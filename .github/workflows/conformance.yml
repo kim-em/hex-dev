@@ -111,6 +111,31 @@ jobs:
         run: |
           lake exe hexbz_emit_fixtures \
             | python3 scripts/oracle/bz_flint.py
+      - name: Build hexgfq_emit_fixtures
+        uses: leanprover/lean-action@v1
+        with:
+          build-args: hexgfq_emit_fixtures
+      - name: Cross-check HexGfq Lean emission against committed fixture
+        run: |
+          lake exe hexgfq_emit_fixtures > /tmp/hexgfq-fresh.jsonl
+          diff -u conformance-fixtures/HexGfq/gfq.jsonl /tmp/hexgfq-fresh.jsonl
+      - name: Run HexGfq python-flint oracle
+        run: |
+          lake exe hexgfq_emit_fixtures \
+            | python3 scripts/oracle/gfq_flint.py
+      - name: Build hexgramschmidt_emit_fixtures
+        uses: leanprover/lean-action@v1
+        with:
+          build-args: hexgramschmidt_emit_fixtures
+      - name: Cross-check HexGramSchmidt Lean emission against committed fixture
+        run: |
+          lake exe hexgramschmidt_emit_fixtures > /tmp/hexgramschmidt-fresh.jsonl
+          diff -u conformance-fixtures/HexGramSchmidt/gram_schmidt.jsonl \
+            /tmp/hexgramschmidt-fresh.jsonl
+      - name: Run HexGramSchmidt python-flint oracle
+        run: |
+          lake exe hexgramschmidt_emit_fixtures \
+            | python3 scripts/oracle/gs_flint.py
       - name: Build hexgf2_emit_fixtures
         uses: leanprover/lean-action@v1
         with:

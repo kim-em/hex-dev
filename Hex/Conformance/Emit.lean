@@ -155,6 +155,25 @@ def emitGfqRingFixture (lib case : String) (p : Int)
     ("n",       jsonInt n)
   ]
 
+/-- Emit a `gfq_bridge` fixture record carrying the prime `p`, the
+modulus polynomial coefficients (ascending), and two reduced operands
+`a` / `b` as ascending coefficient lists.  The operands are the input
+the oracle consumes; both Lean rep paths (packed `GF2n` and generic
+`GFqField.FiniteField`) emit per-op result records describing the
+same `(a, b)` pair, and the oracle cross-checks each rep path against
+python-flint's canonical answer. -/
+def emitGfqBridgeFixture (lib case : String) (p : Int)
+    (modulus a b : List Int) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind",    jsonString "gfq_bridge"),
+    ("lib",     jsonString lib),
+    ("case",    jsonString case),
+    ("p",       jsonInt p),
+    ("modulus", jsonIntList modulus),
+    ("a",       jsonIntList a),
+    ("b",       jsonIntList b)
+  ]
+
 /-- Emit a `gfqfield` fixture record carrying the prime `p`, the
 modulus polynomial coefficients, two reduced operands `a` / `b`
 (with `b` nonzero so `a / b` is well-defined), and the integer
@@ -187,9 +206,26 @@ def emitResult (lib case op : String) (value : String) : IO Unit := do
 /-- Polynomial-shaped result value: a coefficient list. -/
 def polyValue (coeffs : List Int) : String := jsonIntList coeffs
 
+/-- Integer-list result value (e.g. a vector of leading determinants). -/
+def intListValue (xs : List Int) : String := jsonIntList xs
+
+/-- Integer-matrix result value (rows of integers). -/
+def intMatrixValue (rows : List (List Int)) : String := jsonIntMatrix rows
+
 /-- `divmod`-shaped result value: a `[quotient, remainder]` coefficient pair. -/
 def divModValue (quot rem : List Int) : String :=
   "[" ++ jsonIntList quot ++ "," ++ jsonIntList rem ++ "]"
+
+/-- Q-coefficient polynomial result value: parallel `num` / `den` lists.
+
+The oracle compares Lean's gcd to `flint.fmpq_poly`'s gcd by normalising
+both to the monic associate, which is meaningful because `Hex.DensePoly`
+gcd over `Rat` is only determined up to a (rational) scalar associate. -/
+def polyRatValue (coeffs : List Rat) : String :=
+  let nums := coeffs.map (·.num)
+  let dens := coeffs.map fun r => (r.den : Int)
+  "{" ++ jsonString "num" ++ ":" ++ jsonIntList nums ++
+  "," ++ jsonString "den" ++ ":" ++ jsonIntList dens ++ "}"
 
 /-- Lattice-shaped result value: a basis as a list of integer rows. -/
 def latticeValue (basis : List (List Int)) : String := jsonIntMatrix basis

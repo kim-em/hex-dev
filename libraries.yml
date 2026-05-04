@@ -92,7 +92,7 @@ libraries:
   HexBerlekampZassenhaus:
     deps: [HexBerlekamp, HexHensel, HexLLL]
     mathlib: false
-    done_through: 1
+    done_through: 2
 
   # ---------- Mathlib bridges ----------
   HexPolyMathlib:
@@ -138,4 +138,4 @@ libraries:
   HexBerlekampZassenhausMathlib:
     deps: [HexBerlekampZassenhaus, HexPolyZMathlib]
     mathlib: true
-    done_through: 0
+    done_through: 1

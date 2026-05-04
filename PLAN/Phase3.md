@@ -52,6 +52,9 @@ Reviewer checklist for Phase 3 PRs:
   covered properties, covered edge cases.
 - [ ] Every public operation listed in the library's SPEC file has
   ≥1 elaboration-time check.
+- [ ] Input sizes pushed toward the upper end of SPEC/testing.md
+  § "Profile sizes" ranges (or a comment explains why a smaller size
+  was chosen).
 - [ ] Every property named in the module docstring has ≥1 `#guard`.
 - [ ] Every edge case named in the module docstring has ≥1 fixture.
 - [ ] No `expected*` struct field is unreferenced.

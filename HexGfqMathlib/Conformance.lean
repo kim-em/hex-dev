@@ -36,20 +36,6 @@ noncomputable section
 
 private instance conformanceBoundsTwo : Hex.ZMod64.Bounds 2 := ⟨by decide, by decide⟩
 
-private theorem conformancePrimeTwo : Hex.Nat.Prime 2 := by
-  constructor
-  · decide
-  · intro m hm
-    have hmle : m ≤ 2 := Nat.le_of_dvd (by decide : 0 < 2) hm
-    have hcases : m = 0 ∨ m = 1 ∨ m = 2 := by omega
-    rcases hcases with rfl | rfl | rfl
-    · simp at hm
-    · exact Or.inl rfl
-    · exact Or.inr rfl
-
-private instance conformancePrimeModulusTwo : Hex.ZMod64.PrimeModulus 2 :=
-  Hex.ZMod64.primeModulusOfPrime conformancePrimeTwo
-
 private abbrev Entry21 : Conway.SupportedEntry 2 1 :=
   Conway.supportedEntry_2_1
 

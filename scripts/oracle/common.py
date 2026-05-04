@@ -9,27 +9,34 @@ external-tool import (e.g. ``flint`` from ``python-flint``).
 
 JSONL fixture record shape (one record per line):
 
-* ``poly``    — ``{"kind": "poly",    "lib": str, "case": str,
-                   "coeffs": [int...], "modulus": int|null}``
-* ``matrix``  — ``{"kind": "matrix",  "lib": str, "case": str,
-                   "rows": [[int...]...]}``
-* ``lattice`` — ``{"kind": "lattice", "lib": str, "case": str,
-                   "basis": [[int...]...]}``
-* ``prime``   — ``{"kind": "prime",   "lib": str, "case": str,
-                   "p": int, "n": int}``
-* ``gfqring`` — ``{"kind": "gfqring", "lib": str, "case": str,
-                   "p": int, "modulus": [int...],
-                   "a": [int...], "b": [int...],
-                   "c": [int...], "n": int}``
-                  (a, b are reduced operands; c is an unreduced
-                   polynomial used for the `reduce` op; n is the
-                   scalar used for the `nsmul` op.)
-* ``gfqfield`` — ``{"kind": "gfqfield", "lib": str, "case": str,
-                    "p": int, "modulus": [int...],
-                    "a": [int...], "b": [int...], "zexp": int}``
-                   (a, b are reduced operands modulo `m(x)`; `zexp`
-                    is the integer exponent for the `zpow` op.  `b`
-                    must be nonzero so that `a / b` is well-defined.)
+* ``poly``       — ``{"kind": "poly",       "lib": str, "case": str,
+                      "coeffs": [int...], "modulus": int|null}``
+* ``matrix``     — ``{"kind": "matrix",     "lib": str, "case": str,
+                      "rows": [[int...]...]}``
+* ``lattice``    — ``{"kind": "lattice",    "lib": str, "case": str,
+                      "basis": [[int...]...]}``
+* ``prime``      — ``{"kind": "prime",      "lib": str, "case": str,
+                      "p": int, "n": int}``
+* ``gfq_bridge`` — ``{"kind": "gfq_bridge", "lib": str, "case": str,
+                      "p": int, "modulus": [int...],
+                      "a": [int...], "b": [int...]}``
+                     (two reduced operands `a` and `b` over `F_p[x] /
+                      (modulus)`; carries the inputs both Lean
+                      representations consume so the oracle can verify
+                      packed and generic answers independently.)
+* ``gfqring``    — ``{"kind": "gfqring",    "lib": str, "case": str,
+                      "p": int, "modulus": [int...],
+                      "a": [int...], "b": [int...],
+                      "c": [int...], "n": int}``
+                     (a, b are reduced operands; c is an unreduced
+                      polynomial used for the `reduce` op; n is the
+                      scalar used for the `nsmul` op.)
+* ``gfqfield``   — ``{"kind": "gfqfield",   "lib": str, "case": str,
+                      "p": int, "modulus": [int...],
+                      "a": [int...], "b": [int...], "zexp": int}``
+                     (a, b are reduced operands modulo `m(x)`; `zexp`
+                      is the integer exponent for the `zpow` op.  `b`
+                      must be nonzero so that `a / b` is well-defined.)
 
 Result records (emitted by Lean alongside the fixture, on the same
 JSONL stream) carry the operation name and Lean's computed answer:
@@ -59,7 +66,9 @@ from pathlib import Path
 from typing import Any, Iterable, Iterator
 
 
-VALID_FIXTURE_KINDS = frozenset({"poly", "matrix", "lattice", "prime", "gfqring", "gfqfield"})
+VALID_FIXTURE_KINDS = frozenset(
+    {"poly", "matrix", "lattice", "prime", "gfq_bridge", "gfqring", "gfqfield"}
+)
 
 
 class FixtureError(ValueError):
@@ -116,6 +125,15 @@ def _validate_fixture(record: dict[str, Any]) -> None:
             if not isinstance(seq, list) or not all(isinstance(x, int) for x in seq):
                 raise FixtureError(
                     f"gfqring.{key} must be List[int]: {record!r}"
+                )
+    elif kind == "gfq_bridge":
+        if not isinstance(record.get("p"), int):
+            raise FixtureError(f"gfq_bridge.p must be int: {record!r}")
+        for key in ("modulus", "a", "b"):
+            value = record.get(key)
+            if not isinstance(value, list) or not all(isinstance(c, int) for c in value):
+                raise FixtureError(
+                    f"gfq_bridge.{key} must be List[int]: {record!r}"
                 )
     elif kind == "gfqfield":
         if not isinstance(record.get("p"), int):
