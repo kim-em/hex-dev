@@ -24,6 +24,13 @@ JSONL fixture record shape (one record per line):
                       (modulus)`; carries the inputs both Lean
                       representations consume so the oracle can verify
                       packed and generic answers independently.)
+* ``gfqring``    — ``{"kind": "gfqring",    "lib": str, "case": str,
+                      "p": int, "modulus": [int...],
+                      "a": [int...], "b": [int...],
+                      "c": [int...], "n": int}``
+                     (a, b are reduced operands; c is an unreduced
+                      polynomial used for the `reduce` op; n is the
+                      scalar used for the `nsmul` op.)
 * ``gfqfield``   — ``{"kind": "gfqfield",   "lib": str, "case": str,
                       "p": int, "modulus": [int...],
                       "a": [int...], "b": [int...], "zexp": int}``
@@ -60,7 +67,7 @@ from typing import Any, Iterable, Iterator
 
 
 VALID_FIXTURE_KINDS = frozenset(
-    {"poly", "matrix", "lattice", "prime", "gfq_bridge", "gfqfield"}
+    {"poly", "matrix", "lattice", "prime", "gfq_bridge", "gfqring", "gfqfield"}
 )
 
 
@@ -108,6 +115,17 @@ def _validate_fixture(record: dict[str, Any]) -> None:
         for key in ("p", "n"):
             if not isinstance(record.get(key), int):
                 raise FixtureError(f"prime.{key} must be int: {record!r}")
+    elif kind == "gfqring":
+        if not isinstance(record.get("p"), int):
+            raise FixtureError(f"gfqring.p must be int: {record!r}")
+        if not isinstance(record.get("n"), int):
+            raise FixtureError(f"gfqring.n must be int: {record!r}")
+        for key in ("modulus", "a", "b", "c"):
+            seq = record.get(key)
+            if not isinstance(seq, list) or not all(isinstance(x, int) for x in seq):
+                raise FixtureError(
+                    f"gfqring.{key} must be List[int]: {record!r}"
+                )
     elif kind == "gfq_bridge":
         if not isinstance(record.get("p"), int):
             raise FixtureError(f"gfq_bridge.p must be int: {record!r}")

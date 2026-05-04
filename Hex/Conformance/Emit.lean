@@ -137,6 +137,24 @@ def emitPrimeFixture (lib case : String) (p n : Int) : IO Unit := do
     ("n",    jsonInt n)
   ]
 
+/-- Emit a `gfqring` fixture record carrying the prime `p`, the
+modulus polynomial coefficients, two reduced operands `a` / `b`, an
+unreduced polynomial `c` (for the `reduce` op), and a scalar `n` (for
+the `nsmul` op). -/
+def emitGfqRingFixture (lib case : String) (p : Int)
+    (modulus a b c : List Int) (n : Int) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind",    jsonString "gfqring"),
+    ("lib",     jsonString lib),
+    ("case",    jsonString case),
+    ("p",       jsonInt p),
+    ("modulus", jsonIntList modulus),
+    ("a",       jsonIntList a),
+    ("b",       jsonIntList b),
+    ("c",       jsonIntList c),
+    ("n",       jsonInt n)
+  ]
+
 /-- Emit a `gfq_bridge` fixture record carrying the prime `p`, the
 modulus polynomial coefficients (ascending), and two reduced operands
 `a` / `b` as ascending coefficient lists.  The operands are the input

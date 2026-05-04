@@ -148,6 +148,19 @@ jobs:
         run: |
           lake exe hexgf2_emit_fixtures \
             | python3 scripts/oracle/gf2_flint.py
+      - name: Build hexgfqring_emit_fixtures
+        uses: leanprover/lean-action@v1
+        with:
+          build-args: hexgfqring_emit_fixtures
+      - name: Cross-check HexGfqRing Lean emission against committed fixture
+        run: |
+          lake exe hexgfqring_emit_fixtures > /tmp/hexgfqring-fresh.jsonl
+          diff -u conformance-fixtures/HexGfqRing/gfqring.jsonl \
+            /tmp/hexgfqring-fresh.jsonl
+      - name: Run HexGfqRing python-flint oracle
+        run: |
+          lake exe hexgfqring_emit_fixtures \
+            | python3 scripts/oracle/gfqring_flint.py
       - name: Build hexgfqfield_emit_fixtures
         uses: leanprover/lean-action@v1
         with:
