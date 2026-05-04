@@ -272,7 +272,10 @@ instances.
 Size policies per profile. Generators must be parameterised by size
 bounds and seed.
 
-- `core`: tiny deterministic cases only. Polynomial degrees up to
+- `core`: deterministic cases at the *upper end* of the ranges below
+  by default. Shrink only if elaboration time exceeds budget.
+  Larger-than-stated inputs are fine if they elaborate fast — these
+  are floors of coverage, not ceilings. Polynomial degrees up to
   about `8-12`, matrix dimensions up to about `6-8`, finite-field
   extensions up to degree `6`, LLL dimensions up to about `10`.
 - `ci`: modest randomised cases. Integer/finite-field polynomial
