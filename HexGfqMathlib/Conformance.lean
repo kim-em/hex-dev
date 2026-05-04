@@ -53,9 +53,6 @@ private instance conformancePrimeModulusTwo : Hex.ZMod64.PrimeModulus 2 :=
 private abbrev Entry21 : Conway.SupportedEntry 2 1 :=
   Conway.supportedEntry_2_1
 
-private instance conformancePrimeModulusTwo : Hex.ZMod64.PrimeModulus 2 :=
-  Hex.ZMod64.primeModulusOfPrime Entry21.prime
-
 private def polyTwo (coeffs : Array Nat) : Hex.FpPoly 2 :=
   Hex.FpPoly.ofCoeffs (coeffs.map (fun n => Hex.ZMod64.ofNat 2 n))
 
