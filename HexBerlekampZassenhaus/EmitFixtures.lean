@@ -22,12 +22,8 @@ covering the four shapes the SPEC distinguishes:
   factors at a chosen good prime — `x^5 - x` (5 linear factors mod 5)
   and `x^7 - x` (7 linear factors mod 7).  These exercise the
   `exhaustiveRecombinationLocalFactorLimit` LLL-only branch in
-  `HexBerlekampZassenhaus.Basic` once the BZ pipeline performs full
-  irreducible factorisation modulo the good prime; while
-  `factorsModP` is built from `squareFreeDecomposition` (one bucket
-  for square-free input) the fixtures are still meaningful for the
-  oracle, which compares the public `factor` output against
-  `flint.fmpz_poly.factor()` on the full integer polynomial.
+  `HexBerlekampZassenhaus.Basic` because the BZ pipeline records the full
+  irreducible modular factor list at the selected good prime.
 
 Cross-checked operation
 -----------------------
@@ -119,16 +115,12 @@ private def cases_content : List Case :=
 /-! ## Polynomials with many local factors at a good prime
 
 `x^p - x` factors into `p` distinct linear factors modulo `p`, so
-once the BZ pipeline performs full irreducible factorisation modulo
-the good prime, these fixtures will exercise the `LLL-only`
-recombination branch (`exhaustiveRecombinationLocalFactorLimit = 4`).
-While the current `factorsModP` derivation from
-`squareFreeDecomposition` collapses all linear factors of square-free
-input into a single bucket, the fixtures remain meaningful: the
-oracle cross-check is between the public `factor` output and
-`flint.fmpz_poly.factor()` on the full integer polynomial, which
-already detects any product-corruption regression in the
-recombination step. -/
+the BZ pipeline's Berlekamp modular factor list exercises the
+`LLL-only` recombination branch
+(`exhaustiveRecombinationLocalFactorLimit = 4`).  The oracle
+cross-check compares the public `factor` output against
+`flint.fmpz_poly.factor()` on the full integer polynomial, detecting
+product-corruption regressions in the recombination step. -/
 
 private def cases_lll : List Case :=
   [ -- x⁵ - x = x(x-1)(x+1)(x²+1) — five factors over Z, five linear

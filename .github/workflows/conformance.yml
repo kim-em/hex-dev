@@ -76,6 +76,10 @@ jobs:
             emit: hexgf2_emit_fixtures
             script: scripts/oracle/gf2_flint.py
             fixture: conformance-fixtures/HexGF2/gf2.jsonl
+          - lib: HexGfq
+            emit: hexgfq_emit_fixtures
+            script: scripts/oracle/gfq_flint.py
+            fixture: conformance-fixtures/HexGfq/gfq.jsonl
           - lib: HexGfqField
             emit: hexgfqfield_emit_fixtures
             script: scripts/oracle/gfqfield_flint.py
