@@ -1015,6 +1015,90 @@ private theorem rat_add_sub_add_right (a b c d : DensePoly Rat) :
   rw [DensePoly.coeff_sub b d n hzero_sub]
   grind
 
+private theorem rat_sub_zero_right (p : DensePoly Rat) :
+    p - 0 = p := by
+  apply DensePoly.ext_coeff
+  intro n
+  have hzero_sub : (0 : Rat) - (0 : Rat) = 0 := by grind
+  rw [DensePoly.coeff_sub p 0 n hzero_sub, DensePoly.coeff_zero]
+  grind
+
+private theorem rat_zero_mod_eq_zero (m : DensePoly Rat) :
+    (0 : DensePoly Rat) % m = 0 := by
+  by_cases hm_zero : m.size = 0
+  · exact rat_mod_zero_right_of_size_zero 0 m hm_zero
+  · by_cases hdegree : 0 < m.degree?.getD 0
+    · have hzero_degree : (0 : DensePoly Rat).degree?.getD 0 = 0 := by
+        rfl
+      have hlt : (0 : DensePoly Rat).degree?.getD 0 < m.degree?.getD 0 := by
+        rw [hzero_degree]
+        exact hdegree
+      have hdiv := DensePoly.divMod_eq_zero_self_of_degree_lt (0 : DensePoly Rat) m hlt
+      simpa [DensePoly.mod] using congrArg Prod.snd hdiv
+    · have hm_size : m.size = 1 := by
+        have hm_pos : 0 < m.size := Nat.pos_of_ne_zero hm_zero
+        have hdeg : m.degree?.getD 0 = m.size - 1 := by
+          simp [DensePoly.degree?, hm_zero]
+        rw [hdeg] at hdegree
+        omega
+      have hlead_ne : m.leadingCoeff ≠ (Zero.zero : Rat) := by
+        exact rat_leadingCoeff_ne_zero_of_pos_size m (by omega)
+      simpa [DensePoly.mod] using
+        DensePoly.divMod_remainder_eq_zero_of_degree_zero_core (0 : DensePoly Rat) m
+          hm_size (fun a => rat_div_mul_cancel_of_ne a m.leadingCoeff hlead_ne)
+
+private theorem rat_sub_self_right_add (a b : DensePoly Rat) :
+    (a + b) - a = b := by
+  apply DensePoly.ext_coeff
+  intro n
+  have hzero_sub : (0 : Rat) - (0 : Rat) = 0 := by grind
+  have hzero_add : (0 : Rat) + (0 : Rat) = 0 := by grind
+  rw [DensePoly.coeff_sub (a + b) a n hzero_sub]
+  rw [DensePoly.coeff_add a b n hzero_add]
+  grind
+
+private theorem rat_mul_left_remainder_delta
+    (p q m rp rq : DensePoly Rat)
+    (hp : p % m = p + m * rp)
+    (hq : q % m = q + m * rq) :
+    (p % m * (q % m)) - (p * q) = m * (rp * (q % m) + p * rq) := by
+  have hleft :
+      (p + m * rp) * (q % m) =
+        p * (q % m) + (m * rp) * (q % m) :=
+    DensePoly.mul_add_left_poly p (m * rp) (q % m)
+  have hright :
+      p * (q % m) = p * q + p * (m * rq) := by
+    rw [hq]
+    exact DensePoly.mul_add_right_poly p q (m * rq)
+  calc
+    (p % m * (q % m)) - (p * q)
+        = ((p + m * rp) * (q % m)) - (p * q) := by rw [hp]
+    _ = (p * (q % m) + (m * rp) * (q % m)) - (p * q) := by rw [hleft]
+    _ = ((p * q + p * (m * rq)) + (m * rp) * (q % m)) - (p * q) := by
+      rw [hright]
+    _ = (p * q + (p * (m * rq) + (m * rp) * (q % m))) - (p * q) := by
+      exact congrArg (fun x => x - p * q)
+        (DensePoly.add_assoc_poly (p * q) (p * (m * rq)) ((m * rp) * (q % m)))
+    _ = p * (m * rq) + (m * rp) * (q % m) := by
+      rw [rat_sub_self_right_add]
+    _ = m * (p * rq) + (m * rp) * (q % m) := by
+      apply congrArg (fun x => x + (m * rp) * (q % m))
+      calc
+        p * (m * rq) = (p * m) * rq := by
+          exact (DensePoly.mul_assoc_poly p m rq).symm
+        _ = (m * p) * rq := by
+          exact congrArg (fun x => x * rq) (DensePoly.mul_comm_poly p m)
+        _ = m * (p * rq) := by
+          exact DensePoly.mul_assoc_poly m p rq
+    _ = m * (p * rq) + m * (rp * (q % m)) := by
+      exact congrArg (fun x => m * (p * rq) + x)
+        (DensePoly.mul_assoc_poly m rp (q % m))
+    _ = m * (p * rq + rp * (q % m)) := by
+      exact (DensePoly.mul_add_right_poly m (p * rq) (rp * (q % m))).symm
+    _ = m * (rp * (q % m) + p * rq) := by
+      exact congrArg (fun x => m * x)
+        (DensePoly.add_comm_poly (p * rq) (rp * (q % m)))
+
 private theorem rat_foldl_mulCoeffStep_select
     (f g : DensePoly Rat) (n i m : Nat) (acc : Rat) :
     (List.range m).foldl (DensePoly.mulCoeffStep f g n i) acc =
@@ -1324,6 +1408,15 @@ private theorem rat_mod_eq_mod_of_congr_core (p q m : DensePoly Rat)
   · exact rat_mod_eq_mod_of_congr_pos_degree p q m hdegree hcongr
   · exact rat_mod_eq_mod_of_congr_not_pos_degree p q m hdegree hcongr
 
+private theorem rat_mod_eq_zero_of_dvd_core (p q : DensePoly Rat)
+    (hdiv : q ∣ p) :
+    p % q = 0 := by
+  rcases hdiv with ⟨r, hr⟩
+  rw [← rat_zero_mod_eq_zero q]
+  apply rat_mod_eq_mod_of_congr_core
+  exact ⟨r, by
+    rw [rat_sub_zero_right, hr]⟩
+
 private instance ratDivModLaws : DensePoly.DivModLaws Rat where
   divMod_spec := by
     intro p q
@@ -1343,22 +1436,41 @@ private instance ratDivModLaws : DensePoly.DivModLaws Rat where
       grind [Rat.div_def]
   mod_self_eq_zero := by
     intro p
-    sorry
+    apply rat_mod_eq_zero_of_dvd_core
+    exact ⟨1, (DensePoly.mul_one_right_poly p).symm⟩
   mod_eq_zero_of_dvd := by
     intro p q hdiv
-    sorry
+    exact rat_mod_eq_zero_of_dvd_core p q hdiv
   mod_mod_of_not_pos_degree := by
     intro p q hdegree
-    sorry
+    exact rat_mod_eq_mod_of_congr_core (p % q) p q (rat_congr_mod_core p q)
   mod_eq_mod_of_congr := by
     intro p q m hcongr
     exact rat_mod_eq_mod_of_congr_core p q m hcongr
   mod_add_mod := by
     intro p q m
-    sorry
+    apply Eq.symm
+    apply rat_mod_eq_mod_of_congr_core
+    rcases rat_congr_mod_core p m with ⟨rp, hp⟩
+    rcases rat_congr_mod_core q m with ⟨rq, hq⟩
+    exact ⟨rp + rq, by
+      calc
+        (p % m + q % m) - (p + q)
+            = (p % m - p) + (q % m - q) :=
+              rat_add_sub_add_right (p % m) (q % m) p q
+        _ = m * rp + m * rq := by rw [hp, hq]
+        _ = m * (rp + rq) := by
+          exact (DensePoly.mul_add_right_poly m rp rq).symm⟩
   mod_mul_mod := by
     intro p q m
-    sorry
+    apply Eq.symm
+    apply rat_mod_eq_mod_of_congr_core
+    rcases rat_congr_mod_core p m with ⟨rp, hp⟩
+    rcases rat_congr_mod_core q m with ⟨rq, hq⟩
+    exact ⟨rp * (q % m) + p * rq, by
+      have hp' : p % m = p + m * rp := rat_eq_add_mul_of_sub_eq_mul hp
+      have hq' : q % m = q + m * rq := rat_eq_add_mul_of_sub_eq_mul hq
+      exact rat_mul_left_remainder_delta p q m rp rq hp' hq'⟩
 
 private instance ratGcdLaws : DensePoly.GcdLaws Rat where
   gcd_dvd_left := by
