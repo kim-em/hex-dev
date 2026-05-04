@@ -3,9 +3,10 @@
 
 Reads a JSONL stream produced by `lake exe hexpoly_emit_fixtures`
 (or the committed sample at `conformance-fixtures/HexPoly/poly.jsonl`)
-and re-runs each `mul` / `divmod` operation through python-flint's
-`fmpz_poly`.  On mismatch, writes a JSON failure record under
-`conformance-failures/` and exits non-zero so CI fails the job.
+and re-runs each `mul` / `divmod` / `gcd` operation through
+python-flint's `fmpz_poly` / `fmpq_poly`.  On mismatch, writes a JSON
+failure record under `conformance-failures/` and exits non-zero so
+CI fails the job.
 
 Usage::
 
@@ -24,10 +25,18 @@ uses for the regression sentinel: if Lean's emission ever drifts from
 the committed sample, the next agent regenerating the file should
 note the diff in their progress entry.
 
-The script is intentionally narrow.  It handles the operations that
-the bootstrap emit driver covers (mul, divmod over `fmpz_poly`).  The
-per-library oracle issue (#1987) extends it to gcd/xgcd over the
-right base ring.
+Operations:
+
+* ``mul`` and ``divmod`` are cross-checked over ``fmpz_poly`` (Z[x]).
+  Lean's integer multiplication and exact integer division match
+  FLINT's outputs verbatim.
+* ``gcd`` is cross-checked over ``fmpq_poly`` (Q[x]) up to the monic
+  associate.  ``Hex.DensePoly Int.gcd`` is structurally unsuitable for
+  Z[x] gcd cross-check (truncating integer division destroys the
+  Euclidean trajectory), so EmitFixtures runs gcd over ``DensePoly Rat``
+  and emits the rational result as parallel ``num`` / ``den`` arrays.
+  Both Lean's value and FLINT's are normalised to monic before
+  comparison.
 """
 from __future__ import annotations
 
@@ -67,10 +76,9 @@ def _coeffs(record: dict[str, Any]) -> list[int]:
     if record["kind"] != "poly":
         raise ValueError(f"expected poly record, got {record['kind']}")
     if record.get("modulus") is not None:
-        # The bootstrap driver does not emit modular fixtures yet;
-        # follow-ups (#1987) extend this branch with `nmod_poly`.
+        # F_p[x] cross-checks live in HexPolyFp (#1989), not here.
         raise NotImplementedError(
-            f"poly_flint.py: modular fixtures not yet supported "
+            f"poly_flint.py: modular fixtures not supported "
             f"(case {record['lib']}/{record['case']})"
         )
     return list(record["coeffs"])
@@ -79,6 +87,47 @@ def _coeffs(record: dict[str, Any]) -> list[int]:
 def _fmpz_poly(coeffs: list[int]):
     from flint import fmpz_poly  # type: ignore[import-not-found]
     return fmpz_poly(coeffs)
+
+
+def _fmpq_poly(coeffs):
+    """Build an `fmpq_poly` from either ``list[int]`` (treated as
+    integer coefficients) or a parallel ``(nums, dens)`` pair."""
+    from flint import fmpq, fmpq_poly  # type: ignore[import-not-found]
+    if isinstance(coeffs, tuple):
+        nums, dens = coeffs
+        return fmpq_poly([fmpq(int(n), int(d)) for n, d in zip(nums, dens)])
+    return fmpq_poly([fmpq(int(c), 1) for c in coeffs])
+
+
+def _monic_qq_coeffs(p) -> list[tuple[int, int]]:
+    """Return the monic associate of ``p`` (an `fmpq_poly`) as a list
+    of ``(numerator, denominator)`` pairs (denominator > 0).  Returns
+    ``[]`` for the zero polynomial."""
+    from flint import fmpq  # type: ignore[import-not-found]
+    if p.degree() < 0:
+        return []
+    lead = fmpq(p.coeffs()[-1])
+    monic = p / lead
+    out: list[tuple[int, int]] = []
+    for c in monic.coeffs():
+        q = fmpq(c)
+        out.append((int(q.p), int(q.q)))
+    return out
+
+
+def _normalise_lean_gcd_value(value: dict[str, Any]):
+    """Build an `fmpq_poly` from the Lean ``{"num":[...],"den":[...]}``
+    result-value shape and return the monic associate as
+    ``(numerator, denominator)`` pairs."""
+    nums = value.get("num")
+    dens = value.get("den")
+    if not isinstance(nums, list) or not isinstance(dens, list):
+        raise ValueError(f"gcd value must be {{'num': [...], 'den': [...]}}: {value!r}")
+    if len(nums) != len(dens):
+        raise ValueError(
+            f"gcd value: num/den length mismatch ({len(nums)} vs {len(dens)})"
+        )
+    return _monic_qq_coeffs(_fmpq_poly((nums, dens)))
 
 
 def _flint_version() -> str:
@@ -124,6 +173,23 @@ def check(
                     _trim_zeros(list(rem.coeffs())),
                 ]
                 input_record = {"dividend": dividend, "divisor": divisor}
+            elif op == "gcd":
+                # Lean's `Hex.DensePoly Rat.gcd` returns a rational
+                # scalar associate of the true gcd; FLINT's
+                # `fmpq_poly.gcd` returns the monic associate.  We
+                # compare both after normalising to monic.
+                left = cases[(lib, f"{case_id}/left")]
+                right = cases[(lib, f"{case_id}/right")]
+                p = _fmpq_poly(_coeffs(left))
+                q = _fmpq_poly(_coeffs(right))
+                if not isinstance(lean_value, dict):
+                    raise OracleMismatch(
+                        f"{lib}/{case_id}: gcd result-value must be a "
+                        f"{{'num': [...], 'den': [...]}} object, got {lean_value!r}"
+                    )
+                oracle_value = _monic_qq_coeffs(p.gcd(q))
+                lean_value = _normalise_lean_gcd_value(lean_value)
+                input_record = {"left": left, "right": right}
             else:
                 # Unknown op = oracle-side bug (Lean emitted something we
                 # don't know how to verify).  Fail loudly so the gap is

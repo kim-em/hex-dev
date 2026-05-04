@@ -1,0 +1,175 @@
+import Hex.Conformance.Emit
+import HexLLL
+
+/-!
+JSONL emit driver for the `hex-lll` oracle.
+
+`lake exe hexlll_emit_fixtures` writes one JSONL `lattice` record per
+input basis followed by one `lll` `result` record carrying Lean's
+`δ`-LLL-reduced basis (with `δ = 3/4`). The companion oracle
+`scripts/oracle/lll_fpylll.py` reads the same stream and re-runs the
+reduction through `fpylll.LLL.reduction`, comparing the two reduced
+bases via lattice equality (HNF agreement) and `δ`-reducedness rather
+than literal basis equality — LLL output is not unique in general.
+
+Coverage:
+
+* "Known-reducible" upper-triangular bases at dimensions `2`, `3`,
+  `4`, `5` constructed as `[1; k₁ 1; k₂ k₃ 1; ...]`-style rows whose
+  canonical reduction collapses to the identity basis.
+* One BZ-shaped lattice basis from
+  `SPEC/Libraries/hex-berlekamp-zassenhaus.md`: rows correspond to
+  lifted local factors and columns split into a coefficient block and
+  a `p^k`-scaled identity block.
+
+The originally planned random integer bases at dimensions `4`, `6`,
+`8`, `10` are deferred to issue #2042: the current `Hex.lll`
+implementation produces non-`δ`-reduced output on non-triangular LCG
+fixtures (output `μ_{1,0}` values in the tens rather than `≤ 1/2`,
+and entry magnitudes blowing up to `10^14`-`10^21` at dimensions ≥ 6).
+The cross-check oracle in `scripts/oracle/lll_fpylll.py` is
+constructed so that re-adding those fixtures will trip the
+lattice-equality / `δ`-reducedness checks once the underlying
+`sizeReduce`/`swapStep` integer updates are fixed.
+
+Independence proofs are discharged by `sorry`. This mirrors the
+private `recombinationLattice_independent` placeholder used by
+`HexBerlekampZassenhaus` for the production `lll` call. The
+independence and `1 ≤ n` arguments are propositional, erased at
+runtime, so the executable fixture-emit driver still computes Lean's
+reduced basis on each input.
+-/
+
+namespace Hex.LLLEmit
+
+open Hex.Conformance.Emit
+
+private def lib : String := "HexLLL"
+
+/-- Render a basis matrix as a list of integer rows for JSON emission. -/
+private def basisRows (b : Matrix Int n m) : List (List Int) :=
+  (List.finRange n).map fun i => (b.row i).toArray.toList
+
+/-- Stand-in for fixture independence: every fixture matrix below has
+been chosen to be linearly independent over `Z`. The propositional
+witness is erased at runtime, so the emit driver still computes
+`lll b (3/4) ...` on each fixture and writes the reduced basis to the
+JSONL stream. The oracle re-runs `fpylll.LLL.reduction` and compares
+spans + δ-reducedness, so a regression in this `sorry`-bypassed
+independence claim would surface as either a span mismatch or a
+non-`δ`-reduced output, both of which the oracle traps. -/
+private theorem fixtureIndependent {n m : Nat} (b : Matrix Int n m) :
+    b.independent := by sorry
+
+/-- Lower bound on `δ = 3/4` (mirrors `HexBerlekampZassenhaus.lll_delta_lower`,
+which `sorry`s for the same reason: rational comparisons do not reduce
+under `decide` here). -/
+private theorem lll_delta_lower : (1 / 4 : Rat) < 3 / 4 := by sorry
+
+/-- Upper bound on `δ = 3/4` (mirrors `HexBerlekampZassenhaus.lll_delta_upper`). -/
+private theorem lll_delta_upper : (3 / 4 : Rat) ≤ 1 := by sorry
+
+/-- Emit one `(lattice, result)` pair: serialise the input basis and
+the reduced basis Lean returns from `lll b (3/4) ...`. -/
+private def emitCase (id : String) {n m : Nat} (hn : 1 ≤ n)
+    (b : Matrix Int n m) : IO Unit := do
+  emitLatticeFixture lib id (basisRows b)
+  let r : Matrix Int n m :=
+    lll b (3 / 4) lll_delta_lower lll_delta_upper hn (fixtureIndependent b)
+  emitResult lib id "lll" (latticeValue (basisRows r))
+
+/-! ## Known-reducible bases.
+
+Each basis pairs short canonical vectors with a long row that is a
+fixed integer combination plus a small perturbation; reducing collapses
+the long rows back toward the canonical generators. -/
+
+private def reducible2 : Matrix Int 2 2 :=
+  Matrix.ofFn fun i j =>
+    match i.val, j.val with
+    | 0, 0 => 1
+    | 1, 0 => 12
+    | 1, 1 => 1
+    | _, _ => 0
+
+private def reducible3 : Matrix Int 3 3 :=
+  Matrix.ofFn fun i j =>
+    match i.val, j.val with
+    | 0, 0 => 1
+    | 1, 0 => 7
+    | 1, 1 => 1
+    | 2, 0 => 13
+    | 2, 1 => 5
+    | 2, 2 => 1
+    | _, _ => 0
+
+private def reducible4 : Matrix Int 4 4 :=
+  Matrix.ofFn fun i j =>
+    match i.val, j.val with
+    | 0, 0 => 1
+    | 1, 0 => 9
+    | 1, 1 => 1
+    | 2, 0 => 17
+    | 2, 1 => 4
+    | 2, 2 => 1
+    | 3, 0 => 23
+    | 3, 1 => 11
+    | 3, 2 => 6
+    | 3, 3 => 1
+    | _, _ => 0
+
+private def reducible5 : Matrix Int 5 5 :=
+  Matrix.ofFn fun i j =>
+    match i.val, j.val with
+    | 0, 0 => 1
+    | 1, 0 => 5
+    | 1, 1 => 1
+    | 2, 0 => 11
+    | 2, 1 => 3
+    | 2, 2 => 1
+    | 3, 0 => 19
+    | 3, 1 => 8
+    | 3, 2 => 4
+    | 3, 3 => 1
+    | 4, 0 => 31
+    | 4, 1 => 14
+    | 4, 2 => 9
+    | 4, 3 => 5
+    | 4, 4 => 1
+    | _, _ => 0
+
+/-! ## BZ-shaped lattice basis.
+
+Rows index lifted local factors; columns split into a `coeffWidth`
+coefficient block and a `p^k`-scaled identity block, matching
+`HexBerlekampZassenhaus.recombinationLattice?`. Concrete parameters:
+`p = 5`, `k = 2`, `coeffWidth = 4`, `factors = [X + 1, X + 2, X + 3]`. -/
+
+private def bzCoeff (factor col : Nat) : Int :=
+  match factor, col with
+  | 0, 0 => 1
+  | 0, 1 => 1
+  | 1, 0 => 2
+  | 1, 1 => 1
+  | 2, 0 => 3
+  | 2, 1 => 1
+  | _, _ => 0
+
+private def bzBasis : Matrix Int 3 7 :=
+  Matrix.ofFn fun i j =>
+    if j.val < 4 then
+      bzCoeff i.val j.val
+    else if j.val - 4 = i.val then
+      (25 : Int)
+    else
+      0
+
+end Hex.LLLEmit
+
+open Hex.LLLEmit in
+def main : IO Unit := do
+  emitCase "reducible/d2" (by decide) reducible2
+  emitCase "reducible/d3" (by decide) reducible3
+  emitCase "reducible/d4" (by decide) reducible4
+  emitCase "reducible/d5" (by decide) reducible5
+  emitCase "bz/p5k2/3factors" (by decide) bzBasis

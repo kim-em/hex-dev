@@ -188,8 +188,28 @@ def emitResult (lib case op : String) (value : String) : IO Unit := do
 /-- Polynomial-shaped result value: a coefficient list. -/
 def polyValue (coeffs : List Int) : String := jsonIntList coeffs
 
+/-- Integer-list result value (e.g. a vector of leading determinants). -/
+def intListValue (xs : List Int) : String := jsonIntList xs
+
+/-- Integer-matrix result value (rows of integers). -/
+def intMatrixValue (rows : List (List Int)) : String := jsonIntMatrix rows
+
 /-- `divmod`-shaped result value: a `[quotient, remainder]` coefficient pair. -/
 def divModValue (quot rem : List Int) : String :=
   "[" ++ jsonIntList quot ++ "," ++ jsonIntList rem ++ "]"
+
+/-- Q-coefficient polynomial result value: parallel `num` / `den` lists.
+
+The oracle compares Lean's gcd to `flint.fmpq_poly`'s gcd by normalising
+both to the monic associate, which is meaningful because `Hex.DensePoly`
+gcd over `Rat` is only determined up to a (rational) scalar associate. -/
+def polyRatValue (coeffs : List Rat) : String :=
+  let nums := coeffs.map (·.num)
+  let dens := coeffs.map fun r => (r.den : Int)
+  "{" ++ jsonString "num" ++ ":" ++ jsonIntList nums ++
+  "," ++ jsonString "den" ++ ":" ++ jsonIntList dens ++ "}"
+
+/-- Lattice-shaped result value: a basis as a list of integer rows. -/
+def latticeValue (basis : List (List Int)) : String := jsonIntMatrix basis
 
 end Hex.Conformance.Emit
