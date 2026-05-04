@@ -152,14 +152,17 @@ For j < k-1: ν[k-1][j] and ν[k][j] simply swap.
 
 For i > k, the two affected columns update simultaneously:
 
-    ν[i][k-1]' = (ν[i][k-1] * d[k]' + ν[i][k] * B) / d[k]
-    ν[i][k]'   = (ν[i][k] * d[k-1] - ν[i][k-1] * B) / d[k]
+    ν[i][k-1]' = (d[k-1] * ν[i][k] + B * ν[i][k-1]) / d[k]
+    ν[i][k]'   = (d[k+1] * ν[i][k-1] - B * ν[i][k]) / d[k]
 
-(Verify precise formulas for i > k against Cohen Algorithm 2.6.3 or
-von zur Gathen & Gerhard Algorithm 16.10 during implementation.) All
-divisions are exact (see integrality section below). Only d[k] changes
-among d-values, and only ν values with one index equal to k or k-1
-change.
+(Derivation: ν[i][k-1]' = d[k]' * coeffs(b')[i][k-1] and
+d[k]' / ‖basis(b')[k-1]‖² = d[k-1], so the d[k-1] factor in the prev
+update absorbs the d[k]' coming from the scaledCoeffs definition.
+Similarly d[k+1] = d[k+1]' appears in the curr update because
+‖basis(b')[k]‖² = d[k] · d[k+1] / (d[k-1]·d[k+1] + B²) and d[k]·d[k-1]
+combine through the gramDet identity.) All divisions are exact (see
+integrality section below). Only d[k] changes among d-values, and
+only ν values with one index equal to k or k-1 change.
 
 These are pointwise updates: targeted writes only. Rebuilding the full
 ν matrix or d vector via `Matrix.ofFn` / `Vector.ofFn` per swap is
@@ -443,8 +446,8 @@ update:
 follows from the determinant identity for the Gram matrix after the
 swap. The scaledCoeffs updates for i > k:
 
-    (scaledCoeffs b')[i][k-1] = ((scaledCoeffs b)[i][k-1] * gramDet b' k + (scaledCoeffs b)[i][k] * B) / gramDet b k
-    (scaledCoeffs b')[i][k]   = ((scaledCoeffs b)[i][k] * gramDet b (k-1) - (scaledCoeffs b)[i][k-1] * B) / gramDet b k
+    (scaledCoeffs b')[i][k-1] = (gramDet b (k-1) * (scaledCoeffs b)[i][k] + B * (scaledCoeffs b)[i][k-1]) / gramDet b k
+    (scaledCoeffs b')[i][k]   = (gramDet b (k+1) * (scaledCoeffs b)[i][k-1] - B * (scaledCoeffs b)[i][k]) / gramDet b k
 
 follow from substituting the definitions scaledCoeffs = gramDet * coeffs
 into the rational coeffs update formulas and simplifying. For j < k-1,

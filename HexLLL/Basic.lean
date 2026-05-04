@@ -186,10 +186,10 @@ def swapStep (s : LLLState n m) (k : Nat) : LLLState n m :=
           (fun ν i =>
             if hklt : k < i.val then
               let prev :=
-                (((s.ν.get i).get km1 * Int.ofNat dk') + ((s.ν.get i).get kFin * B)) /
+                (Int.ofNat dkPrev * (s.ν.get i).get kFin + B * (s.ν.get i).get km1) /
                   Int.ofNat dk
               let curr :=
-                (((s.ν.get i).get kFin * Int.ofNat dkPrev) - ((s.ν.get i).get km1 * B)) /
+                (Int.ofNat dkNext * (s.ν.get i).get km1 - B * (s.ν.get i).get kFin) /
                   Int.ofNat dk
               let ν := setEntry ν i km1 prev
               setEntry ν i kFin curr

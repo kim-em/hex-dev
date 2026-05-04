@@ -157,11 +157,17 @@ lean_exe hexgramschmidt_emit_fixtures where
 lean_exe hexlll_emit_fixtures where
   root := `HexLLL.EmitFixtures
 
+lean_exe hexgfqring_emit_fixtures where
+  root := `HexGfqRing.EmitFixtures
+
 lean_exe hexgfqfield_emit_fixtures where
   root := `HexGfqField.EmitFixtures
 
 lean_exe hexpolyz_bench where
   root := `HexPolyZ.Bench
+
+lean_exe hexpolyz_emit_fixtures where
+  root := `HexPolyZ.EmitFixtures
 
 lean_exe hexgramschmidt_bench where
   root := `HexGramSchmidt.Bench

@@ -72,6 +72,10 @@ jobs:
             emit: hexbz_emit_fixtures
             script: scripts/oracle/bz_flint.py
             fixture: conformance-fixtures/HexBerlekampZassenhaus/bz.jsonl
+          - lib: HexPolyZ
+            emit: hexpolyz_emit_fixtures
+            script: scripts/oracle/polyz_flint.py
+            fixture: conformance-fixtures/HexPolyZ/polyz.jsonl
           - lib: HexGF2
             emit: hexgf2_emit_fixtures
             script: scripts/oracle/gf2_flint.py
@@ -80,6 +84,10 @@ jobs:
             emit: hexgfq_emit_fixtures
             script: scripts/oracle/gfq_flint.py
             fixture: conformance-fixtures/HexGfq/gfq.jsonl
+          - lib: HexGfqRing
+            emit: hexgfqring_emit_fixtures
+            script: scripts/oracle/gfqring_flint.py
+            fixture: conformance-fixtures/HexGfqRing/gfqring.jsonl
           - lib: HexGfqField
             emit: hexgfqfield_emit_fixtures
             script: scripts/oracle/gfqfield_flint.py
