@@ -145,6 +145,9 @@ lean_exe hexgf2_emit_fixtures where
 lean_exe hexhensel_emit_fixtures where
   root := `HexHensel.EmitFixtures
 
+lean_exe hexgramschmidt_emit_fixtures where
+  root := `HexGramSchmidt.EmitFixtures
+
 lean_exe hexlll_emit_fixtures where
   root := `HexLLL.EmitFixtures
 

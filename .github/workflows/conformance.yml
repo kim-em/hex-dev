@@ -123,6 +123,19 @@ jobs:
         run: |
           lake exe hexpolyz_emit_fixtures \
             | python3 scripts/oracle/polyz_flint.py
+      - name: Build hexgramschmidt_emit_fixtures
+        uses: leanprover/lean-action@v1
+        with:
+          build-args: hexgramschmidt_emit_fixtures
+      - name: Cross-check HexGramSchmidt Lean emission against committed fixture
+        run: |
+          lake exe hexgramschmidt_emit_fixtures > /tmp/hexgramschmidt-fresh.jsonl
+          diff -u conformance-fixtures/HexGramSchmidt/gram_schmidt.jsonl \
+            /tmp/hexgramschmidt-fresh.jsonl
+      - name: Run HexGramSchmidt python-flint oracle
+        run: |
+          lake exe hexgramschmidt_emit_fixtures \
+            | python3 scripts/oracle/gs_flint.py
       - name: Build hexgf2_emit_fixtures
         uses: leanprover/lean-action@v1
         with:
