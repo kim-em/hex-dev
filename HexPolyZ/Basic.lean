@@ -886,6 +886,36 @@ private theorem rat_divMod_remainder_degree_lt_core (p q : DensePoly Rat)
     omega
   · exact Nat.pos_of_ne_zero hq
 
+private theorem rat_divMod_spec_core (p q : DensePoly Rat) :
+    let qr := DensePoly.divMod p q
+    qr.1 * q + qr.2 = p := by
+  by_cases hq : q.size = 0
+  · have hrem := DensePoly.divMod_remainder_eq_self_of_size_zero_core p q hq
+    have hqzero : q = 0 := by
+      apply DensePoly.ext_coeff
+      intro n
+      rw [DensePoly.coeff_eq_zero_of_size_le q (by omega)]
+      rw [DensePoly.coeff_zero]
+      rfl
+    change (DensePoly.divMod p q).1 * q + (DensePoly.divMod p q).2 = p
+    rw [hrem, hqzero]
+    rw [DensePoly.mul_comm_poly ((DensePoly.divMod p (0 : DensePoly Rat)).1)
+      (0 : DensePoly Rat)]
+    rw [DensePoly.zero_mul, DensePoly.zero_add]
+  · have hcancel :
+        ∀ a : Rat, a - (a / q.leadingCoeff) * q.leadingCoeff = 0 := by
+      intro a
+      apply rat_div_mul_cancel_of_ne
+      exact rat_leadingCoeff_ne_zero_of_pos_size q (Nat.pos_of_ne_zero hq)
+    by_cases hlt : p.degree?.getD 0 < q.degree?.getD 0
+    · rw [DensePoly.divMod_eq_zero_self_of_degree_lt p q hlt]
+      change (0 : DensePoly Rat) * q + p = p
+      rw [DensePoly.zero_mul, DensePoly.zero_add]
+    · unfold DensePoly.divMod
+      rw [if_neg hlt]
+      exact DensePoly.divModArray_reconstruction p q
+        (fun coeff : Rat => coeff / q.leadingCoeff) hcancel
+
 private theorem rat_divMod_spec_core_of_not_isZero (p q : DensePoly Rat)
     (hqzero : ¬ q.isZero) :
     let qr := DensePoly.divMod p q
@@ -1297,7 +1327,7 @@ private theorem rat_mod_eq_mod_of_congr_core (p q m : DensePoly Rat)
 private instance ratDivModLaws : DensePoly.DivModLaws Rat where
   divMod_spec := by
     intro p q
-    sorry
+    exact rat_divMod_spec_core p q
   divMod_remainder_degree_lt_of_pos_degree := by
     intro p q hdegree
     exact rat_divMod_remainder_degree_lt_core p q hdegree
