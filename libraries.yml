@@ -118,7 +118,7 @@ libraries:
   HexLLLMathlib:
     deps: [HexLLL, HexMatrixMathlib]
     mathlib: true
-    done_through: 0
+    done_through: 1
   HexBerlekampMathlib:
     deps: [HexBerlekamp, HexPolyMathlib, HexModArithMathlib]
     mathlib: true

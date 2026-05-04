@@ -80,6 +80,10 @@ jobs:
             emit: hexgfqfield_emit_fixtures
             script: scripts/oracle/gfqfield_flint.py
             fixture: conformance-fixtures/HexGfqField/gfqfield.jsonl
+          - lib: HexGramSchmidt
+            emit: hexgramschmidt_emit_fixtures
+            script: scripts/oracle/gs_flint.py
+            fixture: conformance-fixtures/HexGramSchmidt/gram_schmidt.jsonl
     steps:
       - uses: actions/checkout@v4
       - name: Install system dependencies
