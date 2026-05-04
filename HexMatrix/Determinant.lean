@@ -2052,6 +2052,16 @@ def detFinalColumnOffDiagonal {R : Type u} [Lean.Grind.Ring R] {n : Nat}
       acc + detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i.castSucc))
     0
 
+/-- Sum of all final-column determinant terms whose final column is not chosen
+by the final row. This names the residual part of `det_finalColumn_expansion`
+so later bordered-minor algebra does not need to manipulate the raw nested
+fold expression directly. -/
+def detFinalColumnOffDiagonalSum {R : Type u} [Lean.Grind.Ring R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) : R :=
+  (permutationVectors n).foldl
+    (fun acc v => acc + detFinalColumnOffDiagonal M v)
+    0
+
 /-- The diagonal part of the final-column partition is the determinant of the
 leading prefix times the final row/final column entry. -/
 theorem det_finalColumn_diagonal_sum {R : Type u}
@@ -2138,6 +2148,17 @@ theorem det_finalColumn_expansion {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
         det (leadingPrefix M n (Nat.le_succ n)) * M[Fin.last n][Fin.last n] := by
         rw [det_finalColumn_diagonal_sum]
 
+/-- Residual form of `det_finalColumn_expansion`, solving for the named
+off-diagonal final-column contribution. -/
+theorem detFinalColumnOffDiagonalSum_eq_det_sub_diagonal {R : Type u}
+    [Lean.Grind.CommRing R] {n : Nat} (M : Matrix R (n + 1) (n + 1)) :
+    detFinalColumnOffDiagonalSum M =
+      det M - det (leadingPrefix M n (Nat.le_succ n)) * M[Fin.last n][Fin.last n] := by
+  have h := det_finalColumn_expansion M
+  unfold detFinalColumnOffDiagonalSum
+  rw [h]
+  grind
+
 /-- Final-column expansion specialized to a bordered minor. The diagonal
 contribution is rewritten as the source leading-prefix determinant times the
 border entry. -/
@@ -2166,6 +2187,31 @@ theorem det_borderedMinor_succ_finalColumn_expansion {R : Type u}
           0 +
         det (borderedMinor M k hk ⟨k, hk⟩ ⟨k, hk⟩) * M[i][j] := by
   rw [det_finalColumn_expansion]
+  rw [det_leadingPrefix_borderedMinor_succ_eq_det_borderedMinor M k hk hnext i j]
+  rw [borderedMinor_entry_last_last]
+
+/-- Residual final-column expansion for a bordered minor, with the diagonal
+contribution rewritten in source-matrix coordinates. -/
+theorem detFinalColumnOffDiagonalSum_borderedMinor_eq {R : Type u}
+    [Lean.Grind.CommRing R] (M : Matrix R n n) (k : Nat)
+    (hk : k < n) (i j : Fin n) :
+    detFinalColumnOffDiagonalSum (borderedMinor M k hk i j) =
+      det (borderedMinor M k hk i j) -
+        det (leadingPrefix M k (Nat.le_of_lt hk)) * M[i][j] := by
+  rw [detFinalColumnOffDiagonalSum_eq_det_sub_diagonal]
+  rw [det_leadingPrefix_borderedMinor_eq_det_leadingPrefix M k hk i j]
+  rw [borderedMinor_entry_last_last]
+
+/-- Residual final-column expansion for the next bordered minor in the Bareiss
+recurrence, with the diagonal contribution rewritten as the current pivot
+bordered minor times the new source entry. -/
+theorem detFinalColumnOffDiagonalSum_borderedMinor_succ_eq {R : Type u}
+    [Lean.Grind.CommRing R] (M : Matrix R n n) (k : Nat)
+    (hk : k < n) (hnext : k + 1 < n) (i j : Fin n) :
+    detFinalColumnOffDiagonalSum (borderedMinor M (k + 1) hnext i j) =
+      det (borderedMinor M (k + 1) hnext i j) -
+        det (borderedMinor M k hk ⟨k, hk⟩ ⟨k, hk⟩) * M[i][j] := by
+  rw [detFinalColumnOffDiagonalSum_eq_det_sub_diagonal]
   rw [det_leadingPrefix_borderedMinor_succ_eq_det_borderedMinor M k hk hnext i j]
   rw [borderedMinor_entry_last_last]
 
