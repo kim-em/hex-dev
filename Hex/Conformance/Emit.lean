@@ -137,6 +137,25 @@ def emitPrimeFixture (lib case : String) (p n : Int) : IO Unit := do
     ("n",    jsonInt n)
   ]
 
+/-- Emit a `gfq_bridge` fixture record carrying the prime `p`, the
+modulus polynomial coefficients (ascending), and two reduced operands
+`a` / `b` as ascending coefficient lists.  The operands are the input
+the oracle consumes; both Lean rep paths (packed `GF2n` and generic
+`GFqField.FiniteField`) emit per-op result records describing the
+same `(a, b)` pair, and the oracle cross-checks each rep path against
+python-flint's canonical answer. -/
+def emitGfqBridgeFixture (lib case : String) (p : Int)
+    (modulus a b : List Int) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind",    jsonString "gfq_bridge"),
+    ("lib",     jsonString lib),
+    ("case",    jsonString case),
+    ("p",       jsonInt p),
+    ("modulus", jsonIntList modulus),
+    ("a",       jsonIntList a),
+    ("b",       jsonIntList b)
+  ]
+
 /-- Emit a `gfqfield` fixture record carrying the prime `p`, the
 modulus polynomial coefficients, two reduced operands `a` / `b`
 (with `b` nonzero so `a / b` is well-defined), and the integer
