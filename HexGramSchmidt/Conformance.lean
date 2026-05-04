@@ -171,8 +171,8 @@ private def gramDetVecAgrees {n m : Nat} (b : Matrix Int n m) : Bool :=
 #guard GramSchmidt.Int.adjacentSwapPivotCoeff typical f1_3 (by decide) = 1
 #guard GramSchmidt.Int.adjacentSwapGramDetNumerator typical f1_3 (by decide) = 4
 #guard GramSchmidt.Int.adjacentSwapGramDetQuotient typical f1_3 (by decide) = 2
-#guard GramSchmidt.Int.adjacentSwapScaledCoeffAbovePrevNumerator typical f1_3 (by decide) f2_3 = 3
-#guard GramSchmidt.Int.adjacentSwapScaledCoeffAboveCurrNumerator typical f1_3 (by decide) f2_3 = 0
+#guard GramSchmidt.Int.adjacentSwapScaledCoeffAbovePrevNumerator typical f1_3 (by decide) f2_3 = 2
+#guard GramSchmidt.Int.adjacentSwapScaledCoeffAboveCurrNumerator typical f1_3 (by decide) f2_3 = 2
 
 #guard GramSchmidt.Int.adjacentSwapDenom typical f2_3 = 3
 #guard GramSchmidt.Int.adjacentSwapPivotCoeff typical f2_3 (by decide) = 1

@@ -59,17 +59,18 @@ def adjacentSwapScaledCoeffAbovePrevNumerator (b : Matrix Int n m)
     (k : Fin n) (hk : 0 < k.val) (i : Fin n) : Int :=
   let km1 := GramSchmidt.prevRow k hk
   let B := adjacentSwapPivotCoeff b k hk
-  GramSchmidt.entry (scaledCoeffs b) i km1 * adjacentSwapGramDetQuotient b k hk +
-    GramSchmidt.entry (scaledCoeffs b) i k * B
+  ((gramDet b km1.val (Nat.le_of_lt km1.isLt) : Nat) : Int) *
+      GramSchmidt.entry (scaledCoeffs b) i k +
+    B * GramSchmidt.entry (scaledCoeffs b) i km1
 
 /-- Numerator of the adjacent-swap `nu[i][k]'` update for rows above `k`. -/
 def adjacentSwapScaledCoeffAboveCurrNumerator (b : Matrix Int n m)
     (k : Fin n) (hk : 0 < k.val) (i : Fin n) : Int :=
   let km1 := GramSchmidt.prevRow k hk
   let B := adjacentSwapPivotCoeff b k hk
-  GramSchmidt.entry (scaledCoeffs b) i k *
-      ((gramDet b km1.val (Nat.le_of_lt km1.isLt) : Nat) : Int) -
-    GramSchmidt.entry (scaledCoeffs b) i km1 * B
+  ((gramDet b (k.val + 1) (Nat.succ_le_of_lt k.isLt) : Nat) : Int) *
+      GramSchmidt.entry (scaledCoeffs b) i km1 -
+    B * GramSchmidt.entry (scaledCoeffs b) i k
 
 theorem basis_sizeReduce (b : Matrix Int n m) (j k : Fin n) (hjk : j.val < k.val)
     (r : Int) :
