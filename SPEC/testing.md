@@ -2,9 +2,10 @@
 
 Conformance testing cross-checks Lean implementations against either
 (a) independently stated algebraic properties, or (b) an external
-oracle (Sage, FLINT, python-flint, fpLLL, GAP, PARI). The goal is to
-catch implementation bugs *before* proof work starts. No point proving
-theorems about wrong implementations.
+oracle (`python-flint`, `fpylll`, `cypari2`, or the committed Frank
+Lübeck Conway cache). The goal is to catch implementation bugs
+*before* proof work starts. No point proving theorems about wrong
+implementations.
 
 When conformance fails, the response is the same as when benchmarking
 returns an unexpected complexity verdict ([benchmarking.md](benchmarking.md)):
@@ -237,23 +238,27 @@ subsection. Default oracle assignments:
   property checks (Bézout, `Nat.gcd` agreement) sufficient for `core`.
 - `hex-mod-arith` — Lean big-integer modular arithmetic as property
   oracle.
-- `hex-poly`, `hex-poly-z`, `hex-poly-fp` — `python-flint` for
-  univariate polynomial arithmetic; Sage as fallback.
-- `hex-matrix`, `hex-gram-schmidt` — Sage exact matrix / rational
-  linear algebra; numpy/scipy accepted for cross-checks that only
-  need float-level agreement on well-conditioned inputs.
-- `hex-gf2`, `hex-gfq-ring`, `hex-gfq-field`, `hex-gfq` — Sage finite
-  field and quotient-ring computations; GAP acceptable for the
-  character-table adjacent checks.
-- `hex-berlekamp`, `hex-berlekamp-zassenhaus` — FLINT or Sage
-  factorisation / irreducibility checks.
-- `hex-hensel` — Sage or FLINT Hensel-lifting support, plus direct
-  Lean-side congruence/product checks.
-- `hex-lll` — fpLLL or Sage `LLL`, comparing reducedness, lattice
-  equality, and determinant preservation rather than exact basis
-  equality.
-- `hex-conway` — committed database fixtures cross-checked against
-  Sage's Conway tables. No random generation.
+- `hex-poly`, `hex-poly-z`, `hex-poly-fp` — `python-flint` primary
+  for univariate polynomial arithmetic.
+- `hex-matrix`, `hex-gram-schmidt` — `python-flint` exact
+  (`fmpz_mat` / `fmpq_mat`); numpy/scipy float for well-conditioned
+  float-level cross-checks; `fpylll`'s `GSO.Mat` for Gram-Schmidt
+  size-reduction parity.
+- `hex-gf2`, `hex-gfq-ring`, `hex-gfq-field`, `hex-gfq` —
+  `python-flint` (`nmod_poly`, `fq_nmod`, `fq_default`); `cypari2`
+  as a secondary independent finite-field oracle when independence
+  from FLINT matters.
+- `hex-berlekamp`, `hex-berlekamp-zassenhaus` — `python-flint`
+  factorisation primary; `cypari2` secondary.
+- `hex-hensel` — `cypari2` (PARI `factorpadic`) primary for the
+  mod-`p^k` lift surface; `python-flint` does not expose mod-`p^k`
+  polynomial factorisation.
+- `hex-lll` — `fpylll`, which wraps fpLLL directly, comparing
+  reducedness, lattice equality, and determinant preservation rather
+  than exact basis equality.
+- `hex-conway` — `cypari2` (PARI `ffinit`) plus a committed Frank
+  Lübeck flat-file cache for triple-source independence
+  (Lean ≡ PARI ≡ Lübeck). No random generation.
 
 The `-mathlib` bridge libraries are not the primary target of
 external conformance testing. They rely mainly on internal
@@ -267,7 +272,10 @@ instances.
 Size policies per profile. Generators must be parameterised by size
 bounds and seed.
 
-- `core`: tiny deterministic cases only. Polynomial degrees up to
+- `core`: deterministic cases at the *upper end* of the ranges below
+  by default. Shrink only if elaboration time exceeds budget.
+  Larger-than-stated inputs are fine if they elaborate fast — these
+  are floors of coverage, not ceilings. Polynomial degrees up to
   about `8-12`, matrix dimensions up to about `6-8`, finite-field
   extensions up to degree `6`, LLL dimensions up to about `10`.
 - `ci`: modest randomised cases. Integer/finite-field polynomial
@@ -392,18 +400,13 @@ The initial `core` profile does not require JSONL; a library's
 
 ## Sage strategy
 
-Sage is important enough to deserve an explicit deployment story.
-Ubuntu's `apt` packages are not a stable basis for Sage-backed CI;
-the preferred path is Nix-based Sage:
-
-- local use via `nix shell nixpkgs#sage --command ...`
-- CI use via `cachix/install-nix-action` followed by Sage commands
-  through `nix shell`
-
-This keeps local and CI execution close and avoids depending on
-Ubuntu package availability. A conda-forge Sage install is an
-acceptable secondary path for local experimentation, but not the
-primary CI mechanism.
+Sage is not used as an oracle in this project. Every operation we
+want to cross-check has a lighter pip-installable wrapper that
+reaches the same FLINT / fpLLL / PARI internals as Sage would:
+`python-flint`, `fpylll`, and `cypari2`. Together they cover the
+entire oracle surface without a Sage runtime in CI. Local developers
+who already have Sage are free to use it ad-hoc, but no CI job
+depends on it.
 
 ---
 

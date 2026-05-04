@@ -1,2 +1,1 @@
-Reviewed in issue #1193.
-No additional downstream-facing scaffold gaps were identified after the nested Rabin certificate checker repair.
+Reviewed in the PR for issue #2079. The review found one wrong-shape scaffold gap in the modular factor data feeding prime scoring, Hensel lifting, and recombination; follow-up issue #2082 tracks replacing square-free decomposition buckets with the executable Berlekamp irreducible factor surface. No extern trampolines, native-type detours, missing Mathlib-bridge surface declarations, or additional downstream-facing scaffold gaps were identified.
