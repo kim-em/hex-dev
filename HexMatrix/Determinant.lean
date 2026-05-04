@@ -2215,6 +2215,70 @@ theorem detFinalColumnOffDiagonalSum_borderedMinor_succ_eq {R : Type u}
   rw [det_leadingPrefix_borderedMinor_succ_eq_det_borderedMinor M k hk hnext i j]
   rw [borderedMinor_entry_last_last]
 
+/-- The named off-diagonal residual left after expanding the four bordered
+minors in the `k + 1` Desnanot-Jacobi/Bareiss identity by their final columns.
+
+This is intentionally stated in terms of `detFinalColumnOffDiagonalSum` rather
+than the raw nested `foldl` expression. -/
+def detBorderedMinorOffDiagonalProductResidual {R : Type u}
+    [Lean.Grind.Ring R] (M : Matrix R n n) (k : Nat)
+    (hk : k < n) (hnext : k + 1 < n) (i j : Fin n) : R :=
+  let prev := det (leadingPrefix M k (Nat.le_of_lt hk))
+  let offSucc :=
+    detFinalColumnOffDiagonalSum (borderedMinor M (k + 1) hnext i j)
+  let offIJ := detFinalColumnOffDiagonalSum (borderedMinor M k hk i j)
+  let offKK :=
+    detFinalColumnOffDiagonalSum
+      (borderedMinor M k hk (⟨k, hk⟩ : Fin n) (⟨k, hk⟩ : Fin n))
+  let offIK :=
+    detFinalColumnOffDiagonalSum (borderedMinor M k hk i (⟨k, hk⟩ : Fin n))
+  let offKJ :=
+    detFinalColumnOffDiagonalSum (borderedMinor M k hk (⟨k, hk⟩ : Fin n) j)
+  offSucc * prev - offIJ * offKK + offIK * offKJ -
+    prev * offIJ * M[(⟨k, hk⟩ : Fin n)][(⟨k, hk⟩ : Fin n)] +
+    prev * offIK * M[(⟨k, hk⟩ : Fin n)][j] +
+    prev * M[i][(⟨k, hk⟩ : Fin n)] * offKJ +
+    prev * prev * M[i][(⟨k, hk⟩ : Fin n)] * M[(⟨k, hk⟩ : Fin n)][j]
+
+/-- Expanding the four bordered minors in the `k + 1` Desnanot-Jacobi
+difference by their final columns leaves exactly the named off-diagonal
+product residual. -/
+theorem det_borderedMinor_desnanot_difference_eq_offDiagonalProductResidual
+    {R : Type u} [Lean.Grind.CommRing R] (M : Matrix R n n) (k : Nat)
+    (hk : k < n) (hnext : k + 1 < n) (i j : Fin n) :
+    det (borderedMinor M (k + 1) hnext i j) *
+        det (leadingPrefix M k (Nat.le_of_lt hk)) -
+      (det (borderedMinor M k hk i j) *
+          det (borderedMinor M k hk ⟨k, hk⟩ ⟨k, hk⟩) -
+        det (borderedMinor M k hk i ⟨k, hk⟩) *
+          det (borderedMinor M k hk ⟨k, hk⟩ j)) =
+      detBorderedMinorOffDiagonalProductResidual M k hk hnext i j := by
+  unfold detBorderedMinorOffDiagonalProductResidual
+  rw [detFinalColumnOffDiagonalSum_borderedMinor_succ_eq M k hk hnext i j]
+  rw [detFinalColumnOffDiagonalSum_borderedMinor_eq M k hk i j]
+  rw [detFinalColumnOffDiagonalSum_borderedMinor_eq M k hk ⟨k, hk⟩ ⟨k, hk⟩]
+  rw [detFinalColumnOffDiagonalSum_borderedMinor_eq M k hk i ⟨k, hk⟩]
+  rw [detFinalColumnOffDiagonalSum_borderedMinor_eq M k hk ⟨k, hk⟩ j]
+  grind
+
+/-- Once the off-diagonal residual cancels, the bordered-minor
+Desnanot-Jacobi product identity follows from the final-column expansions. -/
+theorem det_borderedMinor_desnanot_of_offDiagonalProductResidual_eq_zero
+    {R : Type u} [Lean.Grind.CommRing R] (M : Matrix R n n) (k : Nat)
+    (hk : k < n) (hnext : k + 1 < n) (i j : Fin n)
+    (hres : detBorderedMinorOffDiagonalProductResidual M k hk hnext i j = 0) :
+    det (borderedMinor M (k + 1) hnext i j) *
+        det (leadingPrefix M k (Nat.le_of_lt hk)) =
+      det (borderedMinor M k hk i j) *
+          det (borderedMinor M k hk ⟨k, hk⟩ ⟨k, hk⟩) -
+        det (borderedMinor M k hk i ⟨k, hk⟩) *
+          det (borderedMinor M k hk ⟨k, hk⟩ j) := by
+  have hdiff :=
+    det_borderedMinor_desnanot_difference_eq_offDiagonalProductResidual
+      M k hk hnext i j
+  rw [hres] at hdiff
+  grind
+
 private theorem rowSwap_rowAddDuplicate_eq {R : Type u} {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) (_h : src ≠ dst) :
     rowSwap (rowAddDuplicate M src dst) src dst = rowAddDuplicate M src dst := by
