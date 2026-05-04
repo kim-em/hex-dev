@@ -23,6 +23,15 @@ leading principal Gram determinant. -/
 def independent (b : Matrix Int n m) : Prop :=
   ∀ k : Fin n, 0 < det (submatrix (gramMatrix b) k)
 
+/-- The identity matrix is independent: every leading principal Gram
+determinant equals `det 1 = 1 > 0`. Used by Phase 4 benchmarks of
+`lll.firstShortVector`, where the identity basis is the degenerate BZ-style
+recombination input with all-zero lift coefficients. -/
+theorem identity_independent {n : Nat} : (1 : Matrix Int n n).independent := by
+  intro k
+  rw [Matrix.gramMatrix_one, Matrix.submatrix_one, Matrix.det_one]
+  decide
+
 /-- Product of the squared Gram-Schmidt basis norms along the first `k` rows. -/
 noncomputable def gramSchmidtNormProduct (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) : Rat :=
   (List.finRange k).foldl

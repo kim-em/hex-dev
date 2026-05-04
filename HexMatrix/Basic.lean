@@ -1,3 +1,5 @@
+import Batteries.Data.List.Lemmas
+
 /-!
 Core dense matrix definitions for `hex-matrix`.
 
@@ -272,6 +274,190 @@ theorem leadingPrefix_borderedMinor_succ_eq_borderedMinor (M : Matrix R n n)
   · have hr_eq : r = k := by omega
     have hc_eq : c = k := by omega
     simp [leadingPrefix, borderedMinor, ofFn, hr_eq, hc_eq]
+
+/-- The identity matrix entry function: `1[i][j] = 1` if `i = j`, else `0`. -/
+@[simp] theorem getElem_one [OfNat R 0] [OfNat R 1] {n : Nat} (i j : Fin n) :
+    (1 : Matrix R n n)[i][j] = if i = j then (1 : R) else 0 := by
+  simp [show (1 : Matrix R n n) = Matrix.identity from rfl, Matrix.identity, ofFn]
+
+/-- A foldl whose every step adds `0` reduces to the initial accumulator. -/
+private theorem foldl_add_eq_acc {R : Type u} [Lean.Grind.CommRing R]
+    {α : Type v} (xs : List α) (f : α → R) (acc : R)
+    (hf : ∀ x ∈ xs, f x = 0) :
+    xs.foldl (fun acc x => acc + f x) acc = acc := by
+  induction xs generalizing acc with
+  | nil =>
+      simp only [List.foldl_nil]
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hx : f x = 0 := hf x (by simp)
+      have hxs : ∀ y ∈ xs, f y = 0 := fun y hy => hf y (List.mem_cons_of_mem _ hy)
+      rw [hx]
+      have hac : acc + (0 : R) = acc := by grind
+      rw [hac]
+      exact ih acc hxs
+
+/-- A foldl summing an indicator function picks out the unique matching index. -/
+private theorem foldl_indicator_unique {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (xs : List (Fin n)) (i : Fin n)
+    (hi : i ∈ xs) (hnodup : xs.Nodup) (acc : R) :
+    xs.foldl (fun acc l => acc + (if i = l then (1 : R) else 0)) acc = acc + 1 := by
+  induction xs generalizing acc with
+  | nil => exact absurd hi (List.not_mem_nil)
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rcases List.mem_cons.mp hi with hieq | hitail
+      · have hx_eq : (if i = x then (1 : R) else 0) = 1 := by
+          rw [hieq]; simp
+        rw [hx_eq]
+        have hxs_zero : ∀ y ∈ xs, (if i = y then (1 : R) else 0) = 0 := by
+          intro y hy
+          have hyx : y ≠ x := fun heq => by
+            rw [heq] at hy
+            exact (List.nodup_cons.mp hnodup).1 hy
+          have hiy : i ≠ y := by
+            rw [hieq]; exact fun h => hyx h.symm
+          simp [hiy]
+        rw [foldl_add_eq_acc xs _ _ hxs_zero]
+      · have hxi : i ≠ x := by
+          intro heq
+          rw [← heq] at hnodup
+          exact (List.nodup_cons.mp hnodup).1 hitail
+        have hx_eq : (if i = x then (1 : R) else 0) = 0 := by simp [hxi]
+        rw [hx_eq]
+        have hac : acc + (0 : R) = acc := by grind
+        rw [hac]
+        exact ih hitail (List.nodup_cons.mp hnodup).2 acc
+
+/-- Squaring an indicator gives the same indicator. -/
+private theorem foldl_indicator_square_eq {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (xs : List (Fin n)) (i : Fin n) (acc : R) :
+    xs.foldl (fun acc l =>
+        acc + (if i = l then (1 : R) else 0) * (if i = l then (1 : R) else 0)) acc =
+      xs.foldl (fun acc l => acc + (if i = l then (1 : R) else 0)) acc := by
+  induction xs generalizing acc with
+  | nil => rfl
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hsq :
+          (if i = x then (1 : R) else 0) * (if i = x then (1 : R) else 0) =
+            if i = x then (1 : R) else 0 := by
+        by_cases h : i = x
+        · rw [if_pos h]; grind
+        · rw [if_neg h]; grind
+      rw [hsq]
+      exact ih _
+
+/-- Strip `Vector.ofFn` lookups inside a dotProduct-style foldl body. -/
+private theorem foldl_dotProduct_basis_body {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (xs : List (Fin n)) (i j : Fin n) (acc : R) :
+    xs.foldl
+        (fun acc l =>
+          acc +
+            (Vector.ofFn fun b : Fin n => (if i = b then (1 : R) else 0))[l] *
+              (Vector.ofFn fun b : Fin n => (if j = b then (1 : R) else 0))[l]) acc =
+      xs.foldl
+        (fun acc l =>
+          acc + (if i = l then (1 : R) else 0) * (if j = l then (1 : R) else 0)) acc := by
+  induction xs generalizing acc with
+  | nil => rfl
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hxi : (Vector.ofFn fun b : Fin n => (if i = b then (1 : R) else 0))[x] =
+          if i = x then (1 : R) else 0 := by simp
+      have hxj : (Vector.ofFn fun b : Fin n => (if j = b then (1 : R) else 0))[x] =
+          if j = x then (1 : R) else 0 := by simp
+      rw [hxi, hxj]
+      exact ih (acc + (if i = x then 1 else 0) * (if j = x then 1 else 0))
+
+/-- Dot product of the `i`-th and `j`-th identity rows. -/
+theorem dotProduct_basis_basis {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (i j : Fin n) :
+    Hex.Vector.dotProduct
+        (Vector.ofFn fun b : Fin n => (if i = b then (1 : R) else 0))
+        (Vector.ofFn fun b : Fin n => (if j = b then (1 : R) else 0)) =
+      if i = j then 1 else 0 := by
+  unfold Hex.Vector.dotProduct
+  rw [foldl_dotProduct_basis_body]
+  by_cases hij : i = j
+  · subst hij
+    rw [foldl_indicator_square_eq]
+    rw [foldl_indicator_unique (List.finRange n) i (List.mem_finRange i)
+      (List.nodup_finRange n) (0 : R)]
+    rw [if_pos rfl]; grind
+  · have hzero : ∀ l ∈ List.finRange n,
+        (if i = l then (1 : R) else 0) * (if j = l then (1 : R) else 0) = 0 := by
+      intro l _
+      by_cases hil : i = l
+      · have hjl : j ≠ l := fun heq => hij (hil.trans heq.symm)
+        rw [if_pos hil, if_neg hjl]; grind
+      · rw [if_neg hil]; grind
+    rw [foldl_add_eq_acc (List.finRange n) _ _ hzero]
+    rw [if_neg hij]
+
+/-- The Gram matrix of the identity is the identity. -/
+theorem gramMatrix_one {R : Type u} [Lean.Grind.CommRing R] {n : Nat} :
+    gramMatrix (1 : Matrix R n n) = (1 : Matrix R n n) := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  have hrow_i : (1 : Matrix R n n).row ⟨i, hi⟩ =
+      Vector.ofFn fun b : Fin n => (if (⟨i, hi⟩ : Fin n) = b then (1 : R) else 0) := by
+    apply Vector.ext
+    intro a ha
+    show ((1 : Matrix R n n).row ⟨i, hi⟩)[(⟨a, ha⟩ : Fin n)] =
+      (Vector.ofFn fun b : Fin n => if (⟨i, hi⟩ : Fin n) = b then (1 : R) else 0)[
+        (⟨a, ha⟩ : Fin n)]
+    rw [Matrix.row, getElem_one]
+    simp
+  have hrow_j : (1 : Matrix R n n).row ⟨j, hj⟩ =
+      Vector.ofFn fun b : Fin n => (if (⟨j, hj⟩ : Fin n) = b then (1 : R) else 0) := by
+    apply Vector.ext
+    intro a ha
+    show ((1 : Matrix R n n).row ⟨j, hj⟩)[(⟨a, ha⟩ : Fin n)] =
+      (Vector.ofFn fun b : Fin n => if (⟨j, hj⟩ : Fin n) = b then (1 : R) else 0)[
+        (⟨a, ha⟩ : Fin n)]
+    rw [Matrix.row, getElem_one]
+    simp
+  show (gramMatrix (1 : Matrix R n n))[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)] =
+    (1 : Matrix R n n)[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)]
+  have hgram :
+      (gramMatrix (1 : Matrix R n n))[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)] =
+        Hex.Vector.dotProduct ((1 : Matrix R n n).row ⟨i, hi⟩)
+          ((1 : Matrix R n n).row ⟨j, hj⟩) := by
+    unfold gramMatrix ofFn
+    simp
+  rw [hgram, hrow_i, hrow_j, dotProduct_basis_basis, getElem_one]
+
+/-- The leading principal `(k + 1) × (k + 1)` submatrix of the identity is the
+identity. -/
+theorem submatrix_one {R : Type u} [OfNat R 0] [OfNat R 1] {n : Nat} (k : Fin n) :
+    submatrix (1 : Matrix R n n) k = (1 : Matrix R (k.val + 1) (k.val + 1)) := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  show (submatrix (1 : Matrix R n n) k)[(⟨i, hi⟩ : Fin (k.val + 1))][
+      (⟨j, hj⟩ : Fin (k.val + 1))] =
+    (1 : Matrix R (k.val + 1) (k.val + 1))[(⟨i, hi⟩ : Fin (k.val + 1))][
+      (⟨j, hj⟩ : Fin (k.val + 1))]
+  rw [submatrix_entry]
+  rw [getElem_one (i := (⟨i, Nat.lt_of_lt_of_le hi (Nat.succ_le_of_lt k.isLt)⟩ : Fin n))]
+  rw [getElem_one (i := (⟨i, hi⟩ : Fin (k.val + 1)))]
+  by_cases hij : (⟨i, hi⟩ : Fin (k.val + 1)) = ⟨j, hj⟩
+  · have hval : i = j := Fin.val_eq_of_eq hij
+    have hijn :
+        (⟨i, Nat.lt_of_lt_of_le hi (Nat.succ_le_of_lt k.isLt)⟩ : Fin n) =
+          ⟨j, Nat.lt_of_lt_of_le hj (Nat.succ_le_of_lt k.isLt)⟩ := by
+      apply Fin.eq_of_val_eq; exact hval
+    simp [hij, hijn]
+  · have hval : i ≠ j := fun heq => hij (by apply Fin.eq_of_val_eq; exact heq)
+    have hijn :
+        (⟨i, Nat.lt_of_lt_of_le hi (Nat.succ_le_of_lt k.isLt)⟩ : Fin n) ≠
+          ⟨j, Nat.lt_of_lt_of_le hj (Nat.succ_le_of_lt k.isLt)⟩ := fun heq =>
+      hval (Fin.val_eq_of_eq heq)
+    simp [hij, hijn]
 
 end Matrix
 end Hex
