@@ -2279,6 +2279,52 @@ theorem det_borderedMinor_desnanot_of_offDiagonalProductResidual_eq_zero
   rw [hres] at hdiff
   grind
 
+theorem detBorderedMinorOffDiagonalProductResidual_eq_zero_of_succ_offDiagonal_identity
+    {R : Type u} [Lean.Grind.CommRing R] (M : Matrix R n n) (k : Nat)
+    (hk : k < n) (hnext : k + 1 < n) (i j : Fin n)
+    (hsucc :
+      detFinalColumnOffDiagonalSum (borderedMinor M (k + 1) hnext i j) *
+          det (leadingPrefix M k (Nat.le_of_lt hk)) =
+        detFinalColumnOffDiagonalSum (borderedMinor M k hk i j) *
+            detFinalColumnOffDiagonalSum
+              (borderedMinor M k hk (⟨k, hk⟩ : Fin n) (⟨k, hk⟩ : Fin n)) -
+          detFinalColumnOffDiagonalSum (borderedMinor M k hk i (⟨k, hk⟩ : Fin n)) *
+            detFinalColumnOffDiagonalSum (borderedMinor M k hk (⟨k, hk⟩ : Fin n) j) +
+          det (leadingPrefix M k (Nat.le_of_lt hk)) *
+            detFinalColumnOffDiagonalSum (borderedMinor M k hk i j) *
+              M[(⟨k, hk⟩ : Fin n)][(⟨k, hk⟩ : Fin n)] -
+          det (leadingPrefix M k (Nat.le_of_lt hk)) *
+            detFinalColumnOffDiagonalSum (borderedMinor M k hk i (⟨k, hk⟩ : Fin n)) *
+              M[(⟨k, hk⟩ : Fin n)][j] -
+          det (leadingPrefix M k (Nat.le_of_lt hk)) * M[i][(⟨k, hk⟩ : Fin n)] *
+            detFinalColumnOffDiagonalSum (borderedMinor M k hk (⟨k, hk⟩ : Fin n) j) -
+          det (leadingPrefix M k (Nat.le_of_lt hk)) *
+            det (leadingPrefix M k (Nat.le_of_lt hk)) *
+              M[i][(⟨k, hk⟩ : Fin n)] * M[(⟨k, hk⟩ : Fin n)][j]) :
+    detBorderedMinorOffDiagonalProductResidual M k hk hnext i j = 0 := by
+  unfold detBorderedMinorOffDiagonalProductResidual
+  change
+    detFinalColumnOffDiagonalSum (borderedMinor M (k + 1) hnext i j) *
+        det (leadingPrefix M k (Nat.le_of_lt hk)) -
+      detFinalColumnOffDiagonalSum (borderedMinor M k hk i j) *
+        detFinalColumnOffDiagonalSum
+          (borderedMinor M k hk (⟨k, hk⟩ : Fin n) (⟨k, hk⟩ : Fin n)) +
+      detFinalColumnOffDiagonalSum (borderedMinor M k hk i (⟨k, hk⟩ : Fin n)) *
+        detFinalColumnOffDiagonalSum (borderedMinor M k hk (⟨k, hk⟩ : Fin n) j) -
+      det (leadingPrefix M k (Nat.le_of_lt hk)) *
+        detFinalColumnOffDiagonalSum (borderedMinor M k hk i j) *
+          M[(⟨k, hk⟩ : Fin n)][(⟨k, hk⟩ : Fin n)] +
+      det (leadingPrefix M k (Nat.le_of_lt hk)) *
+        detFinalColumnOffDiagonalSum (borderedMinor M k hk i (⟨k, hk⟩ : Fin n)) *
+          M[(⟨k, hk⟩ : Fin n)][j] +
+      det (leadingPrefix M k (Nat.le_of_lt hk)) * M[i][(⟨k, hk⟩ : Fin n)] *
+        detFinalColumnOffDiagonalSum (borderedMinor M k hk (⟨k, hk⟩ : Fin n) j) +
+      det (leadingPrefix M k (Nat.le_of_lt hk)) *
+        det (leadingPrefix M k (Nat.le_of_lt hk)) *
+          M[i][(⟨k, hk⟩ : Fin n)] * M[(⟨k, hk⟩ : Fin n)][j] = 0
+  rw [hsucc]
+  grind
+
 private theorem rowSwap_rowAddDuplicate_eq {R : Type u} {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) (_h : src ≠ dst) :
     rowSwap (rowAddDuplicate M src dst) src dst = rowAddDuplicate M src dst := by
