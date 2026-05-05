@@ -391,6 +391,24 @@ private theorem foldl_det_product_congr {R : Type u} [Mul R] {β : Type v}
       intro y hy
       exact h y (List.mem_cons_of_mem x hy)
 
+private theorem detProduct_congr_matrix {R : Type u} [Lean.Grind.Ring R] {n : Nat}
+    {M N : Matrix R n n}
+    (h : ∀ (r : Fin n) (c : Fin n), M[r][c] = N[r][c])
+    (perm : Vector (Fin n) n) :
+    detProduct M perm = detProduct N perm := by
+  unfold detProduct
+  apply foldl_det_product_congr
+  intro r _hr
+  exact h r perm[r]
+
+private theorem detTerm_congr_matrix {R : Type u} [Lean.Grind.Ring R] {n : Nat}
+    {M N : Matrix R n n}
+    (h : ∀ (r : Fin n) (c : Fin n), M[r][c] = N[r][c])
+    (perm : Vector (Fin n) n) :
+    detTerm M perm = detTerm N perm := by
+  unfold detTerm
+  rw [detProduct_congr_matrix h perm]
+
 private theorem foldl_det_product_perm {R : Type u} [Lean.Grind.CommRing R]
     {β : Type v} (f : β → R) {xs ys : List β} (hperm : xs.Perm ys) (z : R) :
     xs.foldl (fun acc x => acc * f x) z =
@@ -734,6 +752,18 @@ private theorem insertAt_last_get_castSucc {α : Type u} {n : Nat}
     (insertAt x v (Fin.last n))[i.castSucc] = v[i] := by
   unfold insertAt
   simp [List.getElem_insertIdx_of_lt]
+
+private theorem insertAt_get_castSucc_of_lt {α : Type u} {n : Nat}
+    (x : α) (v : Vector α (n + 1)) (i r : Fin (n + 1)) (h : r.val < i.val) :
+    (insertAt x v i.castSucc)[r.castSucc.castSucc] = v[r] := by
+  unfold insertAt
+  simp [List.getElem_insertIdx_of_lt, h]
+
+private theorem insertAt_get_last_of_castSucc_last {α : Type u} {n : Nat}
+    (x : α) (v : Vector α (n + 1)) :
+    (insertAt x v (Fin.last n).castSucc)[Fin.last (n + 1)] = v[Fin.last n] := by
+  unfold insertAt
+  simp [List.getElem_insertIdx_of_gt]
 
 private theorem detProduct_identity_insertAt_not_last_zero {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat} (v : Vector (Fin n) n)
@@ -1261,6 +1291,48 @@ theorem detTerm_insertAt_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
         (detProduct (leadingPrefix M n (Nat.le_succ n)) v * M[Fin.last n][Fin.last n]) := by
   unfold detTerm
   rw [detSign_insertAt_last, detProduct_insertAt_last]
+
+/-- Term-level reindexing for the leading block of a successor bordered minor:
+the top-left block is the current pivot bordered minor. -/
+theorem detTerm_leadingPrefix_borderedMinor_succ_eq {R : Type u}
+    [Lean.Grind.Ring R] (M : Matrix R n n) (k : Nat)
+    (hk : k < n) (hnext : k + 1 < n) (i j : Fin n)
+    (perm : Vector (Fin (k + 1)) (k + 1)) :
+    detTerm
+        (leadingPrefix (borderedMinor M (k + 1) hnext i j) (k + 1)
+          (Nat.le_succ (k + 1))) perm =
+      detTerm (borderedMinor M k hk (⟨k, hk⟩ : Fin n) (⟨k, hk⟩ : Fin n)) perm := by
+  apply detTerm_congr_matrix
+  intro r c
+  have hmat :=
+    congrArg (fun A : Matrix R (k + 1) (k + 1) => A[r][c])
+      (leadingPrefix_borderedMinor_succ_eq_borderedMinor M k hk hnext i j)
+  exact hmat
+
+/-- The successor term whose final row chooses the final column rewrites to
+the current pivot bordered-minor term times the new source entry. -/
+theorem detTerm_borderedMinor_succ_insertAt_last {R : Type u}
+    [Lean.Grind.Ring R] (M : Matrix R n n) (k : Nat)
+    (hk : k < n) (hnext : k + 1 < n) (i j : Fin n)
+    (v : Vector (Fin (k + 1)) (k + 1)) :
+    detTerm (borderedMinor M (k + 1) hnext i j)
+        (insertAt (Fin.last (k + 1)) (v.map Fin.castSucc) (Fin.last (k + 1))) =
+      detSign (R := R) v *
+        (detProduct (borderedMinor M k hk (⟨k, hk⟩ : Fin n) (⟨k, hk⟩ : Fin n)) v *
+          M[i][j]) := by
+  rw [detTerm_insertAt_last]
+  have hprod :
+      detProduct
+          (leadingPrefix (borderedMinor M (k + 1) hnext i j) (k + 1)
+            (Nat.le_succ (k + 1))) v =
+        detProduct (borderedMinor M k hk (⟨k, hk⟩ : Fin n) (⟨k, hk⟩ : Fin n)) v := by
+    apply detProduct_congr_matrix
+    intro r c
+    have hmat :=
+      congrArg (fun A : Matrix R (k + 1) (k + 1) => A[r][c])
+        (leadingPrefix_borderedMinor_succ_eq_borderedMinor M k hk hnext i j)
+    exact hmat
+  rw [hprod, borderedMinor_entry_last_last]
 
 private theorem detTerm_identity_insertAt_last {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat} (v : Vector (Fin n) n) :
