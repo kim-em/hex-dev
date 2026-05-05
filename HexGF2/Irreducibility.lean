@@ -175,6 +175,32 @@ def checkIrreducibilityCertificate (f : GF2Poly)
     (cert.powChain[cert.n]? == some (monomial 1 % f)) &&
     checkRabinBezoutWitnesses f cert
 
+/-- Linear-time pow-chain check: each entry must be the squaring step of the
+previous, with the first entry equal to `X mod f`.
+
+This is logically equivalent to `checkPowChain` but uses only `O(n)`
+squarings during kernel reduction, where `checkPowChain` recomputes
+`xpow2kMod f k` from scratch for each `k` and is `O(n^2)`. The linear
+form is intended for kernel-reducible `decide` checks on certificates
+whose modulus has degree comparable to a few machine words. -/
+def checkPowChainLinear (f : GF2Poly) (cert : IrreducibilityCertificate) : Bool :=
+  cert.powChain.size == cert.n + 1 &&
+    (cert.powChain[0]? == some (monomial 1 % f)) &&
+    (List.range cert.n).all fun k =>
+      match cert.powChain[k]?, cert.powChain[k + 1]? with
+      | some prev, some curr => curr == sqMod f prev
+      | _, _ => false
+
+/-- Linear-time variant of `checkIrreducibilityCertificate`. The only
+difference is that it uses `checkPowChainLinear` for the pow-chain leg. -/
+def checkIrreducibilityCertificateLinear (f : GF2Poly)
+    (cert : IrreducibilityCertificate) : Bool :=
+  decide (0 < cert.n) &&
+    decide (cert.n = f.degree) &&
+    checkPowChainLinear f cert &&
+    (cert.powChain[cert.n]? == some (monomial 1 % f)) &&
+    checkRabinBezoutWitnesses f cert
+
 theorem rabinDividesTest_spec (f : GF2Poly) :
     rabinDividesTest f = (frobeniusDiffMod f f.degree).isZero := rfl
 
@@ -382,6 +408,71 @@ theorem checkIrreducibilityCertificate_rabinTest
     rw [← hn]
     rw [hxpow_eq]
     -- Goal: (monomial 1 % f + monomial 1 % f).isZero = true
+    have hself : monomial 1 % f + monomial 1 % f = 0 := by simp
+    rw [hself]
+    exact (isZero_of_eq_zero rfl)
+  · exact checkRabinBezoutWitnesses_rabinWitnesses_all
+      f cert hwitnesses hpow hn
+
+theorem checkPowChainLinear_spec
+    (f : GF2Poly) (cert : IrreducibilityCertificate) :
+    checkPowChainLinear f cert = true →
+      ∀ k, k ≤ cert.n →
+        cert.powChain[k]? = some (xpow2kMod f k) := by
+  intro hcheck
+  unfold checkPowChainLinear at hcheck
+  simp only [Bool.and_eq_true] at hcheck
+  obtain ⟨⟨_hsize, h0beq⟩, hsteps⟩ := hcheck
+  have h0 : cert.powChain[0]? = some (monomial 1 % f) := eq_of_beq h0beq
+  intro k
+  induction k with
+  | zero =>
+      intro _hk
+      simpa [xpow2kMod_zero] using h0
+  | succ m ih =>
+      intro hk
+      have hm := ih (Nat.le_of_succ_le hk)
+      have hmem : m ∈ List.range cert.n := by
+        simpa [List.mem_range] using hk
+      have hstep_all :
+          (match cert.powChain[m]?, cert.powChain[m + 1]? with
+            | some prev, some curr => curr == sqMod f prev
+            | _, _ => false) = true :=
+        List.all_eq_true_of_mem hsteps hmem
+      rw [hm] at hstep_all
+      cases hopt : cert.powChain[m + 1]? with
+      | none =>
+          rw [hopt] at hstep_all
+          exact False.elim (Bool.noConfusion hstep_all)
+      | some curr =>
+          rw [hopt] at hstep_all
+          have hcurr : curr = sqMod f (xpow2kMod f m) := by
+            simpa using eq_of_beq hstep_all
+          simp [hcurr, xpow2kMod_succ]
+
+theorem checkIrreducibilityCertificateLinear_rabinTest
+    (f : GF2Poly) (cert : IrreducibilityCertificate) :
+    checkIrreducibilityCertificateLinear f cert = true → rabinTest f = true := by
+  intro hcheck
+  unfold checkIrreducibilityCertificateLinear at hcheck
+  simp only [Bool.and_eq_true, decide_eq_true_eq] at hcheck
+  obtain ⟨⟨⟨⟨hnpos, hn⟩, hpowCheck⟩, hdividesBeq⟩, hwitnesses⟩ := hcheck
+  have hdividesWitness :
+      cert.powChain[cert.n]? = some (monomial 1 % f) := eq_of_beq hdividesBeq
+  have hpow := checkPowChainLinear_spec f cert hpowCheck
+  simp only [rabinTest, Bool.and_eq_true]
+  refine ⟨⟨?_, ?_⟩, ?_⟩
+  · simpa [hn] using hnpos
+  · unfold rabinDividesTest frobeniusDiffMod
+    have hpowN :
+        cert.powChain[cert.n]? = some (xpow2kMod f cert.n) :=
+      hpow cert.n (Nat.le_refl _)
+    rw [hpowN] at hdividesWitness
+    have hxpow_eq : xpow2kMod f cert.n = monomial 1 % f := by
+      have hsome := hdividesWitness
+      exact Option.some.inj hsome
+    rw [← hn]
+    rw [hxpow_eq]
     have hself : monomial 1 % f + monomial 1 % f = 0 := by simp
     rw [hself]
     exact (isZero_of_eq_zero rfl)

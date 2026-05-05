@@ -1,4 +1,5 @@
 import Hex.Conformance.Emit
+import HexGF2.CommonIrreducibility
 import HexGF2.Field
 
 /-!
@@ -110,8 +111,8 @@ private theorem gf16Irr :
   sorry
 
 private theorem aesIrr :
-    GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x1B 8) := by
-  sorry
+    GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x1B 8) :=
+  GF2Poly.aes_modulus_irreducible
 
 private theorem gf65kIrr :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x100B 16) := by

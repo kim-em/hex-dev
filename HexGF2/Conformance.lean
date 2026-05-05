@@ -1,3 +1,4 @@
+import HexGF2.CommonIrreducibility
 import HexGF2.Field
 
 /-!
@@ -151,8 +152,8 @@ end GF2Poly
 #guard clmul ((1 : UInt64) <<< 63) 2 = pureClmul ((1 : UInt64) <<< 63) 2
 
 private theorem aesIrreducible :
-    GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x1B 8) := by
-  sorry
+    GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x1B 8) :=
+  GF2Poly.aes_modulus_irreducible
 
 namespace GF2n
 

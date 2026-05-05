@@ -75,8 +75,8 @@ structure ShiftInput where
   deriving Hashable
 
 private theorem aesIrreducible :
-    GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x1B 8) := by
-  sorry
+    GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x1B 8) :=
+  GF2Poly.aes_modulus_irreducible
 
 private abbrev AESField : Type :=
   GF2n 8 0x1B (by decide) (by decide) aesIrreducible

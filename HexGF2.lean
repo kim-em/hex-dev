@@ -1,5 +1,6 @@
 import HexGF2.Basic
 import HexGF2.Clmul
+import HexGF2.CommonIrreducibility
 import HexGF2.Conformance
 import HexGF2.CrossCheck
 import HexGF2.Euclid
