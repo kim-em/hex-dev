@@ -600,12 +600,42 @@ private theorem UInt64.and_lowerMask_eq_self_of_lt {n : Nat} (hn64 : n < 64)
   rw [UInt64.toNat_and, lowerMask_toNat_of_lt_64 hn64]
   exact Nat.and_two_pow_sub_one_of_lt_two_pow hw
 
+private theorem UInt64.and_lowerMask_toNat_lt {n : Nat} (hn64 : n < 64)
+    (w : UInt64) :
+    (w &&& lowerMask n).toNat < 2 ^ n := by
+  rw [UInt64.toNat_and, lowerMask_toNat_of_lt_64 hn64]
+  have hpow : 0 < 2 ^ n := Nat.pow_pos (by decide : 0 < 2)
+  have hand :
+      w.toNat &&& (2 ^ n - 1) = w.toNat % 2 ^ n := by
+    apply Nat.eq_of_testBit_eq
+    intro i
+    rw [Nat.testBit_and, Nat.testBit_two_pow_sub_one, Nat.testBit_mod_two_pow]
+    by_cases hi : i < n <;> simp [hi]
+  rw [hand]
+  exact Nat.mod_lt _ hpow
+
+private theorem canonicalWordLT_eq_self_of_lt {n : Nat} (hn64 : n < 64)
+    {w : UInt64} (hw : w.toNat < 2 ^ n) :
+    canonicalWordLT n hn64 w = w := by
+  apply UInt64.toNat_inj.mp
+  simp [canonicalWordLT, Nat.mod_eq_of_lt hw]
+
 private theorem bit_eq_one_eq_testBit (x i : Nat) :
     (x >>> i % 2 == 1) = x.testBit i := by
   rw [Nat.testBit_eq_decide_div_mod_eq]
   rw [Nat.shiftRight_eq_div_pow]
   apply decide_eq_decide.mpr
   exact Iff.rfl
+
+private theorem nat_testBit_eq_false_of_lt_two_pow {x k i : Nat}
+    (hx : x < 2 ^ k) (hki : k ≤ i) :
+    x.testBit i = false := by
+  have hbit : (x % 2 ^ k).testBit i = x.testBit i := by
+    rw [Nat.mod_eq_of_lt hx]
+  rw [Nat.testBit_mod_two_pow] at hbit
+  have hnot : ¬ i < k := Nat.not_lt_of_ge hki
+  simp [hnot] at hbit
+  exact hbit
 
 private theorem coeff_ofUInt64_eq_testBit (w : UInt64) {i : Nat} (hi : i < 64) :
     (ofUInt64 w).coeff i = w.toNat.testBit i := by
@@ -627,6 +657,26 @@ private theorem coeff_ofUInt64_eq_false_of_ge_64 (w : UInt64) {i : Nat} (hi : 64
   | succ k =>
       simp [coeffWords, hidx]
 
+private theorem ofUInt64_injective : Function.Injective ofUInt64 := by
+  intro a b h
+  apply UInt64.toNat_inj.mp
+  apply Nat.eq_of_testBit_eq
+  intro i
+  by_cases hi : i < 64
+  · have hcoeff := congrArg (fun p : GF2Poly => p.coeff i) h
+    simpa [coeff_ofUInt64_eq_testBit _ hi] using hcoeff
+  · have hge : 64 ≤ i := Nat.le_of_not_gt hi
+    rw [show a.toNat.testBit i = false by
+        have ha64 : a.toNat < 2 ^ 64 := by
+          simpa [UInt64.size] using a.toNat_lt_size
+        exact nat_testBit_eq_false_of_lt_two_pow
+          (k := 64) ha64 hge,
+      show b.toNat.testBit i = false by
+        have hb64 : b.toNat < 2 ^ 64 := by
+          simpa [UInt64.size] using b.toNat_lt_size
+        exact nat_testBit_eq_false_of_lt_two_pow
+          (k := 64) hb64 hge]
+
 private theorem coeff_ofUInt64_and_lowerMask (w : UInt64) {n i : Nat} (hn64 : n < 64) :
     (ofUInt64 (w &&& lowerMask n)).coeff i =
       if i < n then (ofUInt64 w).coeff i else false := by
@@ -638,6 +688,63 @@ private theorem coeff_ofUInt64_and_lowerMask (w : UInt64) {n i : Nat} (hn64 : n 
   · have hi64le : 64 ≤ i := Nat.le_of_not_gt hi64
     have hinFalse : ¬ i < n := by omega
     rw [coeff_ofUInt64_eq_false_of_ge_64 _ hi64le, if_neg hinFalse]
+
+private theorem degree?_ofUInt64Monic_of_lt_64 (lower : UInt64) {n : Nat}
+    (hn64 : n < 64) :
+    (ofUInt64Monic lower n).degree? = some n := by
+  apply degree?_eq_some_of_coeff_eq_true_of_forall_gt_false
+  · unfold ofUInt64Monic
+    rw [coeff_add_eq_bne, coeff_monomial_self,
+      coeff_ofUInt64_and_lowerMask lower hn64]
+    simp
+  · intro m hm
+    unfold ofUInt64Monic
+    rw [coeff_add_eq_bne, coeff_monomial_ne (by omega),
+      coeff_ofUInt64_and_lowerMask lower hn64]
+    simp [Nat.not_lt_of_ge (by omega : n ≤ m)]
+
+private theorem degree_ofUInt64Monic_of_lt_64 (lower : UInt64) {n : Nat}
+    (hn64 : n < 64) :
+    (ofUInt64Monic lower n).degree = n := by
+  exact degree_eq_of_degree?_eq_some (degree?_ofUInt64Monic_of_lt_64 lower hn64)
+
+private theorem ofUInt64_ne_zero_of_ne_zero {w : UInt64} (hw : w ≠ 0) :
+    ofUInt64 w ≠ 0 := by
+  intro h
+  apply hw
+  apply ofUInt64_injective
+  simpa [ofUInt64] using h
+
+private theorem ofUInt64_reduced_of_toNat_lt {n : Nat} {w : UInt64}
+    (hwlt : w.toNat < 2 ^ n) :
+    (ofUInt64 w).IsZero ∨ (ofUInt64 w).degree < n := by
+  by_cases hzero : (ofUInt64 w).isZero = true
+  · exact Or.inl hzero
+  · right
+    have hzeroFalse : (ofUInt64 w).isZero = false := by
+      cases h : (ofUInt64 w).isZero <;> simp [h] at hzero ⊢
+    obtain ⟨d, hd⟩ := degree?_isSome_of_isZero_false hzeroFalse
+    have hdlt : d < n := by
+      by_cases hdn : d < n
+      · exact hdn
+      · have hnle : n ≤ d := Nat.le_of_not_gt hdn
+        have hdtrue := coeff_eq_true_of_degree?_eq_some hd
+        by_cases hd64 : d < 64
+        · have hbitfalse : w.toNat.testBit d = false := by
+            exact nat_testBit_eq_false_of_lt_two_pow
+              (k := n) hwlt hnle
+          rw [coeff_ofUInt64_eq_testBit w hd64, hbitfalse] at hdtrue
+          contradiction
+        · have hd64le : 64 ≤ d := Nat.le_of_not_gt hd64
+          rw [coeff_ofUInt64_eq_false_of_ge_64 w hd64le] at hdtrue
+          contradiction
+    simpa [degree, hd] using hdlt
+
+private theorem packedReduceWord_toNat_lt {n : Nat} {irr : UInt64}
+    (hn64 : n < 64) (p : GF2Poly) :
+    (packedReduceWord n irr p).toNat < 2 ^ n := by
+  unfold packedReduceWord
+  exact UInt64.and_lowerMask_toNat_lt hn64 _
 
 /-- Masking the low word of a degree-`< n` residue preserves the represented
 polynomial. -/
@@ -889,12 +996,83 @@ theorem mul_mod_xgcd_left_mod_eq_one_of_irreducible_of_nonzero_reduced {a f : GF
 /-- The packed single-word CLMUL/reduction path agrees with the polynomial
 xgcd inverse bridge for nonzero canonical representatives. -/
 theorem packedReduceWord_clmul_packedInvWord_eq_one {n : Nat} {irr w : UInt64}
-    (hn64 : n < 64) (hf : Irreducible (ofUInt64Monic irr n)) (hw : w ≠ 0) :
+    (hn64 : n < 64) (hf : Irreducible (ofUInt64Monic irr n)) (hw : w ≠ 0)
+    (hwlt : w.toNat < 2 ^ n) :
     packedReduceWord n irr
         (ofWords #[(clmul w (canonicalWordLT n hn64 (packedInvWord n irr w))).2,
           (clmul w (canonicalWordLT n hn64 (packedInvWord n irr w))).1]) =
       packedReduceWord n irr 1 := by
-  sorry
+  let f := ofUInt64Monic irr n
+  let a := ofUInt64 w
+  let invWord := packedInvWord n irr w
+  let invCanonical := canonicalWordLT n hn64 invWord
+  let product :=
+    ofWords #[(clmul w invCanonical).2, (clmul w invCanonical).1]
+  have hfdegree : f.degree = n := by
+    simpa [f] using degree_ofUInt64Monic_of_lt_64 irr hn64
+  have ha_ne : a ≠ 0 := by
+    simpa [a] using ofUInt64_ne_zero_of_ne_zero hw
+  have ha_reduced : a.IsZero ∨ a.degree < f.degree := by
+    rw [hfdegree]
+    simpa [a] using ofUInt64_reduced_of_toNat_lt hwlt
+  have hcanonical : invCanonical = invWord := by
+    simpa [invCanonical, invWord] using
+      canonicalWordLT_eq_self_of_lt hn64 (packedReduceWord_toNat_lt hn64
+        ((xgcd (ofUInt64 w) (ofUInt64Monic irr n)).left))
+  have hinvWord :
+      ofUInt64 invWord = (xgcd a f).left % f := by
+    have hred :
+        ((xgcd a f).left % f).isZero = true ∨
+          ((xgcd a f).left % f).degree < n := by
+      have hmod := mod_degree_lt (xgcd a f).left f hf.1
+      cases hmod with
+      | inl hzero =>
+          exact Or.inl hzero
+      | inr hdegree =>
+          exact Or.inr (by simpa [hfdegree] using hdegree)
+    simpa [packedInvWord, invWord, a, f] using
+      ofUInt64_packedReduceWord_eq_of_degree_lt (n := n) (irr := irr) hn64
+        ((xgcd a f).left) hred
+  have hinvCanonical : ofUInt64 invCanonical = (xgcd a f).left % f := by
+    rw [hcanonical]
+    exact hinvWord
+  have hproductPoly : product = a * ((xgcd a f).left % f) := by
+    calc
+      product = ofUInt64 w * ofUInt64 invCanonical := by
+          rw [ofUInt64_mul_ofUInt64 w invCanonical]
+      _ = a * ((xgcd a f).left % f) := by rw [hinvCanonical]
+  have hleftRed :
+      (product % f).isZero = true ∨ (product % f).degree < n := by
+    have hmod := mod_degree_lt product f hf.1
+    cases hmod with
+    | inl hzero =>
+        exact Or.inl hzero
+    | inr hdegree =>
+        exact Or.inr (by simpa [hfdegree] using hdegree)
+  have honeRed :
+      ((1 : GF2Poly) % f).isZero = true ∨ ((1 : GF2Poly) % f).degree < n := by
+    have hmod := mod_degree_lt (1 : GF2Poly) f hf.1
+    cases hmod with
+    | inl hzero =>
+        exact Or.inl hzero
+    | inr hdegree =>
+        exact Or.inr (by simpa [hfdegree] using hdegree)
+  apply ofUInt64_injective
+  calc
+    ofUInt64 (packedReduceWord n irr product)
+        = product % f := by
+            simpa [f, product] using
+              ofUInt64_packedReduceWord_eq_of_degree_lt (n := n) (irr := irr)
+                hn64 product hleftRed
+    _ = (a * ((xgcd a f).left % f)) % f := by rw [hproductPoly]
+    _ = 1 % f :=
+        mul_mod_xgcd_left_mod_eq_one_of_irreducible_of_nonzero_reduced
+          (a := a) (f := f) (by simpa [f] using hf) ha_ne ha_reduced
+    _ = ofUInt64 (packedReduceWord n irr (1 : GF2Poly)) := by
+        symm
+        simpa [f] using
+          ofUInt64_packedReduceWord_eq_of_degree_lt (n := n) (irr := irr)
+            hn64 (1 : GF2Poly) honeRed
 
 end GF2Poly
 end Hex
