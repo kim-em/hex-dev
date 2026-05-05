@@ -272,24 +272,21 @@ theorem potential_eq_gramDetProduct (s : LLLState n m) :
 
 /-- Initial `LLLState` constructor: build the integer state directly from a
 basis matrix. The `ν` field is the integral scaled Gram-Schmidt coefficient
-matrix and the `d` field is the leading Gram-determinant vector. The
-`ν_eq` and `d_eq` proof fields are discharged in Phase 5 by composing
-`GramSchmidt.Int.scaledCoeffs_eq` and `GramSchmidt.Int.gramDetVec_eq_gramDet`;
-those witness lemmas are stated in `HexGramSchmidt/Int.lean` and currently
-`sorry`'d, so the constructor's proof fields are left as `sorry` here. -/
+matrix and the `d` field is the leading Gram-determinant vector. The proof
+fields are discharged by composing `GramSchmidt.Int.scaledCoeffs_eq` with
+`GramSchmidt.Int.gramDetVec_eq_gramDet`. -/
 def ofBasis (b : Matrix Int n m) (_hind : b.independent) : LLLState n m :=
   { b
     ν := GramSchmidt.Int.scaledCoeffs b
     d := GramSchmidt.Int.gramDetVec b
     ν_eq := by
-      -- combine `GramSchmidt.Int.scaledCoeffs_eq` with
-      -- `GramSchmidt.Int.gramDetVec_eq_gramDet`
       intro i j hi hj hji
-      sorry
+      rw [GramSchmidt.Int.gramDetVec_eq_gramDet]
+      simpa [GramSchmidt.entry, Matrix.row] using
+        GramSchmidt.Int.scaledCoeffs_eq b i j hi hji
     d_eq := by
-      -- direct from `GramSchmidt.Int.gramDetVec_eq_gramDet`
       intro i hi
-      sorry }
+      exact GramSchmidt.Int.gramDetVec_eq_gramDet b i (Nat.le_of_lt_succ hi) }
 
 end LLLState
 
