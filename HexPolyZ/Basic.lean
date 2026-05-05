@@ -404,9 +404,9 @@ structure PrimitiveSquareFreeDecomposition where
   squareFreeCore : ZPoly
   repeatedPart : ZPoly
 
-/-- Square-free over `Rat[x]`, expressed by the executable rational gcd. -/
+/-- Square-free over `Rat[x]`, up to the executable rational gcd's unit factor. -/
 def SquareFreeRat (f : ZPoly) : Prop :=
-  DensePoly.gcd (toRatPoly f) (DensePoly.derivative (toRatPoly f)) = 1
+  (DensePoly.gcd (toRatPoly f) (DensePoly.derivative (toRatPoly f))).size ≤ 1
 
 /--
 Compute the primitive square-free normalization data needed by the integer
@@ -1734,7 +1734,7 @@ private theorem squareFreeRat_one :
     SquareFreeRat 1 := by
   unfold SquareFreeRat
   rw [toRatPoly_one]
-  rfl
+  exact DensePoly.size_C_le_one (1 : Rat)
 
 theorem primitiveSquareFreeDecomposition_reassembly_over_rat (f : ZPoly) :
     let d := primitiveSquareFreeDecomposition f
