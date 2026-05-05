@@ -145,6 +145,15 @@ theorem pos_degree_of_ne_zero_of_not_degree_zero
     0 < a.degree := by
   omega
 
+/-- A nonzero packed `GF2Poly` has a successful `degree?` computation. -/
+private theorem degree?_isSome_of_ne_zero
+    {p : GF2Poly} (hp : p ≠ 0) :
+    ∃ d, p.degree? = some d := by
+  apply degree?_isSome_of_isZero_false
+  cases h : p.isZero with
+  | true => exact (hp (eq_zero_of_isZero h)).elim
+  | false => rfl
+
 /--
 The degree of a factor `a` is strictly less than the degree of `f` whenever
 the cofactor `b` has positive degree.
@@ -153,7 +162,17 @@ theorem factor_degree_lt
     {f a b : GF2Poly}
     (hab : a * b = f) (ha_ne_zero : a ≠ 0) (hb_pos : 0 < b.degree) :
     a.degree < f.degree := by
-  sorry
+  have hb_ne_zero : b ≠ 0 := ne_zero_of_pos_degree hb_pos
+  obtain ⟨da, hda⟩ := degree?_isSome_of_ne_zero ha_ne_zero
+  obtain ⟨db, hdb⟩ := degree?_isSome_of_ne_zero hb_ne_zero
+  have hab_deg : (a * b).degree? = some (da + db) :=
+    degree?_mul_of_degree?_eq_some hda hdb
+  have hf_deg : f.degree? = some (da + db) := hab ▸ hab_deg
+  have ha_deg : a.degree = da := degree_eq_of_degree?_eq_some hda
+  have hb_deg : b.degree = db := degree_eq_of_degree?_eq_some hdb
+  have hf_deg_eq : f.degree = da + db := degree_eq_of_degree?_eq_some hf_deg
+  rw [hb_deg] at hb_pos
+  omega
 
 /-- A positive-degree polynomial is not a unit polynomial. -/
 theorem isUnitPolynomial_eq_false_of_pos_degree
