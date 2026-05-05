@@ -731,6 +731,21 @@ theorem divMod_remainder_eq_self_of_size_zero_core [One R] [Add R] [Sub R] [Mul 
     simpa [Array.isEmpty_iff_size_eq_zero] using hqsize
   simp [hqzero]
 
+/-- Dividing by a size-zero dense polynomial returns zero quotient and the
+original dividend as remainder. -/
+theorem divMod_eq_zero_self_of_size_zero_core [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (p q : DensePoly R) (hqsize : q.size = 0) :
+    divMod p q = (0, p) := by
+  unfold divMod
+  have hnot_lt : ¬ p.degree?.getD 0 < q.degree?.getD 0 := by
+    simp [degree?, hqsize]
+  rw [if_neg hnot_lt]
+  unfold divModArray
+  have hqzero : q.isZero = true := by
+    simp [isZero, size] at hqsize ⊢
+    simpa [Array.isEmpty_iff_size_eq_zero] using hqsize
+  simp [hqzero]
+
 /-- Quotient from polynomial long division over a field. -/
 def div [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) : DensePoly R :=
@@ -785,6 +800,11 @@ def xgcd [One R] [Add R] [Sub R] [Mul R] [Div R]
 def gcd [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) : DensePoly R :=
   (xgcd p q).gcd
+
+/-- The executable gcd of two zero dense polynomials is zero. -/
+theorem gcd_zero_zero [One R] [Add R] [Sub R] [Mul R] [Div R] :
+    gcd (0 : DensePoly R) (0 : DensePoly R) = 0 := by
+  rfl
 
 /-- Law package for the executable dense-polynomial division operations.
 
