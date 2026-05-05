@@ -132,10 +132,7 @@ private theorem foldl_set_outerSubMul_get_eq
     simp only [List.foldl_cons]
     rw [ih]
     by_cases h_xs : ∃ i ∈ xs, i.val = l.val
-    · have h_cons : ∃ i ∈ x :: xs, i.val = l.val := by
-        obtain ⟨i, hi, hi_l⟩ := h_xs
-        exact ⟨i, List.mem_cons.mpr (Or.inr hi), hi_l⟩
-      simp [h_xs, h_cons]
+    · simp [h_xs]
     · by_cases h_xl : x.val = l.val
       · have h_cons : ∃ i ∈ x :: xs, i.val = l.val :=
           ⟨x, List.mem_cons.mpr (Or.inl rfl), h_xl⟩
