@@ -40,6 +40,23 @@ namespace BerlekampConformance
 private instance boundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
 private instance boundsSeven : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
 
+private theorem prime_five : Hex.Nat.Prime 5 := by
+  constructor
+  · decide
+  · intro m hm
+    have hmle : m ≤ 5 := Nat.le_of_dvd (by decide : 0 < 5) hm
+    have hcases : m = 0 ∨ m = 1 ∨ m = 2 ∨ m = 3 ∨ m = 4 ∨ m = 5 := by omega
+    rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl
+    · simp at hm
+    · exact Or.inl rfl
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · exact Or.inr rfl
+
+private instance primeModulusFive : ZMod64.PrimeModulus 5 :=
+  ZMod64.primeModulusOfPrime prime_five
+
 private theorem one_ne_zero_five : (1 : ZMod64 5) ≠ 0 := by
   intro h
   have hm := (ZMod64.natCast_eq_natCast_iff (p := 5) 1 0).mp h
@@ -220,6 +237,7 @@ private def samePrimeValidCert : Berlekamp.SamePrimeIrreducibilityCertificate 5 
         right := polyFive #[0, 4] }]
 
 #guard Berlekamp.checkPowChain irreducibleQuad irreducibleQuad_monic samePrimeValidCert
+#guard Berlekamp.checkPowChainLinear irreducibleQuad irreducibleQuad_monic samePrimeValidCert
 #guard
   Berlekamp.checkRabinBezoutWitness irreducibleQuad irreducibleQuad_monic
     samePrimeValidCert 0 1
@@ -227,8 +245,33 @@ private def samePrimeValidCert : Berlekamp.SamePrimeIrreducibilityCertificate 5 
   Berlekamp.checkRabinBezoutWitnesses irreducibleQuad irreducibleQuad_monic
     samePrimeValidCert
 #guard Berlekamp.checkIrreducibilityCertificate irreducibleQuad irreducibleQuad_monic validQuadCert
+#guard Berlekamp.checkIrreducibilityCertificateLinear irreducibleQuad irreducibleQuad_monic validQuadCert
 #guard !Berlekamp.checkIrreducibilityCertificate irreducibleQuad irreducibleQuad_monic shortPowCert
 #guard !Berlekamp.checkIrreducibilityCertificate irreducibleQuad irreducibleQuad_monic wrongPrimeCert
+
+set_option maxRecDepth 4096 in
+private theorem validQuadCert_linear_check :
+    Berlekamp.checkIrreducibilityCertificateLinear irreducibleQuad irreducibleQuad_monic
+      validQuadCert = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinear, validQuadCert,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinear, Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    Berlekamp.maximalProperDivisors, Berlekamp.properDivisors,
+    irreducibleQuad, polyFive]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · intro x hx
+        have hcases : x = 0 ∨ x = 1 ∨ x = 2 := by omega
+        rcases hcases with rfl | rfl | rfl <;> rfl
+    · rfl
+  · rfl
+
+example : Berlekamp.rabinTest irreducibleQuad irreducibleQuad_monic = true :=
+  Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
+    irreducibleQuad irreducibleQuad_monic validQuadCert validQuadCert_linear_check
 
 #guard coeffNats (Berlekamp.splitFactorAt reducibleQuad FpPoly.X (ZMod64.ofNat 5 1)) =
   [4, 1]
