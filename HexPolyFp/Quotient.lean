@@ -38,6 +38,17 @@ omit [ZMod64.PrimeModulus p] in
   subst h
   rfl
 
+omit [ZMod64.PrimeModulus p] in
+instance : DecidableEq (Quotient g hmonic hg_pos) := by
+  intro a b
+  match decEq a.val b.val with
+  | isTrue h =>
+      exact isTrue (ext h)
+  | isFalse h =>
+      exact isFalse (by
+        intro hab
+        exact h (congrArg Quotient.val hab))
+
 /-- Reduce a polynomial to its canonical quotient representative. -/
 def reduce (f : FpPoly p) : Quotient g hmonic hg_pos :=
   ⟨FpPoly.modByMonic g f hmonic, by
@@ -107,6 +118,38 @@ private theorem nodup_map_of_injective
           intro a ha b hb hab
           exact hinj a (by simp [ha]) b (by simp [hb]) hab)
 
+private theorem length_filter_ne_eq_pred_of_mem_nodup
+    {α : Type} [DecidableEq α] {z : α} :
+    ∀ {xs : List α}, z ∈ xs → xs.Nodup →
+      (xs.filter (fun a => decide (a ≠ z))).length = xs.length - 1
+  | [], hmem, _ => by
+      cases hmem
+  | x :: xs, hmem, hnodup => by
+      rw [List.nodup_cons] at hnodup
+      by_cases hx : x = z
+      · have hnot_mem : x ∉ xs := hnodup.1
+        have hfilter : xs.filter (fun a => decide (a ≠ z)) = xs := by
+          rw [List.filter_eq_self]
+          intro a ha
+          exact decide_eq_true (fun haz => hnot_mem (by simpa [hx, haz] using ha))
+        rw [List.filter_cons_of_neg]
+        · rw [hfilter]
+          simp
+        · simp [hx]
+      · have hz_mem_xs : z ∈ xs := by
+          cases hmem with
+          | head =>
+              exact False.elim (hx rfl)
+          | tail _ hz =>
+              exact hz
+        have ih := length_filter_ne_eq_pred_of_mem_nodup hz_mem_xs hnodup.2
+        have hlen_pos : 0 < xs.length := List.length_pos_of_mem hz_mem_xs
+        rw [List.filter_cons_of_pos]
+        · simp only [List.length_cons]
+          rw [ih]
+          omega
+        · exact decide_eq_true hx
+
 /-- All canonical quotient representatives, enumerated via bounded-degree
 polynomials. -/
 def elements : List (Quotient g hmonic hg_pos) :=
@@ -165,6 +208,34 @@ def zero : Quotient g hmonic hg_pos :=
 
 instance : Zero (Quotient g hmonic hg_pos) where
   zero := zero
+
+/-- The nonzero quotient elements, as a concrete duplicate-free sublist of
+`elements`. -/
+def nonzeroElements : List (Quotient g hmonic hg_pos) :=
+  (elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).filter
+    (fun a => decide (a ≠ 0))
+
+/-- Membership in `nonzeroElements` is exactly nonzero quotient membership. -/
+theorem mem_nonzeroElements (a : Quotient g hmonic hg_pos) :
+    a ∈ nonzeroElements (g := g) (hmonic := hmonic) (hg_pos := hg_pos) ↔
+      a ≠ 0 := by
+  simp [nonzeroElements, mem_elements a]
+
+/-- The nonzero quotient enumeration has no duplicates. -/
+theorem nonzeroElements_nodup :
+    (nonzeroElements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).Nodup := by
+  unfold nonzeroElements
+  exact (elements_nodup (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).filter _
+
+/-- There are `p ^ deg(g) - 1` nonzero quotient representatives. -/
+theorem nonzeroElements_card :
+    (nonzeroElements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).length =
+      p ^ g.degree?.getD 0 - 1 := by
+  unfold nonzeroElements
+  rw [length_filter_ne_eq_pred_of_mem_nodup
+    (mem_elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos) 0)
+    (elements_nodup (g := g) (hmonic := hmonic) (hg_pos := hg_pos))]
+  rw [elements_card]
 
 /-- One in the quotient. -/
 def one : Quotient g hmonic hg_pos :=
