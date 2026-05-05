@@ -1,4 +1,4 @@
-import HexGF2.Euclid
+import HexGF2.Irreducibility
 
 /-!
 Single-word extension-field wrappers for `hex-gf2`.
@@ -326,6 +326,15 @@ theorem reducePoly_eq_iff_mod_eq {p q : GF2Poly} :
     apply eq_of_val_eq
     simp [reducePoly_val_eq_mod, h]
 
+/-- Reducing an already-computed remainder gives the same quotient class as
+reducing the original polynomial. -/
+theorem reducePoly_mod_eq (p : GF2Poly) :
+    reducePoly (f := f) (hirr := hirr) (p % f) =
+      reducePoly (f := f) (hirr := hirr) p := by
+  rw [reducePoly_eq_iff_mod_eq]
+  exact GF2Poly.mod_eq_self_of_reduced (p % f) f
+    (GF2Poly.mod_degree_lt p f hirr.1)
+
 private theorem mod_add_mod_eq_mod_add (p q f : GF2Poly) :
     ((p % f) + (q % f)) % f = (p + q) % f := by
   let qp := (GF2Poly.divMod p f).1
@@ -566,6 +575,46 @@ def pow (a : GF2nPoly f hirr) (k : Nat) : GF2nPoly f hirr :=
 
 instance : Pow (GF2nPoly f hirr) Nat where
   pow := pow
+
+/-- Iterated Frobenius squaring in the packed quotient, starting from a
+specified quotient element. -/
+def frobeniusIter (a : GF2nPoly f hirr) : Nat → GF2nPoly f hirr
+  | 0 => a
+  | k + 1 => frobeniusIter a k * frobeniusIter a k
+
+@[simp] theorem frobeniusIter_zero (a : GF2nPoly f hirr) :
+    frobeniusIter a 0 = a := rfl
+
+@[simp] theorem frobeniusIter_succ (a : GF2nPoly f hirr) (k : Nat) :
+    frobeniusIter a (k + 1) = frobeniusIter a k * frobeniusIter a k := rfl
+
+/-- Iterated quotient squaring of the class of `X` follows the executable
+`xpow2kMod` remainder chain used by Rabin soundness. -/
+theorem quotient_X_frobeniusIter_eq_reduce_xpow2kMod (k : Nat) :
+    frobeniusIter (X (f := f) (hirr := hirr)) k =
+      reducePoly (f := f) (hirr := hirr) (GF2Poly.xpow2kMod f k) := by
+  induction k with
+  | zero =>
+      change X (f := f) (hirr := hirr) =
+        reducePoly (f := f) (hirr := hirr) (GF2Poly.monomial 1 % f)
+      rw [X, reducePoly_mod_eq]
+  | succ k ih =>
+      calc
+        frobeniusIter (X (f := f) (hirr := hirr)) (k + 1)
+            = reducePoly (f := f) (hirr := hirr) (GF2Poly.xpow2kMod f k) *
+                reducePoly (f := f) (hirr := hirr) (GF2Poly.xpow2kMod f k) := by
+                  rw [frobeniusIter_succ, ih]
+        _ = reducePoly (f := f) (hirr := hirr)
+              ((reducePoly (f := f) (hirr := hirr) (GF2Poly.xpow2kMod f k)).val *
+                (reducePoly (f := f) (hirr := hirr) (GF2Poly.xpow2kMod f k)).val) := rfl
+        _ = reducePoly (f := f) (hirr := hirr)
+              (GF2Poly.xpow2kMod f k * GF2Poly.xpow2kMod f k) := by
+                rw [← reducePoly_mul_eq]
+        _ = reducePoly (f := f) (hirr := hirr)
+              ((GF2Poly.xpow2kMod f k * GF2Poly.xpow2kMod f k) % f) := by
+                rw [reducePoly_mod_eq]
+        _ = reducePoly (f := f) (hirr := hirr) (GF2Poly.xpow2kMod f (k + 1)) := by
+                rfl
 
 /-- Integer literals reduce to parity. -/
 def intCast (k : Int) : GF2nPoly f hirr :=
