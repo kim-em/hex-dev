@@ -133,6 +133,73 @@ theorem xPowSubX_dvd_of_dvd
     xPowSubX (p := p) d ∣ xPowSubX (p := p) m := by
   sorry
 
+private theorem lt_of_mem_properDivisors {n d : Nat}
+    (hmem : d ∈ properDivisors n) : d < n := by
+  unfold properDivisors at hmem
+  simp only [List.mem_filter, List.mem_map, List.mem_range,
+    decide_eq_true_eq] at hmem
+  rcases hmem with ⟨⟨k, hk, rfl⟩, _⟩
+  omega
+
+private theorem pos_of_mem_properDivisors {n d : Nat}
+    (hmem : d ∈ properDivisors n) : 0 < d := by
+  unfold properDivisors at hmem
+  simp only [List.mem_filter, List.mem_map, List.mem_range,
+    decide_eq_true_eq] at hmem
+  rcases hmem with ⟨⟨k, _, rfl⟩, _⟩
+  omega
+
+private theorem dvd_of_mem_properDivisors {n d : Nat}
+    (hmem : d ∈ properDivisors n) : d ∣ n := by
+  unfold properDivisors at hmem
+  simp only [List.mem_filter, List.mem_map, List.mem_range,
+    decide_eq_true_eq] at hmem
+  rcases hmem with ⟨⟨k, _, rfl⟩, hmod⟩
+  exact Nat.dvd_of_mod_eq_zero hmod
+
+private theorem mem_properDivisors_of_pos_of_dvd_of_lt {n d : Nat}
+    (hpos : 0 < d) (hdvd : d ∣ n) (hlt : d < n) :
+    d ∈ properDivisors n := by
+  unfold properDivisors
+  simp only [List.mem_filter, List.mem_map, List.mem_range,
+    decide_eq_true_eq]
+  refine ⟨⟨d - 1, ?_, ?_⟩, ?_⟩
+  · omega
+  · omega
+  · exact Nat.mod_eq_zero_of_dvd hdvd
+
+private theorem exists_maximalProperDivisor_dvd_aux (n : Nat) :
+    ∀ (k d : Nat), 0 < d → d ∣ n → d < n → n - d ≤ k →
+        ∃ m, m ∈ maximalProperDivisors n ∧ d ∣ m
+  | 0, _d, _hpos, _hdvd, hlt, hbound => by omega
+  | k + 1, d, hpos, hdvd, hlt, hbound => by
+      by_cases hmax : ∃ e, e ∈ properDivisors n ∧ d < e ∧ d ∣ e
+      · obtain ⟨e, he_mem, he_lt, he_dvd⟩ := hmax
+        have he_lt_n := lt_of_mem_properDivisors he_mem
+        have he_dvd_n := dvd_of_mem_properDivisors he_mem
+        have he_pos : 0 < e := Nat.lt_of_lt_of_le hpos (Nat.le_of_lt he_lt)
+        have hsmaller : n - e ≤ k := by omega
+        obtain ⟨m, hm_mem, hm_dvd⟩ :=
+          exists_maximalProperDivisor_dvd_aux n k e he_pos he_dvd_n he_lt_n hsmaller
+        exact ⟨m, hm_mem, Nat.dvd_trans he_dvd hm_dvd⟩
+      · refine ⟨d, ?_, Nat.dvd_refl d⟩
+        have hd_in : d ∈ properDivisors n :=
+          mem_properDivisors_of_pos_of_dvd_of_lt hpos hdvd hlt
+        unfold maximalProperDivisors
+        simp only [List.mem_filter]
+        refine ⟨hd_in, ?_⟩
+        have hany_false :
+            (properDivisors n).any
+                (fun e => decide (d < e) && decide (e % d = 0)) = false := by
+          apply Bool.eq_false_iff.mpr
+          intro hany
+          rw [List.any_eq_true] at hany
+          obtain ⟨e, he_mem, he_cond⟩ := hany
+          simp only [Bool.and_eq_true, decide_eq_true_eq] at he_cond
+          exact hmax ⟨e, he_mem, he_cond.1, Nat.dvd_of_mod_eq_zero he_cond.2⟩
+        rw [hany_false]
+        rfl
+
 /--
 Every positive proper divisor `d` of `n` is dominated by some maximal
 proper divisor of `n` (with `d` dividing it).
@@ -142,9 +209,9 @@ contrapositive proof to route an irreducible factor's degree `d` to a
 divisor at which the gcd leg of `rabinTest` rules out divisibility.
 -/
 theorem exists_maximalProperDivisor_dvd
-    {n d : Nat} (_hd_pos : 0 < d) (_hd_dvd : d ∣ n) (_hd_lt : d < n) :
-    ∃ m, m ∈ maximalProperDivisors n ∧ d ∣ m := by
-  sorry
+    {n d : Nat} (hd_pos : 0 < d) (hd_dvd : d ∣ n) (hd_lt : d < n) :
+    ∃ m, m ∈ maximalProperDivisors n ∧ d ∣ m :=
+  exists_maximalProperDivisor_dvd_aux n (n - d) d hd_pos hd_dvd hd_lt (Nat.le_refl _)
 
 /--
 A `g` that divides both `f` and `xPowSubX k` also divides the modular
