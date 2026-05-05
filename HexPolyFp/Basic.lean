@@ -1906,6 +1906,297 @@ theorem scale_mul_left (c : ZMod64 p) (f g : FpPoly p) :
     rw [DensePoly.coeff_scale _ _ _ hzero]
     grind
 
+theorem scale_one_poly (c : ZMod64 p) :
+    DensePoly.scale c (1 : FpPoly p) = DensePoly.C c := by
+  apply DensePoly.ext_coeff
+  intro n
+  have hzero : c * (0 : ZMod64 p) = 0 := by grind
+  rw [DensePoly.coeff_scale _ _ _ hzero]
+  change c * (DensePoly.C (1 : ZMod64 p)).coeff n = (DensePoly.C c).coeff n
+  rw [DensePoly.coeff_C, DensePoly.coeff_C]
+  cases n with
+  | zero => grind
+  | succ n => exact hzero
+
+theorem C_mul_eq_scale (c : ZMod64 p) (f : FpPoly p) :
+    DensePoly.C c * f = DensePoly.scale c f := by
+  have hscale := scale_mul_left c (1 : FpPoly p) f
+  rw [one_mul, scale_one_poly] at hscale
+  exact hscale.symm
+
+theorem scale_scale (c d : ZMod64 p) (f : FpPoly p) :
+    DensePoly.scale c (DensePoly.scale d f) = DensePoly.scale (c * d) f := by
+  apply DensePoly.ext_coeff
+  intro n
+  have hzero_c : c * (0 : ZMod64 p) = 0 := by grind
+  have hzero_d : d * (0 : ZMod64 p) = 0 := by grind
+  have hzero_cd : (c * d) * (0 : ZMod64 p) = 0 := by grind
+  rw [DensePoly.coeff_scale _ _ _ hzero_c]
+  rw [DensePoly.coeff_scale _ _ _ hzero_d]
+  rw [DensePoly.coeff_scale _ _ _ hzero_cd]
+  grind
+
+theorem scale_one_left (f : FpPoly p) :
+    DensePoly.scale (1 : ZMod64 p) f = f := by
+  apply DensePoly.ext_coeff
+  intro n
+  have hzero : (1 : ZMod64 p) * 0 = 0 := by grind
+  rw [DensePoly.coeff_scale _ _ _ hzero]
+  grind
+
+private theorem zmod64_one_ne_zero [ZMod64.PrimeModulus p] :
+    (1 : ZMod64 p) ≠ (0 : ZMod64 p) := by
+  intro h
+  have h2 : 2 ≤ p := (ZMod64.PrimeModulus.prime (p := p)).two_le
+  have htoNat : (1 : ZMod64 p).toNat = (0 : ZMod64 p).toNat :=
+    congrArg ZMod64.toNat h
+  rw [show ((1 : ZMod64 p).toNat) = 1 % p from ZMod64.toNat_one,
+      show ((0 : ZMod64 p).toNat) = 0 from ZMod64.toNat_zero,
+      Nat.mod_eq_of_lt (by omega : 1 < p)] at htoNat
+  exact absurd htoNat (by omega)
+
+theorem scale_size_le (c : ZMod64 p) (f : FpPoly p) :
+    (DensePoly.scale c f).size ≤ f.size := by
+  by_cases hle : (DensePoly.scale c f).size ≤ f.size
+  · exact hle
+  · exfalso
+    let i := (DensePoly.scale c f).size - 1
+    have hscale_pos : 0 < (DensePoly.scale c f).size := by omega
+    have htop_ne :
+        (DensePoly.scale c f).coeff i ≠ (0 : ZMod64 p) :=
+      DensePoly.coeff_last_ne_zero_of_pos_size (DensePoly.scale c f) hscale_pos
+    have hfi : f.size ≤ i := by
+      dsimp [i]
+      omega
+    have hzero_c : c * (0 : ZMod64 p) = 0 := by grind
+    rw [DensePoly.coeff_scale _ _ _ hzero_c] at htop_ne
+    rw [DensePoly.coeff_eq_zero_of_size_le f hfi] at htop_ne
+    exact htop_ne hzero_c
+
+theorem scale_size_eq_of_ne_zero [ZMod64.PrimeModulus p]
+    {c : ZMod64 p} (hc : c ≠ 0) (f : FpPoly p) :
+    (DensePoly.scale c f).size = f.size := by
+  apply Nat.le_antisymm
+  · exact scale_size_le c f
+  · by_cases hfsize : f.size = 0
+    · omega
+    · let i := f.size - 1
+      have hf_pos : 0 < f.size := Nat.pos_of_ne_zero hfsize
+      have hf_top : f.coeff i ≠ (0 : ZMod64 p) :=
+        DensePoly.coeff_last_ne_zero_of_pos_size f hf_pos
+      have hprod_ne : c * f.coeff i ≠ (0 : ZMod64 p) := by
+        intro hprod
+        rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero
+            (ZMod64.PrimeModulus.prime (p := p)) hprod with hcz | hfz
+        · exact hc hcz
+        · exact hf_top hfz
+      have hzero_c : c * (0 : ZMod64 p) = 0 := by grind
+      have hcoeff :
+          (DensePoly.scale c f).coeff i ≠ (0 : ZMod64 p) := by
+        rw [DensePoly.coeff_scale _ _ _ hzero_c]
+        exact hprod_ne
+      by_cases hle : f.size ≤ (DensePoly.scale c f).size
+      · exact hle
+      · exfalso
+        have hle' : (DensePoly.scale c f).size ≤ i := by
+          dsimp [i]
+          omega
+        exact hcoeff (DensePoly.coeff_eq_zero_of_size_le (DensePoly.scale c f) hle')
+
+theorem scale_degree?_eq_of_ne_zero [ZMod64.PrimeModulus p]
+    {c : ZMod64 p} (hc : c ≠ 0) (f : FpPoly p) :
+    (DensePoly.scale c f).degree? = f.degree? := by
+  have hsize := scale_size_eq_of_ne_zero (p := p) hc f
+  unfold DensePoly.degree?
+  rw [hsize]
+
+theorem scale_degree?_getD_eq_of_ne_zero [ZMod64.PrimeModulus p]
+    {c : ZMod64 p} (hc : c ≠ 0) (f : FpPoly p) :
+    (DensePoly.scale c f).degree?.getD 0 = f.degree?.getD 0 := by
+  rw [scale_degree?_eq_of_ne_zero (p := p) hc f]
+
+theorem leadingCoeff_eq_coeff_pred
+    (f : FpPoly p) (hpos : 0 < f.size) :
+    DensePoly.leadingCoeff f = f.coeff (f.size - 1) := by
+  unfold DensePoly.leadingCoeff DensePoly.coeff
+  rw [Array.back?_eq_getElem?]
+  have hidx : f.coeffs.size - 1 < f.coeffs.size := by
+    simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hpos
+  simp [Array.getD, DensePoly.size, hidx]
+
+theorem leadingCoeff_ne_zero_of_pos_degree
+    (f : FpPoly p) (hpos : 0 < f.degree?.getD 0) :
+    DensePoly.leadingCoeff f ≠ 0 := by
+  have hfsize : 0 < f.size := by
+    by_cases h : 0 < f.size
+    · exact h
+    · exfalso
+      have hsize : f.size = 0 := by omega
+      simp [DensePoly.degree?, hsize] at hpos
+  rw [leadingCoeff_eq_coeff_pred f hfsize]
+  exact DensePoly.coeff_last_ne_zero_of_pos_size f hfsize
+
+theorem leadingCoeff_scale_of_ne_zero_of_pos_degree [ZMod64.PrimeModulus p]
+    {c : ZMod64 p} (hc : c ≠ 0) (f : FpPoly p)
+    (hpos : 0 < f.degree?.getD 0) :
+    DensePoly.leadingCoeff (DensePoly.scale c f) =
+      c * DensePoly.leadingCoeff f := by
+  have hfpos : 0 < f.size := by
+    by_cases h : 0 < f.size
+    · exact h
+    · exfalso
+      have hsize : f.size = 0 := by omega
+      simp [DensePoly.degree?, hsize] at hpos
+  have hs : (DensePoly.scale c f).size = f.size :=
+    scale_size_eq_of_ne_zero (p := p) hc f
+  have hscale_pos : 0 < (DensePoly.scale c f).size := by omega
+  have hscale_zero : c * (0 : ZMod64 p) = 0 := by grind
+  rw [leadingCoeff_eq_coeff_pred (DensePoly.scale c f) hscale_pos]
+  rw [leadingCoeff_eq_coeff_pred f hfpos]
+  rw [show (DensePoly.scale c f).size - 1 = f.size - 1 by omega]
+  rw [DensePoly.coeff_scale _ _ _ hscale_zero]
+
+theorem scale_inv_leadingCoeff_monic [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hpos : 0 < f.degree?.getD 0) :
+    DensePoly.Monic (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f) := by
+  have hlead_ne := leadingCoeff_ne_zero_of_pos_degree f hpos
+  have hinv_ne : (DensePoly.leadingCoeff f)⁻¹ ≠ (0 : ZMod64 p) := by
+    intro hinv
+    change ZMod64.inv (DensePoly.leadingCoeff f) = (0 : ZMod64 p) at hinv
+    have hone := ZMod64.inv_mul_eq_one_of_prime
+      (ZMod64.PrimeModulus.prime (p := p)) hlead_ne
+    rw [hinv] at hone
+    have hzero : (0 : ZMod64 p) * DensePoly.leadingCoeff f = 0 := by grind
+    rw [hzero] at hone
+    exact zmod64_one_ne_zero hone.symm
+  unfold DensePoly.Monic
+  rw [leadingCoeff_scale_of_ne_zero_of_pos_degree (p := p) hinv_ne f hpos]
+  exact ZMod64.inv_mul_eq_one_of_prime
+    (ZMod64.PrimeModulus.prime (p := p)) hlead_ne
+
+theorem irreducible_scale_iff_of_ne_zero [ZMod64.PrimeModulus p]
+    {c : ZMod64 p} (hc : c ≠ 0) (f : FpPoly p) :
+    FpPoly.Irreducible (DensePoly.scale c f) ↔ FpPoly.Irreducible f := by
+  constructor
+  · intro hcf
+    have hcinv : c⁻¹ ≠ (0 : ZMod64 p) := by
+      intro hinv
+      change ZMod64.inv c = (0 : ZMod64 p) at hinv
+      have hone := ZMod64.inv_mul_eq_one_of_prime
+        (ZMod64.PrimeModulus.prime (p := p)) hc
+      rw [hinv] at hone
+      have hzero : (0 : ZMod64 p) * c = 0 := by grind
+      rw [hzero] at hone
+      exact zmod64_one_ne_zero hone.symm
+    have hscale_back : DensePoly.scale c⁻¹ (DensePoly.scale c f) = f := by
+      rw [scale_scale]
+      have hmul : c⁻¹ * c = (1 : ZMod64 p) :=
+        ZMod64.inv_mul_eq_one_of_prime (ZMod64.PrimeModulus.prime (p := p)) hc
+      rw [hmul]
+      exact scale_one_left f
+    constructor
+    · intro hfzero
+      apply hcf.1
+      rw [hfzero]
+      apply DensePoly.ext_coeff
+      intro n
+      have hzero : c * (0 : ZMod64 p) = 0 := by grind
+      rw [DensePoly.coeff_scale _ _ _ hzero]
+      rw [DensePoly.coeff_zero]
+      exact hzero
+    · intro a b hab
+      have hab' : DensePoly.scale c (a * b) = DensePoly.scale c f := by
+        rw [hab]
+      rw [scale_mul_left] at hab'
+      rcases hcf.2 (DensePoly.scale c a) b hab' with ha | hb
+      · left
+        rwa [scale_degree?_eq_of_ne_zero (p := p) hc a] at ha
+      · right
+        exact hb
+  · intro hf
+    constructor
+    · intro hcfzero
+      apply hf.1
+      have hback : DensePoly.scale c⁻¹ (DensePoly.scale c f) = f := by
+        rw [scale_scale]
+        have hmul : c⁻¹ * c = (1 : ZMod64 p) :=
+          ZMod64.inv_mul_eq_one_of_prime (ZMod64.PrimeModulus.prime (p := p)) hc
+        rw [hmul]
+        exact scale_one_left f
+      rw [hcfzero] at hback
+      have hzero : DensePoly.scale c⁻¹ (0 : FpPoly p) = 0 := by
+        apply DensePoly.ext_coeff
+        intro n
+        have hz : c⁻¹ * (0 : ZMod64 p) = 0 := by grind
+        rw [DensePoly.coeff_scale _ _ _ hz]
+        rw [DensePoly.coeff_zero]
+        exact hz
+      rw [hzero] at hback
+      exact hback.symm
+    · intro a b hab
+      have hab_scaled : DensePoly.scale c⁻¹ (a * b) = f := by
+        rw [hab, scale_scale]
+        have hmul : c⁻¹ * c = (1 : ZMod64 p) :=
+          ZMod64.inv_mul_eq_one_of_prime (ZMod64.PrimeModulus.prime (p := p)) hc
+        rw [hmul]
+        exact scale_one_left f
+      rw [scale_mul_left] at hab_scaled
+      rcases hf.2 (DensePoly.scale c⁻¹ a) b hab_scaled with ha | hb
+      · left
+        have hcinv : c⁻¹ ≠ (0 : ZMod64 p) := by
+          intro hinv
+          change ZMod64.inv c = (0 : ZMod64 p) at hinv
+          have hone := ZMod64.inv_mul_eq_one_of_prime
+            (ZMod64.PrimeModulus.prime (p := p)) hc
+          rw [hinv] at hone
+          have hzero : (0 : ZMod64 p) * c = 0 := by grind
+          rw [hzero] at hone
+          exact zmod64_one_ne_zero hone.symm
+        rwa [scale_degree?_eq_of_ne_zero (p := p) hcinv a] at ha
+      · right
+        exact hb
+
+theorem irreducible_scale_of_ne_zero [ZMod64.PrimeModulus p]
+    {c : ZMod64 p} (hc : c ≠ 0) {f : FpPoly p}
+    (hf : FpPoly.Irreducible f) :
+    FpPoly.Irreducible (DensePoly.scale c f) :=
+  (irreducible_scale_iff_of_ne_zero (p := p) hc f).2 hf
+
+theorem irreducible_of_scale_of_ne_zero [ZMod64.PrimeModulus p]
+    {c : ZMod64 p} (hc : c ≠ 0) {f : FpPoly p}
+    (hf : FpPoly.Irreducible (DensePoly.scale c f)) :
+    FpPoly.Irreducible f :=
+  (irreducible_scale_iff_of_ne_zero (p := p) hc f).1 hf
+
+theorem dvd_scale_of_dvd {c : ZMod64 p} {f g : FpPoly p}
+    (hfg : f ∣ g) : DensePoly.scale c f ∣ DensePoly.scale c g := by
+  rcases hfg with ⟨q, hq⟩
+  exact ⟨q, by rw [← scale_mul_left, hq]⟩
+
+theorem dvd_of_scale_dvd [ZMod64.PrimeModulus p]
+    {c : ZMod64 p} (hc : c ≠ 0) {f g : FpPoly p}
+    (hfg : DensePoly.scale c f ∣ DensePoly.scale c g) : f ∣ g := by
+  rcases hfg with ⟨q, hq⟩
+  refine ⟨q, ?_⟩
+  have hscaled : DensePoly.scale c⁻¹ (DensePoly.scale c g) =
+      DensePoly.scale c⁻¹ (DensePoly.scale c f * q) := by
+    rw [hq]
+  rw [scale_scale] at hscaled
+  rw [scale_mul_left, scale_scale] at hscaled
+  have hmul : c⁻¹ * c = (1 : ZMod64 p) :=
+    ZMod64.inv_mul_eq_one_of_prime (ZMod64.PrimeModulus.prime (p := p)) hc
+  rw [hmul, scale_one_left, scale_one_left] at hscaled
+  exact hscaled
+
+theorem dvd_scale_self_of_ne_zero [ZMod64.PrimeModulus p]
+    {c : ZMod64 p} (hc : c ≠ 0) (f : FpPoly p) :
+    DensePoly.scale c f ∣ f := by
+  refine ⟨DensePoly.C c⁻¹, ?_⟩
+  rw [mul_comm, C_mul_eq_scale, scale_scale]
+  have hmul : c⁻¹ * c = (1 : ZMod64 p) :=
+    ZMod64.inv_mul_eq_one_of_prime (ZMod64.PrimeModulus.prime (p := p)) hc
+  rw [hmul, scale_one_left]
+
 private theorem mulCoeffTerm_eq_zero_above_top
     (f g : FpPoly p) {n i : Nat} (hi : i < f.size)
     (hbound : f.size - 1 + (g.size - 1) < n) :
@@ -2114,7 +2405,7 @@ theorem monomial_mul_monomial (m n : Nat) :
   · simp [him]
     by_cases hi : i = m + n
     · have hi' : i - m = n := by omega
-      simp [hi, hi']
+      simp [hi]
       grind
     · simp [hi]
       have hi' : i - m ≠ n := by omega

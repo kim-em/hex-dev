@@ -226,44 +226,6 @@ private theorem zmod64_natCast_choose_prime_eq_zero
   exact (ZMod64.natCast_eq_zero_iff_dvd (p := p) (Hex.Nat.choose p k)).2
     (Hex.Nat.choose_prime_dvd hp hk0 hkp)
 
-private theorem scale_one_poly (c : ZMod64 p) :
-    DensePoly.scale c (1 : FpPoly p) = DensePoly.C c := by
-  apply DensePoly.ext_coeff
-  intro n
-  have hzero : c * (0 : ZMod64 p) = 0 := by grind
-  rw [DensePoly.coeff_scale _ _ _ hzero]
-  change c * (DensePoly.C (1 : ZMod64 p)).coeff n = (DensePoly.C c).coeff n
-  rw [DensePoly.coeff_C, DensePoly.coeff_C]
-  cases n with
-  | zero => grind
-  | succ n => exact hzero
-
-private theorem C_mul_eq_scale (c : ZMod64 p) (f : FpPoly p) :
-    DensePoly.C c * f = DensePoly.scale c f := by
-  have hscale := scale_mul_left c (1 : FpPoly p) f
-  rw [one_mul, scale_one_poly] at hscale
-  exact hscale.symm
-
-private theorem scale_scale (c d : ZMod64 p) (f : FpPoly p) :
-    DensePoly.scale c (DensePoly.scale d f) = DensePoly.scale (c * d) f := by
-  apply DensePoly.ext_coeff
-  intro n
-  have hzero_c : c * (0 : ZMod64 p) = 0 := by grind
-  have hzero_d : d * (0 : ZMod64 p) = 0 := by grind
-  have hzero_cd : (c * d) * (0 : ZMod64 p) = 0 := by grind
-  rw [DensePoly.coeff_scale _ _ _ hzero_c]
-  rw [DensePoly.coeff_scale _ _ _ hzero_d]
-  rw [DensePoly.coeff_scale _ _ _ hzero_cd]
-  grind
-
-private theorem scale_one_left (f : FpPoly p) :
-    DensePoly.scale (1 : ZMod64 p) f = f := by
-  apply DensePoly.ext_coeff
-  intro n
-  have hzero : (1 : ZMod64 p) * (0 : ZMod64 p) = 0 := by grind
-  rw [DensePoly.coeff_scale _ _ _ hzero]
-  grind
-
 private theorem scale_add_scalar (c d : ZMod64 p) (f : FpPoly p) :
     DensePoly.scale (c + d) f = DensePoly.scale c f + DensePoly.scale d f := by
   apply DensePoly.ext_coeff
