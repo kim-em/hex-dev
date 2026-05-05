@@ -4,6 +4,7 @@ import HexGF2.Conformance
 import HexGF2.CrossCheck
 import HexGF2.Euclid
 import HexGF2.Field
+import HexGF2.Irreducibility
 import HexGF2.Multiply
 import HexGF2.Smoke
 
