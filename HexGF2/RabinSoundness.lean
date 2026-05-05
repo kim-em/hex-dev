@@ -74,13 +74,122 @@ theorem irreducible_dvd_xPowSubX_degree
     g ∣ xPowSubX g.degree := by
   sorry
 
+private theorem mulXk_zero' (p : GF2Poly) : p.mulXk 0 = p := by
+  apply ext_coeff
+  intro n
+  rw [coeff_mulXk, coeff_shiftLeft]
+  simp [coeff]
+
+private theorem one_mul' (p : GF2Poly) : (1 : GF2Poly) * p = p := by
+  show monomial 0 * p = p
+  rw [monomial_mul, mulXk_zero']
+
+private theorem mul_one' (p : GF2Poly) : p * (1 : GF2Poly) = p := by
+  rw [mul_comm, one_mul']
+
+private theorem dvd_refl' (p : GF2Poly) : p ∣ p :=
+  ⟨1, (mul_one' p).symm⟩
+
+private theorem dvd_zero' (p : GF2Poly) : p ∣ 0 :=
+  ⟨0, (mul_zero p).symm⟩
+
+private theorem dvd_add' {d a b : GF2Poly} (hda : d ∣ a) (hdb : d ∣ b) :
+    d ∣ a + b := by
+  rcases hda with ⟨ra, hra⟩
+  rcases hdb with ⟨rb, hrb⟩
+  exact ⟨ra + rb, by rw [hra, hrb, right_distrib]⟩
+
+private theorem dvd_mul_left' {d a : GF2Poly} (c : GF2Poly) (hda : d ∣ a) :
+    d ∣ c * a := by
+  rcases hda with ⟨r, hr⟩
+  refine ⟨c * r, ?_⟩
+  rw [hr, ← mul_assoc, ← mul_assoc, mul_comm c d]
+
+private theorem mul_dvd_mul_left' (c : GF2Poly) {a b : GF2Poly} (h : a ∣ b) :
+    c * a ∣ c * b := by
+  rcases h with ⟨r, hr⟩
+  exact ⟨r, by rw [hr, mul_assoc]⟩
+
+/--
+Geometric-series divisibility in characteristic two: `X^k + 1` divides
+`X^(k*n) + 1` for any `k` and `n`.
+
+Iterated XOR-cancellation gives the identity
+`X^(k*(n+1)) + 1 = X^k * (X^(k*n) + 1) + (X^k + 1)`,
+so the result reduces by induction on `n` to the base cases `n = 0`
+(both sides are zero) and `n = 1` (reflexivity).
+-/
+private theorem monomial_add_one_dvd_geom (k : Nat) :
+    ∀ n, (monomial k + 1) ∣ (monomial (k * n) + 1)
+  | 0 => by
+      rw [Nat.mul_zero, show (monomial 0 : GF2Poly) = 1 from rfl, add_self]
+      exact dvd_zero' _
+  | n + 1 => by
+      have ih := monomial_add_one_dvd_geom k n
+      have heq :
+          monomial (k * (n + 1)) + 1 =
+            monomial k * (monomial (k * n) + 1) + (monomial k + 1) := by
+        rw [right_distrib, mul_one', monomial_mul_monomial]
+        rw [show k + k * n = k * (n + 1) from by rw [Nat.mul_succ]; omega]
+        rw [add_assoc]
+        congr 1
+        rw [← add_assoc, add_self, zero_add]
+      rw [heq]
+      exact dvd_add' (dvd_mul_left' (monomial k) ih) (dvd_refl' _)
+
+/--
+Number-theoretic companion to `monomial_add_one_dvd_geom`: when `d ∣ m`,
+the integer `2 ^ d - 1` divides `2 ^ m - 1`.
+
+Both follow from the same telescoping identity, transposed between the
+polynomial and natural-number rings.
+-/
+private theorem two_pow_sub_one_dvd_two_pow_sub_one_of_dvd
+    {d m : Nat} (hdvd : d ∣ m) : (2 ^ d - 1) ∣ (2 ^ m - 1) := by
+  obtain ⟨k, rfl⟩ := hdvd
+  induction k with
+  | zero => simp
+  | succ k ih =>
+      have h2dk_pos : 0 < 2 ^ (d * k) := Nat.two_pow_pos _
+      have h2d_pos : 0 < 2 ^ d := Nat.two_pow_pos _
+      have hexp : 2 ^ (d * (k + 1)) = 2 ^ d * 2 ^ (d * k) := by
+        rw [Nat.mul_succ, Nat.pow_add, Nat.mul_comm]
+      have hge : 2 ^ d ≤ 2 ^ d * 2 ^ (d * k) := by
+        calc 2 ^ d = 2 ^ d * 1 := (Nat.mul_one _).symm
+          _ ≤ 2 ^ d * 2 ^ (d * k) := Nat.mul_le_mul_left _ h2dk_pos
+      have hkey :
+          2 ^ (d * (k + 1)) - 1 = 2 ^ d * (2 ^ (d * k) - 1) + (2 ^ d - 1) := by
+        rw [hexp, Nat.mul_sub, Nat.mul_one]
+        omega
+      rw [hkey]
+      exact Nat.dvd_add (Nat.dvd_mul_left_of_dvd ih _) (Nat.dvd_refl _)
+
+/--
+Factor `xPowSubX d = monomial 1 * (monomial (2 ^ d - 1) + 1)`.
+
+In characteristic two this collapses `X^(2^d) + X = X * (X^(2^d - 1) + 1)`.
+The factor is uniform in `d ≥ 0`: when `d = 0` both sides reduce to `0`.
+-/
+private theorem xPowSubX_factor (d : Nat) :
+    xPowSubX d = monomial 1 * (monomial (2 ^ d - 1) + 1) := by
+  unfold xPowSubX
+  rw [right_distrib, mul_one', monomial_mul_monomial]
+  have hpos : 0 < 2 ^ d := Nat.two_pow_pos _
+  rw [show 1 + (2 ^ d - 1) = 2 ^ d from by omega]
+
 /--
 Divisibility chain on Rabin polynomials: if `d ∣ m`, then
 `X^(2^d) - X` divides `X^(2^m) - X`.
 -/
-theorem xPowSubX_dvd_of_dvd {d m : Nat} (_hdvd : d ∣ m) :
+theorem xPowSubX_dvd_of_dvd {d m : Nat} (hdvd : d ∣ m) :
     xPowSubX d ∣ xPowSubX m := by
-  sorry
+  obtain ⟨n, hn⟩ :=
+    two_pow_sub_one_dvd_two_pow_sub_one_of_dvd hdvd
+  have hgeo : (monomial (2 ^ d - 1) + 1) ∣ (monomial (2 ^ m - 1) + 1) := by
+    rw [hn]
+    exact monomial_add_one_dvd_geom (2 ^ d - 1) n
+  rw [xPowSubX_factor d, xPowSubX_factor m]
+  exact mul_dvd_mul_left' (monomial 1) hgeo
 
 private theorem lt_of_mem_properDivisors {n d : Nat}
     (hmem : d ∈ properDivisors n) : d < n := by

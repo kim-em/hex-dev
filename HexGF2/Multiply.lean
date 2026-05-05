@@ -6779,5 +6779,39 @@ theorem add_monomial_mul (quot q : GF2Poly) (k : Nat) :
     (quot + monomial k) * q = quot * q + q.mulXk k := by
   rw [left_distrib, monomial_mul]
 
+/-- The product of two monomials is the monomial whose exponent is the sum. -/
+theorem monomial_mul_monomial (a b : Nat) :
+    monomial a * monomial b = monomial (a + b) := by
+  rw [monomial_mul]
+  apply ext_coeff
+  intro n
+  by_cases hn_eq : n = a + b
+  · subst hn_eq
+    have hdeg : ((monomial b).mulXk a).degree? = some (b + a) :=
+      degree?_mulXk_of_degree?_eq_some (degree?_monomial b)
+    rw [coeff_monomial_self,
+      show a + b = b + a from Nat.add_comm a b]
+    exact coeff_eq_true_of_degree?_eq_some hdeg
+  · rw [coeff_monomial_ne hn_eq]
+    by_cases h_gt : a + b < n
+    · have hdeg : ((monomial b).mulXk a).degree? = some (b + a) :=
+        degree?_mulXk_of_degree?_eq_some (degree?_monomial b)
+      exact coeff_eq_false_of_degree?_lt hdeg (by omega)
+    · rw [coeff_mulXk]
+      by_cases hn_lt_a : n < a
+      · exact coeff_shiftLeft_lt (monomial b) hn_lt_a
+      · have hn_ge_a : a ≤ n := Nat.le_of_not_gt hn_lt_a
+        have hlt : n < a + b := by omega
+        have hsource_lt_b : n - a < b := by omega
+        have hsource_ne_b : n - a ≠ b := Nat.ne_of_lt hsource_lt_b
+        have hword : (n - a) / 64 < (monomial b).words.size := by
+          rw [words_monomial_size]
+          have : (n - a) / 64 ≤ b / 64 :=
+            Nat.div_le_div_right (Nat.le_of_lt hsource_lt_b)
+          omega
+        have hn_eq_source : n = (n - a) + a := by omega
+        rw [hn_eq_source, coeff_shiftLeft_add_of_word_lt (monomial b) hword]
+        exact coeff_monomial_ne hsource_ne_b
+
 end GF2Poly
 end Hex
