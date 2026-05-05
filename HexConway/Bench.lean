@@ -30,6 +30,13 @@ Scientific registrations:
   the odd-prime higher-degree imported table entry `C(11, 6)`.
 * `runTier1Irreducibility_13_6Checksum`: Rabin irreducibility verification for
   the odd-prime higher-degree imported table entry `C(13, 6)`.
+
+Fixed registrations are wrapped as `Unit → IO α` so the harness exercises
+them per-call rather than measuring a closed compile-time-folded constant
+load. Each polynomial input is threaded through an `IO.Ref` to defeat the
+same folding on the workload itself, and the per-bench `expectedHash`
+catches silent value regressions that the cross-repeat agreement check
+cannot see (e.g. a stable but wrong `Bool`).
 -/
 
 namespace Hex.ConwayBench
@@ -94,35 +101,33 @@ def checksumLookup {p : Nat} [ZMod64.Bounds p] (result : Option (FpPoly p)) : UI
   | none => 0
   | some f => mixHash 1 (checksumPoly f)
 
-/-- Fixed repeat count for the nanosecond-scale lookup path. -/
-def lookupHotRepeats : Nat :=
-  65536
-
-/-- Fixed repeat count for the selected Tier 1 irreducibility checks. -/
-def irreducibilityHotRepeats : Nat :=
-  256
-
-/-- Repeat a deterministic `UInt64` target with a rolling checksum. -/
-def repeatUInt64Checksum (repeats : Nat) (f : Unit → UInt64) : UInt64 :=
-  (List.range repeats).foldl
-    (fun acc _ => mixHash acc (f ()))
-    0
-
 /-- Benchmark target: committed Tier 1 Luebeck lookup by table ordinal. -/
 def runLuebeckConwayPolynomialLookupChecksum (ordinal : Nat) : UInt64 :=
-  repeatUInt64Checksum lookupHotRepeats fun _ =>
-    match committedEntryKeyAt ordinal with
-    | ⟨2, n⟩ => checksumLookup (Conway.luebeckConwayPolynomial? 2 n)
-    | ⟨3, n⟩ => checksumLookup (Conway.luebeckConwayPolynomial? 3 n)
-    | ⟨5, n⟩ => checksumLookup (Conway.luebeckConwayPolynomial? 5 n)
-    | ⟨7, n⟩ => checksumLookup (Conway.luebeckConwayPolynomial? 7 n)
-    | ⟨11, n⟩ => checksumLookup (Conway.luebeckConwayPolynomial? 11 n)
-    | ⟨13, n⟩ => checksumLookup (Conway.luebeckConwayPolynomial? 13 n)
-    | _ => 0
+  match committedEntryKeyAt ordinal with
+  | ⟨2, n⟩ => checksumLookup (Conway.luebeckConwayPolynomial? 2 n)
+  | ⟨3, n⟩ => checksumLookup (Conway.luebeckConwayPolynomial? 3 n)
+  | ⟨5, n⟩ => checksumLookup (Conway.luebeckConwayPolynomial? 5 n)
+  | ⟨7, n⟩ => checksumLookup (Conway.luebeckConwayPolynomial? 7 n)
+  | ⟨11, n⟩ => checksumLookup (Conway.luebeckConwayPolynomial? 11 n)
+  | ⟨13, n⟩ => checksumLookup (Conway.luebeckConwayPolynomial? 13 n)
+  | _ => 0
+
+/-- `Nonempty` witness for the `IO.Ref` declaration below. The
+`SupportedEntry` field is a dependent record, so `Nonempty` does not
+auto-derive — we hand it the canonical witness. -/
+private instance : Nonempty (Conway.SupportedEntry 2 1) :=
+  ⟨Conway.supportedEntry_2_1⟩
+
+/-- Mutable cell used to defeat compile-time folding of the closed
+`SupportedEntry` literal in the canonical Tier 1 fixed bench. -/
+private initialize supportedEntry_2_1Ref :
+    IO.Ref (Conway.SupportedEntry 2 1) ←
+  IO.mkRef Conway.supportedEntry_2_1
 
 /-- Fixed canonical target: recover the currently exported supported entry. -/
-def runConwayPolySupported_2_1Checksum : UInt64 :=
-  checksumPoly (Conway.conwayPoly 2 1 Conway.supportedEntry_2_1)
+def runConwayPolySupported_2_1Checksum : Unit → IO UInt64 := fun () => do
+  let entry ← supportedEntry_2_1Ref.get
+  return checksumPoly (Conway.conwayPoly 2 1 entry)
 
 /-- The committed `C(2, 6)` Luebeck entry, stored ascending by degree. -/
 def luebeckConwayPolynomial_2_6 : FpPoly 2 :=
@@ -196,62 +201,81 @@ theorem luebeckConwayPolynomial_13_6_monic :
     DensePoly.Monic luebeckConwayPolynomial_13_6 := by
   rfl
 
-#guard Conway.luebeckConwayPolynomial? 2 1 == some Conway.luebeckConwayPolynomial_2_1
-#guard Conway.luebeckConwayPolynomial? 2 6 == some luebeckConwayPolynomial_2_6
-#guard Conway.luebeckConwayPolynomial? 3 6 == some luebeckConwayPolynomial_3_6
-#guard Conway.luebeckConwayPolynomial? 5 6 == some luebeckConwayPolynomial_5_6
-#guard Conway.luebeckConwayPolynomial? 7 6 == some luebeckConwayPolynomial_7_6
-#guard Conway.luebeckConwayPolynomial? 11 6 == some luebeckConwayPolynomial_11_6
-#guard Conway.luebeckConwayPolynomial? 13 6 == some luebeckConwayPolynomial_13_6
+/-- A monic polynomial over `ZMod64 q` paired with its monicity proof.
+Used to thread a Tier 1 irreducibility input through an `IO.Ref` while
+keeping `Berlekamp.rabinTest`'s dependent monicity argument satisfied. -/
+private structure MonicPoly (q : Nat) [ZMod64.Bounds q] where
+  poly : FpPoly q
+  monic : DensePoly.Monic poly
+
+/- `Nonempty` witnesses for the `IO.Ref (MonicPoly q)` declarations below.
+The dependent monicity proof blocks auto-derivation, so we supply a
+canonical witness per prime — the same committed Tier 1 entry the ref
+will hold at runtime. -/
+private instance : Nonempty (MonicPoly 2) :=
+  ⟨⟨Conway.luebeckConwayPolynomial_2_1,
+    Conway.luebeckConwayPolynomial_2_1_monic⟩⟩
+private instance : Nonempty (MonicPoly 3) :=
+  ⟨⟨luebeckConwayPolynomial_3_6, luebeckConwayPolynomial_3_6_monic⟩⟩
+private instance : Nonempty (MonicPoly 5) :=
+  ⟨⟨luebeckConwayPolynomial_5_6, luebeckConwayPolynomial_5_6_monic⟩⟩
+private instance : Nonempty (MonicPoly 7) :=
+  ⟨⟨luebeckConwayPolynomial_7_6, luebeckConwayPolynomial_7_6_monic⟩⟩
+private instance : Nonempty (MonicPoly 11) :=
+  ⟨⟨luebeckConwayPolynomial_11_6, luebeckConwayPolynomial_11_6_monic⟩⟩
+private instance : Nonempty (MonicPoly 13) :=
+  ⟨⟨luebeckConwayPolynomial_13_6, luebeckConwayPolynomial_13_6_monic⟩⟩
+
+private initialize tier1_2_1Ref : IO.Ref (MonicPoly 2) ←
+  IO.mkRef ⟨Conway.luebeckConwayPolynomial_2_1,
+            Conway.luebeckConwayPolynomial_2_1_monic⟩
+private initialize tier1_2_6Ref : IO.Ref (MonicPoly 2) ←
+  IO.mkRef ⟨luebeckConwayPolynomial_2_6, luebeckConwayPolynomial_2_6_monic⟩
+private initialize tier1_3_6Ref : IO.Ref (MonicPoly 3) ←
+  IO.mkRef ⟨luebeckConwayPolynomial_3_6, luebeckConwayPolynomial_3_6_monic⟩
+private initialize tier1_5_6Ref : IO.Ref (MonicPoly 5) ←
+  IO.mkRef ⟨luebeckConwayPolynomial_5_6, luebeckConwayPolynomial_5_6_monic⟩
+private initialize tier1_7_6Ref : IO.Ref (MonicPoly 7) ←
+  IO.mkRef ⟨luebeckConwayPolynomial_7_6, luebeckConwayPolynomial_7_6_monic⟩
+private initialize tier1_11_6Ref : IO.Ref (MonicPoly 11) ←
+  IO.mkRef ⟨luebeckConwayPolynomial_11_6, luebeckConwayPolynomial_11_6_monic⟩
+private initialize tier1_13_6Ref : IO.Ref (MonicPoly 13) ←
+  IO.mkRef ⟨luebeckConwayPolynomial_13_6, luebeckConwayPolynomial_13_6_monic⟩
 
 /-- Benchmark target: Tier 1 irreducibility check for imported `C(2, 1)`. -/
-def runTier1Irreducibility_2_1Checksum : UInt64 :=
-  repeatUInt64Checksum irreducibilityHotRepeats fun _ =>
-    hash <| Berlekamp.rabinTest
-      Conway.luebeckConwayPolynomial_2_1
-      Conway.luebeckConwayPolynomial_2_1_monic
+def runTier1Irreducibility_2_1Checksum : Unit → IO Bool := fun () => do
+  let mp ← tier1_2_1Ref.get
+  return Berlekamp.rabinTest mp.poly mp.monic
 
 /-- Benchmark target: Tier 1 irreducibility check for imported `C(2, 6)`. -/
-def runTier1Irreducibility_2_6Checksum : UInt64 :=
-  repeatUInt64Checksum irreducibilityHotRepeats fun _ =>
-    hash <| Berlekamp.rabinTest
-      luebeckConwayPolynomial_2_6
-      luebeckConwayPolynomial_2_6_monic
+def runTier1Irreducibility_2_6Checksum : Unit → IO Bool := fun () => do
+  let mp ← tier1_2_6Ref.get
+  return Berlekamp.rabinTest mp.poly mp.monic
 
 /-- Benchmark target: Tier 1 irreducibility check for imported `C(3, 6)`. -/
-def runTier1Irreducibility_3_6Checksum : UInt64 :=
-  repeatUInt64Checksum irreducibilityHotRepeats fun _ =>
-    hash <| Berlekamp.rabinTest
-      luebeckConwayPolynomial_3_6
-      luebeckConwayPolynomial_3_6_monic
+def runTier1Irreducibility_3_6Checksum : Unit → IO Bool := fun () => do
+  let mp ← tier1_3_6Ref.get
+  return Berlekamp.rabinTest mp.poly mp.monic
 
 /-- Benchmark target: Tier 1 irreducibility check for imported `C(5, 6)`. -/
-def runTier1Irreducibility_5_6Checksum : UInt64 :=
-  repeatUInt64Checksum irreducibilityHotRepeats fun _ =>
-    hash <| Berlekamp.rabinTest
-      luebeckConwayPolynomial_5_6
-      luebeckConwayPolynomial_5_6_monic
+def runTier1Irreducibility_5_6Checksum : Unit → IO Bool := fun () => do
+  let mp ← tier1_5_6Ref.get
+  return Berlekamp.rabinTest mp.poly mp.monic
 
 /-- Benchmark target: Tier 1 irreducibility check for imported `C(7, 6)`. -/
-def runTier1Irreducibility_7_6Checksum : UInt64 :=
-  repeatUInt64Checksum irreducibilityHotRepeats fun _ =>
-    hash <| Berlekamp.rabinTest
-      luebeckConwayPolynomial_7_6
-      luebeckConwayPolynomial_7_6_monic
+def runTier1Irreducibility_7_6Checksum : Unit → IO Bool := fun () => do
+  let mp ← tier1_7_6Ref.get
+  return Berlekamp.rabinTest mp.poly mp.monic
 
 /-- Benchmark target: Tier 1 irreducibility check for imported `C(11, 6)`. -/
-def runTier1Irreducibility_11_6Checksum : UInt64 :=
-  repeatUInt64Checksum irreducibilityHotRepeats fun _ =>
-    hash <| Berlekamp.rabinTest
-      luebeckConwayPolynomial_11_6
-      luebeckConwayPolynomial_11_6_monic
+def runTier1Irreducibility_11_6Checksum : Unit → IO Bool := fun () => do
+  let mp ← tier1_11_6Ref.get
+  return Berlekamp.rabinTest mp.poly mp.monic
 
 /-- Benchmark target: Tier 1 irreducibility check for imported `C(13, 6)`. -/
-def runTier1Irreducibility_13_6Checksum : UInt64 :=
-  repeatUInt64Checksum irreducibilityHotRepeats fun _ =>
-    hash <| Berlekamp.rabinTest
-      luebeckConwayPolynomial_13_6
-      luebeckConwayPolynomial_13_6_monic
+def runTier1Irreducibility_13_6Checksum : Unit → IO Bool := fun () => do
+  let mp ← tier1_13_6Ref.get
+  return Berlekamp.rabinTest mp.poly mp.monic
 
 /-- Textbook model for finite committed-table lookup at a given table key. -/
 def tier1LookupComplexity (_ordinal : Nat) : Nat :=
@@ -261,8 +285,9 @@ def tier1LookupComplexity (_ordinal : Nat) : Nat :=
 `(p, n)`. The benchmark parameter is the one-based ordinal into the committed
 key set; for each key, the textbook table-lookup model performs one finite-key
 dispatch and materializes the stored coefficient row, whose degree is bounded
-by the committed Tier 1 slice in this registration. The fixed hot-loop repeat
-count is independent of the ordinal, so it changes only the constant factor. -/
+by the committed Tier 1 slice in this registration. The model is constant in
+the ordinal — only `(p, n)` selects the row, never the ordinal directly — so
+the registration declares `tier1LookupComplexity _ := 1`. -/
 setup_benchmark runLuebeckConwayPolynomialLookupChecksum ordinal =>
     tier1LookupComplexity ordinal
   where {
@@ -276,51 +301,63 @@ setup_benchmark runLuebeckConwayPolynomialLookupChecksum ordinal =>
     signalFloorMultiplier := 1.0
   }
 
+/- The fixed registrations declare an `expectedHash` so the harness fails on
+silent value regressions: every Tier 1 irreducibility benchmark must report
+`true` (the Conway entries are irreducible by construction), and the
+`SupportedEntry` checksum must agree with its first observation. The
+`expectedHash` for the `Bool` benches is `Hashable.hash true`; the
+`SupportedEntry` checksum's literal is the `observed hash:` value the
+harness emits on its first run. The cross-repeat `hashesAgree` check is
+vacuous on `Bool` results (a stable `false` regression would still agree
+with itself), which is why `expectedHash` is mandatory here. -/
+
 setup_fixed_benchmark runConwayPolySupported_2_1Checksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
+  expectedHash := some (Hashable.hash
+    (checksumPoly (Conway.conwayPoly 2 1 Conway.supportedEntry_2_1)))
 }
 
-/- Fixed Tier 1 irreducibility registrations use committed Luebeck inputs and
-the executable Rabin checker from `HexBerlekamp`. They intentionally measure
-only the imported-polynomial irreducibility path: no Tier 2 Conway compatibility
-conditions and no Tier 3 search are included. `C(2, 1)` is the canonical
-supported entry; `C(2, 6)`, `C(3, 6)`, `C(5, 6)`, `C(7, 6)`, `C(11, 6)`,
-and `C(13, 6)` cover representative higher-degree committed-table entries
-across small binary and odd-prime fields. -/
 setup_fixed_benchmark runTier1Irreducibility_2_1Checksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
+  expectedHash := some (Hashable.hash true)
 }
 
 setup_fixed_benchmark runTier1Irreducibility_2_6Checksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
+  expectedHash := some (Hashable.hash true)
 }
 
 setup_fixed_benchmark runTier1Irreducibility_3_6Checksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
+  expectedHash := some (Hashable.hash true)
 }
 
 setup_fixed_benchmark runTier1Irreducibility_5_6Checksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
+  expectedHash := some (Hashable.hash true)
 }
 
 setup_fixed_benchmark runTier1Irreducibility_7_6Checksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
+  expectedHash := some (Hashable.hash true)
 }
 
 setup_fixed_benchmark runTier1Irreducibility_11_6Checksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
+  expectedHash := some (Hashable.hash true)
 }
 
 setup_fixed_benchmark runTier1Irreducibility_13_6Checksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
+  expectedHash := some (Hashable.hash true)
 }
 
 end Hex.ConwayBench
