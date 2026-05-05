@@ -471,7 +471,13 @@ theorem dvd_frobeniusDiffMod_of_dvd_dvd
     {f g : GF2Poly} (hg_dvd_f : g ∣ f) {k : Nat}
     (hg_dvd_pow : g ∣ xPowSubX k) :
     g ∣ frobeniusDiffMod f k := by
-  sorry
+  have hf_dvd_sum : f ∣ (xPowSubX k + frobeniusDiffMod f k) :=
+    dvd_xPowSubX_add_frobeniusDiffMod f k
+  have hg_dvd_sum : g ∣ (xPowSubX k + frobeniusDiffMod f k) := by
+    rcases hg_dvd_f with ⟨c, hc⟩
+    rcases hf_dvd_sum with ⟨d, hd⟩
+    exact ⟨c * d, by rw [hd, hc, mul_assoc]⟩
+  exact dvd_sub' hg_dvd_sum hg_dvd_pow
 
 /--
 A divisor of a unit polynomial is a unit polynomial.
