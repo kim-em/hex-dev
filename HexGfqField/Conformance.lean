@@ -1,4 +1,5 @@
 import HexGfqField.Operations
+import HexBerlekamp.RabinSoundness
 
 /-!
 Core conformance checks for the finite-field wrapper in `HexGfqField`.
@@ -61,14 +62,11 @@ private def coeffNats (f : FpPoly 5) : List Nat :=
   f.toArray.toList.map ZMod64.toNat
 
 /-- Modulus `x^4 + 2`, an irreducible degree-4 polynomial over `F_5`.
-Irreducibility is currently stubbed via `theorem ... := by sorry`
-(matching the project pattern); it follows from absence of roots in
-`F_5` (4-th powers in `F_5` are `{0, 1}`, so `x^4 = -2 = 3` has no
-solution) and absence of a quadratic factorisation (case analysis on
-`(x^2 + ax + b)(x^2 + cx + d) = x^4 + 2` forces `b^2 ∈ {2, 3}`, neither
-of which is a square mod 5).  The full proof is pending the
-executable `Berlekamp.rabinTest`-to-`FpPoly.Irreducible` soundness
-bridge. -/
+Irreducibility is discharged below via an executable
+`Berlekamp.IrreducibilityCertificate` whose pow chain and Bezout
+witness are checked by the kernel-reducible
+`Berlekamp.checkIrreducibilityCertificateLinear`, then routed through
+`Berlekamp.rabinTest_imp_irreducible`. -/
 private def modulus : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 0, 0, 0, 1]
     normalized := by
@@ -78,11 +76,59 @@ private def modulus : FpPoly 5 :=
 private theorem modulus_pos_degree : 0 < FpPoly.degree modulus := by
   decide
 
+private theorem modulus_monic : DensePoly.Monic modulus := by rfl
+
+private instance primeModulusFive : ZMod64.PrimeModulus 5 :=
+  ZMod64.primeModulusOfPrime prime_five
+
 private abbrev Q := GFqRing.PolyQuotient modulus modulus_pos_degree
 private abbrev F (hirr : FpPoly.Irreducible modulus) :=
   FiniteField modulus modulus_pos_degree prime_five hirr
 
-private theorem modulus_irreducible : FpPoly.Irreducible modulus := by sorry
+/-- Rabin certificate for `x^4 + 2` over `F_5`.
+
+The pow chain records `X^(5^k) mod (x^4 + 2)` for `k = 0..4`. Using
+`X^4 ≡ -2 ≡ 3` and the relation `X^5 ≡ 3 X`, the iterates are
+`X, 3X, 4X, 2X, X`. The Bezout witness for the only maximal proper
+divisor `d = 2` of `n = 4` certifies `gcd(modulus, X^25 - X mod modulus)`
+is a unit: `3 · (x^4 + 2) + 4x^3 · (3x) = 3x^4 + 1 + 2x^4 = 5x^4 + 1 = 1`
+in `F_5[x]`. -/
+private def modulus_irreducibility_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 5
+  n := 4
+  powChain :=
+    #[polyFive #[0, 1], polyFive #[0, 3], polyFive #[0, 4],
+      polyFive #[0, 2], polyFive #[0, 1]]
+  bezout :=
+    #[{ left := polyFive #[3], right := polyFive #[0, 0, 0, 4] }]
+
+set_option maxRecDepth 4096 in
+private theorem modulus_certificate_linear_check :
+    Berlekamp.checkIrreducibilityCertificateLinear modulus modulus_monic
+        modulus_irreducibility_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinear,
+    modulus_irreducibility_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinear, Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    Berlekamp.maximalProperDivisors, Berlekamp.properDivisors,
+    modulus, polyFive]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · intro x hx
+        have hcases : x = 0 ∨ x = 1 ∨ x = 2 ∨ x = 3 ∨ x = 4 := by omega
+        rcases hcases with rfl | rfl | rfl | rfl | rfl <;> rfl
+    · rfl
+  · rfl
+
+private theorem modulus_irreducible : FpPoly.Irreducible modulus :=
+  Berlekamp.rabinTest_imp_irreducible modulus modulus_monic
+    (Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
+      modulus modulus_monic modulus_irreducibility_certificate
+      modulus_certificate_linear_check)
 
 private def q (coeffs : Array Nat) : Q :=
   GFqRing.ofPoly modulus modulus_pos_degree (polyFive coeffs)
