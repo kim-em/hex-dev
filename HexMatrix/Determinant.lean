@@ -1229,7 +1229,7 @@ private theorem insertAt_peelLastVector {n : Nat}
   simpa [hget] using
     (list_insertIdx_eraseIdx_getElem (xs := perm.toList) (i := k) hklist)
 
-private theorem permutationVectors_complete {n : Nat} {perm : Vector (Fin n) n}
+theorem permutationVectors_complete {n : Nat} {perm : Vector (Fin n) n}
     (hnodup : perm.toList.Nodup) :
     perm ∈ permutationVectors n := by
   induction n with
@@ -1263,7 +1263,7 @@ private theorem permutationVectors_complete {n : Nat} {perm : Vector (Fin n) n}
       refine ⟨(⟨k, hk⟩ : Fin (n + 1)), List.mem_finRange (⟨k, hk⟩ : Fin (n + 1)), ?_⟩
       exact insertAt_peelLastVector perm k hk hidx hnodup
 
-private theorem permutationVectors_nodup {n : Nat} {perm : Vector (Fin n) n}
+theorem permutationVectors_nodup {n : Nat} {perm : Vector (Fin n) n}
     (hmem : perm ∈ permutationVectors n) :
     perm.toList.Nodup := by
   induction n with
@@ -1374,7 +1374,7 @@ private theorem permutationVectors_flatMap_nodup {n : Nat}
             exact hvs.1 (hvw ▸ hw))
           a ha _ (List.mem_map.mpr ⟨j, List.mem_finRange j, rfl⟩) hab
 
-private theorem permutationVectors_nodup_list {n : Nat} :
+theorem permutationVectors_nodup_list {n : Nat} :
     (permutationVectors n).Nodup := by
   induction n with
   | zero =>
