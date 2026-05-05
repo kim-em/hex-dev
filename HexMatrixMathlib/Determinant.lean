@@ -1,5 +1,6 @@
 import HexMatrixMathlib.Basic
 import HexMatrixMathlib.Determinant.DesnanotJacobi
+import HexMatrix.Bareiss
 import HexMatrix.Determinant
 import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
 
@@ -317,5 +318,54 @@ theorem det_borderedMinor_eq_submatrix_det [CommRing R]
           (fun c : Fin (k + 1) =>
             if hc : c.val < k then ⟨c.val, Nat.lt_trans hc hk⟩ else j)) := by
   rw [det_eq, matrixEquiv_borderedMinor]
+
+/-- Exact-division bridge for one Bareiss bordered-minor update.
+
+The remaining Mathlib-side recurrence proof can supply `hdesnanot` from the
+Desnanot-Jacobi identity; this lemma packages the resulting product identity
+as the `hexact` premise expected by `Hex.Matrix.stepMatrix_borderedMinor_update`.
+-/
+theorem bareissExactDiv_borderedMinor_of_mul_eq
+    (source : Hex.Matrix Int n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (i j : Fin n) (hi : k < i.val) (hj : k < j.val) (prevPivot : Int)
+    (hprev_ne : prevPivot ≠ 0)
+    (hdesnanot :
+      Hex.Matrix.det (Hex.Matrix.borderedMinor source (k + 1) hnext i j) * prevPivot =
+        Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+            (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n)
+            (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+          Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk i j) -
+          Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+            i (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+          Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+            (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) j)) :
+    Hex.Matrix.exactDiv
+        (Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+            (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n)
+            (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+          Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk i j) -
+          Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+            i (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+          Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+            (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) j))
+        prevPivot =
+      Hex.Matrix.det (Hex.Matrix.borderedMinor source (k + 1) hnext i j) := by
+  let nextMinor := Hex.Matrix.det (Hex.Matrix.borderedMinor source (k + 1) hnext i j)
+  let numerator :=
+    Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+        (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n)
+        (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+      Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk i j) -
+      Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+        i (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+      Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+        (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) j)
+  have hnum : numerator = prevPivot * nextMinor := by
+    dsimp [numerator, nextMinor]
+    rw [← hdesnanot, mul_comm]
+  have hdvd : prevPivot ∣ numerator := ⟨nextMinor, hnum⟩
+  rw [Hex.Matrix.exactDiv_eq_divExact hdvd]
+  change numerator / prevPivot = nextMinor
+  exact Int.ediv_eq_of_eq_mul_right hprev_ne hnum
 
 end HexMatrixMathlib
