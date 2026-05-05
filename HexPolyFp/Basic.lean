@@ -599,7 +599,7 @@ private theorem zmod_one_ne_zero [PrimeModulus p] :
       Nat.mod_eq_of_lt (by omega : 1 < p)] at htoNat
   exact absurd htoNat (by omega)
 
-private theorem zmod_div_one [PrimeModulus p] (a : ZMod64 p) :
+theorem zmod_div_one [PrimeModulus p] (a : ZMod64 p) :
     a / (1 : ZMod64 p) = a := by
   have h1ne : (1 : ZMod64 p) ≠ 0 := zmod_one_ne_zero
   have hinv : ZMod64.inv (1 : ZMod64 p) * 1 = 1 :=
