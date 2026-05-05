@@ -2071,6 +2071,97 @@ theorem mul_one_right_poly {S : Type _}
   rw [coeff_mul, mulCoeffSum_eq_diagonal]
   exact fold_diagonal_one_right p n
 
+/-- Product of two monomials: `xⁱ * cⱼ * xʲ = cᵢcⱼ * xⁱ⁺ʲ`. -/
+theorem monomial_mul_monomial {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    (m k : Nat) (c d : S) :
+    (monomial m c) * (monomial k d) = monomial (m + k) (c * d) := by
+  apply ext_coeff
+  intro n
+  rw [coeff_mul, mulCoeffSum_eq_diagonal, diagonalSum_eq_degree_bound]
+  rw [coeff_monomial]
+  have hterm : ∀ i,
+      diagonalMulCoeffTerm (monomial m c) (monomial k d) n i =
+        if i = m ∧ n = m + k then c * d else 0 := by
+    intro i
+    unfold diagonalMulCoeffTerm
+    rw [coeff_monomial, coeff_monomial]
+    by_cases hni : n < i
+    · have hcond : ¬ (i = m ∧ n = m + k) := by
+        intro ⟨h1, h2⟩; omega
+      rw [if_pos hni, if_neg hcond]
+    · have hile : i ≤ n := Nat.le_of_not_gt hni
+      rw [if_neg hni]
+      by_cases him : i = m
+      · subst i
+        rw [if_pos rfl]
+        by_cases hnmk : n - m = k
+        · have hn : n = m + k := by omega
+          rw [if_pos hnmk]
+          simp [hn]
+        · have hn : n ≠ m + k := by omega
+          rw [if_neg hnmk]
+          have hcond : ¬ (m = m ∧ n = m + k) := fun ⟨_, h⟩ => hn h
+          rw [if_neg hcond]
+          -- c * Zero.zero = 0.
+          show c * (Zero.zero : S) = 0
+          have : (Zero.zero : S) = 0 := rfl
+          rw [this]
+          grind
+      · rw [if_neg him]
+        have hcond : ¬ (i = m ∧ n = m + k) := fun ⟨h, _⟩ => him h
+        rw [if_neg hcond]
+        -- Zero.zero * anything = 0.
+        exact Lean.Grind.Semiring.zero_mul _
+  have hfold : ∀ (xs : List Nat) (acc : S),
+      xs.foldl (fun acc i =>
+          acc + diagonalMulCoeffTerm (monomial m c) (monomial k d) n i) acc =
+        xs.foldl (fun acc i =>
+          acc + if i = m ∧ n = m + k then c * d else 0) acc := by
+    intro xs
+    induction xs with
+    | nil => intro acc; rfl
+    | cons i xs ih =>
+        intro acc
+        simp only [List.foldl_cons]
+        rw [hterm i]
+        exact ih _
+  rw [hfold (List.range (n + 1)) 0]
+  by_cases hnmk : n = m + k
+  · have hsimp : ∀ i,
+        (if i = m ∧ n = m + k then c * d else 0) =
+          (if i = m then c * d else 0) := fun i => by simp [hnmk]
+    have hfold2 : ∀ (xs : List Nat) (acc : S),
+        xs.foldl (fun acc i => acc + if i = m ∧ n = m + k then c * d else 0) acc =
+          xs.foldl (fun acc i => acc + if i = m then c * d else 0) acc := by
+      intro xs
+      induction xs with
+      | nil => intro acc; rfl
+      | cons i xs ih =>
+          intro acc
+          simp only [List.foldl_cons]
+          rw [hsimp i]
+          exact ih _
+    rw [hfold2 (List.range (n + 1)) 0]
+    rw [fold_single_index]
+    have hm_lt : m < n + 1 := by omega
+    rw [if_pos hm_lt, if_pos hnmk]
+  · have hzero_fold : ∀ (xs : List Nat) (acc : S),
+        xs.foldl (fun acc i => acc + if i = m ∧ n = m + k then c * d else 0) acc = acc := by
+      intro xs
+      induction xs with
+      | nil => intro acc; rfl
+      | cons i xs ih =>
+          intro acc
+          simp only [List.foldl_cons]
+          have hcond : ¬ (i = m ∧ n = m + k) := fun ⟨_, h⟩ => hnmk h
+          rw [if_neg hcond]
+          rw [show acc + (0 : S) = acc by grind]
+          exact ih _
+    rw [hzero_fold]
+    rw [if_neg hnmk]
+    rfl
+
 theorem neg_mul_right_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) :
@@ -2267,19 +2358,19 @@ private theorem degree_getD_lt_size_add_one {S : Type _} [Zero S] [DecidableEq S
       simp [degree?, hsize]
     omega
 
-private theorem dvd_refl_poly {S : Type _}
+theorem dvd_refl_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p : DensePoly S) :
     p ∣ p := by
   exact ⟨1, (mul_one_right_poly p).symm⟩
 
-private theorem dvd_zero_poly {S : Type _}
+theorem dvd_zero_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p : DensePoly S) :
     p ∣ 0 := by
   exact ⟨0, by rw [mul_comm_poly p 0, zero_mul]⟩
 
-private theorem dvd_mul_left_poly {S : Type _}
+theorem dvd_mul_left_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     {d p : DensePoly S} (q : DensePoly S) :
     d ∣ p → d ∣ q * p := by
@@ -2288,7 +2379,7 @@ private theorem dvd_mul_left_poly {S : Type _}
   refine ⟨q * a, ?_⟩
   rw [ha, ← mul_assoc_poly q d a, mul_comm_poly q d, mul_assoc_poly d q a]
 
-private theorem dvd_add_poly {S : Type _}
+theorem dvd_add_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     {d p q : DensePoly S} :
     d ∣ p → d ∣ q → d ∣ p + q := by
@@ -2298,7 +2389,7 @@ private theorem dvd_add_poly {S : Type _}
   refine ⟨a + b, ?_⟩
   rw [ha, hb, mul_add_right_poly]
 
-private theorem dvd_sub_poly {S : Type _}
+theorem dvd_sub_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     {d p q : DensePoly S} :
     d ∣ p → d ∣ q → d ∣ p - q := by
@@ -3055,6 +3146,42 @@ theorem mod_eq_mod_of_congr {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S]
     {p q m : DensePoly S} :
     Congr p q m -> p % m = q % m := by
   exact mod_eq_mod_of_dvd_sub
+
+/-- Reverse direction of `mod_eq_mod_of_congr`: equal canonical remainders force the
+operands to be congruent modulo the divisor. -/
+theorem dvd_of_mod_eq_mod {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S] [Div S]
+    [DivModLaws S]
+    {p q m : DensePoly S} (h : p % m = q % m) :
+    m ∣ (p - q) := by
+  refine ⟨(p / m) - (q / m), ?_⟩
+  apply ext_coeff
+  intro n
+  have hzero_sub : (0 : S) - (0 : S) = 0 := by grind
+  have hzero_add : (0 : S) + (0 : S) = 0 := by grind
+  have hp := congrArg (fun x : DensePoly S => x.coeff n) (div_mul_add_mod p m)
+  have hq := congrArg (fun x : DensePoly S => x.coeff n) (div_mul_add_mod q m)
+  have hh := congrArg (fun x : DensePoly S => x.coeff n) h
+  change ((p / m) * m + (p % m)).coeff n = p.coeff n at hp
+  change ((q / m) * m + (q % m)).coeff n = q.coeff n at hq
+  change (p % m).coeff n = (q % m).coeff n at hh
+  rw [coeff_add ((p / m) * m) (p % m) n hzero_add] at hp
+  rw [coeff_add ((q / m) * m) (q % m) n hzero_add] at hq
+  rw [coeff_sub p q n hzero_sub]
+  -- Reduce m * ((p/m) - (q/m)) via mul_sub_zero_comm-style manipulation.
+  have hgoal :
+      (m * ((p / m) - (q / m))).coeff n =
+        ((p / m) * m).coeff n - ((q / m) * m).coeff n := by
+    rw [show m * ((p / m) - (q / m)) = (p / m) * m + (0 - (q / m) * m) from ?_]
+    · rw [coeff_add ((p / m) * m) (0 - (q / m) * m) n hzero_add]
+      rw [coeff_sub 0 ((q / m) * m) n hzero_sub, coeff_zero]
+      grind
+    · -- m * (a - b) = a * m + (0 - b * m), via sub_eq_add_neg + mul_sub_zero_comm + mul_comm.
+      rw [sub_eq_add_neg_poly]
+      rw [mul_add_right_poly]
+      rw [mul_sub_zero_comm m (q / m)]
+      rw [mul_comm_poly m (p / m)]
+  rw [hgoal]
+  grind
 
 /-- Reducing both summands before addition preserves the canonical remainder. -/
 theorem mod_add_mod {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S] [Div S]

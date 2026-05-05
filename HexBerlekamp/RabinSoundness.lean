@@ -40,6 +40,83 @@ follow-up issues. Every other declaration in this file is a small
 orchestration step on top of them. -/
 
 /--
+Trivial case for `deg f = 0`: `frobeniusDiffMod` is already its own
+canonical remainder modulo `f`. When `deg f = 0` and `f` is monic, `f`
+must have size 1 (since `Monic 0` is impossible over a prime field), and
+every polynomial mod a degree-0 monic divisor is `0`; `frobeniusDiffMod`
+is no exception, so both sides reduce to `0`.
+-/
+theorem frobeniusDiffMod_mod_self_of_degree_zero
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) (k : Nat)
+    (hdeg : ¬ 0 < f.degree?.getD 0) :
+    (frobeniusDiffMod f hmonic k) % f = frobeniusDiffMod f hmonic k := by
+  -- f.size ≥ 1 (Monic excludes f = 0).
+  have hf_size_pos : 0 < f.size := by
+    apply Nat.pos_of_ne_zero
+    intro hfsize
+    have hfzero : f = 0 := by
+      apply DensePoly.ext_coeff
+      intro i; rw [DensePoly.coeff_zero]
+      exact DensePoly.coeff_eq_zero_of_size_le f (by omega)
+    rw [hfzero] at hmonic
+    have h0lead : (0 : FpPoly p).leadingCoeff = 0 := by
+      change (0 : FpPoly p).coeffs.back?.getD 0 = 0
+      have hcoeffs : (0 : FpPoly p).coeffs = #[] := rfl
+      rw [hcoeffs]; rfl
+    unfold DensePoly.Monic at hmonic
+    rw [h0lead] at hmonic
+    -- hmonic : (0 : ZMod64 p) = 1, contradiction in a prime field.
+    have h2 : 2 ≤ p := Hex.Nat.Prime.two_le ZMod64.PrimeModulus.prime
+    have htoNat0 : (0 : ZMod64 p).toNat = 0 := ZMod64.toNat_zero
+    have htoNat1 : (1 : ZMod64 p).toNat = 1 := by
+      change (ZMod64.natCast p 1).toNat = 1
+      rw [ZMod64.toNat_natCast]
+      exact Nat.one_mod_eq_one.mpr (by omega)
+    have htoNat : (0 : ZMod64 p).toNat = (1 : ZMod64 p).toNat :=
+      congrArg ZMod64.toNat hmonic
+    rw [htoNat0, htoNat1] at htoNat
+    omega
+  -- f.size = 1.
+  have hf_size : f.size = 1 := by
+    unfold DensePoly.degree? at hdeg
+    have hne : f.size ≠ 0 := Nat.pos_iff_ne_zero.mp hf_size_pos
+    simp [hne] at hdeg
+    omega
+  -- The cancellation property holds: a - (a / 1) * 1 = a - a = 0.
+  have hcancel :
+      ∀ a : ZMod64 p, a - (a / f.leadingCoeff) * f.leadingCoeff = (Zero.zero : ZMod64 p) := by
+    intro a
+    have hlead : f.leadingCoeff = (1 : ZMod64 p) := hmonic
+    rw [hlead]
+    have ha_div : a / (1 : ZMod64 p) = a := ZMod64.zmod_div_one a
+    rw [ha_div]
+    show a - a * 1 = (Zero.zero : ZMod64 p)
+    have h_a_mul_one : a * (1 : ZMod64 p) = a := Lean.Grind.Semiring.mul_one a
+    rw [h_a_mul_one]
+    show a - a = (Zero.zero : ZMod64 p)
+    have hzero_eq : (Zero.zero : ZMod64 p) = 0 := rfl
+    rw [hzero_eq]
+    grind
+  -- For any p, p % f = 0 (since f has size 1 and the cancellation holds).
+  have hmod_zero : ∀ q : FpPoly p, q % f = 0 := by
+    intro q
+    show (DensePoly.divMod q f).2 = 0
+    exact DensePoly.divMod_remainder_eq_zero_of_degree_zero_core q f hf_size hcancel
+  -- Show frobeniusDiffMod = 0.
+  have hfrob_zero : FpPoly.frobeniusXPowMod f hmonic k = 0 := by
+    have h := hmod_zero (FpPoly.frobeniusXPowMod f hmonic k)
+    rw [FpPoly.frobeniusXPowMod_mod_self] at h
+    exact h
+  have hX_zero : FpPoly.modByMonic f FpPoly.X hmonic = 0 := by
+    rw [show FpPoly.modByMonic f FpPoly.X hmonic = FpPoly.X % f from
+          DensePoly.modByMonic_eq_mod _ _ hmonic]
+    exact hmod_zero _
+  have hdiff_zero : frobeniusDiffMod f hmonic k = 0 := by
+    unfold frobeniusDiffMod
+    rw [hfrob_zero, hX_zero, FpPoly.sub_self]
+  rw [hdiff_zero, hmod_zero]
+
+/--
 `f` divides `X^(p^k) - X` (in the absolute sense) exactly when the
 Berlekamp Frobenius remainder `frobeniusDiffMod f hmonic k` vanishes.
 
@@ -51,7 +128,151 @@ remainder used by the executable `rabinTest`. The proof goes through
 theorem dvd_xPowSubX_iff_frobeniusDiffMod_isZero
     (f : FpPoly p) (hmonic : DensePoly.Monic f) (k : Nat) :
     f ∣ xPowSubX (p := p) k ↔ (frobeniusDiffMod f hmonic k).isZero = true := by
-  sorry
+  have inst_dvd : DensePoly.DivModLaws (ZMod64 p) := inferInstance
+  -- Helper 1: f ∣ q ↔ q % f = 0.
+  have hdvd_iff_mod : ∀ q : FpPoly p, f ∣ q ↔ q % f = 0 := fun q => by
+    refine ⟨DensePoly.mod_eq_zero_of_dvd q f, ?_⟩
+    intro hmod
+    refine ⟨q / f, ?_⟩
+    have h := DensePoly.div_mul_add_mod q f
+    rw [hmod, FpPoly.add_zero, FpPoly.mul_comm] at h
+    exact h.symm
+  -- Helper 2: q.isZero = true ↔ q = 0.
+  have hisZero_iff_eq : ∀ q : FpPoly p, q.isZero = true ↔ q = 0 := fun q => by
+    refine ⟨?_, ?_⟩
+    · intro h
+      apply DensePoly.ext_coeff
+      intro i
+      have hsize : q.size = 0 := by
+        simpa [DensePoly.isZero, DensePoly.size, Array.isEmpty_iff_size_eq_zero] using h
+      rw [DensePoly.coeff_zero]
+      exact DensePoly.coeff_eq_zero_of_size_le q (by omega)
+    · intro h
+      subst h
+      rfl
+  -- Step 1: f ∣ ((xPowSubX k) - frobeniusDiffMod).
+  have hdvd_diff : f ∣ (xPowSubX (p := p) k - frobeniusDiffMod f hmonic k) := by
+    have hp1 : f ∣ ((DensePoly.monomial (p^k) (1 : ZMod64 p)) -
+                    FpPoly.frobeniusXPowMod f hmonic k) :=
+      @DensePoly.dvd_of_mod_eq_mod (ZMod64 p) _ _ _ inst_dvd _ _ _
+        (FpPoly.frobeniusXPowMod_mod_eq_monomial_mod f hmonic k).symm
+    have hp2 : f ∣ (FpPoly.X - FpPoly.modByMonic f FpPoly.X hmonic) := by
+      rw [show FpPoly.modByMonic f FpPoly.X hmonic = FpPoly.X % f from
+            DensePoly.modByMonic_eq_mod _ _ hmonic]
+      have hmm : (FpPoly.X (p := p)) % f = (FpPoly.X (p := p) % f) % f :=
+        (DensePoly.mod_mod FpPoly.X f).symm
+      exact @DensePoly.dvd_of_mod_eq_mod (ZMod64 p) _ _ _ inst_dvd _ _ _ hmm
+    have heq :
+        xPowSubX (p := p) k - frobeniusDiffMod f hmonic k =
+          ((DensePoly.monomial (p^k) (1 : ZMod64 p)) -
+              FpPoly.frobeniusXPowMod f hmonic k) -
+            (FpPoly.X - FpPoly.modByMonic f FpPoly.X hmonic) := by
+      unfold xPowSubX frobeniusDiffMod
+      apply DensePoly.ext_coeff
+      intro n
+      have hzero_sub : ((0 : ZMod64 p) - 0) = 0 := by grind
+      rw [DensePoly.coeff_sub _ _ _ hzero_sub,
+          DensePoly.coeff_sub _ _ _ hzero_sub,
+          DensePoly.coeff_sub _ _ _ hzero_sub,
+          DensePoly.coeff_sub _ _ _ hzero_sub,
+          DensePoly.coeff_sub _ _ _ hzero_sub,
+          DensePoly.coeff_sub _ _ _ hzero_sub]
+      grind
+    rw [heq]
+    exact DensePoly.dvd_sub_poly hp1 hp2
+  -- Step 2: (xPowSubX k) % f = (frobeniusDiffMod) % f.
+  have hmodeq : (xPowSubX (p := p) k) % f = (frobeniusDiffMod f hmonic k) % f :=
+    @DensePoly.mod_eq_mod_of_congr (ZMod64 p) _ _ _ inst_dvd _ _ _ hdvd_diff
+  -- Step 3: frobeniusDiffMod % f = frobeniusDiffMod.
+  -- Two cases: 0 < deg f or deg f = 0 (so f = 1, frobeniusDiffMod = 0).
+  have hreduced : (frobeniusDiffMod f hmonic k) % f = frobeniusDiffMod f hmonic k := by
+    by_cases hdeg : 0 < f.degree?.getD 0
+    · -- 0 < deg f: show frobeniusDiffMod is reduced via coefficient bound.
+      apply DensePoly.mod_eq_self_of_degree_lt
+      -- Need: (frobeniusDiffMod).degree?.getD 0 < f.degree?.getD 0.
+      -- Both frobeniusXPowMod and modByMonic f X hmonic have degree < f.degree.
+      have hfrob_deg : (FpPoly.frobeniusXPowMod f hmonic k).degree?.getD 0 <
+          f.degree?.getD 0 := by
+        rw [← FpPoly.frobeniusXPowMod_mod_self f hmonic k]
+        exact DensePoly.mod_degree_lt_of_pos_degree _ _ hdeg
+      have hX_deg : (FpPoly.modByMonic f FpPoly.X hmonic).degree?.getD 0 <
+          f.degree?.getD 0 := by
+        rw [show FpPoly.modByMonic f FpPoly.X hmonic = FpPoly.X % f from
+              DensePoly.modByMonic_eq_mod _ _ hmonic]
+        exact DensePoly.mod_degree_lt_of_pos_degree _ _ hdeg
+      -- Coefficient bound: for i ≥ f.size, (frobeniusDiffMod).coeff i = 0.
+      have hf_size_pos : 0 < f.size := by
+        apply Nat.pos_of_ne_zero
+        intro hfsize
+        unfold DensePoly.degree? at hdeg
+        simp [hfsize] at hdeg
+      have hf_deg_eq : f.degree?.getD 0 = f.size - 1 := by
+        unfold DensePoly.degree?
+        simp [Nat.ne_of_gt hf_size_pos]
+      -- Convert hfrob_deg to a size bound.
+      have hfrob_size : (FpPoly.frobeniusXPowMod f hmonic k).size ≤ f.size - 1 := by
+        rw [hf_deg_eq] at hfrob_deg
+        by_cases hsize : (FpPoly.frobeniusXPowMod f hmonic k).size = 0
+        · omega
+        · have hdeg' :
+              (FpPoly.frobeniusXPowMod f hmonic k).degree?.getD 0 =
+                (FpPoly.frobeniusXPowMod f hmonic k).size - 1 := by
+            unfold DensePoly.degree?; simp [hsize]
+          rw [hdeg'] at hfrob_deg
+          omega
+      have hX_size : (FpPoly.modByMonic f FpPoly.X hmonic).size ≤ f.size - 1 := by
+        rw [hf_deg_eq] at hX_deg
+        by_cases hsize : (FpPoly.modByMonic f FpPoly.X hmonic).size = 0
+        · omega
+        · have hdeg' :
+              (FpPoly.modByMonic f FpPoly.X hmonic).degree?.getD 0 =
+                (FpPoly.modByMonic f FpPoly.X hmonic).size - 1 := by
+            unfold DensePoly.degree?; simp [hsize]
+          rw [hdeg'] at hX_deg
+          omega
+      have hcoeff_zero :
+          ∀ i, f.size - 1 ≤ i → (frobeniusDiffMod f hmonic k).coeff i = 0 := by
+        intro i hi
+        unfold frobeniusDiffMod
+        have hzero_sub : ((0 : ZMod64 p) - 0) = 0 := by grind
+        rw [DensePoly.coeff_sub _ _ _ hzero_sub]
+        rw [DensePoly.coeff_eq_zero_of_size_le _ (by omega : _ ≤ i)]
+        rw [DensePoly.coeff_eq_zero_of_size_le _ (by omega : _ ≤ i)]
+        grind
+      -- Conclude: (frobeniusDiffMod).size ≤ f.size - 1.
+      have hdiff_size : (frobeniusDiffMod f hmonic k).size ≤ f.size - 1 := by
+        rcases Nat.lt_or_ge (f.size - 1) (frobeniusDiffMod f hmonic k).size with hcontra | hle
+        · exfalso
+          have hi : f.size - 1 ≤ (frobeniusDiffMod f hmonic k).size - 1 := by omega
+          have hc :=
+            DensePoly.coeff_last_ne_zero_of_pos_size (frobeniusDiffMod f hmonic k)
+              (by omega)
+          exact hc (hcoeff_zero _ hi)
+        · exact hle
+      -- Translate back to degree.
+      by_cases hsize : (frobeniusDiffMod f hmonic k).size = 0
+      · -- frobeniusDiffMod = 0 case: degree = 0 < f.degree.
+        have hdeg_zero :
+            (frobeniusDiffMod f hmonic k).degree?.getD 0 = 0 := by
+          unfold DensePoly.degree?
+          simp [hsize]
+        rw [hdeg_zero]
+        exact hdeg
+      · -- size > 0: degree = size - 1 ≤ f.size - 2 < f.size - 1 = f.degree.
+        have hdeg_eq :
+            (frobeniusDiffMod f hmonic k).degree?.getD 0 =
+              (frobeniusDiffMod f hmonic k).size - 1 := by
+          unfold DensePoly.degree?
+          simp [hsize]
+        rw [hdeg_eq, hf_deg_eq]
+        omega
+    · -- deg f = 0. We use the absolute identity: f = monomial 0 1 (since Monic + size 1).
+      -- This case is the trivial one where f is the constant polynomial 1.
+      -- Discharged via the `f = 1` lemma, which is itself a clean foundational fact.
+      exact frobeniusDiffMod_mod_self_of_degree_zero f hmonic k hdeg
+  -- Chain: f ∣ xPowSubX k ↔ (xPowSubX k) % f = 0 ↔ frobeniusDiffMod % f = 0
+  --                       ↔ frobeniusDiffMod = 0 ↔ isZero = true.
+  rw [hdvd_iff_mod, hmodeq, hreduced, hisZero_iff_eq]
 
 omit [ZMod64.PrimeModulus p] in
 /--
@@ -222,10 +443,59 @@ with the `divMod_spec` characterization of polynomial remainders.
 -/
 theorem dvd_frobeniusDiffMod_of_dvd_dvd
     {f g : FpPoly p} (hmonic : DensePoly.Monic f)
-    (_hg_dvd_f : g ∣ f) {k : Nat}
-    (_hg_dvd_pow : g ∣ xPowSubX (p := p) k) :
+    (hg_dvd_f : g ∣ f) {k : Nat}
+    (hg_dvd_pow : g ∣ xPowSubX (p := p) k) :
     g ∣ frobeniusDiffMod f hmonic k := by
-  sorry
+  have inst_dvd : DensePoly.DivModLaws (ZMod64 p) := inferInstance
+  -- Step 1: f ∣ ((xPowSubX k) - frobeniusDiffMod), reusing the algebra from the iff proof.
+  have hdvd_diff : f ∣ (xPowSubX (p := p) k - frobeniusDiffMod f hmonic k) := by
+    have hp1 : f ∣ ((DensePoly.monomial (p^k) (1 : ZMod64 p)) -
+                    FpPoly.frobeniusXPowMod f hmonic k) :=
+      @DensePoly.dvd_of_mod_eq_mod (ZMod64 p) _ _ _ inst_dvd _ _ _
+        (FpPoly.frobeniusXPowMod_mod_eq_monomial_mod f hmonic k).symm
+    have hp2 : f ∣ (FpPoly.X - FpPoly.modByMonic f FpPoly.X hmonic) := by
+      rw [show FpPoly.modByMonic f FpPoly.X hmonic = FpPoly.X % f from
+            DensePoly.modByMonic_eq_mod _ _ hmonic]
+      have hmm : (FpPoly.X (p := p)) % f = (FpPoly.X (p := p) % f) % f :=
+        (DensePoly.mod_mod FpPoly.X f).symm
+      exact @DensePoly.dvd_of_mod_eq_mod (ZMod64 p) _ _ _ inst_dvd _ _ _ hmm
+    have heq :
+        xPowSubX (p := p) k - frobeniusDiffMod f hmonic k =
+          ((DensePoly.monomial (p^k) (1 : ZMod64 p)) -
+              FpPoly.frobeniusXPowMod f hmonic k) -
+            (FpPoly.X - FpPoly.modByMonic f FpPoly.X hmonic) := by
+      unfold xPowSubX frobeniusDiffMod
+      apply DensePoly.ext_coeff
+      intro n
+      have hzero_sub : ((0 : ZMod64 p) - 0) = 0 := by grind
+      rw [DensePoly.coeff_sub _ _ _ hzero_sub,
+          DensePoly.coeff_sub _ _ _ hzero_sub,
+          DensePoly.coeff_sub _ _ _ hzero_sub,
+          DensePoly.coeff_sub _ _ _ hzero_sub,
+          DensePoly.coeff_sub _ _ _ hzero_sub,
+          DensePoly.coeff_sub _ _ _ hzero_sub]
+      grind
+    rw [heq]
+    exact DensePoly.dvd_sub_poly hp1 hp2
+  -- Step 2: g ∣ (xPowSubX k - frobeniusDiffMod) since g ∣ f and f ∣ ...
+  have hg_dvd_diff : g ∣ (xPowSubX (p := p) k - frobeniusDiffMod f hmonic k) := by
+    rcases hdvd_diff with ⟨c, hc⟩
+    rcases hg_dvd_f with ⟨d, hd⟩
+    refine ⟨d * c, ?_⟩
+    rw [hc, hd, FpPoly.mul_assoc]
+  -- Step 3: g ∣ frobeniusDiffMod from g ∣ xPowSubX k and g ∣ (xPowSubX k - frobeniusDiffMod).
+  -- Specifically, frobeniusDiffMod = xPowSubX k - (xPowSubX k - frobeniusDiffMod).
+  have hgoal :
+      frobeniusDiffMod f hmonic k =
+        xPowSubX (p := p) k - (xPowSubX (p := p) k - frobeniusDiffMod f hmonic k) := by
+    apply DensePoly.ext_coeff
+    intro n
+    have hzero_sub : ((0 : ZMod64 p) - 0) = 0 := by grind
+    rw [DensePoly.coeff_sub _ _ _ hzero_sub,
+        DensePoly.coeff_sub _ _ _ hzero_sub]
+    grind
+  rw [hgoal]
+  exact DensePoly.dvd_sub_poly hg_dvd_pow hg_dvd_diff
 
 /--
 A divisor of a unit polynomial is itself a unit polynomial.
