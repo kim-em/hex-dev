@@ -23,13 +23,13 @@ in total).  For each case we emit:
   by the fixture (positive and negative exponents are exercised
   across the matrix).
 
-Each modulus is asserted irreducible by a per-case axiom; this
-matches the existing pattern in `HexGfqField/Conformance.lean` (which
-axiomatises irreducibility of `x^4 + 2` over `F_5`) and is required
-by the field operations (`inv`, `div`, `zpow`) which take an
-`FpPoly.Irreducible` hypothesis.  python-flint independently rejects
-non-irreducible moduli at oracle time, so a typo in any axiom would
-surface as a CI failure rather than a silent miscompare.
+Each modulus is asserted irreducible by a per-case `theorem ... := by
+sorry` (matching the established pattern in `HexGfq/CrossCheck.lean`
+and `HexGF2/Bench.lean`).  Real proofs are pending the executable
+`Berlekamp.rabinTest`-to-`FpPoly.Irreducible` soundness bridge.
+python-flint independently rejects non-irreducible moduli at oracle
+time, so a typo in any committed modulus would surface as a CI
+failure rather than a silent miscompare.
 -/
 
 namespace Hex.GFqFieldEmit
@@ -162,9 +162,11 @@ private def emitAt
 /-! ## Per-modulus declarations and emit helpers.
 
 Sixteen `(p, n)` pairs.  For each, define the irreducible modulus,
-record positive-degree by `decide`, and axiomatise irreducibility.
-Each modulus was independently verified irreducible by python-flint
-(`fq_default_ctx` rejects non-irreducible moduli). -/
+record positive-degree by `decide`, and stub irreducibility with a
+per-case `theorem ... := by sorry`.  Each modulus was independently
+verified irreducible by python-flint (`fq_default_ctx` rejects
+non-irreducible moduli); real proofs are pending the executable
+`Berlekamp.rabinTest`-to-`FpPoly.Irreducible` soundness bridge. -/
 
 -- p = 2
 
@@ -173,28 +175,28 @@ private def m_p2_n2 : FpPoly 2 :=
   { coeffs := #[(1 : ZMod64 2), 1, 1]
     normalized := Or.inr (by simpa using one_ne_zero_two) }
 private theorem m_p2_n2_pos : 0 < FpPoly.degree m_p2_n2 := by decide
-private axiom m_p2_n2_irr : FpPoly.Irreducible m_p2_n2
+private theorem m_p2_n2_irr : FpPoly.Irreducible m_p2_n2 := by sorry
 
 /-- `x^3 + x + 1` — irreducible over `F_2`. -/
 private def m_p2_n3 : FpPoly 2 :=
   { coeffs := #[(1 : ZMod64 2), 1, 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_two) }
 private theorem m_p2_n3_pos : 0 < FpPoly.degree m_p2_n3 := by decide
-private axiom m_p2_n3_irr : FpPoly.Irreducible m_p2_n3
+private theorem m_p2_n3_irr : FpPoly.Irreducible m_p2_n3 := by sorry
 
 /-- `x^4 + x + 1` — irreducible over `F_2`. -/
 private def m_p2_n4 : FpPoly 2 :=
   { coeffs := #[(1 : ZMod64 2), 1, 0, 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_two) }
 private theorem m_p2_n4_pos : 0 < FpPoly.degree m_p2_n4 := by decide
-private axiom m_p2_n4_irr : FpPoly.Irreducible m_p2_n4
+private theorem m_p2_n4_irr : FpPoly.Irreducible m_p2_n4 := by sorry
 
 /-- `x^6 + x + 1` — irreducible over `F_2`. -/
 private def m_p2_n6 : FpPoly 2 :=
   { coeffs := #[(1 : ZMod64 2), 1, 0, 0, 0, 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_two) }
 private theorem m_p2_n6_pos : 0 < FpPoly.degree m_p2_n6 := by decide
-private axiom m_p2_n6_irr : FpPoly.Irreducible m_p2_n6
+private theorem m_p2_n6_irr : FpPoly.Irreducible m_p2_n6 := by sorry
 
 -- p = 3
 
@@ -203,28 +205,28 @@ private def m_p3_n2 : FpPoly 3 :=
   { coeffs := #[(1 : ZMod64 3), 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_three) }
 private theorem m_p3_n2_pos : 0 < FpPoly.degree m_p3_n2 := by decide
-private axiom m_p3_n2_irr : FpPoly.Irreducible m_p3_n2
+private theorem m_p3_n2_irr : FpPoly.Irreducible m_p3_n2 := by sorry
 
 /-- `x^3 + 2x + 1` — irreducible over `F_3`. -/
 private def m_p3_n3 : FpPoly 3 :=
   { coeffs := #[(1 : ZMod64 3), 2, 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_three) }
 private theorem m_p3_n3_pos : 0 < FpPoly.degree m_p3_n3 := by decide
-private axiom m_p3_n3_irr : FpPoly.Irreducible m_p3_n3
+private theorem m_p3_n3_irr : FpPoly.Irreducible m_p3_n3 := by sorry
 
 /-- `x^4 + 2x^3 + 2` — Conway polynomial for `GF(81)`. -/
 private def m_p3_n4 : FpPoly 3 :=
   { coeffs := #[(2 : ZMod64 3), 0, 0, 2, 1]
     normalized := Or.inr (by simpa using one_ne_zero_three) }
 private theorem m_p3_n4_pos : 0 < FpPoly.degree m_p3_n4 := by decide
-private axiom m_p3_n4_irr : FpPoly.Irreducible m_p3_n4
+private theorem m_p3_n4_irr : FpPoly.Irreducible m_p3_n4 := by sorry
 
 /-- `x^6 + 2x^4 + x^2 + 2x + 2` — Conway polynomial for `GF(729)`. -/
 private def m_p3_n6 : FpPoly 3 :=
   { coeffs := #[(2 : ZMod64 3), 2, 1, 0, 2, 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_three) }
 private theorem m_p3_n6_pos : 0 < FpPoly.degree m_p3_n6 := by decide
-private axiom m_p3_n6_irr : FpPoly.Irreducible m_p3_n6
+private theorem m_p3_n6_irr : FpPoly.Irreducible m_p3_n6 := by sorry
 
 -- p = 5
 
@@ -233,28 +235,28 @@ private def m_p5_n2 : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 4, 1]
     normalized := Or.inr (by simpa using one_ne_zero_five) }
 private theorem m_p5_n2_pos : 0 < FpPoly.degree m_p5_n2 := by decide
-private axiom m_p5_n2_irr : FpPoly.Irreducible m_p5_n2
+private theorem m_p5_n2_irr : FpPoly.Irreducible m_p5_n2 := by sorry
 
 /-- `x^3 + 3x + 3` — Conway polynomial for `GF(125)`. -/
 private def m_p5_n3 : FpPoly 5 :=
   { coeffs := #[(3 : ZMod64 5), 3, 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_five) }
 private theorem m_p5_n3_pos : 0 < FpPoly.degree m_p5_n3 := by decide
-private axiom m_p5_n3_irr : FpPoly.Irreducible m_p5_n3
+private theorem m_p5_n3_irr : FpPoly.Irreducible m_p5_n3 := by sorry
 
 /-- `x^4 + 2` — irreducible over `F_5` (matches `HexGfqField.Conformance`). -/
 private def m_p5_n4 : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 0, 0, 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_five) }
 private theorem m_p5_n4_pos : 0 < FpPoly.degree m_p5_n4 := by decide
-private axiom m_p5_n4_irr : FpPoly.Irreducible m_p5_n4
+private theorem m_p5_n4_irr : FpPoly.Irreducible m_p5_n4 := by sorry
 
 /-- `x^6 + x^4 + 4x^3 + x^2 + 2` — Conway polynomial for `GF(15625)`. -/
 private def m_p5_n6 : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 0, 1, 4, 1, 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_five) }
 private theorem m_p5_n6_pos : 0 < FpPoly.degree m_p5_n6 := by decide
-private axiom m_p5_n6_irr : FpPoly.Irreducible m_p5_n6
+private theorem m_p5_n6_irr : FpPoly.Irreducible m_p5_n6 := by sorry
 
 -- p = 7
 
@@ -263,28 +265,28 @@ private def m_p7_n2 : FpPoly 7 :=
   { coeffs := #[(3 : ZMod64 7), 6, 1]
     normalized := Or.inr (by simpa using one_ne_zero_seven) }
 private theorem m_p7_n2_pos : 0 < FpPoly.degree m_p7_n2 := by decide
-private axiom m_p7_n2_irr : FpPoly.Irreducible m_p7_n2
+private theorem m_p7_n2_irr : FpPoly.Irreducible m_p7_n2 := by sorry
 
 /-- `x^3 + 6x^2 + 4` — Conway polynomial for `GF(343)`. -/
 private def m_p7_n3 : FpPoly 7 :=
   { coeffs := #[(4 : ZMod64 7), 0, 6, 1]
     normalized := Or.inr (by simpa using one_ne_zero_seven) }
 private theorem m_p7_n3_pos : 0 < FpPoly.degree m_p7_n3 := by decide
-private axiom m_p7_n3_irr : FpPoly.Irreducible m_p7_n3
+private theorem m_p7_n3_irr : FpPoly.Irreducible m_p7_n3 := by sorry
 
 /-- `x^4 + 5x^2 + 4x + 3` — Conway polynomial for `GF(2401)`. -/
 private def m_p7_n4 : FpPoly 7 :=
   { coeffs := #[(3 : ZMod64 7), 4, 5, 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_seven) }
 private theorem m_p7_n4_pos : 0 < FpPoly.degree m_p7_n4 := by decide
-private axiom m_p7_n4_irr : FpPoly.Irreducible m_p7_n4
+private theorem m_p7_n4_irr : FpPoly.Irreducible m_p7_n4 := by sorry
 
 /-- `x^6 + x^4 + 5x^3 + 4x^2 + 6x + 3` — Conway polynomial for `GF(7^6)`. -/
 private def m_p7_n6 : FpPoly 7 :=
   { coeffs := #[(3 : ZMod64 7), 6, 4, 5, 1, 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_seven) }
 private theorem m_p7_n6_pos : 0 < FpPoly.degree m_p7_n6 := by decide
-private axiom m_p7_n6_irr : FpPoly.Irreducible m_p7_n6
+private theorem m_p7_n6_irr : FpPoly.Irreducible m_p7_n6 := by sorry
 
 end Hex.GFqFieldEmit
 

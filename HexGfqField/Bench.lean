@@ -106,7 +106,15 @@ def modulus (degree : Nat) : FpPoly 8191 :=
       rw [hlast] at hback
       exact one_ne_zero_mersenne (Option.some.inj hback) }
 
-private axiom modulus_irreducible (degree : Nat) : FpPoly.Irreducible (modulus degree)
+/-- TEMPORARY: this universally quantified claim is almost certainly unsound
+for the deterministic `modulus` generator, which is not designed to produce
+irreducible polynomials at every degree.  The benchmark needs structural
+restructuring to fix a finite set of irreducible per-degree moduli; until
+that lands, the placeholder below stays as a `sorry` rather than an `axiom`
+to keep the unsoundness visible (and to satisfy the project ban on
+agent-introduced axioms). -/
+private theorem modulus_irreducible (degree : Nat) :
+    FpPoly.Irreducible (modulus degree) := by sorry
 
 /-- Generated moduli are nonconstant, so field representatives are meaningful. -/
 theorem modulus_pos_degree (degree : Nat) : 0 < FpPoly.degree (modulus (degree + 1)) := by

@@ -61,11 +61,14 @@ private def coeffNats (f : FpPoly 5) : List Nat :=
   f.toArray.toList.map ZMod64.toNat
 
 /-- Modulus `x^4 + 2`, an irreducible degree-4 polynomial over `F_5`.
-Irreducibility is taken as an axiom below; it follows from absence of
-roots in `F_5` (4-th powers in `F_5` are `{0, 1}`, so `x^4 = -2 = 3` has
-no solution) and absence of a quadratic factorisation (case analysis on
+Irreducibility is currently stubbed via `theorem ... := by sorry`
+(matching the project pattern); it follows from absence of roots in
+`F_5` (4-th powers in `F_5` are `{0, 1}`, so `x^4 = -2 = 3` has no
+solution) and absence of a quadratic factorisation (case analysis on
 `(x^2 + ax + b)(x^2 + cx + d) = x^4 + 2` forces `b^2 ∈ {2, 3}`, neither
-of which is a square mod 5). -/
+of which is a square mod 5).  The full proof is pending the
+executable `Berlekamp.rabinTest`-to-`FpPoly.Irreducible` soundness
+bridge. -/
 private def modulus : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 0, 0, 0, 1]
     normalized := by
@@ -79,7 +82,7 @@ private abbrev Q := GFqRing.PolyQuotient modulus modulus_pos_degree
 private abbrev F (hirr : FpPoly.Irreducible modulus) :=
   FiniteField modulus modulus_pos_degree prime_five hirr
 
-private axiom modulus_irreducible : FpPoly.Irreducible modulus
+private theorem modulus_irreducible : FpPoly.Irreducible modulus := by sorry
 
 private def q (coeffs : Array Nat) : Q :=
   GFqRing.ofPoly modulus modulus_pos_degree (polyFive coeffs)
