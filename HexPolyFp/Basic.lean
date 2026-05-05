@@ -730,14 +730,40 @@ instance instDivModLawsZMod64Fp (p : Nat) [Bounds p] [PrimeModulus p] :
         grind
       exact mul_left_remainder_delta f g m rf rg hf' hg'⟩
 
+private theorem divMod_remainder_eq_zero_of_not_pos_degree_core
+    [PrimeModulus p] (f m : DensePoly (ZMod64 p))
+    (hmzero : m.isZero = false)
+    (hdegree : ¬ 0 < m.degree?.getD 0) :
+    (DensePoly.divMod f m).2 = 0 := by
+  have hpos_size : 0 < m.size := by
+    have hsize : m.coeffs.size ≠ 0 := by
+      simpa [DensePoly.isZero, Array.isEmpty_iff_size_eq_zero] using hmzero
+    simpa [DensePoly.size, Nat.pos_iff_ne_zero] using hsize
+  have hsize0 : m.size ≠ 0 := Nat.pos_iff_ne_zero.mp hpos_size
+  have hsize1 : m.size = 1 := by
+    have hdeg_eq : m.degree?.getD 0 = m.size - 1 := by
+      simp [DensePoly.degree?, hsize0]
+    have hnot_pos : ¬ 0 < m.size - 1 := by
+      intro h
+      apply hdegree
+      rw [hdeg_eq]
+      exact h
+    omega
+  have hcancel := cancel_lead_at_pos_size_core m hpos_size
+  exact DensePoly.divMod_remainder_eq_zero_of_degree_zero_core f m hsize1 hcancel
+
 /-- The `F_p[x]` gcd law obligations used by finite-field inverse construction. -/
-instance : DensePoly.GcdLaws (ZMod64 p) where
+instance [PrimeModulus p] : DensePoly.GcdLaws (ZMod64 p) where
   gcd_dvd_left := by
     intro f g
-    sorry
+    exact @DensePoly.gcd_dvd_left_of_divModLaws (ZMod64 p) _ _ _
+      (instDivModLawsZMod64Fp p)
+      (fun a b => divMod_remainder_eq_zero_of_not_pos_degree_core a b) f g
   gcd_dvd_right := by
     intro f g
-    sorry
+    exact @DensePoly.gcd_dvd_right_of_divModLaws (ZMod64 p) _ _ _
+      (instDivModLawsZMod64Fp p)
+      (fun a b => divMod_remainder_eq_zero_of_not_pos_degree_core a b) f g
   dvd_gcd := by
     intro d f g hdf hdg
     sorry
