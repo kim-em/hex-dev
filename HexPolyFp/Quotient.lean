@@ -150,6 +150,49 @@ private theorem length_filter_ne_eq_pred_of_mem_nodup
           omega
         · exact decide_eq_true hx
 
+private theorem perm_of_nodup_mem_iff
+    {α : Type} :
+    ∀ {xs ys : List α}, xs.Nodup → ys.Nodup →
+      (∀ a, a ∈ xs ↔ a ∈ ys) → List.Perm xs ys
+  | [], ys, _, _, hmem => by
+      cases ys with
+      | nil => exact .nil
+      | cons y _ =>
+          have hy : y ∈ ([] : List α) := (hmem y).mpr List.mem_cons_self
+          exact absurd hy List.not_mem_nil
+  | x :: xs', ys, hxs, hys, hmem => by
+      have hxs_inv := List.nodup_cons.mp hxs
+      have hx_not_in_xs' : x ∉ xs' := hxs_inv.1
+      have hxs' : xs'.Nodup := hxs_inv.2
+      have hx_mem : x ∈ ys := (hmem x).mp List.mem_cons_self
+      obtain ⟨ys₁, ys₂, hys_eq⟩ := List.append_of_mem hx_mem
+      subst hys_eq
+      have hys_perm : List.Perm (ys₁ ++ x :: ys₂) (x :: (ys₁ ++ ys₂)) :=
+        List.perm_middle
+      have h_inner_nodup : (x :: (ys₁ ++ ys₂)).Nodup := hys_perm.nodup hys
+      have h_inner_inv := List.nodup_cons.mp h_inner_nodup
+      have hx_not_inner : x ∉ ys₁ ++ ys₂ := h_inner_inv.1
+      have h_concat_nodup : (ys₁ ++ ys₂).Nodup := h_inner_inv.2
+      have hmem' : ∀ a, a ∈ xs' ↔ a ∈ ys₁ ++ ys₂ := by
+        intro a
+        constructor
+        · intro ha
+          have ha_in_xs : a ∈ x :: xs' := List.mem_cons.mpr (Or.inr ha)
+          have ha_in_ys : a ∈ ys₁ ++ x :: ys₂ := (hmem a).mp ha_in_xs
+          have ha_in_split : a ∈ x :: (ys₁ ++ ys₂) := hys_perm.mem_iff.mp ha_in_ys
+          rcases List.mem_cons.mp ha_in_split with hax | h
+          · exact absurd (hax ▸ ha) hx_not_in_xs'
+          · exact h
+        · intro ha
+          have ha_in_split : a ∈ x :: (ys₁ ++ ys₂) := List.mem_cons.mpr (Or.inr ha)
+          have ha_in_ys : a ∈ ys₁ ++ x :: ys₂ := hys_perm.mem_iff.mpr ha_in_split
+          have ha_in_xs : a ∈ x :: xs' := (hmem a).mpr ha_in_ys
+          rcases List.mem_cons.mp ha_in_xs with hax | h
+          · exact absurd (hax ▸ ha) hx_not_inner
+          · exact h
+      have ih_perm := perm_of_nodup_mem_iff hxs' h_concat_nodup hmem'
+      exact (ih_perm.cons x).trans hys_perm.symm
+
 /-- All canonical quotient representatives, enumerated via bounded-degree
 polynomials. -/
 def elements : List (Quotient g hmonic hg_pos) :=
@@ -683,6 +726,92 @@ theorem inv_mul_cancel (hg_irr : FpPoly.Irreducible g)
     a⁻¹ * a = 1 := by
   rw [mul_comm]
   exact mul_inv_cancel (g := g) (hmonic := hmonic) (hg_pos := hg_pos) hg_irr ha
+
+/-- Multiplying any quotient element by zero gives zero. -/
+@[simp] theorem mul_zero (a : Quotient g hmonic hg_pos) :
+    a * (0 : Quotient g hmonic hg_pos) = 0 := by
+  apply ext
+  letI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
+  have hzero_val : (0 : Quotient g hmonic hg_pos).val = (0 : FpPoly p) := by
+    rw [zero_val, FpPoly.modByMonic, DensePoly.modByMonic_zero]
+  show FpPoly.modByMonic g (a.val * (0 : Quotient g hmonic hg_pos).val) hmonic =
+    (0 : Quotient g hmonic hg_pos).val
+  rw [hzero_val, FpPoly.mul_zero, FpPoly.modByMonic, DensePoly.modByMonic_zero]
+
+/-- Zero times any quotient element is zero. -/
+@[simp] theorem zero_mul (a : Quotient g hmonic hg_pos) :
+    (0 : Quotient g hmonic hg_pos) * a = 0 := by
+  rw [mul_comm]
+  exact mul_zero a
+
+/-- For a monic irreducible positive-degree modulus, the product of two nonzero
+quotient elements is nonzero. -/
+theorem mul_left_ne_zero_of_ne_zero (hg_irr : FpPoly.Irreducible g)
+    {a b : Quotient g hmonic hg_pos} (ha : a ≠ 0) (hb : b ≠ 0) :
+    a * b ≠ 0 := by
+  intro hab
+  apply hb
+  calc b
+      = 1 * b := (one_mul b).symm
+    _ = (a⁻¹ * a) * b := by rw [inv_mul_cancel hg_irr ha]
+    _ = a⁻¹ * (a * b) := mul_assoc _ _ _
+    _ = a⁻¹ * 0 := by rw [hab]
+    _ = 0 := mul_zero _
+
+/-- Left multiplication by a nonzero quotient element is injective on the
+quotient under an irreducible modulus. -/
+theorem mul_left_injective (hg_irr : FpPoly.Irreducible g)
+    {a : Quotient g hmonic hg_pos} (ha : a ≠ 0)
+    {b₁ b₂ : Quotient g hmonic hg_pos} (heq : a * b₁ = a * b₂) :
+    b₁ = b₂ := by
+  have h := congrArg (fun x => a⁻¹ * x) heq
+  dsimp at h
+  rw [← mul_assoc, ← mul_assoc, inv_mul_cancel hg_irr ha, one_mul, one_mul] at h
+  exact h
+
+/-- Multiplication by a nonzero quotient element permutes the nonzero
+enumeration. The list of nonzero elements multiplied on the left by `a` is a
+permutation of the original nonzero list. -/
+theorem nonzeroElements_map_mul_left_perm (hg_irr : FpPoly.Irreducible g)
+    {a : Quotient g hmonic hg_pos} (ha : a ≠ 0) :
+    List.Perm
+      ((nonzeroElements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).map
+        (fun b => a * b))
+      (nonzeroElements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)) := by
+  let L : List (Quotient g hmonic hg_pos) :=
+    nonzeroElements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+  have hL_nodup : L.Nodup :=
+    nonzeroElements_nodup (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+  have hmap_inj :
+      ∀ b₁, b₁ ∈ L → ∀ b₂, b₂ ∈ L →
+        (fun b => a * b) b₁ = (fun b => a * b) b₂ → b₁ = b₂ := by
+    intro b₁ _ b₂ _ heq
+    exact mul_left_injective hg_irr ha heq
+  have hmap_nodup : (L.map (fun b => a * b)).Nodup :=
+    nodup_map_of_injective hL_nodup hmap_inj
+  have hmem_iff : ∀ c, c ∈ L.map (fun b => a * b) ↔ c ∈ L := by
+    intro c
+    constructor
+    · intro hc
+      rcases List.mem_map.mp hc with ⟨b, hb_mem, hbc⟩
+      have hb_ne : b ≠ 0 := (mem_nonzeroElements b).mp hb_mem
+      have hab_ne : a * b ≠ 0 := mul_left_ne_zero_of_ne_zero hg_irr ha hb_ne
+      have hc_ne : c ≠ 0 := hbc ▸ hab_ne
+      exact (mem_nonzeroElements c).mpr hc_ne
+    · intro hc
+      have hc_ne : c ≠ 0 := (mem_nonzeroElements c).mp hc
+      refine List.mem_map.mpr ⟨a⁻¹ * c, ?_, ?_⟩
+      · apply (mem_nonzeroElements _).mpr
+        intro hac
+        apply hc_ne
+        calc c
+            = 1 * c := (one_mul c).symm
+          _ = (a * a⁻¹) * c := by rw [mul_inv_cancel hg_irr ha]
+          _ = a * (a⁻¹ * c) := mul_assoc _ _ _
+          _ = a * 0 := by rw [hac]
+          _ = 0 := mul_zero _
+      · rw [← mul_assoc, mul_inv_cancel hg_irr ha, one_mul]
+  exact perm_of_nodup_mem_iff hmap_nodup hL_nodup hmem_iff
 
 end Quotient
 end FpPoly
