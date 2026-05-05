@@ -29,3 +29,8 @@ Commits made during the turn should mention the progress file.
 Check diagnostics after every step; don't continue past errors. Build
 via `lake build`, not `lean` directly. `native_decide` is banned (see
 SPEC).
+
+Never introduce an `axiom`. This includes converting an existing
+`theorem`/`def`/`example` into an `axiom` when a refactor breaks its
+proof — fix the proof or fix the API. For unfinished proofs use
+`sorry`, which is grep-able and produces a warning; `axiom` is silent.
