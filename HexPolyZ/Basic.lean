@@ -1417,6 +1417,26 @@ private theorem rat_mod_eq_zero_of_dvd_core (p q : DensePoly Rat)
   exact ⟨r, by
     rw [rat_sub_zero_right, hr]⟩
 
+private theorem rat_divMod_remainder_eq_zero_of_not_pos_degree (p q : DensePoly Rat)
+    (hqfalse : q.isZero = false)
+    (hdegree : ¬ 0 < q.degree?.getD 0) :
+    (DensePoly.divMod p q).2 = 0 := by
+  have hqsize_ne : q.size ≠ 0 := by
+    intro hsize
+    have hzero : q.isZero = true := by
+      simpa [DensePoly.isZero, DensePoly.size, Array.isEmpty_iff_size_eq_zero] using hsize
+    rw [hzero] at hqfalse
+    contradiction
+  have hqsize : q.size = 1 := by
+    have hdeg : q.degree?.getD 0 = q.size - 1 := by
+      simp [DensePoly.degree?, hqsize_ne]
+    rw [hdeg] at hdegree
+    omega
+  have hlead_ne : q.leadingCoeff ≠ (Zero.zero : Rat) := by
+    exact rat_leadingCoeff_ne_zero_of_pos_size q (by omega)
+  exact DensePoly.divMod_remainder_eq_zero_of_degree_zero_core p q hqsize
+    (fun a => rat_div_mul_cancel_of_ne a q.leadingCoeff hlead_ne)
+
 private instance ratDivModLaws : DensePoly.DivModLaws Rat where
   divMod_spec := by
     intro p q
@@ -1475,13 +1495,15 @@ private instance ratDivModLaws : DensePoly.DivModLaws Rat where
 private instance ratGcdLaws : DensePoly.GcdLaws Rat where
   gcd_dvd_left := by
     intro f g
-    sorry
+    exact DensePoly.gcd_dvd_left_of_divModLaws
+      rat_divMod_remainder_eq_zero_of_not_pos_degree f g
   gcd_dvd_right := by
     intro f g
-    sorry
+    exact DensePoly.gcd_dvd_right_of_divModLaws
+      rat_divMod_remainder_eq_zero_of_not_pos_degree f g
   dvd_gcd := by
     intro d f g hdf hdg
-    sorry
+    exact DensePoly.dvd_gcd_of_divModLaws d f g hdf hdg
   xgcd_bezout := by
     intro f g
     exact DensePoly.xgcd_bezout_of_divModLaws f g
