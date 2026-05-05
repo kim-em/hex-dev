@@ -753,7 +753,7 @@ private theorem divMod_remainder_eq_zero_of_not_pos_degree_core
   exact DensePoly.divMod_remainder_eq_zero_of_degree_zero_core f m hsize1 hcancel
 
 /-- The `F_p[x]` gcd law obligations used by finite-field inverse construction. -/
-instance [PrimeModulus p] : DensePoly.GcdLaws (ZMod64 p) where
+instance instGcdLawsZMod64Fp [PrimeModulus p] : DensePoly.GcdLaws (ZMod64 p) where
   gcd_dvd_left := by
     intro f g
     exact @DensePoly.gcd_dvd_left_of_divModLaws (ZMod64 p) _ _ _
@@ -766,10 +766,11 @@ instance [PrimeModulus p] : DensePoly.GcdLaws (ZMod64 p) where
       (fun a b => divMod_remainder_eq_zero_of_not_pos_degree_core a b) f g
   dvd_gcd := by
     intro d f g hdf hdg
-    sorry
+    exact @DensePoly.dvd_gcd_of_divModLaws (ZMod64 p) _ _ _ (instDivModLawsZMod64Fp p)
+      d f g hdf hdg
   xgcd_bezout := by
     intro f g
-    sorry
+    exact @DensePoly.xgcd_bezout_of_divModLaws (ZMod64 p) _ _ _ (instDivModLawsZMod64Fp p) f g
 
 end ZMod64
 
