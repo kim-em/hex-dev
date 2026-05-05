@@ -1,3 +1,4 @@
 .lake/
 build/
 __pycache__/
+.claude/.pod-checksums
