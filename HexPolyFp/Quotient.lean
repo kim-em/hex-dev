@@ -87,6 +87,72 @@ theorem reduce_eq_reduce_iff_congr (f h : FpPoly p) :
       Congr (g := g) f h :=
   ⟨congr_of_reduce_eq_reduce, reduce_eq_reduce_of_congr⟩
 
+private theorem nodup_map_of_injective
+    {α β : Type} {xs : List α} {f : α → β}
+    (hxs : xs.Nodup)
+    (hinj : ∀ a, a ∈ xs → ∀ b, b ∈ xs → f a = f b → a = b) :
+    (xs.map f).Nodup := by
+  induction xs with
+  | nil =>
+      simp
+  | cons x xs ih =>
+      simp only [List.map_cons]
+      rw [List.nodup_cons] at hxs ⊢
+      constructor
+      · intro hx
+        rcases List.mem_map.mp hx with ⟨y, hy, hxy⟩
+        have hyx : y = x := hinj y (by simp [hy]) x (by simp) hxy
+        exact hxs.1 (by simpa [hyx] using hy)
+      · exact ih hxs.2 (by
+          intro a ha b hb hab
+          exact hinj a (by simp [ha]) b (by simp [hb]) hab)
+
+/-- All canonical quotient representatives, enumerated via bounded-degree
+polynomials. -/
+def elements : List (Quotient g hmonic hg_pos) :=
+  (Enumeration.polysBelowDegree p (g.degree?.getD 0)).map
+    (reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos))
+
+@[simp] theorem elements_length :
+    (elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).length =
+      p ^ g.degree?.getD 0 := by
+  simp [elements]
+
+/-- Every quotient element appears in `elements`. -/
+theorem mem_elements (a : Quotient g hmonic hg_pos) :
+    a ∈ elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos) := by
+  unfold elements
+  apply List.mem_map.mpr
+  refine ⟨a.val, Enumeration.mem_polysBelowDegree_of_degree_getD_lt a.reduced, ?_⟩
+  apply ext
+  rw [reduce_val, FpPoly.modByMonic, DensePoly.modByMonic_eq_mod]
+  exact DensePoly.mod_eq_self_of_degree_lt a.val g a.reduced
+
+/-- The quotient enumeration has no duplicate elements. -/
+theorem elements_nodup :
+    (elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).Nodup := by
+  unfold elements
+  apply nodup_map_of_injective
+  · exact Enumeration.polysBelowDegree_nodup (p := p) (g.degree?.getD 0)
+  · intro a ha b hb hab
+    have hval := congrArg Quotient.val hab
+    rw [reduce_val, reduce_val, FpPoly.modByMonic, FpPoly.modByMonic,
+      DensePoly.modByMonic_eq_mod, DensePoly.modByMonic_eq_mod] at hval
+    have ha_deg : a.degree?.getD 0 < g.degree?.getD 0 :=
+      Enumeration.degree_getD_lt_of_mem_polysBelowDegree hg_pos ha
+    have hb_deg : b.degree?.getD 0 < g.degree?.getD 0 :=
+      Enumeration.degree_getD_lt_of_mem_polysBelowDegree hg_pos hb
+    rw [DensePoly.mod_eq_self_of_degree_lt a g ha_deg,
+      DensePoly.mod_eq_self_of_degree_lt b g hb_deg] at hval
+    exact hval
+
+/-- The quotient has `p ^ deg(g)` canonical representatives in the executable
+list-cardinality sense. -/
+theorem elements_card :
+    (elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).length =
+      p ^ g.degree?.getD 0 :=
+  elements_length (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+
 omit [ZMod64.PrimeModulus p] in
 /-- Equality of quotient elements is equality of canonical remainders. -/
 theorem eq_iff_val_eq {a b : Quotient g hmonic hg_pos} :

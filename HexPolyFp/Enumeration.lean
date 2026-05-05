@@ -252,6 +252,48 @@ theorem mem_polysBelowDegree_of_degree_getD_lt {f : FpPoly p} {d : Nat}
       exact ZMod64.mem_values (f.coeff i)
   · exact of_first_coeffs_eq_of_degree_getD_lt hdeg
 
+private theorem ofCoeffList_degree_getD_lt_of_length_eq
+    {coeffs : List (ZMod64 p)} {d : Nat}
+    (hd : 0 < d) (hlen : coeffs.length = d) :
+    (ofCoeffList coeffs).degree?.getD 0 < d := by
+  have hzero_ge : ∀ i, d ≤ i → (ofCoeffList coeffs).coeff i = 0 := by
+    intro i hi
+    unfold ofCoeffList FpPoly.ofCoeffs
+    rw [DensePoly.coeff_ofCoeffs_list]
+    have hlen_le : coeffs.length ≤ i := by omega
+    change coeffs.getD i (0 : ZMod64 p) = (0 : ZMod64 p)
+    simp [List.getD, hlen_le]
+  have hsize_le : (ofCoeffList coeffs).size ≤ d := by
+    by_cases hle : (ofCoeffList coeffs).size ≤ d
+    · exact hle
+    · exfalso
+      have hd_lt_size : d < (ofCoeffList coeffs).size := Nat.lt_of_not_ge hle
+      let i := (ofCoeffList coeffs).size - 1
+      have hi_ge : d ≤ i := by omega
+      have hi_pos : 0 < (ofCoeffList coeffs).size := by omega
+      have hzero : (ofCoeffList coeffs).coeff i = 0 := hzero_ge i hi_ge
+      have hne : (ofCoeffList coeffs).coeff i ≠ 0 :=
+        DensePoly.coeff_last_ne_zero_of_pos_size (ofCoeffList coeffs) hi_pos
+      exact hne hzero
+  by_cases hsize : (ofCoeffList coeffs).size = 0
+  · simp [DensePoly.degree?, hsize, hd]
+  · have hdeg : (ofCoeffList coeffs).degree?.getD 0 =
+        (ofCoeffList coeffs).size - 1 := by
+      simp [DensePoly.degree?, hsize]
+    rw [hdeg]
+    omega
+
+/-- Every polynomial in the bounded-degree enumeration has degree below the
+bound, provided the bound is positive. -/
+theorem degree_getD_lt_of_mem_polysBelowDegree {f : FpPoly p} {d : Nat}
+    (hd : 0 < d) (hmem : f ∈ polysBelowDegree p d) :
+    f.degree?.getD 0 < d := by
+  unfold polysBelowDegree at hmem
+  rcases List.mem_map.mp hmem with ⟨coeffs, hcoeffs, hf⟩
+  rw [← hf]
+  exact ofCoeffList_degree_getD_lt_of_length_eq hd
+    (length_of_mem_coeffLists hcoeffs)
+
 private theorem list_eq_of_length_eq_of_getD_eq
     {α : Type} [Zero α] {xs ys : List α}
     (hlen : xs.length = ys.length)
