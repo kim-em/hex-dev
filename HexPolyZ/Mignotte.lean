@@ -64,6 +64,23 @@ factor of `f`, using the conservative `coeffL2NormBound`. -/
 def mignotteCoeffBound (f : ZPoly) (k j : Nat) : Nat :=
   binom k j * coeffL2NormBound f
 
+/--
+Uniform executable coefficient bound used by the default integer
+factorization entry point.
+
+It takes the maximum of the executable Mignotte coefficient bounds over every
+candidate factor degree up to `f.degree?.getD 0` and every coefficient index up
+to that degree.
+-/
+def defaultFactorCoeffBound (f : ZPoly) : Nat :=
+  let degreeBound := f.degree?.getD 0
+  (List.range (degreeBound + 1)).foldl
+    (fun acc k =>
+      (List.range (k + 1)).foldl
+        (fun acc j => max acc (mignotteCoeffBound f k j))
+        acc)
+    0
+
 @[simp] theorem binom_zero_right (n : Nat) : binom n 0 = 1 := by
   simp [binom]
 
@@ -89,6 +106,16 @@ theorem coeffL2NormBound_eq_ceilSqrt_coeffNormSq (f : ZPoly) :
 theorem mignotteCoeffBound_eq (f : ZPoly) (k j : Nat) :
     mignotteCoeffBound f k j = binom k j * coeffL2NormBound f := rfl
 
+theorem defaultFactorCoeffBound_eq (f : ZPoly) :
+    defaultFactorCoeffBound f =
+      let degreeBound := f.degree?.getD 0
+      (List.range (degreeBound + 1)).foldl
+        (fun acc k =>
+          (List.range (k + 1)).foldl
+            (fun acc j => max acc (mignotteCoeffBound f k j))
+            acc)
+        0 := rfl
+
 @[simp] theorem coeffNormSq_zero : coeffNormSq (0 : ZPoly) = 0 := by
   rfl
 
@@ -102,6 +129,15 @@ theorem mignotteCoeffBound_eq (f : ZPoly) (k j : Nat) :
 theorem mignotteCoeffBound_eq_zero_of_lt (f : ZPoly) (k j : Nat) (h : k < j) :
     mignotteCoeffBound f k j = 0 := by
   simp [mignotteCoeffBound, binom_eq_zero_of_lt h]
+
+/--
+Every executable Mignotte coefficient bound within the ambient degree range is
+bounded by the default uniform factorization bound.
+-/
+theorem mignotteCoeffBound_le_defaultFactorCoeffBound
+    (f : ZPoly) {k j : Nat} (hk : k ≤ f.degree?.getD 0) (hj : j ≤ k) :
+    mignotteCoeffBound f k j ≤ defaultFactorCoeffBound f := by
+  sorry
 
 end ZPoly
 end Hex

@@ -807,9 +807,9 @@ def factorWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
     else
       reassembleNormalizedFactors normalized coreFactors
 
-/-- Factor using the library's conservative executable coefficient bound. -/
+/-- Factor using the library's uniform executable Mignotte coefficient bound. -/
 def factor (f : ZPoly) : Array ZPoly :=
-  factorWithBound f (ZPoly.coeffL2NormBound f)
+  factorWithBound f (ZPoly.defaultFactorCoeffBound f)
 
 /--
 Conditional product contract for the bounded factorization entry point.

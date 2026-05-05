@@ -1,5 +1,6 @@
 import HexBerlekampZassenhaus
 import HexPolyZMathlib.Basic
+import HexPolyZMathlib.Mignotte
 import Mathlib.RingTheory.Polynomial.UniqueFactorization
 
 /-!
@@ -23,6 +24,54 @@ private def isUnitFactor (g : Hex.ZPoly) : Bool :=
 
 private def nonUnitFactorCount (factors : Array Hex.ZPoly) : Nat :=
   (factors.toList.filter fun g => !isUnitFactor g).length
+
+/--
+The transported degree of an executable divisor is bounded by the executable
+degree of the ambient nonzero polynomial.
+-/
+theorem natDegree_toPolynomial_le_degree_getD_of_dvd
+    (f g : Hex.ZPoly) (hf : f ≠ 0) (hgf : g ∣ f) :
+    (HexPolyZMathlib.toPolynomial g).natDegree ≤ f.degree?.getD 0 := by
+  sorry
+
+/--
+The executable natural L2 bound dominates the real coefficient-vector norm used
+by the Mathlib Mignotte theorem.
+-/
+theorem l2norm_toPolynomial_le_coeffL2NormBound (f : Hex.ZPoly) :
+    HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f) ≤
+      (Hex.ZPoly.coeffL2NormBound f : ℝ) := by
+  sorry
+
+/--
+The default executable factorization bound is strong enough for every
+coefficient of every executable divisor of a nonzero input.
+-/
+theorem defaultFactorCoeffBound_valid
+    (f : Hex.ZPoly) (hf : f ≠ 0) :
+    ∀ g : Hex.ZPoly, g ∣ f → ∀ i, (g.coeff i).natAbs ≤ Hex.ZPoly.defaultFactorCoeffBound f := by
+  intro g hgf i
+  have hf_poly : HexPolyZMathlib.toPolynomial f ≠ 0 := by
+    sorry
+  have hgf_poly : HexPolyZMathlib.toPolynomial g ∣ HexPolyZMathlib.toPolynomial f := by
+    sorry
+  have hmignotte :=
+    HexPolyZMathlib.mignotte_bound
+      (HexPolyZMathlib.toPolynomial f) (HexPolyZMathlib.toPolynomial g)
+      hf_poly hgf_poly i
+  have hdegree :
+      (HexPolyZMathlib.toPolynomial g).natDegree ≤ f.degree?.getD 0 :=
+    natDegree_toPolynomial_le_degree_getD_of_dvd f g hf hgf
+  have hl2 :
+      HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f) ≤
+        (Hex.ZPoly.coeffL2NormBound f : ℝ) :=
+    l2norm_toPolynomial_le_coeffL2NormBound f
+  have huniform :
+      Hex.ZPoly.mignotteCoeffBound f (HexPolyZMathlib.toPolynomial g).natDegree i ≤
+        Hex.ZPoly.defaultFactorCoeffBound f :=
+    Hex.ZPoly.mignotteCoeffBound_le_defaultFactorCoeffBound f hdegree
+      (by sorry)
+  sorry
 
 /--
 Executable irreducibility predicate for transported integer polynomials.
@@ -63,7 +112,11 @@ instance irreducibleDecidablePred :
 /-- The default executable factorization multiplies back to the input. -/
 theorem factor_product (f : Hex.ZPoly) :
     Array.foldl (· * ·) 1 (Hex.factor f) = f := by
-  sorry
+  by_cases hf : f = 0
+  · sorry
+  · rw [Hex.factor]
+    exact Hex.factor_product_of_bound f (Hex.ZPoly.defaultFactorCoeffBound f)
+      (defaultFactorCoeffBound_valid f hf)
 
 /--
 Every factor emitted by the default executable factorization is irreducible
