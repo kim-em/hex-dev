@@ -765,5 +765,17 @@ theorem checkIrreducibilityCertificate_imp_irreducible
   rabinTest_imp_irreducible f
     (checkIrreducibilityCertificate_rabinTest f cert hcheck)
 
+/--
+The linear-time variant of the certificate checker also implies
+project-side `GF2Poly.Irreducible`, composing the linear soundness theorem
+with Rabin soundness.
+-/
+theorem checkIrreducibilityCertificateLinear_imp_irreducible
+    (f : GF2Poly) (cert : IrreducibilityCertificate)
+    (hcheck : checkIrreducibilityCertificateLinear f cert = true) :
+    GF2Poly.Irreducible f :=
+  rabinTest_imp_irreducible f
+    (checkIrreducibilityCertificateLinear_rabinTest f cert hcheck)
+
 end GF2Poly
 end Hex
