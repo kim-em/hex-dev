@@ -113,7 +113,34 @@ relation.
 theorem isUnitPolynomial_of_dvd_isUnitPolynomial
     {g h : GF2Poly} (hgh : g ∣ h) (hh : isUnitPolynomial h = true) :
     isUnitPolynomial g = true := by
-  sorry
+  have hh_deg? : h.degree? = some 0 := by
+    unfold isUnitPolynomial at hh
+    cases hdeg : h.degree? with
+    | none => rw [hdeg] at hh; simp at hh
+    | some k =>
+        rw [hdeg] at hh
+        cases k with
+        | zero => rfl
+        | succ _ => simp at hh
+  have hh_ne_zero : h ≠ 0 := ne_zero_of_degree?_eq_some hh_deg?
+  have hg_ne_zero : g ≠ 0 := by
+    intro hg
+    rcases hgh with ⟨r, hr⟩
+    apply hh_ne_zero
+    rw [hr, hg, zero_mul]
+  have hh_deg : h.degree = 0 := degree_eq_of_degree?_eq_some hh_deg?
+  have hgle : g.degree ≤ h.degree :=
+    degree_le_of_dvd_nonzero hg_ne_zero hh_ne_zero hgh
+  rw [hh_deg] at hgle
+  have hg_deg_zero : g.degree = 0 := Nat.eq_zero_of_le_zero hgle
+  have hg_isZero_false : g.isZero = false := by
+    cases hzero : g.isZero
+    · rfl
+    · exact False.elim (hg_ne_zero (eq_zero_of_isZero hzero))
+  obtain ⟨d, hd⟩ := degree?_isSome_of_isZero_false hg_isZero_false
+  have hd0 : d = 0 := by simpa [degree, hd] using hg_deg_zero
+  unfold isUnitPolynomial
+  rw [hd, hd0]
 
 /-! ## Small structural helpers -/
 
