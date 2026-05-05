@@ -1324,6 +1324,27 @@ private theorem rat_size_le_one_of_mul_dvd_self
       have hcontr : r.size ≤ (d * r).size - 1 + (k.size - 1) := by omega
       omega
 
+private theorem rat_size_le_of_dvd_nonzero
+    {d r : DensePoly Rat} (hd : d.size ≠ 0) (hr : r.size ≠ 0) :
+    d ∣ r → d.size ≤ r.size := by
+  intro hdiv
+  rcases hdiv with ⟨k, hk⟩
+  by_cases hk_zero : k.size = 0
+  · have hk_eq : k = 0 := rat_eq_zero_of_size_zero k hk_zero
+    have hr_eq_zero : r = 0 := by
+      rw [hk_eq, rat_mul_zero_right] at hk
+      exact hk
+    have hr_size_zero : r.size = 0 := by
+      rw [hr_eq_zero]
+      exact DensePoly.size_zero
+    contradiction
+  · have hd_pos : 0 < d.size := Nat.pos_of_ne_zero hd
+    have hk_pos : 0 < k.size := Nat.pos_of_ne_zero hk_zero
+    have htop := rat_product_size_gt_top d k hd_pos hk_pos
+    have hsize_eq : (d * k).size = r.size := by rw [← hk]
+    rw [hsize_eq] at htop
+    omega
+
 private theorem rat_canonical_remainder_unique_of_pos_degree
     (r s m : DensePoly Rat)
     (hr : r.degree?.getD 0 < m.degree?.getD 0)
@@ -1717,6 +1738,20 @@ private theorem ratPolyPow_one (d : DensePoly Rat) :
   show d * (1 : DensePoly Rat) = d
   exact DensePoly.mul_one_right_poly d
 
+private theorem ratPolyPow_size_lower_of_nonconstant
+    (d : DensePoly Rat) (hd : 1 < d.size) :
+    ∀ m : Nat, m + 2 ≤ (ratPolyPow d (m + 1)).size := by
+  intro m
+  induction m with
+  | zero =>
+      rw [ratPolyPow_one]
+      omega
+  | succ k ih =>
+      show k + 3 ≤ (d * ratPolyPow d (k + 1)).size
+      have hpow_pos : 0 < (ratPolyPow d (k + 1)).size := by omega
+      have htop := rat_product_size_gt_top d (ratPolyPow d (k + 1)) (by omega) hpow_pos
+      omega
+
 /-- Cofactor extension to powers: if `d ∣ a * d'` then
 `ratPolyPow d (m + 1) ∣ a * derivative (ratPolyPow d (m + 1))`. -/
 private theorem ratPolyPow_succ_dvd_a_mul_derivative
@@ -1830,6 +1865,55 @@ private theorem rat_pow_dvd_repeated_of_quotient_common_divisor
             (DensePoly.derivative Q)]
           rw [← DensePoly.mul_assoc_poly d (ratPolyPow d (k + 1))
             (a * DensePoly.derivative Q)]
+
+private theorem rat_div_eq_zero_of_right_size_zero
+    (p q : DensePoly Rat) (hq : q.size = 0) :
+    p / q = 0 := by
+  change DensePoly.div p q = 0
+  simpa [DensePoly.div] using
+    congrArg Prod.fst (DensePoly.divMod_eq_zero_self_of_size_zero_core p q hq)
+
+private theorem rat_quotient_derivative_squareFree
+    (ratPrimitive : DensePoly Rat) :
+    let derivative := DensePoly.derivative ratPrimitive
+    let repeatedRat := DensePoly.gcd ratPrimitive derivative
+    let quotientRat := ratPrimitive / repeatedRat
+    (DensePoly.gcd quotientRat (DensePoly.derivative quotientRat)).size ≤ 1 := by
+  intro derivative repeatedRat quotientRat
+  let d := DensePoly.gcd quotientRat (DensePoly.derivative quotientRat)
+  by_cases hdle : d.size ≤ 1
+  · simpa [d]
+  · exfalso
+    have hdgt : 1 < d.size := Nat.lt_of_not_ge hdle
+    have hd_ne : d.size ≠ 0 := by omega
+    have hdq : d ∣ quotientRat := by
+      simpa [d] using DensePoly.gcd_dvd_left quotientRat (DensePoly.derivative quotientRat)
+    have hdq' : d ∣ DensePoly.derivative quotientRat := by
+      simpa [d] using DensePoly.gcd_dvd_right quotientRat (DensePoly.derivative quotientRat)
+    have hpow :=
+      rat_pow_dvd_repeated_of_quotient_common_divisor ratPrimitive d hdq hdq'
+    by_cases hrepeated_zero : repeatedRat.size = 0
+    · have hquot_zero : quotientRat = 0 := by
+        simpa [quotientRat] using
+          rat_div_eq_zero_of_right_size_zero ratPrimitive repeatedRat hrepeated_zero
+      have hd_zero : d = 0 := by
+        dsimp [d]
+        rw [hquot_zero, DensePoly.derivative_zero]
+        exact DensePoly.gcd_zero_zero
+      have hd_size_zero : d.size = 0 := by
+        rw [hd_zero]
+        exact DensePoly.size_zero
+      omega
+    · have hpow_dvd : ratPolyPow d (repeatedRat.size + 1) ∣ repeatedRat :=
+        hpow repeatedRat.size
+      have hpow_ne : (ratPolyPow d (repeatedRat.size + 1)).size ≠ 0 := by
+        have hlower := ratPolyPow_size_lower_of_nonconstant d hdgt repeatedRat.size
+        omega
+      have hpow_size_le :
+          (ratPolyPow d (repeatedRat.size + 1)).size ≤ repeatedRat.size :=
+        rat_size_le_of_dvd_nonzero hpow_ne hrepeated_zero hpow_dvd
+      have hlower := ratPolyPow_size_lower_of_nonconstant d hdgt repeatedRat.size
+      omega
 
 private theorem densePoly_eq_zero_of_isZero_true {R : Type _} [Zero R] [DecidableEq R]
     (p : DensePoly R) (h : p.isZero = true) :
