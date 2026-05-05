@@ -725,6 +725,31 @@ private theorem rat_derivative_scale (u : Rat) (p : DensePoly Rat) :
   rw [DensePoly.coeff_scale (R := Rat) u p (n + 1) (Rat.mul_zero u)]
   grind [Rat.mul_assoc, Rat.mul_comm]
 
+private theorem rat_dvd_mul_left {d p : DensePoly Rat} (q : DensePoly Rat) :
+    d ∣ p → d ∣ q * p := by
+  intro h
+  rcases h with ⟨a, ha⟩
+  refine ⟨q * a, ?_⟩
+  rw [ha, ← DensePoly.mul_assoc_poly q d a, DensePoly.mul_comm_poly q d,
+    DensePoly.mul_assoc_poly d q a]
+
+private theorem rat_dvd_add {d p q : DensePoly Rat} :
+    d ∣ p → d ∣ q → d ∣ p + q := by
+  intro hp hq
+  rcases hp with ⟨a, ha⟩
+  rcases hq with ⟨b, hb⟩
+  refine ⟨a + b, ?_⟩
+  rw [ha, hb, DensePoly.mul_add_right_poly]
+
+private theorem rat_dvd_sub {d p q : DensePoly Rat} :
+    d ∣ p → d ∣ q → d ∣ p - q := by
+  intro hp hq
+  rcases hp with ⟨a, ha⟩
+  rcases hq with ⟨b, hb⟩
+  refine ⟨a + (0 - b), ?_⟩
+  rw [DensePoly.sub_eq_add_neg_poly, ha, hb, DensePoly.mul_add_right_poly,
+    DensePoly.mul_sub_zero_comm, DensePoly.mul_comm_poly b d]
+
 private theorem toRatPoly_normalizePrimitiveSign_rational_associate (p : ZPoly) :
     ∃ unit : Rat, toRatPoly p = DensePoly.scale unit (toRatPoly (normalizePrimitiveSign p)) := by
   by_cases hlead : DensePoly.leadingCoeff p < 0
