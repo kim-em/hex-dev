@@ -2602,5 +2602,48 @@ theorem det_rowAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     det (rowAdd M src dst c) = det M := by
   simpa [det] using det_rowAdd_leibniz M src dst c h
 
+/-- A determinant with two equal rows is zero. -/
+theorem det_eq_zero_of_row_eq {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (src dst : Fin n) (h : src ≠ dst)
+    (hrow : M[src] = M[dst]) :
+    det M = 0 := by
+  have hdup : rowAddDuplicate M src dst = M := by
+    apply Vector.ext
+    intro r hr
+    apply Vector.ext
+    intro c hc
+    change (rowAddDuplicate M src dst)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
+      M[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+    rw [rowAddDuplicate_get]
+    by_cases hdst : (⟨r, hr⟩ : Fin n) = dst
+    · subst hdst
+      simpa using congrArg (fun row => row[(⟨c, hc⟩ : Fin n)]) hrow
+    · simp [hdst]
+  have hsum := permutationVectors_duplicateRow_sum M src dst h
+  rw [hdup] at hsum
+  simpa [det] using hsum
+
+/-- A successor bordered minor whose new border row duplicates the previous
+boundary row has determinant zero. -/
+theorem det_borderedMinor_succ_eq_zero_of_row_duplicate {R : Type u}
+    [Lean.Grind.CommRing R] (M : Matrix R n n) (k : Nat)
+    (hk : k < n) (hnext : k + 1 < n) (j : Fin n) :
+    det (borderedMinor M (k + 1) hnext (⟨k, hk⟩ : Fin n) j) = 0 := by
+  let src : Fin (k + 2) := ⟨k, by omega⟩
+  let dst : Fin (k + 2) := Fin.last (k + 1)
+  apply det_eq_zero_of_row_eq
+      (M := borderedMinor M (k + 1) hnext (⟨k, hk⟩ : Fin n) j)
+      (src := src) (dst := dst)
+  · intro h
+    have hval := congrArg Fin.val h
+    change k = k + 1 at hval
+    omega
+  · apply Vector.ext
+    intro c hc
+    change
+      (borderedMinor M (k + 1) hnext (⟨k, hk⟩ : Fin n) j)[src][(⟨c, hc⟩ : Fin (k + 2))] =
+        (borderedMinor M (k + 1) hnext (⟨k, hk⟩ : Fin n) j)[dst][(⟨c, hc⟩ : Fin (k + 2))]
+    simp [src, dst, borderedMinor, ofFn]
+
 end Matrix
 end Hex
