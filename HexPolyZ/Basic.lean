@@ -1699,6 +1699,138 @@ private theorem rat_dvd_cofactor_derivative
   rw [DensePoly.mul_comm_poly]
   exact hsub
 
+/-- Iterated polynomial power for `DensePoly Rat`. We avoid relying on a generic
+`Monoid` instance and define this directly by recursion. -/
+private def ratPolyPow (d : DensePoly Rat) : Nat → DensePoly Rat
+  | 0 => 1
+  | n + 1 => d * ratPolyPow d n
+
+@[simp] private theorem ratPolyPow_zero (d : DensePoly Rat) :
+    ratPolyPow d 0 = 1 := rfl
+
+@[simp] private theorem ratPolyPow_succ (d : DensePoly Rat) (n : Nat) :
+    ratPolyPow d (n + 1) = d * ratPolyPow d n := rfl
+
+private theorem ratPolyPow_one (d : DensePoly Rat) :
+    ratPolyPow d 1 = d := by
+  show d * ratPolyPow d 0 = d
+  show d * (1 : DensePoly Rat) = d
+  exact DensePoly.mul_one_right_poly d
+
+/-- Cofactor extension to powers: if `d ∣ a * d'` then
+`ratPolyPow d (m + 1) ∣ a * derivative (ratPolyPow d (m + 1))`. -/
+private theorem ratPolyPow_succ_dvd_a_mul_derivative
+    {d a : DensePoly Rat}
+    (h : d ∣ a * DensePoly.derivative d) (m : Nat) :
+    ratPolyPow d (m + 1) ∣
+      a * DensePoly.derivative (ratPolyPow d (m + 1)) := by
+  induction m with
+  | zero =>
+    rw [ratPolyPow_one]
+    exact h
+  | succ k ih =>
+    show d * ratPolyPow d (k + 1) ∣
+      a * DensePoly.derivative (d * ratPolyPow d (k + 1))
+    rw [rat_derivative_mul]
+    rw [DensePoly.mul_add_right_poly]
+    apply rat_dvd_add
+    · rcases h with ⟨c, hc⟩
+      refine ⟨c, ?_⟩
+      rw [← DensePoly.mul_assoc_poly]
+      rw [hc]
+      rw [DensePoly.mul_assoc_poly d c (ratPolyPow d (k + 1))]
+      rw [DensePoly.mul_comm_poly c (ratPolyPow d (k + 1))]
+      rw [← DensePoly.mul_assoc_poly]
+    · rcases ih with ⟨c, hc⟩
+      refine ⟨c, ?_⟩
+      rw [← DensePoly.mul_assoc_poly]
+      rw [DensePoly.mul_comm_poly a d]
+      rw [DensePoly.mul_assoc_poly]
+      rw [hc]
+      rw [← DensePoly.mul_assoc_poly]
+
+/-- Iterated power-divisibility: if `d` divides both the square-free quotient
+and its derivative, then every power `d^(n+1)` divides the repeated factor. -/
+private theorem rat_pow_dvd_repeated_of_quotient_common_divisor
+    (ratPrimitive d : DensePoly Rat) :
+    let derivative := DensePoly.derivative ratPrimitive
+    let repeatedRat := DensePoly.gcd ratPrimitive derivative
+    let quotientRat := ratPrimitive / repeatedRat
+    d ∣ quotientRat →
+    d ∣ DensePoly.derivative quotientRat →
+    ∀ n : Nat, ratPolyPow d (n + 1) ∣ repeatedRat := by
+  intro derivative repeatedRat quotientRat hdq hdq'
+  rcases hdq with ⟨a, ha⟩
+  have hcofactor : d ∣ a * DensePoly.derivative d := by
+    apply rat_dvd_cofactor_derivative d a
+    rw [← ha]
+    exact hdq'
+  have hrec : quotientRat * repeatedRat = ratPrimitive := by
+    simpa [quotientRat, repeatedRat, derivative] using
+      rat_div_gcd_mul_reconstruct ratPrimitive derivative
+  intro n
+  induction n with
+  | zero =>
+    show d * ratPolyPow d 0 ∣ repeatedRat
+    show d * (1 : DensePoly Rat) ∣ repeatedRat
+    rw [DensePoly.mul_one_right_poly]
+    exact rat_common_divisor_quotient_derivative_dvd_repeated ratPrimitive d
+      ⟨a, ha⟩ hdq'
+  | succ k ih =>
+    show d * ratPolyPow d (k + 1) ∣ repeatedRat
+    rcases ih with ⟨Q, hQ⟩
+    apply DensePoly.dvd_gcd
+    · refine ⟨a * Q, ?_⟩
+      have h1 : ratPrimitive = quotientRat * repeatedRat := hrec.symm
+      rw [h1, ha, hQ]
+      rw [DensePoly.mul_assoc_poly d a (ratPolyPow d (k + 1) * Q)]
+      rw [← DensePoly.mul_assoc_poly a (ratPolyPow d (k + 1)) Q]
+      rw [DensePoly.mul_comm_poly a (ratPolyPow d (k + 1))]
+      rw [DensePoly.mul_assoc_poly (ratPolyPow d (k + 1)) a Q]
+      rw [← DensePoly.mul_assoc_poly d (ratPolyPow d (k + 1)) (a * Q)]
+    · have hd_eq : derivative =
+          DensePoly.derivative quotientRat * repeatedRat +
+            quotientRat * DensePoly.derivative repeatedRat := by
+        show DensePoly.derivative ratPrimitive =
+          DensePoly.derivative quotientRat * repeatedRat +
+            quotientRat * DensePoly.derivative repeatedRat
+        rw [← hrec]
+        exact rat_derivative_mul quotientRat repeatedRat
+      rw [hd_eq]
+      apply rat_dvd_add
+      · rcases hdq' with ⟨a', ha'⟩
+        refine ⟨a' * Q, ?_⟩
+        rw [ha', hQ]
+        rw [DensePoly.mul_assoc_poly d a' (ratPolyPow d (k + 1) * Q)]
+        rw [← DensePoly.mul_assoc_poly a' (ratPolyPow d (k + 1)) Q]
+        rw [DensePoly.mul_comm_poly a' (ratPolyPow d (k + 1))]
+        rw [DensePoly.mul_assoc_poly (ratPolyPow d (k + 1)) a' Q]
+        rw [← DensePoly.mul_assoc_poly d (ratPolyPow d (k + 1)) (a' * Q)]
+      · rw [ha, hQ]
+        rw [rat_derivative_mul]
+        rw [DensePoly.mul_add_right_poly]
+        apply rat_dvd_add
+        · have haux := ratPolyPow_succ_dvd_a_mul_derivative hcofactor k
+          rcases haux with ⟨c, hc⟩
+          refine ⟨c * Q, ?_⟩
+          rw [DensePoly.mul_assoc_poly d a
+            (DensePoly.derivative (ratPolyPow d (k + 1)) * Q)]
+          rw [← DensePoly.mul_assoc_poly a
+            (DensePoly.derivative (ratPolyPow d (k + 1))) Q]
+          rw [hc]
+          rw [DensePoly.mul_assoc_poly (ratPolyPow d (k + 1)) c Q]
+          rw [← DensePoly.mul_assoc_poly d (ratPolyPow d (k + 1)) (c * Q)]
+        · refine ⟨a * DensePoly.derivative Q, ?_⟩
+          rw [DensePoly.mul_assoc_poly d a
+            (ratPolyPow d (k + 1) * DensePoly.derivative Q)]
+          rw [← DensePoly.mul_assoc_poly a (ratPolyPow d (k + 1))
+            (DensePoly.derivative Q)]
+          rw [DensePoly.mul_comm_poly a (ratPolyPow d (k + 1))]
+          rw [DensePoly.mul_assoc_poly (ratPolyPow d (k + 1)) a
+            (DensePoly.derivative Q)]
+          rw [← DensePoly.mul_assoc_poly d (ratPolyPow d (k + 1))
+            (a * DensePoly.derivative Q)]
+
 private theorem densePoly_eq_zero_of_isZero_true {R : Type _} [Zero R] [DecidableEq R]
     (p : DensePoly R) (h : p.isZero = true) :
     p = 0 := by
