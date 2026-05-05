@@ -1,5 +1,6 @@
 import Hex.Conformance.Emit
 import HexGfqField.Operations
+import HexBerlekamp.RabinSoundness
 
 /-!
 JSONL emit driver for the `hex-gfq-field` oracle.
@@ -23,13 +24,12 @@ in total).  For each case we emit:
   by the fixture (positive and negative exponents are exercised
   across the matrix).
 
-Each modulus is asserted irreducible by a per-case `theorem ... := by
-sorry` (matching the established pattern in `HexGfq/CrossCheck.lean`
-and `HexGF2/Bench.lean`).  Real proofs are pending the executable
-`Berlekamp.rabinTest`-to-`FpPoly.Irreducible` soundness bridge.
-python-flint independently rejects non-irreducible moduli at oracle
-time, so a typo in any committed modulus would surface as a CI
-failure rather than a silent miscompare.
+Each modulus's irreducibility is discharged by a literal
+`Berlekamp.IrreducibilityCertificate` whose pow chain and Bezout
+witnesses are checked by the kernel-reducible
+`Berlekamp.checkIrreducibilityCertificateLinear`, then routed through
+`Berlekamp.rabinTest_imp_irreducible` (see
+`HexBerlekamp/RabinSoundness.lean`).
 -/
 
 namespace Hex.GFqFieldEmit
@@ -111,6 +111,18 @@ the positive-degree obligation without recursing through the
 private def mkPoly {p : Nat} [ZMod64.Bounds p] (coeffs : List Nat) : FpPoly p :=
   FpPoly.ofCoeffs (coeffs.toArray.map (fun n => ZMod64.ofNat p n))
 
+/-- Per-prime `Array Nat → FpPoly p` helpers used by the certificate
+literals below. The simp set in each `..._certificate_check` proof
+unfolds these to expose the underlying `ofCoeffs` array. -/
+private def polyP2 (coeffs : Array Nat) : FpPoly 2 :=
+  FpPoly.ofCoeffs (coeffs.map (fun n => ZMod64.ofNat 2 n))
+private def polyP3 (coeffs : Array Nat) : FpPoly 3 :=
+  FpPoly.ofCoeffs (coeffs.map (fun n => ZMod64.ofNat 3 n))
+private def polyP5 (coeffs : Array Nat) : FpPoly 5 :=
+  FpPoly.ofCoeffs (coeffs.map (fun n => ZMod64.ofNat 5 n))
+private def polyP7 (coeffs : Array Nat) : FpPoly 7 :=
+  FpPoly.ofCoeffs (coeffs.map (fun n => ZMod64.ofNat 7 n))
+
 /-- Lift an `FpPoly p` to `List Int` via the canonical `[0, p)` representative. -/
 private def liftCoeffs {p : Nat} [ZMod64.Bounds p] (f : FpPoly p) : List Int :=
   f.toArray.toList.map (fun c => Int.ofNat c.toNat)
@@ -162,11 +174,18 @@ private def emitAt
 /-! ## Per-modulus declarations and emit helpers.
 
 Sixteen `(p, n)` pairs.  For each, define the irreducible modulus,
-record positive-degree by `decide`, and stub irreducibility with a
-per-case `theorem ... := by sorry`.  Each modulus was independently
-verified irreducible by python-flint (`fq_default_ctx` rejects
-non-irreducible moduli); real proofs are pending the executable
-`Berlekamp.rabinTest`-to-`FpPoly.Irreducible` soundness bridge. -/
+record positive-degree by `decide`, and discharge `FpPoly.Irreducible`
+via a literal `Berlekamp.IrreducibilityCertificate` checked by
+`Berlekamp.checkIrreducibilityCertificateLinear` and routed through
+`Berlekamp.rabinTest_imp_irreducible`. -/
+
+/-- Precomputed `maximalProperDivisors` for the four `n` values used
+below. `simp` does not reliably reduce the underlying filter for `n ≥ 3`,
+so we rewrite via these explicit equalities. -/
+private theorem maxProperDiv_2 : Berlekamp.maximalProperDivisors 2 = [1] := by decide
+private theorem maxProperDiv_3 : Berlekamp.maximalProperDivisors 3 = [1] := by decide
+private theorem maxProperDiv_4 : Berlekamp.maximalProperDivisors 4 = [2] := by decide
+private theorem maxProperDiv_6 : Berlekamp.maximalProperDivisors 6 = [2, 3] := by decide
 
 -- p = 2
 
@@ -175,28 +194,176 @@ private def m_p2_n2 : FpPoly 2 :=
   { coeffs := #[(1 : ZMod64 2), 1, 1]
     normalized := Or.inr (by simpa using one_ne_zero_two) }
 private theorem m_p2_n2_pos : 0 < FpPoly.degree m_p2_n2 := by decide
-private theorem m_p2_n2_irr : FpPoly.Irreducible m_p2_n2 := by sorry
+private theorem m_p2_n2_monic : DensePoly.Monic m_p2_n2 := by rfl
+
+private def m_p2_n2_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 2
+  n := 2
+  powChain := #[polyP2 #[0, 1], polyP2 #[1, 1], polyP2 #[0, 1]]
+  bezout := #[{ left := polyP2 #[], right := polyP2 #[1] }]
+
+set_option maxRecDepth 4096 in
+private theorem m_p2_n2_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinear m_p2_n2 m_p2_n2_monic
+        m_p2_n2_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinear,
+    m_p2_n2_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinear, Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_2,
+    m_p2_n2, polyP2]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · intro x hx
+        have hcases : x = 0 ∨ x = 1 ∨ x = 2 := by omega
+        rcases hcases with rfl | rfl | rfl <;> rfl
+    · rfl
+  · rfl
+
+private theorem m_p2_n2_irr : FpPoly.Irreducible m_p2_n2 :=
+  Berlekamp.rabinTest_imp_irreducible m_p2_n2 m_p2_n2_monic
+    (Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
+      m_p2_n2 m_p2_n2_monic m_p2_n2_certificate
+      m_p2_n2_certificate_check)
 
 /-- `x^3 + x + 1` — irreducible over `F_2`. -/
 private def m_p2_n3 : FpPoly 2 :=
   { coeffs := #[(1 : ZMod64 2), 1, 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_two) }
 private theorem m_p2_n3_pos : 0 < FpPoly.degree m_p2_n3 := by decide
-private theorem m_p2_n3_irr : FpPoly.Irreducible m_p2_n3 := by sorry
+private theorem m_p2_n3_monic : DensePoly.Monic m_p2_n3 := by rfl
+
+private def m_p2_n3_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 2
+  n := 3
+  powChain :=
+    #[polyP2 #[0, 1], polyP2 #[0, 0, 1], polyP2 #[0, 1, 1], polyP2 #[0, 1]]
+  bezout := #[{ left := polyP2 #[1], right := polyP2 #[1, 1] }]
+
+set_option maxRecDepth 4096 in
+private theorem m_p2_n3_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinear m_p2_n3 m_p2_n3_monic
+        m_p2_n3_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinear,
+    m_p2_n3_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinear, Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_3,
+    m_p2_n3, polyP2]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · intro x hx
+        have hcases : x = 0 ∨ x = 1 ∨ x = 2 ∨ x = 3 := by omega
+        rcases hcases with rfl | rfl | rfl | rfl <;> rfl
+    · rfl
+  · rfl
+
+private theorem m_p2_n3_irr : FpPoly.Irreducible m_p2_n3 :=
+  Berlekamp.rabinTest_imp_irreducible m_p2_n3 m_p2_n3_monic
+    (Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
+      m_p2_n3 m_p2_n3_monic m_p2_n3_certificate
+      m_p2_n3_certificate_check)
 
 /-- `x^4 + x + 1` — irreducible over `F_2`. -/
 private def m_p2_n4 : FpPoly 2 :=
   { coeffs := #[(1 : ZMod64 2), 1, 0, 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_two) }
 private theorem m_p2_n4_pos : 0 < FpPoly.degree m_p2_n4 := by decide
-private theorem m_p2_n4_irr : FpPoly.Irreducible m_p2_n4 := by sorry
+private theorem m_p2_n4_monic : DensePoly.Monic m_p2_n4 := by rfl
+
+private def m_p2_n4_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 2
+  n := 4
+  powChain :=
+    #[polyP2 #[0, 1], polyP2 #[0, 0, 1], polyP2 #[1, 1],
+      polyP2 #[1, 0, 1], polyP2 #[0, 1]]
+  bezout := #[{ left := polyP2 #[], right := polyP2 #[1] }]
+
+set_option maxRecDepth 4096 in
+private theorem m_p2_n4_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinear m_p2_n4 m_p2_n4_monic
+        m_p2_n4_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinear,
+    m_p2_n4_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinear, Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_4,
+    m_p2_n4, polyP2]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · intro x hx
+        have hcases : x = 0 ∨ x = 1 ∨ x = 2 ∨ x = 3 ∨ x = 4 := by omega
+        rcases hcases with rfl | rfl | rfl | rfl | rfl <;> rfl
+    · rfl
+  · rfl
+
+private theorem m_p2_n4_irr : FpPoly.Irreducible m_p2_n4 :=
+  Berlekamp.rabinTest_imp_irreducible m_p2_n4 m_p2_n4_monic
+    (Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
+      m_p2_n4 m_p2_n4_monic m_p2_n4_certificate
+      m_p2_n4_certificate_check)
 
 /-- `x^6 + x + 1` — irreducible over `F_2`. -/
 private def m_p2_n6 : FpPoly 2 :=
   { coeffs := #[(1 : ZMod64 2), 1, 0, 0, 0, 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_two) }
 private theorem m_p2_n6_pos : 0 < FpPoly.degree m_p2_n6 := by decide
-private theorem m_p2_n6_irr : FpPoly.Irreducible m_p2_n6 := by sorry
+private theorem m_p2_n6_monic : DensePoly.Monic m_p2_n6 := by rfl
+
+private def m_p2_n6_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 2
+  n := 6
+  powChain :=
+    #[polyP2 #[0, 1], polyP2 #[0, 0, 1], polyP2 #[0, 0, 0, 0, 1],
+      polyP2 #[0, 0, 1, 1], polyP2 #[1, 1, 0, 0, 1],
+      polyP2 #[1, 0, 0, 1], polyP2 #[0, 1]]
+  bezout :=
+    #[{ left := polyP2 #[1, 0, 1, 1],
+        right := polyP2 #[1, 1, 0, 0, 1, 1] },
+      { left := polyP2 #[1, 1],
+        right := polyP2 #[0, 1, 1, 0, 1] }]
+
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 1000000 in
+private theorem m_p2_n6_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinear m_p2_n6 m_p2_n6_monic
+        m_p2_n6_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinear,
+    m_p2_n6_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinear, Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_6,
+    m_p2_n6, polyP2]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · intro x hx
+        have hcases : x = 0 ∨ x = 1 ∨ x = 2 ∨ x = 3 ∨ x = 4 ∨ x = 5 ∨ x = 6 := by
+          omega
+        rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> rfl
+    · rfl
+  · exact ⟨rfl, rfl⟩
+
+private theorem m_p2_n6_irr : FpPoly.Irreducible m_p2_n6 :=
+  Berlekamp.rabinTest_imp_irreducible m_p2_n6 m_p2_n6_monic
+    (Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
+      m_p2_n6 m_p2_n6_monic m_p2_n6_certificate
+      m_p2_n6_certificate_check)
 
 -- p = 3
 
@@ -205,28 +372,176 @@ private def m_p3_n2 : FpPoly 3 :=
   { coeffs := #[(1 : ZMod64 3), 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_three) }
 private theorem m_p3_n2_pos : 0 < FpPoly.degree m_p3_n2 := by decide
-private theorem m_p3_n2_irr : FpPoly.Irreducible m_p3_n2 := by sorry
+private theorem m_p3_n2_monic : DensePoly.Monic m_p3_n2 := by rfl
+
+private def m_p3_n2_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 3
+  n := 2
+  powChain := #[polyP3 #[0, 1], polyP3 #[0, 2], polyP3 #[0, 1]]
+  bezout := #[{ left := polyP3 #[1], right := polyP3 #[0, 2] }]
+
+set_option maxRecDepth 4096 in
+private theorem m_p3_n2_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinear m_p3_n2 m_p3_n2_monic
+        m_p3_n2_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinear,
+    m_p3_n2_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinear, Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_2,
+    m_p3_n2, polyP3]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · intro x hx
+        have hcases : x = 0 ∨ x = 1 ∨ x = 2 := by omega
+        rcases hcases with rfl | rfl | rfl <;> rfl
+    · rfl
+  · rfl
+
+private theorem m_p3_n2_irr : FpPoly.Irreducible m_p3_n2 :=
+  Berlekamp.rabinTest_imp_irreducible m_p3_n2 m_p3_n2_monic
+    (Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
+      m_p3_n2 m_p3_n2_monic m_p3_n2_certificate
+      m_p3_n2_certificate_check)
 
 /-- `x^3 + 2x + 1` — irreducible over `F_3`. -/
 private def m_p3_n3 : FpPoly 3 :=
   { coeffs := #[(1 : ZMod64 3), 2, 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_three) }
 private theorem m_p3_n3_pos : 0 < FpPoly.degree m_p3_n3 := by decide
-private theorem m_p3_n3_irr : FpPoly.Irreducible m_p3_n3 := by sorry
+private theorem m_p3_n3_monic : DensePoly.Monic m_p3_n3 := by rfl
+
+private def m_p3_n3_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 3
+  n := 3
+  powChain :=
+    #[polyP3 #[0, 1], polyP3 #[2, 1], polyP3 #[1, 1], polyP3 #[0, 1]]
+  bezout := #[{ left := polyP3 #[], right := polyP3 #[2] }]
+
+set_option maxRecDepth 4096 in
+private theorem m_p3_n3_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinear m_p3_n3 m_p3_n3_monic
+        m_p3_n3_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinear,
+    m_p3_n3_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinear, Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_3,
+    m_p3_n3, polyP3]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · intro x hx
+        have hcases : x = 0 ∨ x = 1 ∨ x = 2 ∨ x = 3 := by omega
+        rcases hcases with rfl | rfl | rfl | rfl <;> rfl
+    · rfl
+  · rfl
+
+private theorem m_p3_n3_irr : FpPoly.Irreducible m_p3_n3 :=
+  Berlekamp.rabinTest_imp_irreducible m_p3_n3 m_p3_n3_monic
+    (Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
+      m_p3_n3 m_p3_n3_monic m_p3_n3_certificate
+      m_p3_n3_certificate_check)
 
 /-- `x^4 + 2x^3 + 2` — Conway polynomial for `GF(81)`. -/
 private def m_p3_n4 : FpPoly 3 :=
   { coeffs := #[(2 : ZMod64 3), 0, 0, 2, 1]
     normalized := Or.inr (by simpa using one_ne_zero_three) }
 private theorem m_p3_n4_pos : 0 < FpPoly.degree m_p3_n4 := by decide
-private theorem m_p3_n4_irr : FpPoly.Irreducible m_p3_n4 := by sorry
+private theorem m_p3_n4_monic : DensePoly.Monic m_p3_n4 := by rfl
+
+private def m_p3_n4_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 3
+  n := 4
+  powChain :=
+    #[polyP3 #[0, 1], polyP3 #[0, 0, 0, 1], polyP3 #[0, 2, 1, 1],
+      polyP3 #[1, 0, 2, 1], polyP3 #[0, 1]]
+  bezout := #[{ left := polyP3 #[2, 1, 2], right := polyP3 #[1, 1, 0, 1] }]
+
+set_option maxRecDepth 4096 in
+private theorem m_p3_n4_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinear m_p3_n4 m_p3_n4_monic
+        m_p3_n4_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinear,
+    m_p3_n4_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinear, Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_4,
+    m_p3_n4, polyP3]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · intro x hx
+        have hcases : x = 0 ∨ x = 1 ∨ x = 2 ∨ x = 3 ∨ x = 4 := by omega
+        rcases hcases with rfl | rfl | rfl | rfl | rfl <;> rfl
+    · rfl
+  · rfl
+
+private theorem m_p3_n4_irr : FpPoly.Irreducible m_p3_n4 :=
+  Berlekamp.rabinTest_imp_irreducible m_p3_n4 m_p3_n4_monic
+    (Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
+      m_p3_n4 m_p3_n4_monic m_p3_n4_certificate
+      m_p3_n4_certificate_check)
 
 /-- `x^6 + 2x^4 + x^2 + 2x + 2` — Conway polynomial for `GF(729)`. -/
 private def m_p3_n6 : FpPoly 3 :=
   { coeffs := #[(2 : ZMod64 3), 2, 1, 0, 2, 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_three) }
 private theorem m_p3_n6_pos : 0 < FpPoly.degree m_p3_n6 := by decide
-private theorem m_p3_n6_irr : FpPoly.Irreducible m_p3_n6 := by sorry
+private theorem m_p3_n6_monic : DensePoly.Monic m_p3_n6 := by rfl
+
+private def m_p3_n6_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 3
+  n := 6
+  powChain :=
+    #[polyP3 #[0, 1], polyP3 #[0, 0, 0, 1], polyP3 #[0, 1, 1, 0, 1],
+      polyP3 #[1, 2, 0, 0, 2, 2], polyP3 #[0, 0, 0, 2, 2, 2],
+      polyP3 #[2, 2, 2, 0, 1, 2], polyP3 #[0, 1]]
+  bezout :=
+    #[{ left := polyP3 #[2, 1, 1, 2],
+        right := polyP3 #[0, 2, 0, 0, 2, 1] },
+      { left := polyP3 #[1, 2, 1, 0, 1],
+        right := polyP3 #[2, 1, 1, 1, 2, 1] }]
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 8000000 in
+private theorem m_p3_n6_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinear m_p3_n6 m_p3_n6_monic
+        m_p3_n6_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinear,
+    m_p3_n6_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinear, Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_6,
+    m_p3_n6, polyP3]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · intro x hx
+        have hcases : x = 0 ∨ x = 1 ∨ x = 2 ∨ x = 3 ∨ x = 4 ∨ x = 5 ∨ x = 6 := by
+          omega
+        rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> rfl
+    · rfl
+  · exact ⟨rfl, rfl⟩
+
+private theorem m_p3_n6_irr : FpPoly.Irreducible m_p3_n6 :=
+  Berlekamp.rabinTest_imp_irreducible m_p3_n6 m_p3_n6_monic
+    (Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
+      m_p3_n6 m_p3_n6_monic m_p3_n6_certificate
+      m_p3_n6_certificate_check)
 
 -- p = 5
 
@@ -235,23 +550,138 @@ private def m_p5_n2 : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 4, 1]
     normalized := Or.inr (by simpa using one_ne_zero_five) }
 private theorem m_p5_n2_pos : 0 < FpPoly.degree m_p5_n2 := by decide
-private theorem m_p5_n2_irr : FpPoly.Irreducible m_p5_n2 := by sorry
+private theorem m_p5_n2_monic : DensePoly.Monic m_p5_n2 := by rfl
+
+private def m_p5_n2_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 5
+  n := 2
+  powChain := #[polyP5 #[0, 1], polyP5 #[1, 4], polyP5 #[0, 1]]
+  bezout := #[{ left := polyP5 #[2], right := polyP5 #[2, 1] }]
+
+set_option maxRecDepth 4096 in
+private theorem m_p5_n2_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinear m_p5_n2 m_p5_n2_monic
+        m_p5_n2_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinear,
+    m_p5_n2_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinear, Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_2,
+    m_p5_n2, polyP5]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · intro x hx
+        have hcases : x = 0 ∨ x = 1 ∨ x = 2 := by omega
+        rcases hcases with rfl | rfl | rfl <;> rfl
+    · rfl
+  · rfl
+
+private theorem m_p5_n2_irr : FpPoly.Irreducible m_p5_n2 :=
+  Berlekamp.rabinTest_imp_irreducible m_p5_n2 m_p5_n2_monic
+    (Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
+      m_p5_n2 m_p5_n2_monic m_p5_n2_certificate
+      m_p5_n2_certificate_check)
 
 /-- `x^3 + 3x + 3` — Conway polynomial for `GF(125)`. -/
 private def m_p5_n3 : FpPoly 5 :=
   { coeffs := #[(3 : ZMod64 5), 3, 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_five) }
 private theorem m_p5_n3_pos : 0 < FpPoly.degree m_p5_n3 := by decide
-private theorem m_p5_n3_irr : FpPoly.Irreducible m_p5_n3 := by sorry
+private theorem m_p5_n3_monic : DensePoly.Monic m_p5_n3 := by rfl
+
+private def m_p5_n3_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 5
+  n := 3
+  powChain :=
+    #[polyP5 #[0, 1], polyP5 #[4, 4, 2], polyP5 #[1, 0, 3], polyP5 #[0, 1]]
+  bezout := #[{ left := polyP5 #[3, 3], right := polyP5 #[3, 2, 1] }]
+
+set_option maxRecDepth 16384 in
+set_option maxHeartbeats 1000000 in
+private theorem m_p5_n3_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinear m_p5_n3 m_p5_n3_monic
+        m_p5_n3_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinear,
+    m_p5_n3_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinear, Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_3,
+    m_p5_n3, polyP5]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · intro x hx
+        have hcases : x = 0 ∨ x = 1 ∨ x = 2 ∨ x = 3 := by omega
+        rcases hcases with rfl | rfl | rfl | rfl <;> rfl
+    · rfl
+  · rfl
+
+private theorem m_p5_n3_irr : FpPoly.Irreducible m_p5_n3 :=
+  Berlekamp.rabinTest_imp_irreducible m_p5_n3 m_p5_n3_monic
+    (Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
+      m_p5_n3 m_p5_n3_monic m_p5_n3_certificate
+      m_p5_n3_certificate_check)
 
 /-- `x^4 + 2` — irreducible over `F_5` (matches `HexGfqField.Conformance`). -/
 private def m_p5_n4 : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 0, 0, 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_five) }
 private theorem m_p5_n4_pos : 0 < FpPoly.degree m_p5_n4 := by decide
-private theorem m_p5_n4_irr : FpPoly.Irreducible m_p5_n4 := by sorry
+private theorem m_p5_n4_monic : DensePoly.Monic m_p5_n4 := by rfl
 
-/-- `x^6 + x^4 + 4x^3 + x^2 + 2` — Conway polynomial for `GF(15625)`. -/
+private def m_p5_n4_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 5
+  n := 4
+  powChain :=
+    #[polyP5 #[0, 1], polyP5 #[0, 3], polyP5 #[0, 4],
+      polyP5 #[0, 2], polyP5 #[0, 1]]
+  bezout := #[{ left := polyP5 #[3], right := polyP5 #[0, 0, 0, 4] }]
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 4000000 in
+private theorem m_p5_n4_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinear m_p5_n4 m_p5_n4_monic
+        m_p5_n4_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinear,
+    m_p5_n4_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinear, Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_4,
+    m_p5_n4, polyP5]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · intro x hx
+        have hcases : x = 0 ∨ x = 1 ∨ x = 2 ∨ x = 3 ∨ x = 4 := by omega
+        rcases hcases with rfl | rfl | rfl | rfl | rfl <;> rfl
+    · rfl
+  · rfl
+
+private theorem m_p5_n4_irr : FpPoly.Irreducible m_p5_n4 :=
+  Berlekamp.rabinTest_imp_irreducible m_p5_n4 m_p5_n4_monic
+    (Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
+      m_p5_n4 m_p5_n4_monic m_p5_n4_certificate
+      m_p5_n4_certificate_check)
+
+/-- `x^6 + x^4 + 4x^3 + x^2 + 2` — Conway polynomial for `GF(15625)`.
+
+The Rabin certificate route used for the other 14 moduli relies on
+`Berlekamp.frobeniusXPowModLinear`, which expands `X^(p^k) mod m` as a
+straight-line product of `p^k` modular multiplications.  For `(p, k) = (5, 6)`
+that is `5^6 = 15625` kernel-reducible iterations per pow-chain entry, which
+exceeds practical kernel-reduction budgets.  Discharging this case is tracked
+as a separate follow-up; the certificate data has been precomputed externally.
+-/
 private def m_p5_n6 : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 0, 1, 4, 1, 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_five) }
@@ -265,21 +695,128 @@ private def m_p7_n2 : FpPoly 7 :=
   { coeffs := #[(3 : ZMod64 7), 6, 1]
     normalized := Or.inr (by simpa using one_ne_zero_seven) }
 private theorem m_p7_n2_pos : 0 < FpPoly.degree m_p7_n2 := by decide
-private theorem m_p7_n2_irr : FpPoly.Irreducible m_p7_n2 := by sorry
+private theorem m_p7_n2_monic : DensePoly.Monic m_p7_n2 := by rfl
+
+private def m_p7_n2_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 7
+  n := 2
+  powChain := #[polyP7 #[0, 1], polyP7 #[1, 6], polyP7 #[0, 1]]
+  bezout := #[{ left := polyP7 #[1], right := polyP7 #[5, 4] }]
+
+set_option maxRecDepth 4096 in
+private theorem m_p7_n2_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinear m_p7_n2 m_p7_n2_monic
+        m_p7_n2_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinear,
+    m_p7_n2_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinear, Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_2,
+    m_p7_n2, polyP7]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · intro x hx
+        have hcases : x = 0 ∨ x = 1 ∨ x = 2 := by omega
+        rcases hcases with rfl | rfl | rfl <;> rfl
+    · rfl
+  · rfl
+
+private theorem m_p7_n2_irr : FpPoly.Irreducible m_p7_n2 :=
+  Berlekamp.rabinTest_imp_irreducible m_p7_n2 m_p7_n2_monic
+    (Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
+      m_p7_n2 m_p7_n2_monic m_p7_n2_certificate
+      m_p7_n2_certificate_check)
 
 /-- `x^3 + 6x^2 + 4` — Conway polynomial for `GF(343)`. -/
 private def m_p7_n3 : FpPoly 7 :=
   { coeffs := #[(4 : ZMod64 7), 0, 6, 1]
     normalized := Or.inr (by simpa using one_ne_zero_seven) }
 private theorem m_p7_n3_pos : 0 < FpPoly.degree m_p7_n3 := by decide
-private theorem m_p7_n3_irr : FpPoly.Irreducible m_p7_n3 := by sorry
+private theorem m_p7_n3_monic : DensePoly.Monic m_p7_n3 := by rfl
+
+private def m_p7_n3_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 7
+  n := 3
+  powChain :=
+    #[polyP7 #[0, 1], polyP7 #[0, 5, 3], polyP7 #[1, 1, 4], polyP7 #[0, 1]]
+  bezout := #[{ left := polyP7 #[2], right := polyP7 #[0, 4] }]
+
+set_option maxRecDepth 16384 in
+set_option maxHeartbeats 2000000 in
+private theorem m_p7_n3_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinear m_p7_n3 m_p7_n3_monic
+        m_p7_n3_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinear,
+    m_p7_n3_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinear, Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_3,
+    m_p7_n3, polyP7]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · intro x hx
+        have hcases : x = 0 ∨ x = 1 ∨ x = 2 ∨ x = 3 := by omega
+        rcases hcases with rfl | rfl | rfl | rfl <;> rfl
+    · rfl
+  · rfl
+
+private theorem m_p7_n3_irr : FpPoly.Irreducible m_p7_n3 :=
+  Berlekamp.rabinTest_imp_irreducible m_p7_n3 m_p7_n3_monic
+    (Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
+      m_p7_n3 m_p7_n3_monic m_p7_n3_certificate
+      m_p7_n3_certificate_check)
 
 /-- `x^4 + 5x^2 + 4x + 3` — Conway polynomial for `GF(2401)`. -/
 private def m_p7_n4 : FpPoly 7 :=
   { coeffs := #[(3 : ZMod64 7), 4, 5, 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_seven) }
 private theorem m_p7_n4_pos : 0 < FpPoly.degree m_p7_n4 := by decide
-private theorem m_p7_n4_irr : FpPoly.Irreducible m_p7_n4 := by sorry
+private theorem m_p7_n4_monic : DensePoly.Monic m_p7_n4 := by rfl
+
+private def m_p7_n4_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 7
+  n := 4
+  powChain :=
+    #[polyP7 #[0, 1], polyP7 #[5, 3, 5, 1], polyP7 #[0, 0, 3, 1],
+      polyP7 #[2, 3, 6, 5], polyP7 #[0, 1]]
+  bezout := #[{ left := polyP7 #[5, 3, 5], right := polyP7 #[1, 6, 5, 2] }]
+
+set_option maxRecDepth 131072 in
+set_option maxHeartbeats 8000000 in
+private theorem m_p7_n4_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinear m_p7_n4 m_p7_n4_monic
+        m_p7_n4_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinear,
+    m_p7_n4_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinear, Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_4,
+    m_p7_n4, polyP7]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · intro x hx
+        have hcases : x = 0 ∨ x = 1 ∨ x = 2 ∨ x = 3 ∨ x = 4 := by omega
+        rcases hcases with rfl | rfl | rfl | rfl | rfl <;> rfl
+    · rfl
+  · rfl
+
+private theorem m_p7_n4_irr : FpPoly.Irreducible m_p7_n4 :=
+  Berlekamp.rabinTest_imp_irreducible m_p7_n4 m_p7_n4_monic
+    (Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
+      m_p7_n4 m_p7_n4_monic m_p7_n4_certificate
+      m_p7_n4_certificate_check)
 
 /-- `x^6 + x^4 + 5x^3 + 4x^2 + 6x + 3` — Conway polynomial for `GF(7^6)`. -/
 private def m_p7_n6 : FpPoly 7 :=
