@@ -611,6 +611,24 @@ theorem dvd_xPowSubX_iff_quotient_X_frobeniusIter_eq_X
       rwa [add_comm]
     exact dvd_sub' hkey_comm hdiff_dvd
 
+/--
+If the quotient class of `X` is fixed by the `n`-fold Frobenius squaring in
+`GF2[x]/(g)`, then the irreducible modulus degree divides `n`.
+
+This is the quotient-facing period statement used by the Rabin soundness
+orchestration layer; the divisibility/equality translation stays centralized in
+`dvd_xPowSubX_iff_quotient_X_frobeniusIter_eq_X`.
+-/
+theorem quotient_X_frobenius_fixed_iff_degree_dvd
+    {g : GF2Poly} (hg_irr : GF2Poly.Irreducible g)
+    (hg_pos : 0 < g.degree) {n : Nat}
+    (hfixed :
+      GF2nPoly.frobeniusIter (GF2nPoly.X (f := g) (hirr := hg_irr)) n =
+        GF2nPoly.X (f := g) (hirr := hg_irr)) :
+    g.degree ∣ n := by
+  exact degree_dvd_of_irreducible_dvd_xPowSubX hg_irr hg_pos
+    ((dvd_xPowSubX_iff_quotient_X_frobeniusIter_eq_X hg_irr hg_pos n).mpr hfixed)
+
 /-- The left factor in a factorization of a nonzero polynomial is nonzero. -/
 theorem factor_ne_zero_of_ne_zero
     {f a b : GF2Poly} (hab : a * b = f) (hf_ne_zero : f ≠ 0) :
