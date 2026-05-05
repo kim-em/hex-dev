@@ -2107,6 +2107,82 @@ theorem zero_add {S : Type _}
   rw [coeff_add 0 p n hzero_add, coeff_zero]
   grind
 
+private theorem xgcd_bezout_step {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    (a s₀ t₀ s₁ t₁ p q : DensePoly S) :
+    (s₀ - a * s₁) * p + (t₀ - a * t₁) * q =
+      (s₀ * p + t₀ * q) - a * (s₁ * p + t₁ * q) := by
+  rw [sub_eq_add_neg_poly s₀ (a * s₁), sub_eq_add_neg_poly t₀ (a * t₁)]
+  rw [mul_add_left_poly, mul_add_left_poly]
+  rw [neg_mul_right_poly, neg_mul_right_poly]
+  rw [mul_assoc_poly a s₁ p, mul_assoc_poly a t₁ q]
+  rw [mul_add_right_poly]
+  apply ext_coeff
+  intro n
+  have hzero_add : (0 : S) + (0 : S) = 0 := by grind
+  have hzero_sub : (0 : S) - (0 : S) = 0 := by grind
+  rw [coeff_add (s₀ * p + (0 - a * (s₁ * p))) (t₀ * q + (0 - a * (t₁ * q))) n
+    hzero_add]
+  rw [coeff_add (s₀ * p) (0 - a * (s₁ * p)) n hzero_add]
+  rw [coeff_sub 0 (a * (s₁ * p)) n hzero_sub, coeff_zero]
+  rw [coeff_add (t₀ * q) (0 - a * (t₁ * q)) n hzero_add]
+  rw [coeff_sub 0 (a * (t₁ * q)) n hzero_sub, coeff_zero]
+  rw [coeff_sub (s₀ * p + t₀ * q) (a * (s₁ * p) + a * (t₁ * q)) n hzero_sub]
+  rw [coeff_add (s₀ * p) (t₀ * q) n hzero_add]
+  rw [coeff_add (a * (s₁ * p)) (a * (t₁ * q)) n hzero_add]
+  grind
+
+private theorem xgcdAux_bezout {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
+    (p q r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly S) (fuel : Nat)
+    (hr₀ : s₀ * p + t₀ * q = r₀)
+    (hr₁ : s₁ * p + t₁ * q = r₁) :
+    let r := xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel
+    r.left * p + r.right * q = r.gcd := by
+  induction fuel generalizing r₀ s₀ t₀ r₁ s₁ t₁ with
+  | zero =>
+      simpa [xgcdAux] using hr₀
+  | succ fuel ih =>
+      unfold xgcdAux
+      by_cases hr₁zero : r₁.isZero
+      · simp [hr₁zero, hr₀]
+      · simp [hr₁zero]
+        let qr := divMod r₀ r₁
+        let r := qr.2
+        let s := s₀ - qr.1 * s₁
+        let t := t₀ - qr.1 * t₁
+        apply ih r₁ s₁ t₁ r s t
+        · exact hr₁
+        · have hspec : qr.1 * r₁ + qr.2 = r₀ := by
+            simpa [qr] using DivModLaws.divMod_spec r₀ r₁
+          calc
+            s * p + t * q
+                = (s₀ * p + t₀ * q) - qr.1 * (s₁ * p + t₁ * q) := by
+                  exact xgcd_bezout_step qr.1 s₀ t₀ s₁ t₁ p q
+            _ = r₀ - qr.1 * r₁ := by rw [hr₀, hr₁]
+            _ = qr.2 := by
+              have h : r₀ = qr.1 * r₁ + qr.2 := hspec.symm
+              rw [h]
+              apply ext_coeff
+              intro n
+              have hzero_add : (0 : S) + (0 : S) = 0 := by grind
+              have hzero_sub : (0 : S) - (0 : S) = 0 := by grind
+              rw [coeff_sub]
+              · rw [coeff_add]
+                · grind
+                · exact hzero_add
+              · exact hzero_sub
+
+theorem xgcd_bezout_of_divModLaws {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
+    (p q : DensePoly S) :
+    let r := xgcd p q
+    r.left * p + r.right * q = r.gcd := by
+  unfold xgcd
+  apply xgcdAux_bezout p q
+  · rw [mul_comm_poly (1 : DensePoly S) p, mul_one_right_poly, zero_mul, add_zero_poly]
+  · rw [zero_mul, mul_comm_poly (1 : DensePoly S) q, mul_one_right_poly, zero_add]
+
 /-- Recursive reconstruction invariant for the array-backed long-division loop.
 Under the cancellation hypothesis for the leading-coefficient scaling function
 together with sparsity bounds on `quot` and `rem`, each step of `divModArrayAux`

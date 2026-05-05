@@ -1484,7 +1484,7 @@ private instance ratGcdLaws : DensePoly.GcdLaws Rat where
     sorry
   xgcd_bezout := by
     intro f g
-    sorry
+    exact DensePoly.xgcd_bezout_of_divModLaws f g
 
 private theorem rat_div_gcd_mul_reconstruct (f df : DensePoly Rat) :
     (f / DensePoly.gcd f df) * DensePoly.gcd f df = f := by
