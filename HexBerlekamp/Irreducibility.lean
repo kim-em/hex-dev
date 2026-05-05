@@ -199,27 +199,261 @@ theorem rabinDividesTest_spec (f : FpPoly p) (hmonic : DensePoly.Monic f) :
       (frobeniusDiffMod f hmonic (basisSize f)).isZero := by
   rfl
 
+private theorem zmod64_one_ne_zero_of_prime
+    (hp : Hex.Nat.Prime p) :
+    (1 : ZMod64 p) ≠ 0 := by
+  intro hone
+  have hnat : (1 : ZMod64 p).toNat = (0 : ZMod64 p).toNat :=
+    congrArg ZMod64.toNat hone
+  change (ZMod64.one : ZMod64 p).toNat = (ZMod64.zero : ZMod64 p).toNat at hnat
+  have hp_gt : 1 < p := by
+    have htwo : 2 ≤ p := Hex.Nat.Prime.two_le hp
+    omega
+  rw [ZMod64.toNat_one, ZMod64.toNat_zero, Nat.mod_eq_of_lt hp_gt] at hnat
+  omega
+
+private theorem fp_one_ne_zero [ZMod64.PrimeModulus p] :
+    (1 : FpPoly p) ≠ 0 := by
+  intro hone
+  have hcoeff := congrArg (fun f : FpPoly p => f.coeff 0) hone
+  change (DensePoly.C (1 : ZMod64 p)).coeff 0 = (0 : FpPoly p).coeff 0 at hcoeff
+  rw [DensePoly.coeff_C, DensePoly.coeff_zero] at hcoeff
+  simp only [if_true] at hcoeff
+  exact zmod64_one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) hcoeff
+
+private theorem eq_zero_of_size_eq_zero (f : FpPoly p) (hsize : f.size = 0) :
+    f = 0 := by
+  apply DensePoly.ext_coeff
+  intro i
+  rw [DensePoly.coeff_zero]
+  exact DensePoly.coeff_eq_zero_of_size_le f (by omega)
+
+private theorem isUnitPolynomial_of_dvd_one
+    [ZMod64.PrimeModulus p] {g : FpPoly p}
+    (hdiv : g ∣ (1 : FpPoly p)) :
+    isUnitPolynomial g = true := by
+  by_cases hsize : g.size = 0
+  · rcases hdiv with ⟨r, hr⟩
+    have hg : g = 0 := eq_zero_of_size_eq_zero g hsize
+    have hone_zero : (1 : FpPoly p) = 0 := by
+      rw [hg] at hr
+      simpa using hr
+    exact False.elim (fp_one_ne_zero hone_zero)
+  · have hnot_pos_degree : ¬ 0 < g.degree?.getD 0 := by
+      intro hpos
+      have hmod_zero :
+          (1 : FpPoly p) % g = 0 :=
+        DensePoly.mod_eq_zero_of_dvd (1 : FpPoly p) g hdiv
+      have hone_degree : (1 : FpPoly p).degree?.getD 0 = 0 := by
+        change (DensePoly.C (1 : ZMod64 p)).degree?.getD 0 = 0
+        exact DensePoly.degree?_C_getD (1 : ZMod64 p)
+      have hmod_one :
+          (1 : FpPoly p) % g = 1 :=
+        DensePoly.mod_eq_self_of_degree_lt (1 : FpPoly p) g (by
+          rw [hone_degree]
+          exact hpos)
+      have hone_zero : (1 : FpPoly p) = 0 := by
+        rw [hmod_one] at hmod_zero
+        exact hmod_zero
+      exact fp_one_ne_zero hone_zero
+    unfold isUnitPolynomial
+    have hdegree_getD : g.degree?.getD 0 = 0 := Nat.eq_zero_of_not_pos hnot_pos_degree
+    have hdegree : g.degree? = some 0 := by
+      simp [DensePoly.degree?, hsize] at hdegree_getD ⊢
+      omega
+    rw [hdegree]
+
+private theorem isUnitPolynomial_gcd_of_bezout
+    [ZMod64.PrimeModulus p] {f diff left right : FpPoly p}
+    (hbezout : left * f + right * diff = 1) :
+    isUnitPolynomial (DensePoly.gcd f diff) = true := by
+  let g := DensePoly.gcd f diff
+  change isUnitPolynomial g = true
+  apply isUnitPolynomial_of_dvd_one
+  have hgcd_left : g ∣ f := by
+    dsimp [g]
+    exact DensePoly.gcd_dvd_left f diff
+  have hgcd_right : g ∣ diff := by
+    dsimp [g]
+    exact DensePoly.gcd_dvd_right f diff
+  rcases hgcd_left with ⟨a, ha⟩
+  rcases hgcd_right with ⟨b, hb⟩
+  refine ⟨left * a + right * b, ?_⟩
+  have hleft : left * (g * a) = g * (left * a) := by
+    calc
+      left * (g * a) = (left * g) * a := by
+        rw [FpPoly.mul_assoc]
+      _ = (g * left) * a := by
+        rw [FpPoly.mul_comm left g]
+      _ = g * (left * a) := by
+        rw [FpPoly.mul_assoc]
+  have hright : right * (g * b) = g * (right * b) := by
+    calc
+      right * (g * b) = (right * g) * b := by
+        rw [FpPoly.mul_assoc]
+      _ = (g * right) * b := by
+        rw [FpPoly.mul_comm right g]
+      _ = g * (right * b) := by
+        rw [FpPoly.mul_assoc]
+  calc
+    (1 : FpPoly p) = left * f + right * diff := hbezout.symm
+    _ = left * (g * a) + right * (g * b) := by
+          rw [ha, hb]
+    _ = g * (left * a) + g * (right * b) := by
+          rw [hleft, hright]
+    _ = g * (left * a + right * b) := by
+          exact (FpPoly.left_distrib g (left * a) (right * b)).symm
+
+private theorem checkRabinBezoutWitness_rabinCoprimeTest
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (cert : SamePrimeIrreducibilityCertificate p) (i d : Nat)
+    (hcheck : checkRabinBezoutWitness f hmonic cert i d = true)
+    (hpow : cert.powChain[d]? = some (FpPoly.frobeniusXPowMod f hmonic d)) :
+    rabinCoprimeTest f hmonic d = true := by
+  unfold checkRabinBezoutWitness at hcheck
+  rw [hpow] at hcheck
+  cases hbezoutOpt : cert.bezout[i]? with
+  | none =>
+      simp [hbezoutOpt] at hcheck
+  | some witness =>
+      simp [hbezoutOpt] at hcheck
+      unfold rabinCoprimeTest frobeniusDiffMod
+      exact isUnitPolynomial_gcd_of_bezout hcheck
+
+private theorem List.all_eq_true_of_mem {α : Type u} {xs : List α} {p : α → Bool}
+    (hall : xs.all p = true) {x : α} (hx : x ∈ xs) : p x = true := by
+  induction xs with
+  | nil =>
+      cases hx
+  | cons y ys ih =>
+      simp only [List.all_cons, Bool.and_eq_true] at hall
+      rcases hall with ⟨hy, hys⟩
+      simp only [List.mem_cons] at hx
+      rcases hx with rfl | hx
+      · exact hy
+      · exact ih hys hx
+
+private theorem List.all_map_pair_snd {α : Type u} (xs : List α) (p : α → Bool) :
+    (xs.map fun x => (x, p x)).all Prod.snd = xs.all p := by
+  induction xs with
+  | nil => rfl
+  | cons x xs ih =>
+      simp [ih]
+
+private theorem mem_properDivisors_le {n d : Nat} (hmem : d ∈ properDivisors n) :
+    d ≤ n := by
+  unfold properDivisors at hmem
+  simp only [List.mem_filter, List.mem_map, List.mem_range] at hmem
+  rcases hmem with ⟨⟨k, hk, rfl⟩, _⟩
+  omega
+
+private theorem mem_maximalProperDivisors_le {n d : Nat}
+    (hmem : d ∈ maximalProperDivisors n) :
+    d ≤ n := by
+  unfold maximalProperDivisors at hmem
+  simp only [List.mem_filter] at hmem
+  exact mem_properDivisors_le hmem.1
+
+private theorem checkRabinBezoutWitnesses_rabinWitnesses_all
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (cert : SamePrimeIrreducibilityCertificate p)
+    (hcheck : checkRabinBezoutWitnesses f hmonic cert = true)
+    (hpow : ∀ k, k ≤ cert.n →
+      cert.powChain[k]? = some (FpPoly.frobeniusXPowMod f hmonic k))
+    (hn : cert.n = basisSize f) :
+    (rabinWitnesses f hmonic).all Prod.snd = true := by
+  unfold checkRabinBezoutWitnesses at hcheck
+  simp only [Bool.and_eq_true] at hcheck
+  rcases hcheck with ⟨_hsize, hall⟩
+  unfold rabinWitnesses
+  rw [← hn]
+  let ds := maximalProperDivisors cert.n
+  change (ds.map fun d => (d, rabinCoprimeTest f hmonic d)).all Prod.snd = true
+  rw [List.all_map_pair_snd]
+  change ds.all (fun d => rabinCoprimeTest f hmonic d) = true
+  have hds :
+      ∀ (xs : List Nat) start,
+        (∀ d, d ∈ xs → d ∈ maximalProperDivisors cert.n) →
+        (xs.zipIdx start).all
+            (fun pair => checkRabinBezoutWitness f hmonic cert pair.2 pair.1) = true →
+        xs.all (fun d => rabinCoprimeTest f hmonic d) = true := by
+    clear hall
+    intro xs
+    induction xs with
+    | nil =>
+        intro start _hmem _hall
+        rfl
+    | cons d ds ih =>
+        intro start hmem hall
+        simp only [List.zipIdx_cons, List.all_cons, Bool.and_eq_true] at hall ⊢
+        rcases hall with ⟨hd, htail⟩
+        constructor
+        · apply checkRabinBezoutWitness_rabinCoprimeTest f hmonic cert start d hd
+          apply hpow
+          apply mem_maximalProperDivisors_le
+          exact hmem d (by simp)
+        · exact ih (start + 1) (fun e he => hmem e (by simp [he])) htail
+  exact hds ds 0 (fun d hmem => hmem) hall
+
 theorem checkPowChain_spec
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate p) :
     checkPowChain f hmonic cert = true →
       ∀ k, k ≤ cert.n →
         cert.powChain[k]? = some (FpPoly.frobeniusXPowMod f hmonic k) := by
-  sorry
+  intro hcheck k hk
+  unfold checkPowChain at hcheck
+  simp only [Bool.and_eq_true] at hcheck
+  rcases hcheck with ⟨_hsize, hall⟩
+  have hmem : k ∈ List.range (cert.n + 1) := by
+    simpa [List.mem_range] using Nat.lt_succ_of_le hk
+  have hbeq :
+      (cert.powChain[k]? == some (FpPoly.frobeniusXPowMod f hmonic k)) = true :=
+    List.all_eq_true_of_mem hall hmem
+  simpa using hbeq
 
 theorem checkIrreducibilityCertificate_rabinTest
+    [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (cert : IrreducibilityCertificate) :
     checkIrreducibilityCertificate f hmonic cert = true →
       rabinTest f hmonic = true := by
-  sorry
-
-theorem checkIrreducibilityCertificate_irreducible_predicate
-    (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    (cert : IrreducibilityCertificate) :
-    checkIrreducibilityCertificate f hmonic cert = true →
-      FpPoly.Irreducible f := by
-  sorry
+  intro hcheck
+  unfold checkIrreducibilityCertificate at hcheck
+  cases hambient : cert.toAmbient? p with
+  | none =>
+      simp [hambient] at hcheck
+  | some samePrimeCert =>
+      have hparts :
+          (((0 < samePrimeCert.n ∧ samePrimeCert.n = basisSize f) ∧
+              checkPowChain f hmonic samePrimeCert = true) ∧
+              samePrimeCert.powChain[samePrimeCert.n]? =
+                some (FpPoly.modByMonic f FpPoly.X hmonic)) ∧
+            checkRabinBezoutWitnesses f hmonic samePrimeCert = true := by
+        simpa [checkIrreducibilityCertificate, hambient, Bool.and_eq_true] using hcheck
+      rcases hparts with ⟨⟨⟨⟨hnpos, hn⟩, hpowCheck⟩, hdividesWitness⟩, hwitnesses⟩
+      have hpow := checkPowChain_spec f hmonic samePrimeCert hpowCheck
+      simp only [rabinTest, Bool.and_eq_true]
+      constructor
+      · constructor
+        · simpa [hn] using hnpos
+        · unfold rabinDividesTest frobeniusDiffMod
+          have hpowN :
+              samePrimeCert.powChain[samePrimeCert.n]? =
+                some (FpPoly.frobeniusXPowMod f hmonic samePrimeCert.n) :=
+            hpow samePrimeCert.n (Nat.le_refl _)
+          rw [hpowN] at hdividesWitness
+          simp at hdividesWitness
+          rw [← hn]
+          rw [← hdividesWitness]
+          change (FpPoly.frobeniusXPowMod f hmonic samePrimeCert.n -
+              FpPoly.frobeniusXPowMod f hmonic samePrimeCert.n).isZero = true
+          rw [FpPoly.sub_self]
+          rfl
+      · exact checkRabinBezoutWitnesses_rabinWitnesses_all
+          f hmonic samePrimeCert hwitnesses hpow hn
 
 end Berlekamp
 

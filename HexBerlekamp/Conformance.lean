@@ -30,7 +30,8 @@ Covered edge cases:
 - missing pow-chain and wrong-prime certificate data
 - split searches with no nontrivial factor, a linear edge input, and a
   reducible quadratic adversarial input
-- distinct-degree runs with a unit residual and mixed linear/quadratic factors
+- distinct-degree runs with a unit residual and a degree-8 product of linear,
+  quadratic, and quintic irreducibles (Artin-Schreier `x^5 - x - 1` over `F_5`)
 -/
 
 namespace Hex
@@ -105,11 +106,39 @@ private def reducibleQuad : FpPoly 5 :=
 private theorem reducibleQuad_monic : DensePoly.Monic reducibleQuad := by
   rfl
 
-private def mixedDegreePoly : FpPoly 5 :=
-  irreducibleQuad * linearPoly
+/--
+`x^5 - x - 1 = 4 + 4x + x^5` over `F_5`.  Irreducible by Artin-Schreier:
+`x^p - x - a` is irreducible over `F_p` whenever `a ≠ 0`.
+-/
+private def irreducibleQuint : FpPoly 5 :=
+  { coeffs := #[(4 : ZMod64 5), 4, 0, 0, 0, 1]
+    normalized := by
+      right
+      simpa using one_ne_zero_five }
 
-private theorem mixedDegreePoly_monic : DensePoly.Monic mixedDegreePoly := by
+private theorem irreducibleQuint_monic : DensePoly.Monic irreducibleQuint := by
   rfl
+
+/--
+Degree-8 product `(1 + x) * (2 + x^2) * (x^5 - x - 1)` over `F_5`, expanded
+to `3 + x + 2x² + 3x³ + 4x⁴ + 2x⁵ + 2x⁶ + x⁷ + x⁸`.  The three factors are
+irreducible of distinct degrees `1`, `2`, `5`, so the distinct-degree
+factorization separates them into one bucket each with unit residual.
+
+Stored in expanded form (rather than as the symbolic product) so the monic
+proof reduces by `rfl` without unfolding the schoolbook multiplication.
+-/
+private def bigPoly : FpPoly 5 :=
+  { coeffs := #[(3 : ZMod64 5), 1, 2, 3, 4, 2, 2, 1, 1]
+    normalized := by
+      right
+      simpa using one_ne_zero_five }
+
+private theorem bigPoly_monic : DensePoly.Monic bigPoly := by
+  rfl
+
+set_option maxRecDepth 2048 in
+#guard bigPoly == linearPoly * irreducibleQuad * irreducibleQuint
 
 #guard Berlekamp.basisSize irreducibleQuad = 2
 #guard Berlekamp.basisSize linearPoly = 1
@@ -217,24 +246,48 @@ private def samePrimeValidCert : Berlekamp.SamePrimeIrreducibilityCertificate 5 
   | some split => split.factor * split.cofactor == reducibleQuad
   | none => false
 
-#guard coeffNats
-    (Berlekamp.distinctDegreeCandidate mixedDegreePoly mixedDegreePoly_monic
-      mixedDegreePoly 1) =
-  [1, 1]
+#guard Berlekamp.basisSize bigPoly = 8
+#guard vectorNats (Berlekamp.coeffVector bigPoly bigPoly) = [3, 1, 2, 3, 4, 2, 2, 1]
+
 #guard
-  let step := Berlekamp.distinctDegreeStep mixedDegreePoly mixedDegreePoly_monic
-    mixedDegreePoly 1
-  (step.1.map fun bucket => (bucket.degree, coeffNats bucket.factor), coeffNats step.2) =
-    (some (1, [1, 1]), [2, 0, 1])
-#guard ddfSummary (Berlekamp.distinctDegreeFactor mixedDegreePoly mixedDegreePoly_monic) =
-  ([(1, [1, 1]), (2, [2, 0, 1])], [1])
+  let Q := Berlekamp.berlekampMatrix bigPoly bigPoly_monic
+  let F := Berlekamp.fixedSpaceMatrix bigPoly bigPoly_monic
+  (List.finRange (Berlekamp.basisSize bigPoly)).all fun i =>
+    (List.finRange (Berlekamp.basisSize bigPoly)).all fun j =>
+      F[i][j] == Q[i][j] - if i = j then 1 else 0
+
+-- `X^5 - X` has degree `5 < 8 = deg bigPoly`, so the reduction is the identity
+-- and the result is just `-X + X^5 = 4X + X^5` over `F_5`.
+#guard coeffNats (Berlekamp.frobeniusDiffMod bigPoly bigPoly_monic 1) =
+  [0, 4, 0, 0, 0, 1]
+
+-- `bigPoly(4) = 0` because `linearPoly = 1 + x` vanishes at `x = -1 ≡ 4`.
+-- `gcd(bigPoly, X - 4) = X + 1 = [1, 1]`.
+#guard coeffNats (Berlekamp.splitFactorAt bigPoly FpPoly.X (ZMod64.ofNat 5 4)) =
+  [1, 1]
+
+#guard
+  match Berlekamp.kernelWitnessSplit? bigPoly FpPoly.X with
+  | some split => split.factor * split.cofactor == bigPoly
+  | none => false
+
+-- DDF on `bigPoly` recovers the three irreducible factors.  The EEA-based
+-- `DensePoly.gcd` returns each gcd up to a unit scalar, so we phrase the
+-- bucket test as a degree match plus a structural product reconstruction
+-- rather than pinning literal coefficients.
+#guard
+  let result := Berlekamp.distinctDegreeFactor bigPoly bigPoly_monic
+  result.buckets.map Berlekamp.DegreeBucket.degree = [1, 2, 5]
+#guard
+  let result := Berlekamp.distinctDegreeFactor bigPoly bigPoly_monic
+  result.product == bigPoly
+#guard
+  let result := Berlekamp.distinctDegreeFactor bigPoly bigPoly_monic
+  Berlekamp.isUnitPolynomial result.residual
 #guard ddfSummary (Berlekamp.distinctDegreeFactor irreducibleQuad irreducibleQuad_monic) =
   ([(2, [2, 0, 1])], [1])
 #guard ddfSummary (Berlekamp.distinctDegreeFactor unitPoly unitPoly_monic) =
   ([], [1])
-#guard
-  let result := Berlekamp.distinctDegreeFactor mixedDegreePoly mixedDegreePoly_monic
-  result.product == mixedDegreePoly
 
 end BerlekampConformance
 end Hex

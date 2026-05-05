@@ -35,12 +35,29 @@ def berlekampColumn (f : FpPoly p) (hmonic : DensePoly.Monic f)
   coeffVector f image
 
 /--
+Iteratively build the array of Berlekamp-matrix column polynomials
+`[1, frobX, frobX^2, …, frobX^(n - 1)]`, each reduced modulo `f`.
+Each step costs one polynomial product and one monic reduction, both
+quadratic in `n`, so the array of `n` columns is built in `O(n^3)` total.
+-/
+private def berlekampColumnPolys (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (frobX : FpPoly p) : Nat → FpPoly p → Array (FpPoly p) → Array (FpPoly p)
+  | 0, _, acc => acc
+  | k + 1, current, acc =>
+      berlekampColumnPolys f hmonic frobX k
+        (FpPoly.modByMonic f (current * frobX) hmonic) (acc.push current)
+
+/--
 The Berlekamp matrix `Q_f`, whose `j`-th column records the coordinates of
-`X^(p * j) mod f` in the basis `{1, X, ..., X^(n - 1)}`.
+`X^(p * j) mod f` in the basis `{1, X, ..., X^(n - 1)}`. Columns are computed
+iteratively from the recurrence `column (j + 1) = column j * (X^p mod f) mod f`
+to avoid the per-column fast-exponentiation log factor.
 -/
 def berlekampMatrix (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     Matrix (ZMod64 p) (basisSize f) (basisSize f) :=
-  Matrix.ofFn fun i j => (berlekampColumn f hmonic j)[i]
+  let frobX := FpPoly.frobeniusXMod f hmonic
+  let polys := berlekampColumnPolys f hmonic frobX (basisSize f) 1 #[]
+  Matrix.ofFn fun i j => (polys[j.val]?.getD 0).coeff i.val
 
 /-- The fixed-space matrix `Q_f - I` used in Berlekamp's kernel computation. -/
 def fixedSpaceMatrix (f : FpPoly p) (hmonic : DensePoly.Monic f) :

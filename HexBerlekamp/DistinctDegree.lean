@@ -66,17 +66,31 @@ private def appendBucket? (buckets : List (DegreeBucket p)) :
   | none => buckets
   | some bucket => buckets ++ [bucket]
 
-/-- Fuel-bounded distinct-degree loop over increasing positive degrees. -/
+/--
+Fuel-bounded distinct-degree loop that maintains `currentFrob = X^(p^d) mod f`
+iteratively across degrees. Each step computes the next Frobenius power as
+`currentFrob^p mod f`, costing `O(log p)` polynomial multiplications rather
+than the `O(d)` of `powModMonic X f hmonic (p^d)` from scratch.
+-/
 private def distinctDegreeLoop
-    (f : FpPoly p) (hmonic : DensePoly.Monic f) :
-    Nat → Nat → FpPoly p → List (DegreeBucket p) → List (DegreeBucket p) × FpPoly p
-  | 0, _, residual, buckets => (buckets, residual)
-  | fuel + 1, d, residual, buckets =>
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) (xMod : FpPoly p) :
+    Nat → Nat → FpPoly p → FpPoly p → List (DegreeBucket p) →
+        List (DegreeBucket p) × FpPoly p
+  | 0, _, _, residual, buckets => (buckets, residual)
+  | fuel + 1, d, currentFrob, residual, buckets =>
       if residual.isZero then
         (buckets, residual)
       else
-        let step := distinctDegreeStep f hmonic residual d
-        distinctDegreeLoop f hmonic fuel (d + 1) step.2 (appendBucket? buckets step.1)
+        let diff := currentFrob - xMod
+        let candidate := DensePoly.gcd residual diff
+        let (newBucket, newResidual) :=
+          if isUnitPolynomial candidate then
+            (none, residual)
+          else
+            (some { degree := d, factor := candidate }, residual / candidate)
+        let nextFrob := FpPoly.powModMonic currentFrob f hmonic p
+        distinctDegreeLoop f hmonic xMod fuel (d + 1) nextFrob newResidual
+          (appendBucket? buckets newBucket)
 
 /--
 Compute the distinct-degree factorization surface of a monic polynomial over
@@ -85,7 +99,9 @@ Compute the distinct-degree factorization surface of a monic polynomial over
 def distinctDegreeFactor
     (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     DistinctDegreeFactorization p :=
-  let result := distinctDegreeLoop f hmonic (basisSize f + 1) 1 f []
+  let xMod := FpPoly.modByMonic f FpPoly.X hmonic
+  let frobX := FpPoly.frobeniusXMod f hmonic
+  let result := distinctDegreeLoop f hmonic xMod (basisSize f + 1) 1 frobX f []
   { input := f
     buckets := result.1
     residual := result.2 }

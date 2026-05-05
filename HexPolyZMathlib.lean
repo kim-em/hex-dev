@@ -1,4 +1,5 @@
 import HexPolyZMathlib.Basic
+import HexPolyZMathlib.Conformance
 import HexPolyZMathlib.Mignotte
 
 /-!

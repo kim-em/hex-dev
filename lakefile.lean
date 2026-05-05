@@ -51,6 +51,8 @@ extern_lib hexmodarithffi (pkg) := do
   let oTarget ← zmod64MulOTarget pkg
   buildStaticLib (pkg.staticLibDir / name) #[oTarget]
 
+lean_lib Hex where
+
 lean_lib HexArith where
   precompileModules := true
   moreLinkArgs := #[
@@ -125,8 +127,50 @@ lean_exe hexarith_bench where
 lean_exe hexpoly_bench where
   root := `HexPoly.Bench
 
+lean_exe hexpoly_emit_fixtures where
+  root := `HexPoly.EmitFixtures
+
+lean_exe hexpolyfp_emit_fixtures where
+  root := `HexPolyFp.EmitFixtures
+
+lean_exe hexberlekamp_emit_fixtures where
+  root := `HexBerlekamp.EmitFixtures
+
+lean_exe hexmatrix_emit_fixtures where
+  root := `HexMatrix.EmitFixtures
+
+lean_exe hexbz_emit_fixtures where
+  root := `HexBerlekampZassenhaus.EmitFixtures
+
+lean_exe hexgfq_emit_fixtures where
+  root := `HexGfq.EmitFixtures
+
+lean_exe hexgf2_emit_fixtures where
+  root := `HexGF2.EmitFixtures
+
+lean_exe hexhensel_emit_fixtures where
+  root := `HexHensel.EmitFixtures
+
+lean_exe hexconway_emit_fixtures where
+  root := `HexConway.EmitFixtures
+
+lean_exe hexgramschmidt_emit_fixtures where
+  root := `HexGramSchmidt.EmitFixtures
+
+lean_exe hexlll_emit_fixtures where
+  root := `HexLLL.EmitFixtures
+
+lean_exe hexgfqring_emit_fixtures where
+  root := `HexGfqRing.EmitFixtures
+
+lean_exe hexgfqfield_emit_fixtures where
+  root := `HexGfqField.EmitFixtures
+
 lean_exe hexpolyz_bench where
   root := `HexPolyZ.Bench
+
+lean_exe hexpolyz_emit_fixtures where
+  root := `HexPolyZ.EmitFixtures
 
 lean_exe hexgramschmidt_bench where
   root := `HexGramSchmidt.Bench
@@ -163,6 +207,9 @@ lean_exe hexhensel_bench where
 
 lean_exe hexberlekamp_bench where
   root := `HexBerlekamp.Bench
+
+lean_exe hexconway_bench where
+  root := `HexConway.Bench
 
 @[default_target]
 lean_lib HexManual where

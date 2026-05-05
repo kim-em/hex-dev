@@ -7,7 +7,7 @@ import re
 import tomllib
 
 
-KNOWN_EXCEPTIONS = {"HexManual"}
+KNOWN_EXCEPTIONS = {"Hex", "HexManual"}
 EXTERNAL_IMPORT_ROOTS = {"Mathlib", "Verso"}
 RELEASE_LIBRARIES = {
     1: [

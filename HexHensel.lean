@@ -4,6 +4,7 @@ import HexHensel.Multifactor
 import HexHensel.Quadratic
 import HexHensel.QuadraticMultifactor
 import HexHensel.Conformance
+import HexHensel.CrossCheck
 
 /-!
 The `HexHensel` library provides the executable bridge and lifting layers

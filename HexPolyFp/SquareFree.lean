@@ -555,6 +555,59 @@ private theorem powLinear_add_binom_sum
       rw [powLinearBinomSum_top_succ f g n]
       exact DensePoly.mul_add_left_poly f g (powLinearBinomSum f g n (n + 1))
 
+private theorem powLinearBinomTerm_prime_zero (f g : FpPoly p) :
+    powLinearBinomTerm f g p 0 = powLinear f p := by
+  unfold powLinearBinomTerm
+  simp
+  change DensePoly.scale (1 : ZMod64 p) (powLinear f p * powLinear g 0) =
+    powLinear f p
+  rw [powLinearBinom_scalar_one]
+  exact DensePoly.mul_one_right_poly (powLinear f p)
+
+private theorem powLinearBinomTerm_prime_top (f g : FpPoly p) :
+    powLinearBinomTerm f g p p = powLinear g p := by
+  unfold powLinearBinomTerm
+  rw [choose_self]
+  have hsub : p - p = 0 := by omega
+  rw [hsub]
+  change DensePoly.scale (1 : ZMod64 p) (powLinear f 0 * powLinear g p) =
+    powLinear g p
+  rw [powLinearBinom_scalar_one]
+  exact one_mul (powLinear g p)
+
+private theorem powLinearBinomTerm_prime_middle
+    (hp : Hex.Nat.Prime p) (f g : FpPoly p) {k : Nat} (hk0 : 0 < k) (hkp : k < p) :
+    powLinearBinomTerm f g p k = 0 := by
+  unfold powLinearBinomTerm
+  rw [zmod64_natCast_choose_prime_eq_zero hp hk0 hkp]
+  exact powLinearBinom_scalar_zero _
+
+private theorem powLinearBinomSum_prime_middle
+    (hp : Hex.Nat.Prime p) (f g : FpPoly p) {m : Nat} (hm : m < p) :
+    powLinearBinomSum f g p (m + 1) = powLinear f p := by
+  induction m with
+  | zero =>
+      rw [powLinearBinomSum, powLinearBinomTerm_prime_zero]
+      exact DensePoly.zero_add _
+  | succ m ih =>
+      rw [powLinearBinomSum, ih (by omega)]
+      rw [powLinearBinomTerm_prime_middle hp f g (by omega : 0 < m + 1) (by omega)]
+      exact DensePoly.add_zero_poly _
+
+private theorem powLinear_add_prime
+    (hp : Hex.Nat.Prime p) (f g : FpPoly p) :
+    powLinear (f + g) p = powLinear f p + powLinear g p := by
+  have hp_two : 2 ≤ p := Hex.Nat.Prime.two_le hp
+  have hp_pos : 0 < p := by omega
+  rw [powLinear_add_binom_sum]
+  rw [powLinearBinomSum]
+  have hmid : powLinearBinomSum f g p p = powLinear f p := by
+    have hmid0 :
+        powLinearBinomSum f g p ((p - 1) + 1) = powLinear f p :=
+      powLinearBinomSum_prime_middle hp f g (by omega : p - 1 < p)
+    simpa [Nat.sub_add_cancel hp_pos] using hmid0
+  rw [hmid, powLinearBinomTerm_prime_top]
+
 private theorem foldl_poly_sum_mul_right
     {α : Type _} (xs : List α) (term : α → FpPoly p) (acc h : FpPoly p) :
     (xs.foldl (fun acc x => acc + term x) acc) * h =
@@ -962,7 +1015,81 @@ private theorem coeffFoldPowerCoeff_prime_coeff
         if n / p < m then (g.coeff (n / p)) ^ p else 0
       else
         0 := by
-  sorry
+  have hp_pos : 0 < p := by
+    have hp2 := Hex.Nat.Prime.two_le hp
+    omega
+  rw [← powLinear_coeffFold_prime_coeff_expansion]
+  induction m with
+  | zero =>
+      have hcoeffFold_zero : coeffFold g 0 = 0 := by
+        unfold coeffFold
+        simp [List.range_zero]
+      rw [hcoeffFold_zero]
+      have hpow_zero_p_coeff : (powLinear (0 : FpPoly p) p).coeff n = 0 := by
+        have hgeneral : ∀ k, 0 < k →
+            (powLinear (0 : FpPoly p) k).coeff n = 0 := by
+          intro k hk
+          cases k with
+          | zero => omega
+          | succ k' =>
+              rw [powLinear, powLinearBinom_mul_zero]
+              exact DensePoly.coeff_zero n
+        exact hgeneral p hp_pos
+      rw [hpow_zero_p_coeff]
+      have hne : ¬ n / p < 0 := Nat.not_lt_zero _
+      by_cases hmod : n % p = 0
+      · rw [if_pos hmod, if_neg hne]
+      · rw [if_neg hmod]
+  | succ m ih =>
+      have hsucc : coeffFold g (m + 1) = coeffFold g m + coeffTerm g m := by
+        unfold coeffFold
+        rw [List.range_succ, List.foldl_append]
+        simp only [List.foldl_cons, List.foldl_nil]
+      rw [hsucc, powLinear_add_prime hp,
+        DensePoly.coeff_add _ _ _ zmod64_add_zero_zero_coeff,
+        ih, powLinear_coeffTerm_coeff]
+      by_cases hmod : n % p = 0
+      · rw [if_pos hmod, if_pos hmod]
+        have hn_eq : n = p * (n / p) := by
+          have hdiv := Nat.div_add_mod n p
+          omega
+        by_cases hlt : n / p < m
+        · rw [if_pos hlt]
+          have hne : n ≠ p * m := by
+            intro heq
+            have hmul : p * (n / p) = p * m := by rw [← hn_eq]; exact heq
+            have hdivm : n / p = m := Nat.eq_of_mul_eq_mul_left hp_pos hmul
+            omega
+          rw [if_neg hne]
+          have hltsucc : n / p < m + 1 := by omega
+          rw [if_pos hltsucc]
+          exact zmod64_add_zero_coeff (g.coeff (n / p) ^ p)
+        · rw [if_neg hlt]
+          by_cases heq : n / p = m
+          · have hnm : n = p * m := by rw [hn_eq, heq]
+            rw [if_pos hnm]
+            have hltsucc : n / p < m + 1 := by omega
+            rw [if_pos hltsucc]
+            rw [heq]
+            exact zmod64_zero_add_coeff (g.coeff m ^ p)
+          · have hne : n ≠ p * m := by
+              intro habs
+              have hmul : p * (n / p) = p * m := by rw [← hn_eq]; exact habs
+              have hdivm : n / p = m := Nat.eq_of_mul_eq_mul_left hp_pos hmul
+              exact heq hdivm
+            rw [if_neg hne]
+            have hltsucc : ¬ n / p < m + 1 := by omega
+            rw [if_neg hltsucc]
+            exact zmod64_add_zero_zero_coeff
+      · rw [if_neg hmod, if_neg hmod]
+        have hne : n ≠ p * m := by
+          intro heq
+          have hmodzero : n % p = 0 := by
+            rw [heq]
+            exact Nat.mul_mod_right p m
+          exact hmod hmodzero
+        rw [if_neg hne]
+        exact zmod64_add_zero_zero_coeff
 
 private theorem coeffFoldPowerCoeff_prime_coeff_of_mod_ne_zero
     (hp : Hex.Nat.Prime p) (g : FpPoly p) (m n : Nat) (hn : n % p ≠ 0) :
@@ -991,49 +1118,8 @@ private theorem powLinear_add_prime_coeff
     (hp : Hex.Nat.Prime p) (f g : FpPoly p) (n : Nat) :
     (powLinear (f + g) p).coeff n =
       (powLinear f p).coeff n + (powLinear g p).coeff n := by
-  let m := max f.size g.size
-  have hf_bound : f.size ≤ m := by
-    exact Nat.le_max_left f.size g.size
-  have hg_bound : g.size ≤ m := by
-    exact Nat.le_max_right f.size g.size
-  have hf_eq : coeffFold f m = f :=
-    coeffFold_eq_of_size_le f m hf_bound
-  have hg_eq : coeffFold g m = g :=
-    coeffFold_eq_of_size_le g m hg_bound
-  have hfg_eq : coeffFold (f + g) m = f + g := by
-    apply DensePoly.ext_coeff
-    intro i
-    rw [coeffFold_coeff]
-    by_cases hi : i < m
-    · rw [if_pos hi]
-    · rw [if_neg hi]
-      have hfi : f.coeff i = 0 :=
-        DensePoly.coeff_eq_zero_of_size_le f (by omega)
-      have hgi : g.coeff i = 0 :=
-        DensePoly.coeff_eq_zero_of_size_le g (by omega)
-      rw [DensePoly.coeff_add _ _ _ zmod64_add_zero_zero_coeff, hfi, hgi]
-      exact zmod64_add_zero_zero_coeff.symm
-  calc
-    (powLinear (f + g) p).coeff n =
-        (powLinear (coeffFold (f + g) m) p).coeff n := by
-          rw [hfg_eq]
-    _ = (powLinear (coeffFold f m) p).coeff n +
-          (powLinear (coeffFold g m) p).coeff n := by
-          rw [powLinear_coeffFold_prime_coeff hp (f + g) m n]
-          rw [powLinear_coeffFold_prime_coeff hp f m n]
-          rw [powLinear_coeffFold_prime_coeff hp g m n]
-          by_cases hn : n % p = 0
-          · rw [if_pos hn, if_pos hn, if_pos hn]
-            by_cases hdiv : n / p < m
-            · rw [if_pos hdiv, if_pos hdiv, if_pos hdiv]
-              rw [DensePoly.coeff_add _ _ _ zmod64_add_zero_zero_coeff]
-              exact zmod64_add_pow_prime hp (f.coeff (n / p)) (g.coeff (n / p))
-            · rw [if_neg hdiv, if_neg hdiv, if_neg hdiv]
-              exact zmod64_add_zero_zero_coeff.symm
-          · rw [if_neg hn, if_neg hn, if_neg hn]
-            exact zmod64_add_zero_zero_coeff.symm
-    _ = (powLinear f p).coeff n + (powLinear g p).coeff n := by
-          rw [hf_eq, hg_eq]
+  rw [powLinear_add_prime hp f g]
+  exact DensePoly.coeff_add _ _ _ zmod64_add_zero_zero_coeff
 
 /--
 Freshman's-dream coefficient support for a `p`th power over `F_p[x]`.
@@ -1843,73 +1929,80 @@ private theorem yunFactorsContribution_initial_state_split
   exact div_gcd_mul_reconstruct f (DensePoly.derivative f)
 
 private theorem yunFactorsContribution_initial_state_done
-    (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
-    (hmultiplicity : 0 < multiplicity) (hfuel : f.size < fuel + 2)
-    (hzero : f.isZero = false)
-    (hdf : (DensePoly.derivative f).isZero = false) :
-    let g := DensePoly.gcd f (DensePoly.derivative f)
-    let c := f / g
-    isOne (yunFactorsContribution c g multiplicity (fuel + 1)).2 = true →
-      (yunFactorsContribution c g multiplicity (fuel + 1)).1 = pow f multiplicity := by
-  sorry
-
-private theorem yunFactorsContribution_initial_state_tail
-    (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
-    (hmultiplicity : 0 < multiplicity) (hfuel : f.size < fuel + 2)
-    (hzero : f.isZero = false)
-    (hdf : (DensePoly.derivative f).isZero = false) :
-    let g := DensePoly.gcd f (DensePoly.derivative f)
-    let c := f / g
-    isOne (yunFactorsContribution c g multiplicity (fuel + 1)).2 = false →
-      (yunFactorsContribution c g multiplicity (fuel + 1)).1 *
-        squareFreeAuxRevContribution
-          (pthRoot (yunFactorsContribution c g multiplicity (fuel + 1)).2)
-          (multiplicity * p) (fuel + 1) =
-        pow f multiplicity := by
-  sorry
-
-/--
-Fuel-indexed product invariant for the derivative-active Yun branch, specialized to the
-initial split `g = gcd f f'`, `c = f / g`.  The remaining hard obligations are the terminal
-and recursive-tail cases of this concrete initial state.
--/
-private theorem yunFactorsContribution_derivative_active_initial_state_invariant
-    (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
-    (hmultiplicity : 0 < multiplicity) (hfuel : f.size < fuel + 2)
-    (hzero : f.isZero = false)
-    (hdf : (DensePoly.derivative f).isZero = false) :
+    (f : FpPoly p) (multiplicity fuel : Nat) :
     let g := DensePoly.gcd f (DensePoly.derivative f)
     let c := f / g
     let contribution := yunFactorsContribution c g multiplicity (fuel + 1)
-    (isOne contribution.2 = true → contribution.1 = pow f multiplicity) ∧
+    isOne contribution.2 = true →
+      contribution.1 =
+        weightedProduct (yunFactors c g multiplicity (fuel + 1) []).1.reverse := by
+  dsimp
+  intro _hrepeated
+  have hloop :=
+    yunFactors_reconstruction_invariant
+      (f / DensePoly.gcd f (DensePoly.derivative f))
+      (DensePoly.gcd f (DensePoly.derivative f)) multiplicity (fuel + 1) []
+  have hproduct := hloop.2
+  simpa [weightedProduct_nil] using hproduct.symm
+
+private theorem yunFactorsContribution_initial_state_tail
+    (f : FpPoly p) (multiplicity fuel : Nat) :
+    let g := DensePoly.gcd f (DensePoly.derivative f)
+    let c := f / g
+    let contribution := yunFactorsContribution c g multiplicity (fuel + 1)
+    isOne contribution.2 = false →
+      contribution.1 =
+        weightedProduct (yunFactors c g multiplicity (fuel + 1) []).1.reverse := by
+  dsimp
+  intro _hrepeated
+  have hloop :=
+    yunFactors_reconstruction_invariant
+      (f / DensePoly.gcd f (DensePoly.derivative f))
+      (DensePoly.gcd f (DensePoly.derivative f)) multiplicity (fuel + 1) []
+  have hproduct := hloop.2
+  simpa [weightedProduct_nil] using hproduct.symm
+
+/--
+Fuel-indexed product invariant for the derivative-active Yun branch, specialized to the
+initial split `g = gcd f f'`, `c = f / g`.  This records the offset-form
+product emitted by Yun's loop; assembling that contribution into the outer
+`pow f multiplicity` contract is a separate factorisation step.
+-/
+private theorem yunFactorsContribution_derivative_active_initial_state_invariant
+    (f : FpPoly p) (multiplicity fuel : Nat) :
+    let g := DensePoly.gcd f (DensePoly.derivative f)
+    let c := f / g
+    let contribution := yunFactorsContribution c g multiplicity (fuel + 1)
+    (isOne contribution.2 = true →
+        contribution.1 =
+          weightedProduct (yunFactors c g multiplicity (fuel + 1) []).1.reverse) ∧
       (isOne contribution.2 = false →
-        contribution.1 *
-          squareFreeAuxRevContribution (pthRoot contribution.2) (multiplicity * p)
-            (fuel + 1) =
-          pow f multiplicity) := by
+        contribution.1 =
+          weightedProduct (yunFactors c g multiplicity (fuel + 1) []).1.reverse) := by
   dsimp
   constructor
   · exact
       yunFactorsContribution_initial_state_done
-        hp f multiplicity fuel hmultiplicity hfuel hzero hdf
+        f multiplicity fuel
   · exact
       yunFactorsContribution_initial_state_tail
-        hp f multiplicity fuel hmultiplicity hfuel hzero hdf
+        f multiplicity fuel
 
 private theorem yunFactorsContribution_derivative_active_split_algebra_succ
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
-    (hmultiplicity : 0 < multiplicity) (hfuel : f.size < fuel + 2)
-    (hzero : f.isZero = false)
-    (hdf : (DensePoly.derivative f).isZero = false) :
+    (_hmultiplicity : 0 < multiplicity) (_hfuel : f.size < fuel + 2)
+    (_hzero : f.isZero = false)
+    (_hdf : (DensePoly.derivative f).isZero = false) :
     let g := DensePoly.gcd f (DensePoly.derivative f)
     let c := f / g
     let contribution := yunFactorsContribution c g multiplicity (fuel + 1)
     c * g = f ∧
-      (isOne contribution.2 = true → contribution.1 = pow f multiplicity) ∧
+      (isOne contribution.2 = true →
+        contribution.1 =
+          weightedProduct (yunFactors c g multiplicity (fuel + 1) []).1.reverse) ∧
         (isOne contribution.2 = false →
-          contribution.1 *
-            squareFreeAuxRevContribution (pthRoot contribution.2) (multiplicity * p) (fuel + 1) =
-              pow f multiplicity) := by
+          contribution.1 =
+            weightedProduct (yunFactors c g multiplicity (fuel + 1) []).1.reverse) := by
   letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
   let g := DensePoly.gcd f (DensePoly.derivative f)
   let c := f / g
@@ -1918,7 +2011,7 @@ private theorem yunFactorsContribution_derivative_active_split_algebra_succ
   refine ⟨hcg, ?_⟩
   exact
     (yunFactorsContribution_derivative_active_initial_state_invariant
-      hp f multiplicity fuel hmultiplicity hfuel hzero hdf)
+      f multiplicity fuel)
 
 private theorem yunFactorsContribution_derivative_active_split_algebra
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
@@ -1929,11 +2022,12 @@ private theorem yunFactorsContribution_derivative_active_split_algebra
     let c := f / g
     let contribution := yunFactorsContribution c g multiplicity fuel
     c * g = f ∧
-      (isOne contribution.2 = true → contribution.1 = pow f multiplicity) ∧
+      (isOne contribution.2 = true →
+        contribution.1 =
+          weightedProduct (yunFactors c g multiplicity fuel []).1.reverse) ∧
         (isOne contribution.2 = false →
-          contribution.1 *
-            squareFreeAuxRevContribution (pthRoot contribution.2) (multiplicity * p) fuel =
-              pow f multiplicity) := by
+          contribution.1 =
+            weightedProduct (yunFactors c g multiplicity fuel []).1.reverse) := by
   cases fuel with
   | zero =>
       have hsize_pos : 0 < f.size := size_pos_of_isZero_false f hzero
@@ -1951,11 +2045,12 @@ private theorem yunFactorsContribution_initial_state_product_invariant
     let g := DensePoly.gcd f (DensePoly.derivative f)
     let c := f / g
     let contribution := yunFactorsContribution c g multiplicity fuel
-    (isOne contribution.2 = true → contribution.1 = pow f multiplicity) ∧
+    (isOne contribution.2 = true →
+      contribution.1 =
+        weightedProduct (yunFactors c g multiplicity fuel []).1.reverse) ∧
       (isOne contribution.2 = false →
-        contribution.1 *
-          squareFreeAuxRevContribution (pthRoot contribution.2) (multiplicity * p) fuel =
-            pow f multiplicity) := by
+        contribution.1 =
+          weightedProduct (yunFactors c g multiplicity fuel []).1.reverse) := by
   exact
     (yunFactorsContribution_derivative_active_split_algebra
       hp f multiplicity fuel hmultiplicity hfuel hzero hdf).2
@@ -1968,11 +2063,12 @@ private theorem yunFactorsContribution_reconstruct_core
     let g := DensePoly.gcd f (DensePoly.derivative f)
     let c := f / g
     let contribution := yunFactorsContribution c g multiplicity fuel
-    (isOne contribution.2 = true → contribution.1 = pow f multiplicity) ∧
+    (isOne contribution.2 = true →
+      contribution.1 =
+        weightedProduct (yunFactors c g multiplicity fuel []).1.reverse) ∧
       (isOne contribution.2 = false →
-        contribution.1 *
-          squareFreeAuxRevContribution (pthRoot contribution.2) (multiplicity * p) fuel =
-            pow f multiplicity) := by
+        contribution.1 =
+          weightedProduct (yunFactors c g multiplicity fuel []).1.reverse) := by
   dsimp
   exact
     yunFactorsContribution_initial_state_product_invariant
@@ -1990,7 +2086,10 @@ private theorem yunFactorsContribution_reconstruct_done
     (yunFactorsContribution
       (f / DensePoly.gcd f (DensePoly.derivative f))
       (DensePoly.gcd f (DensePoly.derivative f)) multiplicity fuel).1 =
-        pow f multiplicity := by
+        weightedProduct
+          (yunFactors
+            (f / DensePoly.gcd f (DensePoly.derivative f))
+            (DensePoly.gcd f (DensePoly.derivative f)) multiplicity fuel []).1.reverse := by
   exact (yunFactorsContribution_reconstruct_core
     hp f multiplicity fuel hmultiplicity hfuel hzero hdf).1 hrepeated
 
@@ -2011,9 +2110,17 @@ private theorem yunFactorsContribution_reconstruct_tail
             (f / DensePoly.gcd f (DensePoly.derivative f))
             (DensePoly.gcd f (DensePoly.derivative f)) multiplicity fuel).2)
           (multiplicity * p) fuel =
-          pow f multiplicity := by
-  exact (yunFactorsContribution_reconstruct_core
-    hp f multiplicity fuel hmultiplicity hfuel hzero hdf).2 hrepeated
+          weightedProduct
+            (yunFactors
+              (f / DensePoly.gcd f (DensePoly.derivative f))
+              (DensePoly.gcd f (DensePoly.derivative f)) multiplicity fuel []).1.reverse *
+            squareFreeAuxRevContribution
+              (pthRoot (yunFactorsContribution
+                (f / DensePoly.gcd f (DensePoly.derivative f))
+                (DensePoly.gcd f (DensePoly.derivative f)) multiplicity fuel).2)
+              (multiplicity * p) fuel := by
+  rw [(yunFactorsContribution_reconstruct_core
+    hp f multiplicity fuel hmultiplicity hfuel hzero hdf).2 hrepeated]
 
 private theorem yunFactorsContribution_reconstruct
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
@@ -2024,11 +2131,13 @@ private theorem yunFactorsContribution_reconstruct
     let c := f / g
     let contribution := yunFactorsContribution c g multiplicity fuel
     if isOne contribution.2 then
-      contribution.1 = pow f multiplicity
+      contribution.1 =
+        weightedProduct (yunFactors c g multiplicity fuel []).1.reverse
     else
       contribution.1 *
         squareFreeAuxRevContribution (pthRoot contribution.2) (multiplicity * p) fuel =
-          pow f multiplicity := by
+          weightedProduct (yunFactors c g multiplicity fuel []).1.reverse *
+            squareFreeAuxRevContribution (pthRoot contribution.2) (multiplicity * p) fuel := by
   simp only
   by_cases hrepeated :
       isOne (yunFactorsContribution
@@ -2050,6 +2159,25 @@ private theorem yunFactorsContribution_reconstruct
     simpa [hrepeated_false] using
       yunFactorsContribution_reconstruct_tail
         hp f multiplicity fuel hmultiplicity hfuel hzero hdf hrepeated_false
+
+/--
+Remaining assembly obligation for the derivative-active branch: the new
+offset-form Yun invariant below identifies the local contribution with the
+emitted weighted product, while this theorem is the later factorisation step
+that upgrades that weighted product back to the outer `pow f multiplicity`
+contract.
+-/
+private theorem squareFreeAuxRevContribution_derivative_active_pow_obligation
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
+    (hmultiplicity : 0 < multiplicity) (hfuel : f.size < fuel + 1)
+    (hzero : f.isZero = false)
+    (hdf : (DensePoly.derivative f).isZero = false)
+    (hreachable : squareFreeContributionReachable f) :
+    squareFreeAuxRevContribution f multiplicity (fuel + 1) = pow f multiplicity := by
+  have hoffset :=
+    yunFactorsContribution_reconstruct
+      hp f multiplicity fuel hmultiplicity hfuel hzero hdf
+  sorry
 
 private theorem squareFreeAuxRevContribution_correct_pow_of_nonzero
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
@@ -2093,16 +2221,9 @@ private theorem squareFreeAuxRevContribution_correct_pow_of_nonzero
                   hmultiplicity_root hroot_fuel hroot_zero hroot_reachable)
       · have hdf_false : (DensePoly.derivative f).isZero = false := by
           cases h : (DensePoly.derivative f).isZero <;> simp [h] at hdf ⊢
-        simp [hdf_false]
-        let g := DensePoly.gcd f (DensePoly.derivative f)
-        let c := f / g
-        let contribution := yunFactorsContribution c g multiplicity fuel
-        have hrec :=
-          yunFactorsContribution_reconstruct
-            hp f multiplicity fuel hmultiplicity hfuel hzero hdf_false
-        by_cases hrepeated : isOne contribution.2
-        · simpa [g, c, contribution, hrepeated] using hrec
-        · simpa [g, c, contribution, hrepeated] using hrec
+        simpa [squareFreeAuxRevContribution, hzero, hdf_false] using
+          squareFreeAuxRevContribution_derivative_active_pow_obligation
+            hp f multiplicity fuel hmultiplicity hfuel hzero hdf_false hreachable
 
 /--
 Tail-recursive square-free decomposition over `F_p[x]`, accumulating factors

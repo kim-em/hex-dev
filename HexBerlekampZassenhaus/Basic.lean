@@ -1,3 +1,4 @@
+import HexBerlekamp.Factor
 import HexBerlekamp.Irreducibility
 import HexHensel.Multifactor
 import HexHensel.QuadraticMultifactor
@@ -7,8 +8,8 @@ import HexLLL.Basic
 Executable data records for the Berlekamp-Zassenhaus factorization pipeline.
 
 This module contains the shared records passed between prime selection,
-Hensel lifting, and integer recombination in the `ZPoly` factorization
-pipeline.
+Hensel lifting, and LLL-based integer recombination in the `ZPoly`
+factorization pipeline.
 -/
 namespace Hex
 
@@ -120,10 +121,34 @@ private theorem prime_seventeen : Nat.Prime 17 := by
 private theorem prime_nineteen : Nat.Prime 19 := by
   sorry
 
+private def zmod64ZPow {p : Nat} [ZMod64.Bounds p] (a : ZMod64 p) : Int → ZMod64 p
+  | .ofNat n => a ^ n
+  | .negSucc n => (a ^ (n + 1))⁻¹
+
+private instance zmod64IntPow {p : Nat} [ZMod64.Bounds p] :
+    HPow (ZMod64 p) Int (ZMod64 p) where
+  hPow := zmod64ZPow
+
+private instance zmod64FieldOfPrime
+    {p : Nat} [ZMod64.Bounds p] (hp : Nat.Prime p) :
+    Lean.Grind.Field (ZMod64 p) := by
+  refine Lean.Grind.Field.mk ?_ ?_ ?_ ?_ ?_ ?_ ?_
+  · intro a b
+    rfl
+  · sorry
+  · sorry
+  · intro a ha
+    rw [Lean.Grind.CommSemiring.mul_comm]
+    exact ZMod64.inv_mul_eq_one_of_prime hp ha
+  · sorry
+  · sorry
+  · sorry
+
 private structure SmallPrimeCandidate where
   p : Nat
-  bounds : ZMod64.Bounds p
+  [bounds : ZMod64.Bounds p]
   prime : Nat.Prime p
+  field : Lean.Grind.Field (ZMod64 p)
 
 /-- A scored admissible small-prime candidate for default prime selection. -/
 structure PrimeCandidateScore where
@@ -133,21 +158,52 @@ structure PrimeCandidateScore where
   factorCount : Nat
 
 private def smallPrimeCandidates : List SmallPrimeCandidate :=
-  [ { p := 2, bounds := bounds_two, prime := prime_two },
-    { p := 3, bounds := bounds_three, prime := prime_three },
-    { p := 5, bounds := bounds_five, prime := prime_five },
-    { p := 7, bounds := bounds_seven, prime := prime_seven },
-    { p := 11, bounds := bounds_eleven, prime := prime_eleven },
-    { p := 13, bounds := bounds_thirteen, prime := prime_thirteen },
-    { p := 17, bounds := bounds_seventeen, prime := prime_seventeen },
-    { p := 19, bounds := bounds_nineteen, prime := prime_nineteen } ]
+  [ { p := 2, bounds := bounds_two, prime := prime_two,
+      field := @zmod64FieldOfPrime 2 bounds_two prime_two },
+    { p := 3, bounds := bounds_three, prime := prime_three,
+      field := @zmod64FieldOfPrime 3 bounds_three prime_three },
+    { p := 5, bounds := bounds_five, prime := prime_five,
+      field := @zmod64FieldOfPrime 5 bounds_five prime_five },
+    { p := 7, bounds := bounds_seven, prime := prime_seven,
+      field := @zmod64FieldOfPrime 7 bounds_seven prime_seven },
+    { p := 11, bounds := bounds_eleven, prime := prime_eleven,
+      field := @zmod64FieldOfPrime 11 bounds_eleven prime_eleven },
+    { p := 13, bounds := bounds_thirteen, prime := prime_thirteen,
+      field := @zmod64FieldOfPrime 13 bounds_thirteen prime_thirteen },
+    { p := 17, bounds := bounds_seventeen, prime := prime_seventeen,
+      field := @zmod64FieldOfPrime 17 bounds_seventeen prime_seventeen },
+    { p := 19, bounds := bounds_nineteen, prime := prime_nineteen,
+      field := @zmod64FieldOfPrime 19 bounds_nineteen prime_nineteen } ]
+
+private def monicModularImage {p : Nat} [ZMod64.Bounds p] (f : FpPoly p) : FpPoly p :=
+  if f.isZero then
+    0
+  else
+    DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f
+
+private theorem monicModularImage_monic
+    {p : Nat} [ZMod64.Bounds p] (hp : Nat.Prime p) (f : FpPoly p)
+    (hgood : f.isZero = false) :
+    DensePoly.Monic (monicModularImage f) := by
+  sorry
+
+private def berlekampFactorsModP (f : ZPoly) (c : SmallPrimeCandidate) :
+    Array (@FpPoly c.p c.bounds) :=
+  letI := c.bounds
+  letI := c.field
+  let fModP := ZPoly.modP c.p f
+  if hzero : fModP.isZero = false then
+    (Berlekamp.berlekampFactor
+      (monicModularImage fModP)
+      (monicModularImage_monic c.prime fModP hzero)).factors.toArray
+  else
+    #[]
 
 private def scoreCandidate (f : ZPoly) (c : SmallPrimeCandidate) : Option PrimeCandidateScore :=
   letI := c.bounds
   if isGoodPrime f c.p then
-    let fModP := ZPoly.modP c.p f
-    let factors := (FpPoly.squareFreeDecomposition c.prime fModP).factors
-    some { p := c.p, factorCount := factors.length }
+    let factors := berlekampFactorsModP f c
+    some { p := c.p, factorCount := factors.size }
   else
     none
 
@@ -469,8 +525,7 @@ private def primeChoiceDataScore (f : ZPoly) (c : SmallPrimeCandidate) :
   letI := c.bounds
   if isGoodPrime f c.p then
     let fModP := ZPoly.modP c.p f
-    let decomposition := FpPoly.squareFreeDecomposition c.prime fModP
-    let factorsModP := decomposition.factors.map (fun factor => factor.factor) |>.toArray
+    let factorsModP := berlekampFactorsModP f c
     some
       { data := { p := c.p, fModP, factorsModP }
         factorCount := factorsModP.size }
@@ -496,14 +551,16 @@ private def choosePrimeData? (f : ZPoly) : Option PrimeChoiceData :=
 
 private def fallbackPrimeChoiceData (f : ZPoly) : PrimeChoiceData :=
   letI := bounds_two
+  let c : SmallPrimeCandidate :=
+    { p := 2, bounds := bounds_two, prime := prime_two,
+      field := @zmod64FieldOfPrime 2 bounds_two prime_two }
   let fModP := ZPoly.modP 2 f
-  let decomposition := FpPoly.squareFreeDecomposition prime_two fModP
-  let factorsModP := decomposition.factors.map (fun factor => factor.factor) |>.toArray
+  let factorsModP := berlekampFactorsModP f c
   { p := 2, fModP, factorsModP }
 
 /--
 Choose an admissible small prime and package the modular image together with
-its square-free factor data for the rest of the pipeline.
+its Berlekamp irreducible factor data for the rest of the pipeline.
 -/
 def choosePrimeData (f : ZPoly) : PrimeChoiceData :=
   match choosePrimeData? f with
@@ -642,7 +699,16 @@ private def verifyShortVectorCandidates (target : ZPoly) (candidates : Array ZPo
   else
     none
 
-private def recombineLLL? (f : ZPoly) (d : LiftData) : Option (Array ZPoly) :=
+/--
+Recombine lifted local factors via LLL short-vector enumeration.
+
+The production recombination path; returns `none` when the LLL pass produces
+no candidates that exactly partition `f`. Exposed (rather than `private`) so
+the SPEC-sanctioned LLL-vs-exhaustive cross-check in `HexBerlekampZassenhaus/
+CrossCheck.lean` can compare its output against `recombinationSearch` on the
+same lifted-factor set.
+-/
+def recombineLLL? (f : ZPoly) (d : LiftData) : Option (Array ZPoly) :=
   let coeffWidth := f.degree?.getD 0 + 1
   match recombinationLattice? d coeffWidth with
   | none => none
@@ -679,6 +745,11 @@ private def recombineExhaustive (f : ZPoly) (d : LiftData) : Array ZPoly :=
   | some factors => factors.toArray
   | none => #[]
 
+private def exhaustiveRecombinationLocalFactorLimit : Nat := 4
+
+private def canUseExhaustiveRecombination (d : LiftData) : Bool :=
+  d.liftedFactors.size ≤ exhaustiveRecombinationLocalFactorLimit
+
 /--
 The lifted factors contain enough information for the executable exhaustive
 recombination search to recover factors of `f`.
@@ -687,16 +758,40 @@ def LiftedFactorsRecombineTo (f : ZPoly) (d : LiftData) : Prop :=
   ∃ factors, recombinationSearch f d.liftedFactors.toList = some factors
 
 /--
-Exhaustively recombine lifted local factors into integer factors.
+Recombine lifted local factors into integer factors.
 
-An empty result means the lifted data did not pass the exact-divisibility
-checks; it is an explicit recombination failure rather than a replacement of
-the factorization by the original input.
+The production path is LLL-based. Exhaustive subset recombination is retained
+only as a small-input fallback; for larger inputs, an LLL miss is reported as
+an explicit recombination failure.
 -/
 def recombine (f : ZPoly) (d : LiftData) : Array ZPoly :=
   match recombineLLL? f d with
   | some factors => factors
-  | none => recombineExhaustive f d
+  | none =>
+      if canUseExhaustiveRecombination d then
+        recombineExhaustive f d
+      else
+        #[]
+
+private def recombineLLLBranchGuardFactors : Array ZPoly :=
+  #[DensePoly.ofCoeffs #[-1, 1],
+    DensePoly.ofCoeffs #[-2, 1],
+    DensePoly.ofCoeffs #[-3, 1],
+    DensePoly.ofCoeffs #[-4, 1],
+    DensePoly.ofCoeffs #[-5, 1]]
+
+private def recombineLLLBranchGuardInput : ZPoly :=
+  Array.polyProduct recombineLLLBranchGuardFactors
+
+private def recombineLLLBranchGuardLift : LiftData :=
+  { p := 2
+    k := 8
+    liftedFactors := recombineLLLBranchGuardFactors }
+
+#guard !canUseExhaustiveRecombination recombineLLLBranchGuardLift
+
+#guard Array.polyProduct (recombine recombineLLLBranchGuardInput recombineLLLBranchGuardLift) =
+  recombineLLLBranchGuardInput
 
 /-- Factor with an explicit coefficient bound for the recombination stage. -/
 def factorWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
@@ -712,9 +807,9 @@ def factorWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
     else
       reassembleNormalizedFactors normalized coreFactors
 
-/-- Factor using the library's conservative executable coefficient bound. -/
+/-- Factor using the library's uniform executable Mignotte coefficient bound. -/
 def factor (f : ZPoly) : Array ZPoly :=
-  factorWithBound f (ZPoly.coeffL2NormBound f)
+  factorWithBound f (ZPoly.defaultFactorCoeffBound f)
 
 /--
 Conditional product contract for the bounded factorization entry point.

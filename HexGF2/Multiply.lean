@@ -6290,6 +6290,365 @@ theorem coeff_mul (p q : GF2Poly) (n : Nat) :
     coeffWords (mulWords p.words q.words) n
   simp
 
+private theorem replicate_two_set_zero_one (lo hi : UInt64) :
+    ((Array.replicate 2 (0 : UInt64)).set 0 lo (by simp)).set 1 hi (by simp) =
+      #[lo, hi] := by
+  rfl
+
+/-- Multiplying two single packed words is the two-word carry-less product. -/
+theorem ofUInt64_mul_ofUInt64 (a b : UInt64) :
+    ofUInt64 a * ofUInt64 b = ofWords #[(clmul a b).2, (clmul a b).1] := by
+  by_cases ha : a = 0
+  · subst ha
+    rw [clmul_zero_left]
+    apply ext_words
+    change (mul (ofWords #[(0 : UInt64)]) (ofUInt64 b)).words = (ofWords #[0, 0]).words
+    simp [ofUInt64, mul, mulWords]
+  by_cases hb : b = 0
+  · subst hb
+    rw [clmul_zero_right]
+    apply ext_words
+    change (mul (ofUInt64 a) (ofWords #[(0 : UInt64)])).words = (ofWords #[0, 0]).words
+    simp [ofUInt64, mul, mulWords]
+  apply ext_coeff
+  intro n
+  rw [coeff_mul]
+  simp [ofUInt64, mulWords, xorClmulAt, Array.setIfInBounds, ha, hb,
+    replicate_two_set_zero_one]
+
+private theorem wordBitAt_getElem!_eq_false_of_degree?_lt
+    {p : GF2Poly} {d i bit : Nat}
+    (hp : p.degree? = some d) (hbit : bit < 64) (hlt : d < 64 * i + bit) :
+    wordBitAt p.words[i]! bit = false := by
+  rw [wordBitAt_getElem!_eq_coeff p hbit]
+  exact coeff_eq_false_of_degree?_lt hp hlt
+
+private theorem degree?_eq_some_word_lt {p : GF2Poly} {d : Nat}
+    (hp : p.degree? = some d) :
+    d / 64 < p.words.size := by
+  have hcoeff := coeff_eq_true_of_degree?_eq_some hp
+  by_cases hlt : d / 64 < p.words.size
+  · exact hlt
+  · have hfalse : p.coeff d = false := by
+      simp [coeff, coeffWords, hlt]
+    rw [hfalse] at hcoeff
+    contradiction
+
+private theorem wordBitAt_getElem!_eq_true_of_degree?_eq_some
+    {p : GF2Poly} {d : Nat} (hp : p.degree? = some d) :
+    wordBitAt p.words[d / 64]! (d % 64) = true := by
+  have hbit : d % 64 < 64 := Nat.mod_lt d (by decide : 0 < 64)
+  rw [wordBitAt_getElem!_eq_coeff p hbit]
+  have hd : 64 * (d / 64) + d % 64 = d := by
+    exact Nat.div_add_mod d 64
+  rw [hd]
+  exact coeff_eq_true_of_degree?_eq_some hp
+
+private theorem clmulSourcePairCoeff_eq_false_of_forall
+    (x y : UInt64) {total : Nat}
+    (hzero :
+      ∀ a b, a < 64 → b < 64 → a + b = total →
+        (wordBitAt x a && wordBitAt y b) = false) :
+    clmulSourcePairCoeff x y total = false := by
+  unfold clmulSourcePairCoeff
+  rw [← xorBoolList_map_xorBoolList]
+  have houter :
+      (List.range 64).map
+          (fun b =>
+            xorBoolList
+              ((List.range 64).map
+                (fun a => (wordBitAt x a && wordBitAt y b) &&
+                  decide (a + b = total)))) =
+        (List.range 64).map (fun _ => false) := by
+    apply List.map_congr_left
+    intro b hbMem
+    have hb : b < 64 := List.mem_range.mp hbMem
+    have hinner :
+        (List.range 64).map
+            (fun a => (wordBitAt x a && wordBitAt y b) &&
+              decide (a + b = total)) =
+          (List.range 64).map (fun _ => false) := by
+      apply List.map_congr_left
+      intro a haMem
+      have ha : a < 64 := List.mem_range.mp haMem
+      by_cases hsum : a + b = total
+      · rw [hzero a b ha hb hsum]
+        simp [hsum]
+      · simp [hsum]
+    rw [hinner, xorBoolList_range_false]
+  rw [houter, xorBoolList_range_false]
+
+private theorem source_pair_and_eq_false_of_not_leading
+    {p q : GF2Poly} {dp dq i j a b : Nat}
+    (hp : p.degree? = some dp) (hq : q.degree? = some dq)
+    (ha : a < 64) (hb : b < 64)
+    (hsum : 64 * i + a + (64 * j + b) = dp + dq)
+    (hnot : i ≠ dp / 64 ∨ j ≠ dq / 64 ∨ a ≠ dp % 64 ∨ b ≠ dq % 64) :
+    (wordBitAt p.words[i]! a && wordBitAt q.words[j]! b) = false := by
+  by_cases hpi : i = dp / 64
+  · by_cases hpa : a = dp % 64
+    · have hpidx : 64 * i + a = dp := by
+        subst hpi
+        subst hpa
+        exact Nat.div_add_mod dp 64
+      have hqidx : 64 * j + b = dq := by omega
+      have hj : j = dq / 64 := by
+        have hdiv := congrArg (fun n => n / 64) hqidx
+        simpa [Nat.mul_add_div (by decide : 0 < 64), Nat.div_eq_of_lt hb] using hdiv
+      have hbq : b = dq % 64 := by
+        have hmod := congrArg (fun n => n % 64) hqidx
+        simpa [Nat.mul_add_mod, Nat.mod_eq_of_lt hb] using hmod
+      cases hnot with
+      | inl hi => contradiction
+      | inr hrest =>
+          cases hrest with
+          | inl hjne => contradiction
+          | inr hrest2 =>
+              cases hrest2 with
+              | inl hane => contradiction
+              | inr hbne => contradiction
+    · have hqgt_or_hpgt : dq < 64 * j + b ∨ dp < 64 * i + a := by
+        by_cases halt : a < dp % 64
+        · left
+          subst hpi
+          have hdp := Nat.div_add_mod dp 64
+          omega
+        · right
+          subst hpi
+          have hdp := Nat.div_add_mod dp 64
+          have hdpbit : dp % 64 < 64 := Nat.mod_lt dp (by decide : 0 < 64)
+          omega
+      cases hqgt_or_hpgt with
+      | inl hqgt =>
+          have hqfalse := wordBitAt_getElem!_eq_false_of_degree?_lt hq hb hqgt
+          simp [hqfalse]
+      | inr hpgt =>
+          have hpfalse := wordBitAt_getElem!_eq_false_of_degree?_lt hp ha hpgt
+          simp [hpfalse]
+  · by_cases hilt : i < dp / 64
+    · have hqgt : dq < 64 * j + b := by
+        have hdp := Nat.div_add_mod dp 64
+        have hdpbit : dp % 64 < 64 := Nat.mod_lt dp (by decide : 0 < 64)
+        omega
+      have hqfalse := wordBitAt_getElem!_eq_false_of_degree?_lt hq hb hqgt
+      simp [hqfalse]
+    · have higt : dp < 64 * i + a := by
+        have hdp := Nat.div_add_mod dp 64
+        have hdpbit : dp % 64 < 64 := Nat.mod_lt dp (by decide : 0 < 64)
+        omega
+      have hpfalse := wordBitAt_getElem!_eq_false_of_degree?_lt hp ha higt
+      simp [hpfalse]
+
+private theorem clmulCoeffAt_degree_add_eq_false_of_not_leading_word
+    {p q : GF2Poly} {dp dq i j : Nat}
+    (hp : p.degree? = some dp) (hq : q.degree? = some dq)
+    (hnot : i ≠ dp / 64 ∨ j ≠ dq / 64) :
+    clmulCoeffAt (i + j) p.words[i]! q.words[j]! (dp + dq) = false := by
+  rw [clmulCoeffAt_sourcePairCoeff]
+  by_cases hlow : (dp + dq) / 64 = i + j
+  · simp only [if_pos hlow]
+    apply clmulSourcePairCoeff_eq_false_of_forall
+    intro a b ha hb hsum
+    apply source_pair_and_eq_false_of_not_leading hp hq ha hb
+    · have htarget := Nat.div_add_mod (dp + dq) 64
+      omega
+    · cases hnot with
+      | inl hi => exact Or.inl hi
+      | inr hj => exact Or.inr (Or.inl hj)
+  · by_cases hhigh : (dp + dq) / 64 = i + j + 1
+    · simp only [if_neg hlow, if_pos hhigh]
+      apply clmulSourcePairCoeff_eq_false_of_forall
+      intro a b ha hb hsum
+      apply source_pair_and_eq_false_of_not_leading hp hq ha hb
+      · have htarget := Nat.div_add_mod (dp + dq) 64
+        omega
+      · cases hnot with
+        | inl hi => exact Or.inl hi
+        | inr hj => exact Or.inr (Or.inl hj)
+    · simp only [if_neg hlow, if_neg hhigh]
+
+private theorem clmulCoeffAt_degree_add_leading_word
+    {p q : GF2Poly} {dp dq : Nat}
+    (hp : p.degree? = some dp) (hq : q.degree? = some dq) :
+    clmulCoeffAt (dp / 64 + dq / 64)
+      p.words[dp / 64]! q.words[dq / 64]! (dp + dq) = true := by
+  rw [clmulCoeffAt_sourcePairCoeff]
+  by_cases hcarry : dp % 64 + dq % 64 < 64
+  · have hlow : (dp + dq) / 64 = dp / 64 + dq / 64 := by
+      have hdp := Nat.div_add_mod dp 64
+      have hdq := Nat.div_add_mod dq 64
+      omega
+    have hmod : (dp + dq) % 64 = dp % 64 + dq % 64 := by
+      have hdp := Nat.div_add_mod dp 64
+      have hdq := Nat.div_add_mod dq 64
+      omega
+    simp only [if_pos hlow]
+    rw [hmod]
+    apply clmulSourcePairCoeff_single_active
+      (a₀ := dp % 64) (b₀ := dq % 64)
+    · exact Nat.mod_lt dp (by decide : 0 < 64)
+    · exact Nat.mod_lt dq (by decide : 0 < 64)
+    · exact wordBitAt_getElem!_eq_true_of_degree?_eq_some hp
+    · exact wordBitAt_getElem!_eq_true_of_degree?_eq_some hq
+    · rfl
+    · intro a b ha hb hsum hnot
+      apply source_pair_and_eq_false_of_not_leading hp hq ha hb
+      · have hdp := Nat.div_add_mod dp 64
+        have hdq := Nat.div_add_mod dq 64
+        omega
+      · exact Or.inr (Or.inr hnot)
+  · have hhigh : (dp + dq) / 64 = dp / 64 + dq / 64 + 1 := by
+      have hdp := Nat.div_add_mod dp 64
+      have hdq := Nat.div_add_mod dq 64
+      have hdpbit : dp % 64 < 64 := Nat.mod_lt dp (by decide : 0 < 64)
+      have hdqbit : dq % 64 < 64 := Nat.mod_lt dq (by decide : 0 < 64)
+      omega
+    have hlow : (dp + dq) / 64 ≠ dp / 64 + dq / 64 := by omega
+    have hmod : (dp + dq) % 64 + 64 = dp % 64 + dq % 64 := by
+      have hdp := Nat.div_add_mod dp 64
+      have hdq := Nat.div_add_mod dq 64
+      have htarget := Nat.div_add_mod (dp + dq) 64
+      have hdpbit : dp % 64 < 64 := Nat.mod_lt dp (by decide : 0 < 64)
+      have hdqbit : dq % 64 < 64 := Nat.mod_lt dq (by decide : 0 < 64)
+      omega
+    simp only [if_neg hlow, if_pos hhigh]
+    rw [hmod]
+    apply clmulSourcePairCoeff_single_active
+      (a₀ := dp % 64) (b₀ := dq % 64)
+    · exact Nat.mod_lt dp (by decide : 0 < 64)
+    · exact Nat.mod_lt dq (by decide : 0 < 64)
+    · exact wordBitAt_getElem!_eq_true_of_degree?_eq_some hp
+    · exact wordBitAt_getElem!_eq_true_of_degree?_eq_some hq
+    · rfl
+    · intro a b ha hb hsum hnot
+      apply source_pair_and_eq_false_of_not_leading hp hq ha hb
+      · have hdp := Nat.div_add_mod dp 64
+        have hdq := Nat.div_add_mod dq 64
+        omega
+      · exact Or.inr (Or.inr hnot)
+
+private theorem coeffWords_mulWords_degree_add_of_degree?_eq_some
+    {p q : GF2Poly} {dp dq : Nat}
+    (hp : p.degree? = some dp) (hq : q.degree? = some dq) :
+    coeffWords (mulWords p.words q.words) (dp + dq) = true := by
+  rw [coeffWords_mulWords_contrib]
+  rw [← xorBoolList_map_xorBoolList (List.range p.words.size)
+    (fun i =>
+      (List.range q.words.size).map
+        (fun j => clmulCoeffAt (i + j) p.words[i]! q.words[j]! (dp + dq)))]
+  rw [xorBoolList_range_single_active
+    (fun i =>
+      xorBoolList
+        ((List.range q.words.size).map
+          (fun j => clmulCoeffAt (i + j) p.words[i]! q.words[j]! (dp + dq))))
+    (degree?_eq_some_word_lt hp)]
+  · rw [xorBoolList_range_single_active
+      (fun j =>
+        clmulCoeffAt (dp / 64 + j) p.words[dp / 64]! q.words[j]! (dp + dq))
+      (degree?_eq_some_word_lt hq)]
+    · exact clmulCoeffAt_degree_add_leading_word hp hq
+    · intro j hj hineq
+      exact clmulCoeffAt_degree_add_eq_false_of_not_leading_word hp hq (Or.inr hineq)
+  · intro i hi hineq
+    have hinner :
+        (List.range q.words.size).map
+            (fun j => clmulCoeffAt (i + j) p.words[i]! q.words[j]! (dp + dq)) =
+          (List.range q.words.size).map (fun _ => false) := by
+      apply List.map_congr_left
+      intro j _hj
+      exact clmulCoeffAt_degree_add_eq_false_of_not_leading_word hp hq (Or.inl hineq)
+    rw [hinner, xorBoolList_range_false]
+
+private theorem clmulCoeffAt_above_degree_add_eq_false
+    {p q : GF2Poly} {dp dq i j n : Nat}
+    (hp : p.degree? = some dp) (hq : q.degree? = some dq)
+    (hn : dp + dq < n) :
+    clmulCoeffAt (i + j) p.words[i]! q.words[j]! n = false := by
+  rw [clmulCoeffAt_sourcePairCoeff]
+  by_cases hlow : n / 64 = i + j
+  · simp only [if_pos hlow]
+    apply clmulSourcePairCoeff_eq_false_of_forall
+    intro a b ha hb hsum
+    have htotal : 64 * i + a + (64 * j + b) = n := by
+      have hndecomp := Nat.div_add_mod n 64
+      omega
+    by_cases hpgt : dp < 64 * i + a
+    · have hpfalse := wordBitAt_getElem!_eq_false_of_degree?_lt hp ha hpgt
+      simp [hpfalse]
+    · have hqgt : dq < 64 * j + b := by omega
+      have hqfalse := wordBitAt_getElem!_eq_false_of_degree?_lt hq hb hqgt
+      simp [hqfalse]
+  · by_cases hhigh : n / 64 = i + j + 1
+    · simp only [if_neg hlow, if_pos hhigh]
+      apply clmulSourcePairCoeff_eq_false_of_forall
+      intro a b ha hb hsum
+      have htotal : 64 * i + a + (64 * j + b) = n := by
+        have hndecomp := Nat.div_add_mod n 64
+        omega
+      by_cases hpgt : dp < 64 * i + a
+      · have hpfalse := wordBitAt_getElem!_eq_false_of_degree?_lt hp ha hpgt
+        simp [hpfalse]
+      · have hqgt : dq < 64 * j + b := by omega
+        have hqfalse := wordBitAt_getElem!_eq_false_of_degree?_lt hq hb hqgt
+        simp [hqfalse]
+    · simp only [if_neg hlow, if_neg hhigh]
+
+private theorem coeffWords_mulWords_above_degree_add_eq_false
+    {p q : GF2Poly} {dp dq n : Nat}
+    (hp : p.degree? = some dp) (hq : q.degree? = some dq)
+    (hn : dp + dq < n) :
+    coeffWords (mulWords p.words q.words) n = false := by
+  rw [coeffWords_mulWords_contrib]
+  rw [← xorBoolList_map_xorBoolList (List.range p.words.size)
+    (fun i =>
+      (List.range q.words.size).map
+        (fun j => clmulCoeffAt (i + j) p.words[i]! q.words[j]! n))]
+  have hrows :
+      (List.range p.words.size).map
+          (fun i =>
+            xorBoolList
+              ((List.range q.words.size).map
+                (fun j => clmulCoeffAt (i + j) p.words[i]! q.words[j]! n))) =
+        (List.range p.words.size).map (fun _ => false) := by
+    apply List.map_congr_left
+    intro i _hi
+    have hinner :
+        (List.range q.words.size).map
+            (fun j => clmulCoeffAt (i + j) p.words[i]! q.words[j]! n) =
+          (List.range q.words.size).map (fun _ => false) := by
+      apply List.map_congr_left
+      intro j _hj
+      exact clmulCoeffAt_above_degree_add_eq_false hp hq hn
+    rw [hinner, xorBoolList_range_false]
+  rw [hrows, xorBoolList_range_false]
+
+/-- The top coefficient of a product is the product of the two top
+coefficients, hence set for nonzero `GF(2)` polynomials. -/
+theorem coeff_mul_degree_add_of_degree?_eq_some {p q : GF2Poly} {dp dq : Nat}
+    (hp : p.degree? = some dp) (hq : q.degree? = some dq) :
+    (p * q).coeff (dp + dq) = true := by
+  rw [coeff_mul]
+  exact coeffWords_mulWords_degree_add_of_degree?_eq_some hp hq
+
+/-- Coefficients of a packed `GF(2)` product strictly above the sum of the
+factor degrees vanish. -/
+theorem coeff_mul_eq_false_of_degree_add_lt {p q : GF2Poly} {dp dq n : Nat}
+    (hp : p.degree? = some dp) (hq : q.degree? = some dq)
+    (hn : dp + dq < n) :
+    (p * q).coeff n = false := by
+  rw [coeff_mul]
+  exact coeffWords_mulWords_above_degree_add_eq_false hp hq hn
+
+/-- The packed `GF(2)` product of two nonzero polynomials has degree exactly the
+sum of the two factor degrees. -/
+theorem degree?_mul_of_degree?_eq_some {p q : GF2Poly} {dp dq : Nat}
+    (hp : p.degree? = some dp) (hq : q.degree? = some dq) :
+    (p * q).degree? = some (dp + dq) := by
+  apply degree?_eq_some_of_coeff_eq_true_of_forall_gt_false
+  · exact coeff_mul_degree_add_of_degree?_eq_some hp hq
+  · intro m hm
+    exact coeff_mul_eq_false_of_degree_add_lt hp hq hm
+
 /-- Left distributivity of packed `GF(2)` polynomial multiplication over
 addition. -/
 theorem left_distrib (p r q : GF2Poly) :

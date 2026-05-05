@@ -56,7 +56,7 @@ libraries:
   HexLLL:
     deps: [HexGramSchmidt]
     mathlib: false
-    done_through: 1
+    done_through: 4
   HexPolyFp:
     deps: [HexPoly, HexModArith]
     mathlib: false
@@ -76,11 +76,11 @@ libraries:
   HexBerlekamp:
     deps: [HexPolyFp, HexMatrix, HexGfqRing]
     mathlib: false
-    done_through: 3
+    done_through: 4
   HexHensel:
     deps: [HexPolyFp, HexPolyZ]
     mathlib: false
-    done_through: 4
+    done_through: 5
   HexConway:
     deps: [HexBerlekamp]
     mathlib: false
@@ -92,7 +92,7 @@ libraries:
   HexBerlekampZassenhaus:
     deps: [HexBerlekamp, HexHensel, HexLLL]
     mathlib: false
-    done_through: 0
+    done_through: 3
 
   # ---------- Mathlib bridges ----------
   HexPolyMathlib:
@@ -114,19 +114,19 @@ libraries:
   HexPolyZMathlib:
     deps: [HexPolyZ, HexPolyMathlib]
     mathlib: true
-    done_through: 2
+    done_through: 3
   HexLLLMathlib:
     deps: [HexLLL, HexMatrixMathlib]
     mathlib: true
-    done_through: 0
+    done_through: 1
   HexBerlekampMathlib:
     deps: [HexBerlekamp, HexPolyMathlib, HexModArithMathlib]
     mathlib: true
-    done_through: 2
+    done_through: 3
   HexHenselMathlib:
     deps: [HexHensel, HexPolyMathlib]
     mathlib: true
-    done_through: 1
+    done_through: 3
   HexGF2Mathlib:
     deps: [HexGF2, HexPolyFp, HexGfqField]
     mathlib: true
@@ -138,4 +138,4 @@ libraries:
   HexBerlekampZassenhausMathlib:
     deps: [HexBerlekampZassenhaus, HexPolyZMathlib]
     mathlib: true
-    done_through: 0
+    done_through: 2

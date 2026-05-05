@@ -186,11 +186,10 @@ private def reduceArrModPow (a : Array ZPoly) (p k : Nat) : Array ZPoly :=
 -- `[0, p^k)` via `ZPoly.reduceModPow`.
 
 /-
-At precision `k = 1` the lift is trivial: both paths return the input
-factors reduced modulo `p`, so the canonicalised arrays must agree. This
-is the only cross-check pair currently enforceable; see the "Deferred
-cross-check" note below for why the corresponding `k ≥ 2` checks live in
-a follow-up issue.
+The `k = 1` edge fixture checks the trivial path where both algorithms
+return the input factors modulo `p`. The `k = 4` typical fixture and
+`k = 6` adversarial fixture check the same linear/quadratic agreement at
+higher precision, after both paths canonicalise factors modulo `p^k`.
 -/
 #guard reduceArrModPow (ZPoly.multifactorLift 5 1 qmEdgeF qmEdgeFactors) 5 1
      = reduceArrModPow (ZPoly.multifactorLiftQuadratic 5 1 qmEdgeF qmEdgeFactors) 5 1

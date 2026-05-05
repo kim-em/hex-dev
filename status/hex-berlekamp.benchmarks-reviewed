@@ -1,0 +1,6 @@
+Reviewed in issue #1963.
+All HexBerlekamp Phase 4 parametric benchmark registrations returned verdicts
+consistent with their declared complexity after fixing two implementation
+bugs (the `n^2` column recomputation in `berlekampMatrix` and the
+fresh-`p^d` Frobenius recomputation in `distinctDegreeFactor`) and
+re-tuning the split-step fixture and DDF schedule.

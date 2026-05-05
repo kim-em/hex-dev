@@ -2,3 +2,5 @@
 build/
 __pycache__/
 .claude/.pod-checksums
+conformance-failures/*.json
+.venv-oracles/

@@ -23,6 +23,15 @@ leading principal Gram determinant. -/
 def independent (b : Matrix Int n m) : Prop :=
   ∀ k : Fin n, 0 < det (submatrix (gramMatrix b) k)
 
+/-- The identity matrix is independent: every leading principal Gram
+determinant equals `det 1 = 1 > 0`. Used by Phase 4 benchmarks of
+`lll.firstShortVector`, where the identity basis is the degenerate BZ-style
+recombination input with all-zero lift coefficients. -/
+theorem identity_independent {n : Nat} : (1 : Matrix Int n n).independent := by
+  intro k
+  rw [Matrix.gramMatrix_one, Matrix.submatrix_one, Matrix.det_one]
+  decide
+
 /-- Product of the squared Gram-Schmidt basis norms along the first `k` rows. -/
 noncomputable def gramSchmidtNormProduct (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) : Rat :=
   (List.finRange k).foldl
@@ -131,7 +140,9 @@ def sizeReduceColumn (s : LLLState n m) (j k : Fin n) (hjk : j.val < k.val) :
         sorry
       d_eq := by
         intro i hi
-        sorry }
+        dsimp only [b']
+        rw [GramSchmidt.Int.gramDet_sizeReduce s.b j k hjk r i (Nat.le_of_lt_succ hi)]
+        exact s.d_eq i hi }
   else
     s
 
@@ -177,10 +188,10 @@ def swapStep (s : LLLState n m) (k : Nat) : LLLState n m :=
           (fun ν i =>
             if hklt : k < i.val then
               let prev :=
-                (((s.ν.get i).get km1 * Int.ofNat dk') + ((s.ν.get i).get kFin * B)) /
+                (Int.ofNat dkPrev * (s.ν.get i).get kFin + B * (s.ν.get i).get km1) /
                   Int.ofNat dk
               let curr :=
-                (((s.ν.get i).get kFin * Int.ofNat dkPrev) - ((s.ν.get i).get km1 * B)) /
+                (Int.ofNat dkNext * (s.ν.get i).get km1 - B * (s.ν.get i).get kFin) /
                   Int.ofNat dk
               let ν := setEntry ν i km1 prev
               setEntry ν i kFin curr
@@ -263,24 +274,21 @@ theorem potential_eq_gramDetProduct (s : LLLState n m) :
 
 /-- Initial `LLLState` constructor: build the integer state directly from a
 basis matrix. The `ν` field is the integral scaled Gram-Schmidt coefficient
-matrix and the `d` field is the leading Gram-determinant vector. The
-`ν_eq` and `d_eq` proof fields are discharged in Phase 5 by composing
-`GramSchmidt.Int.scaledCoeffs_eq` and `GramSchmidt.Int.gramDetVec_eq_gramDet`;
-those witness lemmas are stated in `HexGramSchmidt/Int.lean` and currently
-`sorry`'d, so the constructor's proof fields are left as `sorry` here. -/
+matrix and the `d` field is the leading Gram-determinant vector. The proof
+fields are discharged by composing `GramSchmidt.Int.scaledCoeffs_eq` with
+`GramSchmidt.Int.gramDetVec_eq_gramDet`. -/
 def ofBasis (b : Matrix Int n m) (_hind : b.independent) : LLLState n m :=
   { b
     ν := GramSchmidt.Int.scaledCoeffs b
     d := GramSchmidt.Int.gramDetVec b
     ν_eq := by
-      -- combine `GramSchmidt.Int.scaledCoeffs_eq` with
-      -- `GramSchmidt.Int.gramDetVec_eq_gramDet`
       intro i j hi hj hji
-      sorry
+      rw [GramSchmidt.Int.gramDetVec_eq_gramDet]
+      simpa [GramSchmidt.entry, Matrix.row] using
+        GramSchmidt.Int.scaledCoeffs_eq b i j hi hji
     d_eq := by
-      -- direct from `GramSchmidt.Int.gramDetVec_eq_gramDet`
       intro i hi
-      sorry }
+      exact GramSchmidt.Int.gramDetVec_eq_gramDet b i (Nat.le_of_lt_succ hi) }
 
 end LLLState
 
@@ -332,7 +340,7 @@ decreasing_by
 /-- Top-level LLL entry point. Builds the canonical integer state via
 `LLLState.ofBasis` and dispatches to `lllAux`. The proof obligations of
 `LLLState.ofBasis` are discharged inside the constructor itself, so the
-body of `lll` carries no `sorry` placeholders. -/
+body of `lll` has no deferred proof terms. -/
 def lll (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent) :
     Matrix Int n m :=

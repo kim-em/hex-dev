@@ -255,7 +255,7 @@ theorem mul_inv_cancel (a : GF2n n irr hn hn64 hirr) (ha : a ≠ 0) :
     GF2Poly.canonicalWordLT n hn64 (GF2Poly.packedReduceWord n irr 1)
   rw [toPolyWide,
     GF2Poly.packedReduceWord_clmul_packedInvWord_eq_one
-      (n := n) (irr := irr) (w := a.val) hn64 hirr hval_ne]
+      (n := n) (irr := irr) (w := a.val) hn64 hirr hval_ne a.val_lt]
 
 end GF2n
 

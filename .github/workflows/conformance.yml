@@ -6,22 +6,29 @@ on:
   workflow_dispatch:
 
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      targets: ${{ steps.derive.outputs.targets }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify conformance matrix invariant
+        run: python3 scripts/conformance_targets.py --check
+      - id: derive
+        name: Derive conformance matrix
+        run: |
+          targets="$(python3 scripts/conformance_targets.py --json)"
+          echo "targets=$targets" >> "$GITHUB_OUTPUT"
+
   conformance:
+    needs: setup
     runs-on: ubuntu-latest
     env:
       LD_LIBRARY_PATH: /home/runner/.elan/toolchains/leanprover--lean4---v4.30.0-rc2/lib/lean
     strategy:
       fail-fast: false
       matrix:
-        target:
-          - HexArith
-          - HexPoly
-          - HexGfqRing
-          - HexGfqField
-          - HexGfq
-          - HexPolyZ
-          - HexMatrix
-          - HexModArithMathlib
+        target: ${{ fromJSON(needs.setup.outputs.targets) }}
     steps:
       - uses: actions/checkout@v4
       - name: Install system dependencies
@@ -36,3 +43,194 @@ jobs:
         uses: leanprover/lean-action@v1
         with:
           build-args: ${{ matrix.target }}
+
+  oracle-pyflint:
+    runs-on: ubuntu-latest
+    env:
+      LD_LIBRARY_PATH: /home/runner/.elan/toolchains/leanprover--lean4---v4.30.0-rc2/lib/lean
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - lib: HexPoly
+            emit: hexpoly_emit_fixtures
+            script: scripts/oracle/poly_flint.py
+            fixture: conformance-fixtures/HexPoly/poly.jsonl
+          - lib: HexPolyFp
+            emit: hexpolyfp_emit_fixtures
+            script: scripts/oracle/polyfp_flint.py
+            fixture: conformance-fixtures/HexPolyFp/poly.jsonl
+          - lib: HexBerlekamp
+            emit: hexberlekamp_emit_fixtures
+            script: scripts/oracle/berlekamp_flint.py
+            fixture: conformance-fixtures/HexBerlekamp/berlekamp.jsonl
+          - lib: HexMatrix
+            emit: hexmatrix_emit_fixtures
+            script: scripts/oracle/matrix_flint.py
+            fixture: conformance-fixtures/HexMatrix/matrix.jsonl
+          - lib: HexBerlekampZassenhaus
+            emit: hexbz_emit_fixtures
+            script: scripts/oracle/bz_flint.py
+            fixture: conformance-fixtures/HexBerlekampZassenhaus/bz.jsonl
+          - lib: HexPolyZ
+            emit: hexpolyz_emit_fixtures
+            script: scripts/oracle/polyz_flint.py
+            fixture: conformance-fixtures/HexPolyZ/polyz.jsonl
+          - lib: HexGF2
+            emit: hexgf2_emit_fixtures
+            script: scripts/oracle/gf2_flint.py
+            fixture: conformance-fixtures/HexGF2/gf2.jsonl
+          - lib: HexGfq
+            emit: hexgfq_emit_fixtures
+            script: scripts/oracle/gfq_flint.py
+            fixture: conformance-fixtures/HexGfq/gfq.jsonl
+          - lib: HexGfqRing
+            emit: hexgfqring_emit_fixtures
+            script: scripts/oracle/gfqring_flint.py
+            fixture: conformance-fixtures/HexGfqRing/gfqring.jsonl
+          - lib: HexGfqField
+            emit: hexgfqfield_emit_fixtures
+            script: scripts/oracle/gfqfield_flint.py
+            fixture: conformance-fixtures/HexGfqField/gfqfield.jsonl
+          - lib: HexGramSchmidt
+            emit: hexgramschmidt_emit_fixtures
+            script: scripts/oracle/gs_flint.py
+            fixture: conformance-fixtures/HexGramSchmidt/gram_schmidt.jsonl
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev
+      - name: Install python-flint
+        run: python3 -m pip install --user python-flint
+      - name: Configure Lean shared library path
+        run: |
+          toolchain="$(sed 's|/|--|; s|:|---|' lean-toolchain)"
+          echo "LD_LIBRARY_PATH=$HOME/.elan/toolchains/$toolchain/lib/lean:${LD_LIBRARY_PATH:-}" >> "$GITHUB_ENV"
+      - name: Build ${{ matrix.emit }}
+        uses: leanprover/lean-action@v1
+        with:
+          build-args: ${{ matrix.emit }}
+      - name: Cross-check Lean emission against committed fixture
+        run: |
+          lake exe ${{ matrix.emit }} > /tmp/${{ matrix.lib }}-fresh.jsonl
+          diff -u ${{ matrix.fixture }} /tmp/${{ matrix.lib }}-fresh.jsonl
+      - name: Run python-flint oracle
+        run: |
+          lake exe ${{ matrix.emit }} | python3 ${{ matrix.script }}
+      - name: Upload failure records
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: oracle-pyflint-failures-${{ matrix.lib }}
+          path: conformance-failures/*.json
+          if-no-files-found: ignore
+
+  oracle-pari:
+    runs-on: ubuntu-latest
+    env:
+      LD_LIBRARY_PATH: /home/runner/.elan/toolchains/leanprover--lean4---v4.30.0-rc2/lib/lean
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev libpari-dev pari-gp
+      - name: Install cypari2
+        run: python3 -m pip install --user cypari2
+      - name: Configure Lean shared library path
+        run: |
+          toolchain="$(sed 's|/|--|; s|:|---|' lean-toolchain)"
+          echo "LD_LIBRARY_PATH=$HOME/.elan/toolchains/$toolchain/lib/lean:${LD_LIBRARY_PATH:-}" >> "$GITHUB_ENV"
+      - name: Build hexhensel_emit_fixtures
+        uses: leanprover/lean-action@v1
+        with:
+          build-args: hexhensel_emit_fixtures
+      - name: Cross-check Lean emission against committed fixture
+        run: |
+          lake exe hexhensel_emit_fixtures > /tmp/hexhensel-fresh.jsonl
+          diff -u conformance-fixtures/HexHensel/hensel.jsonl /tmp/hexhensel-fresh.jsonl
+      - name: Run PARI oracle
+        run: |
+          lake exe hexhensel_emit_fixtures \
+            | python3 scripts/oracle/hensel_pari.py
+      - name: Upload failure records
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: oracle-pari-failures
+          path: conformance-failures/*.json
+          if-no-files-found: ignore
+
+  oracle-conway:
+    runs-on: ubuntu-latest
+    env:
+      LD_LIBRARY_PATH: /home/runner/.elan/toolchains/leanprover--lean4---v4.30.0-rc2/lib/lean
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev
+      - name: Install conway-polynomials
+        run: python3 -m pip install --user conway-polynomials
+      - name: Configure Lean shared library path
+        run: |
+          toolchain="$(sed 's|/|--|; s|:|---|' lean-toolchain)"
+          echo "LD_LIBRARY_PATH=$HOME/.elan/toolchains/$toolchain/lib/lean:${LD_LIBRARY_PATH:-}" >> "$GITHUB_ENV"
+      - name: Build hexconway_emit_fixtures
+        uses: leanprover/lean-action@v1
+        with:
+          build-args: hexconway_emit_fixtures
+      - name: Cross-check Lean emission against committed fixture
+        run: |
+          lake exe hexconway_emit_fixtures > /tmp/hexconway-fresh.jsonl
+          diff -u conformance-fixtures/HexConway/conway.jsonl /tmp/hexconway-fresh.jsonl
+      - name: Run Conway table oracles
+        run: |
+          lake exe hexconway_emit_fixtures \
+            | python3 scripts/oracle/conway_luebeck.py --require-conway-polynomials
+      - name: Upload failure records
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: oracle-conway-failures
+          path: conformance-failures/*.json
+          if-no-files-found: ignore
+
+  oracle-fpylll:
+    runs-on: ubuntu-latest
+    env:
+      LD_LIBRARY_PATH: /home/runner/.elan/toolchains/leanprover--lean4---v4.30.0-rc2/lib/lean
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev libfplll-dev
+      - name: Install fpylll and python-flint
+        run: python3 -m pip install --user fpylll python-flint
+      - name: Configure Lean shared library path
+        run: |
+          toolchain="$(sed 's|/|--|; s|:|---|' lean-toolchain)"
+          echo "LD_LIBRARY_PATH=$HOME/.elan/toolchains/$toolchain/lib/lean:${LD_LIBRARY_PATH:-}" >> "$GITHUB_ENV"
+      - name: Build hexlll_emit_fixtures
+        uses: leanprover/lean-action@v1
+        with:
+          build-args: hexlll_emit_fixtures
+      - name: Cross-check Lean emission against committed fixture
+        run: |
+          lake exe hexlll_emit_fixtures > /tmp/hexlll-fresh.jsonl
+          diff -u conformance-fixtures/HexLLL/lll.jsonl /tmp/hexlll-fresh.jsonl
+      - name: Run fpylll oracle
+        run: |
+          lake exe hexlll_emit_fixtures \
+            | python3 scripts/oracle/lll_fpylll.py
+      - name: Upload failure records
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: oracle-fpylll-failures
+          path: conformance-failures/*.json
+          if-no-files-found: ignore

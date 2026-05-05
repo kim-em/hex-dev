@@ -226,6 +226,50 @@ private def emptyNullspace : Vector (Vector Rat 2) 0 :=
 #guard dependentRat * dependentNullspace.get ⟨0, by decide⟩ = 0
 #guard dependentRat * dependentNullspace.get ⟨1, by decide⟩ = 0
 
+/-!
+6×6 fixtures matching the SPEC `core` matrix-dimension band, with the
+same typical / edge / adversarial structure as the 2×2 cases above:
+
+- `bigInt` — typical full-rank Int (entries `min i j + 1`); factorises
+  as `L·U` with unit lower- and upper-triangular all-ones, so
+  `det = 1`. Dense enough that Bareiss exercises the inner update loop
+  at every step.
+- `bigZeroInt` — edge zero matrix.
+- `bigSingularInt` — adversarial singular Int with row 1 proportional
+  to row 0 (mirrors the `singularInt` 2×2 pattern at 6×6).
+- `bigPivotInt` — adversarial zero leading pivot (`M[0][0] = 0`),
+  forcing one Bareiss row swap (`bigInt` with the `(0,0)` entry
+  cleared).
+-/
+
+private def bigInt : Matrix Int 6 6 :=
+  Matrix.ofFn fun i j => (min i.val j.val + 1 : Int)
+
+private def bigZeroInt : Matrix Int 6 6 := 0
+
+private def bigSingularInt : Matrix Int 6 6 :=
+  Matrix.ofFn fun i j =>
+    if i.val = 1 then (2 : Int)
+    else (min i.val j.val + 1 : Int)
+
+private def bigPivotInt : Matrix Int 6 6 :=
+  Matrix.ofFn fun i j =>
+    if i.val = 0 ∧ j.val = 0 then (0 : Int)
+    else (min i.val j.val + 1 : Int)
+
+#guard Matrix.transpose (Matrix.transpose bigInt) = bigInt
+#guard (1 : Matrix Int 6 6) * bigInt = bigInt
+
+#guard Matrix.bareiss bigInt = 1
+#guard Matrix.bareiss bigZeroInt = 0
+#guard Matrix.bareiss bigSingularInt = 0
+#guard Matrix.bareiss bigPivotInt = -1
+#guard (Matrix.bareissData bigPivotInt).rowSwaps = 1
+
+#guard Matrix.bareiss (Matrix.rowSwap bigInt ⟨0, by decide⟩ ⟨5, by decide⟩) = -1
+#guard Matrix.bareiss (Matrix.rowScale bigInt ⟨2, by decide⟩ 4) = 4
+#guard Matrix.bareiss (Matrix.rowAdd bigInt ⟨0, by decide⟩ ⟨3, by decide⟩ 7) = 1
+
 end Matrix
 
 end Hex

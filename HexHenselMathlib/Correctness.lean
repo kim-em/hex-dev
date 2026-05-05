@@ -211,6 +211,38 @@ theorem hensel_unique (f g h g' h' : Polynomial ℤ) (p : ℕ) (k : ℕ)
     g.map φ = g'.map φ ∧ h.map φ = h'.map φ := by
   sorry
 
+/--
+The linear and quadratic multifactor lifters agree modulo `p ^ k` after
+canonical reduction, when both are applied to the same input under the
+recursive `MultifactorLiftInvariant` precondition consumed by both
+`Hex.ZPoly.multifactorLift_spec` and
+`Hex.ZPoly.multifactorLiftQuadratic_spec`.
+
+The result is stated over the public array/product multifactor surface
+rather than the private split-tree helpers, and is expressed in Mathlib
+form via `Polynomial.map (Int.castRingHom (ZMod (p ^ k)))`. Through
+`zpoly_congr_toPolynomial_map_eq` / `zpoly_congr_of_toPolynomial_map_eq`,
+this is equivalent to per-factor canonicalisation by
+`Hex.ZPoly.reduceModPow _ p k`.
+
+This is the lift-uniqueness obligation that `hex-hensel` defers to
+`hex-hensel-mathlib`; see `SPEC/Libraries/hex-hensel.md` and the
+companion-statement note at the top of `HexHensel/QuadraticMultifactor.lean`.
+-/
+theorem multifactorLift_eq_multifactorLiftQuadratic
+    (p k : Nat) [Fact (Nat.Prime p)] [Hex.ZMod64.Bounds p]
+    [Hex.ZMod64.PrimeModulus p]
+    (f : Hex.ZPoly) (factors : Array Hex.ZPoly)
+    (hk : 1 ≤ k)
+    (hp : 1 < p)
+    (hinv : Hex.ZPoly.MultifactorLiftInvariant p k f factors.toList) :
+    let φ := Int.castRingHom (ZMod (p ^ k))
+    (Hex.ZPoly.multifactorLift p k f factors).toList.map
+        (fun g => (HexPolyMathlib.toPolynomial g).map φ) =
+      (Hex.ZPoly.multifactorLiftQuadratic p k f factors).toList.map
+        (fun g => (HexPolyMathlib.toPolynomial g).map φ) := by
+  sorry
+
 end
 
 end HexHenselMathlib

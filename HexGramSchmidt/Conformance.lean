@@ -171,8 +171,8 @@ private def gramDetVecAgrees {n m : Nat} (b : Matrix Int n m) : Bool :=
 #guard GramSchmidt.Int.adjacentSwapPivotCoeff typical f1_3 (by decide) = 1
 #guard GramSchmidt.Int.adjacentSwapGramDetNumerator typical f1_3 (by decide) = 4
 #guard GramSchmidt.Int.adjacentSwapGramDetQuotient typical f1_3 (by decide) = 2
-#guard GramSchmidt.Int.adjacentSwapScaledCoeffAbovePrevNumerator typical f1_3 (by decide) f2_3 = 3
-#guard GramSchmidt.Int.adjacentSwapScaledCoeffAboveCurrNumerator typical f1_3 (by decide) f2_3 = 0
+#guard GramSchmidt.Int.adjacentSwapScaledCoeffAbovePrevNumerator typical f1_3 (by decide) f2_3 = 2
+#guard GramSchmidt.Int.adjacentSwapScaledCoeffAboveCurrNumerator typical f1_3 (by decide) f2_3 = 2
 
 #guard GramSchmidt.Int.adjacentSwapDenom typical f2_3 = 3
 #guard GramSchmidt.Int.adjacentSwapPivotCoeff typical f2_3 (by decide) = 1
@@ -183,6 +183,110 @@ private def gramDetVecAgrees {n m : Nat} (b : Matrix Int n m) : Bool :=
 #guard GramSchmidt.Int.adjacentSwapPivotCoeff dependent f1_3 (by decide) = 8
 #guard GramSchmidt.Int.adjacentSwapGramDetNumerator dependent f1_3 (by decide) = 64
 #guard GramSchmidt.Int.adjacentSwapGramDetQuotient dependent f1_3 (by decide) = 16
+
+/-!
+6×6 fixtures matching the SPEC `core` matrix-dimension band, with the
+same typical / edge / adversarial structure as the smaller cases above:
+
+- `bigTypical` — the 6×6 complement-of-identity matrix `J - I`. Each row
+  has 5 ones; pairs of distinct rows share 4 columns. `B Bᵀ` is `5·I + 4·(J − I)`,
+  so the leading `k×k` Gram determinant equals `4k + 1` (eigenvalues
+  `4k + 1, 1, …, 1`). Dense enough that Bareiss exercises the inner
+  update loop at every prefix step, and the Gram is exactly singular
+  nowhere along the prefix chain.
+- `bigZero` — edge zero matrix; gives the `k=0` convention `1` then a
+  collapsed prefix chain.
+- `bigDependent` — adversarial: row 1 = 2·row 0 (so the leading 2×2
+  Gram is singular), with the remaining rows the unit basis on cols
+  2..5. Mirrors the smaller `dependent` shape and forces every Gram
+  prefix from `k=2` onward to be singular while the per-row coefficient
+  surface remains well-defined.
+-/
+
+private def bigTypical : Matrix Int 6 6 :=
+  Matrix.ofFn fun i j => if i.val = j.val then (0 : Int) else 1
+
+private def bigZero : Matrix Int 6 6 := 0
+
+private def bigDependent : Matrix Int 6 6 :=
+  Matrix.ofFn fun i j =>
+    match i.val, j.val with
+    | 0, 0 => 2
+    | 1, 0 => 4
+    | 2, 2 => 1
+    | 3, 3 => 1
+    | 4, 4 => 1
+    | 5, 5 => 1
+    | _, _ => 0
+
+private abbrev g0_6 : Fin 6 := ⟨0, by decide⟩
+private abbrev g1_6 : Fin 6 := ⟨1, by decide⟩
+private abbrev g2_6 : Fin 6 := ⟨2, by decide⟩
+private abbrev g3_6 : Fin 6 := ⟨3, by decide⟩
+private abbrev g4_6 : Fin 6 := ⟨4, by decide⟩
+private abbrev g5_6 : Fin 6 := ⟨5, by decide⟩
+
+#guard gramDetVecAgrees bigTypical
+#guard gramDetVecAgrees bigZero
+#guard gramDetVecAgrees bigDependent
+
+#guard GramSchmidt.Int.gramDet bigTypical 0 (by decide) = 1
+#guard GramSchmidt.Int.gramDet bigTypical 1 (by decide) = 5
+#guard GramSchmidt.Int.gramDet bigTypical 2 (by decide) = 9
+#guard GramSchmidt.Int.gramDet bigTypical 3 (by decide) = 13
+#guard GramSchmidt.Int.gramDet bigTypical 4 (by decide) = 17
+#guard GramSchmidt.Int.gramDet bigTypical 5 (by decide) = 21
+#guard GramSchmidt.Int.gramDet bigTypical 6 (by decide) = 25
+
+#guard GramSchmidt.Int.gramDet bigZero 0 (by decide) = 1
+#guard GramSchmidt.Int.gramDet bigZero 6 (by decide) = 0
+
+#guard GramSchmidt.Int.gramDet bigDependent 0 (by decide) = 1
+#guard GramSchmidt.Int.gramDet bigDependent 1 (by decide) = 4
+#guard GramSchmidt.Int.gramDet bigDependent 2 (by decide) = 0
+#guard GramSchmidt.Int.gramDet bigDependent 6 (by decide) = 0
+
+-- Diagonal entries of `scaledCoeffs` agree with the leading-Gram chain.
+#guard GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs bigTypical) g0_6 g0_6 = 5
+#guard GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs bigTypical) g3_6 g3_6 = 17
+#guard GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs bigTypical) g5_6 g5_6 = 25
+
+-- Sub-diagonal entries away from the first row.
+#guard GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs bigTypical) g3_6 g1_6 = 4
+#guard GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs bigTypical) g5_6 g4_6 = 4
+
+-- Above-diagonal entries are zero across the bigger fixture.
+#guard GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs bigTypical) g0_6 g5_6 = 0
+#guard GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs bigTypical) g2_6 g4_6 = 0
+#guard GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs bigTypical) g3_6 g5_6 = 0
+
+-- size-reducing the last row by row 0 turns
+-- `(1,1,1,1,1,0) - (0,1,1,1,1,1)` into `(1,0,0,0,0,-1)`.
+#guard GramSchmidt.entry
+    (GramSchmidt.Int.sizeReduce bigTypical g0_6 g5_6 1) g5_6 g0_6 = 1
+#guard GramSchmidt.entry
+    (GramSchmidt.Int.sizeReduce bigTypical g0_6 g5_6 1) g5_6 g3_6 = 0
+#guard GramSchmidt.entry
+    (GramSchmidt.Int.sizeReduce bigTypical g0_6 g5_6 1) g5_6 g5_6 = -1
+
+-- swapping rows 4 and 5 of `bigTypical` exchanges the unique-zero columns.
+#guard GramSchmidt.entry
+    (GramSchmidt.Int.adjacentSwap bigTypical g5_6 (by decide)) g4_6 g5_6 = 0
+#guard GramSchmidt.entry
+    (GramSchmidt.Int.adjacentSwap bigTypical g5_6 (by decide)) g4_6 g4_6 = 1
+#guard GramSchmidt.entry
+    (GramSchmidt.Int.adjacentSwap bigTypical g5_6 (by decide)) g5_6 g4_6 = 0
+#guard GramSchmidt.entry
+    (GramSchmidt.Int.adjacentSwap bigTypical g5_6 (by decide)) g5_6 g5_6 = 1
+
+-- Adjacent-swap helper formulas at the last row of `bigTypical`:
+-- `d = gramDet 5 = 21`, pivot `B = scaledCoeffs[5][4] = 4`,
+-- numerator `gramDet 6 · gramDet 4 + B² = 25·17 + 16 = 441`,
+-- quotient `441 / 21 = 21`.
+#guard GramSchmidt.Int.adjacentSwapDenom bigTypical g5_6 = 21
+#guard GramSchmidt.Int.adjacentSwapPivotCoeff bigTypical g5_6 (by decide) = 4
+#guard GramSchmidt.Int.adjacentSwapGramDetNumerator bigTypical g5_6 (by decide) = 441
+#guard GramSchmidt.Int.adjacentSwapGramDetQuotient bigTypical g5_6 (by decide) = 21
 
 end GramSchmidtConformance
 end Hex

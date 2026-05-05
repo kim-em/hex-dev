@@ -13,7 +13,7 @@ compact checksums or summaries of the computed structures.
 Scientific registrations:
 
 * `runBerlekampMatrixChecksum`: build `Q_f` for a degree-`n` input,
-  `O(n^3 log n)`.
+  `O(n^2)` for fixed small `p` (sparse `X^p mod f`).
 * `runRabinTestChecksum`: Rabin irreducibility test on a degree-`n` input,
   `O(n^3)`.
 * `runBerlekampFactorChecksum`: Berlekamp split-step factorization,
@@ -47,7 +47,11 @@ structure MonicInput where
 instance : Hashable MonicInput where
   hash input := hash input.poly
 
-/-- Prepared input for the Berlekamp split-step factoring surface. -/
+/-- Prepared input for the Berlekamp split-step factoring surface.
+
+Both `poly` and `witness` are dense polynomials of comparable degree so each
+`gcd(poly, witness - c)` attempt exercises a representative quadratic Euclidean
+gcd, rather than the `O(n)` shortcut a low-degree witness would expose. -/
 structure SplitInput where
   poly : FpPoly 5
   witness : FpPoly 5
@@ -80,10 +84,6 @@ theorem monicPoly_monic (degree salt : Nat) : DensePoly.Monic (monicPoly degree 
     (1 : ZMod64 5)).back?.getD 0 = 1
   simp
 
-/-- Deterministic split-step input `x^n - 1` with witness `x`. -/
-def splitPoly (n : Nat) : FpPoly 5 :=
-  DensePoly.monomial (n + 1) (1 : ZMod64 5) - 1
-
 /-- Stable checksum for polynomial-valued benchmark results. -/
 def checksumPoly (f : FpPoly 5) : UInt64 :=
   f.toArray.foldl (fun acc coeff => mixHash acc (hash coeff)) 0
@@ -103,6 +103,17 @@ def checksumDistinctDegree (result : DistinctDegreeFactorization 5) : UInt64 :=
       0
   mixHash buckets (checksumPoly result.residual)
 
+/-- Tail-recursive helper for `fibPoly`. -/
+private def fibPolyAux : Nat → FpPoly 5 → FpPoly 5 → FpPoly 5
+  | 0, prev, _ => prev
+  | k + 1, prev, curr => fibPolyAux k curr (FpPoly.X * curr + prev)
+
+/-- Fibonacci-like polynomial family `f_0 = 1`, `f_1 = X`, `f_k = X * f_{k-1} + f_{k-2}`.
+Each `f_k` is monic of degree `k`; the pair `(f_n, f_{n-1})` is the textbook
+worst-case Euclidean gcd on which `gcd(f_n, f_{n-1}) = 1` takes `n` steps with
+quadratic total cost. -/
+def fibPoly (n : Nat) : FpPoly 5 := fibPolyAux n 1 FpPoly.X
+
 /-- Per-parameter fixture for Berlekamp matrix and Rabin paths. -/
 def prepLinearProductInput (n : Nat) : MonicInput :=
   { poly := monicPoly (n + 1) 101
@@ -113,10 +124,15 @@ def prepMixedDegreeInput (n : Nat) : MonicInput :=
   { poly := monicPoly (n + 3) 211
     monic := monicPoly_monic (n + 3) 211 }
 
-/-- Per-parameter fixture for one Berlekamp split-step factoring search. -/
+/-- Per-parameter fixture for one Berlekamp split-step factoring search.
+
+`poly = fibPoly (n + 2)`, `witness = fibPoly (n + 1)` is the textbook Euclidean
+worst case: `gcd(f_{n+2}, f_{n+1} - c)` runs `Θ(n)` Euclidean steps for each
+`c`, giving the declared `O(n^2)` cost rather than the `O(n)` short-circuit a
+random-input fixture would expose. -/
 def prepSplitInput (n : Nat) : SplitInput :=
-  { poly := splitPoly n
-    witness := FpPoly.X }
+  { poly := fibPoly (n + 2)
+    witness := fibPoly (n + 1) }
 
 /-- Benchmark target: build and checksum the Berlekamp matrix. -/
 def runBerlekampMatrixChecksum (input : MonicInput) : UInt64 :=
@@ -126,30 +142,34 @@ def runBerlekampMatrixChecksum (input : MonicInput) : UInt64 :=
 def runRabinTestChecksum (input : MonicInput) : UInt64 :=
   hash <| rabinTest input.poly input.monic
 
-/-- Benchmark target: run one Berlekamp split search and checksum the split. -/
+/-- Benchmark target: run all `p` Berlekamp split candidates `gcd(f, h - c)` and
+checksum them together. The full sweep avoids the variable-cost early exit of
+`kernelWitnessSplit?` and exercises a fixed `p` quadratic gcd attempts. -/
 def runBerlekampFactorChecksum (input : SplitInput) : UInt64 :=
-  match kernelWitnessSplit? input.poly input.witness with
-  | none => 0
-  | some split =>
-      mixHash (hash split.splitConstant.toNat) <|
-        mixHash (checksumPoly split.factor) (checksumPoly split.cofactor)
+  (List.range 5).foldl
+    (fun acc c =>
+      mixHash acc <|
+        checksumPoly (splitFactorAt input.poly input.witness (ZMod64.ofNat 5 c)))
+    0
 
 /-- Benchmark target: run distinct-degree factorization and checksum its buckets. -/
 def runDistinctDegreeChecksum (input : MonicInput) : UInt64 :=
   checksumDistinctDegree <| distinctDegreeFactor input.poly input.monic
 
 /-
-The implementation constructs one Frobenius column for each basis vector.
-Column construction reduces powers modulo a degree-`n` polynomial with dense
-quadratic arithmetic and logarithmic exponent height, so the declared model is
-Theta(n^3 log n).
+The implementation constructs one Frobenius column for each basis vector via
+the iterative recurrence `column (j + 1) = column j * (X^p mod f) mod f`.
+For fixed small `p = 5` and `n > p`, `X^p mod f = X^p` is the sparse single
+monomial `X^5`, so each iterative step costs `O(p * n)` (shift by `p`
+positions plus at most `p` monic reductions, each `O(n)`); over `n` columns
+the total is `O(p * n^2) = O(n^2)` for fixed `p`.
 -/
-setup_benchmark runBerlekampMatrixChecksum n => n * n * n * Nat.log2 (n + 1)
+setup_benchmark runBerlekampMatrixChecksum n => n * n
   with prep := prepLinearProductInput
   where {
-    paramFloor := 8
-    paramCeiling := 64
-    paramSchedule := .custom #[8, 12, 16, 24, 32, 48, 64]
+    paramFloor := 16
+    paramCeiling := 192
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192]
     maxSecondsPerCall := 6.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -174,10 +194,11 @@ setup_benchmark runRabinTestChecksum n => n * n * n
   }
 
 /-
-The split-step factoring surface computes `gcd(f, witness - c)` for field
-constants until a nontrivial factor is found. For fixed prime `5`, this is a
-constant number of dense Euclidean gcd attempts on degree-`n` inputs, giving
-quadratic work.
+The split-step factoring surface computes `gcd(f, witness - c)` for the `p`
+field constants `c` until a nontrivial factor is found. With both `f` and
+`witness` dense and of degree `~n`, each Euclidean gcd is `O(n^2)`, and the
+constant-bounded loop over `c` gives `O(p * n^2) = O(n^2)` per call for
+fixed `p`.
 -/
 setup_benchmark runBerlekampFactorChecksum n => n * n
   with prep := prepSplitInput
@@ -199,9 +220,9 @@ updates over degree-`n` inputs dominate, so the declared model is cubic.
 setup_benchmark runDistinctDegreeChecksum n => n * n * n
   with prep := prepMixedDegreeInput
   where {
-    paramFloor := 8
-    paramCeiling := 64
-    paramSchedule := .custom #[8, 12, 16, 24, 32, 48, 64]
+    paramFloor := 12
+    paramCeiling := 96
+    paramSchedule := .custom #[12, 16, 24, 32, 48, 64, 96]
     maxSecondsPerCall := 6.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0

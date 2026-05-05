@@ -906,6 +906,40 @@ private theorem ofCoeffs_toArray (p : DensePoly R) :
   rw [coeff_ofCoeffs]
   rfl
 
+private theorem ofCoeffs_set!_eq_add_monomial {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    (coeffs : Array S) (shift : Nat) (coeff : S)
+    (hshift : shift < coeffs.size)
+    (hzero : coeffs.getD shift (Zero.zero : S) = (Zero.zero : S)) :
+    (ofCoeffs (coeffs.set! shift coeff) : DensePoly S) =
+      ofCoeffs coeffs + monomial shift coeff := by
+  apply ext_coeff
+  intro n
+  have hzero_add : (0 : S) + (0 : S) = 0 := by grind
+  have hzero_add_left : ∀ x : S, (Zero.zero : S) + x = x := by
+    intro x
+    change (0 : S) + x = x
+    grind
+  have hadd_zero_right : ∀ x : S, x + (Zero.zero : S) = x := by
+    intro x
+    change x + (0 : S) = x
+    grind
+  rw [coeff_ofCoeffs]
+  rw [coeff_add (ofCoeffs coeffs) (monomial shift coeff) n hzero_add]
+  rw [coeff_ofCoeffs, coeff_monomial]
+  by_cases hn : n = shift
+  · subst n
+    rw [array_getD_set!_same]
+    · rw [hzero]
+      rw [if_pos rfl]
+      exact (hzero_add_left coeff).symm
+    · exact hshift
+  · rw [array_getD_set!_ne]
+    · rw [if_neg hn]
+      exact (hadd_zero_right (coeffs.getD n (Zero.zero : S))).symm
+    · intro h
+      exact hn h.symm
+
 theorem divModArray_eq_zero_self_of_degree_lt [Sub R] [Mul R]
     (p q : DensePoly R) (scaleLead : R → R)
     (hdeg : p.degree?.getD 0 < q.degree?.getD 0) :
@@ -1760,6 +1794,143 @@ private theorem fold_add_mul_left_commring {S : Type _} [Lean.Grind.CommRing S]
       rw [← ih]
       grind
 
+private theorem rat_fold_add_range_succ (A : Nat → Rat) (m : Nat) :
+    (List.range (m + 1)).foldl (fun acc i => acc + A i) 0 =
+      (List.range m).foldl (fun acc i => acc + A i) 0 + A m := by
+  rw [List.range_succ, List.foldl_append]
+  simp
+
+private theorem rat_weighted_diagonal_fold_aux
+    (A : Nat → Rat) (m : Nat) :
+    ((m : Nat) : Rat) *
+        (List.range (m + 1)).foldl (fun acc i => acc + A i) 0 =
+      (List.range m).foldl
+          (fun acc i => acc + ((i + 1 : Nat) : Rat) * A (i + 1)) 0 +
+        (List.range m).foldl
+          (fun acc i => acc + ((m - i : Nat) : Rat) * A i) 0 := by
+  induction m with
+  | zero =>
+      simp
+      grind
+  | succ m ih =>
+      rw [rat_fold_add_range_succ A (m + 1)]
+      have hsplit :
+          (((m + 1 : Nat) : Rat) *
+              ((List.range (m + 1)).foldl (fun acc i => acc + A i) 0 + A (m + 1))) =
+            ((m : Nat) : Rat) *
+                (List.range (m + 1)).foldl (fun acc i => acc + A i) 0 +
+              (List.range (m + 1)).foldl (fun acc i => acc + A i) 0 +
+              ((m + 1 : Nat) : Rat) * A (m + 1) := by
+        have hnat : ((m + 1 : Nat) : Rat) = ((m : Nat) : Rat) + 1 := by
+          simp
+        rw [hnat]
+        grind
+      rw [hsplit, ih]
+      rw [rat_fold_add_range_succ
+        (fun i => ((i + 1 : Nat) : Rat) * A (i + 1)) m]
+      rw [rat_fold_add_range_succ
+        (fun i => ((m + 1 - i : Nat) : Rat) * A i) m]
+      rw [rat_fold_add_range_succ A m]
+      have htail : ((m + 1 - m : Nat) : Rat) * A m = A m := by
+        simp
+      rw [htail]
+      have hcoeff :
+          (List.range m).foldl
+              (fun acc i => acc + ((m - i : Nat) : Rat) * A i) 0 +
+            (List.range m).foldl (fun acc i => acc + A i) 0 =
+          (List.range m).foldl
+              (fun acc i => acc + ((m + 1 - i : Nat) : Rat) * A i) 0 := by
+        rw [← fold_add_pair_commring (S := Rat) (List.range m)
+          (fun i => ((m - i : Nat) : Rat) * A i) (fun i => A i) 0 0]
+        rw [show (0 : Rat) + 0 = 0 by grind]
+        apply fold_add_congr
+        intro i hi
+        have hi' : i < m := List.mem_range.mp hi
+        have hnat : ((m + 1 - i : Nat) : Rat) =
+            ((m - i : Nat) : Rat) + 1 := by
+          have h : m + 1 - i = m - i + 1 := by omega
+          rw [h]
+          simp
+        rw [hnat]
+        grind
+      rw [← hcoeff]
+      grind
+
+private theorem rat_weighted_diagonal_fold
+    (A : Nat → Rat) (n : Nat) :
+    ((n + 1 : Nat) : Rat) *
+        (List.range (n + 2)).foldl (fun acc i => acc + A i) 0 =
+      (List.range (n + 1)).foldl
+          (fun acc i => acc + ((i + 1 : Nat) : Rat) * A (i + 1)) 0 +
+        (List.range (n + 1)).foldl
+          (fun acc i => acc + ((n - i + 1 : Nat) : Rat) * A i) 0 := by
+  have h := rat_weighted_diagonal_fold_aux A (n + 1)
+  rw [show n + 1 + 1 = n + 2 by omega] at h
+  exact h.trans (by
+    congr 1
+    apply fold_add_congr
+    intro i hi
+    have hi' : i < n + 1 := List.mem_range.mp hi
+    have hidx : n + 1 - i = n - i + 1 := by omega
+    rw [hidx])
+
+private theorem rat_coeff_derivative_generic (p : DensePoly Rat) (n : Nat) :
+    (derivative p).coeff n = ((n + 1 : Nat) : Rat) * p.coeff (n + 1) := by
+  unfold derivative
+  rw [coeff_ofCoeffs_list]
+  change
+    ((List.range (p.size - 1)).map
+        (fun i => ((i + 1 : Nat) : Rat) * p.coeff (i + 1))).getD n 0 =
+      ((n + 1 : Nat) : Rat) * p.coeff (n + 1)
+  by_cases hn : n < p.size - 1
+  · simp [hn, List.getD]
+  · have hp : p.size ≤ n + 1 := by omega
+    have hcoeff : p.coeff (n + 1) = 0 :=
+      coeff_eq_zero_of_size_le p hp
+    simp [hn, List.getD, hcoeff]
+
+theorem rat_mulCoeffSum_derivative_product_rule
+    (p q : DensePoly Rat) (n : Nat) :
+    ((n + 1 : Nat) : Rat) * mulCoeffSum p q (n + 1) =
+      mulCoeffSum (derivative p) q n + mulCoeffSum p (derivative q) n := by
+  rw [mulCoeffSum_eq_diagonal p q (n + 1)]
+  rw [diagonalSum_eq_degree_bound p q (n + 1)]
+  rw [mulCoeffSum_eq_diagonal (derivative p) q n]
+  rw [diagonalSum_eq_degree_bound (derivative p) q n]
+  rw [mulCoeffSum_eq_diagonal p (derivative q) n]
+  rw [diagonalSum_eq_degree_bound p (derivative q) n]
+  have hleft :
+      (List.range (n + 2)).foldl
+          (fun acc i => acc + diagonalMulCoeffTerm p q (n + 1) i) 0 =
+        (List.range (n + 2)).foldl
+          (fun acc i => acc + p.coeff i * q.coeff (n + 1 - i)) 0 := by
+    apply fold_add_congr
+    intro i hi
+    have hi' : i < n + 2 := List.mem_range.mp hi
+    have hnot : ¬ n + 1 < i := by omega
+    simp [diagonalMulCoeffTerm, hnot]
+  rw [hleft]
+  rw [rat_weighted_diagonal_fold (fun i => p.coeff i * q.coeff (n + 1 - i)) n]
+  congr 1
+  · apply fold_add_congr
+    intro i hi
+    have hi' : i < n + 1 := List.mem_range.mp hi
+    have hnot : ¬ n < i := by omega
+    unfold diagonalMulCoeffTerm
+    simp [hnot, rat_coeff_derivative_generic p i]
+    have hidx : n - i = n + 1 - (i + 1) := by omega
+    rw [hidx]
+    grind
+  · apply fold_add_congr
+    intro i hi
+    have hi' : i < n + 1 := List.mem_range.mp hi
+    have hnot : ¬ n < i := by omega
+    unfold diagonalMulCoeffTerm
+    simp [hnot, rat_coeff_derivative_generic q (n - i)]
+    have hidx : n - i + 1 = n + 1 - i := by omega
+    rw [hidx]
+    grind
+
 private theorem diagonal_mul_left_expand {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q r : DensePoly S) (n i : Nat) (hi : i < n + 1) :
@@ -1929,6 +2100,130 @@ theorem divMod_reconstruction_step {S : Type _}
     (quot + term) * q + (rem - term * q) = quot * q + rem := by
   exact add_mul_sub_cancel_right quot term q rem
 
+/-- The polynomial-level reading of one step of the array-based long-division
+remainder update: subtracting `coeff * q * x^shift` from `rem`, in coefficient
+form, matches the in-place `subtractScaledShift` array update whenever the
+update window stays within `rem`. -/
+private theorem ofCoeffs_subtractScaledShift_eq_sub_monomial_mul {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    (rem q : Array S) (shift : Nat) (coeff : S)
+    (hbound : ∀ j, j < q.size → shift + j < rem.size) :
+    ofCoeffs (subtractScaledShift rem q shift coeff) =
+      ofCoeffs rem - monomial shift coeff * ofCoeffs q := by
+  apply ext_coeff
+  intro n
+  have hzero_sub : (0 : S) - (0 : S) = 0 := by grind
+  rw [coeff_ofCoeffs]
+  rw [coeff_sub (ofCoeffs rem) (monomial shift coeff * ofCoeffs q) n hzero_sub]
+  rw [coeff_ofCoeffs]
+  rw [coeff_mul]
+  rw [mulCoeffSum_eq_diagonal]
+  rw [diagonalSum_eq_degree_bound]
+  rw [subtractScaledShift_getD rem q shift coeff n hbound]
+  -- Compute each diagonal term using the monomial's coefficient law.
+  have hterm : ∀ i,
+      diagonalMulCoeffTerm (monomial shift coeff) (ofCoeffs q) n i =
+        if i = shift ∧ shift ≤ n
+          then coeff * q.getD (n - shift) (Zero.zero : S)
+          else 0 := by
+    intro i
+    unfold diagonalMulCoeffTerm
+    rw [coeff_monomial, coeff_ofCoeffs]
+    by_cases hni : n < i
+    · by_cases hieq : i = shift
+      · subst i
+        have hshift_gt : ¬ shift ≤ n := by omega
+        simp [hni, hshift_gt]
+      · simp [hni, hieq]
+    · have hile : i ≤ n := by omega
+      by_cases hieq : i = shift
+      · subst i
+        simp [hni, hile]
+      · simp [hni, hieq]
+        exact Lean.Grind.Semiring.zero_mul _
+  -- Lift the term-by-term rewrite to the foldl.
+  have hfold : ∀ (xs : List Nat) (acc : S),
+      xs.foldl (fun acc i =>
+          acc + diagonalMulCoeffTerm (monomial shift coeff) (ofCoeffs q) n i) acc =
+        xs.foldl (fun acc i =>
+          acc + if i = shift ∧ shift ≤ n
+            then coeff * q.getD (n - shift) (Zero.zero : S)
+            else 0) acc := by
+    intro xs
+    induction xs with
+    | nil => intro acc; rfl
+    | cons i xs ih =>
+        intro acc
+        simp only [List.foldl_cons]
+        rw [hterm i]
+        exact ih _
+  rw [hfold (List.range (n + 1)) 0]
+  by_cases hshift : shift ≤ n
+  · -- Collapse the conjunction `i = shift ∧ shift ≤ n` to `i = shift`.
+    have hsimp : ∀ i,
+        (if i = shift ∧ shift ≤ n
+            then coeff * q.getD (n - shift) (Zero.zero : S)
+            else 0) =
+        (if i = shift
+            then coeff * q.getD (n - shift) (Zero.zero : S)
+            else 0) := by
+      intro i
+      simp [hshift]
+    have hfold2 : ∀ (xs : List Nat) (acc : S),
+        xs.foldl (fun acc i =>
+            acc + if i = shift ∧ shift ≤ n
+              then coeff * q.getD (n - shift) (Zero.zero : S)
+              else 0) acc =
+          xs.foldl (fun acc i =>
+            acc + if i = shift
+              then coeff * q.getD (n - shift) (Zero.zero : S)
+              else 0) acc := by
+      intro xs
+      induction xs with
+      | nil => intro acc; rfl
+      | cons i xs ih =>
+          intro acc
+          simp only [List.foldl_cons]
+          rw [hsimp i]
+          exact ih _
+    rw [hfold2 (List.range (n + 1)) 0]
+    rw [fold_single_index]
+    have hshift_lt : shift < n + 1 := by omega
+    rw [if_pos hshift_lt]
+    by_cases hsize : n - shift < q.size
+    · rw [if_pos ⟨hshift, hsize⟩]
+    · have hand : ¬ (shift ≤ n ∧ n - shift < q.size) := fun ⟨_, h⟩ => hsize h
+      rw [if_neg hand]
+      have hq0 : q.getD (n - shift) (Zero.zero : S) = (0 : S) := by
+        unfold Array.getD
+        rw [dif_neg (Nat.not_lt.mpr (Nat.le_of_not_lt hsize))]
+        rfl
+      rw [hq0]
+      grind
+  · -- All terms are zero; the fold yields zero.
+    have hzero_fold : ∀ (xs : List Nat) (acc : S),
+        xs.foldl (fun acc i =>
+            acc + if i = shift ∧ shift ≤ n
+              then coeff * q.getD (n - shift) (Zero.zero : S)
+              else 0) acc = acc := by
+      intro xs
+      induction xs with
+      | nil => intro acc; rfl
+      | cons i xs ih =>
+          intro acc
+          simp only [List.foldl_cons]
+          have h0 : (if i = shift ∧ shift ≤ n
+              then coeff * q.getD (n - shift) (Zero.zero : S)
+              else (0 : S)) = 0 := by
+            simp [hshift]
+          rw [h0]
+          rw [show acc + (0 : S) = acc by grind]
+          exact ih _
+    rw [hzero_fold (List.range (n + 1)) 0]
+    have hand : ¬ (shift ≤ n ∧ n - shift < q.size) := fun ⟨h, _⟩ => hshift h
+    rw [if_neg hand]
+    grind
+
 theorem zero_mul {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p : DensePoly S) :
@@ -1948,6 +2243,471 @@ theorem zero_add {S : Type _}
   have hzero_add : (0 : S) + (0 : S) = 0 := by grind
   rw [coeff_add 0 p n hzero_add, coeff_zero]
   grind
+
+private theorem eq_zero_of_isZero_true {S : Type _} [Zero S] [DecidableEq S]
+    (p : DensePoly S) (h : p.isZero = true) :
+    p = 0 := by
+  apply ext_coeff
+  intro n
+  have hsize : p.size = 0 := by
+    simpa [isZero, size, Array.isEmpty_iff_size_eq_zero] using h
+  rw [coeff_zero]
+  exact coeff_eq_zero_of_size_le p (by omega)
+
+private theorem isZero_zero {S : Type _} [Zero S] [DecidableEq S] :
+    (0 : DensePoly S).isZero = true := by
+  rfl
+
+private theorem degree_getD_lt_size_add_one {S : Type _} [Zero S] [DecidableEq S]
+    (p : DensePoly S) :
+    p.degree?.getD 0 < p.size + 1 := by
+  by_cases hsize : p.size = 0
+  · simp [degree?, hsize]
+  · have hdeg : p.degree?.getD 0 = p.size - 1 := by
+      simp [degree?, hsize]
+    omega
+
+private theorem dvd_refl_poly {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    (p : DensePoly S) :
+    p ∣ p := by
+  exact ⟨1, (mul_one_right_poly p).symm⟩
+
+private theorem dvd_zero_poly {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    (p : DensePoly S) :
+    p ∣ 0 := by
+  exact ⟨0, by rw [mul_comm_poly p 0, zero_mul]⟩
+
+private theorem dvd_mul_left_poly {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    {d p : DensePoly S} (q : DensePoly S) :
+    d ∣ p → d ∣ q * p := by
+  intro h
+  rcases h with ⟨a, ha⟩
+  refine ⟨q * a, ?_⟩
+  rw [ha, ← mul_assoc_poly q d a, mul_comm_poly q d, mul_assoc_poly d q a]
+
+private theorem dvd_add_poly {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    {d p q : DensePoly S} :
+    d ∣ p → d ∣ q → d ∣ p + q := by
+  intro hp hq
+  rcases hp with ⟨a, ha⟩
+  rcases hq with ⟨b, hb⟩
+  refine ⟨a + b, ?_⟩
+  rw [ha, hb, mul_add_right_poly]
+
+private theorem dvd_sub_poly {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    {d p q : DensePoly S} :
+    d ∣ p → d ∣ q → d ∣ p - q := by
+  intro hp hq
+  rcases hp with ⟨a, ha⟩
+  rcases hq with ⟨b, hb⟩
+  refine ⟨a + (0 - b), ?_⟩
+  rw [sub_eq_add_neg_poly, ha, hb, mul_add_right_poly, mul_sub_zero_comm, mul_comm_poly b d]
+
+private theorem xgcdAux_gcd_eq_left_of_right_zero {S : Type _}
+    [Zero S] [DecidableEq S] [One S] [Add S] [Sub S] [Mul S] [Div S]
+    (r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly S) (fuel : Nat) (hr₁ : r₁ = 0) :
+    (xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel).gcd = r₀ := by
+  cases fuel with
+  | zero =>
+      simp [xgcdAux]
+  | succ fuel =>
+      simp [xgcdAux, hr₁, isZero_zero]
+
+private theorem xgcd_bezout_step {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    (a s₀ t₀ s₁ t₁ p q : DensePoly S) :
+    (s₀ - a * s₁) * p + (t₀ - a * t₁) * q =
+      (s₀ * p + t₀ * q) - a * (s₁ * p + t₁ * q) := by
+  rw [sub_eq_add_neg_poly s₀ (a * s₁), sub_eq_add_neg_poly t₀ (a * t₁)]
+  rw [mul_add_left_poly, mul_add_left_poly]
+  rw [neg_mul_right_poly, neg_mul_right_poly]
+  rw [mul_assoc_poly a s₁ p, mul_assoc_poly a t₁ q]
+  rw [mul_add_right_poly]
+  apply ext_coeff
+  intro n
+  have hzero_add : (0 : S) + (0 : S) = 0 := by grind
+  have hzero_sub : (0 : S) - (0 : S) = 0 := by grind
+  rw [coeff_add (s₀ * p + (0 - a * (s₁ * p))) (t₀ * q + (0 - a * (t₁ * q))) n
+    hzero_add]
+  rw [coeff_add (s₀ * p) (0 - a * (s₁ * p)) n hzero_add]
+  rw [coeff_sub 0 (a * (s₁ * p)) n hzero_sub, coeff_zero]
+  rw [coeff_add (t₀ * q) (0 - a * (t₁ * q)) n hzero_add]
+  rw [coeff_sub 0 (a * (t₁ * q)) n hzero_sub, coeff_zero]
+  rw [coeff_sub (s₀ * p + t₀ * q) (a * (s₁ * p) + a * (t₁ * q)) n hzero_sub]
+  rw [coeff_add (s₀ * p) (t₀ * q) n hzero_add]
+  rw [coeff_add (a * (s₁ * p)) (a * (t₁ * q)) n hzero_add]
+  grind
+
+private theorem xgcdAux_bezout {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
+    (p q r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly S) (fuel : Nat)
+    (hr₀ : s₀ * p + t₀ * q = r₀)
+    (hr₁ : s₁ * p + t₁ * q = r₁) :
+    let r := xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel
+    r.left * p + r.right * q = r.gcd := by
+  induction fuel generalizing r₀ s₀ t₀ r₁ s₁ t₁ with
+  | zero =>
+      simpa [xgcdAux] using hr₀
+  | succ fuel ih =>
+      unfold xgcdAux
+      by_cases hr₁zero : r₁.isZero
+      · simp [hr₁zero, hr₀]
+      · simp [hr₁zero]
+        let qr := divMod r₀ r₁
+        let r := qr.2
+        let s := s₀ - qr.1 * s₁
+        let t := t₀ - qr.1 * t₁
+        apply ih r₁ s₁ t₁ r s t
+        · exact hr₁
+        · have hspec : qr.1 * r₁ + qr.2 = r₀ := by
+            simpa [qr] using DivModLaws.divMod_spec r₀ r₁
+          calc
+            s * p + t * q
+                = (s₀ * p + t₀ * q) - qr.1 * (s₁ * p + t₁ * q) := by
+                  exact xgcd_bezout_step qr.1 s₀ t₀ s₁ t₁ p q
+            _ = r₀ - qr.1 * r₁ := by rw [hr₀, hr₁]
+            _ = qr.2 := by
+              have h : r₀ = qr.1 * r₁ + qr.2 := hspec.symm
+              rw [h]
+              apply ext_coeff
+              intro n
+              have hzero_add : (0 : S) + (0 : S) = 0 := by grind
+              have hzero_sub : (0 : S) - (0 : S) = 0 := by grind
+              rw [coeff_sub]
+              · rw [coeff_add]
+                · grind
+                · exact hzero_add
+              · exact hzero_sub
+
+theorem xgcd_bezout_of_divModLaws {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
+    (p q : DensePoly S) :
+    let r := xgcd p q
+    r.left * p + r.right * q = r.gcd := by
+  unfold xgcd
+  apply xgcdAux_bezout p q
+  · rw [mul_comm_poly (1 : DensePoly S) p, mul_one_right_poly, zero_mul, add_zero_poly]
+  · rw [zero_mul, mul_comm_poly (1 : DensePoly S) q, mul_one_right_poly, zero_add]
+
+private theorem xgcdAux_common_dvd_gcd {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
+    (d r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly S) (fuel : Nat)
+    (hr₀ : d ∣ r₀) (hr₁ : d ∣ r₁) :
+    d ∣ (xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel).gcd := by
+  induction fuel generalizing r₀ s₀ t₀ r₁ s₁ t₁ with
+  | zero =>
+      simpa [xgcdAux] using hr₀
+  | succ fuel ih =>
+      unfold xgcdAux
+      by_cases hr₁zero : r₁.isZero
+      · simp [hr₁zero, hr₀]
+      · simp [hr₁zero]
+        let qr := divMod r₀ r₁
+        let rem := qr.2
+        apply ih
+        · exact hr₁
+        · have hspec : qr.1 * r₁ + rem = r₀ := by
+            simpa [qr, rem] using DivModLaws.divMod_spec r₀ r₁
+          have hrem : rem = r₀ - qr.1 * r₁ := by
+            rw [← hspec]
+            apply ext_coeff
+            intro n
+            have hzero_add : (0 : S) + (0 : S) = 0 := by grind
+            have hzero_sub : (0 : S) - (0 : S) = 0 := by grind
+            rw [coeff_sub]
+            · rw [coeff_add]
+              · grind
+              · exact hzero_add
+            · exact hzero_sub
+          change d ∣ rem
+          rw [hrem]
+          exact dvd_sub_poly hr₀ (dvd_mul_left_poly qr.1 hr₁)
+
+private theorem xgcdAux_gcd_dvd_inputs {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
+    (hsmall :
+      ∀ p q : DensePoly S,
+        q.isZero = false → ¬ 0 < q.degree?.getD 0 → (divMod p q).2 = 0)
+    (r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly S) (fuel : Nat)
+    (hfuel : r₁.degree?.getD 0 < fuel) :
+    (xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel).gcd ∣ r₀ ∧
+      (xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel).gcd ∣ r₁ := by
+  induction fuel generalizing r₀ s₀ t₀ r₁ s₁ t₁ with
+  | zero =>
+      omega
+  | succ fuel ih =>
+      unfold xgcdAux
+      by_cases hr₁zero : r₁.isZero
+      · simp only [hr₁zero, ↓reduceDIte]
+        exact ⟨dvd_refl_poly r₀, by
+          rw [eq_zero_of_isZero_true r₁ hr₁zero]
+          exact dvd_zero_poly r₀⟩
+      · simp only [hr₁zero]
+        let qr := divMod r₀ r₁
+        let rem := qr.2
+        have hr₁false : r₁.isZero = false := by
+          cases h : r₁.isZero <;> simp [h] at hr₁zero ⊢
+        change (xgcdAux r₁ s₁ t₁ rem (s₀ - qr.1 * s₁) (t₀ - qr.1 * t₁) fuel).gcd ∣ r₀ ∧
+          (xgcdAux r₁ s₁ t₁ rem (s₀ - qr.1 * s₁) (t₀ - qr.1 * t₁) fuel).gcd ∣ r₁
+        by_cases hpos : 0 < r₁.degree?.getD 0
+        · have hrem_degree : rem.degree?.getD 0 < r₁.degree?.getD 0 := by
+            simpa [qr, rem] using
+              DivModLaws.divMod_remainder_degree_lt_of_pos_degree r₀ r₁ hpos
+          have hrem_fuel : rem.degree?.getD 0 < fuel := by omega
+          have hrec := ih r₁ s₁ t₁ rem (s₀ - qr.1 * s₁) (t₀ - qr.1 * t₁) hrem_fuel
+          have hg_r₁ : (xgcdAux r₁ s₁ t₁ rem (s₀ - qr.1 * s₁)
+              (t₀ - qr.1 * t₁) fuel).gcd ∣ r₁ := hrec.1
+          have hg_rem : (xgcdAux r₁ s₁ t₁ rem (s₀ - qr.1 * s₁)
+              (t₀ - qr.1 * t₁) fuel).gcd ∣ rem := hrec.2
+          constructor
+          · have hspec : qr.1 * r₁ + rem = r₀ := by
+              simpa [qr, rem] using DivModLaws.divMod_spec r₀ r₁
+            rw [← hspec]
+            exact dvd_add_poly (dvd_mul_left_poly qr.1 hg_r₁) hg_rem
+          · exact hg_r₁
+        · have hrem_zero : rem = 0 := by
+            simpa [qr, rem] using hsmall r₀ r₁ hr₁false hpos
+          have hg_eq : (xgcdAux r₁ s₁ t₁ rem (s₀ - qr.1 * s₁)
+              (t₀ - qr.1 * t₁) fuel).gcd = r₁ := by
+            exact xgcdAux_gcd_eq_left_of_right_zero r₁ s₁ t₁ rem
+              (s₀ - qr.1 * s₁) (t₀ - qr.1 * t₁) fuel hrem_zero
+          constructor
+          · rw [hg_eq]
+            have hspec : qr.1 * r₁ + rem = r₀ := by
+              simpa [qr, rem] using DivModLaws.divMod_spec r₀ r₁
+            rw [hrem_zero, add_zero_poly] at hspec
+            rw [← hspec]
+            exact dvd_mul_left_poly qr.1 (dvd_refl_poly r₁)
+          · rw [hg_eq]
+            exact dvd_refl_poly r₁
+
+theorem gcd_dvd_left_of_divModLaws {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
+    (hsmall :
+      ∀ p q : DensePoly S,
+        q.isZero = false → ¬ 0 < q.degree?.getD 0 → (divMod p q).2 = 0)
+    (p q : DensePoly S) :
+    gcd p q ∣ p := by
+  unfold gcd xgcd
+  exact (xgcdAux_gcd_dvd_inputs hsmall p 1 0 q 0 1 (p.size + q.size + 1)
+    (by
+      have hq := degree_getD_lt_size_add_one q
+      omega)).1
+
+theorem gcd_dvd_right_of_divModLaws {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
+    (hsmall :
+      ∀ p q : DensePoly S,
+        q.isZero = false → ¬ 0 < q.degree?.getD 0 → (divMod p q).2 = 0)
+    (p q : DensePoly S) :
+    gcd p q ∣ q := by
+  unfold gcd xgcd
+  exact (xgcdAux_gcd_dvd_inputs hsmall p 1 0 q 0 1 (p.size + q.size + 1)
+    (by
+      have hq := degree_getD_lt_size_add_one q
+      omega)).2
+
+theorem dvd_gcd_of_divModLaws {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
+    (d p q : DensePoly S) :
+    d ∣ p → d ∣ q → d ∣ gcd p q := by
+  intro hdp hdq
+  unfold gcd xgcd
+  exact xgcdAux_common_dvd_gcd d p 1 0 q 0 1 (p.size + q.size + 1) hdp hdq
+
+/-- Recursive reconstruction invariant for the array-backed long-division loop.
+Under the cancellation hypothesis for the leading-coefficient scaling function
+together with sparsity bounds on `quot` and `rem`, each step of `divModArrayAux`
+preserves the polynomial-level identity `quot * q + rem`. The bound parameter `B`
+is chosen freshly per recursive call so that strict descent of the loop's pivot
+position keeps the slot of `quot` about to be written zero. -/
+private theorem divModArrayAux_reconstruction {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    (q : Array S) (qDegree : Nat) (scaleLead : S → S)
+    (fuel : Nat) (quot rem : Array S) (B : Nat)
+    (hsize_q : q.size = qDegree + 1)
+    (hcancel :
+      ∀ a : S, a - scaleLead a * q.getD qDegree (Zero.zero : S) = (Zero.zero : S))
+    (hzero_rem :
+      ∀ i, qDegree + B ≤ i → rem.getD i (Zero.zero : S) = (Zero.zero : S))
+    (hzero_quot :
+      ∀ i, i < B → quot.getD i (Zero.zero : S) = (Zero.zero : S))
+    (hsize_match : rem.size ≤ qDegree + quot.size) :
+    (ofCoeffs (divModArrayAux q qDegree scaleLead fuel quot rem).1 : DensePoly S) *
+        ofCoeffs q +
+      ofCoeffs (divModArrayAux q qDegree scaleLead fuel quot rem).2 =
+      ofCoeffs quot * ofCoeffs q + ofCoeffs rem := by
+  induction fuel generalizing quot rem B with
+  | zero =>
+      rfl
+  | succ fuel ih =>
+      unfold divModArrayAux
+      cases hdeg : arrayDegree? rem with
+      | none => rfl
+      | some rd =>
+          by_cases hrd_lt : rd < qDegree
+          · simp [hrd_lt]
+          · simp [hrd_lt]
+            simp only [← Array.set!_eq_setIfInBounds, ← Array.getD_eq_getD_getElem?]
+            have hrd_nonzero : rem.getD rd (Zero.zero : S) ≠ (Zero.zero : S) :=
+              arrayDegree?_some_coeff_ne_zero hdeg
+            have hrd_lt_size : rd < rem.size := arrayDegree?_some_lt hdeg
+            have hrd_ge : qDegree ≤ rd := Nat.le_of_not_lt hrd_lt
+            have hrd_lt_B : rd < qDegree + B := by
+              rcases Nat.lt_or_ge rd (qDegree + B) with hlt | hge
+              · exact hlt
+              · exact absurd (hzero_rem rd hge) hrd_nonzero
+            have hshift_eq : (rd - qDegree) + qDegree = rd := by omega
+            have hshift_lt_B : rd - qDegree < B := by omega
+            have hshift_lt_quot : rd - qDegree < quot.size := by
+              have h1 : rd < qDegree + quot.size :=
+                Nat.lt_of_lt_of_le hrd_lt_size hsize_match
+              omega
+            have hquot_shift_zero :
+                quot.getD (rd - qDegree) (Zero.zero : S) = (Zero.zero : S) :=
+              hzero_quot _ hshift_lt_B
+            have hbound_rem :
+                ∀ j, j < q.size → rd - qDegree + j < rem.size := by
+              intro j hj
+              have hj_le : j ≤ qDegree := by omega
+              calc rd - qDegree + j
+                  ≤ rd - qDegree + qDegree := Nat.add_le_add_left hj_le _
+                _ = rd := hshift_eq
+                _ < rem.size := hrd_lt_size
+            have hzero_rem_new : ∀ i, qDegree + (rd - qDegree) ≤ i →
+                (subtractScaledShift rem q (rd - qDegree)
+                    (scaleLead (rem.getD rd (Zero.zero : S)))).getD i
+                  (Zero.zero : S) = (Zero.zero : S) := by
+              intro i hi
+              have hi_ge_rd : rd ≤ i := by omega
+              rcases Nat.lt_or_eq_of_le hi_ge_rd with hgt | heq
+              · rw [subtractScaledShift_getD_above_last rem q (rd - qDegree) qDegree
+                  (scaleLead (rem.getD rd (Zero.zero : S))) i hsize_q
+                  (by rw [hshift_eq]; exact hgt)]
+                exact arrayDegree?_some_above_eq_zero hdeg hgt
+              · have hi_eq : i = (rd - qDegree) + qDegree := by omega
+                rw [hi_eq]
+                apply subtractScaledShift_getD_last_cancel rem q (rd - qDegree) qDegree
+                  (scaleLead (rem.getD rd (Zero.zero : S))) hsize_q
+                · rw [hshift_eq]; exact hrd_lt_size
+                · rw [hshift_eq]
+                  exact hcancel (rem.getD rd (Zero.zero : S))
+            have hzero_quot_new : ∀ i, i < rd - qDegree →
+                (quot.set! (rd - qDegree)
+                    (scaleLead (rem.getD rd (Zero.zero : S)))).getD i
+                  (Zero.zero : S) = (Zero.zero : S) := by
+              intro i hi
+              rw [array_getD_set!_ne quot i (rd - qDegree) _ (by omega)]
+              exact hzero_quot i (Nat.lt_trans hi hshift_lt_B)
+            have hsize_match_new :
+                (subtractScaledShift rem q (rd - qDegree)
+                    (scaleLead (rem.getD rd (Zero.zero : S)))).size ≤
+                  qDegree + (quot.set! (rd - qDegree)
+                    (scaleLead (rem.getD rd (Zero.zero : S)))).size := by
+              have hrem_size : (subtractScaledShift rem q (rd - qDegree)
+                  (scaleLead (rem.getD rd (Zero.zero : S)))).size = rem.size := by
+                unfold subtractScaledShift
+                exact subtractScaledShift_fold_size rem q (rd - qDegree) _
+                  (List.range q.size)
+              have hquot_size : (quot.set! (rd - qDegree)
+                  (scaleLead (rem.getD rd (Zero.zero : S)))).size = quot.size := by
+                simp [Array.set!_eq_setIfInBounds]
+              rw [hrem_size, hquot_size]
+              exact hsize_match
+            have ih_result := ih
+              (quot := quot.set! (rd - qDegree)
+                (scaleLead (rem.getD rd (Zero.zero : S))))
+              (rem := subtractScaledShift rem q (rd - qDegree)
+                (scaleLead (rem.getD rd (Zero.zero : S))))
+              (B := rd - qDegree)
+              hzero_rem_new hzero_quot_new hsize_match_new
+            rw [ih_result]
+            rw [ofCoeffs_set!_eq_add_monomial quot (rd - qDegree)
+              (scaleLead (rem.getD rd (Zero.zero : S))) hshift_lt_quot
+              hquot_shift_zero]
+            rw [ofCoeffs_subtractScaledShift_eq_sub_monomial_mul rem q (rd - qDegree)
+              (scaleLead (rem.getD rd (Zero.zero : S))) hbound_rem]
+            exact divMod_reconstruction_step (ofCoeffs quot)
+              (monomial (rd - qDegree)
+                (scaleLead (rem.getD rd (Zero.zero : S))))
+              (ofCoeffs q) (ofCoeffs rem)
+
+/-- Reconstruction identity for array-backed long division: under the cancellation
+hypothesis for `scaleLead` against the divisor's leading coefficient, the
+quotient/remainder pair returned by `divModArray p q scaleLead` satisfies
+`q' * q + r' = p`. -/
+theorem divModArray_reconstruction {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    (p q : DensePoly S) (scaleLead : S → S)
+    (hcancel : ∀ a : S, a - scaleLead a * q.leadingCoeff = (Zero.zero : S)) :
+    (divModArray p q scaleLead).1 * q + (divModArray p q scaleLead).2 = p := by
+  unfold divModArray
+  by_cases hqzero : q.isZero
+  · simp [hqzero]
+    rw [zero_mul, zero_add]
+  · rw [if_neg hqzero]
+    have hqpos : 0 < q.size := by
+      have hcoeffs : q.coeffs.size ≠ 0 := by
+        simpa [isZero, Array.isEmpty_iff_size_eq_zero] using hqzero
+      simpa [size, Nat.pos_iff_ne_zero] using hcoeffs
+    have hqsize : q.toArray.size = (q.size - 1) + 1 := by
+      have hraw : q.coeffs.size = (q.coeffs.size - 1) + 1 := by
+        have hcoeffpos : 0 < q.coeffs.size := by simpa [size] using hqpos
+        omega
+      simpa [toArray, size] using hraw
+    have hlead : q.toArray.getD (q.size - 1) (Zero.zero : S) = q.leadingCoeff := by
+      unfold leadingCoeff toArray
+      change q.coeffs.getD (q.coeffs.size - 1) (Zero.zero : S) =
+        q.coeffs.back?.getD (Zero.zero : S)
+      have hcoeffpos : 0 < q.coeffs.size := by simpa [size] using hqpos
+      have hidx : q.coeffs.size - 1 < q.coeffs.size :=
+        Nat.sub_one_lt_of_lt hcoeffpos
+      rw [Array.getD_eq_getD_getElem?, Array.getElem?_eq_getElem hidx]
+      rw [Array.back?_eq_getElem?, Array.getElem?_eq_getElem hidx]
+    have hcancel_array :
+        ∀ a, a - scaleLead a * q.toArray.getD (q.size - 1) (Zero.zero : S) =
+          (Zero.zero : S) := by
+      intro a
+      rw [hlead]
+      exact hcancel a
+    have hzero_rem : ∀ i, (q.size - 1) + p.size ≤ i →
+        p.toArray.getD i (Zero.zero : S) = (Zero.zero : S) := by
+      intro i hi
+      unfold toArray Array.getD
+      have hle : p.coeffs.size ≤ i := by
+        simpa [size] using (by omega : p.size ≤ i)
+      rw [dif_neg (Nat.not_lt.mpr hle)]
+    have hzero_quot : ∀ i, i < p.size →
+        (Array.replicate (p.size - (q.size - 1)) (Zero.zero : S)).getD i
+          (Zero.zero : S) = (Zero.zero : S) := by
+      intro i _
+      simp [Array.getD]
+    have hsize_match : p.toArray.size ≤
+        (q.size - 1) + (Array.replicate (p.size - (q.size - 1))
+          (Zero.zero : S)).size := by
+      have hpsize : p.toArray.size = p.size := by simp [toArray, size]
+      have hqsize_replicate :
+          (Array.replicate (p.size - (q.size - 1)) (Zero.zero : S)).size =
+            p.size - (q.size - 1) := Array.size_replicate
+      rw [hpsize, hqsize_replicate]
+      omega
+    have hreconstr := divModArrayAux_reconstruction
+      q.toArray (q.size - 1) scaleLead p.size
+      (Array.replicate (p.size - (q.size - 1)) (Zero.zero : S))
+      p.toArray p.size hqsize hcancel_array hzero_rem hzero_quot hsize_match
+    -- Convert array-level identity to the polynomial-level conclusion.
+    have hofq : (ofCoeffs q.toArray : DensePoly S) = q := ofCoeffs_toArray q
+    have hofp : (ofCoeffs p.toArray : DensePoly S) = p := ofCoeffs_toArray p
+    have hofquot : (ofCoeffs (Array.replicate (p.size - (q.size - 1))
+        (Zero.zero : S)) : DensePoly S) = 0 :=
+      ofCoeffs_replicate_zero _
+    rw [hofq, hofp, hofquot, zero_mul, zero_add] at hreconstr
+    exact hreconstr
 
 /-- The nonnegative gcd of the coefficients of an integer polynomial. -/
 private def contentNat (p : DensePoly Int) : Nat :=

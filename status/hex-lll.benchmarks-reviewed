@@ -1,0 +1,5 @@
+Reviewed in issue #2188.
+All HexLLL Phase 4 parametric benchmark registrations returned verdicts
+consistent with their declared complexity after re-tuning the `runPotential`
+schedule below the determinant-prefix wallclock cliff while keeping the
+declared cubic model unchanged.

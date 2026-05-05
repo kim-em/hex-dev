@@ -52,14 +52,23 @@ Reviewer checklist for Phase 3 PRs:
   covered properties, covered edge cases.
 - [ ] Every public operation listed in the library's SPEC file has
   ≥1 elaboration-time check.
+- [ ] Input sizes pushed toward the upper end of SPEC/testing.md
+  § "Profile sizes" ranges (or a comment explains why a smaller size
+  was chosen).
 - [ ] Every property named in the module docstring has ≥1 `#guard`.
 - [ ] Every edge case named in the module docstring has ≥1 fixture.
 - [ ] No `expected*` struct field is unreferenced.
 - [ ] No `#guard` / `example` where RHS is a literal copy of the
   LHS's evaluation (i.e. the assertion carries content beyond "the
   evaluator is deterministic").
+- [ ] No `#guard f(x) = literal` where the literal was obtained by
+  running `f`. Each `#guard`'s expected value must be independently
+  derivable from the function's documented contract.
 - [ ] `lake build HexFoo` green.
 - [ ] Conformance workflow green on the PR.
+- [ ] CI conformance matrix builds this library (either via the
+  derivation script picking up the root-import, or via an explicit
+  matrix entry).
 
 ## Oracle wiring (forward reference)
 

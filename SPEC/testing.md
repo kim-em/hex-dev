@@ -2,9 +2,10 @@
 
 Conformance testing cross-checks Lean implementations against either
 (a) independently stated algebraic properties, or (b) an external
-oracle (Sage, FLINT, python-flint, fpLLL, GAP, PARI). The goal is to
-catch implementation bugs *before* proof work starts. No point proving
-theorems about wrong implementations.
+oracle (`python-flint`, `fpylll`, `cypari2`, or the committed Frank
+Lübeck Conway cache). The goal is to catch implementation bugs
+*before* proof work starts. No point proving theorems about wrong
+implementations.
 
 When conformance fails, the response is the same as when benchmarking
 returns an unexpected complexity verdict ([benchmarking.md](benchmarking.md)):
@@ -170,6 +171,15 @@ MUST NOT appear in any `Conformance.lean`:
   it's implementable), don't paper over it with a test that says
   "this wrong output is expected".
 
+  *Process rule.* Don't compute the expected RHS by running the
+  function under test, even with the result hand-copied into the
+  source. The expected value must be independently derivable from
+  the function's documented contract on the committed input —
+  via a closed-form identity, an oracle, a hand calculation, or
+  a different implementation. If the implementation isn't ready,
+  leave a `-- TODO` comment and stop; don't write the `#guard`
+  against output you obtained by running the function.
+
 - **`native_decide`.** Banned project-wide (see
   [SPEC.md](SPEC.md#project-wide-proof-policy)). Restated here because
   conformance checks on large fixtures are a common temptation.
@@ -228,23 +238,27 @@ subsection. Default oracle assignments:
   property checks (Bézout, `Nat.gcd` agreement) sufficient for `core`.
 - `hex-mod-arith` — Lean big-integer modular arithmetic as property
   oracle.
-- `hex-poly`, `hex-poly-z`, `hex-poly-fp` — `python-flint` for
-  univariate polynomial arithmetic; Sage as fallback.
-- `hex-matrix`, `hex-gram-schmidt` — Sage exact matrix / rational
-  linear algebra; numpy/scipy accepted for cross-checks that only
-  need float-level agreement on well-conditioned inputs.
-- `hex-gf2`, `hex-gfq-ring`, `hex-gfq-field`, `hex-gfq` — Sage finite
-  field and quotient-ring computations; GAP acceptable for the
-  character-table adjacent checks.
-- `hex-berlekamp`, `hex-berlekamp-zassenhaus` — FLINT or Sage
-  factorisation / irreducibility checks.
-- `hex-hensel` — Sage or FLINT Hensel-lifting support, plus direct
-  Lean-side congruence/product checks.
-- `hex-lll` — fpLLL or Sage `LLL`, comparing reducedness, lattice
-  equality, and determinant preservation rather than exact basis
-  equality.
-- `hex-conway` — committed database fixtures cross-checked against
-  Sage's Conway tables. No random generation.
+- `hex-poly`, `hex-poly-z`, `hex-poly-fp` — `python-flint` primary
+  for univariate polynomial arithmetic.
+- `hex-matrix`, `hex-gram-schmidt` — `python-flint` exact
+  (`fmpz_mat` / `fmpq_mat`); numpy/scipy float for well-conditioned
+  float-level cross-checks; `fpylll`'s `GSO.Mat` for Gram-Schmidt
+  size-reduction parity.
+- `hex-gf2`, `hex-gfq-ring`, `hex-gfq-field`, `hex-gfq` —
+  `python-flint` (`nmod_poly`, `fq_nmod`, `fq_default`); `cypari2`
+  as a secondary independent finite-field oracle when independence
+  from FLINT matters.
+- `hex-berlekamp`, `hex-berlekamp-zassenhaus` — `python-flint`
+  factorisation primary; `cypari2` secondary.
+- `hex-hensel` — `cypari2` (PARI `factorpadic`) primary for the
+  mod-`p^k` lift surface; `python-flint` does not expose mod-`p^k`
+  polynomial factorisation.
+- `hex-lll` — `fpylll`, which wraps fpLLL directly, comparing
+  reducedness, lattice equality, and determinant preservation rather
+  than exact basis equality.
+- `hex-conway` — `cypari2` (PARI `ffinit`) plus a committed Frank
+  Lübeck flat-file cache for triple-source independence
+  (Lean ≡ PARI ≡ Lübeck). No random generation.
 
 The `-mathlib` bridge libraries are not the primary target of
 external conformance testing. They rely mainly on internal
@@ -258,7 +272,10 @@ instances.
 Size policies per profile. Generators must be parameterised by size
 bounds and seed.
 
-- `core`: tiny deterministic cases only. Polynomial degrees up to
+- `core`: deterministic cases at the *upper end* of the ranges below
+  by default. Shrink only if elaboration time exceeds budget.
+  Larger-than-stated inputs are fine if they elaborate fast — these
+  are floors of coverage, not ceilings. Polynomial degrees up to
   about `8-12`, matrix dimensions up to about `6-8`, finite-field
   extensions up to degree `6`, LLL dimensions up to about `10`.
 - `ci`: modest randomised cases. Integer/finite-field polynomial
@@ -302,6 +319,12 @@ Separately, the default `lake build` MUST elaborate every
 `HexFoo/Conformance.lean` as part of the ordinary library build, so
 even the minimal CI job (no oracle) catches broken `#guard`s.
 
+When the workflow's matrix is derived (e.g. via
+`scripts/conformance_targets.py`), ensuring the new library appears
+amounts to importing `Hex<X>.Conformance` from `Hex<X>.lean`. When
+the matrix is hand-listed, the same PR that lands `Conformance.lean`
+MUST update the matrix.
+
 ## Infrastructure contract
 
 Lean produces and consumes a simple serialised case/result format —
@@ -320,26 +343,70 @@ Python or shell driver scripts are responsible for:
 - normalising oracle outputs into the shared format
 - gracefully skipping checks when an optional tool is unavailable
 
-The serialised artefact layout (where JSON/JSONL files live, which
-Lean target emits them, where oracle drivers read them) is specified
-alongside the first oracle-backed library's Phase 3 work, not
-upfront. The initial `core` profile does not require JSONL; a
-library's `#guard`s suffice until its oracle is wired.
+### Layout
+
+The oracle infrastructure is bootstrapped by the `hex-poly`
+python-flint cross-check; subsequent libraries replicate the same
+pattern.
+
+- **JSONL fixture+result stream.** One record per line. Fixture
+  records use kinds `poly` / `matrix` / `lattice` / `prime`; result
+  records carry `kind="result"` plus an `op` string and Lean's
+  computed `value`. Schemas live in `scripts/oracle/common.py`.
+- **Lean-side emission.** `Hex/Conformance/Emit.lean` provides
+  `emitPolyFixture`, `emitMatrixFixture`, `emitLatticeFixture`,
+  `emitPrimeFixture`, and `emitResult`. Per-library drivers live
+  under `Hex<X>/EmitFixtures.lean` and define a `main`; lakefile
+  exposes them as `lean_exe hex<x>_emit_fixtures`. Output goes to
+  `stdout` by default, or to the file named by `HEX_FIXTURE_OUTPUT`.
+- **Committed sample fixtures.** Each library commits a small
+  `conformance-fixtures/Hex<X>/<topic>.jsonl` snapshot so oracle
+  drivers can be developed and replayed without re-running Lean. CI
+  diffs the freshly-emitted JSONL against the committed file before
+  invoking the oracle, so any drift trips the build.
+- **Oracle drivers.** `scripts/oracle/<lib>_<oracle>.py`, e.g.
+  `scripts/oracle/poly_flint.py`. Drivers reuse
+  `scripts/oracle/common.py` for `read_fixtures`, `assert_equal`,
+  and `write_failure`. A driver MUST treat a missing oracle import
+  as a `SKIP` (exit 0) when the SPEC oracle mode is `if_available`,
+  and MUST exit non-zero on any mismatch.
+- **Failure records.** On mismatch, the driver writes a JSON record
+  to `conformance-failures/<library>-<seed>-<case_id>.json`. The
+  directory is gitignored except for a sentinel `README.md`. CI
+  uploads any records as a workflow artifact named
+  `oracle-<driver>-failures` so the failing case is replayable from
+  the recorded input.
+
+### Adding a new oracle
+
+1. Add a per-library emit driver `Hex<X>/EmitFixtures.lean`
+   following `HexPoly/EmitFixtures.lean`.
+2. Register it as `lean_exe hex<x>_emit_fixtures` in the lakefile.
+3. Commit a JSONL snapshot at
+   `conformance-fixtures/Hex<X>/<topic>.jsonl` produced by running
+   the new driver.
+4. Add `scripts/oracle/<lib>_<oracle>.py` mirroring
+   `scripts/oracle/poly_flint.py`: it must read the JSONL stream,
+   re-run each `op` through the external oracle, and call
+   `assert_equal` against the Lean `value`.
+5. Add a CI job (or extend `oracle-pyflint`) in
+   `.github/workflows/conformance.yml` that installs the oracle,
+   diffs the freshly-emitted JSONL against the committed fixture,
+   and pipes Lean's emission into the driver. Upload
+   `conformance-failures/*.json` on failure.
+
+The initial `core` profile does not require JSONL; a library's
+`#guard`s suffice until its oracle is wired.
 
 ## Sage strategy
 
-Sage is important enough to deserve an explicit deployment story.
-Ubuntu's `apt` packages are not a stable basis for Sage-backed CI;
-the preferred path is Nix-based Sage:
-
-- local use via `nix shell nixpkgs#sage --command ...`
-- CI use via `cachix/install-nix-action` followed by Sage commands
-  through `nix shell`
-
-This keeps local and CI execution close and avoids depending on
-Ubuntu package availability. A conda-forge Sage install is an
-acceptable secondary path for local experimentation, but not the
-primary CI mechanism.
+Sage is not used as an oracle in this project. Every operation we
+want to cross-check has a lighter pip-installable wrapper that
+reaches the same FLINT / fpLLL / PARI internals as Sage would:
+`python-flint`, `fpylll`, and `cypari2`. Together they cover the
+entire oracle surface without a Sage runtime in CI. Local developers
+who already have Sage are free to use it ad-hoc, but no CI job
+depends on it.
 
 ---
 

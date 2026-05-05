@@ -4,10 +4,13 @@ import LeanBench
 /-!
 Benchmark registrations for `hex-lll`.
 
-This first Phase 4 slice covers the executable `LLLState` operations. Fixture
-construction builds the integer Gram-Schmidt state once in `prep`; the timed
-targets measure the state update or projection surfaces and return compact
-checksums of the affected cells.
+This first Phase 4 slice covers the executable `LLLState` operations and the
+top-level `lll.firstShortVector` entry point. Fixture construction builds the
+integer Gram-Schmidt state once in `prep`; the timed targets measure the state
+update or projection surfaces and return compact checksums of the affected
+cells. The `lll.firstShortVector` fixture is the all-zero lift-coefficients
+degenerate BZ recombination basis: one identity row per "factor" with no
+interaction between factors.
 
 Scientific registrations:
 
@@ -21,6 +24,8 @@ Scientific registrations:
   integer `ν` and `d`, wrapped in a fixed hot loop for signal-floor stability.
 * `runPotential`: prefix product of the stored Gram determinants, wrapped in a
   fixed hot loop for signal-floor stability.
+* `runFirstShortVectorIdentityChecksum`: full LLL traversal over the identity
+  basis, the degenerate BZ-style recombination input with no row interaction.
 -/
 
 namespace Hex.LLLBench
@@ -44,6 +49,17 @@ structure StateInput where
 instance : Hashable StateInput where
   hash input :=
     hash (input.rows, input.cols, input.j.val, input.k.val)
+
+/-- Prepared identity basis for `lll.firstShortVector` benchmarks. -/
+structure FirstShortVectorInput where
+  rows : Nat
+  basis : Matrix Int rows rows
+  hn : 1 ≤ rows
+  hind : basis.independent
+
+instance : Hashable FirstShortVectorInput where
+  hash input :=
+    hash input.rows
 
 /-- Deterministic small integer entry generator keyed by shape and position.
 The diagonal offset keeps the prepared bases independent in the benchmark
@@ -106,6 +122,14 @@ def prepStateInput (n : Nat) : StateInput :=
       change n + 1 < n + 2
       omega }
 
+/-- Per-parameter fixture: a square `(n + 3) x (n + 3)` identity basis. -/
+def prepFirstShortVectorInput (n : Nat) : FirstShortVectorInput :=
+  let rows := n + 3
+  { rows := rows
+    basis := (1 : Matrix Int rows rows)
+    hn := by simp [rows]
+    hind := Matrix.identity_independent }
+
 /-- Stable checksum for integer vectors. -/
 def intVectorChecksum (v : Vector Int n) : Int :=
   (List.finRange n).foldl
@@ -159,6 +183,12 @@ def potentialComplexity (n : Nat) : Nat :=
   let rows := n + 3
   rows * rows * rows
 
+/-- Model for full LLL traversal on the identity basis. Every size-reduction
+probe sees a zero scaled coefficient and performs no row update or swap. -/
+def firstShortVectorIdentityComplexity (n : Nat) : Nat :=
+  let rows := n + 3
+  rows * rows
+
 /-- Fixed repeat count for one-step linear state updates. This is independent
 of `n`, so it changes only the constant factor in the declared linear model. -/
 def stateStepHotRepeats : Nat := 2048
@@ -175,6 +205,11 @@ def gramSchmidtCoeffHotRepeats : Nat := 65536
 /-- Fixed repeat count for determinant-prefix products. This is independent of
 `n`, so it changes only the constant factor in the declared linear model. -/
 def potentialHotRepeats : Nat := 128
+
+/-- Fixed repeat count for full identity-basis LLL traversals. This is
+independent of `n`, so it changes only the constant factor in the declared
+quadratic model. -/
+def firstShortVectorIdentityHotRepeats : Nat := 16
 
 /-- Repeat a deterministic integer-valued target with a rolling checksum. -/
 def repeatIntChecksum (repeats : Nat) (f : Unit → Int) : Int :=
@@ -223,6 +258,19 @@ def runGramSchmidtCoeffChecksum (input : StateInput) : Int :=
 def runPotential (input : StateInput) : Nat :=
   repeatNatChecksum potentialHotRepeats fun _ =>
     input.state.potential
+
+private theorem lllDeltaLower : (1 / 4 : Rat) < 3 / 4 := by
+  grind
+
+private theorem lllDeltaUpper : (3 / 4 : Rat) ≤ 1 := by
+  grind
+
+/-- Benchmark target: run LLL on the identity basis and checksum the first row. -/
+def runFirstShortVectorIdentityChecksum (input : FirstShortVectorInput) : Int :=
+  repeatIntChecksum firstShortVectorIdentityHotRepeats fun _ =>
+    intVectorChecksum
+      (lll.firstShortVector input.basis (3 / 4)
+        lllDeltaLower lllDeltaUpper input.hn input.hind)
 
 /- Complexity derivation: `prepStateInput n` gives `rows = n + 3` and
 `cols = 2 * (n + 3) + 1`. A single targeted reduction updates one basis row
@@ -291,9 +339,27 @@ setup_benchmark runPotential n => potentialComplexity n
   with prep := prepStateInput
   where {
     paramFloor := 192
-    paramCeiling := 224
-    paramSchedule := .custom #[192, 208, 224]
+    paramCeiling := 216
+    paramSchedule := .custom #[192, 208, 216]
     maxSecondsPerCall := 8.0
+    targetInnerNanos := 200000000
+  }
+
+/- Complexity derivation: on the identity basis, every Gram-Schmidt scaled
+coefficient `ν[k][j]` is zero and each determinant denominator `d[j+1]` is one.
+The outer LLL loop visits `k = 1, ..., rows - 1`; each `sizeReduce k` checks
+the `k` earlier columns, reads the zero coefficient and unit determinant, and
+does no row update or swap. The resulting hot path is the triangular
+`1 + ... + (rows - 1)` sequence of reads and integer comparisons. The fixed
+hot-loop repeat count is independent of `n`. -/
+setup_benchmark runFirstShortVectorIdentityChecksum n =>
+    firstShortVectorIdentityComplexity n
+  with prep := prepFirstShortVectorInput
+  where {
+    paramFloor := 80
+    paramCeiling := 112
+    paramSchedule := .custom #[80, 96, 112]
+    maxSecondsPerCall := 6.0
     targetInnerNanos := 200000000
   }
 
