@@ -1,4 +1,5 @@
 import HexBerlekamp.Irreducibility
+import HexPolyFp.Quotient
 import HexArith.Nat.Pow
 
 /-!
