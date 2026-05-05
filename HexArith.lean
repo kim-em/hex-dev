@@ -1,4 +1,5 @@
 import HexArith.Nat.ModArith
+import HexArith.Nat.Pow
 import HexArith.Nat.Prime
 import HexArith.Barrett.ReduceNat
 import HexArith.Barrett.Reduce
