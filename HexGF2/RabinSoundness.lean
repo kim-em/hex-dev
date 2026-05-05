@@ -25,6 +25,208 @@ Packed `GF(2)` subtraction is addition, so this is represented as
 def xPowSubX (k : Nat) : GF2Poly :=
   monomial (2 ^ k) + monomial 1
 
+/-! ## Basic divisibility helpers -/
+
+private theorem mulXk_zero' (p : GF2Poly) : p.mulXk 0 = p := by
+  apply ext_coeff
+  intro n
+  rw [coeff_mulXk, coeff_shiftLeft]
+  simp [coeff]
+
+private theorem one_mul' (p : GF2Poly) : (1 : GF2Poly) * p = p := by
+  show monomial 0 * p = p
+  rw [monomial_mul, mulXk_zero']
+
+private theorem mul_one' (p : GF2Poly) : p * (1 : GF2Poly) = p := by
+  rw [mul_comm, one_mul']
+
+private theorem dvd_refl' (p : GF2Poly) : p ∣ p :=
+  ⟨1, (mul_one' p).symm⟩
+
+private theorem dvd_zero' (p : GF2Poly) : p ∣ 0 :=
+  ⟨0, (mul_zero p).symm⟩
+
+private theorem dvd_add' {d a b : GF2Poly} (hda : d ∣ a) (hdb : d ∣ b) :
+    d ∣ a + b := by
+  rcases hda with ⟨ra, hra⟩
+  rcases hdb with ⟨rb, hrb⟩
+  exact ⟨ra + rb, by rw [hra, hrb, right_distrib]⟩
+
+private theorem dvd_sub' {d a b : GF2Poly}
+    (hab : d ∣ a + b) (ha : d ∣ a) : d ∣ b := by
+  rcases hab with ⟨c, hc⟩
+  rcases ha with ⟨e, he⟩
+  refine ⟨e + c, ?_⟩
+  rw [right_distrib, ← he, ← hc]
+  exact (add_add_cancel_left a b).symm
+
+private theorem dvd_mul_left' {d a : GF2Poly} (c : GF2Poly) (hda : d ∣ a) :
+    d ∣ c * a := by
+  rcases hda with ⟨r, hr⟩
+  refine ⟨c * r, ?_⟩
+  rw [hr, ← mul_assoc, ← mul_assoc, mul_comm c d]
+
+private theorem mul_dvd_mul_left' (c : GF2Poly) {a b : GF2Poly} (h : a ∣ b) :
+    c * a ∣ c * b := by
+  rcases h with ⟨r, hr⟩
+  exact ⟨r, by rw [hr, mul_assoc]⟩
+
+/-! ## Frobenius bridge helpers -/
+
+/-- Char-2 freshman's dream: `(a + b) * (a + b) = a * a + b * b`. -/
+private theorem freshman_dream (a b : GF2Poly) :
+    (a + b) * (a + b) = a * a + b * b := by
+  rw [right_distrib, left_distrib, left_distrib, mul_comm b a]
+  rw [add_assoc, ← add_assoc (a * b) (a * b) (b * b), add_self, zero_add]
+
+/-- The remainder added to its dividend is divisible by the divisor in
+characteristic two. -/
+private theorem mod_add_self_dvd (p f : GF2Poly) :
+    f ∣ ((divMod p f).2 + p) := by
+  refine ⟨(divMod p f).1, ?_⟩
+  have hspec : (divMod p f).1 * f + (divMod p f).2 = p := divMod_spec p f
+  have hexpand :
+      (divMod p f).2 + p =
+        (divMod p f).2 + ((divMod p f).1 * f + (divMod p f).2) := by rw [hspec]
+  rw [hexpand, add_comm ((divMod p f).1 * f) ((divMod p f).2),
+      ← add_assoc, add_self, zero_add, mul_comm]
+
+/-- The iterated-squaring chain `xpow2kMod f k` equals the absolute monomial
+`X^(2^k)` modulo `f`. Proved as a divisibility statement to avoid
+multiplication-mod compatibility lemmas. -/
+private theorem dvd_xpow2kMod_add_monomial (f : GF2Poly) :
+    ∀ k, f ∣ ((xpow2kMod f k) + monomial (2 ^ k))
+  | 0 => by
+      show f ∣ ((monomial 1 % f) + monomial 1)
+      exact mod_add_self_dvd (monomial 1) f
+  | k + 1 => by
+      have ih := dvd_xpow2kMod_add_monomial f k
+      have hsq :
+          f ∣ ((xpow2kMod f k) * (xpow2kMod f k) +
+                monomial (2 ^ k) * monomial (2 ^ k)) := by
+        rw [← freshman_dream]
+        exact dvd_mul_left' _ ih
+      have hmm : monomial (2 ^ k) * monomial (2 ^ k) = monomial (2 ^ (k + 1)) := by
+        rw [monomial_mul_monomial]
+        congr 1
+        rw [Nat.pow_succ]
+        omega
+      rw [hmm] at hsq
+      have hmod :
+          f ∣ (((xpow2kMod f k) * (xpow2kMod f k)) % f +
+                (xpow2kMod f k) * (xpow2kMod f k)) :=
+        mod_add_self_dvd _ _
+      have hsum := dvd_add' hsq hmod
+      show f ∣ ((xpow2kMod f k) * (xpow2kMod f k) % f + monomial (2 ^ (k + 1)))
+      have heq :
+          ((xpow2kMod f k) * (xpow2kMod f k) + monomial (2 ^ (k + 1))) +
+              ((xpow2kMod f k) * (xpow2kMod f k) % f +
+                (xpow2kMod f k) * (xpow2kMod f k)) =
+            (xpow2kMod f k) * (xpow2kMod f k) % f + monomial (2 ^ (k + 1)) := by
+        apply ext_coeff
+        intro n
+        rw [coeff_add_eq_bne, coeff_add_eq_bne, coeff_add_eq_bne,
+            coeff_add_eq_bne]
+        cases ((xpow2kMod f k) * (xpow2kMod f k)).coeff n <;>
+          cases (monomial (2 ^ (k + 1))).coeff n <;>
+          cases ((xpow2kMod f k) * (xpow2kMod f k) % f).coeff n <;> rfl
+      rw [heq] at hsum
+      exact hsum
+
+/-- `f` divides the (char-2) sum `xPowSubX k + frobeniusDiffMod f k`, the key
+algebraic identity bridging the absolute Rabin polynomial to its modular
+form. -/
+private theorem dvd_xPowSubX_add_frobeniusDiffMod (f : GF2Poly) (k : Nat) :
+    f ∣ (xPowSubX k + frobeniusDiffMod f k) := by
+  have h1 : f ∣ ((xpow2kMod f k) + monomial (2 ^ k)) :=
+    dvd_xpow2kMod_add_monomial f k
+  have h2 : f ∣ ((monomial 1 % f) + monomial 1) :=
+    mod_add_self_dvd (monomial 1) f
+  have hsum := dvd_add' h1 h2
+  show f ∣ ((monomial (2 ^ k) + monomial 1) +
+            ((xpow2kMod f k) + monomial 1 % f))
+  have heq :
+      ((xpow2kMod f k) + monomial (2 ^ k)) +
+          ((monomial 1 % f) + monomial 1) =
+        (monomial (2 ^ k) + monomial 1) +
+          ((xpow2kMod f k) + monomial 1 % f) := by
+    apply ext_coeff
+    intro n
+    rw [coeff_add_eq_bne, coeff_add_eq_bne, coeff_add_eq_bne,
+        coeff_add_eq_bne, coeff_add_eq_bne, coeff_add_eq_bne]
+    cases (xpow2kMod f k).coeff n <;>
+      cases (monomial (2 ^ k)).coeff n <;>
+      cases ((monomial 1 : GF2Poly) % f).coeff n <;>
+      cases (monomial 1 : GF2Poly).coeff n <;> rfl
+  rw [heq] at hsum
+  exact hsum
+
+/-! ## Reduced-residue helpers -/
+
+private theorem coeff_eq_false_of_reduced_le {p : GF2Poly} {bound n : Nat}
+    (hred : p.isZero = true ∨ p.degree < bound) (hbound : bound ≤ n) :
+    p.coeff n = false := by
+  cases hred with
+  | inl hzero =>
+      rw [eq_zero_of_isZero hzero, coeff_zero]
+  | inr hdegree =>
+      by_cases hpzero : p.isZero = true
+      · rw [eq_zero_of_isZero hpzero, coeff_zero]
+      · have hpzeroFalse : p.isZero = false := by
+          cases h : p.isZero <;> simp [h] at hpzero ⊢
+        obtain ⟨d, hd⟩ := degree?_isSome_of_isZero_false hpzeroFalse
+        have hdn : d < n := by
+          have hdegree' : d < bound := by
+            simpa [degree, hd] using hdegree
+          omega
+        exact coeff_eq_false_of_degree?_lt hd hdn
+
+private theorem add_reduced_of_reduced {p q : GF2Poly} {bound : Nat}
+    (hp : p.isZero = true ∨ p.degree < bound)
+    (hq : q.isZero = true ∨ q.degree < bound) :
+    (p + q).isZero = true ∨ (p + q).degree < bound := by
+  by_cases hsumZero : (p + q).isZero = true
+  · exact Or.inl hsumZero
+  · right
+    have hsumZeroFalse : (p + q).isZero = false := by
+      cases h : (p + q).isZero <;> simp [h] at hsumZero ⊢
+    obtain ⟨d, hd⟩ := degree?_isSome_of_isZero_false hsumZeroFalse
+    have hdbound : d < bound := by
+      by_cases hbound : bound ≤ d
+      · have hpfalse := coeff_eq_false_of_reduced_le (p := p) hp hbound
+        have hqfalse := coeff_eq_false_of_reduced_le (p := q) hq hbound
+        have htrue := coeff_eq_true_of_degree?_eq_some hd
+        rw [coeff_add_eq_bne, hpfalse, hqfalse] at htrue
+        contradiction
+      · omega
+    change (p + q).degree < bound
+    simpa [degree, hd] using hdbound
+
+private theorem reduced_dvd_eq_zero {f r : GF2Poly}
+    (hf : f ≠ 0) (hred : r.isZero = true ∨ r.degree < f.degree)
+    (hdvd : f ∣ r) :
+    r = 0 := by
+  by_cases hr : r = 0
+  · exact hr
+  · cases hred with
+    | inl hzero =>
+        exact eq_zero_of_isZero hzero
+    | inr hlt =>
+        have hle : f.degree ≤ r.degree := degree_le_of_dvd_nonzero hf hr hdvd
+        omega
+
+/-- Each `xpow2kMod` value is a `% f` step, so it is reduced modulo `f`. -/
+private theorem xpow2kMod_reduced (f : GF2Poly) (hf : f ≠ 0) :
+    ∀ k, (xpow2kMod f k).isZero = true ∨
+      (xpow2kMod f k).degree < f.degree
+  | 0 => by
+      show (monomial 1 % f).isZero = true ∨ (monomial 1 % f).degree < f.degree
+      exact mod_degree_lt _ f hf
+  | k + 1 => by
+      show ((xpow2kMod f k) * (xpow2kMod f k) % f).isZero = true ∨
+        ((xpow2kMod f k) * (xpow2kMod f k) % f).degree < f.degree
+      exact mod_degree_lt _ f hf
+
 /--
 The executable Frobenius remainder vanishes exactly when `f` divides the
 absolute Rabin polynomial `X^(2^k) - X`.
@@ -35,7 +237,31 @@ generic Berlekamp Rabin soundness proof.
 theorem dvd_xPowSubX_iff_frobeniusDiffMod_isZero
     (f : GF2Poly) (k : Nat) :
     f ∣ xPowSubX k ↔ (frobeniusDiffMod f k).isZero = true := by
-  sorry
+  have hkey : f ∣ (xPowSubX k + frobeniusDiffMod f k) :=
+    dvd_xPowSubX_add_frobeniusDiffMod f k
+  refine ⟨fun hxsub => ?_, fun hzero => ?_⟩
+  · -- Forward: f ∣ xPowSubX k → frobeniusDiffMod f k = 0.
+    have hdiff : f ∣ frobeniusDiffMod f k := dvd_sub' hkey hxsub
+    have hdiff_eq_zero : frobeniusDiffMod f k = 0 := by
+      by_cases hf : f = 0
+      · subst hf
+        rcases hdiff with ⟨c, hc⟩
+        rw [hc, zero_mul]
+      · have hxpow_red := xpow2kMod_reduced f hf k
+        have hmod_red := mod_degree_lt (monomial 1) f hf
+        have hdiff_red :
+            (frobeniusDiffMod f k).isZero = true ∨
+              (frobeniusDiffMod f k).degree < f.degree := by
+          show ((xpow2kMod f k) + (monomial 1 % f)).isZero = true ∨
+            ((xpow2kMod f k) + (monomial 1 % f)).degree < f.degree
+          exact add_reduced_of_reduced hxpow_red hmod_red
+        exact reduced_dvd_eq_zero hf hdiff_red hdiff
+    rw [isZero_iff_eq_zero]
+    exact hdiff_eq_zero
+  · -- Backward: frobeniusDiffMod = 0 → f ∣ xPowSubX k.
+    have hzero_eq : frobeniusDiffMod f k = 0 := (isZero_iff_eq_zero _).mp hzero
+    rw [hzero_eq, add_zero] at hkey
+    exact hkey
 
 /--
 Every nonconstant factor of a packed GF2 polynomial has an irreducible factor.
@@ -73,42 +299,6 @@ theorem irreducible_dvd_xPowSubX_degree
     (hg_pos : 0 < g.degree) :
     g ∣ xPowSubX g.degree := by
   sorry
-
-private theorem mulXk_zero' (p : GF2Poly) : p.mulXk 0 = p := by
-  apply ext_coeff
-  intro n
-  rw [coeff_mulXk, coeff_shiftLeft]
-  simp [coeff]
-
-private theorem one_mul' (p : GF2Poly) : (1 : GF2Poly) * p = p := by
-  show monomial 0 * p = p
-  rw [monomial_mul, mulXk_zero']
-
-private theorem mul_one' (p : GF2Poly) : p * (1 : GF2Poly) = p := by
-  rw [mul_comm, one_mul']
-
-private theorem dvd_refl' (p : GF2Poly) : p ∣ p :=
-  ⟨1, (mul_one' p).symm⟩
-
-private theorem dvd_zero' (p : GF2Poly) : p ∣ 0 :=
-  ⟨0, (mul_zero p).symm⟩
-
-private theorem dvd_add' {d a b : GF2Poly} (hda : d ∣ a) (hdb : d ∣ b) :
-    d ∣ a + b := by
-  rcases hda with ⟨ra, hra⟩
-  rcases hdb with ⟨rb, hrb⟩
-  exact ⟨ra + rb, by rw [hra, hrb, right_distrib]⟩
-
-private theorem dvd_mul_left' {d a : GF2Poly} (c : GF2Poly) (hda : d ∣ a) :
-    d ∣ c * a := by
-  rcases hda with ⟨r, hr⟩
-  refine ⟨c * r, ?_⟩
-  rw [hr, ← mul_assoc, ← mul_assoc, mul_comm c d]
-
-private theorem mul_dvd_mul_left' (c : GF2Poly) {a b : GF2Poly} (h : a ∣ b) :
-    c * a ∣ c * b := by
-  rcases h with ⟨r, hr⟩
-  exact ⟨r, by rw [hr, mul_assoc]⟩
 
 /--
 Geometric-series divisibility in characteristic two: `X^k + 1` divides
