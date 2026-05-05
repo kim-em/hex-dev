@@ -588,6 +588,48 @@ private theorem mul_left_remainder_delta (f g m rf rg : DensePoly (ZMod64 p))
       exact congrArg (fun x => m * x)
         (DensePoly.add_comm_poly (f * rg) (rf * (g % m)))
 
+private theorem zmod_one_ne_zero [PrimeModulus p] :
+    (1 : ZMod64 p) ≠ (0 : ZMod64 p) := by
+  intro h
+  have h2 : 2 ≤ p := (PrimeModulus.prime (p := p)).two_le
+  have htoNat : (1 : ZMod64 p).toNat = (0 : ZMod64 p).toNat :=
+    congrArg ZMod64.toNat h
+  rw [show ((1 : ZMod64 p).toNat) = 1 % p from ZMod64.toNat_one,
+      show ((0 : ZMod64 p).toNat) = 0 from ZMod64.toNat_zero,
+      Nat.mod_eq_of_lt (by omega : 1 < p)] at htoNat
+  exact absurd htoNat (by omega)
+
+private theorem zmod_div_one [PrimeModulus p] (a : ZMod64 p) :
+    a / (1 : ZMod64 p) = a := by
+  have h1ne : (1 : ZMod64 p) ≠ 0 := zmod_one_ne_zero
+  have hinv : ZMod64.inv (1 : ZMod64 p) * 1 = 1 :=
+    ZMod64.inv_mul_eq_one_of_prime (PrimeModulus.prime (p := p)) h1ne
+  have hmul1 : ZMod64.inv (1 : ZMod64 p) * 1 = ZMod64.inv 1 :=
+    Lean.Grind.Semiring.mul_one (ZMod64.inv (1 : ZMod64 p))
+  have hinv1 : ZMod64.inv (1 : ZMod64 p) = 1 := by
+    rw [hmul1] at hinv
+    exact hinv
+  change ZMod64.mul a (ZMod64.inv 1) = a
+  rw [hinv1]
+  exact Lean.Grind.Semiring.mul_one a
+
+private theorem cancel_lead_at_pos_size_core [PrimeModulus p]
+    (m : DensePoly (ZMod64 p)) (hsize : 0 < m.size) (a : ZMod64 p) :
+    a - (a / m.leadingCoeff) * m.leadingCoeff = (Zero.zero : ZMod64 p) := by
+  have hidx : m.coeffs.size - 1 < m.coeffs.size := by
+    simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hsize
+  have hlead_eq : m.leadingCoeff = m.coeff (m.size - 1) := by
+    unfold DensePoly.leadingCoeff DensePoly.coeff
+    change m.coeffs.back?.getD (0 : ZMod64 p) =
+      m.coeffs.getD (m.coeffs.size - 1) (Zero.zero : ZMod64 p)
+    rw [Array.back?_eq_getElem?, Array.getD_eq_getD_getElem?,
+        Array.getElem?_eq_getElem hidx]
+    rfl
+  have hlead_ne : m.leadingCoeff ≠ (Zero.zero : ZMod64 p) := by
+    rw [hlead_eq]
+    exact DensePoly.coeff_last_ne_zero_of_pos_size m hsize
+  exact zmod_div_mul_cancel_of_ne a m.leadingCoeff hlead_ne
+
 /-- The `F_p[x]` division law obligations used by quotient constructions.
 
 These are the concrete finite-field instances of the generic `DensePoly.DivModLaws` proof
@@ -603,7 +645,18 @@ instance instDivModLawsZMod64Fp (p : Nat) [Bounds p] [PrimeModulus p] :
     exact divMod_remainder_degree_lt_core f g hdegree
   divModMonic_eq_divMod_of_monic := by
     intro f g hmonic
-    sorry
+    by_cases hdeg : f.degree?.getD 0 < g.degree?.getD 0
+    · show DensePoly.divModMonic f g hmonic = DensePoly.divMod f g
+      unfold DensePoly.divModMonic
+      rw [DensePoly.divModArray_eq_zero_self_of_degree_lt f g id hdeg]
+      unfold DensePoly.divMod
+      simp [hdeg]
+    · apply DensePoly.divModMonic_eq_divMod_of_monic_core f g hmonic hdeg
+      intro a
+      have hlead : g.leadingCoeff = (1 : ZMod64 p) := hmonic
+      show a / g.leadingCoeff = a
+      rw [hlead]
+      exact zmod_div_one a
   mod_self_eq_zero := by
     intro f
     sorry
@@ -612,7 +665,27 @@ instance instDivModLawsZMod64Fp (p : Nat) [Bounds p] [PrimeModulus p] :
     sorry
   mod_mod_of_not_pos_degree := by
     intro f g hdegree
-    sorry
+    by_cases hsize0 : g.size = 0
+    · have h2 : (DensePoly.divMod (f % g) g).2 = (f % g) :=
+        DensePoly.divMod_remainder_eq_self_of_size_zero_core (f % g) g hsize0
+      exact h2
+    · have hpos_size : 0 < g.size := Nat.pos_of_ne_zero hsize0
+      have hsize1 : g.size = 1 := by
+        have hdeg_eq : g.degree?.getD 0 = g.size - 1 := by
+          simp [DensePoly.degree?, hsize0]
+        have hnot_pos : ¬ 0 < g.size - 1 := by
+          intro h
+          apply hdegree
+          rw [hdeg_eq]
+          exact h
+        omega
+      have hcancel := cancel_lead_at_pos_size_core g hpos_size
+      have h1 : (DensePoly.divMod f g).2 = 0 :=
+        DensePoly.divMod_remainder_eq_zero_of_degree_zero_core f g hsize1 hcancel
+      have h2 : (DensePoly.divMod (f % g) g).2 = 0 :=
+        DensePoly.divMod_remainder_eq_zero_of_degree_zero_core (f % g) g hsize1 hcancel
+      change (DensePoly.divMod (f % g) g).2 = (DensePoly.divMod f g).2
+      rw [h1, h2]
   mod_eq_mod_of_congr := by
     intro f g m hcongr
     exact mod_eq_mod_of_congr_core f g m hcongr
