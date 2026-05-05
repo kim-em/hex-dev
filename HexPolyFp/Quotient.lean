@@ -274,6 +274,110 @@ theorem reduce_mul_eq (f h : FpPoly p) :
   exact @DensePoly.mod_mul_mod (ZMod64 p) inferInstance inferInstance inferInstance
     (ZMod64.instDivModLawsZMod64Fp p) f h g
 
+/-- Reducing an already-canonical quotient representative leaves it unchanged. -/
+theorem reduce_val_self (a : Quotient g hmonic hg_pos) :
+    reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) a.val = a := by
+  apply ext
+  rw [reduce_val, FpPoly.modByMonic, DensePoly.modByMonic_eq_mod]
+  exact DensePoly.mod_eq_self_of_degree_lt a.val g a.reduced
+
+/-- The canonical quotient representative of `1` is the polynomial `1`. -/
+theorem one_val_eq_one :
+    (1 : Quotient g hmonic hg_pos).val = (1 : FpPoly p) := by
+  rw [one_val, FpPoly.modByMonic, DensePoly.modByMonic_eq_mod]
+  have hone_deg : (1 : FpPoly p).degree?.getD 0 < g.degree?.getD 0 := by
+    change (DensePoly.C (1 : ZMod64 p)).degree?.getD 0 < g.degree?.getD 0
+    simpa using hg_pos
+  exact DensePoly.mod_eq_self_of_degree_lt (1 : FpPoly p) g hone_deg
+
+/-- `1` is a left identity for quotient multiplication. -/
+@[simp] theorem one_mul (a : Quotient g hmonic hg_pos) :
+    (1 : Quotient g hmonic hg_pos) * a = a := by
+  calc
+    (1 : Quotient g hmonic hg_pos) * a =
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          ((1 : Quotient g hmonic hg_pos).val * a.val) := rfl
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          ((1 : FpPoly p) * a.val) := by rw [one_val_eq_one]
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) a.val := by
+          rw [FpPoly.one_mul]
+    _ = a := reduce_val_self a
+
+/-- `1` is a right identity for quotient multiplication. -/
+@[simp] theorem mul_one (a : Quotient g hmonic hg_pos) :
+    a * (1 : Quotient g hmonic hg_pos) = a := by
+  calc
+    a * (1 : Quotient g hmonic hg_pos) =
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (a.val * (1 : Quotient g hmonic hg_pos).val) := rfl
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (a.val * (1 : FpPoly p)) := by rw [one_val_eq_one]
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) a.val := by
+          rw [FpPoly.mul_one]
+    _ = a := reduce_val_self a
+
+/-- Quotient multiplication is associative. -/
+theorem mul_assoc (a b c : Quotient g hmonic hg_pos) :
+    (a * b) * c = a * (b * c) := by
+  calc
+    (a * b) * c =
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          ((a * b).val * c.val) := rfl
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          ((a.val * b.val) * c.val) := by
+          have hmul := reduce_mul_eq (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+            (a.val * b.val) c.val
+          rw [reduce_val_self c] at hmul
+          exact hmul.symm
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (a.val * (b.val * c.val)) := by rw [FpPoly.mul_assoc]
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (a.val * (b * c).val) := by
+          have hmul := reduce_mul_eq (g := g) (hmonic := hmonic)
+            (hg_pos := hg_pos) a.val (b.val * c.val)
+          rw [reduce_val_self a] at hmul
+          exact hmul
+    _ = a * (b * c) := rfl
+
+/-- Quotient multiplication is commutative. -/
+theorem mul_comm (a b : Quotient g hmonic hg_pos) :
+    a * b = b * a := by
+  calc
+    a * b =
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (a.val * b.val) := rfl
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (b.val * a.val) := by rw [FpPoly.mul_comm]
+    _ = b * a := rfl
+
+/-- Quotient powers turn addition of exponents into multiplication. -/
+theorem pow_add (a : Quotient g hmonic hg_pos) (m n : Nat) :
+    a ^ (m + n) = a ^ m * a ^ n := by
+  induction n with
+  | zero =>
+      simp [Nat.add_zero]
+  | succ n ih =>
+      calc
+        a ^ (m + (n + 1)) = a ^ ((m + n) + 1) := by rw [Nat.add_succ]
+        _ = a ^ (m + n) * a := by rfl
+        _ = (a ^ m * a ^ n) * a := by rw [ih]
+        _ = a ^ m * (a ^ n * a) := by rw [mul_assoc]
+        _ = a ^ m * a ^ (n + 1) := by rfl
+
+/-- Quotient powers turn multiplication of exponents into iterated powering. -/
+theorem pow_mul (a : Quotient g hmonic hg_pos) (m n : Nat) :
+    (a ^ m) ^ n = a ^ (m * n) := by
+  induction n with
+  | zero =>
+      simp
+  | succ n ih =>
+      calc
+        (a ^ m) ^ (n + 1) = (a ^ m) ^ n * a ^ m := by rfl
+        _ = a ^ (m * n) * a ^ m := by rw [ih]
+        _ = a ^ (m * n + m) := by
+          exact (pow_add a (m * n) m).symm
+        _ = a ^ (m * (n + 1)) := by rw [Nat.mul_succ]
+
 /--
 Reducing an executable polynomial power agrees with powering its quotient
 class.
@@ -500,6 +604,14 @@ theorem mul_inv_cancel (hg_irr : FpPoly.Irreducible g)
             (g := g) hg_irr ha_val_ne a.reduced
     _ = FpPoly.modByMonic g 1 hmonic := by
           rw [FpPoly.modByMonic, DensePoly.modByMonic_eq_mod]
+
+/-- The inverse candidate also cancels on the left for nonzero quotient
+elements modulo an irreducible polynomial. -/
+theorem inv_mul_cancel (hg_irr : FpPoly.Irreducible g)
+    {a : Quotient g hmonic hg_pos} (ha : a ≠ 0) :
+    a⁻¹ * a = 1 := by
+  rw [mul_comm]
+  exact mul_inv_cancel (g := g) (hmonic := hmonic) (hg_pos := hg_pos) hg_irr ha
 
 end Quotient
 end FpPoly
