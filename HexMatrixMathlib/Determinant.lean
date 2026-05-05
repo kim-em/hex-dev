@@ -1,4 +1,5 @@
 import HexMatrixMathlib.Basic
+import HexMatrixMathlib.Determinant.DesnanotJacobi
 import HexMatrix.Determinant
 import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
 
