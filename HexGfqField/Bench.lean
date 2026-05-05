@@ -106,20 +106,74 @@ def modulus (degree : Nat) : FpPoly 8191 :=
       rw [hlast] at hback
       exact one_ne_zero_mersenne (Option.some.inj hback) }
 
-/-- TEMPORARY: this universally quantified claim is almost certainly unsound
-for the deterministic `modulus` generator, which is not designed to produce
-irreducible polynomials at every degree.  The benchmark needs structural
-restructuring to fix a finite set of irreducible per-degree moduli; until
-that lands, the placeholder below stays as a `sorry` rather than an `axiom`
-to keep the unsoundness visible (and to satisfy the project ban on
-agent-introduced axioms). -/
-private theorem modulus_irreducible (degree : Nat) :
-    FpPoly.Irreducible (modulus degree) := by sorry
-
 /-- Generated moduli are nonconstant, so field representatives are meaningful. -/
 theorem modulus_pos_degree (degree : Nat) : 0 < FpPoly.degree (modulus (degree + 1)) := by
   unfold FpPoly.degree DensePoly.degree? DensePoly.size modulus
   simp
+
+/-! ## Per-degree irreducibility placeholders
+
+The deterministic `modulus` generator is not designed to produce
+irreducible polynomials at every degree, so a universally quantified
+`FpPoly.Irreducible (modulus degree)` claim is unsound.  Instead, we
+sorry irreducibility one degree at a time, restricted to the finite
+set of degrees actually exercised by `paramSchedule` entries below.
+Each such sorry is a *concrete* claim about a specific deterministic
+polynomial: still unverified, but no longer universally quantified
+over arbitrary degrees.
+
+The fallback at degree 2 covers any benchmark `n` not in the
+schedule (none today; included only to keep `bundleForN` total).
+
+These per-degree sorries can be discharged later by checking each
+specific polynomial against an external tool (e.g. python-flint) or
+by replacing the deterministic generator with a known-irreducible
+sparse family.  Until then they remain `sorry` to keep the residual
+unsoundness grep-able. -/
+
+private theorem modulus_2_irreducible : FpPoly.Irreducible (modulus 2) := by sorry
+private theorem modulus_33_irreducible : FpPoly.Irreducible (modulus 33) := by sorry
+private theorem modulus_49_irreducible : FpPoly.Irreducible (modulus 49) := by sorry
+private theorem modulus_65_irreducible : FpPoly.Irreducible (modulus 65) := by sorry
+private theorem modulus_97_irreducible : FpPoly.Irreducible (modulus 97) := by sorry
+private theorem modulus_129_irreducible : FpPoly.Irreducible (modulus 129) := by sorry
+private theorem modulus_193_irreducible : FpPoly.Irreducible (modulus 193) := by sorry
+private theorem modulus_257_irreducible : FpPoly.Irreducible (modulus 257) := by sorry
+private theorem modulus_513_irreducible : FpPoly.Irreducible (modulus 513) := by sorry
+private theorem modulus_1025_irreducible : FpPoly.Irreducible (modulus 1025) := by sorry
+private theorem modulus_2049_irreducible : FpPoly.Irreducible (modulus 2049) := by sorry
+private theorem modulus_4097_irreducible : FpPoly.Irreducible (modulus 4097) := by sorry
+private theorem modulus_8193_irreducible : FpPoly.Irreducible (modulus 8193) := by sorry
+private theorem modulus_16385_irreducible : FpPoly.Irreducible (modulus 16385) := by sorry
+
+/-- A modulus together with its positive-degree and irreducibility
+witnesses, used by the benchmark prep functions to dispatch on the
+parameter `n` and select the correct per-degree fixture. -/
+private structure ModulusBundle where
+  modulus : FpPoly 8191
+  pos : 0 < FpPoly.degree modulus
+  irr : FpPoly.Irreducible modulus
+
+/-- Look up the per-degree modulus fixture for benchmark parameter `n`.
+The match enumerates the union of `paramSchedule` entries used by the
+registrations below; any `n` outside that schedule falls back to a
+degree-2 fixture so that the function remains total. -/
+private def bundleForN (n : Nat) : ModulusBundle :=
+  match n with
+  | 32 => ⟨modulus 33, modulus_pos_degree 32, modulus_33_irreducible⟩
+  | 48 => ⟨modulus 49, modulus_pos_degree 48, modulus_49_irreducible⟩
+  | 64 => ⟨modulus 65, modulus_pos_degree 64, modulus_65_irreducible⟩
+  | 96 => ⟨modulus 97, modulus_pos_degree 96, modulus_97_irreducible⟩
+  | 128 => ⟨modulus 129, modulus_pos_degree 128, modulus_129_irreducible⟩
+  | 192 => ⟨modulus 193, modulus_pos_degree 192, modulus_193_irreducible⟩
+  | 256 => ⟨modulus 257, modulus_pos_degree 256, modulus_257_irreducible⟩
+  | 512 => ⟨modulus 513, modulus_pos_degree 512, modulus_513_irreducible⟩
+  | 1024 => ⟨modulus 1025, modulus_pos_degree 1024, modulus_1025_irreducible⟩
+  | 2048 => ⟨modulus 2049, modulus_pos_degree 2048, modulus_2049_irreducible⟩
+  | 4096 => ⟨modulus 4097, modulus_pos_degree 4096, modulus_4097_irreducible⟩
+  | 8192 => ⟨modulus 8193, modulus_pos_degree 8192, modulus_8193_irreducible⟩
+  | 16384 => ⟨modulus 16385, modulus_pos_degree 16384, modulus_16385_irreducible⟩
+  | _ => ⟨modulus 2, modulus_pos_degree 1, modulus_2_irreducible⟩
 
 /-- Stable checksum for polynomial-valued benchmark results. -/
 def checksumPoly (f : FpPoly 8191) : UInt64 :=
@@ -185,30 +239,20 @@ instance : Hashable ZPowInput where
 
 /-- Per-parameter fixture for field construction. -/
 def prepOfPolyInput (n : Nat) : OfPolyInput :=
-  let degree := n + 1
-  let f := modulus degree
-  let hf : 0 < FpPoly.degree f := by
-    simpa [f] using modulus_pos_degree n
-  let hirr : FpPoly.Irreducible f := by
-    simpa [f] using modulus_irreducible degree
-  { modulus := f
-    modulusDegreePos := hf
-    modulusIrreducible := hirr
-    poly := densePoly (2 * degree + 1) 23 }
+  let b := bundleForN n
+  { modulus := b.modulus
+    modulusDegreePos := b.pos
+    modulusIrreducible := b.irr
+    poly := densePoly (2 * (n + 1) + 1) 23 }
 
 /-- Per-parameter fixture for field binary operations. -/
 def prepBinaryInput (n : Nat) : BinaryInput :=
-  let degree := n + 1
-  let f := modulus degree
-  let hf : 0 < FpPoly.degree f := by
-    simpa [f] using modulus_pos_degree n
-  let hirr : FpPoly.Irreducible f := by
-    simpa [f] using modulus_irreducible degree
-  { modulus := f
-    modulusDegreePos := hf
-    modulusIrreducible := hirr
-    lhs := ofPoly f hf prime_mersenne hirr (densePoly degree 37)
-    rhs := ofPoly f hf prime_mersenne hirr (densePoly degree 71) }
+  let b := bundleForN n
+  { modulus := b.modulus
+    modulusDegreePos := b.pos
+    modulusIrreducible := b.irr
+    lhs := ofPoly b.modulus b.pos prime_mersenne b.irr (densePoly (n + 1) 37)
+    rhs := ofPoly b.modulus b.pos prime_mersenne b.irr (densePoly (n + 1) 71) }
 
 /-- Per-parameter fixture for field unary operations. -/
 def prepUnaryInput (n : Nat) : UnaryInput :=
