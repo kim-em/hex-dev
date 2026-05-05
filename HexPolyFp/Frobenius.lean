@@ -325,5 +325,53 @@ theorem frobeniusXPowMod_succ
   rw [show (p : Nat) * p ^ k = p ^ (k + 1) from by
         rw [Nat.pow_succ]; exact Nat.mul_comm _ _]
 
+/-! ### Bridge to the absolute monomial
+
+Connect `frobeniusXPowMod` to the absolute polynomial `X^(p^k)` via
+`monomial (p^k) 1`, modulo `f`. This is consumed by the project-side
+Rabin soundness bridge in `HexBerlekamp.RabinSoundness`. -/
+
+private theorem powLinear_X_eq_monomial (n : Nat) :
+    powLinear (FpPoly.X (p := p)) n = DensePoly.monomial n (1 : ZMod64 p) := by
+  induction n with
+  | zero =>
+      show (1 : FpPoly p) = DensePoly.monomial 0 (1 : ZMod64 p)
+      apply DensePoly.ext_coeff
+      intro i
+      show (DensePoly.C (1 : ZMod64 p)).coeff i =
+        (DensePoly.monomial 0 (1 : ZMod64 p)).coeff i
+      rw [DensePoly.coeff_C, DensePoly.coeff_monomial]
+  | succ n ih =>
+      have hX : (FpPoly.X (p := p)) = DensePoly.monomial 1 (1 : ZMod64 p) := rfl
+      rw [powLinear_succ, ih, hX]
+      have hmm := DensePoly.monomial_mul_monomial (S := ZMod64 p) n 1 (1 : ZMod64 p) 1
+      have h1 : ((1 : ZMod64 p) * 1) = 1 := by grind
+      rw [h1] at hmm
+      exact hmm
+
+/--
+`frobeniusXPowMod f hmonic k` reduces modulo `f` to the absolute monomial
+`X^(p^k)` reduced modulo `f`. This is the key bridge between the executable
+Frobenius computation and the absolute polynomial identity it represents.
+-/
+theorem frobeniusXPowMod_mod_eq_monomial_mod
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) (k : Nat) :
+    (frobeniusXPowMod f hmonic k) % f =
+      (DensePoly.monomial (p ^ k) (1 : ZMod64 p)) % f := by
+  unfold frobeniusXPowMod
+  rw [powModMonic_mod_eq, powLinear_X_eq_monomial]
+
+/-- `frobeniusXPowMod` outputs an already-reduced polynomial. -/
+theorem frobeniusXPowMod_mod_self
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) (k : Nat) :
+    (frobeniusXPowMod f hmonic k) % f = frobeniusXPowMod f hmonic k := by
+  have hp_pos : 0 < p := by
+    have h2 : 2 ≤ p := Hex.Nat.Prime.two_le ZMod64.PrimeModulus.prime
+    omega
+  unfold frobeniusXPowMod
+  exact powModMonic_pos_self_mod _ _ hmonic _ (Nat.pow_pos hp_pos)
+
 end FpPoly
 end Hex
