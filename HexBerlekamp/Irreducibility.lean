@@ -455,13 +455,6 @@ theorem checkIrreducibilityCertificate_rabinTest
       · exact checkRabinBezoutWitnesses_rabinWitnesses_all
           f hmonic samePrimeCert hwitnesses hpow hn
 
-theorem checkIrreducibilityCertificate_irreducible_predicate
-    (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    (cert : IrreducibilityCertificate) :
-    checkIrreducibilityCertificate f hmonic cert = true →
-      FpPoly.Irreducible f := by
-  sorry
-
 end Berlekamp
 
 end Hex
