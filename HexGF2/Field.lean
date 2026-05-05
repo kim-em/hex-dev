@@ -218,6 +218,128 @@ theorem coeffBoolLists_nodup (d : Nat) :
         have hhead : b = c := (List.cons.inj hxtail' |>.1).symm
         exact hne hhead
 
+/-- Build a packed `GF2Poly` from a Boolean coefficient list, treating
+`bs[i]` as the coefficient of `x^(start + i)`. -/
+def ofBoolListFrom (start : Nat) : List Bool → GF2Poly
+  | [] => 0
+  | b :: bs =>
+      (if b then monomial start else 0) + ofBoolListFrom (start + 1) bs
+
+/-- Build a packed `GF2Poly` from a Boolean coefficient list, treating `bs[i]`
+as the coefficient of `x^i`. -/
+def ofBoolList (bs : List Bool) : GF2Poly :=
+  ofBoolListFrom 0 bs
+
+/-- The packed polynomial built from a coefficient list shifted by `start` has
+no coefficient set strictly below `start`. -/
+theorem coeff_ofBoolListFrom_lt (start : Nat) :
+    ∀ (bs : List Bool) (n : Nat), n < start →
+      (ofBoolListFrom start bs).coeff n = false := by
+  intro bs
+  induction bs generalizing start with
+  | nil =>
+      intro n _
+      simp [ofBoolListFrom]
+  | cons b bs ih =>
+      intro n hn
+      have hne : n ≠ start := Nat.ne_of_lt hn
+      have h_left : (if b then monomial start else (0 : GF2Poly)).coeff n = false := by
+        cases b with
+        | true => simpa using coeff_monomial_ne hne
+        | false => simp
+      have h_right : (ofBoolListFrom (start + 1) bs).coeff n = false :=
+        ih (start + 1) n (by omega)
+      change ((if b then monomial start else (0 : GF2Poly))
+          + ofBoolListFrom (start + 1) bs).coeff n = false
+      rw [coeff_add_eq_bne, h_left, h_right]
+      rfl
+
+/-- The packed polynomial built from a coefficient list shifted by `start` reads
+back the matching list entry, defaulting to `false` past the end. -/
+theorem coeff_ofBoolListFrom_ge (start : Nat) :
+    ∀ (bs : List Bool) (n : Nat), start ≤ n →
+      (ofBoolListFrom start bs).coeff n = (bs[n - start]?).getD false := by
+  intro bs
+  induction bs generalizing start with
+  | nil =>
+      intro n _
+      simp [ofBoolListFrom]
+  | cons b bs ih =>
+      intro n hge
+      change ((if b then monomial start else (0 : GF2Poly))
+          + ofBoolListFrom (start + 1) bs).coeff n = _
+      rw [coeff_add_eq_bne]
+      by_cases h_eq : n = start
+      · subst h_eq
+        have h_right : (ofBoolListFrom (n + 1) bs).coeff n = false :=
+          coeff_ofBoolListFrom_lt (n + 1) bs n (Nat.lt_succ_self n)
+        rw [h_right]
+        have h_idx : n - n = 0 := Nat.sub_self n
+        rw [h_idx]
+        simp only [List.getElem?_cons_zero, Option.getD_some]
+        cases b with
+        | true =>
+            have h_left : ((if (true : Bool) then monomial n
+                else (0 : GF2Poly))).coeff n = true := by
+              simpa using coeff_monomial_self n
+            rw [h_left]
+            rfl
+        | false =>
+            have h_left : ((if (false : Bool) then monomial n
+                else (0 : GF2Poly))).coeff n = false := by simp
+            rw [h_left]
+            rfl
+      · have h_lt : start < n := Nat.lt_of_le_of_ne hge (Ne.symm h_eq)
+        have h_left : (if b then monomial start else (0 : GF2Poly)).coeff n = false := by
+          cases b with
+          | true => simpa using coeff_monomial_ne h_eq
+          | false => simp
+        have h_right :
+            (ofBoolListFrom (start + 1) bs).coeff n =
+              (bs[n - (start + 1)]?).getD false :=
+          ih (start + 1) n (by omega)
+        rw [h_left, h_right]
+        have h_idx : n - start = (n - (start + 1)) + 1 := by omega
+        rw [h_idx]
+        simp [List.getElem?_cons_succ]
+
+/-- Coefficient correctness for `ofBoolList`: indices below the length read the
+matching list entry, indices at or above the length read `false`. -/
+theorem coeff_ofBoolList (bs : List Bool) (n : Nat) :
+    (ofBoolList bs).coeff n = (bs[n]?).getD false := by
+  unfold ofBoolList
+  have h := coeff_ofBoolListFrom_ge 0 bs n (Nat.zero_le n)
+  simpa using h
+
+/-- Indices at or above the list length read `false`. -/
+theorem coeff_ofBoolList_length_le {bs : List Bool} {n : Nat}
+    (h : bs.length ≤ n) : (ofBoolList bs).coeff n = false := by
+  rw [coeff_ofBoolList]
+  have hnone : bs[n]? = none := List.getElem?_eq_none h
+  rw [hnone]
+  rfl
+
+/-- The packed polynomial built from a length-`d` Boolean coefficient list is
+either zero or has degree strictly below `d`. -/
+theorem ofBoolList_isZero_or_degree_lt (bs : List Bool) :
+    (ofBoolList bs).IsZero ∨ (ofBoolList bs).degree < bs.length := by
+  cases h : (ofBoolList bs).isZero with
+  | true =>
+      exact Or.inl h
+  | false =>
+      refine Or.inr ?_
+      obtain ⟨d, hd⟩ := degree?_isSome_of_isZero_false h
+      have hdeg : (ofBoolList bs).degree = d := degree_eq_of_degree?_eq_some hd
+      rw [hdeg]
+      rcases Nat.lt_or_ge d bs.length with hlt | hge'
+      · exact hlt
+      · have hcoeff_false : (ofBoolList bs).coeff d = false :=
+          coeff_ofBoolList_length_le hge'
+        have hcoeff_true : (ofBoolList bs).coeff d = true :=
+          coeff_eq_true_of_degree?_eq_some hd
+        rw [hcoeff_true] at hcoeff_false
+        exact Bool.noConfusion hcoeff_false
+
 end GF2Poly
 
 /-- `GF(2^n)` for arbitrary `n`, represented by reduced `GF2Poly` residues
