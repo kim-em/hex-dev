@@ -839,7 +839,7 @@ theorem sub_eq_add_neg (f g : FpPoly p) :
 
 @[simp] theorem mul_zero (f : FpPoly p) :
     f * 0 = 0 := by
-  sorry
+  exact (DensePoly.mul_comm_poly f 0).trans (DensePoly.zero_mul f)
 
 private theorem coeff_mul_one_fold (f : FpPoly p) (n k : Nat) :
     ((List.range n).foldl
@@ -871,11 +871,11 @@ private theorem coeff_mul_one_fold (f : FpPoly p) (n k : Nat) :
 
 @[simp] theorem one_mul (f : FpPoly p) :
     1 * f = f := by
-  sorry
+  exact (DensePoly.mul_comm_poly (1 : FpPoly p) f).trans (DensePoly.mul_one_right_poly f)
 
 @[simp] theorem mul_one (f : FpPoly p) :
     f * 1 = f := by
-  sorry
+  exact DensePoly.mul_one_right_poly f
 /-- The `i`th schoolbook contribution to coefficient `n` of `f * g`. -/
 def mulCoeffTerm (f g : FpPoly p) (n i : Nat) : ZMod64 p :=
   if n < i then 0 else f.coeff i * g.coeff (n - i)
@@ -901,9 +901,82 @@ private theorem coeff_mul_fold (xs : List Nat) (acc f g : FpPoly p) (n : Nat) :
         DensePoly.coeff_shift_scale i (f.coeff i) g n hzero]
       rfl
 
+private theorem foldl_mulCoeffStep_select_fp
+    (f g : FpPoly p) (n i m : Nat) (acc : ZMod64 p) :
+    (List.range m).foldl (DensePoly.mulCoeffStep f g n i) acc =
+      acc + (if n < i then 0
+        else if n - i < m then f.coeff i * g.coeff (n - i) else 0) := by
+  induction m generalizing acc with
+  | zero =>
+      simp
+      grind
+  | succ m ih =>
+      rw [List.range_succ, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [ih]
+      unfold DensePoly.mulCoeffStep
+      by_cases hlt : n < i
+      · have hne : i + m ≠ n := by omega
+        simp [hlt, hne]
+      · by_cases hm : n - i < m
+        · have hne : i + m ≠ n := by omega
+          simp [hlt, hm, hne]
+          grind
+        · by_cases heq : i + m = n
+          · have hsub : n - i = m := by omega
+            simp [hlt, heq, hsub]
+            grind
+          · have hm' : ¬ n - i < m + 1 := by omega
+            simp [hlt, hm, hm', heq]
+
+private theorem foldl_mulCoeffStep_outer_fp
+    (f g : FpPoly p) (n : Nat) (xs : List Nat) (acc : ZMod64 p) :
+    xs.foldl
+        (fun acc i =>
+          (List.range g.size).foldl (DensePoly.mulCoeffStep f g n i) acc)
+        acc =
+      xs.foldl
+        (fun acc i =>
+          acc + (if n < i then 0
+            else if n - i < g.size then f.coeff i * g.coeff (n - i) else 0))
+        acc := by
+  induction xs generalizing acc with
+  | nil => rfl
+  | cons i xs ih =>
+      simp only [List.foldl_cons]
+      rw [foldl_mulCoeffStep_select_fp]
+      exact ih _
+
+private theorem foldl_mulCoeffStep_outer_eq_mulCoeffTerm
+    (f g : FpPoly p) (n : Nat) (xs : List Nat) (acc : ZMod64 p) :
+    xs.foldl
+        (fun acc i =>
+          (List.range g.size).foldl (DensePoly.mulCoeffStep f g n i) acc)
+        acc =
+      xs.foldl (fun acc i => acc + mulCoeffTerm f g n i) acc := by
+  rw [foldl_mulCoeffStep_outer_fp]
+  induction xs generalizing acc with
+  | nil =>
+      rfl
+  | cons i xs ih =>
+      simp only [List.foldl_cons]
+      rw [ih]
+      congr 1
+      unfold mulCoeffTerm
+      by_cases hlt : n < i
+      · simp [hlt]
+      · by_cases hbound : n - i < g.size
+        · simp [hlt, hbound]
+        · have hcoeff : g.coeff (n - i) = 0 :=
+            DensePoly.coeff_eq_zero_of_size_le g (Nat.le_of_not_gt hbound)
+          simp [hlt, hbound, hcoeff]
+          grind
+
 theorem coeff_mul (f g : FpPoly p) (n : Nat) :
     (f * g).coeff n = mulCoeffSum f g n := by
-  sorry
+  rw [DensePoly.coeff_mul]
+  unfold DensePoly.mulCoeffSum mulCoeffSum
+  exact foldl_mulCoeffStep_outer_eq_mulCoeffTerm f g n (List.range f.size) 0
 
 private theorem mulCoeffTerm_eq_zero_of_size_le
     (f g : FpPoly p) (n i : Nat) (hi : f.size ≤ i) :
