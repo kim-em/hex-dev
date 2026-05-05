@@ -140,7 +140,9 @@ def sizeReduceColumn (s : LLLState n m) (j k : Fin n) (hjk : j.val < k.val) :
         sorry
       d_eq := by
         intro i hi
-        sorry }
+        dsimp only [b']
+        rw [GramSchmidt.Int.gramDet_sizeReduce s.b j k hjk r i (Nat.le_of_lt_succ hi)]
+        exact s.d_eq i hi }
   else
     s
 
