@@ -1257,6 +1257,73 @@ private theorem rat_coeff_mul_at_top
   show (0 : Rat) + _ = _
   grind
 
+private theorem rat_eq_zero_of_size_zero (p : DensePoly Rat) (hsize : p.size = 0) :
+    p = 0 := by
+  apply DensePoly.ext_coeff
+  intro i
+  rw [DensePoly.coeff_zero]
+  exact DensePoly.coeff_eq_zero_of_size_le p (by omega)
+
+private theorem rat_mul_zero_right (p : DensePoly Rat) :
+    p * 0 = 0 := by
+  rw [DensePoly.mul_comm_poly p (0 : DensePoly Rat)]
+  exact DensePoly.zero_mul p
+
+private theorem rat_product_size_gt_top
+    (f g : DensePoly Rat) (hf : 0 < f.size) (hg : 0 < g.size) :
+    f.size - 1 + (g.size - 1) < (f * g).size := by
+  have htop := rat_coeff_mul_at_top f g hf hg
+  have hf_ne : f.coeff (f.size - 1) ≠ 0 :=
+    DensePoly.coeff_last_ne_zero_of_pos_size f hf
+  have hg_ne : g.coeff (g.size - 1) ≠ 0 :=
+    DensePoly.coeff_last_ne_zero_of_pos_size g hg
+  have hprod_ne :
+      f.coeff (f.size - 1) * g.coeff (g.size - 1) ≠ 0 := by
+    intro hprod
+    rcases Rat.mul_eq_zero.mp hprod with hf_zero | hg_zero
+    · exact hf_ne hf_zero
+    · exact hg_ne hg_zero
+  have hcoeff_ne :
+      (f * g).coeff (f.size - 1 + (g.size - 1)) ≠ 0 := by
+    rw [htop]
+    exact hprod_ne
+  rcases Nat.lt_or_ge (f.size - 1 + (g.size - 1)) (f * g).size with hlt | hle
+  · exact hlt
+  · exact False.elim (hcoeff_ne (DensePoly.coeff_eq_zero_of_size_le (f * g) hle))
+
+private theorem rat_size_le_one_of_mul_dvd_self
+    (d r : DensePoly Rat) (hr : r.size ≠ 0) :
+    d * r ∣ r → d.size ≤ 1 := by
+  intro hdiv
+  rcases hdiv with ⟨k, hk⟩
+  by_cases hd_zero : d.size = 0
+  · omega
+  have hd_pos : 0 < d.size := Nat.pos_of_ne_zero hd_zero
+  have hr_pos : 0 < r.size := Nat.pos_of_ne_zero hr
+  by_cases hk_zero : k.size = 0
+  · have hk_eq : k = 0 := rat_eq_zero_of_size_zero k hk_zero
+    have hr_eq_zero : r = 0 := by
+      rw [hk_eq, rat_mul_zero_right] at hk
+      exact hk
+    have hr_size_zero : r.size = 0 := by
+      rw [hr_eq_zero]
+      exact DensePoly.size_zero
+    contradiction
+  · have hk_pos : 0 < k.size := Nat.pos_of_ne_zero hk_zero
+    by_cases hd_le : d.size ≤ 1
+    · exact hd_le
+    · have hdr_top_lt : d.size - 1 + (r.size - 1) < (d * r).size :=
+        rat_product_size_gt_top d r hd_pos hr_pos
+      have hdr_pos : 0 < (d * r).size := by omega
+      have htop_lt : (d * r).size - 1 + (k.size - 1) < ((d * r) * k).size :=
+        rat_product_size_gt_top (d * r) k hdr_pos hk_pos
+      have hsize_eq : ((d * r) * k).size = r.size := by
+        rw [← hk]
+      rw [hsize_eq] at htop_lt
+      have hdr_lower : r.size ≤ (d * r).size - 1 := by omega
+      have hcontr : r.size ≤ (d * r).size - 1 + (k.size - 1) := by omega
+      omega
+
 private theorem rat_canonical_remainder_unique_of_pos_degree
     (r s m : DensePoly Rat)
     (hr : r.degree?.getD 0 < m.degree?.getD 0)
