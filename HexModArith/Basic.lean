@@ -83,6 +83,65 @@ def ofNat (p n : Nat) [Bounds p] : ZMod64 p := by
 @[simp] theorem val_toNat_ofNat (n : Nat) : (ofNat p n).val.toNat = n % p := by
   simpa using toNat_ofNat (p := p) n
 
+/-- All canonical residues modulo `p`, listed in representative order. -/
+def values (p : Nat) [Bounds p] : List (ZMod64 p) :=
+  (List.range p).map fun n => ofNat p n
+
+@[simp] theorem values_length : (values p).length = p := by
+  simp [values]
+
+/-- Every residue appears in `values`. -/
+theorem mem_values (a : ZMod64 p) : a ∈ values p := by
+  unfold values
+  apply List.mem_map.mpr
+  refine ⟨a.toNat, List.mem_range.mpr a.toNat_lt, ?_⟩
+  apply ext
+  apply UInt64.toNat_inj.mp
+  rw [val_toNat_ofNat]
+  exact (Nat.mod_eq_of_lt a.toNat_lt).trans (by rfl)
+
+/-- Reduced representatives below `p` construct the same residue exactly when
+the representatives are equal. -/
+theorem ofNat_eq_ofNat_iff_of_lt {x y : Nat} (hx : x < p) (hy : y < p) :
+    ofNat p x = ofNat p y ↔ x = y := by
+  constructor
+  · intro h
+    have hnat := congrArg ZMod64.toNat h
+    rw [toNat_ofNat, toNat_ofNat, Nat.mod_eq_of_lt hx, Nat.mod_eq_of_lt hy] at hnat
+    exact hnat
+  · intro h
+    subst y
+    rfl
+
+private theorem nodup_map_of_injective_on
+    {α β : Type} {xs : List α} {f : α → β}
+    (hxs : xs.Nodup)
+    (hinj : ∀ a, a ∈ xs → ∀ b, b ∈ xs → f a = f b → a = b) :
+    (xs.map f).Nodup := by
+  induction xs with
+  | nil =>
+      simp
+  | cons x xs ih =>
+      simp only [List.map_cons]
+      rw [List.nodup_cons] at hxs ⊢
+      constructor
+      · intro hx
+        rcases List.mem_map.mp hx with ⟨y, hy, hxy⟩
+        have hxy' : x = y := hinj x (by simp) y (by simp [hy]) hxy.symm
+        exact hxs.1 (hxy' ▸ hy)
+      · apply ih hxs.2
+        intro a ha b hb hab
+        exact hinj a (by simp [ha]) b (by simp [hb]) hab
+
+/-- The canonical residue list has no duplicate entries. -/
+theorem values_nodup : (values p).Nodup := by
+  unfold values
+  apply nodup_map_of_injective_on (List.nodup_range : (List.range p).Nodup)
+  intro x hx y hy hxy
+  exact
+    (ofNat_eq_ofNat_iff_of_lt
+      (List.mem_range.mp hx) (List.mem_range.mp hy)).mp hxy
+
 /-- The zero residue class. -/
 protected def zero : ZMod64 p :=
   ofNat p 0
