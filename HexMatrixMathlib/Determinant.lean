@@ -319,6 +319,92 @@ theorem det_borderedMinor_eq_submatrix_det [CommRing R]
             if hc : c.val < k then ⟨c.val, Nat.lt_trans hc hk⟩ else j)) := by
   rw [det_eq, matrixEquiv_borderedMinor]
 
+/-- Reindex the `(k+2) × (k+2)` bordered minor so Desnanot-Jacobi deletes the
+Bareiss pivot row/column first and the trailing row/column last.
+
+The order is `[k, 0, 1, ..., k-1, k+1]` in the original bordered-minor
+coordinates. Applying the same permutation to rows and columns preserves the
+determinant and makes the Desnanot interior the previous leading pivot. -/
+def bareissDesnanotIndex (k : Nat) : Fin (k + 2) ≃ Fin (k + 2) where
+  toFun r :=
+    if hzero : r.val = 0 then
+      ⟨k, by omega⟩
+    else if hlast : r.val = k + 1 then
+      Fin.last (k + 1)
+    else
+      ⟨r.val - 1, by omega⟩
+  invFun r :=
+    if hk : r.val = k then
+      0
+    else if hlt : r.val < k then
+      ⟨r.val + 1, by omega⟩
+    else
+      Fin.last (k + 1)
+  left_inv r := by
+    ext
+    dsimp
+    by_cases hzero : r.val = 0
+    · simp [hzero]
+    · by_cases hlast : r.val = k + 1
+      · simp [hlast]
+      · have hlt : r.val - 1 < k := by omega
+        have hne : r.val - 1 ≠ k := by omega
+        simp [hzero, hlast, hlt, hne]
+        omega
+  right_inv r := by
+    ext
+    dsimp
+    by_cases hk : r.val = k
+    · simp [hk]
+    · by_cases hlt : r.val < k
+      · have hsucc_ne_last : r.val + 1 ≠ k + 1 := by omega
+        simp [hk, hlt]
+      · have hlast : r.val = k + 1 := by omega
+        simp [hlast]
+
+@[simp]
+theorem bareissDesnanotIndex_zero (k : Nat) :
+    bareissDesnanotIndex k 0 = (⟨k, by omega⟩ : Fin (k + 2)) := by
+  rfl
+
+@[simp]
+theorem bareissDesnanotIndex_last (k : Nat) :
+    bareissDesnanotIndex k (Fin.last (k + 1)) = Fin.last (k + 1) := by
+  simp [bareissDesnanotIndex]
+
+/-- Reindexing a bordered minor by `bareissDesnanotIndex` on both axes does not
+change its determinant. -/
+theorem det_borderedMinor_bareissDesnanotIndex [CommRing R]
+    (source : Hex.Matrix R n n) (k : Nat) (hnext : k + 1 < n)
+    (i j : Fin n) :
+    ((matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)).submatrix
+        (bareissDesnanotIndex k) (bareissDesnanotIndex k)).det =
+      Hex.Matrix.det (Hex.Matrix.borderedMinor source (k + 1) hnext i j) := by
+  rw [Matrix.det_submatrix_equiv_self, ← det_eq]
+
+/-- Desnanot-Jacobi specialized to a Bareiss bordered minor after the row/column
+reindexing used by `bareissDesnanotIndex`.
+
+This is the Mathlib determinant identity that later proofs rewrite through
+`matrixEquiv_borderedMinor`/`det_borderedMinor_eq_submatrix_det` to obtain the
+`hdesnanot` hypothesis for `bareissExactDiv_borderedMinor_of_mul_eq`. -/
+theorem desnanot_jacobi_borderedMinor_reindex [CommRing R]
+    (source : Hex.Matrix R n n) (k : Nat) (hnext : k + 1 < n)
+    (i j : Fin n) :
+    let M : Matrix (Fin (k + 2)) (Fin (k + 2)) R :=
+      (matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)).submatrix
+        (bareissDesnanotIndex k) (bareissDesnanotIndex k)
+    M.det *
+        (M.submatrix (Fin.succAbove 0 ∘ (Fin.last k).succAbove)
+          (Fin.succAbove 0 ∘ (Fin.last k).succAbove)).det =
+      (M.submatrix (Fin.succAbove 0) (Fin.succAbove 0)).det *
+        (M.submatrix (Fin.last (k + 1)).succAbove
+          (Fin.last (k + 1)).succAbove).det -
+      (M.submatrix (Fin.succAbove 0) (Fin.last (k + 1)).succAbove).det *
+        (M.submatrix (Fin.last (k + 1)).succAbove (Fin.succAbove 0)).det := by
+  intro M
+  exact desnanot_jacobi M
+
 /-- Exact-division bridge for one Bareiss bordered-minor update.
 
 The remaining Mathlib-side recurrence proof can supply `hdesnanot` from the
