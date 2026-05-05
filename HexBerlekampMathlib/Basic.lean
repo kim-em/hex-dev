@@ -257,6 +257,20 @@ theorem rabin_irreducible_of_positive_degree
     Hex.Berlekamp.rabinTest f hmonic = true ↔ Irreducible (toMathlibPolynomial f) := by
   sorry
 
+/--
+Accepted executable irreducibility certificates imply Mathlib irreducibility
+after transporting the checked polynomial to `Polynomial (ZMod p)`.
+-/
+theorem checkIrreducibilityCertificate_irreducible
+    (f : Hex.FpPoly p) (hmonic : Hex.DensePoly.Monic f)
+    [Hex.ZMod64.PrimeModulus p] [Fact (Nat.Prime p)]
+    (cert : Hex.Berlekamp.IrreducibilityCertificate) :
+    Hex.Berlekamp.checkIrreducibilityCertificate f hmonic cert = true →
+      Irreducible (toMathlibPolynomial f) := by
+  intro hcheck
+  exact (rabin_irreducible f hmonic (Hex.Berlekamp.basisSize f) rfl).mp
+    (Hex.Berlekamp.checkIrreducibilityCertificate_rabinTest f hmonic cert hcheck)
+
 /-- Mathlib irreducibility over `Polynomial (ZMod p)` is classically decidable. -/
 instance irreducibleDecidablePred (p : Nat) [Fact (Nat.Prime p)] :
     DecidablePred (fun f : Polynomial (ZMod p) => Irreducible f) :=
