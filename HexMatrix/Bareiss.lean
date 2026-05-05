@@ -48,7 +48,9 @@ def det (data : BareissData n) : Int :=
 
 end BareissData
 
-private structure BareissState (n : Nat) where
+/-- Internal state of the no-pivot Bareiss recurrence, exposed read-only for
+the Mathlib-side determinant proof. -/
+structure BareissState (n : Nat) where
   step : Nat
   matrix : Matrix Int n n
   prevPivot : Int
@@ -58,13 +60,14 @@ private structure BareissState (n : Nat) where
 /-- Exact division used by the Bareiss recurrence. The `else` branch is
 defensive; for matrices produced by the Bareiss update, divisibility should
 always hold. -/
-private def exactDiv (num denom : Int) : Int :=
+def exactDiv (num denom : Int) : Int :=
   if h : denom ∣ num then
     Int.divExact num denom h
   else
     0
 
-private theorem exactDiv_eq_divExact {num denom : Int} (h : denom ∣ num) :
+/-- When divisibility is known, `exactDiv` is the GMP-backed exact quotient. -/
+theorem exactDiv_eq_divExact {num denom : Int} (h : denom ∣ num) :
     exactDiv num denom = Int.divExact num denom h := by
   simp [exactDiv, h]
 
@@ -90,7 +93,7 @@ private def findPivot? (M : Matrix Int n n) (col : Fin n) (start : Nat) :
 
 /-- Apply one Bareiss update step to the trailing submatrix strictly below and
 to the right of the current pivot. -/
-private def stepMatrix (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int) :
+def stepMatrix (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int) :
     Matrix Int n n :=
   Matrix.ofFn fun i j =>
     if hkij : k < i.val ∧ k < j.val then
@@ -102,14 +105,18 @@ private def stepMatrix (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int) :
     else
       M[i][j]
 
-private theorem stepMatrix_eq_of_not_update
+/-- Outside the trailing update region and pivot column below the pivot,
+`stepMatrix` leaves entries unchanged. -/
+theorem stepMatrix_eq_of_not_update
     (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int) (i j : Fin n)
     (htrail : ¬ (k < i.val ∧ k < j.val))
     (hcol : ¬ (k < i.val ∧ j.val = k)) :
     (stepMatrix M k pivot prevPivot)[i][j] = M[i][j] := by
   simp [stepMatrix, Matrix.ofFn, htrail, hcol]
 
-private theorem stepMatrix_diag_of_le
+/-- `stepMatrix` preserves diagonal entries whose index is at or before the
+current pivot step. -/
+theorem stepMatrix_diag_of_le
     (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int) (i : Fin n)
     (hi : i.val ≤ k) :
     (stepMatrix M k pivot prevPivot)[i][i] = M[i][i] := by
@@ -119,13 +126,15 @@ private theorem stepMatrix_diag_of_le
   · intro hcol
     exact Nat.not_lt_of_ge hi hcol.1
 
-private theorem stepMatrix_pivot_col_below
+/-- `stepMatrix` clears the pivot column below the current pivot. -/
+theorem stepMatrix_pivot_col_below
     (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int) (i colK : Fin n)
     (hi : k < i.val) (hcolK : colK.val = k) :
     (stepMatrix M k pivot prevPivot)[i][colK] = 0 := by
   simp [stepMatrix, Matrix.ofFn, hi, hcolK]
 
-private theorem stepMatrix_update_eq
+/-- Entry formula for the trailing block updated by one Bareiss step. -/
+theorem stepMatrix_update_eq
     (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int) (i j : Fin n)
     (hi : k < i.val) (hj : k < j.val) :
     (stepMatrix M k pivot prevPivot)[i][j] =
@@ -134,7 +143,10 @@ private theorem stepMatrix_update_eq
        exactDiv (pivot * M[i][j] - M[i][colK] * M[rowK][j]) prevPivot) := by
   simp [stepMatrix, Matrix.ofFn, hi, hj]
 
-private theorem stepMatrix_borderedMinor_update
+/-- If the current matrix entries already match bordered minors and exact
+division evaluates to the next bordered minor, then one `stepMatrix` update
+preserves the bordered-minor invariant at the updated entry. -/
+theorem stepMatrix_borderedMinor_update
     (source current : Matrix Int n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
     (i j : Fin n) (hi : k < i.val) (hj : k < j.val) (pivot prevPivot : Int)
     (hpivot :
@@ -290,14 +302,15 @@ private def bareissArrayDet (state : BareissArrayState) (n : Nat) : Int :=
       | some d => arraySign state.rowSwaps * d
       | none => arraySign state.rowSwaps
 
-private def finish (state : BareissState n) : BareissData n :=
+/-- Package a Bareiss state as public elimination data. -/
+def finish (state : BareissState n) : BareissData n :=
   { matrix := state.matrix
     rowSwaps := state.rowSwaps
     singularStep := state.singularStep }
 
 /-- Bareiss elimination without pivoting. A zero pivot aborts and records the
 singular step. -/
-private def noPivotLoop (fuel : Nat) (state : BareissState n) : BareissState n :=
+def noPivotLoop (fuel : Nat) (state : BareissState n) : BareissState n :=
   match fuel with
   | 0 => state
   | fuel + 1 =>
@@ -317,22 +330,29 @@ private def noPivotLoop (fuel : Nat) (state : BareissState n) : BareissState n :
       else
         state
 
-private theorem noPivotLoop_zero_fuel (state : BareissState n) :
+/-- With zero fuel, the no-pivot Bareiss loop returns its input state. -/
+theorem noPivotLoop_zero_fuel (state : BareissState n) :
     noPivotLoop 0 state = state := by
   rfl
 
-private theorem noPivotLoop_done (fuel : Nat) (state : BareissState n)
+/-- If the current step is already past the last update step, the no-pivot loop
+returns its input state. -/
+theorem noPivotLoop_done (fuel : Nat) (state : BareissState n)
     (hDone : ¬ state.step + 1 < n) :
     noPivotLoop (fuel + 1) state = state := by
   simp [noPivotLoop, hDone]
 
-private theorem noPivotLoop_singular_branch (fuel : Nat) (state : BareissState n)
+/-- If the no-pivot loop sees a zero pivot before completion, it records the
+current step as singular. -/
+theorem noPivotLoop_singular_branch (fuel : Nat) (state : BareissState n)
     (hDone : state.step + 1 < n)
     (hp : state.matrix[state.step][state.step] = 0) :
     noPivotLoop (fuel + 1) state = { state with singularStep := some state.step } := by
   simp [noPivotLoop, hDone, hp]
 
-private theorem noPivotLoop_regular_branch (fuel : Nat) (state : BareissState n)
+/-- If the current no-pivot Bareiss pivot is nonzero, one loop iteration applies
+`stepMatrix`, advances the step, and recurses on the remaining fuel. -/
+theorem noPivotLoop_regular_branch (fuel : Nat) (state : BareissState n)
     (hDone : state.step + 1 < n)
     (hp : state.matrix[state.step][state.step] ≠ 0) :
     noPivotLoop (fuel + 1) state =
@@ -345,7 +365,9 @@ private theorem noPivotLoop_regular_branch (fuel : Nat) (state : BareissState n)
           singularStep := none } := by
   simp [noPivotLoop, hDone, hp]
 
-private theorem noPivotLoop_matrix_entry_of_row_le_or_col_lt (fuel : Nat)
+/-- Entries in rows already processed, or in columns strictly before the current
+step, are unchanged by subsequent no-pivot loop iterations. -/
+theorem noPivotLoop_matrix_entry_of_row_le_or_col_lt (fuel : Nat)
     (state : BareissState n) (i j : Fin n)
     (hfixed : i.val ≤ state.step ∨ j.val < state.step) :
     (noPivotLoop fuel state).matrix[i][j] = state.matrix[i][j] := by
@@ -391,12 +413,15 @@ private theorem noPivotLoop_matrix_entry_of_row_le_or_col_lt (fuel : Nat)
           · simpa [k] using hp
       · simp [noPivotLoop_done fuel state hDone]
 
-private theorem noPivotLoop_diag_of_le_step (fuel : Nat) (state : BareissState n)
+/-- Diagonal entries at or before the current step are unchanged by subsequent
+no-pivot loop iterations. -/
+theorem noPivotLoop_diag_of_le_step (fuel : Nat) (state : BareissState n)
     (i : Fin n) (hi : i.val ≤ state.step) :
     (noPivotLoop fuel state).matrix[i][i] = state.matrix[i][i] :=
   noPivotLoop_matrix_entry_of_row_le_or_col_lt fuel state i i (Or.inl hi)
 
-private theorem noPivotLoop_rowSwaps (fuel : Nat) (state : BareissState n) :
+/-- The no-pivot loop never changes the row-swap counter. -/
+theorem noPivotLoop_rowSwaps (fuel : Nat) (state : BareissState n) :
     (noPivotLoop fuel state).rowSwaps = state.rowSwaps := by
   induction fuel generalizing state with
   | zero =>
@@ -419,6 +444,14 @@ private theorem noPivotLoop_rowSwaps (fuel : Nat) (state : BareissState n) :
             rw [ih next]
           · simpa [k] using hp
       · simp [noPivotLoop_done fuel state hDone]
+
+/-- Initial state used by the no-pivot Bareiss recurrence. -/
+def noPivotInitialState (M : Matrix Int n n) : BareissState n :=
+  { step := 0
+    matrix := M
+    prevPivot := 1
+    rowSwaps := 0
+    singularStep := none }
 
 /-- Bareiss elimination with row pivoting. If a column has no nonzero pivot,
 the elimination aborts and the determinant is zero. -/
@@ -451,12 +484,7 @@ private def pivotLoop (fuel : Nat) (state : BareissState n) : BareissState n :=
 
 /-- Run the no-pivot Bareiss recurrence and return the final elimination data. -/
 def bareissNoPivotData (M : Matrix Int n n) : BareissData n :=
-  finish <| noPivotLoop n
-    { step := 0
-      matrix := M
-      prevPivot := 1
-      rowSwaps := 0
-      singularStep := none }
+  finish <| noPivotLoop n (noPivotInitialState M)
 
 /-- Determinant computed by the no-pivot Bareiss recurrence. -/
 def bareissNoPivot (M : Matrix Int n n) : Int :=
