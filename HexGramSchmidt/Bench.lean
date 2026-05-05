@@ -12,16 +12,11 @@ instead of the full vector or matrix value.
 Scientific registrations:
 
 * `runGramDetVecChecksum`: one Bareiss pass over the Gram matrix, with model
-  `O(n^3 + n^2*m)` on deterministic `n x (2n + 1)` integer inputs. This wraps
-  a fixed hot loop so the fast determinant-vector surface clears the
-  child-process signal floor.
+  `O(n^3 + n^2*m)` on deterministic `n x (2n + 1)` integer inputs.
 * `runScaledCoeffsChecksum`: the full scaled-coefficient matrix surface, using
-  one shared fraction-free Gram elimination pass. This also wraps a fixed hot
-  loop for signal-floor stability.
+  one shared fraction-free Gram elimination pass.
 * `runSizeReduceChecksum` and `runAdjacentSwapChecksum`: executable row-update
-  matrix helpers, checking only affected rows. These wrap a fixed hot loop so
-  the timed call clears the child-process signal floor without changing the
-  asymptotic model.
+  matrix helpers, checking only affected rows.
 * `runAdjacentSwapDenom`: the exact-swap denominator `d[k]`.
 * `runAdjacentSwapPivotCoeff`: the scaled pivot coefficient `nu[k][k-1]`.
 * `runAdjacentSwapGramDetNumerator` and
@@ -196,58 +191,26 @@ before extracting their scalar. -/
 def updateScaledCoeffComplexity (n : Nat) : Nat :=
   scaledCoeffSurfaceComplexity (n + 3)
 
-/-- Fixed repeat count used to lift very fast row-update helpers above the
-child-process measurement floor. This is independent of `n`, so it changes only
-the constant factor in the declared linear model. -/
-def rowUpdateHotRepeats : Nat := 4096
-
-/-- Fixed repeat count used to lift the Gram determinant-vector benchmark above
-the child-process measurement floor. This is independent of `n`, so it changes
-only the constant factor in the declared textbook model. -/
-def gramDetVecHotRepeats : Nat := 128
-
-/-- Fixed repeat count used to lift the scaled-coefficient benchmark above the
-child-process measurement floor while keeping the upper scientific rungs under
-the per-call wallclock cap. This is independent of `n`, so it changes only the
-constant factor in the declared textbook model. -/
-def scaledCoeffsHotRepeats : Nat := 32
-
-/-- Repeat a deterministic natural-valued target with a rolling checksum. -/
-def repeatNatChecksum (repeats : Nat) (f : Unit → Nat) : Nat :=
-  (List.range repeats).foldl
-    (fun acc _ => acc * 65_537 + f ())
-    0
-
-/-- Repeat a deterministic integer-valued target with a rolling checksum. -/
-def repeatIntChecksum (repeats : Nat) (f : Unit → Int) : Int :=
-  (List.range repeats).foldl
-    (fun acc _ => acc * 65_537 + f ())
-    0
-
 /-- Benchmark target: compute all leading Gram determinants and checksum them. -/
 def runGramDetVecChecksum (input : IntBasisInput) : Nat :=
-  repeatNatChecksum gramDetVecHotRepeats fun _ =>
-    natVectorChecksum (GramSchmidt.Int.gramDetVec (matrixOfFlat input))
+  natVectorChecksum (GramSchmidt.Int.gramDetVec (matrixOfFlat input))
 
 /-- Benchmark target: compute the scaled-coefficient matrix and checksum it. -/
 def runScaledCoeffsChecksum (input : IntBasisInput) : Int :=
-  repeatIntChecksum scaledCoeffsHotRepeats fun _ =>
-    intMatrixChecksum (GramSchmidt.Int.scaledCoeffs (matrixOfFlat input))
+  intMatrixChecksum (GramSchmidt.Int.scaledCoeffs (matrixOfFlat input))
 
 /-- Benchmark target: size-reduce the final row against the first row and
 checksum the changed row plus source row. -/
 def runSizeReduceChecksum (input : UpdateInput) : Int :=
-  repeatIntChecksum rowUpdateHotRepeats fun _ =>
-    let reduced :=
-      GramSchmidt.Int.sizeReduce input.matrix input.sizeReduceSrc input.pivotK input.coeff
-    intRowPairChecksum reduced input.sizeReduceSrc input.pivotK
+  let reduced :=
+    GramSchmidt.Int.sizeReduce input.matrix input.sizeReduceSrc input.pivotK input.coeff
+  intRowPairChecksum reduced input.sizeReduceSrc input.pivotK
 
 /-- Benchmark target: swap the final row with its predecessor and checksum the
 two affected rows. -/
 def runAdjacentSwapChecksum (input : UpdateInput) : Int :=
-  repeatIntChecksum rowUpdateHotRepeats fun _ =>
-    let swapped := GramSchmidt.Int.adjacentSwap input.matrix input.pivotK input.pivotHK
-    intRowPairChecksum swapped (GramSchmidt.prevRow input.pivotK input.pivotHK) input.pivotK
+  let swapped := GramSchmidt.Int.adjacentSwap input.matrix input.pivotK input.pivotHK
+  intRowPairChecksum swapped (GramSchmidt.prevRow input.pivotK input.pivotHK) input.pivotK
 
 /-- Benchmark target: compute the adjacent-swap denominator. -/
 def runAdjacentSwapDenom (input : UpdateInput) : Int :=
@@ -307,6 +270,7 @@ setup_benchmark runSizeReduceChecksum n => rowUpdateComplexity n
     paramSchedule := .custom #[64, 96, 128, 160, 192]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
   }
 
 setup_benchmark runAdjacentSwapChecksum n => rowUpdateComplexity n
@@ -317,6 +281,7 @@ setup_benchmark runAdjacentSwapChecksum n => rowUpdateComplexity n
     paramSchedule := .custom #[64, 96, 128, 160, 192]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
   }
 
 /- `prepUpdateInput n` produces `rows = n + 3`, and
