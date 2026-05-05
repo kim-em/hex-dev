@@ -1672,6 +1672,33 @@ private theorem rat_quotient_derivative_gcd_dvd_repeated
       (by simpa [quotientRat] using
         DensePoly.gcd_dvd_right quotientRat (DensePoly.derivative quotientRat))
 
+/-- If `d` divides the derivative of a product `d * a`, then `d` divides
+`a * d'` (where `d' = derivative d`). This is the characteristic-zero
+"derivative cofactor" identity used in iterated divisibility arguments
+for the square-free quotient. -/
+private theorem rat_dvd_cofactor_derivative
+    (d a : DensePoly Rat)
+    (hdq' : d ∣ DensePoly.derivative (d * a)) :
+    d ∣ a * DensePoly.derivative d := by
+  rw [rat_derivative_mul] at hdq'
+  have hda' : d ∣ d * DensePoly.derivative a :=
+    ⟨DensePoly.derivative a, rfl⟩
+  have hsub := rat_dvd_sub hdq' hda'
+  have heq :
+      DensePoly.derivative d * a + d * DensePoly.derivative a -
+        d * DensePoly.derivative a =
+        DensePoly.derivative d * a := by
+    apply DensePoly.ext_coeff
+    intro n
+    have hzero_add : (0 : Rat) + 0 = 0 := by grind
+    have hzero_sub : (0 : Rat) - 0 = 0 := by grind
+    rw [DensePoly.coeff_sub _ _ n hzero_sub]
+    rw [DensePoly.coeff_add _ _ n hzero_add]
+    grind
+  rw [heq] at hsub
+  rw [DensePoly.mul_comm_poly]
+  exact hsub
+
 private theorem densePoly_eq_zero_of_isZero_true {R : Type _} [Zero R] [DecidableEq R]
     (p : DensePoly R) (h : p.isZero = true) :
     p = 0 := by
