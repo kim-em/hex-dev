@@ -91,6 +91,18 @@ theorem coeffs_sizeReduce_lower (b : Matrix Int n m) (l j k : Fin n)
         (r : Rat) * GramSchmidt.entry (coeffs b) j l := by
   sorry
 
+theorem coeffs_sizeReduce_other_row (b : Matrix Int n m) (j k : Fin n)
+    (hjk : j.val < k.val) (r : Int) (i : Fin n) (hik : i ≠ k) :
+    (coeffs (sizeReduce b j k r)).row i = (coeffs b).row i := by
+  sorry
+
+theorem coeffs_sizeReduce_above_pivot (b : Matrix Int n m) (j k : Fin n)
+    (hjk : j.val < k.val) (r : Int) (l : Fin n)
+    (hjl : j.val < l.val) (hlk : l.val < k.val) :
+    GramSchmidt.entry (coeffs (sizeReduce b j k r)) k l =
+      GramSchmidt.entry (coeffs b) k l := by
+  sorry
+
 theorem gramDet_sizeReduce (b : Matrix Int n m) (j k : Fin n) (hjk : j.val < k.val)
     (r : Int) (t : Nat) (ht : t ≤ n) :
     gramDet (sizeReduce b j k r) t ht = gramDet b t ht := by
@@ -108,6 +120,18 @@ theorem scaledCoeffs_sizeReduce_lower (b : Matrix Int n m) (l j k : Fin n)
     GramSchmidt.entry (scaledCoeffs (sizeReduce b j k r)) k l =
       GramSchmidt.entry (scaledCoeffs b) k l -
         r * GramSchmidt.entry (scaledCoeffs b) j l := by
+  sorry
+
+theorem scaledCoeffs_sizeReduce_other_row (b : Matrix Int n m) (j k : Fin n)
+    (hjk : j.val < k.val) (r : Int) (i : Fin n) (hik : i ≠ k) :
+    (scaledCoeffs (sizeReduce b j k r)).row i = (scaledCoeffs b).row i := by
+  sorry
+
+theorem scaledCoeffs_sizeReduce_above_pivot (b : Matrix Int n m) (j k : Fin n)
+    (hjk : j.val < k.val) (r : Int) (l : Fin n)
+    (hjl : j.val < l.val) (hlk : l.val < k.val) :
+    GramSchmidt.entry (scaledCoeffs (sizeReduce b j k r)) k l =
+      GramSchmidt.entry (scaledCoeffs b) k l := by
   sorry
 
 theorem basis_adjacentSwap_of_lt (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.val)
