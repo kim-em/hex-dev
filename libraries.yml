@@ -122,7 +122,7 @@ libraries:
   HexBerlekampMathlib:
     deps: [HexBerlekamp, HexPolyMathlib, HexModArithMathlib]
     mathlib: true
-    done_through: 2
+    done_through: 3
   HexHenselMathlib:
     deps: [HexHensel, HexPolyMathlib]
     mathlib: true

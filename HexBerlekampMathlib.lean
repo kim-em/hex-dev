@@ -1,4 +1,5 @@
 import HexBerlekampMathlib.Basic
+import HexBerlekampMathlib.Conformance
 
 /-!
 The `HexBerlekampMathlib` library contains the Mathlib-facing correctness
