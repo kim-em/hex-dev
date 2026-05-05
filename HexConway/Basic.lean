@@ -159,11 +159,53 @@ def conwayPoly (p n : Nat) [ZMod64.Bounds p] (h : SupportedEntry p n) : FpPoly p
     luebeckConwayPolynomial? p n = some (conwayPoly p n h) :=
   h.isSupported
 
+private theorem zmod64_one_ne_zero_of_one_lt
+    {p : Nat} [ZMod64.Bounds p] (hp : 1 < p) : (1 : ZMod64 p) ≠ 0 := by
+  intro h
+  have hm := (ZMod64.natCast_eq_natCast_iff (p := p) 1 0).mp h
+  rw [Nat.zero_mod, Nat.mod_eq_of_lt hp] at hm
+  exact Nat.one_ne_zero hm
+
+private theorem ofCoeffs_degree_pos_of_back_ne_zero
+    {R : Type u} [Zero R] [DecidableEq R]
+    (arr : Array R) (hsize : 2 ≤ arr.size)
+    (hback : arr[arr.size - 1]'(by omega) ≠ Zero.zero) :
+    0 < (DensePoly.ofCoeffs arr).degree?.getD 0 := by
+  have hgetd_eq :
+      arr.getD (arr.size - 1) (Zero.zero : R) = arr[arr.size - 1]'(by omega) :=
+    (Array.getElem_eq_getD (Zero.zero : R)).symm
+  have hcoeff_ne : (DensePoly.ofCoeffs arr).coeff (arr.size - 1) ≠ Zero.zero := by
+    rw [DensePoly.coeff_ofCoeffs, hgetd_eq]; exact hback
+  have hpoly_size : arr.size - 1 < (DensePoly.ofCoeffs arr).size := by
+    rcases Nat.lt_or_ge (arr.size - 1) (DensePoly.ofCoeffs arr).size with hlt | hge
+    · exact hlt
+    · exact False.elim (hcoeff_ne (DensePoly.coeff_eq_zero_of_size_le _ hge))
+  rw [show (DensePoly.ofCoeffs arr).degree? =
+        if _h : (DensePoly.ofCoeffs arr).size = 0 then none
+        else some ((DensePoly.ofCoeffs arr).size - 1) from rfl]
+  rw [dif_neg (by omega : (DensePoly.ofCoeffs arr).size ≠ 0)]
+  simp only [Option.getD_some]
+  omega
+
 /-- Every committed Tier 1 Conway entry in the current table is nonconstant. -/
-axiom luebeckConwayPolynomial?_degree_pos
+theorem luebeckConwayPolynomial?_degree_pos
     {p n : Nat} [ZMod64.Bounds p] {f : FpPoly p}
     (h : luebeckConwayPolynomial? p n = some f) :
-    0 < FpPoly.degree f
+    0 < FpPoly.degree f := by
+  unfold luebeckConwayPolynomial? at h
+  rw [Option.map_eq_some_iff] at h
+  obtain ⟨coeffs, hcoeffs, hf⟩ := h
+  subst hf
+  unfold luebeckConwayCoeffs? at hcoeffs
+  split at hcoeffs
+  all_goals
+    (cases hcoeffs
+     all_goals
+       (refine ofCoeffs_degree_pos_of_back_ne_zero _ ?_ ?_
+        · simp
+        · intro hzero
+          simp at hzero
+          exact absurd hzero (zmod64_one_ne_zero_of_one_lt (by decide))))
 
 /-- Supported Conway entries produce nonconstant moduli. -/
 theorem conwayPoly_nonconstant
