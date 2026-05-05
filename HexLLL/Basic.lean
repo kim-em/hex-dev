@@ -266,8 +266,29 @@ def sizeReduceColumn (s : LLLState n m) (j k : Fin n) (hjk : j.val < k.val) :
             grind
           · -- Case C: l = j.val
             sorry
-          · -- Case D: l > j.val
-            sorry
+          · -- Case D: l > j.val. rowK[l] is unchanged from (s.ν.get k).get l;
+            -- coeffs(b')[k][l] = coeffs(s.b)[k][l] by coeffs_sizeReduce_above_pivot.
+            have h_lne_j : l ≠ j.val := Nat.ne_of_gt hlj
+            have h_rowK_get : rowK.get ⟨l, hl⟩ = (s.ν.get k).get ⟨l, hl⟩ := by
+              change (((List.finRange j.val).foldl
+                  (fun row l' =>
+                    let lFin : Fin n := ⟨l'.val, Nat.lt_trans l'.isLt j.isLt⟩
+                    row.set lFin ((s.ν.get k).get lFin - r * (s.ν.get j).get lFin))
+                  (s.ν.get k)).set j.val ((s.ν.get k).get j - r * Int.ofNat dj1)
+                  j.isLt)[l] = _
+              rw [Vector.getElem_set_ne j.isLt hl (Ne.symm h_lne_j)]
+              have h := foldl_finRange_set_outerSubMul_get_eq j.val
+                (Nat.le_of_lt j.isLt) (s.ν.get k) (s.ν.get k) (s.ν.get j) r ⟨l, hl⟩
+              rw [if_neg (Nat.not_lt_of_gt hlj)] at h
+              exact h
+            rw [h_rowK_get]
+            have h_coeff_above :
+                ((GramSchmidt.Int.coeffs b').get ⟨k.val, hi⟩).get ⟨l, hl⟩ =
+                  ((GramSchmidt.Int.coeffs s.b).get ⟨k.val, hi⟩).get ⟨l, hl⟩ :=
+              GramSchmidt.Int.coeffs_sizeReduce_above_pivot s.b j k hjk r ⟨l, hl⟩
+                hlj hli
+            rw [h_coeff_above]
+            exact s.ν_eq k.val l k.isLt hl hli
         · -- Row i ≠ k.val: ν' agrees with s.ν, and coeffs(b') agrees with coeffs(s.b)
           -- on row i, so this case reduces to s.ν_eq directly.
           have hik_fin : (⟨i, hi⟩ : Fin n) ≠ k := fun h => hik (congrArg Fin.val h)
