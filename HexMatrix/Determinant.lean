@@ -991,6 +991,85 @@ private theorem inversionCount_insert_last_castSucc {n : Nat} (xs : List (Fin n)
       rw [inversionFold_map_castSucc]
       simp [Fin.lt_def]
 
+private theorem foldl_insertIdx_last_castSucc_not_lt {n : Nat} (xs : List (Fin n))
+    (x : Fin n) (p acc : Nat) :
+    ((xs.map Fin.castSucc).insertIdx p (Fin.last n)).foldl
+        (fun acc y => acc + if y < x.castSucc then 1 else 0) acc =
+      (xs.map Fin.castSucc).foldl
+        (fun acc y => acc + if y < x.castSucc then 1 else 0) acc := by
+  induction xs generalizing p acc with
+  | nil =>
+      cases p <;> simp [List.insertIdx, Fin.lt_def]
+  | cons y ys ih =>
+      cases p with
+      | zero =>
+          have hnlt : ¬ n < x.val := by omega
+          simp [List.insertIdx, Fin.lt_def, hnlt]
+      | succ p =>
+          simp only [List.map_cons]
+          rw [List.insertIdx, List.modifyTailIdx_succ_cons]
+          simp only [List.foldl_cons]
+          change
+            ((ys.map Fin.castSucc).insertIdx p (Fin.last n)).foldl
+                (fun acc y => acc + if y < x.castSucc then 1 else 0)
+                (acc + if y.castSucc < x.castSucc then 1 else 0) =
+              (ys.map Fin.castSucc).foldl
+                (fun acc y => acc + if y < x.castSucc then 1 else 0)
+                (acc + if y.castSucc < x.castSucc then 1 else 0)
+          rw [ih p (acc + if y.castSucc < x.castSucc then 1 else 0)]
+
+private theorem foldl_all_lt_last_castSucc {n : Nat} (xs : List (Fin n)) (acc : Nat) :
+    (xs.map Fin.castSucc).foldl
+        (fun acc y => acc + if y < Fin.last n then 1 else 0) acc =
+      acc + xs.length := by
+  induction xs generalizing acc with
+  | nil => simp
+  | cons x xs ih =>
+      simp only [List.map_cons, List.foldl_cons, List.length_cons]
+      rw [ih (acc + if x.castSucc < Fin.last n then 1 else 0)]
+      simp [Fin.lt_def]
+      omega
+
+private theorem inversionCount_insertIdx_castSucc_last_eq {n : Nat}
+    (xs : List (Fin n)) (p : Nat) (hp : p ≤ xs.length) :
+    inversionCount ((xs.map Fin.castSucc).insertIdx p (Fin.last n)) =
+      inversionCount xs + (xs.length - p) := by
+  induction xs generalizing p with
+  | nil =>
+      cases p with
+      | zero => rfl
+      | succ p => cases hp
+  | cons x xs ih =>
+      cases p with
+      | zero =>
+          simp only [List.map_cons]
+          rw [List.insertIdx, List.modifyTailIdx_zero]
+          simp only [inversionCount, List.foldl_cons]
+          rw [foldl_all_lt_last_castSucc xs
+            (0 + if x.castSucc < Fin.last n then 1 else 0)]
+          rw [inversionFold_map_castSucc]
+          rw [inversionCount_map_castSucc]
+          simp [Fin.lt_def]
+          omega
+      | succ p =>
+          have hp' : p ≤ xs.length := Nat.succ_le_succ_iff.mp hp
+          have hlen : (x :: xs).length - (p + 1) = xs.length - p := by
+            simp
+          simp only [List.map_cons]
+          rw [List.insertIdx, List.modifyTailIdx_succ_cons]
+          simp only [inversionCount]
+          change
+            ((xs.map Fin.castSucc).insertIdx p (Fin.last n)).foldl
+                (fun acc y => acc + if y < x.castSucc then 1 else 0) 0 +
+                inversionCount ((xs.map Fin.castSucc).insertIdx p (Fin.last n)) =
+              xs.foldl (fun acc y => acc + if y < x then 1 else 0) 0 +
+                inversionCount xs + ((x :: xs).length - (p + 1))
+          rw [foldl_insertIdx_last_castSucc_not_lt xs x p]
+          rw [inversionFold_map_castSucc]
+          rw [ih p hp']
+          rw [hlen]
+          grind
+
 private theorem list_insertIdx_length {α : Type u} (xs : List α) (x : α) :
     xs.insertIdx xs.length x = xs ++ [x] := by
   induction xs with
