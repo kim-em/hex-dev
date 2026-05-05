@@ -333,13 +333,24 @@ setup_fixed_benchmark benchFoo where {
 }
 ```
 
+Sub-millisecond bodies are expected: the harness auto-tunes inner
+repeats within one child process up to `minTotalSeconds` (default
+`0.001`) before recording per-call time, mirroring the parametric
+warm-mode contract. Per-call time is `total_nanos / inner_repeats`;
+each fixed JSONL row carries an `inner_repeats` field. Do not
+hand-roll inner loops to clear the noise floor.
+
 Every fixed benchmark sets `expectedHash` in its `where` clause to
 catch silent value regressions — the cross-repeat hash-agreement
 check alone is vacuous on small-cardinality result types like
 `Bool`. Workflow: register, run once, copy the printed `observed
 hash:` value into the `where` clause, commit. A sub-microsecond `‼`
 advisory in the harness output means the body is still being folded
-(typically `pure (closedExpression)`); add an `IO.Ref` read.
+(typically `pure (closedExpression)`); add an `IO.Ref` read. The
+auto-tuner runs the body until `minTotalSeconds` is cleared, so a
+sub-microsecond advisory after that is constant folding by
+definition — fix with the `IO.Ref` read of a runtime input, not a
+longer workload.
 
 ## Conway tier separation
 
