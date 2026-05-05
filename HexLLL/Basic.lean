@@ -115,6 +115,88 @@ private def nearestQuotient (νjk : Int) (dj1 : Nat) : Int :=
 private def setEntry (M : Matrix Int n n) (i j : Fin n) (x : Int) : Matrix Int n n :=
   M.set i ((M.get i).set j x)
 
+private theorem foldl_set_outerSubMul_get_eq
+    {n : Nat} (xs : List (Fin n))
+    (base outerK outerJ : Vector Int n) (r : Int) (l : Fin n) :
+    (xs.foldl
+        (fun (row : Vector Int n) (i : Fin n) =>
+          row.set i (outerK.get i - r * outerJ.get i))
+        base).get l =
+      if (∃ i ∈ xs, i.val = l.val) then
+        outerK.get l - r * outerJ.get l
+      else
+        base.get l := by
+  induction xs generalizing base with
+  | nil => simp
+  | cons x xs ih =>
+    simp only [List.foldl_cons]
+    rw [ih]
+    by_cases h_xs : ∃ i ∈ xs, i.val = l.val
+    · simp [h_xs]
+    · by_cases h_xl : x.val = l.val
+      · have h_cons : ∃ i ∈ x :: xs, i.val = l.val :=
+          ⟨x, List.mem_cons.mpr (Or.inl rfl), h_xl⟩
+        have h_xeq : x = l := Fin.eq_of_val_eq h_xl
+        subst h_xeq
+        simp only [h_xs, ↓reduceIte, h_cons]
+        change (base.set x.val (outerK.get x - r * outerJ.get x) x.isLt)[x.val] = _
+        exact Vector.getElem_set_self x.isLt
+      · have h_cons : ¬ ∃ i ∈ x :: xs, i.val = l.val := by
+          rintro ⟨i, hi, hi_l⟩
+          rcases List.mem_cons.mp hi with rfl | hxs
+          · exact h_xl hi_l
+          · exact h_xs ⟨i, hxs, hi_l⟩
+        simp only [h_xs, ↓reduceIte, h_cons]
+        change (base.set x.val (outerK.get x - r * outerJ.get x) x.isLt)[l.val] = base[l.val]
+        exact Vector.getElem_set_ne x.isLt l.isLt h_xl
+
+private theorem foldl_finRange_set_outerSubMul_get_eq
+    {n : Nat} (jVal : Nat) (hjn : jVal ≤ n)
+    (base outerK outerJ : Vector Int n) (r : Int) (l : Fin n) :
+    ((List.finRange jVal).foldl
+        (fun (row : Vector Int n) (l' : Fin jVal) =>
+          let lFin : Fin n := ⟨l'.val, Nat.lt_of_lt_of_le l'.isLt hjn⟩
+          row.set lFin (outerK.get lFin - r * outerJ.get lFin))
+        base).get l =
+      if l.val < jVal then
+        outerK.get l - r * outerJ.get l
+      else
+        base.get l := by
+  let cast : Fin jVal → Fin n :=
+    fun l' => ⟨l'.val, Nat.lt_of_lt_of_le l'.isLt hjn⟩
+  show ((List.finRange jVal).foldl
+        (fun (row : Vector Int n) (l' : Fin jVal) =>
+          row.set (cast l') (outerK.get (cast l') - r * outerJ.get (cast l')))
+        base).get l = _
+  rw [show ((List.finRange jVal).foldl
+        (fun (row : Vector Int n) (l' : Fin jVal) =>
+          row.set (cast l') (outerK.get (cast l') - r * outerJ.get (cast l')))
+        base) =
+      ((List.finRange jVal).map cast).foldl
+        (fun (row : Vector Int n) (i : Fin n) =>
+          row.set i (outerK.get i - r * outerJ.get i))
+        base from
+      (@List.foldl_map (Fin jVal) (Fin n) (Vector Int n) cast
+        (fun row i => row.set i (outerK.get i - r * outerJ.get i))
+        (List.finRange jVal) base).symm]
+  rw [foldl_set_outerSubMul_get_eq]
+  by_cases hlj : l.val < jVal
+  · have hex : ∃ i ∈ (List.finRange jVal).map cast, i.val = l.val := by
+      refine ⟨⟨l.val, Nat.lt_of_lt_of_le hlj hjn⟩, ?_, rfl⟩
+      rw [List.mem_map]
+      exact ⟨⟨l.val, hlj⟩, List.mem_finRange _, rfl⟩
+    rw [if_pos hex, if_pos hlj]
+  · have hno : ¬ ∃ i ∈ (List.finRange jVal).map cast, i.val = l.val := by
+      rintro ⟨i, hi_mem, hi_eq⟩
+      rw [List.mem_map] at hi_mem
+      obtain ⟨l', _, hl'⟩ := hi_mem
+      have hcast : (cast l').val = l'.val := rfl
+      have : l.val < jVal := by
+        rw [← hi_eq, ← hl', hcast]
+        exact l'.isLt
+      exact hlj this
+    rw [if_neg hno, if_neg hlj]
+
 /-- Single-column size reduction update for row `k` against row `j`. -/
 def sizeReduceColumn (s : LLLState n m) (j k : Fin n) (hjk : j.val < k.val) :
     LLLState n m :=
@@ -137,7 +219,149 @@ def sizeReduceColumn (s : LLLState n m) (j k : Fin n) (hjk : j.val < k.val) :
       d := s.d
       ν_eq := by
         intro i l hi hl hli
-        sorry
+        by_cases hik : i = k.val
+        · -- Row i is row k. Subdivide on l vs j.val.
+          subst hik
+          -- ν'.get ⟨k.val, hi⟩ = rowK
+          have hν_get_k : ν'.get ⟨k.val, hi⟩ = rowK := by
+            change (s.ν.set k.val rowK k.isLt)[k.val] = rowK
+            exact Vector.getElem_set_self k.isLt
+          rw [hν_get_k]
+          rcases Nat.lt_trichotomy l j.val with hlj | hlj | hlj
+          · -- Case B: l < j.val. rowK[l] = (s.ν.get k).get l - r * (s.ν.get j).get l
+            have h_lne_j : l ≠ j.val := Nat.ne_of_lt hlj
+            have h_rowK_get : rowK.get ⟨l, hl⟩ =
+                (s.ν.get k).get ⟨l, hl⟩ - r * (s.ν.get j).get ⟨l, hl⟩ := by
+              change (((List.finRange j.val).foldl
+                  (fun row l' =>
+                    let lFin : Fin n := ⟨l'.val, Nat.lt_trans l'.isLt j.isLt⟩
+                    row.set lFin ((s.ν.get k).get lFin - r * (s.ν.get j).get lFin))
+                  (s.ν.get k)).set j.val ((s.ν.get k).get j - r * Int.ofNat dj1)
+                  j.isLt)[l] = _
+              rw [Vector.getElem_set_ne j.isLt hl (Ne.symm h_lne_j)]
+              have h := foldl_finRange_set_outerSubMul_get_eq j.val
+                (Nat.le_of_lt j.isLt) (s.ν.get k) (s.ν.get k) (s.ν.get j) r ⟨l, hl⟩
+              rw [if_pos hlj] at h
+              exact h
+            rw [h_rowK_get]
+            push_cast
+            have h_νkl : ((s.ν.get k).get ⟨l, hl⟩ : Rat) =
+                (s.d.get ⟨l + 1, Nat.succ_lt_succ hl⟩ : Rat) *
+                  ((GramSchmidt.Int.coeffs s.b).get k).get ⟨l, hl⟩ :=
+              s.ν_eq k.val l k.isLt hl hli
+            have h_νjl : ((s.ν.get j).get ⟨l, hl⟩ : Rat) =
+                (s.d.get ⟨l + 1, Nat.succ_lt_succ hl⟩ : Rat) *
+                  ((GramSchmidt.Int.coeffs s.b).get j).get ⟨l, hl⟩ :=
+              s.ν_eq j.val l j.isLt hl hlj
+            have h_coeff_lower :
+                ((GramSchmidt.Int.coeffs b').get ⟨k.val, hi⟩).get ⟨l, hl⟩ =
+                  ((GramSchmidt.Int.coeffs s.b).get ⟨k.val, hi⟩).get ⟨l, hl⟩ -
+                    (r : Rat) * ((GramSchmidt.Int.coeffs s.b).get ⟨j.val, j.isLt⟩).get
+                      ⟨l, Nat.lt_trans hlj j.isLt⟩ :=
+              GramSchmidt.Int.coeffs_sizeReduce_lower s.b ⟨l, hl⟩ j k hlj hjk r
+            rw [h_coeff_lower, h_νkl, h_νjl]
+            grind
+          · -- Case C: l = j.val. Bridge through `scaledCoeffs` to avoid the `hnorm`
+            -- precondition of `coeffs_sizeReduce_pivot`.
+            subst hlj
+            have h_rowK_get : rowK.get ⟨j.val, hl⟩ =
+                (s.ν.get k).get j - r * Int.ofNat dj1 := by
+              change (((List.finRange j.val).foldl
+                  (fun row l' =>
+                    let lFin : Fin n := ⟨l'.val, Nat.lt_trans l'.isLt j.isLt⟩
+                    row.set lFin ((s.ν.get k).get lFin - r * (s.ν.get j).get lFin))
+                  (s.ν.get k)).set j.val ((s.ν.get k).get j - r * Int.ofNat dj1)
+                  j.isLt)[j.val] = _
+              exact Vector.getElem_set_self j.isLt
+            rw [h_rowK_get]
+            -- s.d[j.val+1] = gramDet s.b (j.val+1)
+            have h_d_eq_orig : s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩ =
+                GramSchmidt.Int.gramDet s.b (j.val + 1) (Nat.succ_le_of_lt j.isLt) :=
+              s.d_eq (j.val + 1) (Nat.succ_lt_succ j.isLt)
+            -- s.ν_eq for k, j.
+            have h_νkj : ((s.ν.get k).get j : Rat) =
+                (s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩ : Rat) *
+                  ((GramSchmidt.Int.coeffs s.b).get k).get j :=
+              s.ν_eq k.val j.val k.isLt j.isLt hjk
+            -- scaledCoeffs_eq for s.b at (k, j).
+            have h_sc_eq_orig :
+                ((((GramSchmidt.Int.scaledCoeffs s.b).get k).get j : Int) : Rat) =
+                (GramSchmidt.Int.gramDet s.b (j.val + 1)
+                  (Nat.succ_le_of_lt (Nat.lt_trans hjk k.isLt)) : Rat) *
+                    ((GramSchmidt.Int.coeffs s.b).get k).get j :=
+              GramSchmidt.Int.scaledCoeffs_eq s.b k.val j.val k.isLt hjk
+            -- (s.ν.get k).get j = scaledCoeffs(s.b)[k][j] (in Int).
+            have h_ν_eq_sc :
+                (s.ν.get k).get j = ((GramSchmidt.Int.scaledCoeffs s.b).get k).get j := by
+              have hrat : (((s.ν.get k).get j : Int) : Rat) =
+                  ((((GramSchmidt.Int.scaledCoeffs s.b).get k).get j : Int) : Rat) := by
+                rw [h_νkj, h_sc_eq_orig, h_d_eq_orig]
+              exact_mod_cast hrat
+            -- scaledCoeffs at the pivot under sizeReduce (no `hnorm` needed).
+            have h_sc_pivot : ((GramSchmidt.Int.scaledCoeffs b').get k).get j =
+                ((GramSchmidt.Int.scaledCoeffs s.b).get k).get j -
+                  r * Int.ofNat (GramSchmidt.Int.gramDet s.b (j.val + 1)
+                    (Nat.succ_le_of_lt j.isLt)) :=
+              GramSchmidt.Int.scaledCoeffs_sizeReduce_pivot s.b j k hjk r
+            -- Combine to express ((s.ν.get k).get j - r * Int.ofNat dj1) as
+            -- scaledCoeffs(b')[k][j].
+            have h_lhs_eq : (s.ν.get k).get j - r * Int.ofNat dj1 =
+                ((GramSchmidt.Int.scaledCoeffs b').get k).get j := by
+              rw [h_sc_pivot, ← h_ν_eq_sc, ← h_d_eq_orig]
+            rw [h_lhs_eq]
+            -- gramDet(b', j.val+1) = gramDet(s.b, j.val+1).
+            have h_gramDet_b' : GramSchmidt.Int.gramDet b' (j.val + 1)
+                (Nat.succ_le_of_lt (Nat.lt_trans hjk k.isLt)) =
+                s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩ := by
+              show GramSchmidt.Int.gramDet (GramSchmidt.Int.sizeReduce s.b j k r)
+                  (j.val + 1) _ = _
+              rw [GramSchmidt.Int.gramDet_sizeReduce s.b j k hjk r (j.val + 1)
+                (Nat.succ_le_of_lt (Nat.lt_trans hjk k.isLt))]
+              exact h_d_eq_orig.symm
+            -- scaledCoeffs_eq for b' at (k, j).
+            have h_sc_eq_b' :
+                ((((GramSchmidt.Int.scaledCoeffs b').get k).get j : Int) : Rat) =
+                (GramSchmidt.Int.gramDet b' (j.val + 1)
+                  (Nat.succ_le_of_lt (Nat.lt_trans hjk k.isLt)) : Rat) *
+                    ((GramSchmidt.Int.coeffs b').get k).get j :=
+              GramSchmidt.Int.scaledCoeffs_eq b' k.val j.val k.isLt hjk
+            rw [h_sc_eq_b', h_gramDet_b']
+          · -- Case D: l > j.val. rowK[l] is unchanged from (s.ν.get k).get l;
+            -- coeffs(b')[k][l] = coeffs(s.b)[k][l] by coeffs_sizeReduce_above_pivot.
+            have h_lne_j : l ≠ j.val := Nat.ne_of_gt hlj
+            have h_rowK_get : rowK.get ⟨l, hl⟩ = (s.ν.get k).get ⟨l, hl⟩ := by
+              change (((List.finRange j.val).foldl
+                  (fun row l' =>
+                    let lFin : Fin n := ⟨l'.val, Nat.lt_trans l'.isLt j.isLt⟩
+                    row.set lFin ((s.ν.get k).get lFin - r * (s.ν.get j).get lFin))
+                  (s.ν.get k)).set j.val ((s.ν.get k).get j - r * Int.ofNat dj1)
+                  j.isLt)[l] = _
+              rw [Vector.getElem_set_ne j.isLt hl (Ne.symm h_lne_j)]
+              have h := foldl_finRange_set_outerSubMul_get_eq j.val
+                (Nat.le_of_lt j.isLt) (s.ν.get k) (s.ν.get k) (s.ν.get j) r ⟨l, hl⟩
+              rw [if_neg (Nat.not_lt_of_gt hlj)] at h
+              exact h
+            rw [h_rowK_get]
+            have h_coeff_above :
+                ((GramSchmidt.Int.coeffs b').get ⟨k.val, hi⟩).get ⟨l, hl⟩ =
+                  ((GramSchmidt.Int.coeffs s.b).get ⟨k.val, hi⟩).get ⟨l, hl⟩ :=
+              GramSchmidt.Int.coeffs_sizeReduce_above_pivot s.b j k hjk r ⟨l, hl⟩
+                hlj hli
+            rw [h_coeff_above]
+            exact s.ν_eq k.val l k.isLt hl hli
+        · -- Row i ≠ k.val: ν' agrees with s.ν, and coeffs(b') agrees with coeffs(s.b)
+          -- on row i, so this case reduces to s.ν_eq directly.
+          have hik_fin : (⟨i, hi⟩ : Fin n) ≠ k := fun h => hik (congrArg Fin.val h)
+          have hν_get : (ν'.get ⟨i, hi⟩) = s.ν.get ⟨i, hi⟩ := by
+            change (s.ν.set k.val rowK k.isLt).get ⟨i, hi⟩ = s.ν.get ⟨i, hi⟩
+            change (s.ν.set k.val rowK k.isLt)[i] = s.ν[i]
+            exact Vector.getElem_set_ne k.isLt hi (fun h => hik h.symm)
+          have hcoeff_row :
+              (GramSchmidt.Int.coeffs b').get ⟨i, hi⟩ =
+                (GramSchmidt.Int.coeffs s.b).get ⟨i, hi⟩ :=
+            GramSchmidt.Int.coeffs_sizeReduce_other_row s.b j k hjk r ⟨i, hi⟩ hik_fin
+          rw [hν_get, hcoeff_row]
+          exact s.ν_eq i l hi hl hli
       d_eq := by
         intro i hi
         dsimp only [b']
