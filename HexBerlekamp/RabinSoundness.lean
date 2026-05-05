@@ -1,4 +1,5 @@
 import HexBerlekamp.Irreducibility
+import HexArith.Nat.Pow
 
 /-!
 Project-side soundness bridge from `Berlekamp.rabinTest` to
@@ -349,10 +350,71 @@ A standard polynomial-algebra identity. Used to lift divisibility of an
 irreducible factor `g` from `X^(p^d) - X` to `X^(p^m) - X` where `m` is a
 maximal proper divisor of `n` in which `d` lives.
 -/
+private theorem xPowSubX_factor (k : Nat) :
+    xPowSubX (p := p) k =
+      FpPoly.X * (DensePoly.monomial (p ^ k - 1) (1 : ZMod64 p) - 1) := by
+  unfold xPowSubX FpPoly.X
+  have hp_pos : 0 < p := by
+    have h2 : 2 ≤ p := (ZMod64.PrimeModulus.prime (p := p)).two_le
+    omega
+  have hp_gt_one : 1 < p := by
+    have h2 : 2 ≤ p := (ZMod64.PrimeModulus.prime (p := p)).two_le
+    omega
+  have hp_ne_one : p ≠ 1 := by omega
+  have hpow_pos : 0 < p ^ k := Nat.pow_pos hp_pos
+  have hcoeff_one :
+      ∀ i, (1 : FpPoly p).coeff i = if i = 0 then (1 : ZMod64 p) else 0 := by
+    intro i
+    change (DensePoly.C (1 : ZMod64 p)).coeff i =
+      if i = 0 then (1 : ZMod64 p) else 0
+    exact DensePoly.coeff_C (1 : ZMod64 p) i
+  apply DensePoly.ext_coeff
+  intro n
+  have hzero_sub : ((0 : ZMod64 p) - 0) = 0 := by grind
+  rw [DensePoly.coeff_sub _ _ _ hzero_sub]
+  rw [FpPoly.coeff_monomial_mul]
+  rw [DensePoly.coeff_sub _ _ _ hzero_sub]
+  rw [DensePoly.coeff_monomial, DensePoly.coeff_monomial, hcoeff_one]
+  by_cases hn0 : n = 0
+  · subst hn0
+    have h0pow_ne : ¬ 0 = p ^ k := by omega
+    simp [h0pow_ne]
+    grind
+  · have hn_not_lt : ¬ n < 1 := by omega
+    simp [hn_not_lt]
+    rw [DensePoly.coeff_monomial]
+    simp only [Lean.Grind.Semiring.one_mul]
+    by_cases hnpow : n = p ^ k
+    · by_cases hk0 : k = 0
+      · simp [hnpow, hk0]
+      · have hpow_gt_one : 1 < p ^ k := Nat.one_lt_pow hk0 hp_gt_one
+        have hpow_sub_ne_zero : p ^ k - 1 ≠ 0 := by omega
+        simp [hnpow, hp_ne_one, hk0, hpow_sub_ne_zero]
+        change (1 : ZMod64 p) - (0 : ZMod64 p) = (1 : ZMod64 p) - (0 : ZMod64 p)
+        rfl
+    · have hsub_ne : n - 1 ≠ p ^ k - 1 := by omega
+      by_cases hn1 : n = 1
+      · subst hn1
+        simp [hnpow, hsub_ne]
+      · have hnsub0 : n - 1 ≠ 0 := by omega
+        simp [hnpow, hsub_ne, hn1, hnsub0]
+        change (0 : ZMod64 p) - (0 : ZMod64 p) = (0 : ZMod64 p) - (0 : ZMod64 p)
+        rfl
+
 theorem xPowSubX_dvd_of_dvd
     {d m : Nat} (_hdvd : d ∣ m) :
     xPowSubX (p := p) d ∣ xPowSubX (p := p) m := by
-  sorry
+  have hpow_dvd :
+      p ^ d - 1 ∣ p ^ m - 1 :=
+    Hex.Nat.pow_sub_one_dvd_pow_sub_one_of_dvd p _hdvd
+  have hgeo :
+      ((DensePoly.monomial (p ^ d - 1) (1 : ZMod64 p) - 1) : FpPoly p) ∣
+        (DensePoly.monomial (p ^ m - 1) (1 : ZMod64 p) - 1 : FpPoly p) :=
+    FpPoly.monomial_sub_one_dvd_of_dvd hpow_dvd
+  rw [xPowSubX_factor d, xPowSubX_factor m]
+  rcases hgeo with ⟨q, hq⟩
+  refine ⟨q, ?_⟩
+  rw [hq, FpPoly.mul_assoc]
 
 private theorem lt_of_mem_properDivisors {n d : Nat}
     (hmem : d ∈ properDivisors n) : d < n := by
