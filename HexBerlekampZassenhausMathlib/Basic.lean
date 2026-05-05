@@ -75,14 +75,16 @@ theorem factor_irreducible (f : Hex.ZPoly) :
 
 /--
 Two irreducible executable factorizations of the same polynomial have the same
-factor list, up to the equality relation used by `List.Perm`.
+transported Mathlib factors up to units and permutation.
 -/
 theorem factor_unique (f : Hex.ZPoly) (gs hs : Array Hex.ZPoly) :
     Array.foldl (· * ·) 1 gs = f →
     Array.foldl (· * ·) 1 hs = f →
     (∀ g ∈ gs, Irreducible (HexPolyZMathlib.toPolynomial g)) →
     (∀ h ∈ hs, Irreducible (HexPolyZMathlib.toPolynomial h)) →
-    List.Perm gs.toList hs.toList := by
+    List.Perm
+      (gs.toList.map fun g => Associates.mk (HexPolyZMathlib.toPolynomial g))
+      (hs.toList.map fun h => Associates.mk (HexPolyZMathlib.toPolynomial h)) := by
   sorry
 
 /--
