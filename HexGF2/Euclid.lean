@@ -840,7 +840,8 @@ private theorem irreducible_common_divisor_eq_one_of_reduced
 private theorem mod_eq_of_add_right_multiple (a c f : GF2Poly) :
     (a + c * f) % f = a % f := by
   by_cases hf : f = 0
-  · simp [hf]
+  · subst hf
+    simp [mul_zero, add_zero]
   · let q₁ := (divMod (a + c * f) f).1
     let r₁ := (divMod (a + c * f) f).2
     let q₂ := (divMod a f).1
@@ -902,6 +903,43 @@ remainder. This is the quotient-congruence bridge used with Bezout witnesses. -/
 theorem mod_add_mul_right_eq_mod (a c f : GF2Poly) :
     (a + c * f) % f = a % f := by
   exact mod_eq_of_add_right_multiple a c f
+
+/-- A reduced packed polynomial is its own remainder modulo `f`. -/
+theorem mod_eq_self_of_reduced (p f : GF2Poly)
+    (hred : p.isZero = true ∨ p.degree < f.degree) :
+    p % f = p := by
+  by_cases hf : f = 0
+  · subst hf
+    change (divModAux 0 (p.degree + 1) 0 p).2 = p
+    have hsucc : p.degree + 1 = Nat.succ p.degree := by omega
+    rw [hsucc]
+    simp [divModAux]
+  · have hmod_red : (p % f).isZero = true ∨ (p % f).degree < f.degree :=
+      mod_degree_lt p f hf
+    have hdvd : f ∣ p % f + p := by
+      let q := (divMod p f).1
+      have hspec : q * f + p % f = p := by
+        simpa [q, mod] using divMod_spec p f
+      refine ⟨q, ?_⟩
+      calc
+        p % f + p = p % f + (q * f + p % f) := by rw [hspec]
+        _ = q * f := by
+          rw [add_comm (q * f) (p % f), ← add_assoc, add_self, zero_add]
+        _ = f * q := by rw [mul_comm]
+    have hsum_zero : p % f + p = 0 :=
+      reduced_dvd_eq_zero hf (add_reduced_of_reduced hmod_red hred) hdvd
+    calc
+      p % f = p % f + 0 := by rw [add_zero]
+      _ = p % f + (p % f + p) := by rw [hsum_zero, add_zero]
+      _ = p := by rw [add_add_cancel_left]
+
+/-- Validate a remainder using an explicit quotient witness. -/
+theorem mod_eq_of_eq_add_mul_right {a r c f : GF2Poly}
+    (h : a = r + c * f)
+    (hred : r.isZero = true ∨ r.degree < f.degree) :
+    a % f = r := by
+  rw [h, mod_add_mul_right_eq_mod]
+  exact mod_eq_self_of_reduced r f hred
 
 private theorem one_mod_eq_one_of_degree_pos {f : GF2Poly} (hfdegree : 0 < f.degree) :
     (1 : GF2Poly) % f = 1 := by
