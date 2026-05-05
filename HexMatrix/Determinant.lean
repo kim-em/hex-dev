@@ -765,6 +765,21 @@ private theorem insertAt_get_last_of_castSucc_last {α : Type u} {n : Nat}
   unfold insertAt
   simp [List.getElem_insertIdx_of_gt]
 
+private theorem insertAt_castSucc_last_get_boundary {α : Type u} {n : Nat}
+    (x : α) (v : Vector α (n + 1)) :
+    (insertAt x v (Fin.last n).castSucc)[(Fin.last n).castSucc] = x := by
+  exact insertAt_get_self x v (Fin.last n).castSucc
+
+private theorem insertAt_castSucc_last_get_last {α : Type u} {n : Nat}
+    (x : α) (v : Vector α (n + 1)) :
+    (insertAt x v (Fin.last n).castSucc)[Fin.last (n + 1)] = v[Fin.last n] := by
+  exact insertAt_get_last_of_castSucc_last x v
+
+private theorem insertAt_castSucc_last_get_prefix {α : Type u} {n : Nat}
+    (x : α) (v : Vector α (n + 1)) (i : Fin n) :
+    (insertAt x v (Fin.last n).castSucc)[i.castSucc.castSucc] = v[i.castSucc] := by
+  exact insertAt_get_castSucc_of_lt x v (Fin.last n) i.castSucc (by simp)
+
 private theorem detProduct_identity_insertAt_not_last_zero {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat} (v : Vector (Fin n) n)
     (i : Fin (n + 1)) (h : i ≠ Fin.last n) :
@@ -1523,6 +1538,103 @@ private theorem transposePermutationValues_get {n : Nat}
     (transposePermutationValues perm i j)[r] = perm[finTranspose i j r] := by
   simp [transposePermutationValues]
 
+private theorem transposePermutationValues_insertAt_last_boundary {n : Nat}
+    (v : Vector (Fin (n + 1)) (n + 1)) :
+    transposePermutationValues
+        (insertAt (Fin.last (n + 1)) (v.map Fin.castSucc) (Fin.last (n + 1)))
+        (Fin.last n).castSucc (Fin.last (n + 1)) =
+      insertAt (Fin.last (n + 1)) (v.map Fin.castSucc) (Fin.last n).castSucc := by
+  apply Vector.ext
+  intro r hr
+  let row : Fin (n + 2) := ⟨r, hr⟩
+  let old : Fin (n + 2) := (Fin.last n).castSucc
+  let last : Fin (n + 2) := Fin.last (n + 1)
+  let finalPerm :=
+    insertAt (Fin.last (n + 1)) (v.map Fin.castSucc) (Fin.last (n + 1))
+  let boundaryPerm :=
+    insertAt (Fin.last (n + 1)) (v.map Fin.castSucc) (Fin.last n).castSucc
+  change (transposePermutationValues finalPerm old last)[row] = boundaryPerm[row]
+  rw [transposePermutationValues_get]
+  by_cases hrowOld : row = old
+  · have hft : finTranspose old last row = last := by
+      rw [hrowOld]
+      exact finTranspose_left old last
+    calc
+      finalPerm[finTranspose old last row] = finalPerm[last] := by
+        exact congrArg (fun c => finalPerm[c]) hft
+      _ = Fin.last (n + 1) := by
+        exact insertAt_get_self (Fin.last (n + 1)) (v.map Fin.castSucc) (Fin.last (n + 1))
+      _ = boundaryPerm[old] := by
+        exact (insertAt_castSucc_last_get_boundary
+          (Fin.last (n + 1)) (v.map Fin.castSucc)).symm
+      _ = boundaryPerm[row] := by
+        exact (congrArg (fun c => boundaryPerm[c]) hrowOld).symm
+  · by_cases hrowLast : row = last
+    · have hft : finTranspose old last row = old := by
+        rw [hrowLast]
+        exact finTranspose_right old last
+      have hfinal :
+          finalPerm[old] = (v[Fin.last n]).castSucc := by
+        change
+          (insertAt (Fin.last (n + 1)) (v.map Fin.castSucc) (Fin.last (n + 1)))[
+              (Fin.last n).castSucc] =
+            (v[Fin.last n]).castSucc
+        simpa using
+          insertAt_last_get_castSucc (Fin.last (n + 1)) (v.map Fin.castSucc)
+            (Fin.last n)
+      have hboundary :
+          boundaryPerm[last] = (v[Fin.last n]).castSucc := by
+        change
+          (insertAt (Fin.last (n + 1)) (v.map Fin.castSucc) (Fin.last n).castSucc)[
+              Fin.last (n + 1)] =
+            (v[Fin.last n]).castSucc
+        simpa using
+          insertAt_castSucc_last_get_last (Fin.last (n + 1)) (v.map Fin.castSucc)
+      calc
+        finalPerm[finTranspose old last row] = finalPerm[old] := by
+          exact congrArg (fun c => finalPerm[c]) hft
+        _ = (v[Fin.last n]).castSucc := hfinal
+        _ = boundaryPerm[last] := hboundary.symm
+        _ = boundaryPerm[row] := by
+          exact (congrArg (fun c => boundaryPerm[c]) hrowLast).symm
+    · have hrowLt : row.val < n := by
+        have hneOldVal : row.val ≠ n := by
+          intro hval
+          exact hrowOld (Fin.ext hval)
+        have hneLastVal : row.val ≠ n + 1 := by
+          intro hval
+          exact hrowLast (Fin.ext hval)
+        omega
+      let i : Fin n := ⟨row.val, hrowLt⟩
+      have hrow : row = i.castSucc.castSucc := Fin.ext rfl
+      have hfinal :
+          finalPerm[i.castSucc.castSucc] = (v[i.castSucc]).castSucc := by
+        change
+          (insertAt (Fin.last (n + 1)) (v.map Fin.castSucc) (Fin.last (n + 1)))[
+              i.castSucc.castSucc] =
+            (v[i.castSucc]).castSucc
+        simpa using
+          insertAt_last_get_castSucc (Fin.last (n + 1)) (v.map Fin.castSucc)
+            i.castSucc
+      have hboundary :
+          boundaryPerm[i.castSucc.castSucc] = (v[i.castSucc]).castSucc := by
+        change
+          (insertAt (Fin.last (n + 1)) (v.map Fin.castSucc) (Fin.last n).castSucc)[
+              i.castSucc.castSucc] =
+            (v[i.castSucc]).castSucc
+        simpa using
+          insertAt_castSucc_last_get_prefix (Fin.last (n + 1)) (v.map Fin.castSucc) i
+      calc
+        finalPerm[finTranspose old last row] = finalPerm[row] := by
+          exact congrArg (fun c => finalPerm[c])
+            (finTranspose_of_ne old last row hrowOld hrowLast)
+        _ = finalPerm[i.castSucc.castSucc] := by
+          exact congrArg (fun c => finalPerm[c]) hrow
+        _ = (v[i.castSucc]).castSucc := hfinal
+        _ = boundaryPerm[i.castSucc.castSucc] := hboundary.symm
+        _ = boundaryPerm[row] := by
+          exact (congrArg (fun c => boundaryPerm[c]) hrow).symm
+
 private theorem vector_toList_eq_finRange_map_get {α : Type u} {n : Nat}
     (v : Vector α n) :
     v.toList = (List.finRange n).map fun i => v[i] := by
@@ -2220,6 +2332,34 @@ private theorem detTerm_rowSwap_transposeValues {R : Type u}
   unfold detTerm
   rw [detProduct_rowSwap_transposeValues M i j h perm]
   rw [detSign_transposeValues (R := R) perm i j hnodup h]
+  grind
+
+private theorem detTerm_insertAt_boundary_eq_neg_rowSwap_insertAt_last {R : Type u}
+    [Lean.Grind.CommRing R] {n : Nat} (M : Matrix R (n + 2) (n + 2))
+    (v : Vector (Fin (n + 1)) (n + 1)) (hnodup : v.toList.Nodup) :
+    detTerm M
+        (insertAt (Fin.last (n + 1)) (v.map Fin.castSucc) (Fin.last n).castSucc) =
+      -detTerm
+        (rowSwap M (Fin.last n).castSucc (Fin.last (n + 1)))
+        (insertAt (Fin.last (n + 1)) (v.map Fin.castSucc) (Fin.last (n + 1))) := by
+  let old : Fin (n + 2) := (Fin.last n).castSucc
+  let last : Fin (n + 2) := Fin.last (n + 1)
+  let finalPerm :=
+    insertAt (Fin.last (n + 1)) (v.map Fin.castSucc) (Fin.last (n + 1))
+  let boundaryPerm :=
+    insertAt (Fin.last (n + 1)) (v.map Fin.castSucc) (Fin.last n).castSucc
+  have hne : old ≠ last := by
+    intro h
+    have hval : old.val = last.val := by simpa using congrArg Fin.val h
+    simp [old, last] at hval
+  have hnodupFinal : finalPerm.toList.Nodup := by
+    exact insertAt_last_castSucc_nodup v (Fin.last (n + 1)) hnodup
+  have hterm := detTerm_rowSwap_transposeValues M old last hne finalPerm hnodupFinal
+  have htranspose : transposePermutationValues finalPerm old last = boundaryPerm := by
+    exact transposePermutationValues_insertAt_last_boundary v
+  rw [htranspose] at hterm
+  change detTerm M boundaryPerm = -detTerm (rowSwap M old last) finalPerm
+  rw [hterm]
   grind
 
 private theorem permutationVectors_transposeValues_neg_sum {R : Type u}
