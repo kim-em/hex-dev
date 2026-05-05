@@ -1831,6 +1831,77 @@ private theorem rat_pow_dvd_repeated_of_quotient_common_divisor
           rw [← DensePoly.mul_assoc_poly d (ratPolyPow d (k + 1))
             (a * DensePoly.derivative Q)]
 
+/-- Polynomial-power size lower bound. If `2 ≤ d.size`, then
+`(ratPolyPow d n).size ≥ n + 1`. -/
+private theorem rat_pow_size_lower_bound
+    (d : DensePoly Rat) (hd : 2 ≤ d.size) (n : Nat) :
+    n + 1 ≤ (ratPolyPow d n).size := by
+  induction n with
+  | zero =>
+    rw [ratPolyPow_zero]
+    show 1 ≤ (DensePoly.C (1 : Rat)).size
+    unfold DensePoly.size
+    rw [DensePoly.coeffs_C_of_ne_zero (by decide : (1 : Rat) ≠ 0)]
+    decide
+  | succ k ih =>
+    rw [ratPolyPow_succ]
+    have hd_pos : 0 < d.size := by omega
+    have hk_pos : 0 < (ratPolyPow d k).size := by omega
+    have hgt := rat_product_size_gt_top d (ratPolyPow d k) hd_pos hk_pos
+    omega
+
+/-- If `b ≠ 0` and `a ∣ b`, then `a.size ≤ b.size`. -/
+private theorem rat_size_le_of_dvd
+    (a b : DensePoly Rat) (hb : b.size ≠ 0) (hab : a ∣ b) :
+    a.size ≤ b.size := by
+  by_cases ha_zero : a.size = 0
+  · omega
+  have ha_pos : 0 < a.size := Nat.pos_of_ne_zero ha_zero
+  rcases hab with ⟨k, hk⟩
+  by_cases hk_zero : k.size = 0
+  · have hk_eq : k = 0 := rat_eq_zero_of_size_zero k hk_zero
+    have hb_eq : b = 0 := by
+      rw [hk, hk_eq, rat_mul_zero_right]
+    have hb_size_zero : b.size = 0 := by
+      rw [hb_eq, DensePoly.size_zero]
+    contradiction
+  · have hk_pos : 0 < k.size := Nat.pos_of_ne_zero hk_zero
+    have hgt := rat_product_size_gt_top a k ha_pos hk_pos
+    have hsize_eq : b.size = (a * k).size := by rw [hk]
+    omega
+
+/-- Common-divisor size bound: divisors of both `quotientRat` and its derivative
+have size at most one. -/
+private theorem rat_quotient_common_divisor_size_le_one
+    (ratPrimitive d : DensePoly Rat)
+    (hrep : DensePoly.gcd ratPrimitive (DensePoly.derivative ratPrimitive) ≠ 0) :
+    let derivative := DensePoly.derivative ratPrimitive
+    let repeatedRat := DensePoly.gcd ratPrimitive derivative
+    let quotientRat := ratPrimitive / repeatedRat
+    d ∣ quotientRat →
+    d ∣ DensePoly.derivative quotientRat →
+    d.size ≤ 1 := by
+  intro derivative repeatedRat quotientRat hdq hdq'
+  rcases Nat.lt_or_ge 1 d.size with hgt | hle
+  · exfalso
+    have hd_two : 2 ≤ d.size := hgt
+    have hrep_size : repeatedRat.size ≠ 0 := by
+      intro hsize
+      exact hrep (rat_eq_zero_of_size_zero repeatedRat hsize)
+    have hdvd_repeated :
+        ratPolyPow d (repeatedRat.size + 1) ∣ repeatedRat :=
+      rat_pow_dvd_repeated_of_quotient_common_divisor ratPrimitive d hdq hdq'
+        repeatedRat.size
+    have hpow_size_lower :
+        repeatedRat.size + 1 + 1 ≤ (ratPolyPow d (repeatedRat.size + 1)).size :=
+      rat_pow_size_lower_bound d hd_two (repeatedRat.size + 1)
+    have hpow_size_upper :
+        (ratPolyPow d (repeatedRat.size + 1)).size ≤ repeatedRat.size :=
+      rat_size_le_of_dvd (ratPolyPow d (repeatedRat.size + 1)) repeatedRat
+        hrep_size hdvd_repeated
+    omega
+  · exact hle
+
 private theorem densePoly_eq_zero_of_isZero_true {R : Type _} [Zero R] [DecidableEq R]
     (p : DensePoly R) (h : p.isZero = true) :
     p = 0 := by
