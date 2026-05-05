@@ -106,11 +106,18 @@ def distinctDegreeFactor
     buckets := result.1
     residual := result.2 }
 
-/-- Predicate used by the SPEC-facing bucket invariant theorem. -/
+/--
+Predicate used by the SPEC-facing bucket invariant theorem: the recorded
+factor divides the corresponding `X^(p^d) - X mod f`. The unnormalised
+executable `DensePoly.gcd` does not return `bucket.factor` literally on the
+left of `gcd bucket.factor (frobeniusDiffMod ...) = bucket.factor` (e.g.
+`gcd X (2*X) = 2*X` over `F_3`), so the morally-correct invariant is the
+divisibility statement that `gcd_dvd_right` already supplies.
+-/
 def DegreeBucket.matchesFrobeniusDegree
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (bucket : DegreeBucket p) : Prop :=
-  DensePoly.gcd bucket.factor (frobeniusDiffMod f hmonic bucket.degree) = bucket.factor
+  bucket.factor ∣ frobeniusDiffMod f hmonic bucket.degree
 
 theorem distinctDegreeCandidate_spec
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
@@ -214,16 +221,83 @@ theorem prod_distinctDegreeFactor
       unfold degreeBucketProduct degreeBucketFactors factorProduct
       simp)
 
+private theorem distinctDegreeLoop_bucket_invariants
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) :
+    ∀ (fuel d : Nat) (currentFrob residual : FpPoly p)
+        (buckets : List (DegreeBucket p)),
+      0 < d →
+      currentFrob = FpPoly.frobeniusXPowMod f hmonic d →
+      (∀ bucket ∈ buckets,
+          0 < bucket.degree ∧ bucket.matchesFrobeniusDegree f hmonic) →
+      ∀ bucket ∈
+          (distinctDegreeLoop f hmonic
+              (FpPoly.modByMonic f FpPoly.X hmonic) fuel d currentFrob residual
+              buckets).1,
+        0 < bucket.degree ∧ bucket.matchesFrobeniusDegree f hmonic := by
+  intro fuel
+  induction fuel with
+  | zero =>
+      intro d currentFrob residual buckets _ _ hbuckets bucket hbucket
+      exact hbuckets bucket hbucket
+  | succ fuel ih =>
+      intro d currentFrob residual buckets hd hcurrent hbuckets bucket hbucket
+      unfold distinctDegreeLoop at hbucket
+      cases hzero : residual.isZero
+      · simp only [hzero, Bool.false_eq_true, if_false] at hbucket
+        have hd' : 0 < d + 1 := Nat.succ_pos _
+        have hnext :
+            FpPoly.powModMonic currentFrob f hmonic p =
+              FpPoly.frobeniusXPowMod f hmonic (d + 1) := by
+          rw [hcurrent, ← FpPoly.frobeniusXPowMod_succ]
+        cases hunit : isUnitPolynomial
+            (DensePoly.gcd residual
+                (currentFrob - FpPoly.modByMonic f FpPoly.X hmonic))
+        · simp only [hunit, Bool.false_eq_true, if_false] at hbucket
+          have hnew :
+              ∀ b ∈ appendBucket? buckets
+                  (some { degree := d,
+                          factor := DensePoly.gcd residual
+                              (currentFrob -
+                                  FpPoly.modByMonic f FpPoly.X hmonic) }),
+                0 < b.degree ∧ b.matchesFrobeniusDegree f hmonic := by
+            intro b hb
+            simp only [appendBucket?, List.mem_append, List.mem_singleton] at hb
+            rcases hb with hb | rfl
+            · exact hbuckets b hb
+            refine ⟨hd, ?_⟩
+            show DensePoly.gcd residual
+                  (currentFrob - FpPoly.modByMonic f FpPoly.X hmonic) ∣
+                frobeniusDiffMod f hmonic d
+            unfold frobeniusDiffMod
+            rw [← hcurrent]
+            exact DensePoly.gcd_dvd_right _ _
+          exact ih (d + 1) _ _ _ hd' hnext hnew bucket hbucket
+        · simp only [hunit, if_true] at hbucket
+          exact ih (d + 1) _ _ _ hd' hnext (fun b hb => hbuckets b hb) bucket hbucket
+      · simp only [hzero, if_true] at hbucket
+        exact hbuckets bucket hbucket
+
 /--
 Every recorded bucket is associated with a positive degree and satisfies the
-corresponding Frobenius-degree gcd invariant.
+corresponding Frobenius-degree divisibility invariant.
 -/
 theorem distinctDegreeFactor_bucket_invariants
+    [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (_hsquareFree : DensePoly.gcd f (DensePoly.derivative f) = 1) :
     ∀ bucket ∈ (distinctDegreeFactor f hmonic).buckets,
       0 < bucket.degree ∧ bucket.matchesFrobeniusDegree f hmonic := by
-  sorry
+  intro bucket hbucket
+  unfold distinctDegreeFactor at hbucket
+  apply distinctDegreeLoop_bucket_invariants f hmonic
+      (basisSize f + 1) 1 (FpPoly.frobeniusXMod f hmonic) f [] Nat.one_pos
+  · show FpPoly.frobeniusXMod f hmonic = FpPoly.frobeniusXPowMod f hmonic 1
+    unfold FpPoly.frobeniusXMod FpPoly.frobeniusXPowMod
+    rw [Nat.pow_one]
+  · intro b hb
+    cases hb
+  · exact hbucket
 
 end Berlekamp
 
