@@ -1702,6 +1702,171 @@ private theorem transposePermutationValues_map_permutationVectors_perm {n : Nat}
       transposePermutationValues_mem_permutationVectors i j hmem, ?_⟩
     exact transposePermutationValues_involutive perm i j
 
+private def swapPermutationValues {n : Nat}
+    (perm : Vector (Fin n) n) (i j : Fin n) : Vector (Fin n) n :=
+  perm.map (finTranspose i j)
+
+private theorem swapPermutationValues_get {n : Nat}
+    (perm : Vector (Fin n) n) (i j r : Fin n) :
+    (swapPermutationValues perm i j)[r] = finTranspose i j perm[r] := by
+  simp [swapPermutationValues]
+
+private theorem swapPermutationValues_toList_nodup {n : Nat}
+    (perm : Vector (Fin n) n) (i j : Fin n)
+    (hnodup : perm.toList.Nodup) :
+    (swapPermutationValues perm i j).toList.Nodup := by
+  change (perm.map (finTranspose i j)).toList.Nodup
+  rw [vector_toList_map]
+  exact list_nodup_map_of_injective (finTranspose_injective i j) hnodup
+
+private theorem swapPermutationValues_mem_permutationVectors {n : Nat}
+    {perm : Vector (Fin n) n} (i j : Fin n)
+    (hmem : perm ∈ permutationVectors n) :
+    swapPermutationValues perm i j ∈ permutationVectors n := by
+  apply permutationVectors_complete
+  exact swapPermutationValues_toList_nodup perm i j (permutationVectors_nodup hmem)
+
+private theorem swapPermutationValues_involutive {n : Nat}
+    (perm : Vector (Fin n) n) (i j : Fin n) :
+    swapPermutationValues (swapPermutationValues perm i j) i j = perm := by
+  apply Vector.ext
+  intro r hr
+  simp [swapPermutationValues, finTranspose_involutive]
+
+private theorem swapPermutationValues_map_permutationVectors_perm {n : Nat}
+    (i j : Fin n) :
+    ((permutationVectors n).map fun perm => swapPermutationValues perm i j).Perm
+      (permutationVectors n) := by
+  have hmapNodup :
+      ((permutationVectors n).map fun perm => swapPermutationValues perm i j).Nodup := by
+    exact list_nodup_map_of_injective
+      (f := fun perm => swapPermutationValues perm i j)
+      (fun a b h => by
+        have h' := congrArg (fun perm => swapPermutationValues perm i j) h
+        change
+          swapPermutationValues (swapPermutationValues a i j) i j =
+            swapPermutationValues (swapPermutationValues b i j) i j at h'
+        rw [swapPermutationValues_involutive] at h'
+        rw [swapPermutationValues_involutive] at h'
+        exact h')
+      permutationVectors_nodup_list
+  apply (List.perm_ext_iff_of_nodup hmapNodup permutationVectors_nodup_list).mpr
+  intro perm
+  constructor
+  · intro hmem
+    simp only [List.mem_map] at hmem
+    rcases hmem with ⟨pre, hpre, rfl⟩
+    exact swapPermutationValues_mem_permutationVectors i j hpre
+  · intro hmem
+    simp only [List.mem_map]
+    refine ⟨swapPermutationValues perm i j,
+      swapPermutationValues_mem_permutationVectors i j hmem, ?_⟩
+    exact swapPermutationValues_involutive perm i j
+
+private theorem fin_mem_of_full_nodup {n : Nat} {xs : List (Fin n)}
+    (x : Fin n) (hlen : xs.length = n) (hnodup : xs.Nodup) :
+    x ∈ xs := by
+  by_cases hmem : x ∈ xs
+  · exact hmem
+  · exfalso
+    have hsub : List.Subperm xs ((List.finRange n).erase x) := by
+      apply List.subperm_of_subset hnodup
+      intro y hy
+      exact (List.mem_erase_of_ne (by
+        intro hyx
+        exact hmem (hyx ▸ hy))).2 (List.mem_finRange y)
+    have hle : xs.length ≤ ((List.finRange n).erase x).length :=
+      List.Subperm.length_le hsub
+    have herase : ((List.finRange n).erase x).length = n - 1 := by
+      rw [List.length_erase]
+      simp [List.mem_finRange, List.length_finRange]
+    rw [hlen, herase] at hle
+    cases n with
+    | zero => exact Fin.elim0 x
+    | succ n => omega
+
+private theorem fin_idxOf_lt_of_full_nodup {n : Nat} {xs : List (Fin n)}
+    (x : Fin n) (hlen : xs.length = n) (hnodup : xs.Nodup) :
+    xs.idxOf x < xs.length := by
+  exact List.idxOf_lt_length_of_mem (fin_mem_of_full_nodup x hlen hnodup)
+
+private theorem swapPermutationValues_eq_transposePermutationValues {n : Nat}
+    (perm : Vector (Fin n) n) (i j : Fin n)
+    (hnodup : perm.toList.Nodup) :
+    let pi : Fin n := ⟨perm.toList.idxOf i,
+      by simpa [Vector.length_toList] using
+        fin_idxOf_lt_of_full_nodup i (by simp [Vector.length_toList]) hnodup⟩
+    let pj : Fin n := ⟨perm.toList.idxOf j,
+      by simpa [Vector.length_toList] using
+        fin_idxOf_lt_of_full_nodup j (by simp [Vector.length_toList]) hnodup⟩
+    swapPermutationValues perm i j = transposePermutationValues perm pi pj := by
+  dsimp
+  apply Vector.ext
+  intro r hr
+  let pi : Fin n := ⟨perm.toList.idxOf i,
+    by simpa [Vector.length_toList] using
+      fin_idxOf_lt_of_full_nodup i (by simp [Vector.length_toList]) hnodup⟩
+  let pj : Fin n := ⟨perm.toList.idxOf j,
+    by simpa [Vector.length_toList] using
+      fin_idxOf_lt_of_full_nodup j (by simp [Vector.length_toList]) hnodup⟩
+  have hpi_get : perm[pi] = i := by
+    have hlt : perm.toList.idxOf i < perm.toList.length := by
+      simpa [pi, Vector.length_toList] using pi.isLt
+    have hget : perm.toList[perm.toList.idxOf i]'hlt = i :=
+      List.getElem_idxOf (x := i) (xs := perm.toList) hlt
+    exact hget
+  have hpj_get : perm[pj] = j := by
+    have hlt : perm.toList.idxOf j < perm.toList.length := by
+      simpa [pj, Vector.length_toList] using pj.isLt
+    have hget : perm.toList[perm.toList.idxOf j]'hlt = j :=
+      List.getElem_idxOf (x := j) (xs := perm.toList) hlt
+    exact hget
+  change (swapPermutationValues perm i j)[(⟨r, hr⟩ : Fin n)] =
+    (transposePermutationValues perm pi pj)[(⟨r, hr⟩ : Fin n)]
+  rw [swapPermutationValues_get, transposePermutationValues_get]
+  by_cases hri : (⟨r, hr⟩ : Fin n) = pi
+  · rw [hri]
+    calc
+      finTranspose i j perm[pi] = finTranspose i j i := by rw [hpi_get]
+      _ = j := finTranspose_left i j
+      _ = perm[pj] := hpj_get.symm
+      _ = perm[finTranspose pi pj pi] := by
+          exact congrArg (fun x => perm[x]) (finTranspose_left pi pj).symm
+  · by_cases hrj : (⟨r, hr⟩ : Fin n) = pj
+    · rw [hrj]
+      calc
+        finTranspose i j perm[pj] = finTranspose i j j := by rw [hpj_get]
+        _ = i := finTranspose_right i j
+        _ = perm[pi] := hpi_get.symm
+        _ = perm[finTranspose pi pj pj] := by
+            exact congrArg (fun x => perm[x]) (finTranspose_right pi pj).symm
+    · have hnot_i : perm[(⟨r, hr⟩ : Fin n)] ≠ i := by
+        intro hv
+        have hridx : perm.toList.idxOf perm[(⟨r, hr⟩ : Fin n)] = r := by
+          have hrlen : r < perm.toList.length := by
+            simpa [Vector.length_toList] using hr
+          exact hnodup.idxOf_getElem r hrlen
+        have hval : r = pi.val := by
+          calc
+            r = perm.toList.idxOf perm[(⟨r, hr⟩ : Fin n)] := hridx.symm
+            _ = perm.toList.idxOf i := by rw [hv]
+            _ = pi.val := rfl
+        exact hri (Fin.ext hval)
+      have hnot_j : perm[(⟨r, hr⟩ : Fin n)] ≠ j := by
+        intro hv
+        have hridx : perm.toList.idxOf perm[(⟨r, hr⟩ : Fin n)] = r := by
+          have hrlen : r < perm.toList.length := by
+            simpa [Vector.length_toList] using hr
+          exact hnodup.idxOf_getElem r hrlen
+        have hval : r = pj.val := by
+          calc
+            r = perm.toList.idxOf perm[(⟨r, hr⟩ : Fin n)] := hridx.symm
+            _ = perm.toList.idxOf j := by rw [hv]
+            _ = pj.val := rfl
+        exact hrj (Fin.ext hval)
+      rw [finTranspose_of_ne i j perm[(⟨r, hr⟩ : Fin n)] hnot_i hnot_j]
+      exact vector_get_fin_congr perm (finTranspose_of_ne pi pj ⟨r, hr⟩ hri hrj).symm
+
 private theorem detSign_transposePermutationValues_involutive {R : Type u}
     [Lean.Grind.Ring R] {n : Nat}
     (perm : Vector (Fin n) n) (i j : Fin n) :
@@ -1820,6 +1985,159 @@ private theorem detSign_transposeValues {R : Type u}
     have ht : inversionCount (transposePermutationValues perm i j).toList % 2 = 0 := by
       omega
     simp [hp, ht]
+
+private theorem detSign_swapPermutationValues {R : Type u}
+    [Lean.Grind.CommRing R] {n : Nat}
+    (perm : Vector (Fin n) n) (i j : Fin n)
+    (hnodup : perm.toList.Nodup) (h : i ≠ j) :
+    detSign (R := R) perm = -detSign (R := R) (swapPermutationValues perm i j) := by
+  let pi : Fin n := ⟨perm.toList.idxOf i,
+    by simpa [Vector.length_toList] using
+      fin_idxOf_lt_of_full_nodup i (by simp [Vector.length_toList]) hnodup⟩
+  let pj : Fin n := ⟨perm.toList.idxOf j,
+    by simpa [Vector.length_toList] using
+      fin_idxOf_lt_of_full_nodup j (by simp [Vector.length_toList]) hnodup⟩
+  have hpij : pi ≠ pj := by
+    intro hp
+    have hpi_get : perm[pi] = i := by
+      have hlt : perm.toList.idxOf i < perm.toList.length := by
+        simpa [pi, Vector.length_toList] using pi.isLt
+      have hget : perm.toList[perm.toList.idxOf i]'hlt = i :=
+        List.getElem_idxOf (x := i) (xs := perm.toList) hlt
+      exact hget
+    have hpj_get : perm[pj] = j := by
+      have hlt : perm.toList.idxOf j < perm.toList.length := by
+        simpa [pj, Vector.length_toList] using pj.isLt
+      have hget : perm.toList[perm.toList.idxOf j]'hlt = j :=
+        List.getElem_idxOf (x := j) (xs := perm.toList) hlt
+      exact hget
+    exact h (by rw [← hpi_get, ← hpj_get, hp])
+  have hswap :
+      swapPermutationValues perm i j = transposePermutationValues perm pi pj := by
+    simpa [pi, pj] using swapPermutationValues_eq_transposePermutationValues perm i j hnodup
+  rw [hswap]
+  exact detSign_transposeValues (R := R) perm pi pj hnodup hpij
+
+private theorem swapPermutationValues_idxOf_left {n : Nat}
+    (perm : Vector (Fin n) n) (i j : Fin n)
+    (hnodup : perm.toList.Nodup) :
+    (swapPermutationValues perm i j).toList.idxOf i = perm.toList.idxOf j := by
+  let pi : Fin n := ⟨perm.toList.idxOf i,
+    by simpa [Vector.length_toList] using
+      fin_idxOf_lt_of_full_nodup i (by simp [Vector.length_toList]) hnodup⟩
+  let pj : Fin n := ⟨perm.toList.idxOf j,
+    by simpa [Vector.length_toList] using
+      fin_idxOf_lt_of_full_nodup j (by simp [Vector.length_toList]) hnodup⟩
+  have hpi_get : perm[pi] = i := by
+    have hlt : perm.toList.idxOf i < perm.toList.length := by
+      simpa [pi, Vector.length_toList] using pi.isLt
+    exact List.getElem_idxOf (x := i) (xs := perm.toList) hlt
+  have hswap :
+      swapPermutationValues perm i j = transposePermutationValues perm pi pj := by
+    simpa [pi, pj] using swapPermutationValues_eq_transposePermutationValues perm i j hnodup
+  have hpj_swap : (swapPermutationValues perm i j)[pj] = i := by
+    rw [hswap, transposePermutationValues_get]
+    calc
+      perm[finTranspose pi pj pj] = perm[pi] := by
+        exact congrArg (fun x => perm[x]) (finTranspose_right pi pj)
+      _ = i := hpi_get
+  have hnodupSwap := swapPermutationValues_toList_nodup perm i j hnodup
+  have hpjLen : pj.val < (swapPermutationValues perm i j).toList.length := by
+    simp [Vector.length_toList]
+  have hidx :
+      (swapPermutationValues perm i j).toList.idxOf
+          ((swapPermutationValues perm i j).toList[pj.val]'hpjLen) = pj.val := by
+    exact hnodupSwap.idxOf_getElem pj.val hpjLen
+  have hget :
+      (swapPermutationValues perm i j).toList[pj.val]'hpjLen = i := by
+    exact hpj_swap
+  rw [hget] at hidx
+  exact hidx
+
+private theorem swapPermutationValues_idxOf_right {n : Nat}
+    (perm : Vector (Fin n) n) (i j : Fin n)
+    (hnodup : perm.toList.Nodup) :
+    (swapPermutationValues perm i j).toList.idxOf j = perm.toList.idxOf i := by
+  have hcomm : swapPermutationValues perm i j = swapPermutationValues perm j i := by
+    apply Vector.ext
+    intro r hr
+    change (swapPermutationValues perm i j)[(⟨r, hr⟩ : Fin n)] =
+      (swapPermutationValues perm j i)[(⟨r, hr⟩ : Fin n)]
+    repeat rw [swapPermutationValues_get]
+    by_cases hpi : perm[(⟨r, hr⟩ : Fin n)] = i
+    · rw [hpi]
+      exact (finTranspose_left i j).trans (finTranspose_right j i).symm
+    · by_cases hpj : perm[(⟨r, hr⟩ : Fin n)] = j
+      · rw [hpj]
+        exact (finTranspose_right i j).trans (finTranspose_left j i).symm
+      · exact
+          (finTranspose_of_ne i j perm[(⟨r, hr⟩ : Fin n)] hpi hpj).trans
+            (finTranspose_of_ne j i perm[(⟨r, hr⟩ : Fin n)] hpj hpi).symm
+  rw [hcomm]
+  exact swapPermutationValues_idxOf_left perm j i hnodup
+
+private theorem permutation_idxOf_ne_of_ne {n : Nat}
+    (perm : Vector (Fin n) n) (i j : Fin n)
+    (hnodup : perm.toList.Nodup) (h : i ≠ j) :
+    perm.toList.idxOf i ≠ perm.toList.idxOf j := by
+  intro hidx
+  have hiLt : perm.toList.idxOf i < perm.toList.length :=
+    fin_idxOf_lt_of_full_nodup i (by simp [Vector.length_toList]) hnodup
+  have hjLt : perm.toList.idxOf j < perm.toList.length :=
+    fin_idxOf_lt_of_full_nodup j (by simp [Vector.length_toList]) hnodup
+  have hiGet : perm.toList[perm.toList.idxOf i]'hiLt = i :=
+    List.getElem_idxOf (x := i) (xs := perm.toList) hiLt
+  have hjGet : perm.toList[perm.toList.idxOf j]'hjLt = j :=
+    List.getElem_idxOf (x := j) (xs := perm.toList) hjLt
+  apply h
+  have hfin :
+      (⟨perm.toList.idxOf i, hiLt⟩ : Fin perm.toList.length) =
+        ⟨perm.toList.idxOf j, hjLt⟩ := Fin.ext hidx
+  have hgeteq := congrArg (fun k : Fin perm.toList.length => perm.toList[k]) hfin
+  exact hiGet.symm.trans (hgeteq.trans hjGet)
+
+private theorem detProduct_colDuplicate_swapValues {R : Type u}
+    [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (src dst : Fin n)
+    (hcol : ∀ r : Fin n, M[r][src] = M[r][dst])
+    (perm : Vector (Fin n) n) :
+    detProduct M perm = detProduct M (swapPermutationValues perm src dst) := by
+  unfold detProduct
+  apply foldl_det_product_congr
+  intro r _hmem
+  by_cases hsrc : perm[r] = src
+  · have hswap : (swapPermutationValues perm src dst)[r] = dst := by
+      rw [swapPermutationValues_get]
+      exact hsrc ▸ finTranspose_left src dst
+    calc
+      M[r][perm[r]] = M[r][src] := congrArg (fun c => M[r][c]) hsrc
+      _ = M[r][dst] := hcol r
+      _ = M[r][(swapPermutationValues perm src dst)[r]] :=
+          (congrArg (fun c => M[r][c]) hswap).symm
+  · by_cases hdst : perm[r] = dst
+    · have hswap : (swapPermutationValues perm src dst)[r] = src := by
+        rw [swapPermutationValues_get]
+        exact hdst ▸ finTranspose_right src dst
+      calc
+        M[r][perm[r]] = M[r][dst] := congrArg (fun c => M[r][c]) hdst
+        _ = M[r][src] := (hcol r).symm
+        _ = M[r][(swapPermutationValues perm src dst)[r]] :=
+            (congrArg (fun c => M[r][c]) hswap).symm
+    · have hswap : (swapPermutationValues perm src dst)[r] = perm[r] := by
+        rw [swapPermutationValues_get]
+        exact finTranspose_of_ne src dst perm[r] hsrc hdst
+      exact (congrArg (fun c => M[r][c]) hswap).symm
+
+private theorem detTerm_colDuplicate_swapValues {R : Type u}
+    [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (src dst : Fin n) (h : src ≠ dst)
+    (hcol : ∀ r : Fin n, M[r][src] = M[r][dst])
+    (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
+    detTerm M perm = -detTerm M (swapPermutationValues perm src dst) := by
+  unfold detTerm
+  rw [detProduct_colDuplicate_swapValues M src dst hcol perm]
+  rw [detSign_swapPermutationValues (R := R) perm src dst hnodup h]
+  grind
 
 private theorem detTerm_rowSwap_transposeValues {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat}
@@ -2541,6 +2859,101 @@ private theorem permutationVectors_duplicateRow_sum {R : Type u} [Lean.Grind.Com
     _ = 0 := by
         exact foldl_det_sum_zero ((permutationVectors n).filter p) 0
 
+private theorem permutationVectors_duplicateCol_sum {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (M : Matrix R n n) (src dst : Fin n) (h : src ≠ dst)
+    (hcol : ∀ r : Fin n, M[r][src] = M[r][dst]) :
+    (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0 = 0 := by
+  let p : Vector (Fin n) n → Bool :=
+    fun perm => perm.toList.idxOf src < perm.toList.idxOf dst
+  let term : Vector (Fin n) n → R := detTerm M
+  have hsplit :=
+    foldl_det_sum_filter_split (R := R) (permutationVectors n) p term
+  rw [hsplit]
+  have hright :
+      ((permutationVectors n).filter fun perm => !p perm).foldl
+          (fun acc perm => acc + term perm) 0 =
+        ((permutationVectors n).filter p).foldl
+          (fun acc perm => acc + term (swapPermutationValues perm src dst)) 0 := by
+    have hperm :
+        (((permutationVectors n).filter p).map
+            fun perm => swapPermutationValues perm src dst).Perm
+          ((permutationVectors n).filter fun perm => !p perm) := by
+      have hleftNodup :
+          (((permutationVectors n).filter p).map
+              fun perm => swapPermutationValues perm src dst).Nodup := by
+        exact list_nodup_map_of_injective
+          (f := fun perm => swapPermutationValues perm src dst)
+          (fun a b hab => by
+            have h' := congrArg (fun perm => swapPermutationValues perm src dst) hab
+            change
+              swapPermutationValues (swapPermutationValues a src dst) src dst =
+                swapPermutationValues (swapPermutationValues b src dst) src dst at h'
+            rw [swapPermutationValues_involutive] at h'
+            rw [swapPermutationValues_involutive] at h'
+            exact h')
+          (permutationVectors_nodup_list.filter p)
+      have hrightNodup :
+          ((permutationVectors n).filter fun perm => !p perm).Nodup :=
+        permutationVectors_nodup_list.filter _
+      apply (List.perm_ext_iff_of_nodup hleftNodup hrightNodup).mpr
+      intro perm
+      constructor
+      · intro hmem
+        simp only [List.mem_map, List.mem_filter] at hmem ⊢
+        rcases hmem with ⟨pre, ⟨hpreMem, hpreP⟩, rfl⟩
+        constructor
+        · exact swapPermutationValues_mem_permutationVectors src dst hpreMem
+        · have hpreNodup := permutationVectors_nodup hpreMem
+          simp [p] at hpreP ⊢
+          rw [swapPermutationValues_idxOf_left pre src dst hpreNodup]
+          rw [swapPermutationValues_idxOf_right pre src dst hpreNodup]
+          omega
+      · intro hmem
+        simp only [List.mem_filter] at hmem
+        rcases hmem with ⟨hpermMem, hpfalse⟩
+        simp only [List.mem_map, List.mem_filter]
+        refine ⟨swapPermutationValues perm src dst,
+          ⟨swapPermutationValues_mem_permutationVectors src dst hpermMem, ?_⟩, ?_⟩
+        · have hpermNodup := permutationVectors_nodup hpermMem
+          simp [p] at hpfalse ⊢
+          rw [swapPermutationValues_idxOf_left perm src dst hpermNodup]
+          rw [swapPermutationValues_idxOf_right perm src dst hpermNodup]
+          have hneIdx := permutation_idxOf_ne_of_ne perm src dst hpermNodup h
+          omega
+        · exact swapPermutationValues_involutive perm src dst
+    calc
+      ((permutationVectors n).filter fun perm => !p perm).foldl
+          (fun acc perm => acc + term perm) 0 =
+        (((permutationVectors n).filter p).map
+            fun perm => swapPermutationValues perm src dst).foldl
+          (fun acc perm => acc + term perm) 0 := by
+          exact (foldl_det_sum_perm term hperm 0).symm
+      _ =
+        ((permutationVectors n).filter p).foldl
+          (fun acc perm => acc + term (swapPermutationValues perm src dst)) 0 := by
+          exact foldl_det_sum_map ((permutationVectors n).filter p)
+            (fun perm => swapPermutationValues perm src dst) term
+  rw [hright]
+  calc
+    ((permutationVectors n).filter p).foldl (fun acc perm => acc + term perm) 0 +
+        ((permutationVectors n).filter p).foldl
+          (fun acc perm => acc + term (swapPermutationValues perm src dst)) 0 =
+      ((permutationVectors n).filter p).foldl
+          (fun acc perm =>
+            acc + (term perm + term (swapPermutationValues perm src dst))) 0 := by
+        exact (foldl_det_sum_add_zero
+          ((permutationVectors n).filter p) term
+          (fun perm => term (swapPermutationValues perm src dst))).symm
+    _ = ((permutationVectors n).filter p).foldl (fun acc _ => acc + 0) 0 := by
+        apply foldl_det_sum_congr
+        intro perm hmem
+        simp only [term]
+        rw [detTerm_colDuplicate_swapValues M src dst h hcol perm]
+        · grind
+        · exact permutationVectors_nodup (List.mem_filter.mp hmem).1
+    _ = 0 := by
+        exact foldl_det_sum_zero ((permutationVectors n).filter p) 0
+
 /-- The multilinear expansion of a row addition has zero total duplicate-row
 contribution, so the Leibniz sum is unchanged. -/
 private theorem permutationVectors_rowAdd_sum {R : Type u} [Lean.Grind.CommRing R]
@@ -2655,6 +3068,13 @@ theorem det_eq_zero_of_row_eq {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
   rw [hdup] at hsum
   simpa [det] using hsum
 
+/-- A determinant with two equal columns is zero. -/
+theorem det_eq_zero_of_col_eq {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (src dst : Fin n) (h : src ≠ dst)
+    (hcol : ∀ r : Fin n, M[r][src] = M[r][dst]) :
+    det M = 0 := by
+  simpa [det] using permutationVectors_duplicateCol_sum M src dst h hcol
+
 /-- A successor bordered minor whose new border row duplicates the previous
 boundary row has determinant zero. -/
 theorem det_borderedMinor_succ_eq_zero_of_row_duplicate {R : Type u}
@@ -2675,6 +3095,27 @@ theorem det_borderedMinor_succ_eq_zero_of_row_duplicate {R : Type u}
     change
       (borderedMinor M (k + 1) hnext (⟨k, hk⟩ : Fin n) j)[src][(⟨c, hc⟩ : Fin (k + 2))] =
         (borderedMinor M (k + 1) hnext (⟨k, hk⟩ : Fin n) j)[dst][(⟨c, hc⟩ : Fin (k + 2))]
+    simp [src, dst, borderedMinor, ofFn]
+
+/-- A successor bordered minor whose new border column duplicates the previous
+boundary column has determinant zero. -/
+theorem det_borderedMinor_succ_eq_zero_of_col_duplicate {R : Type u}
+    [Lean.Grind.CommRing R] (M : Matrix R n n) (k : Nat)
+    (hk : k < n) (hnext : k + 1 < n) (i : Fin n) :
+    det (borderedMinor M (k + 1) hnext i (⟨k, hk⟩ : Fin n)) = 0 := by
+  let src : Fin (k + 2) := ⟨k, by omega⟩
+  let dst : Fin (k + 2) := Fin.last (k + 1)
+  apply det_eq_zero_of_col_eq
+      (M := borderedMinor M (k + 1) hnext i (⟨k, hk⟩ : Fin n))
+      (src := src) (dst := dst)
+  · intro h
+    have hval := congrArg Fin.val h
+    change k = k + 1 at hval
+    omega
+  · intro r
+    change
+      (borderedMinor M (k + 1) hnext i (⟨k, hk⟩ : Fin n))[r][src] =
+        (borderedMinor M (k + 1) hnext i (⟨k, hk⟩ : Fin n))[r][dst]
     simp [src, dst, borderedMinor, ofFn]
 
 end Matrix
