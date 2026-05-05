@@ -2107,6 +2107,80 @@ theorem zero_add {S : Type _}
   rw [coeff_add 0 p n hzero_add, coeff_zero]
   grind
 
+private theorem eq_zero_of_isZero_true {S : Type _} [Zero S] [DecidableEq S]
+    (p : DensePoly S) (h : p.isZero = true) :
+    p = 0 := by
+  apply ext_coeff
+  intro n
+  have hsize : p.size = 0 := by
+    simpa [isZero, size, Array.isEmpty_iff_size_eq_zero] using h
+  rw [coeff_zero]
+  exact coeff_eq_zero_of_size_le p (by omega)
+
+private theorem isZero_zero {S : Type _} [Zero S] [DecidableEq S] :
+    (0 : DensePoly S).isZero = true := by
+  rfl
+
+private theorem degree_getD_lt_size_add_one {S : Type _} [Zero S] [DecidableEq S]
+    (p : DensePoly S) :
+    p.degree?.getD 0 < p.size + 1 := by
+  by_cases hsize : p.size = 0
+  · simp [degree?, hsize]
+  · have hdeg : p.degree?.getD 0 = p.size - 1 := by
+      simp [degree?, hsize]
+    omega
+
+private theorem dvd_refl_poly {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    (p : DensePoly S) :
+    p ∣ p := by
+  exact ⟨1, (mul_one_right_poly p).symm⟩
+
+private theorem dvd_zero_poly {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    (p : DensePoly S) :
+    p ∣ 0 := by
+  exact ⟨0, by rw [mul_comm_poly p 0, zero_mul]⟩
+
+private theorem dvd_mul_left_poly {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    {d p : DensePoly S} (q : DensePoly S) :
+    d ∣ p → d ∣ q * p := by
+  intro h
+  rcases h with ⟨a, ha⟩
+  refine ⟨q * a, ?_⟩
+  rw [ha, ← mul_assoc_poly q d a, mul_comm_poly q d, mul_assoc_poly d q a]
+
+private theorem dvd_add_poly {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    {d p q : DensePoly S} :
+    d ∣ p → d ∣ q → d ∣ p + q := by
+  intro hp hq
+  rcases hp with ⟨a, ha⟩
+  rcases hq with ⟨b, hb⟩
+  refine ⟨a + b, ?_⟩
+  rw [ha, hb, mul_add_right_poly]
+
+private theorem dvd_sub_poly {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    {d p q : DensePoly S} :
+    d ∣ p → d ∣ q → d ∣ p - q := by
+  intro hp hq
+  rcases hp with ⟨a, ha⟩
+  rcases hq with ⟨b, hb⟩
+  refine ⟨a + (0 - b), ?_⟩
+  rw [sub_eq_add_neg_poly, ha, hb, mul_add_right_poly, mul_sub_zero_comm, mul_comm_poly b d]
+
+private theorem xgcdAux_gcd_eq_left_of_right_zero {S : Type _}
+    [Zero S] [DecidableEq S] [One S] [Add S] [Sub S] [Mul S] [Div S]
+    (r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly S) (fuel : Nat) (hr₁ : r₁ = 0) :
+    (xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel).gcd = r₀ := by
+  cases fuel with
+  | zero =>
+      simp [xgcdAux]
+  | succ fuel =>
+      simp [xgcdAux, hr₁, isZero_zero]
+
 private theorem xgcd_bezout_step {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (a s₀ t₀ s₁ t₁ p q : DensePoly S) :
@@ -2182,6 +2256,132 @@ theorem xgcd_bezout_of_divModLaws {S : Type _}
   apply xgcdAux_bezout p q
   · rw [mul_comm_poly (1 : DensePoly S) p, mul_one_right_poly, zero_mul, add_zero_poly]
   · rw [zero_mul, mul_comm_poly (1 : DensePoly S) q, mul_one_right_poly, zero_add]
+
+private theorem xgcdAux_common_dvd_gcd {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
+    (d r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly S) (fuel : Nat)
+    (hr₀ : d ∣ r₀) (hr₁ : d ∣ r₁) :
+    d ∣ (xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel).gcd := by
+  induction fuel generalizing r₀ s₀ t₀ r₁ s₁ t₁ with
+  | zero =>
+      simpa [xgcdAux] using hr₀
+  | succ fuel ih =>
+      unfold xgcdAux
+      by_cases hr₁zero : r₁.isZero
+      · simp [hr₁zero, hr₀]
+      · simp [hr₁zero]
+        let qr := divMod r₀ r₁
+        let rem := qr.2
+        apply ih
+        · exact hr₁
+        · have hspec : qr.1 * r₁ + rem = r₀ := by
+            simpa [qr, rem] using DivModLaws.divMod_spec r₀ r₁
+          have hrem : rem = r₀ - qr.1 * r₁ := by
+            rw [← hspec]
+            apply ext_coeff
+            intro n
+            have hzero_add : (0 : S) + (0 : S) = 0 := by grind
+            have hzero_sub : (0 : S) - (0 : S) = 0 := by grind
+            rw [coeff_sub]
+            · rw [coeff_add]
+              · grind
+              · exact hzero_add
+            · exact hzero_sub
+          change d ∣ rem
+          rw [hrem]
+          exact dvd_sub_poly hr₀ (dvd_mul_left_poly qr.1 hr₁)
+
+private theorem xgcdAux_gcd_dvd_inputs {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
+    (hsmall :
+      ∀ p q : DensePoly S,
+        q.isZero = false → ¬ 0 < q.degree?.getD 0 → (divMod p q).2 = 0)
+    (r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly S) (fuel : Nat)
+    (hfuel : r₁.degree?.getD 0 < fuel) :
+    (xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel).gcd ∣ r₀ ∧
+      (xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel).gcd ∣ r₁ := by
+  induction fuel generalizing r₀ s₀ t₀ r₁ s₁ t₁ with
+  | zero =>
+      omega
+  | succ fuel ih =>
+      unfold xgcdAux
+      by_cases hr₁zero : r₁.isZero
+      · simp only [hr₁zero, ↓reduceDIte]
+        exact ⟨dvd_refl_poly r₀, by
+          rw [eq_zero_of_isZero_true r₁ hr₁zero]
+          exact dvd_zero_poly r₀⟩
+      · simp only [hr₁zero]
+        let qr := divMod r₀ r₁
+        let rem := qr.2
+        have hr₁false : r₁.isZero = false := by
+          cases h : r₁.isZero <;> simp [h] at hr₁zero ⊢
+        change (xgcdAux r₁ s₁ t₁ rem (s₀ - qr.1 * s₁) (t₀ - qr.1 * t₁) fuel).gcd ∣ r₀ ∧
+          (xgcdAux r₁ s₁ t₁ rem (s₀ - qr.1 * s₁) (t₀ - qr.1 * t₁) fuel).gcd ∣ r₁
+        by_cases hpos : 0 < r₁.degree?.getD 0
+        · have hrem_degree : rem.degree?.getD 0 < r₁.degree?.getD 0 := by
+            simpa [qr, rem] using
+              DivModLaws.divMod_remainder_degree_lt_of_pos_degree r₀ r₁ hpos
+          have hrem_fuel : rem.degree?.getD 0 < fuel := by omega
+          have hrec := ih r₁ s₁ t₁ rem (s₀ - qr.1 * s₁) (t₀ - qr.1 * t₁) hrem_fuel
+          have hg_r₁ : (xgcdAux r₁ s₁ t₁ rem (s₀ - qr.1 * s₁)
+              (t₀ - qr.1 * t₁) fuel).gcd ∣ r₁ := hrec.1
+          have hg_rem : (xgcdAux r₁ s₁ t₁ rem (s₀ - qr.1 * s₁)
+              (t₀ - qr.1 * t₁) fuel).gcd ∣ rem := hrec.2
+          constructor
+          · have hspec : qr.1 * r₁ + rem = r₀ := by
+              simpa [qr, rem] using DivModLaws.divMod_spec r₀ r₁
+            rw [← hspec]
+            exact dvd_add_poly (dvd_mul_left_poly qr.1 hg_r₁) hg_rem
+          · exact hg_r₁
+        · have hrem_zero : rem = 0 := by
+            simpa [qr, rem] using hsmall r₀ r₁ hr₁false hpos
+          have hg_eq : (xgcdAux r₁ s₁ t₁ rem (s₀ - qr.1 * s₁)
+              (t₀ - qr.1 * t₁) fuel).gcd = r₁ := by
+            exact xgcdAux_gcd_eq_left_of_right_zero r₁ s₁ t₁ rem
+              (s₀ - qr.1 * s₁) (t₀ - qr.1 * t₁) fuel hrem_zero
+          constructor
+          · rw [hg_eq]
+            have hspec : qr.1 * r₁ + rem = r₀ := by
+              simpa [qr, rem] using DivModLaws.divMod_spec r₀ r₁
+            rw [hrem_zero, add_zero_poly] at hspec
+            rw [← hspec]
+            exact dvd_mul_left_poly qr.1 (dvd_refl_poly r₁)
+          · rw [hg_eq]
+            exact dvd_refl_poly r₁
+
+theorem gcd_dvd_left_of_divModLaws {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
+    (hsmall :
+      ∀ p q : DensePoly S,
+        q.isZero = false → ¬ 0 < q.degree?.getD 0 → (divMod p q).2 = 0)
+    (p q : DensePoly S) :
+    gcd p q ∣ p := by
+  unfold gcd xgcd
+  exact (xgcdAux_gcd_dvd_inputs hsmall p 1 0 q 0 1 (p.size + q.size + 1)
+    (by
+      have hq := degree_getD_lt_size_add_one q
+      omega)).1
+
+theorem gcd_dvd_right_of_divModLaws {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
+    (hsmall :
+      ∀ p q : DensePoly S,
+        q.isZero = false → ¬ 0 < q.degree?.getD 0 → (divMod p q).2 = 0)
+    (p q : DensePoly S) :
+    gcd p q ∣ q := by
+  unfold gcd xgcd
+  exact (xgcdAux_gcd_dvd_inputs hsmall p 1 0 q 0 1 (p.size + q.size + 1)
+    (by
+      have hq := degree_getD_lt_size_add_one q
+      omega)).2
+
+theorem dvd_gcd_of_divModLaws {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
+    (d p q : DensePoly S) :
+    d ∣ p → d ∣ q → d ∣ gcd p q := by
+  intro hdp hdq
+  unfold gcd xgcd
+  exact xgcdAux_common_dvd_gcd d p 1 0 q 0 1 (p.size + q.size + 1) hdp hdq
 
 /-- Recursive reconstruction invariant for the array-backed long-division loop.
 Under the cancellation hypothesis for the leading-coefficient scaling function
