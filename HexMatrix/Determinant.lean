@@ -2062,6 +2062,38 @@ def detFinalColumnOffDiagonalSum {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     (fun acc v => acc + detFinalColumnOffDiagonal M v)
     0
 
+/-- Split the off-diagonal final-column row choices for a successor-sized
+matrix into the old prefix rows and the new boundary row. -/
+theorem detFinalColumnOffDiagonal_succ_split_last {R : Type u}
+    [Lean.Grind.Ring R] {k : Nat} (M : Matrix R (k + 2) (k + 2))
+    (v : Vector (Fin (k + 1)) (k + 1)) :
+    detFinalColumnOffDiagonal M v =
+      (List.finRange k).foldl
+          (fun acc i =>
+            acc + detTerm M
+              (insertAt (Fin.last (k + 1)) (v.map Fin.castSucc) i.castSucc.castSucc))
+          0 +
+        detTerm M
+          (insertAt (Fin.last (k + 1)) (v.map Fin.castSucc) (Fin.last k).castSucc) := by
+  unfold detFinalColumnOffDiagonal
+  exact foldl_det_sum_finRange_succ_last
+    (fun i => detTerm M (insertAt (Fin.last (k + 1)) (v.map Fin.castSucc) i.castSucc)) 0
+
+/-- Expose the recursive permutation enumeration behind a successor-sized
+off-diagonal final-column sum. -/
+theorem detFinalColumnOffDiagonalSum_succ_flatMap {R : Type u}
+    [Lean.Grind.Ring R] {k : Nat} (M : Matrix R (k + 2) (k + 2)) :
+    detFinalColumnOffDiagonalSum M =
+      (permutationVectors k).foldl
+        (fun acc v =>
+          ((List.finRange (k + 1)).map fun i =>
+              insertAt (Fin.last k) (v.map Fin.castSucc) i).foldl
+            (fun acc perm => acc + detFinalColumnOffDiagonal M perm) acc)
+        0 := by
+  unfold detFinalColumnOffDiagonalSum
+  simp only [permutationVectors]
+  rw [foldl_det_sum_flatMap]
+
 /-- The diagonal part of the final-column partition is the determinant of the
 leading prefix times the final row/final column entry. -/
 theorem det_finalColumn_diagonal_sum {R : Type u}
