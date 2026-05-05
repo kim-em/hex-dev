@@ -209,7 +209,116 @@ theorem mul_mod_inverseCandidate_eq_one_of_irreducible
     (hg_irr : FpPoly.Irreducible g) {a : FpPoly p}
     (ha_ne : a ≠ 0) (ha_reduced : a.degree?.getD 0 < g.degree?.getD 0) :
     (a * inverseCandidate (g := g) a) % g = (1 : FpPoly p) % g := by
-  sorry
+  letI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
+  -- Bezout identity from the executable extended gcd.
+  let xres : DensePoly.XGCDResult (ZMod64 p) := DensePoly.xgcd a g
+  let d : FpPoly p := DensePoly.gcd a g
+  have hbezout : xres.left * a + xres.right * g = d := by
+    have hb := DensePoly.xgcd_bezout a g
+    simpa [xres, d, DensePoly.gcd] using hb
+  -- The gcd divides both inputs.
+  have hda : d ∣ a := DensePoly.gcd_dvd_left a g
+  have hdg : d ∣ g := DensePoly.gcd_dvd_right a g
+  have hg_ne : g ≠ 0 := hg_irr.1
+  have hd_ne : d ≠ 0 := by
+    intro hzero
+    obtain ⟨s, hs⟩ := hda
+    apply ha_ne
+    rw [hs, hzero, FpPoly.zero_mul]
+  -- Irreducibility forces the gcd to be a unit constant.
+  obtain ⟨r, hr⟩ := hdg
+  have hr_ne : r ≠ 0 := by
+    intro hzero
+    apply hg_ne
+    rw [hr, hzero, FpPoly.mul_zero]
+  have hd_deg : d.degree? = some 0 := by
+    rcases hg_irr.2 _ _ hr.symm with hd_deg_zero | hr_deg_zero
+    · exact hd_deg_zero
+    · exfalso
+      have hsum : g.degree?.getD 0 = d.degree?.getD 0 + r.degree?.getD 0 := by
+        rw [hr]
+        exact FpPoly.degree?_mul_eq_add_degree? d r hd_ne hr_ne
+      have hr_deg_zero' : r.degree?.getD 0 = 0 := by simp [hr_deg_zero]
+      obtain ⟨s, hs⟩ := hda
+      have hs_ne : s ≠ 0 := by
+        intro hzero
+        apply ha_ne
+        rw [hs, hzero, FpPoly.mul_zero]
+      have hsum_a : a.degree?.getD 0 = d.degree?.getD 0 + s.degree?.getD 0 := by
+        rw [hs]
+        exact FpPoly.degree?_mul_eq_add_degree? d s hd_ne hs_ne
+      omega
+  -- Extract the leading coefficient and verify it is invertible.
+  let dlc : ZMod64 p := DensePoly.leadingCoeff d
+  have hd_size : d.size = 1 := by
+    unfold DensePoly.degree? at hd_deg
+    by_cases hsize : d.size = 0
+    · simp [hsize] at hd_deg
+    · simp [hsize] at hd_deg
+      omega
+  have hd_size_pos : 0 < d.size := by omega
+  have hdlc_ne : dlc ≠ 0 := by
+    show DensePoly.leadingCoeff d ≠ 0
+    rw [FpPoly.leadingCoeff_eq_coeff_pred d hd_size_pos]
+    exact DensePoly.coeff_last_ne_zero_of_pos_size d hd_size_pos
+  -- Scale Bezout by `dlc⁻¹` so the gcd becomes the unit `1`.
+  let R : FpPoly p := DensePoly.scale dlc⁻¹ xres.right
+  let L : FpPoly p := DensePoly.scale dlc⁻¹ xres.left
+  have hbezout_scaled : L * a + R * g = DensePoly.scale dlc⁻¹ d := by
+    show DensePoly.scale dlc⁻¹ xres.left * a +
+        DensePoly.scale dlc⁻¹ xres.right * g = DensePoly.scale dlc⁻¹ d
+    rw [← FpPoly.scale_mul_left, ← FpPoly.scale_mul_left,
+        ← FpPoly.scale_add, hbezout]
+  have hscale_d : DensePoly.scale dlc⁻¹ d = (1 : FpPoly p) := by
+    apply DensePoly.ext_coeff
+    intro n
+    have hzero_mul : (dlc⁻¹ : ZMod64 p) * 0 = 0 := by grind
+    rw [DensePoly.coeff_scale dlc⁻¹ d n hzero_mul]
+    change dlc⁻¹ * d.coeff n = (DensePoly.C (1 : ZMod64 p)).coeff n
+    rw [DensePoly.coeff_C]
+    cases n with
+    | zero =>
+        have hd_coeff : d.coeff 0 = dlc := by
+          show d.coeff 0 = DensePoly.leadingCoeff d
+          rw [FpPoly.leadingCoeff_eq_coeff_pred d hd_size_pos]
+          congr 1
+          omega
+        rw [hd_coeff]
+        simp
+        exact ZMod64.inv_mul_eq_one_of_prime
+          (ZMod64.PrimeModulus.prime (p := p)) hdlc_ne
+    | succ k =>
+        have hd_coeff : d.coeff (k + 1) = 0 :=
+          DensePoly.coeff_eq_zero_of_size_le d (by omega)
+        rw [hd_coeff]
+        have hkne : k + 1 ≠ 0 := Nat.succ_ne_zero k
+        rw [if_neg hkne]
+        exact hzero_mul
+  have hkey : L * a + R * g = (1 : FpPoly p) := by
+    show DensePoly.scale dlc⁻¹ xres.left * a +
+        DensePoly.scale dlc⁻¹ xres.right * g = (1 : FpPoly p)
+    rw [hbezout_scaled, hscale_d]
+  -- Convert to the required modular identity using mod_add_mod and mod_mul_self.
+  have hRg_mod : (R * g) % g = 0 := by
+    show (DensePoly.scale dlc⁻¹ xres.right * g) % g = 0
+    rw [FpPoly.mul_comm (DensePoly.scale dlc⁻¹ xres.right) g]
+    exact DensePoly.mod_eq_zero_of_dvd (g * DensePoly.scale dlc⁻¹ xres.right) g ⟨_, rfl⟩
+  have hL_eq : inverseCandidate (g := g) a = L := rfl
+  rw [hL_eq, FpPoly.mul_comm a L]
+  -- Goal: L * a % g = 1 % g
+  have hmm : L * a % g % g = L * a % g :=
+    @DensePoly.mod_mod (ZMod64 p) inferInstance inferInstance inferInstance
+      inferInstance inferInstance inferInstance inferInstance
+      (ZMod64.instDivModLawsZMod64Fp p) (L * a) g
+  have hadd : (L * a + R * g) % g = (L * a % g + R * g % g) % g :=
+    @DensePoly.mod_add_mod (ZMod64 p) inferInstance inferInstance inferInstance
+      (ZMod64.instDivModLawsZMod64Fp p) (L * a) (R * g) g
+  calc L * a % g
+      = L * a % g % g := hmm.symm
+    _ = (L * a % g + 0) % g := by rw [FpPoly.add_zero]
+    _ = (L * a % g + R * g % g) % g := by rw [hRg_mod]
+    _ = (L * a + R * g) % g := hadd.symm
+    _ = 1 % g := by rw [hkey]
 
 /-- Multiplicative inverse candidate in the quotient, with the conventional
 junk value `0⁻¹ = 0`.  The cancellation theorem below requires irreducibility. -/
