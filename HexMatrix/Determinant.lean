@@ -1346,13 +1346,38 @@ theorem permutationVectors_nodup_list {n : Nat} :
         (permutationVectors n) ih
         (fun v hv => permutationVectors_nodup hv)
 
-private theorem detSign_insertAt_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
+theorem detSign_insertAt_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     (v : Vector (Fin n) n) :
     detSign (R := R)
       (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n)) =
     detSign (R := R) v := by
   unfold detSign
   rw [insertAt_last_toList, vector_toList_map, inversionCount_insert_last_castSucc]
+
+theorem detSign_identity {R : Type u} [Lean.Grind.Ring R] (n : Nat) :
+    detSign (R := R) (Vector.ofFn fun i : Fin n => i) = 1 := by
+  induction n with
+  | zero =>
+      have hvec : (Vector.ofFn fun i : Fin 0 => i) = emptyVec := by
+        apply Vector.ext
+        intro i hi
+        omega
+      simp [hvec, detSign, emptyVec, inversionCount]
+  | succ n ih =>
+      have hvec :
+          (Vector.ofFn fun i : Fin (n + 1) => i) =
+            insertAt (Fin.last n)
+              ((Vector.ofFn fun i : Fin n => i).map Fin.castSucc) (Fin.last n) := by
+        apply Vector.ext
+        intro k hk
+        by_cases hlast : k = n
+        · subst k
+          simp [insertAt, List.getElem_insertIdx_self]
+          exact Fin.ext rfl
+        · have hklt : k < n := by omega
+          simp [insertAt, List.getElem_insertIdx_of_lt, hklt]
+      rw [hvec, detSign_insertAt_last]
+      exact ih
 
 /-- Product reindexing for a permutation that fixes the final column. The
 Leibniz product splits into the product on the leading prefix times the final
@@ -1933,7 +1958,7 @@ private theorem transposePermutationValues_map_permutationVectors_perm {n : Nat}
       transposePermutationValues_mem_permutationVectors i j hmem, ?_⟩
     exact transposePermutationValues_involutive perm i j
 
-private def swapPermutationValues {n : Nat}
+def swapPermutationValues {n : Nat}
     (perm : Vector (Fin n) n) (i j : Fin n) : Vector (Fin n) n :=
   perm.map (finTranspose i j)
 
@@ -1941,6 +1966,13 @@ private theorem swapPermutationValues_get {n : Nat}
     (perm : Vector (Fin n) n) (i j r : Fin n) :
     (swapPermutationValues perm i j)[r] = finTranspose i j perm[r] := by
   simp [swapPermutationValues]
+
+theorem swapPermutationValues_get_if {n : Nat}
+    (perm : Vector (Fin n) n) (i j r : Fin n) :
+    (swapPermutationValues perm i j)[r] =
+      if perm[r] = i then j else if perm[r] = j then i else perm[r] := by
+  rw [swapPermutationValues_get]
+  rfl
 
 private theorem swapPermutationValues_toList_nodup {n : Nat}
     (perm : Vector (Fin n) n) (i j : Fin n)
@@ -2217,7 +2249,7 @@ private theorem detSign_transposeValues {R : Type u}
       omega
     simp [hp, ht]
 
-private theorem detSign_swapPermutationValues {R : Type u}
+theorem detSign_swapPermutationValues {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat}
     (perm : Vector (Fin n) n) (i j : Fin n)
     (hnodup : perm.toList.Nodup) (h : i ≠ j) :

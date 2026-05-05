@@ -102,6 +102,56 @@ theorem equivs_nodup (n : Nat) :
     exact toPerm_injective hpq
   exact congrArg (fun x : {perm : Vector (Fin n) n // perm.toList.Nodup} => x.1) hpq'
 
+private theorem vectorOfPerm_swap_mul (σ : Equiv.Perm (Fin n)) (i j : Fin n) :
+    (Vector.ofFn fun r : Fin n => (Equiv.swap i j * σ) r) =
+      Hex.Matrix.swapPermutationValues (Vector.ofFn fun r : Fin n => σ r) i j := by
+  apply Vector.ext
+  intro r hr
+  show (Vector.ofFn fun r : Fin n => (Equiv.swap i j * σ) r)[(⟨r, hr⟩ : Fin n)] =
+    (Hex.Matrix.swapPermutationValues (Vector.ofFn fun r : Fin n => σ r) i j)[(⟨r, hr⟩ : Fin n)]
+  rw [Hex.Matrix.swapPermutationValues_get_if]
+  simp [Equiv.Perm.mul_apply, Equiv.swap_apply_def]
+
+/-- Hex's inversion-count determinant sign agrees with Mathlib's permutation sign. -/
+theorem detSign_vectorOfPerm_eq_permSign [CommRing R] (σ : Equiv.Perm (Fin n)) :
+    Hex.Matrix.detSign (R := R) (Vector.ofFn fun i : Fin n => σ i) =
+      ((Equiv.Perm.sign σ : Int) : R) := by
+  induction σ using Equiv.Perm.swap_induction_on with
+  | one =>
+      simp [Hex.Matrix.detSign_identity]
+  | swap_mul σ i j hne ih =>
+      rw [vectorOfPerm_swap_mul σ i j]
+      have hflip := Hex.Matrix.detSign_swapPermutationValues (R := R)
+        (perm := (Vector.ofFn fun r : Fin n => σ r)) (i := i) (j := j)
+        (hnodup := vectorOfPerm_nodup σ) hne
+      have hswapped :
+          Hex.Matrix.detSign (R := R)
+              (Hex.Matrix.swapPermutationValues (Vector.ofFn fun r : Fin n => σ r) i j) =
+            -Hex.Matrix.detSign (R := R) (Vector.ofFn fun r : Fin n => σ r) := by
+        rw [hflip]
+        simp
+      rw [hswapped]
+      rw [Equiv.Perm.sign_mul, Equiv.Perm.sign_swap hne]
+      rw [ih]
+      norm_num
+
+/-- Hex's inversion-count determinant sign agrees with Mathlib's permutation sign. -/
+theorem detSign_eq_permSign [CommRing R]
+    (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
+    Hex.Matrix.detSign (R := R) perm =
+      ((Equiv.Perm.sign (toPerm perm hnodup) : Int) : R) := by
+  have hperm :
+      (Vector.ofFn fun i : Fin n => toPerm perm hnodup i) = perm := by
+    apply Vector.ext
+    intro i hi
+    simp [toPerm]
+  calc
+    Hex.Matrix.detSign (R := R) perm =
+        Hex.Matrix.detSign (R := R) (Vector.ofFn fun i : Fin n => toPerm perm hnodup i) := by
+          rw [hperm]
+    _ = ((Equiv.Perm.sign (toPerm perm hnodup) : Int) : R) := by
+          exact detSign_vectorOfPerm_eq_permSign (R := R) (toPerm perm hnodup)
+
 end PermutationVector
 
 @[simp]
