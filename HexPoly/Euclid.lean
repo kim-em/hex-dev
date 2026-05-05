@@ -1794,6 +1794,143 @@ private theorem fold_add_mul_left_commring {S : Type _} [Lean.Grind.CommRing S]
       rw [← ih]
       grind
 
+private theorem rat_fold_add_range_succ (A : Nat → Rat) (m : Nat) :
+    (List.range (m + 1)).foldl (fun acc i => acc + A i) 0 =
+      (List.range m).foldl (fun acc i => acc + A i) 0 + A m := by
+  rw [List.range_succ, List.foldl_append]
+  simp
+
+private theorem rat_weighted_diagonal_fold_aux
+    (A : Nat → Rat) (m : Nat) :
+    ((m : Nat) : Rat) *
+        (List.range (m + 1)).foldl (fun acc i => acc + A i) 0 =
+      (List.range m).foldl
+          (fun acc i => acc + ((i + 1 : Nat) : Rat) * A (i + 1)) 0 +
+        (List.range m).foldl
+          (fun acc i => acc + ((m - i : Nat) : Rat) * A i) 0 := by
+  induction m with
+  | zero =>
+      simp
+      grind
+  | succ m ih =>
+      rw [rat_fold_add_range_succ A (m + 1)]
+      have hsplit :
+          (((m + 1 : Nat) : Rat) *
+              ((List.range (m + 1)).foldl (fun acc i => acc + A i) 0 + A (m + 1))) =
+            ((m : Nat) : Rat) *
+                (List.range (m + 1)).foldl (fun acc i => acc + A i) 0 +
+              (List.range (m + 1)).foldl (fun acc i => acc + A i) 0 +
+              ((m + 1 : Nat) : Rat) * A (m + 1) := by
+        have hnat : ((m + 1 : Nat) : Rat) = ((m : Nat) : Rat) + 1 := by
+          simp
+        rw [hnat]
+        grind
+      rw [hsplit, ih]
+      rw [rat_fold_add_range_succ
+        (fun i => ((i + 1 : Nat) : Rat) * A (i + 1)) m]
+      rw [rat_fold_add_range_succ
+        (fun i => ((m + 1 - i : Nat) : Rat) * A i) m]
+      rw [rat_fold_add_range_succ A m]
+      have htail : ((m + 1 - m : Nat) : Rat) * A m = A m := by
+        simp
+      rw [htail]
+      have hcoeff :
+          (List.range m).foldl
+              (fun acc i => acc + ((m - i : Nat) : Rat) * A i) 0 +
+            (List.range m).foldl (fun acc i => acc + A i) 0 =
+          (List.range m).foldl
+              (fun acc i => acc + ((m + 1 - i : Nat) : Rat) * A i) 0 := by
+        rw [← fold_add_pair_commring (S := Rat) (List.range m)
+          (fun i => ((m - i : Nat) : Rat) * A i) (fun i => A i) 0 0]
+        rw [show (0 : Rat) + 0 = 0 by grind]
+        apply fold_add_congr
+        intro i hi
+        have hi' : i < m := List.mem_range.mp hi
+        have hnat : ((m + 1 - i : Nat) : Rat) =
+            ((m - i : Nat) : Rat) + 1 := by
+          have h : m + 1 - i = m - i + 1 := by omega
+          rw [h]
+          simp
+        rw [hnat]
+        grind
+      rw [← hcoeff]
+      grind
+
+private theorem rat_weighted_diagonal_fold
+    (A : Nat → Rat) (n : Nat) :
+    ((n + 1 : Nat) : Rat) *
+        (List.range (n + 2)).foldl (fun acc i => acc + A i) 0 =
+      (List.range (n + 1)).foldl
+          (fun acc i => acc + ((i + 1 : Nat) : Rat) * A (i + 1)) 0 +
+        (List.range (n + 1)).foldl
+          (fun acc i => acc + ((n - i + 1 : Nat) : Rat) * A i) 0 := by
+  have h := rat_weighted_diagonal_fold_aux A (n + 1)
+  rw [show n + 1 + 1 = n + 2 by omega] at h
+  exact h.trans (by
+    congr 1
+    apply fold_add_congr
+    intro i hi
+    have hi' : i < n + 1 := List.mem_range.mp hi
+    have hidx : n + 1 - i = n - i + 1 := by omega
+    rw [hidx])
+
+private theorem rat_coeff_derivative_generic (p : DensePoly Rat) (n : Nat) :
+    (derivative p).coeff n = ((n + 1 : Nat) : Rat) * p.coeff (n + 1) := by
+  unfold derivative
+  rw [coeff_ofCoeffs_list]
+  change
+    ((List.range (p.size - 1)).map
+        (fun i => ((i + 1 : Nat) : Rat) * p.coeff (i + 1))).getD n 0 =
+      ((n + 1 : Nat) : Rat) * p.coeff (n + 1)
+  by_cases hn : n < p.size - 1
+  · simp [hn, List.getD]
+  · have hp : p.size ≤ n + 1 := by omega
+    have hcoeff : p.coeff (n + 1) = 0 :=
+      coeff_eq_zero_of_size_le p hp
+    simp [hn, List.getD, hcoeff]
+
+theorem rat_mulCoeffSum_derivative_product_rule
+    (p q : DensePoly Rat) (n : Nat) :
+    ((n + 1 : Nat) : Rat) * mulCoeffSum p q (n + 1) =
+      mulCoeffSum (derivative p) q n + mulCoeffSum p (derivative q) n := by
+  rw [mulCoeffSum_eq_diagonal p q (n + 1)]
+  rw [diagonalSum_eq_degree_bound p q (n + 1)]
+  rw [mulCoeffSum_eq_diagonal (derivative p) q n]
+  rw [diagonalSum_eq_degree_bound (derivative p) q n]
+  rw [mulCoeffSum_eq_diagonal p (derivative q) n]
+  rw [diagonalSum_eq_degree_bound p (derivative q) n]
+  have hleft :
+      (List.range (n + 2)).foldl
+          (fun acc i => acc + diagonalMulCoeffTerm p q (n + 1) i) 0 =
+        (List.range (n + 2)).foldl
+          (fun acc i => acc + p.coeff i * q.coeff (n + 1 - i)) 0 := by
+    apply fold_add_congr
+    intro i hi
+    have hi' : i < n + 2 := List.mem_range.mp hi
+    have hnot : ¬ n + 1 < i := by omega
+    simp [diagonalMulCoeffTerm, hnot]
+  rw [hleft]
+  rw [rat_weighted_diagonal_fold (fun i => p.coeff i * q.coeff (n + 1 - i)) n]
+  congr 1
+  · apply fold_add_congr
+    intro i hi
+    have hi' : i < n + 1 := List.mem_range.mp hi
+    have hnot : ¬ n < i := by omega
+    unfold diagonalMulCoeffTerm
+    simp [hnot, rat_coeff_derivative_generic p i]
+    have hidx : n - i = n + 1 - (i + 1) := by omega
+    rw [hidx]
+    grind
+  · apply fold_add_congr
+    intro i hi
+    have hi' : i < n + 1 := List.mem_range.mp hi
+    have hnot : ¬ n < i := by omega
+    unfold diagonalMulCoeffTerm
+    simp [hnot, rat_coeff_derivative_generic q (n - i)]
+    have hidx : n - i + 1 = n + 1 - i := by omega
+    rw [hidx]
+    grind
+
 private theorem diagonal_mul_left_expand {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q r : DensePoly S) (n i : Nat) (hi : i < n + 1) :
