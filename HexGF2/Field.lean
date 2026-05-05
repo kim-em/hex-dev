@@ -49,6 +49,175 @@ theorem eq_of_reducedCoeffVector_eq {bound : Nat} {p q : GF2Poly}
     rw [coeff_eq_false_of_reduced_bound_le hp hbound,
       coeff_eq_false_of_reduced_bound_le hq hbound]
 
+/-- The two coefficients of `GF(2)`, in a stable enumeration order. -/
+def boolCoeffValues : List Bool :=
+  [false, true]
+
+@[simp] theorem boolCoeffValues_length : boolCoeffValues.length = 2 := by
+  rfl
+
+theorem mem_boolCoeffValues (b : Bool) : b ∈ boolCoeffValues := by
+  cases b <;> simp [boolCoeffValues]
+
+theorem boolCoeffValues_nodup : boolCoeffValues.Nodup := by
+  simp [boolCoeffValues]
+
+private theorem nodup_map_of_injective
+    {α β : Type} {xs : List α} {f : α → β}
+    (hxs : xs.Nodup)
+    (hinj : ∀ a, a ∈ xs → ∀ b, b ∈ xs → f a = f b → a = b) :
+    (xs.map f).Nodup := by
+  induction xs with
+  | nil =>
+      simp
+  | cons x xs ih =>
+      simp only [List.map_cons]
+      rw [List.nodup_cons] at hxs ⊢
+      constructor
+      · intro hx
+        rcases List.mem_map.mp hx with ⟨y, hy, hxy⟩
+        have hyx : y = x := hinj y (by simp [hy]) x (by simp) hxy
+        exact hxs.1 (by simpa [hyx] using hy)
+      · exact ih hxs.2 (by
+          intro a ha b hb hab
+          exact hinj a (by simp [ha]) b (by simp [hb]) hab)
+
+private theorem nodup_flatMap_of_disjoint
+    {α β : Type} {xs : List α} {f : α → List β}
+    (hxs : xs.Nodup)
+    (hrow : ∀ x, x ∈ xs → (f x).Nodup)
+    (hdisj :
+      ∀ x, x ∈ xs → ∀ y, y ∈ xs → x ≠ y →
+        ∀ z, z ∈ f x → z ∈ f y → False) :
+    (xs.flatMap f).Nodup := by
+  induction xs with
+  | nil =>
+      simp
+  | cons x xs ih =>
+      rw [List.nodup_cons] at hxs
+      rw [List.flatMap_cons, List.nodup_append]
+      refine ⟨hrow x (by simp), ?_, ?_⟩
+      · exact ih hxs.2
+          (by intro y hy; exact hrow y (by simp [hy]))
+          (by
+            intro y hy z hz hyz t hty htz
+            exact hdisj y (by simp [hy]) z (by simp [hz]) hyz t hty htz)
+      · intro a ha b hb hab
+        rcases List.mem_flatMap.mp hb with ⟨y, hy, hby⟩
+        exact hdisj x (by simp) y (by simp [hy]) (by
+          intro hxy
+          exact hxs.1 (hxy ▸ hy)) a ha (hab ▸ hby)
+
+/-- All Boolean coefficient lists of length `d`, ordered lexicographically by
+the head coefficient. -/
+def coeffBoolLists : Nat → List (List Bool)
+  | 0 => [[]]
+  | d + 1 =>
+      boolCoeffValues.flatMap fun b =>
+        (coeffBoolLists d).map fun coeffs => b :: coeffs
+
+@[simp] theorem coeffBoolLists_zero :
+    coeffBoolLists 0 = ([[]] : List (List Bool)) :=
+  rfl
+
+@[simp] theorem coeffBoolLists_succ (d : Nat) :
+    coeffBoolLists (d + 1) =
+      boolCoeffValues.flatMap fun b =>
+        (coeffBoolLists d).map fun coeffs => b :: coeffs :=
+  rfl
+
+/-- Every list produced by `coeffBoolLists d` has length exactly `d`. -/
+theorem length_of_mem_coeffBoolLists {d : Nat} {coeffs : List Bool}
+    (hmem : coeffs ∈ coeffBoolLists d) :
+    coeffs.length = d := by
+  induction d generalizing coeffs with
+  | zero =>
+      simpa [coeffBoolLists] using hmem
+  | succ d ih =>
+      rw [coeffBoolLists_succ] at hmem
+      rcases List.mem_flatMap.mp hmem with ⟨b, _hb, htail⟩
+      rcases List.mem_map.mp htail with ⟨tail, htail_mem, hcoeffs⟩
+      subst coeffs
+      simp [ih htail_mem]
+
+/-- Membership in `coeffBoolLists d` is exactly having length `d`. -/
+theorem mem_coeffBoolLists_iff {d : Nat} {coeffs : List Bool} :
+    coeffs ∈ coeffBoolLists d ↔ coeffs.length = d := by
+  induction d generalizing coeffs with
+  | zero =>
+      constructor
+      · intro h
+        simpa [coeffBoolLists] using h
+      · intro h
+        have hnil : coeffs = [] := List.eq_nil_of_length_eq_zero h
+        subst coeffs
+        simp [coeffBoolLists]
+  | succ d ih =>
+      constructor
+      · intro h
+        exact length_of_mem_coeffBoolLists h
+      · intro h
+        cases coeffs with
+        | nil =>
+            simp at h
+        | cons b tail =>
+            rw [coeffBoolLists_succ]
+            apply List.mem_flatMap.mpr
+            refine ⟨b, mem_boolCoeffValues b, ?_⟩
+            apply List.mem_map.mpr
+            refine ⟨tail, ?_, rfl⟩
+            apply (ih (coeffs := tail)).mpr
+            simpa using Nat.succ.inj h
+
+/-- Every fixed-length Boolean coefficient list appears in the enumeration. -/
+theorem mem_coeffBoolLists_of_length_eq {d : Nat} {coeffs : List Bool}
+    (hlen : coeffs.length = d) :
+    coeffs ∈ coeffBoolLists d :=
+  (mem_coeffBoolLists_iff (d := d) (coeffs := coeffs)).mpr hlen
+
+/-- The Boolean coefficient-list enumeration has exactly `2 ^ d` entries. -/
+@[simp] theorem coeffBoolLists_length (d : Nat) :
+    (coeffBoolLists d).length = 2 ^ d := by
+  induction d with
+  | zero =>
+      simp [coeffBoolLists]
+  | succ d ih =>
+      rw [coeffBoolLists_succ]
+      calc
+        (boolCoeffValues.flatMap fun _b =>
+            (coeffBoolLists d).map fun coeffs => _b :: coeffs).length =
+            boolCoeffValues.length * (coeffBoolLists d).length := by
+              induction boolCoeffValues with
+              | nil => simp
+              | cons b bs ihbs =>
+                  simp [ihbs, Nat.add_mul, Nat.add_comm]
+        _ = 2 * 2 ^ d := by simp [ih]
+        _ = 2 ^ (d + 1) := by
+          rw [Nat.pow_succ]
+          exact Nat.mul_comm 2 (2 ^ d)
+
+/-- The fixed-length Boolean coefficient-list enumeration has no duplicates. -/
+theorem coeffBoolLists_nodup (d : Nat) :
+    (coeffBoolLists d).Nodup := by
+  induction d with
+  | zero =>
+      simp [coeffBoolLists]
+  | succ d ih =>
+      rw [coeffBoolLists_succ]
+      apply nodup_flatMap_of_disjoint
+      · exact boolCoeffValues_nodup
+      · intro b _hb
+        apply nodup_map_of_injective
+        · exact ih
+        · intro a _ha c _hc h
+          exact List.cons.inj h |>.2
+      · intro b hb c hc hne x hx hx'
+        rcases List.mem_map.mp hx with ⟨tail, _htail, hxtail⟩
+        rcases List.mem_map.mp hx' with ⟨tail', _htail', hxtail'⟩
+        subst x
+        have hhead : b = c := (List.cons.inj hxtail' |>.1).symm
+        exact hne hhead
+
 end GF2Poly
 
 /-- `GF(2^n)` for arbitrary `n`, represented by reduced `GF2Poly` residues
