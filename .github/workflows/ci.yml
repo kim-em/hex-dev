@@ -54,3 +54,6 @@ jobs:
       - run: |
           lake exe hexberlekamp_bench list
           lake exe hexberlekamp_bench verify
+      - run: |
+          lake exe hexconway_bench list
+          lake exe hexconway_bench verify

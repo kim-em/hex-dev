@@ -208,5 +208,8 @@ lean_exe hexhensel_bench where
 lean_exe hexberlekamp_bench where
   root := `HexBerlekamp.Bench
 
+lean_exe hexconway_bench where
+  root := `HexConway.Bench
+
 @[default_target]
 lean_lib HexManual where
