@@ -2362,6 +2362,114 @@ private theorem detTerm_insertAt_boundary_eq_neg_rowSwap_insertAt_last {R : Type
   rw [hterm]
   grind
 
+private theorem leadingPrefix_rowSwap_borderedMinor_succ_oldBoundary_eq {R : Type u}
+    (M : Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (i j : Fin n) :
+    leadingPrefix
+        (rowSwap (borderedMinor M (k + 1) hnext i j)
+          (Fin.last k).castSucc (Fin.last (k + 1)))
+        (k + 1) (Nat.le_succ (k + 1)) =
+      borderedMinor M k hk i (⟨k, hk⟩ : Fin n) := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro c hc
+  have hr2 : r < k + 2 := by omega
+  have hc2 : c < k + 2 := by omega
+  simp only [leadingPrefix, ofFn, Vector.getElem_ofFn]
+  rw [rowSwap_get]
+  have hOldLast : (Fin.last k).castSucc ≠ Fin.last (k + 1) := by
+    intro h
+    have hval := congrArg Fin.val h
+    simp at hval
+  by_cases hrk : r < k <;> by_cases hck : c < k
+  · have hrowLast : (⟨r, hr2⟩ : Fin (k + 2)) ≠ Fin.last (k + 1) := by
+      intro h
+      have hval := congrArg Fin.val h
+      simp at hval
+      omega
+    have hrowOld : (⟨r, hr2⟩ : Fin (k + 2)) ≠ (Fin.last k).castSucc := by
+      intro h
+      have hval := congrArg Fin.val h
+      simp at hval
+      omega
+    simp [borderedMinor, ofFn, hr, hc, hrk, hck, hrowLast, hrowOld]
+  · have hc_eq : c = k := by omega
+    have hrowLast : (⟨r, hr2⟩ : Fin (k + 2)) ≠ Fin.last (k + 1) := by
+      intro h
+      have hval := congrArg Fin.val h
+      simp at hval
+      omega
+    have hrowOld : (⟨r, hr2⟩ : Fin (k + 2)) ≠ (Fin.last k).castSucc := by
+      intro h
+      have hval := congrArg Fin.val h
+      simp at hval
+      omega
+    simp [borderedMinor, ofFn, hr, hrk, hc_eq, hrowLast, hrowOld]
+  · have hr_eq : r = k := by omega
+    subst r
+    have hrowLast : (⟨k, by omega⟩ : Fin (k + 2)) ≠ Fin.last (k + 1) := by
+      intro h
+      have hval := congrArg Fin.val h
+      simp at hval
+    have hrowOld : (⟨k, by omega⟩ : Fin (k + 2)) = (Fin.last k).castSucc := by
+      exact Fin.ext rfl
+    simp [borderedMinor, ofFn, hc, hck, hOldLast, hrowOld]
+  · have hr_eq : r = k := by omega
+    have hc_eq : c = k := by omega
+    subst r
+    subst c
+    have hrowLast : (⟨k, by omega⟩ : Fin (k + 2)) ≠ Fin.last (k + 1) := by
+      intro h
+      have hval := congrArg Fin.val h
+      simp at hval
+    have hrowOld : (⟨k, by omega⟩ : Fin (k + 2)) = (Fin.last k).castSucc := by
+      exact Fin.ext rfl
+    simp [borderedMinor, ofFn, hOldLast, hrowOld]
+
+/-- The old-boundary successor term whose old boundary row chooses the final
+column rewrites to the current bordered-minor term with row border `i` and
+old-boundary column border, times the old-boundary/final-column source entry. -/
+theorem detTerm_borderedMinor_succ_insertAt_oldBoundary {R : Type u}
+    [Lean.Grind.CommRing R] (M : Matrix R n n) (k : Nat)
+    (hk : k < n) (hnext : k + 1 < n) (i j : Fin n)
+    (_hi : i ≠ (⟨k, hk⟩ : Fin n)) (_hj : j ≠ (⟨k, hk⟩ : Fin n))
+    (v : Vector (Fin (k + 1)) (k + 1)) (hnodup : v.toList.Nodup) :
+    detTerm (borderedMinor M (k + 1) hnext i j)
+        (insertAt (Fin.last (k + 1)) (v.map Fin.castSucc) (Fin.last k).castSucc) =
+      -(detSign (R := R) v *
+        (detProduct (borderedMinor M k hk i (⟨k, hk⟩ : Fin n)) v *
+          M[(⟨k, hk⟩ : Fin n)][j])) := by
+  let B : Matrix R (k + 2) (k + 2) := borderedMinor M (k + 1) hnext i j
+  let old : Fin (k + 2) := (Fin.last k).castSucc
+  let last : Fin (k + 2) := Fin.last (k + 1)
+  have hboundary :=
+    detTerm_insertAt_boundary_eq_neg_rowSwap_insertAt_last
+      (M := B) (v := v) hnodup
+  have hlast :
+      detTerm (rowSwap B old last)
+          (insertAt (Fin.last (k + 1)) (v.map Fin.castSucc) (Fin.last (k + 1))) =
+        detSign (R := R) v *
+          (detProduct (borderedMinor M k hk i (⟨k, hk⟩ : Fin n)) v *
+            M[(⟨k, hk⟩ : Fin n)][j]) := by
+    rw [detTerm_insertAt_last]
+    have hprod :
+        detProduct (leadingPrefix (rowSwap B old last) (k + 1)
+            (Nat.le_succ (k + 1))) v =
+          detProduct (borderedMinor M k hk i (⟨k, hk⟩ : Fin n)) v := by
+      apply detProduct_congr_matrix
+      intro r c
+      have hmat :=
+        congrArg (fun A : Matrix R (k + 1) (k + 1) => A[r][c])
+          (leadingPrefix_rowSwap_borderedMinor_succ_oldBoundary_eq
+            M k hk hnext i j)
+      simpa [B, old, last] using hmat
+    have hentry : (rowSwap B old last)[Fin.last (k + 1)][Fin.last (k + 1)] =
+        M[(⟨k, hk⟩ : Fin n)][j] := by
+      simp [B, old, last, rowSwap, borderedMinor, ofFn]
+    rw [hprod, hentry]
+  rw [hboundary, hlast]
+
 private theorem permutationVectors_transposeValues_neg_sum {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (i j : Fin n) (_h : i ≠ j) :
