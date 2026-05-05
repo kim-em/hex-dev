@@ -48,6 +48,54 @@ jobs:
     runs-on: ubuntu-latest
     env:
       LD_LIBRARY_PATH: /home/runner/.elan/toolchains/leanprover--lean4---v4.30.0-rc2/lib/lean
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - lib: HexPoly
+            emit: hexpoly_emit_fixtures
+            script: scripts/oracle/poly_flint.py
+            fixture: conformance-fixtures/HexPoly/poly.jsonl
+          - lib: HexPolyFp
+            emit: hexpolyfp_emit_fixtures
+            script: scripts/oracle/polyfp_flint.py
+            fixture: conformance-fixtures/HexPolyFp/poly.jsonl
+          - lib: HexBerlekamp
+            emit: hexberlekamp_emit_fixtures
+            script: scripts/oracle/berlekamp_flint.py
+            fixture: conformance-fixtures/HexBerlekamp/berlekamp.jsonl
+          - lib: HexMatrix
+            emit: hexmatrix_emit_fixtures
+            script: scripts/oracle/matrix_flint.py
+            fixture: conformance-fixtures/HexMatrix/matrix.jsonl
+          - lib: HexBerlekampZassenhaus
+            emit: hexbz_emit_fixtures
+            script: scripts/oracle/bz_flint.py
+            fixture: conformance-fixtures/HexBerlekampZassenhaus/bz.jsonl
+          - lib: HexPolyZ
+            emit: hexpolyz_emit_fixtures
+            script: scripts/oracle/polyz_flint.py
+            fixture: conformance-fixtures/HexPolyZ/polyz.jsonl
+          - lib: HexGF2
+            emit: hexgf2_emit_fixtures
+            script: scripts/oracle/gf2_flint.py
+            fixture: conformance-fixtures/HexGF2/gf2.jsonl
+          - lib: HexGfq
+            emit: hexgfq_emit_fixtures
+            script: scripts/oracle/gfq_flint.py
+            fixture: conformance-fixtures/HexGfq/gfq.jsonl
+          - lib: HexGfqRing
+            emit: hexgfqring_emit_fixtures
+            script: scripts/oracle/gfqring_flint.py
+            fixture: conformance-fixtures/HexGfqRing/gfqring.jsonl
+          - lib: HexGfqField
+            emit: hexgfqfield_emit_fixtures
+            script: scripts/oracle/gfqfield_flint.py
+            fixture: conformance-fixtures/HexGfqField/gfqfield.jsonl
+          - lib: HexGramSchmidt
+            emit: hexgramschmidt_emit_fixtures
+            script: scripts/oracle/gs_flint.py
+            fixture: conformance-fixtures/HexGramSchmidt/gram_schmidt.jsonl
     steps:
       - uses: actions/checkout@v4
       - name: Install system dependencies
@@ -60,137 +108,22 @@ jobs:
         run: |
           toolchain="$(sed 's|/|--|; s|:|---|' lean-toolchain)"
           echo "LD_LIBRARY_PATH=$HOME/.elan/toolchains/$toolchain/lib/lean:${LD_LIBRARY_PATH:-}" >> "$GITHUB_ENV"
-      - name: Build hexpoly_emit_fixtures
+      - name: Build ${{ matrix.emit }}
         uses: leanprover/lean-action@v1
         with:
-          build-args: hexpoly_emit_fixtures
-      - name: Cross-check HexPoly Lean emission against committed fixture
+          build-args: ${{ matrix.emit }}
+      - name: Cross-check Lean emission against committed fixture
         run: |
-          lake exe hexpoly_emit_fixtures > /tmp/hexpoly-fresh.jsonl
-          diff -u conformance-fixtures/HexPoly/poly.jsonl /tmp/hexpoly-fresh.jsonl
-      - name: Run HexPoly python-flint oracle
+          lake exe ${{ matrix.emit }} > /tmp/${{ matrix.lib }}-fresh.jsonl
+          diff -u ${{ matrix.fixture }} /tmp/${{ matrix.lib }}-fresh.jsonl
+      - name: Run python-flint oracle
         run: |
-          lake exe hexpoly_emit_fixtures \
-            | python3 scripts/oracle/poly_flint.py
-      - name: Build hexberlekamp_emit_fixtures
-        uses: leanprover/lean-action@v1
-        with:
-          build-args: hexberlekamp_emit_fixtures
-      - name: Cross-check HexBerlekamp Lean emission against committed fixture
-        run: |
-          lake exe hexberlekamp_emit_fixtures > /tmp/hexberlekamp-fresh.jsonl
-          diff -u conformance-fixtures/HexBerlekamp/berlekamp.jsonl \
-            /tmp/hexberlekamp-fresh.jsonl
-      - name: Run HexBerlekamp python-flint oracle
-        run: |
-          lake exe hexberlekamp_emit_fixtures \
-            | python3 scripts/oracle/berlekamp_flint.py
-      - name: Build hexmatrix_emit_fixtures
-        uses: leanprover/lean-action@v1
-        with:
-          build-args: hexmatrix_emit_fixtures
-      - name: Cross-check HexMatrix Lean emission against committed fixture
-        run: |
-          lake exe hexmatrix_emit_fixtures > /tmp/hexmatrix-fresh.jsonl
-          diff -u conformance-fixtures/HexMatrix/matrix.jsonl \
-            /tmp/hexmatrix-fresh.jsonl
-      - name: Run HexMatrix python-flint oracle
-        run: |
-          lake exe hexmatrix_emit_fixtures \
-            | python3 scripts/oracle/matrix_flint.py
-      - name: Build hexbz_emit_fixtures
-        uses: leanprover/lean-action@v1
-        with:
-          build-args: hexbz_emit_fixtures
-      - name: Cross-check HexBerlekampZassenhaus Lean emission against committed fixture
-        run: |
-          lake exe hexbz_emit_fixtures > /tmp/hexbz-fresh.jsonl
-          diff -u conformance-fixtures/HexBerlekampZassenhaus/bz.jsonl \
-            /tmp/hexbz-fresh.jsonl
-      - name: Run HexBerlekampZassenhaus python-flint oracle
-        run: |
-          lake exe hexbz_emit_fixtures \
-            | python3 scripts/oracle/bz_flint.py
-      - name: Build hexpolyz_emit_fixtures
-        uses: leanprover/lean-action@v1
-        with:
-          build-args: hexpolyz_emit_fixtures
-      - name: Cross-check HexPolyZ Lean emission against committed fixture
-        run: |
-          lake exe hexpolyz_emit_fixtures > /tmp/hexpolyz-fresh.jsonl
-          diff -u conformance-fixtures/HexPolyZ/polyz.jsonl /tmp/hexpolyz-fresh.jsonl
-      - name: Run HexPolyZ python-flint oracle
-        run: |
-          lake exe hexpolyz_emit_fixtures \
-            | python3 scripts/oracle/polyz_flint.py
-      - name: Build hexgfq_emit_fixtures
-        uses: leanprover/lean-action@v1
-        with:
-          build-args: hexgfq_emit_fixtures
-      - name: Cross-check HexGfq Lean emission against committed fixture
-        run: |
-          lake exe hexgfq_emit_fixtures > /tmp/hexgfq-fresh.jsonl
-          diff -u conformance-fixtures/HexGfq/gfq.jsonl /tmp/hexgfq-fresh.jsonl
-      - name: Run HexGfq python-flint oracle
-        run: |
-          lake exe hexgfq_emit_fixtures \
-            | python3 scripts/oracle/gfq_flint.py
-      - name: Build hexgramschmidt_emit_fixtures
-        uses: leanprover/lean-action@v1
-        with:
-          build-args: hexgramschmidt_emit_fixtures
-      - name: Cross-check HexGramSchmidt Lean emission against committed fixture
-        run: |
-          lake exe hexgramschmidt_emit_fixtures > /tmp/hexgramschmidt-fresh.jsonl
-          diff -u conformance-fixtures/HexGramSchmidt/gram_schmidt.jsonl \
-            /tmp/hexgramschmidt-fresh.jsonl
-      - name: Run HexGramSchmidt python-flint oracle
-        run: |
-          lake exe hexgramschmidt_emit_fixtures \
-            | python3 scripts/oracle/gs_flint.py
-      - name: Build hexgf2_emit_fixtures
-        uses: leanprover/lean-action@v1
-        with:
-          build-args: hexgf2_emit_fixtures
-      - name: Cross-check HexGF2 Lean emission against committed fixture
-        run: |
-          lake exe hexgf2_emit_fixtures > /tmp/hexgf2-fresh.jsonl
-          diff -u conformance-fixtures/HexGF2/gf2.jsonl /tmp/hexgf2-fresh.jsonl
-      - name: Run HexGF2 python-flint oracle
-        run: |
-          lake exe hexgf2_emit_fixtures \
-            | python3 scripts/oracle/gf2_flint.py
-      - name: Build hexgfqring_emit_fixtures
-        uses: leanprover/lean-action@v1
-        with:
-          build-args: hexgfqring_emit_fixtures
-      - name: Cross-check HexGfqRing Lean emission against committed fixture
-        run: |
-          lake exe hexgfqring_emit_fixtures > /tmp/hexgfqring-fresh.jsonl
-          diff -u conformance-fixtures/HexGfqRing/gfqring.jsonl \
-            /tmp/hexgfqring-fresh.jsonl
-      - name: Run HexGfqRing python-flint oracle
-        run: |
-          lake exe hexgfqring_emit_fixtures \
-            | python3 scripts/oracle/gfqring_flint.py
-      - name: Build hexgfqfield_emit_fixtures
-        uses: leanprover/lean-action@v1
-        with:
-          build-args: hexgfqfield_emit_fixtures
-      - name: Cross-check HexGfqField Lean emission against committed fixture
-        run: |
-          lake exe hexgfqfield_emit_fixtures > /tmp/hexgfqfield-fresh.jsonl
-          diff -u conformance-fixtures/HexGfqField/gfqfield.jsonl \
-            /tmp/hexgfqfield-fresh.jsonl
-      - name: Run HexGfqField python-flint oracle
-        run: |
-          lake exe hexgfqfield_emit_fixtures \
-            | python3 scripts/oracle/gfqfield_flint.py
+          lake exe ${{ matrix.emit }} | python3 ${{ matrix.script }}
       - name: Upload failure records
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: oracle-pyflint-failures
+          name: oracle-pyflint-failures-${{ matrix.lib }}
           path: conformance-failures/*.json
           if-no-files-found: ignore
 
