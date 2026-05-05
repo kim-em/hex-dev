@@ -153,6 +153,53 @@ private theorem foldl_set_outerSubMul_get_eq
         change (base.set x.val (outerK.get x - r * outerJ.get x) x.isLt)[l.val] = base[l.val]
         exact Vector.getElem_set_ne x.isLt l.isLt h_xl
 
+private theorem foldl_finRange_set_outerSubMul_get_eq
+    {n : Nat} (jVal : Nat) (hjn : jVal ≤ n)
+    (base outerK outerJ : Vector Int n) (r : Int) (l : Fin n) :
+    ((List.finRange jVal).foldl
+        (fun (row : Vector Int n) (l' : Fin jVal) =>
+          let lFin : Fin n := ⟨l'.val, Nat.lt_of_lt_of_le l'.isLt hjn⟩
+          row.set lFin (outerK.get lFin - r * outerJ.get lFin))
+        base).get l =
+      if l.val < jVal then
+        outerK.get l - r * outerJ.get l
+      else
+        base.get l := by
+  let cast : Fin jVal → Fin n :=
+    fun l' => ⟨l'.val, Nat.lt_of_lt_of_le l'.isLt hjn⟩
+  show ((List.finRange jVal).foldl
+        (fun (row : Vector Int n) (l' : Fin jVal) =>
+          row.set (cast l') (outerK.get (cast l') - r * outerJ.get (cast l')))
+        base).get l = _
+  rw [show ((List.finRange jVal).foldl
+        (fun (row : Vector Int n) (l' : Fin jVal) =>
+          row.set (cast l') (outerK.get (cast l') - r * outerJ.get (cast l')))
+        base) =
+      ((List.finRange jVal).map cast).foldl
+        (fun (row : Vector Int n) (i : Fin n) =>
+          row.set i (outerK.get i - r * outerJ.get i))
+        base from
+      (@List.foldl_map (Fin jVal) (Fin n) (Vector Int n) cast
+        (fun row i => row.set i (outerK.get i - r * outerJ.get i))
+        (List.finRange jVal) base).symm]
+  rw [foldl_set_outerSubMul_get_eq]
+  by_cases hlj : l.val < jVal
+  · have hex : ∃ i ∈ (List.finRange jVal).map cast, i.val = l.val := by
+      refine ⟨⟨l.val, Nat.lt_of_lt_of_le hlj hjn⟩, ?_, rfl⟩
+      rw [List.mem_map]
+      exact ⟨⟨l.val, hlj⟩, List.mem_finRange _, rfl⟩
+    rw [if_pos hex, if_pos hlj]
+  · have hno : ¬ ∃ i ∈ (List.finRange jVal).map cast, i.val = l.val := by
+      rintro ⟨i, hi_mem, hi_eq⟩
+      rw [List.mem_map] at hi_mem
+      obtain ⟨l', _, hl'⟩ := hi_mem
+      have hcast : (cast l').val = l'.val := rfl
+      have : l.val < jVal := by
+        rw [← hi_eq, ← hl', hcast]
+        exact l'.isLt
+      exact hlj this
+    rw [if_neg hno, if_neg hlj]
+
 /-- Single-column size reduction update for row `k` against row `j`. -/
 def sizeReduceColumn (s : LLLState n m) (j k : Fin n) (hjk : j.val < k.val) :
     LLLState n m :=
@@ -175,7 +222,22 @@ def sizeReduceColumn (s : LLLState n m) (j k : Fin n) (hjk : j.val < k.val) :
       d := s.d
       ν_eq := by
         intro i l hi hl hli
-        sorry
+        by_cases hik : i = k.val
+        · -- Row i is row k. Subdivide on l vs j.val.
+          sorry
+        · -- Row i ≠ k.val: ν' agrees with s.ν, and coeffs(b') agrees with coeffs(s.b)
+          -- on row i, so this case reduces to s.ν_eq directly.
+          have hik_fin : (⟨i, hi⟩ : Fin n) ≠ k := fun h => hik (congrArg Fin.val h)
+          have hν_get : (ν'.get ⟨i, hi⟩) = s.ν.get ⟨i, hi⟩ := by
+            change (s.ν.set k.val rowK k.isLt).get ⟨i, hi⟩ = s.ν.get ⟨i, hi⟩
+            change (s.ν.set k.val rowK k.isLt)[i] = s.ν[i]
+            exact Vector.getElem_set_ne k.isLt hi (fun h => hik h.symm)
+          have hcoeff_row :
+              (GramSchmidt.Int.coeffs b').get ⟨i, hi⟩ =
+                (GramSchmidt.Int.coeffs s.b).get ⟨i, hi⟩ :=
+            GramSchmidt.Int.coeffs_sizeReduce_other_row s.b j k hjk r ⟨i, hi⟩ hik_fin
+          rw [hν_get, hcoeff_row]
+          exact s.ν_eq i l hi hl hli
       d_eq := by
         intro i hi
         dsimp only [b']
