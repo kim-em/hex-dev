@@ -290,6 +290,137 @@ theorem ne_zero_of_pos_degree
   unfold DensePoly.degree? at hpos
   simp at hpos
 
+omit [ZMod64.PrimeModulus p] in
+private theorem zmod64_one_ne_zero_local [ZMod64.PrimeModulus p] :
+    (1 : ZMod64 p) ≠ (0 : ZMod64 p) := by
+  intro h
+  have h2 : 2 ≤ p := Hex.Nat.Prime.two_le (ZMod64.PrimeModulus.prime (p := p))
+  have htoNat : (1 : ZMod64 p).toNat = (0 : ZMod64 p).toNat :=
+    congrArg ZMod64.toNat h
+  rw [show ((1 : ZMod64 p).toNat) = 1 % p from ZMod64.toNat_one,
+      show ((0 : ZMod64 p).toNat) = 0 from ZMod64.toNat_zero,
+      Nat.mod_eq_of_lt (by omega : 1 < p)] at htoNat
+  exact absurd htoNat (by omega)
+
+omit [ZMod64.PrimeModulus p] in
+private theorem inv_leadingCoeff_ne_zero_of_pos_degree [ZMod64.PrimeModulus p]
+    (a : FpPoly p) (ha_pos : 0 < a.degree?.getD 0) :
+    (DensePoly.leadingCoeff a)⁻¹ ≠ (0 : ZMod64 p) := by
+  intro hinv
+  have hlead_ne := FpPoly.leadingCoeff_ne_zero_of_pos_degree a ha_pos
+  change ZMod64.inv (DensePoly.leadingCoeff a) = (0 : ZMod64 p) at hinv
+  have hone := ZMod64.inv_mul_eq_one_of_prime
+    (ZMod64.PrimeModulus.prime (p := p)) hlead_ne
+  rw [hinv] at hone
+  have hzero : (0 : ZMod64 p) * DensePoly.leadingCoeff a = 0 := by grind
+  rw [hzero] at hone
+  exact zmod64_one_ne_zero_local hone.symm
+
+omit [ZMod64.PrimeModulus p] in
+private theorem factor_ne_zero_of_ne_zero_local
+    {f a b : FpPoly p} (hab : a * b = f) (hf_ne_zero : f ≠ 0) :
+    a ≠ 0 := by
+  intro hzero
+  rw [hzero, FpPoly.zero_mul] at hab
+  exact hf_ne_zero hab.symm
+
+omit [ZMod64.PrimeModulus p] in
+private theorem pos_degree_of_ne_zero_of_not_isUnit_local
+    {a : FpPoly p} (ha_ne_zero : a ≠ 0)
+    (ha_not_unit : a.degree? ≠ some 0) :
+    0 < a.degree?.getD 0 := by
+  have ha_size_pos : 0 < a.size := by
+    apply Nat.pos_of_ne_zero
+    intro hsize
+    apply ha_ne_zero
+    apply DensePoly.ext_coeff
+    intro i
+    rw [DensePoly.coeff_zero]
+    exact DensePoly.coeff_eq_zero_of_size_le a (by omega)
+  have ha_size_ne_zero : a.size ≠ 0 := Nat.pos_iff_ne_zero.mp ha_size_pos
+  have hdeg : a.degree? = some (a.size - 1) := by
+    unfold DensePoly.degree?
+    simp [ha_size_ne_zero]
+  rw [hdeg] at ha_not_unit
+  rw [hdeg]
+  have : a.size - 1 ≠ 0 := fun h => ha_not_unit (by rw [h])
+  simp
+  omega
+
+omit [ZMod64.PrimeModulus p] in
+private theorem fp_dvd_trans_local {a b c : FpPoly p}
+    (hab : a ∣ b) (hbc : b ∣ c) : a ∣ c := by
+  rcases hab with ⟨r, hr⟩
+  rcases hbc with ⟨s, hs⟩
+  refine ⟨r * s, ?_⟩
+  rw [hs, hr, FpPoly.mul_assoc]
+
+private theorem factor_degree_lt
+    {a x y : FpPoly p}
+    (hxy : x * y = a) (hx_ne_zero : x ≠ 0)
+    (hy_pos : 0 < y.degree?.getD 0) :
+    x.degree?.getD 0 < a.degree?.getD 0 := by
+  have hy_ne_zero : y ≠ 0 := ne_zero_of_pos_degree hy_pos
+  rw [← hxy]
+  rw [FpPoly.degree?_mul_eq_add_degree? x y hx_ne_zero hy_ne_zero]
+  omega
+
+private theorem exists_monic_irreducible_factor_of_pos_degree_aux :
+    ∀ (n : Nat) (a : FpPoly p), a.degree?.getD 0 = n →
+        0 < a.degree?.getD 0 →
+        ∃ g : FpPoly p,
+          FpPoly.Irreducible g ∧ DensePoly.Monic g ∧ g ∣ a ∧
+            0 < g.degree?.getD 0 ∧ g.degree?.getD 0 ≤ a.degree?.getD 0 := by
+  intro n
+  induction n using Nat.strongRecOn with
+  | ind n ih =>
+    intro a hn ha_pos
+    by_cases hirr : FpPoly.Irreducible a
+    · let c : ZMod64 p := (DensePoly.leadingCoeff a)⁻¹
+      have hc : c ≠ 0 := inv_leadingCoeff_ne_zero_of_pos_degree a ha_pos
+      refine ⟨DensePoly.scale c a, ?_, ?_, ?_, ?_, ?_⟩
+      · exact FpPoly.irreducible_scale_of_ne_zero (p := p) hc hirr
+      · exact FpPoly.scale_inv_leadingCoeff_monic a ha_pos
+      · exact FpPoly.dvd_scale_self_of_ne_zero (p := p) hc a
+      · rw [FpPoly.scale_degree?_getD_eq_of_ne_zero (p := p) hc a]
+        exact ha_pos
+      · rw [FpPoly.scale_degree?_getD_eq_of_ne_zero (p := p) hc a]
+        exact Nat.le_refl _
+    · have ha_ne : a ≠ 0 := ne_zero_of_pos_degree ha_pos
+      have hnotforall :
+          ¬ (∀ x y : FpPoly p, x * y = a →
+              x.degree? = some 0 ∨ y.degree? = some 0) :=
+        fun h => hirr ⟨ha_ne, h⟩
+      have hex :
+          ∃ x y : FpPoly p,
+            x * y = a ∧ x.degree? ≠ some 0 ∧ y.degree? ≠ some 0 := by
+        apply Classical.byContradiction
+        intro hno
+        apply hnotforall
+        intro x y hxy
+        by_cases hx0 : x.degree? = some 0
+        · exact Or.inl hx0
+        · by_cases hy0 : y.degree? = some 0
+          · exact Or.inr hy0
+          · exact (hno ⟨x, y, hxy, hx0, hy0⟩).elim
+      obtain ⟨x, y, hxy, hx_not_unit, hy_not_unit⟩ := hex
+      have hx_ne_zero : x ≠ 0 := factor_ne_zero_of_ne_zero_local hxy ha_ne
+      have hy_ne_zero : y ≠ 0 := by
+        have hyx : y * x = a := by rw [FpPoly.mul_comm]; exact hxy
+        exact factor_ne_zero_of_ne_zero_local hyx ha_ne
+      have hx_pos : 0 < x.degree?.getD 0 :=
+        pos_degree_of_ne_zero_of_not_isUnit_local hx_ne_zero hx_not_unit
+      have hy_pos : 0 < y.degree?.getD 0 :=
+        pos_degree_of_ne_zero_of_not_isUnit_local hy_ne_zero hy_not_unit
+      have hx_dvd_a : x ∣ a := ⟨y, hxy.symm⟩
+      have hx_lt : x.degree?.getD 0 < a.degree?.getD 0 :=
+        factor_degree_lt hxy hx_ne_zero hy_pos
+      have hx_lt_n : x.degree?.getD 0 < n := hn ▸ hx_lt
+      obtain ⟨g, hg_irr, hg_monic, hg_dvd_x, hg_deg_pos, hg_deg_le_x⟩ :=
+        ih (x.degree?.getD 0) hx_lt_n x rfl hx_pos
+      exact ⟨g, hg_irr, hg_monic, fp_dvd_trans_local hg_dvd_x hx_dvd_a, hg_deg_pos,
+        Nat.le_trans hg_deg_le_x (Nat.le_of_lt hx_lt)⟩
+
 /--
 Existence of a monic irreducible factor for any non-unit factor.
 
@@ -300,12 +431,12 @@ rescaling needed when `a` itself is not monic.
 -/
 theorem exists_monic_irreducible_factor_of_factor
     {f a b : FpPoly p}
-    (hmonic_f : DensePoly.Monic f) (hab : a * b = f)
+    (_hmonic_f : DensePoly.Monic f) (_hab : a * b = f)
     (ha_pos : 0 < a.degree?.getD 0) :
     ∃ g : FpPoly p,
       FpPoly.Irreducible g ∧ DensePoly.Monic g ∧ g ∣ a ∧
         0 < g.degree?.getD 0 ∧ g.degree?.getD 0 ≤ a.degree?.getD 0 := by
-  sorry
+  exact exists_monic_irreducible_factor_of_pos_degree_aux (a.degree?.getD 0) a rfl ha_pos
 
 /--
 Rabin's degree-divisibility theorem in its `FpPoly` form (forward
