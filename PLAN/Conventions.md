@@ -162,6 +162,12 @@ shape:
 - **Current state** — what is already true, and what assumptions the
   worker should begin from.
 - **Deliverables** — the concrete outputs expected from this issue.
+- **Library placement** — the file path the deliverables will land in,
+  the SPEC § that governs that path (quote 1–3 lines), and a one-line
+  answer to each of the four placement questions in
+  [Library placement is a hard precondition](#library-placement-is-a-hard-precondition).
+  If any answer is "unknown" or "blocked", file the prerequisite issue
+  first and add `depends-on:` here; do not file the dependent issue.
 - **Context** — links to every SPEC file the worker should re-read,
   including adjacent ones likely to be relevant (the library being
   touched, sibling library SPECs whose contracts cross the boundary,
@@ -181,6 +187,49 @@ depends-on: #124
 
 Keep these lines literal and easy to grep. They are the only
 dependency syntax the orchestration layer should rely on by default.
+
+### Library placement is a hard precondition
+
+Every issue that adds or modifies a Lean declaration names its target
+file *and justifies it*. Decomposition inherits the parent's
+placement only if the parent's placement was justified; otherwise
+re-justify in the child. A worker who picks up an issue whose Library
+placement is missing or wrong stops, fixes the issue, and re-queues —
+they do not "fix it in the PR".
+
+Answer all four. One line each is enough.
+
+1. **Which SPEC § governs this file?** Quote the sentence that pins
+   the deliverable to a library or file. If no SPEC § names this
+   placement, the issue is not ready: file a SPEC-clarification
+   issue first.
+2. **Does the natural strategy use Mathlib?** If yes, the file lives
+   in a `*-mathlib` bridge library. Mathlib-free libraries cannot
+   host a proof whose shortest path goes through `Matrix.adjugate`,
+   the universal polynomial ring, `MvPolynomial`,
+   `IsIntegralClosure`, or similar. "We will reprove the Mathlib
+   lemma locally" is not a justification; it is the failure mode
+   this rule exists to catch.
+3. **Is this result already in Mathlib, or in an open Mathlib PR?**
+   Choose one strategy:
+   - **Import** if it is on Mathlib `master` *now*.
+   - **Inline with attribution** otherwise — including any open,
+     draft, or stalled PR. Hex moves much faster than Mathlib's
+     review cycle and treats Mathlib as a static artefact; do not
+     gate hex on upstream merging. Copy the proof in, modify
+     types/namespaces/proof shape as needed, credit the upstream
+     author(s) in a file-level docstring linking the PR.
+   What is *not* allowed: reproving from a blank page without
+   consulting the upstream work.
+4. **Does the deliverable presuppose missing infrastructure?**
+   Type-class instances the statement quantifies over (`HPow`,
+   `Module`, `Algebra`), helper definitions, kernel-reducible
+   evaluators. If yes, file the infrastructure issue first and
+   `depends-on:` it here. A claim against a non-statable theorem is
+   churn, not progress.
+
+A `depends-on:` answer to any of (1)–(4) is healthy. An unanswered
+question is the failure shape.
 
 ### Bench-found and conformance-found issues
 
