@@ -765,6 +765,57 @@ private theorem insertAt_get_last_of_castSucc_last {α : Type u} {n : Nat}
   unfold insertAt
   simp [List.getElem_insertIdx_of_gt]
 
+private theorem list_getElem_insertIdx_succ_of_le {α : Type u}
+    (xs : List α) (x : α) {i r : Nat} (h : i ≤ r) (hr : r < xs.length) :
+    (xs.insertIdx i x)[r + 1]'(by
+      have hi : i ≤ xs.length := Nat.le_trans h (Nat.le_of_lt hr)
+      rw [List.length_insertIdx_of_le_length hi]
+      omega) = xs[r] := by
+  induction xs generalizing i r with
+  | nil =>
+      cases hr
+  | cons y ys ih =>
+      cases i with
+      | zero =>
+          cases r with
+          | zero =>
+              simp
+          | succ r =>
+              simp
+      | succ i =>
+          cases r with
+          | zero =>
+              omega
+          | succ r =>
+              simp only [List.insertIdx, List.getElem_cons_succ]
+              exact ih (Nat.succ_le_succ_iff.mp h) (Nat.succ_lt_succ_iff.mp hr)
+
+private theorem insertAt_prefix_get_self {α : Type u} {n : Nat}
+    (x : α) (v : Vector α (n + 1)) (i : Fin n) :
+    (insertAt x v i.castSucc.castSucc)[i.castSucc.castSucc] = x := by
+  exact insertAt_get_self x v i.castSucc.castSucc
+
+private theorem insertAt_prefix_get_before {α : Type u} {n : Nat}
+    (x : α) (v : Vector α (n + 1)) (i r : Fin n) (h : r.val < i.val) :
+    (insertAt x v i.castSucc.castSucc)[r.castSucc.castSucc] = v[r.castSucc] := by
+  exact insertAt_get_castSucc_of_lt x v i.castSucc r.castSucc (by simpa using h)
+
+private theorem insertAt_prefix_get_shifted {α : Type u} {n : Nat}
+    (x : α) (v : Vector α (n + 1)) (i : Fin n) (r : Fin (n + 1))
+    (h : i.val ≤ r.val) :
+    (insertAt x v i.castSucc.castSucc)[(⟨r.val + 1, by omega⟩ : Fin (n + 2))] =
+      v[r] := by
+  unfold insertAt
+  simpa [Vector.toList] using
+    list_getElem_insertIdx_succ_of_le v.toList x h (by simp [Vector.length_toList])
+
+private theorem insertAt_prefix_get_last {α : Type u} {n : Nat}
+    (x : α) (v : Vector α (n + 1)) (i : Fin n) :
+    (insertAt x v i.castSucc.castSucc)[Fin.last (n + 1)] = v[Fin.last n] := by
+  have hle : i.val ≤ (Fin.last n).val := by
+    simp [Nat.le_of_lt i.isLt]
+  simpa using insertAt_prefix_get_shifted x v i (Fin.last n) hle
+
 private theorem insertAt_castSucc_last_get_boundary {α : Type u} {n : Nat}
     (x : α) (v : Vector α (n + 1)) :
     (insertAt x v (Fin.last n).castSucc)[(Fin.last n).castSucc] = x := by
