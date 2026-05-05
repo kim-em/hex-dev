@@ -68,7 +68,7 @@ libraries:
     mathlib: false
     done_through: 4
   HexGfqField:
-    deps: [HexGfqRing]
+    deps: [HexGfqRing, HexBerlekamp]
     mathlib: false
     done_through: 4
 
