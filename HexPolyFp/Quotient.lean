@@ -139,6 +139,14 @@ def mul (a b : Quotient g hmonic hg_pos) : Quotient g hmonic hg_pos :=
 instance : Mul (Quotient g hmonic hg_pos) where
   mul := mul
 
+/-- Natural-number powers in the quotient. -/
+def pow (a : Quotient g hmonic hg_pos) : Nat → Quotient g hmonic hg_pos
+  | 0 => 1
+  | n + 1 => pow a n * a
+
+instance : Pow (Quotient g hmonic hg_pos) Nat where
+  pow := pow
+
 @[simp] theorem zero_val :
     (0 : Quotient g hmonic hg_pos).val = FpPoly.modByMonic g 0 hmonic :=
   rfl
@@ -168,6 +176,14 @@ instance : Mul (Quotient g hmonic hg_pos) where
     (a * b).val = FpPoly.modByMonic g (a.val * b.val) hmonic :=
   rfl
 
+@[simp] theorem pow_zero (a : Quotient g hmonic hg_pos) :
+    a ^ (0 : Nat) = 1 := by
+  rfl
+
+@[simp] theorem pow_succ (a : Quotient g hmonic hg_pos) (n : Nat) :
+    a ^ (n + 1) = a ^ n * a := by
+  rfl
+
 theorem reduce_add_eq (f h : FpPoly p) :
     reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f + h) =
       reduce
@@ -191,6 +207,37 @@ theorem reduce_mul_eq (f h : FpPoly p) :
   rw [reduce_val_eq_mod, reduce_val_eq_mod, reduce_val_eq_mod, reduce_val_eq_mod]
   exact @DensePoly.mod_mul_mod (ZMod64 p) inferInstance inferInstance inferInstance
     (ZMod64.instDivModLawsZMod64Fp p) f h g
+
+/--
+Reducing an executable polynomial power agrees with powering its quotient
+class.
+-/
+theorem reduce_linearPow_eq_pow (f : FpPoly p) (n : Nat) :
+    reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (FpPoly.linearPow f n) =
+      (reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f) ^ n := by
+  induction n with
+  | zero =>
+      rfl
+  | succ n ih =>
+      calc
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+            (FpPoly.linearPow f (n + 1)) =
+          reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+            (FpPoly.linearPow f n * f) := by
+              rw [FpPoly.linearPow_succ]
+        _ =
+          reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+              (FpPoly.linearPow f n) *
+            reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f := by
+              exact reduce_mul_eq (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+                (FpPoly.linearPow f n) f
+        _ =
+          (reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f) ^ n *
+            reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f := by
+              rw [ih]
+        _ =
+          (reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f) ^ (n + 1) := by
+              rfl
 
 /-- The xgcd-based inverse candidate, normalized by the leading coefficient of
 the computed gcd. -/

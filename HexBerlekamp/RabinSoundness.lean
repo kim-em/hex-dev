@@ -440,6 +440,48 @@ theorem exists_monic_irreducible_factor_of_factor
   exact exists_monic_irreducible_factor_of_pos_degree_aux (a.degree?.getD 0) a rfl ha_pos
 
 /--
+The quotient class of `X` raised to `p^k` is represented by the executable
+Frobenius remainder `frobeniusXPowMod`.
+-/
+theorem quotient_X_pow_eq_reduce_frobeniusXPowMod
+    {g : FpPoly p} (hg_monic : DensePoly.Monic g)
+    (hg_pos : 0 < g.degree?.getD 0) (k : Nat) :
+    (FpPoly.Quotient.X (g := g) (hmonic := hg_monic) (hg_pos := hg_pos)) ^ (p ^ k) =
+      FpPoly.Quotient.reduce
+        (g := g) (hmonic := hg_monic) (hg_pos := hg_pos)
+        (FpPoly.frobeniusXPowMod g hg_monic k) := by
+  calc
+    (FpPoly.Quotient.X (g := g) (hmonic := hg_monic) (hg_pos := hg_pos)) ^ (p ^ k) =
+        FpPoly.Quotient.reduce
+          (g := g) (hmonic := hg_monic) (hg_pos := hg_pos)
+          (FpPoly.linearPow FpPoly.X (p ^ k)) := by
+          exact (FpPoly.Quotient.reduce_linearPow_eq_pow
+            (g := g) (hmonic := hg_monic) (hg_pos := hg_pos)
+            FpPoly.X (p ^ k)).symm
+    _ =
+        FpPoly.Quotient.reduce
+          (g := g) (hmonic := hg_monic) (hg_pos := hg_pos)
+          (DensePoly.monomial (p ^ k) (1 : ZMod64 p)) := by
+          change
+            FpPoly.Quotient.reduce
+              (g := g) (hmonic := hg_monic) (hg_pos := hg_pos)
+              (FpPoly.linearPow (DensePoly.monomial 1 (1 : ZMod64 p)) (p ^ k)) =
+            FpPoly.Quotient.reduce
+              (g := g) (hmonic := hg_monic) (hg_pos := hg_pos)
+              (DensePoly.monomial (p ^ k) (1 : ZMod64 p))
+          rw [FpPoly.linearPow_monomial_one]
+    _ =
+        FpPoly.Quotient.reduce
+          (g := g) (hmonic := hg_monic) (hg_pos := hg_pos)
+          (FpPoly.frobeniusXPowMod g hg_monic k) := by
+          apply FpPoly.Quotient.reduce_eq_reduce_of_congr
+          unfold FpPoly.Quotient.Congr
+          letI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
+          exact @DensePoly.dvd_of_mod_eq_mod (ZMod64 p) inferInstance inferInstance
+            inferInstance (ZMod64.instDivModLawsZMod64Fp p) _ _ g
+            (FpPoly.frobeniusXPowMod_mod_eq_monomial_mod g hg_monic k).symm
+
+/--
 Rabin's degree-divisibility theorem in its `FpPoly` form (forward
 direction).
 
