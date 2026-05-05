@@ -1,4 +1,5 @@
 import HexHenselMathlib.Basic
+import HexHenselMathlib.Conformance
 import HexHenselMathlib.Correctness
 
 /-!
