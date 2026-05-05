@@ -123,4 +123,48 @@ theorem det_eq [CommRing R] (M : Hex.Matrix R n n) :
     Hex.Matrix.det M = Matrix.det (matrixEquiv M) := by
   sorry
 
+/-- `matrixEquiv` sends Hex leading prefixes to Mathlib submatrices. -/
+theorem matrixEquiv_leadingPrefix
+    (M : Hex.Matrix R n n) (k : Nat) (hk : k ≤ n) :
+    matrixEquiv (Hex.Matrix.leadingPrefix M k hk) =
+      (matrixEquiv M).submatrix
+        (fun r : Fin k => ⟨r.val, Nat.lt_of_lt_of_le r.isLt hk⟩)
+        (fun c : Fin k => ⟨c.val, Nat.lt_of_lt_of_le c.isLt hk⟩) := by
+  ext r c
+  simp [Hex.Matrix.leadingPrefix, Hex.Matrix.ofFn]
+
+/-- `matrixEquiv` sends Hex bordered Bareiss minors to Mathlib submatrices. -/
+theorem matrixEquiv_borderedMinor
+    (M : Hex.Matrix R n n) (k : Nat) (hk : k < n) (i j : Fin n) :
+    matrixEquiv (Hex.Matrix.borderedMinor M k hk i j) =
+      (matrixEquiv M).submatrix
+        (fun r : Fin (k + 1) =>
+          if hr : r.val < k then ⟨r.val, Nat.lt_trans hr hk⟩ else i)
+        (fun c : Fin (k + 1) =>
+          if hc : c.val < k then ⟨c.val, Nat.lt_trans hc hk⟩ else j) := by
+  ext r c
+  simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn]
+
+/-- Determinant form of `matrixEquiv_leadingPrefix`. -/
+theorem det_leadingPrefix_eq_submatrix_det [CommRing R]
+    (M : Hex.Matrix R n n) (k : Nat) (hk : k ≤ n) :
+    Hex.Matrix.det (Hex.Matrix.leadingPrefix M k hk) =
+      Matrix.det
+        ((matrixEquiv M).submatrix
+          (fun r : Fin k => ⟨r.val, Nat.lt_of_lt_of_le r.isLt hk⟩)
+          (fun c : Fin k => ⟨c.val, Nat.lt_of_lt_of_le c.isLt hk⟩)) := by
+  rw [det_eq, matrixEquiv_leadingPrefix]
+
+/-- Determinant form of `matrixEquiv_borderedMinor`. -/
+theorem det_borderedMinor_eq_submatrix_det [CommRing R]
+    (M : Hex.Matrix R n n) (k : Nat) (hk : k < n) (i j : Fin n) :
+    Hex.Matrix.det (Hex.Matrix.borderedMinor M k hk i j) =
+      Matrix.det
+        ((matrixEquiv M).submatrix
+          (fun r : Fin (k + 1) =>
+            if hr : r.val < k then ⟨r.val, Nat.lt_trans hr hk⟩ else i)
+          (fun c : Fin (k + 1) =>
+            if hc : c.val < k then ⟨c.val, Nat.lt_trans hc hk⟩ else j)) := by
+  rw [det_eq, matrixEquiv_borderedMinor]
+
 end HexMatrixMathlib
