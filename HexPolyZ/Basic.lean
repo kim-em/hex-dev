@@ -725,6 +725,19 @@ private theorem rat_derivative_scale (u : Rat) (p : DensePoly Rat) :
   rw [DensePoly.coeff_scale (R := Rat) u p (n + 1) (Rat.mul_zero u)]
   grind [Rat.mul_assoc, Rat.mul_comm]
 
+private theorem rat_derivative_mul (p q : DensePoly Rat) :
+    DensePoly.derivative (p * q) =
+      DensePoly.derivative p * q + p * DensePoly.derivative q := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [rat_coeff_derivative]
+  rw [DensePoly.coeff_mul p q (n + 1)]
+  rw [DensePoly.coeff_add (DensePoly.derivative p * q) (p * DensePoly.derivative q) n
+    (by exact Rat.zero_add (0 : Rat))]
+  rw [DensePoly.coeff_mul (DensePoly.derivative p) q n]
+  rw [DensePoly.coeff_mul p (DensePoly.derivative q) n]
+  exact DensePoly.rat_mulCoeffSum_derivative_product_rule p q n
+
 private theorem rat_dvd_mul_left {d p : DensePoly Rat} (q : DensePoly Rat) :
     d ∣ p → d ∣ q * p := by
   intro h
