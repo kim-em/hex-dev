@@ -56,7 +56,7 @@ libraries:
   HexLLL:
     deps: [HexGramSchmidt]
     mathlib: false
-    done_through: 3
+    done_through: 4
   HexPolyFp:
     deps: [HexPoly, HexModArith]
     mathlib: false
