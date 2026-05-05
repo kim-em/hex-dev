@@ -335,6 +335,78 @@ theorem det_leadingPrefix_borderedMinor_succ_eq_det_borderedMinor {R : Type u}
       det (borderedMinor M k hk ⟨k, hk⟩ ⟨k, hk⟩) := by
   rw [leadingPrefix_borderedMinor_succ_eq_borderedMinor]
 
+/-- Local row-deletion minor for the prefix-row part of the successor
+off-diagonal final-column expansion.
+
+For `r : Fin k`, this is the `(k + 1) × (k + 1)` minor with source rows
+`0, ..., r - 1, r + 1, ..., k, i` and source columns `0, ..., k - 1, j`.
+It is the matrix left after the successor bordered minor's final column is
+chosen by prefix row `r`. -/
+def prefixRowDeletionMinor (M : Matrix R n n) (k : Nat) (hnext : k + 1 < n)
+    (i j : Fin n) (r : Fin k) : Matrix R (k + 1) (k + 1) :=
+  ofFn fun row col =>
+    let rr : Fin n :=
+      if hrow : row.val < r.val then
+        ⟨row.val, by omega⟩
+      else if hrow : row.val < k then
+        ⟨row.val + 1, by omega⟩
+      else
+        i
+    let cc : Fin n :=
+      if hcol : col.val < k then
+        ⟨col.val, by omega⟩
+      else
+        j
+    M[rr][cc]
+
+@[simp] theorem prefixRowDeletionMinor_entry_before_prefix (M : Matrix R n n)
+    (k : Nat) (hnext : k + 1 < n) (i j : Fin n) (r : Fin k)
+    (row col : Fin (k + 1)) (hrow : row.val < r.val) (hcol : col.val < k) :
+    (prefixRowDeletionMinor M k hnext i j r)[row][col] =
+      M[(⟨row.val, by omega⟩ : Fin n)][(⟨col.val, by omega⟩ : Fin n)] := by
+  simp [prefixRowDeletionMinor, ofFn, hrow, hcol]
+
+@[simp] theorem prefixRowDeletionMinor_entry_before_last (M : Matrix R n n)
+    (k : Nat) (hnext : k + 1 < n) (i j : Fin n) (r : Fin k)
+    (row : Fin (k + 1)) (hrow : row.val < r.val) :
+    (prefixRowDeletionMinor M k hnext i j r)[row][Fin.last k] =
+      M[(⟨row.val, by omega⟩ : Fin n)][j] := by
+  simp [prefixRowDeletionMinor, ofFn, hrow]
+
+@[simp] theorem prefixRowDeletionMinor_entry_shifted_prefix (M : Matrix R n n)
+    (k : Nat) (hnext : k + 1 < n) (i j : Fin n) (r : Fin k)
+    (row col : Fin (k + 1)) (hrle : r.val ≤ row.val) (hrow : row.val < k)
+    (hcol : col.val < k) :
+    (prefixRowDeletionMinor M k hnext i j r)[row][col] =
+      M[(⟨row.val + 1, by omega⟩ : Fin n)][(⟨col.val, by omega⟩ : Fin n)] := by
+  have hnot : ¬ row.val < r.val := by omega
+  simp [prefixRowDeletionMinor, ofFn, hnot, hrow, hcol]
+
+@[simp] theorem prefixRowDeletionMinor_entry_shifted_last (M : Matrix R n n)
+    (k : Nat) (hnext : k + 1 < n) (i j : Fin n) (r : Fin k)
+    (row : Fin (k + 1)) (hrle : r.val ≤ row.val) (hrow : row.val < k) :
+    (prefixRowDeletionMinor M k hnext i j r)[row][Fin.last k] =
+      M[(⟨row.val + 1, by omega⟩ : Fin n)][j] := by
+  have hnot : ¬ row.val < r.val := by omega
+  simp [prefixRowDeletionMinor, ofFn, hnot, hrow]
+
+@[simp] theorem prefixRowDeletionMinor_entry_border_prefix (M : Matrix R n n)
+    (k : Nat) (hnext : k + 1 < n) (i j : Fin n) (r : Fin k)
+    (col : Fin (k + 1)) (hcol : col.val < k) :
+    (prefixRowDeletionMinor M k hnext i j r)[Fin.last k][col] =
+      M[i][(⟨col.val, by omega⟩ : Fin n)] := by
+  have hnot₁ : ¬ k < r.val := by omega
+  have hnot₂ : ¬ k < k := by omega
+  simp [prefixRowDeletionMinor, ofFn, hnot₁, hnot₂, hcol]
+
+@[simp] theorem prefixRowDeletionMinor_entry_border_last (M : Matrix R n n)
+    (k : Nat) (hnext : k + 1 < n) (i j : Fin n) (r : Fin k) :
+    (prefixRowDeletionMinor M k hnext i j r)[Fin.last k][Fin.last k] =
+      M[i][j] := by
+  have hnot₁ : ¬ k < r.val := by omega
+  have hnot₂ : ¬ k < k := by omega
+  simp [prefixRowDeletionMinor, ofFn, hnot₁, hnot₂]
+
 /-- Congruence for the determinant-style left fold over a finite list. -/
 private theorem foldl_det_sum_congr {R : Type u} [Add R] {β : Type v}
     (xs : List β) (f g : β → R) (z : R)
