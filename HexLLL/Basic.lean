@@ -115,6 +115,44 @@ private def nearestQuotient (νjk : Int) (dj1 : Nat) : Int :=
 private def setEntry (M : Matrix Int n n) (i j : Fin n) (x : Int) : Matrix Int n n :=
   M.set i ((M.get i).set j x)
 
+private theorem foldl_set_outerSubMul_get_eq
+    {n : Nat} (xs : List (Fin n))
+    (base outerK outerJ : Vector Int n) (r : Int) (l : Fin n) :
+    (xs.foldl
+        (fun (row : Vector Int n) (i : Fin n) =>
+          row.set i (outerK.get i - r * outerJ.get i))
+        base).get l =
+      if (∃ i ∈ xs, i.val = l.val) then
+        outerK.get l - r * outerJ.get l
+      else
+        base.get l := by
+  induction xs generalizing base with
+  | nil => simp
+  | cons x xs ih =>
+    simp only [List.foldl_cons]
+    rw [ih]
+    by_cases h_xs : ∃ i ∈ xs, i.val = l.val
+    · have h_cons : ∃ i ∈ x :: xs, i.val = l.val := by
+        obtain ⟨i, hi, hi_l⟩ := h_xs
+        exact ⟨i, List.mem_cons.mpr (Or.inr hi), hi_l⟩
+      simp [h_xs, h_cons]
+    · by_cases h_xl : x.val = l.val
+      · have h_cons : ∃ i ∈ x :: xs, i.val = l.val :=
+          ⟨x, List.mem_cons.mpr (Or.inl rfl), h_xl⟩
+        have h_xeq : x = l := Fin.eq_of_val_eq h_xl
+        subst h_xeq
+        simp only [h_xs, ↓reduceIte, h_cons]
+        change (base.set x.val (outerK.get x - r * outerJ.get x) x.isLt)[x.val] = _
+        exact Vector.getElem_set_self x.isLt
+      · have h_cons : ¬ ∃ i ∈ x :: xs, i.val = l.val := by
+          rintro ⟨i, hi, hi_l⟩
+          rcases List.mem_cons.mp hi with rfl | hxs
+          · exact h_xl hi_l
+          · exact h_xs ⟨i, hxs, hi_l⟩
+        simp only [h_xs, ↓reduceIte, h_cons]
+        change (base.set x.val (outerK.get x - r * outerJ.get x) x.isLt)[l.val] = base[l.val]
+        exact Vector.getElem_set_ne x.isLt l.isLt h_xl
+
 /-- Single-column size reduction update for row `k` against row `j`. -/
 def sizeReduceColumn (s : LLLState n m) (j k : Fin n) (hjk : j.val < k.val) :
     LLLState n m :=
