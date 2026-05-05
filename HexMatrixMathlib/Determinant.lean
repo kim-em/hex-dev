@@ -169,9 +169,110 @@ theorem detTerm_eq_matrixEquiv
         (List.finRange n).foldl (fun acc i => acc * matrixEquiv M i (perm[i])) 1 := by
   rfl
 
+private theorem foldl_sum_map_start {α : Type u} {S : Type v} [AddCommMonoid S]
+    (xs : List α) (f : α → S) (z : S) :
+    xs.foldl (fun acc x => acc + f x) z = z + (xs.map f).sum := by
+  induction xs generalizing z with
+  | nil =>
+      simp
+  | cons x xs ih =>
+      rw [List.foldl_cons, ih (z + f x)]
+      simp [add_assoc]
+
+private theorem foldl_sum_map {α : Type u} {S : Type v} [AddCommMonoid S]
+    (xs : List α) (f : α → S) :
+    xs.foldl (fun acc x => acc + f x) 0 = (xs.map f).sum := by
+  simpa using foldl_sum_map_start xs f (0 : S)
+
+private theorem foldl_prod_map_start {α : Type u} {S : Type v} [CommMonoid S]
+    (xs : List α) (f : α → S) (z : S) :
+    xs.foldl (fun acc x => acc * f x) z = z * (xs.map f).prod := by
+  induction xs generalizing z with
+  | nil =>
+      simp
+  | cons x xs ih =>
+      rw [List.foldl_cons, ih (z * f x)]
+      simp [mul_assoc]
+
+private theorem foldl_prod_finRange {S : Type u} [CommMonoid S] {n : Nat}
+    (f : Fin n → S) :
+    (List.finRange n).foldl (fun acc i => acc * f i) 1 = ∏ i, f i := by
+  rw [foldl_prod_map_start]
+  simp only [one_mul]
+  rw [← List.prod_toFinset f (List.nodup_finRange n)]
+  rw [List.toFinset_finRange]
+
+private theorem prod_perm_inv [CommRing R] (A : Matrix (Fin n) (Fin n) R)
+    (σ : Equiv.Perm (Fin n)) :
+    (∏ i, A (σ i) i) = ∏ i, A i (σ⁻¹ i) := by
+  refine Finset.prod_bij (fun i _ => σ i) ?_ ?_ ?_ ?_
+  · intro i hi
+    simp
+  · intro i hi j hj hij
+    exact σ.injective hij
+  · intro j hj
+    refine ⟨σ⁻¹ j, by simp, ?_⟩
+    simp
+  · intro i hi
+    simp
+
+private theorem det_apply_row [CommRing R] (A : Matrix (Fin n) (Fin n) R) :
+    A.det = ∑ σ : Equiv.Perm (Fin n),
+      ((Equiv.Perm.sign σ : Int) : R) * ∏ i, A i (σ i) := by
+  rw [Matrix.det_apply']
+  refine Finset.sum_bij (fun σ _ => σ⁻¹) ?_ ?_ ?_ ?_
+  · intro σ hσ
+    simp
+  · intro σ hσ τ hτ h
+    exact inv_injective h
+  · intro τ hτ
+    refine ⟨τ⁻¹, by simp, ?_⟩
+    simp
+  · intro σ hσ
+    rw [Equiv.Perm.sign_inv]
+    simp [prod_perm_inv]
+
+private theorem equivs_toFinset (n : Nat) :
+    (PermutationVector.equivs n).toFinset =
+      (Finset.univ : Finset (Equiv.Perm (Fin n))) := by
+  ext σ
+  simp [PermutationVector.equivs_complete]
+
 theorem det_eq [CommRing R] (M : Hex.Matrix R n n) :
     Hex.Matrix.det M = Matrix.det (matrixEquiv M) := by
-  sorry
+  let term : Equiv.Perm (Fin n) → R := fun σ =>
+    ((Equiv.Perm.sign σ : Int) : R) * ∏ i, matrixEquiv M i (σ i)
+  have hhex : Hex.Matrix.det M = (PermutationVector.equivs n).toFinset.sum term := by
+    unfold Hex.Matrix.det
+    rw [foldl_sum_map]
+    calc
+      ((Hex.Matrix.permutationVectors n).map (Hex.Matrix.detTerm M)).sum =
+          ((Hex.Matrix.permutationVectors n).attach.map fun p =>
+            Hex.Matrix.detTerm M p.1).sum := by
+            rw [List.attach_map_val]
+      _ = ((Hex.Matrix.permutationVectors n).attach.map fun p =>
+            term (PermutationVector.toPerm p.1
+              (Hex.Matrix.permutationVectors_nodup p.2))).sum := by
+            congr 1
+            apply List.map_congr_left
+            intro p hp
+            dsimp [term]
+            rw [detTerm_eq_matrixEquiv]
+            rw [PermutationVector.detSign_eq_permSign
+              (hnodup := Hex.Matrix.permutationVectors_nodup p.2)]
+            rw [foldl_prod_finRange]
+            simp [PermutationVector.toPerm_apply]
+      _ = ((PermutationVector.equivs n).map term).sum := by
+            rw [PermutationVector.equivs]
+            rw [List.map_map]
+            apply congrArg List.sum
+            apply List.map_congr_left
+            intro p hp
+            rfl
+      _ = (PermutationVector.equivs n).toFinset.sum term := by
+            exact (List.sum_toFinset term (PermutationVector.equivs_nodup n)).symm
+  rw [hhex, det_apply_row]
+  rw [equivs_toFinset]
 
 /-- `matrixEquiv` sends Hex leading prefixes to Mathlib submatrices. -/
 theorem matrixEquiv_leadingPrefix
