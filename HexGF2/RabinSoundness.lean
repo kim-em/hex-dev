@@ -38,19 +38,6 @@ theorem dvd_xPowSubX_iff_frobeniusDiffMod_isZero
   sorry
 
 /--
-Every nonconstant factor of a packed GF2 polynomial has an irreducible factor.
-
-The proof is the usual descent on degree, specialized to the project-side
-`GF2Poly.Irreducible` predicate and the packed divisibility relation.
--/
-theorem exists_irreducible_factor_of_factor
-    {f a b : GF2Poly} (hab : a * b = f) (ha_pos : 0 < a.degree) :
-    ∃ g : GF2Poly,
-      GF2Poly.Irreducible g ∧ g ∣ a ∧
-        0 < g.degree ∧ g.degree ≤ a.degree := by
-  sorry
-
-/--
 Forward Rabin degree theorem for packed GF2 polynomials.
 
 If an irreducible `g` of positive degree divides `X^(2^n) - X`, then
@@ -416,6 +403,64 @@ theorem isUnitPolynomial_of_dvd_gcd_isUnit
   isUnitPolynomial g = true :=
   isUnitPolynomial_of_dvd_isUnitPolynomial
     (dvd_gcd g f q hgf hgq) hgcd
+
+/--
+Strong-induction descent step for `exists_irreducible_factor_of_factor`.
+Given any `a` of positive degree `n`, there is an irreducible divisor of
+`a` of positive degree at most `n`.
+-/
+private theorem exists_irreducible_factor_of_pos_degree_aux :
+    ∀ (n : Nat) (a : GF2Poly), a.degree = n → 0 < a.degree →
+        ∃ g : GF2Poly,
+          GF2Poly.Irreducible g ∧ g ∣ a ∧
+            0 < g.degree ∧ g.degree ≤ a.degree := by
+  intro n
+  induction n using Nat.strongRecOn with
+  | ind n ih =>
+    intro a hn ha_pos
+    by_cases hirr : Irreducible a
+    · exact ⟨a, hirr, dvd_refl' a, ha_pos, Nat.le_refl _⟩
+    · have ha_ne : a ≠ 0 := ne_zero_of_pos_degree ha_pos
+      have hnotforall :
+          ¬ (∀ x y : GF2Poly, x * y = a → x.degree = 0 ∨ y.degree = 0) :=
+        fun h => hirr ⟨ha_ne, h⟩
+      have hex : ∃ x y, x * y = a ∧ x.degree ≠ 0 ∧ y.degree ≠ 0 := by
+        apply Classical.byContradiction
+        intro hno
+        apply hnotforall
+        intro x y hxy
+        by_cases hx0 : x.degree = 0
+        · exact Or.inl hx0
+        · by_cases hy0 : y.degree = 0
+          · exact Or.inr hy0
+          · exact (hno ⟨x, y, hxy, hx0, hy0⟩).elim
+      obtain ⟨x, y, hxy, hx_deg_ne, hy_deg_ne⟩ := hex
+      have hx_pos : 0 < x.degree := Nat.pos_of_ne_zero hx_deg_ne
+      have hy_pos : 0 < y.degree := Nat.pos_of_ne_zero hy_deg_ne
+      have hx_dvd_a : x ∣ a := ⟨y, hxy.symm⟩
+      have hx_ne_zero : x ≠ 0 := ne_zero_of_pos_degree hx_pos
+      have hx_lt : x.degree < a.degree :=
+        factor_degree_lt hxy hx_ne_zero hy_pos
+      have hx_lt_n : x.degree < n := hn ▸ hx_lt
+      obtain ⟨g, hg_irr, hg_dvd_x, hg_deg_pos, hg_deg_le_x⟩ :=
+        ih x.degree hx_lt_n x rfl hx_pos
+      exact ⟨g, hg_irr, dvd_trans hg_dvd_x hx_dvd_a, hg_deg_pos,
+        Nat.le_trans hg_deg_le_x (Nat.le_of_lt hx_lt)⟩
+
+/--
+Every nonconstant factor of a packed GF2 polynomial has an irreducible factor.
+
+The proof is the usual descent on degree, specialized to the project-side
+`GF2Poly.Irreducible` predicate and the packed divisibility relation. The
+hypothesis `a * b = f` is irrelevant to the construction; descent operates
+purely on `a` via strong induction on `a.degree`.
+-/
+theorem exists_irreducible_factor_of_factor
+    {f a b : GF2Poly} (_hab : a * b = f) (ha_pos : 0 < a.degree) :
+    ∃ g : GF2Poly,
+      GF2Poly.Irreducible g ∧ g ∣ a ∧
+        0 < g.degree ∧ g.degree ≤ a.degree :=
+  exists_irreducible_factor_of_pos_degree_aux a.degree a rfl ha_pos
 
 /-! ## Bridge theorem -/
 
