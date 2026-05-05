@@ -234,9 +234,57 @@ Routine consequence of degree arithmetic: if `g ∣ h` and `h` has degree 0
 with nonzero constant, then `g` also has degree 0 with nonzero constant.
 -/
 theorem isUnitPolynomial_of_dvd_isUnitPolynomial
-    {g h : FpPoly p} (_hgh : g ∣ h) (_hh : isUnitPolynomial h = true) :
+    {g h : FpPoly p} (hgh : g ∣ h) (hh : isUnitPolynomial h = true) :
     isUnitPolynomial g = true := by
-  sorry
+  -- Translate `isUnitPolynomial h = true` into `h.degree? = some 0`.
+  have hh_deg : h.degree? = some 0 := by
+    unfold isUnitPolynomial at hh
+    cases hdeg : h.degree? with
+    | none => rw [hdeg] at hh; simp at hh
+    | some k =>
+      rw [hdeg] at hh
+      cases k with
+      | zero => rfl
+      | succ _ => simp at hh
+  have hh_ne_zero : h ≠ 0 := by
+    intro heq
+    rw [heq] at hh_deg
+    unfold DensePoly.degree? at hh_deg
+    simp at hh_deg
+  rcases hgh with ⟨r, hr⟩
+  have hg_ne_zero : g ≠ 0 := by
+    intro hg
+    apply hh_ne_zero
+    rw [hr, hg, FpPoly.zero_mul]
+  have hr_ne_zero : r ≠ 0 := by
+    intro hzero
+    apply hh_ne_zero
+    rw [hr, hzero, FpPoly.mul_zero]
+  -- `deg h = deg g + deg r` and `deg h = 0`, so `deg g = 0`.
+  have hsum : h.degree?.getD 0 = g.degree?.getD 0 + r.degree?.getD 0 := by
+    rw [hr]
+    exact FpPoly.degree?_mul_eq_add_degree? g r hg_ne_zero hr_ne_zero
+  have hh_deg_zero : h.degree?.getD 0 = 0 := by simp [hh_deg]
+  have hg_deg_zero : g.degree?.getD 0 = 0 := by omega
+  -- Translate `g ≠ 0 ∧ deg g = 0` back to `isUnitPolynomial g = true`.
+  have hg_size_pos : 0 < g.size := by
+    apply Nat.pos_of_ne_zero
+    intro hsize
+    apply hg_ne_zero
+    apply DensePoly.ext_coeff
+    intro i
+    rw [DensePoly.coeff_zero]
+    exact DensePoly.coeff_eq_zero_of_size_le g (by omega)
+  have hg_size_ne_zero : g.size ≠ 0 := Nat.pos_iff_ne_zero.mp hg_size_pos
+  have hg_deg : g.degree? = some (g.size - 1) := by
+    unfold DensePoly.degree?
+    simp [hg_size_ne_zero]
+  rw [hg_deg] at hg_deg_zero
+  simp at hg_deg_zero
+  have hg_deg_some : g.degree? = some 0 := by
+    rw [hg_deg, hg_deg_zero]
+  unfold isUnitPolynomial
+  rw [hg_deg_some]
 
 omit [ZMod64.PrimeModulus p] in
 /-- The factor `a` of a nontrivial product `a * b = f` is nonzero. -/
@@ -283,9 +331,13 @@ match the Berlekamp / Rabin scaffolding.
 -/
 theorem factor_degree_lt_basisSize
     {f a b : FpPoly p}
-    (_hab : a * b = f) (_hb_pos : 0 < b.degree?.getD 0) :
+    (hab : a * b = f) (ha_ne_zero : a ≠ 0) (hb_pos : 0 < b.degree?.getD 0) :
     a.degree?.getD 0 < basisSize f := by
-  sorry
+  have hb_ne_zero : b ≠ 0 := ne_zero_of_pos_degree hb_pos
+  unfold basisSize
+  rw [← hab]
+  rw [FpPoly.degree?_mul_eq_add_degree? a b ha_ne_zero hb_ne_zero]
+  omega
 
 omit [ZMod64.PrimeModulus p] in
 /--
@@ -401,7 +453,7 @@ theorem rabinTest_imp_irreducible
   have hb_pos : 0 < b.degree?.getD 0 :=
     pos_degree_of_ne_zero_of_not_isUnit hb_ne_zero hb_unit
   have ha_lt : a.degree?.getD 0 < basisSize f :=
-    factor_degree_lt_basisSize hab hb_pos
+    factor_degree_lt_basisSize hab ha_ne_zero hb_pos
   -- Pick a monic irreducible factor `g` of `a`.
   obtain ⟨g, hg_irr, hg_monic, hg_dvd_a, hg_deg_pos, hg_deg_le_a⟩ :=
     exists_monic_irreducible_factor_of_factor hmonic hab ha_pos

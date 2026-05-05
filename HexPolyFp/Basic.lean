@@ -1905,5 +1905,110 @@ theorem scale_mul_left (c : ZMod64 p) (f g : FpPoly p) :
   · simp [hn]
     rw [DensePoly.coeff_scale _ _ _ hzero]
     grind
+
+private theorem mulCoeffTerm_eq_zero_above_top
+    (f g : FpPoly p) {n i : Nat} (hi : i < f.size)
+    (hbound : f.size - 1 + (g.size - 1) < n) :
+    mulCoeffTerm f g n i = 0 := by
+  unfold mulCoeffTerm
+  have hni : ¬ n < i := by omega
+  have h_gi : g.size ≤ n - i := by omega
+  have hg_zero : g.coeff (n - i) = 0 :=
+    DensePoly.coeff_eq_zero_of_size_le g h_gi
+  simp [hni, hg_zero]
+  grind
+
+private theorem coeff_mul_eq_zero_above_top
+    (f g : FpPoly p) {n : Nat}
+    (hbound : f.size - 1 + (g.size - 1) < n) :
+    (f * g).coeff n = 0 := by
+  rw [coeff_mul]
+  unfold mulCoeffSum
+  have hfold : ∀ (xs : List Nat) (acc : ZMod64 p),
+      (∀ j ∈ xs, j < f.size) →
+      xs.foldl (fun acc i => acc + mulCoeffTerm f g n i) acc = acc := by
+    intro xs
+    induction xs with
+    | nil => intro acc _; rfl
+    | cons j xs ih =>
+        intro acc hxs
+        have hj : j < f.size := hxs j (by simp)
+        simp only [List.foldl_cons]
+        have hzero : mulCoeffTerm f g n j = 0 :=
+          mulCoeffTerm_eq_zero_above_top f g hj hbound
+        rw [hzero]
+        have hadd : acc + (0 : ZMod64 p) = acc := zmod_add_zero acc
+        rw [hadd]
+        exact ih acc (fun k hk => hxs k (by simp [hk]))
+  exact hfold (List.range f.size) 0 (fun j hj => List.mem_range.mp hj)
+
+/--
+Over a prime modulus, the degree of a product of nonzero polynomials in
+`FpPoly p` equals the sum of the degrees. This is the no-zero-divisors
+identity expressed at the level of `degree?.getD 0`.
+-/
+theorem degree?_mul_eq_add_degree?
+    [ZMod64.PrimeModulus p] (a b : FpPoly p)
+    (ha : a ≠ 0) (hb : b ≠ 0) :
+    (a * b).degree?.getD 0 = a.degree?.getD 0 + b.degree?.getD 0 := by
+  have ha_size_pos : 0 < a.size := by
+    apply Nat.pos_of_ne_zero
+    intro hsize
+    apply ha
+    apply DensePoly.ext_coeff
+    intro i
+    rw [DensePoly.coeff_zero]
+    exact DensePoly.coeff_eq_zero_of_size_le a (by omega)
+  have hb_size_pos : 0 < b.size := by
+    apply Nat.pos_of_ne_zero
+    intro hsize
+    apply hb
+    apply DensePoly.ext_coeff
+    intro i
+    rw [DensePoly.coeff_zero]
+    exact DensePoly.coeff_eq_zero_of_size_le b (by omega)
+  have ha_lead_ne : a.coeff (a.size - 1) ≠ 0 :=
+    DensePoly.coeff_last_ne_zero_of_pos_size a ha_size_pos
+  have hb_lead_ne : b.coeff (b.size - 1) ≠ 0 :=
+    DensePoly.coeff_last_ne_zero_of_pos_size b hb_size_pos
+  have hp_prime : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime
+  have hprod_ne : a.coeff (a.size - 1) * b.coeff (b.size - 1) ≠ 0 := by
+    intro hprod
+    rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp_prime hprod with hh | hh
+    · exact ha_lead_ne hh
+    · exact hb_lead_ne hh
+  have htop_ne : (a * b).coeff (a.size - 1 + (b.size - 1)) ≠ 0 := by
+    rw [ZMod64.coeff_mul_at_top a b ha_size_pos hb_size_pos]
+    exact hprod_ne
+  have hab_size_lower : a.size - 1 + (b.size - 1) < (a * b).size := by
+    rcases Nat.lt_or_ge (a.size - 1 + (b.size - 1)) (a * b).size with h | hle
+    · exact h
+    · exact False.elim (htop_ne (DensePoly.coeff_eq_zero_of_size_le _ hle))
+  have hab_size_upper : (a * b).size ≤ a.size + b.size - 1 := by
+    rcases Nat.lt_or_ge (a.size + b.size - 1) (a * b).size with hgt | hle
+    · exfalso
+      have hab_size_pos : 0 < (a * b).size := by omega
+      have hbound : a.size - 1 + (b.size - 1) < (a * b).size - 1 := by omega
+      have htop_zero : (a * b).coeff ((a * b).size - 1) = 0 :=
+        coeff_mul_eq_zero_above_top a b hbound
+      exact DensePoly.coeff_last_ne_zero_of_pos_size (a * b) hab_size_pos htop_zero
+    · exact hle
+  have hab_size : (a * b).size = a.size + b.size - 1 := by omega
+  have hab_size_ne_zero : (a * b).size ≠ 0 := by omega
+  have ha_size_ne_zero : a.size ≠ 0 := Nat.pos_iff_ne_zero.mp ha_size_pos
+  have hb_size_ne_zero : b.size ≠ 0 := Nat.pos_iff_ne_zero.mp hb_size_pos
+  have hab_deg : (a * b).degree? = some ((a * b).size - 1) := by
+    unfold DensePoly.degree?
+    simp [hab_size_ne_zero]
+  have ha_deg : a.degree? = some (a.size - 1) := by
+    unfold DensePoly.degree?
+    simp [ha_size_ne_zero]
+  have hb_deg : b.degree? = some (b.size - 1) := by
+    unfold DensePoly.degree?
+    simp [hb_size_ne_zero]
+  rw [hab_deg, ha_deg, hb_deg]
+  simp
+  omega
+
 end FpPoly
 end Hex
