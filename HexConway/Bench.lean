@@ -4,9 +4,10 @@ import LeanBench
 /-!
 Benchmark registrations for `hex-conway`.
 
-This first Phase 4 slice covers only the Tier 1 committed-table lookup surface.
-It does not benchmark Tier 2 Conway compatibility verification or Tier 3
-on-demand Conway search.
+This Phase 4 slice covers only Tier 1 committed-table surfaces: imported
+Luebeck lookup and fixed irreducibility verification of selected imported
+entries. It does not benchmark Tier 2 Conway compatibility verification or
+Tier 3 on-demand Conway search.
 
 Scientific registrations:
 
@@ -15,9 +16,18 @@ Scientific registrations:
   the benchmark parameter.
 * `runConwayPolySupported_2_1Checksum`: fixed canonical measurement for the
   currently exported `SupportedEntry` path, `C(2, 1)`.
+* `runTier1Irreducibility_2_1Checksum`: Rabin irreducibility verification for
+  the canonical imported table entry `C(2, 1)`.
+* `runTier1Irreducibility_13_6Checksum`: Rabin irreducibility verification for
+  the higher-degree imported table entry `C(13, 6)`.
 -/
 
 namespace Hex.ConwayBench
+
+private theorem one_ne_zero_thirteen : (1 : ZMod64 13) ≠ 0 := by
+  intro h
+  have hm := (ZMod64.natCast_eq_natCast_iff (p := 13) 1 0).mp h
+  simp at hm
 
 /-- One committed Luebeck table key. -/
 structure EntryKey where
@@ -53,6 +63,10 @@ def checksumLookup {p : Nat} [ZMod64.Bounds p] (result : Option (FpPoly p)) : UI
 def lookupHotRepeats : Nat :=
   65536
 
+/-- Fixed repeat count for the selected Tier 1 irreducibility checks. -/
+def irreducibilityHotRepeats : Nat :=
+  256
+
 /-- Repeat a deterministic `UInt64` target with a rolling checksum. -/
 def repeatUInt64Checksum (repeats : Nat) (f : Unit → UInt64) : UInt64 :=
   (List.range repeats).foldl
@@ -74,6 +88,35 @@ def runLuebeckConwayPolynomialLookupChecksum (ordinal : Nat) : UInt64 :=
 /-- Fixed canonical target: recover the currently exported supported entry. -/
 def runConwayPolySupported_2_1Checksum : UInt64 :=
   checksumPoly (Conway.conwayPoly 2 1 Conway.supportedEntry_2_1)
+
+/-- The committed `C(13, 6)` Luebeck entry, stored ascending by degree. -/
+def luebeckConwayPolynomial_13_6 : FpPoly 13 :=
+  { coeffs := #[(2 : ZMod64 13), 11, 11, 10, 0, 0, 1]
+    normalized := by
+      right
+      simpa using one_ne_zero_thirteen }
+
+/-- The committed `C(13, 6)` entry is monic. -/
+theorem luebeckConwayPolynomial_13_6_monic :
+    DensePoly.Monic luebeckConwayPolynomial_13_6 := by
+  rfl
+
+#guard Conway.luebeckConwayPolynomial? 2 1 == some Conway.luebeckConwayPolynomial_2_1
+#guard Conway.luebeckConwayPolynomial? 13 6 == some luebeckConwayPolynomial_13_6
+
+/-- Benchmark target: Tier 1 irreducibility check for imported `C(2, 1)`. -/
+def runTier1Irreducibility_2_1Checksum : UInt64 :=
+  repeatUInt64Checksum irreducibilityHotRepeats fun _ =>
+    hash <| Berlekamp.rabinTest
+      Conway.luebeckConwayPolynomial_2_1
+      Conway.luebeckConwayPolynomial_2_1_monic
+
+/-- Benchmark target: Tier 1 irreducibility check for imported `C(13, 6)`. -/
+def runTier1Irreducibility_13_6Checksum : UInt64 :=
+  repeatUInt64Checksum irreducibilityHotRepeats fun _ =>
+    hash <| Berlekamp.rabinTest
+      luebeckConwayPolynomial_13_6
+      luebeckConwayPolynomial_13_6_monic
 
 /-- Textbook model for finite committed-table lookup at a given table key. -/
 def tier1LookupComplexity (_ordinal : Nat) : Nat :=
@@ -99,6 +142,21 @@ setup_benchmark runLuebeckConwayPolynomialLookupChecksum ordinal =>
   }
 
 setup_fixed_benchmark runConwayPolySupported_2_1Checksum where {
+  repeats := 5
+  maxSecondsPerCall := 2.0
+}
+
+/- Fixed Tier 1 irreducibility registrations use committed Luebeck inputs and
+the executable Rabin checker from `HexBerlekamp`. They intentionally measure
+only the imported-polynomial irreducibility path: no Tier 2 Conway compatibility
+conditions and no Tier 3 search are included. `C(2, 1)` is the canonical
+supported entry; `C(13, 6)` covers the current higher-degree committed slice. -/
+setup_fixed_benchmark runTier1Irreducibility_2_1Checksum where {
+  repeats := 5
+  maxSecondsPerCall := 2.0
+}
+
+setup_fixed_benchmark runTier1Irreducibility_13_6Checksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
 }
