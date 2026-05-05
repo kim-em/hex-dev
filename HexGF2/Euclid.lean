@@ -577,6 +577,93 @@ private theorem coeff_eq_false_of_reduced_le {p : GF2Poly} {bound n : Nat}
           omega
         exact coeff_eq_false_of_degree?_lt hd hdn
 
+private theorem lowerMask_toNat_of_lt_64 {n : Nat} (hn64 : n < 64) :
+    (lowerMask n).toNat = 2 ^ n - 1 := by
+  unfold lowerMask
+  have hshift :
+      (((1 : UInt64) <<< n.toUInt64).toNat) = 2 ^ n := by
+    have hpow : 2 ^ n < 2 ^ 64 :=
+      Nat.pow_lt_pow_right (by decide : 1 < 2) hn64
+    simp [UInt64.toNat_shiftLeft, UInt64.toNat_ofNat, Nat.mod_eq_of_lt hn64,
+      Nat.one_shiftLeft, Nat.mod_eq_of_lt hpow]
+  have hle : (1 : UInt64) ≤ ((1 : UInt64) <<< n.toUInt64) := by
+    rw [UInt64.le_iff_toNat_le, hshift]
+    exact Nat.one_le_two_pow
+  rw [if_pos hn64]
+  rw [UInt64.toNat_sub_of_le _ _ hle, hshift]
+  simp
+
+private theorem UInt64.and_lowerMask_eq_self_of_lt {n : Nat} (hn64 : n < 64)
+    {w : UInt64} (hw : w.toNat < 2 ^ n) :
+    w &&& lowerMask n = w := by
+  apply UInt64.toNat_inj.mp
+  rw [UInt64.toNat_and, lowerMask_toNat_of_lt_64 hn64]
+  exact Nat.and_two_pow_sub_one_of_lt_two_pow hw
+
+private theorem bit_eq_one_eq_testBit (x i : Nat) :
+    (x >>> i % 2 == 1) = x.testBit i := by
+  rw [Nat.testBit_eq_decide_div_mod_eq]
+  rw [Nat.shiftRight_eq_div_pow]
+  apply decide_eq_decide.mpr
+  exact Iff.rfl
+
+private theorem coeff_ofUInt64_eq_testBit (w : UInt64) {i : Nat} (hi : i < 64) :
+    (ofUInt64 w).coeff i = w.toNat.testBit i := by
+  unfold ofUInt64
+  rw [coeff_ofWords]
+  have hiword : i / 64 = 0 := Nat.div_eq_of_lt hi
+  simp [coeffWords, hiword, UInt64.bne_zero_eq_toNat_bne_zero,
+    UInt64.toNat_shiftRight, UInt64.toNat_and, Nat.mod_eq_of_lt hi,
+    bit_eq_one_eq_testBit]
+
+private theorem coeff_ofUInt64_eq_false_of_ge_64 (w : UInt64) {i : Nat} (hi : 64 ≤ i) :
+    (ofUInt64 w).coeff i = false := by
+  unfold ofUInt64
+  rw [coeff_ofWords]
+  have hiword_pos : 0 < i / 64 := Nat.div_pos (by omega) (by decide : 0 < 64)
+  cases hidx : i / 64 with
+  | zero =>
+      omega
+  | succ k =>
+      simp [coeffWords, hidx]
+
+private theorem coeff_ofUInt64_and_lowerMask (w : UInt64) {n i : Nat} (hn64 : n < 64) :
+    (ofUInt64 (w &&& lowerMask n)).coeff i =
+      if i < n then (ofUInt64 w).coeff i else false := by
+  by_cases hi64 : i < 64
+  · rw [coeff_ofUInt64_eq_testBit _ hi64, coeff_ofUInt64_eq_testBit _ hi64,
+      UInt64.toNat_and, lowerMask_toNat_of_lt_64 hn64, Nat.testBit_and,
+      Nat.testBit_two_pow_sub_one]
+    by_cases hin : i < n <;> simp [hin]
+  · have hi64le : 64 ≤ i := Nat.le_of_not_gt hi64
+    have hinFalse : ¬ i < n := by omega
+    rw [coeff_ofUInt64_eq_false_of_ge_64 _ hi64le, if_neg hinFalse]
+
+/-- Masking the low word of a degree-`< n` residue preserves the represented
+polynomial. -/
+theorem ofUInt64_packedReduceWord_eq_of_degree_lt
+    {n : Nat} {irr : UInt64} (hn64 : n < 64) (p : GF2Poly)
+    (hred :
+      (p % ofUInt64Monic irr n).isZero = true ∨
+        (p % ofUInt64Monic irr n).degree < n) :
+    ofUInt64 (packedReduceWord n irr p) = p % ofUInt64Monic irr n := by
+  unfold packedReduceWord
+  let r := p % ofUInt64Monic irr n
+  change ofUInt64 (r.toWords.getD 0 0 &&& lowerMask n) = r
+  let low := r.toWords.getD 0 0
+  have hred' : r.isZero = true ∨ r.degree < n := by
+    simpa [r] using hred
+  have hlow : ofUInt64 low = r := by
+    simpa [r, low] using ofUInt64_mod_lowWord_eq_of_degree_lt (n := n) (irr := irr) hn64 p hred
+  apply ext_coeff
+  intro i
+  rw [coeff_ofUInt64_and_lowerMask low hn64]
+  by_cases hin : i < n
+  · rw [if_pos hin]
+    exact congrArg (fun q : GF2Poly => q.coeff i) hlow
+  · rw [if_neg hin]
+    exact (coeff_eq_false_of_reduced_le (p := r) hred' (Nat.le_of_not_gt hin)).symm
+
 private theorem add_reduced_of_reduced {p q : GF2Poly} {bound : Nat}
     (hp : p.isZero = true ∨ p.degree < bound)
     (hq : q.isZero = true ∨ q.degree < bound) :
