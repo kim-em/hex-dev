@@ -1354,6 +1354,54 @@ theorem detSign_insertAt_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
   unfold detSign
   rw [insertAt_last_toList, vector_toList_map, inversionCount_insert_last_castSucc]
 
+private theorem detSignParity_add {R : Type u} [Lean.Grind.Ring R] (a m : Nat) :
+    (if (a + m) % 2 = 0 then (1 : R) else -1) =
+      (-1 : R) ^ m * if a % 2 = 0 then (1 : R) else -1 := by
+  induction m with
+  | zero =>
+      simp [Nat.add_zero]
+      grind
+  | succ m ih =>
+      rw [Nat.add_succ]
+      rw [Lean.Grind.Semiring.pow_succ]
+      rw [show (-1 : R) ^ m * -1 * (if a % 2 = 0 then (1 : R) else -1) =
+          -1 * ((-1 : R) ^ m * if a % 2 = 0 then (1 : R) else -1) by
+        grind]
+      rw [← ih]
+      have hsucc : (a + m).succ = a + (m + 1) := by omega
+      rw [hsucc]
+      by_cases hm : (a + m) % 2 = 0
+      · have hmnot' : ¬(a + (m + 1)) % 2 = 0 := by omega
+        rw [if_pos hm, if_neg hmnot']
+        grind
+      · have hmnext' : (a + (m + 1)) % 2 = 0 := by omega
+        rw [if_neg hm, if_pos hmnext']
+        grind
+
+private theorem detSign_of_inversionCount_add {R : Type u} [Lean.Grind.Ring R]
+    {n n' : Nat} (perm : Vector (Fin n) n) (perm' : Vector (Fin n') n') (m : Nat)
+    (h :
+      inversionCount perm'.toList =
+        inversionCount perm.toList + m) :
+    detSign (R := R) perm' = (-1 : R) ^ m * detSign (R := R) perm := by
+  unfold detSign
+  rw [h]
+  exact detSignParity_add (R := R) (inversionCount perm.toList) m
+
+private theorem detSign_insertAt_prefix {R : Type u} [Lean.Grind.Ring R] {k : Nat}
+    (v : Vector (Fin (k + 1)) (k + 1)) (r : Fin k) :
+    detSign (R := R)
+      (insertAt (Fin.last (k + 1)) (v.map Fin.castSucc) r.castSucc.castSucc) =
+      (-1 : R) ^ (k + 1 - r.val) * detSign (R := R) v := by
+  apply detSign_of_inversionCount_add
+  rw [insertAt_toList, vector_toList_map]
+  change inversionCount ((v.toList.map Fin.castSucc).insertIdx r.val (Fin.last (k + 1))) =
+    inversionCount v.toList + (k + 1 - r.val)
+  simpa [Vector.length_toList] using
+    inversionCount_insertIdx_castSucc_last_eq v.toList r.val (by
+      simp [Vector.length_toList]
+      omega)
+
 theorem detSign_identity {R : Type u} [Lean.Grind.Ring R] (n : Nat) :
     detSign (R := R) (Vector.ofFn fun i : Fin n => i) = 1 := by
   induction n with
