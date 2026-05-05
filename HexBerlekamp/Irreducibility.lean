@@ -199,13 +199,35 @@ theorem rabinDividesTest_spec (f : FpPoly p) (hmonic : DensePoly.Monic f) :
       (frobeniusDiffMod f hmonic (basisSize f)).isZero := by
   rfl
 
+private theorem List.all_eq_true_of_mem {α : Type u} {xs : List α} {p : α → Bool}
+    (hall : xs.all p = true) {x : α} (hx : x ∈ xs) : p x = true := by
+  induction xs with
+  | nil =>
+      cases hx
+  | cons y ys ih =>
+      simp only [List.all_cons, Bool.and_eq_true] at hall
+      rcases hall with ⟨hy, hys⟩
+      simp only [List.mem_cons] at hx
+      rcases hx with rfl | hx
+      · exact hy
+      · exact ih hys hx
+
 theorem checkPowChain_spec
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate p) :
     checkPowChain f hmonic cert = true →
       ∀ k, k ≤ cert.n →
         cert.powChain[k]? = some (FpPoly.frobeniusXPowMod f hmonic k) := by
-  sorry
+  intro hcheck k hk
+  unfold checkPowChain at hcheck
+  simp only [Bool.and_eq_true] at hcheck
+  rcases hcheck with ⟨_hsize, hall⟩
+  have hmem : k ∈ List.range (cert.n + 1) := by
+    simpa [List.mem_range] using Nat.lt_succ_of_le hk
+  have hbeq :
+      (cert.powChain[k]? == some (FpPoly.frobeniusXPowMod f hmonic k)) = true :=
+    List.all_eq_true_of_mem hall hmem
+  simpa using hbeq
 
 theorem checkIrreducibilityCertificate_rabinTest
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
