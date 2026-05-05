@@ -224,7 +224,50 @@ def sizeReduceColumn (s : LLLState n m) (j k : Fin n) (hjk : j.val < k.val) :
         intro i l hi hl hli
         by_cases hik : i = k.val
         · -- Row i is row k. Subdivide on l vs j.val.
-          sorry
+          subst hik
+          -- ν'.get ⟨k.val, hi⟩ = rowK
+          have hν_get_k : ν'.get ⟨k.val, hi⟩ = rowK := by
+            change (s.ν.set k.val rowK k.isLt)[k.val] = rowK
+            exact Vector.getElem_set_self k.isLt
+          rw [hν_get_k]
+          rcases Nat.lt_trichotomy l j.val with hlj | hlj | hlj
+          · -- Case B: l < j.val. rowK[l] = (s.ν.get k).get l - r * (s.ν.get j).get l
+            have h_lne_j : l ≠ j.val := Nat.ne_of_lt hlj
+            have h_rowK_get : rowK.get ⟨l, hl⟩ =
+                (s.ν.get k).get ⟨l, hl⟩ - r * (s.ν.get j).get ⟨l, hl⟩ := by
+              change (((List.finRange j.val).foldl
+                  (fun row l' =>
+                    let lFin : Fin n := ⟨l'.val, Nat.lt_trans l'.isLt j.isLt⟩
+                    row.set lFin ((s.ν.get k).get lFin - r * (s.ν.get j).get lFin))
+                  (s.ν.get k)).set j.val ((s.ν.get k).get j - r * Int.ofNat dj1)
+                  j.isLt)[l] = _
+              rw [Vector.getElem_set_ne j.isLt hl (Ne.symm h_lne_j)]
+              have h := foldl_finRange_set_outerSubMul_get_eq j.val
+                (Nat.le_of_lt j.isLt) (s.ν.get k) (s.ν.get k) (s.ν.get j) r ⟨l, hl⟩
+              rw [if_pos hlj] at h
+              exact h
+            rw [h_rowK_get]
+            push_cast
+            have h_νkl : ((s.ν.get k).get ⟨l, hl⟩ : Rat) =
+                (s.d.get ⟨l + 1, Nat.succ_lt_succ hl⟩ : Rat) *
+                  ((GramSchmidt.Int.coeffs s.b).get k).get ⟨l, hl⟩ :=
+              s.ν_eq k.val l k.isLt hl hli
+            have h_νjl : ((s.ν.get j).get ⟨l, hl⟩ : Rat) =
+                (s.d.get ⟨l + 1, Nat.succ_lt_succ hl⟩ : Rat) *
+                  ((GramSchmidt.Int.coeffs s.b).get j).get ⟨l, hl⟩ :=
+              s.ν_eq j.val l j.isLt hl hlj
+            have h_coeff_lower :
+                ((GramSchmidt.Int.coeffs b').get ⟨k.val, hi⟩).get ⟨l, hl⟩ =
+                  ((GramSchmidt.Int.coeffs s.b).get ⟨k.val, hi⟩).get ⟨l, hl⟩ -
+                    (r : Rat) * ((GramSchmidt.Int.coeffs s.b).get ⟨j.val, j.isLt⟩).get
+                      ⟨l, Nat.lt_trans hlj j.isLt⟩ :=
+              GramSchmidt.Int.coeffs_sizeReduce_lower s.b ⟨l, hl⟩ j k hlj hjk r
+            rw [h_coeff_lower, h_νkl, h_νjl]
+            grind
+          · -- Case C: l = j.val
+            sorry
+          · -- Case D: l > j.val
+            sorry
         · -- Row i ≠ k.val: ν' agrees with s.ν, and coeffs(b') agrees with coeffs(s.b)
           -- on row i, so this case reduces to s.ν_eq directly.
           have hik_fin : (⟨i, hi⟩ : Fin n) ≠ k := fun h => hik (congrArg Fin.val h)
