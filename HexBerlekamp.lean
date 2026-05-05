@@ -2,6 +2,7 @@ import HexBerlekamp.Basic
 import HexBerlekamp.DistinctDegree
 import HexBerlekamp.Factor
 import HexBerlekamp.Irreducibility
+import HexBerlekamp.RabinSoundness
 import HexBerlekamp.Conformance
 
 /-!
