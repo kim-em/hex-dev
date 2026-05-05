@@ -264,8 +264,71 @@ def sizeReduceColumn (s : LLLState n m) (j k : Fin n) (hjk : j.val < k.val) :
               GramSchmidt.Int.coeffs_sizeReduce_lower s.b ⟨l, hl⟩ j k hlj hjk r
             rw [h_coeff_lower, h_νkl, h_νjl]
             grind
-          · -- Case C: l = j.val
-            sorry
+          · -- Case C: l = j.val. Bridge through `scaledCoeffs` to avoid the `hnorm`
+            -- precondition of `coeffs_sizeReduce_pivot`.
+            subst hlj
+            have h_rowK_get : rowK.get ⟨j.val, hl⟩ =
+                (s.ν.get k).get j - r * Int.ofNat dj1 := by
+              change (((List.finRange j.val).foldl
+                  (fun row l' =>
+                    let lFin : Fin n := ⟨l'.val, Nat.lt_trans l'.isLt j.isLt⟩
+                    row.set lFin ((s.ν.get k).get lFin - r * (s.ν.get j).get lFin))
+                  (s.ν.get k)).set j.val ((s.ν.get k).get j - r * Int.ofNat dj1)
+                  j.isLt)[j.val] = _
+              exact Vector.getElem_set_self j.isLt
+            rw [h_rowK_get]
+            -- s.d[j.val+1] = gramDet s.b (j.val+1)
+            have h_d_eq_orig : s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩ =
+                GramSchmidt.Int.gramDet s.b (j.val + 1) (Nat.succ_le_of_lt j.isLt) :=
+              s.d_eq (j.val + 1) (Nat.succ_lt_succ j.isLt)
+            -- s.ν_eq for k, j.
+            have h_νkj : ((s.ν.get k).get j : Rat) =
+                (s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩ : Rat) *
+                  ((GramSchmidt.Int.coeffs s.b).get k).get j :=
+              s.ν_eq k.val j.val k.isLt j.isLt hjk
+            -- scaledCoeffs_eq for s.b at (k, j).
+            have h_sc_eq_orig :
+                ((((GramSchmidt.Int.scaledCoeffs s.b).get k).get j : Int) : Rat) =
+                (GramSchmidt.Int.gramDet s.b (j.val + 1)
+                  (Nat.succ_le_of_lt (Nat.lt_trans hjk k.isLt)) : Rat) *
+                    ((GramSchmidt.Int.coeffs s.b).get k).get j :=
+              GramSchmidt.Int.scaledCoeffs_eq s.b k.val j.val k.isLt hjk
+            -- (s.ν.get k).get j = scaledCoeffs(s.b)[k][j] (in Int).
+            have h_ν_eq_sc :
+                (s.ν.get k).get j = ((GramSchmidt.Int.scaledCoeffs s.b).get k).get j := by
+              have hrat : (((s.ν.get k).get j : Int) : Rat) =
+                  ((((GramSchmidt.Int.scaledCoeffs s.b).get k).get j : Int) : Rat) := by
+                rw [h_νkj, h_sc_eq_orig, h_d_eq_orig]
+              exact_mod_cast hrat
+            -- scaledCoeffs at the pivot under sizeReduce (no `hnorm` needed).
+            have h_sc_pivot : ((GramSchmidt.Int.scaledCoeffs b').get k).get j =
+                ((GramSchmidt.Int.scaledCoeffs s.b).get k).get j -
+                  r * Int.ofNat (GramSchmidt.Int.gramDet s.b (j.val + 1)
+                    (Nat.succ_le_of_lt j.isLt)) :=
+              GramSchmidt.Int.scaledCoeffs_sizeReduce_pivot s.b j k hjk r
+            -- Combine to express ((s.ν.get k).get j - r * Int.ofNat dj1) as
+            -- scaledCoeffs(b')[k][j].
+            have h_lhs_eq : (s.ν.get k).get j - r * Int.ofNat dj1 =
+                ((GramSchmidt.Int.scaledCoeffs b').get k).get j := by
+              rw [h_sc_pivot, ← h_ν_eq_sc, ← h_d_eq_orig]
+            rw [h_lhs_eq]
+            -- gramDet(b', j.val+1) = gramDet(s.b, j.val+1).
+            have h_gramDet_b' : GramSchmidt.Int.gramDet b' (j.val + 1)
+                (Nat.succ_le_of_lt (Nat.lt_trans hjk k.isLt)) =
+                s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩ := by
+              show GramSchmidt.Int.gramDet (GramSchmidt.Int.sizeReduce s.b j k r)
+                  (j.val + 1) _ = _
+              rw [GramSchmidt.Int.gramDet_sizeReduce s.b j k hjk r (j.val + 1)
+                (Nat.succ_le_of_lt (Nat.lt_trans hjk k.isLt))]
+              exact h_d_eq_orig.symm
+            -- scaledCoeffs_eq for b' at (k, j).
+            have h_sc_eq_b' :
+                ((((GramSchmidt.Int.scaledCoeffs b').get k).get j : Int) : Rat) =
+                (GramSchmidt.Int.gramDet b' (j.val + 1)
+                  (Nat.succ_le_of_lt (Nat.lt_trans hjk k.isLt)) : Rat) *
+                    ((GramSchmidt.Int.coeffs b').get k).get j :=
+              GramSchmidt.Int.scaledCoeffs_eq b' k.val j.val k.isLt hjk
+            rw [h_sc_eq_b', h_gramDet_b']
           · -- Case D: l > j.val. rowK[l] is unchanged from (s.ν.get k).get l;
             -- coeffs(b')[k][l] = coeffs(s.b)[k][l] by coeffs_sizeReduce_above_pivot.
             have h_lne_j : l ≠ j.val := Nat.ne_of_gt hlj
