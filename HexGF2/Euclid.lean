@@ -654,6 +654,26 @@ theorem mod_add_mul_right_eq_mod (a c f : GF2Poly) :
     (a + c * f) % f = a % f := by
   exact mod_eq_of_add_right_multiple a c f
 
+private theorem one_mod_eq_one_of_degree_pos {f : GF2Poly} (hfdegree : 0 < f.degree) :
+    (1 : GF2Poly) % f = 1 := by
+  have hfzeroFalse : f.isZero = false := by
+    by_cases hzero : f.isZero = true
+    · have hfzero : f = 0 := eq_zero_of_isZero hzero
+      subst hfzero
+      simp at hfdegree
+    · cases h : f.isZero <;> simp [h] at hzero ⊢
+  obtain ⟨fd, hfd⟩ := degree?_isSome_of_isZero_false hfzeroFalse
+  have hfdpos : 0 < fd := by
+    simpa [degree, hfd] using hfdegree
+  change (divMod 1 f).2 = 1
+  unfold divMod
+  change (divModAux f 1 0 1).2 = 1
+  simp only [divModAux]
+  have hone_degree : (1 : GF2Poly).degree? = some 0 := by
+    rfl
+  rw [hone_degree, hfd]
+  simp [hfzeroFalse, hfdpos]
+
 /-- The Bezout identity for `xgcd` gives a congruence between the left inverse
 candidate and the computed gcd modulo the right input. -/
 theorem xgcd_left_mul_mod_eq_gcd_mod (a f : GF2Poly) :
@@ -680,7 +700,15 @@ theorem xgcd_left_mul_mod_eq_one_of_irreducible_of_nonzero_reduced {a f : GF2Pol
     (hf : Irreducible f) (ha : a ≠ 0)
     (hred : a.IsZero ∨ a.degree < f.degree) :
     (a * (xgcd a f).left) % f = 1 := by
-  sorry
+  have hfdegree : 0 < f.degree := by
+    cases hred with
+    | inl hzero =>
+        exact False.elim (ha (eq_zero_of_isZero hzero))
+    | inr hlt =>
+        omega
+  rw [xgcd_left_mul_mod_eq_gcd_mod]
+  rw [gcd_eq_one_of_irreducible_of_nonzero_reduced hf ha hred]
+  exact one_mod_eq_one_of_degree_pos hfdegree
 
 /-- Reducing the xgcd left coefficient before multiplying preserves the
 left-inverse congruence for nonzero reduced residues modulo an irreducible. -/
@@ -688,7 +716,33 @@ theorem mul_mod_xgcd_left_mod_eq_one_of_irreducible_of_nonzero_reduced {a f : GF
     (hf : Irreducible f) (ha : a ≠ 0)
     (hred : a.IsZero ∨ a.degree < f.degree) :
     (a * ((xgcd a f).left % f)) % f = 1 % f := by
-  sorry
+  have hfdegree : 0 < f.degree := by
+    cases hred with
+    | inl hzero =>
+        exact False.elim (ha (eq_zero_of_isZero hzero))
+    | inr hlt =>
+        omega
+  let r := xgcd a f
+  let q := (divMod r.left f).1
+  let rem := (divMod r.left f).2
+  have hspec : q * f + rem = r.left := by
+    simpa [q, rem] using divMod_spec r.left f
+  have hrem_eq : rem = r.left + q * f := by
+    calc
+      rem = rem + 0 := by rw [add_zero]
+      _ = rem + (q * f + q * f) := by simp
+      _ = (rem + q * f) + q * f := by rw [add_assoc]
+      _ = (q * f + rem) + q * f := by rw [add_comm rem (q * f)]
+      _ = r.left + q * f := by rw [hspec]
+  have hmul_congr : a * rem = a * r.left + (a * q) * f := by
+    rw [hrem_eq, right_distrib, mul_assoc]
+  calc
+    (a * ((xgcd a f).left % f)) % f = (a * rem) % f := by rfl
+    _ = (a * r.left + (a * q) * f) % f := by rw [hmul_congr]
+    _ = (a * r.left) % f := mod_add_mul_right_eq_mod (a * r.left) (a * q) f
+    _ = 1 % f := by
+      rw [xgcd_left_mul_mod_eq_one_of_irreducible_of_nonzero_reduced hf ha hred]
+      exact (one_mod_eq_one_of_degree_pos hfdegree).symm
 
 /-- The packed single-word CLMUL/reduction path agrees with the polynomial
 xgcd inverse bridge for nonzero canonical representatives. -/
