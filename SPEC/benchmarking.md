@@ -315,6 +315,32 @@ Comparison against the comparator is then a `compare` invocation
 across two `setup_fixed_benchmark` registrations, one per
 implementation.
 
+`setup_fixed_benchmark` targets must be callable: `Unit → α`,
+`Unit → IO α`, or (legacy) `IO α`. Bare-value `def f : α := …`
+registrations are rejected at elaboration. Thread workload inputs
+through an `IO.Ref` so the body is not a closed expression — Lean
+will otherwise constant-fold the work into the binary, and the
+harness will measure a constant load. Canonical shape:
+
+```lean
+initialize fooInputRef : IO.Ref Nat ← IO.mkRef 1_000_000
+
+def benchFoo : Unit → IO UInt64 := fun () => do
+  return doExpensiveWork (← fooInputRef.get)
+
+setup_fixed_benchmark benchFoo where {
+  expectedHash := some 0xdeadbeefdeadbeef
+}
+```
+
+Every fixed benchmark sets `expectedHash` in its `where` clause to
+catch silent value regressions — the cross-repeat hash-agreement
+check alone is vacuous on small-cardinality result types like
+`Bool`. Workflow: register, run once, copy the printed `observed
+hash:` value into the `where` clause, commit. A sub-microsecond `‼`
+advisory in the harness output means the body is still being folded
+(typically `pure (closedExpression)`); add an `IO.Ref` read.
+
 ## Conway tier separation
 
 Conway-polynomial benchmarks reflect the three-tier design and must
@@ -462,7 +488,17 @@ explicitly forbidden:
   `scheduled-only` or `blocked`; it is not completion.
 - **Rolling a hex-local benchmark harness.** lean-bench is the
   harness; gaps in its API are filed against it, not papered over
-  locally.
+  locally — including hand-rolled `repeatXChecksum` /
+  `mixHash`-fold inner loops in user code. lean-bench auto-tunes
+  inner repeats; user-side iteration scaffolding is removed in the
+  next touch of any bench module that still has it.
+- **Tautological `#guard f x = some y` where `y` is a hand-typed
+  copy of `f x` in the same file.** Verifies the literal was copied
+  correctly, nothing more. Compare against an upstream fixture or
+  use a content-bearing check (e.g. `#guard rabinTest f _ = true`
+  for irreducibility). For benchmarks specifically, the harness's
+  `expectedHash` is the right place for value-correctness
+  assertions.
 - **Shipping a registration that produces no verdict-eligible rows.**
   A parametric `run` whose every rung is filtered out by the
   warmup-trim or signal-floor filter exits with code `2` and reports

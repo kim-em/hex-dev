@@ -55,6 +55,14 @@
    mention performance requirements for an operation, assume the
    implementation needs to be optimal.
 
+   Proof-level placeholders use `sorry`, never `axiom`. `sorry`
+   produces a compile-time warning that surfaces in CI; `axiom` is
+   silent. If a refactor breaks an existing proof, fix the proof,
+   fix the API the proof depends on, or roll back the refactor —
+   never axiomatise the conclusion. The same rollback path that
+   applies to a benchmark-discovered scaffolding `def` applies to a
+   proof a refactor would silently axiomatise.
+
 ## Fully autonomous execution
 
 The project runs without human interaction after launch. Lean, Mathlib,
