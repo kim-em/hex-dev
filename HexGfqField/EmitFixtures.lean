@@ -675,18 +675,66 @@ private theorem m_p5_n4_irr : FpPoly.Irreducible m_p5_n4 :=
 
 /-- `x^6 + x^4 + 4x^3 + x^2 + 2` — Conway polynomial for `GF(15625)`.
 
-The Rabin certificate route used for the other 14 moduli relies on
-`Berlekamp.frobeniusXPowModLinear`, which expands `X^(p^k) mod m` as a
-straight-line product of `p^k` modular multiplications.  For `(p, k) = (5, 6)`
-that is `5^6 = 15625` kernel-reducible iterations per pow-chain entry, which
-exceeds practical kernel-reduction budgets.  Discharging this case is tracked
-as a separate follow-up; the certificate data has been precomputed externally.
--/
+`Berlekamp.checkIrreducibilityCertificateLinear` re-evaluates each pow-chain
+entry by expanding `X^(p^k) mod m` as a straight-line product of `p^k`
+modular multiplications.  For `(p, n) = (5, 6)` that is `5^6 = 15625`
+kernel-reducible iterations per entry — far beyond practical budgets.
+
+The incremental variant `checkIrreducibilityCertificateLinearIncremental`
+uses `(X^(p^k) mod m)^p mod m` (only `p` mults per step) and discharges this
+case in `n · p = 30` total multiplications. -/
 private def m_p5_n6 : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 0, 1, 4, 1, 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_five) }
 private theorem m_p5_n6_pos : 0 < FpPoly.degree m_p5_n6 := by decide
-private theorem m_p5_n6_irr : FpPoly.Irreducible m_p5_n6 := by sorry
+private theorem m_p5_n6_monic : DensePoly.Monic m_p5_n6 := by rfl
+
+private def m_p5_n6_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 5
+  n := 6
+  powChain :=
+    #[polyP5 #[0, 1], polyP5 #[0, 0, 0, 0, 0, 1],
+      polyP5 #[4, 4, 0, 3, 4, 2], polyP5 #[3, 0, 3, 2, 4, 1],
+      polyP5 #[1, 0, 0, 2, 1, 3], polyP5 #[2, 0, 2, 3, 1, 3],
+      polyP5 #[0, 1]]
+  bezout :=
+    #[{ left := polyP5 #[0, 4, 0, 1, 1],
+        right := polyP5 #[4, 0, 0, 3, 3, 2] },
+      { left := polyP5 #[4, 2, 1, 4, 3],
+        right := polyP5 #[1, 4, 0, 0, 3, 2] }]
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 16000000 in
+private theorem m_p5_n6_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinearIncremental m_p5_n6
+        m_p5_n6_monic m_p5_n6_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinearIncremental,
+    m_p5_n6_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinearIncremental,
+    Berlekamp.checkPowChainLinearIncrementalStep,
+    Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_6,
+    m_p5_n6, polyP5]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · constructor
+        · rfl
+        · intro x hx
+          have hcases : x = 0 ∨ x = 1 ∨ x = 2 ∨ x = 3 ∨ x = 4 ∨ x = 5 := by omega
+          rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl <;> rfl
+    · rfl
+  · exact ⟨rfl, rfl⟩
+
+private theorem m_p5_n6_irr : FpPoly.Irreducible m_p5_n6 :=
+  Berlekamp.rabinTest_imp_irreducible m_p5_n6 m_p5_n6_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      m_p5_n6 m_p5_n6_monic m_p5_n6_certificate
+      m_p5_n6_certificate_check)
 
 -- p = 7
 
@@ -818,12 +866,64 @@ private theorem m_p7_n4_irr : FpPoly.Irreducible m_p7_n4 :=
       m_p7_n4 m_p7_n4_monic m_p7_n4_certificate
       m_p7_n4_certificate_check)
 
-/-- `x^6 + x^4 + 5x^3 + 4x^2 + 6x + 3` — Conway polynomial for `GF(7^6)`. -/
+/-- `x^6 + x^4 + 5x^3 + 4x^2 + 6x + 3` — Conway polynomial for `GF(7^6)`.
+
+Uses the incremental Rabin certificate checker (see comment on `m_p5_n6`);
+`(p, n) = (7, 6)` would require `7^6 = 117649` mults per entry on the
+straight-line path, but only `n · p = 42` total mults on the incremental
+path. -/
 private def m_p7_n6 : FpPoly 7 :=
   { coeffs := #[(3 : ZMod64 7), 6, 4, 5, 1, 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_seven) }
 private theorem m_p7_n6_pos : 0 < FpPoly.degree m_p7_n6 := by decide
-private theorem m_p7_n6_irr : FpPoly.Irreducible m_p7_n6 := by sorry
+private theorem m_p7_n6_monic : DensePoly.Monic m_p7_n6 := by rfl
+
+private def m_p7_n6_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 7
+  n := 6
+  powChain :=
+    #[polyP7 #[0, 1], polyP7 #[0, 4, 1, 3, 2, 6],
+      polyP7 #[1, 3, 4, 5, 5], polyP7 #[6, 4, 5, 6, 0, 4],
+      polyP7 #[3, 2, 5, 0, 5, 3], polyP7 #[4, 0, 6, 0, 2, 1],
+      polyP7 #[0, 1]]
+  bezout :=
+    #[{ left := polyP7 #[6, 0, 2, 2],
+        right := polyP7 #[4, 5, 0, 3, 0, 1] },
+      { left := polyP7 #[1, 1, 0, 2, 3],
+        right := polyP7 #[2, 1, 2, 3, 3, 1] }]
+
+set_option maxRecDepth 131072 in
+set_option maxHeartbeats 32000000 in
+private theorem m_p7_n6_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinearIncremental m_p7_n6
+        m_p7_n6_monic m_p7_n6_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinearIncremental,
+    m_p7_n6_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinearIncremental,
+    Berlekamp.checkPowChainLinearIncrementalStep,
+    Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_6,
+    m_p7_n6, polyP7]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · constructor
+        · rfl
+        · intro x hx
+          have hcases : x = 0 ∨ x = 1 ∨ x = 2 ∨ x = 3 ∨ x = 4 ∨ x = 5 := by omega
+          rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl <;> rfl
+    · rfl
+  · exact ⟨rfl, rfl⟩
+
+private theorem m_p7_n6_irr : FpPoly.Irreducible m_p7_n6 :=
+  Berlekamp.rabinTest_imp_irreducible m_p7_n6 m_p7_n6_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      m_p7_n6 m_p7_n6_monic m_p7_n6_certificate
+      m_p7_n6_certificate_check)
 
 end Hex.GFqFieldEmit
 
