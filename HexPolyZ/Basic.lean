@@ -746,6 +746,12 @@ private theorem rat_dvd_mul_left {d p : DensePoly Rat} (q : DensePoly Rat) :
   rw [ha, ← DensePoly.mul_assoc_poly q d a, DensePoly.mul_comm_poly q d,
     DensePoly.mul_assoc_poly d q a]
 
+private theorem rat_dvd_mul_right {d p : DensePoly Rat} (q : DensePoly Rat) :
+    d ∣ p → d ∣ p * q := by
+  intro h
+  rw [DensePoly.mul_comm_poly p q]
+  exact rat_dvd_mul_left q h
+
 private theorem rat_dvd_add {d p q : DensePoly Rat} :
     d ∣ p → d ∣ q → d ∣ p + q := by
   intro hp hq
@@ -1556,6 +1562,48 @@ private theorem rat_div_gcd_mul_reconstruct (f df : DensePoly Rat) :
   rw [hmod] at hspec
   rw [DensePoly.add_zero_poly] at hspec
   exact hspec
+
+private theorem rat_common_divisor_quotient_derivative_dvd_repeated
+    (ratPrimitive : DensePoly Rat) :
+    let derivative := DensePoly.derivative ratPrimitive
+    let repeatedRat := DensePoly.gcd ratPrimitive derivative
+    let quotientRat := ratPrimitive / repeatedRat
+    ∀ d : DensePoly Rat,
+      d ∣ quotientRat →
+      d ∣ DensePoly.derivative quotientRat →
+      d ∣ repeatedRat := by
+  intro derivative repeatedRat quotientRat d hdq hdq'
+  have hrec : quotientRat * repeatedRat = ratPrimitive := by
+    simpa [quotientRat, repeatedRat, derivative] using
+      rat_div_gcd_mul_reconstruct ratPrimitive derivative
+  have hdfactor :
+      d ∣ quotientRat * repeatedRat := rat_dvd_mul_right repeatedRat hdq
+  have hdf : d ∣ ratPrimitive := by
+    simpa [hrec] using hdfactor
+  have hderivative_factor :
+      d ∣ DensePoly.derivative (quotientRat * repeatedRat) := by
+    rw [rat_derivative_mul]
+    apply rat_dvd_add
+    · exact rat_dvd_mul_right repeatedRat hdq'
+    · exact rat_dvd_mul_right (DensePoly.derivative repeatedRat) hdq
+  have hddf : d ∣ derivative := by
+    simpa [derivative, hrec] using hderivative_factor
+  simpa [repeatedRat] using DensePoly.dvd_gcd d ratPrimitive derivative hdf hddf
+
+private theorem rat_quotient_derivative_gcd_dvd_repeated
+    (ratPrimitive : DensePoly Rat) :
+    let derivative := DensePoly.derivative ratPrimitive
+    let repeatedRat := DensePoly.gcd ratPrimitive derivative
+    let quotientRat := ratPrimitive / repeatedRat
+    DensePoly.gcd quotientRat (DensePoly.derivative quotientRat) ∣ repeatedRat := by
+  intro derivative repeatedRat quotientRat
+  exact
+    rat_common_divisor_quotient_derivative_dvd_repeated ratPrimitive
+      (DensePoly.gcd quotientRat (DensePoly.derivative quotientRat))
+      (by simpa [quotientRat] using
+        DensePoly.gcd_dvd_left quotientRat (DensePoly.derivative quotientRat))
+      (by simpa [quotientRat] using
+        DensePoly.gcd_dvd_right quotientRat (DensePoly.derivative quotientRat))
 
 private theorem densePoly_eq_zero_of_isZero_true {R : Type _} [Zero R] [DecidableEq R]
     (p : DensePoly R) (h : p.isZero = true) :
