@@ -265,7 +265,7 @@ variable {f : GF2Poly} {hirr : GF2Poly.Irreducible f}
 
 /-- Equality of packed polynomial representatives follows from equality of
 their stored reduced polynomials. -/
-private theorem eq_of_val_eq {a b : GF2nPoly f hirr}
+theorem eq_of_val_eq {a b : GF2nPoly f hirr}
     (h : a.val = b.val) : a = b := by
   cases a
   cases b
@@ -291,7 +291,7 @@ def reducePoly (p : GF2Poly) : GF2nPoly f hirr :=
   else
     ⟨0, zero_reduced (f := f)⟩
 
-private theorem reducePoly_val_eq_mod (p : GF2Poly) :
+theorem reducePoly_val_eq_mod (p : GF2Poly) :
     (reducePoly (f := f) (hirr := hirr) p).val = p % f := by
   unfold reducePoly modulus
   by_cases hzero : (p % f).isZero = true
@@ -303,12 +303,81 @@ private theorem reducePoly_val_eq_mod (p : GF2Poly) :
       | inl hrem_zero => exact False.elim (hzero hrem_zero)
       | inr hrem_degree => exact False.elim (hdegree hrem_degree)
 
+theorem reducePoly_eq_iff_mod_eq {p q : GF2Poly} :
+    reducePoly (f := f) (hirr := hirr) p =
+      reducePoly (f := f) (hirr := hirr) q ↔
+    p % f = q % f := by
+  constructor
+  · intro h
+    have hval := congrArg GF2nPoly.val h
+    simpa [reducePoly_val_eq_mod (f := f) (hirr := hirr) p,
+      reducePoly_val_eq_mod (f := f) (hirr := hirr) q] using hval
+  · intro h
+    apply eq_of_val_eq
+    simp [reducePoly_val_eq_mod, h]
+
+private theorem mod_eq_zero_of_dvd {p f : GF2Poly} (hf : f ≠ 0) (h : f ∣ p) :
+    p % f = 0 := by
+  rcases h with ⟨c, hc⟩
+  have hrem_reduced : (p % f).isZero = true ∨ (p % f).degree < f.degree :=
+    GF2Poly.mod_degree_lt p f hf
+  have hfdvd_rem : f ∣ p % f := by
+    let q := (GF2Poly.divMod p f).1
+    let r := (GF2Poly.divMod p f).2
+    have hspec : q * f + r = p := by
+      simpa [q, r] using GF2Poly.divMod_spec p f
+    refine ⟨q + c, ?_⟩
+    calc
+      p % f = r := rfl
+      _ = q * f + (q * f + r) := by
+        symm
+        rw [← GF2Poly.add_assoc, GF2Poly.add_self, GF2Poly.zero_add]
+      _ = q * f + p := by rw [hspec]
+      _ = q * f + f * c := by rw [hc]
+      _ = f * q + f * c := by rw [GF2Poly.mul_comm q f]
+      _ = f * (q + c) := by rw [GF2Poly.right_distrib]
+  by_cases hzero : p % f = 0
+  · exact hzero
+  · cases hrem_reduced with
+    | inl hzero_isZero =>
+        exact GF2Poly.eq_zero_of_isZero hzero_isZero
+    | inr hlt =>
+        have hle : f.degree ≤ (p % f).degree :=
+          GF2Poly.degree_le_of_dvd_nonzero hf hzero hfdvd_rem
+        omega
+
+private theorem dvd_of_mod_eq_zero {p f : GF2Poly} (h : p % f = 0) :
+    f ∣ p := by
+  let q := (GF2Poly.divMod p f).1
+  have hspec : q * f + p % f = p := by
+    simpa [q, GF2Poly.mod] using GF2Poly.divMod_spec p f
+  refine ⟨q, ?_⟩
+  rw [h] at hspec
+  rw [GF2Poly.add_zero] at hspec
+  exact hspec.symm.trans (GF2Poly.mul_comm q f)
+
 /-- Canonical additive identity. -/
 def zero : GF2nPoly f hirr :=
   ⟨0, zero_reduced (f := f)⟩
 
 instance : Zero (GF2nPoly f hirr) where
   zero := zero
+
+theorem reducePoly_eq_zero_iff_dvd {p : GF2Poly} (hf : f ≠ 0) :
+    reducePoly (f := f) (hirr := hirr) p = 0 ↔ f ∣ p := by
+  constructor
+  · intro h
+    apply dvd_of_mod_eq_zero
+    have hval := congrArg GF2nPoly.val h
+    simpa [reducePoly_val_eq_mod (f := f) (hirr := hirr) p, zero] using hval
+  · intro h
+    apply eq_of_val_eq
+    change (reducePoly (f := f) (hirr := hirr) p).val = (zero (f := f)).val
+    simp [reducePoly_val_eq_mod, zero, mod_eq_zero_of_dvd hf h]
+
+/-- The quotient class of `X` modulo the packed irreducible `f`. -/
+def X : GF2nPoly f hirr :=
+  reducePoly (GF2Poly.monomial 1)
 
 /-- Canonical multiplicative identity. -/
 def one : GF2nPoly f hirr :=
