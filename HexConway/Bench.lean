@@ -20,10 +20,16 @@ Scientific registrations:
   the canonical imported table entry `C(2, 1)`.
 * `runTier1Irreducibility_2_6Checksum`: Rabin irreducibility verification for
   the low-prime higher-degree imported table entry `C(2, 6)`.
+* `runTier1Irreducibility_3_6Checksum`: Rabin irreducibility verification for
+  the odd-prime higher-degree imported table entry `C(3, 6)`.
+* `runTier1Irreducibility_5_6Checksum`: Rabin irreducibility verification for
+  the odd-prime higher-degree imported table entry `C(5, 6)`.
 * `runTier1Irreducibility_7_6Checksum`: Rabin irreducibility verification for
   the odd-prime higher-degree imported table entry `C(7, 6)`.
+* `runTier1Irreducibility_11_6Checksum`: Rabin irreducibility verification for
+  the odd-prime higher-degree imported table entry `C(11, 6)`.
 * `runTier1Irreducibility_13_6Checksum`: Rabin irreducibility verification for
-  the higher-degree imported table entry `C(13, 6)`.
+  the odd-prime higher-degree imported table entry `C(13, 6)`.
 -/
 
 namespace Hex.ConwayBench
@@ -33,9 +39,24 @@ private theorem one_ne_zero_two : (1 : ZMod64 2) ≠ 0 := by
   have hm := (ZMod64.natCast_eq_natCast_iff (p := 2) 1 0).mp h
   simp at hm
 
+private theorem one_ne_zero_three : (1 : ZMod64 3) ≠ 0 := by
+  intro h
+  have hm := (ZMod64.natCast_eq_natCast_iff (p := 3) 1 0).mp h
+  simp at hm
+
+private theorem one_ne_zero_five : (1 : ZMod64 5) ≠ 0 := by
+  intro h
+  have hm := (ZMod64.natCast_eq_natCast_iff (p := 5) 1 0).mp h
+  simp at hm
+
 private theorem one_ne_zero_seven : (1 : ZMod64 7) ≠ 0 := by
   intro h
   have hm := (ZMod64.natCast_eq_natCast_iff (p := 7) 1 0).mp h
+  simp at hm
+
+private theorem one_ne_zero_eleven : (1 : ZMod64 11) ≠ 0 := by
+  intro h
+  have hm := (ZMod64.natCast_eq_natCast_iff (p := 11) 1 0).mp h
   simp at hm
 
 private theorem one_ne_zero_thirteen : (1 : ZMod64 13) ≠ 0 := by
@@ -115,6 +136,30 @@ theorem luebeckConwayPolynomial_2_6_monic :
     DensePoly.Monic luebeckConwayPolynomial_2_6 := by
   rfl
 
+/-- The committed `C(3, 6)` Luebeck entry, stored ascending by degree. -/
+def luebeckConwayPolynomial_3_6 : FpPoly 3 :=
+  { coeffs := #[(2 : ZMod64 3), 2, 1, 0, 2, 0, 1]
+    normalized := by
+      right
+      simpa using one_ne_zero_three }
+
+/-- The committed `C(3, 6)` entry is monic. -/
+theorem luebeckConwayPolynomial_3_6_monic :
+    DensePoly.Monic luebeckConwayPolynomial_3_6 := by
+  rfl
+
+/-- The committed `C(5, 6)` Luebeck entry, stored ascending by degree. -/
+def luebeckConwayPolynomial_5_6 : FpPoly 5 :=
+  { coeffs := #[(2 : ZMod64 5), 0, 1, 4, 1, 0, 1]
+    normalized := by
+      right
+      simpa using one_ne_zero_five }
+
+/-- The committed `C(5, 6)` entry is monic. -/
+theorem luebeckConwayPolynomial_5_6_monic :
+    DensePoly.Monic luebeckConwayPolynomial_5_6 := by
+  rfl
+
 /-- The committed `C(7, 6)` Luebeck entry, stored ascending by degree. -/
 def luebeckConwayPolynomial_7_6 : FpPoly 7 :=
   { coeffs := #[(3 : ZMod64 7), 6, 4, 5, 1, 0, 1]
@@ -125,6 +170,18 @@ def luebeckConwayPolynomial_7_6 : FpPoly 7 :=
 /-- The committed `C(7, 6)` entry is monic. -/
 theorem luebeckConwayPolynomial_7_6_monic :
     DensePoly.Monic luebeckConwayPolynomial_7_6 := by
+  rfl
+
+/-- The committed `C(11, 6)` Luebeck entry, stored ascending by degree. -/
+def luebeckConwayPolynomial_11_6 : FpPoly 11 :=
+  { coeffs := #[(2 : ZMod64 11), 7, 6, 4, 3, 0, 1]
+    normalized := by
+      right
+      simpa using one_ne_zero_eleven }
+
+/-- The committed `C(11, 6)` entry is monic. -/
+theorem luebeckConwayPolynomial_11_6_monic :
+    DensePoly.Monic luebeckConwayPolynomial_11_6 := by
   rfl
 
 /-- The committed `C(13, 6)` Luebeck entry, stored ascending by degree. -/
@@ -141,7 +198,10 @@ theorem luebeckConwayPolynomial_13_6_monic :
 
 #guard Conway.luebeckConwayPolynomial? 2 1 == some Conway.luebeckConwayPolynomial_2_1
 #guard Conway.luebeckConwayPolynomial? 2 6 == some luebeckConwayPolynomial_2_6
+#guard Conway.luebeckConwayPolynomial? 3 6 == some luebeckConwayPolynomial_3_6
+#guard Conway.luebeckConwayPolynomial? 5 6 == some luebeckConwayPolynomial_5_6
 #guard Conway.luebeckConwayPolynomial? 7 6 == some luebeckConwayPolynomial_7_6
+#guard Conway.luebeckConwayPolynomial? 11 6 == some luebeckConwayPolynomial_11_6
 #guard Conway.luebeckConwayPolynomial? 13 6 == some luebeckConwayPolynomial_13_6
 
 /-- Benchmark target: Tier 1 irreducibility check for imported `C(2, 1)`. -/
@@ -158,12 +218,33 @@ def runTier1Irreducibility_2_6Checksum : UInt64 :=
       luebeckConwayPolynomial_2_6
       luebeckConwayPolynomial_2_6_monic
 
+/-- Benchmark target: Tier 1 irreducibility check for imported `C(3, 6)`. -/
+def runTier1Irreducibility_3_6Checksum : UInt64 :=
+  repeatUInt64Checksum irreducibilityHotRepeats fun _ =>
+    hash <| Berlekamp.rabinTest
+      luebeckConwayPolynomial_3_6
+      luebeckConwayPolynomial_3_6_monic
+
+/-- Benchmark target: Tier 1 irreducibility check for imported `C(5, 6)`. -/
+def runTier1Irreducibility_5_6Checksum : UInt64 :=
+  repeatUInt64Checksum irreducibilityHotRepeats fun _ =>
+    hash <| Berlekamp.rabinTest
+      luebeckConwayPolynomial_5_6
+      luebeckConwayPolynomial_5_6_monic
+
 /-- Benchmark target: Tier 1 irreducibility check for imported `C(7, 6)`. -/
 def runTier1Irreducibility_7_6Checksum : UInt64 :=
   repeatUInt64Checksum irreducibilityHotRepeats fun _ =>
     hash <| Berlekamp.rabinTest
       luebeckConwayPolynomial_7_6
       luebeckConwayPolynomial_7_6_monic
+
+/-- Benchmark target: Tier 1 irreducibility check for imported `C(11, 6)`. -/
+def runTier1Irreducibility_11_6Checksum : UInt64 :=
+  repeatUInt64Checksum irreducibilityHotRepeats fun _ =>
+    hash <| Berlekamp.rabinTest
+      luebeckConwayPolynomial_11_6
+      luebeckConwayPolynomial_11_6_monic
 
 /-- Benchmark target: Tier 1 irreducibility check for imported `C(13, 6)`. -/
 def runTier1Irreducibility_13_6Checksum : UInt64 :=
@@ -204,8 +285,9 @@ setup_fixed_benchmark runConwayPolySupported_2_1Checksum where {
 the executable Rabin checker from `HexBerlekamp`. They intentionally measure
 only the imported-polynomial irreducibility path: no Tier 2 Conway compatibility
 conditions and no Tier 3 search are included. `C(2, 1)` is the canonical
-supported entry; `C(2, 6)`, `C(7, 6)`, and `C(13, 6)` cover representative
-higher-degree committed-table entries across small binary and odd-prime fields. -/
+supported entry; `C(2, 6)`, `C(3, 6)`, `C(5, 6)`, `C(7, 6)`, `C(11, 6)`,
+and `C(13, 6)` cover representative higher-degree committed-table entries
+across small binary and odd-prime fields. -/
 setup_fixed_benchmark runTier1Irreducibility_2_1Checksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
@@ -216,7 +298,22 @@ setup_fixed_benchmark runTier1Irreducibility_2_6Checksum where {
   maxSecondsPerCall := 2.0
 }
 
+setup_fixed_benchmark runTier1Irreducibility_3_6Checksum where {
+  repeats := 5
+  maxSecondsPerCall := 2.0
+}
+
+setup_fixed_benchmark runTier1Irreducibility_5_6Checksum where {
+  repeats := 5
+  maxSecondsPerCall := 2.0
+}
+
 setup_fixed_benchmark runTier1Irreducibility_7_6Checksum where {
+  repeats := 5
+  maxSecondsPerCall := 2.0
+}
+
+setup_fixed_benchmark runTier1Irreducibility_11_6Checksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
 }
