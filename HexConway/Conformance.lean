@@ -4,7 +4,7 @@ import HexConway.Basic
 Core conformance checks for the Tier 1 committed Conway-polynomial lookup
 surface in `HexConway`.
 
-Oracle: none
+Oracle: committed Lübeck cache plus optional `conway-polynomials`
 Mode: always
 Covered operations:
 - `luebeckConwayPolynomial?`
@@ -15,27 +15,68 @@ Covered properties:
 - `conwayPoly` returns the polynomial packaged by its `SupportedEntry`
 - the supported Conway polynomial has positive degree
 Covered edge cases:
-- the committed binary linear hit `(2, 1)`
-- unsupported binary degrees `0`, `2`, and `3`
-- unsupported odd-prime lookups
+- committed entries for `p ∈ {2, 3, 5, 7, 11, 13}` and `n ∈ {1..6}`
+- unsupported degree zero, unsupported larger binary degree, and an
+  unsupported prime outside the committed slice
 -/
 
 namespace Hex
 namespace Conway
 namespace ConwayConformance
 
-private instance boundsThree : ZMod64.Bounds 3 := ⟨by decide, by decide⟩
-private instance boundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+private instance boundsSeventeen : ZMod64.Bounds 17 := ⟨by decide, by decide⟩
 
 private def coeffNats {p : Nat} [ZMod64.Bounds p] (f : FpPoly p) : List Nat :=
   f.toArray.toList.map ZMod64.toNat
 
-#guard luebeckConwayPolynomial? 2 1 = some luebeckConwayPolynomial_2_1
+private def coeffs? (p n : Nat) [ZMod64.Bounds p] : Option (List Nat) :=
+  (luebeckConwayPolynomial? p n).map coeffNats
+
+#guard coeffs? 2 1 = some [1, 1]
+#guard coeffs? 2 2 = some [1, 1, 1]
+#guard coeffs? 2 3 = some [1, 1, 0, 1]
+#guard coeffs? 2 4 = some [1, 1, 0, 0, 1]
+#guard coeffs? 2 5 = some [1, 0, 1, 0, 0, 1]
+#guard coeffs? 2 6 = some [1, 1, 0, 1, 1, 0, 1]
+
+#guard coeffs? 3 1 = some [1, 1]
+#guard coeffs? 3 2 = some [2, 2, 1]
+#guard coeffs? 3 3 = some [1, 2, 0, 1]
+#guard coeffs? 3 4 = some [2, 0, 0, 2, 1]
+#guard coeffs? 3 5 = some [1, 2, 0, 0, 0, 1]
+#guard coeffs? 3 6 = some [2, 2, 1, 0, 2, 0, 1]
+
+#guard coeffs? 5 1 = some [3, 1]
+#guard coeffs? 5 2 = some [2, 4, 1]
+#guard coeffs? 5 3 = some [3, 3, 0, 1]
+#guard coeffs? 5 4 = some [2, 4, 4, 0, 1]
+#guard coeffs? 5 5 = some [3, 4, 0, 0, 0, 1]
+#guard coeffs? 5 6 = some [2, 0, 1, 4, 1, 0, 1]
+
+#guard coeffs? 7 1 = some [4, 1]
+#guard coeffs? 7 2 = some [3, 6, 1]
+#guard coeffs? 7 3 = some [4, 0, 6, 1]
+#guard coeffs? 7 4 = some [3, 4, 5, 0, 1]
+#guard coeffs? 7 5 = some [4, 1, 0, 0, 0, 1]
+#guard coeffs? 7 6 = some [3, 6, 4, 5, 1, 0, 1]
+
+#guard coeffs? 11 1 = some [9, 1]
+#guard coeffs? 11 2 = some [2, 7, 1]
+#guard coeffs? 11 3 = some [9, 2, 0, 1]
+#guard coeffs? 11 4 = some [2, 10, 8, 0, 1]
+#guard coeffs? 11 5 = some [9, 0, 10, 0, 0, 1]
+#guard coeffs? 11 6 = some [2, 7, 6, 4, 3, 0, 1]
+
+#guard coeffs? 13 1 = some [11, 1]
+#guard coeffs? 13 2 = some [2, 12, 1]
+#guard coeffs? 13 3 = some [11, 2, 0, 1]
+#guard coeffs? 13 4 = some [2, 12, 3, 0, 1]
+#guard coeffs? 13 5 = some [11, 4, 0, 0, 0, 1]
+#guard coeffs? 13 6 = some [2, 11, 11, 10, 0, 0, 1]
+
 #guard luebeckConwayPolynomial? 2 0 = (none : Option (FpPoly 2))
-#guard luebeckConwayPolynomial? 2 2 = (none : Option (FpPoly 2))
-#guard luebeckConwayPolynomial? 2 3 = (none : Option (FpPoly 2))
-#guard luebeckConwayPolynomial? 3 1 = (none : Option (FpPoly 3))
-#guard luebeckConwayPolynomial? 5 2 = (none : Option (FpPoly 5))
+#guard luebeckConwayPolynomial? 2 7 = (none : Option (FpPoly 2))
+#guard luebeckConwayPolynomial? 17 1 = (none : Option (FpPoly 17))
 
 #guard coeffNats luebeckConwayPolynomial_2_1 = [1, 1]
 #guard supportedEntry_2_1.poly = luebeckConwayPolynomial_2_1

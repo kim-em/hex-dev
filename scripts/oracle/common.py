@@ -17,6 +17,8 @@ JSONL fixture record shape (one record per line):
                       "basis": [[int...]...]}``
 * ``prime``      — ``{"kind": "prime",      "lib": str, "case": str,
                       "p": int, "n": int}``
+* ``conway``     — ``{"kind": "conway",     "lib": str, "case": str,
+                      "p": int, "n": int}``
 * ``gfq_bridge`` — ``{"kind": "gfq_bridge", "lib": str, "case": str,
                       "p": int, "modulus": [int...],
                       "a": [int...], "b": [int...]}``
@@ -67,7 +69,16 @@ from typing import Any, Iterable, Iterator
 
 
 VALID_FIXTURE_KINDS = frozenset(
-    {"poly", "matrix", "lattice", "prime", "gfq_bridge", "gfqring", "gfqfield"}
+    {
+        "poly",
+        "matrix",
+        "lattice",
+        "prime",
+        "conway",
+        "gfq_bridge",
+        "gfqring",
+        "gfqfield",
+    }
 )
 
 
@@ -115,6 +126,10 @@ def _validate_fixture(record: dict[str, Any]) -> None:
         for key in ("p", "n"):
             if not isinstance(record.get(key), int):
                 raise FixtureError(f"prime.{key} must be int: {record!r}")
+    elif kind == "conway":
+        for key in ("p", "n"):
+            if not isinstance(record.get(key), int):
+                raise FixtureError(f"conway.{key} must be int: {record!r}")
     elif kind == "gfqring":
         if not isinstance(record.get("p"), int):
             raise FixtureError(f"gfqring.p must be int: {record!r}")

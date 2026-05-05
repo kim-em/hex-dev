@@ -163,6 +163,42 @@ jobs:
           path: conformance-failures/*.json
           if-no-files-found: ignore
 
+  oracle-conway:
+    runs-on: ubuntu-latest
+    env:
+      LD_LIBRARY_PATH: /home/runner/.elan/toolchains/leanprover--lean4---v4.30.0-rc2/lib/lean
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev
+      - name: Install conway-polynomials
+        run: python3 -m pip install --user conway-polynomials
+      - name: Configure Lean shared library path
+        run: |
+          toolchain="$(sed 's|/|--|; s|:|---|' lean-toolchain)"
+          echo "LD_LIBRARY_PATH=$HOME/.elan/toolchains/$toolchain/lib/lean:${LD_LIBRARY_PATH:-}" >> "$GITHUB_ENV"
+      - name: Build hexconway_emit_fixtures
+        uses: leanprover/lean-action@v1
+        with:
+          build-args: hexconway_emit_fixtures
+      - name: Cross-check Lean emission against committed fixture
+        run: |
+          lake exe hexconway_emit_fixtures > /tmp/hexconway-fresh.jsonl
+          diff -u conformance-fixtures/HexConway/conway.jsonl /tmp/hexconway-fresh.jsonl
+      - name: Run Conway table oracles
+        run: |
+          lake exe hexconway_emit_fixtures \
+            | python3 scripts/oracle/conway_luebeck.py --require-conway-polynomials
+      - name: Upload failure records
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: oracle-conway-failures
+          path: conformance-failures/*.json
+          if-no-files-found: ignore
+
   oracle-fpylll:
     runs-on: ubuntu-latest
     env:
