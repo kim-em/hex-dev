@@ -137,6 +137,16 @@ def emitPrimeFixture (lib case : String) (p n : Int) : IO Unit := do
     ("n",    jsonInt n)
   ]
 
+/-- Emit a `conway` fixture record identifying a committed `C(p, n)` entry. -/
+def emitConwayFixture (lib case : String) (p n : Int) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "conway"),
+    ("lib",  jsonString lib),
+    ("case", jsonString case),
+    ("p",    jsonInt p),
+    ("n",    jsonInt n)
+  ]
+
 /-- Emit a `gfqring` fixture record carrying the prime `p`, the
 modulus polynomial coefficients, two reduced operands `a` / `b`, an
 unreduced polynomial `c` (for the `reduce` op), and a scalar `n` (for

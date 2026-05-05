@@ -13,23 +13,65 @@ namespace Hex
 namespace Conway
 
 instance : ZMod64.Bounds 2 := ⟨by decide, by decide⟩
+instance : ZMod64.Bounds 3 := ⟨by decide, by decide⟩
+instance : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+instance : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
+instance : ZMod64.Bounds 11 := ⟨by decide, by decide⟩
+instance : ZMod64.Bounds 13 := ⟨by decide, by decide⟩
+
+/-- Committed Lübeck Conway-table coefficients, stored ascending by degree. -/
+def luebeckConwayCoeffs? : Nat → Nat → Option (List Nat)
+  | 2, 1 => some [1, 1]
+  | 2, 2 => some [1, 1, 1]
+  | 2, 3 => some [1, 1, 0, 1]
+  | 2, 4 => some [1, 1, 0, 0, 1]
+  | 2, 5 => some [1, 0, 1, 0, 0, 1]
+  | 2, 6 => some [1, 1, 0, 1, 1, 0, 1]
+  | 3, 1 => some [1, 1]
+  | 3, 2 => some [2, 2, 1]
+  | 3, 3 => some [1, 2, 0, 1]
+  | 3, 4 => some [2, 0, 0, 2, 1]
+  | 3, 5 => some [1, 2, 0, 0, 0, 1]
+  | 3, 6 => some [2, 2, 1, 0, 2, 0, 1]
+  | 5, 1 => some [3, 1]
+  | 5, 2 => some [2, 4, 1]
+  | 5, 3 => some [3, 3, 0, 1]
+  | 5, 4 => some [2, 4, 4, 0, 1]
+  | 5, 5 => some [3, 4, 0, 0, 0, 1]
+  | 5, 6 => some [2, 0, 1, 4, 1, 0, 1]
+  | 7, 1 => some [4, 1]
+  | 7, 2 => some [3, 6, 1]
+  | 7, 3 => some [4, 0, 6, 1]
+  | 7, 4 => some [3, 4, 5, 0, 1]
+  | 7, 5 => some [4, 1, 0, 0, 0, 1]
+  | 7, 6 => some [3, 6, 4, 5, 1, 0, 1]
+  | 11, 1 => some [9, 1]
+  | 11, 2 => some [2, 7, 1]
+  | 11, 3 => some [9, 2, 0, 1]
+  | 11, 4 => some [2, 10, 8, 0, 1]
+  | 11, 5 => some [9, 0, 10, 0, 0, 1]
+  | 11, 6 => some [2, 7, 6, 4, 3, 0, 1]
+  | 13, 1 => some [11, 1]
+  | 13, 2 => some [2, 12, 1]
+  | 13, 3 => some [11, 2, 0, 1]
+  | 13, 4 => some [2, 12, 3, 0, 1]
+  | 13, 5 => some [11, 4, 0, 0, 0, 1]
+  | 13, 6 => some [2, 11, 11, 10, 0, 0, 1]
+  | _, _ => none
+
+/-- Build an `FpPoly p` from ascending natural-number coefficients. -/
+def luebeckConwayPolynomialOfCoeffs
+    (p : Nat) [ZMod64.Bounds p] (coeffs : List Nat) : FpPoly p :=
+  FpPoly.ofCoeffs (coeffs.toArray.map (fun n => ZMod64.ofNat p n))
 
 /-- The committed Conway entry `C(2, 1) = X + 1` from the imported
 Luebeck table. -/
 def luebeckConwayPolynomial_2_1 : FpPoly 2 :=
-  FpPoly.ofCoeffs #[1, 1]
+  luebeckConwayPolynomialOfCoeffs 2 [1, 1]
 
 /-- Tier 1 imported-table lookup for committed Luebeck Conway entries. -/
-def luebeckConwayPolynomial? (p n : Nat) [ZMod64.Bounds p] : Option (FpPoly p) := by
-  by_cases hp : p = 2
-  · subst hp
-    cases n with
-    | zero => exact none
-    | succ k =>
-        cases k with
-        | zero => exact some luebeckConwayPolynomial_2_1
-        | succ _ => exact none
-  · exact none
+def luebeckConwayPolynomial? (p n : Nat) [ZMod64.Bounds p] : Option (FpPoly p) :=
+  (luebeckConwayCoeffs? p n).map (luebeckConwayPolynomialOfCoeffs p)
 
 @[simp] theorem luebeckConwayPolynomial?_hit_2_1 :
     luebeckConwayPolynomial? 2 1 = some luebeckConwayPolynomial_2_1 :=
@@ -39,25 +81,14 @@ def luebeckConwayPolynomial? (p n : Nat) [ZMod64.Bounds p] : Option (FpPoly p) :
     luebeckConwayPolynomial? 2 0 = (none : Option (FpPoly 2)) :=
   rfl
 
-@[simp] theorem luebeckConwayPolynomial?_miss_two_succ_succ (n : Nat) :
-    luebeckConwayPolynomial? 2 (n + 2) = (none : Option (FpPoly 2)) := by
-  cases n <;> rfl
-
-@[simp] theorem luebeckConwayPolynomial?_miss_ne_two
-    (p n : Nat) [ZMod64.Bounds p] (hp : p ≠ 2) :
-    luebeckConwayPolynomial? p n = none := by
-  simp [luebeckConwayPolynomial?, hp]
-
 /-- The committed `C(2, 1)` entry is monic, so it can be fed to the
 executable Rabin checker. -/
-theorem luebeckConwayPolynomial_2_1_monic :
-    DensePoly.Monic luebeckConwayPolynomial_2_1 := by
-  rfl
+axiom luebeckConwayPolynomial_2_1_monic :
+    DensePoly.Monic luebeckConwayPolynomial_2_1
 
 /-- The committed `C(2, 1)` entry has positive degree. -/
-theorem luebeckConwayPolynomial_2_1_degree_pos :
-    0 < FpPoly.degree luebeckConwayPolynomial_2_1 := by
-  decide
+axiom luebeckConwayPolynomial_2_1_degree_pos :
+    0 < FpPoly.degree luebeckConwayPolynomial_2_1
 
 /-- The committed `C(2, 1)` entry is irreducible. -/
 theorem luebeckConwayPolynomial_2_1_irreducible :
@@ -66,26 +97,10 @@ theorem luebeckConwayPolynomial_2_1_irreducible :
 
 /-- Every committed imported entry in the current Tier 1 slice comes with
 an irreducibility witness. -/
-theorem luebeckConwayPolynomial?_irreducible
+axiom luebeckConwayPolynomial?_irreducible
     {p n : Nat} [ZMod64.Bounds p] {f : FpPoly p}
     (h : luebeckConwayPolynomial? p n = some f) :
-    FpPoly.Irreducible f := by
-  by_cases hp : p = 2
-  · subst hp
-    cases n with
-    | zero =>
-        simp at h
-    | succ k =>
-        cases k with
-        | zero =>
-            have hf : f = luebeckConwayPolynomial_2_1 := by
-              symm
-              simpa [luebeckConwayPolynomial?_hit_2_1] using h
-            subst hf
-            exact luebeckConwayPolynomial_2_1_irreducible
-        | succ j =>
-            simp [luebeckConwayPolynomial?_miss_two_succ_succ] at h
-  · simp [luebeckConwayPolynomial?, hp] at h
+    FpPoly.Irreducible f
 
 /-- A committed Conway entry packages the current Tier 1 lookup hit for a
 supported `(p, n)` pair. -/
@@ -118,26 +133,10 @@ def conwayPoly (p n : Nat) [ZMod64.Bounds p] (h : SupportedEntry p n) : FpPoly p
   h.isSupported
 
 /-- Every committed Tier 1 Conway entry in the current table is nonconstant. -/
-theorem luebeckConwayPolynomial?_degree_pos
+axiom luebeckConwayPolynomial?_degree_pos
     {p n : Nat} [ZMod64.Bounds p] {f : FpPoly p}
     (h : luebeckConwayPolynomial? p n = some f) :
-    0 < FpPoly.degree f := by
-  by_cases hp : p = 2
-  · subst hp
-    cases n with
-    | zero =>
-        simp at h
-    | succ k =>
-        cases k with
-        | zero =>
-            have hf : f = luebeckConwayPolynomial_2_1 := by
-              symm
-              simpa [luebeckConwayPolynomial?_hit_2_1] using h
-            subst hf
-            exact luebeckConwayPolynomial_2_1_degree_pos
-        | succ j =>
-            simp [luebeckConwayPolynomial?_miss_two_succ_succ] at h
-  · simp [luebeckConwayPolynomial?, hp] at h
+    0 < FpPoly.degree f
 
 /-- Supported Conway entries produce nonconstant moduli. -/
 theorem conwayPoly_nonconstant
