@@ -64,18 +64,43 @@ def luebeckConwayPolynomialOfCoeffs
     (p : Nat) [ZMod64.Bounds p] (coeffs : List Nat) : FpPoly p :=
   FpPoly.ofCoeffs (coeffs.toArray.map (fun n => ZMod64.ofNat p n))
 
+private theorem one_ne_zero_two : (1 : ZMod64 2) ≠ 0 := by
+  intro h
+  have hm := (ZMod64.natCast_eq_natCast_iff (p := 2) 1 0).mp h
+  simp at hm
+
 /-- The committed Conway entry `C(2, 1) = X + 1` from the imported
-Luebeck table. -/
+Luebeck table.
+
+Defined directly as a record literal (rather than via
+`luebeckConwayPolynomialOfCoeffs`) so that `Monic` reduces to `rfl`
+and `degree` reduces to `decide`; the Bench file uses the same idiom
+for the higher-degree entries. -/
 def luebeckConwayPolynomial_2_1 : FpPoly 2 :=
-  luebeckConwayPolynomialOfCoeffs 2 [1, 1]
+  { coeffs := #[(1 : ZMod64 2), 1]
+    normalized := by
+      right
+      simpa using one_ne_zero_two }
 
 /-- Tier 1 imported-table lookup for committed Luebeck Conway entries. -/
 def luebeckConwayPolynomial? (p n : Nat) [ZMod64.Bounds p] : Option (FpPoly p) :=
   (luebeckConwayCoeffs? p n).map (luebeckConwayPolynomialOfCoeffs p)
 
 @[simp] theorem luebeckConwayPolynomial?_hit_2_1 :
-    luebeckConwayPolynomial? 2 1 = some luebeckConwayPolynomial_2_1 :=
-  rfl
+    luebeckConwayPolynomial? 2 1 = some luebeckConwayPolynomial_2_1 := by
+  show some (luebeckConwayPolynomialOfCoeffs 2 [1, 1]) = some luebeckConwayPolynomial_2_1
+  congr 1
+  apply DensePoly.ext_coeff
+  intro n
+  rw [show DensePoly.coeff (luebeckConwayPolynomialOfCoeffs 2 [1, 1]) n =
+        ([1, 1].toArray.map (fun k => ZMod64.ofNat 2 k)).getD n
+          (Zero.zero : ZMod64 2) from
+      DensePoly.coeff_ofCoeffs _ n]
+  simp [List.toArray, Array.map, DensePoly.coeff, luebeckConwayPolynomial_2_1]
+  match n with
+  | 0 => rfl
+  | 1 => rfl
+  | _ + 2 => rfl
 
 @[simp] theorem luebeckConwayPolynomial?_miss_two_zero :
     luebeckConwayPolynomial? 2 0 = (none : Option (FpPoly 2)) :=
@@ -83,12 +108,14 @@ def luebeckConwayPolynomial? (p n : Nat) [ZMod64.Bounds p] : Option (FpPoly p) :
 
 /-- The committed `C(2, 1)` entry is monic, so it can be fed to the
 executable Rabin checker. -/
-axiom luebeckConwayPolynomial_2_1_monic :
-    DensePoly.Monic luebeckConwayPolynomial_2_1
+theorem luebeckConwayPolynomial_2_1_monic :
+    DensePoly.Monic luebeckConwayPolynomial_2_1 := by
+  rfl
 
 /-- The committed `C(2, 1)` entry has positive degree. -/
-axiom luebeckConwayPolynomial_2_1_degree_pos :
-    0 < FpPoly.degree luebeckConwayPolynomial_2_1
+theorem luebeckConwayPolynomial_2_1_degree_pos :
+    0 < FpPoly.degree luebeckConwayPolynomial_2_1 := by
+  decide
 
 /-- The committed `C(2, 1)` entry is irreducible. -/
 theorem luebeckConwayPolynomial_2_1_irreducible :
@@ -121,7 +148,7 @@ def supportedEntry_2_1 : SupportedEntry 2 1 :=
       · simp at hm
       · exact Or.inl rfl
       · exact Or.inr rfl,
-    rfl⟩
+    luebeckConwayPolynomial?_hit_2_1⟩
 
 /-- Recover the committed Conway modulus for a supported entry. -/
 def conwayPoly (p n : Nat) [ZMod64.Bounds p] (h : SupportedEntry p n) : FpPoly p :=
