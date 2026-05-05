@@ -11,6 +11,15 @@
    libraries also prove correspondence with Mathlib's mathematical
    definitions (e.g. `ZMod64 p ≃+* ZMod p`).
 
+   The procedural consequence — "before filing or claiming an issue,
+   verify which side of this boundary the deliverable sits on" — is
+   captured in [PLAN/Conventions.md, "Library placement is a hard
+   precondition"](../PLAN/Conventions.md#library-placement-is-a-hard-precondition).
+   A proof whose shortest path uses Mathlib's `adjugate`, universal
+   polynomial rings, or any Mathlib-only structure does not live in a
+   Mathlib-free library, regardless of which file the issue happens
+   to name.
+
 3. **Performant by default.** Dense array-backed representations, `UInt64`
    coefficients for `F_p`, Barrett/Montgomery reduction for modular
    arithmetic. New GMP `@[extern]` primitives where Lean's runtime
