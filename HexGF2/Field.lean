@@ -263,6 +263,16 @@ namespace GF2nPoly
 
 variable {f : GF2Poly} {hirr : GF2Poly.Irreducible f}
 
+private theorem add_pair_swap (a b c d : GF2Poly) :
+    (a + b) + (c + d) = (a + c) + (b + d) := by
+  apply GF2Poly.ext_coeff
+  intro n
+  rw [GF2Poly.coeff_add_eq_bne, GF2Poly.coeff_add_eq_bne,
+    GF2Poly.coeff_add_eq_bne, GF2Poly.coeff_add_eq_bne,
+    GF2Poly.coeff_add_eq_bne, GF2Poly.coeff_add_eq_bne]
+  cases a.coeff n <;> cases b.coeff n <;> cases c.coeff n <;>
+    cases d.coeff n <;> rfl
+
 /-- Equality of packed polynomial representatives follows from equality of
 their stored reduced polynomials. -/
 theorem eq_of_val_eq {a b : GF2nPoly f hirr}
@@ -315,6 +325,90 @@ theorem reducePoly_eq_iff_mod_eq {p q : GF2Poly} :
   · intro h
     apply eq_of_val_eq
     simp [reducePoly_val_eq_mod, h]
+
+private theorem mod_add_mod_eq_mod_add (p q f : GF2Poly) :
+    ((p % f) + (q % f)) % f = (p + q) % f := by
+  let qp := (GF2Poly.divMod p f).1
+  let rp := (GF2Poly.divMod p f).2
+  let qq := (GF2Poly.divMod q f).1
+  let rq := (GF2Poly.divMod q f).2
+  have hp : p = rp + qp * f := by
+    have hspec : qp * f + rp = p := by
+      simpa [qp, rp] using GF2Poly.divMod_spec p f
+    rw [← hspec, GF2Poly.add_comm]
+  have hq : q = rq + qq * f := by
+    have hspec : qq * f + rq = q := by
+      simpa [qq, rq] using GF2Poly.divMod_spec q f
+    rw [← hspec, GF2Poly.add_comm]
+  have hsum :
+      p + q = (rp + rq) + (qp + qq) * f := by
+    rw [hp, hq, GF2Poly.left_distrib]
+    exact add_pair_swap rp (qp * f) rq (qq * f)
+  calc
+    ((p % f) + (q % f)) % f = (rp + rq) % f := by rfl
+    _ = ((rp + rq) + (qp + qq) * f) % f := by
+          exact (GF2Poly.mod_add_mul_right_eq_mod (rp + rq) (qp + qq) f).symm
+    _ = (p + q) % f := by rw [hsum]
+
+private theorem mod_mul_mod_eq_mod_mul (p q f : GF2Poly) :
+    ((p % f) * (q % f)) % f = (p * q) % f := by
+  let qp := (GF2Poly.divMod p f).1
+  let rp := (GF2Poly.divMod p f).2
+  let qq := (GF2Poly.divMod q f).1
+  let rq := (GF2Poly.divMod q f).2
+  have hp : p = rp + qp * f := by
+    have hspec : qp * f + rp = p := by
+      simpa [qp, rp] using GF2Poly.divMod_spec p f
+    rw [← hspec, GF2Poly.add_comm]
+  have hq : q = rq + qq * f := by
+    have hspec : qq * f + rq = q := by
+      simpa [qq, rq] using GF2Poly.divMod_spec q f
+    rw [← hspec, GF2Poly.add_comm]
+  let c := qp * rq + (rp * qq + (qp * qq) * f)
+  have hmul :
+      p * q = rp * rq + c * f := by
+    rw [hp, hq]
+    calc
+      (rp + qp * f) * (rq + qq * f)
+          = (rp * rq + rp * (qq * f)) + ((qp * f) * rq + (qp * f) * (qq * f)) := by
+              rw [GF2Poly.right_distrib, GF2Poly.left_distrib, GF2Poly.left_distrib]
+              exact add_pair_swap (rp * rq) ((qp * f) * rq) (rp * (qq * f))
+                ((qp * f) * (qq * f))
+      _ = (rp * rq + (qp * f) * rq) + (rp * (qq * f) + (qp * f) * (qq * f)) := by
+          exact add_pair_swap (rp * rq) (rp * (qq * f)) ((qp * f) * rq)
+            ((qp * f) * (qq * f))
+      _ = (rp * rq + (qp * rq) * f) +
+            ((rp * qq) * f + ((qp * qq) * f) * f) := by
+          have hqprq : (qp * f) * rq = (qp * rq) * f := by
+            rw [GF2Poly.mul_assoc qp f rq, GF2Poly.mul_comm f rq,
+              ← GF2Poly.mul_assoc qp rq f]
+          have hrpqq : rp * (qq * f) = (rp * qq) * f := by
+            rw [GF2Poly.mul_assoc rp qq f]
+          have hqpqq : (qp * f) * (qq * f) = ((qp * qq) * f) * f := by
+            calc
+              (qp * f) * (qq * f) = qp * (f * (qq * f)) := by
+                rw [GF2Poly.mul_assoc]
+              _ = qp * ((f * qq) * f) := by
+                rw [GF2Poly.mul_assoc f qq f]
+              _ = qp * ((qq * f) * f) := by
+                rw [GF2Poly.mul_comm f qq]
+              _ = (qp * (qq * f)) * f := by
+                rw [GF2Poly.mul_assoc qp (qq * f) f]
+              _ = ((qp * qq) * f) * f := by
+                rw [GF2Poly.mul_assoc qp qq f]
+          rw [hqprq, hrpqq, hqpqq]
+      _ = rp * rq + ((qp * rq + (rp * qq + (qp * qq) * f)) * f) := by
+          have htail :
+              (qp * rq) * f + ((rp * qq) * f + ((qp * qq) * f) * f) =
+                (qp * rq + (rp * qq + (qp * qq) * f)) * f := by
+            rw [← GF2Poly.left_distrib (rp * qq) ((qp * qq) * f) f,
+              ← GF2Poly.left_distrib (qp * rq) (rp * qq + (qp * qq) * f) f]
+          rw [GF2Poly.add_assoc, htail]
+  calc
+    ((p % f) * (q % f)) % f = (rp * rq) % f := by rfl
+    _ = (rp * rq + c * f) % f := by
+          exact (GF2Poly.mod_add_mul_right_eq_mod (rp * rq) c f).symm
+    _ = (p * q) % f := by rw [hmul]
 
 private theorem mod_eq_zero_of_dvd {p f : GF2Poly} (hf : f ≠ 0) (h : f ∣ p) :
     p % f = 0 := by
@@ -404,6 +498,17 @@ def add (a b : GF2nPoly f hirr) : GF2nPoly f hirr :=
 instance : Add (GF2nPoly f hirr) where
   add := add
 
+/-- Reducing a polynomial sum agrees with adding the reduced quotient
+representatives. -/
+theorem reducePoly_add_eq (p q : GF2Poly) :
+    reducePoly (f := f) (hirr := hirr) (p + q) =
+      reducePoly (f := f) (hirr := hirr)
+        ((reducePoly (f := f) (hirr := hirr) p).val +
+          (reducePoly (f := f) (hirr := hirr) q).val) := by
+  rw [reducePoly_eq_iff_mod_eq]
+  rw [reducePoly_val_eq_mod, reducePoly_val_eq_mod]
+  exact (mod_add_mod_eq_mod_add p q f).symm
+
 /-- Negation is the identity in characteristic two. -/
 def neg (a : GF2nPoly f hirr) : GF2nPoly f hirr :=
   a
@@ -432,6 +537,17 @@ def mul (a b : GF2nPoly f hirr) : GF2nPoly f hirr :=
 
 instance : Mul (GF2nPoly f hirr) where
   mul := mul
+
+/-- Reducing a polynomial product agrees with multiplying the reduced quotient
+representatives. -/
+theorem reducePoly_mul_eq (p q : GF2Poly) :
+    reducePoly (f := f) (hirr := hirr) (p * q) =
+      reducePoly (f := f) (hirr := hirr)
+        ((reducePoly (f := f) (hirr := hirr) p).val *
+          (reducePoly (f := f) (hirr := hirr) q).val) := by
+  rw [reducePoly_eq_iff_mod_eq]
+  rw [reducePoly_val_eq_mod, reducePoly_val_eq_mod]
+  exact (mod_mul_mod_eq_mod_mul p q f).symm
 
 /-- Natural power in the packed quotient field by repeated squaring. -/
 def pow (a : GF2nPoly f hirr) (k : Nat) : GF2nPoly f hirr :=
