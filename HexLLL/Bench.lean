@@ -339,8 +339,8 @@ setup_benchmark runPotential n => potentialComplexity n
   with prep := prepStateInput
   where {
     paramFloor := 192
-    paramCeiling := 224
-    paramSchedule := .custom #[192, 208, 224]
+    paramCeiling := 216
+    paramSchedule := .custom #[192, 208, 216]
     maxSecondsPerCall := 8.0
     targetInnerNanos := 200000000
   }
