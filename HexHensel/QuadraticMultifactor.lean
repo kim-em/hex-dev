@@ -74,10 +74,63 @@ def multifactorLiftQuadratic
     (f : ZPoly) (factors : Array ZPoly) : Array ZPoly :=
   multifactorLiftQuadraticList p k f factors.toList
 
+/-- The proof state carried by one quadratic Hensel loop modulus. -/
+def QuadraticLiftLoopInvariant
+    (m : Nat) (f : ZPoly) (acc : QuadraticLiftResult) : Prop :=
+  ZPoly.congr (acc.g * acc.h) f m ∧
+    ZPoly.congr (acc.s * acc.g + acc.t * acc.h) 1 m ∧
+    DensePoly.Monic acc.g
+
+/--
+One quadratic step preserves the loop invariant while replacing `m` by `m*m`.
+
+This is the local invariant-preservation surface consumed by the quadratic
+doubling loop.
+-/
+theorem quadraticLiftLoopInvariant_step
+    (m : Nat) (f : ZPoly) (acc : QuadraticLiftResult)
+    (hm : 1 < m)
+    (hinv : QuadraticLiftLoopInvariant m f acc) :
+    let next := quadraticHenselStep m f acc.g acc.h acc.s acc.t
+    QuadraticLiftLoopInvariant (m * m) f next := by
+  rcases hinv with ⟨hprod, hbez, hmonic⟩
+  intro next
+  have hstep :
+      ZPoly.congr (next.g * next.h) f (m * m) ∧
+        ZPoly.congr (next.s * next.g + next.t * next.h) 1 (m * m) := by
+    simpa [next] using
+      quadraticHenselStep_spec m f acc.g acc.h acc.s acc.t hm hprod hbez hmonic
+  exact
+    ⟨hstep.1, hstep.2,
+      by
+        simpa [next] using
+          quadraticHenselStep_monic m f acc.g acc.h acc.s acc.t hm hmonic⟩
+
+/--
+Recursive preconditions required by the sequential quadratic multifactor lift.
+
+Each nontrivial split carries the initial quadratic loop invariant needed by
+`henselLiftQuadratic`; the recursive tail carries the same contract for the
+lifted complementary factor.
+-/
+def QuadraticMultifactorLiftInvariant
+    (p k : Nat) [ZMod64.Bounds p]
+    (f : ZPoly) : List ZPoly → Prop
+  | [] => ZPoly.congr 1 f (p ^ k)
+  | [_g] => True
+  | g :: rest =>
+      let h := Array.polyProduct rest.toArray
+      let xgcd := normalizedXGCD p g h
+      let s := FpPoly.liftToZ xgcd.left
+      let t := FpPoly.liftToZ xgcd.right
+      let lifted := henselLiftQuadratic p k f g h s t
+      QuadraticLiftLoopInvariant p f { g, h, s, t } ∧
+        QuadraticMultifactorLiftInvariant p k lifted.h rest
+
 /--
 The product of the lifted factors is congruent to `f` modulo `p^k`,
-under the same recursive precondition package consumed by
-`multifactorLift_spec`.
+under the recursive precondition package consumed by the quadratic
+multifactor lifting tree.
 
 The lift-uniqueness companion (linear-vs-quadratic agreement after
 canonicalisation) lives in `hex-hensel-mathlib`.
@@ -87,7 +140,7 @@ theorem multifactorLiftQuadratic_spec
     (f : ZPoly) (factors : Array ZPoly)
     (hk : 1 ≤ k)
     (hp : 1 < p)
-    (hinv : MultifactorLiftInvariant p k f factors.toList) :
+    (hinv : QuadraticMultifactorLiftInvariant p k f factors.toList) :
     ZPoly.congr (Array.polyProduct (multifactorLiftQuadratic p k f factors))
       f (p ^ k) := by
   sorry
