@@ -82,6 +82,61 @@ def canonicalWordLT (n : Nat) (hn64 : n < 64) (w : UInt64) : UInt64 :=
       exact Nat.pow_pos (by decide : 0 < 2))) <|
       Nat.pow_le_pow_right (by decide : 0 < 2) (Nat.le_of_lt hn64)
 
+/-- A packed polynomial whose degree is below one machine word is exactly the
+single-word polynomial obtained by reading its low stored word. -/
+private theorem ofUInt64_lowWord_eq_of_degree_lt_64 (p : GF2Poly)
+    (hred : p.isZero = true ∨ p.degree < 64) :
+    ofUInt64 (p.toWords.getD 0 0) = p := by
+  by_cases hzero : p.isZero = true
+  · rw [eq_zero_of_isZero hzero]
+    change ofWords #[(0 : UInt64)] = 0
+    apply ext_words
+    simp
+  · have hzeroFalse : p.isZero = false := by
+      cases h : p.isZero <;> simp [h] at hzero ⊢
+    obtain ⟨d, hd⟩ := degree?_isSome_of_isZero_false hzeroFalse
+    have hd64 : d < 64 := by
+      cases hred with
+      | inl h =>
+          rw [h] at hzeroFalse
+          contradiction
+      | inr hdegree =>
+          simpa [degree, hd] using hdegree
+    apply ext_coeff
+    intro i
+    unfold ofUInt64
+    rw [coeff_ofWords]
+    by_cases hi64 : i < 64
+    · have hiword : i / 64 = 0 := Nat.div_eq_of_lt hi64
+      simp [toWords, coeff, coeffWords, hiword]
+    · have hiword_pos : 0 < i / 64 := by
+        exact Nat.div_pos (by omega) (by decide : 0 < 64)
+      have hpfalse : p.coeff i = false :=
+        coeff_eq_false_of_degree?_lt hd (by omega)
+      rw [hpfalse]
+      cases hidx : i / 64 with
+      | zero =>
+          omega
+      | succ k =>
+          simp [coeffWords, hidx]
+
+/-- Specialized low-word representation for a reduced residue modulo a
+single-word monic modulus. This is the non-mask part of the
+`packedReduceWord` bridge. -/
+private theorem ofUInt64_mod_lowWord_eq_of_degree_lt {n : Nat} {irr : UInt64}
+    (hn64 : n < 64) (p : GF2Poly)
+    (hred :
+      (p % ofUInt64Monic irr n).isZero = true ∨
+        (p % ofUInt64Monic irr n).degree < n) :
+    ofUInt64 (((p % ofUInt64Monic irr n).toWords).getD 0 0) =
+      p % ofUInt64Monic irr n := by
+  apply ofUInt64_lowWord_eq_of_degree_lt_64
+  cases hred with
+  | inl hzero =>
+      exact Or.inl hzero
+  | inr hdegree =>
+      exact Or.inr (Nat.lt_trans hdegree hn64)
+
 private theorem add_cancel_middle (a b c : GF2Poly) :
     (a + b) + (c + b) = a + c := by
   apply ext_coeff
