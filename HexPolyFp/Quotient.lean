@@ -1,4 +1,4 @@
-import HexPolyFp.Basic
+import HexPolyFp.Enumeration
 
 /-!
 Project-side quotient API for `F_p[X] / (g)`.
