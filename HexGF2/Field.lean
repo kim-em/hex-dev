@@ -10,6 +10,45 @@ and modular multiplication modulo a fixed irreducible polynomial.
 namespace Hex
 namespace GF2Poly
 
+/-- Coefficients above a reduced degree bound are zero. -/
+theorem coeff_eq_false_of_reduced_bound_le {p : GF2Poly} {bound n : Nat}
+    (hred : p.IsZero ∨ p.degree < bound) (hbound : bound ≤ n) :
+    p.coeff n = false := by
+  cases hred with
+  | inl hzero =>
+      rw [eq_zero_of_isZero hzero, coeff_zero]
+  | inr hdegree =>
+      by_cases hpzero : p.isZero = true
+      · rw [eq_zero_of_isZero hpzero, coeff_zero]
+      · have hpzeroFalse : p.isZero = false := by
+          cases h : p.isZero <;> simp [h] at hpzero ⊢
+        obtain ⟨d, hd⟩ := degree?_isSome_of_isZero_false hpzeroFalse
+        have hdn : d < n := by
+          have hdegree' : d < bound := by
+            simpa [degree, hd] using hdegree
+          omega
+        exact coeff_eq_false_of_degree?_lt hd hdn
+
+/-- Bounded coefficient vector used as a finite-index code for reduced packed
+polynomials. -/
+def reducedCoeffVector (bound : Nat) (p : GF2Poly) : Fin bound → Bool :=
+  fun i => p.coeff i
+
+/-- Two reduced packed polynomials below the same bound are equal when their
+bounded coefficient vectors agree. -/
+theorem eq_of_reducedCoeffVector_eq {bound : Nat} {p q : GF2Poly}
+    (hp : p.IsZero ∨ p.degree < bound)
+    (hq : q.IsZero ∨ q.degree < bound)
+    (hcoeff : reducedCoeffVector bound p = reducedCoeffVector bound q) :
+    p = q := by
+  apply ext_coeff
+  intro n
+  by_cases hn : n < bound
+  · exact congrFun hcoeff ⟨n, hn⟩
+  · have hbound : bound ≤ n := Nat.le_of_not_gt hn
+    rw [coeff_eq_false_of_reduced_bound_le hp hbound,
+      coeff_eq_false_of_reduced_bound_le hq hbound]
+
 end GF2Poly
 
 /-- `GF(2^n)` for arbitrary `n`, represented by reduced `GF2Poly` residues
@@ -282,6 +321,18 @@ theorem eq_of_val_eq {a b : GF2nPoly f hirr}
   simp at h
   subst h
   rfl
+
+/-- Finite-index coefficient code for the reduced representative of a packed
+quotient-field element. -/
+def coeffVector (a : GF2nPoly f hirr) : Fin f.degree → Bool :=
+  GF2Poly.reducedCoeffVector f.degree a.val
+
+/-- The coefficient code is injective on packed quotient-field elements. -/
+theorem eq_of_coeffVector_eq {a b : GF2nPoly f hirr}
+    (hcoeff : coeffVector a = coeffVector b) :
+    a = b := by
+  apply eq_of_val_eq
+  exact GF2Poly.eq_of_reducedCoeffVector_eq a.val_reduced b.val_reduced hcoeff
 
 /-- The defining irreducible modulus polynomial of the packed quotient field. -/
 def modulus : GF2Poly :=
