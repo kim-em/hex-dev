@@ -6,6 +6,7 @@ import HexGF2.Euclid
 import HexGF2.Field
 import HexGF2.Irreducibility
 import HexGF2.Multiply
+import HexGF2.RabinSoundness
 import HexGF2.Smoke
 
 /-!
