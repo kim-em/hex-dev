@@ -1,4 +1,4 @@
-import HexBerlekamp
+import HexBerlekamp.RabinSoundness
 import HexGfqRing.Basic
 
 /-!
@@ -117,17 +117,57 @@ theorem luebeckConwayPolynomial_2_1_degree_pos :
     0 < FpPoly.degree luebeckConwayPolynomial_2_1 := by
   decide
 
+private theorem prime_two : Hex.Nat.Prime 2 := by
+  constructor
+  · decide
+  · intro m hm
+    have hmle : m ≤ 2 := Nat.le_of_dvd (by decide : 0 < 2) hm
+    have hcases : m = 0 ∨ m = 1 ∨ m = 2 := by omega
+    rcases hcases with rfl | rfl | rfl
+    · simp at hm
+    · exact Or.inl rfl
+    · exact Or.inr rfl
+
+instance instPrimeModulusTwo : ZMod64.PrimeModulus 2 :=
+  ZMod64.primeModulusOfPrime prime_two
+
+/-- Certificate for `C(2, 1) = X + 1`: degree-1 monic with no maximal proper
+divisors of `n = 1`, so `bezout` is empty. The pow-chain stores
+`X^(2^0) mod (X+1) = 1` and `X^(2^1) mod (X+1) = 1`. -/
+private def cert_2_1 : Berlekamp.IrreducibilityCertificate where
+  p := 2
+  n := 1
+  powChain := #[FpPoly.ofCoeffs #[(1 : ZMod64 2)], FpPoly.ofCoeffs #[(1 : ZMod64 2)]]
+  bezout := #[]
+
+set_option maxRecDepth 4096 in
+private theorem cert_2_1_linear_check :
+    Berlekamp.checkIrreducibilityCertificateLinear
+        luebeckConwayPolynomial_2_1 luebeckConwayPolynomial_2_1_monic cert_2_1 = true := by
+  decide
+
 /-- The committed `C(2, 1)` entry is irreducible. -/
 theorem luebeckConwayPolynomial_2_1_irreducible :
-    FpPoly.Irreducible luebeckConwayPolynomial_2_1 := by
-  sorry
+    FpPoly.Irreducible luebeckConwayPolynomial_2_1 :=
+  Berlekamp.rabinTest_imp_irreducible
+    luebeckConwayPolynomial_2_1
+    luebeckConwayPolynomial_2_1_monic
+    (Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
+      luebeckConwayPolynomial_2_1 luebeckConwayPolynomial_2_1_monic cert_2_1
+      cert_2_1_linear_check)
 
 /-- Every committed imported entry in the current Tier 1 slice comes with
-an irreducibility witness. -/
-axiom luebeckConwayPolynomial?_irreducible
+an irreducibility witness.
+
+The `(2, 1)` case lands via `luebeckConwayPolynomial_2_1_irreducible` and the
+cert-based pattern above; the remaining 35 table entries require per-entry
+`Berlekamp.IrreducibilityCertificate` witnesses (or an oracle-generated
+certificate fixture). Tracked separately. -/
+theorem luebeckConwayPolynomial?_irreducible
     {p n : Nat} [ZMod64.Bounds p] {f : FpPoly p}
     (h : luebeckConwayPolynomial? p n = some f) :
-    FpPoly.Irreducible f
+    FpPoly.Irreducible f := by
+  sorry
 
 /-- A committed Conway entry packages the current Tier 1 lookup hit for a
 supported `(p, n)` pair. -/
