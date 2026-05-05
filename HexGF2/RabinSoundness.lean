@@ -1,4 +1,4 @@
-import HexGF2.Irreducibility
+import HexGF2.Field
 
 /-!
 Project-side soundness bridge from `GF2Poly.rabinTest` to
@@ -532,6 +532,84 @@ theorem ne_zero_of_pos_degree {f : GF2Poly} (hpos : 0 < f.degree) : f ≠ 0 := b
   intro hzero
   rw [hzero] at hpos
   simp at hpos
+
+/--
+Rabin divisibility is equivalent to the quotient class of `X` being fixed by
+`k` iterated Frobenius squarings in `GF2nPoly g hg_irr`.
+
+This is the packed quotient bridge used by the finite-field part of Rabin
+soundness: absolute divisibility by `X^(2^k) - X` is the same as
+`X^(2^k) = X` in the quotient by `g`.
+-/
+theorem dvd_xPowSubX_iff_quotient_X_frobeniusIter_eq_X
+    {g : GF2Poly} (hg_irr : GF2Poly.Irreducible g)
+    (hg_pos : 0 < g.degree) (k : Nat) :
+    g ∣ xPowSubX k ↔
+      GF2nPoly.frobeniusIter (GF2nPoly.X (f := g) (hirr := hg_irr)) k =
+        GF2nPoly.X (f := g) (hirr := hg_irr) := by
+  let Xq : GF2nPoly g hg_irr := GF2nPoly.X (f := g) (hirr := hg_irr)
+  have hg_ne : g ≠ 0 := ne_zero_of_pos_degree hg_pos
+  constructor
+  · intro hdiv
+    have hzero_bool :
+        (frobeniusDiffMod g k).isZero = true :=
+      (dvd_xPowSubX_iff_frobeniusDiffMod_isZero g k).mp hdiv
+    have hzero : frobeniusDiffMod g k = 0 :=
+      (isZero_iff_eq_zero (frobeniusDiffMod g k)).mp hzero_bool
+    have hxpow_eq : xpow2kMod g k = monomial 1 % g := by
+      have hsum : xpow2kMod g k + monomial 1 % g = 0 := by
+        simpa [frobeniusDiffMod] using hzero
+      calc
+        xpow2kMod g k = xpow2kMod g k + 0 := by rw [add_zero]
+        _ = xpow2kMod g k + (xpow2kMod g k + monomial 1 % g) := by rw [hsum]
+        _ = (xpow2kMod g k + xpow2kMod g k) + monomial 1 % g := by
+              rw [add_assoc]
+        _ = monomial 1 % g := by rw [add_self, zero_add]
+    calc
+      GF2nPoly.frobeniusIter Xq k
+          = GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (xpow2kMod g k) := by
+              exact GF2nPoly.quotient_X_frobeniusIter_eq_reduce_xpow2kMod
+                (f := g) (hirr := hg_irr) k
+      _ = GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (monomial 1 % g) := by
+              rw [hxpow_eq]
+      _ = Xq := by
+              change GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (monomial 1 % g) =
+                GF2nPoly.X (f := g) (hirr := hg_irr)
+              rw [GF2nPoly.X, GF2nPoly.reducePoly_mod_eq]
+  · intro hquot
+    have hquot' :
+        GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (xpow2kMod g k) =
+          GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (monomial 1) := by
+      calc
+        GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (xpow2kMod g k)
+            = GF2nPoly.frobeniusIter Xq k := by
+                exact (GF2nPoly.quotient_X_frobeniusIter_eq_reduce_xpow2kMod
+                  (f := g) (hirr := hg_irr) k).symm
+        _ = Xq := hquot
+        _ = GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (monomial 1) := rfl
+    have hdiff_zero :
+        GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (frobeniusDiffMod g k) =
+          0 := by
+      unfold frobeniusDiffMod
+      rw [GF2nPoly.reducePoly_add_eq]
+      rw [GF2nPoly.reducePoly_mod_eq]
+      rw [hquot']
+      change
+        GF2nPoly.reducePoly (f := g) (hirr := hg_irr)
+            ((GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (monomial 1)).val +
+              (GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (monomial 1)).val) =
+          0
+      rw [add_self]
+      exact (GF2nPoly.reducePoly_eq_zero_iff_dvd
+        (f := g) (hirr := hg_irr) (p := 0) hg_ne).mpr (dvd_zero' g)
+    have hdiff_dvd : g ∣ frobeniusDiffMod g k :=
+      (GF2nPoly.reducePoly_eq_zero_iff_dvd
+        (f := g) (hirr := hg_irr) (p := frobeniusDiffMod g k) hg_ne).mp hdiff_zero
+    have hkey : g ∣ (xPowSubX k + frobeniusDiffMod g k) :=
+      dvd_xPowSubX_add_frobeniusDiffMod g k
+    have hkey_comm : g ∣ (frobeniusDiffMod g k + xPowSubX k) := by
+      rwa [add_comm]
+    exact dvd_sub' hkey_comm hdiff_dvd
 
 /-- The left factor in a factorization of a nonzero polynomial is nonzero. -/
 theorem factor_ne_zero_of_ne_zero
