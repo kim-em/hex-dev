@@ -1,15 +1,14 @@
 import HexGfqField.Operations
+import HexBerlekamp.RabinSoundness
 import LeanBench
 
 /-!
 Benchmark registrations for `hex-gfq-field`.
 
 This Phase 4 smoke surface measures the executable finite-field wrapper over
-`F_8191[x] / (f)`. The benchmark prime is a Mersenne prime, so the Frobenius
-exponent has dense binary representation and exercises the square-and-multiply
-multiply branch throughout the timed path. Inputs use deterministic dense
-moduli of degree `n + 1`; construction is hoisted through `prep`, and timed
-targets return compact polynomial checksums.
+`F_7[x] / (f)`. Inputs use a small schedule of Conway-style irreducible
+moduli with certificate-checked Rabin witnesses; construction is hoisted
+through `prep`, and timed targets return compact polynomial checksums.
 
 Scientific registrations:
 
@@ -31,11 +30,11 @@ namespace GFqFieldBench
 
 open GFqField
 
-private instance benchBoundsMersenne : ZMod64.Bounds 8191 := ⟨by decide, by decide⟩
+private instance benchBoundsSeven : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
 
-private theorem one_ne_zero_mersenne : (1 : ZMod64 8191) ≠ 0 := by
+private theorem one_ne_zero_seven : (1 : ZMod64 7) ≠ 0 := by
   intro h
-  have hm := (ZMod64.natCast_eq_natCast_iff (p := 8191) 1 0).mp h
+  have hm := (ZMod64.natCast_eq_natCast_iff (p := 7) 1 0).mp h
   simp at hm
 
 private def noNontrivialDivisors (p : Nat) : Nat → Bool
@@ -71,86 +70,228 @@ private theorem noNontrivialDivisors_sound {p n m : Nat} (hp0 : 0 < p)
           contradiction
 
 set_option maxRecDepth 100000 in
-private theorem prime_mersenne : Hex.Nat.Prime 8191 := by
+private theorem prime_seven : Hex.Nat.Prime 7 := by
   constructor
   · decide
   · intro m hm
-    exact noNontrivialDivisors_sound (p := 8191) (n := 8191) (m := m)
-      (by decide) (by decide) (Nat.le_of_dvd (by decide : 0 < 8191) hm) hm
+    exact noNontrivialDivisors_sound (p := 7) (n := 7) (m := m)
+      (by decide) (by decide) (Nat.le_of_dvd (by decide : 0 < 7) hm) hm
 
-instance : Hashable (ZMod64 8191) where
+instance : Hashable (ZMod64 7) where
   hash a := hash a.toNat
 
-instance : Hashable (FpPoly 8191) where
+instance : Hashable (FpPoly 7) where
   hash f := hash f.toArray
 
-/-- Deterministic large-prime coefficient generator keyed by size, index, and salt. -/
-def coeffValue (n i salt : Nat) : ZMod64 8191 :=
-  ZMod64.ofNat 8191 <|
-    ((i + 1) * (salt + 17) + (i + 3) * (i + 5) * 13 + n * 29) % 8191
+private instance primeModulusSeven : ZMod64.PrimeModulus 7 :=
+  ZMod64.primeModulusOfPrime prime_seven
+
+/-- Deterministic coefficient generator keyed by size, index, and salt. -/
+def coeffValue (n i salt : Nat) : ZMod64 7 :=
+  ZMod64.ofNat 7 <|
+    ((i + 1) * (salt + 17) + (i + 3) * (i + 5) * 13 + n * 29) % 7
 
 /-- Deterministic dense polynomial over the benchmark prime field. -/
-def densePoly (n salt : Nat) : FpPoly 8191 :=
+def densePoly (n salt : Nat) : FpPoly 7 :=
   FpPoly.ofCoeffs <| (Array.range n).map fun i => coeffValue n i salt
 
-/-- Deterministic nonconstant modulus of degree `degree + 1`. -/
-def modulus (degree : Nat) : FpPoly 8191 :=
-  { coeffs := ((Array.range degree).map fun i => coeffValue degree i 503).push 1
-    normalized := by
-      right
-      intro hback
-      have hlast :
-          (((Array.range degree).map fun i => coeffValue degree i 503).push
-              (1 : ZMod64 8191)).back? = some 1 := by
-        simp
-      rw [hlast] at hback
-      exact one_ne_zero_mersenne (Option.some.inj hback) }
+private def polyP7 (coeffs : Array Nat) : FpPoly 7 :=
+  FpPoly.ofCoeffs (coeffs.map (fun n => ZMod64.ofNat 7 n))
 
-/-- Generated moduli are nonconstant, so field representatives are meaningful. -/
-theorem modulus_pos_degree (degree : Nat) : 0 < FpPoly.degree (modulus (degree + 1)) := by
-  unfold FpPoly.degree DensePoly.degree? DensePoly.size modulus
-  simp
+private theorem maxProperDiv_2 : Berlekamp.maximalProperDivisors 2 = [1] := by decide
+private theorem maxProperDiv_3 : Berlekamp.maximalProperDivisors 3 = [1] := by decide
+private theorem maxProperDiv_4 : Berlekamp.maximalProperDivisors 4 = [2] := by decide
+private theorem maxProperDiv_6 : Berlekamp.maximalProperDivisors 6 = [2, 3] := by decide
 
-/-! ## Per-degree irreducibility placeholders
+/-! ## Certificate-backed benchmark moduli -/
 
-The deterministic `modulus` generator is not designed to produce
-irreducible polynomials at every degree, so a universally quantified
-`FpPoly.Irreducible (modulus degree)` claim is unsound.  Instead, we
-sorry irreducibility one degree at a time, restricted to the finite
-set of degrees actually exercised by `paramSchedule` entries below.
-Each such sorry is a *concrete* claim about a specific deterministic
-polynomial: still unverified, but no longer universally quantified
-over arbitrary degrees.
+/-- `x^2 + 6x + 3` over `F_7`. -/
+private def m_p7_n2 : FpPoly 7 :=
+  { coeffs := #[(3 : ZMod64 7), 6, 1]
+    normalized := Or.inr (by simpa using one_ne_zero_seven) }
+private theorem m_p7_n2_pos : 0 < FpPoly.degree m_p7_n2 := by decide
+private theorem m_p7_n2_monic : DensePoly.Monic m_p7_n2 := by rfl
 
-The fallback at degree 2 covers any benchmark `n` not in the
-schedule (none today; included only to keep `bundleForN` total).
+private def m_p7_n2_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 7
+  n := 2
+  powChain := #[polyP7 #[0, 1], polyP7 #[1, 6], polyP7 #[0, 1]]
+  bezout := #[{ left := polyP7 #[1], right := polyP7 #[5, 4] }]
 
-These per-degree sorries can be discharged later by checking each
-specific polynomial against an external tool (e.g. python-flint) or
-by replacing the deterministic generator with a known-irreducible
-sparse family.  Until then they remain `sorry` to keep the residual
-unsoundness grep-able. -/
+set_option maxRecDepth 4096 in
+private theorem m_p7_n2_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinear m_p7_n2 m_p7_n2_monic
+        m_p7_n2_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinear,
+    m_p7_n2_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinear, Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_2,
+    m_p7_n2, polyP7]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · intro x hx
+        have hcases : x = 0 ∨ x = 1 ∨ x = 2 := by omega
+        rcases hcases with rfl | rfl | rfl <;> rfl
+    · rfl
+  · rfl
 
-private theorem modulus_2_irreducible : FpPoly.Irreducible (modulus 2) := by sorry
-private theorem modulus_33_irreducible : FpPoly.Irreducible (modulus 33) := by sorry
-private theorem modulus_49_irreducible : FpPoly.Irreducible (modulus 49) := by sorry
-private theorem modulus_65_irreducible : FpPoly.Irreducible (modulus 65) := by sorry
-private theorem modulus_97_irreducible : FpPoly.Irreducible (modulus 97) := by sorry
-private theorem modulus_129_irreducible : FpPoly.Irreducible (modulus 129) := by sorry
-private theorem modulus_193_irreducible : FpPoly.Irreducible (modulus 193) := by sorry
-private theorem modulus_257_irreducible : FpPoly.Irreducible (modulus 257) := by sorry
-private theorem modulus_513_irreducible : FpPoly.Irreducible (modulus 513) := by sorry
-private theorem modulus_1025_irreducible : FpPoly.Irreducible (modulus 1025) := by sorry
-private theorem modulus_2049_irreducible : FpPoly.Irreducible (modulus 2049) := by sorry
-private theorem modulus_4097_irreducible : FpPoly.Irreducible (modulus 4097) := by sorry
-private theorem modulus_8193_irreducible : FpPoly.Irreducible (modulus 8193) := by sorry
-private theorem modulus_16385_irreducible : FpPoly.Irreducible (modulus 16385) := by sorry
+private theorem m_p7_n2_irr : FpPoly.Irreducible m_p7_n2 :=
+  Berlekamp.rabinTest_imp_irreducible m_p7_n2 m_p7_n2_monic
+    (Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
+      m_p7_n2 m_p7_n2_monic m_p7_n2_certificate
+      m_p7_n2_certificate_check)
+
+/-- `x^3 + 6x^2 + 4` over `F_7`. -/
+private def m_p7_n3 : FpPoly 7 :=
+  { coeffs := #[(4 : ZMod64 7), 0, 6, 1]
+    normalized := Or.inr (by simpa using one_ne_zero_seven) }
+private theorem m_p7_n3_pos : 0 < FpPoly.degree m_p7_n3 := by decide
+private theorem m_p7_n3_monic : DensePoly.Monic m_p7_n3 := by rfl
+
+private def m_p7_n3_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 7
+  n := 3
+  powChain :=
+    #[polyP7 #[0, 1], polyP7 #[0, 5, 3], polyP7 #[1, 1, 4], polyP7 #[0, 1]]
+  bezout := #[{ left := polyP7 #[2], right := polyP7 #[0, 4] }]
+
+set_option maxRecDepth 16384 in
+set_option maxHeartbeats 2000000 in
+private theorem m_p7_n3_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinear m_p7_n3 m_p7_n3_monic
+        m_p7_n3_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinear,
+    m_p7_n3_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinear, Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_3,
+    m_p7_n3, polyP7]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · intro x hx
+        have hcases : x = 0 ∨ x = 1 ∨ x = 2 ∨ x = 3 := by omega
+        rcases hcases with rfl | rfl | rfl | rfl <;> rfl
+    · rfl
+  · rfl
+
+private theorem m_p7_n3_irr : FpPoly.Irreducible m_p7_n3 :=
+  Berlekamp.rabinTest_imp_irreducible m_p7_n3 m_p7_n3_monic
+    (Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
+      m_p7_n3 m_p7_n3_monic m_p7_n3_certificate
+      m_p7_n3_certificate_check)
+
+/-- `x^4 + 5x^2 + 4x + 3` over `F_7`. -/
+private def m_p7_n4 : FpPoly 7 :=
+  { coeffs := #[(3 : ZMod64 7), 4, 5, 0, 1]
+    normalized := Or.inr (by simpa using one_ne_zero_seven) }
+private theorem m_p7_n4_pos : 0 < FpPoly.degree m_p7_n4 := by decide
+private theorem m_p7_n4_monic : DensePoly.Monic m_p7_n4 := by rfl
+
+private def m_p7_n4_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 7
+  n := 4
+  powChain :=
+    #[polyP7 #[0, 1], polyP7 #[5, 3, 5, 1], polyP7 #[0, 0, 3, 1],
+      polyP7 #[2, 3, 6, 5], polyP7 #[0, 1]]
+  bezout := #[{ left := polyP7 #[5, 3, 5], right := polyP7 #[1, 6, 5, 2] }]
+
+set_option maxRecDepth 131072 in
+set_option maxHeartbeats 8000000 in
+private theorem m_p7_n4_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinear m_p7_n4 m_p7_n4_monic
+        m_p7_n4_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinear,
+    m_p7_n4_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinear, Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_4,
+    m_p7_n4, polyP7]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · intro x hx
+        have hcases : x = 0 ∨ x = 1 ∨ x = 2 ∨ x = 3 ∨ x = 4 := by omega
+        rcases hcases with rfl | rfl | rfl | rfl | rfl <;> rfl
+    · rfl
+  · rfl
+
+private theorem m_p7_n4_irr : FpPoly.Irreducible m_p7_n4 :=
+  Berlekamp.rabinTest_imp_irreducible m_p7_n4 m_p7_n4_monic
+    (Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
+      m_p7_n4 m_p7_n4_monic m_p7_n4_certificate
+      m_p7_n4_certificate_check)
+
+/-- `x^6 + x^4 + 5x^3 + 4x^2 + 6x + 3` over `F_7`. -/
+private def m_p7_n6 : FpPoly 7 :=
+  { coeffs := #[(3 : ZMod64 7), 6, 4, 5, 1, 0, 1]
+    normalized := Or.inr (by simpa using one_ne_zero_seven) }
+private theorem m_p7_n6_pos : 0 < FpPoly.degree m_p7_n6 := by decide
+private theorem m_p7_n6_monic : DensePoly.Monic m_p7_n6 := by rfl
+
+private def m_p7_n6_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 7
+  n := 6
+  powChain :=
+    #[polyP7 #[0, 1], polyP7 #[0, 4, 1, 3, 2, 6],
+      polyP7 #[1, 3, 4, 5, 5], polyP7 #[6, 4, 5, 6, 0, 4],
+      polyP7 #[3, 2, 5, 0, 5, 3], polyP7 #[4, 0, 6, 0, 2, 1],
+      polyP7 #[0, 1]]
+  bezout :=
+    #[{ left := polyP7 #[6, 0, 2, 2],
+        right := polyP7 #[4, 5, 0, 3, 0, 1] },
+      { left := polyP7 #[1, 1, 0, 2, 3],
+        right := polyP7 #[2, 1, 2, 3, 3, 1] }]
+
+set_option maxRecDepth 131072 in
+set_option maxHeartbeats 32000000 in
+private theorem m_p7_n6_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinearIncremental m_p7_n6
+        m_p7_n6_monic m_p7_n6_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinearIncremental,
+    m_p7_n6_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinearIncremental,
+    Berlekamp.checkPowChainLinearIncrementalStep,
+    Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_6,
+    m_p7_n6, polyP7]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · constructor
+        · rfl
+        · intro x hx
+          have hcases : x = 0 ∨ x = 1 ∨ x = 2 ∨ x = 3 ∨ x = 4 ∨ x = 5 := by omega
+          rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl <;> rfl
+    · rfl
+  · exact ⟨rfl, rfl⟩
+
+private theorem m_p7_n6_irr : FpPoly.Irreducible m_p7_n6 :=
+  Berlekamp.rabinTest_imp_irreducible m_p7_n6 m_p7_n6_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      m_p7_n6 m_p7_n6_monic m_p7_n6_certificate
+      m_p7_n6_certificate_check)
 
 /-- A modulus together with its positive-degree and irreducibility
 witnesses, used by the benchmark prep functions to dispatch on the
 parameter `n` and select the correct per-degree fixture. -/
 private structure ModulusBundle where
-  modulus : FpPoly 8191
+  modulus : FpPoly 7
   pos : 0 < FpPoly.degree modulus
   irr : FpPoly.Irreducible modulus
 
@@ -160,61 +301,52 @@ registrations below; any `n` outside that schedule falls back to a
 degree-2 fixture so that the function remains total. -/
 private def bundleForN (n : Nat) : ModulusBundle :=
   match n with
-  | 32 => ⟨modulus 33, modulus_pos_degree 32, modulus_33_irreducible⟩
-  | 48 => ⟨modulus 49, modulus_pos_degree 48, modulus_49_irreducible⟩
-  | 64 => ⟨modulus 65, modulus_pos_degree 64, modulus_65_irreducible⟩
-  | 96 => ⟨modulus 97, modulus_pos_degree 96, modulus_97_irreducible⟩
-  | 128 => ⟨modulus 129, modulus_pos_degree 128, modulus_129_irreducible⟩
-  | 192 => ⟨modulus 193, modulus_pos_degree 192, modulus_193_irreducible⟩
-  | 256 => ⟨modulus 257, modulus_pos_degree 256, modulus_257_irreducible⟩
-  | 512 => ⟨modulus 513, modulus_pos_degree 512, modulus_513_irreducible⟩
-  | 1024 => ⟨modulus 1025, modulus_pos_degree 1024, modulus_1025_irreducible⟩
-  | 2048 => ⟨modulus 2049, modulus_pos_degree 2048, modulus_2049_irreducible⟩
-  | 4096 => ⟨modulus 4097, modulus_pos_degree 4096, modulus_4097_irreducible⟩
-  | 8192 => ⟨modulus 8193, modulus_pos_degree 8192, modulus_8193_irreducible⟩
-  | 16384 => ⟨modulus 16385, modulus_pos_degree 16384, modulus_16385_irreducible⟩
-  | _ => ⟨modulus 2, modulus_pos_degree 1, modulus_2_irreducible⟩
+  | 2 => ⟨m_p7_n2, m_p7_n2_pos, m_p7_n2_irr⟩
+  | 3 => ⟨m_p7_n3, m_p7_n3_pos, m_p7_n3_irr⟩
+  | 4 => ⟨m_p7_n4, m_p7_n4_pos, m_p7_n4_irr⟩
+  | 6 => ⟨m_p7_n6, m_p7_n6_pos, m_p7_n6_irr⟩
+  | _ => ⟨m_p7_n2, m_p7_n2_pos, m_p7_n2_irr⟩
 
 /-- Stable checksum for polynomial-valued benchmark results. -/
-def checksumPoly (f : FpPoly 8191) : UInt64 :=
+def checksumPoly (f : FpPoly 7) : UInt64 :=
   f.toArray.foldl (fun acc coeff => mixHash acc (hash coeff)) 0
 
 /-- Prepared input for field construction/projection benchmarks. -/
 structure OfPolyInput where
-  modulus : FpPoly 8191
+  modulus : FpPoly 7
   modulusDegreePos : 0 < FpPoly.degree modulus
   modulusIrreducible : FpPoly.Irreducible modulus
-  poly : FpPoly 8191
+  poly : FpPoly 7
 
 /-- Prepared input for binary field operations. -/
 structure BinaryInput where
-  modulus : FpPoly 8191
+  modulus : FpPoly 7
   modulusDegreePos : 0 < FpPoly.degree modulus
   modulusIrreducible : FpPoly.Irreducible modulus
-  lhs : FiniteField modulus modulusDegreePos prime_mersenne modulusIrreducible
-  rhs : FiniteField modulus modulusDegreePos prime_mersenne modulusIrreducible
+  lhs : FiniteField modulus modulusDegreePos prime_seven modulusIrreducible
+  rhs : FiniteField modulus modulusDegreePos prime_seven modulusIrreducible
 
 /-- Prepared input for unary field operations. -/
 structure UnaryInput where
-  modulus : FpPoly 8191
+  modulus : FpPoly 7
   modulusDegreePos : 0 < FpPoly.degree modulus
   modulusIrreducible : FpPoly.Irreducible modulus
-  value : FiniteField modulus modulusDegreePos prime_mersenne modulusIrreducible
+  value : FiniteField modulus modulusDegreePos prime_seven modulusIrreducible
 
 /-- Prepared input for field exponentiation. -/
 structure PowInput where
-  modulus : FpPoly 8191
+  modulus : FpPoly 7
   modulusDegreePos : 0 < FpPoly.degree modulus
   modulusIrreducible : FpPoly.Irreducible modulus
-  value : FiniteField modulus modulusDegreePos prime_mersenne modulusIrreducible
+  value : FiniteField modulus modulusDegreePos prime_seven modulusIrreducible
   exponent : Nat
 
 /-- Prepared input for signed field exponentiation. -/
 structure ZPowInput where
-  modulus : FpPoly 8191
+  modulus : FpPoly 7
   modulusDegreePos : 0 < FpPoly.degree modulus
   modulusIrreducible : FpPoly.Irreducible modulus
-  value : FiniteField modulus modulusDegreePos prime_mersenne modulusIrreducible
+  value : FiniteField modulus modulusDegreePos prime_seven modulusIrreducible
   exponent : Int
 
 instance : Hashable OfPolyInput where
@@ -251,8 +383,8 @@ def prepBinaryInput (n : Nat) : BinaryInput :=
   { modulus := b.modulus
     modulusDegreePos := b.pos
     modulusIrreducible := b.irr
-    lhs := ofPoly b.modulus b.pos prime_mersenne b.irr (densePoly (n + 1) 37)
-    rhs := ofPoly b.modulus b.pos prime_mersenne b.irr (densePoly (n + 1) 71) }
+    lhs := ofPoly b.modulus b.pos prime_seven b.irr (densePoly (n + 1) 37)
+    rhs := ofPoly b.modulus b.pos prime_seven b.irr (densePoly (n + 1) 71) }
 
 /-- Per-parameter fixture for field unary operations. -/
 def prepUnaryInput (n : Nat) : UnaryInput :=
@@ -287,7 +419,7 @@ def prepZPowInput (n : Nat) : ZPowInput :=
 /-- Benchmark target: construct and project a finite-field representative. -/
 def runOfPolyReprChecksum (input : OfPolyInput) : UInt64 :=
   checksumPoly <| repr <| ofPoly input.modulus input.modulusDegreePos
-    prime_mersenne input.modulusIrreducible input.poly
+    prime_seven input.modulusIrreducible input.poly
 
 /-- Benchmark target: field addition checksum. -/
 def runAddChecksum (input : BinaryInput) : UInt64 :=
@@ -325,9 +457,9 @@ representative.
 setup_benchmark runOfPolyReprChecksum n => n * n
   with prep := prepOfPolyInput
   where {
-    paramFloor := 32
-    paramCeiling := 256
-    paramSchedule := .custom #[32, 48, 64, 96, 128, 192, 256]
+    paramFloor := 2
+    paramCeiling := 6
+    paramSchedule := .custom #[2, 3, 4, 6]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -341,9 +473,9 @@ normalization.
 setup_benchmark runAddChecksum n => n
   with prep := prepBinaryInput
   where {
-    paramFloor := 1024
-    paramCeiling := 16384
-    paramSchedule := .custom #[1024, 2048, 4096, 8192, 16384]
+    paramFloor := 2
+    paramCeiling := 6
+    paramSchedule := .custom #[2, 3, 4, 6]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -357,9 +489,9 @@ giving the same quadratic model as quotient-ring multiplication.
 setup_benchmark runMulChecksum n => n * n
   with prep := prepBinaryInput
   where {
-    paramFloor := 32
-    paramCeiling := 256
-    paramSchedule := .custom #[32, 48, 64, 96, 128, 192, 256]
+    paramFloor := 2
+    paramCeiling := 6
+    paramSchedule := .custom #[2, 3, 4, 6]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -372,9 +504,9 @@ degree-bounded representatives, followed by degree-bounded normalization.
 setup_benchmark runNegSubChecksum n => n
   with prep := prepBinaryInput
   where {
-    paramFloor := 1024
-    paramCeiling := 16384
-    paramSchedule := .custom #[1024, 2048, 4096, 8192, 16384]
+    paramFloor := 2
+    paramCeiling := 6
+    paramSchedule := .custom #[2, 3, 4, 6]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -388,9 +520,9 @@ delegates to a quadratic quotient-ring multiplication.
 setup_benchmark runPowChecksum n => n * n * Nat.log2 (n + 1)
   with prep := prepPowInput
   where {
-    paramFloor := 32
-    paramCeiling := 256
-    paramSchedule := .custom #[32, 48, 64, 96, 128, 192, 256]
+    paramFloor := 2
+    paramCeiling := 6
+    paramSchedule := .custom #[2, 3, 4, 6]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -405,9 +537,9 @@ extended-gcd constants from dominating the fitted quadratic slope.
 setup_benchmark runInvDivChecksum n => n * n
   with prep := prepBinaryInput
   where {
-    paramFloor := 32
-    paramCeiling := 1024
-    paramSchedule := .custom #[32, 64, 128, 256, 512, 1024]
+    paramFloor := 2
+    paramCeiling := 6
+    paramSchedule := .custom #[2, 3, 4, 6]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -421,9 +553,9 @@ single quadratic inverse at these parameters.
 setup_benchmark runZPowChecksum n => n * n * Nat.log2 (n + 1)
   with prep := prepZPowInput
   where {
-    paramFloor := 32
-    paramCeiling := 256
-    paramSchedule := .custom #[32, 48, 64, 96, 128, 192, 256]
+    paramFloor := 2
+    paramCeiling := 6
+    paramSchedule := .custom #[2, 3, 4, 6]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -431,15 +563,15 @@ setup_benchmark runZPowChecksum n => n * n * Nat.log2 (n + 1)
 
 /-
 Frobenius is implemented as the fixed `p`-th power. The benchmark prime
-`p = 8191` has all binary exponent bits set, so the square-and-multiply path
+`p = 7` has all binary exponent bits set, so the square-and-multiply path
 performs Theta(log p) quadratic field multiplications.
 -/
-setup_benchmark runFrobChecksum n => n * n * Nat.log2 8191
+setup_benchmark runFrobChecksum n => n * n * Nat.log2 7
   with prep := prepUnaryInput
   where {
-    paramFloor := 32
-    paramCeiling := 256
-    paramSchedule := .custom #[32, 48, 64, 96, 128, 192, 256]
+    paramFloor := 2
+    paramCeiling := 6
+    paramSchedule := .custom #[2, 3, 4, 6]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0

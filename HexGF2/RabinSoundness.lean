@@ -277,15 +277,39 @@ theorem degree_dvd_of_irreducible_dvd_xPowSubX
   sorry
 
 /--
+Backward Rabin algebraic content packaged at the executable level.
+
+For an irreducible packed polynomial `g` of positive degree `d`, the
+iterated-squaring chain `xpow2kMod g d` returns to the residue class of `X`.
+Equivalently, the residue field element `X mod g` is fixed by the `d`-fold
+Frobenius endomorphism `α ↦ α^(2^d)` — the standard Fermat–Euler statement
+for the residue field `F_2[X]/(g)` (which has `2^d` elements when `g` is
+irreducible).
+
+This is the deepest finite-field ingredient of Rabin's test: once it is
+available, `irreducible_dvd_xPowSubX_degree` follows by char-2 cancellation.
+-/
+theorem xpow2kMod_eq_modX_at_degree
+    {g : GF2Poly} (hg_irr : GF2Poly.Irreducible g)
+    (hg_pos : 0 < g.degree) :
+    xpow2kMod g g.degree = monomial 1 % g := by
+  sorry
+
+/--
 Backward Rabin degree theorem for packed GF2 polynomials.
 
-An irreducible `g` of degree `d > 0` divides `X^(2^d) - X`.
+An irreducible `g` of degree `d > 0` divides `X^(2^d) - X`. The proof
+combines char-2 cancellation with `xpow2kMod_eq_modX_at_degree`, which
+carries the residue-field Fermat–Euler argument.
 -/
 theorem irreducible_dvd_xPowSubX_degree
     {g : GF2Poly} (hg_irr : GF2Poly.Irreducible g)
     (hg_pos : 0 < g.degree) :
     g ∣ xPowSubX g.degree := by
-  sorry
+  rw [(dvd_xPowSubX_iff_frobeniusDiffMod_isZero g g.degree),
+      isZero_iff_eq_zero]
+  show xpow2kMod g g.degree + monomial 1 % g = 0
+  rw [xpow2kMod_eq_modX_at_degree hg_irr hg_pos, add_self]
 
 /--
 Geometric-series divisibility in characteristic two: `X^k + 1` divides
@@ -740,6 +764,18 @@ theorem checkIrreducibilityCertificate_imp_irreducible
     GF2Poly.Irreducible f :=
   rabinTest_imp_irreducible f
     (checkIrreducibilityCertificate_rabinTest f cert hcheck)
+
+/--
+The linear-time variant of the certificate checker also implies
+project-side `GF2Poly.Irreducible`, composing the linear soundness theorem
+with Rabin soundness.
+-/
+theorem checkIrreducibilityCertificateLinear_imp_irreducible
+    (f : GF2Poly) (cert : IrreducibilityCertificate)
+    (hcheck : checkIrreducibilityCertificateLinear f cert = true) :
+    GF2Poly.Irreducible f :=
+  rabinTest_imp_irreducible f
+    (checkIrreducibilityCertificateLinear_rabinTest f cert hcheck)
 
 end GF2Poly
 end Hex

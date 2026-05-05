@@ -1,30 +1,19 @@
+import HexGF2.CommonIrreducibility
 import HexGF2.Field
 
 /-!
 Executable smoke tests for the single-word `GF2n` wrapper path.
 
 These checks use the AES modulus `x^8 + x^4 + x^3 + x + 1`; the
-irreducibility proof is a placeholder fixture so the module can focus on
-ordinary evaluation through proof-carrying wrapper constructors.  The
-checks use `#guard` rather than `#eval` because the irreducibility
-fixture is currently a `theorem ... := by sorry` (`#eval` refuses to run
-through `sorry`-tainted closures, while `#guard`'s `decide` path
-reduces); see `HexGF2/Conformance.lean` for the parallel pattern.
+irreducibility witness comes from `HexGF2.CommonIrreducibility` so the
+module can focus on ordinary evaluation through proof-carrying wrapper
+constructors.
 -/
 namespace Hex
 
-/-- Irreducibility of the AES Rijndael modulus `x^8 + x^4 + x^3 + x + 1`
-over `GF(2)` is currently stubbed via `theorem ... := by sorry`,
-matching the established project pattern for irreducibility fixtures
-(see `HexGF2/Bench.lean`, `HexGF2/Conformance.lean`, and
-`HexGF2/EmitFixtures.lean`).  The full proof is pending the executable
-`rabinTest`-to-`GF2Poly.Irreducible` soundness bridge tracked under the
-GF2 Rabin's-theorem follow-up; once that lands, every committed AES-
-style fixture can be discharged uniformly via `rabinTest` plus
-`decide`. -/
 private theorem aesIrreducible :
-    GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x1B 8) := by
-  sorry
+    GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x1B 8) :=
+  GF2Poly.aes_modulus_irreducible
 
 namespace GF2n
 

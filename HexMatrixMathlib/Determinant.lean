@@ -102,6 +102,56 @@ theorem equivs_nodup (n : Nat) :
     exact toPerm_injective hpq
   exact congrArg (fun x : {perm : Vector (Fin n) n // perm.toList.Nodup} => x.1) hpq'
 
+private theorem vectorOfPerm_swap_mul (σ : Equiv.Perm (Fin n)) (i j : Fin n) :
+    (Vector.ofFn fun r : Fin n => (Equiv.swap i j * σ) r) =
+      Hex.Matrix.swapPermutationValues (Vector.ofFn fun r : Fin n => σ r) i j := by
+  apply Vector.ext
+  intro r hr
+  show (Vector.ofFn fun r : Fin n => (Equiv.swap i j * σ) r)[(⟨r, hr⟩ : Fin n)] =
+    (Hex.Matrix.swapPermutationValues (Vector.ofFn fun r : Fin n => σ r) i j)[(⟨r, hr⟩ : Fin n)]
+  rw [Hex.Matrix.swapPermutationValues_get_if]
+  simp [Equiv.Perm.mul_apply, Equiv.swap_apply_def]
+
+/-- Hex's inversion-count determinant sign agrees with Mathlib's permutation sign. -/
+theorem detSign_vectorOfPerm_eq_permSign [CommRing R] (σ : Equiv.Perm (Fin n)) :
+    Hex.Matrix.detSign (R := R) (Vector.ofFn fun i : Fin n => σ i) =
+      ((Equiv.Perm.sign σ : Int) : R) := by
+  induction σ using Equiv.Perm.swap_induction_on with
+  | one =>
+      simp [Hex.Matrix.detSign_identity]
+  | swap_mul σ i j hne ih =>
+      rw [vectorOfPerm_swap_mul σ i j]
+      have hflip := Hex.Matrix.detSign_swapPermutationValues (R := R)
+        (perm := (Vector.ofFn fun r : Fin n => σ r)) (i := i) (j := j)
+        (hnodup := vectorOfPerm_nodup σ) hne
+      have hswapped :
+          Hex.Matrix.detSign (R := R)
+              (Hex.Matrix.swapPermutationValues (Vector.ofFn fun r : Fin n => σ r) i j) =
+            -Hex.Matrix.detSign (R := R) (Vector.ofFn fun r : Fin n => σ r) := by
+        rw [hflip]
+        simp
+      rw [hswapped]
+      rw [Equiv.Perm.sign_mul, Equiv.Perm.sign_swap hne]
+      rw [ih]
+      norm_num
+
+/-- Hex's inversion-count determinant sign agrees with Mathlib's permutation sign. -/
+theorem detSign_eq_permSign [CommRing R]
+    (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
+    Hex.Matrix.detSign (R := R) perm =
+      ((Equiv.Perm.sign (toPerm perm hnodup) : Int) : R) := by
+  have hperm :
+      (Vector.ofFn fun i : Fin n => toPerm perm hnodup i) = perm := by
+    apply Vector.ext
+    intro i hi
+    simp [toPerm]
+  calc
+    Hex.Matrix.detSign (R := R) perm =
+        Hex.Matrix.detSign (R := R) (Vector.ofFn fun i : Fin n => toPerm perm hnodup i) := by
+          rw [hperm]
+    _ = ((Equiv.Perm.sign (toPerm perm hnodup) : Int) : R) := by
+          exact detSign_vectorOfPerm_eq_permSign (R := R) (toPerm perm hnodup)
+
 end PermutationVector
 
 @[simp]
@@ -122,5 +172,49 @@ theorem detTerm_eq_matrixEquiv
 theorem det_eq [CommRing R] (M : Hex.Matrix R n n) :
     Hex.Matrix.det M = Matrix.det (matrixEquiv M) := by
   sorry
+
+/-- `matrixEquiv` sends Hex leading prefixes to Mathlib submatrices. -/
+theorem matrixEquiv_leadingPrefix
+    (M : Hex.Matrix R n n) (k : Nat) (hk : k ≤ n) :
+    matrixEquiv (Hex.Matrix.leadingPrefix M k hk) =
+      (matrixEquiv M).submatrix
+        (fun r : Fin k => ⟨r.val, Nat.lt_of_lt_of_le r.isLt hk⟩)
+        (fun c : Fin k => ⟨c.val, Nat.lt_of_lt_of_le c.isLt hk⟩) := by
+  ext r c
+  simp [Hex.Matrix.leadingPrefix, Hex.Matrix.ofFn]
+
+/-- `matrixEquiv` sends Hex bordered Bareiss minors to Mathlib submatrices. -/
+theorem matrixEquiv_borderedMinor
+    (M : Hex.Matrix R n n) (k : Nat) (hk : k < n) (i j : Fin n) :
+    matrixEquiv (Hex.Matrix.borderedMinor M k hk i j) =
+      (matrixEquiv M).submatrix
+        (fun r : Fin (k + 1) =>
+          if hr : r.val < k then ⟨r.val, Nat.lt_trans hr hk⟩ else i)
+        (fun c : Fin (k + 1) =>
+          if hc : c.val < k then ⟨c.val, Nat.lt_trans hc hk⟩ else j) := by
+  ext r c
+  simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn]
+
+/-- Determinant form of `matrixEquiv_leadingPrefix`. -/
+theorem det_leadingPrefix_eq_submatrix_det [CommRing R]
+    (M : Hex.Matrix R n n) (k : Nat) (hk : k ≤ n) :
+    Hex.Matrix.det (Hex.Matrix.leadingPrefix M k hk) =
+      Matrix.det
+        ((matrixEquiv M).submatrix
+          (fun r : Fin k => ⟨r.val, Nat.lt_of_lt_of_le r.isLt hk⟩)
+          (fun c : Fin k => ⟨c.val, Nat.lt_of_lt_of_le c.isLt hk⟩)) := by
+  rw [det_eq, matrixEquiv_leadingPrefix]
+
+/-- Determinant form of `matrixEquiv_borderedMinor`. -/
+theorem det_borderedMinor_eq_submatrix_det [CommRing R]
+    (M : Hex.Matrix R n n) (k : Nat) (hk : k < n) (i j : Fin n) :
+    Hex.Matrix.det (Hex.Matrix.borderedMinor M k hk i j) =
+      Matrix.det
+        ((matrixEquiv M).submatrix
+          (fun r : Fin (k + 1) =>
+            if hr : r.val < k then ⟨r.val, Nat.lt_trans hr hk⟩ else i)
+          (fun c : Fin (k + 1) =>
+            if hc : c.val < k then ⟨c.val, Nat.lt_trans hc hk⟩ else j)) := by
+  rw [det_eq, matrixEquiv_borderedMinor]
 
 end HexMatrixMathlib
