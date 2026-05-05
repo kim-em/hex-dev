@@ -454,4 +454,41 @@ theorem bareissExactDiv_borderedMinor_of_mul_eq
   change numerator / prevPivot = nextMinor
   exact Int.ediv_eq_of_eq_mul_right hprev_ne hnum
 
+/-- Cyclic shift on `Fin (k + 1)` mapping `0 ↦ k`, `r ↦ r - 1` for `r ≥ 1`.
+
+This is the row/column rearrangement induced by `bareissDesnanotIndex k` on the
+sub-positions selected by `(Fin.last (k + 1)).succAbove`: it carries the Bareiss
+pivot row (originally position `k`) from sub-position `0` back to the trailing
+sub-position `k`. The same shift compares `bareissDesnanotIndex k` columns with
+the natural bordered-minor column order. Defined as the inverse of Mathlib's
+`finRotate (k + 1)` so the sign is available immediately. -/
+private def bareissCyclicShift (k : Nat) : Fin (k + 1) ≃ Fin (k + 1) :=
+  (finRotate (k + 1)).symm
+
+@[simp]
+private theorem bareissCyclicShift_apply_zero (k : Nat) :
+    bareissCyclicShift k 0 = (Fin.last k : Fin (k + 1)) := by
+  show (finRotate (k + 1)).symm 0 = Fin.last k
+  rw [Equiv.symm_apply_eq]
+  exact finRotate_last.symm
+
+private theorem bareissCyclicShift_apply_of_pos (k : Nat) (r : Fin (k + 1))
+    (h : 0 < r.val) :
+    bareissCyclicShift k r = (⟨r.val - 1, by omega⟩ : Fin (k + 1)) := by
+  have hne : r ≠ 0 := by
+    intro h_eq
+    rw [h_eq] at h
+    exact absurd h (Nat.lt_irrefl _)
+  have : NeZero (k + 1) := ⟨Nat.succ_ne_zero _⟩
+  ext
+  show ((finRotate (k + 1)).symm r : ℕ) = r.val - 1
+  exact coe_finRotate_symm_of_ne_zero hne
+
+/-- Sign of the cyclic shift: `(-1)^k`. -/
+private theorem sign_bareissCyclicShift (k : Nat) :
+    Equiv.Perm.sign (bareissCyclicShift k) = (-1) ^ k := by
+  show Equiv.Perm.sign (finRotate (k + 1)).symm = _
+  rw [Equiv.Perm.sign_symm]
+  exact sign_finRotate k
+
 end HexMatrixMathlib
