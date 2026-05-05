@@ -6290,6 +6290,32 @@ theorem coeff_mul (p q : GF2Poly) (n : Nat) :
     coeffWords (mulWords p.words q.words) n
   simp
 
+private theorem replicate_two_set_zero_one (lo hi : UInt64) :
+    ((Array.replicate 2 (0 : UInt64)).set 0 lo (by simp)).set 1 hi (by simp) =
+      #[lo, hi] := by
+  rfl
+
+/-- Multiplying two single packed words is the two-word carry-less product. -/
+theorem ofUInt64_mul_ofUInt64 (a b : UInt64) :
+    ofUInt64 a * ofUInt64 b = ofWords #[(clmul a b).2, (clmul a b).1] := by
+  by_cases ha : a = 0
+  · subst ha
+    rw [clmul_zero_left]
+    apply ext_words
+    change (mul (ofWords #[(0 : UInt64)]) (ofUInt64 b)).words = (ofWords #[0, 0]).words
+    simp [ofUInt64, mul, mulWords]
+  by_cases hb : b = 0
+  · subst hb
+    rw [clmul_zero_right]
+    apply ext_words
+    change (mul (ofUInt64 a) (ofWords #[(0 : UInt64)])).words = (ofWords #[0, 0]).words
+    simp [ofUInt64, mul, mulWords]
+  apply ext_coeff
+  intro n
+  rw [coeff_mul]
+  simp [ofUInt64, mulWords, xorClmulAt, Array.setIfInBounds, ha, hb,
+    replicate_two_set_zero_one]
+
 private theorem wordBitAt_getElem!_eq_false_of_degree?_lt
     {p : GF2Poly} {d i bit : Nat}
     (hp : p.degree? = some d) (hbit : bit < 64) (hlt : d < 64 * i + bit) :

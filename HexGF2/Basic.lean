@@ -454,6 +454,17 @@ instance : One GF2Poly where
 def ofUInt64 (w : UInt64) : GF2Poly :=
   ofWords #[w]
 
+@[simp] theorem words_ofWords_single_zero : (ofWords #[(0 : UInt64)]).words = #[] := by
+  rfl
+
+@[simp] theorem words_ofWords_pair_zero :
+    (ofWords #[(0 : UInt64), (0 : UInt64)]).words = #[] := by
+  rfl
+
+@[simp] theorem words_ofWords_single_nonzero {w : UInt64} (hw : w ≠ 0) :
+    (ofWords #[w]).words = #[w] := by
+  simp [ofWords, normalizeWords, trimTrailingZeroWordsList, hw]
+
 /-- The monomial `x^n`. -/
 def monomial (n : Nat) : GF2Poly :=
   let wordIdx := n / 64
