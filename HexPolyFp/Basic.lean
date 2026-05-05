@@ -2010,5 +2010,244 @@ theorem degree?_mul_eq_add_degree?
   simp
   omega
 
+/-! ### Monomial multiplication and geometric-series divisibility
+
+These lemmas support the `xPowSubX` divisibility chain in
+`HexBerlekamp/RabinSoundness.lean`. -/
+
+private theorem mulCoeffTerm_monomial_eq_zero_of_ne
+    (k : Nat) (c : ZMod64 p) (g : FpPoly p) (n i : Nat) (hi : i ≠ k) :
+    mulCoeffTerm (DensePoly.monomial k c : FpPoly p) g n i = 0 := by
+  unfold mulCoeffTerm
+  by_cases hni : n < i
+  · simp [hni]
+  · have hcoeff : (DensePoly.monomial k c : FpPoly p).coeff i = 0 := by
+      rw [DensePoly.coeff_monomial]
+      simp [hi]
+      rfl
+    simp [hni, hcoeff]
+    grind
+
+private theorem mulCoeffTerm_monomial_self_le
+    (k : Nat) (c : ZMod64 p) (g : FpPoly p) (n : Nat) (hk : ¬ n < k) :
+    mulCoeffTerm (DensePoly.monomial k c : FpPoly p) g n k = c * g.coeff (n - k) := by
+  unfold mulCoeffTerm
+  rw [DensePoly.coeff_monomial]
+  simp [hk]
+
+private theorem mulCoeffTerm_monomial_self_lt
+    (k : Nat) (c : ZMod64 p) (g : FpPoly p) (n : Nat) (hk : n < k) :
+    mulCoeffTerm (DensePoly.monomial k c : FpPoly p) g n k = 0 := by
+  unfold mulCoeffTerm
+  simp [hk]
+
+private theorem fold_mulCoeffTerm_monomial_eq
+    (k : Nat) (c : ZMod64 p) (g : FpPoly p) (n : Nat) :
+    ∀ (m : Nat) (acc : ZMod64 p),
+      (List.range m).foldl
+          (fun acc i =>
+            acc + mulCoeffTerm (DensePoly.monomial k c : FpPoly p) g n i) acc =
+        acc + (if k < m ∧ ¬ n < k then c * g.coeff (n - k) else 0) := by
+  intro m
+  induction m with
+  | zero =>
+      intro acc
+      simp [zmod_add_zero]
+  | succ m ih =>
+      intro acc
+      rw [List.range_succ, List.foldl_append, List.foldl_cons, List.foldl_nil]
+      rw [ih]
+      by_cases hkm : k < m
+      · -- k < m, so the new index m is not k.
+        have hm_ne : m ≠ k := by omega
+        rw [mulCoeffTerm_monomial_eq_zero_of_ne k c g n m hm_ne]
+        rw [zmod_add_zero]
+        have hkm' : k < m + 1 := by omega
+        by_cases hkn : ¬ n < k
+        · simp [hkm, hkn, hkm']
+        · simp [hkm, hkn, hkm']
+      · -- ¬ k < m
+        by_cases hkm_eq : k = m
+        · subst hkm_eq
+          -- index m = k in the new step
+          by_cases hkn : ¬ n < k
+          · rw [mulCoeffTerm_monomial_self_le k c g n hkn]
+            simp [hkn]
+            grind
+          · rw [mulCoeffTerm_monomial_self_lt k c g n (by omega)]
+            simp [hkn]
+            grind
+        · -- ¬ k < m and k ≠ m. So k > m, in particular k ≥ m + 1.
+          have hkm' : ¬ k < m + 1 := by omega
+          have hm_ne : m ≠ k := fun h => hkm_eq h.symm
+          rw [mulCoeffTerm_monomial_eq_zero_of_ne k c g n m hm_ne]
+          rw [zmod_add_zero]
+          simp [hkm, hkm']
+
+/-- Coefficient of `monomial k c * g` at degree `n`: zero below `k`, `c · g[n-k]`
+above. -/
+theorem coeff_monomial_mul (k : Nat) (c : ZMod64 p) (g : FpPoly p) (n : Nat) :
+    ((DensePoly.monomial k c : FpPoly p) * g).coeff n =
+      if n < k then 0 else c * g.coeff (n - k) := by
+  rw [coeff_mul, mulCoeffSum_eq_degree_bound]
+  rw [fold_mulCoeffTerm_monomial_eq k c g n (n + 1) 0]
+  rw [zmod_zero_add]
+  by_cases hnk : n < k
+  · simp [hnk]
+  · have hkn : k < n + 1 := by omega
+    simp [hnk, hkn]
+
+/-- Multiplying two monic monomials adds their exponents. -/
+theorem monomial_mul_monomial (m n : Nat) :
+    (DensePoly.monomial m (1 : ZMod64 p)) *
+        (DensePoly.monomial n (1 : ZMod64 p)) =
+      DensePoly.monomial (m + n) (1 : ZMod64 p) := by
+  apply DensePoly.ext_coeff
+  intro i
+  rw [coeff_monomial_mul]
+  rw [DensePoly.coeff_monomial, DensePoly.coeff_monomial]
+  by_cases him : i < m
+  · simp [him]
+    have hne : i ≠ m + n := by omega
+    simp [hne]
+    rfl
+  · simp [him]
+    by_cases hi : i = m + n
+    · have hi' : i - m = n := by omega
+      simp [hi, hi']
+      grind
+    · simp [hi]
+      have hi' : i - m ≠ n := by omega
+      simp [hi']
+      grind
+
+/-- The constant `1` polynomial agrees with the zero-degree monic monomial. -/
+theorem monomial_zero_one_eq_one :
+    (DensePoly.monomial 0 (1 : ZMod64 p) : FpPoly p) = 1 := by
+  apply DensePoly.ext_coeff
+  intro i
+  rw [DensePoly.coeff_monomial, coeff_one]
+  by_cases hi : i = 0
+  · simp [hi]
+  · simp [hi]
+    rfl
+
+/-- Linear polynomial exponentiation by repeated right-multiplication.
+This is the building block for the geometric-series identity used by
+the `xPowSubX` divisibility chain. -/
+def linearPow (f : FpPoly p) : Nat → FpPoly p
+  | 0 => 1
+  | n + 1 => linearPow f n * f
+
+@[simp] theorem linearPow_zero (f : FpPoly p) : linearPow f 0 = 1 := rfl
+
+theorem linearPow_succ (f : FpPoly p) (n : Nat) :
+    linearPow f (n + 1) = linearPow f n * f := rfl
+
+theorem linearPow_succ_left (f : FpPoly p) (n : Nat) :
+    linearPow f (n + 1) = f * linearPow f n := by
+  induction n with
+  | zero =>
+      change (1 : FpPoly p) * f = f * 1
+      rw [one_mul, mul_one]
+  | succ n ih =>
+      calc linearPow f ((n + 1) + 1)
+          = linearPow f (n + 1) * f := rfl
+        _ = (f * linearPow f n) * f := by rw [ih]
+        _ = f * (linearPow f n * f) := mul_assoc f (linearPow f n) f
+        _ = f * linearPow f (n + 1) := rfl
+
+theorem linearPow_add (f : FpPoly p) (m n : Nat) :
+    linearPow f (m + n) = linearPow f m * linearPow f n := by
+  induction n with
+  | zero =>
+      change linearPow f m = linearPow f m * 1
+      rw [mul_one]
+  | succ n ih =>
+      calc linearPow f (m + (n + 1))
+          = linearPow f ((m + n) + 1) := by rw [Nat.add_succ]
+        _ = linearPow f (m + n) * f := rfl
+        _ = (linearPow f m * linearPow f n) * f := by rw [ih]
+        _ = linearPow f m * (linearPow f n * f) := mul_assoc _ _ _
+        _ = linearPow f m * linearPow f (n + 1) := rfl
+
+/-- `linearPow (monomial k 1) n = monomial (k * n) 1`. -/
+theorem linearPow_monomial (k n : Nat) :
+    linearPow (DensePoly.monomial k (1 : ZMod64 p)) n =
+      DensePoly.monomial (k * n) (1 : ZMod64 p) := by
+  induction n with
+  | zero =>
+      show (1 : FpPoly p) = DensePoly.monomial (k * 0) 1
+      rw [Nat.mul_zero]
+      exact monomial_zero_one_eq_one.symm
+  | succ n ih =>
+      rw [linearPow_succ, ih]
+      have h := monomial_mul_monomial (p := p) (k * n) k
+      have heq : k * n + k = k * (n + 1) := (Nat.mul_succ k n).symm
+      rw [heq] at h
+      exact h
+
+/-- `linearPow (monomial 1 1) n = monomial n 1`. -/
+theorem linearPow_monomial_one (n : Nat) :
+    linearPow (DensePoly.monomial 1 (1 : ZMod64 p)) n =
+      DensePoly.monomial n (1 : ZMod64 p) := by
+  have h := linearPow_monomial (p := p) 1 n
+  rw [Nat.one_mul] at h
+  exact h
+
+/-- The polynomial-level subtraction-multiplication identity: `(P - 1) * Y = P * Y - Y`. -/
+private theorem sub_one_mul_eq (P Y : FpPoly p) :
+    (P - 1) * Y = P * Y - Y := by
+  rw [sub_eq_add_neg]
+  rw [right_distrib]
+  have hneg : (-(1 : FpPoly p)) * Y = -Y := by
+    show (0 - (1 : FpPoly p)) * Y = 0 - Y
+    have h := DensePoly.neg_mul_right_poly (1 : FpPoly p) Y
+    have h1 : (1 : FpPoly p) * Y = Y := one_mul Y
+    calc (0 - (1 : FpPoly p)) * Y = 0 - 1 * Y := h
+      _ = 0 - Y := by rw [h1]
+  rw [hneg]
+  rw [← sub_eq_add_neg]
+
+/-- Geometric-series divisibility: `Y - 1 ∣ Y^j - 1`. -/
+theorem sub_one_dvd_linearPow_sub_one (Y : FpPoly p) (j : Nat) :
+    (Y - 1) ∣ (linearPow Y j - 1) := by
+  induction j with
+  | zero =>
+      change (Y - 1) ∣ (1 - 1 : FpPoly p)
+      exact ⟨0, by rw [sub_self, mul_zero]⟩
+  | succ j ih =>
+      obtain ⟨q, hq⟩ := ih
+      refine ⟨q * Y + 1, ?_⟩
+      -- Need: linearPow Y (j + 1) - 1 = (Y - 1) * (q * Y + 1)
+      rw [linearPow_succ]
+      rw [left_distrib, mul_one]
+      rw [show (Y - 1) * (q * Y) = ((Y - 1) * q) * Y from (mul_assoc _ _ _).symm]
+      rw [← hq]
+      rw [sub_one_mul_eq]
+      -- goal: linearPow Y j * Y - 1 = linearPow Y j * Y - Y + (Y - 1)
+      -- A - 1 = A - Y + Y - 1, regroup at coefficient level.
+      apply DensePoly.ext_coeff
+      intro n
+      have hzero_sub : (Zero.zero : ZMod64 p) - Zero.zero = Zero.zero := zmod_sub_zero_zero
+      have hzero_add : (Zero.zero : ZMod64 p) + Zero.zero = Zero.zero := zmod_add_zero_zero
+      rw [DensePoly.coeff_sub _ _ _ hzero_sub]
+      rw [DensePoly.coeff_add _ _ _ hzero_add]
+      rw [DensePoly.coeff_sub _ _ _ hzero_sub]
+      rw [DensePoly.coeff_sub _ _ _ hzero_sub]
+      grind
+
+/-- Geometric-series divisibility for monomials: when `k ∣ l`,
+`(monomial k 1 - 1) ∣ (monomial l 1 - 1)`. -/
+theorem monomial_sub_one_dvd_of_dvd
+    {k l : Nat} (hdvd : k ∣ l) :
+    ((DensePoly.monomial k (1 : ZMod64 p) - 1) : FpPoly p) ∣
+      (DensePoly.monomial l (1 : ZMod64 p) - 1 : FpPoly p) := by
+  obtain ⟨j, rfl⟩ := hdvd
+  rw [show (DensePoly.monomial (k * j) (1 : ZMod64 p) : FpPoly p) =
+        linearPow (DensePoly.monomial k (1 : ZMod64 p)) j from
+        (linearPow_monomial k j).symm]
+  exact sub_one_dvd_linearPow_sub_one _ j
+
 end FpPoly
 end Hex
