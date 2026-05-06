@@ -221,7 +221,11 @@ using `⌈log₂ k⌉` doubling steps from modulus `p`, then reducing modulo
 `p^k`. The iteration count is `O(log k)` — never `O(k)`. In the
 Berlekamp–Zassenhaus pipeline `k` is a Mignotte bound, polynomial in
 the input size; `O(log k)` doublings is what keeps the lifter
-polynomial.
+polynomial. Note that `hex-berlekamp-zassenhaus` calls this wrapper
+*adaptively* (see that library's "Precision selection" subsection):
+typically multiple times with successively larger `k`, not once at
+the Mignotte upper bound. Each individual call still uses
+`⌈log₂ k⌉` doublings for its given target.
 
 **Phase 4 bench coverage.** Bench registrations for `multifactorLift`,
 `multifactorLiftQuadratic`, `henselLift`, and `henselLiftQuadratic`
