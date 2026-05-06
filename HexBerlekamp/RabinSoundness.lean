@@ -1,5 +1,6 @@
 import HexBerlekamp.Irreducibility
 import HexPolyFp.Quotient
+import HexPolyFp.QuotientFrobenius
 import HexArith.Nat.Pow
 
 /-!
@@ -496,9 +497,41 @@ theorem degree_dvd_of_irreducible_dvd_xPowSubX
     {g : FpPoly p} (hg_irr : FpPoly.Irreducible g)
     (hg_monic : DensePoly.Monic g)
     (hg_pos : 0 < g.degree?.getD 0) {n : Nat}
-    (_hg_dvd : g ∣ xPowSubX (p := p) n) :
+    (hg_dvd : g ∣ xPowSubX (p := p) n) :
     g.degree?.getD 0 ∣ n := by
-  sorry
+  letI inst_dvd : DensePoly.DivModLaws (ZMod64 p) := inferInstance
+  have hX :
+      (FpPoly.Quotient.X (g := g) (hmonic := hg_monic) (hg_pos := hg_pos)) ^
+          (p ^ n) =
+        FpPoly.Quotient.X (g := g) (hmonic := hg_monic) (hg_pos := hg_pos) := by
+    calc
+      (FpPoly.Quotient.X (g := g) (hmonic := hg_monic) (hg_pos := hg_pos)) ^
+          (p ^ n) =
+          FpPoly.Quotient.reduce
+            (g := g) (hmonic := hg_monic) (hg_pos := hg_pos)
+            (FpPoly.frobeniusXPowMod g hg_monic n) := by
+            exact quotient_X_pow_eq_reduce_frobeniusXPowMod hg_monic hg_pos n
+      _ =
+          FpPoly.Quotient.reduce
+            (g := g) (hmonic := hg_monic) (hg_pos := hg_pos)
+            (DensePoly.monomial (p ^ n) (1 : ZMod64 p)) := by
+            apply FpPoly.Quotient.reduce_eq_reduce_of_congr
+            unfold FpPoly.Quotient.Congr
+            exact @DensePoly.dvd_of_mod_eq_mod (ZMod64 p) _ _ _ inst_dvd _ _ _
+              (FpPoly.frobeniusXPowMod_mod_eq_monomial_mod g hg_monic n)
+      _ =
+          FpPoly.Quotient.reduce
+            (g := g) (hmonic := hg_monic) (hg_pos := hg_pos) FpPoly.X := by
+            apply FpPoly.Quotient.reduce_eq_reduce_of_congr
+            unfold FpPoly.Quotient.Congr
+            exact hg_dvd
+      _ =
+          FpPoly.Quotient.X (g := g) (hmonic := hg_monic) (hg_pos := hg_pos) := rfl
+  have huniversal :
+      ∀ β : FpPoly.Quotient g hg_monic hg_pos, β ^ (p ^ n) = β :=
+    FpPoly.Quotient.pow_pPowN_eq_self_of_pow_pPowN_X_eq_X hg_irr hX
+  exact FpPoly.Quotient.deg_dvd_of_pow_pPowN_eq_self_universal
+    (g := g) (hmonic := hg_monic) (hg_pos := hg_pos) hg_irr huniversal
 
 /--
 Rabin's degree-divisibility theorem in its `FpPoly` form (backward
