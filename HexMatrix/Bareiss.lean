@@ -243,12 +243,166 @@ private theorem rowsToMatrix_matrixToRows (M : Matrix Int n n) :
   intro j hj
   simpa [rowsToMatrix, Matrix.ofFn] using getEntry_matrixToRows M ⟨i, hi⟩ ⟨j, hj⟩
 
+private theorem array_getElem!_set!_same {α : Type} [Inhabited α]
+    (xs : Array α) {i : Nat} (hi : i < xs.size) (v : α) :
+    (xs.set! i v)[i]! = v := by
+  rw [Array.getElem!_eq_getD]
+  simp [Array.getD, Array.set!_eq_setIfInBounds, hi]
+
+private theorem array_getElem!_set!_ne {α : Type} [Inhabited α]
+    (xs : Array α) {i j : Nat} (hij : j ≠ i) (v : α) :
+    (xs.set! i v)[j]! = xs[j]! := by
+  rw [Array.getElem!_eq_getD, Array.getElem!_eq_getD]
+  unfold Array.set!
+  unfold Array.setIfInBounds
+  by_cases hi : i < xs.size
+  · simp [hi]
+    rw [Array.getElem?_set]
+    simp [hij.symm]
+  · simp [hi]
+
+private theorem array_getElem!_setIfInBounds_same {α : Type} [Inhabited α]
+    (xs : Array α) {i : Nat} (hi : i < xs.size) (v : α) :
+    (xs.setIfInBounds i v)[i]! = v := by
+  rw [Array.getElem!_eq_getD]
+  unfold Array.getD
+  simp [Array.setIfInBounds, hi]
+
+private theorem array_getElem!_setIfInBounds_ne {α : Type} [Inhabited α]
+    (xs : Array α) {i j : Nat} (hij : j ≠ i) (v : α) :
+    (xs.setIfInBounds i v)[j]! = xs[j]! := by
+  rw [Array.getElem!_eq_getD, Array.getElem!_eq_getD]
+  unfold Array.setIfInBounds
+  by_cases hi : i < xs.size
+  · simp [hi]
+    rw [Array.getElem?_set]
+    simp [hij.symm]
+  · simp [hi]
+
 private def swapRowsArray (rows : Array (Array Int)) (rowA rowB : Nat) :
     Array (Array Int) :=
   if rowA = rowB then
     rows
   else
     (rows.set! rowA rows[rowB]!).set! rowB rows[rowA]!
+
+private theorem rowSwap_get (M : Matrix Int n n) (rowA rowB i j : Fin n) :
+    (rowSwap M rowA rowB)[i][j] =
+      if i = rowB then M[rowA][j] else if i = rowA then M[rowB][j] else M[i][j] := by
+  by_cases hiB : i = rowB
+  · subst i
+    simp [rowSwap]
+  · by_cases hiA : i = rowA
+    · subst i
+      simp [rowSwap, hiB]
+      have hval : rowB.val ≠ rowA.val := by
+        intro hval
+        exact hiB (Fin.ext hval.symm)
+      have hrow : ((M.set rowA M[rowB]).set rowB M[rowA])[rowA] =
+          (M.set rowA M[rowB])[rowA] := by
+        exact Vector.getElem_set_ne (xs := M.set rowA M[rowB]) (x := M[rowA])
+          rowB.isLt rowA.isLt hval
+      simpa using congrArg (fun row => row[j]) hrow
+    · simp [rowSwap, hiB, hiA]
+      have hAi : rowA.val ≠ i.val := by
+        intro hval
+        exact hiA (Fin.ext hval.symm)
+      have hBi : rowB.val ≠ i.val := by
+        intro hval
+        exact hiB (Fin.ext hval.symm)
+      have hrow₁ : (M.set rowA M[rowB])[i] = M[i] := by
+        exact Vector.getElem_set_ne (xs := M) (x := M[rowB]) rowA.isLt i.isLt hAi
+      have hrow₂ : ((M.set rowA M[rowB]).set rowB M[rowA])[i] =
+          (M.set rowA M[rowB])[i] := by
+        exact Vector.getElem_set_ne (xs := M.set rowA M[rowB]) (x := M[rowA])
+          rowB.isLt i.isLt hBi
+      exact (congrArg (fun row => row[j]) hrow₂).trans
+        (congrArg (fun row => row[j]) hrow₁)
+
+private theorem getEntry_swapRowsArray_matrixToRows (M : Matrix Int n n)
+    (rowA rowB i j : Fin n) :
+    getEntry (swapRowsArray (matrixToRows M) rowA.val rowB.val) i.val j.val =
+      (rowSwap M rowA rowB)[i][j] := by
+  by_cases hsame : rowA.val = rowB.val
+  · have hrows : rowA = rowB := Fin.ext hsame
+    subst rowB
+    simp [swapRowsArray, getEntry_matrixToRows, rowSwap]
+  · have hrows_size : (matrixToRows M).size = n := by
+      simp [matrixToRows]
+    have hrowA : rowA.val < (matrixToRows M).size := by
+      simp [hrows_size, rowA.isLt]
+    have hrowB : rowB.val < (matrixToRows M).size := by
+      simp [hrows_size, rowB.isLt]
+    by_cases hiB : i = rowB
+    · subst i
+      have hBA : rowB.val ≠ rowA.val := by
+        intro h
+        exact hsame h.symm
+      have hrowB_after :
+          rowB.val <
+            ((matrixToRows M).setIfInBounds rowA.val (matrixToRows M)[rowB.val]!).size := by
+        simpa [Array.size_setIfInBounds] using hrowB
+      calc
+        getEntry (swapRowsArray (matrixToRows M) rowA.val rowB.val) rowB.val j.val =
+            getEntry (matrixToRows M) rowA.val j.val := by
+              simp [swapRowsArray, hsame, getEntry, Array.set!_eq_setIfInBounds]
+              rw [array_getElem!_setIfInBounds_same
+                (xs := (matrixToRows M).setIfInBounds rowA.val (matrixToRows M)[rowB.val]!)
+                hrowB_after]
+        _ = M[rowA][j] := getEntry_matrixToRows M rowA j
+        _ = (rowSwap M rowA rowB)[rowB][j] := by
+              rw [rowSwap_get]
+              simp
+    · by_cases hiA : i = rowA
+      · subst i
+        have hAB : rowA.val ≠ rowB.val := by
+          intro h
+          exact hsame h
+        calc
+          getEntry (swapRowsArray (matrixToRows M) rowA.val rowB.val) rowA.val j.val =
+              getEntry (matrixToRows M) rowB.val j.val := by
+                simp [swapRowsArray, hsame, getEntry, Array.set!_eq_setIfInBounds]
+                rw [array_getElem!_setIfInBounds_ne
+                  (xs := (matrixToRows M).setIfInBounds rowA.val
+                    (matrixToRows M)[rowB.val]!) hAB]
+                exact congrArg (fun row => row[j.val]!)
+                  (array_getElem!_setIfInBounds_same
+                    (xs := matrixToRows M) hrowA (matrixToRows M)[rowB.val]!)
+          _ = M[rowB][j] := getEntry_matrixToRows M rowB j
+          _ = (rowSwap M rowA rowB)[rowA][j] := by
+                rw [rowSwap_get]
+                simp [hiB]
+      · have hiA_val : i.val ≠ rowA.val := by
+          intro h
+          exact hiA (Fin.ext h)
+        have hiB_val : i.val ≠ rowB.val := by
+          intro h
+          exact hiB (Fin.ext h)
+        calc
+          getEntry (swapRowsArray (matrixToRows M) rowA.val rowB.val) i.val j.val =
+              getEntry (matrixToRows M) i.val j.val := by
+                simp [swapRowsArray, hsame, getEntry, Array.set!_eq_setIfInBounds]
+                rw [array_getElem!_setIfInBounds_ne
+                  (xs := (matrixToRows M).setIfInBounds rowA.val
+                    (matrixToRows M)[rowB.val]!) hiB_val]
+                exact congrArg (fun row => row[j.val]!)
+                  (array_getElem!_setIfInBounds_ne
+                    (xs := matrixToRows M) hiA_val (matrixToRows M)[rowB.val]!)
+          _ = M[i][j] := getEntry_matrixToRows M i j
+          _ = (rowSwap M rowA rowB)[i][j] := by
+                rw [rowSwap_get]
+                simp [hiA, hiB]
+
+private theorem rowsToMatrix_swapRowsArray_matrixToRows (M : Matrix Int n n)
+    (rowA rowB : Fin n) :
+    rowsToMatrix (swapRowsArray (matrixToRows M) rowA.val rowB.val) n =
+      rowSwap M rowA rowB := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  simpa [rowsToMatrix, Matrix.ofFn] using
+    getEntry_swapRowsArray_matrixToRows M rowA rowB ⟨i, hi⟩ ⟨j, hj⟩
 
 private def findPivotArrayAux
     (rows : Array (Array Int)) (n col start fuel : Nat) : Option Nat :=
@@ -266,6 +420,38 @@ private def findPivotArrayAux
 private def findPivotArray? (rows : Array (Array Int)) (n col start : Nat) :
     Option Nat :=
   findPivotArrayAux rows n col start (n - start)
+
+private theorem findPivotArrayAux_matrixToRows (M : Matrix Int n n)
+    (col : Fin n) (start fuel : Nat) :
+    findPivotArrayAux (matrixToRows M) n col.val start fuel =
+      (findPivotAux M col start fuel).map Fin.val := by
+  induction fuel generalizing start with
+  | zero =>
+      rfl
+  | succ fuel ih =>
+      simp [findPivotArrayAux, findPivotAux]
+      by_cases hstart : start < n
+      · simp [hstart]
+        have hentry :
+            getEntry (matrixToRows M) start col.val =
+              M[(⟨start, hstart⟩ : Fin n)][col] := by
+          simpa [getEntry] using
+            getEntry_matrixToRows M (⟨start, hstart⟩ : Fin n) col
+        rw [hentry]
+        by_cases hpivotNat : M[start][col.val] = 0
+        · have hpivot : M[(⟨start, hstart⟩ : Fin n)][col] = 0 := by
+            simpa using hpivotNat
+          simp [hpivotNat, ih]
+        · have hpivot : M[(⟨start, hstart⟩ : Fin n)][col] ≠ 0 := by
+            simpa using hpivotNat
+          simp [hpivotNat]
+      · simp [hstart]
+
+private theorem findPivotArray?_matrixToRows (M : Matrix Int n n)
+    (col : Fin n) (start : Nat) :
+    findPivotArray? (matrixToRows M) n col.val start =
+      (findPivot? M col start).map Fin.val := by
+  simp [findPivotArray?, findPivot?, findPivotArrayAux_matrixToRows]
 
 private def stepArray (rows : Array (Array Int)) (n k : Nat) (pivot prevPivot : Int) :
     Array (Array Int) :=
