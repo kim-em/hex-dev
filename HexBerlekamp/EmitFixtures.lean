@@ -1,5 +1,6 @@
 import Hex.Conformance.Emit
 import HexBerlekamp.DistinctDegree
+import HexPolyFp.SquareFree
 
 /-!
 JSONL emit driver for the `hex-berlekamp` oracle.
@@ -25,13 +26,11 @@ we emit two `result` records that the oracle verifies:
   its irreducible factor list by degree and multiplying within each
   group.
 
-`squareFreeDecomposition` is intentionally **not** cross-checked
-here: Lean's executable SFD splits out leading-coefficient units as
-explicit constant factors, so it is not directly comparable to
-FLINT's canonical square-free factorisation without a lossy
-re-normalisation step.  Lean already self-verifies SFD
-reconstruction in `HexPolyFp/Conformance.lean`; a dedicated SFD
-oracle is left for a follow-up issue.
+* `squarefree` — `squareFreeDecomposition` (unit plus
+  multiplicity-indexed square-free factors).  python-flint
+  cross-checks by grouping its irreducible factor list by
+  multiplicity, after the same monic normalisation used by
+  `HexPolyFp` fixtures.
 
 The fixture set is committed and intentionally small.  Coordinate
 any future case-id additions with the `HexBerlekamp` Conformance
@@ -70,6 +69,87 @@ private theorem one_ne_zero_13 : (1 : ZMod64 13) ≠ 0 := by
   have hm := (ZMod64.natCast_eq_natCast_iff (p := 13) 1 0).mp h
   simp at hm
 
+private theorem prime_five : Hex.Nat.Prime 5 := by
+  constructor
+  · decide
+  · intro m hm
+    have hmle : m ≤ 5 := Nat.le_of_dvd (by decide : 0 < 5) hm
+    have hcases : m = 0 ∨ m = 1 ∨ m = 2 ∨ m = 3 ∨ m = 4 ∨ m = 5 := by omega
+    rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl
+    · simp at hm
+    · exact Or.inl rfl
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · exact Or.inr rfl
+
+private theorem prime_seven : Hex.Nat.Prime 7 := by
+  constructor
+  · decide
+  · intro m hm
+    have hmle : m ≤ 7 := Nat.le_of_dvd (by decide : 0 < 7) hm
+    have hcases :
+        m = 0 ∨ m = 1 ∨ m = 2 ∨ m = 3 ∨ m = 4 ∨ m = 5 ∨ m = 6 ∨ m = 7 := by
+      omega
+    rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
+    · simp at hm
+    · exact Or.inl rfl
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · exact Or.inr rfl
+
+private theorem prime_eleven : Hex.Nat.Prime 11 := by
+  constructor
+  · decide
+  · intro m hm
+    have hmle : m ≤ 11 := Nat.le_of_dvd (by decide : 0 < 11) hm
+    have hcases :
+        m = 0 ∨ m = 1 ∨ m = 2 ∨ m = 3 ∨ m = 4 ∨ m = 5 ∨ m = 6 ∨
+          m = 7 ∨ m = 8 ∨ m = 9 ∨ m = 10 ∨ m = 11 := by
+      omega
+    rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
+    · simp at hm
+    · exact Or.inl rfl
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · exact Or.inr rfl
+
+private theorem prime_thirteen : Hex.Nat.Prime 13 := by
+  constructor
+  · decide
+  · intro m hm
+    have hmle : m ≤ 13 := Nat.le_of_dvd (by decide : 0 < 13) hm
+    have hcases :
+        m = 0 ∨ m = 1 ∨ m = 2 ∨ m = 3 ∨ m = 4 ∨ m = 5 ∨ m = 6 ∨
+          m = 7 ∨ m = 8 ∨ m = 9 ∨ m = 10 ∨ m = 11 ∨ m = 12 ∨ m = 13 := by
+      omega
+    rcases hcases with
+      rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
+    · simp at hm
+    · exact Or.inl rfl
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · exact Or.inr rfl
+
 /-- Lift a `ZMod64 p` coefficient list to `List Int` via the canonical
 representative in `[0, p)`.  Used both for fixture emission and for
 serialising `result` records. -/
@@ -94,12 +174,55 @@ private def ddfValue {p : Nat} [ZMod64.Bounds p]
     "[" ++ String.intercalate "," (d.buckets.map degreeBucketJson) ++ "]"
   "{\"buckets\":" ++ bucketsArr ++ ",\"residual\":" ++ fpPolyJson d.residual ++ "}"
 
-/-- Emit one fixture record plus the two Berlekamp result records. -/
+private def lexLessInts : List Int → List Int → Bool
+  | [], [] => false
+  | [], _ :: _ => true
+  | _ :: _, [] => false
+  | x :: xs, y :: ys =>
+      if x < y then true
+      else if y < x then false
+      else lexLessInts xs ys
+
+private def factorLess (x y : List Int × Nat) : Bool :=
+  if lexLessInts x.1 y.1 then true
+  else if decide (x.1 = y.1) then x.2 < y.2
+  else false
+
+/-- Canonicalise SFD output to match the `HexPolyFp` oracle fixture shape. -/
+private def normalizeSqFree {p : Nat} [ZMod64.Bounds p]
+    (decomp : FpPoly.SquareFreeDecomposition p) : ZMod64 p × List (List Int × Nat) :=
+  let go : (ZMod64 p × List (List Int × Nat)) →
+      FpPoly.SquareFreeFactor p →
+      (ZMod64 p × List (List Int × Nat)) :=
+    fun state sf =>
+      let (unit, factors) := state
+      let f := sf.factor
+      let m := sf.multiplicity
+      if f.size ≤ 1 then
+        let c := f.coeff 0
+        (unit * c ^ m, factors)
+      else
+        let lead := DensePoly.leadingCoeff f
+        let monic := DensePoly.scale (ZMod64.inv lead) f
+        (unit * lead ^ m, (liftCoeffs monic, m) :: factors)
+  let (unit, rawFactors) := decomp.factors.foldl go (decomp.unit, [])
+  (unit, rawFactors.toArray.qsort factorLess |>.toList)
+
+private def jsonFactor (factor : List Int × Nat) : String :=
+  "[" ++ polyValue factor.1 ++ "," ++ toString factor.2 ++ "]"
+
+private def squareFreeValue (unit : Int) (factors : List (List Int × Nat)) : String :=
+  "[" ++ toString unit ++ ",[" ++ String.intercalate "," (factors.map jsonFactor) ++ "]]"
+
+/-- Emit one fixture record plus the Berlekamp result records. -/
 private def emitMonicCase {p : Nat} [ZMod64.Bounds p]
-    (case : String) (f : FpPoly p) (hmonic : DensePoly.Monic f) : IO Unit := do
+    (case : String) (prime : Hex.Nat.Prime p)
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) : IO Unit := do
   emitPolyFixture lib case (liftCoeffs f) (some (Int.ofNat p))
   emitResult lib case "rabin" (boolValue (rabinTest f hmonic))
   emitResult lib case "ddf" (ddfValue (distinctDegreeFactor f hmonic))
+  let (unit, factors) := normalizeSqFree (FpPoly.squareFreeDecomposition prime f)
+  emitResult lib case "squarefree" (squareFreeValue (unit.toNat : Int) factors)
 
 /-- Build a monic `FpPoly p` from the lower-degree coefficients
 (leading `1` is appended).  The returned proof witnesses that the
@@ -151,7 +274,9 @@ private def cases5 : List (Case 5) :=
     -- Repeated factors: (x+1)²(x+2) = (x²+2x+1)(x+2) = x³+4x²+5x+2 ≡ x³+4x²+2
     { id := "p5/rep/sqLin",      lower := #[2, 0, 4] },
     -- (x+1)³ = x³ + 3x² + 3x + 1
-    { id := "p5/rep/cube",       lower := #[1, 3, 3] } ]
+    { id := "p5/rep/cube",       lower := #[1, 3, 3] },
+    -- (x+1)⁵ = x⁵ + 5x⁴ + 10x³ + 10x² + 5x + 1 ≡ x⁵ + 1 over F_5
+    { id := "p5/rep/fifth",      lower := #[1, 0, 0, 0, 0] } ]
 
 private def cases7 : List (Case 7) :=
   [ -- x² + 1: f(0..6) = 1,2,5,3,3,5,2 — no root, irreducible.
@@ -186,19 +311,19 @@ private def cases13 : List (Case 13) :=
 
 private def emitCase5 (c : Case 5) : IO Unit :=
   let m := mkMonic one_ne_zero_5 c.lower
-  emitMonicCase c.id m.1 m.2
+  emitMonicCase c.id prime_five m.1 m.2
 
 private def emitCase7 (c : Case 7) : IO Unit :=
   let m := mkMonic one_ne_zero_7 c.lower
-  emitMonicCase c.id m.1 m.2
+  emitMonicCase c.id prime_seven m.1 m.2
 
 private def emitCase11 (c : Case 11) : IO Unit :=
   let m := mkMonic one_ne_zero_11 c.lower
-  emitMonicCase c.id m.1 m.2
+  emitMonicCase c.id prime_eleven m.1 m.2
 
 private def emitCase13 (c : Case 13) : IO Unit :=
   let m := mkMonic one_ne_zero_13 c.lower
-  emitMonicCase c.id m.1 m.2
+  emitMonicCase c.id prime_thirteen m.1 m.2
 
 end Hex.BerlekampEmit
 
