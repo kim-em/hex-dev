@@ -15,9 +15,11 @@ Operations cross-checked
   input and reports irreducibility iff the factorisation has exactly
   one factor of multiplicity 1 and the expected total degree.
 * `ddf` — `Berlekamp.distinctDegreeFactor` (degree-bucketed factor
-  product + residual).  python-flint checks the reconstruction
-  invariant and, for square-free input, each degree bucket against
-  FLINT's irreducible factor list.
+  product + residual).  python-flint cross-checks two invariants:
+  (a) `∏ bucket_factors * residual == f` always (Lean's bucket-product
+  invariant); (b) every bucket's polynomial matches the product of
+  FLINT's irreducible factors of that degree exactly, with
+  multiplicities included.  The residual must be `1`.
 * `squarefree` — `squareFreeDecomposition` (unit plus
   multiplicity-indexed square-free factors).  python-flint factors
   the input, groups irreducibles by multiplicity, and compares that
@@ -160,10 +162,6 @@ def _is_irreducible(f, total_degree: int) -> bool:
     )
 
 
-def _is_squarefree(f) -> bool:
-    return all(m == 1 for (_, m) in _factor_pairs(f))
-
-
 def _grouped_by_degree(pairs: list[tuple[Any, int]], p: int):
     """Group factor pairs by degree into `{deg: product_poly}`.
 
@@ -250,11 +248,9 @@ def _check_ddf(
             seed=seed,
         )
 
-    # (b) For square-free input, each Lean bucket equals the FLINT
-    # product of irreducible factors of that degree.  The residual
-    # must equal `1`.
-    if not _is_squarefree(f):
-        return
+    # (b) Each Lean bucket equals the FLINT product of irreducible
+    # factors of that degree, with multiplicities included.  The
+    # residual must equal `1`.
     flint_pairs = _factor_pairs(f)
     flint_groups = _grouped_by_degree(flint_pairs, p)
     if _trim_zeros(list(lean_residual.coeffs())) != [1]:
