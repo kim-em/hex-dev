@@ -59,6 +59,22 @@ private theorem dot_subtractProjection_self_zero (row basisRow : Vector Rat m)
   simp [projectionCoeff, hnorm]
   grind
 
+private theorem projectionCoeff_sub_smul_self
+    (row basisRow : Vector Rat m) (c : Rat)
+    (hnorm : Matrix.dot basisRow basisRow ≠ 0) :
+    projectionCoeff (row - c • basisRow) basisRow =
+      projectionCoeff row basisRow - c := by
+  simp [projectionCoeff, Matrix.dot_sub_smul_rat, hnorm]
+  grind
+
+private theorem projectionCoeff_sub_smul
+    (row other basisRow : Vector Rat m) (c : Rat)
+    (hnorm : Matrix.dot basisRow basisRow ≠ 0) :
+    projectionCoeff (row - c • other) basisRow =
+      projectionCoeff row basisRow - c * projectionCoeff other basisRow := by
+  simp [projectionCoeff, Matrix.dot_sub_smul_rat, hnorm]
+  grind
+
 private theorem rat_mul_self_nonneg (x : Rat) : 0 ≤ x * x := by
   simpa [Lean.Grind.Semiring.pow_two] using (Lean.Grind.OrderedRing.sq_nonneg (a := x))
 
