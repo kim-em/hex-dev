@@ -216,6 +216,71 @@ private theorem bareissNoPivotInvariant_step
       (state.matrix[(⟨state.step, hk⟩ : Fin n)][(⟨state.step, hk⟩ : Fin n)])
       state.prevPivot hpivot_eq hentry hleft htop hexact
 
+/-- Public regular no-swap step surface for the row-pivoted Bareiss proof.
+When the current diagonal pivot is already nonzero, the row-pivoted loop takes
+the same regular step as the no-pivot loop, so the bordered-minor invariant is
+preserved by the existing no-pivot step proof. -/
+theorem bareissPivotInvariant_regular_no_swap
+    (source : Hex.Matrix Int n n) (state : Hex.Matrix.BareissState n)
+    (hinv : BareissNoPivotInvariant source state)
+    (hDone : state.step + 1 < n)
+    (hp : state.matrix[state.step][state.step] ≠ 0) :
+    BareissNoPivotInvariant source
+      { step := state.step + 1
+        matrix := Hex.Matrix.stepMatrix state.matrix state.step
+          state.matrix[state.step][state.step] state.prevPivot
+        prevPivot := state.matrix[state.step][state.step]
+        rowSwaps := state.rowSwaps
+        singularStep := none } :=
+  bareissNoPivotInvariant_step source state hinv hDone hp
+
+private theorem findPivot?_some_ne_current
+    (state : Hex.Matrix.BareissState n) (hDone : state.step + 1 < n)
+    {pivot : Fin n}
+    (hfind :
+      Hex.Matrix.findPivot? state.matrix
+        (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+        (state.step + 1) = some pivot) :
+    pivot ≠ (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n) := by
+  intro hpivot
+  have hge :
+      state.step + 1 ≤ pivot.val :=
+    Hex.Matrix.findPivot?_ge_start state.matrix
+      (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+      (state.step + 1) hfind
+  have hval : pivot.val = state.step := by
+    simpa using congrArg Fin.val hpivot
+  omega
+
+/-- In the row-swap regular branch, the Hex determinant of the working matrix
+flips sign. This is the determinant-side row-swap fact needed by the
+row-pivoted Bareiss invariant. -/
+theorem bareissPivotRegularSwap_det
+    (state : Hex.Matrix.BareissState n) (hDone : state.step + 1 < n)
+    {pivot : Fin n}
+    (hfind :
+      Hex.Matrix.findPivot? state.matrix
+        (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+        (state.step + 1) = some pivot) :
+    Hex.Matrix.det
+        (Hex.Matrix.rowSwap state.matrix
+          (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+          pivot) =
+      -Hex.Matrix.det state.matrix := by
+  apply Hex.Matrix.det_rowSwap
+  intro hcurrent
+  exact findPivot?_some_ne_current state hDone hfind hcurrent.symm
+
+private theorem bareissSign_succ (swaps : Nat) :
+    (if (swaps + 1) % 2 = 0 then (1 : Int) else -1) =
+      -(if swaps % 2 = 0 then (1 : Int) else -1) := by
+  omega
+
+/-- Incrementing the row-swap counter flips the Bareiss sign. -/
+theorem bareissData_sign_succ (data : Hex.Matrix.BareissData n) :
+    ({ data with rowSwaps := data.rowSwaps + 1 }).sign = -data.sign := by
+  simp [Hex.Matrix.BareissData.sign, bareissSign_succ]
+
 /-- The recursive no-pivot Bareiss invariant: starting from any state that
 satisfies `BareissNoPivotInvariant`, if every future leading-prefix determinant
 (from `state.step` up to `n`) is nonzero, then the invariant continues to hold
