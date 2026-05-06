@@ -613,6 +613,11 @@ theorem eq_of_val_eq {a b : GF2nPoly f hirr}
   subst h
   rfl
 
+instance instDecidableEq : DecidableEq (GF2nPoly f hirr) := fun a b =>
+  match decEq a.val b.val with
+  | isTrue h => isTrue (eq_of_val_eq h)
+  | isFalse h => isFalse (fun hab => h (congrArg GF2nPoly.val hab))
+
 /-- Finite-index coefficient code for the reduced representative of a packed
 quotient-field element. -/
 def coeffVector (a : GF2nPoly f hirr) : Fin f.degree → Bool :=
@@ -819,6 +824,162 @@ theorem reducePoly_eq_zero_iff_dvd {p : GF2Poly} (hf : f ≠ 0) :
     apply eq_of_val_eq
     change (reducePoly (f := f) (hirr := hirr) p).val = (zero (f := f)).val
     simp [reducePoly_val_eq_mod, zero, mod_eq_zero_of_dvd hf h]
+
+private theorem nodup_map_of_injective
+    {α β : Type} {xs : List α} {g : α → β}
+    (hxs : xs.Nodup)
+    (hinj : ∀ a, a ∈ xs → ∀ b, b ∈ xs → g a = g b → a = b) :
+    (xs.map g).Nodup := by
+  induction xs with
+  | nil =>
+      simp
+  | cons x xs ih =>
+      simp only [List.map_cons]
+      rw [List.nodup_cons] at hxs ⊢
+      constructor
+      · intro hx
+        rcases List.mem_map.mp hx with ⟨y, hy, hxy⟩
+        have hyx : y = x := hinj y (by simp [hy]) x (by simp) hxy
+        exact hxs.1 (by simpa [hyx] using hy)
+      · exact ih hxs.2 (by
+          intro a ha b hb hab
+          exact hinj a (by simp [ha]) b (by simp [hb]) hab)
+
+private theorem length_filter_ne_eq_pred_of_mem_nodup
+    {α : Type} [DecidableEq α] {z : α} :
+    ∀ {xs : List α}, z ∈ xs → xs.Nodup →
+      (xs.filter (fun a => decide (a ≠ z))).length = xs.length - 1
+  | [], hmem, _ => by
+      cases hmem
+  | x :: xs, hmem, hnodup => by
+      rw [List.nodup_cons] at hnodup
+      by_cases hx : x = z
+      · have hnot_mem : x ∉ xs := hnodup.1
+        have hfilter : xs.filter (fun a => decide (a ≠ z)) = xs := by
+          rw [List.filter_eq_self]
+          intro a ha
+          exact decide_eq_true (fun haz => hnot_mem (by simpa [hx, haz] using ha))
+        rw [List.filter_cons_of_neg]
+        · rw [hfilter]
+          simp
+        · simp [hx]
+      · have hz_mem_xs : z ∈ xs := by
+          cases hmem with
+          | head =>
+              exact False.elim (hx rfl)
+          | tail _ hz =>
+              exact hz
+        have ih := length_filter_ne_eq_pred_of_mem_nodup hz_mem_xs hnodup.2
+        have hlen_pos : 0 < xs.length := List.length_pos_of_mem hz_mem_xs
+        rw [List.filter_cons_of_pos]
+        · simp only [List.length_cons]
+          rw [ih]
+          omega
+        · exact decide_eq_true hx
+
+/-- All packed quotient-field elements, enumerated by reducing every length-`f.degree`
+Boolean coefficient list. -/
+def elements : List (GF2nPoly f hirr) :=
+  (GF2Poly.coeffBoolLists f.degree).map
+    (fun bs => reducePoly (f := f) (hirr := hirr) (GF2Poly.ofBoolList bs))
+
+@[simp] theorem elements_length :
+    (elements (f := f) (hirr := hirr)).length = 2 ^ f.degree := by
+  simp [elements]
+
+/-- Every packed quotient-field element appears in `elements`. -/
+theorem mem_elements (a : GF2nPoly f hirr) :
+    a ∈ elements (f := f) (hirr := hirr) := by
+  unfold elements
+  apply List.mem_map.mpr
+  refine ⟨List.ofFn (coeffVector a), ?_, ?_⟩
+  · apply GF2Poly.mem_coeffBoolLists_of_length_eq
+    simp
+  · apply eq_of_val_eq
+    rw [reducePoly_val_eq_mod]
+    have hofBL_red :
+        (GF2Poly.ofBoolList (List.ofFn (coeffVector a))).IsZero ∨
+          (GF2Poly.ofBoolList (List.ofFn (coeffVector a))).degree < f.degree := by
+      have h := GF2Poly.ofBoolList_isZero_or_degree_lt (List.ofFn (coeffVector a))
+      simp at h
+      exact h
+    have hofBL_eq :
+        GF2Poly.ofBoolList (List.ofFn (coeffVector a)) = a.val := by
+      apply GF2Poly.eq_of_reducedCoeffVector_eq hofBL_red a.val_reduced
+      funext i
+      unfold GF2Poly.reducedCoeffVector
+      rw [GF2Poly.coeff_ofBoolList]
+      have hi_lt : i.val < (List.ofFn (coeffVector a)).length := by
+        rw [List.length_ofFn]; exact i.is_lt
+      rw [List.getElem?_eq_getElem hi_lt]
+      simp [List.getElem_ofFn, coeffVector, GF2Poly.reducedCoeffVector]
+    rw [hofBL_eq]
+    exact GF2Poly.mod_eq_self_of_reduced a.val f a.val_reduced
+
+/-- The quotient enumeration has no duplicate elements. -/
+theorem elements_nodup :
+    (elements (f := f) (hirr := hirr)).Nodup := by
+  unfold elements
+  apply nodup_map_of_injective
+  · exact GF2Poly.coeffBoolLists_nodup f.degree
+  · intro bs hbs bs' hbs' hred
+    have hbs_len := GF2Poly.length_of_mem_coeffBoolLists hbs
+    have hbs'_len := GF2Poly.length_of_mem_coeffBoolLists hbs'
+    have hbs_red :
+        (GF2Poly.ofBoolList bs).IsZero ∨
+          (GF2Poly.ofBoolList bs).degree < f.degree := by
+      have h := GF2Poly.ofBoolList_isZero_or_degree_lt bs
+      rw [hbs_len] at h
+      exact h
+    have hbs'_red :
+        (GF2Poly.ofBoolList bs').IsZero ∨
+          (GF2Poly.ofBoolList bs').degree < f.degree := by
+      have h := GF2Poly.ofBoolList_isZero_or_degree_lt bs'
+      rw [hbs'_len] at h
+      exact h
+    have hofBL_eq : GF2Poly.ofBoolList bs = GF2Poly.ofBoolList bs' := by
+      have hred_val := congrArg GF2nPoly.val hred
+      rw [reducePoly_val_eq_mod, reducePoly_val_eq_mod] at hred_val
+      rw [GF2Poly.mod_eq_self_of_reduced (GF2Poly.ofBoolList bs) f hbs_red,
+        GF2Poly.mod_eq_self_of_reduced (GF2Poly.ofBoolList bs') f hbs'_red] at hred_val
+      exact hred_val
+    apply List.ext_getElem (by rw [hbs_len, hbs'_len])
+    intro i hi hi'
+    have hcoeff : (GF2Poly.ofBoolList bs).coeff i = (GF2Poly.ofBoolList bs').coeff i :=
+      congrArg (fun p : GF2Poly => p.coeff i) hofBL_eq
+    rw [GF2Poly.coeff_ofBoolList, GF2Poly.coeff_ofBoolList,
+      List.getElem?_eq_getElem hi, List.getElem?_eq_getElem hi'] at hcoeff
+    simpa using hcoeff
+
+/-- The quotient has `2 ^ f.degree` canonical representatives. -/
+theorem elements_card :
+    (elements (f := f) (hirr := hirr)).length = 2 ^ f.degree :=
+  elements_length (f := f) (hirr := hirr)
+
+/-- The nonzero packed quotient-field elements, as a duplicate-free sublist of
+`elements`. -/
+def nonzeroElements : List (GF2nPoly f hirr) :=
+  (elements (f := f) (hirr := hirr)).filter (fun a => decide (a ≠ 0))
+
+/-- Membership in `nonzeroElements` is exactly nonzero quotient membership. -/
+theorem mem_nonzeroElements (a : GF2nPoly f hirr) :
+    a ∈ nonzeroElements (f := f) (hirr := hirr) ↔ a ≠ 0 := by
+  simp [nonzeroElements, mem_elements a]
+
+/-- The nonzero quotient enumeration has no duplicates. -/
+theorem nonzeroElements_nodup :
+    (nonzeroElements (f := f) (hirr := hirr)).Nodup := by
+  unfold nonzeroElements
+  exact (elements_nodup (f := f) (hirr := hirr)).filter _
+
+/-- There are `2 ^ f.degree - 1` nonzero quotient representatives. -/
+theorem nonzeroElements_card :
+    (nonzeroElements (f := f) (hirr := hirr)).length = 2 ^ f.degree - 1 := by
+  unfold nonzeroElements
+  rw [length_filter_ne_eq_pred_of_mem_nodup
+    (mem_elements (f := f) (hirr := hirr) 0)
+    (elements_nodup (f := f) (hirr := hirr))]
+  rw [elements_card]
 
 /-- The quotient class of `X` modulo the packed irreducible `f`. -/
 def X : GF2nPoly f hirr :=
