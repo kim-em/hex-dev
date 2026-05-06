@@ -810,6 +810,41 @@ private theorem M_k1_eq_matrixEquiv_borderedMinor_submatrix [CommRing R]
   dsimp only
   simp only [fin_n_cyclicShift_eq_castSucc_index k hk r]
 
+/-- The interior `(k × k)` submatrix of the reindexed Bareiss bordered minor:
+deleting both row 0 and the last row (and similarly columns) leaves exactly
+`matrixEquiv (leadingPrefix source k _)`. -/
+private theorem M_interior_eq_matrixEquiv_leadingPrefix [CommRing R]
+    (source : Hex.Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (i j : Fin n) :
+    (((matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)).submatrix
+        (bareissDesnanotIndex k) (bareissDesnanotIndex k)).submatrix
+        (Fin.succAbove (0 : Fin (k + 2)) ∘ (Fin.last k).succAbove)
+        (Fin.succAbove (0 : Fin (k + 2)) ∘ (Fin.last k).succAbove)) =
+      matrixEquiv (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk)) := by
+  ext r c
+  show matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)
+        (bareissDesnanotIndex k (Fin.succAbove (0 : Fin (k + 2))
+          ((Fin.last k).succAbove r)))
+        (bareissDesnanotIndex k (Fin.succAbove (0 : Fin (k + 2))
+          ((Fin.last k).succAbove c))) =
+      matrixEquiv (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk)) r c
+  -- (last k).succAbove r = r.castSucc, then succAbove 0 of r.castSucc = r.castSucc.succ
+  simp only [Fin.succAbove_last, Fin.succAbove_zero]
+  -- Now use bareissDesnanotIndex_succ_lt with r.castSucc, since (r.castSucc).val = r.val < k
+  have hrlt : (r.castSucc : Fin (k + 1)).val < k := r.isLt
+  have hclt : (c.castSucc : Fin (k + 1)).val < k := c.isLt
+  rw [bareissDesnanotIndex_succ_lt k r.castSucc hrlt,
+      bareissDesnanotIndex_succ_lt k c.castSucc hclt]
+  show (Hex.Matrix.borderedMinor source (k + 1) hnext i j)[
+      (⟨(r.castSucc : Fin (k + 1)).val, by omega⟩ : Fin (k + 2))][
+      (⟨(c.castSucc : Fin (k + 1)).val, by omega⟩ : Fin (k + 2))] = _
+  -- Both indices are < k+1, so use borderedMinor_entry_lt_lt
+  show (Hex.Matrix.borderedMinor source (k + 1) hnext i j)[
+      (⟨r.val, by omega⟩ : Fin (k + 2))][
+      (⟨c.val, by omega⟩ : Fin (k + 2))] = _
+  simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, Hex.Matrix.leadingPrefix,
+    show r.val ≤ k from r.isLt.le, show c.val ≤ k from c.isLt.le]
+
 /-- After reindexing the `(k+2)` bordered minor by `bareissDesnanotIndex k`,
 deleting row 0 and column 0 yields exactly `matrixEquiv` of the natural
 `(k+1)` bordered minor with the same trailing row `i` and column `j`. -/
