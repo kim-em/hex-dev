@@ -69,6 +69,15 @@ Reviewer checklist for Phase 3 PRs:
 - [ ] CI conformance matrix builds this library (either via the
   derivation script picking up the root-import, or via an explicit
   matrix entry).
+- [ ] Every `emitResult` in `HexFoo/EmitFixtures.lean` is
+  cross-checked by the corresponding oracle script under the three
+  rules in
+  [../SPEC/testing.md §Oracle discipline](../SPEC/testing.md#oracle-discipline):
+  independent expected value (no re-running the operation under
+  test on Lean's output), uniform contract across input classes (no
+  shape-dependent bypass to a weaker invariant), and a tracking
+  issue for any deliberately uncovered op (with the conformance
+  docstring not claiming it as covered).
 
 ## Oracle wiring (forward reference)
 
