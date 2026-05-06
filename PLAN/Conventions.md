@@ -119,6 +119,34 @@ For ad hoc interpreter smoke tests of extern-backed declarations, use
 of `@[extern]` declarations can fail with `Could not find native
 implementation`.
 
+### Library umbrella discipline
+
+Each library `Foo` has a root file `Foo.lean` (the *umbrella*) and a
+directory `Foo/` containing its modules. The umbrella **must import
+every regular module** under `Foo/`. The only exempt files are those
+declared as `lean_exe` roots in `lakefile.lean` (typically
+`Foo/Bench.lean` and `Foo/EmitFixtures.lean`).
+
+Why this matters: with `precompileModules := true` (the default), Lake
+builds a per-library shared object `libHex_Foo.dylib`/`.so` from the
+`.c.o.export` files of the modules the umbrella imports, and lists
+that shared object as a plugin when elaborating any downstream library.
+A module file under `Foo/` that the umbrella does **not** import is
+absent from the shared object even though it is imported individually
+by downstream code. On Linux, flat-namespace lazy binding hides the
+gap by resolving the missing symbols against per-module dylibs that
+happen to be loaded for the same elaboration run. On macOS, dyld's
+stricter symbol resolution aborts with `dyld[..]: missing symbol
+called` on the first downstream elaboration that needs the absent
+symbols. This is exactly the failure mode that motivated adding macOS
+to CI in [Phase0.md §6](Phase0.md).
+
+`scripts/check_dag.py` enforces this rule mechanically: every
+`Foo/X.lean` is either listed as a `lean_exe` root in `lakefile.lean`
+or imported (directly or transitively) by `Foo.lean`. Any PR that adds
+a new module under `Foo/` must also update `Foo.lean` (or chain the
+import through an existing intermediate module).
+
 ---
 
 ## Issue creation

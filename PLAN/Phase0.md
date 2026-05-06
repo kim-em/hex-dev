@@ -194,6 +194,13 @@ into Phase 1 until the Phase 0 PR lands on `main`.
          - run: python3 scripts/check_dag.py
          - run: sudo apt-get install -y libgmp-dev
          - uses: leanprover/lean-action@v1
+     build-macos:
+       runs-on: macos-latest
+       steps:
+         - uses: actions/checkout@v4
+         - run: python3 scripts/check_dag.py
+         - run: brew install gmp
+         - uses: leanprover/lean-action@v1
    ```
 
    The DAG check runs before the Lean build so import-boundary
@@ -201,7 +208,15 @@ into Phase 1 until the Phase 0 PR lands on `main`.
    performs the `lake build` itself. `libgmp-dev` is installed
    explicitly because the `hex-arith` extern C shims `#include
    <gmp.h>`; Lean's toolchain ships `libgmp.a` for linking but not the
-   headers, and `ubuntu-latest` does not preinstall `libgmp-dev`.
+   headers, and `ubuntu-latest` does not preinstall `libgmp-dev`. The
+   macOS job is required, not optional: macOS dyld uses a stricter
+   symbol-resolution discipline than Linux's flat-namespace lazy
+   binding, so a build that succeeds on Linux can still fail on macOS
+   with `dyld[..]: missing symbol called`. The most common trigger is
+   an incomplete library umbrella file (see
+   [Conventions.md §Library umbrella discipline](Conventions.md#library-umbrella-discipline));
+   `check_dag.py` enforces the source-side condition and the macOS
+   `lake build` is the cross-check.
 
    **`.github/workflows/conformance.yml`** (optional, manual trigger):
    Manual or locally-triggered conformance workflow following
