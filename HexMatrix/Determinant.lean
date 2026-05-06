@@ -2450,6 +2450,98 @@ private theorem detTerm_colDuplicate_swapValues {R : Type u}
   rw [detSign_swapPermutationValues (R := R) perm src dst hnodup h]
   grind
 
+private def colAddDuplicate {R : Type u} {n : Nat}
+    (M : Matrix R n n) (src dst : Fin n) : Matrix R n n :=
+  Matrix.ofFn fun r c => if c = dst then M[r][src] else M[r][c]
+
+private theorem colAddDuplicate_get {R : Type u} {n : Nat}
+    (M : Matrix R n n) (src dst r c : Fin n) :
+    (colAddDuplicate M src dst)[r][c] = if c = dst then M[r][src] else M[r][c] := by
+  simp [colAddDuplicate, Matrix.ofFn]
+
+private theorem colAdd_get {R : Type u} [Mul R] [Add R] {n : Nat}
+    (M : Matrix R n n) (src dst r cidx : Fin n) (c : R) :
+    (colAdd M src dst c)[r][cidx] =
+      if cidx = dst then M[r][cidx] + c * M[r][src] else M[r][cidx] := by
+  simp [colAdd, Matrix.ofFn]
+
+private theorem detProduct_colAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (src dst : Fin n) (c : R)
+    (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
+    detProduct (colAdd M src dst c) perm =
+      detProduct M perm + c * detProduct (colAddDuplicate M src dst) perm := by
+  let pivot : Fin n := ⟨perm.toList.idxOf dst,
+    by
+      simpa [Vector.length_toList] using
+        fin_idxOf_lt_of_full_nodup dst (by simp [Vector.length_toList]) hnodup⟩
+  have hpivot : perm[pivot] = dst := by
+    have hlt : perm.toList.idxOf dst < perm.toList.length :=
+      fin_idxOf_lt_of_full_nodup dst (by simp [Vector.length_toList]) hnodup
+    have hget : perm.toList[perm.toList.idxOf dst]'hlt = dst :=
+      List.getElem_idxOf (x := dst) (xs := perm.toList) hlt
+    change perm.toList[pivot.val]'(by simp [Vector.length_toList, pivot.isLt]) = dst
+    simp [pivot] at hget ⊢
+  unfold detProduct
+  calc
+    (List.finRange n).foldl
+        (fun acc i => acc * (colAdd M src dst c)[i][perm[i]]) 1 =
+      (List.finRange n).foldl
+        (fun acc x =>
+          acc * if x = pivot then
+            M[x][perm[x]] + c * (colAddDuplicate M src dst)[x][perm[x]]
+          else
+            M[x][perm[x]]) 1 := by
+        apply foldl_det_product_congr
+        intro x _hx
+        rw [colAdd_get]
+        by_cases hxp : x = pivot
+        · subst x
+          rw [if_pos hpivot, if_pos rfl, colAddDuplicate_get, if_pos hpivot]
+        · rw [if_neg hxp]
+          have hperm_ne : perm[x] ≠ dst := by
+            intro hperm
+            have hxidx : perm.toList.idxOf perm[x] = x.val := by
+              simpa [Vector.getElem_toList, Vector.length_toList] using
+                hnodup.idxOf_getElem x.val (by simp [Vector.length_toList])
+            have hpidx : perm.toList.idxOf dst = pivot.val := rfl
+            have hval : x.val = pivot.val := by
+              rw [← hxidx, hperm, hpidx]
+            exact hxp (Fin.ext hval)
+          rw [if_neg hperm_ne]
+    _ =
+      (List.finRange n).foldl (fun acc x => acc * M[x][perm[x]]) 1 +
+        c * (List.finRange n).foldl
+          (fun acc x => acc * (colAddDuplicate M src dst)[x][perm[x]]) 1 := by
+      exact
+        foldl_det_product_single_add (R := R) (β := Fin n)
+          (List.finRange n) pivot c
+          (fun x => M[x][perm[x]])
+          (fun x => (colAddDuplicate M src dst)[x][perm[x]])
+          1 (List.mem_finRange pivot) (List.nodup_finRange n)
+          (by
+            intro x _hx hxp
+            change (colAddDuplicate M src dst)[x][perm[x]] = M[x][perm[x]]
+            rw [colAddDuplicate_get]
+            have hperm_ne : perm[x] ≠ dst := by
+              intro hperm
+              have hxidx : perm.toList.idxOf perm[x] = x.val := by
+                simpa [Vector.getElem_toList, Vector.length_toList] using
+                  hnodup.idxOf_getElem x.val (by simp [Vector.length_toList])
+              have hpidx : perm.toList.idxOf dst = pivot.val := rfl
+              have hval : x.val = pivot.val := by
+                rw [← hxidx, hperm, hpidx]
+              exact hxp (Fin.ext hval)
+            rw [if_neg hperm_ne])
+
+private theorem detTerm_colAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (src dst : Fin n) (c : R)
+    (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
+    detTerm (colAdd M src dst c) perm =
+      detTerm M perm + c * detTerm (colAddDuplicate M src dst) perm := by
+  unfold detTerm
+  rw [detProduct_colAdd M src dst c perm hnodup]
+  grind
+
 private theorem detTerm_rowSwap_transposeValues {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (i j : Fin n) (h : i ≠ j)
@@ -2939,6 +3031,42 @@ private theorem permutationVectors_duplicateCol_sum {R : Type u} [Lean.Grind.Com
     _ = 0 := by
         exact foldl_det_sum_zero ((permutationVectors n).filter p) 0
 
+/-- The multilinear expansion of a column addition has zero total
+duplicate-column contribution, so the Leibniz sum is unchanged. -/
+private theorem permutationVectors_colAdd_sum {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (M : Matrix R n n) (src dst : Fin n) (c : R) (h : src ≠ dst) :
+    (permutationVectors n).foldl
+        (fun acc perm => acc + detTerm (colAdd M src dst c) perm) 0 =
+      (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0 := by
+  calc
+    (permutationVectors n).foldl
+        (fun acc perm => acc + detTerm (colAdd M src dst c) perm) 0 =
+      (permutationVectors n).foldl
+        (fun acc perm =>
+          acc + (detTerm M perm + c * detTerm (colAddDuplicate M src dst) perm)) 0 := by
+        apply foldl_det_sum_congr
+        intro perm hmem
+        exact detTerm_colAdd M src dst c perm (permutationVectors_nodup hmem)
+    _ =
+      (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0 +
+        (permutationVectors n).foldl
+          (fun acc perm => acc + c * detTerm (colAddDuplicate M src dst) perm) 0 := by
+        exact foldl_det_sum_add_zero
+          (permutationVectors n) (detTerm M)
+          (fun perm => c * detTerm (colAddDuplicate M src dst) perm)
+    _ =
+      (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0 +
+        c * (permutationVectors n).foldl
+          (fun acc perm => acc + detTerm (colAddDuplicate M src dst) perm) 0 := by
+        rw [foldl_det_sum_mul_left_zero]
+    _ =
+      (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0 := by
+        rw [permutationVectors_duplicateCol_sum (colAddDuplicate M src dst) src dst h]
+        · grind
+        · intro r
+          rw [colAddDuplicate_get, colAddDuplicate_get]
+          simp
+
 /-- The multilinear expansion of a row addition has zero total duplicate-row
 contribution, so the Leibniz sum is unchanged. -/
 private theorem permutationVectors_rowAdd_sum {R : Type u} [Lean.Grind.CommRing R]
@@ -3031,6 +3159,12 @@ theorem det_rowAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) (c : R) (h : src ≠ dst) :
     det (rowAdd M src dst c) = det M := by
   simpa [det] using det_rowAdd_leibniz M src dst c h
+
+/-- Adding a multiple of one column to a distinct column preserves determinant. -/
+theorem det_colAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (src dst : Fin n) (c : R) (h : src ≠ dst) :
+    det (colAdd M src dst c) = det M := by
+  simpa [det] using permutationVectors_colAdd_sum M src dst c h
 
 /-- A determinant with two equal rows is zero. -/
 theorem det_eq_zero_of_row_eq {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
