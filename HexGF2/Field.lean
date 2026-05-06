@@ -2214,6 +2214,161 @@ theorem one_ne_zero (hf_pos : 0 < f.degree) :
   rw [GF2Poly.coeff_monomial_self, GF2Poly.coeff_zero] at hcoeff
   contradiction
 
+/-- Coefficients for the characteristic-two polynomial `T^(2^k) + T`.
+
+For `0 < k`, the list is low-to-high with nonzero coefficients exactly at
+degrees `1` and `2^k`. The `k = 0` list intentionally evaluates to zero,
+matching `T + T`; root-count callers use the positive-`k` theorem below. -/
+def frobeniusFixedCoeffList (k : Nat) : List (GF2nPoly f hirr) :=
+  if k = 0 then
+    [0]
+  else
+    0 :: 1 :: (List.replicate (2 ^ k - 2) (0 : GF2nPoly f hirr) ++ [1])
+
+private theorem evalCoeffList_replicate_zero_append_one
+    (β : GF2nPoly f hirr) (n : Nat) :
+    evalCoeffList (List.replicate n (0 : GF2nPoly f hirr) ++ [1]) β =
+      linearPow β n := by
+  induction n with
+  | zero =>
+      simp [evalCoeffList, linearPow_zero]
+  | succ n ih =>
+      simp only [List.replicate_succ, List.cons_append, evalCoeffList_cons]
+      rw [ih, zero_add, linearPow_succ, mul_comm]
+
+private theorem evalCoeffList_frobeniusFixedCoeffList_of_pos
+    (β : GF2nPoly f hirr) {k : Nat} (hk : 0 < k) :
+    evalCoeffList (frobeniusFixedCoeffList (f := f) (hirr := hirr) k) β =
+      frobeniusIter β k + β := by
+  have hk_ne : k ≠ 0 := Nat.ne_of_gt hk
+  have htwo : 2 ≤ 2 ^ k := by
+    cases k with
+    | zero => exact False.elim (Nat.lt_irrefl 0 hk)
+    | succ k =>
+        rw [Nat.pow_succ]
+        have hpos : 0 < 2 ^ k := Nat.pow_pos (by decide : 0 < 2)
+        omega
+  rw [frobeniusFixedCoeffList, if_neg hk_ne]
+  simp only [evalCoeffList_cons]
+  rw [zero_add, evalCoeffList_replicate_zero_append_one,
+    frobeniusIter_eq_linearPow_two_pow]
+  have hpow_two : linearPow β 2 = β * β := by
+    rw [show (2 : Nat) = 1 + 1 from rfl, linearPow_succ,
+      linearPow_succ, linearPow_zero, one_mul]
+  calc
+    β * (1 + β * linearPow β (2 ^ k - 2))
+        = β * 1 + β * (β * linearPow β (2 ^ k - 2)) := by
+            rw [left_distrib]
+    _ = β + β * (β * linearPow β (2 ^ k - 2)) := by rw [mul_one]
+    _ = β + (β * β) * linearPow β (2 ^ k - 2) := by rw [mul_assoc]
+    _ = β + linearPow β 2 * linearPow β (2 ^ k - 2) := by rw [hpow_two]
+    _ = β + linearPow β (2 + (2 ^ k - 2)) := by
+            have hadd :=
+              (linearPow_add (f := f) (hirr := hirr) β 2 (2 ^ k - 2)).symm
+            rw [hadd]
+    _ = β + linearPow β (2 ^ k) := by
+            have hidx : 2 + (2 ^ k - 2) = 2 ^ k := by omega
+            rw [hidx]
+    _ = linearPow β (2 ^ k) + β := by rw [add_comm]
+
+private theorem getLast?_append_singleton {α : Type} (xs : List α) (x : α) :
+    (xs ++ [x]).getLast? = some x := by
+  induction xs with
+  | nil =>
+      simp
+  | cons y ys ih =>
+      cases ys with
+      | nil => simp
+      | cons z zs =>
+          simpa using ih
+
+private theorem coeffListTopNonzero_frobeniusFixedCoeffList_of_pos
+    (hf_pos : 0 < f.degree) {k : Nat} (hk : 0 < k) :
+    coeffListTopNonzero
+      (f := f) (hirr := hirr)
+      (frobeniusFixedCoeffList (f := f) (hirr := hirr) k) := by
+  have hk_ne : k ≠ 0 := Nat.ne_of_gt hk
+  refine ⟨1, ?_, one_ne_zero (f := f) (hirr := hirr) hf_pos⟩
+  rw [frobeniusFixedCoeffList, if_neg hk_ne]
+  change
+    (((0 : GF2nPoly f hirr) :: 1 ::
+        List.replicate (2 ^ k - 2) (0 : GF2nPoly f hirr)) ++ [1]).getLast? =
+      some 1
+  exact getLast?_append_singleton
+    ((0 : GF2nPoly f hirr) :: 1 ::
+      List.replicate (2 ^ k - 2) (0 : GF2nPoly f hirr)) 1
+
+private theorem add_eq_zero_iff_eq (a b : GF2nPoly f hirr) :
+    a + b = 0 ↔ a = b := by
+  constructor
+  · intro h
+    calc
+      a = a + 0 := (add_zero a).symm
+      _ = a + (a + b) := by rw [h]
+      _ = (a + a) + b := by rw [add_assoc]
+      _ = b := by rw [add_self, zero_add]
+  · intro h
+    rw [h, add_self]
+
+/--
+At most `2^k` packed quotient elements are fixed by the `k`-fold Frobenius
+when `0 < k`.
+
+This is the root-count specialization for `T^(2^k) + T`, stated directly
+against the canonical duplicate-free `elements` enumeration so downstream
+Rabin arguments can combine it with `elements_card`.
+-/
+theorem frobeniusIter_fixed_elements_length_le_two_pow
+    (hf_pos : 0 < f.degree) {k : Nat} (hk : 0 < k) :
+    ((elements (f := f) (hirr := hirr)).filter
+      (fun β => decide (frobeniusIter β k = β))).length ≤ 2 ^ k := by
+  let cs := frobeniusFixedCoeffList (f := f) (hirr := hirr) k
+  have htop :
+      coeffListTopNonzero (f := f) (hirr := hirr) cs :=
+    coeffListTopNonzero_frobeniusFixedCoeffList_of_pos
+      (f := f) (hirr := hirr) hf_pos hk
+  have hroot :=
+    evalCoeffList_rootsIn_elements_length_le_degree
+      (f := f) (hirr := hirr) cs htop
+  have hlen : cs.length - 1 = 2 ^ k := by
+    have hk_ne : k ≠ 0 := Nat.ne_of_gt hk
+    have htwo : 2 ≤ 2 ^ k := by
+      cases k with
+      | zero => exact False.elim (Nat.lt_irrefl 0 hk)
+      | succ k =>
+          rw [Nat.pow_succ]
+          have hpos : 0 < 2 ^ k := Nat.pow_pos (by decide : 0 < 2)
+          omega
+    dsimp [cs]
+    rw [frobeniusFixedCoeffList, if_neg hk_ne]
+    simp
+    omega
+  have hfilter :
+      (elements (f := f) (hirr := hirr)).filter
+          (fun β => decide (frobeniusIter β k = β)) =
+        (elements (f := f) (hirr := hirr)).filter
+          (fun β => decide (evalCoeffList cs β = 0)) := by
+    apply List.filter_congr
+    intro β _hβ
+    have heval :
+        evalCoeffList cs β = frobeniusIter β k + β := by
+      dsimp [cs]
+      exact evalCoeffList_frobeniusFixedCoeffList_of_pos
+        (f := f) (hirr := hirr) β hk
+    by_cases hfixed : frobeniusIter β k = β
+    · have hzero : evalCoeffList cs β = 0 := by
+        rw [heval, hfixed, add_self]
+      rw [decide_eq_true hfixed, decide_eq_true hzero]
+    · have hnot_zero : evalCoeffList cs β ≠ 0 := by
+        intro hzero
+        apply hfixed
+        exact (add_eq_zero_iff_eq
+          (f := f) (hirr := hirr) (frobeniusIter β k) β).mp
+          (by rw [← heval]; exact hzero)
+      rw [decide_eq_false hfixed, decide_eq_false hnot_zero]
+  rw [hfilter]
+  exact hlen ▸ hroot
+
 /-- Product of a list of packed quotient elements (right fold). -/
 def listProd (xs : List (GF2nPoly f hirr)) : GF2nPoly f hirr :=
   xs.foldr (· * ·) 1
