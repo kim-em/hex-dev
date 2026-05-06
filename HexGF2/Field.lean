@@ -1396,5 +1396,200 @@ theorem nonzeroElements_map_mul_left_perm
       · rw [← mul_assoc, mul_inv_cancel a ha, one_mul]
   exact perm_of_nodup_mem_iff hmap_nodup hL_nodup hmem_iff
 
+/-- Linear natural powers in the packed quotient field. This proof-facing
+variant has simple recursion equations; executable exponentiation remains the
+`Pow` instance above. -/
+def linearPow (a : GF2nPoly f hirr) : Nat → GF2nPoly f hirr
+  | 0 => 1
+  | n + 1 => linearPow a n * a
+
+@[simp] theorem linearPow_zero (a : GF2nPoly f hirr) :
+    linearPow a 0 = 1 :=
+  rfl
+
+@[simp] theorem linearPow_succ (a : GF2nPoly f hirr) (n : Nat) :
+    linearPow a (n + 1) = linearPow a n * a :=
+  rfl
+
+/-- Linear quotient powers turn addition of exponents into multiplication. -/
+theorem linearPow_add (a : GF2nPoly f hirr) (m n : Nat) :
+    linearPow a (m + n) = linearPow a m * linearPow a n := by
+  induction n with
+  | zero =>
+      rw [Nat.add_zero, linearPow_zero, mul_one]
+  | succ n ih =>
+      calc linearPow a (m + (n + 1))
+          = linearPow a ((m + n) + 1) := by rw [Nat.add_succ]
+        _ = linearPow a (m + n) * a := rfl
+        _ = (linearPow a m * linearPow a n) * a := by rw [ih]
+        _ = linearPow a m * (linearPow a n * a) := by rw [mul_assoc]
+        _ = linearPow a m * linearPow a (n + 1) := rfl
+
+/-- Linear powers of a product factor in the commutative packed quotient. -/
+theorem linearPow_mul (a b : GF2nPoly f hirr) (n : Nat) :
+    linearPow (a * b) n = linearPow a n * linearPow b n := by
+  induction n with
+  | zero =>
+      rw [linearPow_zero, linearPow_zero, linearPow_zero, one_mul]
+  | succ n ih =>
+      calc linearPow (a * b) (n + 1)
+          = linearPow (a * b) n * (a * b) := rfl
+        _ = (linearPow a n * linearPow b n) * (a * b) := by rw [ih]
+        _ = linearPow a n * (linearPow b n * (a * b)) := by rw [mul_assoc]
+        _ = linearPow a n * ((linearPow b n * a) * b) := by
+              rw [mul_assoc (linearPow b n) a b]
+        _ = linearPow a n * ((a * linearPow b n) * b) := by
+              rw [mul_comm (linearPow b n) a]
+        _ = linearPow a n * (a * (linearPow b n * b)) := by
+              rw [mul_assoc a (linearPow b n) b]
+        _ = (linearPow a n * a) * (linearPow b n * b) := by
+              rw [← mul_assoc]
+        _ = linearPow a (n + 1) * linearPow b (n + 1) := rfl
+
+/-- Iterated Frobenius squaring agrees with linear powering by `2^k`. -/
+theorem frobeniusIter_eq_linearPow_two_pow (a : GF2nPoly f hirr) (k : Nat) :
+    frobeniusIter a k = linearPow a (2 ^ k) := by
+  induction k with
+  | zero =>
+      change a = linearPow a 1
+      rw [show (1 : Nat) = 0 + 1 from rfl, linearPow_succ, linearPow_zero, one_mul]
+  | succ k ih =>
+      calc frobeniusIter a (k + 1)
+          = frobeniusIter a k * frobeniusIter a k := rfl
+        _ = linearPow a (2 ^ k) * linearPow a (2 ^ k) := by rw [ih]
+        _ = linearPow a (2 ^ k + 2 ^ k) := by
+              rw [linearPow_add]
+        _ = linearPow a (2 ^ (k + 1)) := by
+              rw [Nat.pow_succ]
+              rw [show 2 ^ k + 2 ^ k = 2 ^ k * 2 by omega]
+
+/-- The quotient identity is not zero under a positive-degree modulus. -/
+theorem one_ne_zero (hf_pos : 0 < f.degree) :
+    (1 : GF2nPoly f hirr) ≠ 0 := by
+  intro h
+  have hval := congrArg GF2nPoly.val h
+  have hone_val : (1 : GF2nPoly f hirr).val = (1 : GF2Poly) := by
+    rw [one_val]
+    exact GF2Poly.mod_eq_self_of_reduced (1 : GF2Poly) f
+      (Or.inr (by
+        change (GF2Poly.monomial 0).degree < f.degree
+        rw [show (GF2Poly.monomial 0).degree = 0 from by
+          exact GF2Poly.degree_eq_of_degree?_eq_some (GF2Poly.degree?_monomial 0)]
+        exact hf_pos))
+  rw [hone_val, zero_val] at hval
+  have hcoeff := congrArg (fun p : GF2Poly => p.coeff 0) hval
+  change (GF2Poly.monomial 0).coeff 0 = (0 : GF2Poly).coeff 0 at hcoeff
+  rw [GF2Poly.coeff_monomial_self, GF2Poly.coeff_zero] at hcoeff
+  contradiction
+
+/-- Product of a list of packed quotient elements (right fold). -/
+def listProd (xs : List (GF2nPoly f hirr)) : GF2nPoly f hirr :=
+  xs.foldr (· * ·) 1
+
+@[simp] theorem listProd_nil :
+    listProd ([] : List (GF2nPoly f hirr)) = 1 :=
+  rfl
+
+@[simp] theorem listProd_cons (x : GF2nPoly f hirr)
+    (xs : List (GF2nPoly f hirr)) :
+    listProd (x :: xs) = x * listProd xs :=
+  rfl
+
+/-- The list product is invariant under `List.Perm`. -/
+theorem listProd_perm {xs ys : List (GF2nPoly f hirr)}
+    (h : List.Perm xs ys) :
+    listProd xs = listProd ys := by
+  induction h with
+  | nil => rfl
+  | cons _ _ ih =>
+      simp only [listProd_cons]
+      rw [ih]
+  | swap x y zs =>
+      simp only [listProd_cons]
+      rw [← mul_assoc, ← mul_assoc, mul_comm x y]
+  | trans _ _ ih₁ ih₂ =>
+      exact ih₁.trans ih₂
+
+/-- Mapping a list by left-multiplication factors out as a linear power of the
+multiplier times the original list product. -/
+theorem listProd_map_mul_left (a : GF2nPoly f hirr)
+    (xs : List (GF2nPoly f hirr)) :
+    listProd (xs.map (fun b => a * b)) = linearPow a xs.length * listProd xs := by
+  induction xs with
+  | nil =>
+      simp only [List.map_nil, List.length_nil, listProd_nil, linearPow_zero, one_mul]
+  | cons x xs ih =>
+      calc listProd ((x :: xs).map (fun b => a * b))
+          = (a * x) * listProd (xs.map (fun b => a * b)) := by
+              simp only [List.map_cons, listProd_cons]
+        _ = (a * x) * (linearPow a xs.length * listProd xs) := by rw [ih]
+        _ = a * (x * (linearPow a xs.length * listProd xs)) := by rw [mul_assoc]
+        _ = a * ((x * linearPow a xs.length) * listProd xs) := by
+              rw [mul_assoc x (linearPow a xs.length) (listProd xs)]
+        _ = a * ((linearPow a xs.length * x) * listProd xs) := by
+              rw [mul_comm x (linearPow a xs.length)]
+        _ = a * (linearPow a xs.length * (x * listProd xs)) := by
+              rw [mul_assoc (linearPow a xs.length) x (listProd xs)]
+        _ = (a * linearPow a xs.length) * (x * listProd xs) := by
+              rw [← mul_assoc]
+        _ = linearPow a (xs.length + 1) * (x * listProd xs) := by
+              rw [linearPow_succ, mul_comm (linearPow a xs.length) a]
+        _ = linearPow a (x :: xs).length * listProd (x :: xs) := by
+              simp only [listProd_cons, List.length_cons]
+
+/-- The product of a list of nonzero packed quotient elements is nonzero. -/
+theorem listProd_ne_zero (hf_pos : 0 < f.degree)
+    {xs : List (GF2nPoly f hirr)}
+    (hxs : ∀ x ∈ xs, x ≠ 0) :
+    listProd xs ≠ 0 := by
+  induction xs with
+  | nil =>
+      simp only [listProd_nil]
+      exact one_ne_zero (f := f) (hirr := hirr) hf_pos
+  | cons x xs ih =>
+      simp only [listProd_cons]
+      apply mul_ne_zero_of_ne_zero
+      · exact hxs x List.mem_cons_self
+      · exact ih (fun y hy => hxs y (List.mem_cons_of_mem _ hy))
+
+/-- Finite-field exponent theorem for the packed quotient: every nonzero
+quotient element raised to the number of nonzero representatives is `1`. -/
+theorem linearPow_pred_card_eq_one_of_ne_zero
+    (hf_pos : 0 < f.degree) {a : GF2nPoly f hirr} (ha : a ≠ 0) :
+    linearPow a (2 ^ f.degree - 1) = 1 := by
+  let L : List (GF2nPoly f hirr) := nonzeroElements (f := f) (hirr := hirr)
+  let P : GF2nPoly f hirr := listProd L
+  have hL_card : L.length = 2 ^ f.degree - 1 :=
+    nonzeroElements_card (f := f) (hirr := hirr)
+  have hP_ne : P ≠ 0 :=
+    listProd_ne_zero (f := f) (hirr := hirr) hf_pos
+      (fun x hx => (mem_nonzeroElements x).mp hx)
+  have hperm := nonzeroElements_map_mul_left_perm
+    (f := f) (hirr := hirr) ha
+  have hprod_eq : listProd (L.map (fun b => a * b)) = P :=
+    listProd_perm hperm
+  have hfactor : listProd (L.map (fun b => a * b)) = linearPow a L.length * P :=
+    listProd_map_mul_left a L
+  have hkey : linearPow a L.length * P = P := hfactor.symm.trans hprod_eq
+  have hcancel : linearPow a L.length * P * P⁻¹ = P * P⁻¹ :=
+    congrArg (fun x => x * P⁻¹) hkey
+  rw [mul_assoc, mul_inv_cancel P hP_ne, mul_one] at hcancel
+  rw [hL_card] at hcancel
+  exact hcancel
+
+/-- Every packed quotient element is fixed by the degree-cardinality
+Frobenius iterate. -/
+theorem frobeniusIter_degree_eq_self
+    (hf_pos : 0 < f.degree) (a : GF2nPoly f hirr) :
+    frobeniusIter a f.degree = a := by
+  rw [frobeniusIter_eq_linearPow_two_pow]
+  have hpos : 0 < 2 ^ f.degree := Nat.pow_pos (by decide : 0 < 2)
+  have hsplit : 2 ^ f.degree = (2 ^ f.degree - 1) + 1 := by omega
+  by_cases ha : a = 0
+  · rw [ha, hsplit, linearPow_succ, mul_zero]
+  · rw [hsplit, linearPow_succ,
+      linearPow_pred_card_eq_one_of_ne_zero (f := f) (hirr := hirr) hf_pos ha,
+      one_mul]
+
 end GF2nPoly
 end Hex

@@ -293,7 +293,29 @@ theorem xpow2kMod_eq_modX_at_degree
     {g : GF2Poly} (hg_irr : GF2Poly.Irreducible g)
     (hg_pos : 0 < g.degree) :
     xpow2kMod g g.degree = monomial 1 % g := by
-  sorry
+  let Xq : GF2nPoly g hg_irr := GF2nPoly.X (f := g) (hirr := hg_irr)
+  have hfixed : GF2nPoly.frobeniusIter Xq g.degree = Xq :=
+    GF2nPoly.frobeniusIter_degree_eq_self
+      (f := g) (hirr := hg_irr) hg_pos Xq
+  have hreduce :
+      GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (xpow2kMod g g.degree) =
+        GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (monomial 1) := by
+    calc
+      GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (xpow2kMod g g.degree)
+          = GF2nPoly.frobeniusIter Xq g.degree := by
+              exact (GF2nPoly.quotient_X_frobeniusIter_eq_reduce_xpow2kMod
+                (f := g) (hirr := hg_irr) g.degree).symm
+      _ = Xq := hfixed
+      _ = GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (monomial 1) := rfl
+  have hval := congrArg GF2nPoly.val hreduce
+  rw [GF2nPoly.reducePoly_val_eq_mod, GF2nPoly.reducePoly_val_eq_mod] at hval
+  have hg_ne : g ≠ 0 := by
+    intro hzero
+    rw [hzero] at hg_pos
+    simp at hg_pos
+  have hxred := xpow2kMod_reduced g hg_ne g.degree
+  rw [GF2Poly.mod_eq_self_of_reduced (xpow2kMod g g.degree) g hxred] at hval
+  exact hval
 
 /--
 Backward Rabin degree theorem for packed GF2 polynomials.
