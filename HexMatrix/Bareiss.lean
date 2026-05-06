@@ -46,6 +46,26 @@ def det (data : BareissData n) : Int :=
       | some d => data.sign * d
       | none => data.sign
 
+/-- For a non-singular Bareiss elimination of a positive-size matrix, the
+encoded determinant is `sign * (last diagonal entry)`. -/
+theorem det_succ_eq {k : Nat} (data : BareissData (k + 1))
+    (h : data.singularStep = none) :
+    data.det = data.sign *
+      data.matrix[(⟨k, Nat.lt_succ_self k⟩ : Fin (k + 1))][
+        (⟨k, Nat.lt_succ_self k⟩ : Fin (k + 1))] := by
+  unfold det
+  rw [h]
+  rfl
+
+/-- For a non-singular Bareiss elimination of an empty matrix, the encoded
+determinant is the sign. -/
+theorem det_zero_eq (data : BareissData 0)
+    (h : data.singularStep = none) :
+    data.det = data.sign := by
+  unfold det
+  rw [h]
+  rfl
+
 end BareissData
 
 /-- Internal state of the no-pivot Bareiss recurrence, exposed read-only for
