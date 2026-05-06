@@ -514,7 +514,51 @@ theorem irreducible_dvd_xPowSubX_degree
     (hg_monic : DensePoly.Monic g)
     (hg_pos : 0 < g.degree?.getD 0) :
     g ∣ xPowSubX (p := p) (g.degree?.getD 0) := by
-  sorry
+  letI inst_dvd : DensePoly.DivModLaws (ZMod64 p) := inferInstance
+  -- Step 1: the quotient class of `X` is fixed by raising to `p ^ d`.
+  have hfix :
+      (FpPoly.Quotient.X (g := g) (hmonic := hg_monic) (hg_pos := hg_pos)) ^
+          (p ^ g.degree?.getD 0) =
+        FpPoly.Quotient.X (g := g) (hmonic := hg_monic) (hg_pos := hg_pos) :=
+    FpPoly.Quotient.pow_card_eq_self_of_irreducible hg_irr _
+  -- Step 2: bridge the LHS to the executable representative.
+  rw [quotient_X_pow_eq_reduce_frobeniusXPowMod hg_monic hg_pos
+      (g.degree?.getD 0)] at hfix
+  -- `Quotient.X = reduce X` is definitional.
+  have hX_def :
+      (FpPoly.Quotient.X (g := g) (hmonic := hg_monic) (hg_pos := hg_pos)) =
+        FpPoly.Quotient.reduce
+          (g := g) (hmonic := hg_monic) (hg_pos := hg_pos) FpPoly.X := rfl
+  rw [hX_def] at hfix
+  -- Step 3: extract the polynomial congruence `g ∣ frobeniusXPowMod - X`.
+  have hcongr :
+      g ∣ (FpPoly.frobeniusXPowMod g hg_monic (g.degree?.getD 0) - FpPoly.X) :=
+    FpPoly.Quotient.congr_of_reduce_eq_reduce hfix
+  -- Step 4: the absolute Frobenius identity, `g ∣ X^(p^d) - frobeniusXPowMod`.
+  have hp1 :
+      g ∣ ((DensePoly.monomial (p ^ g.degree?.getD 0) (1 : ZMod64 p)) -
+            FpPoly.frobeniusXPowMod g hg_monic (g.degree?.getD 0)) :=
+    @DensePoly.dvd_of_mod_eq_mod (ZMod64 p) _ _ _ inst_dvd _ _ _
+      (FpPoly.frobeniusXPowMod_mod_eq_monomial_mod g hg_monic
+        (g.degree?.getD 0)).symm
+  -- Step 5: rewrite `xPowSubX d` as the sum of the two divisible pieces.
+  have heq :
+      (xPowSubX (p := p) (g.degree?.getD 0)) =
+        ((DensePoly.monomial (p ^ g.degree?.getD 0) (1 : ZMod64 p)) -
+            FpPoly.frobeniusXPowMod g hg_monic (g.degree?.getD 0)) +
+          (FpPoly.frobeniusXPowMod g hg_monic (g.degree?.getD 0) - FpPoly.X) := by
+    unfold xPowSubX
+    apply DensePoly.ext_coeff
+    intro n
+    have hzero_sub : ((0 : ZMod64 p) - 0) = 0 := by grind
+    have hzero_add : ((0 : ZMod64 p) + 0) = 0 := by grind
+    rw [DensePoly.coeff_sub _ _ _ hzero_sub,
+        DensePoly.coeff_add _ _ _ hzero_add,
+        DensePoly.coeff_sub _ _ _ hzero_sub,
+        DensePoly.coeff_sub _ _ _ hzero_sub]
+    grind
+  rw [heq]
+  exact DensePoly.dvd_add_poly hp1 hcongr
 
 /--
 Divisibility chain on Rabin polynomials: if `d ∣ m`, then
