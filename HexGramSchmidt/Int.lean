@@ -133,6 +133,12 @@ private def setArrayEntry (rows : Array (Array Int)) (row col : Nat) (value : In
     Array (Array Int) :=
   rows.set! row (rows[row]!.set! col value)
 
+private theorem array_getElem!_set!_same {α : Type} [Inhabited α]
+    (xs : Array α) {i : Nat} (hi : i < xs.size) (v : α) :
+    (xs.set! i v)[i]! = v := by
+  rw [Array.getElem!_eq_getD]
+  simp [Array.getD, Array.set!_eq_setIfInBounds, hi]
+
 private theorem getArrayEntry_setArrayEntry_of_row_ne
     (rows : Array (Array Int)) (row col r c : Nat) (value : Int) (hr : r ≠ row) :
     getArrayEntry (setArrayEntry rows row col value) r c = getArrayEntry rows r c := by
@@ -142,6 +148,14 @@ private theorem getArrayEntry_setArrayEntry_of_col_ne
     (rows : Array (Array Int)) (row col c : Nat) (value : Int) (hc : c ≠ col) :
     getArrayEntry (setArrayEntry rows row col value) row c = getArrayEntry rows row c := by
   grind [getArrayEntry, setArrayEntry]
+
+private theorem getArrayEntry_setArrayEntry_self
+    (rows : Array (Array Int)) (row col : Nat) (value : Int)
+    (hrow : row < rows.size) (hcol : col < rows[row]!.size) :
+    getArrayEntry (setArrayEntry rows row col value) row col = value := by
+  unfold getArrayEntry setArrayEntry
+  rw [array_getElem!_set!_same rows hrow (rows[row]!.set! col value)]
+  exact array_getElem!_set!_same rows[row]! hcol value
 
 private theorem getArrayEntry_foldl_setArrayEntry_col_above
     (xs : List Nat) (coeffs rows : Array (Array Int)) (k i j : Nat)
@@ -167,6 +181,26 @@ private theorem getArrayEntry_foldl_setArrayEntry_col_above
       · rw [getArrayEntry_setArrayEntry_of_row_ne]
         exact hrow
 
+private theorem getArrayEntry_foldl_setArrayEntry_row_ne
+    (xs : List Nat) (coeffs rows : Array (Array Int)) (k i j : Nat)
+    (hxs : ∀ x ∈ xs, k < x) (hi : i ≤ k) :
+    getArrayEntry
+        (xs.foldl (fun next x => setArrayEntry next x k (getArrayEntry rows x k)) coeffs)
+        i j =
+      getArrayEntry coeffs i j := by
+  induction xs generalizing coeffs with
+  | nil =>
+      simp
+  | cons x xs ih =>
+      have hx : k < x := hxs x (by simp)
+      have hxs' : ∀ y ∈ xs, k < y := by
+        intro y hy
+        exact hxs y (by simp [hy])
+      simp only [List.foldl_cons]
+      rw [ih (setArrayEntry coeffs x k (getArrayEntry rows x k)) hxs']
+      rw [getArrayEntry_setArrayEntry_of_row_ne]
+      omega
+
 private def writeScaledColumn (coeffs rows : Array (Array Int)) (n k : Nat) :
     Array (Array Int) :=
   Id.run do
@@ -191,6 +225,20 @@ private theorem getArrayEntry_writeScaledColumn_above
     simp at hx
     omega
   · exact hij
+
+private theorem getArrayEntry_writeScaledColumn_diag
+    (coeffs rows : Array (Array Int)) (n k : Nat)
+    (hrow : k < coeffs.size) (hcol : k < coeffs[k]!.size) :
+    getArrayEntry (writeScaledColumn coeffs rows n k) k k =
+      getArrayEntry rows k k := by
+  unfold writeScaledColumn
+  simp [Std.Legacy.Range.forIn_eq_forIn_range', Std.Legacy.Range.size]
+  rw [getArrayEntry_foldl_setArrayEntry_row_ne]
+  · rw [getArrayEntry_setArrayEntry_self _ _ _ _ hrow hcol]
+  · intro x hx
+    simp at hx
+    omega
+  · omega
 
 private theorem getArrayEntry_default_row (j : Nat) :
     (default : Array Int)[j]! = 0 := by
@@ -311,13 +359,32 @@ private theorem scaledCoeffRows_lower_eq_coeffs
         GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ := by
   sorry
 
+/-- The scaled-coefficient array loop writes the same diagonal entries as the
+no-pivot Bareiss data over the full Gram matrix. -/
+private theorem scaledCoeffRows_diag_eq_noPivotData_diag
+    (b : Matrix Int n m) (i : Nat) (hi : i < n) :
+    getArrayEntry (scaledCoeffRows b) i i =
+      ((Matrix.bareissNoPivotData (Matrix.gramMatrix b)).matrix.row ⟨i, hi⟩)[
+        (⟨i, hi⟩ : Fin n)] := by
+  sorry
+
+/-- The no-pivot Bareiss diagonal for a Gram matrix is the public Gram
+determinant of the corresponding leading prefix. -/
+private theorem noPivotData_gram_diag_eq_gramDet
+    (b : Matrix Int n m) (i : Nat) (hi : i < n) :
+    ((Matrix.bareissNoPivotData (Matrix.gramMatrix b)).matrix.row ⟨i, hi⟩)[
+        (⟨i, hi⟩ : Fin n)] =
+      Int.ofNat (gramDet b (i + 1) (Nat.succ_le_of_lt hi)) := by
+  sorry
+
 /-- The scaled-coefficient loop stores the next leading Gram determinant on
 the diagonal. -/
 private theorem scaledCoeffRows_diag_eq_gramDet
     (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     getArrayEntry (scaledCoeffRows b) i i =
       Int.ofNat (gramDet b (i + 1) (Nat.succ_le_of_lt hi)) := by
-  sorry
+  rw [scaledCoeffRows_diag_eq_noPivotData_diag (b := b) i hi]
+  exact noPivotData_gram_diag_eq_gramDet (b := b) i hi
 
 theorem gramDet_zero (b : Matrix Int n m) :
     gramDet b 0 (Nat.zero_le n) = 1 := by
