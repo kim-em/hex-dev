@@ -1095,6 +1095,115 @@ private theorem foldl_eval_replicate_zero (β : Quotient g hmonic hg_pos) :
         _ = acc * (β ^ n * β) := by rw [mul_comm β (β ^ n)]
         _ = acc * β ^ (n + 1) := by rfl
 
+/-- Power-sum evaluation of a low-to-high coefficient list in the quotient,
+starting exponents at `base`. -/
+private def evalCoeffPowerSumFrom :
+    List (ZMod64 p) → Nat → Quotient g hmonic hg_pos → Quotient g hmonic hg_pos
+  | [], _, _ => 0
+  | coeff :: coeffs, base, β =>
+      reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C coeff) *
+          β ^ base +
+        evalCoeffPowerSumFrom coeffs (base + 1) β
+
+/-- Recursive low-to-high coefficient evaluation, equivalent to Horner but
+oriented by stored coefficient order. -/
+private def evalCoeffList :
+    List (ZMod64 p) → Quotient g hmonic hg_pos → Quotient g hmonic hg_pos
+  | [], _ => 0
+  | coeff :: coeffs, β =>
+      reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C coeff) +
+        β * evalCoeffList coeffs β
+
+private theorem mul_evalCoeffPowerSumFrom_eq_succ
+    (β : Quotient g hmonic hg_pos) :
+    ∀ coeffs base,
+      β * evalCoeffPowerSumFrom
+          (g := g) (hmonic := hmonic) (hg_pos := hg_pos) coeffs base β =
+        evalCoeffPowerSumFrom
+          (g := g) (hmonic := hmonic) (hg_pos := hg_pos) coeffs (base + 1) β
+  | [], _ => by
+      simp [evalCoeffPowerSumFrom]
+  | coeff :: coeffs, base => by
+      simp only [evalCoeffPowerSumFrom]
+      rw [left_distrib]
+      rw [mul_evalCoeffPowerSumFrom_eq_succ β coeffs (base + 1)]
+      congr 1
+      calc
+        β *
+            (reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+                  (DensePoly.C coeff) *
+                β ^ base) =
+            (reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+                  (DensePoly.C coeff) *
+                β ^ base) *
+              β := by rw [mul_comm]
+        _ =
+            reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+                (DensePoly.C coeff) *
+              (β ^ base * β) := by rw [mul_assoc]
+        _ =
+            reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+                (DensePoly.C coeff) *
+              β ^ (base + 1) := by rfl
+
+private theorem evalCoeffList_eq_powerSumFrom_zero
+    (β : Quotient g hmonic hg_pos) :
+    ∀ coeffs,
+      evalCoeffList (g := g) (hmonic := hmonic) (hg_pos := hg_pos) coeffs β =
+        evalCoeffPowerSumFrom
+          (g := g) (hmonic := hmonic) (hg_pos := hg_pos) coeffs 0 β
+  | [] => by
+      simp [evalCoeffList, evalCoeffPowerSumFrom]
+  | coeff :: coeffs => by
+      simp only [evalCoeffList, evalCoeffPowerSumFrom]
+      rw [evalCoeffList_eq_powerSumFrom_zero β coeffs]
+      rw [mul_evalCoeffPowerSumFrom_eq_succ
+        (g := g) (hmonic := hmonic) (hg_pos := hg_pos) β coeffs 0]
+      rw [pow_zero, mul_one]
+
+private theorem foldl_eval_reverse_eq_evalCoeffList
+    (β : Quotient g hmonic hg_pos) :
+    ∀ coeffs,
+      coeffs.reverse.foldl
+          (fun acc coeff =>
+            acc * β +
+              reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+                (DensePoly.C coeff))
+          0 =
+        evalCoeffList (g := g) (hmonic := hmonic) (hg_pos := hg_pos) coeffs β
+  | [] => by
+      simp [evalCoeffList]
+  | coeff :: coeffs => by
+      rw [List.reverse_cons, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [foldl_eval_reverse_eq_evalCoeffList β coeffs]
+      simp only [evalCoeffList]
+      rw [mul_comm (evalCoeffList
+        (g := g) (hmonic := hmonic) (hg_pos := hg_pos) coeffs β) β]
+      rw [add_comm]
+
+private theorem eval_eq_coeff_power_sum (f : FpPoly p)
+    (β : Quotient g hmonic hg_pos) :
+    eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β =
+      evalCoeffPowerSumFrom
+        (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        f.toArray.toList 0 β := by
+  unfold eval
+  rw [foldl_eval_reverse_eq_evalCoeffList
+    (g := g) (hmonic := hmonic) (hg_pos := hg_pos) β f.toArray.toList]
+  exact evalCoeffList_eq_powerSumFrom_zero
+    (g := g) (hmonic := hmonic) (hg_pos := hg_pos) β f.toArray.toList
+
+omit [ZMod64.PrimeModulus p] in
+private theorem eval_coeff_list_getD_eq_coeff (f : FpPoly p) (n : Nat) :
+    f.toArray.toList.getD n (0 : ZMod64 p) = f.coeff n := by
+  unfold DensePoly.toArray DensePoly.coeff
+  rw [Array.getD_eq_getD_getElem?]
+  change f.coeffs.toList[n]?.getD (0 : ZMod64 p) =
+    f.coeffs[n]?.getD (Zero.zero : ZMod64 p)
+  rw [Array.getElem?_toList]
+  rfl
+
 private theorem eval_add_core (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f + h) β =
       eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β +
