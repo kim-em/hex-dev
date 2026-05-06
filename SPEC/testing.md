@@ -117,6 +117,57 @@ is the `core` profile for `HexFoo`. It MUST:
    wrong-asymptotic intermediate stage that the entry point would
    exercise at realistic input sizes.
 
+## Oracle discipline
+
+Every operation in a library's SPEC API surface that is exercised by
+fixtures via `HexFoo/EmitFixtures.lean` MUST have an external-oracle
+cross-check that satisfies all three rules below. A SPEC declaration
+that names an operation but cannot be paired with an oracle satisfying
+these rules is not Phase-3-ready: file the oracle issue first and hold
+the library at `done_through ≤ 2`.
+
+1. **Independent expected value.** The oracle computes the expected
+   value from the original fixture input, using the oracle's own
+   implementation, never by re-running the operation under test on
+   Lean's output. Canonicalisation between Lean and oracle outputs
+   (e.g. monic-normalisation, sorting by a deterministic key,
+   extracting an explicit unit field) is permitted; re-applying the
+   operation under test as a "canonicalisation" is not. An oracle
+   that re-factors each component of Lean's factorisation through
+   FLINT and compares the union as a multiset accepts any Lean
+   output the oracle's own factor call can refine to the right
+   answer — including Lean returning the input unchanged. That is
+   not a cross-check.
+
+2. **Uniform contract on every input class.** No input-shape-dependent
+   bypass to a strictly weaker invariant. If the fixture set covers
+   square-free and non-square-free inputs, both must be cross-checked
+   against the same correctness contract. A self-consistency invariant
+   like `∏ buckets · residual = f` is a sanity check, not a
+   cross-check. If a class genuinely cannot be cross-checked under the
+   same contract, remove it from the fixture set or split it into a
+   separate operation with its own oracle.
+
+3. **Explicit non-coverage is a tracking obligation.** An emitted
+   operation that has no external oracle (whether deferred or
+   genuinely blocked) must be paired with an open `human-oversight`
+   issue, linked from both `EmitFixtures.lean` and the corresponding
+   oracle script's docstring. The library's `Conformance.lean`
+   docstring must not claim the operation as covered. Self-consistency
+   invariants are not a substitute for an external oracle and must
+   not be advertised as conformance coverage.
+
+For factorisation operations specifically, the canonical oracle
+pattern is **multiplicity-bucket comparison**: factor the input via
+the oracle into its irreducibles `∏ pᵢ^eᵢ`, group by exponent,
+monic-normalise each side, and require Lean's output to be a valid
+refinement of the oracle's irreducible decomposition under the
+operation's documented bucket semantics (full irreducible
+factorisation, distinct-degree factorisation, square-free
+decomposition, etc.). This pattern is strict (rejects unfactored or
+under-decomposed Lean outputs) while still admitting the legitimate
+non-uniqueness of factor order.
+
 ## Banned anti-patterns
 
 These patterns have produced ceremony-heavy modules with no teeth and
