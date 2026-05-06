@@ -111,6 +111,30 @@ def findPivot? (M : Matrix Int n n) (col : Fin n) (start : Nat) :
     Option (Fin n) :=
   findPivotAux M col start (n - start)
 
+/-- A pivot returned by `findPivotAux` is always at or below its starting row. -/
+theorem findPivotAux_ge_start (M : Matrix Int n n) (col : Fin n)
+    (start fuel : Nat) {pivot : Fin n}
+    (hfind : findPivotAux M col start fuel = some pivot) :
+    start ≤ pivot.val := by
+  induction fuel generalizing start with
+  | zero =>
+      simp [findPivotAux] at hfind
+  | succ fuel ih =>
+      by_cases hstart : start < n
+      · simp [findPivotAux, hstart] at hfind
+        split at hfind
+        · exact Nat.le_trans (Nat.le_succ start) (ih (start + 1) hfind)
+        · cases hfind
+          exact Nat.le_refl _
+      · simp [findPivotAux, hstart] at hfind
+
+/-- A pivot returned by `findPivot?` is always at or below its starting row. -/
+theorem findPivot?_ge_start (M : Matrix Int n n) (col : Fin n)
+    (start : Nat) {pivot : Fin n}
+    (hfind : findPivot? M col start = some pivot) :
+    start ≤ pivot.val :=
+  findPivotAux_ge_start M col start (n - start) hfind
+
 /-- Apply one Bareiss update step to the trailing submatrix strictly below and
 to the right of the current pivot. -/
 def stepMatrix (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int) :
