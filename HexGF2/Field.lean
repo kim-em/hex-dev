@@ -1287,6 +1287,14 @@ theorem one_val :
   unfold one
   rw [reducePoly_val_eq_mod]
 
+/-- The value of a quotient sum is the polynomial sum reduced modulo the
+defining irreducible. -/
+theorem add_val (a b : GF2nPoly f hirr) :
+    (a + b).val = (a.val + b.val) % f := by
+  show (add a b).val = _
+  unfold add
+  rw [reducePoly_val_eq_mod]
+
 /-- The value of the additive identity is the zero polynomial. -/
 @[simp] theorem zero_val :
     (0 : GF2nPoly f hirr).val = (0 : GF2Poly) := rfl
@@ -1294,6 +1302,55 @@ theorem one_val :
 /-- A reduced quotient value is its own remainder modulo `f`. -/
 private theorem val_mod_eq (a : GF2nPoly f hirr) : a.val % f = a.val :=
   GF2Poly.mod_eq_self_of_reduced a.val f a.val_reduced
+
+/-- Addition is commutative on the packed quotient. -/
+theorem add_comm (a b : GF2nPoly f hirr) : a + b = b + a := by
+  apply eq_of_val_eq
+  rw [add_val, add_val, GF2Poly.add_comm]
+
+/-- Addition is associative on the packed quotient. -/
+theorem add_assoc (a b c : GF2nPoly f hirr) :
+    (a + b) + c = a + (b + c) := by
+  apply eq_of_val_eq
+  rw [add_val, add_val, add_val, add_val]
+  have hleft : (((a.val + b.val) % f) + c.val) % f =
+      (a.val + b.val + c.val) % f := by
+    have h := mod_add_mod_eq_mod_add (a.val + b.val) c.val f
+    rw [val_mod_eq c] at h
+    exact h
+  have hright : (a.val + ((b.val + c.val) % f)) % f =
+      (a.val + (b.val + c.val)) % f := by
+    have h := mod_add_mod_eq_mod_add a.val (b.val + c.val) f
+    rw [val_mod_eq a] at h
+    exact h
+  rw [hleft, hright, GF2Poly.add_assoc]
+
+private theorem add_pair_swap_quot
+    (a b c d : GF2nPoly f hirr) :
+    (a + b) + (c + d) = (a + c) + (b + d) := by
+  rw [add_assoc a b (c + d)]
+  rw [← add_assoc b c d]
+  rw [add_comm b c]
+  rw [add_assoc c b d]
+  rw [← add_assoc a c (b + d)]
+
+/-- The additive identity is a left identity. -/
+@[simp] theorem zero_add (a : GF2nPoly f hirr) :
+    (0 : GF2nPoly f hirr) + a = a := by
+  apply eq_of_val_eq
+  rw [add_val, zero_val, GF2Poly.zero_add, val_mod_eq]
+
+/-- The additive identity is a right identity. -/
+@[simp] theorem add_zero (a : GF2nPoly f hirr) :
+    a + (0 : GF2nPoly f hirr) = a := by
+  rw [add_comm, zero_add]
+
+/-- Every packed quotient element is its own additive inverse in
+characteristic two. -/
+@[simp] theorem add_self (a : GF2nPoly f hirr) : a + a = 0 := by
+  apply eq_of_val_eq
+  rw [add_val, GF2Poly.add_self]
+  exact GF2Poly.mod_eq_self_of_reduced 0 f (Or.inl rfl)
 
 /-- Multiplication by zero on the right is zero. -/
 @[simp] theorem mul_zero (a : GF2nPoly f hirr) :
@@ -1329,6 +1386,94 @@ theorem mul_assoc (a b c : GF2nPoly f hirr) :
     exact h
   rw [hca, hcb, GF2Poly.mul_assoc]
 
+/-- Multiplication distributes over addition on the left in the packed
+quotient. -/
+theorem left_distrib (a b c : GF2nPoly f hirr) :
+    a * (b + c) = a * b + a * c := by
+  apply eq_of_val_eq
+  rw [mul_val, add_val, add_val, mul_val, mul_val]
+  have hmul : (a.val * ((b.val + c.val) % f)) % f =
+      (a.val * (b.val + c.val)) % f := by
+    have h := mod_mul_mod_eq_mod_mul a.val (b.val + c.val) f
+    rw [val_mod_eq a] at h
+    exact h
+  have hadd : (((a.val * b.val) % f) + ((a.val * c.val) % f)) % f =
+      (a.val * b.val + a.val * c.val) % f :=
+    mod_add_mod_eq_mod_add (a.val * b.val) (a.val * c.val) f
+  rw [hmul, hadd, GF2Poly.right_distrib]
+
+/-- Multiplication distributes over addition on the right in the packed
+quotient. -/
+theorem right_distrib (a b c : GF2nPoly f hirr) :
+    (a + b) * c = a * c + b * c := by
+  rw [mul_comm (a + b) c, left_distrib, mul_comm c a, mul_comm c b]
+
+/-- Squaring a sum is additive in characteristic two. -/
+theorem add_sq (a b : GF2nPoly f hirr) :
+    (a + b) * (a + b) = a * a + b * b := by
+  calc
+    (a + b) * (a + b) = a * (a + b) + b * (a + b) := by
+      rw [right_distrib]
+    _ = (a * a + a * b) + (b * a + b * b) := by
+      rw [left_distrib, left_distrib]
+    _ = (a * a + b * b) + (a * b + b * a) := by
+      rw [add_comm (b * a) (b * b)]
+      rw [add_pair_swap_quot]
+    _ = (a * a + b * b) + (a * b + a * b) := by
+      rw [mul_comm b a]
+    _ = a * a + b * b := by
+      rw [add_self, add_zero]
+
+/-- Iterated Frobenius preserves multiplication in the packed quotient. -/
+theorem frobeniusIter_mul (a b : GF2nPoly f hirr) (k : Nat) :
+    frobeniusIter (a * b) k = frobeniusIter a k * frobeniusIter b k := by
+  induction k with
+  | zero =>
+      rfl
+  | succ k ih =>
+      rw [frobeniusIter_succ, ih, frobeniusIter_succ, frobeniusIter_succ]
+      let x := frobeniusIter a k
+      let y := frobeniusIter b k
+      change (x * y) * (x * y) = (x * x) * (y * y)
+      calc
+        (x * y) * (x * y) = x * (y * (x * y)) := by rw [mul_assoc]
+        _ = x * ((y * x) * y) := by rw [mul_assoc y x y]
+        _ = x * ((x * y) * y) := by rw [mul_comm y x]
+        _ = x * (x * (y * y)) := by rw [mul_assoc x y y]
+        _ = (x * x) * (y * y) := by rw [← mul_assoc]
+
+/-- Iterated Frobenius preserves addition in the packed quotient. -/
+theorem frobeniusIter_add_eq (a b : GF2nPoly f hirr) (k : Nat) :
+    frobeniusIter (a + b) k = frobeniusIter a k + frobeniusIter b k := by
+  induction k with
+  | zero =>
+      rfl
+  | succ k ih =>
+      rw [frobeniusIter_succ, ih, frobeniusIter_succ, frobeniusIter_succ, add_sq]
+
+/-- Zero is fixed by every iterated Frobenius. -/
+@[simp] theorem frobeniusIter_zero_eq (k : Nat) :
+    frobeniusIter (0 : GF2nPoly f hirr) k = 0 := by
+  induction k with
+  | zero =>
+      rfl
+  | succ k ih =>
+      rw [frobeniusIter_succ, ih, zero_mul]
+
+/-- Fixed packed quotient elements are closed under addition for a shared
+Frobenius iterate. -/
+theorem frobeniusIter_fixed_add {a b : GF2nPoly f hirr} {k : Nat}
+    (ha : frobeniusIter a k = a) (hb : frobeniusIter b k = b) :
+    frobeniusIter (a + b) k = a + b := by
+  rw [frobeniusIter_add_eq, ha, hb]
+
+/-- Fixed packed quotient elements are closed under multiplication for a shared
+Frobenius iterate. -/
+theorem frobeniusIter_fixed_mul {a b : GF2nPoly f hirr} {k : Nat}
+    (ha : frobeniusIter a k = a) (hb : frobeniusIter b k = b) :
+    frobeniusIter (a * b) k = a * b := by
+  rw [frobeniusIter_mul, ha, hb]
+
 /-- The multiplicative identity is a left identity. -/
 theorem one_mul (a : GF2nPoly f hirr) :
     (1 : GF2nPoly f hirr) * a = a := by
@@ -1344,6 +1489,129 @@ theorem one_mul (a : GF2nPoly f hirr) :
 theorem mul_one (a : GF2nPoly f hirr) :
     a * (1 : GF2nPoly f hirr) = a := by
   rw [mul_comm, one_mul]
+
+/-- One is fixed by every iterated Frobenius. -/
+@[simp] theorem frobeniusIter_one_eq (k : Nat) :
+    frobeniusIter (1 : GF2nPoly f hirr) k = 1 := by
+  induction k with
+  | zero =>
+      rfl
+  | succ k ih =>
+      rw [frobeniusIter_succ, ih, one_mul]
+
+/-- Reducing the zero polynomial gives the quotient zero. -/
+@[simp] theorem reducePoly_zero :
+    reducePoly (f := f) (hirr := hirr) 0 = 0 := by
+  apply eq_of_val_eq
+  rw [reducePoly_val_eq_mod, zero_val]
+  exact GF2Poly.mod_eq_self_of_reduced 0 f (Or.inl rfl)
+
+/-- Reducing the constant-one monomial gives the quotient one. -/
+@[simp] theorem reducePoly_monomial_zero :
+    reducePoly (f := f) (hirr := hirr) (GF2Poly.monomial 0) = 1 := by
+  rfl
+
+/-- If the quotient class of `X` is fixed by a Frobenius iterate, then every
+monomial quotient class is fixed by the same iterate. -/
+theorem frobeniusIter_reducePoly_monomial_eq_self_of_X_fixed {k : Nat}
+    (hX : frobeniusIter (X (f := f) (hirr := hirr)) k =
+      X (f := f) (hirr := hirr)) :
+    ∀ n : Nat,
+      frobeniusIter
+          (reducePoly (f := f) (hirr := hirr) (GF2Poly.monomial n)) k =
+        reducePoly (f := f) (hirr := hirr) (GF2Poly.monomial n)
+  | 0 => by
+      rw [reducePoly_monomial_zero, frobeniusIter_one_eq]
+  | n + 1 => by
+      have ih := frobeniusIter_reducePoly_monomial_eq_self_of_X_fixed hX n
+      have hprod :
+          reducePoly (f := f) (hirr := hirr) (GF2Poly.monomial (n + 1)) =
+            X (f := f) (hirr := hirr) *
+              reducePoly (f := f) (hirr := hirr) (GF2Poly.monomial n) := by
+        calc
+          reducePoly (f := f) (hirr := hirr) (GF2Poly.monomial (n + 1))
+              = reducePoly (f := f) (hirr := hirr)
+                  (GF2Poly.monomial 1 * GF2Poly.monomial n) := by
+                    rw [GF2Poly.monomial_mul_monomial]
+                    rw [Nat.add_comm]
+          _ = reducePoly (f := f) (hirr := hirr)
+                ((reducePoly (f := f) (hirr := hirr) (GF2Poly.monomial 1)).val *
+                  (reducePoly (f := f) (hirr := hirr) (GF2Poly.monomial n)).val) := by
+                    rw [reducePoly_mul_eq]
+          _ = X (f := f) (hirr := hirr) *
+                reducePoly (f := f) (hirr := hirr) (GF2Poly.monomial n) := rfl
+      rw [hprod]
+      exact frobeniusIter_fixed_mul hX ih
+
+/-- If the quotient class of `X` is fixed by a Frobenius iterate, then any
+Boolean coefficient list starting at an arbitrary monomial degree is fixed. -/
+theorem frobeniusIter_reducePoly_ofBoolListFrom_eq_self_of_X_fixed {k : Nat}
+    (hX : frobeniusIter (X (f := f) (hirr := hirr)) k =
+      X (f := f) (hirr := hirr)) :
+    ∀ (start : Nat) (bs : List Bool),
+      frobeniusIter
+          (reducePoly (f := f) (hirr := hirr)
+            (GF2Poly.ofBoolListFrom start bs)) k =
+        reducePoly (f := f) (hirr := hirr)
+          (GF2Poly.ofBoolListFrom start bs)
+  | start, [] => by
+      simp [GF2Poly.ofBoolListFrom]
+  | start, b :: bs => by
+      have htail :=
+        frobeniusIter_reducePoly_ofBoolListFrom_eq_self_of_X_fixed hX (start + 1) bs
+      have hterm :
+          frobeniusIter
+              (reducePoly (f := f) (hirr := hirr)
+                (if b then GF2Poly.monomial start else 0)) k =
+            reducePoly (f := f) (hirr := hirr)
+              (if b then GF2Poly.monomial start else 0) := by
+        cases b
+        · simp
+        · exact frobeniusIter_reducePoly_monomial_eq_self_of_X_fixed
+            (f := f) (hirr := hirr) hX start
+      have hsum :
+          reducePoly (f := f) (hirr := hirr)
+              ((if b then GF2Poly.monomial start else 0) +
+                GF2Poly.ofBoolListFrom (start + 1) bs) =
+            reducePoly (f := f) (hirr := hirr)
+                (if b then GF2Poly.monomial start else 0) +
+              reducePoly (f := f) (hirr := hirr)
+                (GF2Poly.ofBoolListFrom (start + 1) bs) := by
+        rw [reducePoly_add_eq]
+        rfl
+      change
+        frobeniusIter
+            (reducePoly (f := f) (hirr := hirr)
+              ((if b then GF2Poly.monomial start else 0) +
+                GF2Poly.ofBoolListFrom (start + 1) bs)) k =
+          reducePoly (f := f) (hirr := hirr)
+            ((if b then GF2Poly.monomial start else 0) +
+              GF2Poly.ofBoolListFrom (start + 1) bs)
+      rw [hsum]
+      exact frobeniusIter_fixed_add hterm htail
+
+/-- If the quotient class of `X` is fixed by a Frobenius iterate, then every
+Boolean coefficient expression generated from `X` is fixed. -/
+theorem frobeniusIter_boolListExpression_eq_self_of_X_fixed {k : Nat}
+    (hX : frobeniusIter (X (f := f) (hirr := hirr)) k =
+      X (f := f) (hirr := hirr)) (bs : List Bool) :
+    frobeniusIter (boolListExpression (f := f) (hirr := hirr) bs) k =
+      boolListExpression (f := f) (hirr := hirr) bs := by
+  unfold boolListExpression GF2Poly.ofBoolList
+  exact frobeniusIter_reducePoly_ofBoolListFrom_eq_self_of_X_fixed
+    (f := f) (hirr := hirr) hX 0 bs
+
+/-- If the quotient class of `X` is fixed by a Frobenius iterate, then every
+packed quotient-field element is fixed by the same iterate. -/
+theorem frobeniusIter_eq_self_of_X_fixed {k : Nat}
+    (hX : frobeniusIter (X (f := f) (hirr := hirr)) k =
+      X (f := f) (hirr := hirr)) (a : GF2nPoly f hirr) :
+    frobeniusIter a k = a := by
+  rcases exists_boolListExpression (f := f) (hirr := hirr) a with
+    ⟨bs, _hlen, hbs⟩
+  rw [← hbs]
+  exact frobeniusIter_boolListExpression_eq_self_of_X_fixed
+    (f := f) (hirr := hirr) hX bs
 
 /-- The inverse cancels on the left for nonzero quotient elements. -/
 theorem inv_mul_cancel (a : GF2nPoly f hirr) (ha : a ≠ 0) :
