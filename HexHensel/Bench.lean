@@ -17,12 +17,19 @@ Scientific registrations:
 * `runLiftToZChecksum`: canonical lift from `F_5[x]` to `Z[x]`, `O(n)`.
 * `runReduceModPowChecksum`: coefficient reduction modulo `5^k`, `O(n)`.
 * `runLinearHenselStepChecksum`: one linear Hensel correction, `O(n^2)`.
-* `runHenselLiftChecksum`: fixed-precision iterative linear lift, `O(n^2)`.
+* `runHenselLiftChecksum`: iterative linear lift over `(n, k)`, `O(n^2 k)`.
 * `runQuadraticHenselStepChecksum`: one quadratic Hensel correction, `O(n^2)`.
 * `runPolyProductChecksum`: ordered product of `n` linear factors, `O(n^2)`.
-* `runMultifactorLiftChecksum`: two-factor ordered multifactor lift, `O(n^2)`.
+* `runMultifactorLiftChecksum`: two-factor ordered lift over `(n, k)`,
+  `O(n^2 k)`.
 * `runMultifactorLiftQuadraticChecksum`: production quadratic multifactor lift,
-  `O(n^2)`.
+  `O(n^2 log k)`.
+
+Compare groups:
+
+* `compare runMultifactorLiftChecksum runMultifactorLiftQuadraticChecksum`
+  checks the linear and quadratic multifactor lifters on the shared encoded
+  `(n, k)` fixture schedule.
 -/
 
 namespace Hex
@@ -47,6 +54,7 @@ structure BridgeInput where
 
 /-- Prepared input for one linear Hensel step and the iterative wrapper. -/
 structure LinearInput where
+  k : Nat := 3
   f : ZPoly
   g : ZPoly
   h : ZPoly
@@ -65,9 +73,38 @@ structure QuadraticInput where
 
 /-- Prepared input for ordered multifactor helpers. -/
 structure MultifactorInput where
+  k : Nat := 3
   f : ZPoly
   factors : Array ZPoly
   deriving Hashable
+
+/-- Encoding scale for benchmark parameters that vary both degree `n` and precision `k`. -/
+def liftParamScale : Nat :=
+  1000
+
+/-- Encode a degree/precision pair as the single `Nat` parameter accepted by lean-bench. -/
+def encodeLiftParam (n k : Nat) : Nat :=
+  n * liftParamScale + k
+
+/-- Decode the degree component from an encoded lift benchmark parameter. -/
+def liftBenchDegree (param : Nat) : Nat :=
+  param / liftParamScale
+
+/-- Decode the requested precision component from an encoded lift benchmark parameter. -/
+def liftBenchPrecision (param : Nat) : Nat :=
+  param % liftParamScale
+
+/-- Textbook cost model for linear lifting over encoded `(n, k)` parameters. -/
+def liftLinearComplexity (param : Nat) : Nat :=
+  let n := liftBenchDegree param
+  let k := liftBenchPrecision param
+  n * n * k
+
+/-- Textbook cost model for quadratic lifting over encoded `(n, k)` parameters. -/
+def liftQuadraticComplexity (param : Nat) : Nat :=
+  let n := liftBenchDegree param
+  let k := liftBenchPrecision param
+  n * n * Nat.log2 (k + 1)
 
 /-- Deterministic integer coefficient generator keyed by size, index, and salt. -/
 def zCoeffValue (n i salt : Nat) : Int :=
@@ -129,6 +166,11 @@ def prepLinearInput (n : Nat) : LinearInput :=
     s := 0
     t := 1 }
 
+/-- Encoded `(n, k)` fixture for iterative linear Hensel lift benchmarks. -/
+def prepLinearLiftInput (param : Nat) : LinearInput :=
+  { prepLinearInput (liftBenchDegree param) with
+    k := liftBenchPrecision param }
+
 /-- Per-parameter fixture for quadratic Hensel operations. -/
 def prepQuadraticInput (n : Nat) : QuadraticInput :=
   let g := linearZFactor 43
@@ -157,6 +199,11 @@ def prepMultifactorLiftInput (n : Nat) : MultifactorInput :=
   { f := Array.polyProduct factors + DensePoly.scale (5 : Int) e
     factors := factors }
 
+/-- Encoded `(n, k)` fixture for iterative multifactor lift benchmarks. -/
+def prepMultifactorLiftPrecisionInput (param : Nat) : MultifactorInput :=
+  { prepMultifactorLiftInput (liftBenchDegree param) with
+    k := liftBenchPrecision param }
+
 /-- Benchmark target: reduce integer coefficients modulo `5`. -/
 def runModPChecksum (input : BridgeInput) : UInt64 :=
   checksumFpPoly <| ZPoly.modP 5 input.zpoly
@@ -176,7 +223,7 @@ def runLinearHenselStepChecksum (input : LinearInput) : UInt64 :=
 
 /-- Benchmark target: fixed-precision iterative linear Hensel lift. -/
 def runHenselLiftChecksum (input : LinearInput) : UInt64 :=
-  let r := ZPoly.henselLift 5 4 input.f input.g input.h input.s input.t
+  let r := ZPoly.henselLift 5 input.k input.f input.g input.h input.s input.t
   mixHash (checksumZPoly r.g) (checksumZPoly r.h)
 
 /-- Benchmark target: one quadratic Hensel correction step. -/
@@ -191,11 +238,11 @@ def runPolyProductChecksum (input : MultifactorInput) : UInt64 :=
 
 /-- Benchmark target: ordered multifactor lift of two prepared factors. -/
 def runMultifactorLiftChecksum (input : MultifactorInput) : UInt64 :=
-  checksumZPolyArray <| ZPoly.multifactorLift 5 3 input.f input.factors
+  checksumZPolyArray <| ZPoly.multifactorLift 5 input.k input.f input.factors
 
 /-- Benchmark target: production quadratic ordered multifactor lift. -/
 def runMultifactorLiftQuadraticChecksum (input : MultifactorInput) : UInt64 :=
-  checksumZPolyArray <| ZPoly.multifactorLiftQuadratic 5 3 input.f input.factors
+  checksumZPolyArray <| ZPoly.multifactorLiftQuadratic 5 input.k input.f input.factors
 
 /-
 Coefficient reduction maps each of the `n` dense integer coefficients once and
@@ -258,15 +305,24 @@ setup_benchmark runLinearHenselStepChecksum n => n * n
   }
 
 /-
-The wrapper performs a fixed number of linear steps for precision `5^4`, so the
-asymptotic model is the same quadratic dense-polynomial correction cost.
+The wrapper performs `k` linear correction steps over degree-`n` dense inputs;
+the single lean-bench parameter encodes `(n, k)` as `n * 1000 + k`, including
+Mignotte-sized precisions such as `42` on the scientific schedule.
 -/
-setup_benchmark runHenselLiftChecksum n => n * n
-  with prep := prepLinearInput
+setup_benchmark runHenselLiftChecksum param => liftLinearComplexity param
+  with prep := prepLinearLiftInput
   where {
-    paramFloor := 64
-    paramCeiling := 512
-    paramSchedule := .custom #[64, 96, 128, 192, 256, 384, 512]
+    paramFloor := encodeLiftParam 32 4
+    paramCeiling := encodeLiftParam 192 64
+    paramSchedule := .custom #[
+      encodeLiftParam 32 4,
+      encodeLiftParam 32 16,
+      encodeLiftParam 32 42,
+      encodeLiftParam 64 16,
+      encodeLiftParam 64 42,
+      encodeLiftParam 96 42,
+      encodeLiftParam 128 64,
+      encodeLiftParam 192 64]
     maxSecondsPerCall := 6.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -303,33 +359,48 @@ setup_benchmark runPolyProductChecksum n => n * n
   }
 
 /-
-This two-factor multifactor fixture exercises the public ordered lift helper;
-with a fixed number of factors, the delegated Hensel lift dominates at
-quadratic dense-polynomial cost.
+This two-factor fixture exercises the public ordered lift helper over encoded
+`(n, k)` parameters; the linear delegated Hensel lift repeats a quadratic
+dense-polynomial correction `k` times.
 -/
-setup_benchmark runMultifactorLiftChecksum n => n * n
-  with prep := prepMultifactorLiftInput
+setup_benchmark runMultifactorLiftChecksum param => liftLinearComplexity param
+  with prep := prepMultifactorLiftPrecisionInput
   where {
-    paramFloor := 64
-    paramCeiling := 512
-    paramSchedule := .custom #[64, 96, 128, 192, 256, 384, 512]
+    paramFloor := encodeLiftParam 32 4
+    paramCeiling := encodeLiftParam 192 64
+    paramSchedule := .custom #[
+      encodeLiftParam 32 4,
+      encodeLiftParam 32 16,
+      encodeLiftParam 32 42,
+      encodeLiftParam 64 16,
+      encodeLiftParam 64 42,
+      encodeLiftParam 96 42,
+      encodeLiftParam 128 64,
+      encodeLiftParam 192 64]
     maxSecondsPerCall := 6.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
   }
 
 /-
-The production multifactor path uses the same fixed two-factor fixture but
-delegates the binary lift to the quadratic doubling step; with fixed target
-precision and dense degree-`n` factors, the factor/Bezout correction products
-dominate at quadratic cost.
+The production path shares the encoded `(n, k)` fixture with the linear lifter,
+but its binary lift uses only `ceil(log₂ k)` quadratic-doubling steps; the
+factor/Bezout correction products dominate each step.
 -/
-setup_benchmark runMultifactorLiftQuadraticChecksum n => n * n
-  with prep := prepMultifactorLiftInput
+setup_benchmark runMultifactorLiftQuadraticChecksum param => liftQuadraticComplexity param
+  with prep := prepMultifactorLiftPrecisionInput
   where {
-    paramFloor := 64
-    paramCeiling := 512
-    paramSchedule := .custom #[64, 96, 128, 192, 256, 384, 512]
+    paramFloor := encodeLiftParam 32 4
+    paramCeiling := encodeLiftParam 192 64
+    paramSchedule := .custom #[
+      encodeLiftParam 32 4,
+      encodeLiftParam 32 16,
+      encodeLiftParam 32 42,
+      encodeLiftParam 64 16,
+      encodeLiftParam 64 42,
+      encodeLiftParam 96 42,
+      encodeLiftParam 128 64,
+      encodeLiftParam 192 64]
     maxSecondsPerCall := 6.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
