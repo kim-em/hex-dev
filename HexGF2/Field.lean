@@ -1831,6 +1831,261 @@ private theorem perm_of_nodup_mem_iff
       have ih_perm := perm_of_nodup_mem_iff hxs' h_concat_nodup hmem'
       exact (ih_perm.cons x).trans hys_perm.symm
 
+/--
+The highest coefficient in a low-to-high quotient coefficient list is nonzero.
+
+This predicate gives the syntactic degree bound consumed by the root-count
+theorem: a list satisfying it represents a polynomial of degree strictly below
+the list length, with actual degree exactly `length - 1`.
+-/
+def coeffListTopNonzero : List (GF2nPoly f hirr) → Prop
+  | cs => ∃ c, cs.getLast? = some c ∧ c ≠ 0
+
+private theorem coeffListTopNonzero_tail_of_cons_cons
+    {c d : GF2nPoly f hirr} {cs : List (GF2nPoly f hirr)}
+    (h : coeffListTopNonzero (c :: d :: cs)) :
+    coeffListTopNonzero (d :: cs) := by
+  simpa [coeffListTopNonzero] using h
+
+private theorem dividedDifferenceCoeffs_getLast?
+    (c d : GF2nPoly f hirr) (cs : List (GF2nPoly f hirr))
+    (α : GF2nPoly f hirr) :
+    (dividedDifferenceCoeffs (c :: d :: cs) α).getLast? =
+      (d :: cs).getLast? := by
+  induction cs generalizing c d with
+  | nil =>
+      simp [dividedDifferenceCoeffs, evalCoeffList]
+  | cons e es ih =>
+      cases es with
+      | nil =>
+          simp [dividedDifferenceCoeffs, evalCoeffList]
+      | cons g gs =>
+          simpa [dividedDifferenceCoeffs] using ih e g
+
+private theorem coeffListTopNonzero_dividedDifferenceCoeffs
+    (c d : GF2nPoly f hirr) (cs : List (GF2nPoly f hirr))
+    (α : GF2nPoly f hirr)
+    (h : coeffListTopNonzero (d :: cs)) :
+    coeffListTopNonzero (dividedDifferenceCoeffs (c :: d :: cs) α) := by
+  rcases h with ⟨top, hlast, htop⟩
+  refine ⟨top, ?_, htop⟩
+  rw [dividedDifferenceCoeffs_getLast?]
+  exact hlast
+
+/-- Roots of a quotient-coefficient polynomial inside the canonical quotient
+enumeration. -/
+def rootsOfCoeffList (cs : List (GF2nPoly f hirr)) : List (GF2nPoly f hirr) :=
+  (elements (f := f) (hirr := hirr)).filter
+    (fun β => decide (evalCoeffList cs β = 0))
+
+@[simp] theorem mem_rootsOfCoeffList
+    (cs : List (GF2nPoly f hirr)) (β : GF2nPoly f hirr) :
+    β ∈ rootsOfCoeffList (f := f) (hirr := hirr) cs ↔
+      evalCoeffList cs β = 0 := by
+  simp [rootsOfCoeffList, mem_elements β]
+
+/-- The quotient-coefficient root list has no duplicate roots. -/
+theorem rootsOfCoeffList_nodup (cs : List (GF2nPoly f hirr)) :
+    (rootsOfCoeffList (f := f) (hirr := hirr) cs).Nodup := by
+  unfold rootsOfCoeffList
+  exact (elements_nodup (f := f) (hirr := hirr)).filter _
+
+private theorem length_filter_le (p : α → Bool) :
+    ∀ xs : List α, (xs.filter p).length ≤ xs.length
+  | [] => by simp
+  | x :: xs => by
+      by_cases hx : p x = true
+      · rw [List.filter_cons_of_pos hx]
+        simp only [List.length_cons]
+        exact Nat.succ_le_succ (length_filter_le p xs)
+      · rw [List.filter_cons_of_neg hx]
+        exact Nat.le_trans (length_filter_le p xs) (Nat.le_succ xs.length)
+
+private theorem length_le_of_nodup_subset
+    {α : Type} [DecidableEq α] {xs ys : List α}
+    (hxs : xs.Nodup) (hys : ys.Nodup)
+    (hsub : ∀ a, a ∈ xs → a ∈ ys) :
+    xs.length ≤ ys.length := by
+  let zs := ys.filter (fun a => decide (a ∈ xs))
+  have hzs_nodup : zs.Nodup := hys.filter _
+  have hmem : ∀ a, a ∈ xs ↔ a ∈ zs := by
+    intro a
+    constructor
+    · intro ha
+      exact List.mem_filter.mpr ⟨hsub a ha, decide_eq_true ha⟩
+    · intro ha
+      exact of_decide_eq_true (List.mem_filter.mp ha).2
+  have hperm : List.Perm xs zs :=
+    perm_of_nodup_mem_iff hxs hzs_nodup hmem
+  have hlen_eq : xs.length = zs.length := hperm.length_eq
+  calc
+    xs.length = zs.length := hlen_eq
+    _ ≤ ys.length := length_filter_le (fun a => decide (a ∈ xs)) ys
+
+private theorem add_ne_zero_of_ne {a b : GF2nPoly f hirr} (h : a ≠ b) :
+    a + b ≠ 0 := by
+  intro hab
+  apply h
+  calc
+    a = a + 0 := (add_zero a).symm
+    _ = a + (a + b) := by rw [hab]
+    _ = (a + a) + b := by rw [add_assoc]
+    _ = b := by rw [add_self, zero_add]
+
+private theorem roots_without_base_subset_dividedDifference_roots
+    (c d : GF2nPoly f hirr) (cs : List (GF2nPoly f hirr))
+    {α β : GF2nPoly f hirr}
+    (hα : α ∈ rootsOfCoeffList (f := f) (hirr := hirr) (c :: d :: cs))
+    (hβ : β ∈ rootsOfCoeffList (f := f) (hirr := hirr) (c :: d :: cs))
+    (hβα : β ≠ α) :
+    β ∈ rootsOfCoeffList (f := f) (hirr := hirr)
+      (dividedDifferenceCoeffs (c :: d :: cs) α) := by
+  have hα_eval :
+      evalCoeffList (c :: d :: cs) α = 0 :=
+    (mem_rootsOfCoeffList (f := f) (hirr := hirr) (c :: d :: cs) α).mp hα
+  have hβ_eval :
+      evalCoeffList (c :: d :: cs) β = 0 :=
+    (mem_rootsOfCoeffList (f := f) (hirr := hirr) (c :: d :: cs) β).mp hβ
+  have hident :=
+    evalCoeffList_add_evalCoeffList_eq_add_mul_dividedDifference
+      (f := f) (hirr := hirr) (c :: d :: cs) α β
+  rw [hβ_eval, hα_eval, zero_add] at hident
+  have hadd_ne : β + α ≠ 0 :=
+    add_ne_zero_of_ne (f := f) (hirr := hirr) hβα
+  have hdd_zero : dividedDifference (c :: d :: cs) α β = 0 := by
+    apply mul_left_injective hadd_ne
+    rw [mul_zero]
+    exact hident.symm
+  exact (mem_rootsOfCoeffList
+    (f := f) (hirr := hirr)
+    (dividedDifferenceCoeffs (c :: d :: cs) α) β).mpr hdd_zero
+
+/--
+A nonzero quotient-coefficient polynomial has at most its degree many roots in
+the duplicate-free packed quotient enumeration.
+
+The coefficient list is low-to-high, and `coeffListTopNonzero cs` says the
+highest listed coefficient is nonzero, so the degree bound is `cs.length - 1`.
+-/
+theorem rootsOfCoeffList_length_le_degree
+    (cs : List (GF2nPoly f hirr))
+    (htop : coeffListTopNonzero (f := f) (hirr := hirr) cs) :
+    (rootsOfCoeffList (f := f) (hirr := hirr) cs).length ≤ cs.length - 1 := by
+  have hmain :
+      ∀ n, ∀ cs : List (GF2nPoly f hirr), cs.length = n →
+        coeffListTopNonzero (f := f) (hirr := hirr) cs →
+        (rootsOfCoeffList (f := f) (hirr := hirr) cs).length ≤ cs.length - 1 := by
+    intro n
+    induction n using Nat.strongRecOn with
+    | ind n ih =>
+        intro cs hlen htop
+        cases cs with
+        | nil =>
+            rcases htop with ⟨top, hlast, _htop_ne⟩
+            simp at hlast
+        | cons c cs =>
+            cases cs with
+            | nil =>
+                rcases htop with ⟨top, hlast, htop_ne⟩
+                simp at hlast
+                subst top
+                unfold rootsOfCoeffList
+                simp [evalCoeffList, htop_ne]
+            | cons d ds =>
+                let P := c :: d :: ds
+                let rootsP := rootsOfCoeffList (f := f) (hirr := hirr) P
+                by_cases hnil : rootsP = []
+                · rw [show rootsOfCoeffList (f := f) (hirr := hirr) P = [] from hnil]
+                  simp
+                · cases hrootsP : rootsP with
+                  | nil =>
+                      exact False.elim (hnil hrootsP)
+                  | cons α rest =>
+                      have hα : α ∈ rootsOfCoeffList (f := f) (hirr := hirr) P := by
+                        show α ∈ rootsP
+                        rw [hrootsP]
+                        exact List.mem_cons_self
+                      let rootsWithoutα :=
+                        rootsP.filter (fun β => decide (β ≠ α))
+                      let ddCoeffs := dividedDifferenceCoeffs P α
+                      let rootsDD :=
+                        rootsOfCoeffList (f := f) (hirr := hirr) ddCoeffs
+                      have hrootsP_nodup : rootsP.Nodup := by
+                        dsimp [rootsP]
+                        exact rootsOfCoeffList_nodup (f := f) (hirr := hirr) P
+                      have hα_filter_len :
+                          rootsWithoutα.length = rootsP.length - 1 := by
+                        exact length_filter_ne_eq_pred_of_mem_nodup
+                          (z := α) hα hrootsP_nodup
+                      have hdd_top : coeffListTopNonzero
+                          (f := f) (hirr := hirr) ddCoeffs := by
+                        dsimp [ddCoeffs, P]
+                        exact coeffListTopNonzero_dividedDifferenceCoeffs
+                          (f := f) (hirr := hirr) c d ds α
+                          (coeffListTopNonzero_tail_of_cons_cons
+                            (f := f) (hirr := hirr) htop)
+                      have hsub :
+                          ∀ β, β ∈ rootsWithoutα → β ∈ rootsDD := by
+                        intro β hβ
+                        have hβ_rootsP : β ∈ rootsP :=
+                          (List.mem_filter.mp hβ).1
+                        have hβ_ne : β ≠ α :=
+                          of_decide_eq_true (List.mem_filter.mp hβ).2
+                        dsimp [rootsDD, ddCoeffs, P]
+                        exact roots_without_base_subset_dividedDifference_roots
+                          (f := f) (hirr := hirr) c d ds hα hβ_rootsP hβ_ne
+                      have hwithout_le_dd :
+                          rootsWithoutα.length ≤ rootsDD.length := by
+                        apply length_le_of_nodup_subset
+                        · exact hrootsP_nodup.filter _
+                        · dsimp [rootsDD]
+                          exact rootsOfCoeffList_nodup
+                            (f := f) (hirr := hirr) ddCoeffs
+                        · exact hsub
+                      have hdd_len : ddCoeffs.length = P.length - 1 := by
+                        dsimp [ddCoeffs, P]
+                        exact dividedDifferenceCoeffs_length
+                          (f := f) (hirr := hirr) (c :: d :: ds) α
+                      have hP_len : P.length = n := by
+                        dsimp [P]
+                        exact hlen
+                      have hP_len_two : 2 ≤ P.length := by
+                        dsimp [P]
+                        simp
+                      have hdd_lt : ddCoeffs.length < n := by
+                        omega
+                      have hdd_bound :
+                          rootsDD.length ≤ ddCoeffs.length - 1 := by
+                        dsimp [rootsDD]
+                        exact ih ddCoeffs.length hdd_lt ddCoeffs rfl hdd_top
+                      have hrootsP_pos : 0 < rootsP.length := by
+                        rw [hrootsP]
+                        simp
+                      have hwithout_bound :
+                          rootsWithoutα.length ≤ P.length - 2 := by
+                        calc
+                          rootsWithoutα.length ≤ rootsDD.length := hwithout_le_dd
+                          _ ≤ ddCoeffs.length - 1 := hdd_bound
+                          _ = P.length - 2 := by omega
+                      have hrootsP_eq :
+                          rootsP.length = rootsWithoutα.length + 1 := by
+                        omega
+                      have hrootsP_bound : rootsP.length ≤ P.length - 1 := by
+                        omega
+                      exact hrootsP_bound
+  exact hmain cs.length cs rfl htop
+
+/--
+Direct root-count bound for the canonical `elements` filter form used by
+callers.
+-/
+theorem evalCoeffList_rootsIn_elements_length_le_degree
+    (cs : List (GF2nPoly f hirr))
+    (htop : coeffListTopNonzero (f := f) (hirr := hirr) cs) :
+    ((elements (f := f) (hirr := hirr)).filter
+      (fun β => decide (evalCoeffList cs β = 0))).length ≤ cs.length - 1 :=
+  rootsOfCoeffList_length_le_degree (f := f) (hirr := hirr) cs htop
+
 /-- Multiplication by a nonzero packed quotient element permutes the nonzero
 enumeration. The list of nonzero elements multiplied on the left by `a` is a
 permutation of the original nonzero list. -/
