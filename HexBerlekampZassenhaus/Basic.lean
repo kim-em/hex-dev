@@ -793,6 +793,34 @@ private def recombineLLLBranchGuardLift : LiftData :=
 #guard Array.polyProduct (recombine recombineLLLBranchGuardInput recombineLLLBranchGuardLift) =
   recombineLLLBranchGuardInput
 
+private def initialHenselPrecision (B : Nat) : Nat :=
+  if B ≤ 4 then B else 4
+
+private def nextHenselPrecision (k B : Nat) : Nat :=
+  if 2 * k < B then
+    2 * k
+  else
+    B
+
+/--
+Adaptively lift and retry LLL recombination, using the explicit bound as the
+ceiling. If LLL recombination still fails at the bound, report the core as
+irreducible under that bound.
+-/
+private def adaptiveCoreFactors
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Nat → Nat → Array ZPoly
+  | _k, 0 => #[core]
+  | k, fuel + 1 =>
+      let liftData := henselLiftData core k primeData
+      match recombineLLL? core liftData with
+      | some factors => factors
+      | none =>
+          if k ≥ B then
+            #[core]
+          else
+            adaptiveCoreFactors core B primeData
+              (nextHenselPrecision k B) fuel
+
 /-- Factor with an explicit coefficient bound for the recombination stage. -/
 def factorWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
   let normalized := normalizeForFactor f
@@ -800,12 +828,13 @@ def factorWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
     normalizedConstantFactors normalized
   else
     let primeData := choosePrimeData normalized.squareFreeCore
-    let liftData := henselLiftData normalized.squareFreeCore B primeData
-    let coreFactors := recombine normalized.squareFreeCore liftData
-    if coreFactors.isEmpty then
-      #[]
-    else
-      reassembleNormalizedFactors normalized coreFactors
+    let coreFactors :=
+      if B = 0 then
+        #[normalized.squareFreeCore]
+      else
+        adaptiveCoreFactors normalized.squareFreeCore B primeData
+          (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2)
+    reassembleNormalizedFactors normalized coreFactors
 
 /-- Factor using the library's uniform executable Mignotte coefficient bound. -/
 def factor (f : ZPoly) : Array ZPoly :=
