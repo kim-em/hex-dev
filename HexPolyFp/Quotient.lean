@@ -648,6 +648,14 @@ theorem add_comm (a b : Quotient g hmonic hg_pos) :
           (b.val + a.val) := by rw [FpPoly.add_comm]
     _ = b + a := rfl
 
+private theorem add_pair_swap_quot (a b c d : Quotient g hmonic hg_pos) :
+    (a + b) + (c + d) = (a + c) + (b + d) := by
+  rw [add_assoc a b (c + d)]
+  rw [← add_assoc b c d]
+  rw [add_comm b c]
+  rw [add_assoc c b d]
+  rw [← add_assoc a c (b + d)]
+
 /-- Adding a quotient element to its left additive inverse gives zero. -/
 @[simp] theorem add_left_neg (a : Quotient g hmonic hg_pos) :
     -a + a = 0 := by
@@ -1094,6 +1102,171 @@ theorem sub_add_sub_cancel (a b c : Quotient g hmonic hg_pos) :
     _ = a + (0 + -c) := by rw [add_left_neg]
     _ = a + -c := by rw [zero_add]
 
+/-! ## Quotient-coefficient polynomial evaluation -/
+
+/--
+Evaluate a low-to-high quotient-coefficient list at a quotient point.
+
+The list `[c₀, c₁, ...]` denotes `c₀ + β * (c₁ + β * (...))`. This
+proof-facing evaluator is used by quotient-field root-count arguments where
+the coefficients already live in `F_p[X] / (g)`.
+-/
+def evalCoeffList :
+    List (Quotient g hmonic hg_pos) →
+      Quotient g hmonic hg_pos → Quotient g hmonic hg_pos
+  | [], _ => 0
+  | c :: cs, β => c + β * evalCoeffList cs β
+
+@[simp] theorem evalCoeffList_nil (β : Quotient g hmonic hg_pos) :
+    evalCoeffList ([] : List (Quotient g hmonic hg_pos)) β = 0 :=
+  rfl
+
+@[simp] theorem evalCoeffList_cons
+    (c : Quotient g hmonic hg_pos) (cs : List (Quotient g hmonic hg_pos))
+    (β : Quotient g hmonic hg_pos) :
+    evalCoeffList (c :: cs) β = c + β * evalCoeffList cs β :=
+  rfl
+
+/--
+Synthetic quotient coefficients for the divided difference of `cs` at the
+base point `α`.
+
+If `P` is represented by `cs`, this list represents the quotient
+`(P(T) - P(α)) / (T - α)`. Its length is one less than the input list, which
+is the measure used by root-count induction.
+-/
+def dividedDifferenceCoeffs :
+    List (Quotient g hmonic hg_pos) →
+      Quotient g hmonic hg_pos → List (Quotient g hmonic hg_pos)
+  | [], _ => []
+  | [_], _ => []
+  | _ :: c :: cs, α =>
+      evalCoeffList (c :: cs) α :: dividedDifferenceCoeffs (c :: cs) α
+
+@[simp] theorem dividedDifferenceCoeffs_nil (α : Quotient g hmonic hg_pos) :
+    dividedDifferenceCoeffs ([] : List (Quotient g hmonic hg_pos)) α = [] :=
+  rfl
+
+@[simp] theorem dividedDifferenceCoeffs_singleton
+    (c : Quotient g hmonic hg_pos) (α : Quotient g hmonic hg_pos) :
+    dividedDifferenceCoeffs ([c] : List (Quotient g hmonic hg_pos)) α = [] :=
+  rfl
+
+@[simp] theorem dividedDifferenceCoeffs_cons_cons
+    (c d : Quotient g hmonic hg_pos) (cs : List (Quotient g hmonic hg_pos))
+    (α : Quotient g hmonic hg_pos) :
+    dividedDifferenceCoeffs (c :: d :: cs) α =
+      evalCoeffList (d :: cs) α :: dividedDifferenceCoeffs (d :: cs) α :=
+  rfl
+
+/-- The synthetic divided-difference coefficient list has one fewer entry. -/
+@[simp] theorem dividedDifferenceCoeffs_length
+    (cs : List (Quotient g hmonic hg_pos)) (α : Quotient g hmonic hg_pos) :
+    (dividedDifferenceCoeffs cs α).length = cs.length - 1 := by
+  induction cs with
+  | nil =>
+      rfl
+  | cons c cs ih =>
+      cases cs with
+      | nil =>
+          rfl
+      | cons d ds =>
+          simp [dividedDifferenceCoeffs, ih]
+
+/--
+Evaluate the divided difference of a quotient-coefficient polynomial between
+the base point `α` and target point `β`.
+-/
+def dividedDifference
+    (cs : List (Quotient g hmonic hg_pos))
+    (α β : Quotient g hmonic hg_pos) : Quotient g hmonic hg_pos :=
+  evalCoeffList (dividedDifferenceCoeffs cs α) β
+
+@[simp] theorem dividedDifference_nil
+    (α β : Quotient g hmonic hg_pos) :
+    dividedDifference ([] : List (Quotient g hmonic hg_pos)) α β = 0 :=
+  rfl
+
+@[simp] theorem dividedDifference_cons
+    (c d : Quotient g hmonic hg_pos) (cs : List (Quotient g hmonic hg_pos))
+    (α β : Quotient g hmonic hg_pos) :
+    dividedDifference (c :: d :: cs) α β =
+      evalCoeffList (d :: cs) α + β * dividedDifference (d :: cs) α β :=
+  rfl
+
+/--
+The quotient-coefficient divided difference satisfies the usual identity
+`P(β) - P(α) = (β - α) * DD(P, α, β)`.
+-/
+theorem evalCoeffList_sub_evalCoeffList_eq_sub_mul_dividedDifference
+    (cs : List (Quotient g hmonic hg_pos))
+    (α β : Quotient g hmonic hg_pos) :
+    evalCoeffList cs β - evalCoeffList cs α =
+      (β - α) * dividedDifference cs α β := by
+  induction cs with
+  | nil =>
+      simp [dividedDifference]
+  | cons c cs ih =>
+      cases cs with
+      | nil =>
+          simp [dividedDifference, dividedDifferenceCoeffs]
+      | cons d ds =>
+          let Eβ := evalCoeffList (d :: ds) β
+          let Eα := evalCoeffList (d :: ds) α
+          let D := dividedDifference (d :: ds) α β
+          let A := (β - α) * Eα
+          let B := α * Eα
+          let C := β * ((β - α) * D)
+          have htail : Eβ - Eα = (β - α) * D := ih
+          have hEβ : Eβ = (β - α) * D + Eα := by
+            calc
+              Eβ = (Eβ - Eα) + Eα := (sub_add_cancel Eβ Eα).symm
+              _ = (β - α) * D + Eα := by rw [htail]
+          apply add_right_cancel
+            (evalCoeffList (c :: d :: ds) α)
+            (evalCoeffList (c :: d :: ds) β - evalCoeffList (c :: d :: ds) α)
+            ((β - α) * dividedDifference (c :: d :: ds) α β)
+          calc
+            (evalCoeffList (c :: d :: ds) β -
+                  evalCoeffList (c :: d :: ds) α) +
+                evalCoeffList (c :: d :: ds) α =
+                evalCoeffList (c :: d :: ds) β := by
+                  rw [sub_add_cancel]
+            _ = c + β * Eβ := rfl
+            _ = c + β * ((β - α) * D + Eα) := by rw [hEβ]
+            _ = c + (β * ((β - α) * D) + β * Eα) := by rw [left_distrib]
+            _ = c + (β * Eα + β * ((β - α) * D)) := by
+                  rw [add_comm (β * ((β - α) * D)) (β * Eα)]
+            _ = c + (((β - α) + α) * Eα + β * ((β - α) * D)) := by
+                  rw [sub_add_cancel]
+            _ = c + (((β - α) * Eα + α * Eα) + β * ((β - α) * D)) := by
+                  rw [right_distrib]
+            _ = ((β - α) * Eα + β * ((β - α) * D)) + (c + α * Eα) := by
+                  change c + ((A + B) + C) = (A + C) + (c + B)
+                  calc
+                    c + ((A + B) + C) = c + (A + (B + C)) := by
+                      rw [add_assoc]
+                    _ = c + (A + (C + B)) := by
+                      rw [add_comm B C]
+                    _ = c + ((A + C) + B) := by
+                      rw [← add_assoc A C B]
+                    _ = (c + (A + C)) + B := by
+                      rw [← add_assoc c (A + C) B]
+                    _ = ((A + C) + c) + B := by
+                      rw [add_comm c (A + C)]
+                    _ = (A + C) + (c + B) := by
+                      rw [add_assoc]
+            _ = ((β - α) * Eα + (β * (β - α)) * D) + (c + α * Eα) := by
+                  rw [mul_assoc]
+            _ = ((β - α) * Eα + ((β - α) * β) * D) + (c + α * Eα) := by
+                  rw [mul_comm β (β - α)]
+            _ = ((β - α) * Eα + (β - α) * (β * D)) + (c + α * Eα) := by
+                  rw [mul_assoc]
+            _ = (β - α) * (Eα + β * D) + (c + α * Eα) := by
+                  rw [left_distrib]
+            _ = (β - α) * dividedDifference (c :: d :: ds) α β +
+                  evalCoeffList (c :: d :: ds) α := rfl
+
 private theorem zmod64_one_ne_zero :
     (1 : ZMod64 p) ≠ 0 := by
   intro hone
@@ -1208,14 +1381,14 @@ private def evalCoeffPowerSumFrom :
           β ^ base +
         evalCoeffPowerSumFrom coeffs (base + 1) β
 
-/-- Recursive low-to-high coefficient evaluation, equivalent to Horner but
-oriented by stored coefficient order. -/
-private def evalCoeffList :
+/-- Recursive low-to-high scalar-coefficient evaluation, equivalent to Horner
+but oriented by stored coefficient order. -/
+private def evalScalarCoeffList :
     List (ZMod64 p) → Quotient g hmonic hg_pos → Quotient g hmonic hg_pos
   | [], _ => 0
   | coeff :: coeffs, β =>
       reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C coeff) +
-        β * evalCoeffList coeffs β
+        β * evalScalarCoeffList coeffs β
 
 private theorem mul_evalCoeffPowerSumFrom_eq_succ
     (β : Quotient g hmonic hg_pos) :
@@ -1249,22 +1422,22 @@ private theorem mul_evalCoeffPowerSumFrom_eq_succ
                 (DensePoly.C coeff) *
               β ^ (base + 1) := by rfl
 
-private theorem evalCoeffList_eq_powerSumFrom_zero
+private theorem evalScalarCoeffList_eq_powerSumFrom_zero
     (β : Quotient g hmonic hg_pos) :
     ∀ coeffs,
-      evalCoeffList (g := g) (hmonic := hmonic) (hg_pos := hg_pos) coeffs β =
+      evalScalarCoeffList (g := g) (hmonic := hmonic) (hg_pos := hg_pos) coeffs β =
         evalCoeffPowerSumFrom
           (g := g) (hmonic := hmonic) (hg_pos := hg_pos) coeffs 0 β
   | [] => by
-      simp [evalCoeffList, evalCoeffPowerSumFrom]
+      simp [evalScalarCoeffList, evalCoeffPowerSumFrom]
   | coeff :: coeffs => by
-      simp only [evalCoeffList, evalCoeffPowerSumFrom]
-      rw [evalCoeffList_eq_powerSumFrom_zero β coeffs]
+      simp only [evalScalarCoeffList, evalCoeffPowerSumFrom]
+      rw [evalScalarCoeffList_eq_powerSumFrom_zero β coeffs]
       rw [mul_evalCoeffPowerSumFrom_eq_succ
         (g := g) (hmonic := hmonic) (hg_pos := hg_pos) β coeffs 0]
       rw [pow_zero, mul_one]
 
-private theorem foldl_eval_reverse_eq_evalCoeffList
+private theorem foldl_eval_reverse_eq_evalScalarCoeffList
     (β : Quotient g hmonic hg_pos) :
     ∀ coeffs,
       coeffs.reverse.foldl
@@ -1273,15 +1446,15 @@ private theorem foldl_eval_reverse_eq_evalCoeffList
               reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
                 (DensePoly.C coeff))
           0 =
-        evalCoeffList (g := g) (hmonic := hmonic) (hg_pos := hg_pos) coeffs β
+        evalScalarCoeffList (g := g) (hmonic := hmonic) (hg_pos := hg_pos) coeffs β
   | [] => by
-      simp [evalCoeffList]
+      simp [evalScalarCoeffList]
   | coeff :: coeffs => by
       rw [List.reverse_cons, List.foldl_append]
       simp only [List.foldl_cons, List.foldl_nil]
-      rw [foldl_eval_reverse_eq_evalCoeffList β coeffs]
-      simp only [evalCoeffList]
-      rw [mul_comm (evalCoeffList
+      rw [foldl_eval_reverse_eq_evalScalarCoeffList β coeffs]
+      simp only [evalScalarCoeffList]
+      rw [mul_comm (evalScalarCoeffList
         (g := g) (hmonic := hmonic) (hg_pos := hg_pos) coeffs β) β]
       rw [add_comm]
 
@@ -1292,9 +1465,9 @@ private theorem eval_eq_coeff_power_sum (f : FpPoly p)
         (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
         f.toArray.toList 0 β := by
   unfold eval
-  rw [foldl_eval_reverse_eq_evalCoeffList
+  rw [foldl_eval_reverse_eq_evalScalarCoeffList
     (g := g) (hmonic := hmonic) (hg_pos := hg_pos) β f.toArray.toList]
-  exact evalCoeffList_eq_powerSumFrom_zero
+  exact evalScalarCoeffList_eq_powerSumFrom_zero
     (g := g) (hmonic := hmonic) (hg_pos := hg_pos) β f.toArray.toList
 
 omit [ZMod64.PrimeModulus p] in
