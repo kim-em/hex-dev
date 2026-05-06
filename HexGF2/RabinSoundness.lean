@@ -264,19 +264,6 @@ theorem dvd_xPowSubX_iff_frobeniusDiffMod_isZero
     exact hkey
 
 /--
-Forward Rabin degree theorem for packed GF2 polynomials.
-
-If an irreducible `g` of positive degree divides `X^(2^n) - X`, then
-`deg g` divides `n`.
--/
-theorem degree_dvd_of_irreducible_dvd_xPowSubX
-    {g : GF2Poly} (hg_irr : GF2Poly.Irreducible g)
-    (hg_pos : 0 < g.degree) {n : Nat}
-    (_hg_dvd : g ∣ xPowSubX n) :
-    g.degree ∣ n := by
-  sorry
-
-/--
 Backward Rabin algebraic content packaged at the executable level.
 
 For an irreducible packed polynomial `g` of positive degree `d`, the
@@ -648,8 +635,31 @@ theorem quotient_X_frobenius_fixed_iff_degree_dvd
       GF2nPoly.frobeniusIter (GF2nPoly.X (f := g) (hirr := hg_irr)) n =
         GF2nPoly.X (f := g) (hirr := hg_irr)) :
     g.degree ∣ n := by
-  exact degree_dvd_of_irreducible_dvd_xPowSubX hg_irr hg_pos
-    ((dvd_xPowSubX_iff_quotient_X_frobeniusIter_eq_X hg_irr hg_pos n).mpr hfixed)
+  let Xq : GF2nPoly g hg_irr := GF2nPoly.X (f := g) (hirr := hg_irr)
+  have hmod_fixed : GF2nPoly.frobeniusIter Xq (n % g.degree) = Xq :=
+    GF2nPoly.frobeniusIter_mod_degree_eq_of_fixed
+      (f := g) (hirr := hg_irr) hg_pos (a := Xq) hfixed
+  by_cases hr_zero : n % g.degree = 0
+  · exact Nat.dvd_of_mod_eq_zero hr_zero
+  · have hr_pos : 0 < n % g.degree := Nat.pos_of_ne_zero hr_zero
+    have hr_lt : n % g.degree < g.degree := Nat.mod_lt n hg_pos
+    exact False.elim
+      (GF2nPoly.frobeniusIter_X_ne_self_of_pos_lt_degree
+        (f := g) (hirr := hg_irr) hg_pos hr_pos hr_lt hmod_fixed)
+
+/--
+Forward Rabin degree theorem for packed GF2 polynomials.
+
+If an irreducible `g` of positive degree divides `X^(2^n) - X`, then
+`deg g` divides `n`.
+-/
+theorem degree_dvd_of_irreducible_dvd_xPowSubX
+    {g : GF2Poly} (hg_irr : GF2Poly.Irreducible g)
+    (hg_pos : 0 < g.degree) {n : Nat}
+    (hg_dvd : g ∣ xPowSubX n) :
+    g.degree ∣ n := by
+  exact quotient_X_frobenius_fixed_iff_degree_dvd hg_irr hg_pos
+    ((dvd_xPowSubX_iff_quotient_X_frobeniusIter_eq_X hg_irr hg_pos n).mp hg_dvd)
 
 /-- The left factor in a factorization of a nonzero polynomial is nonzero. -/
 theorem factor_ne_zero_of_ne_zero
