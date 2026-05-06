@@ -231,6 +231,18 @@ private def matrixToRows (M : Matrix Int n n) : Array (Array Int) :=
 private def rowsToMatrix (rows : Array (Array Int)) (n : Nat) : Matrix Int n n :=
   Matrix.ofFn fun i j => getEntry rows i.val j.val
 
+private theorem getEntry_matrixToRows (M : Matrix Int n n) (i j : Fin n) :
+    getEntry (matrixToRows M) i.val j.val = M[i][j] := by
+  simp [getEntry, matrixToRows]
+
+private theorem rowsToMatrix_matrixToRows (M : Matrix Int n n) :
+    rowsToMatrix (matrixToRows M) n = M := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  simpa [rowsToMatrix, Matrix.ofFn] using getEntry_matrixToRows M ⟨i, hi⟩ ⟨j, hj⟩
+
 private def swapRowsArray (rows : Array (Array Int)) (rowA rowB : Nat) :
     Array (Array Int) :=
   if rowA = rowB then
@@ -522,6 +534,22 @@ def bareissData (M : Matrix Int n n) : BareissData n :=
 def bareiss (M : Matrix Int n n) : Int :=
   let state := bareissArrayState M
   bareissArrayDet state n
+
+/-- The public row-pivoted determinant agrees with the determinant encoded by
+`bareissData`. This separates executable array evaluation from the packaged
+elimination data used by correctness proofs. -/
+theorem bareiss_eq_bareissData_det (M : Matrix Int n n) :
+    bareiss M = (bareissData M).det := by
+  cases n with
+  | zero =>
+      simp [bareiss, bareissData, bareissArrayDet, BareissData.det,
+        arrayLastDiag?, BareissData.lastDiag?, arraySign, BareissData.sign]
+      rfl
+  | succ k =>
+      simp [bareiss, bareissData, bareissArrayDet, BareissData.det,
+        arrayLastDiag?, BareissData.lastDiag?, rowsToMatrix, Matrix.ofFn,
+        arraySign, BareissData.sign]
+      rfl
 
 /-- The Bareiss determinant agrees with the generic determinant. -/
 theorem bareiss_eq_det (M : Matrix Int n n) :
