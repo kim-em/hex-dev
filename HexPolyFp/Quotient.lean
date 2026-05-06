@@ -952,6 +952,21 @@ theorem pow_pred_card_eq_one_of_ne_zero
   rw [hL_card] at hcancel
   exact hcancel
 
+/-- Frobenius fixed-point theorem for the quotient: every element of the
+finite-field quotient `F_p[X] / (g)` is fixed by raising to the cardinality
+`p ^ deg(g)`. -/
+theorem pow_card_eq_self_of_irreducible
+    (hg_irr : FpPoly.Irreducible g) (a : Quotient g hmonic hg_pos) :
+    a ^ (p ^ g.degree?.getD 0) = a := by
+  have hp_two : 2 ≤ p :=
+    Hex.Nat.Prime.two_le (ZMod64.PrimeModulus.prime (p := p))
+  have hpos : 0 < p ^ g.degree?.getD 0 := Nat.pow_pos (by omega)
+  have hsplit : p ^ g.degree?.getD 0 = (p ^ g.degree?.getD 0 - 1) + 1 := by
+    omega
+  by_cases ha : a = 0
+  · rw [ha, hsplit, pow_succ, mul_zero]
+  · rw [hsplit, pow_succ, pow_pred_card_eq_one_of_ne_zero hg_irr ha, one_mul]
+
 end Quotient
 end FpPoly
 end Hex
