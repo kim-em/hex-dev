@@ -1725,6 +1725,404 @@ theorem mul_left_injective (hg_irr : FpPoly.Irreducible g)
   rw [← mul_assoc, ← mul_assoc, inv_mul_cancel hg_irr ha, one_mul, one_mul] at h
   exact h
 
+/-! ## Root counting over quotient coefficient lists -/
+
+/--
+The highest coefficient in a low-to-high quotient coefficient list is nonzero.
+
+This predicate is the syntactic degree witness used by root-count induction:
+such a list represents a nonzero quotient-coefficient polynomial of degree
+`cs.length - 1`.
+-/
+def coeffListTopNonzero : List (Quotient g hmonic hg_pos) → Prop
+  | cs => ∃ c, cs.getLast? = some c ∧ c ≠ 0
+
+private theorem coeffListTopNonzero_tail_of_cons_cons
+    {c d : Quotient g hmonic hg_pos} {cs : List (Quotient g hmonic hg_pos)}
+    (h : coeffListTopNonzero (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+      (c :: d :: cs)) :
+    coeffListTopNonzero (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+      (d :: cs) := by
+  simpa [coeffListTopNonzero] using h
+
+private theorem dividedDifferenceCoeffs_getLast?
+    (c d : Quotient g hmonic hg_pos) (cs : List (Quotient g hmonic hg_pos))
+    (α : Quotient g hmonic hg_pos) :
+    (dividedDifferenceCoeffs (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (c :: d :: cs) α).getLast? =
+      (d :: cs).getLast? := by
+  induction cs generalizing c d with
+  | nil =>
+      simp [dividedDifferenceCoeffs, evalCoeffList]
+  | cons e es ih =>
+      cases es with
+      | nil =>
+          simp [dividedDifferenceCoeffs, evalCoeffList]
+      | cons q qs =>
+          simpa [dividedDifferenceCoeffs] using ih e q
+
+private theorem coeffListTopNonzero_dividedDifferenceCoeffs
+    (c d : Quotient g hmonic hg_pos) (cs : List (Quotient g hmonic hg_pos))
+    (α : Quotient g hmonic hg_pos)
+    (h : coeffListTopNonzero (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+      (d :: cs)) :
+    coeffListTopNonzero (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+      (dividedDifferenceCoeffs (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (c :: d :: cs) α) := by
+  rcases h with ⟨top, hlast, htop⟩
+  refine ⟨top, ?_, htop⟩
+  rw [dividedDifferenceCoeffs_getLast?]
+  exact hlast
+
+/-- Roots of a quotient-coefficient polynomial inside the canonical quotient
+enumeration. -/
+def rootsOfCoeffList (cs : List (Quotient g hmonic hg_pos)) :
+    List (Quotient g hmonic hg_pos) :=
+  (elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).filter
+    (fun β => decide (evalCoeffList cs β = 0))
+
+@[simp] theorem mem_rootsOfCoeffList
+    (cs : List (Quotient g hmonic hg_pos)) (β : Quotient g hmonic hg_pos) :
+    β ∈ rootsOfCoeffList (g := g) (hmonic := hmonic) (hg_pos := hg_pos) cs ↔
+      evalCoeffList cs β = 0 := by
+  simp [rootsOfCoeffList, mem_elements β]
+
+/-- The quotient-coefficient root list has no duplicate roots. -/
+theorem rootsOfCoeffList_nodup (cs : List (Quotient g hmonic hg_pos)) :
+    (rootsOfCoeffList (g := g) (hmonic := hmonic) (hg_pos := hg_pos) cs).Nodup := by
+  unfold rootsOfCoeffList
+  exact (elements_nodup (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).filter _
+
+private theorem length_filter_le (p : α → Bool) :
+    ∀ xs : List α, (xs.filter p).length ≤ xs.length
+  | [] => by simp
+  | x :: xs => by
+      by_cases hx : p x = true
+      · rw [List.filter_cons_of_pos hx]
+        simp only [List.length_cons]
+        exact Nat.succ_le_succ (length_filter_le p xs)
+      · rw [List.filter_cons_of_neg hx]
+        exact Nat.le_trans (length_filter_le p xs) (Nat.le_succ xs.length)
+
+private theorem length_le_of_nodup_subset
+    {α : Type} [DecidableEq α] {xs ys : List α}
+    (hxs : xs.Nodup) (hys : ys.Nodup)
+    (hsub : ∀ a, a ∈ xs → a ∈ ys) :
+    xs.length ≤ ys.length := by
+  let zs := ys.filter (fun a => decide (a ∈ xs))
+  have hzs_nodup : zs.Nodup := hys.filter _
+  have hmem : ∀ a, a ∈ xs ↔ a ∈ zs := by
+    intro a
+    constructor
+    · intro ha
+      exact List.mem_filter.mpr ⟨hsub a ha, decide_eq_true ha⟩
+    · intro ha
+      exact of_decide_eq_true (List.mem_filter.mp ha).2
+  have hperm : List.Perm xs zs :=
+    perm_of_nodup_mem_iff hxs hzs_nodup hmem
+  have hlen_eq : xs.length = zs.length := hperm.length_eq
+  calc
+    xs.length = zs.length := hlen_eq
+    _ ≤ ys.length := length_filter_le (fun a => decide (a ∈ xs)) ys
+
+private theorem roots_without_base_subset_dividedDifference_roots
+    (hg_irr : FpPoly.Irreducible g)
+    (c d : Quotient g hmonic hg_pos) (cs : List (Quotient g hmonic hg_pos))
+    {α β : Quotient g hmonic hg_pos}
+    (hα : α ∈ rootsOfCoeffList (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+      (c :: d :: cs))
+    (hβ : β ∈ rootsOfCoeffList (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+      (c :: d :: cs))
+    (hβα : β ≠ α) :
+    β ∈ rootsOfCoeffList (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+      (dividedDifferenceCoeffs (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (c :: d :: cs) α) := by
+  have hα_eval :
+      evalCoeffList (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (c :: d :: cs) α = 0 :=
+    (mem_rootsOfCoeffList (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+      (c :: d :: cs) α).mp hα
+  have hβ_eval :
+      evalCoeffList (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (c :: d :: cs) β = 0 :=
+    (mem_rootsOfCoeffList (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+      (c :: d :: cs) β).mp hβ
+  have hident :=
+    evalCoeffList_sub_evalCoeffList_eq_sub_mul_dividedDifference
+      (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (c :: d :: cs) α β
+  rw [hβ_eval, hα_eval] at hident
+  have hzero_sub : (0 : Quotient g hmonic hg_pos) -
+      (0 : Quotient g hmonic hg_pos) = 0 := by
+    rw [sub_zero]
+  rw [hzero_sub] at hident
+  have hsub_ne : β - α ≠ 0 :=
+    sub_ne_zero_of_ne (g := g) (hmonic := hmonic) (hg_pos := hg_pos) hβα
+  have hdd_zero :
+      dividedDifference (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (c :: d :: cs) α β = 0 := by
+    apply mul_left_injective hg_irr hsub_ne
+    rw [mul_zero]
+    exact hident.symm
+  exact (mem_rootsOfCoeffList
+    (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+    (dividedDifferenceCoeffs (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+      (c :: d :: cs) α) β).mpr hdd_zero
+
+/--
+A nonzero quotient-coefficient polynomial has at most its degree many roots in
+the duplicate-free quotient enumeration.
+
+The coefficient list is low-to-high, and `coeffListTopNonzero cs` says the
+highest listed coefficient is nonzero, so the degree bound is `cs.length - 1`.
+-/
+theorem rootsOfCoeffList_length_le_degree
+    (hg_irr : FpPoly.Irreducible g)
+    (cs : List (Quotient g hmonic hg_pos))
+    (htop : coeffListTopNonzero (g := g) (hmonic := hmonic) (hg_pos := hg_pos) cs) :
+    (rootsOfCoeffList (g := g) (hmonic := hmonic) (hg_pos := hg_pos) cs).length ≤
+      cs.length - 1 := by
+  have hmain :
+      ∀ n, ∀ cs : List (Quotient g hmonic hg_pos), cs.length = n →
+        coeffListTopNonzero (g := g) (hmonic := hmonic) (hg_pos := hg_pos) cs →
+        (rootsOfCoeffList (g := g) (hmonic := hmonic) (hg_pos := hg_pos) cs).length ≤
+          cs.length - 1 := by
+    intro n
+    induction n using Nat.strongRecOn with
+    | ind n ih =>
+        intro cs hlen htop
+        cases cs with
+        | nil =>
+            rcases htop with ⟨top, hlast, _htop_ne⟩
+            simp at hlast
+        | cons c cs =>
+            cases cs with
+            | nil =>
+                rcases htop with ⟨top, hlast, htop_ne⟩
+                simp at hlast
+                subst top
+                unfold rootsOfCoeffList
+                simp [evalCoeffList, htop_ne]
+            | cons d ds =>
+                let P := c :: d :: ds
+                let rootsP :=
+                  rootsOfCoeffList (g := g) (hmonic := hmonic) (hg_pos := hg_pos) P
+                by_cases hnil : rootsP = []
+                · rw [show rootsOfCoeffList (g := g) (hmonic := hmonic)
+                      (hg_pos := hg_pos) P = [] from hnil]
+                  simp
+                · cases hrootsP : rootsP with
+                  | nil =>
+                      exact False.elim (hnil hrootsP)
+                  | cons α rest =>
+                      have hα : α ∈ rootsOfCoeffList
+                          (g := g) (hmonic := hmonic) (hg_pos := hg_pos) P := by
+                        show α ∈ rootsP
+                        rw [hrootsP]
+                        exact List.mem_cons_self
+                      let rootsWithoutα :=
+                        rootsP.filter (fun β => decide (β ≠ α))
+                      let ddCoeffs :=
+                        dividedDifferenceCoeffs
+                          (g := g) (hmonic := hmonic) (hg_pos := hg_pos) P α
+                      let rootsDD :=
+                        rootsOfCoeffList
+                          (g := g) (hmonic := hmonic) (hg_pos := hg_pos) ddCoeffs
+                      have hrootsP_nodup : rootsP.Nodup := by
+                        dsimp [rootsP]
+                        exact rootsOfCoeffList_nodup
+                          (g := g) (hmonic := hmonic) (hg_pos := hg_pos) P
+                      have hα_filter_len :
+                          rootsWithoutα.length = rootsP.length - 1 := by
+                        exact length_filter_ne_eq_pred_of_mem_nodup
+                          (z := α) hα hrootsP_nodup
+                      have hdd_top : coeffListTopNonzero
+                          (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+                          ddCoeffs := by
+                        dsimp [ddCoeffs, P]
+                        exact coeffListTopNonzero_dividedDifferenceCoeffs
+                          (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+                          c d ds α
+                          (coeffListTopNonzero_tail_of_cons_cons
+                            (g := g) (hmonic := hmonic) (hg_pos := hg_pos) htop)
+                      have hsub :
+                          ∀ β, β ∈ rootsWithoutα → β ∈ rootsDD := by
+                        intro β hβ
+                        have hβ_rootsP : β ∈ rootsP :=
+                          (List.mem_filter.mp hβ).1
+                        have hβ_ne : β ≠ α :=
+                          of_decide_eq_true (List.mem_filter.mp hβ).2
+                        dsimp [rootsDD, ddCoeffs, P]
+                        exact roots_without_base_subset_dividedDifference_roots
+                          (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+                          hg_irr c d ds hα hβ_rootsP hβ_ne
+                      have hwithout_le_dd :
+                          rootsWithoutα.length ≤ rootsDD.length := by
+                        apply length_le_of_nodup_subset
+                        · exact hrootsP_nodup.filter _
+                        · dsimp [rootsDD]
+                          exact rootsOfCoeffList_nodup
+                            (g := g) (hmonic := hmonic) (hg_pos := hg_pos) ddCoeffs
+                        · exact hsub
+                      have hdd_len : ddCoeffs.length = P.length - 1 := by
+                        dsimp [ddCoeffs, P]
+                        exact dividedDifferenceCoeffs_length
+                          (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+                          (c :: d :: ds) α
+                      have hP_len : P.length = n := by
+                        dsimp [P]
+                        exact hlen
+                      have hP_len_two : 2 ≤ P.length := by
+                        dsimp [P]
+                        simp
+                      have hdd_lt : ddCoeffs.length < n := by
+                        omega
+                      have hdd_bound :
+                          rootsDD.length ≤ ddCoeffs.length - 1 := by
+                        dsimp [rootsDD]
+                        exact ih ddCoeffs.length hdd_lt ddCoeffs rfl hdd_top
+                      have hrootsP_pos : 0 < rootsP.length := by
+                        rw [hrootsP]
+                        simp
+                      have hwithout_bound :
+                          rootsWithoutα.length ≤ P.length - 2 := by
+                        calc
+                          rootsWithoutα.length ≤ rootsDD.length := hwithout_le_dd
+                          _ ≤ ddCoeffs.length - 1 := hdd_bound
+                          _ = P.length - 2 := by omega
+                      have hrootsP_eq :
+                          rootsP.length = rootsWithoutα.length + 1 := by
+                        omega
+                      have hrootsP_bound : rootsP.length ≤ P.length - 1 := by
+                        omega
+                      exact hrootsP_bound
+  exact hmain cs.length cs rfl htop
+
+/-- Direct root-count bound for the canonical `elements` filter form used by
+callers. -/
+theorem evalCoeffList_rootsIn_elements_length_le_degree
+    (hg_irr : FpPoly.Irreducible g)
+    (cs : List (Quotient g hmonic hg_pos))
+    (htop : coeffListTopNonzero (g := g) (hmonic := hmonic) (hg_pos := hg_pos) cs) :
+    ((elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).filter
+      (fun β => decide (evalCoeffList cs β = 0))).length ≤ cs.length - 1 :=
+  rootsOfCoeffList_length_le_degree
+    (g := g) (hmonic := hmonic) (hg_pos := hg_pos) hg_irr cs htop
+
+private theorem evalQuotientCoeffs_length (f : FpPoly p) :
+    (evalQuotientCoeffs (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f).length =
+      f.size := by
+  simp [evalQuotientCoeffs, DensePoly.toArray, DensePoly.size]
+
+omit [ZMod64.PrimeModulus p] in
+private theorem fpPoly_eq_zero_of_size_eq_zero {f : FpPoly p} (hsize : f.size = 0) :
+    f = 0 := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_eq_zero_of_size_le f (by omega : f.size ≤ n),
+    DensePoly.coeff_zero]
+  rfl
+
+private theorem reduce_C_ne_zero_of_ne_zero {c : ZMod64 p} (hc : c ≠ 0) :
+    reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c) ≠
+      (0 : Quotient g hmonic hg_pos) := by
+  intro hzero
+  have hval := congrArg Quotient.val hzero
+  have hdeg : (DensePoly.C c : FpPoly p).degree?.getD 0 < g.degree?.getD 0 := by
+    rw [DensePoly.degree?_C_getD]
+    exact hg_pos
+  rw [reduce_val, FpPoly.modByMonic, DensePoly.modByMonic_eq_mod,
+    DensePoly.mod_eq_self_of_degree_lt (DensePoly.C c : FpPoly p) g hdeg,
+    zero_val, FpPoly.modByMonic, DensePoly.modByMonic_zero] at hval
+  have hcoeff := congrArg (fun f : FpPoly p => f.coeff 0) hval
+  change (DensePoly.C c : FpPoly p).coeff 0 = (0 : FpPoly p).coeff 0 at hcoeff
+  rw [DensePoly.coeff_C, DensePoly.coeff_zero] at hcoeff
+  simp at hcoeff
+  exact hc hcoeff
+
+private theorem evalQuotientCoeffs_topNonzero_of_ne_zero
+    (f : FpPoly p) (hf : f ≠ 0) :
+    coeffListTopNonzero (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+      (evalQuotientCoeffs (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f) := by
+  have hsize_pos : 0 < f.size := by
+    by_cases hsize : f.size = 0
+    · exact False.elim (hf (fpPoly_eq_zero_of_size_eq_zero hsize))
+    · omega
+  let topCoeff := f.coeff (f.size - 1)
+  let topQuot :=
+    reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C topCoeff)
+  refine ⟨topQuot, ?_, ?_⟩
+  · unfold evalQuotientCoeffs topQuot topCoeff DensePoly.toArray DensePoly.coeff
+    rw [List.getLast?_map, List.getLast?_eq_getElem?]
+    rw [Array.getElem?_toList]
+    rw [Array.getElem?_eq_getElem
+      (by simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hsize_pos)]
+    rw [Array.getElem_eq_getD (Zero.zero : ZMod64 p)]
+    simp [DensePoly.size]
+  · exact reduce_C_ne_zero_of_ne_zero
+      (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+      (DensePoly.coeff_last_ne_zero_of_pos_size f hsize_pos)
+
+/-- Roots of an `FpPoly` quotient evaluation inside the canonical quotient
+enumeration. -/
+def rootsOfFpPoly (f : FpPoly p) : List (Quotient g hmonic hg_pos) :=
+  (elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).filter
+    (fun β => decide (eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β = 0))
+
+@[simp] theorem mem_rootsOfFpPoly
+    (f : FpPoly p) (β : Quotient g hmonic hg_pos) :
+    β ∈ rootsOfFpPoly (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f ↔
+      eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β = 0 := by
+  simp [rootsOfFpPoly, mem_elements β]
+
+/-- The `FpPoly` quotient-evaluation root list has no duplicate roots. -/
+theorem rootsOfFpPoly_nodup (f : FpPoly p) :
+    (rootsOfFpPoly (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f).Nodup := by
+  unfold rootsOfFpPoly
+  exact (elements_nodup (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).filter _
+
+/--
+A nonzero `FpPoly` has at most `f.size - 1` quotient roots in the
+duplicate-free quotient enumeration, provided the modulus is irreducible.
+-/
+theorem rootsOfFpPoly_length_le_degree
+    (hg_irr : FpPoly.Irreducible g)
+    (f : FpPoly p) (hf : f ≠ 0) :
+    (rootsOfFpPoly (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f).length ≤
+      f.size - 1 := by
+  have hcoeffs_top :=
+    evalQuotientCoeffs_topNonzero_of_ne_zero
+      (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f hf
+  have hcoeff_bound :=
+    rootsOfCoeffList_length_le_degree
+      (g := g) (hmonic := hmonic) (hg_pos := hg_pos) hg_irr
+      (evalQuotientCoeffs (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f)
+      hcoeffs_top
+  have hroots_eq :
+      rootsOfFpPoly (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f =
+        rootsOfCoeffList (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (evalQuotientCoeffs (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f) := by
+    unfold rootsOfFpPoly rootsOfCoeffList
+    apply List.filter_congr
+    intro β hβ
+    rw [eval_eq_evalCoeffList
+      (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β]
+  rw [hroots_eq]
+  rw [evalQuotientCoeffs_length
+    (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f] at hcoeff_bound
+  exact hcoeff_bound
+
+/-- Direct root-count bound for the canonical `elements` filter form used by
+callers evaluating an `FpPoly` in the quotient. -/
+theorem eval_rootsIn_elements_length_le_degree
+    (hg_irr : FpPoly.Irreducible g)
+    (f : FpPoly p) (hf : f ≠ 0) :
+    ((elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).filter
+      (fun β => decide
+        (eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β = 0))).length ≤
+      f.size - 1 := by
+  exact rootsOfFpPoly_length_le_degree
+    (g := g) (hmonic := hmonic) (hg_pos := hg_pos) hg_irr f hf
+
 /-- Multiplication by a nonzero quotient element permutes the nonzero
 enumeration. The list of nonzero elements multiplied on the left by `a` is a
 permutation of the original nonzero list. -/
