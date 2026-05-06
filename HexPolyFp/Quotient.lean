@@ -648,6 +648,84 @@ theorem add_comm (a b : Quotient g hmonic hg_pos) :
           (b.val + a.val) := by rw [FpPoly.add_comm]
     _ = b + a := rfl
 
+/-- Adding a quotient element to its left additive inverse gives zero. -/
+@[simp] theorem add_left_neg (a : Quotient g hmonic hg_pos) :
+    -a + a = 0 := by
+  calc
+    -a + a =
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          ((-a).val + a.val) := rfl
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (-a.val + a.val) := by
+          have h :=
+            reduce_add_eq (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+              (-a.val) a.val
+          rw [reduce_val_self a] at h
+          exact h.symm
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (0 : FpPoly p) := by
+          rw [FpPoly.add_left_neg]
+    _ = 0 := rfl
+
+/-- Adding the right additive inverse of a quotient element gives zero. -/
+@[simp] theorem add_right_neg (a : Quotient g hmonic hg_pos) :
+    a + -a = 0 := by
+  rw [add_comm]
+  exact add_left_neg a
+
+/-- Quotient subtraction is addition of the right additive inverse. -/
+theorem sub_eq_add_neg (a b : Quotient g hmonic hg_pos) :
+    a - b = a + -b := by
+  calc
+    a - b =
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (a.val - b.val) := rfl
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (a.val + -b.val) := by
+          rw [FpPoly.sub_eq_add_neg]
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (a.val + (-b).val) := by
+          have h :=
+            reduce_add_eq (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+              a.val (-b.val)
+          rw [reduce_val_self a] at h
+          exact h
+    _ = a + -b := rfl
+
+/-- Subtracting a quotient element from itself gives zero. -/
+@[simp] theorem sub_self (a : Quotient g hmonic hg_pos) :
+    a - a = 0 := by
+  rw [sub_eq_add_neg, add_right_neg]
+
+/-- A quotient subtraction is zero exactly when its left and right terms are
+equal. -/
+theorem sub_eq_zero_iff_eq {a b : Quotient g hmonic hg_pos} :
+    a - b = 0 ↔ a = b := by
+  constructor
+  · intro hsub
+    calc
+      a = a + 0 := (add_zero a).symm
+      _ = a + (-b + b) := by rw [add_left_neg]
+      _ = (a + -b) + b := (add_assoc a (-b) b).symm
+      _ = (a - b) + b := by rw [sub_eq_add_neg]
+      _ = 0 + b := by rw [hsub]
+      _ = b := zero_add b
+  · intro h
+    cases h
+    exact sub_self a
+
+/-- Distinct quotient elements have nonzero difference. -/
+theorem sub_ne_zero_of_ne {a b : Quotient g hmonic hg_pos} (h : a ≠ b) :
+    a - b ≠ 0 := by
+  intro hzero
+  exact h (sub_eq_zero_iff_eq.mp hzero)
+
+/-- A nonzero quotient difference witnesses distinct quotient elements. -/
+theorem ne_of_sub_ne_zero {a b : Quotient g hmonic hg_pos} (h : a - b ≠ 0) :
+    a ≠ b := by
+  intro hab
+  apply h
+  exact sub_eq_zero_iff_eq.mpr hab
+
 /-- Quotient multiplication distributes over addition on the left. -/
 theorem left_distrib (a b c : Quotient g hmonic hg_pos) :
     a * (b + c) = a * b + a * c := by
