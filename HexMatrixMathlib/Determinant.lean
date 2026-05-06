@@ -865,4 +865,51 @@ private theorem M11_eq_matrixEquiv_borderedMinor [CommRing R]
       source_row_of_succ source k hnext i j r c,
       source_row_of_borderedMinor source k hk i j r c]
 
+/-- Desnanot-Jacobi specialised to a Bareiss bordered minor: the Mathlib
+determinant identity from `desnanot_jacobi_borderedMinor_reindex` translated
+back into Hex `borderedMinor`/`leadingPrefix` determinants. This produces the
+`hdesnanot` premise expected by `bareissExactDiv_borderedMinor_of_mul_eq` with
+`prevPivot` instantiated as `det (leadingPrefix source k _)`. -/
+theorem desnanot_jacobi_borderedMinor [CommRing R]
+    (source : Hex.Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (i j : Fin n) (hi : k < i.val) (hj : k < j.val) :
+    Hex.Matrix.det (Hex.Matrix.borderedMinor source (k + 1) hnext i j) *
+        Hex.Matrix.det (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk)) =
+      Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+          (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n)
+          (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+        Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk i j) -
+        Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+          i (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+        Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+          (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) j) := by
+  -- Mathlib Desnanot-Jacobi on the reindexed bordered minor.
+  have hdj := desnanot_jacobi_borderedMinor_reindex source k hnext i j
+  -- Unfold the local `let M := ...` binding in hdj so subsequent rewrites match.
+  dsimp only at hdj
+  -- Identify each Mathlib determinant with a Hex determinant.
+  rw [det_borderedMinor_bareissDesnanotIndex source k hnext i j] at hdj
+  rw [M_interior_eq_matrixEquiv_leadingPrefix source k hk hnext i j,
+      ← det_eq] at hdj
+  rw [M11_eq_matrixEquiv_borderedMinor source k hk hnext i j, ← det_eq] at hdj
+  rw [M_kk_eq_matrixEquiv_borderedMinor_submatrix source k hk hnext i j,
+      Matrix.det_submatrix_equiv_self, ← det_eq] at hdj
+  rw [M_1k_eq_matrixEquiv_borderedMinor_submatrix source k hk hnext i j,
+      Matrix.det_permute', ← det_eq] at hdj
+  rw [M_k1_eq_matrixEquiv_borderedMinor_submatrix source k hk hnext i j,
+      Matrix.det_permute, ← det_eq] at hdj
+  -- hdj has the form M.det * Mint.det = M11.det * Mkk.det - (sign σ * X) * (sign σ * Y).
+  -- Sign² = 1, so the sign factors cancel.
+  have hsign_sq : ((Equiv.Perm.sign (bareissCyclicShift k) : ℤ) : R) *
+      ((Equiv.Perm.sign (bareissCyclicShift k) : ℤ) : R) = 1 := by
+    rw [← Int.cast_mul, ← Units.val_mul, Int.units_mul_self, Units.val_one,
+        Int.cast_one]
+  -- Rearrange hdj using commutativity (M11 * Mkk = Mkk * M11) and the sign²=1
+  -- cancellation (M1k * sign * Mk1 * sign = M1k * Mk1).
+  linear_combination hdj -
+    (Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk i
+        (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+      Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+        (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) j)) * hsign_sq
+
 end HexMatrixMathlib
