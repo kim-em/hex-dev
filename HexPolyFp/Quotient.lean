@@ -1619,25 +1619,416 @@ private theorem eval_coeff_list_getD_eq_coeff (f : FpPoly p) (n : Nat) :
   rw [Array.getElem?_toList]
   rfl
 
+omit [ZMod64.PrimeModulus p] in
+private theorem list_getD_map_range_zmod (bound n : Nat) (coeff : Nat → ZMod64 p) :
+    ((List.range bound).map coeff).getD n (0 : ZMod64 p) =
+      if n < bound then coeff n else 0 := by
+  by_cases hn : n < bound
+  · simp [hn, List.getD]
+  · simp [hn, List.getD]
+
+omit [ZMod64.PrimeModulus p] in
+private theorem list_eq_of_length_eq_of_getD_eq
+    {xs ys : List (ZMod64 p)}
+    (hlen : xs.length = ys.length)
+    (hget : ∀ i, i < xs.length → xs.getD i 0 = ys.getD i 0) :
+    xs = ys := by
+  induction xs generalizing ys with
+  | nil =>
+      cases ys with
+      | nil => rfl
+      | cons y ys => simp at hlen
+  | cons x xs ih =>
+      cases ys with
+      | nil => simp at hlen
+      | cons y ys =>
+          have hhead : x = y := by
+            have h := hget 0 (by simp)
+            simpa using h
+          have hlen_tail : xs.length = ys.length := Nat.succ.inj hlen
+          have htail : xs = ys := by
+            apply ih hlen_tail
+            intro i hi
+            have h := hget (i + 1) (by simp [hi])
+            simpa using h
+          rw [hhead, htail]
+
+omit [ZMod64.PrimeModulus p] in
+private theorem toArray_toList_eq_coeff_range (f : FpPoly p) :
+    f.toArray.toList = (List.range f.size).map (fun i => f.coeff i) := by
+  apply list_eq_of_length_eq_of_getD_eq
+  · simp [DensePoly.toArray, DensePoly.size]
+  · intro i hi
+    have hi_size : i < f.size := by
+      simpa [DensePoly.toArray, DensePoly.size] using hi
+    rw [eval_coeff_list_getD_eq_coeff]
+    rw [list_getD_map_range_zmod]
+    simp [hi_size]
+
+/-- Power-sum evaluation of a coefficient function over a finite interval. -/
+private def evalCoeffPowerSumUpTo
+    (coeff : Nat → ZMod64 p) :
+    Nat → Nat → Quotient g hmonic hg_pos → Quotient g hmonic hg_pos
+  | 0, _, _ => 0
+  | n + 1, base, β =>
+      reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (DensePoly.C (coeff base)) *
+          β ^ base +
+        evalCoeffPowerSumUpTo coeff n (base + 1) β
+
+private theorem evalCoeffPowerSumFrom_range_eq_upTo
+    (coeff : Nat → ZMod64 p) (β : Quotient g hmonic hg_pos) :
+    ∀ n base,
+      evalCoeffPowerSumFrom
+          (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          ((List.range n).map (fun i => coeff (base + i))) base β =
+        evalCoeffPowerSumUpTo
+          (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          coeff n base β
+  | 0, base => by
+      simp [evalCoeffPowerSumFrom, evalCoeffPowerSumUpTo]
+  | n + 1, base => by
+      rw [List.range_succ_eq_map]
+      simp only [List.map_cons, List.map_map]
+      simp only [evalCoeffPowerSumFrom, evalCoeffPowerSumUpTo]
+      congr 1
+      simpa [Function.comp_def, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm]
+        using evalCoeffPowerSumFrom_range_eq_upTo coeff β n (base + 1)
+
+private theorem eval_eq_coeff_power_sum_upTo_size (f : FpPoly p)
+    (β : Quotient g hmonic hg_pos) :
+    eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β =
+      evalCoeffPowerSumUpTo
+        (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (fun i => f.coeff i) f.size 0 β := by
+  rw [eval_eq_coeff_power_sum]
+  rw [toArray_toList_eq_coeff_range]
+  simpa using evalCoeffPowerSumFrom_range_eq_upTo
+    (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+    (fun i => f.coeff i) β f.size 0
+
+private theorem evalCoeffPowerSumUpTo_extend_zero
+    (coeff : Nat → ZMod64 p) (β : Quotient g hmonic hg_pos)
+    (hzero : ∀ i, bound ≤ i → coeff i = 0) :
+    ∀ extra base,
+      bound ≤ base →
+        evalCoeffPowerSumUpTo
+            (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+            coeff extra base β = 0
+  | 0, base, _ => by
+      simp [evalCoeffPowerSumUpTo]
+  | extra + 1, base, hbase => by
+      simp only [evalCoeffPowerSumUpTo]
+      rw [hzero base hbase, reduce_C_zero, zero_mul]
+      rw [evalCoeffPowerSumUpTo_extend_zero coeff β hzero extra (base + 1) (by omega)]
+      rw [zero_add]
+
+private theorem evalCoeffPowerSumUpTo_succ_of_next_zero
+    (coeff : Nat → ZMod64 p) (β : Quotient g hmonic hg_pos) :
+    ∀ n base,
+      coeff (base + n) = 0 →
+        evalCoeffPowerSumUpTo
+            (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+            coeff n base β =
+          evalCoeffPowerSumUpTo
+            (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+            coeff (n + 1) base β
+  | 0, base, hzero => by
+      have hz : coeff base = 0 := by simpa using hzero
+      rw [evalCoeffPowerSumUpTo, evalCoeffPowerSumUpTo, hz, reduce_C_zero, zero_mul]
+      simp [evalCoeffPowerSumUpTo]
+  | n + 1, base, hzero => by
+      simp only [evalCoeffPowerSumUpTo]
+      rw [evalCoeffPowerSumUpTo_succ_of_next_zero coeff β n (base + 1) (by
+        simpa [Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using hzero)]
+      simp only [evalCoeffPowerSumUpTo]
+
+private theorem evalCoeffPowerSumUpTo_le_extend_base
+    (coeff : Nat → ZMod64 p) (β : Quotient g hmonic hg_pos)
+    (hzero : ∀ i, base + bound ≤ i → coeff i = 0) :
+    ∀ extra,
+      evalCoeffPowerSumUpTo
+          (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          coeff bound base β =
+        evalCoeffPowerSumUpTo
+          (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          coeff (bound + extra) base β
+  | 0 => by
+      simp
+  | extra + 1 => by
+      rw [evalCoeffPowerSumUpTo_le_extend_base coeff β hzero extra]
+      rw [Nat.add_succ]
+      exact evalCoeffPowerSumUpTo_succ_of_next_zero
+        coeff β (bound + extra) base (hzero (base + (bound + extra)) (by omega))
+
+private theorem evalCoeffPowerSumUpTo_le_extend
+    (coeff : Nat → ZMod64 p) (β : Quotient g hmonic hg_pos)
+    (hzero : ∀ i, bound ≤ i → coeff i = 0) :
+    ∀ extra,
+      evalCoeffPowerSumUpTo
+          (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          coeff bound 0 β =
+        evalCoeffPowerSumUpTo
+          (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          coeff (bound + extra) 0 β := by
+  intro extra
+  exact evalCoeffPowerSumUpTo_le_extend_base
+    (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+    coeff β (base := 0) (bound := bound) (by simpa using hzero) extra
+
+private theorem eval_eq_coeff_power_sum_upTo_bound (f : FpPoly p)
+    (β : Quotient g hmonic hg_pos) {bound : Nat} (hbound : f.size ≤ bound) :
+    eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β =
+      evalCoeffPowerSumUpTo
+        (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (fun i => f.coeff i) bound 0 β := by
+  rw [eval_eq_coeff_power_sum_upTo_size]
+  obtain ⟨extra, rfl⟩ := Nat.exists_eq_add_of_le hbound
+  exact evalCoeffPowerSumUpTo_le_extend
+    (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+    (fun i => f.coeff i) β
+    (fun i hi => DensePoly.coeff_eq_zero_of_size_le f hi) extra
+
+omit [ZMod64.PrimeModulus p] in
+private theorem zmod64_add_zero_zero_local :
+    (0 : ZMod64 p) + 0 = 0 := by grind
+
+omit [ZMod64.PrimeModulus p] in
+private theorem zmod64_sub_zero_zero_local :
+    (0 : ZMod64 p) - 0 = 0 := by grind
+
+omit [ZMod64.PrimeModulus p] in
+private theorem C_add_eq (a b : ZMod64 p) :
+    (DensePoly.C (a + b) : FpPoly p) = DensePoly.C a + DensePoly.C b := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_C, DensePoly.coeff_add _ _ _ zmod64_add_zero_zero_local,
+    DensePoly.coeff_C, DensePoly.coeff_C]
+  cases n with
+  | zero => grind
+  | succ n =>
+      exact zmod64_add_zero_zero_local.symm
+
+omit [ZMod64.PrimeModulus p] in
+private theorem C_sub_eq (a b : ZMod64 p) :
+    (DensePoly.C (a - b) : FpPoly p) = DensePoly.C a - DensePoly.C b := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_C, DensePoly.coeff_sub _ _ _ zmod64_sub_zero_zero_local,
+    DensePoly.coeff_C, DensePoly.coeff_C]
+  cases n with
+  | zero => grind
+  | succ n =>
+      exact zmod64_sub_zero_zero_local.symm
+
+omit [ZMod64.PrimeModulus p] in
+private theorem C_mul_C_eq (a b : ZMod64 p) :
+    (DensePoly.C (a * b) : FpPoly p) = DensePoly.C a * DensePoly.C b := by
+  rw [FpPoly.C_mul_eq_scale]
+  apply DensePoly.ext_coeff
+  intro n
+  have hzero : a * (0 : ZMod64 p) = 0 := by grind
+  rw [DensePoly.coeff_C, DensePoly.coeff_scale _ _ _ hzero, DensePoly.coeff_C]
+  cases n with
+  | zero => grind
+  | succ n =>
+      exact hzero.symm
+
+private theorem reduce_C_val_eq (a : ZMod64 p) :
+    (reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (DensePoly.C a)).val =
+      (DensePoly.C a : FpPoly p) := by
+  rw [reduce_val, FpPoly.modByMonic, DensePoly.modByMonic_eq_mod]
+  have hdeg : (DensePoly.C a : FpPoly p).degree?.getD 0 < g.degree?.getD 0 := by
+    rw [DensePoly.degree?_C_getD]
+    exact hg_pos
+  exact DensePoly.mod_eq_self_of_degree_lt (DensePoly.C a : FpPoly p) g hdeg
+
+private theorem reduce_C_add (a b : ZMod64 p) :
+    reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (DensePoly.C (a + b)) =
+      reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (DensePoly.C a) +
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (DensePoly.C b) := by
+  rw [C_add_eq]
+  exact reduce_add (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+    (DensePoly.C a) (DensePoly.C b)
+
+private theorem reduce_C_sub (a b : ZMod64 p) :
+    reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (DensePoly.C (a - b)) =
+      reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (DensePoly.C a) -
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (DensePoly.C b) := by
+  apply ext
+  rw [C_sub_eq, reduce_val, sub_val, reduce_C_val_eq, reduce_C_val_eq]
+
+private theorem reduce_C_mul (a b : ZMod64 p) :
+    reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (DensePoly.C (a * b)) =
+      reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (DensePoly.C a) *
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (DensePoly.C b) := by
+  rw [C_mul_C_eq]
+  exact reduce_mul (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+    (DensePoly.C a) (DensePoly.C b)
+
+private theorem evalCoeffPowerSumUpTo_add
+    (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
+    ∀ n base,
+      evalCoeffPowerSumUpTo
+          (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (fun i => f.coeff i + h.coeff i) n base β =
+        evalCoeffPowerSumUpTo
+            (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+            (fun i => f.coeff i) n base β +
+          evalCoeffPowerSumUpTo
+            (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+            (fun i => h.coeff i) n base β
+  | 0, base => by
+      simp [evalCoeffPowerSumUpTo]
+  | n + 1, base => by
+      simp only [evalCoeffPowerSumUpTo]
+      rw [reduce_C_add]
+      rw [evalCoeffPowerSumUpTo_add f h β n (base + 1)]
+      rw [right_distrib]
+      exact add_pair_swap_quot _ _ _ _
+
+private theorem neg_add_quot (a b : Quotient g hmonic hg_pos) :
+    -(a + b) = -a + -b := by
+  have hzero : (a + b) + (-a + -b) = 0 := by
+    rw [add_pair_swap_quot a b (-a) (-b)]
+    rw [add_right_neg, add_right_neg, zero_add]
+  exact (eq_neg_of_add_eq_zero_right hzero).symm
+
+private theorem add_sub_pair_swap
+    (a b c d : Quotient g hmonic hg_pos) :
+    (a - b) + (c - d) = (a + c) - (b + d) := by
+  rw [sub_eq_add_neg a b, sub_eq_add_neg c d, sub_eq_add_neg (a + c) (b + d)]
+  rw [neg_add_quot]
+  exact add_pair_swap_quot a (-b) c (-d)
+
+private theorem evalCoeffPowerSumUpTo_sub
+    (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
+    ∀ n base,
+      evalCoeffPowerSumUpTo
+          (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (fun i => f.coeff i - h.coeff i) n base β =
+        evalCoeffPowerSumUpTo
+            (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+            (fun i => f.coeff i) n base β -
+          evalCoeffPowerSumUpTo
+            (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+            (fun i => h.coeff i) n base β
+  | 0, base => by
+      simp [evalCoeffPowerSumUpTo, sub_self]
+  | n + 1, base => by
+      simp only [evalCoeffPowerSumUpTo]
+      rw [reduce_C_sub]
+      rw [evalCoeffPowerSumUpTo_sub f h β n (base + 1)]
+      rw [sub_mul]
+      exact add_sub_pair_swap _ _ _ _
+
+private theorem evalCoeffPowerSumUpTo_const_mul
+    (c : ZMod64 p) (f : FpPoly p) (β : Quotient g hmonic hg_pos) :
+    ∀ n base,
+      evalCoeffPowerSumUpTo
+          (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (fun i => c * f.coeff i) n base β =
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+            (DensePoly.C c) *
+          evalCoeffPowerSumUpTo
+            (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+            (fun i => f.coeff i) n base β
+  | 0, base => by
+      simp [evalCoeffPowerSumUpTo, mul_zero]
+  | n + 1, base => by
+      simp only [evalCoeffPowerSumUpTo]
+      rw [reduce_C_mul]
+      rw [evalCoeffPowerSumUpTo_const_mul c f β n (base + 1)]
+      rw [left_distrib]
+      congr 1
+      rw [mul_assoc]
+
+omit [ZMod64.PrimeModulus p] in
+private theorem size_le_of_coeff_eq_zero_from_local (f : FpPoly p) (bound : Nat)
+    (hzero : ∀ i, bound ≤ i → f.coeff i = 0) :
+    f.size ≤ bound := by
+  by_cases hle : f.size ≤ bound
+  · exact hle
+  · have hgt : bound < f.size := Nat.lt_of_not_ge hle
+    have hpos : 0 < f.size := by omega
+    have htop_zero : f.coeff (f.size - 1) = 0 := hzero (f.size - 1) (by omega)
+    exact False.elim (DensePoly.coeff_last_ne_zero_of_pos_size f hpos htop_zero)
+
 private theorem eval_add_core_by_coeff_power_sum
     (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f + h) β =
       eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β +
         eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) h β := by
-  -- The intended proof is the coefficient-bound bridge: rewrite all three
-  -- evaluations with `eval_eq_coeff_power_sum`, extend shorter stored
-  -- coefficient lists by zeros using `eval_coeff_list_getD_eq_coeff`, then
-  -- apply `DensePoly.coeff_add` pointwise over the common `max` bound.
-  sorry
+  let bound := max f.size h.size
+  rw [eval_eq_coeff_power_sum_upTo_bound
+    (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f + h) β
+    (bound := bound)]
+  · rw [eval_eq_coeff_power_sum_upTo_bound
+      (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β
+      (bound := bound) (Nat.le_max_left f.size h.size)]
+    rw [eval_eq_coeff_power_sum_upTo_bound
+      (g := g) (hmonic := hmonic) (hg_pos := hg_pos) h β
+      (bound := bound) (Nat.le_max_right f.size h.size)]
+    have hcoeff :
+        (fun i => (f + h).coeff i) =
+          (fun i => f.coeff i + h.coeff i) := by
+      funext i
+      rw [DensePoly.coeff_add _ _ _ zmod64_add_zero_zero_local]
+    rw [hcoeff]
+    exact evalCoeffPowerSumUpTo_add
+      (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f h β bound 0
+  · change (f + h).size ≤ max f.size h.size
+    apply size_le_of_coeff_eq_zero_from_local
+    intro i hi
+    rw [DensePoly.coeff_add _ _ _ zmod64_add_zero_zero_local]
+    rw [DensePoly.coeff_eq_zero_of_size_le f
+        (Nat.le_trans (Nat.le_max_left f.size h.size) hi),
+      DensePoly.coeff_eq_zero_of_size_le h
+        (Nat.le_trans (Nat.le_max_right f.size h.size) hi)]
+    exact zmod64_add_zero_zero_local
 
 private theorem eval_sub_core_by_coeff_power_sum
     (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f - h) β =
       eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β -
         eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) h β := by
-  -- Same coefficient-bound bridge as addition, using `DensePoly.coeff_sub`
-  -- and quotient subtraction as addition of the right additive inverse.
-  sorry
+  let bound := max f.size h.size
+  rw [eval_eq_coeff_power_sum_upTo_bound
+    (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f - h) β
+    (bound := bound)]
+  · rw [eval_eq_coeff_power_sum_upTo_bound
+      (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β
+      (bound := bound) (Nat.le_max_left f.size h.size)]
+    rw [eval_eq_coeff_power_sum_upTo_bound
+      (g := g) (hmonic := hmonic) (hg_pos := hg_pos) h β
+      (bound := bound) (Nat.le_max_right f.size h.size)]
+    have hcoeff :
+        (fun i => (f - h).coeff i) =
+          (fun i => f.coeff i - h.coeff i) := by
+      funext i
+      rw [DensePoly.coeff_sub _ _ _ zmod64_sub_zero_zero_local]
+    rw [hcoeff]
+    exact evalCoeffPowerSumUpTo_sub
+      (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f h β bound 0
+  · change (f - h).size ≤ max f.size h.size
+    apply size_le_of_coeff_eq_zero_from_local
+    intro i hi
+    rw [DensePoly.coeff_sub _ _ _ zmod64_sub_zero_zero_local]
+    rw [DensePoly.coeff_eq_zero_of_size_le f
+        (Nat.le_trans (Nat.le_max_left f.size h.size) hi),
+      DensePoly.coeff_eq_zero_of_size_le h
+        (Nat.le_trans (Nat.le_max_right f.size h.size) hi)]
+    exact zmod64_sub_zero_zero_local
 
 private theorem eval_C_mul_core_by_coeff_power_sum
     (c : ZMod64 p) (f : FpPoly p) (β : Quotient g hmonic hg_pos) :
@@ -1645,10 +2036,28 @@ private theorem eval_C_mul_core_by_coeff_power_sum
         (DensePoly.C c * f) β =
       reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c) *
         eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β := by
-  -- Rewrite `DensePoly.C c * f` through `FpPoly.C_mul_eq_scale`, use
-  -- `DensePoly.coeff_scale` pointwise over the coefficient-power sum, then
-  -- factor the embedded constant through quotient distributivity.
-  sorry
+  rw [FpPoly.C_mul_eq_scale]
+  rw [eval_eq_coeff_power_sum_upTo_bound
+    (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+    (DensePoly.scale c f) β (bound := f.size)]
+  · rw [eval_eq_coeff_power_sum_upTo_size
+      (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β]
+    have hcoeff :
+        (fun i => (DensePoly.scale c f).coeff i) =
+          (fun i => c * f.coeff i) := by
+      funext i
+      have hzero : c * (0 : ZMod64 p) = 0 := by grind
+      rw [DensePoly.coeff_scale _ _ _ hzero]
+    rw [hcoeff]
+    exact evalCoeffPowerSumUpTo_const_mul
+      (g := g) (hmonic := hmonic) (hg_pos := hg_pos) c f β f.size 0
+  · apply size_le_of_coeff_eq_zero_from_local
+    intro i
+    have hzero : c * (0 : ZMod64 p) = 0 := by grind
+    rw [DensePoly.coeff_scale _ _ _ hzero]
+    intro hi
+    rw [DensePoly.coeff_eq_zero_of_size_le f hi]
+    exact hzero
 
 private theorem eval_add_core (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f + h) β =
