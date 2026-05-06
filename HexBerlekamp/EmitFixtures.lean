@@ -24,7 +24,8 @@ we emit two `result` records that the oracle verifies:
 * `ddf` — `Berlekamp.distinctDegreeFactor` (degree-bucketed
   factorisation product).  python-flint cross-checks by grouping
   its irreducible factor list by degree and multiplying within each
-  group, with repeated factors included at their multiplicity.
+  group, with repeated factors included at their multiplicity.  The
+  same strict bucket comparison is used for repeated-factor fixtures.
 
 * `squarefree` — `squareFreeDecomposition` (unit plus
   multiplicity-indexed square-free factors).  python-flint
