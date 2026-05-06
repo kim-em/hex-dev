@@ -92,7 +92,7 @@ theorem exactDiv_eq_divExact {num denom : Int} (h : denom ∣ num) :
   simp [exactDiv, h]
 
 /-- Search column `col` for a nonzero pivot at or below `start`. -/
-private def findPivotAux (M : Matrix Int n n) (col : Fin n) (start fuel : Nat) :
+def findPivotAux (M : Matrix Int n n) (col : Fin n) (start fuel : Nat) :
     Option (Fin n) :=
   match fuel with
   | 0 => none
@@ -107,7 +107,7 @@ private def findPivotAux (M : Matrix Int n n) (col : Fin n) (start fuel : Nat) :
         none
 
 /-- Search column `col` for a nonzero pivot at or below `start`. -/
-private def findPivot? (M : Matrix Int n n) (col : Fin n) (start : Nat) :
+def findPivot? (M : Matrix Int n n) (col : Fin n) (start : Nat) :
     Option (Fin n) :=
   findPivotAux M col start (n - start)
 
@@ -663,6 +663,81 @@ def pivotLoop (fuel : Nat) (state : BareissState n) : BareissState n :=
           pivotLoop fuel next
       else
         state
+
+/-- With zero fuel, the row-pivoted Bareiss loop returns its input state. -/
+theorem pivotLoop_zero_fuel (state : BareissState n) :
+    pivotLoop 0 state = state := by
+  rfl
+
+/-- If the current step is already past the last update step, the row-pivoted
+Bareiss loop returns its input state. -/
+theorem pivotLoop_done (fuel : Nat) (state : BareissState n)
+    (hDone : ¬ state.step + 1 < n) :
+    pivotLoop (fuel + 1) state = state := by
+  simp [pivotLoop, hDone]
+
+/-- If the current row-pivoted Bareiss pivot is already nonzero, one loop
+iteration applies `stepMatrix`, advances the step, and recurses without
+changing the row-swap counter. -/
+theorem pivotLoop_regular_branch_no_swap (fuel : Nat) (state : BareissState n)
+    (hDone : state.step + 1 < n)
+    (hp : state.matrix[state.step][state.step] ≠ 0) :
+    pivotLoop (fuel + 1) state =
+      pivotLoop fuel
+        { step := state.step + 1
+          matrix := stepMatrix state.matrix state.step state.matrix[state.step][state.step]
+            state.prevPivot
+          prevPivot := state.matrix[state.step][state.step]
+          rowSwaps := state.rowSwaps
+          singularStep := none } := by
+  simp [pivotLoop, hDone, hp]
+
+/-- If the current pivot is zero and pivot search finds no replacement row,
+the row-pivoted Bareiss loop records a singular step. -/
+theorem pivotLoop_singular_branch_no_pivot (fuel : Nat) (state : BareissState n)
+    (hDone : state.step + 1 < n)
+    (hp0 : state.matrix[state.step][state.step] = 0)
+    (hfind :
+      findPivot? state.matrix
+        (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+        (state.step + 1) = none) :
+    pivotLoop (fuel + 1) state =
+      { state with singularStep := some state.step } := by
+  simp [pivotLoop, hDone, hp0, hfind]
+
+/-- If the current pivot is zero, pivot search finds a replacement row, and
+the swapped pivot is nonzero, one loop iteration swaps rows, applies
+`stepMatrix`, advances the step, increments the row-swap counter, and recurses. -/
+theorem pivotLoop_regular_branch_swap (fuel : Nat) (state : BareissState n)
+    (hDone : state.step + 1 < n)
+    (hp0 : state.matrix[state.step][state.step] = 0) {pivot : Fin n}
+    (hfind :
+      findPivot? state.matrix
+        (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+        (state.step + 1) = some pivot)
+    (hp :
+      (rowSwap state.matrix
+        (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+        pivot)[state.step][state.step] ≠ 0) :
+    pivotLoop (fuel + 1) state =
+      pivotLoop fuel
+        { step := state.step + 1
+          matrix := stepMatrix
+            (rowSwap state.matrix
+              (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+              pivot)
+            state.step
+            ((rowSwap state.matrix
+              (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+              pivot)[state.step][state.step])
+            state.prevPivot
+          prevPivot :=
+            (rowSwap state.matrix
+              (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+              pivot)[state.step][state.step]
+          rowSwaps := state.rowSwaps + 1
+          singularStep := none } := by
+  simp [pivotLoop, hDone, hp0, hfind, hp]
 
 private def bareissArrayState (M : Matrix Int n n) : BareissArrayState :=
   let state := pivotLoop n
