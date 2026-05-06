@@ -275,6 +275,13 @@ theorem det_eq [CommRing R] (M : Hex.Matrix R n n) :
   rw [hhex, det_apply_row]
   rw [equivs_toFinset]
 
+/-- Row-pivoted Bareiss determinant soundness, exposed against Mathlib's
+determinant for downstream bridge users. -/
+theorem bareissDet_eq_det (M : Hex.Matrix Int n n) :
+    Hex.Matrix.bareiss M = Matrix.det (matrixEquiv M) := by
+  rw [Hex.Matrix.bareiss_eq_det M]
+  exact det_eq M
+
 /-- `matrixEquiv` sends Hex leading prefixes to Mathlib submatrices. -/
 theorem matrixEquiv_leadingPrefix
     (M : Hex.Matrix R n n) (k : Nat) (hk : k ≤ n) :
