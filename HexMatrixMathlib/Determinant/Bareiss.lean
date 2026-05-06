@@ -289,4 +289,171 @@ theorem bareissNoPivotData_singularStep_eq_none
       = none
   exact noPivotLoop_singularStep_eq_none M h
 
+/-- The no-pivot Bareiss loop preserves the bound `state.step + 1 ≤ n`. -/
+private theorem noPivotLoop_step_succ_le
+    (fuel : Nat) (state : Hex.Matrix.BareissState n) (h : state.step + 1 ≤ n) :
+    (Hex.Matrix.noPivotLoop fuel state).step + 1 ≤ n := by
+  induction fuel generalizing state with
+  | zero =>
+      show state.step + 1 ≤ n
+      exact h
+  | succ fuel ih =>
+      by_cases hDone : state.step + 1 < n
+      · by_cases hp :
+            state.matrix[(⟨state.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)][
+              (⟨state.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)] = 0
+        · rw [Hex.Matrix.noPivotLoop_singular_branch fuel state hDone hp]
+          exact h
+        · rw [Hex.Matrix.noPivotLoop_regular_branch fuel state hDone hp]
+          apply ih
+          show state.step + 1 + 1 ≤ n
+          omega
+      · rw [Hex.Matrix.noPivotLoop_done fuel state hDone]
+        exact h
+
+/-- Under `NonzeroBareissPivots`, the no-pivot Bareiss loop run with enough
+fuel reaches a final step satisfying `state.step + 1 ≥ n`. -/
+private theorem noPivotLoop_step_succ_ge
+    (fuel : Nat) (state : Hex.Matrix.BareissState n)
+    (source : Hex.Matrix Int n n)
+    (hinv : BareissNoPivotInvariant source state)
+    (hpivots : ∀ (k : Fin n), state.step ≤ k.val →
+      Hex.Matrix.det
+        (Hex.Matrix.leadingPrefix source (k.val + 1) (Nat.succ_le_of_lt k.isLt))
+          ≠ 0)
+    (hfuel : n ≤ state.step + fuel + 1) :
+    n ≤ (Hex.Matrix.noPivotLoop fuel state).step + 1 := by
+  induction fuel generalizing state with
+  | zero =>
+      show n ≤ state.step + 1
+      omega
+  | succ fuel ih =>
+      by_cases hDone : state.step + 1 < n
+      · have hk : state.step < n := Nat.lt_of_succ_lt hDone
+        have hpivot_idx :
+            state.matrix[(⟨state.step, hk⟩ : Fin n)][(⟨state.step, hk⟩ : Fin n)] =
+              Hex.Matrix.det
+                (Hex.Matrix.leadingPrefix source (state.step + 1)
+                  (Nat.succ_le_of_lt hk)) := by
+          rw [hinv.trailing_eq hk ⟨state.step, hk⟩ ⟨state.step, hk⟩
+            (Nat.le_refl _) (Nat.le_refl _)]
+          rw [borderedMinor_corner_eq_leadingPrefix source state.step hk]
+        have hp_ne :
+            state.matrix[(⟨state.step, hk⟩ : Fin n)][(⟨state.step, hk⟩ : Fin n)] ≠ 0 := by
+          rw [hpivot_idx]
+          exact hpivots ⟨state.step, hk⟩ (Nat.le_refl _)
+        rw [Hex.Matrix.noPivotLoop_regular_branch fuel state hDone hp_ne]
+        apply ih
+        · exact bareissNoPivotInvariant_step source state hinv hDone hp_ne
+        · intro k' hk'
+          change state.step + 1 ≤ k'.val at hk'
+          exact hpivots k' (Nat.le_of_succ_le hk')
+        · show n ≤ state.step + 1 + fuel + 1
+          omega
+      · rw [Hex.Matrix.noPivotLoop_done fuel state hDone]
+        show n ≤ state.step + 1
+        omega
+
+/-- The leading prefix of size `n` of an `n × n` matrix is the matrix itself. -/
+private theorem leadingPrefix_self {R : Type u} [Lean.Grind.Ring R]
+    (M : Hex.Matrix R n n) (h : n ≤ n) :
+    Hex.Matrix.leadingPrefix M n h = M := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  simp [Hex.Matrix.leadingPrefix, Hex.Matrix.ofFn]
+
+/-- Helper: under the bordered-minor invariant, when the recurrence step
+equals `k`, the `(k, k)` entry of the working matrix equals `Hex.Matrix.det M`.
+Stated with `state` as an explicit free variable so that `state.step = k` can
+be substituted via `subst`. -/
+private theorem trailing_corner_entry_eq_det
+    (k : Nat) (M : Hex.Matrix Int (k + 1) (k + 1))
+    (state : Hex.Matrix.BareissState (k + 1))
+    (hinv : BareissNoPivotInvariant M state)
+    (hstep : state.step = k) :
+    state.matrix[(⟨k, Nat.lt_succ_self k⟩ : Fin (k + 1))][
+        (⟨k, Nat.lt_succ_self k⟩ : Fin (k + 1))] = Hex.Matrix.det M := by
+  obtain ⟨step', matrix', prev', swaps', sing'⟩ := state
+  -- Force the structure projection in `hstep` to reduce so `subst` applies.
+  change step' = k at hstep
+  -- `subst hstep` substitutes `k` with `step'` (Lean's preferred direction).
+  subst hstep
+  have hk' : step' < step' + 1 := Nat.lt_succ_self step'
+  have h_trail :=
+    hinv.trailing_eq hk' ⟨step', hk'⟩ ⟨step', hk'⟩ (Nat.le_refl _) (Nat.le_refl _)
+  change matrix'[(⟨step', hk'⟩ : Fin (step' + 1))][
+      (⟨step', hk'⟩ : Fin (step' + 1))] = Hex.Matrix.det M
+  change matrix'[(⟨step', hk'⟩ : Fin (step' + 1))][
+      (⟨step', hk'⟩ : Fin (step' + 1))] =
+    Hex.Matrix.det
+      (Hex.Matrix.borderedMinor M step' hk' ⟨step', hk'⟩ ⟨step', hk'⟩) at h_trail
+  rw [h_trail, borderedMinor_corner_eq_leadingPrefix M step' hk',
+    leadingPrefix_self M (Nat.succ_le_of_lt hk')]
+
+/-- Capstone: under `NonzeroBareissPivots`, the no-pivot Bareiss recurrence
+computes the Mathlib determinant of the source matrix. -/
+theorem bareissNoPivot_eq_det
+    (M : Hex.Matrix Int n n) (h : NonzeroBareissPivots M) :
+    Hex.Matrix.bareissNoPivot M = Matrix.det (matrixEquiv M) := by
+  -- The no-pivot Bareiss data has `singularStep = none` (no zero pivot) and
+  -- `rowSwaps = 0` (the no-pivot loop never swaps rows), giving sign `1`.
+  have hdata_sing : (Hex.Matrix.bareissNoPivotData M).singularStep = none :=
+    bareissNoPivotData_singularStep_eq_none M h
+  have hdata_swaps : (Hex.Matrix.bareissNoPivotData M).rowSwaps = 0 := by
+    show (Hex.Matrix.noPivotLoop n (Hex.Matrix.noPivotInitialState M)).rowSwaps = 0
+    rw [Hex.Matrix.noPivotLoop_rowSwaps]
+    rfl
+  have hdata_sign : (Hex.Matrix.bareissNoPivotData M).sign = 1 := by
+    unfold Hex.Matrix.BareissData.sign
+    rw [hdata_swaps]
+    decide
+  match n, M, h with
+  | 0, M, _ =>
+      -- Empty matrix: Hex side is `sign = 1` by `det_zero_eq`,
+      -- Mathlib side is `1` by `Matrix.det_isEmpty`.
+      show (Hex.Matrix.bareissNoPivotData M).det = Matrix.det (matrixEquiv M)
+      rw [Hex.Matrix.BareissData.det_zero_eq _ hdata_sing, hdata_sign,
+        Matrix.det_isEmpty]
+  | k + 1, M, h =>
+      have hinv := bareissNoPivotInvariant_holds M h
+      have hk : k < k + 1 := Nat.lt_succ_self k
+      -- The final step equals `k = (k + 1) - 1`.
+      have hstep_le :
+          (Hex.Matrix.noPivotLoop (k + 1) (Hex.Matrix.noPivotInitialState M)).step + 1 ≤
+            k + 1 :=
+        noPivotLoop_step_succ_le (k + 1) (Hex.Matrix.noPivotInitialState M)
+          (by show 0 + 1 ≤ k + 1; omega)
+      have hstep_ge :
+          k + 1 ≤
+            (Hex.Matrix.noPivotLoop (k + 1) (Hex.Matrix.noPivotInitialState M)).step
+              + 1 := by
+        apply noPivotLoop_step_succ_ge (k + 1)
+          (Hex.Matrix.noPivotInitialState M) M
+          (bareissNoPivotInvariant_initial M)
+        · intro k' _
+          exact h k'
+        · show k + 1 ≤ 0 + (k + 1) + 1
+          omega
+      have hstep_eq :
+          (Hex.Matrix.noPivotLoop (k + 1) (Hex.Matrix.noPivotInitialState M)).step
+            = k := by
+        omega
+      -- The (k, k) entry of the final matrix equals `det M`.
+      have hentry :
+          (Hex.Matrix.noPivotLoop (k + 1)
+              (Hex.Matrix.noPivotInitialState M)).matrix[(⟨k, hk⟩ : Fin (k + 1))][
+                (⟨k, hk⟩ : Fin (k + 1))] =
+            Hex.Matrix.det M :=
+        trailing_corner_entry_eq_det k M
+          (Hex.Matrix.noPivotLoop (k + 1) (Hex.Matrix.noPivotInitialState M))
+          hinv hstep_eq
+      -- Bridge: BareissData.det = sign * (k, k) entry = 1 * det M = det M.
+      show (Hex.Matrix.bareissNoPivotData M).det = Matrix.det (matrixEquiv M)
+      rw [Hex.Matrix.BareissData.det_succ_eq _ hdata_sing, hdata_sign, one_mul,
+        show (Hex.Matrix.bareissNoPivotData M).matrix[(⟨k, hk⟩ : Fin (k + 1))][
+            (⟨k, hk⟩ : Fin (k + 1))] = Hex.Matrix.det M from hentry]
+      exact det_eq M
+
 end HexMatrixMathlib
