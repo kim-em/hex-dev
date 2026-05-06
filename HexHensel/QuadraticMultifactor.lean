@@ -32,17 +32,22 @@ private def iterateQuadraticHensel
       let next := quadraticHenselStep m f acc.g acc.h acc.s acc.t
       iterateQuadraticHensel p f (2 * current) fuel next
 
+/-- Number of quadratic-doubling steps needed to reach precision `p^k`
+from data valid modulo `p`. -/
+def quadraticDoublingSteps (k : Nat) : Nat :=
+  if k ≤ 1 then 0 else (k - 1).log2 + 1
+
 /-- Lift a Bezout-witnessed factorisation modulo `p` to one valid modulo
 `p^k` by iterating `quadraticHenselStep`.
 
-`k` doubling steps starting from modulus `p` reach modulus `p^(2^k)`,
-which dominates `p^k` for all `k`; the final result is reduced modulo
-`p^k` to expose the requested precision. -/
+The wrapper performs only `ceil(log₂ k)` doubling steps, since after
+`fuel` steps the loop has reached exponent `2^fuel`. The final result is
+reduced modulo `p^k` to expose exactly the requested precision. -/
 def henselLiftQuadratic
     (p k : Nat) [ZMod64.Bounds p]
     (f g h s t : ZPoly) : QuadraticLiftResult :=
   let init : QuadraticLiftResult := { g, h, s, t }
-  let lifted := iterateQuadraticHensel p f 1 k init
+  let lifted := iterateQuadraticHensel p f 1 (quadraticDoublingSteps k) init
   { g := ZPoly.reduceModPow lifted.g p k
     h := ZPoly.reduceModPow lifted.h p k
     s := ZPoly.reduceModPow lifted.s p k
@@ -124,15 +129,14 @@ private theorem congr_of_pow_le
     ZPoly.congr f g (p ^ a) :=
   congr_of_modulus_dvd f g (Nat.pow_dvd_pow p hab) hfg
 
-private theorem le_two_pow_self (k : Nat) : k ≤ 2 ^ k := by
-  induction k with
-  | zero =>
-      simp
-  | succ k ih =>
-      rw [Nat.pow_succ]
-      have hpow_pos : 1 ≤ 2 ^ k := by
-        exact Nat.succ_le_of_lt (Nat.pow_pos (by omega : 0 < 2))
-      omega
+private theorem le_two_pow_quadraticDoublingSteps (k : Nat) :
+    k ≤ 2 ^ quadraticDoublingSteps k := by
+  by_cases hk : k ≤ 1
+  · simp [quadraticDoublingSteps, hk]
+  · have hpred_lt : k - 1 < 2 ^ ((k - 1).log2 + 1) :=
+      Nat.lt_log2_self
+    simp [quadraticDoublingSteps, hk]
+    omega
 
 private theorem iterateQuadraticHensel_invariant
     (p : Nat) [ZMod64.Bounds p]
@@ -201,19 +205,20 @@ theorem henselLiftQuadratic_spec
     let lifted := henselLiftQuadratic p k f g h s t
     ZPoly.congr (lifted.g * lifted.h) f (p ^ k) := by
   let init : QuadraticLiftResult := { g, h, s, t }
-  let looped := iterateQuadraticHensel p f 1 k init
+  let fuel := quadraticDoublingSteps k
+  let looped := iterateQuadraticHensel p f 1 fuel init
   have hstart : QuadraticLiftLoopInvariant (p ^ 1) f init := by
     simpa [init] using hinv
   have hloop :
-      QuadraticLiftLoopInvariant (p ^ (1 * 2 ^ k)) f looped := by
+      QuadraticLiftLoopInvariant (p ^ (1 * 2 ^ fuel)) f looped := by
     simpa [looped] using
-      iterateQuadraticHensel_invariant p f 1 k init hp (by omega) hstart
+      iterateQuadraticHensel_invariant p f 1 fuel init hp (by omega) hstart
   have hprod_loop_k : ZPoly.congr (looped.g * looped.h) f (p ^ k) := by
     have hprod_loop :
-        ZPoly.congr (looped.g * looped.h) f (p ^ (2 ^ k)) := by
+        ZPoly.congr (looped.g * looped.h) f (p ^ (2 ^ fuel)) := by
       simpa using hloop.1
-    exact congr_of_pow_le p k (2 ^ k) (looped.g * looped.h) f
-      (le_two_pow_self k) hprod_loop
+    exact congr_of_pow_le p k (2 ^ fuel) (looped.g * looped.h) f
+      (le_two_pow_quadraticDoublingSteps k) hprod_loop
   have hred :
       ZPoly.congr
         (ZPoly.reduceModPow looped.g p k * ZPoly.reduceModPow looped.h p k)
