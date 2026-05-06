@@ -293,13 +293,39 @@ store `d_{j+1}`, and entries above the diagonal are zero. -/
 def scaledCoeffs (b : Matrix Int n m) : Matrix Int n n :=
   rowsToMatrix (scaledCoeffRows b) n
 
+/-- The no-pivot Bareiss pass over the full Gram matrix records the same
+leading-prefix determinant as the public `gramDet` API at every vector slot. -/
+private theorem gramDetVecEntry_eq_gramDet
+    (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
+    gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
+        ⟨k, Nat.lt_succ_of_le hk⟩ =
+      gramDet b k hk := by
+  sorry
+
+/-- The fraction-free scaled-coefficient loop computes the Cramer/Bareiss
+integer equal to `d[j+1] * μ[i,j]` below the diagonal. -/
+private theorem scaledCoeffRows_lower_eq_coeffs
+    (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < i) :
+    ((getArrayEntry (scaledCoeffRows b) i j : Int) : Rat) =
+      (gramDet b (j + 1) (Nat.succ_le_of_lt (Nat.lt_trans hj hi)) : Rat) *
+        GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ := by
+  sorry
+
+/-- The scaled-coefficient loop stores the next leading Gram determinant on
+the diagonal. -/
+private theorem scaledCoeffRows_diag_eq_gramDet
+    (b : Matrix Int n m) (i : Nat) (hi : i < n) :
+    getArrayEntry (scaledCoeffRows b) i i =
+      Int.ofNat (gramDet b (i + 1) (Nat.succ_le_of_lt hi)) := by
+  sorry
+
 theorem gramDet_zero (b : Matrix Int n m) :
     gramDet b 0 (Nat.zero_le n) = 1 := by
   rfl
 
 theorem gramDetVec_eq_gramDet (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
     (gramDetVec b).get ⟨k, Nat.lt_succ_of_le hk⟩ = gramDet b k hk := by
-  sorry
+  simpa [gramDetVec] using gramDetVecEntry_eq_gramDet (b := b) k hk
 
 theorem gramDet_eq_prod_normSq (b : Matrix Int n m)
     (hli : independent b) (k : Nat) (hk : k ≤ n) :
@@ -323,12 +349,14 @@ theorem scaledCoeffs_eq (b : Matrix Int n m)
     ((GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ : Int) : Rat) =
       (gramDet b (j + 1) (Nat.succ_le_of_lt (Nat.lt_trans hj hi)) : Rat) *
         GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ := by
-  sorry
+  simpa [scaledCoeffs, rowsToMatrix, GramSchmidt.entry, Matrix.row, Matrix.ofFn] using
+    scaledCoeffRows_lower_eq_coeffs (b := b) i j hi hj
 
 theorem scaledCoeffs_diag (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨i, hi⟩ =
       Int.ofNat (gramDet b (i + 1) (Nat.succ_le_of_lt hi)) := by
-  sorry
+  simpa [scaledCoeffs, rowsToMatrix, GramSchmidt.entry, Matrix.row, Matrix.ofFn] using
+    scaledCoeffRows_diag_eq_gramDet (b := b) i hi
 
 theorem scaledCoeffs_upper (b : Matrix Int n m)
     (i j : Nat) (hi : i < n) (hj : j < n) (hij : i < j) :
