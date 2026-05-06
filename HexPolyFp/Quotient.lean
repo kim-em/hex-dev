@@ -2309,6 +2309,171 @@ theorem pow_card_eq_self_of_irreducible
   · rw [ha, hsplit, pow_succ, mul_zero]
   · rw [hsplit, pow_succ, pow_pred_card_eq_one_of_ne_zero hg_irr ha, one_mul]
 
+/-- Adding any multiple of the modulus degree to a Frobenius exponent does not
+change the quotient Frobenius iterate. -/
+theorem pow_pPow_add_mul_degree_eq
+    (hg_irr : FpPoly.Irreducible g) (a : Quotient g hmonic hg_pos) (m q : Nat) :
+    a ^ (p ^ (m + g.degree?.getD 0 * q)) = a ^ (p ^ m) := by
+  induction q with
+  | zero =>
+      rw [Nat.mul_zero, Nat.add_zero]
+  | succ q ih =>
+      have hidx :
+          m + g.degree?.getD 0 * (q + 1) =
+            (m + g.degree?.getD 0 * q) + g.degree?.getD 0 := by
+        rw [Nat.mul_succ]
+        omega
+      calc
+        a ^ (p ^ (m + g.degree?.getD 0 * (q + 1)))
+            = a ^ (p ^ ((m + g.degree?.getD 0 * q) + g.degree?.getD 0)) := by
+              rw [hidx]
+        _ = (a ^ (p ^ (m + g.degree?.getD 0 * q))) ^
+              (p ^ g.degree?.getD 0) := by
+              rw [Nat.pow_add, pow_mul]
+        _ = (a ^ (p ^ m)) ^ (p ^ g.degree?.getD 0) := by rw [ih]
+        _ = a ^ (p ^ m) := pow_card_eq_self_of_irreducible hg_irr _
+
+/-- If a quotient element is fixed by the `n`th Frobenius iterate, then it is
+fixed by the remainder of `n` modulo the modulus degree. -/
+theorem pow_pPow_mod_degree_eq_of_fixed
+    (hg_irr : FpPoly.Irreducible g) {a : Quotient g hmonic hg_pos} {n : Nat}
+    (hfixed : a ^ (p ^ n) = a) :
+    a ^ (p ^ (n % g.degree?.getD 0)) = a := by
+  have hdecomp :
+      n % g.degree?.getD 0 + g.degree?.getD 0 * (n / g.degree?.getD 0) = n :=
+    Nat.mod_add_div n ((g.degree?).getD 0)
+  have hperiod :
+      a ^ (p ^ (n % g.degree?.getD 0 +
+          g.degree?.getD 0 * (n / g.degree?.getD 0))) =
+        a ^ (p ^ (n % g.degree?.getD 0)) :=
+    pow_pPow_add_mul_degree_eq (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+      hg_irr a (n % g.degree?.getD 0) (n / g.degree?.getD 0)
+  rw [hdecomp] at hperiod
+  rw [← hperiod]
+  exact hfixed
+
+omit [ZMod64.PrimeModulus p] in
+private theorem size_le_of_coeff_eq_zero_from
+    (f : FpPoly p) {bound : Nat}
+    (hzero : ∀ i, bound ≤ i → f.coeff i = 0) :
+    f.size ≤ bound := by
+  by_cases hle : f.size ≤ bound
+  · exact hle
+  · have hlt : bound < f.size := Nat.lt_of_not_ge hle
+    have hsize_pos : 0 < f.size := by omega
+    have htop := DensePoly.coeff_last_ne_zero_of_pos_size f hsize_pos
+    have hbound : bound ≤ f.size - 1 := by omega
+    exact False.elim (htop (hzero (f.size - 1) hbound))
+
+private theorem monomial_pPow_sub_X_ne_zero {r : Nat} (hr_pos : 0 < r) :
+    (DensePoly.monomial (p ^ r) (1 : ZMod64 p) - FpPoly.X : FpPoly p) ≠ 0 := by
+  intro hzero
+  have hp_gt_one : 1 < p := by
+    have hp_two : 2 ≤ p :=
+      Hex.Nat.Prime.two_le (ZMod64.PrimeModulus.prime (p := p))
+    omega
+  have hp_pow_gt_one : 1 < p ^ r := Nat.pow_lt_pow_right hp_gt_one hr_pos
+  have hpow_ne_one : p ^ r ≠ 1 := by omega
+  have hcoeff := congrArg (fun f : FpPoly p => f.coeff (p ^ r)) hzero
+  have hzero_sub : (0 : ZMod64 p) - 0 = 0 := by grind
+  change
+      (DensePoly.monomial (p ^ r) (1 : ZMod64 p) -
+          DensePoly.monomial 1 (1 : ZMod64 p) : FpPoly p).coeff (p ^ r) =
+        (0 : FpPoly p).coeff (p ^ r) at hcoeff
+  rw [DensePoly.coeff_sub _ _ _ hzero_sub, DensePoly.coeff_monomial,
+    DensePoly.coeff_monomial, DensePoly.coeff_zero] at hcoeff
+  simp [hpow_ne_one] at hcoeff
+  have hone_zero : (1 : ZMod64 p) = 0 := by
+    calc
+      (1 : ZMod64 p) = 1 - 0 := by grind
+      _ = 0 := hcoeff
+  exact zmod64_one_ne_zero hone_zero
+
+private theorem monomial_pPow_sub_X_size_sub_one_le {r : Nat} (hr_pos : 0 < r) :
+    (DensePoly.monomial (p ^ r) (1 : ZMod64 p) - FpPoly.X : FpPoly p).size - 1 ≤
+      p ^ r := by
+  have hp_gt_one : 1 < p := by
+    have hp_two : 2 ≤ p :=
+      Hex.Nat.Prime.two_le (ZMod64.PrimeModulus.prime (p := p))
+    omega
+  have hp_pow_gt_one : 1 < p ^ r := Nat.pow_lt_pow_right hp_gt_one hr_pos
+  have hsize_le :
+      (DensePoly.monomial (p ^ r) (1 : ZMod64 p) - FpPoly.X : FpPoly p).size ≤
+        p ^ r + 1 := by
+    apply size_le_of_coeff_eq_zero_from
+    intro i hi
+    have hi_ne_pow : i ≠ p ^ r := by omega
+    have hi_ne_one : i ≠ 1 := by omega
+    have hzero_sub : (0 : ZMod64 p) - 0 = 0 := by grind
+    change
+        (DensePoly.monomial (p ^ r) (1 : ZMod64 p) -
+            DensePoly.monomial 1 (1 : ZMod64 p) : FpPoly p).coeff i = 0
+    rw [DensePoly.coeff_sub _ _ _ hzero_sub, DensePoly.coeff_monomial,
+      DensePoly.coeff_monomial]
+    simp [hi_ne_pow, hi_ne_one]
+    grind
+  omega
+
+/--
+If every element of the irreducible quotient is fixed by the `n`th Frobenius
+iterate, then the modulus degree divides `n`.
+
+This is the quotient-side order theorem used by Rabin soundness: a nonzero
+remainder `r = n % deg(g)` would make every quotient element a root of
+`T^(p^r) - T`, contradicting the root-count bound because the quotient has
+`p^deg(g)` elements.
+-/
+theorem deg_dvd_of_pow_pPowN_eq_self_universal
+    (hg_irr : FpPoly.Irreducible g) {n : Nat}
+    (h : ∀ β : Quotient g hmonic hg_pos, β ^ (p ^ n) = β) :
+    g.degree?.getD 0 ∣ n := by
+  let d := g.degree?.getD 0
+  let r := n % d
+  by_cases hr_zero : r = 0
+  · exact Nat.dvd_of_mod_eq_zero (by simpa [r, d] using hr_zero)
+  · have hr_pos : 0 < r := Nat.pos_of_ne_zero hr_zero
+    have hr_lt_d : r < d := by
+      dsimp [r, d]
+      exact Nat.mod_lt n hg_pos
+    let f : FpPoly p := DensePoly.monomial (p ^ r) (1 : ZMod64 p) - FpPoly.X
+    have hf_ne : f ≠ 0 := by
+      dsimp [f]
+      exact monomial_pPow_sub_X_ne_zero (p := p) hr_pos
+    have hroot : ∀ β : Quotient g hmonic hg_pos,
+        eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β = 0 := by
+      intro β
+      have hfixed_r :
+          β ^ (p ^ r) = β := by
+        simpa [r, d] using
+          pow_pPow_mod_degree_eq_of_fixed
+            (g := g) (hmonic := hmonic) (hg_pos := hg_pos) hg_irr (h β)
+      dsimp [f]
+      rw [eval_sub, eval_monomial, eval_X]
+      change (1 : Quotient g hmonic hg_pos) * β ^ (p ^ r) - β = 0
+      rw [one_mul, hfixed_r, sub_self]
+    have hfilter_eq :
+        (elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).filter
+            (fun β => decide
+              (eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β = 0)) =
+          elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos) := by
+      apply (List.filter_eq_self).mpr
+      intro β _hβ
+      exact decide_eq_true (hroot β)
+    have hroot_bound :=
+      eval_rootsIn_elements_length_le_degree
+        (g := g) (hmonic := hmonic) (hg_pos := hg_pos) hg_irr f hf_ne
+    rw [hfilter_eq, elements_card] at hroot_bound
+    have hsize_bound : f.size - 1 ≤ p ^ r := by
+      dsimp [f]
+      exact monomial_pPow_sub_X_size_sub_one_le (p := p) hr_pos
+    have hcard_le : p ^ d ≤ p ^ r := Nat.le_trans hroot_bound hsize_bound
+    have hp_gt_one : 1 < p := by
+      have hp_two : 2 ≤ p :=
+        Hex.Nat.Prime.two_le (ZMod64.PrimeModulus.prime (p := p))
+      omega
+    have hpow_lt : p ^ r < p ^ d := Nat.pow_lt_pow_right hp_gt_one hr_lt_d
+    exact False.elim (Nat.not_lt_of_ge hcard_le hpow_lt)
+
 end Quotient
 end FpPoly
 end Hex
