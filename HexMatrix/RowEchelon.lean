@@ -29,6 +29,10 @@ def rowScale [Mul R] (M : Matrix R n m) (i : Fin n) (c : R) : Matrix R n m :=
 def rowAdd [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin n) (c : R) : Matrix R n m :=
   M.set dst <| Vector.ofFn fun k => M[dst][k] + c * M[src][k]
 
+/-- Replace column `dst` by `col dst + c * col src`. -/
+def colAdd [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin m) (c : R) : Matrix R n m :=
+  Matrix.ofFn fun i j => if j = dst then M[i][j] + c * M[i][src] else M[i][j]
+
 /-- Pure data produced by an echelon-form algorithm. -/
 structure RowEchelonData (R : Type u) (n m : Nat) where
   rank : Nat
