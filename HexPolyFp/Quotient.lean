@@ -1619,17 +1619,50 @@ private theorem eval_coeff_list_getD_eq_coeff (f : FpPoly p) (n : Nat) :
   rw [Array.getElem?_toList]
   rfl
 
+private theorem eval_add_core_by_coeff_power_sum
+    (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
+    eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f + h) β =
+      eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β +
+        eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) h β := by
+  -- The intended proof is the coefficient-bound bridge: rewrite all three
+  -- evaluations with `eval_eq_coeff_power_sum`, extend shorter stored
+  -- coefficient lists by zeros using `eval_coeff_list_getD_eq_coeff`, then
+  -- apply `DensePoly.coeff_add` pointwise over the common `max` bound.
+  sorry
+
+private theorem eval_sub_core_by_coeff_power_sum
+    (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
+    eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f - h) β =
+      eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β -
+        eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) h β := by
+  -- Same coefficient-bound bridge as addition, using `DensePoly.coeff_sub`
+  -- and quotient subtraction as addition of the right additive inverse.
+  sorry
+
+private theorem eval_C_mul_core_by_coeff_power_sum
+    (c : ZMod64 p) (f : FpPoly p) (β : Quotient g hmonic hg_pos) :
+    eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (DensePoly.C c * f) β =
+      reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c) *
+        eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β := by
+  -- Rewrite `DensePoly.C c * f` through `FpPoly.C_mul_eq_scale`, use
+  -- `DensePoly.coeff_scale` pointwise over the coefficient-power sum, then
+  -- factor the embedded constant through quotient distributivity.
+  sorry
+
 private theorem eval_add_core (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f + h) β =
       eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β +
         eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) h β := by
-  sorry
+  exact eval_add_core_by_coeff_power_sum
+    (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f h β
 
 private theorem eval_sub_core (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f - h) β =
       eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β -
         eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) h β := by
-  sorry
+  exact eval_sub_core_by_coeff_power_sum
+    (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f h β
 
 private theorem eval_C_mul_core (c : ZMod64 p) (f : FpPoly p)
     (β : Quotient g hmonic hg_pos) :
@@ -1637,7 +1670,8 @@ private theorem eval_C_mul_core (c : ZMod64 p) (f : FpPoly p)
         (DensePoly.C c * f) β =
       reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c) *
         eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β := by
-  sorry
+  exact eval_C_mul_core_by_coeff_power_sum
+    (g := g) (hmonic := hmonic) (hg_pos := hg_pos) c f β
 
 private theorem eval_monomial_core (n : Nat) (c : ZMod64 p)
     (β : Quotient g hmonic hg_pos) :
