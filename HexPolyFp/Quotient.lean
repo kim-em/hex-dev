@@ -388,6 +388,34 @@ theorem reduce_mul_eq (f h : FpPoly p) :
   exact @DensePoly.mod_mul_mod (ZMod64 p) inferInstance inferInstance inferInstance
     (ZMod64.instDivModLawsZMod64Fp p) f h g
 
+/-- Reduction into the quotient preserves addition. -/
+theorem reduce_add (f h : FpPoly p) :
+    reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f + h) =
+      reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f +
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) h :=
+  reduce_add_eq (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f h
+
+/-- Reduction into the quotient preserves multiplication. -/
+theorem reduce_mul (f h : FpPoly p) :
+    reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f * h) =
+      reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f *
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) h :=
+  reduce_mul_eq (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f h
+
+omit [ZMod64.PrimeModulus p] in
+private theorem monomial_eq_C_mul_monomial_one (n : Nat) (c : ZMod64 p) :
+    (DensePoly.monomial n c : FpPoly p) =
+      DensePoly.C c * (DensePoly.monomial n (1 : ZMod64 p) : FpPoly p) := by
+  rw [FpPoly.C_mul_eq_scale]
+  apply DensePoly.ext_coeff
+  intro i
+  have hzero : c * (0 : ZMod64 p) = 0 := by grind
+  rw [DensePoly.coeff_monomial, DensePoly.coeff_scale _ _ _ hzero,
+    DensePoly.coeff_monomial]
+  split
+  · grind
+  · exact hzero.symm
+
 /-- Reducing an already-canonical quotient representative leaves it unchanged. -/
 theorem reduce_val_self (a : Quotient g hmonic hg_pos) :
     reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) a.val = a := by
@@ -523,6 +551,44 @@ theorem reduce_linearPow_eq_pow (f : FpPoly p) (n : Nat) :
           (reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f) ^ (n + 1) := by
               rfl
 
+/--
+The quotient class of the monomial `c * X^n` is the constant class `c`
+times the `n`th power of the quotient indeterminate.
+-/
+theorem reduce_monomial_eq_const_mul_X_pow (n : Nat) (c : ZMod64 p) :
+    reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (DensePoly.monomial n c : FpPoly p) =
+      reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c) *
+        (X (g := g) (hmonic := hmonic) (hg_pos := hg_pos)) ^ n := by
+  calc
+    reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (DensePoly.monomial n c : FpPoly p) =
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (DensePoly.C c * (DensePoly.monomial n (1 : ZMod64 p) : FpPoly p)) := by
+          rw [monomial_eq_C_mul_monomial_one]
+    _ =
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c) *
+          reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+            (DensePoly.monomial n (1 : ZMod64 p) : FpPoly p) := by
+          exact reduce_mul (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+            (DensePoly.C c) (DensePoly.monomial n (1 : ZMod64 p) : FpPoly p)
+    _ =
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c) *
+          (X (g := g) (hmonic := hmonic) (hg_pos := hg_pos)) ^ n := by
+          have hpow :=
+            reduce_linearPow_eq_pow (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+              (FpPoly.X (p := p)) n
+          change
+            reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+                (FpPoly.linearPow (DensePoly.monomial 1 (1 : ZMod64 p)) n) =
+              (reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+                (DensePoly.monomial 1 (1 : ZMod64 p))) ^ n at hpow
+          rw [FpPoly.linearPow_monomial_one] at hpow
+          exact congrArg
+            (fun q : Quotient g hmonic hg_pos =>
+              reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c) * q)
+            hpow
+
 @[simp] theorem add_zero (a : Quotient g hmonic hg_pos) :
     a + (0 : Quotient g hmonic hg_pos) = a := by
   calc
@@ -570,6 +636,61 @@ theorem add_assoc (a b c : Quotient g hmonic hg_pos) :
           rw [reduce_val_self a] at hadd
           exact hadd
     _ = a + (b + c) := rfl
+
+/-- Quotient addition is commutative. -/
+theorem add_comm (a b : Quotient g hmonic hg_pos) :
+    a + b = b + a := by
+  calc
+    a + b =
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (a.val + b.val) := rfl
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (b.val + a.val) := by rw [FpPoly.add_comm]
+    _ = b + a := rfl
+
+/-- Quotient multiplication distributes over addition on the left. -/
+theorem left_distrib (a b c : Quotient g hmonic hg_pos) :
+    a * (b + c) = a * b + a * c := by
+  calc
+    a * (b + c) =
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (a.val * (b + c).val) := rfl
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (a.val * (b.val + c.val)) := by
+          have hmul := reduce_mul (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+            a.val (b.val + c.val)
+          rw [reduce_val_self a] at hmul
+          exact hmul.symm
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (a.val * b.val + a.val * c.val) := by rw [FpPoly.left_distrib]
+    _ =
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (a.val * b.val) +
+          reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (a.val * c.val) := by
+          exact reduce_add (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+            (a.val * b.val) (a.val * c.val)
+    _ = a * b + a * c := rfl
+
+/-- Quotient multiplication distributes over addition on the right. -/
+theorem right_distrib (a b c : Quotient g hmonic hg_pos) :
+    (a + b) * c = a * c + b * c := by
+  calc
+    (a + b) * c =
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          ((a + b).val * c.val) := rfl
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          ((a.val + b.val) * c.val) := by
+          have hmul := reduce_mul (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+            (a.val + b.val) c.val
+          rw [reduce_val_self c] at hmul
+          exact hmul.symm
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (a.val * c.val + b.val * c.val) := by rw [FpPoly.right_distrib]
+    _ =
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (a.val * c.val) +
+          reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (b.val * c.val) := by
+          exact reduce_add (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+            (a.val * c.val) (b.val * c.val)
+    _ = a * c + b * c := rfl
 
 /-- The xgcd-based inverse candidate, normalized by the leading coefficient of
 the computed gcd. -/
