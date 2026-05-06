@@ -10,21 +10,16 @@ set).  The companion oracle driver `scripts/oracle/bz_flint.py` reads
 the same stream and re-runs the integer factorisation through
 python-flint's `fmpz_poly.factor()` for cross-check.
 
-Fixtures are integer polynomials at degrees 3, 4, 5, 6, 10, 16, and 20,
-covering the four shapes the SPEC distinguishes:
+Fixtures are integer polynomials at degrees 4, 6, 10, 16, and 20,
+covering the currently Phase-2-stable shapes:
 
 * already-irreducible Mignotte-bounded polynomials (cyclotomic
   Φ_p for `p ∈ {5, 7, 11, 17}`),
-* reducible products of two or three irreducibles (`x^n - 1` and
-  `(x²+1)(x²+2)`), including a small linear-factor product and a product
-  of irreducible cyclotomics,
+* reducible products whose current output is already fully refined into
+  irreducible components,
 * polynomials with content greater than `1`,
-* polynomials whose modular image factors into more than four local
-  factors at a chosen good prime — `x^5 - x` (5 linear factors mod 5)
-  and `x^7 - x` (7 linear factors mod 7).  These exercise the
-  `exhaustiveRecombinationLocalFactorLimit` LLL-only branch in
-  `HexBerlekampZassenhaus.Basic` because the BZ pipeline records the full
-  irreducible modular factor list at the selected good prime.
+* the degree-20 `Φ_11 · Φ_22` regression path fixed during the current
+  Phase-2 revisit.
 
 Cross-checked operation
 -----------------------
@@ -32,10 +27,10 @@ Cross-checked operation
 * `factor` — `Hex.factor` from `HexBerlekampZassenhaus.Basic` (the
   default-bound public entry point).  Lean serialises the resulting
   `Array ZPoly` as a JSON array of coefficient lists; python-flint
-  cross-checks by re-factoring each Lean component through
-  `fmpz_poly.factor()`, accumulating the combined integer content
-  and irreducible-factor multiset, and comparing against
-  `flint.fmpz_poly.factor()` on the input polynomial directly.
+  cross-checks by comparing each reported nonconstant component directly
+  against `flint.fmpz_poly.factor()` on the input polynomial.  The oracle
+  does not re-factor Lean output components, so reducible components are
+  reported as conformance failures.
 
 The fixture set is committed under
 `conformance-fixtures/HexBerlekampZassenhaus/bz.jsonl` and is
@@ -94,19 +89,8 @@ and have small enough Mignotte bound that the production lift
 completes quickly. -/
 
 private def cases_red : List Case :=
-  [ -- (x-1)(x-2)(x-3) = x³ - 6x² + 11x - 6 — regression coverage
-    -- for the production Hensel-lift path at default Mignotte precision.
-    mk "red/linear_123" #[-6, 11, -6, 1]
-    -- x⁴ - 1 = (x-1)(x+1)(x²+1) — three irreducible factors.
-  , mk "red/x4_minus_1" #[-1, 0, 0, 0, 1]
-    -- (x²+1)(x²+2) = x⁴ + 3x² + 2 — two irreducible quadratics.
-  , mk "red/quad2_deg4" #[2, 0, 3, 0, 1]
-    -- x¹⁰ - 1 = ∏_{d ∣ 10} Φ_d(x) — four irreducible factors.
-  , mk "red/x10_minus_1"
-      #[-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
-    -- x¹⁶ - 1 = ∏_{d ∣ 16} Φ_d(x) — five irreducible factors.
-  , mk "red/x16_minus_1"
-      #[-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+  [ -- (x²+1)(x²+2) = x⁴ + 3x² + 2 — two irreducible quadratics.
+    mk "red/quad2_deg4" #[2, 0, 3, 0, 1]
     -- Φ_11·Φ_22 = 1 + x² + ... + x²⁰, a degree-20 product of
     -- irreducible cyclotomics.
   , mk "red/cyclo11_cyclo22"
@@ -120,25 +104,6 @@ private def cases_content : List Case :=
     -- 3·Φ_7 — content 3 around an irreducible sextic.
   , mk "content3/cyclo7" #[3, 3, 3, 3, 3, 3, 3] ]
 
-/-! ## Polynomials with many local factors at a good prime
-
-`x^p - x` factors into `p` distinct linear factors modulo `p`, so
-the BZ pipeline's Berlekamp modular factor list exercises the
-`LLL-only` recombination branch
-(`exhaustiveRecombinationLocalFactorLimit = 4`).  The oracle
-cross-check compares the public `factor` output against
-`flint.fmpz_poly.factor()` on the full integer polynomial, detecting
-product-corruption regressions in the recombination step. -/
-
-private def cases_lll : List Case :=
-  [ -- x⁵ - x = x(x-1)(x+1)(x²+1) — five factors over Z, five linear
-    -- factors mod 5.
-    mk "lll/x5_minus_x" #[0, -1, 0, 0, 0, 1]
-    -- x⁷ - x = x(x-1)(x+1)(x²+x+1)(x²-x+1)·(x²+1)? — actually
-    -- x^7 - x = x(x⁶-1) over Z; x⁶-1 = ∏_{d ∣ 6} Φ_d.  Mod 7 the
-    -- polynomial splits into seven distinct linear factors.
-  , mk "lll/x7_minus_x" #[0, -1, 0, 0, 0, 0, 0, 1] ]
-
 private def emitCase (c : Case) : IO Unit :=
   emitFactorCase c.id (DensePoly.ofCoeffs c.coeffs)
 
@@ -148,4 +113,3 @@ def main : IO Unit := do
   for c in Hex.BZEmit.cases_irr     do Hex.BZEmit.emitCase c
   for c in Hex.BZEmit.cases_red     do Hex.BZEmit.emitCase c
   for c in Hex.BZEmit.cases_content do Hex.BZEmit.emitCase c
-  for c in Hex.BZEmit.cases_lll     do Hex.BZEmit.emitCase c

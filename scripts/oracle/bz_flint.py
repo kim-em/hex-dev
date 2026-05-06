@@ -13,22 +13,17 @@ Operation cross-checked
 
 * `factor` — `Hex.factor` from `HexBerlekampZassenhaus.Basic` (the
   default-bound public entry point).  Lean serialises the resulting
-  array of factors as a JSON array of coefficient lists; the oracle
-  re-factors each Lean component with `fmpz_poly.factor()`,
-  accumulates the combined integer content and irreducible-factor
-  multiset, and compares against `flint.fmpz_poly.factor()` on the
-  input polynomial.
+  array of factors as a JSON array of coefficient lists.  The oracle
+  factors the original input once with `fmpz_poly.factor()` and compares
+  Lean's reported components directly against that irreducible-factor
+  multiset after primitive normalisation.
 
-  The cross-check is multiset-only: factor order is unspecified by
-  SPEC, and Lean's pipeline reports content/`X`-power/repeated-part
-  components separately from the LLL-recovered primitive factors.
-  Re-factoring each component canonicalises the comparison: if Lean
-  has a duplicate primitive irreducible split across two output
-  entries the multiset still matches FLINT's multiplicity report.
-
-  Each FLINT factor has a positive leading coefficient (FLINT's own
-  normalisation); signs flow into the content unit.  We compare
-  contents as signed integers and factors as coefficient tuples.
+  Factor order is unspecified by SPEC.  Each nonconstant Lean component
+  must be one irreducible factor slot from FLINT's factorisation; the
+  oracle never re-factors Lean's output as a canonicalisation step.
+  This rejects unfactored or partially factored reducible components.
+  Content and signs are accumulated separately, matching FLINT's
+  positive-leading-factor convention.
 
 Usage::
 
@@ -48,6 +43,7 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import math
 import os
 import sys
 from collections import Counter
@@ -104,48 +100,64 @@ def _flint_version() -> str:
         return "unknown"
 
 
-def _factor_signature(coeffs: list[int]) -> tuple[int, dict[tuple[int, ...], int]]:
-    """Return `(content, multiset)` for the integer polynomial whose
-    coefficients are `coeffs`.
+def _primitive_component(
+    coeffs: list[int],
+) -> tuple[int, tuple[int, ...] | None]:
+    """Split one Lean component into `(content, primitive_factor)`.
 
-    `content` is the signed integer leading content as reported by
-    `fmpz_poly.factor()` (FLINT canonicalises factors to have positive
-    leading coefficient and folds the sign into this content).  The
-    multiset maps each canonical factor's coefficient tuple to its
-    multiplicity.
+    Nonconstant primitive factors are normalised to positive leading
+    coefficient.  Constant components contribute only to content.
+    """
+    coeffs = _trim_zeros(coeffs)
+    if not coeffs:
+        raise OracleMismatch("zero polynomial is not a valid factor component")
+    if len(coeffs) == 1:
+        return int(coeffs[0]), None
+
+    content = 0
+    for c in coeffs:
+        content = math.gcd(content, abs(int(c)))
+    if content == 0:
+        raise OracleMismatch("zero polynomial is not a valid factor component")
+    if coeffs[-1] < 0:
+        content = -content
+    primitive = tuple(int(c // content) for c in coeffs)
+    return int(content), primitive
+
+
+def _oracle_signature(coeffs: list[int]) -> tuple[int, dict[tuple[int, ...], int]]:
+    """Return FLINT's canonical `(content, irreducible multiset)`.
+
+    `content` is the signed integer leading content reported by
+    `fmpz_poly.factor()`.  Each factor has positive leading coefficient.
     """
     f = _fmpz_poly(coeffs)
     content, factors = f.factor()
     out: Counter[tuple[int, ...]] = Counter()
     for g, m in factors:
-        # FLINT factors are already content-free with positive leading
-        # coefficient.  `tuple(g.coeffs())` keys uniquely up to that
-        # canonicalisation.
         key = tuple(int(c) for c in g.coeffs())
         out[key] += int(m)
     return int(content), dict(out)
 
 
-def _combine_signature(
+def _lean_signature(
     components: list[list[int]],
 ) -> tuple[int, dict[tuple[int, ...], int]]:
-    """Re-factor each Lean output component and accumulate the
-    combined `(content, multiset)`.
+    """Accumulate Lean's direct primitive-factor report.
 
-    Constant components contribute only to the content.  Empty arrays
-    (i.e. recombination failures reported by Lean) collapse to content
-    `1` and the empty multiset, so the oracle reports a clean diff
-    against FLINT's true factorisation.
+    This intentionally does not call `factor()` on the components.  A
+    reducible component remains a single key and will fail comparison
+    against FLINT's irreducible-factor multiset.
     """
     total_content = 1
     out: Counter[tuple[int, ...]] = Counter()
     for coeffs in components:
         if not coeffs:
-            continue
-        content, factors = _factor_signature(coeffs)
+            raise OracleMismatch("empty coefficient list is not a valid factor")
+        content, factor = _primitive_component(coeffs)
         total_content *= content
-        for key, m in factors.items():
-            out[key] += m
+        if factor is not None:
+            out[factor] += 1
     return total_content, dict(out)
 
 
@@ -173,7 +185,7 @@ def _check_factor(
     oracle_version: str,
 ) -> None:
     coeffs = _coeffs(poly_record)
-    flint_sig = _factor_signature(coeffs)
+    flint_sig = _oracle_signature(coeffs)
 
     if not isinstance(lean_value, list) or not all(
         isinstance(component, list)
@@ -185,7 +197,7 @@ def _check_factor(
             f"coefficient lists, got {lean_value!r}"
         )
     lean_components = [_trim_zeros(component) for component in lean_value]
-    lean_sig = _combine_signature(lean_components)
+    lean_sig = _lean_signature(lean_components)
 
     assert_equal(
         _signature_to_serialisable(lean_sig),

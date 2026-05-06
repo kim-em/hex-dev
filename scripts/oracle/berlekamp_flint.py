@@ -20,9 +20,10 @@ Operations cross-checked
   invariant); (b) every bucket's polynomial matches the product of
   FLINT's irreducible factors of that degree exactly, with
   multiplicities included.  The residual must be `1`.
-
-Square-free decomposition is intentionally not cross-checked here;
-see `HexBerlekamp/EmitFixtures.lean` for the rationale.
+* `squarefree` — `squareFreeDecomposition` (unit plus
+  multiplicity-indexed square-free factors).  python-flint factors
+  the input, groups irreducibles by multiplicity, and compares that
+  canonical square-free decomposition against Lean's output.
 
 Usage::
 
@@ -123,6 +124,31 @@ def _factor_pairs(f) -> list[tuple[Any, int]]:
     """
     _unit, parts = f.factor()
     return [(g, int(m)) for (g, m) in parts]
+
+
+def _canonical_squarefree(f, p: int) -> list[Any]:
+    """Canonical SFD value `[unit, [[factor_coeffs, multiplicity], ...]]`.
+
+    This mirrors `HexBerlekamp/EmitFixtures.lean`: FLINT's full
+    irreducible factorization is grouped by multiplicity, factors are
+    monic-normalized, and the resulting groups are sorted by
+    `(coeffs, multiplicity)`.
+    """
+    from flint import nmod_poly  # type: ignore[import-not-found]
+
+    unit, parts = f.factor()
+    groups: dict[int, Any] = {}
+    for factor, exp in parts:
+        monic = _monic_normalize(factor)
+        m = int(exp)
+        groups[m] = groups.get(m, nmod_poly([1], p)) * monic
+    factors = [
+        [_trim_zeros(list(_monic_normalize(poly).coeffs())), mult]
+        for mult, poly in groups.items()
+        if poly.degree() > 0
+    ]
+    factors.sort(key=lambda item: (item[0], item[1]))
+    return [int(unit) % p, factors]
 
 
 def _is_irreducible(f, total_degree: int) -> bool:
@@ -267,6 +293,35 @@ def _check_ddf(
             )
 
 
+def _check_squarefree(
+    *,
+    case_id: str,
+    lib: str,
+    poly_record: dict[str, Any],
+    lean_value: list[Any],
+    failure_dir: Path,
+    profile: str,
+    seed: int,
+    oracle_version: str,
+) -> None:
+    coeffs, p = _coeffs(poly_record)
+    f = _nmod_poly(coeffs, p)
+    oracle_value = _canonical_squarefree(f, p)
+    assert_equal(
+        lean_value,
+        oracle_value,
+        library=lib,
+        case_id=f"{case_id}:squarefree",
+        kind="squarefree",
+        input_record=poly_record,
+        oracle_name="python-flint",
+        oracle_version=oracle_version,
+        failure_dir=failure_dir,
+        profile=profile,
+        seed=seed,
+    )
+
+
 def check(
     source: str | Path | None,
     *,
@@ -301,6 +356,13 @@ def check(
                 )
             elif op == "ddf":
                 _check_ddf(
+                    case_id=case_id, lib=lib, poly_record=poly_record,
+                    lean_value=lean_value,
+                    failure_dir=failure_dir, profile=profile, seed=seed,
+                    oracle_version=oracle_version,
+                )
+            elif op == "squarefree":
+                _check_squarefree(
                     case_id=case_id, lib=lib, poly_record=poly_record,
                     lean_value=lean_value,
                     failure_dir=failure_dir, profile=profile, seed=seed,
