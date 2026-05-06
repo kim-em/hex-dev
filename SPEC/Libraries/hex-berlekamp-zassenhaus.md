@@ -102,6 +102,25 @@ the pipeline. An exhaustive subset fallback may be retained as an
 internal small-input shortcut and as a conformance-test oracle, but
 never as the production path.
 
+**Precision selection.** The Hensel-lift target precision `k` is
+chosen *adaptively*, not set once to the worst-case Mignotte bound.
+The pipeline starts with a small initial `k₀` (e.g. constant or
+`O(log deg f)`), invokes `multifactorLiftQuadratic` to that
+precision, and calls `recombine`. If `recombineLLL?` returns `none`,
+the pipeline doubles `k` and retries the lift + recombination.
+Doubling continues until either recombination succeeds or `k`
+exceeds the Mignotte upper bound from
+`ZPoly.defaultFactorCoeffBound`, in which case the pipeline reports
+the input as irreducible — the Mignotte bound being a mathematical
+guarantee that no factor with smaller coefficients exists.
+
+The conditional correctness contract `factor_product_of_bound` is
+unchanged: implementations may pick any `k₀` and any escalation
+schedule, provided the upper bound is the Mignotte bound and the
+loop terminates. `recombineLLL?`'s `Option (Array ZPoly)` return
+type is the escalation signal: `none` means "this `k` was not
+sufficient, escalate".
+
 **Conditional correctness (proved in this library, no Mathlib):**
 
 The algorithm's correctness is proved conditionally on the coefficient
