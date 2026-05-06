@@ -1,6 +1,7 @@
 import HexMatrixMathlib.Basic
 import HexMatrixMathlib.Conformance
 import HexMatrixMathlib.Determinant
+import HexMatrixMathlib.Determinant.Bareiss
 import HexMatrixMathlib.RankSpanNullspace
 
 /-!
