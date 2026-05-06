@@ -39,22 +39,6 @@ theorem mul_eq_reduce_val (a b : Quotient g hmonic hg_pos) :
     FpPoly.modByMonic g (a.val * b.val) hmonic
   rfl
 
-/-- Reducing a sum is the sum of the reductions in the quotient. -/
-theorem reduce_add (f h : FpPoly p) :
-    reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f + h) =
-      reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f +
-        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) h := by
-  rw [add_eq_reduce_val]
-  exact reduce_add_eq (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f h
-
-/-- Reducing a product is the product of the reductions in the quotient. -/
-theorem reduce_mul (f h : FpPoly p) :
-    reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f * h) =
-      reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f *
-        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) h := by
-  rw [mul_eq_reduce_val]
-  exact reduce_mul_eq (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f h
-
 /-- Power of a product factors out in the quotient. -/
 theorem mul_pow (a b : Quotient g hmonic hg_pos) (n : Nat) :
     (a * b) ^ n = a ^ n * b ^ n := by
