@@ -32,7 +32,13 @@ statements like "mod `p^k`" and "mod `p^(k+1)`".
     representative in `[0, p^k)`, then renormalizes the resulting
     `ZPoly` to remove trailing zero coefficients.
 - **Linear Hensel lifting**: from `mod p^k` to `mod p^(k+1)`
-- **Quadratic Hensel lifting**: from `mod p^k` to `mod p^(2k)` (doubling)
+- **Quadratic Hensel lifting**: a single doubling step takes data
+  valid `mod m` to data valid `mod m²`. The wrapper that lifts from
+  `mod p` to a target precision `mod p^k` must run `⌈log₂ k⌉` doubling
+  steps (then reduce modulo `p^k`), **not** `k` doubling steps. With
+  `k` doublings the intermediate modulus is `p^(2^k)`, exponential in
+  `k`, which breaks the polynomial-time complexity model for the
+  Berlekamp–Zassenhaus pipeline.
 - **Multifactor lifting**: public API returns a list/array of lifted
   factors; any binary factor tree is internal to the implementation
 
@@ -209,6 +215,25 @@ Examples include uniqueness of lifts (including the
 linear-vs-quadratic agreement statement), `coprime_mod_p_lifts`, and
 transfer theorems phrased in terms of Mathlib polynomials.
 
+**Iteration count for the quadratic wrapper.** `multifactorLiftQuadratic
+p k` and `henselLiftQuadratic p k` produce data valid modulo `p^k`
+using `⌈log₂ k⌉` doubling steps from modulus `p`, then reducing modulo
+`p^k`. The iteration count is `O(log k)` — never `O(k)`. In the
+Berlekamp–Zassenhaus pipeline `k` is a Mignotte bound, polynomial in
+the input size; `O(log k)` doublings is what keeps the lifter
+polynomial.
+
+**Phase 4 bench coverage.** Bench registrations for `multifactorLift`,
+`multifactorLiftQuadratic`, `henselLift`, and `henselLiftQuadratic`
+must vary `k` as a benchmark parameter (not only the degree `n`) with
+a declared complexity model in both. The `k` schedule must include
+realistic Mignotte-bound values produced by
+`ZPoly.defaultFactorCoeffBound` on the inputs
+`HexBerlekampZassenhaus.Bench` exercises — typically tens, not single
+digits. A registration over only `n` at fixed small `k` cannot detect
+a wrong iteration count and is not an admissible Phase 4 deliverable.
+The linear-vs-quadratic `compare` cross-check varies both `n` and `k`.
+
 **Strategy**: Quadratic Hensel lifting is the production lifter for
 the Berlekamp–Zassenhaus pipeline, and the `multifactorLiftQuadratic`
 surface is a Phase 1 deliverable, not an optimisation deferred to a
@@ -218,6 +243,7 @@ shared inputs, and that agreement is the obligation of
 `hex-hensel-mathlib` via lift uniqueness. Phase 3 conformance must
 exercise `multifactorLiftQuadratic` end-to-end (cross-checked against
 `multifactorLift` at small `k`); Phase 4 benchmarks must register
-quadratic lifting as the hot path. Treating quadratic lifting as
-"later" is incompatible with the polynomial-time complexity model
-declared for the Berlekamp–Zassenhaus pipeline.
+quadratic lifting as the hot path, under the iteration-count and
+`k`-coverage rules in the previous subsections. Treating quadratic
+lifting as "later" is incompatible with the polynomial-time complexity
+model declared for the Berlekamp–Zassenhaus pipeline.
