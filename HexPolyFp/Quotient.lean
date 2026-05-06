@@ -523,6 +523,54 @@ theorem reduce_linearPow_eq_pow (f : FpPoly p) (n : Nat) :
           (reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f) ^ (n + 1) := by
               rfl
 
+@[simp] theorem add_zero (a : Quotient g hmonic hg_pos) :
+    a + (0 : Quotient g hmonic hg_pos) = a := by
+  calc
+    a + (0 : Quotient g hmonic hg_pos) =
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (a.val + (0 : Quotient g hmonic hg_pos).val) := rfl
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (a.val + (0 : FpPoly p)) := by
+          rw [zero_val, FpPoly.modByMonic, DensePoly.modByMonic_zero]
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) a.val := by
+          rw [FpPoly.add_zero]
+    _ = a := reduce_val_self a
+
+@[simp] theorem zero_add (a : Quotient g hmonic hg_pos) :
+    (0 : Quotient g hmonic hg_pos) + a = a := by
+  calc
+    (0 : Quotient g hmonic hg_pos) + a =
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          ((0 : Quotient g hmonic hg_pos).val + a.val) := rfl
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          ((0 : FpPoly p) + a.val) := by
+          rw [zero_val, FpPoly.modByMonic, DensePoly.modByMonic_zero]
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) a.val := by
+          rw [FpPoly.zero_add]
+    _ = a := reduce_val_self a
+
+theorem add_assoc (a b c : Quotient g hmonic hg_pos) :
+    (a + b) + c = a + (b + c) := by
+  calc
+    (a + b) + c =
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          ((a + b).val + c.val) := rfl
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          ((a.val + b.val) + c.val) := by
+          have hadd := reduce_add_eq (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+            (a.val + b.val) c.val
+          rw [reduce_val_self c] at hadd
+          exact hadd.symm
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (a.val + (b.val + c.val)) := by rw [FpPoly.add_assoc]
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (a.val + (b + c).val) := by
+          have hadd := reduce_add_eq (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+            a.val (b.val + c.val)
+          rw [reduce_val_self a] at hadd
+          exact hadd
+    _ = a + (b + c) := rfl
+
 /-- The xgcd-based inverse candidate, normalized by the leading coefficient of
 the computed gcd. -/
 def inverseCandidate (a : FpPoly p) : FpPoly p :=
@@ -744,6 +792,78 @@ theorem inv_mul_cancel (hg_irr : FpPoly.Irreducible g)
   rw [mul_comm]
   exact mul_zero a
 
+private theorem zmod64_one_ne_zero :
+    (1 : ZMod64 p) ≠ 0 := by
+  intro hone
+  have hnat : (1 : ZMod64 p).toNat = (0 : ZMod64 p).toNat :=
+    congrArg ZMod64.toNat hone
+  have hp_two : 2 ≤ p :=
+    (Hex.Nat.Prime.two_le (ZMod64.PrimeModulus.prime (p := p)))
+  rw [show ((1 : ZMod64 p).toNat) = 1 % p from ZMod64.toNat_one,
+      show ((0 : ZMod64 p).toNat) = 0 from ZMod64.toNat_zero,
+      Nat.mod_eq_of_lt (by omega : 1 < p)] at hnat
+  exact absurd hnat (by omega)
+
+/--
+Evaluate an `FpPoly` at a quotient element by Horner iteration in the quotient.
+
+The coefficients are embedded as constant quotient classes. This is a
+project-side evaluation layer for root-counting arguments over
+`F_p[X] / (g)`, without introducing a ring typeclass for the executable
+quotient representation.
+-/
+def eval (f : FpPoly p) (β : Quotient g hmonic hg_pos) : Quotient g hmonic hg_pos :=
+  f.toArray.toList.reverse.foldl
+    (fun acc coeff =>
+      acc * β + reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (DensePoly.C coeff))
+    0
+
+@[simp] theorem eval_zero (β : Quotient g hmonic hg_pos) :
+    eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (0 : FpPoly p) β = 0 := by
+  rfl
+
+/-- Evaluating a constant polynomial gives the corresponding constant quotient
+class. -/
+@[simp] theorem eval_C (c : ZMod64 p) (β : Quotient g hmonic hg_pos) :
+    eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c) β =
+      reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c) := by
+  by_cases hc : c = 0
+  · subst c
+    change eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (DensePoly.C (0 : ZMod64 p)) β =
+      reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (DensePoly.C (0 : ZMod64 p))
+    unfold eval DensePoly.toArray
+    rw [show (DensePoly.C (0 : ZMod64 p)).coeffs = #[] by
+      exact DensePoly.coeffs_C_zero]
+    rfl
+  · simp [eval, DensePoly.toArray, DensePoly.coeffs_C_of_ne_zero hc]
+
+/-- Evaluating the polynomial indeterminate gives the input quotient element. -/
+@[simp] theorem eval_X (β : Quotient g hmonic hg_pos) :
+    eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (FpPoly.X (p := p)) β = β := by
+  change eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+      (DensePoly.monomial 1 (1 : ZMod64 p)) β = β
+  unfold eval DensePoly.toArray DensePoly.monomial
+  split
+  · exact False.elim (zmod64_one_ne_zero ‹(1 : ZMod64 p) = 0›)
+  · have hC1 : reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (DensePoly.C (1 : ZMod64 p)) = (1 : Quotient g hmonic hg_pos) := rfl
+    have hC0_poly : (DensePoly.C (0 : ZMod64 p) : FpPoly p) = 0 := by
+      apply DensePoly.ext_coeff
+      intro n
+      rw [DensePoly.coeff_C, DensePoly.coeff_zero]
+      split <;> rfl
+    have hC0 : reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (DensePoly.C (0 : ZMod64 p)) = (0 : Quotient g hmonic hg_pos) := by
+      rw [hC0_poly]
+      rfl
+    simp [Array.replicate, hC1]
+    have hC0z : reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (DensePoly.C (Zero.zero : ZMod64 p)) = (0 : Quotient g hmonic hg_pos) := hC0
+    rw [hC0z, add_zero]
+
 /-- For a monic irreducible positive-degree modulus, the product of two nonzero
 quotient elements is nonzero. -/
 theorem mul_left_ne_zero_of_ne_zero (hg_irr : FpPoly.Irreducible g)
@@ -812,18 +932,6 @@ theorem nonzeroElements_map_mul_left_perm (hg_irr : FpPoly.Irreducible g)
           _ = 0 := mul_zero _
       · rw [← mul_assoc, mul_inv_cancel hg_irr ha, one_mul]
   exact perm_of_nodup_mem_iff hmap_nodup hL_nodup hmem_iff
-
-private theorem zmod64_one_ne_zero :
-    (1 : ZMod64 p) ≠ 0 := by
-  intro hone
-  have hnat : (1 : ZMod64 p).toNat = (0 : ZMod64 p).toNat :=
-    congrArg ZMod64.toNat hone
-  have hp_two : 2 ≤ p :=
-    (Hex.Nat.Prime.two_le (ZMod64.PrimeModulus.prime (p := p)))
-  rw [show ((1 : ZMod64 p).toNat) = 1 % p from ZMod64.toNat_one,
-      show ((0 : ZMod64 p).toNat) = 0 from ZMod64.toNat_zero,
-      Nat.mod_eq_of_lt (by omega : 1 < p)] at hnat
-  exact absurd hnat (by omega)
 
 private theorem fpPoly_one_ne_zero :
     (1 : FpPoly p) ≠ 0 := by
