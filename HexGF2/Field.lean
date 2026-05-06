@@ -2369,6 +2369,87 @@ theorem frobeniusIter_fixed_elements_length_le_two_pow
   rw [hfilter]
   exact hlen ▸ hroot
 
+/--
+If every packed quotient element is fixed by a positive Frobenius iterate,
+then the iterate is at least the modulus degree.
+
+This is the downstream cardinality form of the fixed-root bound: otherwise
+all `2^f.degree` quotient elements would be roots of `T^(2^k) + T`, whose
+packed root-count bound is only `2^k`.
+-/
+theorem frobeniusIter_universal_fixed_degree_le
+    (hf_pos : 0 < f.degree) {k : Nat} (hk : 0 < k)
+    (hfixed : ∀ β : GF2nPoly f hirr, frobeniusIter β k = β) :
+    f.degree ≤ k := by
+  have hfilter_eq :
+      (elements (f := f) (hirr := hirr)).filter
+          (fun β => decide (frobeniusIter β k = β)) =
+        elements (f := f) (hirr := hirr) := by
+    apply (List.filter_eq_self).mpr
+    intro β _hβ
+    exact decide_eq_true (hfixed β)
+  have hbound :=
+    frobeniusIter_fixed_elements_length_le_two_pow
+      (f := f) (hirr := hirr) hf_pos hk
+  rw [hfilter_eq, elements_card] at hbound
+  by_cases hle : f.degree ≤ k
+  · exact hle
+  · have hlt : k < f.degree := Nat.lt_of_not_ge hle
+    have hpow_lt : 2 ^ k < 2 ^ f.degree :=
+      Nat.pow_lt_pow_right (by decide : 1 < 2) hlt
+    exact False.elim (Nat.not_lt_of_ge hbound hpow_lt)
+
+/--
+For a positive iterate below the packed quotient degree, not every quotient
+element can be fixed by Frobenius.
+
+This contrapositive is the form Rabin soundness uses after reducing an
+exponent modulo the irreducible factor degree.
+-/
+theorem not_forall_frobeniusIter_eq_self_of_pos_lt_degree
+    (hf_pos : 0 < f.degree) {r : Nat} (hr_pos : 0 < r)
+    (hr_lt : r < f.degree) :
+    ¬ ∀ β : GF2nPoly f hirr, frobeniusIter β r = β := by
+  intro hfixed
+  have hdeg_le :
+      f.degree ≤ r :=
+    frobeniusIter_universal_fixed_degree_le
+      (f := f) (hirr := hirr) hf_pos hr_pos hfixed
+  exact Nat.not_lt_of_ge hdeg_le hr_lt
+
+/-- A positive iterate below the quotient degree has some non-fixed element. -/
+theorem exists_frobeniusIter_ne_self_of_pos_lt_degree
+    (hf_pos : 0 < f.degree) {r : Nat} (hr_pos : 0 < r)
+    (hr_lt : r < f.degree) :
+    ∃ β : GF2nPoly f hirr, frobeniusIter β r ≠ β := by
+  classical
+  by_cases h : ∃ β : GF2nPoly f hirr, frobeniusIter β r ≠ β
+  · exact h
+  · exact False.elim
+      (not_forall_frobeniusIter_eq_self_of_pos_lt_degree
+        (f := f) (hirr := hirr) hf_pos hr_pos hr_lt
+        (fun β => by
+          by_cases hβ : frobeniusIter β r = β
+          · exact hβ
+          · exact False.elim (h ⟨β, hβ⟩)))
+
+/--
+For a positive iterate below the quotient degree, the quotient class of `X`
+cannot be fixed by Frobenius.
+
+If `X` were fixed, the existing quotient-generation theorem would make every
+element fixed, contradicting the fixed-point cardinality bound.
+-/
+theorem frobeniusIter_X_ne_self_of_pos_lt_degree
+    (hf_pos : 0 < f.degree) {r : Nat} (hr_pos : 0 < r)
+    (hr_lt : r < f.degree) :
+    frobeniusIter (X (f := f) (hirr := hirr)) r ≠
+      X (f := f) (hirr := hirr) := by
+  intro hX
+  exact not_forall_frobeniusIter_eq_self_of_pos_lt_degree
+    (f := f) (hirr := hirr) hf_pos hr_pos hr_lt
+    (frobeniusIter_eq_self_of_X_fixed (f := f) (hirr := hirr) hX)
+
 /-- Product of a list of packed quotient elements (right fold). -/
 def listProd (xs : List (GF2nPoly f hirr)) : GF2nPoly f hirr :=
   xs.foldr (· * ·) 1
