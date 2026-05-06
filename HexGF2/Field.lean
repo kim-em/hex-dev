@@ -1424,6 +1424,153 @@ theorem add_sq (a b : GF2nPoly f hirr) :
     _ = a * a + b * b := by
       rw [add_self, add_zero]
 
+/-! ## Quotient-coefficient polynomial evaluation -/
+
+/--
+Evaluate a low-to-high quotient-coefficient list at a quotient point.
+
+The list `[c₀, c₁, ...]` denotes `c₀ + β * (c₁ + β * (...))`. This
+proof-facing evaluator is separate from executable packed polynomial
+evaluation; it is used by quotient-field root-count arguments.
+-/
+def evalCoeffList : List (GF2nPoly f hirr) → GF2nPoly f hirr → GF2nPoly f hirr
+  | [], _ => 0
+  | c :: cs, β => c + β * evalCoeffList cs β
+
+@[simp] theorem evalCoeffList_nil (β : GF2nPoly f hirr) :
+    evalCoeffList ([] : List (GF2nPoly f hirr)) β = 0 :=
+  rfl
+
+@[simp] theorem evalCoeffList_cons
+    (c : GF2nPoly f hirr) (cs : List (GF2nPoly f hirr))
+    (β : GF2nPoly f hirr) :
+    evalCoeffList (c :: cs) β = c + β * evalCoeffList cs β :=
+  rfl
+
+/--
+Synthetic quotient coefficients for the divided difference of `cs` at the
+base point `α`.
+
+If `P` is represented by `cs`, this list represents the quotient
+`(P(T) + P(α)) / (T + α)` in characteristic two. Its length is one less
+than the input list, which is the measure used by root-count induction.
+-/
+def dividedDifferenceCoeffs :
+    List (GF2nPoly f hirr) → GF2nPoly f hirr → List (GF2nPoly f hirr)
+  | [], _ => []
+  | [_], _ => []
+  | _ :: c :: cs, α =>
+      evalCoeffList (c :: cs) α :: dividedDifferenceCoeffs (c :: cs) α
+
+@[simp] theorem dividedDifferenceCoeffs_nil (α : GF2nPoly f hirr) :
+    dividedDifferenceCoeffs ([] : List (GF2nPoly f hirr)) α = [] :=
+  rfl
+
+@[simp] theorem dividedDifferenceCoeffs_singleton
+    (c : GF2nPoly f hirr) (α : GF2nPoly f hirr) :
+    dividedDifferenceCoeffs ([c] : List (GF2nPoly f hirr)) α = [] :=
+  rfl
+
+@[simp] theorem dividedDifferenceCoeffs_cons_cons
+    (c d : GF2nPoly f hirr) (cs : List (GF2nPoly f hirr))
+    (α : GF2nPoly f hirr) :
+    dividedDifferenceCoeffs (c :: d :: cs) α =
+      evalCoeffList (d :: cs) α :: dividedDifferenceCoeffs (d :: cs) α :=
+  rfl
+
+/-- The synthetic divided-difference coefficient list has one fewer entry. -/
+@[simp] theorem dividedDifferenceCoeffs_length
+    (cs : List (GF2nPoly f hirr)) (α : GF2nPoly f hirr) :
+    (dividedDifferenceCoeffs cs α).length = cs.length - 1 := by
+  induction cs with
+  | nil =>
+      rfl
+  | cons c cs ih =>
+      cases cs with
+      | nil =>
+          rfl
+      | cons d ds =>
+          simp [dividedDifferenceCoeffs, ih]
+
+/--
+Evaluate the divided difference of a quotient-coefficient polynomial between
+the base point `α` and target point `β`.
+-/
+def dividedDifference
+    (cs : List (GF2nPoly f hirr)) (α β : GF2nPoly f hirr) : GF2nPoly f hirr :=
+  evalCoeffList (dividedDifferenceCoeffs cs α) β
+
+@[simp] theorem dividedDifference_nil (α β : GF2nPoly f hirr) :
+    dividedDifference ([] : List (GF2nPoly f hirr)) α β = 0 :=
+  rfl
+
+@[simp] theorem dividedDifference_cons
+    (c d : GF2nPoly f hirr) (cs : List (GF2nPoly f hirr))
+    (α β : GF2nPoly f hirr) :
+    dividedDifference (c :: d :: cs) α β =
+      evalCoeffList (d :: cs) α + β * dividedDifference (d :: cs) α β :=
+  rfl
+
+private theorem add_self_right (a b : GF2nPoly f hirr) :
+    a + (b + a) = b := by
+  calc
+    a + (b + a) = a + (a + b) := by rw [add_comm b a]
+    _ = (a + a) + b := by rw [add_assoc]
+    _ = b := by rw [add_self, zero_add]
+
+/--
+The quotient-coefficient divided difference satisfies
+`P(β) + P(α) = (β + α) * DD(P, α, β)`.
+
+This is the characteristic-two orientation of the usual
+`P(β) - P(α) = (β - α) * Q(β)` identity, and is the API consumed by
+the root-count induction.
+-/
+theorem evalCoeffList_add_evalCoeffList_eq_add_mul_dividedDifference
+    (cs : List (GF2nPoly f hirr)) (α β : GF2nPoly f hirr) :
+    evalCoeffList cs β + evalCoeffList cs α =
+      (β + α) * dividedDifference cs α β := by
+  induction cs with
+  | nil =>
+      simp [dividedDifference]
+  | cons c cs ih =>
+      cases cs with
+      | nil =>
+          simp [dividedDifference, dividedDifferenceCoeffs]
+      | cons d ds =>
+          let Eβ := evalCoeffList (d :: ds) β
+          let Eα := evalCoeffList (d :: ds) α
+          let D := dividedDifference (d :: ds) α β
+          have htail : Eβ + Eα = (β + α) * D := ih
+          have hEβ : Eβ = Eα + (β + α) * D := by
+            calc
+              Eβ = Eα + (Eβ + Eα) := by
+                exact (add_self_right (f := f) (hirr := hirr) Eα Eβ).symm
+              _ = Eα + (β + α) * D := by rw [htail]
+          calc
+            evalCoeffList (c :: d :: ds) β + evalCoeffList (c :: d :: ds) α
+                = (c + β * Eβ) + (c + α * Eα) := rfl
+            _ = (c + c) + (β * Eβ + α * Eα) := by
+                  exact add_pair_swap_quot c (β * Eβ) c (α * Eα)
+            _ = β * Eβ + α * Eα := by rw [add_self, zero_add]
+            _ = β * (Eα + (β + α) * D) + α * Eα := by rw [hEβ]
+            _ = (β * Eα + β * ((β + α) * D)) + α * Eα := by
+                  rw [left_distrib]
+            _ = (β * Eα + α * Eα) + β * ((β + α) * D) := by
+                  rw [add_assoc, add_comm (β * ((β + α) * D)) (α * Eα),
+                    ← add_assoc]
+            _ = (β + α) * Eα + β * ((β + α) * D) := by
+                  rw [← right_distrib β α Eα]
+            _ = (β + α) * Eα + (β * (β + α)) * D := by
+                  rw [mul_assoc]
+            _ = (β + α) * Eα + ((β + α) * β) * D := by
+                  rw [mul_comm β (β + α)]
+            _ = (β + α) * Eα + (β + α) * (β * D) := by
+                  rw [mul_assoc]
+            _ = (β + α) * (Eα + β * D) := by
+                  rw [left_distrib]
+            _ = (β + α) * dividedDifference (c :: d :: ds) α β := rfl
+
 /-- Iterated Frobenius preserves multiplication in the packed quotient. -/
 theorem frobeniusIter_mul (a b : GF2nPoly f hirr) (k : Nat) :
     frobeniusIter (a * b) k = frobeniusIter a k * frobeniusIter b k := by
