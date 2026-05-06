@@ -1063,6 +1063,38 @@ class. -/
         (DensePoly.C (Zero.zero : ZMod64 p)) = (0 : Quotient g hmonic hg_pos) := hC0
     rw [hC0z, add_zero]
 
+private theorem reduce_C_zero :
+    reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (DensePoly.C (0 : ZMod64 p)) =
+      (0 : Quotient g hmonic hg_pos) := by
+  have hC0_poly : (DensePoly.C (0 : ZMod64 p) : FpPoly p) = 0 := by
+    apply DensePoly.ext_coeff
+    intro n
+    rw [DensePoly.coeff_C, DensePoly.coeff_zero]
+    split <;> rfl
+  rw [hC0_poly]
+  rfl
+
+private theorem foldl_eval_replicate_zero (β : Quotient g hmonic hg_pos) :
+    ∀ n (acc : Quotient g hmonic hg_pos),
+      (List.replicate n (0 : ZMod64 p)).foldl
+          (fun acc coeff =>
+            acc * β +
+              reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+                (DensePoly.C coeff))
+          acc =
+        acc * β ^ n
+  | 0, acc => by
+      simp
+  | n + 1, acc => by
+      simp only [List.replicate_succ, List.foldl_cons]
+      rw [reduce_C_zero, add_zero]
+      rw [foldl_eval_replicate_zero β n (acc * β)]
+      calc
+        (acc * β) * β ^ n = acc * (β * β ^ n) := by rw [mul_assoc]
+        _ = acc * (β ^ n * β) := by rw [mul_comm β (β ^ n)]
+        _ = acc * β ^ (n + 1) := by rfl
+
 private theorem eval_add_core (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f + h) β =
       eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β +
@@ -1089,7 +1121,27 @@ private theorem eval_monomial_core (n : Nat) (c : ZMod64 p)
         (DensePoly.monomial n c : FpPoly p) β =
       reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c) *
         β ^ n := by
-  sorry
+  by_cases hc : c = 0
+  · subst c
+    change eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (DensePoly.monomial n (0 : ZMod64 p) : FpPoly p) β =
+      reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (DensePoly.C (0 : ZMod64 p)) *
+        β ^ n
+    unfold DensePoly.monomial
+    rw [dif_pos (show (0 : ZMod64 p) = Zero.zero from rfl)]
+    rw [eval_zero, reduce_C_zero]
+    rw [zero_mul]
+  · unfold eval DensePoly.toArray DensePoly.monomial
+    have hc0 : ¬ c = (Zero.zero : ZMod64 p) := hc
+    rw [dif_neg hc0]
+    simp only [Array.toList_push, Array.toList_replicate, List.reverse_append,
+      List.reverse_cons, List.reverse_nil, List.nil_append, List.singleton_append,
+      List.foldl_cons]
+    rw [zero_mul, zero_add, List.reverse_replicate]
+    exact foldl_eval_replicate_zero
+      (g := g) (hmonic := hmonic) (hg_pos := hg_pos) β n
+      (reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c))
 
 /-- Evaluation into the quotient preserves polynomial addition. -/
 theorem eval_add (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
