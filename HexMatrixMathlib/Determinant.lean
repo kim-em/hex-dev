@@ -642,6 +642,58 @@ private theorem source_row_of_castSucc [CommRing R]
         (⟨r.val - 1, by omega⟩ : Fin (k + 2))][(⟨c.val - 1, by omega⟩ : Fin (k + 2))] = _
     simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, hr, hc]
 
+/-- The Fin-valued cyclic shift on `Fin (k+1)` agrees with the
+position-indexing-by-cases used in `source_row_of_castSucc`. -/
+private theorem fin_n_cyclicShift_eq_castSucc_index (k : Nat) (hk : k < n)
+    (r : Fin (k + 1)) :
+    (if r.val = 0 then (⟨k, hk⟩ : Fin n) else ⟨r.val - 1, by omega⟩) =
+    (if h : (bareissCyclicShift k r).val < k then (⟨(bareissCyclicShift k r).val, by omega⟩ : Fin n)
+     else ⟨k, hk⟩) := by
+  by_cases hr : r.val = 0
+  · have hr0 : r = 0 := Fin.ext hr
+    have hbs : bareissCyclicShift k r = (Fin.last k : Fin (k + 1)) := by
+      rw [hr0]; exact bareissCyclicShift_apply_zero k
+    have hge : ¬ (bareissCyclicShift k r).val < k := by
+      rw [hbs]; show ¬ k < k; exact Nat.lt_irrefl _
+    rw [if_pos hr, dif_neg hge]
+  · have hpos : 0 < r.val := Nat.pos_of_ne_zero hr
+    have hbs : bareissCyclicShift k r = (⟨r.val - 1, by omega⟩ : Fin (k + 1)) :=
+      bareissCyclicShift_apply_of_pos k r hpos
+    have hbs_val : (bareissCyclicShift k r).val = r.val - 1 := by rw [hbs]
+    have hlt : (bareissCyclicShift k r).val < k := by
+      rw [hbs_val]; have := r.isLt; omega
+    rw [if_neg hr, dif_pos hlt]
+    apply Fin.ext
+    show r.val - 1 = (bareissCyclicShift k r).val
+    rw [hbs_val]
+
+/-- After reindexing by `bareissDesnanotIndex k`, deleting the last row and
+column yields the natural `(k+1)` bordered minor of `source` with the original
+pivot row/column position `⟨k, _⟩` (i.e. the leading prefix of `source` of size
+`k+1`), reindexed by the cyclic shift `bareissCyclicShift k`. -/
+private theorem M_kk_eq_matrixEquiv_borderedMinor_submatrix [CommRing R]
+    (source : Hex.Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (i j : Fin n) :
+    (((matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)).submatrix
+        (bareissDesnanotIndex k) (bareissDesnanotIndex k)).submatrix
+        (Fin.succAbove (Fin.last (k + 1))) (Fin.succAbove (Fin.last (k + 1)))) =
+      (matrixEquiv (Hex.Matrix.borderedMinor source k hk
+        (⟨k, hk⟩ : Fin n) (⟨k, hk⟩ : Fin n))).submatrix
+        (bareissCyclicShift k) (bareissCyclicShift k) := by
+  ext r c
+  show matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)
+        (bareissDesnanotIndex k (Fin.succAbove (Fin.last (k + 1)) r))
+        (bareissDesnanotIndex k (Fin.succAbove (Fin.last (k + 1)) c)) =
+      matrixEquiv (Hex.Matrix.borderedMinor source k hk ⟨k, hk⟩ ⟨k, hk⟩)
+        (bareissCyclicShift k r) (bareissCyclicShift k c)
+  simp only [Fin.succAbove_last]
+  rw [source_row_of_castSucc source k hnext i j r c,
+      source_row_of_borderedMinor source k hk ⟨k, hk⟩ ⟨k, hk⟩
+        (bareissCyclicShift k r) (bareissCyclicShift k c)]
+  dsimp only
+  simp only [fin_n_cyclicShift_eq_castSucc_index k hk r,
+             fin_n_cyclicShift_eq_castSucc_index k hk c]
+
 /-- After reindexing the `(k+2)` bordered minor by `bareissDesnanotIndex k`,
 deleting row 0 and column 0 yields exactly `matrixEquiv` of the natural
 `(k+1)` bordered minor with the same trailing row `i` and column `j`. -/
