@@ -985,6 +985,67 @@ class. -/
         (DensePoly.C (Zero.zero : ZMod64 p)) = (0 : Quotient g hmonic hg_pos) := hC0
     rw [hC0z, add_zero]
 
+private theorem eval_add_core (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
+    eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f + h) β =
+      eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β +
+        eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) h β := by
+  sorry
+
+private theorem eval_sub_core (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
+    eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f - h) β =
+      eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β -
+        eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) h β := by
+  sorry
+
+private theorem eval_C_mul_core (c : ZMod64 p) (f : FpPoly p)
+    (β : Quotient g hmonic hg_pos) :
+    eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (DensePoly.C c * f) β =
+      reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c) *
+        eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β := by
+  sorry
+
+private theorem eval_monomial_core (n : Nat) (c : ZMod64 p)
+    (β : Quotient g hmonic hg_pos) :
+    eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (DensePoly.monomial n c : FpPoly p) β =
+      reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c) *
+        β ^ n := by
+  sorry
+
+/-- Evaluation into the quotient preserves polynomial addition. -/
+theorem eval_add (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
+    eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f + h) β =
+      eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β +
+        eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) h β :=
+  eval_add_core (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f h β
+
+/-- Evaluation into the quotient preserves polynomial subtraction. -/
+theorem eval_sub (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
+    eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f - h) β =
+      eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β -
+        eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) h β :=
+  eval_sub_core (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f h β
+
+/-- Pull a constant polynomial factor out of quotient evaluation. -/
+theorem eval_C_mul (c : ZMod64 p) (f : FpPoly p)
+    (β : Quotient g hmonic hg_pos) :
+    eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (DensePoly.C c * f) β =
+      reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c) *
+        eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β :=
+  eval_C_mul_core (g := g) (hmonic := hmonic) (hg_pos := hg_pos) c f β
+
+/-- Evaluating a monomial gives the embedded coefficient times the
+corresponding power of the evaluation point. -/
+theorem eval_monomial (n : Nat) (c : ZMod64 p)
+    (β : Quotient g hmonic hg_pos) :
+    eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (DensePoly.monomial n c : FpPoly p) β =
+      reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c) *
+        β ^ n :=
+  eval_monomial_core (g := g) (hmonic := hmonic) (hg_pos := hg_pos) n c β
+
 /-- For a monic irreducible positive-degree modulus, the product of two nonzero
 quotient elements is nonzero. -/
 theorem mul_left_ne_zero_of_ne_zero (hg_irr : FpPoly.Irreducible g)
