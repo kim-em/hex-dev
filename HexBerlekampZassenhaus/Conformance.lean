@@ -24,6 +24,9 @@ Covered properties:
 - recombination outputs multiply back to the target on committed lifted factors
 - bounded and default factor entry points multiply their returned factors back
   to the input on committed small cases
+- default factorization returns promptly and preserves product on small linear
+  and cyclotomic products, with factor recovery checked where the current
+  executable recombination surface exposes it
 - nested prime-factor data aligns degrees, modular factors, and Rabin
   certificates, while the integer checker accepts the constant edge case and
   rejects malformed composite/degree-obstruction data
@@ -63,6 +66,11 @@ private def coeffs (f : ZPoly) : List Int :=
 
 private def factorCoeffSummary (factors : Array ZPoly) : List (List Int) :=
   factors.toList.map coeffs
+
+private def sameFactorCoeffSet (actual expected : List (List Int)) : Bool :=
+  actual.length == expected.length &&
+    expected.all (fun target => actual.any (fun got => got == target)) &&
+    actual.all (fun got => expected.any (fun target => got == target))
 
 private def sortedLinearRoots (factors : Array ZPoly) : Array Int :=
   (factors.map fun f => -(f.coeff 0)).qsort (· ≤ ·)
@@ -182,6 +190,18 @@ private def constantCert : ZPolyIrreducibilityCertificate :=
   { perPrime := #[]
     degreeObstructions := #[] }
 
+private def cubicLinear123 : ZPoly :=
+  fromRoots [1, 2, 3]
+
+private def phi11 : ZPoly :=
+  zpoly #[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+
+private def phi22 : ZPoly :=
+  zpoly #[1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1]
+
+private def cyclo11Times22 : ZPoly :=
+  phi11 * phi22
+
 #guard !isGoodPrime repeatedRootPoly 5
 #guard !isGoodPrime leadingCoeffDivisibleByFive 5
 #guard !isGoodPrime (0 : ZPoly) 5
@@ -268,6 +288,14 @@ private def constantCert : ZPolyIrreducibilityCertificate :=
 #guard
   let factors := factor monomialWithContent
   Array.polyProduct factors = monomialWithContent
+#guard
+  let factors := factor cubicLinear123
+  Array.polyProduct factors = cubicLinear123
+#guard
+  let factors := factor cyclo11Times22
+  Array.polyProduct factors = cyclo11Times22 &&
+    sameFactorCoeffSet (factorCoeffSummary factors)
+      (factorCoeffSummary #[phi11, phi22])
 
 #guard PrimeFactorData.degreeSum primeDataValidQuad = 2
 #guard coeffNats (PrimeFactorData.factorProduct primeDataValidQuad) = [2, 0, 1]

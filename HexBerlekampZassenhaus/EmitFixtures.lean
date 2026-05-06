@@ -10,13 +10,14 @@ set).  The companion oracle driver `scripts/oracle/bz_flint.py` reads
 the same stream and re-runs the integer factorisation through
 python-flint's `fmpz_poly.factor()` for cross-check.
 
-Fixtures are integer polynomials at degrees 4, 5, 6, 10, and 16,
+Fixtures are integer polynomials at degrees 3, 4, 5, 6, 10, 16, and 20,
 covering the four shapes the SPEC distinguishes:
 
 * already-irreducible Mignotte-bounded polynomials (cyclotomic
   Φ_p for `p ∈ {5, 7, 11, 17}`),
 * reducible products of two or three irreducibles (`x^n - 1` and
-  `(x²+1)(x²+2)`),
+  `(x²+1)(x²+2)`), including a small linear-factor product and a product
+  of irreducible cyclotomics,
 * polynomials with content greater than `1`,
 * polynomials whose modular image factors into more than four local
   factors at a chosen good prime — `x^5 - x` (5 linear factors mod 5)
@@ -93,8 +94,11 @@ and have small enough Mignotte bound that the production lift
 completes quickly. -/
 
 private def cases_red : List Case :=
-  [ -- x⁴ - 1 = (x-1)(x+1)(x²+1) — three irreducible factors.
-    mk "red/x4_minus_1" #[-1, 0, 0, 0, 1]
+  [ -- (x-1)(x-2)(x-3) = x³ - 6x² + 11x - 6 — regression coverage
+    -- for the production Hensel-lift path at default Mignotte precision.
+    mk "red/linear_123" #[-6, 11, -6, 1]
+    -- x⁴ - 1 = (x-1)(x+1)(x²+1) — three irreducible factors.
+  , mk "red/x4_minus_1" #[-1, 0, 0, 0, 1]
     -- (x²+1)(x²+2) = x⁴ + 3x² + 2 — two irreducible quadratics.
   , mk "red/quad2_deg4" #[2, 0, 3, 0, 1]
     -- x¹⁰ - 1 = ∏_{d ∣ 10} Φ_d(x) — four irreducible factors.
@@ -102,7 +106,11 @@ private def cases_red : List Case :=
       #[-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
     -- x¹⁶ - 1 = ∏_{d ∣ 16} Φ_d(x) — five irreducible factors.
   , mk "red/x16_minus_1"
-      #[-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1] ]
+      #[-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+    -- Φ_11·Φ_22 = 1 + x² + ... + x²⁰, a degree-20 product of
+    -- irreducible cyclotomics.
+  , mk "red/cyclo11_cyclo22"
+      #[1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1] ]
 
 /-! ## Polynomials with non-unit content -/
 
