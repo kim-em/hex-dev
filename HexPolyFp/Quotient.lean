@@ -813,6 +813,145 @@ theorem nonzeroElements_map_mul_left_perm (hg_irr : FpPoly.Irreducible g)
       · rw [← mul_assoc, mul_inv_cancel hg_irr ha, one_mul]
   exact perm_of_nodup_mem_iff hmap_nodup hL_nodup hmem_iff
 
+private theorem zmod64_one_ne_zero :
+    (1 : ZMod64 p) ≠ 0 := by
+  intro hone
+  have hnat : (1 : ZMod64 p).toNat = (0 : ZMod64 p).toNat :=
+    congrArg ZMod64.toNat hone
+  have hp_two : 2 ≤ p :=
+    (Hex.Nat.Prime.two_le (ZMod64.PrimeModulus.prime (p := p)))
+  rw [show ((1 : ZMod64 p).toNat) = 1 % p from ZMod64.toNat_one,
+      show ((0 : ZMod64 p).toNat) = 0 from ZMod64.toNat_zero,
+      Nat.mod_eq_of_lt (by omega : 1 < p)] at hnat
+  exact absurd hnat (by omega)
+
+private theorem fpPoly_one_ne_zero :
+    (1 : FpPoly p) ≠ 0 := by
+  intro hone
+  have hcoeff := congrArg (fun f : FpPoly p => f.coeff 0) hone
+  change (DensePoly.C (1 : ZMod64 p)).coeff 0 = (0 : FpPoly p).coeff 0 at hcoeff
+  rw [DensePoly.coeff_C, DensePoly.coeff_zero] at hcoeff
+  simp only [if_true] at hcoeff
+  exact zmod64_one_ne_zero hcoeff
+
+/-- The quotient is nontrivial: `1` and `0` are distinct quotient elements
+under a positive-degree modulus. -/
+theorem one_ne_zero :
+    (1 : Quotient g hmonic hg_pos) ≠ (0 : Quotient g hmonic hg_pos) := by
+  intro h
+  have hval := congrArg Quotient.val h
+  rw [one_val_eq_one] at hval
+  have hzero_val : (0 : Quotient g hmonic hg_pos).val = (0 : FpPoly p) := by
+    letI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
+    rw [zero_val, FpPoly.modByMonic, DensePoly.modByMonic_zero]
+  rw [hzero_val] at hval
+  exact fpPoly_one_ne_zero hval
+
+/-- Product of a list of quotient elements (right fold). -/
+def listProd (xs : List (Quotient g hmonic hg_pos)) : Quotient g hmonic hg_pos :=
+  xs.foldr (· * ·) 1
+
+@[simp] theorem listProd_nil :
+    listProd ([] : List (Quotient g hmonic hg_pos)) = 1 :=
+  rfl
+
+@[simp] theorem listProd_cons (x : Quotient g hmonic hg_pos)
+    (xs : List (Quotient g hmonic hg_pos)) :
+    listProd (x :: xs) = x * listProd xs :=
+  rfl
+
+theorem listProd_append (xs ys : List (Quotient g hmonic hg_pos)) :
+    listProd (xs ++ ys) = listProd xs * listProd ys := by
+  induction xs with
+  | nil =>
+      simp [listProd_nil, one_mul]
+  | cons x xs ih =>
+      simp only [List.cons_append, listProd_cons, ih]
+      rw [mul_assoc]
+
+/-- The list product is invariant under `List.Perm`. -/
+theorem listProd_perm {xs ys : List (Quotient g hmonic hg_pos)}
+    (h : List.Perm xs ys) :
+    listProd xs = listProd ys := by
+  induction h with
+  | nil => rfl
+  | cons _ _ ih =>
+      simp only [listProd_cons]
+      rw [ih]
+  | swap x y zs =>
+      simp only [listProd_cons]
+      rw [← mul_assoc, ← mul_assoc, mul_comm x y]
+  | trans _ _ ih₁ ih₂ =>
+      exact ih₁.trans ih₂
+
+/-- Mapping a list by left-multiplication factors out as a power of the
+multiplier times the original list product. -/
+theorem listProd_map_mul_left (a : Quotient g hmonic hg_pos)
+    (xs : List (Quotient g hmonic hg_pos)) :
+    listProd (xs.map (fun b => a * b)) = a ^ xs.length * listProd xs := by
+  induction xs with
+  | nil =>
+      simp only [List.map_nil, List.length_nil, listProd_nil, pow_zero, one_mul]
+  | cons x xs ih =>
+      calc listProd ((x :: xs).map (fun b => a * b))
+          = (a * x) * listProd (xs.map (fun b => a * b)) := by
+              simp only [List.map_cons, listProd_cons]
+        _ = (a * x) * (a ^ xs.length * listProd xs) := by rw [ih]
+        _ = a * (x * (a ^ xs.length * listProd xs)) := mul_assoc ..
+        _ = a * ((x * a ^ xs.length) * listProd xs) := by
+              rw [mul_assoc x (a ^ xs.length) (listProd xs)]
+        _ = a * ((a ^ xs.length * x) * listProd xs) := by
+              rw [mul_comm x (a ^ xs.length)]
+        _ = a * (a ^ xs.length * (x * listProd xs)) := by
+              rw [mul_assoc (a ^ xs.length) x (listProd xs)]
+        _ = (a * a ^ xs.length) * (x * listProd xs) := (mul_assoc ..).symm
+        _ = a ^ (xs.length + 1) * (x * listProd xs) := by
+              rw [pow_succ, mul_comm (a ^ xs.length) a]
+        _ = a ^ (x :: xs).length * listProd (x :: xs) := by
+              simp only [listProd_cons, List.length_cons]
+
+/-- The product of a list of nonzero quotient elements is nonzero, under a
+monic irreducible positive-degree modulus. -/
+theorem listProd_ne_zero (hg_irr : FpPoly.Irreducible g)
+    {xs : List (Quotient g hmonic hg_pos)}
+    (hxs : ∀ x ∈ xs, x ≠ 0) :
+    listProd xs ≠ 0 := by
+  induction xs with
+  | nil =>
+      simp only [listProd_nil]
+      exact one_ne_zero
+  | cons x xs ih =>
+      simp only [listProd_cons]
+      apply mul_left_ne_zero_of_ne_zero hg_irr
+      · exact hxs x List.mem_cons_self
+      · exact ih (fun y hy => hxs y (List.mem_cons_of_mem _ hy))
+
+/-- Finite-field exponent theorem for the quotient: every nonzero quotient
+element raised to the cardinality of the nonzero group equals `1`. -/
+theorem pow_pred_card_eq_one_of_ne_zero
+    (hg_irr : FpPoly.Irreducible g)
+    {a : Quotient g hmonic hg_pos} (ha : a ≠ 0) :
+    a ^ (p ^ g.degree?.getD 0 - 1) = 1 := by
+  let L : List (Quotient g hmonic hg_pos) :=
+    nonzeroElements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+  let P : Quotient g hmonic hg_pos := listProd L
+  have hL_card : L.length = p ^ g.degree?.getD 0 - 1 :=
+    nonzeroElements_card (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+  have hP_ne : P ≠ 0 :=
+    listProd_ne_zero hg_irr (fun x hx => (mem_nonzeroElements x).mp hx)
+  have hperm := nonzeroElements_map_mul_left_perm
+    (g := g) (hmonic := hmonic) (hg_pos := hg_pos) hg_irr ha
+  have hprod_eq : listProd (L.map (fun b => a * b)) = P :=
+    listProd_perm hperm
+  have hfactor : listProd (L.map (fun b => a * b)) = a ^ L.length * P :=
+    listProd_map_mul_left a L
+  have hkey : a ^ L.length * P = P := hfactor.symm.trans hprod_eq
+  have hcancel : a ^ L.length * P * P⁻¹ = P * P⁻¹ :=
+    congrArg (fun x => x * P⁻¹) hkey
+  rw [mul_assoc, mul_inv_cancel hg_irr hP_ne, mul_one] at hcancel
+  rw [hL_card] at hcancel
+  exact hcancel
+
 end Quotient
 end FpPoly
 end Hex
