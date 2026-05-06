@@ -23,7 +23,7 @@ we emit two `result` records that the oracle verifies:
 * `ddf` — `Berlekamp.distinctDegreeFactor` (degree-bucketed
   factorisation product).  python-flint cross-checks by grouping
   its irreducible factor list by degree and multiplying within each
-  group.
+  group, with repeated factors included at their multiplicity.
 
 `squareFreeDecomposition` is intentionally **not** cross-checked
 here: Lean's executable SFD splits out leading-coefficient units as
