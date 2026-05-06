@@ -16,6 +16,7 @@ Covered operations:
   `checkRabinBezoutWitnesses`, and `checkIrreducibilityCertificate`
 - `splitFactorAt` and `kernelWitnessSplit?`
 - `distinctDegreeCandidate`, `distinctDegreeStep`, and `distinctDegreeFactor`
+- `squareFreeDecomposition`
 Covered properties:
 - Berlekamp fixed-space matrices subtract the identity from the Frobenius matrix
 - Rabin witnesses agree with the per-divisor coprimality checks
@@ -23,6 +24,7 @@ Covered properties:
   witnesses, while malformed certificates are rejected
 - successful split witnesses multiply back to the split input
 - distinct-degree factorization products reconstruct the committed input
+- square-free decomposition products reconstruct the committed input
 Covered edge cases:
 - constant, linear, irreducible quadratic, and reducible quadratic inputs over
   `F_5`
