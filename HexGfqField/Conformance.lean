@@ -85,6 +85,8 @@ private abbrev Q := GFqRing.PolyQuotient modulus modulus_pos_degree
 private abbrev F (hirr : FpPoly.Irreducible modulus) :=
   FiniteField modulus modulus_pos_degree prime_five hirr
 
+private theorem maxProperDiv_4 : Berlekamp.maximalProperDivisors 4 = [2] := by decide
+
 /-- Rabin certificate for `x^4 + 2` over `F_5`.
 
 The pow chain records `X^(5^k) mod (x^4 + 2)` for `k = 0..4`. Using
@@ -103,7 +105,8 @@ private def modulus_irreducibility_certificate :
   bezout :=
     #[{ left := polyFive #[3], right := polyFive #[0, 0, 0, 4] }]
 
-set_option maxRecDepth 4096 in
+set_option maxRecDepth 131072 in
+set_option maxHeartbeats 8000000 in
 private theorem modulus_certificate_linear_check :
     Berlekamp.checkIrreducibilityCertificateLinear modulus modulus_monic
         modulus_irreducibility_certificate = true := by
@@ -112,7 +115,7 @@ private theorem modulus_certificate_linear_check :
     Berlekamp.IrreducibilityCertificate.toAmbient?,
     Berlekamp.checkPowChainLinear, Berlekamp.checkRabinBezoutWitnesses,
     Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
-    Berlekamp.maximalProperDivisors, Berlekamp.properDivisors,
+    maxProperDiv_4,
     modulus, polyFive]
   constructor
   · constructor
