@@ -107,6 +107,16 @@ is the `core` profile for `HexFoo`. It MUST:
    #guard let (g, s, t) := HexArith.extGcd 30 12; s * 30 + t * 12 = g
    ```
 
+8. **Exercise top-level entry points end-to-end.** When the library
+   SPEC names a public top-level entry point (e.g.
+   `HexBerlekampZassenhaus.factor`), at least one conformance case
+   per such entry point must call it with a raw input and assert the
+   output — not bypass it via internal-stage helpers (e.g. supplying
+   pre-lifted factors directly to `recombine`). Internal-stage checks
+   are useful but not a substitute: they cannot detect a
+   wrong-asymptotic intermediate stage that the entry point would
+   exercise at realistic input sizes.
+
 ## Banned anti-patterns
 
 These patterns have produced ceremony-heavy modules with no teeth and

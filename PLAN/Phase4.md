@@ -88,6 +88,14 @@ required.
   inputs live under `HexFoo/Bench/Inputs/`.
 - **Keep smoke and scientific settings distinct.** `verify` is for
   wiring; Phase 4 completion is judged on real runs.
+- **Cover downstream call patterns.** When the SPEC declares an
+  operation the production hot path of a downstream operation, the
+  bench parameter schedule must cover the parameter values the
+  downstream caller actually produces. A schedule that excludes the
+  downstream-realistic range cannot detect a wrong-asymptotic
+  implementation that downstream use exercises. The schedule must
+  vary every parameter the operation takes that the downstream
+  caller varies — not only the most obvious one.
 
 ## Exit criteria
 
