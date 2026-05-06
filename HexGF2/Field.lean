@@ -1091,6 +1091,18 @@ def frobeniusIter (a : GF2nPoly f hirr) : Nat → GF2nPoly f hirr
 @[simp] theorem frobeniusIter_succ (a : GF2nPoly f hirr) (k : Nat) :
     frobeniusIter a (k + 1) = frobeniusIter a k * frobeniusIter a k := rfl
 
+/-- Frobenius iterates compose by adding their iteration counts. -/
+theorem frobeniusIter_add (a : GF2nPoly f hirr) (m n : Nat) :
+    frobeniusIter (frobeniusIter a m) n = frobeniusIter a (m + n) := by
+  induction n with
+  | zero =>
+      rw [Nat.add_zero]
+      rfl
+  | succ n ih =>
+      rw [frobeniusIter_succ, ih]
+      have hidx : m + (n + 1) = (m + n) + 1 := by omega
+      rw [hidx, frobeniusIter_succ]
+
 /-- Iterated quotient squaring of the class of `X` follows the executable
 `xpow2kMod` remainder chain used by Rabin soundness. -/
 theorem quotient_X_frobeniusIter_eq_reduce_xpow2kMod (k : Nat) :
@@ -1590,6 +1602,45 @@ theorem frobeniusIter_degree_eq_self
   · rw [hsplit, linearPow_succ,
       linearPow_pred_card_eq_one_of_ne_zero (f := f) (hirr := hirr) hf_pos ha,
       one_mul]
+
+/-- Adding any multiple of the modulus degree to a Frobenius iterate does not
+change the result. -/
+theorem frobeniusIter_add_mul_degree_eq
+    (hf_pos : 0 < f.degree) (a : GF2nPoly f hirr) (m q : Nat) :
+    frobeniusIter a (m + f.degree * q) = frobeniusIter a m := by
+  induction q with
+  | zero =>
+      rw [Nat.mul_zero, Nat.add_zero]
+  | succ q ih =>
+      have hidx : m + f.degree * (q + 1) = (m + f.degree * q) + f.degree := by
+        rw [Nat.mul_succ]
+        omega
+      calc
+        frobeniusIter a (m + f.degree * (q + 1))
+            = frobeniusIter a ((m + f.degree * q) + f.degree) := by rw [hidx]
+        _ = frobeniusIter (frobeniusIter a (m + f.degree * q)) f.degree := by
+              rw [frobeniusIter_add]
+        _ = frobeniusIter (frobeniusIter a m) f.degree := by rw [ih]
+        _ = frobeniusIter a m :=
+              frobeniusIter_degree_eq_self (f := f) (hirr := hirr) hf_pos
+                (frobeniusIter a m)
+
+/-- If a quotient element is fixed by the `n`-fold Frobenius, it is also fixed
+by the remainder of `n` modulo the modulus degree. -/
+theorem frobeniusIter_mod_degree_eq_of_fixed
+    (hf_pos : 0 < f.degree) {a : GF2nPoly f hirr} {n : Nat}
+    (hfixed : frobeniusIter a n = a) :
+    frobeniusIter a (n % f.degree) = a := by
+  have hdecomp : n % f.degree + f.degree * (n / f.degree) = n :=
+    Nat.mod_add_div n f.degree
+  have hperiod :
+      frobeniusIter a (n % f.degree + f.degree * (n / f.degree)) =
+        frobeniusIter a (n % f.degree) :=
+    frobeniusIter_add_mul_degree_eq (f := f) (hirr := hirr) hf_pos a
+      (n % f.degree) (n / f.degree)
+  rw [hdecomp] at hperiod
+  rw [← hperiod]
+  exact hfixed
 
 end GF2nPoly
 end Hex
