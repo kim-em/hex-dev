@@ -454,4 +454,462 @@ theorem bareissExactDiv_borderedMinor_of_mul_eq
   change numerator / prevPivot = nextMinor
   exact Int.ediv_eq_of_eq_mul_right hprev_ne hnum
 
+/-- Cyclic shift on `Fin (k + 1)` mapping `0 ↦ k`, `r ↦ r - 1` for `r ≥ 1`.
+
+This is the row/column rearrangement induced by `bareissDesnanotIndex k` on the
+sub-positions selected by `(Fin.last (k + 1)).succAbove`: it carries the Bareiss
+pivot row (originally position `k`) from sub-position `0` back to the trailing
+sub-position `k`. The same shift compares `bareissDesnanotIndex k` columns with
+the natural bordered-minor column order. Defined as the inverse of Mathlib's
+`finRotate (k + 1)` so the sign is available immediately. -/
+private def bareissCyclicShift (k : Nat) : Fin (k + 1) ≃ Fin (k + 1) :=
+  (finRotate (k + 1)).symm
+
+@[simp]
+private theorem bareissCyclicShift_apply_zero (k : Nat) :
+    bareissCyclicShift k 0 = (Fin.last k : Fin (k + 1)) := by
+  show (finRotate (k + 1)).symm 0 = Fin.last k
+  rw [Equiv.symm_apply_eq]
+  exact finRotate_last.symm
+
+private theorem bareissCyclicShift_apply_of_pos (k : Nat) (r : Fin (k + 1))
+    (h : 0 < r.val) :
+    bareissCyclicShift k r = (⟨r.val - 1, by omega⟩ : Fin (k + 1)) := by
+  have hne : r ≠ 0 := by
+    intro h_eq
+    rw [h_eq] at h
+    exact absurd h (Nat.lt_irrefl _)
+  have : NeZero (k + 1) := ⟨Nat.succ_ne_zero _⟩
+  ext
+  show ((finRotate (k + 1)).symm r : ℕ) = r.val - 1
+  exact coe_finRotate_symm_of_ne_zero hne
+
+/-- Sign of the cyclic shift: `(-1)^k`. -/
+private theorem sign_bareissCyclicShift (k : Nat) :
+    Equiv.Perm.sign (bareissCyclicShift k) = (-1) ^ k := by
+  show Equiv.Perm.sign (finRotate (k + 1)).symm = _
+  rw [Equiv.Perm.sign_symm]
+  exact sign_finRotate k
+
+/-- The entry formula for a Bareiss-reindexed bordered minor: the position
+returned by `bareissDesnanotIndex k s.succ` is either an interior source row
+(when `s.val < k`) or the trailing row `i` (when `s.val = k`). -/
+private theorem bareissDesnanotIndex_succ_lt (k : Nat) (s : Fin (k + 1))
+    (hs : s.val < k) :
+    bareissDesnanotIndex k s.succ = (⟨s.val, by omega⟩ : Fin (k + 2)) := by
+  show (if hzero : s.succ.val = 0 then (⟨k, by omega⟩ : Fin (k + 2))
+        else if hlast : s.succ.val = k + 1 then Fin.last (k + 1)
+        else ⟨s.succ.val - 1, by omega⟩) = _
+  have hzero : s.succ.val ≠ 0 := Nat.succ_ne_zero _
+  have hne_last : s.succ.val ≠ k + 1 := by
+    show s.val + 1 ≠ k + 1; omega
+  rw [dif_neg hzero, dif_neg hne_last]
+  ext
+  show s.succ.val - 1 = s.val
+  simp
+
+private theorem bareissDesnanotIndex_succ_top (k : Nat) (s : Fin (k + 1))
+    (hs : s.val = k) :
+    bareissDesnanotIndex k s.succ = Fin.last (k + 1) := by
+  show (if hzero : s.succ.val = 0 then (⟨k, by omega⟩ : Fin (k + 2))
+        else if hlast : s.succ.val = k + 1 then Fin.last (k + 1)
+        else ⟨s.succ.val - 1, by omega⟩) = _
+  have hzero : s.succ.val ≠ 0 := Nat.succ_ne_zero _
+  have hlast : s.succ.val = k + 1 := by
+    show s.val + 1 = k + 1; omega
+  rw [dif_neg hzero, dif_pos hlast]
+
+private theorem bareissDesnanotIndex_castSucc_zero (k : Nat) (s : Fin (k + 1))
+    (hs : s.val = 0) :
+    bareissDesnanotIndex k s.castSucc = (⟨k, by omega⟩ : Fin (k + 2)) := by
+  show (if hzero : s.castSucc.val = 0 then (⟨k, by omega⟩ : Fin (k + 2))
+        else if hlast : s.castSucc.val = k + 1 then Fin.last (k + 1)
+        else ⟨s.castSucc.val - 1, by omega⟩) = _
+  have hzero' : s.castSucc.val = 0 := hs
+  rw [dif_pos hzero']
+
+private theorem bareissDesnanotIndex_castSucc_pos (k : Nat) (s : Fin (k + 1))
+    (hs : 0 < s.val) :
+    bareissDesnanotIndex k s.castSucc = (⟨s.val - 1, by omega⟩ : Fin (k + 2)) := by
+  have hcv : s.castSucc.val = s.val := rfl
+  show (if hzero : s.castSucc.val = 0 then (⟨k, by omega⟩ : Fin (k + 2))
+        else if hlast : s.castSucc.val = k + 1 then Fin.last (k + 1)
+        else ⟨s.castSucc.val - 1, by omega⟩) = _
+  have hne_zero : s.castSucc.val ≠ 0 := by rw [hcv]; exact Nat.ne_of_gt hs
+  have hne_last : s.castSucc.val ≠ k + 1 := by
+    rw [hcv]; exact Nat.ne_of_lt (by have := s.isLt; omega)
+  rw [dif_neg hne_zero, dif_neg hne_last]
+  ext
+  show s.castSucc.val - 1 = s.val - 1
+  rw [hcv]
+
+/-- Source-row index returned by `bareissDesnanotIndex k r.succ` from `r : Fin (k+1)`:
+`r.val` for interior `r.val < k`, `i` when `r.val = k`. -/
+private theorem source_row_of_succ [CommRing R]
+    (source : Hex.Matrix R n n) (k : Nat) (hnext : k + 1 < n) (i j : Fin n)
+    (r : Fin (k + 1)) :
+    ∀ (c : Fin (k + 1)),
+      matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)
+        (bareissDesnanotIndex k r.succ) (bareissDesnanotIndex k c.succ) =
+      (let rr : Fin n := if hr : r.val < k then ⟨r.val, by omega⟩ else i
+       let cc : Fin n := if hc : c.val < k then ⟨c.val, by omega⟩ else j
+       source[rr][cc]) := by
+  intro c
+  have hkn : k < n := Nat.lt_of_succ_lt hnext
+  by_cases hr : r.val < k <;> by_cases hc : c.val < k
+  · rw [bareissDesnanotIndex_succ_lt k r hr, bareissDesnanotIndex_succ_lt k c hc]
+    have hri : (⟨r.val, by omega⟩ : Fin (k + 2)).val < k + 1 := by show r.val < k + 1; omega
+    have hci : (⟨c.val, by omega⟩ : Fin (k + 2)).val < k + 1 := by show c.val < k + 1; omega
+    rw [show (matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)
+            (⟨r.val, by omega⟩ : Fin (k + 2)) (⟨c.val, by omega⟩ : Fin (k + 2)) : R) =
+          (Hex.Matrix.borderedMinor source (k + 1) hnext i j)[
+            (⟨r.val, by omega⟩ : Fin (k + 2))][(⟨c.val, by omega⟩ : Fin (k + 2))] from rfl]
+    rw [Hex.Matrix.borderedMinor_entry_lt_lt source (k + 1) hnext i j _ _ hri hci]
+    simp [hr, hc]
+  · have hc_eq : c.val = k := by have := c.isLt; omega
+    rw [bareissDesnanotIndex_succ_lt k r hr, bareissDesnanotIndex_succ_top k c hc_eq]
+    have hri : (⟨r.val, by omega⟩ : Fin (k + 2)).val < k + 1 := by show r.val < k + 1; omega
+    rw [show (matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)
+            (⟨r.val, by omega⟩ : Fin (k + 2)) (Fin.last (k + 1)) : R) =
+          (Hex.Matrix.borderedMinor source (k + 1) hnext i j)[
+            (⟨r.val, by omega⟩ : Fin (k + 2))][Fin.last (k + 1)] from rfl]
+    rw [Hex.Matrix.borderedMinor_entry_lt_last source (k + 1) hnext i j _ hri]
+    simp [hr, hc]
+  · have hr_eq : r.val = k := by have := r.isLt; omega
+    rw [bareissDesnanotIndex_succ_top k r hr_eq, bareissDesnanotIndex_succ_lt k c hc]
+    have hci : (⟨c.val, by omega⟩ : Fin (k + 2)).val < k + 1 := by show c.val < k + 1; omega
+    rw [show (matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)
+            (Fin.last (k + 1)) (⟨c.val, by omega⟩ : Fin (k + 2)) : R) =
+          (Hex.Matrix.borderedMinor source (k + 1) hnext i j)[
+            Fin.last (k + 1)][(⟨c.val, by omega⟩ : Fin (k + 2))] from rfl]
+    rw [Hex.Matrix.borderedMinor_entry_last_lt source (k + 1) hnext i j _ hci]
+    simp [hr, hc]
+  · have hr_eq : r.val = k := by have := r.isLt; omega
+    have hc_eq : c.val = k := by have := c.isLt; omega
+    rw [bareissDesnanotIndex_succ_top k r hr_eq, bareissDesnanotIndex_succ_top k c hc_eq]
+    rw [show (matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)
+            (Fin.last (k + 1)) (Fin.last (k + 1)) : R) =
+          (Hex.Matrix.borderedMinor source (k + 1) hnext i j)[
+            Fin.last (k + 1)][Fin.last (k + 1)] from rfl]
+    rw [Hex.Matrix.borderedMinor_entry_last_last]
+    simp [hr, hc]
+
+private theorem source_row_of_borderedMinor [CommRing R]
+    (source : Hex.Matrix R n n) (k : Nat) (hk : k < n) (i j : Fin n)
+    (r c : Fin (k + 1)) :
+    matrixEquiv (Hex.Matrix.borderedMinor source k hk i j) r c =
+      (let rr : Fin n := if hr : r.val < k then ⟨r.val, by omega⟩ else i
+       let cc : Fin n := if hc : c.val < k then ⟨c.val, by omega⟩ else j
+       source[rr][cc]) := by
+  show (Hex.Matrix.borderedMinor source k hk i j)[r][c] = _
+  simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn]
+
+/-- For row positions `r.castSucc` (i.e. column `(Fin.last (k + 1)).succAbove r`),
+the entry at `bareissDesnanotIndex k r.castSucc` lands in the interior of the
+`(k+2)` bordered minor: source row `k` for `r = 0`, source row `r.val - 1` for
+`r.val ≥ 1`. Same for columns. -/
+private theorem source_row_of_castSucc [CommRing R]
+    (source : Hex.Matrix R n n) (k : Nat) (hnext : k + 1 < n) (i j : Fin n)
+    (r c : Fin (k + 1)) :
+    matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)
+        (bareissDesnanotIndex k r.castSucc) (bareissDesnanotIndex k c.castSucc) =
+      (let rr : Fin n := if r.val = 0 then ⟨k, by omega⟩ else ⟨r.val - 1, by omega⟩
+       let cc : Fin n := if c.val = 0 then ⟨k, by omega⟩ else ⟨c.val - 1, by omega⟩
+       source[rr][cc]) := by
+  by_cases hr : r.val = 0 <;> by_cases hc : c.val = 0
+  · rw [bareissDesnanotIndex_castSucc_zero k r hr,
+        bareissDesnanotIndex_castSucc_zero k c hc]
+    show (Hex.Matrix.borderedMinor source (k + 1) hnext i j)[
+        (⟨k, by omega⟩ : Fin (k + 2))][(⟨k, by omega⟩ : Fin (k + 2))] = _
+    simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, hr, hc]
+  · have hcpos : 0 < c.val := Nat.pos_of_ne_zero hc
+    rw [bareissDesnanotIndex_castSucc_zero k r hr,
+        bareissDesnanotIndex_castSucc_pos k c hcpos]
+    show (Hex.Matrix.borderedMinor source (k + 1) hnext i j)[
+        (⟨k, by omega⟩ : Fin (k + 2))][(⟨c.val - 1, by omega⟩ : Fin (k + 2))] = _
+    simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, hr, hc]
+  · have hrpos : 0 < r.val := Nat.pos_of_ne_zero hr
+    rw [bareissDesnanotIndex_castSucc_pos k r hrpos,
+        bareissDesnanotIndex_castSucc_zero k c hc]
+    show (Hex.Matrix.borderedMinor source (k + 1) hnext i j)[
+        (⟨r.val - 1, by omega⟩ : Fin (k + 2))][(⟨k, by omega⟩ : Fin (k + 2))] = _
+    simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, hr, hc]
+  · have hrpos : 0 < r.val := Nat.pos_of_ne_zero hr
+    have hcpos : 0 < c.val := Nat.pos_of_ne_zero hc
+    rw [bareissDesnanotIndex_castSucc_pos k r hrpos,
+        bareissDesnanotIndex_castSucc_pos k c hcpos]
+    show (Hex.Matrix.borderedMinor source (k + 1) hnext i j)[
+        (⟨r.val - 1, by omega⟩ : Fin (k + 2))][(⟨c.val - 1, by omega⟩ : Fin (k + 2))] = _
+    simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, hr, hc]
+
+/-- Mixed `succ`/`castSucc` source-row helper used for `M_1k`. -/
+private theorem source_row_of_succ_castSucc [CommRing R]
+    (source : Hex.Matrix R n n) (k : Nat) (hnext : k + 1 < n) (i j : Fin n)
+    (r c : Fin (k + 1)) :
+    matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)
+        (bareissDesnanotIndex k r.succ) (bareissDesnanotIndex k c.castSucc) =
+      (let rr : Fin n := if hr : r.val < k then ⟨r.val, by omega⟩ else i
+       let cc : Fin n := if c.val = 0 then ⟨k, by omega⟩ else ⟨c.val - 1, by omega⟩
+       source[rr][cc]) := by
+  by_cases hr : r.val < k <;> by_cases hc : c.val = 0
+  · rw [bareissDesnanotIndex_succ_lt k r hr, bareissDesnanotIndex_castSucc_zero k c hc]
+    show (Hex.Matrix.borderedMinor source (k + 1) hnext i j)[
+        (⟨r.val, by omega⟩ : Fin (k + 2))][(⟨k, by omega⟩ : Fin (k + 2))] = _
+    have hrle : r.val ≤ k := hr.le
+    simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, hr, hc, hrle]
+  · have hcpos : 0 < c.val := Nat.pos_of_ne_zero hc
+    rw [bareissDesnanotIndex_succ_lt k r hr, bareissDesnanotIndex_castSucc_pos k c hcpos]
+    show (Hex.Matrix.borderedMinor source (k + 1) hnext i j)[
+        (⟨r.val, by omega⟩ : Fin (k + 2))][(⟨c.val - 1, by omega⟩ : Fin (k + 2))] = _
+    have hrle : r.val ≤ k := hr.le
+    simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, hr, hc, hrle]
+  · have hr_eq : r.val = k := by have := r.isLt; omega
+    rw [bareissDesnanotIndex_succ_top k r hr_eq, bareissDesnanotIndex_castSucc_zero k c hc]
+    show (Hex.Matrix.borderedMinor source (k + 1) hnext i j)[
+        Fin.last (k + 1)][(⟨k, by omega⟩ : Fin (k + 2))] = _
+    simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, hr, hc]
+  · have hr_eq : r.val = k := by have := r.isLt; omega
+    have hcpos : 0 < c.val := Nat.pos_of_ne_zero hc
+    rw [bareissDesnanotIndex_succ_top k r hr_eq, bareissDesnanotIndex_castSucc_pos k c hcpos]
+    show (Hex.Matrix.borderedMinor source (k + 1) hnext i j)[
+        Fin.last (k + 1)][(⟨c.val - 1, by omega⟩ : Fin (k + 2))] = _
+    simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, hr, hc]
+
+/-- Mixed `castSucc`/`succ` source-row helper used for `M_k1`. -/
+private theorem source_row_of_castSucc_succ [CommRing R]
+    (source : Hex.Matrix R n n) (k : Nat) (hnext : k + 1 < n) (i j : Fin n)
+    (r c : Fin (k + 1)) :
+    matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)
+        (bareissDesnanotIndex k r.castSucc) (bareissDesnanotIndex k c.succ) =
+      (let rr : Fin n := if r.val = 0 then ⟨k, by omega⟩ else ⟨r.val - 1, by omega⟩
+       let cc : Fin n := if hc : c.val < k then ⟨c.val, by omega⟩ else j
+       source[rr][cc]) := by
+  by_cases hr : r.val = 0 <;> by_cases hc : c.val < k
+  · rw [bareissDesnanotIndex_castSucc_zero k r hr, bareissDesnanotIndex_succ_lt k c hc]
+    show (Hex.Matrix.borderedMinor source (k + 1) hnext i j)[
+        (⟨k, by omega⟩ : Fin (k + 2))][(⟨c.val, by omega⟩ : Fin (k + 2))] = _
+    have hcle : c.val ≤ k := hc.le
+    simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, hr, hc, hcle]
+  · have hc_eq : c.val = k := by have := c.isLt; omega
+    rw [bareissDesnanotIndex_castSucc_zero k r hr, bareissDesnanotIndex_succ_top k c hc_eq]
+    show (Hex.Matrix.borderedMinor source (k + 1) hnext i j)[
+        (⟨k, by omega⟩ : Fin (k + 2))][Fin.last (k + 1)] = _
+    simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, hr, hc]
+  · have hrpos : 0 < r.val := Nat.pos_of_ne_zero hr
+    rw [bareissDesnanotIndex_castSucc_pos k r hrpos, bareissDesnanotIndex_succ_lt k c hc]
+    show (Hex.Matrix.borderedMinor source (k + 1) hnext i j)[
+        (⟨r.val - 1, by omega⟩ : Fin (k + 2))][(⟨c.val, by omega⟩ : Fin (k + 2))] = _
+    have hcle : c.val ≤ k := hc.le
+    simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, hr, hc, hcle]
+  · have hrpos : 0 < r.val := Nat.pos_of_ne_zero hr
+    have hc_eq : c.val = k := by have := c.isLt; omega
+    rw [bareissDesnanotIndex_castSucc_pos k r hrpos, bareissDesnanotIndex_succ_top k c hc_eq]
+    show (Hex.Matrix.borderedMinor source (k + 1) hnext i j)[
+        (⟨r.val - 1, by omega⟩ : Fin (k + 2))][Fin.last (k + 1)] = _
+    simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, hr, hc]
+
+/-- The Fin-valued cyclic shift on `Fin (k+1)` agrees with the
+position-indexing-by-cases used in `source_row_of_castSucc`. -/
+private theorem fin_n_cyclicShift_eq_castSucc_index (k : Nat) (hk : k < n)
+    (r : Fin (k + 1)) :
+    (if r.val = 0 then (⟨k, hk⟩ : Fin n) else ⟨r.val - 1, by omega⟩) =
+    (if h : (bareissCyclicShift k r).val < k then (⟨(bareissCyclicShift k r).val, by omega⟩ : Fin n)
+     else ⟨k, hk⟩) := by
+  by_cases hr : r.val = 0
+  · have hr0 : r = 0 := Fin.ext hr
+    have hbs : bareissCyclicShift k r = (Fin.last k : Fin (k + 1)) := by
+      rw [hr0]; exact bareissCyclicShift_apply_zero k
+    have hge : ¬ (bareissCyclicShift k r).val < k := by
+      rw [hbs]; show ¬ k < k; exact Nat.lt_irrefl _
+    rw [if_pos hr, dif_neg hge]
+  · have hpos : 0 < r.val := Nat.pos_of_ne_zero hr
+    have hbs : bareissCyclicShift k r = (⟨r.val - 1, by omega⟩ : Fin (k + 1)) :=
+      bareissCyclicShift_apply_of_pos k r hpos
+    have hbs_val : (bareissCyclicShift k r).val = r.val - 1 := by rw [hbs]
+    have hlt : (bareissCyclicShift k r).val < k := by
+      rw [hbs_val]; have := r.isLt; omega
+    rw [if_neg hr, dif_pos hlt]
+    apply Fin.ext
+    show r.val - 1 = (bareissCyclicShift k r).val
+    rw [hbs_val]
+
+/-- After reindexing by `bareissDesnanotIndex k`, deleting the last row and
+column yields the natural `(k+1)` bordered minor of `source` with the original
+pivot row/column position `⟨k, _⟩` (i.e. the leading prefix of `source` of size
+`k+1`), reindexed by the cyclic shift `bareissCyclicShift k`. -/
+private theorem M_kk_eq_matrixEquiv_borderedMinor_submatrix [CommRing R]
+    (source : Hex.Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (i j : Fin n) :
+    (((matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)).submatrix
+        (bareissDesnanotIndex k) (bareissDesnanotIndex k)).submatrix
+        (Fin.succAbove (Fin.last (k + 1))) (Fin.succAbove (Fin.last (k + 1)))) =
+      (matrixEquiv (Hex.Matrix.borderedMinor source k hk
+        (⟨k, hk⟩ : Fin n) (⟨k, hk⟩ : Fin n))).submatrix
+        (bareissCyclicShift k) (bareissCyclicShift k) := by
+  ext r c
+  show matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)
+        (bareissDesnanotIndex k (Fin.succAbove (Fin.last (k + 1)) r))
+        (bareissDesnanotIndex k (Fin.succAbove (Fin.last (k + 1)) c)) =
+      matrixEquiv (Hex.Matrix.borderedMinor source k hk ⟨k, hk⟩ ⟨k, hk⟩)
+        (bareissCyclicShift k r) (bareissCyclicShift k c)
+  simp only [Fin.succAbove_last]
+  rw [source_row_of_castSucc source k hnext i j r c,
+      source_row_of_borderedMinor source k hk ⟨k, hk⟩ ⟨k, hk⟩
+        (bareissCyclicShift k r) (bareissCyclicShift k c)]
+  dsimp only
+  simp only [fin_n_cyclicShift_eq_castSucc_index k hk r,
+             fin_n_cyclicShift_eq_castSucc_index k hk c]
+
+/-- After reindexing by `bareissDesnanotIndex k`, deleting row 0 and the last
+column yields the natural `(k+1)` bordered minor with trailing row `i` and
+trailing column position `⟨k, _⟩`, with columns reindexed by
+`bareissCyclicShift k`. -/
+private theorem M_1k_eq_matrixEquiv_borderedMinor_submatrix [CommRing R]
+    (source : Hex.Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (i j : Fin n) :
+    (((matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)).submatrix
+        (bareissDesnanotIndex k) (bareissDesnanotIndex k)).submatrix
+        (Fin.succAbove (0 : Fin (k + 2))) (Fin.succAbove (Fin.last (k + 1)))) =
+      (matrixEquiv (Hex.Matrix.borderedMinor source k hk i (⟨k, hk⟩ : Fin n))).submatrix
+        id (bareissCyclicShift k) := by
+  ext r c
+  show matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)
+        (bareissDesnanotIndex k (Fin.succAbove (0 : Fin (k + 2)) r))
+        (bareissDesnanotIndex k (Fin.succAbove (Fin.last (k + 1)) c)) =
+      matrixEquiv (Hex.Matrix.borderedMinor source k hk i ⟨k, hk⟩)
+        r (bareissCyclicShift k c)
+  rw [show Fin.succAbove (0 : Fin (k + 2)) r = r.succ from rfl]
+  simp only [Fin.succAbove_last]
+  rw [source_row_of_succ_castSucc source k hnext i j r c,
+      source_row_of_borderedMinor source k hk i ⟨k, hk⟩ r (bareissCyclicShift k c)]
+  dsimp only
+  simp only [fin_n_cyclicShift_eq_castSucc_index k hk c]
+
+/-- After reindexing by `bareissDesnanotIndex k`, deleting the last row and
+column 0 yields the natural `(k+1)` bordered minor with trailing row position
+`⟨k, _⟩` and trailing column `j`, with rows reindexed by
+`bareissCyclicShift k`. -/
+private theorem M_k1_eq_matrixEquiv_borderedMinor_submatrix [CommRing R]
+    (source : Hex.Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (i j : Fin n) :
+    (((matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)).submatrix
+        (bareissDesnanotIndex k) (bareissDesnanotIndex k)).submatrix
+        (Fin.succAbove (Fin.last (k + 1))) (Fin.succAbove (0 : Fin (k + 2)))) =
+      (matrixEquiv (Hex.Matrix.borderedMinor source k hk (⟨k, hk⟩ : Fin n) j)).submatrix
+        (bareissCyclicShift k) id := by
+  ext r c
+  show matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)
+        (bareissDesnanotIndex k (Fin.succAbove (Fin.last (k + 1)) r))
+        (bareissDesnanotIndex k (Fin.succAbove (0 : Fin (k + 2)) c)) =
+      matrixEquiv (Hex.Matrix.borderedMinor source k hk ⟨k, hk⟩ j)
+        (bareissCyclicShift k r) c
+  rw [show Fin.succAbove (0 : Fin (k + 2)) c = c.succ from rfl]
+  simp only [Fin.succAbove_last]
+  rw [source_row_of_castSucc_succ source k hnext i j r c,
+      source_row_of_borderedMinor source k hk ⟨k, hk⟩ j (bareissCyclicShift k r) c]
+  dsimp only
+  simp only [fin_n_cyclicShift_eq_castSucc_index k hk r]
+
+/-- The interior `(k × k)` submatrix of the reindexed Bareiss bordered minor:
+deleting both row 0 and the last row (and similarly columns) leaves exactly
+`matrixEquiv (leadingPrefix source k _)`. -/
+private theorem M_interior_eq_matrixEquiv_leadingPrefix [CommRing R]
+    (source : Hex.Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (i j : Fin n) :
+    (((matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)).submatrix
+        (bareissDesnanotIndex k) (bareissDesnanotIndex k)).submatrix
+        (Fin.succAbove (0 : Fin (k + 2)) ∘ (Fin.last k).succAbove)
+        (Fin.succAbove (0 : Fin (k + 2)) ∘ (Fin.last k).succAbove)) =
+      matrixEquiv (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk)) := by
+  ext r c
+  show matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)
+        (bareissDesnanotIndex k (Fin.succAbove (0 : Fin (k + 2))
+          ((Fin.last k).succAbove r)))
+        (bareissDesnanotIndex k (Fin.succAbove (0 : Fin (k + 2))
+          ((Fin.last k).succAbove c))) =
+      matrixEquiv (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk)) r c
+  -- (last k).succAbove r = r.castSucc, then succAbove 0 of r.castSucc = r.castSucc.succ
+  simp only [Fin.succAbove_last, Fin.succAbove_zero]
+  -- Now use bareissDesnanotIndex_succ_lt with r.castSucc, since (r.castSucc).val = r.val < k
+  have hrlt : (r.castSucc : Fin (k + 1)).val < k := r.isLt
+  have hclt : (c.castSucc : Fin (k + 1)).val < k := c.isLt
+  rw [bareissDesnanotIndex_succ_lt k r.castSucc hrlt,
+      bareissDesnanotIndex_succ_lt k c.castSucc hclt]
+  show (Hex.Matrix.borderedMinor source (k + 1) hnext i j)[
+      (⟨(r.castSucc : Fin (k + 1)).val, by omega⟩ : Fin (k + 2))][
+      (⟨(c.castSucc : Fin (k + 1)).val, by omega⟩ : Fin (k + 2))] = _
+  -- Both indices are < k+1, so use borderedMinor_entry_lt_lt
+  show (Hex.Matrix.borderedMinor source (k + 1) hnext i j)[
+      (⟨r.val, by omega⟩ : Fin (k + 2))][
+      (⟨c.val, by omega⟩ : Fin (k + 2))] = _
+  simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, Hex.Matrix.leadingPrefix,
+    show r.val ≤ k from r.isLt.le, show c.val ≤ k from c.isLt.le]
+
+/-- After reindexing the `(k+2)` bordered minor by `bareissDesnanotIndex k`,
+deleting row 0 and column 0 yields exactly `matrixEquiv` of the natural
+`(k+1)` bordered minor with the same trailing row `i` and column `j`. -/
+private theorem M11_eq_matrixEquiv_borderedMinor [CommRing R]
+    (source : Hex.Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (i j : Fin n) :
+    (((matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)).submatrix
+        (bareissDesnanotIndex k) (bareissDesnanotIndex k)).submatrix
+        (Fin.succAbove (0 : Fin (k + 2))) (Fin.succAbove (0 : Fin (k + 2)))) =
+      matrixEquiv (Hex.Matrix.borderedMinor source k hk i j) := by
+  ext r c
+  show matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)
+        (bareissDesnanotIndex k (Fin.succAbove (0 : Fin (k + 2)) r))
+        (bareissDesnanotIndex k (Fin.succAbove (0 : Fin (k + 2)) c)) =
+      matrixEquiv (Hex.Matrix.borderedMinor source k hk i j) r c
+  rw [show Fin.succAbove (0 : Fin (k + 2)) r = r.succ from rfl,
+      show Fin.succAbove (0 : Fin (k + 2)) c = c.succ from rfl,
+      source_row_of_succ source k hnext i j r c,
+      source_row_of_borderedMinor source k hk i j r c]
+
+/-- Desnanot-Jacobi specialised to a Bareiss bordered minor: the Mathlib
+determinant identity from `desnanot_jacobi_borderedMinor_reindex` translated
+back into Hex `borderedMinor`/`leadingPrefix` determinants. This produces the
+`hdesnanot` premise expected by `bareissExactDiv_borderedMinor_of_mul_eq` with
+`prevPivot` instantiated as `det (leadingPrefix source k _)`. -/
+theorem desnanot_jacobi_borderedMinor [CommRing R]
+    (source : Hex.Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (i j : Fin n) (hi : k < i.val) (hj : k < j.val) :
+    Hex.Matrix.det (Hex.Matrix.borderedMinor source (k + 1) hnext i j) *
+        Hex.Matrix.det (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk)) =
+      Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+          (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n)
+          (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+        Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk i j) -
+        Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+          i (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+        Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+          (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) j) := by
+  -- Mathlib Desnanot-Jacobi on the reindexed bordered minor.
+  have hdj := desnanot_jacobi_borderedMinor_reindex source k hnext i j
+  -- Unfold the local `let M := ...` binding in hdj so subsequent rewrites match.
+  dsimp only at hdj
+  -- Identify each Mathlib determinant with a Hex determinant.
+  rw [det_borderedMinor_bareissDesnanotIndex source k hnext i j] at hdj
+  rw [M_interior_eq_matrixEquiv_leadingPrefix source k hk hnext i j,
+      ← det_eq] at hdj
+  rw [M11_eq_matrixEquiv_borderedMinor source k hk hnext i j, ← det_eq] at hdj
+  rw [M_kk_eq_matrixEquiv_borderedMinor_submatrix source k hk hnext i j,
+      Matrix.det_submatrix_equiv_self, ← det_eq] at hdj
+  rw [M_1k_eq_matrixEquiv_borderedMinor_submatrix source k hk hnext i j,
+      Matrix.det_permute', ← det_eq] at hdj
+  rw [M_k1_eq_matrixEquiv_borderedMinor_submatrix source k hk hnext i j,
+      Matrix.det_permute, ← det_eq] at hdj
+  -- hdj has the form M.det * Mint.det = M11.det * Mkk.det - (sign σ * X) * (sign σ * Y).
+  -- Sign² = 1, so the sign factors cancel.
+  have hsign_sq : ((Equiv.Perm.sign (bareissCyclicShift k) : ℤ) : R) *
+      ((Equiv.Perm.sign (bareissCyclicShift k) : ℤ) : R) = 1 := by
+    rw [← Int.cast_mul, ← Units.val_mul, Int.units_mul_self, Units.val_one,
+        Int.cast_one]
+  -- Rearrange hdj using commutativity (M11 * Mkk = Mkk * M11) and the sign²=1
+  -- cancellation (M1k * sign * Mk1 * sign = M1k * Mk1).
+  linear_combination hdj -
+    (Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk i
+        (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+      Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+        (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) j)) * hsign_sq
+
 end HexMatrixMathlib
