@@ -1200,5 +1200,201 @@ theorem mul_inv_cancel (a : GF2nPoly f hirr) (ha : a ≠ 0) :
   exact GF2Poly.mul_mod_xgcd_left_mod_eq_one_of_irreducible_of_nonzero_reduced
     hirr hval_ne a.val_reduced
 
+private theorem GF2Poly_mulXk_zero (p : GF2Poly) : p.mulXk 0 = p := by
+  apply GF2Poly.ext_coeff
+  intro n
+  rw [GF2Poly.coeff_mulXk, GF2Poly.coeff_shiftLeft]
+  simp [GF2Poly.coeff]
+
+private theorem GF2Poly_one_mul (p : GF2Poly) : (1 : GF2Poly) * p = p := by
+  show GF2Poly.monomial 0 * p = p
+  rw [GF2Poly.monomial_mul, GF2Poly_mulXk_zero]
+
+/-- The value of a quotient product is the polynomial product reduced modulo
+the defining irreducible. -/
+theorem mul_val (a b : GF2nPoly f hirr) :
+    (a * b).val = (a.val * b.val) % f := by
+  show (mul a b).val = _
+  unfold mul
+  rw [reducePoly_val_eq_mod]
+
+/-- The value of the multiplicative identity is `(1 : GF2Poly) % f`. -/
+theorem one_val :
+    (1 : GF2nPoly f hirr).val = (1 : GF2Poly) % f := by
+  show (one (f := f) (hirr := hirr)).val = _
+  unfold one
+  rw [reducePoly_val_eq_mod]
+
+/-- The value of the additive identity is the zero polynomial. -/
+@[simp] theorem zero_val :
+    (0 : GF2nPoly f hirr).val = (0 : GF2Poly) := rfl
+
+/-- A reduced quotient value is its own remainder modulo `f`. -/
+private theorem val_mod_eq (a : GF2nPoly f hirr) : a.val % f = a.val :=
+  GF2Poly.mod_eq_self_of_reduced a.val f a.val_reduced
+
+/-- Multiplication by zero on the right is zero. -/
+@[simp] theorem mul_zero (a : GF2nPoly f hirr) :
+    a * (0 : GF2nPoly f hirr) = 0 := by
+  apply eq_of_val_eq
+  rw [mul_val, zero_val, GF2Poly.mul_zero]
+  exact GF2Poly.mod_eq_self_of_reduced 0 f (Or.inl rfl)
+
+/-- Multiplication by zero on the left is zero. -/
+@[simp] theorem zero_mul (a : GF2nPoly f hirr) :
+    (0 : GF2nPoly f hirr) * a = 0 := by
+  apply eq_of_val_eq
+  rw [mul_val, zero_val, GF2Poly.zero_mul]
+  exact GF2Poly.mod_eq_self_of_reduced 0 f (Or.inl rfl)
+
+/-- Multiplication is commutative on the packed quotient. -/
+theorem mul_comm (a b : GF2nPoly f hirr) : a * b = b * a := by
+  apply eq_of_val_eq
+  rw [mul_val, mul_val, GF2Poly.mul_comm]
+
+/-- Multiplication is associative on the packed quotient. -/
+theorem mul_assoc (a b c : GF2nPoly f hirr) :
+    (a * b) * c = a * (b * c) := by
+  apply eq_of_val_eq
+  rw [mul_val, mul_val, mul_val, mul_val]
+  have hca : ((a.val * b.val) % f * c.val) % f = (a.val * b.val * c.val) % f := by
+    have h := mod_mul_mod_eq_mod_mul (a.val * b.val) c.val f
+    rw [val_mod_eq c] at h
+    exact h
+  have hcb : (a.val * ((b.val * c.val) % f)) % f = (a.val * (b.val * c.val)) % f := by
+    have h := mod_mul_mod_eq_mod_mul a.val (b.val * c.val) f
+    rw [val_mod_eq a] at h
+    exact h
+  rw [hca, hcb, GF2Poly.mul_assoc]
+
+/-- The multiplicative identity is a left identity. -/
+theorem one_mul (a : GF2nPoly f hirr) :
+    (1 : GF2nPoly f hirr) * a = a := by
+  apply eq_of_val_eq
+  rw [mul_val, one_val]
+  have h : ((1 : GF2Poly) % f * a.val) % f = ((1 : GF2Poly) * a.val) % f := by
+    have hh := mod_mul_mod_eq_mod_mul 1 a.val f
+    rw [val_mod_eq a] at hh
+    exact hh
+  rw [h, GF2Poly_one_mul, val_mod_eq]
+
+/-- The multiplicative identity is a right identity. -/
+theorem mul_one (a : GF2nPoly f hirr) :
+    a * (1 : GF2nPoly f hirr) = a := by
+  rw [mul_comm, one_mul]
+
+/-- The inverse cancels on the left for nonzero quotient elements. -/
+theorem inv_mul_cancel (a : GF2nPoly f hirr) (ha : a ≠ 0) :
+    a⁻¹ * a = 1 := by
+  rw [mul_comm]
+  exact mul_inv_cancel a ha
+
+/-- The product of two nonzero packed quotient elements is nonzero. -/
+theorem mul_ne_zero_of_ne_zero {a b : GF2nPoly f hirr}
+    (ha : a ≠ 0) (hb : b ≠ 0) : a * b ≠ 0 := by
+  intro hab
+  apply hb
+  calc b
+      = 1 * b := (one_mul b).symm
+    _ = (a⁻¹ * a) * b := by rw [inv_mul_cancel a ha]
+    _ = a⁻¹ * (a * b) := mul_assoc _ _ _
+    _ = a⁻¹ * 0 := by rw [hab]
+    _ = 0 := mul_zero _
+
+/-- Left multiplication by a nonzero packed quotient element is injective. -/
+theorem mul_left_injective {a : GF2nPoly f hirr} (ha : a ≠ 0)
+    {b₁ b₂ : GF2nPoly f hirr} (heq : a * b₁ = a * b₂) :
+    b₁ = b₂ := by
+  have h := congrArg (fun x => a⁻¹ * x) heq
+  dsimp at h
+  rw [← mul_assoc, ← mul_assoc, inv_mul_cancel a ha, one_mul, one_mul] at h
+  exact h
+
+/-- Two `Nodup` lists with the same membership predicate are permutations. -/
+private theorem perm_of_nodup_mem_iff
+    {α : Type} :
+    ∀ {xs ys : List α}, xs.Nodup → ys.Nodup →
+      (∀ a, a ∈ xs ↔ a ∈ ys) → List.Perm xs ys
+  | [], ys, _, _, hmem => by
+      cases ys with
+      | nil => exact .nil
+      | cons y _ =>
+          have hy : y ∈ ([] : List α) := (hmem y).mpr List.mem_cons_self
+          exact absurd hy List.not_mem_nil
+  | x :: xs', ys, hxs, hys, hmem => by
+      have hxs_inv := List.nodup_cons.mp hxs
+      have hx_not_in_xs' : x ∉ xs' := hxs_inv.1
+      have hxs' : xs'.Nodup := hxs_inv.2
+      have hx_mem : x ∈ ys := (hmem x).mp List.mem_cons_self
+      obtain ⟨ys₁, ys₂, hys_eq⟩ := List.append_of_mem hx_mem
+      subst hys_eq
+      have hys_perm : List.Perm (ys₁ ++ x :: ys₂) (x :: (ys₁ ++ ys₂)) :=
+        List.perm_middle
+      have h_inner_nodup : (x :: (ys₁ ++ ys₂)).Nodup := hys_perm.nodup hys
+      have h_inner_inv := List.nodup_cons.mp h_inner_nodup
+      have hx_not_inner : x ∉ ys₁ ++ ys₂ := h_inner_inv.1
+      have h_concat_nodup : (ys₁ ++ ys₂).Nodup := h_inner_inv.2
+      have hmem' : ∀ a, a ∈ xs' ↔ a ∈ ys₁ ++ ys₂ := by
+        intro a
+        constructor
+        · intro ha
+          have ha_in_xs : a ∈ x :: xs' := List.mem_cons.mpr (Or.inr ha)
+          have ha_in_ys : a ∈ ys₁ ++ x :: ys₂ := (hmem a).mp ha_in_xs
+          have ha_in_split : a ∈ x :: (ys₁ ++ ys₂) := hys_perm.mem_iff.mp ha_in_ys
+          rcases List.mem_cons.mp ha_in_split with hax | h
+          · exact absurd (hax ▸ ha) hx_not_in_xs'
+          · exact h
+        · intro ha
+          have ha_in_split : a ∈ x :: (ys₁ ++ ys₂) := List.mem_cons.mpr (Or.inr ha)
+          have ha_in_ys : a ∈ ys₁ ++ x :: ys₂ := hys_perm.mem_iff.mpr ha_in_split
+          have ha_in_xs : a ∈ x :: xs' := (hmem a).mpr ha_in_ys
+          rcases List.mem_cons.mp ha_in_xs with hax | h
+          · exact absurd (hax ▸ ha) hx_not_inner
+          · exact h
+      have ih_perm := perm_of_nodup_mem_iff hxs' h_concat_nodup hmem'
+      exact (ih_perm.cons x).trans hys_perm.symm
+
+/-- Multiplication by a nonzero packed quotient element permutes the nonzero
+enumeration. The list of nonzero elements multiplied on the left by `a` is a
+permutation of the original nonzero list. -/
+theorem nonzeroElements_map_mul_left_perm
+    {a : GF2nPoly f hirr} (ha : a ≠ 0) :
+    List.Perm
+      ((nonzeroElements (f := f) (hirr := hirr)).map (fun b => a * b))
+      (nonzeroElements (f := f) (hirr := hirr)) := by
+  let L : List (GF2nPoly f hirr) := nonzeroElements (f := f) (hirr := hirr)
+  have hL_nodup : L.Nodup :=
+    nonzeroElements_nodup (f := f) (hirr := hirr)
+  have hmap_inj :
+      ∀ b₁, b₁ ∈ L → ∀ b₂, b₂ ∈ L →
+        (fun b => a * b) b₁ = (fun b => a * b) b₂ → b₁ = b₂ := by
+    intro b₁ _ b₂ _ heq
+    exact mul_left_injective ha heq
+  have hmap_nodup : (L.map (fun b => a * b)).Nodup :=
+    nodup_map_of_injective hL_nodup hmap_inj
+  have hmem_iff : ∀ c, c ∈ L.map (fun b => a * b) ↔ c ∈ L := by
+    intro c
+    constructor
+    · intro hc
+      rcases List.mem_map.mp hc with ⟨b, hb_mem, hbc⟩
+      have hb_ne : b ≠ 0 := (mem_nonzeroElements b).mp hb_mem
+      have hab_ne : a * b ≠ 0 := mul_ne_zero_of_ne_zero ha hb_ne
+      have hc_ne : c ≠ 0 := hbc ▸ hab_ne
+      exact (mem_nonzeroElements c).mpr hc_ne
+    · intro hc
+      have hc_ne : c ≠ 0 := (mem_nonzeroElements c).mp hc
+      refine List.mem_map.mpr ⟨a⁻¹ * c, ?_, ?_⟩
+      · apply (mem_nonzeroElements _).mpr
+        intro hac
+        apply hc_ne
+        calc c
+            = 1 * c := (one_mul c).symm
+          _ = (a * a⁻¹) * c := by rw [mul_inv_cancel a ha]
+          _ = a * (a⁻¹ * c) := mul_assoc _ _ _
+          _ = a * 0 := congrArg (a * ·) hac
+          _ = 0 := mul_zero _
+      · rw [← mul_assoc, mul_inv_cancel a ha, one_mul]
+  exact perm_of_nodup_mem_iff hmap_nodup hL_nodup hmem_iff
+
 end GF2nPoly
 end Hex
