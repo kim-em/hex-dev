@@ -734,6 +734,20 @@ theorem ne_of_sub_ne_zero {a b : Quotient g hmonic hg_pos} (h : a - b ≠ 0) :
   apply h
   exact sub_eq_zero_iff_eq.mpr hab
 
+/-- Subtracting zero leaves a quotient element unchanged. -/
+@[simp] theorem sub_zero (a : Quotient g hmonic hg_pos) :
+    a - (0 : Quotient g hmonic hg_pos) = a := by
+  calc
+    a - (0 : Quotient g hmonic hg_pos) =
+        reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (a.val - (0 : Quotient g hmonic hg_pos).val) := rfl
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          (a.val - (0 : FpPoly p)) := by
+          rw [zero_val, FpPoly.modByMonic, DensePoly.modByMonic_zero]
+    _ = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) a.val := by
+          rw [FpPoly.sub_zero]
+    _ = a := reduce_val_self a
+
 /-- Quotient multiplication distributes over addition on the left. -/
 theorem left_distrib (a b c : Quotient g hmonic hg_pos) :
     a * (b + c) = a * b + a * c := by
@@ -1173,6 +1187,19 @@ def dividedDifferenceCoeffs :
       | cons d ds =>
           simp [dividedDifferenceCoeffs, ih]
 
+/-- The synthetic divided-difference coefficient list is strictly shorter for
+nonempty input. -/
+theorem dividedDifferenceCoeffs_length_lt_of_ne_nil
+    {cs : List (Quotient g hmonic hg_pos)} (hcs : cs ≠ [])
+    (α : Quotient g hmonic hg_pos) :
+    (dividedDifferenceCoeffs cs α).length < cs.length := by
+  cases cs with
+  | nil =>
+      exact False.elim (hcs rfl)
+  | cons c cs =>
+      rw [dividedDifferenceCoeffs_length]
+      exact Nat.sub_one_lt (Nat.succ_ne_zero cs.length)
+
 /--
 Evaluate the divided difference of a quotient-coefficient polynomial between
 the base point `α` and target point `β`.
@@ -1293,6 +1320,13 @@ def eval (f : FpPoly p) (β : Quotient g hmonic hg_pos) : Quotient g hmonic hg_p
       acc * β + reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
         (DensePoly.C coeff))
     0
+
+/-- Stored `FpPoly` coefficients embedded as quotient constants, in low-to-high
+coefficient order. -/
+def evalQuotientCoeffs (f : FpPoly p) : List (Quotient g hmonic hg_pos) :=
+  f.toArray.toList.map
+    (fun coeff =>
+      reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C coeff))
 
 @[simp] theorem eval_zero (β : Quotient g hmonic hg_pos) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (0 : FpPoly p) β = 0 := by
@@ -1457,6 +1491,111 @@ private theorem foldl_eval_reverse_eq_evalScalarCoeffList
       rw [mul_comm (evalScalarCoeffList
         (g := g) (hmonic := hmonic) (hg_pos := hg_pos) coeffs β) β]
       rw [add_comm]
+
+private theorem evalCoeffList_map_reduce_C_eq_evalScalarCoeffList
+    (β : Quotient g hmonic hg_pos) :
+    ∀ coeffs,
+      evalCoeffList
+          (coeffs.map
+            (fun coeff =>
+              reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+                (DensePoly.C coeff)))
+          β =
+        evalScalarCoeffList (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          coeffs β
+  | [] => by
+      rfl
+  | coeff :: coeffs => by
+      simp only [List.map_cons, evalCoeffList_cons, evalScalarCoeffList]
+      rw [evalCoeffList_map_reduce_C_eq_evalScalarCoeffList β coeffs]
+
+/-- Quotient evaluation of an `FpPoly` agrees with the proof-facing
+quotient-coefficient evaluator on the embedded stored coefficient list. -/
+theorem eval_eq_evalCoeffList (f : FpPoly p) (β : Quotient g hmonic hg_pos) :
+    eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β =
+      evalCoeffList
+        (evalQuotientCoeffs (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f) β := by
+  unfold eval evalQuotientCoeffs
+  rw [foldl_eval_reverse_eq_evalScalarCoeffList
+    (g := g) (hmonic := hmonic) (hg_pos := hg_pos) β f.toArray.toList]
+  exact (evalCoeffList_map_reduce_C_eq_evalScalarCoeffList
+    (g := g) (hmonic := hmonic) (hg_pos := hg_pos) β f.toArray.toList).symm
+
+/-- `FpPoly`-specific divided-difference quotient evaluated between `α` and
+`β`, using the existing executable coefficient representation. -/
+def evalDividedDifference (f : FpPoly p)
+    (α β : Quotient g hmonic hg_pos) : Quotient g hmonic hg_pos :=
+  dividedDifference
+    (evalQuotientCoeffs (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f) α β
+
+/-- Synthetic quotient coefficients for the `FpPoly` divided difference at
+`α`. -/
+def evalDividedDifferenceCoeffs (f : FpPoly p)
+    (α : Quotient g hmonic hg_pos) : List (Quotient g hmonic hg_pos) :=
+  dividedDifferenceCoeffs
+    (evalQuotientCoeffs (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f) α
+
+@[simp] theorem evalDividedDifference_eq_evalCoeffList
+    (f : FpPoly p) (α β : Quotient g hmonic hg_pos) :
+    evalDividedDifference (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        f α β =
+      evalCoeffList
+        (evalDividedDifferenceCoeffs
+          (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f α) β := by
+  rfl
+
+@[simp] theorem evalDividedDifferenceCoeffs_length
+    (f : FpPoly p) (α : Quotient g hmonic hg_pos) :
+    (evalDividedDifferenceCoeffs
+        (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f α).length =
+      (evalQuotientCoeffs
+        (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f).length - 1 := by
+  simp [evalDividedDifferenceCoeffs]
+
+/-- The executable divided-difference coefficient list is strictly shorter
+whenever the embedded input coefficient list is nonempty. -/
+theorem evalDividedDifferenceCoeffs_length_lt_of_coeffs_ne_nil
+    (f : FpPoly p)
+    (hcoeffs :
+      evalQuotientCoeffs (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f ≠ [])
+    (α : Quotient g hmonic hg_pos) :
+    (evalDividedDifferenceCoeffs
+        (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f α).length <
+      (evalQuotientCoeffs
+        (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f).length := by
+  exact dividedDifferenceCoeffs_length_lt_of_ne_nil
+    (g := g) (hmonic := hmonic) (hg_pos := hg_pos) hcoeffs α
+
+/-- `FpPoly` quotient evaluation satisfies the divided-difference identity. -/
+theorem eval_sub_eval_eq_sub_mul_evalDividedDifference
+    (f : FpPoly p) (α β : Quotient g hmonic hg_pos) :
+    eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β -
+        eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f α =
+      (β - α) *
+        evalDividedDifference (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          f α β := by
+  rw [eval_eq_evalCoeffList
+    (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β]
+  rw [eval_eq_evalCoeffList
+    (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f α]
+  exact evalCoeffList_sub_evalCoeffList_eq_sub_mul_dividedDifference
+    (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+    (evalQuotientCoeffs (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f) α β
+
+/-- If `α` is a quotient root of `f`, every value of `f` factors by
+`β - α` through the executable-coefficient divided difference. -/
+theorem eval_eq_sub_mul_evalDividedDifference_of_eval_eq_zero
+    (f : FpPoly p) (α : Quotient g hmonic hg_pos)
+    (hα : eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f α = 0)
+    (β : Quotient g hmonic hg_pos) :
+    eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β =
+      (β - α) *
+        evalDividedDifference (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+          f α β := by
+  have h := eval_sub_eval_eq_sub_mul_evalDividedDifference
+    (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f α β
+  rw [hα, sub_zero] at h
+  exact h
 
 private theorem eval_eq_coeff_power_sum (f : FpPoly p)
     (β : Quotient g hmonic hg_pos) :
