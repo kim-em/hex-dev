@@ -15,6 +15,16 @@ jobs:
       - run: python3 scripts/check_phase4.py
       - run: sudo apt-get install -y libgmp-dev
       - uses: leanprover/lean-action@v1
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: python3 scripts/check_dag.py
+      - run: brew install gmp
+      - uses: leanprover/lean-action@v1
       - run: |
           lake exe hexmatrix_bench list
           lake exe hexmatrix_bench verify

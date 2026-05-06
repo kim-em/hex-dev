@@ -1,7 +1,10 @@
 import HexPolyFp.Basic
+import HexPolyFp.Enumeration
 import HexPolyFp.Frobenius
 import HexPolyFp.SquareFree
 import HexPolyFp.ModCompose
+import HexPolyFp.Quotient
+import HexPolyFp.QuotientFrobenius
 import HexPolyFp.Conformance
 
 /-!
