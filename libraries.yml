@@ -76,7 +76,7 @@ libraries:
   HexBerlekamp:
     deps: [HexPolyFp, HexMatrix, HexGfqRing]
     mathlib: false
-    done_through: 3
+    done_through: 4
   HexHensel:
     deps: [HexPolyFp, HexPolyZ]
     mathlib: false

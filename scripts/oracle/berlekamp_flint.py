@@ -19,7 +19,9 @@ Operations cross-checked
   (a) `∏ bucket_factors * residual == f` always (Lean's bucket-product
   invariant); (b) every bucket's polynomial matches the product of
   FLINT's irreducible factors of that degree exactly, with
-  multiplicities included.  The residual must be `1`.
+  multiplicities included.  This strict bucket comparison runs for
+  every input, including repeated-factor cases.  The residual must be
+  `1`.
 * `squarefree` — `squareFreeDecomposition` (unit plus
   multiplicity-indexed square-free factors).  python-flint factors
   the input, groups irreducibles by multiplicity, and compares that
@@ -270,8 +272,25 @@ def _check_ddf(
     # Lean's `DensePoly.gcd` over a field is canonical only up to a
     # unit; FLINT's `nmod_poly.factor` returns monic factors.  Compare
     # both sides after monic normalisation.
-    lean_groups = {int(deg): _monic_normalize(_nmod_poly(bucket_coeffs, p))
-                   for deg, bucket_coeffs in lean_buckets}
+    lean_degrees = [int(deg) for deg, _ in lean_buckets]
+    if len(lean_degrees) != len(set(lean_degrees)):
+        assert_equal(
+            lean_degrees,
+            sorted(set(lean_degrees)),
+            library=lib,
+            case_id=f"{case_id}:ddf-degrees",
+            kind="ddf-bucket-degrees",
+            input_record=poly_record,
+            oracle_name="python-flint",
+            oracle_version=oracle_version,
+            failure_dir=failure_dir,
+            profile=profile,
+            seed=seed,
+        )
+    lean_groups = {
+        int(deg): _monic_normalize(_nmod_poly(bucket_coeffs, p))
+        for deg, bucket_coeffs in lean_buckets
+    }
     flint_groups = {d: _monic_normalize(g) for d, g in flint_groups.items()}
     all_degrees = set(lean_groups) | set(flint_groups)
     for d in sorted(all_degrees):
