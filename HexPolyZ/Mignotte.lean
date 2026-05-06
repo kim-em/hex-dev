@@ -130,6 +130,88 @@ theorem mignotteCoeffBound_eq_zero_of_lt (f : ZPoly) (k j : Nat) (h : k < j) :
     mignotteCoeffBound f k j = 0 := by
   simp [mignotteCoeffBound, binom_eq_zero_of_lt h]
 
+private theorem le_foldl_max_left {α : Type} (xs : List α) (g : α → Nat) (init : Nat) :
+    init ≤ xs.foldl (fun acc x => max acc (g x)) init := by
+  induction xs generalizing init with
+  | nil =>
+      simp
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      exact Nat.le_trans (Nat.le_max_left init (g x)) (ih (max init (g x)))
+
+private theorem le_foldl_max_of_mem {α : Type} (xs : List α) (g : α → Nat)
+    {x : α} {init : Nat} (hx : x ∈ xs) :
+    g x ≤ xs.foldl (fun acc y => max acc (g y)) init := by
+  induction xs generalizing init with
+  | nil =>
+      cases hx
+  | cons y ys ih =>
+      simp only [List.mem_cons] at hx
+      simp only [List.foldl_cons]
+      cases hx with
+      | inl h =>
+          rw [h]
+          exact Nat.le_trans (Nat.le_max_right init (g y))
+            (le_foldl_max_left ys g (max init (g y)))
+      | inr h =>
+          exact ih h
+
+private theorem mignotteCoeffBound_le_degree_innerFold
+    (f : ZPoly) (k : Nat) {j init : Nat} (hj : j ≤ k) :
+    mignotteCoeffBound f k j ≤
+      (List.range (k + 1)).foldl
+        (fun acc j => max acc (mignotteCoeffBound f k j))
+        init := by
+  exact le_foldl_max_of_mem (List.range (k + 1))
+    (fun j => mignotteCoeffBound f k j)
+    (List.mem_range.mpr (Nat.lt_succ_of_le hj))
+
+private theorem defaultFactorCoeffBound_outerFold_preserves
+    (f : ZPoly) (ks : List Nat) (init : Nat) :
+    init ≤
+      ks.foldl
+        (fun acc k =>
+          (List.range (k + 1)).foldl
+            (fun acc j => max acc (mignotteCoeffBound f k j))
+            acc)
+        init := by
+  induction ks generalizing init with
+  | nil =>
+      simp
+  | cons k ks ih =>
+      simp only [List.foldl_cons]
+      exact Nat.le_trans
+        (le_foldl_max_left (List.range (k + 1))
+          (fun j => mignotteCoeffBound f k j) init)
+        (ih ((List.range (k + 1)).foldl
+          (fun acc j => max acc (mignotteCoeffBound f k j)) init))
+
+private theorem mignotteCoeffBound_le_defaultFactorCoeffBound_fold
+    (f : ZPoly) (ks : List Nat) {k j init : Nat} (hk : k ∈ ks) (hj : j ≤ k) :
+    mignotteCoeffBound f k j ≤
+      ks.foldl
+        (fun acc k =>
+          (List.range (k + 1)).foldl
+            (fun acc j => max acc (mignotteCoeffBound f k j))
+            acc)
+        init := by
+  induction ks generalizing init with
+  | nil =>
+      cases hk
+  | cons k' ks ih =>
+      simp only [List.mem_cons] at hk
+      simp only [List.foldl_cons]
+      cases hk with
+      | inl h =>
+          subst h
+          exact Nat.le_trans
+            (mignotteCoeffBound_le_degree_innerFold f k (j := j) (init := init) hj)
+            (defaultFactorCoeffBound_outerFold_preserves f ks
+              ((List.range (k + 1)).foldl
+                (fun acc j => max acc (mignotteCoeffBound f k j)) init))
+      | inr h =>
+          exact ih h
+
 /--
 Every executable Mignotte coefficient bound within the ambient degree range is
 bounded by the default uniform factorization bound.
@@ -137,7 +219,10 @@ bounded by the default uniform factorization bound.
 theorem mignotteCoeffBound_le_defaultFactorCoeffBound
     (f : ZPoly) {k j : Nat} (hk : k ≤ f.degree?.getD 0) (hj : j ≤ k) :
     mignotteCoeffBound f k j ≤ defaultFactorCoeffBound f := by
-  sorry
+  unfold defaultFactorCoeffBound
+  exact mignotteCoeffBound_le_defaultFactorCoeffBound_fold f
+    (List.range (f.degree?.getD 0 + 1))
+    (List.mem_range.mpr (Nat.lt_succ_of_le hk)) hj
 
 end ZPoly
 end Hex
