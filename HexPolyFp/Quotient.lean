@@ -991,6 +991,109 @@ theorem inv_mul_cancel (hg_irr : FpPoly.Irreducible g)
   rw [mul_comm]
   exact mul_zero a
 
+/-- Addition on the left by a fixed quotient element is cancellative. -/
+theorem add_left_cancel (a b c : Quotient g hmonic hg_pos)
+    (h : a + b = a + c) : b = c := by
+  calc
+    b = 0 + b := (zero_add b).symm
+    _ = (-a + a) + b := by rw [add_left_neg]
+    _ = -a + (a + b) := add_assoc (-a) a b
+    _ = -a + (a + c) := by rw [h]
+    _ = (-a + a) + c := (add_assoc (-a) a c).symm
+    _ = 0 + c := by rw [add_left_neg]
+    _ = c := zero_add c
+
+/-- Addition on the right by a fixed quotient element is cancellative. -/
+theorem add_right_cancel (a b c : Quotient g hmonic hg_pos)
+    (h : b + a = c + a) : b = c := by
+  apply add_left_cancel a
+  rw [add_comm a b, add_comm a c]
+  exact h
+
+/-- If two quotient elements add to zero, the left element is the negative of
+the right element. -/
+theorem eq_neg_of_add_eq_zero {a b : Quotient g hmonic hg_pos}
+    (h : a + b = 0) : a = -b := by
+  calc
+    a = a + 0 := (add_zero a).symm
+    _ = a + (b + -b) := by rw [add_right_neg]
+    _ = (a + b) + -b := (add_assoc a b (-b)).symm
+    _ = 0 + -b := by rw [h]
+    _ = -b := zero_add (-b)
+
+/-- If two quotient elements add to zero, the right element is the negative of
+the left element. -/
+theorem eq_neg_of_add_eq_zero_right {a b : Quotient g hmonic hg_pos}
+    (h : a + b = 0) : b = -a := by
+  apply eq_neg_of_add_eq_zero
+  rw [add_comm]
+  exact h
+
+/-- Adding back the right-hand subtrahend cancels quotient subtraction. -/
+@[simp] theorem sub_add_cancel (a b : Quotient g hmonic hg_pos) :
+    a - b + b = a := by
+  rw [sub_eq_add_neg]
+  calc
+    (a + -b) + b = a + (-b + b) := add_assoc a (-b) b
+    _ = a + 0 := by rw [add_left_neg]
+    _ = a := add_zero a
+
+/-- Subtracting the right-hand addend cancels quotient addition. -/
+@[simp] theorem add_sub_cancel_right (a b : Quotient g hmonic hg_pos) :
+    a + b - b = a := by
+  rw [sub_eq_add_neg]
+  calc
+    (a + b) + -b = a + (b + -b) := add_assoc a b (-b)
+    _ = a + 0 := by rw [add_right_neg]
+    _ = a := add_zero a
+
+/-- Subtracting the left-hand addend cancels quotient addition. -/
+@[simp] theorem add_sub_cancel_left (a b : Quotient g hmonic hg_pos) :
+    a + b - a = b := by
+  rw [add_comm a b]
+  exact add_sub_cancel_right b a
+
+/-- Multiplication by a negated quotient element on the right negates the
+product. -/
+theorem mul_neg_right (a b : Quotient g hmonic hg_pos) :
+    a * -b = -(a * b) := by
+  apply eq_neg_of_add_eq_zero
+  calc
+    a * -b + a * b = a * (-b + b) := (left_distrib a (-b) b).symm
+    _ = a * 0 := by rw [add_left_neg]
+    _ = 0 := mul_zero a
+
+/-- Multiplication by a negated quotient element on the left negates the
+product. -/
+theorem neg_mul_left (a b : Quotient g hmonic hg_pos) :
+    -a * b = -(a * b) := by
+  calc
+    -a * b = b * -a := mul_comm (-a) b
+    _ = -(b * a) := mul_neg_right b a
+    _ = -(a * b) := by rw [mul_comm b a]
+
+/-- Quotient multiplication distributes over subtraction on the left. -/
+theorem mul_sub (a b c : Quotient g hmonic hg_pos) :
+    a * (b - c) = a * b - a * c := by
+  rw [sub_eq_add_neg b c, sub_eq_add_neg (a * b) (a * c), left_distrib,
+    mul_neg_right]
+
+/-- Quotient multiplication distributes over subtraction on the right. -/
+theorem sub_mul (a b c : Quotient g hmonic hg_pos) :
+    (a - b) * c = a * c - b * c := by
+  rw [sub_eq_add_neg a b, sub_eq_add_neg (a * c) (b * c), right_distrib,
+    neg_mul_left]
+
+/-- Adjacent quotient subtractions cancel their shared middle term. -/
+theorem sub_add_sub_cancel (a b c : Quotient g hmonic hg_pos) :
+    (a - b) + (b - c) = a - c := by
+  rw [sub_eq_add_neg a b, sub_eq_add_neg b c, sub_eq_add_neg a c]
+  calc
+    (a + -b) + (b + -c) = a + (-b + (b + -c)) := add_assoc a (-b) (b + -c)
+    _ = a + ((-b + b) + -c) := by rw [add_assoc (-b) b (-c)]
+    _ = a + (0 + -c) := by rw [add_left_neg]
+    _ = a + -c := by rw [zero_add]
+
 private theorem zmod64_one_ne_zero :
     (1 : ZMod64 p) ≠ 0 := by
   intro hone
