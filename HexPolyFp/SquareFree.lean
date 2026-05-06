@@ -2797,5 +2797,30 @@ theorem squareFree_factors_squareFree (hp : Hex.Nat.Prime p) (f : FpPoly p) :
   intro sf hsf
   simp at hsf
 
+private theorem linearPow_eq_powLinear (f : FpPoly p) (n : Nat) :
+    FpPoly.linearPow f n = powLinear f n := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+      have h1 : FpPoly.linearPow f (n + 1) = FpPoly.linearPow f n * f := rfl
+      have h2 : powLinear f (n + 1) = powLinear f n * f := rfl
+      rw [h1, h2, ih]
+
+/-- Freshman's dream for `FpPoly.linearPow`: in characteristic `p`, raising to
+the prime power is additive. -/
+theorem linearPow_add_prime
+    (hp : Hex.Nat.Prime p) (f g : FpPoly p) :
+    FpPoly.linearPow (f + g) p =
+      FpPoly.linearPow f p + FpPoly.linearPow g p := by
+  rw [linearPow_eq_powLinear, linearPow_eq_powLinear, linearPow_eq_powLinear]
+  exact powLinear_add_prime hp f g
+
+/-- `FpPoly.linearPow` of a product factors over the base. -/
+theorem linearPow_mul_base (f g : FpPoly p) (n : Nat) :
+    FpPoly.linearPow (f * g) n =
+      FpPoly.linearPow f n * FpPoly.linearPow g n := by
+  rw [linearPow_eq_powLinear, linearPow_eq_powLinear, linearPow_eq_powLinear]
+  exact powLinear_mul_base f g n
+
 end FpPoly
 end Hex
