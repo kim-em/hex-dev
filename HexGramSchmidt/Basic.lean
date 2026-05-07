@@ -974,6 +974,19 @@ private theorem basisRows_get!_dot_eq_zero_of_list
     rw [← hget_i, ← hget_j]
     exact hrel.2
 
+private theorem zero_add_vec (v : Vector Rat m) : (0 : Vector Rat m) + v = v := by
+  apply Vector.ext
+  intro k hk
+  rw [Vector.getElem_add, Vector.getElem_zero]
+  grind
+
+private theorem smul_zero_vec (s : Rat) : s • (0 : Vector Rat m) = 0 := by
+  apply Vector.ext
+  intro k hk
+  rw [Vector.getElem_smul, Vector.getElem_zero]
+  show s * (0 : Rat) = 0
+  grind
+
 /-- Reducing a generated basis row against any later prefix that contains it
 returns 0. -/
 private theorem reduceAgainstBasis_basisRows_take_get!_eq_zero
@@ -1039,6 +1052,68 @@ private theorem reduceAgainstBasis_basisRows_take_get!_eq_zero
     · omega
   rw [hinner]
   exact reduceAgainstBasis_basisRows_get!_succ_eq_zero rows ℓ hℓlen
+
+/-- A `projectionCombination` whose basis rows all reduce to 0 against
+`basisRev'` (and whose accumulator does too) reduces to 0 against `basisRev'`. -/
+private theorem reduceAgainstBasis_projectionCombination_eq_zero
+    (basisRev basisRev' : List (Vector Rat m)) (row acc : Vector Rat m)
+    (hzero : ∀ b ∈ basisRev, reduceAgainstBasis basisRev' b = 0)
+    (haccZero : reduceAgainstBasis basisRev' acc = 0) :
+    reduceAgainstBasis basisRev' (projectionCombination row basisRev acc) = 0 := by
+  induction basisRev generalizing acc with
+  | nil =>
+      simp [projectionCombination]
+      exact haccZero
+  | cons b rest ih =>
+      show reduceAgainstBasis basisRev'
+          (projectionCombination row (b :: rest) acc) = 0
+      simp only [projectionCombination, List.foldl_cons]
+      change reduceAgainstBasis basisRev'
+          (projectionCombination row rest
+            (acc + projectionCoeff row b • b)) = 0
+      apply ih
+      · intro b' hb'
+        exact hzero b' (by simp [hb'])
+      · rw [reduceAgainstBasis_add_left, haccZero, reduceAgainstBasis_smul_left,
+          hzero b (by simp), smul_zero_vec, zero_add_vec]
+
+/-- Reducing the source row `rows[j]!` against any later prefix returns 0:
+the source row's basis-prefix decomposition lies entirely in the reduction
+prefix, and the basis component vanishes by index. -/
+private theorem reduceAgainstBasis_basisRows_take_source_eq_zero
+    (rows : List (Vector Rat m)) (j k : Nat)
+    (hjk : j < k) (hk : k ≤ rows.length) :
+    reduceAgainstBasis ((basisRows rows).take k).reverse rows[j]! = 0 := by
+  have hjlen : j < rows.length := Nat.lt_of_lt_of_le hjk hk
+  have hjbasis : j < (basisRows rows).length := by simpa [basisRows_length]
+  -- Reconstruction theorem for the source row.
+  have hrec :=
+    basisRows_get!_eq_reduceAgainstBasis_forward (rows := rows) (k := j) hjlen
+  rw [hrec]
+  rw [reduceAgainstBasis_add_left]
+  -- Basis-row component vanishes by Aux1 with ℓ = j.
+  rw [reduceAgainstBasis_basisRows_take_get!_eq_zero rows j k hjk hk]
+  rw [zero_add_vec]
+  -- ProjectionCombination component vanishes: each contributing basis row is
+  -- at index < j < k, so reducing it gives 0.
+  apply reduceAgainstBasis_projectionCombination_eq_zero
+  · intro b hmem
+    rw [List.mem_iff_getElem] at hmem
+    obtain ⟨i, hilen, hbget⟩ := hmem
+    have htakelen : ((basisRows rows).take j).length = j := by
+      rw [List.length_take]; omega
+    rw [htakelen] at hilen
+    have hi_lt_basis : i < (basisRows rows).length := by
+      have : (basisRows rows).length = rows.length := basisRows_length rows
+      omega
+    have hbget' : b = (basisRows rows)[i]'hi_lt_basis := by
+      rw [← hbget, List.getElem_take]
+    have hbget!_eq : b = (basisRows rows)[i]! := by
+      rw [hbget']; simp [hi_lt_basis]
+    rw [hbget!_eq]
+    apply reduceAgainstBasis_basisRows_take_get!_eq_zero rows i k _ hk
+    omega
+  · exact reduceAgainstBasis_zero_left _
 
 /-- The "by-row" prefix sum: a row-indexed variant of `prefixCombination` that
 takes the projection row directly rather than reading it through a coefficient
