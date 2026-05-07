@@ -140,8 +140,21 @@ private def gramRows (b : Matrix Int n m) : Array (Array Int) :=
       else
         0
 
+private theorem getArrayEntry_gramRows (b : Matrix Int n m) (i j : Fin n) :
+    getArrayEntry (gramRows b) i.val j.val = (Matrix.gramMatrix b)[i][j] := by
+  simp [getArrayEntry, gramRows, Matrix.gramMatrix, Matrix.dot, Matrix.ofFn]
+
 private def rowsToMatrix (rows : Array (Array Int)) (n : Nat) : Matrix Int n n :=
   Matrix.ofFn fun i j => getArrayEntry rows i.val j.val
+
+private theorem rowsToMatrix_gramRows (b : Matrix Int n m) :
+    rowsToMatrix (gramRows b) n = Matrix.gramMatrix b := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  simpa [rowsToMatrix, Matrix.ofFn] using
+    getArrayEntry_gramRows b (⟨i, hi⟩ : Fin n) (⟨j, hj⟩ : Fin n)
 
 private def setArrayEntry (rows : Array (Array Int)) (row col : Nat) (value : Int) :
     Array (Array Int) :=
@@ -401,22 +414,15 @@ private theorem scaledCoeffRows_lower_eq_coeffs
         GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ := by
   sorry
 
-/-- The scaled-coefficient array loop writes the same diagonal entries as the
-no-pivot Bareiss data over the full Gram matrix. -/
-private theorem scaledCoeffRows_diag_eq_noPivotData_diag
+/-- The scaled-coefficient array loop writes the same diagonal determinant
+values as `gramDetVecEntry`, including the zero tail after an early singular
+no-pivot Bareiss step. -/
+private theorem scaledCoeffRows_diag_eq_gramDetVecEntry
     (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     getArrayEntry (scaledCoeffRows b) i i =
-      ((Matrix.bareissNoPivotData (Matrix.gramMatrix b)).matrix.row ⟨i, hi⟩)[
-        (⟨i, hi⟩ : Fin n)] := by
-  sorry
-
-/-- The no-pivot Bareiss diagonal for a Gram matrix is the public Gram
-determinant of the corresponding leading prefix. -/
-private theorem noPivotData_gram_diag_eq_gramDet
-    (b : Matrix Int n m) (i : Nat) (hi : i < n) :
-    ((Matrix.bareissNoPivotData (Matrix.gramMatrix b)).matrix.row ⟨i, hi⟩)[
-        (⟨i, hi⟩ : Fin n)] =
-      Int.ofNat (gramDet b (i + 1) (Nat.succ_le_of_lt hi)) := by
+      Int.ofNat
+        (gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
+          ⟨i + 1, Nat.succ_lt_succ hi⟩) := by
   sorry
 
 /-- The scaled-coefficient loop stores the next leading Gram determinant on
@@ -425,8 +431,8 @@ private theorem scaledCoeffRows_diag_eq_gramDet
     (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     getArrayEntry (scaledCoeffRows b) i i =
       Int.ofNat (gramDet b (i + 1) (Nat.succ_le_of_lt hi)) := by
-  rw [scaledCoeffRows_diag_eq_noPivotData_diag (b := b) i hi]
-  exact noPivotData_gram_diag_eq_gramDet (b := b) i hi
+  rw [scaledCoeffRows_diag_eq_gramDetVecEntry (b := b) i hi]
+  rw [gramDetVecEntry_eq_gramDet (b := b) (i + 1) (Nat.succ_le_of_lt hi)]
 
 theorem gramDet_zero (b : Matrix Int n m) :
     gramDet b 0 (Nat.zero_le n) = 1 := by
