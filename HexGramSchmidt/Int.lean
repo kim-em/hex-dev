@@ -531,6 +531,107 @@ theorem normSq_latticeVec_ge_min_basis_normSq
       Vector.normSq ((basis b).row i) ≤ ((Vector.normSq v : Int) : Rat) := by
   sorry
 
+/-! ### Row-add invariance of the leading Gram determinant
+
+The remaining theorems show that adding a multiple of an earlier row to a later
+row leaves `gramDet` unchanged. Concretely, when `j.val < k.val` and the
+modified row `k` lies inside the leading `t`-prefix, the leading Gram matrix
+acquires a `rowAdd`-then-`colAdd` decoration at the corresponding `Fin t`
+indices; both operations preserve determinants. When `t ≤ k.val`, the leading
+prefix is untouched. -/
+
+/-- Entry-level expansion of `Matrix.rowAdd` for a rectangular matrix. -/
+private theorem rowAdd_get_rect {R : Type u} [Mul R] [Add R] {n' m' : Nat}
+    (M : Matrix R n' m') (src dst r : Fin n') (c : R) (k : Fin m') :
+    (Matrix.rowAdd M src dst c)[r][k] =
+      if r = dst then M[dst][k] + c * M[src][k] else M[r][k] := by
+  by_cases h : r = dst
+  · subst r
+    simp [Matrix.rowAdd]
+  · simp [Matrix.rowAdd, h]
+    have hval : dst.val ≠ r.val := by
+      intro hval
+      exact h (Fin.ext hval.symm)
+    have hrow :
+        (M.set dst (Vector.ofFn fun k => M[dst][k] + c * M[src][k]))[r] = M[r] :=
+      (Vector.getElem_set_ne (xs := M)
+        (x := Vector.ofFn fun k => M[dst][k] + c * M[src][k])
+        dst.isLt r.isLt hval)
+    simpa [Matrix.rowAdd] using congrArg (fun row => row[k]) hrow
+
+private theorem foldl_dot_comm_int {n' : Nat} (xs : List (Fin n'))
+    (u v : Vector Int n') (accU accV : Int) (hacc : accU = accV) :
+    xs.foldl (fun acc i => acc + u[i] * v[i]) accU =
+      xs.foldl (fun acc i => acc + v[i] * u[i]) accV := by
+  induction xs generalizing accU accV with
+  | nil =>
+      simp [hacc]
+  | cons i xs ih =>
+      simp only [List.foldl_cons]
+      apply ih
+      grind
+
+/-- The dot product of integer vectors is commutative. -/
+private theorem dot_comm_int {n' : Nat} (u v : Vector Int n') :
+    Matrix.dot u v = Matrix.dot v u := by
+  simpa [Matrix.dot, Hex.Vector.dotProduct] using
+    foldl_dot_comm_int (xs := List.finRange n') (u := u) (v := v)
+      (accU := 0) (accV := 0) rfl
+
+/-- A row of `Matrix.rowAdd M src dst c` away from `dst` is unchanged. -/
+private theorem rowAdd_row_eq_of_ne {R : Type u} [Mul R] [Add R] {n' m' : Nat}
+    (M : Matrix R n' m') (src dst r : Fin n') (c : R) (hr : r.val ≠ dst.val) :
+    (Matrix.rowAdd M src dst c)[r] = M[r] :=
+  Vector.getElem_set_ne (xs := M)
+    (x := Vector.ofFn fun k => M[dst][k] + c * M[src][k])
+    dst.isLt r.isLt (fun heq => hr heq.symm)
+
+/-- The row of `Matrix.rowAdd M src dst c` at index `dst` is the entry-wise
+sum `M[dst] + c * M[src]`. -/
+private theorem rowAdd_row_at {R : Type u} [Mul R] [Add R] {n' m' : Nat}
+    (M : Matrix R n' m') (src dst : Fin n') (c : R) :
+    (Matrix.rowAdd M src dst c)[dst] =
+      Vector.ofFn fun k => M[dst][k] + c * M[src][k] := by
+  unfold Matrix.rowAdd
+  simp
+
+/-- Inductive helper for `dot_rowAdd_row_at_left`: distribution along a foldl. -/
+private theorem foldl_dot_rowAdd_at {n' m' : Nat}
+    (M : Matrix Int n' m') (src dst : Fin n') (c : Int) (w : Vector Int m')
+    (xs : List (Fin m')) (acc accX accY : Int) (hacc : acc = accX + c * accY) :
+    xs.foldl (fun a i => a + (Matrix.rowAdd M src dst c)[dst][i] * w[i]) acc =
+      xs.foldl (fun a i => a + M[dst][i] * w[i]) accX +
+        c * xs.foldl (fun a i => a + M[src][i] * w[i]) accY := by
+  induction xs generalizing acc accX accY with
+  | nil =>
+      simpa using hacc
+  | cons i xs ih =>
+      simp only [List.foldl_cons]
+      apply ih
+      have hentry : (Matrix.rowAdd M src dst c)[dst][i] = M[dst][i] + c * M[src][i] := by
+        rw [rowAdd_get_rect]
+        simp
+      rw [hentry, hacc]
+      grind
+
+/-- Distribute dot product on the left over the row produced by
+`Matrix.rowAdd`: at index `dst`, the row is `M[dst] + c * M[src]` componentwise,
+so dot with `w` distributes over the sum. -/
+private theorem dot_rowAdd_row_at_left {n' m' : Nat}
+    (M : Matrix Int n' m') (src dst : Fin n') (c : Int) (w : Vector Int m') :
+    Matrix.dot ((Matrix.rowAdd M src dst c)[dst]) w =
+      Matrix.dot M[dst] w + c * Matrix.dot M[src] w := by
+  simp only [Matrix.dot, Hex.Vector.dotProduct]
+  exact foldl_dot_rowAdd_at M src dst c w (List.finRange m')
+    0 0 0 (by show (0 : Int) = 0 + c * 0; grind)
+
+/-- Symmetric form: dot product on the right with the modified row. -/
+private theorem dot_rowAdd_row_at_right {n' m' : Nat}
+    (M : Matrix Int n' m') (src dst : Fin n') (c : Int) (w : Vector Int m') :
+    Matrix.dot w ((Matrix.rowAdd M src dst c)[dst]) =
+      Matrix.dot w M[dst] + c * Matrix.dot w M[src] := by
+  rw [dot_comm_int w, dot_rowAdd_row_at_left, dot_comm_int w M[dst], dot_comm_int w M[src]]
+
 end GramSchmidt.Int
 
 namespace GramSchmidt.Rat
