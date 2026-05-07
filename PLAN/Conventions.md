@@ -58,6 +58,21 @@ At the start of every planner cycle, merge all mergeable+green open
 PRs before creating new work. Downstream agents are blocked on `main`
 until merged PRs land.
 
+`main` is branch-protected: auto-merge only fires once every required
+status check (`build`, `build-macos`, `conformance`) is green. CI
+gating is non-negotiable — see [SPEC/CI.md](../SPEC/CI.md).
+
+### CI work expansion
+
+When adding a new conformance check, oracle, benchmark, or build
+target, **extend the script of the existing single ubuntu job** in
+the relevant workflow (`conformance.yml` for conformance/oracle work,
+`ci.yml` for build/check work). Do **not** add a new top-level job,
+a new `strategy.matrix`, or a new workflow file. The full rationale
+and the trigger / concurrency / Mathlib-cache rules every workflow
+must satisfy live in [SPEC/CI.md](../SPEC/CI.md); read it before
+editing any file under `.github/workflows/`.
+
 ---
 
 ## Lexical conventions

@@ -180,12 +180,22 @@ into Phase 1 until the Phase 0 PR lands on `main`.
    - Exit non-zero on malformed `libraries.yml` or disagreement
      between `libraries.yml` and `lakefile.lean`.
 
-6. Set up CI using `leanprover/lean-action`.
+6. Set up CI using `leanprover/lean-action`. **Read
+   [SPEC/CI.md](../SPEC/CI.md) before editing any workflow file** —
+   it pins the trigger, concurrency, job-count, and Mathlib-cache
+   rules every workflow in this repo must satisfy.
 
-   **`.github/workflows/ci.yml`** (required, runs on every push/PR):
+   **`.github/workflows/ci.yml`** (required, runs on every PR and on
+   pushes to `main`):
    ```yaml
    name: CI
-   on: [push, pull_request]
+   on:
+     push:
+       branches: [main]
+     pull_request:
+   concurrency:
+     group: ${{ github.workflow }}-${{ github.ref }}
+     cancel-in-progress: true
    jobs:
      build:
        runs-on: ubuntu-latest
@@ -203,6 +213,16 @@ into Phase 1 until the Phase 0 PR lands on `main`.
          - uses: leanprover/lean-action@v1
    ```
 
+   The trigger is `push: branches: [main]` plus `pull_request:` —
+   **not** the bare `push:` form. A bare `push:` fires on every
+   commit to every branch *and* on every PR, doubling CI cost on
+   every PR push. Restricting `push:` to `main` and relying on
+   `pull_request:` for branch-side coverage avoids the duplication.
+   The `concurrency:` block cancels superseded runs on the same
+   branch when a new commit arrives — agent branches that get
+   re-pushed during a single session must not stack up queued runs.
+   Both rules are normative; see [SPEC/CI.md](../SPEC/CI.md).
+
    The DAG check runs before the Lean build so import-boundary
    violations fail fast without spending build time. `lean-action`
    performs the `lake build` itself. `libgmp-dev` is installed
@@ -218,14 +238,18 @@ into Phase 1 until the Phase 0 PR lands on `main`.
    `check_dag.py` enforces the source-side condition and the macOS
    `lake build` is the cross-check.
 
-   **`.github/workflows/conformance.yml`** (optional, manual trigger):
-   Manual or locally-triggered conformance workflow following
-   `SPEC/testing.md`. Also uses `leanprover/lean-action` for the
-   Lean portion of the build; external tools (Sage, FLINT, fpLLL)
-   layer on top via `cachix/install-nix-action` when available. The
-   full conformance workflow is not required for the minimal Phase 0
-   repository bootstrap — a stub file pointing at `SPEC/testing.md`
-   is sufficient at this stage.
+   **`.github/workflows/conformance.yml`** (required; runs on every
+   PR and on pushes to `main`): same trigger + concurrency shape as
+   `ci.yml`, plus a `workflow_dispatch:` trigger for ad-hoc runs.
+   Following [SPEC/testing.md](../SPEC/testing.md) and the single-job
+   budget in [SPEC/CI.md](../SPEC/CI.md), the workflow runs the full
+   conformance + oracle pipeline in **one** ubuntu job: external
+   tools (FLINT, PARI, fpLLL, Conway) install side-by-side via apt
+   and pip, the Mathlib cache is fetched via `lake exe cache get`
+   with a hard-fail gate against silent rebuilds, and per-library
+   oracle checks run sequentially. New oracles or new conformance
+   targets extend the existing job's script — they do not introduce
+   new top-level jobs, matrices, or workflows.
 
 7. Create `.gitignore` (at minimum: `.lake/`, `build/`).
 

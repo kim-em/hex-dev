@@ -76,5 +76,6 @@ verified LLL gives confidence in attack results.
 - [Tutorials](tutorials.md)
 - [Testing](testing.md)
 - [Benchmarking](benchmarking.md)
+- [CI](CI.md)
 - [Prior art](prior-art.md)
 - [Future work](future-work.md)
