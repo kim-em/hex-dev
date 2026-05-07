@@ -62,7 +62,17 @@ also has one macOS job (the dyld cross-check). No other parallelism.
 
 Concretely:
 
-- `ci.yml`: one `build` ubuntu job, one `build-macos` macOS job.
+- `ci.yml`: one `build` ubuntu job (DAG checks, hex `lake build`,
+  per-library `bench verify` smoke gate per
+  [SPEC/benchmarking.md §CI integration](benchmarking.md)) and one
+  `build-macos` macOS job (hex `lake build` only — the dyld
+  cross-check). **Bench verify runs on ubuntu, not macOS**: the
+  macOS job exists for symbol-resolution coverage, not benchmarking,
+  and macOS runners are 10× the cost and a fraction of the
+  concurrency. Per [SPEC/benchmarking.md §CI integration](benchmarking.md),
+  `verify` is a smoke gate (does the bench module compile and run?),
+  not a timing measurement; timing-relevant runs live on a separate
+  scheduled workflow on dedicated hardware.
 - `conformance.yml`: one ubuntu job that runs the full conformance
   matrix and every oracle (FLINT, PARI, fpLLL, Conway) sequentially
   inside that single runner.

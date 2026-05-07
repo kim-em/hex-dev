@@ -19,7 +19,48 @@ jobs:
       - run: python3 scripts/check_dag.py
       - run: python3 scripts/check_phase4.py
       - run: sudo apt-get install -y libgmp-dev
-      - uses: leanprover/lean-action@v1
+      - name: Set up Lean toolchain (no build)
+        uses: leanprover/lean-action@v1
+        with:
+          auto-config: false
+          build: false
+          use-mathlib-cache: false
+      - name: Fetch Mathlib cache
+        run: lake exe cache get
+      - name: Verify Mathlib cache populated (hard fail on miss)
+        run: bash scripts/ci/check_no_mathlib_rebuild.sh
+      - name: Build hex (Mathlib must NOT rebuild from source)
+        run: lake build
+      - name: Bench verify (smoke gate per SPEC/benchmarking.md §CI integration)
+        run: |
+          lake exe hexarith_bench list
+          lake exe hexarith_bench verify
+          lake exe hexmatrix_bench list
+          lake exe hexmatrix_bench verify
+          lake exe hexpoly_bench list
+          lake exe hexpoly_bench verify
+          lake exe hexpolyz_bench list
+          lake exe hexpolyz_bench verify
+          lake exe hexpolyfp_bench list
+          lake exe hexpolyfp_bench verify
+          lake exe hexmodarith_bench list
+          lake exe hexmodarith_bench verify
+          lake exe hexgramschmidt_bench list
+          lake exe hexgramschmidt_bench verify
+          lake exe hexgf2_bench list
+          lake exe hexgf2_bench verify
+          lake exe hexgfqring_bench list
+          lake exe hexgfqring_bench verify
+          lake exe hexgfqfield_bench list
+          lake exe hexgfqfield_bench verify
+          lake exe hexlll_bench list
+          lake exe hexlll_bench verify
+          lake exe hexhensel_bench list
+          lake exe hexhensel_bench verify
+          lake exe hexberlekamp_bench list
+          lake exe hexberlekamp_bench verify
+          lake exe hexconway_bench list
+          lake exe hexconway_bench verify
 
   build-macos:
     runs-on: macos-latest
@@ -29,46 +70,15 @@ jobs:
           fetch-depth: 0
       - run: python3 scripts/check_dag.py
       - run: brew install gmp
-      - uses: leanprover/lean-action@v1
-      - run: |
-          lake exe hexmatrix_bench list
-          lake exe hexmatrix_bench verify
-      - run: |
-          lake exe hexarith_bench list
-          lake exe hexarith_bench verify
-      - run: |
-          lake exe hexpoly_bench list
-          lake exe hexpoly_bench verify
-      - run: |
-          lake exe hexpolyz_bench list
-          lake exe hexpolyz_bench verify
-      - run: |
-          lake exe hexgramschmidt_bench list
-          lake exe hexgramschmidt_bench verify
-      - run: |
-          lake exe hexmodarith_bench list
-          lake exe hexmodarith_bench verify
-      - run: |
-          lake exe hexgf2_bench list
-          lake exe hexgf2_bench verify
-      - run: |
-          lake exe hexpolyfp_bench list
-          lake exe hexpolyfp_bench verify
-      - run: |
-          lake exe hexgfqring_bench list
-          lake exe hexgfqring_bench verify
-      - run: |
-          lake exe hexgfqfield_bench list
-          lake exe hexgfqfield_bench verify
-      - run: |
-          lake exe hexlll_bench list
-          lake exe hexlll_bench verify
-      - run: |
-          lake exe hexhensel_bench list
-          lake exe hexhensel_bench verify
-      - run: |
-          lake exe hexberlekamp_bench list
-          lake exe hexberlekamp_bench verify
-      - run: |
-          lake exe hexconway_bench list
-          lake exe hexconway_bench verify
+      - name: Set up Lean toolchain (no build)
+        uses: leanprover/lean-action@v1
+        with:
+          auto-config: false
+          build: false
+          use-mathlib-cache: false
+      - name: Fetch Mathlib cache
+        run: lake exe cache get
+      - name: Verify Mathlib cache populated (hard fail on miss)
+        run: bash scripts/ci/check_no_mathlib_rebuild.sh
+      - name: Build hex (dyld symbol-resolution cross-check)
+        run: lake build
