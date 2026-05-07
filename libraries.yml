@@ -98,7 +98,7 @@ libraries:
   HexPolyMathlib:
     deps: [HexPoly]
     mathlib: true
-    done_through: 3
+    done_through: 4
   HexMatrixMathlib:
     deps: [HexMatrix]
     mathlib: true

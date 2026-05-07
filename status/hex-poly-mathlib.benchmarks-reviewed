@@ -1,0 +1,4 @@
+Reviewed in issue #2575.
+All five HexPolyMathlib Phase 4 parametric benchmark registrations returned
+verdicts consistent with their declared complexity: dense-to-Mathlib,
+Mathlib-to-dense, round trip, gcd bridge, and extended-gcd bridge.

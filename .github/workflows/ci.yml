@@ -61,6 +61,8 @@ jobs:
           lake exe hexberlekamp_bench verify
           lake exe hexconway_bench list
           lake exe hexconway_bench verify
+          lake exe hexpolymathlib_bench list
+          lake exe hexpolymathlib_bench verify
 
   build-macos:
     runs-on: macos-latest
