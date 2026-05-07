@@ -879,6 +879,87 @@ private def bhksGuardBasis : BhksLatticeBasis :=
 #guard bhksProjectIndicator 2 2 bhksGuardBasis.basis[0] = #[1, 0]
 #guard (bhksProjectIndicator 2 2 bhksGuardBasis.basis[0]).size = bhksGuardBasis.factorCount
 
+/--
+Lift the projected integer rows of `L` into a rational row-basis matrix
+sized `n × r`, with `n := L.projectedRows.size` and `r := L.factorCount`.
+The matrix is the input to BHKS Lemma 3.3 RREF-based equivalence-class
+identification.
+-/
+def bhksProjectedRowsAsRatMatrix
+    (rows : Array (Array Int)) (n r : Nat) : Matrix Rat n r :=
+  Matrix.ofFn fun i j =>
+    ((rows.getD i.val #[]).getD j.val (0 : Int) : Rat)
+
+private def bhksColumnSignature
+    (echelonRows : Array (Array Rat)) (j : Nat) : Array Rat :=
+  echelonRows.map (·.getD j 0)
+
+private def bhksInsertSignatureClass
+    (sig : Array Rat) (j : Nat) :
+    List (Array Rat × List Nat) → List (Array Rat × List Nat)
+  | [] => [(sig, [j])]
+  | (s, members) :: rest =>
+      if s = sig then (s, members ++ [j]) :: rest
+      else (s, members) :: bhksInsertSignatureClass sig j rest
+
+private def bhksClassIndicator (r : Nat) (members : List Nat) : Array Int :=
+  ((List.range r).map (fun i => if i ∈ members then (1 : Int) else 0)).toArray
+
+/--
+BHKS equivalence-class indicator vectors over the projected lattice rows
+of `L`.
+
+Lifts the projected integer rows into a rational row-basis matrix, runs
+`Matrix.rref` over `Q`, and groups column indices `0, …, r - 1` by their
+echelon-column signature: indices `i` and `j` are equivalent iff every
+echelon row agrees at positions `i` and `j` (BHKS Lemma 3.3 / FLINT
+Algorithm 8). Each equivalence class produces one compact `0/1` indicator
+of length `r`. Classes are emitted in the order they are first observed by
+ascending column index.
+-/
+def bhksEquivalenceClassIndicators (L : BhksProjectedRows) : Array (Array Int) :=
+  let n := L.projectedRows.size
+  let r := L.factorCount
+  let M : Matrix Rat n r := bhksProjectedRowsAsRatMatrix L.projectedRows n r
+  let D := Matrix.rref M
+  let echelonRows : Array (Array Rat) := D.echelon.toArray.map (·.toArray)
+  let groups : List (List Nat) :=
+    ((List.range r).foldl
+        (fun acc j =>
+          bhksInsertSignatureClass (bhksColumnSignature echelonRows j) j acc)
+        []).map Prod.snd
+  (groups.map (fun cls => bhksClassIndicator r cls)).toArray
+
+private def bhksTwoClassProjectedRows : BhksProjectedRows :=
+  { factorCount := 4
+    coeffWidth := 0
+    cutRadiusSq4 := 0
+    reducedRowCount := 1
+    projectedRows := #[#[1, 1, 0, 0]] }
+
+#guard bhksEquivalenceClassIndicators bhksTwoClassProjectedRows =
+  #[#[1, 1, 0, 0], #[0, 0, 1, 1]]
+
+private def bhksSingletonClassProjectedRows : BhksProjectedRows :=
+  { factorCount := 3
+    coeffWidth := 0
+    cutRadiusSq4 := 0
+    reducedRowCount := 0
+    projectedRows := #[] }
+
+#guard bhksEquivalenceClassIndicators bhksSingletonClassProjectedRows =
+  #[#[1, 1, 1]]
+
+private def bhksNoProgressProjectedRows : BhksProjectedRows :=
+  { factorCount := 3
+    coeffWidth := 0
+    cutRadiusSq4 := 0
+    reducedRowCount := 3
+    projectedRows := #[#[1, 0, 0], #[0, 1, 0], #[0, 0, 1]] }
+
+#guard bhksEquivalenceClassIndicators bhksNoProgressProjectedRows =
+  #[#[1, 0, 0], #[0, 1, 0], #[0, 0, 1]]
+
 private def liftModulus (d : LiftData) : Nat :=
   d.p ^ d.k
 
