@@ -25,15 +25,9 @@ Two families of fixtures
 * **`GF(2^n)` field arithmetic** — `gf_mul`, `gf_inverse`,
   `gf_frobenius` (squaring in characteristic 2) at `n ∈ {4, 8, 16}`.
   The `n = 8` case uses the AES irreducible `x^8 + x^4 + x^3 + x + 1`.
-  The modulus polynomial is emitted alongside the inputs so the oracle
-  reconstructs the field independently.
-
-Irreducibility witnesses are local `sorry` axioms — the same pattern
-`HexGF2/Conformance.lean` uses for the AES modulus, since Hex does
-not yet have native irreducibility certificates for these polynomials.
-python-flint independently rejects a non-irreducible modulus when
-constructing `fq_default_ctx`, so the oracle catches a misclassified
-modulus on the next run rather than silently masking it.
+  All three field moduli are backed by Rabin irreducibility certificates
+  from `HexGF2.CommonIrreducibility`. The modulus polynomial is emitted
+  alongside the inputs so the oracle reconstructs the field independently.
 -/
 
 namespace Hex.GF2Emit
@@ -107,16 +101,16 @@ private def cases_f2x : List PolyCase :=
 /-! ## `GF(2^n)` field fixtures -/
 
 private theorem gf16Irr :
-    GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x3 4) := by
-  sorry
+    GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x3 4) :=
+  GF2Poly.gf16_modulus_irreducible
 
 private theorem aesIrr :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x1B 8) :=
   GF2Poly.aes_modulus_irreducible
 
 private theorem gf65kIrr :
-    GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x100B 16) := by
-  sorry
+    GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x100B 16) :=
+  GF2Poly.gf65k_modulus_irreducible
 
 private abbrev GF16  : Type :=
   Hex.GF2n 4  0x3    (by decide) (by decide) gf16Irr

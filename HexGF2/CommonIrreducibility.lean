@@ -47,6 +47,66 @@ theorem aes_modulus_irreducible :
     Irreducible (ofUInt64Monic 0x1B 8) :=
   checkIrreducibilityCertificate_imp_irreducible aesModulus aesCert aesCert_check
 
+/-- The degree-4 fixture modulus over `GF(2)`: `X^4 + X + 1`. -/
+private def gf16Modulus : GF2Poly := ofUInt64Monic 0x3 4
+
+/-- Rabin certificate for the degree-4 fixture modulus. The unique maximal
+proper divisor of `4` is `2`, so the certificate has one Bezout leg. -/
+private def gf16Cert : IrreducibilityCertificate :=
+  { n := 4
+    powChain :=
+      #[xpow2kMod gf16Modulus 0, xpow2kMod gf16Modulus 1,
+        xpow2kMod gf16Modulus 2, xpow2kMod gf16Modulus 3,
+        xpow2kMod gf16Modulus 4]
+    bezout :=
+      let diff := frobeniusDiffMod gf16Modulus 2
+      let xg := xgcd gf16Modulus diff
+      #[{ left := xg.left, right := xg.right }] }
+
+private theorem gf16Cert_check :
+    checkIrreducibilityCertificate gf16Modulus gf16Cert = true := by
+  decide
+
+/-- The degree-4 fixture modulus `X^4 + X + 1` is irreducible over `GF(2)`. -/
+theorem gf16_modulus_irreducible :
+    Irreducible (ofUInt64Monic 0x3 4) :=
+  checkIrreducibilityCertificate_imp_irreducible
+    gf16Modulus gf16Cert gf16Cert_check
+
+/-- The degree-16 fixture modulus over `GF(2)`: `X^16 + X^12 + X^3 + X + 1`. -/
+private def gf65kModulus : GF2Poly := ofUInt64Monic 0x100B 16
+
+/-- Rabin certificate for the degree-16 fixture modulus. The unique maximal
+proper divisor of `16` is `8`, so the certificate has one Bezout leg. -/
+private def gf65kCert : IrreducibilityCertificate :=
+  { n := 16
+    powChain :=
+      #[xpow2kMod gf65kModulus 0, xpow2kMod gf65kModulus 1,
+        xpow2kMod gf65kModulus 2, xpow2kMod gf65kModulus 3,
+        xpow2kMod gf65kModulus 4, xpow2kMod gf65kModulus 5,
+        xpow2kMod gf65kModulus 6, xpow2kMod gf65kModulus 7,
+        xpow2kMod gf65kModulus 8, xpow2kMod gf65kModulus 9,
+        xpow2kMod gf65kModulus 10, xpow2kMod gf65kModulus 11,
+        xpow2kMod gf65kModulus 12, xpow2kMod gf65kModulus 13,
+        xpow2kMod gf65kModulus 14, xpow2kMod gf65kModulus 15,
+        xpow2kMod gf65kModulus 16]
+    bezout :=
+      let diff := frobeniusDiffMod gf65kModulus 8
+      let xg := xgcd gf65kModulus diff
+      #[{ left := xg.left, right := xg.right }] }
+
+set_option maxRecDepth 4096 in
+private theorem gf65kCert_check :
+    checkIrreducibilityCertificate gf65kModulus gf65kCert = true := by
+  decide
+
+/-- The degree-16 fixture modulus `X^16 + X^12 + X^3 + X + 1` is
+irreducible over `GF(2)`. -/
+theorem gf65k_modulus_irreducible :
+    Irreducible (ofUInt64Monic 0x100B 16) :=
+  checkIrreducibilityCertificate_imp_irreducible
+    gf65kModulus gf65kCert gf65kCert_check
+
 /-- The GHASH degree-128 modulus: `X^128 + X^7 + X^2 + X + 1`. -/
 private def ghashModulus : GF2Poly :=
   ofWords #[0x87, 0, 1]
