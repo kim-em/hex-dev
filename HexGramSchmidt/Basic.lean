@@ -796,6 +796,152 @@ private theorem reduceAgainstBasis_basisRows_get!_succ_eq_zero
   exact reduceAgainstBasis_cons_self_eq_zero
     ((basisRows rows)[j]!) ((basisRows rows).take j).reverse
 
+/-! Linearity-of-source helpers for `subtractProjection` and
+`reduceAgainstBasis`. These let later proofs pull the reconstruction
+sum across the reduction. -/
+
+private theorem foldl_dot_add_left
+    (xs : List (Fin m)) (a b c : Vector Rat m) (accA accB : Rat) :
+    xs.foldl (fun acc i => acc + (a + b)[i] * c[i]) (accA + accB) =
+      xs.foldl (fun acc i => acc + a[i] * c[i]) accA +
+        xs.foldl (fun acc i => acc + b[i] * c[i]) accB := by
+  induction xs generalizing accA accB with
+  | nil => simp
+  | cons i xs ih =>
+      have hentry : (a + b)[i] = a[i] + b[i] := by
+        change (a + b)[i.val] = a[i.val] + b[i.val]
+        rw [Vector.getElem_add]
+      simp only [List.foldl_cons]
+      have hstart :
+          accA + accB + (a + b)[i] * c[i] =
+            (accA + a[i] * c[i]) + (accB + b[i] * c[i]) := by
+        rw [hentry]
+        grind
+      rw [hstart]
+      exact ih (accA := accA + a[i] * c[i]) (accB := accB + b[i] * c[i])
+
+private theorem dot_add_left (a b c : Vector Rat m) :
+    Matrix.dot (a + b) c = Matrix.dot a c + Matrix.dot b c := by
+  unfold Matrix.dot Hex.Vector.dotProduct
+  have hzero : (0 : Rat) + 0 = 0 := by grind
+  simpa [hzero] using
+    foldl_dot_add_left (xs := List.finRange m) (a := a) (b := b) (c := c)
+      (accA := 0) (accB := 0)
+
+private theorem foldl_dot_smul_left
+    (xs : List (Fin m)) (s : Rat) (a c : Vector Rat m) (acc : Rat) :
+    xs.foldl (fun acc i => acc + (s • a)[i] * c[i]) (s * acc) =
+      s * xs.foldl (fun acc i => acc + a[i] * c[i]) acc := by
+  induction xs generalizing acc with
+  | nil => simp
+  | cons i xs ih =>
+      have hentry : (s • a)[i] = s * a[i] := by
+        change (s • a)[i.val] = s * a[i.val]
+        rw [Vector.getElem_smul]; rfl
+      simp only [List.foldl_cons]
+      have hstart :
+          s * acc + (s • a)[i] * c[i] =
+            s * (acc + a[i] * c[i]) := by
+        rw [hentry]; grind
+      rw [hstart]
+      exact ih (acc := acc + a[i] * c[i])
+
+private theorem dot_smul_left (s : Rat) (a c : Vector Rat m) :
+    Matrix.dot (s • a) c = s * Matrix.dot a c := by
+  unfold Matrix.dot Hex.Vector.dotProduct
+  have hzero : s * (0 : Rat) = 0 := by grind
+  simpa [hzero] using
+    foldl_dot_smul_left (xs := List.finRange m) (s := s) (a := a) (c := c) (acc := 0)
+
+private theorem projectionCoeff_add_left (a b c : Vector Rat m) :
+    projectionCoeff (a + b) c = projectionCoeff a c + projectionCoeff b c := by
+  unfold projectionCoeff
+  by_cases hnorm : Matrix.dot c c = 0
+  · simp [hnorm]
+    grind
+  · simp [hnorm]
+    rw [dot_add_left]
+    grind
+
+private theorem projectionCoeff_smul_left (s : Rat) (a c : Vector Rat m) :
+    projectionCoeff (s • a) c = s * projectionCoeff a c := by
+  unfold projectionCoeff
+  by_cases hnorm : Matrix.dot c c = 0
+  · simp [hnorm]
+  · simp [hnorm]
+    rw [dot_smul_left]
+    grind
+
+private theorem subtractProjection_add_left (a b c : Vector Rat m) :
+    subtractProjection (a + b) c =
+      subtractProjection a c + subtractProjection b c := by
+  apply Vector.ext
+  intro k hk
+  unfold subtractProjection
+  have hcoeff := projectionCoeff_add_left a b c
+  have hentry_lhs :
+      ((a + b) - projectionCoeff (a + b) c • c)[k] =
+        a[k] + b[k] - projectionCoeff (a + b) c * c[k] := by
+    rw [Vector.getElem_sub, Vector.getElem_add, Vector.getElem_smul]
+    rfl
+  have hentry_rhs :
+      (a - projectionCoeff a c • c + (b - projectionCoeff b c • c))[k] =
+        a[k] - projectionCoeff a c * c[k] +
+          (b[k] - projectionCoeff b c * c[k]) := by
+    rw [Vector.getElem_add, Vector.getElem_sub, Vector.getElem_sub,
+      Vector.getElem_smul, Vector.getElem_smul]
+    rfl
+  rw [hentry_lhs, hentry_rhs, hcoeff]
+  grind
+
+private theorem subtractProjection_smul_left (s : Rat) (a c : Vector Rat m) :
+    subtractProjection (s • a) c = s • subtractProjection a c := by
+  apply Vector.ext
+  intro k hk
+  unfold subtractProjection
+  have hcoeff := projectionCoeff_smul_left s a c
+  have hentry_lhs :
+      (s • a - projectionCoeff (s • a) c • c)[k] =
+        s * a[k] - projectionCoeff (s • a) c * c[k] := by
+    rw [Vector.getElem_sub, Vector.getElem_smul, Vector.getElem_smul]
+    rfl
+  have hentry_rhs :
+      (s • (a - projectionCoeff a c • c))[k] =
+        s * (a[k] - projectionCoeff a c * c[k]) := by
+    rw [Vector.getElem_smul, Vector.getElem_sub, Vector.getElem_smul]
+    rfl
+  rw [hentry_lhs, hentry_rhs, hcoeff]
+  grind
+
+private theorem reduceAgainstBasis_add_left
+    (basisRev : List (Vector Rat m)) (a b : Vector Rat m) :
+    reduceAgainstBasis basisRev (a + b) =
+      reduceAgainstBasis basisRev a + reduceAgainstBasis basisRev b := by
+  induction basisRev generalizing a b with
+  | nil => simp [reduceAgainstBasis]
+  | cons basisRow rest ih =>
+      rw [reduceAgainstBasis]
+      simp only [List.foldl_cons]
+      rw [subtractProjection_add_left]
+      change reduceAgainstBasis rest
+          (subtractProjection a basisRow + subtractProjection b basisRow) =
+        reduceAgainstBasis rest (subtractProjection a basisRow) +
+          reduceAgainstBasis rest (subtractProjection b basisRow)
+      exact ih (a := subtractProjection a basisRow) (b := subtractProjection b basisRow)
+
+private theorem reduceAgainstBasis_smul_left
+    (basisRev : List (Vector Rat m)) (s : Rat) (a : Vector Rat m) :
+    reduceAgainstBasis basisRev (s • a) = s • reduceAgainstBasis basisRev a := by
+  induction basisRev generalizing a with
+  | nil => simp [reduceAgainstBasis]
+  | cons basisRow rest ih =>
+      rw [reduceAgainstBasis]
+      simp only [List.foldl_cons]
+      rw [subtractProjection_smul_left]
+      change reduceAgainstBasis rest (s • subtractProjection a basisRow) =
+        s • reduceAgainstBasis rest (subtractProjection a basisRow)
+      exact ih (a := subtractProjection a basisRow)
+
 /-- The "by-row" prefix sum: a row-indexed variant of `prefixCombination` that
 takes the projection row directly rather than reading it through a coefficient
 matrix. Defined via `foldl` over `List.finRange i` so the conversion to
