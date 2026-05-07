@@ -234,6 +234,61 @@ theorem bareissPivotInvariant_regular_no_swap
         singularStep := none } :=
   bareissNoPivotInvariant_step source state hinv hDone hp
 
+/-- In the pivot-search failure branch, the current pivot column is zero at
+and below the current step. -/
+theorem bareissPivotNoPivot_column_eq_zero
+    (state : Hex.Matrix.BareissState n) (hDone : state.step + 1 < n)
+    (hp0 : state.matrix[state.step][state.step] = 0)
+    (hfind :
+      Hex.Matrix.findPivot? state.matrix
+        (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+        (state.step + 1) = none) :
+    ∀ i : Fin n, state.step ≤ i.val →
+      state.matrix[i][
+        (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)] =
+        0 := by
+  intro i hi
+  by_cases heq : i.val = state.step
+  · have hiFin :
+        i = (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ :
+          Fin n) :=
+      Fin.ext heq
+    rw [hiFin]
+    simpa using hp0
+  · have hstart : state.step + 1 ≤ i.val := by omega
+    exact Hex.Matrix.findPivot?_eq_zero_of_none state.matrix
+      (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+      (state.step + 1) hfind i hstart
+
+/-- In the pivot-search failure branch, the bordered-minor invariant identifies
+the zero current pivot with the next leading-prefix determinant. -/
+theorem bareissPivotNoPivot_leadingPrefix_det_eq_zero
+    (source : Hex.Matrix Int n n) (state : Hex.Matrix.BareissState n)
+    (hinv : BareissNoPivotInvariant source state)
+    (hDone : state.step + 1 < n)
+    (hp0 : state.matrix[state.step][state.step] = 0)
+    (hfind :
+      Hex.Matrix.findPivot? state.matrix
+        (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+        (state.step + 1) = none) :
+    Hex.Matrix.det
+      (Hex.Matrix.leadingPrefix source (state.step + 1)
+        (Nat.succ_le_of_lt (Nat.lt_of_succ_lt hDone))) = 0 := by
+  have hcol := bareissPivotNoPivot_column_eq_zero state hDone hp0 hfind
+  have hk : state.step < n := Nat.lt_of_succ_lt hDone
+  have hpivot :
+      state.matrix[(⟨state.step, hk⟩ : Fin n)][(⟨state.step, hk⟩ : Fin n)] =
+        0 := hcol ⟨state.step, hk⟩ (Nat.le_refl _)
+  have hpivot_det :
+      state.matrix[(⟨state.step, hk⟩ : Fin n)][(⟨state.step, hk⟩ : Fin n)] =
+        Hex.Matrix.det
+          (Hex.Matrix.borderedMinor source state.step hk
+            (⟨state.step, hk⟩ : Fin n) (⟨state.step, hk⟩ : Fin n)) :=
+    hinv.trailing_eq hk ⟨state.step, hk⟩ ⟨state.step, hk⟩
+      (Nat.le_refl _) (Nat.le_refl _)
+  rw [hpivot_det, borderedMinor_corner_eq_leadingPrefix source state.step hk] at hpivot
+  exact hpivot
+
 private theorem findPivot?_some_ne_current
     (state : Hex.Matrix.BareissState n) (hDone : state.step + 1 < n)
     {pivot : Fin n}

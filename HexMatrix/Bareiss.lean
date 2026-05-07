@@ -135,6 +135,52 @@ theorem findPivot?_ge_start (M : Matrix Int n n) (col : Fin n)
     start ≤ pivot.val :=
   findPivotAux_ge_start M col start (n - start) hfind
 
+/-- If bounded pivot search fails, every checked entry in the pivot column is
+zero. -/
+theorem findPivotAux_eq_zero_of_none (M : Matrix Int n n) (col : Fin n)
+    (start fuel : Nat) (hfind : findPivotAux M col start fuel = none)
+    (i : Fin n) (hstart : start ≤ i.val) (hfuel : i.val < start + fuel) :
+    M[i][col] = 0 := by
+  induction fuel generalizing start with
+  | zero =>
+      omega
+  | succ fuel ih =>
+      by_cases hlt : start < n
+      · by_cases hi : i.val = start
+        · have hentry : M[(⟨start, hlt⟩ : Fin n)][col] = 0 := by
+            by_cases hzero : M[(⟨start, hlt⟩ : Fin n)][col] = 0
+            · exact hzero
+            · have hzeroNat : ¬ M[start][col.val] = 0 := by
+                simpa using hzero
+              simp [findPivotAux, hlt, hzeroNat] at hfind
+          have hiFin : i = (⟨start, hlt⟩ : Fin n) := Fin.ext hi
+          rw [hiFin]
+          exact hentry
+        · have hentry : M[(⟨start, hlt⟩ : Fin n)][col] = 0 := by
+            by_cases hzero : M[(⟨start, hlt⟩ : Fin n)][col] = 0
+            · exact hzero
+            · have hzeroNat : ¬ M[start][col.val] = 0 := by
+                simpa using hzero
+              simp [findPivotAux, hlt, hzeroNat] at hfind
+          have hnext : findPivotAux M col (start + 1) fuel = none := by
+            have hentryNat : M[start][col.val] = 0 := by
+              simpa using hentry
+            simp [findPivotAux, hlt, hentryNat] at hfind
+            exact hfind
+          have hstart' : start + 1 ≤ i.val := by omega
+          have hfuel' : i.val < start + 1 + fuel := by omega
+          exact ih (start + 1) hnext hstart' hfuel'
+      · omega
+
+/-- If pivot search fails, every entry in the searched suffix of the pivot
+column is zero. -/
+theorem findPivot?_eq_zero_of_none (M : Matrix Int n n) (col : Fin n)
+    (start : Nat) (hfind : findPivot? M col start = none)
+    (i : Fin n) (hstart : start ≤ i.val) :
+    M[i][col] = 0 := by
+  apply findPivotAux_eq_zero_of_none M col start (n - start) hfind i hstart
+  omega
+
 /-- Apply one Bareiss update step to the trailing submatrix strictly below and
 to the right of the current pivot. -/
 def stepMatrix (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int) :
