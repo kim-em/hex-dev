@@ -720,6 +720,19 @@ structure BhksLatticeBasis where
   cldRows : Array (Array Int)
   basis : Matrix Int (factorCount + coeffWidth) (factorCount + coeffWidth)
 
+/--
+Projected BHKS rows after LLL reduction and the Gram-Schmidt cut.
+
+`cutRadiusSq4` stores `4 * B'^2 = 4r + n*r^2`, avoiding square-root or
+floating-point arithmetic for the BHKS cut radius.
+-/
+structure BhksProjectedRows where
+  factorCount : Nat
+  coeffWidth : Nat
+  cutRadiusSq4 : Nat
+  reducedRowCount : Nat
+  projectedRows : Array (Array Int)
+
 private def bhksLatticeEntry
     (r n p a : Nat) (thresholds : Array Nat) (cldRows : Array (Array Int))
     (i j : Fin (r + n)) : Int :=
@@ -761,6 +774,76 @@ def bhksLatticeBasis (f : ZPoly) (p a : Nat) (liftedFactors : Array ZPoly) :
     cldRows
     basis }
 
+/-- Four times the squared BHKS cut radius, `4 * (r + n * (r / 2)^2)`. -/
+def bhksCutRadiusSq4 (L : BhksLatticeBasis) : Nat :=
+  4 * L.factorCount + L.coeffWidth * L.factorCount * L.factorCount
+
+private def bhksWithinGramSchmidtCut (L : BhksLatticeBasis)
+    (dets : Vector Nat (L.factorCount + L.coeffWidth + 1))
+    (i : Fin (L.factorCount + L.coeffWidth)) : Bool :=
+  let d0 := dets.get ⟨i.val,
+    Nat.lt_trans i.isLt (Nat.lt_succ_self (L.factorCount + L.coeffWidth))⟩
+  let d1 := dets.get ⟨i.val + 1, Nat.succ_lt_succ i.isLt⟩
+  if d0 = 0 then
+    false
+  else
+    4 * ((d1 : Rat) / (d0 : Rat)) ≤ (bhksCutRadiusSq4 L : Rat)
+
+private def bhksProjectIndicator (r n : Nat) (v : Vector Int (r + n)) : Array Int :=
+  (List.range r).map
+    (fun j =>
+      if h : j < r + n then
+        v.get ⟨j, h⟩
+      else
+        0)
+    |>.toArray
+
+private def bhksRowsArrayToMatrix {m : Nat} (n : Nat) (rows : Array (Vector Int m)) :
+    Matrix Int n m :=
+  Matrix.ofFn fun i j => (rows.getD i.val (Vector.ofFn fun _ => 0))[j]
+
+private theorem lll_delta_lower : (1 / 4 : Rat) < 3 / 4 := by
+  sorry
+
+private theorem lll_delta_upper : (3 / 4 : Rat) ≤ 1 := by
+  sorry
+
+private def bhksCutProjectReducedRows
+    (L : BhksLatticeBasis)
+    (reduced : Matrix Int (L.factorCount + L.coeffWidth)
+        (L.factorCount + L.coeffWidth)) :
+    Array (Array Int) :=
+  let dets := GramSchmidt.Int.gramDetVec reduced
+  (List.finRange (L.factorCount + L.coeffWidth)).foldl
+    (fun acc i =>
+      if bhksWithinGramSchmidtCut L dets i then
+        acc.push (bhksProjectIndicator L.factorCount L.coeffWidth (reduced.row i))
+      else
+        acc)
+    #[]
+
+/--
+Run LLL on a BHKS row-basis lattice, discard rows whose Gram-Schmidt squared
+length exceeds the BHKS radius, and project survivors to the first `r`
+indicator coordinates. The squared Gram-Schmidt lengths are computed from the
+integer leading Gram determinant vector as `d_{i+1}/d_i`.
+
+The result is the executable `L'` row data consumed by the later RREF /
+equivalence-class recovery stage.
+-/
+def bhksProjectedRows (L : BhksLatticeBasis)
+    (hrows : 1 ≤ L.factorCount + L.coeffWidth)
+    (hind : L.basis.independent) : BhksProjectedRows :=
+  let reducedRows :=
+    lll.shortVectors L.basis (3 / 4) lll_delta_lower lll_delta_upper hrows hind
+  let reducedBasis :=
+    bhksRowsArrayToMatrix (L.factorCount + L.coeffWidth) reducedRows
+  { factorCount := L.factorCount
+    coeffWidth := L.coeffWidth
+    cutRadiusSq4 := bhksCutRadiusSq4 L
+    reducedRowCount := reducedRows.size
+    projectedRows := bhksCutProjectReducedRows L reducedBasis }
+
 #guard psiCut 5 4 1 3 = 1
 #guard psiCut 5 4 1 3 ≠ 3 / (5 : Int)
 
@@ -792,6 +875,9 @@ private def bhksGuardBasis : BhksLatticeBasis :=
   Int.ofNat (5 ^ (2 - bhksGuardBasis.cutThresholds.getD 0 0))
 #guard bhksGuardBasis.basis[3][3] =
   Int.ofNat (5 ^ (2 - bhksGuardBasis.cutThresholds.getD 1 0))
+#guard bhksCutRadiusSq4 bhksGuardBasis = 16
+#guard bhksProjectIndicator 2 2 bhksGuardBasis.basis[0] = #[1, 0]
+#guard (bhksProjectIndicator 2 2 bhksGuardBasis.basis[0]).size = bhksGuardBasis.factorCount
 
 private def liftModulus (d : LiftData) : Nat :=
   d.p ^ d.k
@@ -831,12 +917,6 @@ private def recombinationLattice? (d : LiftData) (coeffWidth : Nat) :
         basis }
   else
     none
-
-private theorem lll_delta_lower : (1 / 4 : Rat) < 3 / 4 := by
-  sorry
-
-private theorem lll_delta_upper : (3 / 4 : Rat) ≤ 1 := by
-  sorry
 
 private theorem recombinationLattice_independent (L : RecombinationLattice) :
     L.basis.independent := by
