@@ -591,6 +591,36 @@ def bhksBound (f : ZPoly) : Nat :=
   let sumSquared := ZPoly.coeffNormSq f
   1 + n * 4 ^ (n * n) * (sumSquared + 1) ^ n * (Nat.log2 (sumSquared + 1)) ^ n
 
+/-- Integer coefficient bound `B_j` used by the BHKS all-coefficients CLD lattice. -/
+def bhksCoeffBound (f : ZPoly) (j : Nat) : Nat :=
+  let n := f.degree?.getD 0
+  Nat.choose (n - 1) j * n * ZPoly.coeffL2NormBound f
+
+private def ceilLogPAux (p target : Nat) : Nat → Nat → Nat → Nat
+  | 0, ell, _ => ell
+  | fuel + 1, ell, power =>
+      if target ≤ power then
+        ell
+      else
+        ceilLogPAux p target fuel (ell + 1) (power * p)
+
+/--
+Small executable `ceil_log_p` helper.
+
+For `1 < p`, `ceilLogP p target` searches for the least visible exponent
+whose `p`-power is at least `target`. The degenerate `p ≤ 1` case returns
+zero because the BHKS fast path is only used with admissible primes.
+-/
+def ceilLogP (p target : Nat) : Nat :=
+  if p ≤ 1 then
+    0
+  else
+    ceilLogPAux p target (target + 1) 0 1
+
+/-- Per-coordinate BHKS precision threshold `ell_j := ceil_log_p (2 * B_j + 1)`. -/
+def bhksCoeffCutThreshold (p : Nat) (f : ZPoly) (j : Nat) : Nat :=
+  ceilLogP p (2 * bhksCoeffBound f j + 1)
+
 private def subsetSplits : List ZPoly → List (List ZPoly × List ZPoly)
   | [] => [([], [])]
   | factor :: factors =>
@@ -631,6 +661,53 @@ private def centeredModNat (z : Int) (m : Nat) : Int :=
       r + Int.ofNat m
     else
       r - Int.ofNat m
+
+/-- Centred residue modulo `p^b`, the `mod^±` operation in the BHKS cut. -/
+def centeredResiduePow (p b : Nat) (x : Int) : Int :=
+  centeredModNat x (p ^ b)
+
+/--
+BHKS two-sided cut `Psi^a_b(x) = (x - (x mod^± p^b)) / p^b`.
+
+The precision parameter `a` records the ambient modulus `p^a`; the executable
+cut only needs the lower threshold `b`.
+-/
+def psiCut (p _a b : Nat) (x : Int) : Int :=
+  let modulus := p ^ b
+  if modulus = 0 then
+    0
+  else
+    (x - centeredResiduePow p b x) / Int.ofNat modulus
+
+private def cldQuotientMod (f g : ZPoly) (p a : Nat) : ZPoly :=
+  let numerator := ZPoly.reduceModPow (f * DensePoly.derivative g) p a
+  let quotient := (DensePoly.divMod numerator g).1
+  ZPoly.reduceModPow quotient p a
+
+/--
+Centred high-bit CLD coefficients for one lifted local factor.
+
+The returned array has one entry for each coefficient index
+`0, ..., deg(f)-1`; entry `j` is
+`Psi^a_{ell_j}([x^j] (f * g.derivative / g mod p^a))`.
+-/
+def cldCoeffs (f : ZPoly) (p a : Nat) (g : ZPoly) : Array Int :=
+  let quotient := cldQuotientMod f g p a
+  let n := f.degree?.getD 0
+  (List.range n).map
+    (fun j => psiCut p a (bhksCoeffCutThreshold p f j) (quotient.coeff j))
+    |>.toArray
+
+#guard psiCut 5 4 1 3 = 1
+#guard psiCut 5 4 1 3 ≠ 3 / (5 : Int)
+
+private def cldGuardF : ZPoly :=
+  DensePoly.ofCoeffs #[6, -5, 1]
+
+private def cldGuardG : ZPoly :=
+  DensePoly.ofCoeffs #[-2, 1]
+
+#guard cldQuotientMod cldGuardF cldGuardG 5 2 = DensePoly.ofCoeffs #[22, 1]
 
 private def liftModulus (d : LiftData) : Nat :=
   d.p ^ d.k
