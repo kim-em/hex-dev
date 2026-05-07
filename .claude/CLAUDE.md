@@ -34,3 +34,26 @@ Never introduce an `axiom`. This includes converting an existing
 `theorem`/`def`/`example` into an `axiom` when a refactor breaks its
 proof — fix the proof or fix the API. For unfinished proofs use
 `sorry`, which is grep-able and produces a warning; `axiom` is silent.
+
+## CI: extend, don't fan out
+
+Before touching anything under `.github/workflows/`, read
+[SPEC/CI.md](../SPEC/CI.md). Each workflow runs in **exactly one
+ubuntu job** (`ci.yml` also has one macOS job for the dyld
+cross-check). New conformance targets, new oracles, and new bench
+targets **extend the script** of the existing single job — they do
+not introduce new top-level jobs, `strategy.matrix` blocks, or new
+workflow files. New oracles append a tuple to
+`scripts/ci/run_oracles.sh` and (if needed) an entry to the existing
+apt/pip install step; see
+[SPEC/testing.md § Adding a new oracle](../SPEC/testing.md).
+
+GitHub-hosted Actions on a personal account is concurrency-capped at
+~20 parallel ubuntu runners across all repositories the account
+owns; a 10-entry matrix saturates the cap, a 40-entry matrix
+produces 24-hour queue waits. Per-target parallelism does not
+amortise the fixed Mathlib cache fetch and startup cost on this
+project, so the rule is "no parallelism in CI." Routine timing-
+sensitive runs live on a separate scheduled workflow on dedicated
+hardware (per [SPEC/benchmarking.md](../SPEC/benchmarking.md)),
+not on the merge-gating workflows.
