@@ -405,6 +405,41 @@ private theorem gramDetVecEntry_eq_gramDet
         _ = gramDet b (r + 1) hk := by
               simp [gramDet, GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram]
 
+/-- The fraction-free scaled-coefficient loop records, below the diagonal, the
+Bareiss determinant of the Cramer matrix for the corresponding
+Gram-Schmidt coefficient. This is the executable-array invariant needed to
+connect `scaledCoeffRows` with the determinant formula in `scaledCoeffMatrix`. -/
+private theorem scaledCoeffRows_lower_eq_scaledCoeffMatrix_bareiss
+    (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < i) :
+    getArrayEntry (scaledCoeffRows b) i j =
+      Matrix.bareiss
+        (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ hj) := by
+  sorry
+
+/-- Bareiss agrees with the Leibniz determinant on the Cramer matrix used by
+the scaled-coefficient formula. -/
+private theorem scaledCoeffMatrix_bareiss_eq_det
+    (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < i) :
+    ((Matrix.bareiss
+        (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ hj) :
+          Int) : Rat) =
+      ((Matrix.det
+        (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ hj) :
+          Int) : Rat) := by
+  rw [Matrix.bareiss_eq_det]
+
+/-- Cramer's-rule bridge for the scaled Gram-Schmidt coefficient determinant:
+the Leibniz determinant of `scaledCoeffMatrix` equals
+`gramDet b (j + 1) * coeffs[i,j]` after casting to `Rat`. -/
+private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
+    (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < i) :
+    ((Matrix.det
+        (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ hj) :
+          Int) : Rat) =
+      (gramDet b (j + 1) (Nat.succ_le_of_lt (Nat.lt_trans hj hi)) : Rat) *
+        GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ := by
+  sorry
+
 /-- The fraction-free scaled-coefficient loop computes the Cramer/Bareiss
 integer equal to `d[j+1] * μ[i,j]` below the diagonal. -/
 private theorem scaledCoeffRows_lower_eq_coeffs
@@ -412,7 +447,9 @@ private theorem scaledCoeffRows_lower_eq_coeffs
     ((getArrayEntry (scaledCoeffRows b) i j : Int) : Rat) =
       (gramDet b (j + 1) (Nat.succ_le_of_lt (Nat.lt_trans hj hi)) : Rat) *
         GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ := by
-  sorry
+  rw [scaledCoeffRows_lower_eq_scaledCoeffMatrix_bareiss (b := b) i j hi hj]
+  rw [scaledCoeffMatrix_bareiss_eq_det (b := b) i j hi hj]
+  exact scaledCoeffMatrix_det_eq_gramDet_mul_coeffs (b := b) i j hi hj
 
 /-- The scaled-coefficient array loop writes the same diagonal determinant
 values as `gramDetVecEntry`, including the zero tail after an early singular
