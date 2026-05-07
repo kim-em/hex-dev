@@ -9,9 +9,11 @@ the matrix automatically.
 
 Default output is one library name per line on stdout.  ``--json``
 emits a JSON array suitable for a GitHub Actions matrix include.
-``--check`` performs the consistency check without printing the list
-and exits non-zero on drift between ``Hex*/Conformance.lean`` files and
-root-module imports.
+``--space-separated`` emits a single space-joined line, which feeds
+the consolidated single-job ``conformance.yml`` workflow's
+``lake build`` invocation.  ``--check`` performs the consistency
+check without printing the list and exits non-zero on drift between
+``Hex*/Conformance.lean`` files and root-module imports.
 
 Stdlib only; runs from the repository root regardless of the working
 directory the user invokes it from.
@@ -99,6 +101,14 @@ def main() -> int:
         help="emit the list as a JSON array on stdout",
     )
     parser.add_argument(
+        "--space-separated",
+        action="store_true",
+        help=(
+            "emit the list as a single space-joined line on stdout "
+            "(suitable for `lake build $(... --space-separated)`)"
+        ),
+    )
+    parser.add_argument(
         "--check",
         action="store_true",
         help=(
@@ -117,8 +127,13 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    if args.json and args.check:
-        parser.error("--json and --check are mutually exclusive")
+    exclusive = sum(
+        1 for flag in (args.json, args.space_separated, args.check) if flag
+    )
+    if exclusive > 1:
+        parser.error(
+            "--json, --space-separated, and --check are mutually exclusive"
+        )
 
     targets, errors, warnings = diagnose(repo_root())
 
@@ -137,6 +152,8 @@ def main() -> int:
     if args.json:
         json.dump(targets, sys.stdout)
         sys.stdout.write("\n")
+    elif args.space_separated:
+        print(" ".join(targets))
     else:
         for name in targets:
             print(name)

@@ -204,6 +204,11 @@ into Phase 1 until the Phase 0 PR lands on `main`.
          - run: python3 scripts/check_dag.py
          - run: sudo apt-get install -y libgmp-dev
          - uses: leanprover/lean-action@v1
+           with: { auto-config: false, build: false, use-mathlib-cache: false }
+         - run: lake exe cache get
+         - run: bash scripts/ci/check_no_mathlib_rebuild.sh
+         - run: lake build
+         # plus per-library bench verify steps (see SPEC/benchmarking.md)
      build-macos:
        runs-on: macos-latest
        steps:
@@ -211,7 +216,19 @@ into Phase 1 until the Phase 0 PR lands on `main`.
          - run: python3 scripts/check_dag.py
          - run: brew install gmp
          - uses: leanprover/lean-action@v1
+           with: { auto-config: false, build: false, use-mathlib-cache: false }
+         - run: lake exe cache get
+         - run: bash scripts/ci/check_no_mathlib_rebuild.sh
+         - run: lake build
    ```
+
+   The cache + hard-fail-gate + manual `lake build` shape is
+   non-negotiable and exists to prevent silent Mathlib rebuilds on
+   CI; see [SPEC/CI.md § Mathlib cache is mandatory](../SPEC/CI.md).
+   `lean-action` is invoked with `build: false` so the cache step
+   runs before any build, and the hard-fail gate aborts the job
+   *before* `lake build` would silently rebuild Mathlib if the
+   cache fetch fell short.
 
    The trigger is `push: branches: [main]` plus `pull_request:` —
    **not** the bare `push:` form. A bare `push:` fires on every
@@ -224,8 +241,7 @@ into Phase 1 until the Phase 0 PR lands on `main`.
    Both rules are normative; see [SPEC/CI.md](../SPEC/CI.md).
 
    The DAG check runs before the Lean build so import-boundary
-   violations fail fast without spending build time. `lean-action`
-   performs the `lake build` itself. `libgmp-dev` is installed
+   violations fail fast without spending build time. `libgmp-dev` is installed
    explicitly because the `hex-arith` extern C shims `#include
    <gmp.h>`; Lean's toolchain ships `libgmp.a` for linking but not the
    headers, and `ubuntu-latest` does not preinstall `libgmp-dev`. The
