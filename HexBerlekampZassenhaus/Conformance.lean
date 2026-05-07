@@ -226,6 +226,13 @@ private def cyclo11Times22 : ZPoly :=
     data.factorsModP.size = 1
 
 #guard
+  let data := choosePrimeData leadingCoeffDivisibleByFive
+  letI := data.bounds
+  data.p = choosePrime leadingCoeffDivisibleByFive &&
+    data.fModP == ZPoly.modP data.p leadingCoeffDivisibleByFive &&
+    isGoodPrime leadingCoeffDivisibleByFive data.p
+
+#guard
   let data := normalizeForFactor monomialWithContent
   data.content = 6 &&
     data.xPower = 2 &&
@@ -257,6 +264,20 @@ private def cyclo11Times22 : ZPoly :=
     liftData.k = 4 &&
     liftData.liftedFactors.size = primeData.factorsModP.size
 
+#guard
+  let primeData := choosePrimeData repeatedRootPoly
+  let liftData := henselLiftData repeatedRootPoly 1 primeData
+  liftData.p = primeData.p &&
+    liftData.k = 1 &&
+    liftData.liftedFactors.size = primeData.factorsModP.size
+
+#guard
+  let primeData := choosePrimeData leadingCoeffDivisibleByFive
+  let liftData := henselLiftData leadingCoeffDivisibleByFive 8 primeData
+  liftData.p = primeData.p &&
+    liftData.k = 8 &&
+    liftData.liftedFactors.size = primeData.factorsModP.size
+
 #guard recombinationSearch recombineTarget3 recombineFactors3.toList |>.isSome
 #guard
   match recombinationSearch recombineTarget3 recombineFactors3.toList with
@@ -285,6 +306,9 @@ private def cyclo11Times22 : ZPoly :=
 #guard
   let factors := factorWithBound repeatedRootPoly 4
   Array.polyProduct factors = repeatedRootPoly
+#guard
+  let factors := factorWithBound cubicLinear123 4
+  Array.polyProduct factors = cubicLinear123
 #guard
   let factors := factor monomialWithContent
   Array.polyProduct factors = monomialWithContent

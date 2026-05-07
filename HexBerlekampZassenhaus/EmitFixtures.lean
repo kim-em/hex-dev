@@ -35,7 +35,7 @@ Cross-checked operation
 The fixture set is committed under
 `conformance-fixtures/HexBerlekampZassenhaus/bz.jsonl` and is
 intentionally small.  Coordinate any future case-id additions with
-the eventual `HexBerlekampZassenhaus/Conformance.lean` Phase-3 module
+`HexBerlekampZassenhaus/Conformance.lean` and the Phase-3 oracle script
 so identical ids stay in sync.
 -/
 
