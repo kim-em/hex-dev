@@ -75,33 +75,41 @@ def adjacentSwapScaledCoeffAboveCurrNumerator (b : Matrix Int n m)
 theorem basis_sizeReduce (b : Matrix Int n m) (j k : Fin n) (hjk : j.val < k.val)
     (r : Int) :
     basis (sizeReduce b j k r) = basis b := by
-  sorry
+  simpa [sizeReduce] using basis_rowAdd (b := b) (src := j) (dst := k) (c := -r) hjk
 
 theorem coeffs_sizeReduce_pivot (b : Matrix Int n m) (j k : Fin n) (hjk : j.val < k.val)
     (r : Int)
     (hnorm : Matrix.dot ((basis b).row j) ((basis b).row j) ≠ 0) :
     GramSchmidt.entry (coeffs (sizeReduce b j k r)) k j =
       GramSchmidt.entry (coeffs b) k j - (r : Rat) := by
-  sorry
+  rw [sizeReduce]
+  rw [coeffs_rowAdd_pivot (b := b) (src := j) (dst := k) hjk (c := -r) hnorm]
+  grind
 
 theorem coeffs_sizeReduce_lower (b : Matrix Int n m) (l j k : Fin n)
     (hlj : l.val < j.val) (hjk : j.val < k.val) (r : Int) :
     GramSchmidt.entry (coeffs (sizeReduce b j k r)) k l =
       GramSchmidt.entry (coeffs b) k l -
         (r : Rat) * GramSchmidt.entry (coeffs b) j l := by
-  sorry
+  rw [sizeReduce]
+  rw [coeffs_rowAdd_lower (b := b) (col := l) (src := j) (dst := k) hlj hjk (c := -r)]
+  grind
 
 theorem coeffs_sizeReduce_other_row (b : Matrix Int n m) (j k : Fin n)
     (hjk : j.val < k.val) (r : Int) (i : Fin n) (hik : i ≠ k) :
     (coeffs (sizeReduce b j k r)).row i = (coeffs b).row i := by
-  sorry
+  simpa [sizeReduce] using
+    coeffs_rowAdd_other_row (b := b) (src := j) (dst := k) (c := -r) hjk i hik
 
 theorem coeffs_sizeReduce_above_pivot (b : Matrix Int n m) (j k : Fin n)
     (hjk : j.val < k.val) (r : Int) (l : Fin n)
     (hjl : j.val < l.val) (hlk : l.val < k.val) :
     GramSchmidt.entry (coeffs (sizeReduce b j k r)) k l =
       GramSchmidt.entry (coeffs b) k l := by
-  sorry
+  have _ : j.val < k.val := hjk
+  simpa [sizeReduce] using
+    coeffs_rowAdd_above_pivot (b := b) (src := j) (col := l) (dst := k) hjl hlk
+      (c := -r)
 
 theorem gramDet_sizeReduce (b : Matrix Int n m) (j k : Fin n) (hjk : j.val < k.val)
     (r : Int) (t : Nat) (ht : t ≤ n) :
