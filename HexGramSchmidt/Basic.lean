@@ -1831,6 +1831,84 @@ theorem coeffs_upper (b : Matrix Int n m)
     exact (Nat.ne_of_lt hij) (congrArg Fin.val h)
   simp [coeffs, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn, hnot_lt, hne]
 
+private theorem castIntMatrix_rowAdd (b : Matrix Int n m) (src dst : Fin n) (c : Int) :
+    GramSchmidt.castIntMatrix (Matrix.rowAdd b src dst c) =
+      Matrix.rowAdd (GramSchmidt.castIntMatrix b) src dst (c : Rat) := by
+  apply Vector.ext
+  intro row hrow
+  apply Vector.ext
+  intro col hcol
+  by_cases hdst : row = dst.val
+  · subst row
+    simp [GramSchmidt.castIntMatrix, Matrix.rowAdd, Vector.getElem_set_self]
+  · have hne : dst.val ≠ row := by
+      intro h
+      exact hdst h.symm
+    simp [GramSchmidt.castIntMatrix, Matrix.rowAdd, Vector.getElem_set_ne, hne]
+
+/-- The integer Gram-Schmidt basis is invariant under adding an integer
+multiple of an earlier row to a later row. -/
+theorem basis_rowAdd (b : Matrix Int n m) (src dst : Fin n) (c : Int)
+    (hsrcdst : src.val < dst.val) :
+    basis (Matrix.rowAdd b src dst c) = basis b := by
+  simpa [basis, GramSchmidt.Rat.basis, castIntMatrix_rowAdd] using
+    GramSchmidt.Rat.basis_rowAdd
+      (b := GramSchmidt.castIntMatrix b) (src := src) (dst := dst) (c := (c : Rat))
+      hsrcdst
+
+/-- Under integer row-add with `src < dst`, lower coefficients in the
+destination row update linearly below the pivot source column. -/
+theorem coeffs_rowAdd_lower (b : Matrix Int n m) (col src dst : Fin n)
+    (hcolsrc : col.val < src.val) (hsrcdst : src.val < dst.val) (c : Int) :
+    GramSchmidt.entry (coeffs (Matrix.rowAdd b src dst c)) dst col =
+      GramSchmidt.entry (coeffs b) dst col +
+        (c : Rat) * GramSchmidt.entry (coeffs b) src col := by
+  simpa [coeffs, basis, GramSchmidt.Rat.coeffs, GramSchmidt.Rat.basis,
+    castIntMatrix_rowAdd] using
+    GramSchmidt.Rat.coeffs_rowAdd_lower
+      (b := GramSchmidt.castIntMatrix b) (col := col) (src := src) (dst := dst)
+      hcolsrc hsrcdst (c := (c : Rat))
+
+/-- Under integer row-add with `src < dst`, the pivot coefficient in the
+destination row increases by the added integer multiple. -/
+theorem coeffs_rowAdd_pivot (b : Matrix Int n m) (src dst : Fin n)
+    (hsrcdst : src.val < dst.val) (c : Int)
+    (hnorm : Matrix.dot ((basis b).row src) ((basis b).row src) ≠ 0) :
+    GramSchmidt.entry (coeffs (Matrix.rowAdd b src dst c)) dst src =
+      GramSchmidt.entry (coeffs b) dst src + (c : Rat) := by
+  have hnormRat :
+      Matrix.dot ((GramSchmidt.Rat.basis (GramSchmidt.castIntMatrix b)).row src)
+          ((GramSchmidt.Rat.basis (GramSchmidt.castIntMatrix b)).row src) ≠ 0 := by
+    simpa [basis, GramSchmidt.Rat.basis] using hnorm
+  simpa [coeffs, basis, GramSchmidt.Rat.coeffs, GramSchmidt.Rat.basis,
+    castIntMatrix_rowAdd] using
+    GramSchmidt.Rat.coeffs_rowAdd_pivot
+      (b := GramSchmidt.castIntMatrix b) (src := src) (dst := dst) hsrcdst
+      (c := (c : Rat)) hnormRat
+
+/-- Under integer row-add with `src < col < dst`, destination-row coefficients
+above the pivot source column are preserved. -/
+theorem coeffs_rowAdd_above_pivot (b : Matrix Int n m) (src col dst : Fin n)
+    (hsrccol : src.val < col.val) (hcoldst : col.val < dst.val) (c : Int) :
+    GramSchmidt.entry (coeffs (Matrix.rowAdd b src dst c)) dst col =
+      GramSchmidt.entry (coeffs b) dst col := by
+  simpa [coeffs, basis, GramSchmidt.Rat.coeffs, GramSchmidt.Rat.basis,
+    castIntMatrix_rowAdd] using
+    GramSchmidt.Rat.coeffs_rowAdd_above_pivot
+      (b := GramSchmidt.castIntMatrix b) (src := src) (col := col) (dst := dst)
+      hsrccol hcoldst (c := (c : Rat))
+
+/-- An integer row-add only changes the destination row of the coefficient
+matrix. -/
+theorem coeffs_rowAdd_other_row (b : Matrix Int n m) (src dst : Fin n) (c : Int)
+    (hsrcdst : src.val < dst.val) (row : Fin n) (hrow : row ≠ dst) :
+    (coeffs (Matrix.rowAdd b src dst c)).row row = (coeffs b).row row := by
+  simpa [coeffs, basis, GramSchmidt.Rat.coeffs, GramSchmidt.Rat.basis,
+    castIntMatrix_rowAdd] using
+    GramSchmidt.Rat.coeffs_rowAdd_other_row
+      (b := GramSchmidt.castIntMatrix b) (src := src) (dst := dst) (c := (c : Rat))
+      hsrcdst row hrow
+
 theorem basis_span (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     ∀ v : Vector Rat m,
       GramSchmidt.prefixSpan (basis b) i hi v ↔
