@@ -942,6 +942,104 @@ private theorem reduceAgainstBasis_smul_left
         s • reduceAgainstBasis rest (subtractProjection a basisRow)
       exact ih (a := subtractProjection a basisRow)
 
+private theorem reduceAgainstBasis_append
+    (l₁ l₂ : List (Vector Rat m)) (row : Vector Rat m) :
+    reduceAgainstBasis (l₁ ++ l₂) row =
+      reduceAgainstBasis l₂ (reduceAgainstBasis l₁ row) := by
+  unfold reduceAgainstBasis
+  rw [List.foldl_append]
+
+private theorem basisRows_get!_dot_eq_zero_of_list
+    (rows : List (Vector Rat m)) (i j : Nat)
+    (hi : i < rows.length) (hj : j < rows.length) (hij : i ≠ j) :
+    Matrix.dot (basisRows rows)[i]! (basisRows rows)[j]! = 0 := by
+  have hilen : i < (basisRows rows).length := by simpa [basisRows_length]
+  have hjlen : j < (basisRows rows).length := by simpa [basisRows_length]
+  have hpair : (basisRows rows).Pairwise
+      (fun x y => Matrix.dot x y = 0 ∧ Matrix.dot y x = 0) :=
+    basisRows_pairwise rows
+  have hget_i : (basisRows rows).get ⟨i, hilen⟩ = (basisRows rows)[i]! := by
+    simp [hilen]
+  have hget_j : (basisRows rows).get ⟨j, hjlen⟩ = (basisRows rows)[j]! := by
+    simp [hjlen]
+  by_cases hlt : i < j
+  · have hrel :=
+      (List.pairwise_iff_get.1 hpair) ⟨i, hilen⟩ ⟨j, hjlen⟩ (by simpa using hlt)
+    rw [← hget_i, ← hget_j]
+    exact hrel.1
+  · have hji : j < i :=
+      Nat.lt_of_le_of_ne (Nat.le_of_not_gt hlt) (fun h => hij h.symm)
+    have hrel :=
+      (List.pairwise_iff_get.1 hpair) ⟨j, hjlen⟩ ⟨i, hilen⟩ (by simpa using hji)
+    rw [← hget_i, ← hget_j]
+    exact hrel.2
+
+/-- Reducing a generated basis row against any later prefix that contains it
+returns 0. -/
+private theorem reduceAgainstBasis_basisRows_take_get!_eq_zero
+    (rows : List (Vector Rat m)) (ℓ k : Nat)
+    (hℓk : ℓ < k) (hk : k ≤ rows.length) :
+    reduceAgainstBasis ((basisRows rows).take k).reverse
+        (basisRows rows)[ℓ]! = 0 := by
+  have hℓlen : ℓ < rows.length := Nat.lt_of_lt_of_le hℓk hk
+  have hℓbasis : ℓ < (basisRows rows).length := by simpa [basisRows_length]
+  have hkbasis : k ≤ (basisRows rows).length := by simpa [basisRows_length]
+  -- The first ℓ+1 elements of take k are exactly take (ℓ+1).
+  have htake_take :
+      ((basisRows rows).take k).take (ℓ + 1) = (basisRows rows).take (ℓ + 1) := by
+    rw [List.take_take]
+    congr 1
+    omega
+  have hsplit :
+      (basisRows rows).take k =
+        (basisRows rows).take (ℓ + 1) ++
+          ((basisRows rows).take k).drop (ℓ + 1) := by
+    rw [← htake_take]
+    exact (List.take_append_drop (ℓ + 1) ((basisRows rows).take k)).symm
+  rw [hsplit, List.reverse_append, reduceAgainstBasis_append]
+  -- Inner reduction: (basisRows rows)[ℓ]! is orthogonal to all elements in
+  -- the drop-take part (those are basis rows at indices > ℓ).
+  have hinner :
+      reduceAgainstBasis (((basisRows rows).take k).drop (ℓ + 1)).reverse
+          (basisRows rows)[ℓ]! = (basisRows rows)[ℓ]! := by
+    apply reduceAgainstBasis_eq_self_of_forall_dot_zero
+    intro b hmem
+    rw [List.mem_reverse] at hmem
+    rw [List.mem_iff_getElem] at hmem
+    obtain ⟨i, hilen, hbget⟩ := hmem
+    have hdroplen :
+        (((basisRows rows).take k).drop (ℓ + 1)).length =
+          ((basisRows rows).take k).length - (ℓ + 1) := by
+      rw [List.length_drop]
+    have htakelen : ((basisRows rows).take k).length = k := by
+      rw [List.length_take]; omega
+    rw [hdroplen, htakelen] at hilen
+    have hidx_lt_basis : i + (ℓ + 1) < (basisRows rows).length := by
+      have : k ≤ (basisRows rows).length := hkbasis
+      omega
+    have hidx_lt_take : i + (ℓ + 1) < ((basisRows rows).take k).length := by
+      rw [htakelen]; omega
+    -- Resolve b to (basisRows rows)[ℓ + 1 + i].
+    have hidx_lt_basis' : ℓ + 1 + i < (basisRows rows).length := by
+      have hcomm : ℓ + 1 + i = i + (ℓ + 1) := by omega
+      rw [hcomm]; exact hidx_lt_basis
+    have hbget' :
+        b = (basisRows rows)[ℓ + 1 + i]'hidx_lt_basis' := by
+      rw [← hbget]
+      rw [List.getElem_drop, List.getElem_take]
+    have hbget!_eq :
+        b = (basisRows rows)[ℓ + 1 + i]! := by
+      rw [hbget']
+      simp [hidx_lt_basis']
+    rw [hbget!_eq]
+    apply basisRows_get!_dot_eq_zero_of_list rows ℓ (ℓ + 1 + i) hℓlen
+    · -- ℓ + 1 + i < rows.length
+      have : (basisRows rows).length = rows.length := basisRows_length rows
+      omega
+    · omega
+  rw [hinner]
+  exact reduceAgainstBasis_basisRows_get!_succ_eq_zero rows ℓ hℓlen
+
 /-- The "by-row" prefix sum: a row-indexed variant of `prefixCombination` that
 takes the projection row directly rather than reading it through a coefficient
 matrix. Defined via `foldl` over `List.finRange i` so the conversion to
