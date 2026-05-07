@@ -844,6 +844,10 @@ def bhksProjectedRows (L : BhksLatticeBasis)
     reducedRowCount := reducedRows.size
     projectedRows := bhksCutProjectReducedRows L reducedBasis }
 
+private theorem bhksLatticeBasis_independent (L : BhksLatticeBasis) :
+    L.basis.independent := by
+  sorry
+
 #guard psiCut 5 4 1 3 = 1
 #guard psiCut 5 4 1 3 ≠ 3 / (5 : Int)
 
@@ -1013,6 +1017,60 @@ def bhksIndicatorCandidate?
       | some quotient => some (candidate, quotient)
       | none => none
 
+private def bhksIndicatorOneCount (r : Nat) (indicator : Array Int) : Nat :=
+  (List.range r).foldl
+    (fun count i => if indicator.getD i 0 == 1 then count + 1 else count)
+    0
+
+private def bhksIndicatorAllOnes (r : Nat) (indicator : Array Int) : Bool :=
+  indicator.size == r && bhksIndicatorOneCount r indicator == r
+
+private def bhksDegenerateIndicatorPartition
+    (L : BhksProjectedRows) (indicators : Array (Array Int)) : Bool :=
+  indicators.isEmpty ||
+    L.projectedRows.isEmpty ||
+    (indicators.size == 1 &&
+      bhksIndicatorAllOnes L.factorCount (indicators.getD 0 #[]))
+
+private def bhksIndicatorCandidates?
+    (f : ZPoly) (d : LiftData) (indicators : Array (Array Int)) :
+    Option (Array ZPoly) :=
+  indicators.foldl
+    (fun acc indicator =>
+      match acc with
+      | none => none
+      | some candidates =>
+          match bhksIndicatorCandidate? f d indicator with
+          | some candidate => some (candidates.push candidate.1)
+          | none => none)
+    (some #[])
+
+/--
+Run the fixed-precision BHKS recovery pipeline.
+
+This executable glue builds the CLD lattice for the lifted factors, runs LLL
+plus the Gram-Schmidt cut, extracts BHKS Lemma 3.3 equivalence-class
+indicators by RREF, reconstructs every indicated candidate by centred lifting,
+and accepts only when the verified candidates multiply back to `f`.
+-/
+def bhksRecover? (f : ZPoly) (d : LiftData) : Option (Array ZPoly) :=
+  let L := bhksLatticeBasis f d.p d.k d.liftedFactors
+  if hrows : 1 ≤ L.factorCount + L.coeffWidth then
+    let projected := bhksProjectedRows L hrows (bhksLatticeBasis_independent L)
+    let indicators := bhksEquivalenceClassIndicators projected
+    if bhksDegenerateIndicatorPartition projected indicators then
+      none
+    else
+      match bhksIndicatorCandidates? f d indicators with
+      | none => none
+      | some candidates =>
+          if Array.polyProduct candidates == f then
+            some candidates
+          else
+            none
+  else
+    none
+
 private def bhksIndicatorGuardLift : LiftData :=
   { p := 5
     k := 2
@@ -1024,6 +1082,24 @@ private def bhksIndicatorGuardLift : LiftData :=
 #guard bhksIndicatorCandidate? cldGuardF bhksIndicatorGuardLift #[2, 0] = none
 #guard (bhksIndicatorCandidate? cldGuardF bhksIndicatorGuardLift #[0, 1]).map Prod.snd =
   some (DensePoly.ofCoeffs #[-2, 1])
+
+#guard bhksRecover? cldGuardF bhksIndicatorGuardLift =
+  some bhksGuardFactors
+
+private def bhksDegenerateRecoverLift : LiftData :=
+  { p := 5
+    k := 2
+    liftedFactors := #[DensePoly.ofCoeffs #[1]] }
+
+#guard bhksRecover? cldGuardF bhksDegenerateRecoverLift = none
+
+private def bhksFailedDivisionRecoverLift : LiftData :=
+  { p := 5
+    k := 2
+    liftedFactors := #[DensePoly.ofCoeffs #[-2, 1], DensePoly.ofCoeffs #[-4, 1]] }
+
+#guard bhksIndicatorCandidate? cldGuardF bhksFailedDivisionRecoverLift #[0, 1] = none
+#guard bhksRecover? cldGuardF bhksFailedDivisionRecoverLift = none
 
 private structure RecombinationLattice where
   rows : Nat
