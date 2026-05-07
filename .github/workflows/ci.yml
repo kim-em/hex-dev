@@ -60,6 +60,8 @@ jobs:
           lake exe hexgfqring_bench verify
           lake exe hexgfqfield_bench list
           lake exe hexgfqfield_bench verify
+          lake exe hexgfq_bench list
+          lake exe hexgfq_bench verify
           lake exe hexlll_bench list
           lake exe hexlll_bench verify
           lake exe hexhensel_bench list
