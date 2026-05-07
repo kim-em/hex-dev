@@ -1,0 +1,2 @@
+Reviewed in issue #2574.
+Tier 1 HexConway benchmark registrations cover the committed Luebeck lookup and selected fixed irreducibility checks; Phase 4 excludes Tier 2 and Tier 3 Conway work per SPEC.
