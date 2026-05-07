@@ -817,25 +817,24 @@ private def nextHenselPrecision (k B : Nat) : Nat :=
 
 /--
 Adaptively lift and retry LLL recombination, using the explicit bound as the
-ceiling. If LLL recombination still fails at the bound, report the core as
-irreducible under that bound.
+ceiling. If LLL recombination still fails at the bound, report fast-path
+failure so callers can use the exhaustive fallback.
 -/
-private def adaptiveCoreFactors
-    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Nat → Nat → Array ZPoly
-  | _k, 0 => #[core]
+private def adaptiveCoreFactors?
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Nat → Nat → Option (Array ZPoly)
+  | _k, 0 => none
   | k, fuel + 1 =>
       let liftData := henselLiftData core k primeData
       match recombineLLL? core liftData with
-      | some factors => factors
+      | some factors => some factors
       | none =>
           if k ≥ B then
-            #[core]
+            none
           else
-            adaptiveCoreFactors core B primeData
+            adaptiveCoreFactors? core B primeData
               (nextHenselPrecision k B) fuel
 
-/-- Factor with an explicit coefficient bound for the recombination stage. -/
-def factorWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
+private def factorSlowWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
   let normalized := normalizeForFactor f
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
     normalizedConstantFactors normalized
@@ -845,13 +844,55 @@ def factorWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
       if B = 0 then
         #[normalized.squareFreeCore]
       else
-        adaptiveCoreFactors normalized.squareFreeCore B primeData
-          (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2)
+        let liftData := henselLiftData normalized.squareFreeCore B primeData
+        recombineExhaustive normalized.squareFreeCore liftData
     reassembleNormalizedFactors normalized coreFactors
 
-/-- Factor using the library's uniform executable Mignotte coefficient bound. -/
+private def factorFastWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
+  let normalized := normalizeForFactor f
+  if normalized.squareFreeCore.degree?.getD 0 = 0 then
+    some (normalizedConstantFactors normalized)
+  else
+    let primeData := choosePrimeData normalized.squareFreeCore
+    if B = 0 then
+      none
+    else
+      match adaptiveCoreFactors? normalized.squareFreeCore B primeData
+          (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2) with
+      | none => none
+      | some coreFactors =>
+          if Array.polyProduct coreFactors = normalized.squareFreeCore then
+            some (reassembleNormalizedFactors normalized coreFactors)
+          else
+            none
+
+/--
+Unconditionally-correct exhaustive integer recombination path.
+
+This is the public slow backstop for the two-tier factoring architecture. It
+uses the executable Mignotte coefficient bound as the Hensel precision and then
+enumerates subsets of lifted local factors.
+-/
+def factorSlow (f : ZPoly) : Array ZPoly :=
+  factorSlowWithBound f (ZPoly.defaultFactorCoeffBound f)
+
+/--
+Conditional fast integer recombination path.
+
+The current executable surface keeps the existing LLL recombination attempt
+behind an `Option`: callers must use the `some` result only after its
+verification succeeds, and fall back to `factorSlow` on `none`.
+-/
+def factorFast (f : ZPoly) : Option (Array ZPoly) :=
+  factorFastWithBound f (bhksBound f)
+
+/-- Factor with an explicit coefficient bound for the recombination stage. -/
+def factorWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
+  (factorFastWithBound f B).getD (factorSlowWithBound f B)
+
+/-- Factor using the fast path with exhaustive fallback. -/
 def factor (f : ZPoly) : Array ZPoly :=
-  factorWithBound f (ZPoly.defaultFactorCoeffBound f)
+  (factorFast f).getD (factorSlow f)
 
 /--
 Conditional product contract for the bounded factorization entry point.
