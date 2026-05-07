@@ -632,6 +632,189 @@ private theorem dot_rowAdd_row_at_right {n' m' : Nat}
       Matrix.dot w M[dst] + c * Matrix.dot w M[src] := by
   rw [dot_comm_int w, dot_rowAdd_row_at_left, dot_comm_int w M[dst], dot_comm_int w M[src]]
 
+/-- When the modified row index `k` lies outside the leading `t`-prefix
+(`t ≤ k.val`), the leading Gram matrix of `Matrix.rowAdd b j k c` agrees with
+that of `b`. -/
+private theorem leadingGramMatrixInt_rowAdd_outside
+    (b : Matrix Int n m) (j k : Fin n) (c : Int) (t : Nat) (ht : t ≤ n)
+    (hkt : t ≤ k.val) :
+    GramSchmidt.leadingGramMatrixInt (Matrix.rowAdd b j k c) t ht =
+      GramSchmidt.leadingGramMatrixInt b t ht := by
+  -- Prove the matrices agree row-by-row using a stronger row-level identity:
+  -- for all r : Fin n with r.val < t, the rows of `rowAdd b j k c` and `b`
+  -- agree.
+  apply Vector.ext
+  intro p hp
+  apply Vector.ext
+  intro q hq
+  have hp_ne : (GramSchmidt.liftFinLE ⟨p, hp⟩ ht).val ≠ k.val :=
+    Nat.ne_of_lt (Nat.lt_of_lt_of_le hp hkt)
+  have hq_ne : (GramSchmidt.liftFinLE ⟨q, hq⟩ ht).val ≠ k.val :=
+    Nat.ne_of_lt (Nat.lt_of_lt_of_le hq hkt)
+  have hp_eq : (Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE ⟨p, hp⟩ ht] =
+      b[GramSchmidt.liftFinLE ⟨p, hp⟩ ht] :=
+    rowAdd_row_eq_of_ne b j k (GramSchmidt.liftFinLE ⟨p, hp⟩ ht) c hp_ne
+  have hq_eq : (Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE ⟨q, hq⟩ ht] =
+      b[GramSchmidt.liftFinLE ⟨q, hq⟩ ht] :=
+    rowAdd_row_eq_of_ne b j k (GramSchmidt.liftFinLE ⟨q, hq⟩ ht) c hq_ne
+  simp only [GramSchmidt.leadingGramMatrixInt, Matrix.ofFn, Matrix.row,
+    Vector.getElem_ofFn, hp_eq, hq_eq]
+
+/-- Entry-level structural identity for the leading Gram matrix of
+`Matrix.rowAdd b j k c` when the modified row `k` lies inside the leading
+`t`-prefix. The four cases (`p = k.val ∨ p ≠ k.val` × `q = k.val ∨ q ≠ k.val`)
+are handled separately. -/
+private theorem leadingGramMatrixInt_rowAdd_entry_inside
+    (b : Matrix Int n m) (j k : Fin n) (c : Int) (t : Nat) (ht : t ≤ n)
+    (hjk : j.val < k.val) (hkt : k.val < t)
+    (p q : Fin t) :
+    (GramSchmidt.leadingGramMatrixInt (Matrix.rowAdd b j k c) t ht)[p][q] =
+      (Matrix.colAdd
+          (Matrix.rowAdd (GramSchmidt.leadingGramMatrixInt b t ht)
+            ⟨j.val, Nat.lt_trans hjk hkt⟩ ⟨k.val, hkt⟩ c)
+          ⟨j.val, Nat.lt_trans hjk hkt⟩ ⟨k.val, hkt⟩ c)[p][q] := by
+  -- Abbreviations as Fin t.
+  let jt : Fin t := ⟨j.val, Nat.lt_trans hjk hkt⟩
+  let kt : Fin t := ⟨k.val, hkt⟩
+  -- liftFinLE jt ht = j, liftFinLE kt ht = k as Fin n.
+  have hjt_lift : GramSchmidt.liftFinLE jt ht = j := Fin.ext rfl
+  have hkt_lift : GramSchmidt.liftFinLE kt ht = k := Fin.ext rfl
+  -- The Gram matrix entry as a dot product of integer rows.
+  have hM_entry : ∀ (a b' : Fin t),
+      (GramSchmidt.leadingGramMatrixInt b t ht)[a][b'] =
+        Matrix.dot (b[GramSchmidt.liftFinLE a ht]) (b[GramSchmidt.liftFinLE b' ht]) := by
+    intro a b'
+    simp [GramSchmidt.leadingGramMatrixInt, Matrix.ofFn, Matrix.row,
+      Vector.getElem_ofFn]
+  -- LHS is a dot product over `Matrix.rowAdd b j k c` rows.
+  have hLHS :
+      (GramSchmidt.leadingGramMatrixInt (Matrix.rowAdd b j k c) t ht)[p][q] =
+        Matrix.dot ((Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE p ht])
+          ((Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE q ht]) := by
+    simp [GramSchmidt.leadingGramMatrixInt, Matrix.ofFn, Matrix.row,
+      Vector.getElem_ofFn]
+  -- RHS: the colAdd-rowAdd entry as a conditional.
+  have hRHS :
+      (Matrix.colAdd
+          (Matrix.rowAdd (GramSchmidt.leadingGramMatrixInt b t ht) jt kt c) jt kt c)[p][q] =
+        if q = kt then
+          (Matrix.rowAdd (GramSchmidt.leadingGramMatrixInt b t ht) jt kt c)[p][q] +
+            c * (Matrix.rowAdd (GramSchmidt.leadingGramMatrixInt b t ht) jt kt c)[p][jt]
+        else (Matrix.rowAdd (GramSchmidt.leadingGramMatrixInt b t ht) jt kt c)[p][q] := by
+    simp [Matrix.colAdd, Matrix.ofFn, Vector.getElem_ofFn]
+  rw [hLHS, hRHS]
+  -- Case split on `q = kt` and `p = kt`.
+  by_cases hqk : q = kt
+  · -- q = kt branch
+    rw [if_pos hqk]
+    rw [rowAdd_get_rect (GramSchmidt.leadingGramMatrixInt b t ht) jt kt p c q,
+        rowAdd_get_rect (GramSchmidt.leadingGramMatrixInt b t ht) jt kt p c jt]
+    -- The `b[·]` rewrites for `liftFinLE jt ht` and `liftFinLE kt ht`
+    -- give `b[j]` and `b[k]` respectively. These survive even when direct
+    -- `rw` fails on motive: we rewrite the matrix row indexings via
+    -- `congrArg b.get` once and reuse.
+    have hbjt_lift : b[GramSchmidt.liftFinLE jt ht] = b[j] :=
+      congrArg b.get hjt_lift
+    have hbkt_lift : b[GramSchmidt.liftFinLE kt ht] = b[k] :=
+      congrArg b.get hkt_lift
+    by_cases hpk : p = kt
+    · -- p = kt, q = kt
+      have hpn_k : GramSchmidt.liftFinLE p ht = k :=
+        Fin.ext (Fin.val_eq_of_eq hpk : p.val = kt.val)
+      have hqn_k : GramSchmidt.liftFinLE q ht = k :=
+        Fin.ext (Fin.val_eq_of_eq hqk : q.val = kt.val)
+      have hrowAdd_p :
+          (Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE p ht] =
+            (Matrix.rowAdd b j k c)[k] :=
+        congrArg (Matrix.rowAdd b j k c).get hpn_k
+      have hrowAdd_q :
+          (Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE q ht] =
+            (Matrix.rowAdd b j k c)[k] :=
+        congrArg (Matrix.rowAdd b j k c).get hqn_k
+      rw [hrowAdd_p, hrowAdd_q]
+      rw [dot_rowAdd_row_at_left b j k c ((Matrix.rowAdd b j k c)[k])]
+      have hrec_k :
+          Matrix.dot b[k] ((Matrix.rowAdd b j k c)[k]) =
+            Matrix.dot b[k] b[k] + c * Matrix.dot b[k] b[j] :=
+        dot_rowAdd_row_at_right b j k c b[k]
+      have hrec_j :
+          Matrix.dot b[j] ((Matrix.rowAdd b j k c)[k]) =
+            Matrix.dot b[j] b[k] + c * Matrix.dot b[j] b[j] :=
+        dot_rowAdd_row_at_right b j k c b[j]
+      rw [hrec_k, hrec_j]
+      simp only [if_pos hpk]
+      rw [hM_entry kt q, hM_entry jt q, hM_entry kt jt, hM_entry jt jt]
+      have hb_q : b[GramSchmidt.liftFinLE q ht] = b[k] :=
+        congrArg b.get hqn_k
+      rw [hbjt_lift, hbkt_lift, hb_q]
+      have hsym : Matrix.dot b[j] b[k] = Matrix.dot b[k] b[j] := dot_comm_int _ _
+      rw [hsym]
+    · -- p ≠ kt, q = kt
+      have hpn_ne : (GramSchmidt.liftFinLE p ht).val ≠ k.val :=
+        fun h => hpk (Fin.ext h)
+      have hqn_k : GramSchmidt.liftFinLE q ht = k :=
+        Fin.ext (Fin.val_eq_of_eq hqk : q.val = kt.val)
+      have hrowAdd_q :
+          (Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE q ht] =
+            (Matrix.rowAdd b j k c)[k] :=
+        congrArg (Matrix.rowAdd b j k c).get hqn_k
+      have hb_q : b[GramSchmidt.liftFinLE q ht] = b[k] :=
+        congrArg b.get hqn_k
+      rw [hrowAdd_q]
+      rw [rowAdd_row_eq_of_ne b j k (GramSchmidt.liftFinLE p ht) c hpn_ne]
+      rw [dot_rowAdd_row_at_right b j k c (b[GramSchmidt.liftFinLE p ht])]
+      simp only [if_neg hpk]
+      rw [hM_entry p q, hM_entry p jt]
+      rw [hbjt_lift, hb_q]
+  · -- q ≠ kt branch
+    rw [if_neg hqk]
+    have hqn_ne : (GramSchmidt.liftFinLE q ht).val ≠ k.val :=
+      fun h => hqk (Fin.ext h)
+    rw [rowAdd_get_rect (GramSchmidt.leadingGramMatrixInt b t ht) jt kt p c q]
+    rw [rowAdd_row_eq_of_ne b j k (GramSchmidt.liftFinLE q ht) c hqn_ne]
+    have hbjt_lift : b[GramSchmidt.liftFinLE jt ht] = b[j] :=
+      congrArg b.get hjt_lift
+    have hbkt_lift : b[GramSchmidt.liftFinLE kt ht] = b[k] :=
+      congrArg b.get hkt_lift
+    by_cases hpk : p = kt
+    · -- p = kt, q ≠ kt
+      have hpn_k : GramSchmidt.liftFinLE p ht = k :=
+        Fin.ext (Fin.val_eq_of_eq hpk : p.val = kt.val)
+      have hrowAdd_p :
+          (Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE p ht] =
+            (Matrix.rowAdd b j k c)[k] :=
+        congrArg (Matrix.rowAdd b j k c).get hpn_k
+      rw [hrowAdd_p]
+      rw [dot_rowAdd_row_at_left b j k c (b[GramSchmidt.liftFinLE q ht])]
+      simp only [if_pos hpk]
+      rw [hM_entry kt q, hM_entry jt q]
+      rw [hbjt_lift, hbkt_lift]
+    · -- p ≠ kt, q ≠ kt
+      have hpn_ne : (GramSchmidt.liftFinLE p ht).val ≠ k.val :=
+        fun h => hpk (Fin.ext h)
+      rw [rowAdd_row_eq_of_ne b j k (GramSchmidt.liftFinLE p ht) c hpn_ne]
+      simp only [if_neg hpk]
+      rw [hM_entry p q]
+
+/-- When the modified row index `k` lies inside the leading `t`-prefix
+(`k.val < t`), the leading Gram matrix of `Matrix.rowAdd b j k c` agrees with
+the row-and-column-add of the original leading Gram matrix at the lifted
+`Fin t` indices `jt`, `kt`. -/
+private theorem leadingGramMatrixInt_rowAdd_inside
+    (b : Matrix Int n m) (j k : Fin n) (c : Int) (t : Nat) (ht : t ≤ n)
+    (hjk : j.val < k.val) (hkt : k.val < t) :
+    GramSchmidt.leadingGramMatrixInt (Matrix.rowAdd b j k c) t ht =
+      Matrix.colAdd
+        (Matrix.rowAdd (GramSchmidt.leadingGramMatrixInt b t ht)
+          ⟨j.val, Nat.lt_trans hjk hkt⟩ ⟨k.val, hkt⟩ c)
+        ⟨j.val, Nat.lt_trans hjk hkt⟩ ⟨k.val, hkt⟩ c := by
+  apply Vector.ext
+  intro p hp
+  apply Vector.ext
+  intro q hq
+  exact leadingGramMatrixInt_rowAdd_entry_inside b j k c t ht hjk hkt
+    ⟨p, hp⟩ ⟨q, hq⟩
+
 end GramSchmidt.Int
 
 namespace GramSchmidt.Rat
