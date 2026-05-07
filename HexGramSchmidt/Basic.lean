@@ -1208,6 +1208,30 @@ private theorem basisRows_set_rowAdd
       List.take_of_length_le (Nat.le_of_eq hlen2)] at h
   exact h
 
+/-- `basisMatrix` is invariant under the executable row-add operation
+`Matrix.rowAdd b src dst c` whenever `src.val < dst.val`. Wraps
+`basisRows_set_rowAdd` through the `toList` representation. -/
+private theorem basisMatrix_rowAdd
+    (b : Matrix Rat n m) (src dst : Fin n) (c : Rat) (h : src.val < dst.val) :
+    basisMatrix (Matrix.rowAdd b src dst c) = basisMatrix b := by
+  unfold basisMatrix
+  have hsrc_toList : b.toList[src.val]! = b[src] := by simp
+  have hdst_toList : b.toList[dst.val]! = b[dst] := by simp
+  have htoList :
+      (Matrix.rowAdd b src dst c).toList =
+        b.toList.set dst.val
+          (b.toList[dst.val]! + c • b.toList[src.val]!) := by
+    show (b.set dst (Vector.ofFn fun k => b[dst][k] + c * b[src][k])).toList = _
+    rw [Vector.toList_set]
+    congr 1
+    rw [hsrc_toList, hdst_toList]
+    apply Vector.ext
+    intro idx hidx
+    rw [Vector.getElem_ofFn, Vector.getElem_add, Vector.getElem_smul]
+    rfl
+  rw [htoList, basisRows_set_rowAdd b.toList src.val dst.val c h
+    (by rw [Vector.length_toList]; exact dst.isLt)]
+
 /-- The "by-row" prefix sum: a row-indexed variant of `prefixCombination` that
 takes the projection row directly rather than reading it through a coefficient
 matrix. Defined via `foldl` over `List.finRange i` so the conversion to
