@@ -24,6 +24,20 @@ def leadingGramMatrixInt (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) : Matrix 
   Matrix.ofFn fun i j =>
     Matrix.dot (b.row (liftFinLE i hk)) (b.row (liftFinLE j hk))
 
+/-- The Gram-Schmidt leading Gram matrix is the leading prefix of the full
+Gram matrix. This is the shape bridge between the public `gramDet` API and
+the one-pass `gramDetVec` implementation. -/
+theorem leadingGramMatrixInt_eq_leadingPrefix_gram
+    (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
+    leadingGramMatrixInt b k hk =
+      Matrix.leadingPrefix (Matrix.gramMatrix b) k hk := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  simp [leadingGramMatrixInt, Matrix.leadingPrefix, Matrix.gramMatrix, Matrix.dot, Matrix.ofFn,
+    liftFinLE]
+
 /-- Leading principal Gram matrix of the first `k` rows of a rational basis. -/
 def leadingGramMatrixRat (b : Matrix Rat n m) (k : Nat) (hk : k ≤ n) : Matrix Rat k k :=
   Matrix.ofFn fun i j =>
@@ -343,12 +357,40 @@ def scaledCoeffs (b : Matrix Int n m) : Matrix Int n n :=
 
 /-- The no-pivot Bareiss pass over the full Gram matrix records the same
 leading-prefix determinant as the public `gramDet` API at every vector slot. -/
+private theorem gramDetVecEntry_eq_leadingPrefix_bareiss
+    (b : Matrix Int n m) (r : Nat) (hr : r < n) :
+    gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
+        ⟨r + 1, Nat.succ_lt_succ hr⟩ =
+      (Matrix.bareiss
+        (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+          (Nat.succ_le_of_lt hr))).toNat := by
+  sorry
+
+/-- The no-pivot Bareiss pass over the full Gram matrix records the same
+leading-prefix determinant as the public `gramDet` API at every vector slot. -/
 private theorem gramDetVecEntry_eq_gramDet
     (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
     gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
         ⟨k, Nat.lt_succ_of_le hk⟩ =
       gramDet b k hk := by
-  sorry
+  cases k with
+  | zero =>
+      rw [show hk = Nat.zero_le n from Subsingleton.elim _ _]
+      rfl
+  | succ r =>
+      have hr : r < n := Nat.lt_of_succ_le hk
+      calc
+        gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
+            ⟨r + 1, Nat.lt_succ_of_le hk⟩ =
+          gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
+            ⟨r + 1, Nat.succ_lt_succ hr⟩ := by
+              rfl
+        _ = (Matrix.bareiss
+              (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+                (Nat.succ_le_of_lt hr))).toNat :=
+              gramDetVecEntry_eq_leadingPrefix_bareiss (b := b) r hr
+        _ = gramDet b (r + 1) hk := by
+              simp [gramDet, GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram]
 
 /-- The fraction-free scaled-coefficient loop computes the Cramer/Bareiss
 integer equal to `d[j+1] * μ[i,j]` below the diagonal. -/
