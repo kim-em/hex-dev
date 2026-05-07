@@ -163,6 +163,20 @@ discriminant cores above.
   the `HexRoots`-side gcd-based decision procedure with Mathlib's
   `separable_iff_squarefree`.
 - `HexRootsMathlib/MahlerPrec.lean` — item 4 above.
+- `HexRootsMathlib/Refine.lean` — correctness of the
+  `refineTo`/`refine` threading pattern from `hex-roots.md`:
+  ```lean
+  theorem SimpleRoot.refine_eq (s : SimpleRoot p) (target : Nat) :
+      s.refine target = s
+  -- Follows from `Quotient.sound` plus `refineTo_respects_equiv`.
+
+  theorem SimpleRoot.out_refine_eq (s : SimpleRoot p) (t prec : Nat) :
+      (s.refine t).out prec = s.out prec
+  -- Follows from `refine_eq` by congruence.
+  ```
+  These theorems make the threading pattern transparent at the
+  proof level: callers can substitute `s.refine target` for `s`
+  freely, knowing all downstream observations agree.
 - `HexRootsMathlib/Cauchy.lean` —
   `DyadicRootCluster.cauchy` correctness: the cluster contains all
   `Polynomial.roots p` and the strong `T_k` witness holds at radii
@@ -219,6 +233,7 @@ Bridge (depends on hex-roots data structures):
   HexRootsMathlib/Geometry.lean
   HexRootsMathlib/HasOnlySimpleRoots.lean
   HexRootsMathlib/MahlerPrec.lean
+  HexRootsMathlib/Refine.lean
   HexRootsMathlib/Cauchy.lean
   HexRootsMathlib/Newton.lean
   HexRootsMathlib/Bisection.lean

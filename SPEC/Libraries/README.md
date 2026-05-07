@@ -9,6 +9,8 @@
 - **hex-gf2** — packed bitwise polynomials over `F_2` (XOR + CLMUL), `GF(2^n)` elements
 - **hex-poly-z** — polynomials over `Z`, content/primitive part, Mignotte bound
 - **hex-roots** — certified complex root isolation for `Z[x]` via dyadic squares + Pellet test + speculative Newton
+- **hex-resultant** — polynomial resultant + discriminant via subresultant pseudo-remainder sequence
+- **hex-number-field** — `NumberField p x` (`ℚ(α)` element indexed by a complex root) and canonical `AlgebraicNumber` (any `α ∈ ℂ_alg`)
 - **hex-berlekamp** — Berlekamp factoring and Rabin irreducibility test over `F_p`
 - **hex-hensel** — Hensel lifting from `mod p` to `mod p^k`
 - **hex-lll** — LLL lattice basis reduction
@@ -27,6 +29,8 @@ proving correspondence with Mathlib's mathematical definitions):
 - **hex-gram-schmidt-mathlib** — `GramSchmidt.Int.basis` = Mathlib's `gramSchmidt`
 - **hex-poly-z-mathlib** — `DensePoly Int ≃+* Polynomial ℤ`, Mignotte bound (via Mathlib's Mahler measure)
 - **hex-roots-mathlib** — Pellet on circles (built from `circleIntegral`) + Mahler/Mignotte separation bound; correctness of refinement and `isolate`
+- **hex-resultant-mathlib** — "subresultant zero ↔ common root" property (scope-limited; full bridge to `Polynomial.resultant` deferred)
+- **hex-number-field-mathlib** — `NumberField p x ≃+* AdjoinRoot p`, bijection of `AlgebraicNumber` with `ℂ_alg`, arithmetic correctness
 - **hex-berlekamp-mathlib** — `Decidable (Irreducible f)` for `Polynomial (ZMod p)`
 - **hex-hensel-mathlib** — Hensel correctness, uniqueness, `coprime_mod_p_lifts`
 - **hex-lll-mathlib** — lattice = `Submodule ℤ`, short vector bound
@@ -47,6 +51,8 @@ Each library with its immediate dependencies:
 - **hex-poly-fp** — hex-poly, hex-mod-arith
 - **hex-poly-z** — hex-poly
 - **hex-roots** — hex-poly-z
+- **hex-resultant** — hex-poly
+- **hex-number-field** — hex-poly-z, hex-roots, hex-resultant, hex-berlekamp-zassenhaus
 - **hex-berlekamp** — hex-poly-fp, hex-matrix, hex-gfq-ring
 - **hex-hensel** — hex-poly-fp, hex-poly-z
 - **hex-conway** — hex-berlekamp
@@ -62,6 +68,8 @@ Mathlib bridge libraries (each also depends on Mathlib):
 - **hex-poly-mathlib** — hex-poly
 - **hex-poly-z-mathlib** — hex-poly-z, hex-poly-mathlib
 - **hex-roots-mathlib** — hex-roots, hex-poly-z-mathlib
+- **hex-resultant-mathlib** — hex-resultant, hex-poly-mathlib
+- **hex-number-field-mathlib** — hex-number-field, hex-resultant-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-roots-mathlib, hex-poly-z-mathlib
 - **hex-matrix-mathlib** — hex-matrix
 - **hex-gram-schmidt-mathlib** — hex-gram-schmidt
 - **hex-lll-mathlib** — hex-lll
@@ -126,6 +134,10 @@ hex-gfq-field   hex-conway   hex-gf2
 - [hex-poly-z-mathlib.md](hex-poly-z-mathlib.md) — Mignotte bound proof via Mathlib's Mahler measure
 - [hex-roots.md](hex-roots.md) — certified complex root isolation for `Z[x]`
 - [hex-roots-mathlib.md](hex-roots-mathlib.md) — Pellet on circles, Mahler/Mignotte separation bound, refinement and `isolate` correctness
+- [hex-resultant.md](hex-resultant.md) — polynomial resultant + discriminant via subresultant pseudo-remainder sequence
+- [hex-resultant-mathlib.md](hex-resultant-mathlib.md) — "subresultant zero ↔ common root"; discriminant non-vanishing under squarefreeness
+- [hex-number-field.md](hex-number-field.md) — `NumberField p x` and canonical `AlgebraicNumber` for arbitrary `α ∈ ℂ_alg`
+- [hex-number-field-mathlib.md](hex-number-field-mathlib.md) — `NumberField ≃+* AdjoinRoot`, bijection of `AlgebraicNumber` with `ℂ_alg`, arithmetic correctness
 - [hex-berlekamp.md](hex-berlekamp.md) — Berlekamp factoring and Rabin irreducibility test
 - [hex-berlekamp-mathlib.md](hex-berlekamp-mathlib.md) — Berlekamp/Rabin correctness proofs via Euclidean domain theory
 - [hex-hensel.md](hex-hensel.md) — Hensel lifting algorithms
