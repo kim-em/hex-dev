@@ -88,17 +88,17 @@ libraries:
   HexGfq:
     deps: [HexGfqField, HexConway, HexGF2]
     mathlib: false
-    done_through: 3
+    done_through: 4
   HexBerlekampZassenhaus:
     deps: [HexBerlekamp, HexHensel, HexLLL]
     mathlib: false
-    done_through: 3
+    done_through: 0
 
   # ---------- Mathlib bridges ----------
   HexPolyMathlib:
     deps: [HexPoly]
     mathlib: true
-    done_through: 3
+    done_through: 4
   HexMatrixMathlib:
     deps: [HexMatrix]
     mathlib: true
@@ -118,7 +118,7 @@ libraries:
   HexLLLMathlib:
     deps: [HexLLL, HexMatrixMathlib]
     mathlib: true
-    done_through: 2
+    done_through: 3
   HexBerlekampMathlib:
     deps: [HexBerlekamp, HexPolyMathlib, HexModArithMathlib]
     mathlib: true

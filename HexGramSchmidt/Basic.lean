@@ -1115,6 +1115,123 @@ private theorem reduceAgainstBasis_basisRows_take_source_eq_zero
     omega
   · exact reduceAgainstBasis_zero_left _
 
+/-- For `j < k < rows.length`, the first `i` basis rows produced by Gram-Schmidt
+on `rows.set k (rows[k]! + c • rows[j]!)` agree with the first `i` basis rows
+produced on `rows`. Proved jointly with the pointwise equality at index `i` by
+ordinary induction: the inductive step rewrites `(basisRows _)[i]!` via
+`basisRows_get!_eq_reduceAgainstBasis_take` against the equal prefix from the
+inductive hypothesis, then either uses the unchanged-row case (`i ≠ k`) or
+linearity plus `reduceAgainstBasis_basisRows_take_source_eq_zero` (`i = k`). -/
+private theorem basisRows_take_set_rowAdd
+    (rows : List (Vector Rat m)) (j k : Nat) (c : Rat)
+    (hjk : j < k) (hk : k < rows.length) (i : Nat) (hi : i ≤ rows.length) :
+    (basisRows (rows.set k (rows[k]! + c • rows[j]!))).take i =
+      (basisRows rows).take i := by
+  induction i with
+  | zero => simp
+  | succ i ih =>
+    have hi' : i ≤ rows.length := Nat.le_of_succ_le hi
+    have ihtake := ih hi'
+    have hi_lt : i < rows.length := hi
+    have hrows'_len :
+        (rows.set k (rows[k]! + c • rows[j]!)).length = rows.length := by simp
+    have hi_lt_rows' : i < (rows.set k (rows[k]! + c • rows[j]!)).length := by
+      rw [hrows'_len]; exact hi_lt
+    have hb1_len :
+        (basisRows (rows.set k (rows[k]! + c • rows[j]!))).length = rows.length := by
+      rw [basisRows_length, hrows'_len]
+    have hb2_len : (basisRows rows).length = rows.length := basisRows_length rows
+    have hi_lt_b1 :
+        i < (basisRows (rows.set k (rows[k]! + c • rows[j]!))).length := by
+      rw [hb1_len]; exact hi_lt
+    have hi_lt_b2 : i < (basisRows rows).length := by rw [hb2_len]; exact hi_lt
+    rw [List.take_succ_eq_append_getElem hi_lt_b1,
+        List.take_succ_eq_append_getElem hi_lt_b2,
+        ihtake]
+    congr 1
+    -- Reduce `[(basisRows rows')[i]] = [(basisRows rows)[i]]` to `[i]!`-form.
+    have hge1 :
+        (basisRows (rows.set k (rows[k]! + c • rows[j]!)))[i] =
+          (basisRows (rows.set k (rows[k]! + c • rows[j]!)))[i]! :=
+      (getElem!_pos _ i hi_lt_b1).symm
+    have hge2 : (basisRows rows)[i] = (basisRows rows)[i]! :=
+      (getElem!_pos _ i hi_lt_b2).symm
+    rw [hge1, hge2]
+    congr 1
+    rw [basisRows_get!_eq_reduceAgainstBasis_take
+          (rows.set k (rows[k]! + c • rows[j]!)) i hi_lt_rows',
+        basisRows_get!_eq_reduceAgainstBasis_take rows i hi_lt,
+        ihtake]
+    by_cases hik : i = k
+    · -- Modified row: i = k.
+      have hrows'_get_eq :
+          (rows.set k (rows[k]! + c • rows[j]!))[i]! = rows[k]! + c • rows[j]! := by
+        rw [hik]
+        simp [List.getElem!_eq_getElem?_getD, List.getElem?_set_self hk]
+      rw [hrows'_get_eq, reduceAgainstBasis_add_left,
+          reduceAgainstBasis_smul_left]
+      have hsrc :
+          reduceAgainstBasis ((basisRows rows).take i).reverse rows[j]! = 0 := by
+        rw [hik]
+        exact reduceAgainstBasis_basisRows_take_source_eq_zero rows j k hjk
+            (Nat.le_of_lt hk)
+      rw [hsrc]
+      have hrhs_get :
+          reduceAgainstBasis ((basisRows rows).take i).reverse rows[i]! =
+            reduceAgainstBasis ((basisRows rows).take i).reverse rows[k]! := by
+        rw [hik]
+      rw [hrhs_get, smul_zero_vec]
+      apply Vector.ext
+      intro idx hidx
+      rw [Vector.getElem_add, Vector.getElem_zero]
+      grind
+    · -- Unchanged row: i ≠ k.
+      have hne : k ≠ i := Ne.symm hik
+      have hrows'_get_eq :
+          (rows.set k (rows[k]! + c • rows[j]!))[i]! = rows[i]! := by
+        simp [List.getElem!_eq_getElem?_getD, List.getElem?_set_ne hne]
+      rw [hrows'_get_eq]
+
+/-- `basisRows` is invariant under replacing input row `k` by
+`rows[k]! + c • rows[j]!` for `j < k < rows.length`. -/
+private theorem basisRows_set_rowAdd
+    (rows : List (Vector Rat m)) (j k : Nat) (c : Rat)
+    (hjk : j < k) (hk : k < rows.length) :
+    basisRows (rows.set k (rows[k]! + c • rows[j]!)) = basisRows rows := by
+  have h :=
+    basisRows_take_set_rowAdd rows j k c hjk hk rows.length (Nat.le_refl _)
+  have hlen1 :
+      (basisRows (rows.set k (rows[k]! + c • rows[j]!))).length = rows.length := by
+    rw [basisRows_length, List.length_set]
+  have hlen2 : (basisRows rows).length = rows.length := basisRows_length rows
+  rw [List.take_of_length_le (Nat.le_of_eq hlen1),
+      List.take_of_length_le (Nat.le_of_eq hlen2)] at h
+  exact h
+
+/-- `basisMatrix` is invariant under the executable row-add operation
+`Matrix.rowAdd b src dst c` whenever `src.val < dst.val`. Wraps
+`basisRows_set_rowAdd` through the `toList` representation. -/
+private theorem basisMatrix_rowAdd
+    (b : Matrix Rat n m) (src dst : Fin n) (c : Rat) (h : src.val < dst.val) :
+    basisMatrix (Matrix.rowAdd b src dst c) = basisMatrix b := by
+  unfold basisMatrix
+  have hsrc_toList : b.toList[src.val]! = b[src] := by simp
+  have hdst_toList : b.toList[dst.val]! = b[dst] := by simp
+  have htoList :
+      (Matrix.rowAdd b src dst c).toList =
+        b.toList.set dst.val
+          (b.toList[dst.val]! + c • b.toList[src.val]!) := by
+    show (b.set dst (Vector.ofFn fun k => b[dst][k] + c * b[src][k])).toList = _
+    rw [Vector.toList_set]
+    congr 1
+    rw [hsrc_toList, hdst_toList]
+    apply Vector.ext
+    intro idx hidx
+    rw [Vector.getElem_ofFn, Vector.getElem_add, Vector.getElem_smul]
+    rfl
+  rw [htoList, basisRows_set_rowAdd b.toList src.val dst.val c h
+    (by rw [Vector.length_toList]; exact dst.isLt)]
+
 /-- The "by-row" prefix sum: a row-indexed variant of `prefixCombination` that
 takes the projection row directly rather than reading it through a coefficient
 matrix. Defined via `foldl` over `List.finRange i` so the conversion to

@@ -1,4 +1,4 @@
-import HexMatrixMathlib.Basic
+import HexMatrixMathlib.Determinant
 import LeanBench
 
 /-!
@@ -6,8 +6,8 @@ Benchmark registrations for the `HexMatrixMathlib` dense-matrix bridge.
 
 This Phase 4 slice measures the representation conversion surfaces between the
 executable `Hex.Matrix` representation and Mathlib's function-based `Matrix`
-representation. Determinant, row-operation, rank, span, and nullspace bridge
-benchmarks are left to later Phase 4 slices.
+representation, plus the determinant bridge theorem surface. Row-operation,
+rank, span, and nullspace bridge benchmarks are left to later Phase 4 slices.
 
 Scientific registrations:
 
@@ -17,6 +17,16 @@ Scientific registrations:
   dense matrix and checksum its entries, `O(n^2)`.
 * `runRoundTripChecksum`: perform both dense and Mathlib conversion round trips
   over generated square integer matrices, `O(n^2)`.
+* `runHexDetBridge`: convert a generated Mathlib matrix to `Hex.Matrix` and
+  compute `Hex.Matrix.det`, using the Leibniz determinant model `O(n * n!)`.
+* `runMathlibDetBridge`: convert the same generated dense matrix through
+  `matrixEquiv` and compute `Matrix.det`, using the same textbook Leibniz
+  determinant model.
+
+Compare groups:
+
+* `compare runHexDetBridge runMathlibDetBridge` checks the determinant bridge on
+  the shared small-domain integer fixture schedule.
 -/
 
 namespace HexMatrixMathlib.MatrixBench
@@ -32,6 +42,12 @@ structure RoundTripInput where
   n : Nat
   denseEntries : Array Int
   mathlibEntries : Array Int
+  deriving Repr, BEq, Hashable
+
+/-- Flattened benchmark input for determinant bridge checks. -/
+structure DetInput where
+  n : Nat
+  entries : Array Int
   deriving Repr, BEq, Hashable
 
 /-- Deterministic mixing over machine words for compact benchmark observables. -/
@@ -98,6 +114,11 @@ def prepRoundTripInput (n : Nat) : RoundTripInput :=
     denseEntries := flatMatrix n 131
     mathlibEntries := flatMatrix n 173 }
 
+/-- Per-parameter determinant fixture shared by Hex and Mathlib determinant paths. -/
+def prepDetInput (n : Nat) : DetInput :=
+  { n := n
+    entries := flatMatrix n 211 }
+
 /-- Benchmark target: convert one dense matrix and checksum Mathlib entries. -/
 def runMatrixEquivChecksum (input : MatrixInput) : UInt64 :=
   let dense : Hex.Matrix Int input.n input.n := hexMatrixOfFlat input.n input.entries
@@ -118,6 +139,27 @@ def runRoundTripChecksum (input : RoundTripInput) : UInt64 :=
   let denseRoundTrip := matrixEquiv.symm (matrixEquiv dense)
   let mathlibRoundTrip := matrixEquiv (matrixEquiv.symm mathlib)
   mixWord (checksumHex denseRoundTrip) (checksumMathlib mathlibRoundTrip)
+
+/-- Benchmark target: convert from Mathlib representation and compute Hex's determinant. -/
+def runHexDetBridge (input : DetInput) : Int :=
+  let mathlib : Matrix (Fin input.n) (Fin input.n) Int :=
+    mathlibMatrixOfFlat input.n input.entries
+  let dense : Hex.Matrix Int input.n input.n := matrixEquiv.symm mathlib
+  Hex.Matrix.det dense
+
+/-- Benchmark target: convert from dense representation and compute Mathlib's determinant. -/
+def runMathlibDetBridge (input : DetInput) : Int :=
+  let dense : Hex.Matrix Int input.n input.n := hexMatrixOfFlat input.n input.entries
+  Matrix.det (matrixEquiv dense)
+
+/-- Textbook Leibniz determinant operation-count model, `n!`. -/
+def determinantFactorialComplexity : Nat → Nat
+  | 0 => 1
+  | n + 1 => (n + 1) * determinantFactorialComplexity n
+
+/-- Textbook determinant bridge model for the Leibniz sum, `O(n * n!)`. -/
+def determinantBridgeComplexity (n : Nat) : Nat :=
+  n * determinantFactorialComplexity n
 
 /- Cost model: `matrixEquiv` exposes each dense matrix entry through a function
 view. The checksum forces every entry of the generated `n x n` matrix once. -/
@@ -155,6 +197,36 @@ setup_benchmark runRoundTripChecksum n => n * n
     paramSchedule := .custom #[128, 256, 384, 512]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- Cost model: `Hex.Matrix.det` uses the Leibniz formula. The bridge conversion
+is quadratic, dominated on the shared comparison domain by the `n!` terms, each
+touching `n` entries. -/
+setup_benchmark runHexDetBridge n => determinantBridgeComplexity n
+  with prep := prepDetInput
+  where {
+    paramFloor := 3
+    paramCeiling := 7
+    paramSchedule := .custom #[3, 4, 5, 6, 7]
+    maxSecondsPerCall := 1.5
+    targetInnerNanos := 800000000
+    verdictWarmupFraction := 0.5
+    signalFloorMultiplier := 1.0
+  }
+
+/- Cost model: Mathlib's determinant is exercised through the same Leibniz
+determinant model on the same fixture schedule; `matrixEquiv` conversion is
+quadratic and does not dominate the determinant work. -/
+setup_benchmark runMathlibDetBridge n => determinantBridgeComplexity n
+  with prep := prepDetInput
+  where {
+    paramFloor := 3
+    paramCeiling := 7
+    paramSchedule := .custom #[3, 4, 5, 6, 7]
+    maxSecondsPerCall := 1.5
+    targetInnerNanos := 800000000
+    verdictWarmupFraction := 0.5
     signalFloorMultiplier := 1.0
   }
 

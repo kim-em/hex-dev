@@ -21,6 +21,52 @@ namespace Matrix
 def rowSwap (M : Matrix R n m) (i j : Fin n) : Matrix R n m :=
   (M.set i M[j]).set j M[i]
 
+/-- Read an entry of `rowSwap M i j` by cases on the row index: row `j`
+returns the original row `i`, row `i` returns the original row `j`, and any
+other row is unchanged. -/
+theorem rowSwap_getElem (M : Matrix R n m) (i j r : Fin n) (k : Fin m) :
+    (rowSwap M i j)[r][k] =
+      if r = j then M[i][k] else if r = i then M[j][k] else M[r][k] := by
+  by_cases hrj : r = j
+  · subst r
+    simp [rowSwap]
+  · by_cases hri : r = i
+    · subst r
+      simp [rowSwap, hrj]
+      have hval : j.val ≠ i.val := by
+        intro hval
+        exact hrj (Fin.ext hval.symm)
+      have hrow : ((M.set i M[j]).set j M[i])[i] = (M.set i M[j])[i] := by
+        exact Vector.getElem_set_ne (xs := M.set i M[j]) (x := M[i])
+          j.isLt i.isLt hval
+      simpa using congrArg (fun row => row[k]) hrow
+    · simp [rowSwap, hrj, hri]
+      have hir : i.val ≠ r.val := by
+        intro hval
+        exact hri (Fin.ext hval.symm)
+      have hjr : j.val ≠ r.val := by
+        intro hval
+        exact hrj (Fin.ext hval.symm)
+      have hrow₁ : (M.set i M[j])[r] = M[r] := by
+        exact Vector.getElem_set_ne (xs := M) (x := M[j]) i.isLt r.isLt hir
+      have hrow₂ : ((M.set i M[j]).set j M[i])[r] = (M.set i M[j])[r] := by
+        exact Vector.getElem_set_ne (xs := M.set i M[j]) (x := M[i])
+          j.isLt r.isLt hjr
+      exact (congrArg (fun row => row[k]) hrow₂).trans
+        (congrArg (fun row => row[k]) hrow₁)
+
+/-- Diagonal-entry corollary of `rowSwap_getElem` for square matrices: when
+`pivot ≠ k`, the `(k, k)` entry of `rowSwap M k pivot` is the original
+`(pivot, k)` entry. Used by Bareiss row-pivoted invariants to fold a row swap
+into a single matrix lookup without unfolding `Vector.set`. -/
+theorem rowSwap_diag_of_ne (M : Matrix R n n) {k pivot : Fin n}
+    (h : pivot ≠ k) :
+    (rowSwap M k pivot)[k][k] = M[pivot][k] := by
+  rw [rowSwap_getElem]
+  by_cases hkp : k = pivot
+  · exact (h hkp.symm).elim
+  · simp [hkp]
+
 /-- Scale row `i` by `c`. -/
 def rowScale [Mul R] (M : Matrix R n m) (i : Fin n) (c : R) : Matrix R n m :=
   M.set i <| Vector.ofFn fun k => c * M[i][k]

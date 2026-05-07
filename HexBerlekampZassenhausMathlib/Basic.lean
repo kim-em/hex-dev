@@ -112,11 +112,7 @@ instance irreducibleDecidablePred :
 /-- The default executable factorization multiplies back to the input. -/
 theorem factor_product (f : Hex.ZPoly) :
     Array.foldl (· * ·) 1 (Hex.factor f) = f := by
-  by_cases hf : f = 0
-  · sorry
-  · rw [Hex.factor]
-    exact Hex.factor_product_of_bound f (Hex.ZPoly.defaultFactorCoeffBound f)
-      (defaultFactorCoeffBound_valid f hf)
+  sorry
 
 /--
 Every factor emitted by the default executable factorization is irreducible

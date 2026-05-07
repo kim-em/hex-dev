@@ -181,6 +181,38 @@ theorem findPivot?_eq_zero_of_none (M : Matrix Int n n) (col : Fin n)
   apply findPivotAux_eq_zero_of_none M col start (n - start) hfind i hstart
   omega
 
+/-- A pivot returned by `findPivotAux` indexes a nonzero entry in the pivot
+column. -/
+theorem findPivotAux_some_ne_zero (M : Matrix Int n n) (col : Fin n)
+    (start fuel : Nat) {pivot : Fin n}
+    (hfind : findPivotAux M col start fuel = some pivot) :
+    M[pivot][col] ≠ 0 := by
+  induction fuel generalizing start with
+  | zero =>
+      simp [findPivotAux] at hfind
+  | succ fuel ih =>
+      by_cases hlt : start < n
+      · by_cases hzero : M[(⟨start, hlt⟩ : Fin n)][col] = 0
+        · have hzeroNat : M[start][col.val] = 0 := by
+            simpa using hzero
+          simp [findPivotAux, hlt, hzeroNat] at hfind
+          exact ih (start + 1) hfind
+        · have hzeroNat : ¬ M[start][col.val] = 0 := by
+            simpa using hzero
+          simp [findPivotAux, hlt, hzeroNat] at hfind
+          subst hfind
+          exact hzero
+      · simp [findPivotAux, hlt] at hfind
+
+/-- A pivot returned by `findPivot?` indexes a nonzero entry in the pivot
+column. Lets row-pivoted Bareiss callers read off the nonzero post-swap pivot
+without unfolding the `findPivotAux` recursion. -/
+theorem findPivot?_some_ne_zero (M : Matrix Int n n) (col : Fin n)
+    (start : Nat) {pivot : Fin n}
+    (hfind : findPivot? M col start = some pivot) :
+    M[pivot][col] ≠ 0 :=
+  findPivotAux_some_ne_zero M col start (n - start) hfind
+
 /-- Apply one Bareiss update step to the trailing submatrix strictly below and
 to the right of the current pivot. -/
 def stepMatrix (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int) :

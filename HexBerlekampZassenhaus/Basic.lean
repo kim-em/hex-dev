@@ -578,6 +578,19 @@ def henselLiftData (f : ZPoly) (B : Nat) (d : PrimeChoiceData) : LiftData :=
     k := B
     liftedFactors := ZPoly.multifactorLiftQuadratic d.p B f factors }
 
+/--
+Integer upper bound for the BHKS fast-recombination precision schedule.
+
+This is the conservative all-integer cap from the `hex-berlekamp-zassenhaus`
+SPEC: `1 + n * 4^(n^2) * (sumSquared + 1)^n * log2(sumSquared + 1)^n`, where
+`n` is the executable degree bound and `sumSquared` is the squared coefficient
+norm.
+-/
+def bhksBound (f : ZPoly) : Nat :=
+  let n := f.degree?.getD 0
+  let sumSquared := ZPoly.coeffNormSq f
+  1 + n * 4 ^ (n * n) * (sumSquared + 1) ^ n * (Nat.log2 (sumSquared + 1)) ^ n
+
 private def subsetSplits : List ZPoly → List (List ZPoly × List ZPoly)
   | [] => [([], [])]
   | factor :: factors =>
@@ -621,6 +634,9 @@ private def centeredModNat (z : Int) (m : Nat) : Int :=
 
 private def liftModulus (d : LiftData) : Nat :=
   d.p ^ d.k
+
+private def centeredLiftPoly (f : ZPoly) (m : Nat) : ZPoly :=
+  DensePoly.ofCoeffs <| f.toArray.map fun coeff => centeredModNat coeff m
 
 private structure RecombinationLattice where
   rows : Nat
@@ -740,8 +756,31 @@ then recurses on the quotient and unused local factors.
 def recombinationSearch (f : ZPoly) (localFactors : List ZPoly) : Option (List ZPoly) :=
   recombinationSearchAux f localFactors (localFactors.length + 1)
 
+private def recombinationSearchModAux
+    (target : ZPoly) (modulus : Nat) (localFactors : List ZPoly) :
+    Nat → Option (List ZPoly)
+  | 0 => none
+  | fuel + 1 =>
+      if target = 1 then
+        some []
+      else
+        firstSome (subsetSplitsWithFirst localFactors) fun split =>
+          let candidate :=
+            ZPoly.primitivePart <|
+              centeredLiftPoly (Array.polyProduct split.1.toArray) modulus
+          match exactQuotient? target candidate with
+          | none => none
+          | some quotient =>
+              match recombinationSearchModAux quotient modulus split.2 fuel with
+              | none => none
+              | some rest => some (candidate :: rest)
+
+private def recombinationSearchMod
+    (f : ZPoly) (modulus : Nat) (localFactors : List ZPoly) : Option (List ZPoly) :=
+  recombinationSearchModAux f modulus localFactors (localFactors.length + 1)
+
 private def recombineExhaustive (f : ZPoly) (d : LiftData) : Array ZPoly :=
-  match recombinationSearch f d.liftedFactors.toList with
+  match recombinationSearchMod f (liftModulus d) d.liftedFactors.toList with
   | some factors => factors.toArray
   | none => #[]
 
@@ -802,6 +841,15 @@ private def nextHenselPrecision (k B : Nat) : Nat :=
   else
     B
 
+private def factorFastCoreWithBound
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Nat → Nat → Option (Array ZPoly)
+  | _k, 0 => none
+  | k, fuel + 1 =>
+      if k ≥ B then
+        none
+      else
+        factorFastCoreWithBound core B primeData (nextHenselPrecision k B) fuel
+
 /--
 Adaptively lift and retry LLL recombination, using the explicit bound as the
 ceiling. If LLL recombination still fails at the bound, report the core as
@@ -821,24 +869,67 @@ private def adaptiveCoreFactors
             adaptiveCoreFactors core B primeData
               (nextHenselPrecision k B) fuel
 
-/-- Factor with an explicit coefficient bound for the recombination stage. -/
-def factorWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
+private def exhaustiveCoreFactorsWithBound
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Array ZPoly :=
+  if B = 0 then
+    #[core]
+  else
+    let liftData := henselLiftData core B primeData
+    let factors := recombineExhaustive core liftData
+    if factors.isEmpty then
+      #[core]
+    else
+      factors
+
+private def factorSlowWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
   let normalized := normalizeForFactor f
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
     normalizedConstantFactors normalized
   else
     let primeData := choosePrimeData normalized.squareFreeCore
     let coreFactors :=
-      if B = 0 then
-        #[normalized.squareFreeCore]
-      else
-        adaptiveCoreFactors normalized.squareFreeCore B primeData
-          (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2)
+      exhaustiveCoreFactorsWithBound normalized.squareFreeCore B primeData
     reassembleNormalizedFactors normalized coreFactors
 
-/-- Factor using the library's uniform executable Mignotte coefficient bound. -/
+/--
+Factor using the exhaustive recombination path at the default Mignotte
+coefficient bound. This is the public slow-path backstop for the two-tier BZ
+API.
+-/
+def factorSlow (f : ZPoly) : Array ZPoly :=
+  factorSlowWithBound f (ZPoly.defaultFactorCoeffBound f)
+
+private def factorFastWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
+  let normalized := normalizeForFactor f
+  if normalized.squareFreeCore.degree?.getD 0 = 0 then
+    some (normalizedConstantFactors normalized)
+  else if B = 0 then
+    none
+  else
+    let primeData := choosePrimeData normalized.squareFreeCore
+    match factorFastCoreWithBound normalized.squareFreeCore B primeData
+        (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2) with
+    | some coreFactors => some (reassembleNormalizedFactors normalized coreFactors)
+    | none => none
+
+/--
+Conservative public fast-path surface for the future van Hoeij CLD
+implementation.
+
+Until the BHKS lattice and recovery procedure replace the existing additive
+LLL internals, this function may report `none` instead of treating additive
+short-vector output as a successful fast recombination certificate.
+-/
+def factorFast (f : ZPoly) : Option (Array ZPoly) :=
+  factorFastWithBound f (bhksBound f)
+
+/-- Factor with an explicit coefficient bound for the recombination stage. -/
+def factorWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
+  (factorFastWithBound f B).getD (factorSlowWithBound f B)
+
+/-- Factor using the public fast path with exhaustive slow fallback. -/
 def factor (f : ZPoly) : Array ZPoly :=
-  factorWithBound f (ZPoly.defaultFactorCoeffBound f)
+  (factorFast f).getD (factorSlow f)
 
 /--
 Conditional product contract for the bounded factorization entry point.
