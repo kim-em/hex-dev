@@ -29,6 +29,11 @@ jobs:
         run: lake exe cache get
       - name: Verify Mathlib cache populated (hard fail on miss)
         run: bash scripts/ci/check_no_mathlib_rebuild.sh
+      - name: Configure Lean shared library path
+        run: |
+          toolchain="$(sed 's|/|--|; s|:|---|' lean-toolchain)"
+          echo "LD_LIBRARY_PATH=$HOME/.elan/toolchains/$toolchain/lib/lean:${LD_LIBRARY_PATH:-}" \
+            >> "$GITHUB_ENV"
       - name: Build hex (Mathlib must NOT rebuild from source)
         run: lake build
       - name: Bench verify (smoke gate per SPEC/benchmarking.md §CI integration)
@@ -37,6 +42,8 @@ jobs:
           lake exe hexarith_bench verify
           lake exe hexmatrix_bench list
           lake exe hexmatrix_bench verify
+          lake exe hexmatrixmathlib_bench list
+          lake exe hexmatrixmathlib_bench verify
           lake exe hexpoly_bench list
           lake exe hexpoly_bench verify
           lake exe hexpolyz_bench list
