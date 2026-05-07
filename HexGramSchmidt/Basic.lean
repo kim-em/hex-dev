@@ -1516,6 +1516,12 @@ theorem coeffs_upper (b : Matrix Rat n m)
     exact (Nat.ne_of_lt hij) (congrArg Fin.val h)
   simp [coeffs, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn, hnot_lt, hne]
 
+/-- Earlier row addition leaves the rational Gram-Schmidt basis unchanged. -/
+theorem basis_rowAdd (b : Matrix Rat n m) (src dst : Fin n) (c : Rat)
+    (h : src.val < dst.val) :
+    basis (Matrix.rowAdd b src dst c) = basis b := by
+  simpa [basis] using GramSchmidt.basisMatrix_rowAdd b src dst c h
+
 theorem basis_span (b : Matrix Rat n m) (i : Nat) (hi : i < n) :
     ∀ v : Vector Rat m,
       GramSchmidt.prefixSpan (basis b) i hi v ↔
