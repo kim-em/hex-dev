@@ -231,6 +231,122 @@ theorem kernelWitnessSplit_nontrivial
     !r.factor.isZero ∧ r.factor ≠ 1 ∧ r.factor ≠ f := by
   exact kernelWitnessSplitAux_nontrivial f witness p 0 r hsplit
 
+private theorem splitWithWitnesses?_product_spec
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (witnesses : List (FpPoly p))
+    {r : SplitResult p}
+    (h : splitWithWitnesses? f witnesses = some r) :
+    r.factor * r.cofactor = f := by
+  induction witnesses with
+  | nil => simp [splitWithWitnesses?] at h
+  | cons w ws ih =>
+    rw [splitWithWitnesses?] at h
+    cases hk : kernelWitnessSplit? f w with
+    | some r' =>
+      rw [hk] at h
+      simp only [Option.some.injEq] at h
+      subst h
+      exact kernelWitnessSplit_product_spec f w r' hk
+    | none =>
+      rw [hk] at h
+      exact ih h
+
+private theorem one_mul_poly
+    [ZMod64.PrimeModulus p]
+    (a : FpPoly p) :
+    (1 : FpPoly p) * a = a :=
+  (DensePoly.mul_comm_poly (1 : FpPoly p) a).trans (DensePoly.mul_one_right_poly a)
+
+private theorem foldl_mul_left_factor
+    [ZMod64.PrimeModulus p]
+    (z a : FpPoly p) (xs : List (FpPoly p)) :
+    xs.foldl (fun acc factor => acc * factor) (z * a)
+      = z * xs.foldl (fun acc factor => acc * factor) a := by
+  induction xs generalizing a with
+  | nil => rfl
+  | cons b bs ih =>
+    have hcong : List.foldl (fun acc factor : FpPoly p => acc * factor) ((z * a) * b) bs
+        = List.foldl (fun acc factor => acc * factor) (z * (a * b)) bs := by
+      congr 1
+      exact DensePoly.mul_assoc_poly z a b
+    have hih : List.foldl (fun acc factor : FpPoly p => acc * factor) (z * (a * b)) bs
+        = z * List.foldl (fun acc factor => acc * factor) (a * b) bs := ih (a * b)
+    show List.foldl (fun acc factor => acc * factor) (z * a * b) bs
+        = z * List.foldl (fun acc factor => acc * factor) (a * b) bs
+    exact hcong.trans hih
+
+private theorem foldl_mul_eq_mul_foldl
+    [ZMod64.PrimeModulus p]
+    (z : FpPoly p) (xs : List (FpPoly p)) :
+    xs.foldl (fun acc factor => acc * factor) z
+      = z * xs.foldl (fun acc factor => acc * factor) 1 := by
+  have h1 : xs.foldl (fun acc factor => acc * factor) z
+      = xs.foldl (fun acc factor => acc * factor) (z * 1) := by
+    congr 1
+    exact (DensePoly.mul_one_right_poly z).symm
+  exact h1.trans (foldl_mul_left_factor z 1 xs)
+
+private theorem factorProduct_cons_eq
+    [ZMod64.PrimeModulus p]
+    (x : FpPoly p) (xs : List (FpPoly p)) :
+    factorProduct (x :: xs) = x * factorProduct xs := by
+  show xs.foldl (fun acc factor => acc * factor) (1 * x)
+    = x * xs.foldl (fun acc factor => acc * factor) 1
+  rw [one_mul_poly x]
+  exact foldl_mul_eq_mul_foldl x xs
+
+private theorem factorProduct_splitFirstFactor?_eq
+    [ZMod64.PrimeModulus p]
+    (witnesses : List (FpPoly p))
+    {factors factors' : List (FpPoly p)}
+    (h : splitFirstFactor? witnesses factors = some factors') :
+    factorProduct factors' = factorProduct factors := by
+  induction factors generalizing factors' with
+  | nil => simp [splitFirstFactor?] at h
+  | cons fac rest ih =>
+    rw [splitFirstFactor?] at h
+    cases hsplit : splitWithWitnesses? fac witnesses with
+    | some r =>
+      rw [hsplit] at h
+      simp only [Option.some.injEq] at h
+      subst h
+      have hp : r.factor * r.cofactor = fac :=
+        splitWithWitnesses?_product_spec fac witnesses hsplit
+      rw [factorProduct_cons_eq r.factor, factorProduct_cons_eq r.cofactor,
+        factorProduct_cons_eq fac]
+      have hassoc : r.factor * (r.cofactor * factorProduct rest)
+          = (r.factor * r.cofactor) * factorProduct rest :=
+        (DensePoly.mul_assoc_poly r.factor r.cofactor (factorProduct rest)).symm
+      rw [hassoc, hp]
+    | none =>
+      rw [hsplit] at h
+      cases hrest : splitFirstFactor? witnesses rest with
+      | some rest' =>
+        rw [hrest] at h
+        simp only [Option.some.injEq] at h
+        subst h
+        rw [factorProduct_cons_eq fac, factorProduct_cons_eq fac]
+        rw [ih hrest]
+      | none =>
+        rw [hrest] at h
+        exact absurd h (by simp)
+
+private theorem factorProduct_berlekampFactorLoop_eq
+    [ZMod64.PrimeModulus p]
+    (witnesses : List (FpPoly p)) (fuel : Nat)
+    (factors : List (FpPoly p)) :
+    factorProduct (berlekampFactorLoop witnesses fuel factors)
+      = factorProduct factors := by
+  induction fuel generalizing factors with
+  | zero => rfl
+  | succ fuel ih =>
+    rw [berlekampFactorLoop]
+    cases hsplit : splitFirstFactor? witnesses factors with
+    | some factors' =>
+      rw [ih]
+      exact factorProduct_splitFirstFactor?_eq witnesses hsplit
+    | none => rfl
+
 /--
 The executable Berlekamp factorization preserves the input polynomial as the
 product of the returned factors for square-free monic inputs.
@@ -238,9 +354,16 @@ product of the returned factors for square-free monic inputs.
 theorem prod_berlekampFactor
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [Lean.Grind.Field (ZMod64 p)]
+    [ZMod64.PrimeModulus p]
     (_hsquareFree : DensePoly.gcd f (DensePoly.derivative f) = 1) :
     (berlekampFactor f hmonic).product = f := by
-  sorry
+  show factorProduct (berlekampFactor f hmonic).factors = f
+  rw [show (berlekampFactor f hmonic).factors
+        = berlekampFactorLoop ((fixedSpaceKernel f hmonic).toList)
+            (f.size + 1) [f] from rfl]
+  rw [factorProduct_berlekampFactorLoop_eq, factorProduct_cons_eq]
+  show f * factorProduct ([] : List (FpPoly p)) = f
+  exact DensePoly.mul_one_right_poly f
 
 end Berlekamp
 
