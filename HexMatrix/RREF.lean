@@ -162,7 +162,17 @@ theorem spanCoeffs_complete [Lean.Grind.Field R] [DecidableEq R]
 theorem spanContains_iff [Lean.Grind.Field R] [DecidableEq R]
     (E : IsEchelonForm M D) (v : Vector R m) :
     E.spanContains v = true ↔ ∃ c : Vector R n, rowCombination M c = v := by
-  sorry
+  constructor
+  · intro h
+    unfold spanContains at h
+    cases hCoeffs : E.spanCoeffs v with
+    | none =>
+        simp [hCoeffs] at h
+    | some c =>
+        exact ⟨c, E.spanCoeffs_sound v c hCoeffs⟩
+  · intro h
+    unfold spanContains
+    simpa using E.spanCoeffs_complete v h
 
 end IsEchelonForm
 
