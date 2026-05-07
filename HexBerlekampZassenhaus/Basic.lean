@@ -698,6 +698,69 @@ def cldCoeffs (f : ZPoly) (p a : Nat) (g : ZPoly) : Array Int :=
     (fun j => psiCut p a (bhksCoeffCutThreshold p f j) (quotient.coeff j))
     |>.toArray
 
+/-- Per-coordinate BHKS cut thresholds for the all-coefficients CLD lattice. -/
+def bhksCutThresholds (f : ZPoly) (p : Nat) : Array Nat :=
+  let n := f.degree?.getD 0
+  (List.range n).map (fun j => bhksCoeffCutThreshold p f j) |>.toArray
+
+/--
+Executable row-basis data for the BHKS all-coefficients CLD lattice.
+
+The basis has row and column dimension `factorCount + coeffWidth`. Its first
+`factorCount` columns are indicator coordinates, and its remaining
+`coeffWidth` columns are CLD high-bit coordinates.
+-/
+structure BhksLatticeBasis where
+  p : Nat
+  precision : Nat
+  factorCount : Nat
+  coeffWidth : Nat
+  liftedFactors : Array ZPoly
+  cutThresholds : Array Nat
+  cldRows : Array (Array Int)
+  basis : Matrix Int (factorCount + coeffWidth) (factorCount + coeffWidth)
+
+private def bhksLatticeEntry
+    (r n p a : Nat) (thresholds : Array Nat) (cldRows : Array (Array Int))
+    (i j : Fin (r + n)) : Int :=
+  if _hi : i.val < r then
+    if _hj : j.val < r then
+      if i.val = j.val then 1 else 0
+    else
+      (cldRows.getD i.val #[]).getD (j.val - r) 0
+  else if _hj : j.val < r then
+    0
+  else
+    let coord := i.val - r
+    if j.val - r = coord then
+      Int.ofNat (p ^ (a - thresholds.getD coord 0))
+    else
+      0
+
+/--
+Build the BHKS all-coefficients CLD row-basis matrix
+`[ I_r | A_tilde ; 0 | diag(p^(a-l_j)) ]`.
+
+The diagonal exponent uses natural subtraction; callers that need the exact
+BHKS hypotheses should lift to a precision `a` satisfying every `l_j ≤ a`.
+-/
+def bhksLatticeBasis (f : ZPoly) (p a : Nat) (liftedFactors : Array ZPoly) :
+    BhksLatticeBasis :=
+  let r := liftedFactors.size
+  let n := f.degree?.getD 0
+  let thresholds := bhksCutThresholds f p
+  let cldRows := liftedFactors.map (fun g => cldCoeffs f p a g)
+  let basis : Matrix Int (r + n) (r + n) :=
+    Matrix.ofFn (bhksLatticeEntry r n p a thresholds cldRows)
+  { p
+    precision := a
+    factorCount := r
+    coeffWidth := n
+    liftedFactors
+    cutThresholds := thresholds
+    cldRows
+    basis }
+
 #guard psiCut 5 4 1 3 = 1
 #guard psiCut 5 4 1 3 ≠ 3 / (5 : Int)
 
@@ -708,6 +771,27 @@ private def cldGuardG : ZPoly :=
   DensePoly.ofCoeffs #[-2, 1]
 
 #guard cldQuotientMod cldGuardF cldGuardG 5 2 = DensePoly.ofCoeffs #[22, 1]
+
+private def bhksGuardFactors : Array ZPoly :=
+  #[DensePoly.ofCoeffs #[-2, 1], DensePoly.ofCoeffs #[-3, 1]]
+
+private def bhksGuardBasis : BhksLatticeBasis :=
+  bhksLatticeBasis cldGuardF 5 2 bhksGuardFactors
+
+#guard bhksGuardBasis.factorCount = 2
+#guard bhksGuardBasis.coeffWidth = 2
+#guard bhksGuardBasis.basis[0][0] = 1
+#guard bhksGuardBasis.basis[0][1] = 0
+#guard bhksGuardBasis.basis[0][2] = (bhksGuardBasis.cldRows.getD 0 #[]).getD 0 0
+#guard bhksGuardBasis.basis[0][3] = (bhksGuardBasis.cldRows.getD 0 #[]).getD 1 0
+#guard bhksGuardBasis.basis[0][2] ≠ bhksGuardFactors[0].coeff 0
+#guard bhksGuardBasis.basis[1][0] = 0
+#guard bhksGuardBasis.basis[1][1] = 1
+#guard bhksGuardBasis.basis[2][0] = 0
+#guard bhksGuardBasis.basis[2][2] =
+  Int.ofNat (5 ^ (2 - bhksGuardBasis.cutThresholds.getD 0 0))
+#guard bhksGuardBasis.basis[3][3] =
+  Int.ofNat (5 ^ (2 - bhksGuardBasis.cutThresholds.getD 1 0))
 
 private def liftModulus (d : LiftData) : Nat :=
   d.p ^ d.k
