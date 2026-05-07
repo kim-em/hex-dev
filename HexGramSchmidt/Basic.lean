@@ -796,6 +796,442 @@ private theorem reduceAgainstBasis_basisRows_get!_succ_eq_zero
   exact reduceAgainstBasis_cons_self_eq_zero
     ((basisRows rows)[j]!) ((basisRows rows).take j).reverse
 
+/-! Linearity-of-source helpers for `subtractProjection` and
+`reduceAgainstBasis`. These let later proofs pull the reconstruction
+sum across the reduction. -/
+
+private theorem foldl_dot_add_left
+    (xs : List (Fin m)) (a b c : Vector Rat m) (accA accB : Rat) :
+    xs.foldl (fun acc i => acc + (a + b)[i] * c[i]) (accA + accB) =
+      xs.foldl (fun acc i => acc + a[i] * c[i]) accA +
+        xs.foldl (fun acc i => acc + b[i] * c[i]) accB := by
+  induction xs generalizing accA accB with
+  | nil => simp
+  | cons i xs ih =>
+      have hentry : (a + b)[i] = a[i] + b[i] := by
+        change (a + b)[i.val] = a[i.val] + b[i.val]
+        rw [Vector.getElem_add]
+      simp only [List.foldl_cons]
+      have hstart :
+          accA + accB + (a + b)[i] * c[i] =
+            (accA + a[i] * c[i]) + (accB + b[i] * c[i]) := by
+        rw [hentry]
+        grind
+      rw [hstart]
+      exact ih (accA := accA + a[i] * c[i]) (accB := accB + b[i] * c[i])
+
+private theorem dot_add_left (a b c : Vector Rat m) :
+    Matrix.dot (a + b) c = Matrix.dot a c + Matrix.dot b c := by
+  unfold Matrix.dot Hex.Vector.dotProduct
+  have hzero : (0 : Rat) + 0 = 0 := by grind
+  simpa [hzero] using
+    foldl_dot_add_left (xs := List.finRange m) (a := a) (b := b) (c := c)
+      (accA := 0) (accB := 0)
+
+private theorem foldl_dot_smul_left
+    (xs : List (Fin m)) (s : Rat) (a c : Vector Rat m) (acc : Rat) :
+    xs.foldl (fun acc i => acc + (s • a)[i] * c[i]) (s * acc) =
+      s * xs.foldl (fun acc i => acc + a[i] * c[i]) acc := by
+  induction xs generalizing acc with
+  | nil => simp
+  | cons i xs ih =>
+      have hentry : (s • a)[i] = s * a[i] := by
+        change (s • a)[i.val] = s * a[i.val]
+        rw [Vector.getElem_smul]; rfl
+      simp only [List.foldl_cons]
+      have hstart :
+          s * acc + (s • a)[i] * c[i] =
+            s * (acc + a[i] * c[i]) := by
+        rw [hentry]; grind
+      rw [hstart]
+      exact ih (acc := acc + a[i] * c[i])
+
+private theorem dot_smul_left (s : Rat) (a c : Vector Rat m) :
+    Matrix.dot (s • a) c = s * Matrix.dot a c := by
+  unfold Matrix.dot Hex.Vector.dotProduct
+  have hzero : s * (0 : Rat) = 0 := by grind
+  simpa [hzero] using
+    foldl_dot_smul_left (xs := List.finRange m) (s := s) (a := a) (c := c) (acc := 0)
+
+private theorem projectionCoeff_add_left (a b c : Vector Rat m) :
+    projectionCoeff (a + b) c = projectionCoeff a c + projectionCoeff b c := by
+  unfold projectionCoeff
+  by_cases hnorm : Matrix.dot c c = 0
+  · simp [hnorm]
+    grind
+  · simp [hnorm]
+    rw [dot_add_left]
+    grind
+
+private theorem projectionCoeff_smul_left (s : Rat) (a c : Vector Rat m) :
+    projectionCoeff (s • a) c = s * projectionCoeff a c := by
+  unfold projectionCoeff
+  by_cases hnorm : Matrix.dot c c = 0
+  · simp [hnorm]
+  · simp [hnorm]
+    rw [dot_smul_left]
+    grind
+
+private theorem subtractProjection_add_left (a b c : Vector Rat m) :
+    subtractProjection (a + b) c =
+      subtractProjection a c + subtractProjection b c := by
+  apply Vector.ext
+  intro k hk
+  unfold subtractProjection
+  have hcoeff := projectionCoeff_add_left a b c
+  have hentry_lhs :
+      ((a + b) - projectionCoeff (a + b) c • c)[k] =
+        a[k] + b[k] - projectionCoeff (a + b) c * c[k] := by
+    rw [Vector.getElem_sub, Vector.getElem_add, Vector.getElem_smul]
+    rfl
+  have hentry_rhs :
+      (a - projectionCoeff a c • c + (b - projectionCoeff b c • c))[k] =
+        a[k] - projectionCoeff a c * c[k] +
+          (b[k] - projectionCoeff b c * c[k]) := by
+    rw [Vector.getElem_add, Vector.getElem_sub, Vector.getElem_sub,
+      Vector.getElem_smul, Vector.getElem_smul]
+    rfl
+  rw [hentry_lhs, hentry_rhs, hcoeff]
+  grind
+
+private theorem subtractProjection_smul_left (s : Rat) (a c : Vector Rat m) :
+    subtractProjection (s • a) c = s • subtractProjection a c := by
+  apply Vector.ext
+  intro k hk
+  unfold subtractProjection
+  have hcoeff := projectionCoeff_smul_left s a c
+  have hentry_lhs :
+      (s • a - projectionCoeff (s • a) c • c)[k] =
+        s * a[k] - projectionCoeff (s • a) c * c[k] := by
+    rw [Vector.getElem_sub, Vector.getElem_smul, Vector.getElem_smul]
+    rfl
+  have hentry_rhs :
+      (s • (a - projectionCoeff a c • c))[k] =
+        s * (a[k] - projectionCoeff a c * c[k]) := by
+    rw [Vector.getElem_smul, Vector.getElem_sub, Vector.getElem_smul]
+    rfl
+  rw [hentry_lhs, hentry_rhs, hcoeff]
+  grind
+
+private theorem reduceAgainstBasis_add_left
+    (basisRev : List (Vector Rat m)) (a b : Vector Rat m) :
+    reduceAgainstBasis basisRev (a + b) =
+      reduceAgainstBasis basisRev a + reduceAgainstBasis basisRev b := by
+  induction basisRev generalizing a b with
+  | nil => simp [reduceAgainstBasis]
+  | cons basisRow rest ih =>
+      rw [reduceAgainstBasis]
+      simp only [List.foldl_cons]
+      rw [subtractProjection_add_left]
+      change reduceAgainstBasis rest
+          (subtractProjection a basisRow + subtractProjection b basisRow) =
+        reduceAgainstBasis rest (subtractProjection a basisRow) +
+          reduceAgainstBasis rest (subtractProjection b basisRow)
+      exact ih (a := subtractProjection a basisRow) (b := subtractProjection b basisRow)
+
+private theorem reduceAgainstBasis_smul_left
+    (basisRev : List (Vector Rat m)) (s : Rat) (a : Vector Rat m) :
+    reduceAgainstBasis basisRev (s • a) = s • reduceAgainstBasis basisRev a := by
+  induction basisRev generalizing a with
+  | nil => simp [reduceAgainstBasis]
+  | cons basisRow rest ih =>
+      rw [reduceAgainstBasis]
+      simp only [List.foldl_cons]
+      rw [subtractProjection_smul_left]
+      change reduceAgainstBasis rest (s • subtractProjection a basisRow) =
+        s • reduceAgainstBasis rest (subtractProjection a basisRow)
+      exact ih (a := subtractProjection a basisRow)
+
+private theorem reduceAgainstBasis_append
+    (l₁ l₂ : List (Vector Rat m)) (row : Vector Rat m) :
+    reduceAgainstBasis (l₁ ++ l₂) row =
+      reduceAgainstBasis l₂ (reduceAgainstBasis l₁ row) := by
+  unfold reduceAgainstBasis
+  rw [List.foldl_append]
+
+private theorem basisRows_get!_dot_eq_zero_of_list
+    (rows : List (Vector Rat m)) (i j : Nat)
+    (hi : i < rows.length) (hj : j < rows.length) (hij : i ≠ j) :
+    Matrix.dot (basisRows rows)[i]! (basisRows rows)[j]! = 0 := by
+  have hilen : i < (basisRows rows).length := by simpa [basisRows_length]
+  have hjlen : j < (basisRows rows).length := by simpa [basisRows_length]
+  have hpair : (basisRows rows).Pairwise
+      (fun x y => Matrix.dot x y = 0 ∧ Matrix.dot y x = 0) :=
+    basisRows_pairwise rows
+  have hget_i : (basisRows rows).get ⟨i, hilen⟩ = (basisRows rows)[i]! := by
+    simp [hilen]
+  have hget_j : (basisRows rows).get ⟨j, hjlen⟩ = (basisRows rows)[j]! := by
+    simp [hjlen]
+  by_cases hlt : i < j
+  · have hrel :=
+      (List.pairwise_iff_get.1 hpair) ⟨i, hilen⟩ ⟨j, hjlen⟩ (by simpa using hlt)
+    rw [← hget_i, ← hget_j]
+    exact hrel.1
+  · have hji : j < i :=
+      Nat.lt_of_le_of_ne (Nat.le_of_not_gt hlt) (fun h => hij h.symm)
+    have hrel :=
+      (List.pairwise_iff_get.1 hpair) ⟨j, hjlen⟩ ⟨i, hilen⟩ (by simpa using hji)
+    rw [← hget_i, ← hget_j]
+    exact hrel.2
+
+private theorem zero_add_vec (v : Vector Rat m) : (0 : Vector Rat m) + v = v := by
+  apply Vector.ext
+  intro k hk
+  rw [Vector.getElem_add, Vector.getElem_zero]
+  grind
+
+private theorem smul_zero_vec (s : Rat) : s • (0 : Vector Rat m) = 0 := by
+  apply Vector.ext
+  intro k hk
+  rw [Vector.getElem_smul, Vector.getElem_zero]
+  show s * (0 : Rat) = 0
+  grind
+
+/-- Reducing a generated basis row against any later prefix that contains it
+returns 0. -/
+private theorem reduceAgainstBasis_basisRows_take_get!_eq_zero
+    (rows : List (Vector Rat m)) (ℓ k : Nat)
+    (hℓk : ℓ < k) (hk : k ≤ rows.length) :
+    reduceAgainstBasis ((basisRows rows).take k).reverse
+        (basisRows rows)[ℓ]! = 0 := by
+  have hℓlen : ℓ < rows.length := Nat.lt_of_lt_of_le hℓk hk
+  have hℓbasis : ℓ < (basisRows rows).length := by simpa [basisRows_length]
+  have hkbasis : k ≤ (basisRows rows).length := by simpa [basisRows_length]
+  -- The first ℓ+1 elements of take k are exactly take (ℓ+1).
+  have htake_take :
+      ((basisRows rows).take k).take (ℓ + 1) = (basisRows rows).take (ℓ + 1) := by
+    rw [List.take_take]
+    congr 1
+    omega
+  have hsplit :
+      (basisRows rows).take k =
+        (basisRows rows).take (ℓ + 1) ++
+          ((basisRows rows).take k).drop (ℓ + 1) := by
+    rw [← htake_take]
+    exact (List.take_append_drop (ℓ + 1) ((basisRows rows).take k)).symm
+  rw [hsplit, List.reverse_append, reduceAgainstBasis_append]
+  -- Inner reduction: (basisRows rows)[ℓ]! is orthogonal to all elements in
+  -- the drop-take part (those are basis rows at indices > ℓ).
+  have hinner :
+      reduceAgainstBasis (((basisRows rows).take k).drop (ℓ + 1)).reverse
+          (basisRows rows)[ℓ]! = (basisRows rows)[ℓ]! := by
+    apply reduceAgainstBasis_eq_self_of_forall_dot_zero
+    intro b hmem
+    rw [List.mem_reverse] at hmem
+    rw [List.mem_iff_getElem] at hmem
+    obtain ⟨i, hilen, hbget⟩ := hmem
+    have hdroplen :
+        (((basisRows rows).take k).drop (ℓ + 1)).length =
+          ((basisRows rows).take k).length - (ℓ + 1) := by
+      rw [List.length_drop]
+    have htakelen : ((basisRows rows).take k).length = k := by
+      rw [List.length_take]; omega
+    rw [hdroplen, htakelen] at hilen
+    have hidx_lt_basis : i + (ℓ + 1) < (basisRows rows).length := by
+      have : k ≤ (basisRows rows).length := hkbasis
+      omega
+    have hidx_lt_take : i + (ℓ + 1) < ((basisRows rows).take k).length := by
+      rw [htakelen]; omega
+    -- Resolve b to (basisRows rows)[ℓ + 1 + i].
+    have hidx_lt_basis' : ℓ + 1 + i < (basisRows rows).length := by
+      have hcomm : ℓ + 1 + i = i + (ℓ + 1) := by omega
+      rw [hcomm]; exact hidx_lt_basis
+    have hbget' :
+        b = (basisRows rows)[ℓ + 1 + i]'hidx_lt_basis' := by
+      rw [← hbget]
+      rw [List.getElem_drop, List.getElem_take]
+    have hbget!_eq :
+        b = (basisRows rows)[ℓ + 1 + i]! := by
+      rw [hbget']
+      simp [hidx_lt_basis']
+    rw [hbget!_eq]
+    apply basisRows_get!_dot_eq_zero_of_list rows ℓ (ℓ + 1 + i) hℓlen
+    · -- ℓ + 1 + i < rows.length
+      have : (basisRows rows).length = rows.length := basisRows_length rows
+      omega
+    · omega
+  rw [hinner]
+  exact reduceAgainstBasis_basisRows_get!_succ_eq_zero rows ℓ hℓlen
+
+/-- A `projectionCombination` whose basis rows all reduce to 0 against
+`basisRev'` (and whose accumulator does too) reduces to 0 against `basisRev'`. -/
+private theorem reduceAgainstBasis_projectionCombination_eq_zero
+    (basisRev basisRev' : List (Vector Rat m)) (row acc : Vector Rat m)
+    (hzero : ∀ b ∈ basisRev, reduceAgainstBasis basisRev' b = 0)
+    (haccZero : reduceAgainstBasis basisRev' acc = 0) :
+    reduceAgainstBasis basisRev' (projectionCombination row basisRev acc) = 0 := by
+  induction basisRev generalizing acc with
+  | nil =>
+      simp [projectionCombination]
+      exact haccZero
+  | cons b rest ih =>
+      show reduceAgainstBasis basisRev'
+          (projectionCombination row (b :: rest) acc) = 0
+      simp only [projectionCombination, List.foldl_cons]
+      change reduceAgainstBasis basisRev'
+          (projectionCombination row rest
+            (acc + projectionCoeff row b • b)) = 0
+      apply ih
+      · intro b' hb'
+        exact hzero b' (by simp [hb'])
+      · rw [reduceAgainstBasis_add_left, haccZero, reduceAgainstBasis_smul_left,
+          hzero b (by simp), smul_zero_vec, zero_add_vec]
+
+/-- Reducing the source row `rows[j]!` against any later prefix returns 0:
+the source row's basis-prefix decomposition lies entirely in the reduction
+prefix, and the basis component vanishes by index. -/
+private theorem reduceAgainstBasis_basisRows_take_source_eq_zero
+    (rows : List (Vector Rat m)) (j k : Nat)
+    (hjk : j < k) (hk : k ≤ rows.length) :
+    reduceAgainstBasis ((basisRows rows).take k).reverse rows[j]! = 0 := by
+  have hjlen : j < rows.length := Nat.lt_of_lt_of_le hjk hk
+  have hjbasis : j < (basisRows rows).length := by simpa [basisRows_length]
+  -- Reconstruction theorem for the source row.
+  have hrec :=
+    basisRows_get!_eq_reduceAgainstBasis_forward (rows := rows) (k := j) hjlen
+  rw [hrec]
+  rw [reduceAgainstBasis_add_left]
+  -- Basis-row component vanishes by Aux1 with ℓ = j.
+  rw [reduceAgainstBasis_basisRows_take_get!_eq_zero rows j k hjk hk]
+  rw [zero_add_vec]
+  -- ProjectionCombination component vanishes: each contributing basis row is
+  -- at index < j < k, so reducing it gives 0.
+  apply reduceAgainstBasis_projectionCombination_eq_zero
+  · intro b hmem
+    rw [List.mem_iff_getElem] at hmem
+    obtain ⟨i, hilen, hbget⟩ := hmem
+    have htakelen : ((basisRows rows).take j).length = j := by
+      rw [List.length_take]; omega
+    rw [htakelen] at hilen
+    have hi_lt_basis : i < (basisRows rows).length := by
+      have : (basisRows rows).length = rows.length := basisRows_length rows
+      omega
+    have hbget' : b = (basisRows rows)[i]'hi_lt_basis := by
+      rw [← hbget, List.getElem_take]
+    have hbget!_eq : b = (basisRows rows)[i]! := by
+      rw [hbget']; simp [hi_lt_basis]
+    rw [hbget!_eq]
+    apply reduceAgainstBasis_basisRows_take_get!_eq_zero rows i k _ hk
+    omega
+  · exact reduceAgainstBasis_zero_left _
+
+/-- For `j < k < rows.length`, the first `i` basis rows produced by Gram-Schmidt
+on `rows.set k (rows[k]! + c • rows[j]!)` agree with the first `i` basis rows
+produced on `rows`. Proved jointly with the pointwise equality at index `i` by
+ordinary induction: the inductive step rewrites `(basisRows _)[i]!` via
+`basisRows_get!_eq_reduceAgainstBasis_take` against the equal prefix from the
+inductive hypothesis, then either uses the unchanged-row case (`i ≠ k`) or
+linearity plus `reduceAgainstBasis_basisRows_take_source_eq_zero` (`i = k`). -/
+private theorem basisRows_take_set_rowAdd
+    (rows : List (Vector Rat m)) (j k : Nat) (c : Rat)
+    (hjk : j < k) (hk : k < rows.length) (i : Nat) (hi : i ≤ rows.length) :
+    (basisRows (rows.set k (rows[k]! + c • rows[j]!))).take i =
+      (basisRows rows).take i := by
+  induction i with
+  | zero => simp
+  | succ i ih =>
+    have hi' : i ≤ rows.length := Nat.le_of_succ_le hi
+    have ihtake := ih hi'
+    have hi_lt : i < rows.length := hi
+    have hrows'_len :
+        (rows.set k (rows[k]! + c • rows[j]!)).length = rows.length := by simp
+    have hi_lt_rows' : i < (rows.set k (rows[k]! + c • rows[j]!)).length := by
+      rw [hrows'_len]; exact hi_lt
+    have hb1_len :
+        (basisRows (rows.set k (rows[k]! + c • rows[j]!))).length = rows.length := by
+      rw [basisRows_length, hrows'_len]
+    have hb2_len : (basisRows rows).length = rows.length := basisRows_length rows
+    have hi_lt_b1 :
+        i < (basisRows (rows.set k (rows[k]! + c • rows[j]!))).length := by
+      rw [hb1_len]; exact hi_lt
+    have hi_lt_b2 : i < (basisRows rows).length := by rw [hb2_len]; exact hi_lt
+    rw [List.take_succ_eq_append_getElem hi_lt_b1,
+        List.take_succ_eq_append_getElem hi_lt_b2,
+        ihtake]
+    congr 1
+    -- Reduce `[(basisRows rows')[i]] = [(basisRows rows)[i]]` to `[i]!`-form.
+    have hge1 :
+        (basisRows (rows.set k (rows[k]! + c • rows[j]!)))[i] =
+          (basisRows (rows.set k (rows[k]! + c • rows[j]!)))[i]! :=
+      (getElem!_pos _ i hi_lt_b1).symm
+    have hge2 : (basisRows rows)[i] = (basisRows rows)[i]! :=
+      (getElem!_pos _ i hi_lt_b2).symm
+    rw [hge1, hge2]
+    congr 1
+    rw [basisRows_get!_eq_reduceAgainstBasis_take
+          (rows.set k (rows[k]! + c • rows[j]!)) i hi_lt_rows',
+        basisRows_get!_eq_reduceAgainstBasis_take rows i hi_lt,
+        ihtake]
+    by_cases hik : i = k
+    · -- Modified row: i = k.
+      have hrows'_get_eq :
+          (rows.set k (rows[k]! + c • rows[j]!))[i]! = rows[k]! + c • rows[j]! := by
+        rw [hik]
+        simp [List.getElem!_eq_getElem?_getD, List.getElem?_set_self hk]
+      rw [hrows'_get_eq, reduceAgainstBasis_add_left,
+          reduceAgainstBasis_smul_left]
+      have hsrc :
+          reduceAgainstBasis ((basisRows rows).take i).reverse rows[j]! = 0 := by
+        rw [hik]
+        exact reduceAgainstBasis_basisRows_take_source_eq_zero rows j k hjk
+            (Nat.le_of_lt hk)
+      rw [hsrc]
+      have hrhs_get :
+          reduceAgainstBasis ((basisRows rows).take i).reverse rows[i]! =
+            reduceAgainstBasis ((basisRows rows).take i).reverse rows[k]! := by
+        rw [hik]
+      rw [hrhs_get, smul_zero_vec]
+      apply Vector.ext
+      intro idx hidx
+      rw [Vector.getElem_add, Vector.getElem_zero]
+      grind
+    · -- Unchanged row: i ≠ k.
+      have hne : k ≠ i := Ne.symm hik
+      have hrows'_get_eq :
+          (rows.set k (rows[k]! + c • rows[j]!))[i]! = rows[i]! := by
+        simp [List.getElem!_eq_getElem?_getD, List.getElem?_set_ne hne]
+      rw [hrows'_get_eq]
+
+/-- `basisRows` is invariant under replacing input row `k` by
+`rows[k]! + c • rows[j]!` for `j < k < rows.length`. -/
+private theorem basisRows_set_rowAdd
+    (rows : List (Vector Rat m)) (j k : Nat) (c : Rat)
+    (hjk : j < k) (hk : k < rows.length) :
+    basisRows (rows.set k (rows[k]! + c • rows[j]!)) = basisRows rows := by
+  have h :=
+    basisRows_take_set_rowAdd rows j k c hjk hk rows.length (Nat.le_refl _)
+  have hlen1 :
+      (basisRows (rows.set k (rows[k]! + c • rows[j]!))).length = rows.length := by
+    rw [basisRows_length, List.length_set]
+  have hlen2 : (basisRows rows).length = rows.length := basisRows_length rows
+  rw [List.take_of_length_le (Nat.le_of_eq hlen1),
+      List.take_of_length_le (Nat.le_of_eq hlen2)] at h
+  exact h
+
+/-- `basisMatrix` is invariant under the executable row-add operation
+`Matrix.rowAdd b src dst c` whenever `src.val < dst.val`. Wraps
+`basisRows_set_rowAdd` through the `toList` representation. -/
+private theorem basisMatrix_rowAdd
+    (b : Matrix Rat n m) (src dst : Fin n) (c : Rat) (h : src.val < dst.val) :
+    basisMatrix (Matrix.rowAdd b src dst c) = basisMatrix b := by
+  unfold basisMatrix
+  have hsrc_toList : b.toList[src.val]! = b[src] := by simp
+  have hdst_toList : b.toList[dst.val]! = b[dst] := by simp
+  have htoList :
+      (Matrix.rowAdd b src dst c).toList =
+        b.toList.set dst.val
+          (b.toList[dst.val]! + c • b.toList[src.val]!) := by
+    show (b.set dst (Vector.ofFn fun k => b[dst][k] + c * b[src][k])).toList = _
+    rw [Vector.toList_set]
+    congr 1
+    rw [hsrc_toList, hdst_toList]
+    apply Vector.ext
+    intro idx hidx
+    rw [Vector.getElem_ofFn, Vector.getElem_add, Vector.getElem_smul]
+    rfl
+  rw [htoList, basisRows_set_rowAdd b.toList src.val dst.val c h
+    (by rw [Vector.length_toList]; exact dst.isLt)]
+
 /-- The "by-row" prefix sum: a row-indexed variant of `prefixCombination` that
 takes the projection row directly rather than reading it through a coefficient
 matrix. Defined via `foldl` over `List.finRange i` so the conversion to
