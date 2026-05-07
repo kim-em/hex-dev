@@ -23,7 +23,7 @@ Covered edge cases:
 - the committed binary linear entry `(p, n) = (2, 1)`
 - zero, already-reduced, modulus, and high-degree generic inputs
 - zero, one, modulus-word, and high-bit packed inputs
-- unsupported Conway lookup boundaries adjacent to the selected entry
+- unsupported Conway lookup boundaries outside the committed table
 -/
 
 namespace Hex
@@ -85,8 +85,8 @@ example : 1 < 64 :=
 #guard GFq.modulus Entry21 = Conway.conwayPoly 2 1 Conway.supportedEntry_2_1
 #guard 0 < FpPoly.degree (GFq.modulus Entry21)
 #guard Conway.luebeckConwayPolynomial? 2 0 = (none : Option (FpPoly 2))
-#guard Conway.luebeckConwayPolynomial? 2 2 = (none : Option (FpPoly 2))
-#guard Conway.luebeckConwayPolynomial? 3 1 = (none : Option (FpPoly 3))
+#guard Conway.luebeckConwayPolynomial? 2 7 = (none : Option (FpPoly 2))
+#guard Conway.luebeckConwayPolynomial? 17 1 = (none : Option (FpPoly 17))
 
 #guard genericReprNats (generic #[]) = []
 #guard genericReprNats (generic #[1]) = [1]
