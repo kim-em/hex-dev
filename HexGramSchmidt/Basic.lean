@@ -675,6 +675,131 @@ private def prefixSumByRow (row : Vector Rat m) (basis : Matrix Rat n m)
       acc + projectionCoeff row (basis.row jn) • basis.row jn)
     0
 
+/-- The strict row prefix containing rows `0` through `k - 1`. This is the
+matrix shape naturally paired with `prefixSumByRow`. -/
+private def strictPrefixRows (M : Matrix R n m) (k : Nat) (hk : k ≤ n) :
+    Matrix R k m :=
+  Vector.ofFn fun j => M.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
+
+/-- Coefficients witnessing `prefixSumByRow` as a row combination of the strict
+row prefix. -/
+private def projectionCoeffVector (row : Vector Rat m) (basis : Matrix Rat n m)
+    (k : Nat) (hk : k ≤ n) : Vector Rat k :=
+  Vector.ofFn fun j =>
+    projectionCoeff row (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩)
+
+private theorem foldl_projectionCoeff_rowCombination_comm
+    (xs : List (Fin k)) (row : Vector Rat m) (basis : Matrix Rat n m)
+    (hk : k ≤ n) (idx : Fin m) (acc : Rat) :
+    xs.foldl
+        (fun acc j =>
+          acc +
+            (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩)[idx] *
+              projectionCoeff row (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩))
+        acc =
+      xs.foldl
+        (fun acc j =>
+          acc +
+            projectionCoeff row (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩) *
+              (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩)[idx])
+        acc := by
+  induction xs generalizing acc with
+  | nil =>
+      rfl
+  | cons j rest ih =>
+      simp only [List.foldl_cons]
+      have hcomm :
+          (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩)[idx] *
+              projectionCoeff row (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩) =
+            projectionCoeff row (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩) *
+              (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩)[idx] := by
+        grind
+      rw [hcomm]
+      exact ih (acc := acc +
+        projectionCoeff row (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩) *
+          (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩)[idx])
+
+private theorem foldl_projectionCombination_getElem
+    (xs : List (Fin k)) (row : Vector Rat m) (basis : Matrix Rat n m)
+    (hk : k ≤ n) (idx : Fin m) (acc : Vector Rat m) :
+    (xs.foldl
+        (fun acc j =>
+          acc + projectionCoeff row (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩) •
+            basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩)
+        acc)[idx] =
+      xs.foldl
+        (fun acc j =>
+          acc +
+            projectionCoeff row (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩) *
+              (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩)[idx])
+        acc[idx] := by
+  induction xs generalizing acc with
+  | nil =>
+      rfl
+  | cons j rest ih =>
+      simp only [List.foldl_cons]
+      rw [ih]
+      have hstart :
+          (acc +
+              projectionCoeff row (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩) •
+                basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩)[idx] =
+            acc[idx] +
+              projectionCoeff row (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩) *
+                (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩)[idx] := by
+        change
+          (acc +
+              projectionCoeff row (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩) •
+                basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩)[idx.val] =
+            acc[idx.val] +
+              projectionCoeff row (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩) *
+                (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩)[idx.val]
+        rw [Vector.getElem_add, Vector.getElem_smul]
+        rfl
+      rw [hstart]
+
+/-- `prefixSumByRow` is an executable row combination of the first `k` rows of
+the basis matrix. -/
+private theorem rowCombination_strictPrefixRows_projectionCoeffVector
+    (row : Vector Rat m) (basis : Matrix Rat n m) (k : Nat) (hk : k ≤ n) :
+    Matrix.rowCombination (strictPrefixRows basis k hk)
+        (projectionCoeffVector row basis k hk) =
+      prefixSumByRow row basis k hk := by
+  apply Vector.ext
+  intro idx hidx
+  let idxFin : Fin m := ⟨idx, hidx⟩
+  change
+    (Matrix.mulVec (Matrix.transpose (strictPrefixRows basis k hk))
+        (projectionCoeffVector row basis k hk))[idxFin] =
+      (prefixSumByRow row basis k hk)[idxFin]
+  rw [show
+      (Matrix.mulVec (Matrix.transpose (strictPrefixRows basis k hk))
+          (projectionCoeffVector row basis k hk))[idxFin] =
+        (List.finRange k).foldl
+          (fun acc j =>
+            acc +
+              (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩)[idxFin] *
+                projectionCoeff row (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩))
+          0 by
+        unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Matrix.dot
+          Hex.Vector.dotProduct strictPrefixRows projectionCoeffVector
+        simp [Matrix.row]]
+  rw [show
+      (prefixSumByRow row basis k hk)[idxFin] =
+        (List.finRange k).foldl
+          (fun acc j =>
+            acc +
+              projectionCoeff row (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩) *
+                (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩)[idxFin])
+          0 by
+        unfold prefixSumByRow
+        simpa [Vector.getElem_zero] using
+          foldl_projectionCombination_getElem
+            (xs := List.finRange k) (row := row) (basis := basis) (hk := hk)
+            (idx := idxFin) (acc := 0)]
+  simpa [Matrix.row] using foldl_projectionCoeff_rowCombination_comm
+    (xs := List.finRange k) (row := row) (basis := basis) (hk := hk)
+    (idx := idxFin) (acc := 0)
+
 /-- The recursive shape of `prefixSumByRow`: pulling off the last index. -/
 private theorem prefixSumByRow_succ
     (row : Vector Rat m) (basis : Matrix Rat n m) (k : Nat) (hk : k + 1 ≤ n) :
@@ -734,6 +859,29 @@ private theorem prefixSumByRow_eq_projectionCombination
       have hbasisrow : (basisMatrix b).row ⟨k, hk_lt⟩ = (basisRows b.toList)[k]! := by
         rw [basisMatrix_row_eq_basisRows_get!]
       rw [hbasisrow]
+
+/-- The projection combination over the first `i` generated basis rows is a
+row combination of the strict prefix of the executable basis matrix. -/
+private theorem projectionCombination_basisRows_take_eq_rowCombination
+    (b : Matrix Rat n m) (row : Vector Rat m) (i : Nat) (hi : i ≤ n) :
+    projectionCombination row ((basisRows b.toList).take i) 0 =
+      Matrix.rowCombination (strictPrefixRows (basisMatrix b) i hi)
+        (projectionCoeffVector row (basisMatrix b) i hi) := by
+  rw [← prefixSumByRow_eq_projectionCombination (b := b) (row := row) (i := i) (hi := hi)]
+  exact (rowCombination_strictPrefixRows_projectionCoeffVector
+    (row := row) (basis := basisMatrix b) (k := i) (hk := hi)).symm
+
+/-- The coefficient-matrix prefix term is an executable row combination of the
+earlier generated basis rows. -/
+private theorem prefixCombination_eq_strictPrefixRowCombination
+    (b : Matrix Rat n m) (i : Nat) (hi : i < n) :
+    prefixCombination (coeffMatrix b (basisMatrix b)) (basisMatrix b) i hi =
+      Matrix.rowCombination (strictPrefixRows (basisMatrix b) i (Nat.le_of_lt hi))
+        (projectionCoeffVector (b.row ⟨i, hi⟩) (basisMatrix b) i (Nat.le_of_lt hi)) := by
+  rw [prefixCombination_eq_prefixSumByRow]
+  exact (rowCombination_strictPrefixRows_projectionCoeffVector
+    (row := b.row ⟨i, hi⟩) (basis := basisMatrix b) (k := i)
+    (hk := Nat.le_of_lt hi)).symm
 
 /-- Decomposition invariant: each input row equals its reduced basis row plus
 the prefix combination of earlier basis rows weighted by `coeffMatrix`. -/
