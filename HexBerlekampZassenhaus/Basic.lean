@@ -578,6 +578,19 @@ def henselLiftData (f : ZPoly) (B : Nat) (d : PrimeChoiceData) : LiftData :=
     k := B
     liftedFactors := ZPoly.multifactorLiftQuadratic d.p B f factors }
 
+/--
+Integer upper bound for the BHKS fast-recombination precision schedule.
+
+This is the conservative all-integer cap from the `hex-berlekamp-zassenhaus`
+SPEC: `1 + n * 4^(n^2) * (sumSquared + 1)^n * log2(sumSquared + 1)^n`, where
+`n` is the executable degree bound and `sumSquared` is the squared coefficient
+norm.
+-/
+def bhksBound (f : ZPoly) : Nat :=
+  let n := f.degree?.getD 0
+  let sumSquared := ZPoly.coeffNormSq f
+  1 + n * 4 ^ (n * n) * (sumSquared + 1) ^ n * (Nat.log2 (sumSquared + 1)) ^ n
+
 private def subsetSplits : List ZPoly → List (List ZPoly × List ZPoly)
   | [] => [([], [])]
   | factor :: factors =>

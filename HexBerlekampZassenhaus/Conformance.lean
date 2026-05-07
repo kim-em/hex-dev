@@ -232,6 +232,10 @@ private def cyclo11Times22 : ZPoly :=
     data.fModP == ZPoly.modP data.p leadingCoeffDivisibleByFive &&
     isGoodPrime leadingCoeffDivisibleByFive data.p
 
+#guard bhksBound (0 : ZPoly) = 1
+#guard bhksBound ZPoly.X = 9
+#guard bhksBound (DensePoly.ofCoeffs #[1, 0, 1]) = 4609
+
 #guard
   let data := normalizeForFactor monomialWithContent
   data.content = 6 &&
