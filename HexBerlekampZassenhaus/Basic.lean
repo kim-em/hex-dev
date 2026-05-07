@@ -885,6 +885,65 @@ private def liftModulus (d : LiftData) : Nat :=
 private def centeredLiftPoly (f : ZPoly) (m : Nat) : ZPoly :=
   DensePoly.ofCoeffs <| f.toArray.map fun coeff => centeredModNat coeff m
 
+private def normalizeCandidateFactor (candidate : ZPoly) : ZPoly :=
+  let primitive := ZPoly.primitivePart candidate
+  if DensePoly.leadingCoeff primitive < 0 then
+    DensePoly.scale (-1 : Int) primitive
+  else
+    primitive
+
+private def bhksIndicatorSelectedFactors
+    (liftedFactors : Array ZPoly) (indicator : Array Int) : Option (Array ZPoly) :=
+  if indicator.size != liftedFactors.size then
+    none
+  else
+    let indices := List.range indicator.size
+    if indices.all (fun i => indicator.getD i 0 == 0 || indicator.getD i 0 == 1) &&
+        indices.any (fun i => indicator.getD i 0 == 1) then
+      some <| indices.foldl
+        (fun selected i =>
+          if indicator.getD i 0 == 1 then
+            selected.push (liftedFactors.getD i 0)
+          else
+            selected)
+        #[]
+    else
+      none
+
+/--
+Reconstruct and verify one BHKS equivalence-class indicator.
+
+The indicator row is supplied by the later RREF recovery stage. This helper
+only checks that the row is a nonempty `0/1` vector over the lifted factors,
+forms `lc(f) * product selected g_i` modulo the Hensel modulus, applies the
+centred integer lift, normalizes content and sign, and accepts the candidate
+only when exact division of `f` succeeds.
+-/
+def bhksIndicatorCandidate?
+    (f : ZPoly) (d : LiftData) (indicator : Array Int) : Option (ZPoly × ZPoly) :=
+  match bhksIndicatorSelectedFactors d.liftedFactors indicator with
+  | none => none
+  | some selected =>
+      let modulus := liftModulus d
+      let raw := DensePoly.scale (DensePoly.leadingCoeff f) (Array.polyProduct selected)
+      let candidate := normalizeCandidateFactor <|
+        centeredLiftPoly (ZPoly.reduceModPow raw d.p d.k) modulus
+      match exactQuotient? f candidate with
+      | some quotient => some (candidate, quotient)
+      | none => none
+
+private def bhksIndicatorGuardLift : LiftData :=
+  { p := 5
+    k := 2
+    liftedFactors := bhksGuardFactors }
+
+#guard bhksIndicatorCandidate? cldGuardF bhksIndicatorGuardLift #[1, 0] =
+  some (DensePoly.ofCoeffs #[-2, 1], DensePoly.ofCoeffs #[-3, 1])
+#guard bhksIndicatorCandidate? cldGuardF bhksIndicatorGuardLift #[0, 0] = none
+#guard bhksIndicatorCandidate? cldGuardF bhksIndicatorGuardLift #[2, 0] = none
+#guard (bhksIndicatorCandidate? cldGuardF bhksIndicatorGuardLift #[0, 1]).map Prod.snd =
+  some (DensePoly.ofCoeffs #[-2, 1])
+
 private structure RecombinationLattice where
   rows : Nat
   cols : Nat
