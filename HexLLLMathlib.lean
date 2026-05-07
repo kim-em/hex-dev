@@ -1,4 +1,4 @@
-import HexLLLMathlib.Basic
+import HexLLLMathlib.Conformance
 
 /-!
 The `HexLLLMathlib` library bridges the executable `HexLLL` lattice surface to
