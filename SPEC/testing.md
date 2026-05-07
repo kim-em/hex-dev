@@ -450,11 +450,23 @@ pattern.
    `scripts/oracle/poly_flint.py`: it must read the JSONL stream,
    re-run each `op` through the external oracle, and call
    `assert_equal` against the Lean `value`.
-5. Add a CI job (or extend `oracle-pyflint`) in
-   `.github/workflows/conformance.yml` that installs the oracle,
-   diffs the freshly-emitted JSONL against the committed fixture,
-   and pipes Lean's emission into the driver. Upload
-   `conformance-failures/*.json` on failure.
+5. Wire the new oracle into the **single-ubuntu-job** Conformance
+   workflow at `.github/workflows/conformance.yml`. Concretely:
+   - if a new system dependency is needed, append it to the existing
+     `apt-get install` step;
+   - if a new Python dependency is needed, append it to the existing
+     `pip install --user` step;
+   - append a tuple
+     `<lib>|<emit_exe>|<oracle_script>|<fixture_path>` to the
+     `ORACLES` array in `scripts/ci/run_oracles.sh`. The runner
+     diffs the freshly-emitted JSONL against the committed fixture
+     and pipes Lean's emission into the driver per library.
+
+   **Do NOT** add a new top-level workflow job, do **NOT** add a
+   `strategy.matrix`, and do **NOT** add a new workflow file. The
+   Conformance workflow runs as exactly one ubuntu job — see
+   [SPEC/CI.md](CI.md). Conformance failure artefacts are uploaded
+   by the workflow's existing `if: failure()` artifact step.
 
 The initial `core` profile does not require JSONL; a library's
 `#guard`s suffice until its oracle is wired.
