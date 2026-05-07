@@ -199,6 +199,9 @@ lean_exe hexgfqring_bench where
 lean_exe hexgfqfield_bench where
   root := `HexGfqField.Bench
 
+lean_exe hexgfq_bench where
+  root := `HexGfq.Bench
+
 lean_exe hexlll_bench where
   root := `HexLLL.Bench
 

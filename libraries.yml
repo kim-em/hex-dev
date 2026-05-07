@@ -88,7 +88,7 @@ libraries:
   HexGfq:
     deps: [HexGfqField, HexConway, HexGF2]
     mathlib: false
-    done_through: 3
+    done_through: 4
   HexBerlekampZassenhaus:
     deps: [HexBerlekamp, HexHensel, HexLLL]
     mathlib: false
