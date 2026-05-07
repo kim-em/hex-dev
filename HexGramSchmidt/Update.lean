@@ -106,7 +106,8 @@ theorem coeffs_sizeReduce_above_pivot (b : Matrix Int n m) (j k : Fin n)
 theorem gramDet_sizeReduce (b : Matrix Int n m) (j k : Fin n) (hjk : j.val < k.val)
     (r : Int) (t : Nat) (ht : t ≤ n) :
     gramDet (sizeReduce b j k r) t ht = gramDet b t ht := by
-  sorry
+  unfold sizeReduce
+  exact gramDet_rowAdd_earlier b j k (-r) t ht hjk
 
 theorem scaledCoeffs_sizeReduce_pivot (b : Matrix Int n m) (j k : Fin n)
     (hjk : j.val < k.val) (r : Int) :
