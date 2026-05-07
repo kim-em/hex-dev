@@ -663,6 +663,139 @@ private theorem basisRows_get!_eq_reduceAgainstBasis_forward
   rw [projectionCombination_reverse] at hrec
   exact hrec
 
+private theorem subtractProjection_zero_left (basisRow : Vector Rat m) :
+    subtractProjection 0 basisRow = 0 := by
+  have hdot : Matrix.dot (0 : Vector Rat m) basisRow = 0 := by
+    unfold Matrix.dot Hex.Vector.dotProduct
+    induction List.finRange m with
+    | nil =>
+        rfl
+    | cons i rest ih =>
+      simp only [List.foldl_cons]
+      have hentry : (0 : Vector Rat m)[i] = 0 := by
+        change (0 : Vector Rat m)[i.val] = 0
+        rw [Vector.getElem_zero]
+      rw [hentry]
+      rw [show (0 : Rat) + 0 * basisRow[i] = 0 by grind]
+      exact ih
+  apply Vector.ext
+  intro idx hidx
+  by_cases hnorm : Matrix.dot basisRow basisRow = 0
+  · have hcoeff : projectionCoeff 0 basisRow = 0 := by
+      simp [projectionCoeff, hnorm]
+    rw [subtractProjection, Vector.getElem_sub, Vector.getElem_zero, Vector.getElem_smul,
+      hcoeff]
+    change (0 : Rat) - 0 * basisRow[idx] = 0
+    grind
+  · have hcoeff : projectionCoeff 0 basisRow = 0 := by
+      have hzero_div : (0 : Rat) / Matrix.dot basisRow basisRow = 0 := by
+        grind
+      simp [projectionCoeff, hnorm, hdot, hzero_div]
+    rw [subtractProjection, Vector.getElem_sub, Vector.getElem_zero, Vector.getElem_smul,
+      hcoeff]
+    change (0 : Rat) - 0 * basisRow[idx] = 0
+    grind
+
+private theorem reduceAgainstBasis_zero_left (basisRev : List (Vector Rat m)) :
+    reduceAgainstBasis basisRev 0 = 0 := by
+  induction basisRev with
+  | nil =>
+      simp [reduceAgainstBasis]
+  | cons basisRow rest ih =>
+      rw [reduceAgainstBasis]
+      simp only [List.foldl_cons]
+      rw [subtractProjection_zero_left]
+      change reduceAgainstBasis rest 0 = 0
+      exact ih
+
+private theorem subtractProjection_eq_self_of_dot_zero
+    (row basisRow : Vector Rat m) (h : Matrix.dot row basisRow = 0) :
+    subtractProjection row basisRow = row := by
+  apply Vector.ext
+  intro idx hidx
+  by_cases hnorm : Matrix.dot basisRow basisRow = 0
+  · have hcoeff : projectionCoeff row basisRow = 0 := by
+      simp [projectionCoeff, hnorm]
+    rw [subtractProjection, Vector.getElem_sub, Vector.getElem_smul, hcoeff]
+    change row[idx] - 0 * basisRow[idx] = row[idx]
+    grind
+  · have hcoeff : projectionCoeff row basisRow = 0 := by
+      have hzero_div : (0 : Rat) / Matrix.dot basisRow basisRow = 0 := by
+        grind
+      simp [projectionCoeff, h, hnorm, hzero_div]
+    rw [subtractProjection, Vector.getElem_sub, Vector.getElem_smul, hcoeff]
+    change row[idx] - 0 * basisRow[idx] = row[idx]
+    grind
+
+private theorem reduceAgainstBasis_eq_self_of_forall_dot_zero
+    (basisRev : List (Vector Rat m)) (row : Vector Rat m)
+    (h : ∀ basisRow ∈ basisRev, Matrix.dot row basisRow = 0) :
+    reduceAgainstBasis basisRev row = row := by
+  induction basisRev generalizing row with
+  | nil =>
+      simp [reduceAgainstBasis]
+  | cons basisRow rest ih =>
+      rw [reduceAgainstBasis]
+      simp only [List.foldl_cons]
+      have hhead : subtractProjection row basisRow = row :=
+        subtractProjection_eq_self_of_dot_zero row basisRow (h basisRow (by simp))
+      rw [hhead]
+      exact ih row (by
+        intro later hlater
+        exact h later (by simp [hlater]))
+
+private theorem subtractProjection_self_eq_zero (basisRow : Vector Rat m) :
+    subtractProjection basisRow basisRow = 0 := by
+  by_cases hnorm : Matrix.dot basisRow basisRow = 0
+  · apply Vector.ext
+    intro idx hidx
+    have hzero : basisRow[idx] = 0 :=
+      dot_self_eq_zero_get basisRow hnorm ⟨idx, hidx⟩
+    have hcoeff : projectionCoeff basisRow basisRow = 0 := by
+      simp [projectionCoeff, hnorm]
+    rw [subtractProjection, Vector.getElem_sub, Vector.getElem_zero, Vector.getElem_smul,
+      hcoeff, hzero]
+    change (0 : Rat) - 0 * 0 = 0
+    grind
+  · apply Vector.ext
+    intro idx hidx
+    have hdiv : Matrix.dot basisRow basisRow / Matrix.dot basisRow basisRow = 1 := by
+      grind
+    have hcoeff : projectionCoeff basisRow basisRow = 1 := by
+      simp [projectionCoeff, hnorm, hdiv]
+    rw [subtractProjection, Vector.getElem_sub, Vector.getElem_zero, Vector.getElem_smul,
+      hcoeff]
+    change basisRow[idx] - 1 * basisRow[idx] = 0
+    grind
+
+private theorem reduceAgainstBasis_cons_self_eq_zero
+    (basisRow : Vector Rat m) (rest : List (Vector Rat m)) :
+    reduceAgainstBasis (basisRow :: rest) basisRow = 0 := by
+  rw [reduceAgainstBasis]
+  simp only [List.foldl_cons]
+  rw [subtractProjection_self_eq_zero]
+  change reduceAgainstBasis rest 0 = 0
+  exact reduceAgainstBasis_zero_left rest
+
+/-- Once a generated basis row has been included in the reduction prefix,
+reducing that basis row against the prefix through its own index vanishes. -/
+private theorem reduceAgainstBasis_basisRows_get!_succ_eq_zero
+    (rows : List (Vector Rat m)) (j : Nat) (hj : j < rows.length) :
+    reduceAgainstBasis ((basisRows rows).take (j + 1)).reverse
+        (basisRows rows)[j]! = 0 := by
+  have hlen : j < (basisRows rows).length := by
+    simpa [basisRows_length] using hj
+  have htake :
+      (basisRows rows).take (j + 1) =
+        (basisRows rows).take j ++ [(basisRows rows)[j]!] := by
+    rw [List.take_succ_eq_append_getElem hlen]
+    congr 1
+    simp [List.getElem!_eq_getElem?_getD, List.getElem?_eq_getElem hlen]
+  rw [htake, List.reverse_append]
+  simp only [List.reverse_cons, List.reverse_nil, List.nil_append]
+  exact reduceAgainstBasis_cons_self_eq_zero
+    ((basisRows rows)[j]!) ((basisRows rows).take j).reverse
+
 /-- The "by-row" prefix sum: a row-indexed variant of `prefixCombination` that
 takes the projection row directly rather than reading it through a coefficient
 matrix. Defined via `foldl` over `List.finRange i` so the conversion to
