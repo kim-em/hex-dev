@@ -815,6 +815,33 @@ private theorem leadingGramMatrixInt_rowAdd_inside
   exact leadingGramMatrixInt_rowAdd_entry_inside b j k c t ht hjk hkt
     ⟨p, hp⟩ ⟨q, hq⟩
 
+/-- Adding a multiple of an earlier row to a later row leaves the leading
+Gram determinant unchanged. The hypothesis `j.val < k.val` makes the source
+row earlier than the destination row in the basis. -/
+theorem gramDet_rowAdd_earlier
+    (b : Matrix Int n m) (j k : Fin n) (c : Int) (t : Nat) (ht : t ≤ n)
+    (hjk : j.val < k.val) :
+    gramDet (Matrix.rowAdd b j k c) t ht = gramDet b t ht := by
+  unfold gramDet
+  -- Reduce to the underlying Bareiss-determinant equality on `Int`.
+  congr 1
+  by_cases hkt : k.val < t
+  · -- Inside case: bareiss = det, then det_rowAdd / det_colAdd preserve.
+    rw [leadingGramMatrixInt_rowAdd_inside b j k c t ht hjk hkt]
+    rw [Matrix.bareiss_eq_det, Matrix.bareiss_eq_det]
+    -- Indices and inequality between `jt` and `kt` in `Fin t`.
+    have hjt_ne_kt : (⟨j.val, Nat.lt_trans hjk hkt⟩ : Fin t) ≠ ⟨k.val, hkt⟩ := by
+      intro h
+      have hval : (⟨j.val, Nat.lt_trans hjk hkt⟩ : Fin t).val =
+          (⟨k.val, hkt⟩ : Fin t).val :=
+        congrArg Fin.val h
+      exact Nat.ne_of_lt hjk hval
+    rw [Matrix.det_colAdd _ _ _ _ hjt_ne_kt]
+    rw [Matrix.det_rowAdd _ _ _ _ hjt_ne_kt]
+  · -- Outside case: leading prefix unchanged.
+    have hkt' : t ≤ k.val := Nat.le_of_not_lt hkt
+    rw [leadingGramMatrixInt_rowAdd_outside b j k c t ht hkt']
+
 end GramSchmidt.Int
 
 namespace GramSchmidt.Rat
