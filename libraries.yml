@@ -129,8 +129,14 @@ libraries:
   HexGfqRing:
     deps: [HexPolyFp]
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
+    phase4:
+      input_families:
+        - name: dense-reduction
+          description: Dense polynomial reduction and quotient construction modulo deterministic nonconstant dense moduli over F65537.
+        - name: quotient-arithmetic
+          description: Canonical quotient representatives for addition, multiplication, negation, subtraction, exponentiation, scalar multiplication, and natural casts.
   HexGfqField:
     deps: [HexGfqRing, HexBerlekamp]
     mathlib: false
