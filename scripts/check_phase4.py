@@ -8,6 +8,8 @@ import re
 import subprocess
 import sys
 
+from libgraph import load_libraries
+
 
 SETUP_RE = re.compile(r"^\s*setup_benchmark\s+([A-Za-z0-9_'.]+)\s+([A-Za-z0-9_']+)\s*=>\s*(.+?)\s*$")
 DERIVATION_RE = re.compile(
@@ -17,6 +19,56 @@ DERIVATION_RE = re.compile(
 )
 COMMENT_START_RE = re.compile(r"^\s*/-")
 COMMENT_END_RE = re.compile(r"-/\s*$")
+
+
+def fallback_report_slug(library_name: str) -> str:
+    parts: list[str] = []
+    for index, char in enumerate(library_name):
+        previous = library_name[index - 1] if index else ""
+        if index and char.isupper() and not previous.isupper():
+            parts.append("-")
+        parts.append(char.lower())
+    return "".join(parts)
+
+
+def report_slug(root: Path, library_name: str) -> str:
+    normalized_name = library_name.lower()
+    for spec in sorted((root / "SPEC" / "Libraries").glob("*.md")):
+        slug = spec.stem
+        if slug.replace("-", "") == normalized_name:
+            return slug
+    return fallback_report_slug(library_name)
+
+
+def check_headline_reports(root: Path) -> tuple[int, str | None]:
+    libraries = load_libraries(root / "libraries.yml")
+    checked = 0
+    for name, info in libraries.items():
+        if info.done_through < 4:
+            continue
+        checked += 1
+        report = root / "reports" / f"{report_slug(root, name)}-performance.md"
+        if not report.exists():
+            return checked, f"{name}: missing Phase-4 headline report {report.relative_to(root)}"
+
+        text = report.read_text(encoding="utf-8")
+        if info.phase4 is None:
+            continue
+        for comparator in info.phase4.comparators:
+            if comparator.tool not in text:
+                return (
+                    checked,
+                    f"{name}: Phase-4 headline report {report.relative_to(root)} "
+                    f"does not mention comparator {comparator.tool!r}",
+                )
+        for family in info.phase4.input_families:
+            if family.name not in text:
+                return (
+                    checked,
+                    f"{name}: Phase-4 headline report {report.relative_to(root)} "
+                    f"does not mention input family {family.name!r}",
+                )
+    return checked, None
 
 
 def run_git(args: list[str], root: Path, *, check: bool = True) -> str:
@@ -180,7 +232,7 @@ def check_registrations(root: Path, registrations: list[tuple[Path, int, str]], 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Check Phase-4 benchmark registration derivation requirements."
+        description="Check Phase-4 headline reports and benchmark registration derivation requirements."
     )
     parser.add_argument("--base", help="base revision for changed-registration checks")
     parser.add_argument(
@@ -192,6 +244,11 @@ def main() -> int:
 
     root = Path(__file__).resolve().parent.parent
     try:
+        report_count, report_error = check_headline_reports(root)
+        if report_error is not None:
+            print(report_error, file=sys.stderr)
+            return 1
+
         base = None if args.all else (args.base or default_base(root))
         if not args.all and base is None:
             print(
@@ -211,7 +268,10 @@ def main() -> int:
         return 1
 
     scope = "all registrations" if args.all else "changed registrations"
-    print(f"Phase 4 benchmark derivation check passed ({scope}: {len(registrations)})")
+    print(
+        f"Phase 4 checks passed "
+        f"(headline reports: {report_count}; {scope}: {len(registrations)})"
+    )
     return 0
 
 
