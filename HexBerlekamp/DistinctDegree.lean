@@ -156,6 +156,114 @@ theorem distinctDegreeCandidate_spec
       DensePoly.gcd residual (frobeniusDiffMod f hmonic d) := by
   rfl
 
+private theorem degreeBucketFactors_append
+    (buckets₁ buckets₂ : List (DegreeBucket p)) :
+    degreeBucketFactors (buckets₁ ++ buckets₂) =
+      degreeBucketFactors buckets₁ ++ degreeBucketFactors buckets₂ := by
+  simp [degreeBucketFactors]
+
+private theorem one_mul_poly
+    [ZMod64.PrimeModulus p]
+    (a : FpPoly p) :
+    (1 : FpPoly p) * a = a :=
+  (DensePoly.mul_comm_poly (1 : FpPoly p) a).trans (DensePoly.mul_one_right_poly a)
+
+private theorem foldl_mul_left_factor
+    [ZMod64.PrimeModulus p]
+    (z a : FpPoly p) (xs : List (FpPoly p)) :
+    xs.foldl (fun acc factor => acc * factor) (z * a)
+      = z * xs.foldl (fun acc factor => acc * factor) a := by
+  induction xs generalizing a with
+  | nil => rfl
+  | cons b bs ih =>
+    have hcong : List.foldl (fun acc factor : FpPoly p => acc * factor) ((z * a) * b) bs
+        = List.foldl (fun acc factor => acc * factor) (z * (a * b)) bs := by
+      congr 1
+      exact DensePoly.mul_assoc_poly z a b
+    have hih : List.foldl (fun acc factor : FpPoly p => acc * factor) (z * (a * b)) bs
+        = z * List.foldl (fun acc factor => acc * factor) (a * b) bs := ih (a * b)
+    show List.foldl (fun acc factor => acc * factor) (z * a * b) bs
+        = z * List.foldl (fun acc factor => acc * factor) (a * b) bs
+    exact hcong.trans hih
+
+private theorem foldl_mul_eq_mul_foldl
+    [ZMod64.PrimeModulus p]
+    (z : FpPoly p) (xs : List (FpPoly p)) :
+    xs.foldl (fun acc factor => acc * factor) z
+      = z * xs.foldl (fun acc factor => acc * factor) 1 := by
+  have h1 : xs.foldl (fun acc factor => acc * factor) z
+      = xs.foldl (fun acc factor => acc * factor) (z * 1) := by
+    congr 1
+    exact (DensePoly.mul_one_right_poly z).symm
+  exact h1.trans (foldl_mul_left_factor z 1 xs)
+
+private theorem factorProduct_cons_eq
+    [ZMod64.PrimeModulus p]
+    (x : FpPoly p) (xs : List (FpPoly p)) :
+    factorProduct (x :: xs) = x * factorProduct xs := by
+  show xs.foldl (fun acc factor => acc * factor) (1 * x)
+    = x * xs.foldl (fun acc factor => acc * factor) 1
+  rw [one_mul_poly x]
+  exact foldl_mul_eq_mul_foldl x xs
+
+private theorem factorProduct_append
+    [ZMod64.PrimeModulus p]
+    (xs ys : List (FpPoly p)) :
+    factorProduct (xs ++ ys) = factorProduct xs * factorProduct ys := by
+  induction xs with
+  | nil =>
+      simp [factorProduct]
+  | cons x xs ih =>
+      rw [List.cons_append, factorProduct_cons_eq, factorProduct_cons_eq, ih]
+      exact (DensePoly.mul_assoc_poly x (factorProduct xs) (factorProduct ys)).symm
+
+private theorem degreeBucketProduct_append
+    [ZMod64.PrimeModulus p]
+    (buckets₁ buckets₂ : List (DegreeBucket p)) :
+    degreeBucketProduct (buckets₁ ++ buckets₂) =
+      degreeBucketProduct buckets₁ * degreeBucketProduct buckets₂ := by
+  simp [degreeBucketProduct, degreeBucketFactors_append, factorProduct_append]
+
+private theorem degreeBucketProduct_singleton
+    [ZMod64.PrimeModulus p]
+    (bucket : DegreeBucket p) :
+    degreeBucketProduct [bucket] = bucket.factor := by
+  simp [degreeBucketProduct, degreeBucketFactors, factorProduct]
+
+private theorem degreeBucketProduct_appendBucket?_none
+    (buckets : List (DegreeBucket p)) :
+    degreeBucketProduct (appendBucket? buckets none) = degreeBucketProduct buckets := by
+  rfl
+
+private theorem degreeBucketProduct_appendBucket?_some
+    [ZMod64.PrimeModulus p]
+    (buckets : List (DegreeBucket p)) (bucket : DegreeBucket p) :
+    degreeBucketProduct (appendBucket? buckets (some bucket)) =
+      degreeBucketProduct buckets * bucket.factor := by
+  rw [appendBucket?]
+  rw [degreeBucketProduct_append, degreeBucketProduct_singleton]
+
+private theorem distinctDegreeCandidate_mul_div_eq
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (residual : FpPoly p) (d : Nat) :
+    distinctDegreeCandidate f hmonic residual d *
+        (residual / distinctDegreeCandidate f hmonic residual d) = residual := by
+  have hspec := DensePoly.div_mul_add_mod residual
+    (distinctDegreeCandidate f hmonic residual d)
+  have hmod :
+      residual % distinctDegreeCandidate f hmonic residual d = 0 := by
+    rw [distinctDegreeCandidate_spec]
+    exact DensePoly.mod_eq_zero_of_dvd residual
+      (DensePoly.gcd residual (frobeniusDiffMod f hmonic d))
+      (DensePoly.gcd_dvd_left residual (frobeniusDiffMod f hmonic d))
+  rw [hmod] at hspec
+  exact (DensePoly.mul_comm_poly (distinctDegreeCandidate f hmonic residual d)
+      (residual / distinctDegreeCandidate f hmonic residual d)).trans
+    ((DensePoly.add_zero_poly
+      ((residual / distinctDegreeCandidate f hmonic residual d) *
+        distinctDegreeCandidate f hmonic residual d)).symm.trans hspec)
+
 /--
 The executable distinct-degree factorization preserves the input polynomial as
 the product of recorded degree buckets and the residual factor.
