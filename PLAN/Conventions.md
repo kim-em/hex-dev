@@ -438,3 +438,51 @@ structural DAG data (`deps`, `mathlib`). Other state mechanisms:
   [.claude/CLAUDE.md](../.claude/CLAUDE.md)).
 - **`PLAN/` and `PLAN.md`** — reference material, not progress state.
   Do not modify them for progress tracking.
+
+### Library status (active | planned | draft)
+
+Every entry in `libraries.yml` carries an explicit `status` field
+with exactly one of three values:
+
+- **`active`** — implementation is in progress or complete. The
+  orchestrator dispatches Phase work against this library.
+- **`planned`** — SPEC is finished and ready for implementation,
+  but implementation is deferred. The library appears in the dep
+  graph as informational structure but no work is dispatched.
+  Activation is a one-line edit (`status: planned → active`).
+- **`draft`** — SPEC is a work-in-progress; ideas captured but the
+  contract is not yet stable enough to implement against. Same
+  orchestration treatment as `planned`. Promote to `planned` (or
+  `active`) when the SPEC firms up.
+
+The following invariants are normative and enforced at yml-load
+time (parse errors, not lint warnings):
+
+1. **`status` is required.** Every entry must declare exactly one
+   of `active`, `planned`, `draft`. Missing or unrecognised values
+   are parse errors.
+2. **`planned` and `draft` ⟹ `done_through == 0`.** Non-active
+   libraries cannot have Phase progress recorded against them.
+   Pausing a mid-implementation library is *not* a supported state;
+   roll `done_through` back per [§"Rollback is a normal action"](#rollback-is-a-normal-action)
+   if you need to take a library out of dispatch.
+3. **`active` libraries depend only on `active` libraries.**
+   Activating a library commits its full transitive dependency
+   closure to `active`. Non-`active` libraries may depend on
+   anything (the dep graph is informational and may reference
+   libraries in any state).
+
+The following two structural rules apply per status:
+
+4. **Lake alignment.** An `active` entry must have a corresponding
+   `lean_lib` in `lakefile.toml`; a `planned` or `draft` entry
+   must *not*.
+5. **Root-file existence.** An `active` entry must have a root
+   `<Name>.lean` at the repo top level; a `planned` or `draft`
+   entry must *not*.
+
+Reference implementation lives in `scripts/libgraph.py` (validation
+of invariants 1–3) and `scripts/check_dag.py` (rules 4 and 5). If
+those scripts are rewritten, the rewrite must implement these
+invariants — the contract above is normative, the script names are
+descriptive.
