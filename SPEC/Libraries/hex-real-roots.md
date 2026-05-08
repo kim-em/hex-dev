@@ -140,14 +140,19 @@ def lmqBound    (p : ZPoly) : Dyadic   -- upper bound on positive real roots
 def realRootSeparation (p : ZPoly) : Nat
 ```
 
-`refine1` bisects at the dyadic midpoint, runs Möbius+Descartes on
-each half, and returns the half containing the root. The function
-is total: by the parent's witness invariant the interval contains
-exactly one root, so after bisection one half has `signVariations =
-1` (root strictly inside) and the other has `signVariations = 0`,
-or the root sits exactly at the midpoint and the half-open
-convention `(a, b]` places it in the left half. `refine` and
-`refineTo` iterate.
+`refine1` bisects at the dyadic midpoint `m := (a + b)/2` and uses
+sign evaluation (not Descartes) to pick the half containing the
+root: evaluate `p(m)` as an integer sign, and combine with `p(a)`,
+`p(b)` via IVT.
+
+- If `p(m) = 0`, the root is `m`; return `(a, m]` (half-open
+  includes `m`).
+- If `p(a)` and `p(m)` have opposite signs, the root is in
+  `(a, m]`; return that half.
+- Otherwise the root is in `(m, b]`; return that half.
+
+This is total integer-sign computation, no Descartes recursion, no
+possibility of failure. `refine` and `refineTo` iterate.
 
 `isolate?` runs the Uspensky bisection driver: starting from the
 worklist `[(−M, M]]` with `M := max(lmqBound p, lmqBound (p(−x)))`,
