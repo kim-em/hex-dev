@@ -137,38 +137,51 @@ The tactic implements 1-dimensional CAD:
    where the bridge guarantees `some`) and retry. The result is a
    pairwise-disjoint array of `RealRootIsolation P`.
 
-5. **Build the cell decomposition.** Use the `isolate?` output for
-   `P` directly. Sort isolations by lower endpoint; the cells are:
+5. **Build the cell decomposition.** Sort the `isolate? P`
+   isolations `I₁, …, Iₖ` (each `Iᵢ = (aᵢ, bᵢ]`) by lower endpoint,
+   and let `M := max(lmqBound P, lmqBound (P(−x)))` be the
+   `±M`-bound from `hex-real-roots`. The cells are represented
+   computationally by:
 
    ```
-   (−∞, root₁), {root₁}, (root₁, root₂), {root₂}, …, (rootₖ, +∞)
+   Cell = OpenLeftTail        -- (−∞, a₁]; semantic: sign-constant on (−∞, r₁)
+        | RootPoint    Iᵢ     -- semantic: the unique real root rᵢ of P inside Iᵢ
+        | OpenInterval Iᵢ Iᵢ₊₁ -- (bᵢ, aᵢ₊₁]; semantic: sign-constant on (rᵢ, rᵢ₊₁)
+        | OpenRightTail       -- (bₖ, +∞); semantic: sign-constant on (rₖ, +∞)
    ```
 
-   Each "open interval" cell has a sign-constant interior for
-   *every* `pⱼ` (an interior point cannot be a root of any `pⱼ`,
-   else it would be a root of `P`). Each "root point" cell is a
-   root of some subset of the `pⱼ`s (those `pⱼ` having that real
-   root). Test points: any dyadic rational in the open-interval
-   cell (e.g. midpoint of consecutive isolation upper/lower
-   bounds); for root-point cells, the cell *is* the root.
+   No exact root values are needed at runtime — the cells are
+   defined by isolations of `P`, and dyadic test points within each
+   open-interval cell suffice for sign evaluation.
 
-6. **Sign matrix.** For each cell, evaluate the integer sign of
-   each `pⱼ` at the cell's representative point.
-   - Open-interval cells: evaluate `pⱼ` at the dyadic test point.
-     The result is in `{−1, +1}` (never zero: a zero would mean
-     the test point is a root of `pⱼ`, hence of `P`, hence not
-     interior to the cell).
-   - Root-point cells: the cell is a real root `r` of `P`. The
-     relevant `pⱼ`s with `pⱼ(r) = 0` are determined at the
-     polynomial level: `pⱼ(r) = 0` iff `r` is a root of
-     `gcd(pⱼ, P)`. Precompute `gⱼ := gcd(pⱼ, P)` for each `j`,
-     and isolate the roots of each `gⱼ`; root-point cell `r` has
-     `sign pⱼ(r) = 0` iff some isolation of `gⱼ` contains the
-     same `RealRoot P`-equivalence-class as `r`. For `pⱼ` with
-     `pⱼ(r) ≠ 0`, the sign at `r` equals `sign pⱼ` on either of
-     the two adjacent open-interval cells (which agree because no
-     root of `pⱼ` lies between them other than possibly `r`
-     itself).
+   Open-interval cells have sign-constant interior for *every* `pⱼ`
+   (an interior point cannot be a root of any `pⱼ`, else it would
+   be a root of `P`). Root-point cells correspond semantically to a
+   real root of some subset of the `pⱼ`s (those for which `pⱼ` has
+   that real root).
+
+   Concrete test points: midpoint of `(bᵢ, aᵢ₊₁]` for the central
+   open cells; `aᵢ` for the root-point `RootPoint Iᵢ` cell (so the
+   adjacent open cells use `(bᵢ₋₁, aᵢ]` and `(bᵢ, aᵢ₊₁]`); `−M − 1`
+   for `OpenLeftTail`, `M + 1` for `OpenRightTail`. (Test points
+   are not the cells themselves; they are dyadic rationals at which
+   we evaluate `pⱼ` to determine the cell's sign assignment.)
+
+6. **Sign matrix.** For each cell, determine `sign pⱼ` on the cell:
+   - Open-interval cells (and tails): evaluate `pⱼ` at the dyadic
+     test point. The result is in `{−1, +1}` (never zero: a zero
+     would make the test point a root of `pⱼ`, hence of `P`, hence
+     not interior to the cell).
+   - Root-point cells `RootPoint Iᵢ` representing `rᵢ`: precompute
+     `gⱼ := gcd(pⱼ, P)`. Then `pⱼ(rᵢ) = 0` iff `gⱼ` has a real
+     root in the isolation interval `Iᵢ`. Decide this by computing
+     `signVariations` of `gⱼ`'s Möbius transform on `Iᵢ`: if `≥ 1`,
+     `gⱼ` has a root in `Iᵢ` (it is `rᵢ`, since `gⱼ ∣ P` and `Iᵢ`
+     contains exactly one `P`-root); if `= 0`, no root, so
+     `pⱼ(rᵢ) ≠ 0`. When `pⱼ(rᵢ) ≠ 0`, the sign at `rᵢ` equals
+     `sign pⱼ` on either of the two adjacent open-interval cells
+     (which agree, because no root of `pⱼ` lies between them other
+     than possibly `rᵢ` itself).
 
    The result is a `m × k` matrix of signs `{−1, 0, +1}`.
 
@@ -210,12 +223,15 @@ genuine proof of the corresponding `ℝ`-Prop. The proof factors
 through:
 
 - **Sign-matrix correctness.** For each cell, the signs are correct
-  at *every* point in the cell (not just the representative). This
+  at *every* point in the cell (not just the test point). This
   follows because each `pⱼ` is sign-constant on cell interiors (no
   `pⱼ` has a root strictly between consecutive `P`-roots, since
-  every real root of every `pⱼ` is a real root of `P`), and the
-  zero-detection at root-point cells is correct by definition of
-  `gⱼ := gcd(pⱼ, P)`.
+  every real root of every `pⱼ` is a real root of `P`); the
+  zero-detection at root-point cells is correct because
+  `gⱼ := gcd(pⱼ, P)` has the same real roots as the intersection
+  of `pⱼ`'s and `P`'s real roots, and the
+  `mobiusTransform_root_correspondence` + Descartes corollaries
+  certify the "root in `Iᵢ`?" check.
 - **Cell-decomposition completeness.** Every real number lies in
   exactly one cell of the `P`-decomposition. Follows from
   `isolate?_correct` applied to `P`: every real root of `P` is

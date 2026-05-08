@@ -3,10 +3,12 @@
 Certified isolation of real roots of integer-coefficient polynomials.
 A "real root isolation" is a dyadic interval `(a, b]` together with a
 witness, dischargeable by `cbv_decide`, that exactly one simple real
-root of `p ∈ ℤ[x]` lies in the interval. Refinement bisects the
-interval at the dyadic midpoint, recomputes the Descartes
-sign-variation count after a Möbius transform, and follows the half
-containing the root.
+root of `p ∈ ℤ[x]` lies in the interval. Initial isolation uses
+Descartes' rule of signs on Möbius transforms (Uspensky's algorithm);
+once isolated, refinement bisects the interval and uses sign
+evaluation at the midpoint plus IVT to follow the half containing
+the root — no further Descartes computation is needed past initial
+isolation.
 
 The companion to [hex-roots](hex-roots.md) (complex root isolation
 via BSSY): same project conventions for dyadic centres, the
@@ -260,8 +262,10 @@ The Uspensky bisection algorithm:
      Emit `(a, b]` as an isolation; ensure subsequent intervals
      start strictly above `b`.
 4. **Refinement.** A `RealRootIsolation` at precision `prec` is
-   refined to `prec + 1` by bisecting and re-running Möbius+Descartes
-   on the half containing the root.
+   refined to `prec + 1` by bisecting at the midpoint `m`, evaluating
+   `sign(p(m))`, and selecting the half containing the root via IVT
+   (see `refine1` in §"Operations" for the decision rules). No
+   further Möbius+Descartes computation past initial isolation.
 
 `isolate?` terminates structurally on `targetPrecision − currentPrecision`,
 which strictly decreases at each bisection; once it reaches zero, the
