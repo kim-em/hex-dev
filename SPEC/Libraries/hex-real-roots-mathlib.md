@@ -124,12 +124,28 @@ infrastructure (`mahlerMeasure_le_sqrt_sum_sq_norm_coeff`,
 the real-root specialisation combines Mahler with the
 discriminant/resultant lower bound.
 
-### `isolate` correctness
+### `isolate?` correctness and termination
+
+Two theorems. `isolate?` is the executable, `Option`-returning
+driver from `hex-real-roots`; the bridge proves both that it
+returns `some` at sufficient precision and that the `some` payload
+is the correct isolation set.
 
 ```lean
-theorem isolate_correct
-    (p : ZPoly) (hp : Hex.HasOnlySimpleRealRoots p) (prec : Nat) :
-    let isolations := Hex.isolate p hp prec
+/-- At `targetPrecision ≥ realRootSeparation p`, `isolate?` always
+    succeeds. Bisection cannot stall at signVariations ≥ 2 once the
+    interval width drops below the real-root separation bound. -/
+theorem isolate?_succeeds_at_separation_precision
+    (p : ZPoly) (hp : Hex.HasOnlySimpleRealRoots p) :
+    Hex.isolate? p hp (Hex.realRootSeparation p) ≠ none
+
+/-- Every real root of p is isolated by exactly one returned
+    interval, every returned interval contains a real root, and the
+    intervals are pairwise disjoint. -/
+theorem isolate?_correct
+    (p : ZPoly) (hp : Hex.HasOnlySimpleRealRoots p)
+    (targetPrecision : Nat) (isolations : Array (RealRootIsolation p))
+    (hsome : Hex.isolate? p hp targetPrecision = some isolations) :
     -- (1) every real root of p has exactly one isolation:
     (∀ r : ℝ, (toPolynomial p).aeval r = 0 →
         ∃! iso ∈ isolations.toList,
@@ -142,11 +158,14 @@ theorem isolate_correct
     isolations.toList.Pairwise (fun a b => Disjoint a.interval b.interval)
 ```
 
-Bijection between the isolation array and the (finite) set of real
-roots of `p`. Follows from `mobiusTransform_root_correspondence` +
+The first follows from `realRootSeparation_bounds_min_gap`: at
+precision `realRootSeparation p`, every interval is narrower than
+the minimum gap between distinct real roots, so each interval can
+contain at most one root, so `signVariations ≤ 1` for each, so the
+worklist drains. The second follows from
+`mobiusTransform_root_correspondence` +
 `signVariations_eq_one_implies_one_positive_root` (and the
-zero-variations corollary) + the bisection driver's invariants +
-`realRootSeparation_bounds_min_gap` for termination.
+zero-variations corollary) + the bisection driver's invariants.
 
 ### Refinement correctness
 
@@ -181,8 +200,9 @@ theorem out_real_eq (s : SimpleRealRoot p) (prec₁ prec₂ : Nat) :
   Cauchy but not LMQ).
 - `realRootSeparation_bounds_min_gap`. Wraps Mahler measure
   infrastructure with the discriminant/resultant lower bound.
-- `isolate_correct`. The main bridge theorem, assembled from the
-  above components plus the bisection driver's invariants.
+- `isolate?_correct` and `isolate?_succeeds_at_separation_precision`.
+  The main bridge theorems, assembled from the above components
+  plus the bisection driver's invariants.
 
 **Deliberately not built:**
 - Sturm's theorem and the Sturm sequence. Mathlib has neither.
@@ -201,7 +221,7 @@ HexRealRootsMathlib/
                       ↔ root count theorems
   Bounds.lean       — cauchyBound + lmqBound correctness
   Separation.lean   — realRootSeparation_bounds_min_gap
-  Isolate.lean      — isolate_correct
+  Isolate.lean      — isolate?_correct + isolate?_succeeds_at_separation_precision
   Conformance.lean  — fixture-based checks
 ```
 
