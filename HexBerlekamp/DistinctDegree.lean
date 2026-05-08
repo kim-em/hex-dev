@@ -1,5 +1,6 @@
 import HexBerlekamp.Factor
 import HexBerlekamp.Irreducibility
+import HexBerlekamp.RabinSoundness
 
 /-!
 Executable distinct-degree factorization surface for `hex-berlekamp`.
@@ -243,26 +244,223 @@ private theorem degreeBucketProduct_appendBucket?_some
   rw [appendBucket?]
   rw [degreeBucketProduct_append, degreeBucketProduct_singleton]
 
+private def optionalBucketProduct : Option (DegreeBucket p) → FpPoly p
+  | none => 1
+  | some bucket => bucket.factor
+
+private theorem degreeBucketProduct_appendBucket?
+    [ZMod64.PrimeModulus p]
+    (buckets : List (DegreeBucket p)) (bucket? : Option (DegreeBucket p)) :
+    degreeBucketProduct (appendBucket? buckets bucket?) =
+      degreeBucketProduct buckets * optionalBucketProduct bucket? := by
+  cases bucket? with
+  | none =>
+      rw [degreeBucketProduct_appendBucket?_none]
+      exact (DensePoly.mul_one_right_poly (degreeBucketProduct buckets)).symm
+  | some bucket =>
+      exact degreeBucketProduct_appendBucket?_some buckets bucket
+
+private theorem gcd_mul_div_eq
+    [ZMod64.PrimeModulus p]
+    (residual diff : FpPoly p) :
+    DensePoly.gcd residual diff * (residual / DensePoly.gcd residual diff) = residual := by
+  have hspec := DensePoly.div_mul_add_mod residual (DensePoly.gcd residual diff)
+  have hmod :
+      residual % DensePoly.gcd residual diff = 0 := by
+    exact DensePoly.mod_eq_zero_of_dvd residual
+      (DensePoly.gcd residual diff)
+      (DensePoly.gcd_dvd_left residual diff)
+  rw [hmod] at hspec
+  exact (DensePoly.mul_comm_poly (DensePoly.gcd residual diff)
+      (residual / DensePoly.gcd residual diff)).trans
+    ((DensePoly.add_zero_poly
+      ((residual / DensePoly.gcd residual diff) *
+        DensePoly.gcd residual diff)).symm.trans hspec)
+
 private theorem distinctDegreeCandidate_mul_div_eq
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (residual : FpPoly p) (d : Nat) :
     distinctDegreeCandidate f hmonic residual d *
         (residual / distinctDegreeCandidate f hmonic residual d) = residual := by
-  have hspec := DensePoly.div_mul_add_mod residual
-    (distinctDegreeCandidate f hmonic residual d)
-  have hmod :
-      residual % distinctDegreeCandidate f hmonic residual d = 0 := by
-    rw [distinctDegreeCandidate_spec]
-    exact DensePoly.mod_eq_zero_of_dvd residual
-      (DensePoly.gcd residual (frobeniusDiffMod f hmonic d))
-      (DensePoly.gcd_dvd_left residual (frobeniusDiffMod f hmonic d))
-  rw [hmod] at hspec
-  exact (DensePoly.mul_comm_poly (distinctDegreeCandidate f hmonic residual d)
-      (residual / distinctDegreeCandidate f hmonic residual d)).trans
-    ((DensePoly.add_zero_poly
-      ((residual / distinctDegreeCandidate f hmonic residual d) *
-        distinctDegreeCandidate f hmonic residual d)).symm.trans hspec)
+  rw [distinctDegreeCandidate_spec]
+  exact gcd_mul_div_eq residual (frobeniusDiffMod f hmonic d)
+
+private theorem isUnitPolynomial_mul_eq_false_of_right
+    [ZMod64.PrimeModulus p]
+    (a b : FpPoly p) (hb : isUnitPolynomial b = false) :
+    isUnitPolynomial (a * b) = false := by
+  cases hprod : isUnitPolynomial (a * b) with
+  | false => rfl
+  | true =>
+      have hbUnit : isUnitPolynomial b = true :=
+        isUnitPolynomial_of_dvd_isUnitPolynomial
+          (g := b) (h := a * b) ⟨a, DensePoly.mul_comm_poly a b⟩ hprod
+      rw [hbUnit] at hb
+      simp at hb
+
+private theorem finishDegreePower_product_nonunit
+    [ZMod64.PrimeModulus p]
+    (d : Nat) (residual acc : FpPoly p)
+    (hacc : isUnitPolynomial acc = false) :
+    let result := finishDegreePower (p := p) d residual acc
+    optionalBucketProduct result.1 * result.2 = acc * residual := by
+  unfold finishDegreePower
+  rw [hacc]
+  cases isUnitPolynomial residual <;> simp [optionalBucketProduct]
+
+private theorem zmod_one_ne_zero_local
+    [ZMod64.PrimeModulus p] :
+    (1 : ZMod64 p) ≠ 0 := by
+  intro h
+  have htoNat : (1 : ZMod64 p).toNat = (0 : ZMod64 p).toNat :=
+    congrArg ZMod64.toNat h
+  rw [show ((1 : ZMod64 p).toNat) = 1 % p from ZMod64.toNat_one,
+      show ((0 : ZMod64 p).toNat) = 0 from ZMod64.toNat_zero,
+      Nat.mod_eq_of_lt (by
+        have h2 : 2 ≤ p := (ZMod64.PrimeModulus.prime (p := p)).two_le
+        omega : 1 < p)] at htoNat
+  exact absurd htoNat (by omega)
+
+private theorem isUnitPolynomial_one
+    [ZMod64.PrimeModulus p] :
+    isUnitPolynomial (1 : FpPoly p) = true := by
+  unfold isUnitPolynomial
+  change (match DensePoly.degree? (DensePoly.C (1 : ZMod64 p)) with
+    | some 0 => true
+    | _ => false) = true
+  have hcoeffs : (DensePoly.C (1 : ZMod64 p)).coeffs = #[(1 : ZMod64 p)] :=
+    DensePoly.coeffs_C_of_ne_zero zmod_one_ne_zero_local
+  simp [DensePoly.degree?, DensePoly.size, hcoeffs]
+
+private theorem finishDegreePower_product_one
+    [ZMod64.PrimeModulus p]
+    (d : Nat) (residual : FpPoly p) :
+    let result := finishDegreePower (p := p) d residual 1
+    optionalBucketProduct result.1 * result.2 = residual := by
+  unfold finishDegreePower
+  rw [isUnitPolynomial_one]
+  simp [optionalBucketProduct]
+
+private theorem distinctDegreePowerLoop_product_nonunit
+    [ZMod64.PrimeModulus p]
+    (d : Nat) (diff : FpPoly p) (fuel : Nat) (residual acc : FpPoly p)
+    (hacc : isUnitPolynomial acc = false) :
+    let result := distinctDegreePowerLoop (p := p) d diff fuel residual acc
+    optionalBucketProduct result.1 * result.2 = acc * residual := by
+  induction fuel generalizing residual acc with
+  | zero =>
+      exact finishDegreePower_product_nonunit d residual acc hacc
+  | succ fuel ih =>
+      unfold distinctDegreePowerLoop
+      by_cases hzero : residual.isZero
+      · simp [hzero, finishDegreePower_product_nonunit d residual acc hacc]
+      · simp [hzero]
+        cases hcand : isUnitPolynomial (DensePoly.gcd residual diff) with
+        | true =>
+          simp [finishDegreePower_product_nonunit d residual acc hacc]
+        | false =>
+          have hcandFalse : isUnitPolynomial (DensePoly.gcd residual diff) = false := hcand
+          simp
+          have hmul :
+              isUnitPolynomial (acc * DensePoly.gcd residual diff) = false :=
+            isUnitPolynomial_mul_eq_false_of_right acc (DensePoly.gcd residual diff) hcandFalse
+          have hrec := ih (residual / DensePoly.gcd residual diff)
+            (acc * DensePoly.gcd residual diff) hmul
+          calc
+            optionalBucketProduct
+                  (distinctDegreePowerLoop d diff fuel
+                    (residual / DensePoly.gcd residual diff)
+                    (acc * DensePoly.gcd residual diff)).1 *
+                (distinctDegreePowerLoop d diff fuel
+                    (residual / DensePoly.gcd residual diff)
+                    (acc * DensePoly.gcd residual diff)).2
+                = (acc * DensePoly.gcd residual diff) *
+                    (residual / DensePoly.gcd residual diff) := hrec
+            _ = acc * residual := by
+              calc
+                (acc * DensePoly.gcd residual diff) *
+                    (residual / DensePoly.gcd residual diff)
+                    = acc * (DensePoly.gcd residual diff *
+                        (residual / DensePoly.gcd residual diff)) := by
+                      exact DensePoly.mul_assoc_poly acc (DensePoly.gcd residual diff)
+                        (residual / DensePoly.gcd residual diff)
+                _ = acc * residual := by
+                      exact congrArg (fun x => acc * x) (gcd_mul_div_eq residual diff)
+
+private theorem distinctDegreePowerLoop_product_one
+    [ZMod64.PrimeModulus p]
+    (d : Nat) (diff : FpPoly p) (fuel : Nat) (residual : FpPoly p) :
+    let result := distinctDegreePowerLoop (p := p) d diff fuel residual 1
+    optionalBucketProduct result.1 * result.2 = residual := by
+  induction fuel generalizing residual with
+  | zero =>
+      exact finishDegreePower_product_one d residual
+  | succ fuel ih =>
+      unfold distinctDegreePowerLoop
+      by_cases hzero : residual.isZero
+      · simp [hzero, finishDegreePower_product_one d residual]
+      · simp [hzero]
+        cases hcand : isUnitPolynomial (DensePoly.gcd residual diff) with
+        | true =>
+          simp [finishDegreePower_product_one d residual]
+        | false =>
+          have hcandFalse : isUnitPolynomial (DensePoly.gcd residual diff) = false := hcand
+          simp
+          have hrec := distinctDegreePowerLoop_product_nonunit d diff fuel
+            (residual / DensePoly.gcd residual diff)
+            (DensePoly.gcd residual diff)
+          calc
+            optionalBucketProduct
+                  (distinctDegreePowerLoop d diff fuel
+                    (residual / DensePoly.gcd residual diff)
+                    (DensePoly.gcd residual diff)).1 *
+                (distinctDegreePowerLoop d diff fuel
+                    (residual / DensePoly.gcd residual diff)
+                    (DensePoly.gcd residual diff)).2
+                = DensePoly.gcd residual diff *
+                    (residual / DensePoly.gcd residual diff) := hrec hcandFalse
+            _ = residual := by
+              exact gcd_mul_div_eq residual diff
+
+private theorem distinctDegreeLoop_product_eq
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) (xMod : FpPoly p)
+    (fuel d : Nat) (currentFrob residual : FpPoly p)
+    (buckets : List (DegreeBucket p)) :
+    let result := distinctDegreeLoop f hmonic xMod fuel d currentFrob residual buckets
+    degreeBucketProduct result.1 * result.2 =
+      degreeBucketProduct buckets * residual := by
+  induction fuel generalizing d currentFrob residual buckets with
+  | zero => rfl
+  | succ fuel ih =>
+      unfold distinctDegreeLoop
+      by_cases hzero : residual.isZero
+      · simp [hzero]
+      · simp [hzero]
+        let powerResult :=
+          distinctDegreePowerLoop d (currentFrob - xMod) (residual.size + 1) residual 1
+        have hpower :
+            optionalBucketProduct powerResult.1 * powerResult.2 = residual :=
+          distinctDegreePowerLoop_product_one d (currentFrob - xMod)
+            (residual.size + 1) residual
+        have hstep :
+            degreeBucketProduct (appendBucket? buckets powerResult.1) * powerResult.2 =
+              degreeBucketProduct buckets * residual := by
+          rw [degreeBucketProduct_appendBucket?]
+          calc
+            (degreeBucketProduct buckets * optionalBucketProduct powerResult.1) *
+                powerResult.2
+                = degreeBucketProduct buckets *
+                    (optionalBucketProduct powerResult.1 * powerResult.2) := by
+                  exact DensePoly.mul_assoc_poly
+                    (degreeBucketProduct buckets) (optionalBucketProduct powerResult.1)
+                    powerResult.2
+            _ = degreeBucketProduct buckets * residual := by
+                  rw [hpower]
+        have htail := ih (d + 1) (FpPoly.powModMonic currentFrob f hmonic p)
+          powerResult.2 (appendBucket? buckets powerResult.1)
+        exact htail.trans hstep
 
 /--
 The executable distinct-degree factorization preserves the input polynomial as
@@ -273,7 +471,12 @@ theorem prod_distinctDegreeFactor
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (_hsquareFree : DensePoly.gcd f (DensePoly.derivative f) = 1) :
     (distinctDegreeFactor f hmonic).product = f := by
-  sorry
+  unfold distinctDegreeFactor DistinctDegreeFactorization.product
+  let xMod := FpPoly.modByMonic f FpPoly.X hmonic
+  let frobX := FpPoly.frobeniusXMod f hmonic
+  have hloop := distinctDegreeLoop_product_eq f hmonic xMod
+    (basisSize f + 1) 1 frobX f []
+  simpa [degreeBucketProduct, degreeBucketFactors, factorProduct] using hloop
 
 /--
 Every recorded bucket is associated with a positive degree and satisfies the
