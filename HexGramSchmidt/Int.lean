@@ -632,6 +632,139 @@ private theorem dot_rowAdd_row_at_right {n' m' : Nat}
       Matrix.dot w M[dst] + c * Matrix.dot w M[src] := by
   rw [dot_comm_int w, dot_rowAdd_row_at_left, dot_comm_int w M[dst], dot_comm_int w M[src]]
 
+/-- Determinant-level pivot bridge for scaled Gram-Schmidt coefficients under
+an elementary row addition. In the Cramer matrix computing `nu[k,j]`, replacing
+row `k` by `row k + c * row j` changes the replaced last column linearly: the
+new determinant is the old Cramer determinant plus `c` times the leading Gram
+determinant. This formulation does not require the rational coefficient
+denominator to be nonzero. -/
+theorem scaledCoeffMatrix_rowAdd_pivot_det
+    (b : Matrix Int n m) (j k : Fin n) (hjk : j.val < k.val) (c : Int) :
+    Matrix.det (GramSchmidt.scaledCoeffMatrix (Matrix.rowAdd b j k c) k j hjk) =
+      Matrix.det (GramSchmidt.scaledCoeffMatrix b k j hjk) +
+        c * Matrix.det
+          (GramSchmidt.leadingGramMatrixInt b (j.val + 1) (Nat.succ_le_of_lt j.isLt)) := by
+  let t := j.val + 1
+  let ht : t ≤ n := Nat.succ_le_of_lt j.isLt
+  let last : Fin t := ⟨j.val, Nat.lt_succ_self j.val⟩
+  let M := GramSchmidt.leadingGramMatrixInt b t ht
+  let oldCol : Fin t → Int := fun p =>
+    Matrix.dot (b.row (GramSchmidt.liftFinLE p ht)) (b.row k)
+  let gramCol : Fin t → Int := fun p =>
+    Matrix.dot (b.row (GramSchmidt.liftFinLE p ht)) (b.row j)
+  have hnew :
+      GramSchmidt.scaledCoeffMatrix (Matrix.rowAdd b j k c) k j hjk =
+        Matrix.colReplace M last (fun p => oldCol p + c * gramCol p) := by
+    apply Vector.ext
+    intro r hr
+    apply Vector.ext
+    intro q hq
+    let p : Fin t := ⟨r, hr⟩
+    let qf : Fin t := ⟨q, hq⟩
+    have hp_ne : (GramSchmidt.liftFinLE p ht).val ≠ k.val := by
+      exact Nat.ne_of_lt (Nat.lt_of_lt_of_le p.isLt (Nat.succ_le_iff.mp hjk))
+    have hp_row :
+        (Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE p ht] =
+          b[GramSchmidt.liftFinLE p ht] :=
+      rowAdd_row_eq_of_ne b j k (GramSchmidt.liftFinLE p ht) c hp_ne
+    by_cases hqj : qf.val = j.val
+    · have hqNat : q = j.val := by
+        simpa [qf] using hqj
+      have hq_last : qf = last := Fin.ext hqj
+      simp only [GramSchmidt.scaledCoeffMatrix, Matrix.colReplace, Matrix.ofFn,
+        Vector.getElem_ofFn, hqNat, if_true]
+      rw [if_pos (rfl : (⟨j.val, Nat.lt_succ_self j.val⟩ : Fin t) = last)]
+      simp only [Matrix.row]
+      change Matrix.dot ((Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE p ht])
+          ((Matrix.rowAdd b j k c)[k]) =
+        oldCol p + c * gramCol p
+      rw [hp_row]
+      change Matrix.dot (b.row (GramSchmidt.liftFinLE p ht))
+          ((Matrix.rowAdd b j k c)[k]) =
+        oldCol p + c * gramCol p
+      exact dot_rowAdd_row_at_right b j k c (b.row (GramSchmidt.liftFinLE p ht))
+    · have hq_ne_last : qf ≠ last := by
+        intro h
+        exact hqj (congrArg Fin.val h)
+      have hqNat : q ≠ j.val := by
+        intro h
+        exact hqj (by simpa [qf] using h)
+      have hq_ne_k : (GramSchmidt.liftFinLE qf ht).val ≠ k.val := by
+        exact Nat.ne_of_lt (Nat.lt_of_lt_of_le qf.isLt (Nat.succ_le_iff.mp hjk))
+      have hq_row :
+          (Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE qf ht] =
+            b[GramSchmidt.liftFinLE qf ht] :=
+        rowAdd_row_eq_of_ne b j k (GramSchmidt.liftFinLE qf ht) c hq_ne_k
+      simp only [GramSchmidt.scaledCoeffMatrix, Matrix.colReplace, Matrix.ofFn,
+        Vector.getElem_ofFn, if_neg hqNat]
+      rw [if_neg hq_ne_last]
+      simp only [Matrix.row]
+      rw [hp_row, hq_row]
+      dsimp [M, GramSchmidt.leadingGramMatrixInt, Matrix.ofFn, Matrix.row]
+      rw [Vector.getElem_ofFn, Vector.getElem_ofFn]
+  have hold :
+      GramSchmidt.scaledCoeffMatrix b k j hjk =
+        Matrix.colReplace M last oldCol := by
+    apply Vector.ext
+    intro r hr
+    apply Vector.ext
+    intro q hq
+    let p : Fin t := ⟨r, hr⟩
+    let qf : Fin t := ⟨q, hq⟩
+    by_cases hqj : qf.val = j.val
+    · have hqNat : q = j.val := by
+        simpa [qf] using hqj
+      have hq_last : qf = last := Fin.ext hqj
+      simp only [GramSchmidt.scaledCoeffMatrix, Matrix.colReplace, Matrix.ofFn,
+        Vector.getElem_ofFn, hqNat, if_true]
+      rw [if_pos (rfl : (⟨j.val, Nat.lt_succ_self j.val⟩ : Fin t) = last)]
+    · have hq_ne_last : qf ≠ last := by
+        intro h
+        exact hqj (congrArg Fin.val h)
+      have hqNat : q ≠ j.val := by
+        intro h
+        exact hqj (by simpa [qf] using h)
+      simp only [GramSchmidt.scaledCoeffMatrix, Matrix.colReplace, Matrix.ofFn,
+        Vector.getElem_ofFn, if_neg hqNat]
+      rw [if_neg hq_ne_last]
+      dsimp [M, GramSchmidt.leadingGramMatrixInt, Matrix.ofFn, Matrix.row]
+      simp [Vector.getElem_ofFn]
+  have hgram :
+      Matrix.colReplace M last gramCol = M := by
+    apply Vector.ext
+    intro r hr
+    apply Vector.ext
+    intro q hq
+    let p : Fin t := ⟨r, hr⟩
+    let qf : Fin t := ⟨q, hq⟩
+    by_cases hq_last : qf = last
+    · have hq_lift : GramSchmidt.liftFinLE qf ht = j := by
+        exact Fin.ext (by
+          have hval := congrArg Fin.val hq_last
+          simpa [last] using hval)
+      simp only [M, gramCol, GramSchmidt.leadingGramMatrixInt, Matrix.colReplace, Matrix.ofFn,
+        Vector.getElem_ofFn]
+      rw [if_pos hq_last]
+      rw [hq_lift]
+    · simp only [M, gramCol, GramSchmidt.leadingGramMatrixInt, Matrix.colReplace, Matrix.ofFn,
+        Vector.getElem_ofFn]
+      rw [if_neg hq_last]
+      simp [Matrix.row]
+  calc
+    Matrix.det (GramSchmidt.scaledCoeffMatrix (Matrix.rowAdd b j k c) k j hjk)
+        = Matrix.det (Matrix.colReplace M last (fun p => oldCol p + c * gramCol p)) := by
+          rw [hnew]
+    _ = Matrix.det (Matrix.colReplace M last oldCol) +
+          Matrix.det (Matrix.colReplace M last (fun p => c * gramCol p)) := by
+          rw [Matrix.det_colReplace_add]
+    _ = Matrix.det (Matrix.colReplace M last oldCol) +
+          c * Matrix.det (Matrix.colReplace M last gramCol) := by
+          rw [Matrix.det_colReplace_smul]
+    _ = Matrix.det (GramSchmidt.scaledCoeffMatrix b k j hjk) +
+          c * Matrix.det
+            (GramSchmidt.leadingGramMatrixInt b (j.val + 1) (Nat.succ_le_of_lt j.isLt)) := by
+          rw [← hold, hgram]
+
 /-- When the modified row index `k` lies outside the leading `t`-prefix
 (`t ≤ k.val`), the leading Gram matrix of `Matrix.rowAdd b j k c` agrees with
 that of `b`. -/
