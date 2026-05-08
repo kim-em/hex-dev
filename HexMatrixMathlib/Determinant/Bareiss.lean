@@ -326,6 +326,174 @@ theorem bareissPivotRegularSwap_det
   intro hcurrent
   exact findPivot?_some_ne_current state hDone hfind hcurrent.symm
 
+/-- Swapping source rows `kFin` and `pivot`, both indexed at `≥ k`, leaves the
+size-`k` leading prefix unchanged. Used in the row-pivoted Bareiss invariant
+to identify `prevPivot` with the leading-prefix determinant of the row-swapped
+source matrix. -/
+private theorem leadingPrefix_rowSwap_eq_of_le {R : Type u}
+    (M : Hex.Matrix R n n) (k : Nat) (hk : k ≤ n)
+    (kFin pivot : Fin n) (hkF : k ≤ kFin.val) (hp : k ≤ pivot.val) :
+    Hex.Matrix.leadingPrefix (Hex.Matrix.rowSwap M kFin pivot) k hk =
+      Hex.Matrix.leadingPrefix M k hk := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro c hc
+  have hr_lt : r < n := Nat.lt_of_lt_of_le hr hk
+  have h_r_ne_kFin : (⟨r, hr_lt⟩ : Fin n) ≠ kFin := by
+    intro h
+    have hval : r = kFin.val := by simpa using congrArg Fin.val h
+    omega
+  have h_r_ne_pivot : (⟨r, hr_lt⟩ : Fin n) ≠ pivot := by
+    intro h
+    have hval : r = pivot.val := by simpa using congrArg Fin.val h
+    omega
+  show ((Hex.Matrix.rowSwap M kFin pivot).leadingPrefix k hk)[(⟨r, hr⟩ : Fin k)][
+      (⟨c, hc⟩ : Fin k)] =
+    (M.leadingPrefix k hk)[(⟨r, hr⟩ : Fin k)][(⟨c, hc⟩ : Fin k)]
+  rw [Hex.Matrix.leadingPrefix_entry, Hex.Matrix.leadingPrefix_entry]
+  simp only [Hex.Matrix.rowSwap_getElem, if_neg h_r_ne_pivot, if_neg h_r_ne_kFin]
+
+/-- Auxiliary: a row of `rowSwap M kFin pivot` with index `r` not equal to
+either swap target equals the corresponding row of `M`. -/
+private theorem rowSwap_getElem_of_ne {R : Type u}
+    (M : Hex.Matrix R n n) (kFin pivot r : Fin n) (c : Fin n)
+    (hr_ne_kFin : r ≠ kFin) (hr_ne_pivot : r ≠ pivot) :
+    (Hex.Matrix.rowSwap M kFin pivot)[r][c] = M[r][c] := by
+  rw [Hex.Matrix.rowSwap_getElem]
+  rw [if_neg hr_ne_pivot, if_neg hr_ne_kFin]
+
+/-- Reading row `r` of `rowSwap M kFin pivot` returns row `swap_idx r` of `M`,
+where `swap_idx kFin pivot r = if r = pivot then kFin else if r = kFin then pivot else r`. -/
+private theorem rowSwap_getElem_swap_eq {R : Type u}
+    (M : Hex.Matrix R n n) (kFin pivot r : Fin n) (c : Fin n) :
+    (Hex.Matrix.rowSwap M kFin pivot)[r][c] =
+      M[if r = pivot then kFin else if r = kFin then pivot else r][c] := by
+  rw [Hex.Matrix.rowSwap_getElem]
+  by_cases hrp : r = pivot
+  · simp only [if_pos hrp]
+  · by_cases hrk : r = kFin
+    · simp only [if_neg hrp, if_pos hrk]
+    · simp only [if_neg hrp, if_neg hrk]
+
+/-- Swapping source rows `kFin` and `pivot` (with `kFin.val = k` and
+`k + 1 ≤ pivot.val`) commutes with the bordered-minor construction at level
+`k`: the leading rows are unchanged, and the border row at index `i` of the
+swapped source equals the border row at the swap-permuted index of the
+original source. -/
+private theorem borderedMinor_rowSwap_source_row {R : Type u}
+    (M : Hex.Matrix R n n) (k : Nat) (hk : k < n)
+    (kFin pivot : Fin n) (hkF : kFin.val = k) (hp : k + 1 ≤ pivot.val)
+    (i j : Fin n) :
+    Hex.Matrix.borderedMinor (Hex.Matrix.rowSwap M kFin pivot) k hk i j =
+      Hex.Matrix.borderedMinor M k hk
+        (if i = pivot then kFin else if i = kFin then pivot else i) j := by
+  -- The bordered-minor body computes a row index `rr` and column index `cc`,
+  -- then reads `M[rr][cc]`. For r < k, rr = ⟨r, _⟩ on both sides, so the
+  -- equation reduces to a row equality on M (modulo the source row swap).
+  -- For r = k, rr = i on LHS and rr = swap_idx i on RHS; the row equality
+  -- is exactly `rowSwap_getElem`.
+  apply Vector.ext
+  intro r _hr
+  apply Vector.ext
+  intro c _hc
+  by_cases hrk : r < k
+  · have hr_lt : r < n := Nat.lt_trans hrk hk
+    have h_r_ne_kFin : (⟨r, hr_lt⟩ : Fin n) ≠ kFin := by
+      intro h
+      have hval : r = kFin.val := by simpa using congrArg Fin.val h
+      omega
+    have h_r_ne_pivot : (⟨r, hr_lt⟩ : Fin n) ≠ pivot := by
+      intro h
+      have hval : r = pivot.val := by simpa using congrArg Fin.val h
+      omega
+    by_cases hck : c < k
+    · have hc_lt : c < n := Nat.lt_trans hck hk
+      simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, hrk, hck]
+      show (Hex.Matrix.rowSwap M kFin pivot)[(⟨r, hr_lt⟩ : Fin n)][(⟨c, hc_lt⟩ : Fin n)] =
+          M[(⟨r, hr_lt⟩ : Fin n)][(⟨c, hc_lt⟩ : Fin n)]
+      exact rowSwap_getElem_of_ne M kFin pivot ⟨r, hr_lt⟩ _ h_r_ne_kFin h_r_ne_pivot
+    · simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, hrk, hck]
+      show (Hex.Matrix.rowSwap M kFin pivot)[(⟨r, hr_lt⟩ : Fin n)][j] =
+          M[(⟨r, hr_lt⟩ : Fin n)][j]
+      exact rowSwap_getElem_of_ne M kFin pivot ⟨r, hr_lt⟩ _ h_r_ne_kFin h_r_ne_pivot
+  · by_cases hck : c < k
+    · have hc_lt : c < n := Nat.lt_trans hck hk
+      simp only [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, Vector.getElem_ofFn,
+        hrk, hck, dif_pos, dif_neg, not_false_iff]
+      show (Hex.Matrix.rowSwap M kFin pivot)[i][(⟨c, hc_lt⟩ : Fin n)] = _
+      exact rowSwap_getElem_swap_eq M kFin pivot i _
+    · simp only [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, Vector.getElem_ofFn,
+        hrk, hck, dif_neg, not_false_iff]
+      show (Hex.Matrix.rowSwap M kFin pivot)[i][j] = _
+      exact rowSwap_getElem_swap_eq M kFin pivot i j
+
+/-- Public regular swap-only step surface for the row-pivoted Bareiss proof.
+When the current diagonal pivot is zero and `findPivot?` returns a later row,
+the row-pivoted loop swaps source rows `state.step` and `pivot` before applying
+the stepMatrix update. Under that source rewrite, the bordered-minor invariant
+transports across the source row swap: the working matrix is `rowSwap`'d to
+match, the row-swap counter increments, and `state.step` is unchanged.
+
+The subsequent stepMatrix update is then handled by
+`bareissPivotInvariant_regular_no_swap` applied to the swapped source. -/
+theorem bareissPivotInvariant_regular_swap
+    (source : Hex.Matrix Int n n) (state : Hex.Matrix.BareissState n)
+    (hinv : BareissNoPivotInvariant source state)
+    (hDone : state.step + 1 < n)
+    {pivot : Fin n}
+    (hfind :
+      Hex.Matrix.findPivot? state.matrix
+        (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+        (state.step + 1) = some pivot) :
+    BareissNoPivotInvariant
+      (Hex.Matrix.rowSwap source
+        (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+        pivot)
+      { state with
+          matrix := Hex.Matrix.rowSwap state.matrix
+            (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+            pivot
+          rowSwaps := state.rowSwaps + 1 } := by
+  have hk : state.step < n := Nat.lt_of_succ_lt hDone
+  set kFin : Fin n := ⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩
+  have hkF_val : kFin.val = state.step := rfl
+  have hp_ge :
+      state.step + 1 ≤ pivot.val :=
+    Hex.Matrix.findPivot?_ge_start state.matrix kFin (state.step + 1) hfind
+  refine
+    { singular_none := hinv.singular_none
+      step_le := hinv.step_le
+      prevPivot_eq := ?_
+      prevPivot_ne := hinv.prevPivot_ne
+      trailing_eq := ?_ }
+  · -- Leading prefix of size state.step is unchanged: kFin and pivot both
+    -- have value ≥ state.step.
+    have hkF_ge : state.step ≤ kFin.val := Nat.le_of_eq hkF_val.symm
+    have hp_le : state.step ≤ pivot.val := Nat.le_of_succ_le hp_ge
+    rw [leadingPrefix_rowSwap_eq_of_le source state.step hinv.step_le kFin pivot
+      hkF_ge hp_le]
+    exact hinv.prevPivot_eq
+  · intro hnext i j hi hj
+    -- The working matrix entry at (i, j) under rowSwap rewrites by cases on i.
+    rw [Hex.Matrix.rowSwap_getElem]
+    -- The bordered minor at (i, j) of the row-swapped source equals the
+    -- bordered minor of the original source with the border row swapped.
+    rw [borderedMinor_rowSwap_source_row source state.step hk kFin pivot hkF_val
+      hp_ge i j]
+    by_cases hip : i = pivot
+    · simp only [if_pos hip]
+      -- Need: state.matrix[kFin][j] = det (borderedMinor source state.step _ kFin j).
+      have hkFin_le : state.step ≤ kFin.val := Nat.le_of_eq hkF_val.symm
+      exact hinv.trailing_eq hk kFin j hkFin_le hj
+    · by_cases hik : i = kFin
+      · simp only [if_neg hip, if_pos hik]
+        -- Need: state.matrix[pivot][j] = det (borderedMinor source state.step _ pivot j).
+        have hp_step : state.step ≤ pivot.val := Nat.le_of_succ_le hp_ge
+        exact hinv.trailing_eq hk pivot j hp_step hj
+      · simp only [if_neg hip, if_neg hik]
+        exact hinv.trailing_eq hk i j hi hj
+
 private theorem bareissSign_succ (swaps : Nat) :
     (if (swaps + 1) % 2 = 0 then (1 : Int) else -1) =
       -(if swaps % 2 = 0 then (1 : Int) else -1) := by

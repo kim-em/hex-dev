@@ -32,9 +32,13 @@ PR commit fire each workflow exactly once.
 `workflow_dispatch:` is allowed wherever an ad-hoc manual run is
 useful (currently `conformance.yml`).
 
-Other triggers (`schedule:`, `repository_dispatch:`, `release:`) are
-case-by-case; they must be documented in the workflow file with a
-comment explaining why they're justified.
+Other triggers (`schedule:`, `repository_dispatch:`, `release:`,
+`merge_group:`) are case-by-case; they must be documented in the
+workflow file with a comment explaining why they're justified.
+`merge_group:` is **not** in use on this repo: GitHub's merge queue
+is unavailable on the personal-account plan that owns the repo, so
+adding a `merge_group:` trigger would just be dead configuration.
+Revisit if the account ever moves to a plan that supports the queue.
 
 ## Concurrency
 
@@ -137,6 +141,19 @@ workflow files):
 - `build` (from `ci.yml`)
 - `build-macos` (from `ci.yml`)
 - `conformance` (from `conformance.yml`)
+
+`required_status_checks.strict` is `false`. With `strict: true`,
+every merge to `main` flips every other open PR to `BEHIND` and
+auto-merge will not fire on a behind branch — without a merge queue
+to serially rebase the queue (see Triggers above; the queue is
+unavailable on this account's plan), this serialises the whole repo
+on a manual "Update branch" click per PR per merge, which in
+practice means PRs sit forever. Accepting `strict: false` means a
+merged commit was tested against the tip of `main` *as of when its
+PR's CI last ran*, not the current tip — for this repo's workload
+(largely orthogonal proof additions on top of a green tree), that
+trade-off is acceptable. Reconsider if a future change makes
+cross-PR conflicts more likely.
 
 `enforce_admins: false` is acceptable — humans occasionally need to
 override (e.g. a known-good revert during incident response). PR

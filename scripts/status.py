@@ -32,6 +32,14 @@ def blockers_for(libraries, name: str, phase: int) -> list[str]:
 
 def entry_lines(libraries, name: str) -> list[str]:
     info = libraries[name]
+    if not info.is_active:
+        return [
+            f"{name} is {info.status} (not dispatched)",
+            f"spec: {pascal_to_spec_path(name)}",
+            f"to activate: bump status to active in libraries.yml "
+            f"(plus Lake entry + root file; see PLAN/Conventions.md "
+            f"§'Library status')",
+        ]
     if info.done_through >= 7:
         return [f"{name} is fully done (done_through = {info.done_through})"]
     phase = info.done_through + 1
@@ -62,13 +70,17 @@ def check_release(root: Path, release: int, libraries) -> int:
         print(f"unknown release: {release}", file=sys.stderr)
         return 1
     required = RELEASE_LIBRARIES[release]
-    missing = [name for name in required if libraries[name].done_through < 7]
+    missing = [name for name in required if not libraries[name].is_active or libraries[name].done_through < 7]
     example = root / "Examples" / f"Release{release}.lean"
     print(f"Release {release}")
     if missing:
         print("missing libraries:")
         for name in missing:
-            print(f"  {name}: needs done_through >= 7 (currently {libraries[name].done_through})")
+            info = libraries[name]
+            if not info.is_active:
+                print(f"  {name}: status: {info.status} (must be active for release)")
+            else:
+                print(f"  {name}: needs done_through >= 7 (currently {info.done_through})")
     else:
         print("missing libraries: none")
     print(f"integration example: {example.relative_to(root)}")
@@ -96,7 +108,11 @@ def print_full_status(libraries) -> None:
     ready = []
     blocked = []
     done = []
+    skipped = []  # non-active libraries (planned/draft)
     for name, info in libraries.items():
+        if not info.is_active:
+            skipped.append((name, info.status))
+            continue
         if info.done_through >= 7:
             done.append(name)
             continue
@@ -136,6 +152,24 @@ def print_full_status(libraries) -> None:
         print("  " + ", ".join(done))
     else:
         print("  (none yet)")
+
+    # Mandatory non-active footer (PLAN/Conventions.md §"Library status").
+    # Silent omission would recreate the invisibility problem the status
+    # field was introduced to fix.
+    print()
+    print("Planned (skipped — SPEC ready, implementation deferred):")
+    planned = [name for name, status in skipped if status == "planned"]
+    if planned:
+        print("  " + ", ".join(planned))
+    else:
+        print("  (none)")
+    print()
+    print("Draft (skipped — SPEC in progress):")
+    drafts = [name for name, status in skipped if status == "draft"]
+    if drafts:
+        print("  " + ", ".join(drafts))
+    else:
+        print("  (none)")
 
 
 def main(argv: list[str]) -> int:

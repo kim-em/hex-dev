@@ -8,6 +8,12 @@ operation through python-flint's `fmpz_poly` integer factorisation.  On
 mismatch, writes a JSON failure record under `conformance-failures/`
 and exits non-zero so CI fails the job.
 
+Fixture records may also carry optional pinned modular-factor metadata:
+``modFactorPrime`` plus ``modFactorDegrees``.  When present, this driver
+independently factors the integer input reduced modulo that prime and
+checks the sorted irreducible factor degree multiset.  Plain historical
+``factor`` fixtures omit these fields and keep the original behaviour.
+
 Operation cross-checked
 -----------------------
 
@@ -92,6 +98,11 @@ def _fmpz_poly(coeffs: list[int]):
     return fmpz_poly([int(c) for c in coeffs])
 
 
+def _nmod_poly(coeffs: list[int], p: int):
+    from flint import nmod_poly  # type: ignore[import-not-found]
+    return nmod_poly([int(c) % p for c in coeffs], p)
+
+
 def _flint_version() -> str:
     try:
         import flint  # type: ignore[import-not-found]
@@ -173,6 +184,60 @@ def _signature_to_serialisable(
     return {"content": int(content), "factors": items}
 
 
+def _mod_factor_degrees(coeffs: list[int], p: int) -> list[int]:
+    if p <= 1:
+        raise OracleMismatch(f"modFactorPrime must be > 1, got {p}")
+    f = _nmod_poly(coeffs, p)
+    if f.is_zero():
+        raise OracleMismatch(
+            f"input reduces to zero modulo pinned prime {p}"
+        )
+    _unit, factors = f.factor()
+    degrees: list[int] = []
+    for factor, multiplicity in factors:
+        degree = int(factor.degree())
+        for _ in range(int(multiplicity)):
+            degrees.append(degree)
+    return sorted(degrees)
+
+
+def _check_mod_factor_metadata(
+    *,
+    case_id: str,
+    lib: str,
+    poly_record: dict[str, Any],
+    failure_dir: Path,
+    profile: str,
+    seed: int,
+    oracle_version: str,
+) -> None:
+    p = poly_record.get("modFactorPrime")
+    expected = poly_record.get("modFactorDegrees")
+    if p is None and expected is None:
+        return
+    if not isinstance(p, int) or not isinstance(expected, list) or not all(
+        isinstance(deg, int) and deg > 0 for deg in expected
+    ):
+        raise OracleMismatch(
+            f"{lib}/{case_id}: invalid pinned modular-factor metadata"
+        )
+    coeffs = _coeffs(poly_record)
+    actual = _mod_factor_degrees(coeffs, p)
+    assert_equal(
+        actual,
+        sorted(expected),
+        library=lib,
+        case_id=f"{case_id}:modFactorDegrees",
+        kind="modFactorDegrees",
+        input_record=poly_record,
+        oracle_name="python-flint",
+        oracle_version=oracle_version,
+        failure_dir=failure_dir,
+        profile=profile,
+        seed=seed,
+    )
+
+
 def _check_factor(
     *,
     case_id: str,
@@ -185,6 +250,11 @@ def _check_factor(
     oracle_version: str,
 ) -> None:
     coeffs = _coeffs(poly_record)
+    _check_mod_factor_metadata(
+        case_id=case_id, lib=lib, poly_record=poly_record,
+        failure_dir=failure_dir, profile=profile, seed=seed,
+        oracle_version=oracle_version,
+    )
     flint_sig = _oracle_signature(coeffs)
 
     if not isinstance(lean_value, list) or not all(

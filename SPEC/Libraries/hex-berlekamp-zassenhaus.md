@@ -17,23 +17,158 @@ its Mathlib bridge; every theorem has a real proof.
 The public API accepts arbitrary input polynomials and normalizes
 internally: extract content, remove powers of `X`, and reduce to the
 primitive square-free case before running the recombination pipeline.
-The output is an `Array ZPoly` of primitive factors. Factor order is
-operationally the array order, but the mathematical contract is
-through product and membership rather than any semantic significance
+The output is a **`Factorization` record** explicitly separating the
+signed scalar (sign · content) from the polynomial-factor multiset
+with explicit multiplicities. Factor order in the polynomial-factor
+array is operationally the array order, but the mathematical contract
+is through product and membership rather than any semantic significance
 of that order.
 
 **Top-level API:**
 ```lean
-def factorSlow (f : ZPoly) : Array ZPoly
-def factorFast (f : ZPoly) : Option (Array ZPoly)
-def factor (f : ZPoly) : Array ZPoly := (factorFast f).getD (factorSlow f)
-def factorWithBound (f : ZPoly) (B : Nat) : Array ZPoly
+def factorSlow (f : ZPoly) : Factorization
+def factorFast (f : ZPoly) : Option Factorization
+def factor (f : ZPoly) : Factorization := (factorFast f).getD (factorSlow f)
+def factorWithBound (f : ZPoly) (B : Nat) : Factorization
 ```
 
 `factorSlow` is the unconditionally-correct exhaustive recombination
 path; `factorFast` is the production van Hoeij CLD path; `factor` is
 the public-facing combinator. `factorWithBound` retains its existing
 contract and uses the same combinator under the hood.
+
+**Output convention: the `Factorization` record.**
+
+```lean
+structure Factorization where
+  /-- Signed scalar absorbing both sign and content of the input.
+      For nonzero input: `scalar = sign(lc(f)) · ZPoly.content(f)`.
+      For `f = 0`: `scalar = 0`. -/
+  scalar  : Int
+  /-- Polynomial factors (each irreducible primitive with positive
+      leading coefficient) with multiplicities ≥ 1; no two pairs
+      share a polynomial. -/
+  factors : Array (ZPoly × Nat)
+deriving DecidableEq
+
+def Factorization.product (φ : Factorization) : ZPoly :=
+  φ.factors.foldl (fun acc ⟨g, m⟩ => acc * g^m) (DensePoly.C φ.scalar)
+```
+
+For `f : ZPoly`, `factor f` returns a `Factorization` such that:
+
+1. `scalar = sign(lc(f)) · ZPoly.content(f)`. Zero iff `f = 0`.
+2. Each `(g, m) ∈ factors` has:
+   - `g` primitive with positive leading coefficient
+     (`Hex.ZPoly.Primitive g ∧ 0 < g.leadingCoeff`),
+   - `g` irreducible (`Hex.ZPoly.Irreducible g`; see below),
+   - `m > 0`.
+3. **No duplicate polynomial factors**: distinct entries in `factors`
+   have distinct first components.
+4. **Product preservation**: `Factorization.product (factor f) = f`.
+5. Factor order is operationally array order; the mathematical
+   contract is product + membership (an array of pairs as a multiset).
+
+**Convention: don't break content into primes.** `factor 6 = ⟨6, #[]⟩`,
+not `⟨1, #[(C 2, 1), (C 3, 1)]⟩`. The `factors` field carries
+*polynomial* factors of `primitivePart(f)`; the integer
+factorisation of the content lives in the `scalar` field as a single
+signed integer. This matches FLINT and SymPy.
+
+### Edge cases
+
+| Input `f` | `factor f` |
+|---|---|
+| `0` | `⟨0, #[]⟩` |
+| `1` | `⟨1, #[]⟩` |
+| `-1` | `⟨-1, #[]⟩` |
+| `2` | `⟨2, #[]⟩` |
+| `-6` | `⟨-6, #[]⟩` |
+| `X` | `⟨1, #[(X, 1)]⟩` |
+| `-X` | `⟨-1, #[(X, 1)]⟩` |
+| `X²` | `⟨1, #[(X, 2)]⟩` |
+| `-X² + 1` | `⟨-1, #[(X-1, 1), (X+1, 1)]⟩` |
+| `(X-1)²` | `⟨1, #[(X-1, 2)]⟩` |
+| `-(X-1)²` | `⟨-1, #[(X-1, 2)]⟩` |
+| `2(X-1)(X+1)` | `⟨2, #[(X-1, 1), (X+1, 1)]⟩` |
+| `-2(X-1)²` | `⟨-2, #[(X-1, 2)]⟩` |
+
+**Why this representation, vs. `Array ZPoly` with content folded as
+a constant element?** Two reasons:
+
+1. The signed-scalar field gives uniform sign handling. With a flat
+   `Array ZPoly`, sign would have to be encoded as a constant-
+   polynomial factor or as a separately-tracked `Int`, neither
+   ergonomic. The Mathlib-bridge product theorem
+   `Factorization.product (factor f) = f` then becomes provably
+   exact (no "up to sign" caveat).
+2. Multiplicity is explicit, matching how mature CAS systems
+   (FLINT's `fmpz_poly_factor_t`, SageMath's `Factorization`,
+   SymPy's `factor_list`, Mathematica's `FactorList`) represent
+   integer-polynomial factorisations.
+
+**Mathlib-free `Hex.ZPoly.Irreducible` class.**
+
+```lean
+namespace Hex.ZPoly
+
+/-- Mathlib-free irreducibility for ZPoly. Defined as a `class` (not
+    a plain `Prop`) so that downstream APIs that require `p`
+    irreducible — particularly `NumberField.Inv` and the `Field`
+    instance on `NumberField p x` in `hex-number-field` — can use it
+    as an instance argument and have `x⁻¹` notation work via
+    typeclass inference.
+
+    A bare `Prop` would force inverse-related operations to take
+    explicit hypothesis arguments, breaking the `Inv` typeclass
+    contract. Mathlib's `Fact` wrapper would solve this at the
+    Mathlib level, but `Fact` is unavailable in our Mathlib-free
+    setting.
+
+    This contradicts the project's usual "irreducibility is a
+    term-level fact, not a class" convention (cf.
+    `HexGfqField.FiniteField`'s explicit `_hirr` constructor
+    argument), but the convention applies when irreducibility is
+    *part of a type's identity*. For `NumberField.Inv`'s case,
+    irreducibility is an *ambient assumption used by an operation*
+    on an existing type, so a class is appropriate. -/
+class Irreducible (f : ZPoly) : Prop where
+  not_zero  : f ≠ 0
+  not_unit  : ¬ Hex.ZPoly.IsUnit f       -- IsUnit defined in hex-poly-z
+  no_factors : ∀ a b : ZPoly, f = a * b →
+                Hex.ZPoly.IsUnit a ∨ Hex.ZPoly.IsUnit b
+
+/-- Computational checker for irreducibility. -/
+def isIrreducible (f : ZPoly) : Bool :=
+  if f = 0 then false
+  else if f.natDegree = 0 then
+    -- Constant case: f = C k. Irreducible iff |k| > 1 and |k| is prime.
+    let k := (f.coeff 0).natAbs
+    1 < k && k.Prime
+  else
+    -- Polynomial case: irreducible iff `factor f` returns a
+    -- `Factorization` whose scalar is a unit (±1) and whose
+    -- factors array has exactly one entry with multiplicity 1.
+    let φ := factor f
+    decide (φ.scalar.natAbs = 1) &&
+    φ.factors.size == 1 &&
+    decide ((φ.factors.get! 0).snd = 1)
+
+theorem isIrreducible_iff (f : ZPoly) :
+    isIrreducible f = true ↔ Irreducible f
+
+instance (f : ZPoly) : Decidable (Irreducible f) :=
+  decidable_of_iff _ (isIrreducible_iff f)
+
+end Hex.ZPoly
+```
+
+`Irreducible 0 = False` is explicit by the `not_zero` clause; the
+boolean checker returns `false` on zero input. The constant-case
+primality test on `Nat` lives in `HexArith`. The polynomial-case
+predicate uses the `Factorization` projections directly: scalar
+must be a unit (i.e., `f` is primitive up to sign), `factors` has
+exactly one entry, and that entry has multiplicity 1.
 
 **Prime selection sub-API:**
 ```lean
@@ -85,9 +220,9 @@ threshold (see *Precision schedule* below).
 
 Three top-level functions, all with full Mathlib-bridge proofs:
 
-- **`factorSlow : ZPoly → Array ZPoly`.** Exhaustive subset enumeration. Worst-case `O(2^r)`. **Unconditional correctness:** `factorSlow f = irreducibleFactorisationOf f`.
-- **`factorFast : ZPoly → Option (Array ZPoly)`.** Van Hoeij CLD with precision cap. **Conditional correctness:** `factorFast f = some gs ⟹ gs is the irreducible factorisation of f`. May return `none`.
-- **`factor : ZPoly → Array ZPoly := λ f, (factorFast f).getD (factorSlow f)`.** Unconditionally correct combinator with polynomial-time average performance.
+- **`factorSlow : ZPoly → Factorization`.** Exhaustive subset enumeration. Worst-case `O(2^r)`. **Unconditional correctness:** `factorSlow f = irreducibleFactorisationOf f`.
+- **`factorFast : ZPoly → Option Factorization`.** Van Hoeij CLD with precision cap. **Conditional correctness:** `factorFast f = some φ ⟹ φ is the irreducible factorisation of f`. May return `none`.
+- **`factor : ZPoly → Factorization := λ f, (factorFast f).getD (factorSlow f)`.** Unconditionally correct combinator with polynomial-time average performance.
 
 No axioms. BHKS Theorem 5.2 ("for precision exceeding a paper-stated
 bound, `factorFast` always returns `some`") is a leaf theorem of this
@@ -259,9 +394,11 @@ The conditional correctness contract `factor_product_of_bound`:
 ```lean
 theorem factor_product_of_bound (f : ZPoly) (B : Nat)
     (hB : ∀ g : ZPoly, g ∣ f → ∀ i, |g.coeff i| ≤ B) :
-    Array.foldl (· * ·) 1 (factorWithBound f B) = f
+    Factorization.product (factorWithBound f B) = f
 ```
-follows from C1 specialised to the bound-aware variant.
+follows from C1 specialised to the bound-aware variant. (Old
+`Array.foldl`-based formulation superseded by `Factorization.product`
+per the new output-convention section above.)
 
 ### Group D — leaf performance theorem (BHKS Theorem 5.2; not on the correctness critical path)
 

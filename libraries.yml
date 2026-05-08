@@ -1,8 +1,8 @@
 # libraries.yml — per-library structure + state.
 #
 # Structural fields (deps, mathlib) change rarely, only when the library
-# graph changes. The state field (done_through) changes every planner
-# cycle as libraries complete phases.
+# graph changes. State fields (done_through, status) change as libraries
+# advance through phases or are activated/deactivated.
 #
 # Semantics:
 # - done_through: K means phases 1..K are all complete for L (linear,
@@ -10,13 +10,23 @@
 # - done_through: 0 means no per-library phases are complete; L is
 #   ready to start Phase 1 once Phase 0's global bootstrap is done.
 # - done_through: 7 means L is fully done.
+# - status: active | planned | draft (see PLAN/Conventions.md
+#   §"Library status (active | planned | draft)" for the full
+#   semantic contract).
+#     - active: orchestrator dispatches Phase work.
+#     - planned: SPEC ready, implementation deferred. Lake-alignment
+#       and root-file checks waived. Listed in status report footer.
+#       Required: done_through == 0.
+#     - draft: SPEC incomplete. Same orchestration treatment as planned.
+#       Required: done_through == 0.
+#   Active libraries depend only on active libraries (load-time invariant).
 # - Phase 0 (monorepo bootstrap) is global; its completion is observable
 #   by the existence of lakefile.lean, scripts/check_dag.py, etc., not
 #   by any field in this file.
 #
 # This file is the single source of truth for the library graph.
-# lakefile.lean entries are cross-checked against libraries.yml in CI via
-# scripts/check_dag.py.
+# lakefile.lean entries are cross-checked against active libraries.yml
+# entries in CI via scripts/check_dag.py.
 
 libraries:
 
@@ -25,117 +35,176 @@ libraries:
     deps: []
     mathlib: false
     done_through: 4
+    status: active
   HexPoly:
     deps: []
     mathlib: false
     done_through: 4
+    status: active
   HexMatrix:
     deps: []
     mathlib: false
     done_through: 4
+    status: active
 
   # ---------- Depth 1 ----------
   HexModArith:
     deps: [HexArith]
     mathlib: false
     done_through: 4
+    status: active
   HexGramSchmidt:
     deps: [HexMatrix]
     mathlib: false
     done_through: 4
+    status: active
   HexGF2:
     deps: [HexPoly]
     mathlib: false
     done_through: 4
+    status: active
   HexPolyZ:
     deps: [HexPoly]
     mathlib: false
     done_through: 4
+    status: active
 
   # ---------- Depth 2 ----------
   HexLLL:
     deps: [HexGramSchmidt]
     mathlib: false
     done_through: 4
+    status: active
   HexPolyFp:
     deps: [HexPoly, HexModArith]
     mathlib: false
     done_through: 4
+    status: active
 
   # ---------- Finite-field quotient pipeline ----------
   HexGfqRing:
     deps: [HexPolyFp]
     mathlib: false
     done_through: 4
+    status: active
   HexGfqField:
     deps: [HexGfqRing, HexBerlekamp]
     mathlib: false
     done_through: 4
+    status: active
 
   # ---------- Factoring pipeline ----------
   HexBerlekamp:
     deps: [HexPolyFp, HexMatrix, HexGfqRing]
     mathlib: false
     done_through: 4
+    status: active
   HexHensel:
     deps: [HexPolyFp, HexPolyZ]
     mathlib: false
     done_through: 4
+    status: active
   HexConway:
     deps: [HexBerlekamp]
     mathlib: false
     done_through: 4
+    status: active
   HexGfq:
     deps: [HexGfqField, HexConway, HexGF2]
     mathlib: false
     done_through: 4
+    status: active
   HexBerlekampZassenhaus:
     deps: [HexBerlekamp, HexHensel, HexLLL]
     mathlib: false
     done_through: 0
+    status: active
 
   # ---------- Mathlib bridges ----------
   HexPolyMathlib:
     deps: [HexPoly]
     mathlib: true
     done_through: 4
+    status: active
   HexMatrixMathlib:
     deps: [HexMatrix]
     mathlib: true
     done_through: 3
+    status: active
   HexModArithMathlib:
     deps: [HexModArith]
     mathlib: true
     done_through: 3
+    status: active
   HexGramSchmidtMathlib:
     deps: [HexGramSchmidt]
     mathlib: true
     done_through: 3
+    status: active
   HexPolyZMathlib:
     deps: [HexPolyZ, HexPolyMathlib]
     mathlib: true
     done_through: 3
+    status: active
   HexLLLMathlib:
     deps: [HexLLL, HexMatrixMathlib]
     mathlib: true
     done_through: 3
+    status: active
   HexBerlekampMathlib:
     deps: [HexBerlekamp, HexPolyMathlib, HexModArithMathlib]
     mathlib: true
     done_through: 3
+    status: active
   HexHenselMathlib:
     deps: [HexHensel, HexPolyMathlib]
     mathlib: true
     done_through: 3
+    status: active
   HexGF2Mathlib:
     deps: [HexGF2, HexPolyFp, HexGfqField]
     mathlib: true
     done_through: 3
+    status: active
   HexGfqMathlib:
     deps: [HexGfq, HexGF2Mathlib]
     mathlib: true
     done_through: 3
+    status: active
   HexBerlekampZassenhausMathlib:
     deps: [HexBerlekampZassenhaus, HexPolyZMathlib]
     mathlib: true
     done_through: 2
+    status: active
+
+  # ---------- Planned (status: planned; SPEC ready, implementation deferred) ----------
+  HexRoots:
+    deps: [HexPolyZ]
+    mathlib: false
+    done_through: 0
+    status: planned
+  HexRootsMathlib:
+    deps: [HexRoots, HexPolyZMathlib]
+    mathlib: true
+    done_through: 0
+    status: planned
+  HexResultant:
+    deps: [HexPoly]
+    mathlib: false
+    done_through: 0
+    status: planned
+  HexResultantMathlib:
+    deps: [HexResultant, HexPolyMathlib]
+    mathlib: true
+    done_through: 0
+    status: planned
+  HexNumberField:
+    deps: [HexPolyZ, HexRoots, HexResultant, HexBerlekampZassenhaus]
+    mathlib: false
+    done_through: 0
+    status: planned
+  HexNumberFieldMathlib:
+    deps: [HexNumberField, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRootsMathlib, HexPolyZMathlib]
+    mathlib: true
+    done_through: 0
+    status: planned

@@ -143,9 +143,21 @@ def main() -> int:
 
     errors.extend(check_lakefile_alignment(libraries, lakefile_libs))
 
-    for name in list(libraries) + sorted(KNOWN_EXCEPTIONS):
+    # Root-file existence per PLAN/Conventions.md §"Library status":
+    #   active entry  ⟺  <Name>.lean exists at repo root
+    #   planned/draft entry  ⟹  <Name>.lean must not exist
+    active_names = [name for name, info in libraries.items() if info.is_active]
+    nonactive_names = [name for name, info in libraries.items() if not info.is_active]
+    for name in active_names + sorted(KNOWN_EXCEPTIONS):
         if not (root / f"{name}.lean").exists():
             errors.append(f"missing root file {name}.lean")
+    for name in nonactive_names:
+        if (root / f"{name}.lean").exists():
+            info = libraries[name]
+            errors.append(
+                f"{name}.lean exists at repo root but {name} has status: {info.status}; "
+                f"non-active libraries must not have a root file"
+            )
 
     exe_roots = lean_exe_roots(root / "lakefile.lean")
     errors.extend(check_umbrella_completeness(root, libraries, exe_roots))

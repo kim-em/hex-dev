@@ -10,6 +10,8 @@
 {"kind":"result","lib":"HexBerlekampZassenhaus","case":"red/quad2_deg4","op":"factor","value":[[2,0,1],[1,0,1]]}
 {"kind":"poly","lib":"HexBerlekampZassenhaus","case":"red/cyclo11_cyclo22","coeffs":[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],"modulus":null}
 {"kind":"result","lib":"HexBerlekampZassenhaus","case":"red/cyclo11_cyclo22","op":"factor","value":[[1,1,1,1,1,1,1,1,1,1,1],[1,-1,1,-1,1,-1,1,-1,1,-1,1]]}
+{"kind":"poly","lib":"HexBerlekampZassenhaus","case":"adv/x4_plus_1","coeffs":[1,0,0,0,1],"modulus":null,"modFactorPrime":5,"modFactorDegrees":[2,2]}
+{"kind":"result","lib":"HexBerlekampZassenhaus","case":"adv/x4_plus_1","op":"factor","value":[[1,0,0,0,1]]}
 {"kind":"poly","lib":"HexBerlekampZassenhaus","case":"content2/cyclo5","coeffs":[2,2,2,2,2],"modulus":null}
 {"kind":"result","lib":"HexBerlekampZassenhaus","case":"content2/cyclo5","op":"factor","value":[[2],[1,1,1,1,1]]}
 {"kind":"poly","lib":"HexBerlekampZassenhaus","case":"content3/cyclo7","coeffs":[3,3,3,3,3,3,3],"modulus":null}
