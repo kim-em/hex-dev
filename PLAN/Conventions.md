@@ -274,21 +274,26 @@ Answer all four. One line each is enough.
 A `depends-on:` answer to any of (1)–(4) is healthy. An unanswered
 question is the failure shape.
 
-### Bench-found and conformance-found issues
+### Bench-found, conformance-found, and audit-found issues
 
-Issues filed in response to a benchmark verdict mismatch or a
-conformance failure use the [canonical issue body shape](#canonical-issue-body-shape)
-plus a **Symptom** section recording the evidence:
+Issues filed in response to a benchmark verdict mismatch, a
+conformance failure, or an **audit finding** use the [canonical
+issue body shape](#canonical-issue-body-shape) plus a **Symptom**
+section recording the evidence:
 
 - **Declared expectation.** For a bench finding: the complexity model
   declared in `setup_benchmark` (e.g. `n => n * Nat.log2 (n + 1)`).
   For a conformance finding: the property the failing `#guard` was
-  checking, or the oracle's expected output.
+  checking, or the oracle's expected output. For an audit finding:
+  the SPEC clause the audited work was claimed to satisfy.
 - **Observed result.** For a bench finding: the verdict text emitted
   by `lake exe ... run NAME` (e.g. `inconclusive (cMin=10.5,
   cMax=25.3, β=0.42)`), plus a copy of the relevant JSONL rows. For
   a conformance finding: the failing input, the Lean output, and the
-  oracle output.
+  oracle output. For an audit finding: the specific evidence (a
+  bench input the algorithm short-circuits past, a profile entry
+  showing a dominant cost not attributed to a registered target,
+  a comparator named in the per-library SPEC but not wired, etc.).
 - **Root-cause hypothesis.** One paragraph: what algorithmic shape
   produces this observation? "Quadratic on `p` because we search
   `List.range p`," "factor of `n` slower because we rebuild
@@ -302,6 +307,43 @@ The **Deliverables** section lists two PRs:
 2. The implementation PR fixing the bug at the rolled-back phase.
 
 Cross-link both PRs to this issue.
+
+#### What "audit finding" means
+
+A bench verdict mismatch and a conformance failure both fire from
+an automated check. An audit finding fires from an author writing
+a headline report, reviewing a Phase-4 claim, or otherwise
+auditing existing work, and noticing something that warrants an
+issue **even though no automated verdict fired**.
+
+Examples (illustrative, not exhaustive):
+
+- A bench input is degenerate so the algorithm short-circuits
+  past it (e.g. an LLL bench whose only end-to-end target uses
+  the identity basis, where no Lovász swap fires).
+- A comparator the per-library SPEC requires is not wired.
+- A profile shows a dominant inclusive cost the bench targets
+  do not measure (per
+  [SPEC/benchmarking.md §Attribution rule](../SPEC/benchmarking.md#the-attribution-rule)).
+- An end-to-end target's empirical slope visibly disagrees with
+  its declared complexity over the parameter ladder.
+- A per-library SPEC names no comparator for an algorithm where
+  external references obviously exist (LLL, factoring, GCD, ...)
+  and Phase 4's comparator clause is being claimed satisfied
+  vacuously.
+
+When an audit finding occurs while writing a headline report:
+
+1. File the canonical issue using the body shape above.
+2. Link the issue from the report's §Concerns subsection.
+3. Complete the rest of the report.
+
+The library cannot **remain** at `done_through: 4` while the
+Concern is unresolved (per
+[PLAN/Phase4.md §Exit criteria](Phase4.md#exit-criteria)).
+Resolution available to the orchestrator: act on the HO issue
+tied to the Concern until the underlying problem is fixed and
+the Concern entry is removed from the report.
 
 ### Decomposition is normal
 
