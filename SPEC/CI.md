@@ -32,6 +32,15 @@ PR commit fire each workflow exactly once.
 `workflow_dispatch:` is allowed wherever an ad-hoc manual run is
 useful (currently `conformance.yml`).
 
+`merge_group:` is required on every workflow whose status check is
+in the required-contexts list for `main` (see Branch protection
+below). GitHub's merge queue dispatches workflow runs on a synthetic
+`gh-readonly-queue/main/...` ref; without `merge_group:` the
+required checks never report on the queue's candidate ref and the
+queue stalls. The merge queue runs the same single ubuntu (+ macOS
+for `ci.yml`) job as `pull_request:`, so this does not breach the
+job-count budget.
+
 Other triggers (`schedule:`, `repository_dispatch:`, `release:`) are
 case-by-case; they must be documented in the workflow file with a
 comment explaining why they're justified.
@@ -127,9 +136,12 @@ cache step, not to silently rebuild.
 ## Branch protection
 
 `main` requires every status check produced by `ci.yml` and
-`conformance.yml` to pass before merge. The pod auto-merger
-(`gh pr merge --auto`) respects branch protection, so this is the
-mechanism that gates merges on CI.
+`conformance.yml` to pass before merge, and merges go through
+GitHub's **merge queue**. The pod auto-merger (`gh pr merge --auto`)
+hands a PR to the queue once its own checks are green; the queue
+then serially rebases each PR onto `main`, re-runs the required
+checks against the rebased candidate (the `merge_group:` trigger,
+see Triggers above), and merges only if they pass.
 
 Required contexts (kept in sync with the actual job names in the
 workflow files):
@@ -137,6 +149,13 @@ workflow files):
 - `build` (from `ci.yml`)
 - `build-macos` (from `ci.yml`)
 - `conformance` (from `conformance.yml`)
+
+`required_status_checks.strict` is `false`. The merge queue is the
+mechanism that guarantees each merged commit was tested against the
+current tip of `main`; layering `strict: true` on top forces every
+PR to be manually rebased before the queue will even accept it,
+which (with N PRs in flight) reduces to the pre-queue stall this
+configuration exists to fix.
 
 `enforce_admins: false` is acceptable — humans occasionally need to
 override (e.g. a known-good revert during incident response). PR

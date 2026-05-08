@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  # GitHub merge queue dispatches workflow runs on a synthetic
+  # `gh-readonly-queue/main/...` ref; without this trigger the
+  # required status checks never report and the queue stalls.
+  merge_group:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
