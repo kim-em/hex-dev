@@ -67,7 +67,10 @@ private def coeffs (f : ZPoly) : List Int :=
 private def factorCoeffSummary (factors : Array ZPoly) : List (List Int) :=
   factors.toList.map coeffs
 
-private def sameFactorCoeffSet (actual expected : List (List Int)) : Bool :=
+private def factorizationCoeffSummary (φ : Factorization) : List (List Int × Nat) :=
+  φ.factors.toList.map fun entry => (coeffs entry.1, entry.2)
+
+private def sameFactorCoeffSet (actual expected : List (List Int × Nat)) : Bool :=
   actual.length == expected.length &&
     expected.all (fun target => actual.any (fun got => got == target)) &&
     actual.all (fun got => expected.any (fun target => got == target))
@@ -121,6 +124,12 @@ private def repeatedRootPoly : ZPoly :=
 
 private def monomialWithContent : ZPoly :=
   zpoly #[0, 0, 6]
+
+private def negativeMonomial : ZPoly :=
+  zpoly #[0, -1]
+
+private def negativeRepeatedRootWithContent : ZPoly :=
+  DensePoly.scale (-2 : Int) repeatedRootPoly
 
 private def leadingCoeffDivisibleByFive : ZPoly :=
   zpoly #[1, 1, 5]
@@ -306,24 +315,37 @@ private def cyclo11Times22 : ZPoly :=
 
 #guard
   let factors := factorWithBound (linear 3) 4
-  Array.polyProduct factors = linear 3
+  Factorization.product factors = linear 3
 #guard
   let factors := factorWithBound repeatedRootPoly 4
-  Array.polyProduct factors = repeatedRootPoly
+  Factorization.product factors = repeatedRootPoly
 #guard
   let factors := factorWithBound cubicLinear123 4
-  Array.polyProduct factors = cubicLinear123
+  Factorization.product factors = cubicLinear123
 #guard
   let factors := factor monomialWithContent
-  Array.polyProduct factors = monomialWithContent
+  Factorization.product factors = monomialWithContent
+#guard
+  let φ := factor monomialWithContent
+  φ.scalar = 6 && φ.factors == #[(ZPoly.X, 2)]
+#guard
+  let φ := factor negativeMonomial
+  φ.scalar = -1 && φ.factors == #[(ZPoly.X, 1)]
+#guard
+  let φ := factor repeatedRootPoly
+  φ.scalar = 1 && φ.factors == #[(linear 1, 2)]
+#guard
+  let φ := factor negativeRepeatedRootWithContent
+  φ.scalar = -2 && φ.factors == #[(linear 1, 2)] &&
+    Factorization.product φ = negativeRepeatedRootWithContent
 #guard
   let factors := factor cubicLinear123
-  Array.polyProduct factors = cubicLinear123
+  Factorization.product factors = cubicLinear123
 #guard
   let factors := factor cyclo11Times22
-  Array.polyProduct factors = cyclo11Times22 &&
-    sameFactorCoeffSet (factorCoeffSummary factors)
-      (factorCoeffSummary #[phi11, phi22])
+  Factorization.product factors = cyclo11Times22 &&
+    sameFactorCoeffSet (factorizationCoeffSummary factors)
+      (factorCoeffSummary #[phi11, phi22] |>.map fun coeffs => (coeffs, 1))
 
 #guard PrimeFactorData.degreeSum primeDataValidQuad = 2
 #guard coeffNats (PrimeFactorData.factorProduct primeDataValidQuad) = [2, 0, 1]

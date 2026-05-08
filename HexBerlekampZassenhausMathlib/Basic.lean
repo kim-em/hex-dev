@@ -22,8 +22,8 @@ private def isUnitFactor (g : Hex.ZPoly) : Bool :=
   | some 0 => g.coeff 0 == 1 || g.coeff 0 == -1
   | _ => false
 
-private def nonUnitFactorCount (factors : Array Hex.ZPoly) : Nat :=
-  (factors.toList.filter fun g => !isUnitFactor g).length
+private def nonUnitFactorCount (φ : Hex.Factorization) : Nat :=
+  (φ.factors.toList.filter fun entry => !isUnitFactor entry.1).length
 
 /--
 The transported degree of an executable divisor is bounded by the executable
@@ -111,7 +111,7 @@ instance irreducibleDecidablePred :
 
 /-- The default executable factorization multiplies back to the input. -/
 theorem factor_product (f : Hex.ZPoly) :
-    Array.foldl (· * ·) 1 (Hex.factor f) = f := by
+    Hex.Factorization.product (Hex.factor f) = f := by
   sorry
 
 /--
@@ -119,7 +119,8 @@ Every factor emitted by the default executable factorization is irreducible
 after transport to Mathlib's polynomial model.
 -/
 theorem factor_irreducible (f : Hex.ZPoly) :
-    ∀ g ∈ Hex.factor f, Irreducible (HexPolyZMathlib.toPolynomial g) := by
+    ∀ entry ∈ (Hex.factor f).factors,
+      Irreducible (HexPolyZMathlib.toPolynomial entry.1) := by
   sorry
 
 /--

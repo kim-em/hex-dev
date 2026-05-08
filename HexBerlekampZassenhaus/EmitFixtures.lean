@@ -29,8 +29,8 @@ Cross-checked operation
 
 * `factor` — `Hex.factor` from `HexBerlekampZassenhaus.Basic` (the
   default-bound public entry point).  Lean serialises the resulting
-  `Array ZPoly` as a JSON array of coefficient lists; python-flint
-  cross-checks by comparing each reported nonconstant component directly
+  `Factorization` as `[scalar, [[coeffs, multiplicity], ...]]`;
+  python-flint cross-checks each reported nonconstant component directly
   against `flint.fmpz_poly.factor()` on the input polynomial.  The oracle
   does not re-factor Lean output components, so reducible components are
   reported as conformance failures.
@@ -52,10 +52,11 @@ private def lib : String := "HexBerlekampZassenhaus"
 private def liftCoeffs (f : ZPoly) : List Int :=
   f.toArray.toList
 
-/-- A `factor` result value: a JSON array of coefficient lists. -/
-private def factorValue (factors : Array ZPoly) : String :=
-  "[" ++ String.intercalate ","
-    (factors.toList.map (fun f => polyValue (liftCoeffs f))) ++ "]"
+/-- A `factor` result value: `[scalar, [[factor, multiplicity], ...]]`. -/
+private def factorValue (φ : Factorization) : String :=
+  "[" ++ toString φ.scalar ++ ",[" ++ String.intercalate ","
+    (φ.factors.toList.map (fun entry =>
+      "[" ++ polyValue (liftCoeffs entry.1) ++ "," ++ toString entry.2 ++ "]")) ++ "]]"
 
 /-- Emit one fixture record plus the `factor` result record. -/
 private def emitFactorCase (case : String) (f : ZPoly) : IO Unit := do
