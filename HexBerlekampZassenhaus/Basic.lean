@@ -720,6 +720,51 @@ private def exactQuotient? (target candidate : ZPoly) : Option ZPoly :=
     else
       none
 
+private theorem one_mul_zpoly (g : ZPoly) :
+    (1 : ZPoly) * g = g := by
+  rw [DensePoly.mul_comm_poly (S := Int), DensePoly.mul_one_right_poly]
+
+private theorem list_foldl_mul_eq_mul_foldl_one (g : ZPoly) (xs : List ZPoly) :
+    xs.foldl (fun acc factor => acc * factor) g =
+      g * xs.foldl (fun acc factor => acc * factor) 1 := by
+  induction xs generalizing g with
+  | nil =>
+      simpa using (DensePoly.mul_one_right_poly (S := Int) g).symm
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [one_mul_zpoly]
+      calc
+        xs.foldl (fun acc factor => acc * factor) (g * x) =
+            (g * x) * xs.foldl (fun acc factor => acc * factor) 1 := ih (g * x)
+        _ = g * (x * xs.foldl (fun acc factor => acc * factor) 1) := by
+            rw [DensePoly.mul_assoc_poly (S := Int)]
+        _ = g * xs.foldl (fun acc factor => acc * factor) x := by
+            rw [ih x]
+
+private theorem polyProduct_cons_toArray (g : ZPoly) (rest : List ZPoly) :
+    Array.polyProduct (g :: rest).toArray = g * Array.polyProduct rest.toArray := by
+  simpa [Array.polyProduct, one_mul_zpoly] using
+    (list_foldl_mul_eq_mul_foldl_one g rest)
+
+private theorem exactQuotient?_product
+    {target candidate quotient : ZPoly}
+    (hquot : exactQuotient? target candidate = some quotient) :
+    quotient * candidate = target := by
+  unfold exactQuotient? at hquot
+  split at hquot
+  · contradiction
+  · rename_i hnontrivial
+    generalize hqr : DensePoly.divMod target candidate = qr at hquot
+    cases qr with
+    | mk q r =>
+        simp only at hquot
+        split at hquot
+        · rename_i hcheck
+          cases hquot
+          exact (by
+            simpa [Bool.and_eq_true, beq_iff_eq] using hcheck : r = 0 ∧ quotient * candidate = target).2
+        · contradiction
+
 private def positiveDivisors (n : Nat) : List Nat :=
   (List.range (n + 1)).filter fun d => d != 0 && n % d == 0
 
@@ -1359,7 +1404,10 @@ The lifted factors contain enough information for the executable exhaustive
 recombination search to recover factors of `f`.
 -/
 def LiftedFactorsRecombineTo (f : ZPoly) (d : LiftData) : Prop :=
-  ∃ factors, recombinationSearch f d.liftedFactors.toList = some factors
+  (∃ factors, recombineLLL? f d = some factors ∧ Array.polyProduct factors = f) ∨
+    (recombineLLL? f d = none ∧ canUseExhaustiveRecombination d ∧
+      ∃ factors,
+        recombinationSearchMod f (liftModulus d) d.liftedFactors.toList = some factors)
 
 /--
 Recombine lifted local factors into integer factors.
@@ -1628,12 +1676,123 @@ theorem normalizedConstantFactors_product
     Array.polyProduct (normalizedConstantFactors normalized) = f := by
   sorry
 
+private theorem firstSome_some
+    {α β : Type} {xs : List α} {f : α → Option β} {y : β}
+    (h : firstSome xs f = some y) :
+    ∃ x, f x = some y := by
+  induction xs with
+  | nil =>
+      simp [firstSome] at h
+  | cons x xs ih =>
+      unfold firstSome at h
+      cases hx : f x with
+      | none =>
+          simp [hx] at h
+          exact ih h
+      | some y' =>
+          simp [hx] at h
+          cases h
+          exact ⟨x, hx⟩
+
+private theorem recombinationSearchAux_product
+    (target : ZPoly) (localFactors factors : List ZPoly) (fuel : Nat)
+    (hsearch : recombinationSearchAux target localFactors fuel = some factors) :
+    Array.polyProduct factors.toArray = target := by
+  induction fuel generalizing target localFactors factors with
+  | zero =>
+      simp [recombinationSearchAux] at hsearch
+  | succ fuel ih =>
+      unfold recombinationSearchAux at hsearch
+      by_cases htarget : target = 1
+      · simp [htarget] at hsearch
+        cases hsearch
+        simpa [Array.polyProduct] using htarget.symm
+      · simp [htarget] at hsearch
+        rcases firstSome_some hsearch with ⟨split, hsplit⟩
+        cases hquot : exactQuotient? target (Array.polyProduct split.1.toArray) with
+        | none =>
+            simp [hquot] at hsplit
+        | some quotient =>
+            simp [hquot] at hsplit
+            cases hrec : recombinationSearchAux quotient split.2 fuel with
+            | none =>
+                simp [hrec] at hsplit
+            | some rest =>
+                simp [hrec] at hsplit
+                cases hsplit
+                have hrest :
+                    Array.polyProduct rest.toArray = quotient :=
+                  ih quotient split.2 rest hrec
+                have hquot_prod :
+                    quotient * Array.polyProduct split.1.toArray = target :=
+                  exactQuotient?_product hquot
+                calc
+                  Array.polyProduct (Array.polyProduct split.1.toArray :: rest).toArray =
+                      Array.polyProduct split.1.toArray * Array.polyProduct rest.toArray := by
+                    exact polyProduct_cons_toArray (Array.polyProduct split.1.toArray) rest
+                  _ = Array.polyProduct split.1.toArray * quotient := by
+                    rw [hrest]
+                  _ = quotient * Array.polyProduct split.1.toArray := by
+                    rw [DensePoly.mul_comm_poly (S := Int)]
+                  _ = target := hquot_prod
+
 /-- A successful exhaustive recombination search preserves the target product. -/
 theorem recombinationSearch_product
     (f : ZPoly) (localFactors factors : List ZPoly)
     (hsearch : recombinationSearch f localFactors = some factors) :
     Array.polyProduct factors.toArray = f := by
-  sorry
+  exact recombinationSearchAux_product f localFactors factors (localFactors.length + 1) hsearch
+
+private theorem recombinationSearchModAux_product
+    (target : ZPoly) (modulus : Nat) (localFactors factors : List ZPoly) (fuel : Nat)
+    (hsearch : recombinationSearchModAux target modulus localFactors fuel = some factors) :
+    Array.polyProduct factors.toArray = target := by
+  induction fuel generalizing target localFactors factors with
+  | zero =>
+      simp [recombinationSearchModAux] at hsearch
+  | succ fuel ih =>
+      unfold recombinationSearchModAux at hsearch
+      by_cases htarget : target = 1
+      · simp [htarget] at hsearch
+        cases hsearch
+        simpa [Array.polyProduct] using htarget.symm
+      · simp [htarget] at hsearch
+        rcases firstSome_some hsearch with ⟨split, hsplit⟩
+        let candidate :=
+          ZPoly.primitivePart <|
+            centeredLiftPoly (Array.polyProduct split.1.toArray) modulus
+        cases hquot : exactQuotient? target candidate with
+        | none =>
+            simp [candidate, hquot] at hsplit
+        | some quotient =>
+            simp [candidate, hquot] at hsplit
+            cases hrec : recombinationSearchModAux quotient modulus split.2 fuel with
+            | none =>
+                simp [hrec] at hsplit
+            | some rest =>
+                simp [hrec] at hsplit
+                cases hsplit
+                have hrest :
+                    Array.polyProduct rest.toArray = quotient :=
+                  ih quotient split.2 rest hrec
+                have hquot_prod : quotient * candidate = target :=
+                  exactQuotient?_product hquot
+                calc
+                  Array.polyProduct (candidate :: rest).toArray =
+                      candidate * Array.polyProduct rest.toArray := by
+                    exact polyProduct_cons_toArray candidate rest
+                  _ = candidate * quotient := by
+                    rw [hrest]
+                  _ = quotient * candidate := by
+                    rw [DensePoly.mul_comm_poly (S := Int)]
+                  _ = target := hquot_prod
+
+private theorem recombinationSearchMod_product
+    (f : ZPoly) (modulus : Nat) (localFactors factors : List ZPoly)
+    (hsearch : recombinationSearchMod f modulus localFactors = some factors) :
+    Array.polyProduct factors.toArray = f := by
+  exact recombinationSearchModAux_product
+    f modulus localFactors factors (localFactors.length + 1) hsearch
 
 /--
 Product preservation for `recombine` under the lifted-factor recombination
@@ -1643,7 +1802,16 @@ theorem recombine_product_of_lifted_factors
     (f : ZPoly) (d : LiftData)
     (hvalid : LiftedFactorsRecombineTo f d) :
     Array.polyProduct (recombine f d) = f := by
-  sorry
+  unfold LiftedFactorsRecombineTo at hvalid
+  unfold recombine
+  rcases hvalid with hlll | hexhaustive
+  · rcases hlll with ⟨factors, hlll, hproduct⟩
+    simp [hlll, hproduct]
+  · rcases hexhaustive with ⟨hlll, hsmall, factors, hsearch⟩
+    have hproduct :
+        Array.polyProduct factors.toArray = f :=
+      recombinationSearchMod_product f (liftModulus d) d.liftedFactors.toList factors hsearch
+    simp [hlll, hsmall, recombineExhaustive, hsearch, hproduct]
 
 theorem checkIrreducibleCert_prime_data
     (f : ZPoly) (cert : ZPolyIrreducibilityCertificate)
