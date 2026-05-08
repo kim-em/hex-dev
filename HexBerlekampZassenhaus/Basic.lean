@@ -1379,25 +1379,36 @@ private def factorFastWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
     none
   else
     let primeData := choosePrimeData normalized.squareFreeCore
-    match factorFastCoreWithBound normalized.squareFreeCore B primeData
-        (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2) with
-    | some coreFactors => some (reassembleNormalizedFactors normalized coreFactors)
-    | none => none
+    if primeData.factorsModP.size ≤ 1 then
+      some (reassembleNormalizedFactors normalized #[normalized.squareFreeCore])
+    else
+      match factorFastCoreWithBound normalized.squareFreeCore B primeData
+          (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2) with
+      | some coreFactors => some (reassembleNormalizedFactors normalized coreFactors)
+      | none => none
 
 #guard factorFastWithBound cldGuardF 1 = none
 
 #guard factorFastWithBound cldGuardF 4 =
   some bhksGuardFactors
 
+private def factorFastPrecisionCap (f : ZPoly) : Nat :=
+  min (bhksBound f) (ZPoly.defaultFactorCoeffBound f)
+
 /--
-Public van Hoeij CLD fast path with the BHKS precision cap.
+Public van Hoeij CLD fast path with a practical precision cap.
 
 The bounded core loop only accepts candidates certified by the fixed-precision
 BHKS recovery pipeline; if every precision up to the cap misses, this reports
 `none` so the public `factor` combinator can use the slow backstop.
 -/
 def factorFast (f : ZPoly) : Option (Array ZPoly) :=
-  factorFastWithBound f (bhksBound f)
+  factorFastWithBound f (factorFastPrecisionCap f)
+
+#guard factorFast (DensePoly.ofCoeffs #[1, 1, 1, 1, 1]) =
+  some #[DensePoly.ofCoeffs #[1, 1, 1, 1, 1]]
+
+#guard factorFast (DensePoly.ofCoeffs #[1, 0, 0, 0, 1]) = none
 
 /-- Factor with an explicit coefficient bound for the recombination stage. -/
 def factorWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
