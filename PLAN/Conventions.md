@@ -438,3 +438,67 @@ structural DAG data (`deps`, `mathlib`). Other state mechanisms:
   [.claude/CLAUDE.md](../.claude/CLAUDE.md)).
 - **`PLAN/` and `PLAN.md`** — reference material, not progress state.
   Do not modify them for progress tracking.
+
+### Library status (active | planned | draft)
+
+Every entry in `libraries.yml` carries an explicit `status` field
+with exactly one of three values:
+
+- **`active`** — implementation is in progress or complete. The
+  orchestrator dispatches Phase work against this library.
+- **`planned`** — SPEC is finished and ready for implementation,
+  but implementation is deferred. The library appears in the dep
+  graph as informational structure but no work is dispatched.
+  Activation is a one-line edit (`status: planned → active`).
+- **`draft`** — SPEC is a work-in-progress; ideas captured but the
+  contract is not yet stable enough to implement against. Same
+  orchestration treatment as `planned`. Promote to `planned` (or
+  `active`) when the SPEC firms up.
+
+The following invariants are normative and enforced at yml-load
+time (parse errors, not lint warnings):
+
+1. **`status` is required.** Every entry must declare exactly one
+   of `active`, `planned`, `draft`. Missing or unrecognised values
+   are parse errors.
+2. **`planned` and `draft` ⟹ `done_through == 0`.** Non-active
+   libraries cannot have Phase progress recorded against them.
+   Pausing a mid-implementation library is *not* a supported state;
+   roll `done_through` back per [§"Rollback is a normal action"](#rollback-is-a-normal-action)
+   if you need to take a library out of dispatch.
+3. **`active` libraries depend only on `active` libraries.**
+   Activating a library commits its full transitive dependency
+   closure to `active`. Non-`active` libraries may depend on
+   anything (the dep graph is informational and may reference
+   libraries in any state).
+
+The following structural checks apply only to `active` entries:
+
+4. **Lake alignment** (`lakefile.toml` `lean_lib` ↔ `libraries.yml`
+   name): only `active` entries must have a corresponding
+   `lean_lib` in `lakefile.toml`. Non-`active` entries are exempt.
+5. **Root-file existence** (`<Name>.lean` at the repo top level):
+   only `active` entries must have a root file. Non-`active`
+   entries are exempt.
+
+Activation order: when promoting `planned → active`, all structural
+checks (4, 5) must be satisfied in the same PR. The sequence is
+"create root file + Lake entry + bump status" — same commit, same
+review.
+
+The orchestrator's status report **must** include a "Planned
+(skipped)" / "Draft (skipped)" footer listing every non-active
+library by name and status. Silent omission is forbidden:
+non-active libraries must remain visible in the status output so
+they cannot drift unnoticed. (This is the rule against the failure
+mode that motivated introducing the field — `libraries.yml` was
+previously the only handle the orchestrator scanned, so SPECs
+without yml entries were invisible. The footer keeps non-active
+SPECs visible while still gating dispatch.)
+
+Reference implementation lives in `scripts/libgraph.py` (validation
+of invariants 1–3) and `scripts/status.py` (dispatch filtering and
+footer). `scripts/check_dag.py` enforces 4 and 5 with the
+`active`-only filter. If those scripts are rewritten, the rewrite
+must implement these invariants — the contract above is normative,
+the script names are descriptive.

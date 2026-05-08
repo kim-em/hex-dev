@@ -64,12 +64,20 @@ RELEASE_LIBRARIES = {
 }
 
 
+VALID_STATUSES = {"active", "planned", "draft"}
+
+
 @dataclass(frozen=True)
 class LibraryInfo:
     name: str
     deps: tuple[str, ...]
     mathlib: bool
     done_through: int
+    status: str
+
+    @property
+    def is_active(self) -> bool:
+        return self.status == "active"
 
 
 def repo_root() -> Path:
@@ -88,7 +96,7 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
         nonlocal current_name, current_fields
         if current_name is None:
             return
-        missing = {"deps", "mathlib", "done_through"} - current_fields.keys()
+        missing = {"deps", "mathlib", "done_through", "status"} - current_fields.keys()
         if missing:
             raise ValueError(f"{current_name} missing fields: {sorted(missing)}")
         deps = current_fields["deps"]
@@ -100,11 +108,24 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
         done_through = current_fields["done_through"]
         if not isinstance(done_through, int):
             raise ValueError(f"{current_name} has malformed done_through")
+        status = current_fields["status"]
+        if not isinstance(status, str) or status not in VALID_STATUSES:
+            raise ValueError(
+                f"{current_name} has malformed status {status!r}; "
+                f"must be one of {sorted(VALID_STATUSES)}"
+            )
+        if status != "active" and done_through != 0:
+            raise ValueError(
+                f"{current_name} has status: {status} but done_through: {done_through}; "
+                f"non-active libraries must have done_through == 0 "
+                f"(see PLAN/Conventions.md §'Library status')"
+            )
         libs[current_name] = LibraryInfo(
             name=current_name,
             deps=tuple(deps),
             mathlib=mathlib,
             done_through=done_through,
+            status=status,
         )
         current_name = None
         current_fields = {}
@@ -139,7 +160,25 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
         for dep in info.deps:
             if dep not in libs:
                 raise ValueError(f"{name} depends on unknown library {dep}")
+
+    # Invariant: active libraries depend only on active libraries.
+    # Non-active libraries may depend on anything (the dep graph is
+    # informational and may reference libraries in any state).
+    # See PLAN/Conventions.md §"Library status".
+    for name, info in libs.items():
+        if not info.is_active:
+            continue
+        for dep in info.deps:
+            if not libs[dep].is_active:
+                raise ValueError(
+                    f"{name} (status: active) depends on {dep} "
+                    f"(status: {libs[dep].status}); active libraries "
+                    f"depend only on active libraries"
+                )
     return libs
+
+
+_BARE_STRING_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_-]*$")
 
 
 def _parse_scalar(raw: str) -> object:
@@ -156,6 +195,8 @@ def _parse_scalar(raw: str) -> object:
         return False
     if raw.isdigit():
         return int(raw)
+    if _BARE_STRING_RE.match(raw):
+        return raw
     raise ValueError(f"unsupported scalar: {raw}")
 
 
@@ -203,12 +244,15 @@ def load_lakefile_libs(path: Path | None = None) -> list[str]:
 
 def check_lakefile_alignment(libraries: OrderedDict[str, LibraryInfo], lakefile_libs: list[str]) -> list[str]:
     errors: list[str] = []
-    library_names = set(libraries)
+    # Only active libraries must align with Lake; planned/draft entries are
+    # exempt by design (no Lean code is expected to exist yet).
+    # See PLAN/Conventions.md §"Library status".
+    active_library_names = {name for name, info in libraries.items() if info.is_active}
     lake_names = set(lakefile_libs)
-    for name in sorted(library_names - lake_names):
+    for name in sorted(active_library_names - lake_names):
         errors.append(f"libraries.yml entry {name} missing from Lake config")
-    for name in sorted(lake_names - library_names - KNOWN_EXCEPTIONS):
-        errors.append(f"Lake config library {name} missing from libraries.yml")
+    for name in sorted(lake_names - active_library_names - KNOWN_EXCEPTIONS):
+        errors.append(f"Lake config library {name} missing from libraries.yml (or library is non-active)")
     for name in sorted(KNOWN_EXCEPTIONS):
         if name not in lake_names:
             errors.append(f"known exception {name} missing from Lake config")

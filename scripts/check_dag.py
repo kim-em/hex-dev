@@ -143,7 +143,11 @@ def main() -> int:
 
     errors.extend(check_lakefile_alignment(libraries, lakefile_libs))
 
-    for name in list(libraries) + sorted(KNOWN_EXCEPTIONS):
+    # Root-file existence: only active libraries must have a root file.
+    # Planned/draft libraries are exempt by design (no Lean code expected
+    # to exist yet). See PLAN/Conventions.md §"Library status".
+    active_names = [name for name, info in libraries.items() if info.is_active]
+    for name in active_names + sorted(KNOWN_EXCEPTIONS):
         if not (root / f"{name}.lean").exists():
             errors.append(f"missing root file {name}.lean")
 
