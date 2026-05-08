@@ -109,6 +109,23 @@ def emitPolyFixture (lib case : String) (coeffs : List Int)
     ("modulus", jsonOptionalInt modulus)
   ]
 
+/-- Emit a `poly` fixture record with optional metadata naming a pinned
+modular factorization split expected by an external oracle.  The integer
+fixture itself remains non-modular; `modFactorPrime` and
+`modFactorDegrees` describe the independent factorization check for
+`coeffs` reduced modulo `p`. -/
+def emitPolyFixtureWithModFactorDegrees (lib case : String) (coeffs : List Int)
+    (p : Int) (degrees : List Int) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind",             jsonString "poly"),
+    ("lib",              jsonString lib),
+    ("case",             jsonString case),
+    ("coeffs",           jsonIntList coeffs),
+    ("modulus",          jsonOptionalInt none),
+    ("modFactorPrime",   jsonInt p),
+    ("modFactorDegrees", jsonIntList degrees)
+  ]
+
 /-- Emit a `matrix` fixture record. -/
 def emitMatrixFixture (lib case : String) (rows : List (List Int)) : IO Unit := do
   emitLine <| jsonObject [

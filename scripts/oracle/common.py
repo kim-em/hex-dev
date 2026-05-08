@@ -11,6 +11,11 @@ JSONL fixture record shape (one record per line):
 
 * ``poly``       — ``{"kind": "poly",       "lib": str, "case": str,
                       "coeffs": [int...], "modulus": int|null}``
+                     Optional BZ conformance metadata:
+                     ``"modFactorPrime": int`` and
+                     ``"modFactorDegrees": [int...]`` ask the oracle to
+                     also check the degree multiset of the fixture reduced
+                     modulo the pinned prime.
 * ``matrix``     — ``{"kind": "matrix",     "lib": str, "case": str,
                       "rows": [[int...]...]}``
 * ``lattice``    — ``{"kind": "lattice",    "lib": str, "case": str,
@@ -108,6 +113,22 @@ def _validate_fixture(record: dict[str, Any]) -> None:
         modulus = record.get("modulus", None)
         if modulus is not None and not isinstance(modulus, int):
             raise FixtureError(f"poly.modulus must be int or null: {record!r}")
+        if "modFactorPrime" in record:
+            if not isinstance(record.get("modFactorPrime"), int):
+                raise FixtureError(
+                    f"poly.modFactorPrime must be int: {record!r}"
+                )
+            degrees = record.get("modFactorDegrees")
+            if not isinstance(degrees, list) or not all(
+                isinstance(d, int) and d > 0 for d in degrees
+            ):
+                raise FixtureError(
+                    f"poly.modFactorDegrees must be positive List[int]: {record!r}"
+                )
+        elif "modFactorDegrees" in record:
+            raise FixtureError(
+                f"poly.modFactorDegrees requires modFactorPrime: {record!r}"
+            )
     elif kind == "matrix":
         rows = record.get("rows")
         if not isinstance(rows, list) or not all(

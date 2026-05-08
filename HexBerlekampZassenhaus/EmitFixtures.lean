@@ -8,7 +8,10 @@ JSONL emit driver for the `hex-berlekamp-zassenhaus` oracle.
 `result` record per case to `stdout` (or to `$HEX_FIXTURE_OUTPUT` when
 set).  The companion oracle driver `scripts/oracle/bz_flint.py` reads
 the same stream and re-runs the integer factorisation through
-python-flint's `fmpz_poly.factor()` for cross-check.
+python-flint's `fmpz_poly.factor()` for cross-check.  A small number of
+cases also carry optional pinned modular-factor metadata so the oracle
+checks that the committed input has the intended split over a named
+prime.
 
 Fixtures are integer polynomials at degrees 4, 6, 10, 16, and 20,
 covering the currently Phase-2-stable shapes:
@@ -96,6 +99,12 @@ private def cases_red : List Case :=
   , mk "red/cyclo11_cyclo22"
       #[1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1] ]
 
+/-! ## Pinned-prime modular split smoke case -/
+
+private def cases_pinned : List (Case × Int × List Int) :=
+  [ -- X^4 + 1 is irreducible over Z and splits over F_5 into two quadratics.
+    (mk "adv/x4_plus_1" #[1, 0, 0, 0, 1], 5, [2, 2]) ]
+
 /-! ## Polynomials with non-unit content -/
 
 private def cases_content : List Case :=
@@ -107,9 +116,16 @@ private def cases_content : List Case :=
 private def emitCase (c : Case) : IO Unit :=
   emitFactorCase c.id (DensePoly.ofCoeffs c.coeffs)
 
+private def emitPinnedCase (c : Case × Int × List Int) : IO Unit := do
+  let (c, p, degrees) := c
+  let f := DensePoly.ofCoeffs c.coeffs
+  emitPolyFixtureWithModFactorDegrees lib c.id (liftCoeffs f) p degrees
+  emitResult lib c.id "factor" (factorValue (factor f))
+
 end Hex.BZEmit
 
 def main : IO Unit := do
   for c in Hex.BZEmit.cases_irr     do Hex.BZEmit.emitCase c
   for c in Hex.BZEmit.cases_red     do Hex.BZEmit.emitCase c
+  for c in Hex.BZEmit.cases_pinned  do Hex.BZEmit.emitPinnedCase c
   for c in Hex.BZEmit.cases_content do Hex.BZEmit.emitCase c
