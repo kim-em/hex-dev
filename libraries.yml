@@ -146,7 +146,7 @@ libraries:
   HexHensel:
     deps: [HexPolyFp, HexPolyZ]
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
   HexConway:
     deps: [HexBerlekamp]
