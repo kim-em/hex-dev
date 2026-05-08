@@ -481,12 +481,8 @@ The following two structural rules apply per status:
    `<Name>.lean` at the repo top level; a `planned` or `draft`
    entry must *not*.
 
-The orchestrator's status report includes a "Planned (skipped)" /
-"Draft (skipped)" footer listing every non-active library, so
-non-active SPECs remain visible in the work queue.
-
 Reference implementation lives in `scripts/libgraph.py` (validation
-of invariants 1–3) and `scripts/status.py` (dispatch filtering and
-footer). `scripts/check_dag.py` enforces 4 and 5. If those scripts
-are rewritten, the rewrite must implement these invariants — the
-contract above is normative, the script names are descriptive.
+of invariants 1–3) and `scripts/check_dag.py` (rules 4 and 5). If
+those scripts are rewritten, the rewrite must implement these
+invariants — the contract above is normative, the script names are
+descriptive.
