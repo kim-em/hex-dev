@@ -3166,6 +3166,228 @@ theorem det_colAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     det (colAdd M src dst c) = det M := by
   simpa [det] using permutationVectors_colAdd_sum M src dst c h
 
+/-- Replace one column of a square matrix by the supplied column function. -/
+def colReplace {R : Type u} {n : Nat} (M : Matrix R n n) (dst : Fin n)
+    (v : Fin n → R) : Matrix R n n :=
+  Matrix.ofFn fun r c => if c = dst then v r else M[r][c]
+
+theorem colReplace_get {R : Type u} {n : Nat} (M : Matrix R n n) (dst r c : Fin n)
+    (v : Fin n → R) :
+    (colReplace M dst v)[r][c] = if c = dst then v r else M[r][c] := by
+  simp [colReplace, Matrix.ofFn]
+
+private theorem detProduct_colReplace_add {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (M : Matrix R n n) (dst : Fin n) (v w : Fin n → R)
+    (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
+    detProduct (colReplace M dst (fun r => v r + w r)) perm =
+      detProduct (colReplace M dst v) perm +
+        detProduct (colReplace M dst w) perm := by
+  let pivot : Fin n := ⟨perm.toList.idxOf dst,
+    by
+      simpa [Vector.length_toList] using
+        fin_idxOf_lt_of_full_nodup dst (by simp [Vector.length_toList]) hnodup⟩
+  have hpivot : perm[pivot] = dst := by
+    have hlt : perm.toList.idxOf dst < perm.toList.length :=
+      fin_idxOf_lt_of_full_nodup dst (by simp [Vector.length_toList]) hnodup
+    have hget : perm.toList[perm.toList.idxOf dst]'hlt = dst :=
+      List.getElem_idxOf (x := dst) (xs := perm.toList) hlt
+    change perm.toList[pivot.val]'(by simp [Vector.length_toList, pivot.isLt]) = dst
+    simp [pivot] at hget ⊢
+  unfold detProduct
+  calc
+    (List.finRange n).foldl
+        (fun acc i => acc * (colReplace M dst (fun r => v r + w r))[i][perm[i]]) 1 =
+      (List.finRange n).foldl
+        (fun acc x =>
+          acc * if x = pivot then
+            (colReplace M dst v)[x][perm[x]] + (colReplace M dst w)[x][perm[x]]
+          else
+            (colReplace M dst v)[x][perm[x]]) 1 := by
+        apply foldl_det_product_congr
+        intro x _hx
+        rw [colReplace_get, colReplace_get, colReplace_get]
+        by_cases hxp : x = pivot
+        · subst x
+          rw [if_pos hpivot, if_pos hpivot, if_pos hpivot, if_pos rfl]
+        · rw [if_neg hxp]
+          have hperm_ne : perm[x] ≠ dst := by
+            intro hperm
+            have hxidx : perm.toList.idxOf perm[x] = x.val := by
+              simpa [Vector.getElem_toList, Vector.length_toList] using
+                hnodup.idxOf_getElem x.val (by simp [Vector.length_toList])
+            have hpidx : perm.toList.idxOf dst = pivot.val := rfl
+            have hval : x.val = pivot.val := by
+              rw [← hxidx, hperm, hpidx]
+            exact hxp (Fin.ext hval)
+          change (if perm[x] = dst then v x + w x else M[x][perm[x]]) =
+            (if perm[x] = dst then v x else M[x][perm[x]])
+          rw [if_neg hperm_ne, if_neg hperm_ne]
+    _ =
+      (List.finRange n).foldl
+        (fun acc x =>
+          acc * if x = pivot then
+            (colReplace M dst v)[x][perm[x]] + (1 : R) * (colReplace M dst w)[x][perm[x]]
+          else
+            (colReplace M dst v)[x][perm[x]]) 1 := by
+        apply foldl_det_product_congr
+        intro x _hx
+        by_cases hxp : x = pivot
+        · rw [if_pos hxp]
+          grind
+        · simp [hxp]
+    _ =
+      (List.finRange n).foldl
+          (fun acc x => acc * (colReplace M dst v)[x][perm[x]]) 1 +
+        (1 : R) * (List.finRange n).foldl
+          (fun acc x => acc * (colReplace M dst w)[x][perm[x]]) 1 := by
+        exact
+          foldl_det_product_single_add (R := R) (β := Fin n)
+            (List.finRange n) pivot (1 : R)
+            (fun x => (colReplace M dst v)[x][perm[x]])
+            (fun x => (colReplace M dst w)[x][perm[x]])
+            1 (List.mem_finRange pivot) (List.nodup_finRange n)
+            (by
+              intro x _hx hxp
+              have hperm_ne : perm[x] ≠ dst := by
+                intro hperm
+                have hxidx : perm.toList.idxOf perm[x] = x.val := by
+                  simpa [Vector.getElem_toList, Vector.length_toList] using
+                    hnodup.idxOf_getElem x.val (by simp [Vector.length_toList])
+                have hpidx : perm.toList.idxOf dst = pivot.val := rfl
+                have hval : x.val = pivot.val := by
+                  rw [← hxidx, hperm, hpidx]
+                exact hxp (Fin.ext hval)
+              change (colReplace M dst w)[x][perm[x]] =
+                (colReplace M dst v)[x][perm[x]]
+              rw [colReplace_get, colReplace_get]
+              change (if perm[x] = dst then w x else M[x][perm[x]]) =
+                (if perm[x] = dst then v x else M[x][perm[x]])
+              rw [if_neg hperm_ne, if_neg hperm_ne])
+    _ =
+      (List.finRange n).foldl
+          (fun acc x => acc * (colReplace M dst v)[x][perm[x]]) 1 +
+        (List.finRange n).foldl
+          (fun acc x => acc * (colReplace M dst w)[x][perm[x]]) 1 := by
+        grind
+
+private theorem detProduct_colReplace_smul {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (M : Matrix R n n) (dst : Fin n) (c : R) (v : Fin n → R)
+    (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
+    detProduct (colReplace M dst (fun r => c * v r)) perm =
+      c * detProduct (colReplace M dst v) perm := by
+  let pivot : Fin n := ⟨perm.toList.idxOf dst,
+    by
+      simpa [Vector.length_toList] using
+        fin_idxOf_lt_of_full_nodup dst (by simp [Vector.length_toList]) hnodup⟩
+  have hpivot : perm[pivot] = dst := by
+    have hlt : perm.toList.idxOf dst < perm.toList.length :=
+      fin_idxOf_lt_of_full_nodup dst (by simp [Vector.length_toList]) hnodup
+    have hget : perm.toList[perm.toList.idxOf dst]'hlt = dst :=
+      List.getElem_idxOf (x := dst) (xs := perm.toList) hlt
+    change perm.toList[pivot.val]'(by simp [Vector.length_toList, pivot.isLt]) = dst
+    simp [pivot] at hget ⊢
+  unfold detProduct
+  calc
+    (List.finRange n).foldl
+        (fun acc i => acc * (colReplace M dst (fun r => c * v r))[i][perm[i]]) 1 =
+      (List.finRange n).foldl
+        (fun acc x =>
+          acc * if x = pivot then
+            c * (colReplace M dst v)[x][perm[x]]
+          else
+            (colReplace M dst v)[x][perm[x]]) 1 := by
+        apply foldl_det_product_congr
+        intro x _hx
+        rw [colReplace_get, colReplace_get]
+        by_cases hxp : x = pivot
+        · subst x
+          rw [if_pos hpivot, if_pos hpivot, if_pos rfl]
+        · rw [if_neg hxp]
+          have hperm_ne : perm[x] ≠ dst := by
+            intro hperm
+            have hxidx : perm.toList.idxOf perm[x] = x.val := by
+              simpa [Vector.getElem_toList, Vector.length_toList] using
+                hnodup.idxOf_getElem x.val (by simp [Vector.length_toList])
+            have hpidx : perm.toList.idxOf dst = pivot.val := rfl
+            have hval : x.val = pivot.val := by
+              rw [← hxidx, hperm, hpidx]
+            exact hxp (Fin.ext hval)
+          change (if perm[x] = dst then c * v x else M[x][perm[x]]) =
+            (if perm[x] = dst then v x else M[x][perm[x]])
+          rw [if_neg hperm_ne, if_neg hperm_ne]
+    _ =
+      c * (List.finRange n).foldl
+          (fun acc x => acc * (colReplace M dst v)[x][perm[x]]) 1 := by
+        exact
+          foldl_det_product_single_scale (R := R) (β := Fin n)
+            (List.finRange n) pivot c
+            (fun x => (colReplace M dst v)[x][perm[x]])
+            1 (List.mem_finRange pivot) (List.nodup_finRange n)
+
+private theorem detTerm_colReplace_add {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (M : Matrix R n n) (dst : Fin n) (v w : Fin n → R)
+    (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
+    detTerm (colReplace M dst (fun r => v r + w r)) perm =
+      detTerm (colReplace M dst v) perm + detTerm (colReplace M dst w) perm := by
+  unfold detTerm
+  rw [detProduct_colReplace_add M dst v w perm hnodup]
+  grind
+
+private theorem detTerm_colReplace_smul {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (M : Matrix R n n) (dst : Fin n) (c : R) (v : Fin n → R)
+    (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
+    detTerm (colReplace M dst (fun r => c * v r)) perm =
+      c * detTerm (colReplace M dst v) perm := by
+  unfold detTerm
+  rw [detProduct_colReplace_smul M dst c v perm hnodup]
+  grind
+
+/-- Determinant linearity in one replaced column, additive form. -/
+theorem det_colReplace_add {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (dst : Fin n) (v w : Fin n → R) :
+    det (colReplace M dst (fun r => v r + w r)) =
+      det (colReplace M dst v) + det (colReplace M dst w) := by
+  simp [det]
+  calc
+    (permutationVectors n).foldl
+        (fun acc perm => acc + detTerm (colReplace M dst (fun r => v r + w r)) perm) 0 =
+      (permutationVectors n).foldl
+        (fun acc perm =>
+          acc + (detTerm (colReplace M dst v) perm +
+            detTerm (colReplace M dst w) perm)) 0 := by
+        apply foldl_det_sum_congr
+        intro perm hmem
+        exact detTerm_colReplace_add M dst v w perm (permutationVectors_nodup hmem)
+    _ =
+      (permutationVectors n).foldl
+          (fun acc perm => acc + detTerm (colReplace M dst v) perm) 0 +
+        (permutationVectors n).foldl
+          (fun acc perm => acc + detTerm (colReplace M dst w) perm) 0 := by
+        exact foldl_det_sum_add_zero
+          (permutationVectors n)
+          (detTerm (colReplace M dst v))
+          (detTerm (colReplace M dst w))
+
+/-- Determinant linearity in one replaced column, scalar form. -/
+theorem det_colReplace_smul {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (dst : Fin n) (c : R) (v : Fin n → R) :
+    det (colReplace M dst (fun r => c * v r)) =
+      c * det (colReplace M dst v) := by
+  simp [det]
+  calc
+    (permutationVectors n).foldl
+        (fun acc perm => acc + detTerm (colReplace M dst (fun r => c * v r)) perm) 0 =
+      (permutationVectors n).foldl
+        (fun acc perm => acc + c * detTerm (colReplace M dst v) perm) 0 := by
+        apply foldl_det_sum_congr
+        intro perm hmem
+        exact detTerm_colReplace_smul M dst c v perm (permutationVectors_nodup hmem)
+    _ =
+      c * (permutationVectors n).foldl
+          (fun acc perm => acc + detTerm (colReplace M dst v) perm) 0 := by
+        exact foldl_det_sum_mul_left_zero
+          (permutationVectors n) c (detTerm (colReplace M dst v))
+
 /-- A determinant with two equal rows is zero. -/
 theorem det_eq_zero_of_row_eq {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) (h : src ≠ dst)
