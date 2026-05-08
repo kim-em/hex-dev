@@ -174,7 +174,7 @@ libraries:
   HexBerlekampZassenhausMathlib:
     deps: [HexBerlekampZassenhaus, HexPolyZMathlib]
     mathlib: true
-    done_through: 3
+    done_through: 2
     status: active
 
   # ---------- Planned (status: planned; SPEC ready, implementation deferred) ----------
