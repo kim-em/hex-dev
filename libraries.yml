@@ -119,6 +119,21 @@ libraries:
     mathlib: false
     done_through: 4
     status: active
+    phase4:
+      comparators:
+        - tool: "fpLLL via fpylll"
+          class: informational
+          rationale: "fpLLL uses floating-point Gram-Schmidt (Nguyen-Stehle); this bypasses the integer-arithmetic operand-size drift the verified implementation pays, so the constant-factor gap is structural rather than algorithmic. The ratio is recorded for orientation but does not gate Phase 4."
+        - tool: "verified Isabelle LLL (AFP LLL_Basis_Reduction; Haskell extraction from Zenodo 2636367)"
+          class: gating
+          goal: "Lean LLL is at least as fast as the verified Isabelle LLL on shared canonical inputs at the bottom of each phase4.input_families parameter ladder."
+      input_families:
+        - name: bz-recombination
+          description: "Berlekamp-Zassenhaus recombination basis at the documented (p, k, factors) configurations; the downstream hot path."
+        - name: random-bounded
+          description: "LCG-generated random integer bases, |entry| <= 30, n in {30, 60, 120, 240}; must include a committed seed where >= 1 Lovasz swap fires."
+        - name: harsh-cubic
+          description: "Entry bit-length ~ 3.3 * n at n in {15, 30, 45} (verified-Isabelle paper regime); exercises bigint operand-size drift."
   HexPolyFp:
     deps: [HexPoly, HexModArith]
     mathlib: false
