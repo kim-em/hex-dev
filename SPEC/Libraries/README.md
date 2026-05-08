@@ -9,6 +9,8 @@
 - **hex-gf2** — packed bitwise polynomials over `F_2` (XOR + CLMUL), `GF(2^n)` elements
 - **hex-poly-z** — polynomials over `Z`, content/primitive part, Mignotte bound
 - **hex-roots** — certified complex root isolation for `Z[x]` via dyadic squares + Pellet test + speculative Newton
+- **hex-real-roots** — certified real root isolation for `Z[x]` via Sturm + bisection (subresultant-based integer Sturm sequence)
+- **hex-sturm** — Lean tactic providing a complete decision procedure for univariate real-closed-field formulas (Boolean combinations of polynomial inequalities + ∀/∃ over `ℝ`); reflective implementation backed by `hex-real-roots`. `mathlib: true` (the tactic targets `ℝ`)
 - **hex-resultant** — polynomial resultant + discriminant via subresultant pseudo-remainder sequence
 - **hex-number-field** — `NumberField p x` (`ℚ(α)` element indexed by a complex root) and canonical `AlgebraicNumber` (any `α ∈ ℂ_alg`)
 - **hex-berlekamp** — Berlekamp factoring and Rabin irreducibility test over `F_p`
@@ -29,6 +31,7 @@ proving correspondence with Mathlib's mathematical definitions):
 - **hex-gram-schmidt-mathlib** — `GramSchmidt.Int.basis` = Mathlib's `gramSchmidt`
 - **hex-poly-z-mathlib** — `DensePoly Int ≃+* Polynomial ℤ`, Mignotte bound (via Mathlib's Mahler measure)
 - **hex-roots-mathlib** — Pellet on circles (built from `circleIntegral`) + Mahler/Mignotte separation bound; correctness of refinement and `isolate`
+- **hex-real-roots-mathlib** — Sturm's theorem (integer Sturm count = real-root count); Cauchy bound + Mahler/Mignotte real-root separation; correctness of `isolate`
 - **hex-resultant-mathlib** — "subresultant zero ↔ common root" property (scope-limited; full bridge to `Polynomial.resultant` deferred)
 - **hex-number-field-mathlib** — `NumberField p x ≃+* AdjoinRoot p`, bijection of `AlgebraicNumber` with `ℂ_alg`, arithmetic correctness
 - **hex-berlekamp-mathlib** — `Decidable (Irreducible f)` for `Polynomial (ZMod p)`
@@ -51,6 +54,8 @@ Each library with its immediate dependencies:
 - **hex-poly-fp** — hex-poly, hex-mod-arith
 - **hex-poly-z** — hex-poly
 - **hex-roots** — hex-poly-z
+- **hex-real-roots** — hex-poly-z, hex-resultant
+- **hex-sturm** — hex-real-roots, hex-real-roots-mathlib, hex-poly-z, hex-poly-z-mathlib (mathlib: true)
 - **hex-resultant** — hex-poly
 - **hex-number-field** — hex-poly-z, hex-roots, hex-resultant, hex-berlekamp-zassenhaus
 - **hex-berlekamp** — hex-poly-fp, hex-matrix, hex-gfq-ring
@@ -68,6 +73,7 @@ Mathlib bridge libraries (each also depends on Mathlib):
 - **hex-poly-mathlib** — hex-poly
 - **hex-poly-z-mathlib** — hex-poly-z, hex-poly-mathlib
 - **hex-roots-mathlib** — hex-roots, hex-poly-z-mathlib
+- **hex-real-roots-mathlib** — hex-real-roots, hex-poly-z-mathlib, hex-resultant-mathlib
 - **hex-resultant-mathlib** — hex-resultant, hex-poly-mathlib
 - **hex-number-field-mathlib** — hex-number-field, hex-resultant-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-roots-mathlib, hex-poly-z-mathlib
 - **hex-matrix-mathlib** — hex-matrix
@@ -134,6 +140,9 @@ hex-gfq-field   hex-conway   hex-gf2
 - [hex-poly-z-mathlib.md](hex-poly-z-mathlib.md) — Mignotte bound proof via Mathlib's Mahler measure
 - [hex-roots.md](hex-roots.md) — certified complex root isolation for `Z[x]`
 - [hex-roots-mathlib.md](hex-roots-mathlib.md) — Pellet on circles, Mahler/Mignotte separation bound, refinement and `isolate` correctness
+- [hex-real-roots.md](hex-real-roots.md) — certified real root isolation for `Z[x]` via Sturm + bisection
+- [hex-real-roots-mathlib.md](hex-real-roots-mathlib.md) — Sturm's theorem; Cauchy bound; Mahler/Mignotte real-root separation; `isolate` correctness
+- [hex-sturm.md](hex-sturm.md) — Lean tactic for univariate real-closed-field decision (Boolean polynomial inequalities + ∀/∃ over `ℝ`); reflective implementation, `mathlib: true`
 - [hex-resultant.md](hex-resultant.md) — polynomial resultant + discriminant via subresultant pseudo-remainder sequence
 - [hex-resultant-mathlib.md](hex-resultant-mathlib.md) — "subresultant zero ↔ common root"; discriminant non-vanishing under squarefreeness
 - [hex-number-field.md](hex-number-field.md) — `NumberField p x` and canonical `AlgebraicNumber` for arbitrary `α ∈ ℂ_alg`
