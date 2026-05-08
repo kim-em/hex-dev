@@ -160,8 +160,18 @@ libraries:
   HexPolyMathlib:
     deps: [HexPoly]
     mathlib: true
-    done_through: 4
+    done_through: 3
     status: active
+    phase4:
+      input_families:
+        - name: dense-to-mathlib-conversion
+          description: Normalized dense integer polynomials converted to Mathlib polynomial finite-support payloads.
+        - name: mathlib-to-dense-conversion
+          description: Mathlib integer polynomials rebuilt as normalized dense-polynomial values.
+        - name: bridge-round-trip
+          description: Paired dense-origin and Mathlib-origin conversion round trips over bounded-degree generated inputs.
+        - name: euclidean-bridge
+          description: Fibonacci quotient-chain rational-polynomial fixtures for gcd and extended-gcd bridge transport.
   HexMatrixMathlib:
     deps: [HexMatrix]
     mathlib: true
