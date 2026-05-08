@@ -23,6 +23,17 @@ Scientific registrations:
 * `runPotential`: prefix product of the stored Gram determinants.
 * `runFirstShortVectorIdentityChecksum`: full LLL traversal over the identity
   basis, the degenerate BZ-style recombination input with no row interaction.
+
+External comparator:
+
+* `fpLLL via fpylll` (informational): fixed process-call registrations invoke
+  `scripts/oracle/lll_fpylll_bench.py`, which uses `fpylll.LLL.reduction` with
+  `delta = 0.75` (matching Lean's `3 / 4`). The comparator is informational
+  per `SPEC/Libraries/hex-lll.md`: fpLLL uses floating-point Gram-Schmidt
+  (Nguyen-Stehle), so it bypasses the integer-arithmetic operand-size drift
+  paid by this verified implementation. The version is the developer/CI
+  installed `fpylll` package; CI already installs it for
+  `scripts/oracle/lll_fpylll.py`.
 -/
 
 namespace Hex.LLLBench
@@ -229,6 +240,168 @@ def runFirstShortVectorIdentityChecksum (input : FirstShortVectorInput) : Int :=
     (lll.firstShortVector input.basis (3 / 4)
       lllDeltaLower lllDeltaUpper input.hn input.hind)
 
+/-! ## Canonical fixed LLL comparator inputs -/
+
+private theorem fixtureIndependent {n m : Nat} (b : Matrix Int n m) :
+    b.independent := by sorry
+
+private def matrixRows (b : Matrix Int n m) : List (List Int) :=
+  (List.finRange n).map fun i => (b.row i).toArray.toList
+
+private def intCode (x : Int) : Nat :=
+  if x < 0 then 2 * x.natAbs + 1 else 2 * x.natAbs
+
+private def matrixChecksum (b : Matrix Int n m) : Nat :=
+  (matrixRows b).foldl
+    (fun acc row => row.foldl (fun acc entry => acc * 65_537 + intCode entry) acc)
+    0
+
+private def lllMatrixChecksum (b : Matrix Int n m) (hn : 1 ≤ n) : Nat :=
+  let r := lll b (3 / 4) lllDeltaLower lllDeltaUpper hn (fixtureIndependent b)
+  matrixChecksum r
+
+private def bzCoeff (factor col : Nat) : Int :=
+  match factor, col with
+  | 0, 0 => 1
+  | 0, 1 => 1
+  | 1, 0 => 2
+  | 1, 1 => 1
+  | 2, 0 => 3
+  | 2, 1 => 1
+  | _, _ => 0
+
+/-- `bz-recombination` bottom rung: `p = 5`, `k = 2`, three lifted factors. -/
+def bzRecombinationBasis : Matrix Int 3 7 :=
+  Matrix.ofFn fun i j =>
+    if j.val < 4 then
+      bzCoeff i.val j.val
+    else if j.val - 4 = i.val then
+      (25 : Int)
+    else
+      0
+
+private def lcgStep (x : Nat) : Nat :=
+  (1103515245 * x + 12345) % 2147483648
+
+private def lcgIterate (seed : Nat) (k : Nat) : Nat :=
+  match k with
+  | 0 => seed
+  | k + 1 => lcgIterate (lcgStep seed) k
+
+private def foldEntry (raw : Nat) (window : Int) : Int :=
+  (Int.ofNat raw) % (2 * window + 1) - window
+
+/-- `random-bounded` rung generator: LCG entries with `|entry| ≤ 30`. -/
+def randomBoundedBasis (n : Nat) : Matrix Int n n :=
+  Matrix.ofFn fun i j =>
+    foldEntry (lcgIterate (0x5EED + n) (i.val * n + j.val + 1)) 30
+
+/-- `harsh-cubic` rung generator: lower-triangular integer bases whose diagonal
+entries have bit-length approximately `3.3 * n`. -/
+def harshCubicBasis (n : Nat) : Matrix Int n n :=
+  let bitLen := (10 * n + 2) / 3
+  let scale : Int := 2 ^ bitLen
+  Matrix.ofFn fun i j =>
+    if i = j then
+      scale + Int.ofNat i.val + 1
+    else if j.val < i.val then
+      (Int.ofNat (((i.val + 1) * (j.val + 3)) % 17)) - 8
+    else
+      0
+
+private def runLeanLLLChecksum (b : Matrix Int n m) (hn : 1 ≤ n) : Nat :=
+  let inputChecksum := matrixChecksum b
+  let reducedChecksum := lllMatrixChecksum b hn
+  inputChecksum + reducedChecksum - reducedChecksum
+
+initialize bzRecombinationRef : IO.Ref (Matrix Int 3 7) ←
+  IO.mkRef bzRecombinationBasis
+
+initialize randomBounded30Ref : IO.Ref (Matrix Int 30 30) ←
+  IO.mkRef (randomBoundedBasis 30)
+
+initialize randomBounded60Ref : IO.Ref (Matrix Int 60 60) ←
+  IO.mkRef (randomBoundedBasis 60)
+
+initialize randomBounded120Ref : IO.Ref (Matrix Int 120 120) ←
+  IO.mkRef (randomBoundedBasis 120)
+
+initialize randomBounded240Ref : IO.Ref (Matrix Int 240 240) ←
+  IO.mkRef (randomBoundedBasis 240)
+
+initialize harshCubic15Ref : IO.Ref (Matrix Int 15 15) ←
+  IO.mkRef (harshCubicBasis 15)
+
+initialize harshCubic30Ref : IO.Ref (Matrix Int 30 30) ←
+  IO.mkRef (harshCubicBasis 30)
+
+initialize harshCubic45Ref : IO.Ref (Matrix Int 45 45) ←
+  IO.mkRef (harshCubicBasis 45)
+
+private def runFpylllChecksum (family : String) (rung : Nat) : IO Nat := do
+  let out ← IO.Process.output {
+    cmd := "python3"
+    args := #["scripts/oracle/lll_fpylll_bench.py", family, toString rung]
+    stdin := .null
+  }
+  if out.exitCode != 0 then
+    throw <| IO.userError s!"fpLLL benchmark failed for {family}/{rung}: {out.stderr}"
+  match out.stdout.trimAscii.toString.toNat? with
+  | some checksum => pure checksum
+  | none =>
+      throw <| IO.userError
+        s!"fpLLL benchmark emitted non-Nat checksum for {family}/{rung}: {out.stdout}"
+
+/-- Lean fixed target for the `bz-recombination` bottom rung. -/
+def runLLLBZRecombinationP5K2 : Unit → IO Nat := fun () => do
+  return runLeanLLLChecksum (← bzRecombinationRef.get) (by decide)
+
+/-- fpLLL fixed target for the `bz-recombination` bottom rung. -/
+def runFpylllBZRecombinationP5K2 : Unit → IO Nat := fun () =>
+  runFpylllChecksum "bz-recombination" 0
+
+def runLLLRandomBounded30 : Unit → IO Nat := fun () => do
+  return runLeanLLLChecksum (← randomBounded30Ref.get) (by decide)
+
+def runFpylllRandomBounded30 : Unit → IO Nat := fun () =>
+  runFpylllChecksum "random-bounded" 30
+
+def runLLLRandomBounded60 : Unit → IO Nat := fun () => do
+  return runLeanLLLChecksum (← randomBounded60Ref.get) (by decide)
+
+def runFpylllRandomBounded60 : Unit → IO Nat := fun () =>
+  runFpylllChecksum "random-bounded" 60
+
+def runLLLRandomBounded120 : Unit → IO Nat := fun () => do
+  return runLeanLLLChecksum (← randomBounded120Ref.get) (by decide)
+
+def runFpylllRandomBounded120 : Unit → IO Nat := fun () =>
+  runFpylllChecksum "random-bounded" 120
+
+def runLLLRandomBounded240 : Unit → IO Nat := fun () => do
+  return runLeanLLLChecksum (← randomBounded240Ref.get) (by decide)
+
+def runFpylllRandomBounded240 : Unit → IO Nat := fun () =>
+  runFpylllChecksum "random-bounded" 240
+
+def runLLLHarshCubic15 : Unit → IO Nat := fun () => do
+  return runLeanLLLChecksum (← harshCubic15Ref.get) (by decide)
+
+def runFpylllHarshCubic15 : Unit → IO Nat := fun () =>
+  runFpylllChecksum "harsh-cubic" 15
+
+def runLLLHarshCubic30 : Unit → IO Nat := fun () => do
+  return runLeanLLLChecksum (← harshCubic30Ref.get) (by decide)
+
+def runFpylllHarshCubic30 : Unit → IO Nat := fun () =>
+  runFpylllChecksum "harsh-cubic" 30
+
+def runLLLHarshCubic45 : Unit → IO Nat := fun () => do
+  return runLeanLLLChecksum (← harshCubic45Ref.get) (by decide)
+
+def runFpylllHarshCubic45 : Unit → IO Nat := fun () =>
+  runFpylllChecksum "harsh-cubic" 45
+
 /- Complexity derivation: `prepStateInput n` gives `rows = n + 3` and
 `cols = 2 * (n + 3) + 1`. A single targeted reduction updates one basis row
 over `cols` entries and one coefficient prefix bounded by `rows`. -/
@@ -308,6 +481,91 @@ setup_benchmark runFirstShortVectorIdentityChecksum n =>
     paramSchedule := .custom #[80, 96, 112]
     maxSecondsPerCall := 6.0
   }
+
+/- Fixed-problem comparator registrations for the Phase 4 input families.
+Each Lean/fpLLL pair returns the same input-basis checksum after forcing its
+own full LLL reduction, because LLL reduced bases are not unique and literal
+output equality belongs to the conformance oracle rather than the timing join.
+-/
+setup_fixed_benchmark runLLLBZRecombinationP5K2 where {
+  repeats := 3
+  maxSecondsPerCall := 10.0
+}
+
+setup_fixed_benchmark runFpylllBZRecombinationP5K2 where {
+  repeats := 3
+  maxSecondsPerCall := 10.0
+}
+
+setup_fixed_benchmark runLLLRandomBounded30 where {
+  repeats := 3
+  maxSecondsPerCall := 30.0
+}
+
+setup_fixed_benchmark runFpylllRandomBounded30 where {
+  repeats := 3
+  maxSecondsPerCall := 30.0
+}
+
+setup_fixed_benchmark runLLLRandomBounded60 where {
+  repeats := 3
+  maxSecondsPerCall := 60.0
+}
+
+setup_fixed_benchmark runFpylllRandomBounded60 where {
+  repeats := 3
+  maxSecondsPerCall := 60.0
+}
+
+setup_fixed_benchmark runLLLRandomBounded120 where {
+  repeats := 1
+  maxSecondsPerCall := 120.0
+}
+
+setup_fixed_benchmark runFpylllRandomBounded120 where {
+  repeats := 3
+  maxSecondsPerCall := 120.0
+}
+
+setup_fixed_benchmark runLLLRandomBounded240 where {
+  repeats := 1
+  maxSecondsPerCall := 240.0
+}
+
+setup_fixed_benchmark runFpylllRandomBounded240 where {
+  repeats := 3
+  maxSecondsPerCall := 240.0
+}
+
+setup_fixed_benchmark runLLLHarshCubic15 where {
+  repeats := 3
+  maxSecondsPerCall := 30.0
+}
+
+setup_fixed_benchmark runFpylllHarshCubic15 where {
+  repeats := 3
+  maxSecondsPerCall := 30.0
+}
+
+setup_fixed_benchmark runLLLHarshCubic30 where {
+  repeats := 3
+  maxSecondsPerCall := 60.0
+}
+
+setup_fixed_benchmark runFpylllHarshCubic30 where {
+  repeats := 3
+  maxSecondsPerCall := 60.0
+}
+
+setup_fixed_benchmark runLLLHarshCubic45 where {
+  repeats := 3
+  maxSecondsPerCall := 90.0
+}
+
+setup_fixed_benchmark runFpylllHarshCubic45 where {
+  repeats := 3
+  maxSecondsPerCall := 90.0
+}
 
 end Hex.LLLBench
 
