@@ -1,4 +1,4 @@
-# hex-sturm (Sturm-based decision procedure for univariate ℝ-formulas, depends on hex-real-roots + hex-real-roots-mathlib + hex-poly-z + hex-poly-z-mathlib + Mathlib)
+# hex-rcf (decision procedure for univariate real-closed-field formulas, depends on hex-real-roots + hex-real-roots-mathlib + hex-poly-z + hex-poly-z-mathlib + Mathlib)
 
 A Lean tactic providing a **complete decision procedure** for the
 univariate fragment of real-closed-field arithmetic. Closes goals
@@ -12,15 +12,16 @@ isolate roots of every polynomial appearing in the formula via
 the resulting cell decomposition of `ℝ`, evaluate the Boolean on
 each cell, check the quantifier, and close the goal via a
 soundness-of-reflection lemma proved in this same library. No
-separate Mathlib bridge — `hex-sturm` is `mathlib: true` because
-the tactic targets `ℝ`.
+separate Mathlib bridge — `hex-rcf` is `mathlib: true` because the
+tactic targets `ℝ`.
 
 This is the user-facing payoff of the algebraic-numbers stack:
 neither `polyrith` nor `nlinarith` is complete on this fragment,
-and `decide` is unavailable for `ℝ`-quantifiers. `sturm` decides
-the entire univariate fragment of the theory of real-closed fields.
+and `decide` is unavailable for `ℝ`-quantifiers. `hex-rcf` decides
+the entire univariate fragment of the theory of real-closed fields
+(per Tarski 1948).
 
-## What `sturm` decides
+## What `rcf` decides
 
 Goal forms:
 
@@ -44,10 +45,9 @@ Concrete examples the tactic closes:
 ∀ x : ℝ, 0 < x →                          x + 1/x ≥ 2
 ∀ x : ℝ, x² ≤ 1 →                         x⁴ − x² ≤ 0
 ∃ x : ℝ, x³ − x − 1 = 0   ∧   1 < x ∧ x < 2
-∀ x : ℝ, p(x) ≠ 0    -- for any specific squarefree p
 ```
 
-## What `sturm` does NOT decide (and how it falls through)
+## What `rcf` does NOT decide (and how it falls through)
 
 The tactic must **fall through** (not produce a wrong proof, not
 loop forever) on any goal it cannot decide. Cases:
@@ -153,7 +153,7 @@ The tactic implements 1-dimensional CAD:
 
 9. **Reflection.** The decision result `true`/`false` is reflected
    back to the original goal via the soundness lemma
-   `sturm_decide_sound` (below). On `true`, the tactic emits a
+   `rcf_decide_sound` (below). On `true`, the tactic emits a
    proof. On `false`, the tactic emits no proof and falls through —
    it does not negate the goal.
 
@@ -164,11 +164,11 @@ def Formula.toProp : Formula → Prop
   -- Evaluate the AST against ℝ-valued atoms, with quantifiers
   -- ranging over ℝ (or the specified Dyadic interval).
 
-def decide_sturm : Formula → Bool
+def decide_rcf : Formula → Bool
   -- Run the algorithm above; return whether the formula is valid.
 
-theorem sturm_decide_sound :
-    ∀ (φ : Formula), decide_sturm φ = true → φ.toProp
+theorem rcf_decide_sound :
+    ∀ (φ : Formula), decide_rcf φ = true → φ.toProp
 ```
 
 This is the **soundness lemma**: every "yes" answer produces a
@@ -189,49 +189,48 @@ through:
   because cells partition `ℝ` and the inner Prop is constant on
   each cell.
 
-Imports: `hex-real-roots-mathlib`'s `isolate_correct` and
-`sturm_count_eq_real_root_count`; Mathlib's `IVT`,
+Imports: `hex-real-roots-mathlib`'s `isolate_correct` and the
+Möbius-transform-correspondence theorem; Mathlib's IVT,
 `Polynomial.aeval`, ordered-field structure on `ℝ`.
 
 The library does **not** prove completeness (that every valid
 univariate ℝ-CF formula is decided correctly). Tarski–Seidenberg
-and the completeness of Sturm's theorem give this for free, but
-the tactic only ever emits "yes" answers; "no" answers are never
-emitted as Lean proofs (the tactic falls through). So soundness is
-sufficient for tactic correctness.
+gives this for free, but the tactic only ever emits "yes" answers;
+"no" answers are never emitted as Lean proofs (the tactic falls
+through). So soundness is sufficient for tactic correctness.
 
 ## Tactic surface
 
 ```lean
-example : ∀ x : ℝ, x^2 + 1 > 0 := by sturm
-example : ∀ x : ℝ, 0 < x → x + 1/x ≥ 2 := by sturm
-example : ∃ x : ℝ, x^3 - x - 1 = 0 ∧ 1 < x ∧ x < 2 := by sturm
+example : ∀ x : ℝ, x^2 + 1 > 0 := by rcf
+example : ∀ x : ℝ, 0 < x → x + 1/x ≥ 2 := by rcf
+example : ∃ x : ℝ, x^3 - x - 1 = 0 ∧ 1 < x ∧ x < 2 := by rcf
 ```
 
-The exact tactic name (`sturm`, `decide_sturm`, or another) is
-chosen at implementation time per Mathlib's tactic-naming
-conventions.
+Tactic name: `rcf` (for "real-closed field"). Algorithm-neutral —
+the tactic name does not commit to which root-isolation algorithm
+`hex-real-roots` uses internally.
 
 ## Layered file organisation
 
-- `HexSturm/Formula.lean` — the AST (`Atom`, `Formula`,
-  `AtomCmp`); `Formula.toProp` Prop semantics; `decide_sturm`
+- `HexRcf/Formula.lean` — the AST (`Atom`, `Formula`,
+  `AtomCmp`); `Formula.toProp` Prop semantics; `decide_rcf`
   driver.
-- `HexSturm/CellDecomposition.lean` — union-of-isolations cell
+- `HexRcf/CellDecomposition.lean` — union-of-isolations cell
   construction; representative-point selection; cell-set invariants.
-- `HexSturm/SignMatrix.lean` — per-cell, per-atom sign evaluation;
+- `HexRcf/SignMatrix.lean` — per-cell, per-atom sign evaluation;
   Boolean evaluation of `Formula` against the sign matrix.
-- `HexSturm/QuantifierCheck.lean` — ∀/∃ checks (full ℝ + bounded
+- `HexRcf/QuantifierCheck.lean` — ∀/∃ checks (full ℝ + bounded
   intervals); cell-intersection logic.
-- `HexSturm/Soundness.lean` — `sturm_decide_sound` and supporting
+- `HexRcf/Soundness.lean` — `rcf_decide_sound` and supporting
   lemmas (sign-matrix correctness, cell-decomposition completeness,
   Boolean and quantifier soundness).
-- `HexSturm/Reflect.lean` — `MetaM`/`Qq` reification; tactic
+- `HexRcf/Reflect.lean` — `MetaM`/`Qq` reification; tactic
   driver; `MetaM`-failure paths for out-of-fragment input.
-- `HexSturm/Tactic.lean` — the user-facing `sturm` tactic
+- `HexRcf/Tactic.lean` — the user-facing `rcf` tactic
   registration.
-- `HexSturm/Conformance.lean`, `HexSturm/Bench.lean`,
-  `HexSturm/EmitFixtures.lean` — standard testing trio.
+- `HexRcf/Conformance.lean`, `HexRcf/Bench.lean`,
+  `HexRcf/EmitFixtures.lean` — standard testing trio.
 
 ## Conformance fixtures
 
@@ -259,7 +258,11 @@ Per [SPEC/testing.md](../testing.md):
   formula evaluation, or Mathematica's `Reduce`.
 - *local* (developer-driven): high-degree adversarial families
   (Mignotte-near-zero polynomials, polynomials with extremely close
-  roots requiring high-precision sign matrix).
+  roots requiring high-precision sign matrix). Note: these stress
+  `hex-real-roots`'s Uspensky algorithm, which has known
+  performance pathologies on tight clusters; bench-driven
+  validation that the tactic still terminates within budget on
+  these cases.
 
 External oracles: SageMath (`Reduce`-equivalent via
 `QQbar`-based real-root analysis); Mathematica (`Reduce`,
@@ -271,16 +274,19 @@ For a goal with `k` distinct polynomials of total degree `n` and
 sup-norm `‖·‖∞`:
 
 - **Reification:** linear in goal size.
-- **Root isolation** of all `k` polynomials: `O(k · n³ · log ‖·‖∞)`
-  bit operations (`hex-real-roots.isolate` per polynomial).
+- **Root isolation** of all `k` polynomials: `O(k · n^4 · log² ‖·‖∞)`
+  bit operations (Uspensky's worst case, per `hex-real-roots.isolate`).
 - **Cell decomposition:** `O(k · n)` cells; sort `O(k·n log(k·n))`.
 - **Sign matrix:** `O(k · n²)` polynomial evaluations.
 - **Boolean evaluation:** `O(k · |formula|)` per cell.
 - **Total:** dominated by root isolation, roughly
-  `O(k · n³ · log ‖·‖∞)`.
+  `O(k · n^4 · log² ‖·‖∞)`.
 
 For typical user goals (`k ≤ 5`, `n ≤ 10`, small coefficients) the
-tactic should complete in under a second.
+tactic should complete in under a second. Mignotte-cluster
+adversarial cases are bounded by `hex-real-roots`'s
+`realRootSeparation` — sub-second for moderate inputs but degrades
+gracefully on high-degree pathological clusters.
 
 ## Time budgets (Phase 4 validation)
 
@@ -294,8 +300,9 @@ tactic should complete in under a second.
   Geometry.* RAND Corp, 1948 (republished by Univ. California
   Press, 1951). The foundational decidability result for the
   theory of real-closed fields.
-- Sturm 1829, Marden 1966 — see [hex-real-roots](hex-real-roots.md)
-  §"References".
+- Descartes 1637 / Uspensky 1948 / Akritas–Strzeboński 2008 — see
+  [hex-real-roots](hex-real-roots.md) §"References" for the
+  underlying root-isolation algorithm.
 - Basu, S.; Pollack, R.; Roy, M.-F. *Algorithms in Real Algebraic
   Geometry.* Springer, 2nd ed., 2006. Algorithm 10.13 (Sign
   Determination at the Roots) and Chapter 13 (CAD) cover the

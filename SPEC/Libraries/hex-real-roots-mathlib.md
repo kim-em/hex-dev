@@ -1,35 +1,43 @@
-# hex-real-roots-mathlib (depends on hex-real-roots + hex-poly-z-mathlib + hex-resultant-mathlib + Mathlib)
+# hex-real-roots-mathlib (depends on hex-real-roots + hex-poly-z-mathlib + Mathlib)
 
 Mathlib bridge for [hex-real-roots](hex-real-roots.md). Proves
-correctness of the certified real root isolation against Mathlib's
-`Polynomial ℤ` and `ℝ`-root semantics.
+correctness of the certified real-root isolation against Mathlib's
+`Polynomial ℤ` and `ℝ`-root semantics. Uspensky's algorithm
+(Descartes + Möbius bisection) — the bridge rides on Mathlib's
+existing `Polynomial.signVariations` infrastructure rather than
+formalising Sturm's theorem from scratch.
 
 ## What we cite from Mathlib (no work)
 
 - `Polynomial.IsRoot`, `Polynomial.roots`, `Polynomial.aroots`.
 - `Polynomial.derivative`, `Polynomial.gcd`, `Polynomial.Squarefree`.
-- The cast `Polynomial.eval₂` from `Polynomial ℤ` to `ℝ`-valued
-  evaluation.
-- `Real`'s ordered-field structure (signs, comparisons,
-  Intermediate Value Theorem).
-- `EuclideanDomain.gcd` over `ℤ[x]`.
+- `Polynomial.eval₂` for `Polynomial ℤ → ℝ`-valued evaluation.
+- `Polynomial.cauchyBound` and `Polynomial.IsRoot.norm_lt_cauchyBound`
+  from `Mathlib.Analysis.Polynomial.CauchyBound`.
+- `Polynomial.signVariations` and the main theorem
+  `Polynomial.roots_countP_pos_le_signVariations` from
+  `Mathlib.Algebra.Polynomial.RuleOfSigns`.
+- `Polynomial.comp` for polynomial composition (used to express
+  Möbius transforms).
+- `Polynomial.mahlerMeasure_le_sqrt_sum_sq_norm_coeff` (Landau)
+  and `Polynomial.norm_coeff_le_choose_mul_mahlerMeasure_of_one_le_mahlerMeasure`
+  (Mignotte) from `Mathlib.Analysis.Polynomial.MahlerMeasure`.
+- `Real`'s ordered-field structure and Intermediate Value Theorem
+  (`intermediate_value_Icc` etc.).
 
 ## Bridging theorems
 
 ### `SimpleRealRoot p` semantics
 
 ```lean
-/-- The real number corresponding to a real-root isolation: any
-    point in the interval, made canonical by refinement to a target
-    precision and centred-residue choice. The Mathlib version does
-    *not* depend on the specific refinement; it picks out the
-    unique real root in the isolation's interval. -/
+/-- The real number corresponding to a real-root isolation. The
+    Mathlib version does *not* depend on the specific refinement; it
+    picks out the unique real root in the isolation's interval. -/
 def SimpleRealRoot.toReal {p : ZPoly} (s : SimpleRealRoot p) : ℝ
 
 theorem SimpleRealRoot.toReal_isRoot {p : ZPoly} (s : SimpleRealRoot p)
     (hp : Hex.HasOnlySimpleRealRoots p) :
     (toPolynomial p).aeval s.toReal = 0
-  -- s.toReal is a real root of (toPolynomial p)
 
 theorem SimpleRealRoot.toReal_in_interval
     {p : ZPoly} (s : SimpleRealRoot p) (prec : Nat) :
@@ -41,41 +49,69 @@ theorem SimpleRealRoot.injective_to_real
     Function.Injective (SimpleRealRoot.toReal (p := p))
 ```
 
-### Sturm's theorem
+### Descartes' rule of signs on Möbius transforms
 
-If Mathlib already has Sturm's theorem in a usable form, cite it.
-Otherwise, prove it inline (with attribution to any open Mathlib
-PR that's in flight). The contract:
+The core bridge theorem connecting `signVariations` of the
+Möbius-transformed polynomial to the real-root count of `p` in the
+interval.
 
 ```lean
-theorem sturm_count_eq_real_root_count
-    (p : ZPoly) (hp : Hex.HasOnlySimpleRealRoots p)
-    (a b : Dyadic) (ha : (toPolynomial p).aeval (a : ℝ) ≠ 0)
-    (hb : (toPolynomial p).aeval (b : ℝ) ≠ 0) (hab : a < b) :
-    sturmCount p ⟨a, b, hab⟩ =
-      ((toPolynomial p).roots.filter
-          (fun r => (a : ℝ) < r ∧ r ≤ (b : ℝ))).card
-  -- The integer Sturm count over (a, b] equals the number of real
-  -- roots in (a, b], counted with multiplicity (which is 1 for
-  -- squarefree p).
+/-- The integer Möbius transform of p relative to (a, b]:
+    p_M(x) := (1+x)^(deg p) · p(a + (b-a)/(1+x)) cleared of dyadic
+    denominators. -/
+def mobiusTransform (p : ZPoly) (a b : Dyadic) : ZPoly := …
+
+/-- Möbius transform sends positive reals to (a, b) bijectively
+    (preserving multiplicity for polynomial roots). -/
+theorem mobiusTransform_root_correspondence
+    (p : ZPoly) (a b : Dyadic) (hab : a < b) :
+    ∀ r : ℝ,
+      (toPolynomial (mobiusTransform p a b)).aeval r = 0 ∧ 0 < r
+        ↔ ∃ s : ℝ, (a : ℝ) < s ∧ s < (b : ℝ) ∧
+                   (toPolynomial p).aeval s = 0
+                   -- with multiplicity preserved
 ```
 
-Status of Mathlib's existing Sturm infrastructure should be checked
-at activation time. If absent, port inline per
-[PLAN/Conventions.md §"Library placement"](../../PLAN/Conventions.md)'s
-"inline with attribution" rule.
+### Descartes count → exact-1 corollary
 
-### `cauchyBound` correctness
+Mathlib's `roots_countP_pos_le_signVariations` gives `≤`; we need
+the parity argument to derive `signVariations = 1 ⟹ count = 1`.
+
+```lean
+theorem signVariations_eq_one_implies_one_positive_root
+    (q : Polynomial ℤ) (hsv : q.signVariations = 1) :
+    q.roots.countP (0 < ·) = 1
+  -- Proof: count ≤ 1 (Mathlib), count ≡ 1 (mod 2) (parity, also
+  -- in `roots_countP_pos_le_signVariations`'s context), so count = 1.
+
+theorem signVariations_eq_zero_implies_no_positive_roots
+    (q : Polynomial ℤ) (hsv : q.signVariations = 0) :
+    q.roots.countP (0 < ·) = 0
+  -- Mathlib: count ≤ 0.
+```
+
+The parity lemma `count ≡ signVariations (mod 2)` is the standard
+strengthening of Descartes' rule; if Mathlib's
+`RuleOfSigns.lean` has it, cite directly; otherwise this is a small
+local lemma (~30 lines) building on
+`roots_countP_pos_le_signVariations` and standard parity arguments
+on sign sequences.
+
+### Cauchy bound + LMQ bound correctness
 
 ```lean
 theorem cauchyBound_bounds_real_roots (p : ZPoly) :
     ∀ r : ℝ, (toPolynomial p).aeval r = 0 →
         |r| ≤ (Hex.cauchyBound p : ℝ)
-  -- |any real root of p| ≤ cauchyBound p
-```
+  -- Wraps Mathlib's `Polynomial.IsRoot.norm_lt_cauchyBound`.
 
-Standard Cauchy-bound proof: if `|r| > 1 + max|a_i|/|a_n|`, the
-leading term dominates and `p(r) ≠ 0`.
+theorem lmqBound_bounds_positive_real_roots (p : ZPoly) :
+    ∀ r : ℝ, (toPolynomial p).aeval r = 0 → 0 < r →
+        r ≤ (Hex.lmqBound p : ℝ)
+  -- Akritas-Strzeboński 2008 LMQ bound, stated for positive reals.
+  -- A new theorem (Mathlib has Cauchy but not LMQ); the proof is
+  -- a couple of pages following the original paper.
+```
 
 ### `realRootSeparation` correctness
 
@@ -87,9 +123,11 @@ theorem realRootSeparation_bounds_min_gap
         (2 : ℝ)^(-(Hex.realRootSeparation p : ℝ)) ≤ |r₁ - r₂|
 ```
 
-Mahler/Mignotte bound applied to real roots. Mathlib has Mahler
-measure infrastructure in `Mathlib.Analysis.Polynomial.MahlerMeasure`;
-Landau's inequality wraps as `mahlerMeasure_le_l2norm`.
+Mahler/Mignotte bound applied to real roots. Mathlib has the Mahler
+infrastructure (`mahlerMeasure_le_sqrt_sum_sq_norm_coeff`,
+`norm_coeff_le_choose_mul_mahlerMeasure_of_one_le_mahlerMeasure`);
+the real-root specialisation needs a small wrapper combining Mahler
+with the discriminant/resultant lower bound. Days-to-week wrapper.
 
 ### `isolate` correctness
 
@@ -110,8 +148,10 @@ theorem isolate_correct
 ```
 
 Bijection between the isolation array and the (finite) set of real
-roots of `p`. Follows from `sturm_count_eq_real_root_count` plus the
-bisection-driver's invariants.
+roots of `p`. Follows from `mobiusTransform_root_correspondence` +
+`signVariations_eq_one_implies_one_positive_root` (and the
+zero-variations corollary) + the bisection driver's invariants +
+`realRootSeparation_bounds_min_gap` for termination.
 
 ### Refinement correctness
 
@@ -128,30 +168,44 @@ theorem out_real_eq (s : SimpleRealRoot p) (prec₁ prec₂ : Nat) :
 
 ## Mathlib gap analysis
 
-To verify when drafting; first-cut estimate from the theorem
-statements above:
-
 **Cite directly (no work expected):**
 - `Polynomial.IsRoot`, `Polynomial.roots` over `ℝ` and `ℤ`.
-- `Polynomial.derivative`, `Polynomial.gcd`.
-- Mahler measure infrastructure (`mahlerMeasure_le_l2norm`).
+- `Polynomial.derivative`, `Polynomial.gcd`, `Polynomial.comp`.
+- `Polynomial.cauchyBound` + bound-on-roots theorem.
+- `Polynomial.signVariations` + `roots_countP_pos_le_signVariations`
+  (Descartes' rule).
+- Mahler measure infrastructure (Landau + Mignotte coefficient bound).
 
-**Possibly build (verify status at activation time):**
-- A direct version of Sturm's theorem connecting integer-Sturm-
-  sequence sign counts to real-root counts. Mathlib may have
-  fragments; full theorem may need assembly.
-- The `realRootSeparation` bound: like `mahlerPrec` in
-  `hex-roots-mathlib`, this is a paper result (Mahler 1962 /
-  Mignotte 1982) restricted to real roots; Mathlib likely doesn't
-  have the closed form; port inline with attribution.
+**Build (verify status at activation time):**
+- The Möbius-transform-correspondence theorem
+  (`mobiusTransform_root_correspondence`). Likely a few pages of
+  proof; uses `Polynomial.comp` and standard substitution machinery.
+- The exact-1-from-signVariations parity corollary if not already
+  in Mathlib. Small wrapper.
+- `lmqBound_bounds_positive_real_roots`. New theorem (Mahlib has
+  Cauchy but not LMQ). Few pages.
+- `realRootSeparation_bounds_min_gap`. Small wrapper on Mahler
+  measure infrastructure.
+- `isolate_correct`. The main bridge theorem, assembled from the
+  above components plus the bisection driver's invariants.
+
+**Deliberately not built:**
+- Sturm's theorem and the Sturm sequence. Mathlib has neither;
+  formalising would be a multi-month side quest. Avoided by the
+  algorithm choice (Uspensky uses Descartes, which Mathlib does
+  have).
+- Vincent's theorem (would be needed for VCA/VAS algorithm
+  variants, which are out of scope).
 
 ## Layered file organisation
 
 ```
 HexRealRootsMathlib/
   Basic.lean        — toReal, Quotient bridge
-  Sturm.lean        — sturm_count_eq_real_root_count
-  Cauchy.lean       — cauchyBound_bounds_real_roots
+  Mobius.lean       — mobiusTransform_root_correspondence
+  Descartes.lean    — exact-1 parity corollary; sign-variation count
+                      ↔ root count theorems
+  Bounds.lean       — cauchyBound + lmqBound correctness
   Separation.lean   — realRootSeparation_bounds_min_gap
   Isolate.lean      — isolate_correct
   Conformance.lean  — fixture-based checks
@@ -159,7 +213,7 @@ HexRealRootsMathlib/
 
 ## References
 
-- Sturm 1829, Marden 1966, Basu-Pollack-Roy 2006 — see
+- Descartes, Uspensky, Akritas–Strzeboński 2008 (LMQ) — see
   [hex-real-roots](hex-real-roots.md) §"References".
 - For the Mahler/Mignotte bounds restricted to real roots: same
   sources as [hex-roots-mathlib](hex-roots-mathlib.md)'s `mahlerPrec`
