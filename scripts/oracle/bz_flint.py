@@ -20,16 +20,18 @@ Operation cross-checked
 * `factor` — `Hex.factor` from `HexBerlekampZassenhaus.Basic` (the
   default-bound public entry point).  Lean serialises the resulting
   factorization as ``[scalar, [[coeffs, multiplicity], ...]]``.  The
-  oracle factors the original input once with `fmpz_poly.factor()` and
-  compares Lean's reported components directly against that
-  irreducible-factor multiset after primitive normalisation.
+  oracle checks exact product reconstruction, then factors the original
+  input once with `fmpz_poly.factor()` and compares Lean's reported
+  components directly against that irreducible-factor multiset after
+  primitive normalisation.
 
   Factor order is unspecified by SPEC.  Each nonconstant Lean component
   must be one irreducible factor slot from FLINT's factorisation; the
   oracle never re-factors Lean's output as a canonicalisation step.
   This rejects unfactored or partially factored reducible components.
-  Content and signs are accumulated separately, matching FLINT's
-  positive-leading-factor convention.
+  The signed scalar is checked exactly against FLINT's content
+  convention, and factors must be nonconstant, primitive, positive
+  leading, non-duplicated polynomial factors.
 
 Usage::
 
@@ -195,9 +197,49 @@ def _lean_factorization_signature(
             raise OracleMismatch(
                 f"nonprimitive polynomial factor {entry[0]!r} has content {content}"
             )
-        if factor is not None:
-            out[factor] += int(entry[1])
+        if content < 0:
+            raise OracleMismatch(
+                f"polynomial factor {entry[0]!r} has negative leading coefficient"
+            )
+        if factor is None:
+            raise OracleMismatch(
+                f"constant polynomial factor {entry[0]!r} is not allowed"
+            )
+        if factor in out:
+            raise OracleMismatch(
+                f"duplicate polynomial factor {list(factor)!r} is not allowed"
+            )
+        out[factor] += int(entry[1])
     return int(scalar), dict(out)
+
+
+def _poly_mul(a: list[int], b: list[int]) -> list[int]:
+    if not a or not b:
+        return []
+    out = [0] * (len(a) + len(b) - 1)
+    for i, ai in enumerate(a):
+        for j, bj in enumerate(b):
+            out[i + j] += int(ai) * int(bj)
+    return _trim_zeros(out)
+
+
+def _poly_pow(base: list[int], exponent: int) -> list[int]:
+    out = [1]
+    factor = _trim_zeros(base)
+    n = int(exponent)
+    while n:
+        if n % 2 == 1:
+            out = _poly_mul(out, factor)
+        factor = _poly_mul(factor, factor)
+        n //= 2
+    return out
+
+
+def _factorization_product(scalar: int, factors: list[Any]) -> list[int]:
+    out = _trim_zeros([int(scalar)])
+    for coeffs, multiplicity in factors:
+        out = _poly_mul(out, _poly_pow([int(c) for c in coeffs], int(multiplicity)))
+    return out
 
 
 def _signature_to_serialisable(
@@ -292,17 +334,23 @@ def _check_factor(
         and isinstance(lean_value[1], list)
     ):
         lean_sig = _lean_factorization_signature(lean_value[0], lean_value[1])
-    elif isinstance(lean_value, list) and all(
-        isinstance(component, list)
-        and all(isinstance(c, int) for c in component)
-        for component in lean_value
-    ):
-        lean_components = [_trim_zeros(component) for component in lean_value]
-        lean_sig = _lean_signature(lean_components)
+        assert_equal(
+            _factorization_product(lean_value[0], lean_value[1]),
+            _trim_zeros(coeffs),
+            library=lib,
+            case_id=f"{case_id}:factor:product",
+            kind="factor-product",
+            input_record=poly_record,
+            oracle_name="python-flint",
+            oracle_version=oracle_version,
+            failure_dir=failure_dir,
+            profile=profile,
+            seed=seed,
+        )
     else:
         raise OracleMismatch(
             f"{lib}/{case_id}: factor result must be a Factorization JSON "
-            f"value or legacy list of coefficient lists, got {lean_value!r}"
+            f"value [scalar, [[coeffs, multiplicity], ...]], got {lean_value!r}"
         )
 
     assert_equal(

@@ -720,6 +720,44 @@ private def exactQuotient? (target candidate : ZPoly) : Option ZPoly :=
     else
       none
 
+private def positiveDivisors (n : Nat) : List Nat :=
+  (List.range (n + 1)).filter fun d => d != 0 && n % d == 0
+
+private def integerRootCandidates (f : ZPoly) : List Int :=
+  (positiveDivisors (f.coeff 0).natAbs).flatMap fun d =>
+    let r : Int := Int.ofNat d
+    [r, -r]
+
+private def linearFactorForRoot (r : Int) : ZPoly :=
+  DensePoly.ofCoeffs #[-r, 1]
+
+private def splitIntegerRootFactorsAux :
+    ZPoly → List Int → Nat → Array ZPoly × ZPoly
+  | target, _roots, 0 => (#[], target)
+  | target, [], _fuel + 1 => (#[], target)
+  | target, root :: roots, fuel + 1 =>
+      let factor := linearFactorForRoot root
+      match exactQuotient? target factor with
+      | some quotient =>
+          let rest := splitIntegerRootFactorsAux quotient roots fuel
+          (#[factor] ++ rest.1, rest.2)
+      | none => splitIntegerRootFactorsAux target roots fuel
+
+private def quadraticIntegerRootFactors? (core : ZPoly) : Option (Array ZPoly) :=
+  if core.degree?.getD 0 = 2 then
+    let roots := integerRootCandidates core
+    let split := splitIntegerRootFactorsAux core roots roots.length
+    if split.1.size = 0 then
+      none
+    else if split.2 = 1 then
+      some split.1
+    else if split.2.degree?.getD 0 ≤ 1 then
+      some (split.1.push split.2)
+    else
+      none
+  else
+    none
+
 private def centeredModNat (z : Int) (m : Nat) : Int :=
   if m = 0 then
     z
@@ -1428,10 +1466,13 @@ private def factorSlowFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
     reassemblePolynomialFactors normalized #[]
   else
-    let primeData := choosePrimeData normalized.squareFreeCore
-    let coreFactors :=
-      exhaustiveCoreFactorsWithBound normalized.squareFreeCore B primeData
-    reassemblePolynomialFactors normalized coreFactors
+    match quadraticIntegerRootFactors? normalized.squareFreeCore with
+    | some coreFactors => reassemblePolynomialFactors normalized coreFactors
+    | none =>
+        let primeData := choosePrimeData normalized.squareFreeCore
+        let coreFactors :=
+          exhaustiveCoreFactorsWithBound normalized.squareFreeCore B primeData
+        reassemblePolynomialFactors normalized coreFactors
 
 private def factorSlowWithBound (f : ZPoly) (B : Nat) : Factorization :=
   factorizationOfFactors f (factorSlowFactorsWithBound f B)
@@ -1451,14 +1492,27 @@ private def factorFastFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPo
   else if B = 0 then
     none
   else
-    let primeData := choosePrimeData normalized.squareFreeCore
-    if primeData.factorsModP.size ≤ 1 then
-      some (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
+    if B = 1 then
+      let primeData := choosePrimeData normalized.squareFreeCore
+      if primeData.factorsModP.size ≤ 1 then
+        some (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
+      else
+        match factorFastCoreWithBound normalized.squareFreeCore B primeData
+            (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2) with
+        | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
+        | none => none
     else
-      match factorFastCoreWithBound normalized.squareFreeCore B primeData
-          (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2) with
+      match quadraticIntegerRootFactors? normalized.squareFreeCore with
       | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
-      | none => none
+      | none =>
+        let primeData := choosePrimeData normalized.squareFreeCore
+        if primeData.factorsModP.size ≤ 1 then
+          some (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
+        else
+          match factorFastCoreWithBound normalized.squareFreeCore B primeData
+              (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2) with
+          | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
+          | none => none
 
 #guard factorFastFactorsWithBound cldGuardF 1 = none
 

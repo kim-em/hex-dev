@@ -16,6 +16,7 @@ prime.
 Fixtures are integer polynomials at degrees 4, 6, 10, 16, and 20,
 covering the currently Phase-2-stable shapes:
 
+* scalar/sign edge cases from the public `Factorization` convention,
 * already-irreducible Mignotte-bounded polynomials (cyclotomic
   Φ_p for `p ∈ {5, 7, 11, 17}`),
 * reducible products whose current output is already fully refined into
@@ -76,6 +77,30 @@ private def mk (id : String) (coeffs : Array Int) : Case :=
 Cyclotomic Φ_p(x) = x^(p-1) + ... + x + 1 has `coeffL2NormBound`
 `⌈√p⌉`, well inside the production lift's tractable range. -/
 
+/-! ## Signed-scalar and multiplicity convention edge cases -/
+
+private def cases_edge : List Case :=
+  [ mk "edge/zero" #[]
+  , mk "edge/one" #[1]
+  , mk "edge/neg_one" #[-1]
+  , mk "edge/two" #[2]
+  , mk "edge/neg_two" #[-2]
+  , mk "edge/six" #[6]
+  , mk "edge/neg_six" #[-6]
+  , mk "edge/x" #[0, 1]
+  , mk "edge/neg_x" #[0, -1]
+  , mk "edge/x_squared" #[0, 0, 1]
+    -- -X^2 + 1 = -(X - 1)(X + 1).
+  , mk "edge/neg_x_squared_plus_one" #[1, 0, -1]
+    -- (X - 1)^2.
+  , mk "edge/x_minus_one_squared" #[1, -2, 1]
+    -- -(X - 1)^2.
+  , mk "edge/neg_x_minus_one_squared" #[-1, 2, -1]
+    -- 2(X - 1)(X + 1).
+  , mk "edge/two_x_minus_one_x_plus_one" #[-2, 0, 2]
+    -- -2(X - 1)^2.
+  , mk "edge/neg_two_x_minus_one_squared" #[-2, 4, -2] ]
+
 private def cases_irr : List Case :=
   [ -- Φ_5(x), degree 4, irreducible.
     mk "irr/cyclo5"  #[1, 1, 1, 1, 1]
@@ -126,6 +151,7 @@ private def emitPinnedCase (c : Case × Int × List Int) : IO Unit := do
 end Hex.BZEmit
 
 def main : IO Unit := do
+  for c in Hex.BZEmit.cases_edge    do Hex.BZEmit.emitCase c
   for c in Hex.BZEmit.cases_irr     do Hex.BZEmit.emitCase c
   for c in Hex.BZEmit.cases_red     do Hex.BZEmit.emitCase c
   for c in Hex.BZEmit.cases_pinned  do Hex.BZEmit.emitPinnedCase c
