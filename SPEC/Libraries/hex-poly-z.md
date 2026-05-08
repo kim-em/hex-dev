@@ -43,19 +43,3 @@ Specialized polynomial arithmetic over `Z`.
 - Gauss's lemma (`content(f * g) = content(f) * content(g)`) is not
   needed in this library — it transfers from Mathlib via the ring
   equivalence in hex-poly-z-mathlib.
-
-**Units in `ℤ[x]`:**
-
-```lean
-/-- A ZPoly is a unit iff it equals ±1 as a constant polynomial.
-    Coefficient-ring-specific (units in `R[x]` depend on units in `R`),
-    so this lives in `HexPolyZ` rather than the generic `HexPoly`. -/
-def Hex.ZPoly.IsUnit (f : ZPoly) : Prop := f = .C 1 ∨ f = .C (-1)
-
-instance : Decidable (Hex.ZPoly.IsUnit f) := …   -- structural via DecidableEq
-```
-
-Used by downstream irreducibility predicates (in
-`hex-berlekamp-zassenhaus`) and by any code that needs to test
-unit-ness in `ℤ[x]`. The Mathlib bridge `Hex.ZPoly.IsUnit f ↔ IsUnit
-(toPolynomial f)` lives in `hex-poly-z-mathlib`.

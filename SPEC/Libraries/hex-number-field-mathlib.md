@@ -133,27 +133,62 @@ polynomial computation via `NumberField.toAlgebraicNumber` correctly
 identifies the value's minimal polynomial and matches the right
 SimpleRoot.
 
-## Mathlib gap analysis
+## Mathlib API used (verified citations)
 
-To verify when drafting; first-cut estimate from the bridging
-theorems above:
+The bridge can rely on the following existing Mathlib infrastructure
+(all confirmed at the Mathlib commit currently checked out under
+`/Users/kim/projects/lean/hex/.lake/packages/mathlib/`):
 
-**Cite directly (no work expected):**
-- `Polynomial.AdjoinRoot` and the field instance under irreducibility
-  hypothesis.
-- `IsAlgebraic`, `Algebra ℚ ℂ`, `IsAlgClosed ℂ`.
-- `Field.exists_primitive_element` (finite separable; ℚ has char 0,
-  every field extension is separable, and `[ℚ(α, β) : ℚ] < ∞`).
-- `Polynomial.minpoly`.
+- `AdjoinRoot.lift` for ring homomorphisms `AdjoinRoot p → ℂ`
+  sending the root to a chosen `α ∈ ℂ` with `aeval α p = 0`
+  (`Mathlib/RingTheory/AdjoinRoot.lean:275`).
+- `Field (AdjoinRoot p)` instance under `[Fact (Irreducible f)]`
+  (`Mathlib/RingTheory/AdjoinRoot.lean:515`).
+- `Field.exists_primitive_element` for finite separable extensions
+  (`Mathlib/FieldTheory/PrimitiveElement.lean:213`). Directly
+  applicable to `ℚ ⊂ ℚ(α, β)` since ℚ has characteristic 0.
+- `IntermediateField` and `F⟮α⟯` notation, with full lattice API
+  (`Mathlib/FieldTheory/IntermediateField/{Basic,Adjoin/Defs}.lean`).
+- `IsAlgebraic ℚ z` predicate
+  (`Mathlib/RingTheory/Algebraic/Defs.lean:45`).
+- `algebraicClosure ℚ ℂ` as a subfield of ℂ containing exactly the
+  algebraic complex numbers
+  (`Mathlib/FieldTheory/AlgebraicClosure.lean:40`).
+- `minpoly` (monic by Mathlib convention, in `ℚ[x]` for our case)
+  with full API in `Mathlib/FieldTheory/Minpoly/Basic.lean`.
+- **`minpoly.equivAdjoin`**: for `α` integral over `R` in an
+  `R`-algebra `S`,
+  `AdjoinRoot (minpoly R α) ≃ₐ[R] adjoin R {α}`
+  (`Mathlib/FieldTheory/Minpoly/IsIntegrallyClosed.lean:213`). This
+  is the key abstract-↔-concrete equivalence we need for the
+  `NumberField p x ≃+* AdjoinRoot (toPolynomial p)` theorem.
+- `Polynomial.IsPrimitive`, `content`, `primPart`, and related API
+  (`Mathlib/RingTheory/Polynomial/Content.lean`).
 
-**Possibly build (verify status at Phase 6 start):**
+## Bridge-specific theorems we must build (~250 lines total)
 
-- A clean equivalence `Polynomial R / minpoly α →+* AdjoinRoot
-  (minpoly α)` for the `α ∈ ℂ_alg` case. Mathlib likely has the
-  pieces; assembly may be needed.
-- A canonical "primitive part with positive leading coefficient" form
-  for minimal polynomials over `ℤ`. This is straightforward but the
-  exact lemma may not be packaged.
+1. **Monic-ℚ to primitive-positive-ℤ** (~50 lines):
+   ```lean
+   theorem AlgebraicNumber.minpoly_to_primitive_Z (α : ℂ) (hα : IsAlgebraic ℚ α) :
+       ∃! p : ℤ[X], p.IsPrimitive ∧ 0 < p.leadingCoeff ∧
+                     (p.map (Int.castRingHom ℚ)).leadingCoeff⁻¹ • p.map (Int.castRingHom ℚ)
+                       = minpoly ℚ α
+   ```
+   Standard denominator-clearing + primitive-part argument over the
+   monic ℚ-minimal polynomial.
+2. **`AlgebraicNumber` ↔ `ℂ_alg` bijection** (~100 lines): wrap (1)
+   into the `AlgebraicNumber` data structure and prove
+   `Function.Bijective AlgebraicNumber.toComplex.toFun ∧ (∀ z : ℂ,
+   IsAlgebraic ℚ z ↔ ∃ a, a.toComplex = z)`.
+3. **`NumberField p x ≃+* AdjoinRoot (toPolynomial p)`** (~100
+   lines): compose `HexPolyZMathlib.equiv` (the
+   `DensePoly Int ≃+* Polynomial ℤ` ring-equiv) with
+   `minpoly.equivAdjoin` (specialising `AdjoinRoot` to our
+   coefficient/index representation).
+
+`commonField`'s correctness reduces to citing
+`Field.exists_primitive_element` plus `minpoly.equivAdjoin` for the
+resulting field; no construction-from-scratch needed.
 
 ## Layered file organisation
 

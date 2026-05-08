@@ -159,15 +159,20 @@ Implementation:
    for a small integer shift `c` (default `c = 1`; on degenerate
    cases — when `r₀` happens to have repeated factors crossing the
    `α + β` value — try `c = 2`, `c = 3`, etc.).
-2. **Factor.** `HexBerlekampZassenhaus.factor r₀` returns the
-   irreducible primitive factors. The minimal polynomial of `α + c·β`
-   is one of these.
+2. **Factor.** `(HexBerlekampZassenhaus.factor r₀).factors` is an
+   `Array (ZPoly × Nat)` of `(irreducible primitive polynomial,
+   multiplicity)` pairs. The minimal polynomial of `α + c·β` is one
+   of these polynomial factors. (We ignore the `Factorization`'s
+   `scalar` field — the resultant's content/sign is irrelevant for
+   choosing the factor that vanishes at `α + c·β`.)
 3. **Numerical disambiguation.** Use `α.x.refine` then `α.x.out prec`
    and similarly for β to get high-precision dyadic centres, sum to
-   get an approximation of `α + c·β`, evaluate each factor at the
-   approximation; the unique factor where the value is "small"
-   (within the propagated dyadic error) is the minimal polynomial of
-   `α + c·β`. Refine `prec` until the smallest factor is unambiguous.
+   get an approximation of `α + c·β`, evaluate each polynomial
+   factor at the approximation; the unique factor where the value
+   is "small" (within the propagated dyadic error) is the minimal
+   polynomial of `α + c·β`. Refine `prec` until the smallest factor
+   is unambiguous. Multiplicity > 1 indicates a degenerate shift `c`
+   — restart with a different `c`.
 4. **Identify the SimpleRoot.** Run `HexRoots.isolate` on the chosen
    factor; locate the `SimpleRoot` whose disc contains the numerical
    approximation.
