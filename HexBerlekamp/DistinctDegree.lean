@@ -462,6 +462,123 @@ private theorem distinctDegreeLoop_product_eq
           powerResult.2 (appendBucket? buckets powerResult.1)
         exact htail.trans hstep
 
+private theorem distinctDegreeLoop_frobenius_state_step
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (d : Nat) (currentFrob : FpPoly p)
+    (hstate : currentFrob = FpPoly.frobeniusXPowMod f hmonic d) :
+    FpPoly.powModMonic currentFrob f hmonic p =
+      FpPoly.frobeniusXPowMod f hmonic (d + 1) := by
+  rw [hstate]
+  exact (FpPoly.frobeniusXPowMod_succ f hmonic d).symm
+
+private theorem frobeniusXMod_eq_frobeniusXPowMod_one
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) :
+    FpPoly.frobeniusXMod f hmonic =
+      FpPoly.frobeniusXPowMod f hmonic 1 := by
+  unfold FpPoly.frobeniusXMod FpPoly.frobeniusXPowMod
+  rw [Nat.pow_one]
+
+private theorem finishDegreePower_bucket_degree
+    (d : Nat) (residual acc : FpPoly p) :
+    ∀ bucket : DegreeBucket p,
+      (finishDegreePower (p := p) d residual acc).1 = some bucket →
+        bucket.degree = d := by
+  intro bucket hbucket
+  unfold finishDegreePower at hbucket
+  cases hacc : isUnitPolynomial acc <;> simp [hacc] at hbucket
+  cases hres : isUnitPolynomial residual <;> simp [hres] at hbucket
+  · cases hbucket
+    rfl
+  · cases hbucket
+    rfl
+
+private theorem distinctDegreePowerLoop_bucket_degree
+    (d : Nat) (diff : FpPoly p) (fuel : Nat) (residual acc : FpPoly p) :
+    ∀ bucket : DegreeBucket p,
+      (distinctDegreePowerLoop (p := p) d diff fuel residual acc).1 = some bucket →
+        bucket.degree = d := by
+  induction fuel generalizing residual acc with
+  | zero =>
+      exact finishDegreePower_bucket_degree d residual acc
+  | succ fuel ih =>
+      intro bucket hbucket
+      unfold distinctDegreePowerLoop at hbucket
+      by_cases hzero : residual.isZero
+      · simp [hzero] at hbucket
+        exact finishDegreePower_bucket_degree d residual acc bucket hbucket
+      · simp [hzero] at hbucket
+        cases hcand : isUnitPolynomial (DensePoly.gcd residual diff) with
+        | true =>
+            simp [hcand] at hbucket
+            exact finishDegreePower_bucket_degree d residual acc bucket hbucket
+        | false =>
+            simp [hcand] at hbucket
+            exact ih (residual / DensePoly.gcd residual diff)
+              (acc * DensePoly.gcd residual diff) bucket hbucket
+
+private theorem appendBucket?_positive_degrees
+    (buckets : List (DegreeBucket p)) (bucket? : Option (DegreeBucket p))
+    (d : Nat)
+    (hprev : ∀ bucket ∈ buckets, 0 < bucket.degree)
+    (hnew : ∀ bucket : DegreeBucket p, bucket? = some bucket → bucket.degree = d)
+    (hd : 0 < d) :
+    ∀ bucket ∈ appendBucket? buckets bucket?, 0 < bucket.degree := by
+  intro bucket hmem
+  cases hbucket : bucket? with
+  | none =>
+      simp [appendBucket?, hbucket] at hmem
+      exact hprev bucket hmem
+  | some newBucket =>
+      simp [appendBucket?, hbucket] at hmem
+      rcases hmem with hmem | hmem
+      · exact hprev bucket hmem
+      · rcases hmem with rfl
+        have hdeg : bucket.degree = d := hnew bucket (by simp [hbucket])
+        rw [hdeg]
+        exact hd
+
+private theorem distinctDegreeLoop_bucket_positive_degrees
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) (xMod : FpPoly p)
+    (fuel d : Nat) (currentFrob residual : FpPoly p)
+    (buckets : List (DegreeBucket p))
+    (hd : 0 < d)
+    (hprev : ∀ bucket ∈ buckets, 0 < bucket.degree) :
+    ∀ bucket ∈ (distinctDegreeLoop f hmonic xMod fuel d currentFrob residual buckets).1,
+      0 < bucket.degree := by
+  induction fuel generalizing d currentFrob residual buckets with
+  | zero =>
+      intro bucket hmem
+      exact hprev bucket hmem
+  | succ fuel ih =>
+      intro bucket hmem
+      unfold distinctDegreeLoop at hmem
+      by_cases hzero : residual.isZero
+      · simp [hzero] at hmem
+        exact hprev bucket hmem
+      · simp [hzero] at hmem
+        let powerResult :=
+          distinctDegreePowerLoop d (currentFrob - xMod) (residual.size + 1) residual 1
+        have happend :
+            ∀ bucket ∈ appendBucket? buckets powerResult.1, 0 < bucket.degree := by
+          apply appendBucket?_positive_degrees buckets powerResult.1 d hprev
+          · intro newBucket hnew
+            exact distinctDegreePowerLoop_bucket_degree d (currentFrob - xMod)
+              (residual.size + 1) residual 1 newBucket hnew
+          · exact hd
+        exact ih (d + 1) (FpPoly.powModMonic currentFrob f hmonic p) powerResult.2
+          (appendBucket? buckets powerResult.1) (by omega) happend bucket hmem
+
+private theorem distinctDegreeFactor_bucket_positive_degrees
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) :
+    ∀ bucket ∈ (distinctDegreeFactor f hmonic).buckets, 0 < bucket.degree := by
+  unfold distinctDegreeFactor
+  let xMod := FpPoly.modByMonic f FpPoly.X hmonic
+  let frobX := FpPoly.frobeniusXMod f hmonic
+  exact distinctDegreeLoop_bucket_positive_degrees f hmonic xMod
+    (basisSize f + 1) 1 frobX f [] (by omega) (by simp)
+
 /--
 The executable distinct-degree factorization preserves the input polynomial as
 the product of recorded degree buckets and the residual factor.
