@@ -80,7 +80,7 @@ libraries:
   HexMatrix:
     deps: []
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
 
   # ---------- Depth 1 ----------
