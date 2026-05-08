@@ -188,3 +188,23 @@ libraries:
     mathlib: true
     done_through: 0
     status: planned
+  HexResultant:
+    deps: [HexPoly]
+    mathlib: false
+    done_through: 0
+    status: planned
+  HexResultantMathlib:
+    deps: [HexResultant, HexPolyMathlib]
+    mathlib: true
+    done_through: 0
+    status: planned
+  HexNumberField:
+    deps: [HexPolyZ, HexRoots, HexResultant, HexBerlekampZassenhaus]
+    mathlib: false
+    done_through: 0
+    status: planned
+  HexNumberFieldMathlib:
+    deps: [HexNumberField, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRootsMathlib, HexPolyZMathlib]
+    mathlib: true
+    done_through: 0
+    status: planned
