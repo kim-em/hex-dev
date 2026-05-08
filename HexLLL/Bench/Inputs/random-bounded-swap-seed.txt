@@ -1,0 +1,6 @@
+family: random-bounded
+generator: POSIX LCG x_{i+1} = (1103515245 * x_i + 12345) mod 2^31
+entry-map: (x_i mod 61) - 30
+seed: 8
+dimension: 30
+property: Hex.LLLBench.firstLovaszCheckForcesSwap (Hex.LLLBench.prepRandomBoundedInput 30) = true
