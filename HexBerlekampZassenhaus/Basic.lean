@@ -1372,10 +1372,25 @@ private def factorFastCoreWithBound
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Nat → Nat → Option (Array ZPoly)
   | _k, 0 => none
   | k, fuel + 1 =>
-      if k ≥ B then
-        none
-      else
-        factorFastCoreWithBound core B primeData (nextHenselPrecision k B) fuel
+      let liftData := henselLiftData core k primeData
+      match bhksRecover? core liftData with
+      | some factors => some factors
+      | none =>
+        if k ≥ B then
+          none
+        else
+          factorFastCoreWithBound core B primeData (nextHenselPrecision k B) fuel
+
+private def factorFastCoreGuardPrimeData : PrimeChoiceData :=
+  choosePrimeData cldGuardF
+
+#guard factorFastCoreWithBound cldGuardF 1 factorFastCoreGuardPrimeData
+    (initialHenselPrecision 1) (ZPoly.quadraticDoublingSteps 1 + 2) =
+  none
+
+#guard factorFastCoreWithBound cldGuardF 4 factorFastCoreGuardPrimeData
+    (initialHenselPrecision 4) (ZPoly.quadraticDoublingSteps 4 + 2) =
+  some bhksGuardFactors
 
 /--
 Adaptively lift and retry LLL recombination, using the explicit bound as the
@@ -1437,28 +1452,45 @@ private def factorFastFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPo
     none
   else
     let primeData := choosePrimeData normalized.squareFreeCore
-    match factorFastCoreWithBound normalized.squareFreeCore B primeData
-        (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2) with
-    | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
-    | none => none
+    if primeData.factorsModP.size ≤ 1 then
+      some (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
+    else
+      match factorFastCoreWithBound normalized.squareFreeCore B primeData
+          (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2) with
+      | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
+      | none => none
+
+#guard factorFastFactorsWithBound cldGuardF 1 = none
+
+#guard factorFastFactorsWithBound cldGuardF 4 =
+  some bhksGuardFactors
+
+private def factorFastPrecisionCap (f : ZPoly) : Nat :=
+  min (bhksBound f) (ZPoly.defaultFactorCoeffBound f)
 
 private def factorFastWithBound (f : ZPoly) (B : Nat) : Option Factorization :=
   (factorFastFactorsWithBound f B).map (factorizationOfFactors f)
 
 /--
-Conservative public fast-path surface for the future van Hoeij CLD
-implementation.
+Public van Hoeij CLD fast path with a practical precision cap.
 
-Until the BHKS lattice and recovery procedure replace the existing additive
-LLL internals, this function may report `none` instead of treating additive
-short-vector output as a successful fast recombination certificate.
+The bounded core loop only accepts candidates certified by the fixed-precision
+BHKS recovery pipeline; if every precision up to the cap misses, this reports
+`none` so the public `factor` combinator can use the slow backstop.
 -/
 def factorFast (f : ZPoly) : Option Factorization :=
-  factorFastWithBound f (bhksBound f)
+  factorFastWithBound f (factorFastPrecisionCap f)
+
+#guard (factorFast (DensePoly.ofCoeffs #[1, 1, 1, 1, 1])).map Factorization.product =
+  some (DensePoly.ofCoeffs #[1, 1, 1, 1, 1])
+
+#guard factorFast (DensePoly.ofCoeffs #[1, 0, 0, 0, 1]) = none
 
 /-- Factor with an explicit coefficient bound for the recombination stage. -/
 def factorWithBound (f : ZPoly) (B : Nat) : Factorization :=
   (factorFastWithBound f B).getD (factorSlowWithBound f B)
+
+#guard Factorization.product (factorWithBound cldGuardF 1) = cldGuardF
 
 /-- Factor using the public fast path with exhaustive slow fallback. -/
 def factor (f : ZPoly) : Factorization :=
