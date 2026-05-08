@@ -60,7 +60,7 @@ libraries:
   HexArith:
     deps: []
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
   HexPoly:
     deps: []
@@ -117,7 +117,7 @@ libraries:
   HexLLL:
     deps: [HexGramSchmidt]
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
     phase4:
       comparators:
@@ -155,7 +155,7 @@ libraries:
   HexGfqField:
     deps: [HexGfqRing, HexBerlekamp]
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
 
   # ---------- Factoring pipeline ----------
@@ -177,7 +177,7 @@ libraries:
   HexGfq:
     deps: [HexGfqField, HexConway, HexGF2]
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
   HexBerlekampZassenhaus:
     deps: [HexBerlekamp, HexHensel, HexLLL]
@@ -189,7 +189,7 @@ libraries:
   HexPolyMathlib:
     deps: [HexPoly]
     mathlib: true
-    done_through: 4
+    done_through: 3
     status: active
   HexMatrixMathlib:
     deps: [HexMatrix]
