@@ -1597,35 +1597,37 @@ theorem factor_product_of_bound (f : ZPoly) (B : Nat)
   sorry
 
 /--
-The normalization prefix and square-free core reassemble to the original
-input. This is the proof-facing invariant connecting content extraction,
-`X`-power extraction, and primitive square-free reduction.
+The normalization prefix and square-free core reassemble to the sign-normalized
+input. The signed scalar in `Factorization` carries the original leading sign;
+the polynomial factor array is normalized to positive leading sign.
 -/
 theorem normalizeForFactor_reassembles (f : ZPoly) :
     let normalized := normalizeForFactor f
-    Array.polyProduct (normalizationPrefixFactors normalized ++ #[normalized.squareFreeCore]) = f := by
+    Array.polyProduct (normalizationPrefixFactors normalized ++ #[normalized.squareFreeCore]) =
+      normalizeFactorSign f := by
   sorry
 
 /--
 Replacing the square-free core by a product-equivalent factor array preserves
-the original normalized input.
+the sign-normalized input.
 -/
 theorem reassembleNormalizedFactors_product
     (f : ZPoly) (normalized : FactorNormalizationData) (coreFactors : Array ZPoly)
     (hnormalized : normalizeForFactor f = normalized)
     (hcore : Array.polyProduct coreFactors = normalized.squareFreeCore) :
-    Array.polyProduct (reassembleNormalizedFactors normalized coreFactors) = f := by
+    Array.polyProduct (reassembleNormalizedFactors normalized coreFactors) =
+      normalizeFactorSign f := by
   sorry
 
 /--
-For constant square-free cores, the normalization-only factor array preserves
-the original input.
+For constant square-free cores, the normalization-only factor array preserves the
+sign-normalized input.
 -/
 theorem normalizedConstantFactors_product
     (f : ZPoly) (normalized : FactorNormalizationData)
     (hnormalized : normalizeForFactor f = normalized)
     (hconst : normalized.squareFreeCore.degree?.getD 0 = 0) :
-    Array.polyProduct (normalizedConstantFactors normalized) = f := by
+    Array.polyProduct (normalizedConstantFactors normalized) = normalizeFactorSign f := by
   sorry
 
 /-- A successful exhaustive recombination search preserves the target product. -/
