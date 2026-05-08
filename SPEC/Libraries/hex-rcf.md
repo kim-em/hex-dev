@@ -160,12 +160,12 @@ The tactic implements 1-dimensional CAD:
    real root of some subset of the `pⱼ`s (those for which `pⱼ` has
    that real root).
 
-   Concrete test points: midpoint of `(bᵢ, aᵢ₊₁]` for the central
-   open cells; `aᵢ` for the root-point `RootPoint Iᵢ` cell (so the
-   adjacent open cells use `(bᵢ₋₁, aᵢ]` and `(bᵢ, aᵢ₊₁]`); `−M − 1`
-   for `OpenLeftTail`, `M + 1` for `OpenRightTail`. (Test points
-   are not the cells themselves; they are dyadic rationals at which
-   we evaluate `pⱼ` to determine the cell's sign assignment.)
+   Concrete test points for **open** cells: midpoint of
+   `(bᵢ, aᵢ₊₁]` for the central open cells; `−M − 1` for
+   `OpenLeftTail`; `M + 1` for `OpenRightTail`. **`RootPoint Iᵢ`
+   cells have no test point** — they represent an unknown root
+   `rᵢ ∈ (aᵢ, bᵢ]`, and step 6 determines their sign assignments
+   via the `gⱼ := gcd(pⱼ, P)` mechanism instead of point evaluation.
 
 6. **Sign matrix.** For each cell, determine `sign pⱼ` on the cell:
    - Open-interval cells (and tails): evaluate `pⱼ` at the dyadic
