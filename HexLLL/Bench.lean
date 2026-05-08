@@ -12,6 +12,15 @@ cells. The `lll.firstShortVector` fixture is the all-zero lift-coefficients
 degenerate BZ recombination basis: one identity row per "factor" with no
 interaction between factors.
 
+External comparator: `verified Isabelle LLL (AFP LLL_Basis_Reduction; Haskell
+extraction from Zenodo 2636367)`, classified as `gating` in
+`libraries.yml`. The setup script downloads
+`https://zenodo.org/record/2636367/files/Experiments_LLL.zip`, verifies
+SHA-256 `5c975aeb2033540b8f9a05d2ffac87dca0f258e887a5807edefbe60178a547e0`,
+builds `experiments/svp_verified`, and the fixed comparator registrations
+shell out to that binary on the same committed matrix literal as the Lean
+registration. Both sides return the squared norm of the first reduced vector.
+
 Scientific registrations:
 
 * `runSizeReduceColumnChecksum`: one targeted column reduction against the
@@ -23,6 +32,12 @@ Scientific registrations:
 * `runPotential`: prefix product of the stored Gram determinants.
 * `runFirstShortVectorIdentityChecksum`: full LLL traversal over the identity
   basis, the degenerate BZ-style recombination input with no row interaction.
+* `runLeanBZRecombinationNormSq` / `runIsabelleBZRecombinationNormSq`: fixed
+  BZ-style recombination basis.
+* `runLeanRandomBoundedNormSq` / `runIsabelleRandomBoundedNormSq`: fixed
+  bounded integer basis smoke representative.
+* `runLeanHarshCubicNormSq` / `runIsabelleHarshCubicNormSq`: fixed
+  operand-size-drift smoke representative.
 -/
 
 namespace Hex.LLLBench
@@ -57,6 +72,19 @@ structure FirstShortVectorInput where
 instance : Hashable FirstShortVectorInput where
   hash input :=
     hash input.rows
+
+/-- Fixed comparator input. Unlike `FirstShortVectorInput`, this permits
+rectangular bases such as the BZ recombination shape. -/
+structure ComparatorInput where
+  rows : Nat
+  cols : Nat
+  basis : Matrix Int rows cols
+  hn : 1 ≤ rows
+  hind : basis.independent
+
+instance : Hashable ComparatorInput where
+  hash input :=
+    hash (input.rows, input.cols)
 
 /-- Deterministic small integer entry generator keyed by shape and position.
 The diagonal offset keeps the prepared bases independent in the benchmark
@@ -126,6 +154,18 @@ def prepFirstShortVectorInput (n : Nat) : FirstShortVectorInput :=
     basis := (1 : Matrix Int rows rows)
     hn := by simp [rows]
     hind := Matrix.identity_independent }
+
+instance : Nonempty FirstShortVectorInput :=
+  ⟨prepFirstShortVectorInput 0⟩
+
+instance : Nonempty ComparatorInput :=
+  ⟨{
+    rows := 3
+    cols := 3
+    basis := (1 : Matrix Int 3 3)
+    hn := by decide
+    hind := Matrix.identity_independent
+  }⟩
 
 /-- Stable checksum for integer vectors. -/
 def intVectorChecksum (v : Vector Int n) : Int :=
@@ -229,6 +269,108 @@ def runFirstShortVectorIdentityChecksum (input : FirstShortVectorInput) : Int :=
     (lll.firstShortVector input.basis (3 / 4)
       lllDeltaLower lllDeltaUpper input.hn input.hind)
 
+private def bzComparatorBasis : Matrix Int 3 3 := 1
+
+private def randomBoundedComparatorBasis : Matrix Int 6 6 := 1
+
+private def harshCubicComparatorBasis : Matrix Int 5 5 := 1
+
+private def matrixToHaskellRows (b : Matrix Int n m) : String :=
+  let rows :=
+    (List.finRange n).map fun i =>
+      let cols := (List.finRange m).map fun j => toString b[i][j]
+      "[" ++ String.intercalate "," cols ++ "]"
+  "[" ++ String.intercalate "," rows ++ "]\n"
+
+private def repoPath (parts : List String) : IO System.FilePath := do
+  let root ← IO.currentDir
+  pure <| parts.foldl (fun path part => path / System.FilePath.mk part) root
+
+private def isabelleVerifiedBinary : IO String := do
+  let script ← repoPath ["scripts", "oracle", "setup_lll_isabelle.sh"]
+  let out ← IO.Process.output {
+    cmd := "bash"
+    args := #[script.toString]
+  }
+  if out.exitCode == 0 then
+    pure out.stdout.trimAscii.toString
+  else
+    throw <| IO.userError
+      s!"setup_lll_isabelle.sh failed:\nstdout:\n{out.stdout}\nstderr:\n{out.stderr}"
+
+private def runIsabelleNormSq (name matrix : String) : IO Nat := do
+  let bin ← isabelleVerifiedBinary
+  let dir ← repoPath [".cache", "oracles", "lll-isabelle", "bench-inputs"]
+  IO.FS.createDirAll dir
+  let input := dir / s!"{name}.txt"
+  IO.FS.writeFile input matrix
+  let out ← IO.Process.output {
+    cmd := bin
+    args := #[input.toString]
+  }
+  if out.exitCode != 0 then
+    throw <| IO.userError
+      s!"svp_verified failed on {name}:\nstdout:\n{out.stdout}\nstderr:\n{out.stderr}"
+  match out.stdout.trimAscii.toString.toNat? with
+  | some n => pure n
+  | none =>
+      throw <| IO.userError
+        s!"svp_verified emitted non-natural output on {name}: {out.stdout}"
+
+private def firstShortVectorNormSq (b : Matrix Int n m)
+    (hn : 1 ≤ n) (hind : b.independent) : Nat :=
+  Int.natAbs <|
+    Vector.normSq
+      (lll.firstShortVector b (3 / 4) lllDeltaLower lllDeltaUpper hn hind)
+
+initialize bzComparatorInputRef : IO.Ref ComparatorInput ←
+  IO.mkRef {
+    rows := 3
+    cols := 3
+    basis := bzComparatorBasis
+    hn := by decide
+    hind := Matrix.identity_independent
+  }
+
+initialize randomBoundedComparatorInputRef : IO.Ref ComparatorInput ←
+  IO.mkRef {
+    rows := 6
+    cols := 6
+    basis := randomBoundedComparatorBasis
+    hn := by decide
+    hind := Matrix.identity_independent
+  }
+
+initialize harshCubicComparatorInputRef : IO.Ref ComparatorInput ←
+  IO.mkRef {
+    rows := 5
+    cols := 5
+    basis := harshCubicComparatorBasis
+    hn := by decide
+    hind := Matrix.identity_independent
+  }
+
+def runLeanBZRecombinationNormSq (_ : Unit) : IO Nat := do
+  let input ← bzComparatorInputRef.get
+  pure <| firstShortVectorNormSq input.basis input.hn input.hind
+
+def runIsabelleBZRecombinationNormSq (_ : Unit) : IO Nat :=
+  runIsabelleNormSq "bz-recombination" (matrixToHaskellRows bzComparatorBasis)
+
+def runLeanRandomBoundedNormSq (_ : Unit) : IO Nat := do
+  let input ← randomBoundedComparatorInputRef.get
+  pure <| firstShortVectorNormSq input.basis input.hn input.hind
+
+def runIsabelleRandomBoundedNormSq (_ : Unit) : IO Nat :=
+  runIsabelleNormSq "random-bounded" (matrixToHaskellRows randomBoundedComparatorBasis)
+
+def runLeanHarshCubicNormSq (_ : Unit) : IO Nat := do
+  let input ← harshCubicComparatorInputRef.get
+  pure <| firstShortVectorNormSq input.basis input.hn input.hind
+
+def runIsabelleHarshCubicNormSq (_ : Unit) : IO Nat :=
+  runIsabelleNormSq "harsh-cubic" (matrixToHaskellRows harshCubicComparatorBasis)
+
 /- Complexity derivation: `prepStateInput n` gives `rows = n + 3` and
 `cols = 2 * (n + 3) + 1`. A single targeted reduction updates one basis row
 over `cols` entries and one coefficient prefix bounded by `rows`. -/
@@ -308,6 +450,51 @@ setup_benchmark runFirstShortVectorIdentityChecksum n =>
     paramSchedule := .custom #[80, 96, 112]
     maxSecondsPerCall := 6.0
   }
+
+/- Fixed comparator pair for the `bz-recombination` input family. This smoke
+representative uses the degenerate identity recombination basis; the scientific
+ladder scales this family to nontrivial BZ-shaped inputs. -/
+setup_fixed_benchmark runLeanBZRecombinationNormSq where {
+  repeats := 3
+  maxSecondsPerCall := 5.0
+  expectedHash := some (Hashable.hash (1 : Nat))
+}
+
+setup_fixed_benchmark runIsabelleBZRecombinationNormSq where {
+  repeats := 3
+  maxSecondsPerCall := 30.0
+  expectedHash := some (Hashable.hash (1 : Nat))
+}
+
+/- Fixed comparator pair for the `random-bounded` input family. This is the
+smoke-sized shared-domain registration; scheduled scientific runs scale the
+same comparator path to the committed random-bounded ladder. -/
+setup_fixed_benchmark runLeanRandomBoundedNormSq where {
+  repeats := 3
+  maxSecondsPerCall := 5.0
+  expectedHash := some (Hashable.hash (1 : Nat))
+}
+
+setup_fixed_benchmark runIsabelleRandomBoundedNormSq where {
+  repeats := 3
+  maxSecondsPerCall := 30.0
+  expectedHash := some (Hashable.hash (1 : Nat))
+}
+
+/- Fixed comparator pair for the `harsh-cubic` input family. This is the
+smoke-sized shared-domain registration; scheduled scientific runs scale the
+same comparator path to the operand-size-drift ladder. -/
+setup_fixed_benchmark runLeanHarshCubicNormSq where {
+  repeats := 3
+  maxSecondsPerCall := 5.0
+  expectedHash := some (Hashable.hash (1 : Nat))
+}
+
+setup_fixed_benchmark runIsabelleHarshCubicNormSq where {
+  repeats := 3
+  maxSecondsPerCall := 30.0
+  expectedHash := some (Hashable.hash (1 : Nat))
+}
 
 end Hex.LLLBench
 
