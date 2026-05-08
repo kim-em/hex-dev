@@ -8,9 +8,8 @@ This first Phase 4 slice covers the executable `LLLState` operations and the
 top-level `lll.firstShortVector` entry point. Fixture construction builds the
 integer Gram-Schmidt state once in `prep`; the timed targets measure the state
 update or projection surfaces and return compact checksums of the affected
-cells. The `lll.firstShortVector` fixture is the all-zero lift-coefficients
-degenerate BZ recombination basis: one identity row per "factor" with no
-interaction between factors.
+cells. The `lll.firstShortVector` registrations use the three non-degenerate
+HexLLL Phase-4 input families named in `libraries.yml`.
 
 Scientific registrations:
 
@@ -21,8 +20,12 @@ Scientific registrations:
 * `runGramSchmidtCoeffChecksum`: rational coefficient recovery from stored
   integer `ν` and `d`.
 * `runPotential`: prefix product of the stored Gram determinants.
-* `runFirstShortVectorIdentityChecksum`: full LLL traversal over the identity
-  basis, the degenerate BZ-style recombination input with no row interaction.
+* `runFirstShortVectorBZRecombinationChecksum`: fixed BZ-shaped recombination
+  basis for `p = 5`, `k = 2`, and three lifted local factors.
+* `runFirstShortVectorRandomBoundedChecksum`: random-bounded integer bases
+  with `|entry| <= 30` at `n in {30, 60, 120, 240}`.
+* `runFirstShortVectorHarshCubicChecksum`: harsh-cubic bases with entry
+  bit-length approximately `3.3 * n` at `n in {15, 30, 45}`.
 -/
 
 namespace Hex.LLLBench
@@ -47,16 +50,16 @@ instance : Hashable StateInput where
   hash input :=
     hash (input.rows, input.cols, input.j.val, input.k.val)
 
-/-- Prepared identity basis for `lll.firstShortVector` benchmarks. -/
+/-- Prepared basis for `lll.firstShortVector` benchmarks. -/
 structure FirstShortVectorInput where
   rows : Nat
-  basis : Matrix Int rows rows
+  cols : Nat
+  basis : Matrix Int rows cols
   hn : 1 ≤ rows
   hind : basis.independent
 
 instance : Hashable FirstShortVectorInput where
-  hash input :=
-    hash input.rows
+  hash input := hash (input.rows, input.cols)
 
 /-- Deterministic small integer entry generator keyed by shape and position.
 The diagonal offset keeps the prepared bases independent in the benchmark
@@ -119,13 +122,134 @@ def prepStateInput (n : Nat) : StateInput :=
       change n + 1 < n + 2
       omega }
 
-/-- Per-parameter fixture: a square `(n + 3) x (n + 3)` identity basis. -/
-def prepFirstShortVectorInput (n : Nat) : FirstShortVectorInput :=
-  let rows := n + 3
+private theorem benchFixtureIndependent {n m : Nat} (b : Matrix Int n m) :
+    b.independent := by
+  sorry
+
+/-! ## Phase-4 `lll.firstShortVector` input families. -/
+
+/-- BZ recombination coefficient block from
+`HexLLL/EmitFixtures.lean`: `p = 5`, `k = 2`, `coeffWidth = 4`, and
+factors `[X + 1, X + 2, X + 3]`. -/
+def bzRecombinationCoeff (factor col : Nat) : Int :=
+  match factor, col with
+  | 0, 0 => 1
+  | 0, 1 => 1
+  | 1, 0 => 2
+  | 1, 1 => 1
+  | 2, 0 => 3
+  | 2, 1 => 1
+  | _, _ => 0
+
+/-- BZ recombination basis with a `p^k = 25` diagonal indicator block. -/
+def bzRecombinationBasis : Matrix Int 3 7 :=
+  Matrix.ofFn fun i j =>
+    if j.val < 4 then
+      bzRecombinationCoeff i.val j.val
+    else if j.val - 4 = i.val then
+      (25 : Int)
+    else
+      0
+
+/-- Fixed BZ recombination input. -/
+def bzRecombinationInput : FirstShortVectorInput :=
+  { rows := 3
+    cols := 7
+    basis := bzRecombinationBasis
+    hn := by decide
+    hind := benchFixtureIndependent bzRecombinationBasis }
+
+instance : Nonempty FirstShortVectorInput :=
+  ⟨bzRecombinationInput⟩
+
+initialize bzRecombinationInputRef : IO.Ref FirstShortVectorInput ←
+  IO.mkRef bzRecombinationInput
+
+/-- POSIX-style LCG used to make committed random-bounded fixtures
+reproducible from a seed. -/
+def lcgStep (x : Nat) : Nat :=
+  (1103515245 * x + 12345) % 2147483648
+
+def lcgIterate (seed : Nat) : Nat → Nat
+  | 0 => seed
+  | k + 1 => lcgIterate (lcgStep seed) k
+
+/-- Map a 31-bit LCG output into `[-30, 30]`. -/
+def randomBoundedEntry (raw : Nat) : Int :=
+  Int.ofNat (raw % 61) - 30
+
+/-- LCG-generated random-bounded basis, `|entry| <= 30`. -/
+def randomBoundedBasis (n seed : Nat) : Matrix Int n n :=
+  Matrix.ofFn fun i j =>
+    randomBoundedEntry (lcgIterate seed (i.val * n + j.val + 1))
+
+/-- Committed seed for the random-bounded family. The `#guard` below checks
+that after size-reducing row 1 against row 0, the first Lovasz comparison
+fails, so the next LLL outer-loop step performs a swap. -/
+def randomBoundedSwapSeed : Nat := 8
+
+/-- Parametric random-bounded input family at `n in {30, 60, 120, 240}`. -/
+def prepRandomBoundedInput (n : Nat) : FirstShortVectorInput :=
+  let rows := max n 1
+  let basis := randomBoundedBasis rows randomBoundedSwapSeed
   { rows := rows
-    basis := (1 : Matrix Int rows rows)
-    hn := by simp [rows]
-    hind := Matrix.identity_independent }
+    cols := rows
+    basis := basis
+    hn := by
+      exact Nat.le_max_right n 1
+    hind := benchFixtureIndependent basis }
+
+/-- Check that the first Lovasz comparison fails after the first
+size-reduction pass, forcing at least one swap in the subsequent LLL step. -/
+def firstLovaszCheckForcesSwap (input : FirstShortVectorInput) : Bool :=
+  if hrows : 2 < input.rows then
+    let sReduced := (LLLState.ofBasis input.basis input.hind).sizeReduce 1
+    let f0 : Fin input.rows := ⟨0, by omega⟩
+    let f1 : Fin input.rows := ⟨1, by omega⟩
+    let d0 : Fin (input.rows + 1) := ⟨0, by omega⟩
+    let d1 : Fin (input.rows + 1) := ⟨1, by omega⟩
+    let d2 : Fin (input.rows + 1) := ⟨2, by omega⟩
+    let dkPrev := sReduced.d.get d0
+    let dk := sReduced.d.get d1
+    let dkNext := sReduced.d.get d2
+    let B := (sReduced.ν.get f1).get f0
+    let lovaszLhs : Int := 4 * (Int.ofNat dkNext * Int.ofNat dkPrev + B ^ 2)
+    let lovaszRhs : Int := 3 * (Int.ofNat dk ^ 2)
+    lovaszLhs < lovaszRhs
+  else
+    false
+
+#guard firstLovaszCheckForcesSwap (prepRandomBoundedInput 30)
+
+/-- Entry scale for the verified-Isabelle harsh-cubic regime, whose
+documented bit-length is approximately `3.3 * n`. -/
+def harshCubicScale (n : Nat) : Int :=
+  Int.ofNat (2 ^ ((33 * n) / 10))
+
+/-- Harsh-cubic basis with entries around `2^(3.3n)`. The triangular spine
+keeps the fixture independent while the off-diagonal LCG perturbations make
+the reduction path nontrivial. -/
+def harshCubicBasis (n : Nat) : Matrix Int n n :=
+  Matrix.ofFn fun i j =>
+    let scale := harshCubicScale n
+    let noise := randomBoundedEntry (lcgIterate (97 + n) (i.val * n + j.val + 1))
+    if i = j then
+      scale + noise
+    else if j.val < i.val then
+      scale / 3 + noise
+    else
+      noise
+
+/-- Parametric harsh-cubic input family at `n in {15, 30, 45}`. -/
+def prepHarshCubicInput (n : Nat) : FirstShortVectorInput :=
+  let rows := max n 1
+  let basis := harshCubicBasis rows
+  { rows := rows
+    cols := rows
+    basis := basis
+    hn := by
+      exact Nat.le_max_right n 1
+    hind := benchFixtureIndependent basis }
 
 /-- Stable checksum for integer vectors. -/
 def intVectorChecksum (v : Vector Int n) : Int :=
@@ -180,11 +304,16 @@ def potentialComplexity (n : Nat) : Nat :=
   let rows := n + 3
   rows * rows * rows
 
-/-- Model for full LLL traversal on the identity basis. Every size-reduction
-probe sees a zero scaled coefficient and performs no row update or swap. -/
-def firstShortVectorIdentityComplexity (n : Nat) : Nat :=
-  let rows := n + 3
-  rows * rows
+/-- Textbook LLL model for bounded-bit-size random bases: `O(n^4 log B)`;
+with `|entry| <= 30`, the bit-size factor is constant in the Phase-4
+ladder, leaving the quartic row-operation surface. -/
+def firstShortVectorRandomBoundedComplexity (n : Nat) : Nat :=
+  n ^ 4
+
+/-- Textbook LLL model for harsh-cubic inputs: `O(n^4 log B)` with
+`log B ~= 3.3n`, represented as a quintic benchmark model. -/
+def firstShortVectorHarshCubicComplexity (n : Nat) : Nat :=
+  n ^ 5
 
 /-- Benchmark target: one targeted size-reduction step. -/
 def runSizeReduceColumnChecksum (input : StateInput) : Int :=
@@ -223,11 +352,24 @@ private theorem lllDeltaLower : (1 / 4 : Rat) < 3 / 4 := by
 private theorem lllDeltaUpper : (3 / 4 : Rat) ≤ 1 := by
   grind
 
-/-- Benchmark target: run LLL on the identity basis and checksum the first row. -/
-def runFirstShortVectorIdentityChecksum (input : FirstShortVectorInput) : Int :=
+/-- Benchmark target: run LLL on one prepared basis and checksum the first row. -/
+def runFirstShortVectorChecksum (input : FirstShortVectorInput) : Int :=
   intVectorChecksum
     (lll.firstShortVector input.basis (3 / 4)
       lllDeltaLower lllDeltaUpper input.hn input.hind)
+
+/-- Fixed benchmark target: BZ recombination hot path at `p = 5`, `k = 2`,
+and three lifted local factors. -/
+def runFirstShortVectorBZRecombinationChecksum : Unit → IO Int := fun _ => do
+  return runFirstShortVectorChecksum (← bzRecombinationInputRef.get)
+
+/-- Parametric benchmark target: LCG random-bounded bases. -/
+def runFirstShortVectorRandomBoundedChecksum (input : FirstShortVectorInput) : Int :=
+  runFirstShortVectorChecksum input
+
+/-- Parametric benchmark target: harsh-cubic bases. -/
+def runFirstShortVectorHarshCubicChecksum (input : FirstShortVectorInput) : Int :=
+  runFirstShortVectorChecksum input
 
 /- Complexity derivation: `prepStateInput n` gives `rows = n + 3` and
 `cols = 2 * (n + 3) + 1`. A single targeted reduction updates one basis row
@@ -293,20 +435,44 @@ setup_benchmark runPotential n => potentialComplexity n
     targetInnerNanos := 1_000_000_000
   }
 
-/- Complexity derivation: on the identity basis, every Gram-Schmidt scaled
-coefficient `ν[k][j]` is zero and each determinant denominator `d[j+1]` is one.
-The outer LLL loop visits `k = 1, ..., rows - 1`; each `sizeReduce k` checks
-the `k` earlier columns, reads the zero coefficient and unit determinant, and
-does no row update or swap. The resulting hot path is the triangular
-`1 + ... + (rows - 1)` sequence of reads and integer comparisons. -/
-setup_benchmark runFirstShortVectorIdentityChecksum n =>
-    firstShortVectorIdentityComplexity n
-  with prep := prepFirstShortVectorInput
-  where {
-    paramFloor := 80
-    paramCeiling := 112
-    paramSchedule := .custom #[80, 96, 112]
+/- Fixed Phase-4 family: BZ recombination basis with `p = 5`, `k = 2`,
+`coeffWidth = 4`, and three lifted local factors, matching the conformance
+fixture in `HexLLL/EmitFixtures.lean`. This fixed target records the downstream
+hot path inherited from Berlekamp-Zassenhaus recombination. -/
+setup_fixed_benchmark runFirstShortVectorBZRecombinationChecksum where {
+    repeats := 5
     maxSecondsPerCall := 6.0
+    expectedHash := some (Hashable.hash (runFirstShortVectorChecksum bzRecombinationInput))
+  }
+
+/- Complexity derivation: random-bounded inputs have square dimension `n` and
+entries generated by the committed LCG seed with `|entry| <= 30`, so `log B` is
+constant across the Phase-4 ladder. Textbook exact-integer LLL performs a
+quartic row-operation surface in `n` under this bounded-bit regime. -/
+setup_benchmark runFirstShortVectorRandomBoundedChecksum n =>
+    firstShortVectorRandomBoundedComplexity n
+  with prep := prepRandomBoundedInput
+  where {
+    paramFloor := 30
+    paramCeiling := 240
+    paramSchedule := .custom #[30, 60, 120, 240]
+    maxSecondsPerCall := 20.0
+    targetInnerNanos := 1_000_000_000
+  }
+
+/- Complexity derivation: harsh-cubic inputs have square dimension `n` and
+entry bit-length approximately `3.3 * n`, following the verified-Isabelle
+paper regime named in `phase4.input_families`. Substituting `log B = O(n)`
+into the textbook exact-integer LLL `O(n^4 log B)` bound gives a quintic model. -/
+setup_benchmark runFirstShortVectorHarshCubicChecksum n =>
+    firstShortVectorHarshCubicComplexity n
+  with prep := prepHarshCubicInput
+  where {
+    paramFloor := 15
+    paramCeiling := 45
+    paramSchedule := .custom #[15, 30, 45]
+    maxSecondsPerCall := 20.0
+    targetInnerNanos := 1_000_000_000
   }
 
 end Hex.LLLBench
