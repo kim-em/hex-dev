@@ -524,6 +524,33 @@ theorem scaledCoeffs_upper (b : Matrix Int n m)
       exact getArrayEntry_zeroRows n r c)
     i j hij
 
+/-- Below the diagonal, the executable integral scaled coefficient is exactly
+the Cramer determinant encoded by `scaledCoeffMatrix`. -/
+theorem scaledCoeffs_eq_scaledCoeffMatrix_det
+    (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val) :
+    GramSchmidt.entry (scaledCoeffs b) i j =
+      Matrix.det (GramSchmidt.scaledCoeffMatrix b i j hji) := by
+  have h :
+      getArrayEntry (scaledCoeffRows b) i.val j.val =
+        Matrix.det (GramSchmidt.scaledCoeffMatrix b i j hji) := by
+    rw [scaledCoeffRows_lower_eq_scaledCoeffMatrix_bareiss
+      (b := b) i.val j.val i.isLt hji]
+    exact Matrix.bareiss_eq_det
+      (GramSchmidt.scaledCoeffMatrix b i j hji)
+  simpa [scaledCoeffs, rowsToMatrix, GramSchmidt.entry, Matrix.row, Matrix.ofFn] using h
+
+/-- Conditional form of the leading Gram determinant bridge. The remaining
+unconditional bridge is exactly the nonnegativity of leading Gram determinants:
+once `0 ≤ det` is available, the public `Nat`-valued `gramDet` casts back to
+the signed determinant. -/
+theorem leadingGramMatrixInt_det_eq_gramDet_int_of_nonneg
+    (b : Matrix Int n m) (t : Nat) (ht : t ≤ n)
+    (hdet : 0 ≤ Matrix.det (GramSchmidt.leadingGramMatrixInt b t ht)) :
+    Matrix.det (GramSchmidt.leadingGramMatrixInt b t ht) =
+      Int.ofNat (gramDet b t ht) := by
+  rw [gramDet, Matrix.bareiss_eq_det]
+  exact (Int.toNat_of_nonneg hdet).symm
+
 theorem normSq_latticeVec_ge_min_basis_normSq
     (b : Matrix Int n m) (hli : independent b)
     (v : Vector Int m) (hv : memLattice b v) (hv' : v ≠ 0) :
