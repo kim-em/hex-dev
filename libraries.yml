@@ -62,6 +62,14 @@ libraries:
     mathlib: false
     done_through: 3
     status: active
+    phase4:
+      input_families:
+        - name: modular-multiplication-chain
+          description: Repeated Barrett and Montgomery UInt64 modular multiplication over the shared small odd modulus 65537.
+        - name: word-powmod
+          description: Public modular exponentiation over a fixed odd word-sized modulus with deterministic exponents varying by bit length.
+        - name: bounded-word-extgcd
+          description: Batched Nat, Int/GMP, and UInt64 extended-GCD calls on deterministic nonnegative bounded-word sample pairs.
   HexPoly:
     deps: []
     mathlib: false
