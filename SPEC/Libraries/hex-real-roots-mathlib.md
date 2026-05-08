@@ -59,41 +59,54 @@ interval.
     denominators. -/
 def mobiusTransform (p : ZPoly) (a b : Dyadic) : ZPoly := …
 
-/-- Möbius transform sends positive reals to (a, b) bijectively
-    (preserving multiplicity for polynomial roots). -/
+/-- Möbius transform sends positive reals to (a, b) bijectively, with
+    multiplicities. Stated as a multiset equality on real roots: the
+    positive real roots of `p_M` (with multiplicity) correspond, via
+    `s ↦ (b − s)/(s − a)`, to the real roots of `p` in `(a, b)` (with
+    multiplicity). -/
 theorem mobiusTransform_root_correspondence
     (p : ZPoly) (a b : Dyadic) (hab : a < b) :
-    ∀ r : ℝ,
-      (toPolynomial (mobiusTransform p a b)).aeval r = 0 ∧ 0 < r
-        ↔ ∃ s : ℝ, (a : ℝ) < s ∧ s < (b : ℝ) ∧
-                   (toPolynomial p).aeval s = 0
-                   -- with multiplicity preserved
+    let pℝ  := (toPolynomial p).map (Int.castRingHom ℝ)
+    let pMℝ := (toPolynomial (mobiusTransform p a b)).map (Int.castRingHom ℝ)
+    pMℝ.roots.filter (0 < ·)
+      = (pℝ.roots.filter (fun s => (a : ℝ) < s ∧ s < (b : ℝ))).map
+          (fun s => ((b : ℝ) - s) / (s - (a : ℝ)))
 ```
 
 ### Descartes count → exact-1 corollary
 
-Mathlib's `roots_countP_pos_le_signVariations` gives `≤`; we need
-the parity argument to derive `signVariations = 1 ⟹ count = 1`.
+Mathlib's `roots_countP_pos_le_signVariations` is stated for
+`Polynomial R` over a linearly ordered ring `R`; instantiated at
+`R = ℤ` it counts integer roots, but for the bridge we need real
+roots. The corollaries are stated over `q.map (Int.castRingHom ℝ)`:
 
 ```lean
-theorem signVariations_eq_one_implies_one_positive_root
+theorem signVariations_eq_one_implies_one_positive_real_root
     (q : Polynomial ℤ) (hsv : q.signVariations = 1) :
-    q.roots.countP (0 < ·) = 1
-  -- Proof: count ≤ 1 (Mathlib), count ≡ 1 (mod 2) (parity, also
-  -- in `roots_countP_pos_le_signVariations`'s context), so count = 1.
+    ((q.map (Int.castRingHom ℝ)).roots.filter (0 < ·)).card = 1
+  -- Proof: signVariations is preserved by the cast (auxiliary
+  -- lemma below), so `(q.map ...).signVariations = 1`. Mathlib's
+  -- `roots_countP_pos_le_signVariations` over ℝ gives count ≤ 1.
+  -- The parity strengthening (count ≡ signVariations mod 2) gives
+  -- count = 1.
 
-theorem signVariations_eq_zero_implies_no_positive_roots
+theorem signVariations_eq_zero_implies_no_positive_real_roots
     (q : Polynomial ℤ) (hsv : q.signVariations = 0) :
-    q.roots.countP (0 < ·) = 0
-  -- Mathlib: count ≤ 0.
+    ((q.map (Int.castRingHom ℝ)).roots.filter (0 < ·)).card = 0
+  -- Mathlib over ℝ: count ≤ 0, plus signVariations cast-invariance.
 ```
 
-The parity lemma `count ≡ signVariations (mod 2)` is the standard
-strengthening of Descartes' rule; if Mathlib's
-`RuleOfSigns.lean` has it, cite directly; otherwise this is a small
-local lemma (~30 lines) building on
-`roots_countP_pos_le_signVariations` and standard parity arguments
-on sign sequences.
+Two auxiliary lemmas these depend on:
+
+- **`signVariations` cast-invariance**: `(q.map (Int.castRingHom ℝ)).signVariations = q.signVariations`.
+  `signVariations` reads off the sign sequence of nonzero
+  coefficients; `Int.castRingHom ℝ` is sign-preserving and
+  injective, so the two sequences agree. If Mathlib has a generic
+  `signVariations_map` for sign-preserving ring homs, cite directly;
+  otherwise local lemma.
+- **Parity strengthening**: `count ≡ signVariations (mod 2)`. The
+  standard companion to Descartes' rule; if Mathlib's
+  `RuleOfSigns.lean` has it, cite directly, otherwise local.
 
 ### LMQ bound correctness
 
@@ -164,7 +177,7 @@ the minimum gap between distinct real roots, so each interval can
 contain at most one root, so `signVariations ≤ 1` for each, so the
 worklist drains. The second follows from
 `mobiusTransform_root_correspondence` +
-`signVariations_eq_one_implies_one_positive_root` (and the
+`signVariations_eq_one_implies_one_positive_real_root` (and the
 zero-variations corollary) + the bisection driver's invariants.
 
 ### Refinement correctness
@@ -194,8 +207,11 @@ theorem out_real_eq (s : SimpleRealRoot p) (prec₁ prec₂ : Nat) :
 - The Möbius-transform-correspondence theorem
   (`mobiusTransform_root_correspondence`). Uses `Polynomial.comp`
   and standard substitution machinery.
-- The exact-1-from-signVariations parity corollary if not already
-  in Mathlib.
+- `signVariations` cast-invariance: `(q.map (Int.castRingHom ℝ)).signVariations = q.signVariations`.
+  Local lemma if Mathlib lacks a generic
+  sign-preserving-ring-hom version.
+- The exact-1-from-signVariations parity corollary, stated over the
+  real-cast polynomial.
 - `lmqBound_bounds_positive_real_roots`. New theorem (Mathlib has
   Cauchy but not LMQ).
 - `realRootSeparation_bounds_min_gap`. Wraps Mahler measure

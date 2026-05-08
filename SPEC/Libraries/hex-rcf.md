@@ -7,7 +7,8 @@ real variable, with universal/existential quantifiers over `ℝ` or
 over bounded dyadic intervals.
 
 Reflective implementation: reify the goal to a `Formula` AST,
-isolate roots of every polynomial appearing in the formula via
+form the squarefree product of every polynomial appearing in the
+formula, isolate its roots via
 [hex-real-roots](hex-real-roots.md), build the **sign matrix** over
 the resulting cell decomposition of `ℝ`, evaluate the Boolean on
 each cell, check the quantifier, and close the goal via a
@@ -30,7 +31,7 @@ Goal forms:
 ∃ x : ℝ,                             …
 ∀ x : ℝ, q(x) ≥ 0 →                  p(x) > 0
 ∀ x ∈ Set.Ioc a b,                   p(x) ⊳ 0           -- a, b : Dyadic
-∃ x ∈ Set.Icc a b,                   p(x) = 0           -- root in interval
+∃ x ∈ Set.Ioc a b,                   p(x) = 0           -- root in interval
 ```
 
 The atoms `pᵢ ⊳ᵢ 0` use `pᵢ ∈ ℤ[x]` (or `ℚ[x]`, cleared to `ℤ[x]`)
@@ -63,6 +64,13 @@ loop forever) on any goal it cannot decide. Cases:
 - **Goals with an unprovable conclusion.** The tactic only emits
   "yes" answers; it does not produce a counterexample-style
   rejection. On unprovable goals, it falls through silently.
+- **Bounded quantifiers over `Set.Icc` or `Set.Ioo`.** The tactic
+  natively decides only `Set.Ioc a b` quantification (matching
+  `hex-real-roots`'s half-open isolation convention). Users with
+  closed- or open-interval goals reduce to half-open by evaluating
+  endpoints — e.g. `∃ x ∈ Set.Icc a b, p(x) = 0` becomes
+  `p(a) = 0 ∨ ∃ x ∈ Set.Ioc a b, p(x) = 0`. Future work could
+  encode endpoint-closure in the AST; out of scope for v1.
 
 Falling through is implemented as the tactic raising
 `MetaM`-failure with a clear message; downstream tactics
@@ -97,6 +105,8 @@ The tactic implements 1-dimensional CAD:
       -- is the bound x.
       | forallReal     (φ : Formula)
       | existsReal     (φ : Formula)
+      -- Bounded quantifiers range over `Set.Ioc a b`, matching
+      -- `hex-real-roots`'s half-open isolation convention.
       | forallInterval (a b : Dyadic) (φ : Formula)
       | existsInterval (a b : Dyadic) (φ : Formula)
 
@@ -114,29 +124,53 @@ The tactic implements 1-dimensional CAD:
 3. **Collect atoms' polynomials.** Walk `formula` and gather every
    `pᵢ ∈ ZPoly` appearing in an `Atom.poly pᵢ cmpᵢ`.
 
-4. **Isolate roots** of each `pᵢ` via
-   `Hex.isolate pᵢ ⟨HasOnlySimpleRealRoots pᵢ proof⟩ prec`. For
-   `pᵢ` with multiple real roots, squarefree-ify first
-   (`pᵢ_sf := pᵢ / gcd(pᵢ, pᵢ')`) — multiplicities don't affect
-   sign analysis.
+4. **Form the squarefree product** `P := squarefreePart (∏ᵢ pᵢ)`,
+   computed as `(∏ᵢ pᵢ) / gcd(∏ᵢ pᵢ, (∏ᵢ pᵢ)')`. The real roots of
+   `P` are precisely the union of the real roots of all `pᵢ`, with
+   multiplicity 1 each (shared roots across atoms collapse into a
+   single root of `P`; multiplicities within a single `pᵢ` are
+   killed by the squarefree quotient). Then call
+   `Hex.isolate? P hP_simple targetPrecision`, where
+   `hP_simple : Hex.HasOnlySimpleRealRoots P` is automatic from the
+   squarefree-by-construction `P`. If the call returns `none`,
+   raise `targetPrecision` (e.g. to `Hex.realRootSeparation P`,
+   where the bridge guarantees `some`) and retry. The result is a
+   pairwise-disjoint array of `RealRootIsolation P`.
 
-5. **Build the cell decomposition.** Take the union of all root-
-   isolating intervals; sort by lower endpoint; refine until all
-   intervals are pairwise disjoint and ordered. The result is a
-   finite sequence of dyadic test points
-   `t₀ < t₁ < … < tₘ` where each `tᵢ` is interior to a unique cell:
+5. **Build the cell decomposition.** Use the `isolate?` output for
+   `P` directly. Sort isolations by lower endpoint; the cells are:
 
    ```
    (−∞, root₁), {root₁}, (root₁, root₂), {root₂}, …, (rootₖ, +∞)
    ```
 
-   Each "open interval" cell has a sign-constant interior (no root
-   of any `pⱼ` lies in it). Each "root point" cell has a known
-   sign (zero) for the relevant `pⱼ`s.
+   Each "open interval" cell has a sign-constant interior for
+   *every* `pⱼ` (an interior point cannot be a root of any `pⱼ`,
+   else it would be a root of `P`). Each "root point" cell is a
+   root of some subset of the `pⱼ`s (those `pⱼ` having that real
+   root). Test points: any dyadic rational in the open-interval
+   cell (e.g. midpoint of consecutive isolation upper/lower
+   bounds); for root-point cells, the cell *is* the root.
 
 6. **Sign matrix.** For each cell, evaluate the integer sign of
-   each `pⱼ` at the cell's representative point. The result is a
-   `m × k` matrix of signs `{−1, 0, +1}`.
+   each `pⱼ` at the cell's representative point.
+   - Open-interval cells: evaluate `pⱼ` at the dyadic test point.
+     The result is in `{−1, +1}` (never zero: a zero would mean
+     the test point is a root of `pⱼ`, hence of `P`, hence not
+     interior to the cell).
+   - Root-point cells: the cell is a real root `r` of `P`. The
+     relevant `pⱼ`s with `pⱼ(r) = 0` are determined at the
+     polynomial level: `pⱼ(r) = 0` iff `r` is a root of
+     `gcd(pⱼ, P)`. Precompute `gⱼ := gcd(pⱼ, P)` for each `j`,
+     and isolate the roots of each `gⱼ`; root-point cell `r` has
+     `sign pⱼ(r) = 0` iff some isolation of `gⱼ` contains the
+     same `RealRoot P`-equivalence-class as `r`. For `pⱼ` with
+     `pⱼ(r) ≠ 0`, the sign at `r` equals `sign pⱼ` on either of
+     the two adjacent open-interval cells (which agree because no
+     root of `pⱼ` lies between them other than possibly `r`
+     itself).
+
+   The result is a `m × k` matrix of signs `{−1, 0, +1}`.
 
 7. **Boolean evaluation.** For each cell, substitute the per-`pⱼ`
    sign into each `Atom.poly pⱼ cmpⱼ`'s comparison, getting `True`
@@ -177,21 +211,27 @@ through:
 
 - **Sign-matrix correctness.** For each cell, the signs are correct
   at *every* point in the cell (not just the representative). This
-  follows because each `pⱼ` is sign-constant on cell interiors
-  (between consecutive roots) by IVT, and sign-zero at cell-points
-  (which are roots).
+  follows because each `pⱼ` is sign-constant on cell interiors (no
+  `pⱼ` has a root strictly between consecutive `P`-roots, since
+  every real root of every `pⱼ` is a real root of `P`), and the
+  zero-detection at root-point cells is correct by definition of
+  `gⱼ := gcd(pⱼ, P)`.
 - **Cell-decomposition completeness.** Every real number lies in
-  exactly one cell. Follows from the union-of-isolations being a
-  partition of `ℝ`.
+  exactly one cell of the `P`-decomposition. Follows from
+  `isolate?_correct` applied to `P`: every real root of `P` is
+  isolated by exactly one interval, the intervals are pairwise
+  disjoint, and the open-interval cells between consecutive
+  isolations (plus the two tails) partition `ℝ ∖ {real roots of P}`.
 - **Boolean evaluation correctness.** Substituting signs into atoms
   gives the correct truth value at every point in the cell.
 - **Quantifier correctness.** ∀/∃ on cells lifts to ∀/∃ on `ℝ`
   because cells partition `ℝ` and the inner Prop is constant on
   each cell.
 
-Imports: `hex-real-roots-mathlib`'s `isolate_correct` and the
+Imports: `hex-real-roots-mathlib`'s `isolate?_correct` and the
 Möbius-transform-correspondence theorem; Mathlib's IVT,
-`Polynomial.aeval`, ordered-field structure on `ℝ`.
+`Polynomial.aeval`, ordered-field structure on `ℝ`,
+`Polynomial.gcd` over `ℤ[x]`.
 
 The library does **not** prove completeness (that every valid
 univariate ℝ-CF formula is decided correctly). Tarski–Seidenberg
@@ -274,9 +314,12 @@ For a goal with `k` distinct polynomials of total degree `n` and
 sup-norm `‖·‖∞`:
 
 - **Reification:** linear in goal size.
-- **Root isolation** of all `k` polynomials: `O(k · n^4 · log² ‖·‖∞)`
-  bit operations (Uspensky's worst case, per `hex-real-roots.isolate`).
-- **Cell decomposition:** `O(k · n)` cells; sort `O(k·n log(k·n))`.
+- **Squarefree product** `P := squarefreePart (∏ pⱼ)`: degree `≤ k·n`,
+  computation dominated by polynomial gcd.
+- **Root isolation** of `P`: `O((k·n)^4 · log² ‖P‖∞)` bit operations
+  (Uspensky's worst case, per `hex-real-roots.isolate?`).
+- **Cell decomposition:** `O(k·n)` cells (one per real root of `P`,
+  plus open-interval cells between them).
 - **Sign matrix:** `O(k · n²)` polynomial evaluations.
 - **Boolean evaluation:** `O(k · |formula|)` per cell.
 - **Total:** dominated by root isolation, roughly
