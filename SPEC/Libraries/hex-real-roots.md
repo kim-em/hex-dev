@@ -17,9 +17,10 @@ Pellet tests).
 
 ## Algorithm: Descartes' rule of signs + Möbius bisection (Uspensky)
 
-Pinned: **Uspensky's algorithm**. For each candidate dyadic interval
-`(a, b]` ⊆ ℝ, transform `p` by the Möbius map `x ↦ a + (b − a)/(1 + x)`
-which sends `(0, ∞)` bijectively onto `(a, b)`. The transformed
+Recombination is **Uspensky's algorithm**. For each candidate dyadic
+interval `(a, b]` ⊆ ℝ, transform `p` by the Möbius map
+`x ↦ a + (b − a)/(1 + x)` which sends `(0, ∞)` bijectively onto
+`(a, b)`. The transformed
 polynomial `p_M(x) := (1 + x)^(deg p) · p(a + (b − a)/(1 + x))` has
 positive real roots in bijection (with multiplicity) with `p`'s real
 roots in `(a, b)`. Apply Descartes' rule of signs:
@@ -57,14 +58,10 @@ integer arithmetic, no floats, no rationals, fully `Decidable`.
 Every isolation witness in this library is a strict comparison
 between integer sign-variation counts.
 
-## Bounds: Cauchy and LMQ
-
-The **Cauchy bound** `M_C := 1 + max_i |a_i| / |a_n|` (rounded up to
-a dyadic) bounds every real root of `p` in `[−M_C, M_C]` and is
-the conservative starting interval for the worklist.
+## Bound: LMQ
 
 The **Local Max Quadratic (LMQ) bound** of Akritas–Strzeboński
-gives a tighter upper bound on positive real roots:
+gives an upper bound on positive real roots of `p ∈ ℤ[x]`:
 
 ```
 M_LMQ(p) := 2 · max_{i : a_i < 0} (
@@ -74,11 +71,14 @@ M_LMQ(p) := 2 · max_{i : a_i < 0} (
 ```
 
 with the appropriate integer-arithmetic ceiling. LMQ is often an
-order of magnitude tighter than Cauchy on adversarial inputs
-(Mignotte clusters, polynomials with very negative leading
-coefficients in low-degree slots). The library uses LMQ for the
-positive-root upper bound (and `−LMQ(p(−x))` for the negative-root
-lower bound), with Cauchy as the fallback / sanity bound.
+order of magnitude tighter than the classical Cauchy bound
+`1 + max_i |a_i| / |a_n|` on adversarial inputs (Mignotte clusters,
+polynomials with very negative leading coefficients in low-degree
+slots), which is what makes the bisection driver competitive with
+Sturm-based isolation. The starting interval for the isolation
+worklist is `(−M, M]` where `M := max(lmqBound p, lmqBound (p(−x)))`
+— LMQ on `p` bounds positive real roots, LMQ on `p(−x)` bounds the
+absolute value of negative real roots.
 
 ## Geometry: dyadic intervals on the real line
 
@@ -122,9 +122,9 @@ instance : Decidable (HasOnlySimpleRealRoots p) := …
 
 ```lean
 namespace RealRootIsolation
-def refine1?  : RealRootIsolation p → Option (RealRootIsolation p)
-def refine?   : (target : Nat) → RealRootIsolation p →
-                Option (RealRootIsolation p)
+def refine1   : RealRootIsolation p → RealRootIsolation p
+def refine    : (target : Nat) → RealRootIsolation p →
+                RealRootIsolation p
 def refineTo  : RealRootIsolation p → (target : Nat) →
                 RealRootIsolation p
 end RealRootIsolation
@@ -133,33 +133,24 @@ end RealRootIsolation
 def isolate (p : ZPoly) (h : Hex.HasOnlySimpleRealRoots p)
     (atom_prec : Nat) : Array (RealRootIsolation p)
 
-def cauchyBound (p : ZPoly) : Dyadic
 def lmqBound    (p : ZPoly) : Dyadic   -- upper bound on positive real roots
 def realRootSeparation (p : ZPoly) : Nat
 ```
 
-`refine1?` bisects at the dyadic midpoint, runs Möbius+Descartes on
-each half, and returns the half whose `signVariations` is odd
-(typically `1`; the case of `≥ 3` cannot occur on a
-`RealRootIsolation` by the witness invariant — the existing witness
-guarantees the parent interval contained exactly one root).
-`refine?` and `refineTo` iterate.
+`refine1` bisects at the dyadic midpoint, runs Möbius+Descartes on
+each half, and returns the half containing the root. The function
+is total: by the parent's witness invariant the interval contains
+exactly one root, so after bisection one half has `signVariations =
+1` (root strictly inside) and the other has `signVariations = 0`,
+or the root sits exactly at the midpoint and the half-open
+convention `(a, b]` places it in the left half. `refine` and
+`refineTo` iterate.
 
 `isolate` runs the Uspensky bisection driver: starting from the
-worklist `[(−M, M]]` with `M := max(lmqBound, cauchyBound)`, repeat:
+worklist `[(−M, M]]` with `M := max(lmqBound p, lmqBound (p(−x)))`, repeat:
 pop an interval; compute `signVariations(p_M)`; if 0, discard; if 1,
 emit; if ≥ 2, bisect. Termination by `realRootSeparation p`
 (Mahler/Mignotte real-root bound).
-
-### Midpoint hits a root
-
-If the dyadic midpoint `m` happens to satisfy `p(m) = 0`, the
-half-open interval convention `(a, b]` places that root in
-`(a, m]` (left half) by inclusion of the right endpoint. `p(m) = 0`
-is an integer-arithmetic check, so this case is detected exactly
-and resolved deterministically. (For squarefree `p` this happens
-only at finitely many dyadic points, so refinement always makes
-progress.)
 
 ## SimpleRealRoot quotient and the threading pattern
 
@@ -215,12 +206,12 @@ restricted to the real case.
 
 The Uspensky bisection algorithm:
 
-1. **Squarefree-ify.** `p_sf := p / gcd(p, p')`. Provided as a
-   precondition via `HasOnlySimpleRealRoots`; not mutated by the
-   algorithm itself. (Internally `isolate` may call the gcd routine
-   defensively; the SPEC contract requires squarefree input.)
-2. **Bounds.** Compute `M := max(lmqBound p, cauchyBound p)` —
-   conservative outer bound on real-root locations.
+1. **Squarefree input.** Squarefreeness is a precondition,
+   discharged by the `HasOnlySimpleRealRoots p` argument. `isolate`
+   does not squarefree-ify internally; callers with non-squarefree
+   input compute `p_sf := p / gcd(p, p')` themselves before calling.
+2. **Bound.** Compute `M := max(lmqBound p, lmqBound (p(−x)))` —
+   outer bound on real-root locations.
 3. **Worklist.** Initialise with `[(−M, M]]`. For each interval,
    apply Möbius transform `x ↦ a + (b − a)/(1 + x)` to get `p_M`,
    compute `signVariations(p_M)`, and dispatch:
@@ -245,31 +236,26 @@ squarefree-ifies first.
 
 ## Why Uspensky / Descartes, not Sturm
 
-Pinned: Uspensky (Descartes + Möbius bisection). Deliberately *not*
-implemented in this round:
+The library uses Uspensky (Descartes + Möbius bisection) rather
+than the classical Sturm-sequence alternative. Several known
+approaches are deliberately *not* used here:
 
-- **Sturm's theorem + bisection.** The classical alternative.
-  Theoretically more robust on clustered roots (Sturm gives exact
-  interval counts; Descartes only bounds them). Rejected because
-  Mathlib has no Sturm sequence, no Sturm theorem, and no
-  subresultant pseudo-remainder chain — the bridge would require
-  multi-month formalisation work. Mathlib *does* have Descartes'
-  rule of signs (`Polynomial.signVariations` in
-  `Mathlib.Algebra.Polynomial.RuleOfSigns`), so Uspensky's bridge
-  proof rides on existing infrastructure.
+- **Sturm's theorem + bisection.** Theoretically more robust on
+  clustered roots (Sturm gives exact interval counts; Descartes
+  only bounds them). Mathlib has no Sturm sequence, no Sturm
+  theorem, and no subresultant pseudo-remainder chain, so the
+  bridge proof would require multi-month formalisation work.
+  Mathlib *does* have Descartes' rule of signs
+  (`Polynomial.signVariations` in
+  `Mathlib.Algebra.Polynomial.RuleOfSigns`); Uspensky's bridge
+  rides on existing infrastructure.
 - **Vincent's theorem / VCA / VAS** (continued-fraction-based
   isolation). Faster than Uspensky in practice (used by FLINT,
-  Mathematica, SageMath). Rejected because Vincent's theorem is
-  absent from Mathlib; formalising it is a multi-month side quest
-  before any tactic-level payoff.
+  Mathematica, SageMath). Vincent's theorem is absent from
+  Mathlib; formalising it is a multi-month side quest before any
+  tactic-level payoff.
 - **Speculative Newton refinement** (quadratic convergence on top
-  of any bisection driver). Worth considering as a future
-  refinement; not in this SPEC.
-
-If a future library or tactic needs reusable interval-root-count
-primitives (which Sturm provides natively but Uspensky does not),
-Sturm could be added then with full formalisation cost. Until that
-demand exists, Uspensky's narrower payoff is the right scope.
+  of any bisection driver). Out of scope for this library.
 
 ## Layered file organisation
 
@@ -283,9 +269,9 @@ demand exists, Uspensky's narrower payoff is the right scope.
 - `HexRealRoots/Descartes.lean` — `descartesCount p interval` =
   `signVariations(mobiusTransform p ...)`; `descartesIsolatesOne`
   predicate and `Decidable` infrastructure.
-- `HexRealRoots/Bounds.lean` — `cauchyBound`, `lmqBound`.
+- `HexRealRoots/Bounds.lean` — `lmqBound`.
 - `HexRealRoots/Separation.lean` — `realRootSeparation`.
-- `HexRealRoots/Refine.lean` — `refine1?`, `refine?`, `refineTo`,
+- `HexRealRoots/Refine.lean` — `refine1`, `refine`, `refineTo`,
   `refineTo_respects_equiv`, `SimpleRealRoot.refine`. Threading-
   pattern guidance on `SimpleRealRoot.refine`'s docstring.
 - `HexRealRoots/Isolate.lean` — `isolate` driver.
@@ -329,7 +315,6 @@ External oracles: SageMath
 For Uspensky's algorithm on degree-`n` squarefree `p` with sup-norm
 `‖p‖∞`:
 
-- `cauchyBound p`: `O(n)` integer comparisons.
 - `lmqBound p`: `O(n²)` integer operations (the double-max).
 - Möbius transform of `p` to a candidate interval: `O(n²)` integer
   multiplications; intermediate coefficient size `O(n · log ‖p‖∞)`

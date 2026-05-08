@@ -213,24 +213,24 @@ the tactic name does not commit to which root-isolation algorithm
 
 ## Layered file organisation
 
-- `HexRcf/Formula.lean` — the AST (`Atom`, `Formula`,
+- `HexRCF/Formula.lean` — the AST (`Atom`, `Formula`,
   `AtomCmp`); `Formula.toProp` Prop semantics; `decide_rcf`
   driver.
-- `HexRcf/CellDecomposition.lean` — union-of-isolations cell
+- `HexRCF/CellDecomposition.lean` — union-of-isolations cell
   construction; representative-point selection; cell-set invariants.
-- `HexRcf/SignMatrix.lean` — per-cell, per-atom sign evaluation;
+- `HexRCF/SignMatrix.lean` — per-cell, per-atom sign evaluation;
   Boolean evaluation of `Formula` against the sign matrix.
-- `HexRcf/QuantifierCheck.lean` — ∀/∃ checks (full ℝ + bounded
+- `HexRCF/QuantifierCheck.lean` — ∀/∃ checks (full ℝ + bounded
   intervals); cell-intersection logic.
-- `HexRcf/Soundness.lean` — `rcf_decide_sound` and supporting
+- `HexRCF/Soundness.lean` — `rcf_decide_sound` and supporting
   lemmas (sign-matrix correctness, cell-decomposition completeness,
   Boolean and quantifier soundness).
-- `HexRcf/Reflect.lean` — `MetaM`/`Qq` reification; tactic
+- `HexRCF/Reflect.lean` — `MetaM`/`Qq` reification; tactic
   driver; `MetaM`-failure paths for out-of-fragment input.
-- `HexRcf/Tactic.lean` — the user-facing `rcf` tactic
+- `HexRCF/Tactic.lean` — the user-facing `rcf` tactic
   registration.
-- `HexRcf/Conformance.lean`, `HexRcf/Bench.lean`,
-  `HexRcf/EmitFixtures.lean` — standard testing trio.
+- `HexRCF/Conformance.lean`, `HexRCF/Bench.lean`,
+  `HexRCF/EmitFixtures.lean` — standard testing trio.
 
 ## Conformance fixtures
 

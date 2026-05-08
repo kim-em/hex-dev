@@ -218,7 +218,7 @@ libraries:
     mathlib: true
     done_through: 0
     status: planned
-  HexRcf:
+  HexRCF:
     deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib]
     mathlib: true
     done_through: 0

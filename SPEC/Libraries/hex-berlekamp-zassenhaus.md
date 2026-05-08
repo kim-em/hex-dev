@@ -267,7 +267,7 @@ For a p-adic factor `g | f`, the CLD of `g` is the polynomial
 
 ### Coefficient bound
 
-Pinned: **BHKS Lemma 5.1 with Landau's inequality**. For `g ∈ ℤ[x]` a true factor of `f` and `j ∈ {0, …, deg f − 1}`,
+The coefficient bound is **BHKS Lemma 5.1 with Landau's inequality**. For `g ∈ ℤ[x]` a true factor of `f` and `j ∈ {0, …, deg f − 1}`,
 
     |[x^j] Φ(g)|  ≤  B_j  :=  C(n − 1, j) · n · ‖f‖₂
 
@@ -309,7 +309,7 @@ where `Ã[i, j] := Ψ^a_{ℓ_j}([x^j] Φ(g_i))` for `i ∈ {1,…,r}, j ∈ {0,�
 
 ### Precision schedule
 
-Pinned: start at `a = 4`, double on lattice/verification failure, cap at `bhksBound f` (a Lean-computable integer upper bound for the BHKS Theorem 5.2 threshold `c · n · (2C)^(n²) · ‖f‖₂^(2n−1) · (log ‖f‖₂)^n`; an explicit choice is given below). The cap is the BHKS bound rather than the Mignotte coefficient bound because BHKS dominates Mignotte for every `n ≥ 2` (BHKS §5.3 explicitly: "an annoying extra factor of `n` … coming from a resultant upper bound"); a smaller cap would leave `factorFast f = none` reachable on inputs the algorithm could in principle solve. The constant `4` start is what the current pipeline already does and continues to work.
+The schedule starts at `a = 4`, doubles on lattice/verification failure, and caps at `bhksBound f` (a Lean-computable integer upper bound for the BHKS Theorem 5.2 threshold `c · n · (2C)^(n²) · ‖f‖₂^(2n−1) · (log ‖f‖₂)^n`; an explicit choice is given below). The cap is the BHKS bound rather than the Mignotte coefficient bound because BHKS dominates Mignotte for every `n ≥ 2` (BHKS §5.3 explicitly: "an annoying extra factor of `n` … coming from a resultant upper bound"); a smaller cap would leave `factorFast f = none` reachable on inputs the algorithm could in principle solve.
 
 The `bhksBound : ZPoly → Nat` helper is one of HO-1's deliverables. A safe explicit choice (sound integer upper bound for BHKS eq. 5.3): `bhksBound f := 1 + n · 4^(n²) · (sumSquared f + 1)^n · (log2 (sumSquared f + 1))^n` where `n := deg f` and `sumSquared f := Σ |a_i|²`. Pure `Nat` arithmetic; the upper-bound argument is straightforward (each factor of (5.3) bounded by the corresponding piece of `bhksBound`).
 

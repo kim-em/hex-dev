@@ -12,8 +12,6 @@ formalising Sturm's theorem from scratch.
 - `Polynomial.IsRoot`, `Polynomial.roots`, `Polynomial.aroots`.
 - `Polynomial.derivative`, `Polynomial.gcd`, `Polynomial.Squarefree`.
 - `Polynomial.eval₂` for `Polynomial ℤ → ℝ`-valued evaluation.
-- `Polynomial.cauchyBound` and `Polynomial.IsRoot.norm_lt_cauchyBound`
-  from `Mathlib.Analysis.Polynomial.CauchyBound`.
 - `Polynomial.signVariations` and the main theorem
   `Polynomial.roots_countP_pos_le_signVariations` from
   `Mathlib.Algebra.Polynomial.RuleOfSigns`.
@@ -97,21 +95,20 @@ local lemma (~30 lines) building on
 `roots_countP_pos_le_signVariations` and standard parity arguments
 on sign sequences.
 
-### Cauchy bound + LMQ bound correctness
+### LMQ bound correctness
 
 ```lean
-theorem cauchyBound_bounds_real_roots (p : ZPoly) :
-    ∀ r : ℝ, (toPolynomial p).aeval r = 0 →
-        |r| ≤ (Hex.cauchyBound p : ℝ)
-  -- Wraps Mathlib's `Polynomial.IsRoot.norm_lt_cauchyBound`.
-
 theorem lmqBound_bounds_positive_real_roots (p : ZPoly) :
     ∀ r : ℝ, (toPolynomial p).aeval r = 0 → 0 < r →
         r ≤ (Hex.lmqBound p : ℝ)
-  -- Akritas-Strzeboński 2008 LMQ bound, stated for positive reals.
-  -- A new theorem (Mathlib has Cauchy but not LMQ); the proof is
-  -- a couple of pages following the original paper.
+  -- Akritas–Strzeboński 2008 LMQ bound, stated for positive reals.
+  -- The proof follows the original paper; a couple of pages of
+  -- elementary algebra.
 ```
+
+Mathlib's `Polynomial.IsRoot.norm_lt_cauchyBound` is the closest
+upstream analogue; LMQ is independent of it (sharper, with a
+different proof) and the bridge does not factor through Cauchy.
 
 ### `realRootSeparation` correctness
 
