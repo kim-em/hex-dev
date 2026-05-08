@@ -102,7 +102,7 @@ libraries:
   HexPolyZ:
     deps: [HexPoly]
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
 
   # ---------- Depth 2 ----------
