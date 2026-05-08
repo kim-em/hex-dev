@@ -117,6 +117,21 @@ theorem gramDet_sizeReduce (b : Matrix Int n m) (j k : Fin n) (hjk : j.val < k.v
   unfold sizeReduce
   exact gramDet_rowAdd_earlier b j k (-r) t ht hjk
 
+private theorem scaledCoeffs_eq_fin (b : Matrix Int n m) (i j : Fin n)
+    (hji : j.val < i.val) :
+    ((GramSchmidt.entry (scaledCoeffs b) i j : Int) : Rat) =
+      (gramDet b (j.val + 1) (Nat.succ_le_of_lt j.isLt) : Rat) *
+        GramSchmidt.entry (coeffs b) i j := by
+  simpa using scaledCoeffs_eq (b := b) i.val j.val i.isLt hji
+
+private theorem intCast_rat_injective {a b : Int} (h : (a : Rat) = (b : Rat)) :
+    a = b := by
+  have hz : ((a - b : Int) : Rat) = 0 := by
+    simp [h]
+    grind
+  have hsub : a - b = 0 := Rat.intCast_eq_zero_iff.mp hz
+  omega
+
 theorem scaledCoeffs_sizeReduce_pivot (b : Matrix Int n m) (j k : Fin n)
     (hjk : j.val < k.val) (r : Int) :
     GramSchmidt.entry (scaledCoeffs (sizeReduce b j k r)) k j =
@@ -129,19 +144,121 @@ theorem scaledCoeffs_sizeReduce_lower (b : Matrix Int n m) (l j k : Fin n)
     GramSchmidt.entry (scaledCoeffs (sizeReduce b j k r)) k l =
       GramSchmidt.entry (scaledCoeffs b) k l -
         r * GramSchmidt.entry (scaledCoeffs b) j l := by
-  sorry
+  apply intCast_rat_injective
+  have hnew := scaledCoeffs_eq_fin (b := sizeReduce b j k r) k l
+      (Nat.lt_trans hlj hjk)
+  have holdk := scaledCoeffs_eq_fin (b := b) k l (Nat.lt_trans hlj hjk)
+  have holdj := scaledCoeffs_eq_fin (b := b) j l hlj
+  have hdet :
+      gramDet (sizeReduce b j k r) (l.val + 1) (Nat.succ_le_of_lt l.isLt) =
+        gramDet b (l.val + 1) (Nat.succ_le_of_lt l.isLt) :=
+    gramDet_sizeReduce (b := b) (j := j) (k := k) hjk r (l.val + 1)
+      (Nat.succ_le_of_lt l.isLt)
+  have hcoeff := coeffs_sizeReduce_lower (b := b) (l := l) (j := j) (k := k) hlj hjk r
+  calc
+    ((GramSchmidt.entry (scaledCoeffs (sizeReduce b j k r)) k l : Int) : Rat)
+        =
+          (gramDet (sizeReduce b j k r) (l.val + 1) (Nat.succ_le_of_lt l.isLt) : Rat) *
+            GramSchmidt.entry (coeffs (sizeReduce b j k r)) k l := hnew
+    _ =
+          (gramDet b (l.val + 1) (Nat.succ_le_of_lt l.isLt) : Rat) *
+            (GramSchmidt.entry (coeffs b) k l -
+              (r : Rat) * GramSchmidt.entry (coeffs b) j l) := by
+          rw [hdet, hcoeff]
+    _ =
+          ((GramSchmidt.entry (scaledCoeffs b) k l -
+            r * GramSchmidt.entry (scaledCoeffs b) j l : Int) : Rat) := by
+          calc
+            (gramDet b (l.val + 1) (Nat.succ_le_of_lt l.isLt) : Rat) *
+                (GramSchmidt.entry (coeffs b) k l -
+                  (r : Rat) * GramSchmidt.entry (coeffs b) j l)
+                =
+                  (gramDet b (l.val + 1) (Nat.succ_le_of_lt l.isLt) : Rat) *
+                    GramSchmidt.entry (coeffs b) k l -
+                    (r : Rat) *
+                      ((gramDet b (l.val + 1) (Nat.succ_le_of_lt l.isLt) : Rat) *
+                        GramSchmidt.entry (coeffs b) j l) := by
+                  grind
+            _ =
+                  ((GramSchmidt.entry (scaledCoeffs b) k l : Int) : Rat) -
+                    (r : Rat) * ((GramSchmidt.entry (scaledCoeffs b) j l : Int) : Rat) := by
+                  rw [← holdk, ← holdj]
+            _ =
+                  ((GramSchmidt.entry (scaledCoeffs b) k l -
+                    r * GramSchmidt.entry (scaledCoeffs b) j l : Int) : Rat) := by
+                  grind
 
 theorem scaledCoeffs_sizeReduce_other_row (b : Matrix Int n m) (j k : Fin n)
     (hjk : j.val < k.val) (r : Int) (i : Fin n) (hik : i ≠ k) :
     (scaledCoeffs (sizeReduce b j k r)).row i = (scaledCoeffs b).row i := by
-  sorry
+  apply Vector.ext
+  intro col hcol
+  let l : Fin n := ⟨col, hcol⟩
+  change GramSchmidt.entry (scaledCoeffs (sizeReduce b j k r)) i l =
+    GramSchmidt.entry (scaledCoeffs b) i l
+  by_cases hli : l.val < i.val
+  · apply intCast_rat_injective
+    have hnew := scaledCoeffs_eq_fin (b := sizeReduce b j k r) i l hli
+    have hold := scaledCoeffs_eq_fin (b := b) i l hli
+    have hdet :
+        gramDet (sizeReduce b j k r) (l.val + 1) (Nat.succ_le_of_lt l.isLt) =
+          gramDet b (l.val + 1) (Nat.succ_le_of_lt l.isLt) :=
+      gramDet_sizeReduce (b := b) (j := j) (k := k) hjk r (l.val + 1)
+        (Nat.succ_le_of_lt l.isLt)
+    have hrow := coeffs_sizeReduce_other_row (b := b) (j := j) (k := k) hjk r i hik
+    have hcoeff :
+        GramSchmidt.entry (coeffs (sizeReduce b j k r)) i l =
+          GramSchmidt.entry (coeffs b) i l := by
+      have hget := congrArg (fun row => row[l]) hrow
+      simpa [GramSchmidt.entry] using hget
+    calc
+      ((GramSchmidt.entry (scaledCoeffs (sizeReduce b j k r)) i l : Int) : Rat)
+          =
+            (gramDet (sizeReduce b j k r) (l.val + 1) (Nat.succ_le_of_lt l.isLt) : Rat) *
+              GramSchmidt.entry (coeffs (sizeReduce b j k r)) i l := hnew
+      _ =
+            (gramDet b (l.val + 1) (Nat.succ_le_of_lt l.isLt) : Rat) *
+              GramSchmidt.entry (coeffs b) i l := by
+            rw [hdet, hcoeff]
+      _ = ((GramSchmidt.entry (scaledCoeffs b) i l : Int) : Rat) := hold.symm
+  · by_cases hil : i = l
+    · subst l
+      rw [← hil]
+      rw [scaledCoeffs_diag, scaledCoeffs_diag]
+      exact congrArg Int.ofNat
+        (gramDet_sizeReduce (b := b) (j := j) (k := k) hjk r (i.val + 1)
+          (Nat.succ_le_of_lt i.isLt))
+    · have hilv : i.val < l.val := by
+        have hle : i.val ≤ l.val := Nat.le_of_not_lt hli
+        exact Nat.lt_of_le_of_ne hle (fun h => hil (Fin.ext h))
+      rw [scaledCoeffs_upper (sizeReduce b j k r) i.val l.val i.isLt l.isLt hilv,
+        scaledCoeffs_upper b i.val l.val i.isLt l.isLt hilv]
 
 theorem scaledCoeffs_sizeReduce_above_pivot (b : Matrix Int n m) (j k : Fin n)
     (hjk : j.val < k.val) (r : Int) (l : Fin n)
     (hjl : j.val < l.val) (hlk : l.val < k.val) :
     GramSchmidt.entry (scaledCoeffs (sizeReduce b j k r)) k l =
       GramSchmidt.entry (scaledCoeffs b) k l := by
-  sorry
+  apply intCast_rat_injective
+  have hnew := scaledCoeffs_eq_fin (b := sizeReduce b j k r) k l hlk
+  have hold := scaledCoeffs_eq_fin (b := b) k l hlk
+  have hdet :
+      gramDet (sizeReduce b j k r) (l.val + 1) (Nat.succ_le_of_lt l.isLt) =
+        gramDet b (l.val + 1) (Nat.succ_le_of_lt l.isLt) :=
+    gramDet_sizeReduce (b := b) (j := j) (k := k) hjk r (l.val + 1)
+      (Nat.succ_le_of_lt l.isLt)
+  have hcoeff := coeffs_sizeReduce_above_pivot (b := b) (j := j) (k := k) hjk r
+    l hjl hlk
+  calc
+    ((GramSchmidt.entry (scaledCoeffs (sizeReduce b j k r)) k l : Int) : Rat)
+        =
+          (gramDet (sizeReduce b j k r) (l.val + 1) (Nat.succ_le_of_lt l.isLt) : Rat) *
+            GramSchmidt.entry (coeffs (sizeReduce b j k r)) k l := hnew
+    _ =
+          (gramDet b (l.val + 1) (Nat.succ_le_of_lt l.isLt) : Rat) *
+            GramSchmidt.entry (coeffs b) k l := by
+          rw [hdet, hcoeff]
+    _ = ((GramSchmidt.entry (scaledCoeffs b) k l : Int) : Rat) := hold.symm
 
 theorem basis_adjacentSwap_of_lt (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.val)
     (i : Fin n) (hi : i.val + 1 < k.val) :
