@@ -8,6 +8,7 @@
 - **hex-poly-fp** — polynomials over `F_p`, Frobenius map, square-free decomposition, lazy reduction for small p
 - **hex-gf2** — packed bitwise polynomials over `F_2` (XOR + CLMUL), `GF(2^n)` elements
 - **hex-poly-z** — polynomials over `Z`, content/primitive part, Mignotte bound
+- **hex-roots** — certified complex root isolation for `Z[x]` via dyadic squares + Pellet test + speculative Newton
 - **hex-berlekamp** — Berlekamp factoring and Rabin irreducibility test over `F_p`
 - **hex-hensel** — Hensel lifting from `mod p` to `mod p^k`
 - **hex-lll** — LLL lattice basis reduction
@@ -25,6 +26,7 @@ proving correspondence with Mathlib's mathematical definitions):
 - **hex-matrix-mathlib** — matrix equivalence, `det` agreement, rank = `Matrix.rank`, nullspace = `LinearMap.ker`, row ops = transvections
 - **hex-gram-schmidt-mathlib** — `GramSchmidt.Int.basis` = Mathlib's `gramSchmidt`
 - **hex-poly-z-mathlib** — `DensePoly Int ≃+* Polynomial ℤ`, Mignotte bound (via Mathlib's Mahler measure)
+- **hex-roots-mathlib** — Pellet on circles (built from `circleIntegral`) + Mahler/Mignotte separation bound; correctness of refinement and `isolate`
 - **hex-berlekamp-mathlib** — `Decidable (Irreducible f)` for `Polynomial (ZMod p)`
 - **hex-hensel-mathlib** — Hensel correctness, uniqueness, `coprime_mod_p_lifts`
 - **hex-lll-mathlib** — lattice = `Submodule ℤ`, short vector bound
@@ -44,6 +46,7 @@ Each library with its immediate dependencies:
 - **hex-lll** — hex-gram-schmidt
 - **hex-poly-fp** — hex-poly, hex-mod-arith
 - **hex-poly-z** — hex-poly
+- **hex-roots** — hex-poly-z
 - **hex-berlekamp** — hex-poly-fp, hex-matrix, hex-gfq-ring
 - **hex-hensel** — hex-poly-fp, hex-poly-z
 - **hex-conway** — hex-berlekamp
@@ -58,6 +61,7 @@ Mathlib bridge libraries (each also depends on Mathlib):
 - **hex-mod-arith-mathlib** — hex-mod-arith
 - **hex-poly-mathlib** — hex-poly
 - **hex-poly-z-mathlib** — hex-poly-z, hex-poly-mathlib
+- **hex-roots-mathlib** — hex-roots, hex-poly-z-mathlib
 - **hex-matrix-mathlib** — hex-matrix
 - **hex-gram-schmidt-mathlib** — hex-gram-schmidt
 - **hex-lll-mathlib** — hex-lll
@@ -120,6 +124,8 @@ hex-gfq-field   hex-conway   hex-gf2
 - [hex-gf2-mathlib.md](hex-gf2-mathlib.md) — `GF2Poly ≃+* FpPoly 2`, `GF2n`/`GF2nPoly ≃+* FiniteField 2 f hf hirr`, packed-field finiteness/cardinality
 - [hex-poly-z.md](hex-poly-z.md) — polynomials over `Z`, content/primitive part, Mignotte bound
 - [hex-poly-z-mathlib.md](hex-poly-z-mathlib.md) — Mignotte bound proof via Mathlib's Mahler measure
+- [hex-roots.md](hex-roots.md) — certified complex root isolation for `Z[x]`
+- [hex-roots-mathlib.md](hex-roots-mathlib.md) — Pellet on circles, Mahler/Mignotte separation bound, refinement and `isolate` correctness
 - [hex-berlekamp.md](hex-berlekamp.md) — Berlekamp factoring and Rabin irreducibility test
 - [hex-berlekamp-mathlib.md](hex-berlekamp-mathlib.md) — Berlekamp/Rabin correctness proofs via Euclidean domain theory
 - [hex-hensel.md](hex-hensel.md) — Hensel lifting algorithms
