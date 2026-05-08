@@ -80,8 +80,16 @@ libraries:
   HexMatrix:
     deps: []
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
+    phase4:
+      input_families:
+        - name: dense-square-multiplication
+          description: Deterministic dense square integer matrices for textbook cubic matrix multiplication.
+        - name: structured-bareiss-determinant
+          description: Deterministic tridiagonal integer matrices for row-pivoted Bareiss determinant scaling without arbitrary coefficient blow-up.
+        - name: leibniz-small-determinant
+          description: Small structured integer matrices where the generic Leibniz determinant remains practical for Bareiss cross-checking.
 
   # ---------- Depth 1 ----------
   HexModArith:
