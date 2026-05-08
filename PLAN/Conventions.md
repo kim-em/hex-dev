@@ -472,33 +472,21 @@ time (parse errors, not lint warnings):
    anything (the dep graph is informational and may reference
    libraries in any state).
 
-The following structural checks apply only to `active` entries:
+The following two structural rules apply per status:
 
-4. **Lake alignment** (`lakefile.toml` `lean_lib` ↔ `libraries.yml`
-   name): only `active` entries must have a corresponding
-   `lean_lib` in `lakefile.toml`. Non-`active` entries are exempt.
-5. **Root-file existence** (`<Name>.lean` at the repo top level):
-   only `active` entries must have a root file. Non-`active`
-   entries are exempt.
+4. **Lake alignment.** An `active` entry must have a corresponding
+   `lean_lib` in `lakefile.toml`; a `planned` or `draft` entry
+   must *not*.
+5. **Root-file existence.** An `active` entry must have a root
+   `<Name>.lean` at the repo top level; a `planned` or `draft`
+   entry must *not*.
 
-Activation order: when promoting `planned → active`, all structural
-checks (4, 5) must be satisfied in the same PR. The sequence is
-"create root file + Lake entry + bump status" — same commit, same
-review.
-
-The orchestrator's status report **must** include a "Planned
-(skipped)" / "Draft (skipped)" footer listing every non-active
-library by name and status. Silent omission is forbidden:
-non-active libraries must remain visible in the status output so
-they cannot drift unnoticed. (This is the rule against the failure
-mode that motivated introducing the field — `libraries.yml` was
-previously the only handle the orchestrator scanned, so SPECs
-without yml entries were invisible. The footer keeps non-active
-SPECs visible while still gating dispatch.)
+The orchestrator's status report includes a "Planned (skipped)" /
+"Draft (skipped)" footer listing every non-active library, so
+non-active SPECs remain visible in the work queue.
 
 Reference implementation lives in `scripts/libgraph.py` (validation
 of invariants 1–3) and `scripts/status.py` (dispatch filtering and
-footer). `scripts/check_dag.py` enforces 4 and 5 with the
-`active`-only filter. If those scripts are rewritten, the rewrite
-must implement these invariants — the contract above is normative,
-the script names are descriptive.
+footer). `scripts/check_dag.py` enforces 4 and 5. If those scripts
+are rewritten, the rewrite must implement these invariants — the
+contract above is normative, the script names are descriptive.

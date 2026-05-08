@@ -244,15 +244,22 @@ def load_lakefile_libs(path: Path | None = None) -> list[str]:
 
 def check_lakefile_alignment(libraries: OrderedDict[str, LibraryInfo], lakefile_libs: list[str]) -> list[str]:
     errors: list[str] = []
-    # Only active libraries must align with Lake; planned/draft entries are
-    # exempt by design (no Lean code is expected to exist yet).
-    # See PLAN/Conventions.md §"Library status".
+    # Lake alignment per PLAN/Conventions.md §"Library status":
+    #   active entry  ⟺  lean_lib in lakefile
+    #   planned/draft entry  ⟹  no lean_lib in lakefile
     active_library_names = {name for name, info in libraries.items() if info.is_active}
+    nonactive_library_names = {name for name, info in libraries.items() if not info.is_active}
     lake_names = set(lakefile_libs)
     for name in sorted(active_library_names - lake_names):
-        errors.append(f"libraries.yml entry {name} missing from Lake config")
-    for name in sorted(lake_names - active_library_names - KNOWN_EXCEPTIONS):
-        errors.append(f"Lake config library {name} missing from libraries.yml (or library is non-active)")
+        errors.append(f"libraries.yml entry {name} (status: active) missing from Lake config")
+    for name in sorted(nonactive_library_names & lake_names):
+        info = libraries[name]
+        errors.append(
+            f"libraries.yml entry {name} (status: {info.status}) "
+            f"appears in Lake config; non-active libraries must not have a lean_lib entry"
+        )
+    for name in sorted(lake_names - active_library_names - nonactive_library_names - KNOWN_EXCEPTIONS):
+        errors.append(f"Lake config library {name} missing from libraries.yml")
     for name in sorted(KNOWN_EXCEPTIONS):
         if name not in lake_names:
             errors.append(f"known exception {name} missing from Lake config")
