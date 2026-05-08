@@ -59,12 +59,62 @@ class PrimeModulus (p : Nat) : Prop where
 def primeModulusOfPrime (hp : Hex.Nat.Prime p) : PrimeModulus p :=
   ⟨hp⟩
 
-private theorem divMod_spec_core (f g : DensePoly (ZMod64 p)) :
+private theorem divMod_spec_core [PrimeModulus p] (f g : DensePoly (ZMod64 p)) :
     let qr := DensePoly.divMod f g
     qr.1 * g + qr.2 = f := by
-  sorry
+  by_cases hgzero : g.isZero
+  · have hgsize : g.size = 0 := by
+      have hcoeffs : g.coeffs.size = 0 := by
+        simpa [DensePoly.isZero, Array.isEmpty_iff_size_eq_zero] using hgzero
+      simpa [DensePoly.size] using hcoeffs
+    have hdiv := DensePoly.divMod_eq_zero_self_of_size_zero_core f g hgsize
+    simp [hdiv]
+    change ((0 : DensePoly (ZMod64 p)) * g) + f = f
+    exact Eq.trans (congrArg (fun x : DensePoly (ZMod64 p) => x + f)
+      (DensePoly.zero_mul (S := ZMod64 p) g)) (DensePoly.zero_add (S := ZMod64 p) f)
+  · apply DensePoly.divMod_reconstruction
+    intro a
+    have hgpos : 0 < g.size := by
+      have hcoeffs : g.coeffs.size ≠ 0 := by
+        simpa [DensePoly.isZero, Array.isEmpty_iff_size_eq_zero] using hgzero
+      simpa [DensePoly.size, Nat.pos_iff_ne_zero] using hcoeffs
+    have hidx : g.coeffs.size - 1 < g.coeffs.size := by
+      simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hgpos
+    have hlead_eq : g.leadingCoeff = g.coeff (g.size - 1) := by
+      unfold DensePoly.leadingCoeff DensePoly.coeff
+      change g.coeffs.back?.getD (0 : ZMod64 p) =
+        g.coeffs.getD (g.coeffs.size - 1) (Zero.zero : ZMod64 p)
+      rw [Array.back?_eq_getElem?]
+      rw [Array.getD_eq_getD_getElem?]
+      rw [Array.getElem?_eq_getElem hidx]
+      rfl
+    have hlead_ne : g.leadingCoeff ≠ (Zero.zero : ZMod64 p) := by
+      rw [hlead_eq]
+      exact DensePoly.coeff_last_ne_zero_of_pos_size g hgpos
+    have hinv : ZMod64.inv g.leadingCoeff * g.leadingCoeff = (1 : ZMod64 p) :=
+      ZMod64.inv_mul_eq_one_of_prime (PrimeModulus.prime (p := p)) hlead_ne
+    have hmul : (a / g.leadingCoeff) * g.leadingCoeff = a := by
+      change (ZMod64.mul a (ZMod64.inv g.leadingCoeff)) * g.leadingCoeff = a
+      calc
+        (ZMod64.mul a (ZMod64.inv g.leadingCoeff)) * g.leadingCoeff =
+            a * (ZMod64.inv g.leadingCoeff * g.leadingCoeff) := by
+              exact Lean.Grind.Semiring.mul_assoc a (ZMod64.inv g.leadingCoeff) g.leadingCoeff
+        _ = a * (1 : ZMod64 p) := by rw [hinv]
+        _ = a := by exact Lean.Grind.Semiring.mul_one a
+    change ZMod64.sub a ((a / g.leadingCoeff) * g.leadingCoeff) = (Zero.zero : ZMod64 p)
+    rw [hmul]
+    change ZMod64.sub a a = (Zero.zero : ZMod64 p)
+    apply ZMod64.ext
+    apply UInt64.toNat_inj.mp
+    change (ZMod64.sub a a).toNat = (Zero.zero : ZMod64 p).toNat
+    rw [ZMod64.toNat_sub]
+    have hsum : a.toNat + (p - a.toNat) = p := by
+      have ha : a.toNat < p := a.toNat_lt
+      omega
+    rw [hsum, Nat.mod_self]
+    exact ZMod64.toNat_zero.symm
 
-private theorem mod_sub_self_eq_mul_neg_div (f m : DensePoly (ZMod64 p)) :
+private theorem mod_sub_self_eq_mul_neg_div [PrimeModulus p] (f m : DensePoly (ZMod64 p)) :
     f % m - f = m * (0 - (f / m)) := by
   have hdiv : (f / m) * m + (f % m) = f := by
     simpa [DensePoly.div, DensePoly.mod] using divMod_spec_core f m
@@ -84,7 +134,7 @@ private theorem mod_sub_self_eq_mul_neg_div (f m : DensePoly (ZMod64 p)) :
     _ = m * (0 - (f / m)) := by
       exact (DensePoly.mul_sub_zero_comm m (f / m)).symm
 
-private theorem congr_mod_core (f m : DensePoly (ZMod64 p)) :
+private theorem congr_mod_core [PrimeModulus p] (f m : DensePoly (ZMod64 p)) :
     DensePoly.Congr (f % m) f m := by
   exact ⟨0 - (f / m), mod_sub_self_eq_mul_neg_div f m⟩
 
@@ -412,7 +462,8 @@ private theorem canonical_remainder_unique_of_pos_degree
     have hmk_eq_rs : (m * k).size = (r - s).size := by rw [← hk]
     omega
 
-private theorem mod_remainders_congr_of_congr (f g m : DensePoly (ZMod64 p))
+private theorem mod_remainders_congr_of_congr [PrimeModulus p]
+    (f g m : DensePoly (ZMod64 p))
     (hcongr : DensePoly.Congr f g m) :
     DensePoly.Congr (f % m) (g % m) m := by
   rcases congr_mod_core f m with ⟨rf, hf⟩
@@ -537,6 +588,25 @@ private theorem mod_eq_mod_of_congr_core
   · exact mod_eq_mod_of_congr_pos_degree f g m hdegree hcongr
   · exact mod_eq_mod_of_congr_not_pos_degree f g m hdegree hcongr
 
+private theorem sub_zero_poly (f : DensePoly (ZMod64 p)) :
+    f - 0 = f := by
+  apply DensePoly.ext_coeff
+  intro n
+  have hzero_sub : (0 : ZMod64 p) - 0 = 0 := by grind
+  rw [DensePoly.coeff_sub f 0 n hzero_sub, DensePoly.coeff_zero]
+  grind
+
+private theorem mod_eq_zero_of_dvd_core
+    [PrimeModulus p] (f g : DensePoly (ZMod64 p)) (hdiv : g ∣ f) :
+    f % g = 0 := by
+  rcases hdiv with ⟨k, hk⟩
+  have hcongr : DensePoly.Congr f 0 g := by
+    refine ⟨k, ?_⟩
+    rw [sub_zero_poly f]
+    exact hk
+  have hmod := mod_eq_mod_of_congr_core f 0 g hcongr
+  exact Eq.trans hmod (DensePoly.zero_mod_eq_zero_core (S := ZMod64 p) g)
+
 private theorem sub_self_right_add (a b : DensePoly (ZMod64 p)) :
     (a + b) - a = b := by
   apply DensePoly.ext_coeff
@@ -659,10 +729,10 @@ instance instDivModLawsZMod64Fp (p : Nat) [Bounds p] [PrimeModulus p] :
       exact zmod_div_one a
   mod_self_eq_zero := by
     intro f
-    sorry
+    exact mod_eq_zero_of_dvd_core f f (DensePoly.dvd_refl_poly f)
   mod_eq_zero_of_dvd := by
     intro f g hdiv
-    sorry
+    exact mod_eq_zero_of_dvd_core f g hdiv
   mod_mod_of_not_pos_degree := by
     intro f g hdegree
     by_cases hsize0 : g.size = 0

@@ -901,6 +901,28 @@ theorem mod_eq_divMod [One R] [Add R] [Sub R] [Mul R] [Div R]
     p % q = (divMod p q).2 := by
   rfl
 
+/-- Zero has zero remainder for the executable division algorithm. -/
+theorem zero_mod_eq_zero_core {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S]
+    (m : DensePoly S) :
+    (0 : DensePoly S) % m = 0 := by
+  change (divMod (0 : DensePoly S) m).2 = 0
+  unfold divMod
+  have hzero : (0 : DensePoly S).coeffs = #[] := rfl
+  have hdeg_zero : (0 : DensePoly S).degree?.getD 0 = 0 := by
+    simp [degree?, size, hzero]
+  rw [hdeg_zero]
+  by_cases hpos : 0 < m.degree?.getD 0
+  · simp [hpos]
+  · rw [if_neg hpos]
+    unfold divModArray
+    simp [hzero, isZero, size, toArray, divModArrayAux]
+    by_cases hm : m.coeffs = #[]
+    · rw [if_pos hm]
+    · rw [if_neg hm]
+      change (ofCoeffs #[] : DensePoly S) = 0
+      rfl
+
 theorem divMod_eq_zero_self_of_degree_lt [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) :
     p.degree?.getD 0 < q.degree?.getD 0 → divMod p q = (0, p) := by
@@ -2819,6 +2841,20 @@ theorem divModArray_reconstruction {S : Type _}
       ofCoeffs_replicate_zero _
     rw [hofq, hofp, hofquot, zero_mul, zero_add] at hreconstr
     exact hreconstr
+
+/-- Reconstruction identity for the executable long division wrapper. -/
+theorem divMod_reconstruction {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S] [Div S]
+    (p q : DensePoly S)
+    (hcancel : ∀ a : S, a - (a / q.leadingCoeff) * q.leadingCoeff = (Zero.zero : S)) :
+    let qr := divMod p q
+    qr.1 * q + qr.2 = p := by
+  unfold divMod
+  by_cases hdeg : p.degree?.getD 0 < q.degree?.getD 0
+  · simp [hdeg]
+    rw [zero_mul, zero_add]
+  · simp [hdeg]
+    exact divModArray_reconstruction p q (fun coeff => coeff / q.leadingCoeff) hcancel
 
 /-- The nonnegative gcd of the coefficients of an integer polynomial. -/
 private def contentNat (p : DensePoly Int) : Nat :=
