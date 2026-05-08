@@ -141,7 +141,7 @@ libraries:
   HexBerlekamp:
     deps: [HexPolyFp, HexMatrix, HexGfqRing]
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
   HexHensel:
     deps: [HexPolyFp, HexPolyZ]
