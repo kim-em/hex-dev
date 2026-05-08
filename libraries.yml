@@ -87,8 +87,16 @@ libraries:
   HexModArith:
     deps: [HexArith]
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
+    phase4:
+      input_families:
+        - name: word-residue-core
+          description: Fixed-word prime-modulus residues for construction, casts, add/sub, extern multiplication, exponentiation, and inverse.
+        - name: barrett-hot-loop
+          description: Barrett-context multiplication chains over the UInt64 residue wrapper on the shared small odd prime modulus.
+        - name: montgomery-hot-loop
+          description: Montgomery conversion, Montgomery-form multiplication chains, and conversion back on the shared small odd prime modulus.
   HexGramSchmidt:
     deps: [HexMatrix]
     mathlib: false
