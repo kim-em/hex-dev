@@ -65,8 +65,18 @@ libraries:
   HexPoly:
     deps: []
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
+    phase4:
+      input_families:
+        - name: dense-int-arithmetic
+          description: Deterministic dense integer polynomials for coefficientwise arithmetic, multiplication, derivative, and composition.
+        - name: field-euclidean
+          description: Fixed-size F7 dense polynomials for division, monic remainder, gcd, and extended gcd.
+        - name: integer-content
+          description: Dense integer polynomials with nontrivial coefficient content for content and primitive-part operations.
+        - name: polynomial-crt
+          description: Coprime monic rational-polynomial moduli and residues for CRT witness construction.
   HexMatrix:
     deps: []
     mathlib: false
