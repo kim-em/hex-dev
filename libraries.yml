@@ -134,7 +134,7 @@ libraries:
   HexGfqField:
     deps: [HexGfqRing, HexBerlekamp]
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
 
   # ---------- Factoring pipeline ----------
