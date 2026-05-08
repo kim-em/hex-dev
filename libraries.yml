@@ -122,7 +122,7 @@ libraries:
   HexPolyFp:
     deps: [HexPoly, HexModArith]
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
 
   # ---------- Finite-field quotient pipeline ----------
