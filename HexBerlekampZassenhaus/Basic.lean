@@ -1302,10 +1302,25 @@ private def factorFastCoreWithBound
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Nat → Nat → Option (Array ZPoly)
   | _k, 0 => none
   | k, fuel + 1 =>
-      if k ≥ B then
-        none
-      else
-        factorFastCoreWithBound core B primeData (nextHenselPrecision k B) fuel
+      let liftData := henselLiftData core k primeData
+      match bhksRecover? core liftData with
+      | some factors => some factors
+      | none =>
+        if k ≥ B then
+          none
+        else
+          factorFastCoreWithBound core B primeData (nextHenselPrecision k B) fuel
+
+private def factorFastCoreGuardPrimeData : PrimeChoiceData :=
+  choosePrimeData cldGuardF
+
+#guard factorFastCoreWithBound cldGuardF 1 factorFastCoreGuardPrimeData
+    (initialHenselPrecision 1) (ZPoly.quadraticDoublingSteps 1 + 2) =
+  none
+
+#guard factorFastCoreWithBound cldGuardF 4 factorFastCoreGuardPrimeData
+    (initialHenselPrecision 4) (ZPoly.quadraticDoublingSteps 4 + 2) =
+  some bhksGuardFactors
 
 /--
 Adaptively lift and retry LLL recombination, using the explicit bound as the
@@ -1369,13 +1384,17 @@ private def factorFastWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
     | some coreFactors => some (reassembleNormalizedFactors normalized coreFactors)
     | none => none
 
-/--
-Conservative public fast-path surface for the future van Hoeij CLD
-implementation.
+#guard factorFastWithBound cldGuardF 1 = none
 
-Until the BHKS lattice and recovery procedure replace the existing additive
-LLL internals, this function may report `none` instead of treating additive
-short-vector output as a successful fast recombination certificate.
+#guard factorFastWithBound cldGuardF 4 =
+  some bhksGuardFactors
+
+/--
+Public van Hoeij CLD fast path with the BHKS precision cap.
+
+The bounded core loop only accepts candidates certified by the fixed-precision
+BHKS recovery pipeline; if every precision up to the cap misses, this reports
+`none` so the public `factor` combinator can use the slow backstop.
 -/
 def factorFast (f : ZPoly) : Option (Array ZPoly) :=
   factorFastWithBound f (bhksBound f)
@@ -1383,6 +1402,8 @@ def factorFast (f : ZPoly) : Option (Array ZPoly) :=
 /-- Factor with an explicit coefficient bound for the recombination stage. -/
 def factorWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
   (factorFastWithBound f B).getD (factorSlowWithBound f B)
+
+#guard Array.polyProduct (factorWithBound cldGuardF 1) = cldGuardF
 
 /-- Factor using the public fast path with exhaustive slow fallback. -/
 def factor (f : ZPoly) : Array ZPoly :=
