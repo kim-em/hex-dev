@@ -160,28 +160,27 @@ The tactic implements 1-dimensional CAD:
    real root of some subset of the `pⱼ`s (those for which `pⱼ` has
    that real root).
 
-   Concrete test points for **open** cells: midpoint of
+   Open cells carry an explicit dyadic test point: midpoint of
    `(bᵢ, aᵢ₊₁]` for the central open cells; `−M − 1` for
-   `OpenLeftTail`; `M + 1` for `OpenRightTail`. **`RootPoint Iᵢ`
-   cells have no test point** — they represent an unknown root
-   `rᵢ ∈ (aᵢ, bᵢ]`, and step 6 determines their sign assignments
-   via the `gⱼ := gcd(pⱼ, P)` mechanism instead of point evaluation.
+   `OpenLeftTail`; `M + 1` for `OpenRightTail`. `RootPoint Iᵢ`
+   cells represent the unknown root `rᵢ ∈ (aᵢ, bᵢ]`; their sign
+   assignments come from the `gⱼ := gcd(pⱼ, P)` mechanism in
+   step 6.
 
 6. **Sign matrix.** For each cell, determine `sign pⱼ` on the cell:
    - Open-interval cells (and tails): evaluate `pⱼ` at the dyadic
-     test point. The result is in `{−1, +1}` (never zero: a zero
-     would make the test point a root of `pⱼ`, hence of `P`, hence
-     not interior to the cell).
+     test point. The result is in `{−1, +1}`: every root of `pⱼ`
+     is a root of `P`, and the test point is interior to the cell.
    - Root-point cells `RootPoint Iᵢ` representing `rᵢ`: precompute
      `gⱼ := gcd(pⱼ, P)`. Then `pⱼ(rᵢ) = 0` iff `gⱼ` has a real
      root in the isolation interval `Iᵢ`. Decide this by computing
-     `signVariations` of `gⱼ`'s Möbius transform on `Iᵢ`: if `≥ 1`,
-     `gⱼ` has a root in `Iᵢ` (it is `rᵢ`, since `gⱼ ∣ P` and `Iᵢ`
-     contains exactly one `P`-root); if `= 0`, no root, so
-     `pⱼ(rᵢ) ≠ 0`. When `pⱼ(rᵢ) ≠ 0`, the sign at `rᵢ` equals
-     `sign pⱼ` on either of the two adjacent open-interval cells
-     (which agree, because no root of `pⱼ` lies between them other
-     than possibly `rᵢ` itself).
+     `signVariations` of `gⱼ`'s Möbius transform on `Iᵢ`: `≥ 1`
+     means `gⱼ` has a root in `Iᵢ` (which equals `rᵢ`, since
+     `gⱼ ∣ P` and `Iᵢ` contains exactly one `P`-root); `= 0`
+     means `pⱼ(rᵢ) ≠ 0`. When `pⱼ(rᵢ) ≠ 0`, the sign at `rᵢ`
+     equals `sign pⱼ` on either of the two adjacent open-interval
+     cells (which agree, since `pⱼ`'s only possible root between
+     them is `rᵢ` itself).
 
    The result is a `m × k` matrix of signs `{−1, 0, +1}`.
 

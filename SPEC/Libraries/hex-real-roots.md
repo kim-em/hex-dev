@@ -5,10 +5,8 @@ A "real root isolation" is a dyadic interval `(a, b]` together with a
 witness, dischargeable by `cbv_decide`, that exactly one simple real
 root of `p ∈ ℤ[x]` lies in the interval. Initial isolation uses
 Descartes' rule of signs on Möbius transforms (Uspensky's algorithm);
-once isolated, refinement bisects the interval and uses sign
-evaluation at the midpoint plus IVT to follow the half containing
-the root — no further Descartes computation is needed past initial
-isolation.
+refinement bisects the interval and uses sign evaluation at the
+midpoint plus IVT to follow the half containing the root.
 
 The companion to [hex-roots](hex-roots.md) (complex root isolation
 via BSSY): same project conventions for dyadic centres, the
@@ -143,9 +141,8 @@ def realRootSeparation (p : ZPoly) : Nat
 ```
 
 `refine1` bisects at the dyadic midpoint `m := (a + b)/2` and uses
-sign evaluation (not Descartes) to pick the half containing the
-root: evaluate `p(m)` as an integer sign, and combine with `p(a)`,
-`p(b)` via IVT.
+integer sign evaluation at endpoints + IVT to pick the half
+containing the root:
 
 - If `p(m) = 0`, the root is `m`; return `(a, m]` (half-open
   includes `m`).
@@ -153,20 +150,19 @@ root: evaluate `p(m)` as an integer sign, and combine with `p(a)`,
   `(a, m]`; return that half.
 - Otherwise the root is in `(m, b]`; return that half.
 
-This is total integer-sign computation, no Descartes recursion, no
-possibility of failure. `refine` and `refineTo` iterate.
+`refine` and `refineTo` iterate `refine1`.
 
 `isolate?` runs the Uspensky bisection driver: starting from the
 worklist `[(−M, M]]` with `M := max(lmqBound p, lmqBound (p(−x)))`,
 repeat: pop an interval; compute `signVariations(p_M)`; if 0,
 discard; if 1, emit; if ≥ 2 and current precision < targetPrecision,
 bisect; if ≥ 2 and precision = targetPrecision, abort with `none`.
-The function terminates structurally (`targetPrecision − currentPrecision : ℕ`
-strictly decreases at each bisection). The Mathlib bridge proves
-that `isolate? p h (realRootSeparation p)` is never `none` (every
-remaining interval at that precision has `signVariations ≤ 1` by
-the Mahler/Mignotte real-root separation bound), but that
-guarantee lives in `hex-real-roots-mathlib`, not in this library.
+The function terminates structurally
+(`targetPrecision − currentPrecision : ℕ` strictly decreases at each
+bisection). The "always-`some` at `realRootSeparation p`" guarantee
+lives in `hex-real-roots-mathlib`, where the
+Mahler/Mignotte real-root separation bound establishes that every
+remaining interval has `signVariations ≤ 1` at that precision.
 
 ## SimpleRealRoot quotient and the threading pattern
 
@@ -201,17 +197,13 @@ Equivalent isolations (same root) produce the same canonical
 interval; non-equivalent isolations (different roots) produce
 different ones.
 
-Caution against the obvious-but-wrong shortcut: "intervals overlap
-iff same root" is *not* a decidable characterisation, even after
-refinement. The half-open `(a, b]` convention permits two
-isolations of distinct roots `r₁ < r₂` to overlap without either
-root sitting in the overlap region — e.g. `iso₁ = (0.4, 0.55]`
-holding `r₁ = 0.5` and `iso₂ = (0.5, 0.6]` holding `r₂ = 0.6`
-overlap at `(0.5, 0.55]`, with `0.5 ∉ iso₂` (left-excluded) and
-`0.6 ∉ iso₁` (out of range). Refining to a precision strictly
-less than `(root gap)/2` would close this loophole, but the
-canonicalisation route avoids the precision-bookkeeping subtlety
-entirely.
+Note that under the half-open `(a, b]` convention, two isolations
+of *distinct* roots `r₁ < r₂` can have overlapping intervals: e.g.
+`iso₁ = (0.4, 0.55]` holding `r₁ = 0.5` and `iso₂ = (0.5, 0.6]`
+holding `r₂ = 0.6` overlap at `(0.5, 0.55]`, with `0.5 ∉ iso₂`
+(left-excluded) and `0.6 ∉ iso₁` (out of range). Equivalence is
+therefore characterised by the canonicalised representatives, not
+by interval overlap.
 
 The **threading pattern** is the same as in `hex-roots`: callers
 holding a `SimpleRealRoot p` should refine once and forward the
@@ -234,9 +226,9 @@ not the discriminant value itself).
 `realRootSeparation p` is computed by the executable library so
 callers can pass it as `targetPrecision` to `isolate?`. The
 guarantee that `isolate? p h (realRootSeparation p) ≠ none` is a
-Mathlib-bridge theorem (`isolate?_succeeds_at_separation_precision`
-in `hex-real-roots-mathlib`); the executable library makes no
-such claim.
+Mathlib-bridge theorem
+(`isolate?_succeeds_at_separation_precision` in
+`hex-real-roots-mathlib`).
 
 This is the analogue of [hex-roots](hex-roots.md)'s `mahlerPrec`
 restricted to the real case.
@@ -264,8 +256,7 @@ The Uspensky bisection algorithm:
 4. **Refinement.** A `RealRootIsolation` at precision `prec` is
    refined to `prec + 1` by bisecting at the midpoint `m`, evaluating
    `sign(p(m))`, and selecting the half containing the root via IVT
-   (see `refine1` in §"Operations" for the decision rules). No
-   further Möbius+Descartes computation past initial isolation.
+   (see `refine1` in §"Operations" for the decision rules).
 
 `isolate?` terminates structurally on `targetPrecision − currentPrecision`,
 which strictly decreases at each bisection; once it reaches zero, the
