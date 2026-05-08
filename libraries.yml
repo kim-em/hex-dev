@@ -172,7 +172,7 @@ libraries:
   HexConway:
     deps: [HexBerlekamp]
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
   HexGfq:
     deps: [HexGfqField, HexConway, HexGF2]
