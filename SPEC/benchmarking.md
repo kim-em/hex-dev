@@ -211,6 +211,12 @@ concern:
 If a tactic's compile time matters, it's a Lean / tactic-author
 issue and goes to a different tracker.
 
+CPU profiling of compiled benchmark binaries is **in scope** and is
+a Phase-4 deliverable; see [profiling.md](profiling.md). A bench
+verdict of "consistent with declared complexity" only checks
+asymptotics; profiling is what attributes the constant factor and
+catches dominant costs that the registered targets do not measure.
+
 ## Within-Lean comparisons
 
 Where a SPEC names alternative algorithms or representations,
@@ -281,20 +287,89 @@ Where a SPEC asks for a comparison lean-bench cannot directly model,
 file the gap as a feature request against lean-bench. Do not invent
 a parallel hex-local benchmark harness; one harness is the rule.
 
-Each SPEC-required external comparator must end in exactly one of
+### Comparator classification: `gating` vs `informational`
+
+Every external comparator named by a per-library SPEC carries a
+classification that determines whether it gates Phase-4 completion:
+
+- **`gating`** — the comparator must be wired before Phase-4 can be
+  claimed, the headline report records the measured ratio, and the
+  per-library SPEC may state a performance goal against it (e.g.
+  "at least as fast as X on shared canonical inputs"). A `gating`
+  comparator is the right yardstick for the library — typically
+  another implementation of the same algorithm at the same level of
+  abstraction, where the constant-factor gap is meaningful.
+- **`informational`** — the comparator's ratio is recorded in the
+  headline report but does not gate Phase-4. Use this when the
+  comparator is structurally different (e.g. a floating-point
+  implementation versus an integer-only verified one) but still
+  useful as orientation. An `informational` comparator may be
+  scheduled-only.
+
+A comparator declared `gating` must end Phase-4 in exactly one of
 these states:
 
 - **implemented now** — registration and execution path land in the
   current Phase-4 work;
-- **scheduled-only** — registration lands now, but execution is
-  deferred to scheduled/release benchmarking, with the required
-  environment stated in the bench module docstring;
 - **blocked** — a narrow repo-local issue is filed for the missing
   capability, and the library does not claim Phase-4 completion.
+
+A comparator declared `informational` may additionally be
+**scheduled-only**: registration lands now, but execution is
+deferred to scheduled/release benchmarking, with the required
+environment stated in the bench module docstring.
 
 Do not stub comparator outputs. Do not silently omit a required
 comparator. If the blocker is a missing lean-bench feature, file
 both the upstream feature request and the repo-local blocking issue.
+
+### Comparator naming
+
+Per-library SPECs name the external comparators they require for
+Phase 4. Naming has two surfaces:
+
+- **SPEC text** in `SPEC/Libraries/<lib>.md` describes each
+  comparator with enough specificity for a clean-room re-
+  implementation to identify the same tool: project name, source
+  link, and any structural variant (e.g. "fpLLL via fpylll", "the
+  Haskell extraction of the verified Isabelle LLL from AFP entry
+  `LLL_Basis_Reduction`, Zenodo deposit 2636367"). Version pinning
+  is a per-comparator implementation choice; the SPEC names the
+  tool, not its commit hash.
+- **Structured metadata** in [`libraries.yml`](../libraries.yml)
+  carries the same comparator list under the per-library
+  `phase4.comparators` key. Each entry has `tool`, `class`, and an
+  optional `rationale` (for `informational`) or `goal` (for
+  `gating`). Mechanical scripts read this; SPEC text carries the
+  narrative.
+
+A library SPEC must not name a comparator without classifying it.
+Phase 4 is blocked until every `gating` comparator is wired and
+its measured ratio recorded in the headline report ([§Headline
+reports](#headline-reports)).
+
+### The Attribution rule
+
+Every asymptotically significant phase of an algorithm — whether
+identified by the per-library SPEC, by profiling, or by both —
+must be registered as its own `setup_benchmark` (or
+`setup_fixed_benchmark`) **if it can be separated from the
+surrounding code**. If profiling shows a dominant inclusive cost
+that is not attributable to a registered target, Phase 4 cannot be
+claimed (or must be rolled back) until either:
+
+- the cost is attributed to a new target, with a derivation
+  comment per [the cost-model derivation rule](#harness-lean-bench);
+  or
+- the per-library SPEC is amended with a written rationale for why
+  the cost cannot be separated.
+
+This is a hard rule, not discretionary. The motivation: an end-to-
+end registration whose dominant cost is hidden inside a setup or
+prep step that is itself sized non-trivially in the parameter does
+not detect a wrong-asymptotic implementation in that step. The
+attribution is what lets a future profiling finding be diagnosed
+unambiguously.
 
 ## Fixed-problem benchmarks
 
@@ -455,6 +530,70 @@ committed hard polynomial, a committed lattice basis), the same
 `setup_benchmark`-style registration carries both signals: timing
 in the JSONL output, agreement via the result hash and `compare`.
 
+## Headline reports
+
+Every library at `done_through ≥ 4` must have a headline performance
+report at `reports/<lib>-performance.md`. The report is the
+single, scannable place a reviewer can land on to see whether
+Phase-4 coverage is real and what is known about the library's
+performance shape.
+
+The report contains five subsections:
+
+1. **Bench targets.** The registered bench targets and their
+   declared complexities, copied (not paraphrased) from the
+   `setup_benchmark` registration sites.
+2. **Verdicts.** Each parametric registration's verdict at
+   scientific settings ("consistent with declared complexity",
+   "inconclusive", with the verdict text). Each fixed registration's
+   median per-call time and observed-hash agreement.
+3. **Comparator ratios.** Each comparator named in the per-library
+   SPEC ([§Comparator naming](#comparator-naming)) — `gating` and
+   `informational` alike — with a measured ratio at the bottom of
+   the parameter ladder for parametric registrations, or on the
+   canonical input for fixed registrations. A short narrative
+   paragraph interprets the ratios: what is comfortable, what is
+   not, and why.
+4. **Profile.** Per [profiling.md §Coverage requirement](profiling.md),
+   one representative case per `phase4.input_families`. Dominant
+   inclusive costs are named and explained, with leaf cost
+   categorised across {own code, GMP, allocation, Lean runtime}.
+   Any inclusive cost the author cannot attribute to a registered
+   bench target is filed as an audit-found issue per
+   [Conventions.md §Bench-found, conformance-found, and audit-found
+   issues](../PLAN/Conventions.md#bench-found-conformance-found-and-audit-found-issues)
+   and linked from the next subsection.
+5. **Concerns.** Audit-found issues filed against this library
+   that have not yet resolved. The library cannot **remain** at
+   `done_through: 4` while any Concern is unresolved (see
+   [PLAN/Phase4.md §Exit criteria](../PLAN/Phase4.md#exit-criteria)
+   for the rollback rule). Each Concern entry is a one-line
+   summary linking the open HO issue.
+
+### Artefact traceability
+
+Every numeric claim in a headline report is traceable: the report
+cites the exact bench case name, the command line that produced
+the number, the seed or parameter, the JSONL row path or hash,
+the profile artefact location, and the comparator's source. A
+narrative without traceable artefacts does not satisfy this
+requirement.
+
+The `reports/<lib>-performance.md` file is overwrite-on-rerun:
+when the report is regenerated against a newer build, the previous
+content is replaced and `git log -- reports/<lib>-performance.md`
+is the history channel. There is one current snapshot per library
+in `reports/`.
+
+### Reports vs SPEC
+
+The headline report is observed state at a specific commit on
+specific hardware; per-library SPEC text under `SPEC/Libraries/`
+states the requirements the library must meet. They live in
+different directories deliberately: `reports/` is mutable observed
+state, `SPEC/` is normative and follows the immutability rules in
+[Conventions.md](../PLAN/Conventions.md).
+
 ## Anti-patterns
 
 These behaviours have surfaced in past benchmarking work and are
@@ -535,6 +674,30 @@ explicitly forbidden:
   harness reports "consistent" is not a fix — it is laundering the
   verdict. Inconclusive means raise the schedule or file a
   finding-issue against the implementation, never re-declare.
+- **Best-case / short-circuit inputs as sole Phase-4 evidence.**
+  Inputs the algorithm walks past in its happy path — even when
+  they don't formally fail any precondition — cannot be the sole
+  Phase-4 evidence. They may appear as supplemental smoke or fixed
+  cases, alongside at least one input family that demonstrably
+  exercises every claimed-significant phase of the algorithm.
+  Required Phase-4 input families are specified in the per-library
+  SPEC and cross-referenced as `phase4.input_families` in
+  `libraries.yml`. Exemplar to avoid: an LLL end-to-end bench whose
+  only input is the identity basis — the LLL outer loop visits every
+  k but does no row update and no swap fires, so the registration
+  measures the loop's traversal cost and nothing about size
+  reduction or Lovász swaps.
+- **Dominant profiled cost left unattributed.** A profile run
+  (per [profiling.md](profiling.md)) that finds a dominant
+  inclusive cost not attributable to a registered bench target
+  triggers the [§Attribution rule](#the-attribution-rule):
+  Phase-4 cannot be claimed (or must be rolled back) until the
+  cost is attributed to its own target, or the per-library SPEC
+  is amended explaining why it cannot be separated. Exemplar:
+  an LLL `setup_benchmark` for `lll` whose dominant cost is
+  inside an `LLLState.ofBasis` prep step that is itself
+  sized in `n` — that step is its own asymptotically significant
+  phase and needs its own registration.
 
 Every `setup_benchmark` registration must carry an adjacent comment
 deriving its `n => …` from the algorithm: which step dominates, and
