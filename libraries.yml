@@ -100,7 +100,7 @@ libraries:
   HexGramSchmidt:
     deps: [HexMatrix]
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
   HexGF2:
     deps: [HexPoly]
