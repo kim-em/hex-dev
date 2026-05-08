@@ -91,9 +91,10 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
     in_libraries = False
     current_name: str | None = None
     current_fields: dict[str, object] = {}
+    current_nested_key: str | None = None
 
     def flush_current() -> None:
-        nonlocal current_name, current_fields
+        nonlocal current_name, current_fields, current_nested_key
         if current_name is None:
             return
         missing = {"deps", "mathlib", "done_through", "status"} - current_fields.keys()
@@ -129,6 +130,7 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
         )
         current_name = None
         current_fields = {}
+        current_nested_key = None
 
     for raw_line in lines:
         content = raw_line.split("#", 1)[0].rstrip()
@@ -145,10 +147,18 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
             current_name = stripped[:-1]
             if not current_name:
                 raise ValueError("empty library name")
+            current_nested_key = None
             continue
         if indent == 4 and ":" in stripped and current_name is not None:
             key, value = [part.strip() for part in stripped.split(":", 1)]
+            if key == "phase4" and value == "":
+                current_fields[key] = {}
+                current_nested_key = key
+                continue
             current_fields[key] = _parse_scalar(value)
+            current_nested_key = None
+            continue
+        if indent > 4 and current_name is not None and current_nested_key == "phase4":
             continue
         raise ValueError(f"cannot parse line: {raw_line}")
     flush_current()
