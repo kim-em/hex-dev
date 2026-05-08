@@ -117,7 +117,7 @@ libraries:
   HexLLL:
     deps: [HexGramSchmidt]
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
     phase4:
       comparators:
