@@ -300,6 +300,29 @@ structure FactorNormalizationData where
   squareFreeCore : ZPoly
   repeatedPart : ZPoly
 
+/--
+Public integer-polynomial factorization result.
+
+The scalar carries the signed content of the input. Polynomial factors are
+stored with explicit multiplicities; factor order remains operational.
+-/
+structure Factorization where
+  scalar : Int
+  factors : Array (ZPoly × Nat)
+deriving DecidableEq
+
+namespace Factorization
+
+private def polyPow (f : ZPoly) : Nat → ZPoly
+  | 0 => 1
+  | n + 1 => polyPow f n * f
+
+/-- Expand multiplicity pairs into the ordered polynomial product. -/
+def product (φ : Factorization) : ZPoly :=
+  φ.factors.foldl (fun acc factor => acc * polyPow factor.1 factor.2) (DensePoly.C φ.scalar)
+
+end Factorization
+
 /-- Compute the normalization data required before the square-free pipeline. -/
 def normalizeForFactor (f : ZPoly) : FactorNormalizationData :=
   let primitive := ZPoly.primitivePart f
@@ -327,6 +350,45 @@ private def repeatedPartFactorArray (repeatedPart : ZPoly) : Array ZPoly :=
   else
     #[repeatedPart]
 
+private def signedContentScalar (f : ZPoly) : Int :=
+  if f = 0 then
+    0
+  else if DensePoly.leadingCoeff f < 0 then
+    -ZPoly.content f
+  else
+    ZPoly.content f
+
+private def normalizeFactorSign (f : ZPoly) : ZPoly :=
+  if DensePoly.leadingCoeff f < 0 then
+    DensePoly.scale (-1 : Int) f
+  else
+    f
+
+private def shouldRecordPolynomialFactor (f : ZPoly) : Bool :=
+  f ≠ 0 && f ≠ 1 && f ≠ DensePoly.C (-1)
+
+private def bumpFactorMultiplicity (f : ZPoly) : List (ZPoly × Nat) → List (ZPoly × Nat)
+  | [] => [(f, 1)]
+  | entry :: entries =>
+      if entry.1 = f then
+        (entry.1, entry.2 + 1) :: entries
+      else
+        entry :: bumpFactorMultiplicity f entries
+
+private def collectFactorMultiplicities (factors : Array ZPoly) : Array (ZPoly × Nat) :=
+  factors.toList.foldl
+    (fun acc factor =>
+      let factor := normalizeFactorSign factor
+      if shouldRecordPolynomialFactor factor then
+        bumpFactorMultiplicity factor acc
+      else
+        acc)
+    []
+  |>.reverse.toArray
+
+private def polynomialNormalizationPrefixFactors (d : FactorNormalizationData) : Array ZPoly :=
+  xPowerFactorArray d.xPower ++ repeatedPartFactorArray d.repeatedPart
+
 /-- Factors that come from normalization before the square-free core is factored. -/
 def normalizationPrefixFactors (d : FactorNormalizationData) : Array ZPoly :=
   contentFactorArray d.content ++
@@ -337,6 +399,14 @@ def normalizationPrefixFactors (d : FactorNormalizationData) : Array ZPoly :=
 def reassembleNormalizedFactors
     (d : FactorNormalizationData) (coreFactors : Array ZPoly) : Array ZPoly :=
   normalizationPrefixFactors d ++ coreFactors
+
+private def reassemblePolynomialFactors
+    (d : FactorNormalizationData) (coreFactors : Array ZPoly) : Array ZPoly :=
+  polynomialNormalizationPrefixFactors d ++ coreFactors
+
+private def factorizationOfFactors (f : ZPoly) (factors : Array ZPoly) : Factorization :=
+  { scalar := signedContentScalar f
+    factors := collectFactorMultiplicities factors }
 
 private def normalizedConstantFactors (d : FactorNormalizationData) : Array ZPoly :=
   let coreFactor :=
@@ -1353,47 +1423,53 @@ private def exhaustiveCoreFactorsWithBound
     else
       factors
 
-private def factorSlowWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
+private def factorSlowFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
   let normalized := normalizeForFactor f
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
-    normalizedConstantFactors normalized
+    reassemblePolynomialFactors normalized #[]
   else
     let primeData := choosePrimeData normalized.squareFreeCore
     let coreFactors :=
       exhaustiveCoreFactorsWithBound normalized.squareFreeCore B primeData
-    reassembleNormalizedFactors normalized coreFactors
+    reassemblePolynomialFactors normalized coreFactors
+
+private def factorSlowWithBound (f : ZPoly) (B : Nat) : Factorization :=
+  factorizationOfFactors f (factorSlowFactorsWithBound f B)
 
 /--
 Factor using the exhaustive recombination path at the default Mignotte
 coefficient bound. This is the public slow-path backstop for the two-tier BZ
 API.
 -/
-def factorSlow (f : ZPoly) : Array ZPoly :=
+def factorSlow (f : ZPoly) : Factorization :=
   factorSlowWithBound f (ZPoly.defaultFactorCoeffBound f)
 
-private def factorFastWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
+private def factorFastFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
   let normalized := normalizeForFactor f
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
-    some (normalizedConstantFactors normalized)
+    some (reassemblePolynomialFactors normalized #[])
   else if B = 0 then
     none
   else
     let primeData := choosePrimeData normalized.squareFreeCore
     if primeData.factorsModP.size ≤ 1 then
-      some (reassembleNormalizedFactors normalized #[normalized.squareFreeCore])
+      some (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
     else
       match factorFastCoreWithBound normalized.squareFreeCore B primeData
           (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2) with
-      | some coreFactors => some (reassembleNormalizedFactors normalized coreFactors)
+      | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
       | none => none
 
-#guard factorFastWithBound cldGuardF 1 = none
+#guard factorFastFactorsWithBound cldGuardF 1 = none
 
-#guard factorFastWithBound cldGuardF 4 =
+#guard factorFastFactorsWithBound cldGuardF 4 =
   some bhksGuardFactors
 
 private def factorFastPrecisionCap (f : ZPoly) : Nat :=
   min (bhksBound f) (ZPoly.defaultFactorCoeffBound f)
+
+private def factorFastWithBound (f : ZPoly) (B : Nat) : Option Factorization :=
+  (factorFastFactorsWithBound f B).map (factorizationOfFactors f)
 
 /--
 Public van Hoeij CLD fast path with a practical precision cap.
@@ -1402,23 +1478,59 @@ The bounded core loop only accepts candidates certified by the fixed-precision
 BHKS recovery pipeline; if every precision up to the cap misses, this reports
 `none` so the public `factor` combinator can use the slow backstop.
 -/
-def factorFast (f : ZPoly) : Option (Array ZPoly) :=
+def factorFast (f : ZPoly) : Option Factorization :=
   factorFastWithBound f (factorFastPrecisionCap f)
 
-#guard factorFast (DensePoly.ofCoeffs #[1, 1, 1, 1, 1]) =
-  some #[DensePoly.ofCoeffs #[1, 1, 1, 1, 1]]
+#guard (factorFast (DensePoly.ofCoeffs #[1, 1, 1, 1, 1])).map Factorization.product =
+  some (DensePoly.ofCoeffs #[1, 1, 1, 1, 1])
 
 #guard factorFast (DensePoly.ofCoeffs #[1, 0, 0, 0, 1]) = none
 
 /-- Factor with an explicit coefficient bound for the recombination stage. -/
-def factorWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
+def factorWithBound (f : ZPoly) (B : Nat) : Factorization :=
   (factorFastWithBound f B).getD (factorSlowWithBound f B)
 
-#guard Array.polyProduct (factorWithBound cldGuardF 1) = cldGuardF
+#guard Factorization.product (factorWithBound cldGuardF 1) = cldGuardF
 
 /-- Factor using the public fast path with exhaustive slow fallback. -/
-def factor (f : ZPoly) : Array ZPoly :=
+def factor (f : ZPoly) : Factorization :=
   (factorFast f).getD (factorSlow f)
+
+namespace ZPoly
+
+/-- Mathlib-free irreducibility predicate for integer polynomials. -/
+class Irreducible (f : ZPoly) : Prop where
+  not_zero : f ≠ 0
+  not_unit : ¬ ZPoly.IsUnit f
+  no_factors :
+    ∀ a b : ZPoly, f = a * b → ZPoly.IsUnit a ∨ ZPoly.IsUnit b
+
+private def isNatPrime (n : Nat) : Bool :=
+  2 ≤ n && !((List.range n).any fun d => 2 ≤ d && d * d ≤ n && n % d == 0)
+
+/-- Computational irreducibility checker backed by the public factorization API. -/
+def isIrreducible (f : ZPoly) : Bool :=
+  if f = 0 then
+    false
+  else if f.degree?.getD 0 = 0 then
+    let k := (f.coeff 0).natAbs
+    isNatPrime k
+  else
+    let φ := factor f
+    decide (φ.scalar.natAbs = 1) &&
+      φ.factors.size == 1 &&
+      match φ.factors.toList with
+      | [entry] => decide (entry.2 = 1)
+      | _ => false
+
+theorem isIrreducible_iff (f : ZPoly) :
+    isIrreducible f = true ↔ Irreducible f := by
+  sorry
+
+instance instDecidableIrreducible (f : ZPoly) : Decidable (Irreducible f) :=
+  decidable_of_iff _ (isIrreducible_iff f)
+
+end ZPoly
 
 /--
 Conditional product contract for the bounded factorization entry point.
@@ -1427,7 +1539,7 @@ the later proof layer.
 -/
 theorem factor_product_of_bound (f : ZPoly) (B : Nat)
     (hB : ∀ g : ZPoly, g ∣ f → ∀ i, (g.coeff i).natAbs ≤ B) :
-    Array.foldl (· * ·) 1 (factorWithBound f B) = f := by
+    Factorization.product (factorWithBound f B) = f := by
   sorry
 
 /--

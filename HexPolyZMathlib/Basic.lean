@@ -1,4 +1,6 @@
 import HexPolyMathlib.Basic
+import Mathlib.Algebra.Polynomial.Degree.Units
+import Mathlib.Algebra.Ring.Int.Units
 import HexPolyZ
 
 /-!
@@ -75,6 +77,25 @@ theorem equiv_apply (p : Hex.ZPoly) :
 theorem equiv_symm_apply (p : Polynomial ℤ) :
     equiv.symm p = ofPolynomial p := by
   rfl
+
+/-- The Mathlib-free `ZPoly` unit predicate agrees with Mathlib units after
+transport to `Polynomial ℤ`. -/
+theorem isUnit_iff_toPolynomial_isUnit (f : Hex.ZPoly) :
+    Hex.ZPoly.IsUnit f ↔ IsUnit (toPolynomial f) := by
+  constructor
+  · rintro (rfl | rfl)
+    · simp
+    · simp
+  · intro h
+    rcases Polynomial.isUnit_iff.mp h with ⟨r, hr, hpoly⟩
+    have hf : f = Hex.DensePoly.C r := by
+      exact equiv.injective (by
+        simpa using hpoly.symm)
+    rcases Int.isUnit_iff.mp hr with hr | hr
+    · left
+      simp [hf, hr]
+    · right
+      simp [hf, hr]
 
 end
 

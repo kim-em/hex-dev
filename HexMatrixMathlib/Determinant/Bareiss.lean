@@ -289,6 +289,81 @@ theorem bareissPivotNoPivot_leadingPrefix_det_eq_zero
   rw [hpivot_det, borderedMinor_corner_eq_leadingPrefix source state.step hk] at hpivot
   exact hpivot
 
+/-- One-step zero propagation for the singular row-pivoted Bareiss branch.
+
+If the current `k`-bordered trailing pivot column is zero at every row at or
+below `k`, then every `(k + 1)`-bordered minor one step deeper is zero.  The
+proof is the Desnanot-Jacobi recurrence: both numerator terms contain a zero
+minor from the failed pivot column, and the previous leading-prefix pivot is
+nonzero, so the next determinant must vanish. -/
+theorem borderedMinor_zero_column_succ_det_eq_zero_of_entries
+    (source : Hex.Matrix Int n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (hprev :
+      Hex.Matrix.det (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk)) ≠ 0)
+    (i j : Fin n) (hi : k < i.val) (hj : k < j.val)
+    (hcorner :
+      Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+          (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n)
+          (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) = 0)
+    (hleft :
+      Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+          i (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) = 0) :
+    Hex.Matrix.det (Hex.Matrix.borderedMinor source (k + 1) hnext i j) = 0 := by
+  have hdesnanot :=
+    desnanot_jacobi_borderedMinor source k hk hnext i j hi hj
+  have hmul_zero :
+      Hex.Matrix.det (Hex.Matrix.borderedMinor source (k + 1) hnext i j) *
+          Hex.Matrix.det (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk)) = 0 := by
+    calc
+      Hex.Matrix.det (Hex.Matrix.borderedMinor source (k + 1) hnext i j) *
+          Hex.Matrix.det (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk))
+          =
+        Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+            (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n)
+            (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+          Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk i j) -
+        Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+            i (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+          Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+            (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) j) := hdesnanot
+      _ =
+        0 * Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk i j) -
+        0 * Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+          (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) j) := by
+          congr 1
+          · exact congrArg
+              (fun x =>
+                x * Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk i j))
+              hcorner
+          · exact congrArg
+              (fun x =>
+                x * Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+                  (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) j))
+              hleft
+      _ = 0 := by ring
+  exact (Int.mul_eq_zero.mp hmul_zero).resolve_right hprev
+
+/-- Column-shaped form of `borderedMinor_zero_column_succ_det_eq_zero_of_entries`.
+This is the API used by the singular row-pivoted Bareiss branch: failed pivot
+search supplies a zero current pivot column, and the bordered-minor invariant
+transports that to this determinant column hypothesis. -/
+theorem borderedMinor_zero_column_succ_det_eq_zero
+    (source : Hex.Matrix Int n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (hprev :
+      Hex.Matrix.det (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk)) ≠ 0)
+    (hcol : ∀ i : Fin n, k ≤ i.val →
+      Hex.Matrix.det
+        (Hex.Matrix.borderedMinor source k hk i (⟨k, hk⟩ : Fin n)) = 0)
+    (i j : Fin n) (hi : k < i.val) (hj : k < j.val) :
+    Hex.Matrix.det (Hex.Matrix.borderedMinor source (k + 1) hnext i j) = 0 :=
+  borderedMinor_zero_column_succ_det_eq_zero_of_entries source k hk hnext hprev
+    i j hi hj
+    (by
+      simpa using
+        hcol (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) (Nat.le_refl _))
+    (by
+      simpa using hcol i (Nat.le_of_lt hi))
+
 private theorem findPivot?_some_ne_current
     (state : Hex.Matrix.BareissState n) (hDone : state.step + 1 < n)
     {pivot : Fin n}
@@ -503,6 +578,178 @@ private theorem bareissSign_succ (swaps : Nat) :
 theorem bareissData_sign_succ (data : Hex.Matrix.BareissData n) :
     ({ data with rowSwaps := data.rowSwaps + 1 }).sign = -data.sign := by
   simp [Hex.Matrix.BareissData.sign, bareissSign_succ]
+
+private def bareissStateSign (state : Hex.Matrix.BareissState n) : Int :=
+  if state.rowSwaps % 2 = 0 then 1 else -1
+
+/-- Row-pivoted Bareiss invariant. The current working state is interpreted as
+a no-pivot Bareiss state for a logical source obtained from the original source
+by the row swaps already performed; the sign field records the determinant
+relation back to the original source. -/
+def BareissPivotInvariant
+    (source : Hex.Matrix Int n n) (state : Hex.Matrix.BareissState n) : Prop :=
+  ∃ logicalSource : Hex.Matrix Int n n,
+    Hex.Matrix.det source = bareissStateSign state * Hex.Matrix.det logicalSource ∧
+      BareissNoPivotInvariant logicalSource state
+
+/-- The initial row-pivoted Bareiss state satisfies the pivoted invariant with
+the original matrix as its logical source. -/
+theorem bareissPivotInvariant_initial (M : Hex.Matrix Int n n) :
+    BareissPivotInvariant M (Hex.Matrix.noPivotInitialState M) :=
+  ⟨M, by simp [bareissStateSign, Hex.Matrix.noPivotInitialState],
+    bareissNoPivotInvariant_initial M⟩
+
+/-- A regular row-pivoted Bareiss step that does not swap rows preserves the
+pivoted invariant. -/
+theorem bareissPivotInvariant_regular_no_swap_step
+    (source : Hex.Matrix Int n n) (state : Hex.Matrix.BareissState n)
+    (hinv : BareissPivotInvariant source state)
+    (hDone : state.step + 1 < n)
+    (hp : state.matrix[state.step][state.step] ≠ 0) :
+    BareissPivotInvariant source
+      { step := state.step + 1
+        matrix := Hex.Matrix.stepMatrix state.matrix state.step
+          state.matrix[state.step][state.step] state.prevPivot
+        prevPivot := state.matrix[state.step][state.step]
+        rowSwaps := state.rowSwaps
+        singularStep := none } := by
+  rcases hinv with ⟨logicalSource, hdet, hnopiv⟩
+  exact ⟨logicalSource, hdet,
+    bareissPivotInvariant_regular_no_swap logicalSource state hnopiv hDone hp⟩
+
+private theorem bareissPivotInvariant_swap_source
+    (source : Hex.Matrix Int n n) (state : Hex.Matrix.BareissState n)
+    (hinv : BareissPivotInvariant source state)
+    (hDone : state.step + 1 < n)
+    {pivot : Fin n}
+    (hfind :
+      Hex.Matrix.findPivot? state.matrix
+        (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+        (state.step + 1) = some pivot) :
+    BareissPivotInvariant source
+      { state with
+          matrix := Hex.Matrix.rowSwap state.matrix
+            (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+            pivot
+          rowSwaps := state.rowSwaps + 1 } := by
+  rcases hinv with ⟨logicalSource, hdet, hnopiv⟩
+  set kFin : Fin n :=
+    ⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩
+  have hpivot_ne : pivot ≠ kFin :=
+    findPivot?_some_ne_current state hDone hfind
+  refine ⟨Hex.Matrix.rowSwap logicalSource kFin pivot, ?_, ?_⟩
+  · have hswap :
+        Hex.Matrix.det (Hex.Matrix.rowSwap logicalSource kFin pivot) =
+          -Hex.Matrix.det logicalSource :=
+      Hex.Matrix.det_rowSwap logicalSource kFin pivot hpivot_ne.symm
+    rw [hswap]
+    simpa [bareissStateSign, bareissSign_succ, neg_mul, mul_neg, neg_neg] using hdet
+  · simpa [kFin] using
+      bareissPivotInvariant_regular_swap logicalSource state hnopiv hDone hfind
+
+private theorem pivotLoop_swap_pivot_ne_zero
+    (state : Hex.Matrix.BareissState n)
+    (hDone : state.step + 1 < n)
+    {pivot : Fin n}
+    (hfind :
+      Hex.Matrix.findPivot? state.matrix
+        (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+        (state.step + 1) = some pivot) :
+    (Hex.Matrix.rowSwap state.matrix
+        (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+        pivot)[state.step][state.step] ≠ 0 := by
+  set kFin : Fin n :=
+    ⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩
+  have hpivot_ne : pivot ≠ kFin :=
+    findPivot?_some_ne_current state hDone hfind
+  have hpivot :
+      state.matrix[pivot][kFin] ≠ 0 :=
+    Hex.Matrix.findPivot?_some_ne_zero state.matrix kFin (state.step + 1) hfind
+  have hentry :
+      (Hex.Matrix.rowSwap state.matrix kFin pivot)[kFin][kFin] =
+        state.matrix[pivot][kFin] := by
+    rw [Hex.Matrix.rowSwap_getElem]
+    simp [hpivot_ne.symm]
+  simpa [kFin] using hentry ▸ hpivot
+
+/-- A regular row-pivoted Bareiss step that swaps rows preserves the pivoted
+invariant. -/
+theorem bareissPivotInvariant_regular_swap_step
+    (source : Hex.Matrix Int n n) (state : Hex.Matrix.BareissState n)
+    (hinv : BareissPivotInvariant source state)
+    (hDone : state.step + 1 < n)
+    {pivot : Fin n}
+    (hfind :
+      Hex.Matrix.findPivot? state.matrix
+        (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+        (state.step + 1) = some pivot) :
+    BareissPivotInvariant source
+      { step := state.step + 1
+        matrix := Hex.Matrix.stepMatrix
+          (Hex.Matrix.rowSwap state.matrix
+            (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+            pivot)
+          state.step
+          ((Hex.Matrix.rowSwap state.matrix
+            (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+            pivot)[state.step][state.step])
+          state.prevPivot
+        prevPivot :=
+          (Hex.Matrix.rowSwap state.matrix
+            (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+            pivot)[state.step][state.step]
+        rowSwaps := state.rowSwaps + 1
+        singularStep := none } := by
+  have hswapped :=
+    bareissPivotInvariant_swap_source source state hinv hDone hfind
+  exact bareissPivotInvariant_regular_no_swap_step source
+    { state with
+        matrix := Hex.Matrix.rowSwap state.matrix
+          (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+          pivot
+        rowSwaps := state.rowSwaps + 1 }
+    hswapped hDone (pivotLoop_swap_pivot_ne_zero state hDone hfind)
+
+/-- Recursive row-pivoted Bareiss invariant. If a `pivotLoop` run finishes with
+no singular step, then the final state still satisfies the pivoted invariant. -/
+theorem pivotLoop_invariant_of_singularStep_eq_none
+    (source : Hex.Matrix Int n n)
+    (fuel : Nat) (state : Hex.Matrix.BareissState n)
+    (hinv : BareissPivotInvariant source state)
+    (hregular : (Hex.Matrix.pivotLoop fuel state).singularStep = none) :
+    BareissPivotInvariant source (Hex.Matrix.pivotLoop fuel state) := by
+  induction fuel generalizing state with
+  | zero =>
+      simpa [Hex.Matrix.pivotLoop] using hinv
+  | succ fuel ih =>
+      by_cases hDone : state.step + 1 < n
+      · by_cases hp0 : state.matrix[state.step][state.step] = 0
+        · set kFin : Fin n :=
+            ⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩
+          cases hfind :
+              Hex.Matrix.findPivot? state.matrix kFin (state.step + 1) with
+          | none =>
+              have hloop :=
+                Hex.Matrix.pivotLoop_singular_branch_no_pivot fuel state hDone hp0
+                  (by simpa [kFin] using hfind)
+              rw [hloop] at hregular
+              simp at hregular
+          | some pivot =>
+              have hp :=
+                pivotLoop_swap_pivot_ne_zero state hDone (by simpa [kFin] using hfind)
+              rw [Hex.Matrix.pivotLoop_regular_branch_swap fuel state hDone hp0
+                (by simpa [kFin] using hfind) hp]
+              apply ih
+              · exact bareissPivotInvariant_regular_swap_step source state hinv hDone
+                  (by simpa [kFin] using hfind)
+              · simpa [Hex.Matrix.pivotLoop_regular_branch_swap fuel state hDone hp0
+                  (by simpa [kFin] using hfind) hp] using hregular
+        · rw [Hex.Matrix.pivotLoop_regular_branch_no_swap fuel state hDone hp0]
+          apply ih
+          · exact bareissPivotInvariant_regular_no_swap_step source state hinv hDone hp0
+          · simpa [Hex.Matrix.pivotLoop_regular_branch_no_swap fuel state hDone hp0]
+              using hregular
+      · simpa [Hex.Matrix.pivotLoop_done fuel state hDone] using hinv
 
 /-- The recursive no-pivot Bareiss invariant: starting from any state that
 satisfies `BareissNoPivotInvariant`, if every future leading-prefix determinant

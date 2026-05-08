@@ -19,10 +19,10 @@ Operation cross-checked
 
 * `factor` — `Hex.factor` from `HexBerlekampZassenhaus.Basic` (the
   default-bound public entry point).  Lean serialises the resulting
-  array of factors as a JSON array of coefficient lists.  The oracle
-  factors the original input once with `fmpz_poly.factor()` and compares
-  Lean's reported components directly against that irreducible-factor
-  multiset after primitive normalisation.
+  factorization as ``[scalar, [[coeffs, multiplicity], ...]]``.  The
+  oracle factors the original input once with `fmpz_poly.factor()` and
+  compares Lean's reported components directly against that
+  irreducible-factor multiset after primitive normalisation.
 
   Factor order is unspecified by SPEC.  Each nonconstant Lean component
   must be one irreducible factor slot from FLINT's factorisation; the
@@ -172,6 +172,34 @@ def _lean_signature(
     return total_content, dict(out)
 
 
+def _lean_factorization_signature(
+    scalar: int,
+    factors: list[Any],
+) -> tuple[int, dict[tuple[int, ...], int]]:
+    """Accumulate Lean's `Factorization` record JSON shape."""
+    out: Counter[tuple[int, ...]] = Counter()
+    for entry in factors:
+        if (
+            not isinstance(entry, list)
+            or len(entry) != 2
+            or not isinstance(entry[0], list)
+            or not all(isinstance(c, int) for c in entry[0])
+            or not isinstance(entry[1], int)
+            or entry[1] <= 0
+        ):
+            raise OracleMismatch(
+                "factor entries must have shape [coeffs, positive_multiplicity]"
+            )
+        content, factor = _primitive_component(entry[0])
+        if content not in (-1, 1):
+            raise OracleMismatch(
+                f"nonprimitive polynomial factor {entry[0]!r} has content {content}"
+            )
+        if factor is not None:
+            out[factor] += int(entry[1])
+    return int(scalar), dict(out)
+
+
 def _signature_to_serialisable(
     sig: tuple[int, dict[tuple[int, ...], int]],
 ) -> dict[str, Any]:
@@ -257,17 +285,25 @@ def _check_factor(
     )
     flint_sig = _oracle_signature(coeffs)
 
-    if not isinstance(lean_value, list) or not all(
+    if (
+        isinstance(lean_value, list)
+        and len(lean_value) == 2
+        and isinstance(lean_value[0], int)
+        and isinstance(lean_value[1], list)
+    ):
+        lean_sig = _lean_factorization_signature(lean_value[0], lean_value[1])
+    elif isinstance(lean_value, list) and all(
         isinstance(component, list)
         and all(isinstance(c, int) for c in component)
         for component in lean_value
     ):
+        lean_components = [_trim_zeros(component) for component in lean_value]
+        lean_sig = _lean_signature(lean_components)
+    else:
         raise OracleMismatch(
-            f"{lib}/{case_id}: factor result must be a list of "
-            f"coefficient lists, got {lean_value!r}"
+            f"{lib}/{case_id}: factor result must be a Factorization JSON "
+            f"value or legacy list of coefficient lists, got {lean_value!r}"
         )
-    lean_components = [_trim_zeros(component) for component in lean_value]
-    lean_sig = _lean_signature(lean_components)
 
     assert_equal(
         _signature_to_serialisable(lean_sig),

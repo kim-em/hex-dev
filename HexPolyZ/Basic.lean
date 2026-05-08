@@ -37,6 +37,14 @@ def primitivePart (f : ZPoly) : ZPoly :=
 def Primitive (f : ZPoly) : Prop :=
   content f = 1
 
+/-- A `ZPoly` is a unit iff it is the constant polynomial `1` or `-1`. -/
+def IsUnit (f : ZPoly) : Prop :=
+  f = DensePoly.C 1 ∨ f = DensePoly.C (-1)
+
+instance instDecidableIsUnit (f : ZPoly) : Decidable (IsUnit f) := by
+  unfold IsUnit
+  infer_instance
+
 /-- View an integer polynomial as a rational polynomial. -/
 def toRatPoly (f : ZPoly) : DensePoly Rat :=
   DensePoly.ofCoeffs <| f.toArray.map fun coeff : Int => (coeff : Rat)

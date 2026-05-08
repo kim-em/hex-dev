@@ -59,12 +59,29 @@ For each library `HexFoo` advancing through Phase 4:
 5. **External-comparator registrations** where the library SPEC
    names an architecturally important external tool (FLINT, fpLLL,
    GMP, NTL for FFI; Sage, GAP, PARI, python-flint for process
-   calls). FFI is preferred; see
+   calls). Each named comparator carries a classification per
+   [SPEC/benchmarking.md §Comparator classification](../SPEC/benchmarking.md#comparator-classification-gating-vs-informational)
+   — `gating` (must be wired before Phase 4 is claimed) or
+   `informational` (ratio recorded, may be scheduled-only).
+   Structured metadata lives in `libraries.yml: phase4.comparators`.
+   FFI is preferred; see
    [SPEC/benchmarking.md §External comparators](../SPEC/benchmarking.md#external-comparators)
-   for the integration patterns. Each required comparator must end
-   Phase 4 as either implemented now, scheduled-only with its
-   environment stated, or blocked by a narrow issue that keeps the
-   library below completion.
+   for the integration patterns.
+
+6. **Profile coverage** per
+   [SPEC/profiling.md §Coverage requirement](../SPEC/profiling.md#coverage-requirement):
+   at least one representative case per `phase4.input_families`
+   entry in `libraries.yml`, recorded in
+   `reports/<lib>-performance.md §Profile`. Categorise leaf cost
+   across {own code, GMP, allocation, Lean runtime}; rank inclusive
+   cost; explain the dominant entries.
+
+7. **Headline report** at `reports/<lib>-performance.md` per
+   [SPEC/benchmarking.md §Headline reports](../SPEC/benchmarking.md#headline-reports).
+   Five subsections: Bench targets, Verdicts, Comparator ratios,
+   Profile, Concerns. Every numeric claim cites the bench case
+   name, command line, seed/parameter, JSONL path, profile
+   location, and comparator source.
 
 The PR description records, in one paragraph, any case where the
 declared complexity model differs from the canonical textbook
@@ -116,16 +133,41 @@ For library `hex-foo`, Phase 4 is done when:
   settings;
 - every `compare` group named by the SPEC is registered and reports
   `allAgreed` on its declared common domain;
-- every external-comparator registration named by the SPEC is wired
-  (FFI shim or process call), with its execution policy recorded in
-  the bench module docstring;
-- no registration is merely "consistent" while still orders of
-  magnitude slower than a named architectural comparator on the same
-  canonical task family;
+- every comparator declared `gating` in `libraries.yml:
+  phase4.comparators` is wired and the headline report records its
+  measured ratio; `informational` comparators record ratios but do
+  not gate;
+- the [Attribution rule](../SPEC/benchmarking.md#the-attribution-rule)
+  is satisfied: every dominant profiled cost maps to a registered
+  bench target, or the per-library SPEC documents why the cost
+  cannot be separated;
+- a profile run per
+  [SPEC/profiling.md §Coverage requirement](../SPEC/profiling.md#coverage-requirement)
+  is recorded in `reports/<lib>-performance.md §Profile`;
+- the headline report at `reports/<lib>-performance.md` exists with
+  the five mandated subsections and full artefact traceability;
+- the headline report's §Concerns subsection is empty. A library
+  cannot **remain** at `done_through: 4` while any Concern is
+  unresolved; the orchestrator rolls back if this state is detected.
+  The only resolution available to the orchestrator is to act on
+  the HO issue tied to the Concern until the underlying problem is
+  fixed and the Concern entry is removed from the report.
 - the CI smoke step (`list` + `verify`) runs on every PR.
 
 If any of these fail, the right action is rollback per
 [Conventions.md](Conventions.md), not a SPEC-text edit weakening
 the criterion.
+
+### Audit reset
+
+As of the merge of the PR introducing the new exit criteria above
+(profile coverage, headline report, gating-comparator wiring,
+Attribution rule, empty-Concerns), every library currently at
+`done_through ≥ 4` is re-evaluated under those criteria. The
+re-evaluation is queued via a single umbrella `human-oversight`
+issue with a checkbox per library; per-library follow-on issues
+are filed only when the audit identifies actual gaps. Libraries
+already passing all new criteria stay at `done_through: 4`
+unchanged.
 
 Record completion by bumping `libraries.yml[L].done_through` to `4`.

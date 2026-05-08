@@ -118,15 +118,15 @@ example :
 
 #guard
   let factors := Hex.factor hexLinearPrimitive
-  Array.polyProduct factors = hexLinearPrimitive
+  Hex.Factorization.product factors = hexLinearPrimitive
 
 #guard
   let factors := Hex.factor hexReducibleQuadratic
-  Array.polyProduct factors = hexReducibleQuadratic
+  Hex.Factorization.product factors = hexReducibleQuadratic
 
 #guard
   let factors := Hex.factor hexIrreducibleQuadratic
-  Array.polyProduct factors = hexIrreducibleQuadratic
+  Hex.Factorization.product factors = hexIrreducibleQuadratic
 
 end
 

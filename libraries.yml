@@ -23,6 +23,32 @@
 # - Phase 0 (monorepo bootstrap) is global; its completion is observable
 #   by the existence of lakefile.lean, scripts/check_dag.py, etc., not
 #   by any field in this file.
+# - phase4 (optional, for active libraries planning to reach
+#   done_through ≥ 4): structured Phase-4 metadata that mechanical
+#   checks read. SPEC text in SPEC/Libraries/<lib>.md carries the
+#   narrative; this block carries the machine-readable form.
+#     - phase4.comparators: list of named external comparators.
+#       Each entry has:
+#         tool: <string>          # human-readable tool identifier
+#         class: gating | informational
+#         goal: <string>          # required when class == gating;
+#                                 # the performance goal the headline
+#                                 # report measures against this
+#                                 # comparator (e.g. "at least as
+#                                 # fast as X on shared inputs").
+#         rationale: <string>     # required when class == informational;
+#                                 # why this comparator does not gate.
+#       See SPEC/benchmarking.md §"Comparator classification" and
+#       §"Comparator naming".
+#     - phase4.input_families: list of named non-degenerate input
+#       families the per-library SPEC requires Phase-4 benchmarking
+#       to exercise. Each entry has:
+#         name: <string>          # short identifier used in profile
+#                                 # subsection headings
+#         description: <string>   # one-line description matching the
+#                                 # per-library SPEC's narrative
+#       See SPEC/benchmarking.md §"Anti-patterns" entry on best-case
+#       inputs and SPEC/profiling.md §"Coverage requirement".
 #
 # This file is the single source of truth for the library graph.
 # lakefile.lean entries are cross-checked against active libraries.yml
@@ -39,12 +65,22 @@ libraries:
   HexPoly:
     deps: []
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
+    phase4:
+      input_families:
+        - name: dense-int-arithmetic
+          description: Deterministic dense integer polynomials for coefficientwise arithmetic, multiplication, derivative, and composition.
+        - name: field-euclidean
+          description: Fixed-size F7 dense polynomials for division, monic remainder, gcd, and extended gcd.
+        - name: integer-content
+          description: Dense integer polynomials with nontrivial coefficient content for content and primitive-part operations.
+        - name: polynomial-crt
+          description: Coprime monic rational-polynomial moduli and residues for CRT witness construction.
   HexMatrix:
     deps: []
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
 
   # ---------- Depth 1 ----------
@@ -174,7 +210,7 @@ libraries:
   HexBerlekampZassenhausMathlib:
     deps: [HexBerlekampZassenhaus, HexPolyZMathlib]
     mathlib: true
-    done_through: 3
+    done_through: 2
     status: active
 
   # ---------- Planned (status: planned; SPEC ready, implementation deferred) ----------
