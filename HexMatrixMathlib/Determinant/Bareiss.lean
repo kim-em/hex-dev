@@ -289,6 +289,81 @@ theorem bareissPivotNoPivot_leadingPrefix_det_eq_zero
   rw [hpivot_det, borderedMinor_corner_eq_leadingPrefix source state.step hk] at hpivot
   exact hpivot
 
+/-- One-step zero propagation for the singular row-pivoted Bareiss branch.
+
+If the current `k`-bordered trailing pivot column is zero at every row at or
+below `k`, then every `(k + 1)`-bordered minor one step deeper is zero.  The
+proof is the Desnanot-Jacobi recurrence: both numerator terms contain a zero
+minor from the failed pivot column, and the previous leading-prefix pivot is
+nonzero, so the next determinant must vanish. -/
+theorem borderedMinor_zero_column_succ_det_eq_zero_of_entries
+    (source : Hex.Matrix Int n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (hprev :
+      Hex.Matrix.det (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk)) ≠ 0)
+    (i j : Fin n) (hi : k < i.val) (hj : k < j.val)
+    (hcorner :
+      Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+          (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n)
+          (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) = 0)
+    (hleft :
+      Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+          i (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) = 0) :
+    Hex.Matrix.det (Hex.Matrix.borderedMinor source (k + 1) hnext i j) = 0 := by
+  have hdesnanot :=
+    desnanot_jacobi_borderedMinor source k hk hnext i j hi hj
+  have hmul_zero :
+      Hex.Matrix.det (Hex.Matrix.borderedMinor source (k + 1) hnext i j) *
+          Hex.Matrix.det (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk)) = 0 := by
+    calc
+      Hex.Matrix.det (Hex.Matrix.borderedMinor source (k + 1) hnext i j) *
+          Hex.Matrix.det (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk))
+          =
+        Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+            (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n)
+            (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+          Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk i j) -
+        Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+            i (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+          Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+            (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) j) := hdesnanot
+      _ =
+        0 * Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk i j) -
+        0 * Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+          (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) j) := by
+          congr 1
+          · exact congrArg
+              (fun x =>
+                x * Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk i j))
+              hcorner
+          · exact congrArg
+              (fun x =>
+                x * Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
+                  (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) j))
+              hleft
+      _ = 0 := by ring
+  exact (Int.mul_eq_zero.mp hmul_zero).resolve_right hprev
+
+/-- Column-shaped form of `borderedMinor_zero_column_succ_det_eq_zero_of_entries`.
+This is the API used by the singular row-pivoted Bareiss branch: failed pivot
+search supplies a zero current pivot column, and the bordered-minor invariant
+transports that to this determinant column hypothesis. -/
+theorem borderedMinor_zero_column_succ_det_eq_zero
+    (source : Hex.Matrix Int n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (hprev :
+      Hex.Matrix.det (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk)) ≠ 0)
+    (hcol : ∀ i : Fin n, k ≤ i.val →
+      Hex.Matrix.det
+        (Hex.Matrix.borderedMinor source k hk i (⟨k, hk⟩ : Fin n)) = 0)
+    (i j : Fin n) (hi : k < i.val) (hj : k < j.val) :
+    Hex.Matrix.det (Hex.Matrix.borderedMinor source (k + 1) hnext i j) = 0 :=
+  borderedMinor_zero_column_succ_det_eq_zero_of_entries source k hk hnext hprev
+    i j hi hj
+    (by
+      simpa using
+        hcol (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) (Nat.le_refl _))
+    (by
+      simpa using hcol i (Nat.le_of_lt hi))
+
 private theorem findPivot?_some_ne_current
     (state : Hex.Matrix.BareissState n) (hDone : state.step + 1 < n)
     {pivot : Fin n}
