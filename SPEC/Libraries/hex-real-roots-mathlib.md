@@ -102,8 +102,6 @@ theorem lmqBound_bounds_positive_real_roots (p : ZPoly) :
     ∀ r : ℝ, (toPolynomial p).aeval r = 0 → 0 < r →
         r ≤ (Hex.lmqBound p : ℝ)
   -- Akritas–Strzeboński 2008 LMQ bound, stated for positive reals.
-  -- The proof follows the original paper; a couple of pages of
-  -- elementary algebra.
 ```
 
 Mathlib's `Polynomial.IsRoot.norm_lt_cauchyBound` is the closest
@@ -123,8 +121,8 @@ theorem realRootSeparation_bounds_min_gap
 Mahler/Mignotte bound applied to real roots. Mathlib has the Mahler
 infrastructure (`mahlerMeasure_le_sqrt_sum_sq_norm_coeff`,
 `norm_coeff_le_choose_mul_mahlerMeasure_of_one_le_mahlerMeasure`);
-the real-root specialisation needs a small wrapper combining Mahler
-with the discriminant/resultant lower bound. Days-to-week wrapper.
+the real-root specialisation combines Mahler with the
+discriminant/resultant lower bound.
 
 ### `isolate` correctness
 
@@ -175,22 +173,21 @@ theorem out_real_eq (s : SimpleRealRoot p) (prec₁ prec₂ : Nat) :
 
 **Build (verify status at activation time):**
 - The Möbius-transform-correspondence theorem
-  (`mobiusTransform_root_correspondence`). Likely a few pages of
-  proof; uses `Polynomial.comp` and standard substitution machinery.
+  (`mobiusTransform_root_correspondence`). Uses `Polynomial.comp`
+  and standard substitution machinery.
 - The exact-1-from-signVariations parity corollary if not already
-  in Mathlib. Small wrapper.
-- `lmqBound_bounds_positive_real_roots`. New theorem (Mahlib has
-  Cauchy but not LMQ). Few pages.
-- `realRootSeparation_bounds_min_gap`. Small wrapper on Mahler
-  measure infrastructure.
+  in Mathlib.
+- `lmqBound_bounds_positive_real_roots`. New theorem (Mathlib has
+  Cauchy but not LMQ).
+- `realRootSeparation_bounds_min_gap`. Wraps Mahler measure
+  infrastructure with the discriminant/resultant lower bound.
 - `isolate_correct`. The main bridge theorem, assembled from the
   above components plus the bisection driver's invariants.
 
 **Deliberately not built:**
-- Sturm's theorem and the Sturm sequence. Mathlib has neither;
-  formalising would be a multi-month side quest. Avoided by the
-  algorithm choice (Uspensky uses Descartes, which Mathlib does
-  have).
+- Sturm's theorem and the Sturm sequence. Mathlib has neither.
+  Avoided by the algorithm choice (Uspensky uses Descartes, which
+  Mathlib does have).
 - Vincent's theorem (would be needed for VCA/VAS algorithm
   variants, which are out of scope).
 

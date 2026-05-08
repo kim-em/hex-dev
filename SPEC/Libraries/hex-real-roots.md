@@ -243,17 +243,15 @@ approaches are deliberately *not* used here:
 - **Sturm's theorem + bisection.** Theoretically more robust on
   clustered roots (Sturm gives exact interval counts; Descartes
   only bounds them). Mathlib has no Sturm sequence, no Sturm
-  theorem, and no subresultant pseudo-remainder chain, so the
-  bridge proof would require multi-month formalisation work.
-  Mathlib *does* have Descartes' rule of signs
+  theorem, and no subresultant pseudo-remainder chain. Mathlib
+  *does* have Descartes' rule of signs
   (`Polynomial.signVariations` in
   `Mathlib.Algebra.Polynomial.RuleOfSigns`); Uspensky's bridge
   rides on existing infrastructure.
 - **Vincent's theorem / VCA / VAS** (continued-fraction-based
   isolation). Faster than Uspensky in practice (used by FLINT,
   Mathematica, SageMath). Vincent's theorem is absent from
-  Mathlib; formalising it is a multi-month side quest before any
-  tactic-level payoff.
+  Mathlib.
 - **Speculative Newton refinement** (quadratic convergence on top
   of any bisection driver). Out of scope for this library.
 

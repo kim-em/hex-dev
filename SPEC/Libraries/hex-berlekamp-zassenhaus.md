@@ -244,7 +244,7 @@ Goal: `∀ f, factorSlow f = irreducibleFactorisationOf f` (up to ordering and u
 
 Argument:
 
-1. **Hensel correspondence.** Every irreducible integer factor `g | f` over ℤ corresponds to a unique subset `S ⊆ {1, …, r}` such that `g ≡ ∏_{i ∈ S} g_i (mod p^a)`. Mathlib has `hensels_lemma` in `Mathlib.NumberTheory.Padics.Hensel`; the explicit subset-correspondence form may need a small wrapper lemma but follows directly.
+1. **Hensel correspondence.** Every irreducible integer factor `g | f` over ℤ corresponds to a unique subset `S ⊆ {1, …, r}` such that `g ≡ ∏_{i ∈ S} g_i (mod p^a)`. Mathlib has `hensels_lemma` in `Mathlib.NumberTheory.Padics.Hensel`; the explicit subset-correspondence form may need a wrapper lemma but follows directly.
 2. **Mignotte recoverability.** At precision `a` such that `p^a > 2 · defaultFactorCoeffBound f`, the centred-residue lift in `(−p^a/2, p^a/2]` of `(∏_{i ∈ S} g_i mod p^a)` exactly recovers `g`'s integer coefficients. Mathlib has `Polynomial.mahlerMeasure_le_sqrt_sum_sq_coeff` (Landau); the repo wraps it as `mignotte_bound` in [HexPolyZMathlib/Mignotte.lean](../../HexPolyZMathlib/Mignotte.lean).
 3. **Exhaustive search soundness.** The search enumerates all `2^r` subsets, accepts only those whose product reconstructs to a true integer factor (verified by exact division). By (1) and (2) every irreducible factor is found.
 4. **Uniqueness.** ℤ[x] is a UFD (Mathlib: `Polynomial.UniqueFactorizationMonoid` over `Int`). The output array contains exactly one representative of each associate class.
@@ -342,7 +342,7 @@ deliverables of HO-1's bridge work; Group D is HO-4's leaf theorem
 ### Group A — slow-path correctness (gives full mathematical guarantee for `factorSlow`)
 
 A1. **Hensel-correspondence subset bijection (squarefree case).** For `f ∈ ℤ[x]` squarefree primitive, `p` an admissible prime, `g_1, …, g_r ∈ (ℤ/p^a)[x]` the Hensel-lifted mod-`p` factorisation: every irreducible integer factor `g | f` over ℤ has a unique subset `S ⊆ {1, …, r}` with `g ≡ ∏_{i ∈ S} g_i (mod p^a)`.
-    *Sketch:* `g mod p` factorises into a unique subset of `{g_i mod p}` (irreducible mod-`p` decomposition), and Hensel's lemma uniquely lifts that subset to mod `p^a`. Mathlib's `hensels_lemma` covers the analytic version; the explicit subset-correspondence form needs a small wrapper. Read BHKS §3 + Mathlib `Mathlib.NumberTheory.Padics.Hensel` before attempting.
+    *Sketch:* `g mod p` factorises into a unique subset of `{g_i mod p}` (irreducible mod-`p` decomposition), and Hensel's lemma uniquely lifts that subset to mod `p^a`. Mathlib's `hensels_lemma` covers the analytic version; the explicit subset-correspondence form needs a wrapper. Read BHKS §3 + Mathlib `Mathlib.NumberTheory.Padics.Hensel` before attempting.
 
 A2. **Mignotte recoverability (modulus form).** Let `B := defaultFactorCoeffBound f`. At precision `a` such that `p^a > 2 B`, the centred-residue lift in `(−p^a/2, p^a/2]` of `(∏_{i ∈ S} g_i mod p^a)` exactly recovers `g`'s integer coefficients.
     *Sketch:* Mignotte's bound (the existing executable `defaultFactorCoeffBound` in [HexPolyZ/Mignotte.lean](../../HexPolyZ/Mignotte.lean), which Mathlib-side `mignotte_bound` in [HexPolyZMathlib/Mignotte.lean](../../HexPolyZMathlib/Mignotte.lean) already establishes via Landau) gives `|coeff(g, j)| ≤ B`; the centred residue is then unique. Implementation note: `factorSlow` uses exponent `a := B` as a sufficient choice because `p ≥ 3` ⟹ `p^a ≥ 3^B > 2B`; this is a corollary, not the abstract statement.
