@@ -288,26 +288,35 @@ def prepHarshCubicInput (n : Nat) : FirstShortVectorInput :=
       exact Nat.le_max_right n 1
     hind := benchFixtureIndependent basis }
 
-initialize randomBoundedInput30Ref : IO.Ref FirstShortVectorInput ←
-  IO.mkRef (prepRandomBoundedInput 30)
+def getCachedInput (ref : IO.Ref (Option FirstShortVectorInput))
+    (mk : Unit → FirstShortVectorInput) : IO FirstShortVectorInput := do
+  match (← ref.get) with
+  | some input => return input
+  | none =>
+      let input := mk ()
+      ref.set (some input)
+      return input
 
-initialize randomBoundedInput60Ref : IO.Ref FirstShortVectorInput ←
-  IO.mkRef (prepRandomBoundedInput 60)
+initialize randomBoundedInput30Ref : IO.Ref (Option FirstShortVectorInput) ←
+  IO.mkRef none
 
-initialize randomBoundedInput120Ref : IO.Ref FirstShortVectorInput ←
-  IO.mkRef (prepRandomBoundedInput 120)
+initialize randomBoundedInput60Ref : IO.Ref (Option FirstShortVectorInput) ←
+  IO.mkRef none
 
-initialize randomBoundedInput240Ref : IO.Ref FirstShortVectorInput ←
-  IO.mkRef (prepRandomBoundedInput 240)
+initialize randomBoundedInput120Ref : IO.Ref (Option FirstShortVectorInput) ←
+  IO.mkRef none
 
-initialize harshCubicInput15Ref : IO.Ref FirstShortVectorInput ←
-  IO.mkRef (prepHarshCubicInput 15)
+initialize randomBoundedInput240Ref : IO.Ref (Option FirstShortVectorInput) ←
+  IO.mkRef none
 
-initialize harshCubicInput30Ref : IO.Ref FirstShortVectorInput ←
-  IO.mkRef (prepHarshCubicInput 30)
+initialize harshCubicInput15Ref : IO.Ref (Option FirstShortVectorInput) ←
+  IO.mkRef none
 
-initialize harshCubicInput45Ref : IO.Ref FirstShortVectorInput ←
-  IO.mkRef (prepHarshCubicInput 45)
+initialize harshCubicInput30Ref : IO.Ref (Option FirstShortVectorInput) ←
+  IO.mkRef none
+
+initialize harshCubicInput45Ref : IO.Ref (Option FirstShortVectorInput) ←
+  IO.mkRef none
 
 /-! ## Phase-4 `LLLState.ofBasis` input families. -/
 
@@ -592,46 +601,60 @@ def runIsabelleBZRecombinationNormSq : Unit → IO Int := fun _ => do
   runIsabelleShortVectorNormSq "bz-recombination" (← bzRecombinationInputRef.get)
 
 def runFirstShortVectorRandomBoundedNormSq30 : Unit → IO Int := fun _ => do
-  return runFirstShortVectorNormSq (← randomBoundedInput30Ref.get)
+  return runFirstShortVectorNormSq
+    (← getCachedInput randomBoundedInput30Ref (fun _ => prepRandomBoundedInput 30))
 
 def runIsabelleRandomBoundedNormSq30 : Unit → IO Int := fun _ => do
-  runIsabelleShortVectorNormSq "random-bounded-30" (← randomBoundedInput30Ref.get)
+  runIsabelleShortVectorNormSq "random-bounded-30"
+    (← getCachedInput randomBoundedInput30Ref (fun _ => prepRandomBoundedInput 30))
 
 def runFirstShortVectorRandomBoundedNormSq60 : Unit → IO Int := fun _ => do
-  return runFirstShortVectorNormSq (← randomBoundedInput60Ref.get)
+  return runFirstShortVectorNormSq
+    (← getCachedInput randomBoundedInput60Ref (fun _ => prepRandomBoundedInput 60))
 
 def runIsabelleRandomBoundedNormSq60 : Unit → IO Int := fun _ => do
-  runIsabelleShortVectorNormSq "random-bounded-60" (← randomBoundedInput60Ref.get)
+  runIsabelleShortVectorNormSq "random-bounded-60"
+    (← getCachedInput randomBoundedInput60Ref (fun _ => prepRandomBoundedInput 60))
 
 def runFirstShortVectorRandomBoundedNormSq120 : Unit → IO Int := fun _ => do
-  return runFirstShortVectorNormSq (← randomBoundedInput120Ref.get)
+  return runFirstShortVectorNormSq
+    (← getCachedInput randomBoundedInput120Ref (fun _ => prepRandomBoundedInput 120))
 
 def runIsabelleRandomBoundedNormSq120 : Unit → IO Int := fun _ => do
-  runIsabelleShortVectorNormSq "random-bounded-120" (← randomBoundedInput120Ref.get)
+  runIsabelleShortVectorNormSq "random-bounded-120"
+    (← getCachedInput randomBoundedInput120Ref (fun _ => prepRandomBoundedInput 120))
 
 def runFirstShortVectorRandomBoundedNormSq240 : Unit → IO Int := fun _ => do
-  return runFirstShortVectorNormSq (← randomBoundedInput240Ref.get)
+  return runFirstShortVectorNormSq
+    (← getCachedInput randomBoundedInput240Ref (fun _ => prepRandomBoundedInput 240))
 
 def runIsabelleRandomBoundedNormSq240 : Unit → IO Int := fun _ => do
-  runIsabelleShortVectorNormSq "random-bounded-240" (← randomBoundedInput240Ref.get)
+  runIsabelleShortVectorNormSq "random-bounded-240"
+    (← getCachedInput randomBoundedInput240Ref (fun _ => prepRandomBoundedInput 240))
 
 def runFirstShortVectorHarshCubicNormSq15 : Unit → IO Int := fun _ => do
-  return runFirstShortVectorNormSq (← harshCubicInput15Ref.get)
+  return runFirstShortVectorNormSq
+    (← getCachedInput harshCubicInput15Ref (fun _ => prepHarshCubicInput 15))
 
 def runIsabelleHarshCubicNormSq15 : Unit → IO Int := fun _ => do
-  runIsabelleShortVectorNormSq "harsh-cubic-15" (← harshCubicInput15Ref.get)
+  runIsabelleShortVectorNormSq "harsh-cubic-15"
+    (← getCachedInput harshCubicInput15Ref (fun _ => prepHarshCubicInput 15))
 
 def runFirstShortVectorHarshCubicNormSq30 : Unit → IO Int := fun _ => do
-  return runFirstShortVectorNormSq (← harshCubicInput30Ref.get)
+  return runFirstShortVectorNormSq
+    (← getCachedInput harshCubicInput30Ref (fun _ => prepHarshCubicInput 30))
 
 def runIsabelleHarshCubicNormSq30 : Unit → IO Int := fun _ => do
-  runIsabelleShortVectorNormSq "harsh-cubic-30" (← harshCubicInput30Ref.get)
+  runIsabelleShortVectorNormSq "harsh-cubic-30"
+    (← getCachedInput harshCubicInput30Ref (fun _ => prepHarshCubicInput 30))
 
 def runFirstShortVectorHarshCubicNormSq45 : Unit → IO Int := fun _ => do
-  return runFirstShortVectorNormSq (← harshCubicInput45Ref.get)
+  return runFirstShortVectorNormSq
+    (← getCachedInput harshCubicInput45Ref (fun _ => prepHarshCubicInput 45))
 
 def runIsabelleHarshCubicNormSq45 : Unit → IO Int := fun _ => do
-  runIsabelleShortVectorNormSq "harsh-cubic-45" (← harshCubicInput45Ref.get)
+  runIsabelleShortVectorNormSq "harsh-cubic-45"
+    (← getCachedInput harshCubicInput45Ref (fun _ => prepHarshCubicInput 45))
 
 /-- Parametric benchmark target: LCG random-bounded bases. -/
 def runFirstShortVectorRandomBoundedChecksum (input : FirstShortVectorInput) : Int :=
@@ -814,85 +837,85 @@ setup_fixed_benchmark runIsabelleBZRecombinationNormSq where {
 setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq30 where {
     repeats := 3
     maxSecondsPerCall := 20.0
-    expectedHash := some (Hashable.hash (runFirstShortVectorNormSq (prepRandomBoundedInput 30)))
+    expectedHash := some 0x3a52
   }
 
 setup_fixed_benchmark runIsabelleRandomBoundedNormSq30 where {
     repeats := 3
     maxSecondsPerCall := 20.0
-    expectedHash := some (Hashable.hash (runFirstShortVectorNormSq (prepRandomBoundedInput 30)))
+    expectedHash := some 0x3a52
   }
 
 setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq60 where {
     repeats := 3
     maxSecondsPerCall := 30.0
-    expectedHash := some (Hashable.hash (runFirstShortVectorNormSq (prepRandomBoundedInput 60)))
+    expectedHash := some 0x98cc
   }
 
 setup_fixed_benchmark runIsabelleRandomBoundedNormSq60 where {
     repeats := 3
     maxSecondsPerCall := 30.0
-    expectedHash := some (Hashable.hash (runFirstShortVectorNormSq (prepRandomBoundedInput 60)))
+    expectedHash := some 0x98cc
   }
 
 setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq120 where {
     repeats := 3
     maxSecondsPerCall := 60.0
-    expectedHash := some (Hashable.hash (runFirstShortVectorNormSq (prepRandomBoundedInput 120)))
+    expectedHash := some 0x11860
   }
 
 setup_fixed_benchmark runIsabelleRandomBoundedNormSq120 where {
     repeats := 3
     maxSecondsPerCall := 60.0
-    expectedHash := some (Hashable.hash (runFirstShortVectorNormSq (prepRandomBoundedInput 120)))
+    expectedHash := some 0x11860
   }
 
 setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq240 where {
     repeats := 3
     maxSecondsPerCall := 120.0
-    expectedHash := some (Hashable.hash (runFirstShortVectorNormSq (prepRandomBoundedInput 240)))
+    expectedHash := some 0x2454a
   }
 
 setup_fixed_benchmark runIsabelleRandomBoundedNormSq240 where {
     repeats := 3
     maxSecondsPerCall := 120.0
-    expectedHash := some (Hashable.hash (runFirstShortVectorNormSq (prepRandomBoundedInput 240)))
+    expectedHash := some 0x2454a
   }
 
 setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq15 where {
     repeats := 3
     maxSecondsPerCall := 20.0
-    expectedHash := some (Hashable.hash (runFirstShortVectorNormSq (prepHarshCubicInput 15)))
+    expectedHash := some 0x700000000033a4
   }
 
 setup_fixed_benchmark runIsabelleHarshCubicNormSq15 where {
     repeats := 3
     maxSecondsPerCall := 20.0
-    expectedHash := some (Hashable.hash (runFirstShortVectorNormSq (prepHarshCubicInput 15)))
+    expectedHash := some 0x700000000033a4
   }
 
 setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq30 where {
     repeats := 3
     maxSecondsPerCall := 40.0
-    expectedHash := some (Hashable.hash (runFirstShortVectorNormSq (prepHarshCubicInput 30)))
+    expectedHash := some 0x37cc
   }
 
 setup_fixed_benchmark runIsabelleHarshCubicNormSq30 where {
     repeats := 3
     maxSecondsPerCall := 40.0
-    expectedHash := some (Hashable.hash (runFirstShortVectorNormSq (prepHarshCubicInput 30)))
+    expectedHash := some 0x37cc
   }
 
 setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq45 where {
     repeats := 3
     maxSecondsPerCall := 60.0
-    expectedHash := some (Hashable.hash (runFirstShortVectorNormSq (prepHarshCubicInput 45)))
+    expectedHash := some 0x6d1e
   }
 
 setup_fixed_benchmark runIsabelleHarshCubicNormSq45 where {
     repeats := 3
     maxSecondsPerCall := 60.0
-    expectedHash := some (Hashable.hash (runFirstShortVectorNormSq (prepHarshCubicInput 45)))
+    expectedHash := some 0x6d1e
   }
 
 end Hex.LLLBench
