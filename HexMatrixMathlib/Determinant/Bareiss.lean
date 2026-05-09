@@ -1,4 +1,5 @@
 import HexMatrixMathlib.Determinant
+import Mathlib.LinearAlgebra.Matrix.ToLinearEquiv
 
 /-!
 No-pivot Bareiss loop invariant for `hex-matrix-mathlib`.
@@ -1293,5 +1294,33 @@ theorem failed_bareiss_column_dependence
   · have hrk' : k ≤ r.val := Nat.not_lt.mp hrk
     rw [← det_eq]
     exact hcol r hrk'
+
+/-- **Failed Bareiss column ⟹ source determinant is zero.**
+
+If the leading-prefix determinant of `source` at size `k` is nonzero but every
+`k`-bordered minor with trailing column `⟨k, _⟩` and trailing row at or below
+`k` vanishes, then `Hex.Matrix.det source = 0`.
+
+This is the bridge theorem consumed by the row-pivoted singular Bareiss
+packaging: failed pivot search at level `k` produces a zero pivot column,
+which the bordered-minor invariant transports to the determinant column
+hypothesis here. The proof obtains a nonzero kernel vector for
+`matrixEquiv source` from `failed_bareiss_column_dependence`, then closes the
+determinant via `Matrix.exists_mulVec_eq_zero_iff`. -/
+theorem det_eq_zero_of_bareiss_failed_column
+    (source : Hex.Matrix Int n n) (k : Nat) (hk : k < n)
+    (hprev :
+      Hex.Matrix.det (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk)) ≠ 0)
+    (hcol : ∀ i : Fin n, k ≤ i.val →
+      Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk i ⟨k, hk⟩) = 0) :
+    Hex.Matrix.det source = 0 := by
+  obtain ⟨α, hα_ne, _hα_above, hmulvec⟩ :=
+    failed_bareiss_column_dependence source k hk hprev hcol
+  have hdet_zero : Matrix.det (matrixEquiv source) = 0 := by
+    refine Matrix.exists_mulVec_eq_zero_iff.mp ⟨α, ?_, hmulvec⟩
+    intro hα_zero
+    apply hα_ne
+    simpa using congrFun hα_zero ⟨k, hk⟩
+  exact (det_eq source).trans hdet_zero
 
 end HexMatrixMathlib
