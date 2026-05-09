@@ -746,6 +746,18 @@ private theorem polyProduct_cons_toArray (g : ZPoly) (rest : List ZPoly) :
   simpa [Array.polyProduct, one_mul_zpoly] using
     (list_foldl_mul_eq_mul_foldl_one g rest)
 
+private theorem polyProduct_singleton (g : ZPoly) :
+    Array.polyProduct #[g] = g := by
+  simpa [Array.polyProduct] using one_mul_zpoly g
+
+private theorem polyProduct_append (xs ys : Array ZPoly) :
+    Array.polyProduct (xs ++ ys) = Array.polyProduct xs * Array.polyProduct ys := by
+  rw [Array.polyProduct, Array.foldl_append]
+  cases ys with
+  | mk ylist =>
+      simpa [Array.polyProduct] using list_foldl_mul_eq_mul_foldl_one
+        (Array.foldl (fun acc factor => acc * factor) 1 xs) ylist
+
 private theorem exactQuotient?_product
     {target candidate quotient : ZPoly}
     (hquot : exactQuotient? target candidate = some quotient) :
@@ -1665,7 +1677,17 @@ theorem reassembleNormalizedFactors_product
     (hcore : Array.polyProduct coreFactors = normalized.squareFreeCore) :
     Array.polyProduct (reassembleNormalizedFactors normalized coreFactors) =
       normalizeFactorSign f := by
-  sorry
+  subst normalized
+  unfold reassembleNormalizedFactors
+  rw [polyProduct_append, hcore]
+  have hnormalized := normalizeForFactor_reassembles f
+  change
+    Array.polyProduct
+        (normalizationPrefixFactors (normalizeForFactor f) ++
+          #[(normalizeForFactor f).squareFreeCore]) =
+      normalizeFactorSign f at hnormalized
+  rw [polyProduct_append, polyProduct_singleton] at hnormalized
+  exact hnormalized
 
 /--
 For constant square-free cores, the normalization-only factor array preserves the
@@ -1676,7 +1698,22 @@ theorem normalizedConstantFactors_product
     (hnormalized : normalizeForFactor f = normalized)
     (hconst : normalized.squareFreeCore.degree?.getD 0 = 0) :
     Array.polyProduct (normalizedConstantFactors normalized) = normalizeFactorSign f := by
-  sorry
+  subst normalized
+  unfold normalizedConstantFactors
+  split
+  · rename_i hcore_one
+    change Array.polyProduct (reassembleNormalizedFactors (normalizeForFactor f) #[]) =
+      normalizeFactorSign f
+    exact reassembleNormalizedFactors_product f (normalizeForFactor f) #[] rfl (by
+      simp [Array.polyProduct, hcore_one])
+  · change
+      Array.polyProduct
+          (reassembleNormalizedFactors (normalizeForFactor f)
+            #[(normalizeForFactor f).squareFreeCore]) =
+        normalizeFactorSign f
+    exact reassembleNormalizedFactors_product f (normalizeForFactor f)
+      #[(normalizeForFactor f).squareFreeCore] rfl (by
+        exact polyProduct_singleton (normalizeForFactor f).squareFreeCore)
 
 private theorem firstSome_some
     {α β : Type} {xs : List α} {f : α → Option β} {y : β}
