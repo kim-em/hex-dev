@@ -262,9 +262,103 @@ def lll.shortVectors (b : Matrix Int n m) (δ : Rat)
 
 Both entry points are Phase 1 deliverables; conformance must exercise
 them on the kind of basis matrix BZ recombination produces (one row
-per lifted local factor), and Phase 4 benchmarks must register
-`lll`/`lll.firstShortVector` as the recombination hot path inherited
-from `hex-berlekamp-zassenhaus`.
+per lifted local factor).
+
+### Required Phase 4 bench-input families
+
+Phase 4 benchmarks must register `lll`/`lll.firstShortVector` as the
+recombination hot path inherited from `hex-berlekamp-zassenhaus`,
+and must exercise the algorithm on three input families. These are
+cross-referenced as `phase4.input_families` in [`libraries.yml`](../../libraries.yml):
+
+- **`bz-recombination`** — the Berlekamp–Zassenhaus recombination
+  basis at the documented `(p, k, factors)` configurations.
+  This is the downstream hot path; performance here is what the
+  HexBerlekampZassenhaus pipeline observes.
+- **`random-bounded`** — LCG-generated random integer bases with
+  bounded entries `|·| ≤ 30` at `n ∈ {30, 60, 120, 240}`. This
+  exercises the LLL outer loop on basically-orthogonal input
+  where size reduction does most of the work and few swaps fire.
+- **`harsh-cubic`** — inputs matching the verified-Isabelle paper's
+  regime (entry bit-length `~ 3.3 · n`) at `n ∈ {15, 30, 45}`.
+  This exercises bigint operand-size drift in both `LLLState.ofBasis`
+  and the swap path; entry sizes grow with `n`, so total input
+  size is cubic in `n`.
+
+**At least one family must demonstrably exercise the swap branch of
+the LLL outer loop.** For `bz-recombination` and `harsh-cubic` this
+is automatic; for `random-bounded` the family must include at least
+one committed seed where ≥ 1 Lovász swap fires, recorded in the
+bench module as a fixed fixture so the swap-firing property is
+verifiable from the SPEC alone.
+
+**Best-case inputs are not sole Phase-4 evidence.** Per
+[SPEC/benchmarking.md §Anti-patterns](../benchmarking.md#anti-patterns),
+inputs the algorithm walks past in its happy path may appear as
+supplemental smoke or fixed cases, but never as the sole end-to-end
+evidence. Exemplar to avoid: the identity basis. The LLL outer loop
+visits every k but does no row update and no swap fires (`ν[k][j] = 0`
+for every `j < k`, so `sizeReduce k` is a no-op; the Lovász
+condition is trivially satisfied). The registration measures the
+loop's traversal cost and nothing about size reduction or swaps.
+
+### External comparators
+
+Two external comparators are required for HexLLL Phase 4. The
+classification below is mirrored as structured metadata in
+[`libraries.yml`](../../libraries.yml) under `HexLLL.phase4.comparators`:
+
+- **`fpLLL via fpylll`** — `informational`. fpLLL implements
+  floating-point Gram–Schmidt variants (Nguyen–Stehlé) which
+  bypass the integer-arithmetic operand-size drift our verified
+  implementation pays. The constant-factor gap is structural, not
+  algorithmic, so the ratio is recorded for orientation but does
+  not gate Phase 4. See
+  [SPEC/benchmarking.md §Comparator classification](../benchmarking.md#comparator-classification-gating-vs-informational).
+- **`verified Isabelle LLL`** — `gating`. The Bottesch–Divasón–
+  Haslbeck–Joosten–Thiemann–Yamada formalisation in the Archive of
+  Formal Proofs (entry `LLL_Basis_Reduction`) is the only other
+  formally-verified LLL implementation. Its executable form is the
+  Haskell code generated from the Isabelle development, deposited
+  on Zenodo as record 2636367 ("Experiments_LLL"). It implements
+  the same Cohen Algorithm 2.6.3 integer-only recurrence we use,
+  so the comparison is apples-to-apples and the constant-factor
+  gap is the right yardstick for Phase 4.
+
+  **Performance goal:** Lean LLL is **at least as fast as the
+  verified Isabelle LLL** on shared canonical inputs at the bottom
+  of each `phase4.input_families` parameter ladder. The headline
+  report at `reports/hex-lll-performance.md` records the measured
+  ratios per family and states whether the goal is met; failure
+  to meet the goal is an audit-found Concern per
+  [PLAN/Conventions.md §Bench-found, conformance-found, and
+  audit-found issues](../../PLAN/Conventions.md#bench-found-conformance-found-and-audit-found-issues).
+
+### `LLLState.ofBasis` is its own bench target
+
+The integer Gram–Schmidt construction in `LLLState.ofBasis` —
+implemented as a Bareiss-style fraction-free elimination over the
+Gram matrix — is asymptotically significant in its own right:
+classical analysis gives ~ n³ integer arithmetic operations with
+operand bit-width growing in `n` per Hadamard's bound. This shape
+is distinct from the LLL outer loop's ~ n² iterations × O(n) work
+on near-orthogonal random input. Per the
+[SPEC/benchmarking.md §Attribution rule](../benchmarking.md#the-attribution-rule),
+each must be verified by its own `setup_benchmark` so a future
+profiling finding is attributable to one phase or the other:
+
+- a `setup_benchmark` for `LLLState.ofBasis n => …` declaring the
+  Bareiss-prep complexity over the bench's input family;
+- a `setup_benchmark` for `lll`/`lll.firstShortVector` (or a fixed
+  benchmark on a family-specific canonical input) declaring the
+  outer-loop complexity over that input family.
+
+The headline report's §Profile subsection cross-checks: the
+dominant inclusive cost on each input family must be attributable
+to one of these registered targets, or the audit files an
+audit-found issue per
+[PLAN/Conventions.md §Bench-found, conformance-found, and audit-found
+issues](../../PLAN/Conventions.md#bench-found-conformance-found-and-audit-found-issues).
 
 The swap bound `potential_initial ≤ (maxNormSq b)^{n*(n-1)/2}` follows
 from Hadamard's inequality: `gramDet b k ≤ prod_{i<k} ||b[i]||^2 ≤
