@@ -238,8 +238,12 @@ libraries:
   HexConway:
     deps: [HexBerlekamp]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
+    phase4:
+      input_families:
+        - name: tier1-committed-table
+          description: Imported Luebeck Conway-table entries for supported `(p, n)` pairs, covering finite table lookup, supported-entry recovery, and Tier-1 irreducibility verification.
   HexGfq:
     deps: [HexGfqField, HexConway, HexGF2]
     mathlib: false
