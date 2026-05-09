@@ -246,19 +246,27 @@ private noncomputable def lllReducedCheck (b : Matrix Int n m) (δ : Rat) : Bool
 #guard !independentCheck zero8
 #guard !independentCheck dependent8x4
 
-private def stateOf (b : Matrix Int n m) : LLLState n m where
-  b := b
-  ν := GramSchmidt.Int.scaledCoeffs b
-  d := GramSchmidt.Int.gramDetVec b
-  ν_eq := by
-    intro i j hi hj hji
-    rw [GramSchmidt.Int.gramDetVec_eq_gramDet b (j + 1)
-      (Nat.succ_le_of_lt (Nat.lt_trans hji hi))]
-    simpa [GramSchmidt.entry, Matrix.row] using
-      (GramSchmidt.Int.scaledCoeffs_eq b i j hi hji)
-  d_eq := by
-    intro i hi
-    exact GramSchmidt.Int.gramDetVec_eq_gramDet b i (Nat.le_of_lt_succ hi)
+private def stateOf (b : Matrix Int n m) : LLLState n m :=
+  let gs := GramSchmidt.Int.data b
+  { b := b
+    ν := gs.ν
+    d := gs.d
+    ν_eq := by
+      intro i j hi hj hji
+      have hd :
+          gs.d.get ⟨j + 1, Nat.succ_lt_succ hj⟩ =
+            GramSchmidt.Int.gramDet b (j + 1)
+              (Nat.succ_le_of_lt (Nat.lt_trans hji hi)) := by
+        simpa [GramSchmidt.Int.gramDetVec, gs] using
+          GramSchmidt.Int.gramDetVec_eq_gramDet b (j + 1)
+            (Nat.succ_le_of_lt (Nat.lt_trans hji hi))
+      rw [hd]
+      simpa [GramSchmidt.Int.scaledCoeffs, gs, GramSchmidt.entry, Matrix.row] using
+        (GramSchmidt.Int.scaledCoeffs_eq b i j hi hji)
+    d_eq := by
+      intro i hi
+      simpa [GramSchmidt.Int.gramDetVec, gs] using
+        GramSchmidt.Int.gramDetVec_eq_gramDet b i (Nat.le_of_lt_succ hi) }
 
 private def identityState : LLLState 8 8 := stateOf identity8
 private def zeroState : LLLState 8 8 := stateOf zero8

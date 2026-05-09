@@ -108,13 +108,6 @@ private def gramDetVecEntry (data : Matrix.BareissData n) (k : Fin (n + 1)) : Na
           bareissDiagNat data r hr
       | none => bareissDiagNat data r hr
 
-/-- All leading Gram determinants, starting with the empty-prefix value
-`d₀ = 1`. -/
-def gramDetVec (b : Matrix Int n m) : Vector Nat (n + 1) :=
-  let gram := Matrix.gramMatrix b
-  let data := Matrix.bareissNoPivotData gram
-  Vector.ofFn fun k => gramDetVecEntry data k
-
 private structure ScaledCoeffArrayState where
   step : Nat
   matrix : Array (Array Int)
@@ -365,8 +358,38 @@ private def scaledCoeffRows (b : Matrix Int n m) : Array (Array Int) :=
 /-- Integral scaled Gram-Schmidt coefficients. For `j < i`, the entry is the
 determinant formula corresponding to `d_{j+1} * μ_{i,j}`; on the diagonal we
 store `d_{j+1}`, and entries above the diagonal are zero. -/
+structure Data (n : Nat) where
+  d : Vector Nat (n + 1)
+  ν : Matrix Int n n
+
+private def gramDetVecFromScaledCoeffRows (rows : Array (Array Int)) :
+    Vector Nat (n + 1) :=
+  Vector.ofFn fun k =>
+    match hk : k.val with
+    | 0 => 1
+    | r + 1 =>
+        have hrSucc : r + 1 < n + 1 := by
+          simpa [hk] using k.isLt
+        have _hr : r < n := Nat.succ_lt_succ_iff.mp hrSucc
+        (getArrayEntry rows r r).toNat
+
+/-- Run the shared fraction-free Gram pass once and package both the leading
+Gram determinant vector and the scaled Gram-Schmidt coefficient matrix. -/
+def data (b : Matrix Int n m) : Data n :=
+  let rows := scaledCoeffRows b
+  { d := gramDetVecFromScaledCoeffRows rows
+    ν := rowsToMatrix rows n }
+
+/-- All leading Gram determinants, starting with the empty-prefix value
+`d₀ = 1`. -/
+def gramDetVec (b : Matrix Int n m) : Vector Nat (n + 1) :=
+  (data b).d
+
+/-- Integral scaled Gram-Schmidt coefficients. For `j < i`, the entry is the
+determinant formula corresponding to `d_{j+1} * μ_{i,j}`; on the diagonal we
+store `d_{j+1}`, and entries above the diagonal are zero. -/
 def scaledCoeffs (b : Matrix Int n m) : Matrix Int n n :=
-  rowsToMatrix (scaledCoeffRows b) n
+  (data b).ν
 
 /-- The no-pivot Bareiss pass over the full Gram matrix records the same
 leading-prefix determinant as the public `gramDet` API at every vector slot. -/
@@ -477,7 +500,15 @@ theorem gramDet_zero (b : Matrix Int n m) :
 
 theorem gramDetVec_eq_gramDet (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
     (gramDetVec b).get ⟨k, Nat.lt_succ_of_le hk⟩ = gramDet b k hk := by
-  simpa [gramDetVec] using gramDetVecEntry_eq_gramDet (b := b) k hk
+  cases k with
+  | zero =>
+      rw [show hk = Nat.zero_le n from Subsingleton.elim _ _]
+      rw [gramDet_zero]
+      simp [gramDetVec, data, gramDetVecFromScaledCoeffRows]
+  | succ r =>
+      have hr : r < n := Nat.lt_of_succ_le hk
+      have hdiag := scaledCoeffRows_diag_eq_gramDet (b := b) r hr
+      simpa [gramDetVec, data, gramDetVecFromScaledCoeffRows] using congrArg Int.toNat hdiag
 
 theorem gramDet_eq_prod_normSq (b : Matrix Int n m)
     (hli : independent b) (k : Nat) (hk : k ≤ n) :
@@ -501,19 +532,19 @@ theorem scaledCoeffs_eq (b : Matrix Int n m)
     ((GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ : Int) : Rat) =
       (gramDet b (j + 1) (Nat.succ_le_of_lt (Nat.lt_trans hj hi)) : Rat) *
         GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ := by
-  simpa [scaledCoeffs, rowsToMatrix, GramSchmidt.entry, Matrix.row, Matrix.ofFn] using
+  simpa [scaledCoeffs, data, rowsToMatrix, GramSchmidt.entry, Matrix.row, Matrix.ofFn] using
     scaledCoeffRows_lower_eq_coeffs (b := b) i j hi hj
 
 theorem scaledCoeffs_diag (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨i, hi⟩ =
       Int.ofNat (gramDet b (i + 1) (Nat.succ_le_of_lt hi)) := by
-  simpa [scaledCoeffs, rowsToMatrix, GramSchmidt.entry, Matrix.row, Matrix.ofFn] using
+  simpa [scaledCoeffs, data, rowsToMatrix, GramSchmidt.entry, Matrix.row, Matrix.ofFn] using
     scaledCoeffRows_diag_eq_gramDet (b := b) i hi
 
 theorem scaledCoeffs_upper (b : Matrix Int n m)
     (i j : Nat) (hi : i < n) (hj : j < n) (hij : i < j) :
     GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨j, hj⟩ = 0 := by
-  simpa [scaledCoeffs, rowsToMatrix, scaledCoeffRows, GramSchmidt.entry, Matrix.row,
+  simpa [scaledCoeffs, data, rowsToMatrix, scaledCoeffRows, GramSchmidt.entry, Matrix.row,
     Matrix.ofFn] using getArrayEntry_scaledCoeffArrayLoop_above n n
     { step := 0
       matrix := gramRows b
@@ -537,7 +568,7 @@ theorem scaledCoeffs_eq_scaledCoeffMatrix_det
       (b := b) i.val j.val i.isLt hji]
     exact Matrix.bareiss_eq_det
       (GramSchmidt.scaledCoeffMatrix b i j hji)
-  simpa [scaledCoeffs, rowsToMatrix, GramSchmidt.entry, Matrix.row, Matrix.ofFn] using h
+  simpa [scaledCoeffs, data, rowsToMatrix, GramSchmidt.entry, Matrix.row, Matrix.ofFn] using h
 
 /-- Conditional form of the leading Gram determinant bridge. The remaining
 unconditional bridge is exactly the nonnegativity of leading Gram determinants:
