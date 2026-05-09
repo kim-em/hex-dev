@@ -2101,6 +2101,123 @@ private theorem fin_idxOf_lt_of_full_nodup {n : Nat} {xs : List (Fin n)}
     xs.idxOf x < xs.length := by
   exact List.idxOf_lt_length_of_mem (fin_mem_of_full_nodup x hlen hnodup)
 
+/-- The inverse permutation vector: at value `c`, return the position where
+`c` occurs in `perm`. -/
+private def inversePermutationValues {n : Nat}
+    (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
+    Vector (Fin n) n :=
+  Vector.ofFn fun c =>
+    ⟨perm.toList.idxOf c,
+      by
+        simpa [Vector.length_toList] using
+          fin_idxOf_lt_of_full_nodup c (by simp [Vector.length_toList]) hnodup⟩
+
+private theorem inversePermutationValues_get_value {n : Nat}
+    (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) (c : Fin n) :
+    perm[(inversePermutationValues perm hnodup)[c]] = c := by
+  change
+    perm.toList[(inversePermutationValues perm hnodup)[c].val]'(by
+      simp [Vector.length_toList]) = c
+  simp [inversePermutationValues]
+
+private theorem inversePermutationValues_get_index {n : Nat}
+    (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) (i : Fin n) :
+    (inversePermutationValues perm hnodup)[perm[i]] = i := by
+  apply Fin.ext
+  simp [inversePermutationValues]
+  exact hnodup.idxOf_getElem i.val (by simp [Vector.length_toList])
+
+private theorem inversePermutationValues_nodup {n : Nat}
+    (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
+    (inversePermutationValues perm hnodup).toList.Nodup := by
+  rw [vector_toList_eq_finRange_map_get]
+  apply list_nodup_map_of_injective
+  · intro a b h
+    have hval :
+        perm[(inversePermutationValues perm hnodup)[a]] =
+          perm[(inversePermutationValues perm hnodup)[b]] :=
+      congrArg (fun k => perm[k]) h
+    rw [inversePermutationValues_get_value perm hnodup a] at hval
+    rw [inversePermutationValues_get_value perm hnodup b] at hval
+    exact hval
+  · exact List.nodup_finRange n
+
+private theorem inversePermutationValues_mem_permutationVectors {n : Nat}
+    {perm : Vector (Fin n) n} (hmem : perm ∈ permutationVectors n) :
+    inversePermutationValues perm (permutationVectors_nodup hmem) ∈ permutationVectors n := by
+  exact permutationVectors_complete
+    (inversePermutationValues_nodup perm (permutationVectors_nodup hmem))
+
+private theorem inversePermutationValues_involutive {n : Nat}
+    (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
+    inversePermutationValues
+        (inversePermutationValues perm hnodup)
+        (inversePermutationValues_nodup perm hnodup) = perm := by
+  apply Vector.ext
+  intro k hk
+  let i : Fin n := ⟨k, hk⟩
+  have h :=
+    inversePermutationValues_get_index
+      (inversePermutationValues perm hnodup)
+      (inversePermutationValues_nodup perm hnodup) (perm[i])
+  have hi := inversePermutationValues_get_index perm hnodup i
+  have hleft :
+      (inversePermutationValues
+        (inversePermutationValues perm hnodup)
+        (inversePermutationValues_nodup perm hnodup))[i] =
+        (inversePermutationValues
+          (inversePermutationValues perm hnodup)
+          (inversePermutationValues_nodup perm hnodup))[
+            (inversePermutationValues perm hnodup)[perm[i]]] :=
+    congrArg
+      (fun x =>
+        (inversePermutationValues
+          (inversePermutationValues perm hnodup)
+          (inversePermutationValues_nodup perm hnodup))[x])
+      hi.symm
+  exact hleft.trans h
+
+private theorem finRange_map_perm_get_perm {n : Nat}
+    (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
+    ((List.finRange n).map fun i => perm[i]).Perm (List.finRange n) := by
+  rw [← vector_toList_eq_finRange_map_get perm]
+  apply (List.perm_ext_iff_of_nodup hnodup (List.nodup_finRange n)).mpr
+  intro x
+  constructor
+  · intro _h
+    exact List.mem_finRange x
+  · intro _h
+    exact fin_mem_of_full_nodup x (by simp [Vector.length_toList]) hnodup
+
+private theorem detProduct_transpose_inversePermutationValues {R : Type u}
+    [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
+    detProduct M.transpose perm =
+      detProduct M (inversePermutationValues perm hnodup) := by
+  unfold detProduct
+  calc
+    (List.finRange n).foldl
+        (fun acc r => acc * M.transpose[r][perm[r]]) 1 =
+      (List.finRange n).foldl
+        (fun acc r => acc * M[perm[r]][r]) 1 := by
+        apply foldl_det_product_congr
+        intro r _hmem
+        simp [Matrix.transpose, Matrix.col]
+    _ =
+      ((List.finRange n).map fun r => perm[r]).foldl
+        (fun acc c => acc * M[c][(inversePermutationValues perm hnodup)[c]]) 1 := by
+        simp only [List.foldl_map]
+        apply foldl_det_product_congr
+        intro r _hmem
+        exact congrArg (fun c => M[perm[r]][c])
+          (inversePermutationValues_get_index perm hnodup r).symm
+    _ =
+      (List.finRange n).foldl
+        (fun acc c => acc * M[c][(inversePermutationValues perm hnodup)[c]]) 1 := by
+        exact foldl_det_product_perm
+          (fun c => M[c][(inversePermutationValues perm hnodup)[c]])
+          (finRange_map_perm_get_perm perm hnodup) 1
+
 private theorem swapPermutationValues_eq_transposePermutationValues {n : Nat}
     (perm : Vector (Fin n) n) (i j : Fin n)
     (hnodup : perm.toList.Nodup) :
