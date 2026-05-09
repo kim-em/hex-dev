@@ -32,6 +32,17 @@ Scientific registrations:
   with `|entry| <= 30` at `n in {30, 60, 120, 240}`.
 * `runFirstShortVectorHarshCubicChecksum`: harsh-cubic bases with entry
   bit-length approximately `3.3 * n` at `n in {15, 30, 45}`.
+
+External comparator:
+
+* `verified Isabelle LLL (AFP LLL_Basis_Reduction; Haskell extraction from
+  Zenodo record 2636367, https://zenodo.org/records/2636367, archive SHA-256
+  `5c975aeb2033540b8f9a05d2ffac87dca0f258e887a5807edefbe60178a547e0`)` is
+  registered as the Phase-4 gating comparator for the bottom/shared
+  `phase4.input_families` rungs. `scripts/oracle/setup_lll_isabelle.sh`
+  downloads, verifies, caches, and builds `svp_verified`; set
+  `HEX_LLL_ISABELLE_SVP` to an already-built binary to avoid setup in the
+  first measured call.
 -/
 
 namespace Hex.LLLBench
@@ -277,6 +288,36 @@ def prepHarshCubicInput (n : Nat) : FirstShortVectorInput :=
       exact Nat.le_max_right n 1
     hind := benchFixtureIndependent basis }
 
+def getCachedInput (ref : IO.Ref (Option FirstShortVectorInput))
+    (mk : Unit → FirstShortVectorInput) : IO FirstShortVectorInput := do
+  match (← ref.get) with
+  | some input => return input
+  | none =>
+      let input := mk ()
+      ref.set (some input)
+      return input
+
+initialize randomBoundedInput30Ref : IO.Ref (Option FirstShortVectorInput) ←
+  IO.mkRef none
+
+initialize randomBoundedInput60Ref : IO.Ref (Option FirstShortVectorInput) ←
+  IO.mkRef none
+
+initialize randomBoundedInput120Ref : IO.Ref (Option FirstShortVectorInput) ←
+  IO.mkRef none
+
+initialize randomBoundedInput240Ref : IO.Ref (Option FirstShortVectorInput) ←
+  IO.mkRef none
+
+initialize harshCubicInput15Ref : IO.Ref (Option FirstShortVectorInput) ←
+  IO.mkRef none
+
+initialize harshCubicInput30Ref : IO.Ref (Option FirstShortVectorInput) ←
+  IO.mkRef none
+
+initialize harshCubicInput45Ref : IO.Ref (Option FirstShortVectorInput) ←
+  IO.mkRef none
+
 /-! ## Phase-4 `LLLState.ofBasis` input families. -/
 
 /-- Entry generator for bounded random-looking square bases. -/
@@ -499,10 +540,121 @@ def runFirstShortVectorChecksum (input : FirstShortVectorInput) : Int :=
     (lll.firstShortVector input.basis (3 / 4)
       lllDeltaLower lllDeltaUpper input.hn input.hind)
 
+/-- Benchmark comparator observable: squared norm of Lean's first LLL vector.
+The verified-Isabelle Haskell extraction reports the same scalar. -/
+def runFirstShortVectorNormSq (input : FirstShortVectorInput) : Int :=
+  Vector.intNormSq
+    (lll.firstShortVector input.basis (3 / 4)
+      lllDeltaLower lllDeltaUpper input.hn input.hind)
+
+def intRowHaskell (v : Vector Int n) : String :=
+  "[" ++ String.intercalate "," ((List.finRange n).map fun j => toString v[j]) ++ "]"
+
+def matrixHaskell (b : Matrix Int n m) : String :=
+  "[" ++
+    String.intercalate "," ((List.finRange n).map fun i => intRowHaskell (b.row i)) ++
+    "]"
+
+initialize isabelleBinaryRef : IO.Ref (Option String) ← IO.mkRef none
+
+def checkedProcessOutput (cmd : String) (args : Array String := #[]) : IO String := do
+  let out ← IO.Process.output { cmd := cmd, args := args }
+  if out.exitCode != 0 then
+    throw <| IO.userError
+      s!"process failed ({cmd}):\nstdout:\n{out.stdout}\nstderr:\n{out.stderr}"
+  return out.stdout.trimAscii.toString
+
+def resolveIsabelleBinary : IO String := do
+  if let some cached ← isabelleBinaryRef.get then
+    return cached
+  let path ←
+    match (← IO.getEnv "HEX_LLL_ISABELLE_SVP") with
+    | some p => pure p
+    | none => checkedProcessOutput "scripts/oracle/setup_lll_isabelle.sh"
+  isabelleBinaryRef.set (some path)
+  return path
+
+def ensureIsabelleInputDir : IO Unit := do
+  discard <| checkedProcessOutput "mkdir" #["-p", ".cache/oracles/lll-isabelle/bench-inputs"]
+
+def parseIsabelleNormSq (text : String) : IO Int := do
+  match text.trimAscii.toString.toNat? with
+  | some n => return Int.ofNat n
+  | none => throw <| IO.userError s!"svp_verified emitted non-numeric output: {text}"
+
+def runIsabelleShortVectorNormSq (tag : String) (input : FirstShortVectorInput) : IO Int := do
+  let binary ← resolveIsabelleBinary
+  ensureIsabelleInputDir
+  let path := ".cache/oracles/lll-isabelle/bench-inputs/" ++ tag ++ ".txt"
+  IO.FS.writeFile path (matrixHaskell input.basis)
+  parseIsabelleNormSq (← checkedProcessOutput binary #[path])
+
 /-- Fixed benchmark target: BZ recombination hot path at `p = 5`, `k = 2`,
 and three lifted local factors. -/
 def runFirstShortVectorBZRecombinationChecksum : Unit → IO Int := fun _ => do
   return runFirstShortVectorChecksum (← bzRecombinationInputRef.get)
+
+def runFirstShortVectorBZRecombinationNormSq : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← bzRecombinationInputRef.get)
+
+def runIsabelleBZRecombinationNormSq : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "bz-recombination" (← bzRecombinationInputRef.get)
+
+def runFirstShortVectorRandomBoundedNormSq30 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq
+    (← getCachedInput randomBoundedInput30Ref (fun _ => prepRandomBoundedInput 30))
+
+def runIsabelleRandomBoundedNormSq30 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "random-bounded-30"
+    (← getCachedInput randomBoundedInput30Ref (fun _ => prepRandomBoundedInput 30))
+
+def runFirstShortVectorRandomBoundedNormSq60 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq
+    (← getCachedInput randomBoundedInput60Ref (fun _ => prepRandomBoundedInput 60))
+
+def runIsabelleRandomBoundedNormSq60 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "random-bounded-60"
+    (← getCachedInput randomBoundedInput60Ref (fun _ => prepRandomBoundedInput 60))
+
+def runFirstShortVectorRandomBoundedNormSq120 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq
+    (← getCachedInput randomBoundedInput120Ref (fun _ => prepRandomBoundedInput 120))
+
+def runIsabelleRandomBoundedNormSq120 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "random-bounded-120"
+    (← getCachedInput randomBoundedInput120Ref (fun _ => prepRandomBoundedInput 120))
+
+def runFirstShortVectorRandomBoundedNormSq240 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq
+    (← getCachedInput randomBoundedInput240Ref (fun _ => prepRandomBoundedInput 240))
+
+def runIsabelleRandomBoundedNormSq240 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "random-bounded-240"
+    (← getCachedInput randomBoundedInput240Ref (fun _ => prepRandomBoundedInput 240))
+
+def runFirstShortVectorHarshCubicNormSq15 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq
+    (← getCachedInput harshCubicInput15Ref (fun _ => prepHarshCubicInput 15))
+
+def runIsabelleHarshCubicNormSq15 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "harsh-cubic-15"
+    (← getCachedInput harshCubicInput15Ref (fun _ => prepHarshCubicInput 15))
+
+def runFirstShortVectorHarshCubicNormSq30 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq
+    (← getCachedInput harshCubicInput30Ref (fun _ => prepHarshCubicInput 30))
+
+def runIsabelleHarshCubicNormSq30 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "harsh-cubic-30"
+    (← getCachedInput harshCubicInput30Ref (fun _ => prepHarshCubicInput 30))
+
+def runFirstShortVectorHarshCubicNormSq45 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq
+    (← getCachedInput harshCubicInput45Ref (fun _ => prepHarshCubicInput 45))
+
+def runIsabelleHarshCubicNormSq45 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "harsh-cubic-45"
+    (← getCachedInput harshCubicInput45Ref (fun _ => prepHarshCubicInput 45))
 
 /-- Parametric benchmark target: LCG random-bounded bases. -/
 def runFirstShortVectorRandomBoundedChecksum (input : FirstShortVectorInput) : Int :=
@@ -665,6 +817,105 @@ setup_benchmark runFirstShortVectorHarshCubicChecksum n =>
     paramSchedule := .custom #[15, 30, 45]
     maxSecondsPerCall := 20.0
     targetInnerNanos := 1_000_000_000
+  }
+
+/- Fixed external-comparator registrations. The paired Lean and Isabelle
+targets return the squared norm of the first LLL vector so `compare` can join
+on a semantic scalar, not an implementation-specific reduced-basis encoding. -/
+setup_fixed_benchmark runFirstShortVectorBZRecombinationNormSq where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (Hashable.hash (runFirstShortVectorNormSq bzRecombinationInput))
+  }
+
+setup_fixed_benchmark runIsabelleBZRecombinationNormSq where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (Hashable.hash (runFirstShortVectorNormSq bzRecombinationInput))
+  }
+
+setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq30 where {
+    repeats := 3
+    maxSecondsPerCall := 20.0
+    expectedHash := some 0x3a52
+  }
+
+setup_fixed_benchmark runIsabelleRandomBoundedNormSq30 where {
+    repeats := 3
+    maxSecondsPerCall := 20.0
+    expectedHash := some 0x3a52
+  }
+
+setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq60 where {
+    repeats := 3
+    maxSecondsPerCall := 30.0
+    expectedHash := some 0x98cc
+  }
+
+setup_fixed_benchmark runIsabelleRandomBoundedNormSq60 where {
+    repeats := 3
+    maxSecondsPerCall := 30.0
+    expectedHash := some 0x98cc
+  }
+
+setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq120 where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some 0x11860
+  }
+
+setup_fixed_benchmark runIsabelleRandomBoundedNormSq120 where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some 0x11860
+  }
+
+setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq240 where {
+    repeats := 3
+    maxSecondsPerCall := 120.0
+    expectedHash := some 0x2454a
+  }
+
+setup_fixed_benchmark runIsabelleRandomBoundedNormSq240 where {
+    repeats := 3
+    maxSecondsPerCall := 120.0
+    expectedHash := some 0x2454a
+  }
+
+setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq15 where {
+    repeats := 3
+    maxSecondsPerCall := 20.0
+    expectedHash := some 0x700000000033a4
+  }
+
+setup_fixed_benchmark runIsabelleHarshCubicNormSq15 where {
+    repeats := 3
+    maxSecondsPerCall := 20.0
+    expectedHash := some 0x700000000033a4
+  }
+
+setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq30 where {
+    repeats := 3
+    maxSecondsPerCall := 40.0
+    expectedHash := some 0x37cc
+  }
+
+setup_fixed_benchmark runIsabelleHarshCubicNormSq30 where {
+    repeats := 3
+    maxSecondsPerCall := 40.0
+    expectedHash := some 0x37cc
+  }
+
+setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq45 where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some 0x6d1e
+  }
+
+setup_fixed_benchmark runIsabelleHarshCubicNormSq45 where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some 0x6d1e
   }
 
 end Hex.LLLBench
