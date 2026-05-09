@@ -126,8 +126,16 @@ libraries:
   HexPolyZ:
     deps: [HexPoly]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
+    phase4:
+      input_families:
+        - name: congruence-witnesses
+          description: Dense integer-polynomial finite-prefix congruence and constructed Bezout witness checks modulo a small prime.
+        - name: content-normalization
+          description: Dense integer polynomials with nontrivial coefficient content for content and primitive-part normalization.
+        - name: mignotte-helpers
+          description: Central binomial, square-root, coefficient-norm, and Mignotte coefficient-bound helper computations over deterministic integer-polynomial fixtures.
 
   # ---------- Depth 2 ----------
   HexLLL:
