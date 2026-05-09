@@ -2101,6 +2101,85 @@ private theorem fin_idxOf_lt_of_full_nodup {n : Nat} {xs : List (Fin n)}
     xs.idxOf x < xs.length := by
   exact List.idxOf_lt_length_of_mem (fin_mem_of_full_nodup x hlen hnodup)
 
+/-- Inverse permutation for the project's vector representation of
+permutations. The proof argument records that the source vector is a full
+nodup listing of `Fin n`, so every value has a valid `idxOf` position. -/
+def inversePermutationVector {n : Nat} (perm : Vector (Fin n) n)
+    (hnodup : perm.toList.Nodup) : Vector (Fin n) n :=
+  Vector.ofFn fun x =>
+    ⟨perm.toList.idxOf x,
+      by
+        simpa [Vector.length_toList] using
+          fin_idxOf_lt_of_full_nodup x (by simp [Vector.length_toList]) hnodup⟩
+
+theorem inversePermutationVector_get_apply {n : Nat}
+    (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) (i : Fin n) :
+    (inversePermutationVector perm hnodup)[perm[i]] = i := by
+  apply Fin.ext
+  simp [inversePermutationVector]
+  have hi : i.val < perm.toList.length := by
+    simp [Vector.length_toList, i.isLt]
+  exact hnodup.idxOf_getElem i.val hi
+
+theorem inversePermutationVector_apply_get {n : Nat}
+    (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) (j : Fin n) :
+    perm[(inversePermutationVector perm hnodup)[j]] = j := by
+  have hidx :
+      perm.toList.idxOf j < perm.toList.length :=
+    fin_idxOf_lt_of_full_nodup j (by simp [Vector.length_toList]) hnodup
+  have hget : perm.toList[perm.toList.idxOf j]'hidx = j :=
+    List.getElem_idxOf (x := j) (xs := perm.toList) hidx
+  let idx : Fin n := ⟨perm.toList.idxOf j, by
+    simpa [Vector.length_toList] using hidx⟩
+  have hidxeq : (inversePermutationVector perm hnodup)[j] = idx := by
+    apply Fin.ext
+    simp [inversePermutationVector, idx]
+  calc
+    perm[(inversePermutationVector perm hnodup)[j]] = perm[idx] :=
+      vector_get_fin_congr perm hidxeq
+    _ = j := hget
+
+theorem inversePermutationVector_nodup {n : Nat}
+    (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
+    (inversePermutationVector perm hnodup).toList.Nodup := by
+  rw [vector_toList_eq_finRange_map_get]
+  apply list_nodup_map_of_injective
+  · intro a b h
+    have happly := congrArg (fun x => perm[x]) h
+    change perm[(inversePermutationVector perm hnodup)[a]] =
+      perm[(inversePermutationVector perm hnodup)[b]] at happly
+    rw [inversePermutationVector_apply_get perm hnodup a,
+      inversePermutationVector_apply_get perm hnodup b] at happly
+    exact happly
+  · exact List.nodup_finRange n
+
+theorem inversePermutationVector_mem_permutationVectors {n : Nat}
+    {perm : Vector (Fin n) n} (hmem : perm ∈ permutationVectors n) :
+    inversePermutationVector perm (permutationVectors_nodup hmem) ∈ permutationVectors n := by
+  apply permutationVectors_complete
+  exact inversePermutationVector_nodup perm (permutationVectors_nodup hmem)
+
+theorem inversePermutationVector_involutive {n : Nat}
+    (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
+    inversePermutationVector (inversePermutationVector perm hnodup)
+        (inversePermutationVector_nodup perm hnodup) = perm := by
+  apply Vector.ext
+  intro i hi
+  let inv := inversePermutationVector perm hnodup
+  let x : Fin n := ⟨i, hi⟩
+  change (inversePermutationVector inv (inversePermutationVector_nodup perm hnodup))[x] =
+    perm[x]
+  have hx : inv[perm[x]] = x := inversePermutationVector_get_apply perm hnodup x
+  apply Fin.ext
+  simp [inversePermutationVector]
+  have hidx :
+    inv.toList.idxOf (inv[perm[x]]) = (perm[x]).val := by
+    have hlen : (perm[x]).val < inv.toList.length := by
+      simp [Vector.length_toList]
+    exact (inversePermutationVector_nodup perm hnodup).idxOf_getElem (perm[x]).val hlen
+  rw [hx] at hidx
+  exact hidx
+
 private theorem swapPermutationValues_eq_transposePermutationValues {n : Nat}
     (perm : Vector (Fin n) n) (i j : Fin n)
     (hnodup : perm.toList.Nodup) :
