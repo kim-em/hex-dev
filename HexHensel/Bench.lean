@@ -153,18 +153,24 @@ def prepBridgeInput (n : Nat) : BridgeInput :=
 /-- Per-parameter fixture for linear Hensel operations.
 
 The factor error is built as a multiple of `5`, so the correction path is
-nontrivial while staying deterministic.
+nontrivial while staying deterministic. The Bezout pair is computed via
+`normalizedXGCD` so that `s * gMod + t * hMod ≡ 1 (mod 5)`; the iterative
+linear lift relies on this precondition to keep the corrected `h` factor
+bounded in degree across all `k` steps. The shared salts `59 / 62 / 67`
+match `prepMultifactorLiftInput`, which already verifies coprimeness on
+the full scientific `n` ladder including `n = 192`.
 -/
 def prepLinearInput (n : Nat) : LinearInput :=
-  let g := linearZFactor 31
-  let h := denseZPoly (n + 1) 37
-  let e := denseZPoly (n + 1) 41
+  let g := linearZFactor 59
+  let h := denseZPoly (n + 1) 62
+  let e := denseZPoly (n + 1) 67
   let f := g * h + DensePoly.scale (5 : Int) e
+  let xgcd := ZPoly.normalizedXGCD 5 g h
   { f := f
     g := g
     h := h
-    s := 0
-    t := 1 }
+    s := xgcd.left
+    t := xgcd.right }
 
 /-- Encoded `(n, k)` fixture for iterative linear Hensel lift benchmarks. -/
 def prepLinearLiftInput (param : Nat) : LinearInput :=
