@@ -112,6 +112,16 @@ namespace IsEchelonForm
 variable [Mul R] [Add R] [OfNat R 0] [OfNat R 1]
 variable {M : Matrix R n m} {D : RowEchelonData R n m}
 
+/-- View a pivot-row index as a row index of the ambient matrix. -/
+def pivotRow (E : IsEchelonForm M D) (i : Fin D.rank) : Fin n :=
+  ⟨i.val, Nat.lt_of_lt_of_le i.isLt E.rank_le_n⟩
+
+/-- The pivot entries named by `pivotCols` are nonzero. This is the extra
+proof-facing contract needed by span solving: without it, the pivot-column
+division in `spanCoeffs` can divide by zero. -/
+def HasNonzeroPivots (E : IsEchelonForm M D) : Prop :=
+  ∀ i : Fin D.rank, D.echelon[E.pivotRow i][D.pivotCols.get i] ≠ 0
+
 /-- The square row-transform has a right inverse. -/
 theorem transform_mul_inv (E : IsEchelonForm M D) :
     ∃ Tinv : Matrix R n n, D.transform * Tinv = 1 := by
