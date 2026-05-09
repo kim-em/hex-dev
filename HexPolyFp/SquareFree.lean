@@ -2609,6 +2609,104 @@ private theorem yunFactorsPairwiseReady_succ_of_common_dvd_one
   exact yunFactors_current_tail_coprime_of_common_dvd_one
     c w multiplicity fuel hmonic hcommon
 
+private theorem yunFactorsPairwiseReady_of_reachable_common_dvd_one
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (multiplicity fuel : Nat)
+    (hreachable : yunFactorsPairwiseReachable c w fuel)
+    (hmonic :
+      ∀ c w : FpPoly p, ∀ multiplicity fuel : Nat,
+        yunFactorsPairwiseReachable c w (fuel + 1) →
+          ∀ sf ∈
+              (yunFactors (DensePoly.gcd c w) (w / DensePoly.gcd c w)
+              (multiplicity + 1) fuel []).1.reverse,
+            DensePoly.Monic (DensePoly.gcd (c / DensePoly.gcd c w) sf.factor))
+    (hcommon :
+      ∀ c w : FpPoly p, ∀ _multiplicity fuel : Nat,
+        yunFactorsPairwiseReachable c w (fuel + 1) →
+          ∀ d : FpPoly p,
+            d ∣ c / DensePoly.gcd c w →
+              d ∣ DensePoly.gcd c w →
+                d ∣ (1 : FpPoly p)) :
+    yunFactorsPairwiseReady c w multiplicity fuel := by
+  induction fuel generalizing c w multiplicity with
+  | zero =>
+      simp [yunFactorsPairwiseReady]
+  | succ fuel ih =>
+      have htail :
+          yunFactorsPairwiseReady
+            (DensePoly.gcd c w)
+            (w / DensePoly.gcd c w)
+            (multiplicity + 1)
+            fuel := by
+        exact ih
+          (DensePoly.gcd c w)
+          (w / DensePoly.gcd c w)
+          (multiplicity + 1)
+          (yunFactorsPairwiseReachable_step c w fuel hreachable)
+      exact
+        yunFactorsPairwiseReady_succ_of_common_dvd_one
+          c w multiplicity fuel htail
+          (hmonic c w multiplicity fuel hreachable)
+          (hcommon c w multiplicity fuel hreachable)
+
+private theorem yunFactorsPairwiseReady_of_derivative_split_common_dvd_one
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
+    (hdf : (DensePoly.derivative f).isZero ≠ true)
+    (hmonic :
+      ∀ c w : FpPoly p, ∀ multiplicity fuel : Nat,
+        yunFactorsPairwiseReachable c w (fuel + 1) →
+          ∀ sf ∈
+              (yunFactors (DensePoly.gcd c w) (w / DensePoly.gcd c w)
+              (multiplicity + 1) fuel []).1.reverse,
+            DensePoly.Monic (DensePoly.gcd (c / DensePoly.gcd c w) sf.factor))
+    (hcommon :
+      ∀ c w : FpPoly p, ∀ _multiplicity fuel : Nat,
+        yunFactorsPairwiseReachable c w (fuel + 1) →
+          ∀ d : FpPoly p,
+            d ∣ c / DensePoly.gcd c w →
+              d ∣ DensePoly.gcd c w →
+                d ∣ (1 : FpPoly p)) :
+    yunFactorsPairwiseReady
+      (f / DensePoly.gcd f (DensePoly.derivative f))
+      (DensePoly.gcd f (DensePoly.derivative f))
+      multiplicity
+      fuel := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  exact
+    yunFactorsPairwiseReady_of_reachable_common_dvd_one
+      (f / DensePoly.gcd f (DensePoly.derivative f))
+      (DensePoly.gcd f (DensePoly.derivative f))
+      multiplicity fuel
+      (yunFactorsPairwiseReachable_of_derivative_split hp f fuel hdf)
+      hmonic hcommon
+
+private theorem yunFactorsPairwiseInvariant_of_derivative_split_common_dvd_one
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
+    (hdf : (DensePoly.derivative f).isZero ≠ true)
+    (hmonic :
+      ∀ c w : FpPoly p, ∀ multiplicity fuel : Nat,
+        yunFactorsPairwiseReachable c w (fuel + 1) →
+          ∀ sf ∈
+              (yunFactors (DensePoly.gcd c w) (w / DensePoly.gcd c w)
+              (multiplicity + 1) fuel []).1.reverse,
+            DensePoly.Monic (DensePoly.gcd (c / DensePoly.gcd c w) sf.factor))
+    (hcommon :
+      ∀ c w : FpPoly p, ∀ _multiplicity fuel : Nat,
+        yunFactorsPairwiseReachable c w (fuel + 1) →
+          ∀ d : FpPoly p,
+            d ∣ c / DensePoly.gcd c w →
+              d ∣ DensePoly.gcd c w →
+                d ∣ (1 : FpPoly p)) :
+    yunFactorsPairwiseInvariant
+      (f / DensePoly.gcd f (DensePoly.derivative f))
+      (DensePoly.gcd f (DensePoly.derivative f))
+      multiplicity
+      fuel where
+  reachable := yunFactorsPairwiseReachable_of_derivative_split hp f fuel hdf
+  ready :=
+    yunFactorsPairwiseReady_of_derivative_split_common_dvd_one
+      hp f multiplicity fuel hdf hmonic hcommon
+
 private theorem squareFreeAuxRev_reverse_append
     (f : FpPoly p) (multiplicity fuel : Nat) (accRev : List (SquareFreeFactor p)) :
     (squareFreeAuxRev f multiplicity fuel accRev).reverse =
