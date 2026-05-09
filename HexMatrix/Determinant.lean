@@ -1089,6 +1089,22 @@ private def raiseFinAbove {n : Nat} (i : Fin (n + 1)) (r : Fin n) :
   else
     ⟨r.val + 1, by omega⟩
 
+private theorem insertAt_get_raiseFinAbove {α : Type u} {n : Nat}
+    (x : α) (v : Vector α n) (i : Fin (n + 1)) (r : Fin n) :
+    (insertAt x v i)[raiseFinAbove i r] = v[r] := by
+  unfold insertAt raiseFinAbove
+  split
+  · simpa [Vector.getElem_toList] using
+      List.getElem_insertIdx_of_lt (l := v.toList) (x := x) (i := i.val)
+        (j := r.val) ‹r.val < i.val› (by
+          have hi : i.val ≤ v.toList.length := by
+            simpa [Vector.length_toList] using Nat.lt_succ_iff.mp i.isLt
+          rw [List.length_insertIdx_of_le_length hi]
+          simpa [Vector.length_toList] using Nat.lt_succ_of_lt r.isLt)
+  · simpa using
+      list_getElem_insertIdx_succ_of_le v.toList x (Nat.le_of_not_gt ‹¬r.val < i.val›)
+        (by simp [Vector.length_toList])
+
 private theorem raiseFinAbove_lt_iff {n : Nat} (i : Fin (n + 1)) (a b : Fin n) :
     raiseFinAbove i a < raiseFinAbove i b ↔ a < b := by
   by_cases hai : a.val < i.val
@@ -1176,6 +1192,130 @@ private theorem inversionCount_map_raiseFinAbove_append_self {n : Nat}
   rw [crossInversionCount_singleton_right]
   rw [inversionFold_map_raiseFinAbove_self i xs 0]
   omega
+
+private theorem foldCount_map_castSucc_ge {n : Nat} (i : Fin (n + 1))
+    (xs : List (Fin n)) (acc : Nat) :
+    (xs.map Fin.castSucc).foldl
+        (fun acc y => acc + if i.val ≤ y.val then 1 else 0) acc =
+      xs.foldl (fun acc y => acc + if i.val ≤ y.val then 1 else 0) acc := by
+  induction xs generalizing acc with
+  | nil => rfl
+  | cons x xs ih =>
+      simp only [List.map_cons, List.foldl_cons]
+      exact ih _
+
+private theorem foldl_ignore {α : Type u} (xs : List α) (acc : Nat) :
+    xs.foldl (fun acc _x => acc) acc = acc := by
+  induction xs generalizing acc with
+  | nil => rfl
+  | cons _ xs ih =>
+      simp only [List.foldl_cons]
+      exact ih acc
+
+private theorem foldCount_finRange_ge {n : Nat} (i : Fin (n + 1)) :
+    (List.finRange n).foldl
+        (fun acc y => acc + if i.val ≤ y.val then 1 else 0) 0 =
+      n - i.val := by
+  induction n with
+  | zero =>
+      simp
+  | succ n ih =>
+      by_cases htop : i.val = n + 1
+      · have hfalse :
+            ∀ acc y, y ∈ List.finRange (n + 1) →
+              (fun (acc : Nat) (y : Fin (n + 1)) =>
+                acc + if i.val ≤ y.val then 1 else 0) acc y =
+                (fun (acc : Nat) (_y : Fin (n + 1)) => acc) acc y := by
+          intro acc y _hy
+          have hnle : ¬ i.val ≤ y.val := by omega
+          simp [hnle]
+        calc
+          (List.finRange (n + 1)).foldl
+              (fun acc y => acc + if i.val ≤ y.val then 1 else 0) 0 =
+              (List.finRange (n + 1)).foldl
+                (fun (acc : Nat) (_y : Fin (n + 1)) => acc) 0 := by
+                exact foldl_acc_congr (List.finRange (n + 1))
+                  (fun (acc : Nat) (y : Fin (n + 1)) =>
+                    acc + if i.val ≤ y.val then 1 else 0)
+                  (fun (acc : Nat) (_y : Fin (n + 1)) => acc) 0 hfalse
+          _ = 0 := foldl_ignore (List.finRange (n + 1)) 0
+          _ = n + 1 - i.val := by omega
+      · have hiLt : i.val < n + 1 := by omega
+        let i' : Fin (n + 1) := ⟨i.val, hiLt⟩
+        rw [List.finRange_succ_last]
+        rw [List.foldl_append, List.foldl_cons, List.foldl_nil]
+        rw [foldCount_map_castSucc_ge i' (List.finRange n) 0]
+        rw [ih i']
+        have hleLast : i.val ≤ n := by omega
+        simp [i', hleLast]
+        omega
+
+private theorem foldCount_perm {α : Type u} (p : α → Prop) [DecidablePred p]
+    {xs ys : List α} (hperm : xs.Perm ys) :
+    xs.foldl (fun acc y => acc + if p y then 1 else 0) 0 =
+      ys.foldl (fun acc y => acc + if p y then 1 else 0) 0 := by
+  induction hperm with
+  | nil => rfl
+  | cons x hperm ih =>
+      rename_i l₁ l₂
+      simp only [List.foldl_cons]
+      let a := 0 + if p x then 1 else 0
+      calc
+        l₁.foldl (fun acc y => acc + if p y then 1 else 0) a =
+            a + l₁.foldl (fun acc y => acc + if p y then 1 else 0) 0 := by
+              exact foldCount_start l₁ p a
+        _ = a + l₂.foldl (fun acc y => acc + if p y then 1 else 0) 0 := by
+              rw [ih]
+        _ = l₂.foldl (fun acc y => acc + if p y then 1 else 0) a := by
+              exact (foldCount_start l₂ p a).symm
+  | swap x y xs =>
+      simp only [List.foldl_cons]
+      rw [foldCount_start xs p ((0 + if p y then 1 else 0) + if p x then 1 else 0)]
+      rw [foldCount_start xs p ((0 + if p x then 1 else 0) + if p y then 1 else 0)]
+      omega
+  | trans _ _ ih₁ ih₂ =>
+      exact ih₁.trans ih₂
+
+private theorem fin_mem_of_full_nodup_for_count {n : Nat} {xs : List (Fin n)}
+    (x : Fin n) (hlen : xs.length = n) (hnodup : xs.Nodup) :
+    x ∈ xs := by
+  by_cases hmem : x ∈ xs
+  · exact hmem
+  · exfalso
+    have hsub : List.Subperm xs ((List.finRange n).erase x) := by
+      apply List.subperm_of_subset hnodup
+      intro y hy
+      exact (List.mem_erase_of_ne (by
+        intro hyx
+        exact hmem (hyx ▸ hy))).2 (List.mem_finRange y)
+    have hle : xs.length ≤ ((List.finRange n).erase x).length :=
+      List.Subperm.length_le hsub
+    have herase : ((List.finRange n).erase x).length = n - 1 := by
+      rw [List.length_erase]
+      simp [List.mem_finRange, List.length_finRange]
+    rw [hlen, herase] at hle
+    cases n with
+    | zero => exact Fin.elim0 x
+    | succ n => omega
+
+private theorem list_perm_finRange_of_full_nodup {n : Nat} {xs : List (Fin n)}
+    (hlen : xs.length = n) (hnodup : xs.Nodup) :
+    xs.Perm (List.finRange n) := by
+  rw [List.perm_ext_iff_of_nodup hnodup (List.nodup_finRange n)]
+  intro x
+  constructor
+  · intro _hx
+    exact List.mem_finRange x
+  · intro _hx
+    exact fin_mem_of_full_nodup_for_count x hlen hnodup
+
+private theorem foldCount_full_nodup_ge {n : Nat} (i : Fin (n + 1))
+    {xs : List (Fin n)} (hlen : xs.length = n) (hnodup : xs.Nodup) :
+    xs.foldl (fun acc y => acc + if i.val ≤ y.val then 1 else 0) 0 =
+      n - i.val := by
+  rw [foldCount_perm (fun y : Fin n => i.val ≤ y.val)
+    (list_perm_finRange_of_full_nodup hlen hnodup)]
+  exact foldCount_finRange_ge i
 
 private theorem lowerFinLast_castSucc {n : Nat} (x : Fin (n + 1))
     (h : x ≠ Fin.last n) :
@@ -2255,6 +2395,89 @@ private theorem inversePermutationValues_nodup {n : Nat}
     rw [inversePermutationValues_get_value perm hnodup b] at hval
     exact hval
   · exact List.nodup_finRange n
+
+private theorem inversePermutationValues_insertAt_last_castSucc {n : Nat}
+    (v : Vector (Fin n) n) (i : Fin (n + 1)) (hnodup : v.toList.Nodup) :
+    inversePermutationValues
+        (insertAt (Fin.last n) (v.map Fin.castSucc) i)
+        (insertAt_last_castSucc_nodup v i hnodup) =
+      insertAt i ((inversePermutationValues v hnodup).map (raiseFinAbove i))
+        (Fin.last n) := by
+  apply Vector.ext
+  intro k hk
+  let c : Fin (n + 1) := ⟨k, hk⟩
+  by_cases hlast : k = n
+  · subst k
+    have hleft :
+        (inversePermutationValues
+          (insertAt (Fin.last n) (v.map Fin.castSucc) i)
+          (insertAt_last_castSucc_nodup v i hnodup))[Fin.last n] = i := by
+      apply Fin.ext
+      simp [inversePermutationValues]
+      exact insertAt_last_castSucc_idxOf v i hnodup
+    have hright :
+        (insertAt i ((inversePermutationValues v hnodup).map (raiseFinAbove i))
+          (Fin.last n))[Fin.last n] = i := by
+      exact insertAt_get_self i ((inversePermutationValues v hnodup).map (raiseFinAbove i))
+        (Fin.last n)
+    exact hleft.trans hright.symm
+  · have hklt : k < n := by omega
+    let old : Fin n := ⟨k, hklt⟩
+    have hc : c = old.castSucc := Fin.ext rfl
+    have hget :
+        (insertAt (Fin.last n) (v.map Fin.castSucc) i)[
+            raiseFinAbove i ((inversePermutationValues v hnodup)[old])] =
+          old.castSucc := by
+      rw [insertAt_get_raiseFinAbove]
+      simpa using congrArg Fin.castSucc (inversePermutationValues_get_value v hnodup old)
+    have hleft :
+        (inversePermutationValues
+          (insertAt (Fin.last n) (v.map Fin.castSucc) i)
+          (insertAt_last_castSucc_nodup v i hnodup))[old.castSucc] =
+          raiseFinAbove i ((inversePermutationValues v hnodup)[old]) := by
+      apply Fin.ext
+      have hgetList :
+          (insertAt (Fin.last n) (v.map Fin.castSucc) i).toList[
+              (raiseFinAbove i ((inversePermutationValues v hnodup)[old])).val] =
+            old.castSucc := by
+        simpa [Vector.getElem_toList] using hget
+      have hidxOf :=
+        (insertAt_last_castSucc_nodup v i hnodup).idxOf_getElem
+          (raiseFinAbove i ((inversePermutationValues v hnodup)[old])).val
+          (by simp [Vector.length_toList])
+      have hidx :
+          (insertAt (Fin.last n) (v.map Fin.castSucc) i).toList.idxOf old.castSucc =
+            (raiseFinAbove i ((inversePermutationValues v hnodup)[old])).val := by
+        exact hgetList ▸ hidxOf
+      have hidx' :
+          (insertAt (Fin.last n) (v.map Fin.castSucc) i).toList.idxOf
+              (⟨old.val, by omega⟩ : Fin (n + 1)) =
+            (raiseFinAbove i ((inversePermutationValues v hnodup)[old])).val := by
+        simpa using hidx
+      simpa [inversePermutationValues] using hidx'
+    have hright :
+        (insertAt i ((inversePermutationValues v hnodup).map (raiseFinAbove i))
+          (Fin.last n))[old.castSucc] =
+          raiseFinAbove i ((inversePermutationValues v hnodup)[old]) := by
+      simpa using
+        insertAt_last_get_castSucc i
+          ((inversePermutationValues v hnodup).map (raiseFinAbove i)) old
+    simpa [c, hc] using hleft.trans hright.symm
+
+private theorem inversionCount_inversePermutationValues_insertAt_last_castSucc {n : Nat}
+    (v : Vector (Fin n) n) (i : Fin (n + 1)) (hnodup : v.toList.Nodup) :
+    inversionCount
+        (inversePermutationValues
+          (insertAt (Fin.last n) (v.map Fin.castSucc) i)
+          (insertAt_last_castSucc_nodup v i hnodup)).toList =
+      inversionCount (inversePermutationValues v hnodup).toList + (n - i.val) := by
+  rw [inversePermutationValues_insertAt_last_castSucc v i hnodup]
+  rw [insertAt_last_toList]
+  rw [vector_toList_map]
+  rw [inversionCount_map_raiseFinAbove_append_self]
+  rw [foldCount_full_nodup_ge i]
+  · simp [Vector.length_toList]
+  · exact inversePermutationValues_nodup v hnodup
 
 private theorem inversePermutationValues_mem_permutationVectors {n : Nat}
     {perm : Vector (Fin n) n} (hmem : perm ∈ permutationVectors n) :
