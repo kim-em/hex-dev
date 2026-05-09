@@ -6,8 +6,9 @@ Benchmark registrations for the `HexMatrixMathlib` dense-matrix bridge.
 
 This Phase 4 slice measures the representation conversion surfaces between the
 executable `Hex.Matrix` representation and Mathlib's function-based `Matrix`
-representation, plus the determinant bridge theorem surface. Row-operation,
-rank, span, and nullspace bridge benchmarks are left to later Phase 4 slices.
+representation, row-operation bridge theorem surfaces, and the determinant
+bridge theorem surface. Rank, span, and nullspace bridge benchmarks are left to
+later Phase 4 slices.
 
 Scientific registrations:
 
@@ -17,6 +18,18 @@ Scientific registrations:
   dense matrix and checksum its entries, `O(n^2)`.
 * `runRoundTripChecksum`: perform both dense and Mathlib conversion round trips
   over generated square integer matrices, `O(n^2)`.
+* `runHexRowSwapBridgeChecksum`: apply executable row swap, convert the result,
+  and checksum all entries, `O(n^2)`.
+* `runMathlibRowSwapChecksum`: apply the corresponding Mathlib row-swap matrix
+  to the same fixture and checksum all entries, `O(n^2)`.
+* `runHexRowScaleBridgeChecksum`: apply executable row scaling, convert the
+  result, and checksum all entries, `O(n^2)`.
+* `runMathlibRowScaleChecksum`: apply the corresponding Mathlib diagonal row
+  scaling matrix to the same fixture and checksum all entries, `O(n^2)`.
+* `runHexRowAddBridgeChecksum`: apply executable row addition, convert the
+  result, and checksum all entries, `O(n^2)`.
+* `runMathlibRowAddChecksum`: apply the corresponding Mathlib transvection to
+  the same fixture and checksum all entries, `O(n^2)`.
 * `runHexDetBridge`: convert a generated Mathlib matrix to `Hex.Matrix` and
   compute `Hex.Matrix.det`, using the Leibniz determinant model `O(n * n!)`.
 * `runMathlibDetBridge`: convert the same generated dense matrix through
@@ -27,6 +40,10 @@ Compare groups:
 
 * `compare runHexDetBridge runMathlibDetBridge` checks the determinant bridge on
   the shared small-domain integer fixture schedule.
+* `compare runHexRowSwapBridgeChecksum runMathlibRowSwapChecksum`,
+  `compare runHexRowScaleBridgeChecksum runMathlibRowScaleChecksum`, and
+  `compare runHexRowAddBridgeChecksum runMathlibRowAddChecksum` check the
+  row-operation bridge surfaces on shared square integer fixture schedules.
 -/
 
 namespace HexMatrixMathlib.MatrixBench
@@ -114,10 +131,45 @@ def prepRoundTripInput (n : Nat) : RoundTripInput :=
     denseEntries := flatMatrix n 131
     mathlibEntries := flatMatrix n 173 }
 
+/-- Per-parameter row-swap bridge fixture. -/
+def prepRowSwapInput (n : Nat) : MatrixInput :=
+  { n := n
+    entries := flatMatrix n 257 }
+
+/-- Per-parameter row-scale bridge fixture. -/
+def prepRowScaleInput (n : Nat) : MatrixInput :=
+  { n := n
+    entries := flatMatrix n 293 }
+
+/-- Per-parameter row-addition bridge fixture. -/
+def prepRowAddInput (n : Nat) : MatrixInput :=
+  { n := n
+    entries := flatMatrix n 337 }
+
 /-- Per-parameter determinant fixture shared by Hex and Mathlib determinant paths. -/
 def prepDetInput (n : Nat) : DetInput :=
   { n := n
     entries := flatMatrix n 211 }
+
+/-- First row index for a nonempty square matrix. -/
+def firstRow (n : Nat) (h : 0 < n) : Fin n :=
+  ⟨0, h⟩
+
+/-- Last row index for a nonempty square matrix. -/
+def lastRow (n : Nat) (h : 0 < n) : Fin n :=
+  ⟨n - 1, Nat.sub_lt h (by decide)⟩
+
+/-- Second row index for a matrix with at least two rows. -/
+def secondRow (n : Nat) (h : 1 < n) : Fin n :=
+  ⟨1, h⟩
+
+/-- Fixed nontrivial scale factor used by row-operation bridge benchmarks. -/
+def rowScaleCoeff : Int :=
+  -3
+
+/-- Fixed nontrivial transvection factor used by row-addition bridge benchmarks. -/
+def rowAddCoeff : Int :=
+  5
 
 /-- Benchmark target: convert one dense matrix and checksum Mathlib entries. -/
 def runMatrixEquivChecksum (input : MatrixInput) : UInt64 :=
@@ -139,6 +191,69 @@ def runRoundTripChecksum (input : RoundTripInput) : UInt64 :=
   let denseRoundTrip := matrixEquiv.symm (matrixEquiv dense)
   let mathlibRoundTrip := matrixEquiv (matrixEquiv.symm mathlib)
   mixWord (checksumHex denseRoundTrip) (checksumMathlib mathlibRoundTrip)
+
+/-- Benchmark target: executable row swap followed by bridge conversion. -/
+def runHexRowSwapBridgeChecksum (input : MatrixInput) : UInt64 :=
+  let dense : Hex.Matrix Int input.n input.n := hexMatrixOfFlat input.n input.entries
+  if h : 0 < input.n then
+    let i := firstRow input.n h
+    let j := lastRow input.n h
+    checksumMathlib (matrixEquiv (Hex.Matrix.rowSwap dense i j))
+  else
+    checksumMathlib (matrixEquiv dense)
+
+/-- Benchmark target: direct Mathlib-side row-swap construction. -/
+def runMathlibRowSwapChecksum (input : MatrixInput) : UInt64 :=
+  let dense : Hex.Matrix Int input.n input.n := hexMatrixOfFlat input.n input.entries
+  let mathlib := matrixEquiv dense
+  if h : 0 < input.n then
+    let i := firstRow input.n h
+    let j := lastRow input.n h
+    checksumMathlib (Matrix.swap Int i j * mathlib)
+  else
+    checksumMathlib mathlib
+
+/-- Benchmark target: executable row scaling followed by bridge conversion. -/
+def runHexRowScaleBridgeChecksum (input : MatrixInput) : UInt64 :=
+  let dense : Hex.Matrix Int input.n input.n := hexMatrixOfFlat input.n input.entries
+  if h : 0 < input.n then
+    let i := firstRow input.n h
+    checksumMathlib (matrixEquiv (Hex.Matrix.rowScale dense i rowScaleCoeff))
+  else
+    checksumMathlib (matrixEquiv dense)
+
+/-- Benchmark target: direct Mathlib-side row-scaling construction. -/
+def runMathlibRowScaleChecksum (input : MatrixInput) : UInt64 :=
+  let dense : Hex.Matrix Int input.n input.n := hexMatrixOfFlat input.n input.entries
+  let mathlib := matrixEquiv dense
+  if h : 0 < input.n then
+    let i := firstRow input.n h
+    checksumMathlib
+      (Matrix.diagonal (Function.update (fun _ : Fin input.n => (1 : Int)) i rowScaleCoeff) *
+        mathlib)
+  else
+    checksumMathlib mathlib
+
+/-- Benchmark target: executable row addition followed by bridge conversion. -/
+def runHexRowAddBridgeChecksum (input : MatrixInput) : UInt64 :=
+  let dense : Hex.Matrix Int input.n input.n := hexMatrixOfFlat input.n input.entries
+  if h : 1 < input.n then
+    let src := firstRow input.n (Nat.zero_lt_of_lt h)
+    let dst := secondRow input.n h
+    checksumMathlib (matrixEquiv (Hex.Matrix.rowAdd dense src dst rowAddCoeff))
+  else
+    checksumMathlib (matrixEquiv dense)
+
+/-- Benchmark target: direct Mathlib-side row-addition construction. -/
+def runMathlibRowAddChecksum (input : MatrixInput) : UInt64 :=
+  let dense : Hex.Matrix Int input.n input.n := hexMatrixOfFlat input.n input.entries
+  let mathlib := matrixEquiv dense
+  if h : 1 < input.n then
+    let src := firstRow input.n (Nat.zero_lt_of_lt h)
+    let dst := secondRow input.n h
+    checksumMathlib (Matrix.transvection dst src rowAddCoeff * mathlib)
+  else
+    checksumMathlib mathlib
 
 /-- Benchmark target: convert from Mathlib representation and compute Hex's determinant. -/
 def runHexDetBridge (input : DetInput) : Int :=
@@ -191,6 +306,84 @@ setup_benchmark runMatrixEquivSymmChecksum n => n * n
 for dense-origin and Mathlib-origin inputs. Each pass visits `n^2` entries. -/
 setup_benchmark runRoundTripChecksum n => n * n
   with prep := prepRoundTripInput
+  where {
+    paramFloor := 128
+    paramCeiling := 512
+    paramSchedule := .custom #[128, 256, 384, 512]
+    maxSecondsPerCall := 2.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- Cost model: executable row swap touches two dense rows, then the bridge view
+and checksum force every entry of one generated `n x n` output matrix. -/
+setup_benchmark runHexRowSwapBridgeChecksum n => n * n
+  with prep := prepRowSwapInput
+  where {
+    paramFloor := 128
+    paramCeiling := 512
+    paramSchedule := .custom #[128, 256, 384, 512]
+    maxSecondsPerCall := 2.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- Cost model: the direct Mathlib row-swap matrix is multiplied by the same
+generated `n x n` matrix, and the checksum forces every output entry. -/
+setup_benchmark runMathlibRowSwapChecksum n => n * n
+  with prep := prepRowSwapInput
+  where {
+    paramFloor := 128
+    paramCeiling := 512
+    paramSchedule := .custom #[128, 256, 384, 512]
+    maxSecondsPerCall := 2.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- Cost model: executable row scaling rewrites one dense row, then the bridge
+view and checksum force every entry of one generated `n x n` output matrix. -/
+setup_benchmark runHexRowScaleBridgeChecksum n => n * n
+  with prep := prepRowScaleInput
+  where {
+    paramFloor := 128
+    paramCeiling := 512
+    paramSchedule := .custom #[128, 256, 384, 512]
+    maxSecondsPerCall := 2.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- Cost model: the direct Mathlib diagonal row-scaling matrix is multiplied by
+the same generated `n x n` matrix, and the checksum forces every output entry. -/
+setup_benchmark runMathlibRowScaleChecksum n => n * n
+  with prep := prepRowScaleInput
+  where {
+    paramFloor := 128
+    paramCeiling := 512
+    paramSchedule := .custom #[128, 256, 384, 512]
+    maxSecondsPerCall := 2.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- Cost model: executable row addition rewrites one dense row, then the bridge
+view and checksum force every entry of one generated `n x n` output matrix. -/
+setup_benchmark runHexRowAddBridgeChecksum n => n * n
+  with prep := prepRowAddInput
+  where {
+    paramFloor := 128
+    paramCeiling := 512
+    paramSchedule := .custom #[128, 256, 384, 512]
+    maxSecondsPerCall := 2.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- Cost model: the direct Mathlib transvection is multiplied by the same
+generated `n x n` matrix, and the checksum forces every output entry. -/
+setup_benchmark runMathlibRowAddChecksum n => n * n
+  with prep := prepRowAddInput
   where {
     paramFloor := 128
     paramCeiling := 512
