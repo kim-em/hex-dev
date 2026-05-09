@@ -1977,7 +1977,7 @@ section CommRingDerivative
 
 variable {S : Type _} [Lean.Grind.CommRing S]
 
-attribute [instance 1100] Lean.Grind.Semiring.natCast
+attribute [local instance 1100] Lean.Grind.Semiring.natCast
 
 private theorem fold_add_range_succ_commring (A : Nat → S) (m : Nat) :
     (List.range (m + 1)).foldl (fun acc i => acc + A i) 0 =
