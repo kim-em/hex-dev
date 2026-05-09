@@ -102,6 +102,9 @@ private theorem maxProperDiv_2 : Berlekamp.maximalProperDivisors 2 = [1] := by d
 private theorem maxProperDiv_3 : Berlekamp.maximalProperDivisors 3 = [1] := by decide
 private theorem maxProperDiv_4 : Berlekamp.maximalProperDivisors 4 = [2] := by decide
 private theorem maxProperDiv_6 : Berlekamp.maximalProperDivisors 6 = [2, 3] := by decide
+private theorem maxProperDiv_8 : Berlekamp.maximalProperDivisors 8 = [4] := by decide
+private theorem maxProperDiv_12 : Berlekamp.maximalProperDivisors 12 = [4, 6] := by decide
+private theorem maxProperDiv_16 : Berlekamp.maximalProperDivisors 16 = [8] := by decide
 
 /-! ## Certificate-backed benchmark moduli -/
 
@@ -286,6 +289,123 @@ private theorem m_p7_n6_irr : FpPoly.Irreducible m_p7_n6 :=
     (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
       m_p7_n6 m_p7_n6_monic m_p7_n6_certificate
       m_p7_n6_certificate_check)
+
+/-- `x^8 + x + 3` over `F_7`. -/
+private def m_p7_n8 : FpPoly 7 :=
+  { coeffs := #[(3 : ZMod64 7), 1, 0, 0, 0, 0, 0, 0, 1]
+    normalized := Or.inr (by simpa using one_ne_zero_seven) }
+private theorem m_p7_n8_pos : 0 < FpPoly.degree m_p7_n8 := by decide
+private theorem m_p7_n8_monic : DensePoly.Monic m_p7_n8 := by rfl
+
+private def m_p7_n8_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 7
+  n := 8
+  powChain :=
+    #[polyP7 #[0, 1], polyP7 #[0, 0, 0, 0, 0, 0, 0, 1],
+      polyP7 #[0, 1, 2, 4, 1, 2, 4, 1], polyP7 #[0, 1, 3, 2, 6, 4, 5, 1],
+      polyP7 #[0, 1, 5, 4, 6, 2, 3, 1], polyP7 #[0, 1, 1, 1, 1, 1, 1, 1],
+      polyP7 #[0, 1, 4, 2, 1, 4, 2, 1], polyP7 #[0, 1, 6, 1, 6, 1, 6, 1],
+      polyP7 #[0, 1]]
+  bezout :=
+    #[{ left := polyP7 #[5, 3, 6, 0, 6, 3, 1],
+        right := polyP7 #[0, 3, 1, 1, 4, 3, 0, 6] }]
+
+set_option maxRecDepth 131072 in
+set_option maxHeartbeats 80000000 in
+private theorem m_p7_n8_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinearIncremental m_p7_n8 m_p7_n8_monic
+        m_p7_n8_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinearIncremental,
+    m_p7_n8_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinearIncremental,
+    Berlekamp.checkPowChainLinearIncrementalStep,
+    Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_8,
+    m_p7_n8, polyP7]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · constructor
+        · rfl
+        · intro x hx
+          have hcases : x = 0 ∨ x = 1 ∨ x = 2 ∨ x = 3 ∨ x = 4 ∨ x = 5 ∨
+              x = 6 ∨ x = 7 := by omega
+          rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> rfl
+    · rfl
+  · rfl
+
+private theorem m_p7_n8_irr : FpPoly.Irreducible m_p7_n8 :=
+  Berlekamp.rabinTest_imp_irreducible m_p7_n8 m_p7_n8_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      m_p7_n8 m_p7_n8_monic m_p7_n8_certificate
+      m_p7_n8_certificate_check)
+
+/-- `x^12 + x^2 + x + 2` over `F_7`. -/
+private def m_p7_n12 : FpPoly 7 :=
+  { coeffs := #[(2 : ZMod64 7), 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+    normalized := Or.inr (by simpa using one_ne_zero_seven) }
+private theorem m_p7_n12_pos : 0 < FpPoly.degree m_p7_n12 := by decide
+private theorem m_p7_n12_monic : DensePoly.Monic m_p7_n12 := by rfl
+
+private def m_p7_n12_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 7
+  n := 12
+  powChain :=
+    #[polyP7 #[0, 1], polyP7 #[0, 0, 0, 0, 0, 0, 0, 1],
+      polyP7 #[0, 2, 4, 0, 0, 0, 0, 0, 4, 1],
+      polyP7 #[3, 0, 5, 3, 4, 2, 6, 2, 1, 2, 6, 1],
+      polyP7 #[3, 3, 1, 1, 0, 3, 2, 0, 1, 3, 4, 6],
+      polyP7 #[2, 2, 5, 6, 3, 2, 6, 1, 1, 4, 4, 3],
+      polyP7 #[4, 1, 3, 1, 4, 6, 4, 2, 4, 4, 6, 4],
+      polyP7 #[4, 1, 5, 0, 1, 3, 2, 2, 3, 5, 6, 4],
+      polyP7 #[6, 6, 2, 2, 6, 0, 0, 6, 6, 1, 3],
+      polyP7 #[3, 5, 0, 1, 4, 1, 3, 6, 4, 2, 2, 4],
+      polyP7 #[1, 1, 4, 3, 4, 5, 1, 6, 6, 5, 1, 4],
+      polyP7 #[2, 6, 6, 4, 2, 6, 4, 2, 5, 1, 3, 2], polyP7 #[0, 1]]
+  bezout :=
+    #[{ left := polyP7 #[4, 1, 1, 2, 1, 1, 4, 1, 1, 6, 6],
+        right := polyP7 #[0, 5, 6, 4, 6, 5, 6, 4, 2, 6, 2, 6] },
+      { left := polyP7 #[5, 0, 2, 2, 2, 6, 1, 5, 0, 3, 5],
+        right := polyP7 #[3, 4, 6, 0, 0, 0, 0, 4, 5, 0, 2, 4] }]
+
+set_option maxRecDepth 262144 in
+set_option maxHeartbeats 400000000 in
+private theorem m_p7_n12_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinearIncremental m_p7_n12 m_p7_n12_monic
+        m_p7_n12_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinearIncremental,
+    m_p7_n12_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinearIncremental,
+    Berlekamp.checkPowChainLinearIncrementalStep,
+    Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_12,
+    m_p7_n12, polyP7]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · constructor
+        · rfl
+        · intro x hx
+          have hcases : x = 0 ∨ x = 1 ∨ x = 2 ∨ x = 3 ∨ x = 4 ∨ x = 5 ∨
+              x = 6 ∨ x = 7 ∨ x = 8 ∨ x = 9 ∨ x = 10 ∨ x = 11 := by omega
+          rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl |
+              rfl | rfl | rfl | rfl | rfl | rfl <;> rfl
+    · rfl
+  · exact ⟨rfl, rfl⟩
+
+private theorem m_p7_n12_irr : FpPoly.Irreducible m_p7_n12 :=
+  Berlekamp.rabinTest_imp_irreducible m_p7_n12 m_p7_n12_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      m_p7_n12 m_p7_n12_monic m_p7_n12_certificate
+      m_p7_n12_certificate_check)
 
 /-- A modulus together with its positive-degree and irreducibility
 witnesses, used by the benchmark prep functions to dispatch on the
