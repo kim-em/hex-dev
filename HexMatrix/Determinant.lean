@@ -3710,5 +3710,26 @@ theorem det_eq_zero_of_col_eq {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     det M = 0 := by
   simpa [det] using permutationVectors_duplicateCol_sum M src dst h hcol
 
+/-- Square submatrix obtained by selecting an ordered tuple of columns. -/
+def columnTupleMatrix {R : Type u} {n m : Nat}
+    (A : Matrix R n m) (cols : Fin n → Fin m) : Matrix R n n :=
+  ofFn fun r c => A[r][cols c]
+
+@[simp] theorem columnTupleMatrix_entry {R : Type u} {n m : Nat}
+    (A : Matrix R n m) (cols : Fin n → Fin m) (r c : Fin n) :
+    (columnTupleMatrix A cols)[r][c] = A[r][cols c] := by
+  simp [columnTupleMatrix, ofFn]
+
+/-- An ordered column-tuple minor with a repeated selected column has determinant zero. -/
+theorem det_columnTupleMatrix_eq_zero_of_col_eq
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (A : Matrix R n m) (cols : Fin n → Fin m)
+    {src dst : Fin n} (h : src ≠ dst) (hcols : cols src = cols dst) :
+    det (columnTupleMatrix A cols) = 0 := by
+  apply det_eq_zero_of_col_eq (columnTupleMatrix A cols) src dst h
+  intro r
+  rw [columnTupleMatrix_entry, columnTupleMatrix_entry]
+  exact congrArg (fun c : Fin m => A[r][c]) hcols
+
 end Matrix
 end Hex
