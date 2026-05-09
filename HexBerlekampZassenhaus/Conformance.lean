@@ -211,6 +211,51 @@ private def phi22 : ZPoly :=
 private def cyclo11Times22 : ZPoly :=
   phi11 * phi22
 
+private structure FactorizationCase where
+  input : ZPoly
+  expected : Factorization
+
+private def expectedFactorization
+    (scalar : Int) (factors : Array (ZPoly × Nat)) : Factorization :=
+  { scalar, factors }
+
+private def factorizationEdgeCases : List FactorizationCase :=
+  [ { input := 0
+      expected := expectedFactorization 0 #[] }
+  , { input := 1
+      expected := expectedFactorization 1 #[] }
+  , { input := -1
+      expected := expectedFactorization (-1) #[] }
+  , { input := DensePoly.C (2 : Int)
+      expected := expectedFactorization 2 #[] }
+  , { input := DensePoly.C (-2 : Int)
+      expected := expectedFactorization (-2) #[] }
+  , { input := DensePoly.C (6 : Int)
+      expected := expectedFactorization 6 #[] }
+  , { input := DensePoly.C (-6 : Int)
+      expected := expectedFactorization (-6) #[] }
+  , { input := ZPoly.X
+      expected := expectedFactorization 1 #[(ZPoly.X, 1)] }
+  , { input := DensePoly.scale (-1 : Int) ZPoly.X
+      expected := expectedFactorization (-1) #[(ZPoly.X, 1)] }
+  , { input := ZPoly.X * ZPoly.X
+      expected := expectedFactorization 1 #[(ZPoly.X, 2)] }
+  , { input := zpoly #[1, 0, -1]
+      expected := expectedFactorization (-1) #[(linear (-1), 1), (linear 1, 1)] }
+  , { input := repeatedRootPoly
+      expected := expectedFactorization 1 #[(linear 1, 2)] }
+  , { input := DensePoly.scale (-1 : Int) repeatedRootPoly
+      expected := expectedFactorization (-1) #[(linear 1, 2)] }
+  , { input := zpoly #[-2, 0, 2]
+      expected := expectedFactorization 2 #[(linear (-1), 1), (linear 1, 1)] }
+  , { input := negativeRepeatedRootWithContent
+      expected := expectedFactorization (-2) #[(linear 1, 2)] } ]
+
+#guard
+  factorizationEdgeCases.all fun c =>
+    let φ := factor c.input
+    φ == c.expected && Factorization.product φ == c.input
+
 #guard !isGoodPrime repeatedRootPoly 5
 #guard !isGoodPrime leadingCoeffDivisibleByFive 5
 #guard !isGoodPrime (0 : ZPoly) 5
