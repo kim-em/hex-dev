@@ -1,4 +1,5 @@
 import HexLLL
+import Batteries.Lean.IO.Process
 import LeanBench
 
 /-!
@@ -32,6 +33,17 @@ Scientific registrations:
   with `|entry| <= 30` at `n in {30, 60, 120, 240}`.
 * `runFirstShortVectorHarshCubicChecksum`: harsh-cubic bases with entry
   bit-length approximately `3.3 * n` at `n in {15, 30, 45}`.
+
+Informational external comparator:
+
+* `fpLLL via fpylll`: process-call registrations shell out to
+  `scripts/oracle/lll_fpylll.py --bench-checksum`, which uses
+  `fpylll.LLL.reduction` with `delta = 0.75` (matching Lean's `δ = 3/4`).
+  The comparator is classified informational in `SPEC/Libraries/hex-lll.md`
+  because fpLLL's floating-point Gram-Schmidt implementation
+  (Nguyen-Stehle; fpylll 0.6 or newer supported by the existing oracle
+  driver) bypasses the exact-integer operand-size drift paid by this verified
+  implementation. Ratios are recorded for orientation but do not gate Phase 4.
 -/
 
 namespace Hex.LLLBench
@@ -277,6 +289,12 @@ def prepHarshCubicInput (n : Nat) : FirstShortVectorInput :=
       exact Nat.le_max_right n 1
     hind := benchFixtureIndependent basis }
 
+initialize randomBoundedInput30Ref : IO.Ref FirstShortVectorInput ←
+  IO.mkRef (prepRandomBoundedInput 30)
+
+initialize harshCubicInput15Ref : IO.Ref FirstShortVectorInput ←
+  IO.mkRef (prepHarshCubicInput 15)
+
 /-! ## Phase-4 `LLLState.ofBasis` input families. -/
 
 /-- Entry generator for bounded random-looking square bases. -/
@@ -499,10 +517,49 @@ def runFirstShortVectorChecksum (input : FirstShortVectorInput) : Int :=
     (lll.firstShortVector input.basis (3 / 4)
       lllDeltaLower lllDeltaUpper input.hn input.hind)
 
+/-- Whitespace matrix format consumed by
+`scripts/oracle/lll_fpylll.py --bench-checksum`. -/
+def firstShortVectorMatrixInput (input : FirstShortVectorInput) : String :=
+  let entries :=
+    (List.finRange input.rows).flatMap fun i =>
+      (List.finRange input.cols).map fun j =>
+        toString ((input.basis.row i)[j])
+  s!"{input.rows} {input.cols}\n" ++ String.intercalate " " entries ++ "\n"
+
+/-- Invoke fpylll on one prepared basis and parse the first-row checksum. -/
+def runFpylllFirstShortVectorChecksum (input : FirstShortVectorInput) : IO Int := do
+  let stdout ← IO.Process.runCmdWithInput "python3"
+    #["scripts/oracle/lll_fpylll.py", "--bench-checksum"]
+    (firstShortVectorMatrixInput input)
+  let text := stdout.trimAscii.toString
+  match text.toInt? with
+  | some checksum => pure checksum
+  | none => throw <| IO.userError s!"fpylll checksum was not an integer: {text}"
+
 /-- Fixed benchmark target: BZ recombination hot path at `p = 5`, `k = 2`,
 and three lifted local factors. -/
 def runFirstShortVectorBZRecombinationChecksum : Unit → IO Int := fun _ => do
   return runFirstShortVectorChecksum (← bzRecombinationInputRef.get)
+
+/-- Fixed benchmark target: random-bounded first-short-vector bottom rung. -/
+def runFirstShortVectorRandomBounded30Checksum : Unit → IO Int := fun _ => do
+  return runFirstShortVectorChecksum (← randomBoundedInput30Ref.get)
+
+/-- Fixed benchmark target: harsh-cubic first-short-vector bottom rung. -/
+def runFirstShortVectorHarshCubic15Checksum : Unit → IO Int := fun _ => do
+  return runFirstShortVectorChecksum (← harshCubicInput15Ref.get)
+
+/-- fpylll comparator for the fixed BZ recombination input. -/
+def runFpylllFirstShortVectorBZRecombinationChecksum : Unit → IO Int := fun _ => do
+  runFpylllFirstShortVectorChecksum (← bzRecombinationInputRef.get)
+
+/-- fpylll comparator for the random-bounded bottom rung (`n = 30`). -/
+def runFpylllFirstShortVectorRandomBounded30Checksum : Unit → IO Int := fun _ => do
+  runFpylllFirstShortVectorChecksum (← randomBoundedInput30Ref.get)
+
+/-- fpylll comparator for the harsh-cubic bottom rung (`n = 15`). -/
+def runFpylllFirstShortVectorHarshCubic15Checksum : Unit → IO Int := fun _ => do
+  runFpylllFirstShortVectorChecksum (← harshCubicInput15Ref.get)
 
 /-- Parametric benchmark target: LCG random-bounded bases. -/
 def runFirstShortVectorRandomBoundedChecksum (input : FirstShortVectorInput) : Int :=
@@ -635,6 +692,45 @@ setup_fixed_benchmark runFirstShortVectorBZRecombinationChecksum where {
     repeats := 5
     maxSecondsPerCall := 6.0
     expectedHash := some (Hashable.hash (runFirstShortVectorChecksum bzRecombinationInput))
+  }
+
+/- Fixed bottom-rung Lean/fpylll comparison for the BZ recombination family.
+The fpylll target is informational and process-call based; scheduled and
+release bench runs use
+`compare runFirstShortVectorBZRecombinationChecksum runFpylllFirstShortVectorBZRecombinationChecksum`
+to record its ratio. -/
+setup_fixed_benchmark runFpylllFirstShortVectorBZRecombinationChecksum where {
+    repeats := 5
+    maxSecondsPerCall := 6.0
+    expectedHash := some 0x3c0064007a0036
+  }
+
+/- Fixed bottom-rung Lean/fpylll comparison for the random-bounded family at
+`n = 30`, the first rung of the scientific parametric ladder. -/
+setup_fixed_benchmark runFirstShortVectorRandomBounded30Checksum where {
+    repeats := 5
+    maxSecondsPerCall := 20.0
+    expectedHash := some (Hashable.hash (runFirstShortVectorChecksum (prepRandomBoundedInput 30)))
+  }
+
+setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded30Checksum where {
+    repeats := 5
+    maxSecondsPerCall := 20.0
+    expectedHash := some 0xf977db3a0120001a
+  }
+
+/- Fixed bottom-rung Lean/fpylll comparison for the harsh-cubic family at
+`n = 15`, the first rung of the scientific parametric ladder. -/
+setup_fixed_benchmark runFirstShortVectorHarshCubic15Checksum where {
+    repeats := 5
+    maxSecondsPerCall := 20.0
+    expectedHash := some (Hashable.hash (runFirstShortVectorChecksum (prepHarshCubicInput 15)))
+  }
+
+setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic15Checksum where {
+    repeats := 5
+    maxSecondsPerCall := 20.0
+    expectedHash := some 0x949fde47fa1fffb4
   }
 
 /- Complexity derivation: random-bounded inputs have square dimension `n` and

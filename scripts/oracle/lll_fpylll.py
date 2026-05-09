@@ -149,6 +149,46 @@ def _fpylll_version() -> str:
         return "unknown"
 
 
+def _first_row_checksum(row: list[int]) -> int:
+    acc = 0
+    for value in row:
+        acc = acc * 65537 + int(value)
+    return acc
+
+
+def bench_checksum(source: str | Path | None) -> int:
+    """Read one whitespace matrix, reduce it with fpylll, print b[0]'s checksum.
+
+    Input format is deliberately small and bench-oriented:
+
+        rows cols
+        a_00 a_01 ... a_(rows-1,cols-1)
+
+    The checksum matches `Hex.LLLBench.intVectorChecksum`, so lean-bench can
+    use `compare` between the Lean fixed target and the process-call target.
+    """
+    if source is None:
+        text = sys.stdin.read()
+    else:
+        text = Path(source).read_text(encoding="utf-8")
+    words = text.split()
+    if len(words) < 2:
+        raise ValueError("bench input must start with rows and cols")
+    rows = int(words[0])
+    cols = int(words[1])
+    entries = [int(w) for w in words[2:]]
+    expected = rows * cols
+    if len(entries) != expected:
+        raise ValueError(f"expected {expected} matrix entries, got {len(entries)}")
+    matrix = [entries[i * cols : (i + 1) * cols] for i in range(rows)]
+    reduced = _fpylll_reduce(matrix)
+    if not reduced:
+        print(0)
+    else:
+        print(_first_row_checksum(reduced[0]))
+    return 0
+
+
 def _check_case(
     *,
     case_id: str,
@@ -285,6 +325,14 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help=f"read the committed sample at {DEFAULT_FIXTURE.relative_to(REPO_ROOT)}",
     )
+    src.add_argument(
+        "--bench-checksum",
+        action="store_true",
+        help=(
+            "read one whitespace matrix and print fpylll's first-row checksum "
+            "for HexLLL/Bench.lean process-call comparator registrations"
+        ),
+    )
     parser.add_argument(
         "--failure-dir",
         default=os.environ.get("HEX_FAILURE_DIR", str(DEFAULT_FAILURE_DIR)),
@@ -305,8 +353,14 @@ def main(argv: list[str] | None = None) -> int:
         # Mirror SPEC's `if_available` mode: a missing oracle is a skip,
         # not a failure. CI installs fpylll before invoking the oracle,
         # so an ImportError here in CI means the install failed.
+        if args.bench_checksum:
+            print("ERROR: fpylll not installed", file=sys.stderr)
+            return 1
         print("SKIP: fpylll not installed", file=sys.stderr)
         return 0
+
+    if args.bench_checksum:
+        return bench_checksum(source)
 
     return check(
         source,
