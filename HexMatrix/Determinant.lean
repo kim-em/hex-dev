@@ -4069,5 +4069,21 @@ theorem det_columnTupleMatrix_eq_zero_of_col_eq
   rw [columnTupleMatrix_entry, columnTupleMatrix_entry]
   exact congrArg (fun c : Fin m => A[r][c]) hcols
 
+/-- An ordered column-tuple minor with a non-injective selected-column map has
+determinant zero. -/
+theorem det_columnTupleMatrix_eq_zero_of_not_injective
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (A : Matrix R n m) (cols : Fin n → Fin m)
+    (hcols : ¬ Function.Injective cols) :
+    det (columnTupleMatrix A cols) = 0 := by
+  classical
+  have hdup : ∃ src dst : Fin n, cols src = cols dst ∧ src ≠ dst := by
+    rw [Function.Injective] at hcols
+    rcases Classical.not_forall.mp hcols with ⟨src, hsrc⟩
+    rcases Classical.not_forall.mp hsrc with ⟨dst, hdst⟩
+    exact ⟨src, dst, (not_imp.mp hdst).1, fun h => (not_imp.mp hdst).2 h⟩
+  rcases hdup with ⟨src, dst, hsame, hne⟩
+  exact det_columnTupleMatrix_eq_zero_of_col_eq A cols hne hsame
+
 end Matrix
 end Hex
