@@ -49,6 +49,60 @@ theorem sq_norm_coeff_map_intCast (f : Polynomial ℤ) (n : Nat) :
     ‖(f.map (Int.castRingHom ℂ)).coeff n‖ ^ 2 = (f.coeff n : ℝ) ^ 2 := by
   simp [Complex.norm_intCast, pow_two]
 
+private theorem range_foldl_add_eq_finset_sum_nat (f : Nat → Nat) (m : Nat) :
+    (List.range m).foldl (fun acc i => acc + f i) 0 = ∑ i ∈ Finset.range m, f i := by
+  induction m with
+  | zero =>
+      simp
+  | succ m ih =>
+      rw [List.range_succ, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [ih, Finset.sum_range_succ]
+
+private theorem coeffNormSq_eq_finset_sum_real (f : Hex.ZPoly) :
+    (Hex.ZPoly.coeffNormSq f : ℝ) =
+      ∑ i ∈ Finset.range f.size, ((f.coeff i).natAbs : ℝ) ^ 2 := by
+  rw [Hex.ZPoly.coeffNormSq_eq_sum, range_foldl_add_eq_finset_sum_nat]
+  simp
+
+private theorem l2norm_toPolynomial_sq_eq_sum_size (f : Hex.ZPoly) :
+    (l2norm (toPolynomial f)) ^ 2 =
+      ∑ i ∈ Finset.range f.size, ((f.coeff i : ℤ) : ℝ) ^ 2 := by
+  unfold l2norm
+  rw [Real.sq_sqrt (Finset.sum_nonneg fun _ _ => sq_nonneg _)]
+  trans ∑ i ∈ Finset.range f.size, (((toPolynomial f).coeff i : ℤ) : ℝ) ^ 2
+  · apply Finset.sum_subset
+    · intro x hx
+      rw [Finset.mem_range]
+      by_contra hlt
+      have hcoeff : (toPolynomial f).coeff x = 0 := by
+        rw [coeff_toPolynomial]
+        exact Hex.DensePoly.coeff_eq_zero_of_size_le f (Nat.le_of_not_gt hlt)
+      exact (Polynomial.mem_support_iff.mp hx) hcoeff
+    · intro x _ hx
+      have hcoeff : (toPolynomial f).coeff x = 0 := by
+        by_contra hne
+        exact hx (Polynomial.mem_support_iff.mpr hne)
+      rw [hcoeff]
+      simp
+  · simp
+
+/-- The squared Mathlib coefficient `l2norm` of an executable integer
+polynomial is exactly the executable squared coefficient norm. -/
+theorem l2norm_toPolynomial_sq_eq_coeffNormSq (f : Hex.ZPoly) :
+    (l2norm (toPolynomial f)) ^ 2 = (Hex.ZPoly.coeffNormSq f : ℝ) := by
+  rw [l2norm_toPolynomial_sq_eq_sum_size, coeffNormSq_eq_finset_sum_real]
+  apply Finset.sum_congr rfl
+  intro i _
+  simp
+
+/-- A relaxed form of `l2norm_toPolynomial_sq_eq_coeffNormSq` matching the
+BHKS cap's `(sumSquared + 1)` coefficient factor. -/
+theorem l2norm_toPolynomial_sq_le_coeffNormSq_add_one (f : Hex.ZPoly) :
+    (l2norm (toPolynomial f)) ^ 2 ≤ (Hex.ZPoly.coeffNormSq f + 1 : ℝ) := by
+  rw [l2norm_toPolynomial_sq_eq_coeffNormSq]
+  norm_num
+
 /-- Landau's inequality specialized to `Polynomial ℤ` via the complex cast. -/
 theorem mahlerMeasure_le_l2norm (f : Polynomial ℤ) :
     (f.map (Int.castRingHom ℂ)).mahlerMeasure ≤ l2norm f := by
