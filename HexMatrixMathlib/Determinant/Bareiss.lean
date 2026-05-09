@@ -1323,4 +1323,116 @@ theorem det_eq_zero_of_bareiss_failed_column
     simpa using congrFun hα_zero ⟨k, hk⟩
   exact (det_eq source).trans hdet_zero
 
+/-- If row-pivoted Bareiss pivot search fails in a state satisfying the
+pivoted invariant, then the original source determinant is zero. -/
+theorem bareissPivotInvariant_singular_no_pivot_det_eq_zero
+    (source : Hex.Matrix Int n n) (state : Hex.Matrix.BareissState n)
+    (hinv : BareissPivotInvariant source state)
+    (hDone : state.step + 1 < n)
+    (hp0 : state.matrix[state.step][state.step] = 0)
+    (hfind :
+      Hex.Matrix.findPivot? state.matrix
+        (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩ : Fin n)
+        (state.step + 1) = none) :
+    Hex.Matrix.det source = 0 := by
+  rcases hinv with ⟨logicalSource, hdet, hnopiv⟩
+  have hk : state.step < n := Nat.lt_of_succ_lt hDone
+  have hprev :
+      Hex.Matrix.det
+          (Hex.Matrix.leadingPrefix logicalSource state.step (Nat.le_of_lt hk)) ≠ 0 := by
+    rw [← hnopiv.prevPivot_eq]
+    exact hnopiv.prevPivot_ne
+  have hzero_col := bareissPivotNoPivot_column_eq_zero state hDone hp0 hfind
+  have hcol : ∀ i : Fin n, state.step ≤ i.val →
+      Hex.Matrix.det
+          (Hex.Matrix.borderedMinor logicalSource state.step hk i ⟨state.step, hk⟩) =
+        0 := by
+    intro i hi
+    have hentry :
+        state.matrix[i][(⟨state.step, hk⟩ : Fin n)] = 0 :=
+      hzero_col i hi
+    have htrail :
+        state.matrix[i][(⟨state.step, hk⟩ : Fin n)] =
+          Hex.Matrix.det
+            (Hex.Matrix.borderedMinor logicalSource state.step hk i ⟨state.step, hk⟩) :=
+      hnopiv.trailing_eq hk i ⟨state.step, hk⟩ hi (Nat.le_refl _)
+    rw [← htrail]
+    exact hentry
+  have hlogical_zero :
+      Hex.Matrix.det logicalSource = 0 :=
+    det_eq_zero_of_bareiss_failed_column logicalSource state.step hk hprev hcol
+  rw [hlogical_zero, mul_zero] at hdet
+  exact hdet
+
+/-- If a row-pivoted Bareiss loop reaches any singular step from a state
+satisfying the pivoted invariant, then the original source determinant is
+zero. -/
+theorem pivotLoop_singularStep_ne_none_det_eq_zero
+    (source : Hex.Matrix Int n n)
+    (fuel : Nat) (state : Hex.Matrix.BareissState n)
+    (hinv : BareissPivotInvariant source state)
+    (hsing : (Hex.Matrix.pivotLoop fuel state).singularStep ≠ none) :
+    Hex.Matrix.det source = 0 := by
+  induction fuel generalizing state with
+  | zero =>
+      rcases hinv with ⟨_, _, hnopiv⟩
+      simp [Hex.Matrix.pivotLoop, hnopiv.singular_none] at hsing
+  | succ fuel ih =>
+      by_cases hDone : state.step + 1 < n
+      · by_cases hp0 : state.matrix[state.step][state.step] = 0
+        · set kFin : Fin n :=
+            ⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩
+          cases hfind :
+              Hex.Matrix.findPivot? state.matrix kFin (state.step + 1) with
+          | none =>
+              exact bareissPivotInvariant_singular_no_pivot_det_eq_zero source state hinv
+                hDone hp0 (by simpa [kFin] using hfind)
+          | some pivot =>
+              have hp :=
+                pivotLoop_swap_pivot_ne_zero state hDone (by simpa [kFin] using hfind)
+              apply ih
+              · exact bareissPivotInvariant_regular_swap_step source state hinv hDone
+                  (by simpa [kFin] using hfind)
+              · simpa [Hex.Matrix.pivotLoop_regular_branch_swap fuel state hDone hp0
+                  (by simpa [kFin] using hfind) hp] using hsing
+        · apply ih
+          · exact bareissPivotInvariant_regular_no_swap_step source state hinv hDone hp0
+          · simpa [Hex.Matrix.pivotLoop_regular_branch_no_swap fuel state hDone hp0]
+              using hsing
+      · rcases hinv with ⟨_, _, hnopiv⟩
+        simp [Hex.Matrix.pivotLoop_done fuel state hDone, hnopiv.singular_none] at hsing
+
+/-- Some specific singular step recorded by `pivotLoop` forces the source
+determinant to be zero. -/
+theorem pivotLoop_singularStep_eq_some_det_eq_zero
+    (source : Hex.Matrix Int n n)
+    (fuel : Nat) (state : Hex.Matrix.BareissState n)
+    (hinv : BareissPivotInvariant source state) {k : Nat}
+    (hsing : (Hex.Matrix.pivotLoop fuel state).singularStep = some k) :
+    Hex.Matrix.det source = 0 :=
+  pivotLoop_singularStep_ne_none_det_eq_zero source fuel state hinv (by
+    rw [hsing]
+    simp)
+
+/-- The public row-pivoted Bareiss loop, started from the initial state,
+records a singular step only when the input determinant is zero. -/
+theorem pivotLoop_initial_singularStep_ne_none_det_eq_zero
+    (M : Hex.Matrix Int n n)
+    (hsing :
+      (Hex.Matrix.pivotLoop n (Hex.Matrix.noPivotInitialState M)).singularStep ≠ none) :
+    Hex.Matrix.det M = 0 :=
+  pivotLoop_singularStep_ne_none_det_eq_zero M n (Hex.Matrix.noPivotInitialState M)
+    (bareissPivotInvariant_initial M) hsing
+
+/-- Data-facing singular branch theorem for the final row-pivoted Bareiss
+capstone. -/
+theorem bareissData_singularStep_ne_none_det_eq_zero
+    (M : Hex.Matrix Int n n)
+    (hsing : (Hex.Matrix.bareissData M).singularStep ≠ none) :
+    Hex.Matrix.det M = 0 := by
+  apply pivotLoop_initial_singularStep_ne_none_det_eq_zero M
+  intro hregular
+  apply hsing
+  simpa [Hex.Matrix.bareissData_eq_finish_pivotLoop, Hex.Matrix.finish] using hregular
+
 end HexMatrixMathlib
