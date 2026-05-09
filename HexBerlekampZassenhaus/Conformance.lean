@@ -134,6 +134,9 @@ private def negativeRepeatedRootWithContent : ZPoly :=
 private def leadingCoeffDivisibleByFive : ZPoly :=
   zpoly #[1, 1, 5]
 
+private def x4Plus1 : ZPoly :=
+  zpoly #[1, 0, 0, 0, 1]
+
 private def recombineFactors3 : Array ZPoly :=
   #[linear (-1), linear 2, linear 4]
 
@@ -259,6 +262,10 @@ private def factorizationEdgeCases : List FactorizationCase :=
 #guard !isGoodPrime repeatedRootPoly 5
 #guard !isGoodPrime leadingCoeffDivisibleByFive 5
 #guard !isGoodPrime (0 : ZPoly) 5
+
+#guard modularFactorDegreesAt? x4Plus1 5 = some #[2, 2]
+#guard modularFactorDegreesAt? x4Plus1 23 = none
+#guard modularFactorDegreesAt? leadingCoeffDivisibleByFive 5 = none
 
 #guard choosePrime squareFreeTypical = 2
 #guard isGoodPrime squareFreeTypical 2
