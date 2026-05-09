@@ -2822,5 +2822,130 @@ theorem linearPow_mul_base (f g : FpPoly p) (n : Nat) :
   rw [linearPow_eq_powLinear, linearPow_eq_powLinear, linearPow_eq_powLinear]
   exact powLinear_mul_base f g n
 
+/-! ### Square-free saturation
+
+The distinct-degree assembly proof in `HexBerlekamp.DistinctDegree` needs a
+"saturation" fact: after extracting `c = gcd r d` from a square-free `r`, the
+residual `r / c` is coprime to `d`. The argument has two ingredients: the
+Leibniz product rule (now available generically as
+`DensePoly.derivative_mul`) and a strong square-free characterization which
+deduces unit-status from the existence of a square divisor. -/
+
+private theorem mul_dvd_mul_poly [ZMod64.PrimeModulus p]
+    {a b c d : FpPoly p} (hab : a ∣ b) (hcd : c ∣ d) :
+    a * c ∣ b * d := by
+  rcases hab with ⟨k, hk⟩
+  rcases hcd with ⟨l, hl⟩
+  refine ⟨k * l, ?_⟩
+  -- b * d = a * k * (c * l) = a * c * (k * l)
+  calc b * d
+      = (a * k) * (c * l) := by rw [hk, hl]
+    _ = a * (k * (c * l)) := DensePoly.mul_assoc_poly a k (c * l)
+    _ = a * ((k * c) * l) := by
+        exact congrArg (a * ·) (DensePoly.mul_assoc_poly k c l).symm
+    _ = a * ((c * k) * l) := by
+        refine congrArg (a * ·) (congrArg (· * l) ?_)
+        exact DensePoly.mul_comm_poly k c
+    _ = a * (c * (k * l)) := by
+        exact congrArg (a * ·) (DensePoly.mul_assoc_poly c k l)
+    _ = (a * c) * (k * l) := (DensePoly.mul_assoc_poly a c (k * l)).symm
+
+/--
+Strong square-free characterization: if `r` is square-free (`gcd r r' = 1`)
+and `g · g` divides `r`, then `g` divides `1` (i.e. `g` is a unit polynomial).
+
+The proof Leibniz-expands `r' = (g · g · h)'` into terms each divisible by
+`g`, concluding `g ∣ gcd r r' = 1`.
+-/
+theorem strong_squareFree_characterization [ZMod64.PrimeModulus p]
+    (r g : FpPoly p)
+    (hsf : DensePoly.gcd r (DensePoly.derivative r) = 1)
+    (hgg : g * g ∣ r) :
+    g ∣ 1 := by
+  obtain ⟨h, hr⟩ := hgg
+  -- g ∣ r
+  have hg_dvd_r : g ∣ r := by
+    refine ⟨g * h, ?_⟩
+    rw [hr]
+    exact DensePoly.mul_assoc_poly g g h
+  -- Compute r' = (g*g)' * h + g*g * h' = (g'*g + g*g')*h + g*g*h'.
+  have hgg_deriv : DensePoly.derivative (g * g) =
+      DensePoly.derivative g * g + g * DensePoly.derivative g :=
+    DensePoly.derivative_mul g g
+  have hd_outer : DensePoly.derivative ((g * g) * h) =
+      DensePoly.derivative (g * g) * h + (g * g) * DensePoly.derivative h :=
+    DensePoly.derivative_mul (g * g) h
+  have hr_deriv : DensePoly.derivative r =
+      (DensePoly.derivative g * g + g * DensePoly.derivative g) * h +
+        g * g * DensePoly.derivative h := by
+    rw [hr, hd_outer, hgg_deriv]
+  -- Each summand of r' is divisible by g.
+  have hg_dvd_term1 : g ∣ DensePoly.derivative g * g * h := by
+    refine ⟨DensePoly.derivative g * h, ?_⟩
+    -- derivative g * g * h = g * (derivative g * h)
+    have hcomm : DensePoly.derivative g * g =
+        g * DensePoly.derivative g :=
+      DensePoly.mul_comm_poly (DensePoly.derivative g) g
+    rw [hcomm]
+    exact DensePoly.mul_assoc_poly g (DensePoly.derivative g) h
+  have hg_dvd_term2 : g ∣ g * DensePoly.derivative g * h := by
+    refine ⟨DensePoly.derivative g * h, ?_⟩
+    exact DensePoly.mul_assoc_poly g (DensePoly.derivative g) h
+  have hg_dvd_term3 : g ∣ g * g * DensePoly.derivative h := by
+    refine ⟨g * DensePoly.derivative h, ?_⟩
+    exact DensePoly.mul_assoc_poly g g (DensePoly.derivative h)
+  have hg_dvd_rprime : g ∣ DensePoly.derivative r := by
+    rw [hr_deriv]
+    have hsplit : (DensePoly.derivative g * g + g * DensePoly.derivative g) * h =
+        DensePoly.derivative g * g * h + g * DensePoly.derivative g * h :=
+      DensePoly.mul_add_left_poly (DensePoly.derivative g * g)
+        (g * DensePoly.derivative g) h
+    rw [hsplit]
+    exact DensePoly.dvd_add_poly
+      (DensePoly.dvd_add_poly hg_dvd_term1 hg_dvd_term2) hg_dvd_term3
+  -- g ∣ gcd r r' = 1
+  have hg_dvd_gcd : g ∣ DensePoly.gcd r (DensePoly.derivative r) :=
+    DensePoly.dvd_gcd g r (DensePoly.derivative r) hg_dvd_r hg_dvd_rprime
+  rw [hsf] at hg_dvd_gcd
+  exact hg_dvd_gcd
+
+/--
+Saturation lemma for square-free residuals: if `r` is square-free and `g`
+divides both the quotient `r / gcd(r, d)` and `d`, then `g ∣ 1`.
+
+The proof observes that `g ∣ r/c` and `g ∣ d` together yield `g ∣ r` (via
+`r = (r/c) · c`) and hence `g ∣ gcd(r, d) = c`. Then `g ∣ c · (r/c) = r` with
+multiplicity at least two, so `g · g ∣ r`, and the strong square-free
+characterization closes the goal.
+-/
+theorem gcd_quotient_common_divisor_dvd_one [ZMod64.PrimeModulus p]
+    (r d g : FpPoly p)
+    (hsf : DensePoly.gcd r (DensePoly.derivative r) = 1)
+    (hgr : g ∣ r / DensePoly.gcd r d)
+    (hgd : g ∣ d) :
+    g ∣ 1 := by
+  -- r = (r / gcd r d) * gcd r d
+  have hreconstruct : (r / DensePoly.gcd r d) * DensePoly.gcd r d = r :=
+    div_gcd_mul_reconstruct r d
+  -- g ∣ r (combine hgr with `r = (r/c) * c`).
+  have hg_dvd_r : g ∣ r := by
+    rcases hgr with ⟨k, hk⟩
+    refine ⟨k * DensePoly.gcd r d, ?_⟩
+    -- r = (r / gcd r d) * gcd r d = (g * k) * gcd r d = g * (k * gcd r d)
+    calc r = (r / DensePoly.gcd r d) * DensePoly.gcd r d := hreconstruct.symm
+      _ = (g * k) * DensePoly.gcd r d := by rw [hk]
+      _ = g * (k * DensePoly.gcd r d) :=
+          DensePoly.mul_assoc_poly g k (DensePoly.gcd r d)
+  -- g ∣ gcd r d (via g ∣ r and g ∣ d).
+  have hg_dvd_c : g ∣ DensePoly.gcd r d :=
+    DensePoly.dvd_gcd g r d hg_dvd_r hgd
+  -- g * g ∣ (r / gcd r d) * gcd r d = r.
+  have hgg_dvd_rec : g * g ∣ (r / DensePoly.gcd r d) * DensePoly.gcd r d :=
+    mul_dvd_mul_poly hgr hg_dvd_c
+  have hgg_dvd_r : g * g ∣ r := by
+    rw [hreconstruct] at hgg_dvd_rec
+    exact hgg_dvd_rec
+  exact strong_squareFree_characterization r g hsf hgg_dvd_r
+
 end FpPoly
 end Hex

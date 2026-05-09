@@ -3385,5 +3385,185 @@ theorem polyCRT_mod_snd :
   intro S _ _ _ _ a b u v s t hb hbez
   simpa [modByMonic_eq_mod] using polyCRT_modByMonic_snd a b u v s t hb hbez
 
+/-! ### Generic Leibniz rule for the formal derivative
+
+The Rat-specific Leibniz rule above (`rat_mulCoeffSum_derivative_product_rule`,
+`rat_derivative_mul` in `HexPolyZ/Basic.lean`) is mirrored here over an
+arbitrary `Lean.Grind.CommRing`. The proofs follow the same triangular-fold
+manipulation but use the generic `Lean.Grind.Semiring.natCast_*` lemmas in
+place of `Rat`-specific cast arithmetic. The generic statement specializes
+to `ZMod64 p` and so feeds the square-free characterization theorems used by
+the distinct-degree assembly. -/
+
+attribute [local instance] Lean.Grind.Semiring.natCast
+
+private theorem fold_add_range_succ_commring {S : Type _} [Lean.Grind.CommRing S]
+    (A : Nat → S) (m : Nat) :
+    (List.range (m + 1)).foldl (fun acc i => acc + A i) 0 =
+      (List.range m).foldl (fun acc i => acc + A i) 0 + A m := by
+  rw [List.range_succ, List.foldl_append]
+  simp
+
+private theorem weighted_diagonal_fold_aux_commring {S : Type _}
+    [Lean.Grind.CommRing S] (A : Nat → S) (m : Nat) :
+    ((m : Nat) : S) *
+        (List.range (m + 1)).foldl (fun acc i => acc + A i) 0 =
+      (List.range m).foldl
+          (fun acc i => acc + ((i + 1 : Nat) : S) * A (i + 1)) 0 +
+        (List.range m).foldl
+          (fun acc i => acc + ((m - i : Nat) : S) * A i) 0 := by
+  induction m with
+  | zero =>
+      have h0 : ((0 : Nat) : S) = 0 := Lean.Grind.Semiring.natCast_zero
+      simp [h0]
+      grind
+  | succ m ih =>
+      rw [fold_add_range_succ_commring A (m + 1)]
+      have hsplit :
+          (((m + 1 : Nat) : S) *
+              ((List.range (m + 1)).foldl (fun acc i => acc + A i) 0 + A (m + 1))) =
+            ((m : Nat) : S) *
+                (List.range (m + 1)).foldl (fun acc i => acc + A i) 0 +
+              (List.range (m + 1)).foldl (fun acc i => acc + A i) 0 +
+              ((m + 1 : Nat) : S) * A (m + 1) := by
+        have hnat : ((m + 1 : Nat) : S) = ((m : Nat) : S) + 1 :=
+          Lean.Grind.Semiring.natCast_succ m
+        rw [hnat]
+        grind
+      rw [hsplit, ih]
+      rw [fold_add_range_succ_commring
+        (fun i => ((i + 1 : Nat) : S) * A (i + 1)) m]
+      rw [fold_add_range_succ_commring
+        (fun i => ((m + 1 - i : Nat) : S) * A i) m]
+      rw [fold_add_range_succ_commring A m]
+      have htail : ((m + 1 - m : Nat) : S) * A m = A m := by
+        have hidx : m + 1 - m = 1 := by omega
+        rw [hidx]
+        rw [show ((1 : Nat) : S) = 1 from Lean.Grind.Semiring.natCast_one]
+        grind
+      rw [htail]
+      have hcoeff :
+          (List.range m).foldl
+              (fun acc i => acc + ((m - i : Nat) : S) * A i) 0 +
+            (List.range m).foldl (fun acc i => acc + A i) 0 =
+          (List.range m).foldl
+              (fun acc i => acc + ((m + 1 - i : Nat) : S) * A i) 0 := by
+        rw [← fold_add_pair_commring (S := S) (List.range m)
+          (fun i => ((m - i : Nat) : S) * A i) (fun i => A i) 0 0]
+        rw [show (0 : S) + 0 = 0 by grind]
+        apply fold_add_congr
+        intro i hi
+        have hi' : i < m := List.mem_range.mp hi
+        have hnat : ((m + 1 - i : Nat) : S) =
+            ((m - i : Nat) : S) + 1 := by
+          have h : m + 1 - i = m - i + 1 := by omega
+          rw [h]
+          exact Lean.Grind.Semiring.natCast_succ (m - i)
+        rw [hnat]
+        grind
+      rw [← hcoeff]
+      grind
+
+private theorem weighted_diagonal_fold_commring {S : Type _}
+    [Lean.Grind.CommRing S] (A : Nat → S) (n : Nat) :
+    ((n + 1 : Nat) : S) *
+        (List.range (n + 2)).foldl (fun acc i => acc + A i) 0 =
+      (List.range (n + 1)).foldl
+          (fun acc i => acc + ((i + 1 : Nat) : S) * A (i + 1)) 0 +
+        (List.range (n + 1)).foldl
+          (fun acc i => acc + ((n - i + 1 : Nat) : S) * A i) 0 := by
+  have h := weighted_diagonal_fold_aux_commring A (n + 1)
+  rw [show n + 1 + 1 = n + 2 by omega] at h
+  exact h.trans (by
+    congr 1
+    apply fold_add_congr
+    intro i hi
+    have hi' : i < n + 1 := List.mem_range.mp hi
+    have hidx : n + 1 - i = n - i + 1 := by omega
+    rw [hidx])
+
+private theorem coeff_derivative_commring {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    (p : DensePoly S) (n : Nat) :
+    (derivative p).coeff n = ((n + 1 : Nat) : S) * p.coeff (n + 1) := by
+  unfold derivative
+  rw [coeff_ofCoeffs_list]
+  change
+    ((List.range (p.size - 1)).map
+        (fun i => ((i + 1 : Nat) : S) * p.coeff (i + 1))).getD n 0 =
+      ((n + 1 : Nat) : S) * p.coeff (n + 1)
+  by_cases hn : n < p.size - 1
+  · simp [hn, List.getD]
+  · have hp : p.size ≤ n + 1 := by omega
+    have hcoeff : p.coeff (n + 1) = 0 :=
+      coeff_eq_zero_of_size_le p hp
+    have hzero : ((n + 1 : Nat) : S) * (0 : S) = 0 := by grind
+    rw [hcoeff, hzero]
+    simp [hn, List.getD]
+
+/-- Generic Leibniz product rule on the diagonal coefficient sums underlying
+polynomial multiplication. The Rat-specific
+`rat_mulCoeffSum_derivative_product_rule` is the special case `S = Rat`. -/
+theorem mulCoeffSum_derivative_product_rule_commring {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    (p q : DensePoly S) (n : Nat) :
+    ((n + 1 : Nat) : S) * mulCoeffSum p q (n + 1) =
+      mulCoeffSum (derivative p) q n + mulCoeffSum p (derivative q) n := by
+  rw [mulCoeffSum_eq_diagonal p q (n + 1)]
+  rw [diagonalSum_eq_degree_bound p q (n + 1)]
+  rw [mulCoeffSum_eq_diagonal (derivative p) q n]
+  rw [diagonalSum_eq_degree_bound (derivative p) q n]
+  rw [mulCoeffSum_eq_diagonal p (derivative q) n]
+  rw [diagonalSum_eq_degree_bound p (derivative q) n]
+  have hleft :
+      (List.range (n + 2)).foldl
+          (fun acc i => acc + diagonalMulCoeffTerm p q (n + 1) i) 0 =
+        (List.range (n + 2)).foldl
+          (fun acc i => acc + p.coeff i * q.coeff (n + 1 - i)) 0 := by
+    apply fold_add_congr
+    intro i hi
+    have hi' : i < n + 2 := List.mem_range.mp hi
+    have hnot : ¬ n + 1 < i := by omega
+    simp [diagonalMulCoeffTerm, hnot]
+  rw [hleft]
+  rw [weighted_diagonal_fold_commring (fun i => p.coeff i * q.coeff (n + 1 - i)) n]
+  congr 1
+  · apply fold_add_congr
+    intro i hi
+    have hi' : i < n + 1 := List.mem_range.mp hi
+    have hnot : ¬ n < i := by omega
+    unfold diagonalMulCoeffTerm
+    rw [coeff_derivative_commring p i]
+    simp [hnot]
+    have hidx : n - i = n + 1 - (i + 1) := by omega
+    rw [hidx]
+    grind
+  · apply fold_add_congr
+    intro i hi
+    have hi' : i < n + 1 := List.mem_range.mp hi
+    have hnot : ¬ n < i := by omega
+    unfold diagonalMulCoeffTerm
+    rw [coeff_derivative_commring q (n - i)]
+    simp [hnot]
+    have hidx : n - i + 1 = n + 1 - i := by omega
+    rw [hidx]
+    grind
+
+/-- Leibniz product rule for the formal derivative on dense polynomials over an
+arbitrary `Lean.Grind.CommRing`. -/
+theorem derivative_mul {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S]
+    (p q : DensePoly S) :
+    derivative (p * q) =
+      derivative p * q + p * derivative q := by
+  apply ext_coeff
+  intro n
+  rw [coeff_derivative_commring]
+  rw [coeff_mul p q (n + 1)]
+  have hzero_add : (0 : S) + (0 : S) = 0 := by grind
+  rw [coeff_add (derivative p * q) (p * derivative q) n hzero_add]
+  rw [coeff_mul (derivative p) q n]
+  rw [coeff_mul p (derivative q) n]
+  exact mulCoeffSum_derivative_product_rule_commring p q n
+
 end DensePoly
 end Hex
