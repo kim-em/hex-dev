@@ -2589,6 +2589,13 @@ private theorem yunFactors_pairwise_coprime_nil_of_ready
               yunFactors_reverse_append y (w / y) (multiplicity + 1) fuel [sf]
           simpa [y, z, hz, sf, hrev] using hcombined
 
+private theorem yunFactors_pairwise_coprime_nil_of_invariant
+    (c w : FpPoly p) (multiplicity fuel : Nat)
+    (hinv : yunFactorsPairwiseInvariant c w multiplicity fuel) :
+    (yunFactors c w multiplicity fuel []).1.reverse.Pairwise
+      squareFreeFactorCoprimeRel := by
+  exact yunFactors_pairwise_coprime_nil_of_ready c w multiplicity fuel hinv.ready
+
 private theorem yunFactors_pairwise_coprime_nil
     (c w : FpPoly p) (multiplicity fuel : Nat) :
     (yunFactors c w multiplicity fuel []).1.reverse.Pairwise
