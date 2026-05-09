@@ -1833,6 +1833,16 @@ private theorem recombinationSearchMod_product
   exact recombinationSearchModAux_product
     f modulus localFactors factors (localFactors.length + 1) hsearch
 
+private theorem recombineExhaustive_product
+    (f : ZPoly) (d : LiftData) (factors : List ZPoly)
+    (hsearch :
+      recombinationSearchMod f (liftModulus d) d.liftedFactors.toList =
+        some factors) :
+    Array.polyProduct (recombineExhaustive f d) = f := by
+  unfold recombineExhaustive
+  simp [hsearch, recombinationSearchMod_product f (liftModulus d)
+    d.liftedFactors.toList factors hsearch]
+
 /--
 Product preservation for `recombine` under the lifted-factor recombination
 hypothesis supplied by the Hensel/recombination proof layer.
@@ -1847,10 +1857,9 @@ theorem recombine_product_of_lifted_factors
   · rcases hlll with ⟨factors, hlll, hproduct⟩
     simp [hlll, hproduct]
   · rcases hexhaustive with ⟨hlll, hsmall, factors, hsearch⟩
-    have hproduct :
-        Array.polyProduct factors.toArray = f :=
-      recombinationSearchMod_product f (liftModulus d) d.liftedFactors.toList factors hsearch
-    simp [hlll, hsmall, recombineExhaustive, hsearch, hproduct]
+    have hproduct : Array.polyProduct (recombineExhaustive f d) = f :=
+      recombineExhaustive_product f d factors hsearch
+    simpa [recombine, hlll, hsmall] using hproduct
 
 theorem checkIrreducibleCert_prime_data
     (f : ZPoly) (cert : ZPolyIrreducibilityCertificate)
