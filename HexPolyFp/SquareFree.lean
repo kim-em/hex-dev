@@ -2529,6 +2529,46 @@ private theorem yunFactors_factor_dvd_current
     c w multiplicity fuel [] sf hsf'
   simpa using h
 
+private theorem yunStep_quotient_factor_coprime_of_common_dvd_one
+    [ZMod64.PrimeModulus p]
+    (z y factor : FpPoly p) (multiplicity tailMultiplicity : Nat)
+    (hfactor_dvd_y : factor ∣ y)
+    (hmonic : DensePoly.Monic (DensePoly.gcd z factor))
+    (hcommon :
+      ∀ d : FpPoly p, d ∣ z → d ∣ y → d ∣ (1 : FpPoly p)) :
+    squareFreeFactorCoprimeRel
+      { factor := z, multiplicity := multiplicity }
+      { factor := factor, multiplicity := tailMultiplicity } := by
+  simpa [squareFreeFactorCoprimeRel] using
+    (gcd_eq_one_of_monic_of_common_dvd_one z factor hmonic
+      (fun d hd_z hd_factor => hcommon d hd_z (dvd_trans_poly hd_factor hfactor_dvd_y)))
+
+private theorem yunFactors_current_tail_coprime_of_common_dvd_one
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (multiplicity fuel : Nat)
+    (hmonic :
+      ∀ sf ∈
+          (yunFactors (DensePoly.gcd c w) (w / DensePoly.gcd c w)
+          (multiplicity + 1) fuel []).1.reverse,
+        DensePoly.Monic (DensePoly.gcd (c / DensePoly.gcd c w) sf.factor))
+    (hcommon :
+      ∀ d : FpPoly p,
+        d ∣ c / DensePoly.gcd c w →
+          d ∣ DensePoly.gcd c w →
+            d ∣ (1 : FpPoly p)) :
+    yunFactorsCurrentTailCoprime c w multiplicity fuel := by
+  intro sf hsf
+  have hsf_dvd_current :
+      sf.factor ∣ DensePoly.gcd c w := by
+    exact yunFactors_factor_dvd_current
+      (DensePoly.gcd c w) (w / DensePoly.gcd c w) (multiplicity + 1) fuel sf hsf
+  exact
+    yunStep_quotient_factor_coprime_of_common_dvd_one
+      (c / DensePoly.gcd c w) (DensePoly.gcd c w) sf.factor multiplicity sf.multiplicity
+      hsf_dvd_current
+      (hmonic sf hsf)
+      hcommon
+
 private theorem squareFreeAuxRev_reverse_append
     (f : FpPoly p) (multiplicity fuel : Nat) (accRev : List (SquareFreeFactor p)) :
     (squareFreeAuxRev f multiplicity fuel accRev).reverse =
