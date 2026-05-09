@@ -517,6 +517,85 @@ private theorem distinctDegreePowerLoop_bucket_degree
             exact ih (residual / DensePoly.gcd residual diff)
               (acc * DensePoly.gcd residual diff) bucket hbucket
 
+/-!
+### Same-degree extraction divisibility
+
+`finishDegreePower` and `distinctDegreePowerLoop` both emit at most one bucket
+recording the accumulated product of repeated same-degree gcds against the
+fixed Frobenius difference `diff`.  After the first iteration the bucket
+factor is no longer literally `gcd residual diff`, so divisibility by `diff`
+needs more than `DensePoly.gcd_dvd_right`: it follows from a step-preserved
+invariant on `(residual, acc)` whose construction (the square-free /
+multiplicity content) is delegated to the consumer.
+
+`finishDegreePower_bucket_dvd_diff` covers all three exit cases of
+`finishDegreePower` — including the scalar-unit residual case where the
+emitted factor is `acc * residual`.
+
+`distinctDegreePowerLoop_bucket_dvd_diff` threads an abstract
+step-preserving predicate `P : FpPoly → FpPoly → Prop` through induction
+on the fuel.  Concrete instantiations (e.g. "`acc ∣ diff` together with a
+square-free residual coprime to `acc`") feed the divisibility, the unit
+finish case, and the gcd-extraction step into the three hypotheses
+`hP_acc_dvd`, `hP_finish_unit`, and `hP_step`.
+-/
+
+private theorem finishDegreePower_bucket_dvd_diff
+    (d : Nat) (diff residual acc : FpPoly p)
+    (hacc : acc ∣ diff)
+    (hunit : isUnitPolynomial residual = true → acc * residual ∣ diff) :
+    ∀ bucket : DegreeBucket p,
+      (finishDegreePower (p := p) d residual acc).1 = some bucket →
+        bucket.factor ∣ diff := by
+  intro bucket hbucket
+  unfold finishDegreePower at hbucket
+  cases hacc_unit : isUnitPolynomial acc <;> simp [hacc_unit] at hbucket
+  cases hres_unit : isUnitPolynomial residual <;> simp [hres_unit] at hbucket
+  · cases hbucket
+    exact hacc
+  · cases hbucket
+    exact hunit hres_unit
+
+private theorem distinctDegreePowerLoop_bucket_dvd_diff
+    (d : Nat) (diff : FpPoly p)
+    (P : FpPoly p → FpPoly p → Prop)
+    (hP_acc_dvd : ∀ r a, P r a → a ∣ diff)
+    (hP_finish_unit : ∀ r a, P r a → isUnitPolynomial r = true → a * r ∣ diff)
+    (hP_step : ∀ r a, P r a →
+        isUnitPolynomial (DensePoly.gcd r diff) = false →
+        P (r / DensePoly.gcd r diff) (a * DensePoly.gcd r diff)) :
+    ∀ (fuel : Nat) (residual acc : FpPoly p), P residual acc →
+      ∀ bucket : DegreeBucket p,
+        (distinctDegreePowerLoop (p := p) d diff fuel residual acc).1 = some bucket →
+          bucket.factor ∣ diff := by
+  intro fuel
+  induction fuel with
+  | zero =>
+      intro residual acc hP bucket hbucket
+      exact finishDegreePower_bucket_dvd_diff d diff residual acc
+        (hP_acc_dvd residual acc hP)
+        (fun hu => hP_finish_unit residual acc hP hu) bucket hbucket
+  | succ fuel ih =>
+      intro residual acc hP bucket hbucket
+      unfold distinctDegreePowerLoop at hbucket
+      by_cases hzero : residual.isZero
+      · simp [hzero] at hbucket
+        exact finishDegreePower_bucket_dvd_diff d diff residual acc
+          (hP_acc_dvd residual acc hP)
+          (fun hu => hP_finish_unit residual acc hP hu) bucket hbucket
+      · simp [hzero] at hbucket
+        cases hcand : isUnitPolynomial (DensePoly.gcd residual diff) with
+        | true =>
+            simp [hcand] at hbucket
+            exact finishDegreePower_bucket_dvd_diff d diff residual acc
+              (hP_acc_dvd residual acc hP)
+              (fun hu => hP_finish_unit residual acc hP hu) bucket hbucket
+        | false =>
+            simp [hcand] at hbucket
+            exact ih (residual / DensePoly.gcd residual diff)
+              (acc * DensePoly.gcd residual diff)
+              (hP_step residual acc hP hcand) bucket hbucket
+
 private theorem appendBucket?_positive_degrees
     (buckets : List (DegreeBucket p)) (bucket? : Option (DegreeBucket p))
     (d : Nat)
