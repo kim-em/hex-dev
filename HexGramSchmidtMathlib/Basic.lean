@@ -89,6 +89,33 @@ theorem rowToEuclidean_inner (a b : Vector Rat m) :
   rw [← List.sum_toFinset _ (List.nodup_finRange m)]
   simp [List.toFinset_finRange]
 
+/-- A strictly lower executable coefficient agrees, after casting to `ℝ`, with
+Mathlib's projection coefficient for the corresponding converted rows. -/
+theorem rat_coeffs_lower_projection_real (b : Matrix Rat n m) {i j : Fin n}
+    (hji : j.val < i.val) :
+    ((Hex.GramSchmidt.entry (Hex.GramSchmidt.Rat.coeffs b) i j : Rat) : ℝ) =
+      inner ℝ (rowToEuclidean ((Hex.GramSchmidt.Rat.basis b).row j))
+          (rowToEuclidean (b.row i)) /
+        (‖rowToEuclidean ((Hex.GramSchmidt.Rat.basis b).row j)‖ : ℝ) ^ 2 := by
+  rw [Hex.GramSchmidt.Rat.coeffs_lower_projection_comm (b := b) hji]
+  by_cases hnorm :
+      Matrix.dot ((Hex.GramSchmidt.Rat.basis b).row j)
+          ((Hex.GramSchmidt.Rat.basis b).row j) = 0
+  · have hnorm_real :
+        (‖rowToEuclidean ((Hex.GramSchmidt.Rat.basis b).row j)‖ : ℝ) ^ 2 = 0 := by
+      rw [← real_inner_self_eq_norm_sq]
+      rw [rowToEuclidean_inner]
+      exact_mod_cast hnorm
+    simp [hnorm, hnorm_real]
+  ·
+    have hnorm_real :
+        (‖rowToEuclidean ((Hex.GramSchmidt.Rat.basis b).row j)‖ : ℝ) ^ 2 =
+          ((Matrix.dot ((Hex.GramSchmidt.Rat.basis b).row j)
+            ((Hex.GramSchmidt.Rat.basis b).row j) : Rat) : ℝ) := by
+      rw [← real_inner_self_eq_norm_sq]
+      rw [rowToEuclidean_inner]
+    simp [hnorm, rowToEuclidean_inner, hnorm_real]
+
 /-- The rational Gram-Schmidt basis agrees rowwise with Mathlib's real-valued
 `gramSchmidt` after coercing coefficients into `ℝ`. -/
 theorem rat_basis_row_eq_gramSchmidt (b : Matrix Rat n m) (i : Fin n) :
