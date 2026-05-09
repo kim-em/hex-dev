@@ -2357,6 +2357,21 @@ private theorem yunFactorsPairwiseReady_step
       fuel := by
   simpa [yunFactorsPairwiseReady] using hready.1
 
+private theorem yunFactorsPairwiseReady_succ_of_current_tail
+    (c w : FpPoly p) (multiplicity fuel : Nat)
+    (htail :
+      yunFactorsPairwiseReady
+        (DensePoly.gcd c w)
+        (w / DensePoly.gcd c w)
+        (multiplicity + 1)
+        fuel)
+    (hcurrent :
+      isOne c = false →
+        isOne (c / DensePoly.gcd c w) = false →
+          yunFactorsCurrentTailCoprime c w multiplicity fuel) :
+    yunFactorsPairwiseReady c w multiplicity (fuel + 1) := by
+  simpa [yunFactorsPairwiseReady] using And.intro htail hcurrent
+
 private structure yunFactorsPairwiseInvariant
     (c w : FpPoly p) (multiplicity fuel : Nat) : Prop where
   reachable : yunFactorsPairwiseReachable c w fuel
@@ -2568,6 +2583,31 @@ private theorem yunFactors_current_tail_coprime_of_common_dvd_one
       hsf_dvd_current
       (hmonic sf hsf)
       hcommon
+
+private theorem yunFactorsPairwiseReady_succ_of_common_dvd_one
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (multiplicity fuel : Nat)
+    (htail :
+      yunFactorsPairwiseReady
+        (DensePoly.gcd c w)
+        (w / DensePoly.gcd c w)
+        (multiplicity + 1)
+        fuel)
+    (hmonic :
+      ∀ sf ∈
+          (yunFactors (DensePoly.gcd c w) (w / DensePoly.gcd c w)
+          (multiplicity + 1) fuel []).1.reverse,
+        DensePoly.Monic (DensePoly.gcd (c / DensePoly.gcd c w) sf.factor))
+    (hcommon :
+      ∀ d : FpPoly p,
+        d ∣ c / DensePoly.gcd c w →
+          d ∣ DensePoly.gcd c w →
+            d ∣ (1 : FpPoly p)) :
+    yunFactorsPairwiseReady c w multiplicity (fuel + 1) := by
+  apply yunFactorsPairwiseReady_succ_of_current_tail c w multiplicity fuel htail
+  intro _hc _hz
+  exact yunFactors_current_tail_coprime_of_common_dvd_one
+    c w multiplicity fuel hmonic hcommon
 
 private theorem squareFreeAuxRev_reverse_append
     (f : FpPoly p) (multiplicity fuel : Nat) (accRev : List (SquareFreeFactor p)) :
