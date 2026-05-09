@@ -2479,6 +2479,65 @@ private theorem inversionCount_inversePermutationValues_insertAt_last_castSucc {
   · simp [Vector.length_toList]
   · exact inversePermutationValues_nodup v hnodup
 
+private theorem inversionCount_inversePermutationValues_mod_two {n : Nat}
+    (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
+    inversionCount (inversePermutationValues perm hnodup).toList % 2 =
+      inversionCount perm.toList % 2 := by
+  induction n with
+  | zero =>
+      have hperm_nil : perm.toList = [] := by
+        apply List.eq_nil_iff_length_eq_zero.mpr
+        simp [Vector.length_toList]
+      have hinv_nil : (inversePermutationValues perm hnodup).toList = [] := by
+        apply List.eq_nil_iff_length_eq_zero.mpr
+        simp [Vector.length_toList]
+      simp [hperm_nil, hinv_nil, inversionCount]
+  | succ n ih =>
+      let k := perm.toList.idxOf (Fin.last n)
+      have hk : k < n + 1 := by
+        simpa [k, Vector.length_toList] using
+          finLast_idxOf_lt_of_full_nodup (by simp [Vector.length_toList]) hnodup
+      have hidx : perm.toList.idxOf (Fin.last n) = k := rfl
+      let peeled := peelLastVector perm k hk hidx hnodup
+      have hpeeled_nodup : peeled.toList.Nodup :=
+        peelLastVector_nodup perm k hk hidx hnodup
+      let pos : Fin (n + 1) := ⟨k, hk⟩
+      have hinsert :
+          insertAt (Fin.last n) (peeled.map Fin.castSucc) pos = perm := by
+        simpa [peeled, pos] using
+          insertAt_peelLastVector perm k hk hidx hnodup
+      have hinv_count :
+          inversionCount (inversePermutationValues perm hnodup).toList =
+            inversionCount (inversePermutationValues peeled hpeeled_nodup).toList +
+              (n - pos.val) := by
+        have hnodup_insert :
+            (insertAt (Fin.last n) (peeled.map Fin.castSucc) pos).toList.Nodup :=
+          insertAt_last_castSucc_nodup peeled pos hpeeled_nodup
+        have hinv_eq :
+            inversePermutationValues perm hnodup =
+              inversePermutationValues
+                (insertAt (Fin.last n) (peeled.map Fin.castSucc) pos)
+                hnodup_insert := by
+          apply Vector.ext
+          intro c hc
+          simp [inversePermutationValues, hinsert]
+        rw [hinv_eq]
+        simpa [peeled, pos] using
+          inversionCount_inversePermutationValues_insertAt_last_castSucc
+            peeled pos hpeeled_nodup
+      have hperm_count :
+          inversionCount perm.toList =
+            inversionCount peeled.toList + (n - pos.val) := by
+        rw [← hinsert]
+        rw [insertAt_toList, vector_toList_map]
+        simpa [peeled, pos, Vector.length_toList] using
+          inversionCount_insertIdx_castSucc_last_eq peeled.toList pos.val (by
+            simp [Vector.length_toList, pos]
+            omega)
+      rw [hinv_count, hperm_count]
+      have hih := ih peeled hpeeled_nodup
+      omega
+
 private theorem inversePermutationValues_mem_permutationVectors {n : Nat}
     {perm : Vector (Fin n) n} (hmem : perm ∈ permutationVectors n) :
     inversePermutationValues perm (permutationVectors_nodup hmem) ∈ permutationVectors n := by
