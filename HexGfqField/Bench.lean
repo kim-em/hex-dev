@@ -102,6 +102,7 @@ private theorem maxProperDiv_2 : Berlekamp.maximalProperDivisors 2 = [1] := by d
 private theorem maxProperDiv_3 : Berlekamp.maximalProperDivisors 3 = [1] := by decide
 private theorem maxProperDiv_4 : Berlekamp.maximalProperDivisors 4 = [2] := by decide
 private theorem maxProperDiv_6 : Berlekamp.maximalProperDivisors 6 = [2, 3] := by decide
+private theorem maxProperDiv_8 : Berlekamp.maximalProperDivisors 8 = [4] := by decide
 
 /-! ## Certificate-backed benchmark moduli -/
 
@@ -287,6 +288,60 @@ private theorem m_p7_n6_irr : FpPoly.Irreducible m_p7_n6 :=
       m_p7_n6 m_p7_n6_monic m_p7_n6_certificate
       m_p7_n6_certificate_check)
 
+/-- `x^8 + x + 3` over `F_7`. -/
+private def m_p7_n8 : FpPoly 7 :=
+  { coeffs := #[(3 : ZMod64 7), 1, 0, 0, 0, 0, 0, 0, 1]
+    normalized := Or.inr (by simpa using one_ne_zero_seven) }
+private theorem m_p7_n8_pos : 0 < FpPoly.degree m_p7_n8 := by decide
+private theorem m_p7_n8_monic : DensePoly.Monic m_p7_n8 := by rfl
+
+private def m_p7_n8_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 7
+  n := 8
+  powChain :=
+    #[polyP7 #[0, 1], polyP7 #[0, 0, 0, 0, 0, 0, 0, 1],
+      polyP7 #[0, 1, 2, 4, 1, 2, 4, 1], polyP7 #[0, 1, 3, 2, 6, 4, 5, 1],
+      polyP7 #[0, 1, 5, 4, 6, 2, 3, 1], polyP7 #[0, 1, 1, 1, 1, 1, 1, 1],
+      polyP7 #[0, 1, 4, 2, 1, 4, 2, 1], polyP7 #[0, 1, 6, 1, 6, 1, 6, 1],
+      polyP7 #[0, 1]]
+  bezout :=
+    #[{ left := polyP7 #[5, 3, 6, 0, 6, 3, 1],
+        right := polyP7 #[0, 3, 1, 1, 4, 3, 0, 6] }]
+
+set_option maxRecDepth 131072 in
+set_option maxHeartbeats 80000000 in
+private theorem m_p7_n8_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinearIncremental m_p7_n8 m_p7_n8_monic
+        m_p7_n8_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinearIncremental,
+    m_p7_n8_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinearIncremental,
+    Berlekamp.checkPowChainLinearIncrementalStep,
+    Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_8,
+    m_p7_n8, polyP7]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · constructor
+        · rfl
+        · intro x hx
+          have hcases : x = 0 ∨ x = 1 ∨ x = 2 ∨ x = 3 ∨ x = 4 ∨ x = 5 ∨
+              x = 6 ∨ x = 7 := by omega
+          rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> rfl
+    · rfl
+  · rfl
+
+private theorem m_p7_n8_irr : FpPoly.Irreducible m_p7_n8 :=
+  Berlekamp.rabinTest_imp_irreducible m_p7_n8 m_p7_n8_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      m_p7_n8 m_p7_n8_monic m_p7_n8_certificate
+      m_p7_n8_certificate_check)
+
 /-- A modulus together with its positive-degree and irreducibility
 witnesses, used by the benchmark prep functions to dispatch on the
 parameter `n` and select the correct per-degree fixture. -/
@@ -305,6 +360,7 @@ private def bundleForN (n : Nat) : ModulusBundle :=
   | 3 => ⟨m_p7_n3, m_p7_n3_pos, m_p7_n3_irr⟩
   | 4 => ⟨m_p7_n4, m_p7_n4_pos, m_p7_n4_irr⟩
   | 6 => ⟨m_p7_n6, m_p7_n6_pos, m_p7_n6_irr⟩
+  | 8 => ⟨m_p7_n8, m_p7_n8_pos, m_p7_n8_irr⟩
   | _ => ⟨m_p7_n2, m_p7_n2_pos, m_p7_n2_irr⟩
 
 /-- Stable checksum for polynomial-valued benchmark results. -/
@@ -458,8 +514,8 @@ setup_benchmark runOfPolyReprChecksum n => n * n
   with prep := prepOfPolyInput
   where {
     paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 6]
+    paramCeiling := 8
+    paramSchedule := .custom #[2, 3, 4, 6, 8]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -474,8 +530,8 @@ setup_benchmark runAddChecksum n => n
   with prep := prepBinaryInput
   where {
     paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 6]
+    paramCeiling := 8
+    paramSchedule := .custom #[2, 3, 4, 6, 8]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -490,8 +546,8 @@ setup_benchmark runMulChecksum n => n * n
   with prep := prepBinaryInput
   where {
     paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 6]
+    paramCeiling := 8
+    paramSchedule := .custom #[2, 3, 4, 6, 8]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -505,8 +561,8 @@ setup_benchmark runNegSubChecksum n => n
   with prep := prepBinaryInput
   where {
     paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 6]
+    paramCeiling := 8
+    paramSchedule := .custom #[2, 3, 4, 6, 8]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -521,8 +577,8 @@ setup_benchmark runPowChecksum n => n * n * Nat.log2 (n + 1)
   with prep := prepPowInput
   where {
     paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 6]
+    paramCeiling := 8
+    paramSchedule := .custom #[2, 3, 4, 6, 8]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -538,8 +594,8 @@ setup_benchmark runInvDivChecksum n => n * n
   with prep := prepBinaryInput
   where {
     paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 6]
+    paramCeiling := 8
+    paramSchedule := .custom #[2, 3, 4, 6, 8]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -554,8 +610,8 @@ setup_benchmark runZPowChecksum n => n * n * Nat.log2 (n + 1)
   with prep := prepZPowInput
   where {
     paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 6]
+    paramCeiling := 8
+    paramSchedule := .custom #[2, 3, 4, 6, 8]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -570,8 +626,8 @@ setup_benchmark runFrobChecksum n => n * n * Nat.log2 7
   with prep := prepUnaryInput
   where {
     paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 6]
+    paramCeiling := 8
+    paramSchedule := .custom #[2, 3, 4, 6, 8]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
