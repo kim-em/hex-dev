@@ -4033,6 +4033,60 @@ private theorem det_colReplace_sum_list {R : Type u} [Lean.Grind.CommRing R] {n 
                   (fun acc x => acc + coeff x * det (colReplace M dst (source x)))
                   (0 + coeff x * det (colReplace M dst (source x))) := hstart
 
+/-- Square matrix whose `j`-th column is the finite linear combination of the
+columns of `source` with coefficients from row `j` of `coeff`. -/
+private def columnSumMatrix {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) : Matrix R n n :=
+  ofFn fun r j =>
+    (List.finRange m).foldl (fun acc k => acc + coeff[j][k] * source[r][k]) 0
+
+@[simp] private theorem columnSumMatrix_entry
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (r j : Fin n) :
+    (columnSumMatrix source coeff)[r][j] =
+      (List.finRange m).foldl (fun acc k => acc + coeff[j][k] * source[r][k]) 0 := by
+  simp [columnSumMatrix, ofFn]
+
+private theorem colReplace_columnSumMatrix_self
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (dst : Fin n) :
+    colReplace (columnSumMatrix source coeff) dst
+        (fun r => (List.finRange m).foldl
+          (fun acc k => acc + coeff[dst][k] * source[r][k]) 0) =
+      columnSumMatrix source coeff := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro c hc
+  change
+    (colReplace (columnSumMatrix source coeff) dst
+        (fun r => (List.finRange m).foldl
+          (fun acc k => acc + coeff[dst][k] * source[r][k]) 0))[
+          (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
+      (columnSumMatrix source coeff)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+  rw [colReplace_get]
+  by_cases hcol : (⟨c, hc⟩ : Fin n) = dst
+  · subst dst
+    rw [if_pos rfl]
+    exact (columnSumMatrix_entry source coeff (⟨r, hr⟩ : Fin n) (⟨c, hc⟩ : Fin n)).symm
+  · simp [hcol]
+
+private theorem det_columnSumMatrix_expand_column
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (dst : Fin n) :
+    det (columnSumMatrix source coeff) =
+      (List.finRange m).foldl
+        (fun acc k =>
+          acc + coeff[dst][k] *
+            det (colReplace (columnSumMatrix source coeff) dst (fun r => source[r][k]))) 0 := by
+  have hsum :=
+    det_colReplace_sum_list
+    (columnSumMatrix source coeff) dst (List.finRange m)
+    (fun k => coeff[dst][k]) (fun k r => source[r][k])
+  have hself := colReplace_columnSumMatrix_self source coeff dst
+  rw [hself] at hsum
+  exact hsum
+
 /-- A determinant with two equal rows is zero. -/
 theorem det_eq_zero_of_row_eq {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) (h : src ≠ dst)
