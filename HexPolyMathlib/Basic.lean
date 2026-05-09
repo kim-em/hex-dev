@@ -1,5 +1,7 @@
 import Mathlib.Algebra.Polynomial.Basic
+import Mathlib.Algebra.Polynomial.Coeff
 import Mathlib.Algebra.Polynomial.Degree.Defs
+import Mathlib.Algebra.Polynomial.Degree.Operations
 import Mathlib.Algebra.Polynomial.Monomial
 import HexPoly
 
@@ -21,6 +23,13 @@ variable {R : Type u}
 
 noncomputable section
 
+private theorem list_getD_map_range_zero [Zero R] (size n : Nat) (f : Nat → R) :
+    (List.map f (List.range size)).getD n (Zero.zero : R) =
+      if n < size then f n else (Zero.zero : R) := by
+  by_cases hn : n < size
+  · simp [hn, List.getD]
+  · simp [hn, List.getD]
+
 /-- Interpret a normalized dense coefficient array as a Mathlib polynomial. -/
 def toPolynomial [Semiring R] [DecidableEq R] (p : Hex.DensePoly R) : Polynomial R :=
   Finset.sum (Finset.range p.size) fun i => Polynomial.monomial i (p.coeff i)
@@ -30,44 +39,236 @@ def ofPolynomial [Semiring R] [DecidableEq R] (p : Polynomial R) : Hex.DensePoly
   Hex.DensePoly.ofCoeffs <| ((List.range (p.natDegree + 1)).map p.coeff).toArray
 
 @[simp]
+theorem coeff_ofPolynomial [Semiring R] [DecidableEq R] (p : Polynomial R) (n : Nat) :
+    (ofPolynomial p).coeff n = p.coeff n := by
+  unfold ofPolynomial
+  rw [Hex.DensePoly.coeff_ofCoeffs_list]
+  rw [list_getD_map_range_zero]
+  by_cases hn : n < p.natDegree + 1
+  · simp [hn]
+  · have hlt : p.natDegree < n := by omega
+    simp [hn, Polynomial.coeff_eq_zero_of_natDegree_lt hlt]
+    rfl
+
+private def denseDiagonalMulCoeffTerm [Zero R] [DecidableEq R] [Mul R]
+    (p q : Hex.DensePoly R) (n i : Nat) : R :=
+  if n < i then 0 else p.coeff i * q.coeff (n - i)
+
+private def denseBoundedDiagonalMulCoeffTerm [Zero R] [DecidableEq R] [Mul R]
+    (p q : Hex.DensePoly R) (n i m : Nat) : R :=
+  if n < i then 0 else if n - i < m then p.coeff i * q.coeff (n - i) else 0
+
+private theorem fold_mulCoeffStep_eq_bounded_diagonal [Semiring R] [DecidableEq R]
+    (p q : Hex.DensePoly R) (n i m : Nat) (acc : R) :
+    (List.range m).foldl (Hex.DensePoly.mulCoeffStep p q n i) acc =
+      acc + denseBoundedDiagonalMulCoeffTerm p q n i m := by
+  induction m generalizing acc with
+  | zero =>
+      simp [denseBoundedDiagonalMulCoeffTerm]
+  | succ m ih =>
+      rw [List.range_succ, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [ih]
+      unfold Hex.DensePoly.mulCoeffStep denseBoundedDiagonalMulCoeffTerm
+      by_cases hlt : n < i
+      · have hne : i + m ≠ n := by omega
+        simp [hlt, hne]
+      · by_cases hm : n - i < m
+        · have hne : i + m ≠ n := by omega
+          have hle : n ≤ m + i := by omega
+          simp [hlt, hm, hne, hle]
+        · by_cases heq : i + m = n
+          · have hsub : n - i = m := by omega
+            simp [hlt, heq, hsub]
+          · have hm' : ¬ n - i < m + 1 := by omega
+            simp [hlt, hm, hm', heq]
+
+private theorem fold_mulCoeffStep_eq_diagonal [Semiring R] [DecidableEq R]
+    (p q : Hex.DensePoly R) (n i : Nat) (acc : R) :
+    (List.range q.size).foldl (Hex.DensePoly.mulCoeffStep p q n i) acc =
+      acc + denseDiagonalMulCoeffTerm p q n i := by
+  rw [fold_mulCoeffStep_eq_bounded_diagonal]
+  unfold denseBoundedDiagonalMulCoeffTerm denseDiagonalMulCoeffTerm
+  by_cases hlt : n < i
+  · simp [hlt]
+  · by_cases hbound : n - i < q.size
+    · simp [hlt, hbound]
+    · have hcoeff : q.coeff (n - i) = 0 :=
+        Hex.DensePoly.coeff_eq_zero_of_size_le q (Nat.le_of_not_gt hbound)
+      simp [hlt, hbound, hcoeff]
+
+private theorem fold_mulCoeff_outer_eq_diagonal [Semiring R] [DecidableEq R]
+    (p q : Hex.DensePoly R) (n : Nat) (xs : List Nat) (acc : R) :
+    xs.foldl (fun coeff i => (List.range q.size).foldl
+        (Hex.DensePoly.mulCoeffStep p q n i) coeff) acc =
+      xs.foldl (fun coeff i => coeff + denseDiagonalMulCoeffTerm p q n i) acc := by
+  induction xs generalizing acc with
+  | nil =>
+      rfl
+  | cons i xs ih =>
+      simp only [List.foldl_cons]
+      rw [fold_mulCoeffStep_eq_diagonal]
+      exact ih (acc + denseDiagonalMulCoeffTerm p q n i)
+
+private theorem mulCoeffSum_eq_diagonal [Semiring R] [DecidableEq R]
+    (p q : Hex.DensePoly R) (n : Nat) :
+    Hex.DensePoly.mulCoeffSum p q n =
+      (List.range p.size).foldl (fun acc i => acc + denseDiagonalMulCoeffTerm p q n i) 0 := by
+  unfold Hex.DensePoly.mulCoeffSum
+  exact fold_mulCoeff_outer_eq_diagonal p q n (List.range p.size) 0
+
+private theorem denseDiagonalMulCoeffTerm_eq_zero_of_size_le [Semiring R] [DecidableEq R]
+    (p q : Hex.DensePoly R) (n i : Nat) (hi : p.size ≤ i) :
+    denseDiagonalMulCoeffTerm p q n i = 0 := by
+  unfold denseDiagonalMulCoeffTerm
+  by_cases hn : n < i
+  · simp [hn]
+  · have hcoeff : p.coeff i = 0 := Hex.DensePoly.coeff_eq_zero_of_size_le p hi
+    simp [hn, hcoeff]
+
+private theorem fold_diagonal_extend [Semiring R] [DecidableEq R]
+    (p q : Hex.DensePoly R) (n d : Nat) :
+    (List.range (p.size + d)).foldl (fun acc i => acc + denseDiagonalMulCoeffTerm p q n i) 0 =
+      (List.range p.size).foldl (fun acc i => acc + denseDiagonalMulCoeffTerm p q n i) 0 := by
+  induction d with
+  | zero =>
+      simp
+  | succ d ih =>
+      rw [Nat.add_succ, List.range_succ, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [ih]
+      have hterm : denseDiagonalMulCoeffTerm p q n (p.size + d) = 0 :=
+        denseDiagonalMulCoeffTerm_eq_zero_of_size_le p q n (p.size + d) (by omega)
+      simp [hterm]
+
+private theorem diagonalSum_eq_bound [Semiring R] [DecidableEq R]
+    (p q : Hex.DensePoly R) (n m : Nat) (hm : p.size ≤ m) :
+    (List.range p.size).foldl (fun acc i => acc + denseDiagonalMulCoeffTerm p q n i) 0 =
+      (List.range m).foldl (fun acc i => acc + denseDiagonalMulCoeffTerm p q n i) 0 := by
+  have hm' : p.size + (m - p.size) = m := by omega
+  rw [← hm']
+  exact (fold_diagonal_extend p q n (m - p.size)).symm
+
+private theorem denseDiagonalMulCoeffTerm_eq_zero_of_degree_lt [Semiring R] [DecidableEq R]
+    (p q : Hex.DensePoly R) (n i : Nat) (hi : n < i) :
+    denseDiagonalMulCoeffTerm p q n i = 0 := by
+  simp [denseDiagonalMulCoeffTerm, hi]
+
+private theorem fold_diagonal_truncate_degree [Semiring R] [DecidableEq R]
+    (p q : Hex.DensePoly R) (n d : Nat) :
+    (List.range (n + 1 + d)).foldl (fun acc i => acc + denseDiagonalMulCoeffTerm p q n i) 0 =
+      (List.range (n + 1)).foldl (fun acc i => acc + denseDiagonalMulCoeffTerm p q n i) 0 := by
+  induction d with
+  | zero =>
+      simp
+  | succ d ih =>
+      rw [Nat.add_succ, List.range_succ, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [ih]
+      have hterm : denseDiagonalMulCoeffTerm p q n (n + 1 + d) = 0 :=
+        denseDiagonalMulCoeffTerm_eq_zero_of_degree_lt p q n (n + 1 + d) (by omega)
+      simp [hterm]
+
+private theorem diagonalSum_eq_degree_bound [Semiring R] [DecidableEq R]
+    (p q : Hex.DensePoly R) (n : Nat) :
+    (List.range p.size).foldl (fun acc i => acc + denseDiagonalMulCoeffTerm p q n i) 0 =
+      (List.range (n + 1)).foldl (fun acc i => acc + denseDiagonalMulCoeffTerm p q n i) 0 := by
+  by_cases hsize : p.size ≤ n + 1
+  · exact diagonalSum_eq_bound p q n (n + 1) hsize
+  · have hsize' : n + 1 + (p.size - (n + 1)) = p.size := by omega
+    rw [← hsize']
+    exact fold_diagonal_truncate_degree p q n (p.size - (n + 1))
+
+private theorem range_foldl_add_eq_finset_sum [AddCommMonoid R] (f : Nat → R) (m : Nat) :
+    (List.range m).foldl (fun acc i => acc + f i) 0 = ∑ i ∈ Finset.range m, f i := by
+  induction m with
+  | zero =>
+      simp
+  | succ m ih =>
+      rw [List.range_succ, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [ih, Finset.sum_range_succ]
+
+@[simp]
 theorem coeff_toPolynomial [Semiring R] [DecidableEq R] (p : Hex.DensePoly R) (n : Nat) :
     (toPolynomial p).coeff n = p.coeff n := by
-  sorry
+  unfold toPolynomial
+  rw [Polynomial.finset_sum_coeff]
+  by_cases hn : n < p.size
+  · simp [Polynomial.coeff_monomial, hn]
+  · have hcoeff := Hex.DensePoly.coeff_eq_zero_of_size_le p (Nat.le_of_not_gt hn)
+    rw [Finset.sum_eq_zero]
+    · rw [hcoeff]
+      rfl
+    · intro i hi
+      have hi_lt : i < p.size := Finset.mem_range.mp hi
+      have hne : i ≠ n := by omega
+      simp [Polynomial.coeff_monomial, hne]
 
 @[simp]
 theorem ofPolynomial_zero [Semiring R] [DecidableEq R] :
     ofPolynomial (0 : Polynomial R) = 0 := by
-  sorry
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  simp [coeff_ofPolynomial, Hex.DensePoly.coeff_zero]
 
 @[simp]
 theorem toPolynomial_zero [Semiring R] [DecidableEq R] :
     toPolynomial (0 : Hex.DensePoly R) = 0 := by
-  sorry
+  ext n
+  simp [coeff_toPolynomial, Hex.DensePoly.coeff_zero]
 
 @[simp]
 theorem toPolynomial_C [Semiring R] [DecidableEq R] (c : R) :
     toPolynomial (Hex.DensePoly.C c) = Polynomial.C c := by
-  sorry
+  ext n
+  rw [coeff_toPolynomial, Hex.DensePoly.coeff_C, Polynomial.coeff_C]
+  by_cases hn : n = 0
+  · simp [hn]
+  · simp [hn]
+    rfl
 
 @[simp]
 theorem toPolynomial_add [Semiring R] [DecidableEq R] (p q : Hex.DensePoly R) :
     toPolynomial (p + q) = toPolynomial p + toPolynomial q := by
-  sorry
+  ext n
+  rw [coeff_toPolynomial, Polynomial.coeff_add, coeff_toPolynomial, coeff_toPolynomial]
+  exact Hex.DensePoly.coeff_add p q n (by
+    show (0 : R) + (0 : R) = 0
+    simp)
 
 @[simp]
 theorem toPolynomial_mul [Semiring R] [DecidableEq R] (p q : Hex.DensePoly R) :
     toPolynomial (p * q) = toPolynomial p * toPolynomial q := by
-  sorry
+  ext n
+  rw [coeff_toPolynomial, Polynomial.coeff_mul]
+  simp_rw [coeff_toPolynomial]
+  rw [Hex.DensePoly.coeff_mul, mulCoeffSum_eq_diagonal, diagonalSum_eq_degree_bound]
+  rw [range_foldl_add_eq_finset_sum]
+  rw [show
+      (∑ x ∈ Finset.antidiagonal n, p.coeff x.1 * q.coeff x.2) =
+        ∑ i ∈ Finset.range (n + 1), p.coeff i * q.coeff (n - i) from
+      Finset.Nat.sum_antidiagonal_eq_sum_range_succ
+        (fun i j => p.coeff i * q.coeff j) n]
+  apply Finset.sum_congr rfl
+  intro i hi
+  have hle : ¬ n < i := by
+    have hi_lt : i < n + 1 := Finset.mem_range.mp hi
+    omega
+  simp [denseDiagonalMulCoeffTerm, hle]
 
 @[simp]
 theorem toPolynomial_ofPolynomial [CommRing R] [DecidableEq R] (p : Polynomial R) :
     toPolynomial (ofPolynomial p) = p := by
-  sorry
+  ext n
+  simp [coeff_toPolynomial, coeff_ofPolynomial]
 
 @[simp]
 theorem ofPolynomial_toPolynomial [CommRing R] [DecidableEq R] (p : Hex.DensePoly R) :
     ofPolynomial (toPolynomial p) = p := by
-  sorry
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  simp [coeff_ofPolynomial, coeff_toPolynomial]
 
 /-- The executable dense-polynomial representation is ring-equivalent to Mathlib polynomials. -/
 def equiv [CommRing R] [DecidableEq R] : Hex.DensePoly R ≃+* Polynomial R where
