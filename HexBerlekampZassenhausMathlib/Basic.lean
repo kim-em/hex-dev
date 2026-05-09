@@ -115,26 +115,31 @@ theorem factor_product (f : Hex.ZPoly) :
   sorry
 
 /--
-Every factor emitted by the default executable factorization is irreducible
-after transport to Mathlib's polynomial model.
+The Mathlib-free executable irreducibility predicate agrees with Mathlib's
+irreducibility predicate after transport to `Polynomial ℤ`.
 -/
-theorem factor_irreducible (f : Hex.ZPoly) :
-    ∀ entry ∈ (Hex.factor f).factors,
-      Irreducible (HexPolyZMathlib.toPolynomial entry.1) := by
+theorem Hex.ZPoly.Irreducible_iff_polynomialIrreducible (f : Hex.ZPoly) :
+    Hex.ZPoly.Irreducible f ↔ Irreducible (HexPolyZMathlib.toPolynomial f) := by
+  sorry
+
+/--
+Every polynomial factor emitted by the default executable factorization is
+irreducible in the executable `Hex.ZPoly` sense.
+-/
+theorem factor_irreducible_of_nonUnit (f : Hex.ZPoly) :
+    ∀ entry ∈ (Hex.factor f).factors, Hex.ZPoly.Irreducible entry.1 := by
   sorry
 
 /--
 Two irreducible executable factorizations of the same polynomial have the same
-transported Mathlib factors up to units and permutation.
+signed scalar and the same polynomial factors with multiplicities.
 -/
-theorem factor_unique (f : Hex.ZPoly) (gs hs : Array Hex.ZPoly) :
-    Array.foldl (· * ·) 1 gs = f →
-    Array.foldl (· * ·) 1 hs = f →
-    (∀ g ∈ gs, Irreducible (HexPolyZMathlib.toPolynomial g)) →
-    (∀ h ∈ hs, Irreducible (HexPolyZMathlib.toPolynomial h)) →
-    List.Perm
-      (gs.toList.map fun g => Associates.mk (HexPolyZMathlib.toPolynomial g))
-      (hs.toList.map fun h => Associates.mk (HexPolyZMathlib.toPolynomial h)) := by
+theorem factor_unique (f : Hex.ZPoly) (φ ψ : Hex.Factorization) :
+    Hex.Factorization.product φ = f →
+    Hex.Factorization.product ψ = f →
+    (∀ entry ∈ φ.factors, Hex.ZPoly.Irreducible entry.1) →
+    (∀ entry ∈ ψ.factors, Hex.ZPoly.Irreducible entry.1) →
+    φ.scalar = ψ.scalar ∧ List.Perm φ.factors.toList ψ.factors.toList := by
   sorry
 
 /--

@@ -21,6 +21,8 @@ Scientific registrations:
 * `runMontToChecksum`: `MontCtx.toMont`, `O(n)`.
 * `runMontMulChain`: `MontCtx.mulMont`, `O(n)`.
 * `runMontFromChecksum`: `MontCtx.fromMont`, `O(n)`.
+* `runBarrettCompareChain` / `runMontCompareChain`: common-domain
+  Barrett/Montgomery multiplication comparison, `O(n)`.
 -/
 
 namespace Hex.ModArithBench
@@ -285,6 +287,17 @@ def runMontFromChecksum (input : MontInput) : UInt64 :=
     (fun acc x => checksumZMod acc (montCtx.fromMont x))
     0
 
+/-- Compare target: one Barrett multiplication chain over the Montgomery input. -/
+def runBarrettCompareChain (input : MontInput) : UInt64 :=
+  let acc := input.residues.foldl
+    (fun acc x => barrettCtx.mulMod acc x)
+    (1 : ZMod64 benchModulus)
+  acc.toUInt64
+
+/-- Compare target: one Montgomery multiplication chain over the same residues. -/
+def runMontCompareChain (input : MontInput) : UInt64 :=
+  runMontMulChain input
+
 setup_benchmark runConstructChecksum n => n
   with prep := prepConstructInput
   where {
@@ -386,6 +399,28 @@ setup_benchmark runMontMulChain n => n
   }
 
 setup_benchmark runMontFromChecksum n => n
+  with prep := prepMontInput
+  where {
+    paramFloor := 8192
+    paramCeiling := 131072
+    paramSchedule := .custom #[8192, 16384, 32768, 65536, 131072]
+    maxSecondsPerCall := 2.0
+    targetInnerNanos := 300000000
+  }
+
+-- Cost model: one linear fold over `n` prepared residues; Barrett context prep is fixed.
+setup_benchmark runBarrettCompareChain n => n
+  with prep := prepMontInput
+  where {
+    paramFloor := 8192
+    paramCeiling := 131072
+    paramSchedule := .custom #[8192, 16384, 32768, 65536, 131072]
+    maxSecondsPerCall := 2.0
+    targetInnerNanos := 300000000
+  }
+
+-- Cost model: one linear fold over `n` prepared Montgomery residues plus one final conversion.
+setup_benchmark runMontCompareChain n => n
   with prep := prepMontInput
   where {
     paramFloor := 8192

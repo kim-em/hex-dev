@@ -2,54 +2,73 @@
 
 ## Bench Targets
 
-- `Hex.ModArithBench.runConstructChecksum`: `n`
-- `Hex.ModArithBench.runCastChecksum`: `n`
-- `Hex.ModArithBench.runAddChecksum`: `n`
-- `Hex.ModArithBench.runSubChecksum`: `n`
-- `Hex.ModArithBench.runMulChecksum`: `n`
-- `Hex.ModArithBench.runPow`: `n`
-- `Hex.ModArithBench.runInvChecksum`: `n`
-- `Hex.ModArithBench.runBarrettMulModChain`: `n`
-- `Hex.ModArithBench.runMontToChecksum`: `n`
-- `Hex.ModArithBench.runMontMulChain`: `n`
-- `Hex.ModArithBench.runMontFromChecksum`: `n`
+- `Hex.ModArithBench.runConstructChecksum`: `ZMod64.ofNat`, `n`
+- `Hex.ModArithBench.runCastChecksum`: natural and integer casts, `n`
+- `Hex.ModArithBench.runAddChecksum`: `ZMod64.add`, `n`
+- `Hex.ModArithBench.runSubChecksum`: `ZMod64.sub`, `n`
+- `Hex.ModArithBench.runMulChecksum`: extern-backed `ZMod64.mul`, `n`
+- `Hex.ModArithBench.runPow`: exponentiation by squaring over an `n`-bit exponent, `n`
+- `Hex.ModArithBench.runInvChecksum`: `ZMod64.inv`, `n`
+- `Hex.ModArithBench.runBarrettMulModChain`: `BarrettCtx.mulMod`, `n`
+- `Hex.ModArithBench.runMontToChecksum`: `MontCtx.toMont`, `n`
+- `Hex.ModArithBench.runMontMulChain`: `MontCtx.mulMont`, `n`
+- `Hex.ModArithBench.runMontFromChecksum`: `MontCtx.fromMont`, `n`
+- `Hex.ModArithBench.runBarrettCompareChain`: common-domain Barrett multiplication comparison, `n`
+- `Hex.ModArithBench.runMontCompareChain`: common-domain Montgomery multiplication comparison, `n`
 
 ## Verdicts
 
-Scientific run at commit `f5bfa6409349b42d02ece03f5cb5193c89118bb4`
-(`git_dirty=true`, from an unrelated local `.claude/CLAUDE.md` change) on
-`carica` (Apple M2 Ultra, macOS 14.6.1), command:
+Scientific run at commit `f5bfa6409349b42d02ece03f5cb5193c89118bb4` on
+`carica` (macOS, arm64), command:
 
 ```sh
-.lake/build/bin/hexmodarith_bench run --export-file reports/bench-results/hex-mod-arith-f5bfa64.json Hex.ModArithBench.runConstructChecksum Hex.ModArithBench.runCastChecksum Hex.ModArithBench.runAddChecksum Hex.ModArithBench.runSubChecksum Hex.ModArithBench.runMulChecksum Hex.ModArithBench.runPow Hex.ModArithBench.runInvChecksum Hex.ModArithBench.runBarrettMulModChain Hex.ModArithBench.runMontToChecksum Hex.ModArithBench.runMontMulChain Hex.ModArithBench.runMontFromChecksum
+lake exe hexmodarith_bench run Hex.ModArithBench.runPow Hex.ModArithBench.runMulChecksum Hex.ModArithBench.runCastChecksum Hex.ModArithBench.runMontToChecksum Hex.ModArithBench.runMontMulChain Hex.ModArithBench.runMontCompareChain Hex.ModArithBench.runBarrettCompareChain Hex.ModArithBench.runMontFromChecksum Hex.ModArithBench.runConstructChecksum Hex.ModArithBench.runAddChecksum Hex.ModArithBench.runSubChecksum Hex.ModArithBench.runInvChecksum Hex.ModArithBench.runBarrettMulModChain --signal-floor-multiplier 1.0 --export-file reports/bench-results/hex-mod-arith-f5bfa6409349.json
 ```
 
-The run used deterministic inputs from `HexModArith/Bench.lean`; random seeds
-are not involved. Export artefact:
-`reports/bench-results/hex-mod-arith-f5bfa64.json`.
+The run used deterministic inputs from `HexModArith/Bench.lean`; random
+seeds are not involved. Export artefact:
+`reports/bench-results/hex-mod-arith-f5bfa6409349.json`, SHA-256
+`d658944d021eab8cf2a797ad0e30294b029660c5d96e719052c0432a4e3742a7`.
+The working tree was dirty during the run because this audit branch also
+contained the benchmark/report edits and a pre-existing `.claude/CLAUDE.md`
+modification outside this report's scope.
 
-- `Hex.ModArithBench.runConstructChecksum`: consistent with declared
-  complexity (`β=+0.000`, parameters `131072..1048576`).
-- `Hex.ModArithBench.runCastChecksum`: consistent with declared complexity
-  (`β=-0.016`, parameters `8192..131072`).
-- `Hex.ModArithBench.runAddChecksum`: consistent with declared complexity
-  (`β=+0.011`, parameters `65536..262144`).
-- `Hex.ModArithBench.runSubChecksum`: consistent with declared complexity
-  (`β=+0.011`, parameters `131072..1048576`).
-- `Hex.ModArithBench.runMulChecksum`: consistent with declared complexity
-  (`β=+0.034`, parameters `131072..524288`).
 - `Hex.ModArithBench.runPow`: consistent with declared complexity
-  (`β=-0.023`, parameters `65536..262144`).
-- `Hex.ModArithBench.runInvChecksum`: consistent with declared complexity
-  (`β=-0.006`, parameters `2048..32768`).
-- `Hex.ModArithBench.runBarrettMulModChain`: consistent with declared
-  complexity (`β=+0.008`, parameters `131072..1048576`).
+  (`β=-0.004663`, parameters `65536..262144`, final hash
+  `0x89972e72daba2d86`).
+- `Hex.ModArithBench.runMulChecksum`: consistent with declared complexity
+  (`β=+0.001480`, parameters `131072..524288`, final hash
+  `0x21c1d20bc381ef20`).
+- `Hex.ModArithBench.runCastChecksum`: consistent with declared complexity
+  (`β=+0.000198`, parameters `8192..131072`, final hash
+  `0x2cba60d5674341f6`).
 - `Hex.ModArithBench.runMontToChecksum`: consistent with declared complexity
-  (`β=+0.003`, parameters `8192..131072`).
+  (`β=+0.003680`, parameters `8192..131072`, final hash
+  `0x515f49d9bfa4b3a6`).
 - `Hex.ModArithBench.runMontMulChain`: consistent with declared complexity
-  (`β=-0.009`, parameters `8192..131072`).
+  (`β=-0.001203`, parameters `8192..131072`, final hash `0x0`).
+- `Hex.ModArithBench.runMontCompareChain`: consistent with declared
+  complexity (`β=-0.001675`, parameters `8192..131072`, final hash `0x0`).
+- `Hex.ModArithBench.runBarrettCompareChain`: consistent with declared
+  complexity (`β=-0.003020`, parameters `8192..131072`, final hash `0x0`).
 - `Hex.ModArithBench.runMontFromChecksum`: consistent with declared complexity
-  (`β=-0.005`, parameters `8192..131072`).
+  (`β=+0.003580`, parameters `8192..131072`, final hash
+  `0x515f49d9bfa4b3a6`).
+- `Hex.ModArithBench.runConstructChecksum`: consistent with declared
+  complexity (`β=+0.002486`, parameters `131072..1048576`, final hash
+  `0xb67643c72ce84800`).
+- `Hex.ModArithBench.runAddChecksum`: consistent with declared complexity
+  (`β=-0.004086`, parameters `65536..262144`, final hash
+  `0x1f291d64ff7d8e00`).
+- `Hex.ModArithBench.runSubChecksum`: consistent with declared complexity
+  (`β=-0.011061`, parameters `131072..1048576`, final hash
+  `0xb5cf661b6d76f000`).
+- `Hex.ModArithBench.runInvChecksum`: consistent with declared complexity
+  (`β=-0.001259`, parameters `2048..32768`, final hash
+  `0x3ef5f7d74f82d064`).
+- `Hex.ModArithBench.runBarrettMulModChain`: consistent with declared
+  complexity (`β=-0.004271`, parameters `131072..1048576`, final hash
+  `0x0`).
 
 Smoke wiring was checked with:
 
@@ -58,7 +77,7 @@ lake exe hexmodarith_bench list
 lake exe hexmodarith_bench verify
 ```
 
-`verify` passed all eleven registered benchmarks at the same commit.
+`verify` passed all 13 registered benchmarks.
 
 ## Comparator Ratios
 
@@ -66,11 +85,16 @@ lake exe hexmodarith_bench verify
 comparator for `HexModArith`, so there are no external comparator ratios to
 record.
 
-The internal opt-in hot-loop alternatives use the shared small odd modulus
-`65537`, but they do not have a single common semantic-domain compare group:
-Barrett operates on standard `ZMod64` residues, while Montgomery multiplication
-operates on `MontResidue` values between explicit `toMont` and `fromMont`
-conversions. The benchmark registrations cover both paths separately.
+The within-Lean Barrett/Montgomery common-domain comparison was checked with:
+
+```sh
+lake exe hexmodarith_bench compare Hex.ModArithBench.runBarrettCompareChain Hex.ModArithBench.runMontCompareChain --signal-floor-multiplier 1.0
+```
+
+The common parameters were `8192, 16384, 32768, 65536, 131072`; lean-bench
+reported `agreement: all functions agree on common params`. The run used
+`--signal-floor-multiplier 1.0` because the Barrett compare body is
+sub-millisecond at these parameters under the child-process harness floor.
 
 ## Profile
 
