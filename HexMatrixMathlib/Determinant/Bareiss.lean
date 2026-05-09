@@ -991,4 +991,307 @@ theorem bareissNoPivot_eq_det
             (⟨k, hk⟩ : Fin (k + 1))] = Hex.Matrix.det M from hentry]
       exact det_eq M
 
+/-! ### Failed Bareiss column dependence
+
+Helper for the row-pivoted singular Bareiss branch: if the pivot search at
+level `k` fails (the entire `k`-bordered trailing column is zero) and the
+preceding leading-prefix determinant is nonzero, then there is an explicit
+linear combination of the columns of `source` — with coefficients given by the
+signed `k × k` cofactors of the leading prefix augmented with column `k` —
+that vanishes at every row. The coefficient on column `k` is
+`Hex.Matrix.det (Hex.Matrix.leadingPrefix source k _)`, which is nonzero by
+hypothesis. The follow-up issue closes the determinant via
+`Matrix.det_updateCol_sum` and the duplicate-column determinant identity. -/
+
+/-- The `k × (k+1)` top block used to define the failed-pivot column
+dependence: leading `k` rows of `source`, restricted to columns `0..k-1`
+followed by column `k`. -/
+private def failedBareissTopBlock
+    (source : Hex.Matrix Int n n) (k : Nat) (hk : k < n) :
+    Matrix (Fin k) (Fin (k + 1)) Int :=
+  fun s c =>
+    if hc : c.val < k then
+      matrixEquiv source (⟨s.val, Nat.lt_trans s.isLt hk⟩ : Fin n)
+        (⟨c.val, Nat.lt_trans hc hk⟩ : Fin n)
+    else
+      matrixEquiv source (⟨s.val, Nat.lt_trans s.isLt hk⟩ : Fin n) ⟨k, hk⟩
+
+/-- Coefficient function for the failed-pivot column dependence. The value at
+`c` is `(-1)^(k + c.val) * det(failedBareissTopBlock with column c removed)` for
+`c.val ≤ k` and `0` otherwise. The coefficient on column `k` is
+`det (leadingPrefix source k _)`; see `failedBareissColumn_at_pivot`. -/
+noncomputable def failedBareissColumn
+    (source : Hex.Matrix Int n n) (k : Nat) (hk : k < n) :
+    Fin n → Int :=
+  fun c =>
+    if hc : c.val ≤ k then
+      (-1) ^ (k + c.val) *
+        Matrix.det
+          ((failedBareissTopBlock source k hk).submatrix id
+            (⟨c.val, Nat.lt_succ_of_le hc⟩ : Fin (k + 1)).succAbove)
+    else 0
+
+theorem failedBareissColumn_above_pivot
+    (source : Hex.Matrix Int n n) (k : Nat) (hk : k < n)
+    (c : Fin n) (hc : k < c.val) :
+    failedBareissColumn source k hk c = 0 := by
+  show (if h : c.val ≤ k then _ else (0 : Int)) = 0
+  rw [dif_neg (Nat.not_le_of_lt hc)]
+
+private theorem failedBareissTopBlock_apply_lt
+    (source : Hex.Matrix Int n n) (k : Nat) (hk : k < n)
+    (s : Fin k) (c : Fin (k + 1)) (hc : c.val < k) :
+    failedBareissTopBlock source k hk s c =
+      matrixEquiv source (⟨s.val, Nat.lt_trans s.isLt hk⟩ : Fin n)
+        (⟨c.val, Nat.lt_trans hc hk⟩ : Fin n) := by
+  show (if h : c.val < k then _ else _) = _
+  rw [dif_pos hc]
+
+private theorem failedBareissTopBlock_apply_last
+    (source : Hex.Matrix Int n n) (k : Nat) (hk : k < n)
+    (s : Fin k) :
+    failedBareissTopBlock source k hk s (Fin.last k) =
+      matrixEquiv source (⟨s.val, Nat.lt_trans s.isLt hk⟩ : Fin n) ⟨k, hk⟩ := by
+  show (if h : (Fin.last k : Fin (k + 1)).val < k then _ else _) = _
+  simp only [Fin.val_last]
+  rw [dif_neg (Nat.lt_irrefl k)]
+
+private theorem failedBareissTopBlock_succAbove_last
+    (source : Hex.Matrix Int n n) (k : Nat) (hk : k < n) :
+    (failedBareissTopBlock source k hk).submatrix id (Fin.last k).succAbove =
+      matrixEquiv (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk)) := by
+  ext s t
+  show failedBareissTopBlock source k hk s ((Fin.last k).succAbove t) = _
+  rw [Fin.succAbove_last]
+  have ht : (t.castSucc : Fin (k + 1)).val < k := by
+    show t.val < k; exact t.isLt
+  rw [failedBareissTopBlock_apply_lt source k hk s t.castSucc ht]
+  show matrixEquiv source _ _ = matrixEquiv (Hex.Matrix.leadingPrefix _ _ _) _ _
+  rw [matrixEquiv_apply, matrixEquiv_apply, Hex.Matrix.leadingPrefix_entry]
+  rfl
+
+theorem failedBareissColumn_at_pivot
+    (source : Hex.Matrix Int n n) (k : Nat) (hk : k < n) :
+    failedBareissColumn source k hk ⟨k, hk⟩ =
+      Hex.Matrix.det (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk)) := by
+  show (if hc : (⟨k, hk⟩ : Fin n).val ≤ k then
+      (-1) ^ (k + (⟨k, hk⟩ : Fin n).val) *
+        Matrix.det ((failedBareissTopBlock source k hk).submatrix id
+          (⟨(⟨k, hk⟩ : Fin n).val, Nat.lt_succ_of_le hc⟩ : Fin (k + 1)).succAbove)
+      else 0) = _
+  rw [dif_pos (le_refl k)]
+  have hsign : (-1 : Int) ^ (k + k) = 1 := by
+    rw [← Nat.two_mul, pow_mul]; norm_num
+  show (-1 : Int) ^ (k + k) *
+      Matrix.det ((failedBareissTopBlock source k hk).submatrix id
+        (Fin.last k).succAbove) = _
+  rw [hsign, one_mul, failedBareissTopBlock_succAbove_last, ← det_eq]
+  rfl
+
+/-- The bordered minor's `(Fin.last k, c')` entry equals
+`matrixEquiv source r ⟨c'.val, _⟩` (independent of which subcase of `c'.val < k`
+vs `c'.val = k` we are in). -/
+private theorem matrixEquiv_borderedMinor_apply_last
+    (source : Hex.Matrix Int n n) (k : Nat) (hk : k < n) (r : Fin n)
+    (c' : Fin (k + 1)) :
+    ((matrixEquiv source).submatrix
+        (fun r' : Fin (k + 1) =>
+          if hr : r'.val < k then (⟨r'.val, Nat.lt_trans hr hk⟩ : Fin n) else r)
+        (fun c'' : Fin (k + 1) =>
+          if hc : c''.val < k then (⟨c''.val, Nat.lt_trans hc hk⟩ : Fin n) else
+            ⟨k, hk⟩))
+        (Fin.last k) c' =
+      matrixEquiv source r
+        (⟨c'.val, Nat.lt_of_le_of_lt (Nat.le_of_lt_succ c'.isLt) hk⟩ : Fin n) := by
+  show matrixEquiv source
+      (if hr : (Fin.last k : Fin (k + 1)).val < k then _ else r)
+      (if hc : c'.val < k then (⟨c'.val, Nat.lt_trans hc hk⟩ : Fin n) else
+        ⟨k, hk⟩) = _
+  simp only [Fin.val_last]
+  rw [dif_neg (Nat.lt_irrefl k)]
+  by_cases hcv : c'.val < k
+  · rw [dif_pos hcv]
+  · have hc_eq : c'.val = k :=
+      Nat.le_antisymm (Nat.le_of_lt_succ c'.isLt) (Nat.not_lt.mp hcv)
+    rw [dif_neg hcv]
+    show matrixEquiv source r (⟨k, hk⟩ : Fin n) =
+      matrixEquiv source r (⟨c'.val, Nat.lt_of_le_of_lt
+        (Nat.le_of_lt_succ c'.isLt) hk⟩ : Fin n)
+    rw [show (⟨c'.val, Nat.lt_of_le_of_lt (Nat.le_of_lt_succ c'.isLt) hk⟩ : Fin n) =
+        (⟨k, hk⟩ : Fin n) from Fin.ext hc_eq]
+
+/-- The cofactor minor of the bordered minor (with the last row removed) equals
+the corresponding submatrix of the top block. -/
+private theorem submatrix_borderedMinor_succAbove_last_eq_topBlock
+    (source : Hex.Matrix Int n n) (k : Nat) (hk : k < n) (r : Fin n)
+    (c' : Fin (k + 1)) :
+    ((matrixEquiv source).submatrix
+        (fun r' : Fin (k + 1) =>
+          if hr : r'.val < k then (⟨r'.val, Nat.lt_trans hr hk⟩ : Fin n) else r)
+        (fun c'' : Fin (k + 1) =>
+          if hc : c''.val < k then (⟨c''.val, Nat.lt_trans hc hk⟩ : Fin n) else
+            ⟨k, hk⟩)).submatrix
+        (Fin.last k).succAbove c'.succAbove =
+      (failedBareissTopBlock source k hk).submatrix id c'.succAbove := by
+  ext s t
+  show matrixEquiv source
+      (if hr : ((Fin.last k).succAbove s).val < k then
+        (⟨((Fin.last k).succAbove s).val, Nat.lt_trans hr hk⟩ : Fin n) else r)
+      (if hc : (c'.succAbove t).val < k then
+        (⟨(c'.succAbove t).val, Nat.lt_trans hc hk⟩ : Fin n) else ⟨k, hk⟩) =
+    failedBareissTopBlock source k hk s (c'.succAbove t)
+  rw [Fin.succAbove_last]
+  have hslt : (s.castSucc : Fin (k + 1)).val < k := s.isLt
+  rw [dif_pos hslt]
+  by_cases hctlt : (c'.succAbove t).val < k
+  · rw [dif_pos hctlt]
+    rw [failedBareissTopBlock_apply_lt source k hk s (c'.succAbove t) hctlt]
+    rfl
+  · have hctlt' : k ≤ (c'.succAbove t).val := Nat.not_lt.mp hctlt
+    have hct_eq : (c'.succAbove t).val = k := by
+      have := (c'.succAbove t).isLt
+      omega
+    rw [dif_neg hctlt]
+    have h_succAbove_eq : c'.succAbove t = Fin.last k := Fin.ext hct_eq
+    rw [h_succAbove_eq]
+    rw [failedBareissTopBlock_apply_last source k hk s]
+    rfl
+
+/-- For any source row `r`, the dot product of `failedBareissColumn` with row
+`r` of `source` equals the determinant of the `(k+1)`-bordered minor with
+trailing row `r` and trailing column `⟨k, _⟩`. This is the cofactor expansion
+of the bordered minor along its last row. -/
+private theorem failedBareissColumn_dot_row_eq_borderedMinor_det
+    (source : Hex.Matrix Int n n) (k : Nat) (hk : k < n) (r : Fin n) :
+    ∑ c : Fin n, failedBareissColumn source k hk c * matrixEquiv source r c =
+      Matrix.det
+        (matrixEquiv (Hex.Matrix.borderedMinor source k hk r ⟨k, hk⟩)) := by
+  -- Embedding φ : Fin (k+1) → Fin n.
+  let φ : Fin (k + 1) → Fin n :=
+    fun c' => ⟨c'.val, Nat.lt_of_le_of_lt (Nat.le_of_lt_succ c'.isLt) hk⟩
+  have hφ_apply : ∀ c' : Fin (k + 1), (φ c').val = c'.val := fun _ => rfl
+  have hφ_inj : Function.Injective φ := by
+    intro c₁ c₂ h
+    apply Fin.ext
+    have := congrArg Fin.val h
+    simpa [φ] using this
+  -- LHS = sum over the image of φ (other terms vanish since failedBareissColumn = 0).
+  have hLHS :
+      ∑ c : Fin n, failedBareissColumn source k hk c * matrixEquiv source r c =
+        ∑ c' : Fin (k + 1),
+          failedBareissColumn source k hk (φ c') * matrixEquiv source r (φ c') := by
+    have h_others_zero : ∀ c ∈ (Finset.univ : Finset (Fin n)),
+        c ∉ (Finset.univ : Finset (Fin (k + 1))).image φ →
+        failedBareissColumn source k hk c * matrixEquiv source r c = 0 := by
+      intro c _ hcnotin
+      have hck : k < c.val := by
+        by_contra h
+        apply hcnotin
+        have h' : c.val ≤ k := Nat.not_lt.mp h
+        exact Finset.mem_image.mpr
+          ⟨⟨c.val, Nat.lt_succ_of_le h'⟩, Finset.mem_univ _, Fin.ext rfl⟩
+      rw [failedBareissColumn_above_pivot source k hk c hck, zero_mul]
+    rw [← Finset.sum_subset
+        ((Finset.univ : Finset (Fin (k + 1))).image φ).subset_univ h_others_zero]
+    rw [Finset.sum_image (fun a _ b _ h => hφ_inj h)]
+  rw [hLHS]
+  -- RHS via cofactor expansion along the last row.
+  rw [matrixEquiv_borderedMinor source k hk r ⟨k, hk⟩,
+      Matrix.det_succ_row _ (Fin.last k)]
+  apply Finset.sum_congr rfl
+  intro c' _
+  -- Compare the c'-th terms on both sides.
+  have hφc'_le : (φ c').val ≤ k := Nat.le_of_lt_succ c'.isLt
+  have hφc'_eq_c' : (⟨(φ c').val, Nat.lt_succ_of_le hφc'_le⟩ : Fin (k + 1)) = c' :=
+    Fin.ext rfl
+  have hα_eq :
+      failedBareissColumn source k hk (φ c') =
+        (-1) ^ (k + c'.val) *
+          Matrix.det
+            ((failedBareissTopBlock source k hk).submatrix id c'.succAbove) := by
+    show (if hc : (φ c').val ≤ k then _ else (0 : Int)) = _
+    rw [dif_pos hφc'_le, hφc'_eq_c', hφ_apply]
+  rw [hα_eq, matrixEquiv_borderedMinor_apply_last source k hk r c',
+      submatrix_borderedMinor_succAbove_last_eq_topBlock source k hk r c']
+  -- Now reduce both sides to a normal form.
+  show (-1 : Int) ^ (k + c'.val) *
+      Matrix.det ((failedBareissTopBlock source k hk).submatrix id c'.succAbove) *
+      matrixEquiv source r (φ c') =
+    (-1 : Int) ^ ((Fin.last k : Fin (k + 1)).val + c'.val) *
+      matrixEquiv source r
+        (⟨c'.val, Nat.lt_of_le_of_lt (Nat.le_of_lt_succ c'.isLt) hk⟩ : Fin n) *
+      Matrix.det ((failedBareissTopBlock source k hk).submatrix id c'.succAbove)
+  simp only [Fin.val_last]
+  show (-1 : Int) ^ (k + c'.val) * _ * matrixEquiv source r (φ c') =
+    (-1 : Int) ^ (k + c'.val) * matrixEquiv source r (φ c') * _
+  ring
+
+/-- For row `r` with `r.val < k`, the bordered minor at level `k` with trailing
+row `r` has two equal rows (the `r.val`-th leading row and the trailing row),
+so its determinant is zero. -/
+private theorem matrixEquiv_borderedMinor_det_eq_zero_of_row_lt
+    (source : Hex.Matrix Int n n) (k : Nat) (hk : k < n) (r : Fin n) (hr : r.val < k) :
+    Matrix.det
+      (matrixEquiv (Hex.Matrix.borderedMinor source k hk r ⟨k, hk⟩)) = 0 := by
+  rw [matrixEquiv_borderedMinor source k hk r ⟨k, hk⟩]
+  -- The rows ⟨r.val, Nat.lt_succ_of_lt hr⟩ : Fin (k+1) and Fin.last k are distinct
+  -- (since r.val < k) and yield equal rows of the matrix (both equal source row r).
+  apply Matrix.det_zero_of_row_eq (i := (⟨r.val, Nat.lt_succ_of_lt hr⟩ : Fin (k + 1)))
+    (j := Fin.last k)
+  · intro h
+    have hv : r.val = k := by simpa using congrArg Fin.val h
+    omega
+  funext c
+  show matrixEquiv source
+      (if h : (⟨r.val, Nat.lt_succ_of_lt hr⟩ : Fin (k + 1)).val < k then _ else r) _ =
+    matrixEquiv source
+      (if h : (Fin.last k : Fin (k + 1)).val < k then _ else r) _
+  rw [dif_pos hr]
+  simp only [Fin.val_last]
+  rw [dif_neg (Nat.lt_irrefl k)]
+
+/-- **Failed Bareiss column dependence.**
+
+If the leading-prefix determinant of `source` at size `k` is nonzero, and the
+`k`-bordered minors with trailing column `⟨k, _⟩` all vanish for trailing rows
+at or beyond `k`, then there is an explicit linear combination of the columns
+of `source` — vanishing in every row — whose coefficient on column `k` equals
+the leading-prefix determinant (and is therefore nonzero). The coefficients on
+columns past `k` are zero.
+
+The construction is the standard cofactor/adjugate trick: cofactor expansion
+along the last row of the `(k+1)`-bordered minors yields the coefficient
+function `failedBareissColumn`. -/
+theorem failed_bareiss_column_dependence
+    (source : Hex.Matrix Int n n) (k : Nat) (hk : k < n)
+    (hprev :
+      Hex.Matrix.det (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk)) ≠ 0)
+    (hcol :
+      ∀ i : Fin n, k ≤ i.val →
+        Hex.Matrix.det
+          (Hex.Matrix.borderedMinor source k hk i (⟨k, hk⟩ : Fin n)) = 0) :
+    ∃ α : Fin n → Int,
+      α ⟨k, hk⟩ ≠ 0 ∧
+        (∀ c : Fin n, k < c.val → α c = 0) ∧
+        (matrixEquiv source).mulVec α = 0 := by
+  refine ⟨failedBareissColumn source k hk, ?_,
+    fun c hc => failedBareissColumn_above_pivot source k hk c hc, ?_⟩
+  · rw [failedBareissColumn_at_pivot source k hk]; exact hprev
+  funext r
+  show ∑ c : Fin n,
+      matrixEquiv source r c * failedBareissColumn source k hk c = 0
+  -- Use commutativity to match the dot-product orientation.
+  have h_comm :
+      ∑ c : Fin n, matrixEquiv source r c * failedBareissColumn source k hk c =
+        ∑ c : Fin n, failedBareissColumn source k hk c * matrixEquiv source r c := by
+    apply Finset.sum_congr rfl
+    intros c _
+    exact mul_comm _ _
+  rw [h_comm, failedBareissColumn_dot_row_eq_borderedMinor_det source k hk r]
+  by_cases hrk : r.val < k
+  · exact matrixEquiv_borderedMinor_det_eq_zero_of_row_lt source k hk r hrk
+  · have hrk' : k ≤ r.val := Nat.not_lt.mp hrk
+    rw [← det_eq]
+    exact hcol r hrk'
+
 end HexMatrixMathlib
