@@ -502,17 +502,26 @@ matrix and the `d` field is the leading Gram-determinant vector. The proof
 fields are discharged by composing `GramSchmidt.Int.scaledCoeffs_eq` with
 `GramSchmidt.Int.gramDetVec_eq_gramDet`. -/
 def ofBasis (b : Matrix Int n m) (_hind : b.independent) : LLLState n m :=
+  let gs := GramSchmidt.Int.data b
   { b
-    ν := GramSchmidt.Int.scaledCoeffs b
-    d := GramSchmidt.Int.gramDetVec b
+    ν := gs.ν
+    d := gs.d
     ν_eq := by
       intro i j hi hj hji
-      rw [GramSchmidt.Int.gramDetVec_eq_gramDet]
-      simpa [GramSchmidt.entry, Matrix.row] using
+      have hd :
+          gs.d.get ⟨j + 1, Nat.succ_lt_succ hj⟩ =
+            GramSchmidt.Int.gramDet b (j + 1)
+              (Nat.succ_le_of_lt (Nat.lt_trans hji hi)) := by
+        simpa [GramSchmidt.Int.gramDetVec, gs] using
+          GramSchmidt.Int.gramDetVec_eq_gramDet b (j + 1)
+            (Nat.succ_le_of_lt (Nat.lt_trans hji hi))
+      rw [hd]
+      simpa [GramSchmidt.Int.scaledCoeffs, gs, GramSchmidt.entry, Matrix.row] using
         GramSchmidt.Int.scaledCoeffs_eq b i j hi hji
     d_eq := by
       intro i hi
-      exact GramSchmidt.Int.gramDetVec_eq_gramDet b i (Nat.le_of_lt_succ hi) }
+      simpa [GramSchmidt.Int.gramDetVec, gs] using
+        GramSchmidt.Int.gramDetVec_eq_gramDet b i (Nat.le_of_lt_succ hi) }
 
 end LLLState
 

@@ -130,19 +130,8 @@ private theorem benchFixtureIndependent {n m : Nat} (b : Matrix Int n m) :
   sorry
 
 /-- Build the certified executable LLL state for a deterministic matrix. -/
-def stateOf (b : Matrix Int n m) : LLLState n m where
-  b := b
-  ν := GramSchmidt.Int.scaledCoeffs b
-  d := GramSchmidt.Int.gramDetVec b
-  ν_eq := by
-    intro i j hi hj hji
-    rw [GramSchmidt.Int.gramDetVec_eq_gramDet b (j + 1)
-      (Nat.succ_le_of_lt (Nat.lt_trans hji hi))]
-    simpa [GramSchmidt.entry, Matrix.row] using
-      (GramSchmidt.Int.scaledCoeffs_eq b i j hi hji)
-  d_eq := by
-    intro i hi
-    exact GramSchmidt.Int.gramDetVec_eq_gramDet b i (Nat.le_of_lt_succ hi)
+def stateOf (b : Matrix Int n m) : LLLState n m :=
+  LLLState.ofBasis b (benchFixtureIndependent b)
 
 /-- Per-parameter fixture: a prepared `(n + 3) x (2(n + 3) + 1)` LLL state. -/
 def prepStateInput (n : Nat) : StateInput :=
@@ -458,11 +447,10 @@ def firstShortVectorRandomBoundedComplexity (n : Nat) : Nat :=
 def firstShortVectorHarshCubicComplexity (n : Nat) : Nat :=
   n ^ 5
 
-/-- Model for `LLLState.ofBasis`: Gram matrix construction plus two Bareiss
-passes over the Gram matrix, one for determinants and one for scaled
-coefficients. -/
+/-- Model for `LLLState.ofBasis`: Gram matrix construction plus one shared
+Bareiss-style pass over the Gram matrix. -/
 def ofBasisComplexity (rows cols : Nat) : Nat :=
-  rows * rows * cols + 2 * rows * rows * rows
+  rows * rows * cols + rows * rows * rows
 
 /-- BZ recombination `ofBasis` model for a `(n + 3) x (2(n + 3) + 1)` basis. -/
 def ofBasisBzRecombinationComplexity (n : Nat) : Nat :=
@@ -474,7 +462,7 @@ def ofBasisRandomBoundedComplexity (n : Nat) : Nat :=
   let rows := n + 3
   ofBasisComplexity rows rows
 
-/-- Harsh-cubic `ofBasis` model: the same two Bareiss passes, with a linear
+/-- Harsh-cubic `ofBasis` model: the same shared Bareiss-style pass, with a linear
 entry bit-length factor from the fixture's `3 * rows + O(1)` bits. -/
 def ofBasisHarshCubicComplexity (n : Nat) : Nat :=
   let rows := n + 3
@@ -666,9 +654,9 @@ def runFirstShortVectorHarshCubicChecksum (input : FirstShortVectorInput) : Int 
 
 /- Complexity derivation: `LLLState.ofBasis` builds the Gram matrix for a
 rectangular BZ recombination-style basis with `rows = n + 3` and
-`cols = 2 * rows + 1`, then runs the two fraction-free Bareiss-shaped passes
-used by `gramDetVec` and `scaledCoeffs`. The dominant work is `rows^2 * cols`
-integer multiply-adds for Gram construction plus two cubic eliminations over
+`cols = 2 * rows + 1`, then runs the shared fraction-free Bareiss-shaped pass
+used by `GramSchmidt.Int.data`. The dominant work is `rows^2 * cols`
+integer multiply-adds for Gram construction plus one cubic elimination over
 the `rows x rows` Gram matrix. Hadamard bounds each leading Gram determinant's
 bit-width by `O(k * (log rows + log cols + 2 log B))`; this bounded-coefficient
 fixture keeps the bit-width factor uniform in the declared operation count. -/
@@ -684,8 +672,8 @@ setup_benchmark runOfBasisBzRecombinationChecksum n =>
 
 /- Complexity derivation: the random-bounded family uses a square
 `rows = cols = n + 3` basis with entries in `[-30, 30]`. `ofBasis` first forms
-all `rows^2` dot products of length `rows`, then computes `gramDetVec` and
-`scaledCoeffs` as two Bareiss-style passes over that Gram matrix. Hadamard
+all `rows^2` dot products of length `rows`, then computes `d` and `ν` in one
+Bareiss-style pass over that Gram matrix. Hadamard
 gives `O(k * (log rows + log 30))` pivot bit-width, so the registration
 declares the cubic algebraic surface rather than the host-specific bigint
 constant. -/
