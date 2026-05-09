@@ -1,4 +1,5 @@
 import HexBerlekampZassenhausMathlib.Basic
+import HexBerlekampZassenhausMathlib.BHKSBound
 import HexBerlekampZassenhausMathlib.Conformance
 import HexBerlekampZassenhausMathlib.Resultant
 
