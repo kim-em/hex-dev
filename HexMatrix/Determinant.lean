@@ -3943,6 +3943,62 @@ def columnTupleMatrix {R : Type u} {n m : Nat}
     (columnTupleMatrix A cols)[r][c] = A[r][cols c] := by
   simp [columnTupleMatrix, ofFn]
 
+/-- Interpret an ordered column tuple vector as its column-selection function. -/
+def columnTupleVectorFn {n m : Nat} (cols : Vector (Fin m) n) : Fin n → Fin m :=
+  fun i => cols[i]
+
+@[simp] theorem columnTupleVectorFn_apply {n m : Nat}
+    (cols : Vector (Fin m) n) (i : Fin n) :
+    columnTupleVectorFn cols i = cols[i] := rfl
+
+/-- Enumerate all ordered `n`-tuples of columns from `Fin m`. -/
+def columnTupleVectors : (n m : Nat) → List (Vector (Fin m) n)
+  | 0, _ => [emptyVec]
+  | n + 1, m =>
+      (columnTupleVectors n m).flatMap fun pref =>
+        (List.finRange m).map fun c =>
+          insertAt c pref (Fin.last n)
+
+private theorem columnTupleVectors_ofFn_succ
+    {n m : Nat} (cols : Fin (n + 1) → Fin m) :
+    Vector.ofFn cols =
+      insertAt (cols (Fin.last n)) (Vector.ofFn fun i : Fin n => cols i.castSucc)
+        (Fin.last n) := by
+  apply Vector.ext
+  intro i hi
+  change (Vector.ofFn cols)[(⟨i, hi⟩ : Fin (n + 1))] =
+    (insertAt (cols (Fin.last n)) (Vector.ofFn fun i : Fin n => cols i.castSucc)
+      (Fin.last n))[(⟨i, hi⟩ : Fin (n + 1))]
+  by_cases hlast : i = n
+  · subst i
+    simp [insertAt, List.getElem_insertIdx_self]
+    exact congrArg cols (Fin.ext rfl)
+  · have hi_lt : i < n := by omega
+    simp [insertAt, List.getElem_insertIdx_of_lt, hi_lt]
+
+/-- Every ordered column-selection function occurs in `columnTupleVectors`. -/
+theorem columnTupleVectors_mem_ofFn {n m : Nat} (cols : Fin n → Fin m) :
+    Vector.ofFn cols ∈ columnTupleVectors n m := by
+  induction n with
+  | zero =>
+      simp [columnTupleVectors, emptyVec]
+  | succ n ih =>
+      rw [columnTupleVectors_ofFn_succ cols]
+      rw [columnTupleVectors, List.mem_flatMap]
+      refine ⟨Vector.ofFn fun i : Fin n => cols i.castSucc, ih (fun i => cols i.castSucc), ?_⟩
+      rw [List.mem_map]
+      exact ⟨cols (Fin.last n), List.mem_finRange (cols (Fin.last n)), rfl⟩
+
+/-- Product coefficient attached to an ordered column tuple in the Gram expansion. -/
+def columnTupleCoeff {R : Type u} [Mul R] [OfNat R 1] {n m : Nat}
+    (A : Matrix R n m) (cols : Vector (Fin m) n) : R :=
+  (List.finRange n).foldl (fun acc i => acc * A[i][cols[i]]) 1
+
+/-- The determinant summand associated to an ordered column tuple. -/
+def columnTupleExpansionTerm {R : Type u} [Lean.Grind.Ring R] {n m : Nat}
+    (A : Matrix R n m) (cols : Vector (Fin m) n) : R :=
+  columnTupleCoeff A cols * det (columnTupleMatrix A (columnTupleVectorFn cols))
+
 /-- An ordered column-tuple minor with a repeated selected column has determinant zero. -/
 theorem det_columnTupleMatrix_eq_zero_of_col_eq
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
