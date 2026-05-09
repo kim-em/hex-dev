@@ -235,8 +235,14 @@ libraries:
   HexPolyMathlib:
     deps: [HexPoly]
     mathlib: true
-    done_through: 3
+    done_through: 4
     status: active
+    phase4:
+      input_families:
+        - name: dense-mathlib-conversion
+          description: Deterministic dense integer polynomials transported through `toPolynomial` and `ofPolynomial`, including the paired round-trip checksum.
+        - name: euclidean-bridge-transport
+          description: Polynomial Fibonacci quotient-chain fixtures over `Rat` carried through the executable `DensePoly.gcd`/`DensePoly.xgcd` plus the dense-to-Mathlib bridge.
   HexMatrixMathlib:
     deps: [HexMatrix]
     mathlib: true
