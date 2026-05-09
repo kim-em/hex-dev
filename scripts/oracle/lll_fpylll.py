@@ -37,6 +37,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+from fractions import Fraction
 from pathlib import Path
 from typing import Any
 
@@ -101,11 +102,7 @@ def _hnf_rows(rows: list[list[int]]) -> list[list[int]]:
         return out
     except ImportError:
         pass
-    # fpylll fallback (HNF via lattice-style, then re-extract rows).
-    from fpylll import IntegerMatrix  # type: ignore[import-not-found]
-    M = IntegerMatrix.from_matrix(rows)
-    M.hnf()
-    return [[int(M[i, j]) for j in range(M.ncols)] for i in range(M.nrows)]
+    raise RuntimeError("python-flint is not installed and fpylll exposes no HNF API")
 
 
 def _drop_zero_rows(rows: list[list[int]]) -> list[list[int]]:
@@ -118,6 +115,123 @@ def _normalised_hnf(rows: list[list[int]]) -> list[list[int]]:
     redundant-row case (rectangular full-rank lattices represented by
     n × m bases with `n ≤ m`)."""
     return _drop_zero_rows(_hnf_rows(rows))
+
+
+def _rank(matrix: list[list[Fraction]]) -> int:
+    """Exact rank over Q for small oracle matrices."""
+    rows = [row[:] for row in matrix if any(value != 0 for value in row)]
+    if not rows:
+        return 0
+    row_count = len(rows)
+    col_count = len(rows[0])
+    rank = 0
+    for col in range(col_count):
+        pivot = next((i for i in range(rank, row_count) if rows[i][col] != 0), None)
+        if pivot is None:
+            continue
+        rows[rank], rows[pivot] = rows[pivot], rows[rank]
+        pivot_value = rows[rank][col]
+        rows[rank] = [value / pivot_value for value in rows[rank]]
+        for i in range(row_count):
+            if i == rank or rows[i][col] == 0:
+                continue
+            factor = rows[i][col]
+            rows[i] = [
+                value - factor * pivot_entry
+                for value, pivot_entry in zip(rows[i], rows[rank], strict=True)
+            ]
+        rank += 1
+        if rank == row_count:
+            break
+    return rank
+
+
+def _independent_columns(rows: list[list[int]]) -> list[int]:
+    """Choose columns whose row-restricted square submatrix has full rank."""
+    if not rows:
+        return []
+    row_count = len(rows)
+    col_count = len(rows[0])
+    selected: list[int] = []
+    for col in range(col_count):
+        trial = selected + [col]
+        matrix = [
+            [Fraction(rows[i][j]) for j in trial]
+            for i in range(row_count)
+        ]
+        if _rank(matrix) > len(selected):
+            selected = trial
+            if len(selected) == row_count:
+                return selected
+    raise ValueError("basis rows are not linearly independent over Q")
+
+
+def _inverse(matrix: list[list[Fraction]]) -> list[list[Fraction]]:
+    n = len(matrix)
+    aug = [
+        row[:] + [Fraction(1 if i == j else 0) for j in range(n)]
+        for i, row in enumerate(matrix)
+    ]
+    for col in range(n):
+        pivot = next((i for i in range(col, n) if aug[i][col] != 0), None)
+        if pivot is None:
+            raise ValueError("singular matrix")
+        aug[col], aug[pivot] = aug[pivot], aug[col]
+        pivot_value = aug[col][col]
+        aug[col] = [value / pivot_value for value in aug[col]]
+        for i in range(n):
+            if i == col or aug[i][col] == 0:
+                continue
+            factor = aug[i][col]
+            aug[i] = [
+                value - factor * pivot_entry
+                for value, pivot_entry in zip(aug[i], aug[col], strict=True)
+            ]
+    return [row[n:] for row in aug]
+
+
+def _row_lattice_contains(basis: list[list[int]], row: list[int]) -> bool:
+    """Check whether `row` is an integer combination of full-row-rank basis rows.
+
+    This is the fpylll-only fallback for environments without python-flint.
+    It avoids relying on fpylll's removed/optional HNF API by solving over an
+    independent column minor and then checking that the resulting coefficients
+    are integral and reconstruct the full row.
+    """
+    if not basis:
+        return not any(row)
+    pivots = _independent_columns(basis)
+    minor = [
+        [Fraction(basis[i][j]) for j in pivots]
+        for i in range(len(basis))
+    ]
+    inv = _inverse(minor)
+    restricted = [Fraction(row[j]) for j in pivots]
+    coeffs = [
+        sum(restricted[k] * inv[k][j] for k in range(len(inv)))
+        for j in range(len(inv))
+    ]
+    if any(coeff.denominator != 1 for coeff in coeffs):
+        return False
+    reconstructed = [
+        sum(coeffs[i] * basis[i][j] for i in range(len(basis)))
+        for j in range(len(basis[0]))
+    ]
+    return reconstructed == [Fraction(value) for value in row]
+
+
+def _same_row_lattice(left: list[list[int]], right: list[list[int]]) -> bool:
+    try:
+        return _normalised_hnf(left) == _normalised_hnf(right)
+    except RuntimeError:
+        pass
+    left_nonzero = _drop_zero_rows(left)
+    right_nonzero = _drop_zero_rows(right)
+    if len(left_nonzero) != len(right_nonzero):
+        return False
+    return all(_row_lattice_contains(left_nonzero, row) for row in right_nonzero) and all(
+        _row_lattice_contains(right_nonzero, row) for row in left_nonzero
+    )
 
 
 def _fpylll_reduce(rows: list[list[int]]) -> list[list[int]]:
@@ -207,9 +321,7 @@ def _check_case(
 
     # 1. Lattice equality (Lean output spans the same Z-lattice as input).
     try:
-        input_hnf = _normalised_hnf(input_basis)
-        lean_hnf = _normalised_hnf(lean_basis)
-        if input_hnf != lean_hnf:
+        if not _same_row_lattice(input_basis, lean_basis):
             failures.append("lattice-equality: lean basis spans a different Z-lattice")
     except Exception as exc:
         failures.append(f"lattice-equality: HNF computation failed ({exc})")
