@@ -203,6 +203,16 @@ libraries:
     mathlib: false
     done_through: 3
     status: active
+    phase4:
+      input_families:
+        - name: dense-canonical-reduction
+          description: Field construction from a dense polynomial through quotient-ring reduction modulo certificate-checked irreducible moduli over F7.
+        - name: field-arithmetic
+          description: Canonical field representatives over F7 quotients for addition, multiplication, negation, and subtraction.
+        - name: field-exponentiation
+          description: Square-and-multiply natural, signed, and Frobenius p-th powers on canonical field representatives over F7 quotients.
+        - name: field-inversion-division
+          description: Extended-gcd inversion and division on canonical field representatives over F7 quotients.
 
   # ---------- Factoring pipeline ----------
   HexBerlekamp:
