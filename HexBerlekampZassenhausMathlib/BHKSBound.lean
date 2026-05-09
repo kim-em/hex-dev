@@ -91,6 +91,60 @@ theorem bhksThresholdNatBound_real_le_bhksBound (f : Hex.ZPoly) :
     (bhksThresholdNatBound f : ℝ) ≤ (Hex.bhksBound f : ℝ) := by
   exact_mod_cast bhksThresholdNatBound_le_bhksBound f
 
+/-- Real-valued degree factor appearing in the BHKS paper threshold. -/
+def bhksPaperDegreeFactorReal (f : Hex.ZPoly) : ℝ :=
+  bhksDegree f
+
+/-- Real-valued `(2C)^(n^2)` factor appearing in the BHKS paper threshold. -/
+def bhksPaperConstantFactorReal (f : Hex.ZPoly) (C : ℝ) : ℝ :=
+  (2 * C) ^ (bhksDegree f * bhksDegree f)
+
+/-- Real-valued coefficient-norm factor `‖f‖₂^(2n-1)` from BHKS. -/
+noncomputable def bhksPaperCoeffNormFactorReal (f : Hex.ZPoly) : ℝ :=
+  (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)) ^ (2 * bhksDegree f - 1)
+
+/-- Real-valued logarithmic factor `(log ‖f‖₂)^n` from BHKS. -/
+noncomputable def bhksPaperLogFactorReal (f : Hex.ZPoly) : ℝ :=
+  (Real.log (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f))) ^ bhksDegree f
+
+/-- Product-shaped real BHKS paper threshold, with the project constant explicit. -/
+noncomputable def bhksPaperThresholdReal (f : Hex.ZPoly) (C : ℝ) : ℝ :=
+  bhksPaperDegreeFactorReal f * bhksPaperConstantFactorReal f C *
+    bhksPaperCoeffNormFactorReal f * bhksPaperLogFactorReal f
+
+/-- The packaged Nat degree factor is exactly the paper degree factor after cast. -/
+theorem bhksPaperDegreeFactorReal_eq_natCast (f : Hex.ZPoly) :
+    bhksPaperDegreeFactorReal f = (bhksDegreeFactor f : ℝ) := by
+  rfl
+
+/--
+The project `C ≤ 2` convention makes the paper `(2C)^(n^2)` factor no larger
+than the packaged `4^(n^2)` factor.
+-/
+theorem bhksPaperConstantFactorReal_le_fourPowFactor
+    (f : Hex.ZPoly) (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2) :
+    bhksPaperConstantFactorReal f C ≤ (bhksFourPowFactor f : ℝ) := by
+  have hbase_nonneg : 0 ≤ 2 * C := by nlinarith
+  have hbase_le : 2 * C ≤ (4 : ℝ) := by nlinarith
+  simpa [bhksPaperConstantFactorReal, bhksFourPowFactor] using
+    pow_le_pow_left₀ hbase_nonneg hbase_le (bhksDegree f * bhksDegree f)
+
+/--
+Named analytic target for bounding the BHKS coefficient-norm factor by the
+packaged integer coefficient-norm factor.
+-/
+theorem bhksPaperCoeffNormFactorReal_le_coeffNormFactor (f : Hex.ZPoly) :
+    bhksPaperCoeffNormFactorReal f ≤ (bhksCoeffNormFactor f : ℝ) := by
+  sorry
+
+/--
+Named analytic target for bounding the BHKS logarithmic factor by the packaged
+`Nat.log2` factor.
+-/
+theorem bhksPaperLogFactorReal_le_log2Factor (f : Hex.ZPoly) :
+    bhksPaperLogFactorReal f ≤ (bhksLog2Factor f : ℝ) := by
+  sorry
+
 /--
 The packaged BHKS cap remains available alongside the executable Mignotte
 coefficient bound through a single max expression.  This lightweight bridge is
@@ -105,5 +159,29 @@ theorem defaultFactorCoeffBound_le_max_bhksBound_defaultFactorCoeffBound (f : He
     Hex.ZPoly.defaultFactorCoeffBound f ≤
       max (Hex.bhksBound f) (Hex.ZPoly.defaultFactorCoeffBound f) :=
   Nat.le_max_right _ _
+
+theorem bhksBound_real_le_max_bhksBound_defaultFactorCoeffBound (f : Hex.ZPoly) :
+    (Hex.bhksBound f : ℝ) ≤
+      (max (Hex.bhksBound f) (Hex.ZPoly.defaultFactorCoeffBound f) : ℝ) := by
+  exact_mod_cast bhksBound_le_max_bhksBound_defaultFactorCoeffBound f
+
+theorem defaultFactorCoeffBound_real_le_max_bhksBound_defaultFactorCoeffBound (f : Hex.ZPoly) :
+    (Hex.ZPoly.defaultFactorCoeffBound f : ℝ) ≤
+      (max (Hex.bhksBound f) (Hex.ZPoly.defaultFactorCoeffBound f) : ℝ) := by
+  exact_mod_cast defaultFactorCoeffBound_le_max_bhksBound_defaultFactorCoeffBound f
+
+theorem bhksBound_real_le_of_max_bhksBound_defaultFactorCoeffBound_le
+    (f : Hex.ZPoly) {a : Nat}
+    (ha : max (Hex.bhksBound f) (Hex.ZPoly.defaultFactorCoeffBound f) ≤ a) :
+    (Hex.bhksBound f : ℝ) ≤ (a : ℝ) := by
+  exact_mod_cast
+    (le_trans (bhksBound_le_max_bhksBound_defaultFactorCoeffBound f) ha)
+
+theorem defaultFactorCoeffBound_real_le_of_max_bhksBound_defaultFactorCoeffBound_le
+    (f : Hex.ZPoly) {a : Nat}
+    (ha : max (Hex.bhksBound f) (Hex.ZPoly.defaultFactorCoeffBound f) ≤ a) :
+    (Hex.ZPoly.defaultFactorCoeffBound f : ℝ) ≤ (a : ℝ) := by
+  exact_mod_cast
+    (le_trans (defaultFactorCoeffBound_le_max_bhksBound_defaultFactorCoeffBound f) ha)
 
 end HexBerlekampZassenhausMathlib
