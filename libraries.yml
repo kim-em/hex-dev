@@ -193,8 +193,16 @@ libraries:
   HexGfq:
     deps: [HexGfqField, HexConway, HexGF2]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
+    phase4:
+      input_families:
+        - name: generic-constructor-projection
+          description: Generic GFq constructor and representative projection on deterministic binary polynomial representatives over the committed Conway entry GFq 2 1.
+        - name: packed-constructor-projection
+          description: Packed GF2q constructor and representative projection on the committed single-word Conway entry GF2q 1.
+        - name: packed-generic-shared-bridge
+          description: Shared binary representative family exercising both packed GF2q and generic GFq constructor/projection paths on the common p = 2 API surface.
   HexBerlekampZassenhaus:
     deps: [HexBerlekamp, HexHensel, HexLLL]
     mathlib: false
