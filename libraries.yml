@@ -129,8 +129,22 @@ libraries:
   HexGF2:
     deps: [HexPoly]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
+    phase4:
+      input_families:
+        - name: packed-word-clmul
+          description: Deterministic UInt64 sample pairs for pure-Lean and extern carry-less word multiplication chains.
+        - name: packed-bitwise-core
+          description: Deterministic same-size packed GF2 polynomials for XOR addition and size-proportional left/right shifts.
+        - name: packed-euclidean
+          description: Deterministic same-size and division-shape packed GF2 polynomials for schoolbook multiplication, long division, remainder, gcd, and extended gcd.
+        - name: gf2n-aes-field
+          description: Deterministic AES-modulus single-word extension-field samples for addition, multiplication, inversion, division, and square-and-multiply powering.
+        - name: gf2n-poly-quotient
+          description: Deterministic degree-128 packed quotient-field samples for multiplication, inversion, division, and square-and-multiply powering.
+        - name: packed-vs-generic-comparison
+          description: Shared deterministic GF(2) coefficient fixtures for cross-library comparisons of packed `GF2Poly` versus generic `FpPoly 2` polynomial gcd and Berlekamp-style Frobenius-column construction.
   HexPolyZ:
     deps: [HexPoly]
     mathlib: false
