@@ -596,6 +596,251 @@ private theorem distinctDegreePowerLoop_bucket_dvd_diff
               (acc * DensePoly.gcd residual diff)
               (hP_step residual acc hP hcand) bucket hbucket
 
+private theorem unitPolynomial_dvd_any
+    [ZMod64.PrimeModulus p]
+    {u target : FpPoly p} (hu : isUnitPolynomial u = true) :
+    u ∣ target := by
+  have hu_degree : ¬ 0 < u.degree?.getD 0 := by
+    intro hpos
+    unfold isUnitPolynomial at hu
+    cases hdeg : u.degree? with
+    | none =>
+        rw [hdeg] at hu
+        simp at hu
+    | some k =>
+        rw [hdeg] at hu
+        cases k with
+        | zero =>
+            rw [hdeg] at hpos
+            simp at hpos
+        | succ _ => simp at hu
+  have hu_deg : u.degree? = some 0 := by
+    unfold isUnitPolynomial at hu
+    cases hdeg : u.degree? with
+    | none =>
+        rw [hdeg] at hu
+        simp at hu
+    | some k =>
+        rw [hdeg] at hu
+        cases k with
+        | zero => rfl
+        | succ _ => simp at hu
+  have hu_size_ne_zero : u.size ≠ 0 := by
+    intro hsize
+    unfold DensePoly.degree? at hu_deg
+    simp [hsize] at hu_deg
+  have hu_size : u.size = 1 := by
+    unfold DensePoly.degree? at hu_deg
+    simp [hu_size_ne_zero] at hu_deg
+    omega
+  have hmod : target % u = 0 := by
+    show (DensePoly.divMod target u).2 = 0
+    apply DensePoly.divMod_remainder_eq_zero_of_degree_zero_core
+    · exact hu_size
+    · intro a
+      have hpos : 0 < u.size := by omega
+      have hidx : u.coeffs.size - 1 < u.coeffs.size := by
+        simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hpos
+      have hlead_eq : u.leadingCoeff = u.coeff (u.size - 1) := by
+        unfold DensePoly.leadingCoeff DensePoly.coeff
+        change u.coeffs.back?.getD (0 : ZMod64 p) =
+          u.coeffs.getD (u.coeffs.size - 1) (Zero.zero : ZMod64 p)
+        rw [Array.back?_eq_getElem?, Array.getD_eq_getD_getElem?,
+          Array.getElem?_eq_getElem hidx]
+        rfl
+      have hlead_ne : u.leadingCoeff ≠ (Zero.zero : ZMod64 p) := by
+        rw [hlead_eq]
+        exact DensePoly.coeff_last_ne_zero_of_pos_size u hpos
+      have hinv : ZMod64.inv u.leadingCoeff * u.leadingCoeff = (1 : ZMod64 p) :=
+        ZMod64.inv_mul_eq_one_of_prime (ZMod64.PrimeModulus.prime (p := p)) hlead_ne
+      have hmul : (a / u.leadingCoeff) * u.leadingCoeff = a := by
+        change (ZMod64.mul a (ZMod64.inv u.leadingCoeff)) * u.leadingCoeff = a
+        calc
+          (ZMod64.mul a (ZMod64.inv u.leadingCoeff)) * u.leadingCoeff
+              = a * (ZMod64.inv u.leadingCoeff * u.leadingCoeff) := by
+                  exact Lean.Grind.Semiring.mul_assoc a (ZMod64.inv u.leadingCoeff)
+                    u.leadingCoeff
+          _ = a * (1 : ZMod64 p) := by rw [hinv]
+          _ = a := Lean.Grind.Semiring.mul_one a
+      change a - (a / u.leadingCoeff) * u.leadingCoeff = (Zero.zero : ZMod64 p)
+      rw [hmul]
+      change ZMod64.sub a a = (Zero.zero : ZMod64 p)
+      apply ZMod64.ext
+      apply UInt64.toNat_inj.mp
+      change (ZMod64.sub a a).toNat = (Zero.zero : ZMod64 p).toNat
+      rw [ZMod64.toNat_sub]
+      have hsum : a.toNat + (p - a.toNat) = p := by
+        have ha : a.toNat < p := a.toNat_lt
+        omega
+      rw [hsum, Nat.mod_self]
+      exact ZMod64.toNat_zero.symm
+  refine ⟨target / u, ?_⟩
+  have hspec := DensePoly.div_mul_add_mod target u
+  rw [hmod] at hspec
+  exact ((DensePoly.mul_comm_poly u (target / u)).trans
+    ((DensePoly.add_zero_poly ((target / u) * u)).symm.trans hspec)).symm
+
+private theorem one_dvd_poly
+    [ZMod64.PrimeModulus p]
+    (target : FpPoly p) :
+    (1 : FpPoly p) ∣ target := by
+  exact unitPolynomial_dvd_any (u := (1 : FpPoly p)) (target := target)
+    isUnitPolynomial_one
+
+private theorem mul_right_unit_dvd_of_dvd
+    [ZMod64.PrimeModulus p]
+    {a u target : FpPoly p}
+    (ha : a ∣ target) (hu : isUnitPolynomial u = true) :
+    a * u ∣ target := by
+  rcases ha with ⟨q, hq⟩
+  rcases unitPolynomial_dvd_any (u := u) (target := q) hu with ⟨k, hk⟩
+  refine ⟨k, ?_⟩
+  calc target
+      = a * q := hq
+    _ = a * (u * k) := by rw [hk]
+    _ = (a * u) * k := (DensePoly.mul_assoc_poly a u k).symm
+
+private theorem dvd_trans_poly
+    {a b c : FpPoly p} (hab : a ∣ b) (hbc : b ∣ c) :
+    a ∣ c := by
+  rcases hab with ⟨x, hx⟩
+  rcases hbc with ⟨y, hy⟩
+  refine ⟨x * y, ?_⟩
+  calc c
+      = b * y := hy
+    _ = (a * x) * y := by rw [hx]
+    _ = a * (x * y) := DensePoly.mul_assoc_poly a x y
+
+private theorem isUnitPolynomial_gcd_quotient_of_squareFree_divisor
+    [ZMod64.PrimeModulus p]
+    {f r d : FpPoly p}
+    (hsf : DensePoly.gcd f (DensePoly.derivative f) = 1)
+    (hrf : r ∣ f) :
+    isUnitPolynomial (DensePoly.gcd (r / DensePoly.gcd r d) d) = true := by
+  have hc_dvd_r : DensePoly.gcd r d ∣ r := DensePoly.gcd_dvd_left r d
+  have hr_eq : r = DensePoly.gcd r d * (r / DensePoly.gcd r d) := by
+    have hmod : r % DensePoly.gcd r d = 0 :=
+      DensePoly.mod_eq_zero_of_dvd r (DensePoly.gcd r d) hc_dvd_r
+    have hspec := DensePoly.div_mul_add_mod r (DensePoly.gcd r d)
+    rw [hmod] at hspec
+    exact (hspec.symm.trans
+      (DensePoly.add_zero_poly ((r / DensePoly.gcd r d) * DensePoly.gcd r d))).trans
+      (DensePoly.mul_comm_poly (r / DensePoly.gcd r d) (DensePoly.gcd r d))
+  have hg_dvd_quot :
+      DensePoly.gcd (r / DensePoly.gcd r d) d ∣ r / DensePoly.gcd r d :=
+    DensePoly.gcd_dvd_left _ _
+  have hg_dvd_d :
+      DensePoly.gcd (r / DensePoly.gcd r d) d ∣ d :=
+    DensePoly.gcd_dvd_right _ _
+  have hg_dvd_r :
+      DensePoly.gcd (r / DensePoly.gcd r d) d ∣ r := by
+    rcases hg_dvd_quot with ⟨a, ha⟩
+    refine ⟨DensePoly.gcd r d * a, ?_⟩
+    calc r
+        = DensePoly.gcd r d * (r / DensePoly.gcd r d) := hr_eq
+      _ = DensePoly.gcd r d *
+            (DensePoly.gcd (r / DensePoly.gcd r d) d * a) := by
+          exact congrArg (DensePoly.gcd r d * ·) ha
+      _ = DensePoly.gcd (r / DensePoly.gcd r d) d *
+            (DensePoly.gcd r d * a) := by
+          calc DensePoly.gcd r d *
+                  (DensePoly.gcd (r / DensePoly.gcd r d) d * a)
+              = (DensePoly.gcd r d *
+                  DensePoly.gcd (r / DensePoly.gcd r d) d) * a :=
+                    (DensePoly.mul_assoc_poly _ _ _).symm
+            _ = (DensePoly.gcd (r / DensePoly.gcd r d) d *
+                  DensePoly.gcd r d) * a := by
+                    exact congrArg (· * a) (DensePoly.mul_comm_poly _ _)
+            _ = DensePoly.gcd (r / DensePoly.gcd r d) d *
+                  (DensePoly.gcd r d * a) :=
+                    DensePoly.mul_assoc_poly _ _ _
+  have hg_dvd_c :
+      DensePoly.gcd (r / DensePoly.gcd r d) d ∣ DensePoly.gcd r d :=
+    DensePoly.dvd_gcd _ r d hg_dvd_r hg_dvd_d
+  have hg2_dvd_r :
+      DensePoly.gcd (r / DensePoly.gcd r d) d *
+        DensePoly.gcd (r / DensePoly.gcd r d) d ∣ r := by
+    rcases hg_dvd_c with ⟨e, he⟩
+    rcases hg_dvd_quot with ⟨a, ha⟩
+    refine ⟨e * a, ?_⟩
+    let g := DensePoly.gcd (r / DensePoly.gcd r d) d
+    have hpair : (DensePoly.gcd r d, r / DensePoly.gcd r d) = (g * e, g * a) :=
+      Prod.ext he ha
+    calc r
+        = DensePoly.gcd r d * (r / DensePoly.gcd r d) := hr_eq
+      _ = (g * e) * (g * a) := by
+          exact congrArg (fun (xy : FpPoly p × FpPoly p) => xy.1 * xy.2) hpair
+      _ = (g * g) * (e * a) := by
+          calc (g * e) * (g * a)
+              = g * (e * (g * a)) := DensePoly.mul_assoc_poly g e (g * a)
+            _ = g * ((e * g) * a) := by
+                exact congrArg (g * ·) (DensePoly.mul_assoc_poly e g a).symm
+            _ = g * ((g * e) * a) := by
+                exact congrArg (fun x => g * (x * a)) (DensePoly.mul_comm_poly e g)
+            _ = g * (g * (e * a)) := by
+                exact congrArg (g * ·) (DensePoly.mul_assoc_poly g e a)
+            _ = (g * g) * (e * a) := (DensePoly.mul_assoc_poly g g (e * a)).symm
+  exact isUnitPolynomial_of_squareFree_of_squared_dvd hsf
+    (dvd_trans_poly hg2_dvd_r hrf)
+
+private theorem distinctDegreePowerLoop_bucket_dvd_diff_of_squareFree_divisor
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p)
+    (hsf : DensePoly.gcd f (DensePoly.derivative f) = 1)
+    (d : Nat) (diff residual : FpPoly p)
+    (hresidual : residual ∣ f) :
+    ∀ bucket : DegreeBucket p,
+      (distinctDegreePowerLoop (p := p) d diff (residual.size + 1) residual 1).1 =
+        some bucket →
+        bucket.factor ∣ diff := by
+  let P : FpPoly p → FpPoly p → Prop :=
+    fun r a =>
+      (a = 1 ∧ r = residual) ∨
+        (a ∣ diff ∧ isUnitPolynomial (DensePoly.gcd r diff) = true)
+  apply distinctDegreePowerLoop_bucket_dvd_diff d diff P
+  · intro r a hP
+    rcases hP with hinit | hdone
+    · rcases hinit with ⟨ha, _hr⟩
+      rw [ha]
+      exact one_dvd_poly diff
+    · exact hdone.1
+  · intro r a hP hunit
+    rcases hP with hinit | hdone
+    · rcases hinit with ⟨ha, _hr⟩
+      rw [ha]
+      exact unitPolynomial_dvd_any (u := (1 : FpPoly p) * r) (target := diff) (by
+        rw [one_mul_poly r]
+        exact hunit)
+    · exact mul_right_unit_dvd_of_dvd hdone.1 hunit
+  · intro r a hP hg_nonunit
+    rcases hP with hinit | hdone
+    · rcases hinit with ⟨ha, hr⟩
+      right
+      constructor
+      · rw [ha, one_mul_poly]
+        exact DensePoly.gcd_dvd_right r diff
+      · rw [hr]
+        simpa [one_mul_poly] using
+          isUnitPolynomial_gcd_quotient_of_squareFree_divisor
+            (f := f) (r := residual) (d := diff) hsf hresidual
+    · rw [hdone.2] at hg_nonunit
+      simp at hg_nonunit
+  · left
+    exact ⟨rfl, rfl⟩
+
+private theorem distinctDegreePowerLoop_residual_dvd
+    [ZMod64.PrimeModulus p]
+    (d : Nat) (diff : FpPoly p) (fuel : Nat) (residual : FpPoly p) :
+    (distinctDegreePowerLoop (p := p) d diff fuel residual 1).2 ∣ residual := by
+  have hproduct := distinctDegreePowerLoop_product_one d diff fuel residual
+  refine ⟨optionalBucketProduct
+      (distinctDegreePowerLoop (p := p) d diff fuel residual 1).1, ?_⟩
+  exact ((DensePoly.mul_comm_poly
+      (distinctDegreePowerLoop (p := p) d diff fuel residual 1).2
+      (optionalBucketProduct
+        (distinctDegreePowerLoop (p := p) d diff fuel residual 1).1)).trans
+    hproduct).symm
+
 private theorem appendBucket?_positive_degrees
     (buckets : List (DegreeBucket p)) (bucket? : Option (DegreeBucket p))
     (d : Nat)
@@ -616,6 +861,26 @@ private theorem appendBucket?_positive_degrees
         have hdeg : bucket.degree = d := hnew bucket (by simp [hbucket])
         rw [hdeg]
         exact hd
+
+private theorem appendBucket?_matches
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (buckets : List (DegreeBucket p)) (bucket? : Option (DegreeBucket p))
+    (hprev : ∀ bucket ∈ buckets, bucket.matchesFrobeniusDegree f hmonic)
+    (hnew : ∀ bucket : DegreeBucket p, bucket? = some bucket →
+      bucket.matchesFrobeniusDegree f hmonic) :
+    ∀ bucket ∈ appendBucket? buckets bucket?,
+      bucket.matchesFrobeniusDegree f hmonic := by
+  intro bucket hmem
+  cases hbucket : bucket? with
+  | none =>
+      simp [appendBucket?, hbucket] at hmem
+      exact hprev bucket hmem
+  | some newBucket =>
+      simp [appendBucket?, hbucket] at hmem
+      rcases hmem with hmem | hmem
+      · exact hprev bucket hmem
+      · rcases hmem with rfl
+        exact hnew bucket (by simp [hbucket])
 
 private theorem distinctDegreeLoop_bucket_positive_degrees
     (f : FpPoly p) (hmonic : DensePoly.Monic f) (xMod : FpPoly p)
@@ -658,6 +923,78 @@ private theorem distinctDegreeFactor_bucket_positive_degrees
   exact distinctDegreeLoop_bucket_positive_degrees f hmonic xMod
     (basisSize f + 1) 1 frobX f [] (by omega) (by simp)
 
+private theorem distinctDegreeLoop_bucket_matches
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (xMod : FpPoly p)
+    (hsquareFree : DensePoly.gcd f (DensePoly.derivative f) = 1)
+    (fuel d : Nat) (currentFrob residual : FpPoly p)
+    (buckets : List (DegreeBucket p))
+    (hxMod : xMod = FpPoly.modByMonic f FpPoly.X hmonic)
+    (hstate : currentFrob = FpPoly.frobeniusXPowMod f hmonic d)
+    (hresidual : residual ∣ f)
+    (hprev : ∀ bucket ∈ buckets, bucket.matchesFrobeniusDegree f hmonic) :
+    ∀ bucket ∈ (distinctDegreeLoop f hmonic xMod fuel d currentFrob residual buckets).1,
+      bucket.matchesFrobeniusDegree f hmonic := by
+  induction fuel generalizing d currentFrob residual buckets with
+  | zero =>
+      intro bucket hmem
+      exact hprev bucket hmem
+  | succ fuel ih =>
+      intro bucket hmem
+      unfold distinctDegreeLoop at hmem
+      by_cases hzero : residual.isZero
+      · simp [hzero] at hmem
+        exact hprev bucket hmem
+      · simp [hzero] at hmem
+        let powerResult :=
+          distinctDegreePowerLoop d (currentFrob - xMod) (residual.size + 1) residual 1
+        have hnew :
+            ∀ bucket : DegreeBucket p, powerResult.1 = some bucket →
+              bucket.matchesFrobeniusDegree f hmonic := by
+          intro newBucket hbucket
+          have hdeg : newBucket.degree = d :=
+            distinctDegreePowerLoop_bucket_degree d (currentFrob - xMod)
+              (residual.size + 1) residual 1 newBucket hbucket
+          have hdvd : newBucket.factor ∣ currentFrob - xMod :=
+            distinctDegreePowerLoop_bucket_dvd_diff_of_squareFree_divisor
+              f hsquareFree d (currentFrob - xMod) residual hresidual
+              newBucket hbucket
+          unfold DegreeBucket.matchesFrobeniusDegree
+          rw [hdeg, frobeniusDiffMod, ← hstate, ← hxMod]
+          exact hdvd
+        have happend :
+            ∀ bucket ∈ appendBucket? buckets powerResult.1,
+              bucket.matchesFrobeniusDegree f hmonic :=
+          appendBucket?_matches f hmonic buckets powerResult.1 hprev hnew
+        have hnext_state :
+            FpPoly.powModMonic currentFrob f hmonic p =
+              FpPoly.frobeniusXPowMod f hmonic (d + 1) :=
+          distinctDegreeLoop_frobenius_state_step f hmonic d currentFrob hstate
+        have hpower_residual :
+            powerResult.2 ∣ residual :=
+          distinctDegreePowerLoop_residual_dvd d (currentFrob - xMod)
+            (residual.size + 1) residual
+        have hnext_residual : powerResult.2 ∣ f :=
+          dvd_trans_poly hpower_residual hresidual
+        exact ih (d + 1) (FpPoly.powModMonic currentFrob f hmonic p)
+          powerResult.2 (appendBucket? buckets powerResult.1) hnext_state
+          hnext_residual happend bucket hmem
+
+private theorem distinctDegreeFactor_bucket_matches
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (hsquareFree : DensePoly.gcd f (DensePoly.derivative f) = 1) :
+    ∀ bucket ∈ (distinctDegreeFactor f hmonic).buckets,
+      bucket.matchesFrobeniusDegree f hmonic := by
+  unfold distinctDegreeFactor
+  let xMod := FpPoly.modByMonic f FpPoly.X hmonic
+  let frobX := FpPoly.frobeniusXMod f hmonic
+  exact distinctDegreeLoop_bucket_matches f hmonic xMod hsquareFree
+    (basisSize f + 1) 1 frobX f [] rfl
+    (frobeniusXMod_eq_frobeniusXPowMod_one f hmonic)
+    (DensePoly.dvd_refl_poly f) (by simp)
+
 /--
 The executable distinct-degree factorization preserves the input polynomial as
 the product of recorded degree buckets and the residual factor.
@@ -681,10 +1018,12 @@ corresponding Frobenius-degree divisibility invariant.
 theorem distinctDegreeFactor_bucket_invariants
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    (_hsquareFree : DensePoly.gcd f (DensePoly.derivative f) = 1) :
+    (hsquareFree : DensePoly.gcd f (DensePoly.derivative f) = 1) :
     ∀ bucket ∈ (distinctDegreeFactor f hmonic).buckets,
       0 < bucket.degree ∧ bucket.matchesFrobeniusDegree f hmonic := by
-  sorry
+  intro bucket hmem
+  exact ⟨distinctDegreeFactor_bucket_positive_degrees f hmonic bucket hmem,
+    distinctDegreeFactor_bucket_matches f hmonic hsquareFree bucket hmem⟩
 
 end Berlekamp
 
