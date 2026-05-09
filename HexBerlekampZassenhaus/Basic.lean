@@ -199,6 +199,31 @@ private def berlekampFactorsModP (f : ZPoly) (c : SmallPrimeCandidate) :
   else
     #[]
 
+/--
+Return the sorted degrees of the Berlekamp factors of `f mod p` at an
+explicit small prime supported by the executable prime-selection list.
+
+This testing-facing surface deliberately reuses the production small-prime
+pipeline. It returns `none` if `p` is unsupported or fails the admissibility
+checks for `f`.
+-/
+def modularFactorDegreesAt? (f : ZPoly) (p : Nat) : Option (Array Nat) :=
+  smallPrimeCandidates.foldl
+    (fun found (c : SmallPrimeCandidate) =>
+      match found with
+      | some degrees => some degrees
+      | none =>
+          if c.p == p then
+            letI : ZMod64.Bounds c.p := c.bounds
+            if isGoodPrime f c.p then
+              some ((berlekampFactorsModP f c).map (fun factor =>
+                factor.degree?.getD 0) |>.qsort (· ≤ ·))
+            else
+              none
+          else
+            none)
+    none
+
 private def scoreCandidate (f : ZPoly) (c : SmallPrimeCandidate) : Option PrimeCandidateScore :=
   letI := c.bounds
   if isGoodPrime f c.p then
