@@ -2372,6 +2372,82 @@ theorem degree?_mul_eq_add_degree?
   simp
   omega
 
+/-- A monic finite-field polynomial that divides the unit polynomial is the unit polynomial. -/
+theorem eq_one_of_monic_dvd_one
+    [ZMod64.PrimeModulus p] {g : FpPoly p}
+    (hmonic : DensePoly.Monic g) (hdiv : g ∣ 1) :
+    g = 1 := by
+  rcases hdiv with ⟨u, hu⟩
+  have hone_ne : (1 : FpPoly p) ≠ 0 := by
+    intro h
+    have hcoeff := congrArg (fun f : FpPoly p => f.coeff 0) h
+    change (1 : FpPoly p).coeff 0 = (0 : FpPoly p).coeff 0 at hcoeff
+    rw [coeff_one, DensePoly.coeff_zero] at hcoeff
+    exact zmod64_one_ne_zero hcoeff
+  have hg_ne : g ≠ 0 := by
+    intro hg
+    apply hone_ne
+    rw [hu, hg, zero_mul]
+  have hu_ne : u ≠ 0 := by
+    intro hu_zero
+    apply hone_ne
+    rw [hu, hu_zero, mul_zero]
+  have hdeg_mul := degree?_mul_eq_add_degree? g u hg_ne hu_ne
+  have hdeg_one : (1 : FpPoly p).degree?.getD 0 = 0 := by
+    exact DensePoly.degree?_C_getD (1 : ZMod64 p)
+  have hdeg_eq :
+      (g * u).degree?.getD 0 = (1 : FpPoly p).degree?.getD 0 :=
+    congrArg (fun f : FpPoly p => f.degree?.getD 0) hu.symm
+  have hg_degree_zero : g.degree?.getD 0 = 0 := by
+    rw [hdeg_mul, hdeg_one] at hdeg_eq
+    omega
+  have hg_size_pos : 0 < g.size := by
+    apply Nat.pos_of_ne_zero
+    intro hsize
+    apply hg_ne
+    apply DensePoly.ext_coeff
+    intro i
+    rw [DensePoly.coeff_zero]
+    exact DensePoly.coeff_eq_zero_of_size_le g (by omega)
+  have hg_degree_size : g.degree?.getD 0 = g.size - 1 := by
+    unfold DensePoly.degree?
+    have hsize_ne : g.size ≠ 0 := Nat.pos_iff_ne_zero.mp hg_size_pos
+    simp [hsize_ne]
+  have hg_size_one : g.size = 1 := by
+    omega
+  have hg_coeff_zero : g.coeff 0 = 1 := by
+    have hlead := leadingCoeff_eq_coeff_pred g hg_size_pos
+    rw [hg_size_one] at hlead
+    change DensePoly.leadingCoeff g = g.coeff 0 at hlead
+    unfold DensePoly.Monic at hmonic
+    rw [hlead] at hmonic
+    exact hmonic
+  apply DensePoly.ext_coeff
+  intro n
+  by_cases hn : n = 0
+  · subst n
+    rw [hg_coeff_zero, coeff_one]
+    simp
+  · have hsize_le : g.size ≤ n := by omega
+    rw [DensePoly.coeff_eq_zero_of_size_le g hsize_le, coeff_one]
+    simp [hn]
+    rfl
+
+/--
+Turn the executable gcd into the equality `gcd a b = 1` once the gcd is known
+monic and every common divisor of `a` and `b` divides `1`.
+-/
+theorem gcd_eq_one_of_monic_of_common_dvd_one
+    [ZMod64.PrimeModulus p] (a b : FpPoly p)
+    (hmonic : DensePoly.Monic (DensePoly.gcd a b))
+    (hcommon :
+      ∀ d : FpPoly p, d ∣ a → d ∣ b → d ∣ (1 : FpPoly p)) :
+    DensePoly.gcd a b = 1 := by
+  apply eq_one_of_monic_dvd_one hmonic
+  exact hcommon (DensePoly.gcd a b)
+    (DensePoly.gcd_dvd_left a b)
+    (DensePoly.gcd_dvd_right a b)
+
 /-! ### Monomial multiplication and geometric-series divisibility
 
 These lemmas support the `xPowSubX` divisibility chain in
