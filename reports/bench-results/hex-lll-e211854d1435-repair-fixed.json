@@ -1,0 +1,844 @@
+{
+  "results": [
+    {
+      "verdict_dropped_leading": 0,
+      "verdict": "consistent_with_declared_complexity",
+      "trial_summaries": [
+        {
+          "relative_spread": 0,
+          "param": 32,
+          "ok_count": 1,
+          "min_per_call_nanos": 355924291,
+          "median_per_call_nanos": 355924291,
+          "max_per_call_nanos": 355924291
+        },
+        {
+          "relative_spread": 0,
+          "param": 64,
+          "ok_count": 1,
+          "min_per_call_nanos": 356274125,
+          "median_per_call_nanos": 356274125,
+          "max_per_call_nanos": 356274125
+        },
+        {
+          "relative_spread": 0,
+          "param": 96,
+          "ok_count": 1,
+          "min_per_call_nanos": 394981167,
+          "median_per_call_nanos": 394981167,
+          "max_per_call_nanos": 394981167
+        },
+        {
+          "relative_spread": 0,
+          "param": 128,
+          "ok_count": 1,
+          "min_per_call_nanos": 395213000,
+          "median_per_call_nanos": 395213000,
+          "max_per_call_nanos": 395213000
+        }
+      ],
+      "spawn_floor_nanos": 32153417,
+      "slope": 0.086263,
+      "ratios": [
+        [
+          32,
+          355924291
+        ],
+        [
+          64,
+          356274125
+        ],
+        [
+          96,
+          394981167
+        ],
+        [
+          128,
+          395213000
+        ]
+      ],
+      "points": [
+        {
+          "trial_index": 0,
+          "total_nanos": 355924291,
+          "status": "ok",
+          "result_hash": "0x36c49170fa0bffff",
+          "per_call_nanos": 355924291,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 32,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 356274125,
+          "status": "ok",
+          "result_hash": "0x99c94b5d13d7ffff",
+          "per_call_nanos": 356274125,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 64,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 394981167,
+          "status": "ok",
+          "result_hash": "0xcedee3d8a297ffff",
+          "per_call_nanos": 394981167,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 96,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 395213000,
+          "status": "ok",
+          "result_hash": "0xc738e2c1e435ffff",
+          "per_call_nanos": 395213000,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 128,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        }
+      ],
+      "kind": "parametric",
+      "hashable": true,
+      "function": "Hex.LLLBench.runGramSchmidtCoeffLoopChecksum",
+      "env": {
+        "timestamp_unix_ms": 1778342171869,
+        "timestamp_iso": "2026-05-09T15:56:11Z",
+        "platform_target": "arm64-apple-darwin24.6.0",
+        "os": "macos",
+        "lean_version": "4.30.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.30.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "carica",
+        "git_dirty": true,
+        "git_commit": "e211854d1435fbd3db4739cd6dec5be66da2f857",
+        "exe_name": "hexlll_bench",
+        "cpu_model": null,
+        "cpu_cores": null,
+        "arch": "arm64"
+      },
+      "config": {
+        "verdict_warmup_fraction": 0.2,
+        "target_inner_nanos": 516961645,
+        "slope_tolerance": 0.15,
+        "signal_floor_multiplier": 10,
+        "param_schedule": {
+          "params": [
+            32,
+            64,
+            96,
+            128
+          ],
+          "kind": "custom"
+        },
+        "param_floor": 32,
+        "param_ceiling": 128,
+        "outer_trials": 1,
+        "narrow_range_noise_floor": 1.5,
+        "max_seconds_per_call": 2,
+        "cache_mode": "warm"
+      },
+      "complexity_formula": "gramSchmidtCoeffComplexity n",
+      "c_min": 355924291,
+      "c_max": 395213000,
+      "budget_truncated": false,
+      "advisories": []
+    },
+    {
+      "verdict_dropped_leading": 0,
+      "verdict": "consistent_with_declared_complexity",
+      "trial_summaries": [
+        {
+          "relative_spread": 0,
+          "param": 15,
+          "ok_count": 1,
+          "min_per_call_nanos": 1190628.173828,
+          "median_per_call_nanos": 1190628.173828,
+          "max_per_call_nanos": 1190628.173828
+        },
+        {
+          "relative_spread": 0,
+          "param": 30,
+          "ok_count": 1,
+          "min_per_call_nanos": 21915046.875,
+          "median_per_call_nanos": 21915046.875,
+          "max_per_call_nanos": 21915046.875
+        },
+        {
+          "relative_spread": 0,
+          "param": 45,
+          "ok_count": 1,
+          "min_per_call_nanos": 174564333.25,
+          "median_per_call_nanos": 174564333.25,
+          "max_per_call_nanos": 174564333.25
+        }
+      ],
+      "spawn_floor_nanos": 32208250,
+      "slope": 0.141224,
+      "ratios": [
+        [
+          15,
+          1.469911
+        ],
+        [
+          30,
+          1.690976
+        ],
+        [
+          45,
+          1.702807
+        ]
+      ],
+      "points": [
+        {
+          "trial_index": 0,
+          "total_nanos": 609601625,
+          "status": "ok",
+          "result_hash": "0x949fde47fa1fffb4",
+          "per_call_nanos": 1190628.173828,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 15,
+          "inner_repeats": 512,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 701281500,
+          "status": "ok",
+          "result_hash": "0x4d5c8dba0dde0144",
+          "per_call_nanos": 21915046.875,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 30,
+          "inner_repeats": 32,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 698257333,
+          "status": "ok",
+          "result_hash": "0xdf1a1e91dca9fe8e",
+          "per_call_nanos": 174564333.25,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 45,
+          "inner_repeats": 4,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        }
+      ],
+      "kind": "parametric",
+      "hashable": true,
+      "function": "Hex.LLLBench.runFirstShortVectorHarshCubicChecksum",
+      "env": {
+        "timestamp_unix_ms": 1778342224205,
+        "timestamp_iso": "2026-05-09T15:57:04Z",
+        "platform_target": "arm64-apple-darwin24.6.0",
+        "os": "macos",
+        "lean_version": "4.30.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.30.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "carica",
+        "git_dirty": true,
+        "git_commit": "e211854d1435fbd3db4739cd6dec5be66da2f857",
+        "exe_name": "hexlll_bench",
+        "cpu_model": null,
+        "cpu_cores": null,
+        "arch": "arm64"
+      },
+      "config": {
+        "verdict_warmup_fraction": 0.2,
+        "target_inner_nanos": 1000000000,
+        "slope_tolerance": 0.15,
+        "signal_floor_multiplier": 10,
+        "param_schedule": {
+          "params": [
+            15,
+            30,
+            45
+          ],
+          "kind": "custom"
+        },
+        "param_floor": 15,
+        "param_ceiling": 45,
+        "outer_trials": 1,
+        "narrow_range_noise_floor": 1.5,
+        "max_seconds_per_call": 20,
+        "cache_mode": "warm"
+      },
+      "complexity_formula": "firstShortVectorHarshCubicComplexity n",
+      "c_min": 1.469911,
+      "c_max": 1.702807,
+      "budget_truncated": false,
+      "advisories": []
+    },
+    {
+      "verdict_dropped_leading": 1,
+      "verdict": "consistent_with_declared_complexity",
+      "trial_summaries": [
+        {
+          "relative_spread": 0,
+          "param": 12,
+          "ok_count": 1,
+          "min_per_call_nanos": 1180519.775391,
+          "median_per_call_nanos": 1180519.775391,
+          "max_per_call_nanos": 1180519.775391
+        },
+        {
+          "relative_spread": 0,
+          "param": 18,
+          "ok_count": 1,
+          "min_per_call_nanos": 3898809.40625,
+          "median_per_call_nanos": 3898809.40625,
+          "max_per_call_nanos": 3898809.40625
+        },
+        {
+          "relative_spread": 0,
+          "param": 24,
+          "ok_count": 1,
+          "min_per_call_nanos": 8927854.828125,
+          "median_per_call_nanos": 8927854.828125,
+          "max_per_call_nanos": 8927854.828125
+        },
+        {
+          "relative_spread": 0,
+          "param": 30,
+          "ok_count": 1,
+          "min_per_call_nanos": 18970139.3125,
+          "median_per_call_nanos": 18970139.3125,
+          "max_per_call_nanos": 18970139.3125
+        },
+        {
+          "relative_spread": 0,
+          "param": 36,
+          "ok_count": 1,
+          "min_per_call_nanos": 35208226.5625,
+          "median_per_call_nanos": 35208226.5625,
+          "max_per_call_nanos": 35208226.5625
+        }
+      ],
+      "spawn_floor_nanos": 32602666,
+      "slope": null,
+      "ratios": [
+        [
+          12,
+          11.659455
+        ],
+        [
+          18,
+          10.023625
+        ],
+        [
+          24,
+          8.399667
+        ],
+        [
+          30,
+          7.998062
+        ],
+        [
+          36,
+          7.609493
+        ]
+      ],
+      "points": [
+        {
+          "trial_index": 0,
+          "total_nanos": 604426125,
+          "status": "ok",
+          "result_hash": "0xf4154ace8c6a6816",
+          "per_call_nanos": 1180519.775391,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 12,
+          "inner_repeats": 512,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 998095208,
+          "status": "ok",
+          "result_hash": "0x4c30a9d74ccb8d73",
+          "per_call_nanos": 3898809.40625,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 18,
+          "inner_repeats": 256,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 571382709,
+          "status": "ok",
+          "result_hash": "0xb3c80b06a12a9572",
+          "per_call_nanos": 8927854.828125,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 24,
+          "inner_repeats": 64,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 607044458,
+          "status": "ok",
+          "result_hash": "0x6726b8622630e9bb",
+          "per_call_nanos": 18970139.3125,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 30,
+          "inner_repeats": 32,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 563331625,
+          "status": "ok",
+          "result_hash": "0x1f35a0a52676c52c",
+          "per_call_nanos": 35208226.5625,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 36,
+          "inner_repeats": 16,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        }
+      ],
+      "kind": "parametric",
+      "hashable": true,
+      "function": "Hex.LLLBench.runOfBasisHarshCubicChecksum",
+      "env": {
+        "timestamp_unix_ms": 1778342234816,
+        "timestamp_iso": "2026-05-09T15:57:14Z",
+        "platform_target": "arm64-apple-darwin24.6.0",
+        "os": "macos",
+        "lean_version": "4.30.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.30.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "carica",
+        "git_dirty": true,
+        "git_commit": "e211854d1435fbd3db4739cd6dec5be66da2f857",
+        "exe_name": "hexlll_bench",
+        "cpu_model": null,
+        "cpu_cores": null,
+        "arch": "arm64"
+      },
+      "config": {
+        "verdict_warmup_fraction": 0.2,
+        "target_inner_nanos": 1000000000,
+        "slope_tolerance": 0.15,
+        "signal_floor_multiplier": 10,
+        "param_schedule": {
+          "params": [
+            12,
+            18,
+            24,
+            30,
+            36
+          ],
+          "kind": "custom"
+        },
+        "param_floor": 12,
+        "param_ceiling": 36,
+        "outer_trials": 1,
+        "narrow_range_noise_floor": 1.5,
+        "max_seconds_per_call": 8,
+        "cache_mode": "warm"
+      },
+      "complexity_formula": "ofBasisHarshCubicComplexity n",
+      "c_min": 7.609493,
+      "c_max": 10.023625,
+      "budget_truncated": false,
+      "advisories": []
+    },
+    {
+      "verdict_dropped_leading": 0,
+      "verdict": "consistent_with_declared_complexity",
+      "trial_summaries": [
+        {
+          "relative_spread": 0,
+          "param": 30,
+          "ok_count": 1,
+          "min_per_call_nanos": 5674666.992188,
+          "median_per_call_nanos": 5674666.992188,
+          "max_per_call_nanos": 5674666.992188
+        },
+        {
+          "relative_spread": 0,
+          "param": 60,
+          "ok_count": 1,
+          "min_per_call_nanos": 47780213.5,
+          "median_per_call_nanos": 47780213.5,
+          "max_per_call_nanos": 47780213.5
+        },
+        {
+          "relative_spread": 0,
+          "param": 120,
+          "ok_count": 1,
+          "min_per_call_nanos": 442191521,
+          "median_per_call_nanos": 442191521,
+          "max_per_call_nanos": 442191521
+        },
+        {
+          "relative_spread": 0,
+          "param": 240,
+          "ok_count": 1,
+          "min_per_call_nanos": 6124254583,
+          "median_per_call_nanos": 6124254583,
+          "max_per_call_nanos": 6124254583
+        }
+      ],
+      "spawn_floor_nanos": 36536125,
+      "slope": 0.075244,
+      "ratios": [
+        [
+          30,
+          52.543213
+        ],
+        [
+          60,
+          44.240938
+        ],
+        [
+          120,
+          42.649645
+        ],
+        [
+          240,
+          63.288014
+        ]
+      ],
+      "points": [
+        {
+          "trial_index": 0,
+          "total_nanos": 726357375,
+          "status": "ok",
+          "result_hash": "0xf977db3a0120001a",
+          "per_call_nanos": 5674666.992188,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 30,
+          "inner_repeats": 128,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 764483416,
+          "status": "ok",
+          "result_hash": "0x924b209a08a6000f",
+          "per_call_nanos": 47780213.5,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 60,
+          "inner_repeats": 16,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 884383042,
+          "status": "ok",
+          "result_hash": "0x8582591a300e012b",
+          "per_call_nanos": 442191521,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 120,
+          "inner_repeats": 2,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 6124254583,
+          "status": "ok",
+          "result_hash": "0x63461a4c6427ffd9",
+          "per_call_nanos": 6124254583,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 240,
+          "inner_repeats": 1,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        }
+      ],
+      "kind": "parametric",
+      "hashable": true,
+      "function": "Hex.LLLBench.runFirstShortVectorRandomBoundedChecksum",
+      "env": {
+        "timestamp_unix_ms": 1778342182880,
+        "timestamp_iso": "2026-05-09T15:56:22Z",
+        "platform_target": "arm64-apple-darwin24.6.0",
+        "os": "macos",
+        "lean_version": "4.30.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.30.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "carica",
+        "git_dirty": true,
+        "git_commit": "e211854d1435fbd3db4739cd6dec5be66da2f857",
+        "exe_name": "hexlll_bench",
+        "cpu_model": null,
+        "cpu_cores": null,
+        "arch": "arm64"
+      },
+      "config": {
+        "verdict_warmup_fraction": 0.2,
+        "target_inner_nanos": 1000000000,
+        "slope_tolerance": 0.15,
+        "signal_floor_multiplier": 10,
+        "param_schedule": {
+          "params": [
+            30,
+            60,
+            120,
+            240
+          ],
+          "kind": "custom"
+        },
+        "param_floor": 30,
+        "param_ceiling": 240,
+        "outer_trials": 1,
+        "narrow_range_noise_floor": 1.5,
+        "max_seconds_per_call": 20,
+        "cache_mode": "warm"
+      },
+      "complexity_formula": "firstShortVectorRandomBoundedComplexity n",
+      "c_min": 42.649645,
+      "c_max": 63.288014,
+      "budget_truncated": false,
+      "advisories": []
+    },
+    {
+      "verdict_dropped_leading": 0,
+      "verdict": "consistent_with_declared_complexity",
+      "trial_summaries": [
+        {
+          "relative_spread": 0,
+          "param": 80,
+          "ok_count": 1,
+          "min_per_call_nanos": 185414.510254,
+          "median_per_call_nanos": 185414.510254,
+          "max_per_call_nanos": 185414.510254
+        },
+        {
+          "relative_spread": 0,
+          "param": 96,
+          "ok_count": 1,
+          "min_per_call_nanos": 239547.525879,
+          "median_per_call_nanos": 239547.525879,
+          "max_per_call_nanos": 239547.525879
+        },
+        {
+          "relative_spread": 0,
+          "param": 128,
+          "ok_count": 1,
+          "min_per_call_nanos": 356167.765625,
+          "median_per_call_nanos": 356167.765625,
+          "max_per_call_nanos": 356167.765625
+        },
+        {
+          "relative_spread": 0,
+          "param": 144,
+          "ok_count": 1,
+          "min_per_call_nanos": 427379.191406,
+          "median_per_call_nanos": 427379.191406,
+          "max_per_call_nanos": 427379.191406
+        }
+      ],
+      "spawn_floor_nanos": 32661083,
+      "slope": null,
+      "ratios": [
+        [
+          80,
+          8.935639
+        ],
+        [
+          96,
+          8.119705
+        ],
+        [
+          128,
+          6.900604
+        ],
+        [
+          144,
+          6.577696
+        ]
+      ],
+      "points": [
+        {
+          "trial_index": 0,
+          "total_nanos": 379728917,
+          "status": "ok",
+          "result_hash": "0x5b8902a5618898e9",
+          "per_call_nanos": 185414.510254,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 80,
+          "inner_repeats": 2048,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 490593333,
+          "status": "ok",
+          "result_hash": "0xb3fa39f469a296f3",
+          "per_call_nanos": 239547.525879,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 96,
+          "inner_repeats": 2048,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 309170292,
+          "status": "ok",
+          "result_hash": "0x35dd77d8b4a691cd",
+          "per_call_nanos": 301924.113281,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 112,
+          "inner_repeats": 1024,
+          "error": null,
+          "below_signal_floor": true,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 364715792,
+          "status": "ok",
+          "result_hash": "0xa33596ac1fa56c43",
+          "per_call_nanos": 356167.765625,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 128,
+          "inner_repeats": 1024,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        },
+        {
+          "trial_index": 0,
+          "total_nanos": 437636292,
+          "status": "ok",
+          "result_hash": "0xce503e45a80cba51",
+          "per_call_nanos": 427379.191406,
+          "peak_rss_kb": null,
+          "part_of_verdict": true,
+          "param": 144,
+          "inner_repeats": 1024,
+          "error": null,
+          "below_signal_floor": false,
+          "alloc_bytes": null
+        }
+      ],
+      "kind": "parametric",
+      "hashable": true,
+      "function": "Hex.LLLBench.runSizeReduceChecksum",
+      "env": {
+        "timestamp_unix_ms": 1778342234816,
+        "timestamp_iso": "2026-05-09T15:57:14Z",
+        "platform_target": "arm64-apple-darwin24.6.0",
+        "os": "macos",
+        "lean_version": "4.30.0-rc2",
+        "lean_toolchain": "leanprover/lean4:4.30.0-rc2",
+        "lean_bench_version": "0.1.0",
+        "hostname": "carica",
+        "git_dirty": true,
+        "git_commit": "e211854d1435fbd3db4739cd6dec5be66da2f857",
+        "exe_name": "hexlll_bench",
+        "cpu_model": null,
+        "cpu_cores": null,
+        "arch": "arm64"
+      },
+      "config": {
+        "verdict_warmup_fraction": 0.2,
+        "target_inner_nanos": 500000000,
+        "slope_tolerance": 0.15,
+        "signal_floor_multiplier": 10,
+        "param_schedule": {
+          "params": [
+            80,
+            96,
+            112,
+            128,
+            144
+          ],
+          "kind": "custom"
+        },
+        "param_floor": 80,
+        "param_ceiling": 144,
+        "outer_trials": 1,
+        "narrow_range_noise_floor": 1.5,
+        "max_seconds_per_call": 5,
+        "cache_mode": "warm"
+      },
+      "complexity_formula": "sizeReduceComplexity n",
+      "c_min": 6.577696,
+      "c_max": 8.935639,
+      "budget_truncated": false,
+      "advisories": [
+        "partially_below_signal_floor"
+      ]
+    }
+  ],
+  "lean_bench_version": "0.1.0",
+  "export_schema_version": 1,
+  "env": {
+    "timestamp_unix_ms": 1778342234816,
+    "timestamp_iso": "2026-05-09T15:57:14Z",
+    "platform_target": "arm64-apple-darwin24.6.0",
+    "os": "macos",
+    "lean_version": "4.30.0-rc2",
+    "lean_toolchain": "leanprover/lean4:4.30.0-rc2",
+    "lean_bench_version": "0.1.0",
+    "hostname": "carica",
+    "git_dirty": true,
+    "git_commit": "e211854d1435fbd3db4739cd6dec5be66da2f857",
+    "exe_name": "hexlll_bench",
+    "cpu_model": null,
+    "cpu_cores": null,
+    "arch": "arm64"
+  }
+}
