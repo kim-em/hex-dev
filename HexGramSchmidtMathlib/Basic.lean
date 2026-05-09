@@ -18,6 +18,35 @@ space on `Fin m`. -/
 def rowToEuclidean (row : Vector Rat m) : EuclideanSpace ℝ (Fin m) :=
   WithLp.toLp 2 (fun j : Fin m => (row[j] : ℝ))
 
+@[simp]
+theorem rowToEuclidean_apply (row : Vector Rat m) (j : Fin m) :
+    rowToEuclidean row j = (row[j] : ℝ) := by
+  rfl
+
+@[simp]
+theorem rowToEuclidean_zero :
+    rowToEuclidean (0 : Vector Rat m) = 0 := by
+  ext j
+  simp [rowToEuclidean]
+
+@[simp]
+theorem rowToEuclidean_add (a b : Vector Rat m) :
+    rowToEuclidean (a + b) = rowToEuclidean a + rowToEuclidean b := by
+  ext j
+  simp [rowToEuclidean]
+
+@[simp]
+theorem rowToEuclidean_sub (a b : Vector Rat m) :
+    rowToEuclidean (a - b) = rowToEuclidean a - rowToEuclidean b := by
+  ext j
+  simp [rowToEuclidean]
+
+@[simp]
+theorem rowToEuclidean_smul (c : Rat) (row : Vector Rat m) :
+    rowToEuclidean (c • row) = (c : ℝ) • rowToEuclidean row := by
+  ext j
+  simp [rowToEuclidean]
+
 /-- Cast a rational dense matrix into the real matrix space used by the bridge. -/
 def castRatMatrix (b : Matrix Rat n m) : Matrix ℝ n m :=
   Vector.map (fun row => Vector.map (fun x : Rat => (x : ℝ)) row) b
