@@ -1516,6 +1516,32 @@ theorem coeffs_upper (b : Matrix Rat n m)
     exact (Nat.ne_of_lt hij) (congrArg Fin.val h)
   simp [coeffs, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn, hnot_lt, hne]
 
+/-- Strictly lower-triangular coefficient entries are the rational projection
+coefficient of the input row onto the earlier generated basis row. -/
+theorem coeffs_lower_projection (b : Matrix Rat n m) {i j : Fin n}
+    (hji : j.val < i.val) :
+    GramSchmidt.entry (coeffs b) i j =
+      (if Matrix.dot ((basis b).row j) ((basis b).row j) = 0 then 0
+       else
+        Matrix.dot (b.row i) ((basis b).row j) /
+          Matrix.dot ((basis b).row j) ((basis b).row j)) := by
+  simp [coeffs, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn,
+    GramSchmidt.projectionCoeff, Matrix.row, hji]
+
+/-- Lower coefficient entries, with the dot product oriented to match
+Mathlib's projection coefficient numerator. -/
+theorem coeffs_lower_projection_comm (b : Matrix Rat n m) {i j : Fin n}
+    (hji : j.val < i.val) :
+    GramSchmidt.entry (coeffs b) i j =
+      (if Matrix.dot ((basis b).row j) ((basis b).row j) = 0 then 0
+       else
+        Matrix.dot ((basis b).row j) (b.row i) /
+          Matrix.dot ((basis b).row j) ((basis b).row j)) := by
+  rw [coeffs_lower_projection (b := b) hji]
+  by_cases hnorm : Matrix.dot ((basis b).row j) ((basis b).row j) = 0
+  · simp [hnorm]
+  · simp [hnorm, GramSchmidt.dot_comm_rat]
+
 /-- The Gram-Schmidt basis is invariant under adding a scalar multiple of an
 earlier row to a later row. This is the rational size-reduction update used by
 the integer wrappers. -/
