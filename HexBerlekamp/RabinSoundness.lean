@@ -1105,6 +1105,169 @@ theorem checkIrreducibilityCertificate_imp_irreducible
   rabinTest_imp_irreducible f hmonic
     (checkIrreducibilityCertificate_rabinTest f hmonic cert hcheck)
 
+/-! ### Distinct-degree saturation infrastructure
+
+These lemmas package the Leibniz-rule consequence used by the distinct-degree
+factorization assembly: if `r` is square-free (i.e. `gcd r r' = 1`) and
+`c = gcd r d`, then `r/c` is coprime to `d`. The proof goes through the
+"strong square-free" characterization that any squared divisor of `r` is a
+unit. -/
+
+theorem isUnitPolynomial_one_FpPoly : isUnitPolynomial (1 : FpPoly p) = true := by
+  unfold isUnitPolynomial
+  change (match DensePoly.degree? (DensePoly.C (1 : ZMod64 p)) with
+    | some 0 => true
+    | _ => false) = true
+  have hone_ne_zero : (1 : ZMod64 p) ≠ 0 := by
+    intro h
+    have : (1 : ZMod64 p).toNat = (0 : ZMod64 p).toNat := congrArg ZMod64.toNat h
+    rw [show ((1 : ZMod64 p).toNat) = 1 % p from ZMod64.toNat_one,
+        show ((0 : ZMod64 p).toNat) = 0 from ZMod64.toNat_zero,
+        Nat.mod_eq_of_lt (by
+          have h2 : 2 ≤ p := (ZMod64.PrimeModulus.prime (p := p)).two_le
+          omega : 1 < p)] at this
+    exact absurd this (by omega)
+  have hcoeffs : (DensePoly.C (1 : ZMod64 p)).coeffs = #[(1 : ZMod64 p)] :=
+    DensePoly.coeffs_C_of_ne_zero hone_ne_zero
+  simp [DensePoly.degree?, DensePoly.size, hcoeffs]
+
+private theorem dvd_derivative_self_mul_self (g : FpPoly p) :
+    g ∣ DensePoly.derivative (g * g) := by
+  refine ⟨DensePoly.derivative g + DensePoly.derivative g, ?_⟩
+  -- Use calc-style with `:=` proofs (which check up to defeq) to avoid
+  -- rw's syntactic-match limitations across instance diamond.
+  calc DensePoly.derivative (g * g)
+      = DensePoly.derivative g * g + g * DensePoly.derivative g :=
+        DensePoly.derivative_mul g g
+    _ = g * DensePoly.derivative g + g * DensePoly.derivative g :=
+        congrArg (· + g * DensePoly.derivative g)
+          (DensePoly.mul_comm_poly (DensePoly.derivative g) g)
+    _ = g * (DensePoly.derivative g + DensePoly.derivative g) :=
+        (DensePoly.mul_add_right_poly g
+          (DensePoly.derivative g) (DensePoly.derivative g)).symm
+
+private theorem dvd_derivative_of_squared_dvd
+    {r g : FpPoly p} (hgg : g * g ∣ r) :
+    g ∣ DensePoly.derivative r := by
+  rcases hgg with ⟨h, hr⟩
+  rcases dvd_derivative_self_mul_self g with ⟨k, hk⟩
+  refine ⟨k * h + g * DensePoly.derivative h, ?_⟩
+  calc DensePoly.derivative r
+      = DensePoly.derivative (g * g * h) := by rw [hr]
+    _ = DensePoly.derivative (g * g) * h + (g * g) * DensePoly.derivative h :=
+        DensePoly.derivative_mul (g * g) h
+    _ = (g * k) * h + (g * g) * DensePoly.derivative h := by rw [hk]
+    _ = g * (k * h) + g * (g * DensePoly.derivative h) := by
+        congr 1
+        · exact DensePoly.mul_assoc_poly g k h
+        · exact DensePoly.mul_assoc_poly g g (DensePoly.derivative h)
+    _ = g * (k * h + g * DensePoly.derivative h) :=
+        (DensePoly.mul_add_right_poly g (k * h) (g * DensePoly.derivative h)).symm
+
+theorem isUnitPolynomial_of_squareFree_of_squared_dvd
+    {r g : FpPoly p}
+    (hsf : DensePoly.gcd r (DensePoly.derivative r) = 1)
+    (hgg : g * g ∣ r) :
+    isUnitPolynomial g = true := by
+  have hgr : g ∣ r := by
+    rcases hgg with ⟨b, hb⟩
+    refine ⟨g * b, ?_⟩
+    rw [hb]
+    exact DensePoly.mul_assoc_poly g g b
+  have hgr' : g ∣ DensePoly.derivative r := dvd_derivative_of_squared_dvd hgg
+  have hg_dvd_one : g ∣ (1 : FpPoly p) := by
+    rw [← hsf]
+    exact DensePoly.dvd_gcd g r (DensePoly.derivative r) hgr hgr'
+  exact isUnitPolynomial_of_dvd_isUnitPolynomial hg_dvd_one isUnitPolynomial_one_FpPoly
+
+/-- Helper: `c ∣ r → r = c * (r / c)` for FpPoly. -/
+private theorem fp_eq_mul_div_of_dvd
+    {r c : FpPoly p} (hc_dvd_r : c ∣ r) :
+    r = c * (r / c) := by
+  have hmod : r % c = 0 := DensePoly.mod_eq_zero_of_dvd r c hc_dvd_r
+  have hspec := DensePoly.div_mul_add_mod r c
+  rw [hmod] at hspec
+  -- `hspec : r / c * c + 0 = r`. Need `r = c * (r / c)`.
+  have hcomm : (r / c) * c = c * (r / c) := DensePoly.mul_comm_poly _ _
+  -- `r / c * c + 0 = r / c * c`
+  have hadd : (r / c) * c + 0 = (r / c) * c := DensePoly.add_zero_poly _
+  exact (hspec.symm.trans hadd).trans hcomm
+
+/-- Ring rearrangement: `(g * e) * (g * a) = (g * g) * (e * a)`. -/
+private theorem fp_swap_inner_mul (g e a : FpPoly p) :
+    (g * e) * (g * a) = (g * g) * (e * a) := by
+  calc (g * e) * (g * a)
+      = g * (e * (g * a)) := DensePoly.mul_assoc_poly g e (g * a)
+    _ = g * ((e * g) * a) :=
+        congrArg (g * ·) (DensePoly.mul_assoc_poly e g a).symm
+    _ = g * ((g * e) * a) :=
+        congrArg (fun x => g * (x * a)) (DensePoly.mul_comm_poly e g)
+    _ = g * (g * (e * a)) :=
+        congrArg (g * ·) (DensePoly.mul_assoc_poly g e a)
+    _ = (g * g) * (e * a) := (DensePoly.mul_assoc_poly g g (e * a)).symm
+
+/-- Ring rearrangement: `c * (g * a) = g * (c * a)`. -/
+private theorem fp_swap_left_mul (c g a : FpPoly p) :
+    c * (g * a) = g * (c * a) := by
+  calc c * (g * a)
+      = (c * g) * a := (DensePoly.mul_assoc_poly c g a).symm
+    _ = (g * c) * a :=
+        congrArg (· * a) (DensePoly.mul_comm_poly c g)
+    _ = g * (c * a) := DensePoly.mul_assoc_poly g c a
+
+theorem isUnitPolynomial_gcd_quotient_of_squareFree
+    (r d : FpPoly p)
+    (hsf : DensePoly.gcd r (DensePoly.derivative r) = 1) :
+    isUnitPolynomial (DensePoly.gcd (r / DensePoly.gcd r d) d) = true := by
+  have hc_dvd_r : DensePoly.gcd r d ∣ r := DensePoly.gcd_dvd_left r d
+  have hr_eq : r = DensePoly.gcd r d * (r / DensePoly.gcd r d) :=
+    fp_eq_mul_div_of_dvd hc_dvd_r
+  have hg_dvd_quot :
+      DensePoly.gcd (r / DensePoly.gcd r d) d ∣ r / DensePoly.gcd r d :=
+    DensePoly.gcd_dvd_left _ _
+  have hg_dvd_d :
+      DensePoly.gcd (r / DensePoly.gcd r d) d ∣ d :=
+    DensePoly.gcd_dvd_right _ _
+  -- `g ∣ r` via `g ∣ r/c ∣ r`.
+  have hg_dvd_r :
+      DensePoly.gcd (r / DensePoly.gcd r d) d ∣ r := by
+    rcases hg_dvd_quot with ⟨a, ha⟩
+    refine ⟨DensePoly.gcd r d * a, ?_⟩
+    calc r
+        = DensePoly.gcd r d * (r / DensePoly.gcd r d) := hr_eq
+      _ = DensePoly.gcd r d *
+            (DensePoly.gcd (r / DensePoly.gcd r d) d * a) := by
+          exact congrArg (DensePoly.gcd r d * ·) ha
+      _ = DensePoly.gcd (r / DensePoly.gcd r d) d *
+            (DensePoly.gcd r d * a) :=
+          fp_swap_left_mul _ _ _
+  -- `g ∣ gcd r d = c`.
+  have hg_dvd_c :
+      DensePoly.gcd (r / DensePoly.gcd r d) d ∣ DensePoly.gcd r d :=
+    DensePoly.dvd_gcd _ r d hg_dvd_r hg_dvd_d
+  -- Hence `g * g ∣ r` (since `r = c * (r/c)` and `g ∣ c`, `g ∣ r/c`).
+  have hg2_dvd_r :
+      DensePoly.gcd (r / DensePoly.gcd r d) d *
+        DensePoly.gcd (r / DensePoly.gcd r d) d ∣ r := by
+    rcases hg_dvd_c with ⟨e, he⟩
+    rcases hg_dvd_quot with ⟨a, ha⟩
+    refine ⟨e * a, ?_⟩
+    have hstep2 :
+        DensePoly.gcd r d * (r / DensePoly.gcd r d) =
+        (DensePoly.gcd (r / DensePoly.gcd r d) d * e) *
+          (DensePoly.gcd (r / DensePoly.gcd r d) d * a) := by
+      -- Use congrArg with two-argument function to avoid rw's recursive substitution.
+      have h := congrArg
+        (fun (xy : FpPoly p × FpPoly p) => xy.1 * xy.2)
+        (Prod.ext he ha :
+          (DensePoly.gcd r d, r / DensePoly.gcd r d) =
+            (DensePoly.gcd (r / DensePoly.gcd r d) d * e,
+             DensePoly.gcd (r / DensePoly.gcd r d) d * a))
+      exact h
+    exact hr_eq.trans (hstep2.trans
+      (fp_swap_inner_mul (DensePoly.gcd (r / DensePoly.gcd r d) d) e a))
+  exact isUnitPolynomial_of_squareFree_of_squared_dvd hsf hg2_dvd_r
+
 end
 
 end Berlekamp
