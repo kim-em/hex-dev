@@ -104,7 +104,6 @@ private theorem maxProperDiv_4 : Berlekamp.maximalProperDivisors 4 = [2] := by d
 private theorem maxProperDiv_6 : Berlekamp.maximalProperDivisors 6 = [2, 3] := by decide
 private theorem maxProperDiv_8 : Berlekamp.maximalProperDivisors 8 = [4] := by decide
 private theorem maxProperDiv_12 : Berlekamp.maximalProperDivisors 12 = [4, 6] := by decide
-private theorem maxProperDiv_16 : Berlekamp.maximalProperDivisors 16 = [8] := by decide
 
 /-! ## Certificate-backed benchmark moduli -/
 
@@ -425,6 +424,8 @@ private def bundleForN (n : Nat) : ModulusBundle :=
   | 3 => ⟨m_p7_n3, m_p7_n3_pos, m_p7_n3_irr⟩
   | 4 => ⟨m_p7_n4, m_p7_n4_pos, m_p7_n4_irr⟩
   | 6 => ⟨m_p7_n6, m_p7_n6_pos, m_p7_n6_irr⟩
+  | 8 => ⟨m_p7_n8, m_p7_n8_pos, m_p7_n8_irr⟩
+  | 12 => ⟨m_p7_n12, m_p7_n12_pos, m_p7_n12_irr⟩
   | _ => ⟨m_p7_n2, m_p7_n2_pos, m_p7_n2_irr⟩
 
 /-- Stable checksum for polynomial-valued benchmark results. -/
@@ -578,8 +579,8 @@ setup_benchmark runOfPolyReprChecksum n => n * n
   with prep := prepOfPolyInput
   where {
     paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 6]
+    paramCeiling := 12
+    paramSchedule := .custom #[2, 3, 4, 6, 8, 12]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -594,8 +595,8 @@ setup_benchmark runAddChecksum n => n
   with prep := prepBinaryInput
   where {
     paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 6]
+    paramCeiling := 12
+    paramSchedule := .custom #[2, 3, 4, 6, 8, 12]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -610,8 +611,8 @@ setup_benchmark runMulChecksum n => n * n
   with prep := prepBinaryInput
   where {
     paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 6]
+    paramCeiling := 12
+    paramSchedule := .custom #[2, 3, 4, 6, 8, 12]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -625,8 +626,8 @@ setup_benchmark runNegSubChecksum n => n
   with prep := prepBinaryInput
   where {
     paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 6]
+    paramCeiling := 12
+    paramSchedule := .custom #[2, 3, 4, 6, 8, 12]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -641,8 +642,8 @@ setup_benchmark runPowChecksum n => n * n * Nat.log2 (n + 1)
   with prep := prepPowInput
   where {
     paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 6]
+    paramCeiling := 12
+    paramSchedule := .custom #[2, 3, 4, 6, 8, 12]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -658,8 +659,8 @@ setup_benchmark runInvDivChecksum n => n * n
   with prep := prepBinaryInput
   where {
     paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 6]
+    paramCeiling := 12
+    paramSchedule := .custom #[2, 3, 4, 6, 8, 12]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -674,8 +675,8 @@ setup_benchmark runZPowChecksum n => n * n * Nat.log2 (n + 1)
   with prep := prepZPowInput
   where {
     paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 6]
+    paramCeiling := 12
+    paramSchedule := .custom #[2, 3, 4, 6, 8, 12]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -690,8 +691,8 @@ setup_benchmark runFrobChecksum n => n * n * Nat.log2 7
   with prep := prepUnaryInput
   where {
     paramFloor := 2
-    paramCeiling := 6
-    paramSchedule := .custom #[2, 3, 4, 6]
+    paramCeiling := 12
+    paramSchedule := .custom #[2, 3, 4, 6, 8, 12]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
