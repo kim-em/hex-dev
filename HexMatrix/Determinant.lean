@@ -1082,6 +1082,101 @@ private def lowerFinLast {n : Nat} (x : Fin (n + 1)) (h : x ≠ Fin.last n) :
       exact h (Fin.ext hx)
     omega⟩
 
+private def raiseFinAbove {n : Nat} (i : Fin (n + 1)) (r : Fin n) :
+    Fin (n + 1) :=
+  if h : r.val < i.val then
+    ⟨r.val, by omega⟩
+  else
+    ⟨r.val + 1, by omega⟩
+
+private theorem raiseFinAbove_lt_iff {n : Nat} (i : Fin (n + 1)) (a b : Fin n) :
+    raiseFinAbove i a < raiseFinAbove i b ↔ a < b := by
+  by_cases hai : a.val < i.val
+  · by_cases hbi : b.val < i.val
+    · simp [raiseFinAbove, hai, hbi, Fin.lt_def]
+    · simp [raiseFinAbove, hai, hbi, Fin.lt_def]
+      omega
+  · by_cases hbi : b.val < i.val
+    · simp [raiseFinAbove, hai, hbi, Fin.lt_def]
+      omega
+    · simp [raiseFinAbove, hai, hbi, Fin.lt_def]
+
+private theorem inversionFold_map_raiseFinAbove {n : Nat} (i : Fin (n + 1))
+    (xs : List (Fin n)) (x : Fin n) (acc : Nat) :
+    (xs.map (raiseFinAbove i)).foldl
+        (fun acc y => acc + if y < raiseFinAbove i x then 1 else 0) acc =
+    xs.foldl (fun acc y => acc + if y < x then 1 else 0) acc := by
+  induction xs generalizing acc with
+  | nil => rfl
+  | cons y ys ih =>
+      simp only [List.map_cons, List.foldl_cons]
+      have hhead :
+          (if raiseFinAbove i y < raiseFinAbove i x then 1 else 0) =
+            (if y < x then 1 else 0) := by
+        by_cases hyx : y < x
+        · have hraise : raiseFinAbove i y < raiseFinAbove i x :=
+            (raiseFinAbove_lt_iff i y x).2 hyx
+          simp [hyx, hraise]
+        · have hraise : ¬ raiseFinAbove i y < raiseFinAbove i x := by
+            intro h
+            exact hyx ((raiseFinAbove_lt_iff i y x).1 h)
+          simp [hyx, hraise]
+      rw [hhead]
+      exact ih _
+
+private theorem inversionCount_map_raiseFinAbove {n : Nat}
+    (i : Fin (n + 1)) (xs : List (Fin n)) :
+    inversionCount (xs.map (raiseFinAbove i)) = inversionCount xs := by
+  induction xs with
+  | nil => rfl
+  | cons x xs ih =>
+      simp [inversionCount, ih, inversionFold_map_raiseFinAbove]
+
+private theorem inversionFold_map_raiseFinAbove_self {n : Nat} (i : Fin (n + 1))
+    (xs : List (Fin n)) (acc : Nat) :
+    (xs.map (raiseFinAbove i)).foldl
+        (fun acc y => acc + if i < y then 1 else 0) acc =
+    acc + xs.foldl (fun acc y => acc + if i.val ≤ y.val then 1 else 0) 0 := by
+  induction xs generalizing acc with
+  | nil =>
+      simp
+  | cons x xs ih =>
+      simp only [List.map_cons, List.foldl_cons]
+      have hhead :
+          (if i < raiseFinAbove i x then 1 else 0) =
+            (if i.val ≤ x.val then 1 else 0) := by
+        by_cases hxi : x.val < i.val
+        · have hnle : ¬ i.val ≤ x.val := by omega
+          have hnlt : ¬ i < raiseFinAbove i x := by
+            simp [raiseFinAbove, hxi, Fin.lt_def]
+            omega
+          simp [hnle, hnlt]
+        · have hle : i.val ≤ x.val := Nat.le_of_not_gt hxi
+          have hlt : i < raiseFinAbove i x := by
+            change i.val < (raiseFinAbove i x).val
+            simp [raiseFinAbove, hxi]
+            omega
+          simp [hle, hlt]
+      rw [hhead]
+      rw [ih (acc + if i.val ≤ x.val then 1 else 0)]
+      rw [foldCount_start xs (fun y : Fin n => i.val ≤ y.val)
+        (0 + if i.val ≤ x.val then 1 else 0)]
+      omega
+
+private theorem inversionCount_map_raiseFinAbove_append_self {n : Nat}
+    (i : Fin (n + 1)) (xs : List (Fin n)) :
+    inversionCount ((xs.map (raiseFinAbove i)) ++ [i]) =
+      inversionCount xs +
+        xs.foldl (fun acc y => acc + if i.val ≤ y.val then 1 else 0) 0 := by
+  rw [inversionCount_append]
+  rw [inversionCount_map_raiseFinAbove]
+  have hsingle : inversionCount ([i] : List (Fin (n + 1))) = 0 := by
+    simp [inversionCount]
+  rw [hsingle]
+  rw [crossInversionCount_singleton_right]
+  rw [inversionFold_map_raiseFinAbove_self i xs 0]
+  omega
+
 private theorem lowerFinLast_castSucc {n : Nat} (x : Fin (n + 1))
     (h : x ≠ Fin.last n) :
     (lowerFinLast x h).castSucc = x := by
