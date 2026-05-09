@@ -116,8 +116,16 @@ libraries:
   HexGramSchmidt:
     deps: [HexMatrix]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
+    phase4:
+      input_families:
+        - name: integer-gram-surface
+          description: Deterministic n x (2n + 1) integer bases for Gram determinant vectors and scaled-coefficient surfaces.
+        - name: row-update-helpers
+          description: Deterministic small-entry update fixtures for size reduction and adjacent row swaps.
+        - name: adjacent-swap-scalars
+          description: Adjacent-swap denominator, pivot coefficient, Gram-determinant quotient, and scaled-coefficient numerator helper formulas.
   HexGF2:
     deps: [HexPoly]
     mathlib: false
