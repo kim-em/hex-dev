@@ -2538,6 +2538,12 @@ private theorem inversionCount_inversePermutationValues_mod_two {n : Nat}
       have hih := ih peeled hpeeled_nodup
       omega
 
+private theorem detSign_inversePermutationValues {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
+    detSign (R := R) (inversePermutationValues perm hnodup) = detSign (R := R) perm := by
+  unfold detSign
+  rw [inversionCount_inversePermutationValues_mod_two perm hnodup]
+
 private theorem inversePermutationValues_mem_permutationVectors {n : Nat}
     {perm : Vector (Fin n) n} (hmem : perm ∈ permutationVectors n) :
     inversePermutationValues perm (permutationVectors_nodup hmem) ∈ permutationVectors n := by
