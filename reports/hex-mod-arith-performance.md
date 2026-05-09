@@ -98,28 +98,65 @@ sub-millisecond at these parameters under the child-process harness floor.
 
 ## Profile
 
-Profile coverage is not yet usable for the `HexModArith.phase4.input_families`
-entries in `libraries.yml`:
+Profiles were captured at 1 kHz with `samply 0.13.1` on `carica` (Apple M2
+Ultra, macOS 14.6.1). Each profile used the compiled bench child mode so the
+profiled process was the measured benchmark body, not the parent harness:
 
-- `word-residue-core`
-- `barrett-hot-loop`
-- `montgomery-hot-loop`
+```sh
+samply record --save-only --unstable-presymbolicate --include-args=6 --rate 1000 -o /tmp/hexmodarith-profiles/word-residue-core-child-runMulChecksum-n524288.json.gz -- .lake/build/bin/hexmodarith_bench _child --bench Hex.ModArithBench.runMulChecksum --param 524288 --target-nanos 800000000
+samply record --save-only --unstable-presymbolicate --include-args=6 --rate 1000 -o /tmp/hexmodarith-profiles/barrett-hot-loop-child-runBarrettMulModChain-n1048576.json.gz -- .lake/build/bin/hexmodarith_bench _child --bench Hex.ModArithBench.runBarrettMulModChain --param 1048576 --target-nanos 800000000
+samply record --save-only --unstable-presymbolicate --include-args=6 --rate 1000 -o /tmp/hexmodarith-profiles/montgomery-hot-loop-child-runMontMulChain-n131072.json.gz -- .lake/build/bin/hexmodarith_bench _child --bench Hex.ModArithBench.runMontMulChain --param 131072 --target-nanos 800000000
+```
 
-Local attempts used `samply record --save-only --rate 1000` against
-`.lake/build/bin/hexmodarith_bench` on `carica` and wrote raw artefacts under
-`/tmp/hex-profiles/`:
+The raw profile artefacts are local-only per `SPEC/profiling.md`; the paths
+above record their developer-local locations. The commit recorded by each child
+profile was `f5bfa6409349b42d02ece03f5cb5193c89118bb4` with
+`git_dirty=true` from the unrelated `.claude/CLAUDE.md` worktree change.
 
-- `/tmp/hex-profiles/hex-mod-arith-word-residue-core.json.gz`
-- `/tmp/hex-profiles/hex-mod-arith-barrett-hot-loop.json.gz`
-- `/tmp/hex-profiles/hex-mod-arith-montgomery-hot-loop.json.gz`
+### `word-residue-core`
 
-The generated Firefox Profiler JSON files contained zero sampled stacks for
-the benchmark processes, so no leaf-cost percentages or inclusive-cost ranking
-are claimed in this report snapshot. Issue #2756 tracks producing usable
-profiles and applying the attribution rule.
+- Representative case: `Hex.ModArithBench.runMulChecksum`, `n=524288`,
+  deterministic `prepBinaryInput` samples over modulus `65537`.
+- Non-wait leaf categorisation: allocation/free 54.3%, GMP 15.1%, Lean runtime
+  13.9%, own code 5.1%, other 11.6%. The largest leaves were allocator paths
+  (`_nanov2_free`, `nanov2_malloc`, `_free`, `_malloc_zone_malloc`) under the
+  extern-backed multiplication loop.
+- Inclusive ranking: `Hex.ModArithBench.runMulChecksum_go` 95.4%,
+  the generated loop wrapper 95.4%, and `lean_hex_zmod64_mul` 95.2%.
+- Dominant-cost narrative: the profile lands in the registered
+  `runMulChecksum` target. The inclusive path is the public `ZMod64.mul`
+  extern hot loop; the leaf budget is mostly allocation/GMP support below that
+  call boundary, so no unregistered dominant library function was found.
+
+### `barrett-hot-loop`
+
+- Representative case: `Hex.ModArithBench.runBarrettMulModChain`, `n=1048576`,
+  deterministic `prepUnaryInput` residues over modulus `65537`.
+- Non-wait leaf categorisation: own code 97.4%, Lean runtime 0.9%,
+  allocation/free 0.3%, other 1.4%, GMP 0%.
+- Inclusive ranking: `Hex.ModArithBench.runBarrettMulModChain_go` 97.0%,
+  `Hex.BarrettCtx_mulMod` 91.9%, `Hex.ZMod64_ofNat` 45.3%,
+  `Hex.barrettReduce` 24.7%, and `lean_hex_uint64_mul_hi` 11.1%.
+- Dominant-cost narrative: the cost is attributable to the registered Barrett
+  chain target. The main inclusive entries are the benchmark loop,
+  `BarrettCtx.mulMod`, reduction, and the UInt64 high-multiply extern used by
+  Barrett reduction.
+
+### `montgomery-hot-loop`
+
+- Representative case: `Hex.ModArithBench.runMontMulChain`, `n=131072`,
+  deterministic `prepMontInput` residues over modulus `65537`.
+- Non-wait leaf categorisation: Lean runtime 75.6%, allocation/free 8.8%,
+  own code 5.6%, other 9.9%, GMP 0%.
+- Inclusive ranking: `Hex.redc` 93.2%,
+  `Hex.ModArithBench.runMontMulChain` 87.8%,
+  `lean_hex_uint64_add_carry` 44.0%, and `lean_hex_uint64_mul_full` 32.2%.
+- Dominant-cost narrative: the cost is attributable to the registered
+  Montgomery multiplication-chain target. The dominant inclusive function is
+  the REDC reduction used by `MontCtx.mulMont`; the leaf runtime/allocation
+  samples are below that registered hot path.
+
+The dominant inclusive costs all map to registered `HexModArith.Bench`
+targets. No unattributed dominant cost was observed.
 
 ## Concerns
-
-- #2756: Record representative Phase-4 profile coverage for the three
-  `HexModArith.phase4.input_families` entries and clear the attribution
-  review before re-promoting `HexModArith` to `done_through: 4`.
