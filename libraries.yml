@@ -218,12 +218,22 @@ libraries:
   HexBerlekamp:
     deps: [HexPolyFp, HexMatrix, HexGfqRing]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
+    phase4:
+      input_families:
+        - name: berlekamp-matrix
+          description: Deterministic dense monic F_5 polynomials for Berlekamp Frobenius-matrix construction.
+        - name: rabin-irreducibility
+          description: Deterministic dense monic F_5 polynomials for Rabin irreducibility testing.
+        - name: split-step-factorization
+          description: Fibonacci-style F_5 polynomial pairs exercising quadratic Euclidean gcd work in Berlekamp split candidates.
+        - name: distinct-degree-factorization
+          description: Deterministic dense monic F_5 polynomials with mixed low-degree factor structure for distinct-degree factorization.
   HexHensel:
     deps: [HexPolyFp, HexPolyZ]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
     phase4:
       input_families:
@@ -238,8 +248,12 @@ libraries:
   HexConway:
     deps: [HexBerlekamp]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
+    phase4:
+      input_families:
+        - name: tier1-committed-table
+          description: Imported Luebeck Conway-table entries for supported `(p, n)` pairs, covering finite table lookup, supported-entry recovery, and Tier-1 irreducibility verification.
   HexGfq:
     deps: [HexGfqField, HexConway, HexGF2]
     mathlib: false
