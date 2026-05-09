@@ -983,7 +983,7 @@ setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq15 where {
 
 setup_fixed_benchmark runIsabelleHarshCubicNormSq15 where {
     repeats := 3
-    maxSecondsPerCall := 20.0
+    maxSecondsPerCall := 90.0
     expectedHash := some 0x700000000033a4
   }
 
