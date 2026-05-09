@@ -3742,6 +3742,26 @@ theorem det_rowAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     det (rowAdd M src dst c) = det M := by
   simpa [det] using det_rowAdd_leibniz M src dst c h
 
+/-- The determinant is invariant under matrix transpose. -/
+theorem det_transpose {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) :
+    det M.transpose = det M := by
+  unfold det
+  calc
+    (permutationVectors n).foldl (fun acc perm => acc + detTerm M.transpose perm) 0 =
+      (permutationVectors n).foldl
+        (fun acc perm => acc + detTerm M (inversePermutationVector perm)) 0 := by
+        apply foldl_det_sum_congr
+        intro perm hmem
+        have hnodup := permutationVectors_nodup hmem
+        rw [inversePermutationVector_eq perm hnodup]
+        unfold detTerm
+        rw [detProduct_transpose_inversePermutationValues M perm hnodup]
+        rw [← detSign_inversePermutationValues (R := R) perm hnodup]
+    _ =
+      (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0 := by
+        exact permutationVectors_inverseVector_sum (R := R) (n := n) (fun perm => detTerm M perm)
+
 /-- Adding a multiple of one column to a distinct column preserves determinant. -/
 theorem det_colAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) (c : R) (h : src ≠ dst) :
