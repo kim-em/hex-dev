@@ -2460,6 +2460,75 @@ private theorem yunFactors_repeated_eq_nil
           have hsingle := ih y (w / y) (i + 1) [sf]
           simpa [y, z, hz, sf] using hacc.trans hsingle.symm
 
+private theorem dvd_trans_poly
+    {a b c : FpPoly p} (hab : a ∣ b) (hbc : b ∣ c) :
+    a ∣ c := by
+  rcases hab with ⟨x, hx⟩
+  rcases hbc with ⟨y, hy⟩
+  refine ⟨x * y, ?_⟩
+  calc c
+      = b * y := hy
+    _ = (a * x) * y := by rw [hx]
+    _ = a * (x * y) := DensePoly.mul_assoc_poly a x y
+
+private theorem yunFactors_factor_mem_acc_or_dvd_current
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (multiplicity fuel : Nat)
+    (accRev : List (SquareFreeFactor p)) :
+    ∀ sf ∈ (yunFactors c w multiplicity fuel accRev).1,
+      sf ∈ accRev ∨ sf.factor ∣ c := by
+  induction fuel generalizing c w multiplicity accRev with
+  | zero =>
+      intro sf hsf
+      exact Or.inl hsf
+  | succ fuel ih =>
+      simp only [yunFactors]
+      by_cases hc : isOne c
+      · simp [hc]
+        intro sf hsf
+        exact Or.inl hsf
+      · simp [hc]
+        let y := DensePoly.gcd c w
+        let z := c / y
+        have hy_dvd_c : y ∣ c := by
+          simpa [y] using DensePoly.gcd_dvd_left c w
+        have hz_dvd_c : z ∣ c := by
+          refine ⟨y, ?_⟩
+          simpa [y, z] using (div_gcd_mul_reconstruct c w).symm
+        by_cases hz : isOne z
+        · intro sf hsf
+          have htail :=
+            ih y (w / y) (multiplicity + 1) accRev sf (by
+              simpa [y, z, hz] using hsf)
+          rcases htail with hacc | hsf_y
+          · exact Or.inl hacc
+          · exact Or.inr (dvd_trans_poly hsf_y hy_dvd_c)
+        · let current : SquareFreeFactor p :=
+            { factor := z, multiplicity := multiplicity }
+          intro sf hsf
+          have htail :=
+            ih y (w / y) (multiplicity + 1) (current :: accRev) sf (by
+              simpa [y, z, hz, current] using hsf)
+          rcases htail with hacc | hsf_y
+          · simp only [List.mem_cons] at hacc
+            rcases hacc with hcurrent | haccRev
+            · subst sf
+              exact Or.inr hz_dvd_c
+            · exact Or.inl haccRev
+          · exact Or.inr (dvd_trans_poly hsf_y hy_dvd_c)
+
+private theorem yunFactors_factor_dvd_current
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (multiplicity fuel : Nat) :
+    ∀ sf ∈ (yunFactors c w multiplicity fuel []).1.reverse,
+      sf.factor ∣ c := by
+  intro sf hsf
+  have hsf' : sf ∈ (yunFactors c w multiplicity fuel []).1 :=
+    List.mem_reverse.mp hsf
+  have h := yunFactors_factor_mem_acc_or_dvd_current
+    c w multiplicity fuel [] sf hsf'
+  simpa using h
+
 private theorem squareFreeAuxRev_reverse_append
     (f : FpPoly p) (multiplicity fuel : Nat) (accRev : List (SquareFreeFactor p)) :
     (squareFreeAuxRev f multiplicity fuel accRev).reverse =
