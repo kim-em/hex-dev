@@ -1131,9 +1131,6 @@ theorem isUnitPolynomial_one_FpPoly : isUnitPolynomial (1 : FpPoly p) = true := 
     DensePoly.coeffs_C_of_ne_zero hone_ne_zero
   simp [DensePoly.degree?, DensePoly.size, hcoeffs]
 
-private theorem dvd_self_mul_self (g : FpPoly p) : g ∣ g * g :=
-  ⟨g, rfl⟩
-
 private theorem dvd_derivative_self_mul_self (g : FpPoly p) :
     g ∣ DensePoly.derivative (g * g) := by
   refine ⟨DensePoly.derivative g + DensePoly.derivative g, ?_⟩
