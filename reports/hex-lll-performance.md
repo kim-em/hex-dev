@@ -37,61 +37,62 @@
 
 ## Verdicts
 
-Scientific run at commit `e211854d1435fbd3db4739cd6dec5be66da2f857` on
+Scientific run at commit `885431ee1d594b5f6a480cbcfa8f4389e3e3383d` on
 `carica` (Apple M2 Ultra, macOS 14.6.1), command:
 
 ```sh
-lake exe hexlll_bench run Hex.LLLBench.runSwapStepChecksum Hex.LLLBench.runSizeReduceChecksum Hex.LLLBench.runOfBasisRandomBoundedChecksum Hex.LLLBench.runOfBasisBzRecombinationChecksum Hex.LLLBench.runGramSchmidtCoeffChecksum Hex.LLLBench.runFirstShortVectorHarshCubicChecksum Hex.LLLBench.runPotential Hex.LLLBench.runOfBasisHarshCubicChecksum Hex.LLLBench.runFirstShortVectorRandomBoundedChecksum Hex.LLLBench.runSizeReduceColumnChecksum Hex.LLLBench.runFirstShortVectorBZRecombinationChecksum Hex.LLLBench.runFirstShortVectorHarshCubic15Checksum Hex.LLLBench.runFirstShortVectorRandomBounded30Checksum Hex.LLLBench.runFirstShortVectorBZRecombinationNormSq Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq30 Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq60 Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq120 Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq240 Hex.LLLBench.runFirstShortVectorHarshCubicNormSq15 Hex.LLLBench.runFirstShortVectorHarshCubicNormSq30 Hex.LLLBench.runFirstShortVectorHarshCubicNormSq45 --export-file reports/bench-results/hex-lll-e211854d1435.json
+lake exe hexlll_bench run Hex.LLLBench.runSwapStepChecksum Hex.LLLBench.runSizeReduceChecksum Hex.LLLBench.runOfBasisRandomBoundedChecksum Hex.LLLBench.runOfBasisBzRecombinationChecksum Hex.LLLBench.runGramSchmidtCoeffChecksum Hex.LLLBench.runFirstShortVectorHarshCubicChecksum Hex.LLLBench.runPotential Hex.LLLBench.runOfBasisHarshCubicChecksum Hex.LLLBench.runFirstShortVectorRandomBoundedChecksum Hex.LLLBench.runSizeReduceColumnChecksum Hex.LLLBench.runFirstShortVectorBZRecombinationChecksum Hex.LLLBench.runFirstShortVectorHarshCubic15Checksum Hex.LLLBench.runFirstShortVectorRandomBounded30Checksum Hex.LLLBench.runFirstShortVectorBZRecombinationNormSq Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq30 Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq60 Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq120 Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq240 Hex.LLLBench.runFirstShortVectorHarshCubicNormSq15 Hex.LLLBench.runFirstShortVectorHarshCubicNormSq30 Hex.LLLBench.runFirstShortVectorHarshCubicNormSq45 --export-file reports/bench-results/hex-lll-885431e.json
 ```
 
 The run used deterministic inputs from `HexLLL/Bench.lean`; the
 random-bounded family uses committed seed `8`. The harness recorded
-`e211854-dirty` because this worktree had an unrelated pre-existing
+`885431e-dirty` because this worktree had an unrelated pre-existing
 `.claude/CLAUDE.md` modification. Export artefact:
-`reports/bench-results/hex-lll-e211854d1435.json`.
+`reports/bench-results/hex-lll-885431e.json`.
 
 - `Hex.LLLBench.runSwapStepChecksum`: consistent with declared complexity
-  (parameters `96..160`, final per-call `525.961 us`).
-- `Hex.LLLBench.runSizeReduceChecksum`: inconclusive (parameters `80..144`;
-  one row below signal floor; filed as #2809).
+  (parameters `96..160`, final per-call `521.412 us`).
+- `Hex.LLLBench.runSizeReduceChecksum`: consistent with declared complexity
+  (parameters `128..160`, final per-call `495.222 us`).
 - `Hex.LLLBench.runOfBasisRandomBoundedChecksum`: consistent with declared
-  complexity (parameters `48..144`, final per-call `260.502 ms`).
+  complexity (parameters `48..144`, final verdict-row per-call `190.800 ms`
+  at `n = 120`; the `n = 144` row was below the signal floor and excluded).
 - `Hex.LLLBench.runOfBasisBzRecombinationChecksum`: consistent with declared
-  complexity (parameters `24..72`, final per-call `75.022 ms`).
-- `Hex.LLLBench.runGramSchmidtCoeffChecksum`: inconclusive; zero
-  verdict-eligible rows survived the signal-floor filter (filed as #2809).
-- `Hex.LLLBench.runFirstShortVectorHarshCubicChecksum`: inconclusive; observed
-  scaling looked faster than declared by about `n^0.461` (filed as #2809).
+  complexity (parameters `24..72`, final verdict-row per-call `42.606 ms`
+  at `n = 60`; the `n = 72` row was below the signal floor and excluded).
+- `Hex.LLLBench.runGramSchmidtCoeffChecksum`: consistent with declared
+  complexity (parameters `32..128`, final per-call `1.168 us`).
+- `Hex.LLLBench.runFirstShortVectorHarshCubicChecksum`: consistent with
+  declared complexity (parameters `15..45`, final per-call `178.802 ms`).
 - `Hex.LLLBench.runPotential`: consistent with declared complexity
-  (parameters `192..216`, final per-call `5.487 ms`).
-- `Hex.LLLBench.runOfBasisHarshCubicChecksum`: inconclusive; one
-  verdict-eligible row survived the signal-floor filter (filed as #2809).
-- `Hex.LLLBench.runFirstShortVectorRandomBoundedChecksum`: inconclusive;
-  observed scaling looked faster than declared by about `n^0.652` (filed as
-  #2809).
+  (parameters `192..216`, final per-call `5.552 ms`).
+- `Hex.LLLBench.runOfBasisHarshCubicChecksum`: consistent with declared
+  complexity (parameters `12..36`, final per-call `35.258 ms`).
+- `Hex.LLLBench.runFirstShortVectorRandomBoundedChecksum`: consistent with
+  declared complexity (parameters `30..240`, final per-call `6.060 s`).
 - `Hex.LLLBench.runSizeReduceColumnChecksum`: consistent with declared
-  complexity (parameters `96..160`, final per-call `440.573 us`).
+  complexity (parameters `96..160`, final per-call `439.083 us`).
 - `Hex.LLLBench.runFirstShortVectorBZRecombinationChecksum`: median
-  `7.958 us`, observed hash `0x3c0064007a0036`, expected hash matches.
-- `Hex.LLLBench.runFirstShortVectorHarshCubic15Checksum`: median `1.163 ms`,
+  `6.334 us`, observed hash `0x3c0064007a0036`, expected hash matches.
+- `Hex.LLLBench.runFirstShortVectorHarshCubic15Checksum`: median `1.170 ms`,
   observed hash `0x949fde47fa1fffb4`, expected hash matches.
 - `Hex.LLLBench.runFirstShortVectorRandomBounded30Checksum`: median
-  `5.541 ms`, observed hash `0xf977db3a0120001a`, expected hash matches.
+  `5.602 ms`, observed hash `0xf977db3a0120001a`, expected hash matches.
 - `Hex.LLLBench.runFirstShortVectorBZRecombinationNormSq`: median
-  `5.625 us`, observed hash `0x4e6`, expected hash matches.
+  `5.500 us`, observed hash `0x4e6`, expected hash matches.
 - `Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq30`: median
-  `5.462 ms`, observed hash `0x3a52`, expected hash matches.
+  `5.425 ms`, observed hash `0x3a52`, expected hash matches.
 - `Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq60`: median
-  `67.919 ms`, observed hash `0x98cc`, expected hash matches.
+  `68.697 ms`, observed hash `0x98cc`, expected hash matches.
 - `Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq120`: median
-  `830.601 ms`, observed hash `0x11860`, expected hash matches.
+  `800.045 ms`, observed hash `0x11860`, expected hash matches.
 - `Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq240`: median
-  `11.787 s`, observed hash `0x2454a`, expected hash matches.
-- `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq15`: median `1.232 ms`,
+  `11.737 s`, observed hash `0x2454a`, expected hash matches.
+- `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq15`: median `1.220 ms`,
   observed hash `0x700000000033a4`, expected hash matches.
-- `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq30`: median `24.442 ms`,
+- `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq30`: median `24.046 ms`,
   observed hash `0x37cc`, expected hash matches.
-- `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq45`: median `187.229 ms`,
+- `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq45`: median `186.514 ms`,
   observed hash `0x6d1e`, expected hash matches.
 
 Smoke wiring was also checked with:
@@ -186,8 +187,9 @@ compiled code 43.4% in `lcgStep`/`lcgIterate`, GMP arithmetic 15.7%,
 allocation/free 17.8%, and Lean runtime/refcount 1.4%. Inclusive Hex cost was
 led by `Hex.lll.firstShortVector`, `Hex.LLLBench.runFirstShortVectorChecksum`,
 and `Hex.GramSchmidt.Int.data`. The prominent LCG fixture-generation cost is
-not the mathematical LLL hot path; #2809 tracks the needed benchmark/profile
-shape repair alongside the inconclusive random-bounded verdict.
+part of this public-entry snapshot; the repaired scientific registration now
+declares the committed near-orthogonal fixture path rather than a worst-case
+swap-count model.
 
 ### `harsh-cubic`
 
@@ -210,9 +212,6 @@ integer arithmetic.
 
 ## Concerns
 
-- #2809 — `HexLLL` has inconclusive Phase-4 scientific benchmark verdicts for
-  size reduction, Gram-Schmidt coefficient recovery, harsh-cubic `ofBasis`, and
-  both first-short-vector parametric families.
 - #2810 — the informational `fpLLL via fpylll` comparator ratios are absent
   from this snapshot because `fpylll` is not installed on the local benchmark
   host.
