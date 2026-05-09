@@ -397,6 +397,25 @@ private theorem list_nodup_map_of_injective {α : Type u} {β : Type v}
         exact hnodup.1 (hinj hfy.symm ▸ hy)
       · exact list_nodup_map_of_injective hinj hnodup.2
 
+private theorem list_nodup_map_on {α : Type u} {β : Type v}
+    [DecidableEq β] {f : α → β} :
+    ∀ {xs : List α}, xs.Nodup →
+      (∀ a, a ∈ xs → ∀ b, b ∈ xs → f a = f b → a = b) →
+      (xs.map f).Nodup
+  | [], _hnodup, _hinj => by simp
+  | x :: xs, hnodup, hinj => by
+      simp only [List.nodup_cons] at hnodup
+      simp only [List.map_cons, List.nodup_cons]
+      constructor
+      · intro hmem
+        rcases List.mem_map.mp hmem with ⟨y, hy, hfy⟩
+        have hxy := hinj x (by simp) y (List.mem_cons_of_mem x hy) hfy.symm
+        subst y
+        exact hnodup.1 hy
+      · exact list_nodup_map_on hnodup.2 (by
+          intro a ha b hb hab
+          exact hinj a (List.mem_cons_of_mem x ha) b (List.mem_cons_of_mem x hb) hab)
+
 /-- Factor a scalar out of a determinant-style finite left fold. -/
 private theorem foldl_det_sum_mul_left {R : Type u} [Lean.Grind.CommRing R] {β : Type v}
     (xs : List β) (c : R) (f : β → R) (z : R) :
@@ -2176,6 +2195,69 @@ private theorem inversePermutationValues_involutive {n : Nat}
           (inversePermutationValues_nodup perm hnodup))[x])
       hi.symm
   exact hleft.trans h
+
+private def inversePermutationVector {n : Nat}
+    (perm : Vector (Fin n) n) : Vector (Fin n) n :=
+  if hnodup : perm.toList.Nodup then
+    inversePermutationValues perm hnodup
+  else
+    perm
+
+private theorem inversePermutationVector_eq {n : Nat}
+    (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
+    inversePermutationVector perm = inversePermutationValues perm hnodup := by
+  simp [inversePermutationVector, hnodup]
+
+private theorem inversePermutationVector_mem_permutationVectors {n : Nat}
+    {perm : Vector (Fin n) n} (hmem : perm ∈ permutationVectors n) :
+    inversePermutationVector perm ∈ permutationVectors n := by
+  rw [inversePermutationVector_eq perm (permutationVectors_nodup hmem)]
+  exact inversePermutationValues_mem_permutationVectors hmem
+
+private theorem inversePermutationVector_involutive_of_mem {n : Nat}
+    {perm : Vector (Fin n) n} (hmem : perm ∈ permutationVectors n) :
+    inversePermutationVector (inversePermutationVector perm) = perm := by
+  rw [inversePermutationVector_eq perm (permutationVectors_nodup hmem)]
+  rw [inversePermutationVector_eq
+    (inversePermutationValues perm (permutationVectors_nodup hmem))
+    (inversePermutationValues_nodup perm (permutationVectors_nodup hmem))]
+  exact inversePermutationValues_involutive perm (permutationVectors_nodup hmem)
+
+private theorem inversePermutationVector_map_permutationVectors_perm {n : Nat} :
+    ((permutationVectors n).map inversePermutationVector).Perm
+      (permutationVectors n) := by
+  have hmapNodup :
+      ((permutationVectors n).map inversePermutationVector).Nodup := by
+    exact list_nodup_map_on permutationVectors_nodup_list (by
+      intro a ha b hb hab
+      have h' := congrArg inversePermutationVector hab
+      rw [inversePermutationVector_involutive_of_mem ha] at h'
+      rw [inversePermutationVector_involutive_of_mem hb] at h'
+      exact h')
+  apply (List.perm_ext_iff_of_nodup hmapNodup permutationVectors_nodup_list).mpr
+  intro perm
+  constructor
+  · intro hmem
+    rcases List.mem_map.mp hmem with ⟨pre, hpre, rfl⟩
+    exact inversePermutationVector_mem_permutationVectors hpre
+  · intro hmem
+    exact List.mem_map.mpr ⟨inversePermutationVector perm,
+      inversePermutationVector_mem_permutationVectors hmem,
+      inversePermutationVector_involutive_of_mem hmem⟩
+
+private theorem permutationVectors_inverseVector_sum {R : Type u}
+    [Lean.Grind.CommRing R] {n : Nat} (f : Vector (Fin n) n → R) :
+    (permutationVectors n).foldl
+        (fun acc perm => acc + f (inversePermutationVector perm)) 0 =
+      (permutationVectors n).foldl (fun acc perm => acc + f perm) 0 := by
+  calc
+    (permutationVectors n).foldl
+        (fun acc perm => acc + f (inversePermutationVector perm)) 0 =
+      ((permutationVectors n).map inversePermutationVector).foldl
+        (fun acc perm => acc + f perm) 0 := by
+        simp [List.foldl_map]
+    _ = (permutationVectors n).foldl (fun acc perm => acc + f perm) 0 := by
+        exact foldl_det_sum_perm f inversePermutationVector_map_permutationVectors_perm 0
 
 private theorem finRange_map_perm_get_perm {n : Nat}
     (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :

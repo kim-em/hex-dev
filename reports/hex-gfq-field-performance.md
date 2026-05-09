@@ -13,7 +13,7 @@
 
 ## Verdicts
 
-Scientific run at commit `523de1997cfb` on `carica` (Apple M2 Ultra,
+Scientific run at worktree commit `ed9da7537e96` on `carica` (Apple M2 Ultra,
 macOS 14.6.1), command:
 
 ```sh
@@ -26,60 +26,62 @@ lake exe hexgfqfield_bench run \
     Hex.GFqFieldBench.runInvDivChecksum \
     Hex.GFqFieldBench.runZPowChecksum \
     Hex.GFqFieldBench.runFrobChecksum \
-    --export-file reports/bench-results/hex-gfq-field-523de1997cfb.json
+    --export-file reports/bench-results/hex-gfq-field-n8-schedule.json
 ```
 
 The run used the deterministic certificate-checked benchmark moduli
-from `HexGfqField/Bench.lean`; no random seeds are involved. The
-harness recorded `523de19-dirty` because this worktree had unrelated
-pre-existing `.claude/CLAUDE.md` and untracked `.claude/`
-modifications. Export artefact:
-`reports/bench-results/hex-gfq-field-523de1997cfb.json`, SHA-256
-`d6c0763f2712970c743e84d219291947b589fae31bbcfcf9f760e092404e4ecd`.
+from `HexGfqField/Bench.lean` at
+`paramSchedule := .custom #[2, 3, 4, 6, 8]`; no random seeds are
+involved. The harness recorded `ed9da75-dirty` because this run was
+made from the active worktree containing the degree-8 schedule edit.
+Export artefact:
+`reports/bench-results/hex-gfq-field-n8-schedule.json`, SHA-256
+`21c0755046fc72c9257f60d9307b26099e40ca79470feb2cc151001e9cdb4622`.
 
 - `Hex.GFqFieldBench.runOfPolyReprChecksum`: inconclusive
-  (`cMin=310.536, cMax=1666.879, β=−1.510`, parameters `2..6`,
-  final hash `0xe0324f34c2d7ac63`).
+  (`cMin=310.690, cMax=927.626`, parameters `2,3,4,6,8`,
+  final hash `0x82984efaad14453f`).
 - `Hex.GFqFieldBench.runAddChecksum`: inconclusive
-  (`cMin=90.040, cMax=163.646, β=−0.548`, parameters `2..6`,
-  final hash `0xd1b86c296b959ca6`).
+  (`cMin=79.587, cMax=130.705`, parameters `2,3,4,6,8`,
+  final hash `0x6457f0ed8c5c8ed2`).
 - `Hex.GFqFieldBench.runMulChecksum`: inconclusive
-  (`cMin=153.840, cMax=515.665, β=+0.610`, parameters `2..6`,
-  final hash `0x91489561cd38b03b`).
+  (`cMin=309.126, cMax=515.564`, parameters `2,3,4,6,8`,
+  final hash `0x4084079980228486`).
 - `Hex.GFqFieldBench.runNegSubChecksum`: inconclusive
-  (`cMin=378.664, cMax=603.262, β=−0.387`, parameters `2..6`,
-  final hash `0xd7d268a09652d0ef`).
+  became consistent with declared complexity
+  (`cMin=362.326, cMax=456.305`, parameters `2,3,4,6,8`,
+  final hash `0x98d27f45e383f912`).
 - `Hex.GFqFieldBench.runPowChecksum`: inconclusive
-  (`cMin=478.382, cMax=1337.442, β=+0.566`, parameters `2..6`,
-  final hash `0xf71dec75f2d46f78`).
+  (`cMin=869.988, cMax=1345.984`, parameters `2,3,4,6,8`,
+  final hash `0x9cd46ad6ad57336b`).
 - `Hex.GFqFieldBench.runInvDivChecksum`: inconclusive
-  (`cMin=2418.137, cMax=4086.358, β=−0.460`, parameters `2..6`,
-  final hash `0xbf470feeecf1e1fa`).
-- `Hex.GFqFieldBench.runZPowChecksum`: consistent with declared
-  complexity (`cMin=1624.496, cMax=1974.890, β=−0.121`,
-  parameters `2..6`, final hash `0x78750cf6719eef1`).
-- `Hex.GFqFieldBench.runFrobChecksum`: inconclusive
-  (`cMin=340.670, cMax=1338.808, β=+0.839`, parameters `2..6`,
-  final hash `0xf71dec75f2d46f78`).
+  (`cMin=2151.899, cMax=3766.119`, parameters `2,3,4,6,8`,
+  final hash `0x1415615b9aa4bc17`).
+- `Hex.GFqFieldBench.runZPowChecksum`: inconclusive
+  (`cMin=1201.015, cMax=2033.140`, parameters `2,3,4,6,8`,
+  final hash `0xab98d3409e67fa7f`).
+- `Hex.GFqFieldBench.runFrobChecksum`: consistent with declared
+  complexity (`cMin=889.439, cMax=1316.159`,
+  parameters `2,3,4,6,8`, final hash `0x351dd7aebb5accca`).
 
-The seven inconclusive verdicts are calibration findings rather than
-implementation findings: the bench file ships
-`paramSchedule := .custom #[2, 3, 4, 6]` because that is the union
-of the four certificate-checked irreducible moduli over `F_7` it
-carries (`m_p7_n2`, `m_p7_n3`, `m_p7_n4`, `m_p7_n6`), and the
-per-call times at the bottom rungs (sub-microsecond for
-`runAddChecksum` / `runMulChecksum` at `n = 2`) sit close enough to
-the warm-cache constant-factor floor that the log-log slope fit does
-not converge across only four rungs of a ~3× parameter range.
-`runZPowChecksum` is the one consistent verdict because its per-call
-time at `n = 2` is already 7 µs and rises to 117 µs by `n = 6`,
-giving the fit enough dynamic range to settle. Issue #2784 tracks
-the schedule widening (new degree-`8`/`12`/etc. certificate-checked
-moduli plus matching `paramSchedule`) required before
-`HexGfqField.done_through` can return to `4`. The cost-model
-declarations themselves are unchanged: `runZPowChecksum`'s
-`consistent` verdict at the same schedule confirms the model is
-correct and only the rung spacing is off.
+The degree-8 ladder adds one CI-feasible, certificate-checked
+irreducible monic modulus over `F_7`, `m_p7_n8 := x^8 + x + 3`,
+and wires `bundleForN 8` so every schedule rung maps to a real
+degree-`n` field. This is enough to resolve two verdicts:
+`runNegSubChecksum` and `runFrobChecksum` now return `consistent
+with declared complexity`.
+
+The remaining six inconclusive verdicts keep `HexGfqField` below
+Phase 4 completion. The dominant shape remains calibration rather
+than a model change: the bottom rungs are still close to the
+sub-microsecond or low-microsecond warm-cache floor for several
+targets, while adding degree 12 or 16 certificate checks directly to
+`HexGfqField/Bench.lean` was shown by PR #2790 to be too expensive
+for GitHub-hosted CI. The cost-model declarations therefore remain
+unchanged, `libraries.yml: HexGfqField.done_through` remains `3`,
+and the open concern is a follow-on calibration path that widens the
+scientific evidence without adding CI-heavy certificate elaboration
+to the normal benchmark module.
 
 Smoke wiring was also checked at the same commit with:
 
@@ -222,10 +224,11 @@ remainder chain over `F_7`), matching the `n²` cost model.
 
 ## Concerns
 
-- #2784: Widen the `HexGfqField/Bench.lean` parameter schedule beyond
-  `{2, 3, 4, 6}` so the seven currently-inconclusive scientific
-  verdicts (`runOfPolyReprChecksum`, `runAddChecksum`, `runMulChecksum`,
-  `runNegSubChecksum`, `runPowChecksum`, `runInvDivChecksum`,
-  `runFrobChecksum`) return `consistent with declared complexity`.
-  `HexGfqField.done_through` stays at `3` until the schedule is
-  widened and `§Concerns` becomes empty.
+- #2801: The CI-feasible degree-8 ladder resolves
+  `runNegSubChecksum` and `runFrobChecksum`, but six scientific
+  verdicts remain inconclusive (`runOfPolyReprChecksum`,
+  `runAddChecksum`, `runMulChecksum`, `runPowChecksum`,
+  `runInvDivChecksum`, `runZPowChecksum`). `HexGfqField.done_through`
+  stays at `3` until a follow-on calibration path widens the evidence
+  without putting degree-12/16 certificate checks on the normal CI
+  build path.
