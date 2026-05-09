@@ -121,10 +121,6 @@ namespace IsEchelonForm
 variable [Mul R] [Add R] [OfNat R 0] [OfNat R 1]
 variable {M : Matrix R n m} {D : RowEchelonData R n m}
 
-/-- View a pivot-row index as a row index of the ambient matrix. -/
-def pivotRow (E : IsEchelonForm M D) (i : Fin D.rank) : Fin n :=
-  ⟨i.val, Nat.lt_of_lt_of_le i.isLt E.rank_le_n⟩
-
 /-- Coefficients for expressing `v` in the row span, if the echelon rows solve it. -/
 def spanCoeffs [Lean.Grind.Field R] [DecidableEq R] (E : IsEchelonForm M D)
     (v : Vector R m) : Option (Vector R n) :=
@@ -148,19 +144,20 @@ def spanContains [Lean.Grind.Field R] [DecidableEq R] (E : IsEchelonForm M D)
 
 /-- `spanCoeffs` returns coefficients whose row combination equals `v`. -/
 theorem spanCoeffs_sound [Lean.Grind.Field R] [DecidableEq R]
-    (E : IsEchelonForm M D) (v : Vector R m) (c : Vector R n) :
+    (E : IsEchelonForm M D) (hpiv : E.HasNonzeroPivots) (v : Vector R m)
+    (c : Vector R n) :
     E.spanCoeffs v = some c → rowCombination M c = v := by
   sorry
 
 /-- Any vector in the row span produces some coefficients via `spanCoeffs`. -/
 theorem spanCoeffs_complete [Lean.Grind.Field R] [DecidableEq R]
-    (E : IsEchelonForm M D) (v : Vector R m) :
+    (E : IsEchelonForm M D) (hpiv : E.HasNonzeroPivots) (v : Vector R m) :
     (∃ c : Vector R n, rowCombination M c = v) → (E.spanCoeffs v).isSome := by
   sorry
 
 /-- `spanContains` is exactly row-span membership. -/
 theorem spanContains_iff [Lean.Grind.Field R] [DecidableEq R]
-    (E : IsEchelonForm M D) (v : Vector R m) :
+    (E : IsEchelonForm M D) (hpiv : E.HasNonzeroPivots) (v : Vector R m) :
     E.spanContains v = true ↔ ∃ c : Vector R n, rowCombination M c = v := by
   constructor
   · intro h
@@ -169,14 +166,25 @@ theorem spanContains_iff [Lean.Grind.Field R] [DecidableEq R]
     | none =>
         simp [hCoeffs] at h
     | some c =>
-        exact ⟨c, E.spanCoeffs_sound v c hCoeffs⟩
+        exact ⟨c, E.spanCoeffs_sound hpiv v c hCoeffs⟩
   · intro h
     unfold spanContains
-    simpa using E.spanCoeffs_complete v h
+    simpa using E.spanCoeffs_complete hpiv v h
 
 end IsEchelonForm
 
 namespace IsRREF
+
+/-- RREF data has nonzero pivots because every pivot is normalized to one. -/
+theorem hasNonzeroPivots [Lean.Grind.Field R]
+    {M : Matrix R n m} {D : RowEchelonData R n m} (E : IsRREF M D) :
+    E.toIsEchelonForm.HasNonzeroPivots := by
+  intro i
+  have hpivot :
+      D.echelon[E.toIsEchelonForm.pivotRow i][D.pivotCols.get i] = 1 := by
+    simpa [IsEchelonForm.pivotRow] using E.pivot_one i
+  intro hzero
+  exact (show (0 : R) ≠ 1 from Lean.Grind.Field.zero_ne_one) (hzero.symm.trans hpivot)
 
 variable [Mul R] [Add R] [OfNat R 0] [OfNat R 1]
 variable {M : Matrix R n m} {D : RowEchelonData R n m}
