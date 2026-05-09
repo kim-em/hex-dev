@@ -3964,6 +3964,75 @@ theorem det_colReplace_smul {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
         exact foldl_det_sum_mul_left_zero
           (permutationVectors n) c (detTerm (colReplace M dst v))
 
+private theorem det_colReplace_zero {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (dst : Fin n) :
+    det (colReplace M dst (fun _ => (0 : R))) = 0 := by
+  have h := det_colReplace_smul M dst (0 : R) (fun _ => (1 : R))
+  have hcol : (fun r : Fin n => (0 : R) * (1 : R)) = fun _ => (0 : R) := by
+    funext r
+    grind
+  rw [hcol] at h
+  grind
+
+private theorem det_colReplace_sum_list {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (dst : Fin n) {β : Type v} (xs : List β)
+    (coeff : β → R) (source : β → Fin n → R) :
+    det (colReplace M dst
+        (fun r => xs.foldl (fun acc x => acc + coeff x * source x r) 0)) =
+      xs.foldl
+        (fun acc x => acc + coeff x * det (colReplace M dst (source x))) 0 := by
+  induction xs with
+  | nil =>
+      exact det_colReplace_zero M dst
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      let tail : Fin n → R :=
+        fun r => xs.foldl (fun acc x => acc + coeff x * source x r) 0
+      have hcol :
+          (fun r : Fin n =>
+              xs.foldl (fun acc x => acc + coeff x * source x r)
+                (0 + coeff x * source x r)) =
+            fun r => coeff x * source x r + tail r := by
+        funext r
+        rw [foldl_det_sum_start]
+        simp [tail]
+        grind
+      calc
+        det (colReplace M dst
+            (fun r => xs.foldl (fun acc x => acc + coeff x * source x r)
+              (0 + coeff x * source x r))) =
+          det (colReplace M dst (fun r => coeff x * source x r + tail r)) := by
+            rw [hcol]
+        _ =
+          det (colReplace M dst (fun r => coeff x * source x r)) +
+            det (colReplace M dst tail) := by
+            exact det_colReplace_add M dst (fun r => coeff x * source x r) tail
+        _ =
+          coeff x * det (colReplace M dst (source x)) +
+            xs.foldl (fun acc x => acc + coeff x * det (colReplace M dst (source x))) 0 := by
+            rw [det_colReplace_smul]
+            simp [tail]
+            rw [ih]
+        _ =
+          xs.foldl (fun acc x => acc + coeff x * det (colReplace M dst (source x)))
+            (0 + coeff x * det (colReplace M dst (source x))) := by
+            have hstart :=
+              (foldl_det_sum_start (R := R) xs
+                (fun x => coeff x * det (colReplace M dst (source x)))
+                (0 + coeff x * det (colReplace M dst (source x)))).symm
+            calc
+              coeff x * det (colReplace M dst (source x)) +
+                  xs.foldl
+                    (fun acc x => acc + coeff x * det (colReplace M dst (source x))) 0 =
+                (0 + coeff x * det (colReplace M dst (source x))) +
+                  xs.foldl
+                    (fun acc x => acc + coeff x * det (colReplace M dst (source x))) 0 := by
+                  grind
+              _ =
+                xs.foldl
+                  (fun acc x => acc + coeff x * det (colReplace M dst (source x)))
+                  (0 + coeff x * det (colReplace M dst (source x))) := hstart
+
 /-- A determinant with two equal rows is zero. -/
 theorem det_eq_zero_of_row_eq {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) (h : src ≠ dst)
