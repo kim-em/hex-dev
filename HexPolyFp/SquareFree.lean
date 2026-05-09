@@ -2296,6 +2296,39 @@ private def squareFreeFactorCoprimeRel :
     SquareFreeFactor p → SquareFreeFactor p → Prop :=
   fun a b => DensePoly.gcd a.factor b.factor = 1
 
+private inductive yunFactorsPairwiseReachable :
+    FpPoly p → FpPoly p → Nat → Prop
+  | derivativeSplit (hp : Hex.Nat.Prime p) (f : FpPoly p) (fuel : Nat)
+      (hdf : (DensePoly.derivative f).isZero ≠ true) :
+      yunFactorsPairwiseReachable
+        (f / DensePoly.gcd f (DensePoly.derivative f))
+        (DensePoly.gcd f (DensePoly.derivative f))
+        fuel
+  | step (c w : FpPoly p) (fuel : Nat) :
+      yunFactorsPairwiseReachable c w (fuel + 1) →
+      yunFactorsPairwiseReachable
+        (DensePoly.gcd c w)
+        (w / DensePoly.gcd c w)
+        fuel
+
+private theorem yunFactorsPairwiseReachable_of_derivative_split
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (fuel : Nat)
+    (hdf : (DensePoly.derivative f).isZero ≠ true) :
+    yunFactorsPairwiseReachable
+      (f / DensePoly.gcd f (DensePoly.derivative f))
+      (DensePoly.gcd f (DensePoly.derivative f))
+      fuel :=
+  yunFactorsPairwiseReachable.derivativeSplit hp f fuel hdf
+
+private theorem yunFactorsPairwiseReachable_step
+    (c w : FpPoly p) (fuel : Nat)
+    (hreachable : yunFactorsPairwiseReachable c w (fuel + 1)) :
+    yunFactorsPairwiseReachable
+      (DensePoly.gcd c w)
+      (w / DensePoly.gcd c w)
+      fuel :=
+  yunFactorsPairwiseReachable.step c w fuel hreachable
+
 private theorem pairwise_append_of_cross
     {α : Type} (r : α → α → Prop) {xs ys : List α} :
     xs.Pairwise r →
