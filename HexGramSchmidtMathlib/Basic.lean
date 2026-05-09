@@ -34,6 +34,32 @@ def ratRowFamily (b : Matrix Rat n m) : Fin n → EuclideanSpace ℝ (Fin m) :=
 def intRowFamily (b : Matrix Int n m) : Fin n → EuclideanSpace ℝ (Fin m) :=
   ratRowFamily (castIntMatrix b)
 
+private theorem cast_foldl_dotProduct_rat
+    (xs : List (Fin m)) (a b : Vector Rat m) (acc : Rat) :
+    ((xs.foldl (fun acc i => acc + a[i] * b[i]) acc : Rat) : ℝ) =
+      (acc : ℝ) + (xs.map fun i => ((a[i] : Rat) : ℝ) * ((b[i] : Rat) : ℝ)).sum := by
+  induction xs generalizing acc with
+  | nil =>
+      simp
+  | cons i xs ih =>
+      simp only [List.foldl_cons, List.map_cons, List.sum_cons]
+      rw [ih (acc := acc + a[i] * b[i])]
+      simp only [Rat.cast_add, Rat.cast_mul]
+      ring
+
+/-- Mathlib's real inner product on converted rows agrees with the executable
+rational dense dot product after casting to `ℝ`. -/
+theorem rowToEuclidean_inner (a b : Vector Rat m) :
+    inner ℝ (rowToEuclidean a) (rowToEuclidean b) =
+      ((Matrix.dot (u := a) (v := b) : Rat) : ℝ) := by
+  rw [PiLp.inner_apply]
+  simp [rowToEuclidean, PiLp.toLp_apply, real_inner_eq_re_inner,
+    RCLike.inner_apply, mul_comm]
+  rw [Matrix.dot, Hex.Vector.dotProduct, cast_foldl_dotProduct_rat]
+  simp only [Rat.cast_zero, zero_add]
+  rw [← List.sum_toFinset _ (List.nodup_finRange m)]
+  simp [List.toFinset_finRange]
+
 /-- The rational Gram-Schmidt basis agrees rowwise with Mathlib's real-valued
 `gramSchmidt` after coercing coefficients into `ℝ`. -/
 theorem rat_basis_row_eq_gramSchmidt (b : Matrix Rat n m) (i : Fin n) :
