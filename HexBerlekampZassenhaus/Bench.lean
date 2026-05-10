@@ -16,6 +16,9 @@ Smoke registrations:
 * `runFactorSlowChecksum`: exhaustive backstop on the same inputs.
 * HO-2 adversarial polynomial constants plus singleton `factor` / `factorFast`
   targets for the smoke-tractable recombination surfaces.
+* `runAdvSwinnertonDyerSD3ModularSplitChecksum`: the pinned SD3 modular split
+  profile, keeping the worst-case recombination shape visible without running
+  the currently smoke-intractable full integer factorization in `verify`.
 
 Degree/height registrations:
 
@@ -124,10 +127,19 @@ def checksumFactorization (φ : Factorization) : UInt64 :=
   let factors := φ.factors.foldl (fun acc factor => mixHash acc (checksumFactor factor)) 0
   mixHash (hash φ.scalar) factors
 
+/-- Stable checksum for modular factor-degree profiles. -/
+def checksumNatArray (xs : Array Nat) : UInt64 :=
+  xs.foldl (fun acc x => mixHash acc (hash x)) 0
+
 /-- Stable checksum for optional fast-path factorization results. -/
 def checksumOptionFactorization : Option Factorization → UInt64
   | none => 0
   | some φ => mixHash 1 (checksumFactorization φ)
+
+/-- Stable checksum for optional modular factor-degree profiles. -/
+def checksumOptionNatArray : Option (Array Nat) → UInt64
+  | none => 0
+  | some xs => mixHash 1 (checksumNatArray xs)
 
 /-- Benchmark target: public fast-with-slow-fallback factorization. -/
 def runFactorChecksum (f : ZPoly) : UInt64 :=
@@ -171,11 +183,23 @@ def runFactorAdvPhi15Checksum (f : ZPoly) : UInt64 :=
 def runFactorFastAdvPhi15Checksum (f : ZPoly) : UInt64 :=
   runFactorFastChecksum f
 
+/--
+Singleton benchmark target: pinned modular split profile for Swinnerton-Dyer
+`SD_3` at `p = 71`, where the degree-eight integer polynomial splits into
+eight local linear factors.
+-/
+@[noinline]
+def runAdvSwinnertonDyerSD3ModularSplitChecksum (f : ZPoly) : UInt64 :=
+  checksumOptionNatArray (modularFactorDegreesAt? f 71)
+
 def prepAdvX4Plus1 (_ : Nat) : ZPoly :=
   advX4Plus1
 
 def prepAdvQuadSqrt2Sqrt3 (_ : Nat) : ZPoly :=
   advQuadSqrt2Sqrt3
+
+def prepAdvSwinnertonDyerSD3 (_ : Nat) : ZPoly :=
+  advSwinnertonDyerSD3
 
 def prepAdvPhi15 (_ : Nat) : ZPoly :=
   advPhi15
@@ -389,6 +413,26 @@ setup_benchmark runFactorFastAdvPhi15Checksum n => n + 1
     paramCeiling := 0
     paramSchedule := .custom #[0]
     maxSecondsPerCall := 6.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
+/-
+Singleton HO-2 adversarial shape: Swinnerton-Dyer `SD_3`. Full `factor` and
+`factorFast` on this degree-eight worst-case recombination input currently
+exceed the smoke `verify` budget, so this reduced registration pins the same
+canonical polynomial at the same conformance prime and records its eight-linear
+modular split profile. The constant model is intentional: the schedule fixes
+one canonical shape while keeping SD3 visible to `list` and `verify` until a
+scientific-only full factorization registration is affordable.
+-/
+setup_benchmark runAdvSwinnertonDyerSD3ModularSplitChecksum n => n + 1
+  with prep := prepAdvSwinnertonDyerSD3
+  where {
+    paramFloor := 0
+    paramCeiling := 0
+    paramSchedule := .custom #[0]
+    maxSecondsPerCall := 4.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
   }
