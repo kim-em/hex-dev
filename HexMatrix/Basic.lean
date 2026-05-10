@@ -332,6 +332,28 @@ theorem mul_assoc_vec [Lean.Grind.Ring R]
           intro l _hl
           grind
 
+/-- Transpose reverses matrix multiplication over a commutative coefficient type. -/
+theorem transpose_mul_of_mul_comm [Lean.Grind.Ring R]
+    (hmul_comm : ∀ a b : R, a * b = b * a)
+    (A : Matrix R n m) (B : Matrix R m k) :
+    Matrix.transpose (A * B) = Matrix.transpose B * Matrix.transpose A := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let ii : Fin k := ⟨i, hi⟩
+  let jj : Fin n := ⟨j, hj⟩
+  unfold transpose col
+  simp only [Vector.getElem_ofFn]
+  change (A * B)[jj][ii] = (Matrix.transpose B * Matrix.transpose A)[ii][jj]
+  simp [HMul.hMul, mul, dot, row, col, transpose, Hex.Vector.dotProduct, ofFn]
+  change
+    (List.finRange m).foldl (fun acc l => acc + A[jj][l] * B[l][ii]) 0 =
+      (List.finRange m).foldl (fun acc l => acc + B[l][ii] * A[jj][l]) 0
+  apply foldl_sum_congr
+  intro l _hl
+  rw [hmul_comm]
+
 /-- Left-multiplication by the identity matrix leaves a vector unchanged. -/
 theorem one_mulVec [Lean.Grind.Ring R] (v : Vector R n) :
     (1 : Matrix R n n) * v = v := by

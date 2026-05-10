@@ -118,6 +118,22 @@ end FieldAlgorithms
 
 namespace IsEchelonForm
 
+private theorem rowCombination_transform_transpose [Lean.Grind.CommRing R]
+    {M : Matrix R n m} {D : RowEchelonData R n m}
+    (E : IsEchelonForm M D) (e : Vector R n) :
+    rowCombination M (Matrix.transpose D.transform * e) =
+      rowCombination D.echelon e := by
+  unfold rowCombination
+  calc
+    Matrix.transpose M * (Matrix.transpose D.transform * e) =
+        (Matrix.transpose M * Matrix.transpose D.transform) * e := by
+          exact (Matrix.mul_assoc_vec (A := Matrix.transpose M)
+            (B := Matrix.transpose D.transform) (v := e)).symm
+    _ = Matrix.transpose (D.transform * M) * e := by
+          rw [← Matrix.transpose_mul_of_mul_comm Lean.Grind.CommSemiring.mul_comm]
+    _ = Matrix.transpose D.echelon * e := by
+          rw [E.transform_mul]
+
 variable [Mul R] [Add R] [OfNat R 0] [OfNat R 1]
 variable {M : Matrix R n m} {D : RowEchelonData R n m}
 
