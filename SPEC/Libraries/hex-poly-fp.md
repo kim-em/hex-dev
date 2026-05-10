@@ -21,7 +21,9 @@ Specialized polynomial arithmetic over `Z/pZ` using `UInt64` coefficients.
 **Key properties:**
 - Frobenius endomorphism: `frob(a + b) = frob(a) + frob(b)`
 - Square-free decomposition: output factors are pairwise coprime, their
-  product equals the input, each factor is square-free
+  product equals the input, and each factor is square-free, stated for the
+  raw executable gcd by requiring the monic normalization of
+  `gcd factor (derivative factor)` to be `1`
 
 **Lazy reduction for small p.** When `1 < p < 2^32`, the product
 `a * b` of two `ZMod64 p` values fits in a `UInt64` without overflow
