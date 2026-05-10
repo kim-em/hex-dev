@@ -4765,6 +4765,15 @@ private def vectorLengthCast {α : Type u} {n k : Nat} (h : n = k)
   match v with
   | ⟨xs, hx⟩ => ⟨xs, by simpa [h] using hx⟩
 
+private theorem columnTupleVectors_foldl_vectorLengthCast
+    {α : Type u} {m k l : Nat} (h : k = l)
+    (f : α → Vector (Fin m) l → α) (init : α) :
+    (columnTupleVectors l m).foldl f init =
+      (columnTupleVectors k m).foldl
+        (fun acc pref => f acc (vectorLengthCast h pref)) init := by
+  subst h
+  rfl
+
 private theorem assembleColumnsSuffix_insertAt_last
     {n m : Nat} (chosen : List (Fin m)) (c : Fin m)
     (pref : Vector (Fin m) (n - (c :: chosen).length))
@@ -5032,6 +5041,31 @@ private theorem columnTupleVectors_suffix_rhs_step
         source chosen c pref hkcons hcast)
   rw [hcoeff, hdet]
   grind
+
+private theorem columnTupleVectors_suffix_rhs_step_natural
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (chosen : List (Fin m))
+    (hk : chosen.length < n) :
+    (columnTupleVectors (n - chosen.length) m).foldl
+        (fun acc pref => acc +
+          partialColumnTupleCoeff coeff chosen pref *
+            det (columnTupleMatrix source
+              (columnTupleVectorFn
+                (assembleColumnsSuffix chosen pref (by omega))))) 0 =
+      (List.finRange m).foldl
+        (fun acc c => acc +
+          coeff[(⟨n - chosen.length - 1, by omega⟩ : Fin n)][c] *
+            (columnTupleVectors (n - (c :: chosen).length) m).foldl
+              (fun acc pref => acc +
+                partialColumnTupleCoeff coeff (c :: chosen) pref *
+                  det (columnTupleMatrix source
+                    (columnTupleVectorFn
+                      (assembleColumnsSuffix (c :: chosen) pref (by
+                        have hcons : (c :: chosen).length = chosen.length + 1 := rfl
+                        omega))))) 0) 0 := by
+  rw [columnTupleVectors_foldl_vectorLengthCast
+    (by omega : (n - (chosen.length + 1)) + 1 = n - chosen.length)]
+  exact columnTupleVectors_suffix_rhs_step source coeff chosen hk
 
 end Matrix
 end Hex
