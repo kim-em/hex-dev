@@ -290,6 +290,14 @@ libraries:
     mathlib: true
     done_through: 3
     status: active
+    phase4:
+      input_families:
+        - name: matrix-representation-conversion
+          description: Deterministic dense integer matrices transported through `matrixEquiv`, `matrixEquiv.symm`, and paired round-trip checksums.
+        - name: row-operation-bridge-checks
+          description: Deterministic square integer matrices exercising executable row swap, scale, and add operations against the corresponding Mathlib-side row-operation constructions.
+        - name: determinant-bridge-checks
+          description: Small deterministic integer matrices exercising the Hex and Mathlib Leibniz determinant bridge paths on the shared fixture schedule.
   HexModArithMathlib:
     deps: [HexModArith]
     mathlib: true
