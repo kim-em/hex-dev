@@ -9,9 +9,9 @@ Covered operations:
 - `toPolynomial` and `ofPolynomial` conversion functions
 - `equiv` and `equiv.symm` ring-equivalence bridge functions
 - gcd and xgcd correspondence surfaces (`toPolynomial_gcd_associated`,
-  `equiv_gcd_associated`, `toPolynomial_xgcd_left`, `toPolynomial_xgcd_right`,
+  `equiv_gcd_associated`, `toPolynomial_xgcd_bezout_raw`,
   `toPolynomial_xgcd_gcd_associated`,
-  `toPolynomial_xgcd_bezout`)
+  `toPolynomial_xgcd_bezout_associated`)
 Covered properties:
 - converting executable dense polynomials to Mathlib polynomials and back preserves
   committed normalized inputs
@@ -20,9 +20,9 @@ Covered properties:
 - `equiv` and `equiv.symm` agree with the concrete conversion functions on committed inputs
 - executable raw gcd/xgcd gcd results transport to associated polynomials against
   Mathlib's normalized Euclidean-domain gcd on committed `Rat` inputs
-- executable xgcd coefficients transport to Mathlib's Bezout coefficient surfaces on
+- executable xgcd coefficients transport to raw Bezout identities on
   committed `Rat` inputs
-- transported xgcd coefficients satisfy the Bezout identity against Mathlib gcd
+- transported xgcd Bezout combinations are associated to Mathlib gcd
 Covered edge cases:
 - zero polynomials
 - degree-zero constant polynomials
@@ -131,36 +131,6 @@ example :
   toPolynomial_gcd_associated gcdAdversarialLeft gcdAdversarialRight
 
 example :
-    toPolynomial (Hex.DensePoly.xgcd gcdTypicalLeft gcdTypicalRight).left =
-      EuclideanDomain.gcdA (toPolynomial gcdTypicalLeft) (toPolynomial gcdTypicalRight) :=
-  toPolynomial_xgcd_left gcdTypicalLeft gcdTypicalRight
-
-example :
-    toPolynomial (Hex.DensePoly.xgcd gcdZeroLeft gcdZeroRight).left =
-      EuclideanDomain.gcdA (toPolynomial gcdZeroLeft) (toPolynomial gcdZeroRight) :=
-  toPolynomial_xgcd_left gcdZeroLeft gcdZeroRight
-
-example :
-    toPolynomial (Hex.DensePoly.xgcd gcdAdversarialLeft gcdAdversarialRight).left =
-      EuclideanDomain.gcdA (toPolynomial gcdAdversarialLeft) (toPolynomial gcdAdversarialRight) :=
-  toPolynomial_xgcd_left gcdAdversarialLeft gcdAdversarialRight
-
-example :
-    toPolynomial (Hex.DensePoly.xgcd gcdTypicalLeft gcdTypicalRight).right =
-      EuclideanDomain.gcdB (toPolynomial gcdTypicalLeft) (toPolynomial gcdTypicalRight) :=
-  toPolynomial_xgcd_right gcdTypicalLeft gcdTypicalRight
-
-example :
-    toPolynomial (Hex.DensePoly.xgcd gcdZeroLeft gcdZeroRight).right =
-      EuclideanDomain.gcdB (toPolynomial gcdZeroLeft) (toPolynomial gcdZeroRight) :=
-  toPolynomial_xgcd_right gcdZeroLeft gcdZeroRight
-
-example :
-    toPolynomial (Hex.DensePoly.xgcd gcdAdversarialLeft gcdAdversarialRight).right =
-      EuclideanDomain.gcdB (toPolynomial gcdAdversarialLeft) (toPolynomial gcdAdversarialRight) :=
-  toPolynomial_xgcd_right gcdAdversarialLeft gcdAdversarialRight
-
-example :
     Associated (toPolynomial (Hex.DensePoly.xgcd gcdTypicalLeft gcdTypicalRight).gcd)
       (EuclideanDomain.gcd (toPolynomial gcdTypicalLeft) (toPolynomial gcdTypicalRight)) :=
   toPolynomial_xgcd_gcd_associated gcdTypicalLeft gcdTypicalRight
@@ -180,24 +150,51 @@ example :
         toPolynomial gcdTypicalLeft +
       toPolynomial (Hex.DensePoly.xgcd gcdTypicalLeft gcdTypicalRight).right *
         toPolynomial gcdTypicalRight =
-      EuclideanDomain.gcd (toPolynomial gcdTypicalLeft) (toPolynomial gcdTypicalRight) :=
-  toPolynomial_xgcd_bezout gcdTypicalLeft gcdTypicalRight
+      toPolynomial (Hex.DensePoly.xgcd gcdTypicalLeft gcdTypicalRight).gcd :=
+  toPolynomial_xgcd_bezout_raw gcdTypicalLeft gcdTypicalRight
 
 example :
     toPolynomial (Hex.DensePoly.xgcd gcdZeroLeft gcdZeroRight).left *
         toPolynomial gcdZeroLeft +
       toPolynomial (Hex.DensePoly.xgcd gcdZeroLeft gcdZeroRight).right *
         toPolynomial gcdZeroRight =
-      EuclideanDomain.gcd (toPolynomial gcdZeroLeft) (toPolynomial gcdZeroRight) :=
-  toPolynomial_xgcd_bezout gcdZeroLeft gcdZeroRight
+      toPolynomial (Hex.DensePoly.xgcd gcdZeroLeft gcdZeroRight).gcd :=
+  toPolynomial_xgcd_bezout_raw gcdZeroLeft gcdZeroRight
 
 example :
     toPolynomial (Hex.DensePoly.xgcd gcdAdversarialLeft gcdAdversarialRight).left *
         toPolynomial gcdAdversarialLeft +
       toPolynomial (Hex.DensePoly.xgcd gcdAdversarialLeft gcdAdversarialRight).right *
         toPolynomial gcdAdversarialRight =
-      EuclideanDomain.gcd (toPolynomial gcdAdversarialLeft) (toPolynomial gcdAdversarialRight) :=
-  toPolynomial_xgcd_bezout gcdAdversarialLeft gcdAdversarialRight
+      toPolynomial (Hex.DensePoly.xgcd gcdAdversarialLeft gcdAdversarialRight).gcd :=
+  toPolynomial_xgcd_bezout_raw gcdAdversarialLeft gcdAdversarialRight
+
+example :
+    Associated
+      (toPolynomial (Hex.DensePoly.xgcd gcdTypicalLeft gcdTypicalRight).left *
+          toPolynomial gcdTypicalLeft +
+        toPolynomial (Hex.DensePoly.xgcd gcdTypicalLeft gcdTypicalRight).right *
+          toPolynomial gcdTypicalRight)
+      (EuclideanDomain.gcd (toPolynomial gcdTypicalLeft) (toPolynomial gcdTypicalRight)) :=
+  toPolynomial_xgcd_bezout_associated gcdTypicalLeft gcdTypicalRight
+
+example :
+    Associated
+      (toPolynomial (Hex.DensePoly.xgcd gcdZeroLeft gcdZeroRight).left *
+          toPolynomial gcdZeroLeft +
+        toPolynomial (Hex.DensePoly.xgcd gcdZeroLeft gcdZeroRight).right *
+          toPolynomial gcdZeroRight)
+      (EuclideanDomain.gcd (toPolynomial gcdZeroLeft) (toPolynomial gcdZeroRight)) :=
+  toPolynomial_xgcd_bezout_associated gcdZeroLeft gcdZeroRight
+
+example :
+    Associated
+      (toPolynomial (Hex.DensePoly.xgcd gcdAdversarialLeft gcdAdversarialRight).left *
+          toPolynomial gcdAdversarialLeft +
+        toPolynomial (Hex.DensePoly.xgcd gcdAdversarialLeft gcdAdversarialRight).right *
+          toPolynomial gcdAdversarialRight)
+      (EuclideanDomain.gcd (toPolynomial gcdAdversarialLeft) (toPolynomial gcdAdversarialRight)) :=
+  toPolynomial_xgcd_bezout_associated gcdAdversarialLeft gcdAdversarialRight
 
 example :
     Associated (equiv (Hex.DensePoly.gcd gcdTypicalLeft gcdTypicalRight))

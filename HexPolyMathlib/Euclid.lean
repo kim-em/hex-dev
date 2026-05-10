@@ -65,18 +65,6 @@ theorem toPolynomial_gcd_associated [Field R] [DecidableEq R] [Hex.DensePoly.Gcd
     · exact dense_dvd_of_toPolynomial_dvd (EuclideanDomain.gcd_dvd_left (toPolynomial p) (toPolynomial q))
     · exact dense_dvd_of_toPolynomial_dvd (EuclideanDomain.gcd_dvd_right (toPolynomial p) (toPolynomial q))
 
-/-- The left Bezout coefficient from `Hex.DensePoly.xgcd` transports to Mathlib's `gcdA`. -/
-theorem toPolynomial_xgcd_left [Field R] [DecidableEq R] (p q : Hex.DensePoly R) :
-    toPolynomial (Hex.DensePoly.xgcd p q).left =
-      EuclideanDomain.gcdA (toPolynomial p) (toPolynomial q) := by
-  sorry
-
-/-- The right Bezout coefficient from `Hex.DensePoly.xgcd` transports to Mathlib's `gcdB`. -/
-theorem toPolynomial_xgcd_right [Field R] [DecidableEq R] (p q : Hex.DensePoly R) :
-    toPolynomial (Hex.DensePoly.xgcd p q).right =
-      EuclideanDomain.gcdB (toPolynomial p) (toPolynomial q) := by
-  sorry
-
 /--
 The raw gcd component of `Hex.DensePoly.xgcd` is associated to Mathlib's
 normalized polynomial gcd. This is the xgcd-facing form of
@@ -89,13 +77,35 @@ theorem toPolynomial_xgcd_gcd_associated [Field R] [DecidableEq R] [Hex.DensePol
   simpa [Hex.DensePoly.gcd] using toPolynomial_gcd_associated (R := R) p q
 
 /--
-The executable Bezout identity transports to Mathlib's extended-gcd coefficients under the bridge.
+The executable Bezout identity transports across the dense-polynomial bridge.
+The right hand side is the executable raw gcd component, not Mathlib's
+normalized polynomial gcd.
 -/
-theorem toPolynomial_xgcd_bezout [Field R] [DecidableEq R] (p q : Hex.DensePoly R) :
+theorem toPolynomial_xgcd_bezout_raw [Field R] [DecidableEq R] [Hex.DensePoly.GcdLaws R]
+    (p q : Hex.DensePoly R) :
     toPolynomial (Hex.DensePoly.xgcd p q).left * toPolynomial p +
       toPolynomial (Hex.DensePoly.xgcd p q).right * toPolynomial q =
-        EuclideanDomain.gcd (toPolynomial p) (toPolynomial q) := by
-  sorry
+        toPolynomial (Hex.DensePoly.xgcd p q).gcd := by
+  let r := Hex.DensePoly.xgcd p q
+  have h : r.left * p + r.right * q = r.gcd := by
+    simpa [r] using Hex.DensePoly.xgcd_bezout p q
+  have ht := congrArg (fun x => toPolynomial x) h
+  simpa [r] using ht
+
+/--
+The transported executable Bezout combination is associated to Mathlib's
+normalized polynomial gcd. This is the normalization-aware xgcd correspondence
+surface: executable coefficients certify the raw gcd, whose transport is
+associated to Mathlib's canonical gcd.
+-/
+theorem toPolynomial_xgcd_bezout_associated [Field R] [DecidableEq R] [Hex.DensePoly.GcdLaws R]
+    (p q : Hex.DensePoly R) :
+    Associated
+      (toPolynomial (Hex.DensePoly.xgcd p q).left * toPolynomial p +
+        toPolynomial (Hex.DensePoly.xgcd p q).right * toPolynomial q)
+      (EuclideanDomain.gcd (toPolynomial p) (toPolynomial q)) := by
+  rw [toPolynomial_xgcd_bezout_raw (R := R) p q]
+  exact toPolynomial_xgcd_gcd_associated (R := R) p q
 
 /--
 The ring equivalence sends the executable raw gcd to a polynomial associated to
@@ -107,15 +117,25 @@ theorem equiv_gcd_associated [Field R] [DecidableEq R] [Hex.DensePoly.GcdLaws R]
     Associated (equiv (Hex.DensePoly.gcd p q)) (EuclideanDomain.gcd (equiv p) (equiv q)) := by
   simpa using toPolynomial_gcd_associated (R := R) p q
 
-/-- The ring equivalence sends the executable left Bezout coefficient to Mathlib's `gcdA`. -/
-theorem equiv_xgcd_left [Field R] [DecidableEq R] (p q : Hex.DensePoly R) :
-    equiv (Hex.DensePoly.xgcd p q).left = EuclideanDomain.gcdA (equiv p) (equiv q) := by
-  simpa using toPolynomial_xgcd_left (R := R) p q
+/-- The ring equivalence transports the executable raw Bezout identity. -/
+theorem equiv_xgcd_bezout_raw [Field R] [DecidableEq R] [Hex.DensePoly.GcdLaws R]
+    (p q : Hex.DensePoly R) :
+    equiv (Hex.DensePoly.xgcd p q).left * equiv p +
+      equiv (Hex.DensePoly.xgcd p q).right * equiv q =
+        equiv (Hex.DensePoly.xgcd p q).gcd := by
+  simpa using toPolynomial_xgcd_bezout_raw (R := R) p q
 
-/-- The ring equivalence sends the executable right Bezout coefficient to Mathlib's `gcdB`. -/
-theorem equiv_xgcd_right [Field R] [DecidableEq R] (p q : Hex.DensePoly R) :
-    equiv (Hex.DensePoly.xgcd p q).right = EuclideanDomain.gcdB (equiv p) (equiv q) := by
-  simpa using toPolynomial_xgcd_right (R := R) p q
+/--
+The ring-equivalence form of the normalization-aware xgcd correspondence:
+the executable Bezout combination is associated to Mathlib's normalized gcd.
+-/
+theorem equiv_xgcd_bezout_associated [Field R] [DecidableEq R] [Hex.DensePoly.GcdLaws R]
+    (p q : Hex.DensePoly R) :
+    Associated
+      (equiv (Hex.DensePoly.xgcd p q).left * equiv p +
+        equiv (Hex.DensePoly.xgcd p q).right * equiv q)
+      (EuclideanDomain.gcd (equiv p) (equiv q)) := by
+  simpa using toPolynomial_xgcd_bezout_associated (R := R) p q
 
 end
 
