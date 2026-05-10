@@ -138,6 +138,235 @@ instance [Mul R] [Add R] [OfNat R 0] : HMul (Matrix R n m) (Vector R m) (Vector 
 instance [Mul R] [Add R] [OfNat R 0] : HMul (Matrix R n m) (Matrix R m k) (Matrix R n k) where
   hMul := mul
 
+private theorem foldl_add_eq_acc_ring {R : Type u} [Lean.Grind.Ring R]
+    {α : Type v} (xs : List α) (f : α → R) (acc : R)
+    (hf : ∀ x ∈ xs, f x = 0) :
+    xs.foldl (fun acc x => acc + f x) acc = acc := by
+  induction xs generalizing acc with
+  | nil =>
+      simp only [List.foldl_nil]
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hx : f x = 0 := hf x (by simp)
+      have hxs : ∀ y ∈ xs, f y = 0 := fun y hy => hf y (List.mem_cons_of_mem _ hy)
+      rw [hx]
+      have hac : acc + (0 : R) = acc := by grind
+      rw [hac]
+      exact ih acc hxs
+
+private theorem foldl_sum_start {R : Type u} [Lean.Grind.Ring R]
+    {α : Type v} (xs : List α) (f : α → R) (acc : R) :
+    xs.foldl (fun acc x => acc + f x) acc =
+      acc + xs.foldl (fun acc x => acc + f x) 0 := by
+  induction xs generalizing acc with
+  | nil =>
+      simp
+      grind
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [ih (acc := acc + f x)]
+      rw [ih (acc := (0 : R) + f x)]
+      grind
+
+private theorem foldl_sum_congr {R : Type u} [Add R]
+    {α : Type v} (xs : List α) (f g : α → R) (acc : R)
+    (h : ∀ x ∈ xs, f x = g x) :
+    xs.foldl (fun acc x => acc + f x) acc =
+      xs.foldl (fun acc x => acc + g x) acc := by
+  induction xs generalizing acc with
+  | nil =>
+      rfl
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hx : f x = g x := h x (by simp)
+      have hxs : ∀ y ∈ xs, f y = g y := fun y hy => h y (List.mem_cons_of_mem _ hy)
+      rw [hx]
+      exact ih (acc + g x) hxs
+
+private theorem foldl_sum_add {R : Type u} [Lean.Grind.Ring R]
+    {α : Type v} (xs : List α) (f g : α → R) :
+    xs.foldl (fun acc x => acc + (f x + g x)) 0 =
+      xs.foldl (fun acc x => acc + f x) 0 +
+        xs.foldl (fun acc x => acc + g x) 0 := by
+  induction xs with
+  | nil =>
+      simp
+      grind
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [foldl_sum_start xs (fun x => f x + g x) (0 + (f x + g x))]
+      rw [foldl_sum_start xs f (0 + f x)]
+      rw [foldl_sum_start xs g (0 + g x)]
+      rw [ih]
+      grind
+
+private theorem foldl_sum_comm {R : Type u} [Lean.Grind.Ring R]
+    {α : Type v} {β : Type w} (xs : List α) (ys : List β) (g : α → β → R) :
+    xs.foldl (fun acc x => acc + ys.foldl (fun acc y => acc + g x y) 0) 0 =
+      ys.foldl (fun acc y => acc + xs.foldl (fun acc x => acc + g x y) 0) 0 := by
+  induction xs with
+  | nil =>
+      symm
+      apply foldl_add_eq_acc_ring
+      intro y _hy
+      rfl
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [foldl_sum_start xs (fun x => ys.foldl (fun acc y => acc + g x y) 0)
+        (0 + ys.foldl (fun acc y => acc + g x y) 0)]
+      rw [ih]
+      have hinner :
+          ys.foldl
+              (fun acc y =>
+                acc + xs.foldl (fun acc x' => acc + g x' y) (0 + g x y)) 0 =
+            ys.foldl
+              (fun acc y =>
+                acc + (g x y + xs.foldl (fun acc x' => acc + g x' y) 0)) 0 := by
+        apply foldl_sum_congr
+        intro y _hy
+        rw [foldl_sum_start xs (fun x' => g x' y) (0 + g x y)]
+        grind
+      rw [hinner]
+      rw [foldl_sum_add]
+      grind
+
+private theorem foldl_sum_mul_right {R : Type u} [Lean.Grind.Ring R]
+    {α : Type v} (xs : List α) (f : α → R) (c acc : R) :
+    xs.foldl (fun acc x => acc + f x) acc * c =
+      xs.foldl (fun acc x => acc + f x * c) (acc * c) := by
+  induction xs generalizing acc with
+  | nil =>
+      simp
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [ih (acc := acc + f x)]
+      have hdist : (acc + f x) * c = acc * c + f x * c := by grind
+      rw [hdist]
+
+private theorem foldl_sum_mul_left {R : Type u} [Lean.Grind.Ring R]
+    {α : Type v} (xs : List α) (f : α → R) (c acc : R) :
+    c * xs.foldl (fun acc x => acc + f x) acc =
+      xs.foldl (fun acc x => acc + c * f x) (c * acc) := by
+  induction xs generalizing acc with
+  | nil =>
+      simp
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [ih (acc := acc + f x)]
+      have hdist : c * (acc + f x) = c * acc + c * f x := by grind
+      rw [hdist]
+
+private theorem foldl_indicator_mul_unique {R : Type u} [Lean.Grind.Ring R]
+    {n : Nat} (xs : List (Fin n)) (i : Fin n) (f : Fin n → R)
+    (hi : i ∈ xs) (hnodup : xs.Nodup) (acc : R) :
+    xs.foldl (fun acc l => acc + (if i = l then (1 : R) else 0) * f l) acc =
+      acc + f i := by
+  induction xs generalizing acc with
+  | nil =>
+      exact absurd hi List.not_mem_nil
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rcases List.mem_cons.mp hi with hieq | hitail
+      · subst i
+        have hxs_zero :
+            ∀ y ∈ xs, (if x = y then (1 : R) else 0) * f y = 0 := by
+          intro y hy
+          have hxy : x ≠ y := fun heq => (List.nodup_cons.mp hnodup).1 (heq ▸ hy)
+          rw [if_neg hxy]
+          grind
+        rw [if_pos rfl]
+        rw [foldl_add_eq_acc_ring xs _ _ hxs_zero]
+        grind
+      · have hxi : i ≠ x := by
+          intro heq
+          rw [← heq] at hnodup
+          exact (List.nodup_cons.mp hnodup).1 hitail
+        rw [if_neg hxi]
+        have hzero : (0 : R) * f x = 0 := by grind
+        rw [hzero]
+        have hac : acc + (0 : R) = acc := by grind
+        rw [hac]
+        exact ih hitail (List.nodup_cons.mp hnodup).2 acc
+
+/-- Matrix multiplication associates with matrix-vector multiplication. -/
+theorem mul_assoc_vec [Lean.Grind.Ring R]
+    (A : Matrix R n m) (B : Matrix R m k) (v : Vector R k) :
+    (A * B) * v = A * (B * v) := by
+  apply Vector.ext
+  intro i hi
+  let ii : Fin n := ⟨i, hi⟩
+  simp [HMul.hMul, mulVec, mul, dot, row, col, Hex.Vector.dotProduct, ofFn]
+  change
+    (List.finRange k).foldl
+        (fun acc l =>
+          acc + (List.finRange m).foldl (fun acc j => acc + A[ii][j] * B[j][l]) 0 *
+            v[l]) 0 =
+      (List.finRange m).foldl
+        (fun acc j =>
+          acc + A[ii][j] *
+            (List.finRange k).foldl (fun acc l => acc + B[j][l] * v[l]) 0) 0
+  calc
+    (List.finRange k).foldl
+        (fun acc l =>
+          acc + (List.finRange m).foldl (fun acc j => acc + A[ii][j] * B[j][l]) 0 *
+            v[l]) 0 =
+        (List.finRange k).foldl
+          (fun acc l =>
+            acc + (List.finRange m).foldl
+              (fun acc j => acc + A[ii][j] * B[j][l] * v[l]) 0) 0 := by
+          apply foldl_sum_congr
+          intro l _hl
+          rw [foldl_sum_mul_right]
+          grind
+    _ = (List.finRange m).foldl
+        (fun acc j =>
+          acc + A[ii][j] *
+            (List.finRange k).foldl (fun acc l => acc + B[j][l] * v[l]) 0) 0 := by
+          rw [foldl_sum_comm]
+          apply foldl_sum_congr
+          intro j _hj
+          rw [foldl_sum_mul_left]
+          have hzero : A[ii][j] * (0 : R) = 0 := by grind
+          rw [hzero]
+          apply foldl_sum_congr
+          intro l _hl
+          grind
+
+/-- Left-multiplication by the identity matrix leaves a vector unchanged. -/
+theorem one_mulVec [Lean.Grind.Ring R] (v : Vector R n) :
+    (1 : Matrix R n n) * v = v := by
+  apply Vector.ext
+  intro i hi
+  let ii : Fin n := ⟨i, hi⟩
+  simp [HMul.hMul, mulVec, dot, row, Hex.Vector.dotProduct]
+  change (List.finRange n).foldl
+      (fun acc j => acc + (1 : Matrix R n n)[ii][j] * v[j]) 0 =
+    v[ii]
+  calc
+    (List.finRange n).foldl
+        (fun acc j => acc + (1 : Matrix R n n)[ii][j] * v[j]) 0 =
+        (List.finRange n).foldl
+          (fun acc j => acc + (if ii = j then (1 : R) else 0) * v[j]) 0 := by
+          apply foldl_sum_congr
+          intro j _hj
+          simp [show (1 : Matrix R n n) = Matrix.identity from rfl, Matrix.identity, ofFn]
+    _ = v[ii] := by
+          rw [foldl_indicator_mul_unique (List.finRange n) ii (fun j => v[j])
+            (List.mem_finRange _) (List.nodup_finRange n) 0]
+          grind
+
+/-- Matrix-vector multiplication sends the zero vector to the zero vector. -/
+theorem mulVec_zero [Lean.Grind.Ring R] (A : Matrix R n m) :
+    A * (0 : Vector R m) = 0 := by
+  apply Vector.ext
+  intro i hi
+  let ii : Fin n := ⟨i, hi⟩
+  simp [HMul.hMul, mulVec, dot, row, Hex.Vector.dotProduct]
+  change (List.finRange m).foldl (fun acc j => acc + A[ii][j] * (0 : R)) 0 = 0
+  apply foldl_add_eq_acc_ring
+  intro j _hj
+  grind
+
 /-- Squared Euclidean norm of a vector. -/
 def normSq [Mul R] [Add R] [OfNat R 0] (v : Vector R n) : R :=
   Hex.Vector.normSq v
