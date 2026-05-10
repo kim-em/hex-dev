@@ -594,6 +594,249 @@ private theorem nullspace_get_pivot [Lean.Grind.Ring R] (E : IsRREF M D)
   rw [nullspace_get]
   simpa [Matrix.col] using nullspaceMatrix_pivot E i k
 
+omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
+private theorem foldl_add_eq_acc_ring {R : Type u} [Lean.Grind.Ring R]
+    {α : Type v} (xs : List α) (f : α → R) (acc : R)
+    (hf : ∀ x ∈ xs, f x = 0) :
+    xs.foldl (fun acc x => acc + f x) acc = acc := by
+  induction xs generalizing acc with
+  | nil =>
+      simp only [List.foldl_nil]
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hx : f x = 0 := hf x (by simp)
+      have hxs : ∀ y ∈ xs, f y = 0 := fun y hy => hf y (List.mem_cons_of_mem _ hy)
+      rw [hx]
+      have hac : acc + (0 : R) = acc := by grind
+      rw [hac]
+      exact ih acc hxs
+
+omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
+private theorem foldl_sum_start {R : Type u} [Lean.Grind.Ring R]
+    {α : Type v} (xs : List α) (f : α → R) (acc : R) :
+    xs.foldl (fun acc x => acc + f x) acc =
+      acc + xs.foldl (fun acc x => acc + f x) 0 := by
+  induction xs generalizing acc with
+  | nil =>
+      simp
+      grind
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [ih (acc := acc + f x)]
+      rw [ih (acc := (0 : R) + f x)]
+      grind
+
+omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
+private theorem foldl_one_nonzero {R : Type u} [Lean.Grind.Ring R]
+    {α : Type v} [DecidableEq α] (xs : List α) (a : α) (f : α → R) (x : R)
+    (haMem : a ∈ xs) (hnodup : xs.Nodup)
+    (ha : f a = x) (hz : ∀ z ∈ xs, z ≠ a → f z = 0) :
+    xs.foldl (fun acc z => acc + f z) 0 = x := by
+  induction xs with
+  | nil =>
+      cases haMem
+  | cons z zs ih =>
+      simp only [List.foldl_cons]
+      by_cases hza : z = a
+      · subst z
+        rw [ha]
+        have hzero : ∀ y ∈ zs, f y = 0 := by
+          intro y hy
+          have hya : y ≠ a := by
+            intro h
+            subst y
+            exact (List.nodup_cons.mp hnodup).1 hy
+          exact hz y (List.mem_cons_of_mem _ hy) hya
+        have h0x : (0 : R) + x = x := by grind
+        rw [h0x]
+        rw [foldl_add_eq_acc_ring zs f x hzero]
+      · have hz0 : f z = 0 := hz z (by simp) hza
+        rw [hz0]
+        have haTail : a ∈ zs := by
+          rcases List.mem_cons.mp haMem with hhead | htail
+          · exact False.elim (hza hhead.symm)
+          · exact htail
+        have hnodupTail : zs.Nodup := (List.nodup_cons.mp hnodup).2
+        have hzTail : ∀ y ∈ zs, y ≠ a → f y = 0 := by
+          intro y hy hya
+          exact hz y (List.mem_cons_of_mem _ hy) hya
+        have hzeroAdd : (0 : R) + 0 = 0 := by grind
+        rw [hzeroAdd]
+        exact ih haTail hnodupTail hzTail
+
+omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
+private theorem foldl_two_nonzero {R : Type u} [Lean.Grind.Ring R]
+    {α : Type v} [DecidableEq α] (xs : List α) (a b : α) (f : α → R) (x y : R)
+    (hab : a ≠ b) (haMem : a ∈ xs) (hbMem : b ∈ xs) (hnodup : xs.Nodup)
+    (ha : f a = x) (hb : f b = y)
+    (hz : ∀ z ∈ xs, z ≠ a → z ≠ b → f z = 0) :
+    xs.foldl (fun acc z => acc + f z) 0 = x + y := by
+  induction xs with
+  | nil =>
+      cases haMem
+  | cons z zs ih =>
+      simp only [List.foldl_cons]
+      by_cases hza : z = a
+      · subst z
+        rw [ha]
+        have hbTail : b ∈ zs := by
+          rcases List.mem_cons.mp hbMem with hhead | htail
+          · exact False.elim (hab hhead.symm)
+          · exact htail
+        have hnodupTail : zs.Nodup := (List.nodup_cons.mp hnodup).2
+        have hbOnly : ∀ t ∈ zs, t ≠ b → f t = 0 := by
+          intro t ht htb
+          have hta : t ≠ a := by
+            intro h
+            subst t
+            exact (List.nodup_cons.mp hnodup).1 ht
+          exact hz t (List.mem_cons_of_mem _ ht) hta htb
+        have h0x : (0 : R) + x = x := by grind
+        rw [h0x]
+        rw [foldl_sum_start zs f x]
+        rw [foldl_one_nonzero zs b f y hbTail hnodupTail hb hbOnly]
+      · by_cases hzb : z = b
+        · subst z
+          rw [hb]
+          have haTail : a ∈ zs := by
+            rcases List.mem_cons.mp haMem with hhead | htail
+            · exact False.elim (hza hhead.symm)
+            · exact htail
+          have hnodupTail : zs.Nodup := (List.nodup_cons.mp hnodup).2
+          have haOnly : ∀ t ∈ zs, t ≠ a → f t = 0 := by
+            intro t ht hta
+            have htb : t ≠ b := by
+              intro h
+              subst t
+              exact (List.nodup_cons.mp hnodup).1 ht
+            exact hz t (List.mem_cons_of_mem _ ht) hta htb
+          have h0y : (0 : R) + y = y := by grind
+          rw [h0y]
+          rw [foldl_sum_start zs f y]
+          rw [foldl_one_nonzero zs a f x haTail hnodupTail ha haOnly]
+          grind
+        · have hz0 : f z = 0 := hz z (by simp) hza hzb
+          rw [hz0]
+          have haTail : a ∈ zs := by
+            rcases List.mem_cons.mp haMem with hhead | htail
+            · exact False.elim (hza hhead.symm)
+            · exact htail
+          have hbTail : b ∈ zs := by
+            rcases List.mem_cons.mp hbMem with hhead | htail
+            · exact False.elim (hzb hhead.symm)
+            · exact htail
+          have hnodupTail : zs.Nodup := (List.nodup_cons.mp hnodup).2
+          have hzTail : ∀ t ∈ zs, t ≠ a → t ≠ b → f t = 0 := by
+            intro t ht hta htb
+            exact hz t (List.mem_cons_of_mem _ ht) hta htb
+          have hzeroAdd : (0 : R) + 0 = 0 := by grind
+          rw [hzeroAdd]
+          exact ih haTail hbTail hnodupTail hzTail
+
+omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
+private theorem nullspace_echelon_sound {R : Type u} [Lean.Grind.Ring R] {n m : Nat}
+    {M : Matrix R n m} {D : RowEchelonData R n m} (E : IsRREF M D)
+    (k : Fin (m - D.rank)) :
+    D.echelon * E.nullspace.get k = 0 := by
+  apply Vector.ext
+  intro r hr
+  let row : Fin n := ⟨r, hr⟩
+  by_cases hrow : r < D.rank
+  · let ri : Fin D.rank := ⟨r, hrow⟩
+    let free := E.toIsEchelonForm.freeCols.get k
+    let pivot := D.pivotCols.get ri
+    let coeff := D.echelon[row][free]
+    have hrowEq : row = E.toIsEchelonForm.pivotRow ri := by
+      apply Fin.ext
+      rfl
+    have hpivotFree : pivot ≠ free := by
+      exact E.toIsEchelonForm.pivotCols_disjoint_freeCols ri k
+    change (Matrix.mulVec D.echelon (E.nullspace.get k))[r] = (0 : Vector R n)[r]
+    unfold Matrix.mulVec Matrix.dot Matrix.row Hex.Vector.dotProduct
+    rw [Vector.getElem_ofFn hr]
+    rw [Vector.getElem_zero r hr]
+    change (List.finRange m).foldl
+        (fun acc j => acc + D.echelon[row][j] * (E.nullspace.get k)[j]) 0 = 0
+    have hpivotTerm :
+        D.echelon[row][pivot] * (E.nullspace.get k)[pivot] = -coeff := by
+      have hpone : D.echelon[row][pivot] = 1 := by
+        simpa [row, ri, pivot, IsEchelonForm.pivotRow] using E.pivot_one ri
+      have hnp := nullspace_get_pivot E ri k
+      rw [hpone, hnp]
+      have hcoeff :
+          D.echelon[(IsEchelonForm.pivotRow E.toIsEchelonForm ri)][free] = coeff := by
+        simp [free, coeff, row, ri, IsEchelonForm.pivotRow]
+      change (1 : R) *
+          (-D.echelon[(IsEchelonForm.pivotRow E.toIsEchelonForm ri)][free]) = -coeff
+      rw [hcoeff]
+      grind
+    have hfreeTerm :
+        D.echelon[row][free] * (E.nullspace.get k)[free] = coeff := by
+      have hnf := nullspace_get_free E k
+      rw [hnf]
+      grind
+    have hzero :
+        ∀ j ∈ List.finRange m, j ≠ pivot → j ≠ free →
+          D.echelon[row][j] * (E.nullspace.get k)[j] = 0 := by
+      intro j _ hjp hjf
+      rcases E.toIsEchelonForm.colPartition j with ⟨i, hi⟩ | ⟨l, hl⟩
+      · have hij : i ≠ ri := by
+          intro hir
+          subst i
+          exact hjp hi.symm
+        have hpivotZero : D.echelon[row][D.pivotCols.get i] = 0 := by
+          have hval : i.val ≠ ri.val := by
+            intro h
+            exact hij (Fin.ext h)
+          cases Nat.lt_or_gt_of_ne hval with
+          | inl hlt =>
+              have hbelow := E.toIsEchelonForm.below_pivot_zero i row (by
+                change i.val < r
+                simpa [ri] using hlt)
+              simpa using hbelow
+          | inr hgt =>
+              have habove := E.above_pivot_zero i row (by
+                change r < i.val
+                simpa [ri] using hgt)
+              simpa using habove
+        rw [← hi, hpivotZero]
+        grind
+      · have hlk : k ≠ l := by
+          intro hkl
+          subst l
+          exact hjf hl.symm
+        have hfreeZero := nullspace_get_free_ne E hlk
+        rw [← hl, hfreeZero]
+        grind
+    have hsum := foldl_two_nonzero (R := R) (xs := List.finRange m) pivot free
+      (fun j => D.echelon[row][j] * (E.nullspace.get k)[j]) (-coeff) coeff
+      hpivotFree (List.mem_finRange pivot) (List.mem_finRange free)
+      (List.nodup_finRange m) hpivotTerm hfreeTerm hzero
+    calc
+      (List.finRange m).foldl
+          (fun acc j => acc + D.echelon[row][j] * (E.nullspace.get k)[j]) 0 =
+          -coeff + coeff := by
+            simpa only using hsum
+      _ = 0 := by grind
+  · have hzeroRow := E.toIsEchelonForm.zero_row row (by
+      exact Nat.le_of_not_gt hrow)
+    change (Matrix.mulVec D.echelon (E.nullspace.get k))[r] = (0 : Vector R n)[r]
+    unfold Matrix.mulVec Matrix.dot Matrix.row Hex.Vector.dotProduct
+    rw [Vector.getElem_ofFn hr]
+    rw [Vector.getElem_zero r hr]
+    change (List.finRange m).foldl
+        (fun acc j => acc + D.echelon[row][j] * (E.nullspace.get k)[j]) 0 = 0
+    have hzero :
+        ∀ j ∈ List.finRange m, D.echelon[row][j] * (E.nullspace.get k)[j] = 0 := by
+      intro j _
+      have hentry : D.echelon[row][j] = 0 := by
+        have hrowGet := congrArg (fun v => v[j]) hzeroRow
+        simpa using hrowGet
+      rw [hentry]
+      grind
+    simpa only using foldl_add_eq_acc_ring (List.finRange m)
+      (fun j => D.echelon[row][j] * (E.nullspace.get k)[j]) 0 hzero
+
 /-- Every basis vector returned by `nullspace` lies in the nullspace of `M`. -/
 theorem nullspace_sound [Lean.Grind.Ring R] (E : IsRREF M D) (k : Fin (m - D.rank)) :
     M * E.nullspace.get k = 0 := by
