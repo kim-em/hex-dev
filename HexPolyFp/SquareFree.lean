@@ -3632,6 +3632,21 @@ private theorem yunFactorsPairwiseInvariant_of_derivative_split_common_dvd_one
     yunFactorsPairwiseReady_of_derivative_split_common_dvd_one
       hp f multiplicity fuel hdf hcommon
 
+private theorem yunFactorsPairwiseInvariant_of_derivative_split_reachable
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
+    (hdf : (DensePoly.derivative f).isZero ≠ true) :
+    yunFactorsPairwiseInvariant
+      (f / DensePoly.gcd f (DensePoly.derivative f))
+      (DensePoly.gcd f (DensePoly.derivative f))
+      multiplicity
+      fuel := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  exact
+    yunFactorsPairwiseInvariant_of_derivative_split_common_dvd_one
+      hp f multiplicity fuel hdf
+      (fun c w _multiplicity fuel hreachable =>
+        yunFactorsPairwiseReachable_common_dvd_one c w fuel hreachable)
+
 private theorem squareFreeAuxRev_reverse_append
     (f : FpPoly p) (multiplicity fuel : Nat) (accRev : List (SquareFreeFactor p)) :
     (squareFreeAuxRev f multiplicity fuel accRev).reverse =
@@ -3856,10 +3871,9 @@ private theorem squareFreeAuxRev_pairwise_coprime_nil_core
   apply squareFreeAuxRev_pairwise_coprime_nil_core_of_yun_invariant
   intro f multiplicity fuel hdf
   exact
-    yunFactorsPairwiseInvariant_of_derivative_split_common_dvd_one
-      hp f multiplicity fuel (by intro htrue; rw [htrue] at hdf; cases hdf)
-      (fun c w _multiplicity fuel hreachable =>
-        yunFactorsPairwiseReachable_common_dvd_one c w fuel hreachable)
+    yunFactorsPairwiseInvariant_of_derivative_split_reachable
+      hp f multiplicity fuel
+      (by intro htrue; rw [htrue] at hdf; cases hdf)
 
 private theorem squareFreeAuxRev_pairwise_coprime_core
     (hp : Hex.Nat.Prime p)
