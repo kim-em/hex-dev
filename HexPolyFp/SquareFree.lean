@@ -3086,6 +3086,17 @@ private def yunFactorsContributionResidualDerivativeZero
   isOne contribution.2 = false →
     (DensePoly.derivative contribution.2).isZero = true
 
+private def yunFactorsContributionResidualComplete
+    (c w : FpPoly p) (multiplicity fuel : Nat) : Prop :=
+  yunFactorsContributionResidualDerivativeZero c w multiplicity fuel
+
+private theorem yunFactorsContributionResidualDerivativeZero_of_complete
+    (c w : FpPoly p) (multiplicity fuel : Nat)
+    (hcomplete :
+      yunFactorsContributionResidualComplete c w multiplicity fuel) :
+    yunFactorsContributionResidualDerivativeZero c w multiplicity fuel := by
+  exact hcomplete
+
 private theorem yunFactorsResidualDerivativeZero_of_contribution
     (c w : FpPoly p) (multiplicity fuel : Nat)
     (hresidual :
@@ -3121,6 +3132,40 @@ private theorem yunFactorsResidualDerivativeZero_of_derivative_split_contributio
       multiplicity
       fuel
       hresidual
+
+private theorem yunFactorsResidualDerivativeZero_of_derivative_split_complete
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
+    (hdf : (DensePoly.derivative f).isZero = false)
+    (hcomplete :
+      let g := DensePoly.gcd f (DensePoly.derivative f)
+      let c := f / g
+      yunFactorsContributionResidualComplete c g multiplicity fuel) :
+    yunFactorsResidualDerivativeZero
+      (f / DensePoly.gcd f (DensePoly.derivative f))
+      (DensePoly.gcd f (DensePoly.derivative f))
+      multiplicity
+      fuel := by
+  exact
+    yunFactorsResidualDerivativeZero_of_derivative_split_contribution
+      hp f multiplicity fuel hdf
+      (yunFactorsContributionResidualDerivativeZero_of_complete
+        (f / DensePoly.gcd f (DensePoly.derivative f))
+        (DensePoly.gcd f (DensePoly.derivative f))
+        multiplicity
+        fuel
+        hcomplete)
+
+private theorem yunFactorsContributionResidualComplete_of_derivative_active
+    (_hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
+    (_hdf : (DensePoly.derivative f).isZero = false)
+    (hcomplete :
+      let g := DensePoly.gcd f (DensePoly.derivative f)
+      let c := f / g
+      yunFactorsContributionResidualComplete c g multiplicity fuel) :
+    let g := DensePoly.gcd f (DensePoly.derivative f)
+    let c := f / g
+    yunFactorsContributionResidualComplete c g multiplicity fuel := by
+  exact hcomplete
 
 private theorem dvd_one_of_mul_right_dvd_right
     [ZMod64.PrimeModulus p] {d g : FpPoly p}
