@@ -4752,5 +4752,42 @@ private theorem partialColumnTupleCoeff_nil
   intro i _hmem
   congr 2
 
+private theorem partialColumnTupleCoeff_insertAt_last_fold
+    {R : Type u} [Mul R] [OfNat R 1] {n m rem : Nat}
+    (coeff : Matrix R n m) (c : Fin m) (pref : Vector (Fin m) rem)
+    (hrem : rem < n) :
+    (List.finRange (rem + 1)).foldl
+        (fun acc i => acc * coeff[(⟨i.val, by
+          have hi : i.val < rem + 1 := i.isLt
+          omega⟩ : Fin n)][(insertAt c pref (Fin.last rem))[i]]) 1 =
+      (List.finRange rem).foldl
+          (fun acc i => acc * coeff[(⟨i.val, by
+            have hi : i.val < rem := i.isLt
+            omega⟩ : Fin n)][pref[i]]) 1 *
+        coeff[(⟨rem, hrem⟩ : Fin n)][c] := by
+  rw [List.finRange_succ_last]
+  rw [List.foldl_append, List.foldl_cons, List.foldl_nil]
+  congr 1
+  · simp only [List.foldl_map]
+    apply foldl_det_product_congr
+    intro i _hmem
+    change
+      coeff[(⟨i.val, by
+        have hi : i.val < rem := i.isLt
+        omega⟩ : Fin n)][(insertAt c pref (Fin.last rem))[i.castSucc]] =
+      coeff[(⟨i.val, by
+        have hi : i.val < rem := i.isLt
+        omega⟩ : Fin n)][pref[i]]
+    exact congrArg
+      (fun x : Fin m => coeff[(⟨i.val, by
+        have hi : i.val < rem := i.isLt
+        omega⟩ : Fin n)][x])
+      (insertAt_last_get_castSucc c pref i)
+  · change
+      coeff[(⟨rem, hrem⟩ : Fin n)][(insertAt c pref (Fin.last rem))[Fin.last rem]] =
+        coeff[(⟨rem, hrem⟩ : Fin n)][c]
+    exact congrArg (fun x : Fin m => coeff[(⟨rem, hrem⟩ : Fin n)][x])
+      (insertAt_get_self c pref (Fin.last rem))
+
 end Matrix
 end Hex
