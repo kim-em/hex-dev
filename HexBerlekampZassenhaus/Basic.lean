@@ -1800,14 +1800,21 @@ private def factorFastFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPo
 #guard factorFastFactorsWithBound cldGuardF 4 =
   some bhksGuardFactors
 
-private def factorFastPrecisionCap (f : ZPoly) : Nat :=
-  min (bhksBound f) (ZPoly.defaultFactorCoeffBound f)
+/--
+Precision cap used by the public fast path.
+
+The cap is the larger of the BHKS separation threshold bound and the
+Mignotte coefficient bound, so later termination proofs can use the same
+precision for both lattice separation and exact integer reconstruction.
+-/
+def factorFastPrecisionCap (f : ZPoly) : Nat :=
+  max (bhksBound f) (ZPoly.defaultFactorCoeffBound f)
 
 private def factorFastWithBound (f : ZPoly) (B : Nat) : Option Factorization :=
   (factorFastFactorsWithBound f B).map (factorizationOfFactors f)
 
 /--
-Public van Hoeij CLD fast path with a practical precision cap.
+Public van Hoeij CLD fast path with a combined BHKS/Mignotte precision cap.
 
 The bounded core loop only accepts candidates certified by the fixed-precision
 BHKS recovery pipeline; if every precision up to the cap misses, this reports
@@ -1819,7 +1826,7 @@ def factorFast (f : ZPoly) : Option Factorization :=
 #guard (factorFast (DensePoly.ofCoeffs #[1, 1, 1, 1, 1])).map Factorization.product =
   some (DensePoly.ofCoeffs #[1, 1, 1, 1, 1])
 
-#guard factorFast (DensePoly.ofCoeffs #[1, 0, 0, 0, 1]) = none
+#guard factorFastWithBound (DensePoly.ofCoeffs #[1, 0, 0, 0, 1]) 4 = none
 
 /-- Factor with an explicit coefficient bound for the recombination stage. -/
 def factorWithBound (f : ZPoly) (B : Nat) : Factorization :=
