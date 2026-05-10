@@ -353,6 +353,241 @@ theorem rowAdd_transform_mul_preserve [Lean.Grind.Ring R]
     rowAdd T src dst s * M = rowAdd E src dst s := by
   rw [rowAdd_mul, h]
 
+/-- Swapping the same two rows twice restores the original matrix. -/
+theorem rowSwap_rowSwap (M : Matrix R n m) (i j : Fin n) :
+    rowSwap (rowSwap M i j) i j = M := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro k hk
+  let rr : Fin n := ⟨r, hr⟩
+  let kk : Fin m := ⟨k, hk⟩
+  show (rowSwap (rowSwap M i j) i j)[rr][kk] = M[rr][kk]
+  rw [rowSwap_getElem]
+  by_cases hrj : rr = j
+  · rw [if_pos hrj]
+    rw [rowSwap_getElem]
+    by_cases hji : i = j
+    · simp [hrj, hji]
+    · simp [hrj, hji]
+  · rw [if_neg hrj]
+    by_cases hri : rr = i
+    · rw [if_pos hri]
+      rw [rowSwap_getElem]
+      simp [hri]
+    · rw [if_neg hri]
+      rw [rowSwap_getElem]
+      rw [if_neg hrj, if_neg hri]
+
+/-- Scaling a row by `s` and then by `s⁻¹` restores the original matrix when
+`s` is nonzero. -/
+theorem rowScale_rowScale_inv_left [Lean.Grind.Field R]
+    (M : Matrix R n m) (i : Fin n) {s : R} (hs : s ≠ 0) :
+    rowScale (rowScale M i s) i s⁻¹ = M := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro k hk
+  let rr : Fin n := ⟨r, hr⟩
+  let kk : Fin m := ⟨k, hk⟩
+  show (rowScale (rowScale M i s) i s⁻¹)[rr][kk] = M[rr][kk]
+  rw [rowScale_getElem]
+  by_cases hri : rr = i
+  · rw [if_pos hri]
+    rw [rowScale_getElem]
+    rw [if_pos rfl]
+    grind
+  · rw [if_neg hri]
+    rw [rowScale_getElem]
+    rw [if_neg hri]
+
+/-- Scaling a row by `s⁻¹` and then by `s` restores the original matrix when
+`s` is nonzero. -/
+theorem rowScale_rowScale_inv_right [Lean.Grind.Field R]
+    (M : Matrix R n m) (i : Fin n) {s : R} (hs : s ≠ 0) :
+    rowScale (rowScale M i s⁻¹) i s = M := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro k hk
+  let rr : Fin n := ⟨r, hr⟩
+  let kk : Fin m := ⟨k, hk⟩
+  show (rowScale (rowScale M i s⁻¹) i s)[rr][kk] = M[rr][kk]
+  rw [rowScale_getElem]
+  by_cases hri : rr = i
+  · rw [if_pos hri]
+    rw [rowScale_getElem]
+    rw [if_pos rfl]
+    grind
+  · rw [if_neg hri]
+    rw [rowScale_getElem]
+    rw [if_neg hri]
+
+/-- Adding `s` times a distinct source row to a destination row and then
+adding `-s` times that source row restores the original matrix. -/
+theorem rowAdd_rowAdd_neg [Lean.Grind.Ring R]
+    (M : Matrix R n m) {src dst : Fin n} (s : R) (hsrcdst : src ≠ dst) :
+    rowAdd (rowAdd M src dst s) src dst (-s) = M := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro k hk
+  let rr : Fin n := ⟨r, hr⟩
+  let kk : Fin m := ⟨k, hk⟩
+  show (rowAdd (rowAdd M src dst s) src dst (-s))[rr][kk] = M[rr][kk]
+  rw [rowAdd_getElem]
+  by_cases hrd : rr = dst
+  · rw [if_pos hrd]
+    rw [rowAdd_getElem]
+    rw [if_pos rfl]
+    have hsrc_ne_dst : src ≠ dst := hsrcdst
+    rw [rowAdd_getElem]
+    rw [if_neg hsrc_ne_dst]
+    grind
+  · rw [if_neg hrd]
+    rw [rowAdd_getElem]
+    rw [if_neg hrd]
+
+/-- Adding `-s` times a distinct source row to a destination row and then
+adding `s` times that source row restores the original matrix. -/
+theorem rowAdd_rowAdd_neg_left [Lean.Grind.Ring R]
+    (M : Matrix R n m) {src dst : Fin n} (s : R) (hsrcdst : src ≠ dst) :
+    rowAdd (rowAdd M src dst (-s)) src dst s = M := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro k hk
+  let rr : Fin n := ⟨r, hr⟩
+  let kk : Fin m := ⟨k, hk⟩
+  show (rowAdd (rowAdd M src dst (-s)) src dst s)[rr][kk] = M[rr][kk]
+  rw [rowAdd_getElem]
+  by_cases hrd : rr = dst
+  · rw [if_pos hrd]
+    rw [rowAdd_getElem]
+    rw [if_pos rfl]
+    have hsrc_ne_dst : src ≠ dst := hsrcdst
+    rw [rowAdd_getElem]
+    rw [if_neg hsrc_ne_dst]
+    grind
+  · rw [if_neg hrd]
+    rw [rowAdd_getElem]
+    rw [if_neg hrd]
+
+private theorem leftMul_left_inverse_preserve [Lean.Grind.Ring R]
+    {S Sinv T : Matrix R n n} (hSinvS : Sinv * S = 1)
+    (hT : ∃ Tinv : Matrix R n n, Tinv * T = 1) :
+    ∃ Tinv' : Matrix R n n, Tinv' * (S * T) = 1 := by
+  rcases hT with ⟨Tinv, hTinv⟩
+  refine ⟨Tinv * Sinv, ?_⟩
+  calc
+    (Tinv * Sinv) * (S * T) = ((Tinv * Sinv) * S) * T := by
+      exact (mul_assoc (Tinv * Sinv) S T).symm
+    _ = (Tinv * (Sinv * S)) * T := by
+      rw [mul_assoc Tinv Sinv S]
+    _ = (Tinv * 1) * T := by
+      rw [hSinvS]
+    _ = Tinv * T := by
+      rw [mul_one]
+    _ = 1 := hTinv
+
+private theorem leftMul_right_inverse_preserve [Lean.Grind.Ring R]
+    {S Sinv T : Matrix R n n} (hSSinv : S * Sinv = 1)
+    (hT : ∃ Tinv : Matrix R n n, T * Tinv = 1) :
+    ∃ Tinv' : Matrix R n n, (S * T) * Tinv' = 1 := by
+  rcases hT with ⟨Tinv, hTinv⟩
+  refine ⟨Tinv * Sinv, ?_⟩
+  calc
+    (S * T) * (Tinv * Sinv) = S * (T * (Tinv * Sinv)) := by
+      exact mul_assoc S T (Tinv * Sinv)
+    _ = S * ((T * Tinv) * Sinv) := by
+      rw [mul_assoc]
+    _ = S * (1 * Sinv) := by
+      rw [hTinv]
+    _ = S * Sinv := by
+      rw [one_mul]
+    _ = 1 := hSSinv
+
+/-- A row swap preserves existence of a left inverse for a row transform. -/
+theorem rowSwap_left_inverse_preserve [Lean.Grind.Ring R]
+    (T : Matrix R n n) (i j : Fin n)
+    (hT : ∃ Tinv : Matrix R n n, Tinv * T = 1) :
+    ∃ Tinv' : Matrix R n n, Tinv' * rowSwap T i j = 1 := by
+  let S : Matrix R n n := rowSwap (1 : Matrix R n n) i j
+  have hS : S * T = rowSwap T i j := by
+    simp [S, rowSwap_mul, one_mul]
+  have hSS : S * S = 1 := by
+    simp [S, rowSwap_mul, one_mul, rowSwap_rowSwap]
+  simpa [hS] using leftMul_left_inverse_preserve (S := S) (Sinv := S) (T := T) hSS hT
+
+/-- A row swap preserves existence of a right inverse for a row transform. -/
+theorem rowSwap_right_inverse_preserve [Lean.Grind.Ring R]
+    (T : Matrix R n n) (i j : Fin n)
+    (hT : ∃ Tinv : Matrix R n n, T * Tinv = 1) :
+    ∃ Tinv' : Matrix R n n, rowSwap T i j * Tinv' = 1 := by
+  let S : Matrix R n n := rowSwap (1 : Matrix R n n) i j
+  have hS : S * T = rowSwap T i j := by
+    simp [S, rowSwap_mul, one_mul]
+  have hSS : S * S = 1 := by
+    simp [S, rowSwap_mul, one_mul, rowSwap_rowSwap]
+  simpa [hS] using leftMul_right_inverse_preserve (S := S) (Sinv := S) (T := T) hSS hT
+
+/-- Scaling a row by a nonzero scalar preserves existence of a left inverse for
+a row transform. -/
+theorem rowScale_left_inverse_preserve [Lean.Grind.Field R]
+    (T : Matrix R n n) (i : Fin n) {s : R} (hs : s ≠ 0)
+    (hT : ∃ Tinv : Matrix R n n, Tinv * T = 1) :
+    ∃ Tinv' : Matrix R n n, Tinv' * rowScale T i s = 1 := by
+  let S : Matrix R n n := rowScale (1 : Matrix R n n) i s
+  let Sinv : Matrix R n n := rowScale (1 : Matrix R n n) i s⁻¹
+  have hS : S * T = rowScale T i s := by
+    simp [S, rowScale_mul, one_mul]
+  have hSinvS : Sinv * S = 1 := by
+    simp [Sinv, S, rowScale_mul, one_mul, rowScale_rowScale_inv_left _ _ hs]
+  simpa [hS] using leftMul_left_inverse_preserve (S := S) (Sinv := Sinv) (T := T) hSinvS hT
+
+/-- Scaling a row by a nonzero scalar preserves existence of a right inverse for
+a row transform. -/
+theorem rowScale_right_inverse_preserve [Lean.Grind.Field R]
+    (T : Matrix R n n) (i : Fin n) {s : R} (hs : s ≠ 0)
+    (hT : ∃ Tinv : Matrix R n n, T * Tinv = 1) :
+    ∃ Tinv' : Matrix R n n, rowScale T i s * Tinv' = 1 := by
+  let S : Matrix R n n := rowScale (1 : Matrix R n n) i s
+  let Sinv : Matrix R n n := rowScale (1 : Matrix R n n) i s⁻¹
+  have hS : S * T = rowScale T i s := by
+    simp [S, rowScale_mul, one_mul]
+  have hSSinv : S * Sinv = 1 := by
+    simp [S, Sinv, rowScale_mul, one_mul, rowScale_rowScale_inv_right _ _ hs]
+  simpa [hS] using leftMul_right_inverse_preserve (S := S) (Sinv := Sinv) (T := T) hSSinv hT
+
+/-- Adding a multiple of a distinct source row preserves existence of a left
+inverse for a row transform. -/
+theorem rowAdd_left_inverse_preserve [Lean.Grind.Ring R]
+    (T : Matrix R n n) {src dst : Fin n} (s : R) (hsrcdst : src ≠ dst)
+    (hT : ∃ Tinv : Matrix R n n, Tinv * T = 1) :
+    ∃ Tinv' : Matrix R n n, Tinv' * rowAdd T src dst s = 1 := by
+  let S : Matrix R n n := rowAdd (1 : Matrix R n n) src dst s
+  let Sinv : Matrix R n n := rowAdd (1 : Matrix R n n) src dst (-s)
+  have hS : S * T = rowAdd T src dst s := by
+    simp [S, rowAdd_mul, one_mul]
+  have hSinvS : Sinv * S = 1 := by
+    simp [Sinv, S, rowAdd_mul, one_mul, rowAdd_rowAdd_neg _ _ hsrcdst]
+  simpa [hS] using leftMul_left_inverse_preserve (S := S) (Sinv := Sinv) (T := T) hSinvS hT
+
+/-- Adding a multiple of a distinct source row preserves existence of a right
+inverse for a row transform. -/
+theorem rowAdd_right_inverse_preserve [Lean.Grind.Ring R]
+    (T : Matrix R n n) {src dst : Fin n} (s : R) (hsrcdst : src ≠ dst)
+    (hT : ∃ Tinv : Matrix R n n, T * Tinv = 1) :
+    ∃ Tinv' : Matrix R n n, rowAdd T src dst s * Tinv' = 1 := by
+  let S : Matrix R n n := rowAdd (1 : Matrix R n n) src dst s
+  let Sinv : Matrix R n n := rowAdd (1 : Matrix R n n) src dst (-s)
+  have hS : S * T = rowAdd T src dst s := by
+    simp [S, rowAdd_mul, one_mul]
+  have hSSinv : S * Sinv = 1 := by
+    simp [S, Sinv, rowAdd_mul, one_mul]
+    exact rowAdd_rowAdd_neg_left (1 : Matrix R n n) s hsrcdst
+  simpa [hS] using leftMul_right_inverse_preserve (S := S) (Sinv := Sinv) (T := T) hSSinv hT
+
 /-- Replace column `dst` by `col dst + c * col src`. -/
 def colAdd [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin m) (c : R) : Matrix R n m :=
   Matrix.ofFn fun i j => if j = dst then M[i][j] + c * M[i][src] else M[i][j]
