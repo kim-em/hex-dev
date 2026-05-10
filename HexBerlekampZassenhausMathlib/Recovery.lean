@@ -182,6 +182,119 @@ theorem bhksRecover_eq_some_of_recovery
   simp only [dif_pos hrows, hnondeg, hcand, Bool.false_eq_true, if_false, hprod,
     BEq.refl, if_true]
 
+/-- Corollary form of `bhksRecover_eq_some_of_recovery` that drops the
+expected-factors witness from the conclusion: under the recovery hypotheses,
+`Hex.bhksRecover? f d` is in the `some _` branch. -/
+theorem bhksRecover_isSome_of_recovery
+    (f : Hex.ZPoly) (d : Hex.LiftData) (h : RecoveryHypotheses f d) :
+    (Hex.bhksRecover? f d).isSome := by
+  rw [bhksRecover_eq_some_of_recovery f d h]
+  rfl
+
+/--
+Proof-facing inputs for the SPEC Group D forward-verification clause at one
+precision/recovery call: `L' = W` (deliverable 1, supplied by issue #3034 at
+the executable cap) plus the residual abstract obligations B7 (BHKS
+Lemma 3.3 indicator identification) and A2 (Mignotte centred-residue
+reconstruction) that this layer treats as hypotheses.
+
+The Mignotte precision side condition is the SPEC's
+`p^k > 2 · defaultFactorCoeffBound f`; the Group D obligation establishes
+this whenever `Hex.factorFastPrecisionCap f ≤ k`, since the cap dominates
+the Mignotte coefficient bound.  The two abstract obligations
+(`indicators_match`, `candidates_eq`) wrap the per-step BHKS Lemma 3.3 / A2
+content and are the natural follow-up tasks for later bridge work.
+-/
+structure ForwardRecoveryInputs (f : Hex.ZPoly) (d : Hex.LiftData) where
+  /-- Positive lattice dimension so the projected rows / recovery branch make
+      sense. -/
+  rows_pos : HasPositiveDimension f d
+  /-- True-factor supports backing the indicator lattice `W`. -/
+  trueSupports :
+    Set (Set (Fin (projectedRowsOfLiftData f d rows_pos).factorCount))
+  /-- BHKS `L' = W` at this lift data, supplied by #3034's
+      `BHKS.projectedRowSpan_eq_trueFactorIndicatorLattice_of_cap`. -/
+  lattice_eq_indicators :
+    BHKS.projectedRowSpanInt (projectedRowsOfLiftData f d rows_pos) =
+      BHKS.trueFactorIndicatorLattice trueSupports
+  /-- Mignotte-precision side condition: the modular precision exceeds twice
+      the executable Mignotte coefficient bound, so the centred-residue lift
+      is unique. -/
+  mignotte_precision :
+    2 * Hex.ZPoly.defaultFactorCoeffBound f < d.p ^ d.k
+  /-- BHKS Lemma 3.3 / B7 conclusion, left abstract: the executable
+      equivalence-class indicators agree with a target indicator list
+      `expectedIndicators`. -/
+  expectedIndicators : Array (Array Int)
+  indicators_match :
+    equivalenceClassIndicatorsOfLiftData f d rows_pos = expectedIndicators
+  /-- The chosen indicator partition is non-degenerate. -/
+  nondegenerate :
+    Hex.bhksDegenerateIndicatorPartition
+        (projectedRowsOfLiftData f d rows_pos) expectedIndicators = false
+  /-- A2 + exact division, left abstract: each indicator reconstructs into a
+      verified integer factor.  `expectedFactors` is the resulting factor
+      array. -/
+  expectedFactors : Array Hex.ZPoly
+  candidates_eq :
+    Hex.bhksIndicatorCandidates? f d expectedIndicators = some expectedFactors
+  /-- Final product check: the verified factors multiply back to `f`. -/
+  product_eq : Array.polyProduct expectedFactors = f
+
+namespace ForwardRecoveryInputs
+
+/-- Promote a SPEC-input bundle to the immediate recovery hypotheses
+consumed by `bhksRecover_eq_some_of_recovery`.  The promotion is a
+field-by-field repackaging that uses `indicators_match` to substitute
+`expectedIndicators` for the executable equivalence-class output in the
+non-degenerate and candidate fields. -/
+def toRecoveryHypotheses {f : Hex.ZPoly} {d : Hex.LiftData}
+    (h : ForwardRecoveryInputs f d) : RecoveryHypotheses f d where
+  rows_pos := h.rows_pos
+  nondegenerate := by
+    have hindicators := h.indicators_match
+    show
+      Hex.bhksDegenerateIndicatorPartition
+          (projectedRowsOfLiftData f d h.rows_pos)
+          (equivalenceClassIndicatorsOfLiftData f d h.rows_pos) = false
+    rw [hindicators]
+    exact h.nondegenerate
+  expectedFactors := h.expectedFactors
+  candidates_eq := by
+    have hindicators := h.indicators_match
+    show
+      Hex.bhksIndicatorCandidates? f d
+        (equivalenceClassIndicatorsOfLiftData f d h.rows_pos) =
+        some h.expectedFactors
+    rw [hindicators]
+    exact h.candidates_eq
+  product_eq := h.product_eq
+
+end ForwardRecoveryInputs
+
+/--
+SPEC Group D forward-verification statement at one precision/recovery
+call: under `L' = W` (deliverable 1) and Mignotte-precision plus the
+residual abstract obligations B7 / A2, the executable
+`Hex.bhksRecover? f d` returns `some <expected factors>`.
+
+This is the headline theorem the issue asks for: the bridge from the
+cap-specialised `L' = W` of #3034 (`mignotte_precision` is automatic at any
+precision meeting `Hex.factorFastPrecisionCap f`) to the success branch of
+the executable BHKS recovery pipeline.
+-/
+theorem bhksRecover_eq_some_of_forwardInputs
+    (f : Hex.ZPoly) (d : Hex.LiftData) (h : ForwardRecoveryInputs f d) :
+    Hex.bhksRecover? f d = some h.expectedFactors :=
+  bhksRecover_eq_some_of_recovery f d h.toRecoveryHypotheses
+
+/-- Corollary form: under the SPEC forward-verification inputs,
+`Hex.bhksRecover? f d` is `some _`. -/
+theorem bhksRecover_isSome_of_forwardInputs
+    (f : Hex.ZPoly) (d : Hex.LiftData) (h : ForwardRecoveryInputs f d) :
+    (Hex.bhksRecover? f d).isSome :=
+  bhksRecover_isSome_of_recovery f d h.toRecoveryHypotheses
+
 end BHKS
 
 end HexBerlekampZassenhausMathlib
