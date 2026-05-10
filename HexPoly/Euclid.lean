@@ -3168,6 +3168,11 @@ private theorem contentNat_dvd_coeff (p : DensePoly Int) (n : Nat) :
     rw [coeff_eq_zero_of_size_le p hnle]
     exact ⟨0, by rw [Int.mul_zero]; rfl⟩
 
+/-- The content of an integer polynomial divides every coefficient. -/
+theorem content_dvd_coeff (p : DensePoly Int) (n : Nat) :
+    content p ∣ p.coeff n := by
+  simpa [content] using contentNat_dvd_coeff p n
+
 private theorem dvd_foldl_gcd_of_dvd_mem (xs : List Nat) (d acc : Nat)
     (hacc : d ∣ acc) (hxs : ∀ x, x ∈ xs → d ∣ x) :
     d ∣ xs.foldl (fun g x => Nat.gcd g x) acc := by
@@ -3205,16 +3210,18 @@ private theorem dvd_contentNat_of_dvd_coeff (p : DensePoly Int) (d : Nat)
     rw [hcoeff_eq] at hdiv
     rwa [Int.ofNat_dvd_left] at hdiv
 
-theorem content_dvd_coeff (p : DensePoly Int) (n : Nat) :
-    content p ∣ p.coeff n := by
-  simpa [content] using contentNat_dvd_coeff p n
-
 theorem dvd_content_of_nat_dvd_coeff (p : DensePoly Int) (d : Nat)
     (h : ∀ n, (d : Int) ∣ p.coeff n) :
     (d : Int) ∣ content p := by
   rw [content]
   rw [Int.ofNat_dvd_left]
   exact dvd_contentNat_of_dvd_coeff p d h
+
+/-- If a natural number divides every coefficient, then it divides the content. -/
+theorem natCast_dvd_content_of_dvd_coeff (p : DensePoly Int) (d : Nat)
+    (h : ∀ n, (d : Int) ∣ p.coeff n) :
+    (d : Int) ∣ content p := by
+  exact dvd_content_of_nat_dvd_coeff p d h
 
 theorem nat_eq_one_of_content_eq_one_of_nat_dvd_coeff (p : DensePoly Int) (d : Nat)
     (hp : content p = 1) (h : ∀ n, (d : Int) ∣ p.coeff n) :
