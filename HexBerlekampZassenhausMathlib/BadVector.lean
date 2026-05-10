@@ -1,4 +1,5 @@
 import HexBerlekampZassenhaus.Basic
+import HexBerlekampZassenhausMathlib.Lattice
 import HexBerlekampZassenhausMathlib.Resultant
 
 /-!
@@ -280,6 +281,122 @@ theorem no_badVector_of_l2norm_upper_lt_divisor
       W.inputPolynomial W.auxiliaryPolynomial
       W.liftData.p W.liftData.k W.localFactorDegree
       hp hd hcoprime hdiv hlt
+
+end ExecutableBadVectorWitness
+
+namespace BHKS
+
+/--
+The BHKS auxiliary polynomial `H_v` associated to an integer vector `v` over
+the lifted local factors.
+
+The construction follows the BHKS Lemma 3.2 recipe: each lifted factor `g_i`
+contributes its centred-cut CLD coefficient array, scaled by `v_i`; the
+results are summed coordinate-wise to produce a `Hex.ZPoly` of degree at most
+`deg(input) - 1`.
+-/
+def auxiliaryPolynomial
+    (input : Hex.ZPoly) (liftData : Hex.LiftData) (vec : Array Int) : Hex.ZPoly :=
+  let n := input.degree?.getD 0
+  let r := liftData.liftedFactors.size
+  let coeffs : List Int := (List.range n).map fun j =>
+    (List.range r).foldl (fun acc i =>
+      acc +
+        vec.getD i 0 *
+          (Hex.cldCoeffs input liftData.p liftData.k
+              (liftData.liftedFactors.getD i 0)).getD j 0) 0
+  Hex.DensePoly.ofCoeffs coeffs.toArray
+
+end BHKS
+
+namespace ExecutableBadVectorWitness
+
+/-- Promote an executable `Array Int` row to a vector function indexed by the
+witness's projected factor count. -/
+def projectedVectorFn (W : ExecutableBadVectorWitness) (vec : Array Int) :
+    Fin W.projectedRows.factorCount → ℤ :=
+  fun i => vec.getD i.val 0
+
+/--
+Bad-vector evidence for an executable BHKS bad-vector witness.
+
+The witness's auxiliary polynomial `H` is the canonical BHKS auxiliary
+polynomial of `bhksVector`, and the same vector lies in the projected integer
+row span `L'` but not in the true-factor indicator lattice `W`.
+-/
+structure IsBhksBadVectorSetup (W : ExecutableBadVectorWitness) where
+  bhksVector : Array Int
+  trueSupports : Set (Set (Fin W.projectedRows.factorCount))
+  H_eq :
+    W.H = BHKS.auxiliaryPolynomial W.input W.liftData bhksVector
+  in_projected :
+    W.projectedVectorFn bhksVector ∈ BHKS.projectedRowSpanInt W.projectedRows
+  not_in_indicators :
+    W.projectedVectorFn bhksVector ∉
+      BHKS.trueFactorIndicatorLattice trueSupports
+
+/-- BHKS Lemma 3.2: the selected local-factor degree is positive whenever the
+witness carries a bad-vector setup. -/
+theorem localFactorDegree_pos_of_bhks_bad
+    (W : ExecutableBadVectorWitness) (_h_bad : IsBhksBadVectorSetup W) :
+    0 < W.localFactorDegree := by
+  sorry
+
+/--
+BHKS Lemma 3.2 (rational coprimality clause): the input and auxiliary
+polynomials are coprime over `ℚ` whenever the witness carries a bad-vector
+setup.
+-/
+theorem coprime_input_aux_over_rat_of_bhks_bad
+    (W : ExecutableBadVectorWitness) (_h_bad : IsBhksBadVectorSetup W) :
+    IsCoprime
+      (W.inputPolynomial.map (Int.castRingHom ℚ))
+      (W.auxiliaryPolynomial.map (Int.castRingHom ℚ)) := by
+  sorry
+
+/--
+BHKS Lemma 3.2 (modular divisibility clause): the integer resultant of the
+input and auxiliary polynomials is divisible by `p^(k * d)` whenever the
+witness carries a bad-vector setup, where `p` is the BHKS prime, `k` is the
+lift precision, and `d` is the selected local-factor degree.
+-/
+theorem resultant_divisible_by_p_pow_of_bhks_bad
+    (W : ExecutableBadVectorWitness) (_h_bad : IsBhksBadVectorSetup W) :
+    ((W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : Nat) : ℤ) ∣
+      Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial := by
+  sorry
+
+/--
+Combined BHKS Lemma 3.2 contradiction: an executable bad-vector witness whose
+`H` field is the canonical BHKS auxiliary polynomial of a vector in `L' \ W`
+cannot exist once the Hadamard/l2norm upper bound on the integer resultant of
+the input and the auxiliary polynomial drops below the modular divisor
+`p^(k * d)`.
+
+The selected-degree positivity, rational coprimality, and resultant
+divisibility are discharged by `localFactorDegree_pos_of_bhks_bad`,
+`coprime_input_aux_over_rat_of_bhks_bad`, and
+`resultant_divisible_by_p_pow_of_bhks_bad`; this theorem chains them through
+the existing executable bad-vector contradiction
+`ExecutableBadVectorWitness.no_badVector_of_l2norm_upper_lt_divisor`.
+-/
+theorem no_bhks_bad_setup_of_l2norm_upper_lt_divisor
+    (W : ExecutableBadVectorWitness)
+    (h_bad : IsBhksBadVectorSetup W)
+    (hp : 0 < W.liftData.p)
+    (hlt :
+      (HexPolyZMathlib.l2norm W.inputPolynomial) ^
+          W.auxiliaryPolynomial.natDegree *
+        (HexPolyZMathlib.l2norm W.auxiliaryPolynomial) ^
+          W.inputPolynomial.natDegree <
+      (W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : ℝ)) :
+    False :=
+  W.no_badVector_of_l2norm_upper_lt_divisor
+    hp
+    (localFactorDegree_pos_of_bhks_bad W h_bad)
+    (coprime_input_aux_over_rat_of_bhks_bad W h_bad)
+    (resultant_divisible_by_p_pow_of_bhks_bad W h_bad)
+    hlt
 
 end ExecutableBadVectorWitness
 
