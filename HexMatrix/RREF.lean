@@ -69,6 +69,327 @@ private def eliminateColumn (M : Matrix R n m) (T : Matrix R n n)
           (rowAdd state.1 pivotRow j coeff, rowAdd state.2 pivotRow j coeff))
     (M, T)
 
+/-- Successful pivot search returns an index at or above `start`. -/
+private theorem findPivotAux_some_ge (M : Matrix R n m) (col : Fin m) :
+    ∀ {start fuel : Nat} {i : Fin n},
+      findPivotAux M col start fuel = some i → start ≤ i.val := by
+  intro start fuel
+  induction fuel generalizing start with
+  | zero =>
+      intro i h
+      simp [findPivotAux] at h
+  | succ fuel ih =>
+      intro i h
+      unfold findPivotAux at h
+      by_cases hstart : start < n
+      · rw [dif_pos hstart] at h
+        by_cases hzero : M[(⟨start, hstart⟩ : Fin n)][col] = 0
+        · rw [if_pos hzero] at h
+          exact Nat.le_of_succ_le (ih h)
+        · rw [if_neg hzero] at h
+          injection h with hi
+          subst hi
+          exact Nat.le_refl _
+      · rw [dif_neg hstart] at h
+        contradiction
+
+/-- The result of a successful pivot search is a nonzero entry. -/
+private theorem findPivotAux_some_nonzero (M : Matrix R n m) (col : Fin m) :
+    ∀ {start fuel : Nat} {i : Fin n},
+      findPivotAux M col start fuel = some i → M[i][col] ≠ 0 := by
+  intro start fuel
+  induction fuel generalizing start with
+  | zero =>
+      intro i h
+      simp [findPivotAux] at h
+  | succ fuel ih =>
+      intro i h
+      unfold findPivotAux at h
+      by_cases hstart : start < n
+      · rw [dif_pos hstart] at h
+        by_cases hzero : M[(⟨start, hstart⟩ : Fin n)][col] = 0
+        · rw [if_pos hzero] at h
+          exact ih h
+        · rw [if_neg hzero] at h
+          injection h with hi
+          subst hi
+          exact hzero
+      · rw [dif_neg hstart] at h
+        contradiction
+
+/-- All rows below the pivot search start that precede the returned index are zero. -/
+private theorem findPivotAux_some_above (M : Matrix R n m) (col : Fin m) :
+    ∀ {start fuel : Nat} {i : Fin n},
+      findPivotAux M col start fuel = some i →
+      ∀ k : Fin n, start ≤ k.val → k.val < i.val → M[k][col] = 0 := by
+  intro start fuel
+  induction fuel generalizing start with
+  | zero =>
+      intro i h
+      simp [findPivotAux] at h
+  | succ fuel ih =>
+      intro i h k hge hlt
+      unfold findPivotAux at h
+      by_cases hstart : start < n
+      · rw [dif_pos hstart] at h
+        by_cases hzero : M[(⟨start, hstart⟩ : Fin n)][col] = 0
+        · rw [if_pos hzero] at h
+          rcases Nat.lt_or_ge start (k.val + 1) with hgt | hle
+          · -- start < k.val + 1, so start ≤ k.val and start < k.val + 1
+            -- combined with hge gives start ≤ k.val
+            -- if start = k.val, k = ⟨start, hstart⟩ and goal follows from hzero
+            -- else start < k.val and we apply IH
+            rcases Nat.lt_or_eq_of_le hge with hgt' | heq
+            · exact ih h k hgt' hlt
+            · have hk_eq : k = ⟨start, hstart⟩ := Fin.ext heq.symm
+              rw [hk_eq]
+              exact hzero
+          · -- k.val + 1 ≤ start, contradicts hge
+            omega
+        · rw [if_neg hzero] at h
+          injection h with hi
+          -- hi : ⟨start, hstart⟩ = i
+          have hival : i.val = start := by
+            rw [Fin.ext_iff] at hi
+            exact hi.symm
+          exfalso
+          omega
+      · rw [dif_neg hstart] at h
+        contradiction
+
+/-- Failed pivot search means every searched row is zero in this column. -/
+private theorem findPivotAux_none (M : Matrix R n m) (col : Fin m) :
+    ∀ {start fuel : Nat},
+      findPivotAux M col start fuel = none →
+      ∀ k : Fin n, start ≤ k.val → k.val < start + fuel → M[k][col] = 0 := by
+  intro start fuel
+  induction fuel generalizing start with
+  | zero =>
+      intro _h k hge hlt
+      omega
+  | succ fuel ih =>
+      intro h k hge hlt
+      unfold findPivotAux at h
+      by_cases hstart : start < n
+      · rw [dif_pos hstart] at h
+        by_cases hzero : M[(⟨start, hstart⟩ : Fin n)][col] = 0
+        · rw [if_pos hzero] at h
+          rcases Nat.lt_or_eq_of_le hge with hgt | heq
+          · exact ih h k hgt (by omega)
+          · have hk_eq : k = ⟨start, hstart⟩ := Fin.ext heq.symm
+            rw [hk_eq]
+            exact hzero
+        · rw [if_neg hzero] at h
+          contradiction
+      · exact absurd k.isLt (by omega)
+
+/-- Successful `findPivot?` returns an index at or above `start`. -/
+private theorem findPivot?_some_ge (M : Matrix R n m) (col : Fin m)
+    {start : Nat} {i : Fin n} (h : findPivot? M col start = some i) :
+    start ≤ i.val :=
+  findPivotAux_some_ge M col h
+
+/-- Successful `findPivot?` returns a nonzero entry. -/
+private theorem findPivot?_some_nonzero (M : Matrix R n m) (col : Fin m)
+    {start : Nat} {i : Fin n} (h : findPivot? M col start = some i) :
+    M[i][col] ≠ 0 :=
+  findPivotAux_some_nonzero M col h
+
+/-- All rows between `start` and the index returned by `findPivot?` are zero. -/
+private theorem findPivot?_some_above (M : Matrix R n m) (col : Fin m)
+    {start : Nat} {i : Fin n} (h : findPivot? M col start = some i) :
+    ∀ k : Fin n, start ≤ k.val → k.val < i.val → M[k][col] = 0 :=
+  findPivotAux_some_above M col h
+
+/-- Failed `findPivot?` means every row from `start` to `n` is zero in this column. -/
+private theorem findPivot?_none (M : Matrix R n m) (col : Fin m) {start : Nat}
+    (h : findPivot? M col start = none) :
+    ∀ k : Fin n, start ≤ k.val → M[k][col] = 0 := by
+  intro k hge
+  apply findPivotAux_none M col h k hge
+  have hk : k.val < n := k.isLt
+  omega
+
+omit [DecidableEq R] in
+/-- Entry of `rowAdd M src dst c` at row `dst`. -/
+private theorem rowAdd_get_dst (M : Matrix R n m) (src dst : Fin n) (c : R)
+    (k : Fin m) :
+    (rowAdd M src dst c)[dst][k] = M[dst][k] + c * M[src][k] := by
+  simp [rowAdd]
+
+omit [DecidableEq R] in
+/-- Entry of `rowAdd M src dst c` at any row other than `dst`. -/
+private theorem rowAdd_get_other (M : Matrix R n m) (src dst : Fin n) (c : R)
+    {r : Fin n} (hne : r ≠ dst) (k : Fin m) :
+    (rowAdd M src dst c)[r][k] = M[r][k] := by
+  have hval : dst.val ≠ r.val := by
+    intro hval
+    exact hne (Fin.ext hval.symm)
+  have hrow :
+      (M.set dst (Vector.ofFn fun k => M[dst][k] + c * M[src][k]))[r] = M[r] :=
+    Vector.getElem_set_ne (xs := M)
+      (x := Vector.ofFn fun k => M[dst][k] + c * M[src][k]) dst.isLt r.isLt hval
+  simpa [rowAdd] using congrArg (fun row => row[k]) hrow
+
+/-- One step of `eliminateColumn`'s fold preserves the entry at the pivot row. -/
+private theorem eliminateColumn_step_pivotRow_entry
+    (s : Matrix R n m × Matrix R n n) (pivotRow x : Fin n)
+    (col : Fin m) (k : Fin m) :
+    (if _h : x = pivotRow then s
+     else
+       let coeff := -s.1[x][col]
+       if coeff = 0 then s
+       else (rowAdd s.1 pivotRow x coeff, rowAdd s.2 pivotRow x coeff)).1[pivotRow][k]
+      = s.1[pivotRow][k] := by
+  by_cases hxp : x = pivotRow
+  · rw [dif_pos hxp]
+  · rw [dif_neg hxp]
+    by_cases hcoeff : -s.1[x][col] = 0
+    · rw [if_pos hcoeff]
+    · rw [if_neg hcoeff]
+      exact rowAdd_get_other s.1 pivotRow x _ (fun h => hxp h.symm) k
+
+/-- One step of `eliminateColumn`'s fold preserves the entry at any row other
+than `x` (the row currently being processed) at column `col`. -/
+private theorem eliminateColumn_step_other_entry
+    (s : Matrix R n m × Matrix R n n) (pivotRow x : Fin n)
+    (col : Fin m) {r : Fin n} (hrx : r ≠ x) :
+    (if _h : x = pivotRow then s
+     else
+       let coeff := -s.1[x][col]
+       if coeff = 0 then s
+       else (rowAdd s.1 pivotRow x coeff, rowAdd s.2 pivotRow x coeff)).1[r][col]
+      = s.1[r][col] := by
+  by_cases hxp : x = pivotRow
+  · rw [dif_pos hxp]
+  · rw [dif_neg hxp]
+    by_cases hcoeff : -s.1[x][col] = 0
+    · rw [if_pos hcoeff]
+    · rw [if_neg hcoeff]
+      exact rowAdd_get_other s.1 pivotRow x _ hrx col
+
+/-- One step of `eliminateColumn`'s fold zeros the entry at row `x` (the row
+currently being processed) at column `col`, provided the pivot row already
+holds a `1` there. -/
+private theorem eliminateColumn_step_zero_at_x
+    (s : Matrix R n m × Matrix R n n) (pivotRow x : Fin n)
+    (col : Fin m) (hxp : x ≠ pivotRow) (hpivot : s.1[pivotRow][col] = 1) :
+    (if _h : x = pivotRow then s
+     else
+       let coeff := -s.1[x][col]
+       if coeff = 0 then s
+       else (rowAdd s.1 pivotRow x coeff, rowAdd s.2 pivotRow x coeff)).1[x][col]
+      = 0 := by
+  rw [dif_neg hxp]
+  by_cases hcoeff : -s.1[x][col] = 0
+  · rw [if_pos hcoeff]
+    have : s.1[x][col] = 0 := by
+      have h := hcoeff
+      grind
+    exact this
+  · rw [if_neg hcoeff]
+    show (rowAdd s.1 pivotRow x (-s.1[x][col]))[x][col] = 0
+    rw [rowAdd_get_dst s.1 pivotRow x (-s.1[x][col]) col]
+    rw [hpivot]
+    grind
+
+/-- The pivot-row entries at column `col` are preserved through any fold of
+`eliminateColumn`'s step function. -/
+private theorem eliminateColumn_foldl_pivotRow
+    (pivotRow : Fin n) (col : Fin m) (k : Fin m) :
+    ∀ (xs : List (Fin n)) (s : Matrix R n m × Matrix R n n),
+      (xs.foldl (fun (state : Matrix R n m × Matrix R n n) j =>
+        if _h : j = pivotRow then state
+        else
+          let coeff := -state.1[j][col]
+          if coeff = 0 then state
+          else (rowAdd state.1 pivotRow j coeff, rowAdd state.2 pivotRow j coeff))
+        s).1[pivotRow][k]
+        = s.1[pivotRow][k] := by
+  intro xs
+  induction xs with
+  | nil => intro s; rfl
+  | cons x xs ih =>
+      intro s
+      simp only [List.foldl_cons]
+      rw [ih]
+      exact eliminateColumn_step_pivotRow_entry s pivotRow x col k
+
+/-- Rows outside the fold's processed list are unchanged at column `col`. -/
+private theorem eliminateColumn_foldl_outside
+    (pivotRow : Fin n) (col : Fin m) :
+    ∀ (xs : List (Fin n)) (s : Matrix R n m × Matrix R n n) (r : Fin n),
+      r ∉ xs →
+      (xs.foldl (fun (state : Matrix R n m × Matrix R n n) j =>
+        if _h : j = pivotRow then state
+        else
+          let coeff := -state.1[j][col]
+          if coeff = 0 then state
+          else (rowAdd state.1 pivotRow j coeff, rowAdd state.2 pivotRow j coeff))
+        s).1[r][col]
+        = s.1[r][col] := by
+  intro xs
+  induction xs with
+  | nil => intro s r _; rfl
+  | cons x xs ih =>
+      intro s r hnotin
+      have hrx : r ≠ x := fun h => hnotin (List.mem_cons.mpr (Or.inl h))
+      have hrtail : r ∉ xs := fun h => hnotin (List.mem_cons.mpr (Or.inr h))
+      simp only [List.foldl_cons]
+      rw [ih _ r hrtail]
+      exact eliminateColumn_step_other_entry s pivotRow x col hrx
+
+/-- The whole pivot row is unchanged by `eliminateColumn` at column `k`. -/
+private theorem eliminateColumn_pivotRow (M : Matrix R n m) (T : Matrix R n n)
+    (pivotRow : Fin n) (col : Fin m) (k : Fin m) :
+    (eliminateColumn M T pivotRow col).1[pivotRow][k] = M[pivotRow][k] := by
+  unfold eliminateColumn
+  exact eliminateColumn_foldl_pivotRow pivotRow col k (List.finRange n) (M, T)
+
+/-- After `eliminateColumn`, every non-pivot row is zero in the pivot column,
+provided the pivot row already has a `1` there. -/
+private theorem eliminateColumn_zero (M : Matrix R n m) (T : Matrix R n n)
+    (pivotRow : Fin n) (col : Fin m) (hpivot : M[pivotRow][col] = 1)
+    (r : Fin n) (hne : r ≠ pivotRow) :
+    (eliminateColumn M T pivotRow col).1[r][col] = 0 := by
+  unfold eliminateColumn
+  -- Walk along `List.finRange n` until we reach `r`, then show the rest of the
+  -- fold leaves `r`'s column entry untouched.
+  suffices h : ∀ (xs : List (Fin n)) (s : Matrix R n m × Matrix R n n),
+      s.1[pivotRow][col] = (1 : R) →
+      r ∈ xs → xs.Nodup →
+      (xs.foldl (fun (state : Matrix R n m × Matrix R n n) j =>
+        if _h : j = pivotRow then state
+        else
+          let coeff := -state.1[j][col]
+          if coeff = 0 then state
+          else (rowAdd state.1 pivotRow j coeff, rowAdd state.2 pivotRow j coeff))
+        s).1[r][col] = 0 from
+    h (List.finRange n) (M, T) hpivot (List.mem_finRange r) (List.nodup_finRange n)
+  intro xs
+  induction xs with
+  | nil => intro _ _ hmem _; cases hmem
+  | cons x xs ih =>
+      intro s hs hmem hnodup
+      simp only [List.foldl_cons]
+      rcases List.mem_cons.mp hmem with hrx | hrtail
+      · -- r = x: process this step, then the remaining fold leaves r untouched
+        subst hrx
+        have hr_notail : r ∉ xs := (List.nodup_cons.mp hnodup).1
+        rw [eliminateColumn_foldl_outside pivotRow col xs _ r hr_notail]
+        exact eliminateColumn_step_zero_at_x s pivotRow r col hne hs
+      · -- r ≠ x: peel one step, preserve hypothesis, recurse
+        have hpivot_step :
+            ((if _h : x = pivotRow then s
+              else
+                let coeff := -s.1[x][col]
+                if coeff = 0 then s
+                else (rowAdd s.1 pivotRow x coeff, rowAdd s.2 pivotRow x coeff))).1[pivotRow][col]
+              = (1 : R) := by
+          rw [eliminateColumn_step_pivotRow_entry s pivotRow x col col]
+          exact hs
+        exact ih _ hpivot_step hrtail (List.nodup_cons.mp hnodup).2
+
 /-- Process columns left-to-right, performing Gauss-Jordan elimination. -/
 private def rrefLoop (col fuel : Nat) (state : RrefState R n m) : RrefState R n m :=
   match fuel with
