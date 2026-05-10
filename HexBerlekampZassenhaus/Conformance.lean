@@ -137,6 +137,15 @@ private def leadingCoeffDivisibleByFive : ZPoly :=
 private def x4Plus1 : ZPoly :=
   zpoly #[1, 0, 0, 0, 1]
 
+private def quadSqrt2Sqrt3 : ZPoly :=
+  zpoly #[6, 0, -5, 0, 1]
+
+private def swinnertonDyerSD3 : ZPoly :=
+  zpoly #[576, 0, -960, 0, 352, 0, -40, 0, 1]
+
+private def phi15 : ZPoly :=
+  zpoly #[1, -1, 0, 1, -1, 1, 0, -1, 1]
+
 private def recombineFactors3 : Array ZPoly :=
   #[linear (-1), linear 2, linear 4]
 
@@ -264,7 +273,10 @@ private def factorizationEdgeCases : List FactorizationCase :=
 #guard !isGoodPrime (0 : ZPoly) 5
 
 #guard modularFactorDegreesAt? x4Plus1 5 = some #[2, 2]
-#guard modularFactorDegreesAt? x4Plus1 23 = none
+#guard modularFactorDegreesAt? quadSqrt2Sqrt3 23 = some #[1, 1, 1, 1]
+#guard modularFactorDegreesAt? swinnertonDyerSD3 71 = some #[1, 1, 1, 1, 1, 1, 1, 1]
+#guard modularFactorDegreesAt? phi15 31 = some #[1, 1, 1, 1, 1, 1, 1, 1]
+#guard modularFactorDegreesAt? x4Plus1 29 = none
 #guard modularFactorDegreesAt? leadingCoeffDivisibleByFive 5 = none
 
 #guard choosePrime squareFreeTypical = 2
