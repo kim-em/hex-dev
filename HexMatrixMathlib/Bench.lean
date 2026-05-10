@@ -20,16 +20,16 @@ Scientific registrations:
   over generated square integer matrices, `O(n^2)`.
 * `runHexRowSwapBridgeChecksum`: apply executable row swap, convert the result,
   and checksum all entries, `O(n^2)`.
-* `runMathlibRowSwapChecksum`: apply the corresponding Mathlib row-swap matrix
+* `runMathlibRowSwapChecksum`: apply the corresponding Mathlib sparse row swap
   to the same fixture and checksum all entries, `O(n^2)`.
 * `runHexRowScaleBridgeChecksum`: apply executable row scaling, convert the
   result, and checksum all entries, `O(n^2)`.
-* `runMathlibRowScaleChecksum`: apply the corresponding Mathlib diagonal row
-  scaling matrix to the same fixture and checksum all entries, `O(n^2)`.
+* `runMathlibRowScaleChecksum`: apply the corresponding Mathlib sparse row
+  scaling operation to the same fixture and checksum all entries, `O(n^2)`.
 * `runHexRowAddBridgeChecksum`: apply executable row addition, convert the
   result, and checksum all entries, `O(n^2)`.
-* `runMathlibRowAddChecksum`: apply the corresponding Mathlib transvection to
-  the same fixture and checksum all entries, `O(n^2)`.
+* `runMathlibRowAddChecksum`: apply the corresponding Mathlib sparse
+  transvection surface to the same fixture and checksum all entries, `O(n^2)`.
 * `runHexDetBridge`: convert a generated Mathlib matrix to `Hex.Matrix` and
   compute `Hex.Matrix.det`, using the Leibniz determinant model `O(n * n!)`.
 * `runMathlibDetBridge`: convert the same generated dense matrix through
@@ -114,6 +114,21 @@ def checksumMathlib (M : Matrix (Fin n) (Fin n) Int) : UInt64 :=
         (fun rowAcc j => mixWord rowAcc (hash (M i j)))
         acc)
     0
+
+/-- Direct Mathlib-side sparse row swap, avoiding generic matrix multiplication. -/
+def mathlibRowSwap (M : Matrix (Fin n) (Fin n) Int) (i j : Fin n) :
+    Matrix (Fin n) (Fin n) Int :=
+  fun r k => if r = j then M i k else if r = i then M j k else M r k
+
+/-- Direct Mathlib-side sparse row scaling, avoiding generic matrix multiplication. -/
+def mathlibRowScale (M : Matrix (Fin n) (Fin n) Int) (i : Fin n) (c : Int) :
+    Matrix (Fin n) (Fin n) Int :=
+  fun r k => if r = i then c * M i k else M r k
+
+/-- Direct Mathlib-side sparse row addition, avoiding generic matrix multiplication. -/
+def mathlibRowAdd (M : Matrix (Fin n) (Fin n) Int) (src dst : Fin n) (c : Int) :
+    Matrix (Fin n) (Fin n) Int :=
+  fun r k => if r = dst then M dst k + c * M src k else M r k
 
 /-- Per-parameter dense fixture for conversion to Mathlib. -/
 def prepDenseInput (n : Nat) : MatrixInput :=
@@ -202,14 +217,14 @@ def runHexRowSwapBridgeChecksum (input : MatrixInput) : UInt64 :=
   else
     checksumMathlib (matrixEquiv dense)
 
-/-- Benchmark target: direct Mathlib-side row-swap construction. -/
+/-- Benchmark target: direct Mathlib-side sparse row swap. -/
 def runMathlibRowSwapChecksum (input : MatrixInput) : UInt64 :=
   let dense : Hex.Matrix Int input.n input.n := hexMatrixOfFlat input.n input.entries
   let mathlib := matrixEquiv dense
   if h : 0 < input.n then
     let i := firstRow input.n h
     let j := lastRow input.n h
-    checksumMathlib (Matrix.swap Int i j * mathlib)
+    checksumMathlib (mathlibRowSwap mathlib i j)
   else
     checksumMathlib mathlib
 
@@ -222,15 +237,13 @@ def runHexRowScaleBridgeChecksum (input : MatrixInput) : UInt64 :=
   else
     checksumMathlib (matrixEquiv dense)
 
-/-- Benchmark target: direct Mathlib-side row-scaling construction. -/
+/-- Benchmark target: direct Mathlib-side sparse row scaling. -/
 def runMathlibRowScaleChecksum (input : MatrixInput) : UInt64 :=
   let dense : Hex.Matrix Int input.n input.n := hexMatrixOfFlat input.n input.entries
   let mathlib := matrixEquiv dense
   if h : 0 < input.n then
     let i := firstRow input.n h
-    checksumMathlib
-      (Matrix.diagonal (Function.update (fun _ : Fin input.n => (1 : Int)) i rowScaleCoeff) *
-        mathlib)
+    checksumMathlib (mathlibRowScale mathlib i rowScaleCoeff)
   else
     checksumMathlib mathlib
 
@@ -244,14 +257,14 @@ def runHexRowAddBridgeChecksum (input : MatrixInput) : UInt64 :=
   else
     checksumMathlib (matrixEquiv dense)
 
-/-- Benchmark target: direct Mathlib-side row-addition construction. -/
+/-- Benchmark target: direct Mathlib-side sparse row addition. -/
 def runMathlibRowAddChecksum (input : MatrixInput) : UInt64 :=
   let dense : Hex.Matrix Int input.n input.n := hexMatrixOfFlat input.n input.entries
   let mathlib := matrixEquiv dense
   if h : 1 < input.n then
     let src := firstRow input.n (Nat.zero_lt_of_lt h)
     let dst := secondRow input.n h
-    checksumMathlib (Matrix.transvection dst src rowAddCoeff * mathlib)
+    checksumMathlib (mathlibRowAdd mathlib src dst rowAddCoeff)
   else
     checksumMathlib mathlib
 
@@ -328,8 +341,9 @@ setup_benchmark runHexRowSwapBridgeChecksum n => n * n
     signalFloorMultiplier := 1.0
   }
 
-/- Cost model: the direct Mathlib row-swap matrix is multiplied by the same
-generated `n x n` matrix, and the checksum forces every output entry. -/
+/- Cost model: the direct Mathlib sparse row swap selects one source row per
+output row, and the checksum forces every entry of one generated `n x n`
+output matrix. -/
 setup_benchmark runMathlibRowSwapChecksum n => n * n
   with prep := prepRowSwapInput
   where {
@@ -354,8 +368,9 @@ setup_benchmark runHexRowScaleBridgeChecksum n => n * n
     signalFloorMultiplier := 1.0
   }
 
-/- Cost model: the direct Mathlib diagonal row-scaling matrix is multiplied by
-the same generated `n x n` matrix, and the checksum forces every output entry. -/
+/- Cost model: the direct Mathlib sparse row scaling multiplies one output row
+and leaves the others unchanged, then the checksum forces every entry of one
+generated `n x n` output matrix. -/
 setup_benchmark runMathlibRowScaleChecksum n => n * n
   with prep := prepRowScaleInput
   where {
@@ -380,8 +395,9 @@ setup_benchmark runHexRowAddBridgeChecksum n => n * n
     signalFloorMultiplier := 1.0
   }
 
-/- Cost model: the direct Mathlib transvection is multiplied by the same
-generated `n x n` matrix, and the checksum forces every output entry. -/
+/- Cost model: the direct Mathlib sparse transvection updates one output row
+and leaves the others unchanged, then the checksum forces every entry of one
+generated `n x n` output matrix. -/
 setup_benchmark runMathlibRowAddChecksum n => n * n
   with prep := prepRowAddInput
   where {
