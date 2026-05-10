@@ -5365,5 +5365,92 @@ private theorem mem_selectedColumnTuplesUpTo_of_strictly_increasing {m : Nat} :
           rw [← h1] at base
           exact base
 
+/-- Public membership characterization: a column tuple lies in
+`selectedColumnTuples n m` iff it is strictly increasing. -/
+theorem mem_selectedColumnTuples_iff {n m : Nat} (cols : Vector (Fin m) n) :
+    cols ∈ selectedColumnTuples n m ↔ IsStrictlyIncreasingColumnTuple cols := by
+  refine ⟨?_, ?_⟩
+  · intro hmem
+    exact (mem_selectedColumnTuplesUpTo_imp n m cols hmem).1
+  · intro hsi
+    apply mem_selectedColumnTuplesUpTo_of_strictly_increasing n m cols hsi
+    intro i
+    exact cols[i].isLt
+
+/-- Strictly increasing column tuples induce injective `Fin n → Fin m` selection
+functions, so each enumerated tuple yields an injective `columnTupleVectorFn`. -/
+theorem isStrictlyIncreasingColumnTuple_injective {n m : Nat}
+    {cols : Vector (Fin m) n} (hsi : IsStrictlyIncreasingColumnTuple cols) :
+    Function.Injective (columnTupleVectorFn cols) := by
+  intro i j hij
+  -- Either i.val < j.val, j.val < i.val, or i.val = j.val. Strict increase rules out the first two.
+  rcases Nat.lt_trichotomy i.val j.val with hlt | heq | hgt
+  · -- i.val < j.val ⇒ cols[i].val < cols[j].val ⇒ cols[i] ≠ cols[j], contradiction.
+    have : cols[i].val < cols[j].val := hsi i j hlt
+    exact absurd (congrArg Fin.val hij) (Nat.ne_of_lt this)
+  · exact Fin.ext heq
+  · have : cols[j].val < cols[i].val := hsi j i hgt
+    exact absurd (congrArg Fin.val hij.symm) (Nat.ne_of_lt this)
+
+/-- Convenience corollary: every column tuple enumerated by `selectedColumnTuples`
+yields an injective column-selection function. -/
+theorem mem_selectedColumnTuples_injective {n m : Nat}
+    {cols : Vector (Fin m) n} (hmem : cols ∈ selectedColumnTuples n m) :
+    Function.Injective (columnTupleVectorFn cols) :=
+  isStrictlyIncreasingColumnTuple_injective ((mem_selectedColumnTuples_iff cols).mp hmem)
+
+/-- The push map `pref ↦ pref.push c` is injective on prefixes for any fixed
+last element `c`, since the popped vector recovers the prefix. -/
+private theorem push_left_injective {α : Type u} {n : Nat} (c : α) :
+    Function.Injective fun pref : Vector α n => pref.push c := by
+  intro pref pref' h
+  have := congrArg Vector.pop h
+  simpa using this
+
+/-- Outer-list version of `Nodup` for the `flatMap` body that builds
+`selectedColumnTuplesUpTo` from a list of "last column" candidates. -/
+private theorem selectedColumnTuplesUpTo_flatMap_nodup (m n : Nat) :
+    ∀ (cs : List (Fin m)), cs.Nodup →
+      (∀ c ∈ cs, (selectedColumnTuplesUpTo m n c.val).Nodup) →
+      (cs.flatMap fun c =>
+        (selectedColumnTuplesUpTo m n c.val).map fun pref => pref.push c).Nodup
+  | [], _, _ => by simp
+  | c :: cs, hnodup, hinner => by
+      simp only [List.flatMap_cons]
+      simp only [List.nodup_cons] at hnodup
+      rw [List.nodup_append]
+      refine ⟨?_, ?_, ?_⟩
+      · -- inner `(map ...)` for the head `c` is Nodup
+        apply list_nodup_map_of_injective (push_left_injective c)
+        exact hinner c (by simp)
+      · -- suffix Nodup by IH
+        exact selectedColumnTuplesUpTo_flatMap_nodup m n cs hnodup.2
+          (fun c' hc' => hinner c' (List.mem_cons_of_mem c hc'))
+      · -- disjointness: head produces last-element c, suffix produces last-element c' ∈ cs ⇒ c' ≠ c
+        intro a hahead b hbsuffix hab
+        rcases List.mem_map.mp hahead with ⟨pref, _, rfl⟩
+        rcases List.mem_flatMap.mp hbsuffix with ⟨c', hc', hb⟩
+        rcases List.mem_map.mp hb with ⟨pref', _, rfl⟩
+        -- last entries match c and c' respectively, but c ≠ c'
+        have hlast : (pref.push c)[Fin.last n] = (pref'.push c')[Fin.last n] := by
+          rw [hab]
+        rw [getElem_push_last_index, getElem_push_last_index] at hlast
+        exact hnodup.1 (hlast ▸ hc')
+
+private theorem selectedColumnTuplesUpTo_nodup (m : Nat) :
+    ∀ (n bound : Nat), (selectedColumnTuplesUpTo m n bound).Nodup
+  | 0, _ => by simp [selectedColumnTuplesUpTo]
+  | n + 1, bound => by
+      rw [selectedColumnTuplesUpTo]
+      apply selectedColumnTuplesUpTo_flatMap_nodup
+      · exact (List.nodup_finRange m).filter _
+      · intro c _hc
+        exact selectedColumnTuplesUpTo_nodup m n c.val
+
+/-- The strictly-increasing column-tuple enumeration has no duplicates. -/
+theorem selectedColumnTuples_nodup {n m : Nat} :
+    (selectedColumnTuples n m).Nodup :=
+  selectedColumnTuplesUpTo_nodup m n m
+
 end Matrix
 end Hex
