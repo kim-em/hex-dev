@@ -132,8 +132,9 @@ def spanCoeffs [Lean.Grind.Field R] [DecidableEq R] (E : IsEchelonForm M D)
           D.echelon[(IsEchelonForm.pivotRow E pi)][D.pivotCols.get pi]
       else
         0
-  if rowCombination D.echelon echelonCoeffs = v then
-    some (Matrix.transpose D.transform * echelonCoeffs)
+  let coeffs := Matrix.transpose D.transform * echelonCoeffs
+  if rowCombination M coeffs = v then
+    some coeffs
   else
     none
 
@@ -144,10 +145,18 @@ def spanContains [Lean.Grind.Field R] [DecidableEq R] (E : IsEchelonForm M D)
 
 /-- `spanCoeffs` returns coefficients whose row combination equals `v`. -/
 theorem spanCoeffs_sound [Lean.Grind.Field R] [DecidableEq R]
-    (E : IsEchelonForm M D) (hpiv : E.HasNonzeroPivots) (v : Vector R m)
+    (E : IsEchelonForm M D) (_hpiv : E.HasNonzeroPivots) (v : Vector R m)
     (c : Vector R n) :
     E.spanCoeffs v = some c → rowCombination M c = v := by
-  sorry
+  intro h
+  unfold spanCoeffs at h
+  dsimp only at h
+  split at h
+  · rename_i hspan
+    injection h with hc
+    subst c
+    exact hspan
+  · contradiction
 
 /-- Any vector in the row span produces some coefficients via `spanCoeffs`. -/
 theorem spanCoeffs_complete [Lean.Grind.Field R] [DecidableEq R]
