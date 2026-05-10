@@ -1111,6 +1111,76 @@ private theorem rref_final_shape (M : Matrix R n m) :
       transform := 1
       pivots := [] } (rrefLoop_initial_shape M)
 
+/-- The canonical-column invariant is preserved through `rrefLoop`. -/
+private theorem rrefLoop_canonical :
+    ∀ (fuel col : Nat) (state : RrefState R n m),
+      RrefShapeInvariant (R := R) (n := n) (m := m) col state →
+      RrefCanonicalInvariant (R := R) (n := n) (m := m) state →
+      RrefCanonicalInvariant (R := R) (n := n) (m := m)
+        (rrefLoop (R := R) (n := n) (m := m) col fuel state) := by
+  intro fuel
+  induction fuel with
+  | zero =>
+      intro col state _hshape hcanon
+      simpa [rrefLoop] using hcanon
+  | succ fuel ih =>
+      intro col state hshape hcanon
+      unfold rrefLoop
+      by_cases hRow : state.row < n
+      · rw [dif_pos hRow]
+        by_cases hCol : col < m
+        · rw [dif_pos hCol]
+          cases hpivot : findPivot? state.echelon ⟨col, hCol⟩ state.row with
+          | none =>
+              simpa [hpivot] using
+                ih (col + 1) state (hshape.mono_col (Nat.le_succ col)) hcanon
+          | some pivot =>
+              let colFin : Fin m := ⟨col, hCol⟩
+              let target : Fin n := ⟨state.row, hRow⟩
+              let swappedEchelon := rowSwap state.echelon target pivot
+              let swappedTransform := rowSwap state.transform target pivot
+              let pivotVal := swappedEchelon[target][colFin]
+              let scaledEchelon := rowScale swappedEchelon target pivotVal⁻¹
+              let scaledTransform := rowScale swappedTransform target pivotVal⁻¹
+              let eliminated := eliminateColumn scaledEchelon scaledTransform target colFin
+              let nextState : RrefState R n m :=
+                { row := state.row + 1
+                  echelon := eliminated.1
+                  transform := eliminated.2
+                  pivots := state.pivots.concat colFin }
+              have hnext_shape :
+                  RrefShapeInvariant (R := R) (n := n) (m := m) (col + 1) nextState := by
+                simpa [nextState, colFin] using
+                  rrefShapeInvariant_concat (R := R) (n := n) (m := m)
+                    (col := col) (state := state) hshape hRow hCol
+                    eliminated.1 eliminated.2
+              have hnext_canon :
+                  RrefCanonicalInvariant (R := R) (n := n) (m := m) nextState := by
+                simpa [nextState, colFin, target, swappedEchelon,
+                  swappedTransform, pivotVal, scaledEchelon, scaledTransform,
+                  eliminated] using
+                  rrefCanonicalInvariant_pivot_step (R := R) (n := n) (m := m)
+                    (col := col) (state := state) hshape hcanon hRow hCol hpivot
+              simpa [hpivot, nextState, colFin, target, swappedEchelon,
+                swappedTransform, pivotVal, scaledEchelon, scaledTransform,
+                eliminated] using
+                ih (col + 1) nextState hnext_shape hnext_canon
+        · rw [dif_neg hCol]
+          exact hcanon
+      · rw [dif_neg hRow]
+        exact hcanon
+
+private theorem rref_final_canonical (M : Matrix R n m) :
+    RrefCanonicalInvariant (R := R) (n := n) (m := m)
+      (rrefLoop 0 m
+        { row := 0
+          echelon := M
+          transform := 1
+          pivots := [] }) := by
+  exact rrefLoop_canonical (R := R) (n := n) (m := m) m 0
+    { row := 0, echelon := M, transform := 1, pivots := [] }
+    (rrefLoop_initial_shape M) (rrefLoop_initial_canonical M)
+
 /-- `rrefLoop` preserves existence of a left inverse for the transform. -/
 private theorem rrefLoop_left_inverse_preserve (col fuel : Nat)
     (state : RrefState R n m)
@@ -1336,6 +1406,19 @@ private theorem rref_transform_mul (M : Matrix R n m) :
 
 /-- The computed `rref` data satisfies the `IsRREF` contract. -/
 theorem rref_isRREF (M : Matrix R n m) : IsRREF M (rref M) := by
+  let final := rrefLoop 0 m
+    { row := 0, echelon := M, transform := 1, pivots := [] }
+  have hcanon : RrefCanonicalInvariant (R := R) (n := n) (m := m) final := by
+    simpa [final] using rref_final_canonical M
+  have hshape : RrefShapeInvariant (R := R) (n := n) (m := m) m final := by
+    simpa [final] using rref_final_shape M
+  have hrank_eq : (rref M).rank = final.pivots.length := by simp [rref, final]
+  have hechelon_eq : (rref M).echelon = final.echelon := by simp [rref, final]
+  have hpivotCol_get : ∀ (i : Fin (rref M).rank)
+      (hi : i.val < final.pivots.length),
+      ((rref M).pivotCols.get i).val = (final.pivots[i.val]'hi).val := by
+    intro i _hi
+    simp [rref, final, Vector.get, List.getElem_toArray]
   refine
     { toIsEchelonForm :=
         { transform_mul := rref_transform_mul M
@@ -1344,11 +1427,50 @@ theorem rref_isRREF (M : Matrix R n m) : IsRREF M (rref M) := by
           rank_le_n := rref_rank_le_n M
           rank_le_m := rref_rank_le_m M
           pivotCols_sorted := rref_pivotCols_sorted M
-          below_pivot_zero := ?_
-          zero_row := ?_ }
-      pivot_one := ?_
-      above_pivot_zero := ?_ }
-  all_goals sorry
+          below_pivot_zero := ?bpz
+          zero_row := ?zr }
+      pivot_one := ?po
+      above_pivot_zero := ?apz }
+  case po =>
+    intro i
+    have hi_lt_len : i.val < final.pivots.length := hrank_eq ▸ i.isLt
+    have hin : i.val < n := by
+      have hrow_le : final.row ≤ n := hshape.row_le_n
+      have hrow_eq : final.row = final.pivots.length := hshape.row_eq_length
+      omega
+    have hentry := hcanon.pivot_entry_one i.val hi_lt_len hin
+    have hcol_eq : (rref M).pivotCols.get i = final.pivots[i.val] :=
+      Fin.ext (hpivotCol_get i hi_lt_len)
+    have hech : (rref M).echelon[i][(rref M).pivotCols.get i] =
+        final.echelon[(⟨i.val, hin⟩ : Fin n)][final.pivots[i.val]] := by
+      simp only [hechelon_eq, hcol_eq]
+      rfl
+    rw [hech]
+    exact hentry
+  case apz =>
+    intro i j hji
+    have hi_lt_len : i.val < final.pivots.length := hrank_eq ▸ i.isLt
+    have hentry := hcanon.other_entry_zero i.val hi_lt_len j (Nat.ne_of_lt hji)
+    have hcol_eq : (rref M).pivotCols.get i = final.pivots[i.val] :=
+      Fin.ext (hpivotCol_get i hi_lt_len)
+    have hech : (rref M).echelon[j][(rref M).pivotCols.get i] =
+        final.echelon[j][final.pivots[i.val]] := by
+      simp only [hcol_eq, hechelon_eq]
+    rw [hech]
+    exact hentry
+  case bpz =>
+    intro i j hij
+    have hi_lt_len : i.val < final.pivots.length := hrank_eq ▸ i.isLt
+    have hentry := hcanon.other_entry_zero i.val hi_lt_len j (Nat.ne_of_gt hij)
+    have hcol_eq : (rref M).pivotCols.get i = final.pivots[i.val] :=
+      Fin.ext (hpivotCol_get i hi_lt_len)
+    have hech : (rref M).echelon[j][(rref M).pivotCols.get i] =
+        final.echelon[j][final.pivots[i.val]] := by
+      simp only [hcol_eq, hechelon_eq]
+    rw [hech]
+    exact hentry
+  case zr =>
+    sorry
 
 end FieldAlgorithms
 
