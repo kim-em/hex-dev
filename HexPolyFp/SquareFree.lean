@@ -2829,6 +2829,9 @@ private def squareFreeFactorCoprimeRel :
     SquareFreeFactor p → SquareFreeFactor p → Prop :=
   fun a b => (normalizeMonic (DensePoly.gcd a.factor b.factor)).2 = 1
 
+private def squareFreeFactorSquareFreeRel (sf : SquareFreeFactor p) : Prop :=
+  (normalizeMonic (DensePoly.gcd sf.factor (DensePoly.derivative sf.factor))).2 = 1
+
 private inductive yunFactorsPairwiseReachable :
     FpPoly p → FpPoly p → Nat → Prop
   | derivativeSplit (hp : Hex.Nat.Prime p) (f : FpPoly p) (fuel : Nat)
@@ -3923,8 +3926,50 @@ private def yunFactorsStepsSquareFree (c w : FpPoly p) : Nat → Prop
         (if isOne z then
           True
         else
-          DensePoly.gcd z (DensePoly.derivative z) = 1) ∧
+          (normalizeMonic (DensePoly.gcd z (DensePoly.derivative z))).2 = 1) ∧
           yunFactorsStepsSquareFree y (w / y) fuel
+
+private theorem yunFactorsStepsSquareFree_of_reachable
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (fuel : Nat)
+    (hreachable : yunFactorsPairwiseReachable c w fuel) :
+    yunFactorsStepsSquareFree c w fuel := by
+  induction fuel generalizing c w with
+  | zero =>
+      simp [yunFactorsStepsSquareFree]
+  | succ fuel ih =>
+      by_cases hc : isOne c
+      · simp [yunFactorsStepsSquareFree, hc]
+      · let y := DensePoly.gcd c w
+        let z := c / y
+        have hcurrent :
+            ∀ d : FpPoly p,
+              d ∣ c → d ∣ DensePoly.derivative c → d ∣ (1 : FpPoly p) :=
+          yunFactorsPairwiseReachable_current_squarefree c w (fuel + 1) hreachable
+        have hz_dvd_c : z ∣ c := by
+          refine ⟨y, ?_⟩
+          simpa [z, y] using (div_gcd_mul_reconstruct c w).symm
+        have hz_squarefree :
+            ∀ d : FpPoly p,
+              d ∣ z → d ∣ DensePoly.derivative z → d ∣ (1 : FpPoly p) :=
+          squarefree_factor_of_squarefree hz_dvd_c hcurrent
+        have hgcd_dvd_one :
+            DensePoly.gcd z (DensePoly.derivative z) ∣ (1 : FpPoly p) :=
+          hz_squarefree (DensePoly.gcd z (DensePoly.derivative z))
+            (DensePoly.gcd_dvd_left z (DensePoly.derivative z))
+            (DensePoly.gcd_dvd_right z (DensePoly.derivative z))
+        have hnormalized :
+            (normalizeMonic (DensePoly.gcd z (DensePoly.derivative z))).2 = 1 :=
+          normalizeMonic_eq_one_of_dvd_one hgcd_dvd_one
+        have htail_reachable :
+            yunFactorsPairwiseReachable y (w / y) fuel := by
+          simpa [y] using yunFactorsPairwiseReachable_step c w fuel hreachable
+        have htail : yunFactorsStepsSquareFree y (w / y) fuel :=
+          ih y (w / y) htail_reachable
+        by_cases hz : isOne z
+        · simpa [yunFactorsStepsSquareFree, hc, y, z, hz] using htail
+        · simpa [yunFactorsStepsSquareFree, hc, y, z, hz] using
+            And.intro hnormalized htail
 
 private theorem yunFactorsStepsSquareFree_of_derivative_split
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (fuel : Nat)
@@ -3933,16 +3978,20 @@ private theorem yunFactorsStepsSquareFree_of_derivative_split
       (f / DensePoly.gcd f (DensePoly.derivative f))
       (DensePoly.gcd f (DensePoly.derivative f))
       fuel := by
-  sorry
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  exact yunFactorsStepsSquareFree_of_reachable
+    (f / DensePoly.gcd f (DensePoly.derivative f))
+    (DensePoly.gcd f (DensePoly.derivative f))
+    fuel
+    (yunFactorsPairwiseReachable_of_derivative_split hp f fuel hdf)
 
 private theorem yunFactors_factors_squareFree_of_steps
     (c w : FpPoly p) (multiplicity fuel : Nat)
     (accRev : List (SquareFreeFactor p))
     (hsteps : yunFactorsStepsSquareFree c w fuel)
-    (hacc :
-      ∀ sf ∈ accRev.reverse, DensePoly.gcd sf.factor (DensePoly.derivative sf.factor) = 1) :
+    (hacc : ∀ sf ∈ accRev.reverse, squareFreeFactorSquareFreeRel sf) :
     ∀ sf ∈ (yunFactors c w multiplicity fuel accRev).1.reverse,
-      DensePoly.gcd sf.factor (DensePoly.derivative sf.factor) = 1 := by
+      squareFreeFactorSquareFreeRel sf := by
   induction fuel generalizing c w multiplicity accRev with
   | zero =>
       simpa [yunFactors] using hacc
@@ -3957,7 +4006,7 @@ private theorem yunFactors_factors_squareFree_of_steps
             (if isOne z then
               True
             else
-              DensePoly.gcd z (DensePoly.derivative z) = 1) ∧
+              (normalizeMonic (DensePoly.gcd z (DensePoly.derivative z))).2 = 1) ∧
               yunFactorsStepsSquareFree y (w / y) fuel := by
           simpa [yunFactorsStepsSquareFree, hc, y, z] using hsteps
         have hsteps_tail : yunFactorsStepsSquareFree y (w / y) fuel := by
@@ -3967,16 +4016,17 @@ private theorem yunFactors_factors_squareFree_of_steps
             ih y (w / y) (multiplicity + 1) accRev hsteps_tail hacc
         · have hacc' :
               ∀ sf ∈ ({ factor := z, multiplicity := multiplicity } :: accRev).reverse,
-                DensePoly.gcd sf.factor (DensePoly.derivative sf.factor) = 1 := by
+                squareFreeFactorSquareFreeRel sf := by
             intro sf hsf
             rw [List.reverse_cons] at hsf
             rcases List.mem_append.mp hsf with hsf | hsf
             · exact hacc sf hsf
             · simp only [List.mem_singleton] at hsf
               subst sf
-              have hstep : DensePoly.gcd z (DensePoly.derivative z) = 1 := by
+              have hstep :
+                  (normalizeMonic (DensePoly.gcd z (DensePoly.derivative z))).2 = 1 := by
                 simpa [hz] using hsteps_nonone.1
-              simpa [z, y] using hstep
+              simpa [squareFreeFactorSquareFreeRel, z, y] using hstep
           simpa [y, z, hz] using
             ih y (w / y) (multiplicity + 1)
               ({ factor := z, multiplicity := multiplicity } :: accRev) hsteps_tail hacc'
@@ -3985,12 +4035,11 @@ private theorem yunFactors_factors_squareFree_of_derivative_split
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
     (accRev : List (SquareFreeFactor p))
     (hdf : (DensePoly.derivative f).isZero ≠ true)
-    (hacc :
-      ∀ sf ∈ accRev.reverse, DensePoly.gcd sf.factor (DensePoly.derivative sf.factor) = 1) :
+    (hacc : ∀ sf ∈ accRev.reverse, squareFreeFactorSquareFreeRel sf) :
     ∀ sf ∈
         (yunFactors (f / DensePoly.gcd f (DensePoly.derivative f))
           (DensePoly.gcd f (DensePoly.derivative f)) multiplicity fuel accRev).1.reverse,
-      DensePoly.gcd sf.factor (DensePoly.derivative sf.factor) = 1 := by
+      squareFreeFactorSquareFreeRel sf := by
   apply yunFactors_factors_squareFree_of_steps
   · exact yunFactorsStepsSquareFree_of_derivative_split hp f fuel hdf
   · exact hacc
@@ -3998,10 +4047,9 @@ private theorem yunFactors_factors_squareFree_of_derivative_split
 private theorem squareFreeAuxRev_factors_squareFree
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
     (accRev : List (SquareFreeFactor p))
-    (hacc :
-      ∀ sf ∈ accRev.reverse, DensePoly.gcd sf.factor (DensePoly.derivative sf.factor) = 1) :
+    (hacc : ∀ sf ∈ accRev.reverse, squareFreeFactorSquareFreeRel sf) :
     ∀ sf ∈ (squareFreeAuxRev f multiplicity fuel accRev).reverse,
-      DensePoly.gcd sf.factor (DensePoly.derivative sf.factor) = 1 := by
+      squareFreeFactorSquareFreeRel sf := by
   induction fuel generalizing f multiplicity accRev with
   | zero =>
       simpa [squareFreeAuxRev] using hacc
@@ -4018,7 +4066,7 @@ private theorem squareFreeAuxRev_factors_squareFree
           let loop := yunFactors c g multiplicity fuel accRev
           have hloop :
               ∀ sf ∈ loop.1.reverse,
-                DensePoly.gcd sf.factor (DensePoly.derivative sf.factor) = 1 := by
+                squareFreeFactorSquareFreeRel sf := by
             simpa [loop, c, g] using
               yunFactors_factors_squareFree_of_derivative_split hp f multiplicity fuel
                 accRev hdf hacc
@@ -4174,11 +4222,41 @@ theorem squareFree_weightedProduct (hp : Hex.Nat.Prime p) (f : FpPoly p) :
 
 theorem squareFree_factors_squareFree (hp : Hex.Nat.Prime p) (f : FpPoly p) :
     let d := squareFreeDecomposition hp f
-    ∀ sf ∈ d.factors, DensePoly.gcd sf.factor (DensePoly.derivative sf.factor) = 1 := by
+    ∀ sf ∈ d.factors,
+      (normalizeMonic (DensePoly.gcd sf.factor (DensePoly.derivative sf.factor))).2 = 1 := by
   unfold squareFreeDecomposition squareFreeAux
   apply squareFreeAuxRev_factors_squareFree hp
   intro sf hsf
   simp at hsf
+
+private instance squareFreeGuardBoundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+
+private theorem prime_five_squareFree_guard : Hex.Nat.Prime 5 := by
+  constructor
+  · decide
+  · intro m hm
+    have hmle : m ≤ 5 := Nat.le_of_dvd (by decide : 0 < 5) hm
+    have hcases : m = 0 ∨ m = 1 ∨ m = 2 ∨ m = 3 ∨ m = 4 ∨ m = 5 := by omega
+    rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl
+    · simp at hm
+    · exact Or.inl rfl
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · exact Or.inr rfl
+
+private def polyFiveSquareFreeGuard (coeffs : Array Nat) : FpPoly 5 :=
+  ofCoeffs (coeffs.map (fun n => ZMod64.ofNat 5 n))
+
+private def coeffNatsSquareFreeGuard (f : FpPoly 5) : List Nat :=
+  f.toArray.toList.map ZMod64.toNat
+
+#guard
+  let f := polyFiveSquareFreeGuard #[1, 1, 1]
+  let d := squareFreeDecomposition prime_five_squareFree_guard f
+  d.factors.all (fun sf =>
+    coeffNatsSquareFreeGuard
+      (normalizeMonic (DensePoly.gcd sf.factor (DensePoly.derivative sf.factor))).2 == [1])
 
 private theorem linearPow_eq_powLinear (f : FpPoly p) (n : Nat) :
     FpPoly.linearPow f n = powLinear f n := by
