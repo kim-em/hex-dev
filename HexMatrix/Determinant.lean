@@ -4113,6 +4113,127 @@ private theorem det_columnSumMatrix_expand_column
   rw [hself] at hsum
   exact hsum
 
+/-- Matrix obtained during the ordered column expansion: columns with
+`choices c = some k` have already been specialized to source column `k`, while
+unassigned columns remain the finite coefficient-weighted column sum. -/
+private def columnChoiceMatrix {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (choices : Fin n → Option (Fin m)) : Matrix R n n :=
+  ofFn fun r c =>
+    match choices c with
+    | some k => source[r][k]
+    | none => (List.finRange m).foldl (fun acc k => acc + coeff[c][k] * source[r][k]) 0
+
+private def setColumnChoice {n m : Nat} (choices : Fin n → Option (Fin m))
+    (dst : Fin n) (k : Fin m) : Fin n → Option (Fin m) :=
+  fun c => if c = dst then some k else choices c
+
+@[simp] private theorem columnChoiceMatrix_entry
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (choices : Fin n → Option (Fin m)) (r c : Fin n) :
+    (columnChoiceMatrix source coeff choices)[r][c] =
+      match choices c with
+      | some k => source[r][k]
+      | none => (List.finRange m).foldl (fun acc k => acc + coeff[c][k] * source[r][k]) 0 := by
+  simp [columnChoiceMatrix, ofFn]
+
+private theorem columnChoiceMatrix_none
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) :
+    columnChoiceMatrix source coeff (fun _ => none) = columnSumMatrix source coeff := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro c hc
+  change
+    (columnChoiceMatrix source coeff (fun _ => none))[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
+      (columnSumMatrix source coeff)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+  rw [columnChoiceMatrix_entry, columnSumMatrix_entry]
+
+private theorem colReplace_columnChoiceMatrix_none_self
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (choices : Fin n → Option (Fin m)) (dst : Fin n)
+    (hchoice : choices dst = none) :
+    colReplace (columnChoiceMatrix source coeff choices) dst
+        (fun r => (List.finRange m).foldl
+          (fun acc k => acc + coeff[dst][k] * source[r][k]) 0) =
+      columnChoiceMatrix source coeff choices := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro c hc
+  change
+    (colReplace (columnChoiceMatrix source coeff choices) dst
+        (fun r => (List.finRange m).foldl
+          (fun acc k => acc + coeff[dst][k] * source[r][k]) 0))[
+          (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
+      (columnChoiceMatrix source coeff choices)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+  rw [colReplace_get]
+  by_cases hcol : (⟨c, hc⟩ : Fin n) = dst
+  · subst dst
+    rw [if_pos rfl]
+    rw [columnChoiceMatrix_entry]
+    rw [hchoice]
+  · simp [hcol]
+
+private theorem colReplace_columnChoiceMatrix_set_some
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (choices : Fin n → Option (Fin m)) (dst : Fin n)
+    (k : Fin m) :
+    colReplace (columnChoiceMatrix source coeff choices) dst (fun r => source[r][k]) =
+      columnChoiceMatrix source coeff (setColumnChoice choices dst k) := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro c hc
+  change
+    (colReplace (columnChoiceMatrix source coeff choices) dst (fun r => source[r][k]))[
+        (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
+      (columnChoiceMatrix source coeff (setColumnChoice choices dst k))[
+        (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+  rw [colReplace_get]
+  by_cases hcol : (⟨c, hc⟩ : Fin n) = dst
+  · subst dst
+    rw [if_pos rfl]
+    rw [columnChoiceMatrix_entry]
+    simp [setColumnChoice]
+  · rw [if_neg hcol]
+    rw [columnChoiceMatrix_entry, columnChoiceMatrix_entry]
+    have hset : setColumnChoice choices dst k (⟨c, hc⟩ : Fin n) = choices (⟨c, hc⟩ : Fin n) := by
+      unfold setColumnChoice
+      rw [if_neg hcol]
+    rw [hset]
+
+private theorem det_columnChoiceMatrix_expand_column
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (choices : Fin n → Option (Fin m)) (dst : Fin n)
+    (hchoice : choices dst = none) :
+    det (columnChoiceMatrix source coeff choices) =
+      (List.finRange m).foldl
+        (fun acc k =>
+          acc + coeff[dst][k] *
+            det (columnChoiceMatrix source coeff (setColumnChoice choices dst k))) 0 := by
+  have hsum :=
+    det_colReplace_sum_list
+      (columnChoiceMatrix source coeff choices) dst (List.finRange m)
+      (fun k => coeff[dst][k]) (fun k r => source[r][k])
+  have hself := colReplace_columnChoiceMatrix_none_self source coeff choices dst hchoice
+  rw [hself] at hsum
+  have hreplace :
+      (List.finRange m).foldl
+          (fun acc k =>
+            acc + coeff[dst][k] *
+              det (colReplace (columnChoiceMatrix source coeff choices) dst
+                (fun r => source[r][k]))) 0 =
+        (List.finRange m).foldl
+          (fun acc k =>
+            acc + coeff[dst][k] *
+              det (columnChoiceMatrix source coeff (setColumnChoice choices dst k))) 0 := by
+    apply foldl_det_sum_congr
+    intro k _hmem
+    rw [colReplace_columnChoiceMatrix_set_some source coeff choices dst k]
+  rw [hreplace] at hsum
+  exact hsum
+
 /-- A determinant with two equal rows is zero. -/
 theorem det_eq_zero_of_row_eq {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) (h : src ≠ dst)
@@ -4150,6 +4271,20 @@ def columnTupleMatrix {R : Type u} {n m : Nat}
     (A : Matrix R n m) (cols : Fin n → Fin m) (r c : Fin n) :
     (columnTupleMatrix A cols)[r][c] = A[r][cols c] := by
   simp [columnTupleMatrix, ofFn]
+
+private theorem columnChoiceMatrix_some
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (cols : Fin n → Fin m) :
+    columnChoiceMatrix source coeff (fun c => some (cols c)) = columnTupleMatrix source cols := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro c hc
+  change
+    (columnChoiceMatrix source coeff (fun c => some (cols c)))[(⟨r, hr⟩ : Fin n)][
+        (⟨c, hc⟩ : Fin n)] =
+      (columnTupleMatrix source cols)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+  rw [columnChoiceMatrix_entry, columnTupleMatrix_entry]
 
 /-- Interpret an ordered column tuple vector as its column-selection function. -/
 def columnTupleVectorFn {n m : Nat} (cols : Vector (Fin m) n) : Fin n → Fin m :=
