@@ -1660,7 +1660,11 @@ def bhksProjectedRows (L : BhksLatticeBasis)
     reducedRowCount := reducedRows.size
     projectedRows := bhksCutProjectReducedRows L reducedBasis }
 
-private theorem bhksLatticeBasis_independent (L : BhksLatticeBasis) :
+/-- BHKS `[ I_r | A_tilde ; 0 | diag(p^(a-l_j)) ]` lattice basis is linearly
+independent over `Int`. The block-triangular structure makes this a
+short combinatorial argument; the proof is a Group B obligation tracked
+elsewhere. -/
+theorem bhksLatticeBasis_independent (L : BhksLatticeBasis) :
     L.basis.independent := by
   sorry
 
@@ -1833,22 +1837,30 @@ def bhksIndicatorCandidate?
       | some quotient => some (candidate, quotient)
       | none => none
 
-private def bhksIndicatorOneCount (r : Nat) (indicator : Array Int) : Nat :=
+def bhksIndicatorOneCount (r : Nat) (indicator : Array Int) : Nat :=
   (List.range r).foldl
     (fun count i => if indicator.getD i 0 == 1 then count + 1 else count)
     0
 
-private def bhksIndicatorAllOnes (r : Nat) (indicator : Array Int) : Bool :=
+def bhksIndicatorAllOnes (r : Nat) (indicator : Array Int) : Bool :=
   indicator.size == r && bhksIndicatorOneCount r indicator == r
 
-private def bhksDegenerateIndicatorPartition
+/-- The recovery early-bailout predicate: the projected lattice is empty, the
+indicator partition is empty, or the indicator partition is the trivial
+all-ones single class. -/
+def bhksDegenerateIndicatorPartition
     (L : BhksProjectedRows) (indicators : Array (Array Int)) : Bool :=
   indicators.isEmpty ||
     L.projectedRows.isEmpty ||
     (indicators.size == 1 &&
       bhksIndicatorAllOnes L.factorCount (indicators.getD 0 #[]))
 
-private def bhksIndicatorCandidates?
+/-- Reconstruct and verify every BHKS equivalence-class indicator candidate.
+
+Folds `bhksIndicatorCandidate?` over the list of indicator vectors, pushing the
+verified candidate factor onto the accumulator on success and short-circuiting
+to `none` on the first reconstruction failure. -/
+def bhksIndicatorCandidates?
     (f : ZPoly) (d : LiftData) (indicators : Array (Array Int)) :
     Option (Array ZPoly) :=
   indicators.foldl

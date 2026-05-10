@@ -3,6 +3,7 @@ import HexBerlekampZassenhausMathlib.BadVector
 import HexBerlekampZassenhausMathlib.BHKSBound
 import HexBerlekampZassenhausMathlib.Conformance
 import HexBerlekampZassenhausMathlib.Lattice
+import HexBerlekampZassenhausMathlib.Recovery
 import HexBerlekampZassenhausMathlib.Resultant
 import HexBerlekampZassenhausMathlib.TerminationBound
 
