@@ -3669,6 +3669,66 @@ private theorem yunFactors_current_repeated_coprime_of_common_dvd_one
       (dvd_trans_poly htail_dvd hright_dvd)
       hcommon
 
+set_option maxHeartbeats 800000 in
+private theorem yunFactors_factors_coprime_repeated_of_reachable
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (multiplicity fuel : Nat)
+    (hreachable : yunFactorsPairwiseReachable c w fuel) :
+    let loop := yunFactors c w multiplicity fuel []
+    ∀ a ∈ loop.1.reverse,
+      squareFreeFactorCoprimeRel
+        a { factor := loop.2, multiplicity := multiplicity * p } := by
+  induction fuel generalizing c w multiplicity with
+  | zero =>
+      simp [yunFactors]
+  | succ fuel ih =>
+      simp only [yunFactors]
+      by_cases hc : isOne c
+      · simp [hc]
+      · simp [hc]
+        let y := DensePoly.gcd c w
+        let z := c / y
+        let sf : SquareFreeFactor p := { factor := z, multiplicity := multiplicity }
+        let tail := yunFactors y (w / y) (multiplicity + 1) fuel []
+        have htail_reachable :
+            yunFactorsPairwiseReachable y (w / y) fuel := by
+          simpa [y] using yunFactorsPairwiseReachable_step c w fuel hreachable
+        have htail_cross :
+            ∀ a ∈ tail.1.reverse,
+              squareFreeFactorCoprimeRel
+                a { factor := tail.2, multiplicity := (multiplicity + 1) * p } := by
+          simpa [tail] using ih y (w / y) (multiplicity + 1) htail_reachable
+        by_cases hz : isOne z
+        · simpa [y, z, tail, hz] using htail_cross
+        · have hrev :
+              (yunFactors y (w / y) (multiplicity + 1) fuel [sf]).1.reverse =
+                [sf] ++ tail.1.reverse := by
+            simpa [sf, tail] using
+              yunFactors_reverse_append y (w / y) (multiplicity + 1) fuel [sf]
+          have hrepeated :
+              (yunFactors y (w / y) (multiplicity + 1) fuel [sf]).2 = tail.2 := by
+            simpa [sf, tail] using
+              yunFactors_repeated_eq_nil y (w / y) (multiplicity + 1) fuel [sf]
+          have hsf_cross :
+              squareFreeFactorCoprimeRel
+                sf { factor := tail.2, multiplicity := multiplicity * p } := by
+            simpa [y, z, sf, tail] using
+              yunFactors_current_repeated_coprime_of_common_dvd_one
+                c w multiplicity fuel
+                (yunFactorsPairwiseReachable_common_dvd_one c w fuel hreachable)
+          intro a ha
+          have ha_rev :
+              a ∈ (yunFactors y (w / y) (multiplicity + 1) fuel [sf]).1.reverse := by
+            apply List.mem_reverse.mpr
+            simpa [y, z, sf, hz] using ha
+          rw [hrev] at ha_rev
+          rcases List.mem_append.mp ha_rev with ha | ha
+          · simp only [List.mem_singleton] at ha
+            subst a
+            simpa [y, z, sf, hz, hrepeated] using hsf_cross
+          · have htail_a := htail_cross a ha
+            simpa [y, z, sf, hz, hrepeated, squareFreeFactorCoprimeRel] using htail_a
+
 private theorem yunFactorsPairwiseReady_succ_of_common_dvd_one
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p) (multiplicity fuel : Nat)
