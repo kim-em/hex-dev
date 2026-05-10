@@ -1757,6 +1757,23 @@ private theorem gcd_mul_div_right_reconstruct [ZMod64.PrimeModulus p] (c w : FpP
   rw [mul_comm]
   exact div_gcd_right_mul_reconstruct c w
 
+private theorem gcd_isZero_false_of_right_isZero_false
+    [ZMod64.PrimeModulus p] (a b : FpPoly p)
+    (hb : b.isZero = false) :
+    (DensePoly.gcd a b).isZero = false := by
+  cases hg : (DensePoly.gcd a b).isZero
+  · rfl
+  · have hg_zero : DensePoly.gcd a b = 0 :=
+      eq_zero_of_isZero_true (DensePoly.gcd a b) hg
+    rcases DensePoly.gcd_dvd_right a b with ⟨q, hq⟩
+    have hb_zero : b = 0 := by
+      rw [hq, hg_zero, zero_mul]
+    have hb_true : b.isZero = true := by
+      rw [hb_zero]
+      rfl
+    rw [hb_true] at hb
+    cases hb
+
 private theorem yunFactorsContribution_step_split
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p) :
