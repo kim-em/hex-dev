@@ -1651,6 +1651,26 @@ private theorem pthRoot_frobenius_of_derivative_zero
   · simp [hn]
   · simp [hn, derivative_zero_coeff_non_pmultiple hp f n hdf hn]
 
+private theorem pthRoot_dvd_self_of_derivative_zero
+    (hp : Hex.Nat.Prime p) (f : FpPoly p)
+    (hzero : f.isZero = false)
+    (hdf : (DensePoly.derivative f).isZero = true) :
+    pthRoot f ∣ f := by
+  have hp_pos : 0 < p := by
+    have htwo : 2 ≤ p := Hex.Nat.Prime.two_le hp
+    omega
+  refine ⟨pow (pthRoot f) (p - 1), ?_⟩
+  calc
+    f = pow (pthRoot f) p := by
+      exact (pthRoot_frobenius_of_derivative_zero hp f hzero hdf).symm
+    _ = pow (pthRoot f) (1 + (p - 1)) := by
+      have hp_eq : 1 + (p - 1) = p := by omega
+      rw [hp_eq]
+    _ = pow (pthRoot f) 1 * pow (pthRoot f) (p - 1) := by
+      exact pow_add_exp (pthRoot f) 1 (p - 1)
+    _ = pthRoot f * pow (pthRoot f) (p - 1) := by
+      rw [pow_one]
+
 private theorem pow_pow_mul
     (f : FpPoly p) (m n : Nat) (_hm : 0 < m) :
     pow (pow f n) m = pow f (m * n) := by
@@ -3019,6 +3039,39 @@ private theorem dvd_trans_poly
     _ = (a * x) * y := by rw [hx]
     _ = a * (x * y) := DensePoly.mul_assoc_poly a x y
 
+private theorem yunFactors_repeated_dvd_repeated_of_acc
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (i fuel : Nat) (accRev : List (SquareFreeFactor p)) :
+    (yunFactors c w i fuel accRev).2 ∣ w := by
+  induction fuel generalizing c w i accRev with
+  | zero =>
+      simp [yunFactors]
+      exact ⟨1, by rw [mul_one]⟩
+  | succ fuel ih =>
+      simp only [yunFactors]
+      by_cases hc : isOne c
+      · simp [hc]
+        exact ⟨1, by rw [mul_one]⟩
+      · simp [hc]
+        let y := DensePoly.gcd c w
+        let z := c / y
+        have hdiv_tail : w / y ∣ w := by
+          exact ⟨y, by simpa [y] using (div_gcd_right_mul_reconstruct c w).symm⟩
+        by_cases hz : isOne z
+        · exact dvd_trans_poly
+            (by simpa [y, z, hz] using ih y (w / y) (i + 1) accRev)
+            hdiv_tail
+        · let sf : SquareFreeFactor p := { factor := z, multiplicity := i }
+          exact dvd_trans_poly
+            (by simpa [y, z, hz, sf] using ih y (w / y) (i + 1) (sf :: accRev))
+            hdiv_tail
+
+private theorem yunFactors_repeated_dvd_repeated
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (i fuel : Nat) :
+    (yunFactors c w i fuel []).2 ∣ w := by
+  exact yunFactors_repeated_dvd_repeated_of_acc c w i fuel []
+
 private theorem dvd_one_of_mul_right_dvd_right
     [ZMod64.PrimeModulus p] {d g : FpPoly p}
     (hg : g.isZero = false) (hdiv : d * g ∣ g) :
@@ -3516,6 +3569,36 @@ private theorem yunStep_quotient_factor_coprime_of_common_dvd_one
   have hnormalized := normalizeMonic_eq_one_of_dvd_one hgcd_dvd_one
   simpa [squareFreeFactorCoprimeRel] using hnormalized
 
+private theorem yunStep_quotient_right_factor_coprime_of_common_dvd_one
+    [ZMod64.PrimeModulus p]
+    (c w factor : FpPoly p) (multiplicity tailMultiplicity : Nat)
+    (hfactor_dvd_w : factor ∣ w)
+    (hcommon :
+      ∀ d : FpPoly p,
+        d ∣ c / DensePoly.gcd c w →
+          d ∣ DensePoly.gcd c w →
+            d ∣ (1 : FpPoly p)) :
+    squareFreeFactorCoprimeRel
+      { factor := c / DensePoly.gcd c w, multiplicity := multiplicity }
+      { factor := factor, multiplicity := tailMultiplicity } := by
+  let z := c / DensePoly.gcd c w
+  let y := DensePoly.gcd c w
+  have hz_dvd_c : z ∣ c := by
+    refine ⟨y, ?_⟩
+    simpa [z, y] using (div_gcd_mul_reconstruct c w).symm
+  have hgcd_dvd_y :
+      DensePoly.gcd z factor ∣ y := by
+    apply DensePoly.dvd_gcd
+    · exact dvd_trans_poly (DensePoly.gcd_dvd_left z factor) hz_dvd_c
+    · exact dvd_trans_poly (DensePoly.gcd_dvd_right z factor) hfactor_dvd_w
+  have hgcd_dvd_one :
+      DensePoly.gcd z factor ∣ (1 : FpPoly p) :=
+    hcommon (DensePoly.gcd z factor)
+      (DensePoly.gcd_dvd_left z factor)
+      (by simpa [z, y] using hgcd_dvd_y)
+  have hnormalized := normalizeMonic_eq_one_of_dvd_one hgcd_dvd_one
+  simpa [squareFreeFactorCoprimeRel, z, y] using hnormalized
+
 private theorem yunFactors_current_tail_coprime_of_common_dvd_one
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p) (multiplicity fuel : Nat)
@@ -3534,6 +3617,53 @@ private theorem yunFactors_current_tail_coprime_of_common_dvd_one
     yunStep_quotient_factor_coprime_of_common_dvd_one
       (c / DensePoly.gcd c w) (DensePoly.gcd c w) sf.factor multiplicity sf.multiplicity
       hsf_dvd_current
+      hcommon
+
+private theorem yunFactors_current_repeated_coprime_of_common_dvd_one
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (multiplicity fuel : Nat)
+    (hcommon :
+      ∀ d : FpPoly p,
+        d ∣ c / DensePoly.gcd c w →
+          d ∣ DensePoly.gcd c w →
+            d ∣ (1 : FpPoly p)) :
+    let tail :=
+      yunFactors
+        (DensePoly.gcd c w)
+        (w / DensePoly.gcd c w)
+        (multiplicity + 1)
+        fuel
+        []
+    squareFreeFactorCoprimeRel
+      { factor := c / DensePoly.gcd c w, multiplicity := multiplicity }
+      { factor := tail.2, multiplicity := multiplicity * p } := by
+  dsimp
+  have htail_dvd :
+      (yunFactors
+        (DensePoly.gcd c w)
+        (w / DensePoly.gcd c w)
+        (multiplicity + 1)
+        fuel
+        []).2 ∣ w / DensePoly.gcd c w := by
+    exact yunFactors_repeated_dvd_repeated
+      (DensePoly.gcd c w)
+      (w / DensePoly.gcd c w)
+      (multiplicity + 1)
+      fuel
+  have hright_dvd : w / DensePoly.gcd c w ∣ w := by
+    exact ⟨DensePoly.gcd c w, (div_gcd_right_mul_reconstruct c w).symm⟩
+  exact
+    yunStep_quotient_right_factor_coprime_of_common_dvd_one
+      c w
+      (yunFactors
+        (DensePoly.gcd c w)
+        (w / DensePoly.gcd c w)
+        (multiplicity + 1)
+        fuel
+        []).2
+      multiplicity
+      (multiplicity * p)
+      (dvd_trans_poly htail_dvd hright_dvd)
       hcommon
 
 private theorem yunFactorsPairwiseReady_succ_of_common_dvd_one
