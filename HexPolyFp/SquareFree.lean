@@ -3284,6 +3284,42 @@ private theorem dvd_one_of_all_powers_dvd_nonzero
   rw [hd_const, ← scale_one_poly]
   exact dvd_scale_self_of_ne_zero hcoeff_ne (1 : FpPoly p)
 
+private theorem derivativeSplit_quotient_common_dvd_derivative_one
+    (hp : Hex.Nat.Prime p) (f : FpPoly p)
+    (hdf : (DensePoly.derivative f).isZero ≠ true) :
+    let g := DensePoly.gcd f (DensePoly.derivative f)
+    let c := f / g
+    ∀ d : FpPoly p,
+      d ∣ c → d ∣ DensePoly.derivative c → d ∣ (1 : FpPoly p) := by
+  dsimp
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  intro d hdc hddc
+  let g := DensePoly.gcd f (DensePoly.derivative f)
+  have hdf_false : (DensePoly.derivative f).isZero = false := by
+    cases h : (DensePoly.derivative f).isZero
+    · rfl
+    · exact False.elim (hdf h)
+  have hg_nonzero : g.isZero = false := by
+    simpa [g] using
+      gcd_isZero_false_of_right_isZero_false f (DensePoly.derivative f) hdf_false
+  have hbase : pow d 0 ∣ g := by
+    rw [pow_eq_powLinear]
+    change (1 : FpPoly p) ∣ g
+    exact ⟨g, by rw [one_mul]⟩
+  have hstep :
+      ∀ n, pow d n ∣ g → pow d (n + 1) ∣ g := by
+    intro n hpow
+    simpa [g] using
+      derivativeSplit_quotient_pow_succ_dvd_gcd f d hdc hddc n (by simpa [g] using hpow)
+  have hall : ∀ n : Nat, pow d n ∣ g := by
+    intro n
+    induction n with
+    | zero =>
+        exact hbase
+    | succ n ih =>
+        exact hstep n ih
+  exact dvd_one_of_all_powers_dvd_nonzero hg_nonzero hall
+
 private theorem normalizeMonic_eq_one_of_dvd_one
     [ZMod64.PrimeModulus p] {g : FpPoly p}
     (hdiv : g ∣ (1 : FpPoly p)) :
