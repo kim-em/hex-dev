@@ -698,6 +698,96 @@ theorem ratPolyPrimitivePart_rational_associate (f : DensePoly Rat) :
     ∃ unit : Rat, f = DensePoly.scale unit (toRatPoly (ratPolyPrimitivePart f)) := by
   exact ratPolyPrimitivePart_rational_associate_core f
 
+/--
+Gauss-style cancellation: if two primitive nonzero integer polynomials are
+rational associates with rational factor `unit`, then `unit` is `±1`.
+-/
+theorem rational_associate_primitive_unit
+    {p q : ZPoly} (hp : Primitive p) (_hp_ne : p ≠ 0)
+    (hq : Primitive q) (_hq_ne : q ≠ 0)
+    {unit : Rat}
+    (hunit : toRatPoly p = DensePoly.scale unit (toRatPoly q)) :
+    unit = 1 ∨ unit = -1 := by
+  -- Step 1: `unit.den * unit = unit.num` (as Rat).
+  have hden_rat_ne : ((unit.den : Nat) : Rat) ≠ 0 := by
+    exact_mod_cast unit.den_nz
+  have hunit_den_mul :
+      ((unit.den : Nat) : Rat) * unit = ((unit.num : Int) : Rat) := by
+    have h0 := unit.num_divInt_den
+    rw [Rat.divInt_eq_div] at h0
+    have h : ((unit.num : Int) : Rat) / ((unit.den : Nat) : Rat) = unit := by
+      push_cast at h0 ⊢
+      exact h0
+    have hdiv := Rat.div_mul_cancel
+      (a := ((unit.num : Int) : Rat)) (b := ((unit.den : Nat) : Rat)) hden_rat_ne
+    rw [h] at hdiv
+    rw [Rat.mul_comm]
+    exact hdiv
+  -- Step 2: clear denominators to obtain an integer-polynomial equation.
+  have hscale_eq :
+      DensePoly.scale ((unit.den : Nat) : Int) p =
+        DensePoly.scale unit.num q := by
+    apply DensePoly.ext_coeff
+    intro n
+    rw [DensePoly.coeff_scale (R := Int) ((unit.den : Nat) : Int) p n
+      (Int.mul_zero _)]
+    rw [DensePoly.coeff_scale (R := Int) unit.num q n (Int.mul_zero _)]
+    have hcoeff_n :=
+      congrArg (fun r : DensePoly Rat => r.coeff n) hunit
+    change (toRatPoly p).coeff n =
+      (DensePoly.scale unit (toRatPoly q)).coeff n at hcoeff_n
+    rw [coeff_toRatPoly] at hcoeff_n
+    rw [DensePoly.coeff_scale (R := Rat) unit (toRatPoly q) n
+      (Rat.mul_zero unit)] at hcoeff_n
+    rw [coeff_toRatPoly] at hcoeff_n
+    have hmul_eq :
+        ((unit.den : Nat) : Rat) * ((p.coeff n : Int) : Rat) =
+          ((unit.den : Nat) : Rat) * (unit * ((q.coeff n : Int) : Rat)) := by
+      rw [hcoeff_n]
+    rw [← Rat.mul_assoc, hunit_den_mul] at hmul_eq
+    -- Lift back to Int.
+    have hcast :
+        ((((unit.den : Nat) : Int) * p.coeff n : Int) : Rat) =
+          ((unit.num * q.coeff n : Int) : Rat) := by
+      push_cast
+      exact hmul_eq
+    exact_mod_cast hcast
+  -- Step 3: equate contents.
+  have hcontent_eq :
+      DensePoly.content (DensePoly.scale ((unit.den : Nat) : Int) p) =
+        DensePoly.content (DensePoly.scale unit.num q) := by
+    rw [hscale_eq]
+  rw [DensePoly.content_scale_int, DensePoly.content_scale_int] at hcontent_eq
+  have hcontent_p : DensePoly.content p = 1 := hp
+  have hcontent_q : DensePoly.content q = 1 := hq
+  rw [hcontent_p, hcontent_q, Int.mul_one, Int.mul_one] at hcontent_eq
+  rw [Int.natAbs_natCast] at hcontent_eq
+  have hden_eq_natAbs : unit.den = unit.num.natAbs := by
+    have h : ((unit.den : Nat) : Int) = ((unit.num.natAbs : Nat) : Int) := hcontent_eq
+    exact_mod_cast h
+  -- Step 4: use the reduced-form invariant.
+  have hreduced : Nat.gcd unit.num.natAbs unit.den = 1 := unit.reduced
+  rw [hden_eq_natAbs, Nat.gcd_self] at hreduced
+  -- hreduced : unit.num.natAbs = 1
+  have hden_one : unit.den = 1 := by rw [hden_eq_natAbs]; exact hreduced
+  rcases Int.natAbs_eq unit.num with hpos | hneg
+  · left
+    apply Rat.ext
+    · show unit.num = (1 : Rat).num
+      rw [hpos, hreduced]
+      rfl
+    · show unit.den = (1 : Rat).den
+      rw [hden_one]
+      rfl
+  · right
+    apply Rat.ext
+    · show unit.num = (-1 : Rat).num
+      rw [hneg, hreduced]
+      rfl
+    · show unit.den = (-1 : Rat).den
+      rw [hden_one]
+      rfl
+
 private theorem rat_scale_zero (p : DensePoly Rat) :
     DensePoly.scale 0 p = 0 := by
   apply DensePoly.ext_coeff

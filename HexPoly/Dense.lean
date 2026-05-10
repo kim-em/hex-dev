@@ -39,13 +39,13 @@ instance : DecidableEq (DensePoly R) := by
         exact congrArg DensePoly.coeffs hab)
 
 /-- Remove trailing zeros from a coefficient list without disturbing the remaining order. -/
-private def trimTrailingZerosList : List R → List R
+def trimTrailingZerosList : List R → List R
   | [] => []
   | a :: as =>
       let trimmed := trimTrailingZerosList as
       if trimmed = [] ∧ a = (Zero.zero : R) then [] else a :: trimmed
 
-private theorem trimTrailingZerosList_getD (coeffs : List R) (n : Nat) :
+theorem trimTrailingZerosList_getD (coeffs : List R) (n : Nat) :
     (trimTrailingZerosList coeffs).getD n (Zero.zero : R) =
       coeffs.getD n (Zero.zero : R) := by
   induction coeffs generalizing n with
@@ -67,7 +67,7 @@ private theorem trimTrailingZerosList_getD (coeffs : List R) (n : Nat) :
             simp
           · simpa [trimTrailingZerosList, htrim] using ih n
 
-private theorem trimTrailingZerosList_normalized (coeffs : List R) :
+theorem trimTrailingZerosList_normalized (coeffs : List R) :
     trimTrailingZerosList coeffs = [] ∨
       (trimTrailingZerosList coeffs).getLast? ≠ some (Zero.zero : R) := by
   induction coeffs with

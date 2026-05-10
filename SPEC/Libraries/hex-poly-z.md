@@ -40,9 +40,22 @@ Specialized polynomial arithmetic over `Z`.
 
 **Key properties:**
 - `primitivePart(f)` is primitive (content = 1)
-- Gauss's lemma (`content(f * g) = content(f) * content(g)`) is not
-  needed in this library — it transfers from Mathlib via the ring
-  equivalence in hex-poly-z-mathlib.
+- Gauss-style corollaries needed for downstream Mathlib-free
+  factorization live in this library. The general statement
+  `content(f * g) = content(f) * content(g)` still transfers from
+  Mathlib via the ring equivalence in hex-poly-z-mathlib, but the
+  Berlekamp–Zassenhaus Z-level reassembly path needs (at least) the
+  following primitive-product corollary directly here so its proof
+  stays Mathlib-free:
+  - `Primitive p → Primitive q → Primitive (p * q)` (used to discharge
+    `primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive`).
+  - The associated rational-associate cancellation
+    (`rational_associate_primitive_unit`): if two primitive nonzero
+    `ZPoly`s agree as rational associates with rational factor `u`,
+    then `u = ±1`.
+  - The signed integer reassembly
+    (`primitiveSquareFreeDecomposition_reassembly_signed`) for the
+    BZ Z-level recombination chain.
 
 **Units in `ℤ[x]`:**
 
