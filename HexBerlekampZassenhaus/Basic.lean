@@ -1888,6 +1888,72 @@ def bhksLatticeBasis (f : ZPoly) (p a : Nat) (liftedFactors : Array ZPoly) :
     cldRows
     basis }
 
+private theorem bhksLatticeBasis_factorCount_eq
+    (f : ZPoly) (p a : Nat) (liftedFactors : Array ZPoly) :
+    (bhksLatticeBasis f p a liftedFactors).factorCount = liftedFactors.size := by
+  rfl
+
+private theorem bhksLatticeBasis_coeffWidth_eq
+    (f : ZPoly) (p a : Nat) (liftedFactors : Array ZPoly) :
+    (bhksLatticeBasis f p a liftedFactors).coeffWidth = f.degree?.getD 0 := by
+  rfl
+
+private theorem bhksLatticeEntry_topLeft
+    (r n p a : Nat) (thresholds : Array Nat) (cldRows : Array (Array Int))
+    (i j : Fin (r + n)) (hi : i.val < r) (hj : j.val < r) :
+    bhksLatticeEntry r n p a thresholds cldRows i j =
+      if i.val = j.val then 1 else 0 := by
+  simp [bhksLatticeEntry, hi, hj]
+
+private theorem bhksLatticeEntry_bottomLeft
+    (r n p a : Nat) (thresholds : Array Nat) (cldRows : Array (Array Int))
+    (i j : Fin (r + n)) (hi : r ≤ i.val) (hj : j.val < r) :
+    bhksLatticeEntry r n p a thresholds cldRows i j = 0 := by
+  have hnot : ¬i.val < r := by
+    omega
+  simp [bhksLatticeEntry, hnot, hj]
+
+private theorem bhksLatticeEntry_bottomRight
+    (r n p a : Nat) (thresholds : Array Nat) (cldRows : Array (Array Int))
+    (i j : Fin (r + n)) (hi : r ≤ i.val) (hj : r ≤ j.val) :
+    bhksLatticeEntry r n p a thresholds cldRows i j =
+      let coord := i.val - r
+      if j.val - r = coord then
+        Int.ofNat (p ^ (a - thresholds.getD coord 0))
+      else
+        0 := by
+  have hnot_i : ¬i.val < r := by
+    omega
+  have hnot_j : ¬j.val < r := by
+    omega
+  simp [bhksLatticeEntry, hnot_i, hnot_j]
+
+private theorem bhksLatticeEntry_bottomRight_offDiag
+    (r n p a : Nat) (thresholds : Array Nat) (cldRows : Array (Array Int))
+    (i j : Fin (r + n)) (hi : r ≤ i.val) (hj : r ≤ j.val)
+    (hneq : j.val - r ≠ i.val - r) :
+    bhksLatticeEntry r n p a thresholds cldRows i j = 0 := by
+  rw [bhksLatticeEntry_bottomRight r n p a thresholds cldRows i j hi hj]
+  simp [hneq]
+
+private theorem bhksLatticeEntry_bottomRight_diag
+    (r n p a : Nat) (thresholds : Array Nat) (cldRows : Array (Array Int))
+    (i : Fin (r + n)) (hi : r ≤ i.val) :
+    bhksLatticeEntry r n p a thresholds cldRows i i =
+      Int.ofNat (p ^ (a - thresholds.getD (i.val - r) 0)) := by
+  rw [bhksLatticeEntry_bottomRight r n p a thresholds cldRows i i hi hi]
+  simp
+
+private theorem bhksLatticeEntry_bottomRight_diag_pos
+    (r n p a : Nat) (thresholds : Array Nat) (cldRows : Array (Array Int))
+    (hp : 0 < p) (i : Fin (r + n)) (hi : r ≤ i.val)
+    (_hthreshold : thresholds.getD (i.val - r) 0 ≤ a) :
+    0 < bhksLatticeEntry r n p a thresholds cldRows i i := by
+  rw [bhksLatticeEntry_bottomRight_diag r n p a thresholds cldRows i hi]
+  have hpos : 0 < p ^ (a - thresholds.getD (i.val - r) 0) :=
+    Nat.pow_pos hp
+  exact Int.ofNat_lt.mpr hpos
+
 /-- Four times the squared BHKS cut radius, `4 * (r + n * (r / 2)^2)`. -/
 def bhksCutRadiusSq4 (L : BhksLatticeBasis) : Nat :=
   4 * L.factorCount + L.coeffWidth * L.factorCount * L.factorCount
