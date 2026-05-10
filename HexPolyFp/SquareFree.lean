@@ -1852,6 +1852,57 @@ private theorem pow_succ_dvd_mul_right_of_dvd
           rw [← pow_succ d (n + 1)]
           exact DensePoly.mul_assoc_poly (pow d (n + 2)) q b
 
+private theorem pow_succ_dvd_mul_of_dvd_left_of_pow_dvd_right
+    {d a b : FpPoly p} {n : Nat}
+    (hda : d ∣ a) (hdb : pow d n ∣ b) :
+    pow d (n + 1) ∣ a * b := by
+  rcases hda with ⟨qa, hqa⟩
+  rcases hdb with ⟨qb, hqb⟩
+  refine ⟨qa * qb, ?_⟩
+  calc a * b
+      = (d * qa) * (pow d n * qb) := by rw [hqa, hqb]
+    _ = (pow d n * d) * (qa * qb) := by
+          calc
+            (d * qa) * (pow d n * qb)
+                = ((d * qa) * pow d n) * qb := by
+                  exact (DensePoly.mul_assoc_poly (d * qa) (pow d n) qb).symm
+            _ = (pow d n * (d * qa)) * qb := by
+                  exact congrArg (fun x => x * qb)
+                    (DensePoly.mul_comm_poly (d * qa) (pow d n))
+            _ = ((pow d n * d) * qa) * qb := by
+                  exact congrArg (fun x => x * qb)
+                    (DensePoly.mul_assoc_poly (pow d n) d qa).symm
+            _ = (pow d n * d) * (qa * qb) := by
+                  exact DensePoly.mul_assoc_poly (pow d n * d) qa qb
+    _ = pow d (n + 1) * (qa * qb) := by rw [← pow_succ d n]
+
+private theorem pow_succ_dvd_mul_of_pow_dvd_left_of_dvd_right
+    {d a b : FpPoly p} {n : Nat}
+    (hda : pow d n ∣ a) (hdb : d ∣ b) :
+    pow d (n + 1) ∣ a * b := by
+  rcases hda with ⟨qa, hqa⟩
+  rcases hdb with ⟨qb, hqb⟩
+  refine ⟨qa * qb, ?_⟩
+  calc a * b
+      = (pow d n * qa) * (d * qb) := by rw [hqa, hqb]
+    _ = (pow d n * d) * (qa * qb) := by
+          calc
+            (pow d n * qa) * (d * qb)
+                = ((pow d n * qa) * d) * qb := by
+                  exact (DensePoly.mul_assoc_poly (pow d n * qa) d qb).symm
+            _ = (pow d n * (qa * d)) * qb := by
+                  exact congrArg (fun x => x * qb)
+                    (DensePoly.mul_assoc_poly (pow d n) qa d)
+            _ = (pow d n * (d * qa)) * qb := by
+                  exact congrArg (fun x => (pow d n * x) * qb)
+                    (DensePoly.mul_comm_poly qa d)
+            _ = ((pow d n * d) * qa) * qb := by
+                  exact congrArg (fun x => x * qb)
+                    (DensePoly.mul_assoc_poly (pow d n) d qa).symm
+            _ = (pow d n * d) * (qa * qb) := by
+                  exact DensePoly.mul_assoc_poly (pow d n * d) qa qb
+    _ = pow d (n + 1) * (qa * qb) := by rw [← pow_succ d n]
+
 private theorem quotient_common_dvd_mul_derivative_base
     [ZMod64.PrimeModulus p] (d c : FpPoly p)
     (hdc : d ∣ c)
@@ -1885,6 +1936,79 @@ private theorem quotient_common_dvd_mul_derivative_base
         _ = DensePoly.derivative d * q := add_zero _
     simpa [hfirst_eq] using hsub
   exact (DensePoly.mul_comm_poly q (DensePoly.derivative d)).symm ▸ hd_first
+
+private theorem pow_succ_dvd_cofactor_mul_derivative
+    [ZMod64.PrimeModulus p] {d a : FpPoly p}
+    (h : d ∣ a * DensePoly.derivative d) :
+    ∀ m : Nat, pow d (m + 1) ∣ a * DensePoly.derivative (pow d (m + 1)) := by
+  intro m
+  induction m with
+  | zero =>
+      rw [pow_one]
+      exact h
+  | succ k ih =>
+      rw [pow_succ]
+      have hderiv :
+          a * DensePoly.derivative (pow d (k + 1) * d) =
+            a * (DensePoly.derivative (pow d (k + 1)) * d +
+              pow d (k + 1) * DensePoly.derivative d) := by
+        exact congrArg (fun x => a * x)
+          (DensePoly.derivative_mul (pow d (k + 1)) d)
+      rw [hderiv]
+      have hsplit :
+          a * (DensePoly.derivative (pow d (k + 1)) * d +
+              pow d (k + 1) * DensePoly.derivative d) =
+            a * (DensePoly.derivative (pow d (k + 1)) * d) +
+              a * (pow d (k + 1) * DensePoly.derivative d) :=
+        DensePoly.mul_add_right_poly a
+          (DensePoly.derivative (pow d (k + 1)) * d)
+          (pow d (k + 1) * DensePoly.derivative d)
+      rw [hsplit]
+      exact dvd_add_poly
+        (by
+          rcases ih with ⟨q, hq⟩
+          refine ⟨q, ?_⟩
+          calc
+            a * (DensePoly.derivative (pow d (k + 1)) * d)
+                = (a * DensePoly.derivative (pow d (k + 1))) * d := by
+                  exact (DensePoly.mul_assoc_poly a
+                    (DensePoly.derivative (pow d (k + 1))) d).symm
+            _ = (pow d (k + 1) * q) * d := by rw [hq]
+            _ = (pow d (k + 1) * d) * q := by
+                  calc
+                    (pow d (k + 1) * q) * d
+                        = pow d (k + 1) * (q * d) := by
+                          exact DensePoly.mul_assoc_poly (pow d (k + 1)) q d
+                    _ = pow d (k + 1) * (d * q) := by
+                          exact congrArg (fun x => pow d (k + 1) * x)
+                            (DensePoly.mul_comm_poly q d)
+                    _ = (pow d (k + 1) * d) * q := by
+                          exact (DensePoly.mul_assoc_poly (pow d (k + 1)) d q).symm
+            _ = (pow d (k + 1) * d) * q := by rfl)
+        (by
+          rcases h with ⟨q, hq⟩
+          refine ⟨q, ?_⟩
+          calc
+            a * (pow d (k + 1) * DensePoly.derivative d)
+                = (a * DensePoly.derivative d) * pow d (k + 1) := by
+                  calc
+                    a * (pow d (k + 1) * DensePoly.derivative d)
+                        = a * (DensePoly.derivative d * pow d (k + 1)) := by
+                          exact congrArg (fun x => a * x)
+                            (DensePoly.mul_comm_poly (pow d (k + 1))
+                              (DensePoly.derivative d))
+                    _ = (a * DensePoly.derivative d) * pow d (k + 1) := by
+                          exact (DensePoly.mul_assoc_poly a
+                            (DensePoly.derivative d) (pow d (k + 1))).symm
+            _ = (d * q) * pow d (k + 1) := by rw [hq]
+            _ = (pow d (k + 1) * d) * q := by
+                  calc
+                    (d * q) * pow d (k + 1)
+                        = pow d (k + 1) * (d * q) := by
+                          exact DensePoly.mul_comm_poly (d * q) (pow d (k + 1))
+                    _ = (pow d (k + 1) * d) * q := by
+                          exact (DensePoly.mul_assoc_poly (pow d (k + 1)) d q).symm
+            _ = (pow d (k + 1) * d) * q := by rfl)
 
 private theorem quotient_common_dvd_pow_derivative_factor
     [ZMod64.PrimeModulus p] (d c h : FpPoly p)
@@ -2013,6 +2137,145 @@ private theorem derivativeSplit_common_dvd_quotient_derivative_dvd_gcd
       (dvd_mul_right_of_dvd (a := c) (b := DensePoly.derivative g) (d := d)
         (by simpa [c, g] using hdc))
   exact DensePoly.dvd_gcd d f (DensePoly.derivative f) hdf_dvd_f hdf_dvd_derivative
+
+private theorem derivativeSplit_quotient_pow_succ_dvd_gcd
+    [ZMod64.PrimeModulus p] (f d : FpPoly p)
+    (hdc : d ∣ f / DensePoly.gcd f (DensePoly.derivative f))
+    (hddc : d ∣ DensePoly.derivative
+      (f / DensePoly.gcd f (DensePoly.derivative f))) :
+    ∀ n, pow d n ∣ DensePoly.gcd f (DensePoly.derivative f) →
+      pow d (n + 1) ∣ DensePoly.gcd f (DensePoly.derivative f) := by
+  intro n hpow
+  let g := DensePoly.gcd f (DensePoly.derivative f)
+  let c := f / g
+  rcases quotient_common_dvd_mul_derivative_base d c
+      (by simpa [c, g] using hdc) (by simpa [c, g] using hddc) with
+    ⟨a, ha, hcofactor⟩
+  have hprod : c * g = f := by
+    simpa [c, g] using div_gcd_mul_reconstruct f (DensePoly.derivative f)
+  have hdf :
+      DensePoly.derivative f =
+        DensePoly.derivative c * g + c * DensePoly.derivative g := by
+    rw [← hprod]
+    exact DensePoly.derivative_mul c g
+  cases n with
+  | zero =>
+      rw [pow_one]
+      exact derivativeSplit_common_dvd_quotient_derivative_dvd_gcd f d
+        (by exact ⟨a, by simpa [c, g] using ha⟩) hddc
+  | succ k =>
+      rcases hpow with ⟨q, hq⟩
+      have hg_eq : g = pow d (k + 1) * q := by simpa [g] using hq
+      have hsucc_dvd_f : pow d (k + 2) ∣ f := by
+        rw [← hprod]
+        rw [ha, hg_eq]
+        refine ⟨a * q, ?_⟩
+        calc
+          (d * a) * (pow d (k + 1) * q)
+              = (pow d (k + 1) * d) * (a * q) := by
+                calc
+                  (d * a) * (pow d (k + 1) * q)
+                      = ((d * a) * pow d (k + 1)) * q := by
+                        exact (DensePoly.mul_assoc_poly (d * a) (pow d (k + 1)) q).symm
+                  _ = (pow d (k + 1) * (d * a)) * q := by
+                        exact congrArg (fun x => x * q)
+                          (DensePoly.mul_comm_poly (d * a) (pow d (k + 1)))
+                  _ = ((pow d (k + 1) * d) * a) * q := by
+                        exact congrArg (fun x => x * q)
+                          (DensePoly.mul_assoc_poly (pow d (k + 1)) d a).symm
+                  _ = (pow d (k + 1) * d) * (a * q) := by
+                        exact DensePoly.mul_assoc_poly (pow d (k + 1) * d) a q
+          _ = pow d (k + 2) * (a * q) := by rw [← pow_succ d (k + 1)]
+      have hsucc_dvd_derivative : pow d (k + 2) ∣ DensePoly.derivative f := by
+        rw [hdf]
+        have hleft : pow d (k + 2) ∣ DensePoly.derivative c * g := by
+          rw [hg_eq]
+          exact pow_succ_dvd_mul_of_dvd_left_of_pow_dvd_right
+            (by simpa [c, g] using hddc)
+            (by exact ⟨q, rfl⟩)
+        have hright : pow d (k + 2) ∣ c * DensePoly.derivative g := by
+          rw [ha, hg_eq]
+          have hderiv :
+              (d * a) * DensePoly.derivative (pow d (k + 1) * q) =
+                (d * a) * (DensePoly.derivative (pow d (k + 1)) * q +
+                  pow d (k + 1) * DensePoly.derivative q) := by
+            exact congrArg (fun x => (d * a) * x)
+              (DensePoly.derivative_mul (pow d (k + 1)) q)
+          rw [hderiv]
+          have hsplit :
+              (d * a) * (DensePoly.derivative (pow d (k + 1)) * q +
+                  pow d (k + 1) * DensePoly.derivative q) =
+                (d * a) * (DensePoly.derivative (pow d (k + 1)) * q) +
+                  (d * a) * (pow d (k + 1) * DensePoly.derivative q) :=
+            DensePoly.mul_add_right_poly (d * a)
+              (DensePoly.derivative (pow d (k + 1)) * q)
+              (pow d (k + 1) * DensePoly.derivative q)
+          rw [hsplit]
+          exact dvd_add_poly
+            (by
+              have haux := pow_succ_dvd_cofactor_mul_derivative hcofactor k
+              rcases haux with ⟨r, hr⟩
+              refine ⟨r * q, ?_⟩
+              calc
+                (d * a) * (DensePoly.derivative (pow d (k + 1)) * q)
+                    = d * ((a * DensePoly.derivative (pow d (k + 1))) * q) := by
+                      calc
+                        (d * a) * (DensePoly.derivative (pow d (k + 1)) * q)
+                            = ((d * a) * DensePoly.derivative (pow d (k + 1))) * q := by
+                              exact (DensePoly.mul_assoc_poly (d * a)
+                                (DensePoly.derivative (pow d (k + 1))) q).symm
+                        _ = (d * (a * DensePoly.derivative (pow d (k + 1)))) * q := by
+                              exact congrArg (fun x => x * q)
+                                (DensePoly.mul_assoc_poly d a
+                                  (DensePoly.derivative (pow d (k + 1))))
+                        _ = d * ((a * DensePoly.derivative (pow d (k + 1))) * q) := by
+                              exact DensePoly.mul_assoc_poly d
+                                (a * DensePoly.derivative (pow d (k + 1))) q
+                _ = d * ((pow d (k + 1) * r) * q) := by rw [hr]
+                _ = (pow d (k + 1) * d) * (r * q) := by
+                      calc
+                        d * ((pow d (k + 1) * r) * q)
+                            = (d * (pow d (k + 1) * r)) * q := by
+                              exact (DensePoly.mul_assoc_poly d (pow d (k + 1) * r) q).symm
+                        _ = ((pow d (k + 1) * r) * d) * q := by
+                              exact congrArg (fun x => x * q)
+                                (DensePoly.mul_comm_poly d (pow d (k + 1) * r))
+                        _ = (pow d (k + 1) * (r * d)) * q := by
+                              exact congrArg (fun x => x * q)
+                                (DensePoly.mul_assoc_poly (pow d (k + 1)) r d)
+                        _ = (pow d (k + 1) * (d * r)) * q := by
+                              exact congrArg (fun x => (pow d (k + 1) * x) * q)
+                                (DensePoly.mul_comm_poly r d)
+                        _ = ((pow d (k + 1) * d) * r) * q := by
+                              exact congrArg (fun x => x * q)
+                                (DensePoly.mul_assoc_poly (pow d (k + 1)) d r).symm
+                        _ = (pow d (k + 1) * d) * (r * q) := by
+                              exact DensePoly.mul_assoc_poly (pow d (k + 1) * d) r q
+                _ = pow d (k + 2) * (r * q) := by rw [← pow_succ d (k + 1)])
+            (by
+              refine ⟨a * DensePoly.derivative q, ?_⟩
+              calc
+                (d * a) * (pow d (k + 1) * DensePoly.derivative q)
+                    = (pow d (k + 1) * d) * (a * DensePoly.derivative q) := by
+                      calc
+                        (d * a) * (pow d (k + 1) * DensePoly.derivative q)
+                            = ((d * a) * pow d (k + 1)) * DensePoly.derivative q := by
+                              exact (DensePoly.mul_assoc_poly (d * a)
+                                (pow d (k + 1)) (DensePoly.derivative q)).symm
+                        _ = (pow d (k + 1) * (d * a)) * DensePoly.derivative q := by
+                              exact congrArg (fun x => x * DensePoly.derivative q)
+                                (DensePoly.mul_comm_poly (d * a) (pow d (k + 1)))
+                        _ = ((pow d (k + 1) * d) * a) * DensePoly.derivative q := by
+                              exact congrArg (fun x => x * DensePoly.derivative q)
+                                (DensePoly.mul_assoc_poly (pow d (k + 1)) d a).symm
+                        _ = (pow d (k + 1) * d) * (a * DensePoly.derivative q) := by
+                              exact DensePoly.mul_assoc_poly (pow d (k + 1) * d) a
+                                (DensePoly.derivative q)
+                _ = pow d (k + 2) * (a * DensePoly.derivative q) := by
+                      rw [← pow_succ d (k + 1)])
+        exact dvd_add_poly hleft hright
+      exact DensePoly.dvd_gcd (pow d (k + 2)) f (DensePoly.derivative f)
+        hsucc_dvd_f hsucc_dvd_derivative
 
 private theorem yunFactorsContribution_stop_of_isOne
     (c w : FpPoly p) (i fuel : Nat)
