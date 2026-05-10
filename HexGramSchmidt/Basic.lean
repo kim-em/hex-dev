@@ -1310,6 +1310,182 @@ private theorem rowCombination_prefixRows_extendStrictPrefixCoeff
   simp [extendStrictPrefixCoeff, hlast_not_lt]
   grind
 
+private theorem rowCombination_add_rat
+    (M : Matrix Rat n m) (c d : Vector Rat n) :
+    Matrix.rowCombination M (c + d) =
+      Matrix.rowCombination M c + Matrix.rowCombination M d := by
+  apply Vector.ext
+  intro idx hidx
+  let idxFin : Fin m := ⟨idx, hidx⟩
+  change (Matrix.mulVec (Matrix.transpose M) (c + d))[idxFin] =
+    (Matrix.rowCombination M c + Matrix.rowCombination M d)[idxFin]
+  simp [Matrix.rowCombination, HMul.hMul, Matrix.mulVec, Matrix.transpose, Matrix.col,
+    Matrix.row, Matrix.dot, Hex.Vector.dotProduct, Vector.getElem_add]
+  have hfold :
+      ∀ xs : List (Fin n), ∀ accC accD : Rat,
+        xs.foldl
+            (fun acc row =>
+              acc + M[row.val][idxFin.val] * (c[row.val] + d[row.val]))
+            (accC + accD) =
+          xs.foldl (fun acc row => acc + M[row.val][idxFin.val] * c[row.val]) accC +
+            xs.foldl (fun acc row => acc + M[row.val][idxFin.val] * d[row.val]) accD := by
+    intro xs
+    induction xs with
+    | nil =>
+        intro accC accD
+        simp
+    | cons row rows ih =>
+        intro accC accD
+        simp only [List.foldl_cons]
+        have hstep :
+            accC + accD + M[row.val][idxFin.val] * (c[row.val] + d[row.val]) =
+              (accC + M[row.val][idxFin.val] * c[row.val]) +
+                (accD + M[row.val][idxFin.val] * d[row.val]) := by
+          grind
+        rw [hstep]
+        exact ih (accC + M[row.val][idxFin.val] * c[row.val])
+          (accD + M[row.val][idxFin.val] * d[row.val])
+  have h := hfold (List.finRange n) 0 0
+  rw [show (0 : Rat) + 0 = 0 by grind] at h
+  exact h
+
+private theorem rowCombination_smul_rat
+    (M : Matrix Rat n m) (a : Rat) (c : Vector Rat n) :
+    Matrix.rowCombination M (a • c) =
+      a • Matrix.rowCombination M c := by
+  apply Vector.ext
+  intro idx hidx
+  let idxFin : Fin m := ⟨idx, hidx⟩
+  change (Matrix.mulVec (Matrix.transpose M) (a • c))[idxFin] =
+    (a • Matrix.rowCombination M c)[idxFin]
+  simp [Matrix.rowCombination, HMul.hMul, Matrix.mulVec, Matrix.transpose, Matrix.col,
+    Matrix.row, Matrix.dot, Hex.Vector.dotProduct, Vector.getElem_smul]
+  have hfold :
+      ∀ xs : List (Fin n), ∀ acc : Rat,
+        xs.foldl
+            (fun acc row => acc + M[row.val][idxFin.val] * (a * c[row.val]))
+            (a * acc) =
+          a * xs.foldl (fun acc row => acc + M[row.val][idxFin.val] * c[row.val]) acc := by
+    intro xs
+    induction xs with
+    | nil =>
+        intro acc
+        simp
+    | cons row rows ih =>
+        intro acc
+        simp only [List.foldl_cons]
+        have hstep :
+            a * acc + M[row.val][idxFin.val] * (a * c[row.val]) =
+              a * (acc + M[row.val][idxFin.val] * c[row.val]) := by
+          grind
+        rw [hstep]
+        exact ih (acc + M[row.val][idxFin.val] * c[row.val])
+  simpa using hfold (List.finRange n) 0
+
+private theorem prefixSpan_add
+    (M : Matrix Rat n m) (i : Nat) (hi : i < n) {u v : Vector Rat m}
+    (hu : prefixSpan M i hi u) (hv : prefixSpan M i hi v) :
+    prefixSpan M i hi (u + v) := by
+  rcases hu with ⟨cu, hcu⟩
+  rcases hv with ⟨cv, hcv⟩
+  refine ⟨cu + cv, ?_⟩
+  rw [rowCombination_add_rat, hcu, hcv]
+
+private theorem prefixSpan_smul
+    (M : Matrix Rat n m) (i : Nat) (hi : i < n) (a : Rat) {u : Vector Rat m}
+    (hu : prefixSpan M i hi u) :
+    prefixSpan M i hi (a • u) := by
+  rcases hu with ⟨cu, hcu⟩
+  refine ⟨a • cu, ?_⟩
+  rw [rowCombination_smul_rat, hcu]
+
+private def unitCoeff (j : Fin n) : Vector Rat n :=
+  Vector.ofFn fun k => if k = j then 1 else 0
+
+private theorem foldl_add_eq_acc_rat
+    {α : Type} (xs : List α) (f : α → Rat) (acc : Rat)
+    (hf : ∀ x ∈ xs, f x = 0) :
+    xs.foldl (fun acc x => acc + f x) acc = acc := by
+  induction xs generalizing acc with
+  | nil =>
+      simp only [List.foldl_nil]
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hx : f x = 0 := hf x (by simp)
+      have hxs : ∀ y ∈ xs, f y = 0 := fun y hy => hf y (List.mem_cons_of_mem _ hy)
+      rw [hx]
+      have hacc : acc + (0 : Rat) = acc := by grind
+      rw [hacc]
+      exact ih acc hxs
+
+private theorem foldl_indicator_mul_unique_rat
+    (xs : List (Fin n)) (i : Fin n) (f : Fin n → Rat)
+    (hi : i ∈ xs) (hnodup : xs.Nodup) (acc : Rat) :
+    xs.foldl (fun acc l => acc + f l * (if l = i then (1 : Rat) else 0)) acc =
+      acc + f i := by
+  induction xs generalizing acc with
+  | nil =>
+      exact absurd hi List.not_mem_nil
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rcases List.mem_cons.mp hi with hix | hitail
+      · subst i
+        rw [if_pos rfl]
+        have hxs_zero :
+            ∀ y ∈ xs, f y * (if y = x then (1 : Rat) else 0) = 0 := by
+          intro y hy
+          have hyx : y ≠ x := by
+            intro heq
+            exact (List.nodup_cons.mp hnodup).1 (heq ▸ hy)
+          rw [if_neg hyx]
+          grind
+        have hfold :=
+          foldl_add_eq_acc_rat xs
+            (fun l => f l * (if l = x then (1 : Rat) else 0))
+            (acc + f x * 1) hxs_zero
+        have hfold' :
+            xs.foldl (fun acc l => acc + f l * (if l = x then (1 : Rat) else 0))
+                (acc + f x * 1) =
+              acc + f x * 1 := hfold
+        rw [hfold']
+        grind
+      · have hxi : x ≠ i := by
+          intro h
+          subst i
+          exact (List.nodup_cons.mp hnodup).1 hitail
+        rw [if_neg hxi]
+        have hzero : f x * (0 : Rat) = 0 := by grind
+        rw [hzero]
+        have hacc : acc + (0 : Rat) = acc := by grind
+        rw [hacc]
+        exact ih hitail (List.nodup_cons.mp hnodup).2 acc
+
+private theorem rowCombination_prefixRows_unitCoeff
+    (M : Matrix Rat n m) (i : Nat) (hi : i < n) (j : Fin (i + 1)) :
+    Matrix.rowCombination (prefixRows M i hi) (unitCoeff j) =
+      (prefixRows M i hi).row j := by
+  apply Vector.ext
+  intro idx hidx
+  let idxFin : Fin m := ⟨idx, hidx⟩
+  change
+    (Matrix.mulVec (Matrix.transpose (prefixRows M i hi)) (unitCoeff j))[idxFin] =
+      ((prefixRows M i hi).row j)[idxFin]
+  simp [HMul.hMul, Matrix.mulVec, Matrix.transpose, Matrix.col,
+    Matrix.row, Matrix.dot, Hex.Vector.dotProduct, unitCoeff]
+  have h :=
+    foldl_indicator_mul_unique_rat
+      (xs := List.finRange (i + 1)) (i := j)
+      (f := fun row : Fin (i + 1) => (prefixRows M i hi)[row.val][idxFin.val])
+      (hi := List.mem_finRange j) (hnodup := List.nodup_finRange (i + 1)) (acc := 0)
+  rw [show (0 : Rat) + (prefixRows M i hi)[j.val][idxFin.val] =
+      (prefixRows M i hi)[j.val][idxFin.val] by grind] at h
+  exact h
+
+private theorem prefixSpan_row
+    (M : Matrix Rat n m) (i : Nat) (hi : i < n) (j : Fin (i + 1)) :
+    prefixSpan M i hi ((prefixRows M i hi).row j) := by
+  exact ⟨unitCoeff j, rowCombination_prefixRows_unitCoeff M i hi j⟩
+
 private theorem foldl_projectionCoeff_rowCombination_comm
     (xs : List (Fin k)) (row : Vector Rat m) (basis : Matrix Rat n m)
     (hk : k ≤ n) (idx : Fin m) (acc : Rat) :
