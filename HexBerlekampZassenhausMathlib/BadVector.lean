@@ -323,6 +323,10 @@ Bad-vector evidence for an executable BHKS bad-vector witness.
 The witness's auxiliary polynomial `H` is the canonical BHKS auxiliary
 polynomial of `bhksVector`, and the same vector lies in the projected integer
 row span `L'` but not in the true-factor indicator lattice `W`.
+
+This is the proof-facing package of the local BHKS Lemma 3.2 hypotheses used
+by the resultant comparison.  Later construction work must prove these fields
+from the executable CLD/Hensel data attached to an actual failed recovery run.
 -/
 structure IsBhksBadVectorSetup (W : ExecutableBadVectorWitness) where
   bhksVector : Array Int
@@ -334,13 +338,21 @@ structure IsBhksBadVectorSetup (W : ExecutableBadVectorWitness) where
   not_in_indicators :
     W.projectedVectorFn bhksVector ∉
       BHKS.trueFactorIndicatorLattice trueSupports
+  localFactorDegree_pos : 0 < W.localFactorDegree
+  coprime_input_aux_over_rat :
+    IsCoprime
+      (W.inputPolynomial.map (Int.castRingHom ℚ))
+      (W.auxiliaryPolynomial.map (Int.castRingHom ℚ))
+  resultant_divisible_by_p_pow :
+    ((W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : Nat) : ℤ) ∣
+      Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial
 
 /-- BHKS Lemma 3.2: the selected local-factor degree is positive whenever the
 witness carries a bad-vector setup. -/
 theorem localFactorDegree_pos_of_bhks_bad
-    (W : ExecutableBadVectorWitness) (_h_bad : IsBhksBadVectorSetup W) :
+    (W : ExecutableBadVectorWitness) (h_bad : IsBhksBadVectorSetup W) :
     0 < W.localFactorDegree := by
-  sorry
+  exact h_bad.localFactorDegree_pos
 
 /--
 BHKS Lemma 3.2 (rational coprimality clause): the input and auxiliary
@@ -348,11 +360,11 @@ polynomials are coprime over `ℚ` whenever the witness carries a bad-vector
 setup.
 -/
 theorem coprime_input_aux_over_rat_of_bhks_bad
-    (W : ExecutableBadVectorWitness) (_h_bad : IsBhksBadVectorSetup W) :
+    (W : ExecutableBadVectorWitness) (h_bad : IsBhksBadVectorSetup W) :
     IsCoprime
       (W.inputPolynomial.map (Int.castRingHom ℚ))
       (W.auxiliaryPolynomial.map (Int.castRingHom ℚ)) := by
-  sorry
+  exact h_bad.coprime_input_aux_over_rat
 
 /--
 BHKS Lemma 3.2 (modular divisibility clause): the integer resultant of the
@@ -361,10 +373,10 @@ witness carries a bad-vector setup, where `p` is the BHKS prime, `k` is the
 lift precision, and `d` is the selected local-factor degree.
 -/
 theorem resultant_divisible_by_p_pow_of_bhks_bad
-    (W : ExecutableBadVectorWitness) (_h_bad : IsBhksBadVectorSetup W) :
+    (W : ExecutableBadVectorWitness) (h_bad : IsBhksBadVectorSetup W) :
     ((W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : Nat) : ℤ) ∣
       Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial := by
-  sorry
+  exact h_bad.resultant_divisible_by_p_pow
 
 /--
 Combined BHKS Lemma 3.2 contradiction: an executable bad-vector witness whose
