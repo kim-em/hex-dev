@@ -4448,6 +4448,31 @@ private def coeffNatsSquareFreeGuard (f : FpPoly 5) : List Nat :=
     coeffNatsSquareFreeGuard
       (normalizeMonic (DensePoly.gcd sf.factor (DensePoly.derivative sf.factor))).2 == [1])
 
+private instance squareFreeGuardBoundsTwo : ZMod64.Bounds 2 := ⟨by decide, by decide⟩
+
+private theorem prime_two_squareFree_guard : Hex.Nat.Prime 2 := by
+  constructor
+  · decide
+  · intro m hm
+    have hmle : m ≤ 2 := Nat.le_of_dvd (by decide : 0 < 2) hm
+    have hcases : m = 0 ∨ m = 1 ∨ m = 2 := by omega
+    rcases hcases with rfl | rfl | rfl
+    · simp at hm
+    · exact Or.inl rfl
+    · exact Or.inr rfl
+
+private def polyTwoSquareFreeGuard (coeffs : Array Nat) : FpPoly 2 :=
+  ofCoeffs (coeffs.map (fun n => ZMod64.ofNat 2 n))
+
+private def coeffNatsSquareFreeGuardTwo (f : FpPoly 2) : List Nat :=
+  f.toArray.toList.map ZMod64.toNat
+
+#guard
+  let f := polyTwoSquareFreeGuard #[1, 0, 1, 0, 1, 0, 1]
+  let d := squareFreeDecomposition prime_two_squareFree_guard f
+  coeffNatsSquareFreeGuardTwo (weightedProduct d.factors) !=
+    coeffNatsSquareFreeGuardTwo f
+
 private theorem linearPow_eq_powLinear (f : FpPoly p) (n : Nat) :
     FpPoly.linearPow f n = powLinear f n := by
   induction n with
