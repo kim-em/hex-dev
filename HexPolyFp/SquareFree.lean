@@ -3320,6 +3320,36 @@ private theorem derivativeSplit_quotient_common_dvd_derivative_one
         exact hstep n ih
   exact dvd_one_of_all_powers_dvd_nonzero hg_nonzero hall
 
+private theorem yunFactorsPairwiseReachable_common_dvd_one_derivativeSplit
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (_fuel : Nat)
+    (hdf : (DensePoly.derivative f).isZero ≠ true) :
+    let g := DensePoly.gcd f (DensePoly.derivative f)
+    let c := f / g
+    let y := DensePoly.gcd c g
+    let z := c / y
+    ∀ d : FpPoly p, d ∣ z → d ∣ y → d ∣ (1 : FpPoly p) := by
+  dsimp
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  intro d hdz hdy
+  let g := DensePoly.gcd f (DensePoly.derivative f)
+  let c := f / g
+  let y := DensePoly.gcd c g
+  let z := c / y
+  have hdc : d ∣ c := by
+    have hprod : z * y = c := by
+      simpa [z, y, c, g] using div_gcd_mul_reconstruct c g
+    rw [← hprod]
+    exact dvd_mul_right_of_dvd (a := z) (b := y) (d := d)
+      (by simpa [z, y, c, g] using hdz)
+  have hddc : d ∣ DensePoly.derivative c := by
+    simpa [c, g, y, z] using
+      yunStep_common_dvd_derivative_current c g d
+        (by simpa [z, y, c, g] using hdz)
+        (by simpa [y, c, g] using hdy)
+  exact derivativeSplit_quotient_common_dvd_derivative_one hp f hdf d
+    (by simpa [c, g] using hdc)
+    (by simpa [c, g] using hddc)
+
 private theorem normalizeMonic_eq_one_of_dvd_one
     [ZMod64.PrimeModulus p] {g : FpPoly p}
     (hdiv : g ∣ (1 : FpPoly p)) :
