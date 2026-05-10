@@ -648,6 +648,59 @@ private theorem rref_final_shape (M : Matrix R n m) :
       transform := 1
       pivots := [] } (rrefLoop_initial_shape M)
 
+/-- The Gauss-Jordan loop preserves the same-operation transform invariant:
+the recorded transform applied to the original matrix is the current echelon
+matrix. -/
+private theorem rrefLoop_transform_preserve (M : Matrix R n m) :
+    ∀ (col fuel : Nat) (state : RrefState R n m),
+      state.transform * M = state.echelon →
+      (rrefLoop col fuel state).transform * M = (rrefLoop col fuel state).echelon := by
+  intro col fuel
+  induction fuel generalizing col with
+  | zero =>
+      intro state h
+      simp [rrefLoop, h]
+  | succ fuel ih =>
+      intro state h
+      unfold rrefLoop
+      by_cases hRow : state.row < n
+      · rw [dif_pos hRow]
+        by_cases hCol : col < m
+        · rw [dif_pos hCol]
+          let colFin : Fin m := ⟨col, hCol⟩
+          cases hp : findPivot? state.echelon colFin state.row with
+          | none =>
+              simpa [colFin, hp] using ih (col + 1) state h
+          | some pivot =>
+              let target : Fin n := ⟨state.row, hRow⟩
+              let swappedEchelon := rowSwap state.echelon target pivot
+              let swappedTransform := rowSwap state.transform target pivot
+              have hswap : swappedTransform * M = swappedEchelon := by
+                simpa [swappedTransform, swappedEchelon] using
+                  rowSwap_transform_mul_preserve target pivot h
+              let pivotVal := swappedEchelon[target][colFin]
+              let scaledEchelon := rowScale swappedEchelon target pivotVal⁻¹
+              let scaledTransform := rowScale swappedTransform target pivotVal⁻¹
+              have hscale : scaledTransform * M = scaledEchelon := by
+                simpa [scaledTransform, scaledEchelon] using
+                  rowScale_transform_mul_preserve target pivotVal⁻¹ hswap
+              let eliminated := eliminateColumn scaledEchelon scaledTransform target colFin
+              have helim : eliminated.2 * M = eliminated.1 := by
+                simpa [eliminated] using
+                  eliminateColumn_transform_preserve scaledTransform scaledEchelon target colFin hscale
+              have hnext := ih (col + 1)
+                { row := state.row + 1
+                  echelon := eliminated.1
+                  transform := eliminated.2
+                  pivots := state.pivots.concat colFin } helim
+              simpa [colFin, hp, target, swappedEchelon, swappedTransform, pivotVal,
+                scaledEchelon, scaledTransform, eliminated]
+                using hnext
+        · rw [dif_neg hCol]
+          exact h
+      · rw [dif_neg hRow]
+        exact h
+
 /-- Reduced row echelon form data computed by Gauss-Jordan elimination. -/
 def rref (M : Matrix R n m) : RowEchelonData R n m :=
   let final := rrefLoop 0 m
@@ -686,11 +739,23 @@ private theorem rref_pivotCols_sorted (M : Matrix R n m) :
   simpa [Vector.get, List.getElem_toArray] using
     hshape.pivots_sorted i.val j.val i.isLt j.isLt hij
 
+/-- The transform stored by `rref` maps the input matrix to the computed
+echelon matrix. -/
+private theorem rref_transform_mul (M : Matrix R n m) :
+    (rref M).transform * M = (rref M).echelon := by
+  unfold rref
+  exact rrefLoop_transform_preserve M 0 m
+    { row := 0
+      echelon := M
+      transform := 1
+      pivots := [] }
+    (by rw [Matrix.one_mul])
+
 /-- The computed `rref` data satisfies the `IsRREF` contract. -/
 theorem rref_isRREF (M : Matrix R n m) : IsRREF M (rref M) := by
   refine
     { toIsEchelonForm :=
-        { transform_mul := ?_
+        { transform_mul := rref_transform_mul M
           transform_inv := ?_
           transform_right_inv := ?_
           rank_le_n := rref_rank_le_n M

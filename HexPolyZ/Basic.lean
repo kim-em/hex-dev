@@ -651,6 +651,15 @@ theorem content_mul_primitivePart (f : ZPoly) :
     DensePoly.scale (content f) (primitivePart f) = f := by
   simpa [content, primitivePart] using DensePoly.content_mul_primitivePart f
 
+theorem content_dvd_coeff (f : ZPoly) (n : Nat) :
+    content f ∣ f.coeff n := by
+  simpa [content] using DensePoly.content_dvd_coeff f n
+
+theorem dvd_content_of_nat_dvd_coeff (f : ZPoly) (d : Nat)
+    (h : ∀ n, (d : Int) ∣ f.coeff n) :
+    (d : Int) ∣ content f := by
+  simpa [content] using DensePoly.dvd_content_of_nat_dvd_coeff f d h
+
 theorem primitivePart_primitive (f : ZPoly) (h : content f ≠ 0) :
     Primitive (primitivePart f) := by
   simpa [Primitive, content, primitivePart] using DensePoly.primitivePart_primitive f h
