@@ -100,6 +100,35 @@ theorem trueFactorIndicatorLattice_le_projectedRowSpan
   rintro v ⟨S, rfl⟩
   exact hcut.indicator_mem_projected S
 
+/--
+Abstract separation hypotheses for the BHKS `L' = W` step.
+
+The forward direction packages the existing Gram-Schmidt cut evidence
+`W <= L'`.  The reverse direction is deliberately stated as a contradiction:
+later work constructs a BHKS bad-vector setup from any vector in `L' \ W`, then
+uses the cap/resultant contradiction to discharge this field.
+-/
+structure SeparationHypotheses
+    (L : Hex.BhksProjectedRows) (trueSupports : Set (Set (Fin L.factorCount))) where
+  cut : CutProjectionHypotheses L trueSupports
+  no_projected_not_indicator :
+    ∀ v : Fin L.factorCount → ℤ,
+      v ∈ projectedRowSpanInt L →
+        v ∉ trueFactorIndicatorLattice trueSupports →
+          False
+
+/-- Under the abstract BHKS separation hypotheses, the projected lattice `L'`
+is exactly the true-factor indicator lattice `W`. -/
+theorem projectedRowSpan_eq_trueFactorIndicatorLattice
+    (L : Hex.BhksProjectedRows) (trueSupports : Set (Set (Fin L.factorCount)))
+    (hsep : SeparationHypotheses L trueSupports) :
+    projectedRowSpanInt L = trueFactorIndicatorLattice trueSupports := by
+  refine le_antisymm ?_ ?_
+  · intro v hv
+    by_contra hnot
+    exact hsep.no_projected_not_indicator v hv hnot
+  · exact trueFactorIndicatorLattice_le_projectedRowSpan L trueSupports hsep.cut
+
 /-- Each projected integer row is one of the generators of `L'`. -/
 theorem projectedRow_mem_projectedRowSpanInt
     (L : Hex.BhksProjectedRows) (i : Fin L.projectedRows.size) :
