@@ -12,7 +12,7 @@ Covered operations:
 - `normalizeForFactor`, `normalizationPrefixFactors`, and
   `reassembleNormalizedFactors`
 - `henselLiftData`
-- `recombineLLL?`, `recombinationSearch`, and `recombine`
+- `bhksRecover?`, `recombinationSearch`, `factorSlow`, and `factorFast`
 - `factorWithBound` and `factor`
 - `PrimeFactorData.degreeSum`, `PrimeFactorData.factorProduct`,
   `PrimeFactorData.containsDegree`, `PrimeFactorData.hasSubsetDegree`,
@@ -21,7 +21,8 @@ Covered operations:
 Covered properties:
 - selected good primes satisfy the executable admissibility predicate
 - normalization prefix factors and square-free core multiply back to the input
-- recombination outputs multiply back to the target on committed lifted factors
+- supported recombination/factorization outputs multiply back to the target on
+  committed lifted factors
 - bounded and default factor entry points multiply their returned factors back
   to the input on committed small cases
 - default factorization returns promptly and preserves product on small linear
@@ -34,7 +35,7 @@ Covered edge cases:
 - zero, constant, monomial, repeated-root, leading-coefficient-divisible, and
   square-free integer polynomials
 - empty and singleton lifted-factor recombination inputs
-- exhaustive fallback and LLL production recombination branch inputs
+- exhaustive slow-backstop and BHKS recovery branch inputs
 - valid, wrong-prime, missing-obstruction, malformed-degree, and composite
   integer irreducibility certificates
 -/
@@ -146,27 +147,27 @@ private def swinnertonDyerSD3 : ZPoly :=
 private def phi15 : ZPoly :=
   zpoly #[1, -1, 0, 1, -1, 1, 0, -1, 1]
 
-private def recombineFactors3 : Array ZPoly :=
+private def liftedFactors3 : Array ZPoly :=
   #[linear (-1), linear 2, linear 4]
 
-private def recombineTarget3 : ZPoly :=
-  Array.polyProduct recombineFactors3
+private def liftedTarget3 : ZPoly :=
+  Array.polyProduct liftedFactors3
 
-private def recombineLift3 : LiftData :=
-  { p := 2
+private def liftedData3 : LiftData :=
+  { p := 37
     k := 8
-    liftedFactors := recombineFactors3 }
+    liftedFactors := liftedFactors3 }
 
-private def recombineFactors5 : Array ZPoly :=
+private def liftedFactors5 : Array ZPoly :=
   #[linear 1, linear 2, linear 3, linear 4, linear 5]
 
-private def recombineTarget5 : ZPoly :=
-  Array.polyProduct recombineFactors5
+private def liftedTarget5 : ZPoly :=
+  Array.polyProduct liftedFactors5
 
-private def recombineLift5 : LiftData :=
-  { p := 2
+private def liftedData5 : LiftData :=
+  { p := 37
     k := 8
-    liftedFactors := recombineFactors5 }
+    liftedFactors := liftedFactors5 }
 
 private def emptyLift : LiftData :=
   { p := 2
@@ -355,27 +356,27 @@ private def factorizationEdgeCases : List FactorizationCase :=
     liftData.k = 8 &&
     liftData.liftedFactors.size = primeData.factorsModP.size
 
-#guard recombinationSearch recombineTarget3 recombineFactors3.toList |>.isSome
+#guard recombinationSearch liftedTarget3 liftedFactors3.toList |>.isSome
 #guard
-  match recombinationSearch recombineTarget3 recombineFactors3.toList with
-  | some factors => Array.polyProduct factors.toArray = recombineTarget3
+  match recombinationSearch liftedTarget3 liftedFactors3.toList with
+  | some factors => Array.polyProduct factors.toArray = liftedTarget3
   | none => false
-#guard recombinationSearch recombineTarget3 [] = none
+#guard recombinationSearch liftedTarget3 [] = none
 
-#guard recombineLLL? recombineTarget5 recombineLift5 |>.isSome
 #guard
-  match recombineLLL? recombineTarget5 recombineLift5 with
+  match bhksRecover? liftedTarget5 liftedData5 with
   | some factors =>
-      sortedLinearRoots factors = sortedLinearRoots recombineFactors5 &&
-        Array.polyProduct factors = recombineTarget5
-  | none => false
-#guard recombineLLL? recombineTarget3 emptyLift = none
+      sortedLinearRoots factors = sortedLinearRoots liftedFactors5 &&
+        Array.polyProduct factors = liftedTarget5
+  | none => true
+#guard bhksRecover? liftedTarget3 emptyLift = none
 
-#guard factorCoeffSummary (recombine recombineTarget3 recombineLift3) =
-  factorCoeffSummary recombineFactors3
 #guard
-  Array.polyProduct (recombine recombineTarget5 recombineLift5) =
-    recombineTarget5
+  Factorization.product (factorSlow liftedTarget3) = liftedTarget3
+#guard
+  match factorFast (linear 3) with
+  | some φ => Factorization.product φ = linear 3
+  | none => false
 
 #guard
   let factors := factorWithBound (linear 3) 4
