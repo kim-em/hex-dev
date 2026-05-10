@@ -4735,6 +4735,53 @@ private def assembleColumnsSuffix {n m : Nat} (chosen : List (Fin m))
   unfold assembleColumnsSuffix
   simp [List.getElem_append_right]
 
+private def vectorLengthCast {α : Type u} {n k : Nat} (h : n = k)
+    (v : Vector α n) : Vector α k :=
+  match v with
+  | ⟨xs, hx⟩ => ⟨xs, by simpa [h] using hx⟩
+
+private theorem assembleColumnsSuffix_insertAt_last
+    {n m : Nat} (chosen : List (Fin m)) (c : Fin m)
+    (pref : Vector (Fin m) (n - (c :: chosen).length))
+    (hk : (c :: chosen).length ≤ n)
+    (hlen : (n - (c :: chosen).length) + 1 = n - chosen.length := by
+      have hcons : (c :: chosen).length = chosen.length + 1 := rfl
+      omega) :
+    assembleColumnsSuffix chosen
+        (vectorLengthCast hlen
+          (insertAt c pref (Fin.last (n - (c :: chosen).length))))
+        (by
+          have hcons : (c :: chosen).length = chosen.length + 1 := rfl
+          omega) =
+      assembleColumnsSuffix (c :: chosen) pref hk := by
+  apply Vector.toArray_inj.mp
+  unfold assembleColumnsSuffix
+  simp only [vectorLengthCast, Vector.toList, insertAt]
+  have hidx : (Fin.last (n - (c :: chosen).length)).val = pref.toArray.toList.length := by
+    simp
+  rw [hidx, list_insertIdx_length]
+  simp [List.append_assoc]
+
+private theorem det_columnTupleMatrix_assembleColumnsSuffix_insertAt_last
+    {R : Type u} [Lean.Grind.Ring R] {n m : Nat} (source : Matrix R n m)
+    (chosen : List (Fin m)) (c : Fin m)
+    (pref : Vector (Fin m) (n - (c :: chosen).length))
+    (hk : (c :: chosen).length ≤ n)
+    (hlen : (n - (c :: chosen).length) + 1 = n - chosen.length := by
+      have hcons : (c :: chosen).length = chosen.length + 1 := rfl
+      omega) :
+    det (columnTupleMatrix source
+        (columnTupleVectorFn
+          (assembleColumnsSuffix chosen
+            (vectorLengthCast hlen
+              (insertAt c pref (Fin.last (n - (c :: chosen).length))))
+            (by
+              have hcons : (c :: chosen).length = chosen.length + 1 := rfl
+              omega)))) =
+      det (columnTupleMatrix source
+        (columnTupleVectorFn (assembleColumnsSuffix (c :: chosen) pref hk))) := by
+  rw [assembleColumnsSuffix_insertAt_last chosen c pref hk hlen]
+
 private def partialColumnTupleCoeff {R : Type u} [Mul R] [OfNat R 1] {n m : Nat}
     (coeff : Matrix R n m) (chosen : List (Fin m))
     (pref : Vector (Fin m) (n - chosen.length)) : R :=
