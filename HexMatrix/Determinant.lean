@@ -5174,5 +5174,29 @@ theorem det_columnSumMatrix_eq_sum_columnTuples
       (assembleColumnsSuffix_left ([] : List (Fin m)) cols (by simp) (⟨j, by simp [hj]⟩))
   rw [hcoeff, hdet]
 
+/-- The determinant of a row Gram matrix expands as the ordered-column tuple
+sum induced by the generic column-sum determinant expansion. -/
+theorem det_gramMatrix_eq_sum_columnTuples
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat} (A : Matrix R n m) :
+    det (gramMatrix A) =
+      (columnTupleVectors n m).foldl
+        (fun acc cols => acc +
+          columnTupleCoeff A cols *
+            det (columnTupleMatrix A (columnTupleVectorFn cols))) 0 := by
+  have hgram : gramMatrix A = columnSumMatrix A A := by
+    apply Vector.ext
+    intro r hr
+    apply Vector.ext
+    intro c hc
+    change (gramMatrix A)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
+      (columnSumMatrix A A)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+    rw [columnSumMatrix_entry]
+    simp [gramMatrix, ofFn, row, Hex.Vector.dotProduct]
+    apply foldl_det_sum_congr
+    intro k _hk
+    exact Lean.Grind.CommSemiring.mul_comm A[(⟨r, hr⟩ : Fin n)][k] A[(⟨c, hc⟩ : Fin n)][k]
+  rw [hgram]
+  exact det_columnSumMatrix_eq_sum_columnTuples A A
+
 end Matrix
 end Hex
