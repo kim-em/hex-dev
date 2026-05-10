@@ -2127,6 +2127,21 @@ theorem leadingCoeff_scale_of_ne_zero_of_pos_degree [ZMod64.PrimeModulus p]
   rw [show (DensePoly.scale c f).size - 1 = f.size - 1 by omega]
   rw [DensePoly.coeff_scale _ _ _ hscale_zero]
 
+theorem leadingCoeff_scale_of_ne_zero_of_nonzero [ZMod64.PrimeModulus p]
+    {c : ZMod64 p} (hc : c ≠ 0) (f : FpPoly p)
+    (hfsize : f.size ≠ 0) :
+    DensePoly.leadingCoeff (DensePoly.scale c f) =
+      c * DensePoly.leadingCoeff f := by
+  have hfpos : 0 < f.size := Nat.pos_of_ne_zero hfsize
+  have hscale_size : (DensePoly.scale c f).size = f.size :=
+    scale_size_eq_of_ne_zero (p := p) hc f
+  have hscale_pos : 0 < (DensePoly.scale c f).size := by omega
+  have hscale_zero : c * (0 : ZMod64 p) = 0 := by grind
+  rw [leadingCoeff_eq_coeff_pred (DensePoly.scale c f) hscale_pos]
+  rw [leadingCoeff_eq_coeff_pred f hfpos]
+  rw [show (DensePoly.scale c f).size - 1 = f.size - 1 by omega]
+  rw [DensePoly.coeff_scale _ _ _ hscale_zero]
+
 theorem scale_inv_leadingCoeff_monic [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hpos : 0 < f.degree?.getD 0) :
     DensePoly.Monic (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f) := by

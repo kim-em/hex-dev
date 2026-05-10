@@ -141,17 +141,6 @@ theorem bhksPaperConstantFactorReal_le_fourPowFactor
   simpa [bhksPaperConstantFactorReal, bhksFourPowFactor] using
     pow_le_pow_left₀ hbase_nonneg hbase_le (bhksDegree f * bhksDegree f)
 
-private theorem range_foldl_add_eq_finset_sum_nat (g : Nat → Nat) (m : Nat) :
-    (List.range m).foldl (fun acc i => acc + g i) 0 =
-      ∑ i ∈ Finset.range m, g i := by
-  induction m with
-  | zero =>
-      simp
-  | succ m ih =>
-      rw [List.range_succ, List.foldl_append]
-      simp only [List.foldl_cons, List.foldl_nil]
-      rw [ih, Finset.sum_range_succ]
-
 private theorem toPolynomial_support_subset_range_size (f : Hex.ZPoly) :
     (HexPolyZMathlib.toPolynomial f).support ⊆ Finset.range f.size := by
   intro i hi
@@ -166,44 +155,6 @@ private theorem toPolynomial_support_subset_range_size (f : Hex.ZPoly) :
 private theorem int_natAbs_sq_cast_eq_sq (z : Int) :
     ((z.natAbs : ℝ) ^ 2) = ((z : ℝ) ^ 2) := by
   norm_num [sq]
-
-private theorem l2norm_toPolynomial_sq_le_sumSquared_succ (f : Hex.ZPoly) :
-    (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)) ^ 2 ≤
-      (bhksSumSquared f + 1 : ℝ) := by
-  have hsum_nonneg :
-      0 ≤ ∑ i ∈ (HexPolyZMathlib.toPolynomial f).support,
-        ((HexPolyZMathlib.toPolynomial f).coeff i : ℝ) ^ 2 := by
-    exact Finset.sum_nonneg fun i hi => sq_nonneg _
-  have hl2_sq :
-      (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)) ^ 2 =
-        ∑ i ∈ (HexPolyZMathlib.toPolynomial f).support,
-          ((HexPolyZMathlib.toPolynomial f).coeff i : ℝ) ^ 2 := by
-    unfold HexPolyZMathlib.l2norm
-    exact Real.sq_sqrt hsum_nonneg
-  have hsupport := toPolynomial_support_subset_range_size f
-  have hsum_le :
-      ∑ i ∈ (HexPolyZMathlib.toPolynomial f).support,
-          ((HexPolyZMathlib.toPolynomial f).coeff i : ℝ) ^ 2
-        ≤ ∑ i ∈ Finset.range f.size, ((f.coeff i).natAbs : ℝ) ^ 2 := by
-    refine (Finset.sum_le_sum_of_subset_of_nonneg hsupport ?_).trans_eq ?_
-    · intro i hi_range hi_not_support
-      exact sq_nonneg _
-    · apply Finset.sum_congr rfl
-      intro i hi
-      simp
-  have hcoeff_eq :
-      (bhksSumSquared f : ℝ) =
-        ∑ i ∈ Finset.range f.size, ((f.coeff i).natAbs : ℝ) ^ 2 := by
-    rw [bhksSumSquared, Hex.ZPoly.coeffNormSq_eq_sum,
-      range_foldl_add_eq_finset_sum_nat]
-    norm_cast
-  calc
-    (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)) ^ 2
-        = ∑ i ∈ (HexPolyZMathlib.toPolynomial f).support,
-            ((HexPolyZMathlib.toPolynomial f).coeff i : ℝ) ^ 2 := hl2_sq
-    _ ≤ ∑ i ∈ Finset.range f.size, ((f.coeff i).natAbs : ℝ) ^ 2 := hsum_le
-    _ = (bhksSumSquared f : ℝ) := hcoeff_eq.symm
-    _ ≤ (bhksSumSquared f + 1 : ℝ) := by norm_num
 
 private theorem nonneg_pow_two_sub_one_le_pow_of_sq_le
     {x A : ℝ} {n : Nat} (hx : 0 ≤ x) (hA1 : 1 ≤ A) (hsq : x ^ 2 ≤ A) :
@@ -231,62 +182,6 @@ private theorem nonneg_pow_two_sub_one_le_pow_of_sq_le
           ring
         _ ≤ A * A ^ k := hmain
         _ = A ^ (k + 1) := by rw [pow_succ]; ring
-
-private theorem log_l2norm_le_log2_sumSquared_succ (f : Hex.ZPoly) :
-    Real.log (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)) ≤
-      (Nat.log2 (bhksSumSquared f + 1) : ℝ) := by
-  let x := HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)
-  let A := bhksSumSquared f + 1
-  have hx_nonneg : 0 ≤ x := by
-    unfold x HexPolyZMathlib.l2norm
-    exact Real.sqrt_nonneg _
-  have hsq : x ^ 2 ≤ (A : ℝ) := by
-    simpa [x, A] using l2norm_toPolynomial_sq_le_sumSquared_succ f
-  by_cases hx_zero : x = 0
-  · simp [x, hx_zero]
-  have hx_pos : 0 < x := lt_of_le_of_ne hx_nonneg (Ne.symm hx_zero)
-  have hlog_sq :
-      Real.log x ≤ Real.log (A : ℝ) / 2 := by
-    have hA_pos : 0 < (A : ℝ) := by positivity
-    have hlog_le : Real.log (x ^ 2) ≤ Real.log (A : ℝ) :=
-      Real.log_le_log (sq_pos_of_pos hx_pos) hsq
-    have hx_ne : x ≠ 0 := ne_of_gt hx_pos
-    have hlog_pow : Real.log (x ^ 2) = 2 * Real.log x := by
-      simp [Real.log_pow]
-    nlinarith [hlog_le, hlog_pow]
-  have hlogA_le :
-      Real.log (A : ℝ) / 2 ≤ (Nat.log2 A : ℝ) := by
-    by_cases hA_one : A = 1
-    · simp [hA_one]
-    have hA_ge_two : 2 ≤ A := by omega
-    rw [Nat.log2_eq_log_two]
-    let k := Nat.log 2 A
-    change Real.log (A : ℝ) / 2 ≤ (k : ℝ)
-    have hk_pos : 1 ≤ k := by
-      exact Nat.le_log_of_pow_le (by decide : 1 < 2) (by simpa [k] using hA_ge_two)
-    have hA_lt_pow : (A : ℝ) < (2 : ℝ) ^ (k + 1) := by
-      exact_mod_cast Nat.lt_pow_succ_log_self (by decide : 1 < 2) A
-    have hlogA_lt : Real.log (A : ℝ) < (k + 1 : ℝ) * Real.log 2 := by
-      calc
-        Real.log (A : ℝ) < Real.log ((2 : ℝ) ^ (k + 1)) :=
-          Real.log_lt_log (by positivity) hA_lt_pow
-        _ = (k + 1 : ℝ) * Real.log 2 := by
-          rw [Real.log_pow]
-          norm_num
-    have hlog2_le_one : Real.log 2 ≤ (1 : ℝ) :=
-      by
-        have h := Real.log_le_sub_one_of_pos (by norm_num : (0 : ℝ) < 2)
-        norm_num at h
-        exact h
-    have hsucc_le : (k : ℝ) + 1 ≤ 2 * (k : ℝ) := by
-      have hk_bound_nat : k + 1 ≤ 2 * k := by omega
-      exact_mod_cast hk_bound_nat
-    have hlogA_le_succ : Real.log (A : ℝ) ≤ (k + 1 : ℝ) := by
-      have hmul_le : (k + 1 : ℝ) * Real.log 2 ≤ (k + 1 : ℝ) * 1 :=
-        mul_le_mul_of_nonneg_left hlog2_le_one (by positivity)
-      nlinarith [hlogA_lt.le, hmul_le]
-    nlinarith [hlogA_le_succ, hsucc_le]
-  exact hlog_sq.trans hlogA_le
 
 private theorem l2norm_log_nonneg (f : Hex.ZPoly) :
     0 ≤ Real.log (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)) := by
@@ -390,6 +285,59 @@ theorem l2norm_toPolynomial_sq_le_coeffNormSq_add_one (f : Hex.ZPoly) :
       (Hex.ZPoly.coeffNormSq f + 1 : ℝ) := by
   exact le_trans (l2norm_toPolynomial_sq_le_coeffNormSq f) (by norm_num)
 
+private theorem log_l2norm_le_log2_coeffNormSq_add_one (f : Hex.ZPoly) :
+    Real.log (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)) ≤
+      (Nat.log2 (Hex.ZPoly.coeffNormSq f + 1) : ℝ) := by
+  let x := HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)
+  let A := Hex.ZPoly.coeffNormSq f + 1
+  have hx_nonneg : 0 ≤ x := by
+    unfold x HexPolyZMathlib.l2norm
+    exact Real.sqrt_nonneg _
+  have hsq : x ^ 2 ≤ (A : ℝ) := by
+    simpa [x, A] using l2norm_toPolynomial_sq_le_coeffNormSq_add_one f
+  by_cases hx_zero : x = 0
+  · simp [x, hx_zero]
+  have hx_pos : 0 < x := lt_of_le_of_ne hx_nonneg (Ne.symm hx_zero)
+  have hlog_sq :
+      Real.log x ≤ Real.log (A : ℝ) / 2 := by
+    have hlog_le : Real.log (x ^ 2) ≤ Real.log (A : ℝ) :=
+      Real.log_le_log (sq_pos_of_pos hx_pos) hsq
+    have hlog_pow : Real.log (x ^ 2) = 2 * Real.log x := by
+      simp [Real.log_pow]
+    nlinarith [hlog_le, hlog_pow]
+  have hlogA_le :
+      Real.log (A : ℝ) / 2 ≤ (Nat.log2 A : ℝ) := by
+    by_cases hA_one : A = 1
+    · simp [hA_one]
+    have hA_ge_two : 2 ≤ A := by omega
+    rw [Nat.log2_eq_log_two]
+    let k := Nat.log 2 A
+    change Real.log (A : ℝ) / 2 ≤ (k : ℝ)
+    have hk_pos : 1 ≤ k := by
+      exact Nat.le_log_of_pow_le (by decide : 1 < 2) (by simpa [k] using hA_ge_two)
+    have hA_lt_pow : (A : ℝ) < (2 : ℝ) ^ (k + 1) := by
+      exact_mod_cast Nat.lt_pow_succ_log_self (by decide : 1 < 2) A
+    have hlogA_lt : Real.log (A : ℝ) < (k + 1 : ℝ) * Real.log 2 := by
+      calc
+        Real.log (A : ℝ) < Real.log ((2 : ℝ) ^ (k + 1)) :=
+          Real.log_lt_log (by positivity) hA_lt_pow
+        _ = (k + 1 : ℝ) * Real.log 2 := by
+          rw [Real.log_pow]
+          norm_num
+    have hlog2_le_one : Real.log 2 ≤ (1 : ℝ) := by
+      have h := Real.log_le_sub_one_of_pos (by norm_num : (0 : ℝ) < 2)
+      norm_num at h
+      exact h
+    have hsucc_le : (k : ℝ) + 1 ≤ 2 * (k : ℝ) := by
+      have hk_bound_nat : k + 1 ≤ 2 * k := by omega
+      exact_mod_cast hk_bound_nat
+    have hlogA_le_succ : Real.log (A : ℝ) ≤ (k + 1 : ℝ) := by
+      have hmul_le : (k + 1 : ℝ) * Real.log 2 ≤ (k + 1 : ℝ) * 1 :=
+        mul_le_mul_of_nonneg_left hlog2_le_one (by positivity)
+      nlinarith [hlogA_lt.le, hmul_le]
+    nlinarith [hlogA_le_succ, hsucc_le]
+  exact hlog_sq.trans hlogA_le
+
 /--
 Named analytic target for bounding the BHKS coefficient-norm factor by the
 packaged integer coefficient-norm factor.
@@ -400,7 +348,7 @@ theorem bhksPaperCoeffNormFactorReal_le_coeffNormFactor (f : Hex.ZPoly) :
       0 ≤ HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f) := by
     unfold HexPolyZMathlib.l2norm
     exact Real.sqrt_nonneg _
-  have hsq := l2norm_toPolynomial_sq_le_sumSquared_succ f
+  have hsq := l2norm_toPolynomial_sq_le_coeffNormSq_add_one f
   have hA1 : (1 : ℝ) ≤ (bhksSumSquared f + 1 : ℝ) := by norm_num
   simpa [bhksPaperCoeffNormFactorReal, bhksCoeffNormFactor] using
     nonneg_pow_two_sub_one_le_pow_of_sq_le
@@ -415,9 +363,74 @@ Named analytic target for bounding the BHKS logarithmic factor by the packaged
 theorem bhksPaperLogFactorReal_le_log2Factor (f : Hex.ZPoly) :
     bhksPaperLogFactorReal f ≤ (bhksLog2Factor f : ℝ) := by
   have hlog_nonneg := l2norm_log_nonneg f
-  have hlog_le := log_l2norm_le_log2_sumSquared_succ f
+  have hlog_le := log_l2norm_le_log2_coeffNormSq_add_one f
   simpa [bhksPaperLogFactorReal, bhksLog2Factor] using
     pow_le_pow_left₀ hlog_nonneg hlog_le (bhksDegree f)
+
+/--
+The product-shaped BHKS paper threshold is bounded by the packaged integer
+threshold expression used by the executable cap.
+-/
+theorem bhksPaperThresholdReal_le_thresholdNatBound
+    (f : Hex.ZPoly) (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2) :
+    bhksPaperThresholdReal f C ≤ (bhksThresholdNatBound f : ℝ) := by
+  have hdegree :
+      bhksPaperDegreeFactorReal f ≤ (bhksDegreeFactor f : ℝ) := by
+    rw [bhksPaperDegreeFactorReal_eq_natCast]
+  have hconstant :=
+    bhksPaperConstantFactorReal_le_fourPowFactor f C hC_nonneg hC
+  have hcoeff := bhksPaperCoeffNormFactorReal_le_coeffNormFactor f
+  have hlog := bhksPaperLogFactorReal_le_log2Factor f
+  have hconstant_nonneg : 0 ≤ bhksPaperConstantFactorReal f C := by
+    exact pow_nonneg (mul_nonneg (by norm_num) hC_nonneg) _
+  have hcoeff_nonneg : 0 ≤ bhksPaperCoeffNormFactorReal f := by
+    exact pow_nonneg (by
+      unfold HexPolyZMathlib.l2norm
+      exact Real.sqrt_nonneg _) _
+  have hlog_nonneg : 0 ≤ bhksPaperLogFactorReal f := by
+    exact pow_nonneg (l2norm_log_nonneg f) _
+  have hdegree_bound_nonneg : 0 ≤ (bhksDegreeFactor f : ℝ) := by
+    exact_mod_cast Nat.zero_le (bhksDegreeFactor f)
+  have hdegree_constant_bound_nonneg :
+      0 ≤ (bhksDegreeFactor f : ℝ) * (bhksFourPowFactor f : ℝ) :=
+    mul_nonneg hdegree_bound_nonneg (by exact_mod_cast Nat.zero_le (bhksFourPowFactor f))
+  have hdegree_constant_coeff_bound_nonneg :
+      0 ≤ (bhksDegreeFactor f : ℝ) * (bhksFourPowFactor f : ℝ) *
+        (bhksCoeffNormFactor f : ℝ) :=
+    mul_nonneg hdegree_constant_bound_nonneg
+      (by exact_mod_cast Nat.zero_le (bhksCoeffNormFactor f))
+  have hdegree_constant :
+      bhksPaperDegreeFactorReal f * bhksPaperConstantFactorReal f C ≤
+        (bhksDegreeFactor f : ℝ) * (bhksFourPowFactor f : ℝ) :=
+    mul_le_mul hdegree hconstant hconstant_nonneg hdegree_bound_nonneg
+  have hdegree_constant_coeff :
+      bhksPaperDegreeFactorReal f * bhksPaperConstantFactorReal f C *
+          bhksPaperCoeffNormFactorReal f ≤
+        (bhksDegreeFactor f : ℝ) * (bhksFourPowFactor f : ℝ) *
+          (bhksCoeffNormFactor f : ℝ) :=
+    mul_le_mul hdegree_constant hcoeff hcoeff_nonneg hdegree_constant_bound_nonneg
+  have hproduct :
+      bhksPaperDegreeFactorReal f * bhksPaperConstantFactorReal f C *
+          bhksPaperCoeffNormFactorReal f * bhksPaperLogFactorReal f ≤
+        (bhksDegreeFactor f : ℝ) * (bhksFourPowFactor f : ℝ) *
+          (bhksCoeffNormFactor f : ℝ) * (bhksLog2Factor f : ℝ) :=
+    mul_le_mul hdegree_constant_coeff hlog hlog_nonneg
+      hdegree_constant_coeff_bound_nonneg
+  have hproduct_le_bound :
+      (bhksDegreeFactor f : ℝ) * (bhksFourPowFactor f : ℝ) *
+          (bhksCoeffNormFactor f : ℝ) * (bhksLog2Factor f : ℝ) ≤
+        (bhksThresholdNatBound f : ℝ) := by
+    simp [bhksThresholdNatBound]
+  exact hproduct.trans hproduct_le_bound
+
+/--
+The executable BHKS cap dominates the product-shaped BHKS paper threshold.
+-/
+theorem bhksPaperThresholdReal_le_bhksBound
+    (f : Hex.ZPoly) (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2) :
+    bhksPaperThresholdReal f C ≤ (Hex.bhksBound f : ℝ) :=
+  (bhksPaperThresholdReal_le_thresholdNatBound f C hC_nonneg hC).trans
+    (bhksThresholdNatBound_real_le_bhksBound f)
 
 /--
 The packaged BHKS cap remains available alongside the executable Mignotte
