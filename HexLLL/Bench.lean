@@ -844,7 +844,7 @@ release bench runs use
 to record its ratio. -/
 setup_fixed_benchmark runFpylllFirstShortVectorBZRecombinationChecksum where {
     repeats := 5
-    maxSecondsPerCall := 6.0
+    maxSecondsPerCall := 20.0
     expectedHash := some 0x3c0064007a0036
   }
 

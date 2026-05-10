@@ -109,7 +109,7 @@ def rref (M : Matrix R n m) : RowEchelonData R n m :=
   { rank := final.pivots.length
     echelon := final.echelon
     transform := final.transform
-    pivotCols := ⟨final.pivots.toArray, by simpa using final.pivots.length_toArray⟩ }
+    pivotCols := ⟨final.pivots.toArray, by simp⟩ }
 
 /-- The computed `rref` data satisfies the `IsRREF` contract. -/
 theorem rref_isRREF (M : Matrix R n m) : IsRREF M (rref M) := by
