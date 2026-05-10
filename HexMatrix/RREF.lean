@@ -390,6 +390,68 @@ private theorem eliminateColumn_zero (M : Matrix R n m) (T : Matrix R n n)
           exact hs
         exact ih _ hpivot_step hrtail (List.nodup_cons.mp hnodup).2
 
+/-- Same-operation preservation of `T * M = E` through one fold step of
+`eliminateColumn`'s update: applying the same `rowAdd` to both `T` (transform)
+and `E` (echelon) keeps `T * M = E`. -/
+private theorem eliminateColumn_step_transform_preserve
+    {M : Matrix R n m} (s : Matrix R n m × Matrix R n n) (pivotRow : Fin n)
+    (col : Fin m) (x : Fin n) (h : s.2 * M = s.1) :
+    (if _h : x = pivotRow then s
+      else
+        let coeff := -s.1[x][col]
+        if coeff = 0 then s
+        else (rowAdd s.1 pivotRow x coeff, rowAdd s.2 pivotRow x coeff)).2 * M
+      = (if _h : x = pivotRow then s
+          else
+            let coeff := -s.1[x][col]
+            if coeff = 0 then s
+            else (rowAdd s.1 pivotRow x coeff, rowAdd s.2 pivotRow x coeff)).1 := by
+  by_cases hx : x = pivotRow
+  · rw [dif_pos hx]; exact h
+  · rw [dif_neg hx]
+    by_cases hcoeff : -s.1[x][col] = 0
+    · rw [if_pos hcoeff]; exact h
+    · rw [if_neg hcoeff]
+      exact rowAdd_transform_mul_preserve pivotRow x (-s.1[x][col]) h
+
+/-- Folding `eliminateColumn`'s step function over any list preserves the
+same-operation invariant `state.2 * M = state.1`. -/
+private theorem eliminateColumn_foldl_transform_preserve
+    {M : Matrix R n m} (pivotRow : Fin n) (col : Fin m) :
+    ∀ (xs : List (Fin n)) (s : Matrix R n m × Matrix R n n),
+      s.2 * M = s.1 →
+      (xs.foldl (fun (state : Matrix R n m × Matrix R n n) j =>
+        if _h : j = pivotRow then state
+        else
+          let coeff := -state.1[j][col]
+          if coeff = 0 then state
+          else (rowAdd state.1 pivotRow j coeff, rowAdd state.2 pivotRow j coeff))
+        s).2 * M
+        = (xs.foldl (fun (state : Matrix R n m × Matrix R n n) j =>
+          if _h : j = pivotRow then state
+          else
+            let coeff := -state.1[j][col]
+            if coeff = 0 then state
+            else (rowAdd state.1 pivotRow j coeff, rowAdd state.2 pivotRow j coeff))
+          s).1 := by
+  intro xs
+  induction xs with
+  | nil => intro s h; exact h
+  | cons x xs ih =>
+      intro s h
+      simp only [List.foldl_cons]
+      exact ih _ (eliminateColumn_step_transform_preserve s pivotRow col x h)
+
+/-- Same-operation preservation: when `eliminateColumn` updates both `M` (the
+echelon side) and `T` (the transform side) via the same row-add operations,
+the equation `T * M_orig = M_current` is preserved. -/
+private theorem eliminateColumn_transform_preserve
+    {M : Matrix R n m} (T : Matrix R n n) (E : Matrix R n m)
+    (pivotRow : Fin n) (col : Fin m) (h : T * M = E) :
+    (eliminateColumn E T pivotRow col).2 * M = (eliminateColumn E T pivotRow col).1 := by
+  unfold eliminateColumn
+  exact eliminateColumn_foldl_transform_preserve pivotRow col (List.finRange n) (E, T) h
+
 /-- Process columns left-to-right, performing Gauss-Jordan elimination. -/
 private def rrefLoop (col fuel : Nat) (state : RrefState R n m) : RrefState R n m :=
   match fuel with
