@@ -2564,6 +2564,73 @@ private theorem dvd_trans_poly
     _ = (a * x) * y := by rw [hx]
     _ = a * (x * y) := DensePoly.mul_assoc_poly a x y
 
+private theorem dvd_one_of_mul_right_dvd_right
+    [ZMod64.PrimeModulus p] {d g : FpPoly p}
+    (hg : g.isZero = false) (hdiv : d * g ∣ g) :
+    d ∣ (1 : FpPoly p) := by
+  have hg_ne : g ≠ 0 := by
+    intro hzero
+    rw [hzero] at hg
+    change (0 : FpPoly p).isZero = false at hg
+    have hzero_isZero : (0 : FpPoly p).isZero = true := rfl
+    rw [hzero_isZero] at hg
+    cases hg
+  rcases hdiv with ⟨q, hq⟩
+  have hd_ne : d ≠ 0 := by
+    intro hd
+    apply hg_ne
+    rw [hq, hd, zero_mul, zero_mul]
+  have hdg_ne : d * g ≠ 0 := by
+    intro hdg
+    apply hg_ne
+    rw [hq, hdg, zero_mul]
+  have hq_ne : q ≠ 0 := by
+    intro hq_zero
+    apply hg_ne
+    rw [hq, hq_zero, mul_zero]
+  have hdeg_dg := degree?_mul_eq_add_degree? d g hd_ne hg_ne
+  have hdeg_all := degree?_mul_eq_add_degree? (d * g) q hdg_ne hq_ne
+  have hdeg_eq :
+      g.degree?.getD 0 = (d * g * q).degree?.getD 0 := by
+    rw [← hq]
+  have hd_degree_zero : d.degree?.getD 0 = 0 := by
+    rw [hdeg_all, hdeg_dg] at hdeg_eq
+    omega
+  have hd_size_pos : 0 < d.size := by
+    apply Nat.pos_of_ne_zero
+    intro hsize
+    apply hd_ne
+    apply DensePoly.ext_coeff
+    intro n
+    rw [DensePoly.coeff_zero]
+    exact DensePoly.coeff_eq_zero_of_size_le d (by omega)
+  have hd_size_ne : d.size ≠ 0 := Nat.pos_iff_ne_zero.mp hd_size_pos
+  have hd_degree : d.degree? = some (d.size - 1) := by
+    unfold DensePoly.degree?
+    simp [hd_size_ne]
+  have hd_size_one : d.size = 1 := by
+    rw [hd_degree] at hd_degree_zero
+    simp at hd_degree_zero
+    omega
+  have hcoeff_ne : d.coeff 0 ≠ 0 := by
+    have hlast := DensePoly.coeff_last_ne_zero_of_pos_size d hd_size_pos
+    simpa [hd_size_one] using hlast
+  have hd_const : d = DensePoly.C (d.coeff 0) := by
+    apply DensePoly.ext_coeff
+    intro n
+    cases n with
+    | zero =>
+        rw [DensePoly.coeff_C]
+        simp
+    | succ n =>
+        have hsize_le : d.size ≤ n + 1 := by
+          rw [hd_size_one]
+          omega
+        rw [DensePoly.coeff_eq_zero_of_size_le d hsize_le, DensePoly.coeff_C]
+        simp
+  rw [hd_const, ← scale_one_poly]
+  exact dvd_scale_self_of_ne_zero hcoeff_ne (1 : FpPoly p)
+
 private theorem normalizeMonic_eq_one_of_dvd_one
     [ZMod64.PrimeModulus p] {g : FpPoly p}
     (hdiv : g ∣ (1 : FpPoly p)) :
