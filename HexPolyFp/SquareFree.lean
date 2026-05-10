@@ -1278,6 +1278,29 @@ private theorem normalizeMonic_reconstruct
   · exact normalizeMonic_nonzero_reconstruct hp f hzero
   · exact normalizeMonic_zero_reconstruct f hzero
 
+private theorem normalizeMonic_nonzero_monic
+    [ZMod64.PrimeModulus p] (f : FpPoly p) (hzero : f.isZero = false) :
+    DensePoly.Monic (normalizeMonic f).2 := by
+  rw [normalizeMonic_nonzero f hzero]
+  have hlead_ne := leadingCoeff_ne_zero_of_isZero_false f hzero
+  have hinv_ne : (DensePoly.leadingCoeff f)⁻¹ ≠ (0 : ZMod64 p) := by
+    intro hinv
+    change ZMod64.inv (DensePoly.leadingCoeff f) = (0 : ZMod64 p) at hinv
+    have hone := ZMod64.inv_mul_eq_one_of_prime
+      (ZMod64.PrimeModulus.prime (p := p)) hlead_ne
+    rw [hinv] at hone
+    have hzero_mul : (0 : ZMod64 p) * DensePoly.leadingCoeff f = 0 := by grind
+    rw [hzero_mul] at hone
+    exact zmod64_one_ne_zero_of_prime
+      (ZMod64.PrimeModulus.prime (p := p)) hone.symm
+  unfold DensePoly.Monic
+  have hfsize : f.size ≠ 0 := by
+    simpa [DensePoly.isZero, DensePoly.size, Array.isEmpty_iff_size_eq_zero,
+      Bool.not_eq_true] using hzero
+  rw [leadingCoeff_scale_of_ne_zero_of_nonzero (p := p) hinv_ne f hfsize]
+  exact ZMod64.inv_mul_eq_one_of_prime
+    (ZMod64.PrimeModulus.prime (p := p)) hlead_ne
+
 /--
 Yun's inner loop: peel off the factors with multiplicities `i`, `i + 1`, ...
 from the coprime/repeated split `(c, w)`, consing each discovered factor onto
@@ -2349,7 +2372,7 @@ private theorem squareFreeAuxRev_reconstruction_invariant
 
 private def squareFreeFactorCoprimeRel :
     SquareFreeFactor p → SquareFreeFactor p → Prop :=
-  fun a b => DensePoly.gcd a.factor b.factor = 1
+  fun a b => (normalizeMonic (DensePoly.gcd a.factor b.factor)).2 = 1
 
 private inductive yunFactorsPairwiseReachable :
     FpPoly p → FpPoly p → Nat → Prop
@@ -2541,6 +2564,39 @@ private theorem dvd_trans_poly
     _ = (a * x) * y := by rw [hx]
     _ = a * (x * y) := DensePoly.mul_assoc_poly a x y
 
+private theorem normalizeMonic_eq_one_of_dvd_one
+    [ZMod64.PrimeModulus p] {g : FpPoly p}
+    (hdiv : g ∣ (1 : FpPoly p)) :
+    (normalizeMonic g).2 = 1 := by
+  have hg_nonzero : g.isZero = false := by
+    cases hzero : g.isZero with
+    | false => rfl
+    | true =>
+        exfalso
+        rcases hdiv with ⟨u, hu⟩
+        have hone_ne : (1 : FpPoly p) ≠ 0 := by
+          intro h
+          have hcoeff := congrArg (fun f : FpPoly p => f.coeff 0) h
+          change (1 : FpPoly p).coeff 0 = (0 : FpPoly p).coeff 0 at hcoeff
+          change (DensePoly.C (1 : ZMod64 p)).coeff 0 =
+            (0 : FpPoly p).coeff 0 at hcoeff
+          rw [DensePoly.coeff_C, DensePoly.coeff_zero] at hcoeff
+          exact zmod64_one_ne_zero_of_prime
+            (ZMod64.PrimeModulus.prime (p := p)) hcoeff
+        apply hone_ne
+        rw [hu, eq_zero_of_isZero_true g hzero, zero_mul]
+  apply eq_one_of_monic_dvd_one
+  · exact normalizeMonic_nonzero_monic g hg_nonzero
+  · have hnorm_dvd_g : (normalizeMonic g).2 ∣ g := by
+      refine ⟨DensePoly.C (normalizeMonic g).1, ?_⟩
+      calc
+        g = DensePoly.C (normalizeMonic g).1 * (normalizeMonic g).2 := by
+          exact (normalizeMonic_reconstruct
+            (ZMod64.PrimeModulus.prime (p := p)) g).symm
+        _ = (normalizeMonic g).2 * DensePoly.C (normalizeMonic g).1 := by
+          exact DensePoly.mul_comm_poly _ _
+    exact dvd_trans_poly hnorm_dvd_g hdiv
+
 private theorem yunFactors_factor_mem_acc_or_dvd_current
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p) (multiplicity fuel : Nat)
@@ -2603,24 +2659,22 @@ private theorem yunStep_quotient_factor_coprime_of_common_dvd_one
     [ZMod64.PrimeModulus p]
     (z y factor : FpPoly p) (multiplicity tailMultiplicity : Nat)
     (hfactor_dvd_y : factor ∣ y)
-    (hmonic : DensePoly.Monic (DensePoly.gcd z factor))
     (hcommon :
       ∀ d : FpPoly p, d ∣ z → d ∣ y → d ∣ (1 : FpPoly p)) :
     squareFreeFactorCoprimeRel
       { factor := z, multiplicity := multiplicity }
       { factor := factor, multiplicity := tailMultiplicity } := by
-  simpa [squareFreeFactorCoprimeRel] using
-    (gcd_eq_one_of_monic_of_common_dvd_one z factor hmonic
-      (fun d hd_z hd_factor => hcommon d hd_z (dvd_trans_poly hd_factor hfactor_dvd_y)))
+  have hgcd_dvd_one :
+      DensePoly.gcd z factor ∣ (1 : FpPoly p) :=
+    hcommon (DensePoly.gcd z factor)
+      (DensePoly.gcd_dvd_left z factor)
+      (dvd_trans_poly (DensePoly.gcd_dvd_right z factor) hfactor_dvd_y)
+  have hnormalized := normalizeMonic_eq_one_of_dvd_one hgcd_dvd_one
+  simpa [squareFreeFactorCoprimeRel] using hnormalized
 
 private theorem yunFactors_current_tail_coprime_of_common_dvd_one
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p) (multiplicity fuel : Nat)
-    (hmonic :
-      ∀ sf ∈
-          (yunFactors (DensePoly.gcd c w) (w / DensePoly.gcd c w)
-          (multiplicity + 1) fuel []).1.reverse,
-        DensePoly.Monic (DensePoly.gcd (c / DensePoly.gcd c w) sf.factor))
     (hcommon :
       ∀ d : FpPoly p,
         d ∣ c / DensePoly.gcd c w →
@@ -2636,7 +2690,6 @@ private theorem yunFactors_current_tail_coprime_of_common_dvd_one
     yunStep_quotient_factor_coprime_of_common_dvd_one
       (c / DensePoly.gcd c w) (DensePoly.gcd c w) sf.factor multiplicity sf.multiplicity
       hsf_dvd_current
-      (hmonic sf hsf)
       hcommon
 
 private theorem yunFactorsPairwiseReady_succ_of_common_dvd_one
@@ -2648,11 +2701,6 @@ private theorem yunFactorsPairwiseReady_succ_of_common_dvd_one
         (w / DensePoly.gcd c w)
         (multiplicity + 1)
         fuel)
-    (hmonic :
-      ∀ sf ∈
-          (yunFactors (DensePoly.gcd c w) (w / DensePoly.gcd c w)
-          (multiplicity + 1) fuel []).1.reverse,
-        DensePoly.Monic (DensePoly.gcd (c / DensePoly.gcd c w) sf.factor))
     (hcommon :
       ∀ d : FpPoly p,
         d ∣ c / DensePoly.gcd c w →
@@ -2662,19 +2710,12 @@ private theorem yunFactorsPairwiseReady_succ_of_common_dvd_one
   apply yunFactorsPairwiseReady_succ_of_current_tail c w multiplicity fuel htail
   intro _hc _hz
   exact yunFactors_current_tail_coprime_of_common_dvd_one
-    c w multiplicity fuel hmonic hcommon
+    c w multiplicity fuel hcommon
 
 private theorem yunFactorsPairwiseReady_of_reachable_common_dvd_one
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p) (multiplicity fuel : Nat)
     (hreachable : yunFactorsPairwiseReachable c w fuel)
-    (hmonic :
-      ∀ c w : FpPoly p, ∀ multiplicity fuel : Nat,
-        yunFactorsPairwiseReachable c w (fuel + 1) →
-          ∀ sf ∈
-              (yunFactors (DensePoly.gcd c w) (w / DensePoly.gcd c w)
-              (multiplicity + 1) fuel []).1.reverse,
-            DensePoly.Monic (DensePoly.gcd (c / DensePoly.gcd c w) sf.factor))
     (hcommon :
       ∀ c w : FpPoly p, ∀ _multiplicity fuel : Nat,
         yunFactorsPairwiseReachable c w (fuel + 1) →
@@ -2701,19 +2742,11 @@ private theorem yunFactorsPairwiseReady_of_reachable_common_dvd_one
       exact
         yunFactorsPairwiseReady_succ_of_common_dvd_one
           c w multiplicity fuel htail
-          (hmonic c w multiplicity fuel hreachable)
           (hcommon c w multiplicity fuel hreachable)
 
 private theorem yunFactorsPairwiseReady_of_derivative_split_common_dvd_one
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
     (hdf : (DensePoly.derivative f).isZero ≠ true)
-    (hmonic :
-      ∀ c w : FpPoly p, ∀ multiplicity fuel : Nat,
-        yunFactorsPairwiseReachable c w (fuel + 1) →
-          ∀ sf ∈
-              (yunFactors (DensePoly.gcd c w) (w / DensePoly.gcd c w)
-              (multiplicity + 1) fuel []).1.reverse,
-            DensePoly.Monic (DensePoly.gcd (c / DensePoly.gcd c w) sf.factor))
     (hcommon :
       ∀ c w : FpPoly p, ∀ _multiplicity fuel : Nat,
         yunFactorsPairwiseReachable c w (fuel + 1) →
@@ -2733,18 +2766,11 @@ private theorem yunFactorsPairwiseReady_of_derivative_split_common_dvd_one
       (DensePoly.gcd f (DensePoly.derivative f))
       multiplicity fuel
       (yunFactorsPairwiseReachable_of_derivative_split hp f fuel hdf)
-      hmonic hcommon
+      hcommon
 
 private theorem yunFactorsPairwiseInvariant_of_derivative_split_common_dvd_one
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
     (hdf : (DensePoly.derivative f).isZero ≠ true)
-    (hmonic :
-      ∀ c w : FpPoly p, ∀ multiplicity fuel : Nat,
-        yunFactorsPairwiseReachable c w (fuel + 1) →
-          ∀ sf ∈
-              (yunFactors (DensePoly.gcd c w) (w / DensePoly.gcd c w)
-              (multiplicity + 1) fuel []).1.reverse,
-            DensePoly.Monic (DensePoly.gcd (c / DensePoly.gcd c w) sf.factor))
     (hcommon :
       ∀ c w : FpPoly p, ∀ _multiplicity fuel : Nat,
         yunFactorsPairwiseReachable c w (fuel + 1) →
@@ -2760,7 +2786,7 @@ private theorem yunFactorsPairwiseInvariant_of_derivative_split_common_dvd_one
   reachable := yunFactorsPairwiseReachable_of_derivative_split hp f fuel hdf
   ready :=
     yunFactorsPairwiseReady_of_derivative_split_common_dvd_one
-      hp f multiplicity fuel hdf hmonic hcommon
+      hp f multiplicity fuel hdf hcommon
 
 private theorem squareFreeAuxRev_reverse_append
     (f : FpPoly p) (multiplicity fuel : Nat) (accRev : List (SquareFreeFactor p)) :
@@ -3259,7 +3285,8 @@ private theorem normalizeMonic_zero_squareFree_weightedProduct
 
 theorem squareFree_pairwise_coprime (hp : Hex.Nat.Prime p) (f : FpPoly p) :
     let d := squareFreeDecomposition hp f
-    d.factors.Pairwise (fun a b => DensePoly.gcd a.factor b.factor = 1) := by
+    d.factors.Pairwise
+      (fun a b => (normalizeMonic (DensePoly.gcd a.factor b.factor)).2 = 1) := by
   unfold squareFreeDecomposition squareFreeAux
   exact squareFreeAuxRev_pairwise_coprime_nil
     (normalizeMonic f).2 1 ((normalizeMonic f).2.size + 1)
