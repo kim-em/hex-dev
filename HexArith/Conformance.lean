@@ -178,9 +178,8 @@ private def maxWord : UInt64 := UInt64.ofNat (wordBase - 1)
   let r := T - q * p
   r ≥ p ∧ (barrettReduce ctx T).toNat = T.toNat % p.toNat
 
--- `#eval` rejects `MontCtx.mk` because its proof fields still contain `sorry`s.
 /-- info: (17, 13, 61) -/
-#guard_msgs in #eval! let p := UInt64.ofNat 97
+#guard_msgs in #eval let p := UInt64.ofNat 97
   let ctx := MontCtx.mk p (by decide)
   let a := UInt64.ofNat 13
   let b := UInt64.ofNat 42

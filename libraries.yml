@@ -60,7 +60,7 @@ libraries:
   HexArith:
     deps: []
     mathlib: false
-    done_through: 4
+    done_through: 5
     status: active
     phase4:
       input_families:
