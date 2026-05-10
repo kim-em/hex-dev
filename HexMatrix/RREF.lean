@@ -609,6 +609,172 @@ private def rrefLoop (col fuel : Nat) (state : RrefState R n m) : RrefState R n 
       else
         state
 
+/-- Proof-only shape invariant for `rrefLoop`: the row counter tracks the
+number of pivots, discovered pivot columns are strictly increasing, and all
+recorded pivots lie before the next column to inspect. -/
+private structure RrefShapeInvariant (col : Nat) (state : RrefState R n m) : Prop where
+  row_eq_length : state.row = state.pivots.length
+  row_le_n : state.row ≤ n
+  length_le_col : state.pivots.length ≤ col
+  pivots_sorted :
+    ∀ (i j : Nat) (hi : i < state.pivots.length) (hj : j < state.pivots.length),
+      i < j → state.pivots[i] < state.pivots[j]
+  pivots_lt_col : ∀ p ∈ state.pivots, p.val < col
+
+omit [Lean.Grind.Field R] [DecidableEq R] in
+private theorem RrefShapeInvariant.mono_col {col col' : Nat} {state : RrefState R n m}
+    (hcol : col ≤ col') (h : RrefShapeInvariant (R := R) (n := n) (m := m) col state) :
+    RrefShapeInvariant (R := R) (n := n) (m := m) col' state where
+  row_eq_length := h.row_eq_length
+  row_le_n := h.row_le_n
+  length_le_col := Nat.le_trans h.length_le_col hcol
+  pivots_sorted := h.pivots_sorted
+  pivots_lt_col := fun p hp => Nat.lt_of_lt_of_le (h.pivots_lt_col p hp) hcol
+
+omit [Lean.Grind.Field R] [DecidableEq R] in
+private theorem list_sorted_get_concat_of_lt {ps : List (Fin m)} {col : Nat}
+    (hsorted : ∀ (i j : Nat) (hi : i < ps.length) (hj : j < ps.length),
+      i < j → ps[i] < ps[j])
+    (hlt : ∀ p ∈ ps, p.val < col) (hCol : col < m) :
+    ∀ (i j : Nat) (hi : i < (ps.concat ⟨col, hCol⟩).length)
+      (hj : j < (ps.concat ⟨col, hCol⟩).length),
+      i < j → (ps.concat ⟨col, hCol⟩)[i] < (ps.concat ⟨col, hCol⟩)[j] := by
+  intro i j hi hj hij
+  simp at hi hj
+  rcases Nat.lt_or_eq_of_le (Nat.le_of_lt_succ hj) with hjOld | hjLast
+  · have hiOld : i < ps.length := by omega
+    have get_i : (ps.concat ⟨col, hCol⟩)[i] = ps[i] := by
+      have hiAppend : i < (ps ++ [(⟨col, hCol⟩ : Fin m)]).length := by
+        simpa [List.concat_eq_append] using hi
+      simpa [List.concat_eq_append] using
+        (List.getElem_append_left (as := ps) (bs := [(⟨col, hCol⟩ : Fin m)]) hiOld
+          (h' := hiAppend))
+    have get_j : (ps.concat ⟨col, hCol⟩)[j] = ps[j] := by
+      have hjAppend : j < (ps ++ [(⟨col, hCol⟩ : Fin m)]).length := by
+        simpa [List.concat_eq_append] using hj
+      simpa [List.concat_eq_append] using
+        (List.getElem_append_left (as := ps) (bs := [(⟨col, hCol⟩ : Fin m)]) hjOld
+          (h' := hjAppend))
+    rw [get_i, get_j]
+    exact hsorted i j hiOld hjOld hij
+  · have hiOld : i < ps.length := by omega
+    have get_i : (ps.concat ⟨col, hCol⟩)[i] = ps[i] := by
+      have hiAppend : i < (ps ++ [(⟨col, hCol⟩ : Fin m)]).length := by
+        simpa [List.concat_eq_append] using hi
+      simpa [List.concat_eq_append] using
+        (List.getElem_append_left (as := ps) (bs := [(⟨col, hCol⟩ : Fin m)]) hiOld
+          (h' := hiAppend))
+    have get_j : (ps.concat ⟨col, hCol⟩)[j] = ⟨col, hCol⟩ := by
+      have hjAppend : j < (ps ++ [(⟨col, hCol⟩ : Fin m)]).length := by
+        simpa [List.concat_eq_append] using hj
+      simpa [List.concat_eq_append] using
+        List.getElem_concat_length (l := ps) (a := ⟨col, hCol⟩) hjLast hjAppend
+    rw [get_i, get_j]
+    exact hlt ps[i] (List.getElem_mem hiOld)
+
+omit [Lean.Grind.Field R] [DecidableEq R] in
+private theorem rrefShapeInvariant_concat {col : Nat} {state : RrefState R n m}
+    (h : RrefShapeInvariant (R := R) (n := n) (m := m) col state)
+    (hRow : state.row < n) (hCol : col < m)
+    (echelon : Matrix R n m) (transform : Matrix R n n) :
+    RrefShapeInvariant (R := R) (n := n) (m := m) (col + 1)
+      { row := state.row + 1
+        echelon := echelon
+        transform := transform
+        pivots := state.pivots.concat ⟨col, hCol⟩ } where
+  row_eq_length := by
+    simp [h.row_eq_length]
+  row_le_n := Nat.succ_le_of_lt hRow
+  length_le_col := by
+    simpa using Nat.succ_le_succ h.length_le_col
+  pivots_sorted := by
+    exact list_sorted_get_concat_of_lt h.pivots_sorted h.pivots_lt_col hCol
+  pivots_lt_col := by
+    intro p hp
+    rw [List.concat_eq_append] at hp
+    rcases List.mem_append.mp hp with hpOld | hpLast
+    · exact Nat.lt_trans (h.pivots_lt_col p hpOld) (Nat.lt_succ_self col)
+    · simp at hpLast
+      subst hpLast
+      exact Nat.lt_succ_self col
+
+private theorem rrefLoop_shape :
+    ∀ (fuel col : Nat) (state : RrefState R n m),
+      RrefShapeInvariant (R := R) (n := n) (m := m) col state →
+      RrefShapeInvariant (R := R) (n := n) (m := m) (col + fuel)
+        (rrefLoop (R := R) (n := n) (m := m) col fuel state) := by
+  intro fuel
+  induction fuel with
+  | zero =>
+      intro col state h
+      simpa [rrefLoop] using h
+  | succ fuel ih =>
+      intro col state h
+      unfold rrefLoop
+      by_cases hRow : state.row < n
+      · rw [dif_pos hRow]
+        by_cases hCol : col < m
+        · rw [dif_pos hCol]
+          cases hpivot : findPivot? state.echelon ⟨col, hCol⟩ state.row with
+          | none =>
+              simpa [hpivot, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using
+                ih (col + 1) state (h.mono_col (Nat.le_succ col))
+          | some pivot =>
+              let colFin : Fin m := ⟨col, hCol⟩
+              let target : Fin n := ⟨state.row, hRow⟩
+              let swappedEchelon := rowSwap state.echelon target pivot
+              let swappedTransform := rowSwap state.transform target pivot
+              let pivotVal := swappedEchelon[target][colFin]
+              let scaledEchelon := rowScale swappedEchelon target pivotVal⁻¹
+              let scaledTransform := rowScale swappedTransform target pivotVal⁻¹
+              let eliminated := eliminateColumn scaledEchelon scaledTransform target colFin
+              let nextState : RrefState R n m :=
+                { row := state.row + 1
+                  echelon := eliminated.1
+                  transform := eliminated.2
+                  pivots := state.pivots.concat colFin }
+              have hnext :
+                  RrefShapeInvariant (R := R) (n := n) (m := m) (col + 1) nextState := by
+                simpa [nextState, colFin] using rrefShapeInvariant_concat (R := R) (n := n) (m := m)
+                  (col := col) (state := state) h hRow hCol eliminated.1 eliminated.2
+              simpa [hpivot, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm, nextState, colFin, target,
+                swappedEchelon, swappedTransform, pivotVal, scaledEchelon, scaledTransform,
+                eliminated] using ih (col + 1) nextState hnext
+        · rw [dif_neg hCol]
+          exact h.mono_col (by omega)
+      · rw [dif_neg hRow]
+        exact h.mono_col (by omega)
+
+omit [DecidableEq R] in
+private theorem rrefLoop_initial_shape (M : Matrix R n m) :
+    RrefShapeInvariant (R := R) (n := n) (m := m) 0
+      { row := 0
+        echelon := M
+        transform := 1
+        pivots := [] } where
+  row_eq_length := rfl
+  row_le_n := Nat.zero_le n
+  length_le_col := Nat.le_refl 0
+  pivots_sorted := by
+    intro i _ hi
+    cases hi
+  pivots_lt_col := by
+    intro p hp
+    cases hp
+
+private theorem rref_final_shape (M : Matrix R n m) :
+    RrefShapeInvariant (R := R) (n := n) (m := m) m
+      (rrefLoop 0 m
+        { row := 0
+          echelon := M
+          transform := 1
+          pivots := [] }) := by
+  simpa using rrefLoop_shape (R := R) (n := n) (m := m) m 0
+    { row := 0
+      echelon := M
+      transform := 1
+      pivots := [] } (rrefLoop_initial_shape M)
+
 /-- `rrefLoop` preserves existence of a left inverse for the transform. -/
 private theorem rrefLoop_left_inverse_preserve (col fuel : Nat)
     (state : RrefState R n m)
@@ -778,6 +944,32 @@ def rref (M : Matrix R n m) : RowEchelonData R n m :=
     transform := final.transform
     pivotCols := ⟨final.pivots.toArray, by simp⟩ }
 
+private theorem rref_rank_le_n (M : Matrix R n m) : (rref M).rank ≤ n := by
+  unfold rref
+  change (rrefLoop 0 m { row := 0, echelon := M, transform := 1, pivots := [] }).pivots.length ≤ n
+  rw [← (rref_final_shape M).row_eq_length]
+  exact (rref_final_shape M).row_le_n
+
+private theorem rref_rank_le_m (M : Matrix R n m) : (rref M).rank ≤ m := by
+  unfold rref
+  exact (rref_final_shape M).length_le_col
+
+private theorem rref_pivotCols_sorted (M : Matrix R n m) :
+    ∀ i j, i < j → (rref M).pivotCols.get i < (rref M).pivotCols.get j := by
+  intro i j hij
+  unfold rref
+  let final := rrefLoop 0 m
+    { row := 0
+      echelon := M
+      transform := 1
+      pivots := [] }
+  have hshape : RrefShapeInvariant (R := R) (n := n) (m := m) m final := by
+    simpa [final] using rref_final_shape M
+  change (⟨final.pivots.toArray, by simp⟩ : Vector (Fin m) final.pivots.length).get i <
+    (⟨final.pivots.toArray, by simp⟩ : Vector (Fin m) final.pivots.length).get j
+  simpa [Vector.get, List.getElem_toArray] using
+    hshape.pivots_sorted i.val j.val i.isLt j.isLt hij
+
 /-- Final `rref` row transform has a left inverse. -/
 private theorem rref_transform_left_inverse (M : Matrix R n m) :
     ∃ Tinv : Matrix R n n, Tinv * (rref M).transform = 1 := by
@@ -808,7 +1000,19 @@ private theorem rref_transform_mul (M : Matrix R n m) :
 
 /-- The computed `rref` data satisfies the `IsRREF` contract. -/
 theorem rref_isRREF (M : Matrix R n m) : IsRREF M (rref M) := by
-  sorry
+  refine
+    { toIsEchelonForm :=
+        { transform_mul := rref_transform_mul M
+          transform_inv := rref_transform_left_inverse M
+          transform_right_inv := rref_transform_right_inverse M
+          rank_le_n := rref_rank_le_n M
+          rank_le_m := rref_rank_le_m M
+          pivotCols_sorted := rref_pivotCols_sorted M
+          below_pivot_zero := ?_
+          zero_row := ?_ }
+      pivot_one := ?_
+      above_pivot_zero := ?_ }
+  all_goals sorry
 
 end FieldAlgorithms
 
