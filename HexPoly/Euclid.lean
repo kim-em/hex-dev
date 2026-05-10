@@ -3216,6 +3216,14 @@ theorem dvd_content_of_nat_dvd_coeff (p : DensePoly Int) (d : Nat)
   rw [Int.ofNat_dvd_left]
   exact dvd_contentNat_of_dvd_coeff p d h
 
+theorem nat_eq_one_of_content_eq_one_of_nat_dvd_coeff (p : DensePoly Int) (d : Nat)
+    (hp : content p = 1) (h : ∀ n, (d : Int) ∣ p.coeff n) :
+    d = 1 := by
+  have hdvd : (d : Int) ∣ (1 : Int) := by
+    simpa [hp] using dvd_content_of_nat_dvd_coeff p d h
+  rw [Int.ofNat_dvd_left] at hdvd
+  exact Nat.dvd_one.mp hdvd
+
 private theorem list_getD_map_ediv_zero (c : Int) (coeffs : List Int) (n : Nat) :
     (coeffs.map fun coeff => coeff / c).getD n (Zero.zero : Int) =
       coeffs.getD n (Zero.zero : Int) / c := by

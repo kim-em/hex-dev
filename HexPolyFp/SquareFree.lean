@@ -3075,6 +3075,53 @@ private theorem yunFactors_repeated_dvd_repeated
     (yunFactors c w i fuel []).2 ∣ w := by
   exact yunFactors_repeated_dvd_repeated_of_acc c w i fuel []
 
+private def yunFactorsResidualDerivativeZero
+    (c w : FpPoly p) (multiplicity fuel : Nat) : Prop :=
+  let loop := yunFactors c w multiplicity fuel []
+  isOne loop.2 = false → (DensePoly.derivative loop.2).isZero = true
+
+private def yunFactorsContributionResidualDerivativeZero
+    (c w : FpPoly p) (multiplicity fuel : Nat) : Prop :=
+  let contribution := yunFactorsContribution c w multiplicity fuel
+  isOne contribution.2 = false →
+    (DensePoly.derivative contribution.2).isZero = true
+
+private theorem yunFactorsResidualDerivativeZero_of_contribution
+    (c w : FpPoly p) (multiplicity fuel : Nat)
+    (hresidual :
+      yunFactorsContributionResidualDerivativeZero c w multiplicity fuel) :
+    yunFactorsResidualDerivativeZero c w multiplicity fuel := by
+  intro hloop
+  let loop := yunFactors c w multiplicity fuel []
+  let contribution := yunFactorsContribution c w multiplicity fuel
+  have hloop_repeated : loop.2 = contribution.2 := by
+    simpa [loop, contribution] using
+      (yunFactors_reconstruction_invariant c w multiplicity fuel []).1
+  have hcontribution_not_one : isOne contribution.2 = false := by
+    simpa [loop, contribution, hloop_repeated] using hloop
+  simpa [loop, contribution, hloop_repeated] using
+    (hresidual hcontribution_not_one)
+
+private theorem yunFactorsResidualDerivativeZero_of_derivative_split_contribution
+    (_hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
+    (_hdf : (DensePoly.derivative f).isZero = false)
+    (hresidual :
+      let g := DensePoly.gcd f (DensePoly.derivative f)
+      let c := f / g
+      yunFactorsContributionResidualDerivativeZero c g multiplicity fuel) :
+    yunFactorsResidualDerivativeZero
+      (f / DensePoly.gcd f (DensePoly.derivative f))
+      (DensePoly.gcd f (DensePoly.derivative f))
+      multiplicity
+      fuel := by
+  exact
+    yunFactorsResidualDerivativeZero_of_contribution
+      (f / DensePoly.gcd f (DensePoly.derivative f))
+      (DensePoly.gcd f (DensePoly.derivative f))
+      multiplicity
+      fuel
+      hresidual
+
 private theorem dvd_one_of_mul_right_dvd_right
     [ZMod64.PrimeModulus p] {d g : FpPoly p}
     (hg : g.isZero = false) (hdiv : d * g ∣ g) :
@@ -3668,6 +3715,66 @@ private theorem yunFactors_current_repeated_coprime_of_common_dvd_one
       (multiplicity * p)
       (dvd_trans_poly htail_dvd hright_dvd)
       hcommon
+
+set_option maxHeartbeats 800000 in
+private theorem yunFactors_factors_coprime_repeated_of_reachable
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (multiplicity fuel : Nat)
+    (hreachable : yunFactorsPairwiseReachable c w fuel) :
+    let loop := yunFactors c w multiplicity fuel []
+    ∀ a ∈ loop.1.reverse,
+      squareFreeFactorCoprimeRel
+        a { factor := loop.2, multiplicity := multiplicity * p } := by
+  induction fuel generalizing c w multiplicity with
+  | zero =>
+      simp [yunFactors]
+  | succ fuel ih =>
+      simp only [yunFactors]
+      by_cases hc : isOne c
+      · simp [hc]
+      · simp [hc]
+        let y := DensePoly.gcd c w
+        let z := c / y
+        let sf : SquareFreeFactor p := { factor := z, multiplicity := multiplicity }
+        let tail := yunFactors y (w / y) (multiplicity + 1) fuel []
+        have htail_reachable :
+            yunFactorsPairwiseReachable y (w / y) fuel := by
+          simpa [y] using yunFactorsPairwiseReachable_step c w fuel hreachable
+        have htail_cross :
+            ∀ a ∈ tail.1.reverse,
+              squareFreeFactorCoprimeRel
+                a { factor := tail.2, multiplicity := (multiplicity + 1) * p } := by
+          simpa [tail] using ih y (w / y) (multiplicity + 1) htail_reachable
+        by_cases hz : isOne z
+        · simpa [y, z, tail, hz] using htail_cross
+        · have hrev :
+              (yunFactors y (w / y) (multiplicity + 1) fuel [sf]).1.reverse =
+                [sf] ++ tail.1.reverse := by
+            simpa [sf, tail] using
+              yunFactors_reverse_append y (w / y) (multiplicity + 1) fuel [sf]
+          have hrepeated :
+              (yunFactors y (w / y) (multiplicity + 1) fuel [sf]).2 = tail.2 := by
+            simpa [sf, tail] using
+              yunFactors_repeated_eq_nil y (w / y) (multiplicity + 1) fuel [sf]
+          have hsf_cross :
+              squareFreeFactorCoprimeRel
+                sf { factor := tail.2, multiplicity := multiplicity * p } := by
+            simpa [y, z, sf, tail] using
+              yunFactors_current_repeated_coprime_of_common_dvd_one
+                c w multiplicity fuel
+                (yunFactorsPairwiseReachable_common_dvd_one c w fuel hreachable)
+          intro a ha
+          have ha_rev :
+              a ∈ (yunFactors y (w / y) (multiplicity + 1) fuel [sf]).1.reverse := by
+            apply List.mem_reverse.mpr
+            simpa [y, z, sf, hz] using ha
+          rw [hrev] at ha_rev
+          rcases List.mem_append.mp ha_rev with ha | ha
+          · simp only [List.mem_singleton] at ha
+            subst a
+            simpa [y, z, sf, hz, hrepeated] using hsf_cross
+          · have htail_a := htail_cross a ha
+            simpa [y, z, sf, hz, hrepeated, squareFreeFactorCoprimeRel] using htail_a
 
 private theorem yunFactorsPairwiseReady_succ_of_common_dvd_one
     [ZMod64.PrimeModulus p]
@@ -4387,6 +4494,31 @@ private def coeffNatsSquareFreeGuard (f : FpPoly 5) : List Nat :=
   d.factors.all (fun sf =>
     coeffNatsSquareFreeGuard
       (normalizeMonic (DensePoly.gcd sf.factor (DensePoly.derivative sf.factor))).2 == [1])
+
+private instance squareFreeGuardBoundsTwo : ZMod64.Bounds 2 := ⟨by decide, by decide⟩
+
+private theorem prime_two_squareFree_guard : Hex.Nat.Prime 2 := by
+  constructor
+  · decide
+  · intro m hm
+    have hmle : m ≤ 2 := Nat.le_of_dvd (by decide : 0 < 2) hm
+    have hcases : m = 0 ∨ m = 1 ∨ m = 2 := by omega
+    rcases hcases with rfl | rfl | rfl
+    · simp at hm
+    · exact Or.inl rfl
+    · exact Or.inr rfl
+
+private def polyTwoSquareFreeGuard (coeffs : Array Nat) : FpPoly 2 :=
+  ofCoeffs (coeffs.map (fun n => ZMod64.ofNat 2 n))
+
+private def coeffNatsSquareFreeGuardTwo (f : FpPoly 2) : List Nat :=
+  f.toArray.toList.map ZMod64.toNat
+
+#guard
+  let f := polyTwoSquareFreeGuard #[1, 0, 1, 0, 1, 0, 1]
+  let d := squareFreeDecomposition prime_two_squareFree_guard f
+  coeffNatsSquareFreeGuardTwo (weightedProduct d.factors) !=
+    coeffNatsSquareFreeGuardTwo f
 
 private theorem linearPow_eq_powLinear (f : FpPoly p) (n : Nat) :
     FpPoly.linearPow f n = powLinear f n := by
