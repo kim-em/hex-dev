@@ -5271,5 +5271,99 @@ private theorem isStrictlyIncreasingColumnTuple_push {m n : Nat}
     rw [hi_eq, hj_eq, getElem_push_castSucc, getElem_push_last_index]
     exact hbound ⟨i.val, hilt⟩
 
+/-- Forward characterization: every enumerated tuple is strictly increasing and
+its entries are all bounded by the recursion bound. -/
+private theorem mem_selectedColumnTuplesUpTo_imp {m : Nat} :
+    ∀ (n bound : Nat) (v : Vector (Fin m) n),
+      v ∈ selectedColumnTuplesUpTo m n bound →
+        IsStrictlyIncreasingColumnTuple v ∧
+          ∀ i : Fin n, v[i].val < bound
+  | 0, _, v, hv => by
+      simp [selectedColumnTuplesUpTo] at hv
+      subst hv
+      refine ⟨isStrictlyIncreasingColumnTuple_emptyVec, ?_⟩
+      intro i; exact i.elim0
+  | n + 1, bound, v, hv => by
+      rw [selectedColumnTuplesUpTo, List.mem_flatMap] at hv
+      rcases hv with ⟨c, hc, hmem⟩
+      have hclt : c.val < bound := by
+        rw [List.mem_filter] at hc
+        simpa using hc.2
+      rw [List.mem_map] at hmem
+      rcases hmem with ⟨pref, hpref, rfl⟩
+      have ih := mem_selectedColumnTuplesUpTo_imp n c.val pref hpref
+      refine ⟨?_, ?_⟩
+      · -- strict increase of `pref.push c`
+        apply isStrictlyIncreasingColumnTuple_push pref c ih.1
+        intro i
+        exact ih.2 i
+      · -- every entry of `pref.push c` is `< bound`
+        intro i
+        rcases Nat.lt_succ_iff_lt_or_eq.mp i.isLt with hilt | hieq
+        · have hi_eq : i = (⟨i.val, hilt⟩ : Fin n).castSucc := by
+            apply Fin.ext; rfl
+          rw [hi_eq, getElem_push_castSucc]
+          exact Nat.lt_of_lt_of_le (ih.2 ⟨i.val, hilt⟩) (Nat.le_of_lt hclt)
+        · have hi_eq : i = Fin.last n := by
+            apply Fin.ext; simpa using hieq
+          rw [hi_eq, getElem_push_last_index]
+          exact hclt
+
+/-- Backward characterization: every strictly increasing tuple whose entries
+are all `< bound` is enumerated by the recursive helper. -/
+private theorem mem_selectedColumnTuplesUpTo_of_strictly_increasing {m : Nat} :
+    ∀ (n bound : Nat) (v : Vector (Fin m) n),
+      IsStrictlyIncreasingColumnTuple v →
+        (∀ i : Fin n, v[i].val < bound) →
+        v ∈ selectedColumnTuplesUpTo m n bound
+  | 0, _, v, _, _ => by
+      have hv : v = emptyVec := by
+        apply Vector.ext
+        intro i hi
+        exact absurd hi (by omega)
+      simp [selectedColumnTuplesUpTo, hv]
+  | n + 1, bound, v, hsi, hbound => by
+      -- factor v as `(v.pop).push v[n]`
+      have hpush : (v.pop).push (v[Fin.last n]) = v := by
+        have hback : v.back = v[Fin.last n] := by
+          simp [Vector.back, Fin.last]
+        rw [← hback]
+        exact Vector.push_pop_back v
+      have hpop_get : ∀ i : Fin n,
+          v.pop[i] = v[(⟨i.val, by have := i.isLt; omega⟩ : Fin (n + 1))] := by
+        intro i
+        rcases i with ⟨i, hi⟩
+        change v.pop[i]'(by simp; omega) = v[i]'(by omega)
+        exact Vector.getElem_pop (h := by simp; omega)
+      rw [selectedColumnTuplesUpTo, List.mem_flatMap]
+      refine ⟨v[Fin.last n], ?_, ?_⟩
+      · -- v[last] is in the filtered finRange
+        rw [List.mem_filter]
+        refine ⟨List.mem_finRange _, ?_⟩
+        simpa using hbound (Fin.last n)
+      · rw [List.mem_map]
+        refine ⟨v.pop, ?_, hpush⟩
+        apply mem_selectedColumnTuplesUpTo_of_strictly_increasing n (v[Fin.last n]).val
+        · -- pop preserves strict increase
+          intro i j hij
+          have h1 := hpop_get i
+          have h2 := hpop_get j
+          have base := hsi
+            (⟨i.val, by have := i.isLt; omega⟩ : Fin (n + 1))
+            (⟨j.val, by have := j.isLt; omega⟩ : Fin (n + 1)) hij
+          rw [← h1, ← h2] at base
+          exact base
+        · -- bound: pop entries < v[Fin.last n]
+          intro i
+          have h1 := hpop_get i
+          have hilt : i.val < n + 1 := by have := i.isLt; omega
+          have hi_lt_last :
+              (⟨i.val, hilt⟩ : Fin (n + 1)).val < (Fin.last n).val := by
+            have := i.isLt
+            simp [Fin.last]
+          have base := hsi (⟨i.val, hilt⟩ : Fin (n + 1)) (Fin.last n) hi_lt_last
+          rw [← h1] at base
+          exact base
+
 end Matrix
 end Hex
