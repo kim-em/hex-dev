@@ -1486,6 +1486,180 @@ private theorem prefixSpan_row
     prefixSpan M i hi ((prefixRows M i hi).row j) := by
   exact ⟨unitCoeff j, rowCombination_prefixRows_unitCoeff M i hi j⟩
 
+private theorem rowCombination_eq_foldl_rows
+    (M : Matrix Rat n m) (c : Vector Rat n) :
+    Matrix.rowCombination M c =
+      (List.finRange n).foldl (fun acc j => acc + c[j] • M.row j) 0 := by
+  apply Vector.ext
+  intro idx hidx
+  let idxFin : Fin m := ⟨idx, hidx⟩
+  change (Matrix.mulVec (Matrix.transpose M) c)[idxFin] =
+    ((List.finRange n).foldl (fun acc j => acc + c[j] • M.row j) 0)[idxFin]
+  rw [show
+      (Matrix.mulVec (Matrix.transpose M) c)[idxFin] =
+        (List.finRange n).foldl
+          (fun acc j => acc + M[j.val][idxFin.val] * c[j])
+          0 by
+        unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Matrix.dot
+          Hex.Vector.dotProduct
+        simp]
+  have hfold :
+      ∀ xs : List (Fin n), ∀ accL : Rat, ∀ accR : Vector Rat m,
+        accL = accR[idxFin] →
+        xs.foldl (fun acc j => acc + M[j.val][idxFin.val] * c[j]) accL =
+          (xs.foldl (fun acc j => acc + c[j] • M.row j) accR)[idxFin] := by
+    intro xs
+    induction xs with
+    | nil =>
+        intro accL accR hacc
+        simp [hacc]
+    | cons j rest ih =>
+        intro accL accR hacc
+        simp only [List.foldl_cons]
+        apply ih
+        change accL + M[j.val][idxFin.val] * c[j] =
+          (accR + c[j] • M.row j)[idxFin.val]
+        rw [Vector.getElem_add, Vector.getElem_smul]
+        rw [hacc]
+        change accR[idx] + M[j.val][idx] * c[j] =
+          accR[idx] + c[j] * M[j.val][idx]
+        grind
+  exact hfold (List.finRange n) 0 0 (by simp [Vector.getElem_zero])
+
+private theorem prefixSpan_zero
+    (M : Matrix Rat n m) (i : Nat) (hi : i < n) :
+    prefixSpan M i hi 0 := by
+  let j : Fin (i + 1) := ⟨0, Nat.succ_pos i⟩
+  have hz := prefixSpan_smul M i hi 0 (prefixSpan_row M i hi j)
+  have hzero : (0 : Rat) • (prefixRows M i hi).row j = 0 := by
+    apply Vector.ext
+    intro idx hidx
+    rw [Vector.getElem_smul, Vector.getElem_zero]
+    change (0 : Rat) * ((prefixRows M i hi).row j)[idx] = 0
+    grind
+  simpa [hzero] using hz
+
+private theorem prefixSpan_rowCombination_of_rows
+    (A B : Matrix Rat n m) (i : Nat) (hi : i < n) (c : Vector Rat (i + 1))
+    (hrows : ∀ j : Fin (i + 1), prefixSpan B i hi ((prefixRows A i hi).row j)) :
+    prefixSpan B i hi (Matrix.rowCombination (prefixRows A i hi) c) := by
+  rw [rowCombination_eq_foldl_rows]
+  have hfold :
+      ∀ xs : List (Fin (i + 1)), ∀ acc : Vector Rat m,
+        prefixSpan B i hi acc →
+          prefixSpan B i hi
+            (xs.foldl
+              (fun acc j => acc + c[j] • (prefixRows A i hi).row j) acc) := by
+    intro xs
+    induction xs with
+    | nil =>
+        intro acc hacc
+        simpa using hacc
+    | cons j rest ih =>
+        intro acc hacc
+        simp only [List.foldl_cons]
+        apply ih
+        exact prefixSpan_add B i hi hacc
+          (prefixSpan_smul B i hi c[j] (hrows j))
+  exact hfold (List.finRange (i + 1)) 0 (prefixSpan_zero B i hi)
+
+private theorem strictPrefixRows_succ_eq_prefixRows
+    (M : Matrix Rat n m) (i : Nat) (hi : i + 1 < n) :
+    strictPrefixRows M (i + 1) (Nat.le_of_lt hi) =
+      prefixRows M i (Nat.lt_of_succ_lt hi) := by
+  apply Vector.ext
+  intro row hrow
+  apply Vector.ext
+  intro col hcol
+  rfl
+
+private theorem prefixSpan_mono_succ
+    (M : Matrix Rat n m) (i : Nat) (hi : i + 1 < n) {v : Vector Rat m}
+    (hv : prefixSpan M i (Nat.lt_of_succ_lt hi) v) :
+    prefixSpan M (i + 1) hi v := by
+  rcases hv with ⟨c, hc⟩
+  refine ⟨extendStrictPrefixCoeff c, ?_⟩
+  rw [rowCombination_prefixRows_extendStrictPrefixCoeff]
+  rw [strictPrefixRows_succ_eq_prefixRows (hi := hi)]
+  exact hc
+
+private theorem prefixSpan_mono_le
+    (M : Matrix Rat n m) {j i : Nat} (hj : j < n) (hi : i < n) (hji : j ≤ i)
+    {v : Vector Rat m} (hv : prefixSpan M j hj v) :
+    prefixSpan M i hi v := by
+  induction hji with
+  | refl =>
+      exact hv
+  | step hji ih =>
+      exact prefixSpan_mono_succ M _ hi (ih (Nat.lt_of_succ_lt hi))
+
+private theorem prefixSpan_matrix_row
+    (M : Matrix Rat n m) (j : Fin n) :
+    prefixSpan M j.val j.isLt (M.row j) := by
+  let last : Fin (j.val + 1) := ⟨j.val, Nat.lt_succ_self j.val⟩
+  simpa [prefixRows, Matrix.row] using prefixSpan_row M j.val j.isLt last
+
+private theorem prefixSpan_strictPrefix_rowCombination
+    (M : Matrix Rat n m) (i : Nat) (hi : i < n) (c : Vector Rat i) :
+    prefixSpan M i hi
+      (Matrix.rowCombination (strictPrefixRows M i (Nat.le_of_lt hi)) c) := by
+  cases i with
+  | zero =>
+      have hcomb :
+          Matrix.rowCombination (strictPrefixRows M 0 (Nat.le_of_lt hi)) c = 0 := by
+        rw [rowCombination_eq_foldl_rows]
+        simp
+      simpa [hcomb] using prefixSpan_zero M 0 hi
+  | succ k =>
+      have hk : k < n := Nat.lt_of_succ_lt hi
+      rw [strictPrefixRows_succ_eq_prefixRows (M := M) (i := k) (hi := hi)]
+      have hspan :
+          prefixSpan M k hk
+            (Matrix.rowCombination (prefixRows M k hk) c) := by
+        apply prefixSpan_rowCombination_of_rows
+        intro row
+        have hself :=
+          prefixSpan_matrix_row M (⟨row.val, Nat.lt_trans row.isLt hi⟩ : Fin n)
+        have hmono :=
+          prefixSpan_mono_le M (Nat.lt_trans row.isLt hi) hk
+            (Nat.le_of_lt_succ row.isLt) hself
+        have htarget :
+            M.row (⟨row.val, Nat.lt_trans row.isLt hi⟩ : Fin n) =
+              (prefixRows M k hk).row row := by
+          apply Vector.ext
+          intro col hcol
+          simp [prefixRows, Matrix.row]
+        rw [htarget] at hmono
+        exact hmono
+      exact prefixSpan_mono_succ M k hi hspan
+
+private theorem prefixSpan_strictRowCombination_of_rows
+    (A B : Matrix Rat n m) (i : Nat) (hi : i < n) (c : Vector Rat i)
+    (hrows : ∀ j : Fin i,
+      prefixSpan B i hi ((strictPrefixRows A i (Nat.le_of_lt hi)).row j)) :
+    prefixSpan B i hi
+      (Matrix.rowCombination (strictPrefixRows A i (Nat.le_of_lt hi)) c) := by
+  rw [rowCombination_eq_foldl_rows]
+  have hfold :
+      ∀ xs : List (Fin i), ∀ acc : Vector Rat m,
+        prefixSpan B i hi acc →
+          prefixSpan B i hi
+            (xs.foldl
+              (fun acc j => acc + c[j] • (strictPrefixRows A i (Nat.le_of_lt hi)).row j)
+              acc) := by
+    intro xs
+    induction xs with
+    | nil =>
+        intro acc hacc
+        simpa using hacc
+    | cons j rest ih =>
+        intro acc hacc
+        simp only [List.foldl_cons]
+        apply ih
+        exact prefixSpan_add B i hi hacc
+          (prefixSpan_smul B i hi c[j] (hrows j))
+  exact hfold (List.finRange i) 0 (prefixSpan_zero B i hi)
+
 private theorem foldl_projectionCoeff_rowCombination_comm
     (xs : List (Fin k)) (row : Vector Rat m) (basis : Matrix Rat n m)
     (hk : k ≤ n) (idx : Fin m) (acc : Rat) :
@@ -2038,7 +2212,154 @@ theorem basis_span (b : Matrix Rat n m) (i : Nat) (hi : i < n) :
     ∀ v : Vector Rat m,
       GramSchmidt.prefixSpan (basis b) i hi v ↔
         GramSchmidt.prefixSpan b i hi v := by
-  sorry
+  have hmembersAll :
+      ∀ (i : Nat) (hi : i < n),
+        (∀ j : Fin (i + 1),
+          GramSchmidt.prefixSpan b i hi ((GramSchmidt.prefixRows (basis b) i hi).row j)) ∧
+        (∀ j : Fin (i + 1),
+          GramSchmidt.prefixSpan (basis b) i hi ((GramSchmidt.prefixRows b i hi).row j)) := by
+    intro i
+    induction i with
+    | zero =>
+        intro hi
+        constructor
+        · intro j
+          have hrow :
+              (GramSchmidt.prefixRows (basis b) 0 hi).row j =
+                (GramSchmidt.prefixRows b 0 hi).row j := by
+            apply Vector.ext
+            intro col hcol
+            have hj : j.val = 0 := by omega
+            have hb0 := congrArg (fun v : Vector Rat m => v[col]) (basis_zero b hi)
+            simpa [GramSchmidt.prefixRows, Matrix.row, hj] using hb0
+          rw [hrow]
+          exact GramSchmidt.prefixSpan_row b 0 hi j
+        · intro j
+          have hrow :
+              (GramSchmidt.prefixRows b 0 hi).row j =
+                (GramSchmidt.prefixRows (basis b) 0 hi).row j := by
+            apply Vector.ext
+            intro col hcol
+            have hj : j.val = 0 := by omega
+            have hb0 := congrArg (fun v : Vector Rat m => v[col]) (basis_zero b hi)
+            simpa [GramSchmidt.prefixRows, Matrix.row, hj] using hb0.symm
+          rw [hrow]
+          exact GramSchmidt.prefixSpan_row (basis b) 0 hi j
+    | succ k ih =>
+        intro hi
+        have hk : k < n := Nat.lt_of_succ_lt hi
+        have ihk := ih hk
+        constructor
+        · intro j
+          by_cases hlt : j.val < k + 1
+          · let jp : Fin (k + 1) := ⟨j.val, hlt⟩
+            have hprev := ihk.1 jp
+            have hmono := GramSchmidt.prefixSpan_mono_succ b k hi hprev
+            have hrow :
+                (GramSchmidt.prefixRows (basis b) (k + 1) hi).row j =
+                  (GramSchmidt.prefixRows (basis b) k hk).row jp := by
+              apply Vector.ext
+              intro col hcol
+              simp [GramSchmidt.prefixRows, Matrix.row, jp]
+            rwa [hrow]
+          · have hjlast : j.val = k + 1 := by omega
+            let last : Fin n := ⟨k + 1, hi⟩
+            let pc :=
+              GramSchmidt.prefixCombination (coeffs b) (basis b) (k + 1) hi
+            have hpc : GramSchmidt.prefixSpan b (k + 1) hi pc := by
+              have hraw :=
+                GramSchmidt.prefixSpan_strictRowCombination_of_rows
+                  (A := basis b) (B := b) (i := k + 1) (hi := hi)
+                  (c := GramSchmidt.projectionCoeffVector (b.row last) (basis b)
+                    (k + 1) (Nat.le_of_lt hi))
+                  (by
+                    intro row
+                    let jp : Fin (k + 1) := row
+                    have hprev := ihk.1 jp
+                    have hmono := GramSchmidt.prefixSpan_mono_succ b k hi hprev
+                    have hrow :
+                        (GramSchmidt.strictPrefixRows (basis b) (k + 1)
+                            (Nat.le_of_lt hi)).row row =
+                          (GramSchmidt.prefixRows (basis b) k hk).row jp := by
+                      apply Vector.ext
+                      intro col hcol
+                      simp [GramSchmidt.strictPrefixRows, GramSchmidt.prefixRows,
+                        Matrix.row, jp]
+                    rwa [hrow])
+              simpa [pc, basis, coeffs,
+                GramSchmidt.prefixCombination_eq_strictPrefixRowCombination] using hraw
+            have hbrow : GramSchmidt.prefixSpan b (k + 1) hi (b.row last) := by
+              simpa [GramSchmidt.prefixRows, Matrix.row, last, hjlast] using
+                GramSchmidt.prefixSpan_row b (k + 1) hi j
+            have hbasis_eq :
+                ((GramSchmidt.prefixRows (basis b) (k + 1) hi).row j) =
+                  b.row last + (-1 : Rat) • pc := by
+              have hdec := basis_decomposition b (k + 1) hi
+              apply Vector.ext
+              intro col hcol
+              have hdec_col := congrArg (fun v : Vector Rat m => v[col]) hdec
+              simp [Vector.getElem_add, Vector.getElem_smul, pc, last, hjlast,
+                GramSchmidt.prefixRows, Matrix.row] at hdec_col ⊢
+              change (basis b)[k + 1][col] =
+                b[k + 1][col] +
+                  (-1 : Rat) * (prefixCombination (coeffs b) (basis b) (k + 1) hi)[col]
+              rw [hdec_col]
+              grind
+            rw [hbasis_eq]
+            exact GramSchmidt.prefixSpan_add b (k + 1) hi hbrow
+              (GramSchmidt.prefixSpan_smul b (k + 1) hi (-1) hpc)
+        · intro j
+          by_cases hlt : j.val < k + 1
+          · let jp : Fin (k + 1) := ⟨j.val, hlt⟩
+            have hprev := ihk.2 jp
+            have hmono := GramSchmidt.prefixSpan_mono_succ (basis b) k hi hprev
+            have hrow :
+                (GramSchmidt.prefixRows b (k + 1) hi).row j =
+                  (GramSchmidt.prefixRows b k hk).row jp := by
+              apply Vector.ext
+              intro col hcol
+              simp [GramSchmidt.prefixRows, Matrix.row, jp]
+            rwa [hrow]
+          · have hjlast : j.val = k + 1 := by omega
+            let last : Fin n := ⟨k + 1, hi⟩
+            let pc :=
+              GramSchmidt.prefixCombination (coeffs b) (basis b) (k + 1) hi
+            have hpc : GramSchmidt.prefixSpan (basis b) (k + 1) hi pc := by
+              have hraw :=
+                GramSchmidt.prefixSpan_strictPrefix_rowCombination
+                  (M := basis b) (i := k + 1) (hi := hi)
+                  (c := GramSchmidt.projectionCoeffVector (b.row last) (basis b)
+                    (k + 1) (Nat.le_of_lt hi))
+              simpa [pc, basis, coeffs,
+                GramSchmidt.prefixCombination_eq_strictPrefixRowCombination] using hraw
+            have hbasisrow :
+                GramSchmidt.prefixSpan (basis b) (k + 1) hi ((basis b).row last) := by
+              have hself := GramSchmidt.prefixSpan_row (basis b) (k + 1) hi j
+              simpa [GramSchmidt.prefixRows, Matrix.row, last, hjlast] using hself
+            have hb_eq :
+                ((GramSchmidt.prefixRows b (k + 1) hi).row j) =
+                  (basis b).row last + pc := by
+              have hdec := basis_decomposition b (k + 1) hi
+              apply Vector.ext
+              intro col hcol
+              have hdec_col := congrArg (fun v : Vector Rat m => v[col]) hdec
+              simpa [pc, last, hjlast, GramSchmidt.prefixRows, Matrix.row] using hdec_col
+            rw [hb_eq]
+            exact GramSchmidt.prefixSpan_add (basis b) (k + 1) hi hbasisrow hpc
+  intro v
+  constructor
+  · intro hv
+    rcases hv with ⟨c, hc⟩
+    have hspan :=
+      GramSchmidt.prefixSpan_rowCombination_of_rows (A := basis b) (B := b)
+        (i := i) (hi := hi) c (hmembersAll i hi).1
+    rwa [hc] at hspan
+  · intro hv
+    rcases hv with ⟨c, hc⟩
+    have hspan :=
+      GramSchmidt.prefixSpan_rowCombination_of_rows (A := b) (B := basis b)
+        (i := i) (hi := hi) c (hmembersAll i hi).2
+    rwa [hc] at hspan
 
 end GramSchmidt.Rat
 
@@ -2168,7 +2489,8 @@ theorem basis_span (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     ∀ v : Vector Rat m,
       GramSchmidt.prefixSpan (basis b) i hi v ↔
         GramSchmidt.prefixSpan (GramSchmidt.castIntMatrix b) i hi v := by
-  sorry
+  simpa [basis, GramSchmidt.Rat.basis] using
+    GramSchmidt.Rat.basis_span (b := GramSchmidt.castIntMatrix b) i hi
 
 end GramSchmidt.Int
 end Hex
