@@ -107,28 +107,161 @@ private theorem bounds_seventy_one : ZMod64.Bounds 71 := by
   constructor <;> decide
 
 private theorem prime_two : Nat.Prime 2 := by
-  sorry
+  refine ⟨?_, ?_⟩
+  · decide
+  · intro a hdvd
+    have hle : a ≤ 2 := Nat.le_of_dvd (by decide : 0 < 2) hdvd
+    rcases hdvd with ⟨k, hk⟩
+    match a with
+    | 0 => omega
+    | 1 => exact Or.inl rfl
+    | 2 => exact Or.inr rfl
+    | _ + 3 => omega
 
 private theorem prime_three : Nat.Prime 3 := by
-  sorry
+  refine ⟨?_, ?_⟩
+  · decide
+  · intro a hdvd
+    have hle : a ≤ 3 := Nat.le_of_dvd (by decide : 0 < 3) hdvd
+    rcases hdvd with ⟨k, hk⟩
+    match a with
+    | 0 => omega
+    | 1 => exact Or.inl rfl
+    | 2 => omega
+    | 3 => exact Or.inr rfl
+    | _ + 4 => omega
 
 private theorem prime_five : Nat.Prime 5 := by
-  sorry
+  refine ⟨?_, ?_⟩
+  · decide
+  · intro a hdvd
+    have hle : a ≤ 5 := Nat.le_of_dvd (by decide : 0 < 5) hdvd
+    rcases hdvd with ⟨k, hk⟩
+    match a with
+    | 0 => omega
+    | 1 => exact Or.inl rfl
+    | 2 => omega
+    | 3 => omega
+    | 4 => omega
+    | 5 => exact Or.inr rfl
+    | _ + 6 => omega
 
 private theorem prime_seven : Nat.Prime 7 := by
-  sorry
+  refine ⟨?_, ?_⟩
+  · decide
+  · intro a hdvd
+    have hle : a ≤ 7 := Nat.le_of_dvd (by decide : 0 < 7) hdvd
+    rcases hdvd with ⟨k, hk⟩
+    match a with
+    | 0 => omega
+    | 1 => exact Or.inl rfl
+    | 2 => omega
+    | 3 => omega
+    | 4 => omega
+    | 5 => omega
+    | 6 => omega
+    | 7 => exact Or.inr rfl
+    | _ + 8 => omega
 
 private theorem prime_eleven : Nat.Prime 11 := by
-  sorry
+  refine ⟨?_, ?_⟩
+  · decide
+  · intro a hdvd
+    have hle : a ≤ 11 := Nat.le_of_dvd (by decide : 0 < 11) hdvd
+    rcases hdvd with ⟨k, hk⟩
+    match a with
+    | 0 => omega
+    | 1 => exact Or.inl rfl
+    | 2 => omega
+    | 3 => omega
+    | 4 => omega
+    | 5 => omega
+    | 6 => omega
+    | 7 => omega
+    | 8 => omega
+    | 9 => omega
+    | 10 => omega
+    | 11 => exact Or.inr rfl
+    | _ + 12 => omega
 
 private theorem prime_thirteen : Nat.Prime 13 := by
-  sorry
+  refine ⟨?_, ?_⟩
+  · decide
+  · intro a hdvd
+    have hle : a ≤ 13 := Nat.le_of_dvd (by decide : 0 < 13) hdvd
+    rcases hdvd with ⟨k, hk⟩
+    match a with
+    | 0 => omega
+    | 1 => exact Or.inl rfl
+    | 2 => omega
+    | 3 => omega
+    | 4 => omega
+    | 5 => omega
+    | 6 => omega
+    | 7 => omega
+    | 8 => omega
+    | 9 => omega
+    | 10 => omega
+    | 11 => omega
+    | 12 => omega
+    | 13 => exact Or.inr rfl
+    | _ + 14 => omega
 
 private theorem prime_seventeen : Nat.Prime 17 := by
-  sorry
+  refine ⟨?_, ?_⟩
+  · decide
+  · intro a hdvd
+    have hle : a ≤ 17 := Nat.le_of_dvd (by decide : 0 < 17) hdvd
+    rcases hdvd with ⟨k, hk⟩
+    match a with
+    | 0 => omega
+    | 1 => exact Or.inl rfl
+    | 2 => omega
+    | 3 => omega
+    | 4 => omega
+    | 5 => omega
+    | 6 => omega
+    | 7 => omega
+    | 8 => omega
+    | 9 => omega
+    | 10 => omega
+    | 11 => omega
+    | 12 => omega
+    | 13 => omega
+    | 14 => omega
+    | 15 => omega
+    | 16 => omega
+    | 17 => exact Or.inr rfl
+    | _ + 18 => omega
 
 private theorem prime_nineteen : Nat.Prime 19 := by
-  sorry
+  refine ⟨?_, ?_⟩
+  · decide
+  · intro a hdvd
+    have hle : a ≤ 19 := Nat.le_of_dvd (by decide : 0 < 19) hdvd
+    rcases hdvd with ⟨k, hk⟩
+    match a with
+    | 0 => omega
+    | 1 => exact Or.inl rfl
+    | 2 => omega
+    | 3 => omega
+    | 4 => omega
+    | 5 => omega
+    | 6 => omega
+    | 7 => omega
+    | 8 => omega
+    | 9 => omega
+    | 10 => omega
+    | 11 => omega
+    | 12 => omega
+    | 13 => omega
+    | 14 => omega
+    | 15 => omega
+    | 16 => omega
+    | 17 => omega
+    | 18 => omega
+    | 19 => exact Or.inr rfl
+    | _ + 20 => omega
 
 private theorem prime_twenty_three : Nat.Prime 23 := by
   refine ⟨?_, ?_⟩
