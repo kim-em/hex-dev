@@ -1472,6 +1472,204 @@ private theorem polyProduct_normalizationPrefixFactors (d : FactorNormalizationD
   rw [polyProduct_append, polyProduct_append]
   rw [DensePoly.mul_assoc_poly (S := Int)]
 
+private theorem polyPow_zero (g : ZPoly) :
+    Factorization.polyPow g 0 = (1 : ZPoly) := rfl
+
+private theorem polyPow_succ (g : ZPoly) (n : Nat) :
+    Factorization.polyPow g (n + 1) = Factorization.polyPow g n * g := rfl
+
+private theorem polyPow_one (g : ZPoly) :
+    Factorization.polyPow g 1 = g := by
+  rw [polyPow_succ, polyPow_zero, one_mul_zpoly]
+
+private def multListProduct (mults : List (ZPoly × Nat)) : ZPoly :=
+  mults.foldl (fun acc m => acc * Factorization.polyPow m.1 m.2) 1
+
+private theorem multListProduct_nil :
+    multListProduct [] = 1 := rfl
+
+private theorem multListFoldl_eq_mul_foldl_one (acc : ZPoly) (mults : List (ZPoly × Nat)) :
+    mults.foldl (fun acc m => acc * Factorization.polyPow m.1 m.2) acc =
+      acc * mults.foldl (fun acc m => acc * Factorization.polyPow m.1 m.2) 1 := by
+  induction mults generalizing acc with
+  | nil =>
+      simpa using (DensePoly.mul_one_right_poly (S := Int) acc).symm
+  | cons m ms ih =>
+      simp only [List.foldl_cons]
+      rw [one_mul_zpoly]
+      calc
+        ms.foldl (fun acc m => acc * Factorization.polyPow m.1 m.2)
+            (acc * Factorization.polyPow m.1 m.2) =
+              (acc * Factorization.polyPow m.1 m.2) *
+                ms.foldl (fun acc m => acc * Factorization.polyPow m.1 m.2) 1 :=
+            ih (acc * Factorization.polyPow m.1 m.2)
+        _ = acc * (Factorization.polyPow m.1 m.2 *
+              ms.foldl (fun acc m => acc * Factorization.polyPow m.1 m.2) 1) := by
+              rw [DensePoly.mul_assoc_poly (S := Int)]
+        _ = acc * ms.foldl (fun acc m => acc * Factorization.polyPow m.1 m.2)
+              (Factorization.polyPow m.1 m.2) := by
+              rw [ih (Factorization.polyPow m.1 m.2)]
+
+private theorem multListProduct_cons (m : ZPoly × Nat) (ms : List (ZPoly × Nat)) :
+    multListProduct (m :: ms) =
+      Factorization.polyPow m.1 m.2 * multListProduct ms := by
+  simp only [multListProduct, List.foldl_cons]
+  rw [one_mul_zpoly]
+  exact multListFoldl_eq_mul_foldl_one (Factorization.polyPow m.1 m.2) ms
+
+private theorem multListProduct_singleton (m : ZPoly × Nat) :
+    multListProduct [m] = Factorization.polyPow m.1 m.2 := by
+  rw [multListProduct_cons, multListProduct_nil]
+  rw [DensePoly.mul_one_right_poly]
+
+private theorem multListProduct_append (xs ys : List (ZPoly × Nat)) :
+    multListProduct (xs ++ ys) = multListProduct xs * multListProduct ys := by
+  induction xs with
+  | nil =>
+      rw [List.nil_append, multListProduct_nil]
+      rw [one_mul_zpoly]
+  | cons m ms ih =>
+      rw [List.cons_append]
+      rw [multListProduct_cons, multListProduct_cons, ih]
+      rw [DensePoly.mul_assoc_poly (S := Int)]
+
+private theorem multListProduct_reverse (mults : List (ZPoly × Nat)) :
+    multListProduct mults.reverse = multListProduct mults := by
+  induction mults with
+  | nil => rfl
+  | cons m ms ih =>
+      rw [List.reverse_cons]
+      rw [multListProduct_append, multListProduct_singleton]
+      rw [ih, multListProduct_cons]
+      exact DensePoly.mul_comm_poly (S := Int) _ _
+
+private theorem multListProduct_bumpFactorMultiplicity
+    (g : ZPoly) (mults : List (ZPoly × Nat)) :
+    multListProduct (bumpFactorMultiplicity g mults) = g * multListProduct mults := by
+  induction mults with
+  | nil =>
+      rw [bumpFactorMultiplicity, multListProduct_singleton, multListProduct_nil]
+      rw [polyPow_one]
+      rw [DensePoly.mul_one_right_poly]
+  | cons entry entries ih =>
+      unfold bumpFactorMultiplicity
+      by_cases heq : entry.1 = g
+      · simp only [heq, if_true]
+        rw [multListProduct_cons]
+        show Factorization.polyPow g (entry.2 + 1) * multListProduct entries =
+          g * multListProduct (entry :: entries)
+        rw [polyPow_succ, multListProduct_cons, heq]
+        rw [DensePoly.mul_comm_poly (S := Int)
+              (Factorization.polyPow g entry.2) g]
+        rw [DensePoly.mul_assoc_poly (S := Int)]
+      · simp only [heq, if_false]
+        rw [multListProduct_cons, multListProduct_cons, ih]
+        rw [← DensePoly.mul_assoc_poly (S := Int)]
+        rw [DensePoly.mul_comm_poly (S := Int)
+              (Factorization.polyPow entry.1 entry.2) g]
+        rw [DensePoly.mul_assoc_poly (S := Int)]
+
+private def collectFactorStep
+    (acc : List (ZPoly × Nat)) (f : ZPoly) : List (ZPoly × Nat) :=
+  let f := normalizeFactorSign f
+  if shouldRecordPolynomialFactor f then
+    bumpFactorMultiplicity f acc
+  else
+    acc
+
+private theorem collectFactorMultiplicities_eq_foldl (factors : Array ZPoly) :
+    collectFactorMultiplicities factors =
+      (factors.toList.foldl collectFactorStep []).reverse.toArray := rfl
+
+private def filteredNormalizedFactors (factors : List ZPoly) : List ZPoly :=
+  factors.filterMap fun f =>
+    let f := normalizeFactorSign f
+    if shouldRecordPolynomialFactor f then some f else none
+
+private theorem filteredNormalizedFactors_nil :
+    filteredNormalizedFactors [] = [] := rfl
+
+private theorem filteredNormalizedFactors_cons_keep
+    {f : ZPoly} (fs : List ZPoly)
+    (hkeep : shouldRecordPolynomialFactor (normalizeFactorSign f) = true) :
+    filteredNormalizedFactors (f :: fs) =
+      normalizeFactorSign f :: filteredNormalizedFactors fs := by
+  unfold filteredNormalizedFactors
+  simp [hkeep]
+
+private theorem filteredNormalizedFactors_cons_drop
+    {f : ZPoly} (fs : List ZPoly)
+    (hdrop : shouldRecordPolynomialFactor (normalizeFactorSign f) = false) :
+    filteredNormalizedFactors (f :: fs) = filteredNormalizedFactors fs := by
+  unfold filteredNormalizedFactors
+  simp [hdrop]
+
+private theorem multListProduct_collectAux
+    (acc : List (ZPoly × Nat)) (factors : List ZPoly) :
+    multListProduct (factors.foldl collectFactorStep acc) =
+      multListProduct acc *
+        Array.polyProduct (filteredNormalizedFactors factors).toArray := by
+  induction factors generalizing acc with
+  | nil =>
+      rw [filteredNormalizedFactors_nil, List.foldl_nil]
+      show multListProduct acc = _
+      simp [Array.polyProduct]
+      rw [DensePoly.mul_one_right_poly]
+  | cons f fs ih =>
+      rw [List.foldl_cons]
+      by_cases hrec :
+          shouldRecordPolynomialFactor (normalizeFactorSign f) = true
+      · rw [filteredNormalizedFactors_cons_keep fs hrec]
+        rw [show collectFactorStep acc f =
+              bumpFactorMultiplicity (normalizeFactorSign f) acc from by
+              unfold collectFactorStep
+              simp [hrec]]
+        rw [ih (bumpFactorMultiplicity (normalizeFactorSign f) acc)]
+        rw [multListProduct_bumpFactorMultiplicity]
+        rw [polyProduct_cons_toArray]
+        rw [DensePoly.mul_comm_poly (S := Int) (normalizeFactorSign f)
+              (multListProduct acc)]
+        rw [DensePoly.mul_assoc_poly (S := Int)]
+      · have hdrop : shouldRecordPolynomialFactor (normalizeFactorSign f) = false := by
+          cases hcase :
+              shouldRecordPolynomialFactor (normalizeFactorSign f) with
+          | true => exact (hrec hcase).elim
+          | false => rfl
+        rw [filteredNormalizedFactors_cons_drop fs hdrop]
+        rw [show collectFactorStep acc f = acc from by
+              unfold collectFactorStep
+              simp [hdrop]]
+        exact ih acc
+
+private theorem multListProduct_collectFactorMultiplicities
+    (factors : Array ZPoly) :
+    multListProduct (collectFactorMultiplicities factors).toList =
+      Array.polyProduct (filteredNormalizedFactors factors.toList).toArray := by
+  rw [collectFactorMultiplicities_eq_foldl]
+  show multListProduct (factors.toList.foldl collectFactorStep []).reverse = _
+  rw [multListProduct_reverse]
+  have hcol := multListProduct_collectAux [] factors.toList
+  rw [multListProduct_nil, one_mul_zpoly] at hcol
+  exact hcol
+
+private theorem factorizationOfFactors_product
+    (f : ZPoly) (factors : Array ZPoly) :
+    Factorization.product (factorizationOfFactors f factors) =
+      DensePoly.C (signedContentScalar f) *
+        Array.polyProduct (filteredNormalizedFactors factors.toList).toArray := by
+  show
+    (collectFactorMultiplicities factors).foldl
+        (fun acc m => acc * Factorization.polyPow m.1 m.2)
+        (DensePoly.C (signedContentScalar f)) =
+      _
+  rw [← Array.foldl_toList]
+  rw [multListFoldl_eq_mul_foldl_one]
+  show
+    DensePoly.C (signedContentScalar f) *
+        multListProduct (collectFactorMultiplicities factors).toList =
+      _
+  rw [multListProduct_collectFactorMultiplicities]
+
 private theorem rat_scale_scale (u v : Rat) (p : DensePoly Rat) :
     DensePoly.scale u (DensePoly.scale v p) = DensePoly.scale (u * v) p := by
   apply DensePoly.ext_coeff
