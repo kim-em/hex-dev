@@ -333,11 +333,11 @@ setup_benchmark runFactorDegreeHeightChecksum param => bzClassicalDegreeHeightCo
   }
 
 /- Singleton HO-2 adversarial fast-path setup target for `X^4 + 1`. Full
-`factorFast` exceeds the smoke verifier's one-call budget on this irreducible
-recombination case, so this registration narrows the measured operation to the
-public fast-path precision cap plus the pinned `p = 5` modular split profile.
-The public fallback is not called, so a future `factorFast = none` result is not
-hidden by `factor`. -/
+`factorFast` exceeds the smoke verifier's one-call budget; the declared cost
+model is the constant `n + 1` singleton bound for the pinned `n = 0` schedule.
+This registration narrows the measured operation to the public fast-path
+precision cap plus the pinned `p = 5` modular split profile. The public fallback
+is not called, so a future `factorFast = none` result is not hidden by `factor`. -/
 setup_benchmark runFactorFastSetupAdvX4Plus1Checksum n => n + 1
   with prep := prepAdvX4Plus1
   where {
@@ -424,10 +424,10 @@ setup_benchmark runFactorAdvPhi15Checksum n => n + 1
   }
 
 /- Singleton HO-2 adversarial fast-path setup target for `Phi_15`. Full
-`factorFast` is a scientific-only run for now: the degree-eight cyclotomic
-case exceeds the smoke verifier's one-call budget. This smoke registration
-keeps the fast-path precision cap and pinned `p = 31` eight-linear split visible
-without routing through the public fallback combinator. -/
+`factorFast` is a scientific-only run for now: the declared cost model is the
+constant `n + 1` singleton bound for the pinned `n = 0` schedule. This smoke
+registration keeps the fast-path precision cap and pinned `p = 31` eight-linear
+split visible without routing through the public fallback combinator. -/
 setup_benchmark runFactorFastSetupAdvPhi15Checksum n => n + 1
   with prep := prepAdvPhi15
   where {
