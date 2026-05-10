@@ -1189,10 +1189,10 @@ private def bhksRowsArrayToMatrix {m : Nat} (n : Nat) (rows : Array (Vector Int 
   Matrix.ofFn fun i j => (rows.getD i.val (Vector.ofFn fun _ => 0))[j]
 
 private theorem lll_delta_lower : (1 / 4 : Rat) < 3 / 4 := by
-  sorry
+  grind
 
 private theorem lll_delta_upper : (3 / 4 : Rat) ≤ 1 := by
-  sorry
+  grind
 
 private def bhksCutProjectReducedRows
     (L : BhksLatticeBasis)
