@@ -2461,6 +2461,97 @@ private theorem recombineExhaustive_product
   simp [hsearch, recombinationSearchMod_product f (liftModulus d)
     d.liftedFactors.toList factors hsearch]
 
+/-- A successful BHKS recovery call preserves the polynomial product: when
+`bhksRecover? f d` returns `some candidates`, the candidates multiply back
+to `f` because the executable runs a final `Array.polyProduct candidates == f`
+check before reporting success. -/
+private theorem bhksRecover?_product
+    {f : ZPoly} {d : LiftData} {candidates : Array ZPoly}
+    (hrecover : bhksRecover? f d = some candidates) :
+    Array.polyProduct candidates = f := by
+  rw [bhksRecover?] at hrecover
+  by_cases hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
+      (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
+  · rw [dif_pos hrows] at hrecover
+    by_cases hdeg :
+        bhksDegenerateIndicatorPartition
+          (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows
+            (bhksLatticeBasis_independent _))
+          (bhksEquivalenceClassIndicators
+            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
+              hrows (bhksLatticeBasis_independent _))) = true
+    · simp [hdeg] at hrecover
+    · simp only [hdeg, Bool.false_eq_true, if_false] at hrecover
+      cases hcand : bhksIndicatorCandidates? f d
+          (bhksEquivalenceClassIndicators
+            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
+              hrows (bhksLatticeBasis_independent _))) with
+      | none => simp [hcand] at hrecover
+      | some cands =>
+          simp only [hcand] at hrecover
+          by_cases hprod : Array.polyProduct cands == f
+          · simp only [hprod, if_true] at hrecover
+            cases hrecover
+            simpa [beq_iff_eq] using hprod
+          · simp [hprod] at hrecover
+  · rw [dif_neg hrows] at hrecover
+    simp at hrecover
+
+/-- A successful fixed-precision BHKS fast-recombination loop preserves the
+polynomial product: every success branch threads through `bhksRecover?`, which
+already certifies `Array.polyProduct = core`. -/
+private theorem factorFastCoreWithBound_product
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) :
+    ∀ k fuel coreFactors,
+      factorFastCoreWithBound core B primeData k fuel = some coreFactors →
+        Array.polyProduct coreFactors = core := by
+  intro k fuel
+  induction fuel generalizing k with
+  | zero =>
+      intro coreFactors hfast
+      simp [factorFastCoreWithBound] at hfast
+  | succ fuel ih =>
+      intro coreFactors hfast
+      rw [factorFastCoreWithBound] at hfast
+      cases hrec : bhksRecover? core (henselLiftData core k primeData) with
+      | some xs =>
+          rw [hrec] at hfast
+          cases hfast
+          exact bhksRecover?_product hrec
+      | none =>
+          rw [hrec] at hfast
+          by_cases hk : k ≥ B
+          · simp [hk] at hfast
+          · simp only [hk, if_false] at hfast
+            exact ih _ coreFactors hfast
+
+/-- The exhaustive recombination wrapper preserves the polynomial product
+unconditionally: every branch returns either `#[core]` (singleton, trivially
+multiplying to `core`) or the result of a successful `recombinationSearchMod`
+call (`recombineExhaustive_product`). -/
+private theorem exhaustiveCoreFactorsWithBound_product
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) :
+    Array.polyProduct (exhaustiveCoreFactorsWithBound core B primeData) = core := by
+  rw [exhaustiveCoreFactorsWithBound]
+  by_cases hB : B = 0
+  · simp [hB, polyProduct_singleton]
+  · simp only [hB, if_false]
+    by_cases hempty :
+        (recombineExhaustive core (henselLiftData core B primeData)).isEmpty
+    · simp [hempty, polyProduct_singleton]
+    · simp only [hempty]
+      cases hsearch : recombinationSearchMod core
+          (liftModulus (henselLiftData core B primeData))
+          (henselLiftData core B primeData).liftedFactors.toList with
+      | none =>
+          have hnil : recombineExhaustive core (henselLiftData core B primeData) = #[] := by
+            rw [recombineExhaustive]
+            simp [hsearch]
+          rw [hnil] at hempty
+          simp at hempty
+      | some xs =>
+          exact recombineExhaustive_product core (henselLiftData core B primeData) xs hsearch
+
 theorem checkIrreducibleCert_prime_data
     (f : ZPoly) (cert : ZPolyIrreducibilityCertificate)
     (hcert : checkIrreducibleCert f cert = true) :
