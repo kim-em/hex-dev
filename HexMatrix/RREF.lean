@@ -452,6 +452,133 @@ private theorem eliminateColumn_transform_preserve
   unfold eliminateColumn
   exact eliminateColumn_foldl_transform_preserve pivotRow col (List.finRange n) (E, T) h
 
+/-- One fold step of `eliminateColumn` preserves existence of a left inverse
+for the transform side. -/
+private theorem eliminateColumn_step_left_inverse_preserve
+    (s : Matrix R n m × Matrix R n n) (pivotRow : Fin n) (col : Fin m)
+    (x : Fin n) (h : ∃ Tinv : Matrix R n n, Tinv * s.2 = 1) :
+    ∃ Tinv' : Matrix R n n,
+      Tinv' *
+        (if _h : x = pivotRow then s
+         else
+           let coeff := -s.1[x][col]
+           if coeff = 0 then s
+           else (rowAdd s.1 pivotRow x coeff, rowAdd s.2 pivotRow x coeff)).2 = 1 := by
+  by_cases hx : x = pivotRow
+  · rw [dif_pos hx]
+    exact h
+  · rw [dif_neg hx]
+    by_cases hcoeff : -s.1[x][col] = 0
+    · rw [if_pos hcoeff]
+      exact h
+    · rw [if_neg hcoeff]
+      exact rowAdd_left_inverse_preserve s.2 (-s.1[x][col])
+        (fun hpivotx => hx hpivotx.symm) h
+
+/-- One fold step of `eliminateColumn` preserves existence of a right inverse
+for the transform side. -/
+private theorem eliminateColumn_step_right_inverse_preserve
+    (s : Matrix R n m × Matrix R n n) (pivotRow : Fin n) (col : Fin m)
+    (x : Fin n) (h : ∃ Tinv : Matrix R n n, s.2 * Tinv = 1) :
+    ∃ Tinv' : Matrix R n n,
+      (if _h : x = pivotRow then s
+       else
+         let coeff := -s.1[x][col]
+         if coeff = 0 then s
+         else (rowAdd s.1 pivotRow x coeff, rowAdd s.2 pivotRow x coeff)).2 *
+        Tinv' = 1 := by
+  by_cases hx : x = pivotRow
+  · rw [dif_pos hx]
+    exact h
+  · rw [dif_neg hx]
+    by_cases hcoeff : -s.1[x][col] = 0
+    · rw [if_pos hcoeff]
+      exact h
+    · rw [if_neg hcoeff]
+      exact rowAdd_right_inverse_preserve s.2 (-s.1[x][col])
+        (fun hpivotx => hx hpivotx.symm) h
+
+/-- Folding `eliminateColumn` preserves existence of a left inverse for the
+transform side. -/
+private theorem eliminateColumn_foldl_left_inverse_preserve
+    (pivotRow : Fin n) (col : Fin m) :
+    ∀ (xs : List (Fin n)) (s : Matrix R n m × Matrix R n n),
+      (∃ Tinv : Matrix R n n, Tinv * s.2 = 1) →
+      ∃ Tinv' : Matrix R n n,
+        Tinv' *
+          (xs.foldl (fun (state : Matrix R n m × Matrix R n n) j =>
+            if _h : j = pivotRow then state
+            else
+              let coeff := -state.1[j][col]
+              if coeff = 0 then state
+              else (rowAdd state.1 pivotRow j coeff, rowAdd state.2 pivotRow j coeff))
+            s).2 = 1 := by
+  intro xs
+  induction xs with
+  | nil =>
+      intro s h
+      exact h
+  | cons x xs ih =>
+      intro s h
+      simp only [List.foldl_cons]
+      exact ih _ (eliminateColumn_step_left_inverse_preserve s pivotRow col x h)
+
+/-- Folding `eliminateColumn` preserves existence of a right inverse for the
+transform side. -/
+private theorem eliminateColumn_foldl_right_inverse_preserve
+    (pivotRow : Fin n) (col : Fin m) :
+    ∀ (xs : List (Fin n)) (s : Matrix R n m × Matrix R n n),
+      (∃ Tinv : Matrix R n n, s.2 * Tinv = 1) →
+      ∃ Tinv' : Matrix R n n,
+        (xs.foldl (fun (state : Matrix R n m × Matrix R n n) j =>
+          if _h : j = pivotRow then state
+          else
+            let coeff := -state.1[j][col]
+            if coeff = 0 then state
+            else (rowAdd state.1 pivotRow j coeff, rowAdd state.2 pivotRow j coeff))
+          s).2 *
+          Tinv' = 1 := by
+  intro xs
+  induction xs with
+  | nil =>
+      intro s h
+      exact h
+  | cons x xs ih =>
+      intro s h
+      simp only [List.foldl_cons]
+      exact ih _ (eliminateColumn_step_right_inverse_preserve s pivotRow col x h)
+
+/-- `eliminateColumn` preserves existence of a left inverse for the transform
+side. -/
+private theorem eliminateColumn_left_inverse_preserve
+    (T : Matrix R n n) (E : Matrix R n m) (pivotRow : Fin n) (col : Fin m)
+    (h : ∃ Tinv : Matrix R n n, Tinv * T = 1) :
+    ∃ Tinv' : Matrix R n n,
+      Tinv' * (eliminateColumn E T pivotRow col).2 = 1 := by
+  unfold eliminateColumn
+  exact eliminateColumn_foldl_left_inverse_preserve pivotRow col (List.finRange n) (E, T) h
+
+/-- `eliminateColumn` preserves existence of a right inverse for the transform
+side. -/
+private theorem eliminateColumn_right_inverse_preserve
+    (T : Matrix R n n) (E : Matrix R n m) (pivotRow : Fin n) (col : Fin m)
+    (h : ∃ Tinv : Matrix R n n, T * Tinv = 1) :
+    ∃ Tinv' : Matrix R n n,
+      (eliminateColumn E T pivotRow col).2 * Tinv' = 1 := by
+  unfold eliminateColumn
+  exact eliminateColumn_foldl_right_inverse_preserve pivotRow col (List.finRange n) (E, T) h
+
+omit [Lean.Grind.Field R] [DecidableEq R] in
+/-- Swapping the current row with the discovered pivot moves the nonzero pivot
+entry into the target row. -/
+private theorem rowSwap_target_pivot_entry
+    (E : Matrix R n m) (target pivot : Fin n) (col : Fin m) :
+    (rowSwap E target pivot)[target][col] = E[pivot][col] := by
+  rw [rowSwap_getElem]
+  by_cases h : target = pivot
+  · simp [h]
+  · simp [h]
+
 /-- Process columns left-to-right, performing Gauss-Jordan elimination. -/
 private def rrefLoop (col fuel : Nat) (state : RrefState R n m) : RrefState R n m :=
   match fuel with
@@ -482,6 +609,110 @@ private def rrefLoop (col fuel : Nat) (state : RrefState R n m) : RrefState R n 
       else
         state
 
+/-- `rrefLoop` preserves existence of a left inverse for the transform. -/
+private theorem rrefLoop_left_inverse_preserve (col fuel : Nat)
+    (state : RrefState R n m)
+    (h : ∃ Tinv : Matrix R n n, Tinv * state.transform = 1) :
+    ∃ Tinv' : Matrix R n n,
+      Tinv' * (rrefLoop col fuel state).transform = 1 := by
+  induction fuel generalizing col state with
+  | zero =>
+      simpa [rrefLoop] using h
+  | succ fuel ih =>
+      by_cases hRow : state.row < n
+      · by_cases hCol : col < m
+        ·
+          let colFin : Fin m := ⟨col, hCol⟩
+          cases hpivot : findPivot? state.echelon colFin state.row with
+          | none =>
+              simpa [rrefLoop, hRow, hCol, colFin, hpivot] using ih (col + 1) state h
+          | some pivot =>
+              let target : Fin n := ⟨state.row, hRow⟩
+              let swappedEchelon := rowSwap state.echelon target pivot
+              let swappedTransform := rowSwap state.transform target pivot
+              let pivotVal := swappedEchelon[target][colFin]
+              let scaledEchelon := rowScale swappedEchelon target pivotVal⁻¹
+              let scaledTransform := rowScale swappedTransform target pivotVal⁻¹
+              let eliminated := eliminateColumn scaledEchelon scaledTransform target colFin
+              let nextState : RrefState R n m :=
+                { row := state.row + 1
+                  echelon := eliminated.1
+                  transform := eliminated.2
+                  pivots := state.pivots.concat colFin }
+              have hswap :
+                  ∃ Tinv : Matrix R n n, Tinv * swappedTransform = 1 :=
+                rowSwap_left_inverse_preserve state.transform target pivot h
+              have hpivotVal : pivotVal ≠ 0 := by
+                have hpivotNonzero := findPivot?_some_nonzero state.echelon colFin hpivot
+                have hentry : pivotVal = state.echelon[pivot][colFin] := by
+                  simpa [pivotVal, swappedEchelon] using
+                    (rowSwap_target_pivot_entry state.echelon target pivot colFin)
+                simpa [hentry] using hpivotNonzero
+              have hscale :
+                  ∃ Tinv : Matrix R n n, Tinv * scaledTransform = 1 :=
+                rowScale_left_inverse_preserve swappedTransform target
+                  (show pivotVal⁻¹ ≠ 0 by grind) hswap
+              have helim :
+                  ∃ Tinv : Matrix R n n, Tinv * eliminated.2 = 1 :=
+                eliminateColumn_left_inverse_preserve scaledTransform scaledEchelon target colFin hscale
+              simpa [rrefLoop, hRow, hCol, colFin, hpivot, target, swappedEchelon,
+                swappedTransform, pivotVal, scaledEchelon, scaledTransform, eliminated,
+                nextState] using ih (col + 1) nextState helim
+        · simpa [rrefLoop, hRow, hCol] using h
+      · simpa [rrefLoop, hRow] using h
+
+/-- `rrefLoop` preserves existence of a right inverse for the transform. -/
+private theorem rrefLoop_right_inverse_preserve (col fuel : Nat)
+    (state : RrefState R n m)
+    (h : ∃ Tinv : Matrix R n n, state.transform * Tinv = 1) :
+    ∃ Tinv' : Matrix R n n,
+      (rrefLoop col fuel state).transform * Tinv' = 1 := by
+  induction fuel generalizing col state with
+  | zero =>
+      simpa [rrefLoop] using h
+  | succ fuel ih =>
+      by_cases hRow : state.row < n
+      · by_cases hCol : col < m
+        ·
+          let colFin : Fin m := ⟨col, hCol⟩
+          cases hpivot : findPivot? state.echelon colFin state.row with
+          | none =>
+              simpa [rrefLoop, hRow, hCol, colFin, hpivot] using ih (col + 1) state h
+          | some pivot =>
+              let target : Fin n := ⟨state.row, hRow⟩
+              let swappedEchelon := rowSwap state.echelon target pivot
+              let swappedTransform := rowSwap state.transform target pivot
+              let pivotVal := swappedEchelon[target][colFin]
+              let scaledEchelon := rowScale swappedEchelon target pivotVal⁻¹
+              let scaledTransform := rowScale swappedTransform target pivotVal⁻¹
+              let eliminated := eliminateColumn scaledEchelon scaledTransform target colFin
+              let nextState : RrefState R n m :=
+                { row := state.row + 1
+                  echelon := eliminated.1
+                  transform := eliminated.2
+                  pivots := state.pivots.concat colFin }
+              have hswap :
+                  ∃ Tinv : Matrix R n n, swappedTransform * Tinv = 1 :=
+                rowSwap_right_inverse_preserve state.transform target pivot h
+              have hpivotVal : pivotVal ≠ 0 := by
+                have hpivotNonzero := findPivot?_some_nonzero state.echelon colFin hpivot
+                have hentry : pivotVal = state.echelon[pivot][colFin] := by
+                  simpa [pivotVal, swappedEchelon] using
+                    (rowSwap_target_pivot_entry state.echelon target pivot colFin)
+                simpa [hentry] using hpivotNonzero
+              have hscale :
+                  ∃ Tinv : Matrix R n n, scaledTransform * Tinv = 1 :=
+                rowScale_right_inverse_preserve swappedTransform target
+                  (show pivotVal⁻¹ ≠ 0 by grind) hswap
+              have helim :
+                  ∃ Tinv : Matrix R n n, eliminated.2 * Tinv = 1 :=
+                eliminateColumn_right_inverse_preserve scaledTransform scaledEchelon target colFin hscale
+              simpa [rrefLoop, hRow, hCol, colFin, hpivot, target, swappedEchelon,
+                swappedTransform, pivotVal, scaledEchelon, scaledTransform, eliminated,
+                nextState] using ih (col + 1) nextState helim
+        · simpa [rrefLoop, hRow, hCol] using h
+      · simpa [rrefLoop, hRow] using h
+
 /-- Reduced row echelon form data computed by Gauss-Jordan elimination. -/
 def rref (M : Matrix R n m) : RowEchelonData R n m :=
   let final := rrefLoop 0 m
@@ -493,6 +724,22 @@ def rref (M : Matrix R n m) : RowEchelonData R n m :=
     echelon := final.echelon
     transform := final.transform
     pivotCols := ⟨final.pivots.toArray, by simp⟩ }
+
+/-- Final `rref` row transform has a left inverse. -/
+private theorem rref_transform_left_inverse (M : Matrix R n m) :
+    ∃ Tinv : Matrix R n n, Tinv * (rref M).transform = 1 := by
+  unfold rref
+  exact rrefLoop_left_inverse_preserve 0 m
+    { row := 0, echelon := M, transform := 1, pivots := [] }
+    ⟨1, by rw [one_mul]⟩
+
+/-- Final `rref` row transform has a right inverse. -/
+private theorem rref_transform_right_inverse (M : Matrix R n m) :
+    ∃ Tinv : Matrix R n n, (rref M).transform * Tinv = 1 := by
+  unfold rref
+  exact rrefLoop_right_inverse_preserve 0 m
+    { row := 0, echelon := M, transform := 1, pivots := [] }
+    ⟨1, by rw [one_mul]⟩
 
 /-- The computed `rref` data satisfies the `IsRREF` contract. -/
 theorem rref_isRREF (M : Matrix R n m) : IsRREF M (rref M) := by
