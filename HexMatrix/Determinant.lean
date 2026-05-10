@@ -4421,6 +4421,31 @@ private theorem foldl_det_sum_swap {R : Type u} [Lean.Grind.CommRing R]
           (fun y => xs.foldl (fun acc' x' => acc' + f x' y) 0)
       rw [hLHS, hRHS, ih]
 
+private theorem foldl_det_sum_nested_start {R : Type u} [Lean.Grind.CommRing R]
+    {β γ : Type v} (xs : List β) (ys : List γ) (f : β → γ → R) (z : R) :
+    xs.foldl (fun acc x => ys.foldl (fun acc' y => acc' + f x y) acc) z =
+      z + xs.foldl
+        (fun acc x => acc + ys.foldl (fun acc' y => acc' + f x y) 0) 0 := by
+  induction xs generalizing z with
+  | nil =>
+      simp only [List.foldl_nil]
+      grind
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [foldl_det_sum_start ys (fun y => f x y) z]
+      rw [ih (z + ys.foldl (fun acc' y => acc' + f x y) 0)]
+      rw [foldl_det_sum_start xs
+        (fun x => ys.foldl (fun acc' y => acc' + f x y) 0)
+        (0 + ys.foldl (fun acc' y => acc' + f x y) 0)]
+      grind
+
+private theorem foldl_det_sum_nested_zero {R : Type u} [Lean.Grind.CommRing R]
+    {β γ : Type v} (xs : List β) (ys : List γ) (f : β → γ → R) :
+    xs.foldl (fun acc x => ys.foldl (fun acc' y => acc' + f x y) acc) 0 =
+      xs.foldl
+        (fun acc x => acc + ys.foldl (fun acc' y => acc' + f x y) 0) 0 := by
+  exact (foldl_det_sum_nested_start xs ys f (0 : R)).trans (by grind)
+
 /-- The square matrix obtained from `columnSumMatrix source coeff` by replacing
 the first `chosen.length` columns with selected `source` columns indexed by
 `chosen`. The remaining columns stay in finite-sum form. -/
@@ -4873,6 +4898,140 @@ private theorem partialColumnTupleCoeff_insertAt_last
   unfold partialColumnTupleCoeff
   refine Eq.trans (Lean.Grind.CommSemiring.mul_comm _ _) ?_
   congr 1
+
+private theorem columnTupleVectors_suffix_rhs_step
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (chosen : List (Fin m))
+    (hk : chosen.length < n) :
+    (columnTupleVectors ((n - (chosen.length + 1)) + 1) m).foldl
+        (fun acc pref => acc +
+          partialColumnTupleCoeff coeff chosen
+            (vectorLengthCast (by omega : (n - (chosen.length + 1)) + 1 =
+              n - chosen.length) pref) *
+            det (columnTupleMatrix source
+              (columnTupleVectorFn
+                (assembleColumnsSuffix chosen
+                  (vectorLengthCast (by omega : (n - (chosen.length + 1)) + 1 =
+                    n - chosen.length) pref) (by omega))))) 0 =
+      (List.finRange m).foldl
+        (fun acc c => acc +
+          coeff[(⟨n - chosen.length - 1, by omega⟩ : Fin n)][c] *
+            (columnTupleVectors (n - (c :: chosen).length) m).foldl
+              (fun acc pref => acc +
+                partialColumnTupleCoeff coeff (c :: chosen) pref *
+                  det (columnTupleMatrix source
+                    (columnTupleVectorFn
+                      (assembleColumnsSuffix (c :: chosen) pref (by
+                        have hcons : (c :: chosen).length = chosen.length + 1 := rfl
+                        omega))))) 0) 0 := by
+  have hlen :
+      n - chosen.length = (n - (chosen.length + 1)) + 1 := by
+    omega
+  change
+    (((columnTupleVectors (n - (chosen.length + 1)) m).flatMap fun pref =>
+        (List.finRange m).map fun c =>
+          insertAt c pref (Fin.last (n - (chosen.length + 1)))).foldl
+        (fun acc pref => acc +
+          partialColumnTupleCoeff coeff chosen (vectorLengthCast hlen.symm pref) *
+            det (columnTupleMatrix source
+              (columnTupleVectorFn
+                (assembleColumnsSuffix chosen (vectorLengthCast hlen.symm pref) (by omega))))) 0) =
+      (List.finRange m).foldl
+        (fun acc c => acc +
+          coeff[(⟨n - chosen.length - 1, by omega⟩ : Fin n)][c] *
+            (columnTupleVectors (n - (c :: chosen).length) m).foldl
+              (fun acc pref => acc +
+                partialColumnTupleCoeff coeff (c :: chosen) pref *
+                  det (columnTupleMatrix source
+                    (columnTupleVectorFn
+                      (assembleColumnsSuffix (c :: chosen) pref (by
+                        have hcons : (c :: chosen).length = chosen.length + 1 := rfl
+                        omega))))) 0) 0
+  rw [foldl_det_sum_flatMap]
+  simp only [List.foldl_map]
+  rw [foldl_det_sum_nested_zero]
+  rw [foldl_det_sum_swap]
+  apply foldl_det_sum_congr
+  intro c _hc
+  have hfactor :
+      (columnTupleVectors (n - (chosen.length + 1)) m).foldl
+          (fun acc pref => acc +
+            coeff[(⟨n - chosen.length - 1, by omega⟩ : Fin n)][c] *
+              (partialColumnTupleCoeff coeff (c :: chosen) pref *
+                det (columnTupleMatrix source
+                  (columnTupleVectorFn
+                    (assembleColumnsSuffix (c :: chosen) pref (by
+                      have hcons : (c :: chosen).length = chosen.length + 1 := rfl
+                      omega)))))) 0 =
+        coeff[(⟨n - chosen.length - 1, by omega⟩ : Fin n)][c] *
+          (columnTupleVectors (n - (chosen.length + 1)) m).foldl
+            (fun acc pref => acc +
+              partialColumnTupleCoeff coeff (c :: chosen) pref *
+                det (columnTupleMatrix source
+                  (columnTupleVectorFn
+                    (assembleColumnsSuffix (c :: chosen) pref (by
+                      have hcons : (c :: chosen).length = chosen.length + 1 := rfl
+                      omega))))) 0 := by
+    exact foldl_det_sum_mul_left_zero
+      (columnTupleVectors (n - (chosen.length + 1)) m)
+      (coeff[(⟨n - chosen.length - 1, by omega⟩ : Fin n)][c])
+      (fun pref =>
+        partialColumnTupleCoeff coeff (c :: chosen) pref *
+          det (columnTupleMatrix source
+            (columnTupleVectorFn
+              (assembleColumnsSuffix (c :: chosen) pref (by
+                have hcons : (c :: chosen).length = chosen.length + 1 := rfl
+                omega)))))
+  change
+    (columnTupleVectors (n - (chosen.length + 1)) m).foldl
+        (fun acc' x => acc' +
+          partialColumnTupleCoeff coeff chosen
+              (vectorLengthCast hlen.symm (insertAt c x (Fin.last (n - (chosen.length + 1))))) *
+            det (columnTupleMatrix source
+              (columnTupleVectorFn
+                (assembleColumnsSuffix chosen
+                  (vectorLengthCast hlen.symm (insertAt c x (Fin.last (n - (chosen.length + 1)))))
+                  (by omega))))) 0 =
+      coeff[(⟨n - chosen.length - 1, by omega⟩ : Fin n)][c] *
+        (columnTupleVectors (n - (chosen.length + 1)) m).foldl
+          (fun acc pref => acc +
+            partialColumnTupleCoeff coeff (c :: chosen) pref *
+              det (columnTupleMatrix source
+                (columnTupleVectorFn
+                  (assembleColumnsSuffix (c :: chosen) pref (by
+                    have hcons : (c :: chosen).length = chosen.length + 1 := rfl
+                    omega))))) 0
+  rw [← hfactor]
+  apply foldl_det_sum_congr
+  intro pref _hpref
+  have hcast :
+      (n - (chosen.length + 1)) + 1 = n - chosen.length := by
+    omega
+  have hkcons : (c :: chosen).length ≤ n := by
+    have hcons : (c :: chosen).length = chosen.length + 1 := rfl
+    omega
+  have hcoeff :
+      partialColumnTupleCoeff coeff chosen
+          (vectorLengthCast hcast
+            (insertAt c pref (Fin.last (n - (chosen.length + 1))))) =
+        coeff[(⟨n - chosen.length - 1, by omega⟩ : Fin n)][c] *
+          partialColumnTupleCoeff coeff (c :: chosen) pref := by
+    simpa only [List.length_cons] using
+      (partialColumnTupleCoeff_insertAt_last coeff chosen c pref hkcons hcast)
+  have hdet :
+      det (columnTupleMatrix source
+          (columnTupleVectorFn
+            (assembleColumnsSuffix chosen
+              (vectorLengthCast hcast
+                (insertAt c pref (Fin.last (n - (chosen.length + 1)))))
+              (by omega)))) =
+        det (columnTupleMatrix source
+          (columnTupleVectorFn (assembleColumnsSuffix (c :: chosen) pref hkcons))) := by
+    simpa only [List.length_cons] using
+      (det_columnTupleMatrix_assembleColumnsSuffix_insertAt_last
+        source chosen c pref hkcons hcast)
+  rw [hcoeff, hdet]
+  grind
 
 end Matrix
 end Hex
