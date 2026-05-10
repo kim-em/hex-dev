@@ -3350,6 +3350,64 @@ private theorem yunFactorsPairwiseReachable_common_dvd_one_derivativeSplit
     (by simpa [c, g] using hdc)
     (by simpa [c, g] using hddc)
 
+private theorem squarefree_factor_of_squarefree
+    {c y : FpPoly p}
+    (hyc : y ∣ c)
+    (hsquarefree :
+      ∀ d : FpPoly p, d ∣ c → d ∣ DensePoly.derivative c → d ∣ (1 : FpPoly p)) :
+    ∀ d : FpPoly p,
+      d ∣ y → d ∣ DensePoly.derivative y → d ∣ (1 : FpPoly p) := by
+  intro d hdy hdderiv
+  rcases hyc with ⟨q, hq⟩
+  apply hsquarefree d
+  · exact dvd_trans_poly hdy ⟨q, hq⟩
+  · have hderiv :
+        DensePoly.derivative c =
+          DensePoly.derivative y * q + y * DensePoly.derivative q := by
+      rw [hq]
+      exact DensePoly.derivative_mul y q
+    rw [hderiv]
+    exact dvd_add_poly
+      (dvd_mul_right_of_dvd (a := DensePoly.derivative y) (b := q) (d := d) hdderiv)
+      (dvd_mul_right_of_dvd (a := y) (b := DensePoly.derivative q) (d := d) hdy)
+
+private theorem yunFactorsPairwiseReachable_current_squarefree
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (fuel : Nat)
+    (hreachable : yunFactorsPairwiseReachable c w fuel) :
+    ∀ d : FpPoly p,
+      d ∣ c → d ∣ DensePoly.derivative c → d ∣ (1 : FpPoly p) := by
+  induction hreachable with
+  | derivativeSplit hp f fuel hdf =>
+      intro d hdc hddc
+      exact derivativeSplit_quotient_common_dvd_derivative_one hp f hdf d hdc hddc
+  | step c w fuel _ ih =>
+      exact squarefree_factor_of_squarefree
+        (DensePoly.gcd_dvd_left c w) ih
+
+private theorem yunFactorsPairwiseReachable_common_dvd_one
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (fuel : Nat)
+    (hreachable : yunFactorsPairwiseReachable c w (fuel + 1)) :
+    ∀ d : FpPoly p,
+      d ∣ c / DensePoly.gcd c w →
+        d ∣ DensePoly.gcd c w →
+          d ∣ (1 : FpPoly p) := by
+  intro d hdz hdy
+  have hsquarefree :
+      ∀ d : FpPoly p,
+        d ∣ c → d ∣ DensePoly.derivative c → d ∣ (1 : FpPoly p) :=
+    yunFactorsPairwiseReachable_current_squarefree c w (fuel + 1) hreachable
+  apply hsquarefree d
+  · let y := DensePoly.gcd c w
+    let z := c / y
+    have hprod : z * y = c := by
+      simpa [z, y] using div_gcd_mul_reconstruct c w
+    rw [← hprod]
+    exact dvd_mul_right_of_dvd (a := z) (b := y) (d := d)
+      (by simpa [z, y] using hdz)
+  · exact yunStep_common_dvd_derivative_current c w d hdz hdy
+
 private theorem normalizeMonic_eq_one_of_dvd_one
     [ZMod64.PrimeModulus p] {g : FpPoly p}
     (hdiv : g ∣ (1 : FpPoly p)) :
@@ -3790,12 +3848,21 @@ private theorem squareFreeAuxRev_pairwise_coprime_nil_core_of_yun_invariant
             simpa [g, c, loop, hrepeated, hrev] using hcombined
 
 private theorem squareFreeAuxRev_pairwise_coprime_nil_core
+    (hp : Hex.Nat.Prime p)
     (f : FpPoly p) (multiplicity fuel : Nat) :
     (squareFreeAuxRev f multiplicity fuel []).reverse.Pairwise
       squareFreeFactorCoprimeRel := by
-  sorry
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  apply squareFreeAuxRev_pairwise_coprime_nil_core_of_yun_invariant
+  intro f multiplicity fuel hdf
+  exact
+    yunFactorsPairwiseInvariant_of_derivative_split_common_dvd_one
+      hp f multiplicity fuel (by intro htrue; rw [htrue] at hdf; cases hdf)
+      (fun c w _multiplicity fuel hreachable =>
+        yunFactorsPairwiseReachable_common_dvd_one c w fuel hreachable)
 
 private theorem squareFreeAuxRev_pairwise_coprime_core
+    (hp : Hex.Nat.Prime p)
     (f : FpPoly p) (multiplicity fuel : Nat) (accRev : List (SquareFreeFactor p)) :
     accRev.reverse.Pairwise squareFreeFactorCoprimeRel →
     (∀ a ∈ accRev.reverse,
@@ -3807,10 +3874,11 @@ private theorem squareFreeAuxRev_pairwise_coprime_core
   rw [squareFreeAuxRev_reverse_append f multiplicity fuel accRev]
   apply pairwise_append_of_cross
   · exact hacc
-  · exact squareFreeAuxRev_pairwise_coprime_nil_core f multiplicity fuel
+  · exact squareFreeAuxRev_pairwise_coprime_nil_core hp f multiplicity fuel
   · exact hcross
 
 private theorem squareFreeAuxRev_pairwise_coprime_of_acc
+    (hp : Hex.Nat.Prime p)
     (f : FpPoly p) (multiplicity fuel : Nat) (accRev : List (SquareFreeFactor p)) :
     accRev.reverse.Pairwise squareFreeFactorCoprimeRel →
     (∀ a ∈ accRev.reverse,
@@ -3818,13 +3886,14 @@ private theorem squareFreeAuxRev_pairwise_coprime_of_acc
         squareFreeFactorCoprimeRel a b) →
     (squareFreeAuxRev f multiplicity fuel accRev).reverse.Pairwise
       squareFreeFactorCoprimeRel := by
-  exact squareFreeAuxRev_pairwise_coprime_core f multiplicity fuel accRev
+  exact squareFreeAuxRev_pairwise_coprime_core hp f multiplicity fuel accRev
 
 private theorem squareFreeAuxRev_pairwise_coprime_nil
+    (hp : Hex.Nat.Prime p)
     (f : FpPoly p) (multiplicity fuel : Nat) :
     (squareFreeAuxRev f multiplicity fuel []).reverse.Pairwise
       squareFreeFactorCoprimeRel := by
-  apply squareFreeAuxRev_pairwise_coprime_of_acc
+  apply squareFreeAuxRev_pairwise_coprime_of_acc hp
   · simp
   · intro a ha
     simp at ha
@@ -4074,7 +4143,7 @@ theorem squareFree_pairwise_coprime (hp : Hex.Nat.Prime p) (f : FpPoly p) :
     d.factors.Pairwise
       (fun a b => (normalizeMonic (DensePoly.gcd a.factor b.factor)).2 = 1) := by
   unfold squareFreeDecomposition squareFreeAux
-  exact squareFreeAuxRev_pairwise_coprime_nil
+  exact squareFreeAuxRev_pairwise_coprime_nil hp
     (normalizeMonic f).2 1 ((normalizeMonic f).2.size + 1)
 
 theorem squareFree_weightedProduct (hp : Hex.Nat.Prime p) (f : FpPoly p) :
