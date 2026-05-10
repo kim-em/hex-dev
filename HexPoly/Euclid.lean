@@ -3210,6 +3210,90 @@ private theorem dvd_contentNat_of_dvd_coeff (p : DensePoly Int) (d : Nat)
     rw [hcoeff_eq] at hdiv
     rwa [Int.ofNat_dvd_left] at hdiv
 
+private theorem int_natAbs_signed_mul (a : Int) :
+    ∃ s : Int, s * a = Int.ofNat a.natAbs := by
+  rcases Int.natAbs_eq a with ha | ha
+  · exact ⟨1, by rw [ha]; grind⟩
+  · exact ⟨-1, by rw [ha]; grind⟩
+
+private theorem nat_gcd_bezout (a b : Nat) :
+    ∃ x y : Int, x * (a : Int) + y * (b : Int) = (Nat.gcd a b : Int) := by
+  induction a, b using Nat.gcd.induction with
+  | H0 b =>
+      exact ⟨0, 1, by simp [Nat.gcd_zero_left]⟩
+  | H1 a b hpos ih =>
+      rcases ih with ⟨x, y, hxy⟩
+      refine ⟨y - x * (b / a : Nat), x, ?_⟩
+      have hmod : ((b % a : Nat) : Int) = (b : Int) - (b / a : Nat) * (a : Int) := by
+        have h := congrArg (fun n : Nat => (n : Int)) (Nat.mod_add_div b a)
+        change ((b % a : Nat) : Int) + ((a * (b / a) : Nat) : Int) = (b : Int) at h
+        rw [Int.natCast_mul] at h
+        rw [Int.mul_comm ((a : Int)) ((b / a : Nat) : Int)] at h
+        omega
+      rw [Nat.gcd_rec]
+      rw [← hxy]
+      calc
+        (y - x * (b / a : Nat)) * (a : Int) + x * (b : Int) =
+            x * ((b : Int) - (b / a : Nat) * (a : Int)) + y * (a : Int) := by
+              grind
+        _ = x * (b % a : Nat) + y * (a : Int) := by
+              rw [← hmod]
+
+private theorem list_foldl_add_int (xs : List Int) (z : Int) :
+    xs.foldl (fun s t => s + t) z = z + xs.foldl (fun s t => s + t) 0 := by
+  induction xs generalizing z with
+  | nil => simp
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [ih (z + x), ih (0 + x)]
+      grind
+
+private theorem list_natAbs_gcd_bezout_aux (xs : List Int) (acc : Nat) :
+    ∃ a : Int, ∃ weights : List Int,
+      weights.length = xs.length ∧
+      a * (acc : Int) +
+          (List.zipWith (fun w c : Int => w * c) weights xs).foldl (fun s t => s + t) 0 =
+        ((xs.foldl (fun (g : Nat) (x : Int) => Nat.gcd g x.natAbs) acc : Nat) : Int) := by
+  induction xs generalizing acc with
+  | nil =>
+      exact ⟨1, [], by simp⟩
+  | cons x xs ih =>
+      rcases nat_gcd_bezout acc x.natAbs with ⟨u, v, huv⟩
+      rcases int_natAbs_signed_mul x with ⟨sgn, hsgn⟩
+      rcases ih (Nat.gcd acc x.natAbs) with ⟨a, weights, hlen, hsum⟩
+      refine ⟨a * u, (a * v * sgn) :: weights, ?_, ?_⟩
+      · simp [hlen]
+      · simp only [List.zipWith_cons_cons, List.foldl_cons, List.foldl_cons]
+        rw [← hsum]
+        rw [← huv]
+        rw [list_foldl_add_int]
+        have hterm : a * v * sgn * x = a * v * Int.ofNat x.natAbs := by
+          rw [← hsgn]
+          grind
+        rw [hterm]
+        grind
+
+private theorem list_natAbs_gcd_bezout (xs : List Int) :
+    ∃ weights : List Int,
+      weights.length = xs.length ∧
+      (List.zipWith (fun w c : Int => w * c) weights xs).foldl (fun s t => s + t) 0 =
+        ((xs.foldl (fun (g : Nat) (x : Int) => Nat.gcd g x.natAbs) 0 : Nat) : Int) := by
+  rcases list_natAbs_gcd_bezout_aux xs 0 with ⟨_a, weights, hlen, hsum⟩
+  refine ⟨weights, hlen, ?_⟩
+  simpa using hsum
+
+private theorem exists_linear_combination_coeffs_eq_one_of_content_eq_one
+    (p : DensePoly Int) (hp : content p = 1) :
+    ∃ weights : List Int,
+      weights.length = p.toArray.toList.length ∧
+      (List.zipWith (fun w c : Int => w * c) weights p.toArray.toList).foldl
+          (fun s t => s + t) 0 = 1 := by
+  rcases list_natAbs_gcd_bezout p.toArray.toList with ⟨weights, hlen, hsum⟩
+  refine ⟨weights, hlen, ?_⟩
+  unfold content contentNat at hp
+  rw [hsum]
+  exact hp
+
 theorem dvd_content_of_nat_dvd_coeff (p : DensePoly Int) (d : Nat)
     (h : ∀ n, (d : Int) ∣ p.coeff n) :
     (d : Int) ∣ content p := by
