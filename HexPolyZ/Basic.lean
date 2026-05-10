@@ -660,6 +660,11 @@ theorem dvd_content_of_nat_dvd_coeff (f : ZPoly) (d : Nat)
     (d : Int) ∣ content f := by
   simpa [content] using DensePoly.dvd_content_of_nat_dvd_coeff f d h
 
+theorem natCast_dvd_content_of_dvd_coeff (f : ZPoly) (d : Nat)
+    (h : ∀ n, (d : Int) ∣ f.coeff n) :
+    (d : Int) ∣ content f := by
+  exact dvd_content_of_nat_dvd_coeff f d h
+
 theorem primitivePart_primitive (f : ZPoly) (h : content f ≠ 0) :
     Primitive (primitivePart f) := by
   simpa [Primitive, content, primitivePart] using DensePoly.primitivePart_primitive f h
