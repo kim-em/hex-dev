@@ -3272,6 +3272,89 @@ theorem content_scale_neg_one (p : DensePoly Int) :
     rw [hk]
     grind
 
+private theorem foldl_gcd_natAbs_mul_const_int (c : Int) (xs : List Int) (acc : Nat) :
+    xs.foldl (fun g x => Nat.gcd g (c * x).natAbs) (c.natAbs * acc) =
+      c.natAbs * xs.foldl (fun g x => Nat.gcd g x.natAbs) acc := by
+  induction xs generalizing acc with
+  | nil => rfl
+  | cons x xs' ih =>
+      simp only [List.foldl_cons]
+      rw [Int.natAbs_mul, Nat.gcd_mul_left]
+      exact ih (Nat.gcd acc x.natAbs)
+
+private theorem foldl_gcd_natAbs_of_all_zero (xs : List Int) (acc : Nat)
+    (hzero : ∀ y ∈ xs, y = (0 : Int)) :
+    xs.foldl (fun g x => Nat.gcd g x.natAbs) acc = acc := by
+  induction xs generalizing acc with
+  | nil => rfl
+  | cons x xs' ih =>
+      have hx : x = 0 := hzero x List.mem_cons_self
+      have hxs' : ∀ y ∈ xs', y = (0 : Int) :=
+        fun y hy => hzero y (List.mem_cons_of_mem x hy)
+      simp only [List.foldl_cons, hx, Int.natAbs_zero, Nat.gcd_zero_right]
+      exact ih acc hxs'
+
+private theorem trimTrailingZerosList_cons_int (x : Int) (xs : List Int) :
+    trimTrailingZerosList (x :: xs) =
+      if trimTrailingZerosList xs = [] ∧ x = (0 : Int) then ([] : List Int)
+      else x :: trimTrailingZerosList xs := rfl
+
+private theorem all_zero_of_trimTrailingZerosList_nil (xs : List Int)
+    (htrim : trimTrailingZerosList xs = []) :
+    ∀ y ∈ xs, y = (0 : Int) := by
+  induction xs with
+  | nil => intro y hy; cases hy
+  | cons x xs' ih =>
+      rw [trimTrailingZerosList_cons_int] at htrim
+      by_cases hinner : trimTrailingZerosList xs' = [] ∧ x = (0 : Int)
+      · rw [if_pos hinner] at htrim
+        intro y hy
+        rcases List.mem_cons.mp hy with hyx | hyxs
+        · rw [hyx]; exact hinner.2
+        · exact ih hinner.1 y hyxs
+      · rw [if_neg hinner] at htrim
+        exact absurd htrim (List.cons_ne_nil _ _)
+
+private theorem foldl_gcd_natAbs_trim_eq (xs : List Int) (acc : Nat) :
+    (trimTrailingZerosList xs).foldl (fun g x => Nat.gcd g x.natAbs) acc =
+      xs.foldl (fun g x => Nat.gcd g x.natAbs) acc := by
+  induction xs generalizing acc with
+  | nil => rfl
+  | cons x xs' ih =>
+      rw [trimTrailingZerosList_cons_int]
+      by_cases hinner : trimTrailingZerosList xs' = [] ∧ x = (0 : Int)
+      · rw [if_pos hinner]
+        rw [List.foldl_nil, List.foldl_cons, hinner.2]
+        simp only [Int.natAbs_zero, Nat.gcd_zero_right]
+        have hzero : ∀ y ∈ xs', y = (0 : Int) :=
+          all_zero_of_trimTrailingZerosList_nil xs' hinner.1
+        exact (foldl_gcd_natAbs_of_all_zero xs' acc hzero).symm
+      · rw [if_neg hinner]
+        rw [List.foldl_cons, List.foldl_cons]
+        exact ih (Nat.gcd acc x.natAbs)
+
+/-- Content scales by the absolute value of the scaling integer. -/
+theorem content_scale_int (c : Int) (p : DensePoly Int) :
+    content (scale c p) = Int.ofNat c.natAbs * content p := by
+  show Int.ofNat (contentNat (scale c p)) =
+      Int.ofNat c.natAbs * Int.ofNat (contentNat p)
+  show Int.ofNat (contentNat (scale c p)) =
+      Int.ofNat (c.natAbs * contentNat p)
+  apply congrArg Int.ofNat
+  -- Goal: contentNat (scale c p) = c.natAbs * contentNat p.
+  unfold contentNat
+  have hscale_coeffs :
+      (scale c p).toArray.toList =
+        trimTrailingZerosList (p.toArray.toList.map (fun x => c * x)) := by
+    unfold scale ofCoeffs toArray trimTrailingZeros
+    simp
+  rw [hscale_coeffs]
+  rw [foldl_gcd_natAbs_trim_eq]
+  rw [List.foldl_map]
+  have h := foldl_gcd_natAbs_mul_const_int c p.toArray.toList 0
+  rw [Nat.mul_zero] at h
+  exact h
+
 theorem scale_neg_one_zero :
     scale (-1 : Int) (0 : DensePoly Int) = 0 := by
   apply ext_coeff
