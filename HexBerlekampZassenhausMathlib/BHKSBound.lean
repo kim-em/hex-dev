@@ -368,6 +368,71 @@ theorem bhksPaperLogFactorReal_le_log2Factor (f : Hex.ZPoly) :
     pow_le_pow_left₀ hlog_nonneg hlog_le (bhksDegree f)
 
 /--
+The product-shaped BHKS paper threshold is bounded by the packaged integer
+threshold expression used by the executable cap.
+-/
+theorem bhksPaperThresholdReal_le_thresholdNatBound
+    (f : Hex.ZPoly) (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2) :
+    bhksPaperThresholdReal f C ≤ (bhksThresholdNatBound f : ℝ) := by
+  have hdegree :
+      bhksPaperDegreeFactorReal f ≤ (bhksDegreeFactor f : ℝ) := by
+    rw [bhksPaperDegreeFactorReal_eq_natCast]
+  have hconstant :=
+    bhksPaperConstantFactorReal_le_fourPowFactor f C hC_nonneg hC
+  have hcoeff := bhksPaperCoeffNormFactorReal_le_coeffNormFactor f
+  have hlog := bhksPaperLogFactorReal_le_log2Factor f
+  have hconstant_nonneg : 0 ≤ bhksPaperConstantFactorReal f C := by
+    exact pow_nonneg (mul_nonneg (by norm_num) hC_nonneg) _
+  have hcoeff_nonneg : 0 ≤ bhksPaperCoeffNormFactorReal f := by
+    exact pow_nonneg (by
+      unfold HexPolyZMathlib.l2norm
+      exact Real.sqrt_nonneg _) _
+  have hlog_nonneg : 0 ≤ bhksPaperLogFactorReal f := by
+    exact pow_nonneg (l2norm_log_nonneg f) _
+  have hdegree_bound_nonneg : 0 ≤ (bhksDegreeFactor f : ℝ) := by
+    exact_mod_cast Nat.zero_le (bhksDegreeFactor f)
+  have hdegree_constant_bound_nonneg :
+      0 ≤ (bhksDegreeFactor f : ℝ) * (bhksFourPowFactor f : ℝ) :=
+    mul_nonneg hdegree_bound_nonneg (by exact_mod_cast Nat.zero_le (bhksFourPowFactor f))
+  have hdegree_constant_coeff_bound_nonneg :
+      0 ≤ (bhksDegreeFactor f : ℝ) * (bhksFourPowFactor f : ℝ) *
+        (bhksCoeffNormFactor f : ℝ) :=
+    mul_nonneg hdegree_constant_bound_nonneg
+      (by exact_mod_cast Nat.zero_le (bhksCoeffNormFactor f))
+  have hdegree_constant :
+      bhksPaperDegreeFactorReal f * bhksPaperConstantFactorReal f C ≤
+        (bhksDegreeFactor f : ℝ) * (bhksFourPowFactor f : ℝ) :=
+    mul_le_mul hdegree hconstant hconstant_nonneg hdegree_bound_nonneg
+  have hdegree_constant_coeff :
+      bhksPaperDegreeFactorReal f * bhksPaperConstantFactorReal f C *
+          bhksPaperCoeffNormFactorReal f ≤
+        (bhksDegreeFactor f : ℝ) * (bhksFourPowFactor f : ℝ) *
+          (bhksCoeffNormFactor f : ℝ) :=
+    mul_le_mul hdegree_constant hcoeff hcoeff_nonneg hdegree_constant_bound_nonneg
+  have hproduct :
+      bhksPaperDegreeFactorReal f * bhksPaperConstantFactorReal f C *
+          bhksPaperCoeffNormFactorReal f * bhksPaperLogFactorReal f ≤
+        (bhksDegreeFactor f : ℝ) * (bhksFourPowFactor f : ℝ) *
+          (bhksCoeffNormFactor f : ℝ) * (bhksLog2Factor f : ℝ) :=
+    mul_le_mul hdegree_constant_coeff hlog hlog_nonneg
+      hdegree_constant_coeff_bound_nonneg
+  have hproduct_le_bound :
+      (bhksDegreeFactor f : ℝ) * (bhksFourPowFactor f : ℝ) *
+          (bhksCoeffNormFactor f : ℝ) * (bhksLog2Factor f : ℝ) ≤
+        (bhksThresholdNatBound f : ℝ) := by
+    simp [bhksThresholdNatBound]
+  exact hproduct.trans hproduct_le_bound
+
+/--
+The executable BHKS cap dominates the product-shaped BHKS paper threshold.
+-/
+theorem bhksPaperThresholdReal_le_bhksBound
+    (f : Hex.ZPoly) (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2) :
+    bhksPaperThresholdReal f C ≤ (Hex.bhksBound f : ℝ) :=
+  (bhksPaperThresholdReal_le_thresholdNatBound f C hC_nonneg hC).trans
+    (bhksThresholdNatBound_real_le_bhksBound f)
+
+/--
 The packaged BHKS cap remains available alongside the executable Mignotte
 coefficient bound through a single max expression.  This lightweight bridge is
 useful for later proofs that need one precision dominating both reconstruction
