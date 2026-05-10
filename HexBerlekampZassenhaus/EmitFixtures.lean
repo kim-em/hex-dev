@@ -129,7 +129,10 @@ private def cases_red : List Case :=
 
 private def cases_pinned : List (Case × Int × List Int) :=
   [ -- X^4 + 1 is irreducible over Z and splits over F_5 into two quadratics.
-    (mk "adv/x4_plus_1" #[1, 0, 0, 0, 1], 5, [2, 2]) ]
+    (mk "adv/x4_plus_1" #[1, 0, 0, 0, 1], 5, [2, 2])
+    -- (X^2 - 2)(X^2 - 3) splits over F_23 into four linear factors,
+    -- while its integer factorisation recombines them into two quadratics.
+  , (mk "adv/quad_sqrt2_sqrt3" #[6, 0, -5, 0, 1], 23, [1, 1, 1, 1]) ]
 
 /-! ## Polynomials with non-unit content -/
 
