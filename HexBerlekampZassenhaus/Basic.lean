@@ -1017,6 +1017,118 @@ private theorem polyProduct_xPowerFactorArray_succ (power : Nat) :
       ZPoly.X * Array.polyProduct (xPowerFactorArray power) := by
   simpa [xPowerFactorArray] using polyProduct_replicate_X_succ power
 
+private theorem shift_zero (f : ZPoly) :
+    DensePoly.shift 0 f = f := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_shift]
+  simp
+
+private theorem ofCoeffs_toArray (f : ZPoly) :
+    DensePoly.ofCoeffs f.toArray = f := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_ofCoeffs]
+  rfl
+
+private theorem shift_shift_one (power : Nat) (f : ZPoly) :
+    DensePoly.shift 1 (DensePoly.shift power f) = DensePoly.shift (power + 1) f := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_shift (power + 1) f n]
+  rw [DensePoly.coeff_shift 1 (DensePoly.shift power f) n]
+  cases n with
+  | zero =>
+      simp
+  | succ n =>
+      have hsub_one : n + 1 - 1 = n := by omega
+      rw [hsub_one]
+      rw [DensePoly.coeff_shift power f n]
+      by_cases hn : n < power
+      · have hsucc : n + 1 < power + 1 := by omega
+        simp [hn, hsucc]
+      · have hsucc : ¬ n + 1 < power + 1 := by omega
+        simp [hn, hsucc, Nat.succ_sub_succ_eq_sub]
+
+private theorem X_mul_shift (power : Nat) (f : ZPoly) :
+    ZPoly.X * DensePoly.shift power f = DensePoly.shift (power + 1) f := by
+  unfold ZPoly.X
+  rw [DensePoly.monomial_one_mul_poly_eq_shift]
+  exact shift_shift_one power f
+
+private theorem polyProduct_xPowerFactorArray_mul (power : Nat) (f : ZPoly) :
+    Array.polyProduct (xPowerFactorArray power) * f = DensePoly.shift power f := by
+  induction power with
+  | zero =>
+      rw [polyProduct_xPowerFactorArray_zero]
+      rw [one_mul_zpoly, shift_zero]
+  | succ power ih =>
+      rw [polyProduct_xPowerFactorArray_succ]
+      rw [DensePoly.mul_assoc_poly (S := Int)]
+      rw [ih]
+      exact X_mul_shift power f
+
+private theorem splitInitialZeros_reassembles (coeffs : List Int) :
+    let split := ZPoly.splitInitialZeros coeffs
+    DensePoly.shift split.1 (DensePoly.ofCoeffs split.2.toArray) =
+      DensePoly.ofCoeffs coeffs.toArray := by
+  induction coeffs with
+  | nil =>
+      rfl
+  | cons coeff coeffs ih =>
+      unfold ZPoly.splitInitialZeros
+      by_cases hcoeff : coeff = 0
+      · simp [hcoeff]
+        cases split : ZPoly.splitInitialZeros coeffs with
+        | mk power core =>
+            have hcore :
+                DensePoly.shift power (DensePoly.ofCoeffs core.toArray) =
+                  DensePoly.ofCoeffs coeffs.toArray := by
+              simpa [split] using ih
+            simp
+            apply DensePoly.ext_coeff
+            intro n
+            cases n with
+            | zero =>
+                rw [DensePoly.coeff_shift (power + 1) (DensePoly.ofCoeffs core.toArray) 0]
+                rw [DensePoly.coeff_ofCoeffs_list (0 :: coeffs) 0]
+                simp
+                rfl
+            | succ n =>
+                have hcoeff_n := congrArg (fun p : ZPoly => p.coeff n) hcore
+                change (DensePoly.shift power (DensePoly.ofCoeffs core.toArray)).coeff n =
+                  (DensePoly.ofCoeffs coeffs.toArray).coeff n at hcoeff_n
+                rw [DensePoly.coeff_shift power (DensePoly.ofCoeffs core.toArray) n] at hcoeff_n
+                rw [DensePoly.coeff_ofCoeffs_list coeffs n] at hcoeff_n
+                rw [DensePoly.coeff_shift (power + 1) (DensePoly.ofCoeffs core.toArray) (n + 1)]
+                rw [DensePoly.coeff_ofCoeffs_list (0 :: coeffs) (n + 1)]
+                by_cases hn : n < power
+                · have hsucc : n + 1 < power + 1 := by omega
+                  simpa [hsucc, hn] using hcoeff_n
+                · have hsucc : ¬ n + 1 < power + 1 := by omega
+                  have hvalue :
+                      (DensePoly.ofCoeffs core.toArray).coeff (n - power) =
+                        coeffs.getD n 0 := by
+                    simpa [hn] using hcoeff_n
+                  simpa [hsucc, Nat.succ_sub_succ_eq_sub] using hvalue
+      · simp [hcoeff]
+        exact shift_zero (DensePoly.ofCoeffs (coeff :: coeffs).toArray)
+
+private theorem extractXPower_product (f : ZPoly) :
+    let xData := ZPoly.extractXPower f
+    Array.polyProduct (xPowerFactorArray xData.power ++ #[xData.core]) = f := by
+  unfold ZPoly.extractXPower
+  generalize hsplit : ZPoly.splitInitialZeros f.toArray.toList = split
+  cases split with
+  | mk power core =>
+      simp only
+      rw [polyProduct_append, polyProduct_singleton]
+      rw [polyProduct_xPowerFactorArray_mul]
+      have hreassemble := splitInitialZeros_reassembles f.toArray.toList
+      rw [hsplit] at hreassemble
+      rw [← ofCoeffs_toArray f]
+      simpa [DensePoly.toArray] using hreassemble
+
 private theorem polyProduct_polynomialNormalizationPrefixFactors
     (d : FactorNormalizationData) :
     Array.polyProduct (polynomialNormalizationPrefixFactors d) =
