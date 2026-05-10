@@ -4596,6 +4596,21 @@ private theorem columnSumMatrixWithSuffix_nil
   rw [columnSumMatrixWithSuffix_entry, columnSumMatrix_entry]
   rw [dif_neg (show ¬ n - ([] : List (Fin m)).length ≤ c by simp; omega)]
 
+private theorem columnSumMatrixWithSuffix_eq_columnTupleMatrix
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (chosen : List (Fin m))
+    (hfull : chosen.length = n) :
+    columnSumMatrixWithSuffix source coeff chosen =
+      columnTupleMatrix source (fun j => chosen[j.val]'(by omega)) := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro c hc
+  change (columnSumMatrixWithSuffix source coeff chosen)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
+      (columnTupleMatrix source (fun j => chosen[j.val]'(by omega)))[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+  rw [columnSumMatrixWithSuffix_entry, dif_pos (by omega : n - chosen.length ≤ c)]
+  simp [columnTupleMatrix, ofFn, hfull]
+
 /-- Replacing the rightmost sum column of the suffix-partial matrix with a fixed
 `source` column extends the suffix by prepending that selection. -/
 private theorem colReplace_columnSumMatrixWithSuffix_extend
@@ -4692,6 +4707,50 @@ private theorem det_columnSumMatrixWithSuffix_expand
   intro c _hc
   congr 2
   exact colReplace_columnSumMatrixWithSuffix_extend source coeff chosen hk c
+
+private def assembleColumnsSuffix {n m : Nat} (chosen : List (Fin m))
+    (pref : Vector (Fin m) (n - chosen.length)) (hk : chosen.length ≤ n) :
+    Vector (Fin m) n :=
+  ⟨(pref.toList ++ chosen).toArray, by
+    simp [hk]⟩
+
+@[simp] private theorem assembleColumnsSuffix_left
+    {n m : Nat} (chosen : List (Fin m))
+    (pref : Vector (Fin m) (n - chosen.length)) (hk : chosen.length ≤ n)
+    (i : Fin (n - chosen.length)) :
+    (assembleColumnsSuffix chosen pref hk)[
+        (⟨i.val, by
+          have hi : i.val < n - chosen.length := i.isLt
+          omega⟩ : Fin n)] = pref[i] := by
+  simp [assembleColumnsSuffix]
+
+@[simp] private theorem assembleColumnsSuffix_right
+    {n m : Nat} (chosen : List (Fin m))
+    (pref : Vector (Fin m) (n - chosen.length)) (hk : chosen.length ≤ n)
+    (i : Fin chosen.length) :
+    (assembleColumnsSuffix chosen pref hk)[
+        (⟨n - chosen.length + i.val, by
+          have hi : i.val < chosen.length := i.isLt
+          omega⟩ : Fin n)] = chosen[i] := by
+  unfold assembleColumnsSuffix
+  simp [List.getElem_append_right]
+
+private def partialColumnTupleCoeff {R : Type u} [Mul R] [OfNat R 1] {n m : Nat}
+    (coeff : Matrix R n m) (chosen : List (Fin m))
+    (pref : Vector (Fin m) (n - chosen.length)) : R :=
+  (List.finRange (n - chosen.length)).foldl
+    (fun acc i => acc * coeff[(⟨i.val, by
+      have hi : i.val < n - chosen.length := i.isLt
+      omega⟩ : Fin n)][pref[i]]) 1
+
+private theorem partialColumnTupleCoeff_nil
+    {R : Type u} [Mul R] [OfNat R 1] {n m : Nat}
+    (coeff : Matrix R n m) (cols : Vector (Fin m) n) :
+    partialColumnTupleCoeff coeff [] cols = columnTupleCoeff coeff cols := by
+  unfold partialColumnTupleCoeff columnTupleCoeff
+  apply foldl_det_product_congr
+  intro i _hmem
+  congr 2
 
 end Matrix
 end Hex
