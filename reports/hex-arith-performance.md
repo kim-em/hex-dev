@@ -11,34 +11,30 @@
 
 ## Verdicts
 
-Scientific run at commit `b161a1b1626f32495ec041d206fe99e8486b55b5` on
-`carica` (Apple M2 Ultra, macOS 14.6.1), command:
+Scientific run at commit `9d5abccc06778f4a6f10fdb9e1f58433d1871410` on
+`carica` (macOS arm64), command:
 
 ```sh
-lake exe hexarith_bench run Hex.ArithBench.runBarrettMulChain Hex.ArithBench.runMontgomeryMulChain Hex.ArithBench.runPowMod Hex.ArithBench.runNatExtGcdShapes Hex.ArithBench.runIntExtGcdShapes Hex.ArithBench.runUInt64ExtGcdShapes --export-file reports/bench-results/hex-arith-b161a1b1626f.json
+lake exe hexarith_bench run Hex.ArithBench.runBarrettMulChain Hex.ArithBench.runMontgomeryMulChain Hex.ArithBench.runPowMod Hex.ArithBench.runNatExtGcdShapes Hex.ArithBench.runIntExtGcdShapes Hex.ArithBench.runUInt64ExtGcdShapes --export-file reports/bench-results/hex-arith-9d5abccc0677.json
 ```
 
 The run used the deterministic benchmark inputs from `HexArith/Bench.lean`;
-random seeds are not involved. Export artefact:
-`reports/bench-results/hex-arith-b161a1b1626f.json`.
+random seeds are not involved. The harness recorded `9d5abcc-dirty` because
+this worktree had an unrelated pre-existing `.claude/CLAUDE.md` modification.
+Export artefact: `reports/bench-results/hex-arith-9d5abccc0677.json`.
 
 - `Hex.ArithBench.runBarrettMulChain`: consistent with declared complexity
-  (`β=+0.004`, parameters `8192..131072`, hashes include `0x525b`,
-  `0xb646`, `0xff01`, `0x1`, `0x10000`).
+  (`β=-0.001`, parameters `8192..131072`).
 - `Hex.ArithBench.runMontgomeryMulChain`: consistent with declared complexity
-  (`β=+0.002`, parameters `8192..131072`, same modular-chain hashes as
-  Barrett on the shared domain).
+  (`β=+0.002`, parameters `8192..131072`).
 - `Hex.ArithBench.runPowMod`: consistent with declared complexity
-  (`β=+0.069`, parameters `1024..16384`, hash `0xf00`).
+  (`β=+0.065`, parameters `1024..16384`).
 - `Hex.ArithBench.runNatExtGcdShapes`: consistent with declared complexity
-  (`β=-0.012`, parameters `8192..24576`, hashes include
-  `0xb1b59077645662db`).
+  (`β=-0.093`, parameters `8192..24576`).
 - `Hex.ArithBench.runIntExtGcdShapes`: consistent with declared complexity
-  (`β=-0.003`, parameters `8192..24576`, same normalized-shape hashes as the
-  Nat registration on the shared nonnegative input domain).
+  (`β=+0.006`, parameters `8192..24576`).
 - `Hex.ArithBench.runUInt64ExtGcdShapes`: consistent with declared complexity
-  (`β=+0.034`, parameters `8192..24576`, same normalized-shape hashes as the
-  Nat and Int registrations on the shared nonnegative input domain).
+  (`β=-0.013`, parameters `8192..24576`).
 
 Smoke wiring was also checked with:
 
