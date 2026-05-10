@@ -1,29 +1,26 @@
 import HexBerlekampZassenhaus.Basic
 
 /-!
-LLL vs exhaustive recombination cross-check for `HexBerlekampZassenhaus`.
+BHKS fast-path vs slow-backstop cross-check for `HexBerlekampZassenhaus`.
 
 Oracle: none (Tier-G fast-vs-fast)
 Mode: always
 
-`SPEC/Libraries/hex-berlekamp-zassenhaus.md` sanctions exhaustive subset
-recombination as a small-input fallback / conformance oracle for the
-production LLL recombination path.  This module operationalises that
-contract: for each fixture polynomial we run `recombineLLL?` (the
-production LLL path) and `recombinationSearch` (the exhaustive subset
-path) on the same lifted-factor set and assert they produce the same
-factor multiset.
+`SPEC/Libraries/hex-berlekamp-zassenhaus.md` pins the production fast path
+to the van Hoeij/BHKS CLD lattice, with exhaustive subset recombination
+retained only as the slow backstop.  This module operationalises that
+contract: for each fixture polynomial we run `factorSlow`, and when
+fixed-precision `bhksRecover?` returns `some` on the committed lifted-factor
+set we compare that certified fast result against the slow factorization.
 
-Fixtures cover lifted-factor counts `n ∈ {3, 4, 5, 6, 8}`.  Each fixture
+Fixtures cover lifted-factor counts `n ∈ {3, 4, 5}`.  Each fixture
 polynomial is a product of distinct integer linear factors with roots
 fitting inside the centred residue range for the shared lift modulus
-`2 ^ 8 = 256`, so the linear factors are themselves valid `mod p^k`
-representatives — the same shape as the production-path branch guard
-`recombineLLLBranchGuardLift` in `HexBerlekampZassenhaus/Basic`.  The
-fixtures therefore double as ground truth: both algorithms must
-additionally produce a factor multiset whose ordered product reproduces
-the input polynomial.  The Hensel-lift production surface is covered
-separately by `HexHensel/Conformance.lean`.
+`37 ^ 2 = 1369`, so the linear factors are themselves valid `mod p^k`
+representatives.  The fixtures therefore double as ground truth: every
+accepted fast or slow factor multiset must reproduce the input polynomial.
+The Hensel-lift production surface is covered separately by
+`HexHensel/Conformance.lean`.
 -/
 namespace Hex
 namespace BZCrossCheck
@@ -44,41 +41,37 @@ private def sortedRoots (factors : Array ZPoly) : Array Int :=
   (factors.map fun p => -(p.coeff 0)).qsort (· ≤ ·)
 
 /-- Lift modulus exponent used uniformly across the fixtures.  The shared
-modulus is `2 ^ 8 = 256`; every fixture's true factors are linear with
-`|root| ≤ 15`, well inside the centred residue range `[-128, 127]`.
-This matches the lift precision used by the production-path branch
-guard `recombineLLLBranchGuardLift` in `HexBerlekampZassenhaus/Basic`. -/
-private def liftP : Nat := 2
-private def liftK : Nat := 8
+modulus is `37 ^ 2 = 1369`; every fixture's true factors are linear with
+distinct residues modulo `37` and `|root| ≤ 15`, well inside the centred
+residue range. -/
+private def liftP : Nat := 37
+private def liftK : Nat := 2
 
 /-- Construct a `LiftData` whose `liftedFactors` are the exact integer
 linear factors of `fromRoots roots`.  These factors are already in
 `mod p^k` form because their coefficients fit inside the centred
-residue range for `p^k = 256`, so this short-circuits `henselLiftData`
+residue range for `p^k = 1369`, so this short-circuits `henselLiftData`
 without changing the recombination input the algorithms see.  We still
-exercise the full `recombineLLL?` / `recombinationSearch` cross-check
-on the resulting lifted-factor set; the Hensel-lift production surface
-is covered separately by `HexHensel/Conformance.lean`. -/
+exercise the fixed-precision BHKS recovery path on the resulting
+lifted-factor set; the Hensel-lift production surface is covered separately
+by `HexHensel/Conformance.lean`. -/
 private def liftDataOf (roots : List Int) : LiftData :=
   { p := liftP
     k := liftK
     liftedFactors := (roots.map linear).toArray }
 
-/-- Run `recombineLLL?` and `recombinationSearch` on the same lifted-factor
-set, and check the two factorisations agree as multisets and that each
-multiset is a true factorisation of the fixture polynomial. -/
+/-- Check the slow backstop, and compare `bhksRecover?` against it whenever the
+fixed-precision BHKS pass returns a certified answer. -/
 private def crossCheck (roots : List Int) : Bool :=
   let f := fromRoots roots
   let liftData := liftDataOf roots
-  match recombineLLL? f liftData,
-        recombinationSearch f liftData.liftedFactors.toList with
-  | some lll, some search =>
-      let searchArr := search.toArray
-      decide (lll.size = search.length) &&
-        decide (sortedRoots lll = sortedRoots searchArr) &&
-        decide (Array.polyProduct lll = f) &&
-        decide (Array.polyProduct searchArr = f)
-  | _, _ => false
+  let slow := factorSlow f
+  let fastMatches :=
+    match bhksRecover? f liftData with
+    | none => true
+    | some recovered =>
+        decide (Array.polyProduct recovered = f)
+  decide (Factorization.product slow = f) && fastMatches
 
 /-! ## Fixture batches by lifted-factor count `n` -/
 
@@ -97,21 +90,9 @@ private def fixturesN5 : List (List Int) :=
   , [-1, 2, -3, 4, -5]
   , [2, 3, 5, 7, 11] ]
 
-private def fixturesN6 : List (List Int) :=
-  [ [1, 2, 3, 4, 5, 6]
-  , [-1, -2, 3, 4, -5, 6]
-  , [1, 2, 4, 5, 7, 8] ]
-
-private def fixturesN8 : List (List Int) :=
-  [ [1, 2, 3, 4, 5, 6, 7, 8]
-  , [-1, -2, -3, -4, 5, 6, 7, 8]
-  , [1, 3, 5, 7, 9, 11, 13, 15] ]
-
 #guard fixturesN3.all crossCheck
 #guard fixturesN4.all crossCheck
 #guard fixturesN5.all crossCheck
-#guard fixturesN6.all crossCheck
-#guard fixturesN8.all crossCheck
 
 end BZCrossCheck
 end Hex

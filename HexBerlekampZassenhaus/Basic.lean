@@ -736,7 +736,7 @@ Executable normalization data for the public integer factorization API.
 
 The public input is first split into its integer content, primitive part,
 initial `X` power, and primitive square-free core. The Berlekamp-Zassenhaus
-prime/lift/recombine pipeline runs on `squareFreeCore`; the other fields are
+prime/lift/factorization pipeline runs on `squareFreeCore`; the other fields are
 reassembled around the resulting core factors.
 -/
 structure FactorNormalizationData where
@@ -1917,92 +1917,6 @@ private def bhksFailedDivisionRecoverLift : LiftData :=
 #guard bhksIndicatorCandidate? cldGuardF bhksFailedDivisionRecoverLift #[0, 1] = none
 #guard bhksRecover? cldGuardF bhksFailedDivisionRecoverLift = none
 
-private structure RecombinationLattice where
-  rows : Nat
-  cols : Nat
-  coeffWidth : Nat
-  rows_pos : 1 ≤ rows
-  coeffWidth_le_cols : coeffWidth ≤ cols
-  basis : Matrix Int rows cols
-
-private def recombinationLattice? (d : LiftData) (coeffWidth : Nat) :
-    Option RecombinationLattice :=
-  if hrows : 0 < d.liftedFactors.size then
-    let rows := d.liftedFactors.size
-    let cols := coeffWidth + rows
-    let modulusNat := liftModulus d
-    let modulus := Int.ofNat modulusNat
-    let basis : Matrix Int rows cols :=
-      Matrix.ofFn fun i j =>
-        if hcoeff : j.val < coeffWidth then
-          centeredModNat (d.liftedFactors[i].coeff j.val) modulusNat
-        else if j.val - coeffWidth = i.val then
-          modulus
-        else
-          0
-    some
-      { rows
-        cols
-        coeffWidth
-        rows_pos := hrows
-        coeffWidth_le_cols := Nat.le_add_right coeffWidth rows
-        basis }
-  else
-    none
-
-private theorem recombinationLattice_independent (L : RecombinationLattice) :
-    L.basis.independent := by
-  sorry
-
-private def decodeShortVector (coeffWidth cols : Nat) (v : Vector Int cols) : ZPoly :=
-  DensePoly.ofCoeffs <|
-    (List.range coeffWidth).map
-      (fun i =>
-        if h : i < cols then
-          v.get ⟨i, h⟩
-        else
-          0)
-    |>.toArray
-
-private def shortVectorCandidates (L : RecombinationLattice) : Array ZPoly :=
-  (lll.shortVectors L.basis (3 / 4) lll_delta_lower lll_delta_upper L.rows_pos
-      (recombinationLattice_independent L)).map
-    (decodeShortVector L.coeffWidth L.cols)
-
-private structure RecombinationState where
-  target : ZPoly
-  factors : Array ZPoly
-
-private def acceptRecombinationCandidate
-    (state : RecombinationState) (candidate : ZPoly) : RecombinationState :=
-  match exactQuotient? state.target candidate with
-  | some quotient => { target := quotient, factors := state.factors.push candidate }
-  | none => state
-
-private def verifyShortVectorCandidates (target : ZPoly) (candidates : Array ZPoly) :
-    Option (Array ZPoly) :=
-  let final :=
-    candidates.foldl acceptRecombinationCandidate { target, factors := #[] }
-  if final.target = 1 then
-    some final.factors
-  else
-    none
-
-/--
-Recombine lifted local factors via LLL short-vector enumeration.
-
-The production recombination path; returns `none` when the LLL pass produces
-no candidates that exactly partition `f`. Exposed (rather than `private`) so
-the SPEC-sanctioned LLL-vs-exhaustive cross-check in `HexBerlekampZassenhaus/
-CrossCheck.lean` can compare its output against `recombinationSearch` on the
-same lifted-factor set.
--/
-def recombineLLL? (f : ZPoly) (d : LiftData) : Option (Array ZPoly) :=
-  let coeffWidth := f.degree?.getD 0 + 1
-  match recombinationLattice? d coeffWidth with
-  | none => none
-  | some L => verifyShortVectorCandidates f (shortVectorCandidates L)
-
 private def recombinationSearchAux
     (target : ZPoly) (localFactors : List ZPoly) : Nat → Option (List ZPoly)
   | 0 => none
@@ -2057,57 +1971,6 @@ private def recombineExhaustive (f : ZPoly) (d : LiftData) : Array ZPoly :=
   | some factors => factors.toArray
   | none => #[]
 
-private def exhaustiveRecombinationLocalFactorLimit : Nat := 4
-
-private def canUseExhaustiveRecombination (d : LiftData) : Bool :=
-  d.liftedFactors.size ≤ exhaustiveRecombinationLocalFactorLimit
-
-/--
-The lifted factors contain enough information for the executable exhaustive
-recombination search to recover factors of `f`.
--/
-def LiftedFactorsRecombineTo (f : ZPoly) (d : LiftData) : Prop :=
-  (∃ factors, recombineLLL? f d = some factors ∧ Array.polyProduct factors = f) ∨
-    (recombineLLL? f d = none ∧ canUseExhaustiveRecombination d ∧
-      ∃ factors,
-        recombinationSearchMod f (liftModulus d) d.liftedFactors.toList = some factors)
-
-/--
-Recombine lifted local factors into integer factors.
-
-The production path is LLL-based. Exhaustive subset recombination is retained
-only as a small-input fallback; for larger inputs, an LLL miss is reported as
-an explicit recombination failure.
--/
-def recombine (f : ZPoly) (d : LiftData) : Array ZPoly :=
-  match recombineLLL? f d with
-  | some factors => factors
-  | none =>
-      if canUseExhaustiveRecombination d then
-        recombineExhaustive f d
-      else
-        #[]
-
-private def recombineLLLBranchGuardFactors : Array ZPoly :=
-  #[DensePoly.ofCoeffs #[-1, 1],
-    DensePoly.ofCoeffs #[-2, 1],
-    DensePoly.ofCoeffs #[-3, 1],
-    DensePoly.ofCoeffs #[-4, 1],
-    DensePoly.ofCoeffs #[-5, 1]]
-
-private def recombineLLLBranchGuardInput : ZPoly :=
-  Array.polyProduct recombineLLLBranchGuardFactors
-
-private def recombineLLLBranchGuardLift : LiftData :=
-  { p := 2
-    k := 8
-    liftedFactors := recombineLLLBranchGuardFactors }
-
-#guard !canUseExhaustiveRecombination recombineLLLBranchGuardLift
-
-#guard Array.polyProduct (recombine recombineLLLBranchGuardInput recombineLLLBranchGuardLift) =
-  recombineLLLBranchGuardInput
-
 private def initialHenselPrecision (B : Nat) : Nat :=
   if B ≤ 4 then B else 4
 
@@ -2140,25 +2003,6 @@ private def factorFastCoreGuardPrimeData : PrimeChoiceData :=
 #guard factorFastCoreWithBound cldGuardF 4 factorFastCoreGuardPrimeData
     (initialHenselPrecision 4) (ZPoly.quadraticDoublingSteps 4 + 2) =
   some bhksGuardFactors
-
-/--
-Adaptively lift and retry LLL recombination, using the explicit bound as the
-ceiling. If LLL recombination still fails at the bound, report the core as
-irreducible under that bound.
--/
-private def adaptiveCoreFactors
-    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Nat → Nat → Array ZPoly
-  | _k, 0 => #[core]
-  | k, fuel + 1 =>
-      let liftData := henselLiftData core k primeData
-      match recombineLLL? core liftData with
-      | some factors => factors
-      | none =>
-          if k ≥ B then
-            #[core]
-          else
-            adaptiveCoreFactors core B primeData
-              (nextHenselPrecision k B) fuel
 
 private def exhaustiveCoreFactorsWithBound
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Array ZPoly :=
@@ -2502,24 +2346,6 @@ private theorem recombineExhaustive_product
   unfold recombineExhaustive
   simp [hsearch, recombinationSearchMod_product f (liftModulus d)
     d.liftedFactors.toList factors hsearch]
-
-/--
-Product preservation for `recombine` under the lifted-factor recombination
-hypothesis supplied by the Hensel/recombination proof layer.
--/
-theorem recombine_product_of_lifted_factors
-    (f : ZPoly) (d : LiftData)
-    (hvalid : LiftedFactorsRecombineTo f d) :
-    Array.polyProduct (recombine f d) = f := by
-  unfold LiftedFactorsRecombineTo at hvalid
-  unfold recombine
-  rcases hvalid with hlll | hexhaustive
-  · rcases hlll with ⟨factors, hlll, hproduct⟩
-    simp [hlll, hproduct]
-  · rcases hexhaustive with ⟨hlll, hsmall, factors, hsearch⟩
-    have hproduct : Array.polyProduct (recombineExhaustive f d) = f :=
-      recombineExhaustive_product f d factors hsearch
-    simpa [recombine, hlll, hsmall] using hproduct
 
 theorem checkIrreducibleCert_prime_data
     (f : ZPoly) (cert : ZPolyIrreducibilityCertificate)
