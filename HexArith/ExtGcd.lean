@@ -308,6 +308,20 @@ theorem extGcd_bezout (a b : Int) :
     s * a + t * b = g := by
   simpa [extGcd] using Hex.pureIntExtGcd_bezout a b
 
+theorem extGcd_zero_left_s_ofNat (p : Nat) (hp : 0 < p) :
+    (match extGcd 0 (Int.ofNat p) with
+      | (_, s, _) => s) = 0 := by
+  cases p with
+  | zero =>
+      omega
+  | succ p =>
+      simp [extGcd, Hex.pureIntExtGcd]
+      rw [show (↑p + 1 : Int) = Int.ofNat (p + 1) by simp]
+      rw [Hex.pureIntExtGcd.go.eq_def]
+      simp
+      rw [Hex.pureIntExtGcd.go.eq_def]
+      simp [show ¬ (↑p + 1 : Int) < 0 by omega]
+
 end Int
 
 namespace UInt64
