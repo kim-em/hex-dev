@@ -5198,5 +5198,78 @@ theorem det_gramMatrix_eq_sum_columnTuples
   rw [hgram]
   exact det_columnSumMatrix_eq_sum_columnTuples A A
 
+/-! ### Strictly-increasing column-tuple enumeration
+
+The Cauchy-Binet sum-of-squares formula needs a Mathlib-free enumeration of the
+"essentially distinct" column choices: each strictly increasing length-`n`
+selection from `Fin m` represents one orbit of injective ordered tuples under
+the action of permutations of `Fin n`. The enumeration below builds these
+tuples by appending the new largest element, recursing on a `bound` parameter
+that constrains the next entry to be strictly less than `bound`.
+-/
+
+/-- All strictly increasing length-`n` column tuples in `Fin m` whose entries
+are all `< bound`. The recursion appends a new largest element `c < bound` and
+recurses on the remaining prefix with the smaller bound `c.val`. -/
+private def selectedColumnTuplesUpTo (m : Nat) :
+    (n : Nat) → (bound : Nat) → List (Vector (Fin m) n)
+  | 0, _ => [emptyVec]
+  | n + 1, bound =>
+      ((List.finRange m).filter (fun c : Fin m => decide (c.val < bound))).flatMap
+        fun c =>
+          (selectedColumnTuplesUpTo m n c.val).map fun pref => pref.push c
+
+/-- Enumerate all strictly increasing length-`n` column selections from `Fin m`.
+This list of orbit representatives drives the Cauchy-Binet grouping argument
+that re-folds the ordered-tuple Gram expansion as a sum of squared minors. -/
+def selectedColumnTuples (n m : Nat) : List (Vector (Fin m) n) :=
+  selectedColumnTuplesUpTo m n m
+
+/-- A column tuple is strictly increasing as a function `Fin n → Fin m`. -/
+def IsStrictlyIncreasingColumnTuple {m n : Nat} (cols : Vector (Fin m) n) : Prop :=
+  ∀ i j : Fin n, i.val < j.val → cols[i].val < cols[j].val
+
+private theorem isStrictlyIncreasingColumnTuple_emptyVec {m : Nat} :
+    IsStrictlyIncreasingColumnTuple (m := m) (n := 0) emptyVec := by
+  intro i _ _
+  exact i.elim0
+
+private theorem getElem_push_castSucc {α : Type u} {n : Nat}
+    (v : Vector α n) (x : α) (i : Fin n) :
+    (v.push x)[i.castSucc] = v[i] := by
+  rcases i with ⟨i, hi⟩
+  simp [Fin.castSucc, Fin.castAdd, Fin.castLE, Vector.getElem_push_lt, hi]
+
+private theorem getElem_push_last_index {α : Type u} {n : Nat}
+    (v : Vector α n) (x : α) :
+    (v.push x)[Fin.last n] = x := by
+  simp [Fin.last, Vector.getElem_push_eq]
+
+/-- Pushing a new largest element preserves strict increase as long as the
+old largest entry was still smaller than the new element. -/
+private theorem isStrictlyIncreasingColumnTuple_push {m n : Nat}
+    (pref : Vector (Fin m) n) (c : Fin m)
+    (hpref : IsStrictlyIncreasingColumnTuple pref)
+    (hbound : ∀ i : Fin n, pref[i].val < c.val) :
+    IsStrictlyIncreasingColumnTuple (pref.push c) := by
+  intro i j hij
+  rcases Nat.lt_succ_iff_lt_or_eq.mp j.isLt with hjlt | hjeq
+  · -- j < n, so both i, j are inside `pref`.
+    have hilt : i.val < n := by omega
+    have hi_eq : i = (⟨i.val, hilt⟩ : Fin n).castSucc := by
+      apply Fin.ext; rfl
+    have hj_eq : j = (⟨j.val, hjlt⟩ : Fin n).castSucc := by
+      apply Fin.ext; rfl
+    rw [hi_eq, hj_eq, getElem_push_castSucc, getElem_push_castSucc]
+    exact hpref ⟨i.val, hilt⟩ ⟨j.val, hjlt⟩ hij
+  · -- j.val = n, so j is the last index.
+    have hilt : i.val < n := by omega
+    have hi_eq : i = (⟨i.val, hilt⟩ : Fin n).castSucc := by
+      apply Fin.ext; rfl
+    have hj_eq : j = Fin.last n := by
+      apply Fin.ext; simpa using hjeq
+    rw [hi_eq, hj_eq, getElem_push_castSucc, getElem_push_last_index]
+    exact hbound ⟨i.val, hilt⟩
+
 end Matrix
 end Hex
