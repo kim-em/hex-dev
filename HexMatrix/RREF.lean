@@ -579,6 +579,132 @@ private theorem rowSwap_target_pivot_entry
   · simp [h]
   · simp [h]
 
+omit [DecidableEq R] in
+/-- Swapping two rows that are both zero in an already-canonical pivot column
+preserves that column's canonical shape. -/
+private theorem rowSwap_preserve_canonical_column
+    (E : Matrix R n m) (pivotRow target pivot : Fin n) (oldCol : Fin m)
+    (hTarget : E[target][oldCol] = 0) (hPivot : E[pivot][oldCol] = 0)
+    (hrowTarget : pivotRow ≠ target) (hrowPivot : pivotRow ≠ pivot)
+    (hpivotRow : E[pivotRow][oldCol] = 1)
+    (hzero : ∀ r : Fin n, r ≠ pivotRow → E[r][oldCol] = 0) :
+    (rowSwap E target pivot)[pivotRow][oldCol] = 1 ∧
+      ∀ r : Fin n, r ≠ pivotRow → (rowSwap E target pivot)[r][oldCol] = 0 := by
+  constructor
+  · rw [rowSwap_getElem]
+    simpa [hrowPivot, hrowTarget] using hpivotRow
+  · intro r hr
+    rw [rowSwap_getElem]
+    by_cases hrPivot : r = pivot
+    · simpa [hrPivot] using hTarget
+    · by_cases hrTarget : r = target
+      · by_cases htargetPivot : target = pivot
+        · simpa [hrPivot, hrTarget, htargetPivot] using hTarget
+        · simpa [hrPivot, hrTarget, htargetPivot] using hPivot
+      · simpa [hrPivot, hrTarget] using hzero r hr
+
+omit [DecidableEq R] in
+/-- Scaling a row that is zero in an already-canonical pivot column preserves
+that column's canonical shape. -/
+private theorem rowScale_preserve_canonical_column
+    (E : Matrix R n m) (pivotRow target : Fin n) (oldCol : Fin m) (c : R)
+    (hTarget : E[target][oldCol] = 0) (hrowTarget : pivotRow ≠ target)
+    (hpivotRow : E[pivotRow][oldCol] = 1)
+    (hzero : ∀ r : Fin n, r ≠ pivotRow → E[r][oldCol] = 0) :
+    (rowScale E target c)[pivotRow][oldCol] = 1 ∧
+      ∀ r : Fin n, r ≠ pivotRow → (rowScale E target c)[r][oldCol] = 0 := by
+  constructor
+  · rw [rowScale_getElem]
+    simpa [hrowTarget] using hpivotRow
+  · intro r hr
+    rw [rowScale_getElem]
+    by_cases hrTarget : r = target
+    · subst r
+      rw [if_pos rfl, hTarget]
+      grind
+    · simpa [hrTarget] using hzero r hr
+
+omit [DecidableEq R] in
+/-- Adding a multiple of a row that is zero in an already-canonical pivot
+column preserves that column's canonical shape. -/
+private theorem rowAdd_preserve_canonical_column
+    (E : Matrix R n m) (pivotRow src dst : Fin n) (oldCol : Fin m) (c : R)
+    (hSrc : E[src][oldCol] = 0)
+    (hpivotRow : E[pivotRow][oldCol] = 1)
+    (hzero : ∀ r : Fin n, r ≠ pivotRow → E[r][oldCol] = 0) :
+    (rowAdd E src dst c)[pivotRow][oldCol] = 1 ∧
+      ∀ r : Fin n, r ≠ pivotRow → (rowAdd E src dst c)[r][oldCol] = 0 := by
+  constructor
+  · rw [rowAdd_getElem]
+    by_cases hrowDst : pivotRow = dst
+    · subst dst
+      rw [if_pos rfl, hpivotRow, hSrc]
+      grind
+    · simpa [hrowDst] using hpivotRow
+  · intro r hr
+    rw [rowAdd_getElem]
+    by_cases hrDst : r = dst
+    · subst dst
+      rw [if_pos rfl, hzero r hr, hSrc]
+      grind
+    · simpa [hrDst] using hzero r hr
+
+/-- Eliminating a later pivot column preserves an already-canonical pivot
+column when the later pivot row is zero in the old column. -/
+private theorem eliminateColumn_preserve_canonical_column
+    (E : Matrix R n m) (T : Matrix R n n) (oldPivot newPivot : Fin n)
+    (oldCol newCol : Fin m) (hOldNew : oldPivot ≠ newPivot)
+    (hNew : E[newPivot][oldCol] = 0)
+    (hOld : E[oldPivot][oldCol] = 1)
+    (hzero : ∀ r : Fin n, r ≠ oldPivot → E[r][oldCol] = 0) :
+    (eliminateColumn E T newPivot newCol).1[oldPivot][oldCol] = 1 ∧
+      ∀ r : Fin n, r ≠ oldPivot →
+        (eliminateColumn E T newPivot newCol).1[r][oldCol] = 0 := by
+  unfold eliminateColumn
+  suffices h : ∀ (xs : List (Fin n)) (s : Matrix R n m × Matrix R n n),
+      s.1[newPivot][oldCol] = 0 →
+      s.1[oldPivot][oldCol] = 1 →
+      (∀ r : Fin n, r ≠ oldPivot → s.1[r][oldCol] = 0) →
+      (xs.foldl (fun (state : Matrix R n m × Matrix R n n) j =>
+        if _h : j = newPivot then state
+        else
+          let coeff := -state.1[j][newCol]
+          if coeff = 0 then state
+          else (rowAdd state.1 newPivot j coeff, rowAdd state.2 newPivot j coeff))
+        s).1[oldPivot][oldCol] = 1 ∧
+      ∀ r : Fin n, r ≠ oldPivot →
+        (xs.foldl (fun (state : Matrix R n m × Matrix R n n) j =>
+          if _h : j = newPivot then state
+          else
+            let coeff := -state.1[j][newCol]
+            if coeff = 0 then state
+            else (rowAdd state.1 newPivot j coeff, rowAdd state.2 newPivot j coeff))
+          s).1[r][oldCol] = 0 from
+    h (List.finRange n) (E, T) hNew hOld hzero
+  intro xs
+  induction xs with
+  | nil =>
+      intro s _ hOld hzero
+      exact ⟨hOld, hzero⟩
+  | cons x xs ih =>
+      intro s hSrc hOld hzero
+      simp only [List.foldl_cons]
+      by_cases hx : x = newPivot
+      · simpa [hx] using ih s hSrc hOld hzero
+      · by_cases hcoeff : -s.1[x][newCol] = 0
+        · simpa only [hx, hcoeff, if_false, if_true] using ih s hSrc hOld hzero
+        · let next : Matrix R n m × Matrix R n n :=
+            (rowAdd s.1 newPivot x (-s.1[x][newCol]), rowAdd s.2 newPivot x (-s.1[x][newCol]))
+          have hcanon :
+              next.1[oldPivot][oldCol] = 1 ∧
+                ∀ r : Fin n, r ≠ oldPivot → next.1[r][oldCol] = 0 := by
+            simpa [next] using
+              rowAdd_preserve_canonical_column s.1 oldPivot newPivot x oldCol
+                (-s.1[x][newCol]) hSrc hOld hzero
+          have hSrcNext : next.1[newPivot][oldCol] = 0 :=
+            hcanon.2 newPivot (fun h => hOldNew h.symm)
+          simpa only [hx, hcoeff, if_false, next] using ih next hSrcNext hcanon.1 hcanon.2
+
 /-- Process columns left-to-right, performing Gauss-Jordan elimination. -/
 private def rrefLoop (col fuel : Nat) (state : RrefState R n m) : RrefState R n m :=
   match fuel with
