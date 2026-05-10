@@ -531,6 +531,26 @@ theorem leadingPrefix_borderedMinor_succ_eq_borderedMinor (M : Matrix R n n)
     (1 : Matrix R n n)[i][j] = if i = j then (1 : R) else 0 := by
   simp [show (1 : Matrix R n n) = Matrix.identity from rfl, Matrix.identity, ofFn]
 
+/-- The identity matrix is its own transpose. -/
+theorem transpose_one [OfNat R 0] [OfNat R 1] {n : Nat} :
+    Matrix.transpose (1 : Matrix R n n) = (1 : Matrix R n n) := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let ii : Fin n := ⟨i, hi⟩
+  let jj : Fin n := ⟨j, hj⟩
+  show (Matrix.transpose (1 : Matrix R n n))[ii][jj] = (1 : Matrix R n n)[ii][jj]
+  have hflip : (Matrix.transpose (1 : Matrix R n n))[ii][jj] =
+      (1 : Matrix R n n)[jj][ii] := by
+    simp [transpose, col, Vector.getElem_ofFn]
+  rw [hflip, getElem_one, getElem_one]
+  by_cases hij : ii = jj
+  · have hji : jj = ii := hij.symm
+    rw [if_pos hij, if_pos hji]
+  · have hji : jj ≠ ii := fun h => hij h.symm
+    rw [if_neg hij, if_neg hji]
+
 /-- A foldl whose every step adds `0` reduces to the initial accumulator. -/
 private theorem foldl_add_eq_acc {R : Type u} [Lean.Grind.CommRing R]
     {α : Type v} (xs : List α) (f : α → R) (acc : R)

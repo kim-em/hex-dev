@@ -135,6 +135,46 @@ private theorem rowCombination_transform_transpose [Lean.Grind.CommRing R]
     _ = Matrix.transpose D.echelon * e := by
           rw [E.transform_mul]
 
+/-- Converse row-combination transport: an `M`-row-combination witness `c`
+yields a `D.echelon`-row-combination witness `Matrix.transpose Tinv * c`,
+where `Tinv` is any left inverse of `D.transform`. The proof reuses the
+forward transport at the candidate witness. -/
+private theorem rowCombination_transformInv_transpose [Lean.Grind.CommRing R]
+    {M : Matrix R n m} {D : RowEchelonData R n m}
+    (E : IsEchelonForm M D) {Tinv : Matrix R n n}
+    (hTinv : Tinv * D.transform = 1) (c : Vector R n) :
+    rowCombination D.echelon (Matrix.transpose Tinv * c) = rowCombination M c := by
+  have hcompose :
+      Matrix.transpose D.transform * (Matrix.transpose Tinv * c) = c := by
+    calc
+      Matrix.transpose D.transform * (Matrix.transpose Tinv * c) =
+          (Matrix.transpose D.transform * Matrix.transpose Tinv) * c := by
+            exact (Matrix.mul_assoc_vec (A := Matrix.transpose D.transform)
+              (B := Matrix.transpose Tinv) (v := c)).symm
+      _ = Matrix.transpose (Tinv * D.transform) * c := by
+            rw [← Matrix.transpose_mul_of_mul_comm Lean.Grind.CommSemiring.mul_comm]
+      _ = Matrix.transpose (1 : Matrix R n n) * c := by
+            rw [hTinv]
+      _ = (1 : Matrix R n n) * c := by
+            rw [Matrix.transpose_one]
+      _ = c := Matrix.one_mulVec c
+  have hforward := E.rowCombination_transform_transpose (e := Matrix.transpose Tinv * c)
+  rw [hcompose] at hforward
+  exact hforward.symm
+
+/-- Existential converse transport: any `v` in the row span of `M` is also in
+the row span of `D.echelon`, with an explicit witness produced from a left
+inverse of `D.transform`. -/
+private theorem exists_rowCombination_echelon_of_M [Lean.Grind.CommRing R]
+    {M : Matrix R n m} {D : RowEchelonData R n m}
+    (E : IsEchelonForm M D) {v : Vector R m}
+    (h : ∃ c : Vector R n, rowCombination M c = v) :
+    ∃ d : Vector R n, rowCombination D.echelon d = v := by
+  rcases h with ⟨c, hc⟩
+  rcases E.transform_inv with ⟨Tinv, hTinv⟩
+  refine ⟨Matrix.transpose Tinv * c, ?_⟩
+  rw [E.rowCombination_transformInv_transpose hTinv c, hc]
+
 variable [Mul R] [Add R] [OfNat R 0] [OfNat R 1]
 variable {M : Matrix R n m} {D : RowEchelonData R n m}
 
