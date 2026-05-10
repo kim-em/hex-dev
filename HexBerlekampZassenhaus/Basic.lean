@@ -567,15 +567,96 @@ private def betterScore (old new : PrimeCandidateScore) : PrimeCandidateScore :=
   else
     old
 
+private def choosePrimeScoreStep
+    (f : ZPoly) (best : Option PrimeCandidateScore) (c : SmallPrimeCandidate) :
+    Option PrimeCandidateScore :=
+  match best, scoreCandidate f c with
+  | none, score => score
+  | some old, none => some old
+  | some old, some new => some (betterScore old new)
+
 /-- Scan the fixed small-prime list and return the best admissible scored candidate, if any. -/
 def choosePrimeScore? (f : ZPoly) : Option PrimeCandidateScore :=
-  smallPrimeCandidates.foldl
-    (fun best c =>
-      match best, scoreCandidate f c with
-      | none, score => score
-      | some old, none => some old
-      | some old, some new => some (betterScore old new))
-    none
+  smallPrimeCandidates.foldl (choosePrimeScoreStep f) none
+
+private theorem scoreCandidate_isGoodPrime
+    (f : ZPoly) (c : SmallPrimeCandidate) (score : PrimeCandidateScore)
+    (hscore : scoreCandidate f c = some score) :
+    ∃ hbounds : ZMod64.Bounds score.p,
+      @isGoodPrime f score.p hbounds = true := by
+  unfold scoreCandidate at hscore
+  letI := c.bounds
+  by_cases hgood : isGoodPrime f c.p
+  · simp [hgood] at hscore
+    cases hscore
+    exact ⟨c.bounds, hgood⟩
+  · simp [hgood] at hscore
+
+private theorem betterScore_isGoodPrime
+    (f : ZPoly) (old new score : PrimeCandidateScore)
+    (hold : ∃ hbounds : ZMod64.Bounds old.p,
+      @isGoodPrime f old.p hbounds = true)
+    (hnew : ∃ hbounds : ZMod64.Bounds new.p,
+      @isGoodPrime f new.p hbounds = true)
+    (hscore : betterScore old new = score) :
+    ∃ hbounds : ZMod64.Bounds score.p,
+      @isGoodPrime f score.p hbounds = true := by
+  unfold betterScore at hscore
+  split at hscore
+  · cases hscore
+    exact hnew
+  · cases hscore
+    exact hold
+
+private theorem choosePrimeScoreStep_isGoodPrime
+    (f : ZPoly) (best : Option PrimeCandidateScore) (c : SmallPrimeCandidate)
+    (score : PrimeCandidateScore)
+    (hbest : ∀ old, best = some old →
+      ∃ hbounds : ZMod64.Bounds old.p,
+        @isGoodPrime f old.p hbounds = true)
+    (hscore : choosePrimeScoreStep f best c = some score) :
+    ∃ hbounds : ZMod64.Bounds score.p,
+      @isGoodPrime f score.p hbounds = true := by
+  unfold choosePrimeScoreStep at hscore
+  cases hbest_eq : best with
+  | none =>
+      cases hc_eq : scoreCandidate f c with
+      | none =>
+          simp [hbest_eq, hc_eq] at hscore
+      | some =>
+          simp [hbest_eq, hc_eq] at hscore
+          cases hscore
+          exact scoreCandidate_isGoodPrime f c _ hc_eq
+  | some =>
+      cases hc_eq : scoreCandidate f c with
+      | none =>
+          simp [hbest_eq, hc_eq] at hscore
+          cases hscore
+          exact hbest _ hbest_eq
+      | some =>
+          simp [hbest_eq, hc_eq] at hscore
+          exact betterScore_isGoodPrime f _ _ score
+            (hbest _ hbest_eq)
+            (scoreCandidate_isGoodPrime f c _ hc_eq)
+            hscore
+
+private theorem choosePrimeScore?_fold_isGoodPrime
+    (f : ZPoly) (candidates : List SmallPrimeCandidate)
+    (best : Option PrimeCandidateScore) (score : PrimeCandidateScore)
+    (hbest : ∀ old, best = some old →
+      ∃ hbounds : ZMod64.Bounds old.p,
+        @isGoodPrime f old.p hbounds = true)
+    (hscore : candidates.foldl (choosePrimeScoreStep f) best = some score) :
+    ∃ hbounds : ZMod64.Bounds score.p,
+      @isGoodPrime f score.p hbounds = true := by
+  induction candidates generalizing best with
+  | nil =>
+      exact hbest score hscore
+  | cons c candidates ih =>
+      exact ih (choosePrimeScoreStep f best c)
+        (fun old hold =>
+          choosePrimeScoreStep_isGoodPrime f best c old hbest hold)
+        hscore
 
 /--
 Choose a small admissible prime for the Berlekamp-Zassenhaus pipeline.
@@ -595,7 +676,10 @@ theorem choosePrimeScore?_isGoodPrime
     (hscore : choosePrimeScore? f = some score) :
     ∃ hbounds : ZMod64.Bounds score.p,
       @isGoodPrime f score.p hbounds = true := by
-  sorry
+  unfold choosePrimeScore? at hscore
+  exact choosePrimeScore?_fold_isGoodPrime f smallPrimeCandidates none score
+    (by intro old hnone; cases hnone)
+    hscore
 
 theorem choosePrime_isGoodPrime_of_selected
     (f : ZPoly) (score : PrimeCandidateScore)
@@ -603,21 +687,30 @@ theorem choosePrime_isGoodPrime_of_selected
     (hchoose : choosePrime f = score.p) :
     ∃ hbounds : ZMod64.Bounds (choosePrime f),
       @isGoodPrime f (choosePrime f) hbounds = true := by
-  sorry
+  rcases choosePrimeScore?_isGoodPrime f score hscore with ⟨hbounds, hgood⟩
+  simpa [hchoose] using
+    (show ∃ hbounds : ZMod64.Bounds score.p,
+      @isGoodPrime f score.p hbounds = true from ⟨hbounds, hgood⟩)
 
 /-- A successful good-prime check certifies leading-coefficient admissibility. -/
 theorem isGoodPrime_leadingCoeffAdmissible
     (f : ZPoly) (p : Nat) [ZMod64.Bounds p]
     (hgood : isGoodPrime f p = true) :
     leadingCoeffAdmissible f p := by
-  sorry
+  unfold isGoodPrime at hgood
+  unfold leadingCoeffAdmissible
+  simp only [Bool.and_eq_true] at hgood
+  simpa [bne_iff_ne] using hgood.1.2
 
 /-- A successful good-prime check certifies the modular square-free precondition. -/
 theorem isGoodPrime_squareFreeModP
     (f : ZPoly) (p : Nat) [ZMod64.Bounds p]
     (hgood : isGoodPrime f p = true) :
     squareFreeModP f p := by
-  sorry
+  unfold isGoodPrime at hgood
+  unfold squareFreeModP
+  simp only [Bool.and_eq_true] at hgood
+  simpa [beq_iff_eq] using hgood.2
 
 /--
 Data produced by modular prime selection: the selected prime, the image of the
