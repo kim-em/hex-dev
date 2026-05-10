@@ -8,8 +8,9 @@ Mode: always
 Covered operations:
 - `toPolynomial` and `ofPolynomial` conversion functions
 - `equiv` and `equiv.symm` ring-equivalence bridge functions
-- gcd and xgcd correspondence surfaces (`toPolynomial_gcd`, `equiv_gcd`,
-  `toPolynomial_xgcd_left`, `toPolynomial_xgcd_right`, `toPolynomial_xgcd_gcd`,
+- gcd and xgcd correspondence surfaces (`toPolynomial_gcd_associated`,
+  `equiv_gcd_associated`, `toPolynomial_xgcd_left`, `toPolynomial_xgcd_right`,
+  `toPolynomial_xgcd_gcd_associated`,
   `toPolynomial_xgcd_bezout`)
 Covered properties:
 - converting executable dense polynomials to Mathlib polynomials and back preserves
@@ -17,8 +18,10 @@ Covered properties:
 - converting Mathlib polynomials to executable dense polynomials and back preserves
   committed polynomial inputs
 - `equiv` and `equiv.symm` agree with the concrete conversion functions on committed inputs
-- executable gcd/xgcd results transport to Mathlib's Euclidean-domain gcd and Bezout
-  coefficient surfaces on committed `Rat` inputs
+- executable raw gcd/xgcd gcd results transport to associated polynomials against
+  Mathlib's normalized Euclidean-domain gcd on committed `Rat` inputs
+- executable xgcd coefficients transport to Mathlib's Bezout coefficient surfaces on
+  committed `Rat` inputs
 - transported xgcd coefficients satisfy the Bezout identity against Mathlib gcd
 Covered edge cases:
 - zero polynomials
@@ -110,20 +113,22 @@ example : equiv.symm mathZero = ofPolynomial mathZero :=
 example : equiv.symm mathTrailingZeros = ofPolynomial mathTrailingZeros :=
   equiv_symm_apply mathTrailingZeros
 
-example :
-    toPolynomial (Hex.DensePoly.gcd gcdTypicalLeft gcdTypicalRight) =
-      EuclideanDomain.gcd (toPolynomial gcdTypicalLeft) (toPolynomial gcdTypicalRight) :=
-  toPolynomial_gcd gcdTypicalLeft gcdTypicalRight
+variable [Hex.DensePoly.GcdLaws Rat]
 
 example :
-    toPolynomial (Hex.DensePoly.gcd gcdZeroLeft gcdZeroRight) =
-      EuclideanDomain.gcd (toPolynomial gcdZeroLeft) (toPolynomial gcdZeroRight) :=
-  toPolynomial_gcd gcdZeroLeft gcdZeroRight
+    Associated (toPolynomial (Hex.DensePoly.gcd gcdTypicalLeft gcdTypicalRight))
+      (EuclideanDomain.gcd (toPolynomial gcdTypicalLeft) (toPolynomial gcdTypicalRight)) :=
+  toPolynomial_gcd_associated gcdTypicalLeft gcdTypicalRight
 
 example :
-    toPolynomial (Hex.DensePoly.gcd gcdAdversarialLeft gcdAdversarialRight) =
-      EuclideanDomain.gcd (toPolynomial gcdAdversarialLeft) (toPolynomial gcdAdversarialRight) :=
-  toPolynomial_gcd gcdAdversarialLeft gcdAdversarialRight
+    Associated (toPolynomial (Hex.DensePoly.gcd gcdZeroLeft gcdZeroRight))
+      (EuclideanDomain.gcd (toPolynomial gcdZeroLeft) (toPolynomial gcdZeroRight)) :=
+  toPolynomial_gcd_associated gcdZeroLeft gcdZeroRight
+
+example :
+    Associated (toPolynomial (Hex.DensePoly.gcd gcdAdversarialLeft gcdAdversarialRight))
+      (EuclideanDomain.gcd (toPolynomial gcdAdversarialLeft) (toPolynomial gcdAdversarialRight)) :=
+  toPolynomial_gcd_associated gcdAdversarialLeft gcdAdversarialRight
 
 example :
     toPolynomial (Hex.DensePoly.xgcd gcdTypicalLeft gcdTypicalRight).left =
@@ -156,19 +161,19 @@ example :
   toPolynomial_xgcd_right gcdAdversarialLeft gcdAdversarialRight
 
 example :
-    toPolynomial (Hex.DensePoly.xgcd gcdTypicalLeft gcdTypicalRight).gcd =
-      EuclideanDomain.gcd (toPolynomial gcdTypicalLeft) (toPolynomial gcdTypicalRight) :=
-  toPolynomial_xgcd_gcd gcdTypicalLeft gcdTypicalRight
+    Associated (toPolynomial (Hex.DensePoly.xgcd gcdTypicalLeft gcdTypicalRight).gcd)
+      (EuclideanDomain.gcd (toPolynomial gcdTypicalLeft) (toPolynomial gcdTypicalRight)) :=
+  toPolynomial_xgcd_gcd_associated gcdTypicalLeft gcdTypicalRight
 
 example :
-    toPolynomial (Hex.DensePoly.xgcd gcdZeroLeft gcdZeroRight).gcd =
-      EuclideanDomain.gcd (toPolynomial gcdZeroLeft) (toPolynomial gcdZeroRight) :=
-  toPolynomial_xgcd_gcd gcdZeroLeft gcdZeroRight
+    Associated (toPolynomial (Hex.DensePoly.xgcd gcdZeroLeft gcdZeroRight).gcd)
+      (EuclideanDomain.gcd (toPolynomial gcdZeroLeft) (toPolynomial gcdZeroRight)) :=
+  toPolynomial_xgcd_gcd_associated gcdZeroLeft gcdZeroRight
 
 example :
-    toPolynomial (Hex.DensePoly.xgcd gcdAdversarialLeft gcdAdversarialRight).gcd =
-      EuclideanDomain.gcd (toPolynomial gcdAdversarialLeft) (toPolynomial gcdAdversarialRight) :=
-  toPolynomial_xgcd_gcd gcdAdversarialLeft gcdAdversarialRight
+    Associated (toPolynomial (Hex.DensePoly.xgcd gcdAdversarialLeft gcdAdversarialRight).gcd)
+      (EuclideanDomain.gcd (toPolynomial gcdAdversarialLeft) (toPolynomial gcdAdversarialRight)) :=
+  toPolynomial_xgcd_gcd_associated gcdAdversarialLeft gcdAdversarialRight
 
 example :
     toPolynomial (Hex.DensePoly.xgcd gcdTypicalLeft gcdTypicalRight).left *
@@ -195,19 +200,19 @@ example :
   toPolynomial_xgcd_bezout gcdAdversarialLeft gcdAdversarialRight
 
 example :
-    equiv (Hex.DensePoly.gcd gcdTypicalLeft gcdTypicalRight) =
-      EuclideanDomain.gcd (equiv gcdTypicalLeft) (equiv gcdTypicalRight) :=
-  equiv_gcd gcdTypicalLeft gcdTypicalRight
+    Associated (equiv (Hex.DensePoly.gcd gcdTypicalLeft gcdTypicalRight))
+      (EuclideanDomain.gcd (equiv gcdTypicalLeft) (equiv gcdTypicalRight)) :=
+  equiv_gcd_associated gcdTypicalLeft gcdTypicalRight
 
 example :
-    equiv (Hex.DensePoly.gcd gcdZeroLeft gcdZeroRight) =
-      EuclideanDomain.gcd (equiv gcdZeroLeft) (equiv gcdZeroRight) :=
-  equiv_gcd gcdZeroLeft gcdZeroRight
+    Associated (equiv (Hex.DensePoly.gcd gcdZeroLeft gcdZeroRight))
+      (EuclideanDomain.gcd (equiv gcdZeroLeft) (equiv gcdZeroRight)) :=
+  equiv_gcd_associated gcdZeroLeft gcdZeroRight
 
 example :
-    equiv (Hex.DensePoly.gcd gcdAdversarialLeft gcdAdversarialRight) =
-      EuclideanDomain.gcd (equiv gcdAdversarialLeft) (equiv gcdAdversarialRight) :=
-  equiv_gcd gcdAdversarialLeft gcdAdversarialRight
+    Associated (equiv (Hex.DensePoly.gcd gcdAdversarialLeft gcdAdversarialRight))
+      (EuclideanDomain.gcd (equiv gcdAdversarialLeft) (equiv gcdAdversarialRight)) :=
+  equiv_gcd_associated gcdAdversarialLeft gcdAdversarialRight
 
 end
 
