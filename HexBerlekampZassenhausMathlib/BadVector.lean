@@ -95,6 +95,19 @@ theorem divisor_real_le_l2norm_pow (D : BadVectorResultantData) :
   le_trans D.divisor_real_le_abs_resultant D.abs_resultant_le_l2norm_pow
 
 /--
+If the Hadamard/l2norm upper bound is strictly below the modular divisor, the
+packaged bad-vector resultant data is contradictory.
+-/
+theorem no_badVector_of_l2norm_upper_lt_divisor
+    (D : BadVectorResultantData)
+    (hlt :
+      (HexPolyZMathlib.l2norm D.f) ^ D.H.natDegree *
+          (HexPolyZMathlib.l2norm D.H) ^ D.f.natDegree <
+        (D.divisor : ℝ)) :
+    False :=
+  (not_lt_of_ge D.divisor_real_le_l2norm_pow) hlt
+
+/--
 Parameter-style wrapper for later callers that do not want to construct the
 record explicitly in theorem statements.
 -/
@@ -121,6 +134,34 @@ theorem badVector_resultant_bounds
       resultant_divisible := hdiv }
   exact ⟨by simpa [D, divisor, resultant] using D.divisor_real_le_abs_resultant,
     by simpa [D, resultant] using D.abs_resultant_le_l2norm_pow⟩
+
+/--
+Parameter-style contradiction wrapper for callers that have the raw bad-vector
+resultant hypotheses rather than a `BadVectorResultantData` record.
+-/
+theorem no_badVector_of_l2norm_upper_lt_divisor_params
+    (f H : Polynomial ℤ) (p a d : Nat)
+    (hp : 0 < p) (hd : 0 < d)
+    (hcoprime :
+      IsCoprime (f.map (Int.castRingHom ℚ)) (H.map (Int.castRingHom ℚ)))
+    (hdiv : ((p ^ (a * d) : Nat) : ℤ) ∣ Polynomial.resultant f H)
+    (hlt :
+      (HexPolyZMathlib.l2norm f) ^ H.natDegree *
+          (HexPolyZMathlib.l2norm H) ^ f.natDegree <
+        (p ^ (a * d) : ℝ)) :
+    False := by
+  let D : BadVectorResultantData :=
+    { f := f
+      H := H
+      p := p
+      a := a
+      d := d
+      p_pos := hp
+      d_pos := hd
+      coprime_over_rat := hcoprime
+      resultant_divisible := hdiv }
+  exact D.no_badVector_of_l2norm_upper_lt_divisor (by
+    simpa [D, divisor] using hlt)
 
 end BadVectorResultantData
 
@@ -213,6 +254,32 @@ theorem badVector_resultant_bounds
       W.inputPolynomial W.auxiliaryPolynomial
       W.liftData.p W.liftData.k W.localFactorDegree
       hp hd hcoprime hdiv
+
+/--
+Executable bad-vector contradiction wrapper: the transported witness cannot
+exist when its Hadamard/l2norm upper bound is already below the modular divisor.
+-/
+theorem no_badVector_of_l2norm_upper_lt_divisor
+    (W : ExecutableBadVectorWitness)
+    (hp : 0 < W.liftData.p)
+    (hd : 0 < W.localFactorDegree)
+    (hcoprime :
+      IsCoprime
+        ((W.inputPolynomial).map (Int.castRingHom ℚ))
+        ((W.auxiliaryPolynomial).map (Int.castRingHom ℚ)))
+    (hdiv :
+      ((W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : Nat) : ℤ) ∣
+        Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial)
+    (hlt :
+      (HexPolyZMathlib.l2norm W.inputPolynomial) ^ W.auxiliaryPolynomial.natDegree *
+          (HexPolyZMathlib.l2norm W.auxiliaryPolynomial) ^ W.inputPolynomial.natDegree <
+        (W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : ℝ)) :
+    False := by
+  simpa [inputPolynomial, auxiliaryPolynomial] using
+    BadVectorResultantData.no_badVector_of_l2norm_upper_lt_divisor_params
+      W.inputPolynomial W.auxiliaryPolynomial
+      W.liftData.p W.liftData.k W.localFactorDegree
+      hp hd hcoprime hdiv hlt
 
 end ExecutableBadVectorWitness
 
