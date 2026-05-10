@@ -1822,6 +1822,34 @@ private theorem yunStep_common_dvd_derivative_current
   rw [← hprod]
   exact yunStep_common_dvd_derivative_product z y d hdz hdy
 
+private theorem derivativeSplit_common_dvd_quotient_derivative_dvd_gcd
+    [ZMod64.PrimeModulus p]
+    (f d : FpPoly p)
+    (hdc : d ∣ f / DensePoly.gcd f (DensePoly.derivative f))
+    (hddc : d ∣ DensePoly.derivative
+      (f / DensePoly.gcd f (DensePoly.derivative f))) :
+    d ∣ DensePoly.gcd f (DensePoly.derivative f) := by
+  let g := DensePoly.gcd f (DensePoly.derivative f)
+  let c := f / g
+  have hprod : c * g = f := by
+    simpa [c, g] using div_gcd_mul_reconstruct f (DensePoly.derivative f)
+  have hdf :
+      DensePoly.derivative f =
+        DensePoly.derivative c * g + c * DensePoly.derivative g := by
+    rw [← hprod]
+    exact DensePoly.derivative_mul c g
+  have hdf_dvd_f : d ∣ f := by
+    rw [← hprod]
+    exact dvd_mul_right_of_dvd (a := c) (b := g) (d := d) (by simpa [c, g] using hdc)
+  have hdf_dvd_derivative : d ∣ DensePoly.derivative f := by
+    rw [hdf]
+    exact dvd_add_poly
+      (dvd_mul_right_of_dvd (a := DensePoly.derivative c) (b := g) (d := d)
+        (by simpa [c, g] using hddc))
+      (dvd_mul_right_of_dvd (a := c) (b := DensePoly.derivative g) (d := d)
+        (by simpa [c, g] using hdc))
+  exact DensePoly.dvd_gcd d f (DensePoly.derivative f) hdf_dvd_f hdf_dvd_derivative
+
 private theorem yunFactorsContribution_stop_of_isOne
     (c w : FpPoly p) (i fuel : Nat)
     (hc : isOne c = true) :
