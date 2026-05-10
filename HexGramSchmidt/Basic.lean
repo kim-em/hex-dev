@@ -1250,12 +1250,65 @@ private def strictPrefixRows (M : Matrix R n m) (k : Nat) (hk : k ≤ n) :
     Matrix R k m :=
   Vector.ofFn fun j => M.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
 
+/-- Extend coefficients on a strict prefix by a zero coefficient on the new
+last row of the inclusive prefix. -/
+private def extendStrictPrefixCoeff (c : Vector Rat k) : Vector Rat (k + 1) :=
+  Vector.ofFn fun j =>
+    if h : j.val < k then
+      let jj : Fin k := ⟨j.val, h⟩
+      c[jj]
+    else
+      0
+
 /-- Coefficients witnessing `prefixSumByRow` as a row combination of the strict
 row prefix. -/
 private def projectionCoeffVector (row : Vector Rat m) (basis : Matrix Rat n m)
     (k : Nat) (hk : k ≤ n) : Vector Rat k :=
   Vector.ofFn fun j =>
     projectionCoeff row (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩)
+
+private theorem rowCombination_prefixRows_extendStrictPrefixCoeff
+    (M : Matrix Rat n m) (i : Nat) (hi : i < n) (c : Vector Rat i) :
+    Matrix.rowCombination (prefixRows M i hi) (extendStrictPrefixCoeff c) =
+      Matrix.rowCombination (strictPrefixRows M i (Nat.le_of_lt hi)) c := by
+  apply Vector.ext
+  intro idx hidx
+  let idxFin : Fin m := ⟨idx, hidx⟩
+  change
+    (Matrix.mulVec (Matrix.transpose (prefixRows M i hi))
+        (extendStrictPrefixCoeff c))[idxFin] =
+      (Matrix.mulVec (Matrix.transpose (strictPrefixRows M i (Nat.le_of_lt hi)))
+        c)[idxFin]
+  rw [show
+      (Matrix.mulVec (Matrix.transpose (prefixRows M i hi))
+          (extendStrictPrefixCoeff c))[idxFin] =
+        (List.finRange (i + 1)).foldl
+          (fun acc j =>
+            acc +
+              (M.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt hi)⟩)[idxFin] *
+                (extendStrictPrefixCoeff c)[j])
+          0 by
+        unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Matrix.dot
+          Hex.Vector.dotProduct prefixRows
+        simp [Matrix.row]]
+  rw [show
+      (Matrix.mulVec (Matrix.transpose (strictPrefixRows M i (Nat.le_of_lt hi)))
+          c)[idxFin] =
+        (List.finRange i).foldl
+          (fun acc j =>
+            acc +
+              (M.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.le_of_lt hi)⟩)[idxFin] *
+                c[j])
+          0 by
+        unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Matrix.dot
+          Hex.Vector.dotProduct strictPrefixRows
+        simp [Matrix.row]]
+  rw [List.finRange_succ_last]
+  rw [List.foldl_append, List.foldl_map]
+  simp only [List.foldl_cons, List.foldl_nil]
+  have hlast_not_lt : ¬i < i := Nat.lt_irrefl i
+  simp [extendStrictPrefixCoeff, hlast_not_lt]
+  grind
 
 private theorem foldl_projectionCoeff_rowCombination_comm
     (xs : List (Fin k)) (row : Vector Rat m) (basis : Matrix Rat n m)
