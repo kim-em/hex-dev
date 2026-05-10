@@ -14,6 +14,8 @@ Smoke registrations:
 * `runFactorChecksum`: public `factor` combinator on small split inputs.
 * `runFactorFastChecksum`: CLD fast path on the same inputs, preserving `none`.
 * `runFactorSlowChecksum`: exhaustive backstop on the same inputs.
+* HO-2 adversarial polynomial constants plus singleton `factor` / `factorFast`
+  targets for the smoke-tractable recombination surfaces.
 
 Degree/height registrations:
 
@@ -40,6 +42,22 @@ def smokeInput (n : Nat) : ZPoly :=
   (Array.range (n + 1)).foldl
     (fun acc i => acc * linearZFactor (Int.ofNat (i + 1)))
     (1 : ZPoly)
+
+/-- HO-2 adversarial input `X^4 + 1`, irreducible over `Z` but split mod `5`. -/
+def advX4Plus1 : ZPoly :=
+  DensePoly.ofCoeffs #[1, 0, 0, 0, 1]
+
+/-- HO-2 adversarial input `(X^2 - 2)(X^2 - 3)`. -/
+def advQuadSqrt2Sqrt3 : ZPoly :=
+  DensePoly.ofCoeffs #[6, 0, -5, 0, 1]
+
+/-- HO-2 Swinnerton-Dyer `SD_3` input. -/
+def advSwinnertonDyerSD3 : ZPoly :=
+  DensePoly.ofCoeffs #[576, 0, -960, 0, 352, 0, -40, 0, 1]
+
+/-- HO-2 cyclotomic `Phi_15` input. -/
+def advPhi15 : ZPoly :=
+  DensePoly.ofCoeffs #[1, -1, 0, 1, -1, 1, 0, -1, 1]
 
 /-- Prepared split input whose single parameter encodes degree and height. -/
 structure DegreeHeightInput where
@@ -123,6 +141,45 @@ def runFactorFastChecksum (f : ZPoly) : UInt64 :=
 def runFactorSlowChecksum (f : ZPoly) : UInt64 :=
   checksumFactorization (factorSlow f)
 
+/-- Singleton benchmark target: public factorization on `X^4 + 1`. -/
+@[noinline]
+def runFactorAdvX4Plus1Checksum (f : ZPoly) : UInt64 :=
+  runFactorChecksum f
+
+/-- Singleton benchmark target: fast path on `X^4 + 1`, preserving `none`. -/
+@[noinline]
+def runFactorFastAdvX4Plus1Checksum (f : ZPoly) : UInt64 :=
+  runFactorFastChecksum f
+
+/-- Singleton benchmark target: public factorization on `(X^2 - 2)(X^2 - 3)`. -/
+@[noinline]
+def runFactorAdvQuadSqrt2Sqrt3Checksum (f : ZPoly) : UInt64 :=
+  runFactorChecksum f
+
+/-- Singleton benchmark target: fast path on `(X^2 - 2)(X^2 - 3)`, preserving `none`. -/
+@[noinline]
+def runFactorFastAdvQuadSqrt2Sqrt3Checksum (f : ZPoly) : UInt64 :=
+  runFactorFastChecksum f
+
+/-- Singleton benchmark target: public factorization on `Phi_15`. -/
+@[noinline]
+def runFactorAdvPhi15Checksum (f : ZPoly) : UInt64 :=
+  runFactorChecksum f
+
+/-- Singleton benchmark target: fast path on `Phi_15`, preserving `none`. -/
+@[noinline]
+def runFactorFastAdvPhi15Checksum (f : ZPoly) : UInt64 :=
+  runFactorFastChecksum f
+
+def prepAdvX4Plus1 (_ : Nat) : ZPoly :=
+  advX4Plus1
+
+def prepAdvQuadSqrt2Sqrt3 (_ : Nat) : ZPoly :=
+  advQuadSqrt2Sqrt3
+
+def prepAdvPhi15 (_ : Nat) : ZPoly :=
+  advPhi15
+
 /-- Benchmark target: public combinator over the degree/height matrix. -/
 def runFactorDegreeHeightChecksum (input : DegreeHeightInput) : UInt64 :=
   checksumFactorization (factor input.poly)
@@ -203,6 +260,21 @@ setup_benchmark runFactorSlowChecksum n => 2 ^ n * bzClassicalSmokeComplexity n
     signalFloorMultiplier := 1.0
   }
 
+/- Singleton HO-2 adversarial target: `X^4 + 1`. The declared cost model is
+`n + 1` because the schedule pins `n = 0`; this constant smoke bound records a
+canonical recombination shape where the integer polynomial is irreducible but
+splits modulo `5` without widening this PR into the full Phase-4 matrix. -/
+setup_benchmark runFactorAdvX4Plus1Checksum n => n + 1
+  with prep := prepAdvX4Plus1
+  where {
+    paramFloor := 0
+    paramCeiling := 0
+    paramSchedule := .custom #[0]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
 /-
 This registration varies both public input degree and root-height through an
 encoded `(degree, height)` parameter. The declared model is the classical BHKS
@@ -215,6 +287,20 @@ setup_benchmark runFactorDegreeHeightChecksum param => bzClassicalDegreeHeightCo
     paramFloor := encodeDegreeHeightParam 3 2
     paramCeiling := encodeDegreeHeightParam 6 32
     paramSchedule := .custom degreeHeightSchedule
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- Singleton HO-2 adversarial fast-path target for `X^4 + 1`. The declared cost
+model is the same constant `n + 1` singleton bound, with `none` distinguished so
+fast-path misses remain visible until the BHKS completion work succeeds. -/
+setup_benchmark runFactorFastAdvX4Plus1Checksum n => n + 1
+  with prep := prepAdvX4Plus1
+  where {
+    paramFloor := 0
+    paramCeiling := 0
+    paramSchedule := .custom #[0]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
@@ -249,6 +335,60 @@ setup_benchmark runFactorSlowDegreeHeightChecksum param => bzSlowDegreeHeightCom
     paramCeiling := encodeDegreeHeightParam 4 8
     paramSchedule := .custom slowDegreeHeightSchedule
     maxSecondsPerCall := 4.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- Singleton HO-2 adversarial target: `(X^2 - 2)(X^2 - 3)`. The declared cost
+model is `n + 1`, a constant bound; at the pinned fixture prime this splits into
+four local linear factors and recombines into two true quadratics. -/
+setup_benchmark runFactorAdvQuadSqrt2Sqrt3Checksum n => n + 1
+  with prep := prepAdvQuadSqrt2Sqrt3
+  where {
+    paramFloor := 0
+    paramCeiling := 0
+    paramSchedule := .custom #[0]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- Singleton HO-2 adversarial fast-path target for `(X^2 - 2)(X^2 - 3)`. The
+declared cost model is the same constant `n + 1` singleton bound. -/
+setup_benchmark runFactorFastAdvQuadSqrt2Sqrt3Checksum n => n + 1
+  with prep := prepAdvQuadSqrt2Sqrt3
+  where {
+    paramFloor := 0
+    paramCeiling := 0
+    paramSchedule := .custom #[0]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- Singleton HO-2 adversarial target: `Phi_15`. The declared cost model is
+`n + 1`, a constant bound for the pinned singleton schedule; the degree-eight
+cyclotomic case exercises the recombination hot path without a wider matrix. -/
+setup_benchmark runFactorAdvPhi15Checksum n => n + 1
+  with prep := prepAdvPhi15
+  where {
+    paramFloor := 0
+    paramCeiling := 0
+    paramSchedule := .custom #[0]
+    maxSecondsPerCall := 6.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- Singleton HO-2 adversarial fast-path target for `Phi_15`. The declared cost
+model is the same constant `n + 1` singleton bound. -/
+setup_benchmark runFactorFastAdvPhi15Checksum n => n + 1
+  with prep := prepAdvPhi15
+  where {
+    paramFloor := 0
+    paramCeiling := 0
+    paramSchedule := .custom #[0]
+    maxSecondsPerCall := 6.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
   }
