@@ -1146,6 +1146,43 @@ private theorem polyProduct_normalizationPrefixFactors (d : FactorNormalizationD
   rw [polyProduct_append, polyProduct_append]
   rw [DensePoly.mul_assoc_poly (S := Int)]
 
+private theorem rat_scale_scale (u v : Rat) (p : DensePoly Rat) :
+    DensePoly.scale u (DensePoly.scale v p) = DensePoly.scale (u * v) p := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_scale (R := Rat) u (DensePoly.scale v p) n (Rat.mul_zero u)]
+  rw [DensePoly.coeff_scale (R := Rat) v p n (Rat.mul_zero v)]
+  rw [DensePoly.coeff_scale (R := Rat) (u * v) p n (Rat.mul_zero (u * v))]
+  rw [Rat.mul_assoc]
+
+private theorem toRatPoly_mul_product (f g : ZPoly) :
+    ZPoly.toRatPoly (f * g) = ZPoly.toRatPoly f * ZPoly.toRatPoly g := by
+  exact ZPoly.toRatPoly_mul f g
+
+private theorem primitiveSquareFreeDecomposition_reassembles_xfree_over_rat
+    (xFree : ZPoly) :
+    let sqData := ZPoly.primitiveSquareFreeDecomposition xFree
+    ∃ unit : Rat,
+      ZPoly.toRatPoly xFree =
+        DensePoly.scale unit (ZPoly.toRatPoly (sqData.squareFreeCore * sqData.repeatedPart)) := by
+  simp only
+  rcases ZPoly.primitiveSquareFreeDecomposition_reassembly_over_rat xFree with
+    ⟨unit, hunit⟩
+  refine ⟨(ZPoly.content xFree : Rat) * unit, ?_⟩
+  have hprimitive :
+      (ZPoly.primitiveSquareFreeDecomposition xFree).primitive =
+        ZPoly.primitivePart xFree :=
+    ZPoly.primitiveSquareFreeDecomposition_primitive xFree
+  rw [hprimitive] at hunit
+  have hcontent :
+      ZPoly.toRatPoly xFree =
+        DensePoly.scale (ZPoly.content xFree : Rat)
+          (ZPoly.toRatPoly (ZPoly.primitivePart xFree)) := by
+    rw [← ZPoly.toRatPoly_scale_int]
+    rw [ZPoly.content_mul_primitivePart]
+  rw [hcontent, hunit, rat_scale_scale]
+  rw [toRatPoly_mul_product]
+
 private theorem exactQuotient?_product
     {target candidate quotient : ZPoly}
     (hquot : exactQuotient? target candidate = some quotient) :
@@ -2060,63 +2097,57 @@ theorem factor_product_of_bound (f : ZPoly) (B : Nat)
   sorry
 
 /--
-The normalization prefix and square-free core reassemble to the sign-normalized
-input. The signed scalar in `Factorization` carries the original leading sign;
-the polynomial factor array is normalized to positive leading sign.
+The primitive square-free layer in normalization reassembles the extracted
+`X`-free primitive core up to the rational unit introduced by clearing
+denominators.
 -/
 theorem normalizeForFactor_reassembles (f : ZPoly) :
     let normalized := normalizeForFactor f
-    Array.polyProduct (normalizationPrefixFactors normalized ++ #[normalized.squareFreeCore]) =
-      normalizeFactorSign f := by
-  sorry
+    ∃ unit : Rat,
+      ZPoly.toRatPoly normalized.xFreePrimitive =
+        DensePoly.scale unit
+          (ZPoly.toRatPoly (normalized.squareFreeCore * normalized.repeatedPart)) := by
+  unfold normalizeForFactor
+  simp only
+  exact primitiveSquareFreeDecomposition_reassembles_xfree_over_rat
+    (ZPoly.extractXPower (ZPoly.primitivePart f)).core
 
 /--
 Replacing the square-free core by a product-equivalent factor array preserves
-the sign-normalized input.
+the rational-associate normalization invariant for the extracted primitive core.
 -/
 theorem reassembleNormalizedFactors_product
     (f : ZPoly) (normalized : FactorNormalizationData) (coreFactors : Array ZPoly)
     (hnormalized : normalizeForFactor f = normalized)
     (hcore : Array.polyProduct coreFactors = normalized.squareFreeCore) :
-    Array.polyProduct (reassembleNormalizedFactors normalized coreFactors) =
-      normalizeFactorSign f := by
+    ∃ unit : Rat,
+      ZPoly.toRatPoly normalized.xFreePrimitive =
+        DensePoly.scale unit
+          (ZPoly.toRatPoly (Array.polyProduct coreFactors * normalized.repeatedPart)) := by
   subst normalized
-  unfold reassembleNormalizedFactors
-  rw [polyProduct_append, hcore]
   have hnormalized := normalizeForFactor_reassembles f
   change
-    Array.polyProduct
-        (normalizationPrefixFactors (normalizeForFactor f) ++
-          #[(normalizeForFactor f).squareFreeCore]) =
-      normalizeFactorSign f at hnormalized
-  rw [polyProduct_append, polyProduct_singleton] at hnormalized
-  exact hnormalized
+    ∃ unit : Rat,
+      ZPoly.toRatPoly (normalizeForFactor f).xFreePrimitive =
+        DensePoly.scale unit
+          (ZPoly.toRatPoly
+            ((normalizeForFactor f).squareFreeCore * (normalizeForFactor f).repeatedPart)) at hnormalized
+  simpa [hcore] using hnormalized
 
 /--
 For constant square-free cores, the normalization-only factor array preserves the
-sign-normalized input.
+rational-associate normalization invariant for the extracted primitive core.
 -/
 theorem normalizedConstantFactors_product
     (f : ZPoly) (normalized : FactorNormalizationData)
     (hnormalized : normalizeForFactor f = normalized)
     (hconst : normalized.squareFreeCore.degree?.getD 0 = 0) :
-    Array.polyProduct (normalizedConstantFactors normalized) = normalizeFactorSign f := by
+    ∃ unit : Rat,
+      ZPoly.toRatPoly normalized.xFreePrimitive =
+        DensePoly.scale unit
+          (ZPoly.toRatPoly (normalized.squareFreeCore * normalized.repeatedPart)) := by
   subst normalized
-  unfold normalizedConstantFactors
-  split
-  · rename_i hcore_one
-    change Array.polyProduct (reassembleNormalizedFactors (normalizeForFactor f) #[]) =
-      normalizeFactorSign f
-    exact reassembleNormalizedFactors_product f (normalizeForFactor f) #[] rfl (by
-      simp [Array.polyProduct, hcore_one])
-  · change
-      Array.polyProduct
-          (reassembleNormalizedFactors (normalizeForFactor f)
-            #[(normalizeForFactor f).squareFreeCore]) =
-        normalizeFactorSign f
-    exact reassembleNormalizedFactors_product f (normalizeForFactor f)
-      #[(normalizeForFactor f).squareFreeCore] rfl (by
-        exact polyProduct_singleton (normalizeForFactor f).squareFreeCore)
+  simpa using normalizeForFactor_reassembles f
 
 private theorem firstSome_some
     {α β : Type} {xs : List α} {f : α → Option β} {y : β}
