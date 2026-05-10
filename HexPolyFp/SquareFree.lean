@@ -2486,6 +2486,73 @@ private theorem dvd_trans_poly
     _ = (a * x) * y := by rw [hx]
     _ = a * (x * y) := DensePoly.mul_assoc_poly a x y
 
+private theorem dvd_derivative_mul_of_dvd_left_and_derivative
+    {d z y : FpPoly p}
+    (hdz : d ∣ z) (hdz' : d ∣ DensePoly.derivative z) :
+    d ∣ DensePoly.derivative (z * y) := by
+  rw [show DensePoly.derivative (z * y) =
+      DensePoly.derivative z * y + z * DensePoly.derivative y from
+    DensePoly.derivative_mul z y]
+  apply DensePoly.dvd_add_poly
+  · rcases hdz' with ⟨a, ha⟩
+    refine ⟨a * y, ?_⟩
+    rw [ha]
+    exact DensePoly.mul_assoc_poly d a y
+  · rcases hdz with ⟨a, ha⟩
+    refine ⟨a * DensePoly.derivative y, ?_⟩
+    rw [ha]
+    exact DensePoly.mul_assoc_poly d a (DensePoly.derivative y)
+
+private theorem yunInitialSplit_common_derivative_dvd_y
+    [ZMod64.PrimeModulus p]
+    (f d : FpPoly p) :
+    let g := DensePoly.gcd f (DensePoly.derivative f)
+    let c := f / g
+    let y := DensePoly.gcd c g
+    let z := c / y
+    d ∣ z → d ∣ DensePoly.derivative z → d ∣ y := by
+  dsimp
+  let g := DensePoly.gcd f (DensePoly.derivative f)
+  let c := f / g
+  let y := DensePoly.gcd c g
+  let z := c / y
+  intro hdz hdz'
+  have hzy : z * y = c := by
+    simpa [z, y, c, g] using div_gcd_mul_reconstruct c g
+  have hcg : c * g = f := by
+    simpa [c, g] using div_gcd_mul_reconstruct f (DensePoly.derivative f)
+  have hdc : d ∣ c := by
+    exact dvd_trans_poly hdz ⟨y, hzy.symm⟩
+  have hdf : d ∣ f := by
+    exact dvd_trans_poly hdc ⟨g, hcg.symm⟩
+  have hdc' : d ∣ DensePoly.derivative c := by
+    rw [← hzy]
+    exact dvd_derivative_mul_of_dvd_left_and_derivative hdz hdz'
+  have hdf' : d ∣ DensePoly.derivative f := by
+    rw [← hcg]
+    exact dvd_derivative_mul_of_dvd_left_and_derivative hdc hdc'
+  have hdg : d ∣ g := by
+    simpa [g] using DensePoly.dvd_gcd d f (DensePoly.derivative f) hdf hdf'
+  simpa [y] using DensePoly.dvd_gcd d c g hdc hdg
+
+private theorem yunInitialSplit_gcd_quotient_derivative_eq_one_of_common_dvd_one
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) :
+    let g := DensePoly.gcd f (DensePoly.derivative f)
+    let c := f / g
+    let y := DensePoly.gcd c g
+    let z := c / y
+    DensePoly.Monic (DensePoly.gcd z (DensePoly.derivative z)) →
+      (∀ d : FpPoly p,
+        d ∣ z → d ∣ y → d ∣ (1 : FpPoly p)) →
+      DensePoly.gcd z (DensePoly.derivative z) = 1 := by
+  dsimp
+  intro hmonic hcommon
+  apply gcd_eq_one_of_monic_of_common_dvd_one
+  · exact hmonic
+  · intro d hdz hdz'
+    exact hcommon d hdz (yunInitialSplit_common_derivative_dvd_y f d hdz hdz')
+
 private theorem yunFactors_factor_mem_acc_or_dvd_current
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p) (multiplicity fuel : Nat)
