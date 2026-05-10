@@ -5067,5 +5067,112 @@ private theorem columnTupleVectors_suffix_rhs_step_natural
     (by omega : (n - (chosen.length + 1)) + 1 = n - chosen.length)]
   exact columnTupleVectors_suffix_rhs_step source coeff chosen hk
 
+private theorem assembleColumnsSuffix_full
+    {n m : Nat} (chosen : List (Fin m))
+    (pref : Vector (Fin m) (n - chosen.length))
+    (hk : chosen.length ≤ n) (hfull : chosen.length = n) :
+    assembleColumnsSuffix chosen pref hk =
+      Vector.ofFn (fun j : Fin n => chosen[j.val]'(by omega)) := by
+  apply Vector.ext
+  intro i hi
+  change (assembleColumnsSuffix chosen pref hk)[(⟨i, hi⟩ : Fin n)] =
+    (Vector.ofFn (fun j : Fin n => chosen[j.val]'(by omega)))[(⟨i, hi⟩ : Fin n)]
+  simpa [hfull] using
+    (assembleColumnsSuffix_right chosen pref hk (⟨i, by omega⟩ : Fin chosen.length))
+
+private theorem partialColumnTupleCoeff_full
+    {R : Type u} [Mul R] [OfNat R 1] {n m : Nat}
+    (coeff : Matrix R n m) (chosen : List (Fin m))
+    (pref : Vector (Fin m) (n - chosen.length))
+    (hfull : chosen.length = n) :
+    partialColumnTupleCoeff coeff chosen pref = 1 := by
+  subst n
+  unfold partialColumnTupleCoeff
+  have hlist : List.finRange (chosen.length - chosen.length) = [] := by simp
+  rw [hlist]
+  rfl
+
+private theorem det_columnSumMatrixWithSuffix_eq_sum
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (chosen : List (Fin m))
+    (hk : chosen.length ≤ n) :
+    det (columnSumMatrixWithSuffix source coeff chosen) =
+      (columnTupleVectors (n - chosen.length) m).foldl
+        (fun acc pref => acc +
+          partialColumnTupleCoeff coeff chosen pref *
+            det (columnTupleMatrix source
+              (columnTupleVectorFn
+                (assembleColumnsSuffix chosen pref hk)))) 0 := by
+  by_cases hfull : chosen.length = n
+  ·
+      have hfull : chosen.length = n := by omega
+      subst n
+      rw [columnSumMatrixWithSuffix_eq_columnTupleMatrix source coeff chosen hfull]
+      let hcast : 0 = chosen.length - chosen.length := by omega
+      rw [columnTupleVectors_foldl_vectorLengthCast hcast]
+      simp only [columnTupleVectors, List.foldl_cons, List.foldl_nil]
+      rw [partialColumnTupleCoeff_full coeff chosen (vectorLengthCast hcast emptyVec) hfull]
+      have hdet :
+          det (columnTupleMatrix source (fun j : Fin chosen.length => chosen[j.val]'(by omega))) =
+            det (columnTupleMatrix source
+              (columnTupleVectorFn
+                (assembleColumnsSuffix chosen (vectorLengthCast hcast emptyVec) hk))) := by
+        apply congrArg det
+        apply congrArg (columnTupleMatrix source)
+        funext j
+        simp [columnTupleVectorFn]
+        rw [assembleColumnsSuffix_full chosen (vectorLengthCast hcast emptyVec) hk hfull]
+        simp
+      rw [hdet]
+      grind
+  ·
+      have hklt : chosen.length < n := by omega
+      rw [det_columnSumMatrixWithSuffix_expand source coeff chosen hklt]
+      rw [columnTupleVectors_suffix_rhs_step_natural source coeff chosen hklt]
+      apply foldl_det_sum_congr
+      intro c _hc
+      congr 2
+      have hkcons : (c :: chosen).length ≤ n := by
+        have hcons : (c :: chosen).length = chosen.length + 1 := rfl
+        omega
+      exact det_columnSumMatrixWithSuffix_eq_sum source coeff (c :: chosen) hkcons
+termination_by n - chosen.length
+decreasing_by
+  simp_wf
+  omega
+
+theorem det_columnSumMatrix_eq_sum_columnTuples
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) :
+    det (columnSumMatrix source coeff) =
+      (columnTupleVectors n m).foldl
+        (fun acc cols => acc +
+          columnTupleCoeff coeff cols *
+            det (columnTupleMatrix source (columnTupleVectorFn cols))) 0 := by
+  rw [← columnSumMatrixWithSuffix_nil source coeff]
+  rw [det_columnSumMatrixWithSuffix_eq_sum source coeff [] (by simp)]
+  apply foldl_det_sum_congr
+  intro cols _hcols
+  have hcoeff : partialColumnTupleCoeff coeff [] cols = columnTupleCoeff coeff cols :=
+    partialColumnTupleCoeff_nil coeff cols
+  have hdet :
+      det (columnTupleMatrix source (columnTupleVectorFn (assembleColumnsSuffix [] cols (by simp)))) =
+        det (columnTupleMatrix source (columnTupleVectorFn cols)) := by
+    apply congrArg det
+    apply Vector.ext
+    intro i hi
+    change (columnTupleMatrix source (columnTupleVectorFn (assembleColumnsSuffix [] cols (by simp))))[
+        (⟨i, hi⟩ : Fin n)] =
+      (columnTupleMatrix source (columnTupleVectorFn cols))[(⟨i, hi⟩ : Fin n)]
+    apply Vector.ext
+    intro j hj
+    simp [columnTupleMatrix, columnTupleVectorFn, ofFn]
+    change source[(⟨i, hi⟩ : Fin n)][
+        (assembleColumnsSuffix [] cols (by simp))[(⟨j, hj⟩ : Fin n)]] =
+      source[(⟨i, hi⟩ : Fin n)][cols[(⟨j, hj⟩ : Fin n)]]
+    exact congrArg (fun x : Fin m => source[(⟨i, hi⟩ : Fin n)][x])
+      (assembleColumnsSuffix_left ([] : List (Fin m)) cols (by simp) (⟨j, by simp [hj]⟩))
+  rw [hcoeff, hdet]
+
 end Matrix
 end Hex
