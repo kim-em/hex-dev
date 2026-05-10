@@ -205,6 +205,17 @@ private theorem pow_add_exp (f : FpPoly p) (m n : Nat) :
   rw [pow_eq_powLinear, pow_eq_powLinear, pow_eq_powLinear]
   exact powLinear_add f m n
 
+private theorem pow_succ (f : FpPoly p) (n : Nat) :
+    pow f (n + 1) = pow f n * f := by
+  rw [pow_eq_powLinear, pow_eq_powLinear]
+  rfl
+
+private theorem derivative_pow_succ (f : FpPoly p) (n : Nat) :
+    DensePoly.derivative (pow f (n + 1)) =
+      DensePoly.derivative (pow f n) * f + pow f n * DensePoly.derivative f := by
+  rw [pow_succ]
+  exact DensePoly.derivative_mul (pow f n) f
+
 private theorem pow_mul_base (f g : FpPoly p) (n : Nat) :
     pow (f * g) n = pow f n * pow g n := by
   rw [pow_eq_powLinear, pow_eq_powLinear, pow_eq_powLinear]
