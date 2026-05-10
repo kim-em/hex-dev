@@ -971,6 +971,10 @@ private theorem polyProduct_singleton (g : ZPoly) :
     Array.polyProduct #[g] = g := by
   simpa [Array.polyProduct] using one_mul_zpoly g
 
+private theorem polyProduct_empty :
+    Array.polyProduct (#[] : Array ZPoly) = 1 := by
+  rfl
+
 private theorem polyProduct_append (xs ys : Array ZPoly) :
     Array.polyProduct (xs ++ ys) = Array.polyProduct xs * Array.polyProduct ys := by
   rw [Array.polyProduct, Array.foldl_append]
@@ -978,6 +982,57 @@ private theorem polyProduct_append (xs ys : Array ZPoly) :
   | mk ylist =>
       simpa [Array.polyProduct] using list_foldl_mul_eq_mul_foldl_one
         (Array.foldl (fun acc factor => acc * factor) 1 xs) ylist
+
+private theorem polyProduct_contentFactorArray (content : Int) :
+    Array.polyProduct (contentFactorArray content) =
+      if content = 1 then 1 else DensePoly.C content := by
+  unfold contentFactorArray
+  by_cases hcontent : content = 1
+  · simp [hcontent, polyProduct_empty]
+  · simp [hcontent, polyProduct_singleton]
+
+private theorem polyProduct_repeatedPartFactorArray (repeatedPart : ZPoly) :
+    Array.polyProduct (repeatedPartFactorArray repeatedPart) =
+      if repeatedPart = 1 then 1 else repeatedPart := by
+  unfold repeatedPartFactorArray
+  by_cases hrepeated : repeatedPart = 1
+  · simp [hrepeated, polyProduct_empty]
+  · simp [hrepeated, polyProduct_singleton]
+
+private theorem polyProduct_replicate_X_zero :
+    Array.polyProduct ((List.replicate 0 ZPoly.X).toArray) = 1 := by
+  rfl
+
+private theorem polyProduct_replicate_X_succ (power : Nat) :
+    Array.polyProduct ((List.replicate (power + 1) ZPoly.X).toArray) =
+      ZPoly.X * Array.polyProduct ((List.replicate power ZPoly.X).toArray) := by
+  simpa [List.replicate] using polyProduct_cons_toArray ZPoly.X (List.replicate power ZPoly.X)
+
+private theorem polyProduct_xPowerFactorArray_zero :
+    Array.polyProduct (xPowerFactorArray 0) = 1 := by
+  simpa [xPowerFactorArray] using polyProduct_replicate_X_zero
+
+private theorem polyProduct_xPowerFactorArray_succ (power : Nat) :
+    Array.polyProduct (xPowerFactorArray (power + 1)) =
+      ZPoly.X * Array.polyProduct (xPowerFactorArray power) := by
+  simpa [xPowerFactorArray] using polyProduct_replicate_X_succ power
+
+private theorem polyProduct_polynomialNormalizationPrefixFactors
+    (d : FactorNormalizationData) :
+    Array.polyProduct (polynomialNormalizationPrefixFactors d) =
+      Array.polyProduct (xPowerFactorArray d.xPower) *
+        Array.polyProduct (repeatedPartFactorArray d.repeatedPart) := by
+  unfold polynomialNormalizationPrefixFactors
+  rw [polyProduct_append]
+
+private theorem polyProduct_normalizationPrefixFactors (d : FactorNormalizationData) :
+    Array.polyProduct (normalizationPrefixFactors d) =
+      Array.polyProduct (contentFactorArray d.content) *
+        (Array.polyProduct (xPowerFactorArray d.xPower) *
+          Array.polyProduct (repeatedPartFactorArray d.repeatedPart)) := by
+  unfold normalizationPrefixFactors
+  rw [polyProduct_append, polyProduct_append]
+  rw [DensePoly.mul_assoc_poly (S := Int)]
 
 private theorem exactQuotient?_product
     {target candidate quotient : ZPoly}
