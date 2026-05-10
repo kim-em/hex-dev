@@ -71,9 +71,287 @@ theorem rowSwap_diag_of_ne (M : Matrix R n n) {k pivot : Fin n}
 def rowScale [Mul R] (M : Matrix R n m) (i : Fin n) (c : R) : Matrix R n m :=
   M.set i <| Vector.ofFn fun k => c * M[i][k]
 
+/-- Read an entry of `rowScale M i c` by cases on the row index: row `i`
+returns `c * M[i][k]`, any other row is unchanged. -/
+theorem rowScale_getElem [Mul R] (M : Matrix R n m) (i r : Fin n) (c : R) (k : Fin m) :
+    (rowScale M i c)[r][k] =
+      if r = i then c * M[i][k] else M[r][k] := by
+  by_cases h : r = i
+  · subst r
+    simp [rowScale]
+  · simp [rowScale, h]
+    have hval : i.val ≠ r.val := by
+      intro hval
+      exact h (Fin.ext hval.symm)
+    have hrow :
+        (M.set i (Vector.ofFn fun k => c * M[i][k]))[r] = M[r] := by
+      exact
+        (Vector.getElem_set_ne (xs := M) (x := Vector.ofFn fun k => c * M[i][k])
+          i.isLt r.isLt hval)
+    simpa [rowScale] using congrArg (fun row => row[k]) hrow
+
 /-- Replace row `dst` by `row dst + c * row src`. -/
 def rowAdd [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin n) (c : R) : Matrix R n m :=
   M.set dst <| Vector.ofFn fun k => M[dst][k] + c * M[src][k]
+
+/-- Read an entry of `rowAdd M src dst c` by cases on the row index: row `dst`
+returns `M[dst][k] + c * M[src][k]`, any other row is unchanged. -/
+theorem rowAdd_getElem [Mul R] [Add R]
+    (M : Matrix R n m) (src dst r : Fin n) (c : R) (k : Fin m) :
+    (rowAdd M src dst c)[r][k] =
+      if r = dst then M[dst][k] + c * M[src][k] else M[r][k] := by
+  by_cases h : r = dst
+  · subst r
+    simp [rowAdd]
+  · simp [rowAdd, h]
+    have hval : dst.val ≠ r.val := by
+      intro hval
+      exact h (Fin.ext hval.symm)
+    have hrow :
+        (M.set dst (Vector.ofFn fun k => M[dst][k] + c * M[src][k]))[r] = M[r] := by
+      exact
+        (Vector.getElem_set_ne (xs := M)
+          (x := Vector.ofFn fun k => M[dst][k] + c * M[src][k])
+          dst.isLt r.isLt hval)
+    simpa [rowAdd] using congrArg (fun row => row[k]) hrow
+
+/-- Entry of a matrix product as a dot product of a row of the left factor and a
+column of the right factor. -/
+private theorem mul_getElem [Mul R] [Add R] [OfNat R 0]
+    (A : Matrix R n m) (B : Matrix R m k) (r : Fin n) (l : Fin k) :
+    (A * B)[r][l] = Hex.Vector.dotProduct A[r] (col B l) := by
+  show (mul A B)[r][l] = Hex.Vector.dotProduct A[r] (col B l)
+  simp [mul, ofFn, dot, row, Vector.getElem_ofFn]
+
+private theorem foldl_sum_congr_aux {R : Type u} [Add R] {α : Type v}
+    (xs : List α) (f g : α → R) (acc : R)
+    (h : ∀ x ∈ xs, f x = g x) :
+    xs.foldl (fun acc x => acc + f x) acc =
+    xs.foldl (fun acc x => acc + g x) acc := by
+  induction xs generalizing acc with
+  | nil => rfl
+  | cons x xs ih =>
+    simp only [List.foldl_cons]
+    have hx : f x = g x := h x (by simp)
+    have hxs : ∀ y ∈ xs, f y = g y := fun y hy => h y (List.mem_cons_of_mem _ hy)
+    rw [hx]
+    exact ih (acc + g x) hxs
+
+private theorem foldl_sum_mul_left_aux {R : Type u} [Lean.Grind.Ring R]
+    {α : Type v} (xs : List α) (f : α → R) (c acc : R) :
+    c * xs.foldl (fun acc x => acc + f x) acc =
+    xs.foldl (fun acc x => acc + c * f x) (c * acc) := by
+  induction xs generalizing acc with
+  | nil => simp
+  | cons x xs ih =>
+    simp only [List.foldl_cons]
+    rw [ih (acc := acc + f x)]
+    have hdist : c * (acc + f x) = c * acc + c * f x := by grind
+    rw [hdist]
+
+private theorem foldl_sum_add_aux {R : Type u} [Lean.Grind.Ring R]
+    {α : Type v} (xs : List α) (f g : α → R) (acc accF accG : R)
+    (h : acc = accF + accG) :
+    xs.foldl (fun acc x => acc + (f x + g x)) acc =
+    xs.foldl (fun acc x => acc + f x) accF +
+    xs.foldl (fun acc x => acc + g x) accG := by
+  induction xs generalizing acc accF accG with
+  | nil =>
+    simp only [List.foldl_nil]
+    exact h
+  | cons x xs ih =>
+    simp only [List.foldl_cons]
+    apply ih (acc := acc + (f x + g x)) (accF := accF + f x) (accG := accG + g x)
+    rw [h]; grind
+
+/-- Pull a scalar multiple out of the left argument of a dot product when the
+left vector is given by `Vector.ofFn (fun k => s * v[k])`. -/
+private theorem dotProduct_smul_ofFn_left [Lean.Grind.Ring R]
+    (s : R) (v w : Vector R m) :
+    Hex.Vector.dotProduct (Vector.ofFn fun k => s * v[k]) w =
+    s * Hex.Vector.dotProduct v w := by
+  unfold Hex.Vector.dotProduct
+  rw [foldl_sum_mul_left_aux (xs := List.finRange m)
+        (f := fun i => v[i] * w[i]) (c := s) (acc := 0)]
+  have hzero : s * (0 : R) = 0 := by grind
+  rw [hzero]
+  apply foldl_sum_congr_aux
+  intro i _
+  have hofFn : (Vector.ofFn (fun k : Fin m => s * v[k]))[i] = s * v[i] := by
+    simp
+  rw [hofFn]
+  exact Lean.Grind.Semiring.mul_assoc s v[i] w[i]
+
+/-- Distribute the left argument of a dot product over a sum of the form
+`Vector.ofFn (fun k => v[k] + s * w[k])`. -/
+private theorem dotProduct_add_smul_ofFn_left [Lean.Grind.Ring R]
+    (u v w : Vector R m) (s : R) :
+    Hex.Vector.dotProduct (Vector.ofFn fun k => u[k] + s * v[k]) w =
+    Hex.Vector.dotProduct u w + s * Hex.Vector.dotProduct v w := by
+  unfold Hex.Vector.dotProduct
+  -- LHS body: (u[k] + s * v[k]) * w[k] = u[k] * w[k] + s * (v[k] * w[k])
+  rw [show (List.finRange m).foldl
+        (fun acc i => acc + (Vector.ofFn fun k => u[k] + s * v[k])[i] * w[i]) 0 =
+      (List.finRange m).foldl
+        (fun acc i => acc + (u[i] * w[i] + s * (v[i] * w[i]))) 0 from ?_]
+  · -- Now split the sum
+    have hzero : (0 : R) = 0 + s * 0 := by grind
+    rw [foldl_sum_add_aux (xs := List.finRange m)
+          (f := fun i => u[i] * w[i])
+          (g := fun i => s * (v[i] * w[i]))
+          (acc := 0) (accF := 0) (accG := s * 0) (h := by grind)]
+    -- Pull s out of the second sum
+    rw [← foldl_sum_mul_left_aux (xs := List.finRange m)
+          (f := fun i => v[i] * w[i]) (c := s) (acc := 0)]
+  · apply foldl_sum_congr_aux
+    intro i _
+    have hofFn : (Vector.ofFn (fun k : Fin m => u[k] + s * v[k]))[i] =
+        u[i] + s * v[i] := by
+      simp
+    rw [hofFn]
+    grind
+
+/-- Multiplication by `B` commutes with row swap on the left factor. -/
+theorem rowSwap_mul [Lean.Grind.Ring R]
+    (A : Matrix R n m) (B : Matrix R m k) (i j : Fin n) :
+    rowSwap A i j * B = rowSwap (A * B) i j := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro l hl
+  let rr : Fin n := ⟨r, hr⟩
+  let ll : Fin k := ⟨l, hl⟩
+  show ((rowSwap A i j) * B)[rr][ll] = (rowSwap (A * B) i j)[rr][ll]
+  rw [mul_getElem (rowSwap A i j) B rr ll]
+  rw [rowSwap_getElem (A * B) i j rr ll]
+  by_cases hrj : rr = j
+  · rw [if_pos hrj]
+    rw [mul_getElem A B i ll]
+    have hrow : (rowSwap A i j)[rr] = A[i] := by
+      apply Vector.ext; intro k' hk
+      let kk : Fin m := ⟨k', hk⟩
+      show (rowSwap A i j)[rr][kk] = A[i][kk]
+      rw [rowSwap_getElem]; rw [if_pos hrj]
+    rw [hrow]
+  · rw [if_neg hrj]
+    by_cases hri : rr = i
+    · rw [if_pos hri]
+      rw [mul_getElem A B j ll]
+      have hrow : (rowSwap A i j)[rr] = A[j] := by
+        apply Vector.ext; intro k' hk
+        let kk : Fin m := ⟨k', hk⟩
+        show (rowSwap A i j)[rr][kk] = A[j][kk]
+        rw [rowSwap_getElem]; rw [if_neg hrj, if_pos hri]
+      rw [hrow]
+    · rw [if_neg hri]
+      rw [mul_getElem A B rr ll]
+      have hrow : (rowSwap A i j)[rr] = A[rr] := by
+        apply Vector.ext; intro k' hk
+        let kk : Fin m := ⟨k', hk⟩
+        show (rowSwap A i j)[rr][kk] = A[rr][kk]
+        rw [rowSwap_getElem]; rw [if_neg hrj, if_neg hri]
+      rw [hrow]
+
+/-- Multiplication by `B` commutes with row scaling on the left factor. -/
+theorem rowScale_mul [Lean.Grind.Ring R]
+    (A : Matrix R n m) (B : Matrix R m k) (i : Fin n) (s : R) :
+    rowScale A i s * B = rowScale (A * B) i s := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro l hl
+  let rr : Fin n := ⟨r, hr⟩
+  let ll : Fin k := ⟨l, hl⟩
+  show ((rowScale A i s) * B)[rr][ll] = (rowScale (A * B) i s)[rr][ll]
+  rw [mul_getElem (rowScale A i s) B rr ll]
+  rw [rowScale_getElem (A * B) i rr s ll]
+  by_cases hri : rr = i
+  · rw [if_pos hri]
+    rw [mul_getElem A B i ll]
+    -- LHS: dot (rowScale A i s)[rr] (col B ll) with rr = i
+    have hrow : (rowScale A i s)[rr] = Vector.ofFn fun k' => s * A[i][k'] := by
+      apply Vector.ext; intro k' hk
+      let kk : Fin m := ⟨k', hk⟩
+      show (rowScale A i s)[rr][kk] = (Vector.ofFn fun k' => s * A[i][k'])[kk]
+      rw [rowScale_getElem]
+      simp [hri]
+    rw [hrow]
+    exact dotProduct_smul_ofFn_left s A[i] (col B ll)
+  · rw [if_neg hri]
+    rw [mul_getElem A B rr ll]
+    have hrow : (rowScale A i s)[rr] = A[rr] := by
+      apply Vector.ext; intro k' hk
+      let kk : Fin m := ⟨k', hk⟩
+      show (rowScale A i s)[rr][kk] = A[rr][kk]
+      rw [rowScale_getElem]
+      simp [hri]
+    rw [hrow]
+
+/-- Multiplication by `B` commutes with the row-add operation on the left
+factor. -/
+theorem rowAdd_mul [Lean.Grind.Ring R]
+    (A : Matrix R n m) (B : Matrix R m k) (src dst : Fin n) (s : R) :
+    rowAdd A src dst s * B = rowAdd (A * B) src dst s := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro l hl
+  let rr : Fin n := ⟨r, hr⟩
+  let ll : Fin k := ⟨l, hl⟩
+  show ((rowAdd A src dst s) * B)[rr][ll] = (rowAdd (A * B) src dst s)[rr][ll]
+  rw [mul_getElem (rowAdd A src dst s) B rr ll]
+  rw [rowAdd_getElem (A * B) src dst rr s ll]
+  by_cases hrd : rr = dst
+  · rw [if_pos hrd]
+    rw [mul_getElem A B dst ll]
+    rw [mul_getElem A B src ll]
+    have hrow : (rowAdd A src dst s)[rr] =
+        Vector.ofFn fun k' => A[dst][k'] + s * A[src][k'] := by
+      apply Vector.ext; intro k' hk
+      let kk : Fin m := ⟨k', hk⟩
+      show (rowAdd A src dst s)[rr][kk] =
+        (Vector.ofFn fun k' => A[dst][k'] + s * A[src][k'])[kk]
+      rw [rowAdd_getElem]
+      simp [hrd]
+    rw [hrow]
+    exact dotProduct_add_smul_ofFn_left A[dst] A[src] (col B ll) s
+  · rw [if_neg hrd]
+    rw [mul_getElem A B rr ll]
+    have hrow : (rowAdd A src dst s)[rr] = A[rr] := by
+      apply Vector.ext; intro k' hk
+      let kk : Fin m := ⟨k', hk⟩
+      show (rowAdd A src dst s)[rr][kk] = A[rr][kk]
+      rw [rowAdd_getElem]
+      simp [hrd]
+    rw [hrow]
+
+/-- If `T * M = E`, then `rowSwap T i j * M = rowSwap E i j`: row swap on the
+transform side preserves the equation `T * M = E` when applied to both `T` and
+`E`. -/
+theorem rowSwap_transform_mul_preserve [Lean.Grind.Ring R]
+    {T : Matrix R n n} {M : Matrix R n m} {E : Matrix R n m} (i j : Fin n)
+    (h : T * M = E) :
+    rowSwap T i j * M = rowSwap E i j := by
+  rw [rowSwap_mul, h]
+
+/-- If `T * M = E`, then `rowScale T i s * M = rowScale E i s`: row scale on the
+transform side preserves the equation `T * M = E` when applied to both `T` and
+`E`. -/
+theorem rowScale_transform_mul_preserve [Lean.Grind.Ring R]
+    {T : Matrix R n n} {M : Matrix R n m} {E : Matrix R n m} (i : Fin n) (s : R)
+    (h : T * M = E) :
+    rowScale T i s * M = rowScale E i s := by
+  rw [rowScale_mul, h]
+
+/-- If `T * M = E`, then `rowAdd T src dst s * M = rowAdd E src dst s`: row
+add on the transform side preserves the equation `T * M = E` when applied to
+both `T` and `E`. -/
+theorem rowAdd_transform_mul_preserve [Lean.Grind.Ring R]
+    {T : Matrix R n n} {M : Matrix R n m} {E : Matrix R n m}
+    (src dst : Fin n) (s : R)
+    (h : T * M = E) :
+    rowAdd T src dst s * M = rowAdd E src dst s := by
+  rw [rowAdd_mul, h]
 
 /-- Replace column `dst` by `col dst + c * col src`. -/
 def colAdd [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin m) (c : R) : Matrix R n m :=
