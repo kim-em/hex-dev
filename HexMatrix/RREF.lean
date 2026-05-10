@@ -217,6 +217,69 @@ private def pivotIndexAux (D : RowEchelonData R n m) (j : Fin m) (start fuel : N
 private def pivotIndex? (D : RowEchelonData R n m) (j : Fin m) : Option (Fin D.rank) :=
   pivotIndexAux D j 0 D.rank
 
+private theorem pivotIndexAux_pivot (E : IsEchelonForm M D) (i : Fin D.rank) :
+    ∀ start fuel,
+      start ≤ i.val →
+      i.val < start + fuel →
+      pivotIndexAux D (D.pivotCols.get i) start fuel = some i := by
+  intro start fuel
+  induction fuel generalizing start with
+  | zero =>
+      intro _ hlt
+      omega
+  | succ fuel ih =>
+      intro hstart hlt
+      unfold pivotIndexAux
+      have hstartRank : start < D.rank := by omega
+      simp [hstartRank]
+      let s : Fin D.rank := ⟨start, hstartRank⟩
+      by_cases hsi : s = i
+      · have hcols : D.pivotCols.get s = D.pivotCols.get i := by rw [hsi]
+        rw [if_pos hcols]
+        change some s = some i
+        exact congrArg some hsi
+      · have hcols : D.pivotCols.get s ≠ D.pivotCols.get i := by
+          intro hcols
+          exact hsi (E.pivotCols_injective hcols)
+        rw [if_neg hcols]
+        apply ih (start := start + 1)
+        · have hslt : start < i.val := by
+            have hsne : start ≠ i.val := by
+              intro hval
+              exact hsi (Fin.ext hval)
+            omega
+          omega
+        · omega
+
+private theorem pivotIndex?_pivot (E : IsEchelonForm M D) (i : Fin D.rank) :
+    pivotIndex? D (D.pivotCols.get i) = some i := by
+  unfold pivotIndex?
+  apply pivotIndexAux_pivot E i
+  · omega
+  · omega
+
+omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
+private theorem pivotIndexAux_none_of_not_pivot {j : Fin m}
+    (hnot : ∀ i : Fin D.rank, D.pivotCols.get i ≠ j) :
+    ∀ start fuel, pivotIndexAux D j start fuel = none := by
+  intro start fuel
+  induction fuel generalizing start with
+  | zero =>
+      rfl
+  | succ fuel ih =>
+      unfold pivotIndexAux
+      by_cases hstart : start < D.rank
+      · simp [hstart, hnot ⟨start, hstart⟩]
+        exact ih (start + 1)
+      · simp [hstart]
+
+private theorem pivotIndex?_free_none (E : IsEchelonForm M D) (k : Fin (m - D.rank)) :
+    pivotIndex? D (E.freeCols.get k) = none := by
+  unfold pivotIndex?
+  apply pivotIndexAux_none_of_not_pivot
+  intro i
+  exact E.pivotCols_disjoint_freeCols i k
+
 /-- Nullspace basis vectors assembled as columns indexed by the free variables. -/
 def nullspaceMatrix [Lean.Grind.Ring R] (E : IsRREF M D) :
     Matrix R m (m - D.rank) :=
