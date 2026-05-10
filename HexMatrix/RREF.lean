@@ -218,27 +218,17 @@ theorem spanCoeffs_sound [Lean.Grind.Field R] [DecidableEq R]
     exact hspan
   · contradiction
 
-/-- Any vector in the row span produces some coefficients via `spanCoeffs`. -/
-theorem spanCoeffs_complete [Lean.Grind.Field R] [DecidableEq R]
+/-- If `spanContains` succeeds, the vector is in the row span. -/
+theorem spanContains_sound [Lean.Grind.Field R] [DecidableEq R]
     (E : IsEchelonForm M D) (hpiv : E.HasNonzeroPivots) (v : Vector R m) :
-    (∃ c : Vector R n, rowCombination M c = v) → (E.spanCoeffs v).isSome := by
-  sorry
-
-/-- `spanContains` is exactly row-span membership. -/
-theorem spanContains_iff [Lean.Grind.Field R] [DecidableEq R]
-    (E : IsEchelonForm M D) (hpiv : E.HasNonzeroPivots) (v : Vector R m) :
-    E.spanContains v = true ↔ ∃ c : Vector R n, rowCombination M c = v := by
-  constructor
-  · intro h
-    unfold spanContains at h
-    cases hCoeffs : E.spanCoeffs v with
-    | none =>
-        simp [hCoeffs] at h
-    | some c =>
-        exact ⟨c, E.spanCoeffs_sound hpiv v c hCoeffs⟩
-  · intro h
-    unfold spanContains
-    simpa using E.spanCoeffs_complete hpiv v h
+    E.spanContains v = true → ∃ c : Vector R n, rowCombination M c = v := by
+  intro h
+  unfold spanContains at h
+  cases hCoeffs : E.spanCoeffs v with
+  | none =>
+      simp [hCoeffs] at h
+  | some c =>
+      exact ⟨c, E.spanCoeffs_sound hpiv v c hCoeffs⟩
 
 end IsEchelonForm
 
@@ -444,6 +434,39 @@ private theorem rowCombination_echelonCoeffs_of_rowCombination [Lean.Grind.Field
   rw [hpivotOne]
   grind
 
+/-- Any vector in the row span produces coefficients via the RREF-backed
+`spanCoeffs` API. -/
+theorem spanCoeffs_complete [Lean.Grind.Field R] [DecidableEq R]
+    (E : IsRREF M D) (v : Vector R m) :
+    (∃ c : Vector R n, rowCombination M c = v) →
+      (E.toIsEchelonForm.spanCoeffs v).isSome := by
+  intro h
+  unfold IsEchelonForm.spanCoeffs
+  dsimp only
+  have hechelon :
+      ∃ d : Vector R n, rowCombination D.echelon d = v :=
+    E.toIsEchelonForm.exists_rowCombination_echelon_of_M h
+  have hreconstruct :
+      rowCombination D.echelon (E.toIsEchelonForm.echelonCoeffs v) = v :=
+    rowCombination_echelonCoeffs_of_rowCombination E hechelon
+  have htransport :
+      rowCombination M
+          (Matrix.transpose D.transform * E.toIsEchelonForm.echelonCoeffs v) = v := by
+    rw [E.toIsEchelonForm.rowCombination_transform_transpose]
+    exact hreconstruct
+  simp [htransport]
+
+/-- For RREF data, `spanContains` is exactly row-span membership. -/
+theorem spanContains_iff [Lean.Grind.Field R] [DecidableEq R]
+    (E : IsRREF M D) (v : Vector R m) :
+    E.toIsEchelonForm.spanContains v = true ↔
+      ∃ c : Vector R n, rowCombination M c = v := by
+  constructor
+  · exact E.toIsEchelonForm.spanContains_sound E.hasNonzeroPivots v
+  · intro h
+    unfold IsEchelonForm.spanContains
+    simpa using E.spanCoeffs_complete v h
+
 variable [Mul R] [Add R] [OfNat R 0] [OfNat R 1]
 
 /-- Find the pivot-row index for column `j`, if `j` is a pivot column. -/
@@ -593,23 +616,6 @@ private theorem nullspace_get_pivot [Lean.Grind.Ring R] (E : IsRREF M D)
       -(D.echelon[(IsEchelonForm.pivotRow E.toIsEchelonForm i)][E.toIsEchelonForm.freeCols.get k]) := by
   rw [nullspace_get]
   simpa [Matrix.col] using nullspaceMatrix_pivot E i k
-
-omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
-private theorem foldl_add_eq_acc_ring {R : Type u} [Lean.Grind.Ring R]
-    {α : Type v} (xs : List α) (f : α → R) (acc : R)
-    (hf : ∀ x ∈ xs, f x = 0) :
-    xs.foldl (fun acc x => acc + f x) acc = acc := by
-  induction xs generalizing acc with
-  | nil =>
-      simp only [List.foldl_nil]
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      have hx : f x = 0 := hf x (by simp)
-      have hxs : ∀ y ∈ xs, f y = 0 := fun y hy => hf y (List.mem_cons_of_mem _ hy)
-      rw [hx]
-      have hac : acc + (0 : R) = acc := by grind
-      rw [hac]
-      exact ih acc hxs
 
 omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
 private theorem foldl_sum_start {R : Type u} [Lean.Grind.Ring R]
@@ -860,6 +866,13 @@ def spanContains [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m) (v : Ve
     Bool :=
   let E := (rref_isRREF M).toIsEchelonForm
   E.spanContains v
+
+/-- The public `spanContains` wrapper is exactly row-span membership. -/
+theorem spanContains_iff [Lean.Grind.Field R] [DecidableEq R]
+    (M : Matrix R n m) (v : Vector R m) :
+    spanContains M v = true ↔ ∃ c : Vector R n, rowCombination M c = v := by
+  unfold spanContains
+  simpa using (rref_isRREF M).spanContains_iff v
 
 /-- The rank returned by `rref`. -/
 def rref_rank [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m) : Nat :=
