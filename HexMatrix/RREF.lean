@@ -901,6 +901,320 @@ private theorem rref_final_shape (M : Matrix R n m) :
       transform := 1
       pivots := [] } (rrefLoop_initial_shape M)
 
+/-- Proof-only canonical-pivot invariant for `rrefLoop`: every recorded pivot
+column has the canonical RREF shape — its pivot-row entry is `1` and every
+other row's entry in that column is `0`. The row index is supplied by the
+caller as any `Fin n` whose value matches the pivot row, avoiding dependent
+indexing issues when bridging between abstract and concrete row indices. -/
+private structure RrefCanonicalInvariant (state : RrefState R n m) : Prop where
+  pivot_one : ∀ (k : Nat) (hk : k < state.pivots.length) (r : Fin n),
+      r.val = k → state.echelon[r][state.pivots[k]] = 1
+  pivot_other_zero : ∀ (k : Nat) (hk : k < state.pivots.length) (r : Fin n),
+      r.val ≠ k → state.echelon[r][state.pivots[k]] = 0
+
+/-- After one pivot step (swap + scale + eliminate) the new pivot column is
+canonical at the new pivot row. -/
+private theorem rrefLoop_pivot_step_new_canonical
+    (E : Matrix R n m) (T : Matrix R n n)
+    (target pivot : Fin n) (newCol : Fin m)
+    (hpivotVal_ne : E[pivot][newCol] ≠ 0) :
+    let swappedEchelon := rowSwap E target pivot
+    let swappedTransform := rowSwap T target pivot
+    let pivotVal := swappedEchelon[target][newCol]
+    let scaledEchelon := rowScale swappedEchelon target pivotVal⁻¹
+    let scaledTransform := rowScale swappedTransform target pivotVal⁻¹
+    let eliminated := eliminateColumn scaledEchelon scaledTransform target newCol
+    eliminated.1[target][newCol] = 1 ∧
+      ∀ r : Fin n, r ≠ target → eliminated.1[r][newCol] = 0 := by
+  intro swappedEchelon _ pivotVal scaledEchelon _ _
+  have hpivotVal : pivotVal = E[pivot][newCol] := by
+    simpa [pivotVal, swappedEchelon] using
+      rowSwap_target_pivot_entry E target pivot newCol
+  have hpivotVal_nonzero : pivotVal ≠ 0 := by
+    simpa [hpivotVal] using hpivotVal_ne
+  have hscaled_target : scaledEchelon[target][newCol] = 1 := by
+    show (rowScale swappedEchelon target pivotVal⁻¹)[target][newCol] = 1
+    rw [rowScale_getElem]
+    have hinv : pivotVal⁻¹ * pivotVal = 1 :=
+      Lean.Grind.Field.inv_mul_cancel hpivotVal_nonzero
+    simpa [pivotVal] using hinv
+  refine ⟨?_, ?_⟩
+  · show (eliminateColumn scaledEchelon _ target newCol).1[target][newCol] = 1
+    rw [eliminateColumn_pivotRow scaledEchelon _ target newCol newCol]
+    exact hscaled_target
+  · intro r hr
+    show (eliminateColumn scaledEchelon _ target newCol).1[r][newCol] = 0
+    exact eliminateColumn_zero scaledEchelon _ target newCol hscaled_target r hr
+
+/-- After one pivot step (swap + scale + eliminate) an already-canonical pivot
+column at an old pivot row (distinct from the new pivot row and the discovered
+pivot row) remains canonical. -/
+private theorem rrefLoop_pivot_step_old_canonical
+    (E : Matrix R n m) (T : Matrix R n n)
+    (target pivot : Fin n) (newCol : Fin m)
+    (oldPivot : Fin n) (oldCol : Fin m)
+    (hOldTarget : oldPivot ≠ target) (hOldPivot : oldPivot ≠ pivot)
+    (hOldRowAtPivot : E[oldPivot][oldCol] = 1)
+    (hOldZero : ∀ r : Fin n, r ≠ oldPivot → E[r][oldCol] = 0) :
+    let swappedEchelon := rowSwap E target pivot
+    let swappedTransform := rowSwap T target pivot
+    let pivotVal := swappedEchelon[target][newCol]
+    let scaledEchelon := rowScale swappedEchelon target pivotVal⁻¹
+    let scaledTransform := rowScale swappedTransform target pivotVal⁻¹
+    let eliminated := eliminateColumn scaledEchelon scaledTransform target newCol
+    eliminated.1[oldPivot][oldCol] = 1 ∧
+      ∀ r : Fin n, r ≠ oldPivot → eliminated.1[r][oldCol] = 0 := by
+  intro swappedEchelon _ pivotVal scaledEchelon _ _
+  have hTarget : E[target][oldCol] = 0 :=
+    hOldZero target (Ne.symm hOldTarget)
+  have hPivot : E[pivot][oldCol] = 0 :=
+    hOldZero pivot (Ne.symm hOldPivot)
+  have hswap :=
+    rowSwap_preserve_canonical_column E oldPivot target pivot oldCol
+      hTarget hPivot hOldTarget hOldPivot hOldRowAtPivot hOldZero
+  have hswap_target_zero : swappedEchelon[target][oldCol] = 0 :=
+    hswap.2 target (Ne.symm hOldTarget)
+  have hscale :=
+    rowScale_preserve_canonical_column swappedEchelon oldPivot target oldCol
+      pivotVal⁻¹ hswap_target_zero hOldTarget hswap.1 hswap.2
+  have hscale_target_zero : scaledEchelon[target][oldCol] = 0 :=
+    hscale.2 target (Ne.symm hOldTarget)
+  exact eliminateColumn_preserve_canonical_column scaledEchelon _
+    oldPivot target oldCol newCol hOldTarget hscale_target_zero hscale.1 hscale.2
+
+/-- The `RrefCanonicalInvariant` is preserved by `rrefLoop`, provided the
+shape invariant also holds at the entry. -/
+private theorem rrefLoop_canonical :
+    ∀ (fuel col : Nat) (state : RrefState R n m),
+      RrefShapeInvariant (R := R) (n := n) (m := m) col state →
+      RrefCanonicalInvariant state →
+      RrefCanonicalInvariant
+        (rrefLoop (R := R) (n := n) (m := m) col fuel state) := by
+  intro fuel
+  induction fuel with
+  | zero =>
+      intro col state _ hcanon
+      simpa [rrefLoop] using hcanon
+  | succ fuel ih =>
+      intro col state hshape hcanon
+      unfold rrefLoop
+      by_cases hRow : state.row < n
+      · rw [dif_pos hRow]
+        by_cases hCol : col < m
+        · rw [dif_pos hCol]
+          let colFin : Fin m := ⟨col, hCol⟩
+          cases hpivot : findPivot? state.echelon colFin state.row with
+          | none =>
+              simpa [colFin, hpivot] using
+                ih (col + 1) state (hshape.mono_col (Nat.le_succ col)) hcanon
+          | some pivot =>
+              let target : Fin n := ⟨state.row, hRow⟩
+              let swappedEchelon := rowSwap state.echelon target pivot
+              let swappedTransform := rowSwap state.transform target pivot
+              let pivotVal := swappedEchelon[target][colFin]
+              let scaledEchelon := rowScale swappedEchelon target pivotVal⁻¹
+              let scaledTransform := rowScale swappedTransform target pivotVal⁻¹
+              let eliminated := eliminateColumn scaledEchelon scaledTransform target colFin
+              let nextState : RrefState R n m :=
+                { row := state.row + 1
+                  echelon := eliminated.1
+                  transform := eliminated.2
+                  pivots := state.pivots.concat colFin }
+              have hnext_shape :
+                  RrefShapeInvariant (R := R) (n := n) (m := m) (col + 1) nextState := by
+                simpa [nextState, colFin] using rrefShapeInvariant_concat (R := R)
+                  (n := n) (m := m) (col := col) (state := state) hshape hRow hCol
+                  eliminated.1 eliminated.2
+              have hpivotVal_ne : state.echelon[pivot][colFin] ≠ 0 :=
+                findPivot?_some_nonzero state.echelon colFin hpivot
+              have hpivot_ge : state.row ≤ pivot.val :=
+                findPivot?_some_ge state.echelon colFin hpivot
+              have htarget_val : target.val = state.pivots.length := by
+                simp [target, hshape.row_eq_length]
+              have hnew_step :
+                  eliminated.1[target][colFin] = 1 ∧
+                    ∀ r : Fin n, r ≠ target → eliminated.1[r][colFin] = 0 :=
+                rrefLoop_pivot_step_new_canonical state.echelon state.transform
+                  target pivot colFin hpivotVal_ne
+              obtain ⟨hnew_one, hnew_zero⟩ := hnew_step
+              -- Cache concat indexing facts.
+              have hlen_next : nextState.pivots.length = state.pivots.length + 1 := by
+                simp [nextState]
+              have hpivots_lt {k : Nat} (hkOld : k < state.pivots.length) :
+                  nextState.pivots[k]'(by simp [nextState]; omega) = state.pivots[k] := by
+                show (state.pivots.concat colFin)[k]'_ = state.pivots[k]
+                have hAppend : k < (state.pivots ++ [colFin]).length := by
+                  simp; omega
+                simpa [List.concat_eq_append] using
+                  (List.getElem_append_left (as := state.pivots) (bs := [colFin])
+                    hkOld (h' := hAppend))
+              have hpivots_last :
+                  nextState.pivots[state.pivots.length]'(by simp [nextState]) = colFin := by
+                show (state.pivots.concat colFin)[state.pivots.length]'_ = colFin
+                have hAppend :
+                    state.pivots.length < (state.pivots ++ [colFin]).length := by simp
+                simp [List.concat_eq_append,
+                  List.getElem_concat_length (l := state.pivots) (a := colFin) rfl hAppend]
+              have hnext_canon : RrefCanonicalInvariant nextState := by
+                refine ⟨?_, ?_⟩
+                · -- pivot_one for nextState
+                  intro k hk r hr_eq
+                  have hk' : k < state.pivots.length + 1 := by
+                    have := hk
+                    rw [hlen_next] at this
+                    exact this
+                  rcases Nat.lt_succ_iff_lt_or_eq.mp hk' with hkOld | hkLast
+                  · -- old pivot column k preserved
+                    have hktarget : r ≠ target := by
+                      intro h
+                      have hv : r.val = target.val := congrArg Fin.val h
+                      omega
+                    have hkpivot : r ≠ pivot := by
+                      intro h
+                      have hv : r.val = pivot.val := congrArg Fin.val h
+                      have hge : state.pivots.length ≤ pivot.val := by
+                        rw [← hshape.row_eq_length]; exact hpivot_ge
+                      omega
+                    have hOldAt : state.echelon[r][state.pivots[k]] = 1 :=
+                      hcanon.pivot_one k hkOld r hr_eq
+                    have hOldZero :
+                        ∀ s : Fin n, s ≠ r → state.echelon[s][state.pivots[k]] = 0 := by
+                      intro s hsr
+                      apply hcanon.pivot_other_zero k hkOld s
+                      intro hsval
+                      apply hsr
+                      apply Fin.ext
+                      rw [hsval, ← hr_eq]
+                    have hold_step :
+                        eliminated.1[r][state.pivots[k]] = 1 ∧
+                          ∀ s : Fin n, s ≠ r → eliminated.1[s][state.pivots[k]] = 0 :=
+                      rrefLoop_pivot_step_old_canonical state.echelon
+                        state.transform target pivot colFin r state.pivots[k]
+                        hktarget hkpivot hOldAt hOldZero
+                    show eliminated.1[r][nextState.pivots[k]] = 1
+                    have hcol :
+                        eliminated.1[r][nextState.pivots[k]] =
+                          eliminated.1[r][state.pivots[k]] :=
+                      congrArg (fun c : Fin m => eliminated.1[r][c]) (hpivots_lt hkOld)
+                    rw [hcol]
+                    exact hold_step.1
+                  · -- new pivot column at k = state.pivots.length
+                    subst hkLast
+                    have hr_target : r = target := by
+                      apply Fin.ext
+                      rw [hr_eq, htarget_val]
+                    subst hr_target
+                    show eliminated.1[target][nextState.pivots[state.pivots.length]] = 1
+                    have hcol :
+                        eliminated.1[target][nextState.pivots[state.pivots.length]] =
+                          eliminated.1[target][colFin] :=
+                      congrArg (fun c : Fin m => eliminated.1[target][c]) hpivots_last
+                    rw [hcol]
+                    exact hnew_one
+                · -- pivot_other_zero for nextState
+                  intro k hk r hr_ne
+                  have hk' : k < state.pivots.length + 1 := by
+                    have := hk
+                    rw [hlen_next] at this
+                    exact this
+                  rcases Nat.lt_succ_iff_lt_or_eq.mp hk' with hkOld | hkLast
+                  · have hkn : k < n := by
+                      have hLe : state.pivots.length ≤ n := by
+                        have := hshape.row_le_n
+                        rw [hshape.row_eq_length] at this
+                        exact this
+                      omega
+                    let pivotRowK : Fin n := ⟨k, hkn⟩
+                    have hPivotRowK_val : pivotRowK.val = k := rfl
+                    have hktarget : pivotRowK ≠ target := by
+                      intro h
+                      have hv : pivotRowK.val = target.val := congrArg Fin.val h
+                      omega
+                    have hkpivot : pivotRowK ≠ pivot := by
+                      intro h
+                      have hv : pivotRowK.val = pivot.val := congrArg Fin.val h
+                      have hge : state.pivots.length ≤ pivot.val := by
+                        rw [← hshape.row_eq_length]; exact hpivot_ge
+                      omega
+                    have hOldAt : state.echelon[pivotRowK][state.pivots[k]] = 1 :=
+                      hcanon.pivot_one k hkOld pivotRowK hPivotRowK_val
+                    have hOldZero :
+                        ∀ s : Fin n, s ≠ pivotRowK →
+                          state.echelon[s][state.pivots[k]] = 0 := by
+                      intro s hs
+                      apply hcanon.pivot_other_zero k hkOld s
+                      intro hsval
+                      exact hs (Fin.ext hsval)
+                    have hold_step :
+                        eliminated.1[pivotRowK][state.pivots[k]] = 1 ∧
+                          ∀ s : Fin n, s ≠ pivotRowK →
+                            eliminated.1[s][state.pivots[k]] = 0 :=
+                      rrefLoop_pivot_step_old_canonical state.echelon
+                        state.transform target pivot colFin pivotRowK state.pivots[k]
+                        hktarget hkpivot hOldAt hOldZero
+                    show eliminated.1[r][nextState.pivots[k]] = 0
+                    have hcol :
+                        eliminated.1[r][nextState.pivots[k]] =
+                          eliminated.1[r][state.pivots[k]] :=
+                      congrArg (fun c : Fin m => eliminated.1[r][c]) (hpivots_lt hkOld)
+                    rw [hcol]
+                    apply hold_step.2
+                    intro hrk
+                    apply hr_ne
+                    rw [hrk]
+                  · -- new pivot column at k = state.pivots.length
+                    subst hkLast
+                    have hr_target : r ≠ target := by
+                      intro hrt
+                      apply hr_ne
+                      rw [hrt]
+                      exact htarget_val
+                    show eliminated.1[r][nextState.pivots[state.pivots.length]] = 0
+                    have hcol :
+                        eliminated.1[r][nextState.pivots[state.pivots.length]] =
+                          eliminated.1[r][colFin] :=
+                      congrArg (fun c : Fin m => eliminated.1[r][c]) hpivots_last
+                    rw [hcol]
+                    exact hnew_zero r hr_target
+              -- Apply IH to nextState.
+              simpa [hpivot, colFin, target, swappedEchelon, swappedTransform,
+                pivotVal, scaledEchelon, scaledTransform, eliminated, nextState]
+                using ih (col + 1) nextState hnext_shape hnext_canon
+        · rw [dif_neg hCol]
+          exact hcanon
+      · rw [dif_neg hRow]
+        exact hcanon
+
+omit [DecidableEq R] in
+/-- The initial `rref` state has the canonical-pivot invariant vacuously. -/
+private theorem rrefLoop_initial_canonical (M : Matrix R n m) :
+    RrefCanonicalInvariant (R := R) (n := n) (m := m)
+      { row := 0
+        echelon := M
+        transform := 1
+        pivots := [] } := by
+  refine ⟨?_, ?_⟩
+  · intro k hk _
+    cases hk
+  · intro k hk _ _
+    cases hk
+
+/-- The final `rref` state has the canonical-pivot invariant. -/
+private theorem rref_final_canonical (M : Matrix R n m) :
+    RrefCanonicalInvariant (R := R) (n := n) (m := m)
+      (rrefLoop 0 m
+        { row := 0
+          echelon := M
+          transform := 1
+          pivots := [] }) :=
+  rrefLoop_canonical (R := R) (n := n) (m := m) m 0
+    { row := 0
+      echelon := M
+      transform := 1
+      pivots := [] }
+    (rrefLoop_initial_shape M)
+    (rrefLoop_initial_canonical M)
+
 /-- `rrefLoop` preserves existence of a left inverse for the transform. -/
 private theorem rrefLoop_left_inverse_preserve (col fuel : Nat)
     (state : RrefState R n m)
@@ -1095,6 +1409,55 @@ private theorem rref_pivotCols_sorted (M : Matrix R n m) :
     (⟨final.pivots.toArray, by simp⟩ : Vector (Fin m) final.pivots.length).get j
   simpa [Vector.get, List.getElem_toArray] using
     hshape.pivots_sorted i.val j.val i.isLt j.isLt hij
+
+/-- Final `rref` data has a canonical entry of `1` at every pivot row, indexed
+by any `Fin n` whose value matches the pivot index. -/
+private theorem rref_pivot_one (M : Matrix R n m)
+    (i : Fin (rref M).rank) (r : Fin n) (hr : r.val = i.val) :
+    (rref M).echelon[r][(rref M).pivotCols.get i] = 1 := by
+  have hcanon := rref_final_canonical M
+  have hilt : i.val < (rrefLoop 0 m
+      { row := 0, echelon := M, transform := 1, pivots := [] }).pivots.length :=
+    i.isLt
+  have hpivot_one := hcanon.pivot_one i.val hilt r hr
+  have hpiv :
+      (rref M).pivotCols.get i =
+        (rrefLoop 0 m
+          { row := 0, echelon := M, transform := 1, pivots := [] }).pivots[i.val]'hilt := by
+    show (⟨_, _⟩ : Vector (Fin m) _).get i = _
+    simp [Vector.get, List.getElem_toArray]
+  have hbridge :
+      (rref M).echelon[r][(rref M).pivotCols.get i] =
+        (rref M).echelon[r][(rrefLoop 0 m
+          { row := 0, echelon := M, transform := 1, pivots := [] }).pivots[i.val]'hilt] :=
+    congrArg (fun c : Fin m => (rref M).echelon[r][c]) hpiv
+  rw [hbridge]
+  exact hpivot_one
+
+/-- Final `rref` data has a canonical entry of `0` at every non-pivot row in
+each pivot column, indexed by any `Fin n` whose value differs from the pivot
+index. -/
+private theorem rref_pivot_other_zero (M : Matrix R n m)
+    (i : Fin (rref M).rank) (r : Fin n) (hr : r.val ≠ i.val) :
+    (rref M).echelon[r][(rref M).pivotCols.get i] = 0 := by
+  have hcanon := rref_final_canonical M
+  have hilt : i.val < (rrefLoop 0 m
+      { row := 0, echelon := M, transform := 1, pivots := [] }).pivots.length :=
+    i.isLt
+  have hpivot_zero := hcanon.pivot_other_zero i.val hilt r hr
+  have hpiv :
+      (rref M).pivotCols.get i =
+        (rrefLoop 0 m
+          { row := 0, echelon := M, transform := 1, pivots := [] }).pivots[i.val]'hilt := by
+    show (⟨_, _⟩ : Vector (Fin m) _).get i = _
+    simp [Vector.get, List.getElem_toArray]
+  have hbridge :
+      (rref M).echelon[r][(rref M).pivotCols.get i] =
+        (rref M).echelon[r][(rrefLoop 0 m
+          { row := 0, echelon := M, transform := 1, pivots := [] }).pivots[i.val]'hilt] :=
+    congrArg (fun c : Fin m => (rref M).echelon[r][c]) hpiv
+  rw [hbridge]
+  exact hpivot_zero
 
 /-- Final `rref` row transform has a left inverse. -/
 private theorem rref_transform_left_inverse (M : Matrix R n m) :
