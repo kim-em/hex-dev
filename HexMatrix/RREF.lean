@@ -1,4 +1,5 @@
 import Std
+import Batteries.Data.Vector.Lemmas
 import HexMatrix.RowEchelon
 
 /-!
@@ -293,10 +294,58 @@ def nullspaceMatrix [Lean.Grind.Ring R] (E : IsRREF M D) :
           -D.echelon[(IsEchelonForm.pivotRow E.toIsEchelonForm i)][freeCols.get k]
       | none => 0
 
+private theorem nullspaceMatrix_free [Lean.Grind.Ring R] (E : IsRREF M D)
+    (k : Fin (m - D.rank)) :
+    E.nullspaceMatrix[E.toIsEchelonForm.freeCols.get k][k] = 1 := by
+  unfold nullspaceMatrix Matrix.ofFn
+  simp
+
+private theorem nullspaceMatrix_free_ne [Lean.Grind.Ring R] (E : IsRREF M D)
+    {k l : Fin (m - D.rank)} (hkl : k ≠ l) :
+    E.nullspaceMatrix[E.toIsEchelonForm.freeCols.get l][k] = 0 := by
+  unfold nullspaceMatrix Matrix.ofFn
+  have hne : E.toIsEchelonForm.freeCols.get l ≠ E.toIsEchelonForm.freeCols.get k := by
+    intro h
+    exact hkl ((E.toIsEchelonForm.freeCols_injective h).symm)
+  simp [hne, pivotIndex?_free_none E.toIsEchelonForm l]
+
+private theorem nullspaceMatrix_pivot [Lean.Grind.Ring R] (E : IsRREF M D)
+    (i : Fin D.rank) (k : Fin (m - D.rank)) :
+    E.nullspaceMatrix[D.pivotCols.get i][k] =
+      -(D.echelon[(IsEchelonForm.pivotRow E.toIsEchelonForm i)][E.toIsEchelonForm.freeCols.get k]) := by
+  unfold nullspaceMatrix Matrix.ofFn
+  simp [E.toIsEchelonForm.pivotCols_disjoint_freeCols i k,
+    pivotIndex?_pivot E.toIsEchelonForm i]
+
 /-- The individual nullspace basis vectors. -/
 def nullspace [Lean.Grind.Ring R] (E : IsRREF M D) :
     Vector (Vector R m) (m - D.rank) :=
   Vector.ofFn fun k => Matrix.col (E.nullspaceMatrix) k
+
+private theorem nullspace_get [Lean.Grind.Ring R] (E : IsRREF M D)
+    (k : Fin (m - D.rank)) :
+    E.nullspace.get k = Matrix.col E.nullspaceMatrix k := by
+  unfold nullspace
+  rw [Vector.get_ofFn]
+
+private theorem nullspace_get_free [Lean.Grind.Ring R] (E : IsRREF M D)
+    (k : Fin (m - D.rank)) :
+    (E.nullspace.get k)[E.toIsEchelonForm.freeCols.get k] = 1 := by
+  rw [nullspace_get]
+  simpa [Matrix.col] using nullspaceMatrix_free E k
+
+private theorem nullspace_get_free_ne [Lean.Grind.Ring R] (E : IsRREF M D)
+    {k l : Fin (m - D.rank)} (hkl : k ≠ l) :
+    (E.nullspace.get k)[E.toIsEchelonForm.freeCols.get l] = 0 := by
+  rw [nullspace_get]
+  simpa [Matrix.col] using nullspaceMatrix_free_ne E hkl
+
+private theorem nullspace_get_pivot [Lean.Grind.Ring R] (E : IsRREF M D)
+    (i : Fin D.rank) (k : Fin (m - D.rank)) :
+    (E.nullspace.get k)[D.pivotCols.get i] =
+      -(D.echelon[(IsEchelonForm.pivotRow E.toIsEchelonForm i)][E.toIsEchelonForm.freeCols.get k]) := by
+  rw [nullspace_get]
+  simpa [Matrix.col] using nullspaceMatrix_pivot E i k
 
 /-- Every basis vector returned by `nullspace` lies in the nullspace of `M`. -/
 theorem nullspace_sound [Lean.Grind.Ring R] (E : IsRREF M D) (k : Fin (m - D.rank)) :
