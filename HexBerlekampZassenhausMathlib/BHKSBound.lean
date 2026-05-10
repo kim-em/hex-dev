@@ -146,6 +146,79 @@ theorem bhksPaperLogFactorReal_le_log2Factor (f : Hex.ZPoly) :
   sorry
 
 /--
+The BHKS paper threshold is bounded by the packaged SPEC Group-D integer cap.
+
+This is the factor-comparison assembly used by later termination work: the
+degree factor is definitionally the packaged degree, the project `C ≤ 2`
+assumption controls the constant factor, and the analytic coefficient/log
+factor bridges supply the remaining comparisons.
+-/
+theorem bhksPaperThresholdReal_le_thresholdNatBound
+    (f : Hex.ZPoly) (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2) :
+    bhksPaperThresholdReal f C ≤ (bhksThresholdNatBound f : ℝ) := by
+  have hdeg :
+      bhksPaperDegreeFactorReal f ≤ (bhksDegreeFactor f : ℝ) := by
+    rw [bhksPaperDegreeFactorReal_eq_natCast]
+  have hconst :
+      bhksPaperConstantFactorReal f C ≤ (bhksFourPowFactor f : ℝ) :=
+    bhksPaperConstantFactorReal_le_fourPowFactor f C hC_nonneg hC
+  have hcoeff :
+      bhksPaperCoeffNormFactorReal f ≤ (bhksCoeffNormFactor f : ℝ) :=
+    bhksPaperCoeffNormFactorReal_le_coeffNormFactor f
+  have hlog :
+      bhksPaperLogFactorReal f ≤ (bhksLog2Factor f : ℝ) :=
+    bhksPaperLogFactorReal_le_log2Factor f
+  have hdeg_nonneg : 0 ≤ bhksPaperDegreeFactorReal f := by
+    rw [bhksPaperDegreeFactorReal_eq_natCast]
+    exact Nat.cast_nonneg _
+  have hconst_nonneg : 0 ≤ bhksPaperConstantFactorReal f C := by
+    exact pow_nonneg (by nlinarith : 0 ≤ 2 * C) _
+  have hcoeff_nonneg : 0 ≤ bhksPaperCoeffNormFactorReal f := by
+    unfold bhksPaperCoeffNormFactorReal
+    exact pow_nonneg (by
+      unfold HexPolyZMathlib.l2norm
+      exact Real.sqrt_nonneg _) _
+  have hdeg_const :
+      bhksPaperDegreeFactorReal f * bhksPaperConstantFactorReal f C ≤
+        (bhksDegreeFactor f : ℝ) * (bhksFourPowFactor f : ℝ) :=
+    mul_le_mul hdeg hconst hconst_nonneg (Nat.cast_nonneg _)
+  have hprefix :
+      bhksPaperDegreeFactorReal f * bhksPaperConstantFactorReal f C *
+          bhksPaperCoeffNormFactorReal f ≤
+        (bhksDegreeFactor f : ℝ) * (bhksFourPowFactor f : ℝ) *
+          (bhksCoeffNormFactor f : ℝ) :=
+    mul_le_mul hdeg_const hcoeff hcoeff_nonneg
+      (mul_nonneg (Nat.cast_nonneg _) (Nat.cast_nonneg _))
+  have hproduct :
+      bhksPaperDegreeFactorReal f * bhksPaperConstantFactorReal f C *
+          bhksPaperCoeffNormFactorReal f * bhksPaperLogFactorReal f ≤
+        (bhksDegreeFactor f : ℝ) * (bhksFourPowFactor f : ℝ) *
+          (bhksCoeffNormFactor f : ℝ) * (bhksLog2Factor f : ℝ) :=
+    le_trans
+      (mul_le_mul_of_nonneg_left hlog
+        (mul_nonneg (mul_nonneg hdeg_nonneg hconst_nonneg) hcoeff_nonneg))
+      (mul_le_mul_of_nonneg_right hprefix (Nat.cast_nonneg _))
+  calc
+    bhksPaperThresholdReal f C ≤
+        (bhksDegreeFactor f : ℝ) * (bhksFourPowFactor f : ℝ) *
+          (bhksCoeffNormFactor f : ℝ) * (bhksLog2Factor f : ℝ) := by
+      simpa [bhksPaperThresholdReal, mul_assoc] using hproduct
+    _ ≤ (bhksThresholdNatBound f : ℝ) := by
+      exact_mod_cast
+        (Nat.le_add_left
+          (bhksDegreeFactor f * bhksFourPowFactor f *
+            bhksCoeffNormFactor f * bhksLog2Factor f) 1)
+
+/--
+The BHKS paper threshold is bounded by the executable precision cap.
+-/
+theorem bhksPaperThresholdReal_le_bhksBound
+    (f : Hex.ZPoly) (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2) :
+    bhksPaperThresholdReal f C ≤ (Hex.bhksBound f : ℝ) :=
+  le_trans (bhksPaperThresholdReal_le_thresholdNatBound f C hC_nonneg hC)
+    (bhksThresholdNatBound_real_le_bhksBound f)
+
+/--
 The packaged BHKS cap remains available alongside the executable Mignotte
 coefficient bound through a single max expression.  This lightweight bridge is
 useful for later proofs that need one precision dominating both reconstruction
