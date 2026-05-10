@@ -1,3 +1,4 @@
+import HexBerlekampZassenhaus.Basic
 import HexBerlekampZassenhausMathlib.Resultant
 
 /-!
@@ -122,6 +123,98 @@ theorem badVector_resultant_bounds
     by simpa [D, resultant] using D.abs_resultant_le_l2norm_pow⟩
 
 end BadVectorResultantData
+
+/--
+Proof-facing witness tying an executable BHKS bad vector back to the abstract
+integer-resultant data used by the termination proof.
+
+The executable fields name the original `ZPoly`, the Hensel lift data, the
+all-coefficients CLD lattice, the projected `L'` rows, and the selected local
+factor index/degree.  The auxiliary polynomial is stored as a `Hex.ZPoly`; the
+Mathlib-facing polynomial used in resultants is `auxiliaryPolynomial`.
+-/
+structure ExecutableBadVectorWitness where
+  input : Hex.ZPoly
+  liftData : Hex.LiftData
+  lattice : Hex.BhksLatticeBasis
+  projectedRows : Hex.BhksProjectedRows
+  localFactorIndex : Nat
+  localFactorDegree : Nat
+  H : Hex.ZPoly
+  lattice_matches_lift :
+    lattice =
+      Hex.bhksLatticeBasis input liftData.p liftData.k liftData.liftedFactors
+  projected_factor_count :
+    projectedRows.factorCount = lattice.factorCount
+
+namespace ExecutableBadVectorWitness
+
+/-- The input polynomial transported to Mathlib's `Polynomial ℤ`. -/
+def inputPolynomial (W : ExecutableBadVectorWitness) : Polynomial ℤ :=
+  HexPolyZMathlib.toPolynomial W.input
+
+/-- The auxiliary bad-vector polynomial transported to Mathlib's `Polynomial ℤ`. -/
+def auxiliaryPolynomial (W : ExecutableBadVectorWitness) : Polynomial ℤ :=
+  HexPolyZMathlib.toPolynomial W.H
+
+/-- The selected lifted factor, if the executable array contains the index. -/
+def selectedLiftedFactor (W : ExecutableBadVectorWitness) : Hex.ZPoly :=
+  W.liftData.liftedFactors.getD W.localFactorIndex 0
+
+/--
+Package an executable bad-vector witness and the remaining BHKS local
+coprimality/divisibility hypotheses as abstract resultant data.
+-/
+def toResultantData
+    (W : ExecutableBadVectorWitness)
+    (hp : 0 < W.liftData.p)
+    (hd : 0 < W.localFactorDegree)
+    (hcoprime :
+      IsCoprime
+        ((W.inputPolynomial).map (Int.castRingHom ℚ))
+        ((W.auxiliaryPolynomial).map (Int.castRingHom ℚ)))
+    (hdiv :
+      ((W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : Nat) : ℤ) ∣
+        Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial) :
+    BadVectorResultantData where
+  f := W.inputPolynomial
+  H := W.auxiliaryPolynomial
+  p := W.liftData.p
+  a := W.liftData.k
+  d := W.localFactorDegree
+  p_pos := hp
+  d_pos := hd
+  coprime_over_rat := hcoprime
+  resultant_divisible := hdiv
+
+/--
+Executable bad-vector packaging theorem: once later BHKS work supplies the
+local coprimality and modular-divisibility hypotheses, the existing resultant
+lower/upper-bound theorem applies to the transported executable data.
+-/
+theorem badVector_resultant_bounds
+    (W : ExecutableBadVectorWitness)
+    (hp : 0 < W.liftData.p)
+    (hd : 0 < W.localFactorDegree)
+    (hcoprime :
+      IsCoprime
+        ((W.inputPolynomial).map (Int.castRingHom ℚ))
+        ((W.auxiliaryPolynomial).map (Int.castRingHom ℚ)))
+    (hdiv :
+      ((W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : Nat) : ℤ) ∣
+        Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial) :
+    (W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : ℝ) ≤
+      |((Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial : ℤ) : ℝ)| ∧
+    |((Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial : ℤ) : ℝ)| ≤
+      (HexPolyZMathlib.l2norm W.inputPolynomial) ^ W.auxiliaryPolynomial.natDegree *
+        (HexPolyZMathlib.l2norm W.auxiliaryPolynomial) ^ W.inputPolynomial.natDegree := by
+  simpa [inputPolynomial, auxiliaryPolynomial] using
+    BadVectorResultantData.badVector_resultant_bounds
+      W.inputPolynomial W.auxiliaryPolynomial
+      W.liftData.p W.liftData.k W.localFactorDegree
+      hp hd hcoprime hdiv
+
+end ExecutableBadVectorWitness
 
 end
 
