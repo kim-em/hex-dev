@@ -2365,6 +2365,95 @@ theorem monomial_mul_monomial {S : Type _}
     rw [if_neg hnmk]
     rfl
 
+/-- Multiplication by a unit-coefficient monomial shifts coefficients upward. -/
+theorem monomial_one_mul_poly_eq_shift {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    (shift : Nat) (q : DensePoly S) :
+    monomial shift 1 * q = DensePoly.shift shift q := by
+  apply ext_coeff
+  intro n
+  rw [coeff_mul, mulCoeffSum_eq_diagonal, diagonalSum_eq_degree_bound]
+  rw [coeff_shift]
+  have hterm : ∀ i,
+      diagonalMulCoeffTerm (monomial shift 1) q n i =
+        if i = shift ∧ shift ≤ n then q.coeff (n - shift) else 0 := by
+    intro i
+    unfold diagonalMulCoeffTerm
+    rw [coeff_monomial]
+    by_cases hni : n < i
+    · have hcond : ¬(i = shift ∧ shift ≤ n) := by
+        intro h
+        omega
+      simp [hni, hcond]
+    · have hile : i ≤ n := by omega
+      by_cases hishift : i = shift
+      · subst i
+        simp [hni, hile]
+        grind
+      · simp [hni, hishift]
+        exact Lean.Grind.Semiring.zero_mul _
+  have hfold : ∀ (xs : List Nat) (acc : S),
+      xs.foldl (fun acc i =>
+          acc + diagonalMulCoeffTerm (monomial shift 1) q n i) acc =
+        xs.foldl (fun acc i =>
+          acc + if i = shift ∧ shift ≤ n then q.coeff (n - shift) else 0) acc := by
+    intro xs
+    induction xs with
+    | nil =>
+        intro acc
+        rfl
+    | cons i xs ih =>
+        intro acc
+        simp only [List.foldl_cons]
+        rw [hterm i]
+        exact ih _
+  rw [hfold (List.range (n + 1)) 0]
+  by_cases hshift : shift ≤ n
+  · rw [if_neg (by omega : ¬n < shift)]
+    have hsimp : ∀ i,
+        (if i = shift ∧ shift ≤ n then q.coeff (n - shift) else 0) =
+          if i = shift then q.coeff (n - shift) else 0 := by
+      intro i
+      simp [hshift]
+    have hfold2 : ∀ (xs : List Nat) (acc : S),
+        xs.foldl (fun acc i =>
+            acc + if i = shift ∧ shift ≤ n then q.coeff (n - shift) else 0) acc =
+          xs.foldl (fun acc i =>
+            acc + if i = shift then q.coeff (n - shift) else 0) acc := by
+      intro xs
+      induction xs with
+      | nil =>
+          intro acc
+          rfl
+      | cons i xs ih =>
+          intro acc
+          simp only [List.foldl_cons]
+          rw [hsimp i]
+          exact ih _
+    rw [hfold2 (List.range (n + 1)) 0]
+    rw [fold_single_index]
+    rw [if_pos (by omega : shift < n + 1)]
+  · rw [if_pos (by omega : n < shift)]
+    have hzero_fold : ∀ (xs : List Nat) (acc : S),
+        xs.foldl (fun acc i =>
+            acc + if i = shift ∧ shift ≤ n then q.coeff (n - shift) else 0) acc = acc := by
+      intro xs
+      induction xs with
+      | nil =>
+          intro acc
+          rfl
+      | cons i xs ih =>
+          intro acc
+          simp only [List.foldl_cons]
+          have hzero :
+              (if i = shift ∧ shift ≤ n then q.coeff (n - shift) else 0) = 0 := by
+            simp [hshift]
+          rw [hzero]
+          rw [show acc + (0 : S) = acc by grind]
+          exact ih _
+    rw [hzero_fold]
+    rfl
+
 theorem neg_mul_right_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) :
