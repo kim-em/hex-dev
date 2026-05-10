@@ -2687,6 +2687,204 @@ private theorem dvd_one_of_mul_right_dvd_right
   rw [hd_const, ← scale_one_poly]
   exact dvd_scale_self_of_ne_zero hcoeff_ne (1 : FpPoly p)
 
+private theorem ne_zero_of_isZero_false {f : FpPoly p}
+    (hf : f.isZero = false) :
+    f ≠ 0 := by
+  intro hzero
+  rw [hzero] at hf
+  change (0 : FpPoly p).isZero = false at hf
+  have hzero_isZero : (0 : FpPoly p).isZero = true := rfl
+  rw [hzero_isZero] at hf
+  cases hf
+
+private theorem mul_ne_zero_of_ne_zero
+    [ZMod64.PrimeModulus p] {a b : FpPoly p}
+    (ha : a ≠ 0) (hb : b ≠ 0) :
+    a * b ≠ 0 := by
+  intro hmul
+  have hdeg_mul := degree?_mul_eq_add_degree? a b ha hb
+  rw [hmul] at hdeg_mul
+  change 0 = a.degree?.getD 0 + b.degree?.getD 0 at hdeg_mul
+  have ha_degree_zero : a.degree?.getD 0 = 0 := by omega
+  have hb_degree_zero : b.degree?.getD 0 = 0 := by omega
+  have ha_size_pos : 0 < a.size := by
+    apply Nat.pos_of_ne_zero
+    intro hsize
+    apply ha
+    apply DensePoly.ext_coeff
+    intro i
+    rw [DensePoly.coeff_zero]
+    exact DensePoly.coeff_eq_zero_of_size_le a (by omega)
+  have hb_size_pos : 0 < b.size := by
+    apply Nat.pos_of_ne_zero
+    intro hsize
+    apply hb
+    apply DensePoly.ext_coeff
+    intro i
+    rw [DensePoly.coeff_zero]
+    exact DensePoly.coeff_eq_zero_of_size_le b (by omega)
+  have ha_size_ne : a.size ≠ 0 := Nat.pos_iff_ne_zero.mp ha_size_pos
+  have hb_size_ne : b.size ≠ 0 := Nat.pos_iff_ne_zero.mp hb_size_pos
+  have ha_degree : a.degree? = some (a.size - 1) := by
+    unfold DensePoly.degree?
+    simp [ha_size_ne]
+  have hb_degree : b.degree? = some (b.size - 1) := by
+    unfold DensePoly.degree?
+    simp [hb_size_ne]
+  have ha_size_one : a.size = 1 := by
+    rw [ha_degree] at ha_degree_zero
+    simp at ha_degree_zero
+    omega
+  have hb_size_one : b.size = 1 := by
+    rw [hb_degree] at hb_degree_zero
+    simp at hb_degree_zero
+    omega
+  have ha_coeff_ne : a.coeff 0 ≠ 0 := by
+    have hlast := DensePoly.coeff_last_ne_zero_of_pos_size a ha_size_pos
+    simpa [ha_size_one] using hlast
+  have hb_coeff_ne : b.coeff 0 ≠ 0 := by
+    have hlast := DensePoly.coeff_last_ne_zero_of_pos_size b hb_size_pos
+    simpa [hb_size_one] using hlast
+  have hprod_ne : a.coeff 0 * b.coeff 0 ≠ 0 := by
+    intro hprod
+    rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero
+        (ZMod64.PrimeModulus.prime (p := p)) hprod with hh | hh
+    · exact ha_coeff_ne hh
+    · exact hb_coeff_ne hh
+  have hcoeff := congrArg (fun f : FpPoly p => f.coeff 0) hmul
+  change (a * b).coeff 0 = (0 : FpPoly p).coeff 0 at hcoeff
+  rw [DensePoly.coeff_mul, DensePoly.coeff_zero] at hcoeff
+  unfold DensePoly.mulCoeffSum at hcoeff
+  rw [ha_size_one, hb_size_one] at hcoeff
+  unfold DensePoly.mulCoeffStep at hcoeff
+  simp at hcoeff
+  change (0 : ZMod64 p) + a.coeff 0 * b.coeff 0 = 0 at hcoeff
+  rw [zmod64_zero_add_coeff] at hcoeff
+  exact hprod_ne hcoeff
+
+private theorem powLinear_ne_zero
+    [ZMod64.PrimeModulus p] {d : FpPoly p}
+    (hd : d ≠ 0) :
+    ∀ n, powLinear d n ≠ 0 := by
+  intro n
+  induction n with
+  | zero =>
+      intro hone
+      have hcoeff := congrArg (fun f : FpPoly p => f.coeff 0) hone
+      change (1 : FpPoly p).coeff 0 = (0 : FpPoly p).coeff 0 at hcoeff
+      change (DensePoly.C (1 : ZMod64 p)).coeff 0 = (0 : FpPoly p).coeff 0 at hcoeff
+      rw [DensePoly.coeff_C, DensePoly.coeff_zero] at hcoeff
+      exact zmod64_one_ne_zero_of_prime
+        (ZMod64.PrimeModulus.prime (p := p)) hcoeff
+  | succ n ih =>
+      change powLinear d n * d ≠ 0
+      exact mul_ne_zero_of_ne_zero ih hd
+
+private theorem pow_ne_zero
+    [ZMod64.PrimeModulus p] {d : FpPoly p}
+    (hd : d ≠ 0) (n : Nat) :
+    pow d n ≠ 0 := by
+  rw [pow_eq_powLinear]
+  exact powLinear_ne_zero hd n
+
+private theorem powLinear_degree?_getD
+    [ZMod64.PrimeModulus p] {d : FpPoly p}
+    (hd : d ≠ 0) :
+    ∀ n, (powLinear d n).degree?.getD 0 = n * d.degree?.getD 0 := by
+  intro n
+  induction n with
+  | zero =>
+      change (1 : FpPoly p).degree?.getD 0 = 0 * d.degree?.getD 0
+      change (DensePoly.C (1 : ZMod64 p)).degree?.getD 0 = 0 * d.degree?.getD 0
+      rw [DensePoly.degree?_C_getD]
+      simp
+  | succ n ih =>
+      change (powLinear d n * d).degree?.getD 0 =
+        (n + 1) * d.degree?.getD 0
+      rw [degree?_mul_eq_add_degree? (powLinear d n) d
+        (powLinear_ne_zero hd n) hd, ih, Nat.succ_mul]
+
+private theorem pow_degree?_getD
+    [ZMod64.PrimeModulus p] {d : FpPoly p}
+    (hd : d ≠ 0) (n : Nat) :
+    (pow d n).degree?.getD 0 = n * d.degree?.getD 0 := by
+  rw [pow_eq_powLinear]
+  exact powLinear_degree?_getD hd n
+
+private theorem dvd_one_of_all_powers_dvd_nonzero
+    [ZMod64.PrimeModulus p] {d g : FpPoly p}
+    (hg : g.isZero = false)
+    (hall : ∀ n : Nat, pow d n ∣ g) :
+    d ∣ (1 : FpPoly p) := by
+  have hg_ne : g ≠ 0 := ne_zero_of_isZero_false hg
+  have hd_ne : d ≠ 0 := by
+    intro hd
+    rcases hall 1 with ⟨q, hq⟩
+    apply hg_ne
+    rw [pow_one, hd, zero_mul] at hq
+    exact hq
+  have hd_degree_zero : d.degree?.getD 0 = 0 := by
+    by_cases hdeg_zero : d.degree?.getD 0 = 0
+    · exact hdeg_zero
+    · have hdeg_pos : 0 < d.degree?.getD 0 := Nat.pos_of_ne_zero hdeg_zero
+      let n := g.degree?.getD 0 + 1
+      rcases hall n with ⟨q, hq⟩
+      have hq_ne : q ≠ 0 := by
+        intro hq_zero
+        apply hg_ne
+        rw [hq, hq_zero, mul_zero]
+      have hpow_ne : pow d n ≠ 0 := pow_ne_zero hd_ne n
+      have hdeg_mul := degree?_mul_eq_add_degree? (pow d n) q hpow_ne hq_ne
+      have hdeg_pow := pow_degree?_getD hd_ne n
+      have hdeg_eq :
+          g.degree?.getD 0 = (pow d n * q).degree?.getD 0 := by
+        rw [hq]
+      rw [hdeg_mul, hdeg_pow] at hdeg_eq
+      have hpow_large : g.degree?.getD 0 < n * d.degree?.getD 0 := by
+        have hmul_ge :
+            g.degree?.getD 0 + 1 ≤
+              (g.degree?.getD 0 + 1) * d.degree?.getD 0 := by
+          exact Nat.le_mul_of_pos_right (g.degree?.getD 0 + 1) hdeg_pos
+        dsimp [n]
+        exact Nat.lt_of_lt_of_le (Nat.lt_succ_self _) hmul_ge
+      have hpow_le : n * d.degree?.getD 0 ≤ g.degree?.getD 0 := by
+        omega
+      exact False.elim ((Nat.not_lt_of_ge hpow_le) hpow_large)
+  have hd_size_pos : 0 < d.size := by
+    apply Nat.pos_of_ne_zero
+    intro hsize
+    apply hd_ne
+    apply DensePoly.ext_coeff
+    intro n
+    rw [DensePoly.coeff_zero]
+    exact DensePoly.coeff_eq_zero_of_size_le d (by omega)
+  have hd_size_ne : d.size ≠ 0 := Nat.pos_iff_ne_zero.mp hd_size_pos
+  have hd_degree : d.degree? = some (d.size - 1) := by
+    unfold DensePoly.degree?
+    simp [hd_size_ne]
+  have hd_size_one : d.size = 1 := by
+    rw [hd_degree] at hd_degree_zero
+    simp at hd_degree_zero
+    omega
+  have hcoeff_ne : d.coeff 0 ≠ 0 := by
+    have hlast := DensePoly.coeff_last_ne_zero_of_pos_size d hd_size_pos
+    simpa [hd_size_one] using hlast
+  have hd_const : d = DensePoly.C (d.coeff 0) := by
+    apply DensePoly.ext_coeff
+    intro n
+    cases n with
+    | zero =>
+        rw [DensePoly.coeff_C]
+        simp
+    | succ n =>
+        have hsize_le : d.size ≤ n + 1 := by
+          rw [hd_size_one]
+          omega
+        rw [DensePoly.coeff_eq_zero_of_size_le d hsize_le, DensePoly.coeff_C]
+        simp
+  rw [hd_const, ← scale_one_poly]
+  exact dvd_scale_self_of_ne_zero hcoeff_ne (1 : FpPoly p)
+
 private theorem normalizeMonic_eq_one_of_dvd_one
     [ZMod64.PrimeModulus p] {g : FpPoly p}
     (hdiv : g ∣ (1 : FpPoly p)) :
