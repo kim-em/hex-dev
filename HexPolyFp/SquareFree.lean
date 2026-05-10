@@ -3086,6 +3086,55 @@ private def yunFactorsContributionResidualDerivativeZero
   isOne contribution.2 = false →
     (DensePoly.derivative contribution.2).isZero = true
 
+private def yunFactorsContributionResidualComplete
+    (c w : FpPoly p) (multiplicity : Nat) : Nat → Prop
+  | 0 =>
+      isOne w = false → (DensePoly.derivative w).isZero = true
+  | fuel + 1 =>
+      if isOne c then
+        isOne w = false → (DensePoly.derivative w).isZero = true
+      else
+        let y := DensePoly.gcd c w
+        yunFactorsContributionResidualComplete y (w / y) (multiplicity + 1) fuel
+
+private theorem yunFactorsContributionResidualDerivativeZero_of_complete
+    (c w : FpPoly p) (multiplicity fuel : Nat)
+    (hcomplete :
+      yunFactorsContributionResidualComplete c w multiplicity fuel) :
+    yunFactorsContributionResidualDerivativeZero c w multiplicity fuel := by
+  induction fuel generalizing c w multiplicity with
+  | zero =>
+      intro hrepeated
+      simpa [yunFactorsContributionResidualDerivativeZero,
+        yunFactorsContributionResidualComplete, yunFactorsContribution]
+        using hcomplete hrepeated
+  | succ fuel ih =>
+      intro hrepeated
+      by_cases hc : isOne c = true
+      · have hcomplete_here :
+            isOne w = false → (DensePoly.derivative w).isZero = true := by
+          simpa [yunFactorsContributionResidualComplete, hc] using hcomplete
+        have hrepeated_here : isOne w = false := by
+          simpa [yunFactorsContribution, hc] using hrepeated
+        simpa [yunFactorsContributionResidualDerivativeZero,
+          yunFactorsContribution, hc] using hcomplete_here hrepeated_here
+      · let y := DensePoly.gcd c w
+        have hc_false : isOne c = false := by
+          cases h : isOne c
+          · rfl
+          · exact False.elim (hc h)
+        have hcomplete_tail :
+            yunFactorsContributionResidualComplete y (w / y) (multiplicity + 1) fuel := by
+          simpa [yunFactorsContributionResidualComplete, hc_false, y] using hcomplete
+        have htail :
+            yunFactorsContributionResidualDerivativeZero y (w / y) (multiplicity + 1) fuel :=
+          ih y (w / y) (multiplicity + 1) hcomplete_tail
+        have hrepeated_tail :
+            isOne (yunFactorsContribution y (w / y) (multiplicity + 1) fuel).2 = false := by
+          simpa [yunFactorsContribution, hc_false, y] using hrepeated
+        simpa [yunFactorsContributionResidualDerivativeZero,
+          yunFactorsContribution, hc_false, y] using htail hrepeated_tail
+
 private theorem yunFactorsResidualDerivativeZero_of_contribution
     (c w : FpPoly p) (multiplicity fuel : Nat)
     (hresidual :
@@ -3121,6 +3170,28 @@ private theorem yunFactorsResidualDerivativeZero_of_derivative_split_contributio
       multiplicity
       fuel
       hresidual
+
+private theorem yunFactorsResidualDerivativeZero_of_derivative_split_complete
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
+    (hdf : (DensePoly.derivative f).isZero = false)
+    (hcomplete :
+      let g := DensePoly.gcd f (DensePoly.derivative f)
+      let c := f / g
+      yunFactorsContributionResidualComplete c g multiplicity fuel) :
+    yunFactorsResidualDerivativeZero
+      (f / DensePoly.gcd f (DensePoly.derivative f))
+      (DensePoly.gcd f (DensePoly.derivative f))
+      multiplicity
+      fuel := by
+  apply yunFactorsResidualDerivativeZero_of_derivative_split_contribution
+    hp f multiplicity fuel hdf
+  exact
+    yunFactorsContributionResidualDerivativeZero_of_complete
+      (f / DensePoly.gcd f (DensePoly.derivative f))
+      (DensePoly.gcd f (DensePoly.derivative f))
+      multiplicity
+      fuel
+      hcomplete
 
 private theorem dvd_one_of_mul_right_dvd_right
     [ZMod64.PrimeModulus p] {d g : FpPoly p}
