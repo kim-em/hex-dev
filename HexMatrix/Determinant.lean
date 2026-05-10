@@ -4836,5 +4836,43 @@ private theorem partialColumnTupleCoeff_insertAt_last_fold
     exact congrArg (fun x : Fin m => coeff[(⟨rem, hrem⟩ : Fin n)][x])
       (insertAt_get_self c pref (Fin.last rem))
 
+private theorem partialColumnTupleCoeff_vectorLengthCast
+    {R : Type u} [Mul R] [OfNat R 1] {n m k : Nat}
+    (coeff : Matrix R n m) (chosen : List (Fin m))
+    (hk : k = n - chosen.length) (hkn : k ≤ n) (v : Vector (Fin m) k) :
+    partialColumnTupleCoeff coeff chosen (vectorLengthCast hk v) =
+    (List.finRange k).foldl
+      (fun acc (i : Fin k) => acc *
+        coeff[(⟨i.val, Nat.lt_of_lt_of_le i.isLt hkn⟩ : Fin n)][v[i]]) 1 := by
+  subst hk
+  unfold partialColumnTupleCoeff
+  rcases v with ⟨xs, hx⟩
+  rfl
+
+private theorem partialColumnTupleCoeff_insertAt_last
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (coeff : Matrix R n m) (chosen : List (Fin m)) (c : Fin m)
+    (pref : Vector (Fin m) (n - (c :: chosen).length))
+    (hk : (c :: chosen).length ≤ n)
+    (hlen : (n - (c :: chosen).length) + 1 = n - chosen.length := by
+      have hcons : (c :: chosen).length = chosen.length + 1 := rfl
+      omega) :
+    partialColumnTupleCoeff coeff chosen
+        (vectorLengthCast hlen
+          (insertAt c pref (Fin.last (n - (c :: chosen).length)))) =
+      coeff[(⟨n - chosen.length - 1, by
+        have hcons : (c :: chosen).length = chosen.length + 1 := rfl
+        omega⟩ : Fin n)][c] *
+        partialColumnTupleCoeff coeff (c :: chosen) pref := by
+  have hcons : (c :: chosen).length = chosen.length + 1 := rfl
+  have hrem_lt : n - (c :: chosen).length < n := by omega
+  have hlen_le : (n - (c :: chosen).length) + 1 ≤ n := by omega
+  rw [partialColumnTupleCoeff_vectorLengthCast coeff chosen hlen hlen_le
+      (insertAt c pref (Fin.last (n - (c :: chosen).length)))]
+  rw [partialColumnTupleCoeff_insertAt_last_fold coeff c pref hrem_lt]
+  unfold partialColumnTupleCoeff
+  refine Eq.trans (Lean.Grind.CommSemiring.mul_comm _ _) ?_
+  congr 1
+
 end Matrix
 end Hex
