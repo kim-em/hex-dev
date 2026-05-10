@@ -471,4 +471,34 @@ theorem defaultFactorCoeffBound_real_le_of_max_bhksBound_defaultFactorCoeffBound
   exact_mod_cast
     (le_trans (defaultFactorCoeffBound_le_max_bhksBound_defaultFactorCoeffBound f) ha)
 
+/--
+The public fast path uses exactly the combined precision cap needed by the
+Group-D termination proof: one bound dominates BHKS separation and Mignotte
+reconstruction.
+-/
+theorem factorFastPrecisionCap_eq_max_bhksBound_defaultFactorCoeffBound
+    (f : Hex.ZPoly) :
+    Hex.factorFastPrecisionCap f =
+      max (Hex.bhksBound f) (Hex.ZPoly.defaultFactorCoeffBound f) := by
+  rfl
+
+theorem bhksBound_le_factorFastPrecisionCap (f : Hex.ZPoly) :
+    Hex.bhksBound f ≤ Hex.factorFastPrecisionCap f := by
+  rw [factorFastPrecisionCap_eq_max_bhksBound_defaultFactorCoeffBound]
+  exact bhksBound_le_max_bhksBound_defaultFactorCoeffBound f
+
+theorem defaultFactorCoeffBound_le_factorFastPrecisionCap (f : Hex.ZPoly) :
+    Hex.ZPoly.defaultFactorCoeffBound f ≤ Hex.factorFastPrecisionCap f := by
+  rw [factorFastPrecisionCap_eq_max_bhksBound_defaultFactorCoeffBound]
+  exact defaultFactorCoeffBound_le_max_bhksBound_defaultFactorCoeffBound f
+
+theorem bhksBound_real_le_factorFastPrecisionCap (f : Hex.ZPoly) :
+    (Hex.bhksBound f : ℝ) ≤ (Hex.factorFastPrecisionCap f : ℝ) := by
+  exact_mod_cast bhksBound_le_factorFastPrecisionCap f
+
+theorem defaultFactorCoeffBound_real_le_factorFastPrecisionCap (f : Hex.ZPoly) :
+    (Hex.ZPoly.defaultFactorCoeffBound f : ℝ) ≤
+      (Hex.factorFastPrecisionCap f : ℝ) := by
+  exact_mod_cast defaultFactorCoeffBound_le_factorFastPrecisionCap f
+
 end HexBerlekampZassenhausMathlib
