@@ -4234,5 +4234,329 @@ theorem det_columnTupleMatrix_eq_zero_of_not_injective
   rcases hdup with ⟨src, dst, hsame, hne⟩
   exact det_columnTupleMatrix_eq_zero_of_col_eq A cols hne hsame
 
+/-! ### All-column ordered tuple expansion
+
+Iterates `det_columnSumMatrix_expand_column` over every column to express
+`det (columnSumMatrix source coeff)` as a sum over ordered column tuples.
+Uses a list-based "left prefix" partial assignment, with a Fubini-style
+sum-swap to align the iteration order with `columnTupleVectors`.
+-/
+
+/-- Sum-swap (Fubini) for the standard determinant-style nested folds. -/
+private theorem foldl_det_sum_swap {R : Type u} [Lean.Grind.CommRing R]
+    {β γ : Type v} (xs : List β) (ys : List γ) (f : β → γ → R) :
+    xs.foldl (fun acc x => acc + ys.foldl (fun acc' y => acc' + f x y) 0) 0 =
+      ys.foldl (fun acc y => acc + xs.foldl (fun acc' x => acc' + f x y) 0) 0 := by
+  induction xs with
+  | nil =>
+      simp only [List.foldl_nil]
+      exact (foldl_det_sum_zero ys 0).symm
+  | cons x xs ih =>
+      have hLHS :
+          (x :: xs).foldl
+              (fun acc x' => acc + ys.foldl (fun acc' y => acc' + f x' y) 0) 0 =
+            ys.foldl (fun acc' y => acc' + f x y) 0 +
+              xs.foldl
+                (fun acc x' => acc + ys.foldl (fun acc' y => acc' + f x' y) 0) 0 := by
+        simp only [List.foldl_cons]
+        rw [foldl_det_sum_start xs
+              (fun x' => ys.foldl (fun acc' y => acc' + f x' y) 0)
+              (0 + ys.foldl (fun acc' y => acc' + f x y) 0)]
+        grind
+      have hRHS :
+          ys.foldl
+              (fun acc y => acc + (x :: xs).foldl
+                (fun acc' x' => acc' + f x' y) 0) 0 =
+            ys.foldl (fun acc' y => acc' + f x y) 0 +
+              ys.foldl
+                (fun acc y => acc + xs.foldl
+                  (fun acc' x' => acc' + f x' y) 0) 0 := by
+        have hfun :
+            (fun (acc : R) y =>
+                acc + (x :: xs).foldl (fun acc' x' => acc' + f x' y) 0) =
+              (fun (acc : R) y =>
+                acc + (f x y + xs.foldl (fun acc' x' => acc' + f x' y) 0)) := by
+          funext acc y
+          congr 1
+          simp only [List.foldl_cons]
+          rw [foldl_det_sum_start xs (fun x' => f x' y) (0 + f x y)]
+          grind
+        rw [hfun]
+        exact foldl_det_sum_add_zero ys (fun y => f x y)
+          (fun y => xs.foldl (fun acc' x' => acc' + f x' y) 0)
+      rw [hLHS, hRHS, ih]
+
+/-- The square matrix obtained from `columnSumMatrix source coeff` by replacing
+the first `chosen.length` columns with selected `source` columns indexed by
+`chosen`. The remaining columns stay in finite-sum form. -/
+private def columnSumMatrixWithPrefix
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (chosen : List (Fin m)) : Matrix R n n :=
+  ofFn fun r j =>
+    if h : j.val < chosen.length then
+      source[r][chosen[j.val]'h]
+    else
+      (List.finRange m).foldl (fun acc k => acc + coeff[j][k] * source[r][k]) 0
+
+@[simp] private theorem columnSumMatrixWithPrefix_entry
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (chosen : List (Fin m)) (r j : Fin n) :
+    (columnSumMatrixWithPrefix source coeff chosen)[r][j] =
+      if h : j.val < chosen.length then
+        source[r][chosen[j.val]'h]
+      else
+        (List.finRange m).foldl
+          (fun acc k => acc + coeff[j][k] * source[r][k]) 0 := by
+  simp [columnSumMatrixWithPrefix, ofFn]
+
+private theorem columnSumMatrixWithPrefix_nil
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) :
+    columnSumMatrixWithPrefix source coeff [] = columnSumMatrix source coeff := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro c hc
+  change (columnSumMatrixWithPrefix source coeff [])[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
+      (columnSumMatrix source coeff)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+  rw [columnSumMatrixWithPrefix_entry, columnSumMatrix_entry]
+  rw [dif_neg (by simp : ¬ c < ([] : List (Fin m)).length)]
+
+private theorem columnSumMatrixWithPrefix_eq_columnTupleMatrix
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (chosen : List (Fin m))
+    (hfull : chosen.length = n) :
+    columnSumMatrixWithPrefix source coeff chosen =
+      columnTupleMatrix source (fun j => chosen[j.val]'(by omega)) := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro c hc
+  change (columnSumMatrixWithPrefix source coeff chosen)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
+      (columnTupleMatrix source (fun j => chosen[j.val]'(by omega)))[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+  rw [columnSumMatrixWithPrefix_entry, dif_pos (by omega : c < chosen.length)]
+  simp [columnTupleMatrix, ofFn]
+
+/-- Replacing the column at index `chosen.length` of the partial-prefix matrix
+with a fixed `source` column extends the prefix by that selection. -/
+private theorem colReplace_columnSumMatrixWithPrefix_extend
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (chosen : List (Fin m))
+    (hk : chosen.length < n) (c : Fin m) :
+    colReplace (columnSumMatrixWithPrefix source coeff chosen)
+        (⟨chosen.length, hk⟩ : Fin n) (fun r => source[r][c]) =
+      columnSumMatrixWithPrefix source coeff (chosen ++ [c]) := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro k hk2
+  change (colReplace (columnSumMatrixWithPrefix source coeff chosen)
+      (⟨chosen.length, hk⟩ : Fin n) (fun r => source[r][c]))[
+      (⟨r, hr⟩ : Fin n)][(⟨k, hk2⟩ : Fin n)] =
+    (columnSumMatrixWithPrefix source coeff (chosen ++ [c]))[
+      (⟨r, hr⟩ : Fin n)][(⟨k, hk2⟩ : Fin n)]
+  rw [colReplace_get]
+  simp only [columnSumMatrixWithPrefix_entry]
+  have happ_len : (chosen ++ [c]).length = chosen.length + 1 := by
+    simp [List.length_append]
+  by_cases hkd : (⟨k, hk2⟩ : Fin n) = (⟨chosen.length, hk⟩ : Fin n)
+  · have hkeq : k = chosen.length := by
+      have := congrArg Fin.val hkd; simpa using this
+    subst hkeq
+    rw [if_pos hkd]
+    rw [dif_pos (show chosen.length < (chosen ++ [c]).length by omega)]
+    congr 1
+    rw [List.getElem_append_right (Nat.le_refl _)]
+    simp
+  · rw [if_neg hkd]
+    have hkne : k ≠ chosen.length := fun h => hkd (Fin.ext h)
+    by_cases hk_lt : k < chosen.length
+    · rw [dif_pos hk_lt]
+      rw [dif_pos (show k < (chosen ++ [c]).length by omega)]
+      congr 1
+      exact (List.getElem_append_left hk_lt).symm
+    · rw [dif_neg hk_lt]
+      rw [dif_neg (show ¬ k < (chosen ++ [c]).length by omega)]
+
+/-- One-step expansion of the partial column-sum matrix: when not all columns
+are fixed, peel off the next column as a sum over `Fin m`. -/
+private theorem det_columnSumMatrixWithPrefix_expand
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (chosen : List (Fin m))
+    (hk : chosen.length < n) :
+    det (columnSumMatrixWithPrefix source coeff chosen) =
+      (List.finRange m).foldl
+        (fun acc c => acc + coeff[(⟨chosen.length, hk⟩ : Fin n)][c] *
+          det (columnSumMatrixWithPrefix source coeff (chosen ++ [c]))) 0 := by
+  let dst : Fin n := ⟨chosen.length, hk⟩
+  have hself :
+      colReplace (columnSumMatrixWithPrefix source coeff chosen) dst
+          (fun r => (List.finRange m).foldl
+            (fun acc k => acc + coeff[dst][k] * source[r][k]) 0) =
+        columnSumMatrixWithPrefix source coeff chosen := by
+    apply Vector.ext
+    intro r hr
+    apply Vector.ext
+    intro c hc
+    change (colReplace (columnSumMatrixWithPrefix source coeff chosen) dst _)[
+        (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
+      (columnSumMatrixWithPrefix source coeff chosen)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+    rw [colReplace_get, columnSumMatrixWithPrefix_entry]
+    by_cases hcd : (⟨c, hc⟩ : Fin n) = dst
+    · rw [if_pos hcd, hcd]
+      rw [dif_neg (show ¬ dst.val < chosen.length by simp [dst])]
+    · rw [if_neg hcd]
+  have hsum := det_colReplace_sum_list
+      (columnSumMatrixWithPrefix source coeff chosen) dst
+      (List.finRange m) (fun k => coeff[dst][k]) (fun k r => source[r][k])
+  rw [hself] at hsum
+  rw [hsum]
+  apply foldl_det_sum_congr
+  intro c _hc
+  congr 2
+  exact colReplace_columnSumMatrixWithPrefix_extend source coeff chosen hk c
+
+/-! ### Suffix-based partial assignment
+
+We use a SUFFIX-based parametrization (chosen represents right-fixed columns)
+to align with the natural recursion of `columnTupleVectors`, which factors out
+the LAST element of the suffix. After Fubini sum-swap, the inductive step
+reduces to identity matching of the per-term values. -/
+
+/-- Square matrix where the last `chosen.length` columns are fixed to selected
+`source` columns indexed by `chosen` (in order), and the remaining left columns
+stay in finite-sum form. -/
+private def columnSumMatrixWithSuffix
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (chosen : List (Fin m)) : Matrix R n n :=
+  ofFn fun r j =>
+    if h : n - chosen.length ≤ j.val then
+      source[r][chosen[j.val - (n - chosen.length)]'(by
+        have : j.val < n := j.isLt; omega)]
+    else
+      (List.finRange m).foldl (fun acc k => acc + coeff[j][k] * source[r][k]) 0
+
+@[simp] private theorem columnSumMatrixWithSuffix_entry
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (chosen : List (Fin m)) (r j : Fin n) :
+    (columnSumMatrixWithSuffix source coeff chosen)[r][j] =
+      if h : n - chosen.length ≤ j.val then
+        source[r][chosen[j.val - (n - chosen.length)]'(by
+          have : j.val < n := j.isLt; omega)]
+      else
+        (List.finRange m).foldl
+          (fun acc k => acc + coeff[j][k] * source[r][k]) 0 := by
+  simp [columnSumMatrixWithSuffix, ofFn]
+
+private theorem columnSumMatrixWithSuffix_nil
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) :
+    columnSumMatrixWithSuffix source coeff [] = columnSumMatrix source coeff := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro c hc
+  change (columnSumMatrixWithSuffix source coeff [])[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
+      (columnSumMatrix source coeff)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+  rw [columnSumMatrixWithSuffix_entry, columnSumMatrix_entry]
+  rw [dif_neg (show ¬ n - ([] : List (Fin m)).length ≤ c by simp; omega)]
+
+/-- Replacing the rightmost sum column of the suffix-partial matrix with a fixed
+`source` column extends the suffix by prepending that selection. -/
+private theorem colReplace_columnSumMatrixWithSuffix_extend
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (chosen : List (Fin m))
+    (hk : chosen.length < n) (c : Fin m) :
+    colReplace (columnSumMatrixWithSuffix source coeff chosen)
+        (⟨n - chosen.length - 1, by omega⟩ : Fin n) (fun r => source[r][c]) =
+      columnSumMatrixWithSuffix source coeff (c :: chosen) := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro k hk2
+  change (colReplace (columnSumMatrixWithSuffix source coeff chosen)
+      (⟨n - chosen.length - 1, by omega⟩ : Fin n) (fun r => source[r][c]))[
+      (⟨r, hr⟩ : Fin n)][(⟨k, hk2⟩ : Fin n)] =
+    (columnSumMatrixWithSuffix source coeff (c :: chosen))[
+      (⟨r, hr⟩ : Fin n)][(⟨k, hk2⟩ : Fin n)]
+  rw [colReplace_get]
+  simp only [columnSumMatrixWithSuffix_entry]
+  have hccons_len : (c :: chosen).length = chosen.length + 1 := rfl
+  by_cases hkd : (⟨k, hk2⟩ : Fin n) = (⟨n - chosen.length - 1, by omega⟩ : Fin n)
+  · have hkeq : k = n - chosen.length - 1 := by
+      have := congrArg Fin.val hkd; simpa using this
+    rw [if_pos hkd]
+    rw [dif_pos (show n - (c :: chosen).length ≤ k by rw [hccons_len]; omega)]
+    have hsub0 : k - (n - (c :: chosen).length) = 0 := by rw [hccons_len]; omega
+    have hgetval : (c :: chosen)[k - (n - (c :: chosen).length)]'(by
+        have : k < n := hk2; rw [hccons_len]; omega) = c := by
+      have h1 : (c :: chosen)[k - (n - (c :: chosen).length)]'(by
+          have : k < n := hk2; rw [hccons_len]; omega) =
+        (c :: chosen)[(0 : Nat)]'(by simp) := by
+        congr 1
+      rw [h1]
+      rfl
+    exact congrArg (fun x : Fin m => source[(⟨r, hr⟩ : Fin n)][x]) hgetval.symm
+  · rw [if_neg hkd]
+    have hkne : k ≠ n - chosen.length - 1 := fun h => hkd (Fin.ext h)
+    by_cases hkge : n - chosen.length ≤ k
+    · rw [dif_pos hkge]
+      have hkge' : n - (c :: chosen).length ≤ k := by rw [hccons_len]; omega
+      rw [dif_pos hkge']
+      have hidx_eq : k - (n - (c :: chosen).length) = (k - (n - chosen.length)) + 1 := by
+        rw [hccons_len]; omega
+      have hgetval : (c :: chosen)[k - (n - (c :: chosen).length)]'(by
+          have : k < n := hk2; rw [hccons_len]; omega) =
+        chosen[k - (n - chosen.length)]'(by have : k < n := hk2; omega) := by
+        have h1 : (c :: chosen)[k - (n - (c :: chosen).length)]'(by
+            have : k < n := hk2; rw [hccons_len]; omega) =
+          (c :: chosen)[(k - (n - chosen.length)) + 1]'(by
+            have : k < n := hk2; rw [hccons_len]; omega) := by
+          congr 1
+        rw [h1]
+        rfl
+      exact congrArg (fun x : Fin m => source[(⟨r, hr⟩ : Fin n)][x]) hgetval.symm
+    · rw [dif_neg hkge]
+      have hkge' : ¬ n - (c :: chosen).length ≤ k := by rw [hccons_len]; omega
+      rw [dif_neg hkge']
+
+/-- One-step expansion of the suffix-partial matrix: peel off the rightmost sum
+column as a sum over `Fin m`. -/
+private theorem det_columnSumMatrixWithSuffix_expand
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (chosen : List (Fin m))
+    (hk : chosen.length < n) :
+    det (columnSumMatrixWithSuffix source coeff chosen) =
+      (List.finRange m).foldl
+        (fun acc c => acc + coeff[(⟨n - chosen.length - 1, by omega⟩ : Fin n)][c] *
+          det (columnSumMatrixWithSuffix source coeff (c :: chosen))) 0 := by
+  let dst : Fin n := ⟨n - chosen.length - 1, by omega⟩
+  have hself :
+      colReplace (columnSumMatrixWithSuffix source coeff chosen) dst
+          (fun r => (List.finRange m).foldl
+            (fun acc k => acc + coeff[dst][k] * source[r][k]) 0) =
+        columnSumMatrixWithSuffix source coeff chosen := by
+    apply Vector.ext
+    intro r hr
+    apply Vector.ext
+    intro c hc
+    change (colReplace (columnSumMatrixWithSuffix source coeff chosen) dst _)[
+        (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
+      (columnSumMatrixWithSuffix source coeff chosen)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+    rw [colReplace_get, columnSumMatrixWithSuffix_entry]
+    by_cases hcd : (⟨c, hc⟩ : Fin n) = dst
+    · rw [if_pos hcd, hcd]
+      rw [dif_neg (show ¬ n - chosen.length ≤ dst.val by simp [dst]; omega)]
+    · rw [if_neg hcd]
+  have hsum := det_colReplace_sum_list
+      (columnSumMatrixWithSuffix source coeff chosen) dst
+      (List.finRange m) (fun k => coeff[dst][k]) (fun k r => source[r][k])
+  rw [hself] at hsum
+  rw [hsum]
+  apply foldl_det_sum_congr
+  intro c _hc
+  congr 2
+  exact colReplace_columnSumMatrixWithSuffix_extend source coeff chosen hk c
+
 end Matrix
 end Hex
