@@ -2147,7 +2147,9 @@ theorem normalizedConstantFactors_product
         DensePoly.scale unit
           (ZPoly.toRatPoly (normalized.squareFreeCore * normalized.repeatedPart)) := by
   subst normalized
-  simpa using normalizeForFactor_reassembles f
+  by_cases hcore : (normalizeForFactor f).squareFreeCore = 1
+  · simpa [normalizedConstantFactors, hcore] using normalizeForFactor_reassembles f
+  · simpa [normalizedConstantFactors, hcore] using normalizeForFactor_reassembles f
 
 private theorem firstSome_some
     {α β : Type} {xs : List α} {f : α → Option β} {y : β}
