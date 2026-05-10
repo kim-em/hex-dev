@@ -1744,6 +1744,61 @@ private theorem yunFactorsContribution_step_split
   · exact div_gcd_mul_reconstruct c w
   · exact div_gcd_right_mul_reconstruct c w
 
+private theorem dvd_add_poly
+    {d a b : FpPoly p} (hda : d ∣ a) (hdb : d ∣ b) :
+    d ∣ a + b := by
+  rcases hda with ⟨qa, hqa⟩
+  rcases hdb with ⟨qb, hqb⟩
+  refine ⟨qa + qb, ?_⟩
+  calc a + b
+      = d * qa + d * qb := by rw [hqa, hqb]
+    _ = d * (qa + qb) := (DensePoly.mul_add_right_poly d qa qb).symm
+
+private theorem dvd_mul_left_of_dvd
+    {d a b : FpPoly p} (hda : d ∣ a) :
+    d ∣ b * a := by
+  rcases hda with ⟨q, hq⟩
+  refine ⟨b * q, ?_⟩
+  calc b * a
+      = b * (d * q) := by rw [hq]
+    _ = (b * d) * q := (DensePoly.mul_assoc_poly b d q).symm
+    _ = (d * b) * q := by
+          exact congrArg (fun x => x * q) (DensePoly.mul_comm_poly b d)
+    _ = d * (b * q) := DensePoly.mul_assoc_poly d b q
+
+private theorem dvd_mul_right_of_dvd
+    {d a b : FpPoly p} (hda : d ∣ a) :
+    d ∣ a * b := by
+  rcases hda with ⟨q, hq⟩
+  refine ⟨q * b, ?_⟩
+  calc a * b
+      = (d * q) * b := by rw [hq]
+    _ = d * (q * b) := DensePoly.mul_assoc_poly d q b
+
+private theorem yunStep_common_dvd_derivative_product
+    (z y d : FpPoly p)
+    (hdz : d ∣ z) (hdy : d ∣ y) :
+    d ∣ DensePoly.derivative (z * y) := by
+  have hterms :
+      d ∣ DensePoly.derivative z * y + z * DensePoly.derivative y :=
+    dvd_add_poly
+      (dvd_mul_left_of_dvd hdy)
+      (dvd_mul_right_of_dvd hdz)
+  exact (DensePoly.derivative_mul z y).symm ▸ hterms
+
+private theorem yunStep_common_dvd_derivative_current
+    [ZMod64.PrimeModulus p]
+    (c w d : FpPoly p)
+    (hdz : d ∣ c / DensePoly.gcd c w)
+    (hdy : d ∣ DensePoly.gcd c w) :
+    d ∣ DensePoly.derivative c := by
+  let y := DensePoly.gcd c w
+  let z := c / y
+  have hprod : z * y = c := by
+    simpa [z, y] using div_gcd_mul_reconstruct c w
+  rw [← hprod]
+  exact yunStep_common_dvd_derivative_product z y d hdz hdy
+
 private theorem yunFactorsContribution_stop_of_isOne
     (c w : FpPoly p) (i fuel : Nat)
     (hc : isOne c = true) :
