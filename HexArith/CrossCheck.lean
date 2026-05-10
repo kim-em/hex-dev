@@ -137,9 +137,8 @@ private def mulModMatchesNat (a b : UInt64) : Bool :=
     (montCtx.mulMont (montCtx.toMont a) (montCtx.toMont b))
   bar == truth && mont == truth
 
--- The issue called for 1000 entries; we drop to 256 because the kernel
--- evaluation budget without `native_decide` (banned project-wide per
--- SPEC) does not fit 1000 cross-checks under the 2-second elaboration
+-- The issue called for 1000 entries; we drop to 256 because direct kernel
+-- evaluation does not fit 1000 cross-checks under the 2-second elaboration
 -- target on the project's CI hardware. 256 entries still saturate the
 -- mod-2^32 Barrett residue space densely enough to catch one-off bugs
 -- in either fast path.
