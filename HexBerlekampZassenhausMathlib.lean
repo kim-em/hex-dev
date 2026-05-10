@@ -4,6 +4,7 @@ import HexBerlekampZassenhausMathlib.BHKSBound
 import HexBerlekampZassenhausMathlib.Conformance
 import HexBerlekampZassenhausMathlib.Lattice
 import HexBerlekampZassenhausMathlib.Resultant
+import HexBerlekampZassenhausMathlib.TerminationBound
 
 /-!
 Root module for the Mathlib bridge of the integer Berlekamp-Zassenhaus
