@@ -1317,6 +1317,25 @@ Yun's inner loop: peel off the factors with multiplicities `i`, `i + 1`, ...
 from the coprime/repeated split `(c, w)`, consing each discovered factor onto
 the reverse-order accumulator.
 -/
+private def yunFactorsWithLevel
+    (c w : FpPoly p) (base level : Nat) (fuel : Nat)
+    (accRev : List (SquareFreeFactor p)) :
+    List (SquareFreeFactor p) × FpPoly p :=
+  match fuel with
+  | 0 => (accRev, w)
+  | fuel + 1 =>
+      if isOne c then
+        (accRev, w)
+      else
+        let y := DensePoly.gcd c w
+        let z := c / y
+        let accRev' :=
+          if isOne z then
+            accRev
+          else
+            { factor := z, multiplicity := base * level } :: accRev
+        yunFactorsWithLevel y (w / y) base (level + 1) fuel accRev'
+
 private def yunFactors
     (c w : FpPoly p) (i : Nat) (fuel : Nat)
     (accRev : List (SquareFreeFactor p)) :
@@ -1341,6 +1360,23 @@ Specification payload for `yunFactors`: the first component is the product
 contributed by factors discovered from `(c, w, i, fuel)`, and the second is
 the repeated part that remains for the `p`-th-root descent.
 -/
+private def yunFactorsContributionWithLevel
+    (c w : FpPoly p) (base level : Nat) : Nat → FpPoly p × FpPoly p
+  | 0 => (1, w)
+  | fuel + 1 =>
+      if isOne c then
+        (1, w)
+      else
+        let y := DensePoly.gcd c w
+        let z := c / y
+        let tail := yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel
+        let contribution :=
+          if isOne z then
+            tail.1
+          else
+            pow z (base * level) * tail.1
+        (contribution, tail.2)
+
 private def yunFactorsContribution
     (c w : FpPoly p) (i : Nat) : Nat → FpPoly p × FpPoly p
   | 0 => (1, w)
@@ -1357,6 +1393,52 @@ private def yunFactorsContribution
           else
             pow z i * tail.1
         (contribution, tail.2)
+
+private theorem yunFactorsWithLevel_reconstruction_invariant
+    (c w : FpPoly p) (base level fuel : Nat) (accRev : List (SquareFreeFactor p)) :
+    let loop := yunFactorsWithLevel c w base level fuel accRev
+    let contribution := yunFactorsContributionWithLevel c w base level fuel
+    loop.2 = contribution.2 ∧
+      weightedProduct loop.1.reverse =
+        weightedProduct accRev.reverse * contribution.1 := by
+  induction fuel generalizing c w level accRev with
+  | zero =>
+      simp [yunFactorsWithLevel, yunFactorsContributionWithLevel]
+  | succ fuel ih =>
+      simp only [yunFactorsWithLevel, yunFactorsContributionWithLevel]
+      by_cases hc : isOne c
+      · simp [hc]
+      · simp [hc]
+        let y := DensePoly.gcd c w
+        let z := c / y
+        by_cases hz : isOne z
+        · simpa [y, z, hz] using ih y (w / y) (level + 1) accRev
+        · have htail := ih y (w / y) (level + 1)
+            ({ factor := z, multiplicity := base * level } :: accRev)
+          constructor
+          · simpa [y, z, hz] using htail.1
+          · have hmul :
+                weightedProduct (yunFactorsWithLevel y (w / y) base (level + 1) fuel
+                    ({ factor := z, multiplicity := base * level } :: accRev)).1.reverse =
+                  weightedProduct accRev.reverse *
+                    (pow z (base * level) *
+                      (yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel).1) := by
+              calc
+                weightedProduct (yunFactorsWithLevel y (w / y) base (level + 1) fuel
+                    ({ factor := z, multiplicity := base * level } :: accRev)).1.reverse
+                    = weightedProduct ({ factor := z, multiplicity := base * level } :: accRev).reverse *
+                        (yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel).1 := by
+                          simpa [y, z] using htail.2
+                _ = (weightedProduct accRev.reverse * pow z (base * level)) *
+                        (yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel).1 := by
+                          rw [weightedProduct_reverse_cons]
+                _ = weightedProduct accRev.reverse *
+                        (pow z (base * level) *
+                          (yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel).1) := by
+                          exact DensePoly.mul_assoc_poly
+                            (weightedProduct accRev.reverse) (pow z (base * level))
+                            (yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel).1
+            simpa [y, z, hz] using hmul
 
 private theorem yunFactors_reconstruction_invariant
     (c w : FpPoly p) (i fuel : Nat) (accRev : List (SquareFreeFactor p)) :
@@ -3135,6 +3217,43 @@ private theorem yunFactorsContributionResidualDerivativeZero_of_complete
         simpa [yunFactorsContributionResidualDerivativeZero,
           yunFactorsContribution, hc_false, y] using htail hrepeated_tail
 
+private theorem yunFactorsContributionResidualComplete_of_derivativeZero
+    (c w : FpPoly p) (multiplicity fuel : Nat)
+    (hresidual :
+      yunFactorsContributionResidualDerivativeZero c w multiplicity fuel) :
+    yunFactorsContributionResidualComplete c w multiplicity fuel := by
+  induction fuel generalizing c w multiplicity with
+  | zero =>
+      intro hrepeated
+      simpa [yunFactorsContributionResidualDerivativeZero,
+        yunFactorsContribution] using hresidual hrepeated
+  | succ fuel ih =>
+      by_cases hc : isOne c = true
+      · have hres_here :
+            isOne w = false → (DensePoly.derivative w).isZero = true := by
+          intro hone_w
+          have hres_lifted :
+              isOne (yunFactorsContribution c w multiplicity (fuel + 1)).2 = false := by
+            simpa [yunFactorsContribution, hc] using hone_w
+          simpa [yunFactorsContribution, hc] using hresidual hres_lifted
+        simpa [yunFactorsContributionResidualComplete, hc] using hres_here
+      · let y := DensePoly.gcd c w
+        have hc_false : isOne c = false := by
+          cases h : isOne c
+          · rfl
+          · exact False.elim (hc h)
+        have hres_tail :
+            yunFactorsContributionResidualDerivativeZero y (w / y) (multiplicity + 1) fuel := by
+          intro hone_tail
+          have hres_lifted :
+              isOne (yunFactorsContribution c w multiplicity (fuel + 1)).2 = false := by
+            simpa [yunFactorsContribution, hc_false, y] using hone_tail
+          simpa [yunFactorsContribution, hc_false, y] using hresidual hres_lifted
+        have htail :
+            yunFactorsContributionResidualComplete y (w / y) (multiplicity + 1) fuel :=
+          ih y (w / y) (multiplicity + 1) hres_tail
+        simpa [yunFactorsContributionResidualComplete, hc_false, y] using htail
+
 private theorem yunFactorsResidualDerivativeZero_of_contribution
     (c w : FpPoly p) (multiplicity fuel : Nat)
     (hresidual :
@@ -3192,6 +3311,59 @@ private theorem yunFactorsResidualDerivativeZero_of_derivative_split_complete
       multiplicity
       fuel
       hcomplete
+
+/--
+Derivative-active provider for `yunFactorsContributionResidualComplete`.
+
+The completion fact required by `yunFactorsResidualDerivativeZero_of_derivative_split_complete`
+is supplied by a single recursion-tip derivative-zero witness on the eventual
+`yunFactorsContribution` residual. That witness has the precise shape needed to
+exclude the `fuel = 0` counterexample (where the residual is exactly the input
+`w = gcd f (derivative f)`) by demanding the derivative-zero fact at exactly the
+terminal recursion state.
+-/
+private theorem yunFactorsContributionResidualComplete_of_derivative_active
+    (_hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
+    (_hdf : (DensePoly.derivative f).isZero = false)
+    (hresidual :
+      let g := DensePoly.gcd f (DensePoly.derivative f)
+      let c := f / g
+      yunFactorsContributionResidualDerivativeZero c g multiplicity fuel) :
+    let g := DensePoly.gcd f (DensePoly.derivative f)
+    let c := f / g
+    yunFactorsContributionResidualComplete c g multiplicity fuel := by
+  exact
+    yunFactorsContributionResidualComplete_of_derivativeZero
+      (f / DensePoly.gcd f (DensePoly.derivative f))
+      (DensePoly.gcd f (DensePoly.derivative f))
+      multiplicity
+      fuel
+      hresidual
+
+/--
+Derivative-active residual derivative-zero fact, threaded through the
+completion provider. Composes `yunFactorsContributionResidualComplete_of_derivative_active`
+with `yunFactorsResidualDerivativeZero_of_derivative_split_complete` to expose
+the concrete loop residual derivative-zero fact under the same
+`yunFactorsContributionResidualDerivativeZero` hypothesis.
+-/
+private theorem yunFactorsResidualDerivativeZero_of_derivative_active
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
+    (hdf : (DensePoly.derivative f).isZero = false)
+    (hresidual :
+      let g := DensePoly.gcd f (DensePoly.derivative f)
+      let c := f / g
+      yunFactorsContributionResidualDerivativeZero c g multiplicity fuel) :
+    yunFactorsResidualDerivativeZero
+      (f / DensePoly.gcd f (DensePoly.derivative f))
+      (DensePoly.gcd f (DensePoly.derivative f))
+      multiplicity
+      fuel := by
+  apply yunFactorsResidualDerivativeZero_of_derivative_split_complete
+    hp f multiplicity fuel hdf
+  exact
+    yunFactorsContributionResidualComplete_of_derivative_active
+      hp f multiplicity fuel hdf hresidual
 
 private theorem dvd_one_of_mul_right_dvd_right
     [ZMod64.PrimeModulus p] {d g : FpPoly p}

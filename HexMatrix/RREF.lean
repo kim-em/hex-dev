@@ -1181,6 +1181,243 @@ private theorem rref_final_canonical (M : Matrix R n m) :
     { row := 0, echelon := M, transform := 1, pivots := [] }
     (rrefLoop_initial_shape M) (rrefLoop_initial_canonical M)
 
+omit [DecidableEq R] in
+/-- If two row indices lie at or above `start` and column `k` is zero on every
+row from `start` onward, then `rowSwap` at those indices preserves the
+zero-column property. -/
+private theorem rowSwap_zero_column_preserve {M : Matrix R n m}
+    (i j : Fin n) (k : Fin m) {start : Nat}
+    (hi : start ≤ i.val) (hj : start ≤ j.val)
+    (h : ∀ r : Fin n, start ≤ r.val → M[r][k] = 0) :
+    ∀ r : Fin n, start ≤ r.val → (rowSwap M i j)[r][k] = 0 := by
+  intro r hr
+  rw [rowSwap_getElem]
+  by_cases hrj : r = j
+  · subst r; rw [if_pos rfl]; exact h i hi
+  · rw [if_neg hrj]
+    by_cases hri : r = i
+    · subst r; rw [if_pos rfl]; exact h j hj
+    · rw [if_neg hri]; exact h r hr
+
+omit [DecidableEq R] in
+/-- Scaling row `i` by `c` preserves any zero-column property on rows from
+`start` onward: the scaled row stays zero because the original value is zero,
+and any other row is unchanged. -/
+private theorem rowScale_zero_column_preserve {M : Matrix R n m}
+    (i : Fin n) (c : R) (k : Fin m) {start : Nat}
+    (h : ∀ r : Fin n, start ≤ r.val → M[r][k] = 0) :
+    ∀ r : Fin n, start ≤ r.val → (rowScale M i c)[r][k] = 0 := by
+  intro r hr
+  rw [rowScale_getElem]
+  by_cases hri : r = i
+  · subst r
+    rw [if_pos rfl, h i hr]
+    grind
+  · rw [if_neg hri]; exact h r hr
+
+/-- Folding `eliminateColumn`'s step function over any list preserves every
+row's entry at column `k`, provided the pivot row is zero at column `k`. -/
+private theorem eliminateColumn_foldl_other_column
+    (pivotRow : Fin n) (col : Fin m) (k : Fin m) :
+    ∀ (xs : List (Fin n)) (s : Matrix R n m × Matrix R n n) (r : Fin n),
+      s.1[pivotRow][k] = 0 →
+      (xs.foldl (fun (state : Matrix R n m × Matrix R n n) j =>
+        if _h : j = pivotRow then state
+        else
+          let coeff := -state.1[j][col]
+          if coeff = 0 then state
+          else (rowAdd state.1 pivotRow j coeff, rowAdd state.2 pivotRow j coeff))
+        s).1[r][k]
+        = s.1[r][k] := by
+  intro xs
+  induction xs with
+  | nil => intro s r _; rfl
+  | cons x xs ih =>
+      intro s r hs
+      simp only [List.foldl_cons]
+      have hstep_pivot :
+          (if _h : x = pivotRow then s
+            else
+              let coeff := -s.1[x][col]
+              if coeff = 0 then s
+              else (rowAdd s.1 pivotRow x coeff, rowAdd s.2 pivotRow x coeff)).1[pivotRow][k]
+            = 0 := by
+        rw [eliminateColumn_step_pivotRow_entry s pivotRow x col k]
+        exact hs
+      rw [ih _ r hstep_pivot]
+      by_cases hxp : x = pivotRow
+      · rw [dif_pos hxp]
+      · rw [dif_neg hxp]
+        by_cases hcoeff : -s.1[x][col] = 0
+        · rw [if_pos hcoeff]
+        · rw [if_neg hcoeff]
+          by_cases hrx : r = x
+          · subst r
+            rw [rowAdd_get_dst, hs]
+            grind
+          · exact rowAdd_get_other s.1 pivotRow x _ hrx k
+
+/-- `eliminateColumn` preserves every row's entry at column `k`, provided the
+pivot row is zero at column `k`. -/
+private theorem eliminateColumn_other_column
+    (M : Matrix R n m) (T : Matrix R n n)
+    (pivotRow : Fin n) (col : Fin m) (k : Fin m)
+    (hpivot : M[pivotRow][k] = 0) (r : Fin n) :
+    (eliminateColumn M T pivotRow col).1[r][k] = M[r][k] := by
+  unfold eliminateColumn
+  exact eliminateColumn_foldl_other_column pivotRow col k (List.finRange n) (M, T) r hpivot
+
+/-- Proof-only invariant tracking the no-pivot branch of `rrefLoop`: every
+already-processed column that has not been recorded as a pivot is zero on every
+row at or below `state.row`. -/
+private structure RrefNoPivotZero (col : Nat) (state : RrefState R n m) : Prop where
+  zero_unrecorded :
+    ∀ (c : Fin m), c.val < col → c ∉ state.pivots →
+      ∀ (r : Fin n), state.row ≤ r.val → state.echelon[r][c] = 0
+
+omit [DecidableEq R] in
+private theorem rrefNoPivotZero_initial (M : Matrix R n m) :
+    RrefNoPivotZero (R := R) (n := n) (m := m) 0
+      { row := 0
+        echelon := M
+        transform := 1
+        pivots := [] } where
+  zero_unrecorded := by
+    intro c hc _ _ _
+    exact absurd hc (Nat.not_lt_zero _)
+
+omit [DecidableEq R] in
+/-- When the loop exits with `m ≤ col`, the invariant extends vacuously to any
+larger column bound: every column index lies below `m ≤ col`, so the old
+zero-column facts cover all relevant columns. -/
+private theorem RrefNoPivotZero.widen_col_at_m {col col' : Nat}
+    {state : RrefState R n m}
+    (h : RrefNoPivotZero (R := R) (n := n) (m := m) col state) (hcol : m ≤ col) :
+    RrefNoPivotZero (R := R) (n := n) (m := m) col' state where
+  zero_unrecorded := fun c _ hcnot r hr =>
+    h.zero_unrecorded c (Nat.lt_of_lt_of_le c.isLt hcol) hcnot r hr
+
+omit [DecidableEq R] in
+/-- When the loop exits with `n ≤ state.row`, the invariant extends vacuously
+to any column bound: no row index satisfies the hypothesis. -/
+private theorem RrefNoPivotZero.widen_col_at_n {col col' : Nat}
+    {state : RrefState R n m}
+    (_h : RrefNoPivotZero (R := R) (n := n) (m := m) col state) (hrow : n ≤ state.row) :
+    RrefNoPivotZero (R := R) (n := n) (m := m) col' state where
+  zero_unrecorded := fun _ _ _ r hr => by
+    have hge : n ≤ r.val := Nat.le_trans hrow hr
+    exact absurd r.isLt (Nat.not_lt_of_ge hge)
+
+private theorem rrefLoop_no_pivot_zero :
+    ∀ (fuel col : Nat) (state : RrefState R n m),
+      RrefNoPivotZero col state →
+      RrefNoPivotZero (col + fuel)
+        (rrefLoop (R := R) (n := n) (m := m) col fuel state) := by
+  intro fuel
+  induction fuel with
+  | zero =>
+      intro col state h
+      simpa [rrefLoop] using h
+  | succ fuel ih =>
+      intro col state h
+      unfold rrefLoop
+      by_cases hRow : state.row < n
+      · rw [dif_pos hRow]
+        by_cases hCol : col < m
+        · rw [dif_pos hCol]
+          cases hpivot : findPivot? state.echelon ⟨col, hCol⟩ state.row with
+          | none =>
+              have hnext : RrefNoPivotZero (R := R) (n := n) (m := m) (col + 1) state := by
+                refine ⟨?_⟩
+                intro c hc hcnot r hr
+                rcases Nat.lt_or_eq_of_le (Nat.le_of_lt_succ hc) with hold | heq
+                · exact h.zero_unrecorded c hold hcnot r hr
+                · have hc_eq : c = ⟨col, hCol⟩ := Fin.ext heq
+                  subst hc_eq
+                  exact findPivot?_none state.echelon ⟨col, hCol⟩ hpivot r hr
+              simpa [hpivot, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using
+                ih (col + 1) state hnext
+          | some pivot =>
+              let colFin : Fin m := ⟨col, hCol⟩
+              let target : Fin n := ⟨state.row, hRow⟩
+              let swappedEchelon := rowSwap state.echelon target pivot
+              let swappedTransform := rowSwap state.transform target pivot
+              let pivotVal := swappedEchelon[target][colFin]
+              let scaledEchelon := rowScale swappedEchelon target pivotVal⁻¹
+              let scaledTransform := rowScale swappedTransform target pivotVal⁻¹
+              let eliminated := eliminateColumn scaledEchelon scaledTransform target colFin
+              let nextState : RrefState R n m :=
+                { row := state.row + 1
+                  echelon := eliminated.1
+                  transform := eliminated.2
+                  pivots := state.pivots.concat colFin }
+              have hpivot_ge : state.row ≤ pivot.val :=
+                findPivot?_some_ge state.echelon colFin hpivot
+              have htarget_val : (target : Fin n).val = state.row := rfl
+              have hnext :
+                  RrefNoPivotZero (R := R) (n := n) (m := m) (col + 1) nextState := by
+                refine ⟨?_⟩
+                intro c hc hcnot r hr
+                have hcnot_concat : c ∉ state.pivots.concat colFin := hcnot
+                have hcnot_old : c ∉ state.pivots := by
+                  intro hin
+                  apply hcnot_concat
+                  rw [List.concat_eq_append]
+                  exact List.mem_append.mpr (Or.inl hin)
+                have hcne_colFin : c ≠ colFin := by
+                  intro heq
+                  apply hcnot_concat
+                  rw [List.concat_eq_append]
+                  exact List.mem_append.mpr (Or.inr (by simp [heq]))
+                have hclt_col : c.val < col := by
+                  rcases Nat.lt_or_eq_of_le (Nat.le_of_lt_succ hc) with hold | heq
+                  · exact hold
+                  · exact absurd (Fin.ext heq : c = colFin) hcne_colFin
+                have hzero_state :
+                    ∀ s : Fin n, state.row ≤ s.val → state.echelon[s][c] = 0 :=
+                  fun s hs => h.zero_unrecorded c hclt_col hcnot_old s hs
+                have hzero_swap :
+                    ∀ s : Fin n, state.row ≤ s.val → swappedEchelon[s][c] = 0 :=
+                  rowSwap_zero_column_preserve (M := state.echelon)
+                    target pivot c (start := state.row)
+                    (Nat.le_of_eq htarget_val.symm) hpivot_ge hzero_state
+                have hzero_scaled :
+                    ∀ s : Fin n, state.row ≤ s.val → scaledEchelon[s][c] = 0 :=
+                  rowScale_zero_column_preserve (M := swappedEchelon)
+                    target pivotVal⁻¹ c (start := state.row) hzero_swap
+                have hzero_pivot_at_c : scaledEchelon[target][c] = 0 :=
+                  hzero_scaled target (Nat.le_of_eq htarget_val.symm)
+                have hzero_elim : eliminated.1[r][c] = scaledEchelon[r][c] :=
+                  eliminateColumn_other_column scaledEchelon scaledTransform target colFin c
+                    hzero_pivot_at_c r
+                have hr_old : state.row ≤ r.val := by
+                  have : state.row + 1 ≤ r.val := hr
+                  omega
+                show eliminated.1[r][c] = 0
+                rw [hzero_elim]
+                exact hzero_scaled r hr_old
+              simpa [hpivot, colFin, target, swappedEchelon, swappedTransform,
+                pivotVal, scaledEchelon, scaledTransform, eliminated, nextState,
+                Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using
+                ih (col + 1) nextState hnext
+        · rw [dif_neg hCol]
+          exact h.widen_col_at_m (by omega)
+      · rw [dif_neg hRow]
+        exact h.widen_col_at_n (by omega)
+
+private theorem rref_final_no_pivot_zero (M : Matrix R n m) :
+    RrefNoPivotZero (R := R) (n := n) (m := m) m
+      (rrefLoop 0 m
+        { row := 0
+          echelon := M
+          transform := 1
+          pivots := [] }) := by
+  simpa using rrefLoop_no_pivot_zero (R := R) (n := n) (m := m) m 0
+    { row := 0
+      echelon := M
+      transform := 1
+      pivots := [] } (rrefNoPivotZero_initial M)
+
 /-- `rrefLoop` preserves existence of a left inverse for the transform. -/
 private theorem rrefLoop_left_inverse_preserve (col fuel : Nat)
     (state : RrefState R n m)
