@@ -2300,7 +2300,15 @@ theorem checkIrreducibleCert_prime_data
     (hcert : checkIrreducibleCert f cert = true) :
     ∀ primeData ∈ cert.perPrime.toList,
       primeData.checkForPolynomial f = true := by
-  sorry
+  simp [checkIrreducibleCert] at hcert
+  intro primeData hmem
+  rw [List.mem_iff_getElem] at hmem
+  rcases hmem with ⟨i, hi, hget⟩
+  have hiArray : i < cert.perPrime.size := by
+    simpa using hi
+  have hgetArray : cert.perPrime[i] = primeData := by
+    simpa [Array.getElem_toList] using hget
+  simpa [hgetArray] using hcert.1 i hiArray
 
 /--
 A successful integer certificate exposes the per-prime nested Rabin checks:
@@ -2313,20 +2321,27 @@ theorem checkIrreducibleCert_certificate_alignment
     (hcert : checkIrreducibleCert f cert = true) :
     ∀ primeData ∈ cert.perPrime.toList,
       primeData.checkFactorCerts = true := by
-  sorry
+  intro primeData hmem
+  have hcheck := checkIrreducibleCert_prime_data f cert hcert primeData hmem
+  simp [PrimeFactorData.checkForPolynomial] at hcheck
+  exact hcheck.2
 
 theorem checkIrreducibleCert_degree_obstructions
     (f : ZPoly) (cert : ZPolyIrreducibilityCertificate)
     (hcert : checkIrreducibleCert f cert = true) :
     cert.checkDegreeObstructions f = true := by
-  sorry
+  simp [checkIrreducibleCert] at hcert
+  exact hcert.2
 
 theorem checkIrreducibleCert_obstructs_candidate_degrees
     (f : ZPoly) (cert : ZPolyIrreducibilityCertificate)
     (hcert : checkIrreducibleCert f cert = true) :
     ∀ targetDegree ∈ ZPolyIrreducibilityCertificate.candidateFactorDegrees f,
       cert.hasObstructionFor f targetDegree = true := by
-  sorry
+  intro targetDegree hmem
+  have hobs := checkIrreducibleCert_degree_obstructions f cert hcert
+  simp [ZPolyIrreducibilityCertificate.checkDegreeObstructions] at hobs
+  exact hobs.2 targetDegree hmem
 
 theorem degreeObstruction_no_subset_degree
     (f : ZPoly) (cert : ZPolyIrreducibilityCertificate)
@@ -2334,6 +2349,7 @@ theorem degreeObstruction_no_subset_degree
     (hobs : obs.checkForCertificate f cert = true)
     (hprime : cert.primeDataAt? obs.primeIndex = some primeData) :
     primeData.hasSubsetDegree obs.targetDegree = false := by
-  sorry
+  simp [DegreeObstruction.checkForCertificate, hprime] at hobs
+  exact hobs.2
 
 end Hex
