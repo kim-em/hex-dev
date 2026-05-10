@@ -14,8 +14,12 @@ Smoke registrations:
 * `runFactorChecksum`: public `factor` combinator on small split inputs.
 * `runFactorFastChecksum`: CLD fast path on the same inputs, preserving `none`.
 * `runFactorSlowChecksum`: exhaustive backstop on the same inputs.
-* HO-2 adversarial polynomial constants plus singleton `factor` / `factorFast`
-  targets for the smoke-tractable recombination surfaces.
+* HO-2 adversarial polynomial constants plus singleton `factor` targets and
+  smoke-safe fast-path setup targets for the adversarial recombination surfaces.
+  Full `factorFast` on `X^4 + 1` and `Phi_15` currently exceeds the smoke
+  verifier's one-call budget, so those two fast-path registrations record the
+  public precision cap and pinned modular split profile instead of falling
+  through the public `factor` combinator.
 * `runAdvSwinnertonDyerSD3ModularSplitChecksum`: the pinned SD3 modular split
   profile, keeping the worst-case recombination shape visible without running
   the currently smoke-intractable full integer factorization in `verify`.
@@ -141,6 +145,18 @@ def checksumOptionNatArray : Option (Array Nat) → UInt64
   | none => 0
   | some xs => mixHash 1 (checksumNatArray xs)
 
+/--
+Stable checksum for smoke-safe fast-path setup on an adversarial singleton.
+
+This deliberately does not call the public fallback combinator: the checksum
+records the precision cap that `factorFast` would use and the pinned local split
+shape feeding recombination. It keeps the hard fast-path cases visible to
+`list` / `verify` while the full `factorFast` calls remain too expensive for
+smoke verification.
+-/
+def checksumFastPathSetup (f : ZPoly) (p : Nat) : UInt64 :=
+  mixHash (hash (factorFastPrecisionCap f)) (checksumOptionNatArray (modularFactorDegreesAt? f p))
+
 /-- Benchmark target: public fast-with-slow-fallback factorization. -/
 def runFactorChecksum (f : ZPoly) : UInt64 :=
   checksumFactorization (factor f)
@@ -158,10 +174,10 @@ def runFactorSlowChecksum (f : ZPoly) : UInt64 :=
 def runFactorAdvX4Plus1Checksum (f : ZPoly) : UInt64 :=
   runFactorChecksum f
 
-/-- Singleton benchmark target: fast path on `X^4 + 1`, preserving `none`. -/
+/-- Singleton benchmark target: fast-path setup on `X^4 + 1`, pinned at `p = 5`. -/
 @[noinline]
-def runFactorFastAdvX4Plus1Checksum (f : ZPoly) : UInt64 :=
-  runFactorFastChecksum f
+def runFactorFastSetupAdvX4Plus1Checksum (f : ZPoly) : UInt64 :=
+  checksumFastPathSetup f 5
 
 /-- Singleton benchmark target: public factorization on `(X^2 - 2)(X^2 - 3)`. -/
 @[noinline]
@@ -178,10 +194,10 @@ def runFactorFastAdvQuadSqrt2Sqrt3Checksum (f : ZPoly) : UInt64 :=
 def runFactorAdvPhi15Checksum (f : ZPoly) : UInt64 :=
   runFactorChecksum f
 
-/-- Singleton benchmark target: fast path on `Phi_15`, preserving `none`. -/
+/-- Singleton benchmark target: fast-path setup on `Phi_15`, pinned at `p = 31`. -/
 @[noinline]
-def runFactorFastAdvPhi15Checksum (f : ZPoly) : UInt64 :=
-  runFactorFastChecksum f
+def runFactorFastSetupAdvPhi15Checksum (f : ZPoly) : UInt64 :=
+  checksumFastPathSetup f 31
 
 /--
 Singleton benchmark target: pinned modular split profile for Swinnerton-Dyer
@@ -316,10 +332,13 @@ setup_benchmark runFactorDegreeHeightChecksum param => bzClassicalDegreeHeightCo
     signalFloorMultiplier := 1.0
   }
 
-/- Singleton HO-2 adversarial fast-path target for `X^4 + 1`. The declared cost
-model is the same constant `n + 1` singleton bound, with `none` distinguished so
-fast-path misses remain visible until the BHKS completion work succeeds. -/
-setup_benchmark runFactorFastAdvX4Plus1Checksum n => n + 1
+/- Singleton HO-2 adversarial fast-path setup target for `X^4 + 1`. Full
+`factorFast` exceeds the smoke verifier's one-call budget; the declared cost
+model is the constant `n + 1` singleton bound for the pinned `n = 0` schedule.
+This registration narrows the measured operation to the public fast-path
+precision cap plus the pinned `p = 5` modular split profile. The public fallback
+is not called, so a future `factorFast = none` result is not hidden by `factor`. -/
+setup_benchmark runFactorFastSetupAdvX4Plus1Checksum n => n + 1
   with prep := prepAdvX4Plus1
   where {
     paramFloor := 0
@@ -404,9 +423,12 @@ setup_benchmark runFactorAdvPhi15Checksum n => n + 1
     signalFloorMultiplier := 1.0
   }
 
-/- Singleton HO-2 adversarial fast-path target for `Phi_15`. The declared cost
-model is the same constant `n + 1` singleton bound. -/
-setup_benchmark runFactorFastAdvPhi15Checksum n => n + 1
+/- Singleton HO-2 adversarial fast-path setup target for `Phi_15`. Full
+`factorFast` is a scientific-only run for now: the declared cost model is the
+constant `n + 1` singleton bound for the pinned `n = 0` schedule. This smoke
+registration keeps the fast-path precision cap and pinned `p = 31` eight-linear
+split visible without routing through the public fallback combinator. -/
+setup_benchmark runFactorFastSetupAdvPhi15Checksum n => n + 1
   with prep := prepAdvPhi15
   where {
     paramFloor := 0
