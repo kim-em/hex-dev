@@ -1208,10 +1208,377 @@ theorem nullspace_sound {R : Type u} [Lean.Grind.Ring R] {n m : Nat}
     _ = 0 := by
       rw [Matrix.mulVec_zero]
 
+private theorem vector_toList_eq_finRange_map_get {α : Type u} {n : Nat}
+    (v : Vector α n) :
+    v.toList = (List.finRange n).map fun i => v[i] := by
+  apply List.ext_getElem
+  · simp [Vector.length_toList]
+  · intro k _ _
+    simp
+
+private theorem foldl_sum_mul_left_local {R : Type u} [Lean.Grind.Ring R]
+    {α : Type v} (xs : List α) (f : α → R) (c acc : R) :
+    c * xs.foldl (fun acc x => acc + f x) acc =
+      xs.foldl (fun acc x => acc + c * f x) (c * acc) := by
+  induction xs generalizing acc with
+  | nil =>
+      simp
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [ih (acc := acc + f x)]
+      have hdist : c * (acc + f x) = c * acc + c * f x := by grind
+      rw [hdist]
+
+private theorem foldl_sum_perm_local {R : Type u} [Lean.Grind.CommRing R]
+    {β : Type v} (f : β → R) {xs ys : List β} (hperm : xs.Perm ys) (z : R) :
+    xs.foldl (fun acc x => acc + f x) z =
+      ys.foldl (fun acc x => acc + f x) z := by
+  induction hperm generalizing z with
+  | nil => rfl
+  | cons _ _ ih =>
+      simp only [List.foldl_cons]
+      exact ih (z + _)
+  | swap x y xs =>
+      simp only [List.foldl_cons]
+      congr 1
+      grind
+  | trans _ _ ih₁ ih₂ =>
+      exact (ih₁ z).trans (ih₂ z)
+
+omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
+private theorem pivotCols_toList_nodup
+    [Mul R] [Add R] [OfNat R 0] [OfNat R 1]
+    {M : Matrix R n m} {D : RowEchelonData R n m}
+    (E : IsEchelonForm M D) :
+    D.pivotCols.toList.Nodup := by
+  rw [List.nodup_iff_pairwise_ne]
+  rw [List.pairwise_iff_getElem]
+  intro i j hi hj hij
+  have hi' : i < D.rank := by simpa [Vector.length_toList] using hi
+  have hj' : j < D.rank := by simpa [Vector.length_toList] using hj
+  have h := E.pivotCols_sorted ⟨i, hi'⟩ ⟨j, hj'⟩ hij
+  intro heq
+  have heqGet :
+      D.pivotCols.toList[i]'hi = D.pivotCols.toList[j]'hj := heq
+  rw [Vector.getElem_toList, Vector.getElem_toList] at heqGet
+  have : D.pivotCols.get ⟨i, hi'⟩ = D.pivotCols.get ⟨j, hj'⟩ := heqGet
+  rw [this] at h
+  omega
+
+omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
+private theorem finRange_perm_pivot_free
+    [Mul R] [Add R] [OfNat R 0] [OfNat R 1]
+    {M : Matrix R n m} {D : RowEchelonData R n m}
+    (E : IsEchelonForm M D) :
+    (List.finRange m).Perm
+      (D.pivotCols.toList ++ E.freeColsList) := by
+  let p : Fin m → Bool := fun j => decide (j ∈ D.pivotCols.toList)
+  have hpivot_pair : List.Pairwise (fun a b : Fin m => a < b)
+      ((List.finRange m).filter p) :=
+    List.Pairwise.filter p (List.pairwise_lt_finRange m)
+  have hpivot_nodup : ((List.finRange m).filter p).Nodup := by
+    rw [List.nodup_iff_pairwise_ne]
+    exact hpivot_pair.imp (fun hlt heq => by subst heq; omega)
+  have hpivot_perm : D.pivotCols.toList.Perm ((List.finRange m).filter p) := by
+    rw [List.perm_ext_iff_of_nodup (pivotCols_toList_nodup E) hpivot_nodup]
+    intro a
+    constructor
+    · intro ha
+      rw [List.mem_filter]
+      refine ⟨List.mem_finRange a, ?_⟩
+      exact decide_eq_true ha
+    · intro ha
+      rw [List.mem_filter] at ha
+      exact of_decide_eq_true ha.2
+  have hfree_eq :
+      E.freeColsList = (List.finRange m).filter (fun j => !p j) := by
+    unfold IsEchelonForm.freeColsList
+    apply List.filter_congr
+    intro j _hj
+    show decide (j ∉ D.pivotCols.toList) = !decide (j ∈ D.pivotCols.toList)
+    by_cases hjp : j ∈ D.pivotCols.toList
+    · simp [hjp]
+    · simp [hjp]
+  have hgoal : (D.pivotCols.toList ++ E.freeColsList).Perm (List.finRange m) := by
+    rw [hfree_eq]
+    exact (hpivot_perm.append_right _).trans
+      (List.filter_append_perm p (List.finRange m))
+  exact hgoal.symm
+
+omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
+/-- The pivot-column entry in row `pivotRow i` is `1` exactly when the pivot
+indices match. This is the indicator characterization used to extract
+`v[D.pivotCols.get i]` from the row sum. -/
+private theorem pivot_column_entry_pivotRow {R : Type u} [Lean.Grind.Field R]
+    {n m : Nat} {M : Matrix R n m} {D : RowEchelonData R n m} (E : IsRREF M D)
+    (i i' : Fin D.rank) :
+    D.echelon[E.toIsEchelonForm.pivotRow i][D.pivotCols.get i'] =
+      if i' = i then (1 : R) else 0 := by
+  have h := pivot_column_entry E i' (E.toIsEchelonForm.pivotRow i)
+  by_cases hii : i' = i
+  · subst i'
+    rw [if_pos rfl]
+    rw [h]
+    rw [if_pos rfl]
+  · rw [if_neg hii]
+    rw [h]
+    have hrow_ne : E.toIsEchelonForm.pivotRow i' ≠ E.toIsEchelonForm.pivotRow i := by
+      intro heq
+      apply hii
+      apply Fin.ext
+      simpa [IsEchelonForm.pivotRow] using congrArg Fin.val heq
+    rw [if_neg hrow_ne]
+
+omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
+/-- The row of `D.echelon * v` at `pivotRow i`, expanded as a foldl, is the
+sum of the pivot-column contribution `v[D.pivotCols.get i]` plus the
+free-column contributions. When `D.echelon * v = 0`, this gives a relation
+between `v[D.pivotCols.get i]` and the free-column entries. -/
+private theorem freeSum_eq_neg_pivot {R : Type u} [Lean.Grind.Field R] {n m : Nat}
+    {M : Matrix R n m} {D : RowEchelonData R n m}
+    (E : IsRREF M D) {v : Vector R m}
+    (hEchelon : D.echelon * v = 0) (i : Fin D.rank) :
+    v[D.pivotCols.get i] +
+      (List.finRange (m - D.rank)).foldl
+        (fun acc k =>
+          acc +
+            D.echelon[E.toIsEchelonForm.pivotRow i][E.toIsEchelonForm.freeCols.get k] *
+              v[E.toIsEchelonForm.freeCols.get k]) 0 = 0 := by
+  -- Expand `(D.echelon * v)[pivotRow i] = 0` into a foldl over `Fin m`.
+  have hZero : (List.finRange m).foldl
+      (fun acc l =>
+        acc + D.echelon[E.toIsEchelonForm.pivotRow i][l] * v[l]) 0 = 0 := by
+    have hentry := congrArg (fun w => w[(E.toIsEchelonForm.pivotRow i).val]'
+      (E.toIsEchelonForm.pivotRow i).isLt) hEchelon
+    -- `hentry : (D.echelon * v)[pivotRow i] = (0 : Vector R n)[pivotRow i]`
+    change
+      (Matrix.mulVec D.echelon v)[(E.toIsEchelonForm.pivotRow i).val]'
+        (E.toIsEchelonForm.pivotRow i).isLt =
+      (0 : Vector R n)[(E.toIsEchelonForm.pivotRow i).val]'
+        (E.toIsEchelonForm.pivotRow i).isLt at hentry
+    unfold Matrix.mulVec Matrix.dot Matrix.row Hex.Vector.dotProduct at hentry
+    rw [Vector.getElem_ofFn (E.toIsEchelonForm.pivotRow i).isLt] at hentry
+    rw [Vector.getElem_zero (E.toIsEchelonForm.pivotRow i).val
+      (E.toIsEchelonForm.pivotRow i).isLt] at hentry
+    exact hentry
+  -- Split the foldl using the perm `finRange m ~ pivotCols.toList ++ freeColsList`.
+  have hperm := finRange_perm_pivot_free (M := M) (D := D) E.toIsEchelonForm
+  have hSplit :
+      (List.finRange m).foldl
+          (fun acc l => acc + D.echelon[E.toIsEchelonForm.pivotRow i][l] * v[l]) 0 =
+        D.pivotCols.toList.foldl
+            (fun acc l => acc + D.echelon[E.toIsEchelonForm.pivotRow i][l] * v[l]) 0 +
+        E.toIsEchelonForm.freeColsList.foldl
+            (fun acc l => acc + D.echelon[E.toIsEchelonForm.pivotRow i][l] * v[l]) 0 := by
+    rw [foldl_sum_perm_local
+      (f := fun l => D.echelon[E.toIsEchelonForm.pivotRow i][l] * v[l]) hperm]
+    rw [List.foldl_append]
+    rw [foldl_sum_start (R := R)
+      (xs := E.toIsEchelonForm.freeColsList)
+      (f := fun l => D.echelon[E.toIsEchelonForm.pivotRow i][l] * v[l])
+      (acc := D.pivotCols.toList.foldl
+        (fun acc l => acc + D.echelon[E.toIsEchelonForm.pivotRow i][l] * v[l]) 0)]
+  -- Pivot half: convert to fold over Fin D.rank, use indicator structure.
+  have hPivotPart :
+      D.pivotCols.toList.foldl
+          (fun acc l => acc + D.echelon[E.toIsEchelonForm.pivotRow i][l] * v[l]) 0 =
+        v[D.pivotCols.get i] := by
+    have hList : D.pivotCols.toList =
+        (List.finRange D.rank).map fun i' => D.pivotCols.get i' := by
+      have h := vector_toList_eq_finRange_map_get D.pivotCols
+      simpa [Vector.get] using h
+    rw [hList, List.foldl_map]
+    have hrewrite :
+        (List.finRange D.rank).foldl
+            (fun acc i' =>
+              acc + D.echelon[E.toIsEchelonForm.pivotRow i][D.pivotCols.get i'] *
+                v[D.pivotCols.get i']) 0 =
+          (List.finRange D.rank).foldl
+            (fun acc i' =>
+              acc + (if i = i' then (1 : R) else 0) * v[D.pivotCols.get i']) 0 := by
+      apply foldl_sum_congr
+      intro i' _hi'
+      have h := pivot_column_entry_pivotRow E i i'
+      rw [h]
+      by_cases hii : i' = i
+      · subst i'
+        rfl
+      · have hii' : i ≠ i' := fun h => hii h.symm
+        rw [if_neg hii, if_neg hii']
+    rw [hrewrite]
+    rw [foldl_indicator_mul_unique (List.finRange D.rank) i
+      (fun i' => v[D.pivotCols.get i'])
+      (List.mem_finRange i) (List.nodup_finRange D.rank) 0]
+    grind
+  -- Free half: convert to fold over Fin (m - D.rank).
+  have hFreePart :
+      E.toIsEchelonForm.freeColsList.foldl
+          (fun acc l => acc + D.echelon[E.toIsEchelonForm.pivotRow i][l] * v[l]) 0 =
+        (List.finRange (m - D.rank)).foldl
+          (fun acc k =>
+            acc +
+              D.echelon[E.toIsEchelonForm.pivotRow i][E.toIsEchelonForm.freeCols.get k] *
+                v[E.toIsEchelonForm.freeCols.get k]) 0 := by
+    have hList : E.toIsEchelonForm.freeColsList =
+        (List.finRange (m - D.rank)).map fun k => E.toIsEchelonForm.freeCols.get k := by
+      apply List.ext_getElem
+      · simp [E.toIsEchelonForm.freeColsList_length]
+      · intro k hk₁ _
+        have hk : k < m - D.rank := by
+          rw [E.toIsEchelonForm.freeColsList_length] at hk₁
+          exact hk₁
+        rw [List.getElem_map, List.getElem_finRange]
+        change E.toIsEchelonForm.freeColsList[k]'_ = E.toIsEchelonForm.freeCols.get ⟨k, hk⟩
+        unfold IsEchelonForm.freeCols
+        simp [Vector.get, List.getElem_toArray]
+    rw [hList, List.foldl_map]
+  rw [hSplit, hPivotPart, hFreePart] at hZero
+  exact hZero
+
+omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
 /-- Every nullspace vector is generated by the computed nullspace basis. -/
-theorem nullspace_complete [Lean.Grind.Field R] (E : IsRREF M D) (v : Vector R m) :
+theorem nullspace_complete {R : Type u} [Lean.Grind.Field R] {n m : Nat}
+    {M : Matrix R n m} {D : RowEchelonData R n m}
+    (E : IsRREF M D) (v : Vector R m) :
     M * v = 0 → ∃ c : Vector R (m - D.rank), E.nullspaceMatrix * c = v := by
-  sorry
+  intro hMv
+  have hEchelon : D.echelon * v = 0 := by
+    calc
+      D.echelon * v = (D.transform * M) * v := by rw [E.toIsEchelonForm.transform_mul]
+      _ = D.transform * (M * v) := Matrix.mul_assoc_vec _ _ _
+      _ = D.transform * (0 : Vector R n) := by rw [hMv]
+      _ = 0 := Matrix.mulVec_zero _
+  refine ⟨Vector.ofFn (fun k => v[E.toIsEchelonForm.freeCols.get k]), ?_⟩
+  -- Prove the entry-wise equality for an arbitrary `Fin m` index, then convert
+  -- to the `Vector.ext` form. Working with `Fin` lets us use `subst` on the
+  -- `colPartition` hypothesis without dependent-type rewriting issues.
+  have hcEntry : ∀ k : Fin (m - D.rank),
+      (Vector.ofFn (fun k => v[E.toIsEchelonForm.freeCols.get k]) :
+          Vector R (m - D.rank))[k] =
+        v[E.toIsEchelonForm.freeCols.get k] := by
+    intro k
+    simp [Vector.getElem_ofFn]
+  have key : ∀ jj : Fin m,
+      (E.nullspaceMatrix *
+          (Vector.ofFn (fun k => v[E.toIsEchelonForm.freeCols.get k]) :
+            Vector R (m - D.rank)))[jj.val]'jj.isLt = v[jj.val]'jj.isLt := by
+    intro jj
+    -- Expand the matrix-vector product to a foldl.
+    change
+      (Matrix.mulVec E.nullspaceMatrix
+        (Vector.ofFn (fun k => v[E.toIsEchelonForm.freeCols.get k]) :
+          Vector R (m - D.rank)))[jj.val]'jj.isLt = v[jj.val]'jj.isLt
+    unfold Matrix.mulVec Matrix.dot Matrix.row Hex.Vector.dotProduct
+    rw [Vector.getElem_ofFn jj.isLt]
+    change
+      (List.finRange (m - D.rank)).foldl
+          (fun acc k =>
+            acc + E.nullspaceMatrix[jj][k] *
+              (Vector.ofFn (fun k => v[E.toIsEchelonForm.freeCols.get k]) :
+                Vector R (m - D.rank))[k]) 0 = v[jj]
+    rcases E.toIsEchelonForm.colPartition jj with ⟨i, hi⟩ | ⟨l, hl⟩
+    · -- Pivot case: substitute jj := D.pivotCols.get i
+      subst hi
+      -- Replace v[D.pivotCols.get i] using the freeSum identity.
+      have hRowEq :
+          (List.finRange (m - D.rank)).foldl
+              (fun acc k =>
+                acc + E.nullspaceMatrix[D.pivotCols.get i][k] *
+                  (Vector.ofFn (fun k => v[E.toIsEchelonForm.freeCols.get k]) :
+                    Vector R (m - D.rank))[k]) 0 =
+            (List.finRange (m - D.rank)).foldl
+              (fun acc k =>
+                acc +
+                  -(D.echelon[E.toIsEchelonForm.pivotRow i][
+                      E.toIsEchelonForm.freeCols.get k] *
+                    v[E.toIsEchelonForm.freeCols.get k])) 0 := by
+        apply foldl_sum_congr
+        intro k _hk
+        rw [nullspaceMatrix_pivot E i k, hcEntry k]
+        grind
+      rw [hRowEq]
+      have hFree := freeSum_eq_neg_pivot E hEchelon i
+      have hNeg :
+          (List.finRange (m - D.rank)).foldl
+              (fun acc k =>
+                acc +
+                  -(D.echelon[E.toIsEchelonForm.pivotRow i][
+                      E.toIsEchelonForm.freeCols.get k] *
+                    v[E.toIsEchelonForm.freeCols.get k])) 0 =
+            -((List.finRange (m - D.rank)).foldl
+                (fun acc k =>
+                  acc +
+                    D.echelon[E.toIsEchelonForm.pivotRow i][
+                      E.toIsEchelonForm.freeCols.get k] *
+                      v[E.toIsEchelonForm.freeCols.get k]) 0) := by
+        have hmul := foldl_sum_mul_left_local
+          (xs := List.finRange (m - D.rank))
+          (f := fun k =>
+            D.echelon[E.toIsEchelonForm.pivotRow i][E.toIsEchelonForm.freeCols.get k] *
+              v[E.toIsEchelonForm.freeCols.get k])
+          (c := (-1 : R)) (acc := 0)
+        have hzero : ((-1 : R)) * 0 = 0 := by grind
+        rw [hzero] at hmul
+        have h1 :
+            (List.finRange (m - D.rank)).foldl
+                (fun acc k =>
+                  acc +
+                    -(D.echelon[E.toIsEchelonForm.pivotRow i][
+                        E.toIsEchelonForm.freeCols.get k] *
+                      v[E.toIsEchelonForm.freeCols.get k])) 0 =
+              (List.finRange (m - D.rank)).foldl
+                (fun acc k =>
+                  acc +
+                    ((-1 : R) *
+                      (D.echelon[E.toIsEchelonForm.pivotRow i][
+                          E.toIsEchelonForm.freeCols.get k] *
+                        v[E.toIsEchelonForm.freeCols.get k]))) 0 := by
+          apply foldl_sum_congr
+          intro k _hk
+          grind
+        rw [h1, ← hmul]
+        grind
+      rw [hNeg]
+      have hsum :
+          (List.finRange (m - D.rank)).foldl
+              (fun acc k =>
+                acc +
+                  D.echelon[E.toIsEchelonForm.pivotRow i][
+                    E.toIsEchelonForm.freeCols.get k] *
+                    v[E.toIsEchelonForm.freeCols.get k]) 0 =
+            -v[D.pivotCols.get i] := by
+        have h := hFree
+        grind
+      rw [hsum]
+      grind
+    · -- Free case: substitute jj := freeCols.get l
+      subst hl
+      have hcongr :
+          (List.finRange (m - D.rank)).foldl
+              (fun acc k =>
+                acc + E.nullspaceMatrix[E.toIsEchelonForm.freeCols.get l][k] *
+                  (Vector.ofFn (fun k => v[E.toIsEchelonForm.freeCols.get k]) :
+                    Vector R (m - D.rank))[k]) 0 =
+            (List.finRange (m - D.rank)).foldl
+              (fun acc k =>
+                acc + (if l = k then (1 : R) else 0) *
+                  v[E.toIsEchelonForm.freeCols.get k]) 0 := by
+        apply foldl_sum_congr
+        intro k _hk
+        rw [hcEntry k]
+        by_cases hkl : k = l
+        · subst k
+          rw [nullspaceMatrix_free E l, if_pos rfl]
+        · have hlk : l ≠ k := fun heq => hkl heq.symm
+          rw [nullspaceMatrix_free_ne E (k := k) (l := l) hkl, if_neg hlk]
+      rw [hcongr]
+      rw [foldl_indicator_mul_unique (List.finRange (m - D.rank)) l
+        (fun k => v[E.toIsEchelonForm.freeCols.get k])
+        (List.mem_finRange l) (List.nodup_finRange (m - D.rank)) 0]
+      grind
+  apply Vector.ext
+  intro j hj
+  exact key ⟨j, hj⟩
 
 end IsRREF
 
