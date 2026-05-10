@@ -377,6 +377,79 @@ theorem one_mulVec [Lean.Grind.Ring R] (v : Vector R n) :
             (List.mem_finRange _) (List.nodup_finRange n) 0]
           grind
 
+/-- Left-multiplication by the identity matrix leaves a matrix unchanged. -/
+theorem one_mul [Lean.Grind.Ring R] (M : Matrix R n m) :
+    (1 : Matrix R n n) * M = M := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let ii : Fin n := ⟨i, hi⟩
+  let jj : Fin m := ⟨j, hj⟩
+  change ((1 : Matrix R n n) * M)[ii][jj] = M[ii][jj]
+  simp [HMul.hMul, mul, dot, row, col, Hex.Vector.dotProduct]
+  simp [ofFn]
+  change
+    (List.finRange n).foldl
+        (fun acc l => acc + (1 : Matrix R n n)[ii][l] * M[l][jj]) 0 =
+      M[ii][jj]
+  calc
+    (List.finRange n).foldl
+        (fun acc l => acc + (1 : Matrix R n n)[ii][l] * M[l][jj]) 0 =
+        (List.finRange n).foldl
+          (fun acc l => acc + (if ii = l then (1 : R) else 0) * M[l][jj]) 0 := by
+          apply foldl_sum_congr
+          intro l _hl
+          simp [show (1 : Matrix R n n) = Matrix.identity from rfl, Matrix.identity, ofFn]
+    _ = M[ii][jj] := by
+          rw [foldl_indicator_mul_unique (List.finRange n) ii (fun l => M[l][jj])
+            (List.mem_finRange _) (List.nodup_finRange n) 0]
+          grind
+
+/-- Right-multiplication by the identity matrix leaves a matrix unchanged. -/
+theorem mul_one [Lean.Grind.Ring R] (M : Matrix R n m) :
+    M * (1 : Matrix R m m) = M := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let ii : Fin n := ⟨i, hi⟩
+  let jj : Fin m := ⟨j, hj⟩
+  change (M * (1 : Matrix R m m))[ii][jj] = M[ii][jj]
+  simp [HMul.hMul, mul, dot, row, col, Hex.Vector.dotProduct]
+  simp [ofFn]
+  change
+    (List.finRange m).foldl
+        (fun acc l => acc + M[ii][l] * (1 : Matrix R m m)[l][jj]) 0 =
+      M[ii][jj]
+  calc
+    (List.finRange m).foldl
+        (fun acc l => acc + M[ii][l] * (1 : Matrix R m m)[l][jj]) 0 =
+        (List.finRange m).foldl
+          (fun acc l => acc + (if jj = l then (1 : R) else 0) * M[ii][l]) 0 := by
+          apply foldl_sum_congr
+          intro l _hl
+          simp [show (1 : Matrix R m m) = Matrix.identity from rfl, Matrix.identity, ofFn]
+          split <;> grind
+    _ = M[ii][jj] := by
+          rw [foldl_indicator_mul_unique (List.finRange m) jj (fun l => M[ii][l])
+            (List.mem_finRange _) (List.nodup_finRange m) 0]
+          grind
+
+/-- Matrix multiplication is associative. -/
+theorem mul_assoc [Lean.Grind.Ring R]
+    (A : Matrix R n m) (B : Matrix R m k) (C : Matrix R k l) :
+    (A * B) * C = A * (B * C) := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let ii : Fin n := ⟨i, hi⟩
+  let jj : Fin l := ⟨j, hj⟩
+  change ((A * B) * C)[ii][jj] = (A * (B * C))[ii][jj]
+  simpa [HMul.hMul, mulVec, mul, dot, row, col, Hex.Vector.dotProduct, ofFn] using
+    congrArg (fun v => v[ii]) (mul_assoc_vec A B (col C jj))
+
 /-- Matrix-vector multiplication sends the zero vector to the zero vector. -/
 theorem mulVec_zero [Lean.Grind.Ring R] (A : Matrix R n m) :
     A * (0 : Vector R m) = 0 := by
