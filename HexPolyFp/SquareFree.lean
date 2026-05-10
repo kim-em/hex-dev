@@ -3075,6 +3075,53 @@ private theorem yunFactors_repeated_dvd_repeated
     (yunFactors c w i fuel []).2 ∣ w := by
   exact yunFactors_repeated_dvd_repeated_of_acc c w i fuel []
 
+private def yunFactorsResidualDerivativeZero
+    (c w : FpPoly p) (multiplicity fuel : Nat) : Prop :=
+  let loop := yunFactors c w multiplicity fuel []
+  isOne loop.2 = false → (DensePoly.derivative loop.2).isZero = true
+
+private def yunFactorsContributionResidualDerivativeZero
+    (c w : FpPoly p) (multiplicity fuel : Nat) : Prop :=
+  let contribution := yunFactorsContribution c w multiplicity fuel
+  isOne contribution.2 = false →
+    (DensePoly.derivative contribution.2).isZero = true
+
+private theorem yunFactorsResidualDerivativeZero_of_contribution
+    (c w : FpPoly p) (multiplicity fuel : Nat)
+    (hresidual :
+      yunFactorsContributionResidualDerivativeZero c w multiplicity fuel) :
+    yunFactorsResidualDerivativeZero c w multiplicity fuel := by
+  intro hloop
+  let loop := yunFactors c w multiplicity fuel []
+  let contribution := yunFactorsContribution c w multiplicity fuel
+  have hloop_repeated : loop.2 = contribution.2 := by
+    simpa [loop, contribution] using
+      (yunFactors_reconstruction_invariant c w multiplicity fuel []).1
+  have hcontribution_not_one : isOne contribution.2 = false := by
+    simpa [loop, contribution, hloop_repeated] using hloop
+  simpa [loop, contribution, hloop_repeated] using
+    (hresidual hcontribution_not_one)
+
+private theorem yunFactorsResidualDerivativeZero_of_derivative_split_contribution
+    (_hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
+    (_hdf : (DensePoly.derivative f).isZero = false)
+    (hresidual :
+      let g := DensePoly.gcd f (DensePoly.derivative f)
+      let c := f / g
+      yunFactorsContributionResidualDerivativeZero c g multiplicity fuel) :
+    yunFactorsResidualDerivativeZero
+      (f / DensePoly.gcd f (DensePoly.derivative f))
+      (DensePoly.gcd f (DensePoly.derivative f))
+      multiplicity
+      fuel := by
+  exact
+    yunFactorsResidualDerivativeZero_of_contribution
+      (f / DensePoly.gcd f (DensePoly.derivative f))
+      (DensePoly.gcd f (DensePoly.derivative f))
+      multiplicity
+      fuel
+      hresidual
+
 private theorem dvd_one_of_mul_right_dvd_right
     [ZMod64.PrimeModulus p] {d g : FpPoly p}
     (hg : g.isZero = false) (hdiv : d * g ∣ g) :
