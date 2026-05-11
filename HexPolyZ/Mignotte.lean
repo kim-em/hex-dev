@@ -165,6 +165,33 @@ theorem binom_eq_zero_of_lt {n k : Nat} (h : n < k) : binom n k = 0 := by
 @[simp] theorem ceilSqrt_zero : ceilSqrt 0 = 0 := by
   simp [ceilSqrt]
 
+/--
+The square of `ceilSqrt n` is at least `n`.  This is the executable upper-square
+bound used by the Mignotte coefficient norm chain: in the perfect-square branch
+of `ceilSqrt`, equality holds; in the non-perfect-square branch, the bound
+follows from the Newton iterator invariant `sqrtAux_upper_succ`.
+-/
+theorem le_ceilSqrt_sq (n : Nat) : n ≤ (ceilSqrt n) ^ 2 := by
+  by_cases hn : n = 0
+  · subst hn
+    simp
+  · have hn_pos : 0 < n := Nat.pos_of_ne_zero hn
+    have hfloor : floorSqrt n = sqrtAux n (2 * n.log2 + 1) n := by
+      unfold floorSqrt
+      rw [if_neg hn]
+    have hinit : n ≤ (n + 1) ^ 2 := by
+      simp [Nat.pow_two]
+      grind
+    have hub : n ≤ (floorSqrt n + 1) ^ 2 := by
+      rw [hfloor]
+      exact sqrtAux_upper_succ n (2 * n.log2 + 1) n hn_pos hinit
+    unfold ceilSqrt
+    by_cases hsq : floorSqrt n * floorSqrt n = n
+    · rw [if_pos hsq, Nat.pow_two]
+      omega
+    · rw [if_neg hsq]
+      exact hub
+
 theorem coeffNormSq_eq_sum (f : ZPoly) :
     coeffNormSq f =
       (List.range f.size).foldl (fun acc i => acc + (f.coeff i).natAbs ^ 2) 0 := rfl
