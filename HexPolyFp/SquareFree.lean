@@ -4057,6 +4057,27 @@ private theorem yunFactorsPairwiseReachable_common_dvd_one
       (by simpa [z, y] using hdz)
   · exact yunStep_common_dvd_derivative_current c w d hdz hdy
 
+private theorem yunStep_tail_common_dvd_one_of_common_dvd_one
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p)
+    (hcommon :
+      ∀ d : FpPoly p, d ∣ c → d ∣ w → d ∣ (1 : FpPoly p)) :
+    ∀ d : FpPoly p,
+      d ∣ DensePoly.gcd c w →
+        d ∣ w / DensePoly.gcd c w →
+          d ∣ (1 : FpPoly p) := by
+  intro d hdy hdz
+  apply hcommon d
+  · exact dvd_trans_poly hdy (DensePoly.gcd_dvd_left c w)
+  · have hprod : (w / DensePoly.gcd c w) * DensePoly.gcd c w = w := by
+      exact div_gcd_right_mul_reconstruct c w
+    rw [← hprod]
+    exact dvd_mul_right_of_dvd
+      (a := w / DensePoly.gcd c w)
+      (b := DensePoly.gcd c w)
+      (d := d)
+      hdz
+
 private theorem normalizeMonic_eq_one_of_dvd_one
     [ZMod64.PrimeModulus p] {g : FpPoly p}
     (hdiv : g ∣ (1 : FpPoly p)) :
