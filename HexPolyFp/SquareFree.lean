@@ -3669,6 +3669,89 @@ private theorem ne_zero_of_isZero_false {f : FpPoly p}
   rw [hzero_isZero] at hf
   cases hf
 
+private theorem coeff_derivative (f : FpPoly p) (n : Nat) :
+    (DensePoly.derivative f).coeff n =
+      ((n + 1 : Nat) : ZMod64 p) * f.coeff (n + 1) := by
+  unfold DensePoly.derivative
+  rw [DensePoly.coeff_ofCoeffs_list]
+  change
+    ((List.range (f.size - 1)).map
+        (fun i => ((i + 1 : Nat) : ZMod64 p) * f.coeff (i + 1))).getD n 0 =
+      ((n + 1 : Nat) : ZMod64 p) * f.coeff (n + 1)
+  by_cases hn : n < f.size - 1
+  · simp [hn, List.getD]
+  · have hf : f.size ≤ n + 1 := by omega
+    have hcoeff : f.coeff (n + 1) = 0 :=
+      DensePoly.coeff_eq_zero_of_size_le f hf
+    simp [hn, List.getD, hcoeff]
+    exact (Lean.Grind.Semiring.mul_zero ((n + 1 : Nat) : ZMod64 p)).symm
+
+private theorem derivative_degree?_lt_self_of_ne_zero
+    (f : FpPoly p) (hder_ne : DensePoly.derivative f ≠ 0) :
+    (DensePoly.derivative f).degree?.getD 0 < f.degree?.getD 0 := by
+  have hder_pos : 0 < (DensePoly.derivative f).size := by
+    apply Nat.pos_of_ne_zero
+    intro hsize
+    apply hder_ne
+    apply DensePoly.ext_coeff
+    intro n
+    rw [DensePoly.coeff_zero]
+    exact DensePoly.coeff_eq_zero_of_size_le (DensePoly.derivative f) (by omega)
+  let n := (DensePoly.derivative f).size - 1
+  have hlast :
+      (DensePoly.derivative f).coeff n ≠ 0 := by
+    simpa [n] using
+      DensePoly.coeff_last_ne_zero_of_pos_size (DensePoly.derivative f) hder_pos
+  have hn_lt : n + 1 < f.size := by
+    by_cases hlt : n + 1 < f.size
+    · exact hlt
+    · have hf_le : f.size ≤ n + 1 := Nat.le_of_not_gt hlt
+      have hcoeff : f.coeff (n + 1) = 0 :=
+        DensePoly.coeff_eq_zero_of_size_le f hf_le
+      exfalso
+      apply hlast
+      rw [coeff_derivative f n, hcoeff]
+      exact (Lean.Grind.Semiring.mul_zero ((n + 1 : Nat) : ZMod64 p)).symm
+  have hf_pos : 0 < f.size := by omega
+  have hder_degree :
+      (DensePoly.derivative f).degree? =
+        some ((DensePoly.derivative f).size - 1) := by
+    unfold DensePoly.degree?
+    simp [Nat.ne_of_gt hder_pos]
+  have hf_degree : f.degree? = some (f.size - 1) := by
+    unfold DensePoly.degree?
+    simp [Nat.ne_of_gt hf_pos]
+  rw [hder_degree, hf_degree]
+  simp
+  omega
+
+private theorem derivative_isZero_true_of_dvd_self_derivative
+    [ZMod64.PrimeModulus p] (f : FpPoly p)
+    (hdvd : f ∣ DensePoly.derivative f) :
+    (DensePoly.derivative f).isZero = true := by
+  cases hder : (DensePoly.derivative f).isZero with
+  | true => rfl
+  | false =>
+      have hder_ne : DensePoly.derivative f ≠ 0 :=
+        ne_zero_of_isZero_false hder
+      have hf_ne : f ≠ 0 := by
+        intro hf_zero
+        apply hder_ne
+        rw [hf_zero]
+        exact DensePoly.derivative_zero
+      rcases hdvd with ⟨q, hq⟩
+      have hq_ne : q ≠ 0 := by
+        intro hq_zero
+        apply hder_ne
+        rw [hq, hq_zero, mul_zero]
+      have hdeg_mul := degree?_mul_eq_add_degree? f q hf_ne hq_ne
+      have hdeg_lt := derivative_degree?_lt_self_of_ne_zero f hder_ne
+      have hdeg_eq :
+          (DensePoly.derivative f).degree?.getD 0 = (f * q).degree?.getD 0 := by
+        rw [hq]
+      rw [hdeg_mul] at hdeg_eq
+      omega
+
 private theorem powLinear_ne_zero
     [ZMod64.PrimeModulus p] {d : FpPoly p}
     (hd : d ≠ 0) :
@@ -3827,6 +3910,64 @@ private theorem derivativeSplit_quotient_common_dvd_derivative_one
     | succ n ih =>
         exact hstep n ih
   exact dvd_one_of_all_powers_dvd_nonzero hg_nonzero hall
+
+private theorem derivativeSplit_residual_derivative_zero_of_coprime
+    (hp : Hex.Nat.Prime p) (f : FpPoly p)
+    (_hdf : (DensePoly.derivative f).isZero = false)
+    (hcoprime : ∀ d : FpPoly p,
+      d ∣ (f / DensePoly.gcd f (DensePoly.derivative f)) →
+      d ∣ DensePoly.gcd f (DensePoly.derivative f) →
+      d ∣ (1 : FpPoly p)) :
+    (DensePoly.derivative (DensePoly.gcd f (DensePoly.derivative f))).isZero = true := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  let g := DensePoly.gcd f (DensePoly.derivative f)
+  let c := f / g
+  have hprod : c * g = f := by
+    simpa [c, g] using div_gcd_mul_reconstruct f (DensePoly.derivative f)
+  have hg_dvd_df : g ∣ DensePoly.derivative f := by
+    simpa [g] using DensePoly.gcd_dvd_right f (DensePoly.derivative f)
+  have hdf_prod :
+      DensePoly.derivative f =
+        DensePoly.derivative c * g + c * DensePoly.derivative g := by
+    rw [← hprod]
+    exact DensePoly.derivative_mul c g
+  have hg_dvd_left : g ∣ DensePoly.derivative c * g := by
+    exact ⟨DensePoly.derivative c, DensePoly.mul_comm_poly (DensePoly.derivative c) g⟩
+  have hg_dvd_sum :
+      g ∣ DensePoly.derivative c * g + c * DensePoly.derivative g := by
+    simpa [hdf_prod] using hg_dvd_df
+  have hg_dvd_cdg : g ∣ c * DensePoly.derivative g := by
+    have hsub := dvd_sub_poly hg_dvd_sum hg_dvd_left
+    have hsub_eq :
+        (DensePoly.derivative c * g + c * DensePoly.derivative g) -
+            DensePoly.derivative c * g =
+          c * DensePoly.derivative g := by
+      rw [sub_eq_add_neg]
+      calc
+        (DensePoly.derivative c * g + c * DensePoly.derivative g) +
+            -(DensePoly.derivative c * g)
+            = (c * DensePoly.derivative g + DensePoly.derivative c * g) +
+                -(DensePoly.derivative c * g) := by
+              exact congrArg (fun x => x + -(DensePoly.derivative c * g))
+                (DensePoly.add_comm_poly (DensePoly.derivative c * g)
+                  (c * DensePoly.derivative g))
+        _ = c * DensePoly.derivative g +
+                (DensePoly.derivative c * g + -(DensePoly.derivative c * g)) := by
+              exact DensePoly.add_assoc_poly
+                (c * DensePoly.derivative g)
+                (DensePoly.derivative c * g)
+                (-(DensePoly.derivative c * g))
+        _ = c * DensePoly.derivative g + 0 := by rw [add_right_neg]
+        _ = c * DensePoly.derivative g := add_zero _
+    simpa [hsub_eq] using hsub
+  have hg_dvd_dg : g ∣ DensePoly.derivative g := by
+    exact dvd_of_dvd_mul_of_common_dvd_one
+      (g := g) (c := c) (h := DensePoly.derivative g)
+      hg_dvd_cdg
+      (by
+        intro d hdc hdg
+        exact hcoprime d (by simpa [c, g] using hdc) (by simpa [g] using hdg))
+  exact derivative_isZero_true_of_dvd_self_derivative g hg_dvd_dg
 
 private theorem yunFactorsPairwiseReachable_common_dvd_one_derivativeSplit
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (_fuel : Nat)
