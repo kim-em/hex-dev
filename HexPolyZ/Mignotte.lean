@@ -50,6 +50,75 @@ def ceilSqrt (n : Nat) : Nat :=
   else
     r + 1
 
+private theorem four_mul_le_square_add (a b : Nat) :
+    4 * (a * b) ≤ (a + b) ^ 2 := by
+  by_cases h : a ≤ b
+  · rcases Nat.exists_eq_add_of_le h with ⟨d, rfl⟩
+    simp [Nat.pow_two]
+    grind
+  · have hba : b ≤ a := by omega
+    rcases Nat.exists_eq_add_of_le hba with ⟨d, rfl⟩
+    simp [Nat.pow_two]
+    grind
+
+private theorem mul_succ_le_midpoint_succ_sq (x q : Nat) :
+    x * (q + 1) ≤ ((x + q) / 2 + 1) ^ 2 := by
+  let a := (x + q) / 2 + 1
+  have hmid : x + q + 1 ≤ 2 * a := by
+    dsimp [a]
+    omega
+  have hamgm : 4 * (x * (q + 1)) ≤ (x + q + 1) ^ 2 := by
+    simpa [Nat.add_assoc] using four_mul_le_square_add x (q + 1)
+  have hsquare : (x + q + 1) ^ 2 ≤ (2 * a) ^ 2 := by
+    exact Nat.pow_le_pow_left hmid 2
+  have h4 : 4 * (x * (q + 1)) ≤ 4 * (a ^ 2) := by
+    calc
+      4 * (x * (q + 1)) ≤ (x + q + 1) ^ 2 := hamgm
+      _ ≤ (2 * a) ^ 2 := hsquare
+      _ = 4 * (a ^ 2) := by
+          simp [Nat.pow_two]
+          grind
+  have hcancel := Nat.le_of_mul_le_mul_left h4 (by decide : 0 < 4)
+  simpa [a] using hcancel
+
+private theorem sqrtStep_upper_succ
+    (n x : Nat) (hx : 0 < x) (_h : n ≤ (x + 1) ^ 2) :
+    n ≤ (sqrtStep n x + 1) ^ 2 := by
+  let q := n / x
+  have hn_le : n ≤ x * (q + 1) := by
+    calc
+      n = x * q + n % x := by
+        simpa [q] using (Nat.div_add_mod n x).symm
+      _ ≤ x * q + x := Nat.add_le_add_left (Nat.le_of_lt (Nat.mod_lt n hx)) (x * q)
+      _ = x * (q + 1) := by grind
+  exact Nat.le_trans hn_le
+    (by simpa [sqrtStep, q] using mul_succ_le_midpoint_succ_sq x q)
+
+private theorem sqrtAux_upper_succ_core
+    (n fuel x : Nat) (h : n ≤ (x + 1) ^ 2) :
+    n ≤ (sqrtAux n fuel x + 1) ^ 2 := by
+  induction fuel generalizing x with
+  | zero =>
+      simpa [sqrtAux] using h
+  | succ fuel ih =>
+      by_cases hx : 0 < x
+      · unfold sqrtAux
+        let next := sqrtStep n x
+        by_cases hnext : next ≥ x
+        · simp [next, hnext]
+          exact h
+        · simp [next, hnext]
+          exact ih next (sqrtStep_upper_succ n x hx h)
+      · have hxzero : x = 0 := by omega
+        subst x
+        simp [sqrtAux, sqrtStep]
+        exact h
+
+private theorem sqrtAux_upper_succ
+    (n fuel x : Nat) (_hx : 0 < x) (h : n ≤ (x + 1) ^ 2) :
+    n ≤ (sqrtAux n fuel x + 1) ^ 2 :=
+  sqrtAux_upper_succ_core n fuel x h
+
 /-- The squared Euclidean norm of the coefficient vector of `f`. -/
 def coeffNormSq (f : ZPoly) : Nat :=
   (List.range f.size).foldl (fun acc i => acc + (f.coeff i).natAbs ^ 2) 0
