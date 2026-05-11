@@ -68,7 +68,7 @@ verify_archive() {
 download_archive() {
   local tmp="${archive}.tmp"
   rm -f "${tmp}"
-  curl -L --fail --silent --show-error \
+  curl -L --fail --silent --show-error --connect-timeout 20 \
     --retry 8 --retry-all-errors --retry-delay 10 --retry-max-time 900 \
     -o "${tmp}" "${url}"
   verify_archive "${tmp}"

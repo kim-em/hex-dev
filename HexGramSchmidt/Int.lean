@@ -570,6 +570,25 @@ theorem scaledCoeffs_eq_scaledCoeffMatrix_det
       (GramSchmidt.scaledCoeffMatrix b i j hji)
   simpa [scaledCoeffs, data, rowsToMatrix, GramSchmidt.entry, Matrix.row, Matrix.ofFn] using h
 
+/-- Leading integer Gram determinants are nonnegative. -/
+theorem leadingGramMatrixInt_det_nonneg
+    (b : Matrix Int n m) (t : Nat) (ht : t ≤ n) :
+    0 ≤ Matrix.det (GramSchmidt.leadingGramMatrixInt b t ht) := by
+  let rowPrefix : Matrix Int t m :=
+    Matrix.ofFn fun i j =>
+      (b.row ⟨i.val, Nat.lt_of_lt_of_le i.isLt ht⟩)[j]
+  have hgram :
+      GramSchmidt.leadingGramMatrixInt b t ht =
+        Matrix.gramMatrix rowPrefix := by
+    apply Vector.ext
+    intro i hi
+    apply Vector.ext
+    intro j hj
+    simp [GramSchmidt.leadingGramMatrixInt, rowPrefix, Matrix.gramMatrix, Matrix.dot,
+      Matrix.row, Matrix.ofFn, GramSchmidt.liftFinLE]
+  rw [hgram]
+  exact Matrix.det_gramMatrix_nonneg rowPrefix
+
 /-- Conditional form of the leading Gram determinant bridge. The remaining
 unconditional bridge is exactly the nonnegativity of leading Gram determinants:
 once `0 ≤ det` is available, the public `Nat`-valued `gramDet` casts back to
@@ -581,6 +600,15 @@ theorem leadingGramMatrixInt_det_eq_gramDet_int_of_nonneg
       Int.ofNat (gramDet b t ht) := by
   rw [gramDet, Matrix.bareiss_eq_det]
   exact (Int.toNat_of_nonneg hdet).symm
+
+/-- The public `Nat` Gram determinant casts back to the signed determinant of
+the leading integer Gram matrix. -/
+theorem leadingGramMatrixInt_det_eq_gramDet_int
+    (b : Matrix Int n m) (t : Nat) (ht : t ≤ n) :
+    Matrix.det (GramSchmidt.leadingGramMatrixInt b t ht) =
+      Int.ofNat (gramDet b t ht) :=
+  leadingGramMatrixInt_det_eq_gramDet_int_of_nonneg b t ht
+    (leadingGramMatrixInt_det_nonneg b t ht)
 
 theorem normSq_latticeVec_ge_min_basis_normSq
     (b : Matrix Int n m) (hli : independent b)
