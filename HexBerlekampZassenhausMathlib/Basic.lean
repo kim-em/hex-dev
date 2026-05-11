@@ -51,8 +51,8 @@ by the Mathlib Mignotte theorem.
 -/
 theorem l2norm_toPolynomial_le_coeffL2NormBound (f : Hex.ZPoly) :
     HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f) ≤
-      (Hex.ZPoly.coeffL2NormBound f : ℝ) := by
-  sorry
+      (Hex.ZPoly.coeffL2NormBound f : ℝ) :=
+  HexPolyZMathlib.l2norm_toPolynomial_le_coeffL2NormBound f
 
 /--
 The default executable factorization bound is strong enough for every
