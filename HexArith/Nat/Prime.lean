@@ -20,17 +20,47 @@ def choose : Nat -> Nat -> Nat
   | 0, _ + 1 => 0
   | n + 1, k + 1 => choose n k + choose n (k + 1)
 
+/-- `choose n 0 = 1`: the rightmost column of Pascal's triangle. -/
 @[simp] theorem choose_zero_right (n : Nat) : choose n 0 = 1 := by
   induction n with
   | zero => rfl
   | succ n ih => simp [choose]
 
+/-- `choose 0 (k + 1) = 0`: nontrivial entries vanish in the top row of Pascal's
+triangle. -/
 @[simp] theorem choose_zero_succ (k : Nat) : choose 0 (k + 1) = 0 := by
   rfl
 
+/-- Pascal's recurrence: `choose (n + 1) (k + 1) = choose n k + choose n (k + 1)`. -/
 @[simp] theorem choose_succ_succ (n k : Nat) :
     choose (n + 1) (k + 1) = choose n k + choose n (k + 1) := by
   rfl
+
+/-- Entries past the diagonal of Pascal's triangle vanish: `choose n k = 0` whenever
+`n < k`. -/
+theorem choose_eq_zero_of_lt {n k : Nat} (h : n < k) : choose n k = 0 := by
+  induction n generalizing k with
+  | zero =>
+      cases k with
+      | zero => omega
+      | succ k => rfl
+  | succ n ih =>
+      cases k with
+      | zero => omega
+      | succ k =>
+          simp [choose]
+          by_cases hk : n < k
+          · simp [ih hk]
+            exact ih (by omega)
+          · exfalso
+            omega
+
+/-- The diagonal of Pascal's triangle is constantly one: `choose n n = 1`. -/
+@[simp] theorem choose_self (n : Nat) : choose n n = 1 := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+      simp [choose, ih, choose_eq_zero_of_lt (by omega : n < n + 1)]
 
 /--
 A natural number is prime when it is at least `2` and its positive divisors are
@@ -41,6 +71,7 @@ def Prime (p : Nat) : Prop :=
 
 namespace Prime
 
+/-- Every prime is at least `2`. -/
 theorem two_le {p : Nat} (hp : Hex.Nat.Prime p) : 2 ≤ p := hp.1
 
 private theorem coprime_of_not_dvd {p a : Nat} (hp : Hex.Nat.Prime p)
@@ -54,6 +85,7 @@ private theorem coprime_of_not_dvd {p a : Nat} (hp : Hex.Nat.Prime p)
     rw [← hgcd]
     exact Nat.gcd_dvd_right p a
 
+/-- Euclid's lemma: if a prime divides a product, it divides one of the factors. -/
 theorem dvd_mul {p a b : Nat} (hp : Hex.Nat.Prime p) (h : p ∣ a * b) :
     p ∣ a ∨ p ∣ b := by
   by_cases hb : p ∣ b
@@ -117,29 +149,6 @@ private def chooseTerm (n a b k : Nat) : Nat :=
 private def chooseSum (n a b : Nat) : Nat -> Nat
   | 0 => 0
   | k + 1 => chooseSum n a b k + chooseTerm n a b k
-
-private theorem choose_eq_zero_of_lt {n k : Nat} (h : n < k) : choose n k = 0 := by
-  induction n generalizing k with
-  | zero =>
-      cases k with
-      | zero => omega
-      | succ k => rfl
-  | succ n ih =>
-      cases k with
-      | zero => omega
-      | succ k =>
-          simp [choose]
-          by_cases hk : n < k
-          · simp [ih hk]
-            exact ih (by omega)
-          · exfalso
-            omega
-
-private theorem choose_self (n : Nat) : choose n n = 1 := by
-  induction n with
-  | zero => rfl
-  | succ n ih =>
-      simp [choose, ih, choose_eq_zero_of_lt (by omega : n < n + 1)]
 
 private theorem chooseSum_zero (a b : Nat) : chooseSum 0 a b 1 = 1 := by
   simp [chooseSum, chooseTerm]
