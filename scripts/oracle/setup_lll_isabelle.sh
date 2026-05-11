@@ -13,6 +13,32 @@ patch_dir="${repo_root}/scripts/oracle/patches/lll-isabelle"
 
 mkdir -p "${cache_root}"
 
+lock_dir="${cache_root}/setup.lock"
+
+acquire_lock() {
+  local waited=0
+  while ! mkdir "${lock_dir}" 2>/dev/null; do
+    if [[ -f "${lock_dir}/pid" ]]; then
+      local lock_pid
+      lock_pid="$(cat "${lock_dir}/pid" 2>/dev/null || true)"
+      if [[ "${lock_pid}" =~ ^[0-9]+$ ]] && ! kill -0 "${lock_pid}" 2>/dev/null; then
+        rm -rf "${lock_dir}"
+        continue
+      fi
+    fi
+    if (( waited >= 300 )); then
+      echo "setup_lll_isabelle.sh: timed out waiting for ${lock_dir}" >&2
+      exit 1
+    fi
+    sleep 1
+    waited=$((waited + 1))
+  done
+  printf '%s\n' "$$" > "${lock_dir}/pid"
+  trap 'rm -rf "${lock_dir}"' EXIT
+}
+
+acquire_lock
+
 need() {
   if ! command -v "$1" >/dev/null 2>&1; then
     echo "setup_lll_isabelle.sh: missing required command: $1" >&2
