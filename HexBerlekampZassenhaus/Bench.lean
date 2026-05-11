@@ -38,10 +38,14 @@ Degree/height registrations:
   preserving `none`.
 * `runFactorSlowDegreeHeightChecksum`: bounded slow-path diagnostic on the
   smallest generated regimes.
+* `runFastPathPrecisionLocalChecksum`: smoke-safe fast-path setup over encoded
+  degree, root-height, Hensel-precision, and local-factor-count regimes.
 -/
 
 namespace Hex
 namespace BerlekampZassenhausBench
+
+private instance benchBoundsThirtyOne : ZMod64.Bounds 31 := ⟨by decide, by decide⟩
 
 instance : Hashable ZPoly where
   hash p := hash p.toArray
@@ -77,6 +81,21 @@ structure DegreeHeightInput where
   degree : Nat
   height : Nat
   poly : ZPoly
+  deriving Hashable
+
+/--
+Prepared input for the Phase 4 fast-path setup surface. The encoded parameter
+tracks input degree, root height, requested Hensel precision, and the number of
+mod-`31` local factors separately, while the timed target avoids full
+`factorFast` on adversarial cases.
+-/
+structure PrecisionLocalInput where
+  degree : Nat
+  height : Nat
+  precision : Nat
+  localFactorCount : Nat
+  poly : ZPoly
+  localFactors : Array ZPoly
   deriving Hashable
 
 /-- Encoding scale for benchmark parameters that vary degree and height. -/
@@ -124,6 +143,68 @@ def slowDegreeHeightSchedule : Array Nat :=
     encodeDegreeHeightParam 3 8,
     encodeDegreeHeightParam 4 8]
 
+/-- Encoding scale for benchmark parameters with four small natural axes. -/
+def precisionLocalParamScale : Nat :=
+  1000
+
+/--
+Encode `(degree, height, precision, localFactorCount)` as lean-bench's single
+`Nat` parameter.
+-/
+def encodePrecisionLocalParam
+    (degree height precision localFactorCount : Nat) : Nat :=
+  (((degree * precisionLocalParamScale + height) * precisionLocalParamScale
+      + precision) * precisionLocalParamScale) + localFactorCount
+
+/-- Decode the degree component from an encoded precision/local-factor parameter. -/
+def precisionLocalDegree (param : Nat) : Nat :=
+  param / (precisionLocalParamScale * precisionLocalParamScale * precisionLocalParamScale)
+
+/-- Decode the root-height component from an encoded precision/local-factor parameter. -/
+def precisionLocalHeight (param : Nat) : Nat :=
+  (param / (precisionLocalParamScale * precisionLocalParamScale)) % precisionLocalParamScale
+
+/-- Decode the requested Hensel precision component. -/
+def precisionLocalPrecision (param : Nat) : Nat :=
+  (param / precisionLocalParamScale) % precisionLocalParamScale
+
+/-- Decode the local-factor-count component. -/
+def precisionLocalFactorCount (param : Nat) : Nat :=
+  param % precisionLocalParamScale
+
+/--
+Scientific schedule for the fast-path setup surface. The cases vary Hensel
+precision and the number of local factors while keeping every polynomial split
+over the supported benchmark prime `31`.
+-/
+def precisionLocalSchedule : Array Nat :=
+  #[encodePrecisionLocalParam 2 2 4 2,
+    encodePrecisionLocalParam 2 2 16 2,
+    encodePrecisionLocalParam 4 4 16 4,
+    encodePrecisionLocalParam 4 16 64 4,
+    encodePrecisionLocalParam 6 16 64 6,
+    encodePrecisionLocalParam 8 32 128 8]
+
+/-- Deterministic local linear factors for the precision/local-factor matrix. -/
+def splitPrecisionLocalFactors (localFactorCount height : Nat) : Array ZPoly :=
+  let scale := Int.ofNat (height + 1)
+  (Array.range localFactorCount).map fun i =>
+    linearZFactor (scale * Int.ofNat (i + 1))
+
+/-- Per-parameter fixture for the precision/local-factor benchmark matrix. -/
+def prepPrecisionLocalInput (param : Nat) : PrecisionLocalInput :=
+  let degree := precisionLocalDegree param
+  let height := precisionLocalHeight param
+  let precision := precisionLocalPrecision param
+  let localFactorCount := precisionLocalFactorCount param
+  let localFactors := splitPrecisionLocalFactors localFactorCount height
+  { degree
+    height
+    precision
+    localFactorCount
+    poly := Array.polyProduct localFactors
+    localFactors }
+
 /-- Stable checksum for integer-polynomial benchmark results. -/
 def checksumZPoly (f : ZPoly) : UInt64 :=
   f.toArray.foldl (fun acc coeff => mixHash acc (hash coeff)) 0
@@ -140,6 +221,10 @@ def checksumFactorization (φ : Factorization) : UInt64 :=
 /-- Stable checksum for modular factor-degree profiles. -/
 def checksumNatArray (xs : Array Nat) : UInt64 :=
   xs.foldl (fun acc x => mixHash acc (hash x)) 0
+
+/-- Stable checksum for ordered integer-polynomial arrays. -/
+def checksumZPolyArray (xs : Array ZPoly) : UInt64 :=
+  xs.foldl (fun acc f => mixHash acc (checksumZPoly f)) 0
 
 /-- Stable checksum for optional fast-path factorization results. -/
 def checksumOptionFactorization : Option Factorization → UInt64
@@ -238,6 +323,19 @@ def runFactorFastDegreeHeightChecksum (input : DegreeHeightInput) : UInt64 :=
 def runFactorSlowDegreeHeightChecksum (input : DegreeHeightInput) : UInt64 :=
   checksumFactorization (factorSlow input.poly)
 
+/--
+Benchmark target: smoke-safe fast-path setup over encoded degree, height,
+Hensel precision, and local-factor-count axes.
+-/
+def runFastPathPrecisionLocalChecksum (input : PrecisionLocalInput) : UInt64 :=
+  let lifted :=
+    ZPoly.multifactorLiftQuadratic 31 input.precision input.poly input.localFactors
+  let splitProfile := modularFactorDegreesAt? input.poly 31
+  mixHash (hash input.precision) <|
+    mixHash (hash input.localFactorCount) <|
+      mixHash (checksumZPolyArray lifted) <|
+        mixHash (hash (factorFastPrecisionCap input.poly)) (checksumOptionNatArray splitProfile)
+
 /-- HO-3's classical-arithmetic BHKS model over the smoke degree parameter. -/
 def bzClassicalSmokeComplexity (n : Nat) : Nat :=
   n ^ 9 + n ^ 7 * (Nat.log2 (n + 2)) ^ 2
@@ -252,6 +350,18 @@ def bzClassicalDegreeHeightComplexity (param : Nat) : Nat :=
 def bzSlowDegreeHeightComplexity (param : Nat) : Nat :=
   let n := degreeHeightDegree param
   2 ^ n * bzClassicalDegreeHeightComplexity param
+
+/--
+Classical setup model over encoded degree/height/precision/local-factor inputs:
+the BHKS dense recombination surface plus quadratic multifactor lifting's
+`r * n^2 * log k` contribution.
+-/
+def bzPrecisionLocalComplexity (param : Nat) : Nat :=
+  let n := precisionLocalDegree param
+  let h := Nat.log2 (precisionLocalHeight param + 2)
+  let k := precisionLocalPrecision param
+  let r := precisionLocalFactorCount param
+  n ^ 9 + n ^ 7 * h ^ 2 + r * n * n * Nat.log2 (k + 1)
 
 /-
 Smoke-only registration for the public combinator. The declared cost model is
@@ -383,6 +493,24 @@ setup_benchmark runFactorSlowDegreeHeightChecksum param => bzSlowDegreeHeightCom
     paramFloor := encodeDegreeHeightParam 2 2
     paramCeiling := encodeDegreeHeightParam 4 8
     paramSchedule := .custom slowDegreeHeightSchedule
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
+/-
+Scientific fast-path setup registration for Phase 4. The encoded parameter
+carries `(degree, height, precision, localFactorCount)`; the timed target runs
+quadratic multifactor lifting at the requested precision and records the
+supported-prime modular split profile, avoiding pathological full `factorFast`
+calls while exposing the `k` and `r` axes required by the BZ/Hensel specs.
+-/
+setup_benchmark runFastPathPrecisionLocalChecksum param => bzPrecisionLocalComplexity param
+  with prep := prepPrecisionLocalInput
+  where {
+    paramFloor := encodePrecisionLocalParam 2 2 4 2
+    paramCeiling := encodePrecisionLocalParam 8 32 128 8
+    paramSchedule := .custom precisionLocalSchedule
     maxSecondsPerCall := 4.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
