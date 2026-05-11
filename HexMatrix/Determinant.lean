@@ -5630,7 +5630,7 @@ than to its repackaged Nat-value form. -/
 private theorem vector_ofFn_getElem_fin {α : Type u} {n : Nat}
     (f : Fin n → α) (k : Fin n) :
     (Vector.ofFn f)[k] = f k := by
-  rw [show ((Vector.ofFn f)[k] : α) = (Vector.ofFn f)[k.val]'(by simpa using k.isLt) from rfl]
+  rw [show ((Vector.ofFn f)[k] : α) = (Vector.ofFn f)[k.val]'(by simp [k.isLt]) from rfl]
   rw [Vector.getElem_ofFn]
 
 /-- Factorization equation: each entry of `cols` is recovered through the
@@ -5755,6 +5755,28 @@ def reconstructInjTuple {m n : Nat}
     (reconstructInjTuple sel perm)[i] = sel[perm[i]] := by
   rw [reconstructInjTuple, vector_ofFn_getElem_fin]
 
+/-- Counting how many entries of `List.finRange n` have value `< k`. -/
+private theorem countP_finRange_val_lt :
+    ∀ (n k : Nat), (List.finRange n).countP (fun x : Fin n => decide (x.val < k)) = min n k
+  | 0, k => by simp
+  | n + 1, k => by
+      rw [List.finRange_succ_last, List.countP_append, List.countP_map]
+      -- The induction hypothesis applies to the `map Fin.castSucc` part.
+      -- `(castSucc x).val = x.val`, so the composed predicate matches.
+      have ih := countP_finRange_val_lt n k
+      have hmap_eq :
+          (List.finRange n).countP ((fun x : Fin (n + 1) => decide (x.val < k)) ∘ Fin.castSucc) =
+            (List.finRange n).countP (fun x : Fin n => decide (x.val < k)) := rfl
+      rw [hmap_eq, ih]
+      -- Singleton contribution.
+      simp only [List.countP_singleton, Fin.last]
+      -- Goal: min n k + (if decide (n < k) then 1 else 0) = min (n+1) k.
+      by_cases hnk : n < k
+      · rw [if_pos (by simpa using hnk)]
+        omega
+      · rw [if_neg (by simpa using hnk)]
+        omega
+
 /-- A permutation as a `Vector` acts as an injective function on `Fin n`. -/
 private theorem permutationVectors_getElem_injective {n : Nat}
     {perm : Vector (Fin n) n} (hmem : perm ∈ permutationVectors n) :
@@ -5788,6 +5810,230 @@ theorem reconstructInjTuple_injective {m n : Nat}
         (reconstructInjTuple sel perm)[i] = (reconstructInjTuple sel perm)[j] := hij
     exact hi.symm.trans (hij'.trans hj)
   exact hperm_inj (hsel_inj hval)
+
+/-- For a strictly-increasing `sel`, value comparison agrees with index
+comparison. -/
+private theorem isStrictlyIncreasingColumnTuple_val_lt_iff {m n : Nat}
+    {sel : Vector (Fin m) n} (hsel : IsStrictlyIncreasingColumnTuple sel)
+    (a b : Fin n) :
+    sel[a].val < sel[b].val ↔ a.val < b.val := by
+  refine ⟨?_, hsel a b⟩
+  intro hlt
+  rcases Nat.lt_trichotomy a.val b.val with hltab | heqab | hgtab
+  · exact hltab
+  · have : a = b := Fin.ext heqab
+    subst this; omega
+  · have := hsel b a hgtab; omega
+
+/-- For a permutation `perm`, the `toList` is a `List.Perm` of `List.finRange n`. -/
+private theorem permutationVectors_toList_perm_finRange {n : Nat}
+    {perm : Vector (Fin n) n} (hmem : perm ∈ permutationVectors n) :
+    perm.toList.Perm (List.finRange n) := by
+  have hnodup := permutationVectors_nodup hmem
+  apply (List.perm_ext_iff_of_nodup hnodup (List.nodup_finRange n)).mpr
+  intro x
+  refine ⟨fun _ => List.mem_finRange x, fun _ => ?_⟩
+  exact fin_mem_of_full_nodup x (by simp [Vector.length_toList]) hnodup
+
+/-- Count of indices `j` for which `perm[j].val < k.val` is exactly `k.val`
+when `perm` is a permutation. -/
+private theorem permutationVectors_count_val_lt {n : Nat}
+    {perm : Vector (Fin n) n} (hmem : perm ∈ permutationVectors n) (k : Fin n) :
+    (List.finRange n).countP (fun j : Fin n => decide (perm[j].val < k.val)) = k.val := by
+  -- Reduce to counting on perm.toList via `countP_map`.
+  have hmap :
+      (List.finRange n).countP (fun j : Fin n => decide (perm[j].val < k.val)) =
+        ((List.finRange n).map fun j : Fin n => perm[j]).countP
+          (fun x : Fin n => decide (x.val < k.val)) := by
+    rw [List.countP_map]
+    rfl
+  have htoList : perm.toList = (List.finRange n).map (fun j : Fin n => perm[j]) :=
+    vector_toList_eq_finRange_map_get perm
+  rw [hmap, ← htoList]
+  rw [List.Perm.countP_eq _ (permutationVectors_toList_perm_finRange hmem)]
+  rw [countP_finRange_val_lt]
+  exact Nat.min_eq_right (Nat.le_of_lt k.isLt)
+
+/-- For a strictly-increasing `sel` and a permutation `perm`, the column
+rank of the reconstruction at index `i` agrees with `perm[i].val`. -/
+private theorem columnRankNat_reconstructInjTuple {m n : Nat}
+    {sel : Vector (Fin m) n} {perm : Vector (Fin n) n}
+    (hsel : IsStrictlyIncreasingColumnTuple sel)
+    (hperm : perm ∈ permutationVectors n) (i : Fin n) :
+    columnRankNat (reconstructInjTuple sel perm) i = (perm[i]).val := by
+  unfold columnRankNat
+  -- Convert filter to countP, replace predicate using strict monotonicity, then
+  -- apply the permutation count lemma.
+  rw [← List.countP_eq_length_filter]
+  have hpred :
+      (fun j : Fin n => decide ((reconstructInjTuple sel perm)[j].val
+                                   < (reconstructInjTuple sel perm)[i].val)) =
+        (fun j : Fin n => decide ((perm[j]).val < (perm[i]).val)) := by
+    funext j
+    rw [reconstructInjTuple_getElem, reconstructInjTuple_getElem]
+    exact decide_eq_decide.mpr (isStrictlyIncreasingColumnTuple_val_lt_iff hsel _ _)
+  rw [hpred]
+  exact permutationVectors_count_val_lt hperm (perm[i])
+
+/-- `sortInjPerm` of a reconstructed tuple recovers the original permutation. -/
+theorem sortInjPerm_reconstructInjTuple {m n : Nat}
+    {sel : Vector (Fin m) n} {perm : Vector (Fin n) n}
+    (hsel : IsStrictlyIncreasingColumnTuple sel)
+    (hperm : perm ∈ permutationVectors n) :
+    sortInjPerm (reconstructInjTuple sel perm) = perm := by
+  apply Vector.ext
+  intro k hk
+  let i : Fin n := ⟨k, hk⟩
+  show (sortInjPerm (reconstructInjTuple sel perm))[i] = perm[i]
+  apply Fin.ext
+  rw [sortInjPerm_getElem_val]
+  exact columnRankNat_reconstructInjTuple hsel hperm i
+
+/-- `sortInjTuple` of a reconstructed tuple recovers the original selection. -/
+theorem sortInjTuple_reconstructInjTuple {m n : Nat}
+    {sel : Vector (Fin m) n} {perm : Vector (Fin n) n}
+    (hsel : IsStrictlyIncreasingColumnTuple sel)
+    (hperm : perm ∈ permutationVectors n) :
+    sortInjTuple (reconstructInjTuple sel perm) = sel := by
+  -- Use the factorization equation on the reconstructed tuple, which is injective.
+  have hinj : Function.Injective (columnTupleVectorFn (reconstructInjTuple sel perm)) :=
+    reconstructInjTuple_injective hsel hperm
+  apply Vector.ext
+  intro k hk
+  let r : Fin n := ⟨k, hk⟩
+  show (sortInjTuple (reconstructInjTuple sel perm))[r] = sel[r]
+  -- The reconstruction at index `inv perm [r]` equals sel[perm[(inv perm) r]] = sel[r].
+  -- And by the factorization equation, this equals sortInjTuple cols at sortInjPerm cols [(inv perm) r]
+  -- which is just r by the permutation identity. Hmm, this is circular.
+  -- Direct: sortInjTuple cols [r] = cols[inv (sortInjPerm cols) [r]]
+  --                                = cols[inv perm [r]]                    -- by sortInjPerm_reconstructInjTuple
+  --                                = sel[perm[(inv perm) r]]               -- by reconstruction defn
+  --                                = sel[r]                                -- by perm ∘ inv perm = id
+  have hsortPerm := sortInjPerm_reconstructInjTuple hsel hperm
+  -- Substitute sortInjPerm with perm in the sortInjTuple definition.
+  rw [sortInjTuple, vector_ofFn_getElem_fin]
+  -- Goal: cols[inv (sortInjPerm cols) [r]] = sel[r]
+  -- where cols := reconstructInjTuple sel perm.
+  have hinv_eq : inversePermutationVector (sortInjPerm (reconstructInjTuple sel perm))
+                   = inversePermutationVector perm :=
+    congrArg inversePermutationVector hsortPerm
+  have hstep :
+      (reconstructInjTuple sel perm)[(inversePermutationVector
+                                        (sortInjPerm (reconstructInjTuple sel perm)))[r]]
+        = (reconstructInjTuple sel perm)[(inversePermutationVector perm)[r]] :=
+    congrArg
+      (fun v : Vector (Fin n) n => (reconstructInjTuple sel perm)[v[r]])
+      hinv_eq
+  rw [hstep]
+  -- Now: reconstruction at (inv perm)[r] = sel[perm[(inv perm)[r]]] = sel[r].
+  rw [reconstructInjTuple_getElem]
+  -- Use that perm ∘ inv perm = id (i.e., perm[(inv perm)[r]] = r).
+  have hnodup := permutationVectors_nodup hperm
+  have hinv_perm : inversePermutationVector perm
+                     = inversePermutationValues perm hnodup :=
+    inversePermutationVector_eq perm hnodup
+  have hval := inversePermutationValues_get_value perm hnodup r
+  -- hval : perm[(inv perm) [r]] = r (where inv perm = inversePermutationValues perm hnodup)
+  have hstep' :
+      perm[(inversePermutationVector perm)[r]]
+        = perm[(inversePermutationValues perm hnodup)[r]] :=
+    congrArg (fun v : Vector (Fin n) n => perm[v[r]]) hinv_perm
+  have hperm_apply : perm[(inversePermutationVector perm)[r]] = r := hstep'.trans hval
+  -- Therefore: sel[perm[(inv perm)[r]]] = sel[r] via congrArg.
+  exact congrArg (fun k : Fin n => sel[k]) hperm_apply
+
+/-! ### Bijection wrappers -/
+
+/-- Forward-then-backward identity: reconstruction inverts the canonical
+sort/permutation pair on injective column tuples. -/
+theorem reconstructInjTuple_sortInj {m n : Nat}
+    (cols : Vector (Fin m) n)
+    (hinj : Function.Injective (columnTupleVectorFn cols)) :
+    reconstructInjTuple (sortInjTuple cols) (sortInjPerm cols) = cols := by
+  apply Vector.ext
+  intro k hk
+  let i : Fin n := ⟨k, hk⟩
+  show (reconstructInjTuple (sortInjTuple cols) (sortInjPerm cols))[i] = cols[i]
+  rw [reconstructInjTuple_getElem]
+  exact (cols_getElem_eq_sortInjTuple_sortInjPerm cols hinj i).symm
+
+/-- For each fixed `sel`, the inner `map (reconstructInjTuple sel)` list
+is `Nodup` over `permutationVectors n`. -/
+private theorem permutationVectors_map_reconstruct_nodup {m n : Nat}
+    {sel : Vector (Fin m) n} (hsel : IsStrictlyIncreasingColumnTuple sel) :
+    ((permutationVectors n).map (reconstructInjTuple sel)).Nodup := by
+  apply list_nodup_map_on permutationVectors_nodup_list
+  intro a ha b hb hab
+  -- Apply sortInjPerm to both sides to recover the permutation.
+  have := congrArg sortInjPerm hab
+  rw [sortInjPerm_reconstructInjTuple hsel ha,
+      sortInjPerm_reconstructInjTuple hsel hb] at this
+  exact this
+
+/-- The flat list of reconstructed column tuples, indexed by
+`selectedColumnTuples × permutationVectors`, has no duplicates. -/
+theorem selPerm_reconstructed_list_nodup {m n : Nat} :
+    ((selectedColumnTuples n m).flatMap fun sel =>
+      (permutationVectors n).map (reconstructInjTuple sel)).Nodup := by
+  -- Generalize so we can induct on the outer list (selectedColumnTuples).
+  suffices h : ∀ (sels : List (Vector (Fin m) n)), sels.Nodup →
+      (∀ sel ∈ sels, IsStrictlyIncreasingColumnTuple sel) →
+      (sels.flatMap fun sel =>
+        (permutationVectors n).map (reconstructInjTuple sel)).Nodup by
+    exact h _ selectedColumnTuples_nodup
+      (fun sel hmem => (mem_selectedColumnTuples_iff sel).mp hmem)
+  intro sels hsels_nodup hsels_inc
+  induction sels with
+  | nil => simp
+  | cons s ss ih =>
+      simp only [List.flatMap_cons]
+      rw [List.nodup_append]
+      simp only [List.nodup_cons] at hsels_nodup
+      refine ⟨?_, ?_, ?_⟩
+      · -- Inner head list is Nodup.
+        exact permutationVectors_map_reconstruct_nodup (hsels_inc s (by simp))
+      · -- Tail Nodup by IH.
+        exact ih hsels_nodup.2 (fun sel' hsel' => hsels_inc sel' (List.mem_cons_of_mem s hsel'))
+      · -- Disjointness: a reconstruction with `sel = s` and a reconstruction
+        -- with `sel = s' ∈ ss` agree only if `s = s'` by `sortInjTuple`.
+        intro a ha_head b hb_suffix hab
+        rcases List.mem_map.mp ha_head with ⟨perm, hperm_mem, rfl⟩
+        rcases List.mem_flatMap.mp hb_suffix with ⟨s', hs'_mem, hb_in⟩
+        rcases List.mem_map.mp hb_in with ⟨perm', hperm'_mem, hb_eq⟩
+        -- hab : (reconstructInjTuple s perm) = b; hb_eq : reconstructInjTuple s' perm' = b
+        have hrec_eq : reconstructInjTuple s perm = reconstructInjTuple s' perm' :=
+          hab.trans hb_eq.symm
+        have hs_inc := hsels_inc s (by simp)
+        have hs'_inc := hsels_inc s' (List.mem_cons_of_mem s hs'_mem)
+        have hsort := congrArg sortInjTuple hrec_eq
+        rw [sortInjTuple_reconstructInjTuple hs_inc hperm_mem,
+            sortInjTuple_reconstructInjTuple hs'_inc hperm'_mem] at hsort
+        subst hsort
+        exact hsels_nodup.1 hs'_mem
+
+/-- A column tuple is injective iff it is enumerated by the
+`selectedColumnTuples × permutationVectors` reconstruction. This is the
+bijection statement in membership form. -/
+theorem mem_selPerm_reconstructed_iff {m n : Nat} (cols : Vector (Fin m) n) :
+    cols ∈ ((selectedColumnTuples n m).flatMap fun sel =>
+      (permutationVectors n).map (reconstructInjTuple sel)) ↔
+      Function.Injective (columnTupleVectorFn cols) := by
+  refine ⟨?_, ?_⟩
+  · -- Backward: every reconstruction is injective.
+    intro hmem
+    rcases List.mem_flatMap.mp hmem with ⟨sel, hsel_mem, hinner⟩
+    rcases List.mem_map.mp hinner with ⟨perm, hperm_mem, rfl⟩
+    have hsel_inc : IsStrictlyIncreasingColumnTuple sel :=
+      (mem_selectedColumnTuples_iff sel).mp hsel_mem
+    exact reconstructInjTuple_injective hsel_inc hperm_mem
+  · -- Forward: every injective tuple is in the reconstruction list, via
+    -- (sortInjTuple cols, sortInjPerm cols).
+    intro hinj
+    rw [List.mem_flatMap]
+    refine ⟨sortInjTuple cols, sortInjTuple_mem_selectedColumnTuples cols hinj, ?_⟩
+    rw [List.mem_map]
+    refine ⟨sortInjPerm cols, sortInjPerm_mem_permutationVectors cols hinj, ?_⟩
+    exact reconstructInjTuple_sortInj cols hinj
 
 end Matrix
 end Hex
