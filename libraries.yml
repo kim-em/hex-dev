@@ -270,7 +270,7 @@ libraries:
   HexBerlekampZassenhaus:
     deps: [HexBerlekamp, HexHensel, HexLLL]
     mathlib: false
-    done_through: 2
+    done_through: 3
     status: active
 
   # ---------- Mathlib bridges ----------

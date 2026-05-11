@@ -411,6 +411,12 @@ private def factorizationEdgeCases : List FactorizationCase :=
   Factorization.product factors = cyclo11Times22 &&
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[phi11, phi22] |>.map fun coeffs => (coeffs, 1))
+#guard
+  let factors := factor quadSqrt2Sqrt3
+  Factorization.product factors = quadSqrt2Sqrt3 &&
+    sameFactorCoeffSet (factorizationCoeffSummary factors)
+      (factorCoeffSummary #[zpoly #[-3, 0, 1], zpoly #[-2, 0, 1]] |>.map fun coeffs =>
+        (coeffs, 1))
 
 #guard PrimeFactorData.degreeSum primeDataValidQuad = 2
 #guard coeffNats (PrimeFactorData.factorProduct primeDataValidQuad) = [2, 0, 1]
