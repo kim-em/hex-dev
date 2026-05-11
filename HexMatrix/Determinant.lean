@@ -4932,6 +4932,22 @@ private theorem det_colReplace_zero {R : Type u} [Lean.Grind.CommRing R] {n : Na
   rw [hcol] at h
   grind
 
+/-- Replacing a column by itself leaves the matrix unchanged. -/
+theorem colReplace_self {R : Type u} {n : Nat}
+    (M : Matrix R n n) (dst : Fin n) :
+    colReplace M dst (fun r => M[r][dst]) = M := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro c hc
+  change (colReplace M dst (fun r => M[r][dst]))[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
+    M[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+  rw [colReplace_get]
+  by_cases hc' : (⟨c, hc⟩ : Fin n) = dst
+  · rw [if_pos hc']
+    exact congrArg (fun c' : Fin n => M[(⟨r, hr⟩ : Fin n)][c']) hc'.symm
+  · rw [if_neg hc']
+
 private theorem det_colReplace_sum_list {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (dst : Fin n) {β : Type v} (xs : List β)
     (coeff : β → R) (source : β → Fin n → R) :
@@ -5193,6 +5209,61 @@ theorem det_eq_zero_of_col_eq {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (hcol : ∀ r : Fin n, M[r][src] = M[r][dst]) :
     det M = 0 := by
   simpa [det] using permutationVectors_duplicateCol_sum M src dst h hcol
+
+/-- Replacing a column with a copy of another column produces a determinant of
+zero, since the resulting matrix has two equal columns. -/
+private theorem det_colReplace_copy_other_zero {R : Type u}
+    [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (dst src : Fin n) (h : src ≠ dst) :
+    det (colReplace M dst (fun r => M[r][src])) = 0 := by
+  apply det_eq_zero_of_col_eq (colReplace M dst (fun r => M[r][src])) src dst h
+  intro r
+  rw [colReplace_get, colReplace_get]
+  rw [if_neg h, if_pos rfl]
+
+/-- Adding a finite linear combination of other columns of `M` to column `dst`
+preserves the determinant. The sources are given as a list and each source is
+required to differ from `dst`. -/
+theorem det_colReplace_add_otherCols {R : Type u}
+    [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (dst : Fin n) (sources : List (Fin n)) (coeff : Fin n → R)
+    (hsrc : ∀ s ∈ sources, s ≠ dst) :
+    det (colReplace M dst
+        (fun r => M[r][dst] +
+          sources.foldl (fun acc s => acc + coeff s * M[r][s]) 0)) = det M := by
+  rw [det_colReplace_add M dst (fun r => M[r][dst])
+    (fun r => sources.foldl (fun acc s => acc + coeff s * M[r][s]) 0)]
+  rw [colReplace_self M dst]
+  have hcomb : det (colReplace M dst
+        (fun r => sources.foldl (fun acc s => acc + coeff s * M[r][s]) 0)) = 0 := by
+    rw [det_colReplace_sum_list M dst sources coeff (fun s r => M[r][s])]
+    -- Show each summand is zero; we use the fact that the foldl over sources
+    -- yields zero because each replaced det is zero.
+    have hzero_each : ∀ s ∈ sources, coeff s * det (colReplace M dst (fun r => M[r][s])) = 0 := by
+      intro s hs
+      have hne : s ≠ dst := hsrc s hs
+      rw [det_colReplace_copy_other_zero M dst s hne]
+      grind
+    -- Foldl of a sum that is always zero adds nothing.
+    have hfoldl : sources.foldl
+        (fun acc s => acc + coeff s * det (colReplace M dst (fun r => M[r][s]))) 0 = 0 := by
+      clear hzero_each
+      induction sources with
+      | nil => rfl
+      | cons s ss ih =>
+          simp only [List.foldl_cons]
+          have hs : coeff s * det (colReplace M dst (fun r => M[r][s])) = 0 := by
+            have hne : s ≠ dst := hsrc s (by simp)
+            rw [det_colReplace_copy_other_zero M dst s hne]
+            grind
+          rw [hs]
+          have hsrc' : ∀ s' ∈ ss, s' ≠ dst := fun s' hs' => hsrc s' (by simp [hs'])
+          have hzero_acc : (0 : R) + 0 = 0 := by grind
+          rw [hzero_acc]
+          exact ih hsrc'
+    exact hfoldl
+  rw [hcomb]
+  grind
 
 /-- Square submatrix obtained by selecting an ordered tuple of columns. -/
 def columnTupleMatrix {R : Type u} {n m : Nat}
