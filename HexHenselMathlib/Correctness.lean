@@ -78,7 +78,12 @@ theorem zpoly_congr_toPolynomial_map_eq
     let φ := Int.castRingHom (ZMod m)
     (HexPolyMathlib.toPolynomial f).map φ =
       (HexPolyMathlib.toPolynomial g).map φ := by
-  sorry
+  apply Polynomial.ext
+  intro n
+  rw [coeff_map_intCastRingHom_eq_iff_dvd_sub,
+      HexPolyMathlib.coeff_toPolynomial,
+      HexPolyMathlib.coeff_toPolynomial]
+  exact Int.dvd_of_emod_eq_zero (hcongr n)
 
 /--
 Equality of Mathlib polynomial reductions modulo `m` gives the executable
@@ -91,7 +96,12 @@ theorem zpoly_congr_of_toPolynomial_map_eq
       (HexPolyMathlib.toPolynomial f).map φ =
         (HexPolyMathlib.toPolynomial g).map φ) :
     Hex.ZPoly.congr f g m := by
-  sorry
+  intro n
+  have hcoeff := Polynomial.ext_iff.mp hmap n
+  rw [coeff_map_intCastRingHom_eq_iff_dvd_sub,
+      HexPolyMathlib.coeff_toPolynomial,
+      HexPolyMathlib.coeff_toPolynomial] at hcoeff
+  exact Int.emod_eq_zero_of_dvd hcoeff
 
 /-- The executable monic predicate transfers to Mathlib's polynomial monic predicate. -/
 theorem toPolynomial_monic_of_dense_monic
