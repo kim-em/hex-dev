@@ -2387,6 +2387,142 @@ theorem degree?_mul_eq_add_degree?
   simp
   omega
 
+/-- An `FpPoly p` polynomial is nonzero exactly when its stored coefficient array is nonempty. -/
+theorem size_pos_of_ne_zero {f : FpPoly p} (hf : f ≠ 0) : 0 < f.size := by
+  apply Nat.pos_of_ne_zero
+  intro hsize
+  apply hf
+  apply DensePoly.ext_coeff
+  intro i
+  rw [DensePoly.coeff_zero]
+  exact DensePoly.coeff_eq_zero_of_size_le f (by omega)
+
+/--
+Over a prime modulus, the executable size of a product of two nonzero polynomials in
+`FpPoly p` is the sum of their sizes minus one. This is the no-zero-divisors identity at
+the level of `DensePoly.size`.
+-/
+theorem size_mul_eq_add_sub_one
+    [ZMod64.PrimeModulus p] (a b : FpPoly p)
+    (ha : a ≠ 0) (hb : b ≠ 0) :
+    (a * b).size = a.size + b.size - 1 := by
+  have ha_size_pos : 0 < a.size := size_pos_of_ne_zero ha
+  have hb_size_pos : 0 < b.size := size_pos_of_ne_zero hb
+  have ha_lead_ne : a.coeff (a.size - 1) ≠ 0 :=
+    DensePoly.coeff_last_ne_zero_of_pos_size a ha_size_pos
+  have hb_lead_ne : b.coeff (b.size - 1) ≠ 0 :=
+    DensePoly.coeff_last_ne_zero_of_pos_size b hb_size_pos
+  have hp_prime : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime
+  have hprod_ne : a.coeff (a.size - 1) * b.coeff (b.size - 1) ≠ 0 := by
+    intro hprod
+    rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp_prime hprod with hh | hh
+    · exact ha_lead_ne hh
+    · exact hb_lead_ne hh
+  have htop_ne : (a * b).coeff (a.size - 1 + (b.size - 1)) ≠ 0 := by
+    rw [ZMod64.coeff_mul_at_top a b ha_size_pos hb_size_pos]
+    exact hprod_ne
+  have hab_size_lower : a.size - 1 + (b.size - 1) < (a * b).size := by
+    rcases Nat.lt_or_ge (a.size - 1 + (b.size - 1)) (a * b).size with h | hle
+    · exact h
+    · exact False.elim (htop_ne (DensePoly.coeff_eq_zero_of_size_le _ hle))
+  have hab_size_upper : (a * b).size ≤ a.size + b.size - 1 := by
+    rcases Nat.lt_or_ge (a.size + b.size - 1) (a * b).size with hgt | hle
+    · exfalso
+      have hab_size_pos : 0 < (a * b).size := by omega
+      have hbound : a.size - 1 + (b.size - 1) < (a * b).size - 1 := by omega
+      have htop_zero : (a * b).coeff ((a * b).size - 1) = 0 :=
+        coeff_mul_eq_zero_above_top a b hbound
+      exact DensePoly.coeff_last_ne_zero_of_pos_size (a * b) hab_size_pos htop_zero
+    · exact hle
+  omega
+
+/--
+Over a prime modulus, multiplying two nonzero polynomials in `FpPoly p` gives a nonzero
+polynomial: prime-field polynomials form an integral domain.
+-/
+theorem mul_ne_zero_of_ne_zero
+    [ZMod64.PrimeModulus p] {a b : FpPoly p}
+    (ha : a ≠ 0) (hb : b ≠ 0) :
+    a * b ≠ 0 := by
+  intro hmul
+  have ha_size_pos : 0 < a.size := size_pos_of_ne_zero ha
+  have hb_size_pos : 0 < b.size := size_pos_of_ne_zero hb
+  have hsize := size_mul_eq_add_sub_one a b ha hb
+  have habsize : (a * b).size = 0 := by rw [hmul]; rfl
+  omega
+
+/--
+Over a prime modulus, divisibility implies a size bound: if `a ∣ b` and `b ≠ 0`, then
+`a.size ≤ b.size`. The standard polynomial fact that a divisor has degree at most the
+degree of the dividend, expressed at the level of `DensePoly.size`.
+-/
+theorem size_le_of_dvd_of_ne_zero
+    [ZMod64.PrimeModulus p] {a b : FpPoly p}
+    (hab : a ∣ b) (hb : b ≠ 0) :
+    a.size ≤ b.size := by
+  rcases hab with ⟨c, hc⟩
+  have ha_ne : a ≠ 0 := by
+    intro ha
+    apply hb
+    rw [hc, ha, zero_mul]
+  have hc_ne : c ≠ 0 := by
+    intro hc_zero
+    apply hb
+    rw [hc, hc_zero, mul_zero]
+  have ha_size_pos : 0 < a.size := size_pos_of_ne_zero ha_ne
+  have hc_size_pos : 0 < c.size := size_pos_of_ne_zero hc_ne
+  have hsize := size_mul_eq_add_sub_one a c ha_ne hc_ne
+  rw [hc, hsize]
+  omega
+
+/--
+Over a prime modulus, when `d` divides a nonzero polynomial `c`, the executable sizes
+satisfy `(c / d).size + d.size = c.size + 1`. This is degree-additivity for exact
+division translated to the `size` indexing.
+-/
+theorem size_div_add_size_eq_size_add_one_of_dvd
+    [ZMod64.PrimeModulus p] {c d : FpPoly p}
+    (hdc : d ∣ c) (hc : c ≠ 0) :
+    (c / d).size + d.size = c.size + 1 := by
+  have hd_ne : d ≠ 0 := by
+    intro hd
+    rcases hdc with ⟨e, he⟩
+    apply hc
+    rw [he, hd, zero_mul]
+  have hmod : c % d = 0 := DensePoly.mod_eq_zero_of_dvd c d hdc
+  have hrec : (c / d) * d + (c % d) = c := DensePoly.div_mul_add_mod c d
+  have hquot_mul : (c / d) * d = c := by
+    rw [hmod] at hrec
+    rwa [add_zero ((c / d) * d)] at hrec
+  have hquot_ne : c / d ≠ 0 := by
+    intro hquot
+    apply hc
+    rw [← hquot_mul, hquot, zero_mul]
+  have hsize_mul := size_mul_eq_add_sub_one (c / d) d hquot_ne hd_ne
+  have hd_size_pos : 0 < d.size := size_pos_of_ne_zero hd_ne
+  have hquot_size_pos : 0 < (c / d).size := size_pos_of_ne_zero hquot_ne
+  have hc_size : ((c / d) * d).size = c.size := by rw [hquot_mul]
+  rw [hsize_mul] at hc_size
+  omega
+
+/--
+Specialised quotient-size strict decrease: if `gcd c w` is nonconstant (size ≥ 2) and
+`c ≠ 0`, then `c / gcd c w` has strictly smaller size than `c`. This is the size-strict
+descent step that powers Yun-style square-free decomposition termination.
+-/
+theorem size_div_lt_of_size_gcd_pos
+    [ZMod64.PrimeModulus p] (c w : FpPoly p)
+    (hgcd_pos : 1 < (DensePoly.gcd c w).size)
+    (hc : c.isZero = false) :
+    (c / DensePoly.gcd c w).size < c.size := by
+  have hc_ne : c ≠ 0 := by
+    intro hzero
+    rw [hzero] at hc
+    exact (Bool.eq_not_self _).mp hc.symm
+  have hgcd_dvd : DensePoly.gcd c w ∣ c := DensePoly.gcd_dvd_left c w
+  have hsize := size_div_add_size_eq_size_add_one_of_dvd hgcd_dvd hc_ne
+  omega
+
 /-- A monic finite-field polynomial that divides the unit polynomial is the unit polynomial. -/
 theorem eq_one_of_monic_dvd_one
     [ZMod64.PrimeModulus p] {g : FpPoly p}
