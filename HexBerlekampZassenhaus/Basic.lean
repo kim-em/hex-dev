@@ -2236,6 +2236,19 @@ def bhksIndicatorCandidates?
           | none => none)
     (some #[])
 
+private inductive BhksRecoveryResult where
+  | success (candidates : Array ZPoly)
+  | degenerate
+  | candidateFailure
+  | productMismatch (candidates : Array ZPoly)
+deriving DecidableEq
+
+private def BhksRecoveryResult.toOption : BhksRecoveryResult → Option (Array ZPoly)
+  | .success candidates => some candidates
+  | .degenerate => none
+  | .candidateFailure => none
+  | .productMismatch _ => none
+
 /--
 Run the fixed-precision BHKS recovery pipeline.
 
@@ -2244,23 +2257,26 @@ plus the Gram-Schmidt cut, extracts BHKS Lemma 3.3 equivalence-class
 indicators by RREF, reconstructs every indicated candidate by centred lifting,
 and accepts only when the verified candidates multiply back to `f`.
 -/
-def bhksRecover? (f : ZPoly) (d : LiftData) : Option (Array ZPoly) :=
+private def bhksRecoverClassified (f : ZPoly) (d : LiftData) : BhksRecoveryResult :=
   let L := bhksLatticeBasis f d.p d.k d.liftedFactors
   if hrows : 1 ≤ L.factorCount + L.coeffWidth then
     let projected := bhksProjectedRows L hrows (bhksLatticeBasis_independent L)
     let indicators := bhksEquivalenceClassIndicators projected
     if bhksDegenerateIndicatorPartition projected indicators then
-      none
+      .degenerate
     else
       match bhksIndicatorCandidates? f d indicators with
-      | none => none
+      | none => .candidateFailure
       | some candidates =>
           if Array.polyProduct candidates == f then
-            some candidates
+            .success candidates
           else
-            none
+            .productMismatch candidates
   else
-    none
+    .degenerate
+
+def bhksRecover? (f : ZPoly) (d : LiftData) : Option (Array ZPoly) :=
+  (bhksRecoverClassified f d).toOption
 
 private def bhksIndicatorGuardLift : LiftData :=
   { p := 5
@@ -2276,6 +2292,8 @@ private def bhksIndicatorGuardLift : LiftData :=
 
 #guard bhksRecover? cldGuardF bhksIndicatorGuardLift =
   some bhksGuardFactors
+#guard bhksRecoverClassified cldGuardF bhksIndicatorGuardLift =
+  .success bhksGuardFactors
 
 private def bhksDegenerateRecoverLift : LiftData :=
   { p := 5
@@ -2283,6 +2301,8 @@ private def bhksDegenerateRecoverLift : LiftData :=
     liftedFactors := #[DensePoly.ofCoeffs #[1]] }
 
 #guard bhksRecover? cldGuardF bhksDegenerateRecoverLift = none
+#guard bhksRecoverClassified cldGuardF bhksDegenerateRecoverLift =
+  .degenerate
 
 private def bhksFailedDivisionRecoverLift : LiftData :=
   { p := 5
@@ -2291,6 +2311,8 @@ private def bhksFailedDivisionRecoverLift : LiftData :=
 
 #guard bhksIndicatorCandidate? cldGuardF bhksFailedDivisionRecoverLift #[0, 1] = none
 #guard bhksRecover? cldGuardF bhksFailedDivisionRecoverLift = none
+#guard bhksRecoverClassified cldGuardF bhksFailedDivisionRecoverLift =
+  .candidateFailure
 
 private def recombinationSearchAux
     (target : ZPoly) (localFactors : List ZPoly) : Nat → Option (List ZPoly)
@@ -2892,15 +2914,11 @@ private theorem recombineExhaustive_product
   simp [hsearch, recombinationSearchMod_product f (liftModulus d)
     d.liftedFactors.toList factors hsearch]
 
-/-- A successful BHKS recovery call preserves the polynomial product: when
-`bhksRecover? f d` returns `some candidates`, the candidates multiply back
-to `f` because the executable runs a final `Array.polyProduct candidates == f`
-check before reporting success. -/
-private theorem bhksRecover?_product
+private theorem bhksRecoverClassified_success_product
     {f : ZPoly} {d : LiftData} {candidates : Array ZPoly}
-    (hrecover : bhksRecover? f d = some candidates) :
+    (hrecover : bhksRecoverClassified f d = .success candidates) :
     Array.polyProduct candidates = f := by
-  rw [bhksRecover?] at hrecover
+  rw [bhksRecoverClassified] at hrecover
   by_cases hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
       (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
   · rw [dif_pos hrows] at hrecover
@@ -2927,6 +2945,27 @@ private theorem bhksRecover?_product
           · simp [hprod] at hrecover
   · rw [dif_neg hrows] at hrecover
     simp at hrecover
+
+/-- A successful BHKS recovery call preserves the polynomial product: when
+`bhksRecover? f d` returns `some candidates`, the candidates multiply back
+to `f` because the executable runs a final `Array.polyProduct candidates == f`
+check before reporting success. -/
+private theorem bhksRecover?_product
+    {f : ZPoly} {d : LiftData} {candidates : Array ZPoly}
+    (hrecover : bhksRecover? f d = some candidates) :
+    Array.polyProduct candidates = f := by
+  rw [bhksRecover?] at hrecover
+  cases hclass : bhksRecoverClassified f d with
+  | success cands =>
+      simp [BhksRecoveryResult.toOption, hclass] at hrecover
+      cases hrecover
+      exact bhksRecoverClassified_success_product hclass
+  | degenerate =>
+      simp [BhksRecoveryResult.toOption, hclass] at hrecover
+  | candidateFailure =>
+      simp [BhksRecoveryResult.toOption, hclass] at hrecover
+  | productMismatch cands =>
+      simp [BhksRecoveryResult.toOption, hclass] at hrecover
 
 /-- A successful fixed-precision BHKS fast-recombination loop preserves the
 polynomial product: every success branch threads through `bhksRecover?`, which
