@@ -52,7 +52,17 @@ by the Mathlib Mignotte theorem.
 theorem l2norm_toPolynomial_le_coeffL2NormBound (f : Hex.ZPoly) :
     HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f) ≤
       (Hex.ZPoly.coeffL2NormBound f : ℝ) := by
-  sorry
+  have hsq :=
+    HexPolyZMathlib.l2norm_toPolynomial_sq_le_coeffNormSq f
+  have hceil_nat :
+      Hex.ZPoly.coeffNormSq f ≤ (Hex.ZPoly.coeffL2NormBound f) ^ 2 := by
+    simpa [Hex.ZPoly.coeffL2NormBound_eq_ceilSqrt_coeffNormSq] using
+      Hex.ZPoly.le_ceilSqrt_sq (Hex.ZPoly.coeffNormSq f)
+  have hceil_real :
+      (Hex.ZPoly.coeffNormSq f : ℝ) ≤
+        (Hex.ZPoly.coeffL2NormBound f : ℝ) ^ 2 := by
+    exact_mod_cast hceil_nat
+  exact le_of_sq_le_sq (hsq.trans hceil_real) (by positivity)
 
 /--
 The default executable factorization bound is strong enough for every
