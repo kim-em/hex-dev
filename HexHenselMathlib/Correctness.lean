@@ -126,7 +126,11 @@ theorem quadraticHenselStep_factor_correct
     (HexPolyMathlib.toPolynomial r.g).map φ *
         (HexPolyMathlib.toPolynomial r.h).map φ =
       (HexPolyMathlib.toPolynomial f).map φ := by
-  sorry
+  let r := Hex.ZPoly.quadraticHenselStep m f g h s t
+  have hcongr : Hex.ZPoly.congr (r.g * r.h) f (m * m) :=
+    Hex.ZPoly.quadraticHenselStep_factor_spec m f g h s t hm hprod hbez hmonic
+  have hmap := zpoly_congr_toPolynomial_map_eq (r.g * r.h) f (m * m) hcongr
+  simpa [r, HexPolyMathlib.toPolynomial_mul, Polynomial.map_mul] using hmap
 
 /--
 The quadratic executable step updates Bezout witnesses modulo `m*m`.
@@ -145,7 +149,36 @@ theorem quadraticHenselStep_bezout_correct
         (HexPolyMathlib.toPolynomial r.t).map φ *
           (HexPolyMathlib.toPolynomial r.h).map φ =
       (1 : Polynomial (ZMod (m * m))) := by
-  sorry
+  rcases Nat.eq_or_lt_of_le (Nat.succ_le_of_lt hm) with hm_eq | hm_gt
+  · subst m
+    haveI : Subsingleton (ZMod (1 * 1)) :=
+      ZMod.subsingleton_iff.mpr (by norm_num)
+    apply Polynomial.ext
+    intro n
+    exact Subsingleton.elim _ _
+  ·
+    let r := Hex.ZPoly.quadraticHenselStep m f g h s t
+    have hcongr : Hex.ZPoly.congr (r.s * r.g + r.t * r.h) 1 (m * m) :=
+      Hex.ZPoly.quadraticHenselStep_bezout_spec m f g h s t hm_gt hprod hbez hmonic
+    have hmap := zpoly_congr_toPolynomial_map_eq (r.s * r.g + r.t * r.h) 1 (m * m) hcongr
+    have hone :
+        (HexPolyMathlib.toPolynomial (1 : Hex.ZPoly)).map
+            (Int.castRingHom (ZMod (m * m))) =
+          (1 : Polynomial (ZMod (m * m))) := by
+      rw [show (1 : Hex.ZPoly) = Hex.DensePoly.C (1 : Int) from rfl]
+      simp only [HexPolyMathlib.toPolynomial_C]
+      exact Polynomial.map_one (Int.castRingHom (ZMod (m * m)))
+    dsimp only at hmap
+    dsimp only
+    change
+      (HexPolyMathlib.toPolynomial r.s).map (Int.castRingHom (ZMod (m * m))) *
+            (HexPolyMathlib.toPolynomial r.g).map (Int.castRingHom (ZMod (m * m))) +
+          (HexPolyMathlib.toPolynomial r.t).map (Int.castRingHom (ZMod (m * m))) *
+            (HexPolyMathlib.toPolynomial r.h).map (Int.castRingHom (ZMod (m * m))) =
+        (1 : Polynomial (ZMod (m * m)))
+    rw [← hone, ← hmap]
+    simp only [HexPolyMathlib.toPolynomial_mul, HexPolyMathlib.toPolynomial_add,
+      Polynomial.map_mul, Polynomial.map_add]
 
 /-- The quadratic step preserves monicity on the lifted `g` factor in Mathlib form. -/
 theorem quadraticHenselStep_monic
