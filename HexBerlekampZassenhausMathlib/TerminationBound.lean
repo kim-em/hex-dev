@@ -90,6 +90,18 @@ theorem mignotte_precision_of_factorFastPrecisionCap_lt
   omega
 
 /--
+`LiftData`-shaped wrapper for the Mignotte precision side condition consumed
+by `BHKS.ForwardRecoveryInputs`: if the lift precision strictly exceeds the
+fast-path cap, then the stored modulus `d.p ^ d.k` exceeds twice the executable
+Mignotte coefficient bound.
+-/
+theorem mignotte_precision_of_liftData_factorFastPrecisionCap_lt
+    (f : Hex.ZPoly) (d : Hex.LiftData) (hp : 2 ≤ d.p)
+    (hcap : Hex.factorFastPrecisionCap f < d.k) :
+    2 * Hex.ZPoly.defaultFactorCoeffBound f < d.p ^ d.k :=
+  mignotte_precision_of_factorFastPrecisionCap_lt f hp hcap
+
+/--
 Unconditional cap-successor form: at precision `factorFastPrecisionCap f + 1`,
 the Mignotte precision side condition holds for any modulus `p ≥ 2`.
 
@@ -103,6 +115,17 @@ theorem mignotte_precision_at_factorFastPrecisionCap_succ
     2 * Hex.ZPoly.defaultFactorCoeffBound f <
       p ^ (Hex.factorFastPrecisionCap f + 1) :=
   mignotte_precision_of_factorFastPrecisionCap_lt f hp (Nat.lt_succ_self _)
+
+/--
+`LiftData`-shaped successor form for cap-loop callers whose stored precision is
+exactly `factorFastPrecisionCap f + 1`.
+-/
+theorem mignotte_precision_of_liftData_factorFastPrecisionCap_succ
+    (f : Hex.ZPoly) (d : Hex.LiftData) (hp : 2 ≤ d.p)
+    (hk : d.k = Hex.factorFastPrecisionCap f + 1) :
+    2 * Hex.ZPoly.defaultFactorCoeffBound f < d.p ^ d.k := by
+  rw [hk]
+  exact mignotte_precision_at_factorFastPrecisionCap_succ f hp
 
 /--
 At any precision at least `factorFastPrecisionCap f`, the BHKS paper threshold

@@ -163,7 +163,7 @@ libraries:
   HexLLL:
     deps: [HexGramSchmidt]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
     phase4:
       comparators:
@@ -353,7 +353,7 @@ libraries:
   HexBerlekampZassenhausMathlib:
     deps: [HexBerlekampZassenhaus, HexPolyZMathlib]
     mathlib: true
-    done_through: 2
+    done_through: 3
     status: active
 
   # ---------- Planned (status: planned; SPEC ready, implementation deferred) ----------
