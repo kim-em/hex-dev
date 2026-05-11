@@ -940,6 +940,20 @@ private theorem auxMatrix_diag (b : Matrix Int n m) (k : Nat) (hk : k ≤ n)
   rw [hns]
   grind
 
+/-- The determinant of `auxMatrix` equals the product of squared norms. -/
+private theorem auxMatrix_det_eq_prod_normSq (b : Matrix Int n m)
+    (k : Nat) (hk : k ≤ n) :
+    Matrix.det (auxMatrix b k hk) = gramSchmidtNormProduct b k hk := by
+  rw [Matrix.det_lowerTriangular_eq_foldl_diag (auxMatrix b k hk)
+    (fun i j hij => auxMatrix_zero_above b k hk i j hij)]
+  unfold gramSchmidtNormProduct
+  -- Both foldls are over `List.finRange k`. The diagonal of auxMatrix at i
+  -- equals Vector.normSq of (basis b) row at the lifted index.
+  apply foldl_mul_congr_simple
+  intro i _hi
+  rw [auxMatrix_diag b k hk i]
+  rfl
+
 theorem gramDet_eq_prod_normSq (b : Matrix Int n m)
     (hli : independent b) (k : Nat) (hk : k ≤ n) :
     (gramDet b k hk : Rat) = gramSchmidtNormProduct b k hk := by
