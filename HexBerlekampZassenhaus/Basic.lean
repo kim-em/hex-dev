@@ -2543,6 +2543,45 @@ private def factorFastFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPo
 #guard factorFastFactorsWithBound cldGuardF 4 =
   some bhksGuardFactors
 
+/-- Lift a successful `factorFastCoreWithBound` call to a `factorFastFactorsWithBound`
+success conclusion. The hypotheses pin down the wrapper's branch dispatch: the
+input is not zero-degree (`hdeg`), the recombination budget is at least one
+(`hB_pos`), the chosen prime produces more than one mod-`p` factor (`hmulti`),
+and (when `B ≠ 1`) the quadratic-root short-circuit does not apply
+(`hquadratic`). -/
+private theorem factorFastFactorsWithBound_eq_some_of_core_success
+    (f : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    (coreFactors : Array ZPoly)
+    (hB_pos : 1 ≤ B)
+    (hnormalized : primeData = choosePrimeData
+      (normalizeForFactor f).squareFreeCore)
+    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (hmulti : 1 < primeData.factorsModP.size)
+    (hquadratic : B = 1 ∨
+      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none)
+    (hcore :
+      factorFastCoreWithBound (normalizeForFactor f).squareFreeCore B
+        primeData (initialHenselPrecision B)
+        (ZPoly.quadraticDoublingSteps B + 2) = some coreFactors) :
+    factorFastFactorsWithBound f B =
+      some (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) := by
+  unfold factorFastFactorsWithBound
+  rw [if_neg hdeg, if_neg (by omega : B ≠ 0)]
+  by_cases hB1 : B = 1
+  · rw [if_pos hB1]
+    rw [← hnormalized]
+    rw [if_neg (by omega : ¬ primeData.factorsModP.size ≤ 1)]
+    rw [hcore]
+  · rw [if_neg hB1]
+    have hq : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none := by
+      cases hquadratic with
+      | inl heq => exact absurd heq hB1
+      | inr hnone => exact hnone
+    rw [hq]
+    rw [← hnormalized]
+    rw [if_neg (by omega : ¬ primeData.factorsModP.size ≤ 1)]
+    rw [hcore]
+
 /--
 Precision cap used by the public fast path.
 
