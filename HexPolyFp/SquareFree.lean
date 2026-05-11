@@ -3372,6 +3372,43 @@ private theorem yunFactorsResidualDerivativeZero_of_derivative_active
     yunFactorsContributionResidualComplete_of_derivative_active
       hp f multiplicity fuel hdf hresidual
 
+/--
+The residual component of the scaled Yun contribution
+`yunFactorsContributionWithLevel` agrees with that of the unscaled
+`yunFactorsContribution`. The two recursions share an identical
+`.2`-projection: the base/level scaling only affects the emitted
+`pow z (base * level)` exponents in the first component.
+-/
+private theorem yunFactorsContributionWithLevel_residual_eq_yunFactorsContribution
+    (c w : FpPoly p) (base level fuel : Nat) :
+    (yunFactorsContributionWithLevel c w base level fuel).2 =
+      (yunFactorsContribution c w level fuel).2 := by
+  induction fuel generalizing c w level with
+  | zero =>
+      simp [yunFactorsContributionWithLevel, yunFactorsContribution]
+  | succ fuel ih =>
+      simp only [yunFactorsContributionWithLevel, yunFactorsContribution]
+      by_cases hc : isOne c
+      · simp [hc]
+      · simp [hc]
+        exact ih (DensePoly.gcd c w) (w / DensePoly.gcd c w) (level + 1)
+
+/--
+Derivative-zero of the residual carries between the scaled
+`yunFactorsContributionWithLevel` and the unscaled
+`yunFactorsContribution`: both have the same residual, so the
+derivative-zero fact transports directly.
+-/
+private theorem yunFactorsContributionWithLevel_residual_derivative_zero_of_unscaled
+    (c w : FpPoly p) (base level fuel : Nat)
+    (hresidual : yunFactorsContributionResidualDerivativeZero c w level fuel) :
+    isOne (yunFactorsContributionWithLevel c w base level fuel).2 = false →
+      (DensePoly.derivative
+          (yunFactorsContributionWithLevel c w base level fuel).2).isZero = true := by
+  intro hone
+  rw [yunFactorsContributionWithLevel_residual_eq_yunFactorsContribution] at hone ⊢
+  exact hresidual hone
+
 private theorem dvd_one_of_mul_right_dvd_right
     [ZMod64.PrimeModulus p] {d g : FpPoly p}
     (hg : g.isZero = false) (hdiv : d * g ∣ g) :
