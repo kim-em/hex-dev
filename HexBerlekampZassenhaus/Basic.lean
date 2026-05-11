@@ -2346,10 +2346,12 @@ private def recombineExhaustive (f : ZPoly) (d : LiftData) : Array ZPoly :=
   | some factors => factors.toArray
   | none => #[]
 
-private def initialHenselPrecision (B : Nat) : Nat :=
+/-- Initial Hensel precision used by the fast BHKS doubling schedule. -/
+def initialHenselPrecision (B : Nat) : Nat :=
   if B ≤ 4 then B else 4
 
-private def nextHenselPrecision (k B : Nat) : Nat :=
+/-- Successor precision used by the fast BHKS doubling schedule. -/
+def nextHenselPrecision (k B : Nat) : Nat :=
   if 2 * k < B then
     2 * k
   else
@@ -2368,7 +2370,8 @@ private def factorFastCoreWithBound
         else
           factorFastCoreWithBound core B primeData (nextHenselPrecision k B) fuel
 
-private def henselPrecisionSchedule (B : Nat) : Nat → Nat → List Nat
+/-- Finite list of Hensel precisions inspected by the fast BHKS core loop. -/
+def henselPrecisionSchedule (B : Nat) : Nat → Nat → List Nat
   | _k, 0 => []
   | k, fuel + 1 =>
       k :: if k ≥ B then [] else henselPrecisionSchedule B (nextHenselPrecision k B) fuel
@@ -2644,6 +2647,82 @@ theorem factorFast_ne_none_of_factorFastWithBound_cap_ne_none
     (f : ZPoly)
     (h : factorFastWithBound f (factorFastPrecisionCap f) ≠ none) :
     factorFast f ≠ none := h
+
+/--
+Expose the proof-facing fast-path bridge used by the BHKS termination layer.
+If a precision on `factorFast`'s scheduled search recovers a core
+factorization for the normalized square-free core, then the public fast path
+returns `some _`.
+-/
+theorem factorFast_ne_none_of_core_recovery_on_schedule
+    (f : ZPoly) (primeData : PrimeChoiceData)
+    {target : Nat} {coreFactors : Array ZPoly}
+    (hB_pos : 1 ≤ factorFastPrecisionCap f)
+    (hnormalized :
+      primeData = choosePrimeData (normalizeForFactor f).squareFreeCore)
+    (hmem : target ∈
+      henselPrecisionSchedule (factorFastPrecisionCap f)
+        (initialHenselPrecision (factorFastPrecisionCap f))
+        (ZPoly.quadraticDoublingSteps (factorFastPrecisionCap f) + 2))
+    (hrecover :
+      bhksRecover? (normalizeForFactor f).squareFreeCore
+        (henselLiftData (normalizeForFactor f).squareFreeCore target primeData) =
+          some coreFactors) :
+    factorFast f ≠ none := by
+  let B := factorFastPrecisionCap f
+  have hB_pos' : 1 ≤ B := by
+    simpa [B] using hB_pos
+  have hcore_ne :
+      factorFastCoreWithBound (normalizeForFactor f).squareFreeCore B primeData
+          (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2) ≠ none := by
+    exact
+      factorFastCoreWithBound_ne_none_of_recovery_on_schedule
+        (normalizeForFactor f).squareFreeCore B primeData
+        (by simpa [B] using hmem) hrecover
+  have hfactors_ne :
+      factorFastFactorsWithBound f B ≠ none := by
+    unfold factorFastFactorsWithBound
+    by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
+    · rw [if_pos hdeg]
+      exact Option.some_ne_none _
+    · rw [if_neg hdeg]
+      rw [if_neg (by omega : B ≠ 0)]
+      by_cases hB1 : B = 1
+      · rw [if_pos hB1]
+        rw [← hnormalized]
+        by_cases hsmall : primeData.factorsModP.size ≤ 1
+        · rw [if_pos hsmall]
+          exact Option.some_ne_none _
+        · rw [if_neg hsmall]
+          cases hcore :
+              factorFastCoreWithBound (normalizeForFactor f).squareFreeCore B primeData
+                (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2) with
+          | none => exact absurd hcore hcore_ne
+          | some factors =>
+              simp
+      · rw [if_neg hB1]
+        cases hquad :
+            quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
+        | some factors =>
+            simp
+        | none =>
+            rw [← hnormalized]
+            by_cases hsmall : primeData.factorsModP.size ≤ 1
+            · rw [if_pos hsmall]
+              exact Option.some_ne_none _
+            · rw [if_neg hsmall]
+              cases hcore :
+                  factorFastCoreWithBound (normalizeForFactor f).squareFreeCore B primeData
+                    (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2) with
+              | none => exact absurd hcore hcore_ne
+              | some factors =>
+                  simp
+  have hbounded :
+      factorFastWithBound f B ≠ none :=
+    factorFastWithBound_ne_none_of_factors_ne_none f B hfactors_ne
+  exact
+    factorFast_ne_none_of_factorFastWithBound_cap_ne_none f
+      (by simpa [B] using hbounded)
 
 /-- Factor with an explicit coefficient bound for the recombination stage. -/
 def factorWithBound (f : ZPoly) (B : Nat) : Factorization :=
