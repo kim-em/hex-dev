@@ -1184,6 +1184,10 @@ private def fallbackPrimeChoiceData (f : ZPoly) : PrimeChoiceData :=
 /--
 Choose an admissible small prime and package the modular image together with
 its Berlekamp irreducible factor data for the rest of the pipeline.
+
+The returned record stores the selected prime's `ZMod64.Bounds` instance, so
+callers can consume `fModP` and `factorsModP` directly without re-running the
+prime search or reconstructing typeclass evidence.
 -/
 def choosePrimeData (f : ZPoly) : PrimeChoiceData :=
   match choosePrimeData? f with
@@ -1200,6 +1204,12 @@ def henselLiftData (f : ZPoly) (B : Nat) (d : PrimeChoiceData) : LiftData :=
   { p := d.p
     k := B
     liftedFactors := ZPoly.multifactorLiftQuadratic d.p B f factors }
+
+@[simp] theorem henselLiftData_p (f : ZPoly) (B : Nat) (d : PrimeChoiceData) :
+    (henselLiftData f B d).p = d.p := rfl
+
+@[simp] theorem henselLiftData_k (f : ZPoly) (B : Nat) (d : PrimeChoiceData) :
+    (henselLiftData f B d).k = B := rfl
 
 /--
 Integer upper bound for the BHKS fast-recombination precision schedule.
@@ -2848,6 +2858,16 @@ precision for both lattice separation and exact integer reconstruction.
 -/
 def factorFastPrecisionCap (f : ZPoly) : Nat :=
   max (bhksBound f) (ZPoly.defaultFactorCoeffBound f)
+
+theorem bhksBound_le_factorFastPrecisionCap (f : ZPoly) :
+    bhksBound f ≤ factorFastPrecisionCap f := by
+  unfold factorFastPrecisionCap
+  exact Nat.le_max_left _ _
+
+theorem defaultFactorCoeffBound_le_factorFastPrecisionCap (f : ZPoly) :
+    ZPoly.defaultFactorCoeffBound f ≤ factorFastPrecisionCap f := by
+  unfold factorFastPrecisionCap
+  exact Nat.le_max_right _ _
 
 private def factorFastWithBound (f : ZPoly) (B : Nat) : Option Factorization :=
   (factorFastFactorsWithBound f B).map (factorizationOfFactors f)
