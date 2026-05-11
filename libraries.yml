@@ -272,6 +272,18 @@ libraries:
     mathlib: false
     done_through: 3
     status: active
+    phase4:
+      input_families:
+        - name: public-factor-combinator
+          description: Public `factor` combinator on deterministic split integer-polynomial smoke inputs, covering the fast-with-slow-fallback API surface.
+        - name: cld-fast-path
+          description: Proof-facing CLD `factorFast` path on deterministic split inputs, preserving `none` outcomes and the fast-path setup surfaces for smoke-intractable adversarial cases.
+        - name: exhaustive-slow-backstop
+          description: Unconditional `factorSlow` exhaustive recombination backstop on deterministic split inputs, including the bounded degree/height diagnostic subset.
+        - name: degree-height-matrix
+          description: Encoded degree/root-height split integer-polynomial matrix for public, fast-path, and slow-path BZ factorization registrations.
+        - name: ho2-adversarial-recombination
+          description: HO-2 adversarial recombination shapes `X^4 + 1`, `(X^2 - 2)(X^2 - 3)`, Swinnerton-Dyer SD3, and `Phi_15`, including pinned modular split profiles.
 
   # ---------- Mathlib bridges ----------
   HexPolyMathlib:
