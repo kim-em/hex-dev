@@ -1707,7 +1707,26 @@ theorem rref_isRREF (M : Matrix R n m) : IsRREF M (rref M) := by
     rw [hech]
     exact hentry
   case zr =>
-    sorry
+    intro i hi
+    have hno_pivot : RrefNoPivotZero (R := R) (n := n) (m := m) m final := by
+      simpa [final] using rref_final_no_pivot_zero M
+    have hi_ge : final.pivots.length ≤ i.val := hrank_eq ▸ hi
+    have hrow_le_i : final.row ≤ i.val := hshape.row_eq_length ▸ hi_ge
+    rw [hechelon_eq]
+    apply Vector.ext
+    intro c hc
+    rw [Vector.getElem_zero c hc]
+    let cFin : Fin m := ⟨c, hc⟩
+    show final.echelon[i][cFin] = 0
+    by_cases hmem : cFin ∈ final.pivots
+    · obtain ⟨k, hk_lt, hk_eq⟩ := List.mem_iff_getElem.mp hmem
+      have hi_ne_k : i.val ≠ k := by omega
+      have hentry := hcanon.other_entry_zero k hk_lt i hi_ne_k
+      have heq : final.echelon[i][cFin] = final.echelon[i][final.pivots[k]'hk_lt] :=
+        congrArg (fun x : Fin m => final.echelon[i][x]) hk_eq.symm
+      rw [heq]
+      exact hentry
+    · exact hno_pivot.zero_unrecorded cFin cFin.isLt hmem i hrow_le_i
 
 end FieldAlgorithms
 
