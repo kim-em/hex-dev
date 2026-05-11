@@ -19,8 +19,11 @@ The stored `UInt64` modulus must agree with the Nat-indexed `ZMod64` modulus;
 the underlying `HexArith` context then provides the small-modulus fast path.
 -/
 structure BarrettCtx (p : Nat) [ZMod64.Bounds p] where
+  /-- The executable machine-word modulus used by the underlying context. -/
   modulus : UInt64
+  /-- The stored word modulus agrees with the Nat-indexed `ZMod64` modulus. -/
   modulus_eq : modulus.toNat = p
+  /-- The underlying `UInt64` Barrett context from `HexArith`. -/
   toUInt64Ctx : _root_.BarrettCtx modulus
 
 /--
@@ -30,8 +33,11 @@ As with `BarrettCtx`, the executable context stores the machine-word modulus
 used by the underlying `HexArith` Montgomery code.
 -/
 structure MontCtx (p : Nat) [ZMod64.Bounds p] where
+  /-- The executable machine-word modulus used by the underlying context. -/
   modulus : UInt64
+  /-- The stored word modulus agrees with the Nat-indexed `ZMod64` modulus. -/
   modulus_eq : modulus.toNat = p
+  /-- The underlying `UInt64` Montgomery context from `HexArith`. -/
   toUInt64Ctx : _root_.MontCtx modulus
 
 /--
@@ -42,7 +48,9 @@ This is intentionally distinct from `ZMod64`: values are still reduced into
 canonical standard representative.
 -/
 structure MontResidue (p : Nat) [ZMod64.Bounds p] where
+  /-- Backing word for the Montgomery-form representative. -/
   val : UInt64
+  /-- The backing word remains reduced modulo `p`. -/
   isLt : val.toNat < p
 
 namespace MontResidue
@@ -63,10 +71,16 @@ instance : CoeOut (MontResidue p) UInt64 where
 instance : CoeOut (MontResidue p) Nat where
   coe := toNat
 
+/-- The `UInt64` view of a Montgomery residue is its backing word. -/
 @[simp] theorem toUInt64_eq_val (a : MontResidue p) : a.toUInt64 = a.val := rfl
+
+/-- The Nat view of a Montgomery residue is the Nat value of its backing word. -/
 @[simp] theorem toNat_eq_val (a : MontResidue p) : a.toNat = a.val.toNat := rfl
+
+/-- The Nat view of a Montgomery residue is reduced modulo its indexed modulus. -/
 @[simp] theorem toNat_lt (a : MontResidue p) : a.toNat < p := a.isLt
 
+/-- Montgomery residues are equal when their backing words are equal. -/
 @[ext] theorem ext {a b : MontResidue p} (h : a.val = b.val) : a = b := by
   cases a
   cases b
@@ -91,6 +105,10 @@ result as a `ZMod64`.
 def mulMod (ctx : BarrettCtx p) (a b : ZMod64 p) : ZMod64 p :=
   ZMod64.ofNat p ((_root_.BarrettCtx.mulMod ctx.toUInt64Ctx a.toUInt64 b.toUInt64).toNat)
 
+/--
+The `ZMod64` Barrett wrapper computes the ordinary modular product on reduced
+representatives.
+-/
 @[simp] theorem toNat_mulMod (ctx : BarrettCtx p) (a b : ZMod64 p) :
     (ctx.mulMod a b).toNat = (a.toNat * b.toNat) % p := by
   have ha := residue_lt_modulus ctx a
@@ -149,6 +167,7 @@ representation.
 def fromMont (ctx : MontCtx p) (a : MontResidue p) : ZMod64 p :=
   ZMod64.ofNat p ((_root_.MontCtx.fromMont ctx.toUInt64Ctx a.toUInt64).toNat)
 
+/-- Converting a standard residue into Montgomery form and back is the identity. -/
 @[simp] theorem fromMont_toMont (ctx : MontCtx p) (a : ZMod64 p) :
     ctx.fromMont (ctx.toMont a) = a := by
   have hnat : (ctx.fromMont (ctx.toMont a)).toNat = a.toNat := by
@@ -169,6 +188,10 @@ def fromMont (ctx : MontCtx p) (a : MontResidue p) : ZMod64 p :=
   apply UInt64.toNat_inj.mp
   simpa [ZMod64.toNat_eq_val] using hnat
 
+/--
+Multiplying two standard residues by entering Montgomery form, multiplying, and
+leaving Montgomery form computes the ordinary modular product.
+-/
 @[simp] theorem toNat_mulMont (ctx : MontCtx p) (a b : ZMod64 p) :
     (ctx.fromMont (ctx.mulMont (ctx.toMont a) (ctx.toMont b))).toNat =
       (a.toNat * b.toNat) % p := by
