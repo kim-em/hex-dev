@@ -15,12 +15,14 @@ def redcNat (p p' T : Nat) : Nat :=
   let u := (T + m * p) / UInt64.word
   if u < p then u else u - p
 
+/-- Reducing `T` before multiplying by `p'` does not change the correction word. -/
 private theorem redcNat_correction_eq (p' T : Nat) :
     T * p' % UInt64.word = (T % UInt64.word) * p' % UInt64.word := by
   rw [Nat.mul_mod T p' UInt64.word]
   rw [Nat.mul_mod (T % UInt64.word) p' UInt64.word]
   rw [Nat.mod_mod]
 
+/-- A word-sized value plus its `R - 1` multiple vanishes modulo `R`. -/
 private theorem redcNat_cancel_pred_word (a : Nat) (ha : a < UInt64.word) :
     (a + (a * (UInt64.word - 1)) % UInt64.word) % UInt64.word = 0 := by
   have hword_pos : 0 < UInt64.word := by
@@ -44,6 +46,7 @@ private theorem redcNat_cancel_pred_word (a : Nat) (ha : a < UInt64.word) :
             rw [hs]
           rw [hmul, Nat.mul_mod_left]
 
+/-- The Montgomery correction makes the adjusted numerator exactly divisible by `R`. -/
 private theorem redcNat_exact_dvd (p p' T : Nat)
     (hpp' : p * p' % UInt64.word = UInt64.word - 1) :
     UInt64.word ∣ T + ((T % UInt64.word) * p' % UInt64.word) * p := by
@@ -84,6 +87,7 @@ private theorem redcNat_exact_dvd (p p' T : Nat)
           exact redcNat_cancel_pred_word (T % UInt64.word)
             (Nat.mod_lt T hword_pos)
 
+/-- Core quotient bound before threading the inverse and modulus-size hypotheses. -/
 private theorem redcNat_u_lt_two_p_core (hp_pos : 0 < p)
     (hT : T < p * UInt64.word) :
     (T + ((T % UInt64.word) * p' % UInt64.word) * p) / UInt64.word < 2 * p := by
