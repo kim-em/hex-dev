@@ -4419,6 +4419,123 @@ private def squareFreeAuxRevResidualSatisfied
             squareFreeAuxRevResidualSatisfied
               (pthRoot loop.2) (m * p) fuel)
 
+/--
+Under the recursive residual derivative-zero invariant, every output factor
+of `squareFreeAuxRev g m fuel []` divides `g`. The proof tracks the loop
+through both the `pthRoot`-direct branch and the Yun-then-`pthRoot` branch,
+relying on `pthRoot_dvd_self_of_derivative_zero` for the `pthRoot` steps and
+on `yunFactorsWithLevel_factor_dvd_current` /
+`yunFactorsWithLevel_repeated_dvd_repeated` for the Yun steps.
+-/
+private theorem squareFreeAuxRev_factor_dvd_input
+    (hp : Hex.Nat.Prime p) (g : FpPoly p) (m fuel : Nat)
+    (hresidual : squareFreeAuxRevResidualSatisfied g m fuel) :
+    ∀ b ∈ (squareFreeAuxRev g m fuel []).reverse, b.factor ∣ g := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  induction fuel generalizing g m with
+  | zero =>
+      intro b hb
+      simp [squareFreeAuxRev] at hb
+  | succ fuel ih =>
+      intro b hb
+      simp only [squareFreeAuxRev] at hb
+      by_cases hzero : g.isZero = true
+      · simp [hzero] at hb
+      · have hzero_false : g.isZero = false := by
+          cases h : g.isZero
+          · rfl
+          · exact False.elim (hzero h)
+        rw [if_neg (by simp [hzero_false])] at hb
+        by_cases hdf : (DensePoly.derivative g).isZero = true
+        · rw [if_pos hdf] at hb
+          have hres_pth :
+              squareFreeAuxRevResidualSatisfied (pthRoot g) (m * p) fuel := by
+            have h := hresidual
+            simp only [squareFreeAuxRevResidualSatisfied] at h
+            rw [if_neg (by simp [hzero_false]), if_pos hdf] at h
+            exact h
+          have hb_pth : b.factor ∣ pthRoot g :=
+            ih (pthRoot g) (m * p) hres_pth b hb
+          have hpth_dvd_g : pthRoot g ∣ g :=
+            pthRoot_dvd_self_of_derivative_zero hp g hzero_false hdf
+          exact dvd_trans_poly hb_pth hpth_dvd_g
+        · have hdf_false : (DensePoly.derivative g).isZero = false := by
+            cases h : (DensePoly.derivative g).isZero
+            · rfl
+            · exact False.elim (hdf h)
+          rw [if_neg (by simp [hdf_false])] at hb
+          let g_inner := DensePoly.gcd g (DensePoly.derivative g)
+          let c_inner := g / g_inner
+          let loop := yunFactorsWithLevel c_inner g_inner m 1 fuel []
+          have hres_unpack :
+              ((isOne loop.2 = true) ∨ (DensePoly.derivative loop.2).isZero = true) ∧
+                ((isOne loop.2 = false) →
+                  squareFreeAuxRevResidualSatisfied
+                    (pthRoot loop.2) (m * p) fuel) := by
+            have h := hresidual
+            simp only [squareFreeAuxRevResidualSatisfied] at h
+            rw [if_neg (by simp [hzero_false]), if_neg (by simp [hdf_false])] at h
+            exact h
+          have hg_inner_dvd_g : g_inner ∣ g :=
+            DensePoly.gcd_dvd_left g (DensePoly.derivative g)
+          have hloop_dvd_g_inner : loop.2 ∣ g_inner := by
+            simpa [loop] using
+              yunFactorsWithLevel_repeated_dvd_repeated c_inner g_inner m 1 fuel
+          have hloop_dvd_g : loop.2 ∣ g :=
+            dvd_trans_poly hloop_dvd_g_inner hg_inner_dvd_g
+          have hc_inner_dvd_g : c_inner ∣ g := by
+            refine ⟨g_inner, ?_⟩
+            simpa [c_inner, g_inner] using
+              (div_gcd_mul_reconstruct g (DensePoly.derivative g)).symm
+          have hg_inner_ne : g_inner.isZero = false :=
+            gcd_isZero_false_of_right_isZero_false g
+              (DensePoly.derivative g) hdf_false
+          have hloop_ne : loop.2.isZero = false := by
+            cases hl : loop.2.isZero
+            · rfl
+            · exfalso
+              have hloop_zero : loop.2 = 0 :=
+                eq_zero_of_isZero_true loop.2 hl
+              rcases hloop_dvd_g_inner with ⟨q, hq⟩
+              have hg_inner_zero : g_inner = 0 := by
+                rw [hq, hloop_zero, zero_mul]
+              have hg_inner_isZero : g_inner.isZero = true := by
+                rw [hg_inner_zero]; rfl
+              rw [hg_inner_isZero] at hg_inner_ne
+              cases hg_inner_ne
+          by_cases hrep : isOne loop.2 = true
+          · have hb_loop : b ∈ loop.1.reverse := by
+              simpa [g_inner, c_inner, loop, hrep] using hb
+            have hb_dvd_c : b.factor ∣ c_inner :=
+              yunFactorsWithLevel_factor_dvd_current
+                c_inner g_inner m 1 fuel b hb_loop
+            exact dvd_trans_poly hb_dvd_c hc_inner_dvd_g
+          · have hrep_false : isOne loop.2 = false := by
+              cases h : isOne loop.2
+              · rfl
+              · exact False.elim (hrep h)
+            have hres_inner :
+                squareFreeAuxRevResidualSatisfied
+                  (pthRoot loop.2) (m * p) fuel := hres_unpack.2 hrep_false
+            have hb' :
+                b ∈ (squareFreeAuxRev (pthRoot loop.2) (m * p) fuel loop.1).reverse := by
+              simpa [g_inner, c_inner, loop, hrep_false] using hb
+            rw [squareFreeAuxRev_reverse_append] at hb'
+            rcases List.mem_append.mp hb' with hb_loop | hb_rec
+            · have hb_dvd_c : b.factor ∣ c_inner :=
+                yunFactorsWithLevel_factor_dvd_current
+                  c_inner g_inner m 1 fuel b hb_loop
+              exact dvd_trans_poly hb_dvd_c hc_inner_dvd_g
+            · have hb_pth : b.factor ∣ pthRoot loop.2 :=
+                ih (pthRoot loop.2) (m * p) hres_inner b hb_rec
+              have hdf_loop : (DensePoly.derivative loop.2).isZero = true := by
+                rcases hres_unpack.1 with h | h
+                · rw [h] at hrep_false; cases hrep_false
+                · exact h
+              have hpth_dvd_loop : pthRoot loop.2 ∣ loop.2 :=
+                pthRoot_dvd_self_of_derivative_zero hp loop.2 hloop_ne hdf_loop
+              exact dvd_trans_poly hb_pth (dvd_trans_poly hpth_dvd_loop hloop_dvd_g)
+
 private theorem yunFactorsWithLevel_pairwise_coprime_nil_of_ready
     (c w : FpPoly p) (base level fuel : Nat)
     (hready : yunFactorsPairwiseReady c w base level fuel) :
