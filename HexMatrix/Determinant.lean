@@ -1723,6 +1723,178 @@ theorem detTerm_insertAt_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
   unfold detTerm
   rw [detSign_insertAt_last, detProduct_insertAt_last]
 
+private theorem detProduct_insertAt_not_last_zero_of_last_row_zero
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (v : Vector (Fin n) n)
+    (i : Fin (n + 1)) (hi : i ≠ Fin.last n)
+    (hrow : ∀ j : Fin (n + 1), j.val < n → M[Fin.last n][j] = 0) :
+    detProduct M (insertAt (Fin.last n) (v.map Fin.castSucc) i) = 0 := by
+  unfold detProduct
+  apply foldl_det_product_zero_of_mem
+    (List.finRange (n + 1)) (Fin.last n)
+    (fun r => M[r][(insertAt (Fin.last n) (v.map Fin.castSucc) i)[r]]) 1
+    (List.mem_finRange (Fin.last n))
+  have hiVal : i.val < n := by
+    have hne : i.val ≠ n := by
+      intro hval
+      exact hi (Fin.ext hval)
+    omega
+  have hcolVal :
+      ((insertAt (Fin.last n) (v.map Fin.castSucc) i)[Fin.last n]).val < n := by
+    unfold insertAt
+    simp [List.getElem_insertIdx_of_gt, hiVal, Vector.toList]
+  exact hrow ((insertAt (Fin.last n) (v.map Fin.castSucc) i)[Fin.last n]) hcolVal
+
+private theorem detTerm_insertAt_not_last_zero_of_last_row_zero
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (v : Vector (Fin n) n)
+    (i : Fin (n + 1)) (hi : i ≠ Fin.last n)
+    (hrow : ∀ j : Fin (n + 1), j.val < n → M[Fin.last n][j] = 0) :
+    detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i) = 0 := by
+  unfold detTerm
+  rw [detProduct_insertAt_not_last_zero_of_last_row_zero M v i hi hrow]
+  grind
+
+private theorem foldl_detTerm_last_row_insertions
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (v : Vector (Fin n) n) (z : R)
+    (hrow : ∀ j : Fin (n + 1), j.val < n → M[Fin.last n][j] = 0) :
+    (List.finRange (n + 1)).foldl
+        (fun acc i =>
+          acc + detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i)) z =
+      z + detSign (R := R) v *
+        (detProduct (leadingPrefix M n (Nat.le_succ n)) v * M[Fin.last n][Fin.last n]) := by
+  rw [← Fin.foldl_eq_foldl_finRange]
+  rw [Fin.foldl_succ_last]
+  have hprefix :
+      Fin.foldl n
+          (fun acc i =>
+            acc + detTerm M
+              (insertAt (Fin.last n) (v.map Fin.castSucc) i.castSucc)) z = z := by
+    rw [Fin.foldl_eq_foldl_finRange]
+    calc
+      (List.finRange n).foldl
+          (fun acc i =>
+            acc + detTerm M
+              (insertAt (Fin.last n) (v.map Fin.castSucc) i.castSucc)) z =
+        (List.finRange n).foldl (fun acc (_i : Fin n) => acc + (0 : R)) z := by
+          apply foldl_det_sum_congr
+          intro i _hmem
+          rw [detTerm_insertAt_not_last_zero_of_last_row_zero M v i.castSucc
+            (by
+              intro hlast
+              have hval := congrArg Fin.val hlast
+              simp at hval
+              exact (Nat.ne_of_lt i.isLt) hval)
+            hrow]
+      _ = z := by
+          exact foldl_det_sum_zero (List.finRange n) z
+  rw [hprefix]
+  rw [detTerm_insertAt_last]
+
+theorem det_eq_det_leadingPrefix_mul_last_of_last_row_zero
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1))
+    (hrow : ∀ j : Fin (n + 1), j.val < n → M[Fin.last n][j] = 0) :
+    det M = det (leadingPrefix M n (Nat.le_succ n)) * M[Fin.last n][Fin.last n] := by
+  unfold det
+  rw [show permutationVectors (n + 1) =
+      List.flatMap
+        (fun v =>
+          (List.finRange (n + 1)).map fun i =>
+            insertAt (Fin.last n) (v.map Fin.castSucc) i)
+        (permutationVectors n) by rfl]
+  rw [foldl_det_sum_flatMap]
+  calc
+    (permutationVectors n).foldl
+        (fun acc v =>
+          (List.map (fun i => insertAt (Fin.last n) (Vector.map Fin.castSucc v) i)
+              (List.finRange (n + 1))).foldl
+            (fun acc perm => acc + detTerm M perm) acc) 0 =
+      (permutationVectors n).foldl
+        (fun acc v =>
+          (List.finRange (n + 1)).foldl
+            (fun acc i =>
+              acc + detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i)) acc) 0 := by
+        apply foldl_acc_congr
+        intro acc v _hmem
+        simp only [List.foldl_map]
+    _ =
+      (permutationVectors n).foldl
+        (fun acc v =>
+          acc + detSign (R := R) v *
+            (detProduct (leadingPrefix M n (Nat.le_succ n)) v *
+              M[Fin.last n][Fin.last n])) 0 := by
+        apply foldl_acc_congr
+        intro acc v _hmem
+        exact foldl_detTerm_last_row_insertions M v acc hrow
+    _ =
+      (permutationVectors n).foldl
+          (fun acc v => acc + detTerm (leadingPrefix M n (Nat.le_succ n)) v) 0 *
+        M[Fin.last n][Fin.last n] := by
+        unfold detTerm
+        calc
+          (permutationVectors n).foldl
+              (fun acc v =>
+                acc + detSign (R := R) v *
+                  (detProduct (leadingPrefix M n (Nat.le_succ n)) v *
+                    M[Fin.last n][Fin.last n])) 0 =
+            (permutationVectors n).foldl
+              (fun acc v =>
+                acc + (detSign (R := R) v *
+                  detProduct (leadingPrefix M n (Nat.le_succ n)) v) *
+                    M[Fin.last n][Fin.last n]) 0 := by
+              apply foldl_det_sum_congr
+              intro v _hmem
+              grind
+          _ =
+            (permutationVectors n).foldl
+                (fun acc v =>
+                  acc + detSign (R := R) v *
+                    detProduct (leadingPrefix M n (Nat.le_succ n)) v) 0 *
+              M[Fin.last n][Fin.last n] := by
+              exact foldl_det_sum_mul_right_zero
+                (permutationVectors n)
+                (fun v => detSign (R := R) v *
+                  detProduct (leadingPrefix M n (Nat.le_succ n)) v)
+                M[Fin.last n][Fin.last n]
+    _ = det (leadingPrefix M n (Nat.le_succ n)) * M[Fin.last n][Fin.last n] := by
+        rfl
+
+theorem det_upperTriangular_pos_diag
+    {n : Nat} (M : Matrix Int n n)
+    (hzero : ∀ i j : Fin n, j.val < i.val → M[i][j] = 0)
+    (hdiag : ∀ i : Fin n, 0 < M[i][i]) :
+    0 < det M := by
+  induction n with
+  | zero =>
+      simp [det, permutationVectors, detTerm, detSign, detProduct, emptyVec, inversionCount]
+  | succ n ih =>
+      have hrow : ∀ j : Fin (n + 1), j.val < n → M[Fin.last n][j] = 0 := by
+        intro j hj
+        exact hzero (Fin.last n) j hj
+      rw [det_eq_det_leadingPrefix_mul_last_of_last_row_zero M hrow]
+      have hprefixZero :
+          ∀ i j : Fin n, j.val < i.val →
+            (leadingPrefix M n (Nat.le_succ n))[i][j] = 0 := by
+        intro i j hij
+        let ii : Fin (n + 1) := ⟨i.val, by omega⟩
+        let jj : Fin (n + 1) := ⟨j.val, by omega⟩
+        have hentry : (leadingPrefix M n (Nat.le_succ n))[i][j] = M[ii][jj] := by
+          simp [leadingPrefix, ofFn, ii, jj]
+        rw [hentry]
+        exact hzero ii jj hij
+      have hprefixDiag :
+          ∀ i : Fin n, 0 < (leadingPrefix M n (Nat.le_succ n))[i][i] := by
+        intro i
+        let ii : Fin (n + 1) := ⟨i.val, by omega⟩
+        have hentry : (leadingPrefix M n (Nat.le_succ n))[i][i] = M[ii][ii] := by
+          simp [leadingPrefix, ofFn, ii]
+        rw [hentry]
+        exact hdiag ii
+      exact Int.mul_pos (ih (leadingPrefix M n (Nat.le_succ n)) hprefixZero hprefixDiag)
+        (hdiag (Fin.last n))
+
 private theorem detTerm_identity_insertAt_last {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat} (v : Vector (Fin n) n) :
     detTerm (1 : Matrix R (n + 1) (n + 1))
@@ -6953,6 +7125,43 @@ private theorem foldl_int_sum_sq_nonneg {β : Type v} (xs : List β) (f : β →
     0 ≤ xs.foldl (fun acc x => acc + f x ^ 2) 0 :=
   foldl_int_sum_sq_nonneg_start xs f 0 (by simp)
 
+private theorem foldl_int_sum_sq_pos_of_acc {β : Type v}
+    (xs : List β) (f : β → Int) (acc : Int) (hacc : 0 < acc) :
+    0 < xs.foldl (fun acc x => acc + f x ^ 2) acc := by
+  induction xs generalizing acc with
+  | nil => simpa using hacc
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hx : 0 ≤ f x ^ 2 := by
+        simpa [Lean.Grind.Semiring.pow_two] using
+          (Lean.Grind.OrderedRing.sq_nonneg (a := f x))
+      exact ih (acc + f x ^ 2) (Int.add_pos_of_pos_of_nonneg hacc hx)
+
+private theorem foldl_int_sum_sq_pos_start {β : Type v}
+    (xs : List β) (f : β → Int) (acc : Int) (hacc : 0 ≤ acc)
+    (target : β) (hx : target ∈ xs) (hpos : 0 < f target ^ 2) :
+    0 < xs.foldl (fun acc x => acc + f x ^ 2) acc := by
+  induction xs generalizing acc with
+  | nil => cases hx
+  | cons y ys ih =>
+      simp only [List.foldl_cons]
+      simp only [List.mem_cons] at hx
+      cases hx with
+      | inl hxy =>
+          subst hxy
+          exact foldl_int_sum_sq_pos_of_acc ys f (acc + f target ^ 2)
+            (Int.add_pos_of_nonneg_of_pos hacc hpos)
+      | inr htail =>
+          have hy : 0 ≤ f y ^ 2 := by
+            simpa [Lean.Grind.Semiring.pow_two] using
+              (Lean.Grind.OrderedRing.sq_nonneg (a := f y))
+          exact ih (acc + f y ^ 2) (Int.add_nonneg hacc hy) htail
+
+private theorem foldl_int_sum_sq_pos_of_mem {β : Type v}
+    (xs : List β) (f : β → Int) (x : β) (hx : x ∈ xs) (hpos : 0 < f x ^ 2) :
+    0 < xs.foldl (fun acc x => acc + f x ^ 2) 0 :=
+  foldl_int_sum_sq_pos_start xs f 0 (by simp) x hx hpos
+
 /-- Integer row Gram determinants are nonnegative, by Cauchy-Binet as a finite
 sum of integer squares. -/
 theorem det_gramMatrix_nonneg {n m : Nat} (A : Matrix Int n m) :
@@ -6960,6 +7169,79 @@ theorem det_gramMatrix_nonneg {n m : Nat} (A : Matrix Int n m) :
   rw [det_gramMatrix_eq_sum_minors_sq A]
   exact foldl_int_sum_sq_nonneg (selectedColumnTuples n m)
     (fun cols => det (columnTupleMatrix A (columnTupleVectorFn cols)))
+
+/-- The identity selection of the first `k` columns of an `n`-column matrix. -/
+def firstColumns (k n : Nat) (hk : k ≤ n) : Vector (Fin n) k :=
+  Vector.ofFn fun i => ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
+
+@[simp] theorem firstColumns_entry (k n : Nat) (hk : k ≤ n) (i : Fin k) :
+    (firstColumns k n hk)[i] = (⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩ : Fin n) := by
+  simp [firstColumns]
+
+theorem firstColumns_mem_selectedColumnTuples (k n : Nat) (hk : k ≤ n) :
+    firstColumns k n hk ∈ selectedColumnTuples k n := by
+  rw [mem_selectedColumnTuples_iff]
+  intro i j hij
+  simp [firstColumns]
+  exact hij
+
+theorem columnTupleMatrix_leadingRows_firstColumns_eq_leadingPrefix
+    {R : Type u} {n : Nat} (M : Matrix R n n) (k : Nat) (hk : k ≤ n) :
+    columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn (firstColumns k n hk)) =
+      leadingPrefix M k hk := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  change
+    (columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn (firstColumns k n hk)))[
+        (⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)] =
+      (leadingPrefix M k hk)[(⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)]
+  simp [columnTupleMatrix, leadingRows, leadingPrefix, columnTupleVectorFn, firstColumns, ofFn]
+
+theorem det_gramMatrix_leadingRows_pos_of_upperTriangular_pos_diag
+    {n : Nat} (M : Matrix Int n n)
+    (hzero : ∀ i j : Fin n, j.val < i.val → M[i][j] = 0)
+    (hdiag : ∀ i : Fin n, 0 < M[i][i])
+    (k : Nat) (hk : k ≤ n) :
+    0 < det (gramMatrix (leadingRows M k hk)) := by
+  rw [det_gramMatrix_eq_sum_minors_sq (leadingRows M k hk)]
+  let cols := firstColumns k n hk
+  have hmem : cols ∈ selectedColumnTuples k n :=
+    firstColumns_mem_selectedColumnTuples k n hk
+  have hminor_eq :
+      det (columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn cols)) =
+        det (leadingPrefix M k hk) := by
+    dsimp [cols]
+    rw [columnTupleMatrix_leadingRows_firstColumns_eq_leadingPrefix M k hk]
+  have hprefixZero :
+      ∀ i j : Fin k, j.val < i.val → (leadingPrefix M k hk)[i][j] = 0 := by
+    intro i j hij
+    let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
+    let jj : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
+    have hentry : (leadingPrefix M k hk)[i][j] = M[ii][jj] := by
+      simp [leadingPrefix, ofFn, ii, jj]
+    rw [hentry]
+    exact hzero ii jj hij
+  have hprefixDiag :
+      ∀ i : Fin k, 0 < (leadingPrefix M k hk)[i][i] := by
+    intro i
+    let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
+    have hentry : (leadingPrefix M k hk)[i][i] = M[ii][ii] := by
+      simp [leadingPrefix, ofFn, ii]
+    rw [hentry]
+    exact hdiag ii
+  have hminor_pos :
+      0 < det (columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn cols)) := by
+    rw [hminor_eq]
+    exact det_upperTriangular_pos_diag (leadingPrefix M k hk) hprefixZero hprefixDiag
+  have hminor_sq_pos :
+      0 < det (columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn cols)) ^ 2 := by
+    simpa [Lean.Grind.Semiring.pow_two] using Int.mul_pos hminor_pos hminor_pos
+  exact foldl_int_sum_sq_pos_of_mem
+    (xs := selectedColumnTuples k n)
+    (f := fun cols => det (columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn cols)))
+    (x := cols) hmem hminor_sq_pos
 
 end Matrix
 end Hex

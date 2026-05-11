@@ -94,12 +94,22 @@ private structure PinnedCase where
   coeffs  : Array Int
   p       : Int
   degrees : List Int
+
+private def mkPinned (id : String) (coeffs : Array Int)
+    (p : Int) (degrees : List Int) : PinnedCase :=
+  { id, coeffs, p, degrees }
+
+private structure PinnedExpectedCase where
+  id      : String
+  coeffs  : Array Int
+  p       : Int
+  degrees : List Int
   scalar  : Int
   factors : List (List Int × Nat)
 
-private def mkPinned (id : String) (coeffs : Array Int)
+private def mkPinnedExpected (id : String) (coeffs : Array Int)
     (p : Int) (degrees : List Int) (scalar : Int)
-    (factors : List (List Int × Nat)) : PinnedCase :=
+    (factors : List (List Int × Nat)) : PinnedExpectedCase :=
   { id, coeffs, p, degrees, scalar, factors }
 
 /-! ## Already-irreducible Mignotte-bounded polynomials
@@ -109,6 +119,9 @@ Cyclotomic Φ_p(x) = x^(p-1) + ... + x + 1 has `coeffL2NormBound`
 
 /-! ## Signed-scalar and multiplicity convention edge cases -/
 
+/- These cases intentionally emit the actual public `factor` result via
+`emitCase`; the python-flint oracle supplies the independent expected scalar
+and multiplicity buckets. -/
 private def cases_edge : List Case :=
   [ mk "edge/zero" #[]
   , mk "edge/one" #[1]
@@ -165,21 +178,22 @@ private def cases_red : List ExpectedCase :=
 
 /-! ## Pinned-prime modular split smoke case -/
 
-private def cases_pinned : List PinnedCase :=
-  [ -- X^4 + 1 is irreducible over Z and splits over F_5 into two quadratics.
-    mkPinned "adv/x4_plus_1" #[1, 0, 0, 0, 1] 5 [2, 2]
-      1 [([1, 0, 0, 0, 1], 1)]
-    -- (X^2 - 2)(X^2 - 3) splits over F_23 into four linear factors,
+private def cases_pinned_factor : List PinnedCase :=
+  [ -- (X^2 - 2)(X^2 - 3) splits over F_23 into four linear factors,
     -- while its integer factorisation recombines them into two quadratics.
-  , mkPinned "adv/quad_sqrt2_sqrt3" #[6, 0, -5, 0, 1] 23 [1, 1, 1, 1]
-      1 [([-3, 0, 1], 1), ([-2, 0, 1], 1)]
+    mkPinned "adv/quad_sqrt2_sqrt3" #[6, 0, -5, 0, 1] 23 [1, 1, 1, 1] ]
+
+private def cases_pinned_expected : List PinnedExpectedCase :=
+  [ -- X^4 + 1 is irreducible over Z and splits over F_5 into two quadratics.
+    mkPinnedExpected "adv/x4_plus_1" #[1, 0, 0, 0, 1] 5 [2, 2]
+      1 [([1, 0, 0, 0, 1], 1)]
     -- Swinnerton-Dyer SD_3 splits completely over F_71.
-  , mkPinned "adv/swinnerton_dyer_sd3"
+  , mkPinnedExpected "adv/swinnerton_dyer_sd3"
       #[576, 0, -960, 0, 352, 0, -40, 0, 1]
       71 [1, 1, 1, 1, 1, 1, 1, 1]
       1 [([576, 0, -960, 0, 352, 0, -40, 0, 1], 1)]
     -- Φ_15 splits completely over F_31.
-  , mkPinned "adv/phi15" #[1, -1, 0, 1, -1, 1, 0, -1, 1]
+  , mkPinnedExpected "adv/phi15" #[1, -1, 0, 1, -1, 1, 0, -1, 1]
       31 [1, 1, 1, 1, 1, 1, 1, 1]
       1 [([1, -1, 0, 1, -1, 1, 0, -1, 1], 1)] ]
 
@@ -203,6 +217,11 @@ private def emitExpectedCase (c : ExpectedCase) : IO Unit := do
 private def emitPinnedCase (c : PinnedCase) : IO Unit := do
   let f := DensePoly.ofCoeffs c.coeffs
   emitPolyFixtureWithModFactorDegrees lib c.id (liftCoeffs f) c.p c.degrees
+  emitResult lib c.id "factor" (factorValue (factor f))
+
+private def emitPinnedExpectedCase (c : PinnedExpectedCase) : IO Unit := do
+  let f := DensePoly.ofCoeffs c.coeffs
+  emitPolyFixtureWithModFactorDegrees lib c.id (liftCoeffs f) c.p c.degrees
   emitResult lib c.id "factor" (expectedFactorValue c.scalar c.factors)
 
 end Hex.BZEmit
@@ -212,5 +231,6 @@ def main : IO Unit := do
   for c in Hex.BZEmit.cases_irr     do Hex.BZEmit.emitCase c
   for c in Hex.BZEmit.cases_irr_expected do Hex.BZEmit.emitExpectedCase c
   for c in Hex.BZEmit.cases_red     do Hex.BZEmit.emitExpectedCase c
-  for c in Hex.BZEmit.cases_pinned  do Hex.BZEmit.emitPinnedCase c
+  for c in Hex.BZEmit.cases_pinned_factor do Hex.BZEmit.emitPinnedCase c
+  for c in Hex.BZEmit.cases_pinned_expected do Hex.BZEmit.emitPinnedExpectedCase c
   for c in Hex.BZEmit.cases_content do Hex.BZEmit.emitExpectedCase c

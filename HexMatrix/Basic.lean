@@ -493,6 +493,12 @@ def leadingPrefix (M : Matrix R n n) (k : Nat) (hk : k ≤ n) : Matrix R k k :=
     let jj : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
     M[ii][jj]
 
+/-- The first `k` rows of a matrix, retaining all source columns. -/
+def leadingRows (M : Matrix R n m) (k : Nat) (hk : k ≤ n) : Matrix R k m :=
+  ofFn fun i j =>
+    let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
+    M[ii][j]
+
 @[simp] theorem leadingPrefix_entry (M : Matrix R n n) (k : Nat) (hk : k ≤ n)
     (i j : Fin k) :
     (leadingPrefix M k hk)[i][j] =
@@ -500,6 +506,13 @@ def leadingPrefix (M : Matrix R n n) (k : Nat) (hk : k ≤ n) : Matrix R k k :=
        let jj : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
        M[ii][jj]) := by
   simp [leadingPrefix, ofFn]
+
+@[simp] theorem leadingRows_entry (M : Matrix R n m) (k : Nat) (hk : k ≤ n)
+    (i : Fin k) (j : Fin m) :
+    (leadingRows M k hk)[i][j] =
+      (let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
+       M[ii][j]) := by
+  simp [leadingRows, ofFn]
 
 @[simp] theorem submatrix_entry (M : Matrix R n n) (k : Fin n)
     (i j : Fin (k.val + 1)) :

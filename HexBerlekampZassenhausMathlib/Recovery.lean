@@ -58,6 +58,50 @@ def projectedRowsOfLiftData (f : Hex.ZPoly) (d : Hex.LiftData)
   Hex.bhksProjectedRows (latticeBasisOfLiftData f d) hrows
     (Hex.bhksLatticeBasis_independent _)
 
+/-- Executable bad-vector witness whose lattice and projected rows are the
+ones used by the forward-recovery package at the given lift data.  The
+remaining fields identify the selected local factor and auxiliary polynomial
+for the bad-vector route; cap-separation callers supply their proof obligations
+through `ExecutableCapSeparationHypotheses`. -/
+def badVectorWitnessOfLiftData
+    (f : Hex.ZPoly) (d : Hex.LiftData) (hrows : HasPositiveDimension f d)
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly) :
+    ExecutableBadVectorWitness where
+  input := f
+  liftData := d
+  lattice := latticeBasisOfLiftData f d
+  projectedRows := projectedRowsOfLiftData f d hrows
+  localFactorIndex := localFactorIndex
+  localFactorDegree := localFactorDegree
+  H := H
+  lattice_matches_lift := rfl
+  projected_factor_count := rfl
+
+/--
+Specialize the executable-cap BHKS separation theorem to the projected-row
+shape used by `ForwardRecoveryInputs`.
+
+The conclusion has the same shape as
+`ForwardRecoveryInputs.lattice_eq_indicators`; the later B7/A2 recovery fields
+remain outside this theorem and can be supplied independently.
+-/
+theorem projectedRowsOfLiftData_eq_trueFactorIndicatorLattice_of_cap
+    (f : Hex.ZPoly) (d : Hex.LiftData) (hrows : HasPositiveDimension f d)
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData f d hrows).factorCount)))
+    {a : Nat} (ha : Hex.factorFastPrecisionCap f ≤ a)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (hcap :
+      ExecutableCapSeparationHypotheses
+        (badVectorWitnessOfLiftData f d hrows localFactorIndex localFactorDegree H)
+        trueSupports) :
+    projectedRowSpanInt (projectedRowsOfLiftData f d hrows) =
+      trueFactorIndicatorLattice trueSupports :=
+  projectedRowSpan_eq_trueFactorIndicatorLattice_of_cap
+    (badVectorWitnessOfLiftData f d hrows localFactorIndex localFactorDegree H)
+    trueSupports ha C hC_nonneg hC hcap
+
 /-- The executable BHKS equivalence-class indicator array at the abstract
 Hensel-lift data. -/
 def equivalenceClassIndicatorsOfLiftData (f : Hex.ZPoly) (d : Hex.LiftData)
@@ -292,6 +336,42 @@ theorem bhksRecover_isSome_of_forwardInputs
     (f : Hex.ZPoly) (d : Hex.LiftData) (h : ForwardRecoveryInputs f d) :
     (Hex.bhksRecover? f d).isSome :=
   bhksRecover_isSome_of_recovery f d h.toRecoveryHypotheses
+
+/--
+Compose the Mathlib-side forward-recovery inputs with the executable scheduled
+fast-path bridge: if a scheduled lift for the normalized square-free core
+satisfies the forward-verification inputs, then the public `Hex.factorFast`
+entry point succeeds.
+-/
+theorem factorFast_ne_none_of_forwardInputs_on_schedule
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    {target : Nat}
+    (hB_pos : 1 ≤ Hex.factorFastPrecisionCap f)
+    (hnormalized :
+      primeData = Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+    (hinputs :
+      ForwardRecoveryInputs
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.henselLiftData
+          (Hex.normalizeForFactor f).squareFreeCore target primeData))
+    (hmem : target ∈
+      Hex.henselPrecisionSchedule (Hex.factorFastPrecisionCap f)
+        (Hex.initialHenselPrecision (Hex.factorFastPrecisionCap f))
+        (Hex.ZPoly.quadraticDoublingSteps (Hex.factorFastPrecisionCap f) + 2)) :
+    Hex.factorFast f ≠ none := by
+  have hrecover :
+      Hex.bhksRecover? (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.henselLiftData
+            (Hex.normalizeForFactor f).squareFreeCore target primeData) =
+        some hinputs.expectedFactors :=
+    bhksRecover_eq_some_of_forwardInputs
+      (Hex.normalizeForFactor f).squareFreeCore
+      (Hex.henselLiftData
+        (Hex.normalizeForFactor f).squareFreeCore target primeData)
+      hinputs
+  exact
+    Hex.factorFast_ne_none_of_core_recovery_on_schedule
+      f primeData hB_pos hnormalized hmem hrecover
 
 end BHKS
 

@@ -94,6 +94,14 @@ def rabinCoprimeTest (f : GF2Poly) (d : Nat) : Bool :=
 def rabinWitnesses (f : GF2Poly) : List (Nat × Bool) :=
   (maximalProperDivisors f.degree).map fun d => (d, rabinCoprimeTest f d)
 
+@[simp] theorem rabinWitnesses_all (f : GF2Poly) :
+    (rabinWitnesses f).all Prod.snd =
+      (maximalProperDivisors f.degree).all fun d => rabinCoprimeTest f d := by
+  unfold rabinWitnesses
+  induction maximalProperDivisors f.degree with
+  | nil => rfl
+  | cons d ds ih => simp [ih]
+
 /-- Rabin's executable irreducibility test: `f` must be nonconstant, divide
 `X^(2^n) - X`, and be coprime to `X^(2^d) - X` for every maximal proper
 divisor `d` of `n = deg(f)`. -/
@@ -125,9 +133,15 @@ variable (cert : IrreducibilityCertificate)
 def powWitness? (k : Nat) : Option GF2Poly :=
   cert.powChain[k]?
 
+@[simp] theorem powWitness?_eq_getElem? (k : Nat) :
+    cert.powWitness? k = cert.powChain[k]? := rfl
+
 /-- Read the Bezout witness for the `i`-th maximal proper divisor, if present. -/
 def bezoutWitness? (i : Nat) : Option RabinBezoutWitness :=
   cert.bezout[i]?
+
+@[simp] theorem bezoutWitness?_eq_getElem? (i : Nat) :
+    cert.bezoutWitness? i = cert.bezout[i]? := rfl
 
 end IrreducibilityCertificate
 
