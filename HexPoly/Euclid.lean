@@ -4770,5 +4770,51 @@ private theorem finiteCoeffMcCoyAnnihilator
     pCoeff qCoeff d bound k (by simpa [p, q] using hmul) i hi
   simpa [Int.mul_comm] using hrow
 
+private theorem dvd_last_q_coeff_mul_p_coeff_of_dvd_mul_coeff_of_q_above
+    (p q : DensePoly Int) (d k : Nat)
+    (hprod : ∀ n, (d : Int) ∣ (p * q).coeff n)
+    (hqAbove : ∀ s, k < s → (d : Int) ∣ q.coeff s) :
+    ∀ i, (d : Int) ∣ q.coeff k * p.coeff i := by
+  have hfinite :
+      ∀ n, n ≤ p.size + k →
+        (d : Int) ∣
+          finiteCoeffConvolution (fun r => p.coeff r) (fun s => q.coeff s) n := by
+    intro n _hn
+    have hpoly : (d : Int) ∣
+        (List.range (n + 1)).foldl
+          (fun acc r => acc + diagonalMulCoeffTerm p q n r) 0 := by
+      rw [← diagonalSum_eq_degree_bound p q n]
+      rw [← mulCoeffSum_eq_diagonal p q n]
+      rw [← coeff_mul p q n]
+      exact hprod n
+    unfold finiteCoeffConvolution
+    exact dvd_foldl_add_term_of_dvd_congr (d : Int) (List.range (n + 1))
+      (fun r => diagonalMulCoeffTerm p q n r)
+      (fun r => p.coeff r * q.coeff (n - r)) hpoly (by
+        intro r hr
+        have hrn : ¬ n < r := by
+          have hlt : r < n + 1 := List.mem_range.mp hr
+          omega
+        unfold diagonalMulCoeffTerm
+        simp [hrn])
+  have hleft :
+      ∀ r s, p.size < r →
+        (d : Int) ∣ (fun i => p.coeff i) r * (fun j => q.coeff j) s := by
+    intro r s hr
+    have hp : p.coeff r = 0 := coeff_eq_zero_of_size_le p (by omega)
+    simp [hp]
+  have hrow :
+      ∀ i, i ≤ p.size →
+        (d : Int) ∣
+          (fun s => q.coeff s) k * (fun r => p.coeff r) i :=
+    finiteCoeffMcCoyAnnihilator (fun r => p.coeff r) (fun s => q.coeff s)
+      d p.size k hfinite hqAbove hleft
+  intro i
+  by_cases hi : i ≤ p.size
+  · simpa using hrow i hi
+  · have hp : p.coeff i = 0 := coeff_eq_zero_of_size_le p (by omega)
+    rw [hp]
+    simp
+
 end DensePoly
 end Hex
