@@ -340,6 +340,14 @@ libraries:
     mathlib: true
     done_through: 3
     status: active
+    phase4:
+      input_families:
+        - name: coefficient-map-divisibility-bridges
+          description: Deterministic integer polynomial pairs reduced through Mathlib `Polynomial.map (Int.castRingHom (ZMod 5))`, covering coefficient divisibility and equality bridge lemmas.
+        - name: coprimality-lifting-prime-powers
+          description: Canonical coprime Mathlib polynomial pairs exercising `coprime_mod_p_lifts` from modulo `p` to modulo `p^k`.
+        - name: executable-hensel-correctness-uniqueness-bridges
+          description: Fixed public API checks for executable Hensel correctness, extension, degree, quadratic-step, and uniqueness theorem surfaces.
   HexGF2Mathlib:
     deps: [HexGF2, HexPolyFp, HexGfqField]
     mathlib: true

@@ -211,6 +211,9 @@ lean_exe hexlll_bench where
 lean_exe hexhensel_bench where
   root := `HexHensel.Bench
 
+lean_exe hexhenselmathlib_bench where
+  root := `HexHenselMathlib.Bench
+
 lean_exe hexberlekamp_bench where
   root := `HexBerlekamp.Bench
 

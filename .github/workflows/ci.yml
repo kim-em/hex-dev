@@ -70,6 +70,8 @@ jobs:
           lake exe hexlll_bench verify
           lake exe hexhensel_bench list
           lake exe hexhensel_bench verify
+          lake exe hexhenselmathlib_bench list
+          lake exe hexhenselmathlib_bench verify
           lake exe hexberlekamp_bench list
           lake exe hexberlekamp_bench verify
           lake exe hexbz_bench list
