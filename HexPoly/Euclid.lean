@@ -3315,6 +3315,77 @@ theorem nat_eq_one_of_content_eq_one_of_nat_dvd_coeff (p : DensePoly Int) (d : N
   rw [Int.ofNat_dvd_left] at hdvd
   exact Nat.dvd_one.mp hdvd
 
+private theorem foldl_zipWith_mul_scale_int
+    (a : Int) (weights values : List Int) :
+    a * (List.zipWith (fun w c : Int => w * c) weights values).foldl
+          (fun s t => s + t) 0 =
+      (List.zipWith (fun w c : Int => w * (a * c)) weights values).foldl
+          (fun s t => s + t) 0 := by
+  induction weights generalizing values with
+  | nil => simp
+  | cons w ws ih =>
+      cases values with
+      | nil => simp
+      | cons c cs =>
+          simp only [List.zipWith_cons_cons, List.foldl_cons]
+          rw [list_foldl_add_int (List.zipWith (fun w c : Int => w * c) ws cs)
+                (0 + w * c)]
+          rw [list_foldl_add_int (List.zipWith (fun w c : Int => w * (a * c)) ws cs)
+                (0 + w * (a * c))]
+          rw [← ih cs]
+          grind
+
+private theorem dvd_foldl_zipWith_scale_mul
+    (d : Int) (a : Int) (weights values : List Int)
+    (h : ∀ c ∈ values, d ∣ a * c) :
+    d ∣ (List.zipWith (fun w c : Int => w * (a * c)) weights values).foldl
+          (fun s t => s + t) 0 := by
+  induction weights generalizing values with
+  | nil => simp
+  | cons w ws ih =>
+      cases values with
+      | nil => simp
+      | cons c cs =>
+          simp only [List.zipWith_cons_cons, List.foldl_cons]
+          rw [list_foldl_add_int]
+          have hac : d ∣ a * c := h c List.mem_cons_self
+          have hrest : ∀ c' ∈ cs, d ∣ a * c' :=
+            fun c' hc' => h c' (List.mem_cons.mpr (Or.inr hc'))
+          have hwac : d ∣ w * (a * c) := Int.dvd_mul_of_dvd_right hac
+          have h0wac : d ∣ (0 + w * (a * c) : Int) := by simpa using hwac
+          exact Int.dvd_add h0wac (ih cs hrest)
+
+/-- Scalar annihilator for primitive integer polynomials: if `d` divides every
+coefficient of `a * p` and `p` is primitive (content one), then `d` already
+divides `a`. -/
+theorem nat_dvd_of_scalar_mul_primitive_coeff_dvd
+    (p : DensePoly Int) (d : Nat) (a : Int)
+    (hp : content p = 1)
+    (h : ∀ n, (d : Int) ∣ a * p.coeff n) :
+    (d : Int) ∣ a := by
+  rcases exists_linear_combination_coeffs_eq_one_of_content_eq_one p hp with
+    ⟨weights, _hlen, hsum⟩
+  have hval_dvd : ∀ c ∈ p.toArray.toList, (d : Int) ∣ a * c := by
+    intro c hc
+    rw [List.mem_iff_getElem] at hc
+    rcases hc with ⟨i, hi, hget⟩
+    have hcoeff_eq : p.coeff i = c := by
+      have hgetArray : p.coeffs[i] = c := by
+        simpa [toArray, Array.getElem_toList] using hget
+      change p.coeffs.getD i (0 : Int) = c
+      rw [← Array.getElem_eq_getD (0 : Int)]
+      exact hgetArray
+    rw [← hcoeff_eq]
+    exact h i
+  have hexp :
+      a = (List.zipWith (fun w c : Int => w * (a * c)) weights p.toArray.toList).foldl
+            (fun s t => s + t) 0 := by
+    have key := foldl_zipWith_mul_scale_int a weights p.toArray.toList
+    rw [hsum, Int.mul_one] at key
+    exact key
+  rw [hexp]
+  exact dvd_foldl_zipWith_scale_mul (d : Int) a weights p.toArray.toList hval_dvd
+
 private theorem list_getD_map_ediv_zero (c : Int) (coeffs : List Int) (n : Nat) :
     (coeffs.map fun coeff => coeff / c).getD n (Zero.zero : Int) =
       coeffs.getD n (Zero.zero : Int) / c := by
