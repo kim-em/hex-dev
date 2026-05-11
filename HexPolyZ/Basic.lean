@@ -45,6 +45,18 @@ instance instDecidableIsUnit (f : ZPoly) : Decidable (IsUnit f) := by
   unfold IsUnit
   infer_instance
 
+theorem isUnit_iff (f : ZPoly) :
+    IsUnit f ↔ f = DensePoly.C 1 ∨ f = DensePoly.C (-1) := by
+  rfl
+
+@[simp] theorem isUnit_one : IsUnit (1 : ZPoly) := by
+  left
+  rfl
+
+@[simp] theorem isUnit_C_neg_one : IsUnit (DensePoly.C (-1 : Int)) := by
+  right
+  rfl
+
 /-- View an integer polynomial as a rational polynomial. -/
 def toRatPoly (f : ZPoly) : DensePoly Rat :=
   DensePoly.ofCoeffs <| f.toArray.map fun coeff : Int => (coeff : Rat)
@@ -60,7 +72,7 @@ theorem coeff_toRatPoly (f : ZPoly) (n : Nat) :
     change (0 : Rat) = ((0 : Int) : Rat)
     simp
 
-theorem toRatPoly_zero :
+@[simp] theorem toRatPoly_zero :
     toRatPoly (0 : ZPoly) = 0 := by
   apply DensePoly.ext_coeff
   intro n
@@ -69,7 +81,7 @@ theorem toRatPoly_zero :
   rw [DensePoly.coeff_eq_zero_of_size_le (0 : ZPoly) (by simp)]
   exact (DensePoly.coeff_eq_zero_of_size_le (0 : DensePoly Rat) (by simp)).symm
 
-theorem toRatPoly_C (c : Int) :
+@[simp] theorem toRatPoly_C (c : Int) :
     toRatPoly (DensePoly.C c) = DensePoly.C (c : Rat) := by
   apply DensePoly.ext_coeff
   intro n
@@ -81,7 +93,7 @@ theorem toRatPoly_C (c : Int) :
     change ((0 : Int) : Rat) = 0
     simp
 
-theorem toRatPoly_one :
+@[simp] theorem toRatPoly_one :
     toRatPoly (1 : ZPoly) = 1 := by
   exact toRatPoly_C 1
 
