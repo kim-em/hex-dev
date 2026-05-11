@@ -234,6 +234,29 @@ theorem bhksRecover_isSome_of_recovery
   rfl
 
 /--
+Assemble the forward-recovery candidate equality from per-indicator A2
+reconstruction facts.
+
+This is the Mathlib-side bridge to the Mathlib-free fold helper
+`Hex.bhksIndicatorCandidates?_eq_some_of_getD`: callers prove each expected
+indicator reconstructs and exactly divides `f`, then this theorem supplies the
+raw `ForwardRecoveryInputs.candidates_eq` equality.
+-/
+theorem bhksIndicatorCandidates?_eq_some_of_forwardCandidates
+    (f : Hex.ZPoly) (d : Hex.LiftData)
+    (expectedIndicators : Array (Array Int)) (expectedFactors : Array Hex.ZPoly)
+    (hsize : expectedFactors.size = expectedIndicators.size)
+    (hcandidate :
+      ∀ i, i < expectedIndicators.size →
+        ∃ quotient,
+          Hex.bhksIndicatorCandidate? f d (expectedIndicators.getD i #[]) =
+            some (expectedFactors.getD i 0, quotient)) :
+    Hex.bhksIndicatorCandidates? f d expectedIndicators =
+      some expectedFactors :=
+  Hex.bhksIndicatorCandidates?_eq_some_of_getD
+    f d expectedIndicators expectedFactors hsize hcandidate
+
+/--
 Proof-facing inputs for the SPEC Group D forward-verification clause at one
 precision/recovery call: `L' = W` (deliverable 1, supplied by issue #3034 at
 the executable cap) plus the residual abstract obligations B7 (BHKS
@@ -284,6 +307,49 @@ structure ForwardRecoveryInputs (f : Hex.ZPoly) (d : Hex.LiftData) where
   product_eq : Array.polyProduct expectedFactors = f
 
 namespace ForwardRecoveryInputs
+
+/--
+Build `ForwardRecoveryInputs` when the A2/exact-division obligation is
+available as per-indicator reconstruction witnesses rather than as the folded
+candidate equality.
+-/
+def ofIndicatorCandidateFacts
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    (rows_pos : HasPositiveDimension f d)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData f d rows_pos).factorCount)))
+    (lattice_eq_indicators :
+      BHKS.projectedRowSpanInt (projectedRowsOfLiftData f d rows_pos) =
+        BHKS.trueFactorIndicatorLattice trueSupports)
+    (mignotte_precision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound f < d.p ^ d.k)
+    (expectedIndicators : Array (Array Int))
+    (indicators_match :
+      equivalenceClassIndicatorsOfLiftData f d rows_pos = expectedIndicators)
+    (nondegenerate :
+      Hex.bhksDegenerateIndicatorPartition
+          (projectedRowsOfLiftData f d rows_pos) expectedIndicators = false)
+    (expectedFactors : Array Hex.ZPoly)
+    (hsize : expectedFactors.size = expectedIndicators.size)
+    (hcandidate :
+      ∀ i, i < expectedIndicators.size →
+        ∃ quotient,
+          Hex.bhksIndicatorCandidate? f d (expectedIndicators.getD i #[]) =
+            some (expectedFactors.getD i 0, quotient))
+    (product_eq : Array.polyProduct expectedFactors = f) :
+    ForwardRecoveryInputs f d where
+  rows_pos := rows_pos
+  trueSupports := trueSupports
+  lattice_eq_indicators := lattice_eq_indicators
+  mignotte_precision := mignotte_precision
+  expectedIndicators := expectedIndicators
+  indicators_match := indicators_match
+  nondegenerate := nondegenerate
+  expectedFactors := expectedFactors
+  candidates_eq :=
+    bhksIndicatorCandidates?_eq_some_of_forwardCandidates
+      f d expectedIndicators expectedFactors hsize hcandidate
+  product_eq := product_eq
 
 /-- Promote a SPEC-input bundle to the immediate recovery hypotheses
 consumed by `bhksRecover_eq_some_of_recovery`.  The promotion is a
