@@ -1,6 +1,7 @@
 import Mathlib.Algebra.Polynomial.Basic
 import Mathlib.Algebra.Polynomial.Coeff
 import Mathlib.Algebra.Polynomial.Degree.Defs
+import Mathlib.Algebra.Polynomial.Degree.Lemmas
 import Mathlib.Algebra.Polynomial.Degree.Operations
 import Mathlib.Algebra.Polynomial.Monomial
 import HexPoly
@@ -288,6 +289,36 @@ theorem equiv_apply [CommRing R] [DecidableEq R] (p : Hex.DensePoly R) :
 theorem equiv_symm_apply [CommRing R] [DecidableEq R] (p : Polynomial R) :
     equiv.symm p = ofPolynomial p := by
   rfl
+
+theorem natDegree_toPolynomial [Semiring R] [DecidableEq R] (p : Hex.DensePoly R) :
+    (toPolynomial p).natDegree = p.degree?.getD 0 := by
+  by_cases hsize : p.size = 0
+  · have hp_zero : p = 0 := by
+      apply Hex.DensePoly.ext_coeff
+      intro n
+      rw [Hex.DensePoly.coeff_zero]
+      exact Hex.DensePoly.coeff_eq_zero_of_size_le p (by omega)
+    rw [hp_zero, toPolynomial_zero, Polynomial.natDegree_zero]
+    simp [Hex.DensePoly.degree?]
+  · have hpos : 0 < p.size := Nat.pos_of_ne_zero hsize
+    have hdegree_some : p.degree? = some (p.size - 1) := by
+      simp [Hex.DensePoly.degree?, hsize]
+    rw [hdegree_some, Option.getD_some]
+    apply le_antisymm
+    · apply Polynomial.natDegree_le_iff_coeff_eq_zero.mpr
+      intro N hN
+      rw [coeff_toPolynomial]
+      exact Hex.DensePoly.coeff_eq_zero_of_size_le p (by omega)
+    · apply Polynomial.le_natDegree_of_ne_zero
+      rw [coeff_toPolynomial]
+      exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size p hpos
+
+theorem toPolynomial_dvd [CommRing R] [DecidableEq R] {p q : Hex.DensePoly R}
+    (hdvd : p ∣ q) :
+    toPolynomial p ∣ toPolynomial q := by
+  rcases hdvd with ⟨r, hr⟩
+  refine ⟨toPolynomial r, ?_⟩
+  rw [← toPolynomial_mul, hr]
 
 end
 
