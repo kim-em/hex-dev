@@ -117,7 +117,8 @@ theorem luebeckConwayPolynomial_2_1_degree_pos :
     0 < FpPoly.degree luebeckConwayPolynomial_2_1 := by
   decide
 
-private theorem prime_two : Hex.Nat.Prime 2 := by
+/-- `Hex.Nat.Prime` witness for `p = 2`, the smallest committed Conway prime. -/
+theorem prime_two : Hex.Nat.Prime 2 := by
   constructor
   · decide
   · intro m hm
