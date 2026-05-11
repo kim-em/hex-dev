@@ -2369,6 +2369,99 @@ private def factorFastCoreWithBound
         else
           factorFastCoreWithBound core B primeData (nextHenselPrecision k B) fuel
 
+private def henselPrecisionSchedule (B : Nat) : Nat → Nat → List Nat
+  | _k, 0 => []
+  | k, fuel + 1 =>
+      k :: if k ≥ B then [] else henselPrecisionSchedule B (nextHenselPrecision k B) fuel
+
+private theorem initialHenselPrecision_le (B : Nat) :
+    initialHenselPrecision B ≤ B := by
+  unfold initialHenselPrecision
+  by_cases hB : B ≤ 4
+  · simp [hB]
+  · simp [hB]
+    omega
+
+private theorem nextHenselPrecision_le (k B : Nat) :
+    nextHenselPrecision k B ≤ B := by
+  unfold nextHenselPrecision
+  by_cases h : 2 * k < B
+  · simp [h]
+    omega
+  · simp [h]
+
+private theorem nextHenselPrecision_eq_B_of_cap_reached {k B : Nat}
+    (h : B ≤ 2 * k) :
+    nextHenselPrecision k B = B := by
+  unfold nextHenselPrecision
+  have hnot : ¬ 2 * k < B := by omega
+  simp [hnot]
+
+private theorem initialHenselPrecision_mem_schedule (B fuel : Nat) :
+    initialHenselPrecision B ∈
+      henselPrecisionSchedule B (initialHenselPrecision B) (fuel + 1) := by
+  simp [henselPrecisionSchedule]
+
+private theorem nextHenselPrecision_mem_schedule {B k fuel : Nat}
+    (hk : ¬ k ≥ B) :
+    nextHenselPrecision k B ∈
+      henselPrecisionSchedule B k (fuel + 2) := by
+  simp [henselPrecisionSchedule, hk]
+
+private theorem factorFastCoreWithBound_isSome_of_recovery_on_schedule
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    {start fuel target : Nat} {factors : Array ZPoly}
+    (hmem : target ∈ henselPrecisionSchedule B start fuel)
+    (hrecover :
+      bhksRecover? core (henselLiftData core target primeData) = some factors) :
+    (factorFastCoreWithBound core B primeData start fuel).isSome := by
+  induction fuel generalizing start with
+  | zero =>
+      simp [henselPrecisionSchedule] at hmem
+  | succ fuel ih =>
+      rw [factorFastCoreWithBound]
+      cases hrec : bhksRecover? core (henselLiftData core start primeData) with
+      | some xs =>
+          simp
+      | none =>
+          by_cases hk : start ≥ B
+          · rw [if_pos hk]
+            have hmem' : target = start := by
+              simpa [henselPrecisionSchedule, hk] using hmem
+            subst target
+            rw [hrec] at hrecover
+            cases hrecover
+          · simp only [hk, if_false]
+            have hmem' :
+                target ∈
+                  henselPrecisionSchedule B (nextHenselPrecision start B) fuel := by
+              have hmem_tail :
+                  target = start ∨
+                    target ∈
+                      henselPrecisionSchedule B (nextHenselPrecision start B) fuel := by
+                simpa [henselPrecisionSchedule, hk] using hmem
+              cases hmem_tail with
+              | inl htarget =>
+                  subst target
+                  simp [hrec] at hrecover
+              | inr htail =>
+                  exact htail
+            exact ih hmem'
+
+private theorem factorFastCoreWithBound_ne_none_of_recovery_on_schedule
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    {start fuel target : Nat} {factors : Array ZPoly}
+    (hmem : target ∈ henselPrecisionSchedule B start fuel)
+    (hrecover :
+      bhksRecover? core (henselLiftData core target primeData) = some factors) :
+    factorFastCoreWithBound core B primeData start fuel ≠ none := by
+  intro hnone
+  have hsome :=
+    factorFastCoreWithBound_isSome_of_recovery_on_schedule
+      core B primeData hmem hrecover
+  rw [hnone] at hsome
+  simp at hsome
+
 private def factorFastCoreGuardPrimeData : PrimeChoiceData :=
   choosePrimeData cldGuardF
 
