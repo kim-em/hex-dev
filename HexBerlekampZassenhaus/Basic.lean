@@ -2610,6 +2610,42 @@ def factorFast (f : ZPoly) : Option Factorization :=
 
 #guard factorFastWithBound (DensePoly.ofCoeffs #[1, 0, 0, 0, 1]) 4 = none
 
+/-- Lift a `factorFastFactorsWithBound` success through the `.map` layer that
+defines `factorFastWithBound`. -/
+private theorem factorFastWithBound_eq_some_of_factors_some
+    (f : ZPoly) (B : Nat) {factors : Array ZPoly}
+    (h : factorFastFactorsWithBound f B = some factors) :
+    factorFastWithBound f B = some (factorizationOfFactors f factors) := by
+  unfold factorFastWithBound
+  rw [h]
+  rfl
+
+/-- Forward a `factorFastFactorsWithBound ≠ none` through the `.map` layer that
+defines `factorFastWithBound`. -/
+private theorem factorFastWithBound_ne_none_of_factors_ne_none
+    (f : ZPoly) (B : Nat)
+    (h : factorFastFactorsWithBound f B ≠ none) :
+    factorFastWithBound f B ≠ none := by
+  match hex : factorFastFactorsWithBound f B with
+  | some factors =>
+    rw [factorFastWithBound_eq_some_of_factors_some f B hex]
+    exact Option.some_ne_none _
+  | none => exact absurd hex h
+
+/-- Lift a successful `factorFastWithBound` call at the precision cap to a
+`factorFast` success conclusion. Immediate from the definition of `factorFast`. -/
+theorem factorFast_eq_some_of_factorFastWithBound_cap_eq_some
+    (f : ZPoly) {result : Factorization}
+    (h : factorFastWithBound f (factorFastPrecisionCap f) = some result) :
+    factorFast f = some result := h
+
+/-- Forward `factorFastWithBound ≠ none` at the precision cap to `factorFast ≠ none`.
+Immediate from the definition of `factorFast`. -/
+theorem factorFast_ne_none_of_factorFastWithBound_cap_ne_none
+    (f : ZPoly)
+    (h : factorFastWithBound f (factorFastPrecisionCap f) ≠ none) :
+    factorFast f ≠ none := h
+
 /-- Factor with an explicit coefficient bound for the recombination stage. -/
 def factorWithBound (f : ZPoly) (B : Nat) : Factorization :=
   (factorFastWithBound f B).getD (factorSlowWithBound f B)
