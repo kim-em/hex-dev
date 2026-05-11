@@ -58,6 +58,50 @@ def projectedRowsOfLiftData (f : Hex.ZPoly) (d : Hex.LiftData)
   Hex.bhksProjectedRows (latticeBasisOfLiftData f d) hrows
     (Hex.bhksLatticeBasis_independent _)
 
+/-- Executable bad-vector witness whose lattice and projected rows are the
+ones used by the forward-recovery package at the given lift data.  The
+remaining fields identify the selected local factor and auxiliary polynomial
+for the bad-vector route; cap-separation callers supply their proof obligations
+through `ExecutableCapSeparationHypotheses`. -/
+def badVectorWitnessOfLiftData
+    (f : Hex.ZPoly) (d : Hex.LiftData) (hrows : HasPositiveDimension f d)
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly) :
+    ExecutableBadVectorWitness where
+  input := f
+  liftData := d
+  lattice := latticeBasisOfLiftData f d
+  projectedRows := projectedRowsOfLiftData f d hrows
+  localFactorIndex := localFactorIndex
+  localFactorDegree := localFactorDegree
+  H := H
+  lattice_matches_lift := rfl
+  projected_factor_count := rfl
+
+/--
+Specialize the executable-cap BHKS separation theorem to the projected-row
+shape used by `ForwardRecoveryInputs`.
+
+The conclusion has the same shape as
+`ForwardRecoveryInputs.lattice_eq_indicators`; the later B7/A2 recovery fields
+remain outside this theorem and can be supplied independently.
+-/
+theorem projectedRowsOfLiftData_eq_trueFactorIndicatorLattice_of_cap
+    (f : Hex.ZPoly) (d : Hex.LiftData) (hrows : HasPositiveDimension f d)
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData f d hrows).factorCount)))
+    {a : Nat} (ha : Hex.factorFastPrecisionCap f ≤ a)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (hcap :
+      ExecutableCapSeparationHypotheses
+        (badVectorWitnessOfLiftData f d hrows localFactorIndex localFactorDegree H)
+        trueSupports) :
+    projectedRowSpanInt (projectedRowsOfLiftData f d hrows) =
+      trueFactorIndicatorLattice trueSupports :=
+  projectedRowSpan_eq_trueFactorIndicatorLattice_of_cap
+    (badVectorWitnessOfLiftData f d hrows localFactorIndex localFactorDegree H)
+    trueSupports ha C hC_nonneg hC hcap
+
 /-- The executable BHKS equivalence-class indicator array at the abstract
 Hensel-lift data. -/
 def equivalenceClassIndicatorsOfLiftData (f : Hex.ZPoly) (d : Hex.LiftData)
