@@ -2336,15 +2336,7 @@ private theorem bhksIndicatorCandidates?_foldl_eq_some_append
         ∃ quotient,
           bhksIndicatorCandidate? f d indicators[i] =
             some (candidates[i]'(by rw [hlength]; exact hi), quotient)) →
-      List.foldl
-          (fun acc indicator =>
-            match acc with
-            | none => none
-            | some candidates =>
-                match bhksIndicatorCandidate? f d indicator with
-                | some candidate => some (candidates.push candidate.1)
-                | none => none)
-          (some acc) indicators =
+      List.foldl (bhksIndicatorCandidatesStep f d) (some acc) indicators =
         some (acc ++ candidates.toArray)
   | [], candidates, acc, hlength, _ => by
       have hcandidates : candidates = [] := List.eq_nil_of_length_eq_zero hlength
@@ -2371,26 +2363,12 @@ private theorem bhksIndicatorCandidates?_foldl_eq_some_append
             intro i hi
             simpa using hcandidate (i + 1) (Nat.succ_lt_succ hi)
           calc
-            List.foldl
-                (fun acc indicator =>
-                  match acc with
-                  | none => none
-                  | some candidates =>
-                      match bhksIndicatorCandidate? f d indicator with
-                      | some candidate => some (candidates.push candidate.1)
-                      | none => none)
-                (some acc) (indicator :: indicators)
+            List.foldl (bhksIndicatorCandidatesStep f d) (some acc)
+                (indicator :: indicators)
                 =
-              List.foldl
-                (fun acc indicator =>
-                  match acc with
-                  | none => none
-                  | some candidates =>
-                      match bhksIndicatorCandidate? f d indicator with
-                      | some candidate => some (candidates.push candidate.1)
-                      | none => none)
+              List.foldl (bhksIndicatorCandidatesStep f d)
                 (some (acc.push candidate)) indicators := by
-                  simp [hhead]
+                  simp [bhksIndicatorCandidatesStep, hhead]
             _ = some (acc.push candidate ++ candidates.toArray) := by
                   exact bhksIndicatorCandidates?_foldl_eq_some_append
                     f d indicators candidates (acc.push candidate) hlength_tail htail
