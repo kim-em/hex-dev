@@ -1207,6 +1207,25 @@ private theorem zmod64_one_ne_zero_of_prime
   rw [ZMod64.toNat_one, ZMod64.toNat_zero, Nat.mod_eq_of_lt hp_gt] at hnat
   omega
 
+private theorem isOne_one [ZMod64.PrimeModulus p] :
+    isOne (1 : FpPoly p) = true := by
+  unfold isOne
+  have hone_ne : (1 : ZMod64 p) ≠ 0 :=
+    zmod64_one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p))
+  have hcoeffs : (1 : FpPoly p).coeffs = #[(1 : ZMod64 p)] :=
+    DensePoly.coeffs_C_of_ne_zero hone_ne
+  have hsize : (1 : FpPoly p).size = 1 := by
+    simpa [DensePoly.size] using congrArg Array.size hcoeffs
+  have hdegree : (1 : FpPoly p).degree? = some 0 := by
+    unfold DensePoly.degree?
+    simp [hsize]
+  rw [hdegree]
+  have hcoeff0 : (1 : FpPoly p).coeff 0 = (1 : ZMod64 p) := by
+    change (DensePoly.C (1 : ZMod64 p)).coeff 0 = (1 : ZMod64 p)
+    rw [DensePoly.coeff_C]
+    simp
+  simp [hcoeff0]
+
 private theorem zmod64_inv_ne_zero_of_prime_ne_zero
     (hp : Hex.Nat.Prime p) {a : ZMod64 p} (ha : a ≠ 0) :
     a⁻¹ ≠ 0 := by
@@ -4057,6 +4076,41 @@ private theorem yunFactorsPairwiseReachable_common_dvd_one
       (by simpa [z, y] using hdz)
   · exact yunStep_common_dvd_derivative_current c w d hdz hdy
 
+private theorem one_lt_size_of_isOne_false_of_reachable
+    [ZMod64.PrimeModulus p]
+    (c : FpPoly p)
+    (hzero : c.isZero = false)
+    (hc : isOne c = false)
+    (hreachable : squareFreeContributionReachable c) :
+    1 < c.size := by
+  have hpos : 0 < c.size := size_pos_of_isZero_false c hzero
+  by_cases hsize : c.size = 1
+  · have hc_eq_one : c = 1 := hreachable hsize
+    rw [hc_eq_one, isOne_one] at hc
+    cases hc
+  · omega
+
+private theorem yunLevel_measure_lt_of_reachable_gcd_nonconstant
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p)
+    (hreachable : squareFreeContributionReachable c)
+    (hc : isOne c = false)
+    (hc_zero : c.isZero = false)
+    (hw_zero : w.isZero = false)
+    (_hy_nonconstant : 1 < (DensePoly.gcd c w).size) :
+    (DensePoly.gcd c w).size + (w / DensePoly.gcd c w).size <
+      c.size + w.size := by
+  have hc_size : 1 < c.size :=
+    one_lt_size_of_isOne_false_of_reachable c hc_zero hc hreachable
+  have hw_ne : w ≠ 0 := by
+    intro hw_eq
+    rw [hw_eq] at hw_zero
+    exact (Bool.eq_not_self _).mp hw_zero.symm
+  have hsize :=
+    size_div_add_size_eq_size_add_one_of_dvd
+      (DensePoly.gcd_dvd_right c w) hw_ne
+  omega
+
 private theorem yunStep_tail_common_dvd_one_of_common_dvd_one
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p)
@@ -4147,6 +4201,31 @@ private theorem dvd_one_of_normalizeMonic_eq_one
           (C_mul_eq_scale _ _).symm
       _ = g * DensePoly.C (DensePoly.leadingCoeff g)⁻¹ :=
           DensePoly.mul_comm_poly _ _
+
+private theorem yunStep_gcd_normalized_one_of_common_dvd_one
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p)
+    (hcommon :
+      ∀ d : FpPoly p, d ∣ c → d ∣ w → d ∣ (1 : FpPoly p)) :
+    (normalizeMonic (DensePoly.gcd c w)).2 = 1 := by
+  have hgcd_dvd_one :
+      DensePoly.gcd c w ∣ (1 : FpPoly p) :=
+    hcommon (DensePoly.gcd c w)
+      (DensePoly.gcd_dvd_left c w)
+      (DensePoly.gcd_dvd_right c w)
+  exact normalizeMonic_eq_one_of_dvd_one hgcd_dvd_one
+
+private theorem yunStep_tail_common_dvd_one_of_gcd_normalized_one
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p)
+    (hnormalized : (normalizeMonic (DensePoly.gcd c w)).2 = 1) :
+    ∀ d : FpPoly p,
+      d ∣ DensePoly.gcd c w →
+        d ∣ w / DensePoly.gcd c w →
+          d ∣ (1 : FpPoly p) := by
+  intro d hdy _hdv
+  exact dvd_trans_poly hdy
+    (dvd_one_of_normalizeMonic_eq_one (DensePoly.gcd c w) hnormalized)
 
 private theorem yunFactorsWithLevel_factor_mem_acc_or_dvd_current
     [ZMod64.PrimeModulus p]
