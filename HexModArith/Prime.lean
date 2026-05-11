@@ -14,6 +14,17 @@ namespace ZMod64
 
 variable {p : Nat} [Bounds p]
 
+/-- Typeclass wrapper for the prime-modulus assumption needed by field-style
+facts over `ZMod64 p`. -/
+class PrimeModulus (p : Nat) : Prop where
+  prime : Hex.Nat.Prime p
+
+/-- Build the prime-modulus typeclass witness from an explicit project-local
+primality proof. -/
+@[reducible]
+def primeModulusOfPrime (hp : Hex.Nat.Prime p) : PrimeModulus p :=
+  ⟨hp⟩
+
 private theorem eq_zero_of_dvd_modulus {a : ZMod64 p} (h : p ∣ a.toNat) : a = 0 := by
   apply ext
   apply UInt64.toNat_inj.mp
@@ -35,6 +46,14 @@ theorem eq_zero_or_eq_zero_of_mul_eq_zero (hp : Hex.Nat.Prime p) {a b : ZMod64 p
   rcases Hex.Nat.Prime.dvd_mul hp hdvd with hA | hB
   · exact Or.inl (eq_zero_of_dvd_modulus hA)
   · exact Or.inr (eq_zero_of_dvd_modulus hB)
+
+/--
+Prime-modulus residues have no zero divisors, using the ambient
+`PrimeModulus` typeclass witness.
+-/
+theorem eq_zero_or_eq_zero_of_mul_eq_zero_of_prime_modulus [PrimeModulus p]
+    {a b : ZMod64 p} (h : a * b = 0) : a = 0 ∨ b = 0 :=
+  eq_zero_or_eq_zero_of_mul_eq_zero (PrimeModulus.prime (p := p)) h
 
 /-- Nonzero residues modulo a prime have multiplicative inverses. -/
 theorem inv_mul_eq_one_of_prime (hp : Hex.Nat.Prime p) {a : ZMod64 p}
@@ -60,6 +79,13 @@ theorem inv_mul_eq_one_of_prime (hp : Hex.Nat.Prime p) {a : ZMod64 p}
   exact ZMod64.toNat_one.symm
 
 /--
+Nonzero residues modulo an ambient prime modulus have multiplicative inverses.
+-/
+theorem inv_mul_eq_one_of_ne_zero [PrimeModulus p] {a : ZMod64 p}
+    (ha : a ≠ 0) : ZMod64.inv a * a = 1 :=
+  inv_mul_eq_one_of_prime (PrimeModulus.prime (p := p)) ha
+
+/--
 Fermat's little theorem for `ZMod64`: raising a residue mod a prime `p` to the
 `p`th power returns the original residue.
 -/
@@ -72,6 +98,13 @@ theorem pow_prime (hp : Hex.Nat.Prime p) (a : ZMod64 p) : a ^ p = a := by
       _ = a.toNat % p := Hex.Nat.pow_prime_mod hp a.toNat
       _ = a.toNat := Nat.mod_eq_of_lt a.toNat_lt
   simpa [ZMod64.toNat_eq_val] using hpow
+
+/--
+Fermat's little theorem for an ambient prime modulus.
+-/
+@[simp] theorem pow_prime_of_prime_modulus [PrimeModulus p] (a : ZMod64 p) :
+    a ^ p = a :=
+  pow_prime (PrimeModulus.prime (p := p)) a
 
 end ZMod64
 
