@@ -64,12 +64,12 @@ def squareFreeModP (f : ZPoly) (p : Nat) [ZMod64.Bounds p] : Prop :=
 /--
 Executable good-prime predicate for the Berlekamp-Zassenhaus pipeline.
 
-It checks that the modulus is nontrivial, that the integer leading coefficient
+It checks that the modulus is at least `3`, that the integer leading coefficient
 survives reduction modulo `p`, and that the modular image is square-free.
 -/
 def isGoodPrime (f : ZPoly) (p : Nat) [ZMod64.Bounds p] : Bool :=
   let fModP := ZPoly.modP p f
-  p > 1 &&
+  3 <= p &&
     ZPoly.leadingCoeffModP f p != 0 &&
     DensePoly.gcd fModP (DensePoly.derivative fModP) == 1
 
@@ -537,9 +537,7 @@ structure PrimeCandidateScore where
   factorCount : Nat
 
 private def smallPrimeCandidates : List SmallPrimeCandidate :=
-  [ { p := 2, bounds := bounds_two, prime := prime_two,
-      field := @zmod64FieldOfPrime 2 bounds_two prime_two },
-    { p := 3, bounds := bounds_three, prime := prime_three,
+  [ { p := 3, bounds := bounds_three, prime := prime_three,
       field := @zmod64FieldOfPrime 3 bounds_three prime_three },
     { p := 5, bounds := bounds_five, prime := prime_five,
       field := @zmod64FieldOfPrime 5 bounds_five prime_five },
@@ -768,7 +766,7 @@ earlier prime.
 def choosePrime (f : ZPoly) : Nat :=
   match choosePrimeScore? f with
   | some score => score.p
-  | none => 2
+  | none => 3
 
 theorem choosePrimeScore?_isGoodPrime
     (f : ZPoly) (score : PrimeCandidateScore)
@@ -790,6 +788,15 @@ theorem choosePrime_isGoodPrime_of_selected
   simpa [hchoose] using
     (show ∃ hbounds : ZMod64.Bounds score.p,
       @isGoodPrime f score.p hbounds = true from ⟨hbounds, hgood⟩)
+
+/-- A successful good-prime check certifies the modulus is at least three. -/
+theorem isGoodPrime_ge_three
+    (f : ZPoly) (p : Nat) [ZMod64.Bounds p]
+    (hgood : isGoodPrime f p = true) :
+    3 <= p := by
+  unfold isGoodPrime at hgood
+  simp only [Bool.and_eq_true] at hgood
+  exact of_decide_eq_true hgood.1.1
 
 /-- A successful good-prime check certifies leading-coefficient admissibility. -/
 theorem isGoodPrime_leadingCoeffAdmissible
@@ -1166,13 +1173,13 @@ private def choosePrimeData? (f : ZPoly) : Option PrimeChoiceData :=
   |>.map (fun score => score.data)
 
 private def fallbackPrimeChoiceData (f : ZPoly) : PrimeChoiceData :=
-  letI := bounds_two
+  letI := bounds_three
   let c : SmallPrimeCandidate :=
-    { p := 2, bounds := bounds_two, prime := prime_two,
-      field := @zmod64FieldOfPrime 2 bounds_two prime_two }
-  let fModP := ZPoly.modP 2 f
+    { p := 3, bounds := bounds_three, prime := prime_three,
+      field := @zmod64FieldOfPrime 3 bounds_three prime_three }
+  let fModP := ZPoly.modP 3 f
   let factorsModP := berlekampFactorsModP f c
-  { p := 2, fModP, factorsModP }
+  { p := 3, fModP, factorsModP }
 
 /--
 Choose an admissible small prime and package the modular image together with
