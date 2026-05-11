@@ -5198,5 +5198,259 @@ theorem det_gramMatrix_eq_sum_columnTuples
   rw [hgram]
   exact det_columnSumMatrix_eq_sum_columnTuples A A
 
+/-! ### Strictly-increasing column-tuple enumeration
+
+The Cauchy-Binet sum-of-squares formula needs a Mathlib-free enumeration of the
+"essentially distinct" column choices: each strictly increasing length-`n`
+selection from `Fin m` represents one orbit of injective ordered tuples under
+the action of permutations of `Fin n`. The enumeration below builds these
+tuples by appending the new largest element, recursing on a `bound` parameter
+that constrains the next entry to be strictly less than `bound`.
+-/
+
+/-- All strictly increasing length-`n` column tuples in `Fin m` whose entries
+are all `< bound`. The recursion appends a new largest element `c < bound` and
+recurses on the remaining prefix with the smaller bound `c.val`. -/
+private def selectedColumnTuplesUpTo (m : Nat) :
+    (n : Nat) → (bound : Nat) → List (Vector (Fin m) n)
+  | 0, _ => [emptyVec]
+  | n + 1, bound =>
+      ((List.finRange m).filter (fun c : Fin m => decide (c.val < bound))).flatMap
+        fun c =>
+          (selectedColumnTuplesUpTo m n c.val).map fun pref => pref.push c
+
+/-- Enumerate all strictly increasing length-`n` column selections from `Fin m`.
+This list of orbit representatives drives the Cauchy-Binet grouping argument
+that re-folds the ordered-tuple Gram expansion as a sum of squared minors. -/
+def selectedColumnTuples (n m : Nat) : List (Vector (Fin m) n) :=
+  selectedColumnTuplesUpTo m n m
+
+/-- A column tuple is strictly increasing as a function `Fin n → Fin m`. -/
+def IsStrictlyIncreasingColumnTuple {m n : Nat} (cols : Vector (Fin m) n) : Prop :=
+  ∀ i j : Fin n, i.val < j.val → cols[i].val < cols[j].val
+
+private theorem isStrictlyIncreasingColumnTuple_emptyVec {m : Nat} :
+    IsStrictlyIncreasingColumnTuple (m := m) (n := 0) emptyVec := by
+  intro i _ _
+  exact i.elim0
+
+private theorem getElem_push_castSucc {α : Type u} {n : Nat}
+    (v : Vector α n) (x : α) (i : Fin n) :
+    (v.push x)[i.castSucc] = v[i] := by
+  rcases i with ⟨i, hi⟩
+  simp [Fin.castSucc, Fin.castAdd, Fin.castLE, Vector.getElem_push_lt, hi]
+
+private theorem getElem_push_last_index {α : Type u} {n : Nat}
+    (v : Vector α n) (x : α) :
+    (v.push x)[Fin.last n] = x := by
+  simp [Fin.last, Vector.getElem_push_eq]
+
+/-- Pushing a new largest element preserves strict increase as long as the
+old largest entry was still smaller than the new element. -/
+private theorem isStrictlyIncreasingColumnTuple_push {m n : Nat}
+    (pref : Vector (Fin m) n) (c : Fin m)
+    (hpref : IsStrictlyIncreasingColumnTuple pref)
+    (hbound : ∀ i : Fin n, pref[i].val < c.val) :
+    IsStrictlyIncreasingColumnTuple (pref.push c) := by
+  intro i j hij
+  rcases Nat.lt_succ_iff_lt_or_eq.mp j.isLt with hjlt | hjeq
+  · -- j < n, so both i, j are inside `pref`.
+    have hilt : i.val < n := by omega
+    have hi_eq : i = (⟨i.val, hilt⟩ : Fin n).castSucc := by
+      apply Fin.ext; rfl
+    have hj_eq : j = (⟨j.val, hjlt⟩ : Fin n).castSucc := by
+      apply Fin.ext; rfl
+    rw [hi_eq, hj_eq, getElem_push_castSucc, getElem_push_castSucc]
+    exact hpref ⟨i.val, hilt⟩ ⟨j.val, hjlt⟩ hij
+  · -- j.val = n, so j is the last index.
+    have hilt : i.val < n := by omega
+    have hi_eq : i = (⟨i.val, hilt⟩ : Fin n).castSucc := by
+      apply Fin.ext; rfl
+    have hj_eq : j = Fin.last n := by
+      apply Fin.ext; simpa using hjeq
+    rw [hi_eq, hj_eq, getElem_push_castSucc, getElem_push_last_index]
+    exact hbound ⟨i.val, hilt⟩
+
+/-- Forward characterization: every enumerated tuple is strictly increasing and
+its entries are all bounded by the recursion bound. -/
+private theorem mem_selectedColumnTuplesUpTo_imp {m : Nat} :
+    ∀ (n bound : Nat) (v : Vector (Fin m) n),
+      v ∈ selectedColumnTuplesUpTo m n bound →
+        IsStrictlyIncreasingColumnTuple v ∧
+          ∀ i : Fin n, v[i].val < bound
+  | 0, _, v, hv => by
+      simp [selectedColumnTuplesUpTo] at hv
+      subst hv
+      refine ⟨isStrictlyIncreasingColumnTuple_emptyVec, ?_⟩
+      intro i; exact i.elim0
+  | n + 1, bound, v, hv => by
+      rw [selectedColumnTuplesUpTo, List.mem_flatMap] at hv
+      rcases hv with ⟨c, hc, hmem⟩
+      have hclt : c.val < bound := by
+        rw [List.mem_filter] at hc
+        simpa using hc.2
+      rw [List.mem_map] at hmem
+      rcases hmem with ⟨pref, hpref, rfl⟩
+      have ih := mem_selectedColumnTuplesUpTo_imp n c.val pref hpref
+      refine ⟨?_, ?_⟩
+      · -- strict increase of `pref.push c`
+        apply isStrictlyIncreasingColumnTuple_push pref c ih.1
+        intro i
+        exact ih.2 i
+      · -- every entry of `pref.push c` is `< bound`
+        intro i
+        rcases Nat.lt_succ_iff_lt_or_eq.mp i.isLt with hilt | hieq
+        · have hi_eq : i = (⟨i.val, hilt⟩ : Fin n).castSucc := by
+            apply Fin.ext; rfl
+          rw [hi_eq, getElem_push_castSucc]
+          exact Nat.lt_of_lt_of_le (ih.2 ⟨i.val, hilt⟩) (Nat.le_of_lt hclt)
+        · have hi_eq : i = Fin.last n := by
+            apply Fin.ext; simpa using hieq
+          rw [hi_eq, getElem_push_last_index]
+          exact hclt
+
+/-- Backward characterization: every strictly increasing tuple whose entries
+are all `< bound` is enumerated by the recursive helper. -/
+private theorem mem_selectedColumnTuplesUpTo_of_strictly_increasing {m : Nat} :
+    ∀ (n bound : Nat) (v : Vector (Fin m) n),
+      IsStrictlyIncreasingColumnTuple v →
+        (∀ i : Fin n, v[i].val < bound) →
+        v ∈ selectedColumnTuplesUpTo m n bound
+  | 0, _, v, _, _ => by
+      have hv : v = emptyVec := by
+        apply Vector.ext
+        intro i hi
+        exact absurd hi (by omega)
+      simp [selectedColumnTuplesUpTo, hv]
+  | n + 1, bound, v, hsi, hbound => by
+      -- factor v as `(v.pop).push v[n]`
+      have hpush : (v.pop).push (v[Fin.last n]) = v := by
+        have hback : v.back = v[Fin.last n] := by
+          simp [Vector.back, Fin.last]
+        rw [← hback]
+        exact Vector.push_pop_back v
+      have hpop_get : ∀ i : Fin n,
+          v.pop[i] = v[(⟨i.val, by have := i.isLt; omega⟩ : Fin (n + 1))] := by
+        intro i
+        rcases i with ⟨i, hi⟩
+        change v.pop[i]'(by simp; omega) = v[i]'(by omega)
+        exact Vector.getElem_pop (h := by simp; omega)
+      rw [selectedColumnTuplesUpTo, List.mem_flatMap]
+      refine ⟨v[Fin.last n], ?_, ?_⟩
+      · -- v[last] is in the filtered finRange
+        rw [List.mem_filter]
+        refine ⟨List.mem_finRange _, ?_⟩
+        simpa using hbound (Fin.last n)
+      · rw [List.mem_map]
+        refine ⟨v.pop, ?_, hpush⟩
+        apply mem_selectedColumnTuplesUpTo_of_strictly_increasing n (v[Fin.last n]).val
+        · -- pop preserves strict increase
+          intro i j hij
+          have h1 := hpop_get i
+          have h2 := hpop_get j
+          have base := hsi
+            (⟨i.val, by have := i.isLt; omega⟩ : Fin (n + 1))
+            (⟨j.val, by have := j.isLt; omega⟩ : Fin (n + 1)) hij
+          rw [← h1, ← h2] at base
+          exact base
+        · -- bound: pop entries < v[Fin.last n]
+          intro i
+          have h1 := hpop_get i
+          have hilt : i.val < n + 1 := by have := i.isLt; omega
+          have hi_lt_last :
+              (⟨i.val, hilt⟩ : Fin (n + 1)).val < (Fin.last n).val := by
+            have := i.isLt
+            simp [Fin.last]
+          have base := hsi (⟨i.val, hilt⟩ : Fin (n + 1)) (Fin.last n) hi_lt_last
+          rw [← h1] at base
+          exact base
+
+/-- Public membership characterization: a column tuple lies in
+`selectedColumnTuples n m` iff it is strictly increasing. -/
+theorem mem_selectedColumnTuples_iff {n m : Nat} (cols : Vector (Fin m) n) :
+    cols ∈ selectedColumnTuples n m ↔ IsStrictlyIncreasingColumnTuple cols := by
+  refine ⟨?_, ?_⟩
+  · intro hmem
+    exact (mem_selectedColumnTuplesUpTo_imp n m cols hmem).1
+  · intro hsi
+    apply mem_selectedColumnTuplesUpTo_of_strictly_increasing n m cols hsi
+    intro i
+    exact cols[i].isLt
+
+/-- Strictly increasing column tuples induce injective `Fin n → Fin m` selection
+functions, so each enumerated tuple yields an injective `columnTupleVectorFn`. -/
+theorem isStrictlyIncreasingColumnTuple_injective {n m : Nat}
+    {cols : Vector (Fin m) n} (hsi : IsStrictlyIncreasingColumnTuple cols) :
+    Function.Injective (columnTupleVectorFn cols) := by
+  intro i j hij
+  -- Either i.val < j.val, j.val < i.val, or i.val = j.val. Strict increase rules out the first two.
+  rcases Nat.lt_trichotomy i.val j.val with hlt | heq | hgt
+  · -- i.val < j.val ⇒ cols[i].val < cols[j].val ⇒ cols[i] ≠ cols[j], contradiction.
+    have : cols[i].val < cols[j].val := hsi i j hlt
+    exact absurd (congrArg Fin.val hij) (Nat.ne_of_lt this)
+  · exact Fin.ext heq
+  · have : cols[j].val < cols[i].val := hsi j i hgt
+    exact absurd (congrArg Fin.val hij.symm) (Nat.ne_of_lt this)
+
+/-- Convenience corollary: every column tuple enumerated by `selectedColumnTuples`
+yields an injective column-selection function. -/
+theorem mem_selectedColumnTuples_injective {n m : Nat}
+    {cols : Vector (Fin m) n} (hmem : cols ∈ selectedColumnTuples n m) :
+    Function.Injective (columnTupleVectorFn cols) :=
+  isStrictlyIncreasingColumnTuple_injective ((mem_selectedColumnTuples_iff cols).mp hmem)
+
+/-- The push map `pref ↦ pref.push c` is injective on prefixes for any fixed
+last element `c`, since the popped vector recovers the prefix. -/
+private theorem push_left_injective {α : Type u} {n : Nat} (c : α) :
+    Function.Injective fun pref : Vector α n => pref.push c := by
+  intro pref pref' h
+  have := congrArg Vector.pop h
+  simpa using this
+
+/-- Outer-list version of `Nodup` for the `flatMap` body that builds
+`selectedColumnTuplesUpTo` from a list of "last column" candidates. -/
+private theorem selectedColumnTuplesUpTo_flatMap_nodup (m n : Nat) :
+    ∀ (cs : List (Fin m)), cs.Nodup →
+      (∀ c ∈ cs, (selectedColumnTuplesUpTo m n c.val).Nodup) →
+      (cs.flatMap fun c =>
+        (selectedColumnTuplesUpTo m n c.val).map fun pref => pref.push c).Nodup
+  | [], _, _ => by simp
+  | c :: cs, hnodup, hinner => by
+      simp only [List.flatMap_cons]
+      simp only [List.nodup_cons] at hnodup
+      rw [List.nodup_append]
+      refine ⟨?_, ?_, ?_⟩
+      · -- inner `(map ...)` for the head `c` is Nodup
+        apply list_nodup_map_of_injective (push_left_injective c)
+        exact hinner c (by simp)
+      · -- suffix Nodup by IH
+        exact selectedColumnTuplesUpTo_flatMap_nodup m n cs hnodup.2
+          (fun c' hc' => hinner c' (List.mem_cons_of_mem c hc'))
+      · -- disjointness: head produces last-element c, suffix produces last-element c' ∈ cs ⇒ c' ≠ c
+        intro a hahead b hbsuffix hab
+        rcases List.mem_map.mp hahead with ⟨pref, _, rfl⟩
+        rcases List.mem_flatMap.mp hbsuffix with ⟨c', hc', hb⟩
+        rcases List.mem_map.mp hb with ⟨pref', _, rfl⟩
+        -- last entries match c and c' respectively, but c ≠ c'
+        have hlast : (pref.push c)[Fin.last n] = (pref'.push c')[Fin.last n] := by
+          rw [hab]
+        rw [getElem_push_last_index, getElem_push_last_index] at hlast
+        exact hnodup.1 (hlast ▸ hc')
+
+private theorem selectedColumnTuplesUpTo_nodup (m : Nat) :
+    ∀ (n bound : Nat), (selectedColumnTuplesUpTo m n bound).Nodup
+  | 0, _ => by simp [selectedColumnTuplesUpTo]
+  | n + 1, bound => by
+      rw [selectedColumnTuplesUpTo]
+      apply selectedColumnTuplesUpTo_flatMap_nodup
+      · exact (List.nodup_finRange m).filter _
+      · intro c _hc
+        exact selectedColumnTuplesUpTo_nodup m n c.val
+
+/-- The strictly-increasing column-tuple enumeration has no duplicates. -/
+theorem selectedColumnTuples_nodup {n m : Nat} :
+    (selectedColumnTuples n m).Nodup :=
+  selectedColumnTuplesUpTo_nodup m n m
+
 end Matrix
 end Hex
