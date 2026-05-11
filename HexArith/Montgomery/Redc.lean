@@ -213,7 +213,7 @@ theorem redc_sub_spec (ctx : MontCtx p) (Thi Tlo : UInt64)
       redcNat p.toNat ctx.p'.toNat (Tlo.toNat + Thi.toNat * UInt64.word) := by
   let m := Tlo * ctx.p'
   have hfull : UInt64.mulFull m p = (UInt64.mulHi m p, m * p) :=
-    mulFull_eq_mulHi_mul m p
+    UInt64.mulFull_eq_mulHi_mul m p
   have hTmod :
       (Tlo.toNat + Thi.toNat * UInt64.word) % UInt64.word = Tlo.toNat := by
     have hTlo : Tlo.toNat < UInt64.word := by
