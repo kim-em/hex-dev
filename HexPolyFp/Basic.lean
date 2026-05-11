@@ -49,16 +49,6 @@ instance : DecidableEq (ZMod64 p) := by
       apply h
       exact congrArg ZMod64.val hab)
 
-/-- Typeclass wrapper for the prime-modulus assumption needed by field-style polynomial
-division laws over `ZMod64 p`. -/
-class PrimeModulus (p : Nat) : Prop where
-  prime : Hex.Nat.Prime p
-
-/-- Build the prime-modulus typeclass witness from an explicit project-local primality proof. -/
-@[reducible]
-def primeModulusOfPrime (hp : Hex.Nat.Prime p) : PrimeModulus p :=
-  ⟨hp⟩
-
 private theorem divMod_spec_core [PrimeModulus p] (f g : DensePoly (ZMod64 p)) :
     let qr := DensePoly.divMod f g
     qr.1 * g + qr.2 = f := by
