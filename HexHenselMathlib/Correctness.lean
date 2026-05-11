@@ -126,7 +126,14 @@ theorem quadraticHenselStep_factor_correct
     (HexPolyMathlib.toPolynomial r.g).map φ *
         (HexPolyMathlib.toPolynomial r.h).map φ =
       (HexPolyMathlib.toPolynomial f).map φ := by
-  sorry
+  let r := Hex.ZPoly.quadraticHenselStep m f g h s t
+  let φ := Int.castRingHom (ZMod (m * m))
+  have hcongr :
+      Hex.ZPoly.congr (r.g * r.h) f (m * m) := by
+    simpa [r] using
+      Hex.ZPoly.quadraticHenselStep_factor_spec m f g h s t hm hprod hbez hmonic
+  have hmap := zpoly_congr_toPolynomial_map_eq (r.g * r.h) f (m * m) hcongr
+  simpa [r, φ, HexPolyMathlib.toPolynomial_mul, Polynomial.map_mul] using hmap
 
 /--
 The quadratic executable step updates Bezout witnesses modulo `m*m`.
@@ -141,11 +148,29 @@ theorem quadraticHenselStep_bezout_correct
     let r := Hex.ZPoly.quadraticHenselStep m f g h s t
     let φ := Int.castRingHom (ZMod (m * m))
     (HexPolyMathlib.toPolynomial r.s).map φ *
-          (HexPolyMathlib.toPolynomial r.g).map φ +
-        (HexPolyMathlib.toPolynomial r.t).map φ *
-          (HexPolyMathlib.toPolynomial r.h).map φ =
+        (HexPolyMathlib.toPolynomial r.g).map φ +
+      (HexPolyMathlib.toPolynomial r.t).map φ *
+        (HexPolyMathlib.toPolynomial r.h).map φ =
       (1 : Polynomial (ZMod (m * m))) := by
-  sorry
+  let r := Hex.ZPoly.quadraticHenselStep m f g h s t
+  let φ := Int.castRingHom (ZMod (m * m))
+  by_cases hm1 : 1 < m
+  · have hcongr :
+        Hex.ZPoly.congr (r.s * r.g + r.t * r.h) 1 (m * m) := by
+      simpa [r] using
+        Hex.ZPoly.quadraticHenselStep_bezout_spec m f g h s t hm1 hprod hbez hmonic
+    have hmap := zpoly_congr_toPolynomial_map_eq (r.s * r.g + r.t * r.h) 1 (m * m) hcongr
+    have hone : HexPolyMathlib.toPolynomial (1 : Hex.ZPoly) = 1 := by
+      change HexPolyMathlib.toPolynomial (Hex.DensePoly.C (1 : Int)) = 1
+      simp
+    simpa [r, φ, HexPolyMathlib.toPolynomial_mul, HexPolyMathlib.toPolynomial_add,
+      Polynomial.map_mul, Polynomial.map_add, Polynomial.map_one, hone] using hmap
+  · have hm_eq : m = 1 := by omega
+    subst m
+    haveI : Subsingleton (ZMod (1 * 1)) := ZMod.subsingleton_iff.mpr (by norm_num)
+    apply Polynomial.ext
+    intro n
+    exact Subsingleton.elim _ _
 
 /-- The quadratic step preserves monicity on the lifted `g` factor in Mathlib form. -/
 theorem quadraticHenselStep_monic
