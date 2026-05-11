@@ -58,6 +58,50 @@ def projectedRowsOfLiftData (f : Hex.ZPoly) (d : Hex.LiftData)
   Hex.bhksProjectedRows (latticeBasisOfLiftData f d) hrows
     (Hex.bhksLatticeBasis_independent _)
 
+/-- Executable bad-vector witness whose lattice and projected rows are the
+ones used by the forward-recovery package at the given lift data.  The
+remaining fields identify the selected local factor and auxiliary polynomial
+for the bad-vector route; cap-separation callers supply their proof obligations
+through `ExecutableCapSeparationHypotheses`. -/
+def badVectorWitnessOfLiftData
+    (f : Hex.ZPoly) (d : Hex.LiftData) (hrows : HasPositiveDimension f d)
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly) :
+    ExecutableBadVectorWitness where
+  input := f
+  liftData := d
+  lattice := latticeBasisOfLiftData f d
+  projectedRows := projectedRowsOfLiftData f d hrows
+  localFactorIndex := localFactorIndex
+  localFactorDegree := localFactorDegree
+  H := H
+  lattice_matches_lift := rfl
+  projected_factor_count := rfl
+
+/--
+Specialize the executable-cap BHKS separation theorem to the projected-row
+shape used by `ForwardRecoveryInputs`.
+
+The conclusion has the same shape as
+`ForwardRecoveryInputs.lattice_eq_indicators`; the later B7/A2 recovery fields
+remain outside this theorem and can be supplied independently.
+-/
+theorem projectedRowsOfLiftData_eq_trueFactorIndicatorLattice_of_cap
+    (f : Hex.ZPoly) (d : Hex.LiftData) (hrows : HasPositiveDimension f d)
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData f d hrows).factorCount)))
+    {a : Nat} (ha : Hex.factorFastPrecisionCap f ≤ a)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (hcap :
+      ExecutableCapSeparationHypotheses
+        (badVectorWitnessOfLiftData f d hrows localFactorIndex localFactorDegree H)
+        trueSupports) :
+    projectedRowSpanInt (projectedRowsOfLiftData f d hrows) =
+      trueFactorIndicatorLattice trueSupports :=
+  projectedRowSpan_eq_trueFactorIndicatorLattice_of_cap
+    (badVectorWitnessOfLiftData f d hrows localFactorIndex localFactorDegree H)
+    trueSupports ha C hC_nonneg hC hcap
+
 /-- The executable BHKS equivalence-class indicator array at the abstract
 Hensel-lift data. -/
 def equivalenceClassIndicatorsOfLiftData (f : Hex.ZPoly) (d : Hex.LiftData)
@@ -190,6 +234,29 @@ theorem bhksRecover_isSome_of_recovery
   rfl
 
 /--
+Assemble the forward-recovery candidate equality from per-indicator A2
+reconstruction facts.
+
+This is the Mathlib-side bridge to the Mathlib-free fold helper
+`Hex.bhksIndicatorCandidates?_eq_some_of_getD`: callers prove each expected
+indicator reconstructs and exactly divides `f`, then this theorem supplies the
+raw `ForwardRecoveryInputs.candidates_eq` equality.
+-/
+theorem bhksIndicatorCandidates?_eq_some_of_forwardCandidates
+    (f : Hex.ZPoly) (d : Hex.LiftData)
+    (expectedIndicators : Array (Array Int)) (expectedFactors : Array Hex.ZPoly)
+    (hsize : expectedFactors.size = expectedIndicators.size)
+    (hcandidate :
+      ∀ i, i < expectedIndicators.size →
+        ∃ quotient,
+          Hex.bhksIndicatorCandidate? f d (expectedIndicators.getD i #[]) =
+            some (expectedFactors.getD i 0, quotient)) :
+    Hex.bhksIndicatorCandidates? f d expectedIndicators =
+      some expectedFactors :=
+  Hex.bhksIndicatorCandidates?_eq_some_of_getD
+    f d expectedIndicators expectedFactors hsize hcandidate
+
+/--
 Proof-facing inputs for the SPEC Group D forward-verification clause at one
 precision/recovery call: `L' = W` (deliverable 1, supplied by issue #3034 at
 the executable cap) plus the residual abstract obligations B7 (BHKS
@@ -240,6 +307,49 @@ structure ForwardRecoveryInputs (f : Hex.ZPoly) (d : Hex.LiftData) where
   product_eq : Array.polyProduct expectedFactors = f
 
 namespace ForwardRecoveryInputs
+
+/--
+Build `ForwardRecoveryInputs` when the A2/exact-division obligation is
+available as per-indicator reconstruction witnesses rather than as the folded
+candidate equality.
+-/
+def ofIndicatorCandidateFacts
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    (rows_pos : HasPositiveDimension f d)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData f d rows_pos).factorCount)))
+    (lattice_eq_indicators :
+      BHKS.projectedRowSpanInt (projectedRowsOfLiftData f d rows_pos) =
+        BHKS.trueFactorIndicatorLattice trueSupports)
+    (mignotte_precision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound f < d.p ^ d.k)
+    (expectedIndicators : Array (Array Int))
+    (indicators_match :
+      equivalenceClassIndicatorsOfLiftData f d rows_pos = expectedIndicators)
+    (nondegenerate :
+      Hex.bhksDegenerateIndicatorPartition
+          (projectedRowsOfLiftData f d rows_pos) expectedIndicators = false)
+    (expectedFactors : Array Hex.ZPoly)
+    (hsize : expectedFactors.size = expectedIndicators.size)
+    (hcandidate :
+      ∀ i, i < expectedIndicators.size →
+        ∃ quotient,
+          Hex.bhksIndicatorCandidate? f d (expectedIndicators.getD i #[]) =
+            some (expectedFactors.getD i 0, quotient))
+    (product_eq : Array.polyProduct expectedFactors = f) :
+    ForwardRecoveryInputs f d where
+  rows_pos := rows_pos
+  trueSupports := trueSupports
+  lattice_eq_indicators := lattice_eq_indicators
+  mignotte_precision := mignotte_precision
+  expectedIndicators := expectedIndicators
+  indicators_match := indicators_match
+  nondegenerate := nondegenerate
+  expectedFactors := expectedFactors
+  candidates_eq :=
+    bhksIndicatorCandidates?_eq_some_of_forwardCandidates
+      f d expectedIndicators expectedFactors hsize hcandidate
+  product_eq := product_eq
 
 /-- Promote a SPEC-input bundle to the immediate recovery hypotheses
 consumed by `bhksRecover_eq_some_of_recovery`.  The promotion is a

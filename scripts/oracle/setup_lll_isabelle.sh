@@ -52,19 +52,36 @@ need unzip
 need make
 need ghc
 
-if [[ ! -f "${archive}" ]]; then
-  tmp="${archive}.tmp"
-  curl -L --fail --silent --show-error --retry 3 --retry-all-errors --retry-delay 5 \
-    -o "${tmp}" "${url}"
-  mv "${tmp}" "${archive}"
-fi
-
-actual="$(shasum -a 256 "${archive}" | awk '{print $1}')"
-if [[ "${actual}" != "${sha256}" ]]; then
-  echo "setup_lll_isabelle.sh: SHA-256 mismatch for ${archive}" >&2
+verify_archive() {
+  local path="$1"
+  local actual
+  actual="$(shasum -a 256 "${path}" | awk '{print $1}')"
+  if [[ "${actual}" == "${sha256}" ]]; then
+    return 0
+  fi
+  echo "setup_lll_isabelle.sh: SHA-256 mismatch for ${path}" >&2
   echo "  expected ${sha256}" >&2
   echo "  actual   ${actual}" >&2
-  exit 1
+  return 1
+}
+
+download_archive() {
+  local tmp="${archive}.tmp"
+  rm -f "${tmp}"
+  curl -L --fail --silent --show-error \
+    --retry 8 --retry-all-errors --retry-delay 10 --retry-max-time 900 \
+    -o "${tmp}" "${url}"
+  verify_archive "${tmp}"
+  mv "${tmp}" "${archive}"
+}
+
+if [[ -f "${archive}" ]]; then
+  if ! verify_archive "${archive}"; then
+    rm -f "${archive}"
+    download_archive
+  fi
+else
+  download_archive
 fi
 
 if [[ ! -d "${src_dir}/experiments" ]]; then

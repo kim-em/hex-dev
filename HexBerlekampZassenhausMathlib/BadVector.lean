@@ -317,6 +317,21 @@ def projectedVectorFn (W : ExecutableBadVectorWitness) (vec : Array Int) :
     Fin W.projectedRows.factorCount → ℤ :=
   fun i => vec.getD i.val 0
 
+/-- Store a proof-facing projected vector in the executable array shape used
+by the BHKS auxiliary-polynomial construction. -/
+def projectedVectorArray (W : ExecutableBadVectorWitness)
+    (v : Fin W.projectedRows.factorCount → ℤ) : Array Int :=
+  (List.ofFn v).toArray
+
+/-- `projectedVectorArray` is the canonical array representative of a
+proof-facing projected vector. -/
+theorem projectedVectorFn_projectedVectorArray
+    (W : ExecutableBadVectorWitness)
+    (v : Fin W.projectedRows.factorCount → ℤ) :
+    W.projectedVectorFn (W.projectedVectorArray v) = v := by
+  funext i
+  simp [projectedVectorFn, projectedVectorArray]
+
 /--
 Bad-vector evidence for an executable BHKS bad-vector witness.
 
@@ -346,6 +361,43 @@ structure IsBhksBadVectorSetup (W : ExecutableBadVectorWitness) where
   resultant_divisible_by_p_pow :
     ((W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : Nat) : ℤ) ∣
       Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial
+
+/--
+Construct the BHKS bad-vector setup from the projected vector shape used by
+cap separation.  The structural `L' \ W` fields are transported through the
+canonical executable array representation; the local BHKS Lemma 3.2 algebraic
+clauses remain explicit hypotheses.
+-/
+def isBhksBadVectorSetup_of_projected_not_indicator
+    (W : ExecutableBadVectorWitness)
+    (trueSupports : Set (Set (Fin W.projectedRows.factorCount)))
+    (v : Fin W.projectedRows.factorCount → ℤ)
+    (hH :
+      W.H =
+        BHKS.auxiliaryPolynomial W.input W.liftData
+          (W.projectedVectorArray v))
+    (hin : v ∈ BHKS.projectedRowSpanInt W.projectedRows)
+    (hnot : v ∉ BHKS.trueFactorIndicatorLattice trueSupports)
+    (hd : 0 < W.localFactorDegree)
+    (hcoprime :
+      IsCoprime
+        (W.inputPolynomial.map (Int.castRingHom ℚ))
+        (W.auxiliaryPolynomial.map (Int.castRingHom ℚ)))
+    (hdiv :
+      ((W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : Nat) : ℤ) ∣
+        Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial) :
+    IsBhksBadVectorSetup W := by
+  refine
+    { bhksVector := W.projectedVectorArray v
+      trueSupports := trueSupports
+      H_eq := hH
+      in_projected := ?_
+      not_in_indicators := ?_
+      localFactorDegree_pos := hd
+      coprime_input_aux_over_rat := hcoprime
+      resultant_divisible_by_p_pow := hdiv }
+  · simpa [projectedVectorFn_projectedVectorArray] using hin
+  · simpa [projectedVectorFn_projectedVectorArray] using hnot
 
 /-- BHKS Lemma 3.2: the selected local-factor degree is positive whenever the
 witness carries a bad-vector setup. -/
