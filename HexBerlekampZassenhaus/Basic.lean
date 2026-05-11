@@ -2418,10 +2418,17 @@ def factorWithBound (f : ZPoly) (B : Nat) : Factorization :=
 
 #guard Factorization.product (factorWithBound cldGuardF 1) = cldGuardF
 
-/-- Public total factorization combinator: try the BHKS fast path, then fall
-back to exhaustive recombination. -/
+/--
+Factor using the Mignotte-bounded fast attempt with exhaustive slow fallback.
+
+The standalone `factorFast` entry point exposes the proof-facing combined
+BHKS/Mignotte cap. The default total factorization combinator keeps the
+runtime-oriented coefficient bound before falling back to exhaustive
+recombination, so irreducible inputs that split modulo the chosen prime do not
+force the full BHKS threshold search.
+-/
 def factor (f : ZPoly) : Factorization :=
-  (factorFast f).getD (factorSlow f)
+  factorWithBound f (ZPoly.defaultFactorCoeffBound f)
 
 namespace ZPoly
 
