@@ -296,6 +296,22 @@ theorem divMod_spec (p q : GF2Poly) :
   unfold divMod
   simpa using divModAux_reconstruct q (p.degree + 1) 0 p
 
+/-- The first component of `divMod` is the public quotient operation. -/
+@[simp] theorem divMod_fst (p q : GF2Poly) :
+    (divMod p q).1 = p / q :=
+  rfl
+
+/-- The second component of `divMod` is the public remainder operation. -/
+@[simp] theorem divMod_snd (p q : GF2Poly) :
+    (divMod p q).2 = p % q :=
+  rfl
+
+/-- Quotient/remainder reconstruction through the public `/` and `%`
+operations. -/
+theorem div_mul_add_mod (p q : GF2Poly) :
+    (p / q) * q + p % q = p := by
+  simpa using divMod_spec p q
+
 private theorem one_eq_monomial_zero : (1 : GF2Poly) = monomial 0 := by
   change one = monomial 0
   simp [one, monomial]
