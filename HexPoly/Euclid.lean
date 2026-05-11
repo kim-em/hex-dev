@@ -3271,6 +3271,47 @@ private theorem dvd_list_foldl_add_term_of_forall
     exact h x hx
   simpa [List.foldl_map] using dvd_list_foldl_add_int_of_forall d (xs.map term) hmap
 
+private theorem list_foldl_add_term_int
+    (xs : List Nat) (term : Nat → Int) (z : Int) :
+    xs.foldl (fun s x => s + term x) z =
+      z + xs.foldl (fun s x => s + term x) 0 := by
+  simpa [List.foldl_map] using list_foldl_add_int (xs.map term) z
+
+private theorem foldl_add_int_sub_terms
+    (xs : List Nat) (f g : Nat → Int) :
+    xs.foldl (fun s x => s + f x) 0 -
+      xs.foldl (fun s x => s + g x) 0 =
+    xs.foldl (fun s x => s + (f x - g x)) 0 := by
+  induction xs with
+  | nil =>
+      simp
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [list_foldl_add_term_int xs f (0 + f x)]
+      rw [list_foldl_add_term_int xs g (0 + g x)]
+      rw [list_foldl_add_term_int xs (fun x => f x - g x) (0 + (f x - g x))]
+      rw [← ih]
+      grind
+
+private theorem dvd_foldl_add_term_of_dvd_congr
+    (d : Int) (xs : List Nat) (f g : Nat → Int)
+    (hf : d ∣ xs.foldl (fun s x => s + f x) 0)
+    (hcongr : ∀ x ∈ xs, d ∣ f x - g x) :
+    d ∣ xs.foldl (fun s x => s + g x) 0 := by
+  have hdiff : d ∣ xs.foldl (fun s x => s + (f x - g x)) 0 :=
+    dvd_list_foldl_add_term_of_forall d xs (fun x => f x - g x) hcongr
+  have hsub : d ∣
+      xs.foldl (fun s x => s + f x) 0 -
+        xs.foldl (fun s x => s + (f x - g x)) 0 :=
+    Int.dvd_sub hf hdiff
+  have hrewrite :
+      xs.foldl (fun s x => s + f x) 0 -
+        xs.foldl (fun s x => s + (f x - g x)) 0 =
+      xs.foldl (fun s x => s + g x) 0 := by
+    have hfg := foldl_add_int_sub_terms xs f g
+    grind
+  rwa [hrewrite] at hsub
+
 private theorem dvd_term_of_dvd_foldl_add_of_dvd_others
     (d : Int) :
     ∀ (xs : List Nat) (term : Nat → Int) (idx : Nat),
@@ -3321,6 +3362,24 @@ private theorem dvd_term_of_dvd_foldl_add_of_dvd_others
 
 private def finiteCoeffConvolution (pCoeff qCoeff : Nat → Int) (n : Nat) : Int :=
   (List.range (n + 1)).foldl (fun acc r => acc + pCoeff r * qCoeff (n - r)) 0
+
+private def finiteCoeffFamilyPoly (coeff : Nat → Int) (bound : Nat) : DensePoly Int :=
+  ofCoeffs ((List.range (bound + 1)).map coeff).toArray
+
+private theorem finiteCoeffFamilyPoly_coeff_of_le
+    (coeff : Nat → Int) (bound i : Nat) (hi : i ≤ bound) :
+    (finiteCoeffFamilyPoly coeff bound).coeff i = coeff i := by
+  unfold finiteCoeffFamilyPoly
+  rw [coeff_ofCoeffs_list]
+  simp [hi, Nat.lt_succ_iff]
+
+private theorem finiteCoeffFamilyPoly_coeff_of_lt
+    (coeff : Nat → Int) (bound i : Nat) (hi : bound < i) :
+    (finiteCoeffFamilyPoly coeff bound).coeff i = 0 := by
+  unfold finiteCoeffFamilyPoly
+  rw [coeff_ofCoeffs_list]
+  simp [hi, Nat.lt_succ_iff]
+  rfl
 
 private theorem dvd_finiteCoeffConvolution_term_of_dvd_others
     (pCoeff qCoeff : Nat → Int) (d n i : Nat)
@@ -4575,6 +4634,93 @@ theorem dvd_contentNat_mul_of_dvd_mul_coeff
     rfl
   rw [hnatAbs] at h_int_dvd
   exact h_int_dvd
+
+private theorem finiteCoeffFamilyPoly_mul_coeff_dvd_of_finiteCoeffConvolution
+    (pCoeff qCoeff : Nat → Int) (d bound k : Nat)
+    (hprod : ∀ n, n ≤ bound + k → (d : Int) ∣ finiteCoeffConvolution pCoeff qCoeff n)
+    (hqAbove : ∀ s, k < s → (d : Int) ∣ qCoeff s)
+    (hleft : ∀ r s, bound < r → (d : Int) ∣ pCoeff r * qCoeff s) :
+    ∀ n, (d : Int) ∣
+      (finiteCoeffFamilyPoly pCoeff bound * finiteCoeffFamilyPoly qCoeff k).coeff n := by
+  intro n
+  rw [coeff_mul, mulCoeffSum_eq_diagonal, diagonalSum_eq_degree_bound]
+  by_cases hn : n ≤ bound + k
+  · exact dvd_foldl_add_term_of_dvd_congr (d : Int) (List.range (n + 1))
+      (fun r => pCoeff r * qCoeff (n - r))
+      (fun r => diagonalMulCoeffTerm
+        (finiteCoeffFamilyPoly pCoeff bound) (finiteCoeffFamilyPoly qCoeff k) n r)
+      (hprod n hn) (by
+        intro r hr
+        have hrlt : r < n + 1 := List.mem_range.mp hr
+        have hnot : ¬ n < r := by omega
+        unfold diagonalMulCoeffTerm
+        simp only [hnot, ↓reduceIte]
+        by_cases hrBound : r ≤ bound
+        · by_cases hsK : n - r ≤ k
+          · have hp := finiteCoeffFamilyPoly_coeff_of_le pCoeff bound r hrBound
+            have hq := finiteCoeffFamilyPoly_coeff_of_le qCoeff k (n - r) hsK
+            rw [hp, hq]
+            simp
+          · have hk_lt : k < n - r := Nat.lt_of_not_ge hsK
+            have hq := finiteCoeffFamilyPoly_coeff_of_lt qCoeff k (n - r) hk_lt
+            rw [hq]
+            simpa using Int.dvd_mul_of_dvd_right (hqAbove (n - r) hk_lt)
+        · have hb_lt : bound < r := Nat.lt_of_not_ge hrBound
+          have hp := finiteCoeffFamilyPoly_coeff_of_lt pCoeff bound r hb_lt
+          rw [hp]
+          simpa using hleft r (n - r) hb_lt)
+  · apply dvd_list_foldl_add_term_of_forall
+    intro r hr
+    have hrlt : r < n + 1 := List.mem_range.mp hr
+    have hnot : ¬ n < r := by omega
+    unfold diagonalMulCoeffTerm
+    simp only [hnot, ↓reduceIte]
+    by_cases hrBound : r ≤ bound
+    · have hk_lt : k < n - r := by
+        have hnbk : bound + k < n := Nat.lt_of_not_ge hn
+        omega
+      have hq := finiteCoeffFamilyPoly_coeff_of_lt qCoeff k (n - r) hk_lt
+      rw [hq]
+      simp
+    · have hb_lt : bound < r := Nat.lt_of_not_ge hrBound
+      have hp := finiteCoeffFamilyPoly_coeff_of_lt pCoeff bound r hb_lt
+      rw [hp]
+      simp
+
+/-- Finite coefficient-array McCoy annihilator over `Int`: if every relevant
+finite convolution coefficient is divisible by `d`, all right coefficients
+above `k` are divisible by `d`, and the left family is supported modulo `d`
+through `bound`, then the `k`-th right coefficient annihilates every left
+coefficient up to `bound`. -/
+private theorem finiteCoeffMcCoyAnnihilator
+    (pCoeff qCoeff : Nat → Int) (d bound k : Nat)
+    (hprod : ∀ n, n ≤ bound + k → (d : Int) ∣ finiteCoeffConvolution pCoeff qCoeff n)
+    (hqAbove : ∀ s, k < s → (d : Int) ∣ qCoeff s)
+    (hleft : ∀ r s, bound < r → (d : Int) ∣ pCoeff r * qCoeff s) :
+    ∀ i, i ≤ bound → (d : Int) ∣ qCoeff k * pCoeff i := by
+  intro i hi
+  let p := finiteCoeffFamilyPoly pCoeff bound
+  let q := finiteCoeffFamilyPoly qCoeff k
+  have hmul : ∀ n, (d : Int) ∣ (p * q).coeff n := by
+    intro n
+    simpa [p, q] using
+      finiteCoeffFamilyPoly_mul_coeff_dvd_of_finiteCoeffConvolution
+        pCoeff qCoeff d bound k hprod hqAbove hleft n
+  have hcontentNat : d ∣ contentNat p * contentNat q :=
+    dvd_contentNat_mul_of_dvd_mul_coeff p q d hmul
+  have hcontentInt : (d : Int) ∣ (contentNat p : Int) * (contentNat q : Int) := by
+    change (d : Int) ∣ ((contentNat p * contentNat q : Nat) : Int)
+    exact Int.ofNat_dvd.mpr hcontentNat
+  have hp : (contentNat p : Int) ∣ pCoeff i := by
+    have h := contentNat_dvd_coeff p i
+    simpa [p, finiteCoeffFamilyPoly_coeff_of_le pCoeff bound i hi] using h
+  have hq : (contentNat q : Int) ∣ qCoeff k := by
+    have h := contentNat_dvd_coeff q k
+    simpa [q, finiteCoeffFamilyPoly_coeff_of_le qCoeff k k (Nat.le_refl k)] using h
+  have hprodCoeff : (contentNat p : Int) * (contentNat q : Int) ∣
+      pCoeff i * qCoeff k :=
+    Int.mul_dvd_mul hp hq
+  exact Int.dvd_trans hcontentInt (by simpa [Int.mul_comm] using hprodCoeff)
 
 end DensePoly
 end Hex
