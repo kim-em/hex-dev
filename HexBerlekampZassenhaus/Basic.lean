@@ -2363,8 +2363,8 @@ private theorem bhksIndicatorCandidates?_foldl_eq_some_append
             intro i hi
             simpa using hcandidate (i + 1) (Nat.succ_lt_succ hi)
           calc
-            List.foldl (bhksIndicatorCandidatesStep f d) (some acc)
-                (indicator :: indicators)
+            List.foldl (bhksIndicatorCandidatesStep f d)
+                (some acc) (indicator :: indicators)
                 =
               List.foldl (bhksIndicatorCandidatesStep f d)
                 (some (acc.push candidate)) indicators := by
