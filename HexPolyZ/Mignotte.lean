@@ -22,11 +22,11 @@ def binom (n k : Nat) : Nat :=
     (List.range kk).foldl (fun acc i => acc * (n - i) / (i + 1)) 1
 
 /-- One Newton step for the natural-number square-root iteration. -/
-private def sqrtStep (n x : Nat) : Nat :=
+def sqrtStep (n x : Nat) : Nat :=
   (x + n / x) / 2
 
 /-- A fuel-bounded Newton iteration for the natural floor square root. -/
-private def sqrtAux (n : Nat) : Nat → Nat → Nat
+def sqrtAux (n : Nat) : Nat → Nat → Nat
   | 0, x => x
   | fuel + 1, x =>
       let next := sqrtStep n x
