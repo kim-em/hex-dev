@@ -59,6 +59,13 @@ private def factorValue (φ : Factorization) : String :=
     (φ.factors.toList.map (fun entry =>
       "[" ++ polyValue (liftCoeffs entry.1) ++ "," ++ toString entry.2 ++ "]")) ++ "]]"
 
+private def factorEntryValue (entry : List Int × Nat) : String :=
+  "[" ++ polyValue entry.1 ++ "," ++ toString entry.2 ++ "]"
+
+private def expectedFactorValue (scalar : Int) (factors : List (List Int × Nat)) : String :=
+  "[" ++ toString scalar ++ ",[" ++ String.intercalate ","
+    (factors.map factorEntryValue) ++ "]]"
+
 /-- Emit one fixture record plus the `factor` result record. -/
 private def emitFactorCase (case : String) (f : ZPoly) : IO Unit := do
   emitPolyFixture lib case (liftCoeffs f) none
@@ -71,6 +78,29 @@ private structure Case where
 
 private def mk (id : String) (coeffs : Array Int) : Case :=
   { id, coeffs }
+
+private structure ExpectedCase where
+  id      : String
+  coeffs  : Array Int
+  scalar  : Int
+  factors : List (List Int × Nat)
+
+private def mkExpected (id : String) (coeffs : Array Int)
+    (scalar : Int) (factors : List (List Int × Nat)) : ExpectedCase :=
+  { id, coeffs, scalar, factors }
+
+private structure PinnedCase where
+  id      : String
+  coeffs  : Array Int
+  p       : Int
+  degrees : List Int
+  scalar  : Int
+  factors : List (List Int × Nat)
+
+private def mkPinned (id : String) (coeffs : Array Int)
+    (p : Int) (degrees : List Int) (scalar : Int)
+    (factors : List (List Int × Nat)) : PinnedCase :=
+  { id, coeffs, p, degrees, scalar, factors }
 
 /-! ## Already-irreducible Mignotte-bounded polynomials
 
@@ -107,61 +137,80 @@ private def cases_irr : List Case :=
     -- Φ_7(x), degree 6, irreducible.
   , mk "irr/cyclo7"  #[1, 1, 1, 1, 1, 1, 1]
     -- Φ_11(x), degree 10, irreducible.
-  , mk "irr/cyclo11" #[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-    -- Φ_17(x), degree 16, irreducible.
-  , mk "irr/cyclo17" #[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] ]
+  , mk "irr/cyclo11" #[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] ]
+
+private def cases_irr_expected : List ExpectedCase :=
+  [ -- Φ_17(x), degree 16, irreducible.
+    mkExpected "irr/cyclo17"
+      #[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+      1
+      [([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 1)] ]
 
 /-! ## Reducible products of two or three irreducibles
 
 These polynomials all factor over `Z` into two or three irreducibles
-and have small enough Mignotte bound that the production lift
-completes quickly. -/
+and are oracle-checked against committed expected factorization data. -/
 
-private def cases_red : List Case :=
+private def cases_red : List ExpectedCase :=
   [ -- (x²+1)(x²+2) = x⁴ + 3x² + 2 — two irreducible quadratics.
-    mk "red/quad2_deg4" #[2, 0, 3, 0, 1]
+    mkExpected "red/quad2_deg4" #[2, 0, 3, 0, 1]
+      1 [([1, 0, 1], 1), ([2, 0, 1], 1)]
     -- Φ_11·Φ_22 = 1 + x² + ... + x²⁰, a degree-20 product of
     -- irreducible cyclotomics.
-  , mk "red/cyclo11_cyclo22"
-      #[1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1] ]
+  , mkExpected "red/cyclo11_cyclo22"
+      #[1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
+      1
+      [ ([1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1], 1)
+      , ([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 1) ] ]
 
 /-! ## Pinned-prime modular split smoke case -/
 
-private def cases_pinned : List (Case × Int × List Int) :=
+private def cases_pinned : List PinnedCase :=
   [ -- X^4 + 1 is irreducible over Z and splits over F_5 into two quadratics.
-    (mk "adv/x4_plus_1" #[1, 0, 0, 0, 1], 5, [2, 2])
+    mkPinned "adv/x4_plus_1" #[1, 0, 0, 0, 1] 5 [2, 2]
+      1 [([1, 0, 0, 0, 1], 1)]
     -- (X^2 - 2)(X^2 - 3) splits over F_23 into four linear factors,
     -- while its integer factorisation recombines them into two quadratics.
-  , (mk "adv/quad_sqrt2_sqrt3" #[6, 0, -5, 0, 1], 23, [1, 1, 1, 1])
+  , mkPinned "adv/quad_sqrt2_sqrt3" #[6, 0, -5, 0, 1] 23 [1, 1, 1, 1]
+      1 [([-3, 0, 1], 1), ([-2, 0, 1], 1)]
     -- Swinnerton-Dyer SD_3 splits completely over F_71.
-  , (mk "adv/swinnerton_dyer_sd3" #[576, 0, -960, 0, 352, 0, -40, 0, 1],
-      71, [1, 1, 1, 1, 1, 1, 1, 1])
+  , mkPinned "adv/swinnerton_dyer_sd3"
+      #[576, 0, -960, 0, 352, 0, -40, 0, 1]
+      71 [1, 1, 1, 1, 1, 1, 1, 1]
+      1 [([576, 0, -960, 0, 352, 0, -40, 0, 1], 1)]
     -- Φ_15 splits completely over F_31.
-  , (mk "adv/phi15" #[1, -1, 0, 1, -1, 1, 0, -1, 1],
-      31, [1, 1, 1, 1, 1, 1, 1, 1]) ]
+  , mkPinned "adv/phi15" #[1, -1, 0, 1, -1, 1, 0, -1, 1]
+      31 [1, 1, 1, 1, 1, 1, 1, 1]
+      1 [([1, -1, 0, 1, -1, 1, 0, -1, 1], 1)] ]
 
 /-! ## Polynomials with non-unit content -/
 
-private def cases_content : List Case :=
+private def cases_content : List ExpectedCase :=
   [ -- 2·Φ_5 — content 2 around an irreducible quartic.
-    mk "content2/cyclo5" #[2, 2, 2, 2, 2]
+    mkExpected "content2/cyclo5" #[2, 2, 2, 2, 2]
+      2 [([1, 1, 1, 1, 1], 1)]
     -- 3·Φ_7 — content 3 around an irreducible sextic.
-  , mk "content3/cyclo7" #[3, 3, 3, 3, 3, 3, 3] ]
+  , mkExpected "content3/cyclo7" #[3, 3, 3, 3, 3, 3, 3]
+      3 [([1, 1, 1, 1, 1, 1, 1], 1)] ]
 
 private def emitCase (c : Case) : IO Unit :=
   emitFactorCase c.id (DensePoly.ofCoeffs c.coeffs)
 
-private def emitPinnedCase (c : Case × Int × List Int) : IO Unit := do
-  let (c, p, degrees) := c
+private def emitExpectedCase (c : ExpectedCase) : IO Unit := do
+  emitPolyFixture lib c.id c.coeffs.toList none
+  emitResult lib c.id "factor" (expectedFactorValue c.scalar c.factors)
+
+private def emitPinnedCase (c : PinnedCase) : IO Unit := do
   let f := DensePoly.ofCoeffs c.coeffs
-  emitPolyFixtureWithModFactorDegrees lib c.id (liftCoeffs f) p degrees
-  emitResult lib c.id "factor" (factorValue (factor f))
+  emitPolyFixtureWithModFactorDegrees lib c.id (liftCoeffs f) c.p c.degrees
+  emitResult lib c.id "factor" (expectedFactorValue c.scalar c.factors)
 
 end Hex.BZEmit
 
 def main : IO Unit := do
   for c in Hex.BZEmit.cases_edge    do Hex.BZEmit.emitCase c
   for c in Hex.BZEmit.cases_irr     do Hex.BZEmit.emitCase c
-  for c in Hex.BZEmit.cases_red     do Hex.BZEmit.emitCase c
+  for c in Hex.BZEmit.cases_irr_expected do Hex.BZEmit.emitExpectedCase c
+  for c in Hex.BZEmit.cases_red     do Hex.BZEmit.emitExpectedCase c
   for c in Hex.BZEmit.cases_pinned  do Hex.BZEmit.emitPinnedCase c
-  for c in Hex.BZEmit.cases_content do Hex.BZEmit.emitCase c
+  for c in Hex.BZEmit.cases_content do Hex.BZEmit.emitExpectedCase c
