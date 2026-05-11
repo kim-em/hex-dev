@@ -2769,6 +2769,23 @@ private theorem permutationVectors_inverseVector_sum {R : Type u}
     _ = (permutationVectors n).foldl (fun acc perm => acc + f perm) 0 := by
         exact foldl_det_sum_perm f inversePermutationVector_map_permutationVectors_perm 0
 
+private theorem permutationVectors_composePermutationValues_left_sum {R : Type u}
+    [Lean.Grind.CommRing R] {n : Nat}
+    (sigma : Vector (Fin n) n) (hsigma : sigma ∈ permutationVectors n)
+    (f : Vector (Fin n) n → R) :
+    (permutationVectors n).foldl
+        (fun acc perm => acc + f (composePermutationValues sigma perm)) 0 =
+      (permutationVectors n).foldl (fun acc perm => acc + f perm) 0 := by
+  calc
+    (permutationVectors n).foldl
+        (fun acc perm => acc + f (composePermutationValues sigma perm)) 0 =
+      ((permutationVectors n).map fun perm => composePermutationValues sigma perm).foldl
+        (fun acc perm => acc + f perm) 0 := by
+        simp [List.foldl_map]
+    _ = (permutationVectors n).foldl (fun acc perm => acc + f perm) 0 := by
+        exact foldl_det_sum_perm f
+          (composePermutationValues_left_map_permutationVectors_perm sigma hsigma) 0
+
 private theorem finRange_map_perm_get_perm {n : Nat}
     (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
     ((List.finRange n).map fun i => perm[i]).Perm (List.finRange n) := by
@@ -2780,6 +2797,15 @@ private theorem finRange_map_perm_get_perm {n : Nat}
     exact List.mem_finRange x
   · intro _h
     exact fin_mem_of_full_nodup x (by simp [Vector.length_toList]) hnodup
+
+private theorem detProduct_colPermute_vector {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (M : Matrix R n n) (sigma tau : Vector (Fin n) n) :
+    detProduct (ofFn fun r c => M[r][sigma[c]]) tau =
+      detProduct M (composePermutationValues sigma tau) := by
+  unfold detProduct
+  apply foldl_det_product_congr
+  intro r _hr
+  simp [ofFn, composePermutationValues]
 
 private theorem detProduct_transpose_inversePermutationValues {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat}
@@ -4278,6 +4304,41 @@ theorem det_transpose {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     _ =
       (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0 := by
         exact permutationVectors_inverseVector_sum (R := R) (n := n) (fun perm => detTerm M perm)
+
+/-- Permuting columns multiplies the determinant by the sign of the column permutation. -/
+theorem det_colPermute_vector {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (sigma : Vector (Fin n) n)
+    (hsigma : sigma ∈ permutationVectors n) :
+    det ((ofFn fun r c => M[r][sigma[c]]) : Matrix R n n) =
+      detSign (R := R) sigma * det M := by
+  unfold det
+  calc
+    (permutationVectors n).foldl
+        (fun acc tau =>
+          acc + detTerm ((ofFn fun r c => M[r][sigma[c]]) : Matrix R n n) tau) 0 =
+      (permutationVectors n).foldl
+        (fun acc tau =>
+          acc + detSign (R := R) sigma *
+            detTerm M (composePermutationValues sigma tau)) 0 := by
+        apply foldl_det_sum_congr
+        intro tau htau
+        unfold detTerm
+        rw [detProduct_colPermute_vector]
+        rw [detSign_eq_mul_detSign_composePermutationValues
+          (R := R) sigma tau hsigma htau]
+        grind
+    _ =
+      detSign (R := R) sigma *
+        (permutationVectors n).foldl
+          (fun acc tau => acc + detTerm M (composePermutationValues sigma tau)) 0 := by
+        exact foldl_det_sum_mul_left_zero
+          (permutationVectors n) (detSign (R := R) sigma)
+          (fun tau => detTerm M (composePermutationValues sigma tau))
+    _ =
+      detSign (R := R) sigma *
+        (permutationVectors n).foldl (fun acc tau => acc + detTerm M tau) 0 := by
+        rw [permutationVectors_composePermutationValues_left_sum
+          (R := R) sigma hsigma (fun tau => detTerm M tau)]
 
 /-- Swapping two columns negates determinant. -/
 theorem det_colSwap {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
