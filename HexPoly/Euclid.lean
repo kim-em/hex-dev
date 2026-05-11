@@ -4157,5 +4157,79 @@ theorem polyCRT_mod_snd :
   intro S _ _ _ _ a b u v s t hb hbez
   simpa [modByMonic_eq_mod] using polyCRT_modByMonic_snd a b u v s t hb hbez
 
+/-! ## Gauss's lemma on content multiplicativity for `DensePoly Int`. -/
+
+/-- Local primality predicate for `Nat`. `HexPoly` is foundational and does not
+import the `Hex.Nat.Prime` API; we keep a private copy of just enough machinery
+to formulate Gauss's lemma on integer polynomial content. -/
+private def NatPrime (p : Nat) : Prop :=
+  2 ≤ p ∧ ∀ m : Nat, m ∣ p → m = 1 ∨ m = p
+
+private theorem natPrime_coprime_of_not_dvd {p a : Nat} (hp : NatPrime p)
+    (ha : ¬ p ∣ a) : Nat.Coprime p a := by
+  rw [Nat.Coprime]
+  have hgcd_dvd_p : Nat.gcd p a ∣ p := Nat.gcd_dvd_left p a
+  rcases hp.2 (Nat.gcd p a) hgcd_dvd_p with hgcd | hgcd
+  · exact hgcd
+  · exact absurd (hgcd ▸ Nat.gcd_dvd_right p a) ha
+
+/-- Euclid's lemma for `Nat`. -/
+private theorem natPrime_dvd_mul {p a b : Nat} (hp : NatPrime p)
+    (h : p ∣ a * b) : p ∣ a ∨ p ∣ b := by
+  by_cases hb : p ∣ b
+  · exact Or.inr hb
+  · exact Or.inl ((natPrime_coprime_of_not_dvd hp hb).dvd_of_dvd_mul_right h)
+
+/-- Euclid's lemma carried through `Int.natAbs`. -/
+private theorem natPrime_dvd_mul_int {p : Nat} {a b : Int} (hp : NatPrime p)
+    (h : (p : Int) ∣ a * b) : (p : Int) ∣ a ∨ (p : Int) ∣ b := by
+  rw [Int.ofNat_dvd_left, Int.natAbs_mul] at h
+  rcases natPrime_dvd_mul hp h with hN | hN
+  · left; rw [Int.ofNat_dvd_left]; exact hN
+  · right; rw [Int.ofNat_dvd_left]; exact hN
+
+/-- Every natural number greater than `1` has a prime divisor. -/
+private theorem exists_natPrime_dvd_of_one_lt :
+    ∀ (n : Nat), 1 < n → ∃ r, NatPrime r ∧ r ∣ n := by
+  intro n
+  induction n using Nat.strongRecOn with
+  | ind n ih =>
+      intro hn
+      by_cases hprime : NatPrime n
+      · exact ⟨n, hprime, Nat.dvd_refl n⟩
+      · -- `n` is composite: extract a proper divisor manually (no `push_neg`).
+        have h2 : 2 ≤ n := hn
+        have hcomp : ∃ m : Nat, m ∣ n ∧ m ≠ 1 ∧ m ≠ n := by
+          apply Classical.byContradiction
+          intro hno
+          apply hprime
+          refine ⟨h2, ?_⟩
+          intro m hm
+          apply Classical.byContradiction
+          intro hcases
+          apply hno
+          refine ⟨m, hm, ?_, ?_⟩
+          · intro hm1; exact hcases (Or.inl hm1)
+          · intro hmn; exact hcases (Or.inr hmn)
+        rcases hcomp with ⟨m, hmd, hm1, hmn⟩
+        have hm0 : m ≠ 0 := by
+          intro hm0
+          subst hm0
+          have hn_zero : n = 0 := Nat.eq_zero_of_zero_dvd hmd
+          omega
+        have hmlt : m < n := by
+          have hpos : 0 < n := by omega
+          have hle : m ≤ n := Nat.le_of_dvd hpos hmd
+          omega
+        have hm_one_lt : 1 < m := by
+          cases m with
+          | zero => exact absurd rfl hm0
+          | succ m' =>
+              cases m' with
+              | zero => exact absurd rfl hm1
+              | succ _ => omega
+        rcases ih m hmlt hm_one_lt with ⟨r, hrp, hrm⟩
+        exact ⟨r, hrp, Nat.dvd_trans hrm hmd⟩
+
 end DensePoly
 end Hex
