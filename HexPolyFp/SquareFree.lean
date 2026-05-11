@@ -282,7 +282,7 @@ private theorem choose_self (n : Nat) : Hex.Nat.choose n n = 1 := by
   induction n with
   | zero => rfl
   | succ n ih =>
-      simp [Hex.Nat.choose, ih, choose_eq_zero_of_lt (by omega : n < n + 1)]
+      simp [Hex.Nat.choose, choose_eq_zero_of_lt (by omega : n < n + 1)]
 
 private theorem powLinear_succ_left (f : FpPoly p) (n : Nat) :
     powLinear f (n + 1) = f * powLinear f n := by
