@@ -315,6 +315,16 @@ libraries:
     mathlib: true
     done_through: 3
     status: active
+    phase4:
+      input_families:
+        - name: zmod64-to-zmod-conversion
+          description: Unit, small prime, and large word-sized moduli transported from executable `ZMod64` residues to Mathlib `ZMod` representatives.
+        - name: zmod-to-zmod64-conversion
+          description: Unit, small prime, and large word-sized moduli transported from Mathlib `ZMod` representatives back to executable `ZMod64` residues.
+        - name: bridge-round-trip-equivalence
+          description: Unit, small prime, and large word-sized moduli exercising both conversion round trips and the public `ZMod64.equiv` ring equivalence.
+        - name: ring-operation-transport
+          description: Unit, small prime, and large word-sized moduli checking addition and multiplication transported through the bridge against Mathlib-side operations.
   HexGramSchmidtMathlib:
     deps: [HexGramSchmidt]
     mathlib: true

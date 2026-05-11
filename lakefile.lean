@@ -181,6 +181,9 @@ lean_exe hexgramschmidt_bench where
 lean_exe hexmodarith_bench where
   root := `HexModArith.Bench
 
+lean_exe hexmodarithmathlib_bench where
+  root := `HexModArithMathlib.Bench
+
 lean_exe hexgf2_bench where
   root := `HexGF2Bench
 
