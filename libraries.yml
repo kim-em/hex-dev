@@ -320,6 +320,14 @@ libraries:
     mathlib: true
     done_through: 3
     status: active
+    phase4:
+      input_families:
+        - name: integer-basis-agreement
+          description: Deterministic integer bases cast through the Mathlib bridge and theorem-specialized against Mathlib `gramSchmidt`.
+        - name: rational-row-agreement
+          description: Deterministic rational row families exercising the executable dot-product surface used by the `rowToEuclidean` inner-product bridge.
+        - name: conformance-bridge-elaboration
+          description: Lightweight fixed smoke target importing conformance checks and specializing the public rational and integer basis correspondence theorems.
   HexPolyZMathlib:
     deps: [HexPolyZ, HexPolyMathlib]
     mathlib: true

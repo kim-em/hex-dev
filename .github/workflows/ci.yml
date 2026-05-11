@@ -56,6 +56,8 @@ jobs:
           lake exe hexmodarith_bench verify
           lake exe hexgramschmidt_bench list
           lake exe hexgramschmidt_bench verify
+          lake exe hexgramschmidtimathlib_bench list
+          lake exe hexgramschmidtimathlib_bench verify
           lake exe hexgf2_bench list
           lake exe hexgf2_bench verify
           lake exe hexgfqring_bench list

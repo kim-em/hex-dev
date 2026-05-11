@@ -178,6 +178,9 @@ lean_exe hexpolyz_emit_fixtures where
 lean_exe hexgramschmidt_bench where
   root := `HexGramSchmidt.Bench
 
+lean_exe hexgramschmidtimathlib_bench where
+  root := `HexGramSchmidtMathlib.Bench
+
 lean_exe hexmodarith_bench where
   root := `HexModArith.Bench
 
