@@ -28,14 +28,32 @@ of that order.
 ```lean
 def factorSlow (f : ZPoly) : Factorization
 def factorFast (f : ZPoly) : Option Factorization
-def factor (f : ZPoly) : Factorization := (factorFast f).getD (factorSlow f)
-def factorWithBound (f : ZPoly) (B : Nat) : Factorization
+def factorWithBound (f : ZPoly) (B : Nat) : Factorization :=
+  (factorFastWithBound f B).getD (factorSlowWithBound f B)
+def factor (f : ZPoly) : Factorization :=
+  factorWithBound f (ZPoly.defaultFactorCoeffBound f)
 ```
 
 `factorSlow` is the unconditionally-correct exhaustive recombination
-path; `factorFast` is the production van Hoeij CLD path; `factor` is
-the public-facing combinator. `factorWithBound` retains its existing
-contract and uses the same combinator under the hood.
+path; `factorFast` is the proof-facing van Hoeij CLD path exposing the
+combined BHKS/Mignotte precision cap (`factorFastPrecisionCap`);
+`factorWithBound` is the bounded combinator shared by the slow and
+fast paths at a caller-supplied precision; `factor` is the public
+entry point and uses the runtime-oriented Mignotte coefficient bound
+`ZPoly.defaultFactorCoeffBound` for both paths.
+
+The public `factor` does **not** call `factorFast` at the full BHKS
+threshold. Irreducible inputs that split modulo the chosen prime
+(e.g. `X^4 + 1`, `Φ_15`) force the van Hoeij doubling loop to grind
+through every precision up to `bhksBound f`, which is intractable
+even on the small conformance corpus. The smaller Mignotte cap keeps
+public `factor` runtime within the per-call CI budget and falls
+through to `factorSlow` whenever the fast attempt does not yield a
+recombination certificate. `factorFast` itself is retained at the
+full BHKS cap as the proof-facing entry point: its conditional-
+correctness theorem (Group B) and the eventual BHKS Theorem 5.2
+termination guarantee (Group D, leaf) apply to the BHKS-capped
+combinator.
 
 **Output convention: the `Factorization` record.**
 
@@ -221,8 +239,11 @@ threshold (see *Precision schedule* below).
 Three top-level functions, all with full Mathlib-bridge proofs:
 
 - **`factorSlow : ZPoly → Factorization`.** Exhaustive subset enumeration. Worst-case `O(2^r)`. **Unconditional correctness:** `factorSlow f = irreducibleFactorisationOf f`.
-- **`factorFast : ZPoly → Option Factorization`.** Van Hoeij CLD with precision cap. **Conditional correctness:** `factorFast f = some φ ⟹ φ is the irreducible factorisation of f`. May return `none`.
-- **`factor : ZPoly → Factorization := λ f, (factorFast f).getD (factorSlow f)`.** Unconditionally correct combinator with polynomial-time average performance.
+- **`factorFast : ZPoly → Option Factorization`.** Van Hoeij CLD at the full BHKS precision cap (`factorFastPrecisionCap f := max (bhksBound f) (defaultFactorCoeffBound f)`). **Conditional correctness:** `factorFast f = some φ ⟹ φ is the irreducible factorisation of f`. May return `none`. Proof-facing entry point.
+- **`factorWithBound : ZPoly → Nat → Factorization := λ f B, (factorFastWithBound f B).getD (factorSlowWithBound f B)`.** Bounded combinator at caller-supplied precision `B`.
+- **`factor : ZPoly → Factorization := λ f, factorWithBound f (defaultFactorCoeffBound f)`.** Public entry point at the runtime-oriented Mignotte coefficient bound. Unconditionally correct.
+
+The public `factor` does not use `factorFast`'s full BHKS cap. Irreducible inputs that split modulo the chosen prime force the van Hoeij doubling loop to grind to `bhksBound f`, which is intractable even on the small conformance corpus (e.g. `X^4 + 1`, `Φ_15`). Using `defaultFactorCoeffBound` as the public cap keeps the runtime within the per-call CI budget while preserving unconditional correctness via the `factorSlow` fallback.
 
 No axioms. BHKS Theorem 5.2 ("for precision exceeding a paper-stated
 bound, `factorFast` always returns `some`") is a leaf theorem of this
@@ -386,7 +407,7 @@ B9. **Conditional correctness of `factorFast`.** `factorFast f = some gs ⟹ gs 
 ### Group C — combined `factor` correctness (drives the public API)
 
 C1. **`factor` unconditional correctness.** `factor f = irreducibleFactorisationOf f`.
-    *Sketch:* Case analysis on `factorFast f`. If `some gs`: by B9, `gs` is the irreducible factorisation. If `none`: by A5 (which uses A4 squarefree-core via normalisation/reassembly), `factorSlow f` is the irreducible factorisation. Either way, `factor` returns the irreducible factorisation. One-line proof modulo A5 + B9.
+    *Sketch:* `factor f` unfolds to `factorWithBound f (defaultFactorCoeffBound f) = (factorFastWithBound f B₀).getD (factorSlowWithBound f B₀)` for `B₀ := defaultFactorCoeffBound f`. Case analysis on the fast attempt at bound `B₀`: when it returns `some gs`, B9 (specialised to the bounded variant) gives the irreducible factorisation; when it returns `none`, A5 (via A4 squarefree-core) gives `factorSlowWithBound f B₀ = irreducibleFactorisationOf f`. The unboundedly-correct entry point `factorFast f := factorFastWithBound f (factorFastPrecisionCap f)` is not on `factor`'s correctness path; its conditional-correctness theorem is a separate Group B obligation (B9 above).
 
 C2. **Public-API contracts** (`factor_product_of_bound`, `checkIrreducibleCert_sound`, `Decidable (Irreducible f)`) follow from C1.
 
