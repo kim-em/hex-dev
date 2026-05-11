@@ -4183,6 +4183,42 @@ private theorem yunStep_tail_common_dvd_one_of_common_dvd_one
       (d := d)
       hdz
 
+private theorem yunStep_tail_derivative_isZero_of_derivative_isZero_of_common_dvd_one
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p)
+    (hder : (DensePoly.derivative w).isZero = true)
+    (hcommon :
+      ∀ d : FpPoly p,
+        d ∣ DensePoly.gcd c w →
+          d ∣ w / DensePoly.gcd c w →
+            d ∣ (1 : FpPoly p)) :
+    (DensePoly.derivative (w / DensePoly.gcd c w)).isZero = true := by
+  let y := DensePoly.gcd c w
+  let z := w / y
+  have hprod : z * y = w := by
+    simpa [y, z] using div_gcd_right_mul_reconstruct c w
+  have hder_prod : (DensePoly.derivative (z * y)).isZero = true := by
+    rw [hprod]
+    exact hder
+  exact
+    right_factor_derivative_isZero_of_mul_derivative_isZero_of_common_dvd_one
+      y z hder_prod
+      (by
+        intro d hdy hdz
+        exact hcommon d (by simpa [y] using hdy) (by simpa [y, z] using hdz))
+
+private theorem yunStep_tail_derivative_isZero_of_source_common_dvd_one
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p)
+    (hder : (DensePoly.derivative w).isZero = true)
+    (hcommon :
+      ∀ d : FpPoly p, d ∣ c → d ∣ w → d ∣ (1 : FpPoly p)) :
+    (DensePoly.derivative (w / DensePoly.gcd c w)).isZero = true := by
+  exact
+    yunStep_tail_derivative_isZero_of_derivative_isZero_of_common_dvd_one
+      c w hder
+      (yunStep_tail_common_dvd_one_of_common_dvd_one c w hcommon)
+
 private theorem normalizeMonic_eq_one_of_dvd_one
     [ZMod64.PrimeModulus p] {g : FpPoly p}
     (hdiv : g ∣ (1 : FpPoly p)) :
