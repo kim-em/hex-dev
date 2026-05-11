@@ -2633,6 +2633,36 @@ def supportedEntry_2_1 : SupportedEntry 2 1 :=
       · exact Or.inr rfl,
     luebeckConwayPolynomial?_hit_2_1⟩
 
+/-- The current committed table supports `C(2, 2)`. -/
+def supportedEntry_2_2 : SupportedEntry 2 2 :=
+  ⟨luebeckConwayPolynomial_2_2,
+    supportedEntry_2_1.prime,
+    luebeckConwayPolynomial?_hit_2_2⟩
+
+/-- The current committed table supports `C(2, 3)`. -/
+def supportedEntry_2_3 : SupportedEntry 2 3 :=
+  ⟨luebeckConwayPolynomial_2_3,
+    supportedEntry_2_1.prime,
+    luebeckConwayPolynomial?_hit_2_3⟩
+
+/-- The current committed table supports `C(2, 4)`. -/
+def supportedEntry_2_4 : SupportedEntry 2 4 :=
+  ⟨luebeckConwayPolynomial_2_4,
+    supportedEntry_2_1.prime,
+    luebeckConwayPolynomial?_hit_2_4⟩
+
+/-- The current committed table supports `C(2, 5)`. -/
+def supportedEntry_2_5 : SupportedEntry 2 5 :=
+  ⟨luebeckConwayPolynomial_2_5,
+    supportedEntry_2_1.prime,
+    luebeckConwayPolynomial?_hit_2_5⟩
+
+/-- The current committed table supports `C(2, 6)`. -/
+def supportedEntry_2_6 : SupportedEntry 2 6 :=
+  ⟨luebeckConwayPolynomial_2_6,
+    supportedEntry_2_1.prime,
+    luebeckConwayPolynomial?_hit_2_6⟩
+
 /-- Recover the committed Conway modulus for a supported entry. -/
 def conwayPoly (p n : Nat) [ZMod64.Bounds p] (h : SupportedEntry p n) : FpPoly p :=
   h.poly
