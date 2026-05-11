@@ -778,18 +778,16 @@ private theorem dot_comm_rat {m' : Nat} (u v : Vector Rat m') :
 
 /-- Right-side dot product distribution over a `prefixCombination`. -/
 private theorem dot_prefixCombination_right_rat
-    (b : Matrix Rat n m) (i : Nat) (hi : i < n) (u : Vector Rat m) :
-    Matrix.dot u
-        (GramSchmidt.prefixCombination
-          (GramSchmidt.Rat.coeffs b) (GramSchmidt.Rat.basis b) i hi) =
+    (coeffs : Matrix Rat n n) (basisM : Matrix Rat n m)
+    (i : Nat) (hi : i < n) (u : Vector Rat m) :
+    Matrix.dot u (GramSchmidt.prefixCombination coeffs basisM i hi) =
       (List.finRange i).foldl
         (fun (acc : Rat) (j : Fin i) =>
           acc +
-            GramSchmidt.entry (GramSchmidt.Rat.coeffs b) ⟨i, hi⟩
+            GramSchmidt.entry coeffs ⟨i, hi⟩
                 ⟨j.val, Nat.lt_trans j.isLt hi⟩ *
               Matrix.dot u
-                ((GramSchmidt.Rat.basis b).row
-                  ⟨j.val, Nat.lt_trans j.isLt hi⟩)) 0 := by
+                (basisM.row ⟨j.val, Nat.lt_trans j.isLt hi⟩)) 0 := by
   unfold GramSchmidt.prefixCombination
   have hgen :
       ∀ (xs : List (Fin i)) (acc : Vector Rat m),
@@ -797,20 +795,18 @@ private theorem dot_prefixCombination_right_rat
             (xs.foldl
               (fun acc (j : Fin i) =>
                 acc +
-                  GramSchmidt.entry (GramSchmidt.Rat.coeffs b) ⟨i, hi⟩
+                  GramSchmidt.entry coeffs ⟨i, hi⟩
                       ⟨j.val, Nat.lt_trans j.isLt hi⟩ •
-                    (GramSchmidt.Rat.basis b).row
-                      ⟨j.val, Nat.lt_trans j.isLt hi⟩)
+                    basisM.row ⟨j.val, Nat.lt_trans j.isLt hi⟩)
               acc) =
           Matrix.dot u acc +
             xs.foldl
               (fun (acc' : Rat) (j : Fin i) =>
                 acc' +
-                  GramSchmidt.entry (GramSchmidt.Rat.coeffs b) ⟨i, hi⟩
+                  GramSchmidt.entry coeffs ⟨i, hi⟩
                       ⟨j.val, Nat.lt_trans j.isLt hi⟩ *
                     Matrix.dot u
-                      ((GramSchmidt.Rat.basis b).row
-                        ⟨j.val, Nat.lt_trans j.isLt hi⟩)) 0 := by
+                      (basisM.row ⟨j.val, Nat.lt_trans j.isLt hi⟩)) 0 := by
     intro xs
     induction xs with
     | nil =>
@@ -822,11 +818,10 @@ private theorem dot_prefixCombination_right_rat
         rw [ih]
         rw [dot_add_right_rat, dot_smul_right_rat]
         rw [foldl_sum_start_rat xs _
-          ((0 : Rat) + (GramSchmidt.entry (GramSchmidt.Rat.coeffs b) ⟨i, hi⟩
+          ((0 : Rat) + (GramSchmidt.entry coeffs ⟨i, hi⟩
               ⟨x.val, Nat.lt_trans x.isLt hi⟩ *
             Matrix.dot u
-              ((GramSchmidt.Rat.basis b).row
-                ⟨x.val, Nat.lt_trans x.isLt hi⟩)))]
+              (basisM.row ⟨x.val, Nat.lt_trans x.isLt hi⟩)))]
         grind
   rw [hgen (List.finRange i) 0]
   rw [dot_zero_right_rat]
@@ -835,13 +830,12 @@ private theorem dot_prefixCombination_right_rat
 /-- Dot product against a `prefixCombination` is zero when the right vector is
 orthogonal to every contributing basis row. -/
 private theorem dot_prefixCombination_right_eq_zero_of_dot_zero
-    (b : Matrix Rat n m) (i : Nat) (hi : i < n) (u : Vector Rat m)
+    (coeffs : Matrix Rat n n) (basisM : Matrix Rat n m)
+    (i : Nat) (hi : i < n) (u : Vector Rat m)
     (h : ∀ (j : Fin i),
       Matrix.dot u
-          ((GramSchmidt.Rat.basis b).row ⟨j.val, Nat.lt_trans j.isLt hi⟩) = 0) :
-    Matrix.dot u
-        (GramSchmidt.prefixCombination
-          (GramSchmidt.Rat.coeffs b) (GramSchmidt.Rat.basis b) i hi) = 0 := by
+          (basisM.row ⟨j.val, Nat.lt_trans j.isLt hi⟩) = 0) :
+    Matrix.dot u (GramSchmidt.prefixCombination coeffs basisM i hi) = 0 := by
   rw [dot_prefixCombination_right_rat]
   -- All terms are zero: the foldl with each entry = 0 reduces to 0.
   induction (List.finRange i) with
@@ -849,10 +843,102 @@ private theorem dot_prefixCombination_right_eq_zero_of_dot_zero
   | cons j xs ih =>
       simp only [List.foldl_cons]
       rw [h j]
-      have h0 : (0 : Rat) + GramSchmidt.entry (GramSchmidt.Rat.coeffs b) ⟨i, hi⟩
+      have h0 : (0 : Rat) + GramSchmidt.entry coeffs ⟨i, hi⟩
           ⟨j.val, Nat.lt_trans j.isLt hi⟩ * 0 = 0 := by grind
       rw [h0]
       exact ih
+
+/-- Cast an Int matrix row to a Rat row by entry-wise `Int.cast`. -/
+private def castIntRow (b : Matrix Int n m) (i : Fin n) : Vector Rat m :=
+  Vector.map (fun x : Int => (x : Rat)) (b.row i)
+
+/-- Auxiliary matrix `M_final` whose `(i, j)` entry is the rational inner
+product `⟨b_i, b*_j⟩` between the cast integer row `b_i` and the
+Gram-Schmidt orthogonal basis row `b*_j`. -/
+private noncomputable def auxMatrix (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
+    Matrix Rat k k :=
+  Matrix.ofFn fun i j =>
+    Matrix.dot (castIntRow b (GramSchmidt.liftFinLE i hk))
+      ((basis b).row (GramSchmidt.liftFinLE j hk))
+
+private theorem auxMatrix_get (b : Matrix Int n m) (k : Nat) (hk : k ≤ n)
+    (i j : Fin k) :
+    (auxMatrix b k hk)[i][j] =
+      Matrix.dot (castIntRow b (GramSchmidt.liftFinLE i hk))
+        ((basis b).row (GramSchmidt.liftFinLE j hk)) := by
+  simp [auxMatrix, Matrix.ofFn]
+
+/-- The cast Int row decomposes as `b*_i + prefixCombination`. -/
+private theorem castIntRow_decomposition
+    (b : Matrix Int n m) (i : Nat) (hi : i < n) :
+    castIntRow b ⟨i, hi⟩ =
+      (basis b).row ⟨i, hi⟩ +
+        GramSchmidt.prefixCombination (coeffs b) (basis b) i hi := by
+  exact basis_decomposition (b := b) i hi
+
+/-- `auxMatrix` is lower triangular: entries above the diagonal vanish. -/
+private theorem auxMatrix_zero_above (b : Matrix Int n m) (k : Nat) (hk : k ≤ n)
+    (i j : Fin k) (hij : i.val < j.val) :
+    (auxMatrix b k hk)[i][j] = 0 := by
+  rw [auxMatrix_get]
+  have hi' : i.val < n := Nat.lt_of_lt_of_le i.isLt hk
+  have hj' : j.val < n := Nat.lt_of_lt_of_le j.isLt hk
+  have hij' : i.val ≠ j.val := Nat.ne_of_lt hij
+  -- liftFinLE i hk = ⟨i.val, hi'⟩ definitionally.
+  rw [show GramSchmidt.liftFinLE i hk = ⟨i.val, hi'⟩ from rfl]
+  rw [show GramSchmidt.liftFinLE j hk = ⟨j.val, hj'⟩ from rfl]
+  rw [castIntRow_decomposition b i.val hi']
+  rw [dot_comm_rat]
+  rw [dot_add_right_rat]
+  rw [dot_comm_rat ((basis b).row ⟨j.val, hj'⟩) ((basis b).row ⟨i.val, hi'⟩)]
+  rw [basis_orthogonal b i.val j.val hi' hj' hij']
+  -- Second term: prefixCombination orthogonal to ((basis b).row j).
+  have hprefix :
+      Matrix.dot ((basis b).row ⟨j.val, hj'⟩)
+          (GramSchmidt.prefixCombination (coeffs b) (basis b) i.val hi') = 0 := by
+    apply dot_prefixCombination_right_eq_zero_of_dot_zero
+      (coeffs := coeffs b) (basisM := basis b) (i := i.val) (hi := hi')
+      (u := (basis b).row ⟨j.val, hj'⟩)
+    intro p
+    have hp' : p.val < i.val := p.isLt
+    have hpj : p.val ≠ j.val := Nat.ne_of_lt (Nat.lt_trans hp' hij)
+    have hpj_lt : p.val < n := Nat.lt_trans hp' hi'
+    exact basis_orthogonal b j.val p.val hj' hpj_lt fun h => hpj h.symm
+  rw [hprefix]
+  grind
+
+/-- Diagonal of `auxMatrix` is the squared norm of the corresponding basis row. -/
+private theorem auxMatrix_diag (b : Matrix Int n m) (k : Nat) (hk : k ≤ n)
+    (i : Fin k) :
+    (auxMatrix b k hk)[i][i] =
+      Vector.normSq ((basis b).row (GramSchmidt.liftFinLE i hk)) := by
+  rw [auxMatrix_get]
+  have hi' : i.val < n := Nat.lt_of_lt_of_le i.isLt hk
+  rw [show GramSchmidt.liftFinLE i hk = ⟨i.val, hi'⟩ from rfl]
+  rw [castIntRow_decomposition b i.val hi']
+  rw [dot_comm_rat]
+  rw [dot_add_right_rat]
+  -- First term: dot ((basis b).row i) ((basis b).row i) = normSq ((basis b).row i)
+  -- Second term: dot ((basis b).row i) prefixCombination = 0.
+  have hprefix :
+      Matrix.dot ((basis b).row ⟨i.val, hi'⟩)
+          (GramSchmidt.prefixCombination (coeffs b) (basis b) i.val hi') = 0 := by
+    apply dot_prefixCombination_right_eq_zero_of_dot_zero
+      (coeffs := coeffs b) (basisM := basis b) (i := i.val) (hi := hi')
+      (u := (basis b).row ⟨i.val, hi'⟩)
+    intro p
+    have hp' : p.val < i.val := p.isLt
+    have hpi : p.val ≠ i.val := Nat.ne_of_lt hp'
+    have hpi_lt : p.val < n := Nat.lt_trans hp' hi'
+    exact basis_orthogonal b i.val p.val hi' hpi_lt fun h => hpi h.symm
+  rw [hprefix]
+  -- Remaining: dot ((basis b).row i) ((basis b).row i) + 0 = normSq ((basis b).row i)
+  have hns :
+      Vector.normSq ((basis b).row ⟨i.val, hi'⟩) =
+        Matrix.dot ((basis b).row ⟨i.val, hi'⟩) ((basis b).row ⟨i.val, hi'⟩) := by
+    rfl
+  rw [hns]
+  grind
 
 theorem gramDet_eq_prod_normSq (b : Matrix Int n m)
     (hli : independent b) (k : Nat) (hk : k ≤ n) :
