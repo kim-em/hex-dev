@@ -3340,6 +3340,43 @@ private theorem dvd_diagonalMulCoeffTerm_of_dvd_mul_coeff_of_dvd_other_diagonal_
     rw [diagonalMulCoeffTerm_eq_zero_of_degree_lt p q n i hni]
     simp
 
+private theorem dvd_coeff_mul_of_dvd_mul_coeff_of_dvd_other_diagonal_products
+    (p q : DensePoly Int) (d i j : Nat)
+    (hprod : (d : Int) ∣ (p * q).coeff (i + j))
+    (hothers :
+      ∀ r s, r + s = i + j → r ≠ i → (d : Int) ∣ p.coeff r * q.coeff s) :
+    (d : Int) ∣ p.coeff i * q.coeff j := by
+  have hterm :
+      (d : Int) ∣ diagonalMulCoeffTerm p q (i + j) i :=
+    dvd_diagonalMulCoeffTerm_of_dvd_mul_coeff_of_dvd_other_diagonal_terms
+      p q d (i + j) i hprod (by
+        intro r hri
+        unfold diagonalMulCoeffTerm
+        by_cases hr : i + j < r
+        · simp [hr]
+        · simp [hr]
+          exact hothers r (i + j - r) (by omega) hri)
+  unfold diagonalMulCoeffTerm at hterm
+  have hnot : ¬ i + j < i := by omega
+  simpa [hnot] using hterm
+
+private theorem dvd_coeff_mul_last_of_dvd_mul_coeff_of_dvd_larger_left_products
+    (p q : DensePoly Int) (d i k : Nat)
+    (hprod : (d : Int) ∣ (p * q).coeff (i + k))
+    (hqAbove : ∀ s, k < s → (d : Int) ∣ q.coeff s)
+    (hlarger :
+      ∀ r, i < r → (d : Int) ∣ p.coeff r * q.coeff (i + k - r)) :
+    (d : Int) ∣ p.coeff i * q.coeff k := by
+  exact dvd_coeff_mul_of_dvd_mul_coeff_of_dvd_other_diagonal_products
+    p q d i k hprod (by
+      intro r s hrs hri
+      by_cases hri_lt : r < i
+      · have hks : k < s := by omega
+        exact Int.dvd_mul_of_dvd_right (hqAbove s hks)
+      · have hir : i < r := by omega
+        have hs : s = i + k - r := by omega
+        simpa [hs] using hlarger r hir)
+
 private theorem list_natAbs_gcd_bezout_aux (xs : List Int) (acc : Nat) :
     ∃ a : Int, ∃ weights : List Int,
       weights.length = xs.length ∧
