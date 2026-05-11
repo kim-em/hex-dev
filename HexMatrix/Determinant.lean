@@ -272,6 +272,77 @@ def detTerm {R : Type u} [Lean.Grind.Ring R] {n : Nat}
 def det {R : Type u} [Lean.Grind.Ring R] {n : Nat} (M : Matrix R n n) : R :=
   (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0
 
+/-- Embed `Fin n` into `Fin (n + 1)` while skipping one deleted index. -/
+def skipIndex {n : Nat} (skip : Fin (n + 1)) (i : Fin n) : Fin (n + 1) :=
+  if h : i.val < skip.val then
+    ⟨i.val, by omega⟩
+  else
+    ⟨i.val + 1, by omega⟩
+
+@[simp] theorem skipIndex_val_of_lt {n : Nat} (skip : Fin (n + 1)) (i : Fin n)
+    (h : i.val < skip.val) :
+    (skipIndex skip i).val = i.val := by
+  simp [skipIndex, h]
+
+@[simp] theorem skipIndex_val_of_not_lt {n : Nat} (skip : Fin (n + 1)) (i : Fin n)
+    (h : ¬ i.val < skip.val) :
+    (skipIndex skip i).val = i.val + 1 := by
+  simp [skipIndex, h]
+
+theorem skipIndex_ne {n : Nat} (skip : Fin (n + 1)) (i : Fin n) :
+    skipIndex skip i ≠ skip := by
+  intro hsame
+  have hval : (skipIndex skip i).val = skip.val := congrArg Fin.val hsame
+  by_cases hlt : i.val < skip.val
+  · rw [skipIndex_val_of_lt skip i hlt] at hval
+    omega
+  · rw [skipIndex_val_of_not_lt skip i hlt] at hval
+    omega
+
+/-- Delete one row and one column from an `(n + 1) × (n + 1)` matrix. -/
+def deleteRowCol {R : Type u} {n : Nat} (M : Matrix R (n + 1) (n + 1))
+    (row col : Fin (n + 1)) : Matrix R n n :=
+  ofFn fun i j => M[skipIndex row i][skipIndex col j]
+
+@[simp] theorem deleteRowCol_entry {R : Type u} {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1)) (i j : Fin n) :
+    (deleteRowCol M row col)[i][j] = M[skipIndex row i][skipIndex col j] := by
+  simp [deleteRowCol, ofFn]
+
+/-- The alternating sign used in signed cofactors. -/
+def cofactorSign {R : Type u} [OfNat R 1] [Neg R] {n : Nat}
+    (row col : Fin (n + 1)) : R :=
+  if (row.val + col.val) % 2 = 0 then 1 else -1
+
+@[simp] theorem cofactorSign_of_even {R : Type u} [OfNat R 1] [Neg R] {n : Nat}
+    (row col : Fin (n + 1)) (h : (row.val + col.val) % 2 = 0) :
+    cofactorSign (R := R) row col = 1 := by
+  simp [cofactorSign, h]
+
+@[simp] theorem cofactorSign_of_odd {R : Type u} [OfNat R 1] [Neg R] {n : Nat}
+    (row col : Fin (n + 1)) (h : (row.val + col.val) % 2 ≠ 0) :
+    cofactorSign (R := R) row col = -1 := by
+  simp [cofactorSign, h]
+
+/-- The signed cofactor for the local Leibniz determinant. -/
+def cofactor {R : Type u} [Lean.Grind.Ring R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1)) : R :=
+  cofactorSign row col * det (deleteRowCol M row col)
+
+@[simp] theorem cofactor_of_even {R : Type u} [Lean.Grind.Ring R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1))
+    (h : (row.val + col.val) % 2 = 0) :
+    cofactor M row col = det (deleteRowCol M row col) := by
+  simp [cofactor, h]
+  grind
+
+@[simp] theorem cofactor_of_odd {R : Type u} [Lean.Grind.Ring R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1))
+    (h : (row.val + col.val) % 2 ≠ 0) :
+    cofactor M row col = -det (deleteRowCol M row col) := by
+  simp [cofactor, h]
+  grind
+
 /-- The determinant of the empty leading prefix is the Bareiss previous-pivot
 convention `1`. -/
 @[simp] theorem det_leadingPrefix_zero {R : Type u} [Lean.Grind.Ring R]
