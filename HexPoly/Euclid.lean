@@ -3386,6 +3386,56 @@ theorem nat_dvd_of_scalar_mul_primitive_coeff_dvd
   rw [hexp]
   exact dvd_foldl_zipWith_scale_mul (d : Int) a weights p.toArray.toList hval_dvd
 
+private theorem exists_max_prop_below
+    (P : Nat → Prop) [DecidablePred P] :
+    ∀ N, (∃ n, n < N ∧ P n) →
+      ∃ k, k < N ∧ P k ∧ ∀ j, k < j → j < N → ¬ P j
+  | 0, h => by
+      rcases h with ⟨n, hn, _⟩
+      omega
+  | N + 1, h => by
+      by_cases hN : P N
+      · exact ⟨N, by omega, hN, by
+          intro j hj hjN
+          omega⟩
+      · have hbelow : ∃ n, n < N ∧ P n := by
+          rcases h with ⟨n, hn, hp⟩
+          by_cases hnN : n = N
+          · subst n
+            exact False.elim (hN hp)
+          · exact ⟨n, by omega, hp⟩
+        rcases exists_max_prop_below P N hbelow with ⟨k, hkN, hkP, hmax⟩
+        exact ⟨k, by omega, hkP, by
+          intro j hkj hjNsucc
+          by_cases hj : j = N
+          · subst j
+            exact hN
+          · exact hmax j hkj (by omega)⟩
+
+private theorem exists_last_not_natCast_dvd_coeff
+    (q : DensePoly Int) (d : Nat)
+    (hq : ∃ n, ¬ (d : Int) ∣ q.coeff n) :
+    ∃ k, (¬ (d : Int) ∣ q.coeff k) ∧
+      ∀ j, k < j → (d : Int) ∣ q.coeff j := by
+  have hbelow : ∃ n, n < q.size ∧ ¬ (d : Int) ∣ q.coeff n := by
+    rcases hq with ⟨n, hn⟩
+    by_cases hsize : n < q.size
+    · exact ⟨n, hsize, hn⟩
+    · have hcoeff : q.coeff n = 0 := coeff_eq_zero_of_size_le q (Nat.le_of_not_gt hsize)
+      have hdvd : (d : Int) ∣ q.coeff n := by
+        rw [hcoeff]
+        exact ⟨0, by simp⟩
+      exact False.elim (hn hdvd)
+  rcases exists_max_prop_below (fun n => ¬ (d : Int) ∣ q.coeff n) q.size hbelow with
+    ⟨k, _hkSize, hk, hmax⟩
+  exact ⟨k, hk, by
+    intro j hkj
+    by_cases hjSize : j < q.size
+    · exact Classical.byContradiction (fun hnot => hmax j hkj hjSize hnot)
+    · have hcoeff : q.coeff j = 0 := coeff_eq_zero_of_size_le q (Nat.le_of_not_gt hjSize)
+      rw [hcoeff]
+      exact ⟨0, by simp⟩⟩
+
 private theorem list_getD_map_ediv_zero (c : Int) (coeffs : List Int) (n : Nat) :
     (coeffs.map fun coeff => coeff / c).getD n (Zero.zero : Int) =
       coeffs.getD n (Zero.zero : Int) / c := by
