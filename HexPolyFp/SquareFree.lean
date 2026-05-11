@@ -4397,6 +4397,28 @@ private theorem squareFreeAuxRev_reverse_append
                       (squareFreeAuxRev (pthRoot loopNil.2) (multiplicity * p) fuel loopNil.1).reverse := by
                       rw [hrec_nil])
 
+/--
+Recursive residual derivative-zero invariant for the `squareFreeAuxRev`
+loop. At each non-trivial step the residual `loop.2` is either trivial
+(`isOne`) or has zero derivative, and the recursion into `pthRoot loop.2`
+continues to satisfy the same invariant.
+-/
+private def squareFreeAuxRevResidualSatisfied
+    (g : FpPoly p) (m : Nat) : Nat → Prop
+  | 0 => True
+  | fuel + 1 =>
+      if g.isZero then True
+      else if (DensePoly.derivative g).isZero then
+        squareFreeAuxRevResidualSatisfied (pthRoot g) (m * p) fuel
+      else
+        let g_inner := DensePoly.gcd g (DensePoly.derivative g)
+        let c_inner := g / g_inner
+        let loop := yunFactorsWithLevel c_inner g_inner m 1 fuel []
+        ((isOne loop.2 = true) ∨ (DensePoly.derivative loop.2).isZero = true) ∧
+          ((isOne loop.2 = false) →
+            squareFreeAuxRevResidualSatisfied
+              (pthRoot loop.2) (m * p) fuel)
+
 private theorem yunFactorsWithLevel_pairwise_coprime_nil_of_ready
     (c w : FpPoly p) (base level fuel : Nat)
     (hready : yunFactorsPairwiseReady c w base level fuel) :
