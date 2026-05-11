@@ -2422,20 +2422,6 @@ theorem bhksIndicatorCandidates?_eq_some_of_getD
   have hfold :=
     bhksIndicatorCandidates?_foldl_eq_some_append f d
       indicators.toList candidates.toList #[] hlength hcandidate_list
-  have hstep :
-      (fun (acc : Option (Array ZPoly)) (indicator : Array Int) =>
-        match acc with
-        | none => none
-        | some candidates =>
-            match bhksIndicatorCandidate? f d indicator with
-            | some candidate => some (candidates.push candidate.1)
-            | none => none) =
-        bhksIndicatorCandidatesStep f d := by
-    funext acc indicator
-    cases acc with
-    | none => rfl
-    | some _ => rfl
-  rw [hstep] at hfold
   rw [hfold]
   apply congrArg some
   rw [← Array.toList_inj]
