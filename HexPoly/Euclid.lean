@@ -4379,6 +4379,42 @@ private theorem mul_ne_zero_of_primitive (p q : DensePoly Int)
   · exact hlp_ne h
   · exact hlq_ne h
 
+/-- Factoring a constant out of a `diagonalMulCoeffTerm` foldl with `scale`'d
+polynomials. -/
+private theorem foldl_add_int_diagonal_scaled
+    (a b : Int) (r s : DensePoly Int) (n : Nat) :
+    ∀ m, (List.range m).foldl
+        (fun acc i => acc + diagonalMulCoeffTerm (scale a r) (scale b s) n i) 0 =
+      a * b * (List.range m).foldl
+        (fun acc i => acc + diagonalMulCoeffTerm r s n i) 0
+  | 0 => by simp
+  | m' + 1 => by
+      rw [List.range_succ, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [foldl_add_int_diagonal_scaled a b r s n m']
+      have hterm : diagonalMulCoeffTerm (scale a r) (scale b s) n m' =
+          a * b * diagonalMulCoeffTerm r s n m' := by
+        unfold diagonalMulCoeffTerm
+        by_cases hn : n < m'
+        · simp [hn]
+        · rw [if_neg hn]
+          rw [coeff_scale a r m' (Int.mul_zero a)]
+          rw [coeff_scale b s (n - m') (Int.mul_zero b)]
+          grind
+      rw [hterm]
+      grind
+
+/-- Coefficient identity: scaling both factors of a product. -/
+private theorem coeff_scale_mul_scale (a b : Int) (r s : DensePoly Int) (n : Nat) :
+    ((scale a r) * (scale b s)).coeff n = a * b * (r * s).coeff n := by
+  rw [coeff_mul (scale a r) (scale b s) n]
+  rw [coeff_mul r s n]
+  rw [mulCoeffSum_eq_diagonal (scale a r) (scale b s) n,
+      mulCoeffSum_eq_diagonal r s n]
+  rw [diagonalSum_eq_degree_bound (scale a r) (scale b s) n,
+      diagonalSum_eq_degree_bound r s n]
+  exact foldl_add_int_diagonal_scaled a b r s n (n + 1)
+
 /-- Gauss's lemma for primitive integer polynomials: the product of two
 primitive polynomials is primitive. -/
 theorem content_mul_of_primitive (p q : DensePoly Int)
@@ -4443,6 +4479,68 @@ theorem content_mul_of_primitive (p q : DensePoly Int)
     have hr_le : r ≤ 1 := Nat.le_of_dvd (by omega) hq_dvd
     have hr_ge : 2 ≤ r := hr.1
     omega
+
+/-- Gauss's lemma on content (divisibility form): if a natural number `d`
+divides every coefficient of `p * q`, then it divides `contentNat p *
+contentNat q`. This is the divisibility witness needed by the McCoy row
+construction in #3440 and the downstream chain `#3440 → #3435 → #3389 →
+#3346 → #3252`. -/
+theorem dvd_contentNat_mul_of_dvd_mul_coeff
+    (p q : DensePoly Int) (d : Nat)
+    (h : ∀ n, (d : Int) ∣ (p * q).coeff n) :
+    d ∣ contentNat p * contentNat q := by
+  -- Edge cases where one factor has zero content collapse to `d ∣ 0`.
+  by_cases hcp : contentNat p = 0
+  · rw [hcp, Nat.zero_mul]; exact Nat.dvd_zero d
+  by_cases hcq : contentNat q = 0
+  · rw [hcq, Nat.mul_zero]; exact Nat.dvd_zero d
+  -- Both contents are nonzero, so the primitive parts are primitive.
+  have hcp_ne : content p ≠ 0 := by
+    intro h0
+    apply hcp
+    have h' : Int.ofNat (contentNat p) = Int.ofNat 0 := h0
+    exact Int.ofNat_inj.mp h'
+  have hcq_ne : content q ≠ 0 := by
+    intro h0
+    apply hcq
+    have h' : Int.ofNat (contentNat q) = Int.ofNat 0 := h0
+    exact Int.ofNat_inj.mp h'
+  have hp_prim : content (primitivePart p) = 1 := primitivePart_primitive p hcp_ne
+  have hq_prim : content (primitivePart q) = 1 := primitivePart_primitive q hcq_ne
+  -- Gauss: the product of primitives is primitive.
+  have hpq_prim : content (primitivePart p * primitivePart q) = 1 :=
+    content_mul_of_primitive _ _ hp_prim hq_prim
+  -- Recover `p * q` as a scaled product of primitives.
+  have hp_decomp : scale (content p) (primitivePart p) = p := content_mul_primitivePart p
+  have hq_decomp : scale (content q) (primitivePart q) = q := content_mul_primitivePart q
+  -- Recover `p * q` as a scaled product of primitives at the algebraic level.
+  have hmul_eq : scale (content p) (primitivePart p) *
+      scale (content q) (primitivePart q) = p * q := by
+    rw [hp_decomp, hq_decomp]
+  -- (p * q).coeff n = content p * content q * (p' * q').coeff n
+  have hcoeff_eq : ∀ n, (p * q).coeff n =
+      (content p * content q) *
+        (primitivePart p * primitivePart q).coeff n := by
+    intro n
+    rw [← hmul_eq]
+    exact coeff_scale_mul_scale (content p) (content q)
+      (primitivePart p) (primitivePart q) n
+  -- The scalar `content p * content q` is annihilated by `d`.
+  have h_scaled_dvd : ∀ n, (d : Int) ∣
+      (content p * content q) * (primitivePart p * primitivePart q).coeff n := by
+    intro n
+    rw [← hcoeff_eq]
+    exact h n
+  have h_int_dvd : (d : Int) ∣ content p * content q :=
+    nat_dvd_of_scalar_mul_primitive_coeff_dvd _ d (content p * content q)
+      hpq_prim h_scaled_dvd
+  -- Convert Int divisibility to Nat divisibility on the natAbs.
+  rw [Int.ofNat_dvd_left] at h_int_dvd
+  have hnatAbs : (content p * content q).natAbs = contentNat p * contentNat q := by
+    unfold content
+    rfl
+  rw [hnatAbs] at h_int_dvd
+  exact h_int_dvd
 
 end DensePoly
 end Hex
