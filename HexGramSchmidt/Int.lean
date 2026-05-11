@@ -510,22 +510,81 @@ theorem gramDetVec_eq_gramDet (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
       have hdiag := scaledCoeffRows_diag_eq_gramDet (b := b) r hr
       simpa [gramDetVec, data, gramDetVecFromScaledCoeffRows] using congrArg Int.toNat hdiag
 
-theorem gramDet_eq_prod_normSq (b : Matrix Int n m)
+private theorem gramDet_eq_prod_normSq_core (b : Matrix Int n m)
     (hli : independent b) (k : Nat) (hk : k ≤ n) :
     (gramDet b k hk : Rat) = gramSchmidtNormProduct b k hk := by
   sorry
 
+private theorem leadingGramMatrixInt_det_nonneg_pre
+    (b : Matrix Int n m) (t : Nat) (ht : t ≤ n) :
+    0 ≤ Matrix.det (GramSchmidt.leadingGramMatrixInt b t ht) := by
+  let rowPrefix : Matrix Int t m :=
+    Matrix.ofFn fun i j =>
+      (b.row ⟨i.val, Nat.lt_of_lt_of_le i.isLt ht⟩)[j]
+  have hgram :
+      GramSchmidt.leadingGramMatrixInt b t ht =
+        Matrix.gramMatrix rowPrefix := by
+    apply Vector.ext
+    intro i hi
+    apply Vector.ext
+    intro j hj
+    simp [GramSchmidt.leadingGramMatrixInt, rowPrefix, Matrix.gramMatrix, Matrix.dot,
+      Matrix.row, Matrix.ofFn, GramSchmidt.liftFinLE]
+  rw [hgram]
+  exact Matrix.det_gramMatrix_nonneg rowPrefix
+
+private theorem gramDet_pos_core (b : Matrix Int n m)
+    (hli : independent b) (k : Nat) (hk : k ≤ n) (hk' : 0 < k) :
+    0 < gramDet b k hk := by
+  cases k with
+  | zero =>
+      omega
+  | succ r =>
+      have hrn : r < n := Nat.lt_of_succ_le hk
+      let last : Fin n := ⟨r, hrn⟩
+      have hsub : 0 < Matrix.det (Matrix.submatrix (Matrix.gramMatrix b) last) :=
+        hli last
+      have hsub_eq :
+          Matrix.submatrix (Matrix.gramMatrix b) last =
+            GramSchmidt.leadingGramMatrixInt b (r + 1) hk := by
+        rw [Matrix.submatrix_eq_leadingPrefix]
+        rw [GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram]
+      have hdet_pos :
+          0 < Matrix.det (GramSchmidt.leadingGramMatrixInt b (r + 1) hk) := by
+        simpa [hsub_eq] using hsub
+      have hdet_nat :
+          Matrix.det (GramSchmidt.leadingGramMatrixInt b (r + 1) hk) =
+            Int.ofNat (gramDet b (r + 1) hk) := by
+        rw [gramDet, Matrix.bareiss_eq_det]
+        exact (Int.toNat_of_nonneg
+          (leadingGramMatrixInt_det_nonneg_pre b (r + 1) hk)).symm
+      have hnat_int : 0 < Int.ofNat (gramDet b (r + 1) hk) := by
+        simpa [hdet_nat] using hdet_pos
+      exact Int.ofNat_lt.mp hnat_int
+
+private theorem basis_normSq_core (b : Matrix Int n m)
+    (hli : independent b) (k : Nat) (hk : k < n) :
+    Vector.normSq ((basis b).row ⟨k, hk⟩) =
+      (gramDet b (k + 1) (Nat.succ_le_of_lt hk) : Rat) /
+        (gramDet b k (Nat.le_of_lt hk) : Rat) := by
+  sorry
+
+theorem gramDet_eq_prod_normSq (b : Matrix Int n m)
+    (hli : independent b) (k : Nat) (hk : k ≤ n) :
+    (gramDet b k hk : Rat) = gramSchmidtNormProduct b k hk := by
+  exact gramDet_eq_prod_normSq_core b hli k hk
+
 theorem gramDet_pos (b : Matrix Int n m)
     (hli : independent b) (k : Nat) (hk : k ≤ n) (hk' : 0 < k) :
     0 < gramDet b k hk := by
-  sorry
+  exact gramDet_pos_core b hli k hk hk'
 
 theorem basis_normSq (b : Matrix Int n m)
     (hli : independent b) (k : Nat) (hk : k < n) :
     Vector.normSq ((basis b).row ⟨k, hk⟩) =
       (gramDet b (k + 1) (Nat.succ_le_of_lt hk) : Rat) /
         (gramDet b k (Nat.le_of_lt hk) : Rat) := by
-  sorry
+  exact basis_normSq_core b hli k hk
 
 theorem scaledCoeffs_eq (b : Matrix Int n m)
     (i j : Nat) (hi : i < n) (hj : j < i) :
