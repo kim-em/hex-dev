@@ -351,7 +351,8 @@ private def n : Nat := 16
 
 private theorem packed_irr :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic lower n) := by
-  sorry
+  change GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x100B 16)
+  exact GF2Poly.gf65k_modulus_irreducible
 
 private def genericMod : FpPoly 2 :=
   Conway.packedGF2FpPoly lower n
