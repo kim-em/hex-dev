@@ -856,11 +856,16 @@ structure FactorNormalizationData where
 /--
 Public integer-polynomial factorization result.
 
-The scalar carries the signed content of the input. Polynomial factors are
-stored with explicit multiplicities; factor order remains operational.
+The scalar carries the input's signed content: for nonzero inputs this is
+`sign(lc f) * ZPoly.content f`, while zero inputs use scalar `0`. Polynomial
+factors are primitive, positive-leading-coefficient factors stored with
+explicit multiplicities; factor order remains operational, with the
+mathematical contract expressed through `Factorization.product`.
 -/
 structure Factorization where
+  /-- Signed scalar absorbing both sign and integer content. -/
   scalar : Int
+  /-- Polynomial factors paired with explicit positive multiplicities. -/
   factors : Array (ZPoly × Nat)
 deriving DecidableEq
 
@@ -870,9 +875,33 @@ private def polyPow (f : ZPoly) : Nat → ZPoly
   | 0 => 1
   | n + 1 => polyPow f n * f
 
+/-- Public wrapper for the polynomial power used by `Factorization.product`. -/
+def factorPower (f : ZPoly) (n : Nat) : ZPoly :=
+  polyPow f n
+
+@[simp] theorem factorPower_zero (f : ZPoly) :
+    factorPower f 0 = (1 : ZPoly) := rfl
+
+@[simp] theorem factorPower_succ (f : ZPoly) (n : Nat) :
+    factorPower f (n + 1) = factorPower f n * f := rfl
+
 /-- Expand multiplicity pairs into the ordered polynomial product. -/
 def product (φ : Factorization) : ZPoly :=
   φ.factors.foldl (fun acc factor => acc * polyPow factor.1 factor.2) (DensePoly.C φ.scalar)
+
+@[simp] theorem product_mk_empty (scalar : Int) :
+    product { scalar := scalar, factors := #[] } = DensePoly.C scalar := rfl
+
+/--
+Characterize `product` using the public `factorPower` wrapper instead of the
+private recursion used internally.
+-/
+theorem product_eq_foldl_factorPower (φ : Factorization) :
+    φ.product =
+      φ.factors.foldl
+        (fun acc factor => acc * factorPower factor.1 factor.2)
+        (DensePoly.C φ.scalar) := by
+  rfl
 
 end Factorization
 
@@ -2979,7 +3008,13 @@ theorem factorFast_ne_none_of_core_recovery_on_schedule
     factorFast_ne_none_of_factorFastWithBound_cap_ne_none f
       (by simpa [B] using hbounded)
 
-/-- Factor with an explicit coefficient bound for the recombination stage. -/
+/--
+Factor with an explicit coefficient bound for the recombination stage.
+
+The bounded fast path is tried first at this precision. If it cannot certify a
+factorization at the requested bound, the exhaustive slow path at the same
+bound supplies the returned `Factorization`.
+-/
 def factorWithBound (f : ZPoly) (B : Nat) : Factorization :=
   (factorFastWithBound f B).getD (factorSlowWithBound f B)
 
@@ -2997,19 +3032,37 @@ force the full BHKS threshold search.
 def factor (f : ZPoly) : Factorization :=
   factorWithBound f (ZPoly.defaultFactorCoeffBound f)
 
+@[simp] theorem factor_eq_factorWithBound_default (f : ZPoly) :
+    factor f = factorWithBound f (ZPoly.defaultFactorCoeffBound f) := rfl
+
 namespace ZPoly
 
-/-- Mathlib-free irreducibility predicate for integer polynomials. -/
+/--
+Mathlib-free irreducibility predicate for integer polynomials.
+
+The class form lets downstream Mathlib-free APIs request irreducibility through
+typeclass inference. The predicate remains the usual nonzero, non-unit, no
+proper factorization condition.
+-/
 class Irreducible (f : ZPoly) : Prop where
+  /-- The zero polynomial is not irreducible. -/
   not_zero : f ≠ 0
+  /-- Units are excluded from irreducibility. -/
   not_unit : ¬ ZPoly.IsUnit f
+  /-- Every product decomposition has a unit factor. -/
   no_factors :
     ∀ a b : ZPoly, f = a * b → ZPoly.IsUnit a ∨ ZPoly.IsUnit b
 
 private def isNatPrime (n : Nat) : Bool :=
   2 ≤ n && !((List.range n).any fun d => 2 ≤ d && d * d ≤ n && n % d == 0)
 
-/-- Computational irreducibility checker backed by the public factorization API. -/
+/--
+Computational irreducibility checker backed by the public factorization API.
+
+Constants are checked by integer primality. Positive-degree polynomials are
+checked from the returned `Factorization`: the scalar must be a unit and there
+must be exactly one polynomial factor with multiplicity one.
+-/
 def isIrreducible (f : ZPoly) : Bool :=
   if f = 0 then
     false
