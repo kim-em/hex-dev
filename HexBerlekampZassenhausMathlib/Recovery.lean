@@ -293,6 +293,42 @@ theorem bhksRecover_isSome_of_forwardInputs
     (Hex.bhksRecover? f d).isSome :=
   bhksRecover_isSome_of_recovery f d h.toRecoveryHypotheses
 
+/--
+Compose the Mathlib-side forward-recovery inputs with the executable scheduled
+fast-path bridge: if a scheduled lift for the normalized square-free core
+satisfies the forward-verification inputs, then the public `Hex.factorFast`
+entry point succeeds.
+-/
+theorem factorFast_ne_none_of_forwardInputs_on_schedule
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    {target : Nat}
+    (hB_pos : 1 ≤ Hex.factorFastPrecisionCap f)
+    (hnormalized :
+      primeData = Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+    (hinputs :
+      ForwardRecoveryInputs
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.henselLiftData
+          (Hex.normalizeForFactor f).squareFreeCore target primeData))
+    (hmem : target ∈
+      Hex.henselPrecisionSchedule (Hex.factorFastPrecisionCap f)
+        (Hex.initialHenselPrecision (Hex.factorFastPrecisionCap f))
+        (Hex.ZPoly.quadraticDoublingSteps (Hex.factorFastPrecisionCap f) + 2)) :
+    Hex.factorFast f ≠ none := by
+  have hrecover :
+      Hex.bhksRecover? (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.henselLiftData
+            (Hex.normalizeForFactor f).squareFreeCore target primeData) =
+        some hinputs.expectedFactors :=
+    bhksRecover_eq_some_of_forwardInputs
+      (Hex.normalizeForFactor f).squareFreeCore
+      (Hex.henselLiftData
+        (Hex.normalizeForFactor f).squareFreeCore target primeData)
+      hinputs
+  exact
+    Hex.factorFast_ne_none_of_core_recovery_on_schedule
+      f primeData hB_pos hnormalized hmem hrecover
+
 end BHKS
 
 end HexBerlekampZassenhausMathlib
