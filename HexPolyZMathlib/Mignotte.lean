@@ -17,6 +17,16 @@ namespace HexPolyZMathlib
 
 noncomputable section
 
+private theorem range_foldl_add_eq_finset_sum_nat (g : Nat → Nat) (m : Nat) :
+    (List.range m).foldl (fun acc i => acc + g i) 0 = ∑ i ∈ Finset.range m, g i := by
+  induction m with
+  | zero =>
+      simp
+  | succ m ih =>
+      rw [List.range_succ, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [ih, Finset.sum_range_succ]
+
 /-- The Euclidean norm of the coefficient vector of an integer polynomial. -/
 def l2norm (f : Polynomial ℤ) : ℝ :=
   Real.sqrt (∑ i ∈ f.support, (f.coeff i : ℝ) ^ 2)
@@ -54,6 +64,55 @@ theorem mahlerMeasure_le_l2norm (f : Polynomial ℤ) :
     (f.map (Int.castRingHom ℂ)).mahlerMeasure ≤ l2norm f := by
   simpa [l2norm, support_map_intCast, sq_norm_coeff_map_intCast] using
     Polynomial.mahlerMeasure_le_sqrt_sum_sq_norm_coeff (f.map (Int.castRingHom ℂ))
+
+/--
+The transported Mathlib coefficient-vector norm squared is bounded by the
+executable squared coefficient norm.
+-/
+theorem l2norm_toPolynomial_sq_le_coeffNormSq (f : Hex.ZPoly) :
+    (l2norm (toPolynomial f)) ^ 2 ≤ (Hex.ZPoly.coeffNormSq f : ℝ) := by
+  let p := toPolynomial f
+  have hsupport_subset : p.support ⊆ Finset.range f.size := by
+    intro i hi
+    by_contra hi_range
+    have hsize : f.size ≤ i := Nat.le_of_not_gt (by
+      simpa using hi_range)
+    have hcoeff_zero : p.coeff i = 0 := by
+      change (toPolynomial f).coeff i = 0
+      rw [coeff_toPolynomial]
+      exact Hex.DensePoly.coeff_eq_zero_of_size_le f hsize
+    exact (Polynomial.mem_support_iff.mp hi) hcoeff_zero
+  have hsqrt :
+      (l2norm p) ^ 2 = ∑ i ∈ p.support, (p.coeff i : ℝ) ^ 2 := by
+    unfold l2norm
+    rw [Real.sq_sqrt]
+    exact Finset.sum_nonneg fun i hi => sq_nonneg _
+  have hsum_le :
+      ∑ i ∈ p.support, (p.coeff i : ℝ) ^ 2 ≤
+        ∑ i ∈ Finset.range f.size, (p.coeff i : ℝ) ^ 2 := by
+    exact Finset.sum_le_sum_of_subset_of_nonneg hsupport_subset
+      (fun i hi_range hi_support => sq_nonneg _)
+  have hnorm_sum :
+      (Hex.ZPoly.coeffNormSq f : ℝ) =
+        ∑ i ∈ Finset.range f.size, (p.coeff i : ℝ) ^ 2 := by
+    have hnat :
+        Hex.ZPoly.coeffNormSq f =
+          ∑ i ∈ Finset.range f.size, (f.coeff i).natAbs ^ 2 := by
+      rw [Hex.ZPoly.coeffNormSq_eq_sum, range_foldl_add_eq_finset_sum_nat]
+    rw [hnat]
+    calc
+      ((∑ i ∈ Finset.range f.size, (f.coeff i).natAbs ^ 2 : Nat) : ℝ) =
+          ∑ i ∈ Finset.range f.size, ((f.coeff i).natAbs : ℝ) ^ 2 := by
+        norm_cast
+      _ = ∑ i ∈ Finset.range f.size, (p.coeff i : ℝ) ^ 2 := by
+        apply Finset.sum_congr rfl
+        intro i hi
+        simp [p, sq_abs, Nat.cast_natAbs]
+  calc
+    (l2norm (toPolynomial f)) ^ 2 = (l2norm p) ^ 2 := rfl
+    _ = ∑ i ∈ p.support, (p.coeff i : ℝ) ^ 2 := hsqrt
+    _ ≤ ∑ i ∈ Finset.range f.size, (p.coeff i : ℝ) ^ 2 := hsum_le
+    _ = (Hex.ZPoly.coeffNormSq f : ℝ) := hnorm_sum.symm
 
 /-- Mignotte's coefficient bound for integer polynomial factors, obtained by
 combining Mathlib's Mahler-measure coefficient estimate with Landau's
