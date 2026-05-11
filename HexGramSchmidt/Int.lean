@@ -1200,10 +1200,104 @@ private theorem progressMatrix_det_invariant
       rw [progressMatrix_succ_det b k hk s hslt]
       exact ih hsle
 
+/-- Dot product of cast integer rows equals the rational cast of the integer
+dot product. -/
+private theorem dot_castIntRow_eq_cast_dot
+    (b : Matrix Int n m) (i j : Fin n) :
+    Matrix.dot (castIntRow b i) (castIntRow b j) =
+      ((Matrix.dot (b.row i) (b.row j) : Int) : Rat) := by
+  unfold Matrix.dot Hex.Vector.dotProduct
+  rw [foldl_intCast_add_aux (xs := List.finRange m)
+    (f := fun k : Fin m => (b.row i)[k] * (b.row j)[k]) (acc := 0)]
+  rw [show ((0 : Int) : Rat) = (0 : Rat) from rfl]
+  apply foldl_sum_congr_simple
+  intro k _hk
+  unfold castIntRow
+  have hi_entry : (Vector.map (fun x : Int => (x : Rat)) (b.row i))[k] = ((b.row i)[k] : Rat) := by
+    change (Vector.map (fun x : Int => (x : Rat)) (b.row i))[k.val] = ((b.row i)[k.val] : Rat)
+    rw [Vector.getElem_map]
+  have hj_entry : (Vector.map (fun x : Int => (x : Rat)) (b.row j))[k] = ((b.row j)[k] : Rat) := by
+    change (Vector.map (fun x : Int => (x : Rat)) (b.row j))[k.val] = ((b.row j)[k.val] : Rat)
+    rw [Vector.getElem_map]
+  rw [hi_entry, hj_entry]
+  rw [Rat.intCast_mul]
+
+/-- At `s = 0`, `progressMatrix` equals the entry-wise cast of
+`leadingGramMatrixInt`. -/
+private theorem progressMatrix_zero_eq_castIntDetMatrix (b : Matrix Int n m)
+    (k : Nat) (hk : k ≤ n) :
+    progressMatrix b k hk 0 =
+      castIntDetMatrix (GramSchmidt.leadingGramMatrixInt b k hk) := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let ii : Fin k := ⟨i, hi⟩
+  let jj : Fin k := ⟨j, hj⟩
+  change (progressMatrix b k hk 0)[ii][jj] =
+    (castIntDetMatrix (GramSchmidt.leadingGramMatrixInt b k hk))[ii][jj]
+  have hjnlt : ¬ jj.val < 0 := Nat.not_lt_zero _
+  rw [progressMatrix_get_ge b k hk 0 ii jj hjnlt]
+  rw [castIntDetMatrix_get]
+  -- LHS: Matrix.dot (castIntRow b (lift ii)) (castIntRow b (lift jj))
+  -- RHS: ((leadingGramMatrixInt b k hk)[ii][jj] : Int : Rat)
+  --   = (Matrix.dot (b.row (lift ii)) (b.row (lift jj)) : Int : Rat)
+  rw [dot_castIntRow_eq_cast_dot]
+  -- Match up the leadingGramMatrixInt entry definition.
+  simp [GramSchmidt.leadingGramMatrixInt, Matrix.ofFn]
+
+/-- `(gramDet b k hk : Rat)` equals the determinant of `progressMatrix` at the
+starting index `s = 0`. -/
+private theorem gramDet_rat_eq_progressMatrix_zero_det (b : Matrix Int n m)
+    (k : Nat) (hk : k ≤ n) :
+    (gramDet b k hk : Rat) = Matrix.det (progressMatrix b k hk 0) := by
+  -- (gramDet b k hk : Rat) = ((Matrix.det leadingGramMatrixInt b k hk : Int) : Rat)
+  -- via leadingGramMatrixInt_det_nonneg_pre + bareiss_eq_det.
+  have hdet_int :
+      Matrix.det (GramSchmidt.leadingGramMatrixInt b k hk) =
+        Int.ofNat (gramDet b k hk) := by
+    rw [gramDet, Matrix.bareiss_eq_det]
+    exact (Int.toNat_of_nonneg (leadingGramMatrixInt_det_nonneg_pre b k hk)).symm
+  have hstep1 : ((gramDet b k hk : Int) : Rat) =
+      ((Matrix.det (GramSchmidt.leadingGramMatrixInt b k hk) : Int) : Rat) := by
+    rw [hdet_int]
+    rfl
+  -- ((det leadingGramMatrixInt b k hk : Int) : Rat) = det (castIntDetMatrix _)
+  -- via det_intCast.
+  have hstep2 : ((Matrix.det (GramSchmidt.leadingGramMatrixInt b k hk) : Int) : Rat) =
+      Matrix.det (castIntDetMatrix (GramSchmidt.leadingGramMatrixInt b k hk)) :=
+    det_intCast (GramSchmidt.leadingGramMatrixInt b k hk)
+  -- det (castIntDetMatrix _) = det (progressMatrix b k hk 0) via progressMatrix_zero_eq.
+  have hstep3 :
+      Matrix.det (castIntDetMatrix (GramSchmidt.leadingGramMatrixInt b k hk)) =
+        Matrix.det (progressMatrix b k hk 0) := by
+    rw [progressMatrix_zero_eq_castIntDetMatrix]
+  -- Now (gramDet b k hk : Rat) = ((gramDet : Int) : Rat) by cast chain.
+  have hcast_chain : ((gramDet b k hk : Nat) : Rat) =
+      ((gramDet b k hk : Int) : Rat) := by
+    push_cast; rfl
+  rw [hcast_chain]
+  rw [hstep1, hstep2, hstep3]
+
+/-- Core proof of the Gram-determinant / squared-norm product bridge.
+
+Chain: `(gramDet b k hk : Rat) = det (progressMatrix b k hk 0) =
+det (progressMatrix b k hk k) = det (auxMatrix b k hk) = gramSchmidtNormProduct`.
+Note: the proof does not use the independence hypothesis since both sides are
+computed purely from `b`. The hypothesis is kept for parity with the public
+theorem and downstream callers. -/
+private theorem gramDet_eq_prod_normSq_core (b : Matrix Int n m)
+    (_hli : independent b) (k : Nat) (hk : k ≤ n) :
+    (gramDet b k hk : Rat) = gramSchmidtNormProduct b k hk := by
+  rw [gramDet_rat_eq_progressMatrix_zero_det b k hk]
+  rw [← progressMatrix_det_invariant b k hk k (Nat.le_refl k)]
+  rw [progressMatrix_full_eq_auxMatrix]
+  exact auxMatrix_det_eq_prod_normSq b k hk
+
 theorem gramDet_eq_prod_normSq (b : Matrix Int n m)
     (hli : independent b) (k : Nat) (hk : k ≤ n) :
-    (gramDet b k hk : Rat) = gramSchmidtNormProduct b k hk := by
-  sorry
+    (gramDet b k hk : Rat) = gramSchmidtNormProduct b k hk :=
+  gramDet_eq_prod_normSq_core b hli k hk
 
 theorem gramDet_pos (b : Matrix Int n m)
     (hli : independent b) (k : Nat) (hk : k ≤ n) (hk' : 0 < k) :
