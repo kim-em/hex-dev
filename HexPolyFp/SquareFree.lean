@@ -4380,6 +4380,114 @@ private theorem yunStep_tail_common_dvd_one_of_constant_common_dvd_one
     (yunStep_gcd_normalized_one_of_constant_common_dvd_one
       c w hc_zero hy_constant hcommon)
 
+private theorem yunLevel_measure_lt_of_reachable_gcd_constant
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p)
+    (hreachable : squareFreeContributionReachable c)
+    (hc : isOne c = false)
+    (hc_zero : c.isZero = false)
+    (hw_zero : w.isZero = false)
+    (hy_constant : ¬ 1 < (DensePoly.gcd c w).size)
+    (hcommon :
+      ∀ d : FpPoly p,
+        d ∣ c / DensePoly.gcd c w →
+          d ∣ DensePoly.gcd c w →
+            d ∣ (1 : FpPoly p)) :
+    (DensePoly.gcd c w).size + (w / DensePoly.gcd c w).size <
+      c.size + w.size := by
+  have _htail_common :
+      ∀ d : FpPoly p,
+        d ∣ DensePoly.gcd c w →
+          d ∣ w / DensePoly.gcd c w →
+            d ∣ (1 : FpPoly p) :=
+    yunStep_tail_common_dvd_one_of_constant_common_dvd_one
+      c w hc_zero hy_constant hcommon
+  have hc_size : 1 < c.size :=
+    one_lt_size_of_isOne_false_of_reachable c hc_zero hc hreachable
+  have hy_zero : (DensePoly.gcd c w).isZero = false :=
+    yunStep_gcd_nonzero_of_left_nonzero c w hc_zero
+  have hy_size : (DensePoly.gcd c w).size = 1 := by
+    have hy_pos : 0 < (DensePoly.gcd c w).size :=
+      size_pos_of_isZero_false (DensePoly.gcd c w) hy_zero
+    omega
+  have hw_ne : w ≠ 0 := by
+    intro hw_eq
+    rw [hw_eq] at hw_zero
+    exact (Bool.eq_not_self _).mp hw_zero.symm
+  have hsize :
+      (w / DensePoly.gcd c w).size + (DensePoly.gcd c w).size =
+        w.size + 1 :=
+    size_div_add_size_eq_size_add_one_of_dvd
+      (DensePoly.gcd_dvd_right c w) hw_ne
+  omega
+
+private theorem yunLevel_measure_lt_of_reachable_step
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (fuel : Nat)
+    (hstate :
+      squareFreeContributionReachable c ∧
+        c.isZero = false ∧
+          w.isZero = false)
+    (hreachable : yunFactorsPairwiseReachable c w (fuel + 1))
+    (hc : isOne c = false) :
+    (DensePoly.gcd c w).size + (w / DensePoly.gcd c w).size <
+      c.size + w.size := by
+  rcases hstate with ⟨hcontribution_reachable, hc_zero, hw_zero⟩
+  by_cases hy_nonconstant : 1 < (DensePoly.gcd c w).size
+  · exact
+      yunLevel_measure_lt_of_reachable_gcd_nonconstant
+        c w hcontribution_reachable hc hc_zero hw_zero hy_nonconstant
+  · exact
+      yunLevel_measure_lt_of_reachable_gcd_constant
+        c w hcontribution_reachable hc hc_zero hw_zero hy_nonconstant
+        (yunFactorsPairwiseReachable_common_dvd_one c w fuel hreachable)
+
+private theorem yunFactorsLevelCompletes_of_size_bound
+    [ZMod64.PrimeModulus p] (c w : FpPoly p) (base level fuel : Nat)
+    (hstate :
+      ∀ c w : FpPoly p, ∀ fuel : Nat,
+        yunFactorsPairwiseReachable c w fuel →
+          squareFreeContributionReachable c ∧
+            c.isZero = false ∧
+              w.isZero = false)
+    (hreachable : yunFactorsPairwiseReachable c w fuel)
+    (hbound : c.size + w.size ≤ fuel + 1) :
+    yunFactorsLevelCompletes c w base level fuel := by
+  induction fuel generalizing c w level with
+  | zero =>
+      have hcurrent := hstate c w 0 hreachable
+      have hc_pos : 0 < c.size :=
+        size_pos_of_isZero_false c hcurrent.2.1
+      have hw_pos : 0 < w.size :=
+        size_pos_of_isZero_false w hcurrent.2.2
+      exfalso
+      omega
+  | succ fuel ih =>
+      by_cases hc : isOne c = true
+      · exact Or.inl hc
+      · have hc_false : isOne c = false := by
+          cases h : isOne c
+          · rfl
+          · exact False.elim (hc h)
+        have htail_reachable :
+            yunFactorsPairwiseReachable
+              (DensePoly.gcd c w)
+              (w / DensePoly.gcd c w)
+              fuel :=
+          yunFactorsPairwiseReachable_step c w fuel hreachable
+        have hmeasure :
+            (DensePoly.gcd c w).size + (w / DensePoly.gcd c w).size <
+              c.size + w.size :=
+          yunLevel_measure_lt_of_reachable_step
+            c w fuel (hstate c w (fuel + 1) hreachable) hreachable hc_false
+        have htail_bound :
+            (DensePoly.gcd c w).size + (w / DensePoly.gcd c w).size ≤
+              fuel + 1 := by
+          omega
+        exact Or.inr
+          (ih (DensePoly.gcd c w) (w / DensePoly.gcd c w) (level + 1)
+            htail_reachable htail_bound)
+
 private theorem yunFactorsWithLevel_factor_mem_acc_or_dvd_current
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p) (base level fuel : Nat)
