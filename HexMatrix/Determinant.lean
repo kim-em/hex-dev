@@ -4844,7 +4844,8 @@ private theorem det_colReplace_zero {R : Type u} [Lean.Grind.CommRing R] {n : Na
   rw [hcol] at h
   grind
 
-private theorem det_colReplace_sum_list {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+/-- Determinant linearity in one replaced column, finite-list form. -/
+theorem det_colReplace_sum_list {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (dst : Fin n) {β : Type v} (xs : List β)
     (coeff : β → R) (source : β → Fin n → R) :
     det (colReplace M dst
@@ -4902,6 +4903,17 @@ private theorem det_colReplace_sum_list {R : Type u} [Lean.Grind.CommRing R] {n 
                 xs.foldl
                   (fun acc x => acc + coeff x * det (colReplace M dst (source x)))
                   (0 + coeff x * det (colReplace M dst (source x))) := hstart
+
+/-- Determinant linearity in one replaced column, indexed by `Fin m`. -/
+theorem det_colReplace_sum_finRange {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (M : Matrix R n n) (dst : Fin n) (coeff : Fin m → R)
+    (source : Fin m → Fin n → R) :
+    det (colReplace M dst
+        (fun r => (List.finRange m).foldl
+          (fun acc x => acc + coeff x * source x r) 0)) =
+      (List.finRange m).foldl
+        (fun acc x => acc + coeff x * det (colReplace M dst (source x))) 0 :=
+  det_colReplace_sum_list M dst (List.finRange m) coeff source
 
 /-- Square matrix whose `j`-th column is the finite linear combination of the
 columns of `source` with coefficients from row `j` of `coeff`. -/
@@ -5105,6 +5117,17 @@ theorem det_eq_zero_of_col_eq {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (hcol : ∀ r : Fin n, M[r][src] = M[r][dst]) :
     det M = 0 := by
   simpa [det] using permutationVectors_duplicateCol_sum M src dst h hcol
+
+/-- Replacing a column by an already-present different column creates a
+duplicate column, so the determinant is zero. -/
+theorem det_colReplace_existing_col_eq_zero
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (dst src : Fin n) (hsrcdst : src ≠ dst) :
+    det (colReplace M dst (fun r => M[r][src])) = 0 := by
+  apply det_eq_zero_of_col_eq (colReplace M dst (fun r => M[r][src])) src dst hsrcdst
+  intro r
+  rw [colReplace_get, colReplace_get]
+  rw [if_neg hsrcdst, if_pos rfl]
 
 /-- Square submatrix obtained by selecting an ordered tuple of columns. -/
 def columnTupleMatrix {R : Type u} {n m : Nat}
