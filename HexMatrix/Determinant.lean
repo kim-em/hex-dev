@@ -3038,6 +3038,78 @@ theorem detSign_swapPermutationValues {R : Type u}
   rw [hswap]
   exact detSign_transposeValues (R := R) perm pi pj hnodup hpij
 
+/-- An adjacent swap at a descent strictly decreases inversion count by 1. -/
+private theorem inversionCount_adjacent_swap_descent {n : Nat}
+    (pre post : List (Fin n)) (a b : Fin n) (hba : b < a) :
+    inversionCount (pre ++ a :: b :: post) =
+      inversionCount (pre ++ b :: a :: post) + 1 := by
+  rw [show pre ++ a :: b :: post = pre ++ ([a, b] ++ post) by simp]
+  rw [show pre ++ b :: a :: post = pre ++ ([b, a] ++ post) by simp]
+  have hcross :
+      crossInversionCount pre ([a, b] ++ post) =
+        crossInversionCount pre ([b, a] ++ post) := by
+    repeat rw [crossInversionCount_append_right]
+    rw [crossInversionCount_pair_swap_right]
+  have htail :
+      crossInversionCount [a, b] post =
+        crossInversionCount [b, a] post :=
+    crossInversionCount_pair_swap_left post a b
+  rw [inversionCount_append pre ([a, b] ++ post)]
+  rw [inversionCount_append pre ([b, a] ++ post)]
+  rw [hcross]
+  rw [inversionCount_append [a, b] post]
+  rw [inversionCount_append [b, a] post]
+  rw [htail]
+  rw [inversionCount_pair a b]
+  rw [inversionCount_pair b a]
+  have hab' : ¬ a < b := by omega
+  simp [hba, hab']
+  omega
+
+/-- For an adjacent descent pair in a permutation vector, transposing the two
+positions decreases the inversion count by exactly one. -/
+private theorem inversionCount_transposePermutationValues_adjacent_descent
+    {n : Nat} (perm : Vector (Fin n) n)
+    {i j : Fin n} (hij : i.val + 1 = j.val) (hdesc : perm[j] < perm[i]) :
+    inversionCount perm.toList =
+      inversionCount (transposePermutationValues perm i j).toList + 1 := by
+  have hlt : i.val < j.val := by omega
+  have hmid : j.val - i.val - 1 = 0 := by omega
+  rw [vector_toList_split_two perm hlt, hmid,
+      transposePermutationValues_toList_of_lt perm hlt, hmid]
+  simp only [List.take_zero]
+  -- After simplification, both lists have the form `pre ++ x :: y :: post`,
+  -- and we apply the strict-decrease lemma.
+  have h := inversionCount_adjacent_swap_descent
+    (perm.toList.take i.val) (perm.toList.drop (j.val + 1))
+    perm[i] perm[j] hdesc
+  simpa using h
+
+/-- Composition distributes over right transposition of positions. -/
+private theorem composePermutationValues_transposePermutationValues_right
+    {n : Nat} (sigma tau : Vector (Fin n) n) (i j : Fin n) :
+    composePermutationValues sigma (transposePermutationValues tau i j) =
+      transposePermutationValues (composePermutationValues sigma tau) i j := by
+  apply Vector.ext
+  intro k hk
+  let r : Fin n := ⟨k, hk⟩
+  show
+    (composePermutationValues sigma (transposePermutationValues tau i j))[r] =
+      (transposePermutationValues (composePermutationValues sigma tau) i j)[r]
+  have h1 : (composePermutationValues sigma (transposePermutationValues tau i j))[r] =
+      sigma[(transposePermutationValues tau i j)[r]] :=
+    composePermutationValues_get sigma (transposePermutationValues tau i j) r
+  have h2 : (transposePermutationValues tau i j)[r] = tau[finTranspose i j r] :=
+    transposePermutationValues_get tau i j r
+  have h3 : (transposePermutationValues (composePermutationValues sigma tau) i j)[r] =
+      (composePermutationValues sigma tau)[finTranspose i j r] :=
+    transposePermutationValues_get (composePermutationValues sigma tau) i j r
+  have h4 : (composePermutationValues sigma tau)[finTranspose i j r] =
+      sigma[tau[finTranspose i j r]] :=
+    composePermutationValues_get sigma tau (finTranspose i j r)
+  rw [h1, h3, h4]
+  exact congrArg (fun x => sigma[x]) h2
+
 private theorem swapPermutationValues_idxOf_left {n : Nat}
     (perm : Vector (Fin n) n) (i j : Fin n)
     (hnodup : perm.toList.Nodup) :
