@@ -4895,6 +4895,48 @@ def columnTupleVectorFn {n m : Nat} (cols : Vector (Fin m) n) : Fin n → Fin m 
     (cols : Vector (Fin m) n) (i : Fin n) :
     columnTupleVectorFn cols i = cols[i] := rfl
 
+/-- Reindexing the selected columns by a permutation is entrywise the generic
+column permutation of the selected minor. -/
+@[simp] theorem columnTupleMatrix_compose_perm_entry
+    {R : Type u} {n m : Nat} (A : Matrix R n m)
+    (s : Vector (Fin m) n) (sigma : Vector (Fin n) n)
+    (r c : Fin n) :
+    (columnTupleMatrix A (fun i => s[sigma[i]]))[r][c] =
+      (columnTupleMatrix A (columnTupleVectorFn s))[r][sigma[c]] := by
+  rw [columnTupleMatrix_entry, columnTupleMatrix_entry]
+  exact (congrArg (fun col : Fin m => A[r][col])
+    (columnTupleVectorFn_apply s (sigma[c]))).symm
+
+/-- Reindexing the selected columns by a permutation is the generic column
+permutation of the selected minor. -/
+theorem columnTupleMatrix_compose_perm_eq_colPermute
+    {R : Type u} {n m : Nat} (A : Matrix R n m)
+    (s : Vector (Fin m) n) (sigma : Vector (Fin n) n) :
+    columnTupleMatrix A (fun i => s[sigma[i]]) =
+      (ofFn fun r c => (columnTupleMatrix A (columnTupleVectorFn s))[r][sigma[c]]) := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro c hc
+  change
+    (columnTupleMatrix A (fun i => s[sigma[i]]))[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
+      (ofFn fun r c =>
+        (columnTupleMatrix A (columnTupleVectorFn s))[r][sigma[c]])[
+          (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+  rw [columnTupleMatrix_compose_perm_entry]
+  simp [Matrix.ofFn]
+
+/-- Specialization of the generic column-permutation determinant sign theorem
+to selected-minor matrices. -/
+theorem det_columnTupleMatrix_compose_perm
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (A : Matrix R n m) (s : Vector (Fin m) n) (sigma : Vector (Fin n) n)
+    (hsigma : sigma ∈ permutationVectors n) :
+    det (columnTupleMatrix A (fun i => s[sigma[i]])) =
+      detSign (R := R) sigma * det (columnTupleMatrix A (columnTupleVectorFn s)) := by
+  rw [columnTupleMatrix_compose_perm_eq_colPermute A s sigma]
+  exact det_colPermute_vector (columnTupleMatrix A (columnTupleVectorFn s)) sigma hsigma
+
 /-- Enumerate all ordered `n`-tuples of columns from `Fin m`. -/
 def columnTupleVectors : (n m : Nat) → List (Vector (Fin m) n)
   | 0, _ => [emptyVec]
