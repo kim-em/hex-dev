@@ -32,6 +32,46 @@ theorem identity_independent {n : Nat} : (1 : Matrix Int n n).independent := by
   rw [Matrix.gramMatrix_one, Matrix.submatrix_one, Matrix.det_one]
   decide
 
+theorem gramMatrix_leadingRows_eq_submatrix {n : Nat} (M : Matrix Int n n) (k : Fin n) :
+    gramMatrix (leadingRows M (k.val + 1) (Nat.succ_le_of_lt k.isLt)) =
+      submatrix (gramMatrix M) k := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let iFin : Fin (k.val + 1) := ⟨i, hi⟩
+  let jFin : Fin (k.val + 1) := ⟨j, hj⟩
+  let ii : Fin n := ⟨i, Nat.lt_of_lt_of_le hi (Nat.succ_le_of_lt k.isLt)⟩
+  let jj : Fin n := ⟨j, Nat.lt_of_lt_of_le hj (Nat.succ_le_of_lt k.isLt)⟩
+  have hrow_i :
+      row (leadingRows M (k.val + 1) (Nat.succ_le_of_lt k.isLt)) iFin = row M ii := by
+    apply Vector.ext
+    intro c hc
+    simp [row, leadingRows, ofFn, iFin, ii]
+  have hrow_j :
+      row (leadingRows M (k.val + 1) (Nat.succ_le_of_lt k.isLt)) jFin = row M jj := by
+    apply Vector.ext
+    intro c hc
+    simp [row, leadingRows, ofFn, jFin, jj]
+  have hdot :
+      Hex.Vector.dotProduct
+          (row (leadingRows M (k.val + 1) (Nat.succ_le_of_lt k.isLt)) iFin)
+          (row (leadingRows M (k.val + 1) (Nat.succ_le_of_lt k.isLt)) jFin) =
+        Hex.Vector.dotProduct (row M ii) (row M jj) := by
+    rw [hrow_i, hrow_j]
+  simpa [gramMatrix, submatrix, ofFn, iFin, jFin, ii, jj] using
+    hdot
+
+theorem independent_of_upperTriangular_pos_diag {n : Nat}
+    (M : Matrix Int n n)
+    (hzero : ∀ i j : Fin n, j.val < i.val -> M[i][j] = 0)
+    (hdiag : ∀ i : Fin n, 0 < M[i][i]) : M.independent := by
+  intro k
+  have hpos :=
+    det_gramMatrix_leadingRows_pos_of_upperTriangular_pos_diag M hzero hdiag
+      (k.val + 1) (Nat.succ_le_of_lt k.isLt)
+  rwa [gramMatrix_leadingRows_eq_submatrix M k] at hpos
+
 /-- Product of the squared Gram-Schmidt basis norms along the first `k` rows. -/
 noncomputable def gramSchmidtNormProduct (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) : Rat :=
   (List.finRange k).foldl
