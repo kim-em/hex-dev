@@ -3771,6 +3771,57 @@ private theorem derivative_isZero_true_of_dvd_self_derivative
       rw [hdeg_mul] at hdeg_eq
       omega
 
+private theorem right_factor_derivative_isZero_of_mul_derivative_isZero_of_common_dvd_one
+    [ZMod64.PrimeModulus p] (y z : FpPoly p)
+    (hder : (DensePoly.derivative (z * y)).isZero = true)
+    (hcommon :
+      ∀ d : FpPoly p, d ∣ y → d ∣ z → d ∣ (1 : FpPoly p)) :
+    (DensePoly.derivative z).isZero = true := by
+  have hsum_zero :
+      DensePoly.derivative z * y + z * DensePoly.derivative y = 0 := by
+    have hzero : DensePoly.derivative (z * y) = 0 :=
+      eq_zero_of_isZero_true _ hder
+    calc
+      DensePoly.derivative z * y + z * DensePoly.derivative y =
+          DensePoly.derivative (z * y) := (DensePoly.derivative_mul z y).symm
+      _ = 0 := hzero
+  have hz_dvd_sum :
+      z ∣ DensePoly.derivative z * y + z * DensePoly.derivative y := by
+    rw [hsum_zero]
+    exact ⟨0, by rw [mul_zero]⟩
+  have hz_dvd_right : z ∣ z * DensePoly.derivative y := by
+    exact ⟨DensePoly.derivative y, rfl⟩
+  have hz_dvd_left : z ∣ DensePoly.derivative z * y := by
+    have hsub := dvd_sub_poly hz_dvd_sum hz_dvd_right
+    have hsub_eq :
+        (DensePoly.derivative z * y + z * DensePoly.derivative y) -
+            z * DensePoly.derivative y =
+          DensePoly.derivative z * y := by
+      rw [sub_eq_add_neg]
+      calc
+        (DensePoly.derivative z * y + z * DensePoly.derivative y) +
+            -(z * DensePoly.derivative y)
+            = DensePoly.derivative z * y +
+                (z * DensePoly.derivative y + -(z * DensePoly.derivative y)) := by
+              exact DensePoly.add_assoc_poly
+                (DensePoly.derivative z * y)
+                (z * DensePoly.derivative y)
+                (-(z * DensePoly.derivative y))
+        _ = DensePoly.derivative z * y + 0 := by rw [add_right_neg]
+        _ = DensePoly.derivative z * y := add_zero _
+    simpa [hsub_eq] using hsub
+  have hz_dvd_y_dz : z ∣ y * DensePoly.derivative z := by
+    have hcomm : y * DensePoly.derivative z = DensePoly.derivative z * y :=
+      DensePoly.mul_comm_poly y (DensePoly.derivative z)
+    rw [hcomm]
+    exact hz_dvd_left
+  have hz_dvd_dz : z ∣ DensePoly.derivative z := by
+    exact dvd_of_dvd_mul_of_common_dvd_one
+      (g := z) (c := y) (h := DensePoly.derivative z)
+      hz_dvd_y_dz
+      hcommon
+  exact derivative_isZero_true_of_dvd_self_derivative z hz_dvd_dz
+
 private theorem powLinear_ne_zero
     [ZMod64.PrimeModulus p] {d : FpPoly p}
     (hd : d ≠ 0) :
