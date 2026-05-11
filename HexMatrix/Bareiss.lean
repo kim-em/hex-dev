@@ -307,6 +307,54 @@ theorem stepMatrix_borderedMinor_update
   rw [hpivot, hentry, hleft, htop]
   exact hexact
 
+/-- Exact-division bridge for one Bareiss bordered-minor update.
+
+Once a determinant identity supplies the numerator as `nextMinor * prevPivot`,
+this lemma packages it as the `exactDiv` premise expected by
+`stepMatrix_borderedMinor_update`. -/
+theorem bareissExactDiv_borderedMinor_of_mul_eq
+    (source : Matrix Int n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (i j : Fin n) (hi : k < i.val) (hj : k < j.val) (prevPivot : Int)
+    (hprev_ne : prevPivot ≠ 0)
+    (hdesnanot :
+      det (borderedMinor source (k + 1) hnext i j) * prevPivot =
+        det (borderedMinor source k hk
+            (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n)
+            (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+          det (borderedMinor source k hk i j) -
+          det (borderedMinor source k hk
+            i (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+          det (borderedMinor source k hk
+            (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) j)) :
+    exactDiv
+        (det (borderedMinor source k hk
+            (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n)
+            (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+          det (borderedMinor source k hk i j) -
+          det (borderedMinor source k hk
+            i (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+          det (borderedMinor source k hk
+            (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) j))
+        prevPivot =
+      det (borderedMinor source (k + 1) hnext i j) := by
+  let nextMinor := det (borderedMinor source (k + 1) hnext i j)
+  let numerator :=
+    det (borderedMinor source k hk
+        (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n)
+        (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+      det (borderedMinor source k hk i j) -
+      det (borderedMinor source k hk
+        i (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
+      det (borderedMinor source k hk
+        (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) j)
+  have hnum : numerator = prevPivot * nextMinor := by
+    dsimp [numerator, nextMinor]
+    rw [← hdesnanot, Lean.Grind.CommRing.mul_comm]
+  have hdvd : prevPivot ∣ numerator := ⟨nextMinor, hnum⟩
+  rw [exactDiv_eq_divExact hdvd]
+  change numerator / prevPivot = nextMinor
+  exact Int.ediv_eq_of_eq_mul_right hprev_ne hnum
+
 private structure BareissArrayState where
   step : Nat
   matrix : Array (Array Int)

@@ -436,23 +436,8 @@ theorem bareissExactDiv_borderedMinor_of_mul_eq
             (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) j))
         prevPivot =
       Hex.Matrix.det (Hex.Matrix.borderedMinor source (k + 1) hnext i j) := by
-  let nextMinor := Hex.Matrix.det (Hex.Matrix.borderedMinor source (k + 1) hnext i j)
-  let numerator :=
-    Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
-        (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n)
-        (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
-      Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk i j) -
-      Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
-        i (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
-      Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
-        (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) j)
-  have hnum : numerator = prevPivot * nextMinor := by
-    dsimp [numerator, nextMinor]
-    rw [← hdesnanot, mul_comm]
-  have hdvd : prevPivot ∣ numerator := ⟨nextMinor, hnum⟩
-  rw [Hex.Matrix.exactDiv_eq_divExact hdvd]
-  change numerator / prevPivot = nextMinor
-  exact Int.ediv_eq_of_eq_mul_right hprev_ne hnum
+  exact Hex.Matrix.bareissExactDiv_borderedMinor_of_mul_eq
+    source k hk hnext i j hi hj prevPivot hprev_ne hdesnanot
 
 /-- Cyclic shift on `Fin (k + 1)` mapping `0 ↦ k`, `r ↦ r - 1` for `r ≥ 1`.
 

@@ -275,6 +275,7 @@ private def factorizationEdgeCases : List FactorizationCase :=
 #guard !isGoodPrime repeatedRootPoly 5
 #guard !isGoodPrime leadingCoeffDivisibleByFive 5
 #guard !isGoodPrime (0 : ZPoly) 5
+#guard !isGoodPrime squareFreeTypical 2
 
 #guard modularFactorDegreesAt? x4Plus1 5 = some #[2, 2]
 #guard modularFactorDegreesAt? quadSqrt2Sqrt3 23 = some #[1, 1, 1, 1]
@@ -283,9 +284,9 @@ private def factorizationEdgeCases : List FactorizationCase :=
 #guard modularFactorDegreesAt? x4Plus1 29 = none
 #guard modularFactorDegreesAt? leadingCoeffDivisibleByFive 5 = none
 
-#guard choosePrime squareFreeTypical = 2
-#guard isGoodPrime squareFreeTypical 2
-#guard choosePrime leadingCoeffDivisibleByFive = 2
+#guard choosePrime squareFreeTypical = 3
+#guard isGoodPrime squareFreeTypical 3
+#guard choosePrime leadingCoeffDivisibleByFive = 3
 
 #guard
   let data := choosePrimeData squareFreeTypical
@@ -299,15 +300,22 @@ private def factorizationEdgeCases : List FactorizationCase :=
   letI := data.bounds
   data.p = choosePrime repeatedRootPoly &&
     data.fModP == ZPoly.modP data.p repeatedRootPoly &&
-    data.p = 2 &&
+    data.p = 3 &&
     data.factorsModP.size = 1
 
 #guard
   let data := choosePrimeData leadingCoeffDivisibleByFive
-  letI := data.bounds
   data.p = choosePrime leadingCoeffDivisibleByFive &&
-    data.fModP == ZPoly.modP data.p leadingCoeffDivisibleByFive &&
-    isGoodPrime leadingCoeffDivisibleByFive data.p
+    data.p = 3
+
+#guard
+  let data := choosePrimeData leadingCoeffDivisibleByFive
+  letI := data.bounds
+  data.fModP == ZPoly.modP data.p leadingCoeffDivisibleByFive
+
+#guard
+  let data := choosePrimeData leadingCoeffDivisibleByFive
+  3 <= data.p
 
 #guard bhksBound (0 : ZPoly) = 1
 #guard bhksBound ZPoly.X = 9
