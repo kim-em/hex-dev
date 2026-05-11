@@ -2236,6 +2236,127 @@ def bhksIndicatorCandidates?
           | none => none)
     (some #[])
 
+private theorem bhksIndicatorCandidates?_foldl_eq_some_append
+    (f : ZPoly) (d : LiftData) :
+    ∀ (indicators : List (Array Int)) (candidates : List ZPoly) (acc : Array ZPoly),
+      (hlength : candidates.length = indicators.length) →
+      (∀ i (hi : i < indicators.length),
+        ∃ quotient,
+          bhksIndicatorCandidate? f d indicators[i] =
+            some (candidates[i]'(by rw [hlength]; exact hi), quotient)) →
+      List.foldl
+          (fun acc indicator =>
+            match acc with
+            | none => none
+            | some candidates =>
+                match bhksIndicatorCandidate? f d indicator with
+                | some candidate => some (candidates.push candidate.1)
+                | none => none)
+          (some acc) indicators =
+        some (acc ++ candidates.toArray)
+  | [], candidates, acc, hlength, _ => by
+      have hcandidates : candidates = [] := List.eq_nil_of_length_eq_zero hlength
+      subst hcandidates
+      apply congrArg some
+      rw [← Array.toList_inj]
+      simp
+  | indicator :: indicators, candidates, acc, hlength, hcandidate => by
+      cases candidates with
+      | nil => simp at hlength
+      | cons candidate candidates =>
+          have hhead :
+              ∃ quotient,
+                bhksIndicatorCandidate? f d indicator = some (candidate, quotient) := by
+            simpa using hcandidate 0 (Nat.succ_pos _)
+          rcases hhead with ⟨quotient, hhead⟩
+          have hlength_tail : candidates.length = indicators.length := by
+            simpa using Nat.succ.inj hlength
+          have htail :
+              ∀ i (hi : i < indicators.length),
+                ∃ quotient,
+                  bhksIndicatorCandidate? f d indicators[i] =
+                    some (candidates[i]'(by rw [hlength_tail]; exact hi), quotient) := by
+            intro i hi
+            simpa using hcandidate (i + 1) (Nat.succ_lt_succ hi)
+          calc
+            List.foldl
+                (fun acc indicator =>
+                  match acc with
+                  | none => none
+                  | some candidates =>
+                      match bhksIndicatorCandidate? f d indicator with
+                      | some candidate => some (candidates.push candidate.1)
+                      | none => none)
+                (some acc) (indicator :: indicators)
+                =
+              List.foldl
+                (fun acc indicator =>
+                  match acc with
+                  | none => none
+                  | some candidates =>
+                      match bhksIndicatorCandidate? f d indicator with
+                      | some candidate => some (candidates.push candidate.1)
+                      | none => none)
+                (some (acc.push candidate)) indicators := by
+                  simp [hhead]
+            _ = some (acc.push candidate ++ candidates.toArray) := by
+                  exact bhksIndicatorCandidates?_foldl_eq_some_append
+                    f d indicators candidates (acc.push candidate) hlength_tail htail
+            _ = some (acc ++ (candidate :: candidates).toArray) := by
+                  apply congrArg some
+                  rw [← Array.toList_inj]
+                  simp [Array.toList_append]
+
+/--
+Assemble the BHKS candidate fold from per-indicator reconstruction facts.
+
+This is the proof-facing surface for callers that know every indicator row
+reconstructs and exactly divides `f`: with a size agreement and one quotient
+witness for each row, the executable fold returns the requested candidate
+array.
+-/
+theorem bhksIndicatorCandidates?_eq_some_of_getD
+    (f : ZPoly) (d : LiftData)
+    (indicators : Array (Array Int)) (candidates : Array ZPoly)
+    (hsize : candidates.size = indicators.size)
+    (hcandidate :
+      ∀ i, i < indicators.size →
+        ∃ quotient,
+          bhksIndicatorCandidate? f d (indicators.getD i #[]) =
+            some (candidates.getD i 0, quotient)) :
+    bhksIndicatorCandidates? f d indicators = some candidates := by
+  unfold bhksIndicatorCandidates?
+  rw [← Array.foldl_toList]
+  have hlength : candidates.toList.length = indicators.toList.length := by
+    simpa [Array.length_toList] using hsize
+  have hcandidate_list :
+      ∀ i (hi : i < indicators.toList.length),
+        ∃ quotient,
+          bhksIndicatorCandidate? f d indicators.toList[i] =
+            some (candidates.toList[i]'(by rw [hlength]; exact hi), quotient) := by
+    intro i hi
+    have hi_array : i < indicators.size := by
+      simpa [Array.length_toList] using hi
+    have hi_candidates : i < candidates.size := by
+      simpa [hsize] using hi_array
+    rcases hcandidate i hi_array with ⟨quotient, hquotient⟩
+    refine ⟨quotient, ?_⟩
+    have hind :
+        indicators.toList[i] = indicators.getD i #[] := by
+      simp [Array.getD, Array.getElem_toList, hi_array]
+    have hcand :
+        candidates.toList[i] = candidates.getD i 0 := by
+      simp [Array.getD, Array.getElem_toList, hi_candidates]
+    rw [hind, hcand]
+    exact hquotient
+  have hfold :=
+    bhksIndicatorCandidates?_foldl_eq_some_append f d
+      indicators.toList candidates.toList #[] hlength hcandidate_list
+  rw [hfold]
+  apply congrArg some
+  rw [← Array.toList_inj]
+  simp
+
 private inductive BhksRecoveryResult where
   | success (candidates : Array ZPoly)
   | degenerate
