@@ -2621,17 +2621,7 @@ structure SupportedEntry (p n : Nat) [ZMod64.Bounds p] where
 
 /-- The current committed table supports `C(2, 1)`. -/
 def supportedEntry_2_1 : SupportedEntry 2 1 :=
-  ⟨luebeckConwayPolynomial_2_1, by
-    constructor
-    · decide
-    · intro m hm
-      have hmle : m ≤ 2 := Nat.le_of_dvd (by decide : 0 < 2) hm
-      have hcases : m = 0 ∨ m = 1 ∨ m = 2 := by omega
-      rcases hcases with rfl | rfl | rfl
-      · simp at hm
-      · exact Or.inl rfl
-      · exact Or.inr rfl,
-    luebeckConwayPolynomial?_hit_2_1⟩
+  ⟨luebeckConwayPolynomial_2_1, prime_two, luebeckConwayPolynomial?_hit_2_1⟩
 
 /-- The current committed table supports `C(2, 2)`. -/
 def supportedEntry_2_2 : SupportedEntry 2 2 :=
