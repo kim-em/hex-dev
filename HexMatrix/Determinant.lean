@@ -3110,6 +3110,225 @@ private theorem composePermutationValues_transposePermutationValues_right
   rw [h1, h3, h4]
   exact congrArg (fun x => sigma[x]) h2
 
+private theorem exists_adjacent_descent {n : Nat}
+    (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup)
+    (hpos : 0 < inversionCount perm.toList) :
+    ∃ i : Fin n, ∃ hij : i.val + 1 < n,
+      perm[(⟨i.val + 1, hij⟩ : Fin n)] < perm[i] := by
+  induction n with
+  | zero =>
+      have hnil : perm.toList = [] := by
+        apply List.eq_nil_iff_length_eq_zero.mpr
+        simp [Vector.length_toList]
+      simp [hnil, inversionCount] at hpos
+  | succ n ih =>
+      let k := perm.toList.idxOf (Fin.last n)
+      have hk : k < n + 1 := by
+        simpa [k, Vector.length_toList] using
+          finLast_idxOf_lt_of_full_nodup (by simp [Vector.length_toList]) hnodup
+      have hidx : perm.toList.idxOf (Fin.last n) = k := rfl
+      let peeled := peelLastVector perm k hk hidx hnodup
+      have hpeeled_nodup : peeled.toList.Nodup :=
+        peelLastVector_nodup perm k hk hidx hnodup
+      let pos : Fin (n + 1) := ⟨k, hk⟩
+      have hinsert :
+          insertAt (Fin.last n) (peeled.map Fin.castSucc) pos = perm := by
+        simpa [peeled, pos] using
+          insertAt_peelLastVector perm k hk hidx hnodup
+      have hcount :
+          inversionCount perm.toList =
+            inversionCount peeled.toList + (n - pos.val) := by
+        rw [← hinsert]
+        rw [insertAt_toList, vector_toList_map]
+        simpa [peeled, pos, Vector.length_toList] using
+          inversionCount_insertIdx_castSucc_last_eq peeled.toList pos.val (by
+            simp [Vector.length_toList, pos]
+            omega)
+      by_cases hlast : pos.val = n
+      · have hpeeled_pos : 0 < inversionCount peeled.toList := by
+          rw [hcount] at hpos
+          omega
+        rcases ih peeled hpeeled_nodup hpeeled_pos with ⟨i, hij, hdesc⟩
+        have hijSucc : i.val + 1 < n + 1 := by omega
+        let iUp : Fin (n + 1) := ⟨i.val, by omega⟩
+        have hijUp : iUp.val + 1 < n + 1 := by simp [iUp, hijSucc]
+        refine ⟨iUp, hijUp, ?_⟩
+        · have hpos_eq : pos = Fin.last n := Fin.ext hlast
+          have hget_next :
+              perm[(⟨i.val + 1, hijSucc⟩ : Fin (n + 1))] =
+                (peeled[(⟨i.val + 1, hij⟩ : Fin n)]).castSucc := by
+            have hraw :
+                (insertAt (Fin.last n) (peeled.map Fin.castSucc) (Fin.last n))[
+                    (⟨i.val + 1, hijSucc⟩ : Fin (n + 1))] =
+                  (peeled[(⟨i.val + 1, hij⟩ : Fin n)]).castSucc := by
+              have hraise :
+                  raiseFinAbove (Fin.last n) (⟨i.val + 1, hij⟩ : Fin n) =
+                    (⟨i.val + 1, hijSucc⟩ : Fin (n + 1)) := by
+                apply Fin.ext
+                simp [raiseFinAbove, hij]
+              have hbase := insertAt_get_raiseFinAbove
+                (Fin.last n) (peeled.map Fin.castSucc) (Fin.last n)
+                (⟨i.val + 1, hij⟩ : Fin n)
+              have hbase' :
+                  (insertAt (Fin.last n) (peeled.map Fin.castSucc) (Fin.last n))[
+                      raiseFinAbove (Fin.last n) (⟨i.val + 1, hij⟩ : Fin n)] =
+                    (peeled[(⟨i.val + 1, hij⟩ : Fin n)]).castSucc := by
+                simpa using hbase
+              exact (vector_get_fin_congr
+                (insertAt (Fin.last n) (peeled.map Fin.castSucc) (Fin.last n))
+                hraise).symm.trans hbase'
+            have hinsert_last :
+                insertAt (Fin.last n) (peeled.map Fin.castSucc) (Fin.last n) = perm :=
+              (congrArg (fun p => insertAt (Fin.last n) (peeled.map Fin.castSucc) p)
+                hpos_eq).symm.trans hinsert
+            have hperm :=
+              congrArg
+                (fun v : Vector (Fin (n + 1)) (n + 1) =>
+                  v[(⟨i.val + 1, hijSucc⟩ : Fin (n + 1))])
+                hinsert_last
+            exact hperm.symm.trans hraw
+          have hget_i :
+                perm[iUp] = (peeled[i]).castSucc := by
+              have hraw :
+                  (insertAt (Fin.last n) (peeled.map Fin.castSucc) (Fin.last n))[iUp] =
+                    (peeled[i]).castSucc := by
+                have hraise : raiseFinAbove (Fin.last n) i = iUp := by
+                  apply Fin.ext
+                  simp [raiseFinAbove, iUp]
+                have hbase := insertAt_get_raiseFinAbove
+                  (Fin.last n) (peeled.map Fin.castSucc) (Fin.last n) i
+                have hbase' :
+                    (insertAt (Fin.last n) (peeled.map Fin.castSucc) (Fin.last n))[
+                        raiseFinAbove (Fin.last n) i] = (peeled[i]).castSucc := by
+                  simpa using hbase
+                exact (vector_get_fin_congr
+                  (insertAt (Fin.last n) (peeled.map Fin.castSucc) (Fin.last n))
+                  hraise).symm.trans hbase'
+              have hinsert_last :
+                  insertAt (Fin.last n) (peeled.map Fin.castSucc) (Fin.last n) = perm :=
+                (congrArg (fun p => insertAt (Fin.last n) (peeled.map Fin.castSucc) p)
+                  hpos_eq).symm.trans hinsert
+              have hperm :=
+                congrArg
+                  (fun v : Vector (Fin (n + 1)) (n + 1) => v[iUp])
+                  hinsert_last
+              exact hperm.symm.trans hraw
+          have hidx_up :
+              (⟨iUp.val + 1, hijUp⟩ : Fin (n + 1)) =
+                (⟨i.val + 1, hijSucc⟩ : Fin (n + 1)) := by
+            apply Fin.ext
+            simp [iUp]
+          have hget_next_up :
+              perm[(⟨iUp.val + 1, hijUp⟩ : Fin (n + 1))] =
+                (peeled[(⟨i.val + 1, hij⟩ : Fin n)]).castSucc :=
+            (vector_get_fin_congr perm hidx_up).trans hget_next
+          rw [hget_next_up, hget_i]
+          simpa [Fin.lt_def] using hdesc
+      · have hk_lt_n : k < n := by
+          have hk_le : k ≤ n := Nat.lt_succ_iff.mp hk
+          have hpos_val : pos.val = k := rfl
+          omega
+        have hnextK : (⟨k, hk⟩ : Fin (n + 1)).val + 1 < n + 1 := by
+          simpa using Nat.succ_lt_succ hk_lt_n
+        refine ⟨(⟨k, hk⟩ : Fin (n + 1)), hnextK, ?_⟩
+        · have hget_left : perm[(⟨k, hk⟩ : Fin (n + 1))] = Fin.last n := by
+            have hraw :
+                (insertAt (Fin.last n) (peeled.map Fin.castSucc) pos)[pos] = Fin.last n :=
+              insertAt_get_self (Fin.last n) (peeled.map Fin.castSucc) pos
+            have hperm :=
+              congrArg (fun v : Vector (Fin (n + 1)) (n + 1) => v[pos]) hinsert
+            exact hperm.symm.trans hraw
+          have hget_right :
+              perm[(⟨k + 1, hnextK⟩ : Fin (n + 1))] =
+                (peeled[(⟨k, hk_lt_n⟩ : Fin n)]).castSucc := by
+            have hraise :
+                raiseFinAbove pos (⟨k, hk_lt_n⟩ : Fin n) =
+                  (⟨k + 1, hnextK⟩ : Fin (n + 1)) := by
+              apply Fin.ext
+              simp [raiseFinAbove, pos]
+            have hraw :
+                (insertAt (Fin.last n) (peeled.map Fin.castSucc) pos)[
+                    (⟨k + 1, hnextK⟩ : Fin (n + 1))] =
+                  (peeled[(⟨k, hk_lt_n⟩ : Fin n)]).castSucc := by
+              have hbase := insertAt_get_raiseFinAbove
+                (Fin.last n) (peeled.map Fin.castSucc) pos (⟨k, hk_lt_n⟩ : Fin n)
+              have hbase' :
+                  (insertAt (Fin.last n) (peeled.map Fin.castSucc) pos)[
+                      raiseFinAbove pos (⟨k, hk_lt_n⟩ : Fin n)] =
+                    (peeled[(⟨k, hk_lt_n⟩ : Fin n)]).castSucc := by
+                simpa using hbase
+              exact (vector_get_fin_congr
+                (insertAt (Fin.last n) (peeled.map Fin.castSucc) pos)
+                hraise).symm.trans hbase'
+            have hperm :=
+              congrArg
+                (fun v : Vector (Fin (n + 1)) (n + 1) =>
+                  v[(⟨k + 1, hnextK⟩ : Fin (n + 1))])
+                hinsert
+            exact hperm.symm.trans hraw
+          rw [hget_right, hget_left]
+          simp [Fin.lt_def]
+
+private theorem perm_eq_identity_of_inversionCount_zero {n : Nat}
+    (perm : Vector (Fin n) n) (hmem : perm ∈ permutationVectors n)
+    (hinv : inversionCount perm.toList = 0) :
+    perm = Vector.ofFn fun i : Fin n => i := by
+  induction n with
+  | zero =>
+      apply Vector.ext
+      intro i hi
+      omega
+  | succ n ih =>
+      have hnodup : perm.toList.Nodup := permutationVectors_nodup hmem
+      let k := perm.toList.idxOf (Fin.last n)
+      have hk : k < n + 1 := by
+        simpa [k, Vector.length_toList] using
+          finLast_idxOf_lt_of_full_nodup (by simp [Vector.length_toList]) hnodup
+      have hidx : perm.toList.idxOf (Fin.last n) = k := rfl
+      let peeled := peelLastVector perm k hk hidx hnodup
+      have hpeeled_nodup : peeled.toList.Nodup :=
+        peelLastVector_nodup perm k hk hidx hnodup
+      have hpeeled_mem : peeled ∈ permutationVectors n :=
+        permutationVectors_complete hpeeled_nodup
+      let pos : Fin (n + 1) := ⟨k, hk⟩
+      have hinsert :
+          insertAt (Fin.last n) (peeled.map Fin.castSucc) pos = perm := by
+        simpa [peeled, pos] using
+          insertAt_peelLastVector perm k hk hidx hnodup
+      have hcount :
+          inversionCount perm.toList =
+            inversionCount peeled.toList + (n - pos.val) := by
+        rw [← hinsert]
+        rw [insertAt_toList, vector_toList_map]
+        simpa [peeled, pos, Vector.length_toList] using
+          inversionCount_insertIdx_castSucc_last_eq peeled.toList pos.val (by
+            simp [Vector.length_toList, pos]
+            omega)
+      have hpos : pos.val = n := by
+        rw [hcount] at hinv
+        omega
+      have hpeeled_zero : inversionCount peeled.toList = 0 := by
+        rw [hcount] at hinv
+        omega
+      have hpeeled_id : peeled = Vector.ofFn fun i : Fin n => i :=
+        ih peeled hpeeled_mem hpeeled_zero
+      rw [← hinsert, hpeeled_id]
+      have hpos_eq : pos = Fin.last n := Fin.ext hpos
+      rw [hpos_eq]
+      have hvec :
+          (Vector.ofFn fun i : Fin (n + 1) => i) =
+            insertAt (Fin.last n)
+              ((Vector.ofFn fun i : Fin n => i).map Fin.castSucc) (Fin.last n) := by
+        apply Vector.ext
+        intro r hr
+        by_cases hlast : r = n
+        · subst r
+          simp [insertAt, List.getElem_insertIdx_self]
+          exact Fin.ext rfl
+        · have hr_lt : r < n := by omega
+          simp [insertAt, List.getElem_insertIdx_of_lt, hr_lt]
+      exact hvec.symm
+
 private theorem swapPermutationValues_idxOf_left {n : Nat}
     (perm : Vector (Fin n) n) (i j : Fin n)
     (hnodup : perm.toList.Nodup) :
