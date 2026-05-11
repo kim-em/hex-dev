@@ -2040,6 +2040,11 @@ theorem bhksLatticeBasis_independent (L : BhksLatticeBasis) :
 
 #guard psiCut 5 4 1 3 = 1
 #guard psiCut 5 4 1 3 ≠ 3 / (5 : Int)
+#guard centeredResiduePow 5 1 (-3) = 2
+#guard psiCut 5 4 1 (-3) = -1
+#guard centeredResiduePow 5 1 (-2) = -2
+#guard psiCut 5 4 1 (-2) = 0
+#guard psiCut 5 4 1 (-2) ≠ (-2) / (5 : Int)
 
 private def cldGuardF : ZPoly :=
   DensePoly.ofCoeffs #[6, -5, 1]
@@ -2048,6 +2053,7 @@ private def cldGuardG : ZPoly :=
   DensePoly.ofCoeffs #[-2, 1]
 
 #guard cldQuotientMod cldGuardF cldGuardG 5 2 = DensePoly.ofCoeffs #[22, 1]
+#guard (cldCoeffs cldGuardF 5 2 cldGuardG).size = cldGuardF.degree?.getD 0
 
 private def bhksGuardFactors : Array ZPoly :=
   #[DensePoly.ofCoeffs #[-2, 1], DensePoly.ofCoeffs #[-3, 1]]
@@ -2547,6 +2553,16 @@ private def bhksFailedDivisionRecoverLift : LiftData :=
 #guard bhksRecoverClassified cldGuardF bhksFailedDivisionRecoverLift =
   .candidateFailure
 
+private def bhksProductMismatchRecoverLift : LiftData :=
+  { p := 5
+    k := 2
+    liftedFactors := #[DensePoly.ofCoeffs #[-2, 1]] }
+
+#guard bhksIndicatorCandidate? cldGuardF bhksProductMismatchRecoverLift #[1] =
+  some (DensePoly.ofCoeffs #[-2, 1], DensePoly.ofCoeffs #[-3, 1])
+#guard BhksRecoveryResult.toOption
+    (.productMismatch #[DensePoly.ofCoeffs #[-2, 1]]) = none
+
 private def recombinationSearchAux
     (target : ZPoly) (localFactors : List ZPoly) : Nat → Option (List ZPoly)
   | 0 => none
@@ -2866,6 +2882,7 @@ def factorFast (f : ZPoly) : Option Factorization :=
   some (DensePoly.ofCoeffs #[1, 1, 1, 1, 1])
 
 #guard factorFastWithBound (DensePoly.ofCoeffs #[1, 0, 0, 0, 1]) 4 = none
+#guard factorFastWithBound cldGuardF 1 = none
 
 /-- Lift a `factorFastFactorsWithBound` success through the `.map` layer that
 defines `factorFastWithBound`. -/
