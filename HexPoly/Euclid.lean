@@ -3377,6 +3377,39 @@ private theorem dvd_coeff_mul_last_of_dvd_mul_coeff_of_dvd_larger_left_products
         have hs : s = i + k - r := by omega
         simpa [hs] using hlarger r hir)
 
+private theorem mcCoy_grid_band_descent
+    (D : Nat → Nat → Prop) (bound k : Nat)
+    (hRight : ∀ r s, bound < r → D r s)
+    (hstep : ∀ i j, i ≤ bound → j ≤ k →
+      (∀ r, i < r → D r (i + j - r)) → D i j) :
+    ∀ i j, j ≤ k → D i j := by
+  intro i
+  by_cases hi : i ≤ bound
+  · let m := bound - i
+    have hm : bound - i = m := rfl
+    clear_value m
+    revert i
+    induction m using Nat.strongRecOn with
+    | ind m ih =>
+        intro i hi hm j hj
+        exact hstep i j hi hj (by
+          intro r hir
+          by_cases hr : r ≤ bound
+          · have hltm : bound - r < m := by omega
+            exact ih (bound - r) hltm r hr rfl (i + j - r) (by omega)
+          · exact hRight r (i + j - r) (Nat.lt_of_not_ge hr))
+  · intro j _hj
+    exact hRight i j (Nat.lt_of_not_ge hi)
+
+private theorem mcCoy_top_row_descent
+    (D : Nat → Nat → Prop) (bound k : Nat)
+    (hRight : ∀ r s, bound < r → D r s)
+    (hstep : ∀ i j, i ≤ bound → j ≤ k →
+      (∀ r, i < r → D r (i + j - r)) → D i j) :
+    ∀ i, D i k := by
+  intro i
+  exact mcCoy_grid_band_descent D bound k hRight hstep i k (Nat.le_refl k)
+
 private theorem list_natAbs_gcd_bezout_aux (xs : List Int) (acc : Nat) :
     ∃ a : Int, ∃ weights : List Int,
       weights.length = xs.length ∧
