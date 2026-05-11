@@ -39,7 +39,12 @@ def barrettReduce (ctx : BarrettCtx p) (T : UInt64) : UInt64 :=
   let r := T - q * p
   if r ≥ p then r - p else r
 
-private theorem BarrettCtx.toNat_pinv (ctx : BarrettCtx p) :
+/--
+The reciprocal stored in a Barrett context is the Nat-level
+`floor(barrettRadix / p)`, not just propositionally equal as a `UInt64`.
+-/
+@[simp]
+theorem BarrettCtx.toNat_pinv (ctx : BarrettCtx p) :
     ctx.pinv.toNat = barrettRadix / p.toNat := by
   rw [ctx.pinv_eq]
   have hRpos : 0 < barrettRadix := by
@@ -51,6 +56,10 @@ private theorem BarrettCtx.toNat_pinv (ctx : BarrettCtx p) :
   simpa [UInt64.toNat_ofNat, UInt64.size, barrettRadix, UInt64.word]
     using Nat.mod_eq_of_lt hlt
 
+/--
+Multiplication of two `UInt64` values agrees with Nat multiplication when the
+Nat-level product fits in one machine word.
+-/
 private theorem UInt64.toNat_mul_of_lt_word (a b : UInt64)
     (h : a.toNat * b.toNat < UInt64.word) :
     (a * b).toNat = a.toNat * b.toNat := by

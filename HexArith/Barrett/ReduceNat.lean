@@ -111,6 +111,10 @@ theorem div_le_barrettQuotient_add_one (hp : 1 < p)
     rw [hdiv]
     exact Nat.zero_le _
 
+/--
+If the approximate quotient is exact, the uncorrected Barrett remainder is
+already the ordinary remainder.
+-/
 private theorem barrett_remainder_eq_mod_of_quotient_eq (p T q : Nat)
     (hq : q = T / p) :
     T - q * p = T % p := by
@@ -118,6 +122,10 @@ private theorem barrett_remainder_eq_mod_of_quotient_eq (p T q : Nat)
     simpa [hq, Nat.mul_comm] using Nat.mod_add_div T p
   omega
 
+/--
+If the approximate quotient is one below exact, the uncorrected Barrett
+remainder is the ordinary remainder plus one modulus.
+-/
 private theorem barrett_remainder_eq_mod_add_p_of_quotient_succ (p T q : Nat)
     (hq : T / p = q + 1) :
     T - q * p = T % p + p := by
@@ -135,6 +143,7 @@ private theorem barrett_remainder_eq_mod_add_p_of_quotient_succ (p T q : Nat)
 With `pinv = floor(R / p)` and `T < R`, Nat-level Barrett reduction returns the
 same value as `% p`.
 -/
+@[simp]
 theorem barrettReduceNat_eq_mod (hp : 1 < p) (hpinv : pinv = barrettRadix / p)
     (hT : T < barrettRadix) :
     barrettReduceNat p pinv T = T % p := by
