@@ -4448,6 +4448,92 @@ private theorem yunFactors_pairwise_coprime_nil
       squareFreeFactorCoprimeRel := by
   exact yunFactors_pairwise_coprime_nil_of_invariant c w multiplicity fuel hinv
 
+private theorem yunFactorsWithLevel_pairwise_coprime_nil_of_ready
+    (c w : FpPoly p) (base level fuel : Nat)
+    (hready : yunFactorsPairwiseReadyWithLevel c w base level fuel) :
+    (yunFactorsWithLevel c w base level fuel []).1.reverse.Pairwise
+      squareFreeFactorCoprimeRel := by
+  induction fuel generalizing c w level with
+  | zero =>
+      simp [yunFactorsWithLevel]
+  | succ fuel ih =>
+      simp only [yunFactorsWithLevel]
+      by_cases hc : isOne c
+      · simp [hc]
+      · simp [hc]
+        have hc_false : isOne c = false := by
+          cases h : isOne c with
+          | false => rfl
+          | true => exact False.elim (hc h)
+        let y := DensePoly.gcd c w
+        let z := c / y
+        have hready_unpack :
+            yunFactorsPairwiseReadyWithLevel y (w / y) base (level + 1) fuel ∧
+              (isOne c = false →
+                isOne z = false →
+                  yunFactorsCurrentTailCoprimeWithLevel c w base level fuel) := by
+          simpa [yunFactorsPairwiseReadyWithLevel, y, z] using hready
+        have htail :
+            (yunFactorsWithLevel y (w / y) base (level + 1) fuel
+              []).1.reverse.Pairwise
+              squareFreeFactorCoprimeRel :=
+          ih y (w / y) (level + 1) hready_unpack.1
+        by_cases hz : isOne z
+        · simpa [y, z, hz] using htail
+        · let sf : SquareFreeFactor p :=
+            { factor := z, multiplicity := base * level }
+          have hz_false : isOne z = false := by
+            cases h : isOne z with
+            | false => rfl
+            | true => exact False.elim (hz h)
+          have hcross :
+              ∀ tailSf ∈ (yunFactorsWithLevel y (w / y) base (level + 1) fuel
+                  []).1.reverse,
+                squareFreeFactorCoprimeRel sf tailSf := by
+            simpa [yunFactorsCurrentTailCoprimeWithLevel, y, z, sf] using
+              hready_unpack.2 hc_false hz_false
+          have hsingle :
+              [sf].Pairwise squareFreeFactorCoprimeRel := by
+            simp
+          have hcombined :
+              ([sf] ++
+                  (yunFactorsWithLevel y (w / y) base (level + 1) fuel
+                    []).1.reverse).Pairwise
+                squareFreeFactorCoprimeRel := by
+            apply pairwise_append_of_cross squareFreeFactorCoprimeRel hsingle htail
+            intro headSf hhead tailSf htailSf
+            simp only [List.mem_singleton] at hhead
+            subst headSf
+            exact hcross tailSf htailSf
+          have hrev :
+              (yunFactorsWithLevel y (w / y) base (level + 1) fuel
+                [sf]).1.reverse =
+                [sf] ++
+                  (yunFactorsWithLevel y (w / y) base (level + 1) fuel
+                    []).1.reverse := by
+            simpa [sf] using
+              yunFactorsWithLevel_reverse_append y (w / y) base (level + 1) fuel
+                [sf]
+          simpa [y, z, hz, sf, hrev] using hcombined
+
+private theorem yunFactorsWithLevel_pairwise_coprime_nil_of_invariant
+    (c w : FpPoly p) (base level fuel : Nat)
+    (hinv : yunFactorsPairwiseInvariantWithLevel c w base level fuel) :
+    (yunFactorsWithLevel c w base level fuel []).1.reverse.Pairwise
+      squareFreeFactorCoprimeRel := by
+  exact
+    yunFactorsWithLevel_pairwise_coprime_nil_of_ready c w base level fuel
+      hinv.ready
+
+private theorem yunFactorsWithLevel_pairwise_coprime_nil
+    (c w : FpPoly p) (base level fuel : Nat)
+    (hinv : yunFactorsPairwiseInvariantWithLevel c w base level fuel) :
+    (yunFactorsWithLevel c w base level fuel []).1.reverse.Pairwise
+      squareFreeFactorCoprimeRel := by
+  exact
+    yunFactorsWithLevel_pairwise_coprime_nil_of_invariant c w base level fuel
+      hinv
+
 private theorem yunFactors_squareFreeAuxRev_tail_cross_coprime
     (c w : FpPoly p) (multiplicity fuel : Nat) :
     let loop := yunFactors c w multiplicity fuel []
