@@ -92,37 +92,6 @@ end HexArith
 namespace Hex
 
 /--
-Tail-recursive `UInt64` extended Euclidean loop.
-
-The remainders stay in `UInt64`; only the Bezout coefficients live in `Int`.
--/
-private def uint64ExtGcdLoop
-    (old_r r : UInt64) (old_s s old_t t : Int) : UInt64 × Int × Int :=
-  if h : r = 0 then
-    let _ := h
-    (old_r, old_s, old_t)
-  else
-    let q := old_r / r
-    let qz := Int.ofNat q.toNat
-    uint64ExtGcdLoop r (old_r % r) s (old_s - qz * s) t (old_t - qz * t)
-termination_by r.toNat
-decreasing_by
-  simp_wf
-  exact Nat.mod_lt _ (Nat.pos_of_ne_zero (by
-    intro hr
-    apply h
-    exact UInt64.toNat_inj.mp hr))
-
-/--
-Pure-Lean `UInt64` extended GCD reference implementation.
-
-This stays entirely in native `UInt64` arithmetic for the Euclidean reduction,
-while the Bezout coefficients are tracked in `Int`.
--/
-def pureUInt64ExtGcd (a b : UInt64) : UInt64 × Int × Int :=
-  uint64ExtGcdLoop a b 1 0 0 1
-
-/--
 Pure Lean reference implementation of extended GCD over integers.
 
 This runs the Euclidean algorithm directly on `Int`, carrying Bezout
@@ -309,8 +278,7 @@ theorem extGcd_bezout (a b : Int) :
   simpa [extGcd] using Hex.pureIntExtGcd_bezout a b
 
 theorem extGcd_zero_left_s_ofNat (p : Nat) (hp : 0 < p) :
-    (match extGcd 0 (Int.ofNat p) with
-      | (_, s, _) => s) = 0 := by
+    (extGcd 0 (Int.ofNat p)).2.1 = 0 := by
   cases p with
   | zero =>
       omega
