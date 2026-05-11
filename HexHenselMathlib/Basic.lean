@@ -89,16 +89,65 @@ theorem polynomial_map_zmod_pow_succ_to_pow
 theorem isUnit_one_add_C_mul
     (p k : ℕ) (u : Polynomial (ZMod (p ^ k))) :
     IsUnit (1 + Polynomial.C (p : ZMod (p ^ k)) * u) := by
-  sorry
+  have hnil : IsNilpotent (Polynomial.C (p : ZMod (p ^ k)) * u) := by
+    refine ⟨k, ?_⟩
+    rw [mul_pow, ← Polynomial.C_pow]
+    have hp_pow : (p : ZMod (p ^ k)) ^ k = 0 := by
+      rw [← Nat.cast_pow]
+      exact ZMod.natCast_self _
+    rw [hp_pow, Polynomial.C_0, zero_mul]
+  exact hnil.isUnit_one_add
 
-/-- Coprimality modulo `p` lifts to coprimality modulo `p^k`. -/
+/-- Coprimality modulo `p` lifts to coprimality modulo `p^k`.
+
+The `0 < k` hypothesis is part of the calling convention; the proof does not
+need it (the `k = 0` case is vacuous because `ZMod 1` is the zero ring). -/
 theorem coprime_mod_p_lifts (g h : Polynomial ℤ) (p : ℕ) (k : ℕ)
-    [Fact (Nat.Prime p)] (hk : 0 < k) :
+    [Fact (Nat.Prime p)] (_hk : 0 < k) :
     IsCoprime (g.map (Int.castRingHom (ZMod p)))
               (h.map (Int.castRingHom (ZMod p))) →
     IsCoprime (g.map (Int.castRingHom (ZMod (p ^ k))))
               (h.map (Int.castRingHom (ZMod (p ^ k)))) := by
-  sorry
+  rintro ⟨a₀, b₀, hab⟩
+  obtain ⟨A, hA⟩ :=
+    Polynomial.map_surjective (Int.castRingHom (ZMod p)) ZMod.intCast_surjective a₀
+  obtain ⟨B, hB⟩ :=
+    Polynomial.map_surjective (Int.castRingHom (ZMod p)) ZMod.intCast_surjective b₀
+  have hcombo_modp : (A * g + B * h).map (Int.castRingHom (ZMod p)) = 1 := by
+    rw [Polynomial.map_add, Polynomial.map_mul, Polynomial.map_mul, hA, hB, hab]
+  have hsub_modp : (A * g + B * h - 1).map (Int.castRingHom (ZMod p)) = 0 := by
+    rw [Polynomial.map_sub, Polynomial.map_one, hcombo_modp, sub_self]
+  have hdvd : ∀ n, (p : ℤ) ∣ (A * g + B * h - 1).coeff n := by
+    intro n
+    rw [← coeff_map_intCastRingHom_eq_zero_iff_dvd]
+    have h := congr_arg (fun q : Polynomial (ZMod p) => q.coeff n) hsub_modp
+    simpa using h
+  obtain ⟨U, hU⟩ :=
+    (Polynomial.C_dvd_iff_dvd_coeff (p : ℤ) (A * g + B * h - 1)).mpr hdvd
+  set Φpk : ℤ →+* ZMod (p ^ k) := Int.castRingHom (ZMod (p ^ k)) with hΦpk_def
+  have hp_cast : Φpk (p : ℤ) = (p : ZMod (p ^ k)) := by
+    simp [hΦpk_def]
+  have hsub_pk : (A * g + B * h - 1).map Φpk =
+      Polynomial.C (p : ZMod (p ^ k)) * U.map Φpk := by
+    rw [hU, Polynomial.map_mul, Polynomial.map_C, hp_cast]
+  have hcombo_pk : A.map Φpk * g.map Φpk + B.map Φpk * h.map Φpk
+      = 1 + Polynomial.C (p : ZMod (p ^ k)) * U.map Φpk := by
+    have h := hsub_pk
+    rw [Polynomial.map_sub, Polynomial.map_add, Polynomial.map_mul, Polynomial.map_mul,
+        Polynomial.map_one] at h
+    exact sub_eq_iff_eq_add'.mp h
+  have hunit : IsUnit (1 + Polynomial.C (p : ZMod (p ^ k)) * U.map Φpk) :=
+    isUnit_one_add_C_mul p k _
+  obtain ⟨wu, hwu⟩ := hunit
+  refine ⟨(↑wu⁻¹ : Polynomial (ZMod (p ^ k))) * A.map Φpk,
+          (↑wu⁻¹ : Polynomial (ZMod (p ^ k))) * B.map Φpk, ?_⟩
+  have hregroup :
+      ((↑wu⁻¹ : Polynomial (ZMod (p ^ k))) * A.map Φpk) * g.map Φpk +
+        ((↑wu⁻¹ : Polynomial (ZMod (p ^ k))) * B.map Φpk) * h.map Φpk
+      = (↑wu⁻¹ : Polynomial (ZMod (p ^ k))) *
+        (A.map Φpk * g.map Φpk + B.map Φpk * h.map Φpk) := by ring
+  rw [hregroup, hcombo_pk, ← hwu]
+  exact Units.inv_mul wu
 
 end
 
