@@ -757,6 +757,103 @@ private theorem foldl_sum_start_rat {α : Type v}
       rw [ih (acc := (0 : Rat) + f x)]
       grind
 
+/-- Rational dot product is commutative. -/
+private theorem dot_comm_rat {m' : Nat} (u v : Vector Rat m') :
+    Matrix.dot u v = Matrix.dot v u := by
+  unfold Matrix.dot Hex.Vector.dotProduct
+  have h : ∀ (xs : List (Fin m')) (accU accV : Rat),
+      accU = accV →
+        xs.foldl (fun acc i => acc + u[i] * v[i]) accU =
+          xs.foldl (fun acc i => acc + v[i] * u[i]) accV := by
+    intro xs
+    induction xs with
+    | nil => intro accU accV h; exact h
+    | cons i xs ih =>
+        intro accU accV h
+        simp only [List.foldl_cons]
+        apply ih
+        rw [h]
+        grind
+  exact h (List.finRange m') 0 0 rfl
+
+/-- Right-side dot product distribution over a `prefixCombination`. -/
+private theorem dot_prefixCombination_right_rat
+    (b : Matrix Rat n m) (i : Nat) (hi : i < n) (u : Vector Rat m) :
+    Matrix.dot u
+        (GramSchmidt.prefixCombination
+          (GramSchmidt.Rat.coeffs b) (GramSchmidt.Rat.basis b) i hi) =
+      (List.finRange i).foldl
+        (fun (acc : Rat) (j : Fin i) =>
+          acc +
+            GramSchmidt.entry (GramSchmidt.Rat.coeffs b) ⟨i, hi⟩
+                ⟨j.val, Nat.lt_trans j.isLt hi⟩ *
+              Matrix.dot u
+                ((GramSchmidt.Rat.basis b).row
+                  ⟨j.val, Nat.lt_trans j.isLt hi⟩)) 0 := by
+  unfold GramSchmidt.prefixCombination
+  have hgen :
+      ∀ (xs : List (Fin i)) (acc : Vector Rat m),
+        Matrix.dot u
+            (xs.foldl
+              (fun acc (j : Fin i) =>
+                acc +
+                  GramSchmidt.entry (GramSchmidt.Rat.coeffs b) ⟨i, hi⟩
+                      ⟨j.val, Nat.lt_trans j.isLt hi⟩ •
+                    (GramSchmidt.Rat.basis b).row
+                      ⟨j.val, Nat.lt_trans j.isLt hi⟩)
+              acc) =
+          Matrix.dot u acc +
+            xs.foldl
+              (fun (acc' : Rat) (j : Fin i) =>
+                acc' +
+                  GramSchmidt.entry (GramSchmidt.Rat.coeffs b) ⟨i, hi⟩
+                      ⟨j.val, Nat.lt_trans j.isLt hi⟩ *
+                    Matrix.dot u
+                      ((GramSchmidt.Rat.basis b).row
+                        ⟨j.val, Nat.lt_trans j.isLt hi⟩)) 0 := by
+    intro xs
+    induction xs with
+    | nil =>
+        intro acc
+        simp; grind
+    | cons x xs ih =>
+        intro acc
+        simp only [List.foldl_cons]
+        rw [ih]
+        rw [dot_add_right_rat, dot_smul_right_rat]
+        rw [foldl_sum_start_rat xs _
+          ((0 : Rat) + (GramSchmidt.entry (GramSchmidt.Rat.coeffs b) ⟨i, hi⟩
+              ⟨x.val, Nat.lt_trans x.isLt hi⟩ *
+            Matrix.dot u
+              ((GramSchmidt.Rat.basis b).row
+                ⟨x.val, Nat.lt_trans x.isLt hi⟩)))]
+        grind
+  rw [hgen (List.finRange i) 0]
+  rw [dot_zero_right_rat]
+  grind
+
+/-- Dot product against a `prefixCombination` is zero when the right vector is
+orthogonal to every contributing basis row. -/
+private theorem dot_prefixCombination_right_eq_zero_of_dot_zero
+    (b : Matrix Rat n m) (i : Nat) (hi : i < n) (u : Vector Rat m)
+    (h : ∀ (j : Fin i),
+      Matrix.dot u
+          ((GramSchmidt.Rat.basis b).row ⟨j.val, Nat.lt_trans j.isLt hi⟩) = 0) :
+    Matrix.dot u
+        (GramSchmidt.prefixCombination
+          (GramSchmidt.Rat.coeffs b) (GramSchmidt.Rat.basis b) i hi) = 0 := by
+  rw [dot_prefixCombination_right_rat]
+  -- All terms are zero: the foldl with each entry = 0 reduces to 0.
+  induction (List.finRange i) with
+  | nil => rfl
+  | cons j xs ih =>
+      simp only [List.foldl_cons]
+      rw [h j]
+      have h0 : (0 : Rat) + GramSchmidt.entry (GramSchmidt.Rat.coeffs b) ⟨i, hi⟩
+          ⟨j.val, Nat.lt_trans j.isLt hi⟩ * 0 = 0 := by grind
+      rw [h0]
+      exact ih
+
 theorem gramDet_eq_prod_normSq (b : Matrix Int n m)
     (hli : independent b) (k : Nat) (hk : k ≤ n) :
     (gramDet b k hk : Rat) = gramSchmidtNormProduct b k hk := by
