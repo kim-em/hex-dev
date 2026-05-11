@@ -81,6 +81,8 @@ private theorem foldl_clmul_xor_left (bits : List Nat)
       · simp [hbit]
         simpa using ih accX accY
 
+/-- The pure carry-less multiplier is linear in its left word argument over
+bitwise XOR. -/
 theorem pureClmul_xor_left (x y z : UInt64) :
     pureClmul (x ^^^ y) z =
       ((pureClmul x z).1 ^^^ (pureClmul y z).1,
@@ -94,6 +96,7 @@ private theorem foldl_keep {α β : Type} (xs : List β) (acc : α) :
   | nil => simp
   | cons _ xs ih => simp [ih]
 
+/-- The pure carry-less multiplier returns zero when the left word is zero. -/
 theorem pureClmul_zero_left (x : UInt64) : pureClmul 0 x = (0, 0) := by
   simp [pureClmul, clmulAccumulateBit_zero_left, foldl_keep]
 
@@ -501,6 +504,8 @@ theorem clmul_oneHot (a : UInt64) {bit : Nat} (hbit : bit < 64) :
       if bit = 0 then (0, a) else (a >>> (64 - bit).toUInt64, a <<< bit.toUInt64) := by
   rw [clmul, pureClmul_oneHot a hbit]
 
+/-- Runtime `clmul`, under its trusted reference contract, is linear in its
+left word argument over bitwise XOR. -/
 theorem clmul_xor_left (x y z : UInt64) :
     clmul (x ^^^ y) z =
       ((clmul x z).1 ^^^ (clmul y z).1, (clmul x z).2 ^^^ (clmul y z).2) := by
@@ -727,5 +732,17 @@ theorem clmul_comm (x y : UInt64) :
         exact List.mem_range.mp hmem)]
     _ = clmul y x := by
       rw [← clmul_eq_right_bits x y]
+
+/-- Runtime `clmul`, under its trusted reference contract, is linear in its
+right word argument over bitwise XOR. -/
+theorem clmul_xor_right (x y z : UInt64) :
+    clmul x (y ^^^ z) =
+      ((clmul x y).1 ^^^ (clmul x z).1, (clmul x y).2 ^^^ (clmul x z).2) := by
+  calc
+    clmul x (y ^^^ z) = clmul (y ^^^ z) x := clmul_comm x (y ^^^ z)
+    _ = ((clmul y x).1 ^^^ (clmul z x).1, (clmul y x).2 ^^^ (clmul z x).2) := by
+      rw [clmul_xor_left]
+    _ = ((clmul x y).1 ^^^ (clmul x z).1, (clmul x y).2 ^^^ (clmul x z).2) := by
+      rw [clmul_comm y x, clmul_comm z x]
 
 end Hex

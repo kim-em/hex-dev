@@ -4278,6 +4278,108 @@ private theorem yunStep_tail_common_dvd_one_of_gcd_normalized_one
   exact dvd_trans_poly hdy
     (dvd_one_of_normalizeMonic_eq_one (DensePoly.gcd c w) hnormalized)
 
+private theorem constant_nonzero_dvd
+    [ZMod64.PrimeModulus p] {g f : FpPoly p}
+    (hg_zero : g.isZero = false)
+    (hg_const : ¬ 1 < g.size) :
+    g ∣ f := by
+  have hg_pos : 0 < g.size := size_pos_of_isZero_false g hg_zero
+  have hg_size : g.size = 1 := by omega
+  let unit := DensePoly.leadingCoeff g
+  have hunit_ne : unit ≠ 0 := leadingCoeff_ne_zero_of_isZero_false g hg_zero
+  have hg_eq_C : g = DensePoly.C unit := by
+    apply DensePoly.ext_coeff
+    intro n
+    cases n with
+    | zero =>
+        have hlead : unit = g.coeff 0 := by
+          have hlead_last : DensePoly.leadingCoeff g = g.coeff (g.size - 1) := by
+            unfold DensePoly.leadingCoeff DensePoly.coeff
+            rw [Array.back?_eq_getElem?]
+            have hidx : g.coeffs.size - 1 < g.coeffs.size := by
+              simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hg_pos
+            simp [Array.getD, DensePoly.size, hidx]
+          simpa [unit, hg_size] using hlead_last
+        rw [← hlead]
+        exact (DensePoly.coeff_C unit 0).symm
+    | succ n =>
+        have hg_coeff_zero : g.coeff (n + 1) = 0 :=
+          DensePoly.coeff_eq_zero_of_size_le g (by omega)
+        rw [hg_coeff_zero]
+        exact (DensePoly.coeff_C unit (n + 1)).symm
+  refine ⟨DensePoly.scale unit⁻¹ f, ?_⟩
+  rw [hg_eq_C, C_mul_eq_scale, scale_scale]
+  rw [zmod64_mul_inv_eq_one_of_prime_ne_zero (ZMod64.PrimeModulus.prime (p := p)) hunit_ne]
+  exact (scale_one_left f).symm
+
+private theorem yunStep_gcd_nonzero_of_left_nonzero
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p)
+    (hc_zero : c.isZero = false) :
+    (DensePoly.gcd c w).isZero = false := by
+  cases hy_zero : (DensePoly.gcd c w).isZero with
+  | false => rfl
+  | true =>
+      exfalso
+      have hy_eq_zero : DensePoly.gcd c w = 0 :=
+        eq_zero_of_isZero_true (DensePoly.gcd c w) hy_zero
+      rcases DensePoly.gcd_dvd_left c w with ⟨q, hq⟩
+      have hc_eq_zero : c = 0 := by
+        rw [hy_eq_zero, zero_mul] at hq
+        exact hq
+      rw [hc_eq_zero] at hc_zero
+      cases hc_zero
+
+private theorem yunStep_gcd_dvd_one_of_constant_common_dvd_one
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p)
+    (hc_zero : c.isZero = false)
+    (hy_constant : ¬ 1 < (DensePoly.gcd c w).size)
+    (hcommon :
+      ∀ d : FpPoly p,
+        d ∣ c / DensePoly.gcd c w →
+          d ∣ DensePoly.gcd c w →
+            d ∣ (1 : FpPoly p)) :
+    DensePoly.gcd c w ∣ (1 : FpPoly p) := by
+  have hy_zero : (DensePoly.gcd c w).isZero = false :=
+    yunStep_gcd_nonzero_of_left_nonzero c w hc_zero
+  apply hcommon (DensePoly.gcd c w)
+  · exact constant_nonzero_dvd hy_zero hy_constant
+  · exact DensePoly.dvd_refl_poly (DensePoly.gcd c w)
+
+private theorem yunStep_gcd_normalized_one_of_constant_common_dvd_one
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p)
+    (hc_zero : c.isZero = false)
+    (hy_constant : ¬ 1 < (DensePoly.gcd c w).size)
+    (hcommon :
+      ∀ d : FpPoly p,
+        d ∣ c / DensePoly.gcd c w →
+          d ∣ DensePoly.gcd c w →
+            d ∣ (1 : FpPoly p)) :
+    (normalizeMonic (DensePoly.gcd c w)).2 = 1 := by
+  exact normalizeMonic_eq_one_of_dvd_one
+    (yunStep_gcd_dvd_one_of_constant_common_dvd_one
+      c w hc_zero hy_constant hcommon)
+
+private theorem yunStep_tail_common_dvd_one_of_constant_common_dvd_one
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p)
+    (hc_zero : c.isZero = false)
+    (hy_constant : ¬ 1 < (DensePoly.gcd c w).size)
+    (hcommon :
+      ∀ d : FpPoly p,
+        d ∣ c / DensePoly.gcd c w →
+          d ∣ DensePoly.gcd c w →
+            d ∣ (1 : FpPoly p)) :
+    ∀ d : FpPoly p,
+      d ∣ DensePoly.gcd c w →
+        d ∣ w / DensePoly.gcd c w →
+          d ∣ (1 : FpPoly p) := by
+  exact yunStep_tail_common_dvd_one_of_gcd_normalized_one c w
+    (yunStep_gcd_normalized_one_of_constant_common_dvd_one
+      c w hc_zero hy_constant hcommon)
+
 private theorem yunFactorsWithLevel_factor_mem_acc_or_dvd_current
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p) (base level fuel : Nat)
