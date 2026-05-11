@@ -11,11 +11,16 @@ namespace BarrettCtx
 
 /--
 Multiply two residues modulo `p` using the Barrett reduction context. The
-precondition `a, b < p < 2^32` ensures the product fits in one `UInt64`.
+caller-side condition `a, b < p < 2^32` ensures the product fits in one
+`UInt64`.
 -/
 def mulMod (ctx : BarrettCtx p) (a b : UInt64) : UInt64 :=
   barrettReduce ctx (a * b)
 
+/--
+For residues below a Barrett modulus, the machine-word product has no
+`UInt64` wraparound.
+-/
 private theorem product_toNat_eq (ctx : BarrettCtx p) (a b : UInt64)
     (ha : a < p) (hb : b < p) :
     (a * b).toNat = a.toNat * b.toNat := by
@@ -36,6 +41,10 @@ private theorem product_toNat_eq (ctx : BarrettCtx p) (a b : UInt64)
   simpa [UInt64.toNat_mul, UInt64.size, UInt64.word] using
     Nat.mod_eq_of_lt hprod_lt_word
 
+/--
+The product of two residues is below `p^2`, which is the bound required by
+the Barrett reducer bridge.
+-/
 private theorem product_toNat_lt_p2 (ctx : BarrettCtx p) (a b : UInt64)
     (ha : a < p) (hb : b < p) :
     (a * b).toNat < p.toNat * p.toNat := by
@@ -46,6 +55,10 @@ private theorem product_toNat_lt_p2 (ctx : BarrettCtx p) (a b : UInt64)
   rw [product_toNat_eq ctx a b ha hb]
   exact Nat.mul_lt_mul'' haNat hbNat
 
+/--
+The product of two residues below a Barrett modulus fits below the Barrett
+radix `2^64`.
+-/
 private theorem product_toNat_lt_radix (ctx : BarrettCtx p) (a b : UInt64)
     (ha : a < p) (hb : b < p) :
     (a * b).toNat < barrettRadix := by
@@ -62,6 +75,7 @@ private theorem product_toNat_lt_radix (ctx : BarrettCtx p) (a b : UInt64)
 The `Nat` value of Barrett modular multiplication is the ordinary modular
 product.
 -/
+@[simp]
 theorem toNat_mulMod (ctx : BarrettCtx p) (a b : UInt64)
     (ha : a < p) (hb : b < p) :
     (ctx.mulMod a b).toNat = (a.toNat * b.toNat) % p.toNat := by
