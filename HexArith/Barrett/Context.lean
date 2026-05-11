@@ -16,18 +16,6 @@ precondition `a, b < p < 2^32` ensures the product fits in one `UInt64`.
 def mulMod (ctx : BarrettCtx p) (a b : UInt64) : UInt64 :=
   barrettReduce ctx (a * b)
 
-private theorem toNat_pinv (ctx : BarrettCtx p) :
-    ctx.pinv.toNat = barrettRadix / p.toNat := by
-  rw [ctx.pinv_eq]
-  have hRpos : 0 < barrettRadix := by
-    simp [barrettRadix, UInt64.word]
-  have hlt : barrettRadix / p.toNat < UInt64.word := by
-    have hdiv_lt : barrettRadix / p.toNat < barrettRadix :=
-      Nat.div_lt_self hRpos ctx.p_gt
-    simpa [barrettRadix] using hdiv_lt
-  simpa [UInt64.toNat_ofNat, UInt64.size, barrettRadix, UInt64.word]
-    using Nat.mod_eq_of_lt hlt
-
 private theorem product_toNat_eq (ctx : BarrettCtx p) (a b : UInt64)
     (ha : a < p) (hb : b < p) :
     (a * b).toNat = a.toNat * b.toNat := by
