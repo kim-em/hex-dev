@@ -55,6 +55,7 @@ private theorem extGcd_bezout_step
           omega
     _ = g := hrec
 
+/-- The first component returned by `extGcd` is the ordinary natural gcd. -/
 @[simp] theorem extGcd_fst (a b : Nat) : (extGcd a b).1 = Nat.gcd a b := by
   induction b using Nat.strongRecOn generalizing a with
   | ind b ih =>
@@ -69,6 +70,10 @@ private theorem extGcd_bezout_step
           rw [Nat.gcd_comm a b, Nat.gcd_rec b a, Nat.gcd_comm (a % b) b]
         exact hrec.trans hgcd
 
+/--
+The second and third components returned by `extGcd` are Bezout
+coefficients for the input naturals, viewed in `Int`.
+-/
 theorem extGcd_bezout (a b : Nat) :
     let (g, s, t) := extGcd a b
     s * a + t * b = g := by
@@ -152,6 +157,12 @@ decreasing_by
       exact hmod_lt
     exact Int.ofNat_lt.mp hnatAbs_lt
 
+/--
+Pure Lean integer extended GCD.
+
+This is the proof-facing reference implementation used by the GMP-backed
+`HexArith.Int.extGcd` extern surface.
+-/
 def pureIntExtGcd (a b : Int) : Nat × Int × Int :=
   pureIntExtGcd.go a b 1 0 0 1
 
@@ -256,11 +267,13 @@ private theorem pureIntExtGcd_go_spec
             rfl
           exact ⟨hrec.1.trans (pureIntExtGcd_gcd_step old_r r'), hrec.2⟩
 
+/-- The first component returned by `pureIntExtGcd` is `Int.gcd`. -/
 @[simp] theorem pureIntExtGcd_fst (a b : Int) :
     (pureIntExtGcd a b).1 = Int.gcd a b := by
   have hspec := pureIntExtGcd_go_spec a b 1 0 0 1 a b (by omega) (by omega)
   simpa [pureIntExtGcd] using hspec.1
 
+/-- The coefficient components returned by `pureIntExtGcd` form a Bezout certificate. -/
 theorem pureIntExtGcd_bezout (a b : Int) :
     let (g, s, t) := pureIntExtGcd a b
     s * a + t * b = g := by
@@ -284,9 +297,11 @@ pure Lean reference with a GMP-backed implementation that returns the same
 def extGcd (a b : @& Int) : Nat × Int × Int :=
   Hex.pureIntExtGcd a b
 
+/-- The first component returned by the public integer `extGcd` is `Int.gcd`. -/
 @[simp] theorem extGcd_fst (a b : Int) : (extGcd a b).1 = Int.gcd a b := by
   simp [extGcd]
 
+/-- The public integer `extGcd` returns Bezout coefficients for its inputs. -/
 theorem extGcd_bezout (a b : Int) :
     let (g, s, t) := extGcd a b
     s * a + t * b = g := by
@@ -307,10 +322,15 @@ theorem extGcd_spec (a b : Int) :
   simp [h] at hfst hbez
   exact ⟨hfst, hbez⟩
 
+/-- On nonnegative integer inputs, the integer `extGcd` gcd component is `Nat.gcd`. -/
 @[simp] theorem extGcd_fst_ofNat (a b : Nat) :
     (extGcd (Int.ofNat a) (Int.ofNat b)).1 = Nat.gcd a b := by
   simp [Int.gcd]
 
+/--
+Combined specification for the integer `extGcd` surface on inputs coerced from
+`Nat`.
+-/
 theorem extGcd_spec_ofNat (a b : Nat) :
     let (g, s, t) := extGcd (Int.ofNat a) (Int.ofNat b)
     g = Nat.gcd a b ∧ s * Int.ofNat a + t * Int.ofNat b = g := by
@@ -319,6 +339,10 @@ theorem extGcd_spec_ofNat (a b : Nat) :
   rw [h] at hspec
   simpa [Int.gcd] using hspec
 
+/--
+For a positive natural right input, the Bezout coefficient of the zero left
+input returned by integer `extGcd` is zero.
+-/
 theorem extGcd_zero_left_s_ofNat (p : Nat) (hp : 0 < p) :
     (extGcd 0 (Int.ofNat p)).2.1 = 0 := by
   cases p with
@@ -341,6 +365,7 @@ def extGcd (a b : UInt64) : UInt64 × Int × Int :=
   let (g, s, t) := HexArith.Int.extGcd (Int.ofNat a.toNat) (Int.ofNat b.toNat)
   (UInt64.ofNat g, s, t)
 
+/-- The word gcd returned by `UInt64.extGcd` agrees with `Nat.gcd` after `toNat`. -/
 @[simp] theorem extGcd_fst (a b : UInt64) :
     (extGcd a b).1.toNat = Nat.gcd a.toNat b.toNat := by
   rw [extGcd]
@@ -354,6 +379,10 @@ def extGcd (a b : UInt64) : UInt64 × Int × Int :=
     · exact Nat.lt_of_le_of_lt (Nat.gcd_le_left b.toNat (Nat.pos_of_ne_zero ha)) (UInt64.toNat_lt a)
   simp [hfst, Nat.mod_eq_of_lt hbound]
 
+/--
+The coefficient components returned by `UInt64.extGcd` are a Bezout certificate
+for the natural representatives of the input words.
+-/
 theorem extGcd_bezout (a b : UInt64) :
     let (g, s, t) := extGcd a b
     s * Int.ofNat a.toNat + t * Int.ofNat b.toNat = Int.ofNat g.toNat := by
