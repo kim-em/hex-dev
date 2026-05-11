@@ -32,7 +32,18 @@ degree of the ambient nonzero polynomial.
 theorem natDegree_toPolynomial_le_degree_getD_of_dvd
     (f g : Hex.ZPoly) (hf : f ≠ 0) (hgf : g ∣ f) :
     (HexPolyZMathlib.toPolynomial g).natDegree ≤ f.degree?.getD 0 := by
-  sorry
+  have hf_poly : HexPolyZMathlib.toPolynomial f ≠ 0 := by
+    intro h
+    apply hf
+    apply HexPolyZMathlib.equiv.injective
+    simpa using h
+  have hgf_poly :
+      HexPolyZMathlib.toPolynomial g ∣ HexPolyZMathlib.toPolynomial f :=
+    HexPolyMathlib.toPolynomial_dvd hgf
+  have hbound :=
+    Polynomial.natDegree_le_of_dvd hgf_poly hf_poly
+  rw [HexPolyMathlib.natDegree_toPolynomial f] at hbound
+  exact hbound
 
 /--
 The executable natural L2 bound dominates the real coefficient-vector norm used
