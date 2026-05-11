@@ -132,7 +132,13 @@ private def cases_pinned : List (Case × Int × List Int) :=
     (mk "adv/x4_plus_1" #[1, 0, 0, 0, 1], 5, [2, 2])
     -- (X^2 - 2)(X^2 - 3) splits over F_23 into four linear factors,
     -- while its integer factorisation recombines them into two quadratics.
-  , (mk "adv/quad_sqrt2_sqrt3" #[6, 0, -5, 0, 1], 23, [1, 1, 1, 1]) ]
+  , (mk "adv/quad_sqrt2_sqrt3" #[6, 0, -5, 0, 1], 23, [1, 1, 1, 1])
+    -- Swinnerton-Dyer SD_3 splits completely over F_71.
+  , (mk "adv/swinnerton_dyer_sd3" #[576, 0, -960, 0, 352, 0, -40, 0, 1],
+      71, [1, 1, 1, 1, 1, 1, 1, 1])
+    -- Φ_15 splits completely over F_31.
+  , (mk "adv/phi15" #[1, -1, 0, 1, -1, 1, 0, -1, 1],
+      31, [1, 1, 1, 1, 1, 1, 1, 1]) ]
 
 /-! ## Polynomials with non-unit content -/
 
