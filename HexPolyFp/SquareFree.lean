@@ -4536,6 +4536,23 @@ private theorem squareFreeAuxRev_factor_dvd_input
                 pthRoot_dvd_self_of_derivative_zero hp loop.2 hloop_ne hdf_loop
               exact dvd_trans_poly hb_pth (dvd_trans_poly hpth_dvd_loop hloop_dvd_g)
 
+/--
+Coprime-transfer corollary of `squareFreeAuxRev_factor_dvd_input`: any common
+divisor of `a` and an output factor of `squareFreeAuxRev g m fuel []` is a
+common divisor of `a` and `g`, and thus divides `1` if `a` and `g` are
+coprime.
+-/
+private theorem squareFreeAuxRev_factors_coprime_of_input_coprime
+    (hp : Hex.Nat.Prime p) (g a : FpPoly p) (m fuel : Nat)
+    (hcoprime : ∀ d : FpPoly p, d ∣ a → d ∣ g → d ∣ (1 : FpPoly p))
+    (hresidual : squareFreeAuxRevResidualSatisfied g m fuel) :
+    ∀ b ∈ (squareFreeAuxRev g m fuel []).reverse,
+      ∀ d : FpPoly p, d ∣ a → d ∣ b.factor → d ∣ (1 : FpPoly p) := by
+  intro b hb d hda hdb
+  have hbg : b.factor ∣ g :=
+    squareFreeAuxRev_factor_dvd_input hp g m fuel hresidual b hb
+  exact hcoprime d hda (dvd_trans_poly hdb hbg)
+
 private theorem yunFactorsWithLevel_pairwise_coprime_nil_of_ready
     (c w : FpPoly p) (base level fuel : Nat)
     (hready : yunFactorsPairwiseReady c w base level fuel) :
