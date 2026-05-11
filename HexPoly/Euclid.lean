@@ -4576,5 +4576,85 @@ theorem dvd_contentNat_mul_of_dvd_mul_coeff
   rw [hnatAbs] at h_int_dvd
   exact h_int_dvd
 
+private theorem dvd_coeff_mul_of_dvd_contentNat_mul
+    (p q : DensePoly Int) (d i j : Nat)
+    (hcontent : d ∣ contentNat p * contentNat q) :
+    (d : Int) ∣ p.coeff i * q.coeff j := by
+  have hpcoeff : (contentNat p : Int) ∣ p.coeff i := contentNat_dvd_coeff p i
+  have hqcoeff : (contentNat q : Int) ∣ q.coeff j := contentNat_dvd_coeff q j
+  rcases hpcoeff with ⟨a, ha⟩
+  rcases hqcoeff with ⟨b, hb⟩
+  have hcontent_int : (d : Int) ∣ ((contentNat p * contentNat q : Nat) : Int) :=
+    Int.ofNat_dvd.mpr hcontent
+  rcases hcontent_int with ⟨c, hc⟩
+  refine ⟨c * (a * b), ?_⟩
+  rw [ha, hb]
+  have hc' : (contentNat p : Int) * (contentNat q : Int) = (d : Int) * c := by
+    simpa using hc
+  calc
+    (contentNat p : Int) * a * ((contentNat q : Int) * b) =
+        ((contentNat p : Int) * (contentNat q : Int)) * (a * b) := by
+          grind
+    _ = ((d : Int) * c) * (a * b) := by
+          rw [hc']
+    _ = (d : Int) * (c * (a * b)) := by
+          grind
+
+private def finiteCoeffFamilyPoly (coeff : Nat → Int) (bound : Nat) : DensePoly Int :=
+  ofCoeffs ((List.range (bound + 1)).map coeff).toArray
+
+private theorem list_getD_map_range_int (size n : Nat) (f : Nat → Int) :
+    ((List.range size).map f).getD n (0 : Int) =
+      if n < size then f n else (0 : Int) := by
+  by_cases hn : n < size
+  · simp [hn, List.getD]
+  · simp [hn, List.getD]
+
+private theorem finiteCoeffFamilyPoly_coeff_of_le
+    (coeff : Nat → Int) (bound i : Nat) (hi : i ≤ bound) :
+    (finiteCoeffFamilyPoly coeff bound).coeff i = coeff i := by
+  unfold finiteCoeffFamilyPoly
+  rw [coeff_ofCoeffs_list]
+  change ((List.range (bound + 1)).map coeff).getD i (0 : Int) = coeff i
+  rw [list_getD_map_range_int]
+  have hi' : i < bound + 1 := by omega
+  simp [hi']
+
+/-- Content/Gauss finite-row helper for McCoy-style coefficient arrays.
+
+If `p` and `q` are finite polynomial packages for coefficient families
+`pCoeff` and `qCoeff`, and every coefficient of `p * q` is divisible by
+`d`, then Gauss's content divisibility forces the whole selected row
+`pCoeff i * qCoeff k` to be divisible by `d`. -/
+private theorem finiteCoeffMcCoyRow_of_truncated_product_coeff_dvd
+    (pCoeff qCoeff : Nat → Int) (p q : DensePoly Int) (d bound k : Nat)
+    (hpCoeff : ∀ i, i ≤ bound → p.coeff i = pCoeff i)
+    (hqCoeff : q.coeff k = qCoeff k)
+    (hprod : ∀ n, (d : Int) ∣ (p * q).coeff n) :
+    ∀ i, i ≤ bound → (d : Int) ∣ pCoeff i * qCoeff k := by
+  have hcontent : d ∣ contentNat p * contentNat q :=
+    dvd_contentNat_mul_of_dvd_mul_coeff p q d hprod
+  intro i hi
+  have hrow := dvd_coeff_mul_of_dvd_contentNat_mul p q d i k hcontent
+  simpa [hpCoeff i hi, hqCoeff] using hrow
+
+/-- Coefficient-family version of the content/Gauss McCoy row helper.
+
+This is the finite-array row step after callers have normalized the convolution
+hypotheses into divisibility of the truncated product polynomial's
+coefficients. -/
+private theorem finiteCoeffMcCoyRow_of_truncated_product_coeff_family_dvd
+    (pCoeff qCoeff : Nat → Int) (d bound k : Nat)
+    (hprod :
+      ∀ n, (d : Int) ∣
+        (finiteCoeffFamilyPoly pCoeff bound * finiteCoeffFamilyPoly qCoeff k).coeff n) :
+    ∀ i, i ≤ bound → (d : Int) ∣ pCoeff i * qCoeff k := by
+  exact finiteCoeffMcCoyRow_of_truncated_product_coeff_dvd pCoeff qCoeff
+    (finiteCoeffFamilyPoly pCoeff bound) (finiteCoeffFamilyPoly qCoeff k)
+    d bound k
+    (fun i hi => finiteCoeffFamilyPoly_coeff_of_le pCoeff bound i hi)
+    (finiteCoeffFamilyPoly_coeff_of_le qCoeff k k (Nat.le_refl k))
+    hprod
+
 end DensePoly
 end Hex
