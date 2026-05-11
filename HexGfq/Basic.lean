@@ -195,6 +195,11 @@ variable {p n : Nat} [ZMod64.Bounds p]
 abbrev modulus (h : Conway.SupportedEntry p n) : FpPoly p :=
   Conway.conwayPoly p n h
 
+/-- `GFq.modulus` is the Conway polynomial selected by the committed entry. -/
+@[simp] theorem modulus_eq_conway (h : Conway.SupportedEntry p n) :
+    modulus h = Conway.conwayPoly p n h :=
+  rfl
+
 /-- The selected Conway modulus has positive degree. -/
 theorem modulus_nonconstant (h : Conway.SupportedEntry p n) :
     0 < FpPoly.degree (modulus h) :=
@@ -216,9 +221,24 @@ def ofPoly (h : Conway.SupportedEntry p n) (g : FpPoly p) : GFq p n h :=
   GFqField.ofPoly (modulus h) (modulus_nonconstant h) (modulus_prime h)
     (modulus_irreducible h) g
 
+/-- `GFq.ofPoly` delegates to the generic quotient-field constructor with the
+selected Conway modulus. -/
+@[simp] theorem ofPoly_eq_field_ofPoly (h : Conway.SupportedEntry p n)
+    (g : FpPoly p) :
+    ofPoly h g =
+      GFqField.ofPoly (modulus h) (modulus_nonconstant h)
+        (modulus_prime h) (modulus_irreducible h) g :=
+  rfl
+
 /-- Project a canonical field element to its reduced polynomial representative. -/
 def repr {h : Conway.SupportedEntry p n} (x : GFq p n h) : FpPoly p :=
   GFqField.repr x
+
+/-- `GFq.repr` is the generic quotient-field representative projection. -/
+@[simp] theorem repr_eq_field_repr {h : Conway.SupportedEntry p n}
+    (x : GFq p n h) :
+    repr x = GFqField.repr x :=
+  rfl
 
 @[simp] theorem repr_ofPoly (h : Conway.SupportedEntry p n) (g : FpPoly p) :
     repr (ofPoly h g) = GFqRing.reduceMod (modulus h) g :=
@@ -239,21 +259,42 @@ variable {n : Nat} [h : Conway.PackedGF2Entry n]
 def supportedEntry : Conway.SupportedEntry 2 n :=
   h.entry
 
+/-- `GF2q.supportedEntry` is the committed packed Conway entry. -/
+@[simp] theorem supportedEntry_eq :
+    supportedEntry (n := n) = h.entry :=
+  rfl
+
 /-- The lower-word packed modulus selected for a committed optimized `GF2q`
 entry. -/
 def lower : UInt64 :=
   h.lower
+
+/-- `GF2q.lower` is the lower-word modulus stored in the packed entry. -/
+@[simp] theorem lower_eq :
+    lower (n := n) = h.lower :=
+  rfl
 
 /-- The packed modulus polynomial selected for a committed optimized `GF2q`
 entry. -/
 def modulus : GF2Poly :=
   GF2Poly.ofUInt64Monic h.lower n
 
+/-- `GF2q.modulus` is the packed monic polynomial selected by the entry. -/
+@[simp] theorem modulus_eq_ofUInt64Monic :
+    modulus (n := n) = GF2Poly.ofUInt64Monic h.lower n :=
+  rfl
+
 /-- The packed modulus, viewed through the generic `FpPoly 2` representation,
 is the committed Conway polynomial for this entry. -/
 theorem conway_eq_packed :
     Conway.conwayPoly 2 n h.entry = Conway.packedGF2FpPoly h.lower n :=
   h.conway_eq_packed
+
+/-- The generic `GFq` modulus for a packed binary entry agrees with the packed
+modulus viewed as an `FpPoly 2`. -/
+theorem gfq_modulus_eq_packedFpPoly :
+    GFq.modulus h.entry = Conway.packedGF2FpPoly (lower (n := n)) n := by
+  simpa [GFq.modulus, lower] using h.conway_eq_packed
 
 /-- The selected packed modulus has positive extension degree. -/
 theorem degree_pos : 0 < n :=
@@ -272,10 +313,21 @@ committed packed Conway entry. -/
 def ofWord (w : UInt64) : GF2q n :=
   GF2n.reduce (n := n) (irr := h.lower) w
 
+/-- `GF2q.ofWord` delegates to the packed `GF2n` reducer for the selected
+Conway modulus. -/
+@[simp] theorem ofWord_eq_reduce (w : UInt64) :
+    ofWord (n := n) w = GF2n.reduce (n := n) (irr := h.lower) w :=
+  rfl
+
 /-- Project an optimized binary field element to its packed machine-word
 representative. -/
 def repr (x : GF2q n) : UInt64 :=
   x.val
+
+/-- `GF2q.repr` is the packed-word value stored by `GF2n`. -/
+@[simp] theorem repr_eq_val (x : GF2q n) :
+    repr x = x.val :=
+  rfl
 
 @[simp] theorem repr_ofWord (w : UInt64) :
     repr (ofWord (n := n) w) =
