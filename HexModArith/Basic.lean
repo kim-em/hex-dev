@@ -116,6 +116,10 @@ theorem mem_values (a : ZMod64 p) : a ∈ values p := by
   rw [val_toNat_ofNat]
   exact (Nat.mod_eq_of_lt a.toNat_lt).trans (by rfl)
 
+/-- Membership in the canonical residue list is automatic for every residue. -/
+@[simp] theorem mem_values_iff (a : ZMod64 p) : a ∈ values p ↔ True :=
+  iff_true_intro (mem_values a)
+
 /-- Reduced representatives below `p` construct the same residue exactly when
 the representatives are equal. -/
 theorem ofNat_eq_ofNat_iff_of_lt {x y : Nat} (hx : x < p) (hy : y < p) :

@@ -7125,6 +7125,43 @@ private theorem foldl_int_sum_sq_nonneg {β : Type v} (xs : List β) (f : β →
     0 ≤ xs.foldl (fun acc x => acc + f x ^ 2) 0 :=
   foldl_int_sum_sq_nonneg_start xs f 0 (by simp)
 
+private theorem foldl_int_sum_sq_pos_of_acc {β : Type v}
+    (xs : List β) (f : β → Int) (acc : Int) (hacc : 0 < acc) :
+    0 < xs.foldl (fun acc x => acc + f x ^ 2) acc := by
+  induction xs generalizing acc with
+  | nil => simpa using hacc
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hx : 0 ≤ f x ^ 2 := by
+        simpa [Lean.Grind.Semiring.pow_two] using
+          (Lean.Grind.OrderedRing.sq_nonneg (a := f x))
+      exact ih (acc + f x ^ 2) (Int.add_pos_of_pos_of_nonneg hacc hx)
+
+private theorem foldl_int_sum_sq_pos_start {β : Type v}
+    (xs : List β) (f : β → Int) (acc : Int) (hacc : 0 ≤ acc)
+    (target : β) (hx : target ∈ xs) (hpos : 0 < f target ^ 2) :
+    0 < xs.foldl (fun acc x => acc + f x ^ 2) acc := by
+  induction xs generalizing acc with
+  | nil => cases hx
+  | cons y ys ih =>
+      simp only [List.foldl_cons]
+      simp only [List.mem_cons] at hx
+      cases hx with
+      | inl hxy =>
+          subst hxy
+          exact foldl_int_sum_sq_pos_of_acc ys f (acc + f target ^ 2)
+            (Int.add_pos_of_nonneg_of_pos hacc hpos)
+      | inr htail =>
+          have hy : 0 ≤ f y ^ 2 := by
+            simpa [Lean.Grind.Semiring.pow_two] using
+              (Lean.Grind.OrderedRing.sq_nonneg (a := f y))
+          exact ih (acc + f y ^ 2) (Int.add_nonneg hacc hy) htail
+
+private theorem foldl_int_sum_sq_pos_of_mem {β : Type v}
+    (xs : List β) (f : β → Int) (x : β) (hx : x ∈ xs) (hpos : 0 < f x ^ 2) :
+    0 < xs.foldl (fun acc x => acc + f x ^ 2) 0 :=
+  foldl_int_sum_sq_pos_start xs f 0 (by simp) x hx hpos
+
 /-- Integer row Gram determinants are nonnegative, by Cauchy-Binet as a finite
 sum of integer squares. -/
 theorem det_gramMatrix_nonneg {n m : Nat} (A : Matrix Int n m) :
@@ -7132,6 +7169,79 @@ theorem det_gramMatrix_nonneg {n m : Nat} (A : Matrix Int n m) :
   rw [det_gramMatrix_eq_sum_minors_sq A]
   exact foldl_int_sum_sq_nonneg (selectedColumnTuples n m)
     (fun cols => det (columnTupleMatrix A (columnTupleVectorFn cols)))
+
+/-- The identity selection of the first `k` columns of an `n`-column matrix. -/
+def firstColumns (k n : Nat) (hk : k ≤ n) : Vector (Fin n) k :=
+  Vector.ofFn fun i => ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
+
+@[simp] theorem firstColumns_entry (k n : Nat) (hk : k ≤ n) (i : Fin k) :
+    (firstColumns k n hk)[i] = (⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩ : Fin n) := by
+  simp [firstColumns]
+
+theorem firstColumns_mem_selectedColumnTuples (k n : Nat) (hk : k ≤ n) :
+    firstColumns k n hk ∈ selectedColumnTuples k n := by
+  rw [mem_selectedColumnTuples_iff]
+  intro i j hij
+  simp [firstColumns]
+  exact hij
+
+theorem columnTupleMatrix_leadingRows_firstColumns_eq_leadingPrefix
+    {R : Type u} {n : Nat} (M : Matrix R n n) (k : Nat) (hk : k ≤ n) :
+    columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn (firstColumns k n hk)) =
+      leadingPrefix M k hk := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  change
+    (columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn (firstColumns k n hk)))[
+        (⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)] =
+      (leadingPrefix M k hk)[(⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)]
+  simp [columnTupleMatrix, leadingRows, leadingPrefix, columnTupleVectorFn, firstColumns, ofFn]
+
+theorem det_gramMatrix_leadingRows_pos_of_upperTriangular_pos_diag
+    {n : Nat} (M : Matrix Int n n)
+    (hzero : ∀ i j : Fin n, j.val < i.val → M[i][j] = 0)
+    (hdiag : ∀ i : Fin n, 0 < M[i][i])
+    (k : Nat) (hk : k ≤ n) :
+    0 < det (gramMatrix (leadingRows M k hk)) := by
+  rw [det_gramMatrix_eq_sum_minors_sq (leadingRows M k hk)]
+  let cols := firstColumns k n hk
+  have hmem : cols ∈ selectedColumnTuples k n :=
+    firstColumns_mem_selectedColumnTuples k n hk
+  have hminor_eq :
+      det (columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn cols)) =
+        det (leadingPrefix M k hk) := by
+    dsimp [cols]
+    rw [columnTupleMatrix_leadingRows_firstColumns_eq_leadingPrefix M k hk]
+  have hprefixZero :
+      ∀ i j : Fin k, j.val < i.val → (leadingPrefix M k hk)[i][j] = 0 := by
+    intro i j hij
+    let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
+    let jj : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
+    have hentry : (leadingPrefix M k hk)[i][j] = M[ii][jj] := by
+      simp [leadingPrefix, ofFn, ii, jj]
+    rw [hentry]
+    exact hzero ii jj hij
+  have hprefixDiag :
+      ∀ i : Fin k, 0 < (leadingPrefix M k hk)[i][i] := by
+    intro i
+    let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
+    have hentry : (leadingPrefix M k hk)[i][i] = M[ii][ii] := by
+      simp [leadingPrefix, ofFn, ii]
+    rw [hentry]
+    exact hdiag ii
+  have hminor_pos :
+      0 < det (columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn cols)) := by
+    rw [hminor_eq]
+    exact det_upperTriangular_pos_diag (leadingPrefix M k hk) hprefixZero hprefixDiag
+  have hminor_sq_pos :
+      0 < det (columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn cols)) ^ 2 := by
+    simpa [Lean.Grind.Semiring.pow_two] using Int.mul_pos hminor_pos hminor_pos
+  exact foldl_int_sum_sq_pos_of_mem
+    (xs := selectedColumnTuples k n)
+    (f := fun cols => det (columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn cols)))
+    (x := cols) hmem hminor_sq_pos
 
 end Matrix
 end Hex
