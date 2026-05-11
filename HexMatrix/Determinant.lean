@@ -6474,6 +6474,23 @@ def reconstructInjTuple {m n : Nat}
   exact congrArg (fun col : Fin m => A[r][col])
     (reconstructInjTuple_getElem sel perm c)
 
+private theorem columnTupleMatrix_reconstructInjTuple_eq
+    {R : Type u} {n m : Nat} (A : Matrix R n m)
+    (sel : Vector (Fin m) n) (perm : Vector (Fin n) n) :
+    columnTupleMatrix A (columnTupleVectorFn (reconstructInjTuple sel perm)) =
+      columnTupleMatrix A (fun i => sel[perm[i]]) := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro c hc
+  change
+    (columnTupleMatrix A (columnTupleVectorFn (reconstructInjTuple sel perm)))[
+        (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
+      (columnTupleMatrix A (fun i => sel[perm[i]]))[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+  rw [columnTupleMatrix_entry, columnTupleMatrix_entry]
+  exact congrArg (fun col : Fin m => A[(⟨r, hr⟩ : Fin n)][col])
+    (reconstructInjTuple_getElem sel perm (⟨c, hc⟩ : Fin n))
+
 theorem columnTupleCoeff_reconstructInjTuple
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (A : Matrix R n m) (sel : Vector (Fin m) n) (perm : Vector (Fin n) n) :
@@ -6845,6 +6862,80 @@ theorem columnTupleExpansion_refold_selectedPerm
     _ = (((selectedColumnTuples n m).flatMap fun sel =>
           (permutationVectors n).map (reconstructInjTuple sel))).foldl
         (fun acc cols => acc + columnTupleExpansionTerm A cols) 0 := rfl
+
+private theorem columnTupleExpansionTerm_reconstructInjTuple
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (A : Matrix R n m) (sel : Vector (Fin m) n) (perm : Vector (Fin n) n)
+    (hperm : perm ∈ permutationVectors n) :
+    columnTupleExpansionTerm A (reconstructInjTuple sel perm) =
+      detTerm (columnTupleMatrix A (columnTupleVectorFn sel)) perm *
+        det (columnTupleMatrix A (columnTupleVectorFn sel)) := by
+  unfold columnTupleExpansionTerm detTerm
+  rw [columnTupleCoeff_reconstructInjTuple]
+  rw [columnTupleMatrix_reconstructInjTuple_eq A sel perm]
+  rw [det_columnTupleMatrix_compose_perm A sel perm hperm]
+  grind
+
+private theorem columnTupleExpansion_reconstruct_orbit_sum
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (A : Matrix R n m) (sel : Vector (Fin m) n) :
+    (permutationVectors n).foldl
+        (fun acc perm => acc + columnTupleExpansionTerm A (reconstructInjTuple sel perm)) 0 =
+      det (columnTupleMatrix A (columnTupleVectorFn sel)) ^ 2 := by
+  let minor := columnTupleMatrix A (columnTupleVectorFn sel)
+  calc
+    (permutationVectors n).foldl
+        (fun acc perm => acc + columnTupleExpansionTerm A (reconstructInjTuple sel perm)) 0 =
+      (permutationVectors n).foldl
+        (fun acc perm => acc + detTerm minor perm * det minor) 0 := by
+        apply foldl_det_sum_congr
+        intro perm hperm
+        exact columnTupleExpansionTerm_reconstructInjTuple A sel perm hperm
+    _ =
+      (permutationVectors n).foldl (fun acc perm => acc + detTerm minor perm) 0 *
+        det minor := by
+        exact foldl_det_sum_mul_right_zero (permutationVectors n) (fun perm => detTerm minor perm)
+          (det minor)
+    _ = det minor ^ 2 := by
+        unfold det
+        grind
+
+private theorem columnTupleExpansion_selectedPerm_collapse
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat} (A : Matrix R n m) :
+    (((selectedColumnTuples n m).flatMap fun sel =>
+        (permutationVectors n).map (reconstructInjTuple sel))).foldl
+      (fun acc cols => acc + columnTupleExpansionTerm A cols) 0 =
+    (selectedColumnTuples n m).foldl
+      (fun acc sel => acc + det (columnTupleMatrix A (columnTupleVectorFn sel)) ^ 2) 0 := by
+  rw [foldl_det_sum_flatMap]
+  apply foldl_acc_congr
+  intro acc sel _hsel
+  rw [foldl_det_sum_start]
+  congr 1
+  rw [foldl_det_sum_map]
+  rw [columnTupleExpansion_reconstruct_orbit_sum A sel]
+
+/-- Cauchy-Binet for the row Gram matrix: the Gram determinant is the finite
+sum of squares of the selected column minors. -/
+theorem det_gramMatrix_eq_sum_minors_sq
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat} (A : Matrix R n m) :
+    det (gramMatrix A) =
+      (selectedColumnTuples n m).foldl
+        (fun acc cols => acc + det (columnTupleMatrix A (columnTupleVectorFn cols)) ^ 2) 0 := by
+  calc
+    det (gramMatrix A) =
+      (columnTupleVectors n m).foldl
+        (fun acc cols => acc + columnTupleExpansionTerm A cols) 0 := by
+        exact det_gramMatrix_eq_sum_columnTuples A
+    _ =
+      (((selectedColumnTuples n m).flatMap fun sel =>
+          (permutationVectors n).map (reconstructInjTuple sel))).foldl
+        (fun acc cols => acc + columnTupleExpansionTerm A cols) 0 := by
+        exact columnTupleExpansion_refold_selectedPerm A
+    _ =
+      (selectedColumnTuples n m).foldl
+        (fun acc cols => acc + det (columnTupleMatrix A (columnTupleVectorFn cols)) ^ 2) 0 := by
+        exact columnTupleExpansion_selectedPerm_collapse A
 
 end Matrix
 end Hex
