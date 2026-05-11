@@ -954,6 +954,252 @@ private theorem auxMatrix_det_eq_prod_normSq (b : Matrix Int n m)
   rw [auxMatrix_diag b k hk i]
   rfl
 
+/-- Interpolating matrix between `leadingGramMatrixRat (castIntMatrix b)` (at
+`s = 0`) and `auxMatrix b k hk` (at `s = k`). Columns with index `< s` have
+already been replaced by basis-row dot products; columns with index `≥ s`
+still hold the original `b`-row dot products. -/
+private noncomputable def progressMatrix (b : Matrix Int n m) (k : Nat)
+    (hk : k ≤ n) (s : Nat) : Matrix Rat k k :=
+  Matrix.ofFn fun i j =>
+    if j.val < s then
+      Matrix.dot (castIntRow b (GramSchmidt.liftFinLE i hk))
+        ((basis b).row (GramSchmidt.liftFinLE j hk))
+    else
+      Matrix.dot (castIntRow b (GramSchmidt.liftFinLE i hk))
+        (castIntRow b (GramSchmidt.liftFinLE j hk))
+
+private theorem progressMatrix_get_lt (b : Matrix Int n m) (k : Nat) (hk : k ≤ n)
+    (s : Nat) (i j : Fin k) (hj : j.val < s) :
+    (progressMatrix b k hk s)[i][j] =
+      Matrix.dot (castIntRow b (GramSchmidt.liftFinLE i hk))
+        ((basis b).row (GramSchmidt.liftFinLE j hk)) := by
+  simp [progressMatrix, Matrix.ofFn, hj]
+
+private theorem progressMatrix_get_ge (b : Matrix Int n m) (k : Nat) (hk : k ≤ n)
+    (s : Nat) (i j : Fin k) (hj : ¬ j.val < s) :
+    (progressMatrix b k hk s)[i][j] =
+      Matrix.dot (castIntRow b (GramSchmidt.liftFinLE i hk))
+        (castIntRow b (GramSchmidt.liftFinLE j hk)) := by
+  simp [progressMatrix, Matrix.ofFn, hj]
+
+/-- At `s = k`, `progressMatrix` matches `auxMatrix`. -/
+private theorem progressMatrix_full_eq_auxMatrix (b : Matrix Int n m)
+    (k : Nat) (hk : k ≤ n) :
+    progressMatrix b k hk k = auxMatrix b k hk := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let ii : Fin k := ⟨i, hi⟩
+  let jj : Fin k := ⟨j, hj⟩
+  have hjlt : jj.val < k := hj
+  change (progressMatrix b k hk k)[ii][jj] = (auxMatrix b k hk)[ii][jj]
+  rw [progressMatrix_get_lt b k hk k ii jj hjlt]
+  rw [auxMatrix_get]
+
+/-- The col-op coefficient list for the `s`-th transition step: indices
+`p : Fin s` lifted into `Fin k`. -/
+private def progressMatrixSources (k : Nat) (s : Nat) (hs : s < k) :
+    List (Fin k) :=
+  (List.finRange s).map fun p => ⟨p.val, Nat.lt_of_lt_of_le p.isLt (Nat.le_of_lt hs)⟩
+
+/-- Sources are all strictly below `s` and hence distinct from `⟨s, hs⟩`. -/
+private theorem progressMatrixSources_ne_dst (k : Nat) (s : Nat) (hs : s < k)
+    (src : Fin k) (hmem : src ∈ progressMatrixSources k s hs) :
+    src ≠ ⟨s, hs⟩ := by
+  unfold progressMatrixSources at hmem
+  rw [List.mem_map] at hmem
+  obtain ⟨p, _, hp⟩ := hmem
+  intro h
+  have hval := congrArg Fin.val h
+  rw [← hp] at hval
+  exact Nat.ne_of_lt p.isLt hval
+
+/-- The col-op coefficient for source `src : Fin k`: equals
+`-(coeffs b)[s][src.val]`. -/
+private noncomputable def progressMatrixCoeff (b : Matrix Int n m) (k : Nat)
+    (hk : k ≤ n) (s : Nat) (hs : s < k) (src : Fin k) : Rat :=
+  -(GramSchmidt.entry (coeffs b)
+    ⟨s, Nat.lt_of_lt_of_le hs hk⟩
+    ⟨src.val, Nat.lt_of_lt_of_le src.isLt hk⟩)
+
+/-- The matrix transition for one col-op step: column `s` of
+`progressMatrix b k hk (s+1)` equals column `s` of `progressMatrix b k hk s`
+plus a linear combination of columns with index `< s`. -/
+private theorem progressMatrix_succ_eq_colReplace
+    (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) (s : Nat) (hs : s < k) :
+    progressMatrix b k hk (s + 1) =
+      Matrix.colReplace (progressMatrix b k hk s) (⟨s, hs⟩ : Fin k)
+        (fun i =>
+          (progressMatrix b k hk s)[i][(⟨s, hs⟩ : Fin k)] +
+          (progressMatrixSources k s hs).foldl
+            (fun acc src =>
+              acc + progressMatrixCoeff b k hk s hs src *
+                (progressMatrix b k hk s)[i][src]) 0) := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let ii : Fin k := ⟨i, hi⟩
+  change (progressMatrix b k hk (s + 1))[ii][(⟨j, hj⟩ : Fin k)] =
+    (Matrix.colReplace (progressMatrix b k hk s) (⟨s, hs⟩ : Fin k)
+      (fun i' =>
+        (progressMatrix b k hk s)[i'][(⟨s, hs⟩ : Fin k)] +
+        (progressMatrixSources k s hs).foldl
+          (fun acc src =>
+            acc + progressMatrixCoeff b k hk s hs src *
+              (progressMatrix b k hk s)[i'][src]) 0))[ii][(⟨j, hj⟩ : Fin k)]
+  rw [Matrix.colReplace_get]
+  -- Case split on Fin k equality.
+  by_cases hjs : (⟨j, hj⟩ : Fin k) = (⟨s, hs⟩ : Fin k)
+  · -- Column s case.
+    rw [if_pos hjs]
+    -- Get j = s from the Fin equality, then substitute hj with hs.
+    have hjs_val : j = s := congrArg Fin.val hjs
+    -- Replace [⟨j, hj⟩] with [⟨s, hs⟩] in the LHS by the Fin equality.
+    -- Use Vector.ext-like rewrite: re-express the LHS at ⟨s, hs⟩ via congrArg.
+    have hLHS_eq :
+        (progressMatrix b k hk (s + 1))[ii][(⟨j, hj⟩ : Fin k)] =
+          (progressMatrix b k hk (s + 1))[ii][(⟨s, hs⟩ : Fin k)] := by
+      congr 1
+    rw [hLHS_eq]
+    -- LHS: progressMatrix b k hk (s+1) at column ⟨s, hs⟩.
+    have hjlt : (⟨s, hs⟩ : Fin k).val < s + 1 := Nat.lt_succ_self s
+    rw [progressMatrix_get_lt b k hk (s + 1) ii (⟨s, hs⟩ : Fin k) hjlt]
+    have hjnlt : ¬ (⟨s, hs⟩ : Fin k).val < s := Nat.lt_irrefl s
+    rw [progressMatrix_get_ge b k hk s ii (⟨s, hs⟩ : Fin k) hjnlt]
+    -- LHS = Matrix.dot (castIntRow b (lift ii)) ((basis b).row (lift ⟨s, hs⟩))
+    -- RHS' first piece = Matrix.dot (castIntRow b (lift ii)) (castIntRow b (lift ⟨s, hs⟩))
+    -- We need: LHS = RHS' first + foldl (coeff * (basis row p))
+    have hsn : s < n := Nat.lt_of_lt_of_le hs hk
+    have hslift : GramSchmidt.liftFinLE (⟨s, hs⟩ : Fin k) hk = ⟨s, hsn⟩ := rfl
+    rw [hslift]
+    -- decomposition castIntRow b ⟨s, hsn⟩ = (basis b).row ⟨s, hsn⟩ + prefixComb
+    rw [castIntRow_decomposition b s hsn]
+    rw [dot_add_right_rat]
+    -- LHS = dot (castIntRow ii) ((basis b).row ⟨s, _⟩)
+    -- RHS_first = dot (castIntRow ii) ((basis b).row ⟨s, _⟩) + dot (castIntRow ii) prefixComb
+    -- So we need: dot (castIntRow ii) ((basis b).row ⟨s,_⟩) = (above) + foldl
+    -- => 0 = dot (castIntRow ii) prefixComb + foldl
+    -- Use: dot (castIntRow ii) prefixComb = foldl coeff * dot (castIntRow ii) basis_row_p
+    -- And dot (castIntRow ii) basis_row_p = progressMatrix s at [ii][⟨p, _⟩] for p < s.
+    rw [dot_prefixCombination_right_rat (coeffs := coeffs b) (basisM := basis b)
+      (i := s) (hi := hsn)]
+    -- Now show the two foldls cancel.
+    -- The foldl on the LHS has +entry * dot, and we need to match the - on RHS.
+    -- It's easier to subtract from both sides to show RHS - LHS = 0.
+    -- Actually: LHS + foldl_lhs = LHS_first + foldl_rhs
+    -- where foldl_lhs has positive entries, foldl_rhs has negative entries.
+    -- Equivalently: foldl_lhs + foldl_rhs = 0 (since LHS = LHS_first).
+    -- Let's match them.
+    have hfold_match :
+        (List.finRange s).foldl
+          (fun (acc : Rat) (jp : Fin s) =>
+            acc +
+              GramSchmidt.entry (coeffs b) ⟨s, hsn⟩
+                  ⟨jp.val, Nat.lt_trans jp.isLt hsn⟩ *
+                Matrix.dot (castIntRow b (GramSchmidt.liftFinLE ii hk))
+                  ((basis b).row ⟨jp.val, Nat.lt_trans jp.isLt hsn⟩)) 0 =
+        - ((progressMatrixSources k s hs).foldl
+          (fun acc src =>
+            acc + progressMatrixCoeff b k hk s hs src *
+              (progressMatrix b k hk s)[ii][src]) 0) := by
+      -- Match term by term: each entry on LHS = -coeff * progressMatrix entry.
+      -- The progressMatrix entry at src (which is some ⟨p.val, _⟩ for p < s)
+      -- equals dot (castIntRow ii) ((basis b).row ⟨src.val, _⟩) since src.val < s.
+      unfold progressMatrixSources progressMatrixCoeff
+      -- Move the negation inside the foldl.
+      have hneg_foldl :
+          - ((List.finRange s).map fun p =>
+              (⟨p.val, Nat.lt_of_lt_of_le p.isLt (Nat.le_of_lt hs)⟩ : Fin k)).foldl
+            (fun acc src =>
+              acc + (-GramSchmidt.entry (coeffs b) ⟨s, Nat.lt_of_lt_of_le hs hk⟩
+                ⟨src.val, Nat.lt_of_lt_of_le src.isLt hk⟩) *
+                (progressMatrix b k hk s)[ii][src]) 0 =
+            ((List.finRange s).map fun p =>
+              (⟨p.val, Nat.lt_of_lt_of_le p.isLt (Nat.le_of_lt hs)⟩ : Fin k)).foldl
+            (fun acc src =>
+              acc + GramSchmidt.entry (coeffs b) ⟨s, Nat.lt_of_lt_of_le hs hk⟩
+                ⟨src.val, Nat.lt_of_lt_of_le src.isLt hk⟩ *
+                (progressMatrix b k hk s)[ii][src]) 0 := by
+        -- Induction over the mapped list, factoring out negation.
+        generalize hmap : (List.finRange s).map (fun p : Fin s =>
+              (⟨p.val, Nat.lt_of_lt_of_le p.isLt (Nat.le_of_lt hs)⟩ : Fin k)) = lst
+        clear hmap
+        induction lst with
+        | nil => simp
+        | cons x xs ih =>
+            simp only [List.foldl_cons]
+            -- Use foldl_sum_start_rat to factor out, then match.
+            rw [foldl_sum_start_rat xs _
+              ((0 : Rat) + (-GramSchmidt.entry (coeffs b) ⟨s, Nat.lt_of_lt_of_le hs hk⟩
+                ⟨x.val, Nat.lt_of_lt_of_le x.isLt hk⟩) *
+                (progressMatrix b k hk s)[ii][x])]
+            rw [foldl_sum_start_rat xs _
+              ((0 : Rat) + GramSchmidt.entry (coeffs b) ⟨s, Nat.lt_of_lt_of_le hs hk⟩
+                ⟨x.val, Nat.lt_of_lt_of_le x.isLt hk⟩ *
+                (progressMatrix b k hk s)[ii][x])]
+            grind
+      rw [hneg_foldl]
+      -- Now compare the LHS foldl with the foldl over the mapped list.
+      -- LHS uses xs := List.finRange s indexed by p : Fin s.
+      -- RHS uses xs.map (lift p), then progressMatrix at lifted src.
+      -- We use List.foldl_map.
+      rw [List.foldl_map]
+      -- Now both foldls are over List.finRange s.
+      apply foldl_sum_congr_simple
+      intro p _hp
+      -- LHS body: entry * dot (castIntRow ii) ((basis b).row ⟨p.val, _⟩)
+      -- RHS body: entry * (progressMatrix b k hk s)[ii][⟨p.val, _⟩]
+      -- Need: dot (castIntRow ii) ((basis b).row ⟨p.val, _⟩) =
+      --       (progressMatrix b k hk s)[ii][⟨p.val, _⟩]
+      have hp_lt : p.val < s := p.isLt
+      let pp : Fin k := ⟨p.val, Nat.lt_of_lt_of_le p.isLt (Nat.le_of_lt hs)⟩
+      have hpp_lt_s : pp.val < s := hp_lt
+      rw [progressMatrix_get_lt b k hk s ii pp hpp_lt_s]
+      rfl
+    -- Now use hfold_match to conclude.
+    grind
+  · -- j ≠ s case.
+    rw [if_neg hjs]
+    have hjs_ne : j ≠ s := fun h => hjs (Fin.ext h)
+    by_cases hjlt : j < s
+    · -- j < s: both versions use basis-row dot.
+      have hjlt' : j < s + 1 := Nat.lt_succ_of_lt hjlt
+      have hj_idx_lt_succ : (⟨j, hj⟩ : Fin k).val < s + 1 := hjlt'
+      have hj_idx_lt : (⟨j, hj⟩ : Fin k).val < s := hjlt
+      rw [progressMatrix_get_lt b k hk (s + 1) ii (⟨j, hj⟩ : Fin k) hj_idx_lt_succ]
+      rw [progressMatrix_get_lt b k hk s ii (⟨j, hj⟩ : Fin k) hj_idx_lt]
+    · -- j ≥ s. Since j ≠ s, we have j > s.
+      have hjge : j ≥ s := Nat.le_of_not_lt hjlt
+      have hjgt : j > s := Nat.lt_of_le_of_ne hjge fun h => hjs_ne h.symm
+      have hj_idx_nlt_succ : ¬ (⟨j, hj⟩ : Fin k).val < s + 1 := by
+        change ¬ j < s + 1; omega
+      have hj_idx_nlt : ¬ (⟨j, hj⟩ : Fin k).val < s := hjlt
+      rw [progressMatrix_get_ge b k hk (s + 1) ii (⟨j, hj⟩ : Fin k) hj_idx_nlt_succ]
+      rw [progressMatrix_get_ge b k hk s ii (⟨j, hj⟩ : Fin k) hj_idx_nlt]
+
+/-- The col-op step preserves the determinant. -/
+private theorem progressMatrix_succ_det
+    (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) (s : Nat) (hs : s < k) :
+    Matrix.det (progressMatrix b k hk (s + 1)) =
+      Matrix.det (progressMatrix b k hk s) := by
+  rw [progressMatrix_succ_eq_colReplace b k hk s hs]
+  apply Matrix.det_colReplace_add_otherCols
+  exact progressMatrixSources_ne_dst k s hs
+
+/-- All progress matrices have the same determinant: induct from 0 to k. -/
+private theorem progressMatrix_det_invariant
+    (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) (s : Nat) (hs : s ≤ k) :
+    Matrix.det (progressMatrix b k hk s) = Matrix.det (progressMatrix b k hk 0) := by
+  induction s with
+  | zero => rfl
+  | succ s ih =>
+      have hslt : s < k := Nat.lt_of_succ_le hs
+      have hsle : s ≤ k := Nat.le_of_lt hslt
+      rw [progressMatrix_succ_det b k hk s hslt]
+      exact ih hsle
+
 theorem gramDet_eq_prod_normSq (b : Matrix Int n m)
     (hli : independent b) (k : Nat) (hk : k ≤ n) :
     (gramDet b k hk : Rat) = gramSchmidtNormProduct b k hk := by
