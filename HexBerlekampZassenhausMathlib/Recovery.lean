@@ -178,9 +178,7 @@ theorem bhksRecover_eq_some_of_recovery
         some h.expectedFactors :=
     h.candidates_eq
   have hprod := h.product_eq
-  unfold Hex.bhksRecover?
-  simp only [dif_pos hrows, hnondeg, hcand, Bool.false_eq_true, if_false, hprod,
-    BEq.refl, if_true]
+  exact Hex.bhksRecover?_eq_some_of_checks f d hrows hnondeg hcand hprod
 
 /-- Corollary form of `bhksRecover_eq_some_of_recovery` that drops the
 expected-factors witness from the conclusion: under the recovery hypotheses,

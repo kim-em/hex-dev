@@ -2278,6 +2278,41 @@ private def bhksRecoverClassified (f : ZPoly) (d : LiftData) : BhksRecoveryResul
 def bhksRecover? (f : ZPoly) (d : LiftData) : Option (Array ZPoly) :=
   (bhksRecoverClassified f d).toOption
 
+/--
+If the executable BHKS recovery guards all pass, `bhksRecover?` returns the
+verified candidate array.
+
+This lemma is the public proof-facing surface for callers that should not
+unfold the private failure classifier used by the executable.
+-/
+theorem bhksRecover?_eq_some_of_checks
+    (f : ZPoly) (d : LiftData) {candidates : Array ZPoly}
+    (hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
+      (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth)
+    (hnondeg :
+      bhksDegenerateIndicatorPartition
+          (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
+            hrows (bhksLatticeBasis_independent _))
+          (bhksEquivalenceClassIndicators
+            (bhksProjectedRows
+              (bhksLatticeBasis f d.p d.k d.liftedFactors)
+              hrows (bhksLatticeBasis_independent _))) = false)
+    (hcand :
+      bhksIndicatorCandidates? f d
+          (bhksEquivalenceClassIndicators
+            (bhksProjectedRows
+              (bhksLatticeBasis f d.p d.k d.liftedFactors)
+              hrows (bhksLatticeBasis_independent _))) =
+        some candidates)
+    (hprod : Array.polyProduct candidates = f) :
+    bhksRecover? f d = some candidates := by
+  unfold bhksRecover?
+  rw [bhksRecoverClassified]
+  have hproductCheck : (Array.polyProduct candidates == f) = true := by
+    simpa [beq_iff_eq] using hprod
+  simp only [dif_pos hrows, hnondeg, Bool.false_eq_true, if_false, hcand,
+    hproductCheck, if_true, BhksRecoveryResult.toOption]
+
 private def bhksIndicatorGuardLift : LiftData :=
   { p := 5
     k := 2
