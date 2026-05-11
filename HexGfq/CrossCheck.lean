@@ -15,10 +15,10 @@ diverge by constructing ad-hoc moduli at degrees 4, 8, 16, and 32 and
 running pseudorandom shared inputs through both representations.
 
 The moduli are not committed Conway entries; their irreducibility
-witnesses are propositional `sorry`s, in line with the existing
-pattern in `HexGF2/Conformance.lean` and `HexGF2/Bench.lean`.  The
-cross-check still computes operationally: each `#guard` runs the
-packed and generic operations on the same input and compares results.
+witnesses are local certificates or remaining propositional proof
+obligations.  The cross-check still computes operationally: each
+`#guard` runs the packed and generic operations on the same input and
+compares results.
 
 Operations covered: addition, multiplication, inversion, Frobenius
 (`a ↦ a^p`).
@@ -101,12 +101,107 @@ private def primeTwo : Hex.Nat.Prime 2 := by
 local instance instPrimeModulusTwo : ZMod64.PrimeModulus 2 :=
   ZMod64.primeModulusOfPrime primeTwo
 
+private def polyP2 (coeffs : Array Nat) : FpPoly 2 :=
+  FpPoly.ofCoeffs (coeffs.map (fun n => ZMod64.ofNat 2 n))
+
+private theorem maxProperDiv_4 : Berlekamp.maximalProperDivisors 4 = [2] := by decide
+private theorem maxProperDiv_8 : Berlekamp.maximalProperDivisors 8 = [4] := by decide
+
+private def genericN4Cert : Berlekamp.IrreducibilityCertificate where
+  p := 2
+  n := 4
+  powChain :=
+    #[polyP2 #[0, 1], polyP2 #[0, 0, 1], polyP2 #[1, 1],
+      polyP2 #[1, 0, 1], polyP2 #[0, 1]]
+  bezout := #[{ left := polyP2 #[], right := polyP2 #[1] }]
+
+set_option maxRecDepth 4096 in
+private theorem genericN4Cert_check :
+    Berlekamp.checkIrreducibilityCertificateLinear
+        (Conway.packedGF2FpPoly 0x3 4)
+        (by unfold Conway.packedGF2FpPoly; rfl)
+        genericN4Cert = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinear,
+    genericN4Cert,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinear, Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_4, Conway.packedGF2FpPoly, polyP2]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · intro x hx
+        have hcases : x = 0 ∨ x = 1 ∨ x = 2 ∨ x = 3 ∨ x = 4 := by omega
+        rcases hcases with rfl | rfl | rfl | rfl | rfl <;> rfl
+    · rfl
+  · rfl
+
+private theorem genericN4_irr :
+    FpPoly.Irreducible (Conway.packedGF2FpPoly 0x3 4) :=
+  Berlekamp.rabinTest_imp_irreducible (Conway.packedGF2FpPoly 0x3 4)
+    (by unfold Conway.packedGF2FpPoly; rfl)
+    (Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
+      (Conway.packedGF2FpPoly 0x3 4)
+      (by unfold Conway.packedGF2FpPoly; rfl)
+      genericN4Cert
+      genericN4Cert_check)
+
+private def genericN8Cert : Berlekamp.IrreducibilityCertificate where
+  p := 2
+  n := 8
+  powChain :=
+    #[polyP2 #[0, 1], polyP2 #[0, 0, 1], polyP2 #[0, 0, 0, 0, 1],
+      polyP2 #[1, 1, 0, 1, 1], polyP2 #[0, 1, 1, 1, 1, 0, 1],
+      polyP2 #[0, 0, 1, 0, 0, 1, 1, 1], polyP2 #[1, 0, 1, 1, 0, 0, 1],
+      polyP2 #[0, 1, 0, 1, 1, 1, 1, 1], polyP2 #[0, 1]]
+  bezout :=
+    #[{ left := polyP2 #[1, 1, 0, 0, 1],
+        right := polyP2 #[1, 0, 0, 0, 1, 0, 1] }]
+
+set_option maxRecDepth 4096 in
+private theorem genericN8Cert_check :
+    Berlekamp.checkIrreducibilityCertificateLinearIncremental
+        (Conway.packedGF2FpPoly 0x1B 8)
+        (by unfold Conway.packedGF2FpPoly; rfl)
+        genericN8Cert = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinearIncremental,
+    genericN8Cert,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinearIncremental,
+    Berlekamp.checkPowChainLinearIncrementalStep,
+    Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_8, Conway.packedGF2FpPoly, polyP2]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · constructor
+        · rfl
+        · intro x hx
+          have hcases : x = 0 ∨ x = 1 ∨ x = 2 ∨ x = 3 ∨ x = 4 ∨ x = 5 ∨
+              x = 6 ∨ x = 7 := by omega
+          rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> rfl
+    · rfl
+  · rfl
+
+private theorem genericN8_irr :
+    FpPoly.Irreducible (Conway.packedGF2FpPoly 0x1B 8) :=
+  Berlekamp.rabinTest_imp_irreducible (Conway.packedGF2FpPoly 0x1B 8)
+    (by unfold Conway.packedGF2FpPoly; rfl)
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      (Conway.packedGF2FpPoly 0x1B 8)
+      (by unfold Conway.packedGF2FpPoly; rfl)
+      genericN8Cert
+      genericN8Cert_check)
+
 /-! ## Per-degree fixtures
 
 For each extension degree `n` we fix a known irreducible packed
 modulus, declare the matching `FpPoly 2` modulus via
-`Conway.packedGF2FpPoly`, and provide `sorry`'d irreducibility plus
-positive-degree witnesses for both representations.  The four `#guard`s
+`Conway.packedGF2FpPoly`, and provide irreducibility plus positive-degree
+witnesses for both representations.  The four `#guard`s
 per degree compare 50 pseudorandom shared inputs across addition,
 multiplication, inversion, and Frobenius (`a ↦ a^2`).
 -/
@@ -123,7 +218,7 @@ private def n : Nat := 4
 
 private theorem packed_irr :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic lower n) := by
-  sorry
+  exact GF2Poly.gf16_modulus_irreducible
 
 private def genericMod : FpPoly 2 :=
   Conway.packedGF2FpPoly lower n
@@ -132,7 +227,7 @@ private theorem generic_pos : 0 < FpPoly.degree genericMod := by
   decide
 
 private theorem generic_irr : FpPoly.Irreducible genericMod := by
-  sorry
+  exact genericN4_irr
 
 private abbrev Packed : Type :=
   GF2n n lower (by decide) (by decide) packed_irr
@@ -180,7 +275,7 @@ private def n : Nat := 8
 
 private theorem packed_irr :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic lower n) := by
-  sorry
+  exact GF2Poly.aes_modulus_irreducible
 
 private def genericMod : FpPoly 2 :=
   Conway.packedGF2FpPoly lower n
@@ -189,7 +284,7 @@ private theorem generic_pos : 0 < FpPoly.degree genericMod := by
   decide
 
 private theorem generic_irr : FpPoly.Irreducible genericMod := by
-  sorry
+  exact genericN8_irr
 
 private abbrev Packed : Type :=
   GF2n n lower (by decide) (by decide) packed_irr
