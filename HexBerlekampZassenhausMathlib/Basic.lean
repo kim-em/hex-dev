@@ -73,26 +73,66 @@ theorem defaultFactorCoeffBound_valid
     ∀ g : Hex.ZPoly, g ∣ f → ∀ i, (g.coeff i).natAbs ≤ Hex.ZPoly.defaultFactorCoeffBound f := by
   intro g hgf i
   have hf_poly : HexPolyZMathlib.toPolynomial f ≠ 0 := by
-    sorry
-  have hgf_poly : HexPolyZMathlib.toPolynomial g ∣ HexPolyZMathlib.toPolynomial f := by
-    sorry
-  have hmignotte :=
-    HexPolyZMathlib.mignotte_bound
-      (HexPolyZMathlib.toPolynomial f) (HexPolyZMathlib.toPolynomial g)
-      hf_poly hgf_poly i
+    intro h
+    apply hf
+    exact HexPolyZMathlib.equiv.injective (by simpa using h)
+  have hgf_poly : HexPolyZMathlib.toPolynomial g ∣ HexPolyZMathlib.toPolynomial f :=
+    HexPolyMathlib.toPolynomial_dvd hgf
   have hdegree :
       (HexPolyZMathlib.toPolynomial g).natDegree ≤ f.degree?.getD 0 :=
     natDegree_toPolynomial_le_degree_getD_of_dvd f g hf hgf
-  have hl2 :
-      HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f) ≤
-        (Hex.ZPoly.coeffL2NormBound f : ℝ) :=
-    l2norm_toPolynomial_le_coeffL2NormBound f
-  have huniform :
-      Hex.ZPoly.mignotteCoeffBound f (HexPolyZMathlib.toPolynomial g).natDegree i ≤
-        Hex.ZPoly.defaultFactorCoeffBound f :=
-    Hex.ZPoly.mignotteCoeffBound_le_defaultFactorCoeffBound f hdegree
-      (by sorry)
-  sorry
+  have hcoeff_eq : (HexPolyZMathlib.toPolynomial g).coeff i = g.coeff i :=
+    HexPolyZMathlib.coeff_toPolynomial g i
+  by_cases hi : i ≤ (HexPolyZMathlib.toPolynomial g).natDegree
+  · -- The interesting case: i is within the factor's natural degree.
+    have hmignotte :=
+      HexPolyZMathlib.mignotte_bound
+        (HexPolyZMathlib.toPolynomial f) (HexPolyZMathlib.toPolynomial g)
+        hf_poly hgf_poly i
+    rw [hcoeff_eq] at hmignotte
+    have hl2 :
+        HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f) ≤
+          (Hex.ZPoly.coeffL2NormBound f : ℝ) :=
+      l2norm_toPolynomial_le_coeffL2NormBound f
+    have hchoose_nonneg :
+        (0 : ℝ) ≤ Nat.choose (HexPolyZMathlib.toPolynomial g).natDegree i :=
+      Nat.cast_nonneg _
+    have hstep :
+        ((g.coeff i).natAbs : ℝ) ≤
+          (Nat.choose (HexPolyZMathlib.toPolynomial g).natDegree i : ℝ) *
+            (Hex.ZPoly.coeffL2NormBound f : ℝ) :=
+      hmignotte.trans (mul_le_mul_of_nonneg_left hl2 hchoose_nonneg)
+    have hbinom :
+        (Nat.choose (HexPolyZMathlib.toPolynomial g).natDegree i : ℝ) =
+          (Hex.ZPoly.binom (HexPolyZMathlib.toPolynomial g).natDegree i : ℝ) := by
+      rw [HexPolyZMathlib.binom_eq_choose]
+    rw [hbinom] at hstep
+    have huniform_nat :=
+      Hex.ZPoly.mignotteCoeffBound_le_defaultFactorCoeffBound
+        f (k := (HexPolyZMathlib.toPolynomial g).natDegree) (j := i) hdegree hi
+    have hmig_eq :
+        Hex.ZPoly.mignotteCoeffBound f
+            (HexPolyZMathlib.toPolynomial g).natDegree i =
+          Hex.ZPoly.binom (HexPolyZMathlib.toPolynomial g).natDegree i *
+            Hex.ZPoly.coeffL2NormBound f :=
+      Hex.ZPoly.mignotteCoeffBound_eq f _ _
+    have huniform_real :
+        (Hex.ZPoly.binom (HexPolyZMathlib.toPolynomial g).natDegree i : ℝ) *
+          (Hex.ZPoly.coeffL2NormBound f : ℝ) ≤
+          (Hex.ZPoly.defaultFactorCoeffBound f : ℝ) := by
+      have := huniform_nat
+      rw [hmig_eq] at this
+      exact_mod_cast this
+    have hfinal :
+        ((g.coeff i).natAbs : ℝ) ≤ (Hex.ZPoly.defaultFactorCoeffBound f : ℝ) :=
+      hstep.trans huniform_real
+    exact_mod_cast hfinal
+  · -- Outside the factor's natural degree the coefficient is zero.
+    have hi' : (HexPolyZMathlib.toPolynomial g).natDegree < i := Nat.lt_of_not_le hi
+    have hcoeff_zero : (HexPolyZMathlib.toPolynomial g).coeff i = 0 :=
+      Polynomial.coeff_eq_zero_of_natDegree_lt hi'
+    have hgcoeff_zero : g.coeff i = 0 := hcoeff_eq ▸ hcoeff_zero
+    simp [hgcoeff_zero]
 
 /--
 Executable irreducibility predicate for transported integer polynomials.
