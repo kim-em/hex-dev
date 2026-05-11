@@ -2463,6 +2463,66 @@ theorem gcd_eq_one_of_monic_of_common_dvd_one
     (DensePoly.gcd_dvd_left a b)
     (DensePoly.gcd_dvd_right a b)
 
+/--
+Bezout-style coprime cancellation for `FpPoly p`. If `g ∣ c * h` and every
+common divisor of `c` and `g` divides the unit polynomial `1`, then `g ∣ h`.
+
+The proof uses the extended Euclidean algorithm `DensePoly.xgcd`: from the
+Bezout identity `r.left * c + r.right * g = DensePoly.gcd c g` and the fact
+that `DensePoly.gcd c g ∣ 1` (via the coprime hypothesis), one concludes that
+`g` divides `h`.
+-/
+theorem dvd_of_dvd_mul_of_common_dvd_one
+    [ZMod64.PrimeModulus p]
+    {g c h : FpPoly p}
+    (hdvd : g ∣ c * h)
+    (hcoprime : ∀ d : FpPoly p, d ∣ c → d ∣ g → d ∣ (1 : FpPoly p)) :
+    g ∣ h := by
+  -- The gcd of `(c, g)` divides `c`, `g`, hence `1` by hypothesis.
+  have hDc : DensePoly.gcd c g ∣ c := DensePoly.gcd_dvd_left c g
+  have hDg : DensePoly.gcd c g ∣ g := DensePoly.gcd_dvd_right c g
+  have hD1 : DensePoly.gcd c g ∣ (1 : FpPoly p) :=
+    hcoprime (DensePoly.gcd c g) hDc hDg
+  rcases hD1 with ⟨e, he⟩
+  -- Extract the Bezout coefficients as free variables (not let-bindings).
+  obtain ⟨s, t, hbez⟩ :
+      ∃ s t : FpPoly p, s * c + t * g = DensePoly.gcd c g :=
+    ⟨(DensePoly.xgcd c g).left, (DensePoly.xgcd c g).right,
+     DensePoly.xgcd_bezout c g⟩
+  -- `g` divides each summand of `(s * c + t * g) * h`.
+  have hg_left : g ∣ s * c * h := by
+    have h_assoc : s * c * h = s * (c * h) := DensePoly.mul_assoc_poly s c h
+    exact h_assoc ▸ DensePoly.dvd_mul_left_poly s hdvd
+  have hg_right : g ∣ t * g * h := by
+    have h_rearrange : t * g * h = (t * h) * g := by
+      calc t * g * h
+          = t * (g * h) := DensePoly.mul_assoc_poly _ _ _
+        _ = t * (h * g) := congrArg (fun x => t * x) (DensePoly.mul_comm_poly g h)
+        _ = (t * h) * g := (DensePoly.mul_assoc_poly _ _ _).symm
+    exact h_rearrange ▸ DensePoly.dvd_mul_left_poly (t * h) (DensePoly.dvd_refl_poly g)
+  -- Combine to get `g ∣ DensePoly.gcd c g * h`.
+  have hbez_h :
+      s * c * h + t * g * h = DensePoly.gcd c g * h := by
+    calc s * c * h + t * g * h
+        = (s * c + t * g) * h :=
+          (DensePoly.mul_add_left_poly (s * c) (t * g) h).symm
+      _ = DensePoly.gcd c g * h := congrArg (fun x => x * h) hbez
+  have hg_Dh : g ∣ DensePoly.gcd c g * h :=
+    hbez_h ▸ DensePoly.dvd_add_poly hg_left hg_right
+  -- Use `DensePoly.gcd c g ∣ 1` to conclude `g ∣ h`.
+  have hh_eq : h = e * (DensePoly.gcd c g * h) := by
+    calc h
+        = h * 1 := (DensePoly.mul_one_right_poly h).symm
+      _ = h * (DensePoly.gcd c g * e) :=
+          congrArg (fun x => h * x) he
+      _ = (h * DensePoly.gcd c g) * e :=
+          (DensePoly.mul_assoc_poly h (DensePoly.gcd c g) e).symm
+      _ = (DensePoly.gcd c g * h) * e :=
+          congrArg (fun x => x * e) (DensePoly.mul_comm_poly h (DensePoly.gcd c g))
+      _ = e * (DensePoly.gcd c g * h) :=
+          DensePoly.mul_comm_poly (DensePoly.gcd c g * h) e
+  exact hh_eq ▸ DensePoly.dvd_mul_left_poly e hg_Dh
+
 /-! ### Monomial multiplication and geometric-series divisibility
 
 These lemmas support the `xPowSubX` divisibility chain in
