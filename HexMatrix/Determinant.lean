@@ -2606,6 +2606,133 @@ private theorem inversePermutationVector_involutive_of_mem {n : Nat}
     (inversePermutationValues_nodup perm (permutationVectors_nodup hmem))]
   exact inversePermutationValues_involutive perm (permutationVectors_nodup hmem)
 
+private def composePermutationValues {n : Nat}
+    (sigma tau : Vector (Fin n) n) : Vector (Fin n) n :=
+  Vector.ofFn fun i => sigma[tau[i]]
+
+private theorem composePermutationValues_get {n : Nat}
+    (sigma tau : Vector (Fin n) n) (i : Fin n) :
+    (composePermutationValues sigma tau)[i] = sigma[tau[i]] := by
+  simp [composePermutationValues]
+
+private theorem composePermutationValues_nodup {n : Nat}
+    {sigma tau : Vector (Fin n) n}
+    (hsigma : sigma.toList.Nodup) (htau : tau.toList.Nodup) :
+    (composePermutationValues sigma tau).toList.Nodup := by
+  rw [vector_toList_eq_finRange_map_get (composePermutationValues sigma tau)]
+  apply list_nodup_map_of_injective
+    (f := fun i : Fin n => (composePermutationValues sigma tau)[i])
+    ?_ (List.nodup_finRange n)
+  intro i j hij
+  have hsigma_inj :
+      Function.Injective (fun k : Fin n => sigma[k]) := by
+    intro a b hab
+    have ha_idx :
+        sigma.toList.idxOf sigma[a] = a.val := by
+      have ha_len : a.val < sigma.toList.length := by
+        simp [Vector.length_toList]
+      have hget : sigma.toList[a.val] = sigma[a] := by
+        simp [Vector.toList]
+      simpa [hget] using hsigma.idxOf_getElem a.val ha_len
+    have hb_idx :
+        sigma.toList.idxOf sigma[b] = b.val := by
+      have hb_len : b.val < sigma.toList.length := by
+        simp [Vector.length_toList]
+      have hget : sigma.toList[b.val] = sigma[b] := by
+        simp [Vector.toList]
+      simpa [hget] using hsigma.idxOf_getElem b.val hb_len
+    apply Fin.ext
+    change sigma[a] = sigma[b] at hab
+    rw [← ha_idx, ← hb_idx, hab]
+  have htau_inj :
+      Function.Injective (fun k : Fin n => tau[k]) := by
+    intro a b hab
+    have ha_idx :
+        tau.toList.idxOf tau[a] = a.val := by
+      have ha_len : a.val < tau.toList.length := by
+        simp [Vector.length_toList]
+      have hget : tau.toList[a.val] = tau[a] := by
+        simp [Vector.toList]
+      simpa [hget] using htau.idxOf_getElem a.val ha_len
+    have hb_idx :
+        tau.toList.idxOf tau[b] = b.val := by
+      have hb_len : b.val < tau.toList.length := by
+        simp [Vector.length_toList]
+      have hget : tau.toList[b.val] = tau[b] := by
+        simp [Vector.toList]
+      simpa [hget] using htau.idxOf_getElem b.val hb_len
+    apply Fin.ext
+    change tau[a] = tau[b] at hab
+    rw [← ha_idx, ← hb_idx, hab]
+  exact htau_inj (hsigma_inj (by simpa [composePermutationValues] using hij))
+
+private theorem composePermutationValues_mem_permutationVectors {n : Nat}
+    {sigma tau : Vector (Fin n) n}
+    (hsigma : sigma ∈ permutationVectors n)
+    (htau : tau ∈ permutationVectors n) :
+    composePermutationValues sigma tau ∈ permutationVectors n := by
+  exact permutationVectors_complete
+    (composePermutationValues_nodup
+      (permutationVectors_nodup hsigma) (permutationVectors_nodup htau))
+
+private theorem composePermutationValues_left_involutive_of_inverse {n : Nat}
+    {sigma tau : Vector (Fin n) n}
+    (hsigma : sigma ∈ permutationVectors n) :
+    composePermutationValues
+        (inversePermutationVector sigma)
+        (composePermutationValues sigma tau) = tau := by
+  apply Vector.ext
+  intro k hk
+  let i : Fin n := ⟨k, hk⟩
+  change
+    (composePermutationValues
+        (inversePermutationVector sigma)
+        (composePermutationValues sigma tau))[i] = tau[i]
+  have hnodup := permutationVectors_nodup hsigma
+  rw [inversePermutationVector_eq sigma hnodup]
+  simpa [composePermutationValues] using
+    inversePermutationValues_get_index sigma hnodup tau[i]
+
+private theorem composePermutationValues_left_inverse_of_inverse {n : Nat}
+    {sigma tau : Vector (Fin n) n}
+    (hsigma : sigma ∈ permutationVectors n) :
+    composePermutationValues sigma
+        (composePermutationValues (inversePermutationVector sigma) tau) = tau := by
+  have h :=
+    composePermutationValues_left_involutive_of_inverse
+      (sigma := inversePermutationVector sigma) (tau := tau)
+      (inversePermutationVector_mem_permutationVectors hsigma)
+  rw [inversePermutationVector_involutive_of_mem hsigma] at h
+  exact h
+
+private theorem composePermutationValues_left_map_permutationVectors_perm {n : Nat}
+    (sigma : Vector (Fin n) n) (hsigma : sigma ∈ permutationVectors n) :
+    ((permutationVectors n).map fun tau => composePermutationValues sigma tau).Perm
+      (permutationVectors n) := by
+  have hmapNodup :
+      ((permutationVectors n).map fun tau => composePermutationValues sigma tau).Nodup := by
+    exact list_nodup_map_on permutationVectors_nodup_list (by
+      intro a ha b hb hab
+      have h' := congrArg
+        (fun perm => composePermutationValues (inversePermutationVector sigma) perm) hab
+      exact
+        (composePermutationValues_left_involutive_of_inverse (sigma := sigma) (tau := a) hsigma).symm.trans
+          (h'.trans
+            (composePermutationValues_left_involutive_of_inverse (sigma := sigma) (tau := b) hsigma)))
+  apply (List.perm_ext_iff_of_nodup hmapNodup permutationVectors_nodup_list).mpr
+  intro perm
+  constructor
+  · intro hmem
+    rcases List.mem_map.mp hmem with ⟨pre, hpre, rfl⟩
+    exact composePermutationValues_mem_permutationVectors hsigma hpre
+  · intro hmem
+    apply List.mem_map.mpr
+    refine ⟨composePermutationValues (inversePermutationVector sigma) perm,
+      ?_, ?_⟩
+    · exact composePermutationValues_mem_permutationVectors
+        (inversePermutationVector_mem_permutationVectors hsigma) hmem
+    · exact composePermutationValues_left_inverse_of_inverse hsigma
+
 private theorem inversePermutationVector_map_permutationVectors_perm {n : Nat} :
     ((permutationVectors n).map inversePermutationVector).Perm
       (permutationVectors n) := by
