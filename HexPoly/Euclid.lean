@@ -3248,6 +3248,98 @@ private theorem list_foldl_add_int (xs : List Int) (z : Int) :
       rw [ih (z + x), ih (0 + x)]
       grind
 
+private theorem dvd_list_foldl_add_int_of_forall
+    (d : Int) (xs : List Int) (h : ∀ x ∈ xs, d ∣ x) :
+    d ∣ xs.foldl (fun s t => s + t) 0 := by
+  induction xs with
+  | nil =>
+      simp
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [list_foldl_add_int xs (0 + x)]
+      simpa using Int.dvd_add (h x List.mem_cons_self)
+        (ih (fun y hy => h y (List.mem_cons_of_mem x hy)))
+
+private theorem dvd_list_foldl_add_term_of_forall
+    (d : Int) (xs : List Nat) (term : Nat → Int)
+    (h : ∀ x ∈ xs, d ∣ term x) :
+    d ∣ xs.foldl (fun s x => s + term x) 0 := by
+  have hmap : ∀ y ∈ xs.map term, d ∣ y := by
+    intro y hy
+    rw [List.mem_map] at hy
+    rcases hy with ⟨x, hx, rfl⟩
+    exact h x hx
+  simpa [List.foldl_map] using dvd_list_foldl_add_int_of_forall d (xs.map term) hmap
+
+private theorem dvd_term_of_dvd_foldl_add_of_dvd_others
+    (d : Int) :
+    ∀ (xs : List Nat) (term : Nat → Int) (idx : Nat),
+      xs.Nodup →
+      idx ∈ xs →
+      d ∣ xs.foldl (fun s x => s + term x) 0 →
+      (∀ r, r ∈ xs → r ≠ idx → d ∣ term r) →
+      d ∣ term idx
+  | [], _term, _idx, _hnodup, hmem, _hsum, _hothers => by
+      cases hmem
+  | x :: xs, term, idx, hnodup, hmem, hsum, hothers => by
+      simp only [List.foldl_cons] at hsum
+      have hfold :
+          xs.foldl (fun s x => s + term x) (0 + term x) =
+            term x + xs.foldl (fun s x => s + term x) 0 := by
+        simpa [List.foldl_map] using list_foldl_add_int (xs.map term) (0 + term x)
+      rw [hfold] at hsum
+      have hnodup_tail : xs.Nodup := hnodup.tail
+      have hx_not_mem : x ∉ xs := by
+        rw [List.nodup_cons] at hnodup
+        exact hnodup.1
+      by_cases hxidx : x = idx
+      · subst idx
+        have htail : d ∣ xs.foldl (fun s x => s + term x) 0 := by
+          apply dvd_list_foldl_add_term_of_forall
+          intro y hy
+          exact hothers y (List.mem_cons_of_mem x hy) (by
+            intro hyx
+            exact hx_not_mem (by simpa [hyx] using hy))
+        have hdiff := Int.dvd_sub hsum htail
+        simpa using hdiff
+      · have hxdiv : d ∣ term x :=
+          hothers x List.mem_cons_self hxidx
+        have htail_sum : d ∣ xs.foldl (fun s x => s + term x) 0 := by
+          have hdiff := Int.dvd_sub hsum hxdiv
+          have heq :
+              term x + xs.foldl (fun s x => s + term x) 0 - term x =
+                xs.foldl (fun s x => s + term x) 0 := by
+            grind
+          rwa [heq] at hdiff
+        have hidx_mem_tail : idx ∈ xs := by
+          rcases List.mem_cons.mp hmem with hidx | htail
+          · exact False.elim (hxidx hidx.symm)
+          · exact htail
+        exact dvd_term_of_dvd_foldl_add_of_dvd_others d xs term idx
+          hnodup_tail hidx_mem_tail htail_sum
+          (fun r hr hri => hothers r (List.mem_cons_of_mem x hr) hri)
+
+private theorem dvd_diagonalMulCoeffTerm_of_dvd_mul_coeff_of_dvd_other_diagonal_terms
+    (p q : DensePoly Int) (d n i : Nat)
+    (hprod : (d : Int) ∣ (p * q).coeff n)
+    (hothers : ∀ r, r ≠ i → (d : Int) ∣ diagonalMulCoeffTerm p q n r) :
+    (d : Int) ∣ diagonalMulCoeffTerm p q n i := by
+  by_cases hi : i < n + 1
+  · have hsum :
+        (d : Int) ∣ (List.range (n + 1)).foldl
+          (fun s r => s + diagonalMulCoeffTerm p q n r) 0 := by
+      rw [← diagonalSum_eq_degree_bound p q n]
+      rw [← mulCoeffSum_eq_diagonal p q n]
+      rw [← coeff_mul p q n]
+      exact hprod
+    exact dvd_term_of_dvd_foldl_add_of_dvd_others (d : Int) (List.range (n + 1))
+      (fun r => diagonalMulCoeffTerm p q n r) i
+      List.nodup_range (List.mem_range.mpr hi) hsum
+      (fun r _hr hri => hothers r hri)
+  · have hni : n < i := by omega
+    rw [diagonalMulCoeffTerm_eq_zero_of_degree_lt p q n i hni]
+    simp
+
 private theorem list_natAbs_gcd_bezout_aux (xs : List Int) (acc : Nat) :
     ∃ a : Int, ∃ weights : List Int,
       weights.length = xs.length ∧
