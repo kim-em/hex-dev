@@ -423,11 +423,11 @@ setup_benchmark runFactorAdvPhi15Checksum n => n + 1
     signalFloorMultiplier := 1.0
   }
 
-/- Singleton HO-2 adversarial fast-path setup target for `Phi_15`. Full
-`factorFast` is a scientific-only run for now: the declared cost model is the
-constant `n + 1` singleton bound for the pinned `n = 0` schedule. This smoke
-registration keeps the fast-path precision cap and pinned `p = 31` eight-linear
-split visible without routing through the public fallback combinator. -/
+/- Singleton HO-2 adversarial fast-path setup target for `Phi_15`. The declared
+cost model is the constant `n + 1` singleton bound for the pinned `n = 0`
+schedule. This smoke registration keeps the fast-path precision cap and pinned
+`p = 31` eight-linear split visible without routing through the public fallback
+combinator. -/
 setup_benchmark runFactorFastSetupAdvPhi15Checksum n => n + 1
   with prep := prepAdvPhi15
   where {
