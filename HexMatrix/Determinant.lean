@@ -1723,6 +1723,178 @@ theorem detTerm_insertAt_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
   unfold detTerm
   rw [detSign_insertAt_last, detProduct_insertAt_last]
 
+private theorem detProduct_insertAt_not_last_zero_of_last_row_zero
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (v : Vector (Fin n) n)
+    (i : Fin (n + 1)) (hi : i ≠ Fin.last n)
+    (hrow : ∀ j : Fin (n + 1), j.val < n → M[Fin.last n][j] = 0) :
+    detProduct M (insertAt (Fin.last n) (v.map Fin.castSucc) i) = 0 := by
+  unfold detProduct
+  apply foldl_det_product_zero_of_mem
+    (List.finRange (n + 1)) (Fin.last n)
+    (fun r => M[r][(insertAt (Fin.last n) (v.map Fin.castSucc) i)[r]]) 1
+    (List.mem_finRange (Fin.last n))
+  have hiVal : i.val < n := by
+    have hne : i.val ≠ n := by
+      intro hval
+      exact hi (Fin.ext hval)
+    omega
+  have hcolVal :
+      ((insertAt (Fin.last n) (v.map Fin.castSucc) i)[Fin.last n]).val < n := by
+    unfold insertAt
+    simp [List.getElem_insertIdx_of_gt, hiVal, Vector.toList]
+  exact hrow ((insertAt (Fin.last n) (v.map Fin.castSucc) i)[Fin.last n]) hcolVal
+
+private theorem detTerm_insertAt_not_last_zero_of_last_row_zero
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (v : Vector (Fin n) n)
+    (i : Fin (n + 1)) (hi : i ≠ Fin.last n)
+    (hrow : ∀ j : Fin (n + 1), j.val < n → M[Fin.last n][j] = 0) :
+    detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i) = 0 := by
+  unfold detTerm
+  rw [detProduct_insertAt_not_last_zero_of_last_row_zero M v i hi hrow]
+  grind
+
+private theorem foldl_detTerm_last_row_insertions
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (v : Vector (Fin n) n) (z : R)
+    (hrow : ∀ j : Fin (n + 1), j.val < n → M[Fin.last n][j] = 0) :
+    (List.finRange (n + 1)).foldl
+        (fun acc i =>
+          acc + detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i)) z =
+      z + detSign (R := R) v *
+        (detProduct (leadingPrefix M n (Nat.le_succ n)) v * M[Fin.last n][Fin.last n]) := by
+  rw [← Fin.foldl_eq_foldl_finRange]
+  rw [Fin.foldl_succ_last]
+  have hprefix :
+      Fin.foldl n
+          (fun acc i =>
+            acc + detTerm M
+              (insertAt (Fin.last n) (v.map Fin.castSucc) i.castSucc)) z = z := by
+    rw [Fin.foldl_eq_foldl_finRange]
+    calc
+      (List.finRange n).foldl
+          (fun acc i =>
+            acc + detTerm M
+              (insertAt (Fin.last n) (v.map Fin.castSucc) i.castSucc)) z =
+        (List.finRange n).foldl (fun acc (_i : Fin n) => acc + (0 : R)) z := by
+          apply foldl_det_sum_congr
+          intro i _hmem
+          rw [detTerm_insertAt_not_last_zero_of_last_row_zero M v i.castSucc
+            (by
+              intro hlast
+              have hval := congrArg Fin.val hlast
+              simp at hval
+              exact (Nat.ne_of_lt i.isLt) hval)
+            hrow]
+      _ = z := by
+          exact foldl_det_sum_zero (List.finRange n) z
+  rw [hprefix]
+  rw [detTerm_insertAt_last]
+
+theorem det_eq_det_leadingPrefix_mul_last_of_last_row_zero
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1))
+    (hrow : ∀ j : Fin (n + 1), j.val < n → M[Fin.last n][j] = 0) :
+    det M = det (leadingPrefix M n (Nat.le_succ n)) * M[Fin.last n][Fin.last n] := by
+  unfold det
+  rw [show permutationVectors (n + 1) =
+      List.flatMap
+        (fun v =>
+          (List.finRange (n + 1)).map fun i =>
+            insertAt (Fin.last n) (v.map Fin.castSucc) i)
+        (permutationVectors n) by rfl]
+  rw [foldl_det_sum_flatMap]
+  calc
+    (permutationVectors n).foldl
+        (fun acc v =>
+          (List.map (fun i => insertAt (Fin.last n) (Vector.map Fin.castSucc v) i)
+              (List.finRange (n + 1))).foldl
+            (fun acc perm => acc + detTerm M perm) acc) 0 =
+      (permutationVectors n).foldl
+        (fun acc v =>
+          (List.finRange (n + 1)).foldl
+            (fun acc i =>
+              acc + detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i)) acc) 0 := by
+        apply foldl_acc_congr
+        intro acc v _hmem
+        simp only [List.foldl_map]
+    _ =
+      (permutationVectors n).foldl
+        (fun acc v =>
+          acc + detSign (R := R) v *
+            (detProduct (leadingPrefix M n (Nat.le_succ n)) v *
+              M[Fin.last n][Fin.last n])) 0 := by
+        apply foldl_acc_congr
+        intro acc v _hmem
+        exact foldl_detTerm_last_row_insertions M v acc hrow
+    _ =
+      (permutationVectors n).foldl
+          (fun acc v => acc + detTerm (leadingPrefix M n (Nat.le_succ n)) v) 0 *
+        M[Fin.last n][Fin.last n] := by
+        unfold detTerm
+        calc
+          (permutationVectors n).foldl
+              (fun acc v =>
+                acc + detSign (R := R) v *
+                  (detProduct (leadingPrefix M n (Nat.le_succ n)) v *
+                    M[Fin.last n][Fin.last n])) 0 =
+            (permutationVectors n).foldl
+              (fun acc v =>
+                acc + (detSign (R := R) v *
+                  detProduct (leadingPrefix M n (Nat.le_succ n)) v) *
+                    M[Fin.last n][Fin.last n]) 0 := by
+              apply foldl_det_sum_congr
+              intro v _hmem
+              grind
+          _ =
+            (permutationVectors n).foldl
+                (fun acc v =>
+                  acc + detSign (R := R) v *
+                    detProduct (leadingPrefix M n (Nat.le_succ n)) v) 0 *
+              M[Fin.last n][Fin.last n] := by
+              exact foldl_det_sum_mul_right_zero
+                (permutationVectors n)
+                (fun v => detSign (R := R) v *
+                  detProduct (leadingPrefix M n (Nat.le_succ n)) v)
+                M[Fin.last n][Fin.last n]
+    _ = det (leadingPrefix M n (Nat.le_succ n)) * M[Fin.last n][Fin.last n] := by
+        rfl
+
+theorem det_upperTriangular_pos_diag
+    {n : Nat} (M : Matrix Int n n)
+    (hzero : ∀ i j : Fin n, j.val < i.val → M[i][j] = 0)
+    (hdiag : ∀ i : Fin n, 0 < M[i][i]) :
+    0 < det M := by
+  induction n with
+  | zero =>
+      simp [det, permutationVectors, detTerm, detSign, detProduct, emptyVec, inversionCount]
+  | succ n ih =>
+      have hrow : ∀ j : Fin (n + 1), j.val < n → M[Fin.last n][j] = 0 := by
+        intro j hj
+        exact hzero (Fin.last n) j hj
+      rw [det_eq_det_leadingPrefix_mul_last_of_last_row_zero M hrow]
+      have hprefixZero :
+          ∀ i j : Fin n, j.val < i.val →
+            (leadingPrefix M n (Nat.le_succ n))[i][j] = 0 := by
+        intro i j hij
+        let ii : Fin (n + 1) := ⟨i.val, by omega⟩
+        let jj : Fin (n + 1) := ⟨j.val, by omega⟩
+        have hentry : (leadingPrefix M n (Nat.le_succ n))[i][j] = M[ii][jj] := by
+          simp [leadingPrefix, ofFn, ii, jj]
+        rw [hentry]
+        exact hzero ii jj hij
+      have hprefixDiag :
+          ∀ i : Fin n, 0 < (leadingPrefix M n (Nat.le_succ n))[i][i] := by
+        intro i
+        let ii : Fin (n + 1) := ⟨i.val, by omega⟩
+        have hentry : (leadingPrefix M n (Nat.le_succ n))[i][i] = M[ii][ii] := by
+          simp [leadingPrefix, ofFn, ii]
+        rw [hentry]
+        exact hdiag ii
+      exact Int.mul_pos (ih (leadingPrefix M n (Nat.le_succ n)) hprefixZero hprefixDiag)
+        (hdiag (Fin.last n))
+
 private theorem detTerm_identity_insertAt_last {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat} (v : Vector (Fin n) n) :
     detTerm (1 : Matrix R (n + 1) (n + 1))
