@@ -33,6 +33,7 @@ def redc (ctx : MontCtx p) (Thi Tlo : UInt64) : UInt64 :=
   else
     addHi
 
+/-- A word-sized value plus its `R - 1` multiple vanishes modulo `R`. -/
 private theorem redc_cancel_pred_word (a : Nat) (ha : a < UInt64.word) :
     (a + (a * (UInt64.word - 1)) % UInt64.word) % UInt64.word = 0 := by
   have hword_pos : 0 < UInt64.word := by
@@ -56,6 +57,7 @@ private theorem redc_cancel_pred_word (a : Nat) (ha : a < UInt64.word) :
             rw [hs]
           rw [hmul, Nat.mul_mod_left]
 
+/-- The low-word Montgomery correction makes the adjusted low word zero modulo `R`. -/
 private theorem redc_low_correction_zero (ctx : MontCtx p) (Tlo : UInt64) :
     let m := Tlo * ctx.p'
     (Tlo.toNat + (m * p).toNat) % UInt64.word = 0 := by
@@ -95,6 +97,7 @@ private theorem redc_low_correction_zero (ctx : MontCtx p) (Tlo : UInt64) :
           rw [hpp']
           exact redc_cancel_pred_word Tlo.toNat hTlo
 
+/-- The first add-with-carry step computes an exact carry and a zero low word. -/
 private theorem redc_low_addCarry_exact (ctx : MontCtx p) (Tlo : UInt64) :
     let m := Tlo * ctx.p'
     let (lo, c1) := UInt64.addCarry Tlo (m * p) false
@@ -126,14 +129,31 @@ private theorem redc_low_addCarry_exact (ctx : MontCtx p) (Tlo : UInt64) :
             rw [hlo_zero]
             simp
 
+/-- `mulFull` returns the same high and low words as `mulHi` and wrapped multiply. -/
+private theorem mulFull_eq_mulHi_mul (a b : UInt64) :
+    UInt64.mulFull a b = (UInt64.mulHi a b, a * b) := by
+  cases h : UInt64.mulFull a b with
+  | mk hi lo =>
+      have hfull := UInt64.toNat_mulFull a b
+      simp [h] at hfull
+      apply Prod.ext
+      · apply UInt64.toNat_inj.mp
+        rw [UInt64.toNat_mulHi]
+        exact hfull.1
+      · apply UInt64.toNat_inj.mp
+        simpa [UInt64.toNat_mul, UInt64.word] using hfull.2
+
+/-- View the odd-modulus assumption as a Nat-level parity fact inside this file. -/
 private theorem MontCtx.p_odd_nat (ctx : MontCtx p) : p.toNat % 2 = 1 := by
   have h := congrArg UInt64.toNat ctx.p_odd
   simpa [UInt64.toNat_mod, UInt64.toNat_ofNat, UInt64.size] using h
 
+/-- An odd modulus is positive at the Nat level. -/
 private theorem MontCtx.p_pos (ctx : MontCtx p) : 0 < p.toNat := by
   have hodd := ctx.p_odd_nat
   omega
 
+/-- Every `UInt64` modulus is below the Montgomery radix `R = 2^64`. -/
 private theorem MontCtx.p_lt_word (_ctx : MontCtx p) : p.toNat < UInt64.word := by
   simpa [UInt64.word, UInt64.size] using UInt64.toNat_lt_size p
 
