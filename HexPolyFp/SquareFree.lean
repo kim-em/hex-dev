@@ -4488,6 +4488,48 @@ private theorem yunFactorsLevelCompletes_of_size_bound
           (ih (DensePoly.gcd c w) (w / DensePoly.gcd c w) (level + 1)
             htail_reachable htail_bound)
 
+private theorem yunFactorsLevelCompletes_of_derivative_active_state
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
+    (_hmultiplicity : 0 < multiplicity) (hfuel : f.size < fuel + 1)
+    (hzero : f.isZero = false)
+    (hdf : (DensePoly.derivative f).isZero = false)
+    (hstate :
+      ∀ c w : FpPoly p, ∀ fuel : Nat,
+        yunFactorsPairwiseReachable c w fuel →
+          squareFreeContributionReachable c ∧
+            c.isZero = false ∧
+              w.isZero = false) :
+    let g := DensePoly.gcd f (DensePoly.derivative f)
+    let c := f / g
+    yunFactorsLevelCompletes c g multiplicity 1 fuel := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  let g := DensePoly.gcd f (DensePoly.derivative f)
+  let c := f / g
+  cases fuel with
+  | zero =>
+      have hsize_pos : 0 < f.size := size_pos_of_isZero_false f hzero
+      omega
+  | succ fuel =>
+      have hdf_ne_true : (DensePoly.derivative f).isZero ≠ true := by
+        intro htrue
+        rw [htrue] at hdf
+        cases hdf
+      have hreachable :
+          yunFactorsPairwiseReachable c g (fuel + 1) := by
+        simpa [c, g] using
+          yunFactorsPairwiseReachable_of_derivative_split hp f (fuel + 1) hdf_ne_true
+      have hbound : c.size + g.size ≤ fuel + 2 := by
+        have hf_ne : f ≠ 0 := ne_zero_of_isZero_false hzero
+        have hsize :
+            c.size + g.size = f.size + 1 := by
+          simpa [c, g] using
+            size_div_add_size_eq_size_add_one_of_dvd
+              (DensePoly.gcd_dvd_left f (DensePoly.derivative f)) hf_ne
+        omega
+      simpa [c, g] using
+        yunFactorsLevelCompletes_of_size_bound
+          c g multiplicity 1 (fuel + 1) hstate hreachable hbound
+
 private theorem yunFactorsWithLevel_factor_mem_acc_or_dvd_current
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p) (base level fuel : Nat)
