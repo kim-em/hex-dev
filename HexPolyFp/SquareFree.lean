@@ -3043,6 +3043,89 @@ private theorem yunFactorsPairwiseInvariant_step
   reachable := yunFactorsPairwiseReachable_step c w fuel hinv.reachable
   ready := yunFactorsPairwiseReady_step c w multiplicity fuel hinv.ready
 
+private def yunFactorsCurrentTailCoprimeWithLevel
+    (c w : FpPoly p) (base level fuel : Nat) : Prop :=
+  let y := DensePoly.gcd c w
+  let z := c / y
+  ∀ sf ∈ (yunFactorsWithLevel y (w / y) base (level + 1) fuel []).1.reverse,
+    squareFreeFactorCoprimeRel
+      { factor := z, multiplicity := base * level } sf
+
+private def yunFactorsPairwiseReadyWithLevel
+    (c w : FpPoly p) (base : Nat) : Nat → Nat → Prop
+  | _, 0 => True
+  | level, fuel + 1 =>
+      let y := DensePoly.gcd c w
+      let z := c / y
+      yunFactorsPairwiseReadyWithLevel y (w / y) base (level + 1) fuel ∧
+        (isOne c = false →
+          isOne z = false →
+            yunFactorsCurrentTailCoprimeWithLevel c w base level fuel)
+
+private theorem yunFactorsPairwiseReadyWithLevel_step
+    (c w : FpPoly p) (base level fuel : Nat)
+    (hready : yunFactorsPairwiseReadyWithLevel c w base level (fuel + 1)) :
+    yunFactorsPairwiseReadyWithLevel
+      (DensePoly.gcd c w)
+      (w / DensePoly.gcd c w)
+      base
+      (level + 1)
+      fuel := by
+  simpa [yunFactorsPairwiseReadyWithLevel] using hready.1
+
+private theorem yunFactorsPairwiseReadyWithLevel_succ_of_current_tail
+    (c w : FpPoly p) (base level fuel : Nat)
+    (htail :
+      yunFactorsPairwiseReadyWithLevel
+        (DensePoly.gcd c w)
+        (w / DensePoly.gcd c w)
+        base
+        (level + 1)
+        fuel)
+    (hcurrent :
+      isOne c = false →
+        isOne (c / DensePoly.gcd c w) = false →
+          yunFactorsCurrentTailCoprimeWithLevel c w base level fuel) :
+    yunFactorsPairwiseReadyWithLevel c w base level (fuel + 1) := by
+  simpa [yunFactorsPairwiseReadyWithLevel] using And.intro htail hcurrent
+
+private structure yunFactorsPairwiseInvariantWithLevel
+    (c w : FpPoly p) (base level fuel : Nat) : Prop where
+  reachable : yunFactorsPairwiseReachable c w fuel
+  ready : yunFactorsPairwiseReadyWithLevel c w base level fuel
+
+private theorem yunFactorsPairwiseInvariantWithLevel_of_derivative_split
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (base level fuel : Nat)
+    (hdf : (DensePoly.derivative f).isZero ≠ true)
+    (hready :
+      yunFactorsPairwiseReadyWithLevel
+        (f / DensePoly.gcd f (DensePoly.derivative f))
+        (DensePoly.gcd f (DensePoly.derivative f))
+        base
+        level
+        fuel) :
+    yunFactorsPairwiseInvariantWithLevel
+      (f / DensePoly.gcd f (DensePoly.derivative f))
+      (DensePoly.gcd f (DensePoly.derivative f))
+      base
+      level
+      fuel where
+  reachable := yunFactorsPairwiseReachable_of_derivative_split hp f fuel hdf
+  ready := hready
+
+private theorem yunFactorsPairwiseInvariantWithLevel_step
+    (c w : FpPoly p) (base level fuel : Nat)
+    (hinv : yunFactorsPairwiseInvariantWithLevel c w base level (fuel + 1)) :
+    yunFactorsPairwiseInvariantWithLevel
+      (DensePoly.gcd c w)
+      (w / DensePoly.gcd c w)
+      base
+      (level + 1)
+      fuel where
+  reachable := yunFactorsPairwiseReachable_step c w fuel hinv.reachable
+  ready :=
+    yunFactorsPairwiseReadyWithLevel_step c w base level fuel hinv.ready
+
 private theorem pairwise_append_of_cross
     {α : Type} (r : α → α → Prop) {xs ys : List α} :
     xs.Pairwise r →
@@ -3093,6 +3176,39 @@ private theorem yunFactors_reverse_append
                   rw [hsingle]
                   simp [List.reverse_cons, List.append_assoc])
 
+private theorem yunFactorsWithLevel_reverse_append
+    (c w : FpPoly p) (base level fuel : Nat) (accRev : List (SquareFreeFactor p)) :
+    (yunFactorsWithLevel c w base level fuel accRev).1.reverse =
+      accRev.reverse ++ (yunFactorsWithLevel c w base level fuel []).1.reverse := by
+  induction fuel generalizing c w level accRev with
+  | zero =>
+      simp [yunFactorsWithLevel]
+  | succ fuel ih =>
+      simp only [yunFactorsWithLevel]
+      by_cases hc : isOne c
+      · simp [hc]
+      · simp [hc]
+        let y := DensePoly.gcd c w
+        let z := c / y
+        by_cases hz : isOne z
+        · simpa [y, z, hz] using ih y (w / y) (level + 1) accRev
+        · let sf : SquareFreeFactor p :=
+            { factor := z, multiplicity := base * level }
+          have hacc := ih y (w / y) (level + 1) (sf :: accRev)
+          have hsingle := ih y (w / y) (level + 1) [sf]
+          simpa [y, z, hz, sf] using
+            (calc
+              (yunFactorsWithLevel y (w / y) base (level + 1) fuel
+                  (sf :: accRev)).1.reverse
+                  = (sf :: accRev).reverse ++
+                      (yunFactorsWithLevel y (w / y) base (level + 1) fuel
+                        []).1.reverse := hacc
+              _ = accRev.reverse ++
+                    (yunFactorsWithLevel y (w / y) base (level + 1) fuel
+                      [sf]).1.reverse := by
+                  rw [hsingle]
+                  simp [List.reverse_cons, List.append_assoc])
+
 private theorem yunFactors_repeated_eq_nil
     (c w : FpPoly p) (i fuel : Nat) (accRev : List (SquareFreeFactor p)) :
     (yunFactors c w i fuel accRev).2 = (yunFactors c w i fuel []).2 := by
@@ -3111,6 +3227,29 @@ private theorem yunFactors_repeated_eq_nil
         · let sf : SquareFreeFactor p := { factor := z, multiplicity := i }
           have hacc := ih y (w / y) (i + 1) (sf :: accRev)
           have hsingle := ih y (w / y) (i + 1) [sf]
+          simpa [y, z, hz, sf] using hacc.trans hsingle.symm
+
+private theorem yunFactorsWithLevel_repeated_eq_nil
+    (c w : FpPoly p) (base level fuel : Nat)
+    (accRev : List (SquareFreeFactor p)) :
+    (yunFactorsWithLevel c w base level fuel accRev).2 =
+      (yunFactorsWithLevel c w base level fuel []).2 := by
+  induction fuel generalizing c w level accRev with
+  | zero =>
+      simp [yunFactorsWithLevel]
+  | succ fuel ih =>
+      simp only [yunFactorsWithLevel]
+      by_cases hc : isOne c
+      · simp [hc]
+      · simp [hc]
+        let y := DensePoly.gcd c w
+        let z := c / y
+        by_cases hz : isOne z
+        · simpa [y, z, hz] using ih y (w / y) (level + 1) accRev
+        · let sf : SquareFreeFactor p :=
+            { factor := z, multiplicity := base * level }
+          have hacc := ih y (w / y) (level + 1) (sf :: accRev)
+          have hsingle := ih y (w / y) (level + 1) [sf]
           simpa [y, z, hz, sf] using hacc.trans hsingle.symm
 
 private theorem dvd_trans_poly
@@ -3150,6 +3289,42 @@ private theorem yunFactors_repeated_dvd_repeated_of_acc
           exact dvd_trans_poly
             (by simpa [y, z, hz, sf] using ih y (w / y) (i + 1) (sf :: accRev))
             hdiv_tail
+
+private theorem yunFactorsWithLevel_repeated_dvd_repeated_of_acc
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (base level fuel : Nat)
+    (accRev : List (SquareFreeFactor p)) :
+    (yunFactorsWithLevel c w base level fuel accRev).2 ∣ w := by
+  induction fuel generalizing c w level accRev with
+  | zero =>
+      simp [yunFactorsWithLevel]
+      exact ⟨1, by rw [mul_one]⟩
+  | succ fuel ih =>
+      simp only [yunFactorsWithLevel]
+      by_cases hc : isOne c
+      · simp [hc]
+        exact ⟨1, by rw [mul_one]⟩
+      · simp [hc]
+        let y := DensePoly.gcd c w
+        let z := c / y
+        have hdiv_tail : w / y ∣ w := by
+          exact ⟨y, by simpa [y] using (div_gcd_right_mul_reconstruct c w).symm⟩
+        by_cases hz : isOne z
+        · exact dvd_trans_poly
+            (by simpa [y, z, hz] using ih y (w / y) (level + 1) accRev)
+            hdiv_tail
+        · let sf : SquareFreeFactor p :=
+            { factor := z, multiplicity := base * level }
+          exact dvd_trans_poly
+            (by simpa [y, z, hz, sf] using
+              ih y (w / y) (level + 1) (sf :: accRev))
+            hdiv_tail
+
+private theorem yunFactorsWithLevel_repeated_dvd_repeated
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (base level fuel : Nat) :
+    (yunFactorsWithLevel c w base level fuel []).2 ∣ w := by
+  exact yunFactorsWithLevel_repeated_dvd_repeated_of_acc c w base level fuel []
 
 private theorem yunFactors_repeated_dvd_repeated
     [ZMod64.PrimeModulus p]
@@ -4510,6 +4685,69 @@ private theorem yunFactors_factors_squareFree_of_steps
           simpa [y, z, hz] using
             ih y (w / y) (multiplicity + 1)
               ({ factor := z, multiplicity := multiplicity } :: accRev) hsteps_tail hacc'
+
+private theorem yunFactorsWithLevel_factors_squareFree_of_steps
+    (c w : FpPoly p) (base level fuel : Nat)
+    (accRev : List (SquareFreeFactor p))
+    (hsteps : yunFactorsStepsSquareFree c w fuel)
+    (hacc : ∀ sf ∈ accRev.reverse, squareFreeFactorSquareFreeRel sf) :
+    ∀ sf ∈ (yunFactorsWithLevel c w base level fuel accRev).1.reverse,
+      squareFreeFactorSquareFreeRel sf := by
+  induction fuel generalizing c w level accRev with
+  | zero =>
+      simpa [yunFactorsWithLevel] using hacc
+  | succ fuel ih =>
+      simp only [yunFactorsWithLevel]
+      by_cases hc : isOne c
+      · simpa [hc] using hacc
+      · simp [hc]
+        let y := DensePoly.gcd c w
+        let z := c / y
+        have hsteps_nonone :
+            (if isOne z then
+              True
+            else
+              (normalizeMonic (DensePoly.gcd z (DensePoly.derivative z))).2 = 1) ∧
+              yunFactorsStepsSquareFree y (w / y) fuel := by
+          simpa [yunFactorsStepsSquareFree, hc, y, z] using hsteps
+        have hsteps_tail : yunFactorsStepsSquareFree y (w / y) fuel := by
+          exact hsteps_nonone.2
+        by_cases hz : isOne z
+        · simpa [y, z, hz] using
+            ih y (w / y) (level + 1) accRev hsteps_tail hacc
+        · have hacc' :
+              ∀ sf ∈ ({ factor := z, multiplicity := base * level } ::
+                  accRev).reverse,
+                squareFreeFactorSquareFreeRel sf := by
+            intro sf hsf
+            rw [List.reverse_cons] at hsf
+            rcases List.mem_append.mp hsf with hsf | hsf
+            · exact hacc sf hsf
+            · simp only [List.mem_singleton] at hsf
+              subst sf
+              have hstep :
+                  (normalizeMonic
+                      (DensePoly.gcd z (DensePoly.derivative z))).2 = 1 := by
+                simpa [hz] using hsteps_nonone.1
+              simpa [squareFreeFactorSquareFreeRel, z, y] using hstep
+          simpa [y, z, hz] using
+            ih y (w / y) (level + 1)
+              ({ factor := z, multiplicity := base * level } :: accRev)
+              hsteps_tail hacc'
+
+private theorem yunFactorsWithLevel_factors_squareFree_of_derivative_split
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (base level fuel : Nat)
+    (accRev : List (SquareFreeFactor p))
+    (hdf : (DensePoly.derivative f).isZero ≠ true)
+    (hacc : ∀ sf ∈ accRev.reverse, squareFreeFactorSquareFreeRel sf) :
+    ∀ sf ∈
+        (yunFactorsWithLevel (f / DensePoly.gcd f (DensePoly.derivative f))
+          (DensePoly.gcd f (DensePoly.derivative f)) base level fuel
+          accRev).1.reverse,
+      squareFreeFactorSquareFreeRel sf := by
+  apply yunFactorsWithLevel_factors_squareFree_of_steps
+  · exact yunFactorsStepsSquareFree_of_derivative_split hp f fuel hdf
+  · exact hacc
 
 private theorem yunFactors_factors_squareFree_of_derivative_split
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
