@@ -76,6 +76,24 @@ theorem toNat_mulFull (a b : UInt64) :
   · simp [word]
 
 /--
+`mulFull` returns the same high word as `mulHi` and the same low word as
+ordinary wrapped `UInt64` multiplication, while computing both halves in one
+extern call.
+-/
+theorem mulFull_eq_mulHi_mul (a b : UInt64) :
+    mulFull a b = (mulHi a b, a * b) := by
+  cases h : mulFull a b with
+  | mk hi lo =>
+      have hfull := toNat_mulFull a b
+      simp [h] at hfull
+      apply Prod.ext
+      · apply UInt64.toNat_inj.mp
+        rw [toNat_mulHi]
+        exact hfull.1
+      · apply UInt64.toNat_inj.mp
+        simpa [UInt64.toNat_mul, word] using hfull.2
+
+/--
 Splitting the product into high and low words reconstructs the original
 Nat-level product.
 -/

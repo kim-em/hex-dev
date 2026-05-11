@@ -126,19 +126,6 @@ private theorem redc_low_addCarry_exact (ctx : MontCtx p) (Tlo : UInt64) :
             rw [hlo_zero]
             simp
 
-private theorem mulFull_eq_mulHi_mul (a b : UInt64) :
-    UInt64.mulFull a b = (UInt64.mulHi a b, a * b) := by
-  cases h : UInt64.mulFull a b with
-  | mk hi lo =>
-      have hfull := UInt64.toNat_mulFull a b
-      simp [h] at hfull
-      apply Prod.ext
-      · apply UInt64.toNat_inj.mp
-        rw [UInt64.toNat_mulHi]
-        exact hfull.1
-      · apply UInt64.toNat_inj.mp
-        simpa [UInt64.toNat_mul, UInt64.word] using hfull.2
-
 private theorem MontCtx.p_odd_nat (ctx : MontCtx p) : p.toNat % 2 = 1 := by
   have h := congrArg UInt64.toNat ctx.p_odd
   simpa [UInt64.toNat_mod, UInt64.toNat_ofNat, UInt64.size] using h
@@ -206,7 +193,7 @@ theorem redc_sub_spec (ctx : MontCtx p) (Thi Tlo : UInt64)
       redcNat p.toNat ctx.p'.toNat (Tlo.toNat + Thi.toNat * UInt64.word) := by
   let m := Tlo * ctx.p'
   have hfull : UInt64.mulFull m p = (UInt64.mulHi m p, m * p) :=
-    mulFull_eq_mulHi_mul m p
+    UInt64.mulFull_eq_mulHi_mul m p
   have hTmod :
       (Tlo.toNat + Thi.toNat * UInt64.word) % UInt64.word = Tlo.toNat := by
     have hTlo : Tlo.toNat < UInt64.word := by
