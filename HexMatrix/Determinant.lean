@@ -5755,6 +5755,28 @@ def reconstructInjTuple {m n : Nat}
     (reconstructInjTuple sel perm)[i] = sel[perm[i]] := by
   rw [reconstructInjTuple, vector_ofFn_getElem_fin]
 
+@[simp] theorem columnTupleMatrix_reconstructInjTuple_entry
+    {R : Type u} {n m : Nat} (A : Matrix R n m)
+    (sel : Vector (Fin m) n) (perm : Vector (Fin n) n)
+    (r c : Fin n) :
+    (columnTupleMatrix A (columnTupleVectorFn (reconstructInjTuple sel perm)))[r][c] =
+      (columnTupleMatrix A (columnTupleVectorFn sel))[r][perm[c]] := by
+  rw [columnTupleMatrix_entry, columnTupleMatrix_entry]
+  exact congrArg (fun col : Fin m => A[r][col])
+    (reconstructInjTuple_getElem sel perm c)
+
+theorem columnTupleCoeff_reconstructInjTuple
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (A : Matrix R n m) (sel : Vector (Fin m) n) (perm : Vector (Fin n) n) :
+    columnTupleCoeff A (reconstructInjTuple sel perm) =
+      detProduct (columnTupleMatrix A (columnTupleVectorFn sel)) perm := by
+  unfold columnTupleCoeff detProduct
+  apply foldl_det_product_congr
+  intro i _hmem
+  rw [columnTupleMatrix_entry]
+  exact congrArg (fun col : Fin m => A[i][col])
+    (reconstructInjTuple_getElem sel perm i)
+
 /-- Counting how many entries of `List.finRange n` have value `< k`. -/
 private theorem countP_finRange_val_lt :
     ∀ (n k : Nat), (List.finRange n).countP (fun x : Fin n => decide (x.val < k)) = min n k
