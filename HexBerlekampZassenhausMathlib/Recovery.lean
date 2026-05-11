@@ -439,6 +439,27 @@ theorem factorFast_ne_none_of_forwardInputs_on_schedule
     Hex.factorFast_ne_none_of_core_recovery_on_schedule
       f primeData hB_pos hnormalized hmem hrecover
 
+/--
+Canonical scheduled-cap wrapper for the public fast path: if the
+forward-recovery inputs hold at `factorFastPrecisionCap f`, then
+`Hex.factorFast f` succeeds.
+-/
+theorem factorFast_ne_none_of_forwardInputs_at_cap
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hB_pos : 1 ≤ Hex.factorFastPrecisionCap f)
+    (hnormalized :
+      primeData = Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+    (hinputs :
+      ForwardRecoveryInputs
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.henselLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.factorFastPrecisionCap f) primeData)) :
+    Hex.factorFast f ≠ none :=
+  factorFast_ne_none_of_forwardInputs_on_schedule
+    f primeData hB_pos hnormalized hinputs
+    (Hex.factorFastPrecisionCap_mem_henselPrecisionSchedule f)
+
 end BHKS
 
 end HexBerlekampZassenhausMathlib

@@ -2665,6 +2665,81 @@ private theorem nextHenselPrecision_mem_schedule {B k fuel : Nat}
       henselPrecisionSchedule B k (fuel + 2) := by
   simp [henselPrecisionSchedule, hk]
 
+private theorem le_two_pow_quadraticDoublingSteps (k : Nat) :
+    k ≤ 2 ^ ZPoly.quadraticDoublingSteps k := by
+  by_cases hk : k ≤ 1
+  · simp [ZPoly.quadraticDoublingSteps, hk]
+  · have hpred_lt : k - 1 < 2 ^ ((k - 1).log2 + 1) :=
+      Nat.lt_log2_self
+    simp [ZPoly.quadraticDoublingSteps, hk]
+    omega
+
+private theorem cap_mem_henselPrecisionSchedule_of_le_mul_pow
+    {B k fuel : Nat}
+    (hk_pos : 1 ≤ k) (hkB : k ≤ B) (hB : B ≤ k * 2 ^ fuel) :
+    B ∈ henselPrecisionSchedule B k (fuel + 2) := by
+  induction fuel generalizing k with
+  | zero =>
+      have hk_eq : k = B := by omega
+      subst B
+      simp [henselPrecisionSchedule]
+  | succ fuel ih =>
+      by_cases hcap : k ≥ B
+      · have hk_eq : k = B := by omega
+        subst B
+        simp [henselPrecisionSchedule]
+      · by_cases hnext_cap : B ≤ 2 * k
+        · have hnext : nextHenselPrecision k B = B :=
+            nextHenselPrecision_eq_B_of_cap_reached hnext_cap
+          simpa [hnext] using
+            nextHenselPrecision_mem_schedule (B := B) (k := k)
+              (fuel := fuel + 1) hcap
+        · have hnext_lt : 2 * k < B := by omega
+          have hnext : nextHenselPrecision k B = 2 * k := by
+            unfold nextHenselPrecision
+            simp [hnext_lt]
+          have htail :
+              B ∈ henselPrecisionSchedule B (2 * k) (fuel + 2) := by
+            apply ih
+            · omega
+            · omega
+            · have hpow :
+                  k * 2 ^ (fuel + 1) = 2 * k * 2 ^ fuel := by
+                rw [Nat.pow_succ]
+                ac_rfl
+              omega
+          have htail' :
+              B ∈
+                henselPrecisionSchedule B (nextHenselPrecision k B) (fuel + 2) := by
+            simpa [hnext] using htail
+          simpa [henselPrecisionSchedule, hcap] using (Or.inr htail')
+
+/-- The terminal cap `B` is inspected by the canonical finite Hensel precision
+schedule generated from `initialHenselPrecision B`. -/
+theorem cap_mem_henselPrecisionSchedule (B : Nat) :
+    B ∈
+      henselPrecisionSchedule B (initialHenselPrecision B)
+        (ZPoly.quadraticDoublingSteps B + 2) := by
+  by_cases hsmall : B ≤ 4
+  · have hinitial : initialHenselPrecision B = B := by
+      simp [initialHenselPrecision, hsmall]
+    simp [hinitial, henselPrecisionSchedule]
+  · have hB_pos : 1 ≤ B := by omega
+    have hinitial : initialHenselPrecision B = 4 := by
+      simp [initialHenselPrecision, hsmall]
+    have hpow : B ≤ 4 * 2 ^ ZPoly.quadraticDoublingSteps B := by
+      have hbase : B ≤ 2 ^ ZPoly.quadraticDoublingSteps B :=
+        le_two_pow_quadraticDoublingSteps B
+      have hmul :
+          1 * 2 ^ ZPoly.quadraticDoublingSteps B ≤
+            4 * 2 ^ ZPoly.quadraticDoublingSteps B :=
+        Nat.mul_le_mul_right _ (by decide : 1 ≤ 4)
+      exact Nat.le_trans hbase (by simpa using hmul)
+    simpa [hinitial] using
+      cap_mem_henselPrecisionSchedule_of_le_mul_pow
+        (B := B) (k := 4) (fuel := ZPoly.quadraticDoublingSteps B)
+        (by decide) (by omega) hpow
+
 private theorem factorFastCoreWithBound_isSome_of_recovery_on_schedule
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
     {start fuel target : Nat} {factors : Array ZPoly}
@@ -2848,6 +2923,15 @@ precision for both lattice separation and exact integer reconstruction.
 -/
 def factorFastPrecisionCap (f : ZPoly) : Nat :=
   max (bhksBound f) (ZPoly.defaultFactorCoeffBound f)
+
+/-- The fast-path precision cap is inspected by the canonical finite Hensel
+precision schedule used by `factorFast`. -/
+theorem factorFastPrecisionCap_mem_henselPrecisionSchedule (f : ZPoly) :
+    factorFastPrecisionCap f ∈
+      henselPrecisionSchedule (factorFastPrecisionCap f)
+        (initialHenselPrecision (factorFastPrecisionCap f))
+        (ZPoly.quadraticDoublingSteps (factorFastPrecisionCap f) + 2) :=
+  cap_mem_henselPrecisionSchedule (factorFastPrecisionCap f)
 
 private def factorFastWithBound (f : ZPoly) (B : Nat) : Option Factorization :=
   (factorFastFactorsWithBound f B).map (factorizationOfFactors f)
