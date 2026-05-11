@@ -174,16 +174,19 @@ def mk (p : UInt64) (hp : p % 2 = 1) : MontCtx p :=
       exact toNat_r2OfModulus p hp_pos }
 
 /-- View the odd-modulus assumption as a Nat-level parity fact. -/
+@[simp]
 theorem p_odd_nat (ctx : MontCtx p) : p.toNat % 2 = 1 := by
   have h := congrArg UInt64.toNat ctx.p_odd
   simpa [UInt64.toNat_mod, UInt64.toNat_ofNat, UInt64.size] using h
 
 /-- An odd `UInt64` modulus is positive at the Nat level. -/
+@[simp]
 theorem p_pos (ctx : MontCtx p) : 0 < p.toNat := by
   have hodd := ctx.p_odd_nat
   omega
 
 /-- Every `UInt64` modulus is below the Montgomery radix `R = 2^64`. -/
+@[simp]
 theorem p_lt_R (_ctx : MontCtx p) : p.toNat < UInt64.word := by
   simpa [UInt64.word, UInt64.size] using UInt64.toNat_lt_size p
 
@@ -465,6 +468,7 @@ theorem mulMont_repr (ctx : MontCtx p) (a b : UInt64)
     _ = y * UInt64.word % p.toNat := hyR_eq_mul.symm
 
 /-- Converting into Montgomery form and back is the identity on reduced inputs. -/
+@[simp]
 theorem fromMont_toMont (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
     ctx.fromMont (ctx.toMont a) = a := by
   apply UInt64.toNat_inj.mp
