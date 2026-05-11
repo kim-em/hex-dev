@@ -2769,6 +2769,23 @@ private theorem permutationVectors_inverseVector_sum {R : Type u}
     _ = (permutationVectors n).foldl (fun acc perm => acc + f perm) 0 := by
         exact foldl_det_sum_perm f inversePermutationVector_map_permutationVectors_perm 0
 
+private theorem permutationVectors_composePermutationValues_left_sum {R : Type u}
+    [Lean.Grind.CommRing R] {n : Nat}
+    (sigma : Vector (Fin n) n) (hsigma : sigma ∈ permutationVectors n)
+    (f : Vector (Fin n) n → R) :
+    (permutationVectors n).foldl
+        (fun acc perm => acc + f (composePermutationValues sigma perm)) 0 =
+      (permutationVectors n).foldl (fun acc perm => acc + f perm) 0 := by
+  calc
+    (permutationVectors n).foldl
+        (fun acc perm => acc + f (composePermutationValues sigma perm)) 0 =
+      ((permutationVectors n).map fun perm => composePermutationValues sigma perm).foldl
+        (fun acc perm => acc + f perm) 0 := by
+        simp [List.foldl_map]
+    _ = (permutationVectors n).foldl (fun acc perm => acc + f perm) 0 := by
+        exact foldl_det_sum_perm f
+          (composePermutationValues_left_map_permutationVectors_perm sigma hsigma) 0
+
 private theorem finRange_map_perm_get_perm {n : Nat}
     (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
     ((List.finRange n).map fun i => perm[i]).Perm (List.finRange n) := by
@@ -2780,6 +2797,15 @@ private theorem finRange_map_perm_get_perm {n : Nat}
     exact List.mem_finRange x
   · intro _h
     exact fin_mem_of_full_nodup x (by simp [Vector.length_toList]) hnodup
+
+private theorem detProduct_colPermute_vector {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (M : Matrix R n n) (sigma tau : Vector (Fin n) n) :
+    detProduct (ofFn fun r c => M[r][sigma[c]]) tau =
+      detProduct M (composePermutationValues sigma tau) := by
+  unfold detProduct
+  apply foldl_det_product_congr
+  intro r _hr
+  simp [ofFn, composePermutationValues]
 
 private theorem detProduct_transpose_inversePermutationValues {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat}
@@ -3328,6 +3354,105 @@ private theorem perm_eq_identity_of_inversionCount_zero {n : Nat}
         · have hr_lt : r < n := by omega
           simp [insertAt, List.getElem_insertIdx_of_lt, hr_lt]
       exact hvec.symm
+
+/-- Multiplicativity of `detSign` under composition of permutation vectors.
+The sign of a composed permutation equals the product of the component signs. -/
+theorem detSign_composePermutationValues
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (sigma tau : Vector (Fin n) n)
+    (hsigma : sigma ∈ permutationVectors n)
+    (htau : tau ∈ permutationVectors n) :
+    detSign (R := R) (composePermutationValues sigma tau) =
+      detSign (R := R) sigma * detSign (R := R) tau := by
+  suffices h : ∀ k, ∀ tau' : Vector (Fin n) n,
+      tau' ∈ permutationVectors n →
+      inversionCount tau'.toList = k →
+      detSign (R := R) (composePermutationValues sigma tau') =
+        detSign (R := R) sigma * detSign (R := R) tau' by
+    exact h _ tau htau rfl
+  intro k
+  induction k using Nat.strongRecOn with
+  | ind k ih =>
+    intro tau' htau' hcount
+    by_cases hk : k = 0
+    · subst hk
+      have hid : tau' = Vector.ofFn fun i : Fin n => i :=
+        perm_eq_identity_of_inversionCount_zero tau' htau' hcount
+      have hcompose_id :
+          composePermutationValues sigma tau' = sigma := by
+        rw [hid]
+        apply Vector.ext
+        intro r hr
+        simp [composePermutationValues]
+      rw [hcompose_id, hid, detSign_identity]
+      grind
+    · have hpos : 0 < inversionCount tau'.toList := by
+        rw [hcount]; omega
+      have hnodup_tau' := permutationVectors_nodup htau'
+      obtain ⟨i, hij, hdesc⟩ := exists_adjacent_descent tau' hnodup_tau' hpos
+      let j : Fin n := ⟨i.val + 1, hij⟩
+      have hij_eq : i.val + 1 = j.val := rfl
+      have hi_ne_j : i ≠ j := by
+        intro h
+        have hvals := congrArg Fin.val h
+        have hjval : j.val = i.val + 1 := rfl
+        omega
+      have hdesc' : tau'[j] < tau'[i] := hdesc
+      have hcount_dec :
+          inversionCount tau'.toList =
+            inversionCount (transposePermutationValues tau' i j).toList + 1 :=
+        inversionCount_transposePermutationValues_adjacent_descent
+          tau' hij_eq hdesc'
+      have htau''_mem :
+          transposePermutationValues tau' i j ∈ permutationVectors n :=
+        transposePermutationValues_mem_permutationVectors i j htau'
+      have hk_dec :
+          inversionCount (transposePermutationValues tau' i j).toList < k := by
+        omega
+      have ih_eq :=
+        ih _ hk_dec (transposePermutationValues tau' i j) htau''_mem rfl
+      have hcompose :
+          composePermutationValues sigma (transposePermutationValues tau' i j) =
+            transposePermutationValues
+              (composePermutationValues sigma tau') i j :=
+        composePermutationValues_transposePermutationValues_right sigma tau' i j
+      have hsign_tau :
+          detSign (R := R) tau' =
+            -detSign (R := R) (transposePermutationValues tau' i j) :=
+        detSign_transposeValues (R := R) tau' i j hnodup_tau' hi_ne_j
+      have hnodup_compose :
+          (composePermutationValues sigma tau').toList.Nodup :=
+        composePermutationValues_nodup
+          (permutationVectors_nodup hsigma) hnodup_tau'
+      have hsign_compose :
+          detSign (R := R) (composePermutationValues sigma tau') =
+            -detSign (R := R)
+                (transposePermutationValues
+                  (composePermutationValues sigma tau') i j) :=
+        detSign_transposeValues (R := R)
+          (composePermutationValues sigma tau') i j hnodup_compose hi_ne_j
+      rw [hsign_compose, ← hcompose, ih_eq, hsign_tau]
+      grind
+
+/-- Inverse-orientation form of `detSign_composePermutationValues`: the sign of
+`tau` is the sign of `sigma` times the sign of `composePermutationValues sigma tau`. -/
+theorem detSign_eq_mul_detSign_composePermutationValues
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (sigma tau : Vector (Fin n) n)
+    (hsigma : sigma ∈ permutationVectors n)
+    (htau : tau ∈ permutationVectors n) :
+    detSign (R := R) tau =
+      detSign (R := R) sigma *
+        detSign (R := R) (composePermutationValues sigma tau) := by
+  have hmul :=
+    detSign_composePermutationValues (R := R) sigma tau hsigma htau
+  have hsq : detSign (R := R) sigma * detSign (R := R) sigma = 1 := by
+    unfold detSign
+    by_cases hp : inversionCount sigma.toList % 2 = 0
+    · simp [hp]; grind
+    · simp [hp]; grind
+  rw [hmul]
+  grind
 
 private theorem swapPermutationValues_idxOf_left {n : Nat}
     (perm : Vector (Fin n) n) (i j : Fin n)
@@ -4179,6 +4304,41 @@ theorem det_transpose {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     _ =
       (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0 := by
         exact permutationVectors_inverseVector_sum (R := R) (n := n) (fun perm => detTerm M perm)
+
+/-- Permuting columns multiplies the determinant by the sign of the column permutation. -/
+theorem det_colPermute_vector {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (sigma : Vector (Fin n) n)
+    (hsigma : sigma ∈ permutationVectors n) :
+    det ((ofFn fun r c => M[r][sigma[c]]) : Matrix R n n) =
+      detSign (R := R) sigma * det M := by
+  unfold det
+  calc
+    (permutationVectors n).foldl
+        (fun acc tau =>
+          acc + detTerm ((ofFn fun r c => M[r][sigma[c]]) : Matrix R n n) tau) 0 =
+      (permutationVectors n).foldl
+        (fun acc tau =>
+          acc + detSign (R := R) sigma *
+            detTerm M (composePermutationValues sigma tau)) 0 := by
+        apply foldl_det_sum_congr
+        intro tau htau
+        unfold detTerm
+        rw [detProduct_colPermute_vector]
+        rw [detSign_eq_mul_detSign_composePermutationValues
+          (R := R) sigma tau hsigma htau]
+        grind
+    _ =
+      detSign (R := R) sigma *
+        (permutationVectors n).foldl
+          (fun acc tau => acc + detTerm M (composePermutationValues sigma tau)) 0 := by
+        exact foldl_det_sum_mul_left_zero
+          (permutationVectors n) (detSign (R := R) sigma)
+          (fun tau => detTerm M (composePermutationValues sigma tau))
+    _ =
+      detSign (R := R) sigma *
+        (permutationVectors n).foldl (fun acc tau => acc + detTerm M tau) 0 := by
+        rw [permutationVectors_composePermutationValues_left_sum
+          (R := R) sigma hsigma (fun tau => detTerm M tau)]
 
 /-- Swapping two columns negates determinant. -/
 theorem det_colSwap {R : Type u} [Lean.Grind.CommRing R] {n : Nat}

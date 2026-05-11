@@ -446,7 +446,6 @@ private theorem zmod64_inv_zero {p : Nat} [ZMod64.Bounds p] :
   rw [ZMod64.toNat_inv_def]
   change (((HexArith.Int.extGcd 0 (Int.ofNat p)).2.1 % Int.ofNat p).toNat % p = 0)
   have hs := HexArith.Int.extGcd_zero_left_s_ofNat p (ZMod64.Bounds.pPos (p := p))
-  change (HexArith.Int.extGcd 0 (Int.ofNat p)).2.1 = 0 at hs
   rw [hs]
   simp
 
