@@ -4482,6 +4482,61 @@ theorem columnTupleVectors_mem_ofFn {n m : Nat} (cols : Fin n → Fin m) :
       rw [List.mem_map]
       exact ⟨cols (Fin.last n), List.mem_finRange (cols (Fin.last n)), rfl⟩
 
+private theorem insertAt_last_injective_pair {α : Type u} {n : Nat}
+    {c c' : α} {pref pref' : Vector α n}
+    (h : insertAt c pref (Fin.last n) = insertAt c' pref' (Fin.last n)) :
+    c = c' ∧ pref = pref' := by
+  constructor
+  · have hlast :
+        (insertAt c pref (Fin.last n))[Fin.last n] =
+          (insertAt c' pref' (Fin.last n))[Fin.last n] := by
+      rw [h]
+    rw [insertAt_get_self, insertAt_get_self] at hlast
+    exact hlast
+  · apply Vector.ext
+    intro i hi
+    let idx : Fin n := ⟨i, hi⟩
+    have hidx :
+        (insertAt c pref (Fin.last n))[idx.castSucc] =
+          (insertAt c' pref' (Fin.last n))[idx.castSucc] := by
+      rw [h]
+    rw [insertAt_last_get_castSucc, insertAt_last_get_castSucc] at hidx
+    exact hidx
+
+private theorem columnTupleVectors_flatMap_last_nodup {n m : Nat} :
+    ∀ (prefs : List (Vector (Fin m) n)), prefs.Nodup →
+      (prefs.flatMap fun pref =>
+        (List.finRange m).map fun c => insertAt c pref (Fin.last n)).Nodup
+  | [], _ => by simp
+  | pref :: prefs, hnodup => by
+      simp only [List.flatMap_cons]
+      simp only [List.nodup_cons] at hnodup
+      rw [List.nodup_append]
+      refine ⟨?_, ?_, ?_⟩
+      · apply list_nodup_map_on (List.nodup_finRange m)
+        intro c _hc c' _hc' h
+        exact (insertAt_last_injective_pair h).1
+      · exact columnTupleVectors_flatMap_last_nodup prefs hnodup.2
+      · intro a hahead b hbsuffix hab
+        rcases List.mem_map.mp hahead with ⟨c, _hc, rfl⟩
+        rcases List.mem_flatMap.mp hbsuffix with ⟨pref', hpref', hb⟩
+        rcases List.mem_map.mp hb with ⟨c', _hc', hb_eq⟩
+        have hrec :
+            insertAt c pref (Fin.last n) =
+              insertAt c' pref' (Fin.last n) := hab.trans hb_eq.symm
+        have hpref_eq := (insertAt_last_injective_pair hrec).2
+        subst hpref_eq
+        exact hnodup.1 hpref'
+
+private theorem columnTupleVectors_nodup {n m : Nat} :
+    (columnTupleVectors n m).Nodup := by
+  induction n with
+  | zero =>
+      simp [columnTupleVectors]
+  | succ n ih =>
+      rw [columnTupleVectors]
+      exact columnTupleVectors_flatMap_last_nodup (columnTupleVectors n m) ih
+
 /-- Product coefficient attached to an ordered column tuple in the Gram expansion. -/
 def columnTupleCoeff {R : Type u} [Mul R] [OfNat R 1] {n m : Nat}
     (A : Matrix R n m) (cols : Vector (Fin m) n) : R :=
@@ -5783,6 +5838,17 @@ private theorem vector_ofFn_getElem_fin {α : Type u} {n : Nat}
   rw [show ((Vector.ofFn f)[k] : α) = (Vector.ofFn f)[k.val]'(by simp [k.isLt]) from rfl]
   rw [Vector.getElem_ofFn]
 
+theorem mem_columnTupleVectors {n m : Nat} (cols : Vector (Fin m) n) :
+    cols ∈ columnTupleVectors n m := by
+  have hcols : cols = Vector.ofFn (fun i : Fin n => cols[i]) := by
+    apply Vector.ext
+    intro i hi
+    let k : Fin n := ⟨i, hi⟩
+    change cols[k] = (Vector.ofFn fun i : Fin n => cols[i])[k]
+    rw [vector_ofFn_getElem_fin]
+  rw [hcols]
+  exact columnTupleVectors_mem_ofFn (fun i : Fin n => cols[i])
+
 /-- Factorization equation: each entry of `cols` is recovered through the
 canonical sort/permutation pair. Requires injectivity of `cols`. -/
 theorem cols_getElem_eq_sortInjTuple_sortInjPerm {m n : Nat}
@@ -6206,6 +6272,86 @@ theorem mem_selPerm_reconstructed_iff {m n : Nat} (cols : Vector (Fin m) n) :
     rw [List.mem_map]
     refine ⟨sortInjPerm cols, sortInjPerm_mem_permutationVectors cols hinj, ?_⟩
     exact reconstructInjTuple_sortInj cols hinj
+
+private theorem foldl_det_sum_filter_of_zero {R : Type u} [Lean.Grind.CommRing R]
+    {β : Type v} (xs : List β) (p : β → Prop) [DecidablePred p]
+    (f : β → R) (z : R)
+    (hzero : ∀ x, x ∈ xs → ¬ p x → f x = 0) :
+    xs.foldl (fun acc x => acc + f x) z =
+      (xs.filter p).foldl (fun acc x => acc + f x) z := by
+  induction xs generalizing z with
+  | nil => rfl
+  | cons x xs ih =>
+      by_cases hx : p x
+      · simp [List.filter, hx]
+        apply ih
+        intro y hy hpy
+        exact hzero y (List.mem_cons_of_mem x hy) hpy
+      · simp [List.filter, hx]
+        have hxzero : f x = 0 := hzero x (by simp) hx
+        rw [hxzero]
+        have hacc : z + (0 : R) = z := by grind
+        rw [hacc]
+        apply ih
+        intro y hy hpy
+        exact hzero y (List.mem_cons_of_mem x hy) hpy
+
+/-- Refold the ordered column-tuple Gram expansion over the canonical
+`selectedColumnTuples × permutationVectors` reconstruction list. Non-injective
+ordered tuples contribute zero determinants, and the remaining injective tuples
+are exactly the reconstructed selected/permutation tuples. -/
+theorem columnTupleExpansion_refold_selectedPerm
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat} (A : Matrix R n m) :
+    (columnTupleVectors n m).foldl
+        (fun acc cols => acc + columnTupleExpansionTerm A cols) 0 =
+      (((selectedColumnTuples n m).flatMap fun sel =>
+          (permutationVectors n).map (reconstructInjTuple sel))).foldl
+        (fun acc cols => acc + columnTupleExpansionTerm A cols) 0 := by
+  classical
+  let reconstructed :=
+    (selectedColumnTuples n m).flatMap fun sel =>
+      (permutationVectors n).map (reconstructInjTuple sel)
+  let term := columnTupleExpansionTerm A
+  have hfilter :
+      (columnTupleVectors n m).foldl (fun acc cols => acc + term cols) 0 =
+        ((columnTupleVectors n m).filter
+          (fun cols => Function.Injective (columnTupleVectorFn cols))).foldl
+            (fun acc cols => acc + term cols) 0 := by
+    apply foldl_det_sum_filter_of_zero
+    intro cols hmem hnot
+    unfold term columnTupleExpansionTerm
+    have hdet :
+        det (columnTupleMatrix A (columnTupleVectorFn cols)) = 0 :=
+      det_columnTupleMatrix_eq_zero_of_not_injective A (columnTupleVectorFn cols) hnot
+    rw [hdet]
+    grind
+  have hperm :
+      ((columnTupleVectors n m).filter
+          (fun cols => Function.Injective (columnTupleVectorFn cols))).Perm
+        reconstructed := by
+    apply (List.perm_ext_iff_of_nodup
+      ((columnTupleVectors_nodup (n := n) (m := m)).filter _)
+      (by simpa [reconstructed] using (selPerm_reconstructed_list_nodup (m := m) (n := n)))).mpr
+    intro cols
+    constructor
+    · intro hmem
+      rw [List.mem_filter] at hmem
+      exact (mem_selPerm_reconstructed_iff cols).mpr (of_decide_eq_true hmem.2)
+    · intro hmem
+      rw [List.mem_filter]
+      exact ⟨mem_columnTupleVectors cols,
+        decide_eq_true ((mem_selPerm_reconstructed_iff cols).mp hmem)⟩
+  calc
+    (columnTupleVectors n m).foldl (fun acc cols => acc + columnTupleExpansionTerm A cols) 0
+        = (columnTupleVectors n m).foldl (fun acc cols => acc + term cols) 0 := rfl
+    _ = ((columnTupleVectors n m).filter
+          (fun cols => Function.Injective (columnTupleVectorFn cols))).foldl
+            (fun acc cols => acc + term cols) 0 := hfilter
+    _ = reconstructed.foldl (fun acc cols => acc + term cols) 0 := by
+          exact foldl_det_sum_perm term hperm 0
+    _ = (((selectedColumnTuples n m).flatMap fun sel =>
+          (permutationVectors n).map (reconstructInjTuple sel))).foldl
+        (fun acc cols => acc + columnTupleExpansionTerm A cols) 0 := rfl
 
 end Matrix
 end Hex
