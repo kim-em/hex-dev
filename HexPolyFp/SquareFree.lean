@@ -1813,6 +1813,43 @@ private theorem squareFreeAuxRevContribution_derivative_zero_correct
 private def squareFreeContributionReachable (f : FpPoly p) : Prop :=
   f.size = 1 → f = 1
 
+private theorem squareFreeContributionReachable_of_monic
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) :
+    squareFreeContributionReachable f := by
+  intro hsize
+  apply DensePoly.ext_coeff
+  intro n
+  cases n with
+  | zero =>
+      have hpos : 0 < f.size := by omega
+      have hlead : DensePoly.leadingCoeff f = f.coeff 0 := by
+        have hlead_last :
+            DensePoly.leadingCoeff f = f.coeff (f.size - 1) := by
+          unfold DensePoly.leadingCoeff DensePoly.coeff
+          rw [Array.back?_eq_getElem?]
+          have hidx : f.coeffs.size - 1 < f.coeffs.size := by
+            simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hpos
+          simp [Array.getD, DensePoly.size, hidx]
+        simpa [hsize] using hlead_last
+      change f.coeff 0 = (DensePoly.C (1 : ZMod64 p)).coeff 0
+      rw [← hlead, hmonic]
+      exact (DensePoly.coeff_C (1 : ZMod64 p) 0).symm
+  | succ n =>
+      have hn : f.size ≤ n + 1 := by omega
+      change f.coeff (n + 1) = (DensePoly.C (1 : ZMod64 p)).coeff (n + 1)
+      rw [DensePoly.coeff_eq_zero_of_size_le f hn]
+      exact (DensePoly.coeff_C (1 : ZMod64 p) (n + 1)).symm
+
+private theorem normalizedDerivativeActiveState_of_monic_nonzero
+    (c w : FpPoly p)
+    (hc_monic : DensePoly.Monic c)
+    (hc_zero : c.isZero = false)
+    (hw_zero : w.isZero = false) :
+    squareFreeContributionReachable c ∧
+      c.isZero = false ∧
+        w.isZero = false := by
+  exact ⟨squareFreeContributionReachable_of_monic c hc_monic, hc_zero, hw_zero⟩
+
 private theorem pthRoot_reachable_of_derivative_zero
     (hp : Hex.Nat.Prime p) (f : FpPoly p)
     (hzero : f.isZero = false)
