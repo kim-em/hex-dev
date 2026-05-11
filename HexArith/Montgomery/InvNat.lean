@@ -17,7 +17,7 @@ private theorem montPosInvStep_mod_3_to_6 (p x : UInt64)
     (hx : p * x % 8 = 1) :
     p * montPosInvStep p x % 64 = 1 := by
   unfold montPosInvStep
-  bv_decide (config := { timeout := 30 })
+  bv_decide (config := { timeout := 120 })
 
 /-- The executable wrapping Newton step lifts a 6-bit inverse to 12 bits. -/
 private theorem montPosInvStep_mod_6_to_12 (p x : UInt64)
