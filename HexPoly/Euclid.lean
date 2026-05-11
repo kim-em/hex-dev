@@ -4231,5 +4231,218 @@ private theorem exists_natPrime_dvd_of_one_lt :
         rcases ih m hmlt hm_one_lt with ⟨r, hrp, hrm⟩
         exact ⟨r, hrp, Nat.dvd_trans hrm hmd⟩
 
+/-- Polynomial Euclid's lemma. If a prime divides every coefficient of `p * q`,
+then it divides every coefficient of `p` or every coefficient of `q`. -/
+private theorem natPrime_dvd_all_or_all_of_dvd_mul_coeff
+    {r : Nat} (hr : NatPrime r) (p q : DensePoly Int)
+    (h : ∀ n, (r : Int) ∣ (p * q).coeff n) :
+    (∀ i, (r : Int) ∣ p.coeff i) ∨ (∀ j, (r : Int) ∣ q.coeff j) := by
+  apply Classical.byContradiction
+  intro hno
+  have hp_some : ∃ i, ¬ (r : Int) ∣ p.coeff i := by
+    apply Classical.byContradiction
+    intro hpno
+    apply hno
+    left
+    intro i
+    apply Classical.byContradiction
+    intro hi
+    exact hpno ⟨i, hi⟩
+  have hq_some : ∃ j, ¬ (r : Int) ∣ q.coeff j := by
+    apply Classical.byContradiction
+    intro hqno
+    apply hno
+    right
+    intro j
+    apply Classical.byContradiction
+    intro hj
+    exact hqno ⟨j, hj⟩
+  rcases exists_last_not_natCast_dvd_coeff p r hp_some with ⟨i0, hni0, hi_above⟩
+  rcases exists_last_not_natCast_dvd_coeff q r hq_some with ⟨j0, hnj0, hj_above⟩
+  have hsplit : (r : Int) ∣ p.coeff i0 * q.coeff j0 :=
+    dvd_coeff_mul_last_of_dvd_mul_coeff_of_dvd_larger_left_products
+      p q r i0 j0 (h (i0 + j0)) hj_above
+      (fun a ha => Int.dvd_mul_of_dvd_left (hi_above a ha))
+  rcases natPrime_dvd_mul_int hr hsplit with hpi | hqj
+  · exact hni0 hpi
+  · exact hnj0 hqj
+
+/-- Content-level form of polynomial Euclid: if a prime divides every coefficient
+of `p * q`, it divides the content of `p` or the content of `q`. -/
+private theorem natPrime_dvd_contentNat_or_dvd_contentNat_of_dvd_mul
+    {r : Nat} (hr : NatPrime r) (p q : DensePoly Int)
+    (h : ∀ n, (r : Int) ∣ (p * q).coeff n) :
+    r ∣ contentNat p ∨ r ∣ contentNat q := by
+  rcases natPrime_dvd_all_or_all_of_dvd_mul_coeff hr p q h with hp | hq
+  · exact Or.inl (dvd_contentNat_of_dvd_coeff p r hp)
+  · exact Or.inr (dvd_contentNat_of_dvd_coeff q r hq)
+
+/-- Helper: a foldl over `List.range (k+1)` whose terms vanish below `k`
+collapses to the final term. -/
+private theorem foldl_add_int_eq_last_of_below_zero
+    (g : Nat → Int) (k : Nat)
+    (h : ∀ i, i < k → g i = 0) :
+    (List.range (k + 1)).foldl (fun acc i => acc + g i) 0 = g k := by
+  have hzero : ∀ m, m ≤ k →
+      (List.range m).foldl (fun acc i => acc + g i) 0 = 0 := by
+    intro m hm
+    induction m with
+    | zero => simp
+    | succ m' ih =>
+        rw [List.range_succ, List.foldl_append]
+        simp only [List.foldl_cons, List.foldl_nil]
+        rw [ih (Nat.le_of_succ_le hm)]
+        have hg : g m' = 0 := h m' (Nat.lt_of_succ_le hm)
+        rw [hg]
+        grind
+  rw [List.range_succ, List.foldl_append]
+  simp only [List.foldl_cons, List.foldl_nil]
+  rw [hzero k (Nat.le_refl k)]
+  grind
+
+/-- Helper variant of `foldl_add_int_eq_last_of_below_zero` indexed by the
+foldl bound rather than the (bound - 1). -/
+private theorem foldl_add_int_eq_at_predecessor
+    (g : Nat → Int) (psize : Nat) (hpsize : 0 < psize)
+    (h : ∀ i, i < psize - 1 → g i = 0) :
+    (List.range psize).foldl (fun acc i => acc + g i) 0 = g (psize - 1) := by
+  have hpsize_eq : psize - 1 + 1 = psize := by omega
+  rw [← hpsize_eq]
+  exact foldl_add_int_eq_last_of_below_zero g (psize - 1) h
+
+/-- The top coefficient of a product of nonzero polynomials is the product of
+their leading coefficients. -/
+private theorem coeff_mul_top (p q : DensePoly Int)
+    (hp : 0 < p.size) (hq : 0 < q.size) :
+    (p * q).coeff (p.size - 1 + (q.size - 1)) =
+      p.coeff (p.size - 1) * q.coeff (q.size - 1) := by
+  rw [coeff_mul, mulCoeffSum_eq_diagonal]
+  rw [foldl_add_int_eq_at_predecessor _ p.size hp]
+  · unfold diagonalMulCoeffTerm
+    have hno : ¬ (p.size - 1 + (q.size - 1)) < p.size - 1 := by omega
+    rw [if_neg hno]
+    have hsub : p.size - 1 + (q.size - 1) - (p.size - 1) = q.size - 1 := by omega
+    rw [hsub]
+  · intro i hi
+    unfold diagonalMulCoeffTerm
+    have hno : ¬ (p.size - 1 + (q.size - 1)) < i := by omega
+    rw [if_neg hno]
+    have hsub : (p.size - 1 + (q.size - 1)) - i ≥ q.size := by omega
+    rw [coeff_eq_zero_of_size_le q hsub]
+    show p.coeff i * (0 : Int) = 0
+    rw [Int.mul_zero]
+
+/-- Integral domain property: for primitive integer polynomials, the product
+is nonzero. -/
+private theorem mul_ne_zero_of_primitive (p q : DensePoly Int)
+    (hp : content p = 1) (hq : content q = 1) :
+    p * q ≠ 0 := by
+  have hcp_ne_zero : content p ≠ 0 := by rw [hp]; decide
+  have hcq_ne_zero : content q ≠ 0 := by rw [hq]; decide
+  have hp_ne : p ≠ 0 := by
+    intro hp0
+    apply hcp_ne_zero
+    rw [hp0, content_zero]
+  have hq_ne : q ≠ 0 := by
+    intro hq0
+    apply hcq_ne_zero
+    rw [hq0, content_zero]
+  have hp_size : 0 < p.size := by
+    rcases Nat.lt_or_ge 0 p.size with h | h
+    · exact h
+    · exfalso
+      apply hp_ne
+      have hsize : p.size = 0 := by omega
+      apply ext_coeff
+      intro n
+      rw [coeff_zero]
+      exact coeff_eq_zero_of_size_le p (by omega)
+  have hq_size : 0 < q.size := by
+    rcases Nat.lt_or_ge 0 q.size with h | h
+    · exact h
+    · exfalso
+      apply hq_ne
+      have hsize : q.size = 0 := by omega
+      apply ext_coeff
+      intro n
+      rw [coeff_zero]
+      exact coeff_eq_zero_of_size_le q (by omega)
+  intro hpq0
+  have htop := coeff_mul_top p q hp_size hq_size
+  have hpq_top_zero : (p * q).coeff (p.size - 1 + (q.size - 1)) = 0 := by
+    rw [hpq0]; exact coeff_zero _
+  rw [hpq_top_zero] at htop
+  -- 0 = lead(p) * lead(q), but both leading coefficients are nonzero
+  have hlp_ne := coeff_last_ne_zero_of_pos_size p hp_size
+  have hlq_ne := coeff_last_ne_zero_of_pos_size q hq_size
+  rcases Int.mul_eq_zero.mp htop.symm with h | h
+  · exact hlp_ne h
+  · exact hlq_ne h
+
+/-- Gauss's lemma for primitive integer polynomials: the product of two
+primitive polynomials is primitive. -/
+theorem content_mul_of_primitive (p q : DensePoly Int)
+    (hp : content p = 1) (hq : content q = 1) :
+    content (p * q) = 1 := by
+  -- contentNat (p * q) is nonzero (since p * q ≠ 0 by integral domain).
+  have hpq_ne : p * q ≠ 0 := mul_ne_zero_of_primitive p q hp hq
+  have hpq_size : 0 < (p * q).size := by
+    rcases Nat.lt_or_ge 0 (p * q).size with h | h
+    · exact h
+    · exfalso
+      apply hpq_ne
+      apply ext_coeff
+      intro n
+      rw [coeff_zero]
+      exact coeff_eq_zero_of_size_le (p * q) (by omega)
+  have hpq_top_ne : (p * q).coeff ((p * q).size - 1) ≠ 0 :=
+    coeff_last_ne_zero_of_pos_size (p * q) hpq_size
+  have hcontentNat_ne_zero : contentNat (p * q) ≠ 0 := by
+    intro h0
+    have hdvd : (contentNat (p * q) : Int) ∣ (p * q).coeff ((p * q).size - 1) :=
+      contentNat_dvd_coeff _ _
+    rw [h0] at hdvd
+    apply hpq_top_ne
+    rcases hdvd with ⟨k, hk⟩
+    have hk0 : ((0 : Nat) : Int) * k = (0 : Int) := by
+      rw [show ((0 : Nat) : Int) = 0 from rfl, Int.zero_mul]
+    rw [hk0] at hk
+    exact hk
+  have hcp_one : contentNat p = 1 := by
+    have h : Int.ofNat (contentNat p) = 1 := hp
+    have h' : Int.ofNat (contentNat p) = Int.ofNat 1 := h
+    exact Int.ofNat_inj.mp h'
+  have hcq_one : contentNat q = 1 := by
+    have h : Int.ofNat (contentNat q) = 1 := hq
+    have h' : Int.ofNat (contentNat q) = Int.ofNat 1 := h
+    exact Int.ofNat_inj.mp h'
+  -- Suppose contentNat(pq) ≠ 1; derive contradiction.
+  show Int.ofNat (contentNat (p * q)) = 1
+  apply congrArg Int.ofNat
+  apply Classical.byContradiction
+  intro hne
+  have h_gt_one : 1 < contentNat (p * q) := by
+    rcases Nat.eq_or_lt_of_le (Nat.one_le_iff_ne_zero.mpr hcontentNat_ne_zero) with heq | hlt
+    · exact absurd heq.symm hne
+    · exact hlt
+  rcases exists_natPrime_dvd_of_one_lt _ h_gt_one with ⟨r, hr, hrd⟩
+  have h_r_dvd_each : ∀ n, (r : Int) ∣ (p * q).coeff n := by
+    intro n
+    have hcontent_dvd : (contentNat (p * q) : Int) ∣ (p * q).coeff n :=
+      contentNat_dvd_coeff _ n
+    have hr_dvd_content : (r : Int) ∣ (contentNat (p * q) : Int) :=
+      Int.ofNat_dvd.mpr hrd
+    exact Int.dvd_trans hr_dvd_content hcontent_dvd
+  rcases natPrime_dvd_contentNat_or_dvd_contentNat_of_dvd_mul hr p q h_r_dvd_each
+    with hp_dvd | hq_dvd
+  · rw [hcp_one] at hp_dvd
+    have hr_le : r ≤ 1 := Nat.le_of_dvd (by omega) hp_dvd
+    have hr_ge : 2 ≤ r := hr.1
+    omega
+  · rw [hcq_one] at hq_dvd
+    have hr_le : r ≤ 1 := Nat.le_of_dvd (by omega) hq_dvd
+    have hr_ge : 2 ≤ r := hr.1
+    omega
+
 end DensePoly
 end Hex
