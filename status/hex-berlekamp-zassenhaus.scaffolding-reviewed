@@ -1,31 +1,23 @@
-Re-reviewed in the PR for issue #3154 against the post-`Factorization`
-public API, after #2637 reshaped the SPEC and #3140 / #3143 bumped
-`done_through` to 1.
+Re-reviewed against the current `Factorization` public API after #3210 was
+closed by aligning `SPEC/Libraries/hex-berlekamp-zassenhaus.md` with the
+Mignotte-bounded public `factor` combinator.
 
-The review found one blocking Phase 2 gap: the public `factor`
-combinator's definitional equation diverges from
-`SPEC/Libraries/hex-berlekamp-zassenhaus.md` line 31
-(`factor f := (factorFast f).getD (factorSlow f)`). The current body
-in `HexBerlekampZassenhaus/Basic.lean` at line 2589 is
-`factor f := factorWithBound f (ZPoly.defaultFactorCoeffBound f)`,
-which uses a strictly smaller fast-path precision than the SPEC's
-`factorFast`. The output is still the irreducible factorization, so
-this is a wrong-shape body rather than a wrong-output body; PR #3143's
-repair note records the bench-tractability tradeoff that drove the
-divergence. Human-oversight #2637 pins the SPEC equation, so this
-constitutes a Phase 2 wrong-shape finding. Follow-up issue #3210
-tracks resolving the divergence (either restoring the SPEC equation
-or amending the SPEC under #2637's owner).
+The reviewed executable surface matches the current SPEC shape:
+`factorSlow` returns a total `Factorization`, `factorFast` returns
+`Option Factorization` at `factorFastPrecisionCap`, `factorWithBound f B`
+falls back from `factorFastWithBound f B` to `factorSlowWithBound f B`, and
+`factor f` is the public Mignotte-bounded `factorWithBound f
+(ZPoly.defaultFactorCoeffBound f)`. The `Factorization` record separates the
+signed scalar from polynomial factor/multiplicity pairs, and the conformance
+surface covers the scalar, multiplicity, adversarial recombination, and
+fixture-emission paths required at this phase.
 
-No extern trampolines, native-type detours, banned markers
-(`axiom`, `native_decide`, `TODO`, `FIXME`), or scaffold-language
-strings remain in the audit targets. The three existing
-`sorry`s in `HexBerlekampZassenhaus/Basic.lean`
+No Phase 2 blocking wrong-shape body, data-level placeholder, extern
+trampoline, native-type detour, banned marker (`axiom`, `native_decide`,
+`TODO`, `FIXME`), or scaffold-language string remains in the audit targets.
+The three existing `sorry`s in `HexBerlekampZassenhaus/Basic.lean`
 (`bhksLatticeBasis_independent`, `isIrreducible_iff`,
-`factor_product_of_bound`) are all theorem-level proof obligations
-covered by the Mathlib bridge (Groups B and C), permitted under
-PLAN/Phase1.md.
+`factor_product_of_bound`) are theorem-level proof obligations for later
+proof phases, not data-level scaffolding.
 
-Because of the wrong-shape `factor` body, `done_through` stays at 1
-pending resolution of #3210; bumping to 2 is conditional on either
-the SPEC equation being restored or the SPEC being amended.
+Phase 2 scaffolding review is complete for `HexBerlekampZassenhaus`.
