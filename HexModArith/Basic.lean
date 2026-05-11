@@ -94,6 +94,11 @@ def ofNat (p n : Nat) [Bounds p] : ZMod64 p := by
 theorem eq_iff_toNat_eq (a b : ZMod64 p) : a = b ↔ a.toNat = b.toNat :=
   ⟨fun h => h ▸ rfl, fun h => ext (UInt64.toNat_inj.mp h)⟩
 
+/-- Equality of residues built from arbitrary Nat representatives is equality modulo `p`. -/
+theorem ofNat_eq_ofNat_iff_mod_eq (x y : Nat) :
+    ofNat p x = ofNat p y ↔ x % p = y % p := by
+  rw [eq_iff_toNat_eq, toNat_ofNat, toNat_ofNat]
+
 /-- All canonical residues modulo `p`, listed in representative order. -/
 def values (p : Nat) [Bounds p] : List (ZMod64 p) :=
   (List.range p).map fun n => ofNat p n
@@ -677,7 +682,7 @@ private theorem pow_go_toNat (base acc : ZMod64 p) (k : Nat) :
             rw [toNat_mul, toNat_mul]
             exact nat_mod_mul_pow_square_odd acc.toNat base.toNat (m + 1) p heven
 
-theorem toNat_pow (a : ZMod64 p) (n : Nat) :
+@[simp] theorem toNat_pow (a : ZMod64 p) (n : Nat) :
     (pow a n).toNat = a.toNat ^ n % p := by
   rw [pow]
   rw [pow_go_toNat]
@@ -707,6 +712,11 @@ theorem inv_mul_eq_one (a : ZMod64 p) (hcop : Nat.Coprime a.toNat p) :
     invBezout_mul_mod_eq_one (a := a.toNat) (p := p) (Bounds.pPos (p := p))
       (s := s) (t := t) hbez
 
+/-- Coprime residues multiply by their computed inverse to the unit residue. -/
+theorem inv_mul_eq_one_of_coprime (a : ZMod64 p) (hcop : Nat.Coprime a.toNat p) :
+    mul (inv a) a = ZMod64.one := by
+  rw [eq_iff_toNat_eq, inv_mul_eq_one a hcop, toNat_one]
+
 theorem add_lt_modulus (a b : ZMod64 p) : (add a b).toNat < p := by
   exact (add a b).isLt
 
@@ -715,6 +725,12 @@ theorem sub_lt_modulus (a b : ZMod64 p) : (sub a b).toNat < p := by
 
 theorem mul_lt_modulus (a b : ZMod64 p) : (mul a b).toNat < p := by
   simpa [toNat_mul] using normalize_lt p (a.toNat * b.toNat)
+
+theorem pow_lt_modulus (a : ZMod64 p) (n : Nat) : (pow a n).toNat < p := by
+  exact (pow a n).isLt
+
+theorem inv_lt_modulus (a : ZMod64 p) : (inv a).toNat < p := by
+  exact (inv a).isLt
 
 end ZMod64
 end Hex
