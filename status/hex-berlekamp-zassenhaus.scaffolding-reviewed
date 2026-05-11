@@ -1,1 +1,31 @@
-Reviewed in the PR for issue #2079. The review found one wrong-shape scaffold gap in the modular factor data feeding prime scoring, Hensel lifting, and recombination; follow-up issue #2082 tracks replacing square-free decomposition buckets with the executable Berlekamp irreducible factor surface. No extern trampolines, native-type detours, missing Mathlib-bridge surface declarations, or additional downstream-facing scaffold gaps were identified.
+Re-reviewed in the PR for issue #3154 against the post-`Factorization`
+public API, after #2637 reshaped the SPEC and #3140 / #3143 bumped
+`done_through` to 1.
+
+The review found one blocking Phase 2 gap: the public `factor`
+combinator's definitional equation diverges from
+`SPEC/Libraries/hex-berlekamp-zassenhaus.md` line 31
+(`factor f := (factorFast f).getD (factorSlow f)`). The current body
+in `HexBerlekampZassenhaus/Basic.lean` at line 2589 is
+`factor f := factorWithBound f (ZPoly.defaultFactorCoeffBound f)`,
+which uses a strictly smaller fast-path precision than the SPEC's
+`factorFast`. The output is still the irreducible factorization, so
+this is a wrong-shape body rather than a wrong-output body; PR #3143's
+repair note records the bench-tractability tradeoff that drove the
+divergence. Human-oversight #2637 pins the SPEC equation, so this
+constitutes a Phase 2 wrong-shape finding. Follow-up issue #3210
+tracks resolving the divergence (either restoring the SPEC equation
+or amending the SPEC under #2637's owner).
+
+No extern trampolines, native-type detours, banned markers
+(`axiom`, `native_decide`, `TODO`, `FIXME`), or scaffold-language
+strings remain in the audit targets. The three existing
+`sorry`s in `HexBerlekampZassenhaus/Basic.lean`
+(`bhksLatticeBasis_independent`, `isIrreducible_iff`,
+`factor_product_of_bound`) are all theorem-level proof obligations
+covered by the Mathlib bridge (Groups B and C), permitted under
+PLAN/Phase1.md.
+
+Because of the wrong-shape `factor` body, `done_through` stays at 1
+pending resolution of #3210; bumping to 2 is conditional on either
+the SPEC equation being restored or the SPEC being amended.
