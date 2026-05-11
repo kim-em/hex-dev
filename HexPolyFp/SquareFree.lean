@@ -4617,7 +4617,7 @@ private theorem yunFactorsLevelCompletes_of_size_bound_derivative_active
     (hstate :
       ∀ c w : FpPoly p, ∀ fuel : Nat,
         yunFactorsDerivativeActiveReachable hp f c w fuel →
-          squareFreeContributionReachable c ∧
+          DensePoly.Monic c ∧
             c.isZero = false ∧
               w.isZero = false)
     (hreachable : yunFactorsDerivativeActiveReachable hp f c w fuel)
@@ -4625,7 +4625,10 @@ private theorem yunFactorsLevelCompletes_of_size_bound_derivative_active
     yunFactorsLevelCompletes c w base level fuel := by
   induction fuel generalizing c w level with
   | zero =>
-      have hcurrent := hstate c w 0 hreachable
+      have hnormalized := hstate c w 0 hreachable
+      have hcurrent :=
+        normalizedDerivativeActiveState_of_monic_nonzero
+          c w hnormalized.1 hnormalized.2.1 hnormalized.2.2
       have hc_pos : 0 < c.size :=
         size_pos_of_isZero_false c hcurrent.2.1
       have hw_pos : 0 < w.size :=
@@ -4649,11 +4652,15 @@ private theorem yunFactorsLevelCompletes_of_size_bound_derivative_active
             yunFactorsPairwiseReachable c w (fuel + 1) :=
           yunFactorsPairwiseReachable_of_derivative_active_reachable
             hp f c w (fuel + 1) hreachable
+        have hnormalized := hstate c w (fuel + 1) hreachable
+        have hcurrent :=
+          normalizedDerivativeActiveState_of_monic_nonzero
+            c w hnormalized.1 hnormalized.2.1 hnormalized.2.2
         have hmeasure :
             (DensePoly.gcd c w).size + (w / DensePoly.gcd c w).size <
               c.size + w.size :=
           yunLevel_measure_lt_of_reachable_step
-            c w fuel (hstate c w (fuel + 1) hreachable) hpairwise hc_false
+            c w fuel hcurrent hpairwise hc_false
         have htail_bound :
             (DensePoly.gcd c w).size + (w / DensePoly.gcd c w).size ≤
               fuel + 1 := by
@@ -4671,7 +4678,7 @@ private theorem yunFactorsLevelCompletes_of_derivative_active_reachable
     (hstate :
       ∀ c w : FpPoly p, ∀ fuel : Nat,
         yunFactorsDerivativeActiveReachable hp f c w fuel →
-          squareFreeContributionReachable c ∧
+          DensePoly.Monic c ∧
             c.isZero = false ∧
               w.isZero = false) :
     let g := DensePoly.gcd f (DensePoly.derivative f)
