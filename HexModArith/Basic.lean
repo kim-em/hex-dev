@@ -83,6 +83,17 @@ def ofNat (p n : Nat) [Bounds p] : ZMod64 p := by
 @[simp] theorem val_toNat_ofNat (n : Nat) : (ofNat p n).val.toNat = n % p := by
   simpa using toNat_ofNat (p := p) n
 
+/-- Constructing a residue from its canonical representative is the identity. -/
+@[simp] theorem ofNat_toNat (a : ZMod64 p) : ofNat p a.toNat = a := by
+  apply ext
+  apply UInt64.toNat_inj.mp
+  rw [val_toNat_ofNat]
+  exact Nat.mod_eq_of_lt a.toNat_lt
+
+/-- Two residues are equal exactly when their canonical representatives agree. -/
+theorem eq_iff_toNat_eq (a b : ZMod64 p) : a = b ↔ a.toNat = b.toNat :=
+  ⟨fun h => h ▸ rfl, fun h => ext (UInt64.toNat_inj.mp h)⟩
+
 /-- All canonical residues modulo `p`, listed in representative order. -/
 def values (p : Nat) [Bounds p] : List (ZMod64 p) :=
   (List.range p).map fun n => ofNat p n
