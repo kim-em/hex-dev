@@ -1870,6 +1870,189 @@ private theorem gcd_mul_div_right_reconstruct [ZMod64.PrimeModulus p] (c w : FpP
   rw [mul_comm]
   exact div_gcd_right_mul_reconstruct c w
 
+/--
+Algebraic step identity used to thread the scaled Yun product invariant through
+a single non-terminating iteration. With `y = gcd c w`, `z = c / y`, and
+`v = w / y`, the input `pow c (base * level) * pow w base` rebalances to
+`pow z (base * level) * pow y (base * (level + 1)) * pow v base`, capturing the
+emission of `z` at multiplicity `base * level` while moving `g`'s remaining
+factor into the next level.
+-/
+private theorem yunFactorsContributionWithLevel_pow_step_algebra
+    [ZMod64.PrimeModulus p] (c w : FpPoly p) (base level : Nat) :
+    pow c (base * level) * pow w base =
+      pow (c / DensePoly.gcd c w) (base * level) *
+        pow (DensePoly.gcd c w) (base * (level + 1)) *
+        pow (w / DensePoly.gcd c w) base := by
+  have hqg : (c / DensePoly.gcd c w) * DensePoly.gcd c w = c :=
+    div_gcd_mul_reconstruct c w
+  have hvg : (w / DensePoly.gcd c w) * DensePoly.gcd c w = w :=
+    div_gcd_right_mul_reconstruct c w
+  have hexp : base * level + base = base * (level + 1) := by
+    rw [Nat.mul_succ]
+  calc pow c (base * level) * pow w base
+      = pow ((c / DensePoly.gcd c w) * DensePoly.gcd c w) (base * level) *
+          pow ((w / DensePoly.gcd c w) * DensePoly.gcd c w) base := by rw [hqg, hvg]
+    _ = (pow (c / DensePoly.gcd c w) (base * level) *
+            pow (DensePoly.gcd c w) (base * level)) *
+          (pow (w / DensePoly.gcd c w) base * pow (DensePoly.gcd c w) base) := by
+        rw [pow_mul_base (c / DensePoly.gcd c w) (DensePoly.gcd c w) (base * level),
+            pow_mul_base (w / DensePoly.gcd c w) (DensePoly.gcd c w) base]
+    _ = pow (c / DensePoly.gcd c w) (base * level) *
+          (pow (DensePoly.gcd c w) (base * level) *
+            (pow (w / DensePoly.gcd c w) base * pow (DensePoly.gcd c w) base)) := by
+        exact DensePoly.mul_assoc_poly _ _ _
+    _ = pow (c / DensePoly.gcd c w) (base * level) *
+          ((pow (DensePoly.gcd c w) (base * level) * pow (w / DensePoly.gcd c w) base) *
+            pow (DensePoly.gcd c w) base) := by
+        exact congrArg
+          (fun x => pow (c / DensePoly.gcd c w) (base * level) * x)
+          (DensePoly.mul_assoc_poly
+            (pow (DensePoly.gcd c w) (base * level))
+            (pow (w / DensePoly.gcd c w) base)
+            (pow (DensePoly.gcd c w) base)).symm
+    _ = pow (c / DensePoly.gcd c w) (base * level) *
+          ((pow (w / DensePoly.gcd c w) base * pow (DensePoly.gcd c w) (base * level)) *
+            pow (DensePoly.gcd c w) base) := by
+        exact congrArg
+          (fun x => pow (c / DensePoly.gcd c w) (base * level) *
+            (x * pow (DensePoly.gcd c w) base))
+          (DensePoly.mul_comm_poly
+            (pow (DensePoly.gcd c w) (base * level))
+            (pow (w / DensePoly.gcd c w) base))
+    _ = pow (c / DensePoly.gcd c w) (base * level) *
+          (pow (w / DensePoly.gcd c w) base *
+            (pow (DensePoly.gcd c w) (base * level) * pow (DensePoly.gcd c w) base)) := by
+        exact congrArg
+          (fun x => pow (c / DensePoly.gcd c w) (base * level) * x)
+          (DensePoly.mul_assoc_poly
+            (pow (w / DensePoly.gcd c w) base)
+            (pow (DensePoly.gcd c w) (base * level))
+            (pow (DensePoly.gcd c w) base))
+    _ = pow (c / DensePoly.gcd c w) (base * level) *
+          (pow (w / DensePoly.gcd c w) base *
+            pow (DensePoly.gcd c w) (base * level + base)) := by
+        rw [← pow_add_exp]
+    _ = pow (c / DensePoly.gcd c w) (base * level) *
+          (pow (w / DensePoly.gcd c w) base *
+            pow (DensePoly.gcd c w) (base * (level + 1))) := by
+        rw [hexp]
+    _ = pow (c / DensePoly.gcd c w) (base * level) *
+          (pow (DensePoly.gcd c w) (base * (level + 1)) *
+            pow (w / DensePoly.gcd c w) base) := by
+        exact congrArg
+          (fun x => pow (c / DensePoly.gcd c w) (base * level) * x)
+          (DensePoly.mul_comm_poly
+            (pow (w / DensePoly.gcd c w) base)
+            (pow (DensePoly.gcd c w) (base * (level + 1))))
+    _ = pow (c / DensePoly.gcd c w) (base * level) *
+          pow (DensePoly.gcd c w) (base * (level + 1)) *
+          pow (w / DensePoly.gcd c w) base := by
+        exact (DensePoly.mul_assoc_poly _ _ _).symm
+
+/--
+Recursive termination predicate for the scaled Yun loop: the loop on
+`(c, w, base, level)` reaches `isOne c = true` within `fuel` iterations.
+The predicate is structural in `fuel`, with the witness chain mirroring
+the loop's recursion through `(gcd c w, w / gcd c w, base, level + 1)`.
+-/
+private def yunFactorsLevelCompletes (c w : FpPoly p) (base : Nat) :
+    Nat → Nat → Prop
+  | _, 0 => isOne c = true
+  | level, fuel + 1 =>
+      isOne c = true ∨
+        yunFactorsLevelCompletes
+          (DensePoly.gcd c w) (w / DensePoly.gcd c w) base (level + 1) fuel
+
+/--
+Conditional product invariant for the scaled Yun loop: when the loop
+terminates by `isOne c = true` within the supplied `fuel`, the loop's
+contribution times the power of its residual recovers
+`pow c (base * level) * pow w base`. This is the deep algebraic content
+of Yun's identity, packaged with the termination predicate so the
+inductive base case discharges cleanly.
+-/
+private theorem yunFactorsContributionWithLevel_pow_invariant_of_completes
+    [ZMod64.PrimeModulus p] (c w : FpPoly p) (base level fuel : Nat)
+    (hcompletes : yunFactorsLevelCompletes c w base level fuel) :
+    let contribution := yunFactorsContributionWithLevel c w base level fuel
+    contribution.1 * pow contribution.2 base =
+      pow c (base * level) * pow w base := by
+  induction fuel generalizing c w level with
+  | zero =>
+      -- contribution = (1, w); hcompletes gives c = 1.
+      have hc_eq : c = 1 := eq_one_of_isOne_true c hcompletes
+      subst hc_eq
+      simp [yunFactorsContributionWithLevel, pow_one_base]
+  | succ fuel ih =>
+      by_cases hc : isOne c = true
+      · -- Loop terminates immediately: contribution = (1, w), c = 1.
+        have hc_eq : c = 1 := eq_one_of_isOne_true c hc
+        subst hc_eq
+        simp [yunFactorsContributionWithLevel, hc, pow_one_base]
+      · have hc_false : isOne c = false := by
+          cases h : isOne c
+          · rfl
+          · exact False.elim (hc h)
+        have htail_completes :
+            yunFactorsLevelCompletes
+              (DensePoly.gcd c w) (w / DensePoly.gcd c w) base (level + 1) fuel := by
+          cases hcompletes with
+          | inl hcone => exact False.elim (hc hcone)
+          | inr htail => exact htail
+        have htail := ih (DensePoly.gcd c w) (w / DensePoly.gcd c w) (level + 1)
+          htail_completes
+        -- htail :
+        --   (yunFactorsContributionWithLevel y v base (level+1) fuel).1 *
+        --     pow (yunFactorsContributionWithLevel y v base (level+1) fuel).2 base =
+        --   pow y (base * (level + 1)) * pow v base
+        simp only [yunFactorsContributionWithLevel, hc_false]
+        -- Goal involves let-bound y := gcd c w, z := c/y, tail := ...
+        by_cases hz : isOne (c / DensePoly.gcd c w) = true
+        · -- z = 1 case: contribution.1 = tail.1
+          have hz_eq : c / DensePoly.gcd c w = 1 := eq_one_of_isOne_true _ hz
+          simp [hz_eq, pow_one_base]
+          -- pow c (b*l) = pow (z * y) (b*l) = pow z (b*l) * pow y (b*l)
+          -- With z = 1: pow c (b*l) = pow y (b*l)
+          -- htail gives: tail.1 * pow tail.2 base = pow y (base*(level+1)) * pow v base
+          -- We want: tail.1 * pow tail.2 base = pow c (b*l) * pow w base
+          -- This follows from the step algebra with z=1.
+          have hstep :=
+            yunFactorsContributionWithLevel_pow_step_algebra c w base level
+          rw [hz_eq, pow_one_base, one_mul] at hstep
+          rw [hstep]
+          exact htail
+        · -- z ≠ 1 case: contribution.1 = pow z (b*l) * tail.1
+          have hz_false : isOne (c / DensePoly.gcd c w) = false := by
+            cases h : isOne (c / DensePoly.gcd c w)
+            · rfl
+            · exact False.elim (hz h)
+          simp [hz_false]
+          -- Goal: pow z (b*l) * tail.1 * pow tail.2 base = pow c (b*l) * pow w base
+          have hstep :=
+            yunFactorsContributionWithLevel_pow_step_algebra c w base level
+          calc pow (c / DensePoly.gcd c w) (base * level) *
+                  (yunFactorsContributionWithLevel
+                    (DensePoly.gcd c w) (w / DensePoly.gcd c w) base (level + 1) fuel).1 *
+                  pow (yunFactorsContributionWithLevel
+                    (DensePoly.gcd c w) (w / DensePoly.gcd c w) base (level + 1) fuel).2 base
+              = pow (c / DensePoly.gcd c w) (base * level) *
+                  ((yunFactorsContributionWithLevel
+                    (DensePoly.gcd c w) (w / DensePoly.gcd c w) base (level + 1) fuel).1 *
+                    pow (yunFactorsContributionWithLevel
+                      (DensePoly.gcd c w) (w / DensePoly.gcd c w) base (level + 1) fuel).2 base) :=
+                DensePoly.mul_assoc_poly _ _ _
+            _ = pow (c / DensePoly.gcd c w) (base * level) *
+                  (pow (DensePoly.gcd c w) (base * (level + 1)) *
+                    pow (w / DensePoly.gcd c w) base) :=
+                congrArg
+                  (fun x => pow (c / DensePoly.gcd c w) (base * level) * x) htail
+            _ = pow (c / DensePoly.gcd c w) (base * level) *
+                  pow (DensePoly.gcd c w) (base * (level + 1)) *
+                  pow (w / DensePoly.gcd c w) base :=
+                (DensePoly.mul_assoc_poly _ _ _).symm
+            _ = pow c (base * level) * pow w base := hstep.symm
+
 private theorem gcd_isZero_false_of_right_isZero_false
     [ZMod64.PrimeModulus p] (a b : FpPoly p)
     (hb : b.isZero = false) :
