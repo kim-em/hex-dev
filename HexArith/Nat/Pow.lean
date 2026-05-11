@@ -11,6 +11,11 @@ namespace Hex
 
 namespace Nat
 
+/--
+Inductive content of the geometric-series identity for `1 ≤ x`: every power
+`x ^ j` is one more than a multiple of `x - 1`. The witness `k` is the partial
+geometric sum `1 + x + x^2 + ⋯ + x^(j-1)`.
+-/
 private theorem pow_eq_succ_mul_sub_one_add_one_of_one_le
     {x : Nat} (hx : 1 ≤ x) :
     ∀ j : Nat, ∃ k : Nat, x ^ j = (x - 1) * k + 1
