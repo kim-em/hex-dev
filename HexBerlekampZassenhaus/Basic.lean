@@ -827,6 +827,7 @@ prime, the requested lift precision, and the lifted integer factors.
 -/
 structure LiftData where
   p : Nat
+  p_pos : 0 < p
   k : Nat
   liftedFactors : Array ZPoly
 
@@ -1191,6 +1192,7 @@ def henselLiftData (f : ZPoly) (B : Nat) (d : PrimeChoiceData) : LiftData :=
   letI := d.bounds
   let factors := d.factorsModP.map (fun factor => FpPoly.liftToZ factor)
   { p := d.p
+    p_pos := ZMod64.Bounds.pPos (p := d.p)
     k := B
     liftedFactors := ZPoly.multifactorLiftQuadratic d.p B f factors }
 
@@ -2023,13 +2025,39 @@ def bhksProjectedRows (L : BhksLatticeBasis)
     reducedRowCount := reducedRows.size
     projectedRows := bhksCutProjectReducedRows L reducedBasis }
 
-/-- BHKS `[ I_r | A_tilde ; 0 | diag(p^(a-l_j)) ]` lattice basis is linearly
-independent over `Int`. The block-triangular structure makes this a
-short combinatorial argument; the proof is a Group B obligation tracked
-elsewhere. -/
-theorem bhksLatticeBasis_independent (L : BhksLatticeBasis) :
-    L.basis.independent := by
-  sorry
+/-- Constructor-produced BHKS `[ I_r | A_tilde ; 0 | diag(p^(a-l_j)) ]`
+lattice bases are linearly independent over `Int` for positive `p`. -/
+theorem bhksLatticeBasis_independent
+    (f : ZPoly) (p a : Nat) (liftedFactors : Array ZPoly) (hp : 0 < p) :
+    (bhksLatticeBasis f p a liftedFactors).basis.independent := by
+  change
+    (Matrix.ofFn
+      (bhksLatticeEntry liftedFactors.size (f.degree?.getD 0) p a
+        (bhksCutThresholds f p)
+        (liftedFactors.map (fun g => cldCoeffs f p a g)))).independent
+  apply Matrix.independent_of_upperTriangular_pos_diag
+  · intro i j hji
+    by_cases hi : i.val < liftedFactors.size
+    · have hj : j.val < liftedFactors.size := by omega
+      simp [Matrix.ofFn, bhksLatticeEntry, hi, hj]
+      omega
+    · have hi' : liftedFactors.size ≤ i.val := by omega
+      by_cases hj : j.val < liftedFactors.size
+      · simp [Matrix.ofFn, bhksLatticeEntry, hi, hj]
+      · have hj' : liftedFactors.size ≤ j.val := by omega
+        have hneq : j.val - liftedFactors.size ≠ i.val - liftedFactors.size := by omega
+        simp [Matrix.ofFn, bhksLatticeEntry, hi, hj, hneq]
+  · intro i
+    by_cases hi : i.val < liftedFactors.size
+    · simp [Matrix.ofFn, bhksLatticeEntry, hi]
+    · have hi' : liftedFactors.size ≤ i.val := by omega
+      have hpos : 0 < p ^ (a - (bhksCutThresholds f p).getD (i.val - liftedFactors.size) 0) :=
+        Nat.pow_pos hp
+      simpa [Matrix.ofFn, bhksLatticeEntry, hi] using Int.ofNat_lt.mpr hpos
+
+private theorem bhksLiftData_latticeBasis_independent (f : ZPoly) (d : LiftData) :
+    (bhksLatticeBasis f d.p d.k d.liftedFactors).basis.independent :=
+  bhksLatticeBasis_independent f d.p d.k d.liftedFactors d.p_pos
 
 #guard psiCut 5 4 1 3 = 1
 #guard psiCut 5 4 1 3 ≠ 3 / (5 : Int)
@@ -2451,7 +2479,7 @@ and accepts only when the verified candidates multiply back to `f`.
 private def bhksRecoverClassified (f : ZPoly) (d : LiftData) : BhksRecoveryResult :=
   let L := bhksLatticeBasis f d.p d.k d.liftedFactors
   if hrows : 1 ≤ L.factorCount + L.coeffWidth then
-    let projected := bhksProjectedRows L hrows (bhksLatticeBasis_independent L)
+    let projected := bhksProjectedRows L hrows (bhksLiftData_latticeBasis_independent f d)
     let indicators := bhksEquivalenceClassIndicators projected
     if bhksDegenerateIndicatorPartition projected indicators then
       .degenerate
@@ -2483,17 +2511,17 @@ theorem bhksRecover?_eq_some_of_checks
     (hnondeg :
       bhksDegenerateIndicatorPartition
           (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
-            hrows (bhksLatticeBasis_independent _))
+            hrows (bhksLiftData_latticeBasis_independent f d))
           (bhksEquivalenceClassIndicators
             (bhksProjectedRows
               (bhksLatticeBasis f d.p d.k d.liftedFactors)
-              hrows (bhksLatticeBasis_independent _))) = false)
+              hrows (bhksLiftData_latticeBasis_independent f d))) = false)
     (hcand :
       bhksIndicatorCandidates? f d
           (bhksEquivalenceClassIndicators
             (bhksProjectedRows
               (bhksLatticeBasis f d.p d.k d.liftedFactors)
-              hrows (bhksLatticeBasis_independent _))) =
+              hrows (bhksLiftData_latticeBasis_independent f d))) =
         some candidates)
     (hprod : Array.polyProduct candidates = f) :
     bhksRecover? f d = some candidates := by
@@ -2506,6 +2534,7 @@ theorem bhksRecover?_eq_some_of_checks
 
 private def bhksIndicatorGuardLift : LiftData :=
   { p := 5
+    p_pos := by decide
     k := 2
     liftedFactors := bhksGuardFactors }
 
@@ -2523,6 +2552,7 @@ private def bhksIndicatorGuardLift : LiftData :=
 
 private def bhksDegenerateRecoverLift : LiftData :=
   { p := 5
+    p_pos := by decide
     k := 2
     liftedFactors := #[DensePoly.ofCoeffs #[1]] }
 
@@ -2532,6 +2562,7 @@ private def bhksDegenerateRecoverLift : LiftData :=
 
 private def bhksFailedDivisionRecoverLift : LiftData :=
   { p := 5
+    p_pos := by decide
     k := 2
     liftedFactors := #[DensePoly.ofCoeffs #[-2, 1], DensePoly.ofCoeffs #[-4, 1]] }
 
@@ -3230,16 +3261,16 @@ private theorem bhksRecoverClassified_success_product
     by_cases hdeg :
         bhksDegenerateIndicatorPartition
           (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows
-            (bhksLatticeBasis_independent _))
+            (bhksLiftData_latticeBasis_independent f d))
           (bhksEquivalenceClassIndicators
             (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
-              hrows (bhksLatticeBasis_independent _))) = true
+              hrows (bhksLiftData_latticeBasis_independent f d))) = true
     · simp [hdeg] at hrecover
     · simp only [hdeg, Bool.false_eq_true, if_false] at hrecover
       cases hcand : bhksIndicatorCandidates? f d
           (bhksEquivalenceClassIndicators
             (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
-              hrows (bhksLatticeBasis_independent _))) with
+              hrows (bhksLiftData_latticeBasis_independent f d))) with
       | none => simp [hcand] at hrecover
       | some cands =>
           simp only [hcand] at hrecover

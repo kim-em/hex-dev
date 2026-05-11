@@ -158,6 +158,7 @@ private def liftedTarget3 : ZPoly :=
 
 private def liftedData3 : LiftData :=
   { p := 37
+    p_pos := by decide
     k := 8
     liftedFactors := liftedFactors3 }
 
@@ -169,11 +170,13 @@ private def liftedTarget5 : ZPoly :=
 
 private def liftedData5 : LiftData :=
   { p := 37
+    p_pos := by decide
     k := 8
     liftedFactors := liftedFactors5 }
 
 private def emptyLift : LiftData :=
   { p := 2
+    p_pos := by decide
     k := 4
     liftedFactors := #[] }
 
