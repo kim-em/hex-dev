@@ -3319,6 +3319,52 @@ private theorem dvd_term_of_dvd_foldl_add_of_dvd_others
           hnodup_tail hidx_mem_tail htail_sum
           (fun r hr hri => hothers r (List.mem_cons_of_mem x hr) hri)
 
+private def finiteCoeffConvolution (pCoeff qCoeff : Nat → Int) (n : Nat) : Int :=
+  (List.range (n + 1)).foldl (fun acc r => acc + pCoeff r * qCoeff (n - r)) 0
+
+private theorem dvd_finiteCoeffConvolution_term_of_dvd_others
+    (pCoeff qCoeff : Nat → Int) (d n i : Nat)
+    (hi : i < n + 1)
+    (hprod : (d : Int) ∣ finiteCoeffConvolution pCoeff qCoeff n)
+    (hothers : ∀ r, r < n + 1 → r ≠ i → (d : Int) ∣ pCoeff r * qCoeff (n - r)) :
+    (d : Int) ∣ pCoeff i * qCoeff (n - i) := by
+  exact dvd_term_of_dvd_foldl_add_of_dvd_others (d : Int) (List.range (n + 1))
+    (fun r => pCoeff r * qCoeff (n - r)) i
+    List.nodup_range (List.mem_range.mpr hi) hprod
+    (fun r hr hri => hothers r (List.mem_range.mp hr) hri)
+
+private theorem dvd_coeff_product_of_dvd_finiteCoeffConvolution_of_dvd_other_terms
+    (pCoeff qCoeff : Nat → Int) (d i j : Nat)
+    (hprod : (d : Int) ∣ finiteCoeffConvolution pCoeff qCoeff (i + j))
+    (hothers :
+      ∀ r s, r + s = i + j → r ≠ i → (d : Int) ∣ pCoeff r * qCoeff s) :
+    (d : Int) ∣ pCoeff i * qCoeff j := by
+  have hterm :
+      (d : Int) ∣ pCoeff i * qCoeff (i + j - i) :=
+    dvd_finiteCoeffConvolution_term_of_dvd_others
+      pCoeff qCoeff d (i + j) i (by omega) hprod (by
+        intro r hr hri
+        exact hothers r (i + j - r) (by omega) hri)
+  have hsub : i + j - i = j := by omega
+  simpa [hsub] using hterm
+
+private theorem dvd_coeff_product_last_of_dvd_finiteCoeffConvolution_of_dvd_larger_left_products
+    (pCoeff qCoeff : Nat → Int) (d i k : Nat)
+    (hprod : (d : Int) ∣ finiteCoeffConvolution pCoeff qCoeff (i + k))
+    (hqAbove : ∀ s, k < s → (d : Int) ∣ qCoeff s)
+    (hlarger :
+      ∀ r, i < r → (d : Int) ∣ pCoeff r * qCoeff (i + k - r)) :
+    (d : Int) ∣ pCoeff i * qCoeff k := by
+  exact dvd_coeff_product_of_dvd_finiteCoeffConvolution_of_dvd_other_terms
+    pCoeff qCoeff d i k hprod (by
+      intro r s hrs hri
+      by_cases hri_lt : r < i
+      · have hks : k < s := by omega
+        exact Int.dvd_mul_of_dvd_right (hqAbove s hks)
+      · have hir : i < r := by omega
+        have hs : s = i + k - r := by omega
+        simpa [hs] using hlarger r hir)
+
 private theorem dvd_diagonalMulCoeffTerm_of_dvd_mul_coeff_of_dvd_other_diagonal_terms
     (p q : DensePoly Int) (d n i : Nat)
     (hprod : (d : Int) ∣ (p * q).coeff n)
