@@ -32,6 +32,34 @@ theorem identity_independent {n : Nat} : (1 : Matrix Int n n).independent := by
   rw [Matrix.gramMatrix_one, Matrix.submatrix_one, Matrix.det_one]
   decide
 
+/-- The leading principal Gram submatrix is the Gram matrix of the corresponding
+leading rows. -/
+theorem submatrix_gramMatrix_eq_gramMatrix_leadingRows
+    {n : Nat} (M : Matrix Int n n) (k : Fin n) :
+    submatrix (gramMatrix M) k =
+      gramMatrix (leadingRows M (k.val + 1) (Nat.succ_le_of_lt k.isLt)) := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  change
+    (submatrix (gramMatrix M) k)[(⟨i, hi⟩ : Fin (k.val + 1))][
+        (⟨j, hj⟩ : Fin (k.val + 1))] =
+      (gramMatrix (leadingRows M (k.val + 1) (Nat.succ_le_of_lt k.isLt)))[
+        (⟨i, hi⟩ : Fin (k.val + 1))][(⟨j, hj⟩ : Fin (k.val + 1))]
+  simp [submatrix, gramMatrix, leadingRows, row, ofFn, Hex.Vector.dotProduct]
+
+/-- An integer upper-triangular square matrix with positive diagonal has
+independent rows in the LLL sense. -/
+theorem independent_of_upperTriangular_pos_diag
+    {n : Nat} (M : Matrix Int n n)
+    (hzero : ∀ i j : Fin n, j.val < i.val → M[i][j] = 0)
+    (hdiag : ∀ i : Fin n, 0 < M[i][i]) : M.independent := by
+  intro k
+  rw [submatrix_gramMatrix_eq_gramMatrix_leadingRows M k]
+  exact det_gramMatrix_leadingRows_pos_of_upperTriangular_pos_diag M hzero hdiag
+    (k.val + 1) (Nat.succ_le_of_lt k.isLt)
+
 /-- Product of the squared Gram-Schmidt basis norms along the first `k` rows. -/
 noncomputable def gramSchmidtNormProduct (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) : Rat :=
   (List.finRange k).foldl
