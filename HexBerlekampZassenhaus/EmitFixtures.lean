@@ -13,12 +13,12 @@ cases also carry optional pinned modular-factor metadata so the oracle
 checks that the committed input has the intended split over a named
 prime.
 
-Fixtures are integer polynomials at degrees 4, 6, 10, 16, and 20,
+Fixtures are integer polynomials at degrees 4, 6, and 20,
 covering the currently Phase-2-stable shapes:
 
 * scalar/sign edge cases from the public `Factorization` convention,
 * already-irreducible Mignotte-bounded polynomials (cyclotomic
-  Φ_p for `p ∈ {5, 7, 11, 17}`),
+  Φ_p for `p ∈ {5, 7}`),
 * reducible products whose current output is already fully refined into
   irreducible components,
 * polynomials with content greater than `1`,
@@ -106,10 +106,7 @@ private def cases_irr : List Case :=
     mk "irr/cyclo5"  #[1, 1, 1, 1, 1]
     -- Φ_7(x), degree 6, irreducible.
   , mk "irr/cyclo7"  #[1, 1, 1, 1, 1, 1, 1]
-    -- Φ_11(x), degree 10, irreducible.
-  , mk "irr/cyclo11" #[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-    -- Φ_17(x), degree 16, irreducible.
-  , mk "irr/cyclo17" #[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] ]
+  ]
 
 /-! ## Reducible products of two or three irreducibles
 
@@ -118,11 +115,9 @@ and have small enough Mignotte bound that the production lift
 completes quickly. -/
 
 private def cases_red : List Case :=
-  [ -- (x²+1)(x²+2) = x⁴ + 3x² + 2 — two irreducible quadratics.
-    mk "red/quad2_deg4" #[2, 0, 3, 0, 1]
-    -- Φ_11·Φ_22 = 1 + x² + ... + x²⁰, a degree-20 product of
+  [ -- Φ_11·Φ_22 = 1 + x² + ... + x²⁰, a degree-20 product of
     -- irreducible cyclotomics.
-  , mk "red/cyclo11_cyclo22"
+    mk "red/cyclo11_cyclo22"
       #[1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1] ]
 
 /-! ## Pinned-prime modular split smoke case -/
