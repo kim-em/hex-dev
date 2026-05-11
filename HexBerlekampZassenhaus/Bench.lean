@@ -4,10 +4,16 @@ import LeanBench
 /-!
 Benchmark smoke registrations for `hex-berlekamp-zassenhaus`.
 
-This file is harness plumbing for the full Phase 4 suite tracked by HO-3, not
-Phase 4 completion. The tiny deterministic input family below exists to keep
-`list` / `verify` wired for the public API while the adversarial fixture corpus
-and full degree/height/precision matrix remain blocked on HO-2.
+This is the CI-smoke benchmark root for the BZ factorization API, not a Phase 4
+completion claim. The registrations below keep `list` / `verify` wired to the
+public combinator, the proof-facing fast path, the exhaustive slow path, and the
+HO-2 adversarial recombination shapes. The full scientific Phase 4 suite still
+needs the wider degree/height/precision/local-factor-count matrix, comparator
+ratios, profiling, and headline report required by `SPEC/benchmarking.md`.
+
+The registration names are intentionally stable: CI and scheduled timing runs
+refer to these case names when checking that the benchmark harness still covers
+the public BZ API surface.
 
 Smoke registrations:
 
