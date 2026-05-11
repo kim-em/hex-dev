@@ -3365,6 +3365,40 @@ private theorem dvd_coeff_product_last_of_dvd_finiteCoeffConvolution_of_dvd_larg
         have hs : s = i + k - r := by omega
         simpa [hs] using hlarger r hir)
 
+private theorem dvd_finiteCoeffConvolution_last_of_boundaries_and_larger_left
+    (pCoeff qCoeff : Nat → Int) (d bound i k : Nat)
+    (hprod : (d : Int) ∣ finiteCoeffConvolution pCoeff qCoeff (i + k))
+    (hqAbove : ∀ s, k < s → (d : Int) ∣ qCoeff s)
+    (hleft : ∀ r s, bound < r → (d : Int) ∣ pCoeff r * qCoeff s)
+    (hlarger :
+      ∀ r, i < r → r ≤ bound → (d : Int) ∣ pCoeff r * qCoeff (i + k - r)) :
+    (d : Int) ∣ pCoeff i * qCoeff k := by
+  exact dvd_coeff_product_of_dvd_finiteCoeffConvolution_of_dvd_other_terms
+    pCoeff qCoeff d i k hprod (by
+      intro r s hrs hri
+      by_cases hri_lt : r < i
+      · have hks : k < s := by omega
+        exact Int.dvd_mul_of_dvd_right (hqAbove s hks)
+      · have hir : i < r := by omega
+        by_cases hr : r ≤ bound
+        · have hs : s = i + k - r := by omega
+          simpa [hs] using hlarger r hir hr
+        · exact hleft r s (Nat.lt_of_not_ge hr))
+
+private theorem finiteToeplitzMcCoyRow_of_larger_left_products
+    (pCoeff qCoeff : Nat → Int) (d bound k : Nat)
+    (hprod : ∀ n, n ≤ bound + k → (d : Int) ∣ finiteCoeffConvolution pCoeff qCoeff n)
+    (hqAbove : ∀ s, k < s → (d : Int) ∣ qCoeff s)
+    (hleft : ∀ r s, bound < r → (d : Int) ∣ pCoeff r * qCoeff s)
+    (hlarger :
+      ∀ i, i ≤ bound →
+        ∀ r, i < r → r ≤ bound → (d : Int) ∣ pCoeff r * qCoeff (i + k - r)) :
+    ∀ i, i ≤ bound → (d : Int) ∣ pCoeff i * qCoeff k := by
+  intro i hi
+  exact dvd_finiteCoeffConvolution_last_of_boundaries_and_larger_left
+    pCoeff qCoeff d bound i k (hprod (i + k) (by omega)) hqAbove hleft
+    (hlarger i hi)
+
 private theorem dvd_diagonalMulCoeffTerm_of_dvd_mul_coeff_of_dvd_other_diagonal_terms
     (p q : DensePoly Int) (d n i : Nat)
     (hprod : (d : Int) ∣ (p * q).coeff n)
