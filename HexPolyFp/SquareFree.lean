@@ -4530,6 +4530,144 @@ private theorem yunFactorsLevelCompletes_of_derivative_active_state
         yunFactorsLevelCompletes_of_size_bound
           c g multiplicity 1 (fuel + 1) hstate hreachable hbound
 
+private inductive yunFactorsDerivativeActiveReachable
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) :
+    FpPoly p → FpPoly p → Nat → Prop
+  | derivativeSplit (fuel : Nat)
+      (hdf : (DensePoly.derivative f).isZero ≠ true) :
+      yunFactorsDerivativeActiveReachable hp f
+        (f / DensePoly.gcd f (DensePoly.derivative f))
+        (DensePoly.gcd f (DensePoly.derivative f))
+        fuel
+  | step (c w : FpPoly p) (fuel : Nat) :
+      yunFactorsDerivativeActiveReachable hp f c w (fuel + 1) →
+      yunFactorsDerivativeActiveReachable hp f
+        (DensePoly.gcd c w)
+        (w / DensePoly.gcd c w)
+        fuel
+
+private theorem yunFactorsDerivativeActiveReachable_of_derivative_split
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (fuel : Nat)
+    (hdf : (DensePoly.derivative f).isZero ≠ true) :
+    yunFactorsDerivativeActiveReachable hp f
+      (f / DensePoly.gcd f (DensePoly.derivative f))
+      (DensePoly.gcd f (DensePoly.derivative f))
+      fuel :=
+  yunFactorsDerivativeActiveReachable.derivativeSplit fuel hdf
+
+private theorem yunFactorsDerivativeActiveReachable_step
+    (hp : Hex.Nat.Prime p) (f c w : FpPoly p) (fuel : Nat)
+    (hreachable : yunFactorsDerivativeActiveReachable hp f c w (fuel + 1)) :
+    yunFactorsDerivativeActiveReachable hp f
+      (DensePoly.gcd c w)
+      (w / DensePoly.gcd c w)
+      fuel :=
+  yunFactorsDerivativeActiveReachable.step c w fuel hreachable
+
+private theorem yunFactorsPairwiseReachable_of_derivative_active_reachable
+    (hp : Hex.Nat.Prime p) (f c w : FpPoly p) (fuel : Nat)
+    (hreachable : yunFactorsDerivativeActiveReachable hp f c w fuel) :
+    yunFactorsPairwiseReachable c w fuel := by
+  induction hreachable with
+  | derivativeSplit fuel hdf =>
+      exact yunFactorsPairwiseReachable_of_derivative_split hp f fuel hdf
+  | step c w fuel _ ih =>
+      exact yunFactorsPairwiseReachable_step c w fuel ih
+
+private theorem yunFactorsLevelCompletes_of_size_bound_derivative_active
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p) (f c w : FpPoly p)
+    (base level fuel : Nat)
+    (hstate :
+      ∀ c w : FpPoly p, ∀ fuel : Nat,
+        yunFactorsDerivativeActiveReachable hp f c w fuel →
+          squareFreeContributionReachable c ∧
+            c.isZero = false ∧
+              w.isZero = false)
+    (hreachable : yunFactorsDerivativeActiveReachable hp f c w fuel)
+    (hbound : c.size + w.size ≤ fuel + 1) :
+    yunFactorsLevelCompletes c w base level fuel := by
+  induction fuel generalizing c w level with
+  | zero =>
+      have hcurrent := hstate c w 0 hreachable
+      have hc_pos : 0 < c.size :=
+        size_pos_of_isZero_false c hcurrent.2.1
+      have hw_pos : 0 < w.size :=
+        size_pos_of_isZero_false w hcurrent.2.2
+      exfalso
+      omega
+  | succ fuel ih =>
+      by_cases hc : isOne c = true
+      · exact Or.inl hc
+      · have hc_false : isOne c = false := by
+          cases h : isOne c
+          · rfl
+          · exact False.elim (hc h)
+        have htail_reachable :
+            yunFactorsDerivativeActiveReachable hp f
+              (DensePoly.gcd c w)
+              (w / DensePoly.gcd c w)
+              fuel :=
+          yunFactorsDerivativeActiveReachable_step hp f c w fuel hreachable
+        have hpairwise :
+            yunFactorsPairwiseReachable c w (fuel + 1) :=
+          yunFactorsPairwiseReachable_of_derivative_active_reachable
+            hp f c w (fuel + 1) hreachable
+        have hmeasure :
+            (DensePoly.gcd c w).size + (w / DensePoly.gcd c w).size <
+              c.size + w.size :=
+          yunLevel_measure_lt_of_reachable_step
+            c w fuel (hstate c w (fuel + 1) hreachable) hpairwise hc_false
+        have htail_bound :
+            (DensePoly.gcd c w).size + (w / DensePoly.gcd c w).size ≤
+              fuel + 1 := by
+          omega
+        exact Or.inr
+          (ih (DensePoly.gcd c w) (w / DensePoly.gcd c w) (level + 1)
+            htail_reachable htail_bound)
+
+private theorem yunFactorsLevelCompletes_of_derivative_active_reachable
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
+    (_hmultiplicity : 0 < multiplicity) (hfuel : f.size < fuel + 1)
+    (hzero : f.isZero = false)
+    (hdf : (DensePoly.derivative f).isZero = false)
+    (_hreachable_input : squareFreeContributionReachable f)
+    (hstate :
+      ∀ c w : FpPoly p, ∀ fuel : Nat,
+        yunFactorsDerivativeActiveReachable hp f c w fuel →
+          squareFreeContributionReachable c ∧
+            c.isZero = false ∧
+              w.isZero = false) :
+    let g := DensePoly.gcd f (DensePoly.derivative f)
+    let c := f / g
+    yunFactorsLevelCompletes c g multiplicity 1 fuel := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  let g := DensePoly.gcd f (DensePoly.derivative f)
+  let c := f / g
+  cases fuel with
+  | zero =>
+      have hsize_pos : 0 < f.size := size_pos_of_isZero_false f hzero
+      omega
+  | succ fuel =>
+      have hdf_ne_true : (DensePoly.derivative f).isZero ≠ true := by
+        intro htrue
+        rw [htrue] at hdf
+        cases hdf
+      have hreachable :
+          yunFactorsDerivativeActiveReachable hp f c g (fuel + 1) := by
+        simpa [c, g] using
+          yunFactorsDerivativeActiveReachable_of_derivative_split hp f (fuel + 1) hdf_ne_true
+      have hbound : c.size + g.size ≤ fuel + 2 := by
+        have hf_ne : f ≠ 0 := ne_zero_of_isZero_false hzero
+        have hsize :
+            c.size + g.size = f.size + 1 := by
+          simpa [c, g] using
+            size_div_add_size_eq_size_add_one_of_dvd
+              (DensePoly.gcd_dvd_left f (DensePoly.derivative f)) hf_ne
+        omega
+      simpa [c, g] using
+        yunFactorsLevelCompletes_of_size_bound_derivative_active
+          hp f c g multiplicity 1 (fuel + 1) hstate hreachable hbound
+
 private theorem yunFactorsWithLevel_factor_mem_acc_or_dvd_current
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p) (base level fuel : Nat)
