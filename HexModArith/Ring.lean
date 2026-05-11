@@ -91,6 +91,20 @@ def zsmul (i : Int) (a : ZMod64 p) : ZMod64 p :=
   | .ofNat n => nsmul n a
   | .negSucc n => neg (nsmul (n + 1) a)
 
+@[simp] theorem intCast_ofNat (n : Nat) : intCast p (.ofNat n) = natCast p n :=
+  rfl
+
+@[simp] theorem intCast_negSucc (n : Nat) :
+    intCast p (.negSucc n) = neg (natCast p (n + 1)) :=
+  rfl
+
+@[simp] theorem zsmul_ofNat (n : Nat) (a : ZMod64 p) : zsmul (.ofNat n) a = nsmul n a :=
+  rfl
+
+@[simp] theorem zsmul_negSucc (n : Nat) (a : ZMod64 p) :
+    zsmul (.negSucc n) a = neg (nsmul (n + 1) a) :=
+  rfl
+
 instance : Neg (ZMod64 p) where
   neg := neg
 
@@ -143,6 +157,22 @@ instance : SMul Int (ZMod64 p) where
 @[simp] theorem toNat_nsmul (n : Nat) (a : ZMod64 p) :
     (nsmul n a).toNat = (n * a.toNat) % p := by
   rw [nsmul, toNat_ofNat]
+
+@[simp] theorem toNat_intCast_ofNat (n : Nat) :
+    (intCast p (.ofNat n)).toNat = n % p := by
+  rw [intCast_ofNat, toNat_natCast]
+
+@[simp] theorem toNat_intCast_negSucc (n : Nat) :
+    (intCast p (.negSucc n)).toNat = (p - (n + 1) % p) % p := by
+  rw [intCast_negSucc, toNat_neg, toNat_natCast]
+
+@[simp] theorem toNat_zsmul_ofNat (n : Nat) (a : ZMod64 p) :
+    (zsmul (.ofNat n) a).toNat = (n * a.toNat) % p := by
+  rw [zsmul_ofNat, toNat_nsmul]
+
+@[simp] theorem toNat_zsmul_negSucc (n : Nat) (a : ZMod64 p) :
+    (zsmul (.negSucc n) a).toNat = (p - ((n + 1) * a.toNat) % p) % p := by
+  rw [zsmul_negSucc, toNat_neg, toNat_nsmul]
 
 /-- Nat casts agree exactly when their representatives are congruent mod `p`. -/
 theorem natCast_eq_natCast_iff (x y : Nat) :
