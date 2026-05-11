@@ -20,6 +20,8 @@
   `bzClassicalDegreeHeightComplexity param`
 - `Hex.BerlekampZassenhausBench.runFactorSlowDegreeHeightChecksum`:
   `bzSlowDegreeHeightComplexity param = 2^n * bzClassicalDegreeHeightComplexity param`
+- `Hex.BerlekampZassenhausBench.runFastPathPrecisionLocalChecksum`:
+  `bzPrecisionLocalComplexity param = n^9 + n^7 * log2(height + 2)^2 + r * n^2 * log2(k + 1)`
 - `Hex.BerlekampZassenhausBench.runFactorAdvX4Plus1Checksum`: `n + 1`
 - `Hex.BerlekampZassenhausBench.runFactorFastSetupAdvX4Plus1Checksum`: `n + 1`
 - `Hex.BerlekampZassenhausBench.runFactorAdvQuadSqrt2Sqrt3Checksum`: `n + 1`
@@ -83,6 +85,39 @@ current benchmark surface, not a Phase 4 completion claim.
 - The seven singleton HO-2 adversarial/setup registrations all ran and
   produced stable hashes, but each has only the pinned `n = 0` row and
   therefore no verdict-eligible scaling ladder.
+
+Retuned non-profile run at commit `cab8cfc-dirty` on `carica`
+(Apple M2 Ultra, macOS 14.6.1), command:
+
+```sh
+lake exe hexbz_bench run \
+    Hex.BerlekampZassenhausBench.runFactorChecksum \
+    Hex.BerlekampZassenhausBench.runFactorFastChecksum \
+    Hex.BerlekampZassenhausBench.runFactorSlowDegreeHeightChecksum \
+    --export-file reports/bench-results/hex-berlekamp-zassenhaus-issue3513.json
+```
+
+Export artefact:
+`reports/bench-results/hex-berlekamp-zassenhaus-issue3513.json`,
+SHA-256
+`d9d8b79e70f6e8d4455c57b011f756e9bf271a580f76e697d4550433c240ec2f`.
+The harness recorded `cab8cfc-dirty` because the run was taken from the
+working tree containing this schedule/report update plus the pre-existing
+pod-managed `.claude/CLAUDE.md` modification.
+
+- `runFactorChecksum`: inconclusive (`cMin=3.155`, `cMax=542.102`,
+  parameters `2..5`, final hash `0x2a6bd8144b402a41`). All four
+  rows were verdict-eligible and no committed schedule row hit the
+  per-call cap.
+- `runFactorFastChecksum`: inconclusive (`cMin=3.269`,
+  `cMax=546.583`, parameters `2..5`, final hash
+  `0x9b47b80e99720e2a`). All four rows were verdict-eligible and no
+  committed schedule row hit the per-call cap.
+- `runFactorSlowDegreeHeightChecksum`: inconclusive (`cMin=0.816`,
+  `cMax=89465.950`, encoded parameters `1002`, `2002`, and `3008`,
+  final hash `0xe5ac34affd40d076`). The diagnostic now uses the
+  completing degree/height subset instead of including the previous
+  cap-hitting `4008` row.
 
 Smoke wiring was checked at the same commit with:
 
@@ -172,18 +207,21 @@ degree/height target is profileable through the lean-bench child path.
 
 - Phase 4 is not complete: every scientific verdict in this run was
   inconclusive.
-- The current parametric schedules are still smoke-sized. The public,
-  fast, and slow split-family schedules cover only `n = 1..4`, which
-  is below the signal needed for a meaningful BHKS scaling verdict.
+- The public and fast split-family schedules now expose verdict-eligible
+  rows beyond the previous `n = 1..4` smoke ladder, but they still do
+  not yield a consistent BHKS scaling verdict. An exploratory run with
+  the same eight-second cap reached `n = 5` and hit the cap at `n = 6`,
+  so larger split inputs require either algorithmic improvement or a
+  dedicated longer scheduled run.
 - The singleton HO-2 adversarial registrations are valuable fixed-shape
   coverage, but their `#[0]` schedules cannot produce verdict-eligible
   scaling rows.
 - The new public/slow/fast compare surface is intentionally smoke-sized;
   it does not replace a full scientific-domain LLL-assisted versus
   exhaustive recombination comparison.
-- `runFactorSlowDegreeHeightChecksum` hit the four-second cap at encoded
-  parameter `4008`; the slow diagnostic needs either a smaller
-  scientific subset or an explicitly larger timing budget.
+- `runFactorSlowDegreeHeightChecksum` is now explicit and reproducible on
+  a completing small subset; it remains diagnostic evidence only, not a
+  Phase 4 completion verdict for the full slow path.
 - The profile artefact is address-only on this host, so the required
   leaf category split and inclusive Lean-function ranking remain open.
 - `libraries.yml` has no `phase4.input_families` or comparator metadata
