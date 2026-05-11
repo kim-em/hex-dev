@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-url="https://zenodo.org/record/2636367/files/Experiments_LLL.zip"
+url="https://zenodo.org/records/2636367/files/Experiments_LLL.zip"
 sha256="5c975aeb2033540b8f9a05d2ffac87dca0f258e887a5807edefbe60178a547e0"
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -54,7 +54,8 @@ need ghc
 
 if [[ ! -f "${archive}" ]]; then
   tmp="${archive}.tmp"
-  curl -L --fail --silent --show-error -o "${tmp}" "${url}"
+  curl -L --fail --silent --show-error --retry 3 --retry-all-errors --retry-delay 5 \
+    -o "${tmp}" "${url}"
   mv "${tmp}" "${archive}"
 fi
 
