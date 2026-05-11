@@ -2218,6 +2218,15 @@ def bhksDegenerateIndicatorPartition
     (indicators.size == 1 &&
       bhksIndicatorAllOnes L.factorCount (indicators.getD 0 #[]))
 
+private def bhksIndicatorCandidatesStep
+    (f : ZPoly) (d : LiftData) :
+    Option (Array ZPoly) → Array Int → Option (Array ZPoly)
+  | none, _ => none
+  | some candidates, indicator =>
+      match bhksIndicatorCandidate? f d indicator with
+      | some candidate => some (candidates.push candidate.1)
+      | none => none
+
 /-- Reconstruct and verify every BHKS equivalence-class indicator candidate.
 
 Folds `bhksIndicatorCandidate?` over the list of indicator vectors, pushing the
@@ -2226,15 +2235,98 @@ to `none` on the first reconstruction failure. -/
 def bhksIndicatorCandidates?
     (f : ZPoly) (d : LiftData) (indicators : Array (Array Int)) :
     Option (Array ZPoly) :=
-  indicators.foldl
-    (fun acc indicator =>
-      match acc with
-      | none => none
-      | some candidates =>
-          match bhksIndicatorCandidate? f d indicator with
-          | some candidate => some (candidates.push candidate.1)
-          | none => none)
-    (some #[])
+  indicators.foldl (bhksIndicatorCandidatesStep f d) (some #[])
+
+private theorem array_toList_getD {α : Type}
+    (xs : Array α) (i : Nat) (fallback : α) :
+    xs.toList.getD i fallback = xs.getD i fallback := by
+  cases xs with
+  | mk data =>
+      rw [List.getD_eq_getElem?_getD]
+      unfold Array.getD Array.size Array.getInternal
+      by_cases hlt : i < data.length
+      · rw [dif_pos hlt]
+        simp [List.getElem?_eq_getElem hlt]
+      · rw [dif_neg hlt]
+        simp [List.getElem?_eq_none_iff.mpr (Nat.le_of_not_gt hlt)]
+
+private theorem bhksIndicatorCandidatesStep_fold_eq_some
+    (f : ZPoly) (d : LiftData)
+    (pref : List ZPoly) (indicators : List (Array Int)) (candidates quotients : List ZPoly)
+    (hsize : candidates.length = indicators.length)
+    (hcandidate :
+      ∀ i, i < indicators.length →
+        bhksIndicatorCandidate? f d (indicators.getD i #[]) =
+          some (candidates.getD i 0, quotients.getD i 0)) :
+    indicators.foldl (bhksIndicatorCandidatesStep f d) (some pref.toArray) =
+      some ((pref ++ candidates).toArray) := by
+  induction indicators generalizing pref candidates quotients with
+  | nil =>
+      cases candidates with
+      | nil => simp
+      | cons candidate candidates => simp at hsize
+  | cons indicator indicators ih =>
+      cases candidates with
+      | nil => simp at hsize
+      | cons candidate candidates =>
+          have hhead :
+              bhksIndicatorCandidate? f d indicator =
+                some (candidate, quotients.getD 0 0) := by
+            simpa using hcandidate 0 (by simp)
+          have htail_size : candidates.length = indicators.length := by
+            simpa using hsize
+          have htail :
+              ∀ i, i < indicators.length →
+                bhksIndicatorCandidate? f d (indicators.getD i #[]) =
+                  some (candidates.getD i 0, (quotients.drop 1).getD i 0) := by
+            intro i hi
+            have h := hcandidate (i + 1) (by simp [hi])
+            simpa [List.getD_cons_succ] using h
+          rw [List.foldl_cons]
+          simp [bhksIndicatorCandidatesStep, hhead]
+          simpa [List.append_assoc] using
+            ih (pref := pref ++ [candidate]) (candidates := candidates)
+              (quotients := quotients.drop 1) htail_size htail
+
+/--
+If each BHKS equivalence-class indicator reconstructs and verifies to the
+corresponding candidate factor, the executable candidate fold returns the
+whole candidate array.
+
+The `quotients` array records the exact-division witnesses returned by
+`bhksIndicatorCandidate?`; only the first component is accumulated by
+`bhksIndicatorCandidates?`.
+-/
+theorem bhksIndicatorCandidates?_eq_some_of_forall_candidate
+    (f : ZPoly) (d : LiftData)
+    (indicators : Array (Array Int)) (candidates quotients : Array ZPoly)
+    (hsize : candidates.size = indicators.size)
+    (hcandidate :
+      ∀ i, i < indicators.size →
+        bhksIndicatorCandidate? f d (indicators.getD i #[]) =
+          some (candidates.getD i 0, quotients.getD i 0)) :
+    bhksIndicatorCandidates? f d indicators = some candidates := by
+  unfold bhksIndicatorCandidates?
+  rw [← Array.foldl_toList]
+  have hlist :
+      indicators.toList.foldl (bhksIndicatorCandidatesStep f d) (some #[]) =
+        some ([].append candidates.toList).toArray := by
+    apply bhksIndicatorCandidatesStep_fold_eq_some
+      (quotients := quotients.toList)
+    · simpa using hsize
+    · intro i hi
+      have h := hcandidate i (by simpa using hi)
+      have hindicator :
+          indicators.toList.getD i #[] = indicators.getD i #[] := by
+        exact array_toList_getD indicators i #[]
+      have hcand :
+          candidates.toList.getD i 0 = candidates.getD i 0 := by
+        exact array_toList_getD candidates i 0
+      have hquot :
+          quotients.toList.getD i 0 = quotients.getD i 0 := by
+        exact array_toList_getD quotients i 0
+      simpa [hindicator, hcand, hquot] using h
+  simpa using hlist
 
 private inductive BhksRecoveryResult where
   | success (candidates : Array ZPoly)
