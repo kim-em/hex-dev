@@ -23,6 +23,8 @@ Covered properties:
 - normalization prefix factors and square-free core multiply back to the input
 - supported recombination/factorization outputs multiply back to the target on
   committed lifted factors
+- signed scalar and `(factor, multiplicity)` buckets match independently
+  committed expectations on the public `Factorization` edge-case table
 - bounded and default factor entry points multiply their returned factors back
   to the input on committed small cases
 - default factorization returns promptly and preserves product on small linear
@@ -32,8 +34,9 @@ Covered properties:
   certificates, while the integer checker accepts the constant edge case and
   rejects malformed composite/degree-obstruction data
 Covered edge cases:
-- zero, constant, monomial, repeated-root, leading-coefficient-divisible, and
-  square-free integer polynomials
+- zero, signed constants, signed monomials, repeated roots with explicit
+  multiplicity, non-unit content, negative-leading inputs,
+  leading-coefficient-divisible inputs, and square-free integer polynomials
 - empty and singleton lifted-factor recombination inputs
 - exhaustive slow-backstop and BHKS recovery branch inputs
 - valid, wrong-prime, missing-obstruction, malformed-degree, and composite

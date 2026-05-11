@@ -109,6 +109,9 @@ Cyclotomic Φ_p(x) = x^(p-1) + ... + x + 1 has `coeffL2NormBound`
 
 /-! ## Signed-scalar and multiplicity convention edge cases -/
 
+/- These cases intentionally emit the actual public `factor` result via
+`emitCase`; the python-flint oracle supplies the independent expected scalar
+and multiplicity buckets. -/
 private def cases_edge : List Case :=
   [ mk "edge/zero" #[]
   , mk "edge/one" #[1]
