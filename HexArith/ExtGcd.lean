@@ -55,7 +55,7 @@ private theorem extGcd_bezout_step
           omega
     _ = g := hrec
 
-theorem extGcd_fst (a b : Nat) : (extGcd a b).1 = Nat.gcd a b := by
+@[simp] theorem extGcd_fst (a b : Nat) : (extGcd a b).1 = Nat.gcd a b := by
   induction b using Nat.strongRecOn generalizing a with
   | ind b ih =>
       rw [extGcd]
@@ -86,6 +86,21 @@ theorem extGcd_bezout (a b : Nat) :
         simp [hstep] at hrec
         exact extGcd_bezout_step a b (a / b) (a % b) s t g
           (int_ofNat_mod_add_div a b) hrec
+
+/--
+Combined correctness theorem for `extGcd`.
+
+Use this when a caller needs both the gcd projection and the Bezout
+certificate after destructuring the returned triple.
+-/
+theorem extGcd_spec (a b : Nat) :
+    let (g, s, t) := extGcd a b
+    g = Nat.gcd a b ∧ s * a + t * b = g := by
+  rcases h : extGcd a b with ⟨g, s, t⟩
+  have hfst := extGcd_fst a b
+  have hbez := extGcd_bezout a b
+  simp [h] at hfst hbez
+  exact ⟨hfst, hbez⟩
 
 end HexArith
 
@@ -241,7 +256,7 @@ private theorem pureIntExtGcd_go_spec
             rfl
           exact ⟨hrec.1.trans (pureIntExtGcd_gcd_step old_r r'), hrec.2⟩
 
-theorem pureIntExtGcd_fst (a b : Int) :
+@[simp] theorem pureIntExtGcd_fst (a b : Int) :
     (pureIntExtGcd a b).1 = Int.gcd a b := by
   have hspec := pureIntExtGcd_go_spec a b 1 0 0 1 a b (by omega) (by omega)
   simpa [pureIntExtGcd] using hspec.1
@@ -269,13 +284,40 @@ pure Lean reference with a GMP-backed implementation that returns the same
 def extGcd (a b : @& Int) : Nat × Int × Int :=
   Hex.pureIntExtGcd a b
 
-theorem extGcd_fst (a b : Int) : (extGcd a b).1 = Int.gcd a b := by
-  simpa [extGcd] using Hex.pureIntExtGcd_fst a b
+@[simp] theorem extGcd_fst (a b : Int) : (extGcd a b).1 = Int.gcd a b := by
+  simp [extGcd]
 
 theorem extGcd_bezout (a b : Int) :
     let (g, s, t) := extGcd a b
     s * a + t * b = g := by
   simpa [extGcd] using Hex.pureIntExtGcd_bezout a b
+
+/--
+Combined correctness theorem for the GMP-backed integer extended GCD surface.
+
+The executable may run through the `mpz_gcdext` extern, while this theorem
+characterises the same public triple used by proofs.
+-/
+theorem extGcd_spec (a b : Int) :
+    let (g, s, t) := extGcd a b
+    g = Int.gcd a b ∧ s * a + t * b = g := by
+  rcases h : extGcd a b with ⟨g, s, t⟩
+  have hfst := extGcd_fst a b
+  have hbez := extGcd_bezout a b
+  simp [h] at hfst hbez
+  exact ⟨hfst, hbez⟩
+
+@[simp] theorem extGcd_fst_ofNat (a b : Nat) :
+    (extGcd (Int.ofNat a) (Int.ofNat b)).1 = Nat.gcd a b := by
+  simp [Int.gcd]
+
+theorem extGcd_spec_ofNat (a b : Nat) :
+    let (g, s, t) := extGcd (Int.ofNat a) (Int.ofNat b)
+    g = Nat.gcd a b ∧ s * Int.ofNat a + t * Int.ofNat b = g := by
+  rcases h : extGcd (Int.ofNat a) (Int.ofNat b) with ⟨g, s, t⟩
+  have hspec := extGcd_spec (Int.ofNat a) (Int.ofNat b)
+  rw [h] at hspec
+  simpa [Int.gcd] using hspec
 
 theorem extGcd_zero_left_s_ofNat (p : Nat) (hp : 0 < p) :
     (extGcd 0 (Int.ofNat p)).2.1 = 0 := by
@@ -299,7 +341,7 @@ def extGcd (a b : UInt64) : UInt64 × Int × Int :=
   let (g, s, t) := HexArith.Int.extGcd (Int.ofNat a.toNat) (Int.ofNat b.toNat)
   (UInt64.ofNat g, s, t)
 
-theorem extGcd_fst (a b : UInt64) :
+@[simp] theorem extGcd_fst (a b : UInt64) :
     (extGcd a b).1.toNat = Nat.gcd a.toNat b.toNat := by
   rw [extGcd]
   have hfst := HexArith.Int.extGcd_fst (Int.ofNat a.toNat) (Int.ofNat b.toNat)
@@ -326,6 +368,23 @@ theorem extGcd_bezout (a b : UInt64) :
     · simp [ha, UInt64.toNat_lt b]
     · exact Nat.lt_of_le_of_lt (Nat.gcd_le_left b.toNat (Nat.pos_of_ne_zero ha)) (UInt64.toNat_lt a)
   simpa [hfst, UInt64.toNat_ofNat, Nat.mod_eq_of_lt hbound] using hbez
+
+/--
+Combined correctness theorem for the `UInt64` extended-GCD API.
+
+The gcd component is stored as a word, so the gcd equality is stated after
+`toNat`; the Bezout certificate is stated over the natural representatives of
+the input words.
+-/
+theorem extGcd_spec (a b : UInt64) :
+    let (g, s, t) := extGcd a b
+    g.toNat = Nat.gcd a.toNat b.toNat ∧
+      s * Int.ofNat a.toNat + t * Int.ofNat b.toNat = Int.ofNat g.toNat := by
+  rcases h : extGcd a b with ⟨g, s, t⟩
+  have hfst := extGcd_fst a b
+  have hbez := extGcd_bezout a b
+  simp [h] at hfst hbez
+  exact ⟨hfst, hbez⟩
 
 end UInt64
 
