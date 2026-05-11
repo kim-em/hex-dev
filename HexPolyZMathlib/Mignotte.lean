@@ -114,6 +114,33 @@ theorem l2norm_toPolynomial_sq_le_coeffNormSq (f : Hex.ZPoly) :
     _ ≤ ∑ i ∈ Finset.range f.size, (p.coeff i : ℝ) ^ 2 := hsum_le
     _ = (Hex.ZPoly.coeffNormSq f : ℝ) := hnorm_sum.symm
 
+private theorem foldl_binom_iter_eq_choose (n m : Nat) :
+    (List.range m).foldl (fun acc i => acc * (n - i) / (i + 1)) 1 = Nat.choose n m := by
+  induction m with
+  | zero => simp
+  | succ m ih =>
+      rw [List.range_succ, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil, ih]
+      have hkey : Nat.choose n m * (n - m) = Nat.choose n (m + 1) * (m + 1) :=
+        (Nat.choose_succ_right_eq n m).symm
+      rw [hkey, Nat.mul_div_cancel _ (Nat.succ_pos m)]
+
+/-- The executable Mignotte-bound binomial coefficient agrees with Mathlib's
+`Nat.choose`. -/
+theorem binom_eq_choose (n k : Nat) : Hex.ZPoly.binom n k = Nat.choose n k := by
+  unfold Hex.ZPoly.binom
+  by_cases hnk : n < k
+  · rw [if_pos hnk, Nat.choose_eq_zero_of_lt hnk]
+  · rw [if_neg hnk]
+    have hkn : k ≤ n := Nat.le_of_not_lt hnk
+    by_cases hkk : k ≤ n - k
+    · have hmin : min k (n - k) = k := Nat.min_eq_left hkk
+      rw [hmin, foldl_binom_iter_eq_choose]
+    · have hkk' : n - k ≤ k := Nat.le_of_not_le hkk
+      have hmin : min k (n - k) = n - k := Nat.min_eq_right hkk'
+      rw [hmin, foldl_binom_iter_eq_choose]
+      exact Nat.choose_symm hkn
+
 /-- Mignotte's coefficient bound for integer polynomial factors, obtained by
 combining Mathlib's Mahler-measure coefficient estimate with Landau's
 inequality. -/
