@@ -164,9 +164,6 @@ private theorem foldl_keep {α β : Type} (xs : List β) (acc : α) :
   | nil => simp
   | cons _ xs ih => simp [ih]
 
-private theorem clmul_zero_right (x : UInt64) : clmul x 0 = (0, 0) := by
-  simp [clmul, pureClmul, foldl_keep]
-
 private theorem Array.setIfInBounds_getElem! (xs : Array UInt64) (idx : Nat) :
     xs.setIfInBounds idx xs[idx]! = xs := by
   unfold Array.setIfInBounds
@@ -176,7 +173,7 @@ private theorem Array.setIfInBounds_getElem! (xs : Array UInt64) (idx : Nat) :
 
 private theorem xorClmulAt_zero_right (acc : Array UInt64) (idx : Nat) (x : UInt64) :
     xorClmulAt acc idx x 0 = acc := by
-  simp [xorClmulAt, clmul_zero_right, Array.setIfInBounds_getElem!]
+  simp [xorClmulAt, Array.setIfInBounds_getElem!]
 
 private theorem coeffWords_xorClmulAt_zero_right (acc : Array UInt64) (idx n : Nat)
     (x : UInt64) :
@@ -748,12 +745,9 @@ private theorem foldl_xorClmulAt_monomial_ne
     (hnLow := hLow) (hnHigh := hHigh)]
   rw [foldl_xorClmulAt_monomial_zero_prefix_coeff]
 
-private theorem clmul_zero_left (x : UInt64) : clmul 0 x = (0, 0) := by
-  rw [clmul, pureClmul_zero_left]
-
 private theorem xorClmulAt_zero_left (acc : Array UInt64) (idx : Nat) (x : UInt64) :
     xorClmulAt acc idx 0 x = acc := by
-  simp [xorClmulAt, clmul_zero_left, Array.setIfInBounds_getElem!]
+  simp [xorClmulAt, Array.setIfInBounds_getElem!]
 
 private theorem coeffWords_xorClmulAt_zero_left (acc : Array UInt64) (idx n : Nat)
     (x : UInt64) :

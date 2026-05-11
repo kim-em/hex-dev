@@ -497,6 +497,21 @@ intrinsic-backed implementations are an optimization only. -/
 def clmul (a b : @& UInt64) : UInt64 × UInt64 :=
   pureClmul a b
 
+/-- The trusted extern-backed multiplier has `pureClmul` as its logical
+reference semantics. -/
+theorem clmul_eq_pureClmul (a b : UInt64) : clmul a b = pureClmul a b := by
+  rw [clmul]
+
+/-- Carry-less multiplication by zero on the left returns the zero product. -/
+@[simp]
+theorem clmul_zero_left (x : UInt64) : clmul 0 x = (0, 0) := by
+  rw [clmul_eq_pureClmul, pureClmul_zero_left]
+
+/-- Carry-less multiplication by zero on the right returns the zero product. -/
+@[simp]
+theorem clmul_zero_right (x : UInt64) : clmul x 0 = (0, 0) := by
+  simp [clmul, pureClmul, foldl_keep]
+
 /-- Runtime `clmul`, under its trusted reference contract, agrees with the
 one-hot pure carry-less multiplication split. -/
 theorem clmul_oneHot (a : UInt64) {bit : Nat} (hbit : bit < 64) :
@@ -566,9 +581,6 @@ private theorem xorPair_assoc (x y z : UInt64 × UInt64) :
   cases z
   simp [xorPair]
   constructor <;> bv_decide
-
-private theorem clmul_zero_left (x : UInt64) : clmul 0 x = (0, 0) := by
-  rw [clmul, pureClmul_zero_left]
 
 private def wordBitXorStep (w acc : UInt64) (bit : Nat) : UInt64 :=
   if (((w >>> bit.toUInt64) &&& 1) != 0) then
