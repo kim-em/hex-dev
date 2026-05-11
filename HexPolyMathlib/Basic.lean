@@ -313,6 +313,31 @@ theorem natDegree_toPolynomial [Semiring R] [DecidableEq R] (p : Hex.DensePoly R
       rw [coeff_toPolynomial]
       exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size p hpos
 
+theorem leadingCoeff_toPolynomial [Semiring R] [DecidableEq R]
+    (p : Hex.DensePoly R) :
+    (toPolynomial p).leadingCoeff = p.leadingCoeff := by
+  rw [Polynomial.leadingCoeff, natDegree_toPolynomial, coeff_toPolynomial]
+  by_cases hsize : p.size = 0
+  · have hp_zero : p = 0 := by
+      apply Hex.DensePoly.ext_coeff
+      intro n
+      rw [Hex.DensePoly.coeff_zero]
+      exact Hex.DensePoly.coeff_eq_zero_of_size_le p (by omega)
+    rw [hp_zero]
+    rfl
+  · have hpos : 0 < p.size := Nat.pos_of_ne_zero hsize
+    have hdegree_some : p.degree? = some (p.size - 1) := by
+      simp [Hex.DensePoly.degree?, hsize]
+    rw [hdegree_some, Option.getD_some]
+    show p.coeff (p.size - 1) = p.leadingCoeff
+    unfold Hex.DensePoly.coeff Hex.DensePoly.leadingCoeff
+    have hidx : p.coeffs.size - 1 < p.coeffs.size := by
+      have hs : p.size = p.coeffs.size := rfl
+      omega
+    rw [Array.back?_eq_getElem?, Array.getElem?_eq_getElem hidx, Option.getD_some]
+    rw [show p.size = p.coeffs.size from rfl]
+    exact (Array.getElem_eq_getD (Zero.zero : R)).symm
+
 theorem toPolynomial_dvd [CommRing R] [DecidableEq R] {p q : Hex.DensePoly R}
     (hdvd : p ∣ q) :
     toPolynomial p ∣ toPolynomial q := by

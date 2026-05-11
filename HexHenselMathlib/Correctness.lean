@@ -97,7 +97,9 @@ theorem zpoly_congr_of_toPolynomial_map_eq
 theorem toPolynomial_monic_of_dense_monic
     (f : Hex.ZPoly) (hmonic : Hex.DensePoly.Monic f) :
     (HexPolyMathlib.toPolynomial f).Monic := by
-  sorry
+  show (HexPolyMathlib.toPolynomial f).leadingCoeff = 1
+  rw [HexPolyMathlib.leadingCoeff_toPolynomial]
+  exact hmonic
 
 /--
 The quadratic executable step gives a Mathlib factorization modulo `m*m`.
