@@ -44,6 +44,67 @@ theorem factorFastPrecisionCap_real_dominates
     defaultFactorCoeffBound_real_le_of_factorFastPrecisionCap_le f ha⟩
 
 /--
+Arithmetic helper: `2 * n + 1 ≤ 2 ^ (n + 1)` for every `n : Nat`.
+
+Used to discharge the Mignotte precision side condition: chained with
+`Nat.pow_le_pow_right` and `Nat.pow_le_pow_left` it yields
+`2 * n < p ^ k` whenever `n + 1 ≤ k` and `2 ≤ p`.
+-/
+private theorem two_mul_add_one_le_two_pow_succ (n : Nat) :
+    2 * n + 1 ≤ 2 ^ (n + 1) := by
+  have hlt : n < 2 ^ n := Nat.lt_two_pow_self
+  have hsucc : n + 1 ≤ 2 ^ n := hlt
+  calc
+    2 * n + 1 ≤ 2 * (n + 1) := by omega
+    _ ≤ 2 * 2 ^ n := Nat.mul_le_mul_left 2 hsucc
+    _ = 2 ^ (n + 1) := by rw [pow_succ, Nat.mul_comm]
+
+/--
+Mignotte-precision discharge at any precision strictly exceeding the
+executable fast-path cap `factorFastPrecisionCap`.  Once `k` is strictly
+greater than the cap, any prime modulus `p ≥ 2` gives
+`2 * defaultFactorCoeffBound f < p ^ k`, populating the
+`mignotte_precision` side condition consumed by
+`ForwardRecoveryInputs`.
+
+The strict cap hypothesis is necessary: at the boundary `cap = k = 1` with
+`p = 2` the inequality fails (`f` a unit-coefficient constant has
+`defaultFactorCoeffBound f = 1`, so `2 * 1 = 2 = 2 ^ 1`).  Consumers needing
+the conclusion at the cap itself should bump the precision by one, e.g.
+work with `cap + 1` rather than `cap`.
+-/
+theorem mignotte_precision_of_factorFastPrecisionCap_lt
+    (f : Hex.ZPoly) {p k : Nat} (hp : 2 ≤ p)
+    (hcap : Hex.factorFastPrecisionCap f < k) :
+    2 * Hex.ZPoly.defaultFactorCoeffBound f < p ^ k := by
+  set B := Hex.ZPoly.defaultFactorCoeffBound f
+  have hB_cap : B ≤ Hex.factorFastPrecisionCap f :=
+    defaultFactorCoeffBound_le_factorFastPrecisionCap f
+  have hBk : B + 1 ≤ k := by omega
+  have hstep1 : 2 * B + 1 ≤ 2 ^ (B + 1) :=
+    two_mul_add_one_le_two_pow_succ B
+  have hstep2 : (2 : Nat) ^ (B + 1) ≤ 2 ^ k :=
+    Nat.pow_le_pow_right (by decide) hBk
+  have hstep3 : (2 : Nat) ^ k ≤ p ^ k := Nat.pow_le_pow_left hp k
+  have hchain : 2 * B + 1 ≤ p ^ k := hstep1.trans (hstep2.trans hstep3)
+  omega
+
+/--
+Unconditional cap-successor form: at precision `factorFastPrecisionCap f + 1`,
+the Mignotte precision side condition holds for any modulus `p ≥ 2`.
+
+This is the canonical consumer-facing way to obtain `2 * B < p ^ k`: pick
+`k = factorFastPrecisionCap f + 1` and apply this lemma directly.  Larger
+`k` reduce via
+`mignotte_precision_of_factorFastPrecisionCap_lt`.
+-/
+theorem mignotte_precision_at_factorFastPrecisionCap_succ
+    (f : Hex.ZPoly) {p : Nat} (hp : 2 ≤ p) :
+    2 * Hex.ZPoly.defaultFactorCoeffBound f <
+      p ^ (Hex.factorFastPrecisionCap f + 1) :=
+  mignotte_precision_of_factorFastPrecisionCap_lt f hp (Nat.lt_succ_self _)
+
+/--
 At any precision at least `factorFastPrecisionCap f`, the BHKS paper threshold
 is bounded by that precision, under the project `0 ≤ C ≤ 2` constant
 assumption.
