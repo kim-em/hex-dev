@@ -109,4 +109,22 @@ theorem mulMod_eq (ctx : BarrettCtx p) (a b : UInt64)
     ((a.toNat * b.toNat) % p.toNat) % UInt64.size
   simpa [UInt64.size, UInt64.word] using (Nat.mod_eq_of_lt hmod_word).symm
 
+/-- Zero is a left absorbing element for Barrett modular multiplication. -/
+@[simp]
+theorem mulMod_zero_left (ctx : BarrettCtx p) (b : UInt64) (hb : b < p) :
+    ctx.mulMod 0 b = 0 := by
+  have hzero : (0 : UInt64) < p := by
+    rw [UInt64.lt_iff_toNat_lt]
+    exact Nat.lt_trans (by decide : 0 < 1) ctx.p_gt
+  simpa using mulMod_eq ctx 0 b hzero hb
+
+/-- Zero is a right absorbing element for Barrett modular multiplication. -/
+@[simp]
+theorem mulMod_zero_right (ctx : BarrettCtx p) (a : UInt64) (ha : a < p) :
+    ctx.mulMod a 0 = 0 := by
+  have hzero : (0 : UInt64) < p := by
+    rw [UInt64.lt_iff_toNat_lt]
+    exact Nat.lt_trans (by decide : 0 < 1) ctx.p_gt
+  simpa using mulMod_eq ctx a 0 ha hzero
+
 end BarrettCtx
