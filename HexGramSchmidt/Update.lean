@@ -137,7 +137,29 @@ theorem scaledCoeffs_sizeReduce_pivot (b : Matrix Int n m) (j k : Fin n)
     GramSchmidt.entry (scaledCoeffs (sizeReduce b j k r)) k j =
       GramSchmidt.entry (scaledCoeffs b) k j -
         r * Int.ofNat (gramDet b (j.val + 1) (Nat.succ_le_of_lt j.isLt)) := by
-  sorry
+  have hnew := scaledCoeffs_eq_scaledCoeffMatrix_det
+    (b := sizeReduce b j k r) (i := k) (j := j) hjk
+  have hold := scaledCoeffs_eq_scaledCoeffMatrix_det (b := b) (i := k) (j := j) hjk
+  have hbridge := scaledCoeffMatrix_rowAdd_pivot_det (b := b) (j := j) (k := k) hjk (-r)
+  have hlead := leadingGramMatrixInt_det_eq_gramDet_int
+    (b := b) (t := j.val + 1) (ht := Nat.succ_le_of_lt j.isLt)
+  calc
+    GramSchmidt.entry (scaledCoeffs (sizeReduce b j k r)) k j =
+        Matrix.det (GramSchmidt.scaledCoeffMatrix (sizeReduce b j k r) k j hjk) := hnew
+    _ =
+        Matrix.det (GramSchmidt.scaledCoeffMatrix b k j hjk) +
+          (-r) * Matrix.det
+            (GramSchmidt.leadingGramMatrixInt b (j.val + 1)
+              (Nat.succ_le_of_lt j.isLt)) := by
+      simpa [sizeReduce] using hbridge
+    _ =
+        GramSchmidt.entry (scaledCoeffs b) k j +
+          (-r) * Int.ofNat (gramDet b (j.val + 1) (Nat.succ_le_of_lt j.isLt)) := by
+      rw [← hold, hlead]
+    _ =
+        GramSchmidt.entry (scaledCoeffs b) k j -
+          r * Int.ofNat (gramDet b (j.val + 1) (Nat.succ_le_of_lt j.isLt)) := by
+      rw [Int.neg_mul, Lean.Grind.Ring.sub_eq_add_neg]
 
 theorem scaledCoeffs_sizeReduce_lower (b : Matrix Int n m) (l j k : Fin n)
     (hlj : l.val < j.val) (hjk : j.val < k.val) (r : Int) :
