@@ -579,6 +579,130 @@ def checkPowChainLinearIncremental (f : FpPoly p) (hmonic : DensePoly.Monic f)
       checkPowChainLinearIncrementalStep f hmonic cert k
 
 /--
+Quotient-witness checker for `FpPoly 2` pow chains.  Entry `k` of
+`quotients` certifies
+`powChain[k] * powChain[k] = powChain[k+1] + quotients[k] * f`, with both
+chain entries already reduced modulo `f`.
+-/
+def checkPowChainLinearIncrementalQuotientWitnesses
+    (f : FpPoly 2) (hmonic : DensePoly.Monic f)
+    (cert : SamePrimeIrreducibilityCertificate 2) (quotients : Array (FpPoly 2)) :
+    Bool :=
+  cert.powChain.size == cert.n + 1 &&
+    quotients.size == cert.n &&
+    (cert.powChain[0]? == some (FpPoly.modByMonic f FpPoly.X hmonic)) &&
+    (List.range cert.n).all fun k =>
+      match cert.powChain[k]?, cert.powChain[k + 1]?, quotients[k]? with
+      | some prev, some curr, some quot =>
+          decide (prev.degree?.getD 0 < f.degree?.getD 0) &&
+            (decide (curr.degree?.getD 0 < f.degree?.getD 0) &&
+              ((prev * prev).coeffs == (curr + quot * f).coeffs))
+      | _, _, _ => false
+
+private def primeTwo : Hex.Nat.Prime 2 := by
+  refine ⟨by decide, ?_⟩
+  intro m hm
+  have hmle : m ≤ 2 := Nat.le_of_dvd (by decide : 0 < 2) hm
+  have hcases : m = 0 ∨ m = 1 ∨ m = 2 := by omega
+  rcases hcases with rfl | rfl | rfl
+  · simp at hm
+  · exact Or.inl rfl
+  · exact Or.inr rfl
+
+private theorem densePoly_eq_of_coeffs_eq
+    {R : Type u} [Zero R] [DecidableEq R] {a b : DensePoly R}
+    (h : a.coeffs = b.coeffs) : a = b := by
+  cases a with
+  | mk acoeffs anorm =>
+      cases b with
+      | mk bcoeffs bnorm =>
+          simp only at h
+          subst h
+          rfl
+
+private theorem powModMonicLinear_two_eq_of_quotientWitness
+    (f prev curr quot : FpPoly 2) (hmonic : DensePoly.Monic f)
+    (hprevRed : prev.degree?.getD 0 < f.degree?.getD 0)
+    (hcurrRed : curr.degree?.getD 0 < f.degree?.getD 0)
+    (hmul : prev * prev = curr + quot * f) :
+    FpPoly.powModMonicLinear prev f hmonic 2 = curr := by
+  letI : ZMod64.PrimeModulus 2 := ZMod64.primeModulusOfPrime primeTwo
+  letI : DensePoly.DivModLaws (ZMod64 2) := ZMod64.instDivModLawsZMod64Fp 2
+  have hprevMod : prev % f = prev :=
+    DensePoly.mod_eq_self_of_degree_lt prev f hprevRed
+  have hcurrMod : curr % f = curr :=
+    DensePoly.mod_eq_self_of_degree_lt curr f hcurrRed
+  have hquotMod : (quot * f) % f = 0 :=
+    DensePoly.mod_eq_zero_of_dvd (quot * f) f ⟨quot, (FpPoly.mul_comm f quot).symm⟩
+  have hsquareMod : (prev * prev) % f = curr := by
+    rw [hmul]
+    rw [DensePoly.DivModLaws.mod_add_mod curr (quot * f) f]
+    rw [hcurrMod, hquotMod]
+    rw [FpPoly.add_zero]
+    exact hcurrMod
+  unfold FpPoly.powModMonicLinear
+  change FpPoly.modByMonic f (FpPoly.modByMonic f (1 * prev) hmonic * prev) hmonic =
+    curr
+  simp only [FpPoly.modByMonic, DensePoly.modByMonic_eq_mod, FpPoly.one_mul, hprevMod]
+  exact hsquareMod
+
+theorem checkPowChainLinearIncremental_of_quotientWitnesses
+    (f : FpPoly 2) (hmonic : DensePoly.Monic f)
+    (cert : SamePrimeIrreducibilityCertificate 2) (quotients : Array (FpPoly 2)) :
+    checkPowChainLinearIncrementalQuotientWitnesses f hmonic cert quotients = true →
+      checkPowChainLinearIncremental f hmonic cert = true := by
+  intro h
+  unfold checkPowChainLinearIncrementalQuotientWitnesses at h
+  unfold checkPowChainLinearIncremental
+  simp only [Bool.and_eq_true] at h ⊢
+  obtain ⟨⟨⟨hsize, _hquotSize⟩, hfirst⟩, hsteps⟩ := h
+  refine ⟨⟨hsize, hfirst⟩, ?_⟩
+  rw [List.all_eq_true]
+  intro k hk
+  have hstep := List.all_eq_true_of_mem hsteps hk
+  unfold checkPowChainLinearIncrementalStep
+  cases hprev : cert.powChain[k]? with
+  | none =>
+      rw [hprev] at hstep
+      exact False.elim (Bool.noConfusion hstep)
+  | some prev =>
+      cases hcurr : cert.powChain[k + 1]? with
+      | none =>
+          rw [hprev, hcurr] at hstep
+          exact False.elim (Bool.noConfusion hstep)
+      | some curr =>
+          cases hquot : quotients[k]? with
+          | none =>
+              rw [hprev, hcurr, hquot] at hstep
+              exact False.elim (Bool.noConfusion hstep)
+          | some quot =>
+              rw [hprev, hcurr, hquot] at hstep
+              have hparts :
+                  decide (prev.degree?.getD 0 < f.degree?.getD 0) = true ∧
+                    (decide (curr.degree?.getD 0 < f.degree?.getD 0) &&
+                      ((prev * prev).coeffs == (curr + quot * f).coeffs)) = true := by
+                simpa only [Bool.and_eq_true] using hstep
+              have hprevRedBool := hparts.1
+              have hrest := hparts.2
+              have hrestParts :
+                  decide (curr.degree?.getD 0 < f.degree?.getD 0) = true ∧
+                    ((prev * prev).coeffs == (curr + quot * f).coeffs) = true := by
+                simpa only [Bool.and_eq_true] using hrest
+              have hcurrRedBool := hrestParts.1
+              have hmulCoeffsBool := hrestParts.2
+              have hprevRed : prev.degree?.getD 0 < f.degree?.getD 0 :=
+                of_decide_eq_true hprevRedBool
+              have hcurrRed : curr.degree?.getD 0 < f.degree?.getD 0 :=
+                of_decide_eq_true hcurrRedBool
+              have hmulCoeffs : (prev * prev).coeffs = (curr + quot * f).coeffs :=
+                eq_of_beq hmulCoeffsBool
+              have hmul : prev * prev = curr + quot * f := by
+                exact densePoly_eq_of_coeffs_eq hmulCoeffs
+              have hpow := powModMonicLinear_two_eq_of_quotientWitness
+                f prev curr quot hmonic hprevRed hcurrRed hmul
+              simp [hpow]
+
+/--
 Incremental Rabin certificate checker, suitable for `(p, n)` regimes where
 `p^n` is too large for `checkIrreducibilityCertificateLinear` but `n · p`
 remains in budget (e.g. `(5, 6)` or `(7, 6)`).
