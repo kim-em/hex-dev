@@ -78,6 +78,8 @@ jobs:
           lake exe hexconway_bench verify
           lake exe hexpolymathlib_bench list
           lake exe hexpolymathlib_bench verify
+          lake exe hexpolyzmathlib_bench list
+          lake exe hexpolyzmathlib_bench verify
 
   build-macos:
     runs-on: macos-latest

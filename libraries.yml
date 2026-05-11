@@ -325,6 +325,14 @@ libraries:
     mathlib: true
     done_through: 3
     status: active
+    phase4:
+      input_families:
+        - name: dense-conversion-round-trips
+          description: Deterministic integer dense polynomials transported to and from Mathlib `Polynomial ℤ` with paired conversion round-trip checksums.
+        - name: ring-equivalence-transport
+          description: Deterministic paired `ZPoly` and `Polynomial ℤ` fixtures exercising the executable mirrors of `equiv` and `equiv.symm` transport.
+        - name: mignotte-bound-bridge
+          description: Deterministic integer-polynomial fixtures checking the executable Mignotte coefficient bound against the Mathlib `Nat.choose` bridge expression.
   HexLLLMathlib:
     deps: [HexLLL, HexMatrixMathlib]
     mathlib: true
