@@ -133,10 +133,12 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} : IntCast (PolyQuotient f hf)
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} : SMul Int (PolyQuotient f hf) where
   smul := zsmul
 
+/-- The canonical representative of the quotient zero is the reduction of `0`. -/
 @[simp] theorem repr_zero (f : FpPoly p) (hf : 0 < FpPoly.degree f) :
     repr (0 : PolyQuotient f hf) = reduceMod f 0 :=
   rfl
 
+/-- The canonical representative of a constant quotient element is the reduction of `C c`. -/
 @[simp] theorem repr_const (f : FpPoly p) (hf : 0 < FpPoly.degree f) (c : ZMod64 p) :
     repr (const f hf c) = reduceMod f (FpPoly.C c) :=
   rfl
@@ -174,6 +176,7 @@ private theorem zmod64_zero_ne_one_of_pos_degree
     simp [FpPoly.degree, DensePoly.degree?, DensePoly.size, hsize]
   simp [hdeg] at hf
 
+/-- Modulo any nonconstant polynomial, the zero and one quotient elements are distinct. -/
 theorem zero_ne_one (f : FpPoly p) (hf : 0 < FpPoly.degree f) :
     (0 : PolyQuotient f hf) ≠ 1 := by
   intro h
@@ -198,16 +201,20 @@ theorem zero_ne_one (f : FpPoly p) (hf : 0 < FpPoly.degree f) :
       simp at hcoeffs
   exact zmod64_zero_ne_one_of_pos_degree f hf hcoeff
 
+/-- `natCast` unfolds to the corresponding constant quotient element. -/
 @[simp] theorem natCast_eq_const
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (n : Nat) :
     natCast f hf n = const f hf (n : ZMod64 p) :=
   rfl
 
+/-- The canonical representative of `natCast n` is the reduction of `C (n : ZMod64 p)`. -/
 @[simp] theorem repr_natCast
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (n : Nat) :
     repr (natCast f hf n) = reduceMod f (FpPoly.C (n : ZMod64 p)) :=
   rfl
 
+/-- Two natural-number casts coincide in the quotient ring whenever their prime-field casts
+do. -/
 theorem natCast_eq_of_zmod64_natCast_eq
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) {m n : Nat}
     (h : (m : ZMod64 p) = (n : ZMod64 p)) :
@@ -215,6 +222,7 @@ theorem natCast_eq_of_zmod64_natCast_eq
   change const f hf (m : ZMod64 p) = const f hf (n : ZMod64 p)
   rw [h]
 
+/-- Two natural-number casts coincide in the quotient ring whenever they agree modulo `p`. -/
 theorem natCast_eq_of_mod_eq
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) {m n : Nat}
     (h : m % p = n % p) :
@@ -222,6 +230,8 @@ theorem natCast_eq_of_mod_eq
   natCast_eq_of_zmod64_natCast_eq f hf
     ((ZMod64.natCast_eq_natCast_iff (p := p) m n).2 h)
 
+/-- Equality of natural-number casts is equivalent to equality of the underlying reduced
+constant polynomials. -/
 theorem natCast_eq_natCast_iff_reduceMod_const_eq
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (m n : Nat) :
     ((m : PolyQuotient f hf) = n) ↔
@@ -247,6 +257,7 @@ private theorem coeff_zero_C (c : ZMod64 p) : (FpPoly.C c).coeff 0 = c := by
   · change (DensePoly.C c).coeff 0 = c
     simp [DensePoly.coeff, DensePoly.coeffs_C_of_ne_zero hc]
 
+/-- Equality of natural-number casts in the quotient ring is exactly equality modulo `p`. -/
 theorem natCast_eq_natCast_iff_mod_eq
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (m n : Nat) :
     ((m : PolyQuotient f hf) = n) ↔ m % p = n % p := by
@@ -270,55 +281,68 @@ theorem natCast_eq_natCast_iff_mod_eq
   · intro h
     exact natCast_eq_of_mod_eq f hf h
 
+/-- The canonical representative of a sum reduces the sum of representatives. -/
 @[simp] theorem repr_add {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x y : PolyQuotient f hf) :
     repr (x + y) = reduceMod f (repr x + repr y) :=
   rfl
 
+/-- The canonical representative of a product reduces the product of representatives. -/
 @[simp] theorem repr_mul {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x y : PolyQuotient f hf) :
     repr (x * y) = reduceMod f (repr x * repr y) :=
   rfl
 
+/-- The canonical representative of a negation reduces the negation of the representative. -/
 @[simp] theorem repr_neg {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) :
     repr (-x) = reduceMod f (-repr x) :=
   rfl
 
+/-- The canonical representative of a difference reduces the difference of representatives. -/
 @[simp] theorem repr_sub {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x y : PolyQuotient f hf) :
     repr (x - y) = reduceMod f (repr x - repr y) :=
   rfl
 
+/-- Quotient exponentiation via the `Pow` instance agrees with the internal `pow` definition. -/
 @[simp] theorem repr_pow {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) (n : Nat) :
     repr (x ^ n) = repr (pow x n) :=
   rfl
 
+/-- Public alias for `reduceMod_add_reduceMod_congr`: reducing both summands before quotient
+reduction preserves the canonical representative. -/
 theorem reduceMod_add_reduceMod (f : FpPoly p) (a b : FpPoly p) :
-    reduceMod f (a + b) = reduceMod f (reduceMod f a + reduceMod f b) := by
-  exact reduceMod_add_reduceMod_congr f a b
+    reduceMod f (a + b) = reduceMod f (reduceMod f a + reduceMod f b) :=
+  reduceMod_add_reduceMod_congr f a b
 
+/-- Public alias for `reduceMod_mul_reduceMod_congr`: reducing both factors before quotient
+reduction preserves the canonical representative. -/
 theorem reduceMod_mul_reduceMod (f : FpPoly p) (a b : FpPoly p) :
-    reduceMod f (a * b) = reduceMod f (reduceMod f a * reduceMod f b) := by
-  exact reduceMod_mul_reduceMod_congr f a b
+    reduceMod f (a * b) = reduceMod f (reduceMod f a * reduceMod f b) :=
+  reduceMod_mul_reduceMod_congr f a b
 
+/-- The canonical representative of a quotient element is already reduced. -/
 @[simp] theorem reduceMod_repr {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) :
     reduceMod f (repr x) = repr x := by
   rcases x.2 with ⟨g, hx⟩
-  simp [repr, hx, reduceMod_idem]
+  simp [repr, hx]
 
+/-- `ofPoly` applied to the zero polynomial yields the canonical zero quotient element. -/
 @[simp] theorem ofPoly_zero_eq_zero
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) :
     ofPoly f hf 0 = (0 : PolyQuotient f hf) :=
   rfl
 
+/-- `ofPoly` applied to the one polynomial yields the canonical one quotient element. -/
 @[simp] theorem ofPoly_one_eq_one
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) :
     ofPoly f hf 1 = (1 : PolyQuotient f hf) :=
   rfl
 
+/-- `ofPoly` applied to a constant polynomial agrees with `const`. -/
 @[simp] theorem ofPoly_const_eq_const
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (c : ZMod64 p) :
     ofPoly f hf (FpPoly.C c) = const f hf c :=
