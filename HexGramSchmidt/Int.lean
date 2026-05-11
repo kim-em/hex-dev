@@ -510,11 +510,6 @@ theorem gramDetVec_eq_gramDet (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
       have hdiag := scaledCoeffRows_diag_eq_gramDet (b := b) r hr
       simpa [gramDetVec, data, gramDetVecFromScaledCoeffRows] using congrArg Int.toNat hdiag
 
-private theorem gramDet_eq_prod_normSq_core (b : Matrix Int n m)
-    (hli : independent b) (k : Nat) (hk : k ≤ n) :
-    (gramDet b k hk : Rat) = gramSchmidtNormProduct b k hk := by
-  sorry
-
 private theorem leadingGramMatrixInt_det_nonneg_pre
     (b : Matrix Int n m) (t : Nat) (ht : t ≤ n) :
     0 ≤ Matrix.det (GramSchmidt.leadingGramMatrixInt b t ht) := by
@@ -569,10 +564,203 @@ private theorem basis_normSq_core (b : Matrix Int n m)
         (gramDet b k (Nat.le_of_lt hk) : Rat) := by
   sorry
 
+/-! ### Helpers for `gramDet_eq_prod_normSq_core`
+
+The remaining theorems below build the rational column-operation reduction
+from the leading Gram matrix to the diagonal Gram-Schmidt norm-squared
+matrix, plus the integer→rational cast bridge for `det`. -/
+
+/-- Casting Int → Rat distributes over a `List.foldl` sum. -/
+private theorem foldl_intCast_add_aux {α : Type v}
+    (xs : List α) (f : α → Int) (acc : Int) :
+    ((xs.foldl (fun acc x => acc + f x) acc : Int) : Rat) =
+      xs.foldl (fun (acc' : Rat) x => acc' + ((f x : Int) : Rat)) ((acc : Rat)) := by
+  induction xs generalizing acc with
+  | nil => simp
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hi := ih (acc := acc + f x)
+      simpa [Rat.intCast_add] using hi
+
+/-- Casting Int → Rat distributes over a `List.foldl` product. -/
+private theorem foldl_intCast_mul_aux {α : Type v}
+    (xs : List α) (f : α → Int) (acc : Int) :
+    ((xs.foldl (fun acc x => acc * f x) acc : Int) : Rat) =
+      xs.foldl (fun (acc' : Rat) x => acc' * ((f x : Int) : Rat)) ((acc : Rat)) := by
+  induction xs generalizing acc with
+  | nil => simp
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hi := ih (acc := acc * f x)
+      simpa [Rat.intCast_mul] using hi
+
+/-- `detSign` produces `1` or `-1`, which lifts identically through the
+Int → Rat cast. -/
+private theorem detSign_intCast {k : Nat} (perm : Vector (Fin k) k) :
+    ((Matrix.detSign perm : Int) : Rat) = (Matrix.detSign perm : Rat) := by
+  unfold Matrix.detSign
+  by_cases h : Matrix.inversionCount perm.toList % 2 = 0
+  · simp [h]
+  · simp [h]
+
+/-- The cast of an Int matrix to a Rat matrix by entry-wise Int.cast. -/
+private def castIntDetMatrix {k : Nat} (M : Matrix Int k k) : Matrix Rat k k :=
+  Matrix.ofFn fun i j => ((M[i][j] : Int) : Rat)
+
+@[simp] private theorem castIntDetMatrix_get {k : Nat}
+    (M : Matrix Int k k) (i j : Fin k) :
+    (castIntDetMatrix M)[i][j] = ((M[i][j] : Int) : Rat) := by
+  simp [castIntDetMatrix, Matrix.ofFn]
+
+private theorem foldl_mul_congr_simple {α : Type v} {R : Type w} [Mul R]
+    (xs : List α) (f g : α → R) (acc : R)
+    (h : ∀ x ∈ xs, f x = g x) :
+    xs.foldl (fun acc x => acc * f x) acc =
+      xs.foldl (fun acc x => acc * g x) acc := by
+  induction xs generalizing acc with
+  | nil => rfl
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hx : f x = g x := h x (by simp)
+      rw [hx]
+      exact ih (acc * g x) (fun y hy => h y (by simp [hy]))
+
+private theorem detProduct_intCast {k : Nat}
+    (M : Matrix Int k k) (perm : Vector (Fin k) k) :
+    ((Matrix.detProduct M perm : Int) : Rat) =
+      Matrix.detProduct (castIntDetMatrix M) perm := by
+  unfold Matrix.detProduct
+  rw [foldl_intCast_mul_aux (xs := List.finRange k)
+    (f := fun i => M[i][perm[i]]) (acc := 1)]
+  rw [show ((1 : Int) : Rat) = (1 : Rat) from rfl]
+  apply foldl_mul_congr_simple
+  intro i _hi
+  rw [castIntDetMatrix_get]
+
+private theorem detTerm_intCast {k : Nat}
+    (M : Matrix Int k k) (perm : Vector (Fin k) k) :
+    ((Matrix.detTerm M perm : Int) : Rat) =
+      Matrix.detTerm (castIntDetMatrix M) perm := by
+  unfold Matrix.detTerm
+  rw [Rat.intCast_mul, detSign_intCast, detProduct_intCast]
+
+private theorem foldl_sum_congr_simple {α : Type v} {R : Type w} [Add R]
+    (xs : List α) (f g : α → R) (acc : R)
+    (h : ∀ x ∈ xs, f x = g x) :
+    xs.foldl (fun acc x => acc + f x) acc =
+      xs.foldl (fun acc x => acc + g x) acc := by
+  induction xs generalizing acc with
+  | nil => rfl
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hx : f x = g x := h x (by simp)
+      rw [hx]
+      exact ih (acc + g x) (fun y hy => h y (by simp [hy]))
+
+private theorem det_intCast {k : Nat} (M : Matrix Int k k) :
+    ((Matrix.det M : Int) : Rat) = Matrix.det (castIntDetMatrix M) := by
+  unfold Matrix.det
+  rw [foldl_intCast_add_aux (xs := Matrix.permutationVectors k)
+    (f := fun perm => Matrix.detTerm M perm) (acc := 0)]
+  rw [show ((0 : Int) : Rat) = (0 : Rat) from rfl]
+  apply foldl_sum_congr_simple
+  intro perm _hperm
+  exact detTerm_intCast M perm
+
+/-- Right-side dot product distributes over vector addition. -/
+private theorem dot_add_right_rat {m' : Nat} (u v w : Vector Rat m') :
+    Matrix.dot u (v + w) = Matrix.dot u v + Matrix.dot u w := by
+  unfold Matrix.dot Hex.Vector.dotProduct
+  have h :
+      ∀ (xs : List (Fin m')) (accV accW : Rat),
+        xs.foldl (fun acc i => acc + u[i] * (v + w)[i]) (accV + accW) =
+          xs.foldl (fun acc i => acc + u[i] * v[i]) accV +
+            xs.foldl (fun acc i => acc + u[i] * w[i]) accW := by
+    intro xs
+    induction xs with
+    | nil => intro accV accW; simp
+    | cons i xs ih =>
+        intro accV accW
+        have hentry : (v + w)[i] = v[i] + w[i] := by
+          change (v + w)[i.val] = v[i.val] + w[i.val]
+          rw [Vector.getElem_add]
+        simp only [List.foldl_cons]
+        have hstart :
+            accV + accW + u[i] * (v + w)[i] =
+              (accV + u[i] * v[i]) + (accW + u[i] * w[i]) := by
+          rw [hentry]
+          grind
+        rw [hstart]
+        exact ih (accV + u[i] * v[i]) (accW + u[i] * w[i])
+  have hzero : (0 : Rat) + 0 = 0 := by grind
+  simpa [hzero] using h (List.finRange m') 0 0
+
+/-- Right-side dot product distributes over scalar multiplication. -/
+private theorem dot_smul_right_rat {m' : Nat} (s : Rat) (u v : Vector Rat m') :
+    Matrix.dot u (s • v) = s * Matrix.dot u v := by
+  unfold Matrix.dot Hex.Vector.dotProduct
+  have h :
+      ∀ (xs : List (Fin m')) (acc : Rat),
+        xs.foldl (fun acc i => acc + u[i] * (s • v)[i]) (s * acc) =
+          s * xs.foldl (fun acc i => acc + u[i] * v[i]) acc := by
+    intro xs
+    induction xs with
+    | nil => intro acc; simp
+    | cons i xs ih =>
+        intro acc
+        have hentry : (s • v)[i] = s * v[i] := by
+          change (s • v)[i.val] = s * v[i.val]
+          rw [Vector.getElem_smul]
+          rfl
+        simp only [List.foldl_cons]
+        have hstart :
+            s * acc + u[i] * (s • v)[i] = s * (acc + u[i] * v[i]) := by
+          rw [hentry]
+          grind
+        rw [hstart]
+        exact ih (acc + u[i] * v[i])
+  have hzero : s * (0 : Rat) = 0 := by grind
+  simpa [hzero] using h (List.finRange m') 0
+
+/-- Dot product of a vector against the zero vector is zero. -/
+private theorem dot_zero_right_rat {m' : Nat} (u : Vector Rat m') :
+    Matrix.dot u (0 : Vector Rat m') = 0 := by
+  unfold Matrix.dot Hex.Vector.dotProduct
+  have h : ∀ (xs : List (Fin m')) (acc : Rat),
+      xs.foldl (fun acc i => acc + u[i] * (0 : Vector Rat m')[i]) acc = acc := by
+    intro xs
+    induction xs with
+    | nil => intro acc; rfl
+    | cons i xs ih =>
+        intro acc
+        simp only [List.foldl_cons]
+        have hzero : (0 : Vector Rat m')[i] = 0 := by
+          change (0 : Vector Rat m')[i.val] = 0
+          rw [Vector.getElem_zero]
+        rw [hzero]
+        have : acc + u[i] * 0 = acc := by grind
+        rw [this]
+        exact ih acc
+  exact h (List.finRange m') 0
+
+/-- Folding a sum with an initial value separates: the result equals the
+initial value plus the same fold from zero. -/
+private theorem foldl_sum_start_rat {α : Type v}
+    (xs : List α) (f : α → Rat) (acc : Rat) :
+    xs.foldl (fun acc x => acc + f x) acc =
+      acc + xs.foldl (fun acc x => acc + f x) 0 := by
+  induction xs generalizing acc with
+  | nil => simp; grind
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [ih (acc := acc + f x)]
+      rw [ih (acc := (0 : Rat) + f x)]
+      grind
+
 theorem gramDet_eq_prod_normSq (b : Matrix Int n m)
     (hli : independent b) (k : Nat) (hk : k ≤ n) :
     (gramDet b k hk : Rat) = gramSchmidtNormProduct b k hk := by
-  exact gramDet_eq_prod_normSq_core b hli k hk
+  sorry
 
 theorem gramDet_pos (b : Matrix Int n m)
     (hli : independent b) (k : Nat) (hk : k ≤ n) (hk' : 0 < k) :
