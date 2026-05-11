@@ -101,7 +101,7 @@ Smoke wiring was also checked with:
 lake exe hexlll_bench list
 ```
 
-Informational fpLLL comparator run at commit
+Informational `fpLLL via fpylll` comparator run at commit
 `ed9da7537e96cee75f395e46962d41775f615a53` on `carica` (Apple M2 Ultra,
 macOS), command:
 
@@ -134,8 +134,9 @@ All three fixed fpLLL registrations matched their expected hashes.
 
 ## Comparator Ratios
 
-The verified Isabelle LLL comparator was measured at the bottom shared rung
-for each `phase4.input_families` entry, command:
+The `verified Isabelle LLL (AFP LLL_Basis_Reduction; Haskell extraction from Zenodo 2636367)`
+comparator was measured at the bottom shared rung for each
+`phase4.input_families` entry, command:
 
 ```sh
 lake exe hexlll_bench run Hex.LLLBench.runIsabelleBZRecombinationNormSq Hex.LLLBench.runIsabelleRandomBoundedNormSq30 Hex.LLLBench.runIsabelleHarshCubicNormSq15 --export-file reports/bench-results/hex-lll-isabelle-bottom-e211854d1435.json
