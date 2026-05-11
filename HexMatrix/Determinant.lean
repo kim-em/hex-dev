@@ -3762,6 +3762,29 @@ theorem det_transpose {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
       (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0 := by
         exact permutationVectors_inverseVector_sum (R := R) (n := n) (fun perm => detTerm M perm)
 
+/-- Swapping two columns negates determinant. -/
+theorem det_colSwap {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (i j : Fin n) (h : i ≠ j) :
+    det (ofFn fun r c => M[r][finTranspose i j c]) = -det M := by
+  let C : Matrix R n n := ofFn fun r c => M[r][finTranspose i j c]
+  have htranspose : C.transpose = rowSwap M.transpose i j := by
+    apply Vector.ext
+    intro r hr
+    apply Vector.ext
+    intro c hc
+    let rr : Fin n := ⟨r, hr⟩
+    let cc : Fin n := ⟨c, hc⟩
+    change C.transpose[rr][cc] = (rowSwap M.transpose i j)[rr][cc]
+    rw [rowSwap_get_finTranspose M.transpose i j rr h cc]
+    rw [show C.transpose[rr][cc] = C[cc][rr] by simp [Matrix.transpose, Matrix.col]]
+    rw [show C[cc][rr] = M[cc][finTranspose i j rr] by simp [C, ofFn]]
+    simp [Matrix.transpose, Matrix.col]
+  calc
+    det C = det C.transpose := (det_transpose C).symm
+    _ = det (rowSwap M.transpose i j) := by rw [htranspose]
+    _ = -det M.transpose := det_rowSwap M.transpose i j h
+    _ = -det M := by rw [det_transpose M]
+
 /-- Adding a multiple of one column to a distinct column preserves determinant. -/
 theorem det_colAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) (c : R) (h : src ≠ dst) :
