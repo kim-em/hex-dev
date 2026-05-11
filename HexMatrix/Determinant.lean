@@ -4602,6 +4602,40 @@ theorem det_transpose {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
       (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0 := by
         exact permutationVectors_inverseVector_sum (R := R) (n := n) (fun perm => detTerm M perm)
 
+/-- Diagonal-product formula for the determinant of a lower-triangular matrix
+(entries above the diagonal are zero). Derived from the upper-triangular form
+via `det_transpose`. -/
+theorem det_lowerTriangular_eq_finFoldl_diag
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat} (M : Matrix R n n)
+    (hzero : ∀ i j : Fin n, i.val < j.val → M[i][j] = 0) :
+    det M = Fin.foldl n (fun acc i => acc * M[i][i]) 1 := by
+  rw [← det_transpose M]
+  have htransposeZero :
+      ∀ i j : Fin n, j.val < i.val → M.transpose[i][j] = 0 := by
+    intro i j hij
+    have hentry : M.transpose[i][j] = M[j][i] := by
+      simp [transpose, col]
+    rw [hentry]
+    exact hzero j i hij
+  rw [det_upperTriangular_eq_finFoldl_diag M.transpose htransposeZero]
+  have hdiag : ∀ i : Fin n, M.transpose[i][i] = M[i][i] := by
+    intro i
+    simp [transpose, col]
+  -- Rewrite the foldl over `M.transpose[i][i]` to `M[i][i]`.
+  rw [Fin.foldl_eq_foldl_finRange, Fin.foldl_eq_foldl_finRange]
+  apply foldl_acc_congr
+  intro acc i _hmem
+  rw [hdiag]
+
+/-- The determinant of a lower-triangular square matrix as a `List.foldl`
+product over the diagonal indices in `Fin.finRange`. -/
+theorem det_lowerTriangular_eq_foldl_diag
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat} (M : Matrix R n n)
+    (hzero : ∀ i j : Fin n, i.val < j.val → M[i][j] = 0) :
+    det M = (List.finRange n).foldl (fun acc i => acc * M[i][i]) 1 := by
+  rw [det_lowerTriangular_eq_finFoldl_diag M hzero]
+  rw [Fin.foldl_eq_foldl_finRange]
+
 /-- Permuting columns multiplies the determinant by the sign of the column permutation. -/
 theorem det_colPermute_vector {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (sigma : Vector (Fin n) n)
