@@ -486,10 +486,49 @@ theorem sizeReduce_basis (s : LLLState n m) (k : Nat) :
     GramSchmidt.Int.basis (s.sizeReduce k).b = GramSchmidt.Int.basis s.b := by
   sorry
 
+private theorem memLattice_of_rowSwap_memLattice
+    (b : Matrix Int n m) (i j : Fin n) (v : Vector Int m) :
+    Matrix.memLattice (Matrix.rowSwap b i j) v → Matrix.memLattice b v := by
+  intro hv
+  rcases hv with ⟨c, hc⟩
+  let S : Matrix Int n n := Matrix.rowSwap (1 : Matrix Int n n) i j
+  have hrow : S * b = Matrix.rowSwap b i j := by
+    rw [Matrix.rowSwap_mul, Matrix.one_mul]
+  refine ⟨Matrix.transpose S * c, ?_⟩
+  calc
+    Matrix.rowCombination b (Matrix.transpose S * c)
+        = Matrix.transpose b * (Matrix.transpose S * c) := rfl
+    _ = (Matrix.transpose b * Matrix.transpose S) * c := by
+      rw [Matrix.mul_assoc_vec]
+    _ = Matrix.transpose (S * b) * c := by
+      rw [Matrix.transpose_mul_of_mul_comm (by intro a b; exact Int.mul_comm a b)]
+    _ = Matrix.transpose (Matrix.rowSwap b i j) * c := by
+      rw [hrow]
+    _ = Matrix.rowCombination (Matrix.rowSwap b i j) c := rfl
+    _ = v := hc
+
+private theorem rowSwap_memLattice_iff
+    (b : Matrix Int n m) (i j : Fin n) (v : Vector Int m) :
+    Matrix.memLattice (Matrix.rowSwap b i j) v ↔ Matrix.memLattice b v := by
+  constructor
+  · exact memLattice_of_rowSwap_memLattice b i j v
+  · intro hv
+    have hv' : Matrix.memLattice (Matrix.rowSwap (Matrix.rowSwap b i j) i j) v := by
+      rwa [Matrix.rowSwap_rowSwap]
+    exact memLattice_of_rowSwap_memLattice (Matrix.rowSwap b i j) i j v hv'
+
 /-- Adjacent swaps preserve the generated lattice. -/
 theorem swapStep_memLattice_iff (s : LLLState n m) (k : Nat) (v : Vector Int m) :
     Matrix.memLattice (s.swapStep k).b v ↔ Matrix.memLattice s.b v := by
-  sorry
+  unfold swapStep
+  by_cases hk : k < n
+  · rw [dif_pos hk]
+    by_cases hk0 : 0 < k
+    · rw [dif_pos hk0]
+      simpa [GramSchmidt.Int.adjacentSwap] using
+        rowSwap_memLattice_iff s.b (GramSchmidt.prevRow ⟨k, hk⟩ hk0) ⟨k, hk⟩ v
+    · rw [dif_neg hk0]
+  · rw [dif_neg hk]
 
 /-- The updated swap state still packages the intended scaled coefficient
 representation for its basis. -/
