@@ -40,6 +40,16 @@ Degree/height registrations:
   smallest generated regimes.
 * `runFastPathPrecisionLocalChecksum`: smoke-safe fast-path setup over encoded
   degree, root-height, Hensel-precision, and local-factor-count regimes.
+
+Shared compare domain:
+
+* `compare runFactorCompareChecksum runFactorSlowCompareChecksum` checks public
+  fallback factorization against the exhaustive slow path on the deterministic
+  split smoke family.
+* `runFactorFastCompareChecksum` joins the same domain and returns the same
+  factorization checksum only when `factorFast` succeeds; a fast-path miss is a
+  distinct input-dependent checksum, so `compare` exposes rather than hides
+  `none`.
 -/
 
 namespace Hex
@@ -260,6 +270,26 @@ def runFactorFastChecksum (f : ZPoly) : UInt64 :=
 def runFactorSlowChecksum (f : ZPoly) : UInt64 :=
   checksumFactorization (factorSlow f)
 
+/-- Shared-domain compare target: public factorization on deterministic splits. -/
+def runFactorCompareChecksum (f : ZPoly) : UInt64 :=
+  checksumFactorization (factor f)
+
+/-- Shared-domain compare target: exhaustive slow factorization on deterministic splits. -/
+def runFactorSlowCompareChecksum (f : ZPoly) : UInt64 :=
+  checksumFactorization (factorSlow f)
+
+/--
+Shared-domain compare target: fast factorization on deterministic splits.
+
+When `factorFast` misses, return an input-dependent sentinel instead of routing
+through the public fallback. A `compare` run therefore reports divergence if the
+fast path stops producing the same semantic result on this domain.
+-/
+def runFactorFastCompareChecksum (f : ZPoly) : UInt64 :=
+  match factorFast f with
+  | some φ => checksumFactorization φ
+  | none => mixHash 0xffffffffffffffff (checksumZPoly f)
+
 /-- Singleton benchmark target: public factorization on `X^4 + 1`. -/
 @[noinline]
 def runFactorAdvX4Plus1Checksum (f : ZPoly) : UInt64 :=
@@ -406,6 +436,63 @@ factor, matching the worst-case modular-factor-count bound that the full HO-3
 suite will exercise on adversarial fixtures.
 -/
 setup_benchmark runFactorSlowChecksum n => 2 ^ n * bzClassicalSmokeComplexity n
+  with prep := smokeInput
+  where {
+    paramFloor := 1
+    paramCeiling := 4
+    paramSchedule := .custom #[1, 2, 3, 4]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
+/-
+Shared-domain compare registration for the public combinator. The domain is the
+same deterministic split family and `n = 1..4` schedule used by the smoke timing
+targets. The declared cost model is the classical BHKS smoke bound
+`bzClassicalSmokeComplexity n`, because this target runs the same public
+fast-with-slow-fallback factorization as `runFactorChecksum` over the same
+prepared inputs while making `compare` an intentional public-vs-exhaustive
+equivalence check rather than an accidental overlap.
+-/
+setup_benchmark runFactorCompareChecksum n => bzClassicalSmokeComplexity n
+  with prep := smokeInput
+  where {
+    paramFloor := 1
+    paramCeiling := 4
+    paramSchedule := .custom #[1, 2, 3, 4]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
+/-
+Shared-domain compare registration for the exhaustive backstop. It returns the
+same semantic factorization checksum as `runFactorCompareChecksum` on the same
+deterministic split inputs, while retaining the slow path's exponential search
+factor in the declared model.
+-/
+setup_benchmark runFactorSlowCompareChecksum n => 2 ^ n * bzClassicalSmokeComplexity n
+  with prep := smokeInput
+  where {
+    paramFloor := 1
+    paramCeiling := 4
+    paramSchedule := .custom #[1, 2, 3, 4]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
+/-
+Shared-domain compare registration for the CLD fast path. The return checksum
+matches the public and slow compare targets when `factorFast` succeeds, and
+uses a distinct sentinel on `none`, so adding this target to `compare` exposes
+fast-path misses instead of masking them with the public fallback. The declared
+cost model is again `bzClassicalSmokeComplexity n`: the fast path is the BHKS
+bounded recombination route, and misses are encoded after that same attempted
+computation rather than by falling through the exponential slow path.
+-/
+setup_benchmark runFactorFastCompareChecksum n => bzClassicalSmokeComplexity n
   with prep := smokeInput
   where {
     paramFloor := 1

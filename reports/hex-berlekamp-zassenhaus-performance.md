@@ -8,6 +8,12 @@
   `bzClassicalSmokeComplexity n`
 - `Hex.BerlekampZassenhausBench.runFactorSlowChecksum`:
   `2^n * bzClassicalSmokeComplexity n`
+- `Hex.BerlekampZassenhausBench.runFactorCompareChecksum`:
+  `bzClassicalSmokeComplexity n`
+- `Hex.BerlekampZassenhausBench.runFactorSlowCompareChecksum`:
+  `2^n * bzClassicalSmokeComplexity n`
+- `Hex.BerlekampZassenhausBench.runFactorFastCompareChecksum`:
+  `bzClassicalSmokeComplexity n`
 - `Hex.BerlekampZassenhausBench.runFactorDegreeHeightChecksum`:
   `bzClassicalDegreeHeightComplexity param = n^9 + n^7 * log2(height + 2)^2`
 - `Hex.BerlekampZassenhausBench.runFactorFastDegreeHeightChecksum`:
@@ -85,7 +91,9 @@ lake exe hexbz_bench list
 lake exe hexbz_bench verify
 ```
 
-`verify` passed all thirteen registered benchmarks.
+`verify` passed the registered benchmarks. With the shared-domain compare
+registrations included, the current smoke suite has seventeen registered
+benchmarks and `lake exe hexbz_bench verify` passes all seventeen.
 
 ## Comparator Ratios
 
@@ -94,9 +102,39 @@ external Phase-4 performance comparator in `libraries.yml` metadata, so
 there are no external comparator ratios to record in this first report.
 
 The internal fast/slow/public registrations are not yet a valid
-`compare` group: they overlap on smoke fixtures, but the benchmark module
-does not declare a shared scientific comparison domain for
-LLL-assisted recombination versus exhaustive recombination.
+`compare` group for the full scientific Phase 4 domain, but
+`HexBerlekampZassenhaus/Bench.lean` now declares a narrow shared compare
+domain over the deterministic split smoke family `smokeInput n` for
+`n = 1..4`.
+
+The public combinator versus exhaustive backstop check is:
+
+```sh
+lake exe hexbz_bench compare \
+    Hex.BerlekampZassenhausBench.runFactorCompareChecksum \
+    Hex.BerlekampZassenhausBench.runFactorSlowCompareChecksum
+```
+
+At commit `dcc0ed9-dirty` on `carica`, the harness reported common
+parameters `1, 2, 3, 4` and `agreement: all functions agree on common
+params`. The timing verdicts remained inconclusive, as expected for this
+smoke-sized domain.
+
+The same domain also admits the proof-facing fast path without hiding
+fast-path misses:
+
+```sh
+lake exe hexbz_bench compare \
+    Hex.BerlekampZassenhausBench.runFactorCompareChecksum \
+    Hex.BerlekampZassenhausBench.runFactorSlowCompareChecksum \
+    Hex.BerlekampZassenhausBench.runFactorFastCompareChecksum
+```
+
+`runFactorFastCompareChecksum` returns the same factorization checksum
+when `factorFast` succeeds and an input-dependent sentinel on `none`.
+The three-way check at commit `dcc0ed9-dirty` also reported common
+parameters `1, 2, 3, 4` and `agreement: all functions agree on common
+params`.
 
 ## Profile
 
@@ -140,6 +178,9 @@ degree/height target is profileable through the lean-bench child path.
 - The singleton HO-2 adversarial registrations are valuable fixed-shape
   coverage, but their `#[0]` schedules cannot produce verdict-eligible
   scaling rows.
+- The new public/slow/fast compare surface is intentionally smoke-sized;
+  it does not replace a full scientific-domain LLL-assisted versus
+  exhaustive recombination comparison.
 - `runFactorSlowDegreeHeightChecksum` hit the four-second cap at encoded
   parameter `4008`; the slow diagnostic needs either a smaller
   scientific subset or an explicitly larger timing budget.
