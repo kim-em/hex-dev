@@ -6937,5 +6937,29 @@ theorem det_gramMatrix_eq_sum_minors_sq
         (fun acc cols => acc + det (columnTupleMatrix A (columnTupleVectorFn cols)) ^ 2) 0 := by
         exact columnTupleExpansion_selectedPerm_collapse A
 
+private theorem foldl_int_sum_sq_nonneg_start {β : Type v}
+    (xs : List β) (f : β → Int) (acc : Int) (hacc : 0 ≤ acc) :
+    0 ≤ xs.foldl (fun acc x => acc + f x ^ 2) acc := by
+  induction xs generalizing acc with
+  | nil => simpa using hacc
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hx : 0 ≤ f x ^ 2 := by
+        simpa [Lean.Grind.Semiring.pow_two] using
+          (Lean.Grind.OrderedRing.sq_nonneg (a := f x))
+      exact ih (acc + f x ^ 2) (Int.add_nonneg hacc hx)
+
+private theorem foldl_int_sum_sq_nonneg {β : Type v} (xs : List β) (f : β → Int) :
+    0 ≤ xs.foldl (fun acc x => acc + f x ^ 2) 0 :=
+  foldl_int_sum_sq_nonneg_start xs f 0 (by simp)
+
+/-- Integer row Gram determinants are nonnegative, by Cauchy-Binet as a finite
+sum of integer squares. -/
+theorem det_gramMatrix_nonneg {n m : Nat} (A : Matrix Int n m) :
+    0 ≤ det (gramMatrix A) := by
+  rw [det_gramMatrix_eq_sum_minors_sq A]
+  exact foldl_int_sum_sq_nonneg (selectedColumnTuples n m)
+    (fun cols => det (columnTupleMatrix A (columnTupleVectorFn cols)))
+
 end Matrix
 end Hex
