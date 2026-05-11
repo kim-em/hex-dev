@@ -5452,5 +5452,342 @@ theorem selectedColumnTuples_nodup {n m : Nat} :
     (selectedColumnTuples n m).Nodup :=
   selectedColumnTuplesUpTo_nodup m n m
 
+/-! ### Canonical sort and orbit factorization for injective column tuples
+
+For the Cauchy-Binet orbit-grouping argument we need, for every injective
+ordered column tuple `cols : Vector (Fin m) n`, a canonical factorization
+
+```
+cols[i] = (sortInjTuple cols)[(sortInjPerm cols)[i]]
+```
+
+where `sortInjTuple cols` is strictly increasing (i.e. lives in
+`selectedColumnTuples n m`) and `sortInjPerm cols` is a permutation of
+`Fin n` (i.e. lives in `permutationVectors n`). This gives a bijection
+between injective `columnTupleVectors n m` entries and the product
+`selectedColumnTuples n m × permutationVectors n`, which lets the orbit
+sum group ordered minors by their canonical sorted column choice.
+
+The implementation is rank-based: `sortInjPerm cols i` is the number of
+columns in `cols` strictly smaller in value than `cols[i]`. For any
+`cols`, this is `< n` because `cols[i]` is never strictly less than
+itself; for *injective* `cols`, the rank is moreover a bijection on
+`Fin n`. -/
+
+/-- Count of indices whose `cols`-image has strictly smaller `Fin.val`
+than that at `i`. This is the natural-number form of the rank. -/
+private def columnRankNat {m n : Nat} (cols : Vector (Fin m) n) (i : Fin n) : Nat :=
+  ((List.finRange n).filter fun j => decide (cols[j].val < cols[i].val)).length
+
+/-- The rank is always strictly less than `n`: index `i` itself is never
+in the filter, so the filter is a strict sublist of `finRange n`. -/
+private theorem columnRankNat_lt {m n : Nat} (cols : Vector (Fin m) n) (i : Fin n) :
+    columnRankNat cols i < n := by
+  have hwit :
+      ∃ x ∈ List.finRange n, ¬ (decide (cols[x].val < cols[i].val) = true) := by
+    refine ⟨i, List.mem_finRange i, ?_⟩
+    simp
+  have hlt :=
+    (List.length_filter_lt_length_iff_exists
+      (p := fun j => decide (cols[j].val < cols[i].val))
+      (l := List.finRange n)).mpr hwit
+  simpa [columnRankNat, List.length_finRange] using hlt
+
+/-- Canonical sorting permutation: for each index `i`, output the rank of
+`cols[i]` (number of strictly smaller positions). For an injective `cols`
+this is genuinely a permutation of `Fin n`; for a non-injective `cols` it
+is still well-defined but may have repeated values. -/
+def sortInjPerm {m n : Nat} (cols : Vector (Fin m) n) : Vector (Fin n) n :=
+  Vector.ofFn fun i => ⟨columnRankNat cols i, columnRankNat_lt cols i⟩
+
+@[simp] theorem sortInjPerm_getElem_val {m n : Nat}
+    (cols : Vector (Fin m) n) (i : Fin n) :
+    (sortInjPerm cols)[i].val = columnRankNat cols i := by
+  simp [sortInjPerm]
+
+/-- The canonical sorted version of `cols`: read `cols` through the inverse
+of `sortInjPerm`. For an injective `cols` this is strictly increasing; for
+a non-injective `cols` the value is well-defined but not meaningful. -/
+def sortInjTuple {m n : Nat} (cols : Vector (Fin m) n) : Vector (Fin m) n :=
+  Vector.ofFn fun r => cols[(inversePermutationVector (sortInjPerm cols))[r]]
+
+/-- Strict version of `List.countP_mono_left`: a single witness where
+`q` holds but `p` doesn't forces strict inequality. -/
+private theorem countP_lt_countP_of_witness {α : Type u}
+    (p q : α → Bool)
+    (hle_all : ∀ (xs : List α) (x : α), x ∈ xs → p x = true → q x = true) :
+    ∀ (xs : List α) (k : α), k ∈ xs → q k = true → p k = false →
+      xs.countP p < xs.countP q
+  | [], _k, hkmem, _, _ => by exact absurd hkmem List.not_mem_nil
+  | x :: xs, k, hkmem, hqk, hpk => by
+      simp only [List.mem_cons] at hkmem
+      rcases hkmem with heq | hk_in_xs
+      · -- x = k: at the head, `p k = false` and `q k = true`.
+        subst heq
+        have hxs_le : xs.countP p ≤ xs.countP q :=
+          List.countP_mono_left
+            (fun y hy => hle_all _ y (List.mem_cons_of_mem k hy))
+        simp [hqk, hpk]
+        omega
+      · -- k ∈ xs: recurse on the tail.
+        have ih :=
+          countP_lt_countP_of_witness p q hle_all xs k hk_in_xs hqk hpk
+        by_cases hpx : p x = true
+        · have hqx : q x = true := hle_all (x :: xs) x List.mem_cons_self hpx
+          simp [hpx, hqx]; omega
+        · have hpx' : p x = false := by
+            cases hpe : p x with
+            | true => exact absurd hpe hpx
+            | false => rfl
+          by_cases hqx : q x = true
+          · simp [hpx', hqx]; omega
+          · have hqx' : q x = false := by
+              cases hqe : q x with
+              | true => exact absurd hqe hqx
+              | false => rfl
+            simp [hpx', hqx']; exact ih
+
+/-- Monotonicity of the rank: if `cols[i].val < cols[j].val` then the
+rank strictly increases from `i` to `j`. Holds for any `cols`, no
+injectivity assumption needed. -/
+private theorem columnRankNat_strictMono {m n : Nat} (cols : Vector (Fin m) n)
+    {i j : Fin n} (hij : cols[i].val < cols[j].val) :
+    columnRankNat cols i < columnRankNat cols j := by
+  -- Switch from `length filter` to `countP`.
+  have hlen_eq_p :
+      ((List.finRange n).filter fun k => decide (cols[k].val < cols[i].val)).length
+        = (List.finRange n).countP (fun k => decide (cols[k].val < cols[i].val)) := by
+    rw [List.countP_eq_length_filter]
+  have hlen_eq_q :
+      ((List.finRange n).filter fun k => decide (cols[k].val < cols[j].val)).length
+        = (List.finRange n).countP (fun k => decide (cols[k].val < cols[j].val)) := by
+    rw [List.countP_eq_length_filter]
+  unfold columnRankNat
+  rw [hlen_eq_p, hlen_eq_q]
+  -- Strict comparison via element `i`.
+  refine countP_lt_countP_of_witness
+    (fun k => decide (cols[k].val < cols[i].val))
+    (fun k => decide (cols[k].val < cols[j].val))
+    ?_ (List.finRange n) i (List.mem_finRange i)
+    (decide_eq_true hij) ?_
+  · intro _ k _hkmem hpk
+    have hkk : cols[k].val < cols[i].val := by simpa using hpk
+    exact decide_eq_true (Nat.lt_trans hkk hij)
+  · simp
+
+/-- For an injective `cols`, the rank function is itself injective: two
+positions with the same rank must agree as `Fin n`. -/
+private theorem columnRankNat_injective_of_injective {m n : Nat}
+    (cols : Vector (Fin m) n) (hinj : Function.Injective (columnTupleVectorFn cols)) :
+    Function.Injective (columnRankNat cols) := by
+  intro i j hrank
+  rcases Nat.lt_trichotomy cols[i].val cols[j].val with hlt | heq | hgt
+  · exact absurd (columnRankNat_strictMono cols hlt) (by omega)
+  · -- cols[i].val = cols[j].val ⇒ cols[i] = cols[j] ⇒ i = j by injectivity.
+    have hcol_eq : cols[i] = cols[j] := Fin.ext heq
+    exact hinj hcol_eq
+  · exact absurd (columnRankNat_strictMono cols hgt) (by omega)
+
+/-- For an injective `cols`, `sortInjPerm cols` is a permutation as a list. -/
+private theorem sortInjPerm_toList_nodup_of_injective {m n : Nat}
+    (cols : Vector (Fin m) n)
+    (hinj : Function.Injective (columnTupleVectorFn cols)) :
+    (sortInjPerm cols).toList.Nodup := by
+  rw [vector_toList_eq_finRange_map_get]
+  apply list_nodup_map_of_injective ?_ (List.nodup_finRange n)
+  intro i j hij
+  have hval : columnRankNat cols i = columnRankNat cols j := by
+    have := congrArg Fin.val hij
+    simpa [sortInjPerm] using this
+  exact columnRankNat_injective_of_injective cols hinj hval
+
+/-- For an injective `cols`, `sortInjPerm cols ∈ permutationVectors n`. -/
+theorem sortInjPerm_mem_permutationVectors {m n : Nat}
+    (cols : Vector (Fin m) n)
+    (hinj : Function.Injective (columnTupleVectorFn cols)) :
+    sortInjPerm cols ∈ permutationVectors n :=
+  permutationVectors_complete (sortInjPerm_toList_nodup_of_injective cols hinj)
+
+/-- Converse of `columnRankNat_strictMono` for injective `cols`: a strict
+rank comparison implies the underlying value comparison. -/
+private theorem cols_val_lt_of_rank_lt_of_injective {m n : Nat}
+    (cols : Vector (Fin m) n)
+    (hinj : Function.Injective (columnTupleVectorFn cols))
+    {i j : Fin n} (hij : columnRankNat cols i < columnRankNat cols j) :
+    cols[i].val < cols[j].val := by
+  rcases Nat.lt_trichotomy cols[i].val cols[j].val with hlt | heq | hgt
+  · exact hlt
+  · have hcol_eq : cols[i] = cols[j] := Fin.ext heq
+    have hij' : i = j := hinj hcol_eq
+    subst hij'
+    omega
+  · have := columnRankNat_strictMono cols hgt
+    omega
+
+/-- `Vector.ofFn`-indexed access at a `Fin n` argument, packaged so that
+the result is the function applied to the original `Fin n` index rather
+than to its repackaged Nat-value form. -/
+private theorem vector_ofFn_getElem_fin {α : Type u} {n : Nat}
+    (f : Fin n → α) (k : Fin n) :
+    (Vector.ofFn f)[k] = f k := by
+  rw [show ((Vector.ofFn f)[k] : α) = (Vector.ofFn f)[k.val]'(by simpa using k.isLt) from rfl]
+  rw [Vector.getElem_ofFn]
+
+/-- Factorization equation: each entry of `cols` is recovered through the
+canonical sort/permutation pair. Requires injectivity of `cols`. -/
+theorem cols_getElem_eq_sortInjTuple_sortInjPerm {m n : Nat}
+    (cols : Vector (Fin m) n)
+    (hinj : Function.Injective (columnTupleVectorFn cols))
+    (i : Fin n) :
+    cols[i] = (sortInjTuple cols)[(sortInjPerm cols)[i]] := by
+  have hnodup := sortInjPerm_toList_nodup_of_injective cols hinj
+  have hidx :=
+    inversePermutationValues_get_index (sortInjPerm cols) hnodup i
+  have hinv_eq : inversePermutationVector (sortInjPerm cols)
+                   = inversePermutationValues (sortInjPerm cols) hnodup :=
+    inversePermutationVector_eq (sortInjPerm cols) hnodup
+  have hstep :
+      (inversePermutationVector (sortInjPerm cols))[(sortInjPerm cols)[i]]
+        = (inversePermutationValues (sortInjPerm cols) hnodup)[(sortInjPerm cols)[i]] :=
+    congrArg (fun v : Vector (Fin n) n => v[(sortInjPerm cols)[i]]) hinv_eq
+  have hcompose :
+      (inversePermutationVector (sortInjPerm cols))[(sortInjPerm cols)[i]] = i :=
+    hstep.trans hidx
+  rw [sortInjTuple, vector_ofFn_getElem_fin]
+  exact (congrArg (fun k : Fin n => cols[k]) hcompose).symm
+
+/-- For an injective `cols`, applying `sortInjPerm` after the inverse
+returns the input rank. -/
+private theorem sortInjPerm_inv_apply {m n : Nat}
+    (cols : Vector (Fin m) n)
+    (hinj : Function.Injective (columnTupleVectorFn cols)) (r : Fin n) :
+    (sortInjPerm cols)[(inversePermutationVector (sortInjPerm cols))[r]] = r := by
+  have hnodup := sortInjPerm_toList_nodup_of_injective cols hinj
+  have hval := inversePermutationValues_get_value (sortInjPerm cols) hnodup r
+  have hinv_eq : inversePermutationVector (sortInjPerm cols)
+                   = inversePermutationValues (sortInjPerm cols) hnodup :=
+    inversePermutationVector_eq (sortInjPerm cols) hnodup
+  have hstep :
+      (sortInjPerm cols)[(inversePermutationVector (sortInjPerm cols))[r]]
+        = (sortInjPerm cols)[(inversePermutationValues (sortInjPerm cols) hnodup)[r]] :=
+    congrArg (fun v : Vector (Fin n) n => (sortInjPerm cols)[v[r]]) hinv_eq
+  exact hstep.trans hval
+
+/-- For an injective `cols`, the column-rank at the inverse-perm image
+of `r` is exactly `r.val`. -/
+private theorem columnRankNat_inv_apply {m n : Nat}
+    (cols : Vector (Fin m) n)
+    (hinj : Function.Injective (columnTupleVectorFn cols)) (r : Fin n) :
+    columnRankNat cols (inversePermutationVector (sortInjPerm cols))[r] = r.val := by
+  have hval' := sortInjPerm_inv_apply cols hinj r
+  have := congrArg Fin.val hval'
+  simpa [sortInjPerm] using this
+
+/-- For an injective `cols`, the canonical sorted tuple is strictly
+increasing. -/
+theorem isStrictlyIncreasingColumnTuple_sortInjTuple {m n : Nat}
+    (cols : Vector (Fin m) n)
+    (hinj : Function.Injective (columnTupleVectorFn cols)) :
+    IsStrictlyIncreasingColumnTuple (sortInjTuple cols) := by
+  intro r r' hrr'
+  have hrank_r := columnRankNat_inv_apply cols hinj r
+  have hrank_r' := columnRankNat_inv_apply cols hinj r'
+  have hrank_lt :
+      columnRankNat cols (inversePermutationVector (sortInjPerm cols))[r] <
+        columnRankNat cols (inversePermutationVector (sortInjPerm cols))[r'] := by
+    rw [hrank_r, hrank_r']; exact hrr'
+  have hval_lt :
+      cols[(inversePermutationVector (sortInjPerm cols))[r]].val <
+        cols[(inversePermutationVector (sortInjPerm cols))[r']].val :=
+    cols_val_lt_of_rank_lt_of_injective cols hinj hrank_lt
+  show (sortInjTuple cols)[r].val < (sortInjTuple cols)[r'].val
+  rw [sortInjTuple, vector_ofFn_getElem_fin, vector_ofFn_getElem_fin]
+  exact hval_lt
+
+/-- For an injective `cols`, the canonical sorted tuple is enumerated by
+`selectedColumnTuples n m`. -/
+theorem sortInjTuple_mem_selectedColumnTuples {m n : Nat}
+    (cols : Vector (Fin m) n)
+    (hinj : Function.Injective (columnTupleVectorFn cols)) :
+    sortInjTuple cols ∈ selectedColumnTuples n m :=
+  (mem_selectedColumnTuples_iff (sortInjTuple cols)).mpr
+    (isStrictlyIncreasingColumnTuple_sortInjTuple cols hinj)
+
+/-! ### Forward injectivity of the sort/permutation pair -/
+
+/-- Pairwise distinctness: two injective column tuples that map to the
+same `(sortInjTuple, sortInjPerm)` pair must be equal. -/
+theorem sortInj_pair_injective {m n : Nat} {cols cols' : Vector (Fin m) n}
+    (hinj : Function.Injective (columnTupleVectorFn cols))
+    (hinj' : Function.Injective (columnTupleVectorFn cols'))
+    (hsort : sortInjTuple cols = sortInjTuple cols')
+    (hperm : sortInjPerm cols = sortInjPerm cols') :
+    cols = cols' := by
+  apply Vector.ext
+  intro k hk
+  let i : Fin n := ⟨k, hk⟩
+  show cols[i] = cols'[i]
+  rw [cols_getElem_eq_sortInjTuple_sortInjPerm cols hinj i,
+      cols_getElem_eq_sortInjTuple_sortInjPerm cols' hinj' i]
+  -- Use congrArg to swap `sortInjPerm cols` for `sortInjPerm cols'`.
+  have hperm_apply :
+      (sortInjPerm cols)[i] = (sortInjPerm cols')[i] :=
+    congrArg (fun v : Vector (Fin n) n => v[i]) hperm
+  -- And use hsort to swap `sortInjTuple cols` for `sortInjTuple cols'`.
+  rw [hsort]
+  exact congrArg (fun k : Fin n => (sortInjTuple cols')[k]) hperm_apply
+
+/-! ### Reconstruction from `selectedColumnTuples × permutationVectors`
+
+For a strictly-increasing `sel` and a permutation `perm`, the
+"reconstruction" `Vector.ofFn (fun i => sel[perm[i]])` is itself
+injective, and its canonical sort/permutation pair recovers
+`(sel, perm)`. This is the inverse map of `sortInjTuple`/`sortInjPerm`. -/
+
+/-- Reconstruction map: given a sorted choice and a permutation, build
+an ordered column tuple. -/
+def reconstructInjTuple {m n : Nat}
+    (sel : Vector (Fin m) n) (perm : Vector (Fin n) n) : Vector (Fin m) n :=
+  Vector.ofFn fun i => sel[perm[i]]
+
+@[simp] theorem reconstructInjTuple_getElem {m n : Nat}
+    (sel : Vector (Fin m) n) (perm : Vector (Fin n) n) (i : Fin n) :
+    (reconstructInjTuple sel perm)[i] = sel[perm[i]] := by
+  rw [reconstructInjTuple, vector_ofFn_getElem_fin]
+
+/-- A permutation as a `Vector` acts as an injective function on `Fin n`. -/
+private theorem permutationVectors_getElem_injective {n : Nat}
+    {perm : Vector (Fin n) n} (hmem : perm ∈ permutationVectors n) :
+    Function.Injective (fun i : Fin n => perm[i]) := by
+  intro i j hij
+  have hnodup := permutationVectors_nodup hmem
+  -- Apply the inverse-permutation to both sides.
+  have hstep :
+      (inversePermutationValues perm hnodup)[perm[i]]
+        = (inversePermutationValues perm hnodup)[perm[j]] :=
+    congrArg (fun k : Fin n => (inversePermutationValues perm hnodup)[k]) hij
+  have hi := inversePermutationValues_get_index perm hnodup i
+  have hj := inversePermutationValues_get_index perm hnodup j
+  exact hi.symm.trans (hstep.trans hj)
+
+/-- The reconstructed column tuple is itself injective when `sel` is
+strictly increasing and `perm` is a permutation. -/
+theorem reconstructInjTuple_injective {m n : Nat}
+    {sel : Vector (Fin m) n} {perm : Vector (Fin n) n}
+    (hsel : IsStrictlyIncreasingColumnTuple sel)
+    (hperm : perm ∈ permutationVectors n) :
+    Function.Injective (columnTupleVectorFn (reconstructInjTuple sel perm)) := by
+  intro i j hij
+  have hsel_inj := isStrictlyIncreasingColumnTuple_injective hsel
+  have hperm_inj := permutationVectors_getElem_injective hperm
+  -- `hij` is equality of reconstructed entries; extract `sel[perm[i]] = sel[perm[j]]`.
+  have hval : sel[perm[i]] = sel[perm[j]] := by
+    have hi := reconstructInjTuple_getElem sel perm i
+    have hj := reconstructInjTuple_getElem sel perm j
+    have hij' :
+        (reconstructInjTuple sel perm)[i] = (reconstructInjTuple sel perm)[j] := hij
+    exact hi.symm.trans (hij'.trans hj)
+  exact hperm_inj (hsel_inj hval)
+
 end Matrix
 end Hex
