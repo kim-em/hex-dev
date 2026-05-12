@@ -171,3 +171,22 @@ exists to put the value in a `UInt64` and route every operation
 through native machine arithmetic, with `mul` going through the
 mandatory C extern above and the rest compiling to native UInt64
 ops in pure Lean.
+
+## External comparators
+
+No external comparator is required.
+
+**Justification:** `implementation-is-extern` per
+`SPEC/benchmarking.md §"Comparator naming"`. HexModArith's modular
+operations route through GMP (for `Nat`/`Int` residue arithmetic)
+or through the dedicated `UInt64`-modular C extern (for `ZMod64`).
+The Phase-4 surface is GMP / native arithmetic; there is no
+algorithmically distinct reference implementation to compare
+against externally.
+
+The architecturally important within-Lean comparison — Barrett
+versus Montgomery modular multiplication — is registered as a
+`compare` group in `HexModArith/Bench.lean` (per
+`SPEC/benchmarking.md §"Within-Lean comparisons"`). That
+comparison is the right shape for this library; an external tool
+would just be wrapping the same underlying word-level operations.

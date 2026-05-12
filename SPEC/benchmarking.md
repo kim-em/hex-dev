@@ -348,6 +348,39 @@ Phase 4 is blocked until every `gating` comparator is wired and
 its measured ratio recorded in the headline report ([§Headline
 reports](#headline-reports)).
 
+A comparator may be **scoped to a specific bench-target subset** — one
+comparator gates one bench target while another bench target in the
+same library declares absence — provided the per-library SPEC names
+which bench target each comparator covers. This is the common shape
+when an external tool exposes some of a library's surfaces as
+user-callable functions but not others.
+
+Where a bench target has no external comparator, the per-library
+SPEC declares the absence with a library-specific reason identifying
+exactly one of:
+
+- **implementation-is-extern** — the surface is an external library
+  via `@[extern]`; there is nothing algorithmically distinct to
+  compare against.
+- **structural-layer** — the surface is in a structural layer over a
+  named dependency library whose declared comparator already covers
+  it.
+- **input-source-only** — the only published external implementation
+  is itself the input source (e.g. a committed table), not an
+  executable comparator.
+- **mathlib-bridge** — the library is a `Hex*Mathlib` bridge whose
+  comparison surface is a within-Lean `compare` group against
+  Mathlib's native types.
+- **no-comparable-surface-in-named-comparator** — the library
+  declares a comparator for some surfaces but the named comparator
+  tool does not expose this specific surface as a callable function
+  (the tool builds it internally but doesn't surface it as user API).
+
+Generic "not applicable" is not a valid declaration. Unwired-but-
+required comparators are declared with the `blocked` state per
+[§Comparator classification](#comparator-classification-gating-vs-informational)
+and a tracking issue link, never silently omitted.
+
 ### The Attribution rule
 
 Every asymptotically significant phase of an algorithm — whether

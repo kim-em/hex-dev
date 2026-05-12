@@ -137,6 +137,15 @@ For library `hex-foo`, Phase 4 is done when:
   phase4.comparators` is wired and the headline report records its
   measured ratio; `informational` comparators record ratios but do
   not gate;
+- the per-library SPEC's external-comparator declarations are
+  complete per
+  [SPEC/benchmarking.md §"Comparator naming"](../SPEC/benchmarking.md#comparator-naming):
+  every required comparator is named with its class (optionally
+  scoped per bench target), or the absence is declared with exactly
+  one of the five enumerated reasons (`implementation-is-extern`,
+  `structural-layer`, `input-source-only`, `mathlib-bridge`,
+  `no-comparable-surface-in-named-comparator`). Missing declarations
+  block Phase-4 completion;
 - the [Attribution rule](../SPEC/benchmarking.md#the-attribution-rule)
   is satisfied: every dominant profiled cost maps to a registered
   bench target, or the per-library SPEC documents why the cost
