@@ -39,7 +39,19 @@ jobs:
           echo "LD_LIBRARY_PATH=$HOME/.elan/toolchains/$toolchain/lib/lean:${LD_LIBRARY_PATH:-}" \
             >> "$GITHUB_ENV"
       - name: Build hex (Mathlib must NOT rebuild from source)
-        run: lake build
+        # Build the bench-exes here, not in the `Bench verify` step.
+        # Otherwise the first `lake exe X_bench list` in that step
+        # would pay the bench-exe's first compile (~6 min for the
+        # heaviest one) and the wallclock breakdown would conflate
+        # build time with verify time. Bench verify itself is fast
+        # since lean-bench's verify path runs in-process.
+        run: |
+          lake build \
+            hexarith_bench hexmatrix_bench hexpoly_bench hexpolyz_bench \
+            hexpolyfp_bench hexmodarith_bench hexgramschmidt_bench \
+            hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench \
+            hexlll_bench hexhensel_bench hexberlekamp_bench hexbz_bench \
+            hexconway_bench
       - name: Bench verify (smoke gate per SPEC/benchmarking.md §CI integration)
         env:
           # Initial rollout per HO-35: collect telemetry without
