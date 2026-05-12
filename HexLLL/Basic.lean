@@ -423,6 +423,58 @@ def sizeReduce (s : LLLState n m) (k : Nat) : LLLState n m :=
   else
     s
 
+private theorem sizeReduceColumn_d (s : LLLState n m) (j k : Fin n)
+    (hjk : j.val < k.val) :
+    (s.sizeReduceColumn j k hjk).d = s.d := by
+  unfold sizeReduceColumn
+  by_cases hreduce : 2 * Int.natAbs ((s.ν.get k).get j) >
+      s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
+  · simp [hreduce]
+  · simp [hreduce]
+
+private theorem sizeReduceColumn_basis (s : LLLState n m) (j k : Fin n)
+    (hjk : j.val < k.val) :
+    GramSchmidt.Int.basis (s.sizeReduceColumn j k hjk).b =
+      GramSchmidt.Int.basis s.b := by
+  unfold sizeReduceColumn
+  by_cases hreduce : 2 * Int.natAbs ((s.ν.get k).get j) >
+      s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
+  · simp only [hreduce]
+    exact GramSchmidt.Int.basis_sizeReduce s.b j k hjk
+      (nearestQuotient ((s.ν.get k).get j)
+        (s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩))
+  · simp [hreduce]
+
+private theorem sizeReduce_foldl_d (s : LLLState n m) (k : Nat) (hk : k < n)
+    (xs : List (Fin k)) :
+    (xs.foldl
+        (fun state j =>
+          let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt hk⟩
+          LLLState.sizeReduceColumn state jFin ⟨k, hk⟩ j.isLt)
+        s).d = s.d := by
+  induction xs generalizing s with
+  | nil =>
+      rfl
+  | cons j js ih =>
+      simp only [List.foldl_cons]
+      rw [ih, sizeReduceColumn_d]
+
+private theorem sizeReduce_foldl_basis (s : LLLState n m) (k : Nat) (hk : k < n)
+    (xs : List (Fin k)) :
+    GramSchmidt.Int.basis
+        (xs.foldl
+          (fun state j =>
+            let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt hk⟩
+            LLLState.sizeReduceColumn state jFin ⟨k, hk⟩ j.isLt)
+          s).b =
+      GramSchmidt.Int.basis s.b := by
+  induction xs generalizing s with
+  | nil =>
+      rfl
+  | cons j js ih =>
+      simp only [List.foldl_cons]
+      rw [ih, sizeReduceColumn_basis]
+
 /-- Swap adjacent rows `k - 1` and `k`, updating the stored scaled coefficients
 and Gram determinants with the integer formulas from the LLL specification. -/
 def swapStep (s : LLLState n m) (k : Nat) : LLLState n m :=
@@ -479,12 +531,53 @@ def swapStep (s : LLLState n m) (k : Nat) : LLLState n m :=
 /-- Size reduction leaves the stored Gram determinants unchanged. -/
 theorem sizeReduce_d (s : LLLState n m) (k : Nat) :
     (s.sizeReduce k).d = s.d := by
-  sorry
+  unfold sizeReduce
+  by_cases hk : k < n
+  · simpa [hk] using
+      sizeReduce_foldl_d (s := s) (k := k) (hk := hk) (xs := (List.finRange k).reverse)
+  · simp [hk]
 
 /-- Size reduction preserves the Gram-Schmidt basis of the state basis matrix. -/
 theorem sizeReduce_basis (s : LLLState n m) (k : Nat) :
     GramSchmidt.Int.basis (s.sizeReduce k).b = GramSchmidt.Int.basis s.b := by
-  sorry
+  unfold sizeReduce
+  by_cases hk : k < n
+  · simpa [hk] using
+      sizeReduce_foldl_basis (s := s) (k := k) (hk := hk) (xs := (List.finRange k).reverse)
+  · simp [hk]
+
+private theorem det_submatrix_gram_eq_gramDet_int (b : Matrix Int n m) (i : Fin n) :
+    Matrix.det (Matrix.submatrix (Matrix.gramMatrix b) i) =
+      Int.ofNat
+        (GramSchmidt.Int.gramDet b (i.val + 1) (Nat.succ_le_of_lt i.isLt)) := by
+  rw [Matrix.submatrix_eq_leadingPrefix]
+  rw [← GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram b (i.val + 1)
+    (Nat.succ_le_of_lt i.isLt)]
+  exact GramSchmidt.Int.leadingGramMatrixInt_det_eq_gramDet_int b (i.val + 1)
+    (Nat.succ_le_of_lt i.isLt)
+
+/-- Size reduction preserves the determinant-based independence predicate. -/
+theorem sizeReduce_independent (s : LLLState n m) (k : Nat)
+    (hind : s.b.independent) :
+    (s.sizeReduce k).b.independent := by
+  intro i
+  have hdet_new := det_submatrix_gram_eq_gramDet_int (s.sizeReduce k).b i
+  have hdet_old := det_submatrix_gram_eq_gramDet_int s.b i
+  have hd_vec :
+      (s.sizeReduce k).d.get ⟨i.val + 1, Nat.succ_lt_succ i.isLt⟩ =
+        s.d.get ⟨i.val + 1, Nat.succ_lt_succ i.isLt⟩ := by
+    simpa using congrArg
+      (fun d : Vector Nat (n + 1) => d.get ⟨i.val + 1, Nat.succ_lt_succ i.isLt⟩)
+      (sizeReduce_d s k)
+  have hgram :
+      GramSchmidt.Int.gramDet (s.sizeReduce k).b (i.val + 1)
+          (Nat.succ_le_of_lt i.isLt) =
+        GramSchmidt.Int.gramDet s.b (i.val + 1) (Nat.succ_le_of_lt i.isLt) := by
+    rw [← (s.sizeReduce k).d_eq (i.val + 1) (Nat.succ_lt_succ i.isLt)]
+    rw [hd_vec]
+    rw [s.d_eq (i.val + 1) (Nat.succ_lt_succ i.isLt)]
+  rw [hdet_new, hgram, ← hdet_old]
+  exact hind i
 
 /-- Adjacent swaps preserve the generated lattice. -/
 theorem swapStep_memLattice_iff (s : LLLState n m) (k : Nat) (v : Vector Int m) :
@@ -594,7 +687,7 @@ def lllAux (s : LLLState n m) (k : Nat) (δ : Rat)
     if lovaszLhs ≥ lovaszRhs then
       lllAux sReduced (k + 1) δ hδ hδ'
         (by
-          sorry)
+          simpa [sReduced] using LLLState.sizeReduce_independent s k hind)
         (Nat.succ_pos k) (Nat.succ_le_of_lt hlt)
     else
       let sSwapped := sReduced.swapStep k
