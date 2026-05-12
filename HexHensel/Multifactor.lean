@@ -87,15 +87,22 @@ def MultifactorLiftInvariant
             1 p) ∧
         MultifactorLiftInvariant p k lifted.h rest
 
-private theorem one_mul_zpoly (g : ZPoly) :
+/-- Left identity for `ZPoly` multiplication, used to reason about
+`Array.polyProduct` as a left fold from `1`. Shared by the linear and
+quadratic multifactor proofs. -/
+theorem one_mul_zpoly (g : ZPoly) :
     (1 : ZPoly) * g = g := by
   rw [DensePoly.mul_comm_poly (S := Int), DensePoly.mul_one_right_poly]
 
-private theorem polyProduct_singleton (g : ZPoly) :
+/-- `Array.polyProduct` of a singleton array is just the element. -/
+theorem polyProduct_singleton (g : ZPoly) :
     Array.polyProduct #[g] = g := by
   simpa [Array.polyProduct] using one_mul_zpoly g
 
-private theorem list_foldl_mul_eq_mul_foldl_one (g : ZPoly) (xs : List ZPoly) :
+/-- Folding `(· * ·)` over a `List ZPoly` with seed `g` factors out as
+`g` times the same fold with seed `1`. The key step for splitting
+`Array.polyProduct (#[g] ++ rest)`. -/
+theorem list_foldl_mul_eq_mul_foldl_one (g : ZPoly) (xs : List ZPoly) :
     xs.foldl (fun acc factor => acc * factor) g =
       g * xs.foldl (fun acc factor => acc * factor) 1 := by
   induction xs generalizing g with
@@ -112,7 +119,10 @@ private theorem list_foldl_mul_eq_mul_foldl_one (g : ZPoly) (xs : List ZPoly) :
         _ = g * xs.foldl (fun acc factor => acc * factor) x := by
             rw [ih x]
 
-private theorem polyProduct_singleton_append (g : ZPoly) (rest : Array ZPoly) :
+/-- Splitting `Array.polyProduct` across a singleton prepend: the head
+factors out as a left multiplication. Used to relate the multifactor
+recursion tree to the public ordered-product convention. -/
+theorem polyProduct_singleton_append (g : ZPoly) (rest : Array ZPoly) :
     Array.polyProduct (#[g] ++ rest) = g * Array.polyProduct rest := by
   cases rest with
   | mk xs =>
