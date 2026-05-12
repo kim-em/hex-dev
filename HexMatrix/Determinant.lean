@@ -299,6 +299,11 @@ theorem skipIndex_ne {n : Nat} (skip : Fin (n + 1)) (i : Fin n) :
   · rw [skipIndex_val_of_not_lt skip i hlt] at hval
     omega
 
+@[simp] theorem skipIndex_last {n : Nat} (i : Fin n) :
+    skipIndex (Fin.last n) i = i.castSucc := by
+  apply Fin.ext
+  simp [skipIndex, Fin.last, i.isLt]
+
 /-- Delete one row and one column from an `(n + 1) × (n + 1)` matrix. -/
 def deleteRowCol {R : Type u} {n : Nat} (M : Matrix R (n + 1) (n + 1))
     (row col : Fin (n + 1)) : Matrix R n n :=
@@ -308,6 +313,21 @@ def deleteRowCol {R : Type u} {n : Nat} (M : Matrix R (n + 1) (n + 1))
     (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1)) (i j : Fin n) :
     (deleteRowCol M row col)[i][j] = M[skipIndex row i][skipIndex col j] := by
   simp [deleteRowCol, ofFn]
+
+@[simp] theorem deleteRowCol_last_last {R : Type u} {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) :
+    deleteRowCol M (Fin.last n) (Fin.last n) =
+      leadingPrefix M n (Nat.le_succ n) := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let ii : Fin n := ⟨i, hi⟩
+  let jj : Fin n := ⟨j, hj⟩
+  change (deleteRowCol M (Fin.last n) (Fin.last n))[ii][jj] =
+    (leadingPrefix M n (Nat.le_succ n))[ii][jj]
+  rw [deleteRowCol_entry]
+  simp [leadingPrefix, ofFn]
 
 /-- The alternating sign used in signed cofactors. -/
 def cofactorSign {R : Type u} [OfNat R 1] [Neg R] {n : Nat}
@@ -342,6 +362,14 @@ def cofactor {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     cofactor M row col = -det (deleteRowCol M row col) := by
   simp [cofactor, h]
   grind
+
+@[simp] theorem cofactor_last_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) :
+    cofactor M (Fin.last n) (Fin.last n) =
+      det (leadingPrefix M n (Nat.le_succ n)) := by
+  rw [cofactor_of_even]
+  · simp
+  · omega
 
 /-- The determinant of the empty leading prefix is the Bareiss previous-pivot
 convention `1`. -/
