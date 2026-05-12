@@ -40,14 +40,20 @@ proof — fix the proof or fix the API. For unfinished proofs use
 Before touching anything under `.github/workflows/`, read
 [SPEC/CI.md](../SPEC/CI.md). Each workflow runs in **exactly one
 ubuntu job** (`ci.yml` also has one macOS job for the dyld
-cross-check). New conformance targets and new oracles **extend the
-script** of the existing single job — they do not introduce new
-top-level jobs, `strategy.matrix` blocks, or new workflow files.
-New oracles append a tuple to `scripts/ci/run_oracles.sh` and (if
-needed) an entry to the existing apt/pip install step; see
+cross-check). New conformance targets, new oracles, and new bench
+targets **extend the script** of the existing single job — they do
+not introduce new top-level jobs, `strategy.matrix` blocks, or new
+workflow files. New oracles append a tuple to
+`scripts/ci/run_oracles.sh` and (if needed) an entry to the existing
+apt/pip install step; see
 [SPEC/testing.md § Adding a new oracle](../SPEC/testing.md).
 
-Bench targets are not added by extending CI — see §Benchmarks.
+Bench targets in particular must not import Mathlib (directly or
+transitively) and must keep the `Bench verify` step under its
+wallclock cap; see
+[SPEC/benchmarking.md §Mathlib-free benches](../SPEC/benchmarking.md)
+and the "Time budget" subsection of
+[SPEC/benchmarking.md §CI integration](../SPEC/benchmarking.md).
 
 GitHub-hosted Actions on a personal account is concurrency-capped at
 ~20 parallel ubuntu runners across all repositories the account
@@ -58,20 +64,3 @@ project, so the rule is "no parallelism in CI." Routine timing-
 sensitive runs live on a separate scheduled workflow on dedicated
 hardware (per [SPEC/benchmarking.md](../SPEC/benchmarking.md)),
 not on the merge-gating workflows.
-
-## Benchmarks
-
-`lake exe X_bench verify` runs worker-side, not in CI. Before
-publishing a PR whose diff touches non-proof Lean files under
-`Hex/*/`:
-
-1. `scripts/bench/affected_benches.sh <changed-files...>` lists
-   affected `*_bench` targets.
-2. `lake exe X_bench verify` each one.
-3. PR body must include `Affected benches: <list>` (or `none`).
-
-Failure modes and the verify→fixture-commit rule live in
-[SPEC/benchmarking.md §Worker affected-bench discipline](../SPEC/benchmarking.md).
-A pre-merge `affected-benches-check` status check validates the PR
-body matches the computed set; a nightly workflow on `main` is the
-backstop.

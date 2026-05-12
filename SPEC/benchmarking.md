@@ -177,9 +177,8 @@ The CLI surface is `lake exe hexfoo_bench <subcommand>`:
   hashes at common parameters, plus a relative-timing summary.
 - `verify [NAMES…]` — smoke-test registration wiring: spawn each
   benchmark with a tight inner-tuning budget, check the child exits
-  cleanly and emits a hash where one is expected. Used as the smoke
-  gate workers run before publishing; see
-  [§Worker affected-bench discipline](#worker-affected-bench-discipline).
+  cleanly and emits a hash where one is expected. Used as a CI
+  gate; see [§CI integration](#ci-integration).
 
 Per-library SPECs declare the complexity for each operation in their
 API surface. The textbook model is the contract; the benchmark
@@ -457,80 +456,126 @@ medium and large primes (e.g. `(97, 127)`, `(521, 13)`,
 `(97, 128)`), and large-degree irreducibility stress tests over
 `F_2` at degrees `512`, `1024`, `2048` and beyond when feasible.
 
-## Worker affected-bench discipline
+## Mathlib-free benches
 
-The `verify` subcommand is the bench-module smoke gate: it spawns each
-registered benchmark at a tight inner-tuning budget, checks the child
-exits cleanly, and verifies hashable benchmarks emit hashes. It does
-NOT assert timing values — the gate detects bitrot of the bench module
-itself, not regressions in the implementation.
+Benchmarks measure the computational kernel. The project's
+architectural premise is the Mathlib-free split: `Hex*` libraries are
+computational and Mathlib-free; `Hex*Mathlib` libraries are
+proof-only bridges. Two invariants follow, both hard:
 
-This gate is **enforced worker-side**, not in merge-gating CI. The CI
-cost of running every library's `verify` on every PR — sequentially,
-regardless of which files the PR touched — was prohibitive at this
-repo's scale (~30 minutes per PR, saturating GitHub's hosted-runner
-concurrency cap). Workers run only the verifications their changes
-could plausibly affect, locally, before publishing.
+1. **`Hex*Mathlib` libraries do not have benchmarks.** No
+   `Hex*Mathlib/Bench.lean`, no `Hex*Mathlib/Bench/`, no
+   `lean_exe *mathlib*_bench` in `lakefile.lean`. The Mathlib bridge
+   modules are proof-only; there is nothing computational to
+   benchmark in a bridge.
+2. **No bench reaches Mathlib.** For every bench executable declared
+   as `lean_exe X_bench where root := ...` in `lakefile.lean`, the
+   root module and every module transitively reachable from it via
+   `import` must NOT name any `Mathlib.*` module. Pulling Mathlib
+   into a bench's link chain forces thousands of native-object
+   (`.c.o`) compilations per CI job (a measured 12-minute hit per
+   offending bench at this repo's scale), and silently defeats the
+   Mathlib-free split that the rest of the project rests on. The
+   constraint is on the upstream Mathlib package only; intra-project
+   `Hex*Mathlib.*` modules are not what this rule forbids — but per
+   invariant (1) above, no bench imports them either.
 
-### The worker rule
+Both invariants are enforced by
+`scripts/ci/check_benches_mathlib_free.sh`, invoked from the `build`
+job in `ci.yml`. The script:
 
-For any PR whose diff includes a non-proof Lean file under `Hex/*/`
-(implementation source, not theorems), the worker:
+- Globs `lakefile.lean` for `lean_exe *_bench where root := ...` to
+  enumerate bench exe roots (handles top-level roots like
+  `HexGF2Bench` as well as `Hex*/Bench` modules).
+- Walks each root's transitive `import` graph (Lean syntax allows
+  `import` only at file start, so a simple `^import ` line scan up
+  to the first non-import/non-comment line is sound).
+- Fails on the first reachable `Mathlib.*` import, printing the
+  offending bench root and the full chain (e.g.
+  `HexPolyMathlib.Bench → HexPolyMathlib.Euclid → Mathlib.Algebra.Polynomial.FieldDivision`).
+- Globs `Hex*Mathlib/Bench.lean` and `Hex*Mathlib/Bench/` and fails
+  if any such path exists.
 
-1. Enumerates affected `*_bench` targets via
-   `scripts/bench/affected_benches.sh <changed-files...>`. The script
-   walks the lakefile's `lean_exe *_bench` declarations and the
-   transitive `import` graph from each bench root, intersecting with
-   the changed-files set.
-2. For each affected bench target, runs
-   `lake exe hexfoo_bench verify`. Per-target budget: up to ~15 s
-   where the smallest registered input genuinely needs that long;
-   most libraries finish in a few seconds.
-3. Handles the outcome:
-   - **`verify` passes**: no fixture commit needed.
-   - **`verify` fails because committed expected output legitimately
-     changed** (a deterministic implementation tweak shifted hashes
-     or fixture bytes in a way the worker can explain): regenerate
-     fixtures via `lake build hexfoo_emit_fixtures` (and equivalent),
-     commit the fixture diff in the same PR.
-   - **`verify` fails for any other reason**: that is a bench-found
-     finding. File an issue per
-     [§verdict-as-bug-trigger](#the-verdict-as-bug-trigger-model) and
-     roll back per [PLAN/Conventions.md §Rollback is a normal action](../PLAN/Conventions.md#rollback-is-a-normal-action).
-     Do not paper over by editing fixtures.
+A bench that needs Mathlib is a category error, not an oversight to
+work around: either it's measuring through Mathlib (slow and missing
+the computational kernel) or it accidentally dragged Mathlib into a
+native link chain. Either way, the fix is structural — file the
+finding, roll back if necessary, and either remove the bench or
+move what it measures into a Mathlib-free location.
 
-A PR with no implementation diff (proof-only, doc-only, config-only)
-runs zero benches. The PR description marks this with
-`Affected benches: none`.
+## CI integration
 
-### Pre-merge enforcement
+Every library at `done_through ≥ 4` ships a CI job that runs:
 
-Every PR body must include an `Affected benches:` line listing the
-bench targets affected by the diff, or `none`. A cheap required
-status check (`affected-benches-check`) re-runs
-`scripts/bench/affected_benches.sh` against the PR's diff and fails
-if the body's list disagrees with the computed set. The check runs
-no benches itself — it only validates that the worker named the right
-targets. Verification that the targets actually ran is on trust,
-backstopped by the nightly run on `main`.
+```sh
+lake exe hexfoo_bench list
+lake exe hexfoo_bench verify
+```
 
-### Nightly backstop
+The `verify` subcommand is the smoke gate: it spawns each
+registered benchmark at a tight inner-tuning budget, checks the
+child exits cleanly, and verifies hashable benchmarks emit hashes.
+It does NOT assert timing values — the gate detects bitrot of the
+bench module itself, not regressions in the implementation.
 
-`nightly-bench-verify.yml` runs the full `verify` sweep across every
-library at `done_through ≥ 4` against `main` on a daily schedule.
-Failures open a `human-oversight` issue with the failing target and
-the offending commit. This catches the residual case where a worker
-asserts an `Affected benches:` set but skips the local execution.
+The `Bench verify` step lives in `ci.yml`'s `build` ubuntu job (per
+[SPEC/CI.md §Job-count budget](CI.md)), one sequential block, no
+matrix. New libraries at `done_through ≥ 4` append their bench
+target to that block.
+
+### Time budget
+
+The `Bench verify` step has two enforced budgets:
+
+- **Per-library soft warning at 30 s.** Any library whose `verify`
+  crosses 30 wallclock seconds is logged as a warning in the CI
+  output for visibility. This is a warning, not a fail —
+  GitHub-hosted runner perf variance is real (2-3× single-run noise
+  is normal), and a single-PR flake should not block merges.
+- **Repo-wide hard cap at 10 wallclock minutes** (transitional; see
+  below). The total time for the `Bench verify` step (build + run,
+  summed across all libraries) MUST be under the cap. Crossing it
+  fails the build with a per-library breakdown so the offender is
+  obvious. The 10-minute cap is staged: once outliers are
+  remediated, the cap ratchets to **5 wallclock minutes**, which is
+  the long-term target.
+
+When a library trips either:
+
+- If the smallest honest smoke input is fast at the bench's
+  scientific complexity model but slow at its currently-registered
+  smoke settings, tighten the smoke settings (or add a
+  smoke-specific override clause to the registration) so the smoke
+  path uses a budget appropriate for "does this module compile and
+  run". Scientific settings are unchanged.
+- If the smallest honest smoke input is genuinely minutes at any
+  setting, that's a bench-found finding per
+  [§verdict-as-bug-trigger](#the-verdict-as-bug-trigger-model):
+  file the issue, roll back `done_through`, fix the underlying
+  implementation at the rolled-back phase.
+
+**Smoke settings may be tightened to fit budget; scientific
+settings MUST NOT be weakened to dodge the budget.** That's
+verdict-laundering per [§Anti-patterns](#anti-patterns). The
+distinction matters because `verify` and `run` consume
+different settings layers — see [§Harness](#harness-lean-bench).
+
+The cap is enforced by
+`scripts/ci/check_bench_verify_budget.sh`, invoked at the tail of
+the `Bench verify` step. It wraps the per-library `lake exe X_bench
+verify` invocations (capturing wallclock per invocation), prints a
+sorted breakdown, logs the soft warnings, and exits non-zero if the
+total exceeds the hard cap.
 
 ### Scientific timing runs
 
-Full timing runs (`lake exe hexfoo_bench run NAME` with a real budget)
-are not part of merge-gating CI, the worker pre-publish step, or the
-nightly. They run on a scheduled workflow or release-candidate
-workflow, on dedicated hardware where timing comparisons are
-meaningful. Each release names the libraries whose timing runs must
-succeed; a release is blocked by an inconclusive verdict or a
-comparator divergence even when proofs are complete.
+Full timing runs (`lake exe hexfoo_bench run NAME` with a real
+budget) are not part of merge-gating CI. They run on a scheduled
+workflow or release-candidate workflow, on dedicated hardware where
+timing comparisons are meaningful. Each release names the libraries
+whose timing runs must succeed; a release is blocked by an
+inconclusive verdict or a comparator divergence even when proofs
+are complete.
 
 ## Reproducibility contract
 
@@ -644,6 +689,23 @@ state, `SPEC/` is normative and follows the immutability rules in
 These behaviours have surfaced in past benchmarking work and are
 explicitly forbidden:
 
+- **Importing `Mathlib.*` into a bench module.** See
+  [§Mathlib-free benches](#mathlib-free-benches). Bench targets
+  compile to native executables, and Mathlib's `.c.o` chain is not
+  in the upstream cache — every transitively-Mathlib bench inflates
+  the CI `Bench verify` step's wallclock by ~12 minutes per
+  uncached link chain. This is a category error to remove (delete
+  the bench, move what it measured into a Mathlib-free location),
+  not an oversight to argue around. Enforced by
+  `scripts/ci/check_benches_mathlib_free.sh`.
+- **Weakening scientific settings to fit a CI time budget.** The
+  `Bench verify` time budget is on the smoke path, which has its
+  own settings layer (see [§Harness](#harness-lean-bench)).
+  Tightening smoke settings to fit the cap is allowed; lowering the
+  scientific `setup_benchmark` parameters or `targetInnerNanos` is
+  verdict-laundering. If the smallest honest smoke input is
+  genuinely minutes, the response is a bench-found rollback at the
+  rolled-back phase, never a scientific-settings shrink.
 - **Lowering the parameter range to make a budget-skip go away
   without naming the implementation bug.** If a benchmark would
   exceed its wallclock cap at the declared range, the implementation
@@ -700,9 +762,9 @@ explicitly forbidden:
   `only 0 verdict-eligible row(s) survived…`. That is the harness
   telling you the schedule, the per-call cap, or the target inner
   nanos was set too low for the host the benchmark is supposed to
-  run on. The Phase-4/release gate treats exit 2 the same as a verdict
-  mismatch: file an issue, roll back, fix. Don't shrink scientific
-  settings to dodge the verdict.
+  run on. CI treats exit 2 the same as a verdict mismatch: file an
+  issue, roll back, fix. Don't shrink scientific settings to dodge
+  the verdict.
 - **Treating an "inconclusive" verdict as a passing scientific run.**
   Phase-4 exit criteria require either "consistent with declared
   complexity" or a tracked finding-issue explaining the mismatch
