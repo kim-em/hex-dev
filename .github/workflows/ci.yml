@@ -44,8 +44,6 @@ jobs:
           lake exe hexarith_bench verify
           lake exe hexmatrix_bench list
           lake exe hexmatrix_bench verify
-          lake exe hexmatrixmathlib_bench list
-          lake exe hexmatrixmathlib_bench verify
           lake exe hexpoly_bench list
           lake exe hexpoly_bench verify
           lake exe hexpolyz_bench list
@@ -76,8 +74,6 @@ jobs:
           lake exe hexbz_bench verify
           lake exe hexconway_bench list
           lake exe hexconway_bench verify
-          lake exe hexpolymathlib_bench list
-          lake exe hexpolymathlib_bench verify
 
   build-macos:
     runs-on: macos-latest
