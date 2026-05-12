@@ -184,14 +184,9 @@ lean_exe hexmodarith_bench where
 lean_exe hexgf2_bench where
   root := `HexGF2Bench
 
-lean_exe hexgf2mathlib_bench where
-  root := `HexGF2Mathlib.Bench
-
-lean_exe hexpolymathlib_bench where
-  root := `HexPolyMathlib.Bench
-
-lean_exe hexmatrixmathlib_bench where
-  root := `HexMatrixMathlib.Bench
+-- No bench exes for `Hex*Mathlib` libraries — see
+-- SPEC/benchmarking.md §Mathlib-free benches. The bridges are
+-- proof-only; there is no computational kernel to benchmark.
 
 lean_exe hexpolyfp_bench where
   root := `HexPolyFp.Bench
