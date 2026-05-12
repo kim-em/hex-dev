@@ -59,53 +59,26 @@ PRs before creating new work. Downstream agents are blocked on `main`
 until merged PRs land.
 
 `main` is branch-protected: auto-merge only fires once every required
-status check (`build`, `build-macos`, `conformance`,
-`affected-benches-check`) is green. CI gating is non-negotiable —
-see [SPEC/CI.md](../SPEC/CI.md). `affected-benches-check` is a cheap
-evidence gate validating the PR body's `Affected benches:` line; see
-[§Affected-bench discipline](#affected-bench-discipline) below.
+status check (`build`, `build-macos`, `conformance`) is green. CI
+gating is non-negotiable — see [SPEC/CI.md](../SPEC/CI.md).
 
 ### CI work expansion
 
-When adding a new conformance check, oracle, or build target,
-**extend the script of the existing single ubuntu job** in the
-relevant workflow (`conformance.yml` for conformance/oracle work,
-`ci.yml` for build/check work). Do **not** add a new top-level job,
-a new `strategy.matrix`, or a new workflow file. The full rationale
-and the trigger / concurrency / Mathlib-cache rules every workflow
-must satisfy live in [SPEC/CI.md](../SPEC/CI.md); read it before
-editing any file under `.github/workflows/`.
+When adding a new conformance check, oracle, benchmark, or build
+target, **extend the script of the existing single ubuntu job** in
+the relevant workflow (`conformance.yml` for conformance/oracle work,
+`ci.yml` for build/check/benchmark work). Do **not** add a new
+top-level job, a new `strategy.matrix`, or a new workflow file. The
+full rationale and the trigger / concurrency / Mathlib-cache rules
+every workflow must satisfy live in [SPEC/CI.md](../SPEC/CI.md); read
+it before editing any file under `.github/workflows/`.
 
-Benchmark targets are not added by extending CI — they are not in
-merge-gating CI at all. See [§Affected-bench discipline](#affected-bench-discipline).
-
-### Affected-bench discipline
-
-`lake exe hexfoo_bench verify` is the bench-module smoke gate (see
-[SPEC/benchmarking.md §Worker affected-bench discipline](../SPEC/benchmarking.md)).
-It runs **worker-side**, before publishing a PR, on libraries whose
-source files are touched by the diff. CI runs no `verify` per PR.
-
-Per-PR worker steps:
-
-1. Run `scripts/bench/affected_benches.sh <changed-files...>` to
-   enumerate affected `*_bench` targets.
-2. Run `lake exe hexfoo_bench verify` on each.
-3. In the PR body, include an `Affected benches:` line listing those
-   target names, or `none` for proof/doc/config-only PRs.
-4. If `verify` produced a legitimate fixture diff (deterministic
-   output change from the implementation), commit the regenerated
-   fixtures in the same PR. If `verify` failed for any other reason,
-   file a bench-found issue and roll back per
-   [§Rollback is a normal action](#rollback-is-a-normal-action) —
-   do not edit fixtures to make verify pass.
-
-The pre-merge `affected-benches-check` status check re-runs
-`affected_benches.sh` against the PR's diff and fails if the body's
-list disagrees with the computed set. The check runs no benches; it
-validates evidence only. The scheduled `nightly-bench-verify.yml`
-workflow against `main` runs the full `verify` sweep daily and is
-the backstop for skipped local execution.
+For benchmark targets specifically, the structural and timing rules
+in [SPEC/benchmarking.md §Mathlib-free benches](../SPEC/benchmarking.md)
+and the "Time budget" subsection of
+[SPEC/benchmarking.md §CI integration](../SPEC/benchmarking.md)
+constrain what a new bench is allowed to look like (no Mathlib in
+the link chain; per-library smoke warn at 30 s; repo-wide hard cap).
 
 ---
 

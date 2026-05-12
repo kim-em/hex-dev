@@ -41,15 +41,11 @@ For each library `HexFoo` advancing through Phase 4:
    `require` (per the snippet in
    [SPEC/benchmarking.md §Harness](../SPEC/benchmarking.md#harness-lean-bench)).
 
-3. **Bench-module smoke gate** — `lake exe hexfoo_bench list &&
-   lake exe hexfoo_bench verify`. `verify` is the bitrot gate; it
-   does not assert timing values. It may use reduced smoke settings,
-   but may not weaken the scientific settings used for real runs.
-   This gate runs worker-side before publishing PRs, not in
-   merge-gating CI; see
-   [SPEC/benchmarking.md §Worker affected-bench discipline](../SPEC/benchmarking.md).
-   A scheduled `nightly-bench-verify.yml` workflow against `main`
-   is the backstop.
+3. **CI smoke step** invoking
+   `lake exe hexfoo_bench list && lake exe hexfoo_bench verify`.
+   `verify` is the bitrot gate; it does not assert timing values.
+   It may use reduced smoke settings, but may not weaken the
+   scientific settings used for real runs.
 
 4. **`compare` registrations** for any pair of alternative algorithms
    the library SPEC calls out (e.g. Barrett vs Montgomery, linear vs
@@ -156,13 +152,7 @@ For library `hex-foo`, Phase 4 is done when:
   The only resolution available to the orchestrator is to act on
   the HO issue tied to the Concern until the underlying problem is
   fixed and the Concern entry is removed from the report.
-- the Phase-4 PR/report records the exact
-  `lake exe hexfoo_bench list` and `lake exe hexfoo_bench verify`
-  invocations the author ran (paired with their outcomes, the host
-  and toolchain, and the bench target names produced). CI does not
-  run `verify` per PR; this is the evidence trail in place of that
-  gate. The scheduled `nightly-bench-verify.yml` workflow against
-  `main` provides the residual backstop.
+- the CI smoke step (`list` + `verify`) runs on every PR.
 
 If any of these fail, the right action is rollback per
 [Conventions.md](Conventions.md), not a SPEC-text edit weakening
