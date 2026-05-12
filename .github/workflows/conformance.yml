@@ -73,8 +73,14 @@ jobs:
             lake build "$emit"
             echo "TIMING: $emit $(( $(date +%s) - ts ))s"
           done
-      - name: Cross-check fixtures and run oracles
+      - name: Cross-check fixtures and run oracles (HO-37 experiment A — skipped to capture build timings without 6h-cancel)
+        if: false
         run: bash scripts/ci/run_oracles.sh
+      - name: Emit timing summary (HO-37 experiment A)
+        if: always()
+        run: |
+          echo "=== HO-37 experiment A: per-target build timings ==="
+          echo "(Cross-check + oracles step intentionally skipped on this branch)"
       - name: Upload failure records
         if: failure()
         uses: actions/upload-artifact@v4
