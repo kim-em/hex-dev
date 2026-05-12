@@ -2603,7 +2603,8 @@ private def bhksFailedDivisionRecoverLift : LiftData :=
 private def bhksProductMismatchRecoverLift : LiftData :=
   { p := 5
     k := 2
-    liftedFactors := #[DensePoly.ofCoeffs #[-2, 1]] }
+    liftedFactors := #[DensePoly.ofCoeffs #[-2, 1]]
+    p_pos := by decide }
 
 #guard bhksIndicatorCandidate? cldGuardF bhksProductMismatchRecoverLift #[1] =
   some (DensePoly.ofCoeffs #[-2, 1], DensePoly.ofCoeffs #[-3, 1])
