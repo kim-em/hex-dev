@@ -2447,6 +2447,18 @@ private def BhksRecoveryResult.toOption : BhksRecoveryResult → Option (Array Z
   | .candidateFailure => none
   | .productMismatch _ => none
 
+private def BhksRecoveryResult.isReconstructionFailure : BhksRecoveryResult → Bool
+  | .success _ => false
+  | .degenerate => false
+  | .candidateFailure => true
+  | .productMismatch _ => true
+
+private def BhksRecoveryResult.isLatticeFailure : BhksRecoveryResult → Bool
+  | .success _ => false
+  | .degenerate => true
+  | .candidateFailure => false
+  | .productMismatch _ => false
+
 /--
 Run the fixed-precision BHKS recovery pipeline.
 
@@ -2536,6 +2548,8 @@ private def bhksDegenerateRecoverLift : LiftData :=
 #guard bhksRecover? cldGuardF bhksDegenerateRecoverLift = none
 #guard bhksRecoverClassified cldGuardF bhksDegenerateRecoverLift =
   .degenerate
+#guard (bhksRecoverClassified cldGuardF bhksDegenerateRecoverLift).isLatticeFailure
+#guard !(bhksRecoverClassified cldGuardF bhksDegenerateRecoverLift).isReconstructionFailure
 
 private def bhksFailedDivisionRecoverLift : LiftData :=
   { p := 5
@@ -2546,6 +2560,8 @@ private def bhksFailedDivisionRecoverLift : LiftData :=
 #guard bhksRecover? cldGuardF bhksFailedDivisionRecoverLift = none
 #guard bhksRecoverClassified cldGuardF bhksFailedDivisionRecoverLift =
   .candidateFailure
+#guard (bhksRecoverClassified cldGuardF bhksFailedDivisionRecoverLift).isReconstructionFailure
+#guard !(bhksRecoverClassified cldGuardF bhksFailedDivisionRecoverLift).isLatticeFailure
 
 private def recombinationSearchAux
     (target : ZPoly) (localFactors : List ZPoly) : Nat → Option (List ZPoly)
@@ -2617,9 +2633,19 @@ private def factorFastCoreWithBound
   | _k, 0 => none
   | k, fuel + 1 =>
       let liftData := henselLiftData core k primeData
-      match bhksRecover? core liftData with
-      | some factors => some factors
-      | none =>
+      match bhksRecoverClassified core liftData with
+      | .success factors => some factors
+      | .candidateFailure =>
+        if k ≥ B then
+          none
+        else
+          factorFastCoreWithBound core B primeData (nextHenselPrecision k B) fuel
+      | .productMismatch _ =>
+        if k ≥ B then
+          none
+        else
+          factorFastCoreWithBound core B primeData (nextHenselPrecision k B) fuel
+      | .degenerate =>
         if k ≥ B then
           none
         else
@@ -2677,18 +2703,18 @@ private theorem factorFastCoreWithBound_isSome_of_recovery_on_schedule
       simp [henselPrecisionSchedule] at hmem
   | succ fuel ih =>
       rw [factorFastCoreWithBound]
-      cases hrec : bhksRecover? core (henselLiftData core start primeData) with
-      | some xs =>
+      cases hclass : bhksRecoverClassified core (henselLiftData core start primeData) with
+      | success xs =>
           simp
-      | none =>
+      | degenerate =>
           by_cases hk : start ≥ B
-          · rw [if_pos hk]
+          · simp [hk]
             have hmem' : target = start := by
               simpa [henselPrecisionSchedule, hk] using hmem
             subst target
-            rw [hrec] at hrecover
-            cases hrecover
-          · simp only [hk, if_false]
+            rw [bhksRecover?] at hrecover
+            simp [hclass, BhksRecoveryResult.toOption] at hrecover
+          · simp [hk]
             have hmem' :
                 target ∈
                   henselPrecisionSchedule B (nextHenselPrecision start B) fuel := by
@@ -2700,7 +2726,58 @@ private theorem factorFastCoreWithBound_isSome_of_recovery_on_schedule
               cases hmem_tail with
               | inl htarget =>
                   subst target
-                  simp [hrec] at hrecover
+                  rw [bhksRecover?] at hrecover
+                  simp [hclass, BhksRecoveryResult.toOption] at hrecover
+              | inr htail =>
+                  exact htail
+            exact ih hmem'
+      | candidateFailure =>
+          by_cases hk : start ≥ B
+          · simp [hk]
+            have hmem' : target = start := by
+              simpa [henselPrecisionSchedule, hk] using hmem
+            subst target
+            rw [bhksRecover?] at hrecover
+            simp [hclass, BhksRecoveryResult.toOption] at hrecover
+          · simp [hk]
+            have hmem' :
+                target ∈
+                  henselPrecisionSchedule B (nextHenselPrecision start B) fuel := by
+              have hmem_tail :
+                  target = start ∨
+                    target ∈
+                      henselPrecisionSchedule B (nextHenselPrecision start B) fuel := by
+                simpa [henselPrecisionSchedule, hk] using hmem
+              cases hmem_tail with
+              | inl htarget =>
+                  subst target
+                  rw [bhksRecover?] at hrecover
+                  simp [hclass, BhksRecoveryResult.toOption] at hrecover
+              | inr htail =>
+                  exact htail
+            exact ih hmem'
+      | productMismatch cands =>
+          by_cases hk : start ≥ B
+          · simp [hk]
+            have hmem' : target = start := by
+              simpa [henselPrecisionSchedule, hk] using hmem
+            subst target
+            rw [bhksRecover?] at hrecover
+            simp [hclass, BhksRecoveryResult.toOption] at hrecover
+          · simp [hk]
+            have hmem' :
+                target ∈
+                  henselPrecisionSchedule B (nextHenselPrecision start B) fuel := by
+              have hmem_tail :
+                  target = start ∨
+                    target ∈
+                      henselPrecisionSchedule B (nextHenselPrecision start B) fuel := by
+                simpa [henselPrecisionSchedule, hk] using hmem
+              cases hmem_tail with
+              | inl htarget =>
+                  subst target
+                  rw [bhksRecover?] at hrecover
+                  simp [hclass, BhksRecoveryResult.toOption] at hrecover
               | inr htail =>
                   exact htail
             exact ih hmem'
@@ -3280,8 +3357,8 @@ private theorem bhksRecover?_product
       simp [BhksRecoveryResult.toOption, hclass] at hrecover
 
 /-- A successful fixed-precision BHKS fast-recombination loop preserves the
-polynomial product: every success branch threads through `bhksRecover?`, which
-already certifies `Array.polyProduct = core`. -/
+polynomial product: every success branch comes from the classified BHKS
+recovery success case, which already certifies `Array.polyProduct = core`. -/
 private theorem factorFastCoreWithBound_product
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) :
     ∀ k fuel coreFactors,
@@ -3295,16 +3372,25 @@ private theorem factorFastCoreWithBound_product
   | succ fuel ih =>
       intro coreFactors hfast
       rw [factorFastCoreWithBound] at hfast
-      cases hrec : bhksRecover? core (henselLiftData core k primeData) with
-      | some xs =>
-          rw [hrec] at hfast
+      cases hclass : bhksRecoverClassified core (henselLiftData core k primeData) with
+      | success xs =>
+          simp [hclass] at hfast
           cases hfast
-          exact bhksRecover?_product hrec
-      | none =>
-          rw [hrec] at hfast
+          exact bhksRecoverClassified_success_product hclass
+      | degenerate =>
           by_cases hk : k ≥ B
-          · simp [hk] at hfast
-          · simp only [hk, if_false] at hfast
+          · simp [hclass, hk] at hfast
+          · simp [hclass, hk] at hfast
+            exact ih _ coreFactors hfast
+      | candidateFailure =>
+          by_cases hk : k ≥ B
+          · simp [hclass, hk] at hfast
+          · simp [hclass, hk] at hfast
+            exact ih _ coreFactors hfast
+      | productMismatch cands =>
+          by_cases hk : k ≥ B
+          · simp [hclass, hk] at hfast
+          · simp [hclass, hk] at hfast
             exact ih _ coreFactors hfast
 
 /-- The exhaustive recombination wrapper preserves the polynomial product
