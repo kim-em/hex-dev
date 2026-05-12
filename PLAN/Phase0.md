@@ -208,7 +208,10 @@ into Phase 1 until the Phase 0 PR lands on `main`.
          - run: lake exe cache get
          - run: bash scripts/ci/check_no_mathlib_rebuild.sh
          - run: lake build
-         # plus per-library bench verify steps (see SPEC/benchmarking.md)
+         # No bench verify in CI — workers run `lake exe X_bench verify`
+         # locally before publishing, with a scheduled main-branch
+         # backstop (see SPEC/benchmarking.md §Worker affected-bench
+         # discipline; SPEC/CI.md §Job-count budget).
      build-macos:
        runs-on: macos-latest
        steps:

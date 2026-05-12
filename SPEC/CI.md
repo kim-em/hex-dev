@@ -66,20 +66,23 @@ also has one macOS job (the dyld cross-check). No other parallelism.
 
 Concretely:
 
-- `ci.yml`: one `build` ubuntu job (DAG checks, hex `lake build`,
-  per-library `bench verify` smoke gate per
-  [SPEC/benchmarking.md §CI integration](benchmarking.md)) and one
-  `build-macos` macOS job (hex `lake build` only — the dyld
-  cross-check). **Bench verify runs on ubuntu, not macOS**: the
-  macOS job exists for symbol-resolution coverage, not benchmarking,
-  and macOS runners are 10× the cost and a fraction of the
-  concurrency. Per [SPEC/benchmarking.md §CI integration](benchmarking.md),
-  `verify` is a smoke gate (does the bench module compile and run?),
-  not a timing measurement; timing-relevant runs live on a separate
-  scheduled workflow on dedicated hardware.
+- `ci.yml`: one `build` ubuntu job (DAG checks, Mathlib cache fetch
+  per [§Mathlib cache is mandatory](#mathlib-cache-is-mandatory),
+  hex `lake build`) and one `build-macos` macOS job (hex `lake build`
+  only — the dyld cross-check). The macOS job exists for
+  symbol-resolution coverage; macOS runners are 10× the cost and a
+  fraction of the concurrency, so use them only for what genuinely
+  needs darwin.
 - `conformance.yml`: one ubuntu job that runs the full conformance
   matrix and every oracle (FLINT, PARI, fpLLL, Conway) sequentially
   inside that single runner.
+- `nightly-bench-verify.yml` (scheduled, not merge-gating): one
+  ubuntu job that runs the full `lake exe X_bench verify` sweep
+  across every library at `done_through ≥ 4`. Backstop for the
+  worker-side smoke gate, not a pre-merge check. Per
+  [SPEC/benchmarking.md §Worker affected-bench discipline](benchmarking.md),
+  `verify` is run by workers locally before publishing a PR, not
+  by CI per PR.
 - Future workflows: one ubuntu job, period. If a second runner is
   genuinely needed (e.g. a separate macOS bench cross-check), state
   the reason in a workflow-level comment.
@@ -93,11 +96,20 @@ this project — every job re-builds the project's own Lean libraries
 on top of Mathlib, so a matrix entry that "only does one target"
 still pays the same fixed startup cost as the consolidated job.
 
-**New oracles, new conformance targets, and new bench targets
-extend the script of the single existing job.** Add an apt step
-for new system deps, a pip step for new Python deps, and a sequential
-shell loop for new per-library checks. Do not add a new top-level
-job, do not add `strategy.matrix`, and do not split a workflow.
+**New oracles and new conformance targets extend the script of the
+single existing job.** Add an apt step for new system deps, a pip
+step for new Python deps, and a sequential shell loop for new
+per-library checks. Do not add a new top-level job, do not add
+`strategy.matrix`, and do not split a workflow.
+
+**New bench targets do not extend CI.** Bench-module bitrot is
+caught by workers running `lake exe X_bench verify` locally before
+publishing (see [SPEC/benchmarking.md §Worker affected-bench
+discipline](benchmarking.md)) and by the scheduled
+`nightly-bench-verify.yml` backstop on `main`. Adding a new bench
+target means registering it in the per-library `Bench.lean` and
+ensuring it shows up in the nightly's enumeration — it does not
+mean editing the merge-gating workflows.
 
 ## Mathlib cache is mandatory
 
@@ -141,6 +153,11 @@ workflow files):
 - `build` (from `ci.yml`)
 - `build-macos` (from `ci.yml`)
 - `conformance` (from `conformance.yml`)
+- `affected-benches-check` (from `affected-benches-check.yml`) — a
+  cheap evidence gate that runs no `verify`, only confirms the PR
+  body's `Affected benches:` line matches the affected-benches
+  enumeration for the diff. See
+  [SPEC/benchmarking.md §Worker affected-bench discipline](benchmarking.md).
 
 `required_status_checks.strict` is `false`. With `strict: true`,
 every merge to `main` flips every other open PR to `BEHIND` and
@@ -177,7 +194,7 @@ self-hosted runners explicitly rather than drifting toward them.
 
 ## How to add new CI work
 
-To add a new conformance check, oracle, benchmark, or build target:
+To add a new conformance check, oracle, or build target:
 
 1. **Default**: extend the script of the existing single job in the
    workflow that already covers this kind of work (`conformance.yml`
@@ -192,6 +209,12 @@ To add a new conformance check, oracle, benchmark, or build target:
 6. Update the relevant SPEC and PLAN cross-references (this file,
    `PLAN/Phase0.md` §6, `SPEC/testing.md`'s "Adding a new oracle"
    section) if the change introduces a new category of check.
+
+**Bench targets are not added via this recipe** — they do not run
+in merge-gating CI at all. See
+[SPEC/benchmarking.md §Worker affected-bench discipline](benchmarking.md)
+for how new bench registrations reach their enforcement points
+(worker-side `verify` + scheduled nightly backstop).
 
 A new top-level workflow is justified only by a clearly distinct
 class of CI work that genuinely cannot share a runner with existing
