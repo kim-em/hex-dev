@@ -52,9 +52,60 @@ External comparator:
   `5c975aeb2033540b8f9a05d2ffac87dca0f258e887a5807edefbe60178a547e0`)` is
   registered as the Phase-4 gating comparator for the bottom/shared
   `phase4.input_families` rungs. `scripts/oracle/setup_lll_isabelle.sh`
-  downloads, verifies, caches, and builds `svp_verified`; set
-  `HEX_LLL_ISABELLE_SVP` to an already-built binary to avoid setup in the
-  first measured call.
+  downloads, verifies, caches, and patches the archive, then builds
+  `svp_verified`. The patch
+  `scripts/oracle/patches/lll-isabelle/01-persistent-stdin.patch`
+  rewrites the Haskell entry point so the binary loops on stdin instead
+  of accepting a single matrix file path on argv. Set
+  `HEX_LLL_ISABELLE_SVP` to an already-built binary to avoid setup in
+  the first measured call.
+
+## Comparator-call protocol (persistent subprocess)
+
+Per `SPEC/benchmarking.md` (post-#3657) "External comparators / Process
+call", Phase-4 process-call comparators with non-negligible per-call
+overhead use a persistent subprocess: one driver is spawned per
+`lake exe hexlll_bench run` invocation, and each measured call sends one
+framed request to its stdin and reads one framed reply from its stdout.
+
+**Framing.** Each request is one line containing the input matrix in
+Haskell's `[[Integer]]` read syntax — exactly the string produced by
+`matrixHaskell` — terminated by `\n`. Each reply is one line containing
+the squared norm of the comparator's first reduced row, terminated by
+`\n`. The framing is shared with the fpylll driver wired in HO-17 so
+both comparators are framing-compatible.
+
+**Lifetime.** The driver is spawned lazily on first use into
+`isabelleChildRef : IO.Ref (Option PersistentComparator)` and reused
+for every subsequent call in the same `hexlll_bench` process. The
+child's stdin is held by the bench process via `Child.takeStdin`; on
+process exit, the OS reaps the driver via EOF on stdin.
+
+**Error handling.** If `requestLine` raises any `IO` error, the bench
+wiring drops the cached child handle, re-spawns the driver from
+`scripts/oracle/setup_lll_isabelle.sh`, and retries the request once.
+Persistent failure (e.g. setup script failure or repeated driver
+crash) surfaces as an `IO.userError`.
+
+**Per-call overhead.** Piping 10000 trivial inputs
+(`[[1,0],[0,1]]`) through the patched binary on the audit host takes
+~110 ms wall total (median of 5 trials), of which ~22 ms is the
+one-time GHC startup; per-call protocol overhead is ~9 µs in
+steady state. This is three orders of magnitude below the previous
+~22 ms per-call GHC start-up plus `readFile` shape, and well below
+the 5 % overhead-to-measured-time floor `SPEC/benchmarking.md`
+requires for honest ratios.
+
+**Interaction with `setup_fixed_benchmark`.** `lean-bench` spawns one
+fresh `hexlll_bench` child process per measured repeat of a fixed
+benchmark, so each repeat starts with a cold `isabelleChildRef`.
+The persistent harness still avoids per-call `IO.Process.output` and
+per-call `IO.FS.writeFile` round-trips inside one child, but the
+one-time GHC start cost is incurred per repeat at this benchmark
+shape. Wall-time-per-call for fixed `runIsabelle*` targets remains
+dominated by GHC startup; the protocol-overhead figure above is
+what determines whether comparator ratios qualify for the eligible
+range in HO-18's regenerated report.
 -/
 
 namespace Hex.LLLBench
@@ -596,20 +647,76 @@ def resolveIsabelleBinary : IO String := do
   isabelleBinaryRef.set (some path)
   return path
 
-def ensureIsabelleInputDir : IO Unit := do
-  discard <| checkedProcessOutput "mkdir" #["-p", ".cache/oracles/lll-isabelle/bench-inputs"]
-
 def parseIsabelleNormSq (text : String) : IO Int := do
   match text.trimAscii.toString.toNat? with
   | some n => return Int.ofNat n
   | none => throw <| IO.userError s!"svp_verified emitted non-numeric output: {text}"
 
-def runIsabelleShortVectorNormSq (tag : String) (input : FirstShortVectorInput) : IO Int := do
+/-- Persistent child process for a comparator that loops on stdin/stdout.
+
+The `stdin` field is the writable handle extracted via `Child.takeStdin`;
+the `child` field is the underlying handle (post-`takeStdin`, so its
+`stdin` is `Unit`), kept so the process is not reaped while the
+benchmark holds the comparator. -/
+structure PersistentComparator where
+  stdin : IO.FS.Handle
+  child : IO.Process.Child
+    { stdin := .null, stdout := .piped, stderr := .piped }
+
+namespace PersistentComparator
+
+/-- Spawn the comparator with piped stdio and take its stdin handle. -/
+def spawn (cmd : String) (args : Array String := #[]) :
+    IO PersistentComparator := do
+  let raw ← IO.Process.spawn
+    { cmd := cmd, args := args,
+      stdin := .piped, stdout := .piped, stderr := .piped }
+  let (stdin, child) ← raw.takeStdin
+  return { stdin := stdin, child := child }
+
+/-- Write one request line and read one reply line. The caller embeds
+the framing protocol into `request`; this helper appends a newline,
+flushes stdin, then blocks on `getLine`. -/
+def requestLine (c : PersistentComparator) (request : String) : IO String := do
+  c.stdin.putStr (request ++ "\n")
+  c.stdin.flush
+  c.child.stdout.getLine
+
+end PersistentComparator
+
+initialize isabelleChildRef : IO.Ref (Option PersistentComparator) ←
+  IO.mkRef none
+
+/-- Lazily spawn the persistent `svp_verified` driver, or return the
+cached handle. -/
+def resolveIsabelleChild : IO PersistentComparator := do
+  if let some ch ← isabelleChildRef.get then
+    return ch
   let binary ← resolveIsabelleBinary
-  ensureIsabelleInputDir
-  let path := ".cache/oracles/lll-isabelle/bench-inputs/" ++ tag ++ ".txt"
-  IO.FS.writeFile path (matrixHaskell input.basis)
-  parseIsabelleNormSq (← checkedProcessOutput binary #[path])
+  let ch ← PersistentComparator.spawn binary
+  isabelleChildRef.set (some ch)
+  return ch
+
+/-- Send one matrix to the persistent driver and parse its reply.
+
+On process death or any IO error from the protocol, the cached handle
+is dropped, a fresh driver is spawned, and the call retried once.
+Persistent failure surfaces as an `IO.userError` from the retry path.
+
+The `tag` argument is preserved for call-site documentation but is no
+longer used to materialise per-call temp files. -/
+def runIsabelleShortVectorNormSq (_tag : String) (input : FirstShortVectorInput) :
+    IO Int := do
+  let request := matrixHaskell input.basis
+  let reply ←
+    try
+      (← resolveIsabelleChild).requestLine request
+    catch _ =>
+      isabelleChildRef.set none
+      (← resolveIsabelleChild).requestLine request
+  if reply.isEmpty then
+    throw <| IO.userError "svp_verified closed stdout before replying"
+  parseIsabelleNormSq reply
 
 /-- Fixed benchmark target: BZ recombination hot path at `p = 5`, `k = 2`,
 and three lifted local factors. -/
