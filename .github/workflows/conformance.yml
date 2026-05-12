@@ -47,17 +47,32 @@ jobs:
           toolchain="$(sed 's|/|--|; s|:|---|' lean-toolchain)"
           echo "LD_LIBRARY_PATH=$HOME/.elan/toolchains/$toolchain/lib/lean:${LD_LIBRARY_PATH:-}" \
             >> "$GITHUB_ENV"
-      - name: Build conformance + emit-fixture targets
+      - name: Build conformance + emit-fixture targets (HO-37 experiment A — per-target timing)
         run: |
-          lake build \
-            $(python3 scripts/conformance_targets.py --space-separated) \
-            hexpoly_emit_fixtures hexpolyfp_emit_fixtures \
-            hexberlekamp_emit_fixtures hexmatrix_emit_fixtures \
-            hexbz_emit_fixtures hexpolyz_emit_fixtures \
-            hexgf2_emit_fixtures hexgfq_emit_fixtures \
-            hexgfqring_emit_fixtures hexgfqfield_emit_fixtures \
-            hexgramschmidt_emit_fixtures hexhensel_emit_fixtures \
-            hexconway_emit_fixtures hexlll_emit_fixtures
+          # HO-37 experiment A: split the single `lake build` call into
+          # 27 + 14 = 41 sequential `lake build <target>` invocations so
+          # each one's wallclock surfaces independently. The total
+          # wallclock should equal the original, but we now know which
+          # target contributes how much. `-j 1` would serialise but also
+          # forfeit any parallelism Lake's task scheduler does internally
+          # for a single library compile — we want incremental, not raw.
+          set -x
+          for tgt in $(python3 scripts/conformance_targets.py); do
+            ts=$(date +%s)
+            lake build "$tgt"
+            echo "TIMING: $tgt $(( $(date +%s) - ts ))s"
+          done
+          for emit in hexpoly_emit_fixtures hexpolyfp_emit_fixtures \
+                      hexberlekamp_emit_fixtures hexmatrix_emit_fixtures \
+                      hexbz_emit_fixtures hexpolyz_emit_fixtures \
+                      hexgf2_emit_fixtures hexgfq_emit_fixtures \
+                      hexgfqring_emit_fixtures hexgfqfield_emit_fixtures \
+                      hexgramschmidt_emit_fixtures hexhensel_emit_fixtures \
+                      hexconway_emit_fixtures hexlll_emit_fixtures; do
+            ts=$(date +%s)
+            lake build "$emit"
+            echo "TIMING: $emit $(( $(date +%s) - ts ))s"
+          done
       - name: Cross-check fixtures and run oracles
         run: bash scripts/ci/run_oracles.sh
       - name: Upload failure records
