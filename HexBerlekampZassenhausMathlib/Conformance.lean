@@ -71,6 +71,12 @@ private def mathReducibleQuadratic : Polynomial ℤ :=
 private def mathIrreducibleQuadratic : Polynomial ℤ :=
   HexPolyZMathlib.toPolynomial hexIrreducibleQuadratic
 
+/-- Executable product guard for the `Factorization` returned by `Hex.factor`. -/
+private def factorProductPreserved (f : Hex.ZPoly) : Bool :=
+  Hex.Factorization.product (Hex.factor f) == f
+
+/-! ## Irreducibility checks through the transported Mathlib surface -/
+
 example : irreducibleByFactorization mathZero = false := by
   rw [mathZero, irreducibleByFactorization, HexPolyZMathlib.ofPolynomial_toPolynomial]
   rfl
@@ -83,6 +89,12 @@ example : irreducibleByFactorization mathConstantPrime = true := by
   rw [mathConstantPrime, irreducibleByFactorization, HexPolyZMathlib.ofPolynomial_toPolynomial]
   rfl
 
+/-! ## Decidability elaboration for representative `Polynomial ℤ` inputs -/
+
+example : Decidable (Irreducible mathZero) := inferInstance
+
+example : Decidable (Irreducible mathOne) := inferInstance
+
 example : Decidable (Irreducible mathConstantPrime) := inferInstance
 
 example : Decidable (Irreducible mathLinearPrimitive) := inferInstance
@@ -90,6 +102,8 @@ example : Decidable (Irreducible mathLinearPrimitive) := inferInstance
 example : Decidable (Irreducible mathReducibleQuadratic) := inferInstance
 
 example : Decidable (Irreducible mathIrreducibleQuadratic) := inferInstance
+
+/-! ## Round-trip checks for the conversion boundary -/
 
 example :
     HexPolyZMathlib.toPolynomial (HexPolyZMathlib.ofPolynomial mathLinearPrimitive) =
@@ -116,17 +130,19 @@ example :
       zpoly #[2, 3, 1] :=
   HexPolyZMathlib.ofPolynomial_toPolynomial (zpoly #[2, 3, 1])
 
-#guard
-  let factors := Hex.factor hexLinearPrimitive
-  Hex.Factorization.product factors = hexLinearPrimitive
+/-! ## Product preservation guards for the public `Factorization` convention -/
 
-#guard
-  let factors := Hex.factor hexReducibleQuadratic
-  Hex.Factorization.product factors = hexReducibleQuadratic
+#guard factorProductPreserved hexZero
 
-#guard
-  let factors := Hex.factor hexIrreducibleQuadratic
-  Hex.Factorization.product factors = hexIrreducibleQuadratic
+#guard factorProductPreserved hexOne
+
+#guard factorProductPreserved hexConstantPrime
+
+#guard factorProductPreserved hexLinearPrimitive
+
+#guard factorProductPreserved hexReducibleQuadratic
+
+#guard factorProductPreserved hexIrreducibleQuadratic
 
 end
 
