@@ -123,6 +123,17 @@ representatives.
   simpa [ctx.modulus_eq] using
     (_root_.BarrettCtx.toNat_mulMod ctx.toUInt64Ctx a.toUInt64 b.toUInt64 ha hb)
 
+/--
+Barrett hot-loop multiplication agrees with the ordinary `ZMod64`
+multiplication surface.
+-/
+@[simp] theorem mulMod_eq_mul (ctx : BarrettCtx p) (a b : ZMod64 p) :
+    ctx.mulMod a b = a * b := by
+  exact
+    (ZMod64.eq_iff_toNat_eq (ctx.mulMod a b) (a * b)).mpr (by
+      rw [toNat_mulMod]
+      exact (ZMod64.toNat_mul a b).symm)
+
 end BarrettCtx
 
 namespace MontCtx
@@ -166,6 +177,34 @@ representation.
 -/
 def fromMont (ctx : MontCtx p) (a : MontResidue p) : ZMod64 p :=
   ZMod64.ofNat p ((_root_.MontCtx.fromMont ctx.toUInt64Ctx a.toUInt64).toNat)
+
+/-- The Nat value of `toMont` is multiplication by the Montgomery radix. -/
+@[simp] theorem toNat_toMont (ctx : MontCtx p) (a : ZMod64 p) :
+    (ctx.toMont a).toNat = (a.toNat * UInt64.word) % p := by
+  have ha := zmod64_lt_modulus ctx a
+  simpa [ctx.modulus_eq, toMont, ZMod64.toUInt64_eq_val, ZMod64.toNat_eq_val,
+      MontResidue.toNat_eq_val, MontResidue.toUInt64_eq_val] using
+    (_root_.MontCtx.toNat_toMont ctx.toUInt64Ctx a.toUInt64 ha)
+
+/--
+`fromMont` removes one Montgomery radix factor from a Montgomery-form loop
+temporary.
+-/
+theorem fromMont_repr (ctx : MontCtx p) (a : MontResidue p) :
+    (ctx.fromMont a).toNat * UInt64.word % p = a.toNat := by
+  have ha := montResidue_lt_modulus ctx a
+  have hlt64 : _root_.MontCtx.fromMont ctx.toUInt64Ctx a.toUInt64 < ctx.modulus :=
+    _root_.MontCtx.fromMont_lt ctx.toUInt64Ctx a.toUInt64 ha
+  have hlt :
+      (_root_.MontCtx.fromMont ctx.toUInt64Ctx a.toUInt64).toNat < p := by
+    simpa [ctx.modulus_eq] using UInt64.lt_iff_toNat_lt.mp hlt64
+  have hfrom :
+      (ctx.fromMont a).toNat =
+        (_root_.MontCtx.fromMont ctx.toUInt64Ctx a.toUInt64).toNat := by
+    rw [fromMont, ZMod64.toNat_ofNat, Nat.mod_eq_of_lt hlt]
+  rw [hfrom]
+  simpa [ctx.modulus_eq, MontResidue.toUInt64_eq_val, MontResidue.toNat_eq_val] using
+    (_root_.MontCtx.fromMont_repr ctx.toUInt64Ctx a.toUInt64 ha)
 
 /-- Converting a standard residue into Montgomery form and back is the identity. -/
 @[simp] theorem fromMont_toMont (ctx : MontCtx p) (a : ZMod64 p) :
@@ -211,6 +250,46 @@ leaving Montgomery form computes the ordinary modular product.
     _ = ((a.toNat * b.toNat) % p) % p := by
           simpa [ctx.modulus_eq, ZMod64.toUInt64_eq_val, ZMod64.toNat_eq_val] using congrArg (fun n => n % p) hEq
     _ = (a.toNat * b.toNat) % p := by rw [Nat.mod_mod]
+
+/--
+Montgomery multiplication preserves the represented standard-residue product
+when converted back out of Montgomery form.
+-/
+@[simp] theorem mulMont_repr (ctx : MontCtx p) (a b : MontResidue p) :
+    (ctx.fromMont (ctx.mulMont a b)).toNat =
+      ((ctx.fromMont a).toNat * (ctx.fromMont b).toNat) % p := by
+  have ha := montResidue_lt_modulus ctx a
+  have hb := montResidue_lt_modulus ctx b
+  have hmul :=
+    _root_.MontCtx.mulMont_repr ctx.toUInt64Ctx a.toUInt64 b.toUInt64 ha hb
+  have hfrom (x : MontResidue p) :
+      (ctx.fromMont x).toNat =
+        (_root_.MontCtx.fromMont ctx.toUInt64Ctx x.toUInt64).toNat := by
+    have hx := montResidue_lt_modulus ctx x
+    have hlt64 : _root_.MontCtx.fromMont ctx.toUInt64Ctx x.toUInt64 < ctx.modulus :=
+      _root_.MontCtx.fromMont_lt ctx.toUInt64Ctx x.toUInt64 hx
+    have hlt :
+        (_root_.MontCtx.fromMont ctx.toUInt64Ctx x.toUInt64).toNat < p := by
+      simpa [ctx.modulus_eq] using UInt64.lt_iff_toNat_lt.mp hlt64
+    rw [fromMont, ZMod64.toNat_ofNat, Nat.mod_eq_of_lt hlt]
+  have hmulWord :
+      (ctx.mulMont a b).toUInt64 =
+        _root_.MontCtx.mulMont ctx.toUInt64Ctx a.toUInt64 b.toUInt64 := by
+    simp [mulMont, MontResidue.toUInt64_eq_val]
+  rw [hfrom (ctx.mulMont a b), hfrom a, hfrom b]
+  simpa [ctx.modulus_eq, hmulWord, MontResidue.toUInt64_eq_val] using hmul
+
+/--
+Multiplying two standard residues by entering Montgomery form, multiplying, and
+leaving Montgomery form agrees with ordinary `ZMod64` multiplication.
+-/
+@[simp] theorem fromMont_mulMont_toMont (ctx : MontCtx p) (a b : ZMod64 p) :
+    ctx.fromMont (ctx.mulMont (ctx.toMont a) (ctx.toMont b)) = a * b := by
+  exact
+    (ZMod64.eq_iff_toNat_eq
+      (ctx.fromMont (ctx.mulMont (ctx.toMont a) (ctx.toMont b))) (a * b)).mpr (by
+        rw [toNat_mulMont]
+        exact (ZMod64.toNat_mul a b).symm)
 
 end MontCtx
 
