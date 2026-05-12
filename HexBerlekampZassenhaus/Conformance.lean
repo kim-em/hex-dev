@@ -23,6 +23,8 @@ Covered properties:
 - normalization prefix factors and square-free core multiply back to the input
 - supported recombination/factorization outputs multiply back to the target on
   committed lifted factors
+- adversarial modular split cases exercise non-trivial subset-product
+  recombination buckets
 - signed scalar and `(factor, multiplicity)` buckets match independently
   committed expectations on the public `Factorization` edge-case table
 - bounded and default factor entry points multiply their returned factors back
@@ -39,6 +41,8 @@ Covered edge cases:
   leading-coefficient-divisible inputs, and square-free integer polynomials
 - empty and singleton lifted-factor recombination inputs
 - exhaustive slow-backstop and BHKS recovery branch inputs
+- four-way modular split inputs whose integer factors are quadratic subset
+  products
 - valid, wrong-prime, missing-obstruction, malformed-degree, and composite
   integer irreducibility certificates
 -/
@@ -50,6 +54,7 @@ private instance boundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
 private instance boundsTwo : ZMod64.Bounds 2 := ⟨by decide, by decide⟩
 private instance boundsThree : ZMod64.Bounds 3 := ⟨by decide, by decide⟩
 private instance boundsSeven : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
+private instance boundsTwentyThree : ZMod64.Bounds 23 := ⟨by decide, by decide⟩
 
 private theorem one_ne_zero_five : (1 : ZMod64 5) ≠ 0 := by
   intro h
@@ -79,11 +84,19 @@ private def sameFactorCoeffSet (actual expected : List (List Int × Nat)) : Bool
     expected.all (fun target => actual.any (fun got => got == target)) &&
     actual.all (fun got => expected.any (fun target => got == target))
 
+private def sameCoeffSet (actual expected : List (List Int)) : Bool :=
+  actual.length == expected.length &&
+    expected.all (fun target => actual.any (fun got => got == target)) &&
+    actual.all (fun got => expected.any (fun target => got == target))
+
 private def sortedLinearRoots (factors : Array ZPoly) : Array Int :=
   (factors.map fun f => -(f.coeff 0)).qsort (· ≤ ·)
 
 private def polyFive (coeffs : Array Nat) : FpPoly 5 :=
   FpPoly.ofCoeffs (coeffs.map (fun n => ZMod64.ofNat 5 n))
+
+private def polyTwentyThree (coeffs : Array Nat) : FpPoly 23 :=
+  FpPoly.ofCoeffs (coeffs.map (fun n => ZMod64.ofNat 23 n))
 
 private def coeffNats (f : FpPoly 5) : List Nat :=
   f.toArray.toList.map ZMod64.toNat
@@ -143,6 +156,21 @@ private def x4Plus1 : ZPoly :=
 
 private def quadSqrt2Sqrt3 : ZPoly :=
   zpoly #[6, 0, -5, 0, 1]
+
+private def quadSqrt2Sqrt3PrimeData23 : PrimeChoiceData :=
+  { p := 23
+    fModP := ZPoly.modP 23 quadSqrt2Sqrt3
+    factorsModP :=
+      #[ polyTwentyThree #[18, 1]
+       , polyTwentyThree #[5, 1]
+       , polyTwentyThree #[16, 1]
+       , polyTwentyThree #[7, 1] ] }
+
+private def quadSqrt2Sqrt3LiftData23 : LiftData :=
+  henselLiftData quadSqrt2Sqrt3 4 quadSqrt2Sqrt3PrimeData23
+
+private def quadSqrt2Sqrt3ExpectedFactors : Array ZPoly :=
+  #[zpoly #[-2, 0, 1], zpoly #[-3, 0, 1]]
 
 private def swinnertonDyerSD3 : ZPoly :=
   zpoly #[576, 0, -960, 0, 352, 0, -40, 0, 1]
@@ -384,6 +412,15 @@ private def factorizationEdgeCases : List FactorizationCase :=
         Array.polyProduct factors = liftedTarget5
   | none => true
 #guard bhksRecover? liftedTarget3 emptyLift = none
+#guard quadSqrt2Sqrt3LiftData23.liftedFactors.size = 4
+#guard
+  match bhksRecover? quadSqrt2Sqrt3 quadSqrt2Sqrt3LiftData23 with
+  | some factors =>
+      factors.size = 2 &&
+        Array.polyProduct factors = quadSqrt2Sqrt3 &&
+        sameCoeffSet (factorCoeffSummary factors)
+          (factorCoeffSummary quadSqrt2Sqrt3ExpectedFactors)
+  | none => false
 
 #guard
   Factorization.product (factorSlow liftedTarget3) = liftedTarget3
