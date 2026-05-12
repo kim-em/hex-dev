@@ -72,6 +72,10 @@
    applies to a benchmark-discovered scaffolding `def` applies to a
    proof a refactor would silently axiomatise.
 
+## Lakefile
+
+Don't use `precompileModules := true`. It isn't necessary.
+
 ## Fully autonomous execution
 
 The project runs without human interaction after launch. Lean, Mathlib,
