@@ -177,8 +177,9 @@ The CLI surface is `lake exe hexfoo_bench <subcommand>`:
   hashes at common parameters, plus a relative-timing summary.
 - `verify [NAMES…]` — smoke-test registration wiring: spawn each
   benchmark with a tight inner-tuning budget, check the child exits
-  cleanly and emits a hash where one is expected. Used as a CI
-  gate; see [§CI integration](#ci-integration).
+  cleanly and emits a hash where one is expected. Used as the smoke
+  gate workers run before publishing; see
+  [§Worker affected-bench discipline](#worker-affected-bench-discipline).
 
 Per-library SPECs declare the complexity for each operation in their
 API surface. The textbook model is the contract; the benchmark
@@ -456,36 +457,80 @@ medium and large primes (e.g. `(97, 127)`, `(521, 13)`,
 `(97, 128)`), and large-degree irreducibility stress tests over
 `F_2` at degrees `512`, `1024`, `2048` and beyond when feasible.
 
-## CI integration
+## Worker affected-bench discipline
 
-Every library at `done_through ≥ 4` ships a CI job that runs:
+The `verify` subcommand is the bench-module smoke gate: it spawns each
+registered benchmark at a tight inner-tuning budget, checks the child
+exits cleanly, and verifies hashable benchmarks emit hashes. It does
+NOT assert timing values — the gate detects bitrot of the bench module
+itself, not regressions in the implementation.
 
-```sh
-lake exe hexfoo_bench list
-lake exe hexfoo_bench verify
-```
+This gate is **enforced worker-side**, not in merge-gating CI. The CI
+cost of running every library's `verify` on every PR — sequentially,
+regardless of which files the PR touched — was prohibitive at this
+repo's scale (~30 minutes per PR, saturating GitHub's hosted-runner
+concurrency cap). Workers run only the verifications their changes
+could plausibly affect, locally, before publishing.
 
-The `verify` subcommand is the smoke gate: it spawns each
-registered benchmark at a tight inner-tuning budget, checks the
-child exits cleanly, and verifies hashable benchmarks emit hashes.
-It does NOT assert timing values — the gate detects bitrot of the
-bench module itself, not regressions in the implementation.
+### The worker rule
 
-Per-library `verify` budget is up to ~15 s for libraries whose
-smallest registered input genuinely needs that long; most libraries
-should run in a few seconds. The repo-wide CI step's total budget is
-the sum, with a soft target of a few minutes — not a hard cap. A
-library exceeding 15 s on `verify` needs either tighter
-smoke settings or a closer look at why its tiniest invocation is
-slow. It is not a license to weaken the scientific settings.
+For any PR whose diff includes a non-proof Lean file under `Hex/*/`
+(implementation source, not theorems), the worker:
 
-Full timing runs (`lake exe hexfoo_bench run NAME` with a real
-budget) are not part of merge-gating CI. They run on a scheduled
-workflow or release-candidate workflow, on dedicated hardware where
-timing comparisons are meaningful. Each release names the libraries
-whose timing runs must succeed; a release is blocked by an
-inconclusive verdict or a comparator divergence even when proofs
-are complete.
+1. Enumerates affected `*_bench` targets via
+   `scripts/bench/affected_benches.sh <changed-files...>`. The script
+   walks the lakefile's `lean_exe *_bench` declarations and the
+   transitive `import` graph from each bench root, intersecting with
+   the changed-files set.
+2. For each affected bench target, runs
+   `lake exe hexfoo_bench verify`. Per-target budget: up to ~15 s
+   where the smallest registered input genuinely needs that long;
+   most libraries finish in a few seconds.
+3. Handles the outcome:
+   - **`verify` passes**: no fixture commit needed.
+   - **`verify` fails because committed expected output legitimately
+     changed** (a deterministic implementation tweak shifted hashes
+     or fixture bytes in a way the worker can explain): regenerate
+     fixtures via `lake build hexfoo_emit_fixtures` (and equivalent),
+     commit the fixture diff in the same PR.
+   - **`verify` fails for any other reason**: that is a bench-found
+     finding. File an issue per
+     [§verdict-as-bug-trigger](#the-verdict-as-bug-trigger-model) and
+     roll back per [PLAN/Conventions.md §Rollback is a normal action](../PLAN/Conventions.md#rollback-is-a-normal-action).
+     Do not paper over by editing fixtures.
+
+A PR with no implementation diff (proof-only, doc-only, config-only)
+runs zero benches. The PR description marks this with
+`Affected benches: none`.
+
+### Pre-merge enforcement
+
+Every PR body must include an `Affected benches:` line listing the
+bench targets affected by the diff, or `none`. A cheap required
+status check (`affected-benches-check`) re-runs
+`scripts/bench/affected_benches.sh` against the PR's diff and fails
+if the body's list disagrees with the computed set. The check runs
+no benches itself — it only validates that the worker named the right
+targets. Verification that the targets actually ran is on trust,
+backstopped by the nightly run on `main`.
+
+### Nightly backstop
+
+`nightly-bench-verify.yml` runs the full `verify` sweep across every
+library at `done_through ≥ 4` against `main` on a daily schedule.
+Failures open a `human-oversight` issue with the failing target and
+the offending commit. This catches the residual case where a worker
+asserts an `Affected benches:` set but skips the local execution.
+
+### Scientific timing runs
+
+Full timing runs (`lake exe hexfoo_bench run NAME` with a real budget)
+are not part of merge-gating CI, the worker pre-publish step, or the
+nightly. They run on a scheduled workflow or release-candidate
+workflow, on dedicated hardware where timing comparisons are
+meaningful. Each release names the libraries whose timing runs must
+succeed; a release is blocked by an inconclusive verdict or a
+comparator divergence even when proofs are complete.
 
 ## Reproducibility contract
 
@@ -655,9 +700,9 @@ explicitly forbidden:
   `only 0 verdict-eligible row(s) survived…`. That is the harness
   telling you the schedule, the per-call cap, or the target inner
   nanos was set too low for the host the benchmark is supposed to
-  run on. CI treats exit 2 the same as a verdict mismatch: file an
-  issue, roll back, fix. Don't shrink scientific settings to dodge
-  the verdict.
+  run on. The Phase-4/release gate treats exit 2 the same as a verdict
+  mismatch: file an issue, roll back, fix. Don't shrink scientific
+  settings to dodge the verdict.
 - **Treating an "inconclusive" verdict as a passing scientific run.**
   Phase-4 exit criteria require either "consistent with declared
   complexity" or a tracked finding-issue explaining the mismatch
