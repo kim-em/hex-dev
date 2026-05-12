@@ -56,7 +56,7 @@ abbrev HasPositiveDimension (f : Hex.ZPoly) (d : Hex.LiftData) : Prop :=
 def projectedRowsOfLiftData (f : Hex.ZPoly) (d : Hex.LiftData)
     (hrows : HasPositiveDimension f d) : Hex.BhksProjectedRows :=
   Hex.bhksProjectedRows (latticeBasisOfLiftData f d) hrows
-    (Hex.bhksLatticeBasis_independent _)
+    (Hex.bhksLatticeBasis_independent f d.p d.k d.liftedFactors d.p_pos)
 
 /-- Executable bad-vector witness whose lattice and projected rows are the
 ones used by the forward-recovery package at the given lift data.  The
@@ -207,18 +207,18 @@ theorem bhksRecover_eq_some_of_recovery
   have hnondeg :
       Hex.bhksDegenerateIndicatorPartition
           (Hex.bhksProjectedRows (Hex.bhksLatticeBasis f d.p d.k d.liftedFactors)
-            hrows (Hex.bhksLatticeBasis_independent _))
+            hrows (Hex.bhksLatticeBasis_independent f d.p d.k d.liftedFactors d.p_pos))
           (Hex.bhksEquivalenceClassIndicators
             (Hex.bhksProjectedRows
               (Hex.bhksLatticeBasis f d.p d.k d.liftedFactors)
-              hrows (Hex.bhksLatticeBasis_independent _))) = false :=
+              hrows (Hex.bhksLatticeBasis_independent f d.p d.k d.liftedFactors d.p_pos))) = false :=
     h.nondegenerate
   have hcand :
       Hex.bhksIndicatorCandidates? f d
           (Hex.bhksEquivalenceClassIndicators
             (Hex.bhksProjectedRows
               (Hex.bhksLatticeBasis f d.p d.k d.liftedFactors)
-              hrows (Hex.bhksLatticeBasis_independent _))) =
+              hrows (Hex.bhksLatticeBasis_independent f d.p d.k d.liftedFactors d.p_pos))) =
         some h.expectedFactors :=
     h.candidates_eq
   have hprod := h.product_eq

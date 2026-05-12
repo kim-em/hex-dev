@@ -57,6 +57,7 @@ lifted-factor set; the Hensel-lift production surface is covered separately
 by `HexHensel/Conformance.lean`. -/
 private def liftDataOf (roots : List Int) : LiftData :=
   { p := liftP
+    p_pos := by decide
     k := liftK
     liftedFactors := (roots.map linear).toArray }
 
