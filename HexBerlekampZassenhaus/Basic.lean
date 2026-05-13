@@ -1823,7 +1823,7 @@ private def quadraticIntegerRootFactors? (core : ZPoly) : Option (Array ZPoly) :
   else
     none
 
-private def centeredModNat (z : Int) (m : Nat) : Int :=
+def centeredModNat (z : Int) (m : Nat) : Int :=
   if m = 0 then
     z
   else
@@ -1834,6 +1834,62 @@ private def centeredModNat (z : Int) (m : Nat) : Int :=
       r + Int.ofNat m
     else
       r - Int.ofNat m
+
+theorem centeredModNat_zero (m : Nat) :
+    centeredModNat 0 m = 0 := by
+  unfold centeredModNat
+  by_cases hm : m = 0 <;> simp [hm]
+
+theorem centeredModNat_emod_eq_of_natAbs_le
+    (z : Int) (m B : Nat)
+    (hbound : z.natAbs ≤ B) (hsep : 2 * B < m) :
+    centeredModNat (z % (m : Int)) m = z := by
+  have hmpos : 0 < m := by omega
+  have hmne : m ≠ 0 := Nat.ne_of_gt hmpos
+  rcases Int.natAbs_eq z with hz | hz
+  · rw [hz]
+    have hltNat : z.natAbs < m := by omega
+    have hlt : (z.natAbs : Int) < (m : Int) := by exact_mod_cast hltNat
+    have hnonneg : 0 ≤ (z.natAbs : Int) := by exact_mod_cast Nat.zero_le z.natAbs
+    have hmod : ((z.natAbs : Int) % (m : Int)) = (z.natAbs : Int) :=
+      Int.emod_eq_of_lt hnonneg hlt
+    unfold centeredModNat
+    simp [hmne, hmod]
+    intro hbad
+    omega
+  · rw [hz]
+    by_cases hzero : z.natAbs = 0
+    · simp [hzero, centeredModNat, hmne]
+    · have ha_lt : z.natAbs < m := by omega
+      have hrem : (-(z.natAbs : Int)) % (m : Int) = (m : Int) - (z.natAbs : Int) := by
+        have hnonneg : 0 ≤ (m : Int) - (z.natAbs : Int) := by omega
+        have hlt : (m : Int) - (z.natAbs : Int) < (m : Int) := by omega
+        have hcongr :
+            (((m : Int) - (z.natAbs : Int)) - (-(z.natAbs : Int))) % (m : Int) = 0 := by
+          have hsimp :
+              ((m : Int) - (z.natAbs : Int)) - (-(z.natAbs : Int)) = (m : Int) := by
+            omega
+          rw [hsimp]
+          exact Int.emod_eq_zero_of_dvd ⟨1, by omega⟩
+        have hmod_eq := (Int.emod_eq_emod_iff_emod_sub_eq_zero).2 hcongr
+        rw [Int.emod_eq_of_lt hnonneg hlt] at hmod_eq
+        exact hmod_eq.symm
+      have hinner :
+          (((m : Int) - (z.natAbs : Int)) % (m : Int)) =
+            (m : Int) - (z.natAbs : Int) := by
+        apply Int.emod_eq_of_lt <;> omega
+      unfold centeredModNat
+      simp [hmne, hrem, hinner]
+      have hsub_cast : (m : Int) - (z.natAbs : Int) = (m - z.natAbs : Nat) := by
+        omega
+      have hnatAbs : (((m : Int) - (z.natAbs : Int)).natAbs) = m - z.natAbs := by
+        rw [hsub_cast, Int.natAbs_natCast]
+      rw [hnatAbs]
+      have hnot : ¬ 2 * (m - z.natAbs) ≤ m := by omega
+      simp [hnot]
+      have hnotneg : ¬ (m : Int) - (z.natAbs : Int) < 0 := by omega
+      simp [hnotneg]
+      omega
 
 /-- Centred residue modulo `p^b`, the `mod^±` operation in the BHKS cut. -/
 def centeredResiduePow (p b : Nat) (x : Int) : Int :=
@@ -2242,8 +2298,41 @@ private def bhksNoProgressProjectedRows : BhksProjectedRows :=
 private def liftModulus (d : LiftData) : Nat :=
   d.p ^ d.k
 
-private def centeredLiftPoly (f : ZPoly) (m : Nat) : ZPoly :=
+def centeredLiftPoly (f : ZPoly) (m : Nat) : ZPoly :=
   DensePoly.ofCoeffs <| f.toArray.map fun coeff => centeredModNat coeff m
+
+private theorem coeff_centeredLiftPoly (f : ZPoly) (m i : Nat) :
+    (centeredLiftPoly f m).coeff i = centeredModNat (f.coeff i) m := by
+  have hzero : centeredModNat (0 : Int) m = 0 := centeredModNat_zero m
+  unfold centeredLiftPoly
+  rw [DensePoly.coeff_ofCoeffs]
+  unfold DensePoly.toArray DensePoly.coeff Array.getD
+  by_cases hi : i < f.coeffs.size
+  · simp [hi, Array.getElem_map]
+  · simp [hi]
+    change (0 : Int) = centeredModNat 0 m
+    exact hzero.symm
+
+theorem centeredLiftPoly_reduceModPow_eq_of_coeff_natAbs_le
+    (g : ZPoly) (p k B : Nat)
+    (hbound : ∀ i, (g.coeff i).natAbs ≤ B)
+    (hsep : 2 * B < p ^ k) :
+    centeredLiftPoly (ZPoly.reduceModPow g p k) (p ^ k) = g := by
+  apply DensePoly.ext_coeff
+  intro i
+  rw [coeff_centeredLiftPoly]
+  have hpk : 0 < p ^ k := by omega
+  rw [ZPoly.coeff_reduceModPow_eq_emod_of_pos _ _ _ _ hpk]
+  exact centeredModNat_emod_eq_of_natAbs_le (g.coeff i) (p ^ k) B (hbound i) hsep
+
+theorem centeredLiftPoly_eq_of_reduceModPow_eq
+    (g h : ZPoly) (p k B : Nat)
+    (hbound : ∀ i, (g.coeff i).natAbs ≤ B)
+    (hsep : 2 * B < p ^ k)
+    (hreduce : ZPoly.reduceModPow h p k = ZPoly.reduceModPow g p k) :
+    centeredLiftPoly (ZPoly.reduceModPow h p k) (p ^ k) = g := by
+  rw [hreduce]
+  exact centeredLiftPoly_reduceModPow_eq_of_coeff_natAbs_le g p k B hbound hsep
 
 /-- Normalize a candidate integer factor by extracting its primitive part and
 flipping sign so the leading coefficient is non-negative.  Used by
