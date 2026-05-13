@@ -4391,6 +4391,89 @@ private theorem yunStep_tail_derivative_isZero_of_source_common_dvd_one
       c w hder
       (yunStep_tail_common_dvd_one_of_common_dvd_one c w hcommon)
 
+private theorem yunFactorsContributionResidualComplete_of_derivative_zero_common
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (multiplicity fuel : Nat)
+    (hder : (DensePoly.derivative w).isZero = true)
+    (hcommon : ∀ d : FpPoly p, d ∣ c → d ∣ w → d ∣ (1 : FpPoly p)) :
+    yunFactorsContributionResidualComplete c w multiplicity fuel := by
+  induction fuel generalizing c w multiplicity with
+  | zero =>
+      intro _hone
+      simpa [yunFactorsContributionResidualComplete] using hder
+  | succ fuel ih =>
+      by_cases hc : isOne c = true
+      · simpa [yunFactorsContributionResidualComplete, hc] using
+          (fun _hone : isOne w = false => hder)
+      · have hc_false : isOne c = false := by
+          cases h : isOne c
+          · rfl
+          · exact False.elim (hc h)
+        let y := DensePoly.gcd c w
+        have htail_der :
+            (DensePoly.derivative (w / y)).isZero = true := by
+          simpa [y] using
+            yunStep_tail_derivative_isZero_of_source_common_dvd_one
+              c w hder hcommon
+        have htail_common :
+            ∀ d : FpPoly p, d ∣ y → d ∣ w / y → d ∣ (1 : FpPoly p) := by
+          simpa [y] using
+            yunStep_tail_common_dvd_one_of_common_dvd_one c w hcommon
+        have htail :
+            yunFactorsContributionResidualComplete
+              y (w / y) (multiplicity + 1) fuel :=
+          ih y (w / y) (multiplicity + 1) htail_der htail_common
+        simpa [yunFactorsContributionResidualComplete, hc_false, y] using htail
+
+private theorem yunFactorsContributionResidualDerivativeZero_of_derivative_zero_common
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (multiplicity fuel : Nat)
+    (hder : (DensePoly.derivative w).isZero = true)
+    (hcommon : ∀ d : FpPoly p, d ∣ c → d ∣ w → d ∣ (1 : FpPoly p)) :
+    yunFactorsContributionResidualDerivativeZero c w multiplicity fuel := by
+  exact
+    yunFactorsContributionResidualDerivativeZero_of_complete
+      c w multiplicity fuel
+      (yunFactorsContributionResidualComplete_of_derivative_zero_common
+        c w multiplicity fuel hder hcommon)
+
+private theorem yunFactorsContributionResidualDerivativeZero_of_derivative_split_coprime
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
+    (hdf : (DensePoly.derivative f).isZero = false)
+    (hcoprime :
+      let g := DensePoly.gcd f (DensePoly.derivative f)
+      let c := f / g
+      ∀ d : FpPoly p, d ∣ c → d ∣ g → d ∣ (1 : FpPoly p)) :
+    let g := DensePoly.gcd f (DensePoly.derivative f)
+    let c := f / g
+    yunFactorsContributionResidualDerivativeZero c g multiplicity fuel := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  let g := DensePoly.gcd f (DensePoly.derivative f)
+  let c := f / g
+  have hder_g : (DensePoly.derivative g).isZero = true := by
+    exact derivativeSplit_residual_derivative_zero_of_coprime hp f hdf hcoprime
+  exact
+    yunFactorsContributionResidualDerivativeZero_of_derivative_zero_common
+      c g multiplicity fuel hder_g hcoprime
+
+private theorem yunFactorsResidualDerivativeZero_of_derivative_active_coprime
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
+    (hdf : (DensePoly.derivative f).isZero = false)
+    (hcoprime :
+      let g := DensePoly.gcd f (DensePoly.derivative f)
+      let c := f / g
+      ∀ d : FpPoly p, d ∣ c → d ∣ g → d ∣ (1 : FpPoly p)) :
+    yunFactorsResidualDerivativeZero
+      (f / DensePoly.gcd f (DensePoly.derivative f))
+      (DensePoly.gcd f (DensePoly.derivative f))
+      multiplicity
+      fuel := by
+  apply yunFactorsResidualDerivativeZero_of_derivative_split_contribution
+    hp f multiplicity fuel hdf
+  exact
+    yunFactorsContributionResidualDerivativeZero_of_derivative_split_coprime
+      hp f multiplicity fuel hdf hcoprime
+
 private theorem normalizeMonic_eq_one_of_dvd_one
     [ZMod64.PrimeModulus p] {g : FpPoly p}
     (hdiv : g ∣ (1 : FpPoly p)) :
