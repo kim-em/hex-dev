@@ -3538,6 +3538,95 @@ theorem normalizedConstantFactors_product
   · simpa [normalizedConstantFactors, hcore] using normalizeForFactor_reassembles f
   · simpa [normalizedConstantFactors, hcore] using normalizeForFactor_reassembles f
 
+/--
+The `X`-free part of the primitive part of a nonzero integer polynomial is itself
+primitive. Stripping initial zero coefficients does not introduce a common factor
+because the original primitive part already has unit content.
+-/
+private theorem extractXPower_core_primitive_of_ne_zero
+    (f : ZPoly) (hf : f ≠ 0) :
+    ZPoly.Primitive (ZPoly.extractXPower (ZPoly.primitivePart f)).core := by
+  -- Step 1: shift xData.power xData.core = primitivePart f.
+  have hshift :
+      DensePoly.shift (ZPoly.extractXPower (ZPoly.primitivePart f)).power
+        (ZPoly.extractXPower (ZPoly.primitivePart f)).core =
+        ZPoly.primitivePart f := by
+    have hex :
+        Array.polyProduct
+          (xPowerFactorArray (ZPoly.extractXPower (ZPoly.primitivePart f)).power ++
+            #[(ZPoly.extractXPower (ZPoly.primitivePart f)).core]) =
+          ZPoly.primitivePart f :=
+      extractXPower_product (ZPoly.primitivePart f)
+    rw [polyProduct_append, polyProduct_singleton, polyProduct_xPowerFactorArray_mul] at hex
+    exact hex
+  -- Step 2: f ≠ 0 → content f ≠ 0.
+  have hcontent_f_ne : ZPoly.content f ≠ 0 := by
+    intro hcontent
+    apply hf
+    have hreconstruct := ZPoly.content_mul_primitivePart f
+    rw [hcontent] at hreconstruct
+    have hzero : DensePoly.scale (0 : Int) (ZPoly.primitivePart f) = 0 := by
+      apply DensePoly.ext_coeff
+      intro n
+      rw [DensePoly.coeff_scale (R := Int) (0 : Int) (ZPoly.primitivePart f) n
+        (Int.zero_mul 0)]
+      rw [DensePoly.coeff_zero]
+      exact Int.zero_mul _
+    rw [hzero] at hreconstruct
+    exact hreconstruct.symm
+  -- Step 3: content (primitivePart f) = 1.
+  have hcontent_pf : ZPoly.content (ZPoly.primitivePart f) = 1 :=
+    ZPoly.primitivePart_primitive f hcontent_f_ne
+  -- Step 4: every coefficient of primitivePart f is divisible by content xData.core.
+  have hdvd : ∀ n,
+      ZPoly.content (ZPoly.extractXPower (ZPoly.primitivePart f)).core ∣
+        (ZPoly.primitivePart f).coeff n := by
+    intro n
+    have hcoeff_eq :
+        (ZPoly.primitivePart f).coeff n =
+          (DensePoly.shift (ZPoly.extractXPower (ZPoly.primitivePart f)).power
+            (ZPoly.extractXPower (ZPoly.primitivePart f)).core).coeff n :=
+      congrArg (fun p : ZPoly => p.coeff n) hshift.symm
+    rw [hcoeff_eq, DensePoly.coeff_shift]
+    by_cases hn : n < (ZPoly.extractXPower (ZPoly.primitivePart f)).power
+    · rw [if_pos hn]
+      exact ⟨0, by show (0 : Int) = _ * 0; rw [Int.mul_zero]⟩
+    · rw [if_neg hn]
+      exact DensePoly.content_dvd_coeff
+        (ZPoly.extractXPower (ZPoly.primitivePart f)).core
+        (n - (ZPoly.extractXPower (ZPoly.primitivePart f)).power)
+  -- Step 5: content xData.core is non-negative.
+  have hcontent_nonneg :
+      0 ≤ ZPoly.content (ZPoly.extractXPower (ZPoly.primitivePart f)).core := by
+    show 0 ≤ DensePoly.content _
+    rw [DensePoly.content]
+    exact Int.natCast_nonneg _
+  have hd_int :
+      ((ZPoly.content (ZPoly.extractXPower (ZPoly.primitivePart f)).core).toNat : Int) =
+        ZPoly.content (ZPoly.extractXPower (ZPoly.primitivePart f)).core :=
+    Int.toNat_of_nonneg hcontent_nonneg
+  have hdvd_d :
+      ∀ n,
+        ((ZPoly.content
+            (ZPoly.extractXPower (ZPoly.primitivePart f)).core).toNat : Int) ∣
+          (ZPoly.primitivePart f).coeff n := by
+    intro n
+    rw [hd_int]
+    exact hdvd n
+  -- Step 6: apply the nat_eq_one helper.
+  have hd_eq :
+      (ZPoly.content (ZPoly.extractXPower (ZPoly.primitivePart f)).core).toNat = 1 :=
+    DensePoly.nat_eq_one_of_content_eq_one_of_nat_dvd_coeff
+      (ZPoly.primitivePart f) _
+      (by simpa [ZPoly.content] using hcontent_pf)
+      hdvd_d
+  show ZPoly.content (ZPoly.extractXPower (ZPoly.primitivePart f)).core = 1
+  have hcast :
+      ((ZPoly.content (ZPoly.extractXPower (ZPoly.primitivePart f)).core).toNat : Int) =
+        (1 : Int) := by exact_mod_cast hd_eq
+  rw [hd_int] at hcast
+  exact hcast
+
 private theorem firstSome_some
     {α β : Type} {xs : List α} {f : α → Option β} {y : β}
     (h : firstSome xs f = some y) :

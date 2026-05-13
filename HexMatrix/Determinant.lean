@@ -8402,5 +8402,383 @@ theorem mul_auxAdjugateM_eq_auxP
   intro j hj
   exact mul_auxAdjugateM_eq_auxP_entry M ⟨i, hi⟩ ⟨j, hj⟩
 
+/-! ### Bareiss Desnanot source-entry helpers and structural submatrix equalities
+
+Following the Mathlib-side reindexing in `HexMatrixMathlib/Determinant/Core.lean`,
+these Mathlib-free helpers expose, for each combination of `succ`/`castSucc`,
+the source-matrix entry selected by `bareissDesnanotIndex k`-reindexing a
+`(k+2)`-bordered minor of `source`, and then expose the entrywise matrix
+equalities between the five structural submatrices and the natural `(k+1)`
+bordered minors / leading prefix used by the final bordered-minor Desnanot
+identity. -/
+
+/-- Cyclic shift on `Fin (k + 1)` mapping `0 ↦ Fin.last k` and `r ↦ ⟨r.val - 1, _⟩`
+for `r.val ≥ 1`. This is the row/column rearrangement induced by
+`bareissDesnanotIndex k` on the sub-positions selected by
+`(Fin.last (k + 1)).succAbove`: it carries the Bareiss pivot row (originally
+position `k`) from sub-position `0` back to the trailing sub-position `k`. -/
+def bareissCyclicShift (k : Nat) (r : Fin (k + 1)) : Fin (k + 1) :=
+  if hzero : r.val = 0 then
+    Fin.last k
+  else
+    ⟨r.val - 1, by omega⟩
+
+theorem bareissCyclicShift_of_val_zero (k : Nat) (r : Fin (k + 1)) (h : r.val = 0) :
+    bareissCyclicShift k r = (Fin.last k : Fin (k + 1)) := by
+  show (if hzero : r.val = 0 then (Fin.last k : Fin (k + 1))
+        else ⟨r.val - 1, by omega⟩) = _
+  rw [dif_pos h]
+
+theorem bareissCyclicShift_of_pos (k : Nat) (r : Fin (k + 1)) (h : 0 < r.val) :
+    bareissCyclicShift k r = ⟨r.val - 1, by omega⟩ := by
+  show (if hzero : r.val = 0 then (Fin.last k : Fin (k + 1))
+        else ⟨r.val - 1, by omega⟩) = _
+  rw [dif_neg (Nat.ne_of_gt h)]
+
+/-- Value-form variant of `borderedMinor_entry_last_lt`: when `r.val = k`,
+the entry at `r` and a column with value `< k` selects source row `i`. -/
+private theorem borderedMinor_entry_val_k_lt (M : Matrix R n n) (k : Nat) (hk : k < n)
+    (i j : Fin n) (r : Fin (k + 1)) (hr : r.val = k) (c : Fin (k + 1)) (hc : c.val < k) :
+    (borderedMinor M k hk i j)[r][c] = M[i][(⟨c.val, Nat.lt_trans hc hk⟩ : Fin n)] := by
+  have hrnotlt : ¬ r.val < k := Nat.not_lt.mpr (Nat.le_of_eq hr.symm)
+  simp [borderedMinor, ofFn, hrnotlt, hc]
+
+/-- Value-form variant: when `r.val = k` and `c.val = k`, the entry at `r, c` is `M[i][j]`. -/
+private theorem borderedMinor_entry_val_k_val_k (M : Matrix R n n) (k : Nat) (hk : k < n)
+    (i j : Fin n) (r c : Fin (k + 1)) (hr : r.val = k) (hc : c.val = k) :
+    (borderedMinor M k hk i j)[r][c] = M[i][j] := by
+  have hrnotlt : ¬ r.val < k := Nat.not_lt.mpr (Nat.le_of_eq hr.symm)
+  have hcnotlt : ¬ c.val < k := Nat.not_lt.mpr (Nat.le_of_eq hc.symm)
+  simp [borderedMinor, ofFn, hrnotlt, hcnotlt]
+
+/-- Value-form variant: when `r.val < k` and `c.val = k`, the entry uses
+source row at `r.val` and source column `j`. -/
+private theorem borderedMinor_entry_lt_val_k (M : Matrix R n n) (k : Nat) (hk : k < n)
+    (i j : Fin n) (r : Fin (k + 1)) (hr : r.val < k) (c : Fin (k + 1)) (hc : c.val = k) :
+    (borderedMinor M k hk i j)[r][c] = M[(⟨r.val, Nat.lt_trans hr hk⟩ : Fin n)][j] := by
+  have hcnotlt : ¬ c.val < k := Nat.not_lt.mpr (Nat.le_of_eq hc.symm)
+  simp [borderedMinor, ofFn, hr, hcnotlt]
+
+/-- Source-entry helper for `succ`/`succ` positions: the entry of the `(k+2)`
+bordered minor at `bareissDesnanotIndex k r.succ`/`bareissDesnanotIndex k c.succ`
+selects an interior source row/column when `r.val < k`/`c.val < k` and the
+trailing `i`/`j` otherwise. -/
+theorem borderedMinor_at_succ_succ
+    (source : Matrix R n n) (k : Nat) (hnext : k + 1 < n) (i j : Fin n)
+    (r c : Fin (k + 1)) :
+    (borderedMinor source (k + 1) hnext i j)[bareissDesnanotIndex k r.succ][bareissDesnanotIndex k c.succ] =
+      (let rr : Fin n := if hr : r.val < k then ⟨r.val, Nat.lt_trans hr (Nat.lt_of_succ_lt hnext)⟩ else i
+       let cc : Fin n := if hc : c.val < k then ⟨c.val, Nat.lt_trans hc (Nat.lt_of_succ_lt hnext)⟩ else j
+       source[rr][cc]) := by
+  have hkn : k < n := Nat.lt_of_succ_lt hnext
+  by_cases hr : r.val < k <;> by_cases hc : c.val < k
+  · simp only [bareissDesnanotIndex_succ_lt k r hr, bareissDesnanotIndex_succ_lt k c hc]
+    show (borderedMinor source (k + 1) hnext i j)[(⟨r.val, by omega⟩ : Fin (k + 1 + 1))][(⟨c.val, by omega⟩ : Fin (k + 1 + 1))] = _
+    have hri : (⟨r.val, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by show r.val < k + 1; omega
+    have hci : (⟨c.val, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by show c.val < k + 1; omega
+    rw [borderedMinor_entry_lt_lt source (k + 1) hnext i j _ _ hri hci]
+    simp [hr, hc]
+  · have hc_eq : c.val = k := by have := c.isLt; omega
+    simp only [bareissDesnanotIndex_succ_lt k r hr, bareissDesnanotIndex_succ_top k c hc_eq]
+    show (borderedMinor source (k + 1) hnext i j)[(⟨r.val, by omega⟩ : Fin (k + 1 + 1))][Fin.last (k + 1)] = _
+    have hri : (⟨r.val, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by show r.val < k + 1; omega
+    rw [borderedMinor_entry_lt_last source (k + 1) hnext i j _ hri]
+    simp [hr, hc]
+  · have hr_eq : r.val = k := by have := r.isLt; omega
+    simp only [bareissDesnanotIndex_succ_top k r hr_eq, bareissDesnanotIndex_succ_lt k c hc]
+    show (borderedMinor source (k + 1) hnext i j)[Fin.last (k + 1)][(⟨c.val, by omega⟩ : Fin (k + 1 + 1))] = _
+    have hci : (⟨c.val, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by show c.val < k + 1; omega
+    rw [borderedMinor_entry_last_lt source (k + 1) hnext i j _ hci]
+    simp [hr, hc]
+  · have hr_eq : r.val = k := by have := r.isLt; omega
+    have hc_eq : c.val = k := by have := c.isLt; omega
+    simp only [bareissDesnanotIndex_succ_top k r hr_eq, bareissDesnanotIndex_succ_top k c hc_eq]
+    show (borderedMinor source (k + 1) hnext i j)[Fin.last (k + 1)][Fin.last (k + 1)] = _
+    rw [borderedMinor_entry_last_last source (k + 1) hnext i j]
+    simp [hr, hc]
+
+/-- Source-entry helper for `castSucc`/`castSucc` positions: the entry of the
+`(k+2)` bordered minor at `bareissDesnanotIndex k r.castSucc` / `bareissDesnanotIndex
+k c.castSucc` selects the pivot row/column position `⟨k, _⟩` when `r.val = 0` /
+`c.val = 0` and the shifted source row/column `⟨r.val - 1, _⟩` / `⟨c.val - 1, _⟩`
+otherwise. -/
+theorem borderedMinor_at_castSucc_castSucc
+    (source : Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (i j : Fin n) (r c : Fin (k + 1)) :
+    (borderedMinor source (k + 1) hnext i j)[bareissDesnanotIndex k r.castSucc][bareissDesnanotIndex k c.castSucc] =
+      (let rr : Fin n := if r.val = 0 then ⟨k, hk⟩ else ⟨r.val - 1, by have := r.isLt; omega⟩
+       let cc : Fin n := if c.val = 0 then ⟨k, hk⟩ else ⟨c.val - 1, by have := c.isLt; omega⟩
+       source[rr][cc]) := by
+  by_cases hr : r.val = 0 <;> by_cases hc : c.val = 0
+  · simp only [bareissDesnanotIndex_castSucc_zero k r hr,
+               bareissDesnanotIndex_castSucc_zero k c hc]
+    show (borderedMinor source (k + 1) hnext i j)[(⟨k, by omega⟩ : Fin (k + 1 + 1))][(⟨k, by omega⟩ : Fin (k + 1 + 1))] = _
+    have hri : (⟨k, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by show k < k + 1; omega
+    have hci : (⟨k, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by show k < k + 1; omega
+    rw [borderedMinor_entry_lt_lt source (k + 1) hnext i j _ _ hri hci]
+    simp [hr, hc]
+  · have hcpos : 0 < c.val := Nat.pos_of_ne_zero hc
+    simp only [bareissDesnanotIndex_castSucc_zero k r hr,
+               bareissDesnanotIndex_castSucc_pos k c hcpos]
+    show (borderedMinor source (k + 1) hnext i j)[(⟨k, by omega⟩ : Fin (k + 1 + 1))][(⟨c.val - 1, by omega⟩ : Fin (k + 1 + 1))] = _
+    have hri : (⟨k, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by show k < k + 1; omega
+    have hci : (⟨c.val - 1, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by
+      show c.val - 1 < k + 1; have := c.isLt; omega
+    rw [borderedMinor_entry_lt_lt source (k + 1) hnext i j _ _ hri hci]
+    simp [hr, hc]
+  · have hrpos : 0 < r.val := Nat.pos_of_ne_zero hr
+    simp only [bareissDesnanotIndex_castSucc_pos k r hrpos,
+               bareissDesnanotIndex_castSucc_zero k c hc]
+    show (borderedMinor source (k + 1) hnext i j)[(⟨r.val - 1, by omega⟩ : Fin (k + 1 + 1))][(⟨k, by omega⟩ : Fin (k + 1 + 1))] = _
+    have hri : (⟨r.val - 1, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by
+      show r.val - 1 < k + 1; have := r.isLt; omega
+    have hci : (⟨k, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by show k < k + 1; omega
+    rw [borderedMinor_entry_lt_lt source (k + 1) hnext i j _ _ hri hci]
+    simp [hr, hc]
+  · have hrpos : 0 < r.val := Nat.pos_of_ne_zero hr
+    have hcpos : 0 < c.val := Nat.pos_of_ne_zero hc
+    simp only [bareissDesnanotIndex_castSucc_pos k r hrpos,
+               bareissDesnanotIndex_castSucc_pos k c hcpos]
+    show (borderedMinor source (k + 1) hnext i j)[(⟨r.val - 1, by omega⟩ : Fin (k + 1 + 1))][(⟨c.val - 1, by omega⟩ : Fin (k + 1 + 1))] = _
+    have hri : (⟨r.val - 1, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by
+      show r.val - 1 < k + 1; have := r.isLt; omega
+    have hci : (⟨c.val - 1, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by
+      show c.val - 1 < k + 1; have := c.isLt; omega
+    rw [borderedMinor_entry_lt_lt source (k + 1) hnext i j _ _ hri hci]
+    simp [hr, hc]
+
+/-- Mixed `succ`/`castSucc` source-entry helper. -/
+theorem borderedMinor_at_succ_castSucc
+    (source : Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (i j : Fin n) (r c : Fin (k + 1)) :
+    (borderedMinor source (k + 1) hnext i j)[bareissDesnanotIndex k r.succ][bareissDesnanotIndex k c.castSucc] =
+      (let rr : Fin n := if hr : r.val < k then ⟨r.val, Nat.lt_trans hr (Nat.lt_of_succ_lt hnext)⟩ else i
+       let cc : Fin n := if c.val = 0 then ⟨k, hk⟩ else ⟨c.val - 1, by have := c.isLt; omega⟩
+       source[rr][cc]) := by
+  by_cases hr : r.val < k <;> by_cases hc : c.val = 0
+  · simp only [bareissDesnanotIndex_succ_lt k r hr, bareissDesnanotIndex_castSucc_zero k c hc]
+    show (borderedMinor source (k + 1) hnext i j)[(⟨r.val, by omega⟩ : Fin (k + 1 + 1))][(⟨k, by omega⟩ : Fin (k + 1 + 1))] = _
+    have hri : (⟨r.val, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by show r.val < k + 1; omega
+    have hci : (⟨k, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by show k < k + 1; omega
+    rw [borderedMinor_entry_lt_lt source (k + 1) hnext i j _ _ hri hci]
+    simp [hr, hc]
+  · have hcpos : 0 < c.val := Nat.pos_of_ne_zero hc
+    simp only [bareissDesnanotIndex_succ_lt k r hr, bareissDesnanotIndex_castSucc_pos k c hcpos]
+    show (borderedMinor source (k + 1) hnext i j)[(⟨r.val, by omega⟩ : Fin (k + 1 + 1))][(⟨c.val - 1, by omega⟩ : Fin (k + 1 + 1))] = _
+    have hri : (⟨r.val, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by show r.val < k + 1; omega
+    have hci : (⟨c.val - 1, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by
+      show c.val - 1 < k + 1; have := c.isLt; omega
+    rw [borderedMinor_entry_lt_lt source (k + 1) hnext i j _ _ hri hci]
+    simp [hr, hc]
+  · have hr_eq : r.val = k := by have := r.isLt; omega
+    simp only [bareissDesnanotIndex_succ_top k r hr_eq, bareissDesnanotIndex_castSucc_zero k c hc]
+    show (borderedMinor source (k + 1) hnext i j)[Fin.last (k + 1)][(⟨k, by omega⟩ : Fin (k + 1 + 1))] = _
+    have hci : (⟨k, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by show k < k + 1; omega
+    rw [borderedMinor_entry_last_lt source (k + 1) hnext i j _ hci]
+    simp [hr, hc]
+  · have hr_eq : r.val = k := by have := r.isLt; omega
+    have hcpos : 0 < c.val := Nat.pos_of_ne_zero hc
+    simp only [bareissDesnanotIndex_succ_top k r hr_eq, bareissDesnanotIndex_castSucc_pos k c hcpos]
+    show (borderedMinor source (k + 1) hnext i j)[Fin.last (k + 1)][(⟨c.val - 1, by omega⟩ : Fin (k + 1 + 1))] = _
+    have hci : (⟨c.val - 1, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by
+      show c.val - 1 < k + 1; have := c.isLt; omega
+    rw [borderedMinor_entry_last_lt source (k + 1) hnext i j _ hci]
+    simp [hr, hc]
+
+/-- Mixed `castSucc`/`succ` source-entry helper. -/
+theorem borderedMinor_at_castSucc_succ
+    (source : Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (i j : Fin n) (r c : Fin (k + 1)) :
+    (borderedMinor source (k + 1) hnext i j)[bareissDesnanotIndex k r.castSucc][bareissDesnanotIndex k c.succ] =
+      (let rr : Fin n := if r.val = 0 then ⟨k, hk⟩ else ⟨r.val - 1, by have := r.isLt; omega⟩
+       let cc : Fin n := if hc : c.val < k then ⟨c.val, Nat.lt_trans hc (Nat.lt_of_succ_lt hnext)⟩ else j
+       source[rr][cc]) := by
+  by_cases hr : r.val = 0 <;> by_cases hc : c.val < k
+  · simp only [bareissDesnanotIndex_castSucc_zero k r hr, bareissDesnanotIndex_succ_lt k c hc]
+    show (borderedMinor source (k + 1) hnext i j)[(⟨k, by omega⟩ : Fin (k + 1 + 1))][(⟨c.val, by omega⟩ : Fin (k + 1 + 1))] = _
+    have hri : (⟨k, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by show k < k + 1; omega
+    have hci : (⟨c.val, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by show c.val < k + 1; omega
+    rw [borderedMinor_entry_lt_lt source (k + 1) hnext i j _ _ hri hci]
+    simp [hr, hc]
+  · have hc_eq : c.val = k := by have := c.isLt; omega
+    simp only [bareissDesnanotIndex_castSucc_zero k r hr, bareissDesnanotIndex_succ_top k c hc_eq]
+    show (borderedMinor source (k + 1) hnext i j)[(⟨k, by omega⟩ : Fin (k + 1 + 1))][Fin.last (k + 1)] = _
+    have hri : (⟨k, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by show k < k + 1; omega
+    rw [borderedMinor_entry_lt_last source (k + 1) hnext i j _ hri]
+    simp [hr, hc]
+  · have hrpos : 0 < r.val := Nat.pos_of_ne_zero hr
+    simp only [bareissDesnanotIndex_castSucc_pos k r hrpos, bareissDesnanotIndex_succ_lt k c hc]
+    show (borderedMinor source (k + 1) hnext i j)[(⟨r.val - 1, by omega⟩ : Fin (k + 1 + 1))][(⟨c.val, by omega⟩ : Fin (k + 1 + 1))] = _
+    have hri : (⟨r.val - 1, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by
+      show r.val - 1 < k + 1; have := r.isLt; omega
+    have hci : (⟨c.val, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by show c.val < k + 1; omega
+    rw [borderedMinor_entry_lt_lt source (k + 1) hnext i j _ _ hri hci]
+    simp [hr, hc]
+  · have hrpos : 0 < r.val := Nat.pos_of_ne_zero hr
+    have hc_eq : c.val = k := by have := c.isLt; omega
+    simp only [bareissDesnanotIndex_castSucc_pos k r hrpos, bareissDesnanotIndex_succ_top k c hc_eq]
+    show (borderedMinor source (k + 1) hnext i j)[(⟨r.val - 1, by omega⟩ : Fin (k + 1 + 1))][Fin.last (k + 1)] = _
+    have hri : (⟨r.val - 1, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by
+      show r.val - 1 < k + 1; have := r.isLt; omega
+    rw [borderedMinor_entry_lt_last source (k + 1) hnext i j _ hri]
+    simp [hr, hc]
+
+/-- Structural M11 equality: deleting position `0` from both row and column of
+the `bareissDesnanotIndex k`-reindexed `(k+2)` bordered minor recovers the
+natural `(k+1)` bordered minor of `source` with trailing row `i` and column `j`. -/
+theorem borderedMinor_at_succ_succ_eq_borderedMinor
+    (source : Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (i j : Fin n) (r c : Fin (k + 1)) :
+    (borderedMinor source (k + 1) hnext i j)[bareissDesnanotIndex k r.succ][bareissDesnanotIndex k c.succ] =
+      (borderedMinor source k hk i j)[r][c] := by
+  rw [borderedMinor_at_succ_succ source k hnext i j r c]
+  by_cases hr : r.val < k <;> by_cases hc : c.val < k
+  · rw [borderedMinor_entry_lt_lt source k hk i j r c hr hc]
+    simp [hr, hc]
+  · have hc_eq : c.val = k := by have := c.isLt; omega
+    have hcFin : c = (Fin.last k : Fin (k + 1)) := Fin.ext hc_eq
+    rw [hcFin, borderedMinor_entry_lt_last source k hk i j r hr]
+    simp [hr]
+  · have hr_eq : r.val = k := by have := r.isLt; omega
+    have hrFin : r = (Fin.last k : Fin (k + 1)) := Fin.ext hr_eq
+    rw [hrFin, borderedMinor_entry_last_lt source k hk i j c hc]
+    simp [hc]
+  · have hr_eq : r.val = k := by have := r.isLt; omega
+    have hc_eq : c.val = k := by have := c.isLt; omega
+    have hrFin : r = (Fin.last k : Fin (k + 1)) := Fin.ext hr_eq
+    have hcFin : c = (Fin.last k : Fin (k + 1)) := Fin.ext hc_eq
+    rw [hrFin, hcFin, borderedMinor_entry_last_last source k hk i j]
+    simp
+
+/-- Structural M_kk equality: deleting the last position from both row and column
+of the `bareissDesnanotIndex k`-reindexed `(k+2)` bordered minor recovers the
+natural `(k+1)` bordered minor with both border indices equal to `⟨k, _⟩`,
+reindexed by the cyclic shift `bareissCyclicShift k`. -/
+theorem borderedMinor_at_castSucc_castSucc_eq_borderedMinor_shift
+    (source : Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (i j : Fin n) (r c : Fin (k + 1)) :
+    (borderedMinor source (k + 1) hnext i j)[bareissDesnanotIndex k r.castSucc][bareissDesnanotIndex k c.castSucc] =
+      (borderedMinor source k hk ⟨k, hk⟩ ⟨k, hk⟩)[bareissCyclicShift k r][bareissCyclicShift k c] := by
+  rw [borderedMinor_at_castSucc_castSucc source k hk hnext i j r c]
+  by_cases hr : r.val = 0 <;> by_cases hc : c.val = 0
+  · simp only [bareissCyclicShift_of_val_zero k r hr,
+               bareissCyclicShift_of_val_zero k c hc]
+    show _ = (borderedMinor source k hk ⟨k, hk⟩ ⟨k, hk⟩)[Fin.last k][Fin.last k]
+    rw [borderedMinor_entry_last_last source k hk ⟨k, hk⟩ ⟨k, hk⟩]
+    simp [hr, hc]
+  · have hcpos : 0 < c.val := Nat.pos_of_ne_zero hc
+    simp only [bareissCyclicShift_of_val_zero k r hr,
+               bareissCyclicShift_of_pos k c hcpos]
+    show _ = (borderedMinor source k hk ⟨k, hk⟩ ⟨k, hk⟩)[Fin.last k][(⟨c.val - 1, by have := c.isLt; omega⟩ : Fin (k + 1))]
+    have hci : ((⟨c.val - 1, by have := c.isLt; omega⟩ : Fin (k + 1))).val < k := by
+      show c.val - 1 < k; have := c.isLt; omega
+    rw [borderedMinor_entry_last_lt source k hk ⟨k, hk⟩ ⟨k, hk⟩ _ hci]
+    simp [hr, hc]
+  · have hrpos : 0 < r.val := Nat.pos_of_ne_zero hr
+    simp only [bareissCyclicShift_of_pos k r hrpos,
+               bareissCyclicShift_of_val_zero k c hc]
+    show _ = (borderedMinor source k hk ⟨k, hk⟩ ⟨k, hk⟩)[(⟨r.val - 1, by have := r.isLt; omega⟩ : Fin (k + 1))][Fin.last k]
+    have hri : ((⟨r.val - 1, by have := r.isLt; omega⟩ : Fin (k + 1))).val < k := by
+      show r.val - 1 < k; have := r.isLt; omega
+    rw [borderedMinor_entry_lt_last source k hk ⟨k, hk⟩ ⟨k, hk⟩ _ hri]
+    simp [hr, hc]
+  · have hrpos : 0 < r.val := Nat.pos_of_ne_zero hr
+    have hcpos : 0 < c.val := Nat.pos_of_ne_zero hc
+    simp only [bareissCyclicShift_of_pos k r hrpos,
+               bareissCyclicShift_of_pos k c hcpos]
+    show _ = (borderedMinor source k hk ⟨k, hk⟩ ⟨k, hk⟩)[(⟨r.val - 1, by have := r.isLt; omega⟩ : Fin (k + 1))][(⟨c.val - 1, by have := c.isLt; omega⟩ : Fin (k + 1))]
+    have hri : ((⟨r.val - 1, by have := r.isLt; omega⟩ : Fin (k + 1))).val < k := by
+      show r.val - 1 < k; have := r.isLt; omega
+    have hci : ((⟨c.val - 1, by have := c.isLt; omega⟩ : Fin (k + 1))).val < k := by
+      show c.val - 1 < k; have := c.isLt; omega
+    rw [borderedMinor_entry_lt_lt source k hk ⟨k, hk⟩ ⟨k, hk⟩ _ _ hri hci]
+    simp [hr, hc]
+
+/-- Structural M_1k equality: deleting position `0` from rows and the last
+position from columns of the reindexed `(k+2)` bordered minor recovers the
+natural `(k+1)` bordered minor with trailing row `i` and trailing column
+position `⟨k, _⟩`, with columns reindexed by `bareissCyclicShift k`. -/
+theorem borderedMinor_at_succ_castSucc_eq_borderedMinor_shift_col
+    (source : Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (i j : Fin n) (r c : Fin (k + 1)) :
+    (borderedMinor source (k + 1) hnext i j)[bareissDesnanotIndex k r.succ][bareissDesnanotIndex k c.castSucc] =
+      (borderedMinor source k hk i ⟨k, hk⟩)[r][bareissCyclicShift k c] := by
+  rw [borderedMinor_at_succ_castSucc source k hk hnext i j r c]
+  by_cases hr : r.val < k <;> by_cases hc : c.val = 0
+  · simp only [bareissCyclicShift_of_val_zero k c hc]
+    show _ = (borderedMinor source k hk i ⟨k, hk⟩)[r][Fin.last k]
+    rw [borderedMinor_entry_lt_last source k hk i ⟨k, hk⟩ r hr]
+    simp [hr, hc]
+  · have hcpos : 0 < c.val := Nat.pos_of_ne_zero hc
+    simp only [bareissCyclicShift_of_pos k c hcpos]
+    show _ = (borderedMinor source k hk i ⟨k, hk⟩)[r][(⟨c.val - 1, by have := c.isLt; omega⟩ : Fin (k + 1))]
+    have hci : ((⟨c.val - 1, by have := c.isLt; omega⟩ : Fin (k + 1))).val < k := by
+      show c.val - 1 < k; have := c.isLt; omega
+    rw [borderedMinor_entry_lt_lt source k hk i ⟨k, hk⟩ r _ hr hci]
+    simp [hr, hc]
+  · have hr_eq : r.val = k := by have := r.isLt; omega
+    simp only [bareissCyclicShift_of_val_zero k c hc]
+    rw [borderedMinor_entry_val_k_val_k source k hk i ⟨k, hk⟩ r (Fin.last k) hr_eq rfl]
+    simp [hr, hc]
+  · have hr_eq : r.val = k := by have := r.isLt; omega
+    have hcpos : 0 < c.val := Nat.pos_of_ne_zero hc
+    simp only [bareissCyclicShift_of_pos k c hcpos]
+    have hci : ((⟨c.val - 1, by have := c.isLt; omega⟩ : Fin (k + 1))).val < k := by
+      show c.val - 1 < k; have := c.isLt; omega
+    rw [borderedMinor_entry_val_k_lt source k hk i ⟨k, hk⟩ r hr_eq _ hci]
+    simp [hr, hc]
+
+/-- Structural M_k1 equality: deleting the last position from rows and position
+`0` from columns of the reindexed `(k+2)` bordered minor recovers the natural
+`(k+1)` bordered minor with trailing row position `⟨k, _⟩` and trailing column
+`j`, with rows reindexed by `bareissCyclicShift k`. -/
+theorem borderedMinor_at_castSucc_succ_eq_borderedMinor_shift_row
+    (source : Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (i j : Fin n) (r c : Fin (k + 1)) :
+    (borderedMinor source (k + 1) hnext i j)[bareissDesnanotIndex k r.castSucc][bareissDesnanotIndex k c.succ] =
+      (borderedMinor source k hk ⟨k, hk⟩ j)[bareissCyclicShift k r][c] := by
+  rw [borderedMinor_at_castSucc_succ source k hk hnext i j r c]
+  by_cases hr : r.val = 0 <;> by_cases hc : c.val < k
+  · simp only [bareissCyclicShift_of_val_zero k r hr]
+    show _ = (borderedMinor source k hk ⟨k, hk⟩ j)[Fin.last k][c]
+    rw [borderedMinor_entry_last_lt source k hk ⟨k, hk⟩ j c hc]
+    simp [hr, hc]
+  · have hc_eq : c.val = k := by have := c.isLt; omega
+    simp only [bareissCyclicShift_of_val_zero k r hr]
+    -- RHS: (borderedMinor source k hk ⟨k, hk⟩ j)[Fin.last k][c] with c.val = k
+    rw [borderedMinor_entry_val_k_val_k source k hk ⟨k, hk⟩ j (Fin.last k) c rfl hc_eq]
+    simp [hr, hc]
+  · have hrpos : 0 < r.val := Nat.pos_of_ne_zero hr
+    simp only [bareissCyclicShift_of_pos k r hrpos]
+    have hri : ((⟨r.val - 1, by have := r.isLt; omega⟩ : Fin (k + 1))).val < k := by
+      show r.val - 1 < k; have := r.isLt; omega
+    rw [borderedMinor_entry_lt_lt source k hk ⟨k, hk⟩ j _ c hri hc]
+    simp [hr, hc]
+  · have hrpos : 0 < r.val := Nat.pos_of_ne_zero hr
+    have hc_eq : c.val = k := by have := c.isLt; omega
+    simp only [bareissCyclicShift_of_pos k r hrpos]
+    have hri : ((⟨r.val - 1, by have := r.isLt; omega⟩ : Fin (k + 1))).val < k := by
+      show r.val - 1 < k; have := r.isLt; omega
+    rw [borderedMinor_entry_lt_val_k source k hk ⟨k, hk⟩ j _ hri c hc_eq]
+    simp [hr, hc]
+
+/-- Structural interior equality: deleting both position `0` and the last
+position from both rows and columns of the reindexed `(k+2)` bordered minor
+recovers the leading prefix of `source` of size `k`. -/
+theorem borderedMinor_at_interior_eq_leadingPrefix
+    (source : Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
+    (i j : Fin n) (r c : Fin k) :
+    (borderedMinor source (k + 1) hnext i j)[bareissDesnanotIndex k r.castSucc.succ][bareissDesnanotIndex k c.castSucc.succ] =
+      (leadingPrefix source k (Nat.le_of_lt hk))[r][c] := by
+  have hrlt : (r.castSucc : Fin (k + 1)).val < k := r.isLt
+  have hclt : (c.castSucc : Fin (k + 1)).val < k := c.isLt
+  simp only [bareissDesnanotIndex_succ_lt k r.castSucc hrlt,
+             bareissDesnanotIndex_succ_lt k c.castSucc hclt]
+  show (borderedMinor source (k + 1) hnext i j)[(⟨r.val, by omega⟩ : Fin (k + 1 + 1))][(⟨c.val, by omega⟩ : Fin (k + 1 + 1))] = _
+  have hri : (⟨r.val, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by show r.val < k + 1; omega
+  have hci : (⟨c.val, by omega⟩ : Fin (k + 1 + 1)).val < k + 1 := by show c.val < k + 1; omega
+  rw [borderedMinor_entry_lt_lt source (k + 1) hnext i j _ _ hri hci]
+  rw [leadingPrefix_entry source k (Nat.le_of_lt hk) r c]
+
 end Matrix
 end Hex
