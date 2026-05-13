@@ -329,6 +329,21 @@ def deleteRowCol {R : Type u} {n : Nat} (M : Matrix R (n + 1) (n + 1))
   rw [deleteRowCol_entry]
   simp [leadingPrefix, ofFn]
 
+/-- Deleting row `row` and column `col` after transposing is the transpose of
+the minor obtained by deleting row `col` and column `row` before transposing. -/
+theorem deleteRowCol_transpose {R : Type u} {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1)) :
+    deleteRowCol M.transpose row col = (deleteRowCol M col row).transpose := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let ii : Fin n := ⟨i, hi⟩
+  let jj : Fin n := ⟨j, hj⟩
+  change (deleteRowCol M.transpose row col)[ii][jj] =
+    (deleteRowCol M col row).transpose[ii][jj]
+  simp [deleteRowCol, ofFn, Matrix.transpose, Matrix.col]
+
 /-- The alternating sign used in signed cofactors. -/
 def cofactorSign {R : Type u} [OfNat R 1] [Neg R] {n : Nat}
     (row col : Fin (n + 1)) : R :=
@@ -4767,6 +4782,21 @@ theorem det_transpose {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
       (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0 := by
         exact permutationVectors_inverseVector_sum (R := R) (n := n) (fun perm => detTerm M perm)
 
+/-- Cofactors commute with transpose after swapping the row and column
+indices. -/
+theorem cofactor_transpose {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1)) :
+    cofactor M.transpose row col = cofactor M col row := by
+  unfold cofactor
+  have hsign :
+      cofactorSign (R := R) row col = cofactorSign (R := R) col row := by
+    unfold cofactorSign
+    have hsum : row.val + col.val = col.val + row.val := Nat.add_comm _ _
+    rw [hsum]
+  rw [hsign]
+  rw [deleteRowCol_transpose]
+  rw [det_transpose]
+
 /-- Diagonal-product formula for the determinant of a lower-triangular matrix
 (entries above the diagonal are zero). Derived from the upper-triangular form
 via `det_transpose`. -/
@@ -5788,6 +5818,27 @@ theorem det_eq_foldl_laplace_last
   intro acc i _hmem
   congr 1
   exact foldl_detTerm_insertions_eq_cofactor M i
+
+/-- Laplace expansion of the determinant along the final row. -/
+theorem det_eq_foldl_laplace_last_row
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) :
+    det M =
+      (List.finRange (n + 1)).foldl
+        (fun acc col => acc + M[Fin.last n][col] * cofactor M (Fin.last n) col) 0 := by
+  calc
+    det M = det M.transpose := (det_transpose M).symm
+    _ =
+      (List.finRange (n + 1)).foldl
+        (fun acc col => acc + M.transpose[col][Fin.last n] *
+          cofactor M.transpose col (Fin.last n)) 0 := det_eq_foldl_laplace_last M.transpose
+    _ =
+      (List.finRange (n + 1)).foldl
+        (fun acc col => acc + M[Fin.last n][col] * cofactor M (Fin.last n) col) 0 := by
+        apply foldl_acc_congr
+        intro acc col _hmem
+        rw [cofactor_transpose]
+        simp [Matrix.transpose, Matrix.col]
 
 /-- The square matrix obtained from `columnSumMatrix source coeff` by replacing
 the first `chosen.length` columns with selected `source` columns indexed by
