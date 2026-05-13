@@ -8402,6 +8402,146 @@ theorem mul_auxAdjugateM_eq_auxP
   intro j hj
   exact mul_auxAdjugateM_eq_auxP_entry M ⟨i, hi⟩ ⟨j, hj⟩
 
+/-! ### `det (M * auxAdjugateM M) = det M * det (auxAdjugateM M)`
+
+The scaled Desnanot-Jacobi identity needs the determinant of
+`M * auxAdjugateM M` to split as `det M * det (auxAdjugateM M)`. The
+proof rewrites both `M * auxAdjugateM M` and `auxAdjugateM M` as
+`columnSumMatrix _ (auxAdjugateM M).transpose`, applies
+`det_columnSumMatrix_eq_sum_columnTuples` to both, then uses
+`det (columnTupleMatrix M cols) = det M * det (columnTupleMatrix 1 cols)`
+to factor `det M` out of the resulting ordered-column-tuple sum. -/
+
+private theorem ofFn_toList_eq_map_finRange {α : Type v} {n : Nat}
+    (f : Fin n → α) :
+    (Vector.ofFn f).toList = (List.finRange n).map f := by
+  rw [vector_toList_eq_finRange_map_get]
+  apply List.map_congr_left
+  intro i _
+  exact vector_ofFn_getElem_fin f i
+
+private theorem ofFn_mem_permutationVectors_of_injective {n : Nat}
+    (cols : Fin n → Fin n) (hcols : Function.Injective cols) :
+    Vector.ofFn cols ∈ permutationVectors n := by
+  apply permutationVectors_complete
+  rw [ofFn_toList_eq_map_finRange]
+  apply list_nodup_map_on (List.nodup_finRange n)
+  intro a _ha b _hb hab
+  exact hcols hab
+
+private theorem columnTupleMatrix_eq_ofFn_ofFn
+    {R : Type u} {n : Nat} (M : Matrix R n n) (cols : Fin n → Fin n) :
+    columnTupleMatrix M cols =
+      (ofFn fun r c => M[r][(Vector.ofFn cols)[c]] : Matrix R n n) := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro c hc
+  show (columnTupleMatrix M cols)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
+    (ofFn (fun r c => M[r][(Vector.ofFn cols)[c]]) : Matrix R n n)[
+      (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+  rw [columnTupleMatrix_entry]
+  unfold ofFn
+  rw [vector_ofFn_getElem_fin, vector_ofFn_getElem_fin]
+  exact congrArg (fun col : Fin n => M[(⟨r, hr⟩ : Fin n)][col])
+    (vector_ofFn_getElem_fin cols (⟨c, hc⟩ : Fin n)).symm
+
+private theorem det_columnTupleMatrix_of_injective
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (cols : Fin n → Fin n)
+    (hcols : Function.Injective cols) :
+    det (columnTupleMatrix M cols) =
+      detSign (R := R) (Vector.ofFn cols) * det M := by
+  have hmem : Vector.ofFn cols ∈ permutationVectors n :=
+    ofFn_mem_permutationVectors_of_injective cols hcols
+  rw [columnTupleMatrix_eq_ofFn_ofFn M cols]
+  exact det_colPermute_vector M (Vector.ofFn cols) hmem
+
+private theorem det_columnTupleMatrix_eq_det_mul_det_one
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (cols : Fin n → Fin n) :
+    det (columnTupleMatrix M cols) =
+      det M * det (columnTupleMatrix (1 : Matrix R n n) cols) := by
+  by_cases hinj : Function.Injective cols
+  · rw [det_columnTupleMatrix_of_injective M cols hinj,
+        det_columnTupleMatrix_of_injective (1 : Matrix R n n) cols hinj]
+    rw [det_one]
+    grind
+  · rw [det_columnTupleMatrix_eq_zero_of_not_injective M cols hinj,
+        det_columnTupleMatrix_eq_zero_of_not_injective (1 : Matrix R n n) cols hinj]
+    grind
+
+private theorem mul_eq_columnSumMatrix_transpose
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M N : Matrix R n n) :
+    M * N = columnSumMatrix M N.transpose := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro c hc
+  let rr : Fin n := ⟨r, hr⟩
+  let cc : Fin n := ⟨c, hc⟩
+  show (M * N)[rr][cc] = (columnSumMatrix M N.transpose)[rr][cc]
+  rw [columnSumMatrix_entry]
+  change (Matrix.mul M N)[rr][cc] = _
+  unfold Matrix.mul ofFn
+  rw [vector_ofFn_getElem_fin, vector_ofFn_getElem_fin]
+  unfold Matrix.dot Hex.Vector.dotProduct
+  apply foldl_det_sum_congr
+  intro k _
+  have hrow : (row M rr)[k] = M[rr][k] := by simp [row]
+  have hcol : (col N cc)[k] = N[k][cc] := by
+    show (Vector.ofFn (fun i : Fin n => N[i][cc]))[k] = N[k][cc]
+    exact vector_ofFn_getElem_fin _ k
+  have htrn : N.transpose[cc][k] = N[k][cc] := by
+    show (Vector.ofFn (fun j : Fin n => col N j))[cc][k] = N[k][cc]
+    rw [vector_ofFn_getElem_fin]
+    exact hcol
+  rw [hrow, hcol, htrn]
+  exact Lean.Grind.CommSemiring.mul_comm _ _
+
+private theorem eq_columnSumMatrix_one_transpose
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (N : Matrix R n n) :
+    N = columnSumMatrix (1 : Matrix R n n) N.transpose := by
+  rw [← mul_eq_columnSumMatrix_transpose (1 : Matrix R n n) N]
+  exact (one_mul N).symm
+
+/-- Determinant of `M * auxAdjugateM M` splits as `det M * det (auxAdjugateM M)`.
+This is the narrow determinant-multiplication identity used by the scaled
+Desnanot-Jacobi step; the proof goes through the `columnSumMatrix` expansion
+plus the column-tuple identity that pulls `det M` out of each term. -/
+theorem det_mul_auxAdjugateM
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) :
+    det (M * auxAdjugateM M) = det M * det (auxAdjugateM M) := by
+  rw [mul_eq_columnSumMatrix_transpose M (auxAdjugateM M)]
+  rw [det_columnSumMatrix_eq_sum_columnTuples M (auxAdjugateM M).transpose]
+  have hbody_eq :
+      (columnTupleVectors (n + 2) (n + 2)).foldl
+          (fun acc cols => acc +
+            columnTupleCoeff (auxAdjugateM M).transpose cols *
+              det (columnTupleMatrix M (columnTupleVectorFn cols))) 0 =
+        (columnTupleVectors (n + 2) (n + 2)).foldl
+          (fun acc cols => acc + det M *
+            (columnTupleCoeff (auxAdjugateM M).transpose cols *
+              det (columnTupleMatrix (1 : Matrix R (n + 2) (n + 2))
+                (columnTupleVectorFn cols)))) 0 := by
+    apply foldl_det_sum_congr
+    intro cols _
+    rw [det_columnTupleMatrix_eq_det_mul_det_one M (columnTupleVectorFn cols)]
+    exact Lean.Grind.CommSemiring.mul_left_comm _ _ _
+  rw [hbody_eq]
+  rw [foldl_det_sum_mul_left_zero
+        (columnTupleVectors (n + 2) (n + 2))
+        (det M)
+        (fun cols => columnTupleCoeff (auxAdjugateM M).transpose cols *
+            det (columnTupleMatrix (1 : Matrix R (n + 2) (n + 2))
+              (columnTupleVectorFn cols)))]
+  rw [← det_columnSumMatrix_eq_sum_columnTuples
+        (1 : Matrix R (n + 2) (n + 2)) (auxAdjugateM M).transpose]
+  rw [← eq_columnSumMatrix_one_transpose (auxAdjugateM M)]
+
 /-! ### Bareiss Desnanot source-entry helpers and structural submatrix equalities
 
 Following the Mathlib-side reindexing in `HexMatrixMathlib/Determinant/Core.lean`,
