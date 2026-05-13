@@ -487,6 +487,35 @@ theorem factorFast_ne_none_of_forwardInputs_on_schedule
     Hex.factorFast_ne_none_of_core_recovery_on_schedule
       f primeData hB_pos hnormalized hmem hrecover
 
+/--
+Canonical scheduled-precision specialisation of
+`factorFast_ne_none_of_forwardInputs_on_schedule`: if the SPEC Group D
+forward-recovery inputs hold at the executable terminal precision
+`a = precisionForCoeffBound (factorFastPrecisionCap f) primeData.p`, the
+public `Hex.factorFast` entry point succeeds.  The doubling-schedule
+membership obligation is discharged here using
+`Hex.cap_mem_henselPrecisionSchedule`, so later HO-4 work only needs to
+provide the `ForwardRecoveryInputs` bundle plus the surrounding BHKS
+semantic hypotheses.
+-/
+theorem factorFast_ne_none_of_forwardInputs_at_cap
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hB_pos : 1 ≤ Hex.factorFastPrecisionCap f)
+    (hnormalized :
+      primeData = Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+    (hinputs :
+      ForwardRecoveryInputs
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.henselLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.precisionForCoeffBound
+            (Hex.factorFastPrecisionCap f) primeData.p)
+          primeData)) :
+    Hex.factorFast f ≠ none :=
+  factorFast_ne_none_of_forwardInputs_on_schedule
+    f primeData hB_pos hnormalized hinputs
+    (Hex.cap_mem_henselPrecisionSchedule _)
+
 end BHKS
 
 end HexBerlekampZassenhausMathlib
