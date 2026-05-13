@@ -557,24 +557,13 @@ private theorem leadingGramMatrixInt_rowSwap_inside
     by_cases hpk : pp = k'
     · simp [hpk]
     · by_cases hpkm1 : pp = km1'
-      · simp [hpkm1, hpk, hkm1'_ne_k']
+      · simp [hpkm1, hkm1'_ne_k']
       · simp [hpk, hpkm1]
   -- Helper: build the equality (rowSwap b km1 k)[r] = (rowSwap b km1 k)[r']
-  -- from r.val = r'.val (avoiding `rw` motive issues with dependent indices).
+  -- from r = r' (avoiding `rw` motive issues with dependent indices).
   have heq_get_swap : ∀ (r r' : Fin n), r = r' →
       (Matrix.rowSwap b km1 k)[r] = (Matrix.rowSwap b km1 k)[r'] := by
     intros r r' h; exact congrArg (Matrix.rowSwap b km1 k).get h
-  have heq_get_b : ∀ (r r' : Fin n), r = r' → b[r] = b[r'] := by
-    intros r r' h; exact congrArg b.get h
-  have heq_get_M : ∀ (r r' : Fin t) (s : Fin t), r = r' → M[r][s] = M[r'][s] := by
-    intros r r' s h; rw [h]
-  -- Combined LHS rewriter: dot ((rowSwap b)[pn]) ((rowSwap b)[qn]) = ?
-  have hpn_val : pp.val = p := rfl
-  have hqn_val : qq.val = q := rfl
-  have hpn_eq_lift_pp : pn = (⟨pp.val, Nat.lt_of_lt_of_le pp.isLt ht⟩ : Fin n) := by
-    apply Fin.ext; rfl
-  have hqn_eq_lift_qq : qn = (⟨qq.val, Nat.lt_of_lt_of_le qq.isLt ht⟩ : Fin n) := by
-    apply Fin.ext; rfl
   -- Apply the outer ite resolution at qq.
   by_cases hqk : qq = k'
   · -- qq = k': RHS specializes to M[σ(pp)][km1'].
@@ -789,19 +778,79 @@ theorem adjacentSwap_gramDetNumerator_dvd (b : Matrix Int n m)
     adjacentSwapDenom b k ∣ adjacentSwapGramDetNumerator b k hk := by
   sorry
 
+private theorem intCast_rat_injective_local {a b : Int} (h : (a : Rat) = (b : Rat)) :
+    a = b := by
+  have hz : ((a - b : Int) : Rat) = 0 := by
+    simp [h]
+    grind
+  have hsub : a - b = 0 := Rat.intCast_eq_zero_iff.mp hz
+  omega
+
 theorem scaledCoeffs_adjacentSwap_lower_prev (b : Matrix Int n m)
     (k : Fin n) (hk : 0 < k.val) (j : Fin n) (hj : j.val + 1 < k.val) :
     let km1 := GramSchmidt.prevRow k hk
     GramSchmidt.entry (scaledCoeffs (adjacentSwap b k hk)) km1 j =
       GramSchmidt.entry (scaledCoeffs b) k j := by
-  sorry
+  intro km1
+  have hkm1 : km1.val + 1 = k.val := by
+    dsimp [km1, GramSchmidt.prevRow]
+    omega
+  have hjkm1 : j.val < km1.val := by omega
+  have hjk : j.val < k.val := by omega
+  have hjsucc_ne : j.val + 1 ≠ k.val := by omega
+  apply intCast_rat_injective_local
+  have hLHS := scaledCoeffs_eq (b := adjacentSwap b k hk) km1.val j.val km1.isLt hjkm1
+  have hRHS := scaledCoeffs_eq (b := b) k.val j.val k.isLt hjk
+  have hdet :
+      gramDet (adjacentSwap b k hk) (j.val + 1)
+          (Nat.succ_le_of_lt (Nat.lt_trans hjkm1 km1.isLt)) =
+        gramDet b (j.val + 1) (Nat.succ_le_of_lt (Nat.lt_trans hjkm1 km1.isLt)) := by
+    apply gramDet_adjacentSwap_of_ne
+    exact hjsucc_ne
+  have hcoeff : GramSchmidt.entry (coeffs (adjacentSwap b k hk)) km1 j =
+      GramSchmidt.entry (coeffs b) k j :=
+    coeffs_adjacentSwap_lower_prev (b := b) k hk j hj
+  calc ((GramSchmidt.entry (scaledCoeffs (adjacentSwap b k hk)) km1 j : Int) : Rat)
+      = (gramDet (adjacentSwap b k hk) (j.val + 1)
+            (Nat.succ_le_of_lt (Nat.lt_trans hjkm1 km1.isLt)) : Rat) *
+          GramSchmidt.entry (coeffs (adjacentSwap b k hk)) km1 j := hLHS
+    _ = (gramDet b (j.val + 1) (Nat.succ_le_of_lt (Nat.lt_trans hjkm1 km1.isLt)) : Rat) *
+          GramSchmidt.entry (coeffs b) k j := by
+          rw [hdet, hcoeff]
+    _ = ((GramSchmidt.entry (scaledCoeffs b) k j : Int) : Rat) := hRHS.symm
 
 theorem scaledCoeffs_adjacentSwap_lower_curr (b : Matrix Int n m)
     (k : Fin n) (hk : 0 < k.val) (j : Fin n) (hj : j.val + 1 < k.val) :
     let km1 := GramSchmidt.prevRow k hk
     GramSchmidt.entry (scaledCoeffs (adjacentSwap b k hk)) k j =
       GramSchmidt.entry (scaledCoeffs b) km1 j := by
-  sorry
+  intro km1
+  have hkm1 : km1.val + 1 = k.val := by
+    dsimp [km1, GramSchmidt.prevRow]
+    omega
+  have hjkm1 : j.val < km1.val := by omega
+  have hjk : j.val < k.val := by omega
+  have hjsucc_ne : j.val + 1 ≠ k.val := by omega
+  apply intCast_rat_injective_local
+  have hLHS := scaledCoeffs_eq (b := adjacentSwap b k hk) k.val j.val k.isLt hjk
+  have hRHS := scaledCoeffs_eq (b := b) km1.val j.val km1.isLt hjkm1
+  have hdet :
+      gramDet (adjacentSwap b k hk) (j.val + 1)
+          (Nat.succ_le_of_lt (Nat.lt_trans hjkm1 km1.isLt)) =
+        gramDet b (j.val + 1) (Nat.succ_le_of_lt (Nat.lt_trans hjkm1 km1.isLt)) := by
+    apply gramDet_adjacentSwap_of_ne
+    exact hjsucc_ne
+  have hcoeff : GramSchmidt.entry (coeffs (adjacentSwap b k hk)) k j =
+      GramSchmidt.entry (coeffs b) km1 j :=
+    coeffs_adjacentSwap_lower_curr (b := b) k hk j hj
+  calc ((GramSchmidt.entry (scaledCoeffs (adjacentSwap b k hk)) k j : Int) : Rat)
+      = (gramDet (adjacentSwap b k hk) (j.val + 1)
+            (Nat.succ_le_of_lt (Nat.lt_trans hjkm1 km1.isLt)) : Rat) *
+          GramSchmidt.entry (coeffs (adjacentSwap b k hk)) k j := hLHS
+    _ = (gramDet b (j.val + 1) (Nat.succ_le_of_lt (Nat.lt_trans hjkm1 km1.isLt)) : Rat) *
+          GramSchmidt.entry (coeffs b) km1 j := by
+          rw [hdet, hcoeff]
+    _ = ((GramSchmidt.entry (scaledCoeffs b) km1 j : Int) : Rat) := hRHS.symm
 
 theorem scaledCoeffs_adjacentSwap_pivot (b : Matrix Int n m)
     (k : Fin n) (hk : 0 < k.val) :
