@@ -1752,6 +1752,17 @@ private theorem pthRoot_frobenius_of_derivative_zero
   · simp [hn]
   · simp [hn, derivative_zero_coeff_non_pmultiple hp f n hdf hn]
 
+private theorem pthRoot_frobenius_of_derivative_zero'
+    (hp : Hex.Nat.Prime p) (f : FpPoly p)
+    (hdf : (DensePoly.derivative f).isZero = true) :
+    pow (pthRoot f) p = f := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [pthRoot_pow_prime_coeff hp f n]
+  by_cases hn : n % p = 0
+  · simp [hn]
+  · simp [hn, derivative_zero_coeff_non_pmultiple hp f n hdf hn]
+
 private theorem pthRoot_dvd_self_of_derivative_zero
     (hp : Hex.Nat.Prime p) (f : FpPoly p)
     (hzero : f.isZero = false)
@@ -3741,6 +3752,65 @@ private theorem coeff_derivative (f : FpPoly p) (n : Nat) :
       DensePoly.coeff_eq_zero_of_size_le f hf
     simp [hn, List.getD, hcoeff]
     exact (Lean.Grind.Semiring.mul_zero ((n + 1 : Nat) : ZMod64 p)).symm
+
+private theorem derivative_isZero_true_of_pthRoot_frobenius
+    (hp : Hex.Nat.Prime p) (f : FpPoly p)
+    (hfrob : pow (pthRoot f) p = f) :
+    (DensePoly.derivative f).isZero = true := by
+  have hder_zero : DensePoly.derivative f = 0 := by
+    apply DensePoly.ext_coeff
+    intro n
+    rw [coeff_derivative]
+    rw [← hfrob, pthRoot_pow_prime_coeff hp f (n + 1)]
+    by_cases hmod : (n + 1) % p = 0
+    · have hcast : (((n + 1 : Nat) : Nat) : ZMod64 p) = 0 := by
+        rw [ZMod64.natCast_eq_zero_iff_dvd]
+        exact Nat.dvd_of_mod_eq_zero hmod
+      rw [hmod, hcast, DensePoly.coeff_zero]
+      grind
+    · rw [if_neg hmod, DensePoly.coeff_zero]
+      exact zmod64_mul_zero ((n + 1 : Nat) : ZMod64 p)
+  rw [hder_zero]
+  rfl
+
+private theorem yunFactorsContribution_terminal_residual_pthRoot_witness
+    (hp : Hex.Nat.Prime p)
+    (c w : FpPoly p) (multiplicity fuel : Nat)
+    (hresidual :
+      yunFactorsContributionResidualDerivativeZero c w multiplicity fuel) :
+    let contribution := yunFactorsContribution c w multiplicity fuel
+    isOne contribution.2 = false →
+      pow (pthRoot contribution.2) p = contribution.2 := by
+  intro contribution hone
+  exact pthRoot_frobenius_of_derivative_zero' hp contribution.2
+    (hresidual hone)
+
+private theorem yunFactorsContributionResidualDerivativeZero_of_terminal_residual_pthRoot_witness
+    (hp : Hex.Nat.Prime p)
+    (c w : FpPoly p) (multiplicity fuel : Nat)
+    (hwitness :
+      let contribution := yunFactorsContribution c w multiplicity fuel
+      isOne contribution.2 = false →
+        pow (pthRoot contribution.2) p = contribution.2) :
+    yunFactorsContributionResidualDerivativeZero c w multiplicity fuel := by
+  intro hone
+  exact derivative_isZero_true_of_pthRoot_frobenius hp
+    (yunFactorsContribution c w multiplicity fuel).2
+    (hwitness hone)
+
+private theorem yunFactorsContribution_terminal_residual_pthRoot_witness_of_complete
+    (hp : Hex.Nat.Prime p)
+    (c w : FpPoly p) (multiplicity fuel : Nat)
+    (hcomplete :
+      yunFactorsContributionResidualComplete c w multiplicity fuel) :
+    let contribution := yunFactorsContribution c w multiplicity fuel
+    isOne contribution.2 = false →
+      pow (pthRoot contribution.2) p = contribution.2 := by
+  exact
+    yunFactorsContribution_terminal_residual_pthRoot_witness hp
+      c w multiplicity fuel
+      (yunFactorsContributionResidualDerivativeZero_of_complete
+        c w multiplicity fuel hcomplete)
 
 private theorem derivative_degree?_lt_self_of_ne_zero
     (f : FpPoly p) (hder_ne : DensePoly.derivative f ≠ 0) :
