@@ -14,6 +14,19 @@ independently factors the integer input reduced modulo that prime and
 checks the sorted irreducible factor degree multiset.  Plain historical
 ``factor`` fixtures omit these fields and keep the original behaviour.
 
+HO-2 adversarial coverage (#2565).
+``SPEC/Libraries/hex-berlekamp-zassenhaus.md`` §"Conformance fixtures"
+requires the core profile to include at least one input where the
+integer factors require a non-trivial subset product of lifted mod-p
+factors, and at least one input that splits heavily (>= 4 distinct
+mod-p factors) over a small admissible prime.  The committed sample
+emits four ``adv/*`` cases — ``adv/quad_sqrt2_sqrt3`` (4 linear factors
+over F_23), ``adv/x4_plus_1`` (2 quadratics over F_5),
+``adv/swinnerton_dyer_sd3`` (8 linear factors over F_71), and
+``adv/phi15`` (8 linear factors over F_31) — each carrying pinned
+``modFactorPrime`` / ``modFactorDegrees`` so this driver cross-checks
+the named modular split independently of the Lean factorisation result.
+
 Operation cross-checked
 -----------------------
 
