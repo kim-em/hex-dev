@@ -664,7 +664,7 @@ theorem checkPowChainLinearIncremental_of_quotientWitnesses
   refine ⟨⟨hsize, hfirst⟩, ?_⟩
   rw [List.all_eq_true]
   intro k hk
-  have hstep := List.all_eq_true_of_mem hsteps hk
+  have hstep := List.all_eq_true.mp hsteps k hk
   unfold checkPowChainLinearIncrementalStep
   cases hprev : cert.powChain[k]? with
   | none =>
