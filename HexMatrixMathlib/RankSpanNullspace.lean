@@ -64,6 +64,28 @@ private theorem vectorEquiv_mulVec [Field R] (M : Hex.Matrix R n m) (v : Vector 
   intro k _
   rfl
 
+private theorem vectorEquiv_rowCombination [Field R] (M : Hex.Matrix R n m) (c : Vector R n) :
+    vectorEquiv (Hex.Matrix.rowCombination M c) =
+      Fintype.linearCombination R (_root_.Matrix.row (matrixEquiv M)) (vectorEquiv c) := by
+  funext j
+  simp only [vectorEquiv_apply]
+  unfold Hex.Matrix.rowCombination
+  change (Hex.Matrix.mulVec (Hex.Matrix.transpose M) c)[j.val] =
+    (Fintype.linearCombination R (_root_.Matrix.row (matrixEquiv M)) (vectorEquiv c)) j
+  unfold Hex.Matrix.mulVec Hex.Matrix.dot Hex.Matrix.row Hex.Vector.dotProduct Hex.Matrix.transpose
+    Hex.Matrix.col
+  rw [Vector.getElem_ofFn j.isLt]
+  rw [foldl_finRange_eq_sum]
+  rw [Fintype.linearCombination_apply]
+  rw [Finset.sum_apply]
+  apply Finset.sum_congr rfl
+  intro i _
+  simp only [vectorEquiv_apply, matrixEquiv_apply, _root_.Matrix.row_apply, Pi.smul_apply,
+    smul_eq_mul]
+  rw [mul_comm]
+  congr 1
+  simp [Vector.getElem_ofFn]
+
 private theorem vectorEquiv_nullspaceMatrix_mulVec [Field R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
     (E : Hex.Matrix.IsRREF M D) (c : Vector R (m - D.rank)) :
@@ -92,14 +114,33 @@ theorem spanCoeffs_eq_linearCombination [Field R] [DecidableEq R]
     E.spanCoeffs v = some c →
       vectorEquiv v =
         Fintype.linearCombination R (_root_.Matrix.row (matrixEquiv M)) (vectorEquiv c) := by
-  sorry
+  intro h
+  unfold Hex.Matrix.IsEchelonForm.spanCoeffs at h
+  dsimp only at h
+  split at h
+  · rename_i hrow
+    injection h with hc
+    subst c
+    exact (congrArg vectorEquiv hrow.symm).trans (vectorEquiv_rowCombination M _)
+  · contradiction
 
 theorem spanContains_iff_mem_span [Field R] [DecidableEq R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
-    (E : Hex.Matrix.IsEchelonForm M D) (v : Vector R m) :
-    E.spanContains v = true ↔
+    (E : Hex.Matrix.IsRREF M D) (v : Vector R m) :
+    E.toIsEchelonForm.spanContains v = true ↔
       vectorEquiv v ∈ Submodule.span R (Set.range (_root_.Matrix.row (matrixEquiv M))) := by
-  sorry
+  rw [← Fintype.range_linearCombination]
+  constructor
+  · intro h
+    rcases (E.spanContains_iff v).mp h with ⟨c, hc⟩
+    exact ⟨vectorEquiv c, by
+      rw [← vectorEquiv_rowCombination M c, hc]⟩
+  · rintro ⟨c, hc⟩
+    apply (E.spanContains_iff v).mpr
+    refine ⟨vectorEquiv.symm c, ?_⟩
+    apply Equiv.injective vectorEquiv
+    rw [vectorEquiv_rowCombination M (vectorEquiv.symm c)]
+    simpa using hc
 
 theorem nullspace_mem_ker [Field R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
