@@ -8238,6 +8238,170 @@ theorem bareissDesnanotIndex_castSucc_pos (k : Nat) (s : Fin (k + 1))
   show s.castSucc.val - 1 = s.val - 1
   rw [hcv]
 
+/-! ### Auxiliary matrices for Desnanot-Jacobi
+
+These auxiliary matrices reproduce the construction used by the Mathlib
+upstream proof of the Desnanot-Jacobi identity over Hex matrices.
+`auxAdjugateM M` is the identity matrix with columns `0` and
+`Fin.last (n + 1)` replaced by the corresponding columns of
+`adjugate M`; `auxP M` is `M` with those same two columns replaced by
+`det M • e_0` and `det M • e_last` respectively. The matrix equality
+`M * auxAdjugateM M = auxP M` follows entrywise from the existing
+`mul_adjugate_apply_zero`/`mul_adjugate_apply_last` lemmas on the two
+special columns and a standard-basis collapse on middle columns. The
+follow-on issues consume these definitions to derive the scaled
+Desnanot-Jacobi identity. -/
+
+private theorem fin_last_succ_ne_zero (n : Nat) :
+    (Fin.last (n + 1) : Fin (n + 2)) ≠ 0 := by
+  intro h
+  have hv : (Fin.last (n + 1) : Fin (n + 2)).val = (0 : Fin (n + 2)).val :=
+    congrArg Fin.val h
+  simp [Fin.last] at hv
+
+/-- Entry equality of `Matrix.mul` only depends on the relevant row of
+the first matrix and column of the second matrix; if two `m × k`
+matrices `B` and `B'` agree on column `j`, then `A * B` and `A * B'`
+agree on column `j`. -/
+private theorem mul_apply_of_col_eq
+    {R : Type u} [Lean.Grind.Ring R] {n m k : Nat}
+    (A : Matrix R n m) (B B' : Matrix R m k) (i : Fin n) (j : Fin k)
+    (hcol : ∀ l : Fin m, B[l][j] = B'[l][j]) :
+    (A * B)[i][j] = (A * B')[i][j] := by
+  change (Matrix.mul A B)[i][j] = (Matrix.mul A B')[i][j]
+  unfold Matrix.mul ofFn
+  rw [vector_ofFn_getElem_fin, vector_ofFn_getElem_fin,
+      vector_ofFn_getElem_fin, vector_ofFn_getElem_fin]
+  unfold Matrix.dot Hex.Vector.dotProduct
+  apply foldl_acc_congr
+  intro acc l _hmem
+  congr 1
+  have h1 : (col B j)[l] = B[l][j] := by simp [col]
+  have h2 : (col B' j)[l] = B'[l][j] := by simp [col]
+  rw [h1, h2, hcol l]
+
+/-- The auxiliary matrix used by the Desnanot-Jacobi proof: the
+identity matrix with columns `0` and `Fin.last (n + 1)` replaced by
+columns `0` and `Fin.last (n + 1)` of `adjugate M`. -/
+def auxAdjugateM {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) : Matrix R (n + 2) (n + 2) :=
+  ofFn fun i j =>
+    if j = (0 : Fin (n + 2)) then (adjugate M)[i][(0 : Fin (n + 2))]
+    else if j = Fin.last (n + 1) then
+      (adjugate M)[i][Fin.last (n + 1)]
+    else if i = j then 1 else 0
+
+@[simp] theorem auxAdjugateM_apply_zero
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) (i : Fin (n + 2)) :
+    (auxAdjugateM M)[i][(0 : Fin (n + 2))] =
+      (adjugate M)[i][(0 : Fin (n + 2))] := by
+  unfold auxAdjugateM ofFn
+  rw [vector_ofFn_getElem_fin, vector_ofFn_getElem_fin]
+  dsimp only
+  rw [if_pos rfl]
+
+@[simp] theorem auxAdjugateM_apply_last
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) (i : Fin (n + 2)) :
+    (auxAdjugateM M)[i][Fin.last (n + 1)] =
+      (adjugate M)[i][Fin.last (n + 1)] := by
+  unfold auxAdjugateM ofFn
+  rw [vector_ofFn_getElem_fin, vector_ofFn_getElem_fin]
+  dsimp only
+  rw [if_neg (fin_last_succ_ne_zero n), if_pos rfl]
+
+theorem auxAdjugateM_apply_middle
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) (i j : Fin (n + 2))
+    (hj0 : j ≠ (0 : Fin (n + 2))) (hjlast : j ≠ Fin.last (n + 1)) :
+    (auxAdjugateM M)[i][j] = if i = j then 1 else 0 := by
+  unfold auxAdjugateM ofFn
+  rw [vector_ofFn_getElem_fin, vector_ofFn_getElem_fin]
+  dsimp only
+  rw [if_neg hj0, if_neg hjlast]
+
+/-- The matrix `auxP M` used by the Desnanot-Jacobi proof: `M` with
+columns `0` and `Fin.last (n + 1)` replaced by `det M • e_0` and
+`det M • e_last`. -/
+def auxP {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) : Matrix R (n + 2) (n + 2) :=
+  ofFn fun i j =>
+    if j = (0 : Fin (n + 2)) then
+      (if i = (0 : Fin (n + 2)) then det M else 0)
+    else if j = Fin.last (n + 1) then
+      (if i = Fin.last (n + 1) then det M else 0)
+    else M[i][j]
+
+@[simp] theorem auxP_apply_zero
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) (i : Fin (n + 2)) :
+    (auxP M)[i][(0 : Fin (n + 2))] =
+      if i = (0 : Fin (n + 2)) then det M else 0 := by
+  unfold auxP ofFn
+  rw [vector_ofFn_getElem_fin, vector_ofFn_getElem_fin]
+  dsimp only
+  rw [if_pos rfl]
+
+@[simp] theorem auxP_apply_last
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) (i : Fin (n + 2)) :
+    (auxP M)[i][Fin.last (n + 1)] =
+      if i = Fin.last (n + 1) then det M else 0 := by
+  unfold auxP ofFn
+  rw [vector_ofFn_getElem_fin, vector_ofFn_getElem_fin]
+  dsimp only
+  rw [if_neg (fin_last_succ_ne_zero n), if_pos rfl]
+
+theorem auxP_apply_middle
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) (i j : Fin (n + 2))
+    (hj0 : j ≠ (0 : Fin (n + 2))) (hjlast : j ≠ Fin.last (n + 1)) :
+    (auxP M)[i][j] = M[i][j] := by
+  unfold auxP ofFn
+  rw [vector_ofFn_getElem_fin, vector_ofFn_getElem_fin]
+  dsimp only
+  rw [if_neg hj0, if_neg hjlast]
+
+private theorem mul_auxAdjugateM_eq_auxP_entry
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) (ii jj : Fin (n + 2)) :
+    (M * auxAdjugateM M)[ii][jj] = (auxP M)[ii][jj] := by
+  by_cases hj0 : jj = (0 : Fin (n + 2))
+  · subst hj0
+    rw [mul_apply_of_col_eq M (auxAdjugateM M) (adjugate M) ii
+          (0 : Fin (n + 2)) (fun k => by rw [auxAdjugateM_apply_zero])]
+    rw [mul_adjugate_apply_zero, auxP_apply_zero]
+  · by_cases hjlast : jj = Fin.last (n + 1)
+    · subst hjlast
+      rw [mul_apply_of_col_eq M (auxAdjugateM M) (adjugate M) ii
+            (Fin.last (n + 1))
+            (fun k => by rw [auxAdjugateM_apply_last])]
+      rw [mul_adjugate_apply_last, auxP_apply_last]
+    · rw [mul_apply_of_col_eq M (auxAdjugateM M)
+            (1 : Matrix R (n + 2) (n + 2)) ii jj
+            (fun k => by
+              rw [auxAdjugateM_apply_middle M k jj hj0 hjlast,
+                  identity_get])]
+      rw [auxP_apply_middle M ii jj hj0 hjlast]
+      exact congrArg (fun N => N[ii][jj]) (mul_one M)
+
+/-- `M * auxAdjugateM M = auxP M`: the entrywise identity at the heart
+of the Mathlib Desnanot-Jacobi proof, transported to Hex matrices.
+On column `0` this is `mul_adjugate_apply_zero`; on column
+`Fin.last (n + 1)` this is `mul_adjugate_apply_last`; on middle
+columns `auxAdjugateM M` agrees with the identity, so `mul_one`
+applies. -/
+theorem mul_auxAdjugateM_eq_auxP
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) :
+    M * auxAdjugateM M = auxP M := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  exact mul_auxAdjugateM_eq_auxP_entry M ⟨i, hi⟩ ⟨j, hj⟩
+
 /-! ### Bareiss Desnanot source-entry helpers and structural submatrix equalities
 
 Following the Mathlib-side reindexing in `HexMatrixMathlib/Determinant/Core.lean`,
