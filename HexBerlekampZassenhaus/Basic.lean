@@ -1316,7 +1316,7 @@ private def firstSome {α β : Type} : List α → (α → Option β) → Option
       | some y => some y
       | none => firstSome xs f
 
-private def exactQuotient? (target candidate : ZPoly) : Option ZPoly :=
+def exactQuotient? (target candidate : ZPoly) : Option ZPoly :=
   if candidate.isZero || candidate = 1 then
     none
   else
@@ -1784,6 +1784,56 @@ private theorem exactQuotient?_product
           exact (by
             simpa [Bool.and_eq_true, beq_iff_eq] using hcheck : r = 0 ∧ quotient * candidate = target).2
         · contradiction
+
+/-- Converse to `exactQuotient?_product`: if `candidate` is monic with positive
+degree and `quotient * candidate = target`, then `exactQuotient? target candidate`
+returns `some quotient`. -/
+theorem exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree
+    {target candidate quotient : ZPoly}
+    (hmonic : DensePoly.Monic candidate)
+    (hdegree : 0 < candidate.degree?.getD 0)
+    (hmul : quotient * candidate = target) :
+    exactQuotient? target candidate = some quotient := by
+  have hcandidate_ne : candidate ≠ 0 := by
+    intro hzero
+    have hdeg : candidate.degree?.getD 0 = 0 := by
+      rw [hzero]
+      simp [DensePoly.degree?]
+    omega
+  have hcandidate_ne_one : candidate ≠ 1 := by
+    intro hone
+    have hdeg : candidate.degree?.getD 0 = 0 := by
+      rw [hone]
+      change (DensePoly.C (1 : Int)).degree?.getD 0 = 0
+      exact DensePoly.degree?_C_getD 1
+    omega
+  have hsize_pos : 0 < candidate.size := by
+    rcases Nat.lt_or_ge 0 candidate.size with h | h
+    · exact h
+    · exfalso
+      apply hcandidate_ne
+      apply DensePoly.ext_coeff
+      intro n
+      rw [DensePoly.coeff_zero]
+      exact DensePoly.coeff_eq_zero_of_size_le candidate (by omega)
+  have hisZero_false : candidate.isZero = false := by
+    unfold DensePoly.isZero
+    have hne : candidate.coeffs ≠ #[] := by
+      intro hempty
+      have : candidate.size = 0 := by
+        change candidate.coeffs.size = 0
+        rw [hempty]
+        rfl
+      omega
+    simpa using hne
+  have hdivMod_eq : DensePoly.divMod target candidate = (quotient, 0) :=
+    ZPoly.divMod_eq_of_monic_mul_eq target candidate quotient hmonic hdegree hmul
+  unfold exactQuotient?
+  rw [hisZero_false]
+  simp only [Bool.false_or, decide_eq_true_eq]
+  rw [if_neg hcandidate_ne_one]
+  rw [hdivMod_eq]
+  simp [hmul]
 
 private def positiveDivisors (n : Nat) : List Nat :=
   (List.range (n + 1)).filter fun d => d != 0 && n % d == 0
