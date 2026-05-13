@@ -9,7 +9,7 @@
 
 ## Verdicts
 
-Scientific run at commit `e7bf7c23bbb5` on `carica` (Apple M2 Ultra,
+Scientific run at commit `ad74d65a9295` on `carica` (Apple M2 Ultra,
 macOS 14.6.1), command:
 
 ```sh
@@ -18,28 +18,29 @@ lake exe hexberlekamp_bench run \
     Hex.BerlekampBench.runRabinTestChecksum \
     Hex.BerlekampBench.runBerlekampFactorChecksum \
     Hex.BerlekampBench.runDistinctDegreeChecksum \
-    --export-file reports/bench-results/hex-berlekamp-e7bf7c2.json
+    --export-file reports/bench-results/hex-berlekamp-ad74d65.json
 ```
 
 The deterministic benchmark fixtures in `HexBerlekamp/Bench.lean` use
 the fixed small prime `p = 5`; no random seeds are involved. The harness
-recorded `e7bf7c2-dirty` because this worktree carried a pre-existing
+recorded `ad74d65-dirty` because this worktree carried a pre-existing
 local `.claude/CLAUDE.md` modification outside this evidence package.
-Export artefact: `reports/bench-results/hex-berlekamp-e7bf7c2.json`,
-SHA-256 `e21e8bbf5deefb5c3f44bd2b32005bee095c82487cce1aa1fa7bf3ee1bcbd30a`.
+Export artefact: `reports/bench-results/hex-berlekamp-ad74d65.json`,
+SHA-256 `af9f901e5a8be1f3ae6c6c7313d9dd37f8985179884d880d07de3dc53bb6c9c7`.
 
 - `Hex.BerlekampBench.runBerlekampMatrixChecksum`: consistent with
-  declared complexity (`cMin=1604.524, cMax=1914.459, beta=-0.058`,
+  declared complexity (`cMin=1560.075, cMax=2374.100, beta=-0.158`,
   parameters `16..192`, final hash `0xa562d3f84baa18e9`).
 - `Hex.BerlekampBench.runRabinTestChecksum`: consistent with declared
-  complexity (`cMin=1124.630, cMax=1358.726, beta=-0.031`,
-  parameters `8..64`, final hash `0xd`).
+  complexity (`cMin=1068.124, cMax=1349.340, beta=-0.047`,
+  densified ladder `8,10,12,16,20,24,32,40,48,56,64`, final hash `0xd`).
 - `Hex.BerlekampBench.runBerlekampFactorChecksum`: consistent with
-  declared complexity (`cMin=1927.593, cMax=2700.022, beta=-0.137`,
+  declared complexity (`cMin=1828.018, cMax=2634.728, beta=-0.149`,
   parameters `16..256`, final hash `0xf7bf198d9173a6ce`).
 - `Hex.BerlekampBench.runDistinctDegreeChecksum`: consistent with
-  declared complexity (`cMin=1698.591, cMax=2925.243, beta=-0.316`,
-  parameters `12..96`, final hash `0x967aa08b9f90679`).
+  declared complexity (`cMin=1627.883, cMax=2869.790, beta=-0.296`,
+  densified ladder `12,16,20,24,32,40,48,64,80,96`,
+  final hash `0x967aa08b9f90679`).
 
 Smoke wiring was checked at the same commit with:
 
@@ -52,12 +53,70 @@ lake exe hexberlekamp_bench verify
 
 ## Comparator Ratios
 
-`SPEC/Libraries/hex-berlekamp.md` does not name an external Phase-4
-performance comparator for `HexBerlekamp`, so there are no
-`phase4.comparators` ratios to record. The conformance oracle for
-Berlekamp factoring remains the separate python-flint fixture driver
-under `scripts/oracle/berlekamp_flint.py`; it is not a Phase-4
-performance comparator named by the SPEC.
+`SPEC/Libraries/hex-berlekamp.md` names two `gating` FLINT comparators:
+`nmod_poly.is_irreducible` for `runRabinTestChecksum` and
+`nmod_poly.factor_distinct_deg` for `runDistinctDegreeChecksum`. Both
+are wired through `Hex.BenchOracle.Flint.runOp` and registered as fixed
+per-rung benchmark pairs over the same input families as the Lean
+targets.
+
+Measured fixed-comparator process-call overhead is about `52 ms` per
+call on this host. The current fixed registrations spawn one benchmark
+child per repeat, so even though the FLINT driver is persistent inside
+that child, the Python/driver startup dominates the FLINT medians at
+every rung below. Raw ratios are `FLINT median / Lean median`; adjusted
+ratios subtract `52 ms` from the FLINT median when positive. Because the
+overhead is more than 50% of measured FLINT wall time at every rung, no
+rung is eligible for a final gating-goal verdict under
+`SPEC/benchmarking.md §"Headline reports" §"Comparator ratios"`.
+
+### FLINT `nmod_poly.is_irreducible` vs Rabin
+
+| n | Lean median | FLINT median | raw ratio | adjusted ratio | eligible |
+|---:|---:|---:|---:|---:|:---:|
+| 8 | 0.777 ms | 53.229 ms | 68.532x | 1.582x | no |
+| 10 | 1.486 ms | 54.783 ms | 36.871x | 1.873x | no |
+| 12 | 2.114 ms | 52.346 ms | 24.767x | 0.164x | no |
+| 16 | 5.312 ms | 55.379 ms | 10.426x | 0.636x | no |
+| 20 | 10.554 ms | 51.723 ms | 4.901x | 0.000x | no |
+| 24 | 16.019 ms | 57.258 ms | 3.574x | 0.328x | no |
+| 32 | 36.021 ms | 69.158 ms | 1.920x | 0.476x | no |
+| 40 | 81.167 ms | 55.964 ms | 0.689x | 0.049x | no |
+| 48 | 127.045 ms | 55.526 ms | 0.437x | 0.028x | no |
+| 56 | 217.878 ms | 53.264 ms | 0.244x | 0.006x | no |
+| 64 | 329.806 ms | 53.284 ms | 0.162x | 0.004x | no |
+
+Trend: raw ratios fall monotonically after the small-startup regime;
+FLINT is raw-faster by `n = 40` and the gap widens through `n = 64`.
+The adjusted ratios are not a valid verdict curve because the overhead
+floor dominates every FLINT measurement. Gating-goal verdict:
+**blocked/no eligible rung** for this process-call shape.
+
+### FLINT `nmod_poly.factor_distinct_deg` vs DDF
+
+The DDF fixed targets use an opaque timing token for the fixed compare:
+the conformance oracle compares monic-normalised degree buckets, while
+the raw Lean and FLINT representative checksums are not a stable shared
+observable.
+
+| n | Lean median | FLINT median | raw ratio | adjusted ratio | eligible |
+|---:|---:|---:|---:|---:|:---:|
+| 12 | 5.872 ms | 56.241 ms | 9.578x | 0.722x | no |
+| 16 | 11.453 ms | 52.724 ms | 4.604x | 0.063x | no |
+| 20 | 18.630 ms | 52.191 ms | 2.801x | 0.010x | no |
+| 24 | 38.281 ms | 55.162 ms | 1.441x | 0.083x | no |
+| 32 | 69.851 ms | 57.250 ms | 0.820x | 0.075x | no |
+| 40 | 117.502 ms | 57.305 ms | 0.488x | 0.045x | no |
+| 48 | 214.047 ms | 55.294 ms | 0.258x | 0.015x | no |
+| 64 | 509.125 ms | 55.684 ms | 0.109x | 0.007x | no |
+| 80 | 882.482 ms | 56.784 ms | 0.064x | 0.005x | no |
+| 96 | 1.470 s | 56.130 ms | 0.038x | 0.003x | no |
+
+Trend: raw ratios cross in FLINT's favour by `n = 32` and continue
+falling through `n = 96`. As with Rabin, the process-call overhead
+dominates every FLINT row, so the adjusted curve is informational only.
+Gating-goal verdict: **blocked/no eligible rung** for this process-call
+shape.
 
 ## Profile
 
@@ -174,3 +233,14 @@ declared cubic model.
 
 ## Concerns
 
+- The two required FLINT gating comparators are wired, but the current
+  fixed process-call measurement shape has no eligible rung: driver
+  startup is more than 50% of the measured FLINT wall time for both
+  surfaces across the full ladder. HexBerlekamp should not re-claim
+  Phase 4 until either the comparator harness amortises the persistent
+  driver across measured inner repeats or an FFI comparator replaces the
+  process-call path.
+- The raw FLINT trend is adverse for both gating surfaces: after startup
+  stops dominating the Lean side, FLINT is substantially faster by the
+  largest measured rung (`0.162x` raw for Rabin at `n = 64`, `0.038x`
+  raw for DDF at `n = 96`, where lower is faster for FLINT/Lean ratios).
