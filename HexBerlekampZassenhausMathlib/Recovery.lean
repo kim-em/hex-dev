@@ -353,6 +353,31 @@ def toEquivalenceClassRecoveryHypotheses {f : Hex.ZPoly} {d : Hex.LiftData}
   indicators_match := h.indicators_match
 
 /--
+The executable non-degeneracy guard follows from the shape facts supplied by
+the true-support indicator partition: the projected lattice has rows, the
+partition has at least one class, and B7 did not collapse all local factors
+into the single all-ones class.
+-/
+theorem nondegenerateOfTrueSupportIndicators
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    (rows_pos : HasPositiveDimension f d)
+    (expectedIndicators : Array (Array Int))
+    (hprojected_nonempty :
+      (projectedRowsOfLiftData f d rows_pos).projectedRows.isEmpty = false)
+    (hindicators_nonempty : expectedIndicators.isEmpty = false)
+    (hnot_single_all_ones :
+      (expectedIndicators.size == 1 &&
+        Hex.bhksIndicatorAllOnes
+          (projectedRowsOfLiftData f d rows_pos).factorCount
+          (expectedIndicators.getD 0 #[])) = false) :
+    Hex.bhksDegenerateIndicatorPartition
+        (projectedRowsOfLiftData f d rows_pos) expectedIndicators = false := by
+  unfold Hex.bhksDegenerateIndicatorPartition
+  rw [hindicators_nonempty, hprojected_nonempty]
+  simp only [Bool.false_or]
+  exact hnot_single_all_ones
+
+/--
 Build `ForwardRecoveryInputs` when the A2/exact-division obligation is
 available as per-indicator reconstruction witnesses rather than as the folded
 candidate equality.
