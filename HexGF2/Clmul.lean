@@ -97,8 +97,14 @@ private theorem foldl_keep {α β : Type} (xs : List β) (acc : α) :
   | cons _ xs ih => simp [ih]
 
 /-- The pure carry-less multiplier returns zero when the left word is zero. -/
+@[simp]
 theorem pureClmul_zero_left (x : UInt64) : pureClmul 0 x = (0, 0) := by
   simp [pureClmul, clmulAccumulateBit_zero_left, foldl_keep]
+
+/-- The pure carry-less multiplier returns zero when the right word is zero. -/
+@[simp]
+theorem pureClmul_zero_right (x : UInt64) : pureClmul x 0 = (0, 0) := by
+  simp [pureClmul, foldl_keep]
 
 private theorem oneHotWord_bit {hot bit : Nat} (hhot : hot < 64) (hbit : bit < 64) :
     (((((1 : UInt64) <<< hot.toUInt64) >>> bit.toUInt64) &&& 1) != 0) = (hot == bit) := by
@@ -502,6 +508,16 @@ reference semantics. -/
 theorem clmul_eq_pureClmul (a b : UInt64) : clmul a b = pureClmul a b := by
   rw [clmul]
 
+/-- The high word of the extern-backed multiplier has `pureClmul` as its
+logical reference semantics. -/
+theorem clmul_eq_pureClmul_fst (a b : UInt64) : (clmul a b).1 = (pureClmul a b).1 := by
+  rw [clmul_eq_pureClmul]
+
+/-- The low word of the extern-backed multiplier has `pureClmul` as its logical
+reference semantics. -/
+theorem clmul_eq_pureClmul_snd (a b : UInt64) : (clmul a b).2 = (pureClmul a b).2 := by
+  rw [clmul_eq_pureClmul]
+
 /-- Carry-less multiplication by zero on the left returns the zero product. -/
 @[simp]
 theorem clmul_zero_left (x : UInt64) : clmul 0 x = (0, 0) := by
@@ -510,7 +526,7 @@ theorem clmul_zero_left (x : UInt64) : clmul 0 x = (0, 0) := by
 /-- Carry-less multiplication by zero on the right returns the zero product. -/
 @[simp]
 theorem clmul_zero_right (x : UInt64) : clmul x 0 = (0, 0) := by
-  simp [clmul, pureClmul, foldl_keep]
+  rw [clmul_eq_pureClmul, pureClmul_zero_right]
 
 /-- Runtime `clmul`, under its trusted reference contract, agrees with the
 one-hot pure carry-less multiplication split. -/
