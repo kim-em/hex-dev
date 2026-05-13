@@ -2441,6 +2441,31 @@ theorem mul_ne_zero_of_ne_zero
   have habsize : (a * b).size = 0 := by rw [hmul]; rfl
   omega
 
+/-- Right cancellation for multiplication by a nonzero `FpPoly p` polynomial. -/
+theorem mul_right_cancel_of_ne_zero
+    [ZMod64.PrimeModulus p] {a b c : FpPoly p}
+    (hc : c ≠ 0) (h : a * c = b * c) :
+    a = b := by
+  apply Classical.byContradiction
+  intro hab
+  have hsub_ne : a - b ≠ 0 := by
+    intro hsub
+    apply hab
+    apply DensePoly.ext_coeff
+    intro n
+    have hcoeff := congrArg (fun s : FpPoly p => s.coeff n) hsub
+    have hzero_sub : (0 : ZMod64 p) - 0 = 0 := by grind
+    change (a - b).coeff n = (0 : FpPoly p).coeff n at hcoeff
+    rw [DensePoly.coeff_sub a b n hzero_sub, DensePoly.coeff_zero] at hcoeff
+    grind
+  have hmul_ne : (a - b) * c ≠ 0 := mul_ne_zero_of_ne_zero hsub_ne hc
+  apply hmul_ne
+  rw [sub_eq_add_neg, right_distrib]
+  have hneg : (-(b : FpPoly p)) * c = -(b * c) := by
+    show (0 - b) * c = 0 - b * c
+    exact DensePoly.neg_mul_right_poly b c
+  rw [hneg, h, add_right_neg]
+
 /--
 Over a prime modulus, divisibility implies a size bound: if `a ∣ b` and `b ≠ 0`, then
 `a.size ≤ b.size`. The standard polynomial fact that a divisor has degree at most the
