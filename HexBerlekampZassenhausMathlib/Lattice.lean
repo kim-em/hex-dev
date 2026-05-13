@@ -81,6 +81,164 @@ def trueFactorIndicatorLattice {r : Nat} (trueSupports : Set (Set (Fin r))) :
     Submodule ℤ (Fin r → ℤ) :=
   Submodule.span ℤ (Set.range fun S : trueSupports => indicatorVector S.1)
 
+/-- Two lifted-factor columns have the same support signature across all true
+factor supports. -/
+def supportEquivalent {r : Nat} (trueSupports : Set (Set (Fin r)))
+    (j k : Fin r) : Prop :=
+  ∀ S ∈ trueSupports, (j ∈ S ↔ k ∈ S)
+
+/-- Nat-indexed form of `supportEquivalent`, convenient for filtering
+`List.range r` while retaining proof irrelevance for the bounds. -/
+def supportEquivalentAt {r : Nat} (trueSupports : Set (Set (Fin r)))
+    (j k : Nat) : Prop :=
+  ∃ (hj : j < r) (hk : k < r),
+    supportEquivalent trueSupports ⟨j, hj⟩ ⟨k, hk⟩
+
+theorem supportEquivalentAt_iff {r : Nat}
+    (trueSupports : Set (Set (Fin r))) {j k : Nat}
+    (hj : j < r) (hk : k < r) :
+    supportEquivalentAt trueSupports j k ↔
+      supportEquivalent trueSupports ⟨j, hj⟩ ⟨k, hk⟩ := by
+  constructor
+  · intro h
+    rcases h with ⟨hj', hk', h⟩
+    simpa using h
+  · intro h
+    exact ⟨hj, hk, h⟩
+
+theorem supportEquivalentAt_refl {r : Nat}
+    (trueSupports : Set (Set (Fin r))) {j : Nat} (hj : j < r) :
+    supportEquivalentAt trueSupports j j := by
+  exact ⟨hj, hj, by intro S hS; simp⟩
+
+theorem supportEquivalentAt_symm {r : Nat}
+    (trueSupports : Set (Set (Fin r))) {j k : Nat}
+    (h : supportEquivalentAt trueSupports j k) :
+    supportEquivalentAt trueSupports k j := by
+  rcases h with ⟨hj, hk, h⟩
+  exact ⟨hk, hj, by intro S hS; exact (h S hS).symm⟩
+
+theorem supportEquivalentAt_trans {r : Nat}
+    (trueSupports : Set (Set (Fin r))) {i j k : Nat}
+    (hij : supportEquivalentAt trueSupports i j)
+    (hjk : supportEquivalentAt trueSupports j k) :
+    supportEquivalentAt trueSupports i k := by
+  rcases hij with ⟨hi, hj, hij⟩
+  rcases hjk with ⟨hj', hk, hjk⟩
+  exact ⟨hi, hk, by intro S hS; exact (hij S hS).trans (hjk S hS)⟩
+
+/-- Minimum representatives of support-equivalence classes, emitted in
+ascending column order. -/
+def supportRepresentativeColumns {r : Nat}
+    (trueSupports : Set (Set (Fin r))) : List Nat :=
+  by
+    classical
+    exact (List.range r).filter
+      (fun j =>
+        ((List.range j).filter
+          (fun k => decide (supportEquivalentAt trueSupports k j))).isEmpty)
+
+/-- The support-equivalence class represented by `rep`, listed in ascending
+column order. -/
+def supportClassMembers {r : Nat}
+    (trueSupports : Set (Set (Fin r))) (rep : Nat) : List Nat :=
+  by
+    classical
+    exact (List.range r).filter
+      (fun j => decide (supportEquivalentAt trueSupports j rep))
+
+/-- Canonical partition of columns by true-support membership signatures. -/
+def supportPartitionByMinColumn {r : Nat}
+    (trueSupports : Set (Set (Fin r))) : List (List Nat) :=
+  (supportRepresentativeColumns trueSupports).map
+    (fun rep => supportClassMembers trueSupports rep)
+
+/-- The executable indicator-array shape for a finite Nat-indexed class. -/
+def classIndicatorArray (r : Nat) (members : List Nat) : Array Int :=
+  ((List.range r).map (fun i => if i ∈ members then (1 : Int) else 0)).toArray
+
+/--
+Canonical support-driven expected B7 indicator array.
+
+Entries are `0/1` indicators of support-equivalence classes.  The class order
+is ascending by the least column in each class, matching the executable
+signature-class fold order characterised in `SignatureClasses.lean`.
+-/
+noncomputable def expectedIndicatorArrayOfSupports
+    {r : Nat} (trueSupports : Set (Set (Fin r))) : Array (Array Int) :=
+  ((supportPartitionByMinColumn trueSupports).map
+    (fun members => classIndicatorArray r members)).toArray
+
+theorem mem_supportRepresentativeColumns_iff {r : Nat}
+    (trueSupports : Set (Set (Fin r))) (rep : Nat) :
+    rep ∈ supportRepresentativeColumns trueSupports ↔
+      rep < r ∧
+        ∀ k, k < rep → ¬ supportEquivalentAt trueSupports k rep := by
+  classical
+  unfold supportRepresentativeColumns
+  rw [List.mem_filter]
+  simp only [List.mem_range, List.isEmpty_iff]
+  constructor
+  · rintro ⟨hlt, hfilter⟩
+    refine ⟨hlt, ?_⟩
+    intro k hk heq
+    have : k ∈ (List.range rep).filter
+        (fun k => decide (supportEquivalentAt trueSupports k rep)) := by
+      rw [List.mem_filter]
+      exact ⟨List.mem_range.mpr hk, by simpa using heq⟩
+    rw [hfilter] at this
+    exact List.not_mem_nil this
+  · rintro ⟨hlt, hfresh⟩
+    refine ⟨hlt, ?_⟩
+    apply List.eq_nil_iff_forall_not_mem.mpr
+    intro k hk
+    rw [List.mem_filter] at hk
+    exact hfresh k (List.mem_range.mp hk.1) (by simpa using hk.2)
+
+theorem supportRepresentativeColumns_lt {r : Nat}
+    (trueSupports : Set (Set (Fin r))) {rep : Nat}
+    (hrep : rep ∈ supportRepresentativeColumns trueSupports) : rep < r :=
+  ((mem_supportRepresentativeColumns_iff trueSupports rep).mp hrep).1
+
+theorem supportRepresentativeColumns_min {r : Nat}
+    (trueSupports : Set (Set (Fin r))) {rep : Nat}
+    (hrep : rep ∈ supportRepresentativeColumns trueSupports) :
+    ∀ k, k < rep → ¬ supportEquivalentAt trueSupports k rep :=
+  ((mem_supportRepresentativeColumns_iff trueSupports rep).mp hrep).2
+
+theorem mem_supportClassMembers_iff {r : Nat}
+    (trueSupports : Set (Set (Fin r))) (rep j : Nat) :
+    j ∈ supportClassMembers trueSupports rep ↔
+      j < r ∧ supportEquivalentAt trueSupports j rep := by
+  classical
+  unfold supportClassMembers
+  rw [List.mem_filter]
+  simp [List.mem_range]
+
+theorem supportClassMembers_rep_mem {r : Nat}
+    (trueSupports : Set (Set (Fin r))) {rep : Nat}
+    (hrep : rep ∈ supportRepresentativeColumns trueSupports) :
+    rep ∈ supportClassMembers trueSupports rep := by
+  rw [mem_supportClassMembers_iff]
+  exact ⟨supportRepresentativeColumns_lt trueSupports hrep,
+    supportEquivalentAt_refl trueSupports
+      (supportRepresentativeColumns_lt trueSupports hrep)⟩
+
+theorem supportClassMembers_mem_iff_fin {r : Nat}
+    (trueSupports : Set (Set (Fin r))) {rep j : Nat}
+    (hj : j < r) (hrep : rep < r) :
+    j ∈ supportClassMembers trueSupports rep ↔
+      supportEquivalent trueSupports ⟨j, hj⟩ ⟨rep, hrep⟩ := by
+  rw [mem_supportClassMembers_iff, supportEquivalentAt_iff trueSupports hj hrep]
+  simp [hj]
+
+theorem expectedIndicatorArrayOfSupports_toList {r : Nat}
+    (trueSupports : Set (Set (Fin r))) :
+    (expectedIndicatorArrayOfSupports trueSupports).toList =
+      (supportPartitionByMinColumn trueSupports).map
+        (fun members => classIndicatorArray r members) := by
+  simp [expectedIndicatorArrayOfSupports]
+
 /-- Each declared true-factor support contributes its indicator to `W`. -/
 theorem indicatorVector_mem_trueFactorIndicatorLattice
     {r : Nat} (trueSupports : Set (Set (Fin r))) (S : trueSupports) :
