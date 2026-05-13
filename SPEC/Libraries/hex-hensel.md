@@ -251,3 +251,31 @@ quadratic lifting as the hot path, under the iteration-count and
 `k`-coverage rules in the previous subsections. Treating quadratic
 lifting as "later" is incompatible with the polynomial-time complexity
 model declared for the Berlekamp–Zassenhaus pipeline.
+
+## External comparators
+
+| Comparator | Class | Scope |
+|---|---|---|
+| FLINT `nmod_poly_hensel_lift_*` via python-flint | informational | bench targets exercising single-step and iterated Hensel lifting of factor pairs over `Z_{p^k}` |
+
+FLINT exposes a family of Hensel-lift functions
+(`nmod_poly_hensel_lift_once_preinv`, `nmod_poly_hensel_lift`,
+`nmod_poly_hensel_continue_lift`) that perform the same Newton-style
+quadratic lift Hex implements. The concrete framings differ —
+FLINT exposes single-step and incremental APIs while Hex exposes
+linear / quadratic / multifactor entry points — but the underlying
+operation is the same and FLINT's tuned implementation is a useful
+speed reference.
+
+Classification is **fixed informational**, not a deferred decision.
+The constant-factor gap reflects FLINT's word-level operand
+tuning and its `preinv` precomputation that Hex doesn't currently
+exploit; a future gating upgrade requires a separate SPEC PR
+identifying a narrower comparable kernel (e.g. single-step lift
+with preinv on canonical inputs) and is not delegated to an HO
+implementer.
+
+Wired via a persistent-subprocess Python driver per
+`SPEC/benchmarking.md §"External comparators" §"Process call"`.
+
+Structured metadata in `libraries.yml: HexHensel.phase4.comparators`.

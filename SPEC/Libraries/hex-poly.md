@@ -52,3 +52,22 @@ theorem polyCRT_mod_snd [CommRing R] [DecidableEq R]
 Given coprime `a, b` with Bezout coefficients `s, t`, constructs `h`
 with `h ≡ u (mod a)` and `h ≡ v (mod b)`. Used by hex-hensel,
 hex-gfq-ring, and hex-berlekamp-mathlib (Berlekamp correctness proof).
+
+## External comparators
+
+| Comparator | Class | Scope |
+|---|---|---|
+| FLINT `fmpz_poly` via python-flint | informational | all `setup_benchmark` registrations against integer polynomial inputs |
+
+FLINT's `fmpz_poly` is the standard reference for univariate
+integer polynomial arithmetic. The comparator is `informational`
+rather than `gating`: FLINT tunes Karatsuba/Toom-Cook/FFT
+crossovers in `fmpz_poly_mul` and uses non-recursive Newton-style
+algorithms for division and GCD; Hex's implementation is
+schoolbook with the Karatsuba crossover named in the algorithm
+table above. The constant-factor gap is structural, not
+algorithmic — the ratio is recorded for orientation but is not a
+Phase-4 gate. Wired via a persistent-subprocess Python driver per
+`SPEC/benchmarking.md §"External comparators" §"Process call"`.
+
+Structured metadata in `libraries.yml: HexPoly.phase4.comparators`.
