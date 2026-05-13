@@ -451,29 +451,6 @@ private theorem scaledCoeffMatrix_bareiss_eq_det
           Int) : Rat) := by
   rw [Matrix.bareiss_eq_det]
 
-/-- Cramer's-rule bridge for the scaled Gram-Schmidt coefficient determinant:
-the Leibniz determinant of `scaledCoeffMatrix` equals
-`gramDet b (j + 1) * coeffs[i,j]` after casting to `Rat`. -/
-private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
-    (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < i) :
-    ((Matrix.det
-        (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ hj) :
-          Int) : Rat) =
-      (gramDet b (j + 1) (Nat.succ_le_of_lt (Nat.lt_trans hj hi)) : Rat) *
-        GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ := by
-  sorry
-
-/-- The fraction-free scaled-coefficient loop computes the Cramer/Bareiss
-integer equal to `d[j+1] * μ[i,j]` below the diagonal. -/
-private theorem scaledCoeffRows_lower_eq_coeffs
-    (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < i) :
-    ((getArrayEntry (scaledCoeffRows b) i j : Int) : Rat) =
-      (gramDet b (j + 1) (Nat.succ_le_of_lt (Nat.lt_trans hj hi)) : Rat) *
-        GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ := by
-  rw [scaledCoeffRows_lower_eq_scaledCoeffMatrix_bareiss (b := b) i j hi hj]
-  rw [scaledCoeffMatrix_bareiss_eq_det (b := b) i j hi hj]
-  exact scaledCoeffMatrix_det_eq_gramDet_mul_coeffs (b := b) i j hi hj
-
 /-- The scaled-coefficient array loop writes the same diagonal determinant
 values as `gramDetVecEntry`, including the zero tail after an early singular
 no-pivot Bareiss step. -/
@@ -1560,6 +1537,465 @@ theorem basis_normSq (b : Matrix Int n m)
       (gramDet b (k + 1) (Nat.succ_le_of_lt hk) : Rat) /
         (gramDet b k (Nat.le_of_lt hk) : Rat) := by
   exact basis_normSq_core b hli k hk
+
+/-- Original-row dot products vanish against orthogonal basis vectors of higher
+index. For `p < r`, `castIntRow b p` lies in the basis-vector span of indices
+`≤ p`, which is orthogonal to `(basis b).row r`. -/
+private theorem dot_castIntRow_basis_eq_zero_of_lt
+    (b : Matrix Int n m) (p r : Nat) (hp : p < n) (hr : r < n) (hpr : p < r) :
+    Matrix.dot (castIntRow b ⟨p, hp⟩) ((basis b).row ⟨r, hr⟩) = 0 := by
+  rw [dot_comm_rat]
+  rw [castIntRow_decomposition b p hp]
+  rw [dot_add_right_rat]
+  have hbasis : Matrix.dot ((basis b).row ⟨r, hr⟩) ((basis b).row ⟨p, hp⟩) = 0 :=
+    basis_orthogonal b r p hr hp (Nat.ne_of_gt hpr)
+  have hprefix : Matrix.dot ((basis b).row ⟨r, hr⟩)
+      (GramSchmidt.prefixCombination (coeffs b) (basis b) p hp) = 0 := by
+    apply dot_prefixCombination_right_eq_zero_of_dot_zero
+      (coeffs := coeffs b) (basisM := basis b) (i := p) (hi := hp)
+      (u := (basis b).row ⟨r, hr⟩)
+    intro p'
+    have hp'_lt_p : p'.val < p := p'.isLt
+    have hp'_lt_r : p'.val < r := Nat.lt_trans hp'_lt_p hpr
+    have hp'_lt_n : p'.val < n := Nat.lt_trans hp'_lt_p hp
+    exact basis_orthogonal b r p'.val hr hp'_lt_n (Nat.ne_of_gt hp'_lt_r)
+  rw [hbasis, hprefix]
+  grind
+
+/-- Truncate a `Fin m` foldl to `Fin k₀` when the proof-indexed body vanishes
+on indices `≥ k₀` and `k₀ ≤ m`. Induction is on `m`. -/
+private theorem foldl_finRange_truncate_zero_above
+    {n : Nat} (body : ∀ (k : Nat), k < n → Rat) (acc : Rat) (k₀ : Nat)
+    (h_zero : ∀ r : Nat, k₀ ≤ r → (hrn : r < n) → body r hrn = 0) :
+    ∀ (m : Nat) (hk : m ≤ n) (hkk : k₀ ≤ m),
+      (List.finRange m).foldl
+          (fun (acc' : Rat) (r : Fin m) =>
+            acc' + body r.val (Nat.lt_of_lt_of_le r.isLt hk)) acc =
+        (List.finRange k₀).foldl
+          (fun (acc' : Rat) (q : Fin k₀) =>
+            acc' + body q.val (Nat.lt_of_lt_of_le q.isLt (Nat.le_trans hkk hk))) acc := by
+  intro m
+  induction m with
+  | zero =>
+      intro _ hkk
+      have hk₀ : k₀ = 0 := Nat.eq_zero_of_le_zero hkk
+      subst hk₀
+      rfl
+  | succ m ih =>
+      intro hk hkk
+      rcases Nat.lt_or_ge m k₀ with hmk | hkm
+      · have hk_eq : k₀ = m + 1 := Nat.le_antisymm hkk (Nat.succ_le_of_lt hmk)
+        subst hk_eq
+        rfl
+      · have hk' : m ≤ n := Nat.le_of_succ_le hk
+        have h_last_lt : m < n := Nat.lt_of_lt_of_le (Nat.lt_succ_self m) hk
+        have h_last_zero : body m h_last_lt = 0 := h_zero m hkm h_last_lt
+        rw [List.finRange_succ_last, List.foldl_append, List.foldl_map]
+        simp only [List.foldl_cons, List.foldl_nil]
+        have h_last :
+            body (Fin.last m).val
+                (Nat.lt_of_lt_of_le (Fin.last m).isLt hk) = 0 :=
+          h_last_zero
+        rw [h_last, Rat.add_zero]
+        exact ih hk' hkm
+
+/-- The Gram-Schmidt prefix projection of row `i` onto the span of rows
+`0, ..., j` agrees with `castIntRow b i` when dotted with `castIntRow b p` for
+any `p ≤ j < i`. The residue between the two lies in the span of basis vectors
+of indices `> j`, hence orthogonal to `castIntRow b p`. -/
+private theorem dot_castIntRow_castIntRow_eq_dot_basisPrefixProjection
+    (b : Matrix Int n m) (i j p : Nat) (hi : i < n) (hj : j < i)
+    (hp_le_j : p ≤ j) (hp : p < n) :
+    Matrix.dot (castIntRow b ⟨p, hp⟩) (castIntRow b ⟨i, hi⟩) =
+      Matrix.dot (castIntRow b ⟨p, hp⟩)
+        (basisPrefixProjection b i j hi (Nat.lt_trans hj hi)) := by
+  -- Substitute `i = (j + 1) + d` so the foldl bounds align with the helper.
+  obtain ⟨d, rfl⟩ : ∃ d, i = (j + 1) + d := ⟨i - (j + 1), by omega⟩
+  have hkdn : (j + 1) + d ≤ n := Nat.le_of_lt hi
+  -- LHS via basis_decomposition for `castIntRow b i`.
+  rw [castIntRow_decomposition b ((j + 1) + d) hi]
+  rw [dot_add_right_rat]
+  rw [dot_castIntRow_basis_eq_zero_of_lt b p ((j + 1) + d) hp hi
+    (Nat.lt_of_le_of_lt hp_le_j hj)]
+  rw [Rat.zero_add]
+  rw [dot_prefixCombination_right_rat (coeffs := coeffs b) (basisM := basis b)
+    (i := (j + 1) + d) (hi := hi) (u := castIntRow b ⟨p, hp⟩)]
+  -- RHS unfold and expand basisPrefixProjection.
+  unfold basisPrefixProjection
+  rw [dot_rowCombination_right_rat]
+  -- Define a Nat-indexed body shared by both sides.
+  let body : ∀ (k : Nat), k < n → Rat := fun k hk =>
+    GramSchmidt.entry (coeffs b) ⟨(j + 1) + d, hi⟩ ⟨k, hk⟩ *
+      Matrix.dot (castIntRow b ⟨p, hp⟩) ((basis b).row ⟨k, hk⟩)
+  -- Normalize the RHS foldl body to use `body`. The literal proof inside the
+  -- unfolded `basisPrefixProjection` is `Nat.lt_trans hj hi`.
+  have hRHS :
+      (List.finRange (j + 1)).foldl
+          (fun (acc' : Rat) (q : Fin (j + 1)) =>
+            acc' +
+              (projectionCoeffPrefix b ((j + 1) + d) j hi
+                (Nat.lt_trans hj hi))[q] *
+              Matrix.dot (castIntRow b ⟨p, hp⟩)
+                ((GramSchmidt.prefixRows (basis b) j (Nat.lt_trans hj hi)).row q)) 0 =
+        (List.finRange (j + 1)).foldl
+          (fun (acc' : Rat) (q : Fin (j + 1)) =>
+            acc' + body q.val (Nat.lt_of_lt_of_le q.isLt
+              (Nat.le_trans (Nat.le_add_right (j + 1) d) hkdn))) 0 := by
+    apply foldl_sum_congr_simple
+    intro q _hq
+    have hq_lt_n : q.val < n :=
+      Nat.lt_of_lt_of_le q.isLt (Nat.le_trans (Nat.le_add_right (j + 1) d) hkdn)
+    have hcoeff :
+        (projectionCoeffPrefix b ((j + 1) + d) j hi (Nat.lt_trans hj hi))[q] =
+          GramSchmidt.entry (coeffs b) ⟨(j + 1) + d, hi⟩ ⟨q.val, hq_lt_n⟩ := by
+      simp [projectionCoeffPrefix, Vector.getElem_ofFn]
+    have hrow :
+        (GramSchmidt.prefixRows (basis b) j (Nat.lt_trans hj hi)).row q =
+          (basis b).row ⟨q.val, hq_lt_n⟩ := by
+      simp [GramSchmidt.prefixRows, Matrix.row, Vector.getElem_ofFn]
+    rw [hcoeff, hrow]
+  rw [hRHS]
+  -- Apply foldl truncation. By proof irrelevance the LHS body matches.
+  exact foldl_finRange_truncate_zero_above body 0 (j + 1)
+    (by
+      intro r hjr hrn
+      show GramSchmidt.entry (coeffs b) ⟨(j + 1) + d, hi⟩ ⟨r, hrn⟩ *
+          Matrix.dot (castIntRow b ⟨p, hp⟩) ((basis b).row ⟨r, hrn⟩) = 0
+      have hpr : p < r := Nat.lt_of_le_of_lt hp_le_j (Nat.lt_of_succ_le hjr)
+      rw [dot_castIntRow_basis_eq_zero_of_lt b p r hp hrn hpr]
+      grind)
+    ((j + 1) + d) hkdn (Nat.le_add_right (j + 1) d)
+
+/-- Isolate the last term in a `foldl` over `List.finRange (k + 1)` when every
+earlier term vanishes. -/
+private theorem foldl_finRange_succ_isolate_last
+    (k : Nat) (f : Fin (k + 1) → Rat)
+    (h_zero : ∀ q : Fin (k + 1), q.val < k → f q = 0) :
+    (List.finRange (k + 1)).foldl
+        (fun (acc : Rat) (q : Fin (k + 1)) => acc + f q) 0 =
+      f (Fin.last k) := by
+  rw [List.finRange_succ_last, List.foldl_append, List.foldl_map]
+  simp only [List.foldl_cons, List.foldl_nil]
+  have hfold_zero :
+      (List.finRange k).foldl
+          (fun (acc : Rat) (q : Fin k) => acc + f (Fin.castSucc q)) 0 = 0 := by
+    have hgen : ∀ (xs : List (Fin k)) (acc : Rat),
+        xs.foldl (fun acc' q => acc' + f (Fin.castSucc q)) acc = acc := by
+      intro xs
+      induction xs with
+      | nil => intro acc; rfl
+      | cons q xs ih =>
+          intro acc
+          simp only [List.foldl_cons]
+          have hq : f (Fin.castSucc q) = 0 := h_zero (Fin.castSucc q) q.isLt
+          rw [hq, Rat.add_zero]
+          exact ih acc
+    exact hgen (List.finRange k) 0
+  rw [hfold_zero, Rat.zero_add]
+
+/-- Dotting `basisPrefixProjection b i j` with the Gram-Schmidt basis vector
+`(basis b).row ⟨j, _⟩` extracts the projection coefficient `coeffs[i][j]`,
+weighted by `(basis b).row j`'s squared norm. -/
+private theorem dot_basis_basisPrefixProjection_eq_coeff_mul_normSq
+    (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < i) :
+    Matrix.dot ((basis b).row ⟨j, Nat.lt_trans hj hi⟩)
+        (basisPrefixProjection b i j hi (Nat.lt_trans hj hi)) =
+      GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ *
+        Vector.normSq ((basis b).row ⟨j, Nat.lt_trans hj hi⟩) := by
+  have hjlt : j < n := Nat.lt_trans hj hi
+  unfold basisPrefixProjection
+  rw [dot_rowCombination_right_rat]
+  -- Isolate the q = ⟨j, lt_succ_self j⟩ term in the foldl.
+  rw [foldl_finRange_succ_isolate_last j _ ?_]
+  · -- Last term: projectionCoeffPrefix[⟨j, _⟩] * dot basis[j] basis[j].
+    have hrow :
+        (GramSchmidt.prefixRows (basis b) j hjlt).row (Fin.last j) =
+          (basis b).row ⟨j, hjlt⟩ := by
+      simp [GramSchmidt.prefixRows, Matrix.row, Vector.getElem_ofFn, Fin.last]
+    have hcoeff :
+        (projectionCoeffPrefix b i j hi hjlt)[Fin.last j] =
+          GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, hjlt⟩ := by
+      simp [projectionCoeffPrefix, Vector.getElem_ofFn, Fin.last]
+    rw [hcoeff, hrow]
+    rfl
+  · -- For q < j: dot basis[j] basis[q.val_lift] = 0.
+    intro q hqval
+    have hq_lt_n : q.val < n :=
+      Nat.lt_of_lt_of_le q.isLt (Nat.succ_le_of_lt hjlt)
+    have hrow :
+        (GramSchmidt.prefixRows (basis b) j hjlt).row q =
+          (basis b).row ⟨q.val, hq_lt_n⟩ := by
+      simp [GramSchmidt.prefixRows, Matrix.row, Vector.getElem_ofFn]
+    rw [hrow]
+    rw [basis_orthogonal b j q.val hjlt hq_lt_n (Nat.ne_of_gt hqval)]
+    grind
+
+/-- Dotting `basisPrefixProjection b i j` with `(basis b).row ⟨j, _⟩` also
+extracts the original-row coordinate, weighted by the squared norm. -/
+private theorem dot_basis_basisPrefixProjection_eq_origProjCoords_mul_normSq
+    (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < i) :
+    Matrix.dot ((basis b).row ⟨j, Nat.lt_trans hj hi⟩)
+        (basisPrefixProjection b i j hi (Nat.lt_trans hj hi)) =
+      (originalProjectionCoords b i j hi (Nat.lt_trans hj hi))[Fin.last j] *
+        Vector.normSq ((basis b).row ⟨j, Nat.lt_trans hj hi⟩) := by
+  have hjlt : j < n := Nat.lt_trans hj hi
+  rw [← originalProjectionCoords_spec b i j hi hjlt]
+  rw [dot_rowCombination_right_rat]
+  rw [foldl_finRange_succ_isolate_last j _ ?_]
+  · -- Last term: origProjCoords[⟨j, _⟩] * dot basis[j] (cast b row j).
+    -- castIntMatrixRat b row at ⟨j, _⟩ = castIntRow b ⟨j, _⟩.
+    have hrow :
+        (GramSchmidt.prefixRows (castIntMatrixRat b) j hjlt).row (Fin.last j) =
+          castIntRow b ⟨j, hjlt⟩ := by
+      simp [GramSchmidt.prefixRows, Matrix.row, Vector.getElem_ofFn,
+        castIntMatrixRat, castIntRow, Fin.last]
+    rw [hrow]
+    -- dot basis[j] castIntRow b j = dot basis[j] (basis[j] + prefixComb) = normSq + 0.
+    rw [castIntRow_decomposition b j hjlt]
+    rw [dot_add_right_rat]
+    have hbasis_self :
+        Matrix.dot ((basis b).row ⟨j, hjlt⟩) ((basis b).row ⟨j, hjlt⟩) =
+          Vector.normSq ((basis b).row ⟨j, hjlt⟩) := rfl
+    rw [hbasis_self]
+    have hprefix :
+        Matrix.dot ((basis b).row ⟨j, hjlt⟩)
+            (GramSchmidt.prefixCombination (coeffs b) (basis b) j hjlt) = 0 := by
+      apply dot_prefixCombination_right_eq_zero_of_dot_zero
+        (coeffs := coeffs b) (basisM := basis b) (i := j) (hi := hjlt)
+        (u := (basis b).row ⟨j, hjlt⟩)
+      intro r
+      have hr_lt_j : r.val < j := r.isLt
+      have hr_lt_n : r.val < n := Nat.lt_trans hr_lt_j hjlt
+      exact basis_orthogonal b j r.val hjlt hr_lt_n (Nat.ne_of_gt hr_lt_j)
+    rw [hprefix, Rat.add_zero]
+  · -- For q < j: dot basis[j] castIntRow b q = 0.
+    intro q hqval
+    have hq_lt_n : q.val < n :=
+      Nat.lt_of_lt_of_le q.isLt (Nat.succ_le_of_lt hjlt)
+    have hrow :
+        (GramSchmidt.prefixRows (castIntMatrixRat b) j hjlt).row q =
+          castIntRow b ⟨q.val, hq_lt_n⟩ := by
+      simp [GramSchmidt.prefixRows, Matrix.row, Vector.getElem_ofFn,
+        castIntMatrixRat, castIntRow]
+    rw [hrow]
+    rw [dot_comm_rat]
+    rw [dot_castIntRow_basis_eq_zero_of_lt b q.val j hq_lt_n hjlt hqval]
+    grind
+
+/-- The Gram-determinant succession: `(gramDet (j+1) : Rat)` factors as
+`(gramSchmidtNormProduct j) * normSq(basis[j])`. -/
+private theorem gramDet_succ_rat
+    (b : Matrix Int n m) (j : Nat) (hjsuc : j + 1 ≤ n) :
+    (gramDet b (j + 1) hjsuc : Rat) =
+      gramSchmidtNormProduct b j (Nat.le_of_succ_le hjsuc) *
+        Vector.normSq ((basis b).row ⟨j, Nat.lt_of_succ_le hjsuc⟩) := by
+  have hgd_eq_gsnp :
+      (gramDet b (j + 1) hjsuc : Rat) = gramSchmidtNormProduct b (j + 1) hjsuc := by
+    rw [gramDet_rat_eq_progressMatrix_zero_det]
+    rw [← progressMatrix_det_invariant b (j + 1) hjsuc (j + 1) (Nat.le_refl _)]
+    rw [progressMatrix_full_eq_auxMatrix]
+    exact auxMatrix_det_eq_prod_normSq b (j + 1) hjsuc
+  rw [hgd_eq_gsnp]
+  exact gramSchmidtNormProduct_succ b j hjsuc
+
+/-- Cramer's-rule bridge for the scaled Gram-Schmidt coefficient determinant:
+the Leibniz determinant of `scaledCoeffMatrix` equals
+`gramDet b (j + 1) * coeffs[i,j]` after casting to `Rat`. -/
+private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
+    (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < i) :
+    ((Matrix.det
+        (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ hj) :
+          Int) : Rat) =
+      (gramDet b (j + 1) (Nat.succ_le_of_lt (Nat.lt_trans hj hi)) : Rat) *
+        GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ := by
+  have hjlt : j < n := Nat.lt_trans hj hi
+  have hjsuc : j + 1 ≤ n := Nat.succ_le_of_lt hjlt
+  -- Cast LHS via det_intCast.
+  rw [det_intCast]
+  -- Step 1: express `castIntDetMatrix M` as a `colReplace` of `castIntDetMatrix G`.
+  have hM_colReplace :
+      castIntDetMatrix
+          (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, hjlt⟩ hj) =
+        Matrix.colReplace
+          (castIntDetMatrix (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc))
+          (⟨j, Nat.lt_succ_self j⟩ : Fin (j + 1))
+          (fun p : Fin (j + 1) =>
+            Matrix.dot
+              (castIntRow b ⟨p.val, Nat.lt_of_lt_of_le p.isLt hjsuc⟩)
+              (castIntRow b ⟨i, hi⟩)) := by
+    apply Vector.ext
+    intro r hr
+    apply Vector.ext
+    intro c hc
+    let pp : Fin (j + 1) := ⟨r, hr⟩
+    let cc : Fin (j + 1) := ⟨c, hc⟩
+    change
+      (castIntDetMatrix
+          (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, hjlt⟩ hj))[pp][cc] =
+        (Matrix.colReplace _ _ _)[pp][cc]
+    rw [Matrix.colReplace_get, castIntDetMatrix_get]
+    by_cases hc_eq : cc = (⟨j, Nat.lt_succ_self j⟩ : Fin (j + 1))
+    · rw [if_pos hc_eq]
+      have hc_val : cc.val = j := congrArg Fin.val hc_eq
+      have hsc :
+          (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, hjlt⟩ hj)[pp][cc] =
+            Matrix.dot
+              (b.row ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt hjsuc⟩)
+              (b.row ⟨i, hi⟩) := by
+        simp [GramSchmidt.scaledCoeffMatrix, Matrix.ofFn,
+          GramSchmidt.liftFinLE, hc_val]
+      rw [hsc, ← dot_castIntRow_eq_cast_dot]
+    · rw [if_neg hc_eq, castIntDetMatrix_get]
+      have hc_ne : cc.val ≠ j := fun h => hc_eq (Fin.ext h)
+      have hsc :
+          (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, hjlt⟩ hj)[pp][cc] =
+            Matrix.dot
+              (b.row ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt hjsuc⟩)
+              (b.row ⟨cc.val, Nat.lt_of_lt_of_le cc.isLt hjsuc⟩) := by
+        simp [GramSchmidt.scaledCoeffMatrix, Matrix.ofFn,
+          GramSchmidt.liftFinLE, hc_ne]
+      have hG :
+          (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc)[pp][cc] =
+            Matrix.dot
+              (b.row ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt hjsuc⟩)
+              (b.row ⟨cc.val, Nat.lt_of_lt_of_le cc.isLt hjsuc⟩) := by
+        simp [GramSchmidt.leadingGramMatrixInt, Matrix.ofFn,
+          GramSchmidt.liftFinLE]
+      rw [hsc, hG]
+  rw [hM_colReplace]
+  -- Step 2: rewrite the replacement column as `castG * originalProjectionCoords`.
+  have hcol_lin_comb :
+      (fun p : Fin (j + 1) =>
+        Matrix.dot
+          (castIntRow b ⟨p.val, Nat.lt_of_lt_of_le p.isLt hjsuc⟩)
+          (castIntRow b ⟨i, hi⟩)) =
+      (fun p : Fin (j + 1) =>
+        (List.finRange (j + 1)).foldl
+          (fun (acc : Rat) (q : Fin (j + 1)) =>
+            acc + (originalProjectionCoords b i j hi hjlt)[q] *
+              (castIntDetMatrix
+                (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc))[p][q]) 0) := by
+    funext p
+    -- dot castIntRow b p castIntRow b i = dot castIntRow b p basisPrefixProjection
+    rw [dot_castIntRow_castIntRow_eq_dot_basisPrefixProjection b i j p.val hi hj
+      (Nat.le_of_lt_succ p.isLt) (Nat.lt_of_lt_of_le p.isLt hjsuc)]
+    -- = (castG * originalProjectionCoords)[p]
+    rw [← scaledCoeffMatrix_replacementColumn_solve b i j hi hj p]
+    -- Now: (castG * origProjCoords)[p] = foldl over Fin (j+1) of castG[p][q] * origProjCoords[q].
+    -- Reorder to origProjCoords[q] * castG[p][q] using Rat.mul_comm.
+    change
+      (Matrix.mulVec
+          (castIntDetMatrix
+            (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc))
+          (originalProjectionCoords b i j hi hjlt))[p] = _
+    unfold Matrix.mulVec Matrix.row
+    have hleft :
+        (Vector.ofFn fun i' : Fin (j + 1) =>
+            Matrix.dot
+              (castIntDetMatrix
+                (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc))[i']
+              (originalProjectionCoords b i j hi hjlt))[p] =
+          Matrix.dot
+            (castIntDetMatrix
+              (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc))[p]
+            (originalProjectionCoords b i j hi hjlt) := by
+      simp [Vector.getElem_ofFn]
+    rw [hleft]
+    unfold Matrix.dot Hex.Vector.dotProduct
+    apply foldl_sum_congr_simple
+    intro q _hq
+    grind
+  rw [hcol_lin_comb]
+  -- Step 3: apply det_colReplace_sum_finRange.
+  rw [Matrix.det_colReplace_sum_finRange]
+  -- Step 4: isolate the q = ⟨j, _⟩ term.
+  rw [foldl_finRange_succ_isolate_last j _ ?_]
+  · -- Last term: origProjCoords[⟨j, _⟩] * det castG.
+    have hlast_self :
+        Matrix.colReplace
+            (castIntDetMatrix (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc))
+            (⟨j, Nat.lt_succ_self j⟩ : Fin (j + 1))
+            (fun p : Fin (j + 1) =>
+              (castIntDetMatrix
+                (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc))[p][Fin.last j]) =
+          castIntDetMatrix (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc) :=
+      Matrix.colReplace_self _ _
+    rw [hlast_self]
+    -- det castG = (gramDet (j+1) : Rat).
+    have hdetG :
+        Matrix.det
+            (castIntDetMatrix (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc)) =
+          (gramDet b (j + 1) hjsuc : Rat) := by
+      rw [← det_intCast]
+      have hdet_int :
+          Matrix.det (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc) =
+            Int.ofNat (gramDet b (j + 1) hjsuc) := by
+        rw [gramDet, Matrix.bareiss_eq_det]
+        exact (Int.toNat_of_nonneg
+          (leadingGramMatrixInt_det_nonneg_pre b (j + 1) hjsuc)).symm
+      rw [hdet_int]
+      push_cast
+      rfl
+    rw [hdetG]
+    -- Cancellation: origProjCoords[Fin.last j] * gramDet = gramDet * coeffs[i][j].
+    have hcancel_normSq :
+        Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+            (originalProjectionCoords b i j hi hjlt)[Fin.last j] =
+          Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+            GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, hjlt⟩ := by
+      have hH2 := dot_basis_basisPrefixProjection_eq_coeff_mul_normSq b i j hi hj
+      have hH3 := dot_basis_basisPrefixProjection_eq_origProjCoords_mul_normSq b i j hi hj
+      have heq := hH3.symm.trans hH2
+      -- heq : (originalProjectionCoords ...)[Fin.last j] * normSq = entry coeffs ... * normSq
+      grind
+    have hgd_succ := gramDet_succ_rat b j hjsuc
+    -- Combine: gramDet(j+1) * coeffs[i][j] = gnp(j) * normSq * coeffs[i][j] = gnp(j) * normSq * origProjCoords = gramDet(j+1) * origProjCoords.
+    rw [hgd_succ]
+    have hgnp_ne_or_zero :
+        gramSchmidtNormProduct b j (Nat.le_of_succ_le hjsuc) *
+              Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+            (originalProjectionCoords b i j hi hjlt)[Fin.last j] =
+          gramSchmidtNormProduct b j (Nat.le_of_succ_le hjsuc) *
+              Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+            GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, hjlt⟩ := by
+      have h1 :
+          gramSchmidtNormProduct b j (Nat.le_of_succ_le hjsuc) *
+              Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+            (originalProjectionCoords b i j hi hjlt)[Fin.last j] =
+            gramSchmidtNormProduct b j (Nat.le_of_succ_le hjsuc) *
+              (Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+                (originalProjectionCoords b i j hi hjlt)[Fin.last j]) := by
+        grind
+      have h2 :
+          gramSchmidtNormProduct b j (Nat.le_of_succ_le hjsuc) *
+              Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+            GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, hjlt⟩ =
+            gramSchmidtNormProduct b j (Nat.le_of_succ_le hjsuc) *
+              (Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+                GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, hjlt⟩) := by
+        grind
+      rw [h1, h2, hcancel_normSq]
+    rw [Rat.mul_comm (originalProjectionCoords b i j hi hjlt)[Fin.last j] _]
+    exact hgnp_ne_or_zero
+  · -- For q < j: det (colReplace castG ⟨j, _⟩ (col q of castG)) = 0 (existing col).
+    intro q hqval
+    have hq_ne :
+        q ≠ (⟨j, Nat.lt_succ_self j⟩ : Fin (j + 1)) := by
+      intro h
+      exact Nat.ne_of_lt hqval (congrArg Fin.val h)
+    rw [Matrix.det_colReplace_existing_col_eq_zero _ _ _ hq_ne]
+    grind
+
+/-- The fraction-free scaled-coefficient loop computes the Cramer/Bareiss
+integer equal to `d[j+1] * μ[i,j]` below the diagonal. -/
+private theorem scaledCoeffRows_lower_eq_coeffs
+    (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < i) :
+    ((getArrayEntry (scaledCoeffRows b) i j : Int) : Rat) =
+      (gramDet b (j + 1) (Nat.succ_le_of_lt (Nat.lt_trans hj hi)) : Rat) *
+        GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ := by
+  rw [scaledCoeffRows_lower_eq_scaledCoeffMatrix_bareiss (b := b) i j hi hj]
+  rw [scaledCoeffMatrix_bareiss_eq_det (b := b) i j hi hj]
+  exact scaledCoeffMatrix_det_eq_gramDet_mul_coeffs (b := b) i j hi hj
 
 theorem scaledCoeffs_eq (b : Matrix Int n m)
     (i j : Nat) (hi : i < n) (hj : j < i) :
