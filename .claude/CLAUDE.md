@@ -48,6 +48,13 @@ workflow files. New oracles append a tuple to
 apt/pip install step; see
 [SPEC/testing.md § Adding a new oracle](../SPEC/testing.md).
 
+Bench targets in particular must not import Mathlib (directly or
+transitively) and must keep the `Bench verify` step under its
+wallclock cap; see
+[SPEC/benchmarking.md §Mathlib-free benches](../SPEC/benchmarking.md)
+and the "Time budget" subsection of
+[SPEC/benchmarking.md §CI integration](../SPEC/benchmarking.md).
+
 GitHub-hosted Actions on a personal account is concurrency-capped at
 ~20 parallel ubuntu runners across all repositories the account
 owns; a 10-entry matrix saturates the cap, a 40-entry matrix

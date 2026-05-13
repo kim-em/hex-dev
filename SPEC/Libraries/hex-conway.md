@@ -142,3 +142,22 @@ determines how much of the table is committed.
 Conway polynomial is chosen automatically *when a committed entry is
 available*. For degrees outside the committed table, a separate explicit
 search API may be used.
+
+## External comparators
+
+No external comparator is required.
+
+**Justification:** `input-source-only` per
+`SPEC/benchmarking.md §"Comparator naming"`. The only published
+external reference for HexConway is Lübeck's Conway polynomial
+database, and that database is the **input source** rather than an
+executable comparator: HexConway verifies that committed table
+entries are irreducible (Tier 1) and additionally satisfy the
+primitivity / compatibility properties (Tier 2), and searches for
+missing entries (Tier 3). The search direction has no
+algorithmically distinct external implementation to race against —
+GAP exposes the same Lübeck data, not a separately-engineered
+search; and SageMath / FLINT either consume the same table or run
+ad-hoc search code that is not packaged as a benchmarkable API.
+The Phase-4 evidence is therefore the declared-complexity verdict
+of HexConway's own bench targets across the three tiers.

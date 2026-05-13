@@ -20,6 +20,8 @@
   `bzClassicalDegreeHeightComplexity param`
 - `Hex.BerlekampZassenhausBench.runFactorSlowDegreeHeightChecksum`:
   `bzSlowDegreeHeightComplexity param = 2^n * bzClassicalDegreeHeightComplexity param`
+- `Hex.BerlekampZassenhausBench.runFastPathPrecisionLocalChecksum`:
+  `bzPrecisionLocalComplexity param = n^9 + n^7 * log2(height + 2)^2 + r * n^2 * log2(k + 1)`
 - `Hex.BerlekampZassenhausBench.runFactorAdvX4Plus1Checksum`: `n + 1`
 - `Hex.BerlekampZassenhausBench.runFactorFastSetupAdvX4Plus1Checksum`: `n + 1`
 - `Hex.BerlekampZassenhausBench.runFactorAdvQuadSqrt2Sqrt3Checksum`: `n + 1`
@@ -84,6 +86,39 @@ current benchmark surface, not a Phase 4 completion claim.
   produced stable hashes, but each has only the pinned `n = 0` row and
   therefore no verdict-eligible scaling ladder.
 
+Retuned non-profile run at commit `cab8cfc-dirty` on `carica`
+(Apple M2 Ultra, macOS 14.6.1), command:
+
+```sh
+lake exe hexbz_bench run \
+    Hex.BerlekampZassenhausBench.runFactorChecksum \
+    Hex.BerlekampZassenhausBench.runFactorFastChecksum \
+    Hex.BerlekampZassenhausBench.runFactorSlowDegreeHeightChecksum \
+    --export-file reports/bench-results/hex-berlekamp-zassenhaus-issue3513.json
+```
+
+Export artefact:
+`reports/bench-results/hex-berlekamp-zassenhaus-issue3513.json`,
+SHA-256
+`d9d8b79e70f6e8d4455c57b011f756e9bf271a580f76e697d4550433c240ec2f`.
+The harness recorded `cab8cfc-dirty` because the run was taken from the
+working tree containing this schedule/report update plus the pre-existing
+pod-managed `.claude/CLAUDE.md` modification.
+
+- `runFactorChecksum`: inconclusive (`cMin=3.155`, `cMax=542.102`,
+  parameters `2..5`, final hash `0x2a6bd8144b402a41`). All four
+  rows were verdict-eligible and no committed schedule row hit the
+  per-call cap.
+- `runFactorFastChecksum`: inconclusive (`cMin=3.269`,
+  `cMax=546.583`, parameters `2..5`, final hash
+  `0x9b47b80e99720e2a`). All four rows were verdict-eligible and no
+  committed schedule row hit the per-call cap.
+- `runFactorSlowDegreeHeightChecksum`: inconclusive (`cMin=0.816`,
+  `cMax=89465.950`, encoded parameters `1002`, `2002`, and `3008`,
+  final hash `0xe5ac34affd40d076`). The diagnostic now uses the
+  completing degree/height subset instead of including the previous
+  cap-hitting `4008` row.
+
 Smoke wiring was checked at the same commit with:
 
 ```sh
@@ -138,57 +173,85 @@ params`.
 
 ## Profile
 
-A representative profile was recorded with `samply record --save-only
---unstable-presymbolicate` at commit `53771741e259` on `carica`
-(Apple M2 Ultra, macOS 14.6.1), sampling at samply's default 1 kHz:
+A representative `degree-height-matrix` profile was recorded with
+`samply record --save-only --unstable-presymbolicate` at commit
+`06d996d749e3` on `carica` (Apple M2 Ultra, macOS 14.6.1), sampling at
+1 kHz. The worktree was dirty only because `.claude/CLAUDE.md` carried a
+pre-existing agent-context change outside this report package. The raw
+Firefox Profiler JSON and `.syms.json` sidecar are developer-local at
+`/tmp/hex-profiles/hex-bz-degree-height-child-06d996d.{json,syms.json}`.
 
 ```sh
-lake exe hexbz_bench profile \
-    Hex.BerlekampZassenhausBench.runFactorDegreeHeightChecksum \
-    --param 6032 --target-inner-nanos 1000000000 \
-    --profiler "samply record --save-only --unstable-presymbolicate \
-        -o reports/bench-results/profiles/hex-berlekamp-zassenhaus-factor-degree-height-5377174.json --"
+samply record --save-only --unstable-presymbolicate --include-args=6 \
+    --rate 1000 \
+    -o /tmp/hex-profiles/hex-bz-degree-height-child-06d996d.json -- \
+    .lake/build/bin/hexbz_bench _child \
+        --bench Hex.BerlekampZassenhausBench.runFactorDegreeHeightChecksum \
+        --param 6032 --target-nanos 1000000000
 ```
 
-Profile artefact:
-`reports/bench-results/profiles/hex-berlekamp-zassenhaus-factor-degree-height-5377174.json`.
-Samply also emitted the sidecar symbol table
-`reports/bench-results/profiles/hex-berlekamp-zassenhaus-factor-degree-height-5377174.syms.json`.
 The profiled child row was encoded degree/height parameter `6032`
 (`degree = 6`, `height = 32`), with `inner_repeats=32`,
-`per_call_nanos=19,662,252.625`, and result hash
-`0x32829c6a8f776a64`.
+`per_call_nanos=19,006,277.343750`, and result hash
+`0x32829c6a8f776a64`. The profile's main worker thread contained `635`
+sample rows with total sample weight `679`; the sidecar symbol table was
+used for Lean-name attribution because the Firefox JSON itself keeps
+address strings.
 
-The profile sampled the benchmark child, but the generated Firefox
-Profiler JSON in this optimized macOS build retained address-only frame
-names rather than demangled Lean names. The largest sampled worker
-thread contained `658` samples; without symbol names, the leaf-cost
-categories and inclusive `Hex.BerlekampZassenhaus.*` function ranking
-cannot be reported to the standard required by `SPEC/profiling.md`.
-The recorded sample still confirms that the representative public
-degree/height target is profileable through the lean-bench child path.
+Leaf self-time categories for that worker thread:
+
+- Lean own code: `51 / 679 = 7.5%`.
+- GMP big-integer arithmetic: `60 / 679 = 8.8%`.
+- Allocation / free: `222 / 679 = 32.7%`.
+- Lean runtime and dispatch: `200 / 679 = 29.5%`.
+- Other system frames: `146 / 679 = 21.5%`, dominated by profiler I/O
+  and platform frames such as `__read_nocancel` and thread-local lookup.
+
+Top inclusive BZ-library costs:
+
+- `Hex.factorWithBound`: `621 / 679 = 91.5%`.
+- `Hex.factorFastWithBound`: `621 / 679 = 91.5%`.
+- `Hex.factorFastFactorsWithBound`: `621 / 679 = 91.5%`.
+- `Hex.choosePrimeData?`: `586 / 679 = 86.3%`.
+- `Hex.primeChoiceDataScore`: `586 / 679 = 86.3%`.
+- `Hex.berlekampFactorsModP`: `574 / 679 = 84.5%`.
+- `Hex.factorFastCoreWithBound`: `32 / 679 = 4.7%`.
+- `Hex.bhksRecoverClassified`: `23 / 679 = 3.4%`.
+- `Hex.bhksLatticeBasis`: `18 / 679 = 2.7%`.
+
+The dominant inclusive path is the public `factorWithBound` call through
+the fast-path attempt, especially prime selection and modular
+factorization (`choosePrimeData?`, `primeChoiceDataScore`, and
+`berlekampFactorsModP`). The BHKS recombination body is present but much
+smaller on this split degree/height case. This profile therefore maps its
+dominant BZ costs to the registered
+`runFactorDegreeHeightChecksum`/`runFactorFastDegreeHeightChecksum`
+targets and leaves the broader Phase 4 verdict/schedule concerns below
+unchanged.
 
 ## Concerns
 
 - Phase 4 is not complete: every scientific verdict in this run was
   inconclusive.
-- The current parametric schedules are still smoke-sized. The public,
-  fast, and slow split-family schedules cover only `n = 1..4`, which
-  is below the signal needed for a meaningful BHKS scaling verdict.
+- The public and fast split-family schedules now expose verdict-eligible
+  rows beyond the previous `n = 1..4` smoke ladder, but they still do
+  not yield a consistent BHKS scaling verdict. An exploratory run with
+  the same eight-second cap reached `n = 5` and hit the cap at `n = 6`,
+  so larger split inputs require either algorithmic improvement or a
+  dedicated longer scheduled run.
 - The singleton HO-2 adversarial registrations are valuable fixed-shape
   coverage, but their `#[0]` schedules cannot produce verdict-eligible
   scaling rows.
 - The new public/slow/fast compare surface is intentionally smoke-sized;
   it does not replace a full scientific-domain LLL-assisted versus
   exhaustive recombination comparison.
-- `runFactorSlowDegreeHeightChecksum` hit the four-second cap at encoded
-  parameter `4008`; the slow diagnostic needs either a smaller
-  scientific subset or an explicitly larger timing budget.
-- The profile artefact is address-only on this host, so the required
-  leaf category split and inclusive Lean-function ranking remain open.
-- `libraries.yml` has no `phase4.input_families` or comparator metadata
-  for `HexBerlekampZassenhaus`; final Phase 4 coverage should add or
-  explicitly justify that metadata before bumping `done_through`.
+- `runFactorSlowDegreeHeightChecksum` is now explicit and reproducible on
+  a completing small subset; it remains diagnostic evidence only, not a
+  Phase 4 completion verdict for the full slow path.
+- `libraries.yml` now records `phase4.input_families` for
+  `HexBerlekampZassenhaus`, but it still has no comparator metadata;
+  final Phase 4 coverage should add or explicitly justify comparator
+  metadata before bumping `done_through`.
 - HO-3 remains open as a complexity-evidence concern: this report adds
   the first benchmark/profile slice, but it does not yet establish the
   full Phase 4 verdict, comparator, and profile coverage required for

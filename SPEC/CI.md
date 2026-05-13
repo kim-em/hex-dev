@@ -68,14 +68,15 @@ Concretely:
 
 - `ci.yml`: one `build` ubuntu job (DAG checks, hex `lake build`,
   per-library `bench verify` smoke gate per
-  [SPEC/benchmarking.md §CI integration](benchmarking.md)) and one
-  `build-macos` macOS job (hex `lake build` only — the dyld
-  cross-check). **Bench verify runs on ubuntu, not macOS**: the
-  macOS job exists for symbol-resolution coverage, not benchmarking,
-  and macOS runners are 10× the cost and a fraction of the
-  concurrency. Per [SPEC/benchmarking.md §CI integration](benchmarking.md),
-  `verify` is a smoke gate (does the bench module compile and run?),
-  not a timing measurement; timing-relevant runs live on a separate
+  [SPEC/benchmarking.md §CI integration](benchmarking.md), plus the
+  structural and timing lints named there) and one `build-macos`
+  macOS job (hex `lake build` only — the dyld cross-check).
+  **Bench verify runs on ubuntu, not macOS**: the macOS job exists
+  for symbol-resolution coverage, not benchmarking, and macOS runners
+  are 10× the cost and a fraction of the concurrency. Per
+  [SPEC/benchmarking.md §CI integration](benchmarking.md), `verify`
+  is a smoke gate (does the bench module compile and run?), not a
+  timing measurement; timing-relevant runs live on a separate
   scheduled workflow on dedicated hardware.
 - `conformance.yml`: one ubuntu job that runs the full conformance
   matrix and every oracle (FLINT, PARI, fpLLL, Conway) sequentially
@@ -94,10 +95,14 @@ on top of Mathlib, so a matrix entry that "only does one target"
 still pays the same fixed startup cost as the consolidated job.
 
 **New oracles, new conformance targets, and new bench targets
-extend the script of the single existing job.** Add an apt step
-for new system deps, a pip step for new Python deps, and a sequential
+extend the script of the single existing job.** Add an apt step for
+new system deps, a pip step for new Python deps, and a sequential
 shell loop for new per-library checks. Do not add a new top-level
-job, do not add `strategy.matrix`, and do not split a workflow.
+job, do not add `strategy.matrix`, and do not split a workflow. For
+benches specifically, the structural and timing rules in
+[SPEC/benchmarking.md §Mathlib-free benches](benchmarking.md) and
+[SPEC/benchmarking.md §CI integration "Time budget"](benchmarking.md)
+constrain what a new bench is allowed to look like.
 
 ## Mathlib cache is mandatory
 
@@ -127,6 +132,38 @@ A stale or missing cache is a fixable upstream problem (the
 Mathlib `cache` service publishes oleans for every Mathlib commit
 on `master`); the right response is to fix the upstream pin or the
 cache step, not to silently rebuild.
+
+## Hex build cache
+
+Every CI workflow that runs `lake build` MUST also cache the
+project's own `.lake/build` directory across runs via
+`actions/cache`. Lake's incremental build checks every module's
+content hash; restoring a stale cache is safe because Lake
+re-elaborates any module whose source has changed and reuses
+anything that hasn't.
+
+The cache key does not need careful tuning. Lake handles
+invalidation. A per-run unique key (e.g. `${{ github.run_id }}`)
+with a constant prefix in `restore-keys` is sufficient — every run
+uploads a fresh snapshot, every run restores the most recent
+snapshot, and Lake reconciles the rest.
+
+Coverage:
+
+- `.lake/build/lib/lean/Hex*` and `.lake/build/ir/Hex*` — the
+  project's own elaboration and IR outputs.
+- NOT Mathlib's build outputs — those come from `lake exe cache get`
+  and are handled separately (see § Mathlib cache is mandatory).
+
+Anti-patterns:
+
+- Keying on a content hash of the Hex source tree. The key changes
+  on every commit, so the cache misses on every PR — buying
+  nothing for what is otherwise the dominant build-time cost.
+- Skipping the cache because "Lake should be fast." Lake from a
+  clean `.lake/build` recompiles every Hex module elaborated by
+  the workflow; on the conformance target list that runs ~13 min on
+  a stock `ubuntu-latest` runner.
 
 ## Branch protection
 
@@ -181,7 +218,7 @@ To add a new conformance check, oracle, benchmark, or build target:
 
 1. **Default**: extend the script of the existing single job in the
    workflow that already covers this kind of work (`conformance.yml`
-   for conformance/oracle, `ci.yml` for build/check).
+   for conformance/oracle, `ci.yml` for build/check/benchmark).
 2. Add any new system dependency to the existing apt/brew step.
 3. Add any new Python or Lean dependency to the existing install
    step.
@@ -192,6 +229,14 @@ To add a new conformance check, oracle, benchmark, or build target:
 6. Update the relevant SPEC and PLAN cross-references (this file,
    `PLAN/Phase0.md` §6, `SPEC/testing.md`'s "Adding a new oracle"
    section) if the change introduces a new category of check.
+
+**Bench targets are constrained** by the structural and timing rules
+in [SPEC/benchmarking.md §Mathlib-free benches](benchmarking.md) and
+[SPEC/benchmarking.md §CI integration "Time budget"](benchmarking.md):
+no bench may import any `Mathlib.*` module (directly or transitively),
+and the per-PR `Bench verify` total has a hard wallclock cap. Both
+are enforced by lint scripts named in those sections, invoked from
+the `build` job.
 
 A new top-level workflow is justified only by a clearly distinct
 class of CI work that genuinely cannot share a runner with existing

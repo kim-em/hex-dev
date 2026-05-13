@@ -42,6 +42,15 @@ jobs:
           toolchain="$(sed 's|/|--|; s|:|---|' lean-toolchain)"
           echo "LD_LIBRARY_PATH=$HOME/.elan/toolchains/$toolchain/lib/lean:${LD_LIBRARY_PATH:-}" \
             >> "$GITHUB_ENV"
+      - name: Restore .lake/build (Hex modules only)
+        uses: actions/cache@v4
+        with:
+          path: |
+            .lake/build/lib/lean/Hex*
+            .lake/build/ir/Hex*
+          key: lake-build-${{ github.workflow }}-${{ github.run_id }}
+          restore-keys: |
+            lake-build-${{ github.workflow }}-
       - name: Build conformance + emit-fixture targets
         run: |
           lake build \

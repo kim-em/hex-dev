@@ -35,14 +35,39 @@ structure DistinctDegreeFactorization (p : Nat) [ZMod64.Bounds p] where
 def degreeBucketFactors (buckets : List (DegreeBucket p)) : List (FpPoly p) :=
   buckets.map DegreeBucket.factor
 
+@[simp] theorem degreeBucketFactors_nil :
+    degreeBucketFactors ([] : List (DegreeBucket p)) = [] := by
+  rfl
+
+@[simp] theorem degreeBucketFactors_cons
+    (bucket : DegreeBucket p) (buckets : List (DegreeBucket p)) :
+    degreeBucketFactors (bucket :: buckets) =
+      bucket.factor :: degreeBucketFactors buckets := by
+  rfl
+
+@[simp] theorem degreeBucketFactors_append
+    (buckets₁ buckets₂ : List (DegreeBucket p)) :
+    degreeBucketFactors (buckets₁ ++ buckets₂) =
+      degreeBucketFactors buckets₁ ++ degreeBucketFactors buckets₂ := by
+  simp [degreeBucketFactors]
+
 /-- Multiply the polynomial factors recorded in distinct-degree buckets. -/
 def degreeBucketProduct (buckets : List (DegreeBucket p)) : FpPoly p :=
   factorProduct (degreeBucketFactors buckets)
+
+@[simp] theorem degreeBucketProduct_nil :
+    degreeBucketProduct ([] : List (DegreeBucket p)) = 1 := by
+  rfl
 
 /-- Product represented by a distinct-degree factorization result. -/
 def DistinctDegreeFactorization.product (result : DistinctDegreeFactorization p) :
     FpPoly p :=
   degreeBucketProduct result.buckets * result.residual
+
+@[simp] theorem DistinctDegreeFactorization.product_eq
+    (result : DistinctDegreeFactorization p) :
+    result.product = degreeBucketProduct result.buckets * result.residual := by
+  rfl
 
 /-- The degree-`d` gcd candidate against the current residual polynomial. -/
 def distinctDegreeCandidate
@@ -150,18 +175,19 @@ def DegreeBucket.matchesFrobeniusDegree
     (bucket : DegreeBucket p) : Prop :=
   bucket.factor ∣ frobeniusDiffMod f hmonic bucket.degree
 
+theorem DegreeBucket.matchesFrobeniusDegree_iff
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (bucket : DegreeBucket p) :
+    bucket.matchesFrobeniusDegree f hmonic ↔
+      bucket.factor ∣ frobeniusDiffMod f hmonic bucket.degree := by
+  rfl
+
 theorem distinctDegreeCandidate_spec
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (residual : FpPoly p) (d : Nat) :
     distinctDegreeCandidate f hmonic residual d =
       DensePoly.gcd residual (frobeniusDiffMod f hmonic d) := by
   rfl
-
-private theorem degreeBucketFactors_append
-    (buckets₁ buckets₂ : List (DegreeBucket p)) :
-    degreeBucketFactors (buckets₁ ++ buckets₂) =
-      degreeBucketFactors buckets₁ ++ degreeBucketFactors buckets₂ := by
-  simp [degreeBucketFactors]
 
 private theorem one_mul_poly
     [ZMod64.PrimeModulus p]
@@ -218,18 +244,29 @@ private theorem factorProduct_append
       rw [List.cons_append, factorProduct_cons_eq, factorProduct_cons_eq, ih]
       exact (DensePoly.mul_assoc_poly x (factorProduct xs) (factorProduct ys)).symm
 
-private theorem degreeBucketProduct_append
+/-- Bucket products distribute over list append in stored bucket order. -/
+theorem degreeBucketProduct_append
     [ZMod64.PrimeModulus p]
     (buckets₁ buckets₂ : List (DegreeBucket p)) :
     degreeBucketProduct (buckets₁ ++ buckets₂) =
       degreeBucketProduct buckets₁ * degreeBucketProduct buckets₂ := by
   simp [degreeBucketProduct, degreeBucketFactors_append, factorProduct_append]
 
-private theorem degreeBucketProduct_singleton
+/-- The product of a singleton bucket list is its recorded factor. -/
+@[simp] theorem degreeBucketProduct_singleton
     [ZMod64.PrimeModulus p]
     (bucket : DegreeBucket p) :
     degreeBucketProduct [bucket] = bucket.factor := by
   simp [degreeBucketProduct, degreeBucketFactors, factorProduct]
+
+/-- Pull the first bucket factor out of a bucket product. -/
+@[simp] theorem degreeBucketProduct_cons
+    [ZMod64.PrimeModulus p]
+    (bucket : DegreeBucket p) (buckets : List (DegreeBucket p)) :
+    degreeBucketProduct (bucket :: buckets) =
+      bucket.factor * degreeBucketProduct buckets := by
+  rw [show bucket :: buckets = [bucket] ++ buckets from rfl,
+    degreeBucketProduct_append, degreeBucketProduct_singleton]
 
 private theorem degreeBucketProduct_appendBucket?_none
     (buckets : List (DegreeBucket p)) :
@@ -1024,6 +1061,32 @@ theorem distinctDegreeFactor_bucket_invariants
   intro bucket hmem
   exact ⟨distinctDegreeFactor_bucket_positive_degrees f hmonic bucket hmem,
     distinctDegreeFactor_bucket_matches f hmonic hsquareFree bucket hmem⟩
+
+/--
+Every bucket emitted by `distinctDegreeFactor` records a positive Frobenius
+degree.
+-/
+theorem distinctDegreeFactor_bucket_degree_pos
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (hsquareFree : DensePoly.gcd f (DensePoly.derivative f) = 1)
+    {bucket : DegreeBucket p}
+    (hmem : bucket ∈ (distinctDegreeFactor f hmonic).buckets) :
+    0 < bucket.degree :=
+  (distinctDegreeFactor_bucket_invariants f hmonic hsquareFree bucket hmem).1
+
+/--
+Every bucket emitted by `distinctDegreeFactor` divides its matching Frobenius
+difference.
+-/
+theorem distinctDegreeFactor_bucket_matchesFrobeniusDegree
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (hsquareFree : DensePoly.gcd f (DensePoly.derivative f) = 1)
+    {bucket : DegreeBucket p}
+    (hmem : bucket ∈ (distinctDegreeFactor f hmonic).buckets) :
+    bucket.matchesFrobeniusDegree f hmonic :=
+  (distinctDegreeFactor_bucket_invariants f hmonic hsquareFree bucket hmem).2
 
 end Berlekamp
 

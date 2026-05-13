@@ -15,20 +15,20 @@ HexLLL Phase-4 input families named in `libraries.yml`.
 Scientific registrations:
 
 * `runOfBasisBzRecombinationChecksum`: build the initial integer state for a
-  rectangular BZ-style recombination basis.
+  square BZ-style triangular recombination basis.
 * `runOfBasisRandomBoundedChecksum`: build the initial integer state for a
   bounded-coefficient square basis.
 * `runOfBasisHarshCubicChecksum`: build the initial integer state for a
   square basis whose entry bit-length grows linearly in the dimension.
 * `runSizeReduceColumnChecksum`: one targeted column reduction against the
-  previous row of a prepared `(n + 3) x (2(n + 3) + 1)` state.
+  previous row of a prepared `(n + 3) x (n + 3)` state.
 * `runSizeReduceChecksum`: full reduction of the final prepared row.
 * `runSwapStepChecksum`: one adjacent swap at the final prepared row.
 * `runGramSchmidtCoeffChecksum`: rational coefficient recovery from stored
   integer `ν` and `d`.
 * `runPotential`: prefix product of the stored Gram determinants.
-* `runFirstShortVectorBZRecombinationChecksum`: fixed BZ-shaped recombination
-  basis for `p = 5`, `k = 2`, and three lifted local factors.
+* `runFirstShortVectorBZRecombinationChecksum`: fixed BZ-shaped triangular
+  recombination basis with three lifted local factors.
 * `runFirstShortVectorRandomBoundedChecksum`: random-bounded integer bases
   with `|entry| <= 30` at `n in {30, 60, 120, 240}`.
 * `runFirstShortVectorHarshCubicChecksum`: harsh-cubic bases with entry
@@ -115,7 +115,12 @@ def entryValue (rows cols row col salt : Nat) : Int :=
       (cols + 7) * 13 +
       salt) % 5
   let centered := Int.ofNat raw - 2
-  if row = col then centered + Int.ofNat (rows + 3) else centered
+  if col < row then
+    0
+  else if row = col then
+    Int.ofNat (rows + 3)
+  else
+    centered
 
 /-- Deterministic row-major matrix fixture of shape `rows x cols`. -/
 def flatBasis (rows cols salt : Nat) : Array Int :=
@@ -131,33 +136,33 @@ def flatBasis (rows cols salt : Nat) : Array Int :=
 def matrixOfFlat (input : IntBasisInput) : Matrix Int input.rows input.cols :=
   Matrix.ofFn fun i j => input.entries.getD (i.val * input.cols + j.val) 0
 
-/-- Fixture independence witness for Phase-4 benchmark bases.
+/-- Deterministic square matrix fixture. -/
+def generatedBasis (rows salt : Nat) : Matrix Int rows rows :=
+  Matrix.ofFn fun i j => entryValue rows rows i.val j.val salt
 
-The benchmark target measures the executable construction of the `ν` and `d`
-fields; the independence proof is erased and `LLLState.ofBasis` does not
-inspect it at runtime. Non-identity fixture independence is discharged with the
-LLL proof work rather than in this bench module. -/
-private theorem benchFixtureIndependent {n m : Nat} (b : Matrix Int n m) :
-    b.independent := by
-  sorry
+private theorem generatedBasis_independent (rows salt : Nat) :
+    (generatedBasis rows salt).independent := by
+  apply Matrix.independent_of_upperTriangular_pos_diag
+  · intro i j hij
+    simp [generatedBasis, Matrix.ofFn, Vector.getElem_ofFn, entryValue, hij]
+  · intro i
+    simp [generatedBasis, Matrix.ofFn, Vector.getElem_ofFn, entryValue]
+    omega
 
 /-- Build the certified executable LLL state for a deterministic matrix. -/
-def stateOf (b : Matrix Int n m) : LLLState n m :=
-  LLLState.ofBasis b (benchFixtureIndependent b)
+def stateOf (b : Matrix Int n m) (hind : b.independent) : LLLState n m :=
+  LLLState.ofBasis b hind
 
-/-- Per-parameter fixture: a prepared `(n + 3) x (2(n + 3) + 1)` LLL state. -/
+/-- Per-parameter fixture: a prepared `(n + 3) x (n + 3)` LLL state. -/
 def prepStateInput (n : Nat) : StateInput :=
   let rows := n + 3
-  let cols := 2 * rows + 1
-  let flat : IntBasisInput :=
-    { rows := rows
-      cols := cols
-      entries := flatBasis rows cols 197 }
+  let cols := rows
+  let basis := generatedBasis rows 197
   let j : Fin rows := ⟨n + 1, by simp [rows]⟩
   let k : Fin rows := ⟨n + 2, by simp [rows]⟩
   { rows := rows
     cols := cols
-    state := stateOf (matrixOfFlat flat)
+    state := stateOf basis (generatedBasis_independent rows 197)
     j := j
     k := k
     hjk := by
@@ -166,36 +171,29 @@ def prepStateInput (n : Nat) : StateInput :=
 
 /-! ## Phase-4 `lll.firstShortVector` input families. -/
 
-/-- BZ recombination coefficient block from
-`HexLLL/EmitFixtures.lean`: `p = 5`, `k = 2`, `coeffWidth = 4`, and
-factors `[X + 1, X + 2, X + 3]`. -/
+/-- BZ-shaped triangular coefficient block from `HexLLL/EmitFixtures.lean`. -/
 def bzRecombinationCoeff (factor col : Nat) : Int :=
   match factor, col with
   | 0, 0 => 1
   | 0, 1 => 1
-  | 1, 0 => 2
   | 1, 1 => 1
-  | 2, 0 => 3
-  | 2, 1 => 1
+  | 1, 2 => 1
+  | 2, 2 => 1
   | _, _ => 0
 
-/-- BZ recombination basis with a `p^k = 25` diagonal indicator block. -/
-def bzRecombinationBasis : Matrix Int 3 7 :=
+/-- BZ-shaped triangular recombination basis. -/
+def bzRecombinationBasis : Matrix Int 3 3 :=
   Matrix.ofFn fun i j =>
-    if j.val < 4 then
-      bzRecombinationCoeff i.val j.val
-    else if j.val - 4 = i.val then
-      (25 : Int)
-    else
-      0
+    bzRecombinationCoeff i.val j.val
 
 /-- Fixed BZ recombination input. -/
 def bzRecombinationInput : FirstShortVectorInput :=
   { rows := 3
-    cols := 7
+    cols := 3
     basis := bzRecombinationBasis
     hn := by decide
-    hind := benchFixtureIndependent bzRecombinationBasis }
+    hind := by
+      apply Matrix.independent_of_upperTriangular_pos_diag <;> decide }
 
 instance : Nonempty FirstShortVectorInput :=
   ⟨bzRecombinationInput⟩
@@ -216,10 +214,23 @@ def lcgIterate (seed : Nat) : Nat → Nat
 def randomBoundedEntry (raw : Nat) : Int :=
   Int.ofNat (raw % 61) - 30
 
-/-- LCG-generated random-bounded basis, `|entry| <= 30`. -/
+/-- LCG-generated upper-triangular random-bounded basis. -/
 def randomBoundedBasis (n seed : Nat) : Matrix Int n n :=
   Matrix.ofFn fun i j =>
-    randomBoundedEntry (lcgIterate seed (i.val * n + j.val + 1))
+    if j.val < i.val then
+      0
+    else if i = j then
+      Int.ofNat (n - i.val + 1)
+    else
+      randomBoundedEntry (lcgIterate seed (i.val * n + j.val + 1))
+
+private theorem randomBoundedBasis_independent (n seed : Nat) :
+    (randomBoundedBasis n seed).independent := by
+  apply Matrix.independent_of_upperTriangular_pos_diag
+  · intro i j hij
+    simp [randomBoundedBasis, Matrix.ofFn, Vector.getElem_ofFn, hij]
+  · intro i
+    simp [randomBoundedBasis, Matrix.ofFn, Vector.getElem_ofFn]
 
 /-- Committed seed for the random-bounded family. The `#guard` below checks
 that after size-reducing row 1 against row 0, the first Lovasz comparison
@@ -235,7 +246,7 @@ def prepRandomBoundedInput (n : Nat) : FirstShortVectorInput :=
     basis := basis
     hn := by
       exact Nat.le_max_right n 1
-    hind := benchFixtureIndependent basis }
+    hind := randomBoundedBasis_independent rows randomBoundedSwapSeed }
 
 /-- Check that the first Lovasz comparison fails after the first
 size-reduction pass, forcing at least one swap in the subsequent LLL step. -/
@@ -271,12 +282,23 @@ def harshCubicBasis (n : Nat) : Matrix Int n n :=
   Matrix.ofFn fun i j =>
     let scale := harshCubicScale n
     let noise := randomBoundedEntry (lcgIterate (97 + n) (i.val * n + j.val + 1))
-    if i = j then
-      scale + noise
-    else if j.val < i.val then
-      scale / 3 + noise
+    if j.val < i.val then
+      0
+    else if i = j then
+      scale
     else
       noise
+
+private theorem harshCubicBasis_independent (n : Nat) :
+    (harshCubicBasis n).independent := by
+  apply Matrix.independent_of_upperTriangular_pos_diag
+  · intro i j hij
+    simp [harshCubicBasis, Matrix.ofFn, Vector.getElem_ofFn, hij]
+  · intro i
+    have hscale : (0 : Int) < harshCubicScale n := by
+      dsimp [harshCubicScale]
+      exact_mod_cast Nat.pow_pos (by decide : 0 < 2)
+    simpa [harshCubicBasis, Matrix.ofFn, Vector.getElem_ofFn] using hscale
 
 /-- Parametric harsh-cubic input family at `n in {15, 30, 45}`. -/
 def prepHarshCubicInput (n : Nat) : FirstShortVectorInput :=
@@ -287,7 +309,7 @@ def prepHarshCubicInput (n : Nat) : FirstShortVectorInput :=
     basis := basis
     hn := by
       exact Nat.le_max_right n 1
-    hind := benchFixtureIndependent basis }
+    hind := harshCubicBasis_independent rows }
 
 def getCachedInput (ref : IO.Ref (Option FirstShortVectorInput))
     (mk : Unit → FirstShortVectorInput) : IO FirstShortVectorInput := do
@@ -325,8 +347,10 @@ initialize harshCubicInput45Ref : IO.Ref (Option FirstShortVectorInput) ←
 def ofBasisRandomBoundedEntry (rows row col salt : Nat) : Int :=
   let raw := ((row + 11) * 1_103 + (col + 7) * 2_009 + salt + rows * 97) % 61
   let centered := Int.ofNat raw - 30
-  if row = col then
-    if centered = 0 then 1 else centered
+  if col < row then
+    0
+  else if row = col then
+    Int.ofNat (rows + 31)
   else
     centered
 
@@ -335,44 +359,57 @@ def ofBasisHarshCubicEntry (rows row col salt : Nat) : Int :=
   let sign : Int := if ((row + col + salt) % 2 = 0) then 1 else -1
   let low := ofBasisRandomBoundedEntry rows row col salt
   let bits := 3 * rows + ((row + 2 * col + salt) % 5)
-  sign * (Int.ofNat (2 ^ bits)) + low
+  if col < row then
+    0
+  else if row = col then
+    Int.ofNat (2 ^ bits)
+  else
+    sign * (Int.ofNat (2 ^ bits)) + low
 
 /-- Deterministic row-major square basis for the random-bounded family. -/
-def flatOfBasisRandomBoundedBasis (rows salt : Nat) : Array Int :=
-  if rows = 0 then
-    #[]
-  else
-    (Array.range (rows * rows)).map fun idx =>
-      let row := idx / rows
-      let col := idx % rows
-      ofBasisRandomBoundedEntry rows row col salt
+def ofBasisRandomBoundedBasis (rows salt : Nat) : Matrix Int rows rows :=
+  Matrix.ofFn fun i j => ofBasisRandomBoundedEntry rows i.val j.val salt
+
+private theorem ofBasisRandomBoundedBasis_independent (rows salt : Nat) :
+    (ofBasisRandomBoundedBasis rows salt).independent := by
+  apply Matrix.independent_of_upperTriangular_pos_diag
+  · intro i j hij
+    simp [ofBasisRandomBoundedBasis, Matrix.ofFn, Vector.getElem_ofFn,
+      ofBasisRandomBoundedEntry, hij]
+  · intro i
+    simp [ofBasisRandomBoundedBasis, Matrix.ofFn, Vector.getElem_ofFn,
+      ofBasisRandomBoundedEntry]
+    omega
 
 /-- Deterministic row-major square basis for the harsh-cubic family. -/
-def flatOfBasisHarshCubicBasis (rows salt : Nat) : Array Int :=
-  if rows = 0 then
-    #[]
-  else
-    (Array.range (rows * rows)).map fun idx =>
-      let row := idx / rows
-      let col := idx % rows
-      ofBasisHarshCubicEntry rows row col salt
+def ofBasisHarshCubicBasis (rows salt : Nat) : Matrix Int rows rows :=
+  Matrix.ofFn fun i j => ofBasisHarshCubicEntry rows i.val j.val salt
+
+private theorem ofBasisHarshCubicBasis_independent (rows salt : Nat) :
+    (ofBasisHarshCubicBasis rows salt).independent := by
+  apply Matrix.independent_of_upperTriangular_pos_diag
+  · intro i j hij
+    simp [ofBasisHarshCubicBasis, Matrix.ofFn, Vector.getElem_ofFn,
+      ofBasisHarshCubicEntry, hij]
+  · intro i
+    have hpos : (0 : Int) <
+        Int.ofNat (2 ^ (3 * rows + ((i.val + 2 * i.val + salt) % 5))) := by
+      exact Int.ofNat_lt.mpr (Nat.pow_pos (by decide : 0 < 2))
+    simpa [ofBasisHarshCubicBasis, Matrix.ofFn, Vector.getElem_ofFn,
+      ofBasisHarshCubicEntry] using hpos
 
 /-- General constructor for an `LLLState.ofBasis` benchmark fixture.
 The benchmark parameter maps to `rows = n + 3`, so the final two row indices
 are always available for the result checksum. -/
-def prepOfBasisInput (n cols : Nat) (entries : Array Int) : OfBasisInput :=
+def prepOfBasisInput (n cols : Nat) (basis : Matrix Int (n + 3) cols)
+    (hind : basis.independent) : OfBasisInput :=
   let rows := n + 3
-  let flat : IntBasisInput :=
-    { rows := rows
-      cols := cols
-      entries := entries }
   let j : Fin rows := ⟨n + 1, by simp [rows]⟩
   let k : Fin rows := ⟨n + 2, by simp [rows]⟩
-  let basis := matrixOfFlat flat
   { rows := rows
     cols := cols
     basis := basis
-    hind := benchFixtureIndependent basis
+    hind := hind
     j := j
     k := k
     hjk := by
@@ -382,18 +419,20 @@ def prepOfBasisInput (n cols : Nat) (entries : Array Int) : OfBasisInput :=
 /-- Per-parameter fixture for the BZ recombination input family. -/
 def prepOfBasisBzRecombinationInput (n : Nat) : OfBasisInput :=
   let rows := n + 3
-  let cols := 2 * rows + 1
-  prepOfBasisInput n cols (flatBasis rows cols 311)
+  let basis := generatedBasis rows 311
+  prepOfBasisInput n rows basis (generatedBasis_independent rows 311)
 
 /-- Per-parameter fixture for the random-bounded input family. -/
 def prepOfBasisRandomBoundedInput (n : Nat) : OfBasisInput :=
   let rows := n + 3
-  prepOfBasisInput n rows (flatOfBasisRandomBoundedBasis rows 509)
+  let basis := ofBasisRandomBoundedBasis rows 509
+  prepOfBasisInput n rows basis (ofBasisRandomBoundedBasis_independent rows 509)
 
 /-- Per-parameter fixture for the harsh-cubic input family. -/
 def prepOfBasisHarshCubicInput (n : Nat) : OfBasisInput :=
   let rows := n + 3
-  prepOfBasisInput n rows (flatOfBasisHarshCubicBasis rows 887)
+  let basis := ofBasisHarshCubicBasis rows 887
+  prepOfBasisInput n rows basis (ofBasisHarshCubicBasis_independent rows 887)
 
 /-- Stable checksum for integer vectors. -/
 def intVectorChecksum (v : Vector Int n) : Int :=
@@ -423,20 +462,20 @@ def stateUpdateChecksum (s : LLLState n m) (i j : Fin n) : Int :=
     Int.ofNat (natVectorChecksum s.d)
 
 /-- Model for reducing one row against one previous row: one basis row update
-over `m = 2(n + 3) + 1` columns plus the affected coefficient prefix. -/
+over `m = n + 3` columns plus the affected coefficient prefix. -/
 def sizeReduceColumnComplexity (n : Nat) : Nat :=
-  (2 * (n + 3) + 1) + n + 3
+  2 * (n + 3)
 
 /-- Model for reducing the final row against all earlier rows: `k` row updates
 over `m` columns plus the triangular coefficient-prefix updates. -/
 def sizeReduceComplexity (n : Nat) : Nat :=
   let rows := n + 3
-  rows * (2 * rows + 1) + rows * rows
+  rows * rows + rows * rows
 
 /-- Model for an adjacent swap update: one basis swap over `m` columns, one
 determinant write, and linear coefficient updates in the affected rows/columns. -/
 def swapStepComplexity (n : Nat) : Nat :=
-  (2 * (n + 3) + 1) + n + 3
+  2 * (n + 3)
 
 /-- Model for one stored rational coefficient projection. -/
 def gramSchmidtCoeffComplexity (_n : Nat) : Nat :=
@@ -467,10 +506,10 @@ Bareiss-style pass over the Gram matrix. -/
 def ofBasisComplexity (rows cols : Nat) : Nat :=
   rows * rows * cols + rows * rows * rows
 
-/-- BZ recombination `ofBasis` model for a `(n + 3) x (2(n + 3) + 1)` basis. -/
+/-- BZ recombination `ofBasis` model for a square `(n + 3) x (n + 3)` basis. -/
 def ofBasisBzRecombinationComplexity (n : Nat) : Nat :=
   let rows := n + 3
-  ofBasisComplexity rows (2 * rows + 1)
+  ofBasisComplexity rows rows
 
 /-- Random-bounded `ofBasis` model for a square `(n + 3) x (n + 3)` basis. -/
 def ofBasisRandomBoundedComplexity (n : Nat) : Nat :=
@@ -711,9 +750,9 @@ def runFirstShortVectorHarshCubicChecksum (input : FirstShortVectorInput) : Int 
   runFirstShortVectorChecksum input
 
 /- Complexity derivation: `LLLState.ofBasis` builds the Gram matrix for a
-rectangular BZ recombination-style basis with `rows = n + 3` and
-`cols = 2 * rows + 1`, then runs the shared fraction-free Bareiss-shaped pass
-used by `GramSchmidt.Int.data`. The dominant work is `rows^2 * cols`
+square BZ recombination-style basis with `rows = cols = n + 3`, then runs the
+shared fraction-free Bareiss-shaped pass used by `GramSchmidt.Int.data`.
+The dominant work is `rows^2 * cols`
 integer multiply-adds for Gram construction plus one cubic elimination over
 the `rows x rows` Gram matrix. Hadamard bounds each leading Gram determinant's
 bit-width by `O(k * (log rows + log cols + 2 log B))`; this bounded-coefficient
@@ -827,10 +866,10 @@ setup_benchmark runPotential n => potentialComplexity n
     targetInnerNanos := 1_000_000_000
   }
 
-/- Fixed Phase-4 family: BZ recombination basis with `p = 5`, `k = 2`,
-`coeffWidth = 4`, and three lifted local factors, matching the conformance
-fixture in `HexLLL/EmitFixtures.lean`. This fixed target records the downstream
-hot path inherited from Berlekamp-Zassenhaus recombination. -/
+/- Fixed Phase-4 family: BZ-shaped triangular basis with three lifted local
+factors, matching the conformance fixture in `HexLLL/EmitFixtures.lean`. This
+fixed target records the downstream hot path inherited from
+Berlekamp-Zassenhaus recombination. -/
 setup_fixed_benchmark runFirstShortVectorBZRecombinationChecksum where {
     repeats := 5
     maxSecondsPerCall := 6.0
@@ -845,7 +884,7 @@ to record its ratio. -/
 setup_fixed_benchmark runFpylllFirstShortVectorBZRecombinationChecksum where {
     repeats := 5
     maxSecondsPerCall := 20.0
-    expectedHash := some 0x3c0064007a0036
+    expectedHash := some 0x20001
   }
 
 /- Fixed bottom-rung Lean/fpylll comparison for the random-bounded family at
@@ -859,7 +898,7 @@ setup_fixed_benchmark runFirstShortVectorRandomBounded30Checksum where {
 setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded30Checksum where {
     repeats := 5
     maxSecondsPerCall := 20.0
-    expectedHash := some 0xf977db3a0120001a
+    expectedHash := some 0x4
   }
 
 /- Fixed bottom-rung Lean/fpylll comparison for the harsh-cubic family at
@@ -873,7 +912,7 @@ setup_fixed_benchmark runFirstShortVectorHarshCubic15Checksum where {
 setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic15Checksum where {
     repeats := 5
     maxSecondsPerCall := 20.0
-    expectedHash := some 0x949fde47fa1fffb4
+    expectedHash := some 0x6ccfd453f897ff98
   }
 
 /- Complexity derivation: random-bounded inputs have square dimension `n` and
@@ -930,85 +969,85 @@ setup_fixed_benchmark runIsabelleBZRecombinationNormSq where {
 setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq30 where {
     repeats := 3
     maxSecondsPerCall := 20.0
-    expectedHash := some 0x3a52
+    expectedHash := some 0x8
   }
 
 setup_fixed_benchmark runIsabelleRandomBoundedNormSq30 where {
     repeats := 3
     maxSecondsPerCall := 20.0
-    expectedHash := some 0x3a52
+    expectedHash := some 0x8
   }
 
 setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq60 where {
     repeats := 3
     maxSecondsPerCall := 30.0
-    expectedHash := some 0x98cc
+    expectedHash := some 0x8
   }
 
 setup_fixed_benchmark runIsabelleRandomBoundedNormSq60 where {
     repeats := 3
     maxSecondsPerCall := 30.0
-    expectedHash := some 0x98cc
+    expectedHash := some 0x8
   }
 
 setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq120 where {
     repeats := 3
     maxSecondsPerCall := 60.0
-    expectedHash := some 0x11860
+    expectedHash := some 0x8
   }
 
 setup_fixed_benchmark runIsabelleRandomBoundedNormSq120 where {
     repeats := 3
     maxSecondsPerCall := 60.0
-    expectedHash := some 0x11860
+    expectedHash := some 0x8
   }
 
 setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq240 where {
     repeats := 3
     maxSecondsPerCall := 120.0
-    expectedHash := some 0x2454a
+    expectedHash := some 0x8
   }
 
 setup_fixed_benchmark runIsabelleRandomBoundedNormSq240 where {
     repeats := 3
     maxSecondsPerCall := 120.0
-    expectedHash := some 0x2454a
+    expectedHash := some 0x8
   }
 
 setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq15 where {
     repeats := 3
     maxSecondsPerCall := 20.0
-    expectedHash := some 0x700000000033a4
+    expectedHash := some 0x321c
   }
 
 setup_fixed_benchmark runIsabelleHarshCubicNormSq15 where {
     repeats := 3
     maxSecondsPerCall := 90.0
-    expectedHash := some 0x700000000033a4
+    expectedHash := some 0x321c
   }
 
 setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq30 where {
     repeats := 3
     maxSecondsPerCall := 40.0
-    expectedHash := some 0x37cc
+    expectedHash := some 0x358a
   }
 
 setup_fixed_benchmark runIsabelleHarshCubicNormSq30 where {
     repeats := 3
     maxSecondsPerCall := 40.0
-    expectedHash := some 0x37cc
+    expectedHash := some 0x358a
   }
 
 setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq45 where {
     repeats := 3
     maxSecondsPerCall := 60.0
-    expectedHash := some 0x6d1e
+    expectedHash := some 0x6a96
   }
 
 setup_fixed_benchmark runIsabelleHarshCubicNormSq45 where {
     repeats := 3
     maxSecondsPerCall := 60.0
-    expectedHash := some 0x6d1e
+    expectedHash := some 0x6a96
   }
 
 end Hex.LLLBench

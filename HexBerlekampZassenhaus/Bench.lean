@@ -15,9 +15,10 @@ The registration names are intentionally stable: CI and scheduled timing runs
 refer to these case names when checking that the benchmark harness still covers
 the public BZ API surface.
 
-Smoke registrations:
+Split-family registrations:
 
-* `runFactorChecksum`: public `factor` combinator on small split inputs.
+* `runFactorChecksum`: public `factor` combinator on split inputs over the
+  scientific degree ladder `n = 2..5`.
 * `runFactorFastChecksum`: CLD fast path on the same inputs, preserving `none`.
 * `runFactorSlowChecksum`: exhaustive backstop on the same inputs.
 * HO-2 adversarial polynomial constants plus singleton `factor` targets and
@@ -69,6 +70,10 @@ def smokeInput (n : Nat) : ZPoly :=
   (Array.range (n + 1)).foldl
     (fun acc i => acc * linearZFactor (Int.ofNat (i + 1)))
     (1 : ZPoly)
+
+/-- Scientific split-family ladder for public and proof-facing fast factoring. -/
+def splitScientificSchedule : Array Nat :=
+  #[2, 3, 4, 5]
 
 /-- HO-2 adversarial input `X^4 + 1`, irreducible over `Z` but split mod `5`. -/
 def advX4Plus1 : ZPoly :=
@@ -149,9 +154,9 @@ def degreeHeightSchedule : Array Nat :=
 
 /-- Bounded slow-path subset of the degree/height schedule. -/
 def slowDegreeHeightSchedule : Array Nat :=
-  #[encodeDegreeHeightParam 2 2,
-    encodeDegreeHeightParam 3 8,
-    encodeDegreeHeightParam 4 8]
+  #[encodeDegreeHeightParam 1 2,
+    encodeDegreeHeightParam 2 2,
+    encodeDegreeHeightParam 3 8]
 
 /-- Encoding scale for benchmark parameters with four small natural axes. -/
 def precisionLocalParamScale : Nat :=
@@ -394,37 +399,36 @@ def bzPrecisionLocalComplexity (param : Nat) : Nat :=
   n ^ 9 + n ^ 7 * h ^ 2 + r * n * n * Nat.log2 (k + 1)
 
 /-
-Smoke-only registration for the public combinator. The declared cost model is
-the classical BHKS polynomial bound over the smoke degree parameter: dense
-arithmetic/recombination dominates, so this plumbing uses the shared
-`n^9 + n^7 log^2 n` complexity shape until HO-3 replaces the tiny split-family
-schedule with the full degree, height, precision, modular-factor-count, and
-adversarial axes.
+Scientific split-family registration for the public combinator. The declared
+cost model is the classical BHKS polynomial bound over the split degree
+parameter: dense arithmetic/recombination dominates, so this plumbing uses the
+shared `n^9 + n^7 log^2 n` complexity shape while the separate degree/height,
+precision/local-factor, and adversarial registrations cover the other HO-3 axes.
 -/
 setup_benchmark runFactorChecksum n => bzClassicalSmokeComplexity n
   with prep := smokeInput
   where {
-    paramFloor := 1
-    paramCeiling := 4
-    paramSchedule := .custom #[1, 2, 3, 4]
-    maxSecondsPerCall := 4.0
+    paramFloor := 2
+    paramCeiling := 5
+    paramSchedule := .custom splitScientificSchedule
+    maxSecondsPerCall := 8.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
   }
 
 /-
-Smoke-only registration for the CLD fast path on the same inputs as `factor`.
-The declared cost model is the same classical BHKS polynomial bound used by the
-public combinator, since the fast path pays the same dense arithmetic and
-recombination complexity on successful split smoke inputs.
+Scientific split-family registration for the CLD fast path on the same inputs
+as `factor`. The declared cost model is the same classical BHKS polynomial
+bound used by the public combinator, since the fast path pays the same dense
+arithmetic and recombination complexity on successful split inputs.
 -/
 setup_benchmark runFactorFastChecksum n => bzClassicalSmokeComplexity n
   with prep := smokeInput
   where {
-    paramFloor := 1
-    paramCeiling := 4
-    paramSchedule := .custom #[1, 2, 3, 4]
-    maxSecondsPerCall := 4.0
+    paramFloor := 2
+    paramCeiling := 5
+    paramSchedule := .custom splitScientificSchedule
+    maxSecondsPerCall := 8.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
   }
@@ -570,15 +574,16 @@ setup_benchmark runFactorFastDegreeHeightChecksum param => bzClassicalDegreeHeig
   }
 
 /-
-The slow diagnostic intentionally uses only the smallest degree/height subset:
-exhaustive recombination has an exponential dependence on the number of local
-factors, so the declared complexity is `O(2^n * (n^9 + n^7 h^2))`.
+The slow diagnostic intentionally uses only the smallest completing
+degree/height subset: exhaustive recombination has an exponential dependence on
+the number of local factors, so the declared complexity is
+`O(2^n * (n^9 + n^7 h^2))`.
 -/
 setup_benchmark runFactorSlowDegreeHeightChecksum param => bzSlowDegreeHeightComplexity param
   with prep := prepDegreeHeightInput
   where {
-    paramFloor := encodeDegreeHeightParam 2 2
-    paramCeiling := encodeDegreeHeightParam 4 8
+    paramFloor := encodeDegreeHeightParam 1 2
+    paramCeiling := encodeDegreeHeightParam 3 8
     paramSchedule := .custom slowDegreeHeightSchedule
     maxSecondsPerCall := 4.0
     targetInnerNanos := 100000000

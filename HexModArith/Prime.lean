@@ -85,6 +85,17 @@ theorem inv_mul_eq_one_of_ne_zero [PrimeModulus p] {a : ZMod64 p}
     (ha : a ≠ 0) : ZMod64.inv a * a = 1 :=
   inv_mul_eq_one_of_prime (PrimeModulus.prime (p := p)) ha
 
+/-- Symmetric form of `inv_mul_eq_one_of_prime`: `a * a⁻¹ = 1`. -/
+theorem mul_inv_eq_one_of_prime (hp : Hex.Nat.Prime p) {a : ZMod64 p}
+    (ha : a ≠ 0) : a * ZMod64.inv a = 1 := by
+  have h := inv_mul_eq_one_of_prime hp ha
+  grind
+
+/-- Symmetric form of `inv_mul_eq_one_of_ne_zero`: `a * a⁻¹ = 1`. -/
+theorem mul_inv_eq_one_of_ne_zero [PrimeModulus p] {a : ZMod64 p}
+    (ha : a ≠ 0) : a * ZMod64.inv a = 1 :=
+  mul_inv_eq_one_of_prime (PrimeModulus.prime (p := p)) ha
+
 /--
 Fermat's little theorem for `ZMod64`: raising a residue mod a prime `p` to the
 `p`th power returns the original residue.

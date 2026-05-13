@@ -299,6 +299,11 @@ theorem skipIndex_ne {n : Nat} (skip : Fin (n + 1)) (i : Fin n) :
   · rw [skipIndex_val_of_not_lt skip i hlt] at hval
     omega
 
+@[simp] theorem skipIndex_last {n : Nat} (i : Fin n) :
+    skipIndex (Fin.last n) i = i.castSucc := by
+  apply Fin.ext
+  simp [skipIndex, Fin.last, i.isLt]
+
 /-- Delete one row and one column from an `(n + 1) × (n + 1)` matrix. -/
 def deleteRowCol {R : Type u} {n : Nat} (M : Matrix R (n + 1) (n + 1))
     (row col : Fin (n + 1)) : Matrix R n n :=
@@ -308,6 +313,21 @@ def deleteRowCol {R : Type u} {n : Nat} (M : Matrix R (n + 1) (n + 1))
     (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1)) (i j : Fin n) :
     (deleteRowCol M row col)[i][j] = M[skipIndex row i][skipIndex col j] := by
   simp [deleteRowCol, ofFn]
+
+@[simp] theorem deleteRowCol_last_last {R : Type u} {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) :
+    deleteRowCol M (Fin.last n) (Fin.last n) =
+      leadingPrefix M n (Nat.le_succ n) := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let ii : Fin n := ⟨i, hi⟩
+  let jj : Fin n := ⟨j, hj⟩
+  change (deleteRowCol M (Fin.last n) (Fin.last n))[ii][jj] =
+    (leadingPrefix M n (Nat.le_succ n))[ii][jj]
+  rw [deleteRowCol_entry]
+  simp [leadingPrefix, ofFn]
 
 /-- The alternating sign used in signed cofactors. -/
 def cofactorSign {R : Type u} [OfNat R 1] [Neg R] {n : Nat}
@@ -342,6 +362,14 @@ def cofactor {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     cofactor M row col = -det (deleteRowCol M row col) := by
   simp [cofactor, h]
   grind
+
+@[simp] theorem cofactor_last_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) :
+    cofactor M (Fin.last n) (Fin.last n) =
+      det (leadingPrefix M n (Nat.le_succ n)) := by
+  rw [cofactor_of_even]
+  · simp
+  · omega
 
 /-- The determinant of the empty leading prefix is the Bareiss previous-pivot
 convention `1`. -/
@@ -4948,7 +4976,8 @@ theorem colReplace_self {R : Type u} {n : Nat}
     exact congrArg (fun c' : Fin n => M[(⟨r, hr⟩ : Fin n)][c']) hc'.symm
   · rw [if_neg hc']
 
-private theorem det_colReplace_sum_list {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+/-- Determinant linearity in one replaced column, finite-list form. -/
+theorem det_colReplace_sum_list {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (dst : Fin n) {β : Type v} (xs : List β)
     (coeff : β → R) (source : β → Fin n → R) :
     det (colReplace M dst
@@ -5006,6 +5035,17 @@ private theorem det_colReplace_sum_list {R : Type u} [Lean.Grind.CommRing R] {n 
                 xs.foldl
                   (fun acc x => acc + coeff x * det (colReplace M dst (source x)))
                   (0 + coeff x * det (colReplace M dst (source x))) := hstart
+
+/-- Determinant linearity in one replaced column, indexed by `Fin m`. -/
+theorem det_colReplace_sum_finRange {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (M : Matrix R n n) (dst : Fin n) (coeff : Fin m → R)
+    (source : Fin m → Fin n → R) :
+    det (colReplace M dst
+        (fun r => (List.finRange m).foldl
+          (fun acc x => acc + coeff x * source x r) 0)) =
+      (List.finRange m).foldl
+        (fun acc x => acc + coeff x * det (colReplace M dst (source x))) 0 :=
+  det_colReplace_sum_list M dst (List.finRange m) coeff source
 
 /-- Square matrix whose `j`-th column is the finite linear combination of the
 columns of `source` with coefficients from row `j` of `coeff`. -/
@@ -5210,16 +5250,16 @@ theorem det_eq_zero_of_col_eq {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     det M = 0 := by
   simpa [det] using permutationVectors_duplicateCol_sum M src dst h hcol
 
-/-- Replacing a column with a copy of another column produces a determinant of
-zero, since the resulting matrix has two equal columns. -/
-private theorem det_colReplace_copy_other_zero {R : Type u}
-    [Lean.Grind.CommRing R] {n : Nat}
-    (M : Matrix R n n) (dst src : Fin n) (h : src ≠ dst) :
+/-- Replacing a column by an already-present different column creates a
+duplicate column, so the determinant is zero. -/
+theorem det_colReplace_existing_col_eq_zero
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (dst src : Fin n) (hsrcdst : src ≠ dst) :
     det (colReplace M dst (fun r => M[r][src])) = 0 := by
-  apply det_eq_zero_of_col_eq (colReplace M dst (fun r => M[r][src])) src dst h
+  apply det_eq_zero_of_col_eq (colReplace M dst (fun r => M[r][src])) src dst hsrcdst
   intro r
   rw [colReplace_get, colReplace_get]
-  rw [if_neg h, if_pos rfl]
+  rw [if_neg hsrcdst, if_pos rfl]
 
 /-- Adding a finite linear combination of other columns of `M` to column `dst`
 preserves the determinant. The sources are given as a list and each source is
@@ -5242,7 +5282,7 @@ theorem det_colReplace_add_otherCols {R : Type u}
     have hzero_each : ∀ s ∈ sources, coeff s * det (colReplace M dst (fun r => M[r][s])) = 0 := by
       intro s hs
       have hne : s ≠ dst := hsrc s hs
-      rw [det_colReplace_copy_other_zero M dst s hne]
+      rw [det_colReplace_existing_col_eq_zero M dst s hne]
       grind
     -- Foldl of a sum that is always zero adds nothing.
     have hfoldl : sources.foldl
@@ -5254,7 +5294,7 @@ theorem det_colReplace_add_otherCols {R : Type u}
           simp only [List.foldl_cons]
           have hs : coeff s * det (colReplace M dst (fun r => M[r][s])) = 0 := by
             have hne : s ≠ dst := hsrc s (by simp)
-            rw [det_colReplace_copy_other_zero M dst s hne]
+            rw [det_colReplace_existing_col_eq_zero M dst s hne]
             grind
           rw [hs]
           have hsrc' : ∀ s' ∈ ss, s' ≠ dst := fun s' hs' => hsrc s' (by simp [hs'])

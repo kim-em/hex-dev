@@ -1,6 +1,5 @@
 import HexGfqMathlib.Basic
 import HexGfqMathlib.GF2q
-import HexGfqMathlib.Conformance
 
 /-!
 Mathlib-side bridges for the canonical finite-field convenience constructors.
