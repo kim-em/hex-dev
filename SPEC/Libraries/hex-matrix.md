@@ -199,3 +199,29 @@ Proof strategy for `nullspace_complete`:
 
 4. **Package.** The entry-wise equality gives
    `E.nullspaceMatrix * c = v`.
+
+## External comparators
+
+| Comparator | Class | Scope |
+|---|---|---|
+| FLINT `fmpz_mat_det` via python-flint | informational | determinant-surface bench targets only (`runBareissDet` and equivalents) |
+
+FLINT's `fmpz_mat_det` is a structurally distinct reference for
+integer matrix determinant: FLINT uses multimodular reduction
+(determinant modulo many small primes, then CRT) which has
+different asymptotic and constant-factor profile from Bareiss
+fraction-free elimination. The comparator is `informational`:
+the ratio is recorded for orientation but is not a Phase-4 gate.
+Wired via a persistent-subprocess Python driver per
+`SPEC/benchmarking.md §"External comparators" §"Process call"`.
+
+The library's other Phase-4 surfaces (matrix multiplication, row
+operations, transposition, slicing) have no external comparator
+named. They declare absence with the **structural-layer** reason
+per `SPEC/benchmarking.md §"Comparator naming"`: those surfaces
+are GMP-backed `Int` arithmetic on `Vector` / `Array` primitives,
+and the determinant comparator covers the only matrix-specific
+algorithmic surface where an external reference adds meaningful
+orientation.
+
+Structured metadata in `libraries.yml: HexMatrix.phase4.comparators`.

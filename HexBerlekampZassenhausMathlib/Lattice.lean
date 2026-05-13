@@ -54,6 +54,16 @@ def indicatorVector {r : Nat} (S : Set (Fin r)) : Fin r → ℤ :=
     classical
     exact fun i => if i ∈ S then 1 else 0
 
+@[simp] theorem indicatorVector_apply_mem {r : Nat} (S : Set (Fin r))
+    {i : Fin r} (hi : i ∈ S) :
+    indicatorVector S i = 1 := by
+  simp [indicatorVector, hi]
+
+@[simp] theorem indicatorVector_apply_not_mem {r : Nat} (S : Set (Fin r))
+    {i : Fin r} (hi : i ∉ S) :
+    indicatorVector S i = 0 := by
+  simp [indicatorVector, hi]
+
 /-- A support of lifted local-factor indices for a BHKS lattice basis. -/
 abbrev LiftedFactorSupport (L : Hex.BhksLatticeBasis) :=
   Set (Fin L.factorCount)
@@ -71,11 +81,24 @@ def trueFactorIndicatorLattice {r : Nat} (trueSupports : Set (Set (Fin r))) :
     Submodule ℤ (Fin r → ℤ) :=
   Submodule.span ℤ (Set.range fun S : trueSupports => indicatorVector S.1)
 
+/-- Each declared true-factor support contributes its indicator to `W`. -/
+theorem indicatorVector_mem_trueFactorIndicatorLattice
+    {r : Nat} (trueSupports : Set (Set (Fin r))) (S : trueSupports) :
+    indicatorVector S.1 ∈ trueFactorIndicatorLattice trueSupports := by
+  exact Submodule.subset_span ⟨S, rfl⟩
+
 /-- The true-factor indicator lattice over the lifted factors of a BHKS basis. -/
 def liftedFactorIndicatorLattice
     (L : Hex.BhksLatticeBasis) (trueSupports : Set (LiftedFactorSupport L)) :
     Submodule ℤ (Fin L.factorCount → ℤ) :=
   trueFactorIndicatorLattice trueSupports
+
+/-- Each declared lifted-factor support contributes its indicator to `W`. -/
+theorem liftedFactorIndicator_mem_liftedFactorIndicatorLattice
+    (L : Hex.BhksLatticeBasis) (trueSupports : Set (LiftedFactorSupport L))
+    (S : trueSupports) :
+    liftedFactorIndicator L S.1 ∈ liftedFactorIndicatorLattice L trueSupports := by
+  exact indicatorVector_mem_trueFactorIndicatorLattice trueSupports S
 
 /--
 Cut hypotheses needed to connect the executable projected rows to the abstract
@@ -86,6 +109,13 @@ structure CutProjectionHypotheses
     (L : Hex.BhksProjectedRows) (trueSupports : Set (Set (Fin L.factorCount))) where
   indicator_mem_projected :
     ∀ S : trueSupports, indicatorVector S.1 ∈ projectedRowSpanInt L
+
+/-- Direct consumer-facing form of the cut hypothesis for one true support. -/
+theorem indicatorVector_mem_projectedRowSpan_of_cut
+    (L : Hex.BhksProjectedRows) (trueSupports : Set (Set (Fin L.factorCount)))
+    (hcut : CutProjectionHypotheses L trueSupports) (S : trueSupports) :
+    indicatorVector S.1 ∈ projectedRowSpanInt L :=
+  hcut.indicator_mem_projected S
 
 /--
 BHKS `W <= L'`: every vector in the true-factor indicator lattice is in the
@@ -99,6 +129,15 @@ theorem trueFactorIndicatorLattice_le_projectedRowSpan
   refine Submodule.span_le.mpr ?_
   rintro v ⟨S, rfl⟩
   exact hcut.indicator_mem_projected S
+
+/-- Membership form of `W <= L'`, useful after proving a vector lies in `W`. -/
+theorem mem_projectedRowSpan_of_mem_trueFactorIndicatorLattice
+    (L : Hex.BhksProjectedRows) (trueSupports : Set (Set (Fin L.factorCount)))
+    (hcut : CutProjectionHypotheses L trueSupports)
+    {v : Fin L.factorCount → ℤ}
+    (hv : v ∈ trueFactorIndicatorLattice trueSupports) :
+    v ∈ projectedRowSpanInt L :=
+  trueFactorIndicatorLattice_le_projectedRowSpan L trueSupports hcut hv
 
 /--
 Abstract separation hypotheses for the BHKS `L' = W` step.
@@ -128,6 +167,24 @@ theorem projectedRowSpan_eq_trueFactorIndicatorLattice
     by_contra hnot
     exact hsep.no_projected_not_indicator v hv hnot
   · exact trueFactorIndicatorLattice_le_projectedRowSpan L trueSupports hsep.cut
+
+/-- Separation gives the reverse containment `L' <= W`. -/
+theorem projectedRowSpan_le_trueFactorIndicatorLattice
+    (L : Hex.BhksProjectedRows) (trueSupports : Set (Set (Fin L.factorCount)))
+    (hsep : SeparationHypotheses L trueSupports) :
+    projectedRowSpanInt L ≤ trueFactorIndicatorLattice trueSupports := by
+  intro v hv
+  by_contra hnot
+  exact hsep.no_projected_not_indicator v hv hnot
+
+/-- Membership in `L'` and `W` are equivalent under separation. -/
+theorem mem_projectedRowSpan_iff_mem_trueFactorIndicatorLattice
+    (L : Hex.BhksProjectedRows) (trueSupports : Set (Set (Fin L.factorCount)))
+    (hsep : SeparationHypotheses L trueSupports)
+    {v : Fin L.factorCount → ℤ} :
+    v ∈ projectedRowSpanInt L ↔
+      v ∈ trueFactorIndicatorLattice trueSupports := by
+  rw [projectedRowSpan_eq_trueFactorIndicatorLattice L trueSupports hsep]
 
 /-- Each projected integer row is one of the generators of `L'`. -/
 theorem projectedRow_mem_projectedRowSpanInt

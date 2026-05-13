@@ -25,13 +25,21 @@ structure Factorization (p : Nat) [ZMod64.Bounds p] where
   input : FpPoly p
   factors : List (FpPoly p)
 
-/-- Multiply a list of `F_p[x]` factors in stored order. -/
+/-- Multiply a list of `F_p[x]` factors in stored order, starting from `1`. -/
 def factorProduct (factors : List (FpPoly p)) : FpPoly p :=
   factors.foldl (fun acc factor => acc * factor) 1
 
 /-- Product of the factors returned by a `Factorization`. -/
 def Factorization.product (result : Factorization p) : FpPoly p :=
   factorProduct result.factors
+
+/-- Empty-list base case for `factorProduct`. -/
+@[simp] theorem factorProduct_nil : factorProduct ([] : List (FpPoly p)) = 1 := rfl
+
+/-- Unfold a `Factorization`'s product to the `factorProduct` of its stored factors. -/
+@[simp] theorem Factorization.product_def (result : Factorization p) :
+    result.product = factorProduct result.factors :=
+  rfl
 
 /-- The gcd candidate attached to one field constant `c`. -/
 def splitFactorAt (f witness : FpPoly p) (c : ZMod64 p) : FpPoly p :=
@@ -106,9 +114,9 @@ def berlekampFactor (f : FpPoly p) (hmonic : DensePoly.Monic f)
   { input := f
     factors := berlekampFactorLoop witnesses (f.size + 1) [f] }
 
+/-- Definitional unfolding of `splitFactorAt` to its underlying `gcd` candidate. -/
 theorem splitFactorAt_spec (f witness : FpPoly p) (c : ZMod64 p) :
-    splitFactorAt f witness c = DensePoly.gcd f (witness - FpPoly.C c) := by
-  rfl
+    splitFactorAt f witness c = DensePoly.gcd f (witness - FpPoly.C c) := rfl
 
 private theorem splitFactorAt_mul_div_eq
     [ZMod64.PrimeModulus p]
@@ -286,7 +294,12 @@ private theorem foldl_mul_eq_mul_foldl
     exact (DensePoly.mul_one_right_poly z).symm
   exact h1.trans (foldl_mul_left_factor z 1 xs)
 
-private theorem factorProduct_cons_eq
+/--
+Cons-expansion for `factorProduct`: pulling the head factor out of the running
+product. Useful for downstream proofs that reason about `factorProduct` without
+unfolding the underlying `List.foldl`.
+-/
+theorem factorProduct_cons
     [ZMod64.PrimeModulus p]
     (x : FpPoly p) (xs : List (FpPoly p)) :
     factorProduct (x :: xs) = x * factorProduct xs := by
@@ -312,8 +325,8 @@ private theorem factorProduct_splitFirstFactor?_eq
       subst h
       have hp : r.factor * r.cofactor = fac :=
         splitWithWitnesses?_product_spec fac witnesses hsplit
-      rw [factorProduct_cons_eq r.factor, factorProduct_cons_eq r.cofactor,
-        factorProduct_cons_eq fac]
+      rw [factorProduct_cons r.factor, factorProduct_cons r.cofactor,
+        factorProduct_cons fac]
       have hassoc : r.factor * (r.cofactor * factorProduct rest)
           = (r.factor * r.cofactor) * factorProduct rest :=
         (DensePoly.mul_assoc_poly r.factor r.cofactor (factorProduct rest)).symm
@@ -325,7 +338,7 @@ private theorem factorProduct_splitFirstFactor?_eq
         rw [hrest] at h
         simp only [Option.some.injEq] at h
         subst h
-        rw [factorProduct_cons_eq fac, factorProduct_cons_eq fac]
+        rw [factorProduct_cons fac, factorProduct_cons fac]
         rw [ih hrest]
       | none =>
         rw [hrest] at h
@@ -357,12 +370,11 @@ theorem prod_berlekampFactor
     [ZMod64.PrimeModulus p]
     (_hsquareFree : DensePoly.gcd f (DensePoly.derivative f) = 1) :
     (berlekampFactor f hmonic).product = f := by
-  show factorProduct (berlekampFactor f hmonic).factors = f
+  simp only [Factorization.product_def]
   rw [show (berlekampFactor f hmonic).factors
         = berlekampFactorLoop ((fixedSpaceKernel f hmonic).toList)
             (f.size + 1) [f] from rfl]
-  rw [factorProduct_berlekampFactorLoop_eq, factorProduct_cons_eq]
-  show f * factorProduct ([] : List (FpPoly p)) = f
+  rw [factorProduct_berlekampFactorLoop_eq, factorProduct_cons, factorProduct_nil]
   exact DensePoly.mul_one_right_poly f
 
 end Berlekamp

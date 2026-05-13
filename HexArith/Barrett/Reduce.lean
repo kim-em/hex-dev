@@ -132,3 +132,45 @@ theorem toNat_barrettReduce (ctx : BarrettCtx p) (T : UInt64)
       rw [UInt64.le_iff_toNat_le]
       simpa [hr_toNat] using hnat
     simp [hnot_ge, hcond, hr_toNat]
+
+/--
+The executable Barrett reducer returns the ordinary Nat remainder for every
+input in the small-product range guaranteed by the context.
+-/
+@[simp]
+theorem toNat_barrettReduce_eq_mod (ctx : BarrettCtx p) (T : UInt64)
+    (hT : T.toNat < p.toNat * p.toNat) :
+    (barrettReduce ctx T).toNat = T.toNat % p.toNat := by
+  rw [toNat_barrettReduce ctx T hT]
+  have hT_word : T.toNat < barrettRadix := by
+    have hp_word : p.toNat * p.toNat < UInt64.word := by
+      calc
+        p.toNat * p.toNat < 2 ^ 32 * 2 ^ 32 :=
+          Nat.mul_lt_mul'' ctx.p_lt ctx.p_lt
+        _ = UInt64.word := by
+          rw [UInt64.word, ← Nat.pow_add]
+    exact Nat.lt_trans hT (by simpa [barrettRadix] using hp_word)
+  exact barrettReduceNat_eq_mod ctx.p_gt ctx.toNat_pinv hT_word
+
+/-- The executable Barrett reducer returns a canonical residue. -/
+theorem barrettReduce_lt (ctx : BarrettCtx p) (T : UInt64)
+    (hT : T.toNat < p.toNat * p.toNat) :
+    barrettReduce ctx T < p := by
+  rw [UInt64.lt_iff_toNat_lt, toNat_barrettReduce_eq_mod ctx T hT]
+  exact Nat.mod_lt _ (Nat.lt_trans (by decide : 0 < 1) ctx.p_gt)
+
+/--
+The executable Barrett reducer agrees with reducing the input word and
+re-encoding the canonical residue as a `UInt64`.
+-/
+theorem barrettReduce_eq (ctx : BarrettCtx p) (T : UInt64)
+    (hT : T.toNat < p.toNat * p.toNat) :
+    barrettReduce ctx T = .ofNat (T.toNat % p.toNat) := by
+  apply UInt64.toNat_inj.mp
+  rw [toNat_barrettReduce_eq_mod ctx T hT]
+  have hmod_lt : T.toNat % p.toNat < p.toNat :=
+    Nat.mod_lt _ (Nat.lt_trans (by decide : 0 < 1) ctx.p_gt)
+  have hmod_word : T.toNat % p.toNat < UInt64.word := by
+    exact Nat.lt_trans hmod_lt (Nat.lt_trans ctx.p_lt (by decide))
+  change T.toNat % p.toNat = (T.toNat % p.toNat) % UInt64.size
+  simpa [UInt64.size, UInt64.word] using (Nat.mod_eq_of_lt hmod_word).symm

@@ -255,38 +255,6 @@ def QuadraticMultifactorLiftInvariant
       QuadraticLiftLoopInvariant p f { g, h, s, t } ∧
         QuadraticMultifactorLiftInvariant p k lifted.h rest
 
-private theorem one_mul_zpoly (g : ZPoly) :
-    (1 : ZPoly) * g = g := by
-  rw [DensePoly.mul_comm_poly (S := Int), DensePoly.mul_one_right_poly]
-
-private theorem polyProduct_singleton (g : ZPoly) :
-    Array.polyProduct #[g] = g := by
-  simpa [Array.polyProduct] using one_mul_zpoly g
-
-private theorem list_foldl_mul_eq_mul_foldl_one (g : ZPoly) (xs : List ZPoly) :
-    xs.foldl (fun acc factor => acc * factor) g =
-      g * xs.foldl (fun acc factor => acc * factor) 1 := by
-  induction xs generalizing g with
-  | nil =>
-      simpa using (DensePoly.mul_one_right_poly (S := Int) g).symm
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      rw [one_mul_zpoly]
-      calc
-        xs.foldl (fun acc factor => acc * factor) (g * x) =
-            (g * x) * xs.foldl (fun acc factor => acc * factor) 1 := ih (g * x)
-        _ = g * (x * xs.foldl (fun acc factor => acc * factor) 1) := by
-            rw [DensePoly.mul_assoc_poly (S := Int)]
-        _ = g * xs.foldl (fun acc factor => acc * factor) x := by
-            rw [ih x]
-
-private theorem polyProduct_singleton_append (g : ZPoly) (rest : Array ZPoly) :
-    Array.polyProduct (#[g] ++ rest) = g * Array.polyProduct rest := by
-  cases rest with
-  | mk xs =>
-      simpa [Array.polyProduct, one_mul_zpoly] using
-        list_foldl_mul_eq_mul_foldl_one g xs
-
 private theorem multifactorLiftQuadraticList_spec
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) (factors : List ZPoly)

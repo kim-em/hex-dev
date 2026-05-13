@@ -67,11 +67,18 @@ gating is non-negotiable — see [SPEC/CI.md](../SPEC/CI.md).
 When adding a new conformance check, oracle, benchmark, or build
 target, **extend the script of the existing single ubuntu job** in
 the relevant workflow (`conformance.yml` for conformance/oracle work,
-`ci.yml` for build/check work). Do **not** add a new top-level job,
-a new `strategy.matrix`, or a new workflow file. The full rationale
-and the trigger / concurrency / Mathlib-cache rules every workflow
-must satisfy live in [SPEC/CI.md](../SPEC/CI.md); read it before
-editing any file under `.github/workflows/`.
+`ci.yml` for build/check/benchmark work). Do **not** add a new
+top-level job, a new `strategy.matrix`, or a new workflow file. The
+full rationale and the trigger / concurrency / Mathlib-cache rules
+every workflow must satisfy live in [SPEC/CI.md](../SPEC/CI.md); read
+it before editing any file under `.github/workflows/`.
+
+For benchmark targets specifically, the structural and timing rules
+in [SPEC/benchmarking.md §Mathlib-free benches](../SPEC/benchmarking.md)
+and the "Time budget" subsection of
+[SPEC/benchmarking.md §CI integration](../SPEC/benchmarking.md)
+constrain what a new bench is allowed to look like (no Mathlib in
+the link chain; per-library smoke warn at 30 s; repo-wide hard cap).
 
 ---
 

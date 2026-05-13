@@ -249,6 +249,26 @@ MUST NOT appear in any `Conformance.lean`:
   `Conformance.lean` MUST be imported from the library's root module
   so that `lake build HexFoo` elaborates its `#guard`s.
 
+- **Ceremonial API-still-elaborates `example`s.** An `example` whose
+  proof reduces entirely to a `sorry`'d declaration produces no
+  regression signal — it elaborates iff the API surface still
+  matches, which is already caught by ordinary `lake build` of any
+  importing file. Such examples are actively harmful: they cost
+  elaboration time, mislead readers into thinking real coverage
+  exists where there's none, and propagate as an anti-pattern
+  whenever a future agent copies the file's shape. If the underlying
+  theorem is `sorry`, delete the example. The example becomes
+  meaningful only when the theorem it relies on has a real proof.
+
+- **`Hex*Mathlib/Conformance.lean` files.** The `Hex*Mathlib`
+  libraries are proof-only — they have no executable runtime to
+  conform to a contract. A `Hex*Mathlib/Conformance.lean` file
+  should not exist. Any `#guard` or `#eval` exercising Hex
+  executable code belongs in the computational sibling's
+  `Hex*/Conformance.lean` (e.g. checks on `Hex.Berlekamp.rabinTest`
+  live in `HexBerlekamp/Conformance.lean`, never in
+  `HexBerlekampMathlib/Conformance.lean`).
+
 ## `#eval` vs `#eval!`
 
 `#eval e` errors when `e` transitively depends on any `sorry`,

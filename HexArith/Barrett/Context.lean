@@ -56,22 +56,6 @@ private theorem product_toNat_lt_p2 (ctx : BarrettCtx p) (a b : UInt64)
   exact Nat.mul_lt_mul'' haNat hbNat
 
 /--
-The product of two residues below a Barrett modulus fits below the Barrett
-radix `2^64`.
--/
-private theorem product_toNat_lt_radix (ctx : BarrettCtx p) (a b : UInt64)
-    (ha : a < p) (hb : b < p) :
-    (a * b).toNat < barrettRadix := by
-  have hprod_lt_p2 := product_toNat_lt_p2 ctx a b ha hb
-  have hp2_lt_word : p.toNat * p.toNat < UInt64.word := by
-    calc
-      p.toNat * p.toNat < 2 ^ 32 * 2 ^ 32 :=
-        Nat.mul_lt_mul'' ctx.p_lt ctx.p_lt
-      _ = UInt64.word := by
-        rw [UInt64.word, ← Nat.pow_add]
-  simpa [barrettRadix] using Nat.lt_trans hprod_lt_p2 hp2_lt_word
-
-/--
 The `Nat` value of Barrett modular multiplication is the ordinary modular
 product.
 -/
@@ -80,8 +64,7 @@ theorem toNat_mulMod (ctx : BarrettCtx p) (a b : UInt64)
     (ha : a < p) (hb : b < p) :
     (ctx.mulMod a b).toNat = (a.toNat * b.toNat) % p.toNat := by
   unfold mulMod
-  rw [toNat_barrettReduce ctx (a * b) (product_toNat_lt_p2 ctx a b ha hb)]
-  rw [barrettReduceNat_eq_mod ctx.p_gt (toNat_pinv ctx) (product_toNat_lt_radix ctx a b ha hb)]
+  rw [toNat_barrettReduce_eq_mod ctx (a * b) (product_toNat_lt_p2 ctx a b ha hb)]
   rw [product_toNat_eq ctx a b ha hb]
 
 /-- Barrett modular multiplication returns a residue strictly below the modulus. -/
@@ -99,15 +82,9 @@ re-encoding it as a `UInt64`.
 theorem mulMod_eq (ctx : BarrettCtx p) (a b : UInt64)
     (ha : a < p) (hb : b < p) :
     ctx.mulMod a b = .ofNat ((a.toNat * b.toNat) % p.toNat) := by
-  apply UInt64.toNat_inj.mp
-  rw [toNat_mulMod ctx a b ha hb]
-  have hmod_lt : (a.toNat * b.toNat) % p.toNat < p.toNat :=
-    Nat.mod_lt _ (Nat.lt_trans (by decide : 0 < 1) ctx.p_gt)
-  have hmod_word : (a.toNat * b.toNat) % p.toNat < UInt64.word := by
-    exact Nat.lt_trans hmod_lt (Nat.lt_trans ctx.p_lt (by decide))
-  change (a.toNat * b.toNat) % p.toNat =
-    ((a.toNat * b.toNat) % p.toNat) % UInt64.size
-  simpa [UInt64.size, UInt64.word] using (Nat.mod_eq_of_lt hmod_word).symm
+  unfold mulMod
+  rw [barrettReduce_eq ctx (a * b) (product_toNat_lt_p2 ctx a b ha hb)]
+  rw [product_toNat_eq ctx a b ha hb]
 
 /-- Zero is a left absorbing element for Barrett modular multiplication. -/
 @[simp]
