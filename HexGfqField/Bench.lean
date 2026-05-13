@@ -101,6 +101,7 @@ private def polyP7 (coeffs : Array Nat) : FpPoly 7 :=
 private theorem maxProperDiv_2 : Berlekamp.maximalProperDivisors 2 = [1] := by decide
 private theorem maxProperDiv_3 : Berlekamp.maximalProperDivisors 3 = [1] := by decide
 private theorem maxProperDiv_4 : Berlekamp.maximalProperDivisors 4 = [2] := by decide
+private theorem maxProperDiv_5 : Berlekamp.maximalProperDivisors 5 = [1] := by decide
 private theorem maxProperDiv_6 : Berlekamp.maximalProperDivisors 6 = [2, 3] := by decide
 private theorem maxProperDiv_8 : Berlekamp.maximalProperDivisors 8 = [4] := by decide
 
@@ -234,6 +235,54 @@ private theorem m_p7_n4_irr : FpPoly.Irreducible m_p7_n4 :=
       m_p7_n4 m_p7_n4_monic m_p7_n4_certificate
       m_p7_n4_certificate_check)
 
+/-- `x^5 + x + 4` over `F_7`. -/
+private def m_p7_n5 : FpPoly 7 :=
+  { coeffs := #[(4 : ZMod64 7), 1, 0, 0, 0, 1]
+    normalized := Or.inr (by simpa using one_ne_zero_seven) }
+private theorem m_p7_n5_pos : 0 < FpPoly.degree m_p7_n5 := by decide
+private theorem m_p7_n5_monic : DensePoly.Monic m_p7_n5 := by rfl
+
+private def m_p7_n5_certificate :
+    Berlekamp.IrreducibilityCertificate where
+  p := 7
+  n := 5
+  powChain :=
+    #[polyP7 #[0, 1], polyP7 #[0, 0, 3, 6], polyP7 #[6, 3, 0, 2, 4],
+      polyP7 #[4, 2, 4, 4, 5], polyP7 #[4, 1, 0, 2, 5], polyP7 #[0, 1]]
+  bezout := #[{ left := polyP7 #[2], right := polyP7 #[2, 6, 2] }]
+
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 8000000 in
+private theorem m_p7_n5_certificate_check :
+    Berlekamp.checkIrreducibilityCertificateLinearIncremental m_p7_n5
+        m_p7_n5_monic m_p7_n5_certificate = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinearIncremental,
+    m_p7_n5_certificate,
+    Berlekamp.IrreducibilityCertificate.toAmbient?,
+    Berlekamp.checkPowChainLinearIncremental,
+    Berlekamp.checkPowChainLinearIncrementalStep,
+    Berlekamp.checkRabinBezoutWitnesses,
+    Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
+    maxProperDiv_5,
+    m_p7_n5, polyP7]
+  constructor
+  · constructor
+    · constructor
+      · rfl
+      · constructor
+        · rfl
+        · intro x hx
+          have hcases : x = 0 ∨ x = 1 ∨ x = 2 ∨ x = 3 ∨ x = 4 := by omega
+          rcases hcases with rfl | rfl | rfl | rfl | rfl <;> rfl
+    · rfl
+  · rfl
+
+private theorem m_p7_n5_irr : FpPoly.Irreducible m_p7_n5 :=
+  Berlekamp.rabinTest_imp_irreducible m_p7_n5 m_p7_n5_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      m_p7_n5 m_p7_n5_monic m_p7_n5_certificate
+      m_p7_n5_certificate_check)
+
 /-- `x^6 + x^4 + 5x^3 + 4x^2 + 6x + 3` over `F_7`. -/
 private def m_p7_n6 : FpPoly 7 :=
   { coeffs := #[(3 : ZMod64 7), 6, 4, 5, 1, 0, 1]
@@ -359,6 +408,7 @@ private def bundleForN (n : Nat) : ModulusBundle :=
   | 2 => ⟨m_p7_n2, m_p7_n2_pos, m_p7_n2_irr⟩
   | 3 => ⟨m_p7_n3, m_p7_n3_pos, m_p7_n3_irr⟩
   | 4 => ⟨m_p7_n4, m_p7_n4_pos, m_p7_n4_irr⟩
+  | 5 => ⟨m_p7_n5, m_p7_n5_pos, m_p7_n5_irr⟩
   | 6 => ⟨m_p7_n6, m_p7_n6_pos, m_p7_n6_irr⟩
   | 8 => ⟨m_p7_n8, m_p7_n8_pos, m_p7_n8_irr⟩
   | _ => ⟨m_p7_n2, m_p7_n2_pos, m_p7_n2_irr⟩
@@ -515,7 +565,7 @@ setup_benchmark runOfPolyReprChecksum n => n * n
   where {
     paramFloor := 2
     paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 6, 8]
+    paramSchedule := .custom #[2, 3, 4, 5, 6, 8]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -531,7 +581,7 @@ setup_benchmark runAddChecksum n => n
   where {
     paramFloor := 2
     paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 6, 8]
+    paramSchedule := .custom #[2, 3, 4, 5, 6, 8]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -547,7 +597,7 @@ setup_benchmark runMulChecksum n => n * n
   where {
     paramFloor := 2
     paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 6, 8]
+    paramSchedule := .custom #[2, 3, 4, 5, 6, 8]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -578,7 +628,7 @@ setup_benchmark runPowChecksum n => n * n * Nat.log2 (n + 1)
   where {
     paramFloor := 2
     paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 6, 8]
+    paramSchedule := .custom #[2, 3, 4, 5, 6, 8]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -595,7 +645,7 @@ setup_benchmark runInvDivChecksum n => n * n
   where {
     paramFloor := 2
     paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 6, 8]
+    paramSchedule := .custom #[2, 3, 4, 5, 6, 8]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -611,7 +661,7 @@ setup_benchmark runZPowChecksum n => n * n * Nat.log2 (n + 1)
   where {
     paramFloor := 2
     paramCeiling := 8
-    paramSchedule := .custom #[2, 3, 4, 6, 8]
+    paramSchedule := .custom #[2, 3, 4, 5, 6, 8]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
