@@ -3,7 +3,6 @@ import Lake
 open System Lake DSL
 
 package Hex where
-  precompileModules := true
 
 require verso from git
   "https://github.com/leanprover/verso.git" @ "v4.30.0-rc2"
@@ -54,7 +53,6 @@ extern_lib hexmodarithffi (pkg) := do
 lean_lib Hex where
 
 lean_lib HexArith where
-  precompileModules := true
   moreLinkArgs := #[
     s!"{(defaultBuildDir / "lib" / nameToStaticLib "hexarithffi").toString}",
     "-lgmp"
@@ -65,7 +63,6 @@ lean_lib HexPoly where
 lean_lib HexMatrix where
 
 lean_lib HexModArith where
-  precompileModules := true
   moreLinkArgs := #[
     s!"{(defaultBuildDir / "lib" / nameToStaticLib "hexmodarithffi").toString}",
     "-lgmp"
@@ -100,7 +97,6 @@ lean_lib HexPolyMathlib where
 lean_lib HexMatrixMathlib where
 
 lean_lib HexModArithMathlib where
-  precompileModules := false
 
 lean_lib HexGramSchmidtMathlib where
 
