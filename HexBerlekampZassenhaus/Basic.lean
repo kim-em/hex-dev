@@ -3834,6 +3834,116 @@ private theorem normalizeForFactor_reassembles_with_signed_unit
   rw [hshift_core, ZPoly.content_mul_primitivePart] at hscaled
   simpa [normalizeForFactor, xData, sqData] using hscaled
 
+private theorem normalizeForFactor_reassembles_signedContentScalar
+    (f : ZPoly) (hf : f ≠ 0) :
+    DensePoly.scale (signedContentScalar f)
+      (DensePoly.shift (normalizeForFactor f).xPower
+        ((normalizeForFactor f).squareFreeCore * (normalizeForFactor f).repeatedPart)) = f := by
+  let xData := ZPoly.extractXPower (ZPoly.primitivePart f)
+  rcases normalizeForFactor_reassembles_with_signed_unit f hf with ⟨ε, hε, heq⟩
+  -- Step 1: `content f` is positive.
+  have hcontent_ne : ZPoly.content f ≠ 0 := by
+    intro hcontent
+    apply hf
+    have hreconstruct := ZPoly.content_mul_primitivePart f
+    rw [hcontent] at hreconstruct
+    have hzero : DensePoly.scale (0 : Int) (ZPoly.primitivePart f) = 0 := by
+      apply DensePoly.ext_coeff
+      intro n
+      rw [DensePoly.coeff_scale (R := Int) (0 : Int) (ZPoly.primitivePart f) n
+        (Int.zero_mul 0)]
+      rw [DensePoly.coeff_zero]
+      exact Int.zero_mul _
+    rw [hzero] at hreconstruct
+    exact hreconstruct.symm
+  have hcontent_pos : 0 < ZPoly.content f := by
+    have hnonneg : 0 ≤ ZPoly.content f := by
+      show 0 ≤ DensePoly.content _
+      rw [DensePoly.content]
+      exact Int.natCast_nonneg _
+    omega
+  -- Step 2: the x-power core is nonzero.
+  have hcore_primitive : ZPoly.Primitive xData.core := by
+    simpa [xData] using extractXPower_core_primitive_of_ne_zero f hf
+  have hcore_ne : xData.core ≠ 0 := by
+    intro hzero
+    have hcontent_core : ZPoly.content xData.core = 0 := by
+      rw [hzero]
+      simp [ZPoly.content, DensePoly.content_zero]
+    have hone_eq_zero : (1 : Int) = 0 := by
+      have := hcore_primitive
+      rw [ZPoly.Primitive, hcontent_core] at this
+      exact this.symm
+    exact absurd hone_eq_zero (by decide)
+  -- Step 3: `squareFreeCore * repeatedPart` has positive leading coefficient.
+  have hA_pos :
+      0 < DensePoly.leadingCoeff
+        ((normalizeForFactor f).squareFreeCore * (normalizeForFactor f).repeatedPart) := by
+    have h :=
+      ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_leadingCoeff_pos
+        xData.core hcore_ne
+    simpa [normalizeForFactor, xData] using h
+  have hA_ne :
+      (normalizeForFactor f).squareFreeCore * (normalizeForFactor f).repeatedPart ≠ 0 := by
+    intro hzero
+    rw [hzero] at hA_pos
+    have hl0 : DensePoly.leadingCoeff (0 : ZPoly) = 0 := rfl
+    rw [hl0] at hA_pos
+    omega
+  have hB_leading :
+      DensePoly.leadingCoeff
+          (DensePoly.shift (normalizeForFactor f).xPower
+            ((normalizeForFactor f).squareFreeCore * (normalizeForFactor f).repeatedPart)) =
+        DensePoly.leadingCoeff
+          ((normalizeForFactor f).squareFreeCore * (normalizeForFactor f).repeatedPart) :=
+    ZPoly.leadingCoeff_shift_of_nonzero _ _ hA_ne
+  have hcε_ne : ZPoly.content f * ε ≠ 0 := by
+    intro hzero
+    rcases Int.mul_eq_zero.mp hzero with h | h
+    · exact hcontent_ne h
+    · rcases hε with h1 | h1
+      · rw [h1] at h; exact absurd h (by decide)
+      · rw [h1] at h; exact absurd h (by decide)
+  -- Step 4: extract the leading coefficient of `f` from `heq`.
+  have h_f_leading :
+      DensePoly.leadingCoeff f =
+        (ZPoly.content f * ε) *
+          DensePoly.leadingCoeff
+            ((normalizeForFactor f).squareFreeCore * (normalizeForFactor f).repeatedPart) := by
+    have h_LHS :
+        DensePoly.leadingCoeff
+            (DensePoly.scale (ZPoly.content f * ε)
+              (DensePoly.shift (normalizeForFactor f).xPower
+                ((normalizeForFactor f).squareFreeCore *
+                  (normalizeForFactor f).repeatedPart))) =
+          (ZPoly.content f * ε) *
+            DensePoly.leadingCoeff
+              ((normalizeForFactor f).squareFreeCore *
+                (normalizeForFactor f).repeatedPart) := by
+      rw [ZPoly.leadingCoeff_scale_of_nonzero _ _ hcε_ne, hB_leading]
+    rw [← h_LHS, heq]
+  -- Step 5: identify `signedContentScalar f = content f * ε`.
+  suffices h_sign_eq : signedContentScalar f = ZPoly.content f * ε by
+    rw [h_sign_eq]; exact heq
+  rcases hε with hε | hε
+  · -- ε = 1
+    have hf_pos : 0 < DensePoly.leadingCoeff f := by
+      rw [h_f_leading, hε, Int.mul_one]
+      exact Int.mul_pos hcontent_pos hA_pos
+    have hf_not_neg : ¬ DensePoly.leadingCoeff f < 0 := by omega
+    unfold signedContentScalar
+    rw [if_neg hf, if_neg hf_not_neg, hε, Int.mul_one]
+  · -- ε = -1
+    have hcontent_neg : ZPoly.content f * (-1 : Int) < 0 := by
+      have hrw : ZPoly.content f * (-1 : Int) = -(ZPoly.content f) := by
+        exact Int.mul_neg_one _
+      rw [hrw]; omega
+    have hf_neg : DensePoly.leadingCoeff f < 0 := by
+      rw [h_f_leading, hε]
+      exact Int.mul_neg_of_neg_of_pos hcontent_neg hA_pos
+    unfold signedContentScalar
+    rw [if_neg hf, if_pos hf_neg, hε, Int.mul_neg_one]
+
 private theorem firstSome_some
     {α β : Type} {xs : List α} {f : α → Option β} {y : β}
     (h : firstSome xs f = some y) :
