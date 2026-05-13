@@ -4313,6 +4313,24 @@ private theorem one_lt_size_of_isOne_false_of_reachable
     cases hc
   · omega
 
+private theorem pthRoot_valid_of_derivative_zero_nontrivial
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) {fuel : Nat}
+    (hfuel : f.size < fuel + 1)
+    (hzero : f.isZero = false)
+    (hone : isOne f = false)
+    (hdf : (DensePoly.derivative f).isZero = true)
+    (hreachable : squareFreeContributionReachable f) :
+    squareFreeContributionReachable (pthRoot f) ∧
+      (pthRoot f).isZero = false ∧
+        (pthRoot f).size < fuel := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  have hsize : 1 < f.size :=
+    one_lt_size_of_isOne_false_of_reachable f hzero hone hreachable
+  exact ⟨
+    pthRoot_reachable_of_derivative_zero hp f hzero hdf hreachable,
+    pthRoot_nonzero_of_derivative_zero_nonconstant hp f hzero hdf hsize,
+    pthRoot_fuel_decrease_of_derivative_zero_nonconstant hp f hfuel hsize⟩
+
 private theorem yunLevel_measure_lt_of_reachable_gcd_nonconstant
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p)
@@ -4838,6 +4856,72 @@ private theorem yunFactorsDerivativeActiveReachable_step
       (w / DensePoly.gcd c w)
       fuel :=
   yunFactorsDerivativeActiveReachable.step c w fuel hreachable
+
+private theorem yunFactorsContributionWithLevel_tail_valid_of_derivative_active_reachable
+    (hp : Hex.Nat.Prime p) (f c w : FpPoly p) (base level fuel : Nat)
+    (hstate :
+      ∀ c w : FpPoly p, ∀ fuel : Nat,
+        yunFactorsDerivativeActiveReachable hp f c w fuel →
+          squareFreeContributionReachable c ∧
+            c.isZero = false ∧
+              squareFreeContributionReachable w ∧
+                w.isZero = false)
+    (hreachable : yunFactorsDerivativeActiveReachable hp f c w fuel) :
+    let contribution := yunFactorsContributionWithLevel c w base level fuel
+    squareFreeContributionReachable contribution.2 ∧
+      contribution.2.isZero = false := by
+  induction fuel generalizing c w level with
+  | zero =>
+      have hcurrent := hstate c w 0 hreachable
+      simpa [yunFactorsContributionWithLevel] using
+        And.intro hcurrent.2.2.1 hcurrent.2.2.2
+  | succ fuel ih =>
+      by_cases hc : isOne c = true
+      · have hcurrent := hstate c w (fuel + 1) hreachable
+        simpa [yunFactorsContributionWithLevel, hc] using
+          And.intro hcurrent.2.2.1 hcurrent.2.2.2
+      · have hc_false : isOne c = false := by
+          cases h : isOne c
+          · rfl
+          · exact False.elim (hc h)
+        have htail_reachable :
+            yunFactorsDerivativeActiveReachable hp f
+              (DensePoly.gcd c w)
+              (w / DensePoly.gcd c w)
+              fuel :=
+          yunFactorsDerivativeActiveReachable_step hp f c w fuel hreachable
+        simpa [yunFactorsContributionWithLevel, hc_false] using
+          ih (DensePoly.gcd c w) (w / DensePoly.gcd c w) (level + 1)
+            htail_reachable
+
+private theorem yunFactorsContributionWithLevel_pthRoot_tail_valid
+    (hp : Hex.Nat.Prime p) (f c w : FpPoly p) (base level fuel : Nat)
+    (hstate :
+      ∀ c w : FpPoly p, ∀ fuel : Nat,
+        yunFactorsDerivativeActiveReachable hp f c w fuel →
+          squareFreeContributionReachable c ∧
+            c.isZero = false ∧
+              squareFreeContributionReachable w ∧
+                w.isZero = false)
+    (hreachable : yunFactorsDerivativeActiveReachable hp f c w fuel)
+    (htail_fuel :
+      (yunFactorsContributionWithLevel c w base level fuel).2.size < fuel + 1)
+    (htail_nontrivial :
+      isOne (yunFactorsContributionWithLevel c w base level fuel).2 = false)
+    (htail_derivative_zero :
+      (DensePoly.derivative
+        (yunFactorsContributionWithLevel c w base level fuel).2).isZero = true) :
+    squareFreeContributionReachable
+        (pthRoot (yunFactorsContributionWithLevel c w base level fuel).2) ∧
+      (pthRoot (yunFactorsContributionWithLevel c w base level fuel).2).isZero = false ∧
+        (pthRoot (yunFactorsContributionWithLevel c w base level fuel).2).size < fuel := by
+  have htail_valid :=
+    yunFactorsContributionWithLevel_tail_valid_of_derivative_active_reachable
+      hp f c w base level fuel hstate hreachable
+  exact
+    pthRoot_valid_of_derivative_zero_nontrivial hp
+      (yunFactorsContributionWithLevel c w base level fuel).2
+      htail_fuel htail_valid.2 htail_nontrivial htail_derivative_zero htail_valid.1
 
 private theorem yunFactorsPairwiseReachable_of_derivative_active_reachable
     (hp : Hex.Nat.Prime p) (f c w : FpPoly p) (fuel : Nat)
