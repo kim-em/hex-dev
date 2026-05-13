@@ -38,6 +38,15 @@ jobs:
           toolchain="$(sed 's|/|--|; s|:|---|' lean-toolchain)"
           echo "LD_LIBRARY_PATH=$HOME/.elan/toolchains/$toolchain/lib/lean:${LD_LIBRARY_PATH:-}" \
             >> "$GITHUB_ENV"
+      - name: Restore .lake/build (Hex modules only)
+        uses: actions/cache@v4
+        with:
+          path: |
+            .lake/build/lib/lean/Hex*
+            .lake/build/ir/Hex*
+          key: lake-build-${{ github.workflow }}-${{ github.run_id }}
+          restore-keys: |
+            lake-build-${{ github.workflow }}-
       - name: Build hex (Mathlib must NOT rebuild from source)
         # Build the bench-exes here, not in the `Bench verify` step.
         # Otherwise the first `lake exe X_bench list` in that step
