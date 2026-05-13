@@ -2571,6 +2571,119 @@ private theorem projectionCoeff_row_basis_self_eq_one
     simp [GramSchmidt.projectionCoeff, hnorm, hdiv]
   simpa [hself] using hproj.symm
 
+theorem basis_rowSwap_adjacent_curr (b : Matrix Rat n m) (km1 k : Fin n)
+    (hkm1 : km1.val + 1 = k.val)
+    (hnorm :
+      Matrix.dot
+        ((basis b).row k + GramSchmidt.entry (coeffs b) k km1 • (basis b).row km1)
+        ((basis b).row k + GramSchmidt.entry (coeffs b) k km1 • (basis b).row km1) ≠ 0) :
+    let prev := (basis b).row km1
+    let curr := (basis b).row k
+    let mu := GramSchmidt.entry (coeffs b) k km1
+    let swappedPrev := curr + mu • prev
+    (basis (Matrix.rowSwap b km1 k)).row k =
+      (Matrix.dot curr curr / Matrix.dot swappedPrev swappedPrev) • prev -
+        (mu * Matrix.dot prev prev / Matrix.dot swappedPrev swappedPrev) • curr := by
+  let prev := (basis b).row km1
+  let curr := (basis b).row k
+  let mu := GramSchmidt.entry (coeffs b) k km1
+  let swappedPrev := curr + mu • prev
+  have hraw :=
+    GramSchmidt.basisMatrix_rowSwap_adjacent_curr (b := b) (km1 := km1) (k := k) hkm1
+  have hlt : km1.val < k.val := by omega
+  have hmu :
+      GramSchmidt.projectionCoeff (b.row k) ((basis b).row km1) = mu := by
+    simp [mu, coeffs, basis, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn,
+      GramSchmidt.projectionCoeff, Matrix.row, hlt]
+  have hmu_raw :
+      GramSchmidt.projectionCoeff (b.row k) ((GramSchmidt.basisMatrix b).row km1) = mu := by
+    simpa [basis] using hmu
+  have hraw' :
+      (basis (Matrix.rowSwap b km1 k)).row k =
+        prev - GramSchmidt.projectionCoeff (b.row km1) swappedPrev • swappedPrev := by
+    simpa [basis, prev, curr, mu, swappedPrev, hmu_raw] using hraw
+  have horth_curr_prev : Matrix.dot curr prev = 0 := by
+    simpa [curr, prev] using
+      basis_orthogonal (b := b) k.val km1.val k.isLt km1.isLt (by omega)
+  have horth_prev_curr : Matrix.dot prev curr = 0 := by
+    simpa [prev, curr, GramSchmidt.dot_comm_rat] using horth_curr_prev
+  have hrow_curr : Matrix.dot (b.row km1) curr = 0 := by
+    have hpc :=
+      projectionCoeff_row_later_basis_eq_zero (b := b) (src := km1) (col := k) hlt
+    by_cases hcurr : Matrix.dot curr curr = 0
+    · exact GramSchmidt.dot_zero_of_dot_self_zero (row := b.row km1) (v := curr) hcurr
+    · have hdiv :
+        Matrix.dot (b.row km1) curr / Matrix.dot curr curr = 0 := by
+          simpa [curr, GramSchmidt.projectionCoeff, hcurr] using hpc
+      grind
+  have hrow_prev : Matrix.dot (b.row km1) prev = Matrix.dot prev prev := by
+    by_cases hprev : Matrix.dot prev prev = 0
+    · have hzero := GramSchmidt.dot_zero_of_dot_self_zero (row := b.row km1) (v := prev) hprev
+      simp [hzero, hprev]
+    · have hpc := projectionCoeff_row_basis_self_eq_one (b := b) (src := km1) (by
+        simpa [prev] using hprev)
+      have hdiv :
+        Matrix.dot (b.row km1) prev / Matrix.dot prev prev = 1 := by
+          simpa [prev, GramSchmidt.projectionCoeff, hprev] using hpc
+      grind
+  have hrow_swapped :
+      Matrix.dot (b.row km1) swappedPrev = mu * Matrix.dot prev prev := by
+    rw [GramSchmidt.dot_comm_rat]
+    change Matrix.dot (curr + mu • prev) (b.row km1) = mu * Matrix.dot prev prev
+    rw [GramSchmidt.dot_add_left, GramSchmidt.dot_smul_left]
+    have hcurr_row : Matrix.dot curr (b.row km1) = 0 := by
+      simpa [GramSchmidt.dot_comm_rat] using hrow_curr
+    have hprev_row : Matrix.dot prev (b.row km1) = Matrix.dot prev prev := by
+      simpa [GramSchmidt.dot_comm_rat] using hrow_prev
+    rw [hcurr_row, hprev_row]
+    grind
+  have hproj :
+      GramSchmidt.projectionCoeff (b.row km1) swappedPrev =
+        mu * Matrix.dot prev prev / Matrix.dot swappedPrev swappedPrev := by
+    have hnorm' : Matrix.dot swappedPrev swappedPrev ≠ 0 := by
+      simpa [prev, curr, mu, swappedPrev] using hnorm
+    simp [GramSchmidt.projectionCoeff, hnorm', hrow_swapped]
+  have hcurr_swapped : Matrix.dot curr swappedPrev = Matrix.dot curr curr := by
+    rw [GramSchmidt.dot_comm_rat]
+    change Matrix.dot (curr + mu • prev) curr = Matrix.dot curr curr
+    rw [GramSchmidt.dot_add_left, GramSchmidt.dot_smul_left, horth_prev_curr]
+    grind
+  have hprev_swapped : Matrix.dot prev swappedPrev = mu * Matrix.dot prev prev := by
+    rw [GramSchmidt.dot_comm_rat]
+    change Matrix.dot (curr + mu • prev) prev = mu * Matrix.dot prev prev
+    rw [GramSchmidt.dot_add_left, GramSchmidt.dot_smul_left, horth_curr_prev]
+    grind
+  have hdenom :
+      Matrix.dot swappedPrev swappedPrev =
+        Matrix.dot curr curr + mu * mu * Matrix.dot prev prev := by
+    change Matrix.dot (curr + mu • prev) swappedPrev =
+      Matrix.dot curr curr + mu * mu * Matrix.dot prev prev
+    rw [GramSchmidt.dot_add_left, GramSchmidt.dot_smul_left, hcurr_swapped, hprev_swapped]
+    grind
+  rw [hraw', hproj]
+  change
+    prev - (mu * Matrix.dot prev prev / Matrix.dot swappedPrev swappedPrev) • swappedPrev =
+      (Matrix.dot curr curr / Matrix.dot swappedPrev swappedPrev) • prev -
+        (mu * Matrix.dot prev prev / Matrix.dot swappedPrev swappedPrev) • curr
+  apply Vector.ext
+  intro idx hidx
+  simp only [Vector.getElem_sub, Vector.getElem_smul]
+  have hswapped_idx : swappedPrev[idx] = curr[idx] + mu * prev[idx] := by
+    simp only [swappedPrev, Vector.getElem_add, Vector.getElem_smul]
+    change curr[idx] + mu * prev[idx] = curr[idx] + mu * prev[idx]
+    rfl
+  rw [hswapped_idx]
+  change
+    prev[idx] -
+        (mu * Matrix.dot prev prev / Matrix.dot swappedPrev swappedPrev) *
+          (curr[idx] + mu * prev[idx]) =
+      (Matrix.dot curr curr / Matrix.dot swappedPrev swappedPrev) * prev[idx] -
+        (mu * Matrix.dot prev prev / Matrix.dot swappedPrev swappedPrev) * curr[idx]
+  have hdenom_ne : Matrix.dot swappedPrev swappedPrev ≠ 0 := by
+    simpa [prev, curr, mu, swappedPrev] using hnorm
+  rw [hdenom]
+  grind
+
 private theorem rowAdd_row_dst_rat (b : Matrix Rat n m) (src dst : Fin n) (c : Rat) :
     (Matrix.rowAdd b src dst c).row dst = b.row dst + c • b.row src := by
   apply Vector.ext

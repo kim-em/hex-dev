@@ -119,6 +119,31 @@ pod-managed `.claude/CLAUDE.md` modification.
   completing degree/height subset instead of including the previous
   cap-hitting `4008` row.
 
+Precision-local targeted run at commit `454066c-dirty` on `carica`
+(Apple M2 Ultra, macOS 15.6), command:
+
+```sh
+lake exe hexbz_bench run \
+    Hex.BerlekampZassenhausBench.runFastPathPrecisionLocalChecksum \
+    --export-file reports/bench-results/hex-berlekamp-zassenhaus-issue3527-precision-local.json
+```
+
+Export artefact:
+`reports/bench-results/hex-berlekamp-zassenhaus-issue3527-precision-local.json`,
+SHA-256
+`78ae610334570a5f178e3f95b6c4138670c72a4287ace61581ce65a549b4d8ba`.
+The harness recorded `454066c-dirty` because this worktree carries the
+pre-existing pod-managed `.claude/CLAUDE.md` modification outside this
+report package.
+
+- `runFastPathPrecisionLocalChecksum`: inconclusive (`cMin=0.028`,
+  `cMax=71.644`, encoded parameters `2002004002`, `2002016002`,
+  `4004016004`, `4016064004`, `6016064006`, and `8032128008`,
+  final hash `0x21b9063dace28489`). All six rows completed and were
+  verdict-eligible; the run is evidence for the fast-path
+  precision/local-factor setup surface but not a Phase 4 completion
+  verdict.
+
 Smoke wiring was checked at the same commit with:
 
 ```sh
@@ -456,8 +481,12 @@ record on each adversarial polynomial.
 
 ## Concerns
 
-- Phase 4 is not complete: every scientific verdict in this run was
-  inconclusive.
+- Phase 4 is not complete: every scientific verdict recorded in this
+  report remains inconclusive, including the precision/local-factor
+  setup surface added by the issue #3527 targeted run.
+- The Phase 4 dependency gate is still closed:
+  `python3 scripts/status.py HexBerlekampZassenhaus` reports blockers
+  `HexBerlekamp.done_through >= 4` and `HexLLL.done_through >= 4`.
 - The public and fast split-family schedules now expose verdict-eligible
   rows beyond the previous `n = 1..4` smoke ladder, but they still do
   not yield a consistent BHKS scaling verdict. An exploratory run with
@@ -480,8 +509,9 @@ record on each adversarial polynomial.
   `HexBerlekampZassenhaus`, but it still has no comparator metadata;
   final Phase 4 coverage should add or explicitly justify comparator
   metadata before bumping `done_through`.
-- HO-3 remains open as a complexity-evidence concern: this report now
-  records §Profile coverage for every declared
+- HO-3 ([#2566](https://github.com/kim-em/hex/issues/2566)) remains open
+  as a complexity-evidence concern: this report now records §Profile
+  coverage for every declared
   `phase4.input_families` entry per
   [SPEC/profiling.md §Coverage requirement](../SPEC/profiling.md), but
   it does not yet establish the full Phase 4 verdicts or external
