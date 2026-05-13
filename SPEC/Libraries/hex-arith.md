@@ -471,3 +471,22 @@ externs; GMP itself is linked via
 other `@[extern]` GMP binding in Lean. If GMP is unavailable, the
 attachment falls through to `Hex.pureIntExtGcd` — correct, but
 slow on large inputs.
+
+## External comparators
+
+No external comparator is required.
+
+**Justification:** `implementation-is-extern` per
+`SPEC/benchmarking.md §"Comparator naming"`. HexArith's bigint
+primitives — multiplication, addition, division, gcd, extended-gcd
+— are GMP-backed via `@[extern]` shims (`wide_arith.c`,
+`mpz_gcdext.c`). The Phase-4 surface is GMP itself; there is no
+algorithmically distinct reference implementation to compare
+against. Within-Lean alternative-implementation comparisons cover
+the surfaces where they exist: Barrett vs Montgomery modular
+multiplication is registered as a `compare` group in
+`HexArith/Bench.lean`, and the pure-Lean ExtGcd fallback is
+covered by the `compare` group against the GMP-backed
+`Hex.gmpIntExtGcd`. Those internal comparisons are the right
+shape for HexArith; an external tool would just be wrapping GMP
+again.

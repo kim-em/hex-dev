@@ -18,6 +18,8 @@ jobs:
           fetch-depth: 0
       - run: python3 scripts/check_dag.py
       - run: python3 scripts/check_phase4.py
+      - name: Lint benches are Mathlib-free (SPEC/benchmarking.md §Mathlib-free benches)
+        run: python3 scripts/ci/check_benches_mathlib_free.py
       - run: sudo apt-get install -y libgmp-dev libfplll-dev
       - name: Install Python bench comparator dependencies
         run: python3 -m pip install --user cysignals fpylll
@@ -36,48 +38,48 @@ jobs:
           toolchain="$(sed 's|/|--|; s|:|---|' lean-toolchain)"
           echo "LD_LIBRARY_PATH=$HOME/.elan/toolchains/$toolchain/lib/lean:${LD_LIBRARY_PATH:-}" \
             >> "$GITHUB_ENV"
+      - name: Restore .lake/build (Hex modules only)
+        uses: actions/cache@v4
+        with:
+          path: |
+            .lake/build/lib/lean/Hex*
+            .lake/build/ir/Hex*
+          key: lake-build-${{ github.workflow }}-${{ github.run_id }}
+          restore-keys: |
+            lake-build-${{ github.workflow }}-
       - name: Build hex (Mathlib must NOT rebuild from source)
-        run: lake build
-      - name: Bench verify (smoke gate per SPEC/benchmarking.md §CI integration)
+        # Build the bench-exes here, not in the `Bench verify` step.
+        # Otherwise the first `lake exe X_bench list` in that step
+        # would pay the bench-exe's first compile (~6 min for the
+        # heaviest one) and the wallclock breakdown would conflate
+        # build time with verify time. Bench verify itself is fast
+        # since lean-bench's verify path runs in-process.
         run: |
-          lake exe hexarith_bench list
-          lake exe hexarith_bench verify
-          lake exe hexmatrix_bench list
-          lake exe hexmatrix_bench verify
-          lake exe hexmatrixmathlib_bench list
-          lake exe hexmatrixmathlib_bench verify
-          lake exe hexpoly_bench list
-          lake exe hexpoly_bench verify
-          lake exe hexpolyz_bench list
-          lake exe hexpolyz_bench verify
-          lake exe hexpolyfp_bench list
-          lake exe hexpolyfp_bench verify
-          lake exe hexmodarith_bench list
-          lake exe hexmodarith_bench verify
-          lake exe hexgramschmidt_bench list
-          lake exe hexgramschmidt_bench verify
-          lake exe hexgf2_bench list
-          lake exe hexgf2_bench verify
-          lake exe hexgfqring_bench list
-          lake exe hexgfqring_bench verify
-          lake exe hexgfqfield_bench list
-          lake exe hexgfqfield_bench verify
-          lake exe hexgfq_bench list
-          lake exe hexgfq_bench verify
+          lake build \
+            hexarith_bench hexmatrix_bench hexpoly_bench hexpolyz_bench \
+            hexpolyfp_bench hexmodarith_bench hexgramschmidt_bench \
+            hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench \
+            hexlll_bench hexhensel_bench hexberlekamp_bench hexbz_bench \
+            hexconway_bench
+      - name: Bench verify (smoke gate per SPEC/benchmarking.md §CI integration)
+        env:
+          # Hard cap enforced per SPEC/benchmarking.md §CI integration
+          # "Time budget". Two consecutive main pushes after the
+          # lean-bench in-process verify fix (#3692) measured the full
+          # 16-bench verify step at 47-51 s, slowest single bench
+          # hexlll_bench at 23 s. The 300 s cap gives ~6× headroom for
+          # noise / new benches while still flagging anyone who tries
+          # to reintroduce a per-spawn-overhead regression.
+          BENCH_VERIFY_HARD_CAP_SECONDS: "300"
+        run: |
           HEX_LLL_ISABELLE_SVP="$(scripts/oracle/setup_lll_isabelle.sh)"
           export HEX_LLL_ISABELLE_SVP
-          lake exe hexlll_bench list
-          lake exe hexlll_bench verify
-          lake exe hexhensel_bench list
-          lake exe hexhensel_bench verify
-          lake exe hexberlekamp_bench list
-          lake exe hexberlekamp_bench verify
-          lake exe hexbz_bench list
-          lake exe hexbz_bench verify
-          lake exe hexconway_bench list
-          lake exe hexconway_bench verify
-          lake exe hexpolymathlib_bench list
-          lake exe hexpolymathlib_bench verify
+          bash scripts/ci/check_bench_verify_budget.sh \
+            hexarith_bench hexmatrix_bench hexpoly_bench hexpolyz_bench \
+            hexpolyfp_bench hexmodarith_bench hexgramschmidt_bench \
+            hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench \
+            hexlll_bench hexhensel_bench hexberlekamp_bench hexbz_bench \
+            hexconway_bench
 
   build-macos:
     runs-on: macos-latest

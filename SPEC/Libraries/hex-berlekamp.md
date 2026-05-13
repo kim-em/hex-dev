@@ -68,3 +68,23 @@ hex-berlekamp-mathlib below for the proof strategy.
 - Isabelle AFP entry "Berlekamp_Zassenhaus"
   (Divason-Joosten-Thiemann-Yamada, 2016; JAR 2019). Browsable at
   `isa-afp.org/entries/Berlekamp_Zassenhaus.html`.
+
+## External comparators
+
+The four Phase-4 bench targets in `HexBerlekamp/Bench.lean` decompose
+into two surfaces with `gating` FLINT comparators and two surfaces
+with declared absence:
+
+| Bench target | Comparator | Class | Goal / reason |
+|---|---|---|---|
+| `runRabinTestChecksum` | FLINT `nmod_poly.is_irreducible` via python-flint | **gating** | Same boolean predicate (is `f` irreducible). FLINT may internally use square-free + distinct-degree rather than Rabin's `X^(p^k) mod f` schema; the input-output relation is identical and FLINT's speed is the right yardstick. Goal: Lean's `runRabinTestChecksum` is at least as fast as FLINT's `is_irreducible` at the largest eligible rung per `SPEC/benchmarking.md §"Headline reports" §"Comparator ratios"`. |
+| `runDistinctDegreeChecksum` | FLINT `nmod_poly.factor_distinct_deg` via python-flint | **gating** | Same operation, same standard algorithm class — the cleanest apples-to-apples bar in HexBerlekamp. Goal: Lean's `runDistinctDegreeChecksum` is at least as fast as FLINT's `factor_distinct_deg` at the largest eligible rung. |
+| `runBerlekampMatrixChecksum` | (none) | **no-comparable-surface-in-named-comparator** | The Frobenius matrix `Q_f - I` is constructed internally by FLINT's factorization pipeline but not exposed as a user-callable function. The bench target's declared-complexity verdict (`O(n²)` for fixed `p`) is its only Phase-4 evidence. |
+| `runBerlekampFactorChecksum` | (none) | **no-comparable-surface-in-named-comparator** | The split-step kernel `gcd(f, witness - c)` for `c ∈ F_p` is FLINT-internal. Same justification. |
+
+Both gating comparators are wired via a persistent-subprocess
+Python driver per `SPEC/benchmarking.md §"External comparators"
+§"Process call"`. The shared driver invocation pattern handles
+multiple FLINT comparator families.
+
+Structured metadata in `libraries.yml: HexBerlekamp.phase4.comparators`.

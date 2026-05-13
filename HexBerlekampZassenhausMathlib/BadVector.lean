@@ -491,6 +491,40 @@ theorem resultant_divisible_by_p_pow_of_bhks_bad
   exact h_bad.resultant_divisible_by_p_pow
 
 /--
+Package a BHKS bad-vector setup as the abstract resultant data consumed by
+the lower/upper-bound comparison lemmas.
+-/
+def resultantDataOfBhksBad
+    (W : ExecutableBadVectorWitness) (h_bad : IsBhksBadVectorSetup W)
+    (hp : 0 < W.liftData.p) :
+    BadVectorResultantData :=
+  W.toResultantData
+    hp
+    (localFactorDegree_pos_of_bhks_bad W h_bad)
+    (coprime_input_aux_over_rat_of_bhks_bad W h_bad)
+    (resultant_divisible_by_p_pow_of_bhks_bad W h_bad)
+
+/--
+BHKS Lemma 3.2 bound package: a bad-vector setup gives both the modular
+resultant lower bound and the Hadamard/l2norm upper bound without callers
+projecting the setup fields manually.
+-/
+theorem badVector_resultant_bounds_of_bhks_bad
+    (W : ExecutableBadVectorWitness)
+    (h_bad : IsBhksBadVectorSetup W)
+    (hp : 0 < W.liftData.p) :
+    (W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : ℝ) ≤
+      |((Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial : ℤ) : ℝ)| ∧
+    |((Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial : ℤ) : ℝ)| ≤
+      (HexPolyZMathlib.l2norm W.inputPolynomial) ^ W.auxiliaryPolynomial.natDegree *
+        (HexPolyZMathlib.l2norm W.auxiliaryPolynomial) ^ W.inputPolynomial.natDegree :=
+  W.badVector_resultant_bounds
+    hp
+    (localFactorDegree_pos_of_bhks_bad W h_bad)
+    (coprime_input_aux_over_rat_of_bhks_bad W h_bad)
+    (resultant_divisible_by_p_pow_of_bhks_bad W h_bad)
+
+/--
 Combined BHKS Lemma 3.2 contradiction: an executable bad-vector witness whose
 `H` field is the canonical BHKS auxiliary polynomial of a vector in `L' \ W`
 cannot exist once the Hadamard/l2norm upper bound on the integer resultant of

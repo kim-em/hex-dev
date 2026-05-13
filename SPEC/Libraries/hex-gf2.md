@@ -136,3 +136,23 @@ The ring equivalences `GF2n ≃+* FiniteField 2 f hf hirr` and
 transferring via `GF2Poly ≃+* FpPoly 2`; that bridge library is also the
 home for `Fintype` and cardinality results about the packed
 representations.
+
+## External comparators
+
+| Comparator | Class | Scope |
+|---|---|---|
+| NTL `GF2X` | informational | bench targets exercising packed-word GF(2)[x] arithmetic: addition, multiplication, division, GCD, modular reduction |
+
+NTL is the speed reference for hand-tuned `GF(2)[x]` arithmetic:
+its inner loops are optimised at the word level for carry-less
+multiplication, XOR-folding division, and fast GCD. Hex's
+packed-word representation is the same algorithmic shape but
+the constant factors differ. The comparator is `informational`.
+
+The wiring pattern (process-call driver vs `@[extern]` C++ shim
+vs hybrid) is an implementation choice for the HO that wires
+this comparator. The SPEC names NTL as the tool; the choice of
+integration shape is documented in the bench module docstring
+when the HO lands. Either pattern satisfies the SPEC.
+
+Structured metadata in `libraries.yml: HexGF2.phase4.comparators`.

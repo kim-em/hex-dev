@@ -138,35 +138,61 @@ params`.
 
 ## Profile
 
-A representative profile was recorded with `samply record --save-only
---unstable-presymbolicate` at commit `53771741e259` on `carica`
-(Apple M2 Ultra, macOS 14.6.1), sampling at samply's default 1 kHz:
+A representative `degree-height-matrix` profile was recorded with
+`samply record --save-only --unstable-presymbolicate` at commit
+`06d996d749e3` on `carica` (Apple M2 Ultra, macOS 14.6.1), sampling at
+1 kHz. The worktree was dirty only because `.claude/CLAUDE.md` carried a
+pre-existing agent-context change outside this report package. The raw
+Firefox Profiler JSON and `.syms.json` sidecar are developer-local at
+`/tmp/hex-profiles/hex-bz-degree-height-child-06d996d.{json,syms.json}`.
 
 ```sh
-lake exe hexbz_bench profile \
-    Hex.BerlekampZassenhausBench.runFactorDegreeHeightChecksum \
-    --param 6032 --target-inner-nanos 1000000000 \
-    --profiler "samply record --save-only --unstable-presymbolicate \
-        -o reports/bench-results/profiles/hex-berlekamp-zassenhaus-factor-degree-height-5377174.json --"
+samply record --save-only --unstable-presymbolicate --include-args=6 \
+    --rate 1000 \
+    -o /tmp/hex-profiles/hex-bz-degree-height-child-06d996d.json -- \
+    .lake/build/bin/hexbz_bench _child \
+        --bench Hex.BerlekampZassenhausBench.runFactorDegreeHeightChecksum \
+        --param 6032 --target-nanos 1000000000
 ```
 
-Profile artefact:
-`reports/bench-results/profiles/hex-berlekamp-zassenhaus-factor-degree-height-5377174.json`.
-Samply also emitted the sidecar symbol table
-`reports/bench-results/profiles/hex-berlekamp-zassenhaus-factor-degree-height-5377174.syms.json`.
 The profiled child row was encoded degree/height parameter `6032`
 (`degree = 6`, `height = 32`), with `inner_repeats=32`,
-`per_call_nanos=19,662,252.625`, and result hash
-`0x32829c6a8f776a64`.
+`per_call_nanos=19,006,277.343750`, and result hash
+`0x32829c6a8f776a64`. The profile's main worker thread contained `635`
+sample rows with total sample weight `679`; the sidecar symbol table was
+used for Lean-name attribution because the Firefox JSON itself keeps
+address strings.
 
-The profile sampled the benchmark child, but the generated Firefox
-Profiler JSON in this optimized macOS build retained address-only frame
-names rather than demangled Lean names. The largest sampled worker
-thread contained `658` samples; without symbol names, the leaf-cost
-categories and inclusive `Hex.BerlekampZassenhaus.*` function ranking
-cannot be reported to the standard required by `SPEC/profiling.md`.
-The recorded sample still confirms that the representative public
-degree/height target is profileable through the lean-bench child path.
+Leaf self-time categories for that worker thread:
+
+- Lean own code: `51 / 679 = 7.5%`.
+- GMP big-integer arithmetic: `60 / 679 = 8.8%`.
+- Allocation / free: `222 / 679 = 32.7%`.
+- Lean runtime and dispatch: `200 / 679 = 29.5%`.
+- Other system frames: `146 / 679 = 21.5%`, dominated by profiler I/O
+  and platform frames such as `__read_nocancel` and thread-local lookup.
+
+Top inclusive BZ-library costs:
+
+- `Hex.factorWithBound`: `621 / 679 = 91.5%`.
+- `Hex.factorFastWithBound`: `621 / 679 = 91.5%`.
+- `Hex.factorFastFactorsWithBound`: `621 / 679 = 91.5%`.
+- `Hex.choosePrimeData?`: `586 / 679 = 86.3%`.
+- `Hex.primeChoiceDataScore`: `586 / 679 = 86.3%`.
+- `Hex.berlekampFactorsModP`: `574 / 679 = 84.5%`.
+- `Hex.factorFastCoreWithBound`: `32 / 679 = 4.7%`.
+- `Hex.bhksRecoverClassified`: `23 / 679 = 3.4%`.
+- `Hex.bhksLatticeBasis`: `18 / 679 = 2.7%`.
+
+The dominant inclusive path is the public `factorWithBound` call through
+the fast-path attempt, especially prime selection and modular
+factorization (`choosePrimeData?`, `primeChoiceDataScore`, and
+`berlekampFactorsModP`). The BHKS recombination body is present but much
+smaller on this split degree/height case. This profile therefore maps its
+dominant BZ costs to the registered
+`runFactorDegreeHeightChecksum`/`runFactorFastDegreeHeightChecksum`
+targets and leaves the broader Phase 4 verdict/schedule concerns below
+unchanged.
 
 ## Concerns
 
@@ -184,11 +210,10 @@ degree/height target is profileable through the lean-bench child path.
 - `runFactorSlowDegreeHeightChecksum` hit the four-second cap at encoded
   parameter `4008`; the slow diagnostic needs either a smaller
   scientific subset or an explicitly larger timing budget.
-- The profile artefact is address-only on this host, so the required
-  leaf category split and inclusive Lean-function ranking remain open.
-- `libraries.yml` has no `phase4.input_families` or comparator metadata
-  for `HexBerlekampZassenhaus`; final Phase 4 coverage should add or
-  explicitly justify that metadata before bumping `done_through`.
+- `libraries.yml` now records `phase4.input_families` for
+  `HexBerlekampZassenhaus`, but it still has no comparator metadata;
+  final Phase 4 coverage should add or explicitly justify comparator
+  metadata before bumping `done_through`.
 - HO-3 remains open as a complexity-evidence concern: this report adds
   the first benchmark/profile slice, but it does not yet establish the
   full Phase 4 verdict, comparator, and profile coverage required for

@@ -140,7 +140,7 @@ private def crtWitness : DensePoly Rat :=
   polyCRT crtModA crtModB crtResidueA crtResidueB crtBezoutS crtBezoutT
 
 -- `#eval` refuses to reduce `DensePoly` values because `ofCoeffs` and `monomial`
--- still carry sorry-backed normalization proofs in their propositional fields.
+-- still carry proof-placeholder-backed normalization fields.
 /-- info: [3, 0, -2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1] -/
 #guard_msgs in #eval! polyTypical.toArray.toList
 

@@ -306,6 +306,42 @@ theorem divMod_spec (p q : GF2Poly) :
     (divMod p q).2 = p % q :=
   rfl
 
+/-- Dividing by zero returns zero quotient and leaves the dividend as the
+remainder. -/
+@[simp] theorem divMod_zero_right (p : GF2Poly) :
+    divMod p 0 = (0, p) := by
+  unfold divMod
+  cases hfuel : p.degree + 1 with
+  | zero => omega
+  | succ fuel =>
+      simp [divModAux]
+
+/-- Zero has zero quotient and zero remainder against any divisor. -/
+@[simp] theorem divMod_zero_left (q : GF2Poly) :
+    divMod 0 q = (0, 0) := by
+  unfold divMod
+  simp [divModAux]
+
+/-- Division by zero has quotient zero for packed `GF(2)` polynomials. -/
+@[simp] theorem div_zero_right (p : GF2Poly) :
+    p / 0 = 0 := by
+  rw [← divMod_fst, divMod_zero_right]
+
+/-- Remainder modulo zero is the dividend for packed `GF(2)` polynomials. -/
+@[simp] theorem mod_zero_right (p : GF2Poly) :
+    p % 0 = p := by
+  rw [← divMod_snd, divMod_zero_right]
+
+/-- Zero divided by any packed `GF(2)` polynomial has quotient zero. -/
+@[simp] theorem zero_div (q : GF2Poly) :
+    (0 : GF2Poly) / q = 0 := by
+  rw [← divMod_fst, divMod_zero_left]
+
+/-- Zero has zero remainder modulo any packed `GF(2)` polynomial. -/
+@[simp] theorem zero_mod (q : GF2Poly) :
+    (0 : GF2Poly) % q = 0 := by
+  rw [← divMod_snd, divMod_zero_left]
+
 /-- Quotient/remainder reconstruction through the public `/` and `%`
 operations. -/
 theorem div_mul_add_mod (p q : GF2Poly) :
@@ -705,7 +741,9 @@ private theorem coeff_ofUInt64_and_lowerMask (w : UInt64) {n i : Nat} (hn64 : n 
     have hinFalse : ¬ i < n := by omega
     rw [coeff_ofUInt64_eq_false_of_ge_64 _ hi64le, if_neg hinFalse]
 
-private theorem degree?_ofUInt64Monic_of_lt_64 (lower : UInt64) {n : Nat}
+/-- The packed single-word monic modulus has the advertised degree when
+`n < 64`. -/
+@[simp] theorem degree?_ofUInt64Monic_of_lt_64 (lower : UInt64) {n : Nat}
     (hn64 : n < 64) :
     (ofUInt64Monic lower n).degree? = some n := by
   apply degree?_eq_some_of_coeff_eq_true_of_forall_gt_false
@@ -719,7 +757,8 @@ private theorem degree?_ofUInt64Monic_of_lt_64 (lower : UInt64) {n : Nat}
       coeff_ofUInt64_and_lowerMask lower hn64]
     simp [Nat.not_lt_of_ge (by omega : n ≤ m)]
 
-private theorem degree_ofUInt64Monic_of_lt_64 (lower : UInt64) {n : Nat}
+/-- The degree of `ofUInt64Monic lower n` is exactly `n` when `n < 64`. -/
+@[simp] theorem degree_ofUInt64Monic_of_lt_64 (lower : UInt64) {n : Nat}
     (hn64 : n < 64) :
     (ofUInt64Monic lower n).degree = n := by
   exact degree_eq_of_degree?_eq_some (degree?_ofUInt64Monic_of_lt_64 lower hn64)
@@ -756,7 +795,9 @@ private theorem ofUInt64_reduced_of_toNat_lt {n : Nat} {w : UInt64}
           contradiction
     simpa [degree, hd] using hdlt
 
-private theorem packedReduceWord_toNat_lt {n : Nat} {irr : UInt64}
+/-- `packedReduceWord` always returns a canonical word below `2^n` for
+single-word extension degrees. -/
+theorem packedReduceWord_toNat_lt {n : Nat} {irr : UInt64}
     (hn64 : n < 64) (p : GF2Poly) :
     (packedReduceWord n irr p).toNat < 2 ^ n := by
   unfold packedReduceWord

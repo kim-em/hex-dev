@@ -277,6 +277,41 @@ theorem dvd_xPowSubX_iff_frobeniusDiffMod_isZero
   --                       ↔ frobeniusDiffMod = 0 ↔ isZero = true.
   rw [hdvd_iff_mod, hmodeq, hreduced, hisZero_iff_eq]
 
+/--
+The executable divisibility leg of Rabin's test is exactly the absolute
+condition `f ∣ X^(p^n) - X`, where `n = basisSize f`.
+
+This is the caller-facing form of
+`dvd_xPowSubX_iff_frobeniusDiffMod_isZero` for code that consumes
+`rabinDividesTest` without unfolding `frobeniusDiffMod`.
+-/
+theorem rabinDividesTest_eq_true_iff_dvd_xPowSubX
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) :
+    rabinDividesTest f hmonic = true ↔
+      f ∣ xPowSubX (p := p) (basisSize f) := by
+  unfold rabinDividesTest
+  exact (dvd_xPowSubX_iff_frobeniusDiffMod_isZero f hmonic (basisSize f)).symm
+
+/--
+Boolean characterization of the executable Rabin test in theorem-facing
+terms: positive degree, absolute divisibility by `X^(p^n) - X`, and all
+maximal-proper-divisor gcd witnesses accepted.
+-/
+theorem rabinTest_eq_true_iff
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) :
+    rabinTest f hmonic = true ↔
+      0 < basisSize f ∧
+        f ∣ xPowSubX (p := p) (basisSize f) ∧
+        (rabinWitnesses f hmonic).all Prod.snd = true := by
+  unfold rabinTest
+  simp only [Bool.and_eq_true, decide_eq_true_eq]
+  constructor
+  · intro h
+    exact ⟨h.1.1, (rabinDividesTest_eq_true_iff_dvd_xPowSubX f hmonic).mp h.1.2, h.2⟩
+  · intro h
+    exact ⟨⟨h.1, (rabinDividesTest_eq_true_iff_dvd_xPowSubX f hmonic).mpr h.2.1⟩,
+      h.2.2⟩
+
 omit [ZMod64.PrimeModulus p] in
 /--
 A polynomial of positive degree is nonzero.
@@ -1105,6 +1140,31 @@ theorem checkIrreducibilityCertificate_imp_irreducible
   rabinTest_imp_irreducible f hmonic
     (checkIrreducibilityCertificate_rabinTest f hmonic cert hcheck)
 
+/--
+The kernel-reducible certificate checker also implies project-side
+`FpPoly.Irreducible`, composing the linear checker soundness theorem with
+Rabin soundness.
+-/
+theorem checkIrreducibilityCertificateLinear_imp_irreducible
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (cert : IrreducibilityCertificate)
+    (hcheck : checkIrreducibilityCertificateLinear f hmonic cert = true) :
+    FpPoly.Irreducible f :=
+  rabinTest_imp_irreducible f hmonic
+    (checkIrreducibilityCertificateLinear_rabinTest f hmonic cert hcheck)
+
+/--
+The incremental kernel-reducible certificate checker also implies
+project-side `FpPoly.Irreducible`.
+-/
+theorem checkIrreducibilityCertificateLinearIncremental_imp_irreducible
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (cert : IrreducibilityCertificate)
+    (hcheck : checkIrreducibilityCertificateLinearIncremental f hmonic cert = true) :
+    FpPoly.Irreducible f :=
+  rabinTest_imp_irreducible f hmonic
+    (checkIrreducibilityCertificateLinearIncremental_rabinTest f hmonic cert hcheck)
+
 /-! ### Distinct-degree saturation infrastructure
 
 These lemmas package the Leibniz-rule consequence used by the distinct-degree
@@ -1131,6 +1191,7 @@ theorem isUnitPolynomial_one_FpPoly : isUnitPolynomial (1 : FpPoly p) = true := 
     DensePoly.coeffs_C_of_ne_zero hone_ne_zero
   simp [DensePoly.degree?, DensePoly.size, hcoeffs]
 
+omit [ZMod64.PrimeModulus p] in
 private theorem dvd_derivative_self_mul_self (g : FpPoly p) :
     g ∣ DensePoly.derivative (g * g) := by
   refine ⟨DensePoly.derivative g + DensePoly.derivative g, ?_⟩
@@ -1146,6 +1207,7 @@ private theorem dvd_derivative_self_mul_self (g : FpPoly p) :
         (DensePoly.mul_add_right_poly g
           (DensePoly.derivative g) (DensePoly.derivative g)).symm
 
+omit [ZMod64.PrimeModulus p] in
 private theorem dvd_derivative_of_squared_dvd
     {r g : FpPoly p} (hgg : g * g ∣ r) :
     g ∣ DensePoly.derivative r := by
@@ -1193,6 +1255,7 @@ private theorem fp_eq_mul_div_of_dvd
   have hadd : (r / c) * c + 0 = (r / c) * c := DensePoly.add_zero_poly _
   exact (hspec.symm.trans hadd).trans hcomm
 
+omit [ZMod64.PrimeModulus p] in
 /-- Ring rearrangement: `(g * e) * (g * a) = (g * g) * (e * a)`. -/
 private theorem fp_swap_inner_mul (g e a : FpPoly p) :
     (g * e) * (g * a) = (g * g) * (e * a) := by
@@ -1206,6 +1269,7 @@ private theorem fp_swap_inner_mul (g e a : FpPoly p) :
         congrArg (g * ·) (DensePoly.mul_assoc_poly g e a)
     _ = (g * g) * (e * a) := (DensePoly.mul_assoc_poly g g (e * a)).symm
 
+omit [ZMod64.PrimeModulus p] in
 /-- Ring rearrangement: `c * (g * a) = g * (c * a)`. -/
 private theorem fp_swap_left_mul (c g a : FpPoly p) :
     c * (g * a) = g * (c * a) := by

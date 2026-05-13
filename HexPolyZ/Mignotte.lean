@@ -222,6 +222,38 @@ theorem defaultFactorCoeffBound_eq (f : ZPoly) :
     mignotteCoeffBound (0 : ZPoly) k j = 0 := by
   simp [mignotteCoeffBound]
 
+@[simp] theorem defaultFactorCoeffBound_zero :
+    defaultFactorCoeffBound (0 : ZPoly) = 0 := by
+  unfold defaultFactorCoeffBound
+  have hignore :
+      ∀ (xs : List Nat) (init : Nat),
+        xs.foldl (fun acc _ => acc) init = init := by
+    intro xs
+    induction xs with
+    | nil =>
+        intro init
+        rfl
+    | cons _ xs ih =>
+        intro init
+        simp [ih]
+  have hfold :
+      ∀ (ks : List Nat) (init : Nat),
+        ks.foldl
+          (fun acc k =>
+            (List.range (k + 1)).foldl
+              (fun acc j => max acc (mignotteCoeffBound (0 : ZPoly) k j))
+              acc)
+          init = init := by
+    intro ks
+    induction ks with
+    | nil =>
+        intro init
+        rfl
+    | cons k ks ih =>
+        intro init
+        simp [mignotteCoeffBound_zero, hignore]
+  exact hfold (List.range (((0 : ZPoly).degree?).getD 0 + 1)) 0
+
 theorem mignotteCoeffBound_eq_zero_of_lt (f : ZPoly) (k j : Nat) (h : k < j) :
     mignotteCoeffBound f k j = 0 := by
   simp [mignotteCoeffBound, binom_eq_zero_of_lt h]
@@ -319,6 +351,12 @@ theorem mignotteCoeffBound_le_defaultFactorCoeffBound
   exact mignotteCoeffBound_le_defaultFactorCoeffBound_fold f
     (List.range (f.degree?.getD 0 + 1))
     (List.mem_range.mpr (Nat.lt_succ_of_le hk)) hj
+
+theorem coeffL2NormBound_le_defaultFactorCoeffBound (f : ZPoly) :
+    coeffL2NormBound f ≤ defaultFactorCoeffBound f := by
+  simpa [mignotteCoeffBound] using
+    (mignotteCoeffBound_le_defaultFactorCoeffBound f
+      (k := 0) (j := 0) (Nat.zero_le _) (Nat.zero_le _))
 
 end ZPoly
 end Hex
