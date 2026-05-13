@@ -9059,6 +9059,291 @@ theorem det_deleteRowCol_auxAdjugateM_zero_last
     grind
   exact hgoal
 
+/-! ### `det (M * auxAdjugateM M) = det M * det (auxAdjugateM M)`
+
+The scaled Desnanot-Jacobi identity needs the determinant of
+`M * auxAdjugateM M` to split as `det M * det (auxAdjugateM M)`. The
+proof rewrites both `M * auxAdjugateM M` and `auxAdjugateM M` as
+`columnSumMatrix _ (auxAdjugateM M).transpose`, applies
+`det_columnSumMatrix_eq_sum_columnTuples` to both, then uses
+`det (columnTupleMatrix M cols) = det M * det (columnTupleMatrix 1 cols)`
+to factor `det M` out of the resulting ordered-column-tuple sum. -/
+
+private theorem ofFn_toList_eq_map_finRange {α : Type v} {n : Nat}
+    (f : Fin n → α) :
+    (Vector.ofFn f).toList = (List.finRange n).map f := by
+  rw [vector_toList_eq_finRange_map_get]
+  apply List.map_congr_left
+  intro i _
+  exact vector_ofFn_getElem_fin f i
+
+private theorem ofFn_mem_permutationVectors_of_injective {n : Nat}
+    (cols : Fin n → Fin n) (hcols : Function.Injective cols) :
+    Vector.ofFn cols ∈ permutationVectors n := by
+  apply permutationVectors_complete
+  rw [ofFn_toList_eq_map_finRange]
+  apply list_nodup_map_on (List.nodup_finRange n)
+  intro a _ha b _hb hab
+  exact hcols hab
+
+private theorem columnTupleMatrix_eq_ofFn_ofFn
+    {R : Type u} {n : Nat} (M : Matrix R n n) (cols : Fin n → Fin n) :
+    columnTupleMatrix M cols =
+      (ofFn fun r c => M[r][(Vector.ofFn cols)[c]] : Matrix R n n) := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro c hc
+  show (columnTupleMatrix M cols)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
+    (ofFn (fun r c => M[r][(Vector.ofFn cols)[c]]) : Matrix R n n)[
+      (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+  rw [columnTupleMatrix_entry]
+  unfold ofFn
+  rw [vector_ofFn_getElem_fin, vector_ofFn_getElem_fin]
+  exact congrArg (fun col : Fin n => M[(⟨r, hr⟩ : Fin n)][col])
+    (vector_ofFn_getElem_fin cols (⟨c, hc⟩ : Fin n)).symm
+
+private theorem det_columnTupleMatrix_of_injective
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (cols : Fin n → Fin n)
+    (hcols : Function.Injective cols) :
+    det (columnTupleMatrix M cols) =
+      detSign (R := R) (Vector.ofFn cols) * det M := by
+  have hmem : Vector.ofFn cols ∈ permutationVectors n :=
+    ofFn_mem_permutationVectors_of_injective cols hcols
+  rw [columnTupleMatrix_eq_ofFn_ofFn M cols]
+  exact det_colPermute_vector M (Vector.ofFn cols) hmem
+
+private theorem det_columnTupleMatrix_eq_det_mul_det_one
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (cols : Fin n → Fin n) :
+    det (columnTupleMatrix M cols) =
+      det M * det (columnTupleMatrix (1 : Matrix R n n) cols) := by
+  by_cases hinj : Function.Injective cols
+  · rw [det_columnTupleMatrix_of_injective M cols hinj,
+        det_columnTupleMatrix_of_injective (1 : Matrix R n n) cols hinj]
+    rw [det_one]
+    grind
+  · rw [det_columnTupleMatrix_eq_zero_of_not_injective M cols hinj,
+        det_columnTupleMatrix_eq_zero_of_not_injective (1 : Matrix R n n) cols hinj]
+    grind
+
+private theorem mul_eq_columnSumMatrix_transpose
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M N : Matrix R n n) :
+    M * N = columnSumMatrix M N.transpose := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro c hc
+  let rr : Fin n := ⟨r, hr⟩
+  let cc : Fin n := ⟨c, hc⟩
+  show (M * N)[rr][cc] = (columnSumMatrix M N.transpose)[rr][cc]
+  rw [columnSumMatrix_entry]
+  change (Matrix.mul M N)[rr][cc] = _
+  unfold Matrix.mul ofFn
+  rw [vector_ofFn_getElem_fin, vector_ofFn_getElem_fin]
+  unfold Matrix.dot Hex.Vector.dotProduct
+  apply foldl_det_sum_congr
+  intro k _
+  have hrow : (row M rr)[k] = M[rr][k] := by simp [row]
+  have hcol : (col N cc)[k] = N[k][cc] := by
+    show (Vector.ofFn (fun i : Fin n => N[i][cc]))[k] = N[k][cc]
+    exact vector_ofFn_getElem_fin _ k
+  have htrn : N.transpose[cc][k] = N[k][cc] := by
+    show (Vector.ofFn (fun j : Fin n => col N j))[cc][k] = N[k][cc]
+    rw [vector_ofFn_getElem_fin]
+    exact hcol
+  rw [hrow, hcol, htrn]
+  exact Lean.Grind.CommSemiring.mul_comm _ _
+
+private theorem eq_columnSumMatrix_one_transpose
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (N : Matrix R n n) :
+    N = columnSumMatrix (1 : Matrix R n n) N.transpose := by
+  rw [← mul_eq_columnSumMatrix_transpose (1 : Matrix R n n) N]
+  exact (one_mul N).symm
+
+/-- Determinant of `M * auxAdjugateM M` splits as `det M * det (auxAdjugateM M)`.
+This is the narrow determinant-multiplication identity used by the scaled
+Desnanot-Jacobi step; the proof goes through the `columnSumMatrix` expansion
+plus the column-tuple identity that pulls `det M` out of each term. -/
+theorem det_mul_auxAdjugateM
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) :
+    det (M * auxAdjugateM M) = det M * det (auxAdjugateM M) := by
+  rw [mul_eq_columnSumMatrix_transpose M (auxAdjugateM M)]
+  rw [det_columnSumMatrix_eq_sum_columnTuples M (auxAdjugateM M).transpose]
+  have hbody_eq :
+      (columnTupleVectors (n + 2) (n + 2)).foldl
+          (fun acc cols => acc +
+            columnTupleCoeff (auxAdjugateM M).transpose cols *
+              det (columnTupleMatrix M (columnTupleVectorFn cols))) 0 =
+        (columnTupleVectors (n + 2) (n + 2)).foldl
+          (fun acc cols => acc + det M *
+            (columnTupleCoeff (auxAdjugateM M).transpose cols *
+              det (columnTupleMatrix (1 : Matrix R (n + 2) (n + 2))
+                (columnTupleVectorFn cols)))) 0 := by
+    apply foldl_det_sum_congr
+    intro cols _
+    rw [det_columnTupleMatrix_eq_det_mul_det_one M (columnTupleVectorFn cols)]
+    exact Lean.Grind.CommSemiring.mul_left_comm _ _ _
+  rw [hbody_eq]
+  rw [foldl_det_sum_mul_left_zero
+        (columnTupleVectors (n + 2) (n + 2))
+        (det M)
+        (fun cols => columnTupleCoeff (auxAdjugateM M).transpose cols *
+            det (columnTupleMatrix (1 : Matrix R (n + 2) (n + 2))
+              (columnTupleVectorFn cols)))]
+  rw [← det_columnSumMatrix_eq_sum_columnTuples
+        (1 : Matrix R (n + 2) (n + 2)) (auxAdjugateM M).transpose]
+  rw [← eq_columnSumMatrix_one_transpose (auxAdjugateM M)]
+
+private theorem foldl_det_sum_finRange_zero
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (f : Fin (n + 1) → R)
+    (hzero : ∀ i : Fin n, f i.succ = 0) :
+    (List.finRange (n + 1)).foldl (fun acc i => acc + f i) 0 = f 0 := by
+  rw [← Fin.foldl_eq_foldl_finRange]
+  rw [Fin.foldl_succ]
+  rw [Fin.foldl_eq_foldl_finRange]
+  calc
+    (List.finRange n).foldl (fun acc i => acc + f i.succ) (0 + f 0) =
+        (List.finRange n).foldl (fun acc (_i : Fin n) => acc + (0 : R)) (0 + f 0) := by
+      apply foldl_acc_congr
+      intro acc i _hmem
+      rw [hzero i]
+    _ = f 0 := by
+      rw [foldl_det_sum_zero]
+      grind
+
+private theorem foldl_det_sum_finRange_last
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (f : Fin (n + 1) → R)
+    (hzero : ∀ i : Fin n, f i.castSucc = 0) :
+    (List.finRange (n + 1)).foldl (fun acc i => acc + f i) 0 = f (Fin.last n) := by
+  rw [← Fin.foldl_eq_foldl_finRange]
+  rw [Fin.foldl_succ_last]
+  have hprefix :
+      Fin.foldl n (fun acc i => acc + f i.castSucc) 0 = 0 := by
+    rw [Fin.foldl_eq_foldl_finRange]
+    calc
+      (List.finRange n).foldl (fun acc i => acc + f i.castSucc) 0 =
+          (List.finRange n).foldl (fun acc (_i : Fin n) => acc + (0 : R)) 0 := by
+        apply foldl_acc_congr
+        intro acc i _hmem
+        rw [hzero i]
+      _ = 0 := by
+        exact foldl_det_sum_zero (List.finRange n) 0
+  rw [hprefix]
+  grind
+
+private theorem deleteRowCol_deleteRowCol_auxP_endpoints
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) :
+    deleteRowCol (deleteRowCol (auxP M) 0 0) (Fin.last n) (Fin.last n) =
+      deleteRowCol (deleteRowCol M 0 0) (Fin.last n) (Fin.last n) := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let ii : Fin n := ⟨i, hi⟩
+  let jj : Fin n := ⟨j, hj⟩
+  change
+    (deleteRowCol (deleteRowCol (auxP M) 0 0) (Fin.last n) (Fin.last n))[ii][jj] =
+      (deleteRowCol (deleteRowCol M 0 0) (Fin.last n) (Fin.last n))[ii][jj]
+  rw [deleteRowCol_entry, deleteRowCol_entry, deleteRowCol_entry, deleteRowCol_entry]
+  have hcol0 : skipIndex (0 : Fin (n + 2)) (skipIndex (Fin.last n) jj) ≠
+      (0 : Fin (n + 2)) := by
+    exact skipIndex_ne 0 (skipIndex (Fin.last n) jj)
+  have hcollast : skipIndex (0 : Fin (n + 2)) (skipIndex (Fin.last n) jj) ≠
+      Fin.last (n + 1) := by
+    intro h
+    have hval := congrArg Fin.val h
+    have hinner : (skipIndex (Fin.last n) jj).val = jj.val := by
+      simp [skipIndex, Fin.last, jj.isLt]
+    rw [skipIndex_val_of_not_lt] at hval
+    · rw [hinner] at hval
+      simp [Fin.last] at hval
+      have hjlt : jj.val < n := jj.isLt
+      omega
+    · exact Nat.not_lt_zero _
+  rw [auxP_apply_middle M _ _ hcol0 hcollast]
+
+/-- Determinant of the Desnanot-Jacobi auxiliary product matrix `auxP`.
+
+The proof expands along column `0`, then along the last column of the
+surviving minor; both columns have a single nonzero entry by construction. -/
+theorem det_auxP
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) :
+    det (auxP M) =
+      det M * det M *
+        det (deleteRowCol (deleteRowCol M 0 0) (Fin.last n) (Fin.last n)) := by
+  let Q : Matrix R (n + 1) (n + 1) := deleteRowCol (auxP M) 0 0
+  have hfirst : det (auxP M) = det M * det Q := by
+    rw [det_eq_foldl_laplace_col (auxP M) (0 : Fin (n + 2))]
+    rw [foldl_det_sum_finRange_zero
+      (fun row => (auxP M)[row][(0 : Fin (n + 2))] *
+        cofactor (auxP M) row (0 : Fin (n + 2)))]
+    · rw [auxP_apply_zero]
+      rw [if_pos rfl]
+      rw [cofactor_of_even (auxP M) 0 0 (by simp)]
+    · intro row
+      rw [auxP_apply_zero]
+      rw [if_neg (Fin.succ_ne_zero row)]
+      grind
+  have hsecond : det Q = det M * det (deleteRowCol Q (Fin.last n) (Fin.last n)) := by
+    rw [det_eq_foldl_laplace_col Q (Fin.last n)]
+    rw [foldl_det_sum_finRange_last
+      (fun row => Q[row][Fin.last n] * cofactor Q row (Fin.last n))]
+    · have hQlast : Q[Fin.last n][Fin.last n] = det M := by
+        change (deleteRowCol (auxP M) 0 0)[Fin.last n][Fin.last n] = det M
+        rw [deleteRowCol_entry]
+        have hskip : skipIndex (0 : Fin (n + 2)) (Fin.last n) = Fin.last (n + 1) := by
+          apply Fin.ext
+          simp [skipIndex, Fin.last]
+        rw [show ((auxP M)[skipIndex (0 : Fin (n + 2)) (Fin.last n)])[skipIndex (0 : Fin (n + 2)) (Fin.last n)] =
+              ((auxP M)[skipIndex (0 : Fin (n + 2)) (Fin.last n)])[Fin.last (n + 1)] by
+          exact congrArg
+            (fun c => ((auxP M)[skipIndex (0 : Fin (n + 2)) (Fin.last n)])[c])
+            hskip]
+        rw [auxP_apply_last]
+        rw [if_pos hskip]
+      rw [hQlast]
+      rw [cofactor_last_last Q]
+      rw [deleteRowCol_last_last Q]
+    · intro row
+      have hskip_ne_last :
+          skipIndex (0 : Fin (n + 2)) row.castSucc ≠ Fin.last (n + 1) := by
+        intro h
+        have hval := congrArg Fin.val h
+        rw [skipIndex_val_of_not_lt] at hval
+        · simp [Fin.last] at hval
+          have hrowlt : row.val < n := row.isLt
+          omega
+        · exact Nat.not_lt_zero _
+      have hQzero : Q[row.castSucc][Fin.last n] = 0 := by
+        change (deleteRowCol (auxP M) 0 0)[row.castSucc][Fin.last n] = 0
+        rw [deleteRowCol_entry]
+        have hskip : skipIndex (0 : Fin (n + 2)) (Fin.last n) = Fin.last (n + 1) := by
+          apply Fin.ext
+          simp [skipIndex, Fin.last]
+        rw [show ((auxP M)[skipIndex (0 : Fin (n + 2)) row.castSucc])[skipIndex (0 : Fin (n + 2)) (Fin.last n)] =
+              ((auxP M)[skipIndex (0 : Fin (n + 2)) row.castSucc])[Fin.last (n + 1)] by
+          exact congrArg
+            (fun c => ((auxP M)[skipIndex (0 : Fin (n + 2)) row.castSucc])[c]) hskip]
+        rw [auxP_apply_last]
+        rw [if_neg hskip_ne_last]
+      rw [hQzero]
+      grind
+  have hminor :
+      deleteRowCol Q (Fin.last n) (Fin.last n) =
+        deleteRowCol (deleteRowCol M 0 0) (Fin.last n) (Fin.last n) := by
+    simpa [Q] using deleteRowCol_deleteRowCol_auxP_endpoints M
+  rw [hfirst, hsecond, hminor]
+  grind
+
 /-! ### Bareiss Desnanot source-entry helpers and structural submatrix equalities
 
 Following the Mathlib-side reindexing in `HexMatrixMathlib/Determinant/Core.lean`,
