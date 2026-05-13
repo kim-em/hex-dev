@@ -308,6 +308,16 @@ structure ForwardRecoveryInputs (f : Hex.ZPoly) (d : Hex.LiftData) where
 
 namespace ForwardRecoveryInputs
 
+/-- Extract the B7 equivalence-class recovery package from the full
+forward-recovery input bundle. -/
+def toEquivalenceClassRecoveryHypotheses {f : Hex.ZPoly} {d : Hex.LiftData}
+    (h : ForwardRecoveryInputs f d) : EquivalenceClassRecoveryHypotheses f d where
+  rows_pos := h.rows_pos
+  trueSupports := h.trueSupports
+  lattice_eq_indicators := h.lattice_eq_indicators
+  expectedIndicators := h.expectedIndicators
+  indicators_match := h.indicators_match
+
 /--
 Build `ForwardRecoveryInputs` when the A2/exact-division obligation is
 available as per-indicator reconstruction witnesses rather than as the folded
@@ -377,6 +387,42 @@ def toRecoveryHypotheses {f : Hex.ZPoly} {d : Hex.LiftData}
     rw [hindicators]
     exact h.candidates_eq
   product_eq := h.product_eq
+
+/-- The B7 indicator conclusion exposed directly from a
+`ForwardRecoveryInputs` bundle. -/
+theorem equivalenceClassIndicators_eq_expected {f : Hex.ZPoly} {d : Hex.LiftData}
+    (h : ForwardRecoveryInputs f d) :
+    equivalenceClassIndicatorsOfLiftData f d h.rows_pos = h.expectedIndicators :=
+  bhksEquivalenceClassIndicators_eq_of_recovery
+    f d h.toEquivalenceClassRecoveryHypotheses
+
+/-- Raw projected-row form of `equivalenceClassIndicators_eq_expected`. -/
+theorem projectedRows_indicators_eq_expected {f : Hex.ZPoly} {d : Hex.LiftData}
+    (h : ForwardRecoveryInputs f d) :
+    Hex.bhksEquivalenceClassIndicators
+        (projectedRowsOfLiftData f d h.rows_pos) = h.expectedIndicators :=
+  bhksEquivalenceClassIndicators_projectedRows_eq_of_recovery
+    f d h.toEquivalenceClassRecoveryHypotheses
+
+/-- The non-degeneracy guard after rewriting the expected indicators back to
+the executable indicator array. -/
+theorem nondegenerate_of_executableIndicators {f : Hex.ZPoly} {d : Hex.LiftData}
+    (h : ForwardRecoveryInputs f d) :
+    Hex.bhksDegenerateIndicatorPartition
+        (projectedRowsOfLiftData f d h.rows_pos)
+        (equivalenceClassIndicatorsOfLiftData f d h.rows_pos) = false := by
+  rw [h.equivalenceClassIndicators_eq_expected]
+  exact h.nondegenerate
+
+/-- The folded A2/exact-division candidate equality after rewriting the
+expected indicators back to the executable indicator array. -/
+theorem candidates_eq_of_executableIndicators {f : Hex.ZPoly} {d : Hex.LiftData}
+    (h : ForwardRecoveryInputs f d) :
+    Hex.bhksIndicatorCandidates? f d
+        (equivalenceClassIndicatorsOfLiftData f d h.rows_pos) =
+      some h.expectedFactors := by
+  rw [h.equivalenceClassIndicators_eq_expected]
+  exact h.candidates_eq
 
 end ForwardRecoveryInputs
 
