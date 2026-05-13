@@ -8154,5 +8154,89 @@ the leading prefix minor obtained by deleting the last row and column. -/
   rw [adjugate_get]
   exact cofactor_last_last M
 
+/-! ### Bareiss Desnanot-Jacobi indexing helpers
+
+These are the Mathlib-free structural pieces needed to specialize a future
+local Desnanot-Jacobi theorem to Bareiss bordered minors. They intentionally
+stop at entrywise matrix equalities; determinant permutation and Desnanot
+assembly are handled by separate determinant infrastructure. -/
+
+/-- Reindex the `(k+2) × (k+2)` bordered minor so Desnanot-Jacobi deletes the
+Bareiss pivot row/column first and the trailing row/column last.
+
+The order is `[k, 0, 1, ..., k-1, k+1]` in the original bordered-minor
+coordinates. -/
+def bareissDesnanotIndex (k : Nat) (r : Fin (k + 2)) : Fin (k + 2) :=
+  if hzero : r.val = 0 then
+    ⟨k, by omega⟩
+  else if hlast : r.val = k + 1 then
+    Fin.last (k + 1)
+  else
+    ⟨r.val - 1, by omega⟩
+
+@[simp]
+theorem bareissDesnanotIndex_zero (k : Nat) :
+    bareissDesnanotIndex k 0 = (⟨k, by omega⟩ : Fin (k + 2)) := by
+  rfl
+
+@[simp]
+theorem bareissDesnanotIndex_last (k : Nat) :
+    bareissDesnanotIndex k (Fin.last (k + 1)) = Fin.last (k + 1) := by
+  simp [bareissDesnanotIndex]
+
+theorem bareissDesnanotIndex_succ_lt (k : Nat) (s : Fin (k + 1))
+    (hs : s.val < k) :
+    bareissDesnanotIndex k s.succ = (⟨s.val, by omega⟩ : Fin (k + 2)) := by
+  show (if hzero : s.succ.val = 0 then (⟨k, by omega⟩ : Fin (k + 2))
+        else if hlast : s.succ.val = k + 1 then Fin.last (k + 1)
+        else ⟨s.succ.val - 1, by omega⟩) = _
+  have hzero : s.succ.val ≠ 0 := Nat.succ_ne_zero _
+  have hne_last : s.succ.val ≠ k + 1 := by
+    show s.val + 1 ≠ k + 1
+    omega
+  rw [dif_neg hzero, dif_neg hne_last]
+  ext
+  show s.succ.val - 1 = s.val
+  simp
+
+theorem bareissDesnanotIndex_succ_top (k : Nat) (s : Fin (k + 1))
+    (hs : s.val = k) :
+    bareissDesnanotIndex k s.succ = Fin.last (k + 1) := by
+  show (if hzero : s.succ.val = 0 then (⟨k, by omega⟩ : Fin (k + 2))
+        else if hlast : s.succ.val = k + 1 then Fin.last (k + 1)
+        else ⟨s.succ.val - 1, by omega⟩) = _
+  have hzero : s.succ.val ≠ 0 := Nat.succ_ne_zero _
+  have hlast : s.succ.val = k + 1 := by
+    show s.val + 1 = k + 1
+    omega
+  rw [dif_neg hzero, dif_pos hlast]
+
+theorem bareissDesnanotIndex_castSucc_zero (k : Nat) (s : Fin (k + 1))
+    (hs : s.val = 0) :
+    bareissDesnanotIndex k s.castSucc = (⟨k, by omega⟩ : Fin (k + 2)) := by
+  show (if hzero : s.castSucc.val = 0 then (⟨k, by omega⟩ : Fin (k + 2))
+        else if hlast : s.castSucc.val = k + 1 then Fin.last (k + 1)
+        else ⟨s.castSucc.val - 1, by omega⟩) = _
+  have hzero' : s.castSucc.val = 0 := hs
+  rw [dif_pos hzero']
+
+theorem bareissDesnanotIndex_castSucc_pos (k : Nat) (s : Fin (k + 1))
+    (hs : 0 < s.val) :
+    bareissDesnanotIndex k s.castSucc = (⟨s.val - 1, by omega⟩ : Fin (k + 2)) := by
+  have hcv : s.castSucc.val = s.val := rfl
+  show (if hzero : s.castSucc.val = 0 then (⟨k, by omega⟩ : Fin (k + 2))
+        else if hlast : s.castSucc.val = k + 1 then Fin.last (k + 1)
+        else ⟨s.castSucc.val - 1, by omega⟩) = _
+  have hne_zero : s.castSucc.val ≠ 0 := by
+    rw [hcv]
+    exact Nat.ne_of_gt hs
+  have hne_last : s.castSucc.val ≠ k + 1 := by
+    rw [hcv]
+    exact Nat.ne_of_lt (by have := s.isLt; omega)
+  rw [dif_neg hne_zero, dif_neg hne_last]
+  ext
+  show s.castSucc.val - 1 = s.val - 1
+  rw [hcv]
+
 end Matrix
 end Hex
