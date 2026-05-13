@@ -57,6 +57,44 @@ theorem partitionAcc_map_snd (r : Nat) (sig : Nat → Array Rat) :
   unfold partitionAcc partitionByMinColumn
   simp [List.map_map, Function.comp]
 
+/--
+If no entry of `acc` carries signature `s`, then
+`Hex.bhksInsertSignatureClass s j acc` appends `(s, [j])` at the end.
+-/
+theorem bhksInsertSignatureClass_eq_append
+    (s : Array Rat) (j : Nat) (acc : List (Array Rat × List Nat))
+    (hnotin : ∀ p ∈ acc, p.1 ≠ s) :
+    Hex.bhksInsertSignatureClass s j acc = acc ++ [(s, [j])] := by
+  induction acc with
+  | nil => simp [Hex.bhksInsertSignatureClass]
+  | cons p rest ih =>
+      obtain ⟨s', members⟩ := p
+      have hs' : s' ≠ s := hnotin (s', members) (List.mem_cons_self ..)
+      have hrest : ∀ p ∈ rest, p.1 ≠ s := fun p hp =>
+        hnotin p (List.mem_cons_of_mem _ hp)
+      simp [Hex.bhksInsertSignatureClass, hs', ih hrest]
+
+/--
+If `acc = l ++ (s, members) :: r` and no entry of `l` carries
+signature `s`, then `Hex.bhksInsertSignatureClass s j acc` replaces the
+single matching entry's member list with `members ++ [j]`.
+-/
+theorem bhksInsertSignatureClass_eq_replace
+    (s : Array Rat) (j : Nat)
+    (l r : List (Array Rat × List Nat)) (members : List Nat)
+    (hnotin : ∀ p ∈ l, p.1 ≠ s) :
+    Hex.bhksInsertSignatureClass s j (l ++ (s, members) :: r) =
+      l ++ (s, members ++ [j]) :: r := by
+  induction l with
+  | nil => simp [Hex.bhksInsertSignatureClass]
+  | cons p l' ih =>
+      obtain ⟨s', members'⟩ := p
+      have hs' : s' ≠ s := hnotin (s', members') (List.mem_cons_self ..)
+      have hl' : ∀ p ∈ l', p.1 ≠ s := fun p hp =>
+        hnotin p (List.mem_cons_of_mem _ hp)
+      have := ih hl'
+      simp [Hex.bhksInsertSignatureClass, hs', this]
+
 theorem representativeColumns_succ_of_fresh
     (m : Nat) (sig : Nat → Array Rat)
     (hfresh : ∀ k, k < m → sig k ≠ sig m) :
@@ -106,6 +144,75 @@ theorem representativeColumns_succ_of_match
       [m]) = [] := by
     simp [List.filter, hisEmpty]
   rw [hsuffix, List.append_nil]
+
+theorem mem_representativeColumns_iff
+    (m : Nat) (sig : Nat → Array Rat) (rep : Nat) :
+    rep ∈ representativeColumns m sig ↔
+      rep < m ∧ ∀ k, k < rep → sig k ≠ sig rep := by
+  unfold representativeColumns
+  rw [List.mem_filter]
+  simp only [List.mem_range, List.isEmpty_iff]
+  constructor
+  · rintro ⟨hlt, hfilter⟩
+    refine ⟨hlt, ?_⟩
+    intro k hk hsigeq
+    have : k ∈ (List.range rep).filter (fun k => sig k = sig rep) := by
+      rw [List.mem_filter]
+      refine ⟨List.mem_range.mpr hk, ?_⟩
+      simpa using hsigeq
+    rw [hfilter] at this
+    exact List.not_mem_nil this
+  · rintro ⟨hlt, hfresh⟩
+    refine ⟨hlt, ?_⟩
+    apply List.eq_nil_iff_forall_not_mem.mpr
+    intro k hk
+    rw [List.mem_filter] at hk
+    rcases hk with ⟨hmem, hsig⟩
+    rw [List.mem_range] at hmem
+    exact hfresh k hmem (by simpa using hsig)
+
+theorem representativeColumns_lt (m : Nat) (sig : Nat → Array Rat) (rep : Nat)
+    (h : rep ∈ representativeColumns m sig) : rep < m :=
+  ((mem_representativeColumns_iff m sig rep).mp h).1
+
+theorem representativeColumns_fresh (m : Nat) (sig : Nat → Array Rat) (rep : Nat)
+    (h : rep ∈ representativeColumns m sig) :
+    ∀ k, k < rep → sig k ≠ sig rep :=
+  ((mem_representativeColumns_iff m sig rep).mp h).2
+
+/--
+Representatives in `representativeColumns m sig` carry pairwise
+distinct signatures: each rep's signature first appears at that rep.
+-/
+theorem representativeColumns_distinct_sig
+    (m : Nat) (sig : Nat → Array Rat)
+    {rep₁ rep₂ : Nat}
+    (_h₁ : rep₁ ∈ representativeColumns m sig)
+    (h₂ : rep₂ ∈ representativeColumns m sig)
+    (hlt : rep₁ < rep₂) :
+    sig rep₁ ≠ sig rep₂ :=
+  representativeColumns_fresh m sig rep₂ h₂ rep₁ hlt
+
+/-- Filtering `List.range (m + 1)` splits as filtering range `m` plus
+the trailing element. -/
+theorem filter_range_succ (m : Nat) (p : Nat → Bool) :
+    (List.range (m + 1)).filter p =
+      (List.range m).filter p ++ (if p m then [m] else []) := by
+  rw [List.range_succ, List.filter_append]
+  congr 1
+  by_cases hpm : p m
+  · simp [List.filter, hpm]
+  · simp [List.filter, hpm]
+
+/-- The members list of the entry for `rep` in `partitionAcc (m + 1) sig`
+factors as the members at step `m` plus `m` itself if `sig m = sig rep`. -/
+theorem filter_range_succ_sig_eq (m : Nat) (sig : Nat → Array Rat) (rep : Nat) :
+    (List.range (m + 1)).filter (fun j => sig j = sig rep) =
+      (List.range m).filter (fun j => sig j = sig rep) ++
+        (if sig m = sig rep then [m] else []) := by
+  have := filter_range_succ m (fun j => decide (sig j = sig rep))
+  -- Match the shape `fun j => sig j = sig rep` and `if sig m = sig rep`.
+  simpa using this
 
 end BHKS
 
