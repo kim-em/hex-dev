@@ -1,6 +1,7 @@
 import HexMatrixMathlib.Basic
 import HexMatrix.RREF
 import Mathlib.LinearAlgebra.Finsupp.LinearCombination
+import Mathlib.LinearAlgebra.Dimension.Constructions
 import Mathlib.LinearAlgebra.Matrix.Rank
 
 /-!
@@ -103,11 +104,6 @@ private theorem vectorEquiv_nullspaceMatrix_mulVec [Field R]
   unfold Hex.Matrix.IsRREF.nullspace Hex.Matrix.col
   simp [mul_comm]
 
-theorem rank_eq [Field R] (M : Hex.Matrix R n m)
-    (D : Hex.Matrix.RowEchelonData R n m) (E : Hex.Matrix.IsEchelonForm M D) :
-    D.rank = _root_.Matrix.rank (matrixEquiv M) := by
-  sorry
-
 theorem spanCoeffs_eq_linearCombination [Field R] [DecidableEq R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
     (E : Hex.Matrix.IsEchelonForm M D) (v : Vector R m) (c : Vector R n) :
@@ -191,5 +187,60 @@ theorem nullspace_span_eq_ker [Field R]
     rw [hxsum]
     exact Submodule.sum_mem _ fun k _ =>
       Submodule.smul_mem _ c[k] (Submodule.subset_span ⟨k, rfl⟩)
+
+private theorem nullspace_get_free_entry [Field R]
+    {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
+    (E : Hex.Matrix.IsRREF M D) (k l : Fin (m - D.rank)) :
+    (E.nullspace.get k)[E.toIsEchelonForm.freeCols.get l] =
+      if k = l then (1 : R) else 0 := by
+  by_cases hkl : k = l
+  · subst k
+    simpa using Hex.Matrix.IsRREF.nullspace_get_free E l
+  · simpa [hkl] using Hex.Matrix.IsRREF.nullspace_get_free_ne E hkl
+
+private theorem nullspace_linearIndependent [Field R]
+    {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
+    (E : Hex.Matrix.IsRREF M D) :
+    LinearIndependent R (fun k : Fin (m - D.rank) => vectorEquiv (E.nullspace.get k)) := by
+  classical
+  rw [Fintype.linearIndependent_iff]
+  intro g hsum l
+  have hcoord := congrFun hsum (E.toIsEchelonForm.freeCols.get l)
+  rw [Finset.sum_apply] at hcoord
+  have hcoord' :
+      (∑ k : Fin (m - D.rank),
+          g k * (E.nullspace.get k)[E.toIsEchelonForm.freeCols.get l]) = 0 := by
+    simpa [Pi.smul_apply, vectorEquiv_apply] using hcoord
+  have hsingle :
+      (∑ k : Fin (m - D.rank),
+          g k * (if k = l then (1 : R) else 0)) = 0 := by
+    simpa [nullspace_get_free_entry E] using hcoord'
+  rw [Finset.sum_eq_single l] at hsingle
+  · simpa using hsingle
+  · intro k _ hkl
+    simp [hkl]
+  · intro hmem
+    exact (hmem (Finset.mem_univ l)).elim
+
+theorem rank_eq [Field R]
+    {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
+    (E : Hex.Matrix.IsRREF M D) :
+    D.rank = _root_.Matrix.rank (matrixEquiv M) := by
+  classical
+  have hker :
+      Module.finrank R (LinearMap.ker (_root_.Matrix.mulVecLin (matrixEquiv M))) = m - D.rank := by
+    rw [← nullspace_span_eq_ker E]
+    simpa using finrank_span_eq_card (nullspace_linearIndependent E)
+  have hrank_nullity :
+      _root_.Matrix.rank (matrixEquiv M) +
+          Module.finrank R (LinearMap.ker (_root_.Matrix.mulVecLin (matrixEquiv M))) = m := by
+    rw [_root_.Matrix.rank]
+    simpa using
+      (LinearMap.finrank_range_add_finrank_ker
+        (_root_.Matrix.mulVecLin (matrixEquiv M)))
+  have hrank_add : _root_.Matrix.rank (matrixEquiv M) + (m - D.rank) = m := by
+    simpa [hker] using hrank_nullity
+  have hDadd : D.rank + (m - D.rank) = m := Nat.add_sub_of_le E.toIsEchelonForm.rank_le_m
+  exact Nat.add_right_cancel (hDadd.trans hrank_add.symm)
 
 end HexMatrixMathlib
