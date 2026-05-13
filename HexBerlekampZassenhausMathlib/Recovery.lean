@@ -396,6 +396,61 @@ def ofIndicatorCandidateFacts
   product_eq := product_eq
 
 /--
+Fold the single-indicator Mignotte reconstruction theorem over an expected
+indicator array. This is the A2 candidate-equality bridge for
+`ForwardRecoveryInputs`: callers supply the selected lifted-factor products,
+true-factor facts, and modular product equalities for each indicator, and the
+executable candidate fold returns the expected factor array.
+-/
+theorem candidatesOfMignottePrecision
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    (expectedIndicators : Array (Array Int))
+    (selectedFactors : Array (Array Hex.ZPoly))
+    (expectedFactors : Array Hex.ZPoly)
+    (hf_ne_zero : f ≠ 0)
+    (hsize : expectedFactors.size = expectedIndicators.size)
+    (hselected :
+      ∀ i, i < expectedIndicators.size →
+        Hex.bhksIndicatorSelectedFactors d.liftedFactors
+            (expectedIndicators.getD i #[]) =
+          some (selectedFactors.getD i #[]))
+    (hdivides :
+      ∀ i, i < expectedIndicators.size →
+        expectedFactors.getD i 0 ∣ f)
+    (hprimitive :
+      ∀ i, i < expectedIndicators.size →
+        Hex.ZPoly.Primitive (expectedFactors.getD i 0))
+    (hsign :
+      ∀ i, i < expectedIndicators.size →
+        0 ≤ Hex.DensePoly.leadingCoeff (expectedFactors.getD i 0))
+    (hmonic :
+      ∀ i, i < expectedIndicators.size →
+        Hex.DensePoly.Monic (expectedFactors.getD i 0))
+    (hdegree :
+      ∀ i, i < expectedIndicators.size →
+        0 < (expectedFactors.getD i 0).degree?.getD 0)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound f < d.p ^ d.k)
+    (hproduct :
+      ∀ i, i < expectedIndicators.size →
+        Hex.ZPoly.reduceModPow
+            (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f)
+              (Array.polyProduct (selectedFactors.getD i #[])))
+            d.p d.k =
+          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0) d.p d.k) :
+    Hex.bhksIndicatorCandidates? f d expectedIndicators =
+      some expectedFactors :=
+  bhksIndicatorCandidates?_eq_some_of_forwardCandidates
+    f d expectedIndicators expectedFactors hsize
+    (fun i hi =>
+      bhksIndicatorCandidate?_eq_some_of_mignottePrecision
+        f d (expectedIndicators.getD i #[])
+        (selectedFactors.getD i #[]) (expectedFactors.getD i 0)
+        hf_ne_zero (hselected i hi) (hdivides i hi)
+        (hprimitive i hi) (hsign i hi) (hmonic i hi) (hdegree i hi)
+        hprecision (hproduct i hi))
+
+/--
 Build `ForwardRecoveryInputs` from per-indicator Mignotte reconstruction
 facts. This is the A2 capstone constructor: callers supply the selected-factor
 array for each indicator, the modular-product equality that B7/A2 establishes,
@@ -451,17 +506,20 @@ def ofMignottePrecisionCandidateProducts
           Hex.ZPoly.reduceModPow (expectedFactors.getD i 0) d.p d.k)
     (product_eq : Array.polyProduct expectedFactors = f) :
     ForwardRecoveryInputs f d :=
-  ofIndicatorCandidateFacts
-    rows_pos trueSupports lattice_eq_indicators mignotte_precision
-    expectedIndicators indicators_match nondegenerate expectedFactors hsize
-    (fun i hi =>
-      bhksIndicatorCandidate?_eq_some_of_mignottePrecision
-        f d (expectedIndicators.getD i #[])
-        (selectedFactors.getD i #[]) (expectedFactors.getD i 0)
-        hf_ne_zero (hselected i hi) (hdivides i hi)
-        (hprimitive i hi) (hsign i hi) (hmonic i hi) (hdegree i hi)
-        mignotte_precision (hproduct i hi))
-    product_eq
+  { rows_pos := rows_pos
+    trueSupports := trueSupports
+    lattice_eq_indicators := lattice_eq_indicators
+    mignotte_precision := mignotte_precision
+    expectedIndicators := expectedIndicators
+    indicators_match := indicators_match
+    nondegenerate := nondegenerate
+    expectedFactors := expectedFactors
+    candidates_eq :=
+      candidatesOfMignottePrecision
+        expectedIndicators selectedFactors expectedFactors hf_ne_zero hsize
+        hselected hdivides hprimitive hsign hmonic hdegree mignotte_precision
+        hproduct
+    product_eq := product_eq }
 
 /--
 Build `ForwardRecoveryInputs f d` from cap-level BHKS separation plus the
