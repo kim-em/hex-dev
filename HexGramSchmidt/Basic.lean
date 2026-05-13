@@ -2070,6 +2070,85 @@ private theorem prefixSpan_matrix_row
   let last : Fin (j.val + 1) := ⟨j.val, Nat.lt_succ_self j.val⟩
   simpa [prefixRows, Matrix.row] using prefixSpan_row M j.val j.isLt last
 
+private theorem prefixRows_rowSwap_row_mem_prefixSpan
+    (b : Matrix Rat n m) (km1 k : Fin n) (i : Nat) (hi : i < n)
+    (hkm1k : km1.val < k.val) (hki : k.val ≤ i) (j : Fin (i + 1)) :
+    prefixSpan b i hi ((prefixRows (Matrix.rowSwap b km1 k) i hi).row j) := by
+  let r : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt hi)⟩
+  have hkm1_ne_k : km1 ≠ k := by
+    intro h
+    exact Nat.ne_of_lt hkm1k (congrArg Fin.val h)
+  by_cases hjkm1 : r = km1
+  · have hrow :
+        (prefixRows (Matrix.rowSwap b km1 k) i hi).row j = b.row k := by
+      apply Vector.ext
+      intro col hcol
+      let c : Fin m := ⟨col, hcol⟩
+      simp [prefixRows, Matrix.row]
+      change (Matrix.rowSwap b km1 k)[r][c] = b[k][c]
+      rw [Matrix.rowSwap_getElem]
+      simp [hjkm1, hkm1_ne_k]
+    rw [hrow]
+    exact prefixSpan_mono_le b k.isLt hi hki (prefixSpan_matrix_row b k)
+  · by_cases hjk : r = k
+    · have hkm1_le_i : km1.val ≤ i := by
+        omega
+      have hrow :
+          (prefixRows (Matrix.rowSwap b km1 k) i hi).row j = b.row km1 := by
+        apply Vector.ext
+        intro col hcol
+        let c : Fin m := ⟨col, hcol⟩
+        simp [prefixRows, Matrix.row]
+        change (Matrix.rowSwap b km1 k)[r][c] = b[km1][c]
+        rw [Matrix.rowSwap_getElem]
+        simp [hjk]
+      rw [hrow]
+      exact prefixSpan_mono_le b km1.isLt hi hkm1_le_i (prefixSpan_matrix_row b km1)
+    · have hrle : r.val ≤ i := Nat.le_of_lt_succ j.isLt
+      have hrow :
+          (prefixRows (Matrix.rowSwap b km1 k) i hi).row j = b.row r := by
+        apply Vector.ext
+        intro col hcol
+        let c : Fin m := ⟨col, hcol⟩
+        simp [prefixRows, Matrix.row, r]
+        change (Matrix.rowSwap b km1 k)[r][c] = b[r][c]
+        rw [Matrix.rowSwap_getElem]
+        simp [hjk, hjkm1]
+      rw [hrow]
+      exact prefixSpan_mono_le b r.isLt hi hrle (prefixSpan_matrix_row b r)
+
+private theorem prefixSpan_rowSwap_adjacent_after
+    (b : Matrix Rat n m) (km1 k : Fin n) (i : Nat) (hi : i < n)
+    (hkm1 : km1.val + 1 = k.val) (hki : k.val < i) (v : Vector Rat m) :
+    prefixSpan (Matrix.rowSwap b km1 k) i hi v ↔ prefixSpan b i hi v := by
+  constructor
+  · intro hv
+    rcases hv with ⟨c, hc⟩
+    have hspan :=
+      prefixSpan_rowCombination_of_rows
+        (A := Matrix.rowSwap b km1 k) (B := b) (i := i) (hi := hi) c
+        (by
+          intro j
+          exact prefixRows_rowSwap_row_mem_prefixSpan
+            (b := b) (km1 := km1) (k := k) (i := i) (hi := hi)
+            (by omega) (Nat.le_of_lt hki) j)
+    rwa [hc] at hspan
+  · intro hv
+    rcases hv with ⟨c, hc⟩
+    have hspan :=
+      prefixSpan_rowCombination_of_rows
+        (A := b) (B := Matrix.rowSwap b km1 k) (i := i) (hi := hi) c
+        (by
+          intro j
+          have hrowspan :=
+            prefixRows_rowSwap_row_mem_prefixSpan
+              (b := Matrix.rowSwap b km1 k) (km1 := km1) (k := k)
+              (i := i) (hi := hi) (by omega) (Nat.le_of_lt hki) j
+          have hswap_swap : Matrix.rowSwap (Matrix.rowSwap b km1 k) km1 k = b := by
+            exact Matrix.rowSwap_rowSwap b km1 k
+          simpa [hswap_swap] using hrowspan)
+    rwa [hc] at hspan
+
 private theorem prefixSpan_strictPrefix_rowCombination
     (M : Matrix Rat n m) (i : Nat) (hi : i < n) (c : Vector Rat i) :
     prefixSpan M i hi
