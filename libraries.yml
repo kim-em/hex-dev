@@ -76,6 +76,10 @@ libraries:
     done_through: 5
     status: active
     phase4:
+      comparators:
+        - tool: "FLINT fmpz_poly via python-flint"
+          class: informational
+          rationale: "FLINT tunes Karatsuba/Toom-Cook/FFT crossovers in fmpz_poly_mul and uses non-recursive Newton-style algorithms for division and GCD; Hex's implementation is schoolbook with the Karatsuba crossover named in the algorithm table. The constant-factor gap is structural, not algorithmic — the ratio is recorded for orientation but is not a Phase-4 gate. Wired via a persistent-subprocess Python driver per SPEC/benchmarking.md §External comparators §Process call."
       input_families:
         - name: dense-int-arithmetic
           description: Deterministic dense integer polynomials for coefficientwise arithmetic, multiplication, derivative, and composition.
