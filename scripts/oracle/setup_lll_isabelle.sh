@@ -96,6 +96,9 @@ if (( ${#patches[@]} > 0 )); then
   stamp="${cache_root}/patches-applied.stamp"
   current_patch_sum="$(shasum -a 256 "${patches[@]}" | shasum -a 256 | awk '{print $1}')"
   if [[ ! -f "${stamp}" ]] || [[ "$(cat "${stamp}")" != "${current_patch_sum}" ]]; then
+    rm -rf "${src_dir}"
+    mkdir -p "${src_dir}"
+    unzip -q "${archive}" -d "${src_dir}"
     for patch in "${patches[@]}"; do
       patch -d "${src_dir}" -p1 < "${patch}"
     done

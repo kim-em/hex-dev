@@ -699,24 +699,33 @@ def resolveIsabelleChild : IO PersistentComparator := do
 
 /-- Send one matrix to the persistent driver and parse its reply.
 
-On process death or any IO error from the protocol, the cached handle
-is dropped, a fresh driver is spawned, and the call retried once.
-Persistent failure surfaces as an `IO.userError` from the retry path.
+On process death, EOF before a reply line, or any IO error from the
+protocol, the cached handle is dropped, a fresh driver is spawned, and
+the call retried once. Persistent failure surfaces as an `IO.userError`
+from the retry path.
 
 The `tag` argument is preserved for call-site documentation but is no
 longer used to materialise per-call temp files. -/
+def requestIsabelleLineWithRetry (request : String) : Nat → IO String
+  | 0 => do
+    let reply ← (← resolveIsabelleChild).requestLine request
+    if reply.isEmpty then
+      throw <| IO.userError "svp_verified closed stdout before replying"
+    return reply
+  | Nat.succ remaining => do
+    try
+      let reply ← (← resolveIsabelleChild).requestLine request
+      if reply.isEmpty then
+        throw <| IO.userError "svp_verified closed stdout before replying"
+      return reply
+    catch _ =>
+      isabelleChildRef.set none
+      requestIsabelleLineWithRetry request remaining
+
 def runIsabelleShortVectorNormSq (_tag : String) (input : FirstShortVectorInput) :
     IO Int := do
   let request := matrixHaskell input.basis
-  let reply ←
-    try
-      (← resolveIsabelleChild).requestLine request
-    catch _ =>
-      isabelleChildRef.set none
-      (← resolveIsabelleChild).requestLine request
-  if reply.isEmpty then
-    throw <| IO.userError "svp_verified closed stdout before replying"
-  parseIsabelleNormSq reply
+  parseIsabelleNormSq (← requestIsabelleLineWithRetry request 1)
 
 /-- Fixed benchmark target: BZ recombination hot path at `p = 5`, `k = 2`,
 and three lifted local factors. -/

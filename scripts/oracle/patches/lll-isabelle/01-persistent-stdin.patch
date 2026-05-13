@@ -21,7 +21,7 @@ re-spawns once and retries; persistent failure surfaces as an
 
 --- a/haskell_sources/Main_Verified.hs
 +++ b/haskell_sources/Main_Verified.hs
-@@ -1,11 +1,21 @@
+@@ -1,11 +1,15 @@
  {-# LANGUAGE LambdaCase #-}
  module Main(main)
    where
@@ -35,17 +35,11 @@ re-spawns once and retries; persistent failure surfaces as an
 -  let mat = (read input :: [[Integer]])
 -  putStrLn (show (test_verified mat))
 +main = do
-+  hSetBuffering stdin LineBuffering
 +  hSetBuffering stdout LineBuffering
-+  loop
++  contents <- getContents
++  mapM_ runOne (lines contents)
 +  where
-+    loop = do
-+      eof <- isEOF
-+      if eof
-+        then return ()
-+        else do
-+          line <- getLine
-+          let mat = (read line :: [[Integer]])
-+          putStrLn (show (test_verified mat))
-+          hFlush stdout
-+          loop
++    runOne line = do
++      let mat = (read line :: [[Integer]])
++      putStrLn (show (test_verified mat))
++      hFlush stdout
