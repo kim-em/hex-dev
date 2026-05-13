@@ -698,6 +698,164 @@ theorem coeff_mul_top (p q : ZPoly)
       p.coeff (p.size - 1) * q.coeff (q.size - 1) := by
   exact DensePoly.coeff_mul_top_int p q hp hq
 
+private theorem trimTrailingZerosList_length_le_int (coeffs : List Int) :
+    (DensePoly.trimTrailingZerosList coeffs).length ≤ coeffs.length := by
+  induction coeffs with
+  | nil =>
+      simp [DensePoly.trimTrailingZerosList]
+  | cons coeff coeffs ih =>
+      simp only [DensePoly.trimTrailingZerosList]
+      split
+      · simp
+      · simp
+        omega
+
+private theorem ofCoeffs_size_le_int (coeffs : Array Int) :
+    (DensePoly.ofCoeffs coeffs).size ≤ coeffs.size := by
+  unfold DensePoly.ofCoeffs DensePoly.size DensePoly.trimTrailingZeros
+  simpa using trimTrailingZerosList_length_le_int coeffs.toList
+
+private theorem isZero_false_of_size_pos (p : ZPoly) (hp : 0 < p.size) :
+    p.isZero = false := by
+  cases hzero : p.isZero
+  · rfl
+  · have hsize : p.size = 0 := by
+      simpa [DensePoly.isZero, DensePoly.size, Array.isEmpty_iff_size_eq_zero] using hzero
+    omega
+
+private theorem mul_inner_array_size_int
+    (p q : ZPoly) (i : Nat) (xs : List Nat) (acc : Array Int) :
+    (xs.foldl
+        (fun acc j =>
+          let k := i + j
+          acc.set! k ((acc[k]?).getD (0 : Int) + p.coeff i * q.coeff j))
+        acc).size = acc.size := by
+  induction xs generalizing acc with
+  | nil =>
+      rfl
+  | cons j xs ih =>
+      simp only [List.foldl_cons]
+      rw [ih]
+      simp [Array.size_setIfInBounds]
+
+private theorem mul_outer_array_size_int
+    (p q : ZPoly) (xs : List Nat) (acc : Array Int) :
+    (xs.foldl
+        (fun acc i =>
+          (List.range q.size).foldl
+            (fun acc j =>
+              let k := i + j
+              acc.set! k ((acc[k]?).getD (0 : Int) + p.coeff i * q.coeff j))
+            acc)
+        acc).size = acc.size := by
+  induction xs generalizing acc with
+  | nil =>
+      rfl
+  | cons i xs ih =>
+      simp only [List.foldl_cons]
+      rw [ih]
+      exact mul_inner_array_size_int p q i (List.range q.size) acc
+
+private theorem mul_size_le_top_succ (p q : ZPoly)
+    (hp : 0 < p.size) (hq : 0 < q.size) :
+    (p * q).size ≤ p.size + q.size - 1 := by
+  change (DensePoly.mul p q).size ≤ p.size + q.size - 1
+  unfold DensePoly.mul
+  have hpzero : p.isZero = false := isZero_false_of_size_pos p hp
+  have hqzero : q.isZero = false := isZero_false_of_size_pos q hq
+  have hnot : ¬(p.isZero || q.isZero) := by
+    simp [hpzero, hqzero]
+  rw [if_neg hnot]
+  let size := p.size + q.size - 1
+  let coeffs :=
+    (List.range p.size).foldl
+      (fun acc i =>
+        (List.range q.size).foldl
+          (fun acc j =>
+            let k := i + j
+            acc.set! k ((acc[k]?).getD (0 : Int) + p.coeff i * q.coeff j))
+          acc)
+      (Array.replicate size (0 : Int))
+  have hcoeffs_size : coeffs.size = size := by
+    simpa [coeffs] using
+      mul_outer_array_size_int p q (List.range p.size) (Array.replicate size (0 : Int))
+  have hle : (DensePoly.ofCoeffs coeffs).size ≤ coeffs.size :=
+    ofCoeffs_size_le_int coeffs
+  rw [hcoeffs_size] at hle
+  simpa [size, coeffs] using hle
+
+private theorem mul_size_eq_top_succ_of_nonzero (p q : ZPoly)
+    (hp : 0 < p.size) (hq : 0 < q.size) :
+    (p * q).size = p.size + q.size - 1 := by
+  have htop := coeff_mul_top p q hp hq
+  have hp_lead_ne : p.coeff (p.size - 1) ≠ 0 :=
+    DensePoly.coeff_last_ne_zero_of_pos_size p hp
+  have hq_lead_ne : q.coeff (q.size - 1) ≠ 0 :=
+    DensePoly.coeff_last_ne_zero_of_pos_size q hq
+  have hprod_ne :
+      p.coeff (p.size - 1) * q.coeff (q.size - 1) ≠ 0 := by
+    intro hzero
+    rcases Int.mul_eq_zero.mp hzero with h | h
+    · exact hp_lead_ne h
+    · exact hq_lead_ne h
+  have hcoeff_ne : (p * q).coeff (p.size - 1 + (q.size - 1)) ≠ 0 := by
+    rw [htop]
+    exact hprod_ne
+  have hlt : p.size - 1 + (q.size - 1) < (p * q).size := by
+    rcases Nat.lt_or_ge (p.size - 1 + (q.size - 1)) (p * q).size with h | hle
+    · exact h
+    · exact False.elim (hcoeff_ne (DensePoly.coeff_eq_zero_of_size_le (p * q) hle))
+  have hle := mul_size_le_top_succ p q hp hq
+  omega
+
+private theorem size_pos_of_ne_zero (p : ZPoly) (hp : p ≠ 0) :
+    0 < p.size := by
+  rcases Nat.lt_or_ge 0 p.size with h | h
+  · exact h
+  · exfalso
+    apply hp
+    apply DensePoly.ext_coeff
+    intro n
+    rw [DensePoly.coeff_zero]
+    exact DensePoly.coeff_eq_zero_of_size_le p (by omega)
+
+theorem leadingCoeff_mul_of_nonzero (p q : ZPoly)
+    (hp : p ≠ 0) (hq : q ≠ 0) :
+    DensePoly.leadingCoeff (p * q) =
+      DensePoly.leadingCoeff p * DensePoly.leadingCoeff q := by
+  have hp_pos : 0 < p.size := size_pos_of_ne_zero p hp
+  have hq_pos : 0 < q.size := size_pos_of_ne_zero q hq
+  have hpq_size := mul_size_eq_top_succ_of_nonzero p q hp_pos hq_pos
+  have hpq_pos : 0 < (p * q).size := by omega
+  rw [DensePoly.leadingCoeff_eq_coeff_last (p * q) hpq_pos]
+  rw [DensePoly.leadingCoeff_eq_coeff_last p hp_pos]
+  rw [DensePoly.leadingCoeff_eq_coeff_last q hq_pos]
+  have hlast : (p * q).size - 1 = p.size - 1 + (q.size - 1) := by omega
+  rw [hlast]
+  exact coeff_mul_top p q hp_pos hq_pos
+
+theorem leadingCoeff_mul_pos_of_pos (p q : ZPoly)
+    (hp_pos : 0 < DensePoly.leadingCoeff p)
+    (hq_pos : 0 < DensePoly.leadingCoeff q) :
+    0 < DensePoly.leadingCoeff (p * q) := by
+  have hp_ne : p ≠ 0 := by
+    intro hp_zero
+    rw [hp_zero] at hp_pos
+    change 0 < (0 : Int) at hp_pos
+    omega
+  have hq_ne : q ≠ 0 := by
+    intro hq_zero
+    rw [hq_zero] at hq_pos
+    change 0 < (0 : Int) at hq_pos
+    omega
+  rw [leadingCoeff_mul_of_nonzero p q hp_ne hq_ne]
+  exact Int.mul_pos hp_pos hq_pos
+
+private theorem leadingCoeff_one_pos :
+    0 < DensePoly.leadingCoeff (1 : ZPoly) := by
+  change 0 < DensePoly.leadingCoeff (DensePoly.C (1 : Int))
+  simp [DensePoly.leadingCoeff, DensePoly.coeffs_C_of_ne_zero (by decide : (1 : Int) ≠ 0)]
+
 private theorem fold_mulCoeffStep_C_left_range
     (c : Int) (p : ZPoly) (n m : Nat) (a : Int) :
     (List.range m).foldl (DensePoly.mulCoeffStep (DensePoly.C c) p n 0) a =
@@ -1070,6 +1228,93 @@ private theorem normalizePrimitiveSign_zero :
   split
   · exact DensePoly.scale_neg_one_zero
   · rfl
+
+theorem leadingCoeff_normalizePrimitiveSign_nonneg (p : ZPoly) :
+    0 ≤ DensePoly.leadingCoeff (normalizePrimitiveSign p) := by
+  unfold normalizePrimitiveSign
+  by_cases hlead : DensePoly.leadingCoeff p < 0
+  · rw [if_pos hlead]
+    rw [leadingCoeff_scale_of_nonzero (-1 : Int) p (by decide)]
+    omega
+  · rw [if_neg hlead]
+    omega
+
+private theorem leadingCoeff_ne_zero_of_ne_zero (p : ZPoly) (hp : p ≠ 0) :
+    DensePoly.leadingCoeff p ≠ 0 := by
+  have hp_pos : 0 < p.size := size_pos_of_ne_zero p hp
+  rw [DensePoly.leadingCoeff_eq_coeff_last p hp_pos]
+  exact DensePoly.coeff_last_ne_zero_of_pos_size p hp_pos
+
+private theorem normalizePrimitiveSign_ne_zero_of_ne_zero (p : ZPoly) (hp : p ≠ 0) :
+    normalizePrimitiveSign p ≠ 0 := by
+  unfold normalizePrimitiveSign
+  by_cases hlead : DensePoly.leadingCoeff p < 0
+  · rw [if_pos hlead]
+    intro hzero
+    have hsize : p.size = 0 := by
+      have hscaled_size : (DensePoly.scale (-1 : Int) p).size = p.size :=
+        scale_size_of_nonzero (-1 : Int) p (by decide)
+      rw [hzero, DensePoly.size_zero] at hscaled_size
+      omega
+    apply hp
+    apply DensePoly.ext_coeff
+    intro n
+    rw [DensePoly.coeff_zero]
+    exact DensePoly.coeff_eq_zero_of_size_le p (by omega)
+  · rw [if_neg hlead]
+    exact hp
+
+theorem leadingCoeff_normalizePrimitiveSign_pos_of_ne_zero (p : ZPoly)
+    (hp : p ≠ 0) :
+    0 < DensePoly.leadingCoeff (normalizePrimitiveSign p) := by
+  have hnonneg := leadingCoeff_normalizePrimitiveSign_nonneg p
+  have hne : DensePoly.leadingCoeff (normalizePrimitiveSign p) ≠ 0 :=
+    leadingCoeff_ne_zero_of_ne_zero (normalizePrimitiveSign p)
+      (normalizePrimitiveSign_ne_zero_of_ne_zero p hp)
+  omega
+
+theorem leadingCoeff_ratPolyPrimitivePart_nonneg (p : DensePoly Rat) :
+    0 ≤ DensePoly.leadingCoeff (ratPolyPrimitivePart p) := by
+  unfold ratPolyPrimitivePart
+  exact leadingCoeff_normalizePrimitiveSign_nonneg _
+
+theorem leadingCoeff_ratPolyPrimitivePart_pos_of_ne_zero (p : DensePoly Rat)
+    (hp : p ≠ 0) :
+    0 < DensePoly.leadingCoeff (ratPolyPrimitivePart p) := by
+  unfold ratPolyPrimitivePart
+  apply leadingCoeff_normalizePrimitiveSign_pos_of_ne_zero
+  intro hpart_zero
+  have hcleared_zero : ratPolyPrimitivePartCleared p = 0 := by
+    change DensePoly.primitivePart (ratPolyPrimitivePartCleared p) = 0 at hpart_zero
+    rw [← DensePoly.content_mul_primitivePart (ratPolyPrimitivePartCleared p)]
+    change DensePoly.scale (DensePoly.content (ratPolyPrimitivePartCleared p))
+        (DensePoly.primitivePart (ratPolyPrimitivePartCleared p)) = 0
+    rw [hpart_zero]
+    apply DensePoly.ext_coeff
+    intro n
+    rw [DensePoly.coeff_scale (R := Int) (DensePoly.content (ratPolyPrimitivePartCleared p))
+      (0 : ZPoly) n (Int.mul_zero _)]
+    rw [DensePoly.coeff_zero]
+    exact Int.mul_zero _
+  have hrat_zero : toRatPoly (ratPolyPrimitivePartCleared p) = 0 := by
+    rw [hcleared_zero, toRatPoly_zero]
+  have hscaled_zero :
+      DensePoly.scale (ratCommonDen p.toArray.toList : Rat) p = 0 := by
+    simpa [toRatPoly_ratPolyPrimitivePartCleared] using hrat_zero
+  have hden_ne : (ratCommonDen p.toArray.toList : Rat) ≠ 0 := by
+    exact_mod_cast Nat.ne_of_gt (ratCommonDen_pos p.toArray.toList)
+  apply hp
+  apply DensePoly.ext_coeff
+  intro n
+  have hcoeff := congrArg (fun q : DensePoly Rat => q.coeff n) hscaled_zero
+  change (DensePoly.scale (ratCommonDen p.toArray.toList : Rat) p).coeff n =
+    (0 : DensePoly Rat).coeff n at hcoeff
+  rw [DensePoly.coeff_scale (R := Rat) (ratCommonDen p.toArray.toList : Rat) p n
+    (Rat.mul_zero _)] at hcoeff
+  rw [DensePoly.coeff_zero] at hcoeff ⊢
+  rcases Rat.mul_eq_zero.mp hcoeff with hden_zero | hp_zero
+  · exact False.elim (hden_ne hden_zero)
+  · exact hp_zero
 
 private theorem normalizePrimitiveSign_primitivePart_primitive (f : ZPoly)
     (h : content (normalizePrimitiveSign (primitivePart f)) ≠ 0) :
@@ -2901,6 +3146,84 @@ theorem primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive
       simpa [p] using hprimitive_ne
     simpa [p, ratPrimitive, derivative] using
       ratPolyPrimitivePart_div_gcd_mul_primitive p hp_ne
+
+theorem primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_leadingCoeff_pos
+    (f : ZPoly) (hf : f ≠ 0) :
+    let d := primitiveSquareFreeDecomposition f
+    0 < DensePoly.leadingCoeff (d.squareFreeCore * d.repeatedPart) := by
+  have hcontent_ne : content f ≠ 0 := content_ne_zero_of_ne_zero f hf
+  have hprimitive : Primitive (primitivePart f) :=
+    primitivePart_primitive f hcontent_ne
+  have hprimitive_ne : primitivePart f ≠ 0 :=
+    ne_zero_of_primitive (primitivePart f) hprimitive
+  have hprimitive_not_isZero : (primitivePart f).isZero = false := by
+    cases hzero : (primitivePart f).isZero
+    · rfl
+    · exfalso
+      exact hprimitive_ne (densePoly_eq_zero_of_isZero_true (primitivePart f) hzero)
+  unfold primitiveSquareFreeDecomposition
+  rw [if_neg (by simpa using hprimitive_not_isZero)]
+  let p := primitivePart f
+  let ratPrimitive := toRatPoly p
+  let derivative := DensePoly.derivative ratPrimitive
+  by_cases hderivative : derivative.isZero = true
+  · rw [if_pos hderivative]
+    have hderivative_eq : derivative = 0 :=
+      densePoly_eq_zero_of_isZero_true derivative hderivative
+    have hsize : p.size ≤ 1 := by
+      exact size_le_one_of_toRatPoly_derivative_zero p (by
+        simpa [derivative, ratPrimitive] using hderivative_eq)
+    have hp_primitive : Primitive p := by
+      simpa [p] using hprimitive
+    have hcore_eq : normalizePrimitiveSign p = 1 :=
+      normalizePrimitiveSign_eq_one_of_primitive_size_le_one p hp_primitive hsize
+    have hprod_pos : 0 < DensePoly.leadingCoeff ((1 : ZPoly) * (1 : ZPoly)) := by
+      rw [leadingCoeff_mul_of_nonzero (1 : ZPoly) (1 : ZPoly)
+        (by decide) (by decide)]
+      exact Int.mul_pos leadingCoeff_one_pos leadingCoeff_one_pos
+    simpa [p, hcore_eq] using hprod_pos
+  · rw [if_neg hderivative]
+    let repeatedRat := DensePoly.gcd ratPrimitive derivative
+    let quotientRat := ratPrimitive / repeatedRat
+    have hp_ne : p ≠ 0 := by
+      simpa [p] using hprimitive_ne
+    have hratPrimitive_ne : ratPrimitive ≠ 0 :=
+      toRatPoly_ne_zero_of_ne_zero p hp_ne
+    have hrepeated_ne : repeatedRat ≠ 0 := by
+      intro hrepeated_zero
+      rcases DensePoly.gcd_dvd_left ratPrimitive derivative with ⟨a, ha⟩
+      apply hratPrimitive_ne
+      have hzero : ratPrimitive = 0 := by
+        rw [show DensePoly.gcd ratPrimitive derivative = repeatedRat by rfl] at ha
+        rw [hrepeated_zero, DensePoly.zero_mul] at ha
+        exact ha
+      exact hzero
+    have hquotient_ne : quotientRat ≠ 0 := by
+      intro hquotient_zero
+      have hrec : quotientRat * repeatedRat = ratPrimitive := by
+        simpa [quotientRat, repeatedRat] using
+          rat_div_gcd_mul_reconstruct ratPrimitive derivative
+      apply hratPrimitive_ne
+      rw [hquotient_zero, DensePoly.zero_mul] at hrec
+      exact hrec.symm
+    have hcore_pos :
+        0 < DensePoly.leadingCoeff (ratPolyPrimitivePart quotientRat) :=
+      leadingCoeff_ratPolyPrimitivePart_pos_of_ne_zero quotientRat hquotient_ne
+    have hrepeated_pos :
+        0 < DensePoly.leadingCoeff (ratPolyPrimitivePart repeatedRat) :=
+      leadingCoeff_ratPolyPrimitivePart_pos_of_ne_zero repeatedRat hrepeated_ne
+    have hcore_part_ne : ratPolyPrimitivePart quotientRat ≠ 0 :=
+      ratPolyPrimitivePart_ne_zero_of_ne_zero quotientRat hquotient_ne
+    have hrepeated_part_ne : ratPolyPrimitivePart repeatedRat ≠ 0 :=
+      ratPolyPrimitivePart_ne_zero_of_ne_zero repeatedRat hrepeated_ne
+    have hprod_pos :
+        0 < DensePoly.leadingCoeff
+          (ratPolyPrimitivePart quotientRat * ratPolyPrimitivePart repeatedRat) := by
+      rw [leadingCoeff_mul_of_nonzero
+        (ratPolyPrimitivePart quotientRat) (ratPolyPrimitivePart repeatedRat)
+        hcore_part_ne hrepeated_part_ne]
+      exact Int.mul_pos hcore_pos hrepeated_pos
+    simpa [p, ratPrimitive, derivative, repeatedRat, quotientRat] using hprod_pos
 
 theorem primitiveSquareFreeDecomposition_reassembly_signed
     (f : ZPoly) (hf : f ≠ 0) :
