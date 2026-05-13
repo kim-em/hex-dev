@@ -3008,6 +3008,29 @@ private theorem yunFactorsContribution_reconstruct
         hp f multiplicity fuel hmultiplicity hfuel hzero hdf hrepeated_false
 
 /--
+Inductive predicate capturing states `(c, w, fuel)` reachable from the initial
+derivative-active split of `f`. Used to scope the state payload hypothesis
+expected by `yunFactorsLevelCompletes_of_derivative_active_initial_split`,
+which the derivative-active branch threads into the recursive correctness
+chain.
+-/
+private inductive yunFactorsDerivativeActiveReachable
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) :
+    FpPoly p → FpPoly p → Nat → Prop
+  | derivativeSplit (fuel : Nat)
+      (hdf : (DensePoly.derivative f).isZero ≠ true) :
+      yunFactorsDerivativeActiveReachable hp f
+        (f / DensePoly.gcd f (DensePoly.derivative f))
+        (DensePoly.gcd f (DensePoly.derivative f))
+        fuel
+  | step (c w : FpPoly p) (fuel : Nat) :
+      yunFactorsDerivativeActiveReachable hp f c w (fuel + 1) →
+      yunFactorsDerivativeActiveReachable hp f
+        (DensePoly.gcd c w)
+        (w / DensePoly.gcd c w)
+        fuel
+
+/--
 Remaining assembly obligation for the derivative-active branch: the new
 offset-form Yun invariant below identifies the local contribution with the
 emitted weighted product, while this theorem is the later factorisation step
@@ -3019,7 +3042,13 @@ private theorem squareFreeAuxRevContribution_derivative_active_pow_obligation
     (hmultiplicity : 0 < multiplicity) (hfuel : f.size < fuel + 1)
     (hzero : f.isZero = false)
     (hdf : (DensePoly.derivative f).isZero = false)
-    (hreachable : squareFreeContributionReachable f) :
+    (hreachable : squareFreeContributionReachable f)
+    (_hstate :
+      ∀ f' c w : FpPoly p, ∀ fuel : Nat,
+        yunFactorsDerivativeActiveReachable hp f' c w fuel →
+          squareFreeContributionReachable c ∧
+            c.isZero = false ∧
+              w.isZero = false) :
     squareFreeAuxRevContribution f multiplicity (fuel + 1) = pow f multiplicity := by
   have hoffset :=
     yunFactorsContribution_reconstruct
@@ -3030,7 +3059,13 @@ private theorem squareFreeAuxRevContribution_correct_pow_of_nonzero
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
     (hmultiplicity : 0 < multiplicity) (hfuel : f.size < fuel)
     (hzero : f.isZero = false)
-    (hreachable : squareFreeContributionReachable f) :
+    (hreachable : squareFreeContributionReachable f)
+    (hstate :
+      ∀ f' c w : FpPoly p, ∀ fuel : Nat,
+        yunFactorsDerivativeActiveReachable hp f' c w fuel →
+          squareFreeContributionReachable c ∧
+            c.isZero = false ∧
+              w.isZero = false) :
     squareFreeAuxRevContribution f multiplicity fuel = pow f multiplicity := by
   induction fuel generalizing f multiplicity with
   | zero =>
@@ -3070,7 +3105,7 @@ private theorem squareFreeAuxRevContribution_correct_pow_of_nonzero
           cases h : (DensePoly.derivative f).isZero <;> simp [h] at hdf ⊢
         simpa [squareFreeAuxRevContribution, hzero, hdf_false] using
           squareFreeAuxRevContribution_derivative_active_pow_obligation
-            hp f multiplicity fuel hmultiplicity hfuel hzero hdf_false hreachable
+            hp f multiplicity fuel hmultiplicity hfuel hzero hdf_false hreachable hstate
 
 /--
 Tail-recursive square-free decomposition over `F_p[x]`, accumulating factors
@@ -4673,22 +4708,6 @@ private theorem yunFactorsLevelCompletes_of_derivative_active_state
         yunFactorsLevelCompletes_of_size_bound
           c g multiplicity 1 (fuel + 1) hstate hreachable hbound
 
-private inductive yunFactorsDerivativeActiveReachable
-    (hp : Hex.Nat.Prime p) (f : FpPoly p) :
-    FpPoly p → FpPoly p → Nat → Prop
-  | derivativeSplit (fuel : Nat)
-      (hdf : (DensePoly.derivative f).isZero ≠ true) :
-      yunFactorsDerivativeActiveReachable hp f
-        (f / DensePoly.gcd f (DensePoly.derivative f))
-        (DensePoly.gcd f (DensePoly.derivative f))
-        fuel
-  | step (c w : FpPoly p) (fuel : Nat) :
-      yunFactorsDerivativeActiveReachable hp f c w (fuel + 1) →
-      yunFactorsDerivativeActiveReachable hp f
-        (DensePoly.gcd c w)
-        (w / DensePoly.gcd c w)
-        fuel
-
 private theorem yunFactorsDerivativeActiveReachable_of_derivative_split
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (fuel : Nat)
     (hdf : (DensePoly.derivative f).isZero ≠ true) :
@@ -5934,10 +5953,16 @@ private theorem squareFreeAuxRev_factors_squareFree
 
 private theorem squareFreeAuxRevContribution_correct
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (hzero : f.isZero = false)
-    (hreachable : squareFreeContributionReachable f) :
+    (hreachable : squareFreeContributionReachable f)
+    (hstate :
+      ∀ f' c w : FpPoly p, ∀ fuel : Nat,
+        yunFactorsDerivativeActiveReachable hp f' c w fuel →
+          squareFreeContributionReachable c ∧
+            c.isZero = false ∧
+              w.isZero = false) :
     squareFreeAuxRevContribution f 1 (f.size + 1) = f := by
   rw [squareFreeAuxRevContribution_correct_pow_of_nonzero hp f 1 (f.size + 1)
-    (by omega) (by omega) hzero hreachable]
+    (by omega) (by omega) hzero hreachable hstate]
   exact pow_one f
 
 private theorem squareFreeAux_zero_weightedProduct
@@ -5960,13 +5985,19 @@ def squareFreeDecomposition (hp : Hex.Nat.Prime p) (f : FpPoly p) : SquareFreeDe
 
 private theorem squareFreeAux_weightedProduct_nonzero
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (hzero : f.isZero = false)
-    (hreachable : squareFreeContributionReachable f) :
+    (hreachable : squareFreeContributionReachable f)
+    (hstate :
+      ∀ f' c w : FpPoly p, ∀ fuel : Nat,
+        yunFactorsDerivativeActiveReachable hp f' c w fuel →
+          squareFreeContributionReachable c ∧
+            c.isZero = false ∧
+              w.isZero = false) :
     weightedProduct (squareFreeAux f 1 (f.size + 1)) = f := by
   unfold squareFreeAux
   have hinvariant := squareFreeAuxRev_reconstruction_invariant f 1 (f.size + 1) []
   rw [hinvariant]
   simp [weightedProduct_nil]
-  exact squareFreeAuxRevContribution_correct hp f hzero hreachable
+  exact squareFreeAuxRevContribution_correct hp f hzero hreachable hstate
 
 private theorem normalizeMonic_squareFreeContributionReachable
     (hp : Hex.Nat.Prime p) (f : FpPoly p) :
@@ -6070,7 +6101,13 @@ theorem squareFree_pairwise_coprime (hp : Hex.Nat.Prime p)
   exact squareFreeAuxRev_pairwise_coprime_nil hp residualInvariant
     (normalizeMonic f).2 1 ((normalizeMonic f).2.size + 1)
 
-theorem squareFree_weightedProduct (hp : Hex.Nat.Prime p) (f : FpPoly p) :
+theorem squareFree_weightedProduct (hp : Hex.Nat.Prime p) (f : FpPoly p)
+    (hstate :
+      ∀ f' c w : FpPoly p, ∀ fuel : Nat,
+        yunFactorsDerivativeActiveReachable hp f' c w fuel →
+          squareFreeContributionReachable c ∧
+            c.isZero = false ∧
+              w.isZero = false) :
     let d := squareFreeDecomposition hp f
     DensePoly.C d.unit * weightedProduct d.factors = f := by
   dsimp [squareFreeDecomposition]
@@ -6079,7 +6116,7 @@ theorem squareFree_weightedProduct (hp : Hex.Nat.Prime p) (f : FpPoly p) :
   · have hnonzero : (normalizeMonic f).2.isZero = false := by
       cases h : (normalizeMonic f).2.isZero <;> simp [h] at hzero ⊢
     rw [squareFreeAux_weightedProduct_nonzero hp (normalizeMonic f).2 hnonzero
-      (normalizeMonic_squareFreeContributionReachable hp f)]
+      (normalizeMonic_squareFreeContributionReachable hp f) hstate]
     exact normalizeMonic_reconstruct hp f
 
 theorem squareFree_factors_squareFree (hp : Hex.Nat.Prime p) (f : FpPoly p) :
