@@ -3,13 +3,8 @@ name: Conformance
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
-  # Intentionally NO `pull_request` trigger: conformance currently
-  # takes ~30-60 min (24 min Lean compile + 5-30 min oracle runs)
-  # and saturates the 20-runner pool, blocking the gating `CI`
-  # workflow on every PR. Until HO-37 (#3693) ships a fix
-  # (`.lake/build` cache or trimmed target set), conformance runs
-  # only on push-to-`main` and via manual `workflow_dispatch`.
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
