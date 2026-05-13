@@ -7983,5 +7983,176 @@ theorem det_gramMatrix_leadingRows_pos_of_upperTriangular_pos_diag
     (f := fun cols => det (columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn cols)))
     (x := cols) hmem hminor_sq_pos
 
+/-! ### Adjugate matrix and `M * adjugate M = det M • 1`
+
+The local adjugate matrix is the transpose of the cofactor matrix. The
+defining property is `(M * adjugate M)[i][j] = det M * δᵢⱼ`, which we
+prove entrywise via Laplace expansion. The off-diagonal case uses the
+"alien cofactor" identity: expanding row `i` against the cofactors of a
+different row `j` collapses to the determinant of a matrix with two
+equal rows. These are the Mathlib-free local analogues of Mathlib's
+`Matrix.adjugate` and `Matrix.mul_adjugate` needed by the Desnanot-Jacobi
+assembly. -/
+
+/-- Replace row `dst` of `M` with the vector `v`. -/
+def setRow {R : Type u} {n m : Nat}
+    (M : Matrix R n m) (dst : Fin n) (v : Vector R m) : Matrix R n m :=
+  M.set dst v
+
+@[simp] theorem setRow_get_self {R : Type u} {n m : Nat}
+    (M : Matrix R n m) (dst : Fin n) (v : Vector R m) :
+    (setRow M dst v)[dst] = v := by
+  simp [setRow]
+
+theorem setRow_row_ne {R : Type u} {n m : Nat}
+    (M : Matrix R n m) (dst r : Fin n) (v : Vector R m)
+    (h : r ≠ dst) :
+    (setRow M dst v)[r] = M[r] := by
+  have hval : dst.val ≠ r.val := fun hval => h (Fin.ext hval.symm)
+  exact Vector.getElem_set_ne (xs := M) (x := v) dst.isLt r.isLt hval
+
+/-- Deleting the destination row of `setRow M dst v` gives the same minor
+as deleting the destination row of `M`: the replaced row is removed
+anyway, so the new entries are invisible. -/
+theorem deleteRowCol_setRow_self {R : Type u} {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (dst col : Fin (n + 1))
+    (v : Vector R (n + 1)) :
+    deleteRowCol (setRow M dst v) dst col = deleteRowCol M dst col := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let ii : Fin n := ⟨i, hi⟩
+  let jj : Fin n := ⟨j, hj⟩
+  change (deleteRowCol (setRow M dst v) dst col)[ii][jj] =
+    (deleteRowCol M dst col)[ii][jj]
+  rw [deleteRowCol_entry, deleteRowCol_entry]
+  have hne : skipIndex dst ii ≠ dst := skipIndex_ne dst ii
+  have hrow := setRow_row_ne M dst (skipIndex dst ii) v hne
+  exact congrArg (fun row => row[skipIndex col jj]) hrow
+
+/-- The cofactor expansion of `setRow M dst v` along the replaced row
+`dst` uses the same minors as the cofactor expansion of `M` along that
+row, because the deleted row never contributes to the minor. -/
+theorem cofactor_setRow_self {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (dst col : Fin (n + 1))
+    (v : Vector R (n + 1)) :
+    cofactor (setRow M dst v) dst col = cofactor M dst col := by
+  unfold cofactor
+  rw [deleteRowCol_setRow_self M dst col v]
+
+/-- The "alien cofactor" identity: expanding row `i` of `M` against the
+cofactors of a different row `j` produces zero. This is the
+characteristic vanishing identity that makes the adjugate work. -/
+theorem foldl_alien_cofactor_eq_zero
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (i j : Fin (n + 1)) (hij : i ≠ j) :
+    (List.finRange (n + 1)).foldl
+        (fun acc k => acc + M[i][k] * cofactor M j k) 0 = 0 := by
+  let N : Matrix R (n + 1) (n + 1) := setRow M j M[i]
+  have hNi : N[i] = M[i] := setRow_row_ne M j i M[i] hij
+  have hNj : N[j] = M[i] := setRow_get_self M j M[i]
+  have hrows : N[i] = N[j] := hNi.trans hNj.symm
+  have hdetN : det N = 0 := det_eq_zero_of_row_eq N i j hij hrows
+  have hLaplace := det_eq_foldl_laplace_row N j
+  have hcof :
+      (List.finRange (n + 1)).foldl
+          (fun acc k => acc + N[j][k] * cofactor N j k) 0 =
+        (List.finRange (n + 1)).foldl
+          (fun acc k => acc + M[i][k] * cofactor M j k) 0 := by
+    apply foldl_acc_congr
+    intro acc k _hmem
+    have hentry : N[j][k] = M[i][k] := congrArg (fun row => row[k]) hNj
+    have hcofk : cofactor N j k = cofactor M j k :=
+      cofactor_setRow_self M j k M[i]
+    rw [hentry, hcofk]
+  rw [hcof] at hLaplace
+  exact hLaplace.symm.trans hdetN
+
+/-- The local adjugate matrix: entry `(i, j)` is the cofactor at row `j`,
+column `i` of `M`. This is the transpose of the cofactor matrix. -/
+def adjugate {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) : Matrix R (n + 1) (n + 1) :=
+  ofFn fun i j => cofactor M j i
+
+@[simp] theorem adjugate_get {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (i j : Fin (n + 1)) :
+    (adjugate M)[i][j] = cofactor M j i := by
+  simp [adjugate, ofFn]
+
+/-- Entrywise version of `M * adjugate M = det M • 1`. On the diagonal
+this is Laplace expansion of `det M`; off the diagonal it is the alien
+cofactor identity. -/
+theorem mul_adjugate_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (i j : Fin (n + 1)) :
+    (M * adjugate M)[i][j] =
+      if i = j then det M else 0 := by
+  have hmul : (M * adjugate M)[i][j] = Matrix.dot (row M i) (col (adjugate M) j) := by
+    change (Matrix.mul M (adjugate M))[i][j] = _
+    unfold Matrix.mul
+    show (ofFn fun i j => Matrix.dot (row M i) (col (adjugate M) j))[i][j] = _
+    simp [ofFn]
+  have hentry :
+      (M * adjugate M)[i][j] =
+        (List.finRange (n + 1)).foldl
+          (fun acc k => acc + M[i][k] * cofactor M j k) 0 := by
+    rw [hmul]
+    unfold Matrix.dot Hex.Vector.dotProduct
+    apply foldl_acc_congr
+    intro acc k _hmem
+    congr 1
+    have hrow : (row M i)[k] = M[i][k] := rfl
+    have hcol : (col (adjugate M) j)[k] = (adjugate M)[k][j] := by
+      simp [col]
+    rw [hrow, hcol, adjugate_get]
+  by_cases hij : i = j
+  · subst hij
+    rw [hentry, if_pos rfl]
+    exact (det_eq_foldl_laplace_row M i).symm
+  · rw [hentry, if_neg hij]
+    exact foldl_alien_cofactor_eq_zero M i j hij
+
+/-- Column-`0` view of `M * adjugate M`. -/
+theorem mul_adjugate_apply_zero {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (i : Fin (n + 1)) :
+    (M * adjugate M)[i][(0 : Fin (n + 1))] =
+      if i = 0 then det M else 0 :=
+  mul_adjugate_apply M i 0
+
+/-- Last-column view of `M * adjugate M`. -/
+theorem mul_adjugate_apply_last {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (i : Fin (n + 1)) :
+    (M * adjugate M)[i][Fin.last n] =
+      if i = Fin.last n then det M else 0 :=
+  mul_adjugate_apply M i (Fin.last n)
+
+/-- Cofactor-minor representation of an adjugate entry. -/
+theorem adjugate_eq_cofactorSign_mul_deleteRowCol
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (i j : Fin (n + 1)) :
+    (adjugate M)[i][j] = cofactorSign j i * det (deleteRowCol M j i) := by
+  rw [adjugate_get]
+  rfl
+
+/-- The `(0, 0)` adjugate entry equals the determinant of the minor
+obtained by deleting row `0` and column `0`. -/
+@[simp] theorem adjugate_zero_zero
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) :
+    (adjugate M)[(0 : Fin (n + 1))][(0 : Fin (n + 1))] =
+      det (deleteRowCol M 0 0) := by
+  rw [adjugate_get]
+  exact cofactor_of_even M 0 0 (by simp)
+
+/-- The `(Fin.last, Fin.last)` adjugate entry equals the determinant of
+the leading prefix minor obtained by deleting the last row and column. -/
+@[simp] theorem adjugate_last_last
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) :
+    (adjugate M)[Fin.last n][Fin.last n] =
+      det (leadingPrefix M n (Nat.le_succ n)) := by
+  rw [adjugate_get]
+  exact cofactor_last_last M
+
 end Matrix
 end Hex

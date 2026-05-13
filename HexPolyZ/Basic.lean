@@ -685,6 +685,11 @@ theorem primitivePart_eq_self_of_primitive (f : ZPoly) (h : Primitive f) :
     primitivePart f = f :=
   DensePoly.primitivePart_eq_self_of_content_eq_one f (by simpa [Primitive, content] using h)
 
+theorem primitive_mul (p q : ZPoly)
+    (hp : Primitive p) (hq : Primitive q) :
+    Primitive (p * q) := by
+  simpa [Primitive, content] using DensePoly.content_mul_of_primitive p q hp hq
+
 theorem primitiveSquareFreeDecomposition_primitive (f : ZPoly) :
     (primitiveSquareFreeDecomposition f).primitive = primitivePart f := by
   by_cases hzero : (primitivePart f).isZero = true

@@ -4839,5 +4839,23 @@ theorem exists_scalar_annihilator_of_mul_coeff_dvd_of_exists_not_dvd_coeff
   refine ⟨q.coeff k, hk, ?_⟩
   exact dvd_last_q_coeff_mul_p_coeff_of_dvd_mul_coeff_of_q_above p q d k hprod hqAbove
 
+/-- Coefficient divisibility transfer for primitive products: if `p` is
+primitive (content one) and a natural number `d` divides every coefficient of
+`p * q`, then `d` divides every coefficient of `q`. Proved by contradiction
+using the McCoy scalar annihilator
+`exists_scalar_annihilator_of_mul_coeff_dvd_of_exists_not_dvd_coeff` and the
+primitive scalar annihilator `nat_dvd_of_scalar_mul_primitive_coeff_dvd`. -/
+theorem coeff_dvd_of_primitive_mul_coeff_dvd
+    (p q : DensePoly Int) (d : Nat)
+    (hp : content p = 1)
+    (hprod : ∀ n, (d : Int) ∣ (p * q).coeff n) :
+    ∀ n, (d : Int) ∣ q.coeff n := by
+  intro n
+  apply Classical.byContradiction
+  intro hn
+  rcases exists_scalar_annihilator_of_mul_coeff_dvd_of_exists_not_dvd_coeff
+    p q d hprod ⟨n, hn⟩ with ⟨a, hna, ha⟩
+  exact hna (nat_dvd_of_scalar_mul_primitive_coeff_dvd p d a hp ha)
+
 end DensePoly
 end Hex
