@@ -214,6 +214,57 @@ theorem filter_range_succ_sig_eq (m : Nat) (sig : Nat → Array Rat) (rep : Nat)
   -- Match the shape `fun j => sig j = sig rep` and `if sig m = sig rep`.
   simpa using this
 
+/-- If signatures are decidably distinct at `rep` and `m`, the
+`partitionAcc m sig` entry for `rep` extends trivially to step `m + 1`. -/
+theorem partitionAcc_entry_eq_of_ne
+    (m : Nat) (sig : Nat → Array Rat) (rep : Nat)
+    (hne : sig m ≠ sig rep) :
+    (sig rep, (List.range (m + 1)).filter (fun j => sig j = sig rep)) =
+      (sig rep, (List.range m).filter (fun j => sig j = sig rep)) := by
+  rw [filter_range_succ_sig_eq]
+  simp [hne]
+
+/-- Inductive step: `partitionAcc (m + 1) sig` is obtained by feeding
+`(sig m, m)` through `Hex.bhksInsertSignatureClass` on top of
+`partitionAcc m sig`, assuming `sig m` has not been seen earlier. -/
+private theorem partitionAcc_succ_of_fresh
+    (m : Nat) (sig : Nat → Array Rat)
+    (hfresh : ∀ k, k < m → sig k ≠ sig m) :
+    partitionAcc (m + 1) sig =
+      Hex.bhksInsertSignatureClass (sig m) m (partitionAcc m sig) := by
+  -- No entry of `partitionAcc m sig` has signature `sig m`.
+  have hnotin : ∀ p ∈ partitionAcc m sig, p.1 ≠ sig m := by
+    intro p hp
+    unfold partitionAcc at hp
+    rw [List.mem_map] at hp
+    obtain ⟨rep, hrep_mem, hrep_eq⟩ := hp
+    subst hrep_eq
+    have hrep_lt : rep < m := representativeColumns_lt m sig rep hrep_mem
+    exact hfresh rep hrep_lt
+  rw [bhksInsertSignatureClass_eq_append (sig m) m _ hnotin]
+  -- Now show: partitionAcc (m+1) sig = partitionAcc m sig ++ [(sig m, [m])]
+  unfold partitionAcc
+  rw [representativeColumns_succ_of_fresh m sig hfresh, List.map_append]
+  congr 1
+  · -- prefix: each rep < m, so sig m ≠ sig rep, so the filter at m+1 equals filter at m.
+    apply List.map_congr_left
+    intro rep hrep
+    have hrep_lt : rep < m := representativeColumns_lt m sig rep hrep
+    have hne : sig m ≠ sig rep := (hfresh rep hrep_lt).symm
+    exact partitionAcc_entry_eq_of_ne m sig rep hne
+  · -- the trailing [m] entry produces (sig m, [m])
+    simp only [List.map_cons, List.map_nil]
+    congr 1
+    rw [filter_range_succ_sig_eq]
+    have hfilter : (List.range m).filter (fun j => sig j = sig m) = [] := by
+      apply List.eq_nil_iff_forall_not_mem.mpr
+      intro k hk
+      rw [List.mem_filter] at hk
+      rcases hk with ⟨hmem, hsig⟩
+      rw [List.mem_range] at hmem
+      exact (hfresh k hmem) (by simpa using hsig)
+    simp [hfilter]
+
 end BHKS
 
 end HexBerlekampZassenhausMathlib
