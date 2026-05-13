@@ -3453,6 +3453,40 @@ theorem basis_rowSwap_adjacent_prev (b : Matrix Int n m) (km1 k : Fin n)
     GramSchmidt.Rat.basis_rowSwap_adjacent_prev
       (b := GramSchmidt.castIntMatrix b) (km1 := km1) (k := k) hkm1
 
+theorem basis_rowSwap_of_after (b : Matrix Int n m) (km1 k i : Fin n)
+    (hkm1 : km1.val + 1 = k.val) (hi : k.val < i.val) :
+    (basis (Matrix.rowSwap b km1 k)).row i = (basis b).row i := by
+  simpa [basis, GramSchmidt.Rat.basis, castIntMatrix_rowSwap] using
+    GramSchmidt.Rat.basis_rowSwap_of_after
+      (b := GramSchmidt.castIntMatrix b) (km1 := km1) (k := k) (i := i) hkm1 hi
+
+theorem basis_rowSwap_adjacent_curr (b : Matrix Int n m) (km1 k : Fin n)
+    (hkm1 : km1.val + 1 = k.val)
+    (hnorm :
+      Matrix.dot
+        ((basis b).row k + GramSchmidt.entry (coeffs b) k km1 • (basis b).row km1)
+        ((basis b).row k + GramSchmidt.entry (coeffs b) k km1 • (basis b).row km1) ≠ 0) :
+    let prev := (basis b).row km1
+    let curr := (basis b).row k
+    let mu := GramSchmidt.entry (coeffs b) k km1
+    let swappedPrev := curr + mu • prev
+    (basis (Matrix.rowSwap b km1 k)).row k =
+      (Matrix.dot curr curr / Matrix.dot swappedPrev swappedPrev) • prev -
+        (mu * Matrix.dot prev prev / Matrix.dot swappedPrev swappedPrev) • curr := by
+  have hnormRat :
+      Matrix.dot
+        ((GramSchmidt.Rat.basis (GramSchmidt.castIntMatrix b)).row k +
+          GramSchmidt.entry (GramSchmidt.Rat.coeffs (GramSchmidt.castIntMatrix b)) k km1 •
+            (GramSchmidt.Rat.basis (GramSchmidt.castIntMatrix b)).row km1)
+        ((GramSchmidt.Rat.basis (GramSchmidt.castIntMatrix b)).row k +
+          GramSchmidt.entry (GramSchmidt.Rat.coeffs (GramSchmidt.castIntMatrix b)) k km1 •
+            (GramSchmidt.Rat.basis (GramSchmidt.castIntMatrix b)).row km1) ≠ 0 := by
+    simpa [basis, coeffs, GramSchmidt.Rat.basis, GramSchmidt.Rat.coeffs] using hnorm
+  simpa [basis, coeffs, GramSchmidt.Rat.basis, GramSchmidt.Rat.coeffs,
+    castIntMatrix_rowSwap] using
+    GramSchmidt.Rat.basis_rowSwap_adjacent_curr
+      (b := GramSchmidt.castIntMatrix b) (km1 := km1) (k := k) hkm1 hnormRat
+
 /-- Under integer row-add with `src < dst`, lower coefficients in the
 destination row update linearly below the pivot source column. -/
 theorem coeffs_rowAdd_lower (b : Matrix Int n m) (col src dst : Fin n)
