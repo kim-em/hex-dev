@@ -5,6 +5,7 @@ import HexBerlekampZassenhausMathlib.ColumnSignature
 import HexBerlekampZassenhausMathlib.Lattice
 import HexBerlekampZassenhausMathlib.Recovery
 import HexBerlekampZassenhausMathlib.Resultant
+import HexBerlekampZassenhausMathlib.SignatureClasses
 import HexBerlekampZassenhausMathlib.TerminationBound
 
 /-!
