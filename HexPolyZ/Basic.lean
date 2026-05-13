@@ -827,6 +827,14 @@ private theorem rat_scale_zero (p : DensePoly Rat) :
   rw [DensePoly.coeff_zero]
   exact Rat.zero_mul (p.coeff n)
 
+private theorem rat_scale_zero_right (u : Rat) :
+    DensePoly.scale u (0 : DensePoly Rat) = 0 := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_scale (R := Rat) u (0 : DensePoly Rat) n (Rat.mul_zero u)]
+  rw [DensePoly.coeff_zero]
+  exact Rat.mul_zero u
+
 private theorem rat_scale_one (p : DensePoly Rat) :
     DensePoly.scale 1 p = p := by
   apply DensePoly.ext_coeff
@@ -2174,6 +2182,61 @@ private theorem content_C_int (c : Int) :
     content (DensePoly.C c) = Int.ofNat c.natAbs := by
   simpa [content] using DensePoly.content_C c
 
+private theorem int_scale_zero (p : ZPoly) :
+    DensePoly.scale (0 : Int) p = 0 := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_scale (R := Int) (0 : Int) p n (Int.zero_mul 0)]
+  rw [DensePoly.coeff_zero]
+  exact Int.zero_mul (p.coeff n)
+
+private theorem content_ne_zero_of_ne_zero (p : ZPoly) (hp : p ≠ 0) :
+    content p ≠ 0 := by
+  intro hcontent
+  apply hp
+  have hpart_zero : primitivePart p = 0 := by
+    simpa [primitivePart] using
+      DensePoly.primitivePart_eq_zero_of_content_eq_zero p
+        (by simpa [content] using hcontent)
+  have hreconstruct := content_mul_primitivePart p
+  rw [hcontent, hpart_zero, int_scale_zero] at hreconstruct
+  exact hreconstruct.symm
+
+private theorem ne_zero_of_primitive (p : ZPoly) (hp : Primitive p) :
+    p ≠ 0 := by
+  intro hzero
+  have hcontent : content p = 0 := by
+    rw [hzero]
+    simp [content, DensePoly.content_zero]
+  rw [Primitive, hcontent] at hp
+  contradiction
+
+private theorem primitive_one :
+    Primitive (1 : ZPoly) := by
+  change content (DensePoly.C (1 : Int)) = 1
+  rw [content_C_int]
+  rfl
+
+private theorem toRatPoly_injective {p q : ZPoly}
+    (h : toRatPoly p = toRatPoly q) :
+    p = q := by
+  apply DensePoly.ext_coeff
+  intro n
+  have hcoeff := congrArg (fun r : DensePoly Rat => r.coeff n) h
+  change (toRatPoly p).coeff n = (toRatPoly q).coeff n at hcoeff
+  rw [coeff_toRatPoly, coeff_toRatPoly] at hcoeff
+  exact_mod_cast hcoeff
+
+private theorem ratPolyPrimitivePart_ne_zero_of_ne_zero (p : DensePoly Rat)
+    (hp : p ≠ 0) :
+    ratPolyPrimitivePart p ≠ 0 := by
+  rcases ratPolyPrimitivePart_rational_associate p with ⟨unit, hunit⟩
+  intro hprimitive_zero
+  apply hp
+  rw [hunit, hprimitive_zero]
+  rw [toRatPoly_zero]
+  exact rat_scale_zero_right unit
+
 private theorem int_eq_one_or_neg_one_of_natAbs_eq_one {c : Int}
     (habs : c.natAbs = 1) :
     c = 1 ∨ c = -1 := by
@@ -2386,6 +2449,135 @@ theorem primitiveSquareFreeDecomposition_squareFreeCore
           (u := unit)
           hunit_ne hquotient_ne hunit_core hsquare
       simpa [SquareFreeRat, coreRat] using htransfer
+
+private theorem ratPolyPrimitivePart_div_gcd_mul_primitive
+    (p : ZPoly) (hp_ne : p ≠ 0) :
+    let ratPrimitive := toRatPoly p
+    let derivative := DensePoly.derivative ratPrimitive
+    let repeatedRat := DensePoly.gcd ratPrimitive derivative
+    let quotientRat := ratPrimitive / repeatedRat
+    Primitive (ratPolyPrimitivePart quotientRat * ratPolyPrimitivePart repeatedRat) := by
+  let ratPrimitive := toRatPoly p
+  let derivative := DensePoly.derivative ratPrimitive
+  let repeatedRat := DensePoly.gcd ratPrimitive derivative
+  let quotientRat := ratPrimitive / repeatedRat
+  have hratPrimitive_ne : ratPrimitive ≠ 0 :=
+    toRatPoly_ne_zero_of_ne_zero p hp_ne
+  have hrepeated_ne : repeatedRat ≠ 0 := by
+    intro hrepeated_zero
+    rcases DensePoly.gcd_dvd_left ratPrimitive derivative with ⟨a, ha⟩
+    apply hratPrimitive_ne
+    have hzero : ratPrimitive = 0 := by
+      rw [show DensePoly.gcd ratPrimitive derivative = repeatedRat by rfl] at ha
+      rw [hrepeated_zero, DensePoly.zero_mul] at ha
+      exact ha
+    exact hzero
+  have hquotient_ne : quotientRat ≠ 0 := by
+    intro hquotient_zero
+    have hrec : quotientRat * repeatedRat = ratPrimitive := by
+      simpa [quotientRat, repeatedRat] using
+        rat_div_gcd_mul_reconstruct ratPrimitive derivative
+    apply hratPrimitive_ne
+    rw [hquotient_zero, DensePoly.zero_mul] at hrec
+    exact hrec.symm
+  have hcore_ne : ratPolyPrimitivePart quotientRat ≠ 0 :=
+    ratPolyPrimitivePart_ne_zero_of_ne_zero quotientRat hquotient_ne
+  have hrepeated_part_ne : ratPolyPrimitivePart repeatedRat ≠ 0 :=
+    ratPolyPrimitivePart_ne_zero_of_ne_zero repeatedRat hrepeated_ne
+  have hcore_primitive : Primitive (ratPolyPrimitivePart quotientRat) :=
+    ratPolyPrimitivePart_primitive quotientRat
+      (content_ne_zero_of_ne_zero (ratPolyPrimitivePart quotientRat) hcore_ne)
+  have hrepeated_primitive : Primitive (ratPolyPrimitivePart repeatedRat) :=
+    ratPolyPrimitivePart_primitive repeatedRat
+      (content_ne_zero_of_ne_zero (ratPolyPrimitivePart repeatedRat) hrepeated_part_ne)
+  exact primitive_mul (ratPolyPrimitivePart quotientRat) (ratPolyPrimitivePart repeatedRat)
+    hcore_primitive hrepeated_primitive
+
+theorem primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive
+    (f : ZPoly) (hf : f ≠ 0) :
+    let d := primitiveSquareFreeDecomposition f
+    Primitive (d.squareFreeCore * d.repeatedPart) := by
+  have hcontent_ne : content f ≠ 0 := content_ne_zero_of_ne_zero f hf
+  have hprimitive : Primitive (primitivePart f) :=
+    primitivePart_primitive f hcontent_ne
+  have hprimitive_ne : primitivePart f ≠ 0 :=
+    ne_zero_of_primitive (primitivePart f) hprimitive
+  have hprimitive_not_isZero : (primitivePart f).isZero = false := by
+    cases hzero : (primitivePart f).isZero
+    · rfl
+    · exfalso
+      exact hprimitive_ne (densePoly_eq_zero_of_isZero_true (primitivePart f) hzero)
+  unfold primitiveSquareFreeDecomposition
+  rw [if_neg (by simpa using hprimitive_not_isZero)]
+  let p := primitivePart f
+  let ratPrimitive := toRatPoly p
+  let derivative := DensePoly.derivative ratPrimitive
+  by_cases hderivative : derivative.isZero = true
+  · rw [if_pos hderivative]
+    have hderivative_eq : derivative = 0 :=
+      densePoly_eq_zero_of_isZero_true derivative hderivative
+    have hsize : p.size ≤ 1 := by
+      exact size_le_one_of_toRatPoly_derivative_zero p (by
+        simpa [derivative, ratPrimitive] using hderivative_eq)
+    have hp_primitive : Primitive p := by
+      simpa [p] using hprimitive
+    have hcore_eq : normalizePrimitiveSign p = 1 :=
+      normalizePrimitiveSign_eq_one_of_primitive_size_le_one p hp_primitive hsize
+    rw [hcore_eq]
+    change Primitive ((1 : ZPoly) * (1 : ZPoly))
+    exact primitive_mul 1 1 primitive_one primitive_one
+  · rw [if_neg hderivative]
+    have hp_ne : p ≠ 0 := by
+      simpa [p] using hprimitive_ne
+    simpa [p, ratPrimitive, derivative] using
+      ratPolyPrimitivePart_div_gcd_mul_primitive p hp_ne
+
+theorem primitiveSquareFreeDecomposition_reassembly_signed
+    (f : ZPoly) (hf : f ≠ 0) :
+    let d := primitiveSquareFreeDecomposition f
+    ∃ ε : Int, (ε = 1 ∨ ε = -1) ∧
+      DensePoly.scale ε (d.squareFreeCore * d.repeatedPart) =
+        primitivePart f := by
+  let d := primitiveSquareFreeDecomposition f
+  have hdprimitive : d.primitive = primitivePart f := by
+    simpa [d] using primitiveSquareFreeDecomposition_primitive f
+  have hcontent_ne : content f ≠ 0 := content_ne_zero_of_ne_zero f hf
+  have hprimitive : Primitive d.primitive := by
+    rw [hdprimitive]
+    exact primitivePart_primitive f hcontent_ne
+  have hprimitive_ne : d.primitive ≠ 0 :=
+    ne_zero_of_primitive d.primitive hprimitive
+  have hproduct_primitive : Primitive (d.squareFreeCore * d.repeatedPart) := by
+    simpa [d] using
+      primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive f hf
+  have hproduct_ne : d.squareFreeCore * d.repeatedPart ≠ 0 :=
+    ne_zero_of_primitive (d.squareFreeCore * d.repeatedPart) hproduct_primitive
+  rcases primitiveSquareFreeDecomposition_reassembly_over_rat f with ⟨unit, hunit⟩
+  have hunit_product :
+      toRatPoly d.primitive =
+        DensePoly.scale unit (toRatPoly (d.squareFreeCore * d.repeatedPart)) := by
+    simpa [d, toRatPoly_mul] using hunit
+  rcases rational_associate_primitive_unit hprimitive hprimitive_ne
+      hproduct_primitive hproduct_ne hunit_product with hunit_one | hunit_neg
+  · refine ⟨1, Or.inl rfl, ?_⟩
+    apply toRatPoly_injective
+    rw [toRatPoly_scale_int]
+    change DensePoly.scale (1 : Rat) (toRatPoly (d.squareFreeCore * d.repeatedPart)) =
+      toRatPoly (primitivePart f)
+    have htarget := hunit_product
+    rw [hunit_one, rat_scale_one] at htarget
+    rw [rat_scale_one]
+    rw [← hdprimitive]
+    exact htarget.symm
+  · refine ⟨-1, Or.inr rfl, ?_⟩
+    apply toRatPoly_injective
+    rw [toRatPoly_scale_int]
+    change DensePoly.scale (-1 : Rat) (toRatPoly (d.squareFreeCore * d.repeatedPart)) =
+      toRatPoly (primitivePart f)
+    have htarget := hunit_product
+    rw [hunit_neg] at htarget
+    rw [← hdprimitive]
+    exact htarget.symm
 
 theorem coprimeModP_of_bezout
     (f g s t : ZPoly) (p : Nat)
