@@ -399,6 +399,66 @@ def isBhksBadVectorSetup_of_projected_not_indicator
   · simpa [projectedVectorFn_projectedVectorArray] using hin
   · simpa [projectedVectorFn_projectedVectorArray] using hnot
 
+/--
+Per-vector algebraic bridge needed to turn a projected vector in `L' \ W` into
+the exact bad-vector setup callback consumed by cap separation.
+
+The structural `L' \ W` facts are supplied by the callback arguments.  This
+record packages the remaining BHKS Lemma 3.2 data: the canonical auxiliary
+polynomial attached to the projected vector, positivity of the selected local
+factor degree, rational coprimality, and the `p^(k*d)` resultant divisibility.
+-/
+structure ProjectedBadVectorSetupBridge
+    (W : ExecutableBadVectorWitness)
+    (trueSupports : Set (Set (Fin W.projectedRows.factorCount))) where
+  auxiliary_eq :
+    ∀ v : Fin W.projectedRows.factorCount → ℤ,
+      v ∈ BHKS.projectedRowSpanInt W.projectedRows →
+        v ∉ BHKS.trueFactorIndicatorLattice trueSupports →
+          W.H =
+            BHKS.auxiliaryPolynomial W.input W.liftData
+              (W.projectedVectorArray v)
+  localFactorDegree_pos :
+    ∀ v : Fin W.projectedRows.factorCount → ℤ,
+      v ∈ BHKS.projectedRowSpanInt W.projectedRows →
+        v ∉ BHKS.trueFactorIndicatorLattice trueSupports →
+          0 < W.localFactorDegree
+  coprime_input_aux_over_rat :
+    ∀ v : Fin W.projectedRows.factorCount → ℤ,
+      v ∈ BHKS.projectedRowSpanInt W.projectedRows →
+        v ∉ BHKS.trueFactorIndicatorLattice trueSupports →
+          IsCoprime
+            (W.inputPolynomial.map (Int.castRingHom ℚ))
+            (W.auxiliaryPolynomial.map (Int.castRingHom ℚ))
+  resultant_divisible_by_p_pow :
+    ∀ v : Fin W.projectedRows.factorCount → ℤ,
+      v ∈ BHKS.projectedRowSpanInt W.projectedRows →
+        v ∉ BHKS.trueFactorIndicatorLattice trueSupports →
+          ((W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : Nat) : ℤ) ∣
+            Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial
+
+/--
+Convert the packaged projected-vector bridge into the callback shape expected
+by `BHKS.ExecutableCapSeparationHypotheses`.
+-/
+def bad_setup_of_projected_not_indicator
+    (W : ExecutableBadVectorWitness)
+    (trueSupports : Set (Set (Fin W.projectedRows.factorCount)))
+    (hbridge : ProjectedBadVectorSetupBridge W trueSupports) :
+    ∀ v : Fin W.projectedRows.factorCount → ℤ,
+      v ∈ BHKS.projectedRowSpanInt W.projectedRows →
+        v ∉ BHKS.trueFactorIndicatorLattice trueSupports →
+          IsBhksBadVectorSetup W := by
+  intro v hin hnot
+  exact
+    isBhksBadVectorSetup_of_projected_not_indicator
+      W trueSupports v
+      (hbridge.auxiliary_eq v hin hnot)
+      hin hnot
+      (hbridge.localFactorDegree_pos v hin hnot)
+      (hbridge.coprime_input_aux_over_rat v hin hnot)
+      (hbridge.resultant_divisible_by_p_pow v hin hnot)
+
 /-- BHKS Lemma 3.2: the selected local-factor degree is positive whenever the
 witness carries a bad-vector setup. -/
 theorem localFactorDegree_pos_of_bhks_bad

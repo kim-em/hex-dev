@@ -557,13 +557,6 @@ private theorem gramDet_pos_core (b : Matrix Int n m)
         simpa [hdet_nat] using hdet_pos
       exact Int.ofNat_lt.mp hnat_int
 
-private theorem basis_normSq_core (b : Matrix Int n m)
-    (hli : independent b) (k : Nat) (hk : k < n) :
-    Vector.normSq ((basis b).row ⟨k, hk⟩) =
-      (gramDet b (k + 1) (Nat.succ_le_of_lt hk) : Rat) /
-        (gramDet b k (Nat.le_of_lt hk) : Rat) := by
-  sorry
-
 /-! ### Helpers for `gramDet_eq_prod_normSq_core`
 
 The remaining theorems below build the rational column-operation reduction
@@ -1303,6 +1296,41 @@ theorem gramDet_pos (b : Matrix Int n m)
     (hli : independent b) (k : Nat) (hk : k ≤ n) (hk' : 0 < k) :
     0 < gramDet b k hk := by
   exact gramDet_pos_core b hli k hk hk'
+
+/-- One-step extension of `gramSchmidtNormProduct`: appending the `k`-th
+factor multiplies the `k`-fold product by `Vector.normSq ((basis b).row ⟨k, _⟩)`.
+This is a `List.finRange` cancellation lemma; positivity of the leading Gram
+determinant is handled separately by `gramDet_pos`. -/
+private theorem gramSchmidtNormProduct_succ (b : Matrix Int n m)
+    (k : Nat) (hk : k + 1 ≤ n) :
+    gramSchmidtNormProduct b (k + 1) hk =
+      gramSchmidtNormProduct b k (Nat.le_of_succ_le hk) *
+        Vector.normSq ((basis b).row ⟨k, Nat.lt_of_succ_le hk⟩) := by
+  unfold gramSchmidtNormProduct
+  rw [List.finRange_succ_last]
+  rw [List.foldl_append, List.foldl_map]
+  simp only [List.foldl_cons, List.foldl_nil]
+  rfl
+
+private theorem basis_normSq_core (b : Matrix Int n m)
+    (hli : independent b) (k : Nat) (hk : k < n) :
+    Vector.normSq ((basis b).row ⟨k, hk⟩) =
+      (gramDet b (k + 1) (Nat.succ_le_of_lt hk) : Rat) /
+        (gramDet b k (Nat.le_of_lt hk) : Rat) := by
+  have hk_le : k ≤ n := Nat.le_of_lt hk
+  have hden_pos : 0 < (gramDet b k hk_le : Rat) := by
+    rw [Rat.natCast_pos]
+    rcases Nat.eq_zero_or_pos k with hk0 | hkpos
+    · subst hk0; rw [gramDet_zero]; decide
+    · exact gramDet_pos b hli k hk_le hkpos
+  have hprod_ne : gramSchmidtNormProduct b k hk_le ≠ 0 := by
+    rw [← gramDet_eq_prod_normSq b hli k hk_le]
+    exact Rat.ne_of_gt hden_pos
+  rw [gramDet_eq_prod_normSq b hli (k + 1) (Nat.succ_le_of_lt hk)]
+  rw [gramDet_eq_prod_normSq b hli k hk_le]
+  rw [gramSchmidtNormProduct_succ b k (Nat.succ_le_of_lt hk)]
+  rw [Rat.mul_comm]
+  exact (Rat.mul_div_cancel hprod_ne).symm
 
 theorem basis_normSq (b : Matrix Int n m)
     (hli : independent b) (k : Nat) (hk : k < n) :
