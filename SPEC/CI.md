@@ -133,6 +133,38 @@ Mathlib `cache` service publishes oleans for every Mathlib commit
 on `master`); the right response is to fix the upstream pin or the
 cache step, not to silently rebuild.
 
+## Hex build cache
+
+Every CI workflow that runs `lake build` MUST also cache the
+project's own `.lake/build` directory across runs via
+`actions/cache`. Lake's incremental build checks every module's
+content hash; restoring a stale cache is safe because Lake
+re-elaborates any module whose source has changed and reuses
+anything that hasn't.
+
+The cache key does not need careful tuning. Lake handles
+invalidation. A per-run unique key (e.g. `${{ github.run_id }}`)
+with a constant prefix in `restore-keys` is sufficient — every run
+uploads a fresh snapshot, every run restores the most recent
+snapshot, and Lake reconciles the rest.
+
+Coverage:
+
+- `.lake/build/lib/lean/Hex*` and `.lake/build/ir/Hex*` — the
+  project's own elaboration and IR outputs.
+- NOT Mathlib's build outputs — those come from `lake exe cache get`
+  and are handled separately (see § Mathlib cache is mandatory).
+
+Anti-patterns:
+
+- Keying on a content hash of the Hex source tree. The key changes
+  on every commit, so the cache misses on every PR — buying
+  nothing for what is otherwise the dominant build-time cost.
+- Skipping the cache because "Lake should be fast." Lake from a
+  clean `.lake/build` recompiles every Hex module elaborated by
+  the workflow; on the conformance target list that runs ~13 min on
+  a stock `ubuntu-latest` runner.
+
 ## Branch protection
 
 `main` requires every status check produced by `ci.yml` and
