@@ -342,6 +342,51 @@ structure ForwardRecoveryInputs (f : Hex.ZPoly) (d : Hex.LiftData) where
 
 namespace ForwardRecoveryInputs
 
+/--
+Proof-facing package saying that `expectedFactors` is the true integer-factor
+list for the current recovery target.  The per-factor fields are exactly the
+facts needed by the A2 candidate reconstruction wrapper; `product_eq` is the
+final executable recovery guard.
+-/
+structure ExpectedTrueFactors (f : Hex.ZPoly)
+    (expectedIndicators : Array (Array Int))
+    (expectedFactors : Array Hex.ZPoly) where
+  /-- The true-factor list has one factor for each expected indicator. -/
+  size_eq : expectedFactors.size = expectedIndicators.size
+  /-- Every expected true factor divides the recovery target. -/
+  divides :
+    ∀ i, i < expectedIndicators.size →
+      expectedFactors.getD i 0 ∣ f
+  /-- Expected true factors are primitive integer polynomials. -/
+  primitive :
+    ∀ i, i < expectedIndicators.size →
+      Hex.ZPoly.Primitive (expectedFactors.getD i 0)
+  /-- Expected true factors use the positive-leading-coefficient convention. -/
+  leadingCoeff_nonneg :
+    ∀ i, i < expectedIndicators.size →
+      0 ≤ Hex.DensePoly.leadingCoeff (expectedFactors.getD i 0)
+  /-- Expected true factors are monic at the square-free-core layer. -/
+  monic :
+    ∀ i, i < expectedIndicators.size →
+      Hex.DensePoly.Monic (expectedFactors.getD i 0)
+  /-- Expected true factors are nonconstant. -/
+  positive_degree :
+    ∀ i, i < expectedIndicators.size →
+      0 < (expectedFactors.getD i 0).degree?.getD 0
+  /-- The expected true factors multiply back to the recovery target. -/
+  product_eq : Array.polyProduct expectedFactors = f
+
+/--
+The final BHKS recovery product guard follows directly from an expected
+true-factor-list package.
+-/
+theorem productOfExpectedFactors
+    {f : Hex.ZPoly} {expectedIndicators : Array (Array Int)}
+    {expectedFactors : Array Hex.ZPoly}
+    (h : ExpectedTrueFactors f expectedIndicators expectedFactors) :
+    Array.polyProduct expectedFactors = f :=
+  h.product_eq
+
 /-- Extract the B7 equivalence-class recovery package from the full
 forward-recovery input bundle. -/
 def toEquivalenceClassRecoveryHypotheses {f : Hex.ZPoly} {d : Hex.LiftData}
@@ -545,6 +590,54 @@ def ofMignottePrecisionCandidateProducts
         hselected hdivides hprimitive hsign hmonic hdegree mignotte_precision
         hproduct
     product_eq := product_eq }
+
+/--
+Build `ForwardRecoveryInputs` from the expected true-factor package plus
+per-indicator Mignotte reconstruction facts.  This is the product-check
+wrapper for the forward-recovery layer: callers identify the true factor list
+once, and the final `Array.polyProduct expectedFactors = f` guard is extracted
+by `productOfExpectedFactors`.
+-/
+def ofMignottePrecisionExpectedFactors
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    (rows_pos : HasPositiveDimension f d)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData f d rows_pos).factorCount)))
+    (lattice_eq_indicators :
+      BHKS.projectedRowSpanInt (projectedRowsOfLiftData f d rows_pos) =
+        BHKS.trueFactorIndicatorLattice trueSupports)
+    (mignotte_precision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound f < d.p ^ d.k)
+    (expectedIndicators : Array (Array Int))
+    (indicators_match :
+      equivalenceClassIndicatorsOfLiftData f d rows_pos = expectedIndicators)
+    (nondegenerate :
+      Hex.bhksDegenerateIndicatorPartition
+          (projectedRowsOfLiftData f d rows_pos) expectedIndicators = false)
+    (selectedFactors : Array (Array Hex.ZPoly))
+    (expectedFactors : Array Hex.ZPoly)
+    (hf_ne_zero : f ≠ 0)
+    (htrue : ExpectedTrueFactors f expectedIndicators expectedFactors)
+    (hselected :
+      ∀ i, i < expectedIndicators.size →
+        Hex.bhksIndicatorSelectedFactors d.liftedFactors
+            (expectedIndicators.getD i #[]) =
+          some (selectedFactors.getD i #[]))
+    (hproduct :
+      ∀ i, i < expectedIndicators.size →
+        Hex.ZPoly.reduceModPow
+            (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f)
+              (Array.polyProduct (selectedFactors.getD i #[])))
+            d.p d.k =
+          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0) d.p d.k) :
+    ForwardRecoveryInputs f d :=
+  ofMignottePrecisionCandidateProducts
+    rows_pos trueSupports lattice_eq_indicators mignotte_precision
+    expectedIndicators indicators_match nondegenerate
+    selectedFactors expectedFactors hf_ne_zero htrue.size_eq
+    hselected htrue.divides htrue.primitive htrue.leadingCoeff_nonneg
+    htrue.monic htrue.positive_degree hproduct
+    (productOfExpectedFactors htrue)
 
 /--
 Build `ForwardRecoveryInputs f d` from cap-level BHKS separation plus the
