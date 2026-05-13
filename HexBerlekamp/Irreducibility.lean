@@ -614,12 +614,77 @@ theorem checkPowChainLinearIncrementalQuotientWitnessStep_of_entries
   rw [hprev, hcurr, hquot]
   simp [hprevRed, hcurrRed, hmulCoeffs]
 
+theorem checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_bools
+    (f prev curr quot : FpPoly 2)
+    (cert : SamePrimeIrreducibilityCertificate 2)
+    (quotients : Array (FpPoly 2)) (k : Nat)
+    (hprev : cert.powChain[k]? = some prev)
+    (hcurr : cert.powChain[k + 1]? = some curr)
+    (hquot : quotients[k]? = some quot)
+    (hprevRed : decide (prev.degree?.getD 0 < f.degree?.getD 0) = true)
+    (hcurrRed : decide (curr.degree?.getD 0 < f.degree?.getD 0) = true)
+    (hmulCoeffs : ((prev * prev).coeffs == (curr + quot * f).coeffs) = true) :
+    checkPowChainLinearIncrementalQuotientWitnessStep f cert quotients k = true := by
+  apply checkPowChainLinearIncrementalQuotientWitnessStep_of_entries
+      (prev := prev) (curr := curr) (quot := quot)
+  · exact hprev
+  · exact hcurr
+  · exact hquot
+  · exact of_decide_eq_true hprevRed
+  · exact of_decide_eq_true hcurrRed
+  · exact eq_of_beq hmulCoeffs
+
+private theorem densePoly_eq_of_coeffs_eq
+    {R : Type u} [Zero R] [DecidableEq R] {a b : DensePoly R}
+    (h : a.coeffs = b.coeffs) : a = b := by
+  cases a with
+  | mk acoeffs anorm =>
+      cases b with
+      | mk bcoeffs bnorm =>
+          simp only at h
+          subst h
+          rfl
+
+theorem checkPowChainLinearIncrementalQuotientWitnesses_first_of_coeffs
+    (f first : FpPoly 2) (hmonic : DensePoly.Monic f)
+    (cert : SamePrimeIrreducibilityCertificate 2)
+    (hfirst : cert.powChain[0]? = some first)
+    (hcoeffs : first.coeffs = (FpPoly.modByMonic f FpPoly.X hmonic).coeffs) :
+    cert.powChain[0]? == some (FpPoly.modByMonic f FpPoly.X hmonic) := by
+  have hpoly : first = FpPoly.modByMonic f FpPoly.X hmonic :=
+    densePoly_eq_of_coeffs_eq hcoeffs
+  rw [hfirst, hpoly]
+  simp
+
+theorem checkPowChainLinearIncrementalQuotientWitnesses_first_of_coeffs_beq
+    (f first : FpPoly 2) (hmonic : DensePoly.Monic f)
+    (cert : SamePrimeIrreducibilityCertificate 2)
+    (hfirst : cert.powChain[0]? = some first)
+    (hcoeffs : (first.coeffs == (FpPoly.modByMonic f FpPoly.X hmonic).coeffs) = true) :
+    cert.powChain[0]? == some (FpPoly.modByMonic f FpPoly.X hmonic) :=
+  checkPowChainLinearIncrementalQuotientWitnesses_first_of_coeffs
+    f first hmonic cert hfirst (eq_of_beq hcoeffs)
+
 private theorem checkPowChainLinearIncrementalQuotientWitnessStep_zero_pilot :
     let zero : FpPoly 2 := 0
     let cert : SamePrimeIrreducibilityCertificate 2 :=
       { n := 1, powChain := #[zero, zero], bezout := #[] }
     checkPowChainLinearIncrementalQuotientWitnessStep FpPoly.X cert #[zero] 0 = true := by
   apply checkPowChainLinearIncrementalQuotientWitnessStep_of_entries
+    (prev := (0 : FpPoly 2)) (curr := (0 : FpPoly 2)) (quot := (0 : FpPoly 2))
+  · rfl
+  · rfl
+  · rfl
+  · decide
+  · decide
+  · rfl
+
+private theorem checkPowChainLinearIncrementalQuotientWitnessStep_zero_bool_pilot :
+    let zero : FpPoly 2 := 0
+    let cert : SamePrimeIrreducibilityCertificate 2 :=
+      { n := 1, powChain := #[zero, zero], bezout := #[] }
+    checkPowChainLinearIncrementalQuotientWitnessStep FpPoly.X cert #[zero] 0 = true := by
+  apply checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_bools
     (prev := (0 : FpPoly 2)) (curr := (0 : FpPoly 2)) (quot := (0 : FpPoly 2))
   · rfl
   · rfl
@@ -663,17 +728,6 @@ private def primeTwo : Hex.Nat.Prime 2 := by
   · simp at hm
   · exact Or.inl rfl
   · exact Or.inr rfl
-
-private theorem densePoly_eq_of_coeffs_eq
-    {R : Type u} [Zero R] [DecidableEq R] {a b : DensePoly R}
-    (h : a.coeffs = b.coeffs) : a = b := by
-  cases a with
-  | mk acoeffs anorm =>
-      cases b with
-      | mk bcoeffs bnorm =>
-          simp only at h
-          subst h
-          rfl
 
 private theorem powModMonicLinear_two_eq_of_quotientWitness
     (f prev curr quot : FpPoly 2) (hmonic : DensePoly.Monic f)
