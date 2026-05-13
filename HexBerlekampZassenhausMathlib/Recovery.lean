@@ -1,4 +1,6 @@
 import HexBerlekampZassenhausMathlib.Lattice
+import HexBerlekampZassenhausMathlib.ColumnSignature
+import HexBerlekampZassenhausMathlib.SignatureClasses
 import HexBerlekampZassenhausMathlib.TerminationBound
 
 /-!
@@ -35,6 +37,204 @@ out of scope for this module.
 namespace HexBerlekampZassenhausMathlib
 
 namespace BHKS
+
+theorem supportEquivalent_iff_forall_mem_trueFactorIndicatorLattice_rat_coord_eq
+    {r : Nat} (trueSupports : Set (Set (Fin r))) (j k : Fin r) :
+    supportEquivalent trueSupports j k ↔
+      ∀ v : Fin r → ℚ,
+        v ∈ trueFactorIndicatorLattice_rat trueSupports →
+          v j = v k := by
+  constructor
+  · intro hsupport v hv
+    unfold trueFactorIndicatorLattice_rat at hv
+    induction hv using Submodule.span_induction with
+    | mem v hv =>
+      rcases hv with ⟨S, rfl⟩
+      have hmem := hsupport S S.2
+      by_cases hj : j ∈ S.1
+      · have hk : k ∈ S.1 := (hmem.mp hj)
+        simp [intVectorToRat, indicatorVector, hj, hk]
+      · have hk : k ∉ S.1 := by
+          intro hk
+          exact hj ((hmem.mpr hk))
+        simp [intVectorToRat, indicatorVector, hj, hk]
+    | zero =>
+      simp
+    | add u v _ _ hu hv =>
+      simp [Pi.add_apply, hu, hv]
+    | smul a v _ hv =>
+      simp [Pi.smul_apply, hv]
+  · intro hcoords S hS
+    constructor
+    · intro hj
+      by_contra hk
+      have hmem :
+          intVectorToRat (indicatorVector S) ∈
+            trueFactorIndicatorLattice_rat trueSupports := by
+        exact Submodule.subset_span ⟨⟨S, hS⟩, rfl⟩
+      have hcoord := hcoords (intVectorToRat (indicatorVector S)) hmem
+      simp [intVectorToRat, indicatorVector, hj, hk] at hcoord
+    · intro hk
+      by_contra hj
+      have hmem :
+          intVectorToRat (indicatorVector S) ∈
+            trueFactorIndicatorLattice_rat trueSupports := by
+        exact Submodule.subset_span ⟨⟨S, hS⟩, rfl⟩
+      have hcoord := hcoords (intVectorToRat (indicatorVector S)) hmem
+      simp [intVectorToRat, indicatorVector, hj, hk] at hcoord
+
+private theorem partitionByMinColumn_eq_supportPartitionByMinColumn_of_iff
+    {r : Nat} (trueSupports : Set (Set (Fin r))) (sig : Nat → Array Rat)
+    (hiff :
+      ∀ j k, (hj : j < r) → (hk : k < r) →
+        (sig j = sig k ↔
+          supportEquivalent trueSupports ⟨j, hj⟩ ⟨k, hk⟩)) :
+    partitionByMinColumn r sig = supportPartitionByMinColumn trueSupports := by
+  have hreps : representativeColumns r sig =
+      supportRepresentativeColumns trueSupports := by
+    unfold representativeColumns supportRepresentativeColumns
+    apply List.filter_congr
+    intro rep hrep
+    have hrep_lt : rep < r := List.mem_range.mp hrep
+    congr 1
+    apply List.filter_congr
+    intro k hk
+    have hk_lt_r : k < r := lt_of_lt_of_le (List.mem_range.mp hk) (Nat.le_of_lt hrep_lt)
+    have hprop :
+        sig k = sig rep ↔ supportEquivalentAt trueSupports k rep :=
+      (hiff k rep hk_lt_r hrep_lt).trans
+        (supportEquivalentAt_iff trueSupports hk_lt_r hrep_lt).symm
+    by_cases hsig : sig k = sig rep
+    · have hsup : supportEquivalentAt trueSupports k rep := hprop.mp hsig
+      simp [hsig, hsup]
+    · have hsup : ¬ supportEquivalentAt trueSupports k rep := fun h => hsig (hprop.mpr h)
+      simp [hsig, hsup]
+  unfold partitionByMinColumn supportPartitionByMinColumn
+  rw [hreps]
+  apply List.map_congr_left
+  intro rep hrep
+  have hrep_lt : rep < r := supportRepresentativeColumns_lt trueSupports hrep
+  unfold supportClassMembers
+  apply List.filter_congr
+  intro j hj
+  have hj_lt : j < r := List.mem_range.mp hj
+  have hprop :
+      sig j = sig rep ↔ supportEquivalentAt trueSupports j rep :=
+    (hiff j rep hj_lt hrep_lt).trans
+      (supportEquivalentAt_iff trueSupports hj_lt hrep_lt).symm
+  by_cases hsig : sig j = sig rep
+  · have hsup : supportEquivalentAt trueSupports j rep := hprop.mp hsig
+    simp [hsig, hsup]
+  · have hsup : ¬ supportEquivalentAt trueSupports j rep := fun h => hsig (hprop.mpr h)
+    simp [hsig, hsup]
+
+/-- The RREF column signature expression used by
+`Hex.bhksEquivalenceClassIndicators`, exposed as a proof-facing definition. -/
+def projectedRowsRrefColumnSignature (L : Hex.BhksProjectedRows) (j : Nat) :
+    Array Rat :=
+  let n := L.projectedRows.size
+  let r := L.factorCount
+  let M : Hex.Matrix Rat n r := Hex.bhksProjectedRowsAsRatMatrix L.projectedRows n r
+  let D := Hex.Matrix.rref M
+  let echelonRows : Array (Array Rat) := D.echelon.toArray.map (·.toArray)
+  echelonRows.map (·.getD j 0)
+
+theorem matrixEquiv_bhksProjectedRowsAsRatMatrix
+    (L : Hex.BhksProjectedRows) :
+    HexMatrixMathlib.matrixEquiv
+        (Hex.bhksProjectedRowsAsRatMatrix
+          L.projectedRows L.projectedRows.size L.factorCount) =
+      projectedRowsRatMatrix L := by
+  funext i j
+  simp [HexMatrixMathlib.matrixEquiv_apply, Hex.bhksProjectedRowsAsRatMatrix,
+    projectedRowsRatMatrix, Hex.Matrix.ofFn]
+
+private theorem projectedRowsRrefColumnSignature_eq_iff_forall_echelon
+    (L : Hex.BhksProjectedRows) {j k : Nat}
+    (hj : j < L.factorCount) (hk : k < L.factorCount) :
+    projectedRowsRrefColumnSignature L j = projectedRowsRrefColumnSignature L k ↔
+      ∀ i : Fin L.projectedRows.size,
+        (Hex.Matrix.rref
+          (Hex.bhksProjectedRowsAsRatMatrix
+            L.projectedRows L.projectedRows.size L.factorCount)).echelon[i][
+              (⟨j, hj⟩ : Fin L.factorCount)] =
+        (Hex.Matrix.rref
+          (Hex.bhksProjectedRowsAsRatMatrix
+            L.projectedRows L.projectedRows.size L.factorCount)).echelon[i][
+              (⟨k, hk⟩ : Fin L.factorCount)] := by
+  constructor
+  · intro h i
+    have hget := congrArg (fun a : Array Rat => a.getD i.val 0) h
+    simpa [projectedRowsRrefColumnSignature, Array.getD, hj, hk] using hget
+  · intro h
+    apply Array.ext
+    · simp [projectedRowsRrefColumnSignature]
+    · intro i hi₁ hi₂
+      have hi : i < L.projectedRows.size := by
+        simpa [projectedRowsRrefColumnSignature] using hi₁
+      have hrow := h ⟨i, hi⟩
+      simpa [projectedRowsRrefColumnSignature, Array.getD, hj, hk] using hrow
+
+theorem projectedRowsRrefColumnSignature_eq_iff_forall_mem_projectedRowSpaceRat_coord_eq
+    (L : Hex.BhksProjectedRows) {j k : Nat}
+    (hj : j < L.factorCount) (hk : k < L.factorCount) :
+    projectedRowsRrefColumnSignature L j = projectedRowsRrefColumnSignature L k ↔
+      ∀ v : Fin L.factorCount → ℚ,
+        v ∈ projectedRowSpaceRat L →
+          v ⟨j, hj⟩ = v ⟨k, hk⟩ := by
+  rw [projectedRowsRrefColumnSignature_eq_iff_forall_echelon L hj hk]
+  have hmatrix := matrixEquiv_bhksProjectedRowsAsRatMatrix L
+  unfold projectedRowSpaceRat
+  rw [← hmatrix]
+  exact rref_columnAgreement_iff_forall_mem_span_coord_eq
+    (Hex.bhksProjectedRowsAsRatMatrix
+      L.projectedRows L.projectedRows.size L.factorCount) ⟨j, hj⟩ ⟨k, hk⟩
+
+theorem projectedRowsRrefColumnSignature_eq_iff_supportEquivalent_of_projectedRowSpan_eq
+    (L : Hex.BhksProjectedRows)
+    (trueSupports : Set (Set (Fin L.factorCount)))
+    (hint : projectedRowSpanInt L = trueFactorIndicatorLattice trueSupports)
+    {j k : Nat} (hj : j < L.factorCount) (hk : k < L.factorCount) :
+    projectedRowsRrefColumnSignature L j = projectedRowsRrefColumnSignature L k ↔
+      supportEquivalent trueSupports ⟨j, hj⟩ ⟨k, hk⟩ := by
+  have hsig :=
+    projectedRowsRrefColumnSignature_eq_iff_forall_mem_projectedRowSpaceRat_coord_eq
+      L hj hk
+  have hspace := projectedRowSpaceRat_eq_trueFactorIndicatorLattice_rat
+    L trueSupports hint
+  rw [hspace] at hsig
+  exact hsig.trans
+    (supportEquivalent_iff_forall_mem_trueFactorIndicatorLattice_rat_coord_eq
+      trueSupports ⟨j, hj⟩ ⟨k, hk⟩).symm
+
+theorem bhksEquivalenceClassIndicators_eq_expectedIndicatorArrayOfSupports
+    (L : Hex.BhksProjectedRows)
+    (trueSupports : Set (Set (Fin L.factorCount)))
+    (hint : projectedRowSpanInt L = trueFactorIndicatorLattice trueSupports) :
+    Hex.bhksEquivalenceClassIndicators L =
+      expectedIndicatorArrayOfSupports trueSupports := by
+  let sig := projectedRowsRrefColumnSignature L
+  have hpartition :
+      partitionByMinColumn L.factorCount sig =
+        supportPartitionByMinColumn trueSupports := by
+    exact partitionByMinColumn_eq_supportPartitionByMinColumn_of_iff
+      trueSupports sig
+      (fun j k hj hk =>
+        projectedRowsRrefColumnSignature_eq_iff_supportEquivalent_of_projectedRowSpan_eq
+          L trueSupports hint hj hk)
+  have hfold :
+      ((List.range L.factorCount).foldl
+        (fun acc j => Hex.bhksInsertSignatureClass (sig j) j acc) []).map Prod.snd =
+        supportPartitionByMinColumn trueSupports := by
+    rw [bhksInsertSignatureClass_fold_eq_partitionByMinColumn, hpartition]
+  unfold Hex.bhksEquivalenceClassIndicators expectedIndicatorArrayOfSupports
+  change
+    ((((List.range L.factorCount).foldl
+      (fun acc j => Hex.bhksInsertSignatureClass (sig j) j acc) []).map Prod.snd).map
+        (fun cls => classIndicatorArray L.factorCount cls)).toArray =
+      ((supportPartitionByMinColumn trueSupports).map
+        (fun members => classIndicatorArray L.factorCount members)).toArray
+  rw [hfold]
 
 /-- The executable BHKS lattice basis at the abstract Hensel-lift data.
 
