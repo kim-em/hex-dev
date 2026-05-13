@@ -1359,6 +1359,84 @@ private theorem dot_castIntRow_eq_cast_dot
   rw [hi_entry, hj_entry]
   rw [Rat.intCast_mul]
 
+/-- The original-row coordinates chosen for the Gram-Schmidt prefix projection
+solve the leading Gram linear system whose right-hand side is obtained by
+dotting prefix rows with that projection. This is the matrix/vector form of
+`originalProjectionCoords_dot_eq_gram_combination`; the downstream Cramer
+bridge rewrites the right-hand side to the replacement Gram column. -/
+private theorem scaledCoeffMatrix_replacementColumn_solve
+    (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < i)
+    (p : Fin (j + 1)) :
+    (castIntDetMatrix
+        (GramSchmidt.leadingGramMatrixInt b (j + 1)
+          (Nat.succ_le_of_lt (Nat.lt_trans hj hi))) *
+        originalProjectionCoords b i j hi (Nat.lt_trans hj hi))[p] =
+        Matrix.dot
+          (castIntRow b
+            ⟨p.val, Nat.lt_of_lt_of_le p.isLt
+              (Nat.succ_le_of_lt (Nat.lt_trans hj hi))⟩)
+          (basisPrefixProjection b i j hi (Nat.lt_trans hj hi)) := by
+  have hsys :=
+    originalProjectionCoords_dot_eq_gram_combination
+      (b := b) (i := i) (j := j) (hi := hi)
+      (hj := Nat.lt_trans hj hi) p
+  change
+    (Matrix.mulVec
+        (castIntDetMatrix
+          (GramSchmidt.leadingGramMatrixInt b (j + 1)
+            (Nat.succ_le_of_lt (Nat.lt_trans hj hi))))
+        (originalProjectionCoords b i j hi (Nat.lt_trans hj hi)))[p] =
+      Matrix.dot
+        (castIntRow b
+          ⟨p.val, Nat.lt_of_lt_of_le p.isLt
+            (Nat.succ_le_of_lt (Nat.lt_trans hj hi))⟩)
+        (basisPrefixProjection b i j hi (Nat.lt_trans hj hi))
+  rw [hsys]
+  unfold Matrix.mulVec Matrix.row
+  have hleft :
+      (Vector.ofFn fun i' : Fin (j + 1) =>
+          Matrix.dot
+            (castIntDetMatrix
+              (GramSchmidt.leadingGramMatrixInt b (j + 1)
+                (Nat.succ_le_of_lt (Nat.lt_trans hj hi))))[i']
+            (originalProjectionCoords b i j hi (Nat.lt_trans hj hi)))[p] =
+        Matrix.dot
+          (castIntDetMatrix
+            (GramSchmidt.leadingGramMatrixInt b (j + 1)
+              (Nat.succ_le_of_lt (Nat.lt_trans hj hi))))[p]
+          (originalProjectionCoords b i j hi (Nat.lt_trans hj hi)) := by
+    simp [Vector.getElem_ofFn]
+  rw [hleft]
+  change
+    (List.finRange (j + 1)).foldl
+      (fun acc q =>
+        acc +
+          (castIntDetMatrix
+            (GramSchmidt.leadingGramMatrixInt b (j + 1)
+              (Nat.succ_le_of_lt (Nat.lt_trans hj hi))))[p][q] *
+            (originalProjectionCoords b i j hi (Nat.lt_trans hj hi))[q]) 0 =
+    (List.finRange (j + 1)).foldl
+      (fun acc q =>
+        acc +
+          (originalProjectionCoords b i j hi (Nat.lt_trans hj hi))[q] *
+            Matrix.dot
+              (castIntRow b
+                ⟨p.val, Nat.lt_of_lt_of_le p.isLt
+                  (Nat.succ_le_of_lt (Nat.lt_trans hj hi))⟩)
+              (castIntRow b
+                ⟨q.val, Nat.lt_of_lt_of_le q.isLt
+                  (Nat.succ_le_of_lt (Nat.lt_trans hj hi))⟩)) 0
+  apply foldl_sum_congr_simple
+  intro q _hq
+  rw [castIntDetMatrix_get]
+  simp [GramSchmidt.leadingGramMatrixInt, Matrix.ofFn, GramSchmidt.liftFinLE]
+  rw [← dot_castIntRow_eq_cast_dot b
+    (⟨p.val, Nat.lt_of_lt_of_le p.isLt
+      (Nat.succ_le_of_lt (Nat.lt_trans hj hi))⟩ : Fin n)
+    (⟨q.val, Nat.lt_of_lt_of_le q.isLt
+      (Nat.succ_le_of_lt (Nat.lt_trans hj hi))⟩ : Fin n)]
+  grind
+
 /-- At `s = 0`, `progressMatrix` equals the entry-wise cast of
 `leadingGramMatrixInt`. -/
 private theorem progressMatrix_zero_eq_castIntDetMatrix (b : Matrix Int n m)
