@@ -2266,9 +2266,9 @@ private theorem prefixRows_rowSwap_row_mem_prefixSpan
       rw [hrow]
       exact prefixSpan_mono_le b r.isLt hi hrle (prefixSpan_matrix_row b r)
 
-private theorem prefixSpan_rowSwap_adjacent_after
+private theorem prefixSpan_rowSwap_adjacent_at_or_after
     (b : Matrix Rat n m) (km1 k : Fin n) (i : Nat) (hi : i < n)
-    (hkm1 : km1.val + 1 = k.val) (hki : k.val < i) (v : Vector Rat m) :
+    (hkm1 : km1.val + 1 = k.val) (hki : k.val ≤ i) (v : Vector Rat m) :
     prefixSpan (Matrix.rowSwap b km1 k) i hi v ↔ prefixSpan b i hi v := by
   constructor
   · intro hv
@@ -2280,7 +2280,7 @@ private theorem prefixSpan_rowSwap_adjacent_after
           intro j
           exact prefixRows_rowSwap_row_mem_prefixSpan
             (b := b) (km1 := km1) (k := k) (i := i) (hi := hi)
-            (by omega) (Nat.le_of_lt hki) j)
+            (by omega) hki j)
     rwa [hc] at hspan
   · intro hv
     rcases hv with ⟨c, hc⟩
@@ -2292,11 +2292,17 @@ private theorem prefixSpan_rowSwap_adjacent_after
           have hrowspan :=
             prefixRows_rowSwap_row_mem_prefixSpan
               (b := Matrix.rowSwap b km1 k) (km1 := km1) (k := k)
-              (i := i) (hi := hi) (by omega) (Nat.le_of_lt hki) j
+              (i := i) (hi := hi) (by omega) hki j
           have hswap_swap : Matrix.rowSwap (Matrix.rowSwap b km1 k) km1 k = b := by
             exact Matrix.rowSwap_rowSwap b km1 k
           simpa [hswap_swap] using hrowspan)
     rwa [hc] at hspan
+
+private theorem prefixSpan_rowSwap_adjacent_after
+    (b : Matrix Rat n m) (km1 k : Fin n) (i : Nat) (hi : i < n)
+    (hkm1 : km1.val + 1 = k.val) (hki : k.val < i) (v : Vector Rat m) :
+    prefixSpan (Matrix.rowSwap b km1 k) i hi v ↔ prefixSpan b i hi v :=
+  prefixSpan_rowSwap_adjacent_at_or_after b km1 k i hi hkm1 (Nat.le_of_lt hki) v
 
 private theorem prefixSpan_strictPrefix_rowCombination
     (M : Matrix Rat n m) (i : Nat) (hi : i < n) (c : Vector Rat i) :
@@ -3194,6 +3200,145 @@ theorem basis_span (b : Matrix Rat n m) (i : Nat) (hi : i < n) :
       GramSchmidt.prefixSpan_rowCombination_of_rows (A := b) (B := basis b)
         (i := i) (hi := hi) c (hmembersAll i hi).2
     rwa [hc] at hspan
+
+private theorem basis_row_sub_basis_row_prefixSpan_pred
+    (b : Matrix Rat n m) (i p : Nat) (hi : i < n) (hp : p < n)
+    (hsucc : p + 1 = i) :
+    GramSchmidt.prefixSpan (basis b) p hp
+      (b.row ⟨i, hi⟩ - (basis b).row ⟨i, hi⟩) := by
+  subst i
+  refine ⟨GramSchmidt.projectionCoeffVector (b.row ⟨p + 1, hi⟩) (basis b)
+      (p + 1) (Nat.le_of_lt hi), ?_⟩
+  change
+    Matrix.rowCombination (GramSchmidt.prefixRows (basis b) p hp)
+        (GramSchmidt.projectionCoeffVector (b.row ⟨p + 1, hi⟩) (basis b)
+          (p + 1) (Nat.le_of_lt hi)) =
+      b.row ⟨p + 1, hi⟩ - (basis b).row ⟨p + 1, hi⟩
+  rw [← GramSchmidt.strictPrefixRows_succ_eq_prefixRows
+    (M := basis b) (i := p) (hi := hi)]
+  have hpc :
+      GramSchmidt.prefixCombination (coeffs b) (basis b) (p + 1) hi =
+        Matrix.rowCombination (GramSchmidt.strictPrefixRows (basis b) (p + 1)
+            (Nat.le_of_lt hi))
+          (GramSchmidt.projectionCoeffVector (b.row ⟨p + 1, hi⟩) (basis b)
+            (p + 1) (Nat.le_of_lt hi)) := by
+    simpa [basis, coeffs] using
+      GramSchmidt.prefixCombination_eq_strictPrefixRowCombination
+        (b := b) (i := p + 1) (hi := hi)
+  rw [← hpc]
+  have hdec := basis_decomposition b (p + 1) hi
+  apply Vector.ext
+  intro col hcol
+  have hdec_col := congrArg (fun v : Vector Rat m => v[col]) hdec
+  rw [Vector.getElem_sub]
+  simp only [Vector.getElem_add] at hdec_col
+  grind
+
+private theorem basis_row_orthogonal_prefix_pred
+    (b : Matrix Rat n m) (i p : Nat) (hi : i < n) (hp : p < n)
+    (hsucc : p + 1 = i) :
+    ∀ j : Fin (p + 1),
+      Matrix.dot ((basis b).row ⟨i, hi⟩)
+        ((GramSchmidt.prefixRows (basis b) p hp).row j) = 0 := by
+  subst i
+  intro j
+  have hjn : j.val < n := Nat.lt_trans j.isLt hi
+  have hrow :
+      (GramSchmidt.prefixRows (basis b) p hp).row j =
+        (basis b).row ⟨j.val, hjn⟩ := by
+    apply Vector.ext
+    intro col hcol
+    simp [GramSchmidt.prefixRows, Matrix.row]
+  rw [hrow]
+  exact basis_orthogonal b (p + 1) j.val hi hjn (by omega)
+
+private theorem basis_rowSwap_of_after_private (b : Matrix Rat n m) (km1 k i : Fin n)
+    (hkm1 : km1.val + 1 = k.val) (hi : k.val < i.val) :
+    (basis (Matrix.rowSwap b km1 k)).row i = (basis b).row i := by
+  let p := i.val - 1
+  have hp : p < n := by
+    dsimp [p]
+    exact Nat.lt_of_le_of_lt (Nat.pred_le i.val) i.isLt
+  have hsucc : p + 1 = i.val := by
+    dsimp [p]
+    omega
+  have hkp : k.val ≤ p := by
+    dsimp [p]
+    omega
+  have hsource :
+      (Matrix.rowSwap b km1 k).row i = b.row i := by
+    apply Vector.ext
+    intro col hcol
+    let c : Fin m := ⟨col, hcol⟩
+    change (Matrix.rowSwap b km1 k)[i][c] = b[i][c]
+    rw [Matrix.rowSwap_getElem]
+    have hik : i ≠ k := by
+      intro h
+      exact Nat.ne_of_gt hi (congrArg Fin.val h)
+    have hikm1 : i ≠ km1 := by
+      intro h
+      have hval := congrArg Fin.val h
+      omega
+    simp [hik, hikm1]
+  have horig_span :
+      GramSchmidt.prefixSpan (basis b) p hp
+        (b.row i - (basis b).row i) :=
+    basis_row_sub_basis_row_prefixSpan_pred (b := b) (i := i.val) (p := p)
+      (hi := i.isLt) (hp := hp) hsucc
+  have hswap_span :
+      GramSchmidt.prefixSpan (basis (Matrix.rowSwap b km1 k)) p hp
+        (b.row i - (basis (Matrix.rowSwap b km1 k)).row i) := by
+    have hraw :=
+      basis_row_sub_basis_row_prefixSpan_pred (b := Matrix.rowSwap b km1 k)
+        (i := i.val) (p := p) (hi := i.isLt) (hp := hp) hsucc
+    simpa [hsource] using hraw
+  have hswap_to_orig :
+      ∀ v : Vector Rat m,
+        GramSchmidt.prefixSpan (basis (Matrix.rowSwap b km1 k)) p hp v →
+          GramSchmidt.prefixSpan (basis b) p hp v := by
+    intro v hv
+    have hswap_input := (basis_span (Matrix.rowSwap b km1 k) p hp v).1 hv
+    have hinput :=
+      (GramSchmidt.prefixSpan_rowSwap_adjacent_at_or_after
+        (b := b) (km1 := km1) (k := k) (i := p) (hi := hp)
+        hkm1 hkp v).1 hswap_input
+    exact (basis_span b p hp v).2 hinput
+  have horig_rows_to_swap :
+      ∀ j : Fin (p + 1),
+        GramSchmidt.prefixSpan (basis (Matrix.rowSwap b km1 k)) p hp
+          ((GramSchmidt.prefixRows (basis b) p hp).row j) := by
+    intro j
+    have horig_basis :
+        GramSchmidt.prefixSpan (basis b) p hp
+          ((GramSchmidt.prefixRows (basis b) p hp).row j) :=
+      GramSchmidt.prefixSpan_row (basis b) p hp j
+    have horig_input :=
+      (basis_span b p hp ((GramSchmidt.prefixRows (basis b) p hp).row j)).1 horig_basis
+    have hswap_input :=
+      (GramSchmidt.prefixSpan_rowSwap_adjacent_at_or_after
+        (b := b) (km1 := km1) (k := k) (i := p) (hi := hp)
+        hkm1 hkp ((GramSchmidt.prefixRows (basis b) p hp).row j)).2 horig_input
+    exact
+      (basis_span (Matrix.rowSwap b km1 k) p hp
+        ((GramSchmidt.prefixRows (basis b) p hp).row j)).2 hswap_input
+  have horig_orth :=
+    basis_row_orthogonal_prefix_pred (b := b) (i := i.val) (p := p)
+      (hi := i.isLt) (hp := hp) hsucc
+  have hswap_orth :=
+    basis_row_orthogonal_prefix_pred (b := Matrix.rowSwap b km1 k)
+      (i := i.val) (p := p) (hi := i.isLt) (hp := hp) hsucc
+  have hres :=
+    GramSchmidt.residual_eq_of_equiv_prefixSpan
+      (A := basis b) (B := basis (Matrix.rowSwap b km1 k)) (i := p) (hi := hp)
+      (row := b.row i) (r := (basis b).row i)
+      (s := (basis (Matrix.rowSwap b km1 k)).row i)
+      horig_span hswap_span hswap_to_orig horig_rows_to_swap horig_orth hswap_orth
+  exact hres.symm
+
+theorem basis_rowSwap_of_after (b : Matrix Rat n m) (km1 k i : Fin n)
+    (hkm1 : km1.val + 1 = k.val) (hi : k.val < i.val) :
+    (basis (Matrix.rowSwap b km1 k)).row i = (basis b).row i :=
+  basis_rowSwap_of_after_private b km1 k i hkm1 hi
 
 end GramSchmidt.Rat
 
