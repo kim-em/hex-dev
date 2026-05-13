@@ -22,8 +22,7 @@ covering the currently Phase-2-stable shapes:
 * reducible products whose current output is already fully refined into
   irreducible components,
 * polynomials with content greater than `1`,
-* the degree-20 `Φ_11 · Φ_22` regression path fixed during the current
-  Phase-2 revisit.
+* the degree-20 `Φ_11 · Φ_22` reducible product.
 
 Cross-checked operation
 -----------------------
@@ -53,25 +52,42 @@ private def lib : String := "HexBerlekampZassenhaus"
 private def liftCoeffs (f : ZPoly) : List Int :=
   f.toArray.toList
 
-/-- A `factor` result value: `[scalar, [[factor, multiplicity], ...]]`. -/
-private def factorValue (φ : Factorization) : String :=
-  "[" ++ toString φ.scalar ++ ",[" ++ String.intercalate ","
-    (φ.factors.toList.map (fun entry =>
-      "[" ++ polyValue (liftCoeffs entry.1) ++ "," ++ toString entry.2 ++ "]")) ++ "]]"
+/--
+One `Factorization.factors` entry as `[coeffs, multiplicity]`.
 
+`coeffs` are ascending integer coefficients for a primitive nonconstant
+polynomial factor, and `multiplicity` is the positive exponent attached to
+that factor.
+-/
 private def factorEntryValue (entry : List Int × Nat) : String :=
   "[" ++ polyValue entry.1 ++ "," ++ toString entry.2 ++ "]"
 
+/-- The factor-entry list inside a `Factorization` value. -/
+private def factorEntriesValue (factors : List (List Int × Nat)) : String :=
+  "[" ++ String.intercalate "," (factors.map factorEntryValue) ++ "]"
+
+/--
+A `factor` result value: `[scalar, [[coeffs, multiplicity], ...]]`.
+
+The scalar is the signed content (`sign(lc(f)) * content(f)`, or `0` for
+zero input).  Polynomial factors are emitted separately from the scalar, with
+explicit multiplicity buckets; factor order is not part of the public
+contract.
+-/
+private def factorValue (φ : Factorization) : String :=
+  "[" ++ toString φ.scalar ++ "," ++
+    factorEntriesValue (φ.factors.toList.map (fun entry => (liftCoeffs entry.1, entry.2))) ++ "]"
+
+/-- Expected `Factorization` JSON in the same shape as `factorValue`. -/
 private def expectedFactorValue (scalar : Int) (factors : List (List Int × Nat)) : String :=
-  "[" ++ toString scalar ++ ",[" ++ String.intercalate ","
-    (factors.map factorEntryValue) ++ "]]"
+  "[" ++ toString scalar ++ "," ++ factorEntriesValue factors ++ "]"
 
 /-- Emit one fixture record plus the `factor` result record. -/
 private def emitFactorCase (case : String) (f : ZPoly) : IO Unit := do
   emitPolyFixture lib case (liftCoeffs f) none
   emitResult lib case "factor" (factorValue (factor f))
 
-/-- One fixture: case id and ascending coefficient list. -/
+/-- One fixture whose result is emitted by running the public Lean `factor`. -/
 private structure Case where
   id     : String
   coeffs : Array Int
@@ -79,32 +95,44 @@ private structure Case where
 private def mk (id : String) (coeffs : Array Int) : Case :=
   { id, coeffs }
 
+/-- One fixture with a hand-pinned expected `Factorization` JSON value. -/
 private structure ExpectedCase where
   id      : String
   coeffs  : Array Int
+  /-- Signed scalar field of the expected `Factorization`. -/
   scalar  : Int
+  /-- Primitive polynomial factors, by ascending coefficients and multiplicity. -/
   factors : List (List Int × Nat)
 
 private def mkExpected (id : String) (coeffs : Array Int)
     (scalar : Int) (factors : List (List Int × Nat)) : ExpectedCase :=
   { id, coeffs, scalar, factors }
 
+/-- One fixture whose modular split metadata is checked by the FLINT oracle. -/
 private structure PinnedCase where
   id      : String
   coeffs  : Array Int
+  /-- Prime used only for the pinned modular-factor smoke check. -/
   p       : Int
+  /-- Sorted degrees of the irreducible factors of the input reduced mod `p`. -/
   degrees : List Int
 
 private def mkPinned (id : String) (coeffs : Array Int)
     (p : Int) (degrees : List Int) : PinnedCase :=
   { id, coeffs, p, degrees }
 
+/--
+One pinned modular-split fixture with a hand-pinned expected
+`Factorization` JSON value.
+-/
 private structure PinnedExpectedCase where
   id      : String
   coeffs  : Array Int
   p       : Int
   degrees : List Int
+  /-- Signed scalar field of the expected `Factorization`. -/
   scalar  : Int
+  /-- Primitive polynomial factors, by ascending coefficients and multiplicity. -/
   factors : List (List Int × Nat)
 
 private def mkPinnedExpected (id : String) (coeffs : Array Int)
@@ -148,13 +176,16 @@ private def cases_irr : List Case :=
   [ -- Φ_5(x), degree 4, irreducible.
     mk "irr/cyclo5"  #[1, 1, 1, 1, 1]
     -- Φ_7(x), degree 6, irreducible.
-  , mk "irr/cyclo7"  #[1, 1, 1, 1, 1, 1, 1]
-    -- Φ_11(x), degree 10, irreducible.
-  , mk "irr/cyclo11" #[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] ]
+  , mk "irr/cyclo7"  #[1, 1, 1, 1, 1, 1, 1] ]
 
 private def cases_irr_expected : List ExpectedCase :=
-  [ -- Φ_17(x), degree 16, irreducible.
-    mkExpected "irr/cyclo17"
+  [ -- Φ_11(x), degree 10, irreducible.
+    mkExpected "irr/cyclo11"
+      #[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+      1
+      [([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 1)]
+    -- Φ_17(x), degree 16, irreducible.
+  , mkExpected "irr/cyclo17"
       #[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
       1
       [([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 1)] ]
@@ -162,7 +193,7 @@ private def cases_irr_expected : List ExpectedCase :=
 /-! ## Reducible products of two or three irreducibles
 
 These polynomials all factor over `Z` into two or three irreducibles
-and are oracle-checked against committed expected factorization data. -/
+and are oracle-checked against committed expected `Factorization` data. -/
 
 private def cases_red : List ExpectedCase :=
   [ -- (x²+1)(x²+2) = x⁴ + 3x² + 2 — two irreducible quadratics.

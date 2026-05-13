@@ -160,3 +160,26 @@ Mathlib's `gramSchmidt` works over inner product spaces and does not
 track coefficients or update formulas, so it cannot be used in the
 computational core. The `hex-gram-schmidt-mathlib` bridge proves
 that `GramSchmidt.Int.basis` corresponds to Mathlib's `gramSchmidt`.
+
+## External comparators
+
+No external comparator is required.
+
+**Justification:** `structural-layer` per
+`SPEC/benchmarking.md §"Comparator naming"`. HexGramSchmidt is a
+structural layer over `HexMatrix`: the integer Gram-Schmidt
+construction is implemented via Bareiss-style fraction-free
+elimination on the Gram matrix (`Matrix.bareissNoPivotData`),
+which is HexMatrix's own architecturally-named surface and is
+covered by HexMatrix's external comparator declaration
+(`FLINT fmpz_mat_det`, scoped to the determinant surface).
+
+End-to-end coverage of the integer Gram-Schmidt construction as
+it appears in downstream consumers is via HexLLL's `gating`
+comparator (the verified Isabelle LLL Haskell extraction), which
+exercises `LLLState.ofBasis` — itself a thin wrapper around the
+GS construction — under its end-to-end ratio measurement. No
+distinct external tool exposes an integer Gram-Schmidt
+construction at the level of abstraction HexGramSchmidt operates
+on; the within-Lean linkage to HexMatrix and HexLLL covers the
+coverage gap.

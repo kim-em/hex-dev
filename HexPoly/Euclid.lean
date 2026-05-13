@@ -3952,7 +3952,11 @@ theorem primitivePart_primitive (p : DensePoly Int) (h : content p ≠ 0) :
   rw [hcp_one]
   rfl
 
-/-- Construct a polynomial with prescribed residues modulo coprime factors. -/
+/-- Construct a polynomial with prescribed residues modulo coprime factors.
+
+If `s * a + t * b = 1`, then `polyCRT a b u v s t` is congruent to `u`
+modulo `a` and to `v` modulo `b`; see `polyCRT_congr_fst`,
+`polyCRT_congr_snd`, `polyCRT_mod_fst`, and `polyCRT_mod_snd`. -/
 def polyCRT {S : Type _} [Zero S] [DecidableEq S] [One S] [Add S] [Mul S]
     (a b u v s t : DensePoly S) : DensePoly S :=
   u * t * b + v * s * a
@@ -4104,6 +4108,22 @@ theorem dvd_of_mod_eq_mod {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S] [
   rw [hgoal]
   grind
 
+/-- Equal canonical remainders produce polynomial congruence modulo the divisor. -/
+theorem congr_of_mod_eq_mod {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S]
+    [Div S] [DivModLaws S]
+    {p q m : DensePoly S} (h : p % m = q % m) :
+    Congr p q m := by
+  exact dvd_of_mod_eq_mod h
+
+/-- Polynomial congruence modulo `m` is equivalent to equality of canonical remainders. -/
+theorem mod_eq_mod_iff_congr {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S]
+    [Div S] [DivModLaws S]
+    {p q m : DensePoly S} :
+    p % m = q % m ↔ Congr p q m := by
+  constructor
+  · exact congr_of_mod_eq_mod
+  · exact mod_eq_mod_of_congr
+
 /-- Reducing both summands before addition preserves the canonical remainder. -/
 theorem mod_add_mod {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S] [Div S]
     [DivModLaws S]
@@ -4192,7 +4212,8 @@ private theorem polyCRT_sub_right_factor {S : Type _}
     _ = b * (u * t + (0 - v * t)) := by
           rw [mul_comm_poly]
 
-private theorem polyCRT_congr_fst :
+/-- The CRT witness is congruent to the prescribed first residue modulo `a`. -/
+theorem polyCRT_congr_fst :
     {S : Type _} -> [Lean.Grind.CommRing S] -> [DecidableEq S] ->
     (a b u v s t : DensePoly S) -> s * a + t * b = 1 ->
     Congr (polyCRT a b u v s t) u a := by
@@ -4201,7 +4222,8 @@ private theorem polyCRT_congr_fst :
   refine ⟨v * s + (0 - u * s), ?_⟩
   exact polyCRT_sub_left_factor a b u v s t hbez
 
-private theorem polyCRT_congr_snd :
+/-- The CRT witness is congruent to the prescribed second residue modulo `b`. -/
+theorem polyCRT_congr_snd :
     {S : Type _} -> [Lean.Grind.CommRing S] -> [DecidableEq S] ->
     (a b u v s t : DensePoly S) -> s * a + t * b = 1 ->
     Congr (polyCRT a b u v s t) v b := by

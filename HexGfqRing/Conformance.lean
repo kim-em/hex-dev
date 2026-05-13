@@ -29,6 +29,9 @@ Covered edge cases:
 - zero, one, and constant representatives
 - already reduced linear and degree-3 representatives
 - high-degree inputs reduced modulo `x^4 + 2` over `F_5`
+- a second concrete quotient `F_7[x] / (x^2 + 1)` exercising
+  reduction, ring operations, exponentiation, and scalar/cast at a
+  different prime and lower modulus degree
 - subtraction and negative integer representatives
 - binary-shaped natural and integer scalar multipliers
 -/
@@ -200,6 +203,112 @@ private def x5 : Q := q #[0, 0, 0, 0, 0, 1]
 #guard nsmul 8 a = ((8 : Nat) : Q) * a
 #guard zsmul 7 a = ((7 : Int) : Q) * a
 #guard zsmul (-2) x = ((-2 : Int) : Q) * x
+
+/-! ## Second concrete quotient: `F_7[x] / (x^2 + 1)` -/
+
+private instance conformanceBoundsSeven : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
+
+private theorem one_ne_zero_seven : (1 : ZMod64 7) ≠ 0 := by
+  intro h
+  have hm := (ZMod64.natCast_eq_natCast_iff (p := 7) 1 0).mp h
+  simp at hm
+
+private def polySeven (coeffs : Array Nat) : FpPoly 7 :=
+  FpPoly.ofCoeffs (coeffs.map (fun n => ZMod64.ofNat 7 n))
+
+private def coeffNats7 (f : FpPoly 7) : List Nat :=
+  f.toArray.toList.map ZMod64.toNat
+
+/-- Modulus `x^2 + 1`, a monic degree-2 polynomial over `F_7`. The
+quotient ring `F_7[x] / (x^2 + 1)` has reduction rule
+`x^2 ≡ -1 ≡ 6 (mod 7)`. Irreducibility is not needed for the
+ring-level conformance checks; `x^2 + 1` is in fact irreducible over
+`F_7` since `-1` is not a square mod 7. -/
+private def modulus7 : FpPoly 7 :=
+  { coeffs := #[(1 : ZMod64 7), 0, 1]
+    normalized := by
+      right
+      simpa using one_ne_zero_seven }
+
+private theorem modulus7_pos_degree : 0 < FpPoly.degree modulus7 := by
+  decide
+
+private abbrev Q7 := PolyQuotient modulus7 modulus7_pos_degree
+
+private def q7 (coeffs : Array Nat) : Q7 :=
+  ofPoly modulus7 modulus7_pos_degree (polySeven coeffs)
+
+private def reprNats7 (x : Q7) : List Nat :=
+  coeffNats7 (repr x)
+
+-- typical: linear element 3 + 5x
+private def a7 : Q7 := q7 #[3, 5]
+-- second linear element 2 + 4x
+private def b7 : Q7 := q7 #[2, 4]
+-- generator x
+private def x7 : Q7 := q7 #[0, 1]
+-- adversarial raw polynomial x^2, exactly at the modulus degree
+private def x2Raw7 : FpPoly 7 := polySeven #[0, 0, 1]
+-- adversarial quotient element from x^2: reduces to constant 6 since x^2 = -1 ≡ 6
+private def x2Mod7 : Q7 := ofPoly modulus7 modulus7_pos_degree x2Raw7
+-- adversarial quotient element from x^3: reduces to 6x via x · x^2 = x · 6 = 6x
+private def x3Seven : Q7 := q7 #[0, 0, 0, 1]
+
+/-- info: [6] -/
+#guard_msgs in
+#eval! coeffNats7 (reduceMod modulus7 x2Raw7)
+
+#guard coeffNats7 (reduceMod modulus7 (polySeven #[3, 5])) = [3, 5]
+#guard coeffNats7 (reduceMod modulus7 (0 : FpPoly 7)) = []
+-- x^3 mod (x^2 + 1): x^3 - x(x^2 + 1) = -x ≡ 6x
+#guard coeffNats7 (reduceMod modulus7 (polySeven #[0, 0, 0, 1])) = [0, 6]
+
+#guard reprNats7 (ofPoly modulus7 modulus7_pos_degree (polySeven #[3, 5])) = [3, 5]
+#guard reprNats7 (ofPoly modulus7 modulus7_pos_degree (0 : FpPoly 7)) = []
+#guard reprNats7 x2Mod7 = [6]
+#guard repr (ofPoly modulus7 modulus7_pos_degree x2Raw7) = reduceMod modulus7 x2Raw7
+
+#guard reprNats7 a7 = [3, 5]
+#guard reprNats7 b7 = [2, 4]
+#guard reprNats7 (0 : Q7) = []
+#guard reprNats7 x3Seven = [0, 6]
+
+-- (3 + 5x) + (2 + 4x) = 5 + 9x ≡ 5 + 2x (mod 7)
+#guard reprNats7 (a7 + b7) = [5, 2]
+#guard reprNats7 (a7 + 0) = [3, 5]
+#guard repr (a7 + b7) = reduceMod modulus7 (repr a7 + repr b7)
+
+-- (3 + 5x)(2 + 4x) = 6 + 22x + 20x^2
+--   ≡ 6 + x + 6x^2 (mod 7)
+--   ≡ 6 + x + 6·6 (mod 7, x^2 ≡ 6) = 6 + x + 36 ≡ x (mod 7)
+#guard reprNats7 (a7 * b7) = [0, 1]
+#guard reprNats7 (a7 * 0) = []
+#guard repr (a7 * b7) = reduceMod modulus7 (repr a7 * repr b7)
+
+-- -a7 = -(3 + 5x) ≡ 4 + 2x (mod 7)
+#guard reprNats7 (-a7) = [4, 2]
+-- a7 - b7 = (3 + 5x) - (2 + 4x) = 1 + x
+#guard reprNats7 (a7 - b7) = [1, 1]
+-- b7 - x2Mod7 = (2 + 4x) - 6 ≡ 3 + 4x (mod 7)
+#guard reprNats7 (b7 - x2Mod7) = [3, 4]
+
+#guard reprNats7 (x7 ^ 0) = [1]
+-- x^2 ≡ 6 (mod 7) by the modulus relation
+#guard reprNats7 (x7 ^ 2) = [6]
+-- x^3 ≡ 6x
+#guard reprNats7 (x7 ^ 3) = [0, 6]
+-- x^4 = (x^2)^2 ≡ 6^2 = 36 ≡ 1 (mod 7)
+#guard reprNats7 (x7 ^ 4) = [1]
+
+#guard reprNats7 ((10 : Nat) : Q7) = [3]
+#guard reprNats7 ((7 : Nat) : Q7) = []
+#guard reprNats7 ((-1 : Int) : Q7) = [6]
+
+-- -2 · (3 + 5x) = -6 - 10x ≡ 1 + 4x (mod 7)
+#guard reprNats7 (zsmul (-2) a7) = [1, 4]
+
+#guard FpPoly.degree (repr a7) < FpPoly.degree modulus7
+#guard FpPoly.degree (repr x2Mod7) < FpPoly.degree modulus7
 
 end GFqRing
 end Hex

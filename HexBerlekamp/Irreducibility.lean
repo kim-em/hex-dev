@@ -117,6 +117,11 @@ structure SamePrimeIrreducibilityCertificate (p : Nat) [ZMod64.Bounds p] where
   powChain : Array (FpPoly p)
   bezout : Array (RabinBezoutWitness p)
 
+/--
+Match a certificate's stored prime against the ambient `p`. Returns the
+same-prime view on success, or `none` if the certificate is for a different
+prime.
+-/
 def IrreducibilityCertificate.toAmbient?
     (cert : IrreducibilityCertificate) (p : Nat) [ZMod64.Bounds p] :
     Option (SamePrimeIrreducibilityCertificate p) := by
@@ -214,6 +219,8 @@ def rabinTest (f : FpPoly p) (hmonic : DensePoly.Monic f) : Bool :=
     rabinDividesTest f hmonic &&
     (rabinWitnesses f hmonic).all Prod.snd
 
+/-- `berlekampRankTest` succeeds exactly when the fixed-space matrix has rank
+`deg(f) - 1`, the Berlekamp rank criterion. -/
 theorem berlekampRankTest_spec (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [Lean.Grind.Field (ZMod64 p)] :
     berlekampRankTest f hmonic = true ↔
@@ -221,6 +228,8 @@ theorem berlekampRankTest_spec (f : FpPoly p) (hmonic : DensePoly.Monic f)
       Matrix.rref_rank (fixedSpaceMatrix f hmonic) = basisSize f - 1 := by
   simp [berlekampRankTest]
 
+/-- `rabinDividesTest` reduces to checking that `frobeniusDiffMod f _ n`
+vanishes, where `n = deg(f)`. -/
 theorem rabinDividesTest_spec (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     rabinDividesTest f hmonic =
       (frobeniusDiffMod f hmonic (basisSize f)).isZero := by
@@ -348,19 +357,6 @@ private theorem checkRabinBezoutWitness_rabinCoprimeTest
       unfold rabinCoprimeTest frobeniusDiffMod
       exact isUnitPolynomial_gcd_of_bezout hcheck
 
-private theorem List.all_eq_true_of_mem {α : Type u} {xs : List α} {p : α → Bool}
-    (hall : xs.all p = true) {x : α} (hx : x ∈ xs) : p x = true := by
-  induction xs with
-  | nil =>
-      cases hx
-  | cons y ys ih =>
-      simp only [List.all_cons, Bool.and_eq_true] at hall
-      rcases hall with ⟨hy, hys⟩
-      simp only [List.mem_cons] at hx
-      rcases hx with rfl | hx
-      · exact hy
-      · exact ih hys hx
-
 private theorem List.all_map_pair_snd {α : Type u} (xs : List α) (p : α → Bool) :
     (xs.map fun x => (x, p x)).all Prod.snd = xs.all p := by
   induction xs with
@@ -424,6 +420,8 @@ private theorem checkRabinBezoutWitnesses_rabinWitnesses_all
         · exact ih (start + 1) (fun e he => hmem e (by simp [he])) htail
   exact hds ds 0 (fun d hmem => hmem) hall
 
+/-- If `checkPowChain` accepts, every entry `cert.powChain[k]` (for `k ≤ cert.n`)
+agrees with the committed Frobenius routine `FpPoly.frobeniusXPowMod`. -/
 theorem checkPowChain_spec
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate p) :
@@ -438,9 +436,13 @@ theorem checkPowChain_spec
     simpa [List.mem_range] using Nat.lt_succ_of_le hk
   have hbeq :
       (cert.powChain[k]? == some (FpPoly.frobeniusXPowMod f hmonic k)) = true :=
-    List.all_eq_true_of_mem hall hmem
+    List.all_eq_true.mp hall k hmem
   simpa using hbeq
 
+/-- Linear-kernel companion to `checkPowChain_spec`: if `checkPowChainLinear`
+accepts, every entry agrees with `FpPoly.frobeniusXPowMod`, after rewriting
+the structural Frobenius evaluator through
+`FpPoly.frobeniusXPowModLinear_eq_frobeniusXPowMod`. -/
 theorem checkPowChainLinear_spec
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
@@ -456,12 +458,47 @@ theorem checkPowChainLinear_spec
     simpa [List.mem_range] using Nat.lt_succ_of_le hk
   have hbeq :
       (cert.powChain[k]? == some (FpPoly.frobeniusXPowModLinear f hmonic k)) = true :=
-    List.all_eq_true_of_mem hall hmem
+    List.all_eq_true.mp hall k hmem
   have hlinear :
       cert.powChain[k]? = some (FpPoly.frobeniusXPowModLinear f hmonic k) := by
     simpa using hbeq
   rw [hlinear, FpPoly.frobeniusXPowModLinear_eq_frobeniusXPowMod]
 
+/--
+Shared closing step for the three `checkIrreducibilityCertificate*_rabinTest`
+theorems: assemble `rabinTest f hmonic = true` from a verified pow chain, a
+matching divisibility witness, and the Bezout-witness check.
+-/
+private theorem rabinTest_of_powChain_spec
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (cert : SamePrimeIrreducibilityCertificate p)
+    (hnpos : 0 < cert.n) (hn : cert.n = basisSize f)
+    (hpow : ∀ k, k ≤ cert.n →
+      cert.powChain[k]? = some (FpPoly.frobeniusXPowMod f hmonic k))
+    (hdividesWitness :
+      cert.powChain[cert.n]? = some (FpPoly.modByMonic f FpPoly.X hmonic))
+    (hwitnesses : checkRabinBezoutWitnesses f hmonic cert = true) :
+    rabinTest f hmonic = true := by
+  simp only [rabinTest, Bool.and_eq_true]
+  refine ⟨⟨?_, ?_⟩, ?_⟩
+  · simpa [hn] using hnpos
+  · unfold rabinDividesTest frobeniusDiffMod
+    have hpowN := hpow cert.n (Nat.le_refl _)
+    rw [hpowN] at hdividesWitness
+    simp at hdividesWitness
+    rw [← hn, ← hdividesWitness]
+    change (FpPoly.frobeniusXPowMod f hmonic cert.n -
+        FpPoly.frobeniusXPowMod f hmonic cert.n).isZero = true
+    rw [FpPoly.sub_self]
+    rfl
+  · exact checkRabinBezoutWitnesses_rabinWitnesses_all
+      f hmonic cert hwitnesses hpow hn
+
+/-- If `checkIrreducibilityCertificate` accepts a self-describing certificate,
+the corresponding `rabinTest` succeeds. Downstream irreducibility soundness
+(`FpPoly.Irreducible`) is then chained via
+`HexBerlekamp.RabinSoundness.rabinTest_imp_irreducible`. -/
 theorem checkIrreducibilityCertificate_rabinTest
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
@@ -482,27 +519,12 @@ theorem checkIrreducibilityCertificate_rabinTest
             checkRabinBezoutWitnesses f hmonic samePrimeCert = true := by
         simpa [checkIrreducibilityCertificate, hambient, Bool.and_eq_true] using hcheck
       rcases hparts with ⟨⟨⟨⟨hnpos, hn⟩, hpowCheck⟩, hdividesWitness⟩, hwitnesses⟩
-      have hpow := checkPowChain_spec f hmonic samePrimeCert hpowCheck
-      simp only [rabinTest, Bool.and_eq_true]
-      constructor
-      · constructor
-        · simpa [hn] using hnpos
-        · unfold rabinDividesTest frobeniusDiffMod
-          have hpowN :
-              samePrimeCert.powChain[samePrimeCert.n]? =
-                some (FpPoly.frobeniusXPowMod f hmonic samePrimeCert.n) :=
-            hpow samePrimeCert.n (Nat.le_refl _)
-          rw [hpowN] at hdividesWitness
-          simp at hdividesWitness
-          rw [← hn]
-          rw [← hdividesWitness]
-          change (FpPoly.frobeniusXPowMod f hmonic samePrimeCert.n -
-              FpPoly.frobeniusXPowMod f hmonic samePrimeCert.n).isZero = true
-          rw [FpPoly.sub_self]
-          rfl
-      · exact checkRabinBezoutWitnesses_rabinWitnesses_all
-          f hmonic samePrimeCert hwitnesses hpow hn
+      exact rabinTest_of_powChain_spec f hmonic samePrimeCert hnpos hn
+        (checkPowChain_spec f hmonic samePrimeCert hpowCheck)
+        hdividesWitness hwitnesses
 
+/-- Kernel-reducible counterpart of `checkIrreducibilityCertificate_rabinTest`,
+suited to `decide`-discharged certificates over small concrete polynomials. -/
 theorem checkIrreducibilityCertificateLinear_rabinTest
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
@@ -523,26 +545,9 @@ theorem checkIrreducibilityCertificateLinear_rabinTest
             checkRabinBezoutWitnesses f hmonic samePrimeCert = true := by
         simpa [checkIrreducibilityCertificateLinear, hambient, Bool.and_eq_true] using hcheck
       rcases hparts with ⟨⟨⟨⟨hnpos, hn⟩, hpowCheck⟩, hdividesWitness⟩, hwitnesses⟩
-      have hpow := checkPowChainLinear_spec f hmonic samePrimeCert hpowCheck
-      simp only [rabinTest, Bool.and_eq_true]
-      constructor
-      · constructor
-        · simpa [hn] using hnpos
-        · unfold rabinDividesTest frobeniusDiffMod
-          have hpowN :
-              samePrimeCert.powChain[samePrimeCert.n]? =
-                some (FpPoly.frobeniusXPowMod f hmonic samePrimeCert.n) :=
-            hpow samePrimeCert.n (Nat.le_refl _)
-          rw [hpowN] at hdividesWitness
-          simp at hdividesWitness
-          rw [← hn]
-          rw [← hdividesWitness]
-          change (FpPoly.frobeniusXPowMod f hmonic samePrimeCert.n -
-              FpPoly.frobeniusXPowMod f hmonic samePrimeCert.n).isZero = true
-          rw [FpPoly.sub_self]
-          rfl
-      · exact checkRabinBezoutWitnesses_rabinWitnesses_all
-          f hmonic samePrimeCert hwitnesses hpow hn
+      exact rabinTest_of_powChain_spec f hmonic samePrimeCert hnpos hn
+        (checkPowChainLinear_spec f hmonic samePrimeCert hpowCheck)
+        hdividesWitness hwitnesses
 
 /-! ### Incremental pow-chain check
 
@@ -719,6 +724,10 @@ def checkIrreducibilityCertificateLinearIncremental
         (samePrimeCert.powChain[samePrimeCert.n]? == some (FpPoly.modByMonic f FpPoly.X hmonic)) &&
         checkRabinBezoutWitnesses f hmonic samePrimeCert
 
+/-- Incremental companion to `checkPowChain_spec`: if
+`checkPowChainLinearIncremental` accepts, every entry agrees with
+`FpPoly.frobeniusXPowMod`. The proof inducts on `k`, using the chain
+identity `X^(p^(k+1)) ≡ (X^(p^k))^p (mod f)`. -/
 theorem checkPowChainLinearIncremental_spec
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
@@ -743,7 +752,7 @@ theorem checkPowChainLinearIncremental_spec
         ih hj_le
       have hmem : j ∈ List.range cert.n := List.mem_range.mpr hj
       have hstep : checkPowChainLinearIncrementalStep f hmonic cert j = true :=
-        List.all_eq_true_of_mem hsteps hmem
+        List.all_eq_true.mp hsteps j hmem
       unfold checkPowChainLinearIncrementalStep at hstep
       rw [hih] at hstep
       cases hnext : cert.powChain[j+1]? with
@@ -759,6 +768,10 @@ theorem checkPowChainLinearIncremental_spec
           rw [heq, FpPoly.powModMonicLinear_eq_powModMonic,
               ← FpPoly.frobeniusXPowMod_succ]
 
+/-- Incremental counterpart of `checkIrreducibilityCertificate_rabinTest`,
+suited to `(p, n)` regimes where the per-step `O(n · p)` cost fits the
+`decide` kernel budget but the bulk `O(Σ p^k)` of the non-incremental
+checker does not. -/
 theorem checkIrreducibilityCertificateLinearIncremental_rabinTest
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
@@ -780,26 +793,9 @@ theorem checkIrreducibilityCertificateLinearIncremental_rabinTest
         simpa [checkIrreducibilityCertificateLinearIncremental, hambient,
           Bool.and_eq_true] using hcheck
       rcases hparts with ⟨⟨⟨⟨hnpos, hn⟩, hpowCheck⟩, hdividesWitness⟩, hwitnesses⟩
-      have hpow := checkPowChainLinearIncremental_spec f hmonic samePrimeCert hpowCheck
-      simp only [rabinTest, Bool.and_eq_true]
-      constructor
-      · constructor
-        · simpa [hn] using hnpos
-        · unfold rabinDividesTest frobeniusDiffMod
-          have hpowN :
-              samePrimeCert.powChain[samePrimeCert.n]? =
-                some (FpPoly.frobeniusXPowMod f hmonic samePrimeCert.n) :=
-            hpow samePrimeCert.n (Nat.le_refl _)
-          rw [hpowN] at hdividesWitness
-          simp at hdividesWitness
-          rw [← hn]
-          rw [← hdividesWitness]
-          change (FpPoly.frobeniusXPowMod f hmonic samePrimeCert.n -
-              FpPoly.frobeniusXPowMod f hmonic samePrimeCert.n).isZero = true
-          rw [FpPoly.sub_self]
-          rfl
-      · exact checkRabinBezoutWitnesses_rabinWitnesses_all
-          f hmonic samePrimeCert hwitnesses hpow hn
+      exact rabinTest_of_powChain_spec f hmonic samePrimeCert hnpos hn
+        (checkPowChainLinearIncremental_spec f hmonic samePrimeCert hpowCheck)
+        hdividesWitness hwitnesses
 
 end Berlekamp
 

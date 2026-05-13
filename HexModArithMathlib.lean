@@ -1,5 +1,4 @@
 import HexModArithMathlib.Basic
-import HexModArithMathlib.Conformance
 
 /-!
 The `HexModArithMathlib` library bridges executable `Hex.ZMod64` residues to

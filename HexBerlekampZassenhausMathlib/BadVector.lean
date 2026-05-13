@@ -399,6 +399,66 @@ def isBhksBadVectorSetup_of_projected_not_indicator
   · simpa [projectedVectorFn_projectedVectorArray] using hin
   · simpa [projectedVectorFn_projectedVectorArray] using hnot
 
+/--
+Per-vector algebraic bridge needed to turn a projected vector in `L' \ W` into
+the exact bad-vector setup callback consumed by cap separation.
+
+The structural `L' \ W` facts are supplied by the callback arguments.  This
+record packages the remaining BHKS Lemma 3.2 data: the canonical auxiliary
+polynomial attached to the projected vector, positivity of the selected local
+factor degree, rational coprimality, and the `p^(k*d)` resultant divisibility.
+-/
+structure ProjectedBadVectorSetupBridge
+    (W : ExecutableBadVectorWitness)
+    (trueSupports : Set (Set (Fin W.projectedRows.factorCount))) where
+  auxiliary_eq :
+    ∀ v : Fin W.projectedRows.factorCount → ℤ,
+      v ∈ BHKS.projectedRowSpanInt W.projectedRows →
+        v ∉ BHKS.trueFactorIndicatorLattice trueSupports →
+          W.H =
+            BHKS.auxiliaryPolynomial W.input W.liftData
+              (W.projectedVectorArray v)
+  localFactorDegree_pos :
+    ∀ v : Fin W.projectedRows.factorCount → ℤ,
+      v ∈ BHKS.projectedRowSpanInt W.projectedRows →
+        v ∉ BHKS.trueFactorIndicatorLattice trueSupports →
+          0 < W.localFactorDegree
+  coprime_input_aux_over_rat :
+    ∀ v : Fin W.projectedRows.factorCount → ℤ,
+      v ∈ BHKS.projectedRowSpanInt W.projectedRows →
+        v ∉ BHKS.trueFactorIndicatorLattice trueSupports →
+          IsCoprime
+            (W.inputPolynomial.map (Int.castRingHom ℚ))
+            (W.auxiliaryPolynomial.map (Int.castRingHom ℚ))
+  resultant_divisible_by_p_pow :
+    ∀ v : Fin W.projectedRows.factorCount → ℤ,
+      v ∈ BHKS.projectedRowSpanInt W.projectedRows →
+        v ∉ BHKS.trueFactorIndicatorLattice trueSupports →
+          ((W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : Nat) : ℤ) ∣
+            Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial
+
+/--
+Convert the packaged projected-vector bridge into the callback shape expected
+by `BHKS.ExecutableCapSeparationHypotheses`.
+-/
+def bad_setup_of_projected_not_indicator
+    (W : ExecutableBadVectorWitness)
+    (trueSupports : Set (Set (Fin W.projectedRows.factorCount)))
+    (hbridge : ProjectedBadVectorSetupBridge W trueSupports) :
+    ∀ v : Fin W.projectedRows.factorCount → ℤ,
+      v ∈ BHKS.projectedRowSpanInt W.projectedRows →
+        v ∉ BHKS.trueFactorIndicatorLattice trueSupports →
+          IsBhksBadVectorSetup W := by
+  intro v hin hnot
+  exact
+    isBhksBadVectorSetup_of_projected_not_indicator
+      W trueSupports v
+      (hbridge.auxiliary_eq v hin hnot)
+      hin hnot
+      (hbridge.localFactorDegree_pos v hin hnot)
+      (hbridge.coprime_input_aux_over_rat v hin hnot)
+      (hbridge.resultant_divisible_by_p_pow v hin hnot)
+
 /-- BHKS Lemma 3.2: the selected local-factor degree is positive whenever the
 witness carries a bad-vector setup. -/
 theorem localFactorDegree_pos_of_bhks_bad
@@ -429,6 +489,40 @@ theorem resultant_divisible_by_p_pow_of_bhks_bad
     ((W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : Nat) : ℤ) ∣
       Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial := by
   exact h_bad.resultant_divisible_by_p_pow
+
+/--
+Package a BHKS bad-vector setup as the abstract resultant data consumed by
+the lower/upper-bound comparison lemmas.
+-/
+def resultantDataOfBhksBad
+    (W : ExecutableBadVectorWitness) (h_bad : IsBhksBadVectorSetup W)
+    (hp : 0 < W.liftData.p) :
+    BadVectorResultantData :=
+  W.toResultantData
+    hp
+    (localFactorDegree_pos_of_bhks_bad W h_bad)
+    (coprime_input_aux_over_rat_of_bhks_bad W h_bad)
+    (resultant_divisible_by_p_pow_of_bhks_bad W h_bad)
+
+/--
+BHKS Lemma 3.2 bound package: a bad-vector setup gives both the modular
+resultant lower bound and the Hadamard/l2norm upper bound without callers
+projecting the setup fields manually.
+-/
+theorem badVector_resultant_bounds_of_bhks_bad
+    (W : ExecutableBadVectorWitness)
+    (h_bad : IsBhksBadVectorSetup W)
+    (hp : 0 < W.liftData.p) :
+    (W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : ℝ) ≤
+      |((Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial : ℤ) : ℝ)| ∧
+    |((Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial : ℤ) : ℝ)| ≤
+      (HexPolyZMathlib.l2norm W.inputPolynomial) ^ W.auxiliaryPolynomial.natDegree *
+        (HexPolyZMathlib.l2norm W.auxiliaryPolynomial) ^ W.inputPolynomial.natDegree :=
+  W.badVector_resultant_bounds
+    hp
+    (localFactorDegree_pos_of_bhks_bad W h_bad)
+    (coprime_input_aux_over_rat_of_bhks_bad W h_bad)
+    (resultant_divisible_by_p_pow_of_bhks_bad W h_bad)
 
 /--
 Combined BHKS Lemma 3.2 contradiction: an executable bad-vector witness whose

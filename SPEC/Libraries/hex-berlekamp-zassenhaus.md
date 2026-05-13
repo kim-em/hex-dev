@@ -255,9 +255,19 @@ theorem, and no public-API contract depends on it.
 
 Algorithm:
 
-1. Hensel-lift `f mod p` to `f mod p^a` for `a := ZPoly.defaultFactorCoeffBound f` (the Mignotte ceiling). Obtain lifted factors `g_1, …, g_r ∈ (ℤ/p^a)[x]`.
+1. Hensel-lift `f mod p` to `f mod p^a` for `a := ⌈log_p (2 · ZPoly.defaultFactorCoeffBound f + 1)⌉`, the smallest exponent with `p^a > 2 · defaultFactorCoeffBound f`. Obtain lifted factors `g_1, …, g_r ∈ (ℤ/p^a)[x]`.
 2. Enumerate subsets `S ⊆ {1, …, r}` (current implementation: the existing `recombinationSearch` helper). For each: compute `g_S := lc(f) · ∏_{i ∈ S} g_i mod p^a`, lift via centred residue, remove content, check exact division of `f`. On exact division, accept and recurse on the quotient.
 3. Termination is by induction on `|remaining factors|`; the search is finite by construction.
+
+The Mignotte coefficient bound `defaultFactorCoeffBound f` and the
+Hensel precision exponent `a` are different quantities and **must
+not be conflated**. The coefficient bound is a magnitude in ℤ — a
+number like 1008 — describing how large any factor's coefficient
+can be. The precision exponent `a` is the small integer with
+`p^a > 2·(coefficient bound)` — typically a single-digit number.
+Setting `a := defaultFactorCoeffBound f` makes `p^a` astronomically
+large (e.g. `3^1008` for Φ_11) and renders Hensel lifting
+intractable on inputs the algorithm could in principle solve.
 
 ### Slow-path correctness sketch (in-bridge proof)
 

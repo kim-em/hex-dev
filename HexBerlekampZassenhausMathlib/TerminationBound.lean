@@ -36,6 +36,18 @@ theorem defaultFactorCoeffBound_real_le_of_factorFastPrecisionCap_le
 Any precision at least `factorFastPrecisionCap f` dominates both executable
 integer bounds needed by the fast-path termination proof.
 -/
+theorem factorFastPrecisionCap_dominates
+    (f : Hex.ZPoly) {a : Nat} (ha : Hex.factorFastPrecisionCap f ≤ a) :
+    Hex.bhksBound f ≤ a ∧
+      Hex.ZPoly.defaultFactorCoeffBound f ≤ a := by
+  exact ⟨le_trans (bhksBound_le_factorFastPrecisionCap f) ha,
+    le_trans (defaultFactorCoeffBound_le_factorFastPrecisionCap f) ha⟩
+
+/--
+Any precision at least `factorFastPrecisionCap f` dominates both executable
+bounds needed by the fast-path termination proof, in the real-valued form used
+by the analytic separation and reconstruction lemmas.
+-/
 theorem factorFastPrecisionCap_real_dominates
     (f : Hex.ZPoly) {a : Nat} (ha : Hex.factorFastPrecisionCap f ≤ a) :
     (Hex.bhksBound f : ℝ) ≤ (a : ℝ) ∧
@@ -139,6 +151,17 @@ theorem bhksPaperThresholdReal_le_of_factorFastPrecisionCap_le
   (bhksPaperThresholdReal_le_bhksBound f C hC_nonneg hC).trans
     (bhksBound_real_le_of_factorFastPrecisionCap_le f ha)
 
+/--
+Exact-cap form of `bhksPaperThresholdReal_le_of_factorFastPrecisionCap_le`.
+This is the canonical BHKS threshold fact for callers working at the
+executable fast-path cap itself.
+-/
+theorem bhksPaperThresholdReal_le_factorFastPrecisionCap
+    (f : Hex.ZPoly) (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2) :
+    bhksPaperThresholdReal f C ≤ (Hex.factorFastPrecisionCap f : ℝ) :=
+  bhksPaperThresholdReal_le_of_factorFastPrecisionCap_le
+    f C hC_nonneg hC (Nat.le_refl _)
+
 namespace ExecutableBadVectorWitness
 
 /--
@@ -189,6 +212,25 @@ theorem no_bhks_bad_setup_of_factorFastPrecisionCap_le
   (bhksPaperThreshold_and_no_bad_setup_of_factorFastPrecisionCap_le
     W ha C hC_nonneg hC h_bad hp hlt).2
 
+/--
+Exact-cap bad-vector contradiction wrapper for callers working at
+`factorFastPrecisionCap W.input`.
+-/
+theorem no_bhks_bad_setup_at_factorFastPrecisionCap
+    (W : ExecutableBadVectorWitness)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (h_bad : IsBhksBadVectorSetup W)
+    (hp : 0 < W.liftData.p)
+    (hlt :
+      (HexPolyZMathlib.l2norm W.inputPolynomial) ^
+          W.auxiliaryPolynomial.natDegree *
+        (HexPolyZMathlib.l2norm W.auxiliaryPolynomial) ^
+          W.inputPolynomial.natDegree <
+      (W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : ℝ)) :
+    False :=
+  no_bhks_bad_setup_of_factorFastPrecisionCap_le
+    W (Nat.le_refl _) C hC_nonneg hC h_bad hp hlt
+
 end ExecutableBadVectorWitness
 
 namespace BHKS
@@ -219,6 +261,36 @@ structure ExecutableCapSeparationHypotheses
         W.inputPolynomial.natDegree <
     (W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : ℝ)
 
+namespace ExecutableCapSeparationHypotheses
+
+/--
+Instantiate the cap-separation hypotheses from the packaged projected-vector
+bad-vector bridge supplied by `BadVector.lean`, plus the existing cut and
+resultant-bound side conditions.
+-/
+def ofProjectedBadVectorSetupBridge
+    (W : ExecutableBadVectorWitness)
+    (trueSupports : Set (Set (Fin W.projectedRows.factorCount)))
+    (hcut : CutProjectionHypotheses W.projectedRows trueSupports)
+    (hbridge :
+      ExecutableBadVectorWitness.ProjectedBadVectorSetupBridge W trueSupports)
+    (hp : 0 < W.liftData.p)
+    (hlt :
+      (HexPolyZMathlib.l2norm W.inputPolynomial) ^
+          W.auxiliaryPolynomial.natDegree *
+        (HexPolyZMathlib.l2norm W.auxiliaryPolynomial) ^
+          W.inputPolynomial.natDegree <
+      (W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : ℝ)) :
+    ExecutableCapSeparationHypotheses W trueSupports where
+  cut := hcut
+  bad_setup_of_projected_not_indicator :=
+    ExecutableBadVectorWitness.bad_setup_of_projected_not_indicator
+      W trueSupports hbridge
+  hp := hp
+  l2norm_upper_lt_divisor := hlt
+
+end ExecutableCapSeparationHypotheses
+
 /--
 At any executable fast-path precision cap, the cap-level bad-vector
 contradiction excludes every vector in `L' \ W`.
@@ -241,6 +313,21 @@ theorem no_projected_not_indicator_of_factorFastPrecisionCap_le
       hcap.l2norm_upper_lt_divisor
 
 /--
+Exact-cap contradiction form for projected vectors in `L' \ W`.
+-/
+theorem no_projected_not_indicator_at_factorFastPrecisionCap
+    (W : ExecutableBadVectorWitness)
+    (trueSupports : Set (Set (Fin W.projectedRows.factorCount)))
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (hcap : ExecutableCapSeparationHypotheses W trueSupports) :
+    ∀ v : Fin W.projectedRows.factorCount → ℤ,
+      v ∈ projectedRowSpanInt W.projectedRows →
+        v ∉ trueFactorIndicatorLattice trueSupports →
+          False :=
+  no_projected_not_indicator_of_factorFastPrecisionCap_le
+    W trueSupports (Nat.le_refl _) C hC_nonneg hC hcap
+
+/--
 Executable-cap BHKS separation: at any precision meeting
 `factorFastPrecisionCap`, the projected row span equals the true-factor
 indicator lattice, assuming the remaining failed-recovery-to-bad-vector bridge.
@@ -259,6 +346,47 @@ theorem projectedRowSpan_eq_trueFactorIndicatorLattice_of_cap
       no_projected_not_indicator :=
         no_projected_not_indicator_of_factorFastPrecisionCap_le
           W trueSupports ha C hC_nonneg hC hcap }
+
+/--
+Exact-cap BHKS separation: at the executable fast-path cap itself, the
+projected row span equals the true-factor indicator lattice, assuming the
+remaining failed-recovery-to-bad-vector bridge.
+-/
+theorem projectedRowSpan_eq_trueFactorIndicatorLattice_at_factorFastPrecisionCap
+    (W : ExecutableBadVectorWitness)
+    (trueSupports : Set (Set (Fin W.projectedRows.factorCount)))
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (hcap : ExecutableCapSeparationHypotheses W trueSupports) :
+    projectedRowSpanInt W.projectedRows =
+      trueFactorIndicatorLattice trueSupports :=
+  projectedRowSpan_eq_trueFactorIndicatorLattice_of_cap
+    W trueSupports (Nat.le_refl _) C hC_nonneg hC hcap
+
+/--
+Wrapper form of `projectedRowSpan_eq_trueFactorIndicatorLattice_of_cap` that
+accepts the packaged projected-vector bad-vector bridge directly.
+-/
+theorem projectedRowSpan_eq_trueFactorIndicatorLattice_of_cap_bridge
+    (W : ExecutableBadVectorWitness)
+    (trueSupports : Set (Set (Fin W.projectedRows.factorCount)))
+    {a : Nat} (ha : Hex.factorFastPrecisionCap W.input ≤ a)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (hcut : CutProjectionHypotheses W.projectedRows trueSupports)
+    (hbridge :
+      ExecutableBadVectorWitness.ProjectedBadVectorSetupBridge W trueSupports)
+    (hp : 0 < W.liftData.p)
+    (hlt :
+      (HexPolyZMathlib.l2norm W.inputPolynomial) ^
+          W.auxiliaryPolynomial.natDegree *
+        (HexPolyZMathlib.l2norm W.auxiliaryPolynomial) ^
+          W.inputPolynomial.natDegree <
+      (W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : ℝ)) :
+    projectedRowSpanInt W.projectedRows =
+      trueFactorIndicatorLattice trueSupports :=
+  projectedRowSpan_eq_trueFactorIndicatorLattice_of_cap
+    W trueSupports ha C hC_nonneg hC
+    (ExecutableCapSeparationHypotheses.ofProjectedBadVectorSetupBridge
+      W trueSupports hcut hbridge hp hlt)
 
 end BHKS
 

@@ -299,6 +299,11 @@ theorem skipIndex_ne {n : Nat} (skip : Fin (n + 1)) (i : Fin n) :
   · rw [skipIndex_val_of_not_lt skip i hlt] at hval
     omega
 
+@[simp] theorem skipIndex_last {n : Nat} (i : Fin n) :
+    skipIndex (Fin.last n) i = i.castSucc := by
+  apply Fin.ext
+  simp [skipIndex, Fin.last, i.isLt]
+
 /-- Delete one row and one column from an `(n + 1) × (n + 1)` matrix. -/
 def deleteRowCol {R : Type u} {n : Nat} (M : Matrix R (n + 1) (n + 1))
     (row col : Fin (n + 1)) : Matrix R n n :=
@@ -308,6 +313,21 @@ def deleteRowCol {R : Type u} {n : Nat} (M : Matrix R (n + 1) (n + 1))
     (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1)) (i j : Fin n) :
     (deleteRowCol M row col)[i][j] = M[skipIndex row i][skipIndex col j] := by
   simp [deleteRowCol, ofFn]
+
+@[simp] theorem deleteRowCol_last_last {R : Type u} {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) :
+    deleteRowCol M (Fin.last n) (Fin.last n) =
+      leadingPrefix M n (Nat.le_succ n) := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let ii : Fin n := ⟨i, hi⟩
+  let jj : Fin n := ⟨j, hj⟩
+  change (deleteRowCol M (Fin.last n) (Fin.last n))[ii][jj] =
+    (leadingPrefix M n (Nat.le_succ n))[ii][jj]
+  rw [deleteRowCol_entry]
+  simp [leadingPrefix, ofFn]
 
 /-- The alternating sign used in signed cofactors. -/
 def cofactorSign {R : Type u} [OfNat R 1] [Neg R] {n : Nat}
@@ -342,6 +362,14 @@ def cofactor {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     cofactor M row col = -det (deleteRowCol M row col) := by
   simp [cofactor, h]
   grind
+
+@[simp] theorem cofactor_last_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) :
+    cofactor M (Fin.last n) (Fin.last n) =
+      det (leadingPrefix M n (Nat.le_succ n)) := by
+  rw [cofactor_of_even]
+  · simp
+  · omega
 
 /-- The determinant of the empty leading prefix is the Bareiss previous-pivot
 convention `1`. -/
@@ -1965,6 +1993,60 @@ theorem det_upperTriangular_pos_diag
         exact hdiag ii
       exact Int.mul_pos (ih (leadingPrefix M n (Nat.le_succ n)) hprefixZero hprefixDiag)
         (hdiag (Fin.last n))
+
+/-- The determinant of an upper-triangular square matrix (entries below the
+diagonal are zero) over a commutative ring is the product of its diagonal
+entries, expressed via a `Fin.foldl` over the diagonal indices. -/
+theorem det_upperTriangular_eq_finFoldl_diag
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat} (M : Matrix R n n)
+    (hzero : ∀ i j : Fin n, j.val < i.val → M[i][j] = 0) :
+    det M = Fin.foldl n (fun acc i => acc * M[i][i]) 1 := by
+  induction n with
+  | zero =>
+      simp only [Fin.foldl_zero]
+      simp [det, permutationVectors, detTerm, detSign, detProduct, emptyVec,
+        inversionCount]
+      grind
+  | succ n ih =>
+      have hrow : ∀ j : Fin (n + 1), j.val < n → M[Fin.last n][j] = 0 := by
+        intro j hj
+        exact hzero (Fin.last n) j hj
+      rw [det_eq_det_leadingPrefix_mul_last_of_last_row_zero M hrow]
+      have hprefixZero :
+          ∀ i j : Fin n, j.val < i.val →
+            (leadingPrefix M n (Nat.le_succ n))[i][j] = 0 := by
+        intro i j hij
+        let ii : Fin (n + 1) := ⟨i.val, by omega⟩
+        let jj : Fin (n + 1) := ⟨j.val, by omega⟩
+        have hentry : (leadingPrefix M n (Nat.le_succ n))[i][j] = M[ii][jj] := by
+          simp [leadingPrefix, ofFn, ii, jj]
+        rw [hentry]
+        exact hzero ii jj hij
+      rw [ih (leadingPrefix M n (Nat.le_succ n)) hprefixZero]
+      -- The (n+1)-length Fin.foldl over diagonals splits as the n-length foldl
+      -- times the last diagonal entry.
+      rw [Fin.foldl_succ_last]
+      -- Rewrite the leading prefix diagonal entries as M[i.castSucc][i.castSucc].
+      have hcongr :
+          Fin.foldl n
+              (fun acc i => acc * (leadingPrefix M n (Nat.le_succ n))[i][i]) 1 =
+            Fin.foldl n (fun acc i => acc * M[i.castSucc][i.castSucc]) 1 := by
+        rw [Fin.foldl_eq_foldl_finRange, Fin.foldl_eq_foldl_finRange]
+        apply foldl_acc_congr
+        intro acc i _hmem
+        have hentry : (leadingPrefix M n (Nat.le_succ n))[i][i] = M[i.castSucc][i.castSucc] :=
+          by simp [leadingPrefix, ofFn, Fin.castSucc]
+        rw [hentry]
+      rw [hcongr]
+
+/-- The determinant of an upper-triangular square matrix as a `List.foldl`
+product over the diagonal indices in `Fin.finRange`. -/
+theorem det_upperTriangular_eq_foldl_diag
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat} (M : Matrix R n n)
+    (hzero : ∀ i j : Fin n, j.val < i.val → M[i][j] = 0) :
+    det M = (List.finRange n).foldl (fun acc i => acc * M[i][i]) 1 := by
+  rw [det_upperTriangular_eq_finFoldl_diag M hzero]
+  rw [Fin.foldl_eq_foldl_finRange]
 
 private theorem detTerm_identity_insertAt_last {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat} (v : Vector (Fin n) n) :
@@ -4548,6 +4630,40 @@ theorem det_transpose {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
       (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0 := by
         exact permutationVectors_inverseVector_sum (R := R) (n := n) (fun perm => detTerm M perm)
 
+/-- Diagonal-product formula for the determinant of a lower-triangular matrix
+(entries above the diagonal are zero). Derived from the upper-triangular form
+via `det_transpose`. -/
+theorem det_lowerTriangular_eq_finFoldl_diag
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat} (M : Matrix R n n)
+    (hzero : ∀ i j : Fin n, i.val < j.val → M[i][j] = 0) :
+    det M = Fin.foldl n (fun acc i => acc * M[i][i]) 1 := by
+  rw [← det_transpose M]
+  have htransposeZero :
+      ∀ i j : Fin n, j.val < i.val → M.transpose[i][j] = 0 := by
+    intro i j hij
+    have hentry : M.transpose[i][j] = M[j][i] := by
+      simp [transpose, col]
+    rw [hentry]
+    exact hzero j i hij
+  rw [det_upperTriangular_eq_finFoldl_diag M.transpose htransposeZero]
+  have hdiag : ∀ i : Fin n, M.transpose[i][i] = M[i][i] := by
+    intro i
+    simp [transpose, col]
+  -- Rewrite the foldl over `M.transpose[i][i]` to `M[i][i]`.
+  rw [Fin.foldl_eq_foldl_finRange, Fin.foldl_eq_foldl_finRange]
+  apply foldl_acc_congr
+  intro acc i _hmem
+  rw [hdiag]
+
+/-- The determinant of a lower-triangular square matrix as a `List.foldl`
+product over the diagonal indices in `Fin.finRange`. -/
+theorem det_lowerTriangular_eq_foldl_diag
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat} (M : Matrix R n n)
+    (hzero : ∀ i j : Fin n, i.val < j.val → M[i][j] = 0) :
+    det M = (List.finRange n).foldl (fun acc i => acc * M[i][i]) 1 := by
+  rw [det_lowerTriangular_eq_finFoldl_diag M hzero]
+  rw [Fin.foldl_eq_foldl_finRange]
+
 /-- Permuting columns multiplies the determinant by the sign of the column permutation. -/
 theorem det_colPermute_vector {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (sigma : Vector (Fin n) n)
@@ -4844,7 +4960,24 @@ private theorem det_colReplace_zero {R : Type u} [Lean.Grind.CommRing R] {n : Na
   rw [hcol] at h
   grind
 
-private theorem det_colReplace_sum_list {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+/-- Replacing a column by itself leaves the matrix unchanged. -/
+theorem colReplace_self {R : Type u} {n : Nat}
+    (M : Matrix R n n) (dst : Fin n) :
+    colReplace M dst (fun r => M[r][dst]) = M := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro c hc
+  change (colReplace M dst (fun r => M[r][dst]))[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
+    M[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+  rw [colReplace_get]
+  by_cases hc' : (⟨c, hc⟩ : Fin n) = dst
+  · rw [if_pos hc']
+    exact congrArg (fun c' : Fin n => M[(⟨r, hr⟩ : Fin n)][c']) hc'.symm
+  · rw [if_neg hc']
+
+/-- Determinant linearity in one replaced column, finite-list form. -/
+theorem det_colReplace_sum_list {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (dst : Fin n) {β : Type v} (xs : List β)
     (coeff : β → R) (source : β → Fin n → R) :
     det (colReplace M dst
@@ -4902,6 +5035,17 @@ private theorem det_colReplace_sum_list {R : Type u} [Lean.Grind.CommRing R] {n 
                 xs.foldl
                   (fun acc x => acc + coeff x * det (colReplace M dst (source x)))
                   (0 + coeff x * det (colReplace M dst (source x))) := hstart
+
+/-- Determinant linearity in one replaced column, indexed by `Fin m`. -/
+theorem det_colReplace_sum_finRange {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (M : Matrix R n n) (dst : Fin n) (coeff : Fin m → R)
+    (source : Fin m → Fin n → R) :
+    det (colReplace M dst
+        (fun r => (List.finRange m).foldl
+          (fun acc x => acc + coeff x * source x r) 0)) =
+      (List.finRange m).foldl
+        (fun acc x => acc + coeff x * det (colReplace M dst (source x))) 0 :=
+  det_colReplace_sum_list M dst (List.finRange m) coeff source
 
 /-- Square matrix whose `j`-th column is the finite linear combination of the
 columns of `source` with coefficients from row `j` of `coeff`. -/
@@ -5105,6 +5249,61 @@ theorem det_eq_zero_of_col_eq {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (hcol : ∀ r : Fin n, M[r][src] = M[r][dst]) :
     det M = 0 := by
   simpa [det] using permutationVectors_duplicateCol_sum M src dst h hcol
+
+/-- Replacing a column by an already-present different column creates a
+duplicate column, so the determinant is zero. -/
+theorem det_colReplace_existing_col_eq_zero
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (dst src : Fin n) (hsrcdst : src ≠ dst) :
+    det (colReplace M dst (fun r => M[r][src])) = 0 := by
+  apply det_eq_zero_of_col_eq (colReplace M dst (fun r => M[r][src])) src dst hsrcdst
+  intro r
+  rw [colReplace_get, colReplace_get]
+  rw [if_neg hsrcdst, if_pos rfl]
+
+/-- Adding a finite linear combination of other columns of `M` to column `dst`
+preserves the determinant. The sources are given as a list and each source is
+required to differ from `dst`. -/
+theorem det_colReplace_add_otherCols {R : Type u}
+    [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (dst : Fin n) (sources : List (Fin n)) (coeff : Fin n → R)
+    (hsrc : ∀ s ∈ sources, s ≠ dst) :
+    det (colReplace M dst
+        (fun r => M[r][dst] +
+          sources.foldl (fun acc s => acc + coeff s * M[r][s]) 0)) = det M := by
+  rw [det_colReplace_add M dst (fun r => M[r][dst])
+    (fun r => sources.foldl (fun acc s => acc + coeff s * M[r][s]) 0)]
+  rw [colReplace_self M dst]
+  have hcomb : det (colReplace M dst
+        (fun r => sources.foldl (fun acc s => acc + coeff s * M[r][s]) 0)) = 0 := by
+    rw [det_colReplace_sum_list M dst sources coeff (fun s r => M[r][s])]
+    -- Show each summand is zero; we use the fact that the foldl over sources
+    -- yields zero because each replaced det is zero.
+    have hzero_each : ∀ s ∈ sources, coeff s * det (colReplace M dst (fun r => M[r][s])) = 0 := by
+      intro s hs
+      have hne : s ≠ dst := hsrc s hs
+      rw [det_colReplace_existing_col_eq_zero M dst s hne]
+      grind
+    -- Foldl of a sum that is always zero adds nothing.
+    have hfoldl : sources.foldl
+        (fun acc s => acc + coeff s * det (colReplace M dst (fun r => M[r][s]))) 0 = 0 := by
+      clear hzero_each
+      induction sources with
+      | nil => rfl
+      | cons s ss ih =>
+          simp only [List.foldl_cons]
+          have hs : coeff s * det (colReplace M dst (fun r => M[r][s])) = 0 := by
+            have hne : s ≠ dst := hsrc s (by simp)
+            rw [det_colReplace_existing_col_eq_zero M dst s hne]
+            grind
+          rw [hs]
+          have hsrc' : ∀ s' ∈ ss, s' ≠ dst := fun s' hs' => hsrc s' (by simp [hs'])
+          have hzero_acc : (0 : R) + 0 = 0 := by grind
+          rw [hzero_acc]
+          exact ih hsrc'
+    exact hfoldl
+  rw [hcomb]
+  grind
 
 /-- Square submatrix obtained by selecting an ordered tuple of columns. -/
 def columnTupleMatrix {R : Type u} {n m : Nat}

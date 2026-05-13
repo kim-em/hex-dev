@@ -23,6 +23,8 @@ Covered properties:
 - normalization prefix factors and square-free core multiply back to the input
 - supported recombination/factorization outputs multiply back to the target on
   committed lifted factors
+- adversarial modular split cases exercise non-trivial subset-product
+  recombination buckets
 - signed scalar and `(factor, multiplicity)` buckets match independently
   committed expectations on the public `Factorization` edge-case table
 - bounded and default factor entry points multiply their returned factors back
@@ -39,6 +41,8 @@ Covered edge cases:
   leading-coefficient-divisible inputs, and square-free integer polynomials
 - empty and singleton lifted-factor recombination inputs
 - exhaustive slow-backstop and BHKS recovery branch inputs
+- four-way modular split inputs whose integer factors are quadratic subset
+  products
 - valid, wrong-prime, missing-obstruction, malformed-degree, and composite
   integer irreducibility certificates
 -/
@@ -50,6 +54,7 @@ private instance boundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
 private instance boundsTwo : ZMod64.Bounds 2 := ⟨by decide, by decide⟩
 private instance boundsThree : ZMod64.Bounds 3 := ⟨by decide, by decide⟩
 private instance boundsSeven : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
+private instance boundsTwentyThree : ZMod64.Bounds 23 := ⟨by decide, by decide⟩
 
 private theorem one_ne_zero_five : (1 : ZMod64 5) ≠ 0 := by
   intro h
@@ -74,7 +79,19 @@ private def factorCoeffSummary (factors : Array ZPoly) : List (List Int) :=
 private def factorizationCoeffSummary (φ : Factorization) : List (List Int × Nat) :=
   φ.factors.toList.map fun entry => (coeffs entry.1, entry.2)
 
+/-- Order-insensitive comparison for factor coefficient lists with multiplicities.
+The public contract treats factor order as operational, not mathematical, so
+conformance guards compare the coefficient/multiplicity buckets as a multiset. -/
 private def sameFactorCoeffSet (actual expected : List (List Int × Nat)) : Bool :=
+  actual.length == expected.length &&
+    expected.all (fun target => actual.any (fun got => got == target)) &&
+    actual.all (fun got => expected.any (fun target => got == target))
+
+/-- Product preservation guard for the public default `factor` entry point. -/
+private def factorPreservesProduct (f : ZPoly) : Bool :=
+  Factorization.product (factor f) = f
+
+private def sameCoeffSet (actual expected : List (List Int)) : Bool :=
   actual.length == expected.length &&
     expected.all (fun target => actual.any (fun got => got == target)) &&
     actual.all (fun got => expected.any (fun target => got == target))
@@ -84,6 +101,9 @@ private def sortedLinearRoots (factors : Array ZPoly) : Array Int :=
 
 private def polyFive (coeffs : Array Nat) : FpPoly 5 :=
   FpPoly.ofCoeffs (coeffs.map (fun n => ZMod64.ofNat 5 n))
+
+private def polyTwentyThree (coeffs : Array Nat) : FpPoly 23 :=
+  FpPoly.ofCoeffs (coeffs.map (fun n => ZMod64.ofNat 23 n))
 
 private def coeffNats (f : FpPoly 5) : List Nat :=
   f.toArray.toList.map ZMod64.toNat
@@ -138,11 +158,33 @@ private def negativeRepeatedRootWithContent : ZPoly :=
 private def leadingCoeffDivisibleByFive : ZPoly :=
   zpoly #[1, 1, 5]
 
+/-! ## Adversarial modular split smoke cases
+
+These named polynomials exercise the SPEC-required shapes where modular
+factors split more finely than the integer factorization.  The guards below
+check the local modular split facts only; oracle-stream fixture alignment is
+kept in `EmitFixtures.lean` and the JSONL oracle workflow. -/
+
 private def x4Plus1 : ZPoly :=
   zpoly #[1, 0, 0, 0, 1]
 
 private def quadSqrt2Sqrt3 : ZPoly :=
   zpoly #[6, 0, -5, 0, 1]
+
+private def quadSqrt2Sqrt3PrimeData23 : PrimeChoiceData :=
+  { p := 23
+    fModP := ZPoly.modP 23 quadSqrt2Sqrt3
+    factorsModP :=
+      #[ polyTwentyThree #[18, 1]
+       , polyTwentyThree #[5, 1]
+       , polyTwentyThree #[16, 1]
+       , polyTwentyThree #[7, 1] ] }
+
+private def quadSqrt2Sqrt3LiftData23 : LiftData :=
+  henselLiftData quadSqrt2Sqrt3 4 quadSqrt2Sqrt3PrimeData23
+
+private def quadSqrt2Sqrt3ExpectedFactors : Array ZPoly :=
+  #[zpoly #[-2, 0, 1], zpoly #[-3, 0, 1]]
 
 private def swinnertonDyerSD3 : ZPoly :=
   zpoly #[576, 0, -960, 0, 352, 0, -40, 0, 1]
@@ -158,6 +200,7 @@ private def liftedTarget3 : ZPoly :=
 
 private def liftedData3 : LiftData :=
   { p := 37
+    p_pos := by decide
     k := 8
     liftedFactors := liftedFactors3 }
 
@@ -169,11 +212,13 @@ private def liftedTarget5 : ZPoly :=
 
 private def liftedData5 : LiftData :=
   { p := 37
+    p_pos := by decide
     k := 8
     liftedFactors := liftedFactors5 }
 
 private def emptyLift : LiftData :=
   { p := 2
+    p_pos := by decide
     k := 4
     liftedFactors := #[] }
 
@@ -267,10 +312,14 @@ private def factorizationEdgeCases : List FactorizationCase :=
   , { input := negativeRepeatedRootWithContent
       expected := expectedFactorization (-2) #[(linear 1, 2)] } ]
 
+/-- Edge-case table guard: expected signed scalar/multiplicity buckets and
+exact product preservation must both hold for the public `factor` output. -/
+private def factorizationCaseMatches (c : FactorizationCase) : Bool :=
+  let φ := factor c.input
+  φ == c.expected && Factorization.product φ == c.input
+
 #guard
-  factorizationEdgeCases.all fun c =>
-    let φ := factor c.input
-    φ == c.expected && Factorization.product φ == c.input
+  factorizationEdgeCases.all factorizationCaseMatches
 
 #guard !isGoodPrime repeatedRootPoly 5
 #guard !isGoodPrime leadingCoeffDivisibleByFive 5
@@ -381,6 +430,15 @@ private def factorizationEdgeCases : List FactorizationCase :=
         Array.polyProduct factors = liftedTarget5
   | none => true
 #guard bhksRecover? liftedTarget3 emptyLift = none
+#guard quadSqrt2Sqrt3LiftData23.liftedFactors.size = 4
+#guard
+  match bhksRecover? quadSqrt2Sqrt3 quadSqrt2Sqrt3LiftData23 with
+  | some factors =>
+      factors.size = 2 &&
+        Array.polyProduct factors = quadSqrt2Sqrt3 &&
+        sameCoeffSet (factorCoeffSummary factors)
+          (factorCoeffSummary quadSqrt2Sqrt3ExpectedFactors)
+  | none => false
 
 #guard
   Factorization.product (factorSlow liftedTarget3) = liftedTarget3
@@ -415,16 +473,15 @@ private def factorizationEdgeCases : List FactorizationCase :=
   φ.scalar = -2 && φ.factors == #[(linear 1, 2)] &&
     Factorization.product φ = negativeRepeatedRootWithContent
 #guard
-  let factors := factor cubicLinear123
-  Factorization.product factors = cubicLinear123
+  factorPreservesProduct cubicLinear123
 #guard
   let factors := factor cyclo11Times22
-  Factorization.product factors = cyclo11Times22 &&
+  factorPreservesProduct cyclo11Times22 &&
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[phi11, phi22] |>.map fun coeffs => (coeffs, 1))
 #guard
   let factors := factor quadSqrt2Sqrt3
-  Factorization.product factors = quadSqrt2Sqrt3 &&
+  factorPreservesProduct quadSqrt2Sqrt3 &&
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[zpoly #[-3, 0, 1], zpoly #[-2, 0, 1]] |>.map fun coeffs =>
         (coeffs, 1))

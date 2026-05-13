@@ -163,7 +163,7 @@ libraries:
   HexLLL:
     deps: [HexGramSchmidt]
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
     phase4:
       comparators:
@@ -185,6 +185,14 @@ libraries:
     mathlib: false
     done_through: 3
     status: active
+    phase4:
+      input_families:
+        - name: quotient-powers
+          description: Dense `F_65537` quotient-ring exponentiation and Frobenius power fixtures with modulus degree and exponent height scaled together.
+        - name: modular-composition
+          description: Same-size dense `F_65537` Horner modular composition modulo deterministic monic moduli.
+        - name: product-squarefree
+          description: Deterministic `F_5` products of linear factors covering weighted product reconstruction and Yun square-free decomposition summaries.
 
   # ---------- Finite-field quotient pipeline ----------
   HexGfqRing:
@@ -289,7 +297,7 @@ libraries:
   HexPolyMathlib:
     deps: [HexPoly]
     mathlib: true
-    done_through: 4
+    done_through: 5
     status: active
     phase4:
       input_families:
@@ -300,7 +308,7 @@ libraries:
   HexMatrixMathlib:
     deps: [HexMatrix]
     mathlib: true
-    done_through: 3
+    done_through: 4
     status: active
     phase4:
       input_families:

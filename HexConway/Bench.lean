@@ -41,36 +41,6 @@ cannot see (e.g. a stable but wrong `Bool`).
 
 namespace Hex.ConwayBench
 
-private theorem one_ne_zero_two : (1 : ZMod64 2) ≠ 0 := by
-  intro h
-  have hm := (ZMod64.natCast_eq_natCast_iff (p := 2) 1 0).mp h
-  simp at hm
-
-private theorem one_ne_zero_three : (1 : ZMod64 3) ≠ 0 := by
-  intro h
-  have hm := (ZMod64.natCast_eq_natCast_iff (p := 3) 1 0).mp h
-  simp at hm
-
-private theorem one_ne_zero_five : (1 : ZMod64 5) ≠ 0 := by
-  intro h
-  have hm := (ZMod64.natCast_eq_natCast_iff (p := 5) 1 0).mp h
-  simp at hm
-
-private theorem one_ne_zero_seven : (1 : ZMod64 7) ≠ 0 := by
-  intro h
-  have hm := (ZMod64.natCast_eq_natCast_iff (p := 7) 1 0).mp h
-  simp at hm
-
-private theorem one_ne_zero_eleven : (1 : ZMod64 11) ≠ 0 := by
-  intro h
-  have hm := (ZMod64.natCast_eq_natCast_iff (p := 11) 1 0).mp h
-  simp at hm
-
-private theorem one_ne_zero_thirteen : (1 : ZMod64 13) ≠ 0 := by
-  intro h
-  have hm := (ZMod64.natCast_eq_natCast_iff (p := 13) 1 0).mp h
-  simp at hm
-
 /-- One committed Luebeck table key. -/
 structure EntryKey where
   p : Nat
@@ -129,78 +99,6 @@ def runConwayPolySupported_2_1Checksum : Unit → IO UInt64 := fun () => do
   let entry ← supportedEntry_2_1Ref.get
   return checksumPoly (Conway.conwayPoly 2 1 entry)
 
-/-- The committed `C(2, 6)` Luebeck entry, stored ascending by degree. -/
-def luebeckConwayPolynomial_2_6 : FpPoly 2 :=
-  { coeffs := #[(1 : ZMod64 2), 1, 0, 1, 1, 0, 1]
-    normalized := by
-      right
-      simpa using one_ne_zero_two }
-
-/-- The committed `C(2, 6)` entry is monic. -/
-theorem luebeckConwayPolynomial_2_6_monic :
-    DensePoly.Monic luebeckConwayPolynomial_2_6 := by
-  rfl
-
-/-- The committed `C(3, 6)` Luebeck entry, stored ascending by degree. -/
-def luebeckConwayPolynomial_3_6 : FpPoly 3 :=
-  { coeffs := #[(2 : ZMod64 3), 2, 1, 0, 2, 0, 1]
-    normalized := by
-      right
-      simpa using one_ne_zero_three }
-
-/-- The committed `C(3, 6)` entry is monic. -/
-theorem luebeckConwayPolynomial_3_6_monic :
-    DensePoly.Monic luebeckConwayPolynomial_3_6 := by
-  rfl
-
-/-- The committed `C(5, 6)` Luebeck entry, stored ascending by degree. -/
-def luebeckConwayPolynomial_5_6 : FpPoly 5 :=
-  { coeffs := #[(2 : ZMod64 5), 0, 1, 4, 1, 0, 1]
-    normalized := by
-      right
-      simpa using one_ne_zero_five }
-
-/-- The committed `C(5, 6)` entry is monic. -/
-theorem luebeckConwayPolynomial_5_6_monic :
-    DensePoly.Monic luebeckConwayPolynomial_5_6 := by
-  rfl
-
-/-- The committed `C(7, 6)` Luebeck entry, stored ascending by degree. -/
-def luebeckConwayPolynomial_7_6 : FpPoly 7 :=
-  { coeffs := #[(3 : ZMod64 7), 6, 4, 5, 1, 0, 1]
-    normalized := by
-      right
-      simpa using one_ne_zero_seven }
-
-/-- The committed `C(7, 6)` entry is monic. -/
-theorem luebeckConwayPolynomial_7_6_monic :
-    DensePoly.Monic luebeckConwayPolynomial_7_6 := by
-  rfl
-
-/-- The committed `C(11, 6)` Luebeck entry, stored ascending by degree. -/
-def luebeckConwayPolynomial_11_6 : FpPoly 11 :=
-  { coeffs := #[(2 : ZMod64 11), 7, 6, 4, 3, 0, 1]
-    normalized := by
-      right
-      simpa using one_ne_zero_eleven }
-
-/-- The committed `C(11, 6)` entry is monic. -/
-theorem luebeckConwayPolynomial_11_6_monic :
-    DensePoly.Monic luebeckConwayPolynomial_11_6 := by
-  rfl
-
-/-- The committed `C(13, 6)` Luebeck entry, stored ascending by degree. -/
-def luebeckConwayPolynomial_13_6 : FpPoly 13 :=
-  { coeffs := #[(2 : ZMod64 13), 11, 11, 10, 0, 0, 1]
-    normalized := by
-      right
-      simpa using one_ne_zero_thirteen }
-
-/-- The committed `C(13, 6)` entry is monic. -/
-theorem luebeckConwayPolynomial_13_6_monic :
-    DensePoly.Monic luebeckConwayPolynomial_13_6 := by
-  rfl
-
 /-- A monic polynomial over `ZMod64 q` paired with its monicity proof.
 Used to thread a Tier 1 irreducibility input through an `IO.Ref` while
 keeping `Berlekamp.rabinTest`'s dependent monicity argument satisfied. -/
@@ -216,31 +114,42 @@ private instance : Nonempty (MonicPoly 2) :=
   ⟨⟨Conway.luebeckConwayPolynomial_2_1,
     Conway.luebeckConwayPolynomial_2_1_monic⟩⟩
 private instance : Nonempty (MonicPoly 3) :=
-  ⟨⟨luebeckConwayPolynomial_3_6, luebeckConwayPolynomial_3_6_monic⟩⟩
+  ⟨⟨Conway.luebeckConwayPolynomial_3_6,
+    Conway.luebeckConwayPolynomial_3_6_monic⟩⟩
 private instance : Nonempty (MonicPoly 5) :=
-  ⟨⟨luebeckConwayPolynomial_5_6, luebeckConwayPolynomial_5_6_monic⟩⟩
+  ⟨⟨Conway.luebeckConwayPolynomial_5_6,
+    Conway.luebeckConwayPolynomial_5_6_monic⟩⟩
 private instance : Nonempty (MonicPoly 7) :=
-  ⟨⟨luebeckConwayPolynomial_7_6, luebeckConwayPolynomial_7_6_monic⟩⟩
+  ⟨⟨Conway.luebeckConwayPolynomial_7_6,
+    Conway.luebeckConwayPolynomial_7_6_monic⟩⟩
 private instance : Nonempty (MonicPoly 11) :=
-  ⟨⟨luebeckConwayPolynomial_11_6, luebeckConwayPolynomial_11_6_monic⟩⟩
+  ⟨⟨Conway.luebeckConwayPolynomial_11_6,
+    Conway.luebeckConwayPolynomial_11_6_monic⟩⟩
 private instance : Nonempty (MonicPoly 13) :=
-  ⟨⟨luebeckConwayPolynomial_13_6, luebeckConwayPolynomial_13_6_monic⟩⟩
+  ⟨⟨Conway.luebeckConwayPolynomial_13_6,
+    Conway.luebeckConwayPolynomial_13_6_monic⟩⟩
 
 private initialize tier1_2_1Ref : IO.Ref (MonicPoly 2) ←
   IO.mkRef ⟨Conway.luebeckConwayPolynomial_2_1,
             Conway.luebeckConwayPolynomial_2_1_monic⟩
 private initialize tier1_2_6Ref : IO.Ref (MonicPoly 2) ←
-  IO.mkRef ⟨luebeckConwayPolynomial_2_6, luebeckConwayPolynomial_2_6_monic⟩
+  IO.mkRef ⟨Conway.luebeckConwayPolynomial_2_6,
+            Conway.luebeckConwayPolynomial_2_6_monic⟩
 private initialize tier1_3_6Ref : IO.Ref (MonicPoly 3) ←
-  IO.mkRef ⟨luebeckConwayPolynomial_3_6, luebeckConwayPolynomial_3_6_monic⟩
+  IO.mkRef ⟨Conway.luebeckConwayPolynomial_3_6,
+            Conway.luebeckConwayPolynomial_3_6_monic⟩
 private initialize tier1_5_6Ref : IO.Ref (MonicPoly 5) ←
-  IO.mkRef ⟨luebeckConwayPolynomial_5_6, luebeckConwayPolynomial_5_6_monic⟩
+  IO.mkRef ⟨Conway.luebeckConwayPolynomial_5_6,
+            Conway.luebeckConwayPolynomial_5_6_monic⟩
 private initialize tier1_7_6Ref : IO.Ref (MonicPoly 7) ←
-  IO.mkRef ⟨luebeckConwayPolynomial_7_6, luebeckConwayPolynomial_7_6_monic⟩
+  IO.mkRef ⟨Conway.luebeckConwayPolynomial_7_6,
+            Conway.luebeckConwayPolynomial_7_6_monic⟩
 private initialize tier1_11_6Ref : IO.Ref (MonicPoly 11) ←
-  IO.mkRef ⟨luebeckConwayPolynomial_11_6, luebeckConwayPolynomial_11_6_monic⟩
+  IO.mkRef ⟨Conway.luebeckConwayPolynomial_11_6,
+            Conway.luebeckConwayPolynomial_11_6_monic⟩
 private initialize tier1_13_6Ref : IO.Ref (MonicPoly 13) ←
-  IO.mkRef ⟨luebeckConwayPolynomial_13_6, luebeckConwayPolynomial_13_6_monic⟩
+  IO.mkRef ⟨Conway.luebeckConwayPolynomial_13_6,
+            Conway.luebeckConwayPolynomial_13_6_monic⟩
 
 /-- Benchmark target: Tier 1 irreducibility check for imported `C(2, 1)`. -/
 def runTier1Irreducibility_2_1Checksum : Unit → IO Bool := fun () => do
