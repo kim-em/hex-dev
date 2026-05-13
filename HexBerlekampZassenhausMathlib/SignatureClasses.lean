@@ -224,6 +224,72 @@ theorem partitionAcc_entry_eq_of_ne
   rw [filter_range_succ_sig_eq]
   simp [hne]
 
+/--
+Decompose `representativeColumns m sig` around a known representative
+`k₀ ∈ representativeColumns m sig`.  The list splits as the
+`representativeColumns k₀ sig` prefix, then `k₀`, then a suffix of reps
+in `(k₀, m)`.
+-/
+theorem representativeColumns_decompose_at
+    (m : Nat) (sig : Nat → Array Rat)
+    (k₀ : Nat) (hk₀ : k₀ ∈ representativeColumns m sig) :
+    ∃ suffix : List Nat,
+      representativeColumns m sig =
+        representativeColumns k₀ sig ++ k₀ :: suffix ∧
+      (∀ rep ∈ suffix, k₀ < rep ∧ rep ∈ representativeColumns m sig) := by
+  have hk₀_lt : k₀ < m := representativeColumns_lt m sig k₀ hk₀
+  have hk₀_fresh : ∀ k, k < k₀ → sig k ≠ sig k₀ :=
+    representativeColumns_fresh m sig k₀ hk₀
+  -- Split List.range m at k₀:
+  -- List.range m = List.range k₀ ++ k₀ :: List.range' (k₀+1) (m - k₀ - 1)
+  let rest : List Nat := List.range' (k₀ + 1) (m - k₀ - 1)
+  have hrange_split : List.range m = List.range k₀ ++ k₀ :: rest := by
+    have hk_le : k₀ ≤ m := Nat.le_of_lt hk₀_lt
+    have h1 : List.range m = List.range k₀ ++ List.range' k₀ (m - k₀) := by
+      rw [List.range_eq_range', List.range_eq_range']
+      have hsum : (k₀ + (m - k₀)) = m := by omega
+      rw [← hsum]
+      rw [← List.range'_append_1]
+      simp
+    have hmk : List.range' k₀ (m - k₀) = k₀ :: List.range' (k₀ + 1) (m - k₀ - 1) := by
+      cases hd : m - k₀ with
+      | zero => omega
+      | succ n =>
+          show List.range' k₀ (n + 1) = k₀ :: List.range' (k₀ + 1) n
+          rfl
+    rw [h1, hmk]
+  refine ⟨rest.filter (fun j =>
+    ((List.range j).filter (fun k => sig k = sig j)).isEmpty), ?_, ?_⟩
+  · unfold representativeColumns
+    rw [hrange_split, List.filter_append]
+    -- k₀ is a rep of itself: ((range k₀).filter (sig · = sig k₀)).isEmpty
+    have hk₀_pred :
+        ((List.range k₀).filter (fun k => sig k = sig k₀)).isEmpty = true := by
+      rw [List.isEmpty_iff]
+      apply List.eq_nil_iff_forall_not_mem.mpr
+      intro k hk
+      rw [List.mem_filter] at hk
+      rcases hk with ⟨hmem, hsig⟩
+      rw [List.mem_range] at hmem
+      exact (hk₀_fresh k hmem) (by simpa using hsig)
+    rw [List.filter_cons]
+    rw [if_pos (by simpa using hk₀_pred)]
+  · intro rep hrep
+    rw [List.mem_filter] at hrep
+    rcases hrep with ⟨hmem, hpred⟩
+    refine ⟨?_, ?_⟩
+    · -- rep > k₀ from List.range' (k₀+1) ...
+      have : rep ∈ List.range' (k₀ + 1) (m - k₀ - 1) := hmem
+      rw [List.mem_range'] at this
+      omega
+    · unfold representativeColumns
+      rw [List.mem_filter]
+      have hrep_lt : rep < m := by
+        have : rep ∈ List.range' (k₀ + 1) (m - k₀ - 1) := hmem
+        rw [List.mem_range'] at this
+        omega
+      exact ⟨List.mem_range.mpr hrep_lt, hpred⟩
+
 /-- Inductive step: `partitionAcc (m + 1) sig` is obtained by feeding
 `(sig m, m)` through `Hex.bhksInsertSignatureClass` on top of
 `partitionAcc m sig`, assuming `sig m` has not been seen earlier. -/
