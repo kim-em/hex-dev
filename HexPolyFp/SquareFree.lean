@@ -4211,8 +4211,159 @@ private theorem yunFactorsPairwiseReachable_common_dvd_one
       simpa [z, y] using div_gcd_mul_reconstruct c w
     rw [← hprod]
     exact dvd_mul_right_of_dvd (a := z) (b := y) (d := d)
-      (by simpa [z, y] using hdz)
+        (by simpa [z, y] using hdz)
   · exact yunStep_common_dvd_derivative_current c w d hdz hdy
+
+private theorem dvd_mul_derivative_right_of_dvd_derivative_product
+    (c w : FpPoly p)
+    (hprev : w ∣ DensePoly.derivative (c * w)) :
+    w ∣ c * DensePoly.derivative w := by
+  have hw_dvd_left : w ∣ DensePoly.derivative c * w :=
+    ⟨DensePoly.derivative c, DensePoly.mul_comm_poly (DensePoly.derivative c) w⟩
+  have hder :
+      DensePoly.derivative (c * w) =
+        DensePoly.derivative c * w + c * DensePoly.derivative w :=
+    DensePoly.derivative_mul c w
+  have hsub := dvd_sub_poly (by simpa [hder] using hprev) hw_dvd_left
+  have hsub_eq :
+      (DensePoly.derivative c * w + c * DensePoly.derivative w) -
+          DensePoly.derivative c * w =
+        c * DensePoly.derivative w := by
+    rw [sub_eq_add_neg]
+    calc
+      (DensePoly.derivative c * w + c * DensePoly.derivative w) +
+          -(DensePoly.derivative c * w)
+          = (c * DensePoly.derivative w + DensePoly.derivative c * w) +
+              -(DensePoly.derivative c * w) := by
+            exact congrArg (fun x => x + -(DensePoly.derivative c * w))
+              (DensePoly.add_comm_poly
+                (DensePoly.derivative c * w)
+                (c * DensePoly.derivative w))
+      _ = c * DensePoly.derivative w +
+              (DensePoly.derivative c * w + -(DensePoly.derivative c * w)) := by
+            exact DensePoly.add_assoc_poly
+              (c * DensePoly.derivative w)
+              (DensePoly.derivative c * w)
+              (-(DensePoly.derivative c * w))
+      _ = c * DensePoly.derivative w + 0 := by rw [add_right_neg]
+      _ = c * DensePoly.derivative w := add_zero _
+  simpa [hsub_eq] using hsub
+
+private theorem yunStep_quotient_tail_common_dvd_one_of_reachable
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (fuel : Nat)
+    (hreachable : yunFactorsPairwiseReachable c w (fuel + 1)) :
+    ∀ d : FpPoly p,
+      d ∣ c / DensePoly.gcd c w →
+        d ∣ w / DensePoly.gcd c w →
+          d ∣ (1 : FpPoly p) := by
+  intro d hda hdz
+  let y := DensePoly.gcd c w
+  let a := c / y
+  let z := w / y
+  have hcy : a * y = c := by
+    simpa [a, y] using div_gcd_mul_reconstruct c w
+  have hwy : z * y = w := by
+    simpa [z, y] using div_gcd_right_mul_reconstruct c w
+  have hz_dvd_w : z ∣ w := ⟨y, by simpa [z, y] using hwy.symm⟩
+  have hdy : d ∣ y := by
+    apply DensePoly.dvd_gcd
+    · rw [← hcy]
+      exact dvd_mul_right_of_dvd (a := a) (b := y) (d := d)
+        (by simpa [a, y] using hda)
+    · exact dvd_trans_poly (by simpa [z, y] using hdz) hz_dvd_w
+  exact
+    yunFactorsPairwiseReachable_common_dvd_one c w fuel hreachable d
+      hda
+      (by simpa [y] using hdy)
+
+private theorem quotient_dvd_of_mul_right_dvd_mul_right
+    [ZMod64.PrimeModulus p]
+    {a c w y z h : FpPoly p}
+    (hy : y ≠ 0)
+    (hcy : a * y = c)
+    (hwy : z * y = w)
+    (hdvd : w ∣ c * h) :
+    z ∣ a * h := by
+  rcases hdvd with ⟨q, hq⟩
+  refine ⟨q, ?_⟩
+  apply FpPoly.mul_right_cancel_of_ne_zero hy
+  calc
+    (a * h) * y
+        = (a * y) * h := by
+          calc
+            (a * h) * y = a * (h * y) := DensePoly.mul_assoc_poly a h y
+            _ = a * (y * h) := by
+                  exact congrArg (fun x => a * x) (DensePoly.mul_comm_poly h y)
+            _ = (a * y) * h := (DensePoly.mul_assoc_poly a y h).symm
+    _ = c * h := by rw [hcy]
+    _ = w * q := hq
+    _ = (z * y) * q := by rw [hwy]
+    _ = (z * q) * y := by
+          calc
+            (z * y) * q = z * (y * q) := DensePoly.mul_assoc_poly z y q
+            _ = z * (q * y) := by
+                  exact congrArg (fun x => z * x) (DensePoly.mul_comm_poly y q)
+            _ = (z * q) * y := (DensePoly.mul_assoc_poly z q y).symm
+
+set_option maxHeartbeats 800000 in
+private theorem yunStep_residual_dvd_derivative_product_core
+    [ZMod64.PrimeModulus p]
+    (c w y a z : FpPoly p)
+    (hcy : a * y = c)
+    (hwy : z * y = w)
+    (hcommon_az :
+      ∀ d : FpPoly p, d ∣ a → d ∣ z → d ∣ (1 : FpPoly p))
+    (hprev : w ∣ DensePoly.derivative (c * w)) :
+    z ∣ DensePoly.derivative (y * z) := by
+  have hw_dvd_cdw : w ∣ c * DensePoly.derivative w :=
+    dvd_mul_derivative_right_of_dvd_derivative_product c w hprev
+  have hz_dvd_adw : z ∣ a * DensePoly.derivative w := by
+    by_cases hy_zero : y = 0
+    · rw [← hwy, hy_zero, mul_zero] at hw_dvd_cdw
+      rw [← hwy, hy_zero, mul_zero]
+      exact ⟨0, by rw [DensePoly.derivative_zero, mul_zero, mul_zero]⟩
+    · exact
+        quotient_dvd_of_mul_right_dvd_mul_right
+          (a := a) (c := c) (w := w) (y := y) (z := z)
+          (h := DensePoly.derivative w) hy_zero hcy hwy hw_dvd_cdw
+  have hz_dvd_dw : z ∣ DensePoly.derivative w :=
+    dvd_of_dvd_mul_of_common_dvd_one
+      (g := z) (c := a) (h := DensePoly.derivative w)
+      hz_dvd_adw
+      hcommon_az
+  have hyz : y * z = w := by
+    calc
+      y * z = z * y := DensePoly.mul_comm_poly y z
+      _ = w := hwy
+  simpa [hyz] using hz_dvd_dw
+
+private theorem yunStep_residual_dvd_derivative_product_of_previous
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (fuel : Nat)
+    (hreachable : yunFactorsPairwiseReachable c w (fuel + 1))
+    (hprev : w ∣ DensePoly.derivative (c * w)) :
+    let y := DensePoly.gcd c w
+    let z := w / y
+    z ∣ DensePoly.derivative (y * z) := by
+  dsimp
+  let y := DensePoly.gcd c w
+  let a := c / y
+  let z := w / y
+  have hcy : a * y = c := by
+    simpa [a, y] using div_gcd_mul_reconstruct c w
+  have hwy : z * y = w := by
+    simpa [z, y] using div_gcd_right_mul_reconstruct c w
+  have hcommon_az :
+      ∀ d : FpPoly p, d ∣ a → d ∣ z → d ∣ (1 : FpPoly p) := by
+    intro d hda hdz
+    exact
+      yunStep_quotient_tail_common_dvd_one_of_reachable c w fuel hreachable d
+        (by simpa [a, y] using hda)
+        (by simpa [z, y] using hdz)
+  exact
+    yunStep_residual_dvd_derivative_product_core
+      c w y a z hcy hwy hcommon_az hprev
 
 private theorem one_lt_size_of_isOne_false_of_reachable
     [ZMod64.PrimeModulus p]
