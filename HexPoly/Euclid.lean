@@ -4792,5 +4792,22 @@ private theorem finiteCoeffMcCoyAnnihilator
     pCoeff qCoeff d bound k (by simpa [p, q] using hmul) i hi
   simpa [Int.mul_comm] using hrow
 
+/-- McCoy annihilator for `DensePoly Int`: if every coefficient of `p * q` is
+divisible by `d`, then `q.coeff k` annihilates every coefficient of `p` modulo
+`d`. This is the polynomial instantiation of `finiteCoeffMcCoyAnnihilator`
+when `pCoeff = p.coeff` and `qCoeff = q.coeff`; downstream callers couple it
+with a "last non-divisible coefficient" witness, supplying `hqAbove`. -/
+private theorem dvd_last_q_coeff_mul_p_coeff_of_dvd_mul_coeff_of_q_above
+    (p q : DensePoly Int) (d k : Nat)
+    (hprod : ∀ n, (d : Int) ∣ (p * q).coeff n)
+    (_hqAbove : ∀ s, k < s → (d : Int) ∣ q.coeff s) :
+    ∀ i, (d : Int) ∣ q.coeff k * p.coeff i := by
+  intro i
+  have hrow :=
+    finiteCoeffMcCoyRow_of_truncated_product_coeff_dvd
+      p.coeff q.coeff p q d i k
+      (fun _ _ => rfl) rfl hprod i (Nat.le_refl i)
+  simpa [Int.mul_comm] using hrow
+
 end DensePoly
 end Hex
