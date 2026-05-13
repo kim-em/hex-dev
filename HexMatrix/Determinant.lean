@@ -6035,6 +6035,27 @@ theorem det_eq_foldl_laplace_col
         rw [cofactorSign_col_eq_move_mul_last (R := R) row col]
         grind
 
+/-- Laplace expansion of the determinant along an arbitrary fixed row. -/
+theorem det_eq_foldl_laplace_row
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (row : Fin (n + 1)) :
+    det M =
+      (List.finRange (n + 1)).foldl
+        (fun acc col => acc + M[row][col] * cofactor M row col) 0 := by
+  calc
+    det M = det M.transpose := (det_transpose M).symm
+    _ =
+      (List.finRange (n + 1)).foldl
+        (fun acc col => acc + M.transpose[col][row] *
+          cofactor M.transpose col row) 0 := det_eq_foldl_laplace_col M.transpose row
+    _ =
+      (List.finRange (n + 1)).foldl
+        (fun acc col => acc + M[row][col] * cofactor M row col) 0 := by
+        apply foldl_acc_congr
+        intro acc col _hmem
+        rw [cofactor_transpose]
+        simp [Matrix.transpose, Matrix.col]
+
 /-- The square matrix obtained from `columnSumMatrix source coeff` by replacing
 the first `chosen.length` columns with selected `source` columns indexed by
 `chosen`. The remaining columns stay in finite-sum form. -/
