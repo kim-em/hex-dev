@@ -4809,5 +4809,20 @@ private theorem dvd_last_q_coeff_mul_p_coeff_of_dvd_mul_coeff_of_q_above
       (fun _ _ => rfl) rfl hprod i (Nat.le_refl i)
   simpa [Int.mul_comm] using hrow
 
+/-- Public McCoy scalar-annihilator wrapper for integer dense polynomials.
+
+If `d` divides every coefficient of `p * q` and some coefficient of `q` is not
+divisible by `d`, then a non-`d`-divisible scalar annihilates all coefficients
+of `p` modulo `d`. -/
+theorem exists_scalar_annihilator_of_mul_coeff_dvd_of_exists_not_dvd_coeff
+    (p q : DensePoly Int) (d : Nat)
+    (hprod : ∀ n, (d : Int) ∣ (p * q).coeff n)
+    (hq : ∃ n, ¬ (d : Int) ∣ q.coeff n) :
+    ∃ a : Int, (¬ (d : Int) ∣ a) ∧
+      ∀ i, (d : Int) ∣ a * p.coeff i := by
+  rcases exists_last_not_natCast_dvd_coeff q d hq with ⟨k, hk, hqAbove⟩
+  refine ⟨q.coeff k, hk, ?_⟩
+  exact dvd_last_q_coeff_mul_p_coeff_of_dvd_mul_coeff_of_q_above p q d k hprod hqAbove
+
 end DensePoly
 end Hex
