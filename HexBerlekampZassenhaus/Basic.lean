@@ -2412,7 +2412,7 @@ theorem normalizeCandidateFactor_eq_of_primitive_nonneg_leading
   have hnot_neg : ¬ DensePoly.leadingCoeff g < 0 := Int.not_lt.mpr hsign
   rw [if_neg hnot_neg]
 
-private def bhksIndicatorSelectedFactors
+def bhksIndicatorSelectedFactors
     (liftedFactors : Array ZPoly) (indicator : Array Int) : Option (Array ZPoly) :=
   if indicator.size != liftedFactors.size then
     none
@@ -2451,6 +2451,74 @@ def bhksIndicatorCandidate?
       match exactQuotient? f candidate with
       | some quotient => some (candidate, quotient)
       | none => none
+
+/--
+A2 reconstruction surface for a single BHKS indicator, stated at the
+Mathlib-free executable layer. If the indicator selects `selected`, the
+scaled selected product is congruent to the expected factor modulo the Hensel
+precision, the expected factor is within the Mignotte bound, already
+canonical under primitive/sign normalization, and it divides `f` as a monic
+positive-degree factor, then `bhksIndicatorCandidate?` returns that expected
+factor with some quotient.
+-/
+theorem bhksIndicatorCandidate?_eq_some_of_mignottePrecision
+    (f : ZPoly) (d : LiftData) (indicator : Array Int)
+    (selected : Array ZPoly) (expectedFactor : ZPoly)
+    (hselected :
+      bhksIndicatorSelectedFactors d.liftedFactors indicator = some selected)
+    (hdvd : expectedFactor ∣ f)
+    (hbound :
+      ∀ i, (expectedFactor.coeff i).natAbs ≤ ZPoly.defaultFactorCoeffBound f)
+    (hexpected_prim : ZPoly.Primitive expectedFactor)
+    (hexpected_sign : 0 ≤ DensePoly.leadingCoeff expectedFactor)
+    (hexpected_monic : DensePoly.Monic expectedFactor)
+    (hexpected_degree : 0 < expectedFactor.degree?.getD 0)
+    (hprecision : 2 * ZPoly.defaultFactorCoeffBound f < d.p ^ d.k)
+    (hindicator_product :
+      ZPoly.reduceModPow
+          (DensePoly.scale (DensePoly.leadingCoeff f) (Array.polyProduct selected))
+          d.p d.k =
+        ZPoly.reduceModPow expectedFactor d.p d.k) :
+    ∃ quotient,
+      bhksIndicatorCandidate? f d indicator = some (expectedFactor, quotient) := by
+  let raw :=
+    DensePoly.scale (DensePoly.leadingCoeff f) (Array.polyProduct selected)
+  have hlift :
+      centeredLiftPoly (ZPoly.reduceModPow raw d.p d.k) (d.p ^ d.k) =
+        expectedFactor := by
+    exact
+      centeredLiftPoly_eq_of_reduceModPow_eq
+        expectedFactor raw d.p d.k (ZPoly.defaultFactorCoeffBound f)
+        hbound hprecision hindicator_product
+  have hnormalize :
+      normalizeCandidateFactor
+          (centeredLiftPoly (ZPoly.reduceModPow raw d.p d.k) (d.p ^ d.k)) =
+        expectedFactor := by
+    rw [hlift]
+    exact normalizeCandidateFactor_eq_of_primitive_nonneg_leading
+      expectedFactor hexpected_prim hexpected_sign
+  rcases hdvd with ⟨quotient, hquotient_mul⟩
+  have hmul : quotient * expectedFactor = f := by
+    rw [DensePoly.mul_comm_poly (S := Int)]
+    exact hquotient_mul.symm
+  have hquotient :
+      exactQuotient? f expectedFactor = some quotient :=
+    exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree
+      hexpected_monic hexpected_degree hmul
+  refine ⟨quotient, ?_⟩
+  unfold bhksIndicatorCandidate?
+  rw [hselected]
+  change
+    (let modulus := liftModulus d
+     let raw :=
+       DensePoly.scale (DensePoly.leadingCoeff f) (Array.polyProduct selected)
+     let candidate :=
+       normalizeCandidateFactor
+         (centeredLiftPoly (ZPoly.reduceModPow raw d.p d.k) modulus)
+     match exactQuotient? f candidate with
+     | some quotient => some (candidate, quotient)
+     | none => none) = some (expectedFactor, quotient)
+  simp [raw, liftModulus, hnormalize, hquotient]
 
 def bhksIndicatorOneCount (r : Nat) (indicator : Array Int) : Nat :=
   (List.range r).foldl

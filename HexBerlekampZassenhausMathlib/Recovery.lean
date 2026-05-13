@@ -257,6 +257,40 @@ theorem bhksIndicatorCandidates?_eq_some_of_forwardCandidates
     f d expectedIndicators expectedFactors hsize hcandidate
 
 /--
+Single-indicator A2 reconstruction from Mignotte precision. The selected
+lifted factors are supplied explicitly by `hselected`, while
+`hindicator_product` is the B7/A2-facing modular-product fact: after scaling
+the selected lifted-factor product by `lc(f)`, it reduces modulo `p^k` to the
+expected integer factor. The coefficient bound needed for centred lifting is
+derived from `defaultFactorCoeffBound_valid`.
+-/
+theorem bhksIndicatorCandidate?_eq_some_of_mignottePrecision
+    (f : Hex.ZPoly) (d : Hex.LiftData) (indicator : Array Int)
+    (selected : Array Hex.ZPoly) (expectedFactor : Hex.ZPoly)
+    (hf_ne_zero : f ≠ 0)
+    (hselected :
+      Hex.bhksIndicatorSelectedFactors d.liftedFactors indicator = some selected)
+    (hdvd : expectedFactor ∣ f)
+    (hexpected_prim : Hex.ZPoly.Primitive expectedFactor)
+    (hexpected_sign : 0 ≤ Hex.DensePoly.leadingCoeff expectedFactor)
+    (hexpected_monic : Hex.DensePoly.Monic expectedFactor)
+    (hexpected_degree : 0 < expectedFactor.degree?.getD 0)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound f < d.p ^ d.k)
+    (hindicator_product :
+      Hex.ZPoly.reduceModPow
+          (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f) (Array.polyProduct selected))
+          d.p d.k =
+        Hex.ZPoly.reduceModPow expectedFactor d.p d.k) :
+    ∃ quotient,
+      Hex.bhksIndicatorCandidate? f d indicator =
+        some (expectedFactor, quotient) :=
+  Hex.bhksIndicatorCandidate?_eq_some_of_mignottePrecision
+    f d indicator selected expectedFactor hselected hdvd
+    (defaultFactorCoeffBound_valid f hf_ne_zero expectedFactor hdvd)
+    hexpected_prim hexpected_sign hexpected_monic hexpected_degree
+    hprecision hindicator_product
+
+/--
 Proof-facing inputs for the SPEC Group D forward-verification clause at one
 precision/recovery call: `L' = W` (deliverable 1, supplied by issue #3034 at
 the executable cap) plus the residual abstract obligations B7 (BHKS
@@ -360,6 +394,74 @@ def ofIndicatorCandidateFacts
     bhksIndicatorCandidates?_eq_some_of_forwardCandidates
       f d expectedIndicators expectedFactors hsize hcandidate
   product_eq := product_eq
+
+/--
+Build `ForwardRecoveryInputs` from per-indicator Mignotte reconstruction
+facts. This is the A2 capstone constructor: callers supply the selected-factor
+array for each indicator, the modular-product equality that B7/A2 establishes,
+and the expected true-factor facts; this constructor packages them through the
+existing candidate fold.
+-/
+def ofMignottePrecisionCandidateProducts
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    (rows_pos : HasPositiveDimension f d)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData f d rows_pos).factorCount)))
+    (lattice_eq_indicators :
+      BHKS.projectedRowSpanInt (projectedRowsOfLiftData f d rows_pos) =
+        BHKS.trueFactorIndicatorLattice trueSupports)
+    (mignotte_precision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound f < d.p ^ d.k)
+    (expectedIndicators : Array (Array Int))
+    (indicators_match :
+      equivalenceClassIndicatorsOfLiftData f d rows_pos = expectedIndicators)
+    (nondegenerate :
+      Hex.bhksDegenerateIndicatorPartition
+          (projectedRowsOfLiftData f d rows_pos) expectedIndicators = false)
+    (selectedFactors : Array (Array Hex.ZPoly))
+    (expectedFactors : Array Hex.ZPoly)
+    (hf_ne_zero : f ≠ 0)
+    (hsize : expectedFactors.size = expectedIndicators.size)
+    (hselected :
+      ∀ i, i < expectedIndicators.size →
+        Hex.bhksIndicatorSelectedFactors d.liftedFactors
+            (expectedIndicators.getD i #[]) =
+          some (selectedFactors.getD i #[]))
+    (hdivides :
+      ∀ i, i < expectedIndicators.size →
+        expectedFactors.getD i 0 ∣ f)
+    (hprimitive :
+      ∀ i, i < expectedIndicators.size →
+        Hex.ZPoly.Primitive (expectedFactors.getD i 0))
+    (hsign :
+      ∀ i, i < expectedIndicators.size →
+        0 ≤ Hex.DensePoly.leadingCoeff (expectedFactors.getD i 0))
+    (hmonic :
+      ∀ i, i < expectedIndicators.size →
+        Hex.DensePoly.Monic (expectedFactors.getD i 0))
+    (hdegree :
+      ∀ i, i < expectedIndicators.size →
+        0 < (expectedFactors.getD i 0).degree?.getD 0)
+    (hproduct :
+      ∀ i, i < expectedIndicators.size →
+        Hex.ZPoly.reduceModPow
+            (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f)
+              (Array.polyProduct (selectedFactors.getD i #[])))
+            d.p d.k =
+          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0) d.p d.k)
+    (product_eq : Array.polyProduct expectedFactors = f) :
+    ForwardRecoveryInputs f d :=
+  ofIndicatorCandidateFacts
+    rows_pos trueSupports lattice_eq_indicators mignotte_precision
+    expectedIndicators indicators_match nondegenerate expectedFactors hsize
+    (fun i hi =>
+      bhksIndicatorCandidate?_eq_some_of_mignottePrecision
+        f d (expectedIndicators.getD i #[])
+        (selectedFactors.getD i #[]) (expectedFactors.getD i 0)
+        hf_ne_zero (hselected i hi) (hdivides i hi)
+        (hprimitive i hi) (hsign i hi) (hmonic i hi) (hdegree i hi)
+        mignotte_precision (hproduct i hi))
+    product_eq
 
 /--
 Build `ForwardRecoveryInputs f d` from cap-level BHKS separation plus the
