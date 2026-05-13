@@ -74,7 +74,9 @@
 
 ## Lakefile
 
-Don't use `precompileModules := true`. It isn't necessary.
+Use `precompileModules := true` only on libraries that export
+`@[extern]` functions. Don't use it otherwise, and in particular
+libraries importing Mathlib must not use `precompileModules`.
 
 ## Fully autonomous execution
 
