@@ -361,6 +361,57 @@ def ofIndicatorCandidateFacts
       f d expectedIndicators expectedFactors hsize hcandidate
   product_eq := product_eq
 
+/--
+Build `ForwardRecoveryInputs f d` from cap-level BHKS separation plus the
+abstract B7/A2 obligations.
+
+`lattice_eq_indicators` is supplied internally by
+`BHKS.projectedRowsOfLiftData_eq_trueFactorIndicatorLattice_of_cap`, which
+specialises issue #3034's executable-cap separation theorem to the
+projected-row shape consumed by `ForwardRecoveryInputs`.  The remaining
+fields (`mignotte_precision`, `expectedIndicators`, `indicators_match`,
+`nondegenerate`, `expectedFactors`, per-indicator candidate facts, and the
+final product check) pass through unchanged to `ofIndicatorCandidateFacts`.
+-/
+def ofCapSeparation
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    (rows_pos : HasPositiveDimension f d)
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData f d rows_pos).factorCount)))
+    (hcap_le : Hex.factorFastPrecisionCap f ≤ d.k)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (hcap :
+      ExecutableCapSeparationHypotheses
+        (badVectorWitnessOfLiftData f d rows_pos localFactorIndex
+          localFactorDegree H)
+        trueSupports)
+    (mignotte_precision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound f < d.p ^ d.k)
+    (expectedIndicators : Array (Array Int))
+    (indicators_match :
+      equivalenceClassIndicatorsOfLiftData f d rows_pos = expectedIndicators)
+    (nondegenerate :
+      Hex.bhksDegenerateIndicatorPartition
+          (projectedRowsOfLiftData f d rows_pos) expectedIndicators = false)
+    (expectedFactors : Array Hex.ZPoly)
+    (hsize : expectedFactors.size = expectedIndicators.size)
+    (hcandidate :
+      ∀ i, i < expectedIndicators.size →
+        ∃ quotient,
+          Hex.bhksIndicatorCandidate? f d (expectedIndicators.getD i #[]) =
+            some (expectedFactors.getD i 0, quotient))
+    (product_eq : Array.polyProduct expectedFactors = f) :
+    ForwardRecoveryInputs f d :=
+  ofIndicatorCandidateFacts
+    rows_pos trueSupports
+    (projectedRowsOfLiftData_eq_trueFactorIndicatorLattice_of_cap
+      f d rows_pos localFactorIndex localFactorDegree H trueSupports
+      hcap_le C hC_nonneg hC hcap)
+    mignotte_precision
+    expectedIndicators indicators_match nondegenerate
+    expectedFactors hsize hcandidate product_eq
+
 /-- Promote a SPEC-input bundle to the immediate recovery hypotheses
 consumed by `bhksRecover_eq_some_of_recovery`.  The promotion is a
 field-by-field repackaging that uses `indicators_match` to substitute
@@ -448,6 +499,48 @@ theorem bhksRecover_isSome_of_forwardInputs
     (f : Hex.ZPoly) (d : Hex.LiftData) (h : ForwardRecoveryInputs f d) :
     (Hex.bhksRecover? f d).isSome :=
   bhksRecover_isSome_of_recovery f d h.toRecoveryHypotheses
+
+/--
+Cap-level specialisation: compose `ForwardRecoveryInputs.ofCapSeparation`
+with `bhksRecover_eq_some_of_forwardInputs` at a fixed `LiftData`.  Under
+cap-level BHKS separation and the residual B7/A2 obligations,
+`Hex.bhksRecover? f d` returns `some expectedFactors`.
+-/
+theorem bhksRecover_eq_some_of_capSeparation
+    (f : Hex.ZPoly) (d : Hex.LiftData)
+    (rows_pos : HasPositiveDimension f d)
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData f d rows_pos).factorCount)))
+    (hcap_le : Hex.factorFastPrecisionCap f ≤ d.k)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (hcap :
+      ExecutableCapSeparationHypotheses
+        (badVectorWitnessOfLiftData f d rows_pos localFactorIndex
+          localFactorDegree H)
+        trueSupports)
+    (mignotte_precision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound f < d.p ^ d.k)
+    (expectedIndicators : Array (Array Int))
+    (indicators_match :
+      equivalenceClassIndicatorsOfLiftData f d rows_pos = expectedIndicators)
+    (nondegenerate :
+      Hex.bhksDegenerateIndicatorPartition
+          (projectedRowsOfLiftData f d rows_pos) expectedIndicators = false)
+    (expectedFactors : Array Hex.ZPoly)
+    (hsize : expectedFactors.size = expectedIndicators.size)
+    (hcandidate :
+      ∀ i, i < expectedIndicators.size →
+        ∃ quotient,
+          Hex.bhksIndicatorCandidate? f d (expectedIndicators.getD i #[]) =
+            some (expectedFactors.getD i 0, quotient))
+    (product_eq : Array.polyProduct expectedFactors = f) :
+    Hex.bhksRecover? f d = some expectedFactors :=
+  bhksRecover_eq_some_of_forwardInputs f d
+    (ForwardRecoveryInputs.ofCapSeparation rows_pos localFactorIndex
+      localFactorDegree H trueSupports hcap_le C hC_nonneg hC hcap
+      mignotte_precision expectedIndicators indicators_match nondegenerate
+      expectedFactors hsize hcandidate product_eq)
 
 /--
 Compose the Mathlib-side forward-recovery inputs with the executable scheduled
