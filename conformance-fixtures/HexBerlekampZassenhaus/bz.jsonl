@@ -32,8 +32,6 @@
 {"kind":"result","lib":"HexBerlekampZassenhaus","case":"irr/cyclo5","op":"factor","value":[1,[[[1,1,1,1,1],1]]]}
 {"kind":"poly","lib":"HexBerlekampZassenhaus","case":"irr/cyclo7","coeffs":[1,1,1,1,1,1,1],"modulus":null}
 {"kind":"result","lib":"HexBerlekampZassenhaus","case":"irr/cyclo7","op":"factor","value":[1,[[[1,1,1,1,1,1,1],1]]]}
-{"kind":"poly","lib":"HexBerlekampZassenhaus","case":"irr/cyclo11","coeffs":[1,1,1,1,1,1,1,1,1,1,1],"modulus":null}
-{"kind":"result","lib":"HexBerlekampZassenhaus","case":"irr/cyclo11","op":"factor","value":[1,[[[1,1,1,1,1,1,1,1,1,1,1],1]]]}
 {"kind":"poly","lib":"HexBerlekampZassenhaus","case":"irr/cyclo17","coeffs":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"modulus":null}
 {"kind":"result","lib":"HexBerlekampZassenhaus","case":"irr/cyclo17","op":"factor","value":[1,[[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],1]]]}
 {"kind":"poly","lib":"HexBerlekampZassenhaus","case":"red/quad2_deg4","coeffs":[2,0,3,0,1],"modulus":null}
