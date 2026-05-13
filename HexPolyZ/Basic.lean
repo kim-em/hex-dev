@@ -690,6 +690,194 @@ theorem primitive_mul (p q : ZPoly)
     Primitive (p * q) := by
   simpa [Primitive, content] using DensePoly.content_mul_of_primitive p q hp hq
 
+/-- The top coefficient of a product of nonzero integer polynomials is the
+product of their top coefficients. -/
+theorem coeff_mul_top (p q : ZPoly)
+    (hp : 0 < p.size) (hq : 0 < q.size) :
+    (p * q).coeff (p.size - 1 + (q.size - 1)) =
+      p.coeff (p.size - 1) * q.coeff (q.size - 1) := by
+  exact DensePoly.coeff_mul_top_int p q hp hq
+
+/-- Integer dense polynomials have no zero divisors. -/
+theorem mul_ne_zero_of_ne_zero (p q : ZPoly)
+    (hp : p ≠ 0) (hq : q ≠ 0) :
+    p * q ≠ 0 := by
+  exact DensePoly.mul_ne_zero_int p q hp hq
+
+/-- Right cancellation for multiplication by a nonzero integer polynomial. -/
+theorem mul_right_cancel_of_ne_zero {p q r : ZPoly}
+    (hr : r ≠ 0) (h : p * r = q * r) :
+    p = q := by
+  apply Classical.byContradiction
+  intro hpq
+  have hsub_ne : p - q ≠ 0 := by
+    intro hsub
+    apply hpq
+    apply DensePoly.ext_coeff
+    intro n
+    have hcoeff := congrArg (fun s : ZPoly => s.coeff n) hsub
+    have hzero_sub : (0 : Int) - 0 = 0 := by omega
+    change (p - q).coeff n = (0 : ZPoly).coeff n at hcoeff
+    rw [DensePoly.coeff_sub p q n hzero_sub, DensePoly.coeff_zero] at hcoeff
+    omega
+  have hmul_ne : (p - q) * r ≠ 0 := mul_ne_zero_of_ne_zero (p - q) r hsub_ne hr
+  apply hmul_ne
+  rw [DensePoly.sub_eq_add_neg_poly, DensePoly.mul_add_left_poly,
+    DensePoly.neg_mul_right_poly, h]
+  apply DensePoly.ext_coeff
+  intro n
+  have hzero_add : (0 : Int) + 0 = 0 := by omega
+  have hzero_sub : (0 : Int) - 0 = 0 := by omega
+  rw [DensePoly.coeff_add (q * r) (0 - q * r) n hzero_add]
+  rw [DensePoly.coeff_sub 0 (q * r) n hzero_sub, DensePoly.coeff_zero]
+  omega
+
+/-- A nonzero divisor of a nonzero integer polynomial has no larger dense size. -/
+theorem size_le_of_dvd_nonzero {d r : ZPoly}
+    (hd : d ≠ 0) (hr : r ≠ 0) :
+    d ∣ r → d.size ≤ r.size := by
+  intro hdiv
+  rcases hdiv with ⟨k, hk⟩
+  by_cases hk_zero : k = 0
+  · apply False.elim
+    apply hr
+    rw [hk, hk_zero]
+    rw [DensePoly.mul_comm_poly d (0 : ZPoly), DensePoly.zero_mul]
+  · have hd_pos : 0 < d.size := by
+      rcases Nat.lt_or_ge 0 d.size with h | h
+      · exact h
+      · exfalso
+        apply hd
+        apply DensePoly.ext_coeff
+        intro n
+        rw [DensePoly.coeff_zero]
+        exact DensePoly.coeff_eq_zero_of_size_le d (by omega)
+    have hk_pos : 0 < k.size := by
+      rcases Nat.lt_or_ge 0 k.size with h | h
+      · exact h
+      · exfalso
+        apply hk_zero
+        apply DensePoly.ext_coeff
+        intro n
+        rw [DensePoly.coeff_zero]
+        exact DensePoly.coeff_eq_zero_of_size_le k (by omega)
+    have htop := coeff_mul_top d k hd_pos hk_pos
+    have hd_lead_ne := DensePoly.coeff_last_ne_zero_of_pos_size d hd_pos
+    have hk_lead_ne := DensePoly.coeff_last_ne_zero_of_pos_size k hk_pos
+    have hprod_ne :
+        d.coeff (d.size - 1) * k.coeff (k.size - 1) ≠ 0 := by
+      intro hzero
+      rcases Int.mul_eq_zero.mp hzero with h | h
+      · exact hd_lead_ne h
+      · exact hk_lead_ne h
+    have hcoeff_ne : (d * k).coeff (d.size - 1 + (k.size - 1)) ≠ 0 := by
+      rw [htop]
+      exact hprod_ne
+    have htop_lt : d.size - 1 + (k.size - 1) < (d * k).size := by
+      rcases Nat.lt_or_ge (d.size - 1 + (k.size - 1)) (d * k).size with h | hle
+      · exact h
+      · exact False.elim (hcoeff_ne (DensePoly.coeff_eq_zero_of_size_le (d * k) hle))
+    have hsize_eq : (d * k).size = r.size := by rw [hk]
+    omega
+
+/-- If a monic positive-degree integer divisor has an exact product witness,
+the executable dense-polynomial division returns zero remainder. -/
+theorem divMod_remainder_eq_zero_of_monic_mul_eq
+    (target candidate quotient : ZPoly)
+    (hmonic : DensePoly.Monic candidate)
+    (hdegree : 0 < candidate.degree?.getD 0)
+    (hmul : quotient * candidate = target) :
+    (DensePoly.divMod target candidate).2 = 0 := by
+  let qr := DensePoly.divMod target candidate
+  have hcancel :
+      ∀ a : Int, a - (a / candidate.leadingCoeff) * candidate.leadingCoeff = 0 := by
+    intro a
+    rw [hmonic]
+    omega
+  have hrecon : qr.1 * candidate + qr.2 = target := by
+    simpa [qr] using DensePoly.divMod_reconstruction target candidate hcancel
+  rw [← hmul] at hrecon
+  have hcandidate_ne : candidate ≠ 0 := by
+    intro hzero
+    have hdeg : candidate.degree?.getD 0 = 0 := by
+      rw [hzero]
+      simp [DensePoly.degree?]
+    omega
+  have hrem_degree :
+      qr.2.degree?.getD 0 < candidate.degree?.getD 0 := by
+    simpa [qr] using
+      DensePoly.divMod_remainder_degree_lt_of_pos_degree_core target candidate hdegree hcancel
+  by_cases hrem_zero : qr.2 = 0
+  · simpa [qr] using hrem_zero
+  · have hrem_dvd : candidate ∣ qr.2 := by
+      refine ⟨quotient - qr.1, ?_⟩
+      rw [DensePoly.mul_comm_poly candidate (quotient - qr.1)]
+      apply DensePoly.ext_coeff
+      intro n
+      have hcoeff := congrArg (fun s : ZPoly => s.coeff n) hrecon
+      have hzero_add : (0 : Int) + 0 = 0 := by omega
+      have hzero_sub : (0 : Int) - 0 = 0 := by omega
+      change (qr.1 * candidate + qr.2).coeff n = (quotient * candidate).coeff n at hcoeff
+      rw [DensePoly.coeff_add (qr.1 * candidate) qr.2 n hzero_add] at hcoeff
+      rw [DensePoly.coeff_mul] at hcoeff
+      rw [DensePoly.coeff_mul] at hcoeff
+      rw [DensePoly.sub_eq_add_neg_poly, DensePoly.mul_add_left_poly,
+        DensePoly.neg_mul_right_poly]
+      rw [DensePoly.coeff_add (quotient * candidate) (0 - qr.1 * candidate) n hzero_add]
+      rw [DensePoly.coeff_sub 0 (qr.1 * candidate) n hzero_sub, DensePoly.coeff_zero]
+      rw [DensePoly.coeff_mul, DensePoly.coeff_mul]
+      omega
+    have hsize_le : candidate.size ≤ qr.2.size :=
+      size_le_of_dvd_nonzero hcandidate_ne hrem_zero hrem_dvd
+    have hcandidate_size_ne : candidate.size ≠ 0 := by
+      intro hsize
+      simp [DensePoly.degree?, hsize] at hdegree
+    have hrem_size_ne : qr.2.size ≠ 0 := by
+      intro hsize
+      apply hrem_zero
+      apply DensePoly.ext_coeff
+      intro n
+      rw [DensePoly.coeff_zero]
+      exact DensePoly.coeff_eq_zero_of_size_le qr.2 (by omega)
+    have hcandidate_deg : candidate.degree?.getD 0 = candidate.size - 1 := by
+      simp [DensePoly.degree?, hcandidate_size_ne]
+    have hrem_deg : qr.2.degree?.getD 0 = qr.2.size - 1 := by
+      simp [DensePoly.degree?, hrem_size_ne]
+    rw [hrem_deg, hcandidate_deg] at hrem_degree
+    omega
+
+/-- If a monic positive-degree integer divisor has an exact product witness,
+the executable dense-polynomial division returns the witnessed quotient and
+zero remainder. -/
+theorem divMod_eq_of_monic_mul_eq
+    (target candidate quotient : ZPoly)
+    (hmonic : DensePoly.Monic candidate)
+    (hdegree : 0 < candidate.degree?.getD 0)
+    (hmul : quotient * candidate = target) :
+    DensePoly.divMod target candidate = (quotient, 0) := by
+  let qr := DensePoly.divMod target candidate
+  have hrem : qr.2 = 0 := by
+    simpa [qr] using
+      divMod_remainder_eq_zero_of_monic_mul_eq target candidate quotient hmonic hdegree hmul
+  have hcancel :
+      ∀ a : Int, a - (a / candidate.leadingCoeff) * candidate.leadingCoeff = 0 := by
+    intro a
+    rw [hmonic]
+    omega
+  have hrecon : qr.1 * candidate + qr.2 = target := by
+    simpa [qr] using DensePoly.divMod_reconstruction target candidate hcancel
+  rw [hrem, DensePoly.add_zero_poly, ← hmul] at hrecon
+  have hcandidate_ne : candidate ≠ 0 := by
+    intro hzero
+    have hdeg : candidate.degree?.getD 0 = 0 := by
+      rw [hzero]
+      simp [DensePoly.degree?]
+    omega
+  have hquot : qr.1 = quotient :=
+    mul_right_cancel_of_ne_zero hcandidate_ne hrecon
+  change qr = (quotient, 0)
+  exact Prod.ext hquot hrem
+
 theorem primitiveSquareFreeDecomposition_primitive (f : ZPoly) :
     (primitiveSquareFreeDecomposition f).primitive = primitivePart f := by
   by_cases hzero : (primitivePart f).isZero = true

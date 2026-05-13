@@ -4440,9 +4440,9 @@ private theorem foldl_add_int_eq_at_predecessor
   rw [← hpsize_eq]
   exact foldl_add_int_eq_last_of_below_zero g (psize - 1) h
 
-/-- The top coefficient of a product of nonzero polynomials is the product of
+/-- The top coefficient of a product of nonzero integer polynomials is the product of
 their leading coefficients. -/
-private theorem coeff_mul_top (p q : DensePoly Int)
+theorem coeff_mul_top_int (p q : DensePoly Int)
     (hp : 0 < p.size) (hq : 0 < q.size) :
     (p * q).coeff (p.size - 1 + (q.size - 1)) =
       p.coeff (p.size - 1) * q.coeff (q.size - 1) := by
@@ -4462,6 +4462,42 @@ private theorem coeff_mul_top (p q : DensePoly Int)
     show p.coeff i * (0 : Int) = 0
     rw [Int.mul_zero]
 
+/-- Integral domain property for integer polynomials. -/
+theorem mul_ne_zero_int (p q : DensePoly Int)
+    (hp : p ≠ 0) (hq : q ≠ 0) :
+    p * q ≠ 0 := by
+  have hp_size : 0 < p.size := by
+    rcases Nat.lt_or_ge 0 p.size with h | h
+    · exact h
+    · exfalso
+      apply hp
+      have hsize : p.size = 0 := by omega
+      apply ext_coeff
+      intro n
+      rw [coeff_zero]
+      exact coeff_eq_zero_of_size_le p (by omega)
+  have hq_size : 0 < q.size := by
+    rcases Nat.lt_or_ge 0 q.size with h | h
+    · exact h
+    · exfalso
+      apply hq
+      have hsize : q.size = 0 := by omega
+      apply ext_coeff
+      intro n
+      rw [coeff_zero]
+      exact coeff_eq_zero_of_size_le q (by omega)
+  intro hpq0
+  have htop := coeff_mul_top_int p q hp_size hq_size
+  have hpq_top_zero : (p * q).coeff (p.size - 1 + (q.size - 1)) = 0 := by
+    rw [hpq0]; exact coeff_zero _
+  rw [hpq_top_zero] at htop
+  -- 0 = lead(p) * lead(q), but both leading coefficients are nonzero
+  have hlp_ne := coeff_last_ne_zero_of_pos_size p hp_size
+  have hlq_ne := coeff_last_ne_zero_of_pos_size q hq_size
+  rcases Int.mul_eq_zero.mp htop.symm with h | h
+  · exact hlp_ne h
+  · exact hlq_ne h
+
 /-- Integral domain property: for primitive integer polynomials, the product
 is nonzero. -/
 private theorem mul_ne_zero_of_primitive (p q : DensePoly Int)
@@ -4477,37 +4513,7 @@ private theorem mul_ne_zero_of_primitive (p q : DensePoly Int)
     intro hq0
     apply hcq_ne_zero
     rw [hq0, content_zero]
-  have hp_size : 0 < p.size := by
-    rcases Nat.lt_or_ge 0 p.size with h | h
-    · exact h
-    · exfalso
-      apply hp_ne
-      have hsize : p.size = 0 := by omega
-      apply ext_coeff
-      intro n
-      rw [coeff_zero]
-      exact coeff_eq_zero_of_size_le p (by omega)
-  have hq_size : 0 < q.size := by
-    rcases Nat.lt_or_ge 0 q.size with h | h
-    · exact h
-    · exfalso
-      apply hq_ne
-      have hsize : q.size = 0 := by omega
-      apply ext_coeff
-      intro n
-      rw [coeff_zero]
-      exact coeff_eq_zero_of_size_le q (by omega)
-  intro hpq0
-  have htop := coeff_mul_top p q hp_size hq_size
-  have hpq_top_zero : (p * q).coeff (p.size - 1 + (q.size - 1)) = 0 := by
-    rw [hpq0]; exact coeff_zero _
-  rw [hpq_top_zero] at htop
-  -- 0 = lead(p) * lead(q), but both leading coefficients are nonzero
-  have hlp_ne := coeff_last_ne_zero_of_pos_size p hp_size
-  have hlq_ne := coeff_last_ne_zero_of_pos_size q hq_size
-  rcases Int.mul_eq_zero.mp htop.symm with h | h
-  · exact hlp_ne h
-  · exact hlq_ne h
+  exact mul_ne_zero_int p q hp_ne hq_ne
 
 /-- Factoring a constant out of a `diagonalMulCoeffTerm` foldl with `scale`'d
 polynomials. -/
