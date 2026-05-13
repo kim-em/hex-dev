@@ -589,6 +589,16 @@ Quotient-witness checker for `FpPoly 2` pow chains.  Entry `k` of
 `powChain[k] * powChain[k] = powChain[k+1] + quotients[k] * f`, with both
 chain entries already reduced modulo `f`.
 -/
+def checkPowChainLinearIncrementalQuotientWitnessStep
+    (f : FpPoly 2) (cert : SamePrimeIrreducibilityCertificate 2)
+    (quotients : Array (FpPoly 2)) (k : Nat) : Bool :=
+  match cert.powChain[k]?, cert.powChain[k + 1]?, quotients[k]? with
+  | some prev, some curr, some quot =>
+      decide (prev.degree?.getD 0 < f.degree?.getD 0) &&
+        (decide (curr.degree?.getD 0 < f.degree?.getD 0) &&
+          ((prev * prev).coeffs == (curr + quot * f).coeffs))
+  | _, _, _ => false
+
 def checkPowChainLinearIncrementalQuotientWitnesses
     (f : FpPoly 2) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate 2) (quotients : Array (FpPoly 2)) :
@@ -597,12 +607,23 @@ def checkPowChainLinearIncrementalQuotientWitnesses
     quotients.size == cert.n &&
     (cert.powChain[0]? == some (FpPoly.modByMonic f FpPoly.X hmonic)) &&
     (List.range cert.n).all fun k =>
-      match cert.powChain[k]?, cert.powChain[k + 1]?, quotients[k]? with
-      | some prev, some curr, some quot =>
-          decide (prev.degree?.getD 0 < f.degree?.getD 0) &&
-            (decide (curr.degree?.getD 0 < f.degree?.getD 0) &&
-              ((prev * prev).coeffs == (curr + quot * f).coeffs))
-      | _, _, _ => false
+      checkPowChainLinearIncrementalQuotientWitnessStep f cert quotients k
+
+theorem checkPowChainLinearIncrementalQuotientWitnesses_of_steps
+    (f : FpPoly 2) (hmonic : DensePoly.Monic f)
+    (cert : SamePrimeIrreducibilityCertificate 2) (quotients : Array (FpPoly 2))
+    (hpowSize : cert.powChain.size == cert.n + 1)
+    (hquotSize : quotients.size == cert.n)
+    (hfirst : cert.powChain[0]? == some (FpPoly.modByMonic f FpPoly.X hmonic))
+    (hsteps : ∀ k, k < cert.n →
+      checkPowChainLinearIncrementalQuotientWitnessStep f cert quotients k = true) :
+    checkPowChainLinearIncrementalQuotientWitnesses f hmonic cert quotients = true := by
+  unfold checkPowChainLinearIncrementalQuotientWitnesses
+  simp only [Bool.and_eq_true]
+  refine ⟨⟨⟨hpowSize, hquotSize⟩, hfirst⟩, ?_⟩
+  rw [List.all_eq_true]
+  intro k hk
+  exact hsteps k (List.mem_range.mp hk)
 
 private def primeTwo : Hex.Nat.Prime 2 := by
   refine ⟨by decide, ?_⟩
@@ -666,6 +687,7 @@ theorem checkPowChainLinearIncremental_of_quotientWitnesses
   intro k hk
   have hstep := List.all_eq_true.mp hsteps k hk
   unfold checkPowChainLinearIncrementalStep
+  unfold checkPowChainLinearIncrementalQuotientWitnessStep at hstep
   cases hprev : cert.powChain[k]? with
   | none =>
       rw [hprev] at hstep
