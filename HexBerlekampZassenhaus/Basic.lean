@@ -2318,7 +2318,7 @@ private def bhksColumnSignature
     (echelonRows : Array (Array Rat)) (j : Nat) : Array Rat :=
   echelonRows.map (·.getD j 0)
 
-private def bhksInsertSignatureClass
+def bhksInsertSignatureClass
     (sig : Array Rat) (j : Nat) :
     List (Array Rat × List Nat) → List (Array Rat × List Nat)
   | [] => [(sig, [j])]
