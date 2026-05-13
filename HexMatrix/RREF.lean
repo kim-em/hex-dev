@@ -2211,13 +2211,13 @@ private theorem nullspace_get [Lean.Grind.Ring R] (E : IsRREF M D)
   unfold nullspace
   rw [Vector.get_ofFn]
 
-private theorem nullspace_get_free [Lean.Grind.Ring R] (E : IsRREF M D)
+theorem nullspace_get_free [Lean.Grind.Ring R] (E : IsRREF M D)
     (k : Fin (m - D.rank)) :
     (E.nullspace.get k)[E.toIsEchelonForm.freeCols.get k] = 1 := by
   rw [nullspace_get]
   simpa [Matrix.col] using nullspaceMatrix_free E k
 
-private theorem nullspace_get_free_ne [Lean.Grind.Ring R] (E : IsRREF M D)
+theorem nullspace_get_free_ne [Lean.Grind.Ring R] (E : IsRREF M D)
     {k l : Fin (m - D.rank)} (hkl : k ≠ l) :
     (E.nullspace.get k)[E.toIsEchelonForm.freeCols.get l] = 0 := by
   rw [nullspace_get]
