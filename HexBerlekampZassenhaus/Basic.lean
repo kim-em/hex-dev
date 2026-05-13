@@ -1285,6 +1285,18 @@ def ceilLogP (p target : Nat) : Nat :=
 def bhksCoeffCutThreshold (p : Nat) (f : ZPoly) (j : Nat) : Nat :=
   ceilLogP p (2 * bhksCoeffBound f j + 1)
 
+/--
+Hensel precision exponent for a Mignotte coefficient bound.
+
+For the Mignotte criterion `p^a > 2·B`, returns the smallest exponent
+`a` with `p^a ≥ 2·B + 1` (equivalently `p^a > 2·B`). The two quantities
+are different — `B` is a magnitude on integer coefficients, `a` is the
+small exponent on the Hensel modulus `p^a` — and must not be conflated.
+See SPEC/Libraries/hex-berlekamp-zassenhaus.md §"Slow path".
+-/
+def precisionForCoeffBound (B p : Nat) : Nat :=
+  ceilLogP p (2 * B + 1)
+
 private def subsetSplits : List ZPoly → List (List ZPoly × List ZPoly)
   | [] => [([], [])]
   | factor :: factors =>
@@ -2899,7 +2911,8 @@ private def exhaustiveCoreFactorsWithBound
   if B = 0 then
     #[core]
   else
-    let liftData := henselLiftData core B primeData
+    let liftData :=
+      henselLiftData core (precisionForCoeffBound B primeData.p) primeData
     let factors := recombineExhaustive core liftData
     if factors.isEmpty then
       #[core]
@@ -2939,11 +2952,12 @@ private def factorFastFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPo
   else
     if B = 1 then
       let primeData := choosePrimeData normalized.squareFreeCore
+      let a := precisionForCoeffBound B primeData.p
       if primeData.factorsModP.size ≤ 1 then
         some (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
       else
-        match factorFastCoreWithBound normalized.squareFreeCore B primeData
-            (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2) with
+        match factorFastCoreWithBound normalized.squareFreeCore a primeData
+            (initialHenselPrecision a) (ZPoly.quadraticDoublingSteps a + 2) with
         | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
         | none => none
     else
@@ -2951,11 +2965,12 @@ private def factorFastFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPo
       | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
       | none =>
         let primeData := choosePrimeData normalized.squareFreeCore
+        let a := precisionForCoeffBound B primeData.p
         if primeData.factorsModP.size ≤ 1 then
           some (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
         else
-          match factorFastCoreWithBound normalized.squareFreeCore B primeData
-              (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2) with
+          match factorFastCoreWithBound normalized.squareFreeCore a primeData
+              (initialHenselPrecision a) (ZPoly.quadraticDoublingSteps a + 2) with
           | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
           | none => none
 
@@ -2981,9 +2996,10 @@ private theorem factorFastFactorsWithBound_eq_some_of_core_success
     (hquadratic : B = 1 ∨
       quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none)
     (hcore :
-      factorFastCoreWithBound (normalizeForFactor f).squareFreeCore B
-        primeData (initialHenselPrecision B)
-        (ZPoly.quadraticDoublingSteps B + 2) = some coreFactors) :
+      let a := precisionForCoeffBound B primeData.p
+      factorFastCoreWithBound (normalizeForFactor f).squareFreeCore a
+        primeData (initialHenselPrecision a)
+        (ZPoly.quadraticDoublingSteps a + 2) = some coreFactors) :
     factorFastFactorsWithBound f B =
       some (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) := by
   unfold factorFastFactorsWithBound
@@ -3090,25 +3106,28 @@ theorem factorFast_ne_none_of_core_recovery_on_schedule
     (hB_pos : 1 ≤ factorFastPrecisionCap f)
     (hnormalized :
       primeData = choosePrimeData (normalizeForFactor f).squareFreeCore)
-    (hmem : target ∈
-      henselPrecisionSchedule (factorFastPrecisionCap f)
-        (initialHenselPrecision (factorFastPrecisionCap f))
-        (ZPoly.quadraticDoublingSteps (factorFastPrecisionCap f) + 2))
+    (hmem :
+      let a := precisionForCoeffBound (factorFastPrecisionCap f) primeData.p
+      target ∈
+        henselPrecisionSchedule a
+          (initialHenselPrecision a)
+          (ZPoly.quadraticDoublingSteps a + 2))
     (hrecover :
       bhksRecover? (normalizeForFactor f).squareFreeCore
         (henselLiftData (normalizeForFactor f).squareFreeCore target primeData) =
           some coreFactors) :
     factorFast f ≠ none := by
   let B := factorFastPrecisionCap f
+  let a := precisionForCoeffBound B primeData.p
   have hB_pos' : 1 ≤ B := by
     simpa [B] using hB_pos
   have hcore_ne :
-      factorFastCoreWithBound (normalizeForFactor f).squareFreeCore B primeData
-          (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2) ≠ none := by
+      factorFastCoreWithBound (normalizeForFactor f).squareFreeCore a primeData
+          (initialHenselPrecision a) (ZPoly.quadraticDoublingSteps a + 2) ≠ none := by
     exact
       factorFastCoreWithBound_ne_none_of_recovery_on_schedule
-        (normalizeForFactor f).squareFreeCore B primeData
-        (by simpa [B] using hmem) hrecover
+        (normalizeForFactor f).squareFreeCore a primeData
+        (by simpa [a, B] using hmem) hrecover
   have hfactors_ne :
       factorFastFactorsWithBound f B ≠ none := by
     unfold factorFastFactorsWithBound
@@ -3125,8 +3144,10 @@ theorem factorFast_ne_none_of_core_recovery_on_schedule
           exact Option.some_ne_none _
         · rw [if_neg hsmall]
           cases hcore :
-              factorFastCoreWithBound (normalizeForFactor f).squareFreeCore B primeData
-                (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2) with
+              factorFastCoreWithBound (normalizeForFactor f).squareFreeCore
+                (precisionForCoeffBound B primeData.p) primeData
+                (initialHenselPrecision (precisionForCoeffBound B primeData.p))
+                (ZPoly.quadraticDoublingSteps (precisionForCoeffBound B primeData.p) + 2) with
           | none => exact absurd hcore hcore_ne
           | some factors =>
               simp
@@ -3142,8 +3163,11 @@ theorem factorFast_ne_none_of_core_recovery_on_schedule
               exact Option.some_ne_none _
             · rw [if_neg hsmall]
               cases hcore :
-                  factorFastCoreWithBound (normalizeForFactor f).squareFreeCore B primeData
-                    (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2) with
+                  factorFastCoreWithBound (normalizeForFactor f).squareFreeCore
+                    (precisionForCoeffBound B primeData.p) primeData
+                    (initialHenselPrecision (precisionForCoeffBound B primeData.p))
+                    (ZPoly.quadraticDoublingSteps
+                      (precisionForCoeffBound B primeData.p) + 2) with
               | none => exact absurd hcore hcore_ne
               | some factors =>
                   simp
@@ -3527,20 +3551,28 @@ private theorem exhaustiveCoreFactorsWithBound_product
   · simp [hB, polyProduct_singleton]
   · simp only [hB, if_false]
     by_cases hempty :
-        (recombineExhaustive core (henselLiftData core B primeData)).isEmpty
+        (recombineExhaustive core
+            (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)).isEmpty
     · simp [hempty, polyProduct_singleton]
     · simp only [hempty]
       cases hsearch : recombinationSearchMod core
-          (liftModulus (henselLiftData core B primeData))
-          (henselLiftData core B primeData).liftedFactors.toList with
+          (liftModulus
+            (henselLiftData core (precisionForCoeffBound B primeData.p) primeData))
+          (henselLiftData core (precisionForCoeffBound B primeData.p)
+            primeData).liftedFactors.toList with
       | none =>
-          have hnil : recombineExhaustive core (henselLiftData core B primeData) = #[] := by
+          have hnil :
+              recombineExhaustive core
+                (henselLiftData core (precisionForCoeffBound B primeData.p)
+                  primeData) = #[] := by
             rw [recombineExhaustive]
             simp [hsearch]
           rw [hnil] at hempty
           simp at hempty
       | some xs =>
-          exact recombineExhaustive_product core (henselLiftData core B primeData) xs hsearch
+          exact recombineExhaustive_product core
+            (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)
+            xs hsearch
 
 theorem checkIrreducibleCert_prime_data
     (f : ZPoly) (cert : ZPolyIrreducibilityCertificate)

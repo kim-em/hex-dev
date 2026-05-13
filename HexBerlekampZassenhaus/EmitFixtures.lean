@@ -176,7 +176,9 @@ private def cases_irr : List Case :=
   [ -- Φ_5(x), degree 4, irreducible.
     mk "irr/cyclo5"  #[1, 1, 1, 1, 1]
     -- Φ_7(x), degree 6, irreducible.
-  , mk "irr/cyclo7"  #[1, 1, 1, 1, 1, 1, 1] ]
+  , mk "irr/cyclo7"  #[1, 1, 1, 1, 1, 1, 1]
+    -- Φ_11(x), degree 10, irreducible.
+  , mk "irr/cyclo11" #[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] ]
 
 private def cases_irr_expected : List ExpectedCase :=
   [ -- Φ_17(x), degree 16, irreducible.
