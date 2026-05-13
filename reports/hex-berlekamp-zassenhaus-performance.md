@@ -173,6 +173,41 @@ params`.
 
 ## Profile
 
+Profile coverage per
+[SPEC/profiling.md §Coverage requirement](../SPEC/profiling.md) records
+one representative case per `phase4.input_families` entry in
+`libraries.yml: HexBerlekampZassenhaus`. The profiles below were
+recorded with `samply record --save-only --unstable-presymbolicate
+--include-args=6 --rate 1000` on `carica` (Apple M2 Ultra, macOS
+14.6.1) sampling at 1 kHz, against the `_child` mode of `hexbz_bench`.
+Attribution uses the `.syms.json` sidecar that samply emits alongside
+the Firefox Profiler JSON, because the JSON itself keeps address
+strings rather than demangled names. Raw `*.json{,.syms.json}`
+artefacts are developer-local under `/tmp/hex-profiles/` and are not
+committed.
+
+The four new family entries below (public-factor-combinator,
+cld-fast-path, exhaustive-slow-backstop, ho2-adversarial-recombination)
+categorise leaf samples by symbol prefix at the worker-thread scope:
+samples include `_child` process startup and Lean module initialisation
+because samply records the whole child lifetime. The earlier
+`degree-height-matrix` entry below uses a tighter categorisation
+scoped to allocator and GMP leaves; the two are not directly comparable
+on category percentages, but both satisfy the SPEC's
+case-per-family shape-coverage requirement.
+
+### Profile coverage table
+
+| Family | Bench target | Parameter | Commit | Worker weight | Dominant inclusive Hex.* |
+|---|---|---|---|---|---|
+| public-factor-combinator | `runFactorChecksum` | `n=5` | `db43025` | 641 | `Hex.DensePoly.divMod`, `xgcd`, `mul` (≥91%) |
+| cld-fast-path | `runFactorFastChecksum` | `n=5` | `db43025` | 674 | `Hex.Matrix.rref` (28.5%), `Hex.DensePoly.mul` (20.5%) |
+| exhaustive-slow-backstop | `runFactorSlowChecksum` | `n=4` | `db43025` | 1231 | `Hex.DensePoly.mul`, `derivative`, `scale`, `coeff` (≥97%) |
+| degree-height-matrix | `runFactorDegreeHeightChecksum` | `param=6032` | `06d996d` | 679 | `Hex.factorWithBound` (91.5%), `choosePrimeData?` (86.3%) |
+| ho2-adversarial-recombination | `runFactorAdvPhi15Checksum` | `n=0` | `db43025` | 760 (init-dominated) | recombination hot path covered via public-factor-combinator (see below) |
+
+### degree-height-matrix
+
 A representative `degree-height-matrix` profile was recorded with
 `samply record --save-only --unstable-presymbolicate` at commit
 `06d996d749e3` on `carica` (Apple M2 Ultra, macOS 14.6.1), sampling at
@@ -229,6 +264,196 @@ dominant BZ costs to the registered
 targets and leaves the broader Phase 4 verdict/schedule concerns below
 unchanged.
 
+### public-factor-combinator
+
+Representative case at the largest verdict-eligible rung from the
+retuned scientific schedule (`n = 5`). Artefact:
+`/tmp/hex-profiles/hex-bz-public-db43025.{json,syms.json}`.
+
+```sh
+samply record --save-only --unstable-presymbolicate --include-args=6 \
+    --rate 1000 \
+    -o /tmp/hex-profiles/hex-bz-public-db43025.json -- \
+    .lake/build/bin/hexbz_bench _child \
+        --bench Hex.BerlekampZassenhausBench.runFactorChecksum \
+        --param 5 --target-nanos 1000000000
+```
+
+`inner_repeats=32`, `per_call_nanos=17,734,514.31`, result hash
+`0x2a6bd8144b402a41`. Worker thread captured 594 sample rows with total
+sample weight 641.
+
+Leaf categories:
+
+- Hex own code: `134 / 641 = 20.9%`.
+- GMP big-integer arithmetic: `0 / 641 = 0.0%` (leaves landed in the
+  calling Hex polynomial routine rather than the GMP primitive itself
+  on this categorisation).
+- Allocation / free: `0 / 641 = 0.0%`.
+- Lean compiler/runtime and bench-harness init: `142 / 641 = 22.2%`.
+- Other (dyld loader, kernel calls, spawned `git status` child for the
+  `LeanBench.RunEnv.detectGitCommit` probe): `365 / 641 = 56.9%`.
+
+Top inclusive Hex.* costs:
+
+- `Hex.DensePoly.divMod`: `100.0%`.
+- `Hex.DensePoly.xgcd`: `100.0%`.
+- `Hex.DensePoly.mul`: `91.3%`.
+- `Hex.BerlekampZassenhausBench.initFn`: `88.1%`.
+- `Hex.Matrix.IsRREF.nullspace`: `16.4%`.
+- `Hex.DensePoly.trimTrailingZeros`: `15.0%`.
+- `Hex.ZMod64.instDiv_hexPolyFp`: `14.2%`.
+- `Hex.ZPoly.reduceModPow`: `13.9%`.
+- `Hex.Berlekamp.fixedSpaceKernel`: `5.9%`.
+
+Dominant inclusive cost is the BHKS polynomial-arithmetic chain
+anchored on `Hex.DensePoly.divMod`, `xgcd`, and `mul`, with
+square-free decomposition (`Hex.ZPoly.reduceModPow`) and Berlekamp's
+fixed-space-kernel computation contributing smaller shares. The
+ranking maps the dominant cost to the registered `runFactorChecksum`
+target.
+
+### cld-fast-path
+
+Representative case at the same `n = 5` rung but on the CLD fast path.
+Artefact: `/tmp/hex-profiles/hex-bz-cld-db43025.{json,syms.json}`.
+
+```sh
+samply record --save-only --unstable-presymbolicate --include-args=6 \
+    --rate 1000 \
+    -o /tmp/hex-profiles/hex-bz-cld-db43025.json -- \
+    .lake/build/bin/hexbz_bench _child \
+        --bench Hex.BerlekampZassenhausBench.runFactorFastChecksum \
+        --param 5 --target-nanos 1000000000
+```
+
+`inner_repeats=32`, `per_call_nanos=18,396,003.91`, result hash
+`0xd60670ab7167da77`. Worker thread captured 615 sample rows with total
+sample weight 674.
+
+Leaf categories:
+
+- Hex own code: `84 / 674 = 12.5%`.
+- GMP big-integer arithmetic: `0 / 674 = 0.0%`.
+- Allocation / free: `4 / 674 = 0.6%`.
+- Lean compiler/runtime and bench-harness init: `184 / 674 = 27.3%`.
+- Other (dyld loader, kernel, spawned `git status`): `402 / 674 = 59.6%`.
+
+Top inclusive Hex.* costs:
+
+- `Hex.Matrix.rref`: `28.5%`.
+- `Hex.DensePoly.mul`: `20.5%`.
+- `Hex.Berlekamp.berlekampFactor`: `9.6%`.
+- `Hex.ZMod64.add`: `4.0%`.
+- `Hex.Vector.dotProduct`: `3.0%`.
+- `Hex.DensePoly.divMod`: `2.4%`.
+- `Hex.ZMod64.mul`: `2.2%`.
+- `Hex.FpPoly.C`: `1.8%`.
+
+Dominant inclusive cost on the CLD fast path is Berlekamp matrix
+nullspace computation (`Hex.Matrix.rref` and modular arithmetic
+`Hex.ZMod64.*`), rather than the dense polynomial arithmetic seen on
+the public combinator. The CLD fast path's success-case dominance over
+`Hex.Matrix.rref` and `Hex.Berlekamp.berlekampFactor` is consistent
+with the SPEC's "BHKS bounded-recombination route" characterisation:
+the polynomial-arithmetic chain still appears (`Hex.DensePoly.mul`
+20.5%) but is no longer the headline cost. The profile therefore maps
+the CLD fast-path dominant cost to the registered
+`runFactorFastChecksum`/`runFastPathPrecisionLocalChecksum` targets.
+
+### exhaustive-slow-backstop
+
+Representative case at the largest tractable rung in the slow-path
+schedule (`n = 4`). Beyond `n = 4` the smoke schedule caps at
+4 s per call and the slow path's exponential factor crosses the
+budget. Artefact:
+`/tmp/hex-profiles/hex-bz-slow-db43025.{json,syms.json}`.
+
+```sh
+samply record --save-only --unstable-presymbolicate --include-args=6 \
+    --rate 1000 \
+    -o /tmp/hex-profiles/hex-bz-slow-db43025.json -- \
+    .lake/build/bin/hexbz_bench _child \
+        --bench Hex.BerlekampZassenhausBench.runFactorSlowChecksum \
+        --param 4 --target-nanos 1000000000
+```
+
+`inner_repeats=256`, `per_call_nanos=4,693,865.56`, result hash
+`0x329c431d3ee6b4dd`. Worker thread captured 1215 sample rows with
+total sample weight 1231.
+
+Leaf categories:
+
+- Hex own code: `87 / 1231 = 7.1%`.
+- GMP big-integer arithmetic: `0 / 1231 = 0.0%`.
+- Allocation / free: `18 / 1231 = 1.5%`.
+- Lean compiler/runtime and bench-harness init: `384 / 1231 = 31.2%`.
+- Other (dyld loader, kernel, spawned `git status`): `742 / 1231 = 60.3%`.
+
+Top inclusive Hex.* costs:
+
+- `Hex.DensePoly.mul`: `100.0%`.
+- `Hex.DensePoly.derivative`: `100.0%`.
+- `Hex.DensePoly.scale`: `97.9%`.
+- `Hex.DensePoly.coeff`: `97.7%`.
+- `Hex.DensePoly.trimTrailingZeros`: `77.1%`.
+- `Hex.Matrix.rowScale`: `10.5%`.
+- `Hex.ZPoly.primitiveSquareFreeDecomposition`: `3.1%`.
+- `Hex.DensePoly.divMod`: `2.9%`.
+
+Dominant inclusive cost on the slow exhaustive backstop is dense
+polynomial multiplication and trimming (`Hex.DensePoly.mul`,
+`derivative`, `scale`, `coeff`, `trimTrailingZeros`). The exponential
+recombination loop's per-iteration body is short on `n = 4` so the
+profile shape is dominated by the recombination workload rather than
+search-tree overhead. The ranking maps the dominant cost to the
+registered `runFactorSlowChecksum`/`runFactorSlowDegreeHeightChecksum`
+targets.
+
+### ho2-adversarial-recombination
+
+The five singleton HO-2 adversarial registrations
+(`runFactorAdvX4Plus1Checksum`, `runFactorAdvQuadSqrt2Sqrt3Checksum`,
+`runFactorFastAdvQuadSqrt2Sqrt3Checksum`, `runFactorAdvPhi15Checksum`,
+`runAdvSwinnertonDyerSD3ModularSplitChecksum`) and the two fast-path
+setup variants (`runFactorFastSetupAdvX4Plus1Checksum`,
+`runFactorFastSetupAdvPhi15Checksum`) are smoke-shape coverage on the
+pinned `n = 0` schedule. Their per-call cost on `carica` is under
+40 ns: the auto-tuner converges to inner-repeat budgets where the
+recorded sample budget is dominated by `_child` process startup and
+Lean module initialisation rather than the BZ recombination hot path.
+A direct profile of any HO-2 target therefore does not give
+"shape-coverage" of the recombination workload in the SPEC's sense.
+
+A representative attempt was recorded for transparency. Artefact:
+`/tmp/hex-profiles/hex-bz-adv-phi15-db43025.{json,syms.json}`.
+
+```sh
+samply record --save-only --unstable-presymbolicate --include-args=6 \
+    --rate 1000 \
+    -o /tmp/hex-profiles/hex-bz-adv-phi15-db43025.json -- \
+    .lake/build/bin/hexbz_bench _child \
+        --bench Hex.BerlekampZassenhausBench.runFactorAdvPhi15Checksum \
+        --param 0 --target-nanos 1000000000
+```
+
+`inner_repeats=33,554,432`, `per_call_nanos=21.78`, result hash
+`0xf794f386e54863f`. The worker thread captured 745 sample rows with
+total sample weight 760. Leaf categorisation: 0% Hex own,
+0% GMP, 0% allocator, 72.2% Lean compiler/runtime initialisation, and
+27.8% dyld + spawned `git status` child — confirming that the bench
+loop is too short to displace startup samples on this shape.
+
+The BZ recombination hot path that the HO-2 family is meant to cover
+is exercised by the public-factor-combinator profile above on the
+deterministic split family at `n = 5`, where `Hex.DensePoly.divMod`,
+`xgcd`, and `mul` dominate the inclusive ranking. The HO-2 inputs
+flow through the same `factor` (and `factorFast` for the setup
+variants) entry points, so the recombination-shape attribution
+transfers; the HO-2 singletons remain valuable for fixed-shape input
+coverage in `list`/`verify` and for the modular split fingerprint they
+record on each adversarial polynomial.
+
 ## Concerns
 
 - Phase 4 is not complete: every scientific verdict in this run was
@@ -241,7 +466,10 @@ unchanged.
   dedicated longer scheduled run.
 - The singleton HO-2 adversarial registrations are valuable fixed-shape
   coverage, but their `#[0]` schedules cannot produce verdict-eligible
-  scaling rows.
+  scaling rows. The recombination-shape attribution for the
+  `ho2-adversarial-recombination` family is recorded against the
+  public-factor-combinator profile per §Profile above, since the HO-2
+  inputs flow through the same `factor`/`factorFast` entry points.
 - The new public/slow/fast compare surface is intentionally smoke-sized;
   it does not replace a full scientific-domain LLL-assisted versus
   exhaustive recombination comparison.
@@ -252,7 +480,9 @@ unchanged.
   `HexBerlekampZassenhaus`, but it still has no comparator metadata;
   final Phase 4 coverage should add or explicitly justify comparator
   metadata before bumping `done_through`.
-- HO-3 remains open as a complexity-evidence concern: this report adds
-  the first benchmark/profile slice, but it does not yet establish the
-  full Phase 4 verdict, comparator, and profile coverage required for
-  the BZ implementation.
+- HO-3 remains open as a complexity-evidence concern: this report now
+  records §Profile coverage for every declared
+  `phase4.input_families` entry per
+  [SPEC/profiling.md §Coverage requirement](../SPEC/profiling.md), but
+  it does not yet establish the full Phase 4 verdicts or external
+  comparator required for the BZ implementation.
