@@ -599,6 +599,35 @@ def checkPowChainLinearIncrementalQuotientWitnessStep
           ((prev * prev).coeffs == (curr + quot * f).coeffs))
   | _, _, _ => false
 
+theorem checkPowChainLinearIncrementalQuotientWitnessStep_of_entries
+    (f prev curr quot : FpPoly 2)
+    (cert : SamePrimeIrreducibilityCertificate 2)
+    (quotients : Array (FpPoly 2)) (k : Nat)
+    (hprev : cert.powChain[k]? = some prev)
+    (hcurr : cert.powChain[k + 1]? = some curr)
+    (hquot : quotients[k]? = some quot)
+    (hprevRed : prev.degree?.getD 0 < f.degree?.getD 0)
+    (hcurrRed : curr.degree?.getD 0 < f.degree?.getD 0)
+    (hmulCoeffs : (prev * prev).coeffs = (curr + quot * f).coeffs) :
+    checkPowChainLinearIncrementalQuotientWitnessStep f cert quotients k = true := by
+  unfold checkPowChainLinearIncrementalQuotientWitnessStep
+  rw [hprev, hcurr, hquot]
+  simp [hprevRed, hcurrRed, hmulCoeffs]
+
+private theorem checkPowChainLinearIncrementalQuotientWitnessStep_zero_pilot :
+    let zero : FpPoly 2 := 0
+    let cert : SamePrimeIrreducibilityCertificate 2 :=
+      { n := 1, powChain := #[zero, zero], bezout := #[] }
+    checkPowChainLinearIncrementalQuotientWitnessStep FpPoly.X cert #[zero] 0 = true := by
+  apply checkPowChainLinearIncrementalQuotientWitnessStep_of_entries
+    (prev := (0 : FpPoly 2)) (curr := (0 : FpPoly 2)) (quot := (0 : FpPoly 2))
+  · rfl
+  · rfl
+  · rfl
+  · decide
+  · decide
+  · rfl
+
 def checkPowChainLinearIncrementalQuotientWitnesses
     (f : FpPoly 2) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate 2) (quotients : Array (FpPoly 2)) :
