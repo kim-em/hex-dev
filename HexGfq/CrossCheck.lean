@@ -388,9 +388,28 @@ namespace N32
 private def lower : UInt64 := 0x8D
 private def n : Nat := 32
 
+private def packedModulus : GF2Poly :=
+  GF2Poly.ofUInt64Monic lower n
+
+private def packedCert : GF2Poly.IrreducibilityCertificate :=
+  { n := n
+    powChain := Array.ofFn fun k : Fin (n + 1) =>
+      GF2Poly.xpow2kMod packedModulus k.val
+    bezout :=
+      let diff := GF2Poly.frobeniusDiffMod packedModulus 16
+      let xg := GF2Poly.xgcd packedModulus diff
+      #[{ left := xg.left, right := xg.right }] }
+
+set_option maxHeartbeats 5000000 in
+set_option maxRecDepth 8192 in
+private theorem packedCert_check :
+    GF2Poly.checkIrreducibilityCertificate packedModulus packedCert = true := by
+  decide
+
 private theorem packed_irr :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic lower n) := by
-  sorry
+  exact GF2Poly.checkIrreducibilityCertificate_imp_irreducible
+    packedModulus packedCert packedCert_check
 
 private def genericMod : FpPoly 2 :=
   Conway.packedGF2FpPoly lower n
