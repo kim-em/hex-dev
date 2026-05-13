@@ -29,6 +29,18 @@ instance [One R] : One (DensePoly R) where
 def Monic [One R] (p : DensePoly R) : Prop :=
   p.leadingCoeff = 1
 
+/-- For a nonzero normalized dense polynomial, `leadingCoeff` is the coefficient
+at the last stored index. -/
+theorem leadingCoeff_eq_coeff_last (p : DensePoly R) (hpos : 0 < p.size) :
+    p.leadingCoeff = p.coeff (p.size - 1) := by
+  unfold leadingCoeff coeff
+  change p.coeffs.back?.getD (Zero.zero : R) =
+    p.coeffs.getD (p.coeffs.size - 1) (Zero.zero : R)
+  rw [Array.back?_eq_getElem?]
+  have hidx : p.coeffs.size - 1 < p.coeffs.size := by
+    simpa [size] using Nat.sub_one_lt_of_lt hpos
+  rw [Array.getD_eq_getD_getElem?]
+
 private def arrayDegreeAux (coeffs : Array R) : Nat → Option Nat
   | 0 => none
   | fuel + 1 =>

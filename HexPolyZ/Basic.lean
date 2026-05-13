@@ -698,6 +698,184 @@ theorem coeff_mul_top (p q : ZPoly)
       p.coeff (p.size - 1) * q.coeff (q.size - 1) := by
   exact DensePoly.coeff_mul_top_int p q hp hq
 
+private theorem fold_mulCoeffStep_C_left_range
+    (c : Int) (p : ZPoly) (n m : Nat) (a : Int) :
+    (List.range m).foldl (DensePoly.mulCoeffStep (DensePoly.C c) p n 0) a =
+      if n < m then a + c * p.coeff n else a := by
+  induction m generalizing a with
+  | zero =>
+      simp
+  | succ m ih =>
+      rw [List.range_succ, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [ih]
+      unfold DensePoly.mulCoeffStep
+      rcases Nat.lt_trichotomy n m with hlt | heq | hgt
+      · have hn_succ : n < m + 1 := by omega
+        have hne : m ≠ n := by omega
+        simp [hlt, hn_succ, hne]
+      · subst n
+        have hnot_m : ¬ m < m := by omega
+        have hlt_succ : m < m + 1 := by omega
+        simp [hnot_m, hlt_succ]
+      · have hnot_m : ¬ n < m := by omega
+        have hnot_succ : ¬ n < m + 1 := by omega
+        have hne : m ≠ n := by omega
+        simp [hnot_m, hnot_succ, hne]
+
+/-- Multiplication by an integer constant agrees with coefficient scaling. -/
+theorem C_mul_eq_scale (c : Int) (p : ZPoly) :
+    DensePoly.C c * p = DensePoly.scale c p := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_mul, DensePoly.coeff_scale (R := Int) c p n (Int.mul_zero c)]
+  unfold DensePoly.mulCoeffSum
+  by_cases hc : c = 0
+  · subst c
+    have hCsize : (DensePoly.C (0 : Int)).size = 0 := by
+      simp [DensePoly.size]
+    rw [hCsize]
+    simp
+    change (0 : Int) = 0
+    rfl
+  · have hCsize : (DensePoly.C c).size = 1 := by
+      simp [DensePoly.size, DensePoly.coeffs_C_of_ne_zero hc]
+    rw [hCsize]
+    simp only [List.range_one, List.foldl_cons, List.foldl_nil]
+    rw [fold_mulCoeffStep_C_left_range]
+    by_cases hn : n < p.size
+    · rw [if_pos hn]
+      change (0 : Int) + c * p.coeff n = c * p.coeff n
+      omega
+    · rw [if_neg hn, DensePoly.coeff_eq_zero_of_size_le p (Nat.le_of_not_gt hn)]
+      change (0 : Int) = c * 0
+      rw [Int.mul_zero]
+
+private theorem scale_size_of_nonzero_core {c : Int} (hc : c ≠ 0) (p : ZPoly) :
+    (DensePoly.scale c p).size = p.size := by
+  apply Nat.le_antisymm
+  · by_cases hle : (DensePoly.scale c p).size ≤ p.size
+    · exact hle
+    · have hlt : p.size < (DensePoly.scale c p).size := Nat.lt_of_not_ge hle
+      let i := (DensePoly.scale c p).size - 1
+      have hscaled_ne : (DensePoly.scale c p).coeff i ≠ 0 :=
+        DensePoly.coeff_last_ne_zero_of_pos_size (DensePoly.scale c p) (by omega)
+      have hp_zero : p.coeff i = 0 := DensePoly.coeff_eq_zero_of_size_le p (by
+        unfold i
+        omega)
+      exfalso
+      apply hscaled_ne
+      rw [DensePoly.coeff_scale (R := Int) c p i (Int.mul_zero c), hp_zero, Int.mul_zero]
+  · by_cases hle : p.size ≤ (DensePoly.scale c p).size
+    · exact hle
+    · have hlt : (DensePoly.scale c p).size < p.size := Nat.lt_of_not_ge hle
+      let i := p.size - 1
+      have hp_ne : p.coeff i ≠ 0 :=
+        DensePoly.coeff_last_ne_zero_of_pos_size p (by omega)
+      have hscaled_zero : (DensePoly.scale c p).coeff i = 0 :=
+        DensePoly.coeff_eq_zero_of_size_le (DensePoly.scale c p) (by
+          unfold i
+          omega)
+      exfalso
+      apply hp_ne
+      have hmul_zero : c * p.coeff i = 0 := by
+        rw [← DensePoly.coeff_scale (R := Int) c p i (Int.mul_zero c)]
+        exact hscaled_zero
+      exact (Int.mul_eq_zero.mp hmul_zero).resolve_left hc
+
+/-- Nonzero integer scalar multiplication preserves the stored size. -/
+theorem scale_size_of_nonzero (c : Int) (p : ZPoly) (hc : c ≠ 0) :
+    (DensePoly.scale c p).size = p.size :=
+  scale_size_of_nonzero_core (c := c) hc p
+
+/-- Leading coefficient after nonzero integer scalar multiplication. -/
+theorem leadingCoeff_scale_of_nonzero (c : Int) (p : ZPoly) (hc : c ≠ 0) :
+    (DensePoly.scale c p).leadingCoeff = c * p.leadingCoeff := by
+  by_cases hp : 0 < p.size
+  · rw [DensePoly.leadingCoeff_eq_coeff_last (DensePoly.scale c p)]
+    · rw [scale_size_of_nonzero c p hc]
+      rw [DensePoly.coeff_scale (R := Int) c p (p.size - 1) (Int.mul_zero c)]
+      rw [DensePoly.leadingCoeff_eq_coeff_last p hp]
+    · rw [scale_size_of_nonzero c p hc]
+      exact hp
+  · have hpsize : p.size = 0 := by omega
+    have hscaled_size : (DensePoly.scale c p).size = 0 := by
+      rw [scale_size_of_nonzero c p hc, hpsize]
+    have hpzero : p = 0 := by
+      apply DensePoly.ext_coeff
+      intro n
+      rw [DensePoly.coeff_zero]
+      exact DensePoly.coeff_eq_zero_of_size_le p (by omega)
+    rw [hpzero]
+    change (DensePoly.scale c (0 : ZPoly)).leadingCoeff = c * (0 : Int)
+    have hleft : (DensePoly.scale c (0 : ZPoly)).leadingCoeff = 0 := by
+      rfl
+    rw [hleft, Int.mul_zero]
+
+private theorem shift_size_of_nonzero_core (k : Nat) {p : ZPoly} (hp : p ≠ 0) :
+    (DensePoly.shift k p).size = k + p.size := by
+  have hpos : 0 < p.size := by
+    by_cases hpos : 0 < p.size
+    · exact hpos
+    · exfalso
+      apply hp
+      apply DensePoly.ext_coeff
+      intro i
+      rw [DensePoly.coeff_zero]
+      exact DensePoly.coeff_eq_zero_of_size_le p (by omega)
+  apply Nat.le_antisymm
+  · by_cases hle : (DensePoly.shift k p).size ≤ k + p.size
+    · exact hle
+    · have hlt : k + p.size < (DensePoly.shift k p).size := Nat.lt_of_not_ge hle
+      let i := (DensePoly.shift k p).size - 1
+      have hshift_ne : (DensePoly.shift k p).coeff i ≠ 0 :=
+        DensePoly.coeff_last_ne_zero_of_pos_size (DensePoly.shift k p) (by omega)
+      have hpidx : p.size ≤ i - k := by
+        unfold i
+        omega
+      have hcoeff : (DensePoly.shift k p).coeff i = 0 := by
+        rw [DensePoly.coeff_shift]
+        have hnot : ¬ i < k := by
+          unfold i
+          omega
+        simp [hnot, DensePoly.coeff_eq_zero_of_size_le p hpidx]
+        change (0 : Int) = 0
+        rfl
+      exact False.elim (hshift_ne hcoeff)
+  · have hcoeff_ne : (DensePoly.shift k p).coeff (k + p.size - 1) ≠ 0 := by
+      rw [DensePoly.coeff_shift]
+      have hnot : ¬ k + p.size - 1 < k := by omega
+      have hidx : k + p.size - 1 - k = p.size - 1 := by omega
+      rw [if_neg hnot, hidx]
+      exact DensePoly.coeff_last_ne_zero_of_pos_size p hpos
+    by_cases hle : k + p.size ≤ (DensePoly.shift k p).size
+    · exact hle
+    · have htop : (DensePoly.shift k p).size ≤ k + p.size - 1 := by omega
+      exact False.elim
+        (hcoeff_ne (DensePoly.coeff_eq_zero_of_size_le (DensePoly.shift k p) htop))
+
+/-- Shifting a nonzero polynomial by `x^k` preserves its leading coefficient. -/
+theorem leadingCoeff_shift_of_nonzero (k : Nat) (p : ZPoly) (hp : p ≠ 0) :
+    (DensePoly.shift k p).leadingCoeff = p.leadingCoeff := by
+  have hpos : 0 < p.size := by
+    by_cases hpos : 0 < p.size
+    · exact hpos
+    · exfalso
+      apply hp
+      apply DensePoly.ext_coeff
+      intro i
+      rw [DensePoly.coeff_zero]
+      exact DensePoly.coeff_eq_zero_of_size_le p (by omega)
+  rw [DensePoly.leadingCoeff_eq_coeff_last (DensePoly.shift k p)]
+  · rw [shift_size_of_nonzero_core k hp]
+    rw [DensePoly.coeff_shift]
+    have hnot : ¬ k + p.size - 1 < k := by omega
+    have hidx : k + p.size - 1 - k = p.size - 1 := by omega
+    rw [if_neg hnot, hidx]
+    rw [DensePoly.leadingCoeff_eq_coeff_last p hpos]
+  · rw [shift_size_of_nonzero_core k hp]
+    omega
+
 /-- Integer dense polynomials have no zero divisors. -/
 theorem mul_ne_zero_of_ne_zero (p q : ZPoly)
     (hp : p ≠ 0) (hq : q ≠ 0) :
