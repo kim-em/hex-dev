@@ -1115,6 +1115,171 @@ private theorem reduceAgainstBasis_basisRows_take_source_eq_zero
     omega
   · exact reduceAgainstBasis_zero_left _
 
+/-- The first `i` Gram-Schmidt output rows depend only on the first `i` input
+rows. -/
+private theorem basisRows_take_eq_of_prefix
+    (rows rows' : List (Vector Rat m)) (i : Nat)
+    (hlen : rows'.length = rows.length)
+    (hprefix : ∀ t, t < i → rows'[t]! = rows[t]!)
+    (hi : i ≤ rows.length) :
+    (basisRows rows').take i = (basisRows rows).take i := by
+  induction i with
+  | zero => simp
+  | succ i ih =>
+    have hi' : i ≤ rows.length := Nat.le_of_succ_le hi
+    have ihtake := ih (by
+      intro t ht
+      exact hprefix t (Nat.lt_trans ht (Nat.lt_succ_self i))) hi'
+    have hi_lt : i < rows.length := hi
+    have hi_lt_rows' : i < rows'.length := by rw [hlen]; exact hi_lt
+    have hb1_len : (basisRows rows').length = rows.length := by
+      rw [basisRows_length, hlen]
+    have hb2_len : (basisRows rows).length = rows.length := basisRows_length rows
+    have hi_lt_b1 : i < (basisRows rows').length := by rw [hb1_len]; exact hi_lt
+    have hi_lt_b2 : i < (basisRows rows).length := by rw [hb2_len]; exact hi_lt
+    rw [List.take_succ_eq_append_getElem hi_lt_b1,
+        List.take_succ_eq_append_getElem hi_lt_b2,
+        ihtake]
+    congr 1
+    have hge1 : (basisRows rows')[i] = (basisRows rows')[i]! :=
+      (getElem!_pos _ i hi_lt_b1).symm
+    have hge2 : (basisRows rows)[i] = (basisRows rows)[i]! :=
+      (getElem!_pos _ i hi_lt_b2).symm
+    rw [hge1, hge2]
+    congr 1
+    rw [basisRows_get!_eq_reduceAgainstBasis_take rows' i hi_lt_rows',
+        basisRows_get!_eq_reduceAgainstBasis_take rows i hi_lt,
+        ihtake,
+        hprefix i (Nat.lt_succ_self i)]
+
+private theorem basisRows_get!_eq_of_prefix
+    (rows rows' : List (Vector Rat m)) (i : Nat)
+    (hlen : rows'.length = rows.length)
+    (hprefix : ∀ t, t ≤ i → rows'[t]! = rows[t]!)
+    (hi : i < rows.length) :
+    (basisRows rows')[i]! = (basisRows rows)[i]! := by
+  have htake :=
+    basisRows_take_eq_of_prefix rows rows' (i + 1) hlen
+      (by
+        intro t ht
+        exact hprefix t (Nat.le_of_lt_succ ht))
+      (Nat.succ_le_of_lt hi)
+  have hb1_len : (basisRows rows').length = rows.length := by
+    rw [basisRows_length, hlen]
+  have hb2_len : (basisRows rows).length = rows.length := basisRows_length rows
+  have hi_b1 : i < (basisRows rows').length := by rw [hb1_len]; exact hi
+  have hi_b2 : i < (basisRows rows).length := by rw [hb2_len]; exact hi
+  have hget :=
+    congrArg (fun xs : List (Vector Rat m) => xs[i]?) htake
+  simp [hi_b1, hi_b2] at hget
+  simp [hget, hi_b1, hi_b2]
+
+private theorem add_zero_vec (v : Vector Rat m) : v + (0 : Vector Rat m) = v := by
+  apply Vector.ext
+  intro k hk
+  rw [Vector.getElem_add, Vector.getElem_zero]
+  grind
+
+/-- Reducing the next source row against the prefix before its predecessor
+leaves the old next basis row plus the predecessor projection term. -/
+private theorem reduceAgainstBasis_basisRows_take_source_adjacent
+    (rows : List (Vector Rat m)) (km1 k : Nat)
+    (hkm1 : km1 + 1 = k) (hk : k < rows.length) :
+    reduceAgainstBasis ((basisRows rows).take km1).reverse rows[k]! =
+      (basisRows rows)[k]! +
+        projectionCoeff rows[k]! (basisRows rows)[km1]! • (basisRows rows)[km1]! := by
+  have hkm1_lt_k : km1 < k := by omega
+  have hkm1_lt_rows : km1 < rows.length := Nat.lt_trans hkm1_lt_k hk
+  have hbasis_k_len : k < (basisRows rows).length := by simpa [basisRows_length]
+  have hbasis_km1_len : km1 < (basisRows rows).length := by
+    simpa [basisRows_length] using hkm1_lt_rows
+  have hrec :=
+    basisRows_get!_eq_reduceAgainstBasis_forward (rows := rows) (k := k) hk
+  have htake :
+      (basisRows rows).take k =
+        (basisRows rows).take km1 ++ [(basisRows rows)[km1]!] := by
+    rw [← hkm1]
+    rw [List.take_succ_eq_append_getElem hbasis_km1_len]
+    congr 1
+    simp [List.getElem!_eq_getElem?_getD, List.getElem?_eq_getElem hbasis_km1_len]
+  have hbasis_k :
+      reduceAgainstBasis ((basisRows rows).take km1).reverse (basisRows rows)[k]! =
+        (basisRows rows)[k]! := by
+    apply reduceAgainstBasis_eq_self_of_forall_dot_zero
+    intro b hmem
+    rw [List.mem_reverse] at hmem
+    rw [List.mem_iff_getElem] at hmem
+    obtain ⟨idx, hidx, hbget⟩ := hmem
+    have htake_len : ((basisRows rows).take km1).length = km1 := by
+      rw [List.length_take]
+      omega
+    have hidx_km1 : idx < km1 := by
+      rw [htake_len] at hidx
+      exact hidx
+    have hidx_basis : idx < (basisRows rows).length := by
+      have : (basisRows rows).length = rows.length := basisRows_length rows
+      omega
+    have hbget' : b = (basisRows rows)[idx]! := by
+      rw [← hbget, List.getElem_take]
+      simp [hidx_basis]
+    rw [hbget']
+    exact basisRows_get!_dot_eq_zero_of_list rows k idx hk
+      (by omega) (by omega)
+  have hproj_prefix :
+      reduceAgainstBasis ((basisRows rows).take km1).reverse
+        (projectionCombination rows[k]! ((basisRows rows).take km1) 0) = 0 := by
+    apply reduceAgainstBasis_projectionCombination_eq_zero
+    · intro b hmem
+      rw [List.mem_iff_getElem] at hmem
+      obtain ⟨idx, hidx, hbget⟩ := hmem
+      have htake_len : ((basisRows rows).take km1).length = km1 := by
+        rw [List.length_take]
+        omega
+      have hidx_km1 : idx < km1 := by
+        rw [htake_len] at hidx
+        exact hidx
+      have hidx_basis : idx < (basisRows rows).length := by
+        have : (basisRows rows).length = rows.length := basisRows_length rows
+        omega
+      have hbget' : b = (basisRows rows)[idx]! := by
+        rw [← hbget, List.getElem_take]
+        simp [hidx_basis]
+      rw [hbget']
+      apply reduceAgainstBasis_basisRows_take_get!_eq_zero rows idx km1 hidx_km1
+      omega
+    · exact reduceAgainstBasis_zero_left _
+  have hbasis_km1 :
+      reduceAgainstBasis ((basisRows rows).take km1).reverse (basisRows rows)[km1]! =
+      (basisRows rows)[km1]! := by
+    apply reduceAgainstBasis_eq_self_of_forall_dot_zero
+    intro b hmem
+    rw [List.mem_reverse] at hmem
+    rw [List.mem_iff_getElem] at hmem
+    obtain ⟨idx, hidx, hbget⟩ := hmem
+    have htake_len : ((basisRows rows).take km1).length = km1 := by
+      rw [List.length_take]
+      omega
+    have hidx_km1 : idx < km1 := by
+      rw [htake_len] at hidx
+      exact hidx
+    have hidx_basis : idx < (basisRows rows).length := by
+      have : (basisRows rows).length = rows.length := basisRows_length rows
+      omega
+    have hbget' : b = (basisRows rows)[idx]! := by
+      rw [← hbget, List.getElem_take]
+      simp [hidx_basis]
+    rw [hbget']
+    exact basisRows_get!_dot_eq_zero_of_list rows km1 idx hkm1_lt_rows
+      (by omega) (by omega)
+  conv => lhs; rw [hrec]
+  rw [htake, projectionCombination_append, projectionCombination_singleton]
+  repeat rw [reduceAgainstBasis_add_left]
+  rw [hbasis_k, hproj_prefix, reduceAgainstBasis_smul_left, hbasis_km1]
+  apply Vector.ext
+  intro idx hidx
+  rw [Vector.getElem_add, Vector.getElem_add, Vector.getElem_zero]
+  grind
+
 /-- For `j < k < rows.length`, the first `i` basis rows produced by Gram-Schmidt
 on `rows.set k (rows[k]! + c • rows[j]!)` agree with the first `i` basis rows
 produced on `rows`. Proved jointly with the pointwise equality at index `i` by
@@ -1231,6 +1396,103 @@ private theorem basisMatrix_rowAdd
     rfl
   rw [htoList, basisRows_set_rowAdd b.toList src.val dst.val c h
     (by rw [Vector.length_toList]; exact dst.isLt)]
+
+private theorem rowSwap_toList_get!_of_lt
+    (b : Matrix Rat n m) (km1 k : Fin n) (t : Nat)
+    (hkm1k : km1.val < k.val) (ht : t < km1.val) :
+    (Matrix.rowSwap b km1 k).toList[t]! = b.toList[t]! := by
+  have ht_n : t < n := Nat.lt_trans ht km1.isLt
+  let r : Fin n := ⟨t, ht_n⟩
+  have hrk : r ≠ k := by
+    intro h
+    have hval := congrArg Fin.val h
+    change t = k.val at hval
+    omega
+  have hrkm1 : r ≠ km1 := by
+    intro h
+    have hval := congrArg Fin.val h
+    change t = km1.val at hval
+    omega
+  have hleft :
+      (Matrix.rowSwap b km1 k).toList[t]! = (Matrix.rowSwap b km1 k).row r := by
+    have hget :
+        (Matrix.rowSwap b km1 k).toList[t]! =
+          (Matrix.rowSwap b km1 k).toList[t]'(by simp [ht_n]) :=
+      getElem!_pos _ t (by simp [ht_n])
+    simpa [Matrix.row, Vector.getElem_toList, r] using hget
+  have hright : b.toList[t]! = b.row r := by
+    have hget : b.toList[t]! = b.toList[t]'(by simp [ht_n]) :=
+      getElem!_pos _ t (by simp [ht_n])
+    simpa [Matrix.row, Vector.getElem_toList, r] using hget
+  rw [hleft, hright]
+  apply Vector.ext
+  intro idx hidx
+  let cc : Fin m := ⟨idx, hidx⟩
+  change (Matrix.rowSwap b km1 k)[r][cc] = b[r][cc]
+  rw [Matrix.rowSwap_getElem]
+  simp [hrk, hrkm1]
+
+private theorem rowSwap_toList_get!_left
+    (b : Matrix Rat n m) (km1 k : Fin n) (hkm1k : km1.val ≠ k.val) :
+    (Matrix.rowSwap b km1 k).toList[km1.val]! = b.toList[k.val]! := by
+  have hleft :
+      (Matrix.rowSwap b km1 k).toList[km1.val]! =
+        (Matrix.rowSwap b km1 k).row km1 := by
+    simp [Matrix.row]
+  have hright : b.toList[k.val]! = b.row k := by
+    simp [Matrix.row]
+  rw [hleft, hright]
+  have hne : km1 ≠ k := by
+    intro h
+    exact hkm1k (congrArg Fin.val h)
+  apply Vector.ext
+  intro idx hidx
+  let cc : Fin m := ⟨idx, hidx⟩
+  change (Matrix.rowSwap b km1 k)[km1][cc] = b[k][cc]
+  rw [Matrix.rowSwap_getElem]
+  simp [hne]
+
+private theorem basisMatrix_rowSwap_of_before
+    (b : Matrix Rat n m) (km1 k i : Fin n)
+    (hkm1k : km1.val < k.val) (hi : i.val < km1.val) :
+    (basisMatrix (Matrix.rowSwap b km1 k)).row i = (basisMatrix b).row i := by
+  rw [basisMatrix_row_eq_basisRows_get!, basisMatrix_row_eq_basisRows_get!]
+  apply basisRows_get!_eq_of_prefix
+  · simp
+  · intro t ht
+    exact rowSwap_toList_get!_of_lt b km1 k t hkm1k (Nat.lt_of_le_of_lt ht hi)
+  · simp
+
+private theorem basisMatrix_rowSwap_adjacent_prev
+    (b : Matrix Rat n m) (km1 k : Fin n) (hkm1 : km1.val + 1 = k.val) :
+    (basisMatrix (Matrix.rowSwap b km1 k)).row km1 =
+      (basisMatrix b).row k +
+        projectionCoeff (b.row k) ((basisMatrix b).row km1) • (basisMatrix b).row km1 := by
+  rw [basisMatrix_row_eq_basisRows_get!, basisMatrix_row_eq_basisRows_get!,
+    basisMatrix_row_eq_basisRows_get!]
+  have hswap_row :
+      (Matrix.rowSwap b km1 k).toList[km1.val]! = b.toList[k.val]! := by
+    apply rowSwap_toList_get!_left
+    omega
+  have hprefix :
+      ((basisRows (Matrix.rowSwap b km1 k).toList).take km1.val) =
+        ((basisRows b.toList).take km1.val) := by
+    apply basisRows_take_eq_of_prefix
+    · simp
+    · intro t ht
+      exact rowSwap_toList_get!_of_lt b km1 k t (by omega) ht
+    · simp
+  have hlen_swap : (Matrix.rowSwap b km1 k).toList.length = b.toList.length := by simp
+  have hkm1_lt_len : km1.val < b.toList.length := by simp [km1.isLt]
+  have hkm1_lt_swap : km1.val < (Matrix.rowSwap b km1 k).toList.length := by
+    rw [hlen_swap]; exact hkm1_lt_len
+  rw [basisRows_get!_eq_reduceAgainstBasis_take
+        (Matrix.rowSwap b km1 k).toList km1.val hkm1_lt_swap,
+      hprefix, hswap_row]
+  have hreduce :=
+    reduceAgainstBasis_basisRows_take_source_adjacent
+      (rows := b.toList) (km1 := km1.val) (k := k.val) hkm1 (by simp [k.isLt])
+  simpa [Matrix.row] using hreduce
 
 /-- The "by-row" prefix sum: a row-indexed variant of `prefixCombination` that
 takes the projection row directly rather than reading it through a coefficient
@@ -1954,6 +2216,28 @@ theorem basis_rowAdd (b : Matrix Rat n m) (src dst : Fin n) (c : Rat)
   simpa [basis] using
     GramSchmidt.basisMatrix_rowAdd (b := b) (src := src) (dst := dst) (c := c) hsrcdst
 
+theorem basis_rowSwap_of_before (b : Matrix Rat n m) (km1 k i : Fin n)
+    (hkm1k : km1.val < k.val) (hi : i.val < km1.val) :
+    (basis (Matrix.rowSwap b km1 k)).row i = (basis b).row i := by
+  simpa [basis] using
+    GramSchmidt.basisMatrix_rowSwap_of_before (b := b) (km1 := km1) (k := k)
+      (i := i) hkm1k hi
+
+theorem basis_rowSwap_adjacent_prev (b : Matrix Rat n m) (km1 k : Fin n)
+    (hkm1 : km1.val + 1 = k.val) :
+    (basis (Matrix.rowSwap b km1 k)).row km1 =
+      (basis b).row k +
+        GramSchmidt.entry (coeffs b) k km1 • (basis b).row km1 := by
+  have hraw :=
+    GramSchmidt.basisMatrix_rowSwap_adjacent_prev (b := b) (km1 := km1) (k := k) hkm1
+  have hlt : km1.val < k.val := by omega
+  have hcoeff :
+      GramSchmidt.projectionCoeff (b.row k) ((GramSchmidt.basisMatrix b).row km1) =
+        GramSchmidt.entry (coeffs b) k km1 := by
+    simp [coeffs, basis, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn,
+      GramSchmidt.projectionCoeff, Matrix.row, hlt]
+  simpa [basis, hcoeff] using hraw
+
 private theorem projectionCoeff_row_later_basis_eq_zero
     (b : Matrix Rat n m) (src col : Fin n) (hsrccol : src.val < col.val) :
     GramSchmidt.projectionCoeff (b.row src) ((basis b).row col) = 0 := by
@@ -2422,6 +2706,31 @@ private theorem castIntMatrix_rowAdd (b : Matrix Int n m) (src dst : Fin n) (c :
       exact hdst h.symm
     simp [GramSchmidt.castIntMatrix, Matrix.rowAdd, Vector.getElem_set_ne, hne]
 
+private theorem castIntMatrix_rowSwap (b : Matrix Int n m) (i j : Fin n) :
+    GramSchmidt.castIntMatrix (Matrix.rowSwap b i j) =
+      Matrix.rowSwap (GramSchmidt.castIntMatrix b) i j := by
+  apply Vector.ext
+  intro row hrow
+  apply Vector.ext
+  intro col hcol
+  let r : Fin n := ⟨row, hrow⟩
+  let c : Fin m := ⟨col, hcol⟩
+  calc
+    (GramSchmidt.castIntMatrix (Matrix.rowSwap b i j))[r][c]
+        = ((Matrix.rowSwap b i j)[r][c] : Rat) := by
+          simp [GramSchmidt.castIntMatrix]
+    _ = (Matrix.rowSwap (GramSchmidt.castIntMatrix b) i j)[r][c] := by
+          rw [Matrix.rowSwap_getElem (M := b) (i := i) (j := j) (r := r) (k := c)]
+          rw [Matrix.rowSwap_getElem (M := GramSchmidt.castIntMatrix b)
+            (i := i) (j := j) (r := r) (k := c)]
+          by_cases hrj : r = j
+          · simp [hrj, GramSchmidt.castIntMatrix]
+          · by_cases hri : r = i
+            · by_cases hij : i = j
+              · simp [hri, hij, GramSchmidt.castIntMatrix]
+              · simp [hri, hij, GramSchmidt.castIntMatrix]
+            · simp [hrj, hri, GramSchmidt.castIntMatrix]
+
 /-- The integer Gram-Schmidt basis is invariant under adding an integer
 multiple of an earlier row to a later row. -/
 theorem basis_rowAdd (b : Matrix Int n m) (src dst : Fin n) (c : Int)
@@ -2431,6 +2740,23 @@ theorem basis_rowAdd (b : Matrix Int n m) (src dst : Fin n) (c : Int)
     GramSchmidt.Rat.basis_rowAdd
       (b := GramSchmidt.castIntMatrix b) (src := src) (dst := dst) (c := (c : Rat))
       hsrcdst
+
+theorem basis_rowSwap_of_before (b : Matrix Int n m) (km1 k i : Fin n)
+    (hkm1k : km1.val < k.val) (hi : i.val < km1.val) :
+    (basis (Matrix.rowSwap b km1 k)).row i = (basis b).row i := by
+  simpa [basis, GramSchmidt.Rat.basis, castIntMatrix_rowSwap] using
+    GramSchmidt.Rat.basis_rowSwap_of_before
+      (b := GramSchmidt.castIntMatrix b) (km1 := km1) (k := k) (i := i) hkm1k hi
+
+theorem basis_rowSwap_adjacent_prev (b : Matrix Int n m) (km1 k : Fin n)
+    (hkm1 : km1.val + 1 = k.val) :
+    (basis (Matrix.rowSwap b km1 k)).row km1 =
+      (basis b).row k +
+        GramSchmidt.entry (coeffs b) k km1 • (basis b).row km1 := by
+  simpa [basis, coeffs, GramSchmidt.Rat.basis, GramSchmidt.Rat.coeffs,
+    castIntMatrix_rowSwap] using
+    GramSchmidt.Rat.basis_rowSwap_adjacent_prev
+      (b := GramSchmidt.castIntMatrix b) (km1 := km1) (k := k) hkm1
 
 /-- Under integer row-add with `src < dst`, lower coefficients in the
 destination row update linearly below the pivot source column. -/
