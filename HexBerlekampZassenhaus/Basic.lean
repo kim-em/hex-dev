@@ -1751,6 +1751,32 @@ private theorem rat_scale_scale (u v : Rat) (p : DensePoly Rat) :
   rw [DensePoly.coeff_scale (R := Rat) (u * v) p n (Rat.mul_zero (u * v))]
   rw [Rat.mul_assoc]
 
+private theorem int_scale_scale (u v : Int) (p : ZPoly) :
+    DensePoly.scale u (DensePoly.scale v p) = DensePoly.scale (u * v) p := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_scale (R := Int) u (DensePoly.scale v p) n (Int.mul_zero u)]
+  rw [DensePoly.coeff_scale (R := Int) v p n (Int.mul_zero v)]
+  rw [DensePoly.coeff_scale (R := Int) (u * v) p n (Int.mul_zero (u * v))]
+  rw [Int.mul_assoc]
+
+private theorem shift_scale_int (k : Nat) (c : Int) (p : ZPoly) :
+    DensePoly.shift k (DensePoly.scale c p) =
+      DensePoly.scale c (DensePoly.shift k p) := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_shift, DensePoly.coeff_scale (R := Int) c (DensePoly.shift k p) n
+    (Int.mul_zero c)]
+  rw [DensePoly.coeff_shift]
+  by_cases hn : n < k
+  · rw [if_pos hn]
+    rw [if_pos hn]
+    change (0 : Int) = c * 0
+    rw [Int.mul_zero]
+  · rw [if_neg hn]
+    rw [if_neg hn]
+    rw [DensePoly.coeff_scale (R := Int) c p (n - k) (Int.mul_zero c)]
+
 private theorem toRatPoly_mul_product (f g : ZPoly) :
     ZPoly.toRatPoly (f * g) = ZPoly.toRatPoly f * ZPoly.toRatPoly g := by
   exact ZPoly.toRatPoly_mul f g
@@ -3757,6 +3783,56 @@ private theorem extractXPower_core_primitive_of_ne_zero
         (1 : Int) := by exact_mod_cast hd_eq
   rw [hd_int] at hcast
   exact hcast
+
+private theorem normalizeForFactor_reassembles_with_signed_unit
+    (f : ZPoly) (hf : f ≠ 0) :
+    ∃ ε : Int, (ε = 1 ∨ ε = -1) ∧
+      DensePoly.scale (ZPoly.content f * ε)
+        (DensePoly.shift (normalizeForFactor f).xPower
+          ((normalizeForFactor f).squareFreeCore * (normalizeForFactor f).repeatedPart)) =
+        f := by
+  let xData := ZPoly.extractXPower (ZPoly.primitivePart f)
+  let sqData := ZPoly.primitiveSquareFreeDecomposition xData.core
+  have hcore_primitive : ZPoly.Primitive xData.core := by
+    simpa [xData] using extractXPower_core_primitive_of_ne_zero f hf
+  have hcore_ne : xData.core ≠ 0 := by
+    intro hzero
+    have hcontent : ZPoly.content xData.core = 0 := by
+      rw [hzero]
+      simp [ZPoly.content, DensePoly.content_zero]
+    rw [ZPoly.Primitive, hcontent] at hcore_primitive
+    contradiction
+  have hprimitive_core : ZPoly.primitivePart xData.core = xData.core :=
+    ZPoly.primitivePart_eq_self_of_primitive xData.core hcore_primitive
+  have hshift_core :
+      DensePoly.shift xData.power xData.core = ZPoly.primitivePart f := by
+    have hex :
+        Array.polyProduct (xPowerFactorArray xData.power ++ #[xData.core]) =
+          ZPoly.primitivePart f := by
+      simpa [xData] using extractXPower_product (ZPoly.primitivePart f)
+    rw [polyProduct_append, polyProduct_singleton, polyProduct_xPowerFactorArray_mul] at hex
+    exact hex
+  rcases ZPoly.primitiveSquareFreeDecomposition_reassembly_signed xData.core hcore_ne with
+    ⟨ε, hε, hsq⟩
+  refine ⟨ε, hε, ?_⟩
+  have hsq_core :
+      DensePoly.scale ε (sqData.squareFreeCore * sqData.repeatedPart) = xData.core := by
+    simpa [sqData, hprimitive_core] using hsq
+  have hshift_sq :
+      DensePoly.scale ε
+          (DensePoly.shift xData.power (sqData.squareFreeCore * sqData.repeatedPart)) =
+        DensePoly.shift xData.power xData.core := by
+    rw [← shift_scale_int]
+    exact congrArg (DensePoly.shift xData.power) hsq_core
+  have hscaled :
+      DensePoly.scale (ZPoly.content f)
+          (DensePoly.scale ε
+            (DensePoly.shift xData.power (sqData.squareFreeCore * sqData.repeatedPart))) =
+        DensePoly.scale (ZPoly.content f) (DensePoly.shift xData.power xData.core) := by
+    rw [hshift_sq]
+  rw [int_scale_scale] at hscaled
+  rw [hshift_core, ZPoly.content_mul_primitivePart] at hscaled
+  simpa [normalizeForFactor, xData, sqData] using hscaled
 
 private theorem firstSome_some
     {α β : Type} {xs : List α} {f : α → Option β} {y : β}
