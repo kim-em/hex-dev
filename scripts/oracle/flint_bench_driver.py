@@ -52,7 +52,13 @@ degree (the same convention `Hex.DensePoly` uses in
 `scripts/oracle/poly_flint.py`).
 
 * ``add`` — returns ``a + b`` as a coefficient list.
+* ``sub`` — returns ``a - b`` as a coefficient list.
 * ``mul`` — returns ``a * b`` as a coefficient list.
+* ``derivative`` — returns ``a'`` as a coefficient list.
+* ``compose`` — returns ``a(b(x))`` as a coefficient list.
+* ``content`` — returns the integer content of ``a``.
+* ``primitive_part`` — returns ``a / content(a)`` as a coefficient list,
+  with the zero polynomial mapped to ``[]``.
 * ``divmod`` — returns ``[q_coeffs, r_coeffs]`` with ``q * b + r = a``,
   ``deg r < deg b``. Raises ``"divisor is zero"`` if ``b`` is the
   zero polynomial. Note FLINT's ``fmpz_poly`` ``divmod`` succeeds
@@ -194,8 +200,37 @@ def _fmpz_poly_add(req: dict[str, Any]) -> list[int]:
     return _fmpz_poly_coeffs(_fmpz_poly(req["a"]) + _fmpz_poly(req["b"]))
 
 
+def _fmpz_poly_sub(req: dict[str, Any]) -> list[int]:
+    return _fmpz_poly_coeffs(_fmpz_poly(req["a"]) - _fmpz_poly(req["b"]))
+
+
 def _fmpz_poly_mul(req: dict[str, Any]) -> list[int]:
     return _fmpz_poly_coeffs(_fmpz_poly(req["a"]) * _fmpz_poly(req["b"]))
+
+
+def _fmpz_poly_derivative(req: dict[str, Any]) -> list[int]:
+    return _fmpz_poly_coeffs(_fmpz_poly(req["a"]).derivative())
+
+
+def _fmpz_poly_compose(req: dict[str, Any]) -> list[int]:
+    outer = _fmpz_poly(req["a"])
+    inner = _fmpz_poly(req["b"])
+    result = _fmpz_poly([])
+    for coeff in reversed(outer.coeffs()):
+        result = result * inner + _fmpz_poly([int(coeff)])
+    return _fmpz_poly_coeffs(result)
+
+
+def _fmpz_poly_content(req: dict[str, Any]) -> int:
+    return int(_fmpz_poly(req["a"]).content())
+
+
+def _fmpz_poly_primitive_part(req: dict[str, Any]) -> list[int]:
+    poly = _fmpz_poly(req["a"])
+    content = int(poly.content())
+    if content == 0:
+        return []
+    return _fmpz_poly_coeffs(poly // content)
 
 
 def _fmpz_poly_divmod(req: dict[str, Any]) -> list[list[int]]:
@@ -215,7 +250,12 @@ def _fmpz_poly_gcd(req: dict[str, Any]) -> list[int]:
 
 _FMPZ_POLY_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
     "add": _fmpz_poly_add,
+    "sub": _fmpz_poly_sub,
     "mul": _fmpz_poly_mul,
+    "derivative": _fmpz_poly_derivative,
+    "compose": _fmpz_poly_compose,
+    "content": _fmpz_poly_content,
+    "primitive_part": _fmpz_poly_primitive_part,
     "divmod": _fmpz_poly_divmod,
     "gcd": _fmpz_poly_gcd,
 }

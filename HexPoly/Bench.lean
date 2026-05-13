@@ -1,4 +1,5 @@
 import HexPoly
+import Hex.BenchOracle.Flint
 import LeanBench
 
 /-!
@@ -34,6 +35,22 @@ Scientific registrations:
 * `runPrimitivePartChecksum`: integer primitive part, `O(n)`.
 * `runPolyCRTChecksum`: polynomial CRT witness construction over coprime
   monic moduli, `O(n^2)` with the current schoolbook multiplication path.
+
+Informational FLINT `fmpz_poly` comparator registrations:
+
+* `runFlintAddChecksum`: paired with `runAddChecksum` on
+  `dense-int-arithmetic`.
+* `runFlintSubChecksum`: paired with `runSubChecksum` on
+  `dense-int-arithmetic`.
+* `runFlintMulChecksum`: paired with `runMulChecksum` on
+  `dense-int-arithmetic`.
+* `runFlintComposeChecksum`: paired with `runComposeChecksum` on
+  `dense-int-arithmetic`.
+* `runFlintDerivativeChecksum`: paired with `runDerivativeChecksum` on
+  `dense-int-arithmetic`.
+* `runFlintContent`: paired with `runContent` on `integer-content`.
+* `runFlintPrimitivePartChecksum`: paired with
+  `runPrimitivePartChecksum` on `integer-content`.
 -/
 
 namespace Hex.PolyBench
@@ -302,12 +319,69 @@ def runPolyCRTChecksum (input : PolyCRTInput) : UInt64 :=
     DensePoly.polyCRT
       input.modulusA input.modulusB input.residueA input.residueB input.bezoutS input.bezoutT
 
+def polyIntToJson (p : DensePoly Int) : Lean.Json :=
+  Hex.BenchOracle.Flint.intsToJson p.toArray.toList
+
+def checksumIntJsonCoeffs (j : Lean.Json) : IO UInt64 := do
+  let coeffs ← Hex.BenchOracle.Flint.jsonToInts j
+  return checksum (DensePoly.ofCoeffs coeffs.toArray : DensePoly Int)
+
+def runFlintBinaryChecksum (op : String) (input : BinaryInput) : IO UInt64 := do
+  let result ← Hex.BenchOracle.Flint.runOp "fmpz_poly" op
+    #[("a", polyIntToJson input.lhs), ("b", polyIntToJson input.rhs)]
+  checksumIntJsonCoeffs result
+
+def runFlintUnaryChecksum (op : String) (input : UnaryInput) : IO UInt64 := do
+  let result ← Hex.BenchOracle.Flint.runOp "fmpz_poly" op
+    #[("a", polyIntToJson input.poly)]
+  checksumIntJsonCoeffs result
+
+def runFlintContentChecksumOp (op : String) (input : ContentInput) : IO UInt64 := do
+  let result ← Hex.BenchOracle.Flint.runOp "fmpz_poly" op
+    #[("a", polyIntToJson input.poly)]
+  checksumIntJsonCoeffs result
+
+/-- FLINT comparator target: `fmpz_poly` addition. -/
+def runFlintAddChecksum (input : BinaryInput) : IO UInt64 :=
+  runFlintBinaryChecksum "add" input
+
+/-- FLINT comparator target: `fmpz_poly` subtraction. -/
+def runFlintSubChecksum (input : BinaryInput) : IO UInt64 :=
+  runFlintBinaryChecksum "sub" input
+
+/-- FLINT comparator target: `fmpz_poly` multiplication. -/
+def runFlintMulChecksum (input : BinaryInput) : IO UInt64 :=
+  runFlintBinaryChecksum "mul" input
+
+/-- FLINT comparator target: `fmpz_poly` composition. -/
+def runFlintComposeChecksum (input : ComposeInput) : IO UInt64 := do
+  let result ← Hex.BenchOracle.Flint.runOp "fmpz_poly" "compose"
+    #[("a", polyIntToJson input.outer), ("b", polyIntToJson input.inner)]
+  checksumIntJsonCoeffs result
+
+/-- FLINT comparator target: `fmpz_poly` derivative. -/
+def runFlintDerivativeChecksum (input : UnaryInput) : IO UInt64 :=
+  runFlintUnaryChecksum "derivative" input
+
+/-- FLINT comparator target: `fmpz_poly` content. -/
+def runFlintContent (input : ContentInput) : IO Int := do
+  let result ← Hex.BenchOracle.Flint.runOp "fmpz_poly" "content"
+    #[("a", polyIntToJson input.poly)]
+  match result.getInt? with
+  | Except.ok n => return n
+  | Except.error msg =>
+      throw <| IO.userError s!"FLINT content result was not an integer: {msg}"
+
+/-- FLINT comparator target: `fmpz_poly` primitive part. -/
+def runFlintPrimitivePartChecksum (input : ContentInput) : IO UInt64 :=
+  runFlintContentChecksumOp "primitive_part" input
+
 setup_benchmark runAddChecksum n => n
   with prep := prepBinaryInput
   where {
     paramFloor := 8192
     paramCeiling := 131072
-    paramSchedule := .custom #[8192, 16384, 32768, 65536, 131072]
+    paramSchedule := .custom #[8192, 12288, 16384, 24576, 32768, 49152, 65536, 98304, 131072]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -318,7 +392,7 @@ setup_benchmark runSubChecksum n => n
   where {
     paramFloor := 8192
     paramCeiling := 131072
-    paramSchedule := .custom #[8192, 16384, 32768, 65536, 131072]
+    paramSchedule := .custom #[8192, 12288, 16384, 24576, 32768, 49152, 65536, 98304, 131072]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -329,7 +403,7 @@ setup_benchmark runMulChecksum n => n * n
   where {
     paramFloor := 128
     paramCeiling := 512
-    paramSchedule := .custom #[128, 192, 256, 384, 512]
+    paramSchedule := .custom #[128, 160, 192, 224, 256, 320, 384, 448, 512]
     maxSecondsPerCall := 3.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -351,7 +425,7 @@ setup_benchmark runComposeChecksum n => n * n * n * n
   where {
     paramFloor := 16
     paramCeiling := 64
-    paramSchedule := .custom #[16, 24, 32, 48, 64]
+    paramSchedule := .custom #[16, 20, 24, 28, 32, 40, 48, 56, 64]
     maxSecondsPerCall := 3.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -362,7 +436,7 @@ setup_benchmark runDerivativeChecksum n => n
   where {
     paramFloor := 8192
     paramCeiling := 131072
-    paramSchedule := .custom #[8192, 16384, 32768, 65536, 131072]
+    paramSchedule := .custom #[8192, 12288, 16384, 24576, 32768, 49152, 65536, 98304, 131072]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -453,7 +527,7 @@ setup_benchmark runContent n => n
   where {
     paramFloor := 8192
     paramCeiling := 131072
-    paramSchedule := .custom #[8192, 16384, 32768, 65536, 131072]
+    paramSchedule := .custom #[8192, 12288, 16384, 24576, 32768, 49152, 65536, 98304, 131072]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -464,7 +538,7 @@ setup_benchmark runPrimitivePartChecksum n => n
   where {
     paramFloor := 8192
     paramCeiling := 131072
-    paramSchedule := .custom #[8192, 16384, 32768, 65536, 131072]
+    paramSchedule := .custom #[8192, 12288, 16384, 24576, 32768, 49152, 65536, 98304, 131072]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -480,6 +554,124 @@ setup_benchmark runPolyCRTChecksum n => n * n
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
   }
+
+/-- Fixed Lean endpoint paired with FLINT `fmpz_poly` addition. -/
+def runtimeNat (n : Nat) : IO Nat := do
+  discard <| IO.monoNanosNow
+  return n
+
+def runFixedAddChecksum8192 : Unit → IO UInt64 := fun _ =>
+  return runAddChecksum (prepBinaryInput (← runtimeNat 8192))
+
+/-- Fixed FLINT `fmpz_poly` addition endpoint. -/
+def runFixedFlintAddChecksum8192 : Unit → IO UInt64 := fun _ =>
+  runFlintAddChecksum (prepBinaryInput 8192)
+
+setup_fixed_benchmark runFixedAddChecksum8192 where {
+  repeats := 5
+  maxSecondsPerCall := 10.0
+}
+
+setup_fixed_benchmark runFixedFlintAddChecksum8192 where {
+  repeats := 5
+  maxSecondsPerCall := 10.0
+}
+
+def runFixedSubChecksum8192 : Unit → IO UInt64 := fun _ =>
+  return runSubChecksum (prepBinaryInput (← runtimeNat 8192))
+
+def runFixedFlintSubChecksum8192 : Unit → IO UInt64 := fun _ =>
+  runFlintSubChecksum (prepBinaryInput 8192)
+
+def runFixedDerivativeChecksum8192 : Unit → IO UInt64 := fun _ =>
+  return runDerivativeChecksum (prepUnaryInput (← runtimeNat 8192))
+
+def runFixedFlintDerivativeChecksum8192 : Unit → IO UInt64 := fun _ =>
+  runFlintDerivativeChecksum (prepUnaryInput 8192)
+
+def runFixedContent8192 : Unit → IO Int := fun _ =>
+  return runContent (prepContentInput (← runtimeNat 8192))
+
+def runFixedFlintContent8192 : Unit → IO Int := fun _ =>
+  runFlintContent (prepContentInput 8192)
+
+def runFixedPrimitivePartChecksum8192 : Unit → IO UInt64 := fun _ =>
+  return runPrimitivePartChecksum (prepContentInput (← runtimeNat 8192))
+
+def runFixedFlintPrimitivePartChecksum8192 : Unit → IO UInt64 := fun _ =>
+  runFlintPrimitivePartChecksum (prepContentInput 8192)
+
+def runFixedMulChecksum512 : Unit → IO UInt64 := fun _ =>
+  return runMulChecksum (prepBinaryInput (← runtimeNat 512))
+
+def runFixedFlintMulChecksum512 : Unit → IO UInt64 := fun _ =>
+  runFlintMulChecksum (prepBinaryInput 512)
+
+def runFixedComposeChecksum64 : Unit → IO UInt64 := fun _ =>
+  return runComposeChecksum (prepComposeInput (← runtimeNat 64))
+
+def runFixedFlintComposeChecksum64 : Unit → IO UInt64 := fun _ =>
+  runFlintComposeChecksum (prepComposeInput 64)
+
+setup_fixed_benchmark runFixedSubChecksum8192 where {
+  repeats := 5
+  maxSecondsPerCall := 10.0
+}
+
+setup_fixed_benchmark runFixedFlintSubChecksum8192 where {
+  repeats := 5
+  maxSecondsPerCall := 10.0
+}
+
+setup_fixed_benchmark runFixedDerivativeChecksum8192 where {
+  repeats := 5
+  maxSecondsPerCall := 10.0
+}
+
+setup_fixed_benchmark runFixedFlintDerivativeChecksum8192 where {
+  repeats := 5
+  maxSecondsPerCall := 10.0
+}
+
+setup_fixed_benchmark runFixedContent8192 where {
+  repeats := 5
+  maxSecondsPerCall := 10.0
+}
+
+setup_fixed_benchmark runFixedFlintContent8192 where {
+  repeats := 5
+  maxSecondsPerCall := 10.0
+}
+
+setup_fixed_benchmark runFixedPrimitivePartChecksum8192 where {
+  repeats := 5
+  maxSecondsPerCall := 10.0
+}
+
+setup_fixed_benchmark runFixedFlintPrimitivePartChecksum8192 where {
+  repeats := 5
+  maxSecondsPerCall := 10.0
+}
+
+setup_fixed_benchmark runFixedMulChecksum512 where {
+  repeats := 5
+  maxSecondsPerCall := 10.0
+}
+
+setup_fixed_benchmark runFixedFlintMulChecksum512 where {
+  repeats := 5
+  maxSecondsPerCall := 10.0
+}
+
+setup_fixed_benchmark runFixedComposeChecksum64 where {
+  repeats := 5
+  maxSecondsPerCall := 10.0
+}
+
+setup_fixed_benchmark runFixedFlintComposeChecksum64 where {
+  repeats := 5
+  maxSecondsPerCall := 10.0
+}
 
 end Hex.PolyBench
 

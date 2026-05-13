@@ -78,8 +78,65 @@ lake exe hexpoly_bench verify
 
 ## Comparator Ratios
 
-`SPEC/Libraries/hex-poly.md` does not name an external Phase-4 comparator for
-`HexPoly`, so there are no comparator ratios to record in this snapshot.
+`SPEC/Libraries/hex-poly.md` names FLINT `fmpz_poly` via `python-flint` as an
+`informational` comparator for integer-polynomial inputs. The comparator is
+wired through the shared persistent-subprocess driver
+`scripts/oracle/flint_bench_driver.py` and registered as fixed representative
+pairs for each integer-input HexPoly target. Pairwise hashes agree for every
+row below.
+
+The comparator process-call overhead is about `56-65 ms` per fixed call on this
+host. That dominates the small linear rows and is shown directly in the raw
+medians; because this comparator is informational, no gating-goal verdict is
+computed. The full parametric Hex ladders for integer targets were densified in
+`HexPoly/Bench.lean` to `8192,12288,16384,24576,32768,49152,65536,98304,131072`
+for linear targets, `128,160,192,224,256,320,384,448,512` for multiplication,
+and `16,20,24,28,32,40,48,56,64` for composition. A larger fixed comparator
+matrix was not kept because this version of the bench registry overflows while
+listing/verifying that many fixed IO registrations; the committed fixed surface
+therefore records one representative case per integer-input target.
+
+Command:
+
+```sh
+lake exe hexpoly_bench compare \
+    Hex.PolyBench.runFixedAddChecksum8192 \
+    Hex.PolyBench.runFixedFlintAddChecksum8192 \
+    Hex.PolyBench.runFixedSubChecksum8192 \
+    Hex.PolyBench.runFixedFlintSubChecksum8192 \
+    Hex.PolyBench.runFixedMulChecksum512 \
+    Hex.PolyBench.runFixedFlintMulChecksum512 \
+    Hex.PolyBench.runFixedComposeChecksum64 \
+    Hex.PolyBench.runFixedFlintComposeChecksum64 \
+    Hex.PolyBench.runFixedDerivativeChecksum8192 \
+    Hex.PolyBench.runFixedFlintDerivativeChecksum8192 \
+    Hex.PolyBench.runFixedContent8192 \
+    Hex.PolyBench.runFixedFlintContent8192 \
+    Hex.PolyBench.runFixedPrimitivePartChecksum8192 \
+    Hex.PolyBench.runFixedFlintPrimitivePartChecksum8192 \
+    --export-file reports/bench-results/hex-poly-flint-fixed-7771fa9c.json
+```
+
+Export artefact:
+`reports/bench-results/hex-poly-flint-fixed-7771fa9c.json`.
+
+| Pair | n | Hex median | FLINT median | raw ratio |
+|---|---:|---:|---:|---:|
+| addition | 8192 | 1.004 ms | 64.549 ms | 64.3x |
+| subtraction | 8192 | 1.042 ms | 62.958 ms | 60.4x |
+| multiplication | 512 | 3.740 ms | 56.519 ms | 15.1x |
+| composition | 64 | 1.692 s | 411.914 ms | 0.243x |
+| derivative | 8192 | 651.583 us | 61.885 ms | 95.0x |
+| content | 8192 | 1.518 ms | 59.488 ms | 39.2x |
+| primitive part | 8192 | 1.850 ms | 63.974 ms | 34.6x |
+
+Trend: the small linear fixed rows mostly measure the persistent subprocess and
+JSON boundary, so FLINT appears slower despite matching results. The
+multiplication row is still process-overhead dominated but narrows the gap. The
+composition row is large enough for algorithmic work to dominate and FLINT is
+about `4.1x` faster (`0.243x` FLINT/Hex), matching the expected structural
+advantage of FLINT's tuned integer-polynomial kernels. These rows are
+orientation data only, not a Phase-4 gate.
 
 ## Profile
 
