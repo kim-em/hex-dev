@@ -1994,6 +1994,60 @@ theorem det_upperTriangular_pos_diag
       exact Int.mul_pos (ih (leadingPrefix M n (Nat.le_succ n)) hprefixZero hprefixDiag)
         (hdiag (Fin.last n))
 
+/-- The determinant of an upper-triangular square matrix (entries below the
+diagonal are zero) over a commutative ring is the product of its diagonal
+entries, expressed via a `Fin.foldl` over the diagonal indices. -/
+theorem det_upperTriangular_eq_finFoldl_diag
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat} (M : Matrix R n n)
+    (hzero : ∀ i j : Fin n, j.val < i.val → M[i][j] = 0) :
+    det M = Fin.foldl n (fun acc i => acc * M[i][i]) 1 := by
+  induction n with
+  | zero =>
+      simp only [Fin.foldl_zero]
+      simp [det, permutationVectors, detTerm, detSign, detProduct, emptyVec,
+        inversionCount]
+      grind
+  | succ n ih =>
+      have hrow : ∀ j : Fin (n + 1), j.val < n → M[Fin.last n][j] = 0 := by
+        intro j hj
+        exact hzero (Fin.last n) j hj
+      rw [det_eq_det_leadingPrefix_mul_last_of_last_row_zero M hrow]
+      have hprefixZero :
+          ∀ i j : Fin n, j.val < i.val →
+            (leadingPrefix M n (Nat.le_succ n))[i][j] = 0 := by
+        intro i j hij
+        let ii : Fin (n + 1) := ⟨i.val, by omega⟩
+        let jj : Fin (n + 1) := ⟨j.val, by omega⟩
+        have hentry : (leadingPrefix M n (Nat.le_succ n))[i][j] = M[ii][jj] := by
+          simp [leadingPrefix, ofFn, ii, jj]
+        rw [hentry]
+        exact hzero ii jj hij
+      rw [ih (leadingPrefix M n (Nat.le_succ n)) hprefixZero]
+      -- The (n+1)-length Fin.foldl over diagonals splits as the n-length foldl
+      -- times the last diagonal entry.
+      rw [Fin.foldl_succ_last]
+      -- Rewrite the leading prefix diagonal entries as M[i.castSucc][i.castSucc].
+      have hcongr :
+          Fin.foldl n
+              (fun acc i => acc * (leadingPrefix M n (Nat.le_succ n))[i][i]) 1 =
+            Fin.foldl n (fun acc i => acc * M[i.castSucc][i.castSucc]) 1 := by
+        rw [Fin.foldl_eq_foldl_finRange, Fin.foldl_eq_foldl_finRange]
+        apply foldl_acc_congr
+        intro acc i _hmem
+        have hentry : (leadingPrefix M n (Nat.le_succ n))[i][i] = M[i.castSucc][i.castSucc] :=
+          by simp [leadingPrefix, ofFn, Fin.castSucc]
+        rw [hentry]
+      rw [hcongr]
+
+/-- The determinant of an upper-triangular square matrix as a `List.foldl`
+product over the diagonal indices in `Fin.finRange`. -/
+theorem det_upperTriangular_eq_foldl_diag
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat} (M : Matrix R n n)
+    (hzero : ∀ i j : Fin n, j.val < i.val → M[i][j] = 0) :
+    det M = (List.finRange n).foldl (fun acc i => acc * M[i][i]) 1 := by
+  rw [det_upperTriangular_eq_finFoldl_diag M hzero]
+  rw [Fin.foldl_eq_foldl_finRange]
+
 private theorem detTerm_identity_insertAt_last {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat} (v : Vector (Fin n) n) :
     detTerm (1 : Matrix R (n + 1) (n + 1))
@@ -4575,6 +4629,40 @@ theorem det_transpose {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     _ =
       (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0 := by
         exact permutationVectors_inverseVector_sum (R := R) (n := n) (fun perm => detTerm M perm)
+
+/-- Diagonal-product formula for the determinant of a lower-triangular matrix
+(entries above the diagonal are zero). Derived from the upper-triangular form
+via `det_transpose`. -/
+theorem det_lowerTriangular_eq_finFoldl_diag
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat} (M : Matrix R n n)
+    (hzero : ∀ i j : Fin n, i.val < j.val → M[i][j] = 0) :
+    det M = Fin.foldl n (fun acc i => acc * M[i][i]) 1 := by
+  rw [← det_transpose M]
+  have htransposeZero :
+      ∀ i j : Fin n, j.val < i.val → M.transpose[i][j] = 0 := by
+    intro i j hij
+    have hentry : M.transpose[i][j] = M[j][i] := by
+      simp [transpose, col]
+    rw [hentry]
+    exact hzero j i hij
+  rw [det_upperTriangular_eq_finFoldl_diag M.transpose htransposeZero]
+  have hdiag : ∀ i : Fin n, M.transpose[i][i] = M[i][i] := by
+    intro i
+    simp [transpose, col]
+  -- Rewrite the foldl over `M.transpose[i][i]` to `M[i][i]`.
+  rw [Fin.foldl_eq_foldl_finRange, Fin.foldl_eq_foldl_finRange]
+  apply foldl_acc_congr
+  intro acc i _hmem
+  rw [hdiag]
+
+/-- The determinant of a lower-triangular square matrix as a `List.foldl`
+product over the diagonal indices in `Fin.finRange`. -/
+theorem det_lowerTriangular_eq_foldl_diag
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat} (M : Matrix R n n)
+    (hzero : ∀ i j : Fin n, i.val < j.val → M[i][j] = 0) :
+    det M = (List.finRange n).foldl (fun acc i => acc * M[i][i]) 1 := by
+  rw [det_lowerTriangular_eq_finFoldl_diag M hzero]
+  rw [Fin.foldl_eq_foldl_finRange]
 
 /-- Permuting columns multiplies the determinant by the sign of the column permutation. -/
 theorem det_colPermute_vector {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
