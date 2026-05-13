@@ -1,4 +1,5 @@
 import HexBerlekampZassenhaus
+import Mathlib.Data.Nat.Find
 
 /-!
 Partition semantics for the executable `bhksInsertSignatureClass` fold.
@@ -330,6 +331,162 @@ private theorem partitionAcc_succ_of_fresh
       rw [List.mem_range] at hmem
       exact (hfresh k hmem) (by simpa using hsig)
     simp [hfilter]
+
+/-- Inductive step (matching case): `partitionAcc (m + 1) sig` extends
+the `partitionAcc m sig` entry at the minimum matching representative
+`k₀` by appending `m` to its member list. -/
+private theorem partitionAcc_succ_of_match
+    (m : Nat) (sig : Nat → Array Rat)
+    (k₀ : Nat) (hk₀_lt : k₀ < m) (hk₀_sig : sig k₀ = sig m)
+    (hk₀_min : ∀ k, k < k₀ → sig k ≠ sig m) :
+    partitionAcc (m + 1) sig =
+      Hex.bhksInsertSignatureClass (sig m) m (partitionAcc m sig) := by
+  -- k₀ is in representativeColumns m sig, since no earlier k has the same signature.
+  have hk₀_fresh : ∀ k, k < k₀ → sig k ≠ sig k₀ := by
+    intro k hk hsig
+    apply hk₀_min k hk
+    rw [hsig, hk₀_sig]
+  have hk₀_rep : k₀ ∈ representativeColumns m sig := by
+    rw [mem_representativeColumns_iff]
+    exact ⟨hk₀_lt, hk₀_fresh⟩
+  obtain ⟨suffix, hdecomp, hsuffix_props⟩ :=
+    representativeColumns_decompose_at m sig k₀ hk₀_rep
+  -- Members at step m for k₀ and at step m+1.
+  let p : Nat → Array Rat × List Nat :=
+    fun rep => (sig rep, (List.range m).filter (fun j => sig j = sig rep))
+  let p' : Nat → Array Rat × List Nat :=
+    fun rep => (sig rep, (List.range (m + 1)).filter (fun j => sig j = sig rep))
+  -- Sig of suffix reps differs from sig m, by representativeColumns_fresh.
+  have hsuffix_sig_ne : ∀ rep ∈ suffix, sig rep ≠ sig m := by
+    intro rep hrep
+    rcases hsuffix_props rep hrep with ⟨hgt, hmem⟩
+    intro heq
+    have : sig k₀ ≠ sig rep := by
+      apply representativeColumns_fresh m sig rep hmem
+      exact hgt
+    apply this
+    rw [hk₀_sig, ← heq]
+  have hsuffix_sig_ne_sig_k₀ : ∀ rep ∈ suffix, sig m ≠ sig rep := by
+    intro rep hrep heq
+    exact hsuffix_sig_ne rep hrep heq.symm
+  have hprefix_sig_ne : ∀ rep ∈ representativeColumns k₀ sig, sig rep ≠ sig m := by
+    intro rep hrep
+    have hrep_lt : rep < k₀ := representativeColumns_lt k₀ sig rep hrep
+    exact hk₀_min rep hrep_lt
+  have hprefix_sig_ne_sig_m : ∀ rep ∈ representativeColumns k₀ sig, sig m ≠ sig rep := by
+    intro rep hrep heq
+    exact hprefix_sig_ne rep hrep heq.symm
+  -- Set up the partitionAcc m sig decomposition.
+  have hpAcc_m : partitionAcc m sig =
+      (representativeColumns k₀ sig).map p ++ p k₀ :: suffix.map p := by
+    unfold partitionAcc
+    rw [hdecomp, List.map_append, List.map_cons]
+  -- Apply bhksInsertSignatureClass_eq_replace.
+  -- First, the prefix entries have signature ≠ sig m.
+  have hprefix_pred :
+      ∀ q ∈ (representativeColumns k₀ sig).map p, q.1 ≠ sig m := by
+    intro q hq
+    rw [List.mem_map] at hq
+    obtain ⟨rep, hrep_mem, hrep_eq⟩ := hq
+    subst hrep_eq
+    exact hprefix_sig_ne rep hrep_mem
+  -- The entry at k₀ has signature sig k₀ = sig m; rewrite the form needed by the lemma.
+  have hp_k₀ : p k₀ =
+      (sig m, (List.range m).filter (fun j => sig j = sig k₀)) := by
+    simp only [p, hk₀_sig]
+  -- The substituted form: prefix.map p ++ (sig m, members) :: suffix.map p
+  have hpAcc_m_normalized : partitionAcc m sig =
+      (representativeColumns k₀ sig).map p ++
+        (sig m, (List.range m).filter (fun j => sig j = sig k₀)) :: suffix.map p := by
+    rw [hpAcc_m, hp_k₀]
+  -- Each prefix entry: p' rep = p rep when sig m ≠ sig rep.
+  have hprefix_eq : (representativeColumns k₀ sig).map p' =
+      (representativeColumns k₀ sig).map p := by
+    apply List.map_congr_left
+    intro rep hrep
+    have hne : sig m ≠ sig rep := hprefix_sig_ne_sig_m rep hrep
+    show p' rep = p rep
+    exact partitionAcc_entry_eq_of_ne m sig rep hne
+  -- The k₀ entry: p' k₀ = (sig m, members ++ [m])
+  have hp'_k₀ : p' k₀ =
+      (sig m, (List.range m).filter (fun j => sig j = sig k₀) ++ [m]) := by
+    show (sig k₀, (List.range (m + 1)).filter (fun j => sig j = sig k₀)) =
+         (sig m, (List.range m).filter (fun j => sig j = sig k₀) ++ [m])
+    rw [filter_range_succ_sig_eq, if_pos hk₀_sig.symm, hk₀_sig]
+  -- Each suffix entry: p' rep = p rep when sig m ≠ sig rep.
+  have hsuffix_eq : suffix.map p' = suffix.map p := by
+    apply List.map_congr_left
+    intro rep hrep
+    have hne : sig m ≠ sig rep := hsuffix_sig_ne_sig_k₀ rep hrep
+    show p' rep = p rep
+    exact partitionAcc_entry_eq_of_ne m sig rep hne
+  -- Apply Lemma B.
+  rw [hpAcc_m_normalized]
+  rw [bhksInsertSignatureClass_eq_replace (sig m) m _ _ _ hprefix_pred]
+  -- Now match the LHS via partitionAcc (m+1) sig unfolded.
+  show ((representativeColumns (m + 1) sig).map p') =
+       (representativeColumns k₀ sig).map p ++
+         (sig m, (List.range m).filter (fun j => sig j = sig k₀) ++ [m]) :: suffix.map p
+  rw [representativeColumns_succ_of_match m sig k₀ hk₀_lt hk₀_sig]
+  rw [hdecomp, List.map_append, List.map_cons]
+  rw [hprefix_eq, hsuffix_eq, hp'_k₀]
+
+/-- The inductive step: `partitionAcc (m + 1) sig` is one
+`bhksInsertSignatureClass` application above `partitionAcc m sig`. -/
+theorem partitionAcc_succ (m : Nat) (sig : Nat → Array Rat) :
+    partitionAcc (m + 1) sig =
+      Hex.bhksInsertSignatureClass (sig m) m (partitionAcc m sig) := by
+  classical
+  by_cases hex : ∃ k, k < m ∧ sig k = sig m
+  · let k₀ := Nat.find hex
+    have hk₀_spec := Nat.find_spec hex
+    have hk₀_min : ∀ k, k < k₀ → ¬ (k < m ∧ sig k = sig m) := fun k hk =>
+      Nat.find_min hex hk
+    have hk₀_min' : ∀ k, k < k₀ → sig k ≠ sig m := by
+      intro k hk hsig
+      apply hk₀_min k hk
+      exact ⟨lt_trans hk hk₀_spec.1, hsig⟩
+    exact partitionAcc_succ_of_match m sig k₀ hk₀_spec.1 hk₀_spec.2 hk₀_min'
+  · have hfresh : ∀ k, k < m → sig k ≠ sig m := by
+      intro k hk hsig
+      exact hex ⟨k, hk, hsig⟩
+    exact partitionAcc_succ_of_fresh m sig hfresh
+
+/-- The fold over `List.range r` of `Hex.bhksInsertSignatureClass` produces
+exactly the canonical partition accumulator. -/
+theorem foldl_bhksInsertSignatureClass_eq_partitionAcc
+    (r : Nat) (sig : Nat → Array Rat) :
+    (List.range r).foldl
+      (fun acc j => Hex.bhksInsertSignatureClass (sig j) j acc) [] =
+      partitionAcc r sig := by
+  induction r with
+  | zero =>
+      unfold partitionAcc representativeColumns
+      simp
+  | succ r ih =>
+      rw [List.range_succ, List.foldl_append]
+      rw [show ([r] : List Nat).foldl
+            (fun acc j => Hex.bhksInsertSignatureClass (sig j) j acc)
+            ((List.range r).foldl
+              (fun acc j => Hex.bhksInsertSignatureClass (sig j) j acc) [])
+            = Hex.bhksInsertSignatureClass (sig r) r
+              ((List.range r).foldl
+                (fun acc j => Hex.bhksInsertSignatureClass (sig j) j acc) [])
+          from rfl]
+      rw [ih]
+      exact (partitionAcc_succ r sig).symm
+
+/-- **Partition semantics of `Hex.bhksInsertSignatureClass`.**
+
+The classes emitted by folding `Hex.bhksInsertSignatureClass` over
+`List.range r` form the canonical min-column partition of `{0, …, r-1}`
+by signature equality. -/
+theorem bhksInsertSignatureClass_fold_eq_partitionByMinColumn
+    (r : Nat) (sig : Nat → Array Rat) :
+    ((List.range r).foldl
+      (fun acc j => Hex.bhksInsertSignatureClass (sig j) j acc) []).map Prod.snd =
+      partitionByMinColumn r sig := by
+  rw [foldl_bhksInsertSignatureClass_eq_partitionAcc, partitionAcc_map_snd]
 
 end BHKS
 
