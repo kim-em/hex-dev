@@ -3574,6 +3574,13 @@ private theorem exhaustiveCoreFactorsWithBound_product
             (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)
             xs hsearch
 
+/--
+A successful integer certificate exposes the per-prime polynomial check fact:
+every recorded `PrimeFactorData` block satisfies `checkForPolynomial f` —
+admissible prime, positive recorded factor degrees, modular degree-sum and
+factor-product alignment, and aligned nested Rabin certificates. Consumers
+extract individual conjuncts via the dedicated helpers below.
+-/
 theorem checkIrreducibleCert_prime_data
     (f : ZPoly) (cert : ZPolyIrreducibilityCertificate)
     (hcert : checkIrreducibleCert f cert = true) :
@@ -3588,6 +3595,70 @@ theorem checkIrreducibleCert_prime_data
   have hgetArray : cert.perPrime[i] = primeData := by
     simpa [Array.getElem_toList] using hget
   simpa [hgetArray] using hcert.1 i hiArray
+
+/--
+A successful integer certificate exposes the per-prime good-prime fact: every
+recorded `PrimeFactorData` uses an admissible prime for `f` (size, leading
+coefficient, and modular square-freeness all satisfied).
+-/
+theorem checkIrreducibleCert_isGoodPrime
+    (f : ZPoly) (cert : ZPolyIrreducibilityCertificate)
+    (hcert : checkIrreducibleCert f cert = true) :
+    ∀ primeData ∈ cert.perPrime.toList,
+      letI := primeData.bounds
+      isGoodPrime f primeData.p = true := by
+  intro primeData hmem
+  have hcheck := checkIrreducibleCert_prime_data f cert hcert primeData hmem
+  simp [PrimeFactorData.checkForPolynomial] at hcheck
+  exact hcheck.1.1.1.1
+
+/--
+A successful integer certificate exposes positivity of every recorded modular
+factor degree: each per-prime block's `factorDegrees` array contains only
+positive entries.
+-/
+theorem checkIrreducibleCert_factorDegrees_positive
+    (f : ZPoly) (cert : ZPolyIrreducibilityCertificate)
+    (hcert : checkIrreducibleCert f cert = true) :
+    ∀ primeData ∈ cert.perPrime.toList,
+      ∀ (i : Nat) (hi : i < primeData.factorDegrees.size),
+        0 < primeData.factorDegrees[i] := by
+  intro primeData hmem
+  have hcheck := checkIrreducibleCert_prime_data f cert hcert primeData hmem
+  simp [PrimeFactorData.checkForPolynomial] at hcheck
+  exact hcheck.1.1.1.2
+
+/--
+A successful integer certificate exposes the per-prime modular degree-sum
+alignment: each block's recorded `degreeSum` equals the degree of the
+polynomial's modular image.
+-/
+theorem checkIrreducibleCert_degreeSum_eq
+    (f : ZPoly) (cert : ZPolyIrreducibilityCertificate)
+    (hcert : checkIrreducibleCert f cert = true) :
+    ∀ primeData ∈ cert.perPrime.toList,
+      letI := primeData.bounds
+      primeData.degreeSum = (ZPoly.modP primeData.p f).degree?.getD 0 := by
+  intro primeData hmem
+  have hcheck := checkIrreducibleCert_prime_data f cert hcert primeData hmem
+  simp [PrimeFactorData.checkForPolynomial] at hcheck
+  exact hcheck.1.1.2
+
+/--
+A successful integer certificate exposes the per-prime modular factor product
+alignment: each block's recorded `factorProduct` equals the polynomial's
+modular image.
+-/
+theorem checkIrreducibleCert_factorProduct_eq
+    (f : ZPoly) (cert : ZPolyIrreducibilityCertificate)
+    (hcert : checkIrreducibleCert f cert = true) :
+    ∀ primeData ∈ cert.perPrime.toList,
+      letI := primeData.bounds
+      primeData.factorProduct = ZPoly.modP primeData.p f := by
+  intro primeData hmem
+  have hcheck := checkIrreducibleCert_prime_data f cert hcert primeData hmem
+  simp [PrimeFactorData.checkForPolynomial] at hcheck
+  exact hcheck.1.2
 
 /--
 A successful integer certificate exposes the per-prime nested Rabin checks:
@@ -3605,6 +3676,11 @@ theorem checkIrreducibleCert_certificate_alignment
   simp [PrimeFactorData.checkForPolynomial] at hcheck
   exact hcheck.2
 
+/--
+A successful integer certificate satisfies the top-level degree-obstruction
+check: every recorded `DegreeObstruction` is valid for the certificate, and
+every nontrivial candidate factor degree of `f` has at least one obstruction.
+-/
 theorem checkIrreducibleCert_degree_obstructions
     (f : ZPoly) (cert : ZPolyIrreducibilityCertificate)
     (hcert : checkIrreducibleCert f cert = true) :
@@ -3612,6 +3688,11 @@ theorem checkIrreducibleCert_degree_obstructions
   simp [checkIrreducibleCert] at hcert
   exact hcert.2
 
+/--
+A successful integer certificate provides a valid obstruction for every
+nontrivial candidate factor degree of `f` (the degrees `1, …, (deg f) / 2`),
+ruling out an integer factorization at any of those degrees.
+-/
 theorem checkIrreducibleCert_obstructs_candidate_degrees
     (f : ZPoly) (cert : ZPolyIrreducibilityCertificate)
     (hcert : checkIrreducibleCert f cert = true) :
@@ -3622,6 +3703,11 @@ theorem checkIrreducibleCert_obstructs_candidate_degrees
   simp [ZPolyIrreducibilityCertificate.checkDegreeObstructions] at hobs
   exact hobs.2 targetDegree hmem
 
+/--
+A valid `DegreeObstruction` exposes the underlying no-subset-sum fact: the
+referenced per-prime block has no subset of its modular factor degrees summing
+to the obstruction's `targetDegree`.
+-/
 theorem degreeObstruction_no_subset_degree
     (f : ZPoly) (cert : ZPolyIrreducibilityCertificate)
     (obs : DegreeObstruction) (primeData : PrimeFactorData)
