@@ -466,10 +466,12 @@ theorem factorFast_ne_none_of_forwardInputs_on_schedule
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.henselLiftData
           (Hex.normalizeForFactor f).squareFreeCore target primeData))
-    (hmem : target ∈
-      Hex.henselPrecisionSchedule (Hex.factorFastPrecisionCap f)
-        (Hex.initialHenselPrecision (Hex.factorFastPrecisionCap f))
-        (Hex.ZPoly.quadraticDoublingSteps (Hex.factorFastPrecisionCap f) + 2)) :
+    (hmem :
+      let a := Hex.precisionForCoeffBound (Hex.factorFastPrecisionCap f) primeData.p
+      target ∈
+        Hex.henselPrecisionSchedule a
+          (Hex.initialHenselPrecision a)
+          (Hex.ZPoly.quadraticDoublingSteps a + 2)) :
     Hex.factorFast f ≠ none := by
   have hrecover :
       Hex.bhksRecover? (Hex.normalizeForFactor f).squareFreeCore
