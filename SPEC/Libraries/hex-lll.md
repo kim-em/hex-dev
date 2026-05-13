@@ -326,13 +326,34 @@ classification below is mirrored as structured metadata in
   gap is the right yardstick for Phase 4.
 
   **Performance goal:** Lean LLL is **at least as fast as the
-  verified Isabelle LLL** on shared canonical inputs at the bottom
-  of each `phase4.input_families` parameter ladder. The headline
-  report at `reports/hex-lll-performance.md` records the measured
-  ratios per family and states whether the goal is met; failure
-  to meet the goal is an audit-found Concern per
+  verified Isabelle LLL** on shared canonical inputs, evaluated at
+  the largest eligible rung of each `phase4.input_families` parameter
+  ladder per
+  [SPEC/benchmarking.md §Headline reports — Comparator ratios](../benchmarking.md#headline-reports).
+  "Eligible" is the rung range between the comparator-overhead-
+  dominance floor and the per-call wallclock ceiling (10 s hard,
+  1 s soft) defined there. The headline report at
+  `reports/hex-lll-performance.md` records measured ratios across
+  the full ladder, with raw and overhead-adjusted values; bottom-rung
+  ratios are reported for context but do not constitute the verdict.
+  An adverse trend (Lean steadily losing ground as the parameter
+  grows) is itself an audit-found Concern per
   [PLAN/Conventions.md §Bench-found, conformance-found, and
-  audit-found issues](../../PLAN/Conventions.md#bench-found-conformance-found-and-audit-found-issues).
+  audit-found issues](../../PLAN/Conventions.md#bench-found-conformance-found-and-audit-found-issues),
+  even when the highest-rung verdict happens to pass.
+
+  **Comparator-call protocol.** Both `fpLLL via fpylll` and
+  `verified Isabelle LLL` are wired as persistent subprocesses per
+  [SPEC/benchmarking.md §External comparators — Process call](../benchmarking.md#external-comparators):
+  one subprocess per comparator per `lake exe hexlll_bench run`,
+  looping on stdin. Per-call overhead is measured for each
+  comparator and recorded in
+  `reports/hex-lll-performance.md §"Comparator ratios"`. Ratios
+  are reported across the full (potentially densified) parameter
+  ladder of each input family, with both raw and overhead-adjusted
+  values where the thresholds in
+  [§Headline reports — Comparator ratios](../benchmarking.md#headline-reports)
+  apply.
 
 ### `LLLState.ofBasis` is its own bench target
 

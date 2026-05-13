@@ -269,19 +269,46 @@ Two integration patterns:
   produces no extern resolution. The same `@[extern]` boundary
   rules from [Conventions.md](../PLAN/Conventions.md) apply.
 - **Process call, acceptable when FFI isn't viable.** The external
-  tool is scripted (Sage, python-flint, GAP, PARI) or the per-call
-  cost is large enough that process-spawn overhead is negligible.
-  Use `setup_fixed_benchmark` with an `IO α` body that shells out,
-  parses the output, and returns it. This covers both single
-  canonical-input comparisons *and* "swept" process-call
-  comparisons, by registering one `setup_fixed_benchmark` per
-  parameter value (e.g. `Hex.LLL.fpLLL.dim10`,
-  `Hex.LLL.fpLLL.dim20`, `Hex.LLL.fpLLL.dim30`) — the parametric
-  `setup_benchmark` form itself takes `Nat → α`, not `Nat → IO α`,
-  so the per-rung-fixed pattern is the canonical workaround. If a
-  true `Nat → IO α` parametric form matters more than the
-  per-rung-fixed encoding, file an issue against lean-bench rather
-  than rolling a hex-local harness.
+  tool is scripted (Sage, python-flint, GAP, PARI) or has a foreign
+  runtime that doesn't interop cleanly with Lean's RTS. Use
+  `setup_fixed_benchmark` with an `IO α` body that drives the
+  comparator. This covers both single canonical-input comparisons
+  *and* "swept" process-call comparisons, by registering one
+  `setup_fixed_benchmark` per parameter value (e.g.
+  `Hex.LLL.fpLLL.dim10`, `Hex.LLL.fpLLL.dim20`,
+  `Hex.LLL.fpLLL.dim30`) — the parametric `setup_benchmark` form
+  itself takes `Nat → α`, not `Nat → IO α`, so the per-rung-fixed
+  pattern is the canonical workaround. If a true `Nat → IO α`
+  parametric form matters more than the per-rung-fixed encoding,
+  file an issue against lean-bench rather than rolling a hex-local
+  harness.
+
+  Process-call comparator wiring carries three contract clauses:
+
+  - **Measure overhead.** Every process-call comparator records a
+    per-call overhead measurement in
+    `reports/<lib>-performance.md §"Comparator ratios"`. Methodology:
+    time the comparator binary on a trivial input whose algorithmic
+    work is sub-millisecond; report the median across enough runs to
+    be stable. This figure is subtracted from per-call wall times
+    before reporting ratios per
+    [§Headline reports — Comparator ratios](#headline-reports).
+  - **Persistent-subprocess is the preferred shape when overhead is
+    non-negligible.** Wrap the comparator in a driver that loops on
+    stdin (one problem per request, length- or delimiter-framed)
+    and emits answers on stdout. The bench harness spawns the
+    driver once per `lake exe hexfoo_bench run` invocation and
+    reuses the file descriptors across calls, amortising one process
+    startup across all comparator calls in that registration.
+    Document the protocol in the bench module docstring.
+  - **Per-call process spawn is acceptable only as a last resort.**
+    FFI is preferred when feasible; persistent-subprocess is the
+    fallback when FFI isn't viable. Per-call process spawn (the
+    pattern where each `setup_fixed_benchmark` body shells out
+    afresh) is acceptable only when both above are infeasible *and*
+    the per-call algorithmic work is large enough that the measured
+    per-call overhead falls below the adjustment threshold defined
+    in [§Headline reports — Comparator ratios](#headline-reports).
 
 Where a SPEC asks for a comparison lean-bench cannot directly model,
 file the gap as a feature request against lean-bench. Do not invent
@@ -672,11 +699,64 @@ The report contains five subsections:
    median per-call time and observed-hash agreement.
 3. **Comparator ratios.** Each comparator named in the per-library
    SPEC ([§Comparator naming](#comparator-naming)) — `gating` and
-   `informational` alike — with a measured ratio at the bottom of
-   the parameter ladder for parametric registrations, or on the
-   canonical input for fixed registrations. A short narrative
-   paragraph interprets the ratios: what is comfortable, what is
-   not, and why.
+   `informational` alike — with measured ratios across the full
+   parameter ladder (parametric registrations) or every canonical
+   input (fixed-benchmark families), and a narrative paragraph
+   naming the trend across rungs. A single number anchored at the
+   bottom is structurally flattering to whichever side has the
+   better startup characteristics; what's needed is a curve across
+   the eligible range. Five clauses, all binding on the report:
+
+   - **Define eligible range.** A rung is *eligible* for the
+     gating-goal verdict when both: (a) the comparator's per-call
+     overhead is ≤ 50% of measured wall time on that rung — below
+     this floor the rung is a process-startup measurement, not an
+     algorithm one; and (b) per-call wall time is ≤ 10 s hard /
+     ≤ 1 s soft — exceed the soft target only when needed to give
+     the trend enough range to read cleanly, and never exceed the
+     hard ceiling. The eligible range for a `gating` verdict is the
+     intersection of these floor and ceiling constraints.
+
+   - **Ratios across the full ladder, with adjusted values inside
+     the eligible range.** The §"Comparator ratios" subsection
+     records the measured ratio at every shared rung of the
+     parametric schedule (or every canonical input for
+     fixed-benchmark families). Per-call overhead is measured once
+     per process-call comparator per
+     [§External comparators — Process call](#external-comparators)
+     and shown as one line per comparator. On any rung where overhead
+     exceeds 5% of measured wall time, both the raw ratio and the
+     overhead-adjusted ratio (comparator wall time minus overhead,
+     then divide) are recorded. Rungs outside the eligible range
+     are reported for completeness only.
+
+   - **Enough rungs inside the eligible range to see a trend.** Two
+     or three points are at best a single slope; the ratio's shape
+     across the eligible range — flat, climbing, accelerating,
+     decelerating — must be unambiguous from the data alone. A
+     doubling-only parameter schedule typically does not provide
+     enough eligible rungs; the ladder is densified with in-fill
+     rungs between existing points, never extended past the
+     wallclock ceiling. The headline report records the actual
+     ladder (including in-fill) so a reader sees what was measured,
+     not just the family's default.
+
+   - **Trend narrative and adverse-trend Concerns.** The
+     §"Comparator ratios" subsection includes a paragraph naming
+     the trend, with reference to the rungs that establish it. The
+     baseline shape is a ratio that converges to a small constant
+     past the regime where startup or fixed costs dominate; a
+     diverging trend (one side steadily losing ground as the
+     parameter grows) is itself an audit-found Concern even when
+     the highest-rung verdict happens to pass, linked from the
+     §"Concerns" subsection.
+
+   - **Gating-goal verdict at the top eligible rung.** When the
+     per-library SPEC states a performance goal against a `gating`
+     comparator, the verdict is computed at the largest-parameter
+     eligible rung of each input family. The bottom rung is
+     reported for context; it is never the rung that meets or
+     fails the goal.
 4. **Profile.** Per [profiling.md §Coverage requirement](profiling.md),
    one representative case per `phase4.input_families`. Dominant
    inclusive costs are named and explained, with leaf cost
@@ -838,6 +918,28 @@ explicitly forbidden:
   inside an `LLLState.ofBasis` prep step that is itself
   sized in `n` — that step is its own asymptotically significant
   phase and needs its own registration.
+- **Comparator process overhead reported as algorithmic difference.**
+  Per-call subprocess on inputs small enough that startup dominates
+  the comparator's wall time is a measurement-shape problem, not an
+  algorithmic one. Recognisable in a headline report by a comparator
+  ratio of multiple orders of magnitude at the smallest rungs that
+  collapses to a small constant factor at larger rungs — the
+  small-rung gap is process startup, not algorithm. Fix per
+  [§External comparators — Process call](#external-comparators) and
+  [§Headline reports — Comparator ratios](#headline-reports):
+  persistent-subprocess (or FFI) protocol, or explicit per-call
+  overhead subtraction. The raw ratio is never published without that
+  adjustment when overhead is non-negligible.
+- **Bottom-rung-only comparator evaluation.** Declaring a `gating`
+  comparator goal met on the basis of the bottom-of-ladder ratio
+  alone hides asymptotic shape: two same-algorithm implementations
+  can show wildly different bottom-rung ratios driven by startup and
+  constant-factor differences while diverging steadily at larger
+  parameters; the bottom rung is the rung most flattering to
+  whichever side has the better warm-up. The verdict is evaluated
+  at the largest eligible rung across enough in-fill rungs to see
+  the trend, per
+  [§Headline reports — Comparator ratios](#headline-reports).
 
 Every `setup_benchmark` registration must carry an adjacent comment
 deriving its `n => …` from the algorithm: which step dominates, and
