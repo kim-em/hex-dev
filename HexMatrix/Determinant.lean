@@ -8402,6 +8402,663 @@ theorem mul_auxAdjugateM_eq_auxP
   intro j hj
   exact mul_auxAdjugateM_eq_auxP_entry M ⟨i, hi⟩ ⟨j, hj⟩
 
+/-! ### `auxAdjugateM` Laplace-collapse preliminaries
+
+Indexed Laplace-collapse helpers for `auxAdjugateM M` that prepare the
+surface for a future `det_auxAdjugateM` Desnanot-Jacobi capstone. They
+expose: a first-row Laplace 2-survivor collapse along row `0`; entry
+rewrites for the two surviving endpoint entries `(auxAdjugateM M)[0][0]`
+and `(auxAdjugateM M)[0][Fin.last (n + 1)]`; a "middle columns are
+identity columns" minor-shape lemma for `deleteRowCol (auxAdjugateM M)
+0 0`; and the two determinant-collapse identifications of those
+surviving cofactor minors with the natural corner deletions of `M`. -/
+
+/-- Additive companion of `foldl_finRange_succ_factor_skipIndex`: factor
+an additive `foldl` over `List.finRange (n + 1)` at index `i`, yielding
+`f i` plus the foldl over `List.finRange n` reindexed via
+`skipIndex i`. -/
+private theorem foldl_det_sum_finRange_succ_factor_skipIndex
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (i : Fin (n + 1)) (f : Fin (n + 1) → R) :
+    (List.finRange (n + 1)).foldl (fun acc r => acc + f r) 0 =
+      f i +
+        (List.finRange n).foldl (fun acc r' => acc + f (skipIndex i r')) 0 := by
+  rw [foldl_det_sum_perm f (list_finRange_succ_perm_skipIndex i) 0]
+  show (i :: (List.finRange n).map (skipIndex i)).foldl
+        (fun acc r => acc + f r) 0 = _
+  rw [List.foldl_cons, List.foldl_map]
+  rw [foldl_det_sum_start (List.finRange n)
+      (fun r' => f (skipIndex i r')) (0 + f i)]
+  grind
+
+/-- Determinant vanishes when a row is identically zero. -/
+private theorem det_eq_zero_of_row_eq_zero
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (row : Fin (n + 1))
+    (h : ∀ col : Fin (n + 1), M[row][col] = 0) :
+    det M = 0 := by
+  rw [det_eq_foldl_laplace_row M row]
+  have hcongr : (List.finRange (n + 1)).foldl
+      (fun acc col => acc + M[row][col] * cofactor M row col) 0 =
+      (List.finRange (n + 1)).foldl (fun acc _ => acc + (0 : R)) 0 := by
+    apply foldl_acc_congr
+    intro acc col _hmem
+    rw [h col]
+    grind
+  rw [hcongr, foldl_det_sum_zero]
+
+/-- Determinant vanishes when a column is identically zero. -/
+private theorem det_eq_zero_of_col_eq_zero
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (col : Fin (n + 1))
+    (h : ∀ row : Fin (n + 1), M[row][col] = 0) :
+    det M = 0 := by
+  rw [det_eq_foldl_laplace_col M col]
+  have hcongr : (List.finRange (n + 1)).foldl
+      (fun acc row => acc + M[row][col] * cofactor M row col) 0 =
+      (List.finRange (n + 1)).foldl (fun acc _ => acc + (0 : R)) 0 := by
+    apply foldl_acc_congr
+    intro acc row _hmem
+    rw [h row]
+    grind
+  rw [hcongr, foldl_det_sum_zero]
+
+/-- Version of `det_eq_zero_of_col_eq_zero` for arbitrary size: the `n = 0`
+case is vacuous because no column index exists. -/
+private theorem det_eq_zero_of_col_eq_zero'
+    {R : Type u} [Lean.Grind.CommRing R] :
+    ∀ {n : Nat} (M : Matrix R n n) (col : Fin n),
+      (∀ row : Fin n, M[row][col] = 0) → det M = 0
+  | 0, _, col, _ => Fin.elim0 col
+  | _ + 1, M, col, h => det_eq_zero_of_col_eq_zero M col h
+
+/-- First-row Laplace 2-survivor collapse for `auxAdjugateM`: every
+middle column of row `0` vanishes, so only column `0` and column
+`Fin.last (n + 1)` contribute to the row-0 Laplace expansion of
+`det (auxAdjugateM M)`. -/
+theorem det_auxAdjugateM_eq_endpoint_collapse
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) :
+    det (auxAdjugateM M) =
+      (auxAdjugateM M)[(0 : Fin (n + 2))][(0 : Fin (n + 2))] *
+          cofactor (auxAdjugateM M) (0 : Fin (n + 2)) (0 : Fin (n + 2)) +
+        (auxAdjugateM M)[(0 : Fin (n + 2))][Fin.last (n + 1)] *
+          cofactor (auxAdjugateM M) (0 : Fin (n + 2)) (Fin.last (n + 1)) := by
+  rw [det_eq_foldl_laplace_row (auxAdjugateM M) (0 : Fin (n + 2))]
+  rw [foldl_det_sum_finRange_succ_factor_skipIndex (0 : Fin (n + 2))
+      (fun col => (auxAdjugateM M)[(0 : Fin (n + 2))][col] *
+                    cofactor (auxAdjugateM M) (0 : Fin (n + 2)) col)]
+  -- Inner foldl is over `List.finRange (n + 1)` reindexed via `skipIndex 0`.
+  -- Factor it again at `Fin.last n` to expose the second endpoint.
+  rw [foldl_det_sum_finRange_succ_factor_skipIndex (Fin.last n)
+      (fun r' =>
+        (auxAdjugateM M)[(0 : Fin (n + 2))][skipIndex (0 : Fin (n + 2)) r'] *
+          cofactor (auxAdjugateM M) (0 : Fin (n + 2))
+            (skipIndex (0 : Fin (n + 2)) r'))]
+  -- The remaining inner foldl over `List.finRange n` collapses to zero
+  -- because each middle column makes the entry vanish.
+  have hskip_last :
+      skipIndex (0 : Fin (n + 2)) (Fin.last n) = Fin.last (n + 1) := by
+    apply Fin.ext
+    show (skipIndex (0 : Fin (n + 2)) (Fin.last n)).val = (Fin.last (n + 1)).val
+    rw [skipIndex_val_of_not_lt _ _ (by simp [Fin.last])]
+    simp [Fin.last]
+  have hmid_zero : ∀ r : Fin n,
+      (auxAdjugateM M)[(0 : Fin (n + 2))][
+          skipIndex (0 : Fin (n + 2)) (skipIndex (Fin.last n) r)] *
+        cofactor (auxAdjugateM M) (0 : Fin (n + 2))
+          (skipIndex (0 : Fin (n + 2)) (skipIndex (Fin.last n) r)) = 0 := by
+    intro r
+    have hj_ne_zero :
+        skipIndex (0 : Fin (n + 2)) (skipIndex (Fin.last n) r) ≠
+            (0 : Fin (n + 2)) :=
+      skipIndex_ne (0 : Fin (n + 2)) _
+    have hskip_castSucc :
+        skipIndex (Fin.last n) r = r.castSucc := by
+      apply Fin.ext
+      show (skipIndex (Fin.last n) r).val = r.castSucc.val
+      have hrlt : r.val < (Fin.last n).val := by
+        rw [Fin.val_last]; exact r.isLt
+      rw [skipIndex_val_of_lt _ _ hrlt]
+      rfl
+    have hjval :
+        (skipIndex (0 : Fin (n + 2)) (skipIndex (Fin.last n) r)).val
+            = r.val + 1 := by
+      rw [hskip_castSucc, skipIndex_val_of_not_lt _ _ (by simp)]
+      rfl
+    have hj_ne_last :
+        skipIndex (0 : Fin (n + 2)) (skipIndex (Fin.last n) r) ≠
+            Fin.last (n + 1) := by
+      intro hcontra
+      have := congrArg Fin.val hcontra
+      rw [hjval] at this
+      simp [Fin.last] at this
+      have := r.isLt
+      omega
+    have hentry :
+        (auxAdjugateM M)[(0 : Fin (n + 2))][
+            skipIndex (0 : Fin (n + 2)) (skipIndex (Fin.last n) r)] = 0 := by
+      rw [auxAdjugateM_apply_middle M (0 : Fin (n + 2))
+            (skipIndex (0 : Fin (n + 2)) (skipIndex (Fin.last n) r))
+            hj_ne_zero hj_ne_last]
+      exact if_neg (Ne.symm hj_ne_zero)
+    rw [hentry]
+    grind
+  have hinner_zero :
+      (List.finRange n).foldl
+        (fun acc r =>
+          acc +
+            (auxAdjugateM M)[(0 : Fin (n + 2))][
+                skipIndex (0 : Fin (n + 2)) (skipIndex (Fin.last n) r)] *
+              cofactor (auxAdjugateM M) (0 : Fin (n + 2))
+                (skipIndex (0 : Fin (n + 2)) (skipIndex (Fin.last n) r))) 0
+        = 0 := by
+    have hcongr :
+        (List.finRange n).foldl
+          (fun acc r =>
+            acc +
+              (auxAdjugateM M)[(0 : Fin (n + 2))][
+                  skipIndex (0 : Fin (n + 2)) (skipIndex (Fin.last n) r)] *
+                cofactor (auxAdjugateM M) (0 : Fin (n + 2))
+                  (skipIndex (0 : Fin (n + 2)) (skipIndex (Fin.last n) r))) 0
+          = (List.finRange n).foldl (fun acc _ => acc + (0 : R)) 0 := by
+      apply foldl_acc_congr
+      intro acc r _hmem
+      rw [hmid_zero r]
+    rw [hcongr, foldl_det_sum_zero]
+  rw [hinner_zero]
+  -- The remaining manipulation replaces `skipIndex 0 (Fin.last n)`
+  -- with `Fin.last (n + 1)` (they are equal Fin (n + 2) elements).
+  simp only [hskip_last]
+  grind
+
+/-- Entry rewrite: `(auxAdjugateM M)[0][0]` is the determinant of the
+top-left `(n + 1) × (n + 1)` minor of `M`. -/
+theorem auxAdjugateM_apply_zero_zero_eq_det
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) :
+    (auxAdjugateM M)[(0 : Fin (n + 2))][(0 : Fin (n + 2))] =
+      det (deleteRowCol M (0 : Fin (n + 2)) (0 : Fin (n + 2))) := by
+  rw [auxAdjugateM_apply_zero, adjugate_zero_zero]
+
+/-- Entry rewrite: `(auxAdjugateM M)[0][Fin.last (n + 1)]` is the
+cofactor `cofactor M (Fin.last (n + 1)) 0`. -/
+theorem auxAdjugateM_apply_zero_last_eq_cofactor
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) :
+    (auxAdjugateM M)[(0 : Fin (n + 2))][Fin.last (n + 1)] =
+      cofactor M (Fin.last (n + 1)) (0 : Fin (n + 2)) := by
+  rw [auxAdjugateM_apply_last, adjugate_get]
+
+/-- Minor-shape lemma: middle columns of `deleteRowCol (auxAdjugateM M)
+0 0` are identity columns. Concretely, for `i, j : Fin (n + 1)` with
+`j ≠ Fin.last n`, the `(i, j)` entry of the minor equals
+`if i = j then 1 else 0`. -/
+theorem deleteRowCol_auxAdjugateM_zero_zero_apply_not_last
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) (i j : Fin (n + 1))
+    (hj : j ≠ Fin.last n) :
+    (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2)) (0 : Fin (n + 2)))[i][j] =
+      if i = j then 1 else 0 := by
+  rw [deleteRowCol_entry]
+  have hj_ne_zero :
+      skipIndex (0 : Fin (n + 2)) j ≠ (0 : Fin (n + 2)) :=
+    skipIndex_ne (0 : Fin (n + 2)) j
+  have hj_ne_last :
+      skipIndex (0 : Fin (n + 2)) j ≠ Fin.last (n + 1) := by
+    intro hcontra
+    have := congrArg Fin.val hcontra
+    rw [skipIndex_val_of_not_lt _ _ (by simp)] at this
+    simp [Fin.last] at this
+    have hlast_val : (Fin.last n).val = n := by simp [Fin.last]
+    have hjlt : j.val < n := by
+      rcases Nat.lt_or_eq_of_le (Nat.le_of_lt_succ j.isLt) with h | h
+      · exact h
+      · exact absurd (Fin.ext (h.trans hlast_val.symm)) hj
+    omega
+  rw [auxAdjugateM_apply_middle M (skipIndex (0 : Fin (n + 2)) i)
+      (skipIndex (0 : Fin (n + 2)) j) hj_ne_zero hj_ne_last]
+  by_cases hij : i = j
+  · rw [hij, if_pos rfl, if_pos rfl]
+  · rw [if_neg hij, if_neg]
+    intro hsame
+    exact hij (skipIndex_injective (0 : Fin (n + 2)) hsame)
+
+/-- Minor-shape lemma: the bottom-right entry of `deleteRowCol
+(auxAdjugateM M) 0 0` equals the determinant of the natural
+`Fin.last (n + 1)` corner deletion of `M`. -/
+theorem deleteRowCol_auxAdjugateM_zero_zero_apply_last_last
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) :
+    (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+        (0 : Fin (n + 2)))[Fin.last n][Fin.last n] =
+      det (deleteRowCol M (Fin.last (n + 1)) (Fin.last (n + 1))) := by
+  rw [deleteRowCol_entry]
+  have hskip : skipIndex (0 : Fin (n + 2)) (Fin.last n) = Fin.last (n + 1) := by
+    apply Fin.ext
+    rw [skipIndex_val_of_not_lt _ _ (by simp [Fin.last])]
+    simp [Fin.last]
+  simp only [hskip]
+  rw [auxAdjugateM_apply_last, adjugate_last_last,
+      ← deleteRowCol_last_last]
+
+/-- Determinant collapse for the surviving `(0, 0)` cofactor minor: it
+equals the determinant of the `Fin.last (n + 1)` corner deletion of `M`. -/
+theorem det_deleteRowCol_auxAdjugateM_zero_zero
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) :
+    det (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2)) (0 : Fin (n + 2))) =
+      det (deleteRowCol M (Fin.last (n + 1)) (Fin.last (n + 1))) := by
+  -- Expand along the last column (`Fin.last n`) of the minor.
+  rw [det_eq_foldl_laplace_col
+        (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2)) (0 : Fin (n + 2)))
+        (Fin.last n)]
+  rw [foldl_det_sum_finRange_succ_factor_skipIndex (Fin.last n)
+      (fun row =>
+        (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+            (0 : Fin (n + 2)))[row][Fin.last n] *
+          cofactor
+            (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+              (0 : Fin (n + 2))) row (Fin.last n))]
+  -- Inner foldl: each cofactor minor has a zero column → contributes 0.
+  have hinner_zero :
+      (List.finRange n).foldl
+        (fun acc r =>
+          acc +
+            (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+                (0 : Fin (n + 2)))[skipIndex (Fin.last n) r][Fin.last n] *
+              cofactor
+                (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+                  (0 : Fin (n + 2))) (skipIndex (Fin.last n) r)
+                (Fin.last n)) 0 = 0 := by
+    have hcongr :
+        (List.finRange n).foldl
+          (fun acc r =>
+            acc +
+              (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+                  (0 : Fin (n + 2)))[skipIndex (Fin.last n) r][Fin.last n] *
+                cofactor
+                  (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+                    (0 : Fin (n + 2))) (skipIndex (Fin.last n) r)
+                  (Fin.last n)) 0
+          = (List.finRange n).foldl (fun acc _ => acc + (0 : R)) 0 := by
+      apply foldl_acc_congr
+      intro acc r' _hmem
+      -- Cofactor at row `skipIndex (Fin.last n) r'`, col `Fin.last n`
+      -- vanishes: the cofactor minor has a zero column at value `r'.val`.
+      have hcof_zero :
+          det (deleteRowCol
+                (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+                  (0 : Fin (n + 2)))
+                (skipIndex (Fin.last n) r') (Fin.last n)) = 0 := by
+        apply det_eq_zero_of_col_eq_zero'
+          (deleteRowCol
+            (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+              (0 : Fin (n + 2)))
+            (skipIndex (Fin.last n) r') (Fin.last n))
+          (⟨r'.val, by have := r'.isLt; omega⟩ : Fin n)
+        intro s
+        rw [deleteRowCol_entry]
+        have hcol_ne_last :
+            skipIndex (Fin.last n) (⟨r'.val, by have := r'.isLt; omega⟩ : Fin n)
+              ≠ Fin.last n := skipIndex_ne (Fin.last n) _
+        rw [deleteRowCol_auxAdjugateM_zero_zero_apply_not_last M
+              (skipIndex (skipIndex (Fin.last n) r') s)
+              (skipIndex (Fin.last n)
+                (⟨r'.val, by have := r'.isLt; omega⟩ : Fin n))
+              hcol_ne_last]
+        apply if_neg
+        intro hsame
+        -- `skipIndex (skipIndex (Fin.last n) r') s ≠ skipIndex (Fin.last n) r'`
+        -- by skipIndex_ne. But the RHS column index has value `r'.val`, same
+        -- as `(skipIndex (Fin.last n) r').val`, so equality forces a contradiction.
+        have hrhs_val :
+            (skipIndex (Fin.last n)
+              (⟨r'.val, by have := r'.isLt; omega⟩ : Fin n)).val
+            = r'.val := by
+          rw [skipIndex_val_of_lt _ _ (by show r'.val < n; exact r'.isLt)]
+        have hskip_outer_val :
+            (skipIndex (Fin.last n) r').val = r'.val := by
+          rw [skipIndex_val_of_lt _ _ (by show r'.val < n; exact r'.isLt)]
+        have hskip_outer_eq :
+            skipIndex (Fin.last n)
+              (⟨r'.val, by have := r'.isLt; omega⟩ : Fin n)
+              = skipIndex (Fin.last n) r' :=
+          Fin.ext (hrhs_val.trans hskip_outer_val.symm)
+        rw [hskip_outer_eq] at hsame
+        exact skipIndex_ne (skipIndex (Fin.last n) r') s hsame
+      have hcof_val :
+          cofactor
+            (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+              (0 : Fin (n + 2))) (skipIndex (Fin.last n) r')
+            (Fin.last n) = 0 := by
+        unfold cofactor
+        rw [hcof_zero]
+        grind
+      rw [hcof_val]
+      grind
+    rw [hcongr, foldl_det_sum_zero]
+  rw [hinner_zero]
+  -- Combine the surviving (Fin.last n, Fin.last n) entry term.
+  have hentry := deleteRowCol_auxAdjugateM_zero_zero_apply_last_last (M := M)
+  have hcof :
+      cofactor
+        (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2)) (0 : Fin (n + 2)))
+        (Fin.last n) (Fin.last n) = 1 := by
+    rw [cofactor_of_even _ _ _ (by
+        show ((Fin.last n).val + (Fin.last n).val) % 2 = 0
+        rw [Fin.val_last]; omega)]
+    -- The further-deleted minor is the n × n identity.
+    have hminor :
+        deleteRowCol
+          (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+            (0 : Fin (n + 2)))
+          (Fin.last n) (Fin.last n) =
+          (1 : Matrix R n n) := by
+      apply Vector.ext
+      intro i hi
+      apply Vector.ext
+      intro j hj
+      change (deleteRowCol
+                (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+                  (0 : Fin (n + 2)))
+                (Fin.last n) (Fin.last n))[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)]
+             = (1 : Matrix R n n)[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)]
+      rw [deleteRowCol_entry, identity_get]
+      have hcol_ne_last :
+          skipIndex (Fin.last n) (⟨j, hj⟩ : Fin n) ≠ Fin.last n :=
+        skipIndex_ne (Fin.last n) _
+      rw [deleteRowCol_auxAdjugateM_zero_zero_apply_not_last M
+            (skipIndex (Fin.last n) (⟨i, hi⟩ : Fin n))
+            (skipIndex (Fin.last n) (⟨j, hj⟩ : Fin n))
+            hcol_ne_last]
+      by_cases hij : (⟨i, hi⟩ : Fin n) = ⟨j, hj⟩
+      · rw [hij, if_pos rfl, if_pos rfl]
+      · rw [if_neg hij, if_neg]
+        intro hsame
+        exact hij (skipIndex_injective (Fin.last n) hsame)
+    rw [hminor, det_one]
+  rw [hentry, hcof]
+  grind
+
+/-- Minor-shape lemma: nonzero columns of `deleteRowCol (auxAdjugateM M)
+0 (Fin.last (n + 1))` are identity-shaped in `auxAdjugateM`'s middle.
+Concretely, for `i, j : Fin (n + 1)` with `j ≠ 0`, the `(i, j)` entry of
+the minor equals `if skipIndex 0 i = skipIndex (Fin.last (n + 1)) j
+then 1 else 0`. -/
+theorem deleteRowCol_auxAdjugateM_zero_last_apply_ne_zero
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) (i j : Fin (n + 1))
+    (hj : j ≠ 0) :
+    (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+        (Fin.last (n + 1)))[i][j] =
+      if skipIndex (0 : Fin (n + 2)) i =
+          skipIndex (Fin.last (n + 1)) j then 1 else 0 := by
+  rw [deleteRowCol_entry]
+  have hj_skip_val :
+      (skipIndex (Fin.last (n + 1)) j).val = j.val := by
+    rw [skipIndex_val_of_lt _ _ (by rw [Fin.val_last]; exact j.isLt)]
+  have hj_ne_zero :
+      skipIndex (Fin.last (n + 1)) j ≠ (0 : Fin (n + 2)) := by
+    intro hcontra
+    have hval := congrArg Fin.val hcontra
+    rw [hj_skip_val] at hval
+    simp at hval
+    exact hj (Fin.ext (by simp [hval]))
+  have hj_ne_last :
+      skipIndex (Fin.last (n + 1)) j ≠ Fin.last (n + 1) :=
+    skipIndex_ne (Fin.last (n + 1)) j
+  rw [auxAdjugateM_apply_middle M (skipIndex (0 : Fin (n + 2)) i)
+        (skipIndex (Fin.last (n + 1)) j) hj_ne_zero hj_ne_last]
+
+/-- Minor-shape lemma: the bottom-left entry of `deleteRowCol
+(auxAdjugateM M) 0 (Fin.last (n + 1))` equals the `(Fin.last (n + 1),
+0)` entry of `adjugate M`. -/
+theorem deleteRowCol_auxAdjugateM_zero_last_apply_last_zero
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) :
+    (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+        (Fin.last (n + 1)))[Fin.last n][(0 : Fin (n + 1))] =
+      (adjugate M)[Fin.last (n + 1)][(0 : Fin (n + 2))] := by
+  rw [deleteRowCol_entry]
+  have hrow :
+      skipIndex (0 : Fin (n + 2)) (Fin.last n) = Fin.last (n + 1) := by
+    apply Fin.ext
+    rw [skipIndex_val_of_not_lt _ _ (by simp [Fin.last])]
+    simp [Fin.last]
+  have hcol :
+      skipIndex (Fin.last (n + 1)) (0 : Fin (n + 1)) = (0 : Fin (n + 2)) := by
+    apply Fin.ext
+    rw [skipIndex_val_of_lt _ _ (by rw [Fin.val_last]; show (0 : Nat) < n + 1; omega)]
+    rfl
+  simp only [hrow, hcol]
+  rw [auxAdjugateM_apply_zero]
+
+/-- Determinant collapse for the surviving `(0, Fin.last (n + 1))`
+cofactor minor: it equals the negation of the determinant of the
+`(0, Fin.last (n + 1))` corner deletion of `M`. -/
+theorem det_deleteRowCol_auxAdjugateM_zero_last
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) :
+    det (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2)) (Fin.last (n + 1))) =
+      -det (deleteRowCol M (0 : Fin (n + 2)) (Fin.last (n + 1))) := by
+  -- Expand along column 0 of the minor.
+  rw [det_eq_foldl_laplace_col
+        (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2)) (Fin.last (n + 1)))
+        (0 : Fin (n + 1))]
+  rw [foldl_det_sum_finRange_succ_factor_skipIndex (Fin.last n)
+      (fun row =>
+        (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+            (Fin.last (n + 1)))[row][(0 : Fin (n + 1))] *
+          cofactor
+            (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+              (Fin.last (n + 1))) row (0 : Fin (n + 1)))]
+  have hinner_zero :
+      (List.finRange n).foldl
+        (fun acc r =>
+          acc +
+            (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+                (Fin.last (n + 1)))[skipIndex (Fin.last n) r][
+                (0 : Fin (n + 1))] *
+              cofactor
+                (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+                  (Fin.last (n + 1))) (skipIndex (Fin.last n) r)
+                (0 : Fin (n + 1))) 0 = 0 := by
+    have hcongr :
+        (List.finRange n).foldl
+          (fun acc r =>
+            acc +
+              (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+                  (Fin.last (n + 1)))[skipIndex (Fin.last n) r][
+                  (0 : Fin (n + 1))] *
+                cofactor
+                  (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+                    (Fin.last (n + 1))) (skipIndex (Fin.last n) r)
+                  (0 : Fin (n + 1))) 0
+          = (List.finRange n).foldl (fun acc _ => acc + (0 : R)) 0 := by
+      apply foldl_acc_congr
+      intro acc r' _hmem
+      -- For row `skipIndex (Fin.last n) r' = r'.castSucc`, the cofactor
+      -- minor has a zero column at the slot corresponding to
+      -- `⟨r'.val + 1, _⟩ : Fin n`.
+      have hcof_zero :
+          det (deleteRowCol
+                (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+                  (Fin.last (n + 1)))
+                (skipIndex (Fin.last n) r') (0 : Fin (n + 1))) = 0 := by
+        apply det_eq_zero_of_col_eq_zero'
+          (deleteRowCol
+            (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+              (Fin.last (n + 1)))
+            (skipIndex (Fin.last n) r') (0 : Fin (n + 1)))
+          (⟨r'.val, by have := r'.isLt; omega⟩ : Fin n)
+        intro s
+        rw [deleteRowCol_entry]
+        have hcol_ne_zero :
+            skipIndex (0 : Fin (n + 1))
+                (⟨r'.val, by have := r'.isLt; omega⟩ : Fin n) ≠
+              (0 : Fin (n + 1)) :=
+          skipIndex_ne (0 : Fin (n + 1)) _
+        rw [deleteRowCol_auxAdjugateM_zero_last_apply_ne_zero M
+              (skipIndex (skipIndex (Fin.last n) r') s)
+              (skipIndex (0 : Fin (n + 1))
+                (⟨r'.val, by have := r'.isLt; omega⟩ : Fin n))
+              hcol_ne_zero]
+        apply if_neg
+        -- Goal: skipIndex 0 (skipIndex (Fin.last n) r' s) ≠ skipIndex (Fin.last (n+1)) (skipIndex 0 ⟨r'.val, _⟩)
+        -- Value comparison: LHS val and RHS val
+        intro heq
+        have hval := congrArg Fin.val heq
+        -- LHS val = (skipIndex (skipIndex (Fin.last n) r') s).val + 1 (skip 0 in Fin (n+2))
+        -- RHS val = (skipIndex 0 ⟨r'.val, _⟩).val = r'.val + 1 (skip Fin.last (n+1))
+        have hlhs_val :
+            (skipIndex (0 : Fin (n + 2))
+              (skipIndex (skipIndex (Fin.last n) r') s)).val =
+              (skipIndex (skipIndex (Fin.last n) r') s).val + 1 := by
+          rw [skipIndex_val_of_not_lt _ _ (by simp)]
+        have hskip_inner_r_val : (skipIndex (Fin.last n) r').val = r'.val := by
+          rw [skipIndex_val_of_lt _ _ (by rw [Fin.val_last]; exact r'.isLt)]
+        have hrhs_val :
+            (skipIndex (Fin.last (n + 1))
+              (skipIndex (0 : Fin (n + 1))
+                (⟨r'.val, by have := r'.isLt; omega⟩ : Fin n))).val =
+              r'.val + 1 := by
+          rw [skipIndex_val_of_lt _ _ ?_]
+          · rw [skipIndex_val_of_not_lt _ _ (by simp)]
+          · rw [Fin.val_last,
+                skipIndex_val_of_not_lt _ _ (by simp)]
+            -- (⟨r'.val, _⟩ : Fin n).val + 1 < n + 1, i.e., r'.val + 1 < n + 1
+            show r'.val + 1 < n + 1
+            have := r'.isLt; omega
+        rw [hlhs_val, hrhs_val] at hval
+        -- hval: (skipIndex (skipIndex (Fin.last n) r') s).val + 1 = r'.val + 1
+        -- so (skipIndex (skipIndex (Fin.last n) r') s).val = r'.val = (skipIndex (Fin.last n) r').val
+        have hskip_outer_eq :
+            skipIndex (skipIndex (Fin.last n) r') s =
+              skipIndex (Fin.last n) r' := by
+          apply Fin.ext
+          show (skipIndex (skipIndex (Fin.last n) r') s).val =
+                (skipIndex (Fin.last n) r').val
+          rw [hskip_inner_r_val]
+          omega
+        exact skipIndex_ne (skipIndex (Fin.last n) r') s hskip_outer_eq
+      have hcof_val :
+          cofactor
+            (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+              (Fin.last (n + 1))) (skipIndex (Fin.last n) r')
+            (0 : Fin (n + 1)) = 0 := by
+        unfold cofactor
+        rw [hcof_zero]
+        grind
+      rw [hcof_val]
+      grind
+    rw [hcongr, foldl_det_sum_zero]
+  rw [hinner_zero]
+  -- Surviving term: M'_1n[Fin.last n][0] * cofactor M'_1n (Fin.last n) 0.
+  have hentry := deleteRowCol_auxAdjugateM_zero_last_apply_last_zero (M := M)
+  have hcof :
+      cofactor
+        (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2)) (Fin.last (n + 1)))
+        (Fin.last n) (0 : Fin (n + 1)) = (-1 : R) ^ n := by
+    unfold cofactor
+    -- `cofactorSign (Fin.last n) 0` agrees with `cofactorSign 0 (Fin.last n)`
+    -- because the sum is symmetric, and the latter is `(-1)^(n - 0) = (-1)^n`.
+    have hsign :
+        cofactorSign (R := R) (Fin.last n) (0 : Fin (n + 1)) = (-1 : R) ^ n := by
+      have h := cofactorSign_last_eq_pow (R := R) (0 : Fin (n + 1))
+      unfold cofactorSign at h ⊢
+      simp only [Fin.val_zero, Fin.val_last, Nat.zero_add, Nat.add_zero,
+                 Nat.sub_zero] at h ⊢
+      exact h
+    rw [hsign]
+    -- Minor det = 1 (it's the n × n identity)
+    have hminor :
+        deleteRowCol
+          (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+            (Fin.last (n + 1)))
+          (Fin.last n) (0 : Fin (n + 1)) =
+          (1 : Matrix R n n) := by
+      apply Vector.ext
+      intro i hi
+      apply Vector.ext
+      intro j hj
+      change ((deleteRowCol
+                (deleteRowCol (auxAdjugateM M) (0 : Fin (n + 2))
+                  (Fin.last (n + 1)))
+                (Fin.last n)
+                (0 : Fin (n + 1)))[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)] : R) =
+             (1 : Matrix R n n)[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)]
+      rw [deleteRowCol_entry, identity_get]
+      have hcol_ne_zero :
+          skipIndex (0 : Fin (n + 1)) (⟨j, hj⟩ : Fin n) ≠ (0 : Fin (n + 1)) :=
+        skipIndex_ne (0 : Fin (n + 1)) _
+      rw [deleteRowCol_auxAdjugateM_zero_last_apply_ne_zero M
+            (skipIndex (Fin.last n) (⟨i, hi⟩ : Fin n))
+            (skipIndex (0 : Fin (n + 1)) (⟨j, hj⟩ : Fin n))
+            hcol_ne_zero]
+      -- Goal: (if skipIndex 0 (skipIndex (Fin.last n) ⟨i, hi⟩) =
+      --             skipIndex (Fin.last (n+1)) (skipIndex 0 ⟨j, hj⟩)
+      --        then 1 else 0) = if ⟨i, hi⟩ = ⟨j, hj⟩ then 1 else 0
+      have hlhs_val :
+          (skipIndex (0 : Fin (n + 2))
+            (skipIndex (Fin.last n) (⟨i, hi⟩ : Fin n))).val = i + 1 := by
+        rw [skipIndex_val_of_not_lt _ _ (by simp)]
+        congr 1
+        rw [skipIndex_val_of_lt _ _ (by rw [Fin.val_last]; exact hi)]
+      have hrhs_val :
+          (skipIndex (Fin.last (n + 1))
+            (skipIndex (0 : Fin (n + 1)) (⟨j, hj⟩ : Fin n))).val = j + 1 := by
+        rw [skipIndex_val_of_lt _ _ ?_]
+        · rw [skipIndex_val_of_not_lt _ _ (by simp)]
+        · rw [Fin.val_last,
+              skipIndex_val_of_not_lt _ _ (by simp)]
+          omega
+      by_cases hij : (⟨i, hi⟩ : Fin n) = ⟨j, hj⟩
+      · rw [if_pos hij, if_pos]
+        apply Fin.ext
+        rw [hlhs_val, hrhs_val]
+        have : i = j := congrArg Fin.val hij
+        omega
+      · rw [if_neg hij, if_neg]
+        intro heq
+        apply hij
+        have hval := congrArg Fin.val heq
+        apply Fin.ext
+        show i = j
+        omega
+    rw [hminor, det_one]
+    -- Goal: (-1)^n * 1 = (-1)^n; the `1` here is the unit of the
+    -- commutative ring `R`.
+    exact Lean.Grind.Semiring.mul_one ((-1 : R) ^ n)
+  rw [hentry, hcof]
+  -- Combine: `(adjugate M)[Fin.last (n+1)][0] * (-1)^n
+  --          = ((-1)^(n+1) * det(deleteRowCol M 0 (Fin.last (n+1)))) * (-1)^n
+  --          = (-1)^(2n+1) * det(...) = -det(...)`.
+  rw [adjugate_get]
+  unfold cofactor
+  -- Goal: cofactorSign 0 (Fin.last (n+1)) * det (...) * (-1)^n = -det (...)
+  have hsign_eq :
+      cofactorSign (R := R) (0 : Fin (n + 2)) (Fin.last (n + 1))
+        = (-1 : R) ^ (n + 1) := by
+    have h := cofactorSign_last_eq_pow (R := R) (0 : Fin (n + 2))
+    simp only [Fin.val_zero, Nat.sub_zero] at h
+    exact h
+  rw [hsign_eq]
+  have hpow : ((-1 : R) ^ (n + 1)) * ((-1 : R) ^ n) = -1 := by
+    rw [Lean.Grind.Semiring.pow_succ]
+    have hself := neg_one_pow_mul_self (R := R) n
+    grind
+  -- Final algebraic step: clean up + 0 and combine using hpow.
+  let D := det (deleteRowCol M (0 : Fin (n + 2)) (Fin.last (n + 1)))
+  show
+    (-1 : R) ^ (n + 1) * D * (-1 : R) ^ n + 0 = -D
+  have hgoal : (-1 : R) ^ (n + 1) * D * (-1 : R) ^ n + 0 = -D := by
+    have h1 : (-1 : R) ^ (n + 1) * D * (-1) ^ n =
+              ((-1 : R) ^ (n + 1) * (-1) ^ n) * D := by grind
+    rw [h1, hpow]
+    grind
+  exact hgoal
+
 /-! ### `det (M * auxAdjugateM M) = det M * det (auxAdjugateM M)`
 
 The scaled Desnanot-Jacobi identity needs the determinant of
