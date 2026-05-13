@@ -11,7 +11,9 @@ to the van Hoeij/BHKS CLD lattice, with exhaustive subset recombination
 retained only as the slow backstop.  This module operationalises that
 contract: for each fixture polynomial we run `factorSlow`, and when
 fixed-precision `bhksRecover?` returns `some` on the committed lifted-factor
-set we compare that certified fast result against the slow factorization.
+set we check that the certified fast result preserves the same input product.
+If fixed-precision recovery returns `none`, the fast path has made no
+correctness claim; that is an allowed miss for this Lean-only cross-check.
 
 Fixtures cover lifted-factor counts `n ∈ {3, 4, 5}`.  Most fixture
 polynomials are products of distinct integer linear factors with roots fitting
@@ -67,6 +69,31 @@ residue range. -/
 private def liftP : Nat := 37
 private def liftK : Nat := 2
 
+/-- Fixed lift modulus used by the committed `LiftData` fixtures. -/
+private def liftModulus : Nat :=
+  liftP ^ liftK
+
+/-- True when the constant coefficient of `x - r` is already represented by
+the centred residue interval for the fixed modulus.  The linear coefficient
+is `1`, so the root bound is the only nontrivial coefficient check for these
+fixtures. -/
+private def rootFitsCentredLift (r : Int) : Bool :=
+  r.natAbs ≤ liftModulus / 2
+
+/-- Fixture roots are intentionally pairwise distinct so each integer factor is
+a separate linear irreducible and `sortedRoots` identifies the factor multiset
+by its roots. -/
+private def rootsDistinct (roots : List Int) : Bool :=
+  roots.length == roots.eraseDups.length
+
+/-- Local fixture precondition: distinct integer roots, all already in the
+centred residue range for the fixed `p^k`. -/
+private def fixtureAssumptions (roots : List Int) : Bool :=
+  rootsDistinct roots && roots.all rootFitsCentredLift
+
+private def batchAssumptions (batch : List (List Int)) : Bool :=
+  batch.all fixtureAssumptions
+
 /-- Construct a `LiftData` whose `liftedFactors` are the exact integer
 linear factors of `fromRoots roots`.  These factors are already in
 `mod p^k` form because their coefficients fit inside the centred
@@ -81,8 +108,12 @@ private def liftDataOf (roots : List Int) : LiftData :=
     k := liftK
     liftedFactors := (roots.map linear).toArray }
 
-/-- Check the slow backstop, and compare `bhksRecover?` against it whenever the
-fixed-precision BHKS pass returns a certified answer. -/
+/-- Check the slow backstop, and compare fixed-precision BHKS recovery against
+the fixture product when recovery succeeds.
+
+The `none` branch means the fixed-precision fast path did not certify a
+recombination at `liftP ^ liftK`; it is accepted here because the public
+factorization API falls back to `factorSlow` in that case. -/
 private def crossCheck (roots : List Int) : Bool :=
   let f := fromRoots roots
   let liftData := liftDataOf roots
@@ -143,6 +174,10 @@ private def fixturesN5 : List (List Int) :=
   [ [1, 2, 3, 4, 5]
   , [-1, 2, -3, 4, -5]
   , [2, 3, 5, 7, 11] ]
+
+#guard batchAssumptions fixturesN3
+#guard batchAssumptions fixturesN4
+#guard batchAssumptions fixturesN5
 
 #guard fixturesN3.all crossCheck
 #guard fixturesN4.all crossCheck
