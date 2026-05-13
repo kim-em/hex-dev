@@ -2245,12 +2245,33 @@ private def liftModulus (d : LiftData) : Nat :=
 private def centeredLiftPoly (f : ZPoly) (m : Nat) : ZPoly :=
   DensePoly.ofCoeffs <| f.toArray.map fun coeff => centeredModNat coeff m
 
-private def normalizeCandidateFactor (candidate : ZPoly) : ZPoly :=
+/-- Normalize a candidate integer factor by extracting its primitive part and
+flipping sign so the leading coefficient is non-negative.  Used by
+`bhksIndicatorCandidate?` to produce a canonical witness from the centred
+lift of a scaled lifted-factor product. -/
+def normalizeCandidateFactor (candidate : ZPoly) : ZPoly :=
   let primitive := ZPoly.primitivePart candidate
   if DensePoly.leadingCoeff primitive < 0 then
     DensePoly.scale (-1 : Int) primitive
   else
     primitive
+
+/--
+`normalizeCandidateFactor g = g` when `g` is already primitive (content `1`)
+and has non-negative leading coefficient.  This is the A2 reconstruction step
+that asserts the canonical witness produced by `bhksIndicatorCandidate?`
+agrees with the expected true factor under those normalization assumptions.
+-/
+theorem normalizeCandidateFactor_eq_of_primitive_nonneg_leading
+    (g : ZPoly) (hprim : ZPoly.Primitive g)
+    (hsign : 0 ≤ DensePoly.leadingCoeff g) :
+    normalizeCandidateFactor g = g := by
+  unfold normalizeCandidateFactor
+  have hpart : ZPoly.primitivePart g = g :=
+    ZPoly.primitivePart_eq_self_of_primitive g hprim
+  rw [hpart]
+  have hnot_neg : ¬ DensePoly.leadingCoeff g < 0 := Int.not_lt.mpr hsign
+  rw [if_neg hnot_neg]
 
 private def bhksIndicatorSelectedFactors
     (liftedFactors : Array ZPoly) (indicator : Array Int) : Option (Array ZPoly) :=

@@ -3913,6 +3913,21 @@ theorem primitivePart_eq_zero_of_content_eq_zero (p : DensePoly Int) (h : conten
     simpa [content] using h
   simp [primitivePart, hc]
 
+/-- A polynomial whose content is `1` equals its primitive part. -/
+theorem primitivePart_eq_self_of_content_eq_one
+    (p : DensePoly Int) (h : content p = 1) :
+    primitivePart p = p := by
+  have hscale : scale (content p) (primitivePart p) = p :=
+    content_mul_primitivePart p
+  apply ext_coeff
+  intro n
+  have hcoeff :
+      (scale (content p) (primitivePart p)).coeff n = p.coeff n := by
+    rw [hscale]
+  rw [coeff_scale (content p) (primitivePart p) n (Int.mul_zero _)] at hcoeff
+  rw [h] at hcoeff
+  simpa using hcoeff
+
 /-- The primitive part of a polynomial with nonzero content has content `1`. -/
 theorem primitivePart_primitive (p : DensePoly Int) (h : content p ≠ 0) :
     content (primitivePart p) = 1 := by
