@@ -198,6 +198,133 @@ theorem projectedRow_mem_projectedRowSpaceRat
     Matrix.row (projectedRowsRatMatrix L) i ∈ projectedRowSpaceRat L := by
   exact Submodule.subset_span ⟨i, rfl⟩
 
+/-- `intVectorToRat` of the zero vector is the zero rational vector. -/
+@[simp] theorem intVectorToRat_zero {r : Nat} :
+    intVectorToRat (0 : Fin r → ℤ) = 0 := by
+  funext i
+  simp [intVectorToRat]
+
+/-- `intVectorToRat` commutes with pointwise addition. -/
+@[simp] theorem intVectorToRat_add {r : Nat} (u v : Fin r → ℤ) :
+    intVectorToRat (u + v) = intVectorToRat u + intVectorToRat v := by
+  funext i
+  simp [intVectorToRat, Pi.add_apply]
+
+/-- `intVectorToRat` of an integer-scalar multiple is the rational-cast scalar
+times the rational vector. -/
+@[simp] theorem intVectorToRat_intSmul {r : Nat} (n : ℤ) (v : Fin r → ℤ) :
+    intVectorToRat (n • v) = (n : ℚ) • intVectorToRat v := by
+  funext i
+  simp only [intVectorToRat, Pi.smul_apply, smul_eq_mul, Int.cast_mul]
+
+/-- Membership in the integer span carries over to membership of the
+rational-cast vector in the rational span of the rational-cast generators. -/
+theorem intVectorToRat_mem_span_rat_of_mem_span_int
+    {r : Nat} {S : Set (Fin r → ℤ)} {v : Fin r → ℤ}
+    (hv : v ∈ Submodule.span ℤ S) :
+    intVectorToRat v ∈ Submodule.span ℚ (intVectorToRat '' S) := by
+  induction hv using Submodule.span_induction with
+  | mem w hw => exact Submodule.subset_span ⟨w, hw, rfl⟩
+  | zero =>
+      rw [intVectorToRat_zero]
+      exact Submodule.zero_mem _
+  | add u w _ _ hu hw =>
+      rw [intVectorToRat_add]
+      exact Submodule.add_mem _ hu hw
+  | smul n w _ hw =>
+      rw [intVectorToRat_intSmul]
+      exact Submodule.smul_mem _ _ hw
+
+/-- Two integer-vector sets with equal ℤ-spans give equal ℚ-spans after the
+pointwise rational cast.  This is the scalar-extension transport step that lets
+B7 lift the abstract `L' = W` integer equality to a rational row-span equality
+that #3756's executable RREF row-span theorem can consume. -/
+theorem span_rat_image_eq_of_span_int_eq
+    {r : Nat} {S₁ S₂ : Set (Fin r → ℤ)}
+    (hint : Submodule.span ℤ S₁ = Submodule.span ℤ S₂) :
+    Submodule.span ℚ (intVectorToRat '' S₁) =
+      Submodule.span ℚ (intVectorToRat '' S₂) := by
+  refine le_antisymm (Submodule.span_le.mpr ?_) (Submodule.span_le.mpr ?_)
+  · rintro _ ⟨v, hv, rfl⟩
+    have hv' : v ∈ Submodule.span ℤ S₂ :=
+      hint ▸ Submodule.subset_span hv
+    exact intVectorToRat_mem_span_rat_of_mem_span_int hv'
+  · rintro _ ⟨v, hv, rfl⟩
+    have hv' : v ∈ Submodule.span ℤ S₁ :=
+      hint.symm ▸ Submodule.subset_span hv
+    exact intVectorToRat_mem_span_rat_of_mem_span_int hv'
+
+/-- The rational counterpart of `trueFactorIndicatorLattice`: the rational span
+of the rational-cast indicator vectors. -/
+def trueFactorIndicatorLattice_rat
+    {r : Nat} (trueSupports : Set (Set (Fin r))) :
+    Submodule ℚ (Fin r → ℚ) :=
+  Submodule.span ℚ (Set.range fun S : trueSupports =>
+    intVectorToRat (indicatorVector S.1))
+
+/-- The rational projected row is the pointwise rational cast of the integer
+projected row.  Both `projectedRowsRatMatrix` and `projectedRowsIntMatrix` read
+the same underlying `L.projectedRows` array; the only difference is the
+codomain. -/
+theorem row_projectedRowsRatMatrix_eq_intVectorToRat
+    (L : Hex.BhksProjectedRows) (i : Fin L.projectedRows.size) :
+    Matrix.row (projectedRowsRatMatrix L) i =
+      intVectorToRat (Matrix.row (projectedRowsIntMatrix L) i) := by
+  funext j
+  simp [Matrix.row, projectedRowsRatMatrix, projectedRowsIntMatrix,
+    intVectorToRat]
+
+/-- The range of the rational projected rows is the image of the range of the
+integer projected rows under `intVectorToRat`. -/
+theorem range_row_projectedRowsRatMatrix_eq_image
+    (L : Hex.BhksProjectedRows) :
+    (Set.range fun i : Fin L.projectedRows.size =>
+        Matrix.row (projectedRowsRatMatrix L) i) =
+      intVectorToRat ''
+        (Set.range fun i : Fin L.projectedRows.size =>
+          Matrix.row (projectedRowsIntMatrix L) i) := by
+  ext w
+  constructor
+  · rintro ⟨i, rfl⟩
+    exact ⟨Matrix.row (projectedRowsIntMatrix L) i, ⟨i, rfl⟩,
+      (row_projectedRowsRatMatrix_eq_intVectorToRat L i).symm⟩
+  · rintro ⟨v, ⟨i, rfl⟩, rfl⟩
+    exact ⟨i, (row_projectedRowsRatMatrix_eq_intVectorToRat L i)⟩
+
+/-- The range of the rational-cast indicator vectors is the image of the range
+of the integer indicator vectors under `intVectorToRat`. -/
+theorem range_intVectorToRat_indicatorVector_eq_image
+    {r : Nat} (trueSupports : Set (Set (Fin r))) :
+    (Set.range fun S : trueSupports =>
+        intVectorToRat (indicatorVector S.1)) =
+      intVectorToRat ''
+        (Set.range fun S : trueSupports => indicatorVector S.1) := by
+  ext w
+  constructor
+  · rintro ⟨S, rfl⟩
+    exact ⟨indicatorVector S.1, ⟨S, rfl⟩, rfl⟩
+  · rintro ⟨v, ⟨S, rfl⟩, rfl⟩
+    exact ⟨S, rfl⟩
+
+/-- BHKS rational row-span transport: an integer `L' = W` equality at the
+abstract projected-row level lifts to a rational `L' = W` equality between the
+rational projected row span and the rational indicator lattice
+`trueFactorIndicatorLattice_rat`.
+
+This is the first leg of B7: the executable RREF runs over `ℚ`, so the integer
+separation `L' = W` supplied by callers (typically the cap-specialised
+`BHKS.projectedRowSpan_eq_trueFactorIndicatorLattice_of_cap` from
+`TerminationBound.lean`) must be lifted to a rational row-span equality before
+#3756's `HexMatrixMathlib.spanContains_iff_mem_span` can be applied. -/
+theorem projectedRowSpaceRat_eq_trueFactorIndicatorLattice_rat
+    (L : Hex.BhksProjectedRows) (trueSupports : Set (Set (Fin L.factorCount)))
+    (hint : projectedRowSpanInt L = trueFactorIndicatorLattice trueSupports) :
+    projectedRowSpaceRat L = trueFactorIndicatorLattice_rat trueSupports := by
+  unfold projectedRowSpaceRat trueFactorIndicatorLattice_rat
+  rw [range_row_projectedRowsRatMatrix_eq_image L,
+    range_intVectorToRat_indicatorVector_eq_image trueSupports]
+  exact span_rat_image_eq_of_span_int_eq hint
+
 end BHKS
 
 end
