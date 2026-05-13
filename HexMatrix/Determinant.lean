@@ -8402,6 +8402,151 @@ theorem mul_auxAdjugateM_eq_auxP
   intro j hj
   exact mul_auxAdjugateM_eq_auxP_entry M ⟨i, hi⟩ ⟨j, hj⟩
 
+private theorem foldl_det_sum_finRange_zero
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (f : Fin (n + 1) → R)
+    (hzero : ∀ i : Fin n, f i.succ = 0) :
+    (List.finRange (n + 1)).foldl (fun acc i => acc + f i) 0 = f 0 := by
+  rw [← Fin.foldl_eq_foldl_finRange]
+  rw [Fin.foldl_succ]
+  rw [Fin.foldl_eq_foldl_finRange]
+  calc
+    (List.finRange n).foldl (fun acc i => acc + f i.succ) (0 + f 0) =
+        (List.finRange n).foldl (fun acc (_i : Fin n) => acc + (0 : R)) (0 + f 0) := by
+      apply foldl_acc_congr
+      intro acc i _hmem
+      rw [hzero i]
+    _ = f 0 := by
+      rw [foldl_det_sum_zero]
+      grind
+
+private theorem foldl_det_sum_finRange_last
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (f : Fin (n + 1) → R)
+    (hzero : ∀ i : Fin n, f i.castSucc = 0) :
+    (List.finRange (n + 1)).foldl (fun acc i => acc + f i) 0 = f (Fin.last n) := by
+  rw [← Fin.foldl_eq_foldl_finRange]
+  rw [Fin.foldl_succ_last]
+  have hprefix :
+      Fin.foldl n (fun acc i => acc + f i.castSucc) 0 = 0 := by
+    rw [Fin.foldl_eq_foldl_finRange]
+    calc
+      (List.finRange n).foldl (fun acc i => acc + f i.castSucc) 0 =
+          (List.finRange n).foldl (fun acc (_i : Fin n) => acc + (0 : R)) 0 := by
+        apply foldl_acc_congr
+        intro acc i _hmem
+        rw [hzero i]
+      _ = 0 := by
+        exact foldl_det_sum_zero (List.finRange n) 0
+  rw [hprefix]
+  grind
+
+private theorem deleteRowCol_deleteRowCol_auxP_endpoints
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) :
+    deleteRowCol (deleteRowCol (auxP M) 0 0) (Fin.last n) (Fin.last n) =
+      deleteRowCol (deleteRowCol M 0 0) (Fin.last n) (Fin.last n) := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let ii : Fin n := ⟨i, hi⟩
+  let jj : Fin n := ⟨j, hj⟩
+  change
+    (deleteRowCol (deleteRowCol (auxP M) 0 0) (Fin.last n) (Fin.last n))[ii][jj] =
+      (deleteRowCol (deleteRowCol M 0 0) (Fin.last n) (Fin.last n))[ii][jj]
+  rw [deleteRowCol_entry, deleteRowCol_entry, deleteRowCol_entry, deleteRowCol_entry]
+  have hcol0 : skipIndex (0 : Fin (n + 2)) (skipIndex (Fin.last n) jj) ≠
+      (0 : Fin (n + 2)) := by
+    exact skipIndex_ne 0 (skipIndex (Fin.last n) jj)
+  have hcollast : skipIndex (0 : Fin (n + 2)) (skipIndex (Fin.last n) jj) ≠
+      Fin.last (n + 1) := by
+    intro h
+    have hval := congrArg Fin.val h
+    have hinner : (skipIndex (Fin.last n) jj).val = jj.val := by
+      simp [skipIndex, Fin.last, jj.isLt]
+    rw [skipIndex_val_of_not_lt] at hval
+    · rw [hinner] at hval
+      simp [Fin.last] at hval
+      have hjlt : jj.val < n := jj.isLt
+      omega
+    · exact Nat.not_lt_zero _
+  rw [auxP_apply_middle M _ _ hcol0 hcollast]
+
+/-- Determinant of the Desnanot-Jacobi auxiliary product matrix `auxP`.
+
+The proof expands along column `0`, then along the last column of the
+surviving minor; both columns have a single nonzero entry by construction. -/
+theorem det_auxP
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) :
+    det (auxP M) =
+      det M * det M *
+        det (deleteRowCol (deleteRowCol M 0 0) (Fin.last n) (Fin.last n)) := by
+  let Q : Matrix R (n + 1) (n + 1) := deleteRowCol (auxP M) 0 0
+  have hfirst : det (auxP M) = det M * det Q := by
+    rw [det_eq_foldl_laplace_col (auxP M) (0 : Fin (n + 2))]
+    rw [foldl_det_sum_finRange_zero
+      (fun row => (auxP M)[row][(0 : Fin (n + 2))] *
+        cofactor (auxP M) row (0 : Fin (n + 2)))]
+    · rw [auxP_apply_zero]
+      rw [if_pos rfl]
+      rw [cofactor_of_even (auxP M) 0 0 (by simp)]
+    · intro row
+      rw [auxP_apply_zero]
+      rw [if_neg (Fin.succ_ne_zero row)]
+      grind
+  have hsecond : det Q = det M * det (deleteRowCol Q (Fin.last n) (Fin.last n)) := by
+    rw [det_eq_foldl_laplace_col Q (Fin.last n)]
+    rw [foldl_det_sum_finRange_last
+      (fun row => Q[row][Fin.last n] * cofactor Q row (Fin.last n))]
+    · have hQlast : Q[Fin.last n][Fin.last n] = det M := by
+        change (deleteRowCol (auxP M) 0 0)[Fin.last n][Fin.last n] = det M
+        rw [deleteRowCol_entry]
+        have hskip : skipIndex (0 : Fin (n + 2)) (Fin.last n) = Fin.last (n + 1) := by
+          apply Fin.ext
+          simp [skipIndex, Fin.last]
+        rw [show ((auxP M)[skipIndex (0 : Fin (n + 2)) (Fin.last n)])[skipIndex (0 : Fin (n + 2)) (Fin.last n)] =
+              ((auxP M)[skipIndex (0 : Fin (n + 2)) (Fin.last n)])[Fin.last (n + 1)] by
+          exact congrArg
+            (fun c => ((auxP M)[skipIndex (0 : Fin (n + 2)) (Fin.last n)])[c])
+            hskip]
+        rw [auxP_apply_last]
+        rw [if_pos hskip]
+      rw [hQlast]
+      rw [cofactor_last_last Q]
+      rw [deleteRowCol_last_last Q]
+    · intro row
+      have hskip_ne_last :
+          skipIndex (0 : Fin (n + 2)) row.castSucc ≠ Fin.last (n + 1) := by
+        intro h
+        have hval := congrArg Fin.val h
+        rw [skipIndex_val_of_not_lt] at hval
+        · simp [Fin.last] at hval
+          have hrowlt : row.val < n := row.isLt
+          omega
+        · exact Nat.not_lt_zero _
+      have hQzero : Q[row.castSucc][Fin.last n] = 0 := by
+        change (deleteRowCol (auxP M) 0 0)[row.castSucc][Fin.last n] = 0
+        rw [deleteRowCol_entry]
+        have hskip : skipIndex (0 : Fin (n + 2)) (Fin.last n) = Fin.last (n + 1) := by
+          apply Fin.ext
+          simp [skipIndex, Fin.last]
+        rw [show ((auxP M)[skipIndex (0 : Fin (n + 2)) row.castSucc])[skipIndex (0 : Fin (n + 2)) (Fin.last n)] =
+              ((auxP M)[skipIndex (0 : Fin (n + 2)) row.castSucc])[Fin.last (n + 1)] by
+          exact congrArg
+            (fun c => ((auxP M)[skipIndex (0 : Fin (n + 2)) row.castSucc])[c]) hskip]
+        rw [auxP_apply_last]
+        rw [if_neg hskip_ne_last]
+      rw [hQzero]
+      grind
+  have hminor :
+      deleteRowCol Q (Fin.last n) (Fin.last n) =
+        deleteRowCol (deleteRowCol M 0 0) (Fin.last n) (Fin.last n) := by
+    simpa [Q] using deleteRowCol_deleteRowCol_auxP_endpoints M
+  rw [hfirst, hsecond, hminor]
+  grind
+
 /-! ### Bareiss Desnanot source-entry helpers and structural submatrix equalities
 
 Following the Mathlib-side reindexing in `HexMatrixMathlib/Determinant/Core.lean`,
