@@ -5723,6 +5723,72 @@ private theorem foldl_det_sum_nested_zero {R : Type u} [Lean.Grind.CommRing R]
         (fun acc x => acc + ys.foldl (fun acc' y => acc' + f x y) 0) 0 := by
   exact (foldl_det_sum_nested_start xs ys f (0 : R)).trans (by grind)
 
+/-- Inner sum-over-permutations collapse: for any row `i`, the Leibniz terms whose
+permutation sends row `i` to the last column collapse to `M[i][last] * cofactor M i last`. -/
+private theorem foldl_detTerm_insertions_eq_cofactor
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (i : Fin (n + 1)) :
+    (permutationVectors n).foldl
+        (fun acc v => acc + detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i)) 0 =
+      M[i][Fin.last n] * cofactor M i (Fin.last n) := by
+  have hsumands : (permutationVectors n).foldl
+        (fun acc v => acc + detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i)) 0 =
+      (permutationVectors n).foldl
+        (fun acc v => acc + cofactorSign (R := R) i (Fin.last n) *
+          (M[i][Fin.last n] * detTerm (deleteRowCol M i (Fin.last n)) v)) 0 := by
+    apply foldl_det_sum_congr
+    intro v _hmem
+    exact detTerm_insertAt_general M v i
+  rw [hsumands]
+  rw [foldl_det_sum_mul_left_zero (permutationVectors n)
+    (cofactorSign (R := R) i (Fin.last n))
+    (fun v => M[i][Fin.last n] * detTerm (deleteRowCol M i (Fin.last n)) v)]
+  rw [foldl_det_sum_mul_left_zero (permutationVectors n) M[i][Fin.last n]
+    (fun v => detTerm (deleteRowCol M i (Fin.last n)) v)]
+  show cofactorSign (R := R) i (Fin.last n) *
+       (M[i][Fin.last n] * det (deleteRowCol M i (Fin.last n))) = _
+  unfold cofactor
+  grind
+
+/-- Laplace expansion of the determinant along the final column. -/
+theorem det_eq_foldl_laplace_last
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) :
+    det M =
+      (List.finRange (n + 1)).foldl
+        (fun acc row => acc + M[row][Fin.last n] * cofactor M row (Fin.last n)) 0 := by
+  unfold det
+  rw [show permutationVectors (n + 1) =
+      List.flatMap
+        (fun v =>
+          (List.finRange (n + 1)).map fun i =>
+            insertAt (Fin.last n) (v.map Fin.castSucc) i)
+        (permutationVectors n) from rfl]
+  rw [foldl_det_sum_flatMap]
+  have hmap :
+      (permutationVectors n).foldl
+        (fun acc v =>
+          ((List.finRange (n + 1)).map
+            (fun i => insertAt (Fin.last n) (v.map Fin.castSucc) i)).foldl
+            (fun acc perm => acc + detTerm M perm) acc) 0 =
+      (permutationVectors n).foldl
+        (fun acc v =>
+          (List.finRange (n + 1)).foldl
+            (fun acc i =>
+              acc + detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i)) acc) 0 := by
+    apply foldl_acc_congr
+    intro acc v _hmem
+    simp only [List.foldl_map]
+  rw [hmap]
+  rw [foldl_det_sum_nested_zero (permutationVectors n) (List.finRange (n + 1))
+    (fun v i => detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i))]
+  rw [foldl_det_sum_swap (permutationVectors n) (List.finRange (n + 1))
+    (fun v i => detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i))]
+  apply foldl_acc_congr
+  intro acc i _hmem
+  congr 1
+  exact foldl_detTerm_insertions_eq_cofactor M i
+
 /-- The square matrix obtained from `columnSumMatrix source coeff` by replacing
 the first `chosen.length` columns with selected `source` columns indexed by
 `chosen`. The remaining columns stay in finite-sum form. -/
