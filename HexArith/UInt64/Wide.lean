@@ -13,6 +13,19 @@ namespace UInt64
 /-- The radix for a single `UInt64` word. -/
 def word : Nat := 2 ^ 64
 
+/-- The `UInt64` word radix is positive. -/
+theorem word_pos : 0 < word := by
+  simp [word]
+
+/-- Every `UInt64` value is strictly below the word radix. -/
+theorem toNat_lt_word (a : UInt64) : a.toNat < word := by
+  simpa [word, UInt64.size] using UInt64.toNat_lt_size a
+
+/-- `UInt64.ofNat` reduces Nat values modulo the word radix. -/
+theorem toNat_ofNat_mod_word (n : Nat) :
+    (UInt64.ofNat n).toNat = n % word := by
+  simp [word]
+
 /-- The high 64 bits of the product `a * b`, viewed in radix `2^64`. -/
 @[extern "lean_hex_uint64_mul_hi"]
 def mulHi (a b : UInt64) : UInt64 :=
@@ -56,10 +69,6 @@ private theorem toNat_ofNat_quot_mul_lt_word (a b : UInt64) :
   have hquot : a.toNat * b.toNat / word < word := Nat.div_lt_of_lt_mul hprod
   simpa [UInt64.toNat_ofNat, word] using Nat.mod_eq_of_lt hquot
 
-private theorem toNat_ofNat_word (n : Nat) :
-    (UInt64.ofNat n).toNat = n % word := by
-  simp [word]
-
 /-- `mulHi` agrees with Nat-level division by `2^64`. -/
 theorem toNat_mulHi (a b : UInt64) :
     (mulHi a b).toNat = a.toNat * b.toNat / word := by
@@ -93,6 +102,30 @@ theorem mulFull_eq_mulHi_mul (a b : UInt64) :
       · apply UInt64.toNat_inj.mp
         simpa [UInt64.toNat_mul, word] using hfull.2
 
+/-- The high component of `mulFull` is the same value returned by `mulHi`. -/
+@[simp]
+theorem mulFull_fst_eq_mulHi (a b : UInt64) :
+    (mulFull a b).1 = mulHi a b := by
+  simpa using congrArg Prod.fst (mulFull_eq_mulHi_mul a b)
+
+/-- The low component of `mulFull` is ordinary wrapped `UInt64` multiplication. -/
+@[simp]
+theorem mulFull_snd_eq_mul (a b : UInt64) :
+    (mulFull a b).2 = a * b := by
+  simpa using congrArg Prod.snd (mulFull_eq_mulHi_mul a b)
+
+/-- Nat-level view of the high component returned by `mulFull`. -/
+@[simp]
+theorem toNat_mulFull_fst (a b : UInt64) :
+    (mulFull a b).1.toNat = a.toNat * b.toNat / word := by
+  rw [mulFull_fst_eq_mulHi, toNat_mulHi]
+
+/-- Nat-level view of the low component returned by `mulFull`. -/
+@[simp]
+theorem toNat_mulFull_snd (a b : UInt64) :
+    (mulFull a b).2.toNat = a.toNat * b.toNat % word := by
+  simp [mulFull_snd_eq_mul, UInt64.toNat_mul, word]
+
 /--
 Splitting the product into high and low words reconstructs the original
 Nat-level product.
@@ -123,12 +156,12 @@ theorem toNat_addCarry (a b : UInt64) (cin : Bool) :
   · have hdiv : total / word = 1 :=
       Nat.div_eq_of_lt_le (by simpa using hcarry) (by omega)
     have hsplit := Nat.mod_add_div total word
-    rw [toNat_ofNat_word,
+    rw [toNat_ofNat_mod_word,
       show (decide (word ≤ total)).toNat = 1 by simp [hcarry]]
     rw [hdiv] at hsplit
     omega
   · have htotal_word : total < word := by omega
-    rw [toNat_ofNat_word,
+    rw [toNat_ofNat_mod_word,
       show (decide (word ≤ total)).toNat = 0 by simp [hcarry],
       Nat.mod_eq_of_lt htotal_word]
     omega
