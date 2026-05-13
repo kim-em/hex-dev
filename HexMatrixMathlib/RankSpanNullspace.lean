@@ -65,7 +65,7 @@ private theorem vectorEquiv_mulVec [Field R] (M : Hex.Matrix R n m) (v : Vector 
   intro k _
   rfl
 
-private theorem vectorEquiv_rowCombination [Field R] (M : Hex.Matrix R n m) (c : Vector R n) :
+theorem vectorEquiv_rowCombination [Field R] (M : Hex.Matrix R n m) (c : Vector R n) :
     vectorEquiv (Hex.Matrix.rowCombination M c) =
       Fintype.linearCombination R (_root_.Matrix.row (matrixEquiv M)) (vectorEquiv c) := by
   funext j
@@ -137,6 +137,33 @@ theorem spanContains_iff_mem_span [Field R] [DecidableEq R]
     apply Equiv.injective vectorEquiv
     rw [vectorEquiv_rowCombination M (vectorEquiv.symm c)]
     simpa using hc
+
+theorem rref_echelon_row_mem_span [Field R] [DecidableEq R]
+    {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
+    (E : Hex.Matrix.IsRREF M D) (i : Fin n) :
+    vectorEquiv (Hex.Matrix.row D.echelon i) ∈
+      Submodule.span R (Set.range (_root_.Matrix.row (matrixEquiv M))) := by
+  rw [← Fintype.range_linearCombination]
+  let e : Vector R n := Vector.ofFn fun p : Fin n => if i = p then (1 : R) else 0
+  refine ⟨vectorEquiv (Hex.Matrix.transpose D.transform * e), ?_⟩
+  rw [← vectorEquiv_rowCombination M (Hex.Matrix.transpose D.transform * e)]
+  have htransport := E.toIsEchelonForm.rowCombination_transform_transpose (e := e)
+  have hsingle : Hex.Matrix.rowCombination D.echelon e = Hex.Matrix.row D.echelon i := by
+    simpa [e] using Hex.Matrix.IsRREF.rowCombination_single (M := D.echelon) i
+  rw [htransport, hsingle]
+
+theorem rref_mem_span_echelon_of_mem_span [Field R] [DecidableEq R]
+    {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
+    (E : Hex.Matrix.IsRREF M D) {v : Fin m → R} :
+    v ∈ Submodule.span R (Set.range (_root_.Matrix.row (matrixEquiv M))) →
+      ∃ c : Vector R n, Hex.Matrix.rowCombination D.echelon c = vectorEquiv.symm v := by
+  intro hv
+  have hcontains :
+      E.toIsEchelonForm.spanContains (vectorEquiv.symm v) = true := by
+    rw [spanContains_iff_mem_span E]
+    simpa using hv
+  exact E.toIsEchelonForm.exists_rowCombination_echelon_of_M
+    ((E.spanContains_iff (vectorEquiv.symm v)).mp hcontains)
 
 theorem nullspace_mem_ker [Field R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}

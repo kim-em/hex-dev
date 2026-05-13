@@ -1732,7 +1732,7 @@ end FieldAlgorithms
 
 namespace IsEchelonForm
 
-private theorem rowCombination_transform_transpose [Lean.Grind.CommRing R]
+theorem rowCombination_transform_transpose [Lean.Grind.CommRing R]
     {M : Matrix R n m} {D : RowEchelonData R n m}
     (E : IsEchelonForm M D) (e : Vector R n) :
     rowCombination M (Matrix.transpose D.transform * e) =
@@ -1752,7 +1752,7 @@ private theorem rowCombination_transform_transpose [Lean.Grind.CommRing R]
 yields a `D.echelon`-row-combination witness `Matrix.transpose Tinv * c`,
 where `Tinv` is any left inverse of `D.transform`. The proof reuses the
 forward transport at the candidate witness. -/
-private theorem rowCombination_transformInv_transpose [Lean.Grind.CommRing R]
+theorem rowCombination_transformInv_transpose [Lean.Grind.CommRing R]
     {M : Matrix R n m} {D : RowEchelonData R n m}
     (E : IsEchelonForm M D) {Tinv : Matrix R n n}
     (hTinv : Tinv * D.transform = 1) (c : Vector R n) :
@@ -1778,7 +1778,7 @@ private theorem rowCombination_transformInv_transpose [Lean.Grind.CommRing R]
 /-- Existential converse transport: any `v` in the row span of `M` is also in
 the row span of `D.echelon`, with an explicit witness produced from a left
 inverse of `D.transform`. -/
-private theorem exists_rowCombination_echelon_of_M [Lean.Grind.CommRing R]
+theorem exists_rowCombination_echelon_of_M [Lean.Grind.CommRing R]
     {M : Matrix R n m} {D : RowEchelonData R n m}
     (E : IsEchelonForm M D) {v : Vector R m}
     (h : ∃ c : Vector R n, rowCombination M c = v) :
@@ -1922,6 +1922,53 @@ private theorem foldl_indicator_mul_unique {R : Type u} [Lean.Grind.Ring R]
         have hacc : acc + (0 : R) = acc := by grind
         rw [hacc]
         rw [ih hitail (List.nodup_cons.mp hnodup).2 acc]
+
+theorem rowCombination_single {R : Type u} [Lean.Grind.CommRing R]
+    {n m : Nat} (M : Matrix R n m) (i : Fin n) :
+    rowCombination M (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0) =
+      row M i := by
+  apply Vector.ext
+  intro j hj
+  let jf : Fin m := ⟨j, hj⟩
+  change
+    (rowCombination M (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0))[jf] =
+      (row M i)[jf]
+  unfold rowCombination
+  change (Matrix.mulVec (Matrix.transpose M)
+      (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0))[jf] =
+    (row M i)[jf]
+  unfold Matrix.mulVec Matrix.dot Matrix.row Hex.Vector.dotProduct Matrix.transpose
+    Matrix.col
+  change (Vector.ofFn fun j : Fin m =>
+      (List.finRange n).foldl
+        (fun acc l => acc + (Vector.ofFn fun j : Fin m => Vector.ofFn fun i : Fin n => M[i][j])[j][l] *
+          (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0)[l]) 0).get jf =
+    M[i][jf]
+  rw [Vector.get_ofFn]
+  change
+    (List.finRange n).foldl
+        (fun acc l => acc +
+          (Vector.ofFn fun j : Fin m => Vector.ofFn fun i : Fin n => M[i][j])[jf][l] *
+          (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0)[l]) 0 =
+      M[i][jf]
+  have hbody :
+      (List.finRange n).foldl
+          (fun acc l => acc +
+            (Vector.ofFn fun j : Fin m => Vector.ofFn fun i : Fin n => M[i][j])[jf][l] *
+            (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0)[l]) 0 =
+        (List.finRange n).foldl
+          (fun acc l => acc + (if i = l then (1 : R) else 0) * M[l][jf]) 0 := by
+    apply foldl_sum_congr
+    intro l _hl
+    by_cases hil : i = l
+    · simp [hil, Lean.Grind.CommSemiring.mul_comm]
+    · rw [if_neg hil]
+      grind
+  rw [hbody]
+  have hpick := foldl_indicator_mul_unique (R := R) (List.finRange n) i
+    (fun l : Fin n => M[l][jf]) (List.mem_finRange i) (List.nodup_finRange n) 0
+  have hzero : (0 : R) + M[i][jf] = M[i][jf] := by grind
+  exact hpick.trans hzero
 
 private theorem pivot_column_entry [Lean.Grind.Field R] (E : IsRREF M D)
     (p : Fin D.rank) (i : Fin n) :
