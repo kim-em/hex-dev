@@ -2790,6 +2790,113 @@ private theorem nextHenselPrecision_mem_schedule {B k fuel : Nat}
       henselPrecisionSchedule B k (fuel + 2) := by
   simp [henselPrecisionSchedule, hk]
 
+/-- Helper: when the doubling fuel `fuel` is large enough that the geometric
+progression starting from `k` reaches the cap `B`, the cap appears in the
+finite Hensel precision schedule.  The geometric bound `B ≤ k * 2 ^ fuel`
+is what we will discharge for the canonical executable choice
+`k = initialHenselPrecision B`, `fuel = quadraticDoublingSteps B + 1`. -/
+private theorem henselPrecisionSchedule_mem_cap
+    {B : Nat} :
+    ∀ (k fuel : Nat), 0 < k → k ≤ B → B ≤ k * 2 ^ fuel →
+      B ∈ henselPrecisionSchedule B k (fuel + 1) := by
+  intro k fuel
+  induction fuel generalizing k with
+  | zero =>
+      intro _ hk_le hfuel
+      have hkB : k = B := by
+        have : k * 2 ^ 0 = k := by simp
+        omega
+      subst hkB
+      simp [henselPrecisionSchedule]
+  | succ fuel ih =>
+      intro hk_pos hk_le hfuel
+      by_cases hk_eq : k = B
+      · subst hk_eq
+        simp [henselPrecisionSchedule]
+      · have hk_lt : k < B := Nat.lt_of_le_of_ne hk_le hk_eq
+        rw [henselPrecisionSchedule]
+        simp only [List.mem_cons]
+        right
+        rw [if_neg (by omega : ¬ k ≥ B)]
+        unfold nextHenselPrecision
+        have hpow : k * 2 ^ (fuel + 1) = 2 * k * 2 ^ fuel := by
+          rw [Nat.pow_succ']
+          rw [← Nat.mul_assoc, Nat.mul_comm k 2]
+        by_cases h2 : 2 * k < B
+        · rw [if_pos h2]
+          refine ih (2 * k) (by omega) (by omega) ?_
+          omega
+        · rw [if_neg h2]
+          refine ih B (by omega) (Nat.le_refl _) ?_
+          have hge1 : 1 ≤ 2 ^ fuel := Nat.one_le_two_pow
+          calc B = B * 1 := (Nat.mul_one B).symm
+            _ ≤ B * 2 ^ fuel := Nat.mul_le_mul_left B hge1
+
+/--
+The fast-path cap `B` is itself a member of the canonical Hensel precision
+schedule the executable loop walks: `henselPrecisionSchedule B
+(initialHenselPrecision B) (quadraticDoublingSteps B + 2)`.
+
+This is the connective bridge consumed by the Mathlib-facing Group D
+forward-recovery wrapper: callers who supply `ForwardRecoveryInputs` at the
+canonical terminal precision no longer need to re-prove the executable
+doubling-schedule membership obligation.
+-/
+theorem cap_mem_henselPrecisionSchedule (B : Nat) :
+    B ∈ henselPrecisionSchedule B (initialHenselPrecision B)
+      (ZPoly.quadraticDoublingSteps B + 2) := by
+  rcases Nat.eq_zero_or_pos B with hB | hB
+  · subst hB
+    simp [henselPrecisionSchedule, initialHenselPrecision]
+  · -- B ≥ 1.  Reduce to the geometric-bound helper.
+    have hinit_pos : 0 < initialHenselPrecision B := by
+      unfold initialHenselPrecision
+      by_cases hle : B ≤ 4
+      · simp [hle]; omega
+      · simp [hle]
+    have hinit_le : initialHenselPrecision B ≤ B := initialHenselPrecision_le B
+    have hbound :
+        B ≤ initialHenselPrecision B * 2 ^ (ZPoly.quadraticDoublingSteps B + 1) := by
+      by_cases hsmall : B ≤ 4
+      · have hinit : initialHenselPrecision B = B := by
+          unfold initialHenselPrecision; simp [hsmall]
+        rw [hinit]
+        have hpow : 1 ≤ 2 ^ (ZPoly.quadraticDoublingSteps B + 1) :=
+          Nat.one_le_two_pow
+        calc B = B * 1 := (Nat.mul_one B).symm
+          _ ≤ B * 2 ^ (ZPoly.quadraticDoublingSteps B + 1) :=
+              Nat.mul_le_mul_left B hpow
+      · have hinit : initialHenselPrecision B = 4 := by
+          unfold initialHenselPrecision
+          simp [hsmall]
+        rw [hinit]
+        have hquad :
+            ZPoly.quadraticDoublingSteps B = (B - 1).log2 + 1 := by
+          unfold ZPoly.quadraticDoublingSteps
+          have : ¬ B ≤ 1 := by omega
+          simp [this]
+        rw [hquad]
+        -- Goal: B ≤ 4 * 2 ^ ((B - 1).log2 + 1 + 1)
+        have hlog : B - 1 < 2 ^ ((B - 1).log2 + 1) := Nat.lt_log2_self
+        have hB_le : B ≤ 2 ^ ((B - 1).log2 + 1) := by omega
+        have hexp :
+            2 ^ ((B - 1).log2 + 1 + 1) = 2 * 2 ^ ((B - 1).log2 + 1) := by
+          rw [Nat.pow_succ, Nat.mul_comm]
+        calc B ≤ 2 ^ ((B - 1).log2 + 1) := hB_le
+          _ ≤ 4 * 2 ^ ((B - 1).log2 + 1 + 1) := by
+              rw [hexp]
+              -- 2^(x+1) ≤ 4 * (2 * 2^(x+1)) = 8 * 2^(x+1)
+              have hle : 2 ^ ((B - 1).log2 + 1) ≤ 8 * 2 ^ ((B - 1).log2 + 1) := by
+                have : 1 ≤ 8 := by decide
+                calc 2 ^ ((B - 1).log2 + 1)
+                    = 1 * 2 ^ ((B - 1).log2 + 1) := (Nat.one_mul _).symm
+                  _ ≤ 8 * 2 ^ ((B - 1).log2 + 1) := Nat.mul_le_mul_right _ this
+              have h8eq : 4 * (2 * 2 ^ ((B - 1).log2 + 1)) =
+                  8 * 2 ^ ((B - 1).log2 + 1) := by
+                rw [← Nat.mul_assoc]
+              omega
+    exact henselPrecisionSchedule_mem_cap _ _ hinit_pos hinit_le hbound
+
 private theorem factorFastCoreWithBound_isSome_of_recovery_on_schedule
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
     {start fuel target : Nat} {factors : Array ZPoly}
