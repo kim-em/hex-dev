@@ -22,7 +22,7 @@ jobs:
         run: python3 scripts/ci/check_benches_mathlib_free.py
       - run: sudo apt-get install -y libgmp-dev libfplll-dev
       - name: Install Python bench comparator dependencies
-        run: python3 -m pip install --user cysignals fpylll
+        run: python3 -m pip install --user cysignals fpylll python-flint
       - name: Set up Lean toolchain (no build)
         uses: leanprover/lean-action@v1
         with:
