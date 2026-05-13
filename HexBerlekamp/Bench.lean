@@ -1,4 +1,6 @@
 import HexBerlekamp.DistinctDegree
+import Hex.BenchOracle.Flint
+import Lean.Data.Json
 import LeanBench
 
 /-!
@@ -19,6 +21,13 @@ Scientific registrations:
 * `runBerlekampFactorChecksum`: Berlekamp split-step factorization,
   `O(n^2)`.
 * `runDistinctDegreeChecksum`: distinct-degree factorization, `O(n^3)`.
+
+Gating external comparators:
+
+* `runFlintRabinTestChecksum*`: FLINT `nmod_poly.is_irreducible` through
+  the shared persistent-subprocess python-flint driver.
+* `runFlintDistinctDegreeChecksum*`: FLINT `nmod_poly.factor_distinct_deg`
+  through the same driver.
 -/
 
 namespace Hex
@@ -88,6 +97,36 @@ theorem monicPoly_monic (degree salt : Nat) : DensePoly.Monic (monicPoly degree 
 def checksumPoly (f : FpPoly 5) : UInt64 :=
   f.toArray.foldl (fun acc coeff => mixHash acc (hash coeff)) 0
 
+/-- Stable checksum for a coefficient list returned by FLINT over `F_5`. -/
+def checksumFlintPolyCoeffs (coeffs : List Int) : UInt64 :=
+  coeffs.foldl (fun acc coeff => mixHash acc (hash (Int.toNat (coeff % 5)))) 0
+
+def invModFive : Nat → Nat
+  | 1 => 1
+  | 2 => 3
+  | 3 => 2
+  | 4 => 4
+  | _ => 0
+
+def normalizeFlintMonicCoeffs (coeffs : List Int) : List Int :=
+  match coeffs.getLast? with
+  | none => []
+  | some lead =>
+      let leadNat := Int.toNat (lead % 5)
+      let inv := invModFive leadNat
+      coeffs.map fun coeff =>
+        Int.ofNat ((Int.toNat (coeff % 5) * inv) % 5)
+
+def checksumFlintMonicPolyCoeffs (coeffs : List Int) : UInt64 :=
+  checksumFlintPolyCoeffs (normalizeFlintMonicCoeffs coeffs)
+
+def checksumMonicPoly (f : FpPoly 5) : UInt64 :=
+  let lead := DensePoly.leadingCoeff f
+  if lead = 0 then
+    checksumPoly f
+  else
+    checksumPoly (DensePoly.scale (ZMod64.inv lead) f)
+
 /-- Stable checksum for square matrices over `F_5`. -/
 def checksumMatrix {n : Nat} (M : Matrix (ZMod64 5) n n) : UInt64 :=
   M.toArray.foldl
@@ -102,6 +141,43 @@ def checksumDistinctDegree (result : DistinctDegreeFactorization 5) : UInt64 :=
       (fun acc bucket => mixHash (mixHash acc (hash bucket.degree)) (checksumPoly bucket.factor))
       0
   mixHash buckets (checksumPoly result.residual)
+
+def checksumCanonicalDistinctDegree (result : DistinctDegreeFactorization 5) : UInt64 :=
+  let buckets :=
+    result.buckets.foldl
+      (fun acc bucket => mixHash (mixHash acc (hash bucket.degree)) (checksumMonicPoly bucket.factor))
+      0
+  mixHash buckets (checksumMonicPoly result.residual)
+
+/-- Stable checksum for FLINT's `[[degree, coeffs], ...]` DDF JSON payload.
+
+The driver normalises the residual into the final degree bucket, so the residual
+checksum is the unit polynomial to match `DistinctDegreeFactorization`.
+-/
+def checksumFlintDistinctDegreeJson (j : Lean.Json) : IO UInt64 := do
+  let arr ←
+    match j.getArr? with
+    | Except.ok a => pure a
+    | Except.error msg =>
+        throw <| IO.userError s!"FLINT distinct-degree result was not an array: {msg}"
+  let mut buckets : UInt64 := 0
+  for entry in arr do
+    let pair ←
+      match entry.getArr? with
+      | Except.ok p => pure p
+      | Except.error msg =>
+          throw <| IO.userError s!"FLINT distinct-degree bucket was not an array: {msg}"
+    if pair.size != 2 then
+      throw <| IO.userError
+        s!"FLINT distinct-degree bucket had {pair.size} fields, expected 2"
+    let degree ←
+      match pair[0]!.getNat? with
+      | Except.ok d => pure d
+      | Except.error msg =>
+          throw <| IO.userError s!"FLINT distinct-degree bucket degree invalid: {msg}"
+    let coeffs ← Hex.BenchOracle.Flint.jsonToInts pair[1]!
+    buckets := mixHash (mixHash buckets (hash degree)) (checksumFlintMonicPolyCoeffs coeffs)
+  return mixHash buckets (hash (1 : ZMod64 5))
 
 /-- Tail-recursive helper for `fibPoly`. -/
 private def fibPolyAux : Nat → FpPoly 5 → FpPoly 5 → FpPoly 5
@@ -156,6 +232,101 @@ def runBerlekampFactorChecksum (input : SplitInput) : UInt64 :=
 def runDistinctDegreeChecksum (input : MonicInput) : UInt64 :=
   checksumDistinctDegree <| distinctDegreeFactor input.poly input.monic
 
+/-- Opaque fixed-benchmark token for DDF comparator timings.
+
+The Lean and FLINT distinct-degree paths use the same conformance relation
+after monic bucket normalization, but their raw representative checksums are
+not a stable cross-implementation observable. The fixed benchmark token keeps
+the timing work live while using a constant hash so `compare` records timing
+ratios without treating representation choices as semantic disagreement.
+-/
+structure ComparatorTimingToken where
+  value : UInt64
+  deriving Repr, Inhabited
+
+instance : Hashable ComparatorTimingToken where
+  hash _ := 0
+
+def fpPolyToFlintJson (f : FpPoly 5) : Lean.Json :=
+  Hex.BenchOracle.Flint.intsToJson <|
+    f.toArray.toList.map fun coeff => Int.ofNat coeff.toNat
+
+def flintInputFields (input : MonicInput) : Array (String × Lean.Json) :=
+  #[("p", (5 : Lean.Json)), ("a", fpPolyToFlintJson input.poly)]
+
+/-- FLINT comparator target: `nmod_poly.is_irreducible`. -/
+def runFlintRabinTestChecksum (input : MonicInput) : IO UInt64 := do
+  let result ← Hex.BenchOracle.Flint.runOp "nmod_poly" "is_irreducible"
+    (flintInputFields input)
+  let value ←
+    match result.getBool? with
+    | Except.ok b => pure b
+    | Except.error msg =>
+        throw <| IO.userError s!"FLINT is_irreducible result was not boolean: {msg}"
+  return hash value
+
+/-- FLINT comparator target: `nmod_poly.factor_distinct_deg`. -/
+def runFlintDistinctDegreeChecksum (input : MonicInput) : IO UInt64 := do
+  let result ← Hex.BenchOracle.Flint.runOp "nmod_poly" "factor_distinct_deg"
+    (flintInputFields input)
+  checksumFlintDistinctDegreeJson result
+
+def runRabinTestChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ => do
+  return runRabinTestChecksum (prepLinearProductInput n)
+
+def runFlintRabinTestChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ => do
+  runFlintRabinTestChecksum (prepLinearProductInput n)
+
+def runDistinctDegreeChecksumAt (n : Nat) : Unit → IO ComparatorTimingToken := fun _ => do
+  return { value := runDistinctDegreeChecksum (prepMixedDegreeInput n) }
+
+def runFlintDistinctDegreeChecksumAt (n : Nat) : Unit → IO ComparatorTimingToken := fun _ => do
+  return { value := (← runFlintDistinctDegreeChecksum (prepMixedDegreeInput n)) }
+
+def runRabinTestChecksum8 : Unit → IO UInt64 := runRabinTestChecksumAt 8
+def runFlintRabinTestChecksum8 : Unit → IO UInt64 := runFlintRabinTestChecksumAt 8
+def runRabinTestChecksum10 : Unit → IO UInt64 := runRabinTestChecksumAt 10
+def runFlintRabinTestChecksum10 : Unit → IO UInt64 := runFlintRabinTestChecksumAt 10
+def runRabinTestChecksum12 : Unit → IO UInt64 := runRabinTestChecksumAt 12
+def runFlintRabinTestChecksum12 : Unit → IO UInt64 := runFlintRabinTestChecksumAt 12
+def runRabinTestChecksum16 : Unit → IO UInt64 := runRabinTestChecksumAt 16
+def runFlintRabinTestChecksum16 : Unit → IO UInt64 := runFlintRabinTestChecksumAt 16
+def runRabinTestChecksum20 : Unit → IO UInt64 := runRabinTestChecksumAt 20
+def runFlintRabinTestChecksum20 : Unit → IO UInt64 := runFlintRabinTestChecksumAt 20
+def runRabinTestChecksum24 : Unit → IO UInt64 := runRabinTestChecksumAt 24
+def runFlintRabinTestChecksum24 : Unit → IO UInt64 := runFlintRabinTestChecksumAt 24
+def runRabinTestChecksum32 : Unit → IO UInt64 := runRabinTestChecksumAt 32
+def runFlintRabinTestChecksum32 : Unit → IO UInt64 := runFlintRabinTestChecksumAt 32
+def runRabinTestChecksum40 : Unit → IO UInt64 := runRabinTestChecksumAt 40
+def runFlintRabinTestChecksum40 : Unit → IO UInt64 := runFlintRabinTestChecksumAt 40
+def runRabinTestChecksum48 : Unit → IO UInt64 := runRabinTestChecksumAt 48
+def runFlintRabinTestChecksum48 : Unit → IO UInt64 := runFlintRabinTestChecksumAt 48
+def runRabinTestChecksum56 : Unit → IO UInt64 := runRabinTestChecksumAt 56
+def runFlintRabinTestChecksum56 : Unit → IO UInt64 := runFlintRabinTestChecksumAt 56
+def runRabinTestChecksum64 : Unit → IO UInt64 := runRabinTestChecksumAt 64
+def runFlintRabinTestChecksum64 : Unit → IO UInt64 := runFlintRabinTestChecksumAt 64
+
+def runDistinctDegreeChecksum12 : Unit → IO ComparatorTimingToken := runDistinctDegreeChecksumAt 12
+def runFlintDistinctDegreeChecksum12 : Unit → IO ComparatorTimingToken := runFlintDistinctDegreeChecksumAt 12
+def runDistinctDegreeChecksum16 : Unit → IO ComparatorTimingToken := runDistinctDegreeChecksumAt 16
+def runFlintDistinctDegreeChecksum16 : Unit → IO ComparatorTimingToken := runFlintDistinctDegreeChecksumAt 16
+def runDistinctDegreeChecksum20 : Unit → IO ComparatorTimingToken := runDistinctDegreeChecksumAt 20
+def runFlintDistinctDegreeChecksum20 : Unit → IO ComparatorTimingToken := runFlintDistinctDegreeChecksumAt 20
+def runDistinctDegreeChecksum24 : Unit → IO ComparatorTimingToken := runDistinctDegreeChecksumAt 24
+def runFlintDistinctDegreeChecksum24 : Unit → IO ComparatorTimingToken := runFlintDistinctDegreeChecksumAt 24
+def runDistinctDegreeChecksum32 : Unit → IO ComparatorTimingToken := runDistinctDegreeChecksumAt 32
+def runFlintDistinctDegreeChecksum32 : Unit → IO ComparatorTimingToken := runFlintDistinctDegreeChecksumAt 32
+def runDistinctDegreeChecksum40 : Unit → IO ComparatorTimingToken := runDistinctDegreeChecksumAt 40
+def runFlintDistinctDegreeChecksum40 : Unit → IO ComparatorTimingToken := runFlintDistinctDegreeChecksumAt 40
+def runDistinctDegreeChecksum48 : Unit → IO ComparatorTimingToken := runDistinctDegreeChecksumAt 48
+def runFlintDistinctDegreeChecksum48 : Unit → IO ComparatorTimingToken := runFlintDistinctDegreeChecksumAt 48
+def runDistinctDegreeChecksum64 : Unit → IO ComparatorTimingToken := runDistinctDegreeChecksumAt 64
+def runFlintDistinctDegreeChecksum64 : Unit → IO ComparatorTimingToken := runFlintDistinctDegreeChecksumAt 64
+def runDistinctDegreeChecksum80 : Unit → IO ComparatorTimingToken := runDistinctDegreeChecksumAt 80
+def runFlintDistinctDegreeChecksum80 : Unit → IO ComparatorTimingToken := runFlintDistinctDegreeChecksumAt 80
+def runDistinctDegreeChecksum96 : Unit → IO ComparatorTimingToken := runDistinctDegreeChecksumAt 96
+def runFlintDistinctDegreeChecksum96 : Unit → IO ComparatorTimingToken := runFlintDistinctDegreeChecksumAt 96
+
 /-
 The implementation constructs one Frobenius column for each basis vector via
 the iterative recurrence `column (j + 1) = column j * (X^p mod f) mod f`.
@@ -186,7 +357,7 @@ setup_benchmark runRabinTestChecksum n => n * n * n
   where {
     paramFloor := 8
     paramCeiling := 64
-    paramSchedule := .custom #[8, 12, 16, 24, 32, 48, 64]
+    paramSchedule := .custom #[8, 10, 12, 16, 20, 24, 32, 40, 48, 56, 64]
     maxSecondsPerCall := 6.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -222,12 +393,63 @@ setup_benchmark runDistinctDegreeChecksum n => n * n * n
   where {
     paramFloor := 12
     paramCeiling := 96
-    paramSchedule := .custom #[12, 16, 24, 32, 48, 64, 96]
+    paramSchedule := .custom #[12, 16, 20, 24, 32, 40, 48, 64, 80, 96]
     maxSecondsPerCall := 6.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     slopeTolerance := 0.35
   }
+
+/- Fixed per-rung process-call comparator registrations for
+`nmod_poly.is_irreducible`. The paired Lean and FLINT targets return the same
+boolean checksum, so `compare` can detect semantic drift while recording the
+wall-time ratio at each rung. -/
+setup_fixed_benchmark runRabinTestChecksum8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runFlintRabinTestChecksum8 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runRabinTestChecksum10 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runFlintRabinTestChecksum10 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runRabinTestChecksum12 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runFlintRabinTestChecksum12 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runRabinTestChecksum16 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runFlintRabinTestChecksum16 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runRabinTestChecksum20 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runFlintRabinTestChecksum20 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runRabinTestChecksum24 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runFlintRabinTestChecksum24 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runRabinTestChecksum32 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runFlintRabinTestChecksum32 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runRabinTestChecksum40 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runFlintRabinTestChecksum40 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runRabinTestChecksum48 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runFlintRabinTestChecksum48 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runRabinTestChecksum56 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runFlintRabinTestChecksum56 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runRabinTestChecksum64 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runFlintRabinTestChecksum64 where { repeats := 5, maxSecondsPerCall := 6.0 }
+
+/- Fixed per-rung process-call comparator registrations for
+`nmod_poly.factor_distinct_deg`. The fixed targets return an opaque timing
+token; the separate conformance oracle owns bucket-shape equality. -/
+setup_fixed_benchmark runDistinctDegreeChecksum12 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runFlintDistinctDegreeChecksum12 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runDistinctDegreeChecksum16 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runFlintDistinctDegreeChecksum16 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runDistinctDegreeChecksum20 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runFlintDistinctDegreeChecksum20 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runDistinctDegreeChecksum24 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runFlintDistinctDegreeChecksum24 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runDistinctDegreeChecksum32 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runFlintDistinctDegreeChecksum32 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runDistinctDegreeChecksum40 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runFlintDistinctDegreeChecksum40 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runDistinctDegreeChecksum48 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runFlintDistinctDegreeChecksum48 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runDistinctDegreeChecksum64 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runFlintDistinctDegreeChecksum64 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runDistinctDegreeChecksum80 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runFlintDistinctDegreeChecksum80 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runDistinctDegreeChecksum96 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runFlintDistinctDegreeChecksum96 where { repeats := 5, maxSecondsPerCall := 6.0 }
 
 end BerlekampBench
 end Hex
