@@ -53,6 +53,7 @@ extern_lib hexmodarithffi (pkg) := do
 lean_lib Hex where
 
 lean_lib HexArith where
+  precompileModules := true
   moreLinkArgs := #[
     s!"{(defaultBuildDir / "lib" / nameToStaticLib "hexarithffi").toString}",
     "-lgmp"
@@ -63,6 +64,7 @@ lean_lib HexPoly where
 lean_lib HexMatrix where
 
 lean_lib HexModArith where
+  precompileModules := true
   moreLinkArgs := #[
     s!"{(defaultBuildDir / "lib" / nameToStaticLib "hexmodarithffi").toString}",
     "-lgmp"
@@ -71,6 +73,7 @@ lean_lib HexModArith where
 lean_lib HexGramSchmidt where
 
 lean_lib HexGF2 where
+  precompileModules := true
 
 lean_lib HexPolyZ where
 
