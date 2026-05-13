@@ -2,55 +2,72 @@ import HexBerlekampZassenhaus.Basic
 import LeanBench
 
 /-!
-Benchmark smoke registrations for `hex-berlekamp-zassenhaus`.
+Phase 4 benchmark registrations for `hex-berlekamp-zassenhaus`.
 
-This is the CI-smoke benchmark root for the BZ factorization API, not a Phase 4
-completion claim. The registrations below keep `list` / `verify` wired to the
-public combinator, the proof-facing fast path, the exhaustive slow path, and the
-HO-2 adversarial recombination shapes. The full scientific Phase 4 suite still
-needs the wider degree/height/precision/local-factor-count matrix, comparator
-ratios, profiling, and headline report required by `SPEC/benchmarking.md`.
+This module is the Phase 4 benchmark root for the BZ factorization API. It
+covers the public combinator, the proof-facing fast path, the exhaustive slow
+path, the (degree, height) matrix, the (degree, height, precision,
+local-factor-count) fast-path setup surface, a shared-domain `compare` family,
+and the HO-2 adversarial recombination shapes. Comparator ratios and the
+headline performance report still depend on the scheduled-hardware runs and
+report reconciliation described in `SPEC/benchmarking.md`.
 
 The registration names are intentionally stable: CI and scheduled timing runs
 refer to these case names when checking that the benchmark harness still covers
-the public BZ API surface.
+the public BZ API surface. Each `setup_benchmark` has an adjacent cost-model
+derivation comment.
 
-Split-family registrations:
+Each family below is either a *scientific* ladder (verdict-eligible scaling)
+or a *smoke* ladder (small fixed sweep for `list` / `verify`); the per-target
+comment annotates which one.
+
+Split-family registrations (`prep := smokeInput`):
 
 * `runFactorChecksum`: public `factor` combinator on split inputs over the
-  scientific degree ladder `n = 2..5`.
-* `runFactorFastChecksum`: CLD fast path on the same inputs, preserving `none`.
-* `runFactorSlowChecksum`: exhaustive backstop on the same inputs.
-* HO-2 adversarial polynomial constants plus singleton `factor` targets and
-  smoke-safe fast-path setup targets for the adversarial recombination surfaces.
-  Full `factorFast` on `X^4 + 1` and `Phi_15` currently exceeds the smoke
-  verifier's one-call budget, so those two fast-path registrations record the
-  public precision cap and pinned modular split profile instead of falling
-  through the public `factor` combinator.
-* `runAdvSwinnertonDyerSD3ModularSplitChecksum`: the pinned SD3 modular split
-  profile, keeping the worst-case recombination shape visible without running
-  the currently smoke-intractable full integer factorization in `verify`.
+  scientific degree ladder `splitScientificSchedule = #[2, 3, 4, 5]`.
+* `runFactorFastChecksum`: CLD fast path on the same scientific ladder,
+  preserving `none`.
+* `runFactorSlowChecksum`: exhaustive backstop on the smoke ladder
+  `smokeSchedule = #[1, 2, 3, 4]`.
 
-Degree/height registrations:
+Shared compare domain (`prep := smokeInput`, `paramSchedule := smokeSchedule`):
 
-* `runFactorDegreeHeightChecksum`: public `factor` over split inputs with
-  encoded degree and root-height regimes.
-* `runFactorFastDegreeHeightChecksum`: CLD fast path on the same regimes,
+* `runFactorCompareChecksum` vs `runFactorSlowCompareChecksum` checks the
+  public fallback factorization against the exhaustive slow path.
+* `runFactorFastCompareChecksum` joins the same domain and returns the same
+  factorization checksum only when `factorFast` succeeds; a fast-path miss is
+  a distinct input-dependent checksum, so `compare` exposes rather than hides
+  `none`.
+
+Degree/height registrations (`prep := prepDegreeHeightInput`):
+
+* `runFactorDegreeHeightChecksum`: public `factor` over the scientific encoded
+  `degreeHeightSchedule`.
+* `runFactorFastDegreeHeightChecksum`: CLD fast path on the same schedule,
   preserving `none`.
 * `runFactorSlowDegreeHeightChecksum`: bounded slow-path diagnostic on the
-  smallest generated regimes.
+  smallest-completing encoded subset `slowDegreeHeightSchedule`.
+
+Precision/local-factor registration (`prep := prepPrecisionLocalInput`):
+
 * `runFastPathPrecisionLocalChecksum`: smoke-safe fast-path setup over encoded
   degree, root-height, Hensel-precision, and local-factor-count regimes.
 
-Shared compare domain:
+HO-2 adversarial singletons (each pinned at `paramSchedule := #[0]`):
 
-* `compare runFactorCompareChecksum runFactorSlowCompareChecksum` checks public
-  fallback factorization against the exhaustive slow path on the deterministic
-  split smoke family.
-* `runFactorFastCompareChecksum` joins the same domain and returns the same
-  factorization checksum only when `factorFast` succeeds; a fast-path miss is a
-  distinct input-dependent checksum, so `compare` exposes rather than hides
-  `none`.
+* `runFactorAdvX4Plus1Checksum`, `runFactorAdvQuadSqrt2Sqrt3Checksum`,
+  `runFactorAdvPhi15Checksum`: full public `factor` on the named adversarial
+  input.
+* `runFactorFastSetupAdvX4Plus1Checksum`,
+  `runFactorFastSetupAdvPhi15Checksum`: fast-path *setup* only — these record
+  the public precision cap and pinned modular split profile, because the full
+  `factorFast` call exceeds the verifier's one-call budget on these inputs.
+* `runFactorFastAdvQuadSqrt2Sqrt3Checksum`: full `factorFast` on the quadratic
+  product (cheap enough to run in `verify`), preserving `none`.
+* `runAdvSwinnertonDyerSD3ModularSplitChecksum`: pinned modular split profile
+  for SD3 at the conformance prime, keeping the worst-case recombination
+  shape visible without running the smoke-intractable full integer
+  factorization.
 -/
 
 namespace Hex
@@ -65,11 +82,20 @@ instance : Hashable ZPoly where
 def linearZFactor (root : Int) : ZPoly :=
   DensePoly.ofCoeffs #[-root, 1]
 
-/-- Small split integer-polynomial family used only for smoke verification. -/
+/--
+Deterministic split integer-polynomial family. Consumed both as the smoke
+sweep (`smokeSchedule = #[1, 2, 3, 4]`, used by the slow target and the
+`compare` registrations) and as the scientific ladder for the public and
+fast-path targets (`splitScientificSchedule = #[2, 3, 4, 5]`).
+-/
 def smokeInput (n : Nat) : ZPoly :=
   (Array.range (n + 1)).foldl
     (fun acc i => acc * linearZFactor (Int.ofNat (i + 1)))
     (1 : ZPoly)
+
+/-- Smoke ladder used by the slow target and the shared-domain `compare` family. -/
+def smokeSchedule : Array Nat :=
+  #[1, 2, 3, 4]
 
 /-- Scientific split-family ladder for public and proof-facing fast factoring. -/
 def splitScientificSchedule : Array Nat :=
@@ -334,15 +360,19 @@ eight local linear factors.
 def runAdvSwinnertonDyerSD3ModularSplitChecksum (f : ZPoly) : UInt64 :=
   checksumOptionNatArray (modularFactorDegreesAt? f 71)
 
+/-- Constant prep returning the `X^4 + 1` adversarial fixture for the pinned singleton schedule. -/
 def prepAdvX4Plus1 (_ : Nat) : ZPoly :=
   advX4Plus1
 
+/-- Constant prep returning the `(X^2 - 2)(X^2 - 3)` adversarial fixture. -/
 def prepAdvQuadSqrt2Sqrt3 (_ : Nat) : ZPoly :=
   advQuadSqrt2Sqrt3
 
+/-- Constant prep returning the Swinnerton-Dyer `SD_3` adversarial fixture. -/
 def prepAdvSwinnertonDyerSD3 (_ : Nat) : ZPoly :=
   advSwinnertonDyerSD3
 
+/-- Constant prep returning the cyclotomic `Phi_15` adversarial fixture. -/
 def prepAdvPhi15 (_ : Nat) : ZPoly :=
   advPhi15
 
@@ -444,7 +474,7 @@ setup_benchmark runFactorSlowChecksum n => 2 ^ n * bzClassicalSmokeComplexity n
   where {
     paramFloor := 1
     paramCeiling := 4
-    paramSchedule := .custom #[1, 2, 3, 4]
+    paramSchedule := .custom smokeSchedule
     maxSecondsPerCall := 4.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
@@ -464,7 +494,7 @@ setup_benchmark runFactorCompareChecksum n => bzClassicalSmokeComplexity n
   where {
     paramFloor := 1
     paramCeiling := 4
-    paramSchedule := .custom #[1, 2, 3, 4]
+    paramSchedule := .custom smokeSchedule
     maxSecondsPerCall := 4.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
@@ -481,7 +511,7 @@ setup_benchmark runFactorSlowCompareChecksum n => 2 ^ n * bzClassicalSmokeComple
   where {
     paramFloor := 1
     paramCeiling := 4
-    paramSchedule := .custom #[1, 2, 3, 4]
+    paramSchedule := .custom smokeSchedule
     maxSecondsPerCall := 4.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
@@ -501,7 +531,7 @@ setup_benchmark runFactorFastCompareChecksum n => bzClassicalSmokeComplexity n
   where {
     paramFloor := 1
     paramCeiling := 4
-    paramSchedule := .custom #[1, 2, 3, 4]
+    paramSchedule := .custom smokeSchedule
     maxSecondsPerCall := 4.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
