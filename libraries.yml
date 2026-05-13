@@ -140,6 +140,10 @@ libraries:
     done_through: 5
     status: active
     phase4:
+      comparators:
+        - tool: "NTL GF2X via persistent C++ subprocess driver"
+          class: informational
+          rationale: "NTL ships hand-tuned word-level inner loops for GF(2)[x] (Karatsuba/FFT crossovers in mul, XOR-folding division, fast GCD); Hex's `GF2Poly` is the verified packed-word algorithmic surface. The constant-factor gap is structural rather than algorithmic — the ratios are recorded for orientation but are not a Phase-4 gate. Wired via a persistent-subprocess C++ driver (`scripts/oracle/gf2_ntl_bench_driver.cc`, built on-demand by `scripts/oracle/setup_gf2_ntl_driver.sh`) per SPEC/benchmarking.md §External comparators §Process call."
       input_families:
         - name: packed-word-clmul
           description: Deterministic UInt64 sample pairs for pure-Lean and extern carry-less word multiplication chains.
