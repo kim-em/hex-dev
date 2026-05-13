@@ -3944,6 +3944,52 @@ private theorem normalizeForFactor_reassembles_signedContentScalar
     unfold signedContentScalar
     rw [if_neg hf, if_pos hf_neg, hε, Int.mul_neg_one]
 
+private theorem shift_mul_left_zpoly (k : Nat) (a b : ZPoly) :
+    DensePoly.shift k (a * b) = DensePoly.shift k a * b := by
+  rw [← DensePoly.monomial_one_mul_poly_eq_shift k (a * b)]
+  rw [← DensePoly.monomial_one_mul_poly_eq_shift k a]
+  exact (DensePoly.mul_assoc_poly (S := Int) _ _ _).symm
+
+/--
+The full normalized reassembly: combining the array-product layout from
+`polyProduct_reassemblePolynomialFactors` with the signed content reconstruction
+recovers the original polynomial exactly. Handles `f = 0` separately because
+`signedContentScalar 0 = 0` collapses the scalar prefix.
+-/
+private theorem reassemblePolynomialFactors_product_eq_input
+    (f : ZPoly) (coreFactors : Array ZPoly)
+    (hcore : Array.polyProduct coreFactors =
+      (normalizeForFactor f).squareFreeCore) :
+    DensePoly.C (signedContentScalar f) *
+      Array.polyProduct
+        (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) = f := by
+  rw [polyProduct_reassemblePolynomialFactors]
+  rw [hcore]
+  by_cases hf : f = 0
+  · subst hf
+    have hsig : signedContentScalar (0 : ZPoly) = 0 := by
+      unfold signedContentScalar
+      simp
+    rw [hsig]
+    have hC0 : DensePoly.C (0 : Int) = (0 : ZPoly) := by
+      apply DensePoly.ext_coeff
+      intro n
+      rw [DensePoly.coeff_C, DensePoly.coeff_zero]
+      split <;> rfl
+    rw [hC0]
+    exact DensePoly.zero_mul _
+  · rw [ZPoly.C_mul_eq_scale]
+    have hrearrange :
+        DensePoly.shift (normalizeForFactor f).xPower (normalizeForFactor f).repeatedPart *
+            (normalizeForFactor f).squareFreeCore =
+          DensePoly.shift (normalizeForFactor f).xPower
+            ((normalizeForFactor f).squareFreeCore * (normalizeForFactor f).repeatedPart) := by
+      rw [← shift_mul_left_zpoly]
+      rw [DensePoly.mul_comm_poly (S := Int)
+        (normalizeForFactor f).repeatedPart (normalizeForFactor f).squareFreeCore]
+    rw [hrearrange]
+    exact normalizeForFactor_reassembles_signedContentScalar f hf
+
 private theorem firstSome_some
     {α β : Type} {xs : List α} {f : α → Option β} {y : β}
     (h : firstSome xs f = some y) :
