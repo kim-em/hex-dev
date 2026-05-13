@@ -4792,5 +4792,56 @@ private theorem finiteCoeffMcCoyAnnihilator
     pCoeff qCoeff d bound k (by simpa [p, q] using hmul) i hi
   simpa [Int.mul_comm] using hrow
 
+/-- Public McCoy scalar-annihilator wrapper for integer dense polynomials.
+
+If `d` divides every coefficient of `p * q` and some coefficient of `q` is not
+divisible by `d`, then a non-`d`-divisible scalar annihilates all coefficients
+of `p` modulo `d`. -/
+theorem exists_scalar_annihilator_of_mul_coeff_dvd_of_exists_not_dvd_coeff
+    (p q : DensePoly Int) (d : Nat)
+    (hprod : ∀ n, (d : Int) ∣ (p * q).coeff n)
+    (hq : ∃ n, ¬ (d : Int) ∣ q.coeff n) :
+    ∃ a : Int, (¬ (d : Int) ∣ a) ∧
+      ∀ i, (d : Int) ∣ a * p.coeff i := by
+  rcases exists_last_not_natCast_dvd_coeff q d hq with ⟨k, hk, hqAbove⟩
+  refine ⟨q.coeff k, hk, ?_⟩
+  intro i
+  by_cases hi : i ≤ p.size
+  · have hconv :
+        ∀ n, n ≤ p.size + k →
+          (d : Int) ∣ finiteCoeffConvolution p.coeff q.coeff n := by
+      intro n _hn
+      unfold finiteCoeffConvolution
+      have hsum :
+          (d : Int) ∣ (List.range (n + 1)).foldl
+            (fun s r => s + diagonalMulCoeffTerm p q n r) 0 := by
+        rw [← diagonalSum_eq_degree_bound p q n]
+        rw [← mulCoeffSum_eq_diagonal p q n]
+        rw [← coeff_mul p q n]
+        exact hprod n
+      exact dvd_foldl_add_term_of_dvd_congr (d : Int) (List.range (n + 1))
+        (fun r => diagonalMulCoeffTerm p q n r)
+        (fun r => p.coeff r * q.coeff (n - r))
+        hsum (by
+          intro r hr
+          have hrle : ¬ n < r := by
+            have hrlt : r < n + 1 := List.mem_range.mp hr
+            omega
+          unfold diagonalMulCoeffTerm
+          simp [hrle])
+    have hleft :
+        ∀ r s, p.size < r → (d : Int) ∣ p.coeff r * q.coeff s := by
+      intro r s hr
+      have hpzero : p.coeff r = 0 :=
+        coeff_eq_zero_of_size_le p (by omega)
+      rw [hpzero]
+      simp
+    exact finiteCoeffMcCoyAnnihilator p.coeff q.coeff d p.size k
+      hconv hqAbove hleft i hi
+  · have hpzero : p.coeff i = 0 :=
+      coeff_eq_zero_of_size_le p (Nat.le_of_not_ge hi)
+    rw [hpzero]
+    simp
+
 end DensePoly
 end Hex
