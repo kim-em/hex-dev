@@ -1822,6 +1822,143 @@ theorem detTerm_insertAt_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
   unfold detTerm
   rw [detSign_insertAt_last, detProduct_insertAt_last]
 
+/-- Insertion-position generalization of `detSign_insertAt_last`/`detSign_insertAt_prefix`:
+inserting `Fin.last n` at any position `i` adds `n - i.val` inversions. -/
+private theorem detSign_insertAt_general {R : Type u} [Lean.Grind.Ring R] {n : Nat}
+    (v : Vector (Fin n) n) (i : Fin (n + 1)) :
+    detSign (R := R) (insertAt (Fin.last n) (v.map Fin.castSucc) i) =
+      (-1 : R) ^ (n - i.val) * detSign (R := R) v := by
+  apply detSign_of_inversionCount_add
+  rw [insertAt_toList, vector_toList_map]
+  have hlen : i.val ≤ v.toList.length := by
+    rw [Vector.length_toList]; exact Nat.le_of_lt_succ i.isLt
+  simpa [Vector.length_toList] using
+    inversionCount_insertIdx_castSucc_last_eq v.toList i.val hlen
+
+/-- The cofactor sign for the last column equals `(-1)^(n - i.val)`. -/
+private theorem cofactorSign_last_eq_pow {R : Type u} [Lean.Grind.Ring R] {n : Nat}
+    (i : Fin (n + 1)) :
+    cofactorSign (R := R) i (Fin.last n) = (-1 : R) ^ (n - i.val) := by
+  unfold cofactorSign
+  simp only [Fin.val_last]
+  have hle : i.val ≤ n := Nat.le_of_lt_succ i.isLt
+  have h := detSignParity_add (R := R) (2 * i.val) (n - i.val)
+  have heven : (2 * i.val) % 2 = 0 := by omega
+  rw [if_pos heven] at h
+  have hsum : 2 * i.val + (n - i.val) = i.val + n := by omega
+  rw [hsum] at h
+  -- h : (if (i.val + n) % 2 = 0 then 1 else -1) = (-1) ^ (n - i.val) * 1
+  calc (if (i.val + n) % 2 = 0 then (1 : R) else -1)
+      = (-1 : R) ^ (n - i.val) * 1 := h
+    _ = (-1 : R) ^ (n - i.val) := by grind
+
+/-- Reading `insertAt x v i` at `skipIndex i r'` recovers `v[r']`: the inserted
+element occupies position `i`, leaving the other positions in bijection with the
+original via `skipIndex i`. -/
+private theorem insertAt_get_skipIndex {α : Type u} {n : Nat}
+    (x : α) (v : Vector α n) (i : Fin (n + 1)) (r' : Fin n) :
+    (insertAt x v i)[skipIndex i r'] = v[r'] := by
+  unfold insertAt
+  by_cases hlt : r'.val < i.val
+  · simp [List.getElem_insertIdx_of_lt, hlt]
+  · have hge : i.val ≤ r'.val := by omega
+    have hgt : i.val < r'.val + 1 := by omega
+    simp [List.getElem_insertIdx_of_gt, hlt, hgt]
+
+/-- `List.finRange (n + 1)` decomposes as the `Fin n` enumeration mapped through
+`skipIndex i` with `i` inserted at position `i.val`. -/
+private theorem list_finRange_succ_eq_insertIdx_skipIndex {n : Nat} (i : Fin (n + 1)) :
+    List.finRange (n + 1) =
+      ((List.finRange n).map (skipIndex i)).insertIdx i.val i := by
+  have hilen : i.val ≤ ((List.finRange n).map (skipIndex i)).length := by
+    simp [List.length_finRange]; exact Nat.le_of_lt_succ i.isLt
+  apply List.ext_getElem
+  · rw [List.length_finRange, List.length_insertIdx_of_le_length hilen,
+        List.length_map, List.length_finRange]
+  · intro k hk hk'
+    rw [List.getElem_finRange]
+    by_cases hki : k < i.val
+    · rw [List.getElem_insertIdx_of_lt hki]
+      have hkn : k < n := by
+        have : k < ((List.finRange n).map (skipIndex i)).length := by
+          simp [List.length_finRange]; omega
+        simpa [List.length_map, List.length_finRange] using this
+      rw [List.getElem_map, List.getElem_finRange]
+      apply Fin.ext
+      simp [skipIndex_val_of_lt, hki]
+    · by_cases hkeq : k = i.val
+      · subst hkeq
+        rw [List.getElem_insertIdx_self]
+        apply Fin.ext; rfl
+      · have hkgt : i.val < k := by omega
+        rw [List.getElem_insertIdx_of_gt hkgt]
+        have hk1n : k - 1 < n := by
+          have hklt : k < n + 1 := by simp [List.length_finRange] at hk; exact hk
+          omega
+        rw [List.getElem_map, List.getElem_finRange]
+        apply Fin.ext
+        have hgt' : ¬ (k - 1 < i.val) := by omega
+        simp [skipIndex_val_of_not_lt, hgt']
+        omega
+
+/-- `List.finRange (n + 1)` is a permutation of `i :: ((List.finRange n).map (skipIndex i))`. -/
+private theorem list_finRange_succ_perm_skipIndex {n : Nat} (i : Fin (n + 1)) :
+    (List.finRange (n + 1)).Perm (i :: (List.finRange n).map (skipIndex i)) := by
+  rw [list_finRange_succ_eq_insertIdx_skipIndex i]
+  have hilen : i.val ≤ ((List.finRange n).map (skipIndex i)).length := by
+    simp [List.length_finRange]; exact Nat.le_of_lt_succ i.isLt
+  exact List.perm_insertIdx i ((List.finRange n).map (skipIndex i)) hilen
+
+/-- Factorize a multiplicative `foldl` over `List.finRange (n + 1)` at index `i`,
+yielding `f i` times the foldl over `List.finRange n` reindexed via `skipIndex i`. -/
+private theorem foldl_finRange_succ_factor_skipIndex {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (i : Fin (n + 1)) (f : Fin (n + 1) → R) :
+    (List.finRange (n + 1)).foldl (fun acc r => acc * f r) 1 =
+      f i * (List.finRange n).foldl (fun acc r' => acc * f (skipIndex i r')) 1 := by
+  rw [foldl_det_product_perm f (list_finRange_succ_perm_skipIndex i) 1]
+  show (i :: (List.finRange n).map (skipIndex i)).foldl (fun acc r => acc * f r) 1 = _
+  simp only [List.foldl_cons]
+  rw [show (1 : R) * f i = f i * 1 from by grind]
+  rw [foldl_det_product_mul_left ((List.finRange n).map (skipIndex i)) (f i) f 1]
+  rw [List.foldl_map]
+
+/-- Permutation-product bridge generalizing `detProduct_insertAt_last` to any
+insertion position: factor the Leibniz product into the `(i, last)` entry times
+the product over the `deleteRowCol` minor. -/
+private theorem detProduct_insertAt_general {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (v : Vector (Fin n) n) (i : Fin (n + 1)) :
+    detProduct M (insertAt (Fin.last n) (v.map Fin.castSucc) i) =
+      M[i][Fin.last n] * detProduct (deleteRowCol M i (Fin.last n)) v := by
+  unfold detProduct
+  rw [foldl_finRange_succ_factor_skipIndex i
+    (fun r => M[r][(insertAt (Fin.last n) (v.map Fin.castSucc) i)[r]])]
+  congr 1
+  · -- M[i][(insertAt ... i)[i]] = M[i][Fin.last n]
+    congr 1
+    exact insertAt_get_self _ _ _
+  · apply foldl_det_product_congr
+    intro r' _hmem
+    -- Bridge the column index of each side to `(v[r']).castSucc`.
+    have hLHS_col :
+        (insertAt (Fin.last n) (v.map Fin.castSucc) i)[skipIndex i r'] =
+          (v[r']).castSucc := by
+      rw [insertAt_get_skipIndex]
+      simp [Vector.getElem_map]
+    have hRHS_col :
+        skipIndex (Fin.last n) v[r'] = (v[r']).castSucc := skipIndex_last v[r']
+    simp only [deleteRowCol_entry, hLHS_col, hRHS_col]
+
+/-- Leibniz-term bridge for an arbitrary insertion position. -/
+private theorem detTerm_insertAt_general {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (v : Vector (Fin n) n) (i : Fin (n + 1)) :
+    detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i) =
+      cofactorSign (R := R) i (Fin.last n) *
+        (M[i][Fin.last n] * detTerm (deleteRowCol M i (Fin.last n)) v) := by
+  unfold detTerm
+  rw [detSign_insertAt_general, detProduct_insertAt_general]
+  rw [cofactorSign_last_eq_pow]
+  grind
+
 private theorem detProduct_insertAt_not_last_zero_of_last_row_zero
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (v : Vector (Fin n) n)
@@ -5585,6 +5722,72 @@ private theorem foldl_det_sum_nested_zero {R : Type u} [Lean.Grind.CommRing R]
       xs.foldl
         (fun acc x => acc + ys.foldl (fun acc' y => acc' + f x y) 0) 0 := by
   exact (foldl_det_sum_nested_start xs ys f (0 : R)).trans (by grind)
+
+/-- Inner sum-over-permutations collapse: for any row `i`, the Leibniz terms whose
+permutation sends row `i` to the last column collapse to `M[i][last] * cofactor M i last`. -/
+private theorem foldl_detTerm_insertions_eq_cofactor
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (i : Fin (n + 1)) :
+    (permutationVectors n).foldl
+        (fun acc v => acc + detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i)) 0 =
+      M[i][Fin.last n] * cofactor M i (Fin.last n) := by
+  have hsumands : (permutationVectors n).foldl
+        (fun acc v => acc + detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i)) 0 =
+      (permutationVectors n).foldl
+        (fun acc v => acc + cofactorSign (R := R) i (Fin.last n) *
+          (M[i][Fin.last n] * detTerm (deleteRowCol M i (Fin.last n)) v)) 0 := by
+    apply foldl_det_sum_congr
+    intro v _hmem
+    exact detTerm_insertAt_general M v i
+  rw [hsumands]
+  rw [foldl_det_sum_mul_left_zero (permutationVectors n)
+    (cofactorSign (R := R) i (Fin.last n))
+    (fun v => M[i][Fin.last n] * detTerm (deleteRowCol M i (Fin.last n)) v)]
+  rw [foldl_det_sum_mul_left_zero (permutationVectors n) M[i][Fin.last n]
+    (fun v => detTerm (deleteRowCol M i (Fin.last n)) v)]
+  show cofactorSign (R := R) i (Fin.last n) *
+       (M[i][Fin.last n] * det (deleteRowCol M i (Fin.last n))) = _
+  unfold cofactor
+  grind
+
+/-- Laplace expansion of the determinant along the final column. -/
+theorem det_eq_foldl_laplace_last
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) :
+    det M =
+      (List.finRange (n + 1)).foldl
+        (fun acc row => acc + M[row][Fin.last n] * cofactor M row (Fin.last n)) 0 := by
+  unfold det
+  rw [show permutationVectors (n + 1) =
+      List.flatMap
+        (fun v =>
+          (List.finRange (n + 1)).map fun i =>
+            insertAt (Fin.last n) (v.map Fin.castSucc) i)
+        (permutationVectors n) from rfl]
+  rw [foldl_det_sum_flatMap]
+  have hmap :
+      (permutationVectors n).foldl
+        (fun acc v =>
+          ((List.finRange (n + 1)).map
+            (fun i => insertAt (Fin.last n) (v.map Fin.castSucc) i)).foldl
+            (fun acc perm => acc + detTerm M perm) acc) 0 =
+      (permutationVectors n).foldl
+        (fun acc v =>
+          (List.finRange (n + 1)).foldl
+            (fun acc i =>
+              acc + detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i)) acc) 0 := by
+    apply foldl_acc_congr
+    intro acc v _hmem
+    simp only [List.foldl_map]
+  rw [hmap]
+  rw [foldl_det_sum_nested_zero (permutationVectors n) (List.finRange (n + 1))
+    (fun v i => detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i))]
+  rw [foldl_det_sum_swap (permutationVectors n) (List.finRange (n + 1))
+    (fun v i => detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i))]
+  apply foldl_acc_congr
+  intro acc i _hmem
+  congr 1
+  exact foldl_detTerm_insertions_eq_cofactor M i
 
 /-- The square matrix obtained from `columnSumMatrix source coeff` by replacing
 the first `chosen.length` columns with selected `source` columns indexed by
