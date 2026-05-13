@@ -129,20 +129,6 @@ private theorem redc_low_addCarry_exact (ctx : MontCtx p) (Tlo : UInt64) :
             rw [hlo_zero]
             simp
 
-/-- `mulFull` returns the same high and low words as `mulHi` and wrapped multiply. -/
-private theorem mulFull_eq_mulHi_mul (a b : UInt64) :
-    UInt64.mulFull a b = (UInt64.mulHi a b, a * b) := by
-  cases h : UInt64.mulFull a b with
-  | mk hi lo =>
-      have hfull := UInt64.toNat_mulFull a b
-      simp [h] at hfull
-      apply Prod.ext
-      · apply UInt64.toNat_inj.mp
-        rw [UInt64.toNat_mulHi]
-        exact hfull.1
-      · apply UInt64.toNat_inj.mp
-        simpa [UInt64.toNat_mul, UInt64.word] using hfull.2
-
 /-- View the odd-modulus assumption as a Nat-level parity fact inside this file. -/
 private theorem MontCtx.p_odd_nat (ctx : MontCtx p) : p.toNat % 2 = 1 := by
   have h := congrArg UInt64.toNat ctx.p_odd
@@ -158,6 +144,7 @@ private theorem MontCtx.p_lt_word (_ctx : MontCtx p) : p.toNat < UInt64.word := 
   simpa [UInt64.word, UInt64.size] using UInt64.toNat_lt_size p
 
 /-- The low-word multiply computes the Montgomery correction factor `m`. -/
+@[simp]
 theorem redc_m_spec (ctx : MontCtx p) (_Thi Tlo : UInt64) :
     let m := Tlo * ctx.p'
     m.toNat = (Tlo.toNat * ctx.p'.toNat) % UInt64.word := by
@@ -296,3 +283,27 @@ theorem toNat_redc (ctx : MontCtx p) (Thi Tlo : UInt64)
     (redc ctx Thi Tlo).toNat =
       redcNat p.toNat ctx.p'.toNat (Tlo.toNat + Thi.toNat * UInt64.word) := by
   exact redc_sub_spec ctx Thi Tlo hT
+
+/-- Executable REDC returns a canonical residue below the modulus. -/
+theorem redc_lt (ctx : MontCtx p) (Thi Tlo : UInt64)
+    (hT : Tlo.toNat + Thi.toNat * UInt64.word < p.toNat * UInt64.word) :
+    redc ctx Thi Tlo < p := by
+  rw [UInt64.lt_iff_toNat_lt, toNat_redc ctx Thi Tlo hT]
+  have hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1 := by
+    simpa [Nat.mul_comm] using ctx.p'_eq
+  exact redcNat_lt ctx.p_pos ctx.p_lt_word hpp' hT
+
+/--
+Executable REDC represents division by the Montgomery radix modulo `p`.
+
+This is the direct bridge form of `redcNat_eq_mod`, avoiding an explicit
+unfolding through the Nat-level REDC definition for downstream callers.
+-/
+theorem redc_mul_word_mod (ctx : MontCtx p) (Thi Tlo : UInt64)
+    (hT : Tlo.toNat + Thi.toNat * UInt64.word < p.toNat * UInt64.word) :
+    (redc ctx Thi Tlo).toNat * UInt64.word % p.toNat =
+      (Tlo.toNat + Thi.toNat * UInt64.word) % p.toNat := by
+  rw [toNat_redc ctx Thi Tlo hT]
+  have hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1 := by
+    simpa [Nat.mul_comm] using ctx.p'_eq
+  exact redcNat_eq_mod ctx.p_pos ctx.p_lt_word hpp' hT

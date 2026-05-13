@@ -40,3 +40,23 @@ supports a field structure; that extension belongs to hex-gfq-field.
 - `reduceMod f (a + b) = reduceMod f (reduceMod f a + reduceMod f b)`
 - `reduceMod f (a * b) = reduceMod f (reduceMod f a * reduceMod f b)`
 - Ring axioms for `PolyQuotient p f hf`
+
+## External comparators
+
+| Comparator | Class | Scope |
+|---|---|---|
+| FLINT `fq_default` arithmetic via python-flint | informational | bench targets exercising quotient-ring arithmetic: addition, multiplication, reduction modulo `f` |
+
+FLINT's `fq_default` is the standard reference for finite-field
+quotient-ring arithmetic and covers the same operations:
+reduction modulo a fixed modulus polynomial, addition,
+multiplication. FLINT internally selects between
+representations (`fq_nmod` for word-size primes, `fq_zech` for
+small fields) via crossover heuristics that Hex does not
+replicate; the constant-factor gap is structural rather than
+algorithmic. Classification is `informational`.
+
+Wired via a persistent-subprocess Python driver per
+`SPEC/benchmarking.md §"External comparators" §"Process call"`.
+
+Structured metadata in `libraries.yml: HexGfqRing.phase4.comparators`.

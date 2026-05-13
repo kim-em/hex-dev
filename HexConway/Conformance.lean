@@ -11,13 +11,17 @@ Covered operations:
 - `SupportedEntry`
 - `conwayPoly`
 Covered properties:
-- the committed `(2, 1)` lookup agrees exactly with `supportedEntry_2_1`
+- the committed `(2, 1)`, `(2, 4)`, and `(3, 1)` lookups agree exactly
+  with their packaged `SupportedEntry`
 - `conwayPoly` returns the polynomial packaged by its `SupportedEntry`
-- the supported Conway polynomial has positive degree
+- each supported Conway polynomial has positive degree
 Covered edge cases:
 - committed entries for `p ∈ {2, 3, 5, 7, 11, 13}` and `n ∈ {1..6}`
 - unsupported degree zero, unsupported larger binary degree, and an
   unsupported prime outside the committed slice
+- a binary higher-degree `SupportedEntry` (`(2, 4)`) and an odd-prime
+  `SupportedEntry` constructed locally from the public hit lemma and an
+  inline prime witness (`(3, 1)`)
 -/
 
 namespace Hex
@@ -86,6 +90,42 @@ private def coeffs? (p n : Nat) [ZMod64.Bounds p] : Option (List Nat) :=
 #guard luebeckConwayPolynomial? 2 1 =
   some (conwayPoly 2 1 supportedEntry_2_1)
 #guard 0 < FpPoly.degree (conwayPoly 2 1 supportedEntry_2_1)
+
+-- Binary higher-degree entry: `(2, 4)`, using the exported supported entry.
+#guard coeffNats supportedEntry_2_4.poly = [1, 1, 0, 0, 1]
+#guard supportedEntry_2_4.poly = luebeckConwayPolynomial_2_4
+#guard luebeckConwayPolynomial? 2 4 = some supportedEntry_2_4.poly
+#guard conwayPoly 2 4 supportedEntry_2_4 = luebeckConwayPolynomial_2_4
+#guard luebeckConwayPolynomial? 2 4 =
+  some (conwayPoly 2 4 supportedEntry_2_4)
+#guard 0 < FpPoly.degree (conwayPoly 2 4 supportedEntry_2_4)
+
+-- Odd-prime entry: `(3, 1)`. No `SupportedEntry` for an odd prime is
+-- exported from `HexConway/Basic.lean`, so we construct one locally from
+-- the public hit lemma and an inline prime witness for `3`.
+private theorem prime_three : Hex.Nat.Prime 3 := by
+  constructor
+  · decide
+  · intro m hm
+    have hmle : m ≤ 3 := Nat.le_of_dvd (by decide : 0 < 3) hm
+    have hcases : m = 0 ∨ m = 1 ∨ m = 2 ∨ m = 3 := by omega
+    rcases hcases with rfl | rfl | rfl | rfl
+    · simp at hm
+    · exact Or.inl rfl
+    · simp at hm
+    · exact Or.inr rfl
+
+private def supportedEntry_3_1 : SupportedEntry 3 1 :=
+  ⟨luebeckConwayPolynomial_3_1, prime_three,
+    luebeckConwayPolynomial?_hit_3_1⟩
+
+#guard coeffNats supportedEntry_3_1.poly = [1, 1]
+#guard supportedEntry_3_1.poly = luebeckConwayPolynomial_3_1
+#guard luebeckConwayPolynomial? 3 1 = some supportedEntry_3_1.poly
+#guard conwayPoly 3 1 supportedEntry_3_1 = luebeckConwayPolynomial_3_1
+#guard luebeckConwayPolynomial? 3 1 =
+  some (conwayPoly 3 1 supportedEntry_3_1)
+#guard 0 < FpPoly.degree (conwayPoly 3 1 supportedEntry_3_1)
 
 end ConwayConformance
 end Conway

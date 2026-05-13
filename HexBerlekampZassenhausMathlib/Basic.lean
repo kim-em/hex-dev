@@ -154,6 +154,7 @@ def irreducibleByFactorization (f : Polynomial ℤ) : Bool :=
 The executable factorization predicate agrees with Mathlib irreducibility over
 `Polynomial ℤ`.
 -/
+@[simp]
 theorem irreducibleByFactorization_iff (f : Polynomial ℤ) :
     irreducibleByFactorization f = true ↔ Irreducible f := by
   sorry
@@ -171,6 +172,7 @@ instance irreducibleDecidablePred :
       isFalse (fun hf => h ((irreducibleByFactorization_iff f).mpr hf))
 
 /-- The default executable factorization multiplies back to the input. -/
+@[simp]
 theorem factor_product (f : Hex.ZPoly) :
     Hex.Factorization.product (Hex.factor f) = f := by
   sorry
@@ -221,12 +223,32 @@ theorem Hex.ZPoly.Irreducible_iff_polynomialIrreducible (f : Hex.ZPoly) :
         exact (HexPolyZMathlib.isUnit_iff_toPolynomial_isUnit b).mpr hunit
 
 /--
+Mathlib irreducibility of the transported polynomial is equivalent to the
+Mathlib-free executable irreducibility predicate.
+-/
+theorem Hex.ZPoly.polynomialIrreducible_iff_irreducible (f : Hex.ZPoly) :
+    Irreducible (HexPolyZMathlib.toPolynomial f) ↔ Hex.ZPoly.Irreducible f :=
+  (Hex.ZPoly.Irreducible_iff_polynomialIrreducible f).symm
+
+/--
 Every polynomial factor emitted by the default executable factorization is
 irreducible in the executable `Hex.ZPoly` sense.
 -/
 theorem factor_irreducible_of_nonUnit (f : Hex.ZPoly) :
     ∀ entry ∈ (Hex.factor f).factors, Hex.ZPoly.Irreducible entry.1 := by
   sorry
+
+/--
+Every polynomial factor emitted by the default executable factorization is
+irreducible after transport to `Polynomial ℤ`.
+-/
+theorem factor_polynomialIrreducible_of_nonUnit (f : Hex.ZPoly) :
+    ∀ entry ∈ (Hex.factor f).factors,
+      Irreducible (HexPolyZMathlib.toPolynomial entry.1) := by
+  intro entry hentry
+  exact
+    (Hex.ZPoly.Irreducible_iff_polynomialIrreducible entry.1).mp
+      (factor_irreducible_of_nonUnit f entry hentry)
 
 /--
 Two irreducible executable factorizations of the same polynomial have the same
@@ -241,6 +263,19 @@ theorem factor_unique (f : Hex.ZPoly) (φ ψ : Hex.Factorization) :
   sorry
 
 /--
+Uniqueness specialised against the default executable factorization, so callers
+only provide the competing product and irreducibility facts.
+-/
+theorem factor_unique_of_product
+    (f : Hex.ZPoly) (φ : Hex.Factorization)
+    (hproduct : Hex.Factorization.product φ = f)
+    (hirr : ∀ entry ∈ φ.factors, Hex.ZPoly.Irreducible entry.1) :
+    φ.scalar = (Hex.factor f).scalar ∧
+      List.Perm φ.factors.toList (Hex.factor f).factors.toList :=
+  factor_unique f φ (Hex.factor f) hproduct (factor_product f) hirr
+    (factor_irreducible_of_nonUnit f)
+
+/--
 The executable integer-polynomial irreducibility checker is sound after
 transport to Mathlib's polynomial model.
 -/
@@ -248,6 +283,18 @@ theorem checkIrreducibleCert_sound
     (f : Hex.ZPoly) (cert : Hex.ZPolyIrreducibilityCertificate) :
     Hex.checkIrreducibleCert f cert = true → Irreducible (HexPolyZMathlib.toPolynomial f) := by
   sorry
+
+/--
+The executable integer-polynomial irreducibility checker is sound for the
+Mathlib-free irreducibility predicate as well.
+-/
+theorem checkIrreducibleCert_sound_zpoly
+    (f : Hex.ZPoly) (cert : Hex.ZPolyIrreducibilityCertificate) :
+    Hex.checkIrreducibleCert f cert = true → Hex.ZPoly.Irreducible f := by
+  intro hcert
+  exact
+    (Hex.ZPoly.Irreducible_iff_polynomialIrreducible f).mpr
+      (checkIrreducibleCert_sound f cert hcert)
 
 end
 

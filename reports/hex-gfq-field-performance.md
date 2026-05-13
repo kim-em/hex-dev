@@ -13,8 +13,8 @@
 
 ## Verdicts
 
-Scientific run at worktree commit `ed9da7537e96` on `carica` (Apple M2 Ultra,
-macOS 14.6.1), command:
+Scientific follow-up run at worktree commit `713a73d5754` on `carica`
+(Apple Silicon, macOS arm64), command:
 
 ```sh
 lake exe hexgfqfield_bench run \
@@ -26,62 +26,65 @@ lake exe hexgfqfield_bench run \
     Hex.GFqFieldBench.runInvDivChecksum \
     Hex.GFqFieldBench.runZPowChecksum \
     Hex.GFqFieldBench.runFrobChecksum \
-    --export-file reports/bench-results/hex-gfq-field-n8-schedule.json
+    --export-file reports/bench-results/hex-gfq-field-n5-n8-schedule.json
 ```
 
-The run used the deterministic certificate-checked benchmark moduli
-from `HexGfqField/Bench.lean` at
-`paramSchedule := .custom #[2, 3, 4, 6, 8]`; no random seeds are
-involved. The harness recorded `ed9da75-dirty` because this run was
-made from the active worktree containing the degree-8 schedule edit.
+The run used the deterministic benchmark moduli from
+`HexGfqField/Bench.lean` at
+`paramSchedule := .custom #[2, 3, 4, 5, 6, 8]` for the six
+previously inconclusive targets and the existing
+`#[2, 3, 4, 6, 8]` schedule for the already-consistent neg/sub and
+Frobenius targets; no random seeds are involved. The degree-5 rung
+is the small certificate-checked irreducible monic modulus
+`m_p7_n5 := x^5 + x + 4`, adding a mid-ladder calibration point
+without pulling in a Conway dependency or degree-12/16 certificate
+elaboration. The harness recorded `713a73d-dirty` because this run
+was made from the active worktree containing the schedule edit.
 Export artefact:
-`reports/bench-results/hex-gfq-field-n8-schedule.json`, SHA-256
-`21c0755046fc72c9257f60d9307b26099e40ca79470feb2cc151001e9cdb4622`.
+`reports/bench-results/hex-gfq-field-n5-n8-schedule.json`, SHA-256
+`e2fc068af1ddf6a781ddbe7a75f9f43ad6ca2db3dcd7e499d017d0aa7c7d815c`.
 
 - `Hex.GFqFieldBench.runOfPolyReprChecksum`: inconclusive
-  (`cMin=310.690, cMax=927.626`, parameters `2,3,4,6,8`,
+  (`cMin=313.133, cMax=918.817`, parameters `2,3,4,5,6,8`,
   final hash `0x82984efaad14453f`).
 - `Hex.GFqFieldBench.runAddChecksum`: inconclusive
-  (`cMin=79.587, cMax=130.705`, parameters `2,3,4,6,8`,
+  (`cMin=81.544, cMax=128.528`, parameters `2,3,4,5,6,8`,
   final hash `0x6457f0ed8c5c8ed2`).
 - `Hex.GFqFieldBench.runMulChecksum`: inconclusive
-  (`cMin=309.126, cMax=515.564`, parameters `2,3,4,6,8`,
+  (`cMin=309.870, cMax=525.271`, parameters `2,3,4,5,6,8`,
   final hash `0x4084079980228486`).
-- `Hex.GFqFieldBench.runNegSubChecksum`: inconclusive
-  became consistent with declared complexity
-  (`cMin=362.326, cMax=456.305`, parameters `2,3,4,6,8`,
+- `Hex.GFqFieldBench.runNegSubChecksum`: consistent with declared
+  complexity (`cMin=384.250, cMax=470.554`,
+  parameters `2,3,4,6,8`,
   final hash `0x98d27f45e383f912`).
 - `Hex.GFqFieldBench.runPowChecksum`: inconclusive
-  (`cMin=869.988, cMax=1345.984`, parameters `2,3,4,6,8`,
+  (`cMin=864.125, cMax=1318.216`, parameters `2,3,4,5,6,8`,
   final hash `0x9cd46ad6ad57336b`).
 - `Hex.GFqFieldBench.runInvDivChecksum`: inconclusive
-  (`cMin=2151.899, cMax=3766.119`, parameters `2,3,4,6,8`,
+  (`cMin=2159.953, cMax=3740.486`, parameters `2,3,4,5,6,8`,
   final hash `0x1415615b9aa4bc17`).
 - `Hex.GFqFieldBench.runZPowChecksum`: inconclusive
-  (`cMin=1201.015, cMax=2033.140`, parameters `2,3,4,6,8`,
+  (`cMin=1194.725, cMax=1956.204`, parameters `2,3,4,5,6,8`,
   final hash `0xab98d3409e67fa7f`).
 - `Hex.GFqFieldBench.runFrobChecksum`: consistent with declared
-  complexity (`cMin=889.439, cMax=1316.159`,
+  complexity (`cMin=921.583, cMax=1348.282`,
   parameters `2,3,4,6,8`, final hash `0x351dd7aebb5accca`).
 
-The degree-8 ladder adds one CI-feasible, certificate-checked
-irreducible monic modulus over `F_7`, `m_p7_n8 := x^8 + x + 3`,
-and wires `bundleForN 8` so every schedule rung maps to a real
-degree-`n` field. This is enough to resolve two verdicts:
-`runNegSubChecksum` and `runFrobChecksum` now return `consistent
-with declared complexity`.
+The degree-5 rung adds a CI-safe calibration point between the
+existing degree-4 and degree-6 fixtures. This widens the scientific
+evidence without changing executable semantics or adding degree-12/16
+certificate elaboration to the normal benchmark module.
 
 The remaining six inconclusive verdicts keep `HexGfqField` below
 Phase 4 completion. The dominant shape remains calibration rather
-than a model change: the bottom rungs are still close to the
-sub-microsecond or low-microsecond warm-cache floor for several
-targets, while adding degree 12 or 16 certificate checks directly to
-`HexGfqField/Bench.lean` was shown by PR #2790 to be too expensive
-for GitHub-hosted CI. The cost-model declarations therefore remain
-unchanged, `libraries.yml: HexGfqField.done_through` remains `3`,
-and the open concern is a follow-on calibration path that widens the
-scientific evidence without adding CI-heavy certificate elaboration
-to the normal benchmark module.
+than a model change: several targets still have bottom rungs close to
+the sub-microsecond or low-microsecond warm-cache floor, and the
+degree-5 point does not materially change the verdict reduction. The
+cost-model declarations therefore remain unchanged,
+`libraries.yml: HexGfqField.done_through` remains `3`, and the open
+concern is still a larger calibration path that widens the evidence
+without adding CI-heavy degree-12/16 certificate elaboration to the
+normal benchmark module.
 
 Smoke wiring was also checked at the same commit with:
 
@@ -225,10 +228,12 @@ remainder chain over `F_7`), matching the `n²` cost model.
 ## Concerns
 
 - #2801: The CI-feasible degree-8 ladder resolves
-  `runNegSubChecksum` and `runFrobChecksum`, but six scientific
-  verdicts remain inconclusive (`runOfPolyReprChecksum`,
-  `runAddChecksum`, `runMulChecksum`, `runPowChecksum`,
-  `runInvDivChecksum`, `runZPowChecksum`). `HexGfqField.done_through`
-  stays at `3` until a follow-on calibration path widens the evidence
-  without putting degree-12/16 certificate checks on the normal CI
-  build path.
+  `runNegSubChecksum` and `runFrobChecksum`, and the CI-safe
+  degree-5 certificate widens the six unresolved calibration
+  schedules to `2,3,4,5,6,8`, but those six scientific verdicts
+  remain inconclusive
+  (`runOfPolyReprChecksum`, `runAddChecksum`, `runMulChecksum`,
+  `runPowChecksum`, `runInvDivChecksum`, `runZPowChecksum`).
+  `HexGfqField.done_through` stays at `3` until a larger calibration
+  path widens the evidence without putting degree-12/16 certificate
+  checks on the normal CI build path.

@@ -3,7 +3,6 @@ import Lake
 open System Lake DSL
 
 package Hex where
-  precompileModules := true
 
 require verso from git
   "https://github.com/leanprover/verso.git" @ "v4.30.0-rc2"
@@ -74,6 +73,7 @@ lean_lib HexModArith where
 lean_lib HexGramSchmidt where
 
 lean_lib HexGF2 where
+  precompileModules := true
 
 lean_lib HexPolyZ where
 
@@ -100,7 +100,6 @@ lean_lib HexPolyMathlib where
 lean_lib HexMatrixMathlib where
 
 lean_lib HexModArithMathlib where
-  precompileModules := false
 
 lean_lib HexGramSchmidtMathlib where
 
@@ -184,14 +183,9 @@ lean_exe hexmodarith_bench where
 lean_exe hexgf2_bench where
   root := `HexGF2Bench
 
-lean_exe hexgf2mathlib_bench where
-  root := `HexGF2Mathlib.Bench
-
-lean_exe hexpolymathlib_bench where
-  root := `HexPolyMathlib.Bench
-
-lean_exe hexmatrixmathlib_bench where
-  root := `HexMatrixMathlib.Bench
+-- No bench exes for `Hex*Mathlib` libraries — see
+-- SPEC/benchmarking.md §Mathlib-free benches. The bridges are
+-- proof-only; there is no computational kernel to benchmark.
 
 lean_exe hexpolyfp_bench where
   root := `HexPolyFp.Bench
