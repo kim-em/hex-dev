@@ -1,0 +1,45 @@
+Loop on stdin for persistent benchmark protocol.
+
+Rewrap the Haskell entry point `Main_Verified.hs` so that one invocation
+of the resulting `svp_verified` binary handles many bench requests,
+instead of spawning a fresh process per call. Each line of stdin is one
+matrix in `[[Integer]]` Haskell-read syntax; each line of stdout is the
+squared norm emitted by `test_verified`. The binary exits cleanly on
+EOF.
+
+This is necessary because GHC start-up plus the original per-call
+`readFile` is ~22 ms on the audit host, which dominates the wall time
+of sub-millisecond LLL inputs and makes the comparator ratio dishonest
+under SPEC/benchmarking.md (post-#3657) "External comparators / Process
+call".
+
+The Hex-side wiring in `HexLLL/Bench.lean` spawns the driver lazily,
+caches the process handle in an `IO.Ref`, sends one request line per
+call, and parses one reply line back. On process death the wiring
+re-spawns once and retries; persistent failure surfaces as an
+`IO.userError`.
+
+--- a/haskell_sources/Main_Verified.hs
++++ b/haskell_sources/Main_Verified.hs
+@@ -1,11 +1,15 @@
+ {-# LANGUAGE LambdaCase #-}
+ module Main(main)
+   where
+-import System.Environment
++import System.IO
+ import LLL_SVP
+ 
+-main = do 
+-  as <- getArgs
+-  input <- readFile (as !! 0)
+-  let mat = (read input :: [[Integer]])
+-  putStrLn (show (test_verified mat))
++main = do
++  hSetBuffering stdout LineBuffering
++  contents <- getContents
++  mapM_ runOne (lines contents)
++  where
++    runOne line = do
++      let mat = (read line :: [[Integer]])
++      putStrLn (show (test_verified mat))
++      hFlush stdout
