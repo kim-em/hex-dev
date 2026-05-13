@@ -100,7 +100,7 @@ if (( ${#patches[@]} > 0 )); then
     mkdir -p "${src_dir}"
     unzip -q "${archive}" -d "${src_dir}"
     for patch in "${patches[@]}"; do
-      patch -d "${src_dir}" -p1 < "${patch}"
+      patch -d "${src_dir}" -p1 < "${patch}" >&2
     done
     printf '%s\n' "${current_patch_sum}" > "${stamp}"
     rm -f "${binary}"
