@@ -371,6 +371,23 @@ def cofactor {R : Type u} [Lean.Grind.Ring R] {n : Nat}
   · simp
   · omega
 
+@[simp] theorem deleteRowCol_transpose {R : Type u} {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1)) :
+    deleteRowCol M.transpose col row = (deleteRowCol M row col).transpose := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let ii : Fin n := ⟨i, hi⟩
+  let jj : Fin n := ⟨j, hj⟩
+  change (deleteRowCol M.transpose col row)[ii][jj] =
+    (deleteRowCol M row col).transpose[ii][jj]
+  rw [deleteRowCol_entry]
+  rw [show (deleteRowCol M row col).transpose[ii][jj] =
+      (deleteRowCol M row col)[jj][ii] by simp [Matrix.transpose, Matrix.col]]
+  rw [deleteRowCol_entry]
+  simp [Matrix.transpose, Matrix.col]
+
 /-- The determinant of the empty leading prefix is the Bareiss previous-pivot
 convention `1`. -/
 @[simp] theorem det_leadingPrefix_zero {R : Type u} [Lean.Grind.Ring R]
@@ -4767,6 +4784,15 @@ theorem det_transpose {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
       (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0 := by
         exact permutationVectors_inverseVector_sum (R := R) (n := n) (fun perm => detTerm M perm)
 
+@[simp] theorem cofactor_transpose {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1)) :
+    cofactor M.transpose col row = cofactor M row col := by
+  unfold cofactor cofactorSign
+  rw [deleteRowCol_transpose]
+  rw [det_transpose]
+  have hsum : col.val + row.val = row.val + col.val := by omega
+  rw [hsum]
+
 /-- Diagonal-product formula for the determinant of a lower-triangular matrix
 (entries above the diagonal are zero). Derived from the upper-triangular form
 via `det_transpose`. -/
@@ -5788,6 +5814,21 @@ theorem det_eq_foldl_laplace_last
   intro acc i _hmem
   congr 1
   exact foldl_detTerm_insertions_eq_cofactor M i
+
+/-- Laplace expansion of the determinant along the final row. -/
+theorem det_eq_foldl_laplace_last_row
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) :
+    det M =
+      (List.finRange (n + 1)).foldl
+        (fun acc col => acc + M[Fin.last n][col] * cofactor M (Fin.last n) col) 0 := by
+  rw [← det_transpose M]
+  rw [det_eq_foldl_laplace_last M.transpose]
+  apply foldl_acc_congr
+  intro acc col _hmem
+  congr 1
+  rw [cofactor_transpose M (Fin.last n) col]
+  simp [Matrix.transpose, Matrix.col]
 
 /-- The square matrix obtained from `columnSumMatrix source coeff` by replacing
 the first `chosen.length` columns with selected `source` columns indexed by
