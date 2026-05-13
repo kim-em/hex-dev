@@ -346,14 +346,32 @@ theorem coeffs_adjacentSwap_lower_prev (b : Matrix Int n m) (k : Fin n) (hk : 0 
     let km1 := GramSchmidt.prevRow k hk
     GramSchmidt.entry (coeffs (adjacentSwap b k hk)) km1 j =
       GramSchmidt.entry (coeffs b) k j := by
-  sorry
+  let km1 := GramSchmidt.prevRow k hk
+  have hkm1 : km1.val + 1 = k.val := by
+    dsimp [km1, GramSchmidt.prevRow]
+    omega
+  have hjkm1 : j.val < km1.val := by
+    dsimp [km1, GramSchmidt.prevRow]
+    omega
+  simpa [adjacentSwap, km1] using
+    GramSchmidt.Int.coeffs_rowSwap_adjacent_lower_prev
+      (b := b) (km1 := km1) (k := k) (j := j) hkm1 hjkm1
 
 theorem coeffs_adjacentSwap_lower_curr (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.val)
     (j : Fin n) (hj : j.val + 1 < k.val) :
     let km1 := GramSchmidt.prevRow k hk
     GramSchmidt.entry (coeffs (adjacentSwap b k hk)) k j =
       GramSchmidt.entry (coeffs b) km1 j := by
-  sorry
+  let km1 := GramSchmidt.prevRow k hk
+  have hkm1 : km1.val + 1 = k.val := by
+    dsimp [km1, GramSchmidt.prevRow]
+    omega
+  have hjkm1 : j.val < km1.val := by
+    dsimp [km1, GramSchmidt.prevRow]
+    omega
+  simpa [adjacentSwap, km1] using
+    GramSchmidt.Int.coeffs_rowSwap_adjacent_lower_curr
+      (b := b) (km1 := km1) (k := k) (j := j) hkm1 hjkm1
 
 theorem coeffs_adjacentSwap_pivot (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.val)
     (hdenom :
@@ -368,7 +386,13 @@ theorem coeffs_adjacentSwap_pivot (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.v
     let swappedPrev := curr + μ • prev
     GramSchmidt.entry (coeffs (adjacentSwap b k hk)) k km1 =
       μ * Matrix.dot prev prev / Matrix.dot swappedPrev swappedPrev := by
-  sorry
+  let km1 := GramSchmidt.prevRow k hk
+  have hkm1 : km1.val + 1 = k.val := by
+    dsimp [km1, GramSchmidt.prevRow]
+    omega
+  simpa [adjacentSwap, km1] using
+    GramSchmidt.Int.coeffs_rowSwap_adjacent_pivot
+      (b := b) (km1 := km1) (k := k) hkm1 hdenom
 
 theorem gramDet_adjacentSwap_of_ne (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.val)
     (t : Nat) (ht : t ≤ n) (htk : t ≠ k.val) :
