@@ -299,7 +299,13 @@ theorem basis_adjacentSwap_of_lt (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.va
 theorem basis_adjacentSwap_of_gt (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.val)
     (i : Fin n) (hi : k.val < i.val) :
     (basis (adjacentSwap b k hk)).row i = (basis b).row i := by
-  sorry
+  let km1 := GramSchmidt.prevRow k hk
+  have hkm1 : km1.val + 1 = k.val := by
+    dsimp [km1, GramSchmidt.prevRow]
+    omega
+  simpa [adjacentSwap, km1] using
+    GramSchmidt.Int.basis_rowSwap_of_after
+      (b := b) (km1 := km1) (k := k) (i := i) hkm1 hi
 
 theorem basis_adjacentSwap_prev (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.val) :
     let km1 := GramSchmidt.prevRow k hk
@@ -327,7 +333,13 @@ theorem basis_adjacentSwap_curr (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.val
     (basis (adjacentSwap b k hk)).row k =
       (Matrix.dot curr curr / Matrix.dot swappedPrev swappedPrev) • prev -
         (μ * Matrix.dot prev prev / Matrix.dot swappedPrev swappedPrev) • curr := by
-  sorry
+  let km1 := GramSchmidt.prevRow k hk
+  have hkm1 : km1.val + 1 = k.val := by
+    dsimp [km1, GramSchmidt.prevRow]
+    omega
+  simpa [adjacentSwap, km1] using
+    GramSchmidt.Int.basis_rowSwap_adjacent_curr
+      (b := b) (km1 := km1) (k := k) hkm1 hdenom
 
 theorem coeffs_adjacentSwap_lower_prev (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.val)
     (j : Fin n) (hj : j.val + 1 < k.val) :
