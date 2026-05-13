@@ -74,3 +74,19 @@ Used by downstream irreducibility predicates (in
 unit-ness in `ℤ[x]`. The Mathlib bridge
 `Hex.ZPoly.IsUnit f ↔ IsUnit (toPolynomial f)` lives in
 `hex-poly-z-mathlib`.
+
+## External comparators
+
+| Comparator | Class | Scope |
+|---|---|---|
+| FLINT `fmpz_poly` via python-flint | informational | bench targets exercising arithmetic on `ZPoly` (the integer-polynomial surface inherited from `HexPoly`) |
+
+Same comparator and rationale as `hex-poly` (informational because
+of FLINT's tuned Karatsuba/Toom-Cook/FFT crossovers vs Hex's
+schoolbook + Karatsuba implementation). The Mignotte / Hensel-lift
+data surfaces specific to `hex-poly-z` have no direct FLINT
+analog at the same level of abstraction; those bench targets
+declare absence with the `no-comparable-surface-in-named-comparator`
+reason per `SPEC/benchmarking.md §"Comparator naming"`.
+
+Structured metadata in `libraries.yml: HexPolyZ.phase4.comparators`.

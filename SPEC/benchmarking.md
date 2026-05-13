@@ -269,19 +269,46 @@ Two integration patterns:
   produces no extern resolution. The same `@[extern]` boundary
   rules from [Conventions.md](../PLAN/Conventions.md) apply.
 - **Process call, acceptable when FFI isn't viable.** The external
-  tool is scripted (Sage, python-flint, GAP, PARI) or the per-call
-  cost is large enough that process-spawn overhead is negligible.
-  Use `setup_fixed_benchmark` with an `IO α` body that shells out,
-  parses the output, and returns it. This covers both single
-  canonical-input comparisons *and* "swept" process-call
-  comparisons, by registering one `setup_fixed_benchmark` per
-  parameter value (e.g. `Hex.LLL.fpLLL.dim10`,
-  `Hex.LLL.fpLLL.dim20`, `Hex.LLL.fpLLL.dim30`) — the parametric
-  `setup_benchmark` form itself takes `Nat → α`, not `Nat → IO α`,
-  so the per-rung-fixed pattern is the canonical workaround. If a
-  true `Nat → IO α` parametric form matters more than the
-  per-rung-fixed encoding, file an issue against lean-bench rather
-  than rolling a hex-local harness.
+  tool is scripted (Sage, python-flint, GAP, PARI) or has a foreign
+  runtime that doesn't interop cleanly with Lean's RTS. Use
+  `setup_fixed_benchmark` with an `IO α` body that drives the
+  comparator. This covers both single canonical-input comparisons
+  *and* "swept" process-call comparisons, by registering one
+  `setup_fixed_benchmark` per parameter value (e.g.
+  `Hex.LLL.fpLLL.dim10`, `Hex.LLL.fpLLL.dim20`,
+  `Hex.LLL.fpLLL.dim30`) — the parametric `setup_benchmark` form
+  itself takes `Nat → α`, not `Nat → IO α`, so the per-rung-fixed
+  pattern is the canonical workaround. If a true `Nat → IO α`
+  parametric form matters more than the per-rung-fixed encoding,
+  file an issue against lean-bench rather than rolling a hex-local
+  harness.
+
+  Process-call comparator wiring carries three contract clauses:
+
+  - **Measure overhead.** Every process-call comparator records a
+    per-call overhead measurement in
+    `reports/<lib>-performance.md §"Comparator ratios"`. Methodology:
+    time the comparator binary on a trivial input whose algorithmic
+    work is sub-millisecond; report the median across enough runs to
+    be stable. This figure is subtracted from per-call wall times
+    before reporting ratios per
+    [§Headline reports — Comparator ratios](#headline-reports).
+  - **Persistent-subprocess is the preferred shape when overhead is
+    non-negligible.** Wrap the comparator in a driver that loops on
+    stdin (one problem per request, length- or delimiter-framed)
+    and emits answers on stdout. The bench harness spawns the
+    driver once per `lake exe hexfoo_bench run` invocation and
+    reuses the file descriptors across calls, amortising one process
+    startup across all comparator calls in that registration.
+    Document the protocol in the bench module docstring.
+  - **Per-call process spawn is acceptable only as a last resort.**
+    FFI is preferred when feasible; persistent-subprocess is the
+    fallback when FFI isn't viable. Per-call process spawn (the
+    pattern where each `setup_fixed_benchmark` body shells out
+    afresh) is acceptable only when both above are infeasible *and*
+    the per-call algorithmic work is large enough that the measured
+    per-call overhead falls below the adjustment threshold defined
+    in [§Headline reports — Comparator ratios](#headline-reports).
 
 Where a SPEC asks for a comparison lean-bench cannot directly model,
 file the gap as a feature request against lean-bench. Do not invent
@@ -347,6 +374,39 @@ A library SPEC must not name a comparator without classifying it.
 Phase 4 is blocked until every `gating` comparator is wired and
 its measured ratio recorded in the headline report ([§Headline
 reports](#headline-reports)).
+
+A comparator may be **scoped to a specific bench-target subset** — one
+comparator gates one bench target while another bench target in the
+same library declares absence — provided the per-library SPEC names
+which bench target each comparator covers. This is the common shape
+when an external tool exposes some of a library's surfaces as
+user-callable functions but not others.
+
+Where a bench target has no external comparator, the per-library
+SPEC declares the absence with a library-specific reason identifying
+exactly one of:
+
+- **implementation-is-extern** — the surface is an external library
+  via `@[extern]`; there is nothing algorithmically distinct to
+  compare against.
+- **structural-layer** — the surface is in a structural layer over a
+  named dependency library whose declared comparator already covers
+  it.
+- **input-source-only** — the only published external implementation
+  is itself the input source (e.g. a committed table), not an
+  executable comparator.
+- **mathlib-bridge** — the library is a `Hex*Mathlib` bridge whose
+  comparison surface is a within-Lean `compare` group against
+  Mathlib's native types.
+- **no-comparable-surface-in-named-comparator** — the library
+  declares a comparator for some surfaces but the named comparator
+  tool does not expose this specific surface as a callable function
+  (the tool builds it internally but doesn't surface it as user API).
+
+Generic "not applicable" is not a valid declaration. Unwired-but-
+required comparators are declared with the `blocked` state per
+[§Comparator classification](#comparator-classification-gating-vs-informational)
+and a tracking issue link, never silently omitted.
 
 ### The Attribution rule
 
@@ -456,6 +516,53 @@ medium and large primes (e.g. `(97, 127)`, `(521, 13)`,
 `(97, 128)`), and large-degree irreducibility stress tests over
 `F_2` at degrees `512`, `1024`, `2048` and beyond when feasible.
 
+## Mathlib-free benches
+
+Benchmarks measure the computational kernel. The project's
+architectural premise is the Mathlib-free split: `Hex*` libraries are
+computational and Mathlib-free; `Hex*Mathlib` libraries are
+proof-only bridges. Two invariants follow, both hard:
+
+1. **`Hex*Mathlib` libraries do not have benchmarks.** No
+   `Hex*Mathlib/Bench.lean`, no `Hex*Mathlib/Bench/`, no
+   `lean_exe *mathlib*_bench` in `lakefile.lean`. The Mathlib bridge
+   modules are proof-only; there is nothing computational to
+   benchmark in a bridge.
+2. **No bench reaches Mathlib.** For every bench executable declared
+   as `lean_exe X_bench where root := ...` in `lakefile.lean`, the
+   root module and every module transitively reachable from it via
+   `import` must NOT name any `Mathlib.*` module. Pulling Mathlib
+   into a bench's link chain forces thousands of native-object
+   (`.c.o`) compilations per CI job (a measured 12-minute hit per
+   offending bench at this repo's scale), and silently defeats the
+   Mathlib-free split that the rest of the project rests on. The
+   constraint is on the upstream Mathlib package only; intra-project
+   `Hex*Mathlib.*` modules are not what this rule forbids — but per
+   invariant (1) above, no bench imports them either.
+
+Both invariants are enforced by
+`scripts/ci/check_benches_mathlib_free.sh`, invoked from the `build`
+job in `ci.yml`. The script:
+
+- Globs `lakefile.lean` for `lean_exe *_bench where root := ...` to
+  enumerate bench exe roots (handles top-level roots like
+  `HexGF2Bench` as well as `Hex*/Bench` modules).
+- Walks each root's transitive `import` graph (Lean syntax allows
+  `import` only at file start, so a simple `^import ` line scan up
+  to the first non-import/non-comment line is sound).
+- Fails on the first reachable `Mathlib.*` import, printing the
+  offending bench root and the full chain (e.g.
+  `HexPolyMathlib.Bench → HexPolyMathlib.Euclid → Mathlib.Algebra.Polynomial.FieldDivision`).
+- Globs `Hex*Mathlib/Bench.lean` and `Hex*Mathlib/Bench/` and fails
+  if any such path exists.
+
+A bench that needs Mathlib is a category error, not an oversight to
+work around: either it's measuring through Mathlib (slow and missing
+the computational kernel) or it accidentally dragged Mathlib into a
+native link chain. Either way, the fix is structural — file the
+finding, roll back if necessary, and either remove the bench or
+move what it measures into a Mathlib-free location.
+
 ## CI integration
 
 Every library at `done_through ≥ 4` ships a CI job that runs:
@@ -471,13 +578,56 @@ child exits cleanly, and verifies hashable benchmarks emit hashes.
 It does NOT assert timing values — the gate detects bitrot of the
 bench module itself, not regressions in the implementation.
 
-Per-library `verify` budget is up to ~15 s for libraries whose
-smallest registered input genuinely needs that long; most libraries
-should run in a few seconds. The repo-wide CI step's total budget is
-the sum, with a soft target of a few minutes — not a hard cap. A
-library exceeding 15 s on `verify` needs either tighter
-smoke settings or a closer look at why its tiniest invocation is
-slow. It is not a license to weaken the scientific settings.
+The `Bench verify` step lives in `ci.yml`'s `build` ubuntu job (per
+[SPEC/CI.md §Job-count budget](CI.md)), one sequential block, no
+matrix. New libraries at `done_through ≥ 4` append their bench
+target to that block.
+
+### Time budget
+
+The `Bench verify` step has two enforced budgets:
+
+- **Per-library soft warning at 30 s.** Any library whose `verify`
+  crosses 30 wallclock seconds is logged as a warning in the CI
+  output for visibility. This is a warning, not a fail —
+  GitHub-hosted runner perf variance is real (2-3× single-run noise
+  is normal), and a single-PR flake should not block merges.
+- **Repo-wide hard cap at 10 wallclock minutes** (transitional; see
+  below). The total time for the `Bench verify` step (build + run,
+  summed across all libraries) MUST be under the cap. Crossing it
+  fails the build with a per-library breakdown so the offender is
+  obvious. The 10-minute cap is staged: once outliers are
+  remediated, the cap ratchets to **5 wallclock minutes**, which is
+  the long-term target.
+
+When a library trips either:
+
+- If the smallest honest smoke input is fast at the bench's
+  scientific complexity model but slow at its currently-registered
+  smoke settings, tighten the smoke settings (or add a
+  smoke-specific override clause to the registration) so the smoke
+  path uses a budget appropriate for "does this module compile and
+  run". Scientific settings are unchanged.
+- If the smallest honest smoke input is genuinely minutes at any
+  setting, that's a bench-found finding per
+  [§verdict-as-bug-trigger](#the-verdict-as-bug-trigger-model):
+  file the issue, roll back `done_through`, fix the underlying
+  implementation at the rolled-back phase.
+
+**Smoke settings may be tightened to fit budget; scientific
+settings MUST NOT be weakened to dodge the budget.** That's
+verdict-laundering per [§Anti-patterns](#anti-patterns). The
+distinction matters because `verify` and `run` consume
+different settings layers — see [§Harness](#harness-lean-bench).
+
+The cap is enforced by
+`scripts/ci/check_bench_verify_budget.sh`, invoked at the tail of
+the `Bench verify` step. It wraps the per-library `lake exe X_bench
+verify` invocations (capturing wallclock per invocation), prints a
+sorted breakdown, logs the soft warnings, and exits non-zero if the
+total exceeds the hard cap.
+
+### Scientific timing runs
 
 Full timing runs (`lake exe hexfoo_bench run NAME` with a real
 budget) are not part of merge-gating CI. They run on a scheduled
@@ -549,11 +699,64 @@ The report contains five subsections:
    median per-call time and observed-hash agreement.
 3. **Comparator ratios.** Each comparator named in the per-library
    SPEC ([§Comparator naming](#comparator-naming)) — `gating` and
-   `informational` alike — with a measured ratio at the bottom of
-   the parameter ladder for parametric registrations, or on the
-   canonical input for fixed registrations. A short narrative
-   paragraph interprets the ratios: what is comfortable, what is
-   not, and why.
+   `informational` alike — with measured ratios across the full
+   parameter ladder (parametric registrations) or every canonical
+   input (fixed-benchmark families), and a narrative paragraph
+   naming the trend across rungs. A single number anchored at the
+   bottom is structurally flattering to whichever side has the
+   better startup characteristics; what's needed is a curve across
+   the eligible range. Five clauses, all binding on the report:
+
+   - **Define eligible range.** A rung is *eligible* for the
+     gating-goal verdict when both: (a) the comparator's per-call
+     overhead is ≤ 50% of measured wall time on that rung — below
+     this floor the rung is a process-startup measurement, not an
+     algorithm one; and (b) per-call wall time is ≤ 10 s hard /
+     ≤ 1 s soft — exceed the soft target only when needed to give
+     the trend enough range to read cleanly, and never exceed the
+     hard ceiling. The eligible range for a `gating` verdict is the
+     intersection of these floor and ceiling constraints.
+
+   - **Ratios across the full ladder, with adjusted values inside
+     the eligible range.** The §"Comparator ratios" subsection
+     records the measured ratio at every shared rung of the
+     parametric schedule (or every canonical input for
+     fixed-benchmark families). Per-call overhead is measured once
+     per process-call comparator per
+     [§External comparators — Process call](#external-comparators)
+     and shown as one line per comparator. On any rung where overhead
+     exceeds 5% of measured wall time, both the raw ratio and the
+     overhead-adjusted ratio (comparator wall time minus overhead,
+     then divide) are recorded. Rungs outside the eligible range
+     are reported for completeness only.
+
+   - **Enough rungs inside the eligible range to see a trend.** Two
+     or three points are at best a single slope; the ratio's shape
+     across the eligible range — flat, climbing, accelerating,
+     decelerating — must be unambiguous from the data alone. A
+     doubling-only parameter schedule typically does not provide
+     enough eligible rungs; the ladder is densified with in-fill
+     rungs between existing points, never extended past the
+     wallclock ceiling. The headline report records the actual
+     ladder (including in-fill) so a reader sees what was measured,
+     not just the family's default.
+
+   - **Trend narrative and adverse-trend Concerns.** The
+     §"Comparator ratios" subsection includes a paragraph naming
+     the trend, with reference to the rungs that establish it. The
+     baseline shape is a ratio that converges to a small constant
+     past the regime where startup or fixed costs dominate; a
+     diverging trend (one side steadily losing ground as the
+     parameter grows) is itself an audit-found Concern even when
+     the highest-rung verdict happens to pass, linked from the
+     §"Concerns" subsection.
+
+   - **Gating-goal verdict at the top eligible rung.** When the
+     per-library SPEC states a performance goal against a `gating`
+     comparator, the verdict is computed at the largest-parameter
+     eligible rung of each input family. The bottom rung is
+     reported for context; it is never the rung that meets or
+     fails the goal.
 4. **Profile.** Per [profiling.md §Coverage requirement](profiling.md),
    one representative case per `phase4.input_families`. Dominant
    inclusive costs are named and explained, with leaf cost
@@ -599,6 +802,23 @@ state, `SPEC/` is normative and follows the immutability rules in
 These behaviours have surfaced in past benchmarking work and are
 explicitly forbidden:
 
+- **Importing `Mathlib.*` into a bench module.** See
+  [§Mathlib-free benches](#mathlib-free-benches). Bench targets
+  compile to native executables, and Mathlib's `.c.o` chain is not
+  in the upstream cache — every transitively-Mathlib bench inflates
+  the CI `Bench verify` step's wallclock by ~12 minutes per
+  uncached link chain. This is a category error to remove (delete
+  the bench, move what it measured into a Mathlib-free location),
+  not an oversight to argue around. Enforced by
+  `scripts/ci/check_benches_mathlib_free.sh`.
+- **Weakening scientific settings to fit a CI time budget.** The
+  `Bench verify` time budget is on the smoke path, which has its
+  own settings layer (see [§Harness](#harness-lean-bench)).
+  Tightening smoke settings to fit the cap is allowed; lowering the
+  scientific `setup_benchmark` parameters or `targetInnerNanos` is
+  verdict-laundering. If the smallest honest smoke input is
+  genuinely minutes, the response is a bench-found rollback at the
+  rolled-back phase, never a scientific-settings shrink.
 - **Lowering the parameter range to make a budget-skip go away
   without naming the implementation bug.** If a benchmark would
   exceed its wallclock cap at the declared range, the implementation
@@ -698,6 +918,28 @@ explicitly forbidden:
   inside an `LLLState.ofBasis` prep step that is itself
   sized in `n` — that step is its own asymptotically significant
   phase and needs its own registration.
+- **Comparator process overhead reported as algorithmic difference.**
+  Per-call subprocess on inputs small enough that startup dominates
+  the comparator's wall time is a measurement-shape problem, not an
+  algorithmic one. Recognisable in a headline report by a comparator
+  ratio of multiple orders of magnitude at the smallest rungs that
+  collapses to a small constant factor at larger rungs — the
+  small-rung gap is process startup, not algorithm. Fix per
+  [§External comparators — Process call](#external-comparators) and
+  [§Headline reports — Comparator ratios](#headline-reports):
+  persistent-subprocess (or FFI) protocol, or explicit per-call
+  overhead subtraction. The raw ratio is never published without that
+  adjustment when overhead is non-negligible.
+- **Bottom-rung-only comparator evaluation.** Declaring a `gating`
+  comparator goal met on the basis of the bottom-of-ladder ratio
+  alone hides asymptotic shape: two same-algorithm implementations
+  can show wildly different bottom-rung ratios driven by startup and
+  constant-factor differences while diverging steadily at larger
+  parameters; the bottom rung is the rung most flattering to
+  whichever side has the better warm-up. The verdict is evaluated
+  at the largest eligible rung across enough in-fill rungs to see
+  the trend, per
+  [§Headline reports — Comparator ratios](#headline-reports).
 
 Every `setup_benchmark` registration must carry an adjacent comment
 deriving its `n => …` from the algorithm: which step dominates, and

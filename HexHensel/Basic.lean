@@ -102,6 +102,36 @@ theorem congr_reduceModPow_of_congr (f g : ZPoly) (p k : Nat)
   rw [coeff_reduceModPow, coeff_reduceModPow]
   exact intModNat_eq_of_congr (hfg i)
 
+/-- Congruence modulo a larger modulus descends along divisibility of moduli. -/
+theorem congr_of_dvd_modulus (f g : ZPoly) {m n : Nat}
+    (hmn : m ∣ n)
+    (hfg : congr f g n) :
+    congr f g m := by
+  intro i
+  have hmnInt : (m : Int) ∣ (n : Int) := by
+    exact_mod_cast hmn
+  exact Int.emod_eq_zero_of_dvd
+    (Int.dvd_trans hmnInt (Int.dvd_of_emod_eq_zero (hfg i)))
+
+/-- Congruence modulo `p^b` descends to congruence modulo `p^a` for `a ≤ b`. -/
+theorem congr_pow_of_le (p a b : Nat) (f g : ZPoly)
+    (hab : a ≤ b)
+    (hfg : congr f g (p ^ b)) :
+    congr f g (p ^ a) :=
+  congr_of_dvd_modulus f g (Nat.pow_dvd_pow p hab) hfg
+
+/-- Alias oriented toward canonical reduction: congruent inputs have the same reduction. -/
+theorem reduceModPow_eq_of_congr (f g : ZPoly) (p k : Nat)
+    (hfg : congr f g (p ^ k)) :
+    reduceModPow f p k = reduceModPow g p k :=
+  congr_reduceModPow_of_congr f g p k hfg
+
+/-- Reducing twice to the same positive modulus is idempotent. -/
+theorem reduceModPow_idempotent (f : ZPoly) (p k : Nat) (hpk : 0 < p ^ k) :
+    reduceModPow (reduceModPow f p k) p k = reduceModPow f p k :=
+  reduceModPow_eq_of_congr (reduceModPow f p k) f p k
+    (congr_reduceModPow f p k hpk)
+
 /-- Congruent integer polynomials have the same reduction modulo `p`. -/
 theorem modP_eq_of_congr (p : Nat) [ZMod64.Bounds p] (f g : ZPoly)
     (hfg : congr f g p) :
@@ -119,6 +149,19 @@ theorem modP_eq_of_congr (p : Nat) [ZMod64.Bounds p] (f g : ZPoly)
       intModNat (f.coeff i) p = intModNat (g.coeff i) p := by
     exact Int.ofNat.inj (intModNat_eq_of_congr (hfg i))
   rw [hnat]
+
+/-- Reducing modulo `p^(k+1)` does not change the reduction modulo `p`. -/
+theorem modP_reduceModPow
+    (p k : Nat) [ZMod64.Bounds p] (f : ZPoly) :
+    modP p (reduceModPow f p (k + 1)) = modP p f := by
+  apply modP_eq_of_congr
+  have hred :
+      congr (reduceModPow f p (k + 1)) f (p ^ (k + 1)) :=
+    congr_reduceModPow f p (k + 1) (Nat.pow_pos (ZMod64.Bounds.pPos (p := p)))
+  have hred₁ :
+      congr (reduceModPow f p (k + 1)) f (p ^ 1) :=
+    congr_pow_of_le p 1 (k + 1) (reduceModPow f p (k + 1)) f (by omega) hred
+  simpa using hred₁
 
 end ZPoly
 

@@ -501,4 +501,33 @@ theorem defaultFactorCoeffBound_real_le_factorFastPrecisionCap (f : Hex.ZPoly) :
       (Hex.factorFastPrecisionCap f : ℝ) := by
   exact_mod_cast defaultFactorCoeffBound_le_factorFastPrecisionCap f
 
+/--
+Single-hypothesis dominance bundle for HO-4 termination callers.
+
+At any precision `a` with `factorFastPrecisionCap f ≤ a`, all three real-valued
+BHKS quantities are dominated by `(a : ℝ)`:
+
+* the product-shaped BHKS paper threshold `bhksPaperThresholdReal f C`
+  (under the project `0 ≤ C ≤ 2` constant convention from
+  `bhksPaperConstantFactorReal_le_fourPowFactor`),
+* the executable BHKS precision cap `Hex.bhksBound f`,
+* the executable Mignotte coefficient bound `Hex.ZPoly.defaultFactorCoeffBound f`.
+
+This packages the BHKS Theorem 5.2 separation precondition and the Mignotte
+reconstruction precondition into a single hypothesis, so leaf-theorem proofs
+do not have to thread three independent dominance lemmas at every use site.
+-/
+theorem factorFastPrecisionCap_real_dominates_bhksPaperThreshold
+    (f : Hex.ZPoly) (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    {a : Nat} (ha : Hex.factorFastPrecisionCap f ≤ a) :
+    bhksPaperThresholdReal f C ≤ (a : ℝ) ∧
+      (Hex.bhksBound f : ℝ) ≤ (a : ℝ) ∧
+        (Hex.ZPoly.defaultFactorCoeffBound f : ℝ) ≤ (a : ℝ) := by
+  have hbhks : (Hex.bhksBound f : ℝ) ≤ (a : ℝ) := by
+    exact_mod_cast (le_trans (bhksBound_le_factorFastPrecisionCap f) ha)
+  have hmignotte : (Hex.ZPoly.defaultFactorCoeffBound f : ℝ) ≤ (a : ℝ) := by
+    exact_mod_cast (le_trans (defaultFactorCoeffBound_le_factorFastPrecisionCap f) ha)
+  exact ⟨(bhksPaperThresholdReal_le_bhksBound f C hC_nonneg hC).trans hbhks,
+    hbhks, hmignotte⟩
+
 end HexBerlekampZassenhausMathlib

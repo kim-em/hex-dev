@@ -56,7 +56,9 @@ end ZPoly
 
 /-- Result of one linear Hensel lift step. -/
 structure LinearLiftResult where
+  /-- The lifted first factor. -/
   g : ZPoly
+  /-- The lifted complementary factor. -/
   h : ZPoly
 
 namespace LinearLiftResult
@@ -103,6 +105,32 @@ def linearHenselStep
   let h' := h + LinearLiftResult.liftScaledIncrement p k hCorrection
   { g := reduceModPow g' p (k + 1)
     h := reduceModPow h' p (k + 1) }
+
+/-- The `g` projection of a linear Hensel step, exposed without unfolding the result record. -/
+@[simp] theorem linearHenselStep_g
+    (p k : Nat) [ZMod64.Bounds p]
+    (f g h : ZPoly) (s t : FpPoly p) :
+    (linearHenselStep p k f g h s t).g =
+      let e := coeffwiseDiv (f - g * h) (p ^ k)
+      let gMod := modP p g
+      let eMod := modP p e
+      let qr := DensePoly.divMod (t * eMod) gMod
+      reduceModPow (g + LinearLiftResult.liftScaledIncrement p k qr.2) p (k + 1) := by
+  simp [linearHenselStep]
+
+/-- The `h` projection of a linear Hensel step, exposed without unfolding the result record. -/
+@[simp] theorem linearHenselStep_h
+    (p k : Nat) [ZMod64.Bounds p]
+    (f g h : ZPoly) (s t : FpPoly p) :
+    (linearHenselStep p k f g h s t).h =
+      let e := coeffwiseDiv (f - g * h) (p ^ k)
+      let gMod := modP p g
+      let hMod := modP p h
+      let eMod := modP p e
+      let qr := DensePoly.divMod (t * eMod) gMod
+      let hCorrection := s * eMod + qr.1 * hMod
+      reduceModPow (h + LinearLiftResult.liftScaledIncrement p k hCorrection) p (k + 1) := by
+  simp [linearHenselStep]
 
 private theorem congr_mul_reduceModPow_pair
     (p k : Nat) [ZMod64.Bounds p] (g h : ZPoly) :
@@ -1108,6 +1136,36 @@ def LinearLiftLoopInvariant
       (FpPoly.liftToZ (s * ZPoly.modP p acc.g + t * ZPoly.modP p acc.h))
       1 p ∧
     DensePoly.Monic acc.g
+
+namespace LinearLiftLoopInvariant
+
+/-- The product-congruence component of a linear-lift loop invariant. -/
+theorem product_congr
+    {p current : Nat} [ZMod64.Bounds p]
+    {f : ZPoly} {s t : FpPoly p} {acc : LinearLiftResult}
+    (hinv : LinearLiftLoopInvariant p current f s t acc) :
+    ZPoly.congr (acc.g * acc.h) f (p ^ current) :=
+  hinv.1
+
+/-- The Bezout-congruence component of a linear-lift loop invariant. -/
+theorem bezout_congr
+    {p current : Nat} [ZMod64.Bounds p]
+    {f : ZPoly} {s t : FpPoly p} {acc : LinearLiftResult}
+    (hinv : LinearLiftLoopInvariant p current f s t acc) :
+    ZPoly.congr
+      (FpPoly.liftToZ (s * ZPoly.modP p acc.g + t * ZPoly.modP p acc.h))
+      1 p :=
+  hinv.2.1
+
+/-- The monicity component of a linear-lift loop invariant. -/
+theorem monic_g
+    {p current : Nat} [ZMod64.Bounds p]
+    {f : ZPoly} {s t : FpPoly p} {acc : LinearLiftResult}
+    (hinv : LinearLiftLoopInvariant p current f s t acc) :
+    DensePoly.Monic acc.g :=
+  hinv.2.2
+
+end LinearLiftLoopInvariant
 
 /-- The per-step degree hypothesis needed to preserve monicity of the `g` factor. -/
 def LinearLiftStepDegreeInvariant
