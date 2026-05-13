@@ -1522,6 +1522,19 @@ private theorem polyProduct_polynomialNormalizationPrefixFactors
   unfold polynomialNormalizationPrefixFactors
   rw [polyProduct_append]
 
+private theorem polyProduct_reassemblePolynomialFactors
+    (d : FactorNormalizationData) (coreFactors : Array ZPoly) :
+    Array.polyProduct (reassemblePolynomialFactors d coreFactors) =
+      DensePoly.shift d.xPower d.repeatedPart *
+        Array.polyProduct coreFactors := by
+  unfold reassemblePolynomialFactors
+  rw [polyProduct_append, polyProduct_polynomialNormalizationPrefixFactors]
+  rw [polyProduct_xPowerFactorArray_mul]
+  rw [polyProduct_repeatedPartFactorArray]
+  by_cases hrepeated : d.repeatedPart = 1
+  · rw [if_pos hrepeated, hrepeated]
+  · rw [if_neg hrepeated]
+
 private theorem polyProduct_normalizationPrefixFactors (d : FactorNormalizationData) :
     Array.polyProduct (normalizationPrefixFactors d) =
       Array.polyProduct (contentFactorArray d.content) *
