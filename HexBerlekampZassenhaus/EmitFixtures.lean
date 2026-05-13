@@ -13,7 +13,7 @@ cases also carry optional pinned modular-factor metadata so the oracle
 checks that the committed input has the intended split over a named
 prime.
 
-Fixtures are integer polynomials at degrees 4, 6, 10, 16, and 20,
+Fixtures are integer polynomials at degrees 4, 6, 8, 10, 16, and 20,
 covering the currently Phase-2-stable shapes:
 
 * scalar/sign edge cases from the public `Factorization` convention,
@@ -22,7 +22,31 @@ covering the currently Phase-2-stable shapes:
 * reducible products whose current output is already fully refined into
   irreducible components,
 * polynomials with content greater than `1`,
-* the degree-20 `Φ_11 · Φ_22` reducible product.
+* the degree-20 `Φ_11 · Φ_22` reducible product,
+* HO-2 (#2565) adversarial cases where mod-p factors split more finely
+  than the integer factorisation; see "HO-2 adversarial coverage" below.
+
+HO-2 adversarial coverage
+-------------------------
+
+`SPEC/Libraries/hex-berlekamp-zassenhaus.md` §"Conformance fixtures"
+requires the core profile to include at least one input where the integer
+factorisation requires a non-trivial subset product of lifted mod-p factors,
+and at least one input that splits heavily (≥ 4 distinct mod-p factors)
+over a small admissible prime.  Four `adv/*` cases are emitted with pinned
+`modFactorPrime` / `modFactorDegrees` metadata so the oracle independently
+verifies the named modular split:
+
+* `adv/quad_sqrt2_sqrt3` — `(X² − 2)(X² − 3)` splits over F₂₃ as four
+  linear factors that recombine into two integer quadratics
+  (non-trivial subset product, heavy split over a small admissible prime).
+* `adv/x4_plus_1` — `X⁴ + 1`, irreducible over ℤ, splits over F₅ as
+  two quadratics (subset-product over a small admissible prime).
+* `adv/swinnerton_dyer_sd3` — degree-8 Swinnerton-Dyer SD₃, irreducible
+  over ℤ, splits completely as eight linear factors over F₇₁
+  (heavy split).
+* `adv/phi15` — Φ₁₅, irreducible over ℤ, splits completely as eight
+  linear factors over F₃₁ (heavy split, small admissible prime).
 
 Cross-checked operation
 -----------------------
@@ -207,23 +231,41 @@ private def cases_red : List ExpectedCase :=
       [ ([1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1], 1)
       , ([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 1) ] ]
 
-/-! ## Pinned-prime modular split smoke case -/
+/-! ## HO-2 adversarial cases with pinned modular split metadata
+
+These cases discharge `SPEC/Libraries/hex-berlekamp-zassenhaus.md`
+§"Conformance fixtures" (HO-2, #2565); see the module docstring above
+for the case-by-case role.  Each case is emitted with
+`modFactorPrime` / `modFactorDegrees`, which the python-flint oracle
+cross-checks via `nmod_poly.factor`.  Conformance buckets for the same
+polynomials live in `HexBerlekampZassenhaus/Conformance.lean` under
+"Adversarial modular split smoke cases"; case-id stems
+(`quad_sqrt2_sqrt3`, `x4_plus_1`, `swinnerton_dyer_sd3`, `phi15`) match
+the local Lean polynomial names there. -/
 
 private def cases_pinned_factor : List PinnedCase :=
-  [ -- (X^2 - 2)(X^2 - 3) splits over F_23 into four linear factors,
-    -- while its integer factorisation recombines them into two quadratics.
+  [ -- adv/quad_sqrt2_sqrt3 — (X^2 - 2)(X^2 - 3) splits over F_23 into
+    -- four linear factors that the integer factorisation recombines
+    -- into two quadratics.  Discharges the HO-2 non-trivial
+    -- subset-product requirement.
     mkPinned "adv/quad_sqrt2_sqrt3" #[6, 0, -5, 0, 1] 23 [1, 1, 1, 1] ]
 
 private def cases_pinned_expected : List PinnedExpectedCase :=
-  [ -- X^4 + 1 is irreducible over Z and splits over F_5 into two quadratics.
+  [ -- adv/x4_plus_1 — X^4 + 1 is irreducible over Z and splits over F_5
+    -- into two quadratics; HO-2 subset-product case at a small
+    -- admissible prime.
     mkPinnedExpected "adv/x4_plus_1" #[1, 0, 0, 0, 1] 5 [2, 2]
       1 [([1, 0, 0, 0, 1], 1)]
-    -- Swinnerton-Dyer SD_3 splits completely over F_71.
+    -- adv/swinnerton_dyer_sd3 — Swinnerton-Dyer SD_3 (degree 8, root
+    -- field Q(√2, √3, √5)) is irreducible over Z and splits completely
+    -- over F_71 as eight linear factors; HO-2 heavy-split case.
   , mkPinnedExpected "adv/swinnerton_dyer_sd3"
       #[576, 0, -960, 0, 352, 0, -40, 0, 1]
       71 [1, 1, 1, 1, 1, 1, 1, 1]
       1 [([576, 0, -960, 0, 352, 0, -40, 0, 1], 1)]
-    -- Φ_15 splits completely over F_31.
+    -- adv/phi15 — Φ_15 (degree 8) is irreducible over Z and splits
+    -- completely over F_31 as eight linear factors; HO-2 heavy-split
+    -- case at a small admissible prime.
   , mkPinnedExpected "adv/phi15" #[1, -1, 0, 1, -1, 1, 0, -1, 1]
       31 [1, 1, 1, 1, 1, 1, 1, 1]
       1 [([1, -1, 0, 1, -1, 1, 0, -1, 1], 1)] ]

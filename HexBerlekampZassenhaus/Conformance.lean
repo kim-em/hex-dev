@@ -158,12 +158,21 @@ private def negativeRepeatedRootWithContent : ZPoly :=
 private def leadingCoeffDivisibleByFive : ZPoly :=
   zpoly #[1, 1, 5]
 
-/-! ## Adversarial modular split smoke cases
+/-! ## Adversarial modular split smoke cases (HO-2, #2565)
 
-These named polynomials exercise the SPEC-required shapes where modular
-factors split more finely than the integer factorization.  The guards below
-check the local modular split facts only; oracle-stream fixture alignment is
-kept in `EmitFixtures.lean` and the JSONL oracle workflow. -/
+These named polynomials exercise the SPEC-required shapes from
+`SPEC/Libraries/hex-berlekamp-zassenhaus.md` §"Conformance fixtures":
+at least one input where the integer factors require a non-trivial subset
+product of lifted mod-p factors, and at least one input that splits heavily
+(≥ 4 distinct mod-p factors) over a small admissible prime.
+
+The Lean-only guards below check the local modular split facts and, where
+the executable BHKS recovery surface exposes it, the recombined integer
+factor buckets.  The companion `EmitFixtures.lean` driver emits the same
+four polynomials as `adv/quad_sqrt2_sqrt3`, `adv/x4_plus_1`,
+`adv/swinnerton_dyer_sd3`, and `adv/phi15` with pinned
+`modFactorPrime` / `modFactorDegrees` so `scripts/oracle/bz_flint.py`
+independently verifies the named modular split via `nmod_poly.factor`. -/
 
 private def x4Plus1 : ZPoly :=
   zpoly #[1, 0, 0, 0, 1]
