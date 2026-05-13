@@ -82,27 +82,27 @@ noncomputable def gramSchmidtNormProduct (b : Matrix Int n m) (k : Nat) (hk : k 
 
 theorem gramDet_eq_prod_normSq (b : Matrix Int n m)
     (hli : b.independent) (k : Nat) (hk : k ≤ n) :
-    (GramSchmidt.Int.gramDet b k hk : Rat) = gramSchmidtNormProduct b k hk := by
-  sorry
+    (GramSchmidt.Int.gramDet b k hk : Rat) = gramSchmidtNormProduct b k hk :=
+  GramSchmidt.Int.gramDet_eq_prod_normSq b hli k hk
 
 theorem gramDet_pos (b : Matrix Int n m)
     (hli : b.independent) (k : Nat) (hk : k ≤ n) (hk' : 0 < k) :
-    0 < GramSchmidt.Int.gramDet b k hk := by
-  sorry
+    0 < GramSchmidt.Int.gramDet b k hk :=
+  GramSchmidt.Int.gramDet_pos b hli k hk hk'
 
 theorem basis_normSq (b : Matrix Int n m)
     (hli : b.independent) (k : Nat) (hk : k < n) :
     Vector.normSq ((GramSchmidt.Int.basis b).row ⟨k, hk⟩) =
       (GramSchmidt.Int.gramDet b (k + 1) (Nat.succ_le_of_lt hk) : Rat) /
-        (GramSchmidt.Int.gramDet b k (Nat.le_of_lt hk) : Rat) := by
-  sorry
+        (GramSchmidt.Int.gramDet b k (Nat.le_of_lt hk) : Rat) :=
+  GramSchmidt.Int.basis_normSq b hli k hk
 
 theorem normSq_latticeVec_ge_min_basis_normSq
     (b : Matrix Int n m) (hli : b.independent)
     (v : Vector Int m) (hv : b.memLattice v) (hv' : v ≠ 0) :
     ∃ i : Fin n,
-      Vector.normSq ((GramSchmidt.Int.basis b).row i) ≤ ((Vector.normSq v : Int) : Rat) := by
-  sorry
+      Vector.normSq ((GramSchmidt.Int.basis b).row i) ≤ ((Vector.normSq v : Int) : Rat) :=
+  GramSchmidt.Int.normSq_latticeVec_ge_min_basis_normSq b hli v hv hv'
 
 end Matrix
 
