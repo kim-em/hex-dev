@@ -1870,6 +1870,58 @@ private theorem prefixSpan_smul
   refine ⟨a • cu, ?_⟩
   rw [rowCombination_smul_rat, hcu]
 
+private theorem prefixSpan_sub
+    (M : Matrix Rat n m) (i : Nat) (hi : i < n) {u v : Vector Rat m}
+    (hu : prefixSpan M i hi u) (hv : prefixSpan M i hi v) :
+    prefixSpan M i hi (u - v) := by
+  have hneg : prefixSpan M i hi ((-1 : Rat) • v) :=
+    prefixSpan_smul M i hi (-1) hv
+  have hadd := prefixSpan_add M i hi hu hneg
+  have hsub : u + (-1 : Rat) • v = u - v := by
+    apply Vector.ext
+    intro idx hidx
+    rw [Vector.getElem_add, Vector.getElem_smul, Vector.getElem_sub]
+    change u[idx] + (-1 : Rat) * v[idx] = u[idx] - v[idx]
+    grind
+  simpa [← hsub] using hadd
+
+private theorem dot_add_right (a b c : Vector Rat m) :
+    Matrix.dot a (b + c) = Matrix.dot a b + Matrix.dot a c := by
+  rw [dot_comm_rat, dot_add_left, dot_comm_rat b a, dot_comm_rat c a]
+
+private theorem dot_smul_right (s : Rat) (a b : Vector Rat m) :
+    Matrix.dot a (s • b) = s * Matrix.dot a b := by
+  rw [dot_comm_rat, dot_smul_left, dot_comm_rat b a]
+
+private theorem dot_sub_right (a b c : Vector Rat m) :
+    Matrix.dot a (b - c) = Matrix.dot a b - Matrix.dot a c := by
+  have hsub : b - c = b + (-1 : Rat) • c := by
+    apply Vector.ext
+    intro idx hidx
+    rw [Vector.getElem_sub, Vector.getElem_add, Vector.getElem_smul]
+    change b[idx] - c[idx] = b[idx] + (-1 : Rat) * c[idx]
+    grind
+  rw [hsub, dot_add_right, dot_smul_right]
+  grind
+
+private theorem dot_zero_right (a : Vector Rat m) :
+    Matrix.dot a 0 = 0 := by
+  unfold Matrix.dot Hex.Vector.dotProduct
+  change (List.finRange m).foldl
+      (fun acc i => acc + a[i] * (0 : Vector Rat m)[i]) 0 = 0
+  induction List.finRange m with
+  | nil =>
+      simp
+  | cons i xs ih =>
+      simp only [List.foldl_cons]
+      have hterm : a[i] * (0 : Vector Rat m)[i] = 0 := by
+        change a[i] * (0 : Vector Rat m)[i.val] = 0
+        rw [Vector.getElem_zero]
+        grind
+      rw [hterm]
+      rw [show (0 : Rat) + 0 = 0 by grind]
+      exact ih
+
 private def unitCoeff (j : Fin n) : Vector Rat n :=
   Vector.ofFn fun k => if k = j then 1 else 0
 
@@ -1996,6 +2048,103 @@ private theorem rowCombination_eq_foldl_rows
           accR[idx] + c[j] * M[j.val][idx]
         grind
   exact hfold (List.finRange n) 0 0 (by simp [Vector.getElem_zero])
+
+private theorem dot_eq_zero_of_prefixSpan
+    (M : Matrix Rat n m) (i : Nat) (hi : i < n)
+    (u v : Vector Rat m)
+    (hspan : prefixSpan M i hi v)
+    (horth : ∀ j : Fin (i + 1), Matrix.dot u ((prefixRows M i hi).row j) = 0) :
+    Matrix.dot u v = 0 := by
+  rcases hspan with ⟨c, hc⟩
+  rw [← hc, rowCombination_eq_foldl_rows]
+  have hfold :
+      ∀ xs : List (Fin (i + 1)), ∀ acc : Vector Rat m,
+        Matrix.dot u acc = 0 →
+          Matrix.dot u
+            (xs.foldl
+              (fun acc j => acc + c[j] • (prefixRows M i hi).row j) acc) = 0 := by
+    intro xs
+    induction xs with
+    | nil =>
+        intro acc hacc
+        simpa using hacc
+    | cons j rest ih =>
+        intro acc hacc
+        simp only [List.foldl_cons]
+        apply ih
+        rw [dot_add_right, dot_smul_right, hacc, horth j]
+        grind
+  exact hfold (List.finRange (i + 1)) 0 (dot_zero_right u)
+
+private theorem eq_zero_of_prefixSpan_of_forall_dot_zero
+    (M : Matrix Rat n m) (i : Nat) (hi : i < n) (v : Vector Rat m)
+    (hspan : prefixSpan M i hi v)
+    (horth : ∀ j : Fin (i + 1), Matrix.dot v ((prefixRows M i hi).row j) = 0) :
+    v = 0 := by
+  have hself : Matrix.dot v v = 0 :=
+    dot_eq_zero_of_prefixSpan M i hi v v hspan horth
+  apply Vector.ext
+  intro idx hidx
+  rw [Vector.getElem_zero]
+  exact dot_self_eq_zero_get v hself ⟨idx, hidx⟩
+
+/-- If two residuals reconstruct the same source row modulo the same prefix
+span and are both orthogonal to that prefix, they are equal. This is the
+local uniqueness principle used by suffix row-swap proofs after translating
+equal generated prefixes into equal `prefixSpan` predicates. -/
+private theorem residual_eq_of_same_prefixSpan
+    (M : Matrix Rat n m) (i : Nat) (hi : i < n)
+    (row r s : Vector Rat m)
+    (hrspan : prefixSpan M i hi (row - r))
+    (hsspan : prefixSpan M i hi (row - s))
+    (hrorth : ∀ j : Fin (i + 1), Matrix.dot r ((prefixRows M i hi).row j) = 0)
+    (hsorth : ∀ j : Fin (i + 1), Matrix.dot s ((prefixRows M i hi).row j) = 0) :
+    r = s := by
+  have hspanDiff :
+      prefixSpan M i hi ((row - s) - (row - r)) :=
+    prefixSpan_sub M i hi hsspan hrspan
+  have hdiff_eq : (row - s) - (row - r) = r - s := by
+    apply Vector.ext
+    intro idx hidx
+    rw [Vector.getElem_sub, Vector.getElem_sub, Vector.getElem_sub]
+    grind
+  have hspan : prefixSpan M i hi (r - s) := by
+    simpa [hdiff_eq] using hspanDiff
+  have horth : ∀ j : Fin (i + 1),
+      Matrix.dot (r - s) ((prefixRows M i hi).row j) = 0 := by
+    intro j
+    rw [dot_comm_rat (r - s) ((prefixRows M i hi).row j)]
+    rw [dot_sub_right]
+    rw [dot_comm_rat ((prefixRows M i hi).row j) r,
+      dot_comm_rat ((prefixRows M i hi).row j) s, hrorth j, hsorth j]
+    grind
+  have hzero := eq_zero_of_prefixSpan_of_forall_dot_zero M i hi (r - s) hspan horth
+  apply Vector.ext
+  intro idx hidx
+  have hz := congrArg (fun v : Vector Rat m => v[(⟨idx, hidx⟩ : Fin m)]) hzero
+  change (r - s)[idx] = (0 : Vector Rat m)[idx] at hz
+  rw [Vector.getElem_sub, Vector.getElem_zero] at hz
+  grind
+
+/-- Residual uniqueness across two prefix bases with the same span. The
+second residual only needs to reconstruct modulo `B`; the span bridge and
+orthogonality transport move it to `A`, where `residual_eq_of_same_prefixSpan`
+applies. -/
+private theorem residual_eq_of_equiv_prefixSpan
+    (A B : Matrix Rat n m) (i : Nat) (hi : i < n)
+    (row r s : Vector Rat m)
+    (hrspan : prefixSpan A i hi (row - r))
+    (hsspan : prefixSpan B i hi (row - s))
+    (hB_to_A : ∀ v : Vector Rat m, prefixSpan B i hi v → prefixSpan A i hi v)
+    (hA_rows_to_B :
+      ∀ j : Fin (i + 1), prefixSpan B i hi ((prefixRows A i hi).row j))
+    (hrorth : ∀ j : Fin (i + 1), Matrix.dot r ((prefixRows A i hi).row j) = 0)
+    (hsorth : ∀ j : Fin (i + 1), Matrix.dot s ((prefixRows B i hi).row j) = 0) :
+    r = s := by
+  apply residual_eq_of_same_prefixSpan A i hi row r s hrspan (hB_to_A _ hsspan) hrorth
+  intro j
+  exact dot_eq_zero_of_prefixSpan B i hi s ((prefixRows A i hi).row j)
+    (hA_rows_to_B j) hsorth
 
 private theorem prefixSpan_zero
     (M : Matrix Rat n m) (i : Nat) (hi : i < n) :
