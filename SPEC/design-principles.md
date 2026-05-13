@@ -72,6 +72,12 @@
    applies to a benchmark-discovered scaffolding `def` applies to a
    proof a refactor would silently axiomatise.
 
+## Lakefile
+
+Use `precompileModules := true` only on libraries that export
+`@[extern]` functions. Don't use it otherwise, and in particular
+libraries importing Mathlib must not use `precompileModules`.
+
 ## Fully autonomous execution
 
 The project runs without human interaction after launch. Lean, Mathlib,
