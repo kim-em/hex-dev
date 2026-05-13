@@ -845,6 +845,150 @@ private theorem dot_prefixCombination_right_eq_zero_of_dot_zero
 private def castIntRow (b : Matrix Int n m) (i : Fin n) : Vector Rat m :=
   Vector.map (fun x : Int => (x : Rat)) (b.row i)
 
+/-- Cast an Int matrix to the Rat matrix whose rows are `castIntRow`. -/
+private def castIntMatrixRat (b : Matrix Int n m) : Matrix Rat n m :=
+  Vector.map (fun row => Vector.map (fun x : Int => (x : Rat)) row) b
+
+/-- Coefficients of the projection of row `i` onto the Gram-Schmidt prefix
+`0, ..., j`, indexed by that prefix. -/
+private noncomputable def projectionCoeffPrefix
+    (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < n) :
+    Vector Rat (j + 1) :=
+  Vector.ofFn fun q =>
+    GramSchmidt.entry (coeffs b) ⟨i, hi⟩
+      ⟨q.val, Nat.lt_of_lt_of_le q.isLt (Nat.succ_le_of_lt hj)⟩
+
+/-- The Gram-Schmidt prefix projection of row `i` onto rows `0, ..., j`, still
+written in the orthogonal basis rows. -/
+private noncomputable def basisPrefixProjection
+    (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < n) :
+    Vector Rat m :=
+  Matrix.rowCombination (GramSchmidt.prefixRows (basis b) j hj)
+    (projectionCoeffPrefix b i j hi hj)
+
+private theorem basisPrefixProjection_mem_basisSpan
+    (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < n) :
+    GramSchmidt.prefixSpan (basis b) j hj
+      (basisPrefixProjection b i j hi hj) := by
+  exact ⟨projectionCoeffPrefix b i j hi hj, rfl⟩
+
+private theorem basisPrefixProjection_mem_originalSpan
+    (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < n) :
+    GramSchmidt.prefixSpan (castIntMatrixRat b) j hj
+      (basisPrefixProjection b i j hi hj) := by
+  simpa [castIntMatrixRat] using
+    ((basis_span b j hj (basisPrefixProjection b i j hi hj)).mp
+      (basisPrefixProjection_mem_basisSpan b i j hi hj))
+
+/-- Original-row coordinates for the projection of row `i` onto the row prefix
+`0, ..., j`. The coordinates are chosen through the proved span equivalence
+between original rows and Gram-Schmidt rows. -/
+private noncomputable def originalProjectionCoords
+    (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < n) :
+    Vector Rat (j + 1) :=
+  Classical.choose (basisPrefixProjection_mem_originalSpan b i j hi hj)
+
+/-- The chosen original-row coordinates reconstruct the same projection vector
+as the Gram-Schmidt prefix coefficients. -/
+private theorem originalProjectionCoords_spec
+    (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < n) :
+    Matrix.rowCombination (GramSchmidt.prefixRows (castIntMatrixRat b) j hj)
+        (originalProjectionCoords b i j hi hj) =
+      basisPrefixProjection b i j hi hj := by
+  exact Classical.choose_spec (basisPrefixProjection_mem_originalSpan b i j hi hj)
+
+private theorem rowCombination_eq_foldl_rows_rat
+    (M : Matrix Rat n m) (c : Vector Rat n) :
+    Matrix.rowCombination M c =
+      (List.finRange n).foldl (fun acc j => acc + c[j] • M.row j) 0 := by
+  apply Vector.ext
+  intro idx hidx
+  let idxFin : Fin m := ⟨idx, hidx⟩
+  change (Matrix.mulVec (Matrix.transpose M) c)[idxFin] =
+    ((List.finRange n).foldl (fun acc j => acc + c[j] • M.row j) 0)[idxFin]
+  rw [show
+      (Matrix.mulVec (Matrix.transpose M) c)[idxFin] =
+        (List.finRange n).foldl
+          (fun acc j => acc + M[j.val][idxFin.val] * c[j])
+          0 by
+        unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Matrix.dot
+          Hex.Vector.dotProduct
+        simp]
+  have hfold :
+      ∀ xs : List (Fin n), ∀ accL : Rat, ∀ accR : Vector Rat m,
+        accL = accR[idxFin] →
+        xs.foldl (fun acc j => acc + M[j.val][idxFin.val] * c[j]) accL =
+          (xs.foldl (fun acc j => acc + c[j] • M.row j) accR)[idxFin] := by
+    intro xs
+    induction xs with
+    | nil =>
+        intro accL accR hacc
+        simp [hacc]
+    | cons j rest ih =>
+        intro accL accR hacc
+        simp only [List.foldl_cons]
+        apply ih
+        change accL + M[j.val][idxFin.val] * c[j] =
+          (accR + c[j] • M.row j)[idxFin.val]
+        rw [Vector.getElem_add, Vector.getElem_smul]
+        rw [hacc]
+        change accR[idx] + M[j.val][idx] * c[j] =
+          accR[idx] + c[j] * M[j.val][idx]
+        grind
+  exact hfold (List.finRange n) 0 0 (by simp [Vector.getElem_zero])
+
+private theorem dot_rowCombination_right_rat
+    (u : Vector Rat m) (M : Matrix Rat n m) (c : Vector Rat n) :
+    Matrix.dot u (Matrix.rowCombination M c) =
+      (List.finRange n).foldl
+        (fun acc j => acc + c[j] * Matrix.dot u (M.row j)) 0 := by
+  rw [rowCombination_eq_foldl_rows_rat]
+  have hgen :
+      ∀ xs : List (Fin n), ∀ acc : Vector Rat m,
+        Matrix.dot u (xs.foldl (fun acc j => acc + c[j] • M.row j) acc) =
+          Matrix.dot u acc +
+            xs.foldl (fun acc' j => acc' + c[j] * Matrix.dot u (M.row j)) 0 := by
+    intro xs
+    induction xs with
+    | nil =>
+        intro acc
+        simp only [List.foldl_nil]
+        grind
+    | cons x xs ih =>
+        intro acc
+        simp only [List.foldl_cons]
+        rw [ih]
+        rw [dot_add_right_rat, dot_smul_right_rat]
+        rw [foldl_sum_start_rat xs _
+          ((0 : Rat) + c[x] * Matrix.dot u (M.row x))]
+        grind
+  rw [hgen (List.finRange n) 0]
+  rw [dot_zero_right_rat]
+  grind
+
+/-- Dotting the projection with an original prefix row is the corresponding
+linear combination of original Gram-matrix entries. -/
+private theorem originalProjectionCoords_dot_eq_gram_combination
+    (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < n)
+    (p : Fin (j + 1)) :
+    Matrix.dot
+        (castIntRow b
+          ⟨p.val, Nat.lt_of_lt_of_le p.isLt (Nat.succ_le_of_lt hj)⟩)
+        (basisPrefixProjection b i j hi hj) =
+      (List.finRange (j + 1)).foldl
+        (fun acc q =>
+          acc + (originalProjectionCoords b i j hi hj)[q] *
+            Matrix.dot
+              (castIntRow b
+                ⟨p.val, Nat.lt_of_lt_of_le p.isLt (Nat.succ_le_of_lt hj)⟩)
+              (castIntRow b
+                ⟨q.val, Nat.lt_of_lt_of_le q.isLt (Nat.succ_le_of_lt hj)⟩)) 0 := by
+  rw [← originalProjectionCoords_spec b i j hi hj]
+  rw [dot_rowCombination_right_rat]
+  apply foldl_sum_congr_simple
+  intro q _hq
+  simp [GramSchmidt.prefixRows, Matrix.row, castIntMatrixRat, castIntRow]
+
 /-- Auxiliary matrix `M_final` whose `(i, j)` entry is the rational inner
 product `⟨b_i, b*_j⟩` between the cast integer row `b_i` and the
 Gram-Schmidt orthogonal basis row `b*_j`. -/

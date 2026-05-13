@@ -4792,6 +4792,23 @@ private theorem finiteCoeffMcCoyAnnihilator
     pCoeff qCoeff d bound k (by simpa [p, q] using hmul) i hi
   simpa [Int.mul_comm] using hrow
 
+/-- McCoy annihilator for `DensePoly Int`: if every coefficient of `p * q` is
+divisible by `d`, then `q.coeff k` annihilates every coefficient of `p` modulo
+`d`. This is the polynomial instantiation of `finiteCoeffMcCoyAnnihilator`
+when `pCoeff = p.coeff` and `qCoeff = q.coeff`; downstream callers couple it
+with a "last non-divisible coefficient" witness, supplying `hqAbove`. -/
+private theorem dvd_last_q_coeff_mul_p_coeff_of_dvd_mul_coeff_of_q_above
+    (p q : DensePoly Int) (d k : Nat)
+    (hprod : ∀ n, (d : Int) ∣ (p * q).coeff n)
+    (_hqAbove : ∀ s, k < s → (d : Int) ∣ q.coeff s) :
+    ∀ i, (d : Int) ∣ q.coeff k * p.coeff i := by
+  intro i
+  have hrow :=
+    finiteCoeffMcCoyRow_of_truncated_product_coeff_dvd
+      p.coeff q.coeff p q d i k
+      (fun _ _ => rfl) rfl hprod i (Nat.le_refl i)
+  simpa [Int.mul_comm] using hrow
+
 /-- Public McCoy scalar-annihilator wrapper for integer dense polynomials.
 
 If `d` divides every coefficient of `p * q` and some coefficient of `q` is not
@@ -4805,43 +4822,7 @@ theorem exists_scalar_annihilator_of_mul_coeff_dvd_of_exists_not_dvd_coeff
       ∀ i, (d : Int) ∣ a * p.coeff i := by
   rcases exists_last_not_natCast_dvd_coeff q d hq with ⟨k, hk, hqAbove⟩
   refine ⟨q.coeff k, hk, ?_⟩
-  intro i
-  by_cases hi : i ≤ p.size
-  · have hconv :
-        ∀ n, n ≤ p.size + k →
-          (d : Int) ∣ finiteCoeffConvolution p.coeff q.coeff n := by
-      intro n _hn
-      unfold finiteCoeffConvolution
-      have hsum :
-          (d : Int) ∣ (List.range (n + 1)).foldl
-            (fun s r => s + diagonalMulCoeffTerm p q n r) 0 := by
-        rw [← diagonalSum_eq_degree_bound p q n]
-        rw [← mulCoeffSum_eq_diagonal p q n]
-        rw [← coeff_mul p q n]
-        exact hprod n
-      exact dvd_foldl_add_term_of_dvd_congr (d : Int) (List.range (n + 1))
-        (fun r => diagonalMulCoeffTerm p q n r)
-        (fun r => p.coeff r * q.coeff (n - r))
-        hsum (by
-          intro r hr
-          have hrle : ¬ n < r := by
-            have hrlt : r < n + 1 := List.mem_range.mp hr
-            omega
-          unfold diagonalMulCoeffTerm
-          simp [hrle])
-    have hleft :
-        ∀ r s, p.size < r → (d : Int) ∣ p.coeff r * q.coeff s := by
-      intro r s hr
-      have hpzero : p.coeff r = 0 :=
-        coeff_eq_zero_of_size_le p (by omega)
-      rw [hpzero]
-      simp
-    exact finiteCoeffMcCoyAnnihilator p.coeff q.coeff d p.size k
-      hconv hqAbove hleft i hi
-  · have hpzero : p.coeff i = 0 :=
-      coeff_eq_zero_of_size_le p (Nat.le_of_not_ge hi)
-    rw [hpzero]
-    simp
+  exact dvd_last_q_coeff_mul_p_coeff_of_dvd_mul_coeff_of_q_above p q d k hprod hqAbove
 
 end DensePoly
 end Hex

@@ -299,6 +299,25 @@ theorem skipIndex_ne {n : Nat} (skip : Fin (n + 1)) (i : Fin n) :
   · rw [skipIndex_val_of_not_lt skip i hlt] at hval
     omega
 
+private theorem skipIndex_injective {n : Nat} (skip : Fin (n + 1)) :
+    Function.Injective (skipIndex skip) := by
+  intro i j h
+  apply Fin.ext
+  have hval : (skipIndex skip i).val = (skipIndex skip j).val := congrArg Fin.val h
+  by_cases hi : i.val < skip.val
+  · rw [skipIndex_val_of_lt skip i hi] at hval
+    by_cases hj : j.val < skip.val
+    · rw [skipIndex_val_of_lt skip j hj] at hval
+      exact hval
+    · rw [skipIndex_val_of_not_lt skip j hj] at hval
+      omega
+  · rw [skipIndex_val_of_not_lt skip i hi] at hval
+    by_cases hj : j.val < skip.val
+    · rw [skipIndex_val_of_lt skip j hj] at hval
+      omega
+    · rw [skipIndex_val_of_not_lt skip j hj] at hval
+      omega
+
 @[simp] theorem skipIndex_last {n : Nat} (i : Fin n) :
     skipIndex (Fin.last n) i = i.castSucc := by
   apply Fin.ext
@@ -5839,6 +5858,182 @@ theorem det_eq_foldl_laplace_last_row
         intro acc col _hmem
         rw [cofactor_transpose]
         simp [Matrix.transpose, Matrix.col]
+
+/-- Column permutation that preserves the relative order of every column except
+`col`, which is moved to the final position. -/
+private def moveColumnToLastValues {n : Nat} (col : Fin (n + 1)) :
+    Vector (Fin (n + 1)) (n + 1) :=
+  insertAt col (Vector.ofFn fun i : Fin n => skipIndex col i) (Fin.last n)
+
+private theorem moveColumnToLastValues_last {n : Nat} (col : Fin (n + 1)) :
+    (moveColumnToLastValues col)[Fin.last n] = col := by
+  exact insertAt_get_self col (Vector.ofFn fun i : Fin n => skipIndex col i) (Fin.last n)
+
+private theorem moveColumnToLastValues_castSucc {n : Nat} (col : Fin (n + 1)) (i : Fin n) :
+    (moveColumnToLastValues col)[i.castSucc] = skipIndex col i := by
+  rw [moveColumnToLastValues]
+  simpa using
+    insertAt_last_get_castSucc col (Vector.ofFn fun i : Fin n => skipIndex col i) i
+
+private theorem moveColumnToLastValues_nodup {n : Nat} (col : Fin (n + 1)) :
+    (moveColumnToLastValues col).toList.Nodup := by
+  rw [moveColumnToLastValues, insertAt_last_toList]
+  rw [vector_toList_eq_finRange_map_get]
+  rw [List.nodup_append]
+  refine ⟨?_, ?_, ?_⟩
+  · apply list_nodup_map_of_injective
+    · intro i j h
+      exact skipIndex_injective col (by simpa using h)
+    · exact List.nodup_finRange n
+  · simp
+  · intro x hx y hy hxy
+    simp only [List.mem_singleton] at hy
+    have hxcol : x = col := hxy.trans hy
+    rcases List.mem_map.mp hx with ⟨i, _hi, rfl⟩
+    exact skipIndex_ne col i (by simpa using hxcol)
+
+private theorem moveColumnToLastValues_mem_permutationVectors {n : Nat}
+    (col : Fin (n + 1)) :
+    moveColumnToLastValues col ∈ permutationVectors (n + 1) :=
+  permutationVectors_complete (moveColumnToLastValues_nodup col)
+
+private theorem skipIndex_eq_raiseFinAbove {n : Nat} (col : Fin (n + 1)) (i : Fin n) :
+    skipIndex col i = raiseFinAbove col i := by
+  unfold skipIndex raiseFinAbove
+  split <;> rfl
+
+private theorem moveColumnToLastValues_toList {n : Nat} (col : Fin (n + 1)) :
+    (moveColumnToLastValues col).toList =
+      ((List.finRange n).map (raiseFinAbove col)) ++ [col] := by
+  rw [moveColumnToLastValues, insertAt_last_toList]
+  rw [vector_toList_eq_finRange_map_get]
+  apply congrArg (fun xs => xs ++ [col])
+  apply List.map_congr_left
+  intro i _hi
+  simpa using skipIndex_eq_raiseFinAbove col i
+
+private theorem detSign_moveColumnToLastValues
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat} (col : Fin (n + 1)) :
+    detSign (R := R) (moveColumnToLastValues col) =
+      (-1 : R) ^ (n - col.val) := by
+  have hidList :
+      (Vector.ofFn fun i : Fin n => i).toList = List.finRange n := by
+    rw [vector_toList_eq_finRange_map_get]
+    simp
+  calc
+    detSign (R := R) (moveColumnToLastValues col) =
+        (-1 : R) ^ (n - col.val) *
+          detSign (R := R) (Vector.ofFn fun i : Fin n => i) := by
+      apply detSign_of_inversionCount_add
+      rw [moveColumnToLastValues_toList, hidList]
+      rw [inversionCount_map_raiseFinAbove_append_self]
+      rw [foldCount_finRange_ge]
+    _ = (-1 : R) ^ (n - col.val) := by
+      rw [detSign_identity]
+      grind
+
+private theorem neg_one_pow_mul_self {R : Type u} [Lean.Grind.CommRing R] (k : Nat) :
+    (-1 : R) ^ k * (-1 : R) ^ k = 1 := by
+  induction k with
+  | zero =>
+      grind
+  | succ k ih =>
+      grind
+
+private theorem cofactorSign_col_eq_move_mul_last
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (row col : Fin (n + 1)) :
+    cofactorSign (R := R) row col =
+      (-1 : R) ^ (n - col.val) * cofactorSign (R := R) row (Fin.last n) := by
+  unfold cofactorSign
+  simp only [Fin.val_last]
+  have hle : col.val ≤ n := Nat.le_of_lt_succ col.isLt
+  have h := detSignParity_add (R := R) (row.val + col.val) (n - col.val)
+  have hsum : row.val + col.val + (n - col.val) = row.val + n := by omega
+  rw [hsum] at h
+  let s : R := (-1 : R) ^ (n - col.val)
+  let a : R := if (row.val + col.val) % 2 = 0 then 1 else -1
+  let b : R := if (row.val + n) % 2 = 0 then 1 else -1
+  have hs : s * s = 1 := neg_one_pow_mul_self (R := R) (n - col.val)
+  have hb : b = s * a := by simpa [a, b, s] using h
+  calc
+    (if (row.val + col.val) % 2 = 0 then (1 : R) else -1) = a := rfl
+    _ = s * (s * a) := by
+      have hss : s * (s * a) = a := by
+        calc
+          s * (s * a) = (s * s) * a := by grind
+          _ = 1 * a := by rw [hs]
+          _ = a := by grind
+      exact hss.symm
+    _ = s * b := by rw [hb]
+    _ = s * (if (row.val + n) % 2 = 0 then (1 : R) else -1) := rfl
+
+/-- Laplace expansion of the determinant along an arbitrary fixed column. -/
+theorem det_eq_foldl_laplace_col
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (col : Fin (n + 1)) :
+    det M =
+      (List.finRange (n + 1)).foldl
+        (fun acc row => acc + M[row][col] * cofactor M row col) 0 := by
+  let sigma := moveColumnToLastValues col
+  let C : Matrix R (n + 1) (n + 1) := ofFn fun r c => M[r][sigma[c]]
+  have hsigma : sigma ∈ permutationVectors (n + 1) :=
+    moveColumnToLastValues_mem_permutationVectors col
+  have hdetC : det C = (-1 : R) ^ (n - col.val) * det M := by
+    calc
+      det C = detSign (R := R) sigma * det M := by
+        exact det_colPermute_vector M sigma hsigma
+      _ = (-1 : R) ^ (n - col.val) * det M := by
+        rw [detSign_moveColumnToLastValues col]
+  have hsign_sq : (-1 : R) ^ (n - col.val) * ((-1 : R) ^ (n - col.val)) = 1 := by
+    exact neg_one_pow_mul_self (R := R) (n - col.val)
+  calc
+    det M = (-1 : R) ^ (n - col.val) * det C := by
+      rw [hdetC]
+      grind
+    _ =
+      (-1 : R) ^ (n - col.val) *
+        (List.finRange (n + 1)).foldl
+          (fun acc row => acc + C[row][Fin.last n] * cofactor C row (Fin.last n)) 0 := by
+        rw [det_eq_foldl_laplace_last C]
+    _ =
+      (List.finRange (n + 1)).foldl
+        (fun acc row =>
+          acc + (-1 : R) ^ (n - col.val) *
+            (C[row][Fin.last n] * cofactor C row (Fin.last n))) 0 := by
+        rw [foldl_det_sum_mul_left_zero]
+    _ =
+      (List.finRange (n + 1)).foldl
+        (fun acc row => acc + M[row][col] * cofactor M row col) 0 := by
+        apply foldl_acc_congr
+        intro acc row _hmem
+        congr 1
+        unfold cofactor
+        have hClast : C[row][Fin.last n] = M[row][col] := by
+          rw [show C[row][Fin.last n] = M[row][sigma[Fin.last n]] by
+            simp [C, ofFn]]
+          exact congrArg (fun c => M[row][c]) (moveColumnToLastValues_last col)
+        have hminor : deleteRowCol C row (Fin.last n) = deleteRowCol M row col := by
+          apply Vector.ext
+          intro i hi
+          apply Vector.ext
+          intro j hj
+          let ii : Fin n := ⟨i, hi⟩
+          let jj : Fin n := ⟨j, hj⟩
+          change (deleteRowCol C row (Fin.last n))[ii][jj] =
+            (deleteRowCol M row col)[ii][jj]
+          rw [deleteRowCol_entry, deleteRowCol_entry]
+          rw [show C[skipIndex row ii][skipIndex (Fin.last n) jj] =
+              C[skipIndex row ii][jj.castSucc] by
+            exact congrArg (fun c => C[skipIndex row ii][c]) (skipIndex_last jj)]
+          rw [show C[skipIndex row ii][jj.castSucc] =
+              M[skipIndex row ii][sigma[jj.castSucc]] by
+            simp [C, ofFn]]
+          exact congrArg (fun c => M[skipIndex row ii][c])
+            (moveColumnToLastValues_castSucc col jj)
+        rw [hClast, hminor]
+        rw [cofactorSign_col_eq_move_mul_last (R := R) row col]
+        grind
 
 /-- The square matrix obtained from `columnSumMatrix source coeff` by replacing
 the first `chosen.length` columns with selected `source` columns indexed by
