@@ -4430,6 +4430,22 @@ private theorem pthRoot_valid_of_derivative_zero_nontrivial
     pthRoot_nonzero_of_derivative_zero_nonconstant hp f hzero hdf hsize,
     pthRoot_fuel_decrease_of_derivative_zero_nonconstant hp f hfuel hsize⟩
 
+private theorem pthRoot_fuel_bound_or_one_of_derivative_zero
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) {fuel : Nat}
+    (hfuel : f.size < fuel + 1)
+    (hzero : f.isZero = false)
+    (_hdf : (DensePoly.derivative f).isZero = true)
+    (hreachable : squareFreeContributionReachable f) :
+    f = 1 ∨ (pthRoot f).size < fuel := by
+  by_cases hsize : f.size = 1
+  · exact Or.inl (hreachable hsize)
+  · have hnonconstant : 1 < f.size := by
+      have hpos : 0 < f.size := size_pos_of_isZero_false f hzero
+      omega
+    exact Or.inr
+      (pthRoot_fuel_decrease_of_derivative_zero_nonconstant
+        hp f hfuel hnonconstant)
+
 private theorem yunLevel_measure_lt_of_reachable_gcd_nonconstant
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p)
@@ -5021,6 +5037,34 @@ private theorem yunFactorsContributionWithLevel_pthRoot_tail_valid
     pthRoot_valid_of_derivative_zero_nontrivial hp
       (yunFactorsContributionWithLevel c w base level fuel).2
       htail_fuel htail_valid.2 htail_nontrivial htail_derivative_zero htail_valid.1
+
+private theorem yunFactorsWithLevel_pthRoot_tail_fuel_bound
+    (hp : Hex.Nat.Prime p) (f c w : FpPoly p) (base level fuel : Nat)
+    (hstate :
+      ∀ c w : FpPoly p, ∀ fuel : Nat,
+        yunFactorsDerivativeActiveReachable hp f c w fuel →
+          squareFreeContributionReachable c ∧
+            c.isZero = false ∧
+              squareFreeContributionReachable w ∧
+                w.isZero = false)
+    (hreachable : yunFactorsDerivativeActiveReachable hp f c w fuel)
+    (htail_fuel : (yunFactorsWithLevel c w base level fuel []).2.size < fuel + 1)
+    (htail_nontrivial : isOne (yunFactorsWithLevel c w base level fuel []).2 = false)
+    (htail_derivative_zero :
+      (DensePoly.derivative (yunFactorsWithLevel c w base level fuel []).2).isZero = true) :
+    (pthRoot (yunFactorsWithLevel c w base level fuel []).2).size < fuel := by
+  let contribution := yunFactorsContributionWithLevel c w base level fuel
+  let loop := yunFactorsWithLevel c w base level fuel []
+  have hloop_eq : loop.2 = contribution.2 := by
+    have hrec := yunFactorsWithLevel_reconstruction_invariant c w base level fuel []
+    simpa [loop, contribution] using hrec.1
+  have hvalid :=
+    yunFactorsContributionWithLevel_pthRoot_tail_valid
+      hp f c w base level fuel hstate hreachable
+      (by simpa [loop, contribution, hloop_eq] using htail_fuel)
+      (by simpa [loop, contribution, hloop_eq] using htail_nontrivial)
+      (by simpa [loop, contribution, hloop_eq] using htail_derivative_zero)
+  simpa [loop, contribution, hloop_eq] using hvalid.2.2
 
 private theorem yunFactorsPairwiseReachable_of_derivative_active_reachable
     (hp : Hex.Nat.Prime p) (f c w : FpPoly p) (fuel : Nat)
