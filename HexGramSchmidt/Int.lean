@@ -827,6 +827,42 @@ private theorem noPivotLoop_add
         rw [noPivotLoop_id_at_done (a' + 1) state hDone]
         exact (noPivotLoop_id_at_done b state hDone).symm
 
+/-- After running `noPivotLoop` from a state without a recorded singular
+step, the result has either no singular step, or it has a singular step
+that matches the current `step` field together with a zero pivot at that
+position. -/
+private theorem noPivotLoop_singular_inv
+    {n : Nat} (fuel : Nat) (state : Matrix.BareissState n)
+    (h_init : state.singularStep = none) :
+    (Matrix.noPivotLoop fuel state).singularStep = none ∨
+    ∃ k : Fin n,
+      (Matrix.noPivotLoop fuel state).singularStep = some k.val ∧
+      (Matrix.noPivotLoop fuel state).step = k.val ∧
+      (Matrix.noPivotLoop fuel state).matrix[k][k] = 0 ∧
+      k.val + 1 < n := by
+  induction fuel generalizing state with
+  | zero =>
+      left
+      change state.singularStep = none
+      exact h_init
+  | succ f ih =>
+      by_cases hDone : state.step + 1 < n
+      · let k : Fin n := ⟨state.step, Nat.lt_of_succ_lt hDone⟩
+        by_cases hp : state.matrix[k][k] = 0
+        · -- Singular branch: result = {state with singularStep := some state.step}.
+          right
+          refine ⟨k, ?_, ?_, ?_, hDone⟩
+          · rw [Matrix.noPivotLoop_singular_branch f state hDone hp]
+          · rw [Matrix.noPivotLoop_singular_branch f state hDone hp]
+          · rw [Matrix.noPivotLoop_singular_branch f state hDone hp]
+            exact hp
+        · -- Regular branch
+          rw [Matrix.noPivotLoop_regular_branch f state hDone hp]
+          exact ih _ rfl
+      · -- Boundary
+        rw [Matrix.noPivotLoop_done f state hDone]
+        left; exact h_init
+
 /-- No-pivot Bareiss projection at the `gramDetVecEntry` diagonal slot:
 running `Matrix.noPivotLoop r` from the initial state on the full Gram
 matrix and on its `(r+1)`-leading prefix yields states whose `(r, r)`
