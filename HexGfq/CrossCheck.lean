@@ -111,6 +111,7 @@ private def polyP2 (coeffs : Array Nat) : FpPoly 2 :=
 
 private theorem maxProperDiv_4 : Berlekamp.maximalProperDivisors 4 = [2] := by decide
 private theorem maxProperDiv_8 : Berlekamp.maximalProperDivisors 8 = [4] := by decide
+private theorem maxProperDiv_32 : Berlekamp.maximalProperDivisors 32 = [16] := by decide
 
 private def genericN4Cert : Berlekamp.IrreducibilityCertificate where
   p := 2
@@ -1210,6 +1211,17 @@ private theorem genericN32PowChain_check :
   Berlekamp.checkRabinBezoutWitnesses
     genericMod genericMod_monic genericN32SamePrimeCert = true
 
+set_option maxRecDepth 65536 in
+private theorem genericN32_bezout :
+  Berlekamp.checkRabinBezoutWitnesses
+    genericMod genericMod_monic genericN32SamePrimeCert = true := by
+  unfold Berlekamp.checkRabinBezoutWitnesses Berlekamp.checkRabinBezoutWitness
+    Berlekamp.certifiedFrobeniusDiffMod
+  rw [genericMod_modByMonic_X]
+  simp [genericN32SamePrimeCert, genericN32PowChain, maxProperDiv_32,
+    genericMod, Conway.packedGF2FpPoly, lower, n, polyP2]
+  decide
+
 private theorem genericN32_basisSize :
     genericN32SamePrimeCert.n = Berlekamp.basisSize genericMod := by
   decide
@@ -1224,11 +1236,23 @@ private theorem genericN32_finalEntry :
   rw [← polyP2_zero_one_eq_X]
   rfl
 
+private theorem genericN32Cert_check :
+    Berlekamp.checkIrreducibilityCertificateLinearIncremental
+      genericMod genericMod_monic genericN32Cert = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinearIncremental,
+    genericN32Cert, Berlekamp.IrreducibilityCertificate.toAmbient?]
+  exact ⟨⟨⟨genericN32_basisSize,
+    by simpa [genericN32SamePrimeCert] using genericN32PowChain_check⟩,
+    by simpa [genericN32SamePrimeCert] using genericN32_finalEntry⟩,
+    by simpa [genericN32SamePrimeCert] using genericN32_bezout⟩
+
 private theorem generic_pos : 0 < FpPoly.degree genericMod := by
   decide
 
 private theorem generic_irr : FpPoly.Irreducible genericMod := by
-  sorry
+  exact Berlekamp.rabinTest_imp_irreducible genericMod genericMod_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      genericMod genericMod_monic genericN32Cert genericN32Cert_check)
 
 private abbrev Packed : Type :=
   GF2n n lower (by decide) (by decide) packed_irr
