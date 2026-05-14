@@ -6763,6 +6763,146 @@ private theorem squareFreeAuxRev_pairwise_coprime_nil
   · intro a ha
     simp at ha
 
+private theorem squareFreeAuxRevResidualSatisfied_of_pairwise_state
+    (hp : Hex.Nat.Prime p)
+    (stateProvider :
+      ∀ f' c w : FpPoly p, ∀ fuel : Nat,
+        yunFactorsDerivativeActiveReachable hp f' c w fuel →
+          squareFreeContributionReachable c ∧
+            c.isZero = false ∧
+              squareFreeContributionReachable w ∧
+                w.isZero = false)
+    (f : FpPoly p) (multiplicity fuel : Nat)
+    (hfuel : f.size < fuel)
+    (hzero : f.isZero = false)
+    (hreachable : squareFreeContributionReachable f) :
+    squareFreeAuxRevResidualSatisfied f multiplicity fuel := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  induction fuel generalizing f multiplicity with
+  | zero =>
+      simp only [squareFreeAuxRevResidualSatisfied]
+  | succ fuel ih =>
+      simp only [squareFreeAuxRevResidualSatisfied]
+      rw [if_neg (by simp [hzero])]
+      by_cases hdf : (DensePoly.derivative f).isZero = true
+      · rw [if_pos hdf]
+        have hroot_bound_or_one :=
+          pthRoot_fuel_bound_or_one_of_derivative_zero
+            hp f (by omega) hzero hdf hreachable
+        rcases hroot_bound_or_one with hone | hroot_bound
+        · rw [hone, pthRoot_one hp]
+          exact squareFreeAuxRevResidualSatisfied_one hp (multiplicity * p) fuel
+        · have hroot_reachable : squareFreeContributionReachable (pthRoot f) :=
+            pthRoot_reachable_of_derivative_zero hp f hzero hdf hreachable
+          by_cases hf_size : f.size = 1
+          · have hf_one := hreachable hf_size
+            rw [hf_one, pthRoot_one hp]
+            exact squareFreeAuxRevResidualSatisfied_one hp (multiplicity * p) fuel
+          · have hsize : 1 < f.size := by
+              have hpos : 0 < f.size := size_pos_of_isZero_false f hzero
+              omega
+            have hroot_nonzero : (pthRoot f).isZero = false :=
+              pthRoot_nonzero_of_derivative_zero_nonconstant hp f hzero hdf hsize
+            exact ih (pthRoot f) (multiplicity * p) (by omega) hroot_nonzero hroot_reachable
+      · have hdf_false : (DensePoly.derivative f).isZero = false := by
+          cases h : (DensePoly.derivative f).isZero
+          · rfl
+          · exact False.elim (hdf h)
+        rw [if_neg hdf]
+        let g := DensePoly.gcd f (DensePoly.derivative f)
+        let c := f / g
+        let loop := yunFactorsWithLevel c g multiplicity 1 fuel []
+        let contribution := yunFactorsContributionWithLevel c g multiplicity 1 fuel
+        have hloop_eq : loop.2 = contribution.2 := by
+          have hrec :=
+            yunFactorsWithLevel_reconstruction_invariant c g multiplicity 1 fuel []
+          simpa [loop, contribution] using hrec.1
+        have hstate_level :
+            ∀ c w : FpPoly p, ∀ fuel : Nat,
+              yunFactorsDerivativeActiveReachable hp f c w fuel →
+                squareFreeContributionReachable c ∧
+                  c.isZero = false ∧
+                    w.isZero = false := by
+          intro c w fuel hreach
+          have h := stateProvider f c w fuel hreach
+          exact ⟨h.1, h.2.1, h.2.2.2⟩
+        have hresidual_derivative :
+            isOne loop.2 = false →
+              (DensePoly.derivative loop.2).isZero = true := by
+          intro hloop_not_one
+          have hcontribution_not_one : isOne contribution.2 = false := by
+            simpa [loop, contribution, hloop_eq] using hloop_not_one
+          have h :=
+            yunFactorsContributionWithLevel_residual_derivative_zero_of_derivative_split
+              hp f multiplicity 1 fuel hfuel hzero hdf_false hstate_level
+          simpa [loop, contribution, hloop_eq] using h hcontribution_not_one
+        constructor
+        · by_cases hone : isOne loop.2 = true
+          · exact Or.inl hone
+          · have hone_false : isOne loop.2 = false := by
+              cases h : isOne loop.2
+              · rfl
+              · exact False.elim (hone h)
+            exact Or.inr (hresidual_derivative hone_false)
+        · intro hone
+          have htail_derivative : (DensePoly.derivative loop.2).isZero = true :=
+            hresidual_derivative hone
+          have hdf_ne_true : (DensePoly.derivative f).isZero ≠ true := by
+            intro htrue
+            rw [htrue] at hdf_false
+            cases hdf_false
+          have hinitial_reachable :
+              yunFactorsDerivativeActiveReachable hp f c g fuel := by
+            simpa [c, g] using
+              yunFactorsDerivativeActiveReachable_of_derivative_split hp f fuel hdf_ne_true
+          have htail_fuel_raw : loop.2.size < fuel + 1 := by
+            have hloop_dvd_g : loop.2 ∣ g := by
+              simpa [loop] using
+                yunFactorsWithLevel_repeated_dvd_repeated c g multiplicity 1 fuel
+            have hg_dvd_f : g ∣ f := by
+              simpa [g] using DensePoly.gcd_dvd_left f (DensePoly.derivative f)
+            have hloop_dvd_f : loop.2 ∣ f :=
+              dvd_trans_poly hloop_dvd_g hg_dvd_f
+            have hf_ne : f ≠ 0 := ne_zero_of_isZero_false hzero
+            have hsize_le : loop.2.size ≤ f.size :=
+              size_le_of_dvd_of_ne_zero hloop_dvd_f hf_ne
+            omega
+          have htail_valid :=
+            yunFactorsContributionWithLevel_pthRoot_tail_valid
+              hp f c g multiplicity 1 fuel
+              (fun c w fuel hreach => stateProvider f c w fuel hreach)
+              hinitial_reachable
+              (by simpa [loop, contribution, hloop_eq] using htail_fuel_raw)
+              (by
+                have hcontribution_not_one : isOne contribution.2 = false := by
+                  rw [← hloop_eq]
+                  exact hone
+                exact hcontribution_not_one)
+              (by simpa [loop, contribution, hloop_eq] using htail_derivative)
+          have htail_residual :=
+            ih (pthRoot contribution.2) (multiplicity * p)
+              htail_valid.2.2 htail_valid.2.1 htail_valid.1
+          have hpth : pthRoot loop.2 = pthRoot contribution.2 := by
+            exact congrArg pthRoot hloop_eq
+          change squareFreeAuxRevResidualSatisfied (pthRoot loop.2) (multiplicity * p) fuel
+          rw [hpth]
+          exact htail_residual
+
+private theorem squareFreeAuxRevPairwiseResidualProvider_of_state
+    (hp : Hex.Nat.Prime p)
+    (stateProvider :
+      ∀ f' c w : FpPoly p, ∀ fuel : Nat,
+        yunFactorsDerivativeActiveReachable hp f' c w fuel →
+          squareFreeContributionReachable c ∧
+            c.isZero = false ∧
+              squareFreeContributionReachable w ∧
+                w.isZero = false) :
+    SquareFreeAuxRevPairwiseResidualProvider hp := by
+  intro f multiplicity fuel hfuel hzero hreachable hdf hstate
+  simpa [squareFreeAuxRevResidualSatisfied, hzero, hdf, Nat.mul_one] using
+    squareFreeAuxRevResidualSatisfied_of_pairwise_state
+      hp stateProvider f multiplicity (fuel + 1) hfuel hzero hreachable
+
 private def yunFactorsStepsSquareFree (c w : FpPoly p) : Nat → Prop
   | 0 => True
   | fuel + 1 =>
@@ -7065,7 +7205,6 @@ private theorem normalizeMonic_zero_squareFree_weightedProduct
   rfl
 
 theorem squareFree_pairwise_coprime (hp : Hex.Nat.Prime p)
-    (residualProvider : SquareFreeAuxRevPairwiseResidualProvider hp)
     (stateProvider :
       ∀ f' c w : FpPoly p, ∀ fuel : Nat,
         yunFactorsDerivativeActiveReachable hp f' c w fuel →
@@ -7078,7 +7217,8 @@ theorem squareFree_pairwise_coprime (hp : Hex.Nat.Prime p)
     d.factors.Pairwise
       (fun a b => (normalizeMonic (DensePoly.gcd a.factor b.factor)).2 = 1) := by
   unfold squareFreeDecomposition squareFreeAux
-  exact squareFreeAuxRev_pairwise_coprime_nil hp residualProvider stateProvider
+  exact squareFreeAuxRev_pairwise_coprime_nil hp
+    (squareFreeAuxRevPairwiseResidualProvider_of_state hp stateProvider) stateProvider
     (normalizeMonic f).2 1 ((normalizeMonic f).2.size + 1)
     (Nat.lt_succ_self _)
     (normalizeMonic_squareFreeContributionReachable hp f)
