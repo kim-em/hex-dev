@@ -584,6 +584,154 @@ store `d_{j+1}`, and entries above the diagonal are zero. -/
 def scaledCoeffs (b : Matrix Int n m) : Matrix Int n n :=
   (data b).ν
 
+/-- One Bareiss update step commutes with taking the leading `K × K`
+prefix: the leading prefix of the updated full matrix equals the result
+of running the same step on the leading prefix. The pivot/`prevPivot`
+scalars are passed through unchanged. -/
+private theorem leadingPrefix_stepMatrix_eq
+    {n K : Nat} (M : Matrix Int n n) (hK : K ≤ n)
+    (k : Nat) (pivot prevPivot : Int) :
+    Matrix.leadingPrefix (Matrix.stepMatrix M k pivot prevPivot) K hK =
+      Matrix.stepMatrix (Matrix.leadingPrefix M K hK) k pivot prevPivot := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let iK : Fin K := ⟨i, hi⟩
+  let jK : Fin K := ⟨j, hj⟩
+  let iN : Fin n := ⟨i, Nat.lt_of_lt_of_le hi hK⟩
+  let jN : Fin n := ⟨j, Nat.lt_of_lt_of_le hj hK⟩
+  show (Matrix.leadingPrefix (Matrix.stepMatrix M k pivot prevPivot) K hK)[iK][jK] =
+      (Matrix.stepMatrix (Matrix.leadingPrefix M K hK) k pivot prevPivot)[iK][jK]
+  simp only [Matrix.leadingPrefix_entry]
+  show (Matrix.stepMatrix M k pivot prevPivot)[iN][jN] =
+      (Matrix.stepMatrix (Matrix.leadingPrefix M K hK) k pivot prevPivot)[iK][jK]
+  by_cases htrail : k < i ∧ k < j
+  · have hki_n : k < iN.val := htrail.1
+    have hkj_n : k < jN.val := htrail.2
+    have hki_K : k < iK.val := htrail.1
+    have hkj_K : k < jK.val := htrail.2
+    rw [Matrix.stepMatrix_update_eq M k pivot prevPivot iN jN hki_n hkj_n]
+    rw [Matrix.stepMatrix_update_eq (Matrix.leadingPrefix M K hK) k pivot prevPivot
+      iK jK hki_K hkj_K]
+    simp only [Matrix.leadingPrefix_entry]
+    rfl
+  · by_cases hbelow : k < i ∧ j = k
+    · have hki_n : k < iN.val := hbelow.1
+      have hjk_n : jN.val = k := hbelow.2
+      have hki_K : k < iK.val := hbelow.1
+      have hjk_K : jK.val = k := hbelow.2
+      rw [Matrix.stepMatrix_pivot_col_below M k pivot prevPivot iN jN hki_n hjk_n]
+      rw [Matrix.stepMatrix_pivot_col_below (Matrix.leadingPrefix M K hK) k
+        pivot prevPivot iK jK hki_K hjk_K]
+    · have hnot_n : ¬ (k < iN.val ∧ k < jN.val) := htrail
+      have hnot_n' : ¬ (k < iN.val ∧ jN.val = k) := hbelow
+      have hnot_K : ¬ (k < iK.val ∧ k < jK.val) := htrail
+      have hnot_K' : ¬ (k < iK.val ∧ jK.val = k) := hbelow
+      rw [Matrix.stepMatrix_eq_of_not_update M k pivot prevPivot iN jN hnot_n hnot_n']
+      rw [Matrix.stepMatrix_eq_of_not_update (Matrix.leadingPrefix M K hK) k
+        pivot prevPivot iK jK hnot_K hnot_K']
+      simp only [Matrix.leadingPrefix_entry]
+      rfl
+
+/-- Run `noPivotLoop` on a full `n × n` matrix and on its `K × K` leading
+prefix from two BareissStates that agree on the leading prefix. While
+both runs are still synchronized (fuel fits within `K - state.step`),
+their bookkeeping fields agree and the full state's matrix, restricted
+to the leading prefix, matches the prefix state's matrix. -/
+private theorem noPivotLoop_sync_leadingPrefix_aux
+    {n K : Nat} (hK : K ≤ n) (fuel : Nat) :
+    ∀ (state_full : Matrix.BareissState n) (state_pref : Matrix.BareissState K),
+      state_full.step = state_pref.step →
+      state_full.prevPivot = state_pref.prevPivot →
+      state_full.rowSwaps = state_pref.rowSwaps →
+      state_full.singularStep = state_pref.singularStep →
+      Matrix.leadingPrefix state_full.matrix K hK = state_pref.matrix →
+      fuel + state_full.step < K →
+      (Matrix.noPivotLoop fuel state_full).step =
+          (Matrix.noPivotLoop fuel state_pref).step ∧
+      (Matrix.noPivotLoop fuel state_full).prevPivot =
+          (Matrix.noPivotLoop fuel state_pref).prevPivot ∧
+      (Matrix.noPivotLoop fuel state_full).rowSwaps =
+          (Matrix.noPivotLoop fuel state_pref).rowSwaps ∧
+      (Matrix.noPivotLoop fuel state_full).singularStep =
+          (Matrix.noPivotLoop fuel state_pref).singularStep ∧
+      Matrix.leadingPrefix (Matrix.noPivotLoop fuel state_full).matrix K hK =
+          (Matrix.noPivotLoop fuel state_pref).matrix := by
+  induction fuel with
+  | zero =>
+      intros state_full state_pref h_step h_prev h_rows h_sing h_mat _hfuel
+      simp only [Matrix.noPivotLoop]
+      exact ⟨h_step, h_prev, h_rows, h_sing, h_mat⟩
+  | succ f ih =>
+      intros state_full state_pref h_step h_prev h_rows h_sing h_mat hfuel
+      have h_step_lt_K : state_full.step + 1 < K := by omega
+      have h_full_done : state_full.step + 1 < n :=
+        Nat.lt_of_lt_of_le h_step_lt_K hK
+      have h_pref_done : state_pref.step + 1 < K := h_step ▸ h_step_lt_K
+      have h_step_lt_n : state_full.step < n := Nat.lt_of_succ_lt h_full_done
+      have h_step_lt_K_strict : state_full.step < K :=
+        Nat.lt_of_succ_lt h_step_lt_K
+      have h_pref_step_lt_K : state_pref.step < K := h_step ▸ h_step_lt_K_strict
+      let k_full : Fin n := ⟨state_full.step, h_step_lt_n⟩
+      let k_pref : Fin K := ⟨state_pref.step, h_pref_step_lt_K⟩
+      let k_full' : Fin K := ⟨state_full.step, h_step_lt_K_strict⟩
+      -- The pivot entries agree on both sides because the full state's
+      -- matrix, restricted to the leading prefix, equals the prefix state's
+      -- matrix.
+      have h_k_eq : k_full' = k_pref := Fin.ext h_step
+      have h_pivot_eq : state_full.matrix[k_full][k_full] =
+          state_pref.matrix[k_pref][k_pref] := by
+        have hcongr := congrArg (fun (M : Matrix Int K K) => M[k_pref][k_pref]) h_mat
+        simp only [Matrix.leadingPrefix_entry] at hcongr
+        -- hcongr : state_full.matrix[⟨k_pref.val, _⟩][⟨k_pref.val, _⟩] =
+        --          state_pref.matrix[k_pref][k_pref]
+        -- k_full.val = state_full.step = state_pref.step = k_pref.val (by h_step),
+        -- so as Fin n elements they coincide. Use congrArg on the diagonal
+        -- entry as a function of Fin n to bridge the gap.
+        have h_idx :
+            k_full = (⟨k_pref.val, Nat.lt_of_lt_of_le k_pref.isLt hK⟩ : Fin n) :=
+          Fin.ext h_step
+        have h_diag :
+            state_full.matrix[k_full][k_full] =
+              state_full.matrix[(⟨k_pref.val, Nat.lt_of_lt_of_le k_pref.isLt hK⟩ : Fin n)][(⟨k_pref.val, Nat.lt_of_lt_of_le k_pref.isLt hK⟩ : Fin n)] :=
+          congrArg (fun (i : Fin n) => state_full.matrix[i][i]) h_idx
+        exact h_diag.trans hcongr
+      by_cases hp_full : state_full.matrix[k_full][k_full] = 0
+      · -- Singular branch on both sides.
+        have hp_pref : state_pref.matrix[k_pref][k_pref] = 0 := by
+          rw [← h_pivot_eq]; exact hp_full
+        rw [Matrix.noPivotLoop_singular_branch f state_full h_full_done hp_full]
+        rw [Matrix.noPivotLoop_singular_branch f state_pref h_pref_done hp_pref]
+        refine ⟨h_step, h_prev, h_rows, ?_, h_mat⟩
+        simp [h_step]
+      · -- Regular branch on both sides; apply IH to the updated states.
+        have hp_pref : state_pref.matrix[k_pref][k_pref] ≠ 0 := by
+          rw [← h_pivot_eq]; exact hp_full
+        rw [Matrix.noPivotLoop_regular_branch f state_full h_full_done hp_full]
+        rw [Matrix.noPivotLoop_regular_branch f state_pref h_pref_done hp_pref]
+        -- After one step, the new states are still linked.
+        have h_new_mat :
+            Matrix.leadingPrefix
+              (Matrix.stepMatrix state_full.matrix state_full.step
+                state_full.matrix[k_full][k_full] state_full.prevPivot) K hK =
+              Matrix.stepMatrix state_pref.matrix state_pref.step
+                state_pref.matrix[k_pref][k_pref] state_pref.prevPivot := by
+          rw [leadingPrefix_stepMatrix_eq, h_mat, h_step, h_prev, h_pivot_eq]
+        apply ih
+        · -- step
+          simp [h_step]
+        · -- prevPivot
+          exact h_pivot_eq
+        · -- rowSwaps
+          exact h_rows
+        · -- singularStep
+          rfl
+        · -- matrix
+          exact h_new_mat
+        · -- fuel
+          simp; omega
+
 /-- The no-pivot Bareiss pass over the full Gram matrix records the same
 leading-prefix determinant as the public `gramDet` API at every vector slot. -/
 private theorem gramDetVecEntry_eq_leadingPrefix_bareiss
