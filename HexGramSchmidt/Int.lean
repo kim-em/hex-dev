@@ -778,6 +778,37 @@ private theorem getArrayEntry_scaledCoeffArrayLoop_above
       · simp only [hstep, ↓reduceIte]
         exact hcoeffs i j hij
 
+/-- Once a coefficient column lies strictly before the current loop step, later
+`scaledCoeffArrayLoop` iterations do not rewrite that column. -/
+private theorem getArrayEntry_scaledCoeffArrayLoop_preserve_col_before_step
+    (n fuel : Nat) (state : ScaledCoeffArrayState) (i j : Nat)
+    (hj : j < state.step) :
+    getArrayEntry (scaledCoeffArrayLoop n fuel state).coeffs i j =
+      getArrayEntry state.coeffs i j := by
+  induction fuel generalizing state with
+  | zero =>
+      rfl
+  | succ fuel ih =>
+      rw [scaledCoeffArrayLoop]
+      by_cases hstep : state.step < n
+      · simp only [hstep, ↓reduceIte]
+        by_cases hnext : state.step + 1 < n
+        · simp only [hnext, ↓reduceIte]
+          by_cases hpivot : getArrayEntry state.matrix state.step state.step = 0
+          · simp only [hpivot, ↓reduceIte]
+            rw [getArrayEntry_writeScaledColumn_of_col_ne]
+            omega
+          · simp only [hpivot, ↓reduceIte]
+            rw [ih]
+            · rw [getArrayEntry_writeScaledColumn_of_col_ne]
+              omega
+            · show j < state.step + 1
+              omega
+        · simp only [hnext, ↓reduceIte]
+          rw [getArrayEntry_writeScaledColumn_of_col_ne]
+          omega
+      · simp only [hstep, ↓reduceIte]
+
 /-- Run one no-pivot fraction-free Gram elimination and record each scaled
 coefficient column immediately before the elimination step zeroes it. -/
 private def scaledCoeffRows (b : Matrix Int n m) : Array (Array Int) :=
