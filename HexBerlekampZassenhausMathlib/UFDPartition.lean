@@ -75,6 +75,62 @@ private lemma eq_one_of_one_le_of_sum_eq_card {M : Multiset ℕ}
       · exact ih hcs_ge hcs_sum c' h
 
 /--
+Upper cardinality bound for a product partition in a UFD.
+
+If a non-zero element `f` is associated to the product of a list of non-zero
+non-unit factors, then that list cannot have more entries than the multiset of
+normalized irreducible factors of `f`. Each list entry contributes at least one
+normalized factor.
+-/
+theorem length_le_normalizedFactors_card
+    {α : Type*} [CommMonoidWithZero α] [NormalizationMonoid α]
+    [UniqueFactorizationMonoid α]
+    {f : α} (_hf : f ≠ 0)
+    (gs : List α)
+    (hne : ∀ g ∈ gs, g ≠ 0)
+    (hnonunit : ∀ g ∈ gs, ¬ IsUnit g)
+    (hprod : Associated gs.prod f) :
+    gs.length ≤ (normalizedFactors f).card := by
+  let s : Multiset α := (gs : Multiset α)
+  have hszero : (0 : α) ∉ s := by
+    intro h
+    exact hne 0 (Multiset.mem_coe.mp h) rfl
+  have hs_prod : s.prod = gs.prod := by
+    simp [s, Multiset.prod_coe]
+  have hsum_factors :
+      (normalizedFactors gs.prod) = (s.map normalizedFactors).sum := by
+    rw [← hs_prod]
+    exact normalizedFactors_multiset_prod s hszero
+  have heq : (normalizedFactors f) = (s.map normalizedFactors).sum := by
+    rw [← hsum_factors]
+    exact hprod.normalizedFactors_eq.symm
+  have hcard_sum :
+      (normalizedFactors f).card =
+        ((s.map normalizedFactors).map Multiset.card).sum := by
+    rw [heq, card_multiset_sum]
+  have hge_one :
+      ∀ c ∈ (s.map normalizedFactors).map Multiset.card, 1 ≤ c := by
+    intro c hc
+    rcases Multiset.mem_map.mp hc with ⟨m, hm, rfl⟩
+    rcases Multiset.mem_map.mp hm with ⟨g, hg, rfl⟩
+    have hg_mem_gs : g ∈ gs := Multiset.mem_coe.mp hg
+    have hne_g : g ≠ 0 := hne g hg_mem_gs
+    have hnonunit_g : ¬ IsUnit g := hnonunit g hg_mem_gs
+    have hfactors_ne : normalizedFactors g ≠ 0 :=
+      (normalizedFactors_eq_zero_iff hne_g).not.mpr hnonunit_g
+    rw [Nat.one_le_iff_ne_zero]
+    intro hzero
+    exact hfactors_ne (Multiset.card_eq_zero.mp hzero)
+  have hM_card :
+      ((s.map normalizedFactors).map Multiset.card).card = gs.length := by
+    simp [s]
+  calc
+    gs.length = ((s.map normalizedFactors).map Multiset.card).card := hM_card.symm
+    _ ≤ ((s.map normalizedFactors).map Multiset.card).sum :=
+      card_le_sum_of_one_le hge_one
+    _ = (normalizedFactors f).card := hcard_sum.symm
+
+/--
 **Group B partition-cardinality bound (Mathlib-only UFD argument).**
 
 In any unique factorization monoid, a non-zero element `f` admitting a list of
