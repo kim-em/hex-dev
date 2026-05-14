@@ -189,6 +189,19 @@ through `Matrix.bareiss_eq_det`. Such a theorem belongs in
 `HexGramSchmidtMathlib/Int.lean` (or the analogous bridge file),
 not in the Mathlib-free core.
 
+**Proof path governs placement, not just statement.** Theorems
+whose *statement* is purely Hex-local but whose only realistic
+proof goes through `Matrix.bareiss_eq_det` (directly, or via a
+renamed `bareiss`-invariance lemma that secretly re-derives
+Desnanot–Jacobi) also belong in `hex-gram-schmidt-mathlib`.
+Concretely, `gramDet_sizeReduce`,
+`scaledCoeffs_sizeReduce_pivot`, and `gramDet_rowAdd_earlier` state
+equalities between Hex computational outputs — Hex-local by
+statement — but their natural proofs cross to the bridge. They
+live in the bridge layer. See
+[hex-matrix.md "Proof path governs placement, not just statement"](hex-matrix.md)
+for the analogous rule on the matrix side.
+
 ## External comparators
 
 No external comparator is required.

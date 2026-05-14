@@ -143,6 +143,30 @@ Row-operation lemmas (`det_rowSwap`, `det_rowScale`, `det_rowAdd`)
 and equalities purely between Hex-local definitions remain in
 `hex-matrix` and are unaffected by this list.
 
+**Proof path governs placement, not just statement.** A theorem
+whose *statement* is purely Hex-local (e.g. `bareiss (rowAdd M
+i j c) = bareiss M`, with `det` nowhere mentioned) still belongs in
+`hex-matrix-mathlib` if its only realistic Mathlib-free proof
+requires re-deriving an entry from the forbidden list above —
+re-deriving Desnanot–Jacobi by hand, restating the no-pivot
+bordered-minor invariant under a renamed lemma, or threading
+`bareiss_eq_det` through twice while hiding it behind a wrapper.
+The shortest-path test in
+[PLAN/Conventions.md §Library placement is a hard precondition
+question 2](../../PLAN/Conventions.md) governs **proof
+obligations**, not statement surface. A Hex-local statement with a
+bridge-only proof is the same SPEC violation as a bridge-typed
+statement, dressed up.
+
+Symptom this addendum exists to catch: an issue titled
+"Mathlib-free `bareiss`-invariance for row-add" whose deliverable
+is to prove an `Int`-only `bareiss → bareiss` equation by induction
+on the executable Bareiss recurrence. The induction works because
+Desnanot–Jacobi (or its `Int`-narrowed shadow) is being secretly
+re-derived inline. The repair is to relocate the *consumer*
+theorem (`gramDet_sizeReduce`, `scaledCoeffs_sizeReduce_pivot`, or
+similar) to the bridge layer, not to add the secret re-derivation.
+
 **Proof that `bareiss M = det M`:** Via the bordered-minor invariant.
 Define `μ(k; i, j) := det M[rows 0..k-1 ∪ {i} | cols 0..k-1 ∪ {j}]`.
 The invariant `a^{(k)}_{ij} = μ(k; i, j)` holds by induction, where
