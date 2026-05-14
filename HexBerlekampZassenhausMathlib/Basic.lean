@@ -438,6 +438,90 @@ theorem unique_liftedFactorSubset_of_henselSubsetCorrespondence
     S = T :=
   h.unique_subset (factor := factor) (S := S) (T := T) hirr hdvd hS hT
 
+/--
+Mignotte recoverability for one represented integer factor.
+
+If a subset of the executable lifted factors represents an integer divisor of
+`core` modulo the Hensel modulus, and that modulus is beyond twice the default
+Mignotte coefficient bound for `core`, then the executable centred-lift
+operation recovers the integer factor exactly.
+-/
+theorem centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hdvd : factor ∣ core)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    Hex.centeredLiftPoly
+        (Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k)
+        (d.p ^ d.k) =
+      factor := by
+  exact
+    Hex.centeredLiftPoly_eq_of_reduceModPow_eq
+      factor (scaledLiftedFactorProduct core d S) d.p d.k
+      (Hex.ZPoly.defaultFactorCoeffBound core)
+      (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
+      hprecision hrep
+
+/--
+Group A2 packaged for downstream exhaustive-search proofs: under the Hensel
+subset-correspondence hypotheses, each irreducible integer factor has a unique
+lifted-factor subset whose scaled product both represents it modulo the Hensel
+modulus and centred-lifts back to the factor exactly at Mignotte precision.
+-/
+theorem existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
+    (h :
+      HenselSubsetCorrespondenceHypotheses core B primeData d
+        admissiblePrime successfulLift)
+    {factor : Hex.ZPoly}
+    (hcore_ne : core ≠ 0)
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hdvd : factor ∣ core)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    ∃! S : LiftedFactorSubset d,
+      RepresentsIntegerFactorAtLift core d factor S ∧
+        Hex.centeredLiftPoly
+            (Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k)
+            (d.p ^ d.k) =
+          factor := by
+  rcases h.exists_subset hirr hdvd with ⟨S, hS⟩
+  refine ⟨S, ⟨hS, ?_⟩, ?_⟩
+  · exact
+      centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision
+        hcore_ne hdvd hS hprecision
+  · intro T hT
+    exact
+      (h.unique_subset (factor := factor) (S := S) (T := T)
+        hirr hdvd hS hT.1).symm
+
+/--
+The A2 recoverability package specialized to the slow exhaustive path's
+default Mignotte precision exponent.
+-/
+theorem existsUnique_recoveringLiftedFactorSubset_at_defaultPrecision
+    {core : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
+    (h :
+      HenselSubsetCorrespondenceHypotheses core
+        (Hex.precisionForCoeffBound (Hex.ZPoly.defaultFactorCoeffBound core)
+          primeData.p)
+        primeData d admissiblePrime successfulLift)
+    {factor : Hex.ZPoly}
+    (hcore_ne : core ≠ 0)
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hdvd : factor ∣ core)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    ∃! S : LiftedFactorSubset d,
+      RepresentsIntegerFactorAtLift core d factor S ∧
+        Hex.centeredLiftPoly
+            (Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k)
+            (d.p ^ d.k) =
+          factor :=
+  existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence
+    h hcore_ne hirr hdvd hprecision
+
 /-- A `Hex.ZPoly` factor that passes the executable `shouldRecordPolynomialFactor`
 check is non-zero and not a unit after transport to `Polynomial ℤ`.  The
 executable check rejects `0`, `1`, and `-1`, which are exactly the zero
