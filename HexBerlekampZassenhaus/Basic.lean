@@ -4519,6 +4519,294 @@ private theorem splitIntegerRootFactorsAux_product
                           rw [hrec]
                     _ = target := hquot_prod
 
+private theorem splitIntegerRootFactorsAux_normalizeFactorSign
+    (target : ZPoly) (roots : List Int) (fuel : Nat) :
+    ∀ factors residual,
+      splitIntegerRootFactorsAux target roots fuel = (factors, residual) →
+        ∀ factor ∈ factors.toList, normalizeFactorSign factor = factor := by
+  induction fuel generalizing target roots with
+  | zero =>
+      intro factors residual hsplit factor hmem
+      rw [splitIntegerRootFactorsAux] at hsplit
+      injection hsplit with hfactors hresidual
+      subst factors
+      simp at hmem
+  | succ fuel ih =>
+      intro factors residual hsplit factor hmem
+      cases roots with
+      | nil =>
+          rw [splitIntegerRootFactorsAux] at hsplit
+          injection hsplit with hfactors hresidual
+          subst factors
+          simp at hmem
+      | cons root roots =>
+          unfold splitIntegerRootFactorsAux at hsplit
+          cases hquot : exactQuotient? target (linearFactorForRoot root) with
+          | none =>
+              simp [hquot] at hsplit
+              exact ih target roots factors residual hsplit factor hmem
+          | some quotient =>
+              simp [hquot] at hsplit
+              cases hrest : splitIntegerRootFactorsAux quotient roots fuel with
+              | mk restFactors restResidual =>
+                  simp [hrest] at hsplit
+                  rcases hsplit with ⟨hfactors, hresidual⟩
+                  subst factors
+                  subst residual
+                  rw [Array.toList_append] at hmem
+                  simp at hmem
+                  cases hmem with
+                  | inl hroot =>
+                      rw [hroot]
+                      exact normalizeFactorSign_linearFactorForRoot root
+                  | inr hrest_mem =>
+                      exact ih quotient roots restFactors restResidual hrest factor (by
+                        simpa using hrest_mem)
+
+private theorem splitIntegerRootFactorsAux_shouldRecord
+    (target : ZPoly) (roots : List Int) (fuel : Nat) :
+    ∀ factors residual,
+      splitIntegerRootFactorsAux target roots fuel = (factors, residual) →
+        ∀ factor ∈ factors.toList, shouldRecordPolynomialFactor factor = true := by
+  induction fuel generalizing target roots with
+  | zero =>
+      intro factors residual hsplit factor hmem
+      rw [splitIntegerRootFactorsAux] at hsplit
+      injection hsplit with hfactors hresidual
+      subst factors
+      simp at hmem
+  | succ fuel ih =>
+      intro factors residual hsplit factor hmem
+      cases roots with
+      | nil =>
+          rw [splitIntegerRootFactorsAux] at hsplit
+          injection hsplit with hfactors hresidual
+          subst factors
+          simp at hmem
+      | cons root roots =>
+          unfold splitIntegerRootFactorsAux at hsplit
+          cases hquot : exactQuotient? target (linearFactorForRoot root) with
+          | none =>
+              simp [hquot] at hsplit
+              exact ih target roots factors residual hsplit factor hmem
+          | some quotient =>
+              simp [hquot] at hsplit
+              cases hrest : splitIntegerRootFactorsAux quotient roots fuel with
+              | mk restFactors restResidual =>
+                  simp [hrest] at hsplit
+                  rcases hsplit with ⟨hfactors, hresidual⟩
+                  subst factors
+                  subst residual
+                  rw [Array.toList_append] at hmem
+                  simp at hmem
+                  cases hmem with
+                  | inl hroot =>
+                      rw [hroot]
+                      exact shouldRecordPolynomialFactor_linearFactorForRoot root
+                  | inr hrest_mem =>
+                      exact ih quotient roots restFactors restResidual hrest factor (by
+                        simpa using hrest_mem)
+
+private theorem splitIntegerRootFactorsAux_polyProduct_leadingCoeff_pos
+    (target : ZPoly) (roots : List Int) (fuel : Nat) :
+    ∀ factors residual,
+      splitIntegerRootFactorsAux target roots fuel = (factors, residual) →
+        0 < DensePoly.leadingCoeff (Array.polyProduct factors) := by
+  induction fuel generalizing target roots with
+  | zero =>
+      intro factors residual hsplit
+      rw [splitIntegerRootFactorsAux] at hsplit
+      injection hsplit with hfactors hresidual
+      subst factors
+      change 0 < DensePoly.leadingCoeff (DensePoly.C (1 : Int))
+      simp [DensePoly.leadingCoeff, DensePoly.coeffs_C_of_ne_zero
+        (by decide : (1 : Int) ≠ 0)]
+  | succ fuel ih =>
+      intro factors residual hsplit
+      cases roots with
+      | nil =>
+          rw [splitIntegerRootFactorsAux] at hsplit
+          injection hsplit with hfactors hresidual
+          subst factors
+          change 0 < DensePoly.leadingCoeff (DensePoly.C (1 : Int))
+          simp [DensePoly.leadingCoeff, DensePoly.coeffs_C_of_ne_zero
+            (by decide : (1 : Int) ≠ 0)]
+      | cons root roots =>
+          unfold splitIntegerRootFactorsAux at hsplit
+          cases hquot : exactQuotient? target (linearFactorForRoot root) with
+          | none =>
+              simp [hquot] at hsplit
+              exact ih target roots factors residual hsplit
+          | some quotient =>
+              simp [hquot] at hsplit
+              cases hrest : splitIntegerRootFactorsAux quotient roots fuel with
+              | mk restFactors restResidual =>
+                  simp [hrest] at hsplit
+                  rcases hsplit with ⟨hfactors, hresidual⟩
+                  subst factors
+                  subst residual
+                  rw [polyProduct_append, polyProduct_singleton]
+                  apply ZPoly.leadingCoeff_mul_pos_of_pos
+                  · rw [leadingCoeff_linearFactorForRoot]
+                    omega
+                  · exact ih quotient roots restFactors restResidual hrest
+
+private theorem quadraticIntegerRootFactors?_normalizeFactorSign
+    {core : ZPoly} {factors : Array ZPoly}
+    (hcore_pos : 0 < DensePoly.leadingCoeff core)
+    (hquad : quadraticIntegerRootFactors? core = some factors) :
+    ∀ factor ∈ factors.toList, normalizeFactorSign factor = factor := by
+  unfold quadraticIntegerRootFactors? at hquad
+  by_cases hdeg : core.degree?.getD 0 = 2
+  · simp only [hdeg, if_true] at hquad
+    let roots := integerRootCandidates core
+    let split := splitIntegerRootFactorsAux core roots roots.length
+    have hsplit_norm :
+        ∀ factor ∈ split.1.toList, normalizeFactorSign factor = factor := by
+      simpa [split, roots] using
+        splitIntegerRootFactorsAux_normalizeFactorSign core roots roots.length
+          split.1 split.2 rfl
+    by_cases hsize : split.1.size = 0
+    · simp [roots, split, hsize] at hquad
+    · simp only [roots, split, hsize, if_false] at hquad
+      by_cases hres_one : split.2 = 1
+      · rw [if_pos hres_one] at hquad
+        cases hquad
+        exact hsplit_norm
+      · rw [if_neg hres_one] at hquad
+        by_cases hres_deg : split.2.degree?.getD 0 ≤ 1
+        · rw [if_pos hres_deg] at hquad
+          cases hquad
+          intro factor hmem
+          rw [Array.toList_push] at hmem
+          simp only [List.mem_append, List.mem_singleton] at hmem
+          cases hmem with
+          | inl hsplit_mem =>
+              exact hsplit_norm factor hsplit_mem
+          | inr hres =>
+              rw [hres]
+              apply normalizeFactorSign_eq_self_of_leadingCoeff_nonneg
+              change 0 ≤ DensePoly.leadingCoeff split.2
+              have hsplit_prod :
+                  split.2 * Array.polyProduct split.1 = core := by
+                simpa [split, roots] using
+                  splitIntegerRootFactorsAux_product core roots roots.length
+                    split.1 split.2 rfl
+              have hsplit_lc_pos :
+                  0 < DensePoly.leadingCoeff (Array.polyProduct split.1) := by
+                simpa [split, roots] using
+                  splitIntegerRootFactorsAux_polyProduct_leadingCoeff_pos core roots roots.length
+                    split.1 split.2 rfl
+              have hsplit_poly_ne : Array.polyProduct split.1 ≠ 0 := by
+                intro hzero
+                rw [hzero] at hsplit_lc_pos
+                change 0 < (0 : Int) at hsplit_lc_pos
+                omega
+              have hres_ne : split.2 ≠ 0 := by
+                intro hzero
+                have hcore_zero : core = 0 := by
+                  rw [← hsplit_prod, hzero]
+                  exact DensePoly.zero_mul _
+                rw [hcore_zero] at hcore_pos
+                change 0 < (0 : Int) at hcore_pos
+                omega
+              have hlc :
+                  DensePoly.leadingCoeff core =
+                    DensePoly.leadingCoeff split.2 *
+                      DensePoly.leadingCoeff (Array.polyProduct split.1) := by
+                rw [← hsplit_prod]
+                exact ZPoly.leadingCoeff_mul_of_nonzero
+                    split.2 (Array.polyProduct split.1) hres_ne hsplit_poly_ne
+              by_cases hnonneg : 0 ≤ DensePoly.leadingCoeff split.2
+              · exact hnonneg
+              · have hle : DensePoly.leadingCoeff split.2 < 0 := by omega
+                have hcore_neg : DensePoly.leadingCoeff core < 0 := by
+                  rw [hlc]
+                  exact Int.mul_neg_of_neg_of_pos hle hsplit_lc_pos
+                omega
+        · simp [roots, split, hres_deg] at hquad
+  · simp [hdeg] at hquad
+
+private theorem quadraticIntegerRootFactors?_shouldRecord
+    {core : ZPoly} {factors : Array ZPoly}
+    (hcore_pos : 0 < DensePoly.leadingCoeff core)
+    (hquad : quadraticIntegerRootFactors? core = some factors) :
+    ∀ factor ∈ factors.toList, shouldRecordPolynomialFactor factor = true := by
+  unfold quadraticIntegerRootFactors? at hquad
+  by_cases hdeg : core.degree?.getD 0 = 2
+  · simp only [hdeg, if_true] at hquad
+    let roots := integerRootCandidates core
+    let split := splitIntegerRootFactorsAux core roots roots.length
+    have hsplit_record :
+        ∀ factor ∈ split.1.toList, shouldRecordPolynomialFactor factor = true := by
+      simpa [split, roots] using
+        splitIntegerRootFactorsAux_shouldRecord core roots roots.length
+          split.1 split.2 rfl
+    by_cases hsize : split.1.size = 0
+    · simp [roots, split, hsize] at hquad
+    · simp only [roots, split, hsize, if_false] at hquad
+      by_cases hres_one : split.2 = 1
+      · rw [if_pos hres_one] at hquad
+        cases hquad
+        exact hsplit_record
+      · rw [if_neg hres_one] at hquad
+        by_cases hres_deg : split.2.degree?.getD 0 ≤ 1
+        · rw [if_pos hres_deg] at hquad
+          cases hquad
+          intro factor hmem
+          rw [Array.toList_push] at hmem
+          simp only [List.mem_append, List.mem_singleton] at hmem
+          cases hmem with
+          | inl hsplit_mem =>
+              exact hsplit_record factor hsplit_mem
+          | inr hres =>
+              rw [hres]
+              have hsplit_prod :
+                  split.2 * Array.polyProduct split.1 = core := by
+                simpa [split, roots] using
+                  splitIntegerRootFactorsAux_product core roots roots.length
+                    split.1 split.2 rfl
+              have hsplit_lc_pos :
+                  0 < DensePoly.leadingCoeff (Array.polyProduct split.1) := by
+                simpa [split, roots] using
+                  splitIntegerRootFactorsAux_polyProduct_leadingCoeff_pos core roots roots.length
+                    split.1 split.2 rfl
+              have hsplit_poly_ne : Array.polyProduct split.1 ≠ 0 := by
+                intro hzero
+                rw [hzero] at hsplit_lc_pos
+                change 0 < (0 : Int) at hsplit_lc_pos
+                omega
+              have hres_ne : split.2 ≠ 0 := by
+                intro hzero
+                have hcore_zero : core = 0 := by
+                  rw [← hsplit_prod, hzero]
+                  exact DensePoly.zero_mul _
+                rw [hcore_zero] at hcore_pos
+                change 0 < (0 : Int) at hcore_pos
+                omega
+              have hres_ne_one : split.2 ≠ 1 := hres_one
+              have hres_ne_neg_one : split.2 ≠ DensePoly.C (-1 : Int) := by
+                intro hneg_one
+                have hlc :
+                    DensePoly.leadingCoeff core =
+                      DensePoly.leadingCoeff split.2 *
+                        DensePoly.leadingCoeff (Array.polyProduct split.1) := by
+                  rw [← hsplit_prod]
+                  exact ZPoly.leadingCoeff_mul_of_nonzero
+                    split.2 (Array.polyProduct split.1) hres_ne hsplit_poly_ne
+                rw [hneg_one] at hlc
+                have hneg_lc :
+                    DensePoly.leadingCoeff (DensePoly.C (-1 : Int)) = -1 := by decide
+                rw [hneg_lc] at hlc
+                have hcore_neg : DensePoly.leadingCoeff core < 0 := by
+                  rw [hlc]
+                  omega
+                omega
+              simp [shouldRecordPolynomialFactor, split, roots, hres_ne, hres_ne_one,
+                hres_ne_neg_one]
+        · simp [roots, split, hres_deg] at hquad
+  · simp [hdeg] at hquad
+
 private theorem quadraticIntegerRootFactors?_product
     {core : ZPoly} {factors : Array ZPoly}
     (hquad : quadraticIntegerRootFactors? core = some factors) :
@@ -4884,6 +5172,43 @@ private theorem factorSlowWithBound_product_of_constant_branch
       exact polynomialNormalizationPrefixFactors_shouldRecord_of_ne_zero
         f hf factor hmem
 
+private theorem factorSlowWithBound_product_of_quadratic_branch
+    (f : ZPoly) (B : Nat)
+    (hf : f ≠ 0)
+    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (coreFactors : Array ZPoly)
+    (hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore =
+      some coreFactors) :
+    Factorization.product (factorSlowWithBound f B) = f := by
+  apply factorSlowWithBound_product_of_all_recorded_normalized
+  · unfold factorSlowFactorsWithBound
+    rw [if_neg hdeg]
+    rw [hquad]
+    unfold reassemblePolynomialFactors
+    intro factor hmem
+    rw [Array.toList_append] at hmem
+    simp only [List.mem_append] at hmem
+    cases hmem with
+    | inl hprefix =>
+        exact polynomialNormalizationPrefixFactors_normalizeFactorSign_of_ne_zero
+          f hf factor hprefix
+    | inr hcore =>
+        exact quadraticIntegerRootFactors?_normalizeFactorSign
+          (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad factor hcore
+  · unfold factorSlowFactorsWithBound
+    rw [if_neg hdeg]
+    rw [hquad]
+    unfold reassemblePolynomialFactors
+    intro factor hmem
+    rw [Array.toList_append] at hmem
+    simp only [List.mem_append] at hmem
+    cases hmem with
+    | inl hprefix =>
+        exact polynomialNormalizationPrefixFactors_shouldRecord_of_ne_zero
+          f hf factor hprefix
+    | inr hcore =>
+        exact quadraticIntegerRootFactors?_shouldRecord
+          (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad factor hcore
 
 private theorem factorFastFactorsWithBound_product_of_some_of_all_recorded_normalized
     {f : ZPoly} {B : Nat} {factors : Array ZPoly}
