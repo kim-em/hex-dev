@@ -23,10 +23,6 @@ namespace Berlekamp
 
 variable {p : Nat} [ZMod64.Bounds p]
 
-section
-
-variable [ZMod64.PrimeModulus p]
-
 /--
 The polynomial `X^(p^k) - X` viewed inside the executable `FpPoly p` model.
 
@@ -35,6 +31,141 @@ underlying Rabin's test.
 -/
 def xPowSubX (k : Nat) : FpPoly p :=
   DensePoly.monomial (p ^ k) (1 : ZMod64 p) - FpPoly.X
+
+/-! ### CRT representatives for Berlekamp completeness -/
+
+/--
+The zero-one CRT representative used to separate a coprime product
+`a * b`: it is congruent to `0` modulo `a` and to `1` modulo `b` when
+`s * a + t * b = 1`.
+-/
+def crtZeroOneCandidate (a b s t : FpPoly p) : FpPoly p :=
+  DensePoly.polyCRT a b 0 1 s t
+
+/-- The zero-one CRT representative is congruent to `0` modulo the left factor. -/
+theorem crtZeroOneCandidate_congr_zero_left
+    (a b s t : FpPoly p) (hbez : s * a + t * b = 1) :
+    DensePoly.Congr (crtZeroOneCandidate a b s t) 0 a := by
+  unfold crtZeroOneCandidate
+  simpa using
+    (DensePoly.polyCRT_congr_fst a b (0 : FpPoly p) (1 : FpPoly p) s t hbez)
+
+/-- The zero-one CRT representative is congruent to `1` modulo the right factor. -/
+theorem crtZeroOneCandidate_congr_one_right
+    (a b s t : FpPoly p) (hbez : s * a + t * b = 1) :
+    DensePoly.Congr (crtZeroOneCandidate a b s t) 1 b := by
+  unfold crtZeroOneCandidate
+  simpa using
+    (DensePoly.polyCRT_congr_snd a b (0 : FpPoly p) (1 : FpPoly p) s t hbez)
+
+/-- Monic reduction of the zero-one CRT representative modulo the left factor. -/
+theorem crtZeroOneCandidate_modByMonic_zero_left
+    [ZMod64.PrimeModulus p] (a b s t : FpPoly p)
+    (ha : DensePoly.Monic a) (hbez : s * a + t * b = 1) :
+    DensePoly.modByMonic (crtZeroOneCandidate a b s t) a ha =
+      DensePoly.modByMonic (0 : FpPoly p) a ha := by
+  haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
+  unfold crtZeroOneCandidate
+  simpa using
+    (@DensePoly.polyCRT_modByMonic_fst (ZMod64 p) inferInstance inferInstance
+      inferInstance (ZMod64.instDivModLawsZMod64Fp p) a b
+      (0 : FpPoly p) (1 : FpPoly p) s t ha hbez)
+
+/-- Monic reduction of the zero-one CRT representative modulo the right factor. -/
+theorem crtZeroOneCandidate_modByMonic_one_right
+    [ZMod64.PrimeModulus p] (a b s t : FpPoly p)
+    (hb : DensePoly.Monic b) (hbez : s * a + t * b = 1) :
+    DensePoly.modByMonic (crtZeroOneCandidate a b s t) b hb =
+      DensePoly.modByMonic (1 : FpPoly p) b hb := by
+  haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
+  unfold crtZeroOneCandidate
+  simpa using
+    (@DensePoly.polyCRT_modByMonic_snd (ZMod64 p) inferInstance inferInstance
+      inferInstance (ZMod64.instDivModLawsZMod64Fp p) a b
+      (0 : FpPoly p) (1 : FpPoly p) s t hb hbez)
+
+/-- Remainder form of the zero residue modulo the left factor. -/
+theorem crtZeroOneCandidate_mod_zero_left
+    [ZMod64.PrimeModulus p] (a b s t : FpPoly p)
+    (ha : DensePoly.Monic a) (hbez : s * a + t * b = 1) :
+    crtZeroOneCandidate a b s t % a = (0 : FpPoly p) % a := by
+  haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
+  unfold crtZeroOneCandidate
+  simpa using
+    (@DensePoly.polyCRT_mod_fst (ZMod64 p) inferInstance inferInstance
+      inferInstance (ZMod64.instDivModLawsZMod64Fp p) a b
+      (0 : FpPoly p) (1 : FpPoly p) s t ha hbez)
+
+/-- Remainder form of the one residue modulo the right factor. -/
+theorem crtZeroOneCandidate_mod_one_right
+    [ZMod64.PrimeModulus p] (a b s t : FpPoly p)
+    (hb : DensePoly.Monic b) (hbez : s * a + t * b = 1) :
+    crtZeroOneCandidate a b s t % b = (1 : FpPoly p) % b := by
+  haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
+  unfold crtZeroOneCandidate
+  simpa using
+    (@DensePoly.polyCRT_mod_snd (ZMod64 p) inferInstance inferInstance
+      inferInstance (ZMod64.instDivModLawsZMod64Fp p) a b
+      (0 : FpPoly p) (1 : FpPoly p) s t hb hbez)
+
+/-- The same zero-one CRT representative, using the executable xgcd coefficients. -/
+def crtZeroOneXGCDCandidate (a b : FpPoly p) : FpPoly p :=
+  let r := DensePoly.xgcd a b
+  crtZeroOneCandidate a b r.left r.right
+
+/-- If the executable gcd is `1`, xgcd supplies CRT-ready coefficients. -/
+theorem xgcd_bezout_of_gcd_eq_one
+    [ZMod64.PrimeModulus p] (a b : FpPoly p)
+    (hgcd : DensePoly.gcd a b = 1) :
+    (DensePoly.xgcd a b).left * a + (DensePoly.xgcd a b).right * b = 1 := by
+  haveI : DensePoly.GcdLaws (ZMod64 p) := inferInstance
+  have hgcd' : (DensePoly.xgcd a b).gcd = 1 := by
+    simpa [DensePoly.gcd] using hgcd
+  simpa [hgcd'] using DensePoly.xgcd_bezout a b
+
+/-- The xgcd-backed zero-one CRT representative is congruent to `0` on the left. -/
+theorem crtZeroOneXGCDCandidate_congr_zero_left
+    [ZMod64.PrimeModulus p] (a b : FpPoly p)
+    (hgcd : DensePoly.gcd a b = 1) :
+    DensePoly.Congr (crtZeroOneXGCDCandidate a b) 0 a := by
+  unfold crtZeroOneXGCDCandidate
+  exact crtZeroOneCandidate_congr_zero_left a b
+    (DensePoly.xgcd a b).left (DensePoly.xgcd a b).right
+    (xgcd_bezout_of_gcd_eq_one a b hgcd)
+
+/-- The xgcd-backed zero-one CRT representative is congruent to `1` on the right. -/
+theorem crtZeroOneXGCDCandidate_congr_one_right
+    [ZMod64.PrimeModulus p] (a b : FpPoly p)
+    (hgcd : DensePoly.gcd a b = 1) :
+    DensePoly.Congr (crtZeroOneXGCDCandidate a b) 1 b := by
+  unfold crtZeroOneXGCDCandidate
+  exact crtZeroOneCandidate_congr_one_right a b
+    (DensePoly.xgcd a b).left (DensePoly.xgcd a b).right
+    (xgcd_bezout_of_gcd_eq_one a b hgcd)
+
+/-- Remainder form of the xgcd-backed zero residue modulo the left factor. -/
+theorem crtZeroOneXGCDCandidate_mod_zero_left
+    [ZMod64.PrimeModulus p] (a b : FpPoly p)
+    (ha : DensePoly.Monic a) (hgcd : DensePoly.gcd a b = 1) :
+    crtZeroOneXGCDCandidate a b % a = (0 : FpPoly p) % a := by
+  unfold crtZeroOneXGCDCandidate
+  exact crtZeroOneCandidate_mod_zero_left a b
+    (DensePoly.xgcd a b).left (DensePoly.xgcd a b).right ha
+    (xgcd_bezout_of_gcd_eq_one a b hgcd)
+
+/-- Remainder form of the xgcd-backed one residue modulo the right factor. -/
+theorem crtZeroOneXGCDCandidate_mod_one_right
+    [ZMod64.PrimeModulus p] (a b : FpPoly p)
+    (hb : DensePoly.Monic b) (hgcd : DensePoly.gcd a b = 1) :
+    crtZeroOneXGCDCandidate a b % b = (1 : FpPoly p) % b := by
+  unfold crtZeroOneXGCDCandidate
+  exact crtZeroOneCandidate_mod_one_right a b
+    (DensePoly.xgcd a b).left (DensePoly.xgcd a b).right hb
+    (xgcd_bezout_of_gcd_eq_one a b hgcd)
+
+section
+
+variable [ZMod64.PrimeModulus p]
 
 /-! ### Foundational lemmas
 

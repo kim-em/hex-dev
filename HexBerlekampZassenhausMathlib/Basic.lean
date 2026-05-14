@@ -325,6 +325,119 @@ theorem polyProduct_toPolynomial (factors : Array Hex.ZPoly) :
     toPolynomial_one_zpoly]
   exact List.prod_eq_foldl.symm
 
+/-- Index type for the local factors stored in executable Hensel lift data. -/
+abbrev LiftedFactorIndex (d : Hex.LiftData) : Type :=
+  Fin d.liftedFactors.size
+
+/-- A finite subset of the local factors stored in executable Hensel lift data. -/
+abbrev LiftedFactorSubset (d : Hex.LiftData) : Type :=
+  Finset (LiftedFactorIndex d)
+
+/-- The lifted local factor at an executable `LiftData` index. -/
+def liftedFactor (d : Hex.LiftData) (i : LiftedFactorIndex d) : Hex.ZPoly :=
+  d.liftedFactors[i]
+
+/-- Product of the lifted local factors selected by a finite subset. -/
+def liftedFactorProduct (d : Hex.LiftData) (S : LiftedFactorSubset d) : Hex.ZPoly :=
+  S.toList.foldl (fun acc i => acc * liftedFactor d i) 1
+
+/--
+Selected lifted-factor product scaled by the leading coefficient of the integer
+core, matching the product formed by the executable recombination candidate
+checker.
+-/
+def scaledLiftedFactorProduct
+    (core : Hex.ZPoly) (d : Hex.LiftData) (S : LiftedFactorSubset d) : Hex.ZPoly :=
+  Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core) (liftedFactorProduct d S)
+
+/--
+An integer factor is represented by a subset of the lifted local factors when
+the executable scaled selected product agrees with the factor modulo the Hensel
+modulus `p^k`.
+-/
+def RepresentsIntegerFactorAtLift
+    (core : Hex.ZPoly) (d : Hex.LiftData) (factor : Hex.ZPoly)
+    (S : LiftedFactorSubset d) : Prop :=
+  Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k =
+    Hex.ZPoly.reduceModPow factor d.p d.k
+
+/--
+Proof-facing package for the square-free Hensel subset correspondence over the
+executable `PrimeChoiceData`/`LiftData` surface.
+
+The two proposition parameters are hooks for the precise admissible-prime and
+successful-lift hypotheses supplied by the later analytic Hensel proof.  The
+consumer theorems below depend only on the resulting existence and uniqueness
+fields, so downstream exhaustive-recombination proofs can be written against a
+stable executable API.
+-/
+structure HenselSubsetCorrespondenceHypotheses
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (d : Hex.LiftData) (admissiblePrime successfulLift : Prop) : Prop where
+  lift_eq : d = Hex.henselLiftData core B primeData
+  admissible_prime : admissiblePrime
+  successful_lift : successfulLift
+  exists_subset :
+    ∀ {factor : Hex.ZPoly},
+      Irreducible (HexPolyZMathlib.toPolynomial factor) →
+      factor ∣ core →
+      ∃ S : LiftedFactorSubset d, RepresentsIntegerFactorAtLift core d factor S
+  unique_subset :
+    ∀ {factor : Hex.ZPoly} {S T : LiftedFactorSubset d},
+      Irreducible (HexPolyZMathlib.toPolynomial factor) →
+      factor ∣ core →
+      RepresentsIntegerFactorAtLift core d factor S →
+      RepresentsIntegerFactorAtLift core d factor T →
+      S = T
+
+/--
+Consumer-facing square-free Hensel subset correspondence: an irreducible
+integer factor of the core has a unique representing subset of the executable
+lifted local factors.
+-/
+theorem existsUnique_liftedFactorSubset_of_henselSubsetCorrespondence
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
+    (h :
+      HenselSubsetCorrespondenceHypotheses core B primeData d
+        admissiblePrime successfulLift)
+    {factor : Hex.ZPoly}
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hdvd : factor ∣ core) :
+    ∃! S : LiftedFactorSubset d, RepresentsIntegerFactorAtLift core d factor S := by
+  rcases h.exists_subset hirr hdvd with ⟨S, hS⟩
+  refine ⟨S, hS, ?_⟩
+  intro T hT
+  exact (h.unique_subset (factor := factor) (S := S) (T := T) hirr hdvd hS hT).symm
+
+/-- Existence projection from the executable Hensel subset-correspondence API. -/
+theorem exists_liftedFactorSubset_of_henselSubsetCorrespondence
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
+    (h :
+      HenselSubsetCorrespondenceHypotheses core B primeData d
+        admissiblePrime successfulLift)
+    {factor : Hex.ZPoly}
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hdvd : factor ∣ core) :
+    ∃ S : LiftedFactorSubset d, RepresentsIntegerFactorAtLift core d factor S :=
+  h.exists_subset hirr hdvd
+
+/-- Uniqueness projection from the executable Hensel subset-correspondence API. -/
+theorem unique_liftedFactorSubset_of_henselSubsetCorrespondence
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
+    (h :
+      HenselSubsetCorrespondenceHypotheses core B primeData d
+        admissiblePrime successfulLift)
+    {factor : Hex.ZPoly} {S T : LiftedFactorSubset d}
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hdvd : factor ∣ core)
+    (hS : RepresentsIntegerFactorAtLift core d factor S)
+    (hT : RepresentsIntegerFactorAtLift core d factor T) :
+    S = T :=
+  h.unique_subset (factor := factor) (S := S) (T := T) hirr hdvd hS hT
+
 /-- A `Hex.ZPoly` factor that passes the executable `shouldRecordPolynomialFactor`
 check is non-zero and not a unit after transport to `Polynomial ℤ`.  The
 executable check rejects `0`, `1`, and `-1`, which are exactly the zero
