@@ -699,6 +699,10 @@ theorem gf2WordPoly_coeff (bits : UInt64) (width i : Nat) :
 def coeffsEqUpTo (bound : Nat) (a b : FpPoly 2) : Bool :=
   (List.range bound).all fun i => a.coeff i == b.coeff i
 
+def quotientStepCoeffCheck
+    (bound : Nat) (prev curr quot f : FpPoly 2) : Bool :=
+  coeffsEqUpTo bound (prev * prev) (curr + quot * f)
+
 theorem coeff_eq_of_coeffsEqUpTo
     {bound : Nat} {a b : FpPoly 2}
     (h : coeffsEqUpTo bound a b = true) :
@@ -729,6 +733,41 @@ theorem coeffs_eq_of_size_le_of_coeffsEqUpTo
     (h : coeffsEqUpTo bound a b = true) :
     a.coeffs = b.coeffs :=
   coeffs_eq_of_size_le_of_coeff_eq ha hb (coeff_eq_of_coeffsEqUpTo h)
+
+theorem quotientStep_coeffs_eq_of_check
+    {bound : Nat} {prev curr quot f : FpPoly 2}
+    (hleft : (prev * prev).size ≤ bound)
+    (hright : (curr + quot * f).size ≤ bound)
+    (hcheck : quotientStepCoeffCheck bound prev curr quot f = true) :
+    (prev * prev).coeffs = (curr + quot * f).coeffs := by
+  unfold quotientStepCoeffCheck at hcheck
+  exact coeffs_eq_of_size_le_of_coeffsEqUpTo hleft hright hcheck
+
+def gf2WordQuotientStepCoeffCheck
+    (bound width : Nat) (prevBits currBits quotBits fBits : UInt64) : Bool :=
+  quotientStepCoeffCheck bound
+    (gf2WordPoly prevBits width)
+    (gf2WordPoly currBits width)
+    (gf2WordPoly quotBits width)
+    (gf2WordPoly fBits width)
+
+theorem gf2WordQuotientStep_coeffs_eq_of_check
+    {bound width : Nat} {prevBits currBits quotBits fBits : UInt64}
+    (hleft :
+      (gf2WordPoly prevBits width * gf2WordPoly prevBits width).size ≤ bound)
+    (hright :
+      (gf2WordPoly currBits width +
+        gf2WordPoly quotBits width * gf2WordPoly fBits width).size ≤ bound)
+    (hcheck :
+      gf2WordQuotientStepCoeffCheck bound width prevBits currBits quotBits fBits =
+        true) :
+    (gf2WordPoly prevBits width * gf2WordPoly prevBits width).coeffs =
+      (gf2WordPoly currBits width +
+        gf2WordPoly quotBits width * gf2WordPoly fBits width).coeffs := by
+  apply quotientStep_coeffs_eq_of_check (bound := bound)
+  · exact hleft
+  · exact hright
+  · exact hcheck
 
 private theorem densePoly_eq_of_coeffs_eq
     {R : Type u} [Zero R] [DecidableEq R] {a b : DensePoly R}
