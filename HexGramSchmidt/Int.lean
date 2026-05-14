@@ -1038,6 +1038,60 @@ private theorem noPivotLoop_full_eq_leadingPrefix_at_gramDetVecEntry
   -- hcongr's LHS index in Fin n has val = r; same as the goal's LHS index.
   exact hcongr
 
+/-- If the array loop's `state.step` is past the matrix extent, one outer
+iteration returns the input state unchanged. -/
+private theorem scaledCoeffArrayLoop_done (fuel : Nat)
+    (state : ScaledCoeffArrayState) (hDone : ¬ state.step < n) :
+    scaledCoeffArrayLoop n (fuel + 1) state = state := by
+  simp [scaledCoeffArrayLoop, hDone]
+
+/-- The array loop is idempotent once `state.step ≥ n`. -/
+private theorem scaledCoeffArrayLoop_id_at_done (fuel : Nat)
+    (state : ScaledCoeffArrayState) (hDone : ¬ state.step < n) :
+    scaledCoeffArrayLoop n fuel state = state := by
+  cases fuel with
+  | zero => rfl
+  | succ f => exact scaledCoeffArrayLoop_done f state hDone
+
+/-- Singular branch of one array-loop iteration: a zero pivot strictly before
+the last column halts the loop, writing the scaled column at the current step
+but leaving the matrix and step untouched. -/
+private theorem scaledCoeffArrayLoop_singular_branch (fuel : Nat)
+    (state : ScaledCoeffArrayState)
+    (hStep : state.step < n) (hNext : state.step + 1 < n)
+    (hp : getArrayEntry state.matrix state.step state.step = 0) :
+    scaledCoeffArrayLoop n (fuel + 1) state =
+      { state with coeffs := writeScaledColumn state.coeffs state.matrix n state.step } := by
+  simp [scaledCoeffArrayLoop, hStep, hNext, hp]
+
+/-- Last-column branch of one array-loop iteration: when `state.step = n - 1`,
+the loop writes the final scaled column and advances `step` to `n` without
+applying a Bareiss step. -/
+private theorem scaledCoeffArrayLoop_last_step (fuel : Nat)
+    (state : ScaledCoeffArrayState)
+    (hStep : state.step < n) (hNext : ¬ state.step + 1 < n) :
+    scaledCoeffArrayLoop n (fuel + 1) state =
+      { state with
+        step := state.step + 1
+        coeffs := writeScaledColumn state.coeffs state.matrix n state.step } := by
+  simp [scaledCoeffArrayLoop, hStep, hNext]
+
+/-- Regular branch of one array-loop iteration: a nonzero pivot strictly before
+the last column applies one canonical Bareiss `stepArray` update, advances
+`step`, records the new `prevPivot`, and recurses on the remaining fuel. -/
+private theorem scaledCoeffArrayLoop_regular_branch (fuel : Nat)
+    (state : ScaledCoeffArrayState)
+    (hStep : state.step < n) (hNext : state.step + 1 < n)
+    (hp : getArrayEntry state.matrix state.step state.step ≠ 0) :
+    scaledCoeffArrayLoop n (fuel + 1) state =
+      scaledCoeffArrayLoop n fuel
+        { step := state.step + 1
+          matrix := Matrix.stepArray state.matrix n state.step
+            (getArrayEntry state.matrix state.step state.step) state.prevPivot
+          coeffs := writeScaledColumn state.coeffs state.matrix n state.step
+          prevPivot := getArrayEntry state.matrix state.step state.step } := by
+  simp [scaledCoeffArrayLoop, hStep, hNext, hp]
+
 /-- The no-pivot Bareiss pass over the full Gram matrix records the same
 leading-prefix determinant as the public `gramDet` API at every vector slot. -/
 private theorem gramDetVecEntry_eq_leadingPrefix_bareiss
