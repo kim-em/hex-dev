@@ -1104,6 +1104,71 @@ private theorem noPivotLoop_singular_inv
         rw [Matrix.noPivotLoop_done f state hDone]
         left; exact h_init
 
+/-- After running `fuel` iterations of `Matrix.noPivotLoop` from a state with
+no recorded singular step, if the result also has no recorded singular step
+and the loop had at least `fuel + 1` steps of room from its starting step,
+then the result's step is the starting step plus `fuel`. -/
+private theorem noPivotLoop_step_eq_add_of_singularStep_none
+    {n : Nat} (fuel : Nat) (state : Matrix.BareissState n)
+    (h_init : state.singularStep = none)
+    (h_room : state.step + fuel + 1 ≤ n)
+    (h_no_sing : (Matrix.noPivotLoop fuel state).singularStep = none) :
+    (Matrix.noPivotLoop fuel state).step = state.step + fuel := by
+  induction fuel generalizing state with
+  | zero =>
+      show state.step = state.step + 0
+      omega
+  | succ f ih =>
+      have hDone : state.step + 1 < n := by omega
+      by_cases hp : state.matrix[state.step][state.step] = 0
+      · rw [Matrix.noPivotLoop_singular_branch f state hDone hp] at h_no_sing
+        simp at h_no_sing
+      · rw [Matrix.noPivotLoop_regular_branch f state hDone hp] at h_no_sing
+        rw [Matrix.noPivotLoop_regular_branch f state hDone hp]
+        have h_next_room : state.step + 1 + f + 1 ≤ n := by omega
+        have h_next_step := ih
+          { step := state.step + 1
+            matrix := Matrix.stepMatrix state.matrix state.step
+              state.matrix[state.step][state.step] state.prevPivot
+            prevPivot := state.matrix[state.step][state.step]
+            rowSwaps := state.rowSwaps
+            singularStep := none }
+          rfl h_next_room h_no_sing
+        rw [h_next_step]
+        show state.step + 1 + f = state.step + (f + 1)
+        omega
+
+/-- The `step` field of a no-pivot Bareiss state never decreases under further
+loop iterations. -/
+private theorem noPivotLoop_step_monotone
+    {n : Nat} (fuel : Nat) (state : Matrix.BareissState n) :
+    state.step ≤ (Matrix.noPivotLoop fuel state).step := by
+  induction fuel generalizing state with
+  | zero =>
+      show state.step ≤ state.step
+      omega
+  | succ f ih =>
+      by_cases hDone : state.step + 1 < n
+      · have hStepLt : state.step < n := Nat.lt_of_succ_lt hDone
+        by_cases hp : state.matrix[state.step][state.step] = 0
+        · rw [Matrix.noPivotLoop_singular_branch f state hDone hp]
+          show state.step ≤ state.step
+          omega
+        · rw [Matrix.noPivotLoop_regular_branch f state hDone hp]
+          have h_ih := ih
+            { step := state.step + 1
+              matrix := Matrix.stepMatrix state.matrix state.step
+                state.matrix[state.step][state.step] state.prevPivot
+              prevPivot := state.matrix[state.step][state.step]
+              rowSwaps := state.rowSwaps
+              singularStep := none }
+          -- h_ih says state.step + 1 ≤ (noPivotLoop f next).step
+          -- Want: state.step ≤ (noPivotLoop f next).step
+          exact Nat.le_trans (Nat.le_succ _) h_ih
+      · rw [Matrix.noPivotLoop_done f state hDone]
+        show state.step ≤ state.step
+        omega
+
 /-- No-pivot Bareiss projection at the `gramDetVecEntry` diagonal slot:
 running `Matrix.noPivotLoop r` from the initial state on the full Gram
 matrix and on its `(r+1)`-leading prefix yields states whose `(r, r)`
@@ -1139,6 +1204,134 @@ private theorem noPivotLoop_full_eq_leadingPrefix_at_gramDetVecEntry
   -- hcongr's LHS index in Fin n has val = r; same as the goal's LHS index.
   exact hcongr
 
+/-- The `gramDetVecEntry` slot at index `r + 1` for the no-pivot Bareiss pass
+on `M : Matrix Int n n` is determined by the intermediate state after `r`
+iterations of `Matrix.noPivotLoop`: the iterations from `r` to `n` either
+leave the state unchanged (when a singular step is already recorded, by the
+singular fixed point) or preserve the `(r, r)` diagonal entry and only
+record singularities at steps `≥ r`, which the slot's match resolves to
+the same natural value. -/
+private theorem gramDetVecEntry_bareissNoPivot_eq_at_r
+    {n : Nat} (M : Matrix Int n n) (r : Nat) (hr : r < n) :
+    gramDetVecEntry (Matrix.bareissNoPivotData M) ⟨r + 1, Nat.succ_lt_succ hr⟩ =
+      gramDetVecEntry
+        (Matrix.finish (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)))
+        ⟨r + 1, Nat.succ_lt_succ hr⟩ := by
+  have h_factor : Matrix.noPivotLoop n (Matrix.noPivotInitialState M) =
+      Matrix.noPivotLoop (n - r) (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)) := by
+    have h_add := noPivotLoop_add r (n - r) (Matrix.noPivotInitialState M)
+    have h_split : r + (n - r) = n := by omega
+    rw [h_split] at h_add
+    exact h_add
+  show gramDetVecEntry (Matrix.finish (Matrix.noPivotLoop n (Matrix.noPivotInitialState M)))
+      ⟨r + 1, Nat.succ_lt_succ hr⟩ = _
+  rw [h_factor]
+  rcases noPivotLoop_singular_inv (n := n) r (Matrix.noPivotInitialState M) rfl with
+    h_r_none | ⟨k_r, h_r_sing, h_r_step, h_r_zero, h_r_klt⟩
+  · -- After r iterations, no singular step recorded yet.
+    have h_step_r :
+        (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).step = r := by
+      have := noPivotLoop_step_eq_add_of_singularStep_none r
+        (Matrix.noPivotInitialState M) rfl (show 0 + r + 1 ≤ n by omega) h_r_none
+      simpa [Matrix.noPivotInitialState] using this
+    have h_diag_preserved :
+        (Matrix.noPivotLoop (n - r) (Matrix.noPivotLoop r
+            (Matrix.noPivotInitialState M))).matrix[(⟨r, hr⟩ : Fin n)][(⟨r, hr⟩ : Fin n)] =
+          (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).matrix[(⟨r, hr⟩ : Fin n)][(⟨r, hr⟩ : Fin n)] := by
+      apply Matrix.noPivotLoop_diag_of_le_step
+      show r ≤ (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).step
+      rw [h_step_r]
+      exact Nat.le_refl r
+    rcases noPivotLoop_singular_inv (n := n) (n - r)
+        (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)) h_r_none with
+      h_extra_none | ⟨k, h_extra_sing, h_extra_step, h_extra_zero, h_extra_klt⟩
+    · -- No singularity introduced by the extra iterations.
+      simp only [gramDetVecEntry, Matrix.finish, bareissDiagNat,
+        h_extra_none, h_r_none]
+      exact congrArg Int.toNat h_diag_preserved
+    · -- Singularity introduced at step k.val ≥ r.
+      have h_step_mono := noPivotLoop_step_monotone (n - r)
+        (Matrix.noPivotLoop r (Matrix.noPivotInitialState M))
+      have h_k_ge_r : r ≤ k.val := by
+        rw [← h_step_r, ← h_extra_step]; exact h_step_mono
+      simp only [gramDetVecEntry, Matrix.finish, bareissDiagNat,
+        h_extra_sing, h_r_none]
+      by_cases h : k.val < r + 1
+      · -- k.val = r, so the (r, r) entry was zero.
+        have h_k_eq_r : k.val = r := by omega
+        rw [if_pos h]
+        have h_k_idx : k = ⟨r, hr⟩ := Fin.ext h_k_eq_r
+        rw [h_k_idx] at h_extra_zero
+        have h_diag_zero :
+            (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).matrix[(⟨r, hr⟩ : Fin n)][(⟨r, hr⟩ : Fin n)] = 0 := by
+          rw [← h_diag_preserved]; exact h_extra_zero
+        exact (congrArg Int.toNat h_diag_zero).symm
+      · rw [if_neg h]
+        exact congrArg Int.toNat h_diag_preserved
+  · -- After r iterations, a singular step was already recorded.
+    have h_extra_id :
+        Matrix.noPivotLoop (n - r) (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)) =
+          Matrix.noPivotLoop r (Matrix.noPivotInitialState M) := by
+      have h_hDone :
+          (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).step + 1 < n := by
+        rw [h_r_step]; exact h_r_klt
+      have h_idx :
+          (⟨(Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).step,
+              Nat.lt_of_succ_lt h_hDone⟩ : Fin n) = k_r :=
+        Fin.ext h_r_step
+      have h_hp :
+          (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).matrix[
+              (⟨(Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).step,
+                  Nat.lt_of_succ_lt h_hDone⟩ : Fin n)][
+              (⟨(Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).step,
+                  Nat.lt_of_succ_lt h_hDone⟩ : Fin n)] = 0 := by
+        have h_lift := congrArg
+          (fun (i : Fin n) =>
+            (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).matrix[i][i])
+          h_idx
+        exact h_lift.trans h_r_zero
+      have h_hsing :
+          (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).singularStep =
+            some (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).step := by
+        rw [h_r_sing, h_r_step]
+      exact noPivotLoop_id_at_singular_fixedpoint (n - r) _ h_hDone h_hp h_hsing
+    rw [h_extra_id]
+
+/-- The `gramDetVecEntry` slot at index `r + 1` for the no-pivot Bareiss pass
+over the full Gram matrix agrees with the same slot for the no-pivot Bareiss
+pass over its `(r + 1)` leading prefix. This is the `bareissNoPivotData`-level
+wrapper assembled from the `r`-iteration loop sync. -/
+private theorem gramDetVecEntry_bareissNoPivot_full_eq_leadingPrefix
+    (b : Matrix Int n m) (r : Nat) (hr : r < n) :
+    gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
+        ⟨r + 1, Nat.succ_lt_succ hr⟩ =
+      gramDetVecEntry
+        (Matrix.bareissNoPivotData
+          (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+            (Nat.succ_le_of_lt hr)))
+        ⟨r + 1, Nat.lt_succ_self _⟩ := by
+  obtain ⟨h_diag, h_sing⟩ :=
+    noPivotLoop_full_eq_leadingPrefix_at_gramDetVecEntry (b := b) r hr
+  rw [gramDetVecEntry_bareissNoPivot_eq_at_r (Matrix.gramMatrix b) r hr]
+  rw [gramDetVecEntry_bareissNoPivot_eq_at_r
+    (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1) (Nat.succ_le_of_lt hr)) r
+    (Nat.lt_succ_self r)]
+  -- Reduce both gramDetVecEntry calls to their match form, then case on the
+  -- shared singularStep value.
+  simp only [gramDetVecEntry, Matrix.finish, bareissDiagNat]
+  rw [← h_sing]
+  generalize hs :
+      (Matrix.noPivotLoop r (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = ss
+  cases ss with
+  | none =>
+      dsimp only
+      exact congrArg Int.toNat h_diag
+  | some s_val =>
+      dsimp only
+      by_cases h : s_val < r + 1
+      · rw [if_pos h, if_pos h]
+      · rw [if_neg h, if_neg h]
+        exact congrArg Int.toNat h_diag
 /-- If the array loop's `state.step` is past the matrix extent, one outer
 iteration returns the input state unchanged. -/
 private theorem scaledCoeffArrayLoop_done (fuel : Nat)
@@ -1443,7 +1636,6 @@ private theorem scaledCoeffArrayLoop_diag_matches
           have h_ilt : i.val < state_matrix.step := by
             rw [← h_step_eq]; exact Nat.lt_of_lt_of_le i.isLt hArrayStep'
           exact h_coeffs_processed i.val h_ilt i.isLt
-
 /-- The no-pivot Bareiss pass over the full Gram matrix records the same
 leading-prefix determinant as the public `gramDet` API at every vector slot. -/
 private theorem gramDetVecEntry_eq_leadingPrefix_bareiss
