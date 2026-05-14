@@ -6669,28 +6669,42 @@ private theorem squareFreeAuxRev_pairwise_coprime_nil_core_of_residual_invariant
 
 private theorem squareFreeAuxRev_pairwise_coprime_nil_core
     (hp : Hex.Nat.Prime p)
-    (residualInvariant :
-      ∀ f : FpPoly p, ∀ multiplicity fuel : Nat,
-        (DensePoly.derivative f).isZero = false →
-          squareFreeAuxRevResidualSatisfied f multiplicity fuel)
-    (f : FpPoly p) (multiplicity fuel : Nat) :
+    (residualProvider : SquareFreeAuxRevPairwiseResidualProvider hp)
+    (stateProvider :
+      ∀ f' c w : FpPoly p, ∀ fuel : Nat,
+        yunFactorsDerivativeActiveReachable hp f' c w fuel →
+          squareFreeContributionReachable c ∧
+            c.isZero = false ∧
+              squareFreeContributionReachable w ∧
+                w.isZero = false)
+    (f : FpPoly p) (multiplicity fuel : Nat)
+    (hfuel : f.size < fuel)
+    (hreachable : squareFreeContributionReachable f) :
     (squareFreeAuxRev f multiplicity fuel []).reverse.Pairwise
       squareFreeFactorCoprimeRel := by
   letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
-  apply squareFreeAuxRev_pairwise_coprime_nil_core_of_residual_invariant hp _ residualInvariant
-  intro f base fuel hdf
+  apply squareFreeAuxRev_pairwise_coprime_nil_core_of_yun_invariant hp _ residualProvider
+    stateProvider f multiplicity fuel hfuel hreachable
+  intro f' base fuel' hdf
   exact
     yunFactorsPairwiseInvariant_of_derivative_split_reachable
-      hp f base 1 fuel
+      hp f' base 1 fuel'
       (by intro htrue; rw [htrue] at hdf; cases hdf)
 
 private theorem squareFreeAuxRev_pairwise_coprime_core
     (hp : Hex.Nat.Prime p)
-    (residualInvariant :
-      ∀ f : FpPoly p, ∀ multiplicity fuel : Nat,
-        (DensePoly.derivative f).isZero = false →
-          squareFreeAuxRevResidualSatisfied f multiplicity fuel)
-    (f : FpPoly p) (multiplicity fuel : Nat) (accRev : List (SquareFreeFactor p)) :
+    (residualProvider : SquareFreeAuxRevPairwiseResidualProvider hp)
+    (stateProvider :
+      ∀ f' c w : FpPoly p, ∀ fuel : Nat,
+        yunFactorsDerivativeActiveReachable hp f' c w fuel →
+          squareFreeContributionReachable c ∧
+            c.isZero = false ∧
+              squareFreeContributionReachable w ∧
+                w.isZero = false)
+    (f : FpPoly p) (multiplicity fuel : Nat)
+    (hfuel : f.size < fuel)
+    (hreachable : squareFreeContributionReachable f)
+    (accRev : List (SquareFreeFactor p)) :
     accRev.reverse.Pairwise squareFreeFactorCoprimeRel →
     (∀ a ∈ accRev.reverse,
       ∀ b ∈ (squareFreeAuxRev f multiplicity fuel []).reverse,
@@ -6701,34 +6715,50 @@ private theorem squareFreeAuxRev_pairwise_coprime_core
   rw [squareFreeAuxRev_reverse_append f multiplicity fuel accRev]
   apply pairwise_append_of_cross
   · exact hacc
-  · exact squareFreeAuxRev_pairwise_coprime_nil_core hp residualInvariant f multiplicity fuel
+  · exact squareFreeAuxRev_pairwise_coprime_nil_core hp residualProvider stateProvider
+      f multiplicity fuel hfuel hreachable
   · exact hcross
 
 private theorem squareFreeAuxRev_pairwise_coprime_of_acc
     (hp : Hex.Nat.Prime p)
-    (residualInvariant :
-      ∀ f : FpPoly p, ∀ multiplicity fuel : Nat,
-        (DensePoly.derivative f).isZero = false →
-          squareFreeAuxRevResidualSatisfied f multiplicity fuel)
-    (f : FpPoly p) (multiplicity fuel : Nat) (accRev : List (SquareFreeFactor p)) :
+    (residualProvider : SquareFreeAuxRevPairwiseResidualProvider hp)
+    (stateProvider :
+      ∀ f' c w : FpPoly p, ∀ fuel : Nat,
+        yunFactorsDerivativeActiveReachable hp f' c w fuel →
+          squareFreeContributionReachable c ∧
+            c.isZero = false ∧
+              squareFreeContributionReachable w ∧
+                w.isZero = false)
+    (f : FpPoly p) (multiplicity fuel : Nat)
+    (hfuel : f.size < fuel)
+    (hreachable : squareFreeContributionReachable f)
+    (accRev : List (SquareFreeFactor p)) :
     accRev.reverse.Pairwise squareFreeFactorCoprimeRel →
     (∀ a ∈ accRev.reverse,
       ∀ b ∈ (squareFreeAuxRev f multiplicity fuel []).reverse,
         squareFreeFactorCoprimeRel a b) →
     (squareFreeAuxRev f multiplicity fuel accRev).reverse.Pairwise
       squareFreeFactorCoprimeRel := by
-  exact squareFreeAuxRev_pairwise_coprime_core hp residualInvariant f multiplicity fuel accRev
+  exact squareFreeAuxRev_pairwise_coprime_core hp residualProvider stateProvider
+    f multiplicity fuel hfuel hreachable accRev
 
 private theorem squareFreeAuxRev_pairwise_coprime_nil
     (hp : Hex.Nat.Prime p)
-    (residualInvariant :
-      ∀ f : FpPoly p, ∀ multiplicity fuel : Nat,
-        (DensePoly.derivative f).isZero = false →
-          squareFreeAuxRevResidualSatisfied f multiplicity fuel)
-    (f : FpPoly p) (multiplicity fuel : Nat) :
+    (residualProvider : SquareFreeAuxRevPairwiseResidualProvider hp)
+    (stateProvider :
+      ∀ f' c w : FpPoly p, ∀ fuel : Nat,
+        yunFactorsDerivativeActiveReachable hp f' c w fuel →
+          squareFreeContributionReachable c ∧
+            c.isZero = false ∧
+              squareFreeContributionReachable w ∧
+                w.isZero = false)
+    (f : FpPoly p) (multiplicity fuel : Nat)
+    (hfuel : f.size < fuel)
+    (hreachable : squareFreeContributionReachable f) :
     (squareFreeAuxRev f multiplicity fuel []).reverse.Pairwise
       squareFreeFactorCoprimeRel := by
-  apply squareFreeAuxRev_pairwise_coprime_of_acc hp residualInvariant
+  apply squareFreeAuxRev_pairwise_coprime_of_acc hp residualProvider stateProvider
+    f multiplicity fuel hfuel hreachable
   · simp
   · intro a ha
     simp at ha
@@ -7035,17 +7065,23 @@ private theorem normalizeMonic_zero_squareFree_weightedProduct
   rfl
 
 theorem squareFree_pairwise_coprime (hp : Hex.Nat.Prime p)
-    (residualInvariant :
-      ∀ f : FpPoly p, ∀ multiplicity fuel : Nat,
-        (DensePoly.derivative f).isZero = false →
-          squareFreeAuxRevResidualSatisfied f multiplicity fuel)
+    (residualProvider : SquareFreeAuxRevPairwiseResidualProvider hp)
+    (stateProvider :
+      ∀ f' c w : FpPoly p, ∀ fuel : Nat,
+        yunFactorsDerivativeActiveReachable hp f' c w fuel →
+          squareFreeContributionReachable c ∧
+            c.isZero = false ∧
+              squareFreeContributionReachable w ∧
+                w.isZero = false)
     (f : FpPoly p) :
     let d := squareFreeDecomposition hp f
     d.factors.Pairwise
       (fun a b => (normalizeMonic (DensePoly.gcd a.factor b.factor)).2 = 1) := by
   unfold squareFreeDecomposition squareFreeAux
-  exact squareFreeAuxRev_pairwise_coprime_nil hp residualInvariant
+  exact squareFreeAuxRev_pairwise_coprime_nil hp residualProvider stateProvider
     (normalizeMonic f).2 1 ((normalizeMonic f).2.size + 1)
+    (Nat.lt_succ_self _)
+    (normalizeMonic_squareFreeContributionReachable hp f)
 
 private theorem squareFreeAuxRevResidualSatisfied_of_invariant
     (residualInvariant :
