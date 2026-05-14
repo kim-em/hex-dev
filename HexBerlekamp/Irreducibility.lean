@@ -665,6 +665,71 @@ theorem checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
   · exact degree?_getD_lt_of_size_le curr hfpos hcurrSize
   · exact hmulCoeffs
 
+def gf2BitCoeff (bits : UInt64) (i : Nat) : ZMod64 2 :=
+  if (((bits >>> i.toUInt64) &&& 1) = 0) then
+    0
+  else
+    1
+
+def gf2WordPoly (bits : UInt64) (width : Nat) : FpPoly 2 :=
+  FpPoly.ofCoeffs (((List.range width).map fun i => gf2BitCoeff bits i).toArray)
+
+theorem gf2WordPoly_size_le (bits : UInt64) (width : Nat) :
+    (gf2WordPoly bits width).size ≤ width := by
+  unfold gf2WordPoly FpPoly.ofCoeffs
+  exact Nat.le_trans (DensePoly.size_ofCoeffs_le _) (by simp)
+
+theorem gf2WordPoly_degree?_getD_lt
+    (bits : UInt64) {width bound : Nat} (hwidth_pos : 0 < bound)
+    (hwidth : width ≤ bound) :
+    (gf2WordPoly bits width).degree?.getD 0 < bound :=
+  degree?_getD_lt_of_size_le (gf2WordPoly bits width) hwidth_pos
+    (Nat.le_trans (gf2WordPoly_size_le bits width) hwidth)
+
+theorem gf2WordPoly_coeff (bits : UInt64) (width i : Nat) :
+    (gf2WordPoly bits width).coeff i =
+      if i < width then gf2BitCoeff bits i else 0 := by
+  unfold gf2WordPoly FpPoly.ofCoeffs gf2BitCoeff
+  rw [DensePoly.coeff_ofCoeffs]
+  by_cases hi : i < width
+  · simp [Array.getD, hi]
+  · simp [Array.getD, hi]
+    rfl
+
+def coeffsEqUpTo (bound : Nat) (a b : FpPoly 2) : Bool :=
+  (List.range bound).all fun i => a.coeff i == b.coeff i
+
+theorem coeff_eq_of_coeffsEqUpTo
+    {bound : Nat} {a b : FpPoly 2}
+    (h : coeffsEqUpTo bound a b = true) :
+    ∀ i, i < bound → a.coeff i = b.coeff i := by
+  intro i hi
+  unfold coeffsEqUpTo at h
+  have hmem : i ∈ List.range bound := List.mem_range.mpr hi
+  have hbool := List.all_eq_true.mp h i hmem
+  exact eq_of_beq hbool
+
+theorem coeffs_eq_of_size_le_of_coeff_eq
+    {bound : Nat} {a b : FpPoly 2}
+    (ha : a.size ≤ bound) (hb : b.size ≤ bound)
+    (hcoeff : ∀ i, i < bound → a.coeff i = b.coeff i) :
+    a.coeffs = b.coeffs := by
+  have hpoly : a = b := by
+    apply DensePoly.ext_coeff
+    intro i
+    by_cases hi : i < bound
+    · exact hcoeff i hi
+    · rw [DensePoly.coeff_eq_zero_of_size_le a (by omega : a.size ≤ i),
+        DensePoly.coeff_eq_zero_of_size_le b (by omega : b.size ≤ i)]
+  exact congrArg DensePoly.coeffs hpoly
+
+theorem coeffs_eq_of_size_le_of_coeffsEqUpTo
+    {bound : Nat} {a b : FpPoly 2}
+    (ha : a.size ≤ bound) (hb : b.size ≤ bound)
+    (h : coeffsEqUpTo bound a b = true) :
+    a.coeffs = b.coeffs :=
+  coeffs_eq_of_size_le_of_coeff_eq ha hb (coeff_eq_of_coeffsEqUpTo h)
+
 private theorem densePoly_eq_of_coeffs_eq
     {R : Type u} [Zero R] [DecidableEq R] {a b : DensePoly R}
     (h : a.coeffs = b.coeffs) : a = b := by

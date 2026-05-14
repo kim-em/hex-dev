@@ -73,11 +73,16 @@ private def maskBits (w : UInt64) (n : Nat) : UInt64 :=
     w &&& (((1 : UInt64) <<< n.toUInt64) - 1)
 
 private def wordToPoly2 (w : UInt64) (n : Nat) : FpPoly 2 :=
-  FpPoly.ofCoeffs (((List.range n).map fun i =>
-    if (((w >>> i.toUInt64) &&& 1) = 0) then
-      (0 : ZMod64 2)
-    else
-      (1 : ZMod64 2)).toArray)
+  Berlekamp.gf2WordPoly w n
+
+private theorem wordToPoly2_size_le (w : UInt64) (n : Nat) :
+    (wordToPoly2 w n).size ≤ n :=
+  Berlekamp.gf2WordPoly_size_le w n
+
+private theorem wordToPoly2_coeff (w : UInt64) (n i : Nat) :
+    (wordToPoly2 w n).coeff i =
+      if i < n then Berlekamp.gf2BitCoeff w i else 0 :=
+  Berlekamp.gf2WordPoly_coeff w n i
 
 private def poly2ToWord (f : FpPoly 2) (n : Nat) : UInt64 :=
   (List.range n).foldl (init := (0 : UInt64)) fun acc i =>
