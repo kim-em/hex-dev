@@ -175,7 +175,7 @@ instance irreducibleDecidablePred :
 @[simp]
 theorem factor_product (f : Hex.ZPoly) :
     Hex.Factorization.product (Hex.factor f) = f := by
-  sorry
+  exact Hex.factorWithBound_product f (Hex.ZPoly.defaultFactorCoeffBound f)
 
 /--
 The Mathlib-free executable irreducibility predicate agrees with Mathlib's
