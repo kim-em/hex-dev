@@ -929,6 +929,46 @@ theorem eval_X [ZMod64.PrimeModulus p] (x : ZMod64 p) :
   change (((0 : ZMod64 p) * x + 1) * x + 0 = x)
   rw [zmod_zero_mul, zmod_zero_add, zmod_one_mul, zmod_add_zero]
 
+private theorem foldl_eval_replicate_zero (x : ZMod64 p) :
+    ∀ n acc,
+      (List.replicate n (0 : ZMod64 p)).foldl
+          (fun acc coeff => acc * x + coeff) acc =
+        acc * x ^ n := by
+  intro n
+  induction n with
+  | zero =>
+      intro acc
+      rw [Lean.Grind.Semiring.pow_zero]
+      exact (zmod_mul_one acc).symm
+  | succ n ih =>
+      intro acc
+      simp only [List.replicate_succ, List.foldl_cons]
+      rw [zmod_add_zero]
+      rw [ih (acc * x)]
+      rw [Lean.Grind.Semiring.pow_succ x n]
+      rw [Lean.Grind.Semiring.mul_assoc acc x (x ^ n)]
+      rw [Lean.Grind.CommSemiring.mul_comm x (x ^ n)]
+
+/-- Evaluating a monomial gives the coefficient times the corresponding power. -/
+theorem eval_monomial (n : Nat) (c x : ZMod64 p) :
+    DensePoly.eval (DensePoly.monomial n c : FpPoly p) x = c * x ^ n := by
+  by_cases hc : c = 0
+  · subst c
+    unfold DensePoly.monomial
+    rw [dif_pos (show (0 : ZMod64 p) = Zero.zero from rfl)]
+    exact (zmod_zero_mul (x ^ n)).symm
+  · unfold DensePoly.eval DensePoly.toArray DensePoly.monomial
+    have hc0 : ¬ c = (Zero.zero : ZMod64 p) := hc
+    rw [dif_neg hc0]
+    simp only [Array.toList_push, Array.toList_replicate, List.reverse_append,
+      List.reverse_cons, List.reverse_nil, List.nil_append, List.singleton_append,
+      List.foldl_cons]
+    change (List.replicate n (0 : ZMod64 p)).reverse.foldl
+        (fun acc coeff => acc * x + coeff) ((0 : ZMod64 p) * x + c) =
+      c * x ^ n
+    rw [zmod_zero_mul, zmod_zero_add, List.reverse_replicate]
+    exact foldl_eval_replicate_zero x n c
+
 private def evalCoeffPowerSumFrom :
     List (ZMod64 p) → Nat → ZMod64 p → ZMod64 p
   | [], _, _ => 0
