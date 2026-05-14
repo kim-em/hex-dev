@@ -315,9 +315,8 @@ Proof-facing hypotheses for the BHKS Lemma 3.3 / B7 step at fixed precision.
 `ExecutableCapSeparationHypotheses` from `TerminationBound.lean`) provides
 `L' = W`.  The `indicators_match` field is the abstract conclusion of BHKS
 Lemma 3.3 connecting the executable rref + signature partition to a target
-indicator list; this is the residual obligation B7 in the SPEC, which
-depends on still-open executable RREF correctness and is intentionally left
-abstract here.
+indicator list; `EquivalenceClassRecoveryHypotheses.ofIndicatorLattice`
+discharges it for the canonical support-driven indicator array.
 -/
 structure EquivalenceClassRecoveryHypotheses
     (f : Hex.ZPoly) (d : Hex.LiftData) where
@@ -335,6 +334,45 @@ structure EquivalenceClassRecoveryHypotheses
   expectedIndicators : Array (Array Int)
   indicators_match :
     equivalenceClassIndicatorsOfLiftData f d rows_pos = expectedIndicators
+
+/-- Lift-data form of the B7 bridge: when the executable projected row span is
+the true-factor indicator lattice, the executable equivalence-class indicators
+are the canonical support-driven indicator array. -/
+theorem equivalenceClassIndicatorsOfLiftData_eq_expectedIndicatorArrayOfSupports
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    (rows_pos : HasPositiveDimension f d)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData f d rows_pos).factorCount)))
+    (lattice_eq_indicators :
+      BHKS.projectedRowSpanInt (projectedRowsOfLiftData f d rows_pos) =
+        BHKS.trueFactorIndicatorLattice trueSupports) :
+    equivalenceClassIndicatorsOfLiftData f d rows_pos =
+      expectedIndicatorArrayOfSupports trueSupports :=
+  bhksEquivalenceClassIndicators_eq_expectedIndicatorArrayOfSupports
+    (projectedRowsOfLiftData f d rows_pos) trueSupports lattice_eq_indicators
+
+namespace EquivalenceClassRecoveryHypotheses
+
+/-- Build the B7 recovery package directly from `L' = W`, targeting the
+canonical support-driven indicator array. -/
+noncomputable def ofIndicatorLattice
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    (rows_pos : HasPositiveDimension f d)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData f d rows_pos).factorCount)))
+    (lattice_eq_indicators :
+      BHKS.projectedRowSpanInt (projectedRowsOfLiftData f d rows_pos) =
+        BHKS.trueFactorIndicatorLattice trueSupports) :
+    EquivalenceClassRecoveryHypotheses f d where
+  rows_pos := rows_pos
+  trueSupports := trueSupports
+  lattice_eq_indicators := lattice_eq_indicators
+  expectedIndicators := expectedIndicatorArrayOfSupports trueSupports
+  indicators_match :=
+    equivalenceClassIndicatorsOfLiftData_eq_expectedIndicatorArrayOfSupports
+      rows_pos trueSupports lattice_eq_indicators
+
+end EquivalenceClassRecoveryHypotheses
 
 /-- Under the equivalence-class recovery hypotheses, the executable
 `bhksEquivalenceClassIndicators` output is exactly the expected indicator
