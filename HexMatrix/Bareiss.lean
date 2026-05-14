@@ -362,10 +362,17 @@ private structure BareissArrayState where
   rowSwaps : Nat
   singularStep : Option Nat
 
-@[inline] private def getEntry (rows : Array (Array Int)) (row col : Nat) : Int :=
+/-- Read an entry from an `Array (Array Int)` row-storage representation.
+
+Exposed so downstream Mathlib-free clients (notably the shared scaled
+Gram-Schmidt loop in `HexGramSchmidt.Int`) can speak about array storage
+without re-deriving the conversion lemmas. -/
+@[inline] def getEntry (rows : Array (Array Int)) (row col : Nat) : Int :=
   rows[row]![col]!
 
-private def matrixToRows (M : Matrix Int n n) : Array (Array Int) :=
+/-- Pack a `Matrix Int n n` as an `Array (Array Int)` of size `n × n`. The
+representation used by the executable Bareiss array pass. -/
+def matrixToRows (M : Matrix Int n n) : Array (Array Int) :=
   (Array.range n).map fun row =>
     (Array.range n).map fun col =>
       if hrow : row < n then
@@ -378,14 +385,20 @@ private def matrixToRows (M : Matrix Int n n) : Array (Array Int) :=
       else
         0
 
-private def rowsToMatrix (rows : Array (Array Int)) (n : Nat) : Matrix Int n n :=
+/-- Unpack an `Array (Array Int)` row-storage representation back into a
+`Matrix Int n n`. Inverse-on-the-left of `matrixToRows`. -/
+def rowsToMatrix (rows : Array (Array Int)) (n : Nat) : Matrix Int n n :=
   Matrix.ofFn fun i j => getEntry rows i.val j.val
 
-private theorem getEntry_matrixToRows (M : Matrix Int n n) (i j : Fin n) :
+/-- Pointwise round-trip: `getEntry (matrixToRows M)` reads back the matrix
+entry at the same index. -/
+theorem getEntry_matrixToRows (M : Matrix Int n n) (i j : Fin n) :
     getEntry (matrixToRows M) i.val j.val = M[i][j] := by
   simp [getEntry, matrixToRows]
 
-private theorem rowsToMatrix_matrixToRows (M : Matrix Int n n) :
+/-- Reading back the array storage produced by `matrixToRows` recovers the
+original matrix. -/
+theorem rowsToMatrix_matrixToRows (M : Matrix Int n n) :
     rowsToMatrix (matrixToRows M) n = M := by
   apply Vector.ext
   intro i hi
@@ -706,7 +719,11 @@ private theorem findPivotArray?_matches (rows : Array (Array Int))
   simp [findPivotArray?, findPivot?, findPivotArrayAux_matches rows M col start (n - start)
     hentry]
 
-private def stepArray (rows : Array (Array Int)) (n k : Nat) (pivot prevPivot : Int) :
+/-- Array-storage form of `stepMatrix`: rebuild the whole `n × n` array,
+applying the Bareiss trailing update for entries strictly below and to the
+right of the pivot, clearing the pivot column below the pivot, and leaving
+all other entries unchanged. -/
+def stepArray (rows : Array (Array Int)) (n k : Nat) (pivot prevPivot : Int) :
     Array (Array Int) :=
   (Array.range n).map fun i =>
     (Array.range n).map fun j =>
@@ -723,7 +740,10 @@ private theorem getEntry_rangeMap₂ (f : Nat → Nat → Int) (i j : Fin n) :
       i.val j.val = f i.val j.val := by
   simp [getEntry]
 
-private theorem getEntry_stepArray_matches
+/-- Pointwise bridge: if the array storage `rows` matches a matrix `M` at
+every entry, then `stepArray` on `rows` matches `stepMatrix` on `M` at
+every entry. -/
+theorem getEntry_stepArray_matches
     (rows : Array (Array Int)) (M : Matrix Int n n)
     (hentry : ∀ i j : Fin n, getEntry rows i.val j.val = M[i][j])
     (k : Nat) (pivot prevPivot : Int) (i j : Fin n) :
@@ -752,10 +772,31 @@ private theorem getEntry_stepArray_matches
       rw [stepMatrix_eq_of_not_update M k pivot prevPivot i j htrail hcol]
       exact hij
 
-private theorem stepArray_size (rows : Array (Array Int)) (n k : Nat)
+/-- `stepArray` rebuilds the storage as an `n`-sized array of rows. -/
+theorem stepArray_size (rows : Array (Array Int)) (n k : Nat)
     (pivot prevPivot : Int) :
     (stepArray rows n k pivot prevPivot).size = n := by
   simp [stepArray]
+
+/-- Matrix-level bridge: applying `stepArray` to a row-storage representation
+and reading it back as a matrix agrees with applying `stepMatrix` to the
+matrix view of the same row storage. The one-step companion to
+`getEntry_stepArray_matches` packaged at the `rowsToMatrix` level. -/
+theorem rowsToMatrix_stepArray {n : Nat} (rows : Array (Array Int)) (k : Nat)
+    (pivot prevPivot : Int) :
+    rowsToMatrix (stepArray rows n k pivot prevPivot) n =
+      stepMatrix (rowsToMatrix rows n) k pivot prevPivot := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  have hentry : ∀ a b : Fin n,
+      getEntry rows a.val b.val = (rowsToMatrix rows n)[a][b] := by
+    intro a b
+    simp [rowsToMatrix, Matrix.ofFn]
+  simpa [rowsToMatrix, Matrix.ofFn] using
+    getEntry_stepArray_matches rows (rowsToMatrix rows n) hentry k pivot prevPivot
+      ⟨i, hi⟩ ⟨j, hj⟩
 
 private def pivotArrayLoop (n fuel : Nat) (state : BareissArrayState) :
     BareissArrayState :=
