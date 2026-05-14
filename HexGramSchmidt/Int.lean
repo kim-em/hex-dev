@@ -906,6 +906,194 @@ private theorem leadingPrefix_stepMatrix_eq
       simp only [Matrix.leadingPrefix_entry]
       rfl
 
+/-- A bordered-minor entry equals the source matrix at the lifted index.
+The lifted index for a row/column of the bordered minor is the bordered
+"row"/"col" anchor when the bordered-minor coordinate hits the last
+position (val = k) and the natural inclusion otherwise. -/
+private theorem borderedMinor_entry_eq_source
+    {n : Nat} (M : Matrix Int n n) (k : Nat) (hk : k < n) (row col : Fin n)
+    (i_bm j_bm : Fin (k + 1)) :
+    (Matrix.borderedMinor M k hk row col)[i_bm][j_bm] =
+      M[(if h : i_bm.val < k then ⟨i_bm.val, Nat.lt_trans h hk⟩ else row)][
+        (if h : j_bm.val < k then ⟨j_bm.val, Nat.lt_trans h hk⟩ else col)] := by
+  by_cases hi_lt : i_bm.val < k
+  · by_cases hj_lt : j_bm.val < k
+    · have h := Matrix.borderedMinor_entry_lt_lt M k hk row col i_bm j_bm hi_lt hj_lt
+      simp [hi_lt, hj_lt] at h ⊢
+      exact h
+    · have hj_eq : j_bm.val = k := by
+        have := j_bm.isLt
+        omega
+      have hjFin : j_bm = Fin.last k := Fin.ext (by simp [hj_eq])
+      have h := Matrix.borderedMinor_entry_lt_last M k hk row col i_bm hi_lt
+      rw [hjFin]
+      simp [hi_lt, hj_lt] at h ⊢
+      exact h
+  · have hi_eq : i_bm.val = k := by
+      have := i_bm.isLt
+      omega
+    have hiFin : i_bm = Fin.last k := Fin.ext (by simp [hi_eq])
+    by_cases hj_lt : j_bm.val < k
+    · have h := Matrix.borderedMinor_entry_last_lt M k hk row col j_bm hj_lt
+      rw [hiFin]
+      simp [hi_lt, hj_lt] at h ⊢
+      exact h
+    · have hj_eq : j_bm.val = k := by
+        have := j_bm.isLt
+        omega
+      have hjFin : j_bm = Fin.last k := Fin.ext (by simp [hj_eq])
+      have h := Matrix.borderedMinor_entry_last_last M k hk row col
+      rw [hiFin, hjFin]
+      simp [hi_lt, hj_lt] at h ⊢
+      exact h
+
+/-- Promote a bordered-minor coordinate to its lifted index in `Fin n`. -/
+private def liftBorderedIdx {n k : Nat} (hk : k < n) (anchor : Fin n) (x : Fin (k + 1)) :
+    Fin n :=
+  if h : x.val < k then ⟨x.val, Nat.lt_trans h hk⟩ else anchor
+
+private theorem liftBorderedIdx_val_lt {n k : Nat} (hk : k < n) (anchor : Fin n)
+    (x : Fin (k + 1)) (h : x.val < k) :
+    liftBorderedIdx hk anchor x = ⟨x.val, Nat.lt_trans h hk⟩ := by
+  simp [liftBorderedIdx, h]
+
+private theorem liftBorderedIdx_val_eq_k {n k : Nat} (hk : k < n) (anchor : Fin n)
+    (x : Fin (k + 1)) (h : x.val = k) :
+    liftBorderedIdx hk anchor x = anchor := by
+  have : ¬ x.val < k := fun h' => Nat.lt_irrefl _ (h ▸ h')
+  simp [liftBorderedIdx, this]
+
+private theorem liftBorderedIdx_at_kStep {n k : Nat} (hk : k < n) (anchor : Fin n)
+    {k_step : Nat} (hkstep : k_step < k) (hkstep_lt_n : k_step < n)
+    (hkstep_lt_k1 : k_step < k + 1) :
+    liftBorderedIdx hk anchor ⟨k_step, hkstep_lt_k1⟩ = ⟨k_step, hkstep_lt_n⟩ := by
+  show (if h : k_step < k then (⟨k_step, Nat.lt_trans h hk⟩ : Fin n) else anchor) =
+    ⟨k_step, hkstep_lt_n⟩
+  simp [hkstep]
+
+private theorem borderedMinor_entry_eq_lift
+    {n : Nat} (M : Matrix Int n n) (k : Nat) (hk : k < n) (row col : Fin n)
+    (i_bm j_bm : Fin (k + 1)) :
+    (Matrix.borderedMinor M k hk row col)[i_bm][j_bm] =
+      M[liftBorderedIdx hk row i_bm][liftBorderedIdx hk col j_bm] := by
+  rw [borderedMinor_entry_eq_source M k hk row col i_bm j_bm]
+  rfl
+
+/-- One Bareiss update step commutes with taking a bordered minor whose
+border row/column indices `row`, `col` lie in the trailing block: the
+bordered minor of the updated full matrix equals the result of running
+the same step on the bordered minor. The pivot/`prevPivot` scalars are
+passed through unchanged. -/
+private theorem borderedMinor_stepMatrix_eq
+    {n : Nat} (M : Matrix Int n n) (k : Nat) (hk : k < n) (row col : Fin n)
+    (hrow : k ≤ row.val) (hcol : k ≤ col.val)
+    (k_step : Nat) (hkstep : k_step < k) (pivot prevPivot : Int) :
+    Matrix.borderedMinor (Matrix.stepMatrix M k_step pivot prevPivot) k hk row col =
+      Matrix.stepMatrix (Matrix.borderedMinor M k hk row col) k_step pivot prevPivot := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let i_bm : Fin (k + 1) := ⟨i, hi⟩
+  let j_bm : Fin (k + 1) := ⟨j, hj⟩
+  let iN : Fin n := liftBorderedIdx hk row i_bm
+  let jN : Fin n := liftBorderedIdx hk col j_bm
+  -- Equivalence of "in update zone" between bordered minor and source.
+  have hi_iff : k_step < i_bm.val ↔ k_step < iN.val := by
+    by_cases hi_lt : i_bm.val < k
+    · have : iN = ⟨i_bm.val, Nat.lt_trans hi_lt hk⟩ :=
+        liftBorderedIdx_val_lt hk row i_bm hi_lt
+      rw [show iN.val = i_bm.val from congrArg Fin.val this]
+    · have hi_eq : i_bm.val = k := by have := i_bm.isLt; omega
+      have : iN = row := liftBorderedIdx_val_eq_k hk row i_bm hi_eq
+      rw [show iN.val = row.val from congrArg Fin.val this, hi_eq]
+      constructor
+      · intro _; exact Nat.lt_of_lt_of_le hkstep hrow
+      · intro _; exact hkstep
+  have hj_iff : k_step < j_bm.val ↔ k_step < jN.val := by
+    by_cases hj_lt : j_bm.val < k
+    · have : jN = ⟨j_bm.val, Nat.lt_trans hj_lt hk⟩ :=
+        liftBorderedIdx_val_lt hk col j_bm hj_lt
+      rw [show jN.val = j_bm.val from congrArg Fin.val this]
+    · have hj_eq : j_bm.val = k := by have := j_bm.isLt; omega
+      have : jN = col := liftBorderedIdx_val_eq_k hk col j_bm hj_eq
+      rw [show jN.val = col.val from congrArg Fin.val this, hj_eq]
+      constructor
+      · intro _; exact Nat.lt_of_lt_of_le hkstep hcol
+      · intro _; exact hkstep
+  have hj_eq_iff : j_bm.val = k_step ↔ jN.val = k_step := by
+    by_cases hj_lt : j_bm.val < k
+    · have : jN = ⟨j_bm.val, Nat.lt_trans hj_lt hk⟩ :=
+        liftBorderedIdx_val_lt hk col j_bm hj_lt
+      rw [show jN.val = j_bm.val from congrArg Fin.val this]
+    · have hj_eq : j_bm.val = k := by have := j_bm.isLt; omega
+      have : jN = col := liftBorderedIdx_val_eq_k hk col j_bm hj_eq
+      rw [show jN.val = col.val from congrArg Fin.val this, hj_eq]
+      constructor
+      · intro h; omega
+      · intro h; exact absurd h (Nat.ne_of_gt (Nat.lt_of_lt_of_le hkstep hcol))
+  -- Bridge: borderedMinor entry at (i_bm, j_bm) equals M entry at (iN, jN).
+  have h_entry : ∀ (M' : Matrix Int n n) (r : Fin (k + 1)) (c : Fin (k + 1)),
+      (Matrix.borderedMinor M' k hk row col)[r][c] =
+        M'[liftBorderedIdx hk row r][liftBorderedIdx hk col c] :=
+    fun M' r c => borderedMinor_entry_eq_lift M' k hk row col r c
+  show (Matrix.borderedMinor (Matrix.stepMatrix M k_step pivot prevPivot) k hk row col)[i_bm][j_bm] =
+       (Matrix.stepMatrix (Matrix.borderedMinor M k hk row col) k_step pivot prevPivot)[i_bm][j_bm]
+  rw [h_entry (Matrix.stepMatrix M k_step pivot prevPivot) i_bm j_bm]
+  -- LHS = (stepMatrix M k_step pivot prevPivot)[iN][jN].
+  by_cases htrail_bm : k_step < i_bm.val ∧ k_step < j_bm.val
+  · have htrail_N : k_step < iN.val ∧ k_step < jN.val :=
+      ⟨hi_iff.mp htrail_bm.1, hj_iff.mp htrail_bm.2⟩
+    -- Pivot column / pivot row indices in `Fin (k+1)` have val = k_step < k.
+    have hkstep_lt_k1 : k_step < k + 1 := Nat.lt_succ_of_lt hkstep
+    have hkstep_lt_n : k_step < n := Nat.lt_trans hkstep hk
+    let colK_bm : Fin (k + 1) := ⟨k_step, hkstep_lt_k1⟩
+    let colK_N : Fin n := ⟨k_step, hkstep_lt_n⟩
+    have hcolK_row : liftBorderedIdx hk row colK_bm = colK_N :=
+      liftBorderedIdx_at_kStep hk row hkstep hkstep_lt_n hkstep_lt_k1
+    have hcolK_col : liftBorderedIdx hk col colK_bm = colK_N :=
+      liftBorderedIdx_at_kStep hk col hkstep hkstep_lt_n hkstep_lt_k1
+    have h_iK : (Matrix.borderedMinor M k hk row col)[i_bm][colK_bm] = M[iN][colK_N] := by
+      rw [h_entry M i_bm colK_bm]
+      show M[iN][liftBorderedIdx hk col colK_bm] = M[iN][colK_N]
+      exact congrArg (fun (x : Fin n) => M[iN][x]) hcolK_col
+    have h_Kj : (Matrix.borderedMinor M k hk row col)[colK_bm][j_bm] = M[colK_N][jN] := by
+      rw [h_entry M colK_bm j_bm]
+      show M[liftBorderedIdx hk row colK_bm][jN] = M[colK_N][jN]
+      exact congrArg (fun (x : Fin n) => M[x][jN]) hcolK_row
+    -- Compute LHS directly.
+    have hLHS :
+        (Matrix.stepMatrix M k_step pivot prevPivot)[iN][jN] =
+          Matrix.exactDiv (pivot * M[iN][jN] -
+            M[iN][colK_N] * M[colK_N][jN]) prevPivot := by
+      rw [Matrix.stepMatrix_update_eq M k_step pivot prevPivot iN jN htrail_N.1 htrail_N.2]
+    have hRHS :
+        (Matrix.stepMatrix (Matrix.borderedMinor M k hk row col) k_step pivot prevPivot)[i_bm][j_bm] =
+          Matrix.exactDiv (pivot * (Matrix.borderedMinor M k hk row col)[i_bm][j_bm] -
+            (Matrix.borderedMinor M k hk row col)[i_bm][colK_bm] *
+            (Matrix.borderedMinor M k hk row col)[colK_bm][j_bm]) prevPivot := by
+      rw [Matrix.stepMatrix_update_eq (Matrix.borderedMinor M k hk row col) k_step pivot prevPivot
+        i_bm j_bm htrail_bm.1 htrail_bm.2]
+    rw [hLHS, hRHS, h_entry M i_bm j_bm, h_iK, h_Kj]
+  · by_cases hbelow_bm : k_step < i_bm.val ∧ j_bm.val = k_step
+    · have hi_N : k_step < iN.val := hi_iff.mp hbelow_bm.1
+      have hj_N : jN.val = k_step := hj_eq_iff.mp hbelow_bm.2
+      rw [Matrix.stepMatrix_pivot_col_below M k_step pivot prevPivot iN jN hi_N hj_N]
+      rw [Matrix.stepMatrix_pivot_col_below (Matrix.borderedMinor M k hk row col) k_step
+        pivot prevPivot i_bm j_bm hbelow_bm.1 hbelow_bm.2]
+    · -- Outside the update zone on both sides.
+      have hnot_trail_N : ¬ (k_step < iN.val ∧ k_step < jN.val) := by
+        intro h
+        exact htrail_bm ⟨hi_iff.mpr h.1, hj_iff.mpr h.2⟩
+      have hnot_below_N : ¬ (k_step < iN.val ∧ jN.val = k_step) := by
+        intro h
+        exact hbelow_bm ⟨hi_iff.mpr h.1, hj_eq_iff.mpr h.2⟩
+      rw [Matrix.stepMatrix_eq_of_not_update M k_step pivot prevPivot iN jN
+        hnot_trail_N hnot_below_N]
+      rw [Matrix.stepMatrix_eq_of_not_update (Matrix.borderedMinor M k hk row col) k_step
+        pivot prevPivot i_bm j_bm htrail_bm hbelow_bm]
+      exact (h_entry M i_bm j_bm).symm
+
 /-- Run `noPivotLoop` on a full `n × n` matrix and on its `K × K` leading
 prefix from two BareissStates that agree on the leading prefix. While
 both runs are still synchronized (fuel fits within `K - state.step`),
