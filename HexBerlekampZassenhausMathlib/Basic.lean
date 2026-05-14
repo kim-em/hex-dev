@@ -418,6 +418,32 @@ theorem factorFastCoreWithBound_some_factor_irreducible_of_count
     HexBerlekampZassenhausMathlib.UFDPartition.irreducible_of_partition_card_eq_normalizedFactors_card
       hf_ne gs hne_all hnonunit_all hprod hcount _ hpolyfactor_mem
 
+/-- Branch-local fast-core success irreducibility, expressed in the Mathlib-free
+`Hex.ZPoly.Irreducible` predicate. This is the `Hex.ZPoly` transport of
+`factorFastCoreWithBound_some_factor_irreducible_of_count`, obtained by
+composing that scaffold with the existing
+`Hex.ZPoly.Irreducible_iff_polynomialIrreducible` bridge equivalence.
+
+The remaining count-equality hypothesis is the residual #4030 obligation; once
+supplied, this lemma yields fast-core branch irreducibility directly in the
+executable `Hex.ZPoly` form needed by callers that do not import Mathlib's
+`Polynomial` model. -/
+theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_count
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
+    (hcore_ne : core ≠ 0)
+    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (hcount :
+      (coreFactors.toList.map HexPolyZMathlib.toPolynomial).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial core)).card) :
+    ∀ factor ∈ coreFactors.toList, Hex.ZPoly.Irreducible factor := by
+  intro factor hfactor_mem
+  exact
+    (Hex.ZPoly.Irreducible_iff_polynomialIrreducible factor).mpr
+      (factorFastCoreWithBound_some_factor_irreducible_of_count
+        hcore_ne h hcount factor hfactor_mem)
+
 end
 
 end HexBerlekampZassenhausMathlib
