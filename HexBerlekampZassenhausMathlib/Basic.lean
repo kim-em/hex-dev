@@ -609,6 +609,133 @@ theorem unique_liftedFactorSubset_of_henselSubsetCorrespondence
   h.unique_subset (factor := factor) (S := S) (T := T) hirr hdvd hS hT
 
 /--
+Proof-facing package for transporting the mod-`p` subset partition through a
+successful Hensel lift.
+
+The fields isolate the analytic Hensel obligations: the lift preserves the
+factor count, every mod-`p` selected subset represents the same integer factor
+after lifting, and every lifted representation descends to a mod-`p` selected
+subset.  The consumer theorems below combine these fields with
+`ModPSubsetPartitionHypotheses` to recover the existing lifted-subset
+correspondence API.
+-/
+structure HenselSubsetLiftHypotheses
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (d : Hex.LiftData)
+    (admissiblePrime squareFreeReduction successfulLift coprimeLift : Prop) :
+    Prop where
+  lift_eq : d = Hex.henselLiftData core B primeData
+  factor_count_eq : d.liftedFactors.size = primeData.factorsModP.size
+  admissible_prime : admissiblePrime
+  square_free_reduction : squareFreeReduction
+  successful_lift : successfulLift
+  coprime_lift : coprimeLift
+  represents_lifted_of_modP :
+    ∀ {factor : Hex.ZPoly} {S : ModPFactorSubset primeData},
+      Irreducible (HexPolyZMathlib.toPolynomial factor) →
+      factor ∣ core →
+      RepresentsIntegerFactorModP primeData factor S →
+      RepresentsIntegerFactorAtLift core d factor
+        (liftedSubsetOfModPSubset primeData d factor_count_eq S)
+  represents_modP_of_lifted :
+    ∀ {factor : Hex.ZPoly} {T : LiftedFactorSubset d},
+      Irreducible (HexPolyZMathlib.toPolynomial factor) →
+      factor ∣ core →
+      RepresentsIntegerFactorAtLift core d factor T →
+      ∃ S : ModPFactorSubset primeData,
+        T = liftedSubsetOfModPSubset primeData d factor_count_eq S ∧
+          RepresentsIntegerFactorModP primeData factor S
+
+/--
+The mod-`p` subset selected for an irreducible integer factor has a unique
+lifted representative through the Hensel transport package.
+-/
+theorem existsUnique_modPSubset_lifting_to_henselRepresentation
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData}
+    {admissiblePrime squareFreeReduction successfulLift coprimeLift : Prop}
+    (hmod :
+      ModPSubsetPartitionHypotheses core primeData
+        admissiblePrime squareFreeReduction)
+    (hlift :
+      HenselSubsetLiftHypotheses core B primeData d
+        admissiblePrime squareFreeReduction successfulLift coprimeLift)
+    {factor : Hex.ZPoly}
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hdvd : factor ∣ core) :
+    ∃! S : ModPFactorSubset primeData,
+      RepresentsIntegerFactorModP primeData factor S ∧
+        RepresentsIntegerFactorAtLift core d factor
+          (liftedSubsetOfModPSubset primeData d hlift.factor_count_eq S) := by
+  rcases hmod.exists_subset hirr hdvd with ⟨S, hS_mod⟩
+  refine ⟨S, ⟨hS_mod, hlift.represents_lifted_of_modP hirr hdvd hS_mod⟩, ?_⟩
+  intro T hT
+  exact hmod.unique_subset hirr hdvd hT.1 hS_mod
+
+/--
+Composing the mod-`p` subset partition with Hensel-lift transport gives the
+consumer-facing lifted-factor subset correspondence.
+-/
+theorem existsUnique_liftedFactorSubset_of_modPSubsetPartition_henselLift
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData}
+    {admissiblePrime squareFreeReduction successfulLift coprimeLift : Prop}
+    (hmod :
+      ModPSubsetPartitionHypotheses core primeData
+        admissiblePrime squareFreeReduction)
+    (hlift :
+      HenselSubsetLiftHypotheses core B primeData d
+        admissiblePrime squareFreeReduction successfulLift coprimeLift)
+    {factor : Hex.ZPoly}
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hdvd : factor ∣ core) :
+    ∃! S : LiftedFactorSubset d, RepresentsIntegerFactorAtLift core d factor S := by
+  rcases hmod.exists_subset hirr hdvd with ⟨S, hS_mod⟩
+  let liftedS := liftedSubsetOfModPSubset primeData d hlift.factor_count_eq S
+  have hS_lift : RepresentsIntegerFactorAtLift core d factor liftedS :=
+    hlift.represents_lifted_of_modP hirr hdvd hS_mod
+  refine ⟨liftedS, hS_lift, ?_⟩
+  intro T hT
+  rcases hlift.represents_modP_of_lifted hirr hdvd hT with ⟨U, hT_eq, hU_mod⟩
+  have hUS : U = S :=
+    hmod.unique_subset hirr hdvd hU_mod hS_mod
+  rw [hT_eq, hUS]
+
+/--
+The mod-`p` partition plus Hensel transport produces the existing
+`HenselSubsetCorrespondenceHypotheses` package, so downstream consumers can
+use the stable lifted-factor API without depending on the intermediate
+mod-`p` vocabulary.
+-/
+def henselSubsetCorrespondence_of_modPSubsetPartition
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData}
+    {admissiblePrime squareFreeReduction successfulLift coprimeLift : Prop}
+    (hmod :
+      ModPSubsetPartitionHypotheses core primeData
+        admissiblePrime squareFreeReduction)
+    (hlift :
+      HenselSubsetLiftHypotheses core B primeData d
+        admissiblePrime squareFreeReduction successfulLift coprimeLift) :
+    HenselSubsetCorrespondenceHypotheses core B primeData d
+      admissiblePrime successfulLift where
+  lift_eq := hlift.lift_eq
+  admissible_prime := hlift.admissible_prime
+  successful_lift := hlift.successful_lift
+  exists_subset := by
+    intro factor hirr hdvd
+    exact
+      (existsUnique_liftedFactorSubset_of_modPSubsetPartition_henselLift
+        hmod hlift hirr hdvd).exists
+  unique_subset := by
+    intro factor S T hirr hdvd hS hT
+    rcases
+      existsUnique_liftedFactorSubset_of_modPSubsetPartition_henselLift
+        hmod hlift hirr hdvd with
+      ⟨U, hU, huniq⟩
+    exact (huniq S hS).trans (huniq T hT).symm
+
+/--
 Mignotte recoverability for one represented integer factor.
 
 If a subset of the executable lifted factors represents an integer divisor of
