@@ -2388,6 +2388,34 @@ theorem scaledCoeffMatrix_rowAdd_pivot_det
             (GramSchmidt.leadingGramMatrixInt b (j.val + 1) (Nat.succ_le_of_lt j.isLt)) := by
           rw [← hold, hgram]
 
+/-- The executable scaled-coefficient pivot entry changes predictably under
+an earlier-row addition. This packages the Cramer/Bareiss pivot identity at
+the public `scaledCoeffs` level so update consumers need not unfold the
+determinant bridge directly. -/
+theorem scaledCoeffs_rowAdd_pivot (b : Matrix Int n m) (j k : Fin n)
+    (hjk : j.val < k.val) (c : Int) :
+    GramSchmidt.entry (scaledCoeffs (Matrix.rowAdd b j k c)) k j =
+      GramSchmidt.entry (scaledCoeffs b) k j +
+        c * Int.ofNat (gramDet b (j.val + 1) (Nat.succ_le_of_lt j.isLt)) := by
+  have hnew := scaledCoeffs_eq_scaledCoeffMatrix_det
+    (b := Matrix.rowAdd b j k c) (i := k) (j := j) hjk
+  have hold := scaledCoeffs_eq_scaledCoeffMatrix_det (b := b) (i := k) (j := j) hjk
+  have hbridge := scaledCoeffMatrix_rowAdd_pivot_det (b := b) (j := j) (k := k) hjk c
+  have hlead := leadingGramMatrixInt_det_eq_gramDet_int
+    (b := b) (t := j.val + 1) (ht := Nat.succ_le_of_lt j.isLt)
+  calc
+    GramSchmidt.entry (scaledCoeffs (Matrix.rowAdd b j k c)) k j =
+        Matrix.det (GramSchmidt.scaledCoeffMatrix (Matrix.rowAdd b j k c) k j hjk) := hnew
+    _ =
+        Matrix.det (GramSchmidt.scaledCoeffMatrix b k j hjk) +
+          c * Matrix.det
+            (GramSchmidt.leadingGramMatrixInt b (j.val + 1)
+              (Nat.succ_le_of_lt j.isLt)) := hbridge
+    _ =
+        GramSchmidt.entry (scaledCoeffs b) k j +
+          c * Int.ofNat (gramDet b (j.val + 1) (Nat.succ_le_of_lt j.isLt)) := by
+      rw [← hold, hlead]
+
 /-- When the modified row index `k` lies outside the leading `t`-prefix
 (`t ≤ k.val`), the leading Gram matrix of `Matrix.rowAdd b j k c` agrees with
 that of `b`. -/
