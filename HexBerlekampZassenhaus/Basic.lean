@@ -4129,7 +4129,7 @@ private def factorFastCoreGuardPrimeData : PrimeChoiceData :=
     (initialHenselPrecision 4) (ZPoly.quadraticDoublingSteps 4 + 2) =
   some bhksGuardFactors
 
-private def exhaustiveCoreFactorsWithBound
+def exhaustiveCoreFactorsWithBound
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Array ZPoly :=
   if B = 0 then
     #[core]
@@ -4141,6 +4141,12 @@ private def exhaustiveCoreFactorsWithBound
       #[core]
     else
       factors
+
+/-- The raw slow-path factor array used by the exhaustive recombination branch. -/
+def exhaustiveSlowRawFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
+  reassemblePolynomialFactors (normalizeForFactor f)
+    (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
+      (choosePrimeData (normalizeForFactor f).squareFreeCore))
 
 private def factorSlowFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
   let normalized := normalizeForFactor f
@@ -4244,6 +4250,12 @@ private def factorFastFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPo
 
 #guard factorFastFactorsWithBound cldGuardF 4 =
   some bhksGuardFactors
+
+/-- Public branch predicate for the `factorWithBound` slow exhaustive fallback. -/
+def factorWithBoundUsesExhaustiveBranch (f : ZPoly) (B : Nat) : Prop :=
+  factorFastFactorsWithBound f B = none ∧
+    (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
+    quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none
 
 /-- Lift a successful `factorFastCoreWithBound` call to a `factorFastFactorsWithBound`
 success conclusion. The hypotheses pin down the wrapper's branch dispatch: the
@@ -4495,6 +4507,47 @@ theorem factorWithBound_entry_mem_raw_source
       apply factorizationOfFactors_entry_mem_normalized_raw
       simpa only [factorWithBound, factorFastWithBound, factorSlowWithBound, hfast,
         Option.map_none, Option.getD_none] using hmem
+
+/-- In the slow exhaustive fallback branch, every recorded `factorWithBound`
+entry comes from the public raw exhaustive slow-factor array, up to sign
+normalization by `collectFactorMultiplicities`. -/
+theorem factorWithBound_entry_mem_exhaustive_branch_raw
+    (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
+    (hbranch : factorWithBoundUsesExhaustiveBranch f B)
+    (hmem : entry ∈ (factorWithBound f B).factors.toList) :
+    ∃ raw ∈ (exhaustiveSlowRawFactorsWithBound f B).toList,
+      entry.1 = normalizeFactorSign raw := by
+  rcases hbranch with ⟨hfast, hdeg, hquad⟩
+  rcases factorWithBound_entry_mem_raw_source f B entry hmem with
+    ⟨rawFactors, hsource, raw, hraw_mem, hraw_norm⟩
+  cases hsource with
+  | inl hfast_some =>
+      rw [hfast] at hfast_some
+      contradiction
+  | inr hslow =>
+      rcases hslow with ⟨_, hrawFactors⟩
+      subst rawFactors
+      refine ⟨raw, ?_, hraw_norm⟩
+      rw [exhaustiveSlowRawFactorsWithBound] at ⊢
+      unfold factorSlowFactorsWithBound at hraw_mem
+      rw [if_neg hdeg, hquad] at hraw_mem
+      exact hraw_mem
+
+/-- Membership in the public exhaustive slow raw array splits into
+normalization-prefix factors and exhaustive square-free-core factors. -/
+theorem exhaustiveSlowRawFactorsWithBound_mem_normalization_or_core
+    (f factor : ZPoly) (B : Nat)
+    (hmem : factor ∈ (exhaustiveSlowRawFactorsWithBound f B).toList) :
+    factor ∈ (polynomialNormalizationPrefixFactors (normalizeForFactor f)).toList ∨
+      factor ∈
+        (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
+          (choosePrimeData (normalizeForFactor f).squareFreeCore)).toList := by
+  rw [exhaustiveSlowRawFactorsWithBound] at hmem
+  exact reassemblePolynomialFactors_mem_normalization_or_core
+    (normalizeForFactor f)
+    (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
+      (choosePrimeData (normalizeForFactor f).squareFreeCore))
+    factor hmem
 
 /-- In the fast-path small-mod singleton branch, every recorded
 `factorWithBound` entry comes from the normalization reassembly whose core array
@@ -5392,7 +5445,7 @@ private theorem recombineExhaustive_shouldRecord
       exact recombinationSearchMod_shouldRecord f (liftModulus d)
         d.liftedFactors.toList factors hsearch factor (by simpa using hmem)
 
-private theorem exhaustiveCoreFactorsWithBound_normalizeFactorSign
+theorem exhaustiveCoreFactorsWithBound_normalizeFactorSign
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
     (hcore : normalizeFactorSign core = core) :
     ∀ factor ∈ (exhaustiveCoreFactorsWithBound core B primeData).toList,
@@ -5409,7 +5462,7 @@ private theorem exhaustiveCoreFactorsWithBound_normalizeFactorSign
       exact recombineExhaustive_normalizeFactorSign core
         (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)
 
-private theorem exhaustiveCoreFactorsWithBound_shouldRecord
+theorem exhaustiveCoreFactorsWithBound_shouldRecord
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
     (hcore : shouldRecordPolynomialFactor core = true) :
     ∀ factor ∈ (exhaustiveCoreFactorsWithBound core B primeData).toList,
@@ -5698,7 +5751,7 @@ theorem factorFastCoreWithBound_some_dvd
 unconditionally: every branch returns either `#[core]` (singleton, trivially
 multiplying to `core`) or the result of a successful `recombinationSearchMod`
 call (`recombineExhaustive_product`). -/
-private theorem exhaustiveCoreFactorsWithBound_product
+theorem exhaustiveCoreFactorsWithBound_product
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) :
     Array.polyProduct (exhaustiveCoreFactorsWithBound core B primeData) = core := by
   rw [exhaustiveCoreFactorsWithBound]
