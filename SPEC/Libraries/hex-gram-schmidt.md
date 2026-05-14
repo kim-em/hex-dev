@@ -161,6 +161,34 @@ track coefficients or update formulas, so it cannot be used in the
 computational core. The `hex-gram-schmidt-mathlib` bridge proves
 that `GramSchmidt.Int.basis` corresponds to Mathlib's `gramSchmidt`.
 
+**Mathlib-free vs. Mathlib-bridge proof surface.** Theorems in
+`hex-gram-schmidt` (the Mathlib-free integer/rational GS core) may
+state equalities between:
+
+- Hex-local recurrences and their executable implementations
+  (e.g. `scaledCoeffRows_diag_eq_gramDetVecEntry` — diagonal writes
+  of the shared Bareiss pass agreeing with `gramDetVecEntry`);
+- Hex computational outputs and other Hex computational outputs
+  (e.g. `scaledCoeffs` and `scaledCoeffMatrix` as packagings of the
+  same Bareiss data).
+
+They may **not** state equalities between Hex computational outputs
+and the Leibniz `det` of any (sub)matrix. That includes `gramDet`,
+`scaledCoeffs`, the executable Bareiss output, the leading
+principal minor determinants, and any update formula expressed at
+the level of `Hex.det`. Theorems of that shape live in
+`hex-gram-schmidt-mathlib`, because their shortest proof goes
+through `Matrix.bareiss_eq_det` (see
+[hex-matrix.md "Mathlib-free vs. Mathlib-bridge proof surface"](hex-matrix.md)),
+which itself lives in `hex-matrix-mathlib`.
+
+Symptom this boundary exists to catch: a Mathlib-free
+`HexGramSchmidt/Int.lean` theorem of the form
+`<Hex computational output> = Matrix.det <matrix>` that chains
+through `Matrix.bareiss_eq_det`. Such a theorem belongs in
+`HexGramSchmidtMathlib/Int.lean` (or the analogous bridge file),
+not in the Mathlib-free core.
+
 ## External comparators
 
 No external comparator is required.
