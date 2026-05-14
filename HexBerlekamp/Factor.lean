@@ -218,6 +218,44 @@ private theorem kernelWitnessSplitAux_nontrivial
       · simp [splitConstant, factor, hnon] at hsplit
         exact ih (c + 1) hsplit
 
+private theorem kernelWitnessSplitAux_some_of_nontrivial_offset
+    (f witness : FpPoly p) :
+    ∀ (fuel start offset : Nat),
+      offset < fuel →
+      isNontrivialSplitFactor f
+        (splitFactorAt f witness (ZMod64.ofNat p (start + offset))) = true →
+      ∃ r : SplitResult p, kernelWitnessSplitAux f witness fuel start = some r := by
+  intro fuel
+  induction fuel with
+  | zero =>
+      intro start offset hoffset _
+      omega
+  | succ fuel ih =>
+      intro start offset hoffset hnon_target
+      unfold kernelWitnessSplitAux
+      let splitConstant := ZMod64.ofNat p start
+      let factor := splitFactorAt f witness splitConstant
+      by_cases hnon : isNontrivialSplitFactor f factor
+      · exact ⟨
+          { splitConstant
+            factor
+            cofactor := f / factor },
+          by simp [splitConstant, factor, hnon]⟩
+      · cases offset with
+        | zero =>
+            have htarget :
+                isNontrivialSplitFactor f factor = true := by
+              simpa [splitConstant, factor] using hnon_target
+            exact False.elim (hnon htarget)
+        | succ offset =>
+            have hoffset' : offset < fuel := by omega
+            have htarget' :
+                isNontrivialSplitFactor f
+                  (splitFactorAt f witness (ZMod64.ofNat p (start + 1 + offset))) = true := by
+              simpa [Nat.add_assoc, Nat.add_left_comm, Nat.add_comm] using hnon_target
+            have hsome := ih (start + 1) offset hoffset' htarget'
+            simpa [splitConstant, factor, hnon] using hsome
+
 /--
 Any successful Berlekamp split records a factor and cofactor whose product is
 the original polynomial.
@@ -238,6 +276,28 @@ theorem kernelWitnessSplit_nontrivial
     (hsplit : kernelWitnessSplit? f witness = some r) :
     !r.factor.isZero ∧ r.factor ≠ 1 ∧ r.factor ≠ f := by
   exact kernelWitnessSplitAux_nontrivial f witness p 0 r hsplit
+
+/--
+Executable search reflection for one field constant: if the gcd candidate
+attached to `c` is nonzero, nonconstant, and not the full input, then the
+bounded Berlekamp witness search succeeds.
+-/
+theorem kernelWitnessSplit?_some_of_nontrivial_splitFactorAt
+    (f witness : FpPoly p) (c : ZMod64 p)
+    (hnotZero : !(splitFactorAt f witness c).isZero)
+    (hdegree : (splitFactorAt f witness c).degree? ≠ some 0)
+    (hne_input : splitFactorAt f witness c ≠ f) :
+    ∃ r : SplitResult p, kernelWitnessSplit? f witness = some r := by
+  have hc_lt : c.toNat < p := c.toNat_lt
+  have hc_eq : ZMod64.ofNat p c.toNat = c := ZMod64.ofNat_toNat c
+  have hnon :
+      isNontrivialSplitFactor f
+        (splitFactorAt f witness (ZMod64.ofNat p (0 + c.toNat))) = true := by
+    unfold isNontrivialSplitFactor
+    rw [Nat.zero_add, hc_eq]
+    cases hz : (splitFactorAt f witness c).isZero <;> simp [hz] at hnotZero ⊢
+    exact ⟨hdegree, hne_input⟩
+  exact kernelWitnessSplitAux_some_of_nontrivial_offset f witness p 0 c.toNat hc_lt hnon
 
 private theorem splitWithWitnesses?_product_spec
     [ZMod64.PrimeModulus p]
