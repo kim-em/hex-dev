@@ -5424,6 +5424,52 @@ private theorem factorFastWithBound_product_of_small_mod_branch
   rw [← hphi]
   exact factorFastWithBound_product_of_squareFreeCore_emit f B hf hdeg hfast rfl
 
+private theorem factorFastWithBound_product_of_quadratic_branch
+    (f : ZPoly) (B : Nat) {φ : Factorization}
+    (hf : f ≠ 0)
+    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (hB_ge_two : 2 ≤ B)
+    (coreFactors : Array ZPoly)
+    (hquad : quadraticIntegerRootFactors?
+      (normalizeForFactor f).squareFreeCore = some coreFactors)
+    (h : factorFastWithBound f B = some φ) :
+    Factorization.product φ = f := by
+  have hfast :
+      factorFastFactorsWithBound f B =
+        some (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) := by
+    unfold factorFastFactorsWithBound
+    rw [if_neg hdeg, if_neg (by omega : B ≠ 0), if_neg (by omega : B ≠ 1)]
+    rw [hquad]
+  have hphi :
+      factorizationOfFactors f
+          (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) = φ := by
+    rw [factorFastWithBound_eq_some_of_factors_some f B hfast] at h
+    exact Option.some.inj h
+  rw [← hphi]
+  apply factorFastFactorsWithBound_product_of_some_of_all_recorded_normalized hfast
+  · intro factor hmem
+    unfold reassemblePolynomialFactors at hmem
+    rw [Array.toList_append] at hmem
+    simp only [List.mem_append] at hmem
+    cases hmem with
+    | inl hprefix =>
+        exact polynomialNormalizationPrefixFactors_normalizeFactorSign_of_ne_zero
+          f hf factor hprefix
+    | inr hcore =>
+        exact quadraticIntegerRootFactors?_normalizeFactorSign
+          (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad factor hcore
+  · intro factor hmem
+    unfold reassemblePolynomialFactors at hmem
+    rw [Array.toList_append] at hmem
+    simp only [List.mem_append] at hmem
+    cases hmem with
+    | inl hprefix =>
+        exact polynomialNormalizationPrefixFactors_shouldRecord_of_ne_zero
+          f hf factor hprefix
+    | inr hcore =>
+        exact quadraticIntegerRootFactors?_shouldRecord
+          (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad factor hcore
+
 /--
 A successful integer certificate exposes the per-prime polynomial check fact:
 every recorded `PrimeFactorData` block satisfies `checkForPolynomial f` —
