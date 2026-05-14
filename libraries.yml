@@ -221,9 +221,13 @@ libraries:
   HexGfqField:
     deps: [HexGfqRing, HexBerlekamp]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
     phase4:
+      comparators:
+        - tool: FLINT fq_default via python-flint
+          class: informational
+          rationale: "FLINT's fq_default finite-field arithmetic is a tuned C implementation over irreducible polynomial quotient fields; HexGfqField is the verified field wrapper over HexGfqRing with certificate-checked irreducible moduli. The ratio is recorded for orientation but is not a Phase-4 gate. Wired via the shared persistent-subprocess python-flint driver (`scripts/oracle/flint_bench_driver.py`) per SPEC/benchmarking.md §External comparators §Process call."
       input_families:
         - name: dense-canonical-reduction
           description: Field construction from a dense polynomial through quotient-ring reduction modulo certificate-checked irreducible moduli over F7.
