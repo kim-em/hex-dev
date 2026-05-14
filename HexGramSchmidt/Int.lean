@@ -470,6 +470,117 @@ private theorem stepScaledRows_size
     -Array.set!_eq_setIfInBounds]
   exact size_foldl_set! _ _ _
 
+/-- Per-entry correspondence between the array-storage `stepScaledRows`
+update and the matrix-storage `Matrix.stepMatrix` update. Trailing-block
+entries match under exact divisibility, the pivot column clears to zero,
+and entries outside the update region are preserved on both sides. The
+divisibility hypothesis bridges Lean's `Int` `/` (used inside
+`stepScaledRows`) and `Matrix.exactDiv` (used inside `Matrix.stepMatrix`). -/
+private theorem getArrayEntry_stepScaledRows_matches_stepMatrix
+    {n : Nat} (rows : Array (Array Int)) (M : Matrix Int n n) (k : Nat)
+    (pivot prevPivot : Int)
+    (hentry : ∀ a b : Fin n, getArrayEntry rows a.val b.val = M[a][b])
+    (hsize : rows.size = n)
+    (hrowsize : ∀ (a : Nat), a < n → rows[a]!.size = n)
+    (i j : Fin n)
+    (hdvd : k < i.val → k < j.val →
+      prevPivot ∣
+        (pivot * getArrayEntry rows i.val j.val -
+          getArrayEntry rows i.val k * getArrayEntry rows k j.val)) :
+    getArrayEntry (stepScaledRows rows n k pivot prevPivot) i.val j.val =
+      (Matrix.stepMatrix M k pivot prevPivot)[i][j] := by
+  rcases Nat.lt_or_ge k i.val with hki | hki
+  · rcases Nat.lt_or_ge k j.val with hkj | hkj
+    · -- Trailing-block update: divide the Bareiss numerator by `prevPivot`.
+      have hrows : i.val < rows.size := by rw [hsize]; exact i.isLt
+      have hcols : j.val < rows[i.val]!.size := by
+        rw [hrowsize i.val i.isLt]; exact j.isLt
+      have hij_eq : getArrayEntry rows i.val j.val = M[i][j] := hentry i j
+      have hcol_eq :
+          getArrayEntry rows i.val k =
+            M[i][(⟨k, Nat.lt_trans hki i.isLt⟩ : Fin n)] := by
+        simpa using hentry i ⟨k, Nat.lt_trans hki i.isLt⟩
+      have hrow_eq :
+          getArrayEntry rows k j.val =
+            M[(⟨k, Nat.lt_trans hkj j.isLt⟩ : Fin n)][j] := by
+        simpa using hentry ⟨k, Nat.lt_trans hkj j.isLt⟩ j
+      have hdvd' := hdvd hki hkj
+      have hdvd_M : prevPivot ∣
+          (pivot * M[i][j] -
+            M[i][(⟨k, Nat.lt_trans hki i.isLt⟩ : Fin n)] *
+              M[(⟨k, Nat.lt_trans hkj j.isLt⟩ : Fin n)][j]) := by
+        rw [← hij_eq, ← hcol_eq, ← hrow_eq]; exact hdvd'
+      rw [getArrayEntry_stepScaledRows_trailing rows n k pivot prevPivot
+            i.val j.val hki i.isLt hkj j.isLt hrows hcols]
+      rw [Matrix.stepMatrix_update_eq M k pivot prevPivot i j hki hkj]
+      simp only
+      rw [Matrix.exactDiv_eq_divExact hdvd_M]
+      rw [Int.divExact_eq_ediv hdvd_M]
+      show (pivot * getArrayEntry rows i.val j.val -
+              getArrayEntry rows i.val k * getArrayEntry rows k j.val) / prevPivot = _
+      rw [hij_eq, hcol_eq, hrow_eq]
+    · -- Pivot column or strictly-left column at a trailing row.
+      rcases Nat.lt_or_eq_of_le hkj with hkj_lt | hkj_eq
+      · -- Strictly left of pivot column: entries preserved on both sides.
+        have hrows : i.val < rows.size := by rw [hsize]; exact i.isLt
+        rw [getArrayEntry_stepScaledRows_of_col_lt rows n k pivot prevPivot
+              i.val j.val hki i.isLt hkj_lt hrows]
+        rw [Matrix.stepMatrix_eq_of_not_update M k pivot prevPivot i j
+              (fun h => Nat.not_lt_of_ge hkj h.2)
+              (fun h => Nat.ne_of_lt hkj_lt h.2)]
+        exact hentry i j
+      · -- Pivot column itself: both sides clear to zero.
+        have hjk : j.val = k := hkj_eq
+        have hrows : i.val < rows.size := by rw [hsize]; exact i.isLt
+        have hk_row : k < rows[i.val]!.size := by
+          rw [hrowsize i.val i.isLt]
+          exact Nat.lt_of_lt_of_le hki (Nat.le_of_lt i.isLt)
+        have hLHS :
+            getArrayEntry (stepScaledRows rows n k pivot prevPivot) i.val j.val = 0 := by
+          rw [hjk]
+          exact getArrayEntry_stepScaledRows_pivot_col rows n k pivot prevPivot
+            i.val hki i.isLt hrows hk_row
+        have hRHS :
+            (Matrix.stepMatrix M k pivot prevPivot)[i][j] = 0 :=
+          Matrix.stepMatrix_pivot_col_below M k pivot prevPivot i j hki hjk
+        rw [hLHS]
+        exact hRHS.symm
+  · -- Row preserved: at or above pivot row.
+    rw [getArrayEntry_stepScaledRows_of_row_le rows n k pivot prevPivot
+          i.val j.val hki]
+    rw [Matrix.stepMatrix_eq_of_not_update M k pivot prevPivot i j
+          (fun h => Nat.not_lt_of_ge hki h.1)
+          (fun h => Nat.not_lt_of_ge hki h.1)]
+    exact hentry i j
+
+/-- Matrix-level correspondence: one `stepScaledRows` array update, viewed
+as a matrix via `rowsToMatrix`, equals the corresponding `Matrix.stepMatrix`
+update on the matrix view of the same row storage. The hypothesis encodes
+the Bareiss exact-divisibility condition that must hold for the array-side
+integer division to agree with `Matrix.exactDiv`. -/
+private theorem rowsToMatrix_stepScaledRows_eq_stepMatrix_of_dvd
+    {n : Nat} (rows : Array (Array Int)) (k : Nat) (pivot prevPivot : Int)
+    (hsize : rows.size = n)
+    (hrowsize : ∀ (a : Nat), a < n → rows[a]!.size = n)
+    (hdvd : ∀ (i j : Fin n), k < i.val → k < j.val →
+      prevPivot ∣
+        (pivot * getArrayEntry rows i.val j.val -
+          getArrayEntry rows i.val k * getArrayEntry rows k j.val)) :
+    rowsToMatrix (stepScaledRows rows n k pivot prevPivot) n =
+      Matrix.stepMatrix (rowsToMatrix rows n) k pivot prevPivot := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  have hentry : ∀ a b : Fin n,
+      getArrayEntry rows a.val b.val = (rowsToMatrix rows n)[a][b] := by
+    intro a b
+    simp [rowsToMatrix, Matrix.ofFn]
+  simpa [rowsToMatrix, Matrix.ofFn] using
+    getArrayEntry_stepScaledRows_matches_stepMatrix rows (rowsToMatrix rows n)
+      k pivot prevPivot hentry hsize hrowsize ⟨i, hi⟩ ⟨j, hj⟩
+      (fun hki hkj => hdvd ⟨i, hi⟩ ⟨j, hj⟩ hki hkj)
+
 end StepScaledRowsBookkeeping
 
 private def scaledCoeffArrayLoop (n fuel : Nat) (state : ScaledCoeffArrayState) :
