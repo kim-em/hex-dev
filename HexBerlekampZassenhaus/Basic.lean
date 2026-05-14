@@ -1676,6 +1676,75 @@ private theorem filteredNormalizedFactors_cons_drop
   unfold filteredNormalizedFactors
   simp [hdrop]
 
+private theorem shouldRecordPolynomialFactor_eq_true_of_ne
+    {f : ZPoly}
+    (hzero : f ≠ 0)
+    (hone : f ≠ 1)
+    (hneg_one : f ≠ DensePoly.C (-1 : Int)) :
+    shouldRecordPolynomialFactor f = true := by
+  unfold shouldRecordPolynomialFactor
+  simp [hzero, hone, hneg_one]
+
+private theorem normalizeFactorSign_ne_zero_of_ne_zero
+    (f : ZPoly) (hf : f ≠ 0) :
+    normalizeFactorSign f ≠ 0 := by
+  unfold normalizeFactorSign
+  by_cases hlead : DensePoly.leadingCoeff f < 0
+  · rw [if_pos hlead]
+    intro hzero
+    apply hf
+    apply DensePoly.ext_coeff
+    intro n
+    have hcoeff := congrArg (fun p : ZPoly => p.coeff n) hzero
+    change (DensePoly.scale (-1 : Int) f).coeff n = (0 : ZPoly).coeff n at hcoeff
+    rw [DensePoly.coeff_scale (R := Int) (-1 : Int) f n
+      (Int.mul_zero (-1 : Int))] at hcoeff
+    rw [DensePoly.coeff_zero] at hcoeff
+    rw [DensePoly.coeff_zero]
+    omega
+  · rw [if_neg hlead]
+    exact hf
+
+private theorem filteredNormalizedFactors_eq_map_normalizeFactorSign_of_no_units
+    (factors : List ZPoly)
+    (h_no_zero : ∀ factor ∈ factors, factor ≠ 0)
+    (h_no_unit :
+      ∀ factor ∈ factors,
+        normalizeFactorSign factor ≠ 1 ∧
+          normalizeFactorSign factor ≠ DensePoly.C (-1 : Int)) :
+    filteredNormalizedFactors factors = factors.map normalizeFactorSign := by
+  induction factors with
+  | nil => rfl
+  | cons factor factors ih =>
+      have hkeep :
+          shouldRecordPolynomialFactor (normalizeFactorSign factor) = true :=
+        shouldRecordPolynomialFactor_eq_true_of_ne
+          (normalizeFactorSign_ne_zero_of_ne_zero factor
+            (h_no_zero factor (by simp)))
+          (h_no_unit factor (by simp)).1
+          (h_no_unit factor (by simp)).2
+      rw [filteredNormalizedFactors_cons_keep factors hkeep]
+      rw [ih
+        (fun factor hmem => h_no_zero factor (by simp [hmem]))
+        (fun factor hmem => h_no_unit factor (by simp [hmem]))]
+      simp
+
+private theorem polyProduct_filteredNormalizedFactors_eq_of_normalized_product
+    (factors : Array ZPoly)
+    (h_no_zero : ∀ factor ∈ factors.toList, factor ≠ 0)
+    (h_no_unit :
+      ∀ factor ∈ factors.toList,
+        normalizeFactorSign factor ≠ 1 ∧
+          normalizeFactorSign factor ≠ DensePoly.C (-1 : Int))
+    (hnormalized_product :
+      Array.polyProduct (factors.toList.map normalizeFactorSign).toArray =
+        Array.polyProduct factors) :
+    Array.polyProduct (filteredNormalizedFactors factors.toList).toArray =
+      Array.polyProduct factors := by
+  rw [filteredNormalizedFactors_eq_map_normalizeFactorSign_of_no_units
+    factors.toList h_no_zero h_no_unit]
+  exact hnormalized_product
+
 private theorem filteredNormalizedFactors_eq_self_of_all_recorded_normalized
     (factors : List ZPoly)
     (hnormalized :
