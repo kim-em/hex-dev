@@ -5150,6 +5150,145 @@ private theorem yunFactorsLevelCompletes_of_derivative_active_initial_split
       hp f multiplicity fuel hmultiplicity hfuel hzero hdf hstate
 
 /--
+Combined provider for `yunFactorsContributionResidualComplete` driven by a
+`yunFactorsLevelCompletes` termination witness and a pairwise reachability
+chain. Walks the recursion through the `LevelCompletes` predicate; at each
+state where `isOne c = true` the residual derivative-zero fact comes from
+`yunFactorsPairwiseReachable_terminal_residual_derivative_zero`.
+-/
+private theorem yunFactorsContributionResidualComplete_of_pairwise_reachable_levelCompletes
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (multiplicity base level fuel : Nat)
+    (hreachable : yunFactorsPairwiseReachable c w fuel)
+    (hcompletes : yunFactorsLevelCompletes c w base level fuel) :
+    yunFactorsContributionResidualComplete c w multiplicity fuel := by
+  induction fuel generalizing c w multiplicity level with
+  | zero =>
+      intro _hone
+      have hc : isOne c = true := by
+        simpa [yunFactorsLevelCompletes] using hcompletes
+      exact
+        yunFactorsPairwiseReachable_terminal_residual_derivative_zero
+          c w 0 hreachable hc
+  | succ fuel ih =>
+      by_cases hc : isOne c = true
+      · simpa [yunFactorsContributionResidualComplete, hc] using
+          (fun _hone : isOne w = false =>
+            yunFactorsPairwiseReachable_terminal_residual_derivative_zero
+              c w (fuel + 1) hreachable hc)
+      · have hc_false : isOne c = false := by
+          cases h : isOne c
+          · rfl
+          · exact False.elim (hc h)
+        let y := DensePoly.gcd c w
+        have htail_reachable :
+            yunFactorsPairwiseReachable y (w / y) fuel := by
+          simpa [y] using yunFactorsPairwiseReachable_step c w fuel hreachable
+        have htail_completes :
+            yunFactorsLevelCompletes y (w / y) base (level + 1) fuel := by
+          have hcompletes_unfold :
+              isOne c = true ∨
+                yunFactorsLevelCompletes y (w / y) base (level + 1) fuel := by
+            simpa [y, yunFactorsLevelCompletes] using hcompletes
+          rcases hcompletes_unfold with hone | htail
+          · exact False.elim (hc hone)
+          · exact htail
+        have htail :
+            yunFactorsContributionResidualComplete y (w / y) (multiplicity + 1) fuel :=
+          ih y (w / y) (multiplicity + 1) (level + 1) htail_reachable htail_completes
+        simpa [yunFactorsContributionResidualComplete, hc_false, y] using htail
+
+/--
+Unscaled derivative-active provider for the contribution residual derivative-zero
+fact. Discharges the `yunFactorsContributionResidualDerivativeZero` hypothesis
+on `(c, g) = (f / gcd f f', gcd f f')` purely from the size bound, the
+nonzero/derivative-active hypotheses on `f`, and a derivative-active state
+provider, by combining `yunFactorsLevelCompletes_of_size_bound_derivative_active`
+with the pairwise-reachable terminal residual derivative-zero lemma.
+-/
+private theorem yunFactorsContributionResidualDerivativeZero_of_derivative_split
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
+    (hfuel : f.size < fuel + 1)
+    (hzero : f.isZero = false)
+    (hdf : (DensePoly.derivative f).isZero = false)
+    (hstate :
+      ∀ c w : FpPoly p, ∀ fuel : Nat,
+        yunFactorsDerivativeActiveReachable hp f c w fuel →
+          squareFreeContributionReachable c ∧
+            c.isZero = false ∧
+              w.isZero = false) :
+    let g := DensePoly.gcd f (DensePoly.derivative f)
+    let c := f / g
+    yunFactorsContributionResidualDerivativeZero c g multiplicity fuel := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  let g := DensePoly.gcd f (DensePoly.derivative f)
+  let c := f / g
+  have hdf_ne_true : (DensePoly.derivative f).isZero ≠ true := by
+    intro htrue
+    rw [htrue] at hdf
+    cases hdf
+  have hreachable : yunFactorsPairwiseReachable c g fuel := by
+    simpa [c, g] using
+      yunFactorsPairwiseReachable_of_derivative_split hp f fuel hdf_ne_true
+  cases fuel with
+  | zero =>
+      exfalso
+      have hsize_pos : 0 < f.size := size_pos_of_isZero_false f hzero
+      omega
+  | succ fuel =>
+      have hda_reachable :
+          yunFactorsDerivativeActiveReachable hp f c g (fuel + 1) := by
+        simpa [c, g] using
+          yunFactorsDerivativeActiveReachable_of_derivative_split
+            hp f (fuel + 1) hdf_ne_true
+      have hbound : c.size + g.size ≤ fuel + 2 := by
+        have hf_ne : f ≠ 0 := ne_zero_of_isZero_false hzero
+        have hsize_eq : c.size + g.size = f.size + 1 := by
+          simpa [c, g] using
+            size_div_add_size_eq_size_add_one_of_dvd
+              (DensePoly.gcd_dvd_left f (DensePoly.derivative f)) hf_ne
+        omega
+      have hcompletes :
+          yunFactorsLevelCompletes c g multiplicity 1 (fuel + 1) :=
+        yunFactorsLevelCompletes_of_size_bound_derivative_active
+          hp f c g multiplicity 1 (fuel + 1) hstate hda_reachable hbound
+      have hresidual_complete :
+          yunFactorsContributionResidualComplete c g multiplicity (fuel + 1) :=
+        yunFactorsContributionResidualComplete_of_pairwise_reachable_levelCompletes
+          c g multiplicity multiplicity 1 (fuel + 1) hreachable hcompletes
+      exact
+        yunFactorsContributionResidualDerivativeZero_of_complete
+          c g multiplicity (fuel + 1) hresidual_complete
+
+/--
+Chained loop residual corollary: the unscaled `yunFactors` loop residual at
+`(c, g) = (f / gcd f f', gcd f f')` has zero derivative when not trivial,
+proved by composing the contribution-level provider with
+`yunFactorsResidualDerivativeZero_of_derivative_split_contribution`.
+-/
+private theorem yunFactorsResidualDerivativeZero_of_derivative_split
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
+    (hfuel : f.size < fuel + 1)
+    (hzero : f.isZero = false)
+    (hdf : (DensePoly.derivative f).isZero = false)
+    (hstate :
+      ∀ c w : FpPoly p, ∀ fuel : Nat,
+        yunFactorsDerivativeActiveReachable hp f c w fuel →
+          squareFreeContributionReachable c ∧
+            c.isZero = false ∧
+              w.isZero = false) :
+    yunFactorsResidualDerivativeZero
+      (f / DensePoly.gcd f (DensePoly.derivative f))
+      (DensePoly.gcd f (DensePoly.derivative f))
+      multiplicity
+      fuel := by
+  apply yunFactorsResidualDerivativeZero_of_derivative_split_contribution
+    hp f multiplicity fuel hdf
+  exact
+    yunFactorsContributionResidualDerivativeZero_of_derivative_split
+      hp f multiplicity fuel hfuel hzero hdf hstate
+
+/--
 Remaining assembly obligation for the derivative-active branch: the level-form
 Yun invariant identifies the local contribution and residual product, while
 the recursive IH closes the nontrivial repeated tail.
