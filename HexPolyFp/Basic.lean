@@ -929,6 +929,289 @@ theorem eval_X [ZMod64.PrimeModulus p] (x : ZMod64 p) :
   change (((0 : ZMod64 p) * x + 1) * x + 0 = x)
   rw [zmod_zero_mul, zmod_zero_add, zmod_one_mul, zmod_add_zero]
 
+private def evalCoeffPowerSumFrom :
+    List (ZMod64 p) → Nat → ZMod64 p → ZMod64 p
+  | [], _, _ => 0
+  | coeff :: coeffs, base, x =>
+      coeff * x ^ base + evalCoeffPowerSumFrom coeffs (base + 1) x
+
+private def evalScalarCoeffList :
+    List (ZMod64 p) → ZMod64 p → ZMod64 p
+  | [], _ => 0
+  | coeff :: coeffs, x => coeff + x * evalScalarCoeffList coeffs x
+
+private theorem mul_evalCoeffPowerSumFrom_eq_succ
+    (x : ZMod64 p) :
+    ∀ coeffs base,
+      x * evalCoeffPowerSumFrom coeffs base x =
+        evalCoeffPowerSumFrom coeffs (base + 1) x
+  | [], _ => by
+      simp [evalCoeffPowerSumFrom, Lean.Grind.Semiring.mul_zero]
+  | coeff :: coeffs, base => by
+      simp only [evalCoeffPowerSumFrom]
+      rw [Lean.Grind.Semiring.left_distrib]
+      rw [mul_evalCoeffPowerSumFrom_eq_succ x coeffs (base + 1)]
+      rw [← Lean.Grind.Semiring.mul_assoc x coeff (x ^ base)]
+      rw [Lean.Grind.CommSemiring.mul_comm x coeff]
+      rw [Lean.Grind.Semiring.mul_assoc coeff x (x ^ base)]
+      rw [Lean.Grind.CommSemiring.mul_comm x (x ^ base)]
+      rw [← Lean.Grind.Semiring.mul_assoc coeff (x ^ base) x]
+      rw [Lean.Grind.Semiring.pow_succ x base]
+      rw [Lean.Grind.Semiring.mul_assoc coeff (x ^ base) x]
+
+private theorem evalScalarCoeffList_eq_powerSumFrom_zero
+    (x : ZMod64 p) :
+    ∀ coeffs,
+      evalScalarCoeffList coeffs x = evalCoeffPowerSumFrom coeffs 0 x
+  | [] => by
+      simp [evalScalarCoeffList, evalCoeffPowerSumFrom]
+  | coeff :: coeffs => by
+      simp only [evalScalarCoeffList, evalCoeffPowerSumFrom]
+      rw [evalScalarCoeffList_eq_powerSumFrom_zero x coeffs]
+      rw [mul_evalCoeffPowerSumFrom_eq_succ x coeffs 0]
+      grind
+
+private theorem foldl_eval_reverse_eq_evalScalarCoeffList
+    (x : ZMod64 p) :
+    ∀ coeffs,
+      coeffs.reverse.foldl (fun acc coeff => acc * x + coeff) (Zero.zero : ZMod64 p) =
+        evalScalarCoeffList coeffs x
+  | [] => by
+      rfl
+  | coeff :: coeffs => by
+      rw [List.reverse_cons, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [foldl_eval_reverse_eq_evalScalarCoeffList x coeffs]
+      rw [Lean.Grind.CommSemiring.mul_comm]
+      rw [Lean.Grind.Semiring.add_comm]
+      rfl
+
+private theorem eval_eq_coeff_power_sum (f : FpPoly p) (x : ZMod64 p) :
+    DensePoly.eval f x = evalCoeffPowerSumFrom f.toArray.toList 0 x := by
+  unfold DensePoly.eval
+  rw [foldl_eval_reverse_eq_evalScalarCoeffList x f.toArray.toList]
+  exact evalScalarCoeffList_eq_powerSumFrom_zero x f.toArray.toList
+
+private theorem eval_coeff_list_getD_eq_coeff (f : FpPoly p) (n : Nat) :
+    f.toArray.toList.getD n (0 : ZMod64 p) = f.coeff n := by
+  unfold DensePoly.toArray DensePoly.coeff
+  rw [Array.getD_eq_getD_getElem?]
+  change f.coeffs.toList[n]?.getD (0 : ZMod64 p) =
+    f.coeffs[n]?.getD (Zero.zero : ZMod64 p)
+  rw [Array.getElem?_toList]
+  rfl
+
+private theorem list_getD_map_range_zmod (bound n : Nat) (coeff : Nat → ZMod64 p) :
+    ((List.range bound).map coeff).getD n (0 : ZMod64 p) =
+      if n < bound then coeff n else 0 := by
+  by_cases hn : n < bound
+  · simp [hn, List.getD]
+  · simp [hn, List.getD]
+
+private theorem list_eq_of_length_eq_of_getD_eq
+    {xs ys : List (ZMod64 p)}
+    (hlen : xs.length = ys.length)
+    (hget : ∀ i, i < xs.length → xs.getD i 0 = ys.getD i 0) :
+    xs = ys := by
+  induction xs generalizing ys with
+  | nil =>
+      cases ys with
+      | nil => rfl
+      | cons _ _ => simp at hlen
+  | cons x xs ih =>
+      cases ys with
+      | nil => simp at hlen
+      | cons y ys =>
+          have hhead : x = y := by
+            have h := hget 0 (by simp)
+            simpa using h
+          have hlen_tail : xs.length = ys.length := Nat.succ.inj hlen
+          have htail : xs = ys := by
+            apply ih hlen_tail
+            intro i hi
+            have h := hget (i + 1) (by simp [hi])
+            simpa using h
+          rw [hhead, htail]
+
+private theorem toArray_toList_eq_coeff_range (f : FpPoly p) :
+    f.toArray.toList = (List.range f.size).map (fun i => f.coeff i) := by
+  apply list_eq_of_length_eq_of_getD_eq
+  · simp [DensePoly.toArray, DensePoly.size]
+  · intro i hi
+    have hi_size : i < f.size := by
+      simpa [DensePoly.toArray, DensePoly.size] using hi
+    rw [eval_coeff_list_getD_eq_coeff]
+    rw [list_getD_map_range_zmod]
+    simp [hi_size]
+
+private def evalCoeffPowerSumUpTo
+    (coeff : Nat → ZMod64 p) :
+    Nat → Nat → ZMod64 p → ZMod64 p
+  | 0, _, _ => 0
+  | n + 1, base, x =>
+      coeff base * x ^ base + evalCoeffPowerSumUpTo coeff n (base + 1) x
+
+private theorem evalCoeffPowerSumFrom_range_eq_upTo
+    (coeff : Nat → ZMod64 p) (x : ZMod64 p) :
+    ∀ n base,
+      evalCoeffPowerSumFrom ((List.range n).map (fun i => coeff (base + i))) base x =
+        evalCoeffPowerSumUpTo coeff n base x
+  | 0, base => by
+      simp [evalCoeffPowerSumFrom, evalCoeffPowerSumUpTo]
+  | n + 1, base => by
+      rw [List.range_succ_eq_map]
+      simp only [List.map_cons, List.map_map]
+      simp only [evalCoeffPowerSumFrom, evalCoeffPowerSumUpTo]
+      congr 1
+      simpa [Function.comp_def, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm]
+        using evalCoeffPowerSumFrom_range_eq_upTo coeff x n (base + 1)
+
+private theorem eval_eq_coeff_power_sum_upTo_size (f : FpPoly p)
+    (x : ZMod64 p) :
+    DensePoly.eval f x = evalCoeffPowerSumUpTo (fun i => f.coeff i) f.size 0 x := by
+  rw [eval_eq_coeff_power_sum]
+  rw [toArray_toList_eq_coeff_range]
+  simpa using evalCoeffPowerSumFrom_range_eq_upTo (fun i => f.coeff i) x f.size 0
+
+private theorem evalCoeffPowerSumUpTo_succ_of_next_zero
+    (coeff : Nat → ZMod64 p) (x : ZMod64 p) :
+    ∀ n base,
+      coeff (base + n) = 0 →
+        evalCoeffPowerSumUpTo coeff n base x =
+          evalCoeffPowerSumUpTo coeff (n + 1) base x
+  | 0, base, hzero => by
+      have hz : coeff base = 0 := by simpa using hzero
+      rw [evalCoeffPowerSumUpTo, evalCoeffPowerSumUpTo, hz]
+      rw [evalCoeffPowerSumUpTo]
+      rw [Lean.Grind.Semiring.add_zero]
+      exact (Lean.Grind.Semiring.zero_mul (x ^ base)).symm
+  | n + 1, base, hzero => by
+      simp only [evalCoeffPowerSumUpTo]
+      rw [evalCoeffPowerSumUpTo_succ_of_next_zero coeff x n (base + 1) (by
+        simpa [Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using hzero)]
+      simp only [evalCoeffPowerSumUpTo]
+
+private theorem evalCoeffPowerSumUpTo_le_extend_base
+    (coeff : Nat → ZMod64 p) (x : ZMod64 p)
+    (hzero : ∀ i, base + bound ≤ i → coeff i = 0) :
+    ∀ extra,
+      evalCoeffPowerSumUpTo coeff bound base x =
+        evalCoeffPowerSumUpTo coeff (bound + extra) base x
+  | 0 => by
+      simp
+  | extra + 1 => by
+      rw [evalCoeffPowerSumUpTo_le_extend_base coeff x hzero extra]
+      rw [Nat.add_succ]
+      exact evalCoeffPowerSumUpTo_succ_of_next_zero
+        coeff x (bound + extra) base (hzero (base + (bound + extra)) (by omega))
+
+private theorem evalCoeffPowerSumUpTo_le_extend
+    (coeff : Nat → ZMod64 p) (x : ZMod64 p)
+    (hzero : ∀ i, bound ≤ i → coeff i = 0) :
+    ∀ extra,
+      evalCoeffPowerSumUpTo coeff bound 0 x =
+        evalCoeffPowerSumUpTo coeff (bound + extra) 0 x := by
+  intro extra
+  exact evalCoeffPowerSumUpTo_le_extend_base
+    coeff x (base := 0) (bound := bound) (by simpa using hzero) extra
+
+private theorem eval_eq_coeff_power_sum_upTo_bound (f : FpPoly p)
+    (x : ZMod64 p) {bound : Nat} (hbound : f.size ≤ bound) :
+    DensePoly.eval f x = evalCoeffPowerSumUpTo (fun i => f.coeff i) bound 0 x := by
+  rw [eval_eq_coeff_power_sum_upTo_size]
+  obtain ⟨extra, rfl⟩ := Nat.exists_eq_add_of_le hbound
+  exact evalCoeffPowerSumUpTo_le_extend
+    (fun i => f.coeff i) x
+    (fun i hi => DensePoly.coeff_eq_zero_of_size_le f hi) extra
+
+private theorem evalCoeffPowerSumUpTo_add
+    (f h : FpPoly p) (x : ZMod64 p) :
+    ∀ n base,
+      evalCoeffPowerSumUpTo (fun i => f.coeff i + h.coeff i) n base x =
+        evalCoeffPowerSumUpTo (fun i => f.coeff i) n base x +
+          evalCoeffPowerSumUpTo (fun i => h.coeff i) n base x
+  | 0, _ => by
+      simp [evalCoeffPowerSumUpTo]
+      exact zmod_add_zero_zero.symm
+  | n + 1, base => by
+      simp only [evalCoeffPowerSumUpTo]
+      rw [evalCoeffPowerSumUpTo_add f h x n (base + 1)]
+      grind
+
+private theorem evalCoeffPowerSumUpTo_sub
+    (f h : FpPoly p) (x : ZMod64 p) :
+    ∀ n base,
+      evalCoeffPowerSumUpTo (fun i => f.coeff i - h.coeff i) n base x =
+        evalCoeffPowerSumUpTo (fun i => f.coeff i) n base x -
+          evalCoeffPowerSumUpTo (fun i => h.coeff i) n base x
+  | 0, _ => by
+      simp [evalCoeffPowerSumUpTo]
+      grind
+  | n + 1, base => by
+      simp only [evalCoeffPowerSumUpTo]
+      rw [evalCoeffPowerSumUpTo_sub f h x n (base + 1)]
+      grind
+
+private theorem size_le_of_coeff_eq_zero_from (f : FpPoly p) (bound : Nat)
+    (hzero : ∀ i, bound ≤ i → f.coeff i = 0) :
+    f.size ≤ bound := by
+  by_cases hle : f.size ≤ bound
+  · exact hle
+  · have hgt : bound < f.size := Nat.lt_of_not_ge hle
+    have hpos : 0 < f.size := by omega
+    have htop_zero : f.coeff (f.size - 1) = 0 := hzero (f.size - 1) (by omega)
+    exact False.elim (DensePoly.coeff_last_ne_zero_of_pos_size f hpos htop_zero)
+
+theorem eval_add (f h : FpPoly p) (x : ZMod64 p) :
+    DensePoly.eval (f + h) x = DensePoly.eval f x + DensePoly.eval h x := by
+  let bound := max f.size h.size
+  rw [eval_eq_coeff_power_sum_upTo_bound (f + h) x (bound := bound)]
+  · rw [eval_eq_coeff_power_sum_upTo_bound f x (bound := bound)
+      (Nat.le_max_left f.size h.size)]
+    rw [eval_eq_coeff_power_sum_upTo_bound h x (bound := bound)
+      (Nat.le_max_right f.size h.size)]
+    have hcoeff :
+        (fun i => (f + h).coeff i) =
+          (fun i => f.coeff i + h.coeff i) := by
+      funext i
+      rw [DensePoly.coeff_add _ _ _ zmod_add_zero_zero]
+    rw [hcoeff]
+    exact evalCoeffPowerSumUpTo_add f h x bound 0
+  · change (f + h).size ≤ max f.size h.size
+    apply size_le_of_coeff_eq_zero_from
+    intro i hi
+    rw [DensePoly.coeff_add _ _ _ zmod_add_zero_zero]
+    rw [DensePoly.coeff_eq_zero_of_size_le f
+        (Nat.le_trans (Nat.le_max_left f.size h.size) hi),
+      DensePoly.coeff_eq_zero_of_size_le h
+        (Nat.le_trans (Nat.le_max_right f.size h.size) hi)]
+    exact zmod_add_zero_zero
+
+theorem eval_sub (f h : FpPoly p) (x : ZMod64 p) :
+    DensePoly.eval (f - h) x = DensePoly.eval f x - DensePoly.eval h x := by
+  let bound := max f.size h.size
+  rw [eval_eq_coeff_power_sum_upTo_bound (f - h) x (bound := bound)]
+  · rw [eval_eq_coeff_power_sum_upTo_bound f x (bound := bound)
+      (Nat.le_max_left f.size h.size)]
+    rw [eval_eq_coeff_power_sum_upTo_bound h x (bound := bound)
+      (Nat.le_max_right f.size h.size)]
+    have hcoeff :
+        (fun i => (f - h).coeff i) =
+          (fun i => f.coeff i - h.coeff i) := by
+      funext i
+      rw [DensePoly.coeff_sub _ _ _ zmod_sub_zero_zero]
+    rw [hcoeff]
+    exact evalCoeffPowerSumUpTo_sub f h x bound 0
+  · change (f - h).size ≤ max f.size h.size
+    apply size_le_of_coeff_eq_zero_from
+    intro i hi
+    rw [DensePoly.coeff_sub _ _ _ zmod_sub_zero_zero]
+    rw [DensePoly.coeff_eq_zero_of_size_le f
+        (Nat.le_trans (Nat.le_max_left f.size h.size) hi),
+      DensePoly.coeff_eq_zero_of_size_le h
+        (Nat.le_trans (Nat.le_max_right f.size h.size) hi)]
+    exact zmod_sub_zero_zero
+
 theorem add_zero (f : FpPoly p) :
     f + 0 = f := by
   apply DensePoly.ext_coeff
