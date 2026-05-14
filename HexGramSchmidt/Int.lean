@@ -241,6 +241,26 @@ private theorem getArrayEntry_foldl_setArrayEntry_row_ne
       rw [getArrayEntry_setArrayEntry_of_row_ne]
       omega
 
+/-- A column-targeted `foldl` of `setArrayEntry`s at column `k` leaves entries
+in any other column unchanged. -/
+private theorem getArrayEntry_foldl_setArrayEntry_col_ne
+    (xs : List Nat) (coeffs rows : Array (Array Int)) (k r c : Nat) (hc : c ≠ k) :
+    getArrayEntry
+        (xs.foldl (fun next x => setArrayEntry next x k (getArrayEntry rows x k)) coeffs)
+        r c =
+      getArrayEntry coeffs r c := by
+  induction xs generalizing coeffs with
+  | nil =>
+      simp
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [ih (setArrayEntry coeffs x k (getArrayEntry rows x k))]
+      by_cases hrow : r = x
+      · subst x
+        rw [getArrayEntry_setArrayEntry_of_col_ne _ _ _ _ _ hc]
+      · rw [getArrayEntry_setArrayEntry_of_row_ne]
+        exact hrow
+
 /-- A `foldl` that sets indices appearing in `xs` leaves untouched indices
 unchanged. Used to characterise the outer and inner sweeps of
 `stepScaledRows`. -/
@@ -335,6 +355,87 @@ private theorem getArrayEntry_writeScaledColumn_diag
     simp at hx
     omega
   · omega
+
+/-- `writeScaledColumn` only updates entries in column `k`; entries in any
+other column are unchanged. -/
+private theorem getArrayEntry_writeScaledColumn_of_col_ne
+    (coeffs rows : Array (Array Int)) (n k r c : Nat) (hc : c ≠ k) :
+    getArrayEntry (writeScaledColumn coeffs rows n k) r c =
+      getArrayEntry coeffs r c := by
+  unfold writeScaledColumn
+  simp [Std.Legacy.Range.forIn_eq_forIn_range', Std.Legacy.Range.size]
+  rw [getArrayEntry_foldl_setArrayEntry_col_ne _ _ _ _ _ _ hc]
+  by_cases hrow : r = k
+  · subst r
+    rw [getArrayEntry_setArrayEntry_of_col_ne _ _ _ _ _ hc]
+  · rw [getArrayEntry_setArrayEntry_of_row_ne]
+    exact hrow
+
+/-- `setArrayEntry` preserves the outer-array size. -/
+private theorem setArrayEntry_size (rows : Array (Array Int)) (row col : Nat) (value : Int) :
+    (setArrayEntry rows row col value).size = rows.size := by
+  simp [setArrayEntry, Array.set!_eq_setIfInBounds, Array.size_setIfInBounds]
+
+/-- `setArrayEntry` preserves each inner row's size. -/
+private theorem setArrayEntry_rows_size
+    (rows : Array (Array Int)) (row col r : Nat) (value : Int) :
+    (setArrayEntry rows row col value)[r]!.size = rows[r]!.size := by
+  unfold setArrayEntry
+  by_cases hrow : r = row
+  · subst r
+    by_cases hbound : row < rows.size
+    · rw [array_getElem!_set!_same _ hbound]
+      simp [Array.set!_eq_setIfInBounds, Array.size_setIfInBounds]
+    · simp [Array.set!_eq_setIfInBounds, Array.setIfInBounds, hbound]
+  · simp only [Array.getElem!_eq_getD, Array.getD_eq_getD_getElem?,
+      Array.set!_eq_setIfInBounds]
+    have hne : row ≠ r := fun h => hrow h.symm
+    by_cases hbound : row < rows.size
+    · simp [Array.getElem?_setIfInBounds, hne]
+    · simp [Array.setIfInBounds, hbound]
+
+/-- A `foldl` of `setArrayEntry` writes at column `k` preserves the
+outer-array size. -/
+private theorem foldl_setArrayEntry_size
+    (xs : List Nat) (init rows : Array (Array Int)) (k : Nat) :
+    (xs.foldl (fun next x => setArrayEntry next x k (getArrayEntry rows x k)) init).size =
+      init.size := by
+  induction xs generalizing init with
+  | nil => simp
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [ih]
+      exact setArrayEntry_size _ _ _ _
+
+/-- A `foldl` of `setArrayEntry` writes at column `k` preserves inner row sizes. -/
+private theorem foldl_setArrayEntry_rows_size
+    (xs : List Nat) (init rows : Array (Array Int)) (k r : Nat) :
+    (xs.foldl (fun next x => setArrayEntry next x k (getArrayEntry rows x k)) init)[r]!.size =
+      init[r]!.size := by
+  induction xs generalizing init with
+  | nil => simp
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [ih]
+      exact setArrayEntry_rows_size _ _ _ _ _
+
+/-- `writeScaledColumn` preserves the outer-array size. -/
+private theorem writeScaledColumn_size
+    (coeffs rows : Array (Array Int)) (n k : Nat) :
+    (writeScaledColumn coeffs rows n k).size = coeffs.size := by
+  unfold writeScaledColumn
+  simp [Std.Legacy.Range.forIn_eq_forIn_range', Std.Legacy.Range.size]
+  rw [foldl_setArrayEntry_size]
+  exact setArrayEntry_size _ _ _ _
+
+/-- `writeScaledColumn` preserves each inner row's size. -/
+private theorem writeScaledColumn_rows_size
+    (coeffs rows : Array (Array Int)) (n k r : Nat) :
+    (writeScaledColumn coeffs rows n k)[r]!.size = coeffs[r]!.size := by
+  unfold writeScaledColumn
+  simp [Std.Legacy.Range.forIn_eq_forIn_range', Std.Legacy.Range.size]
+  rw [foldl_setArrayEntry_rows_size]
+  exact setArrayEntry_rows_size _ _ _ _ _
 
 private theorem getArrayEntry_default_row (j : Nat) :
     (default : Array Int)[j]! = 0 := by
