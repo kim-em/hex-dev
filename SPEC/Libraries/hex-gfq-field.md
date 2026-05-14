@@ -43,3 +43,33 @@ cardinality, and correspondence with Mathlib's abstract finite fields.
 - `a / b = a * b⁻¹`
 - `frob(a) = a ^ p`
 - Field axioms for `FiniteField p f hf hirr`
+
+## External comparators
+
+| Comparator | Class | Scope |
+|---|---|---|
+| FLINT `fq_default` arithmetic via python-flint | informational | bench targets exercising finite-field arithmetic: addition, multiplication, reduction modulo `f`, inversion, division, exponentiation, Frobenius |
+
+FLINT's `fq_default` is the standard reference for finite-field
+arithmetic and covers the same operations as HexGfqField:
+reduction modulo a fixed irreducible modulus polynomial, addition,
+multiplication, inversion, division, and exponentiation. FLINT
+internally selects between representations (`fq_nmod` for word-size
+primes, `fq_zech` for small fields) via crossover heuristics that
+Hex does not replicate; the constant-factor gap is structural rather
+than algorithmic. Classification is `informational`.
+
+The irreducibility precondition `hirr : Irreducible f` carried by
+`FiniteField p f hf hirr` matches the precondition `fq_default`
+imposes at `ctx` construction time — bench fixtures generated from
+the field type satisfy this automatically. This is the layer at
+which the FLINT primitive's contract aligns with Hex's; the
+underlying quotient-ring arithmetic in HexGfqRing handles the
+general (reducible-modulus) case for which no clean FLINT primitive
+exists, and is covered transitively through this declaration on
+fixtures whose moduli are irreducible.
+
+Wired via a persistent-subprocess Python driver per
+`SPEC/benchmarking.md §"External comparators" §"Process call"`.
+
+Structured metadata in `libraries.yml: HexGfqField.phase4.comparators`.

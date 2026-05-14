@@ -43,20 +43,29 @@ supports a field structure; that extension belongs to hex-gfq-field.
 
 ## External comparators
 
-| Comparator | Class | Scope |
-|---|---|---|
-| FLINT `fq_default` arithmetic via python-flint | informational | bench targets exercising quotient-ring arithmetic: addition, multiplication, reduction modulo `f` |
+No external comparator is required.
 
-FLINT's `fq_default` is the standard reference for finite-field
-quotient-ring arithmetic and covers the same operations:
-reduction modulo a fixed modulus polynomial, addition,
-multiplication. FLINT internally selects between
-representations (`fq_nmod` for word-size primes, `fq_zech` for
-small fields) via crossover heuristics that Hex does not
-replicate; the constant-factor gap is structural rather than
-algorithmic. Classification is `informational`.
+**Justification:** `structural-layer` per
+`SPEC/benchmarking.md §"Comparator naming"`. HexGfqRing's semantic
+domain is `F_p[x]/(f)` for *any* nonconstant `f`, including reducible
+moduli (see the contents section: "This does NOT require `f` to be
+irreducible — the quotient is always a ring"). The natural FLINT
+primitive `fq_default` rejects reducible moduli at `ctx` construction
+time (FLINT internally selects between `fq_nmod` and `fq_zech`
+representations, both of which assume a field), so it cannot serve as
+a reference implementation for HexGfqRing's actual scope.
 
-Wired via a persistent-subprocess Python driver per
-`SPEC/benchmarking.md §"External comparators" §"Process call"`.
+Other FLINT primitives (`nmod_poly` with explicit `nmod_poly_divrem`
+per multiplication) cover the general quotient case but do not measure
+the comparison HexGfqRing's design point is targeting — they pay
+reduction overhead on every operation and do not exploit the
+fixed-modulus structure, so the ratio carries no information about
+quotient-ring constant-factor parity.
 
-Structured metadata in `libraries.yml: HexGfqRing.phase4.comparators`.
+Coverage at the finite-field subset of HexGfqRing's domain is provided
+upstream by HexGfqField's external comparator declaration (FLINT
+`fq_default`, informational), which exercises HexGfqRing's quotient
+arithmetic transitively through `FiniteField p f hf hirr`'s thin
+wrapper over `PolyQuotient p f hf`. The irreducibility precondition
+that breaks the declaration at this layer is naturally satisfied at
+the field layer.
