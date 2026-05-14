@@ -4329,7 +4329,145 @@ theorem isIrreducible_iff (f : ZPoly) :
 instance instDecidableIrreducible (f : ZPoly) : Decidable (Irreducible f) :=
   decidable_of_iff _ (isIrreducible_iff f)
 
+/-- A polynomial of dense size `1` is the constant polynomial of its zeroth
+coefficient. The trimming invariant on `DensePoly` forces the single stored
+coefficient to be nonzero, so `coeff 0` already names the unique stored entry. -/
+private theorem eq_C_of_size_eq_one (a : ZPoly) (hsize : a.size = 1) :
+    a = DensePoly.C (a.coeff 0) := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_C]
+  by_cases hn : n = 0
+  · simp [hn]
+  · simp [hn]
+    exact DensePoly.coeff_eq_zero_of_size_le a (by omega)
+
+/-- An integer factor of `1` is `±1`. Used to read off the unit factor in
+size-two monic polynomial irreducibility proofs. -/
+private theorem int_factor_one_eq_unit {x y : Int} (h : x * y = 1) :
+    x = 1 ∨ x = -1 := by
+  have hx_dvd : x ∣ (1 : Int) := ⟨y, h.symm⟩
+  have hxnat_dvd : x.natAbs ∣ (1 : Nat) := by
+    have := Int.natAbs_dvd_natAbs.mpr hx_dvd
+    simpa using this
+  have hxnat_le : x.natAbs ≤ 1 := Nat.le_of_dvd (by omega) hxnat_dvd
+  have hx_ne : x ≠ 0 := by
+    intro hzero
+    rw [hzero] at h
+    rw [Int.zero_mul] at h
+    omega
+  have hxnat_pos : 1 ≤ x.natAbs := by
+    rcases Nat.eq_zero_or_pos x.natAbs with hzero | hpos
+    · exact absurd (Int.natAbs_eq_zero.mp hzero) hx_ne
+    · exact hpos
+  have hxnat_eq : x.natAbs = 1 := by omega
+  rcases Int.natAbs_eq x with heq | heq
+  · left
+    rw [heq, hxnat_eq]
+    rfl
+  · right
+    rw [heq, hxnat_eq]
+    rfl
+
+/-- A monic integer polynomial of dense size two is irreducible. The proof
+splits any factorization `f = a * b` by dense size: degree arithmetic forces
+one factor to be a constant `±1`, so the constant factor is a `ZPoly` unit. -/
+private theorem irreducible_of_size_two_monic
+    (f : ZPoly) (hf_size : f.size = 2)
+    (hf_monic : DensePoly.leadingCoeff f = (1 : Int)) :
+    ZPoly.Irreducible f := by
+  have hf_ne : f ≠ 0 := by
+    intro hzero
+    rw [hzero] at hf_size
+    change (0 : Nat) = 2 at hf_size
+    omega
+  have hf_pos : 0 < f.size := by omega
+  refine
+    { not_zero := hf_ne
+      not_unit := ?_
+      no_factors := ?_ }
+  · intro hunit
+    rcases hunit with hone | hneg
+    · rw [hone] at hf_size
+      have h1 : (DensePoly.C (1 : Int)).size = 1 := rfl
+      omega
+    · rw [hneg] at hf_size
+      have hneg_size : (DensePoly.C (-1 : Int)).size = 1 := rfl
+      omega
+  · intro a b hf_ab
+    by_cases ha_zero : a = 0
+    · exfalso
+      apply hf_ne
+      rw [hf_ab, ha_zero, DensePoly.zero_mul]
+    by_cases hb_zero : b = 0
+    · exfalso
+      apply hf_ne
+      rw [hf_ab, hb_zero]
+      change a * (0 : ZPoly) = 0
+      rw [DensePoly.mul_comm_poly, DensePoly.zero_mul]
+    have ha_pos : 0 < a.size := ZPoly.size_pos_of_ne_zero a ha_zero
+    have hb_pos : 0 < b.size := ZPoly.size_pos_of_ne_zero b hb_zero
+    have hab_size :
+        (a * b).size = a.size + b.size - 1 :=
+      ZPoly.mul_size_eq_top_succ_of_nonzero a b ha_pos hb_pos
+    rw [← hf_ab] at hab_size
+    rw [hf_size] at hab_size
+    have hsum : a.size + b.size = 3 := by omega
+    have hlead :
+        DensePoly.leadingCoeff a * DensePoly.leadingCoeff b = (1 : Int) := by
+      have := ZPoly.leadingCoeff_mul_of_nonzero a b ha_zero hb_zero
+      rw [← hf_ab] at this
+      rw [hf_monic] at this
+      exact this.symm
+    have ha_size_le : a.size ≤ 2 := by omega
+    have hb_size_le : b.size ≤ 2 := by omega
+    have ha_size_eq_one_or_two : a.size = 1 ∨ a.size = 2 := by omega
+    rcases ha_size_eq_one_or_two with ha_one | ha_two
+    · -- a.size = 1, so a is constant; show IsUnit a
+      left
+      have ha_eq : a = DensePoly.C (a.coeff 0) := eq_C_of_size_eq_one a ha_one
+      have ha_lead : DensePoly.leadingCoeff a = a.coeff 0 := by
+        rw [DensePoly.leadingCoeff_eq_coeff_last a (by omega)]
+        congr 1
+        omega
+      rw [ha_lead] at hlead
+      have ha_coeff_unit : a.coeff 0 = 1 ∨ a.coeff 0 = -1 :=
+        int_factor_one_eq_unit hlead
+      rcases ha_coeff_unit with hone | hneg
+      · left
+        rw [ha_eq, hone]
+      · right
+        rw [ha_eq, hneg]
+    · -- a.size = 2, so b.size = 1; symmetric case
+      right
+      have hb_one : b.size = 1 := by omega
+      have hb_eq : b = DensePoly.C (b.coeff 0) := eq_C_of_size_eq_one b hb_one
+      have hb_lead : DensePoly.leadingCoeff b = b.coeff 0 := by
+        rw [DensePoly.leadingCoeff_eq_coeff_last b (by omega)]
+        congr 1
+        omega
+      rw [hb_lead] at hlead
+      rw [Int.mul_comm] at hlead
+      have hb_coeff_unit : b.coeff 0 = 1 ∨ b.coeff 0 = -1 :=
+        int_factor_one_eq_unit hlead
+      rcases hb_coeff_unit with hone | hneg
+      · left
+        rw [hb_eq, hone]
+      · right
+        rw [hb_eq, hneg]
+
+/-- The integer indeterminate `X` is irreducible. -/
+theorem irreducible_X : ZPoly.Irreducible ZPoly.X :=
+  irreducible_of_size_two_monic ZPoly.X rfl rfl
+
 end ZPoly
+
+/-- The monic linear factor `X - r` is irreducible over `ZPoly`. -/
+private theorem irreducible_linearFactorForRoot (r : Int) :
+    ZPoly.Irreducible (linearFactorForRoot r) :=
+  ZPoly.irreducible_of_size_two_monic (linearFactorForRoot r)
+    (linearFactorForRoot_size_eq_two r)
+    (leadingCoeff_linearFactorForRoot r)
 
 /--
 The primitive square-free layer in normalization reassembles the extracted
