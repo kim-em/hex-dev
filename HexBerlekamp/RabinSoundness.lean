@@ -163,6 +163,125 @@ theorem crtZeroOneXGCDCandidate_mod_one_right
     (DensePoly.xgcd a b).left (DensePoly.xgcd a b).right hb
     (xgcd_bezout_of_gcd_eq_one a b hgcd)
 
+private theorem congr_of_congr_mul_left
+    {x y a b : FpPoly p} (h : DensePoly.Congr x y (a * b)) :
+    DensePoly.Congr x y a := by
+  rcases h with ⟨r, hr⟩
+  refine ⟨b * r, ?_⟩
+  rw [hr, FpPoly.mul_assoc]
+
+private theorem congr_of_congr_mul_right
+    {x y a b : FpPoly p} (h : DensePoly.Congr x y (a * b)) :
+    DensePoly.Congr x y b := by
+  rcases h with ⟨r, hr⟩
+  refine ⟨a * r, ?_⟩
+  calc
+    x - y = (a * b) * r := hr
+    _ = a * (b * r) := FpPoly.mul_assoc a b r
+    _ = b * (a * r) := by
+      calc
+        a * (b * r) = (a * b) * r := (FpPoly.mul_assoc a b r).symm
+        _ = (b * a) * r := by rw [FpPoly.mul_comm a b]
+        _ = b * (a * r) := FpPoly.mul_assoc b a r
+
+private theorem zmod64_one_ne_zero_of_prime [ZMod64.PrimeModulus p] :
+    (1 : ZMod64 p) ≠ (0 : ZMod64 p) := by
+  intro h
+  have h2 : 2 ≤ p := Hex.Nat.Prime.two_le (ZMod64.PrimeModulus.prime (p := p))
+  have htoNat : (1 : ZMod64 p).toNat = (0 : ZMod64 p).toNat :=
+    congrArg ZMod64.toNat h
+  rw [show ((1 : ZMod64 p).toNat) = 1 % p from ZMod64.toNat_one,
+      show ((0 : ZMod64 p).toNat) = 0 from ZMod64.toNat_zero,
+      Nat.mod_eq_of_lt (by omega : 1 < p)] at htoNat
+  exact absurd htoNat (by omega)
+
+private theorem constant_eq_zero_of_mod_eq_zero
+    [ZMod64.PrimeModulus p] {a : FpPoly p} {c : ZMod64 p}
+    (ha_pos : 0 < a.degree?.getD 0)
+    (hmod : (DensePoly.C c : FpPoly p) % a = (0 : FpPoly p) % a) :
+    c = 0 := by
+  haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
+  have hC : (DensePoly.C c : FpPoly p) % a = DensePoly.C c := by
+    apply DensePoly.mod_eq_self_of_degree_lt
+    rw [DensePoly.degree?_C_getD]
+    exact ha_pos
+  have hzero : (0 : FpPoly p) % a = 0 := by
+    exact DensePoly.zero_mod_eq_zero_core (S := ZMod64 p) a
+  have hpoly : (DensePoly.C c : FpPoly p) = 0 := by
+    simpa [hC, hzero] using hmod
+  have hcoeff := congrArg (fun q : FpPoly p => q.coeff 0) hpoly
+  simpa using hcoeff
+
+private theorem constant_eq_one_of_mod_eq_one
+    [ZMod64.PrimeModulus p] {b : FpPoly p} {c : ZMod64 p}
+    (hb_pos : 0 < b.degree?.getD 0)
+    (hmod : (DensePoly.C c : FpPoly p) % b = (1 : FpPoly p) % b) :
+    c = 1 := by
+  haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
+  have hC : (DensePoly.C c : FpPoly p) % b = DensePoly.C c := by
+    apply DensePoly.mod_eq_self_of_degree_lt
+    rw [DensePoly.degree?_C_getD]
+    exact hb_pos
+  have hone_deg : (1 : FpPoly p).degree?.getD 0 < b.degree?.getD 0 := by
+    change (DensePoly.C (1 : ZMod64 p)).degree?.getD 0 < b.degree?.getD 0
+    rw [DensePoly.degree?_C_getD]
+    exact hb_pos
+  have hone : (1 : FpPoly p) % b = 1 := by
+    exact DensePoly.mod_eq_self_of_degree_lt (1 : FpPoly p) b hone_deg
+  have hpoly : (DensePoly.C c : FpPoly p) = 1 := by
+    simpa [hC, hone] using hmod
+  have hcoeff := congrArg (fun q : FpPoly p => q.coeff 0) hpoly
+  have hC_coeff : (DensePoly.C c : FpPoly p).coeff 0 = c := by
+    rw [DensePoly.coeff_C]
+    simp
+  have hone_coeff : (1 : FpPoly p).coeff 0 = (1 : ZMod64 p) := by
+    change (DensePoly.C (1 : ZMod64 p)).coeff 0 = (1 : ZMod64 p)
+    rw [DensePoly.coeff_C]
+    simp
+  exact hC_coeff.symm.trans (hcoeff.trans hone_coeff)
+
+/--
+The zero-one CRT representative is not congruent to a constant modulo
+`a * b` when both factors have positive degree.
+-/
+theorem crtZeroOneCandidate_not_congr_constant_mod_product
+    [ZMod64.PrimeModulus p] (a b s t : FpPoly p)
+    (ha : DensePoly.Monic a) (hb : DensePoly.Monic b)
+    (ha_pos : 0 < a.degree?.getD 0) (hb_pos : 0 < b.degree?.getD 0)
+    (hbez : s * a + t * b = 1) (c : ZMod64 p) :
+    ¬ DensePoly.Congr (crtZeroOneCandidate a b s t) (DensePoly.C c) (a * b) := by
+  intro hconst
+  haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
+  have hconst_left :
+      crtZeroOneCandidate a b s t % a = (DensePoly.C c : FpPoly p) % a :=
+    @DensePoly.mod_eq_mod_of_congr (ZMod64 p) inferInstance inferInstance inferInstance
+      (ZMod64.instDivModLawsZMod64Fp p) _ _ _ (congr_of_congr_mul_left hconst)
+  have hconst_right :
+      crtZeroOneCandidate a b s t % b = (DensePoly.C c : FpPoly p) % b :=
+    @DensePoly.mod_eq_mod_of_congr (ZMod64 p) inferInstance inferInstance inferInstance
+      (ZMod64.instDivModLawsZMod64Fp p) _ _ _ (congr_of_congr_mul_right hconst)
+  have hc_zero : c = 0 := by
+    apply constant_eq_zero_of_mod_eq_zero (a := a) ha_pos
+    exact hconst_left.symm.trans
+      (crtZeroOneCandidate_mod_zero_left a b s t ha hbez)
+  have hc_one : c = 1 := by
+    apply constant_eq_one_of_mod_eq_one (b := b) hb_pos
+    exact hconst_right.symm.trans
+      (crtZeroOneCandidate_mod_one_right a b s t hb hbez)
+  exact zmod64_one_ne_zero_of_prime (hc_one.symm.trans hc_zero)
+
+/-- XGCD-backed specialization of `crtZeroOneCandidate_not_congr_constant_mod_product`. -/
+theorem crtZeroOneXGCDCandidate_not_congr_constant_mod_product
+    [ZMod64.PrimeModulus p] (a b : FpPoly p)
+    (ha : DensePoly.Monic a) (hb : DensePoly.Monic b)
+    (ha_pos : 0 < a.degree?.getD 0) (hb_pos : 0 < b.degree?.getD 0)
+    (hgcd : DensePoly.gcd a b = 1) (c : ZMod64 p) :
+    ¬ DensePoly.Congr (crtZeroOneXGCDCandidate a b) (DensePoly.C c) (a * b) := by
+  unfold crtZeroOneXGCDCandidate
+  exact crtZeroOneCandidate_not_congr_constant_mod_product a b
+    (DensePoly.xgcd a b).left (DensePoly.xgcd a b).right
+    ha hb ha_pos hb_pos (xgcd_bezout_of_gcd_eq_one a b hgcd) c
+
 section
 
 variable [ZMod64.PrimeModulus p]
