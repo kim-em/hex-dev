@@ -780,6 +780,74 @@ private theorem densePoly_eq_of_coeffs_eq
           subst h
           rfl
 
+theorem checkRabinBezoutWitness_of_coeffsEqUpTo
+    (f : FpPoly 2) (hmonic : DensePoly.Monic f)
+    (cert : SamePrimeIrreducibilityCertificate 2)
+    {i d bound : Nat} {powWitness : FpPoly 2}
+    {witness : RabinBezoutWitness 2}
+    (hpow : cert.powChain[d]? = some powWitness)
+    (hbezout : cert.bezout[i]? = some witness)
+    (hleft :
+      (witness.left * f +
+        witness.right * certifiedFrobeniusDiffMod f hmonic powWitness).size ≤ bound)
+    (hright : (1 : FpPoly 2).size ≤ bound)
+    (hcoeffs :
+      coeffsEqUpTo bound
+        (witness.left * f +
+          witness.right * certifiedFrobeniusDiffMod f hmonic powWitness)
+        1 = true) :
+    checkRabinBezoutWitness f hmonic cert i d = true := by
+  unfold checkRabinBezoutWitness
+  rw [hpow, hbezout]
+  have hcoeffsEq :
+      (witness.left * f +
+        witness.right * certifiedFrobeniusDiffMod f hmonic powWitness).coeffs =
+        (1 : FpPoly 2).coeffs :=
+    coeffs_eq_of_size_le_of_coeffsEqUpTo hleft hright hcoeffs
+  have hpoly :
+      witness.left * f +
+          witness.right * certifiedFrobeniusDiffMod f hmonic powWitness =
+        (1 : FpPoly 2) :=
+    densePoly_eq_of_coeffs_eq hcoeffsEq
+  simp [hpoly]
+
+theorem checkRabinBezoutWitness_of_coeffs_eq
+    (f : FpPoly 2) (hmonic : DensePoly.Monic f)
+    (cert : SamePrimeIrreducibilityCertificate 2)
+    {i d : Nat} {powWitness : FpPoly 2}
+    {witness : RabinBezoutWitness 2}
+    (hpow : cert.powChain[d]? = some powWitness)
+    (hbezout : cert.bezout[i]? = some witness)
+    (hcoeffs :
+      (witness.left * f +
+        witness.right * certifiedFrobeniusDiffMod f hmonic powWitness).coeffs =
+        (1 : FpPoly 2).coeffs) :
+    checkRabinBezoutWitness f hmonic cert i d = true := by
+  unfold checkRabinBezoutWitness
+  rw [hpow, hbezout]
+  have hpoly :
+      witness.left * f +
+          witness.right * certifiedFrobeniusDiffMod f hmonic powWitness =
+        (1 : FpPoly 2) :=
+    densePoly_eq_of_coeffs_eq hcoeffs
+  simp [hpoly]
+
+theorem checkRabinBezoutWitness_of_poly_eq
+    (f : FpPoly 2) (hmonic : DensePoly.Monic f)
+    (cert : SamePrimeIrreducibilityCertificate 2)
+    {i d : Nat} {powWitness : FpPoly 2}
+    {witness : RabinBezoutWitness 2}
+    (hpow : cert.powChain[d]? = some powWitness)
+    (hbezout : cert.bezout[i]? = some witness)
+    (hpoly :
+      witness.left * f +
+          witness.right * certifiedFrobeniusDiffMod f hmonic powWitness =
+        (1 : FpPoly 2)) :
+    checkRabinBezoutWitness f hmonic cert i d = true := by
+  unfold checkRabinBezoutWitness
+  rw [hpow, hbezout]
+  simp [hpoly]
+
 theorem checkPowChainLinearIncrementalQuotientWitnesses_first_of_coeffs
     (f first : FpPoly 2) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate 2)
