@@ -69,6 +69,17 @@ theorem trimTrailingZerosList_getD (coeffs : List R) (n : Nat) :
             simp
           · simpa [trimTrailingZerosList, htrim] using ih n
 
+theorem trimTrailingZerosList_length_le (coeffs : List R) :
+    (trimTrailingZerosList coeffs).length ≤ coeffs.length := by
+  induction coeffs with
+  | nil =>
+      simp [trimTrailingZerosList]
+  | cons a as ih =>
+      by_cases htrim : trimTrailingZerosList as = [] ∧ a = (Zero.zero : R)
+      · simp [trimTrailingZerosList, htrim]
+      · simp [trimTrailingZerosList, htrim]
+        omega
+
 /-- Trimming leaves the list either empty or with a nonzero last entry; this is the list-level
 form of the `DensePolyNormalized` invariant. -/
 theorem trimTrailingZerosList_normalized (coeffs : List R) :
@@ -140,6 +151,11 @@ def monomial (n : Nat) (c : R) : DensePoly R :=
 degree, except for the zero polynomial where it is `0`. -/
 def size (p : DensePoly R) : Nat :=
   p.coeffs.size
+
+theorem size_ofCoeffs_le (coeffs : Array R) :
+    (ofCoeffs coeffs).size ≤ coeffs.size := by
+  unfold ofCoeffs size trimTrailingZeros
+  simpa using trimTrailingZerosList_length_le (R := R) coeffs.toList
 
 /-- `true` exactly when the polynomial is zero. -/
 def isZero (p : DensePoly R) : Bool :=
