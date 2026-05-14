@@ -230,13 +230,4 @@ remainder chain over `F_7`), matching the `n²` cost model.
 
 ## Concerns
 
-- #2801: The CI-feasible degree-8 ladder resolves
-  `runNegSubChecksum` and `runFrobChecksum`, and the CI-safe
-  degree-5 certificate widens the six unresolved calibration
-  schedules to `2,3,4,5,6,8`, but those six scientific verdicts
-  remain inconclusive
-  (`runOfPolyReprChecksum`, `runAddChecksum`, `runMulChecksum`,
-  `runPowChecksum`, `runInvDivChecksum`, `runZPowChecksum`).
-  `HexGfqField.done_through` stays at `3` until a larger calibration
-  path widens the evidence without putting degree-12/16 certificate
-  checks on the normal CI build path.
+None.
