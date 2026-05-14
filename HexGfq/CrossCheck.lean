@@ -515,39 +515,630 @@ private def genericN32Cert : Berlekamp.IrreducibilityCertificate where
     genericMod genericMod_monic genericN32SamePrimeCert
     genericN32Quotients = true
 
-private theorem genericN32_step0_prev_reduced :
-    (polyP2 #[0, 1]).degree?.getD 0 < genericMod.degree?.getD 0 := by
-  have hdegree : genericMod.degree?.getD 0 = 32 := by
-    unfold genericMod Conway.packedGF2FpPoly DensePoly.degree? DensePoly.size
-    rfl
-  apply Berlekamp.degree?_getD_lt_of_size_le
-  · decide
-  · rw [hdegree]
-    unfold polyP2 FpPoly.ofCoeffs
-    exact Nat.le_trans (DensePoly.size_ofCoeffs_le _)
-      (by simp)
+private theorem genericMod_degree_eq : genericMod.degree?.getD 0 = 32 := by
+  unfold genericMod Conway.packedGF2FpPoly DensePoly.degree? DensePoly.size
+  rfl
 
-private theorem genericN32_step0_curr_reduced :
-    (polyP2 #[0, 0, 1]).degree?.getD 0 < genericMod.degree?.getD 0 := by
-  have hdegree : genericMod.degree?.getD 0 = 32 := by
-    unfold genericMod Conway.packedGF2FpPoly DensePoly.degree? DensePoly.size
-    rfl
-  apply Berlekamp.degree?_getD_lt_of_size_le
-  · decide
-  · rw [hdegree]
-    unfold polyP2 FpPoly.ofCoeffs
-    exact Nat.le_trans (DensePoly.size_ofCoeffs_le _)
-      (by simp)
+private theorem genericMod_degree_pos : 0 < genericMod.degree?.getD 0 := by
+  rw [genericMod_degree_eq]; decide
 
-private theorem genericN32_step0_reduced_bools :
-    decide ((polyP2 #[0, 1]).degree?.getD 0 < genericMod.degree?.getD 0) = true ∧
-      decide ((polyP2 #[0, 0, 1]).degree?.getD 0 < genericMod.degree?.getD 0) = true := by
-  exact ⟨decide_eq_true genericN32_step0_prev_reduced,
-    decide_eq_true genericN32_step0_curr_reduced⟩
+private theorem polyP2_size_le_32 {arr : Array Nat} (h : arr.size ≤ 32) :
+    (polyP2 arr).size ≤ genericMod.degree?.getD 0 := by
+  rw [genericMod_degree_eq]
+  unfold polyP2 FpPoly.ofCoeffs
+  exact Nat.le_trans (DensePoly.size_ofCoeffs_le _) (by simpa using h)
 
 #guard
   Berlekamp.quotientStepCoeffCheck 65
     (polyP2 #[0, 1]) (polyP2 #[0, 0, 1]) (polyP2 #[]) genericMod = true
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step0_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 0 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 1])
+    (curr := polyP2 #[0, 0, 1])
+    (quot := polyP2 #[])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step1_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 1 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 0, 1])
+    (curr := polyP2 #[0, 0, 0, 0, 1])
+    (quot := polyP2 #[])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step2_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 2 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 0, 0, 0, 1])
+    (curr := polyP2 #[0, 0, 0, 0, 0, 0, 0, 0, 1])
+    (quot := polyP2 #[])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step3_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 3 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 0, 0, 0, 0, 0, 0, 0, 1])
+    (curr := polyP2 #[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+    (quot := polyP2 #[])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step4_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 4 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+    (curr := polyP2 #[1, 0, 1, 1, 0, 0, 0, 1])
+    (quot := polyP2 #[1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step5_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 5 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[1, 0, 1, 1, 0, 0, 0, 1])
+    (curr := polyP2 #[1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1])
+    (quot := polyP2 #[])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step6_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 6 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1])
+    (curr := polyP2 #[1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+    (quot := polyP2 #[])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step7_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 7 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+    (curr := polyP2 #[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1])
+    (quot := polyP2 #[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step8_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 8 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1])
+    (curr := polyP2 #[1, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1])
+    (quot := polyP2 #[0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step9_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 9 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[1, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1])
+    (curr := polyP2 #[1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1])
+    (quot := polyP2 #[0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step10_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 10 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1])
+    (curr := polyP2 #[0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1])
+    (quot := polyP2 #[1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step11_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 11 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1])
+    (curr := polyP2 #[1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1])
+    (quot := polyP2 #[1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step12_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 12 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1])
+    (curr := polyP2 #[1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1])
+    (quot := polyP2 #[0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step13_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 13 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1])
+    (curr := polyP2 #[0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1])
+    (quot := polyP2 #[1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step14_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 14 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1])
+    (curr := polyP2 #[1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1])
+    (quot := polyP2 #[1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step15_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 15 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1])
+    (curr := polyP2 #[0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1])
+    (quot := polyP2 #[1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step16_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 16 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1])
+    (curr := polyP2 #[0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1])
+    (quot := polyP2 #[0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step17_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 17 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1])
+    (curr := polyP2 #[0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1])
+    (quot := polyP2 #[0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step18_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 18 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1])
+    (curr := polyP2 #[0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1])
+    (quot := polyP2 #[0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step19_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 19 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1])
+    (curr := polyP2 #[0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1])
+    (quot := polyP2 #[0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step20_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 20 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1])
+    (curr := polyP2 #[0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1])
+    (quot := polyP2 #[0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step21_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 21 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1])
+    (curr := polyP2 #[0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1])
+    (quot := polyP2 #[0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step22_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 22 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1])
+    (curr := polyP2 #[1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1])
+    (quot := polyP2 #[1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step23_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 23 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1])
+    (curr := polyP2 #[1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1])
+    (quot := polyP2 #[0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step24_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 24 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1])
+    (curr := polyP2 #[1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1])
+    (quot := polyP2 #[0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step25_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 25 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1])
+    (curr := polyP2 #[1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1])
+    (quot := polyP2 #[0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step26_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 26 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1])
+    (curr := polyP2 #[1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1])
+    (quot := polyP2 #[0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step27_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 27 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1])
+    (curr := polyP2 #[1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1])
+    (quot := polyP2 #[0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step28_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 28 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1])
+    (curr := polyP2 #[1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1])
+    (quot := polyP2 #[0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step29_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 29 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1])
+    (curr := polyP2 #[0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1])
+    (quot := polyP2 #[1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step30_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 30 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1])
+    (curr := polyP2 #[0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1])
+    (quot := polyP2 #[0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN32_step31_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericMod genericN32SamePrimeCert genericN32Quotients 31 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1])
+    (curr := polyP2 #[0, 1])
+    (quot := polyP2 #[0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericMod_degree_pos
+  · exact polyP2_size_le_32 (by decide)
+  · exact polyP2_size_le_32 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
+      Conway.packedGF2FpPoly]
+    decide
 
 #guard
   Berlekamp.checkRabinBezoutWitnesses
