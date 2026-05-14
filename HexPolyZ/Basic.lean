@@ -1239,7 +1239,7 @@ theorem leadingCoeff_normalizePrimitiveSign_nonneg (p : ZPoly) :
   · rw [if_neg hlead]
     omega
 
-private theorem leadingCoeff_ne_zero_of_ne_zero (p : ZPoly) (hp : p ≠ 0) :
+theorem leadingCoeff_ne_zero_of_ne_zero (p : ZPoly) (hp : p ≠ 0) :
     DensePoly.leadingCoeff p ≠ 0 := by
   have hp_pos : 0 < p.size := size_pos_of_ne_zero p hp
   rw [DensePoly.leadingCoeff_eq_coeff_last p hp_pos]
@@ -2817,7 +2817,7 @@ private theorem content_ne_zero_of_ne_zero (p : ZPoly) (hp : p ≠ 0) :
   rw [hcontent, hpart_zero, int_scale_zero] at hreconstruct
   exact hreconstruct.symm
 
-private theorem ne_zero_of_primitive (p : ZPoly) (hp : Primitive p) :
+theorem ne_zero_of_primitive (p : ZPoly) (hp : Primitive p) :
     p ≠ 0 := by
   intro hzero
   have hcontent : content p = 0 := by
@@ -3146,6 +3146,37 @@ theorem primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive
       simpa [p] using hprimitive_ne
     simpa [p, ratPrimitive, derivative] using
       ratPolyPrimitivePart_div_gcd_mul_primitive p hp_ne
+
+theorem leadingCoeff_squareFreeCore_nonneg (f : ZPoly) :
+    0 ≤ DensePoly.leadingCoeff (primitiveSquareFreeDecomposition f).squareFreeCore := by
+  unfold primitiveSquareFreeDecomposition
+  by_cases hzero : (primitivePart f).isZero
+  · simp [hzero]
+    show 0 ≤ DensePoly.leadingCoeff (0 : ZPoly)
+    decide
+  · simp [hzero]
+    by_cases hderiv :
+        (DensePoly.derivative (toRatPoly (primitivePart f))).isZero
+    · simp [hderiv]
+      exact leadingCoeff_normalizePrimitiveSign_nonneg _
+    · simp [hderiv]
+      exact leadingCoeff_ratPolyPrimitivePart_nonneg _
+
+theorem leadingCoeff_repeatedPart_nonneg (f : ZPoly) :
+    0 ≤ DensePoly.leadingCoeff (primitiveSquareFreeDecomposition f).repeatedPart := by
+  unfold primitiveSquareFreeDecomposition
+  by_cases hzero : (primitivePart f).isZero
+  · simp [hzero]
+    show 0 ≤ DensePoly.leadingCoeff (0 : ZPoly)
+    decide
+  · simp [hzero]
+    by_cases hderiv :
+        (DensePoly.derivative (toRatPoly (primitivePart f))).isZero
+    · simp [hderiv]
+      show 0 ≤ DensePoly.leadingCoeff (1 : ZPoly)
+      decide
+    · simp [hderiv]
+      exact leadingCoeff_ratPolyPrimitivePart_nonneg _
 
 theorem primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_leadingCoeff_pos
     (f : ZPoly) (hf : f ≠ 0) :
