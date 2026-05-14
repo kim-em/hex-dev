@@ -19,18 +19,16 @@ def memLattice (b : Matrix Int n m) (v : Vector Int m) : Prop :=
   ∃ c : Vector Int n, rowCombination b c = v
 
 /-- The rows of `b` are linearly independent, witnessed by positivity of each
-leading principal Gram determinant. -/
+executable leading Gram determinant. -/
 def independent (b : Matrix Int n m) : Prop :=
-  ∀ k : Fin n, 0 < det (submatrix (gramMatrix b) k)
+  GramSchmidt.Int.independent b
 
-/-- The identity matrix is independent: every leading principal Gram
-determinant equals `det 1 = 1 > 0`. Used by Phase 4 benchmarks of
+/-- The identity matrix is independent: every executable leading Gram
+determinant is positive. Used by Phase 4 benchmarks of
 `lll.firstShortVector`, where the identity basis is the degenerate BZ-style
 recombination input with all-zero lift coefficients. -/
 theorem identity_independent {n : Nat} : (1 : Matrix Int n n).independent := by
-  intro k
-  rw [Matrix.gramMatrix_one, Matrix.submatrix_one, Matrix.det_one]
-  decide
+  exact GramSchmidt.Int.independent_one
 
 theorem gramMatrix_leadingRows_eq_submatrix {n : Nat} (M : Matrix Int n n) (k : Fin n) :
     gramMatrix (leadingRows M (k.val + 1) (Nat.succ_le_of_lt k.isLt)) =
@@ -66,11 +64,12 @@ theorem independent_of_upperTriangular_pos_diag {n : Nat}
     (M : Matrix Int n n)
     (hzero : ∀ i j : Fin n, j.val < i.val -> M[i][j] = 0)
     (hdiag : ∀ i : Fin n, 0 < M[i][i]) : M.independent := by
-  intro k
-  have hpos :=
-    det_gramMatrix_leadingRows_pos_of_upperTriangular_pos_diag M hzero hdiag
-      (k.val + 1) (Nat.succ_le_of_lt k.isLt)
-  rwa [gramMatrix_leadingRows_eq_submatrix M k] at hpos
+  exact GramSchmidt.Int.independent_of_det_positive M (by
+    intro k
+    have hpos :=
+      det_gramMatrix_leadingRows_pos_of_upperTriangular_pos_diag M hzero hdiag
+        (k.val + 1) (Nat.succ_le_of_lt k.isLt)
+    rwa [gramMatrix_leadingRows_eq_submatrix M k] at hpos)
 
 /-- Product of the squared Gram-Schmidt basis norms along the first `k` rows. -/
 noncomputable def gramSchmidtNormProduct (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) : Rat :=
@@ -508,23 +507,12 @@ theorem sizeReduce_basis (s : LLLState n m) (k : Nat) :
       sizeReduce_foldl_basis (s := s) (k := k) (hk := hk) (xs := (List.finRange k).reverse)
   · simp [hk]
 
-private theorem det_submatrix_gram_eq_gramDet_int (b : Matrix Int n m) (i : Fin n) :
-    Matrix.det (Matrix.submatrix (Matrix.gramMatrix b) i) =
-      Int.ofNat
-        (GramSchmidt.Int.gramDet b (i.val + 1) (Nat.succ_le_of_lt i.isLt)) := by
-  rw [Matrix.submatrix_eq_leadingPrefix]
-  rw [← GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram b (i.val + 1)
-    (Nat.succ_le_of_lt i.isLt)]
-  exact GramSchmidt.Int.leadingGramMatrixInt_det_eq_gramDet_int b (i.val + 1)
-    (Nat.succ_le_of_lt i.isLt)
-
-/-- Size reduction preserves the determinant-based independence predicate. -/
+/-- Size reduction preserves the executable Gram-determinant independence
+predicate. -/
 theorem sizeReduce_independent (s : LLLState n m) (k : Nat)
     (hind : s.b.independent) :
     (s.sizeReduce k).b.independent := by
   intro i
-  have hdet_new := det_submatrix_gram_eq_gramDet_int (s.sizeReduce k).b i
-  have hdet_old := det_submatrix_gram_eq_gramDet_int s.b i
   have hd_vec :
       (s.sizeReduce k).d.get ⟨i.val + 1, Nat.succ_lt_succ i.isLt⟩ =
         s.d.get ⟨i.val + 1, Nat.succ_lt_succ i.isLt⟩ := by
@@ -538,7 +526,7 @@ theorem sizeReduce_independent (s : LLLState n m) (k : Nat)
     rw [← (s.sizeReduce k).d_eq (i.val + 1) (Nat.succ_lt_succ i.isLt)]
     rw [hd_vec]
     rw [s.d_eq (i.val + 1) (Nat.succ_lt_succ i.isLt)]
-  rw [hdet_new, hgram, ← hdet_old]
+  rw [hgram]
   exact hind i
 
 private theorem memLattice_of_rowSwap_memLattice
