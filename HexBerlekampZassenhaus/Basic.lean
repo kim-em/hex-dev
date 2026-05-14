@@ -3296,7 +3296,7 @@ private def exhaustiveCoreFactorsWithBound
 private def factorSlowFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
   let normalized := normalizeForFactor f
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
-    reassemblePolynomialFactors normalized #[]
+    reassemblePolynomialFactors normalized #[normalized.squareFreeCore]
   else
     match quadraticIntegerRootFactors? normalized.squareFreeCore with
     | some coreFactors => reassemblePolynomialFactors normalized coreFactors
@@ -3320,7 +3320,7 @@ def factorSlow (f : ZPoly) : Factorization :=
 private def factorFastFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
   let normalized := normalizeForFactor f
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
-    some (reassemblePolynomialFactors normalized #[])
+    some (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
   else if B = 0 then
     none
   else
@@ -4242,6 +4242,218 @@ private theorem exhaustiveCoreFactorsWithBound_product
           exact recombineExhaustive_product core
             (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)
             xs hsearch
+
+private theorem polyProduct_push (factors : Array ZPoly) (factor : ZPoly) :
+    Array.polyProduct (factors.push factor) =
+      Array.polyProduct factors * factor := by
+  cases factors with
+  | mk xs =>
+      induction xs generalizing factor with
+      | nil =>
+          simp [Array.polyProduct, one_mul_zpoly]
+      | cons x xs ih =>
+          simp [Array.polyProduct, List.foldl_cons] at ih ⊢
+
+private theorem splitIntegerRootFactorsAux_product
+    (target : ZPoly) (roots : List Int) (fuel : Nat) :
+    ∀ factors residual,
+      splitIntegerRootFactorsAux target roots fuel = (factors, residual) →
+        residual * Array.polyProduct factors = target := by
+  induction fuel generalizing target roots with
+  | zero =>
+      intro factors residual hsplit
+      rw [splitIntegerRootFactorsAux] at hsplit
+      injection hsplit with hfactors hresidual
+      subst factors
+      subst residual
+      exact DensePoly.mul_one_right_poly (S := Int) target
+  | succ fuel ih =>
+      intro factors residual hsplit
+      cases roots with
+      | nil =>
+          rw [splitIntegerRootFactorsAux] at hsplit
+          injection hsplit with hfactors hresidual
+          subst factors
+          subst residual
+          exact DensePoly.mul_one_right_poly (S := Int) target
+      | cons root roots =>
+          unfold splitIntegerRootFactorsAux at hsplit
+          cases hquot : exactQuotient? target (linearFactorForRoot root) with
+          | none =>
+              simp [hquot] at hsplit
+              exact ih target roots factors residual hsplit
+          | some quotient =>
+              simp [hquot] at hsplit
+              cases hrest : splitIntegerRootFactorsAux quotient roots fuel with
+              | mk restFactors restResidual =>
+                  simp [hrest] at hsplit
+                  rcases hsplit with ⟨hfactors, hresidual⟩
+                  subst factors
+                  subst residual
+                  have hrec :
+                      restResidual * Array.polyProduct restFactors = quotient :=
+                    ih quotient roots restFactors restResidual hrest
+                  have hquot_prod :
+                      quotient * linearFactorForRoot root = target :=
+                    exactQuotient?_product hquot
+                  calc
+                    restResidual *
+                        Array.polyProduct (#[linearFactorForRoot root] ++ restFactors) =
+                        restResidual *
+                          (linearFactorForRoot root * Array.polyProduct restFactors) := by
+                          rw [polyProduct_append, polyProduct_singleton]
+                    _ = restResidual *
+                          (Array.polyProduct restFactors * linearFactorForRoot root) := by
+                          rw [DensePoly.mul_comm_poly (S := Int)
+                            (linearFactorForRoot root) (Array.polyProduct restFactors)]
+                    _ = (restResidual * Array.polyProduct restFactors) *
+                          linearFactorForRoot root := by
+                          rw [DensePoly.mul_assoc_poly (S := Int)]
+                    _ = quotient * linearFactorForRoot root := by
+                          rw [hrec]
+                    _ = target := hquot_prod
+
+private theorem quadraticIntegerRootFactors?_product
+    {core : ZPoly} {factors : Array ZPoly}
+    (hquad : quadraticIntegerRootFactors? core = some factors) :
+    Array.polyProduct factors = core := by
+  unfold quadraticIntegerRootFactors? at hquad
+  by_cases hdeg : core.degree?.getD 0 = 2
+  · simp only [hdeg, if_true] at hquad
+    let roots := integerRootCandidates core
+    let split := splitIntegerRootFactorsAux core roots roots.length
+    have hsplit_prod :
+        split.2 * Array.polyProduct split.1 = core := by
+      simpa [split, roots] using
+        splitIntegerRootFactorsAux_product core roots roots.length split.1 split.2 rfl
+    by_cases hsize : split.1.size = 0
+    · simp [roots, split, hsize] at hquad
+    · simp only [roots, split, hsize, if_false] at hquad
+      by_cases hres_one : split.2 = 1
+      · rw [if_pos hres_one] at hquad
+        cases hquad
+        simpa [hres_one, one_mul_zpoly] using hsplit_prod
+      · rw [if_neg hres_one] at hquad
+        by_cases hres_deg : split.2.degree?.getD 0 ≤ 1
+        · rw [if_pos hres_deg] at hquad
+          cases hquad
+          rw [polyProduct_push]
+          rw [DensePoly.mul_comm_poly (S := Int)]
+          exact hsplit_prod
+        · rw [if_neg hres_deg] at hquad
+          contradiction
+  · simp [hdeg] at hquad
+
+private theorem factorSlowFactorsWithBound_polyProduct
+    (f : ZPoly) (B : Nat) :
+    DensePoly.C (signedContentScalar f) *
+      Array.polyProduct (factorSlowFactorsWithBound f B) = f := by
+  unfold factorSlowFactorsWithBound
+  by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
+  · simp only [hdeg, if_true]
+    exact reassemblePolynomialFactors_product_eq_input f
+      #[(normalizeForFactor f).squareFreeCore] (by simp [polyProduct_singleton])
+  · simp only [hdeg, if_false]
+    cases hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
+    | some coreFactors =>
+        exact reassemblePolynomialFactors_product_eq_input f coreFactors
+          (quadraticIntegerRootFactors?_product hquad)
+    | none =>
+        exact reassemblePolynomialFactors_product_eq_input f
+          (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
+            (choosePrimeData (normalizeForFactor f).squareFreeCore))
+          (exhaustiveCoreFactorsWithBound_product
+            (normalizeForFactor f).squareFreeCore B
+            (choosePrimeData (normalizeForFactor f).squareFreeCore))
+
+set_option maxHeartbeats 3000000 in
+private theorem factorFastFactorsWithBound_polyProduct_of_some
+    {f : ZPoly} {B : Nat} {factors : Array ZPoly}
+    (hfast : factorFastFactorsWithBound f B = some factors) :
+    DensePoly.C (signedContentScalar f) * Array.polyProduct factors = f := by
+  unfold factorFastFactorsWithBound at hfast
+  by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
+  · simp only [hdeg, if_true] at hfast
+    have hfactors := Option.some.inj hfast
+    rw [← hfactors]
+    exact reassemblePolynomialFactors_product_eq_input f
+      #[(normalizeForFactor f).squareFreeCore] (by simp [polyProduct_singleton])
+  · simp only [hdeg, if_false] at hfast
+    by_cases hB0 : B = 0
+    · simp [hB0] at hfast
+    · simp only [hB0, if_false] at hfast
+      by_cases hB1 : B = 1
+      · simp only [hB1, if_true] at hfast
+        subst B
+        let primeData := choosePrimeData (normalizeForFactor f).squareFreeCore
+        by_cases hsmall : primeData.factorsModP.size ≤ 1
+        · simp only [primeData, hsmall, if_true] at hfast
+          have hfactors := Option.some.inj hfast
+          rw [← hfactors]
+          exact reassemblePolynomialFactors_product_eq_input f
+            #[(normalizeForFactor f).squareFreeCore]
+            (by simp [polyProduct_singleton])
+        · simp only [primeData, hsmall, if_false] at hfast
+          cases hcore :
+              factorFastCoreWithBound (normalizeForFactor f).squareFreeCore
+                (precisionForCoeffBound 1 primeData.p) primeData
+                (initialHenselPrecision (precisionForCoeffBound 1 primeData.p))
+                (ZPoly.quadraticDoublingSteps
+                  (precisionForCoeffBound 1 primeData.p) + 2) with
+          | none =>
+              rw [hcore] at hfast
+              contradiction
+          | some coreFactors =>
+              rw [hcore] at hfast
+              have hfactors := Option.some.inj hfast
+              rw [← hfactors]
+              exact reassemblePolynomialFactors_product_eq_input f coreFactors
+                (factorFastCoreWithBound_product
+                  (normalizeForFactor f).squareFreeCore
+                  (precisionForCoeffBound 1 primeData.p) primeData
+                  (initialHenselPrecision (precisionForCoeffBound 1 primeData.p))
+                  (ZPoly.quadraticDoublingSteps
+                    (precisionForCoeffBound 1 primeData.p) + 2)
+                  coreFactors hcore)
+      · simp only [hB1, if_false] at hfast
+        cases hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
+        | some coreFactors =>
+            simp only [hquad, Option.some.injEq] at hfast
+            rw [← hfast]
+            exact reassemblePolynomialFactors_product_eq_input f coreFactors
+              (quadraticIntegerRootFactors?_product hquad)
+        | none =>
+            simp only [hquad] at hfast
+            let primeData := choosePrimeData (normalizeForFactor f).squareFreeCore
+            by_cases hsmall : primeData.factorsModP.size ≤ 1
+            · simp only [primeData, hsmall, if_true] at hfast
+              have hfactors := Option.some.inj hfast
+              rw [← hfactors]
+              exact reassemblePolynomialFactors_product_eq_input f
+                #[(normalizeForFactor f).squareFreeCore]
+                (by simp [polyProduct_singleton])
+            · simp only [primeData, hsmall, if_false] at hfast
+              cases hcore :
+                  factorFastCoreWithBound (normalizeForFactor f).squareFreeCore
+                    (precisionForCoeffBound B primeData.p) primeData
+                    (initialHenselPrecision (precisionForCoeffBound B primeData.p))
+                    (ZPoly.quadraticDoublingSteps
+                      (precisionForCoeffBound B primeData.p) + 2) with
+              | none =>
+                  rw [hcore] at hfast
+                  contradiction
+              | some coreFactors =>
+                  rw [hcore] at hfast
+                  have hfactors := Option.some.inj hfast
+                  rw [← hfactors]
+                  exact reassemblePolynomialFactors_product_eq_input f coreFactors
+                    (factorFastCoreWithBound_product
+                      (normalizeForFactor f).squareFreeCore
+                      (precisionForCoeffBound B primeData.p) primeData
+                      (initialHenselPrecision (precisionForCoeffBound B primeData.p))
+                      (ZPoly.quadraticDoublingSteps
+                        (precisionForCoeffBound B primeData.p) + 2)
+                      coreFactors hcore)
 
 /--
 A successful integer certificate exposes the per-prime polynomial check fact:
