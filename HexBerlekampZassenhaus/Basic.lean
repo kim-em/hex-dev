@@ -4624,6 +4624,50 @@ theorem irreducible_X : ZPoly.Irreducible ZPoly.X :=
 
 end ZPoly
 
+/-- Every factor emitted by the extracted `X`-power normalization array is
+irreducible. -/
+theorem xPowerFactorArray_irreducible
+    (power : Nat) (factor : ZPoly)
+    (h : factor ∈ (xPowerFactorArray power).toList) :
+    ZPoly.Irreducible factor := by
+  rw [mem_xPowerFactorArray_eq_X power factor h]
+  exact ZPoly.irreducible_X
+
+/-- Reassembly preserves the irreducibility proof for normalization factors
+coming specifically from the extracted power of `X`. -/
+theorem reassemblePolynomialFactors_xPower_irreducible
+    (d : FactorNormalizationData) (coreFactors : Array ZPoly) (factor : ZPoly)
+    (_hmem : factor ∈ (reassemblePolynomialFactors d coreFactors).toList)
+    (hx : factor ∈ (xPowerFactorArray d.xPower).toList) :
+    ZPoly.Irreducible factor :=
+  xPowerFactorArray_irreducible d.xPower factor hx
+
+/-- Membership classifier for the constant square-free-core branch. The only
+raw factors requiring irreducibility content are extracted powers of `X`; the
+singleton core factor is `1`, and any repeated-part fallback is identified
+separately for later expansion through actual core factors. -/
+theorem reassemblePolynomialFactors_constant_irreducible_or_repeated_or_one
+    (d : FactorNormalizationData) {factor : ZPoly}
+    (hcore : d.squareFreeCore = 1)
+    (hmem : factor ∈
+      (reassemblePolynomialFactors d #[d.squareFreeCore]).toList) :
+    ZPoly.Irreducible factor ∨
+      factor ∈ (repeatedPartFactorArray d.repeatedPart).toList ∨
+      factor = 1 := by
+  rcases reassemblePolynomialFactors_mem d #[d.squareFreeCore] factor hmem with
+    hprefix | hcore_mem
+  · unfold polynomialNormalizationPrefixFactors at hprefix
+    rw [Array.toList_append] at hprefix
+    simp only [List.mem_append] at hprefix
+    cases hprefix with
+    | inl hx =>
+        exact Or.inl (xPowerFactorArray_irreducible d.xPower factor hx)
+    | inr hrep =>
+        exact Or.inr (Or.inl hrep)
+  · have hfactor : factor = d.squareFreeCore := by
+      simpa using hcore_mem
+    exact Or.inr (Or.inr (by simpa [hcore] using hfactor))
+
 /-- The monic linear factor `X - r` is irreducible over `ZPoly`. -/
 private theorem irreducible_linearFactorForRoot (r : Int) :
     ZPoly.Irreducible (linearFactorForRoot r) :=
@@ -5665,6 +5709,62 @@ private theorem splitIntegerRootFactorsAux_shouldRecord
                       exact ih quotient roots restFactors restResidual hrest factor (by
                         simpa using hrest_mem)
 
+private theorem splitIntegerRootFactorsAux_irreducible
+    (target : ZPoly) (roots : List Int) (fuel : Nat) :
+    ∀ factors residual,
+      splitIntegerRootFactorsAux target roots fuel = (factors, residual) →
+        ∀ factor ∈ factors.toList, ZPoly.Irreducible factor := by
+  induction fuel generalizing target roots with
+  | zero =>
+      intro factors residual hsplit factor hmem
+      rw [splitIntegerRootFactorsAux] at hsplit
+      injection hsplit with hfactors hresidual
+      subst factors
+      simp at hmem
+  | succ fuel ih =>
+      intro factors residual hsplit factor hmem
+      cases roots with
+      | nil =>
+          rw [splitIntegerRootFactorsAux] at hsplit
+          injection hsplit with hfactors hresidual
+          subst factors
+          simp at hmem
+      | cons root roots =>
+          unfold splitIntegerRootFactorsAux at hsplit
+          cases hquot : exactQuotient? target (linearFactorForRoot root) with
+          | none =>
+              simp [hquot] at hsplit
+              exact ih target roots factors residual hsplit factor hmem
+          | some quotient =>
+              simp [hquot] at hsplit
+              cases hrest : splitIntegerRootFactorsAux quotient roots fuel with
+              | mk restFactors restResidual =>
+                  simp [hrest] at hsplit
+                  rcases hsplit with ⟨hfactors, hresidual⟩
+                  subst factors
+                  subst residual
+                  rw [Array.toList_append] at hmem
+                  simp at hmem
+                  cases hmem with
+                  | inl hroot =>
+                      rw [hroot]
+                      exact irreducible_linearFactorForRoot root
+                  | inr hrest_mem =>
+                      exact ih quotient roots restFactors restResidual hrest factor (by
+                        simpa using hrest_mem)
+
+/-- Factors emitted by the integer-root splitter are monic linear root factors,
+and hence irreducible. This is the theorem-level wrapper used by the
+quadratic-root branch before any optional residual factor is appended. -/
+theorem splitIntegerRootFactorsAux_factor_irreducible
+    {target : ZPoly} {roots : List Int} {fuel : Nat}
+    {factors : Array ZPoly} {residual factor : ZPoly}
+    (hsplit : splitIntegerRootFactorsAux target roots fuel = (factors, residual))
+    (hmem : factor ∈ factors.toList) :
+    ZPoly.Irreducible factor :=
+  splitIntegerRootFactorsAux_irreducible target roots fuel factors residual
+    hsplit factor hmem
+
 private theorem splitIntegerRootFactorsAux_polyProduct_leadingCoeff_pos
     (target : ZPoly) (roots : List Int) (fuel : Nat) :
     ∀ factors residual,
@@ -5864,6 +5964,82 @@ private theorem quadraticIntegerRootFactors?_shouldRecord
                 hres_ne_neg_one]
         · simp [roots, split, hres_deg] at hquad
   · simp [hdeg] at hquad
+
+/-- In the quadratic integer-root branch, every emitted factor other than the
+optional final residual comes from the integer-root splitter and is therefore
+irreducible. When the split is complete (`residual = 1`), this covers every
+recorded quadratic-branch factor. -/
+theorem quadraticIntegerRootFactors?_factor_irreducible_of_ne_residual
+    {core : ZPoly} {factors : Array ZPoly} {factor : ZPoly}
+    (hquad : quadraticIntegerRootFactors? core = some factors)
+    (hmem : factor ∈ factors.toList)
+    (hnot_residual :
+      factor ≠
+        (splitIntegerRootFactorsAux core (integerRootCandidates core)
+          (integerRootCandidates core).length).2) :
+    ZPoly.Irreducible factor := by
+  unfold quadraticIntegerRootFactors? at hquad
+  by_cases hdeg : core.degree?.getD 0 = 2
+  · simp only [hdeg, if_true] at hquad
+    let roots := integerRootCandidates core
+    let split := splitIntegerRootFactorsAux core roots roots.length
+    by_cases hsize : split.1.size = 0
+    · simp [roots, split, hsize] at hquad
+    · simp only [roots, split, hsize, if_false] at hquad
+      by_cases hres_one : split.2 = 1
+      · rw [if_pos hres_one] at hquad
+        cases hquad
+        exact splitIntegerRootFactorsAux_factor_irreducible
+          (target := core) (roots := roots) (fuel := roots.length)
+          (factors := split.1) (residual := split.2) rfl hmem
+      · rw [if_neg hres_one] at hquad
+        by_cases hres_deg : split.2.degree?.getD 0 ≤ 1
+        · rw [if_pos hres_deg] at hquad
+          cases hquad
+          rw [Array.toList_push] at hmem
+          simp only [List.mem_append, List.mem_singleton] at hmem
+          cases hmem with
+          | inl hsplit_mem =>
+              exact splitIntegerRootFactorsAux_factor_irreducible
+                (target := core) (roots := roots) (fuel := roots.length)
+                (factors := split.1) (residual := split.2) rfl hsplit_mem
+          | inr hres =>
+              exact absurd hres hnot_residual
+        · simp [roots, split, hres_deg] at hquad
+  · simp [hdeg] at hquad
+
+/-- Membership classifier for a reassembled quadratic-root branch. A raw factor
+is either one of the already-proved irreducible normalization/root factors, the
+normalization repeated-part fallback, or the optional residual appended by the
+quadratic splitter. -/
+theorem reassemblePolynomialFactors_quadratic_irreducible_or_repeated_or_residual
+    (d : FactorNormalizationData) {coreFactors : Array ZPoly} {factor : ZPoly}
+    (hquad : quadraticIntegerRootFactors? d.squareFreeCore = some coreFactors)
+    (hmem : factor ∈ (reassemblePolynomialFactors d coreFactors).toList) :
+    ZPoly.Irreducible factor ∨
+      factor ∈ (repeatedPartFactorArray d.repeatedPart).toList ∨
+      factor =
+        (splitIntegerRootFactorsAux d.squareFreeCore
+          (integerRootCandidates d.squareFreeCore)
+          (integerRootCandidates d.squareFreeCore).length).2 := by
+  rcases reassemblePolynomialFactors_mem d coreFactors factor hmem with hprefix | hcore
+  · unfold polynomialNormalizationPrefixFactors at hprefix
+    rw [Array.toList_append] at hprefix
+    simp only [List.mem_append] at hprefix
+    cases hprefix with
+    | inl hx =>
+        exact Or.inl (xPowerFactorArray_irreducible d.xPower factor hx)
+    | inr hrep =>
+        exact Or.inr (Or.inl hrep)
+  · by_cases hres :
+        factor =
+          (splitIntegerRootFactorsAux d.squareFreeCore
+            (integerRootCandidates d.squareFreeCore)
+            (integerRootCandidates d.squareFreeCore).length).2
+    · exact Or.inr (Or.inr hres)
+    · exact Or.inl
+        (quadraticIntegerRootFactors?_factor_irreducible_of_ne_residual
+          hquad hcore hres)
 
 private theorem quadraticIntegerRootFactors?_product
     {core : ZPoly} {factors : Array ZPoly}
