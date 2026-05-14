@@ -377,6 +377,146 @@ theorem prod_berlekampFactor
   rw [factorProduct_berlekampFactorLoop_eq, factorProduct_cons, factorProduct_nil]
   exact DensePoly.mul_one_right_poly f
 
+/-! ### Singleton-output loop structure
+
+Each successful `splitFirstFactor?` extends the factor list by one entry, so
+`berlekampFactorLoop` is length-monotone. When `berlekampFactor` returns at
+most one factor (starting from the singleton `[f]`), the very first
+`splitFirstFactor?` invocation must have returned `none`, which by direct
+unfolding means every fixed-space kernel witness yields
+`kernelWitnessSplit? = none`. This isolates the executable / loop side of
+Berlekamp completeness; the algebraic implication "no kernel-witness split
+implies irreducibility" lives in a separate finite-field bridge. -/
+
+private theorem splitFirstFactor?_length_succ_of_some
+    (witnesses : List (FpPoly p)) :
+    ∀ {factors factors' : List (FpPoly p)},
+      splitFirstFactor? witnesses factors = some factors' →
+        factors'.length = factors.length + 1 := by
+  intro factors
+  induction factors with
+  | nil =>
+      intro factors' h
+      simp [splitFirstFactor?] at h
+  | cons fac rest ih =>
+      intro factors' h
+      rw [splitFirstFactor?] at h
+      cases hsplit : splitWithWitnesses? fac witnesses with
+      | some _ =>
+          rw [hsplit] at h
+          simp only [Option.some.injEq] at h
+          subst h
+          simp [List.length_cons]
+      | none =>
+          rw [hsplit] at h
+          cases hrest : splitFirstFactor? witnesses rest with
+          | some rest' =>
+              rw [hrest] at h
+              simp only [Option.some.injEq] at h
+              subst h
+              have ihr := ih hrest
+              simp [List.length_cons, ihr]
+          | none =>
+              rw [hrest] at h
+              exact absurd h (by simp)
+
+private theorem berlekampFactorLoop_length_ge
+    (witnesses : List (FpPoly p)) (fuel : Nat) (factors : List (FpPoly p)) :
+    factors.length ≤ (berlekampFactorLoop witnesses fuel factors).length := by
+  induction fuel generalizing factors with
+  | zero => exact Nat.le_refl _
+  | succ fuel ih =>
+      rw [berlekampFactorLoop]
+      cases hsplit : splitFirstFactor? witnesses factors with
+      | some factors' =>
+          change factors.length ≤
+            (berlekampFactorLoop witnesses fuel factors').length
+          have hlen := splitFirstFactor?_length_succ_of_some witnesses hsplit
+          have hih := ih factors'
+          omega
+      | none =>
+          exact Nat.le_refl _
+
+private theorem splitFirstFactor?_singleton_none_iff
+    (witnesses : List (FpPoly p)) (f : FpPoly p) :
+    splitFirstFactor? witnesses [f] = none ↔
+      splitWithWitnesses? f witnesses = none := by
+  constructor
+  · intro h
+    rw [splitFirstFactor?] at h
+    cases hw : splitWithWitnesses? f witnesses with
+    | some _ =>
+        rw [hw] at h
+        simp at h
+    | none => rfl
+  · intro h
+    rw [splitFirstFactor?, h, splitFirstFactor?]
+
+private theorem splitWithWitnesses?_none_iff_forall
+    (f : FpPoly p) (witnesses : List (FpPoly p)) :
+    splitWithWitnesses? f witnesses = none ↔
+      ∀ w ∈ witnesses, kernelWitnessSplit? f w = none := by
+  induction witnesses with
+  | nil =>
+      simp [splitWithWitnesses?]
+  | cons w ws ih =>
+      rw [splitWithWitnesses?]
+      cases hw : kernelWitnessSplit? f w with
+      | some split =>
+          constructor
+          · intro hcontra; simp at hcontra
+          · intro hforall
+            have hwnone := hforall w (by simp)
+            rw [hw] at hwnone
+            simp at hwnone
+      | none =>
+          rw [ih]
+          constructor
+          · intro h w' hw'
+            rcases List.mem_cons.mp hw' with heq | hmem
+            · exact heq ▸ hw
+            · exact h w' hmem
+          · intro h w' hw'
+            exact h w' (List.mem_cons_of_mem _ hw')
+
+/--
+Structural lemma about `berlekampFactor` output: if its `factors` list has
+length at most one, then every fixed-space kernel witness yields
+`kernelWitnessSplit? = none`. This is the loop-tracing half of the parent
+Berlekamp completeness theorem; the algebraic half (no kernel-witness split
+forces irreducibility for square-free monic inputs) belongs to a separate
+Mathlib-free finite-field bridge.
+-/
+theorem kernelWitnessSplit?_none_of_berlekampFactor_factors_length_le_one
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    [Lean.Grind.Field (ZMod64 p)]
+    (hsmall : (berlekampFactor f hmonic).factors.length ≤ 1) :
+    ∀ w ∈ (fixedSpaceKernel f hmonic).toList,
+      kernelWitnessSplit? f w = none := by
+  have hloop_eq :
+      (berlekampFactor f hmonic).factors
+        = berlekampFactorLoop ((fixedSpaceKernel f hmonic).toList)
+            (f.size + 1) [f] := rfl
+  rw [hloop_eq] at hsmall
+  have hsplit :
+      splitFirstFactor? ((fixedSpaceKernel f hmonic).toList) [f] = none := by
+    rw [berlekampFactorLoop] at hsmall
+    cases h : splitFirstFactor? ((fixedSpaceKernel f hmonic).toList) [f] with
+    | none => rfl
+    | some factors' =>
+        simp only [h] at hsmall
+        have hlen' :=
+          splitFirstFactor?_length_succ_of_some
+            ((fixedSpaceKernel f hmonic).toList) h
+        have hmono :=
+          berlekampFactorLoop_length_ge
+            ((fixedSpaceKernel f hmonic).toList) f.size factors'
+        simp at hlen'
+        omega
+  rw [splitFirstFactor?_singleton_none_iff,
+      splitWithWitnesses?_none_iff_forall] at hsplit
+  exact hsplit
+
 end Berlekamp
 
 end Hex
