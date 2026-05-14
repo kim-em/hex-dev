@@ -2792,11 +2792,88 @@ def bhksIndicatorCandidate?
   | some selected =>
       let modulus := liftModulus d
       let raw := DensePoly.scale (DensePoly.leadingCoeff f) (Array.polyProduct selected)
-      let candidate := normalizeCandidateFactor <|
+      let candidate := normalizeFactorSign <| normalizeCandidateFactor <|
         centeredLiftPoly (ZPoly.reduceModPow raw d.p d.k) modulus
-      match exactQuotient? f candidate with
-      | some quotient => some (candidate, quotient)
-      | none => none
+      if shouldRecordPolynomialFactor candidate then
+        match exactQuotient? f candidate with
+        | some quotient => some (candidate, quotient)
+        | none => none
+      else
+        none
+
+private theorem bhksIndicatorCandidate?_normalizeFactorSign
+    {f : ZPoly} {d : LiftData} {indicator : Array Int}
+    {candidate quotient : ZPoly}
+    (h : bhksIndicatorCandidate? f d indicator = some (candidate, quotient)) :
+    normalizeFactorSign candidate = candidate := by
+  unfold bhksIndicatorCandidate? at h
+  cases hselected : bhksIndicatorSelectedFactors d.liftedFactors indicator with
+  | none =>
+      simp [hselected] at h
+  | some selected =>
+      simp only [hselected] at h
+      let modulus := liftModulus d
+      let raw := DensePoly.scale (DensePoly.leadingCoeff f) (Array.polyProduct selected)
+      let candidate0 :=
+        normalizeCandidateFactor
+          (centeredLiftPoly (ZPoly.reduceModPow raw d.p d.k) modulus)
+      let candidate' := normalizeFactorSign candidate0
+      change
+        (if shouldRecordPolynomialFactor candidate' then
+          match exactQuotient? f candidate' with
+          | some quotient => some (candidate', quotient)
+          | none => none
+        else
+          none) = some (candidate, quotient) at h
+      by_cases hrecord : shouldRecordPolynomialFactor candidate'
+      · rw [if_pos hrecord] at h
+        cases hquot : exactQuotient? f candidate' with
+        | none =>
+            simp [hquot] at h
+        | some quotient' =>
+            simp [hquot] at h
+            rcases h with ⟨hcandidate, _hquotient⟩
+            subst candidate
+            exact normalizeFactorSign_idem candidate0
+      · rw [if_neg hrecord] at h
+        simp at h
+
+private theorem bhksIndicatorCandidate?_shouldRecord
+    {f : ZPoly} {d : LiftData} {indicator : Array Int}
+    {candidate quotient : ZPoly}
+    (h : bhksIndicatorCandidate? f d indicator = some (candidate, quotient)) :
+    shouldRecordPolynomialFactor candidate = true := by
+  unfold bhksIndicatorCandidate? at h
+  cases hselected : bhksIndicatorSelectedFactors d.liftedFactors indicator with
+  | none =>
+      simp [hselected] at h
+  | some selected =>
+      simp only [hselected] at h
+      let modulus := liftModulus d
+      let raw := DensePoly.scale (DensePoly.leadingCoeff f) (Array.polyProduct selected)
+      let candidate0 :=
+        normalizeCandidateFactor
+          (centeredLiftPoly (ZPoly.reduceModPow raw d.p d.k) modulus)
+      let candidate' := normalizeFactorSign candidate0
+      change
+        (if shouldRecordPolynomialFactor candidate' then
+          match exactQuotient? f candidate' with
+          | some quotient => some (candidate', quotient)
+          | none => none
+        else
+          none) = some (candidate, quotient) at h
+      by_cases hrecord : shouldRecordPolynomialFactor candidate'
+      · rw [if_pos hrecord] at h
+        cases hquot : exactQuotient? f candidate' with
+        | none =>
+            simp [hquot] at h
+        | some quotient' =>
+            simp [hquot] at h
+            rcases h with ⟨hcandidate, _hquotient⟩
+            subst candidate
+            exact hrecord
+      · rw [if_neg hrecord] at h
+        simp at h
 
 /--
 A2 reconstruction surface for a single BHKS indicator, stated at the
@@ -2836,13 +2913,37 @@ theorem bhksIndicatorCandidate?_eq_some_of_mignottePrecision
       centeredLiftPoly_eq_of_reduceModPow_eq
         expectedFactor raw d.p d.k (ZPoly.defaultFactorCoeffBound f)
         hbound hprecision hindicator_product
-  have hnormalize :
+  have hnormalizeCandidate :
       normalizeCandidateFactor
           (centeredLiftPoly (ZPoly.reduceModPow raw d.p d.k) (d.p ^ d.k)) =
         expectedFactor := by
     rw [hlift]
     exact normalizeCandidateFactor_eq_of_primitive_nonneg_leading
       expectedFactor hexpected_prim hexpected_sign
+  have hnormalize :
+      normalizeFactorSign (normalizeCandidateFactor
+          (centeredLiftPoly (ZPoly.reduceModPow raw d.p d.k) (d.p ^ d.k))) =
+        expectedFactor := by
+    rw [hnormalizeCandidate]
+    exact normalizeFactorSign_eq_self_of_leadingCoeff_nonneg expectedFactor hexpected_sign
+  have hrecord :
+      shouldRecordPolynomialFactor expectedFactor = true := by
+    apply shouldRecordPolynomialFactor_eq_true_of_ne
+    · intro hzero
+      rw [hzero] at hexpected_degree
+      simp [DensePoly.degree?] at hexpected_degree
+    · intro hone
+      rw [hone] at hexpected_degree
+      have hdeg0 : (DensePoly.degree? (1 : ZPoly)).getD 0 = 0 := by
+        rfl
+      rw [hdeg0] at hexpected_degree
+      omega
+    · intro hneg
+      rw [hneg] at hexpected_degree
+      have hdeg0 : (DensePoly.degree? (DensePoly.C (-1 : Int))).getD 0 = 0 := by
+        simp
+      rw [hdeg0] at hexpected_degree
+      omega
   rcases hdvd with ⟨quotient, hquotient_mul⟩
   have hmul : quotient * expectedFactor = f := by
     rw [DensePoly.mul_comm_poly (S := Int)]
@@ -2859,12 +2960,15 @@ theorem bhksIndicatorCandidate?_eq_some_of_mignottePrecision
      let raw :=
        DensePoly.scale (DensePoly.leadingCoeff f) (Array.polyProduct selected)
      let candidate :=
-       normalizeCandidateFactor
+       normalizeFactorSign <| normalizeCandidateFactor
          (centeredLiftPoly (ZPoly.reduceModPow raw d.p d.k) modulus)
-     match exactQuotient? f candidate with
-     | some quotient => some (candidate, quotient)
-     | none => none) = some (expectedFactor, quotient)
-  simp [raw, liftModulus, hnormalize, hquotient]
+     if shouldRecordPolynomialFactor candidate then
+       match exactQuotient? f candidate with
+       | some quotient => some (candidate, quotient)
+       | none => none
+     else
+       none) = some (expectedFactor, quotient)
+  simp [raw, liftModulus, hnormalize, hrecord, hquotient]
 
 def bhksIndicatorOneCount (r : Nat) (indicator : Array Int) : Nat :=
   (List.range r).foldl
@@ -2902,6 +3006,93 @@ def bhksIndicatorCandidates?
     (f : ZPoly) (d : LiftData) (indicators : Array (Array Int)) :
     Option (Array ZPoly) :=
   indicators.foldl (bhksIndicatorCandidatesStep f d) (some #[])
+
+private theorem bhksIndicatorCandidatesStep_fold_none
+    (f : ZPoly) (d : LiftData) (indicators : List (Array Int)) :
+    List.foldl (bhksIndicatorCandidatesStep f d) none indicators = none := by
+  induction indicators with
+  | nil => rfl
+  | cons indicator indicators ih =>
+      rw [List.foldl_cons]
+      simpa [bhksIndicatorCandidatesStep] using ih
+
+private theorem bhksIndicatorCandidatesStep_fold_all_of_candidate
+    (P : ZPoly → Prop)
+    (f : ZPoly) (d : LiftData)
+    (hcandidate :
+      ∀ {indicator candidate quotient},
+        bhksIndicatorCandidate? f d indicator = some (candidate, quotient) →
+          P candidate) :
+    ∀ (indicators : List (Array Int)) (acc candidates : Array ZPoly),
+      (∀ factor ∈ acc.toList, P factor) →
+        List.foldl (bhksIndicatorCandidatesStep f d) (some acc) indicators =
+            some candidates →
+          ∀ factor ∈ candidates.toList, P factor
+  | [], acc, candidates, hacc, hfold => by
+      simp at hfold
+      cases hfold
+      exact hacc
+  | indicator :: indicators, acc, candidates, hacc, hfold => by
+      rw [List.foldl_cons] at hfold
+      cases hhead : bhksIndicatorCandidate? f d indicator with
+      | none =>
+          have hnone :=
+            bhksIndicatorCandidatesStep_fold_none f d indicators
+          simp [bhksIndicatorCandidatesStep, hhead, hnone] at hfold
+      | some pair =>
+          rcases pair with ⟨candidate, quotient⟩
+          have hnext :
+              List.foldl (bhksIndicatorCandidatesStep f d) (some (acc.push candidate))
+                  indicators = some candidates := by
+            simpa [bhksIndicatorCandidatesStep, hhead] using hfold
+          have hacc_push :
+              ∀ factor ∈ (acc.push candidate).toList, P factor := by
+            intro factor hmem
+            rw [Array.toList_push] at hmem
+            simp only [List.mem_append, List.mem_singleton] at hmem
+            cases hmem with
+            | inl hacc_mem => exact hacc factor hacc_mem
+            | inr hfactor =>
+                rw [hfactor]
+                exact hcandidate hhead
+          exact
+            bhksIndicatorCandidatesStep_fold_all_of_candidate
+              P f d hcandidate indicators (acc.push candidate) candidates
+              hacc_push hnext
+
+private theorem bhksIndicatorCandidates?_all_of_candidate
+    (P : ZPoly → Prop)
+    (f : ZPoly) (d : LiftData)
+    (hcandidate :
+      ∀ {indicator candidate quotient},
+        bhksIndicatorCandidate? f d indicator = some (candidate, quotient) →
+          P candidate)
+    {indicators : Array (Array Int)} {candidates : Array ZPoly}
+    (h : bhksIndicatorCandidates? f d indicators = some candidates) :
+    ∀ factor ∈ candidates.toList, P factor := by
+  unfold bhksIndicatorCandidates? at h
+  rw [← Array.foldl_toList] at h
+  exact
+    bhksIndicatorCandidatesStep_fold_all_of_candidate
+      P f d hcandidate indicators.toList #[] candidates (by simp) h
+
+private theorem bhksIndicatorCandidates?_normalizeFactorSign
+    {f : ZPoly} {d : LiftData} {indicators : Array (Array Int)}
+    {candidates : Array ZPoly}
+    (h : bhksIndicatorCandidates? f d indicators = some candidates) :
+    ∀ factor ∈ candidates.toList, normalizeFactorSign factor = factor :=
+  bhksIndicatorCandidates?_all_of_candidate
+    (fun factor => normalizeFactorSign factor = factor)
+    f d (fun hcandidate => bhksIndicatorCandidate?_normalizeFactorSign hcandidate) h
+
+private theorem bhksIndicatorCandidates?_shouldRecord
+    {f : ZPoly} {d : LiftData} {indicators : Array (Array Int)}
+    {candidates : Array ZPoly}
+    (h : bhksIndicatorCandidates? f d indicators = some candidates) :
+    ∀ factor ∈ candidates.toList, shouldRecordPolynomialFactor factor = true :=
+  bhksIndicatorCandidates?_all_of_candidate
+    (fun factor => shouldRecordPolynomialFactor factor = true)
+    f d (fun hcandidate => bhksIndicatorCandidate?_shouldRecord hcandidate) h
 
 private theorem array_toList_getD {α : Type}
     (xs : Array α) (i : Nat) (fallback : α) :
@@ -4663,6 +4854,55 @@ private theorem bhksRecoverClassified_success_product
   · rw [dif_neg hrows] at hrecover
     simp at hrecover
 
+private theorem bhksRecoverClassified_success_all_of_candidates
+    (P : ZPoly → Prop)
+    (hall :
+      ∀ {f : ZPoly} {d : LiftData} {indicators : Array (Array Int)}
+        {candidates : Array ZPoly},
+        bhksIndicatorCandidates? f d indicators = some candidates →
+          ∀ factor ∈ candidates.toList, P factor)
+    {f : ZPoly} {d : LiftData} {candidates : Array ZPoly}
+    (hrecover : bhksRecoverClassified f d = .success candidates) :
+    ∀ factor ∈ candidates.toList, P factor := by
+  rw [bhksRecoverClassified] at hrecover
+  by_cases hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
+      (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
+  · rw [dif_pos hrows] at hrecover
+    let projected :=
+      bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows
+        (bhksLiftData_latticeBasis_independent f d)
+    let indicators := bhksEquivalenceClassIndicators projected
+    by_cases hdeg : bhksDegenerateIndicatorPartition projected indicators = true
+    · simp [projected, indicators, hdeg] at hrecover
+    · simp only [projected, indicators, hdeg, Bool.false_eq_true, if_false] at hrecover
+      cases hcand : bhksIndicatorCandidates? f d indicators with
+      | none => simp [projected, indicators, hcand] at hrecover
+      | some cands =>
+          simp only [projected, indicators, hcand] at hrecover
+          by_cases hprod : Array.polyProduct cands == f
+          · simp only [hprod, if_true] at hrecover
+            cases hrecover
+            exact hall hcand
+          · simp [hprod] at hrecover
+  · rw [dif_neg hrows] at hrecover
+    simp at hrecover
+
+private theorem bhksRecoverClassified_success_normalizeFactorSign
+    {f : ZPoly} {d : LiftData} {candidates : Array ZPoly}
+    (h : bhksRecoverClassified f d = .success candidates) :
+    ∀ factor ∈ candidates.toList, normalizeFactorSign factor = factor :=
+  bhksRecoverClassified_success_all_of_candidates
+    (fun factor => normalizeFactorSign factor = factor)
+    (fun hcand => bhksIndicatorCandidates?_normalizeFactorSign hcand) h
+
+private theorem bhksRecoverClassified_success_shouldRecord
+    {f : ZPoly} {d : LiftData} {candidates : Array ZPoly}
+    (h : bhksRecoverClassified f d = .success candidates) :
+    ∀ factor ∈ candidates.toList, shouldRecordPolynomialFactor factor = true :=
+  bhksRecoverClassified_success_all_of_candidates
+    (fun factor => shouldRecordPolynomialFactor factor = true)
+    (fun hcand => bhksIndicatorCandidates?_shouldRecord hcand) h
+
 /-- A successful BHKS recovery call preserves the polynomial product: when
 `bhksRecover? f d` returns `some candidates`, the candidates multiply back
 to `f` because the executable runs a final `Array.polyProduct candidates == f`
@@ -4720,6 +4960,65 @@ private theorem factorFastCoreWithBound_product
           · simp [hclass, hk] at hfast
           · simp [hclass, hk] at hfast
             exact ih _ coreFactors hfast
+
+private theorem factorFastCoreWithBound_some_all_of_recovery
+    (P : ZPoly → Prop)
+    (hrecover :
+      ∀ {core : ZPoly} {d : LiftData} {candidates : Array ZPoly},
+        bhksRecoverClassified core d = .success candidates →
+          ∀ factor ∈ candidates.toList, P factor)
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) :
+    ∀ k fuel coreFactors,
+      factorFastCoreWithBound core B primeData k fuel = some coreFactors →
+        ∀ factor ∈ coreFactors.toList, P factor := by
+  intro k fuel
+  induction fuel generalizing k with
+  | zero =>
+      intro coreFactors hfast
+      simp [factorFastCoreWithBound] at hfast
+  | succ fuel ih =>
+      intro coreFactors hfast
+      rw [factorFastCoreWithBound] at hfast
+      cases hclass : bhksRecoverClassified core (henselLiftData core k primeData) with
+      | success xs =>
+          simp [hclass] at hfast
+          cases hfast
+          exact hrecover hclass
+      | degenerate =>
+          by_cases hk : k ≥ B
+          · simp [hclass, hk] at hfast
+          · simp [hclass, hk] at hfast
+            exact ih _ coreFactors hfast
+      | candidateFailure =>
+          by_cases hk : k ≥ B
+          · simp [hclass, hk] at hfast
+          · simp [hclass, hk] at hfast
+            exact ih _ coreFactors hfast
+      | productMismatch cands =>
+          by_cases hk : k ≥ B
+          · simp [hclass, hk] at hfast
+          · simp [hclass, hk] at hfast
+            exact ih _ coreFactors hfast
+
+private theorem factorFastCoreWithBound_some_normalizeFactorSign
+    {core : ZPoly} {B : Nat} {primeData : PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array ZPoly}
+    (h : factorFastCoreWithBound core B primeData k fuel = some coreFactors) :
+    ∀ factor ∈ coreFactors.toList, normalizeFactorSign factor = factor :=
+  factorFastCoreWithBound_some_all_of_recovery
+    (fun factor => normalizeFactorSign factor = factor)
+    (fun hrecover => bhksRecoverClassified_success_normalizeFactorSign hrecover)
+    core B primeData k fuel coreFactors h
+
+private theorem factorFastCoreWithBound_some_shouldRecord
+    {core : ZPoly} {B : Nat} {primeData : PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array ZPoly}
+    (h : factorFastCoreWithBound core B primeData k fuel = some coreFactors) :
+    ∀ factor ∈ coreFactors.toList, shouldRecordPolynomialFactor factor = true :=
+  factorFastCoreWithBound_some_all_of_recovery
+    (fun factor => shouldRecordPolynomialFactor factor = true)
+    (fun hrecover => bhksRecoverClassified_success_shouldRecord hrecover)
+    core B primeData k fuel coreFactors h
 
 /-- The exhaustive recombination wrapper preserves the polynomial product
 unconditionally: every branch returns either `#[core]` (singleton, trivially
@@ -5993,6 +6292,151 @@ private theorem factorFastWithBound_product_of_quadratic_branch
       | inr hcore =>
           exact quadraticIntegerRootFactors?_shouldRecord
             (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad factor hcore
+
+private theorem factorFastWithBound_product_of_core_success_branch
+    (f : ZPoly) (B : Nat) {φ : Factorization}
+    (hf : f ≠ 0)
+    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (hB_pos : 1 ≤ B)
+    (primeData : PrimeChoiceData)
+    (hprime : primeData = choosePrimeData (normalizeForFactor f).squareFreeCore)
+    (hmulti : 1 < primeData.factorsModP.size)
+    (hquadratic : B = 1 ∨
+      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none)
+    (coreFactors : Array ZPoly)
+    (hcore :
+      let a := precisionForCoeffBound B primeData.p
+      factorFastCoreWithBound (normalizeForFactor f).squareFreeCore a
+        primeData (initialHenselPrecision a)
+        (ZPoly.quadraticDoublingSteps a + 2) = some coreFactors)
+    (h : factorFastWithBound f B = some φ) :
+    Factorization.product φ = f := by
+  have hfast :
+      factorFastFactorsWithBound f B =
+        some (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) :=
+    factorFastFactorsWithBound_eq_some_of_core_success
+      f B primeData coreFactors hB_pos hprime hdeg hmulti hquadratic hcore
+  have hphi :
+      factorizationOfFactors f
+          (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) = φ := by
+    rw [factorFastWithBound_eq_some_of_factors_some f B hfast] at h
+    exact Option.some.inj h
+  rw [← hphi]
+  apply factorFastFactorsWithBound_product_of_some_of_all_recorded_normalized hfast
+  · intro factor hmem
+    unfold reassemblePolynomialFactors at hmem
+    by_cases hdup :
+        (normalizeForFactor f).repeatedPart =
+            (normalizeForFactor f).squareFreeCore ∧
+          (normalizeForFactor f).repeatedPart ≠ 1
+    · rw [if_pos hdup] at hmem
+      rw [Array.toList_append] at hmem
+      simp only [List.mem_append] at hmem
+      cases hmem with
+      | inl hleft =>
+          rw [Array.toList_append] at hleft
+          simp only [List.mem_append] at hleft
+          cases hleft with
+          | inl hx =>
+              exact xPowerFactorArray_normalizeFactorSign
+                (normalizeForFactor f).xPower factor hx
+          | inr hcore_mem =>
+              exact
+                factorFastCoreWithBound_some_normalizeFactorSign
+                  (core := (normalizeForFactor f).squareFreeCore)
+                  (B := precisionForCoeffBound B primeData.p)
+                  (primeData := primeData)
+                  (k := initialHenselPrecision (precisionForCoeffBound B primeData.p))
+                  (fuel := ZPoly.quadraticDoublingSteps
+                    (precisionForCoeffBound B primeData.p) + 2)
+                  (coreFactors := coreFactors)
+                  hcore factor hcore_mem
+      | inr hcore_mem =>
+          exact
+            factorFastCoreWithBound_some_normalizeFactorSign
+              (core := (normalizeForFactor f).squareFreeCore)
+              (B := precisionForCoeffBound B primeData.p)
+              (primeData := primeData)
+              (k := initialHenselPrecision (precisionForCoeffBound B primeData.p))
+              (fuel := ZPoly.quadraticDoublingSteps
+                (precisionForCoeffBound B primeData.p) + 2)
+              (coreFactors := coreFactors)
+              hcore factor hcore_mem
+    · rw [if_neg hdup] at hmem
+      rw [Array.toList_append] at hmem
+      simp only [List.mem_append] at hmem
+      cases hmem with
+      | inl hprefix =>
+          exact polynomialNormalizationPrefixFactors_normalizeFactorSign_of_ne_zero
+            f hf factor hprefix
+      | inr hcore_mem =>
+          exact
+            factorFastCoreWithBound_some_normalizeFactorSign
+              (core := (normalizeForFactor f).squareFreeCore)
+              (B := precisionForCoeffBound B primeData.p)
+              (primeData := primeData)
+              (k := initialHenselPrecision (precisionForCoeffBound B primeData.p))
+              (fuel := ZPoly.quadraticDoublingSteps
+                (precisionForCoeffBound B primeData.p) + 2)
+              (coreFactors := coreFactors)
+              hcore factor hcore_mem
+  · intro factor hmem
+    unfold reassemblePolynomialFactors at hmem
+    by_cases hdup :
+        (normalizeForFactor f).repeatedPart =
+            (normalizeForFactor f).squareFreeCore ∧
+          (normalizeForFactor f).repeatedPart ≠ 1
+    · rw [if_pos hdup] at hmem
+      rw [Array.toList_append] at hmem
+      simp only [List.mem_append] at hmem
+      cases hmem with
+      | inl hleft =>
+          rw [Array.toList_append] at hleft
+          simp only [List.mem_append] at hleft
+          cases hleft with
+          | inl hx =>
+              exact xPowerFactorArray_shouldRecord
+                (normalizeForFactor f).xPower factor hx
+          | inr hcore_mem =>
+              exact
+                factorFastCoreWithBound_some_shouldRecord
+                  (core := (normalizeForFactor f).squareFreeCore)
+                  (B := precisionForCoeffBound B primeData.p)
+                  (primeData := primeData)
+                  (k := initialHenselPrecision (precisionForCoeffBound B primeData.p))
+                  (fuel := ZPoly.quadraticDoublingSteps
+                    (precisionForCoeffBound B primeData.p) + 2)
+                  (coreFactors := coreFactors)
+                  hcore factor hcore_mem
+      | inr hcore_mem =>
+          exact
+            factorFastCoreWithBound_some_shouldRecord
+              (core := (normalizeForFactor f).squareFreeCore)
+              (B := precisionForCoeffBound B primeData.p)
+              (primeData := primeData)
+              (k := initialHenselPrecision (precisionForCoeffBound B primeData.p))
+              (fuel := ZPoly.quadraticDoublingSteps
+                (precisionForCoeffBound B primeData.p) + 2)
+              (coreFactors := coreFactors)
+              hcore factor hcore_mem
+    · rw [if_neg hdup] at hmem
+      rw [Array.toList_append] at hmem
+      simp only [List.mem_append] at hmem
+      cases hmem with
+      | inl hprefix =>
+          exact polynomialNormalizationPrefixFactors_shouldRecord_of_ne_zero
+            f hf factor hprefix
+      | inr hcore_mem =>
+          exact
+            factorFastCoreWithBound_some_shouldRecord
+              (core := (normalizeForFactor f).squareFreeCore)
+              (B := precisionForCoeffBound B primeData.p)
+              (primeData := primeData)
+              (k := initialHenselPrecision (precisionForCoeffBound B primeData.p))
+              (fuel := ZPoly.quadraticDoublingSteps
+                (precisionForCoeffBound B primeData.p) + 2)
+              (coreFactors := coreFactors)
+              hcore factor hcore_mem
 
 /--
 A successful integer certificate exposes the per-prime polynomial check fact:
