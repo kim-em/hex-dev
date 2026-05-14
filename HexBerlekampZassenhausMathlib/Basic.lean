@@ -415,8 +415,61 @@ theorem factorFastCoreWithBound_some_factor_irreducible_of_count
     rw [hgs_def, List.mem_map]
     exact ⟨factor, hfactor_mem, rfl⟩
   exact
-    HexBerlekampZassenhausMathlib.UFDPartition.irreducible_of_partition_card_eq_normalizedFactors_card
+      HexBerlekampZassenhausMathlib.UFDPartition.irreducible_of_partition_card_eq_normalizedFactors_card
       hf_ne gs hne_all hnonunit_all hprod hcount _ hpolyfactor_mem
+
+/-- Upper cardinality bound for a successful BHKS fast-core branch.
+
+The emitted factor list consists of non-zero non-units whose product is
+associated to `core`, so the abstract UFD partition bound applies after
+transporting the executable factors to `Polynomial ℤ`. -/
+theorem factorFastCoreWithBound_some_factor_count_le
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
+    (hcore_ne : core ≠ 0)
+    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors) :
+    (coreFactors.toList.map HexPolyZMathlib.toPolynomial).length ≤
+      (UniqueFactorizationMonoid.normalizedFactors
+        (HexPolyZMathlib.toPolynomial core)).card := by
+  set f := HexPolyZMathlib.toPolynomial core with hf_def
+  have hf_ne : f ≠ 0 := by
+    intro hzero
+    apply hcore_ne
+    apply HexPolyZMathlib.equiv.injective
+    simpa using hzero
+  set gs : List (Polynomial ℤ) :=
+    coreFactors.toList.map HexPolyZMathlib.toPolynomial with hgs_def
+  have hprod : Associated gs.prod f := by
+    have hp_core : Array.polyProduct coreFactors = core :=
+      Hex.factorFastCoreWithBound_product core B primeData k fuel coreFactors h
+    have hp_poly :
+        (coreFactors.toList.map HexPolyZMathlib.toPolynomial).prod =
+          HexPolyZMathlib.toPolynomial core := by
+      rw [← polyProduct_toPolynomial, hp_core]
+    rw [hgs_def, hp_poly, hf_def]
+  have hrecord_all :
+      ∀ factor ∈ coreFactors.toList,
+        Hex.shouldRecordPolynomialFactor factor = true :=
+    Hex.factorFastCoreWithBound_some_shouldRecord h
+  have hne_all : ∀ g ∈ gs, g ≠ 0 := by
+    intro g hg
+    rw [hgs_def, List.mem_map] at hg
+    obtain ⟨factor, hfactor_mem, hg_eq⟩ := hg
+    rw [← hg_eq]
+    exact
+      (toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord
+        (hrecord_all factor hfactor_mem)).1
+  have hnonunit_all : ∀ g ∈ gs, ¬ IsUnit g := by
+    intro g hg
+    rw [hgs_def, List.mem_map] at hg
+    obtain ⟨factor, hfactor_mem, hg_eq⟩ := hg
+    rw [← hg_eq]
+    exact
+      (toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord
+        (hrecord_all factor hfactor_mem)).2
+  exact
+    HexBerlekampZassenhausMathlib.UFDPartition.length_le_normalizedFactors_card
+      hf_ne gs hne_all hnonunit_all hprod
 
 /-- Branch-local fast-core success irreducibility, expressed in the Mathlib-free
 `Hex.ZPoly.Irreducible` predicate. This is the `Hex.ZPoly` transport of
