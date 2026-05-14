@@ -1192,6 +1192,19 @@ private theorem evalCoeffPowerSumUpTo_sub
       rw [evalCoeffPowerSumUpTo_sub f h x n (base + 1)]
       grind
 
+private theorem evalCoeffPowerSumUpTo_const_mul
+    (c : ZMod64 p) (coeff : Nat → ZMod64 p) (x : ZMod64 p) :
+    ∀ n base,
+      evalCoeffPowerSumUpTo (fun i => c * coeff i) n base x =
+        c * evalCoeffPowerSumUpTo coeff n base x
+  | 0, _ => by
+      simp [evalCoeffPowerSumUpTo]
+      grind
+  | n + 1, base => by
+      simp only [evalCoeffPowerSumUpTo]
+      rw [evalCoeffPowerSumUpTo_const_mul c coeff x n (base + 1)]
+      grind
+
 private theorem size_le_of_coeff_eq_zero_from (f : FpPoly p) (bound : Nat)
     (hzero : ∀ i, bound ≤ i → f.coeff i = 0) :
     f.size ≤ bound := by
@@ -2332,6 +2345,26 @@ theorem C_mul_eq_scale (c : ZMod64 p) (f : FpPoly p) :
   have hscale := scale_mul_left c (1 : FpPoly p) f
   rw [one_mul, scale_one_poly] at hscale
   exact hscale.symm
+
+theorem eval_C_mul (c : ZMod64 p) (f : FpPoly p) (x : ZMod64 p) :
+    DensePoly.eval (DensePoly.C c * f) x = c * DensePoly.eval f x := by
+  rw [C_mul_eq_scale]
+  rw [eval_eq_coeff_power_sum_upTo_bound (DensePoly.scale c f) x (bound := f.size)]
+  · rw [eval_eq_coeff_power_sum_upTo_size f x]
+    have hcoeff :
+        (fun i => (DensePoly.scale c f).coeff i) =
+          (fun i => c * f.coeff i) := by
+      funext i
+      have hzero : c * (0 : ZMod64 p) = 0 := by grind
+      rw [DensePoly.coeff_scale _ _ _ hzero]
+    rw [hcoeff]
+    exact evalCoeffPowerSumUpTo_const_mul c (fun i => f.coeff i) x f.size 0
+  · apply size_le_of_coeff_eq_zero_from
+    intro i hi
+    have hzero : c * (0 : ZMod64 p) = 0 := by grind
+    rw [DensePoly.coeff_scale _ _ _ hzero]
+    rw [DensePoly.coeff_eq_zero_of_size_le f hi]
+    exact hzero
 
 theorem scale_scale (c d : ZMod64 p) (f : FpPoly p) :
     DensePoly.scale c (DensePoly.scale d f) = DensePoly.scale (c * d) f := by
