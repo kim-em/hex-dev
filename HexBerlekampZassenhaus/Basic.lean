@@ -4140,16 +4140,6 @@ instance instDecidableIrreducible (f : ZPoly) : Decidable (Irreducible f) :=
 end ZPoly
 
 /--
-Conditional product contract for the bounded factorization entry point.
-The bound hypothesis is the computational correctness assumption supplied by
-the later proof layer.
--/
-theorem factor_product_of_bound (f : ZPoly) (B : Nat)
-    (hB : ∀ g : ZPoly, g ∣ f → ∀ i, (g.coeff i).natAbs ≤ B) :
-    Factorization.product (factorWithBound f B) = f := by
-  sorry
-
-/--
 The primitive square-free layer in normalization reassembles the extracted
 `X`-free primitive core up to the rational unit introduced by clearing
 denominators.
@@ -6437,6 +6427,96 @@ private theorem factorFastWithBound_product_of_core_success_branch
                 (precisionForCoeffBound B primeData.p) + 2)
               (coreFactors := coreFactors)
               hcore factor hcore_mem
+
+private theorem factorFastWithBound_product_of_some
+    (f : ZPoly) (B : Nat) {φ : Factorization}
+    (h : factorFastWithBound f B = some φ) :
+    Factorization.product φ = f := by
+  by_cases hf : f = 0
+  · subst f
+    unfold factorFastWithBound at h
+    cases hfast : factorFastFactorsWithBound 0 B with
+    | none =>
+        simp [hfast] at h
+    | some factors =>
+        simp [hfast] at h
+        rw [← h]
+        exact factorizationOfFactors_product_of_zero factors
+  · by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
+    · exact factorFastWithBound_product_of_constant_branch f B hf hdeg h
+    · by_cases hB0 : B = 0
+      · unfold factorFastWithBound factorFastFactorsWithBound at h
+        rw [if_neg hdeg, if_pos hB0] at h
+        simp at h
+      · have hB_pos : 1 ≤ B := by omega
+        by_cases hB1 : B = 1
+        · let primeData := choosePrimeData (normalizeForFactor f).squareFreeCore
+          by_cases hsmall : primeData.factorsModP.size ≤ 1
+          · exact
+              factorFastWithBound_product_of_small_mod_branch
+                f B hf hdeg hB_pos hsmall (Or.inl hB1) h
+          · cases hcore :
+              let a := precisionForCoeffBound B primeData.p
+              factorFastCoreWithBound (normalizeForFactor f).squareFreeCore a
+                primeData (initialHenselPrecision a)
+                (ZPoly.quadraticDoublingSteps a + 2) with
+            | none =>
+                unfold factorFastWithBound factorFastFactorsWithBound at h
+                rw [if_neg hdeg, if_neg hB0, if_pos hB1] at h
+                simp [primeData, hsmall, hcore] at h
+            | some coreFactors =>
+                exact
+                  factorFastWithBound_product_of_core_success_branch
+                    f B hf hdeg hB_pos primeData rfl
+                    (by omega) (Or.inl hB1) coreFactors hcore h
+        · have hB_ge_two : 2 ≤ B := by omega
+          cases hquad :
+              quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
+          | some coreFactors =>
+              exact
+                factorFastWithBound_product_of_quadratic_branch
+                  f B hf hdeg hB_ge_two coreFactors hquad h
+          | none =>
+              let primeData := choosePrimeData (normalizeForFactor f).squareFreeCore
+              by_cases hsmall : primeData.factorsModP.size ≤ 1
+              · exact
+                  factorFastWithBound_product_of_small_mod_branch
+                    f B hf hdeg hB_pos hsmall (Or.inr hquad) h
+              · cases hcore :
+                  let a := precisionForCoeffBound B primeData.p
+                  factorFastCoreWithBound (normalizeForFactor f).squareFreeCore a
+                    primeData (initialHenselPrecision a)
+                    (ZPoly.quadraticDoublingSteps a + 2) with
+                | none =>
+                    unfold factorFastWithBound factorFastFactorsWithBound at h
+                    rw [if_neg hdeg, if_neg hB0, if_neg hB1, hquad] at h
+                    simp [primeData, hsmall, hcore] at h
+                | some coreFactors =>
+                    exact
+                      factorFastWithBound_product_of_core_success_branch
+                        f B hf hdeg hB_pos primeData rfl
+                        (by omega) (Or.inr hquad) coreFactors hcore h
+
+/--
+Product contract for the bounded factorization entry point.
+-/
+theorem factorWithBound_product (f : ZPoly) (B : Nat) :
+    Factorization.product (factorWithBound f B) = f := by
+  unfold factorWithBound
+  cases hfast : factorFastWithBound f B with
+  | some φ =>
+      exact factorFastWithBound_product_of_some f B hfast
+  | none =>
+      exact factorSlowWithBound_product f B
+
+/--
+Conditional product contract for callers that still carry an explicit
+coefficient-bound hypothesis.
+-/
+theorem factor_product_of_bound (f : ZPoly) (B : Nat)
+    (_hB : ∀ g : ZPoly, g ∣ f → ∀ i, (g.coeff i).natAbs ≤ B) :
+    Factorization.product (factorWithBound f B) = f :=
+  factorWithBound_product f B
 
 /--
 A successful integer certificate exposes the per-prime polynomial check fact:
