@@ -985,7 +985,10 @@ def reassembleNormalizedFactors
 
 private def reassemblePolynomialFactors
     (d : FactorNormalizationData) (coreFactors : Array ZPoly) : Array ZPoly :=
-  polynomialNormalizationPrefixFactors d ++ coreFactors
+  if d.repeatedPart = d.squareFreeCore ∧ d.repeatedPart ≠ 1 then
+    xPowerFactorArray d.xPower ++ coreFactors ++ coreFactors
+  else
+    polynomialNormalizationPrefixFactors d ++ coreFactors
 
 private def factorizationOfFactors (f : ZPoly) (factors : Array ZPoly) : Factorization :=
   { scalar := signedContentScalar f
@@ -1525,15 +1528,24 @@ private theorem polyProduct_polynomialNormalizationPrefixFactors
 private theorem polyProduct_reassemblePolynomialFactors
     (d : FactorNormalizationData) (coreFactors : Array ZPoly) :
     Array.polyProduct (reassemblePolynomialFactors d coreFactors) =
-      DensePoly.shift d.xPower d.repeatedPart *
-        Array.polyProduct coreFactors := by
+      if d.repeatedPart = d.squareFreeCore ∧ d.repeatedPart ≠ 1 then
+        DensePoly.shift d.xPower (Array.polyProduct coreFactors) *
+          Array.polyProduct coreFactors
+      else
+        DensePoly.shift d.xPower d.repeatedPart *
+          Array.polyProduct coreFactors := by
   unfold reassemblePolynomialFactors
-  rw [polyProduct_append, polyProduct_polynomialNormalizationPrefixFactors]
-  rw [polyProduct_xPowerFactorArray_mul]
-  rw [polyProduct_repeatedPartFactorArray]
-  by_cases hrepeated : d.repeatedPart = 1
-  · rw [if_pos hrepeated, hrepeated]
-  · rw [if_neg hrepeated]
+  by_cases hdup : d.repeatedPart = d.squareFreeCore ∧ d.repeatedPart ≠ 1
+  · rw [if_pos hdup, if_pos hdup]
+    rw [polyProduct_append, polyProduct_append]
+    rw [polyProduct_xPowerFactorArray_mul]
+  · rw [if_neg hdup, if_neg hdup]
+    rw [polyProduct_append, polyProduct_polynomialNormalizationPrefixFactors]
+    rw [polyProduct_xPowerFactorArray_mul]
+    rw [polyProduct_repeatedPartFactorArray]
+    by_cases hrepeated : d.repeatedPart = 1
+    · rw [if_pos hrepeated, hrepeated]
+    · rw [if_neg hrepeated]
 
 private theorem polyProduct_normalizationPrefixFactors (d : FactorNormalizationData) :
     Array.polyProduct (normalizationPrefixFactors d) =
@@ -3878,6 +3890,13 @@ def factor (f : ZPoly) : Factorization :=
 @[simp] theorem factor_eq_factorWithBound_default (f : ZPoly) :
     factor f = factorWithBound f (ZPoly.defaultFactorCoeffBound f) := rfl
 
+private def quadraticSquareRegression : ZPoly :=
+  let q : ZPoly := DensePoly.ofCoeffs #[-1, 0, 1]
+  q * q
+
+#guard (factor quadraticSquareRegression).factors =
+  #[(linearFactorForRoot (-1), 2), (linearFactorForRoot 1, 2)]
+
 namespace ZPoly
 
 /--
@@ -4263,31 +4282,60 @@ private theorem reassemblePolynomialFactors_product_eq_input
       Array.polyProduct
         (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) = f := by
   rw [polyProduct_reassemblePolynomialFactors]
-  rw [hcore]
-  by_cases hf : f = 0
-  · subst hf
-    have hsig : signedContentScalar (0 : ZPoly) = 0 := by
-      unfold signedContentScalar
-      simp
-    rw [hsig]
-    have hC0 : DensePoly.C (0 : Int) = (0 : ZPoly) := by
-      apply DensePoly.ext_coeff
-      intro n
-      rw [DensePoly.coeff_C, DensePoly.coeff_zero]
-      split <;> rfl
-    rw [hC0]
-    exact DensePoly.zero_mul _
-  · rw [ZPoly.C_mul_eq_scale]
-    have hrearrange :
-        DensePoly.shift (normalizeForFactor f).xPower (normalizeForFactor f).repeatedPart *
-            (normalizeForFactor f).squareFreeCore =
+  by_cases hdup :
+      (normalizeForFactor f).repeatedPart = (normalizeForFactor f).squareFreeCore ∧
+        (normalizeForFactor f).repeatedPart ≠ 1
+  · rw [if_pos hdup, hcore]
+    by_cases hf : f = 0
+    · subst hf
+      have hsig : signedContentScalar (0 : ZPoly) = 0 := by
+        unfold signedContentScalar
+        simp
+      rw [hsig]
+      have hC0 : DensePoly.C (0 : Int) = (0 : ZPoly) := by
+        apply DensePoly.ext_coeff
+        intro n
+        rw [DensePoly.coeff_C, DensePoly.coeff_zero]
+        split <;> rfl
+      rw [hC0]
+      exact DensePoly.zero_mul _
+    · rw [ZPoly.C_mul_eq_scale]
+      have hrearrange :
           DensePoly.shift (normalizeForFactor f).xPower
-            ((normalizeForFactor f).squareFreeCore * (normalizeForFactor f).repeatedPart) := by
-      rw [← shift_mul_left_zpoly]
-      rw [DensePoly.mul_comm_poly (S := Int)
-        (normalizeForFactor f).repeatedPart (normalizeForFactor f).squareFreeCore]
-    rw [hrearrange]
-    exact normalizeForFactor_reassembles_signedContentScalar f hf
+              (normalizeForFactor f).squareFreeCore *
+              (normalizeForFactor f).squareFreeCore =
+            DensePoly.shift (normalizeForFactor f).xPower
+              ((normalizeForFactor f).squareFreeCore *
+                (normalizeForFactor f).repeatedPart) := by
+        rw [hdup.1]
+        rw [← shift_mul_left_zpoly]
+      rw [hrearrange]
+      exact normalizeForFactor_reassembles_signedContentScalar f hf
+  · rw [if_neg hdup, hcore]
+    by_cases hf : f = 0
+    · subst hf
+      have hsig : signedContentScalar (0 : ZPoly) = 0 := by
+        unfold signedContentScalar
+        simp
+      rw [hsig]
+      have hC0 : DensePoly.C (0 : Int) = (0 : ZPoly) := by
+        apply DensePoly.ext_coeff
+        intro n
+        rw [DensePoly.coeff_C, DensePoly.coeff_zero]
+        split <;> rfl
+      rw [hC0]
+      exact DensePoly.zero_mul _
+    · rw [ZPoly.C_mul_eq_scale]
+      have hrearrange :
+          DensePoly.shift (normalizeForFactor f).xPower (normalizeForFactor f).repeatedPart *
+              (normalizeForFactor f).squareFreeCore =
+            DensePoly.shift (normalizeForFactor f).xPower
+              ((normalizeForFactor f).squareFreeCore * (normalizeForFactor f).repeatedPart) := by
+        rw [← shift_mul_left_zpoly]
+        rw [DensePoly.mul_comm_poly (S := Int)
+          (normalizeForFactor f).repeatedPart (normalizeForFactor f).squareFreeCore]
+      rw [hrearrange]
+      exact normalizeForFactor_reassembles_signedContentScalar f hf
 
 private theorem firstSome_some
     {α β : Type} {xs : List α} {f : α → Option β} {y : β}
@@ -5449,6 +5497,15 @@ private theorem factorSlowWithBound_product_of_constant_branch
       rw [polyProduct_singleton]
       exact hcore_one.symm)
   · unfold reassemblePolynomialFactors
+    have hnot_dup :
+        ¬ ((normalizeForFactor f).repeatedPart =
+              (normalizeForFactor f).squareFreeCore ∧
+            (normalizeForFactor f).repeatedPart ≠ 1) := by
+      intro hdup
+      have hrepeated_one : (normalizeForFactor f).repeatedPart = 1 := by
+        rw [hdup.1, hcore_one]
+      exact hdup.2 hrepeated_one
+    rw [if_neg hnot_dup]
     rw [polyProduct_filteredNormalizedFactors_append_one_of_all_recorded_normalized]
     rw [polyProduct_append, polyProduct_singleton]
     exact (DensePoly.mul_one_right_poly (S := Int) _).symm
@@ -5472,30 +5529,84 @@ private theorem factorSlowWithBound_product_of_quadratic_branch
     rw [if_neg hdeg]
     rw [hquad]
     unfold reassemblePolynomialFactors
-    intro factor hmem
-    rw [Array.toList_append] at hmem
-    simp only [List.mem_append] at hmem
-    cases hmem with
-    | inl hprefix =>
-        exact polynomialNormalizationPrefixFactors_normalizeFactorSign_of_ne_zero
-          f hf factor hprefix
-    | inr hcore =>
-        exact quadraticIntegerRootFactors?_normalizeFactorSign
-          (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad factor hcore
+    by_cases hdup :
+        (normalizeForFactor f).repeatedPart =
+            (normalizeForFactor f).squareFreeCore ∧
+          (normalizeForFactor f).repeatedPart ≠ 1
+    · rw [if_pos hdup]
+      intro factor hmem
+      simp only at hmem
+      rw [if_pos hdup] at hmem
+      rw [Array.toList_append] at hmem
+      simp only [List.mem_append] at hmem
+      cases hmem with
+      | inl hleft =>
+          rw [Array.toList_append] at hleft
+          simp only [List.mem_append] at hleft
+          cases hleft with
+          | inl hx =>
+              exact xPowerFactorArray_normalizeFactorSign
+                (normalizeForFactor f).xPower factor hx
+          | inr hcore =>
+              exact quadraticIntegerRootFactors?_normalizeFactorSign
+                (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad factor hcore
+      | inr hcore =>
+          exact quadraticIntegerRootFactors?_normalizeFactorSign
+            (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad factor hcore
+    · rw [if_neg hdup]
+      intro factor hmem
+      simp only at hmem
+      rw [if_neg hdup] at hmem
+      rw [Array.toList_append] at hmem
+      simp only [List.mem_append] at hmem
+      cases hmem with
+      | inl hprefix =>
+          exact polynomialNormalizationPrefixFactors_normalizeFactorSign_of_ne_zero
+            f hf factor hprefix
+      | inr hcore =>
+          exact quadraticIntegerRootFactors?_normalizeFactorSign
+            (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad factor hcore
   · unfold factorSlowFactorsWithBound
     rw [if_neg hdeg]
     rw [hquad]
     unfold reassemblePolynomialFactors
-    intro factor hmem
-    rw [Array.toList_append] at hmem
-    simp only [List.mem_append] at hmem
-    cases hmem with
-    | inl hprefix =>
-        exact polynomialNormalizationPrefixFactors_shouldRecord_of_ne_zero
-          f hf factor hprefix
-    | inr hcore =>
-        exact quadraticIntegerRootFactors?_shouldRecord
-          (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad factor hcore
+    by_cases hdup :
+        (normalizeForFactor f).repeatedPart =
+            (normalizeForFactor f).squareFreeCore ∧
+          (normalizeForFactor f).repeatedPart ≠ 1
+    · rw [if_pos hdup]
+      intro factor hmem
+      simp only at hmem
+      rw [if_pos hdup] at hmem
+      rw [Array.toList_append] at hmem
+      simp only [List.mem_append] at hmem
+      cases hmem with
+      | inl hleft =>
+          rw [Array.toList_append] at hleft
+          simp only [List.mem_append] at hleft
+          cases hleft with
+          | inl hx =>
+              exact xPowerFactorArray_shouldRecord
+                (normalizeForFactor f).xPower factor hx
+          | inr hcore =>
+              exact quadraticIntegerRootFactors?_shouldRecord
+                (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad factor hcore
+      | inr hcore =>
+          exact quadraticIntegerRootFactors?_shouldRecord
+            (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad factor hcore
+    · rw [if_neg hdup]
+      intro factor hmem
+      simp only at hmem
+      rw [if_neg hdup] at hmem
+      rw [Array.toList_append] at hmem
+      simp only [List.mem_append] at hmem
+      cases hmem with
+      | inl hprefix =>
+          exact polynomialNormalizationPrefixFactors_shouldRecord_of_ne_zero
+            f hf factor hprefix
+      | inr hcore =>
+          exact quadraticIntegerRootFactors?_shouldRecord
+            (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad factor hcore
 
 private theorem factorSlowWithBound_product_of_exhaustive_branch
     (f : ZPoly) (B : Nat)
@@ -5508,36 +5619,98 @@ private theorem factorSlowWithBound_product_of_exhaustive_branch
     rw [if_neg hdeg]
     rw [hquad]
     unfold reassemblePolynomialFactors
-    intro factor hmem
-    rw [Array.toList_append] at hmem
-    simp only [List.mem_append] at hmem
-    cases hmem with
-    | inl hprefix =>
-        exact polynomialNormalizationPrefixFactors_normalizeFactorSign_of_ne_zero
-          f hf factor hprefix
-    | inr hcore =>
-        exact exhaustiveCoreFactorsWithBound_normalizeFactorSign
-          (normalizeForFactor f).squareFreeCore B
-          (choosePrimeData (normalizeForFactor f).squareFreeCore)
-          (squareFreeCore_normalizeFactorSign_of_ne_zero f hf)
-          factor hcore
+    by_cases hdup :
+        (normalizeForFactor f).repeatedPart =
+            (normalizeForFactor f).squareFreeCore ∧
+          (normalizeForFactor f).repeatedPart ≠ 1
+    · rw [if_pos hdup]
+      intro factor hmem
+      simp only at hmem
+      rw [Array.toList_append] at hmem
+      simp only [List.mem_append] at hmem
+      cases hmem with
+      | inl hleft =>
+          rw [Array.toList_append] at hleft
+          simp only [List.mem_append] at hleft
+          cases hleft with
+          | inl hx =>
+              exact xPowerFactorArray_normalizeFactorSign
+                (normalizeForFactor f).xPower factor hx
+          | inr hcore =>
+              exact exhaustiveCoreFactorsWithBound_normalizeFactorSign
+                (normalizeForFactor f).squareFreeCore B
+                (choosePrimeData (normalizeForFactor f).squareFreeCore)
+                (squareFreeCore_normalizeFactorSign_of_ne_zero f hf)
+                factor hcore
+      | inr hcore =>
+          exact exhaustiveCoreFactorsWithBound_normalizeFactorSign
+            (normalizeForFactor f).squareFreeCore B
+            (choosePrimeData (normalizeForFactor f).squareFreeCore)
+            (squareFreeCore_normalizeFactorSign_of_ne_zero f hf)
+            factor hcore
+    · rw [if_neg hdup]
+      intro factor hmem
+      simp only at hmem
+      rw [Array.toList_append] at hmem
+      simp only [List.mem_append] at hmem
+      cases hmem with
+      | inl hprefix =>
+          exact polynomialNormalizationPrefixFactors_normalizeFactorSign_of_ne_zero
+            f hf factor hprefix
+      | inr hcore =>
+          exact exhaustiveCoreFactorsWithBound_normalizeFactorSign
+            (normalizeForFactor f).squareFreeCore B
+            (choosePrimeData (normalizeForFactor f).squareFreeCore)
+            (squareFreeCore_normalizeFactorSign_of_ne_zero f hf)
+            factor hcore
   · unfold factorSlowFactorsWithBound
     rw [if_neg hdeg]
     rw [hquad]
     unfold reassemblePolynomialFactors
-    intro factor hmem
-    rw [Array.toList_append] at hmem
-    simp only [List.mem_append] at hmem
-    cases hmem with
-    | inl hprefix =>
-        exact polynomialNormalizationPrefixFactors_shouldRecord_of_ne_zero
-          f hf factor hprefix
-    | inr hcore =>
-        exact exhaustiveCoreFactorsWithBound_shouldRecord
-          (normalizeForFactor f).squareFreeCore B
-          (choosePrimeData (normalizeForFactor f).squareFreeCore)
-          (squareFreeCore_shouldRecord_of_degree_pos f hf hdeg)
-          factor hcore
+    by_cases hdup :
+        (normalizeForFactor f).repeatedPart =
+            (normalizeForFactor f).squareFreeCore ∧
+          (normalizeForFactor f).repeatedPart ≠ 1
+    · rw [if_pos hdup]
+      intro factor hmem
+      simp only at hmem
+      rw [Array.toList_append] at hmem
+      simp only [List.mem_append] at hmem
+      cases hmem with
+      | inl hleft =>
+          rw [Array.toList_append] at hleft
+          simp only [List.mem_append] at hleft
+          cases hleft with
+          | inl hx =>
+              exact xPowerFactorArray_shouldRecord
+                (normalizeForFactor f).xPower factor hx
+          | inr hcore =>
+              exact exhaustiveCoreFactorsWithBound_shouldRecord
+                (normalizeForFactor f).squareFreeCore B
+                (choosePrimeData (normalizeForFactor f).squareFreeCore)
+                (squareFreeCore_shouldRecord_of_degree_pos f hf hdeg)
+                factor hcore
+      | inr hcore =>
+          exact exhaustiveCoreFactorsWithBound_shouldRecord
+            (normalizeForFactor f).squareFreeCore B
+            (choosePrimeData (normalizeForFactor f).squareFreeCore)
+            (squareFreeCore_shouldRecord_of_degree_pos f hf hdeg)
+            factor hcore
+    · rw [if_neg hdup]
+      intro factor hmem
+      simp only at hmem
+      rw [Array.toList_append] at hmem
+      simp only [List.mem_append] at hmem
+      cases hmem with
+      | inl hprefix =>
+          exact polynomialNormalizationPrefixFactors_shouldRecord_of_ne_zero
+            f hf factor hprefix
+      | inr hcore =>
+          exact exhaustiveCoreFactorsWithBound_shouldRecord
+            (normalizeForFactor f).squareFreeCore B
+            (choosePrimeData (normalizeForFactor f).squareFreeCore)
+            (squareFreeCore_shouldRecord_of_degree_pos f hf hdeg)
+            factor hcore
 
 private theorem factorSlowWithBound_product
     (f : ZPoly) (B : Nat) :
@@ -5590,6 +5763,15 @@ private theorem factorFastWithBound_product_of_constant_branch
       rw [polyProduct_singleton]
       exact hcore_one.symm)
   · unfold reassemblePolynomialFactors
+    have hnot_dup :
+        ¬ ((normalizeForFactor f).repeatedPart =
+              (normalizeForFactor f).squareFreeCore ∧
+            (normalizeForFactor f).repeatedPart ≠ 1) := by
+      intro hdup
+      have hrepeated_one : (normalizeForFactor f).repeatedPart = 1 := by
+        rw [hdup.1, hcore_one]
+      exact hdup.2 hrepeated_one
+    rw [if_neg hnot_dup]
     rw [polyProduct_filteredNormalizedFactors_append_one_of_all_recorded_normalized]
     rw [polyProduct_append, polyProduct_singleton]
     exact (DensePoly.mul_one_right_poly (S := Int) _).symm
@@ -5614,28 +5796,76 @@ private theorem factorFastWithBound_product_of_squareFreeCore_emit
   apply factorFastFactorsWithBound_product_of_some_of_all_recorded_normalized hfast
   · intro factor hmem
     unfold reassemblePolynomialFactors at hmem
-    rw [Array.toList_append] at hmem
-    simp only [List.mem_append] at hmem
-    cases hmem with
-    | inl hprefix =>
-        exact polynomialNormalizationPrefixFactors_normalizeFactorSign_of_ne_zero
-          f hf factor hprefix
-    | inr hcore =>
-        simp only [List.mem_singleton] at hcore
-        rw [hcore]
-        exact squareFreeCore_normalizeFactorSign_of_ne_zero f hf
+    by_cases hdup :
+        (normalizeForFactor f).repeatedPart =
+            (normalizeForFactor f).squareFreeCore ∧
+          (normalizeForFactor f).repeatedPart ≠ 1
+    · rw [if_pos hdup] at hmem
+      rw [Array.toList_append] at hmem
+      simp only [List.mem_append] at hmem
+      cases hmem with
+      | inl hleft =>
+          rw [Array.toList_append] at hleft
+          simp only [List.mem_append] at hleft
+          cases hleft with
+          | inl hx =>
+              exact xPowerFactorArray_normalizeFactorSign
+                (normalizeForFactor f).xPower factor hx
+          | inr hcore =>
+              simp only [List.mem_singleton] at hcore
+              rw [hcore]
+              exact squareFreeCore_normalizeFactorSign_of_ne_zero f hf
+      | inr hcore =>
+          simp only [List.mem_singleton] at hcore
+          rw [hcore]
+          exact squareFreeCore_normalizeFactorSign_of_ne_zero f hf
+    · rw [if_neg hdup] at hmem
+      rw [Array.toList_append] at hmem
+      simp only [List.mem_append] at hmem
+      cases hmem with
+      | inl hprefix =>
+          exact polynomialNormalizationPrefixFactors_normalizeFactorSign_of_ne_zero
+            f hf factor hprefix
+      | inr hcore =>
+          simp only [List.mem_singleton] at hcore
+          rw [hcore]
+          exact squareFreeCore_normalizeFactorSign_of_ne_zero f hf
   · intro factor hmem
     unfold reassemblePolynomialFactors at hmem
-    rw [Array.toList_append] at hmem
-    simp only [List.mem_append] at hmem
-    cases hmem with
-    | inl hprefix =>
-        exact polynomialNormalizationPrefixFactors_shouldRecord_of_ne_zero
-          f hf factor hprefix
-    | inr hcore =>
-        simp only [List.mem_singleton] at hcore
-        rw [hcore]
-        exact squareFreeCore_shouldRecord_of_degree_pos f hf hdeg
+    by_cases hdup :
+        (normalizeForFactor f).repeatedPart =
+            (normalizeForFactor f).squareFreeCore ∧
+          (normalizeForFactor f).repeatedPart ≠ 1
+    · rw [if_pos hdup] at hmem
+      rw [Array.toList_append] at hmem
+      simp only [List.mem_append] at hmem
+      cases hmem with
+      | inl hleft =>
+          rw [Array.toList_append] at hleft
+          simp only [List.mem_append] at hleft
+          cases hleft with
+          | inl hx =>
+              exact xPowerFactorArray_shouldRecord
+                (normalizeForFactor f).xPower factor hx
+          | inr hcore =>
+              simp only [List.mem_singleton] at hcore
+              rw [hcore]
+              exact squareFreeCore_shouldRecord_of_degree_pos f hf hdeg
+      | inr hcore =>
+          simp only [List.mem_singleton] at hcore
+          rw [hcore]
+          exact squareFreeCore_shouldRecord_of_degree_pos f hf hdeg
+    · rw [if_neg hdup] at hmem
+      rw [Array.toList_append] at hmem
+      simp only [List.mem_append] at hmem
+      cases hmem with
+      | inl hprefix =>
+          exact polynomialNormalizationPrefixFactors_shouldRecord_of_ne_zero
+            f hf factor hprefix
+      | inr hcore =>
+          simp only [List.mem_singleton] at hcore
+          rw [hcore]
+          exact squareFreeCore_shouldRecord_of_degree_pos f hf hdeg
 
 private theorem factorFastWithBound_product_of_small_mod_branch
     (f : ZPoly) (B : Nat) {φ : Factorization}
@@ -5699,26 +5929,70 @@ private theorem factorFastWithBound_product_of_quadratic_branch
   apply factorFastFactorsWithBound_product_of_some_of_all_recorded_normalized hfast
   · intro factor hmem
     unfold reassemblePolynomialFactors at hmem
-    rw [Array.toList_append] at hmem
-    simp only [List.mem_append] at hmem
-    cases hmem with
-    | inl hprefix =>
-        exact polynomialNormalizationPrefixFactors_normalizeFactorSign_of_ne_zero
-          f hf factor hprefix
-    | inr hcore =>
-        exact quadraticIntegerRootFactors?_normalizeFactorSign
-          (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad factor hcore
+    by_cases hdup :
+        (normalizeForFactor f).repeatedPart =
+            (normalizeForFactor f).squareFreeCore ∧
+          (normalizeForFactor f).repeatedPart ≠ 1
+    · rw [if_pos hdup] at hmem
+      rw [Array.toList_append] at hmem
+      simp only [List.mem_append] at hmem
+      cases hmem with
+      | inl hleft =>
+          rw [Array.toList_append] at hleft
+          simp only [List.mem_append] at hleft
+          cases hleft with
+          | inl hx =>
+              exact xPowerFactorArray_normalizeFactorSign
+                (normalizeForFactor f).xPower factor hx
+          | inr hcore =>
+              exact quadraticIntegerRootFactors?_normalizeFactorSign
+                (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad factor hcore
+      | inr hcore =>
+          exact quadraticIntegerRootFactors?_normalizeFactorSign
+            (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad factor hcore
+    · rw [if_neg hdup] at hmem
+      rw [Array.toList_append] at hmem
+      simp only [List.mem_append] at hmem
+      cases hmem with
+      | inl hprefix =>
+          exact polynomialNormalizationPrefixFactors_normalizeFactorSign_of_ne_zero
+            f hf factor hprefix
+      | inr hcore =>
+          exact quadraticIntegerRootFactors?_normalizeFactorSign
+            (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad factor hcore
   · intro factor hmem
     unfold reassemblePolynomialFactors at hmem
-    rw [Array.toList_append] at hmem
-    simp only [List.mem_append] at hmem
-    cases hmem with
-    | inl hprefix =>
-        exact polynomialNormalizationPrefixFactors_shouldRecord_of_ne_zero
-          f hf factor hprefix
-    | inr hcore =>
-        exact quadraticIntegerRootFactors?_shouldRecord
-          (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad factor hcore
+    by_cases hdup :
+        (normalizeForFactor f).repeatedPart =
+            (normalizeForFactor f).squareFreeCore ∧
+          (normalizeForFactor f).repeatedPart ≠ 1
+    · rw [if_pos hdup] at hmem
+      rw [Array.toList_append] at hmem
+      simp only [List.mem_append] at hmem
+      cases hmem with
+      | inl hleft =>
+          rw [Array.toList_append] at hleft
+          simp only [List.mem_append] at hleft
+          cases hleft with
+          | inl hx =>
+              exact xPowerFactorArray_shouldRecord
+                (normalizeForFactor f).xPower factor hx
+          | inr hcore =>
+              exact quadraticIntegerRootFactors?_shouldRecord
+                (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad factor hcore
+      | inr hcore =>
+          exact quadraticIntegerRootFactors?_shouldRecord
+            (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad factor hcore
+    · rw [if_neg hdup] at hmem
+      rw [Array.toList_append] at hmem
+      simp only [List.mem_append] at hmem
+      cases hmem with
+      | inl hprefix =>
+          exact polynomialNormalizationPrefixFactors_shouldRecord_of_ne_zero
+            f hf factor hprefix
+      | inr hcore =>
+          exact quadraticIntegerRootFactors?_shouldRecord
+            (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad factor hcore
 
 /--
 A successful integer certificate exposes the per-prime polynomial check fact:
