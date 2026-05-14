@@ -1802,6 +1802,66 @@ private theorem factorizationOfFactors_product_of_raw_product_of_all_recorded_no
     (polyProduct_filteredNormalizedFactors_eq_self_of_all_recorded_normalized
       factors hnormalized hrecorded)
 
+private theorem signedContentScalar_zero :
+    signedContentScalar 0 = 0 := by
+  unfold signedContentScalar
+  simp
+
+private theorem factorizationOfFactors_product_of_zero (factors : Array ZPoly) :
+    Factorization.product (factorizationOfFactors 0 factors) = 0 := by
+  rw [factorizationOfFactors_product]
+  rw [signedContentScalar_zero]
+  change DensePoly.C (0 : Int) *
+      Array.polyProduct (filteredNormalizedFactors factors.toList).toArray = 0
+  rw [show (DensePoly.C (0 : Int) : ZPoly) = (0 : ZPoly) from rfl]
+  exact DensePoly.zero_mul
+    (Array.polyProduct (filteredNormalizedFactors factors.toList).toArray)
+
+private theorem leadingCoeff_X :
+    DensePoly.leadingCoeff ZPoly.X = (1 : Int) := by
+  rfl
+
+private theorem X_ne_zero : ZPoly.X ≠ (0 : ZPoly) := by
+  decide
+
+private theorem X_ne_one : ZPoly.X ≠ (1 : ZPoly) := by
+  decide
+
+private theorem X_ne_C_neg_one : ZPoly.X ≠ DensePoly.C (-1 : Int) := by
+  decide
+
+private theorem normalizeFactorSign_X :
+    normalizeFactorSign ZPoly.X = ZPoly.X := by
+  unfold normalizeFactorSign
+  rw [leadingCoeff_X]
+  simp
+
+private theorem shouldRecordPolynomialFactor_X :
+    shouldRecordPolynomialFactor ZPoly.X = true := by
+  unfold shouldRecordPolynomialFactor
+  simp [X_ne_zero, X_ne_one, X_ne_C_neg_one]
+
+private theorem mem_xPowerFactorArray_eq_X (power : Nat) (factor : ZPoly)
+    (h : factor ∈ (xPowerFactorArray power).toList) :
+    factor = ZPoly.X := by
+  unfold xPowerFactorArray at h
+  simp [List.mem_replicate] at h
+  exact h.2
+
+private theorem xPowerFactorArray_normalizeFactorSign
+    (power : Nat) (factor : ZPoly)
+    (h : factor ∈ (xPowerFactorArray power).toList) :
+    normalizeFactorSign factor = factor := by
+  rw [mem_xPowerFactorArray_eq_X power factor h]
+  exact normalizeFactorSign_X
+
+private theorem xPowerFactorArray_shouldRecord
+    (power : Nat) (factor : ZPoly)
+    (h : factor ∈ (xPowerFactorArray power).toList) :
+    shouldRecordPolynomialFactor factor = true := by
+  rw [mem_xPowerFactorArray_eq_X power factor h]
+  exact shouldRecordPolynomialFactor_X
+
 private theorem rat_scale_scale (u v : Rat) (p : DensePoly Rat) :
     DensePoly.scale u (DensePoly.scale v p) = DensePoly.scale (u * v) p := by
   apply DensePoly.ext_coeff
