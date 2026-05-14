@@ -827,6 +827,41 @@ private theorem noPivotLoop_add
         rw [noPivotLoop_id_at_done (a' + 1) state hDone]
         exact (noPivotLoop_id_at_done b state hDone).symm
 
+/-- No-pivot Bareiss projection at the `gramDetVecEntry` diagonal slot:
+running `Matrix.noPivotLoop r` from the initial state on the full Gram
+matrix and on its `(r+1)`-leading prefix yields states whose `(r, r)`
+diagonal entry agrees (after the leading-prefix identification) and
+whose `singularStep` field agrees. This is the executable-loop
+projection needed by the parent assembly of
+`gramDetVecEntry_eq_leadingPrefix_bareiss`. -/
+private theorem noPivotLoop_full_eq_leadingPrefix_at_gramDetVecEntry
+    (b : Matrix Int n m) (r : Nat) (hr : r < n) :
+    let GM := Matrix.gramMatrix b
+    let hK : r + 1 ≤ n := Nat.succ_le_of_lt hr
+    let LP := Matrix.leadingPrefix GM (r + 1) hK
+    let s_full := Matrix.noPivotLoop r (Matrix.noPivotInitialState GM)
+    let s_pref := Matrix.noPivotLoop r (Matrix.noPivotInitialState LP)
+    s_full.matrix[(⟨r, hr⟩ : Fin n)][(⟨r, hr⟩ : Fin n)] =
+        s_pref.matrix[(⟨r, Nat.lt_succ_self r⟩ : Fin (r + 1))][(⟨r, Nat.lt_succ_self r⟩ : Fin (r + 1))]
+      ∧ s_full.singularStep = s_pref.singularStep := by
+  intro GM hK LP s_full s_pref
+  have h_sync := noPivotLoop_sync_leadingPrefix_aux hK r
+    (Matrix.noPivotInitialState GM) (Matrix.noPivotInitialState LP)
+    rfl rfl rfl rfl rfl
+    (show r + (Matrix.noPivotInitialState GM).step < r + 1 by
+      simp [Matrix.noPivotInitialState])
+  obtain ⟨_, _, _, h_sing, h_mat⟩ := h_sync
+  refine ⟨?_, h_sing⟩
+  -- Diagonal: the (r, r) entry of s_full agrees with the (r, r) entry of s_pref via the
+  -- leading-prefix identification.
+  have hcongr := congrArg
+    (fun (M : Matrix Int (r + 1) (r + 1)) =>
+      M[(⟨r, Nat.lt_succ_self r⟩ : Fin (r + 1))][(⟨r, Nat.lt_succ_self r⟩ : Fin (r + 1))])
+    h_mat
+  simp only [Matrix.leadingPrefix_entry] at hcongr
+  -- hcongr's LHS index in Fin n has val = r; same as the goal's LHS index.
+  exact hcongr
+
 /-- The no-pivot Bareiss pass over the full Gram matrix records the same
 leading-prefix determinant as the public `gramDet` API at every vector slot. -/
 private theorem gramDetVecEntry_eq_leadingPrefix_bareiss
