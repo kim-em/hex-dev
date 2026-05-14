@@ -69,6 +69,14 @@ def fixedSpaceMatrix (f : FpPoly p) (hmonic : DensePoly.Monic f) :
 def vectorToPoly {n : Nat} (v : Vector (ZMod64 p) n) : FpPoly p :=
   FpPoly.ofCoeffs v.toArray
 
+/-- Re-reading the coefficients of a polynomial built from a Berlekamp-basis
+coefficient vector recovers the original vector. -/
+theorem coeffVector_vectorToPoly (f : FpPoly p) (v : Vector (ZMod64 p) (basisSize f)) :
+    coeffVector f (vectorToPoly v) = v := by
+  apply Vector.ext
+  intro i hi
+  simp [coeffVector, vectorToPoly, FpPoly.ofCoeffs]
+
 /--
 The fixed-space kernel of `Q_f - I`, reusing `HexMatrix.nullspace` instead of a
 Berlekamp-local linear-algebra implementation.
@@ -85,6 +93,74 @@ def fixedSpaceKernel (f : FpPoly p) (hmonic : DensePoly.Monic f)
     Vector (FpPoly p)
       (basisSize f - Matrix.rref_rank (fixedSpaceMatrix f hmonic)) :=
   Vector.ofFn fun i => vectorToPoly ((fixedSpaceKernelVectors f hmonic).get i)
+
+/-- Vector-level executable Berlekamp kernel condition for the fixed-space
+matrix `Q_f - I`. -/
+def IsFixedSpaceKernelVector (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (v : Vector (ZMod64 p) (basisSize f)) [inst : Lean.Grind.Field (ZMod64 p)] : Prop :=
+  @Matrix.mulVec (ZMod64 p) (basisSize f) (basisSize f)
+      inst.toCommSemiring.toMul inst.toCommSemiring.toAdd
+      (inst.toCommSemiring.toSemiring.ofNat 0) (fixedSpaceMatrix f hmonic) v =
+    @OfNat.ofNat (Vector (ZMod64 p) (basisSize f)) 0
+      (@Zero.toOfNat0 (Vector (ZMod64 p) (basisSize f))
+        (@Vector.instZero (ZMod64 p) (basisSize f)
+          (@Zero.ofOfNat0 (ZMod64 p)
+            (@Lean.Grind.Semiring.ofNat (ZMod64 p) inst.toCommSemiring.toSemiring 0))))
+
+/-- Polynomial-level executable Berlekamp kernel condition, by reading the
+representative in the quotient basis used by `fixedSpaceMatrix`. -/
+def IsFixedSpaceKernelPolynomial (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (g : FpPoly p) [Lean.Grind.Field (ZMod64 p)] : Prop :=
+  IsFixedSpaceKernelVector f hmonic (coeffVector f g)
+
+/-- Every vector returned by `fixedSpaceKernelVectors` satisfies the executable
+fixed-space kernel condition. -/
+theorem fixedSpaceKernelVectors_sound (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    [Lean.Grind.Field (ZMod64 p)]
+    (k : Fin (basisSize f - Matrix.rref_rank (fixedSpaceMatrix f hmonic))) :
+    IsFixedSpaceKernelVector f hmonic ((fixedSpaceKernelVectors f hmonic).get k) := by
+  unfold IsFixedSpaceKernelVector fixedSpaceKernelVectors
+  exact Matrix.nullspace_sound (fixedSpaceMatrix f hmonic) k
+
+/-- Every polynomial representative returned by `fixedSpaceKernel` satisfies the
+executable fixed-space kernel condition. -/
+theorem fixedSpaceKernel_sound (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    [Lean.Grind.Field (ZMod64 p)]
+    (k : Fin (basisSize f - Matrix.rref_rank (fixedSpaceMatrix f hmonic))) :
+    IsFixedSpaceKernelPolynomial f hmonic ((fixedSpaceKernel f hmonic).get k) := by
+  unfold IsFixedSpaceKernelPolynomial fixedSpaceKernel
+  rw [Vector.get_ofFn, coeffVector_vectorToPoly]
+  exact fixedSpaceKernelVectors_sound f hmonic k
+
+/-- Every vector satisfying the executable fixed-space kernel condition is a
+linear combination of the public nullspace-basis matrix for `Q_f - I`. -/
+theorem fixedSpaceKernelVectors_complete (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    [inst : Lean.Grind.Field (ZMod64 p)] (v : Vector (ZMod64 p) (basisSize f)) :
+    IsFixedSpaceKernelVector f hmonic v →
+      ∃ c : Vector (ZMod64 p)
+          (basisSize f - Matrix.rref_rank (fixedSpaceMatrix f hmonic)),
+        @Matrix.mulVec (ZMod64 p) (basisSize f)
+            (basisSize f - Matrix.rref_rank (fixedSpaceMatrix f hmonic))
+            inst.toCommSemiring.toMul inst.toCommSemiring.toAdd
+            (inst.toCommSemiring.toSemiring.ofNat 0)
+            (Matrix.nullspaceBasisMatrix (fixedSpaceMatrix f hmonic)) c = v := by
+  intro hv
+  exact Matrix.nullspace_complete (fixedSpaceMatrix f hmonic) v hv
+
+/-- Polynomial representatives satisfying the executable fixed-space kernel
+condition have coefficient vectors in the span of the nullspace basis. -/
+theorem fixedSpaceKernelPolynomial_coeffVector_complete (f : FpPoly p)
+    (hmonic : DensePoly.Monic f) [inst : Lean.Grind.Field (ZMod64 p)] (g : FpPoly p) :
+    IsFixedSpaceKernelPolynomial f hmonic g →
+      ∃ c : Vector (ZMod64 p)
+          (basisSize f - Matrix.rref_rank (fixedSpaceMatrix f hmonic)),
+        @Matrix.mulVec (ZMod64 p) (basisSize f)
+            (basisSize f - Matrix.rref_rank (fixedSpaceMatrix f hmonic))
+            inst.toCommSemiring.toMul inst.toCommSemiring.toAdd
+            (inst.toCommSemiring.toSemiring.ofNat 0)
+            (Matrix.nullspaceBasisMatrix (fixedSpaceMatrix f hmonic)) c = coeffVector f g := by
+  intro hg
+  exact fixedSpaceKernelVectors_complete f hmonic (coeffVector f g) hg
 
 end Berlekamp
 
