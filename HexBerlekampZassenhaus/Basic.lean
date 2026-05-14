@@ -4729,6 +4729,38 @@ private theorem repeatedPartFactorArray_shouldRecord_of_ne_zero
   simp [repeatedPart_ne_zero_of_ne_zero f hf, hne_one,
     repeatedPart_ne_C_neg_one_of_ne_zero f hf]
 
+private theorem squareFreeCore_ne_zero_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
+    (normalizeForFactor f).squareFreeCore ≠ 0 := by
+  unfold normalizeForFactor
+  simp only
+  intro hzero
+  have hcore_ne := extractXPower_core_ne_zero_of_ne_zero f hf
+  have hprod_primitive :=
+    ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive _ hcore_ne
+  have hprod_ne :
+      (ZPoly.primitiveSquareFreeDecomposition
+            (ZPoly.extractXPower (ZPoly.primitivePart f)).core).squareFreeCore *
+        (ZPoly.primitiveSquareFreeDecomposition
+            (ZPoly.extractXPower (ZPoly.primitivePart f)).core).repeatedPart ≠ 0 :=
+    ZPoly.ne_zero_of_primitive _ hprod_primitive
+  apply hprod_ne
+  rw [hzero]
+  exact DensePoly.zero_mul _
+
+private theorem squareFreeCore_leadingCoeff_pos_of_ne_zero
+    (f : ZPoly) (hf : f ≠ 0) :
+    0 < DensePoly.leadingCoeff (normalizeForFactor f).squareFreeCore := by
+  have hne := squareFreeCore_ne_zero_of_ne_zero f hf
+  have hnonneg :
+      0 ≤ DensePoly.leadingCoeff (normalizeForFactor f).squareFreeCore := by
+    unfold normalizeForFactor
+    exact ZPoly.leadingCoeff_squareFreeCore_nonneg _
+  have hne_lead :
+      DensePoly.leadingCoeff (normalizeForFactor f).squareFreeCore ≠ 0 :=
+    ZPoly.leadingCoeff_ne_zero_of_ne_zero _ hne
+  omega
+
+
 private theorem factorFastFactorsWithBound_product_of_some_of_all_recorded_normalized
     {f : ZPoly} {B : Nat} {factors : Array ZPoly}
     (hfast : factorFastFactorsWithBound f B = some factors)
