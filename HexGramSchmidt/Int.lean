@@ -109,6 +109,25 @@ private def gramDetVecEntry (data : Matrix.BareissData n) (k : Fin (n + 1)) : Na
           bareissDiagNat data r hr
       | none => bareissDiagNat data r hr
 
+/-- After a no-pivot Bareiss pass records a singular step, every later
+`gramDetVecEntry` slot is the encoded zero tail rather than a diagonal read. -/
+private theorem gramDetVecEntry_eq_zero_of_singularStep_lt
+    (data : Matrix.BareissData n) (s r : Nat) (hr : r < n)
+    (hsing : data.singularStep = some s) (hs : s < r + 1) :
+    gramDetVecEntry data ⟨r + 1, Nat.succ_lt_succ hr⟩ = 0 := by
+  simp [gramDetVecEntry, hsing, hs]
+
+/-- Specialization of the encoded zero-tail fact to the no-pivot executable
+data used by the Gram determinant vector pass. -/
+private theorem gramDetVecEntry_noPivot_eq_zero_of_singularStep_lt
+    (b : Matrix Int n m) (s r : Nat) (hr : r < n)
+    (hsing : (Matrix.bareissNoPivotData (Matrix.gramMatrix b)).singularStep = some s)
+    (hs : s < r + 1) :
+    gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
+        ⟨r + 1, Nat.succ_lt_succ hr⟩ = 0 :=
+  gramDetVecEntry_eq_zero_of_singularStep_lt
+    (Matrix.bareissNoPivotData (Matrix.gramMatrix b)) s r hr hsing hs
+
 private structure ScaledCoeffArrayState where
   step : Nat
   matrix : Array (Array Int)
