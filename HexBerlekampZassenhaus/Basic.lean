@@ -1724,6 +1724,15 @@ private theorem reassemblePolynomialFactors_mem
         · exact Or.inl hprefix
         · exact Or.inr hcf
 
+/-- Public wrapper for the reassembly membership split used by downstream
+factor-output classifiers. -/
+theorem reassemblePolynomialFactors_mem_normalization_or_core
+    (d : FactorNormalizationData) (coreFactors : Array ZPoly) (factor : ZPoly)
+    (hmem : factor ∈ (reassemblePolynomialFactors d coreFactors).toList) :
+    factor ∈ (polynomialNormalizationPrefixFactors d).toList ∨
+      factor ∈ coreFactors.toList :=
+  reassemblePolynomialFactors_mem d coreFactors factor hmem
+
 private theorem polyProduct_repeatedPartFactorArray_eq (repeatedPart : ZPoly) :
     Array.polyProduct (repeatedPartFactorArray repeatedPart) = repeatedPart := by
   rw [polyProduct_repeatedPartFactorArray]
@@ -2044,6 +2053,91 @@ private theorem multListProduct_collectFactorMultiplicities
   have hcol := multListProduct_collectAux [] factors.toList
   rw [multListProduct_nil, one_mul_zpoly] at hcol
   exact hcol
+
+private theorem bumpFactorMultiplicity_mem_normalized_or_old
+    (g : ZPoly) (acc : List (ZPoly × Nat)) (entry : ZPoly × Nat)
+    (hmem : entry ∈ bumpFactorMultiplicity g acc) :
+    entry.1 = g ∨ entry ∈ acc := by
+  induction acc with
+  | nil =>
+      simp [bumpFactorMultiplicity] at hmem
+      left
+      rw [hmem]
+  | cons head tail ih =>
+      unfold bumpFactorMultiplicity at hmem
+      by_cases heq : head.1 = g
+      · simp [heq] at hmem
+        rcases hmem with hentry | htail
+        · left
+          rw [hentry]
+        · right
+          exact List.mem_cons_of_mem head htail
+      · simp [heq] at hmem
+        rcases hmem with hhead | htail
+        · right
+          rw [hhead]
+          simp
+        · rcases ih htail with hnorm | hold
+          · left
+            exact hnorm
+          · right
+            exact List.mem_cons_of_mem head hold
+
+private theorem collectFactorStep_mem_normalized_or_old
+    (acc : List (ZPoly × Nat)) (factor : ZPoly) (entry : ZPoly × Nat)
+    (hmem : entry ∈ collectFactorStep acc factor) :
+    entry.1 = normalizeFactorSign factor ∨ entry ∈ acc := by
+  unfold collectFactorStep at hmem
+  by_cases hrec : shouldRecordPolynomialFactor (normalizeFactorSign factor) = true
+  · simp [hrec] at hmem
+    exact bumpFactorMultiplicity_mem_normalized_or_old
+      (normalizeFactorSign factor) acc entry hmem
+  · simp [hrec] at hmem
+    exact Or.inr hmem
+
+private theorem foldl_collectFactorStep_mem_normalized_or_old
+    (factors : List ZPoly) (acc : List (ZPoly × Nat)) (entry : ZPoly × Nat)
+    (hmem : entry ∈ factors.foldl collectFactorStep acc) :
+    entry ∈ acc ∨ ∃ factor ∈ factors, entry.1 = normalizeFactorSign factor := by
+  induction factors generalizing acc with
+  | nil =>
+      simp at hmem
+      exact Or.inl hmem
+  | cons factor factors ih =>
+      simp only [List.foldl_cons] at hmem
+      rcases ih (collectFactorStep acc factor) hmem with hstep | htail
+      · rcases collectFactorStep_mem_normalized_or_old acc factor entry hstep with hnorm | hold
+        · right
+          exact ⟨factor, by simp, hnorm⟩
+        · left
+          exact hold
+      · rcases htail with ⟨raw, hraw, hnorm⟩
+        right
+        exact ⟨raw, by simp [hraw], hnorm⟩
+
+/-- Every collected `(factor, multiplicity)` entry comes from some raw factor
+after sign normalization. This is the theorem-level wrapper for the
+`collectFactorMultiplicities` step. -/
+theorem collectFactorMultiplicities_entry_mem_normalized_raw
+    (factors : Array ZPoly) (entry : ZPoly × Nat)
+    (hmem : entry ∈ (collectFactorMultiplicities factors).toList) :
+    ∃ raw ∈ factors.toList, entry.1 = normalizeFactorSign raw := by
+  rw [collectFactorMultiplicities_eq_foldl] at hmem
+  have hmem_fold : entry ∈ factors.toList.foldl collectFactorStep [] := by
+    simpa using hmem
+  rcases foldl_collectFactorStep_mem_normalized_or_old factors.toList [] entry hmem_fold with
+    hold | hraw
+  · simp at hold
+  · exact hraw
+
+/-- Membership in a `Factorization` built from a raw factor array descends to
+membership in that raw array, up to sign normalization. -/
+theorem factorizationOfFactors_entry_mem_normalized_raw
+    (f : ZPoly) (factors : Array ZPoly) (entry : ZPoly × Nat)
+    (hmem : entry ∈ (factorizationOfFactors f factors).factors.toList) :
+    ∃ raw ∈ factors.toList, entry.1 = normalizeFactorSign raw := by
+  unfold factorizationOfFactors at hmem
+  exact collectFactorMultiplicities_entry_mem_normalized_raw factors entry hmem
 
 private theorem factorizationOfFactors_product
     (f : ZPoly) (factors : Array ZPoly) :
@@ -3993,6 +4087,49 @@ private def factorSlowFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
           exhaustiveCoreFactorsWithBound normalized.squareFreeCore B primeData
         reassemblePolynomialFactors normalized coreFactors
 
+set_option maxHeartbeats 800000
+
+/-- Classify the raw slow-path factor array by the dispatch branch that emitted
+it. The final recorded `Factorization` entries still pass through
+`collectFactorMultiplicities`; use `factorizationOfFactors_entry_mem_normalized_raw`
+or `factorWithBound_entry_mem_raw_source` for that layer. -/
+theorem factorSlowFactorsWithBound_branch
+    (f : ZPoly) (B : Nat) :
+    (factorSlowFactorsWithBound f B =
+        reassemblePolynomialFactors (normalizeForFactor f)
+          #[(normalizeForFactor f).squareFreeCore] ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0) ∨
+    (∃ coreFactors : Array ZPoly,
+      factorSlowFactorsWithBound f B =
+        reassemblePolynomialFactors (normalizeForFactor f) coreFactors ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
+      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore =
+        some coreFactors) ∨
+    (factorSlowFactorsWithBound f B =
+        reassemblePolynomialFactors (normalizeForFactor f)
+          (exhaustiveCoreFactorsWithBound
+            (normalizeForFactor f).squareFreeCore B
+            (choosePrimeData (normalizeForFactor f).squareFreeCore)) ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
+      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none) := by
+  unfold factorSlowFactorsWithBound
+  by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
+  · left
+    constructor
+    · simp only [hdeg, if_true]
+    · exact hdeg
+  · right
+    cases hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
+    | some coreFactors =>
+        left
+        refine ⟨coreFactors, ?_, hdeg, rfl⟩
+        simp only [hdeg, if_false, hquad]
+    | none =>
+        right
+        constructor
+        · simp only [hdeg, if_false, hquad]
+        · exact ⟨hdeg, rfl⟩
+
 private def factorSlowWithBound (f : ZPoly) (B : Nat) : Factorization :=
   factorizationOfFactors f (factorSlowFactorsWithBound f B)
 
@@ -4265,6 +4402,31 @@ def factor (f : ZPoly) : Factorization :=
 
 @[simp] theorem factor_eq_factorWithBound_default (f : ZPoly) :
     factor f = factorWithBound f (ZPoly.defaultFactorCoeffBound f) := rfl
+
+set_option maxHeartbeats 800000
+
+/-- Any recorded entry of `factorWithBound` comes from the raw factor array
+chosen by the fast path, or from the slow fallback when the fast path returns
+`none`, after the `collectFactorMultiplicities` sign-normalization step. -/
+theorem factorWithBound_entry_mem_raw_source
+    (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
+    (hmem : entry ∈ (factorWithBound f B).factors.toList) :
+    ∃ rawFactors : Array ZPoly,
+      (factorFastFactorsWithBound f B = some rawFactors ∨
+        (factorFastFactorsWithBound f B = none ∧
+          rawFactors = factorSlowFactorsWithBound f B)) ∧
+      ∃ raw ∈ rawFactors.toList, entry.1 = normalizeFactorSign raw := by
+  cases hfast : factorFastFactorsWithBound f B with
+  | some rawFactors =>
+      refine ⟨rawFactors, Or.inl rfl, ?_⟩
+      apply factorizationOfFactors_entry_mem_normalized_raw
+      simpa only [factorWithBound, factorFastWithBound, hfast, Option.map_some,
+        Option.getD_some] using hmem
+  | none =>
+      refine ⟨factorSlowFactorsWithBound f B, Or.inr ⟨rfl, rfl⟩, ?_⟩
+      apply factorizationOfFactors_entry_mem_normalized_raw
+      simpa only [factorWithBound, factorFastWithBound, factorSlowWithBound, hfast,
+        Option.map_none, Option.getD_none] using hmem
 
 private def quadraticSquareRegression : ZPoly :=
   let q : ZPoly := DensePoly.ofCoeffs #[-1, 0, 1]
