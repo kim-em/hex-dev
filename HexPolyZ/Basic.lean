@@ -784,7 +784,9 @@ private theorem mul_size_le_top_succ (p q : ZPoly)
   rw [hcoeffs_size] at hle
   simpa [size, coeffs] using hle
 
-private theorem mul_size_eq_top_succ_of_nonzero (p q : ZPoly)
+/-- The size of a product of nonzero integer polynomials is one less than the
+sum of their sizes. -/
+theorem mul_size_eq_top_succ_of_nonzero (p q : ZPoly)
     (hp : 0 < p.size) (hq : 0 < q.size) :
     (p * q).size = p.size + q.size - 1 := by
   have htop := coeff_mul_top p q hp hq
@@ -808,7 +810,8 @@ private theorem mul_size_eq_top_succ_of_nonzero (p q : ZPoly)
   have hle := mul_size_le_top_succ p q hp hq
   omega
 
-private theorem size_pos_of_ne_zero (p : ZPoly) (hp : p ≠ 0) :
+/-- A nonzero integer polynomial has positive dense size. -/
+theorem size_pos_of_ne_zero (p : ZPoly) (hp : p ≠ 0) :
     0 < p.size := by
   rcases Nat.lt_or_ge 0 p.size with h | h
   · exact h
