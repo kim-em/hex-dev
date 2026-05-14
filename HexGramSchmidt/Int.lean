@@ -600,6 +600,16 @@ private theorem rowsToMatrix_stepScaledRows_eq_stepMatrix_of_dvd
       k pivot prevPivot hentry hsize hrowsize ⟨i, hi⟩ ⟨j, hj⟩
       (fun hki hkj => hdvd ⟨i, hi⟩ ⟨j, hj⟩ hki hkj)
 
+/-- Local view of the canonical Bareiss array step: after reading the private
+Gram-Schmidt row storage as a matrix, `Matrix.stepArray` is exactly
+`Matrix.stepMatrix`. -/
+private theorem rowsToMatrix_stepArray_eq_stepMatrix
+    {n : Nat} (rows : Array (Array Int)) (k : Nat) (pivot prevPivot : Int) :
+    rowsToMatrix (Matrix.stepArray rows n k pivot prevPivot) n =
+      Matrix.stepMatrix (rowsToMatrix rows n) k pivot prevPivot := by
+  simpa [rowsToMatrix, Matrix.rowsToMatrix, Matrix.ofFn, getArrayEntry, Matrix.getEntry] using
+    Matrix.rowsToMatrix_stepArray (n := n) rows k pivot prevPivot
+
 end StepScaledRowsBookkeeping
 
 private def scaledCoeffArrayLoop (n fuel : Nat) (state : ScaledCoeffArrayState) :
@@ -617,7 +627,7 @@ private def scaledCoeffArrayLoop (n fuel : Nat) (state : ScaledCoeffArrayState) 
           else
             let next : ScaledCoeffArrayState :=
               { step := state.step + 1
-                matrix := stepScaledRows state.matrix n k pivot state.prevPivot
+                matrix := Matrix.stepArray state.matrix n k pivot state.prevPivot
                 coeffs := coeffs
                 prevPivot := pivot }
             scaledCoeffArrayLoop n fuel next
@@ -653,7 +663,7 @@ private theorem getArrayEntry_scaledCoeffArrayLoop_above
           · simp only [hpivot, ↓reduceIte]
             exact ih
               { step := state.step + 1
-                matrix := stepScaledRows state.matrix n state.step
+                matrix := Matrix.stepArray state.matrix n state.step
                   (getArrayEntry state.matrix state.step state.step) state.prevPivot
                 coeffs := writeScaledColumn state.coeffs state.matrix n state.step
                 prevPivot := getArrayEntry state.matrix state.step state.step }
