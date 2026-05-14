@@ -3155,6 +3155,53 @@ private theorem bhksIndicatorCandidate?_shouldRecord
         simp at h
 
 /--
+A successful BHKS indicator candidate divides `f`. The executable
+`bhksIndicatorCandidate?` only returns `some (candidate, _)` after
+`exactQuotient? f candidate` succeeds, so the candidate is a verified
+integer divisor of `f`.
+-/
+private theorem bhksIndicatorCandidate?_dvd
+    {f : ZPoly} {d : LiftData} {indicator : Array Int}
+    {candidate quotient : ZPoly}
+    (h : bhksIndicatorCandidate? f d indicator = some (candidate, quotient)) :
+    candidate ∣ f := by
+  unfold bhksIndicatorCandidate? at h
+  cases hselected : bhksIndicatorSelectedFactors d.liftedFactors indicator with
+  | none =>
+      simp [hselected] at h
+  | some selected =>
+      simp only [hselected] at h
+      let modulus := liftModulus d
+      let raw := DensePoly.scale (DensePoly.leadingCoeff f) (Array.polyProduct selected)
+      let candidate0 :=
+        normalizeCandidateFactor
+          (centeredLiftPoly (ZPoly.reduceModPow raw d.p d.k) modulus)
+      let candidate' := normalizeFactorSign candidate0
+      change
+        (if shouldRecordPolynomialFactor candidate' then
+          match exactQuotient? f candidate' with
+          | some quotient => some (candidate', quotient)
+          | none => none
+        else
+          none) = some (candidate, quotient) at h
+      by_cases hrecord : shouldRecordPolynomialFactor candidate'
+      · rw [if_pos hrecord] at h
+        cases hquot : exactQuotient? f candidate' with
+        | none =>
+            simp [hquot] at h
+        | some quotient' =>
+            simp [hquot] at h
+            rcases h with ⟨hcandidate, hquotient⟩
+            subst candidate
+            subst quotient
+            have hmul : quotient' * candidate' = f := exactQuotient?_product hquot
+            refine ⟨quotient', ?_⟩
+            rw [DensePoly.mul_comm_poly (S := Int)]
+            exact hmul.symm
+      · rw [if_neg hrecord] at h
+        simp at h
+
+/--
 A2 reconstruction surface for a single BHKS indicator, stated at the
 Mathlib-free executable layer. If the indicator selects `selected`, the
 scaled selected product is congruent to the expected factor modulo the Hensel
@@ -3372,6 +3419,18 @@ private theorem bhksIndicatorCandidates?_shouldRecord
   bhksIndicatorCandidates?_all_of_candidate
     (fun factor => shouldRecordPolynomialFactor factor = true)
     f d (fun hcandidate => bhksIndicatorCandidate?_shouldRecord hcandidate) h
+
+/-- Every candidate emitted by `bhksIndicatorCandidates?` divides the
+input polynomial; this is the per-candidate version of the verified
+exact-division check performed inside `bhksIndicatorCandidate?`. -/
+private theorem bhksIndicatorCandidates?_dvd
+    {f : ZPoly} {d : LiftData} {indicators : Array (Array Int)}
+    {candidates : Array ZPoly}
+    (h : bhksIndicatorCandidates? f d indicators = some candidates) :
+    ∀ factor ∈ candidates.toList, factor ∣ f :=
+  bhksIndicatorCandidates?_all_of_candidate
+    (fun factor => factor ∣ f)
+    f d (fun hcandidate => bhksIndicatorCandidate?_dvd hcandidate) h
 
 private theorem array_toList_getD {α : Type}
     (xs : Array α) (i : Nat) (fallback : α) :
@@ -5439,6 +5498,38 @@ private theorem bhksRecoverClassified_success_shouldRecord
     (fun factor => shouldRecordPolynomialFactor factor = true)
     (fun hcand => bhksIndicatorCandidates?_shouldRecord hcand) h
 
+/-- A successful BHKS recovery emits only candidates that divide `f`,
+since each candidate has passed the executable exact-division check
+inside `bhksIndicatorCandidate?`.  The dependence of the conclusion on
+`f` prevents a one-liner via `bhksRecoverClassified_success_all_of_candidates`,
+so we unfold `bhksRecoverClassified` directly. -/
+private theorem bhksRecoverClassified_success_dvd
+    {f : ZPoly} {d : LiftData} {candidates : Array ZPoly}
+    (hrecover : bhksRecoverClassified f d = .success candidates) :
+    ∀ factor ∈ candidates.toList, factor ∣ f := by
+  rw [bhksRecoverClassified] at hrecover
+  by_cases hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
+      (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
+  · rw [dif_pos hrows] at hrecover
+    let projected :=
+      bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows
+        (bhksLiftData_latticeBasis_independent f d)
+    let indicators := bhksEquivalenceClassIndicators projected
+    by_cases hdeg : bhksDegenerateIndicatorPartition projected indicators = true
+    · simp [projected, indicators, hdeg] at hrecover
+    · simp only [projected, indicators, hdeg, Bool.false_eq_true, if_false] at hrecover
+      cases hcand : bhksIndicatorCandidates? f d indicators with
+      | none => simp [projected, indicators, hcand] at hrecover
+      | some cands =>
+          simp only [projected, indicators, hcand] at hrecover
+          by_cases hprod : Array.polyProduct cands == f
+          · simp only [hprod, if_true] at hrecover
+            cases hrecover
+            exact bhksIndicatorCandidates?_dvd hcand
+          · simp [hprod] at hrecover
+  · rw [dif_neg hrows] at hrecover
+    simp at hrecover
+
 /-- A successful BHKS recovery call preserves the polynomial product: when
 `bhksRecover? f d` returns `some candidates`, the candidates multiply back
 to `f` because the executable runs a final `Array.polyProduct candidates == f`
@@ -5555,6 +5646,44 @@ private theorem factorFastCoreWithBound_some_shouldRecord
     (fun factor => shouldRecordPolynomialFactor factor = true)
     (fun hrecover => bhksRecoverClassified_success_shouldRecord hrecover)
     core B primeData k fuel coreFactors h
+
+/-- Every factor emitted by the BHKS fast-recombination loop divides the
+input core. The success branch is the only branch that exits with
+`some coreFactors`, and `bhksRecoverClassified_success_dvd` certifies
+divisibility for each candidate at that exit. -/
+private theorem factorFastCoreWithBound_some_dvd
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) :
+    ∀ k fuel coreFactors,
+      factorFastCoreWithBound core B primeData k fuel = some coreFactors →
+        ∀ factor ∈ coreFactors.toList, factor ∣ core := by
+  intro k fuel
+  induction fuel generalizing k with
+  | zero =>
+      intro coreFactors hfast
+      simp [factorFastCoreWithBound] at hfast
+  | succ fuel ih =>
+      intro coreFactors hfast
+      rw [factorFastCoreWithBound] at hfast
+      cases hclass : bhksRecoverClassified core (henselLiftData core k primeData) with
+      | success xs =>
+          simp [hclass] at hfast
+          cases hfast
+          exact bhksRecoverClassified_success_dvd hclass
+      | degenerate =>
+          by_cases hk : k ≥ B
+          · simp [hclass, hk] at hfast
+          · simp [hclass, hk] at hfast
+            exact ih _ coreFactors hfast
+      | candidateFailure =>
+          by_cases hk : k ≥ B
+          · simp [hclass, hk] at hfast
+          · simp [hclass, hk] at hfast
+            exact ih _ coreFactors hfast
+      | productMismatch cands =>
+          by_cases hk : k ≥ B
+          · simp [hclass, hk] at hfast
+          · simp [hclass, hk] at hfast
+            exact ih _ coreFactors hfast
 
 /-- The exhaustive recombination wrapper preserves the polynomial product
 unconditionally: every branch returns either `#[core]` (singleton, trivially
