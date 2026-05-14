@@ -732,6 +732,101 @@ private theorem noPivotLoop_sync_leadingPrefix_aux
         · -- fuel
           simp; omega
 
+/-- Once the no-pivot Bareiss loop has reached the boundary
+(`state.step + 1 ≥ n`), any further fuel is a no-op. -/
+private theorem noPivotLoop_id_at_done
+    {n : Nat} (fuel : Nat) (state : Matrix.BareissState n)
+    (hDone : ¬ state.step + 1 < n) :
+    Matrix.noPivotLoop fuel state = state := by
+  induction fuel with
+  | zero => rfl
+  | succ f _ih => exact Matrix.noPivotLoop_done f state hDone
+
+/-- Once the no-pivot Bareiss loop has marked the current step singular
+(`state.singularStep = some state.step` with a zero pivot at that step),
+any further fuel is a no-op. -/
+private theorem noPivotLoop_id_at_singular_fixedpoint
+    {n : Nat} (fuel : Nat) (state : Matrix.BareissState n)
+    (hDone : state.step + 1 < n)
+    (hp : state.matrix[(⟨state.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)][(⟨state.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)] = 0)
+    (hsing : state.singularStep = some state.step) :
+    Matrix.noPivotLoop fuel state = state := by
+  induction fuel with
+  | zero => rfl
+  | succ f _ih =>
+      rw [Matrix.noPivotLoop_singular_branch f state hDone hp]
+      -- Goal: {state with singularStep := some state.step} = state.
+      cases state with
+      | mk step matrix prevPivot rowSwaps singularStep =>
+        simp only at hsing
+        subst hsing
+        rfl
+
+/-- Fuel composition for the no-pivot Bareiss loop: running `a + b` units of
+fuel from `state` equals running `b` more units after `a` initial units. -/
+private theorem noPivotLoop_add
+    {n : Nat} (a b : Nat) (state : Matrix.BareissState n) :
+    Matrix.noPivotLoop (a + b) state =
+      Matrix.noPivotLoop b (Matrix.noPivotLoop a state) := by
+  induction a generalizing state with
+  | zero =>
+      show Matrix.noPivotLoop (0 + b) state = Matrix.noPivotLoop b state
+      simp
+  | succ a' ih =>
+      by_cases hDone : state.step + 1 < n
+      · let k : Fin n :=
+          ⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩
+        by_cases hp : state.matrix[k][k] = 0
+        · -- Singular: both sides collapse to `{state with singularStep := some state.step}`.
+          have h_lhs :
+              Matrix.noPivotLoop (a' + 1 + b) state =
+                {state with singularStep := some state.step} := by
+            have : a' + 1 + b = (a' + b) + 1 := by omega
+            rw [this]
+            exact Matrix.noPivotLoop_singular_branch (a' + b) state hDone hp
+          have h_rhs_inner :
+              Matrix.noPivotLoop (a' + 1) state =
+                {state with singularStep := some state.step} :=
+            Matrix.noPivotLoop_singular_branch a' state hDone hp
+          rw [h_lhs, h_rhs_inner]
+          symm
+          -- Now show: noPivotLoop b {state with singularStep := some state.step} = that.
+          let s' : Matrix.BareissState n :=
+            {state with singularStep := some state.step}
+          have hDone_s' : s'.step + 1 < n := hDone
+          have hp_s' : s'.matrix[(⟨s'.step, Nat.lt_of_succ_lt hDone_s'⟩ : Fin n)][(⟨s'.step, Nat.lt_of_succ_lt hDone_s'⟩ : Fin n)] = 0 := hp
+          have hsing_s' : s'.singularStep = some s'.step := rfl
+          exact noPivotLoop_id_at_singular_fixedpoint b s' hDone_s' hp_s' hsing_s'
+        · -- Regular: both sides do one step then recurse on `next`.
+          have h_lhs :
+              Matrix.noPivotLoop (a' + 1 + b) state =
+                Matrix.noPivotLoop (a' + b)
+                  { step := state.step + 1
+                    matrix := Matrix.stepMatrix state.matrix state.step
+                      state.matrix[k][k] state.prevPivot
+                    prevPivot := state.matrix[k][k]
+                    rowSwaps := state.rowSwaps
+                    singularStep := none } := by
+            have : a' + 1 + b = (a' + b) + 1 := by omega
+            rw [this]
+            exact Matrix.noPivotLoop_regular_branch (a' + b) state hDone hp
+          have h_rhs_inner :
+              Matrix.noPivotLoop (a' + 1) state =
+                Matrix.noPivotLoop a'
+                  { step := state.step + 1
+                    matrix := Matrix.stepMatrix state.matrix state.step
+                      state.matrix[k][k] state.prevPivot
+                    prevPivot := state.matrix[k][k]
+                    rowSwaps := state.rowSwaps
+                    singularStep := none } :=
+            Matrix.noPivotLoop_regular_branch a' state hDone hp
+          rw [h_lhs, h_rhs_inner]
+          exact ih _
+      · -- Boundary: both sides return `state` unchanged.
+        rw [noPivotLoop_id_at_done (a' + 1 + b) state hDone]
+        rw [noPivotLoop_id_at_done (a' + 1) state hDone]
+        exact (noPivotLoop_id_at_done b state hDone).symm
+
 /-- The no-pivot Bareiss pass over the full Gram matrix records the same
 leading-prefix determinant as the public `gramDet` API at every vector slot. -/
 private theorem gramDetVecEntry_eq_leadingPrefix_bareiss
