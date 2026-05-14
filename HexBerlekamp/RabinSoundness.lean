@@ -1191,6 +1191,75 @@ theorem isUnitPolynomial_one_FpPoly : isUnitPolynomial (1 : FpPoly p) = true := 
     DensePoly.coeffs_C_of_ne_zero hone_ne_zero
   simp [DensePoly.degree?, DensePoly.size, hcoeffs]
 
+theorem dvd_one_of_isUnitPolynomial
+    {u : FpPoly p} (hu : isUnitPolynomial u = true) :
+    u ∣ (1 : FpPoly p) := by
+  have hu_deg : u.degree? = some 0 := by
+    unfold isUnitPolynomial at hu
+    cases hdeg : u.degree? with
+    | none =>
+        rw [hdeg] at hu
+        simp at hu
+    | some k =>
+        rw [hdeg] at hu
+        cases k with
+        | zero => rfl
+        | succ _ => simp at hu
+  have hu_size_ne_zero : u.size ≠ 0 := by
+    intro hsize
+    unfold DensePoly.degree? at hu_deg
+    simp [hsize] at hu_deg
+  have hu_size : u.size = 1 := by
+    unfold DensePoly.degree? at hu_deg
+    simp [hu_size_ne_zero] at hu_deg
+    omega
+  have hmod : (1 : FpPoly p) % u = 0 := by
+    show (DensePoly.divMod (1 : FpPoly p) u).2 = 0
+    apply DensePoly.divMod_remainder_eq_zero_of_degree_zero_core
+    · exact hu_size
+    · intro a
+      have hpos : 0 < u.size := by omega
+      have hidx : u.coeffs.size - 1 < u.coeffs.size := by
+        simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hpos
+      have hlead_eq : u.leadingCoeff = u.coeff (u.size - 1) := by
+        unfold DensePoly.leadingCoeff DensePoly.coeff
+        change u.coeffs.back?.getD (0 : ZMod64 p) =
+          u.coeffs.getD (u.coeffs.size - 1) (Zero.zero : ZMod64 p)
+        rw [Array.back?_eq_getElem?, Array.getD_eq_getD_getElem?,
+          Array.getElem?_eq_getElem hidx]
+        rfl
+      have hlead_ne : u.leadingCoeff ≠ (Zero.zero : ZMod64 p) := by
+        rw [hlead_eq]
+        exact DensePoly.coeff_last_ne_zero_of_pos_size u hpos
+      have hinv : ZMod64.inv u.leadingCoeff * u.leadingCoeff = (1 : ZMod64 p) :=
+        ZMod64.inv_mul_eq_one_of_prime (ZMod64.PrimeModulus.prime (p := p)) hlead_ne
+      have hmul : (a / u.leadingCoeff) * u.leadingCoeff = a := by
+        change (ZMod64.mul a (ZMod64.inv u.leadingCoeff)) * u.leadingCoeff = a
+        calc
+          (ZMod64.mul a (ZMod64.inv u.leadingCoeff)) * u.leadingCoeff
+              = a * (ZMod64.inv u.leadingCoeff * u.leadingCoeff) := by
+                  exact Lean.Grind.Semiring.mul_assoc a (ZMod64.inv u.leadingCoeff)
+                    u.leadingCoeff
+          _ = a * (1 : ZMod64 p) := by rw [hinv]
+          _ = a := Lean.Grind.Semiring.mul_one a
+      change a - (a / u.leadingCoeff) * u.leadingCoeff = (Zero.zero : ZMod64 p)
+      rw [hmul]
+      change ZMod64.sub a a = (Zero.zero : ZMod64 p)
+      apply ZMod64.ext
+      apply UInt64.toNat_inj.mp
+      change (ZMod64.sub a a).toNat = (Zero.zero : ZMod64 p).toNat
+      rw [ZMod64.toNat_sub]
+      have hsum : a.toNat + (p - a.toNat) = p := by
+        have ha : a.toNat < p := a.toNat_lt
+        omega
+      rw [hsum, Nat.mod_self]
+      exact ZMod64.toNat_zero.symm
+  refine ⟨(1 : FpPoly p) / u, ?_⟩
+  have hspec := DensePoly.div_mul_add_mod (1 : FpPoly p) u
+  rw [hmod] at hspec
+  exact ((DensePoly.mul_comm_poly u ((1 : FpPoly p) / u)).trans
+    ((DensePoly.add_zero_poly (((1 : FpPoly p) / u) * u)).symm.trans hspec)).symm
+
 omit [ZMod64.PrimeModulus p] in
 private theorem dvd_derivative_self_mul_self (g : FpPoly p) :
     g ∣ DensePoly.derivative (g * g) := by
@@ -1278,6 +1347,21 @@ private theorem fp_swap_left_mul (c g a : FpPoly p) :
     _ = (g * c) * a :=
         congrArg (· * a) (DensePoly.mul_comm_poly c g)
     _ = g * (c * a) := DensePoly.mul_assoc_poly g c a
+
+theorem common_dvd_one_of_squareFree_mul
+    {a b d : FpPoly p}
+    (hsquareFree : DensePoly.gcd (a * b) (DensePoly.derivative (a * b)) = 1)
+    (hda : d ∣ a) (hdb : d ∣ b) :
+    d ∣ (1 : FpPoly p) := by
+  have hdd_dvd_ab : d * d ∣ a * b := by
+    rcases hda with ⟨a', ha'⟩
+    rcases hdb with ⟨b', hb'⟩
+    refine ⟨a' * b', ?_⟩
+    calc a * b
+        = (d * a') * (d * b') := by rw [ha', hb']
+      _ = (d * d) * (a' * b') := fp_swap_inner_mul d a' b'
+  exact dvd_one_of_isUnitPolynomial
+    (isUnitPolynomial_of_squareFree_of_squared_dvd hsquareFree hdd_dvd_ab)
 
 theorem isUnitPolynomial_gcd_quotient_of_squareFree
     (r d : FpPoly p)
