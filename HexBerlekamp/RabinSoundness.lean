@@ -32,6 +32,67 @@ underlying Rabin's test.
 def xPowSubX (k : Nat) : FpPoly p :=
   DensePoly.monomial (p ^ k) (1 : ZMod64 p) - FpPoly.X
 
+/-! ### Prime-field linear product -/
+
+/-- The executable product `∏ c ∈ F_p, (X - c)` over canonical residues. -/
+def primeFieldLinearProduct : FpPoly p :=
+  (ZMod64.values p).foldl
+    (fun acc c => acc * (FpPoly.X - FpPoly.C c)) 1
+
+/-- The linear factor corresponding to a prime-field residue. -/
+def primeFieldLinearFactor (c : ZMod64 p) : FpPoly p :=
+  FpPoly.X - FpPoly.C c
+
+private theorem primeFieldLinearFactor_dvd_foldl_of_dvd_acc
+    (d : FpPoly p) (xs : List (ZMod64 p)) (acc : FpPoly p)
+    (hacc : d ∣ acc) :
+    d ∣ xs.foldl (fun acc c => acc * primeFieldLinearFactor c) acc := by
+  induction xs generalizing acc with
+  | nil =>
+      exact hacc
+  | cons c xs ih =>
+      rcases hacc with ⟨q, hq⟩
+      apply ih
+      refine ⟨q * primeFieldLinearFactor c, ?_⟩
+      calc
+        acc * primeFieldLinearFactor c =
+            (d * q) * primeFieldLinearFactor c := by rw [hq]
+        _ = d * (q * primeFieldLinearFactor c) := FpPoly.mul_assoc d q _
+
+private theorem primeFieldLinearFactor_dvd_foldl_of_mem
+    (c : ZMod64 p) (xs : List (ZMod64 p)) (acc : FpPoly p)
+    (hmem : c ∈ xs) :
+    primeFieldLinearFactor c ∣
+      xs.foldl (fun acc d => acc * primeFieldLinearFactor d) acc := by
+  induction xs generalizing acc with
+  | nil =>
+      cases hmem
+  | cons d xs ih =>
+      simp only [List.mem_cons] at hmem
+      simp only [List.foldl_cons]
+      rcases hmem with hcd | htail
+      · subst d
+        apply primeFieldLinearFactor_dvd_foldl_of_dvd_acc
+        refine ⟨acc, ?_⟩
+        exact FpPoly.mul_comm acc (primeFieldLinearFactor c)
+      · exact ih (acc * primeFieldLinearFactor d) htail
+
+/--
+Every field element contributes its linear factor to the canonical
+prime-field product. This is the divisibility/root-coverage form used by
+the subsequent `X^p - X` product-identity assembly.
+-/
+theorem primeFieldLinearFactor_dvd_primeFieldLinearProduct (c : ZMod64 p) :
+    primeFieldLinearFactor c ∣ primeFieldLinearProduct (p := p) := by
+  unfold primeFieldLinearProduct
+  exact primeFieldLinearFactor_dvd_foldl_of_mem c (ZMod64.values p) 1
+    (ZMod64.mem_values c)
+
+/-- The canonical product has one listed linear factor for each residue. -/
+@[simp] theorem primeFieldLinearProduct_factor_count :
+    (ZMod64.values p).length = p :=
+  ZMod64.values_length (p := p)
+
 /-! ### CRT representatives for Berlekamp completeness -/
 
 /--
@@ -194,6 +255,36 @@ private theorem zmod64_one_ne_zero_of_prime [ZMod64.PrimeModulus p] :
       show ((0 : ZMod64 p).toNat) = 0 from ZMod64.toNat_zero,
       Nat.mod_eq_of_lt (by omega : 1 < p)] at htoNat
   exact absurd htoNat (by omega)
+
+/-- The listed prime-field linear factors are genuinely degree-one candidates. -/
+theorem primeFieldLinearFactor_coeff_one (c : ZMod64 p) :
+    (primeFieldLinearFactor c).coeff 1 = (1 : ZMod64 p) := by
+  unfold primeFieldLinearFactor FpPoly.X FpPoly.C
+  have hzero : (Zero.zero : ZMod64 p) - Zero.zero = Zero.zero := by
+    change ZMod64.sub (Zero.zero : ZMod64 p) Zero.zero = Zero.zero
+    apply ZMod64.ext
+    apply UInt64.toNat_inj.mp
+    change (ZMod64.sub (Zero.zero : ZMod64 p) Zero.zero).toNat =
+      (Zero.zero : ZMod64 p).toNat
+    rw [ZMod64.toNat_sub]
+    have hz : (Zero.zero : ZMod64 p).val.toNat = 0 := by
+      change (Zero.zero : ZMod64 p).toNat = 0
+      exact ZMod64.toNat_zero
+    simp [hz]
+  rw [DensePoly.coeff_sub _ _ _ hzero]
+  rw [DensePoly.coeff_monomial, DensePoly.coeff_C]
+  simp
+  grind
+
+/-- No listed prime-field linear factor is the zero polynomial. -/
+theorem primeFieldLinearFactor_ne_zero
+    [ZMod64.PrimeModulus p] (c : ZMod64 p) :
+    primeFieldLinearFactor c ≠ 0 := by
+  intro hzero
+  have hcoeff := congrArg (fun f : FpPoly p => f.coeff 1) hzero
+  change (primeFieldLinearFactor c).coeff 1 = (0 : FpPoly p).coeff 1 at hcoeff
+  rw [primeFieldLinearFactor_coeff_one c, DensePoly.coeff_zero] at hcoeff
+  exact zmod64_one_ne_zero_of_prime hcoeff
 
 private theorem constant_eq_zero_of_mod_eq_zero
     [ZMod64.PrimeModulus p] {a : FpPoly p} {c : ZMod64 p}
