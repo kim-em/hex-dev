@@ -1210,6 +1210,20 @@ private theorem genericN32PowChain_check :
   Berlekamp.checkRabinBezoutWitnesses
     genericMod genericMod_monic genericN32SamePrimeCert = true
 
+private theorem genericN32_basisSize :
+    genericN32SamePrimeCert.n = Berlekamp.basisSize genericMod := by
+  decide
+
+private theorem genericN32_nPos : 0 < genericN32SamePrimeCert.n := by
+  decide
+
+private theorem genericN32_finalEntry :
+    genericN32SamePrimeCert.powChain[genericN32SamePrimeCert.n]? =
+      some (FpPoly.modByMonic genericMod FpPoly.X genericMod_monic) := by
+  rw [genericMod_modByMonic_X]
+  rw [← polyP2_zero_one_eq_X]
+  rfl
+
 private theorem generic_pos : 0 < FpPoly.degree genericMod := by
   decide
 
