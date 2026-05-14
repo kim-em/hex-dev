@@ -4814,6 +4814,34 @@ private theorem squareFreeCore_eq_one_of_constant_of_ne_zero
         simpa using squareFreeCore_ne_zero_of_ne_zero f hf)
       hdeg
 
+private theorem squareFreeCore_normalizeFactorSign_of_ne_zero
+    (f : ZPoly) (hf : f ≠ 0) :
+    normalizeFactorSign (normalizeForFactor f).squareFreeCore =
+      (normalizeForFactor f).squareFreeCore := by
+  apply normalizeFactorSign_eq_self_of_leadingCoeff_nonneg
+  have hpos := squareFreeCore_leadingCoeff_pos_of_ne_zero f hf
+  omega
+
+private theorem squareFreeCore_shouldRecord_of_degree_pos
+    (f : ZPoly) (hf : f ≠ 0)
+    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0) :
+    shouldRecordPolynomialFactor (normalizeForFactor f).squareFreeCore = true := by
+  have hne_zero : (normalizeForFactor f).squareFreeCore ≠ 0 :=
+    squareFreeCore_ne_zero_of_ne_zero f hf
+  have hne_one : (normalizeForFactor f).squareFreeCore ≠ 1 := by
+    intro hone
+    apply hdeg
+    rw [hone]
+    change (DensePoly.C (1 : Int)).degree?.getD 0 = 0
+    exact DensePoly.degree?_C_getD 1
+  have hne_neg_one : (normalizeForFactor f).squareFreeCore ≠ DensePoly.C (-1 : Int) := by
+    intro hneg
+    apply hdeg
+    rw [hneg]
+    exact DensePoly.degree?_C_getD (-1)
+  unfold shouldRecordPolynomialFactor
+  simp [hne_zero, hne_one, hne_neg_one]
+
 private theorem filteredNormalizedFactors_append_one_of_all_recorded_normalized
     (factors : List ZPoly)
     (hnormalized :
