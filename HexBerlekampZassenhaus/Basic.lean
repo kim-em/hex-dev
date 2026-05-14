@@ -5102,6 +5102,34 @@ private theorem squareFreeCore_eq_one_of_constant_of_ne_zero
         simpa using squareFreeCore_ne_zero_of_ne_zero f hf)
       hdeg
 
+private theorem squareFreeCore_normalizeFactorSign_of_ne_zero
+    (f : ZPoly) (hf : f ≠ 0) :
+    normalizeFactorSign (normalizeForFactor f).squareFreeCore =
+      (normalizeForFactor f).squareFreeCore := by
+  apply normalizeFactorSign_eq_self_of_leadingCoeff_nonneg
+  have hpos := squareFreeCore_leadingCoeff_pos_of_ne_zero f hf
+  omega
+
+private theorem squareFreeCore_shouldRecord_of_degree_pos
+    (f : ZPoly) (hf : f ≠ 0)
+    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0) :
+    shouldRecordPolynomialFactor (normalizeForFactor f).squareFreeCore = true := by
+  have hne_zero : (normalizeForFactor f).squareFreeCore ≠ 0 :=
+    squareFreeCore_ne_zero_of_ne_zero f hf
+  have hne_one : (normalizeForFactor f).squareFreeCore ≠ 1 := by
+    intro hone
+    apply hdeg
+    rw [hone]
+    change (DensePoly.C (1 : Int)).degree?.getD 0 = 0
+    exact DensePoly.degree?_C_getD 1
+  have hne_neg_one : (normalizeForFactor f).squareFreeCore ≠ DensePoly.C (-1 : Int) := by
+    intro hneg
+    apply hdeg
+    rw [hneg]
+    exact DensePoly.degree?_C_getD (-1)
+  unfold shouldRecordPolynomialFactor
+  simp [hne_zero, hne_one, hne_neg_one]
+
 private theorem filteredNormalizedFactors_append_one_of_all_recorded_normalized
     (factors : List ZPoly)
     (hnormalized :
@@ -5221,6 +5249,111 @@ private theorem factorFastFactorsWithBound_product_of_some_of_all_recorded_norma
   factorizationOfFactors_product_of_raw_product_of_all_recorded_normalized
     f factors (factorFastFactorsWithBound_polyProduct_of_some hfast)
     hnormalized hrecorded
+
+private theorem factorFastWithBound_product_of_constant_branch
+    (f : ZPoly) (B : Nat) {φ : Factorization}
+    (hf : f ≠ 0)
+    (hbranch : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0)
+    (h : factorFastWithBound f B = some φ) :
+    Factorization.product φ = f := by
+  unfold factorFastWithBound factorFastFactorsWithBound at h
+  rw [if_pos hbranch] at h
+  have hphi :
+      factorizationOfFactors f
+          (reassemblePolynomialFactors (normalizeForFactor f)
+            #[(normalizeForFactor f).squareFreeCore]) = φ := by
+    simpa using h
+  rw [← hphi]
+  have hcore_one := squareFreeCore_eq_one_of_constant_of_ne_zero f hf hbranch
+  rw [hcore_one]
+  apply factorizationOfFactors_product_of_filtered_product
+  · exact reassemblePolynomialFactors_product_eq_input f #[1] (by
+      rw [polyProduct_singleton]
+      exact hcore_one.symm)
+  · unfold reassemblePolynomialFactors
+    rw [polyProduct_filteredNormalizedFactors_append_one_of_all_recorded_normalized]
+    rw [polyProduct_append, polyProduct_singleton]
+    exact (DensePoly.mul_one_right_poly (S := Int) _).symm
+    · intro factor hmem
+      exact polynomialNormalizationPrefixFactors_normalizeFactorSign_of_ne_zero
+        f hf factor hmem
+    · intro factor hmem
+      exact polynomialNormalizationPrefixFactors_shouldRecord_of_ne_zero
+        f hf factor hmem
+
+private theorem factorFastWithBound_product_of_squareFreeCore_emit
+    (f : ZPoly) (B : Nat) {factors : Array ZPoly}
+    (hf : f ≠ 0)
+    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (hfast : factorFastFactorsWithBound f B =
+      some (reassemblePolynomialFactors (normalizeForFactor f)
+        #[(normalizeForFactor f).squareFreeCore]))
+    (hresult : factors = reassemblePolynomialFactors (normalizeForFactor f)
+      #[(normalizeForFactor f).squareFreeCore]) :
+    Factorization.product (factorizationOfFactors f factors) = f := by
+  subst hresult
+  apply factorFastFactorsWithBound_product_of_some_of_all_recorded_normalized hfast
+  · intro factor hmem
+    unfold reassemblePolynomialFactors at hmem
+    rw [Array.toList_append] at hmem
+    simp only [List.mem_append] at hmem
+    cases hmem with
+    | inl hprefix =>
+        exact polynomialNormalizationPrefixFactors_normalizeFactorSign_of_ne_zero
+          f hf factor hprefix
+    | inr hcore =>
+        simp only [List.mem_singleton] at hcore
+        rw [hcore]
+        exact squareFreeCore_normalizeFactorSign_of_ne_zero f hf
+  · intro factor hmem
+    unfold reassemblePolynomialFactors at hmem
+    rw [Array.toList_append] at hmem
+    simp only [List.mem_append] at hmem
+    cases hmem with
+    | inl hprefix =>
+        exact polynomialNormalizationPrefixFactors_shouldRecord_of_ne_zero
+          f hf factor hprefix
+    | inr hcore =>
+        simp only [List.mem_singleton] at hcore
+        rw [hcore]
+        exact squareFreeCore_shouldRecord_of_degree_pos f hf hdeg
+
+private theorem factorFastWithBound_product_of_small_mod_branch
+    (f : ZPoly) (B : Nat) {φ : Factorization}
+    (hf : f ≠ 0)
+    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (hB_pos : 1 ≤ B)
+    (hsmall :
+      (choosePrimeData (normalizeForFactor f).squareFreeCore).factorsModP.size ≤ 1)
+    (hquadratic : B = 1 ∨
+      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none)
+    (h : factorFastWithBound f B = some φ) :
+    Factorization.product φ = f := by
+  have hfast :
+      factorFastFactorsWithBound f B =
+        some (reassemblePolynomialFactors (normalizeForFactor f)
+          #[(normalizeForFactor f).squareFreeCore]) := by
+    unfold factorFastFactorsWithBound
+    rw [if_neg hdeg, if_neg (by omega : B ≠ 0)]
+    by_cases hB1 : B = 1
+    · rw [if_pos hB1]
+      rw [if_pos hsmall]
+    · rw [if_neg hB1]
+      have hq : quadraticIntegerRootFactors?
+          (normalizeForFactor f).squareFreeCore = none := by
+        cases hquadratic with
+        | inl heq => exact absurd heq hB1
+        | inr hnone => exact hnone
+      rw [hq]
+      rw [if_pos hsmall]
+  have hphi :
+      factorizationOfFactors f
+          (reassemblePolynomialFactors (normalizeForFactor f)
+            #[(normalizeForFactor f).squareFreeCore]) = φ := by
+    rw [factorFastWithBound_eq_some_of_factors_some f B hfast] at h
+    exact Option.some.inj h
+  rw [← hphi]
+  exact factorFastWithBound_product_of_squareFreeCore_emit f B hf hdeg hfast rfl
 
 /--
 A successful integer certificate exposes the per-prime polynomial check fact:
