@@ -253,16 +253,10 @@ private def stateOf (b : Matrix Int n m) : LLLState n m :=
     d := gs.d
     ν_eq := by
       intro i j hi hj hji
-      have hd :
-          gs.d.get ⟨j + 1, Nat.succ_lt_succ hj⟩ =
-            GramSchmidt.Int.gramDet b (j + 1)
-              (Nat.succ_le_of_lt (Nat.lt_trans hji hi)) := by
-        simpa [GramSchmidt.Int.gramDetVec, gs] using
-          GramSchmidt.Int.gramDetVec_eq_gramDet b (j + 1)
-            (Nat.succ_le_of_lt (Nat.lt_trans hji hi))
-      rw [hd]
       simpa [GramSchmidt.Int.scaledCoeffs, gs, GramSchmidt.entry, Matrix.row] using
-        (GramSchmidt.Int.scaledCoeffs_eq b i j hi hji)
+        (rfl :
+          GramSchmidt.entry gs.ν ⟨i, hi⟩ ⟨j, hj⟩ =
+            GramSchmidt.entry gs.ν ⟨i, hi⟩ ⟨j, hj⟩)
     d_eq := by
       intro i hi
       simpa [GramSchmidt.Int.gramDetVec, gs] using
