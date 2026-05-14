@@ -1140,6 +1140,72 @@ private theorem genericN32_step31_check :
       Conway.packedGF2FpPoly]
     decide
 
+private theorem genericMod_modByMonic_X :
+    FpPoly.modByMonic genericMod FpPoly.X genericMod_monic = FpPoly.X := by
+  rw [FpPoly.modByMonic, DensePoly.modByMonic_eq_mod]
+  apply DensePoly.mod_eq_self_of_degree_lt
+  rw [genericMod_degree_eq]
+  decide
+
+private theorem polyP2_zero_one_eq_X : (polyP2 #[0, 1] : FpPoly 2) = FpPoly.X := by
+  simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, FpPoly.X, DensePoly.monomial,
+        DensePoly.trimTrailingZeros, DensePoly.trimTrailingZerosList]
+  decide
+
+private theorem genericN32QuotientWitnesses_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnesses
+      genericMod genericMod_monic genericN32SamePrimeCert
+      genericN32Quotients = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnesses_of_steps
+  · decide
+  · decide
+  · apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnesses_first_of_coeffs
+      (first := polyP2 #[0, 1])
+    · rfl
+    · rw [genericMod_modByMonic_X, polyP2_zero_one_eq_X]
+  · intro k hk
+    match k, hk with
+    | 0, _ => exact genericN32_step0_check
+    | 1, _ => exact genericN32_step1_check
+    | 2, _ => exact genericN32_step2_check
+    | 3, _ => exact genericN32_step3_check
+    | 4, _ => exact genericN32_step4_check
+    | 5, _ => exact genericN32_step5_check
+    | 6, _ => exact genericN32_step6_check
+    | 7, _ => exact genericN32_step7_check
+    | 8, _ => exact genericN32_step8_check
+    | 9, _ => exact genericN32_step9_check
+    | 10, _ => exact genericN32_step10_check
+    | 11, _ => exact genericN32_step11_check
+    | 12, _ => exact genericN32_step12_check
+    | 13, _ => exact genericN32_step13_check
+    | 14, _ => exact genericN32_step14_check
+    | 15, _ => exact genericN32_step15_check
+    | 16, _ => exact genericN32_step16_check
+    | 17, _ => exact genericN32_step17_check
+    | 18, _ => exact genericN32_step18_check
+    | 19, _ => exact genericN32_step19_check
+    | 20, _ => exact genericN32_step20_check
+    | 21, _ => exact genericN32_step21_check
+    | 22, _ => exact genericN32_step22_check
+    | 23, _ => exact genericN32_step23_check
+    | 24, _ => exact genericN32_step24_check
+    | 25, _ => exact genericN32_step25_check
+    | 26, _ => exact genericN32_step26_check
+    | 27, _ => exact genericN32_step27_check
+    | 28, _ => exact genericN32_step28_check
+    | 29, _ => exact genericN32_step29_check
+    | 30, _ => exact genericN32_step30_check
+    | 31, _ => exact genericN32_step31_check
+    | k + 32, h => exact absurd (show k + 32 < 32 from h) (by omega)
+
+private theorem genericN32PowChain_check :
+    Berlekamp.checkPowChainLinearIncremental
+      genericMod genericMod_monic genericN32SamePrimeCert = true :=
+  Berlekamp.checkPowChainLinearIncremental_of_quotientWitnesses
+    genericMod genericMod_monic genericN32SamePrimeCert
+    genericN32Quotients genericN32QuotientWitnesses_check
+
 #guard
   Berlekamp.checkRabinBezoutWitnesses
     genericMod genericMod_monic genericN32SamePrimeCert = true
