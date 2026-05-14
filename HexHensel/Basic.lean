@@ -19,7 +19,7 @@ private theorem list_getD_map_range {α : Type} [Zero α] (size n : Nat) (f : Na
 
 namespace ZPoly
 
-private def intModNat (z : Int) (m : Nat) : Nat :=
+def intModNat (z : Int) (m : Nat) : Nat :=
   Int.toNat (z % Int.ofNat m)
 
 private theorem intModNat_eq_emod (z : Int) {m : Nat} (hm : 0 < m) :
