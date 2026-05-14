@@ -4586,6 +4586,40 @@ theorem factorWithBound_entry_mem_small_mod_singleton_raw
   simpa only [factorWithBound, factorFastWithBound, hfast, Option.map_some,
     Option.getD_some] using hmem
 
+/-- In the fast-path BHKS fast-core success branch, every recorded
+`factorWithBound` entry comes from the normalization reassembly whose core array
+is the successful `factorFastCoreWithBound` output for the chosen prime data.
+This is the branch-shape lemma needed by Mathlib-side BHKS irreducibility
+proofs; it leaves the mathematical proof that each core factor is irreducible
+to the bridge layer. -/
+theorem factorWithBound_entry_mem_fast_core_success_raw
+    (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
+    (hB_pos : 1 ≤ B)
+    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (hmulti :
+      1 < (choosePrimeData (normalizeForFactor f).squareFreeCore).factorsModP.size)
+    (hquadratic : B = 1 ∨
+      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none)
+    {coreFactors : Array ZPoly}
+    (hcore :
+      let primeData := choosePrimeData (normalizeForFactor f).squareFreeCore
+      let a := precisionForCoeffBound B primeData.p
+      factorFastCoreWithBound (normalizeForFactor f).squareFreeCore a
+        primeData (initialHenselPrecision a)
+        (ZPoly.quadraticDoublingSteps a + 2) = some coreFactors)
+    (hmem : entry ∈ (factorWithBound f B).factors.toList) :
+    ∃ raw ∈ (reassemblePolynomialFactors (normalizeForFactor f) coreFactors).toList,
+      entry.1 = normalizeFactorSign raw := by
+  have hfast :
+      factorFastFactorsWithBound f B =
+        some (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) :=
+    factorFastFactorsWithBound_eq_some_of_core_success f B
+      (choosePrimeData (normalizeForFactor f).squareFreeCore) coreFactors
+      hB_pos rfl hdeg hmulti hquadratic hcore
+  apply factorizationOfFactors_entry_mem_normalized_raw
+  simpa only [factorWithBound, factorFastWithBound, hfast, Option.map_some,
+    Option.getD_some] using hmem
+
 private def quadraticSquareRegression : ZPoly :=
   let q : ZPoly := DensePoly.ofCoeffs #[-1, 0, 1]
   q * q
