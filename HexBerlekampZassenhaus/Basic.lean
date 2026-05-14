@@ -1802,6 +1802,91 @@ private theorem factorizationOfFactors_product_of_raw_product_of_all_recorded_no
     (polyProduct_filteredNormalizedFactors_eq_self_of_all_recorded_normalized
       factors hnormalized hrecorded)
 
+private theorem signedContentScalar_zero :
+    signedContentScalar 0 = 0 := by
+  unfold signedContentScalar
+  simp
+
+private theorem factorizationOfFactors_product_of_zero (factors : Array ZPoly) :
+    Factorization.product (factorizationOfFactors 0 factors) = 0 := by
+  rw [factorizationOfFactors_product]
+  rw [signedContentScalar_zero]
+  change DensePoly.C (0 : Int) *
+      Array.polyProduct (filteredNormalizedFactors factors.toList).toArray = 0
+  rw [show (DensePoly.C (0 : Int) : ZPoly) = (0 : ZPoly) from rfl]
+  exact DensePoly.zero_mul
+    (Array.polyProduct (filteredNormalizedFactors factors.toList).toArray)
+
+private theorem leadingCoeff_X :
+    DensePoly.leadingCoeff ZPoly.X = (1 : Int) := by
+  rfl
+
+private theorem X_ne_zero : ZPoly.X ≠ (0 : ZPoly) := by
+  decide
+
+private theorem X_ne_one : ZPoly.X ≠ (1 : ZPoly) := by
+  decide
+
+private theorem X_ne_C_neg_one : ZPoly.X ≠ DensePoly.C (-1 : Int) := by
+  decide
+
+private theorem normalizeFactorSign_X :
+    normalizeFactorSign ZPoly.X = ZPoly.X := by
+  unfold normalizeFactorSign
+  rw [leadingCoeff_X]
+  simp
+
+private theorem shouldRecordPolynomialFactor_X :
+    shouldRecordPolynomialFactor ZPoly.X = true := by
+  unfold shouldRecordPolynomialFactor
+  simp [X_ne_zero, X_ne_one, X_ne_C_neg_one]
+
+private theorem mem_xPowerFactorArray_eq_X (power : Nat) (factor : ZPoly)
+    (h : factor ∈ (xPowerFactorArray power).toList) :
+    factor = ZPoly.X := by
+  unfold xPowerFactorArray at h
+  simp [List.mem_replicate] at h
+  exact h.2
+
+private theorem xPowerFactorArray_normalizeFactorSign
+    (power : Nat) (factor : ZPoly)
+    (h : factor ∈ (xPowerFactorArray power).toList) :
+    normalizeFactorSign factor = factor := by
+  rw [mem_xPowerFactorArray_eq_X power factor h]
+  exact normalizeFactorSign_X
+
+private theorem xPowerFactorArray_shouldRecord
+    (power : Nat) (factor : ZPoly)
+    (h : factor ∈ (xPowerFactorArray power).toList) :
+    shouldRecordPolynomialFactor factor = true := by
+  rw [mem_xPowerFactorArray_eq_X power factor h]
+  exact shouldRecordPolynomialFactor_X
+
+private theorem mem_repeatedPartFactorArray_eq (rep : ZPoly) (factor : ZPoly)
+    (h : factor ∈ (repeatedPartFactorArray rep).toList) :
+    factor = rep := by
+  unfold repeatedPartFactorArray at h
+  by_cases hone : rep = 1
+  · simp [hone] at h
+  · simp [hone] at h
+    exact h
+
+private theorem mem_repeatedPartFactorArray_ne_one
+    (rep : ZPoly) (factor : ZPoly)
+    (h : factor ∈ (repeatedPartFactorArray rep).toList) :
+    rep ≠ 1 := by
+  unfold repeatedPartFactorArray at h
+  by_cases hone : rep = 1
+  · simp [hone] at h
+  · exact hone
+
+private theorem normalizeFactorSign_eq_self_of_leadingCoeff_nonneg (g : ZPoly)
+    (h : 0 ≤ DensePoly.leadingCoeff g) :
+    normalizeFactorSign g = g := by
+  unfold normalizeFactorSign
+  have hnot : ¬ DensePoly.leadingCoeff g < 0 := by omega
+  rw [if_neg hnot]
+
 private theorem rat_scale_scale (u v : Rat) (p : DensePoly Rat) :
     DensePoly.scale u (DensePoly.scale v p) = DensePoly.scale (u * v) p := by
   apply DensePoly.ext_coeff
@@ -1944,6 +2029,53 @@ private def integerRootCandidates (f : ZPoly) : List Int :=
 
 private def linearFactorForRoot (r : Int) : ZPoly :=
   DensePoly.ofCoeffs #[-r, 1]
+
+private theorem leadingCoeff_linearFactorForRoot (r : Int) :
+    DensePoly.leadingCoeff (linearFactorForRoot r) = (1 : Int) := by
+  unfold linearFactorForRoot
+  rfl
+
+private theorem linearFactorForRoot_size_eq_two (r : Int) :
+    (linearFactorForRoot r).size = 2 := by
+  unfold linearFactorForRoot
+  rfl
+
+private theorem linearFactorForRoot_ne_zero (r : Int) :
+    linearFactorForRoot r ≠ (0 : ZPoly) := by
+  intro h
+  have hsize := linearFactorForRoot_size_eq_two r
+  rw [h] at hsize
+  change (0 : ZPoly).size = 2 at hsize
+  have hzero : (0 : ZPoly).size = 0 := rfl
+  omega
+
+private theorem linearFactorForRoot_ne_one (r : Int) :
+    linearFactorForRoot r ≠ (1 : ZPoly) := by
+  intro h
+  have hsize := linearFactorForRoot_size_eq_two r
+  rw [h] at hsize
+  have hone : (1 : ZPoly).size = 1 := rfl
+  omega
+
+private theorem linearFactorForRoot_ne_C_neg_one (r : Int) :
+    linearFactorForRoot r ≠ DensePoly.C (-1 : Int) := by
+  intro h
+  have hsize := linearFactorForRoot_size_eq_two r
+  rw [h] at hsize
+  have hcsize : (DensePoly.C (-1 : Int)).size = 1 := rfl
+  omega
+
+private theorem normalizeFactorSign_linearFactorForRoot (r : Int) :
+    normalizeFactorSign (linearFactorForRoot r) = linearFactorForRoot r := by
+  unfold normalizeFactorSign
+  rw [leadingCoeff_linearFactorForRoot]
+  simp
+
+private theorem shouldRecordPolynomialFactor_linearFactorForRoot (r : Int) :
+    shouldRecordPolynomialFactor (linearFactorForRoot r) = true := by
+  unfold shouldRecordPolynomialFactor
+  simp [linearFactorForRoot_ne_zero, linearFactorForRoot_ne_one,
+    linearFactorForRoot_ne_C_neg_one]
 
 private def splitIntegerRootFactorsAux :
     ZPoly → List Int → Nat → Array ZPoly × ZPoly
@@ -4529,6 +4661,105 @@ private theorem factorSlowWithBound_product_of_all_recorded_normalized
     factorizationOfFactors_product_of_raw_product_of_all_recorded_normalized
       f (factorSlowFactorsWithBound f B)
       (factorSlowFactorsWithBound_polyProduct f B) hnormalized hrecorded
+
+private theorem extractXPower_core_ne_zero_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
+    (ZPoly.extractXPower (ZPoly.primitivePart f)).core ≠ 0 :=
+  ZPoly.ne_zero_of_primitive _ (extractXPower_core_primitive_of_ne_zero f hf)
+
+private theorem repeatedPart_ne_zero_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
+    (normalizeForFactor f).repeatedPart ≠ 0 := by
+  unfold normalizeForFactor
+  simp only
+  intro hzero
+  have hcore_ne := extractXPower_core_ne_zero_of_ne_zero f hf
+  have hprod_primitive :=
+    ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive _ hcore_ne
+  have hprod_ne :
+      (ZPoly.primitiveSquareFreeDecomposition
+            (ZPoly.extractXPower (ZPoly.primitivePart f)).core).squareFreeCore *
+        (ZPoly.primitiveSquareFreeDecomposition
+            (ZPoly.extractXPower (ZPoly.primitivePart f)).core).repeatedPart ≠ 0 :=
+    ZPoly.ne_zero_of_primitive _ hprod_primitive
+  apply hprod_ne
+  rw [hzero]
+  rw [DensePoly.mul_comm_poly (S := Int)]
+  exact DensePoly.zero_mul _
+
+private theorem repeatedPart_leadingCoeff_pos_of_ne_zero
+    (f : ZPoly) (hf : f ≠ 0) :
+    0 < DensePoly.leadingCoeff (normalizeForFactor f).repeatedPart := by
+  have hne := repeatedPart_ne_zero_of_ne_zero f hf
+  have hnonneg :
+      0 ≤ DensePoly.leadingCoeff (normalizeForFactor f).repeatedPart := by
+    unfold normalizeForFactor
+    exact ZPoly.leadingCoeff_repeatedPart_nonneg _
+  have hne_lead :
+      DensePoly.leadingCoeff (normalizeForFactor f).repeatedPart ≠ 0 :=
+    ZPoly.leadingCoeff_ne_zero_of_ne_zero _ hne
+  omega
+
+private theorem repeatedPart_ne_C_neg_one_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
+    (normalizeForFactor f).repeatedPart ≠ DensePoly.C (-1 : Int) := by
+  intro h
+  have hpos := repeatedPart_leadingCoeff_pos_of_ne_zero f hf
+  rw [h] at hpos
+  have hneg : DensePoly.leadingCoeff (DensePoly.C (-1 : Int)) = -1 := by decide
+  rw [hneg] at hpos
+  omega
+
+private theorem repeatedPartFactorArray_normalizeFactorSign_of_ne_zero
+    (f : ZPoly) (hf : f ≠ 0)
+    (factor : ZPoly)
+    (h : factor ∈ (repeatedPartFactorArray (normalizeForFactor f).repeatedPart).toList) :
+    normalizeFactorSign factor = factor := by
+  rw [mem_repeatedPartFactorArray_eq _ factor h]
+  apply normalizeFactorSign_eq_self_of_leadingCoeff_nonneg
+  have hpos := repeatedPart_leadingCoeff_pos_of_ne_zero f hf
+  omega
+
+private theorem repeatedPartFactorArray_shouldRecord_of_ne_zero
+    (f : ZPoly) (hf : f ≠ 0)
+    (factor : ZPoly)
+    (h : factor ∈ (repeatedPartFactorArray (normalizeForFactor f).repeatedPart).toList) :
+    shouldRecordPolynomialFactor factor = true := by
+  have hfactor_eq := mem_repeatedPartFactorArray_eq _ factor h
+  have hne_one := mem_repeatedPartFactorArray_ne_one _ factor h
+  rw [hfactor_eq]
+  unfold shouldRecordPolynomialFactor
+  simp [repeatedPart_ne_zero_of_ne_zero f hf, hne_one,
+    repeatedPart_ne_C_neg_one_of_ne_zero f hf]
+
+private theorem squareFreeCore_ne_zero_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
+    (normalizeForFactor f).squareFreeCore ≠ 0 := by
+  unfold normalizeForFactor
+  simp only
+  intro hzero
+  have hcore_ne := extractXPower_core_ne_zero_of_ne_zero f hf
+  have hprod_primitive :=
+    ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive _ hcore_ne
+  have hprod_ne :
+      (ZPoly.primitiveSquareFreeDecomposition
+            (ZPoly.extractXPower (ZPoly.primitivePart f)).core).squareFreeCore *
+        (ZPoly.primitiveSquareFreeDecomposition
+            (ZPoly.extractXPower (ZPoly.primitivePart f)).core).repeatedPart ≠ 0 :=
+    ZPoly.ne_zero_of_primitive _ hprod_primitive
+  apply hprod_ne
+  rw [hzero]
+  exact DensePoly.zero_mul _
+
+private theorem squareFreeCore_leadingCoeff_pos_of_ne_zero
+    (f : ZPoly) (hf : f ≠ 0) :
+    0 < DensePoly.leadingCoeff (normalizeForFactor f).squareFreeCore := by
+  have hne := squareFreeCore_ne_zero_of_ne_zero f hf
+  have hnonneg :
+      0 ≤ DensePoly.leadingCoeff (normalizeForFactor f).squareFreeCore := by
+    unfold normalizeForFactor
+    exact ZPoly.leadingCoeff_squareFreeCore_nonneg _
+  have hne_lead :
+      DensePoly.leadingCoeff (normalizeForFactor f).squareFreeCore ≠ 0 :=
+    ZPoly.leadingCoeff_ne_zero_of_ne_zero _ hne
+  omega
+
 
 private theorem factorFastFactorsWithBound_product_of_some_of_all_recorded_normalized
     {f : ZPoly} {B : Nat} {factors : Array ZPoly}
