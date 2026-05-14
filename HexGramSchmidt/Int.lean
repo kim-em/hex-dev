@@ -258,10 +258,25 @@ private theorem getElem!_foldl_set!_of_mem_nodup
       rcases List.mem_cons.mp hr with hr_eq | hr_in
       · subst hr_eq
         rw [getElem!_foldl_set!_of_notMem _ _ _ _ hxnotmem]
-        have hsize : r < (arr.set! r (f r)).size := by simp [hbound]
+        have hsize : r < (arr.set! r (f r)).size := by
+          simp [Array.set!_eq_setIfInBounds, Array.size_setIfInBounds, hbound]
         grind
-      · have hbound' : r < (arr.set! x (f x)).size := by simp [hbound]
+      · have hbound' : r < (arr.set! x (f x)).size := by
+          simp [Array.set!_eq_setIfInBounds, Array.size_setIfInBounds, hbound]
         exact ih _ hr_in hnodup' hbound'
+
+/-- A `foldl` that sets indices via `Array.set!` preserves the outer array
+size. -/
+private theorem size_foldl_set!
+    {α : Type} [Inhabited α]
+    (xs : List Nat) (arr : Array α) (f : Nat → α) :
+    (xs.foldl (fun next x => next.set! x (f x)) arr).size = arr.size := by
+  induction xs generalizing arr with
+  | nil => simp
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [ih]
+      simp [Array.set!_eq_setIfInBounds, Array.size_setIfInBounds]
 
 private def writeScaledColumn (coeffs rows : Array (Array Int)) (n k : Nat) :
     Array (Array Int) :=
@@ -320,6 +335,142 @@ private def stepScaledRows (rows : Array (Array Int)) (n k : Nat)
         nextRow := nextRow.set! j value
       next := next.set! i nextRow
     return next
+
+section StepScaledRowsBookkeeping
+
+/-- After one `stepScaledRows` sweep, rows whose index lies at or below the
+current pivot are untouched by the outer fold. -/
+private theorem getArrayEntry_stepScaledRows_of_row_le
+    (rows : Array (Array Int)) (n k : Nat) (pivot prevPivot : Int)
+    (r c : Nat) (hr : r ≤ k) :
+    getArrayEntry (stepScaledRows rows n k pivot prevPivot) r c =
+      getArrayEntry rows r c := by
+  show
+      (stepScaledRows rows n k pivot prevPivot)[r]![c]! =
+        rows[r]![c]!
+  unfold stepScaledRows
+  simp [Std.Legacy.Range.forIn_eq_forIn_range', Std.Legacy.Range.size,
+    -Array.set!_eq_setIfInBounds]
+  have hnot : r ∉ List.range' (k + 1) (n - (k + 1)) := by
+    intro hmem
+    rw [List.mem_range'] at hmem
+    obtain ⟨i, hi, hri⟩ := hmem
+    omega
+  rw [getElem!_foldl_set!_of_notMem _ _ _ _ hnot]
+
+/-- After one `stepScaledRows` sweep, rows whose index is past the matrix
+extent are untouched by the outer fold (`Array.set!` is a no-op out of
+bounds, and the iteration range stops at `n`). -/
+private theorem getArrayEntry_stepScaledRows_of_row_ge
+    (rows : Array (Array Int)) (n k : Nat) (pivot prevPivot : Int)
+    (r c : Nat) (hr : n ≤ r) :
+    getArrayEntry (stepScaledRows rows n k pivot prevPivot) r c =
+      getArrayEntry rows r c := by
+  show
+      (stepScaledRows rows n k pivot prevPivot)[r]![c]! =
+        rows[r]![c]!
+  unfold stepScaledRows
+  simp [Std.Legacy.Range.forIn_eq_forIn_range', Std.Legacy.Range.size,
+    -Array.set!_eq_setIfInBounds]
+  have hnot : r ∉ List.range' (k + 1) (n - (k + 1)) := by
+    intro hmem
+    rw [List.mem_range'] at hmem
+    obtain ⟨i, hi, hri⟩ := hmem
+    omega
+  rw [getElem!_foldl_set!_of_notMem _ _ _ _ hnot]
+
+/-- The new row written at trailing index `r` (with `k < r` and `r < n`) by
+`stepScaledRows`, expressed in fold form. This is an intermediate
+characterisation; downstream lemmas read individual entries via
+`getElem!_foldl_set!_*`. -/
+private theorem stepScaledRows_row_at_trailing
+    (rows : Array (Array Int)) (n k : Nat) (pivot prevPivot : Int)
+    (r : Nat) (hk : k < r) (hr : r < n) (hrows : r < rows.size) :
+    (stepScaledRows rows n k pivot prevPivot)[r]! =
+      (List.range' (k + 1) (n - (k + 1))).foldl
+        (fun nextRow j =>
+          nextRow.set! j
+            ((pivot * rows[r]![j]! - rows[r]![k]! * getArrayEntry rows k j) / prevPivot))
+        (rows[r]!.set! k 0) := by
+  unfold stepScaledRows
+  simp [Std.Legacy.Range.forIn_eq_forIn_range', Std.Legacy.Range.size,
+    -Array.set!_eq_setIfInBounds]
+  have hmem : r ∈ List.range' (k + 1) (n - (k + 1)) := by
+    rw [List.mem_range']
+    exact ⟨r - (k + 1), by omega, by omega⟩
+  have hnodup : (List.range' (k + 1) (n - (k + 1))).Nodup := List.nodup_range'
+  rw [getElem!_foldl_set!_of_mem_nodup _ _ _ _ hmem hnodup hrows]
+
+/-- The pivot column of `stepScaledRows` is cleared at every trailing row. -/
+private theorem getArrayEntry_stepScaledRows_pivot_col
+    (rows : Array (Array Int)) (n k : Nat) (pivot prevPivot : Int)
+    (r : Nat) (hk : k < r) (hr : r < n) (hrows : r < rows.size)
+    (hk_row : k < rows[r]!.size) :
+    getArrayEntry (stepScaledRows rows n k pivot prevPivot) r k = 0 := by
+  show (stepScaledRows rows n k pivot prevPivot)[r]![k]! = 0
+  rw [stepScaledRows_row_at_trailing rows n k pivot prevPivot r hk hr hrows]
+  have hnot : k ∉ List.range' (k + 1) (n - (k + 1)) := by
+    intro hmem
+    rw [List.mem_range'] at hmem
+    obtain ⟨i, hi, hki⟩ := hmem
+    omega
+  rw [getElem!_foldl_set!_of_notMem _ _ _ _ hnot]
+  grind
+
+/-- Trailing-column entries of `stepScaledRows` are the fraction-free
+Bareiss-style update written by the inner sweep. -/
+private theorem getArrayEntry_stepScaledRows_trailing
+    (rows : Array (Array Int)) (n k : Nat) (pivot prevPivot : Int)
+    (r c : Nat) (hkr : k < r) (hr : r < n) (hkc : k < c) (hc : c < n)
+    (hrows : r < rows.size) (hcols : c < rows[r]!.size) :
+    getArrayEntry (stepScaledRows rows n k pivot prevPivot) r c =
+      (pivot * rows[r]![c]! - rows[r]![k]! * getArrayEntry rows k c) / prevPivot := by
+  show
+      (stepScaledRows rows n k pivot prevPivot)[r]![c]! =
+        (pivot * rows[r]![c]! - rows[r]![k]! * getArrayEntry rows k c) / prevPivot
+  rw [stepScaledRows_row_at_trailing rows n k pivot prevPivot r hkr hr hrows]
+  have hmem : c ∈ List.range' (k + 1) (n - (k + 1)) := by
+    rw [List.mem_range']
+    exact ⟨c - (k + 1), by omega, by omega⟩
+  have hnodup : (List.range' (k + 1) (n - (k + 1))).Nodup := List.nodup_range'
+  have hbound : c < (rows[r]!.set! k 0).size := by
+    simp [Array.set!_eq_setIfInBounds, Array.size_setIfInBounds, hcols]
+  rw [getElem!_foldl_set!_of_mem_nodup _ _ _ _ hmem hnodup hbound]
+
+/-- Entries strictly left of the pivot column of `stepScaledRows` are
+preserved at every trailing row: the inner sweep only writes the trailing
+window `[k+1, n)`, and the explicit pivot-column zeroing only touches
+column `k`. -/
+private theorem getArrayEntry_stepScaledRows_of_col_lt
+    (rows : Array (Array Int)) (n k : Nat) (pivot prevPivot : Int)
+    (r c : Nat) (hkr : k < r) (hr : r < n) (hc : c < k)
+    (hrows : r < rows.size) :
+    getArrayEntry (stepScaledRows rows n k pivot prevPivot) r c =
+      getArrayEntry rows r c := by
+  show
+      (stepScaledRows rows n k pivot prevPivot)[r]![c]! = rows[r]![c]!
+  rw [stepScaledRows_row_at_trailing rows n k pivot prevPivot r hkr hr hrows]
+  have hnot : c ∉ List.range' (k + 1) (n - (k + 1)) := by
+    intro hmem
+    rw [List.mem_range'] at hmem
+    obtain ⟨i, hi, hci⟩ := hmem
+    omega
+  rw [getElem!_foldl_set!_of_notMem _ _ _ _ hnot]
+  have hck : c ≠ k := by omega
+  grind
+
+/-- The outer-array length of `stepScaledRows` matches the input. The outer
+fold only replaces rows already present in `rows` via `Array.set!`, which
+preserves array size. -/
+private theorem stepScaledRows_size
+    (rows : Array (Array Int)) (n k : Nat) (pivot prevPivot : Int) :
+    (stepScaledRows rows n k pivot prevPivot).size = rows.size := by
+  unfold stepScaledRows
+  simp [Std.Legacy.Range.forIn_eq_forIn_range', Std.Legacy.Range.size,
+    -Array.set!_eq_setIfInBounds]
+  exact size_foldl_set! _ _ _
+
+end StepScaledRowsBookkeeping
 
 private def scaledCoeffArrayLoop (n fuel : Nat) (state : ScaledCoeffArrayState) :
     ScaledCoeffArrayState :=
