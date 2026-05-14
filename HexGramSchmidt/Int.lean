@@ -974,6 +974,26 @@ private theorem scaledCoeffArrayLoop_lower_matches_current_step
   rw [hentry, h_matrix_eq]
   exact congrArg (fun c => state_matrix.matrix[i][c]) hcol_eq
 
+/-- Base target-column form of lower-triangle capture. If the requested lower
+column is exactly the starting no-pivot step, the scaled-coefficient loop
+records the matrix entry from the pre-step `Matrix.noPivotLoop 0` state. -/
+private theorem scaledCoeffArrayLoop_lower_matches_start_column
+    {state_array : ScaledCoeffArrayState} {state_matrix : Matrix.BareissState n}
+    (h_step_eq : state_array.step = state_matrix.step)
+    (h_matrix_eq : rowsToMatrix state_array.matrix n = state_matrix.matrix)
+    (h_coeffs_size : state_array.coeffs.size = n)
+    (h_coeffs_rows_size : ∀ r, r < n → state_array.coeffs[r]!.size = n)
+    (fuel : Nat) (i : Fin n)
+    (hji : state_matrix.step < i.val) :
+    getArrayEntry (scaledCoeffArrayLoop n (fuel + 1) state_array).coeffs
+        i.val state_array.step =
+      (Matrix.noPivotLoop 0 state_matrix).matrix[i][
+        (⟨state_matrix.step, Nat.lt_trans hji i.isLt⟩ : Fin n)] := by
+  simpa [Matrix.noPivotLoop_zero_fuel] using
+    scaledCoeffArrayLoop_lower_matches_current_step
+      (n := n) (state_array := state_array) (state_matrix := state_matrix)
+      h_step_eq h_matrix_eq h_coeffs_size h_coeffs_rows_size fuel i hji
+
 /-- Run one no-pivot fraction-free Gram elimination and record each scaled
 coefficient column immediately before the elimination step zeroes it. -/
 private def scaledCoeffRows (b : Matrix Int n m) : Array (Array Int) :=
