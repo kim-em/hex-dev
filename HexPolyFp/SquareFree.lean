@@ -5289,6 +5289,40 @@ private theorem yunFactorsResidualDerivativeZero_of_derivative_split
       hp f multiplicity fuel hfuel hzero hdf hstate
 
 /--
+Scaled-loop residual derivative-zero invariant for the derivative-active
+branch. Composes the unscaled witness
+`yunFactorsContributionResidualDerivativeZero_of_derivative_split` with the
+bridge `yunFactorsContributionWithLevel_residual_derivative_zero_of_unscaled`:
+the residual `.2` of `yunFactorsContributionWithLevel` agrees with that of
+`yunFactorsContribution`, so derivative-zero transports directly.
+-/
+private theorem yunFactorsContributionWithLevel_residual_derivative_zero_of_derivative_split
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (base level fuel : Nat)
+    (hfuel : f.size < fuel + 1)
+    (hzero : f.isZero = false)
+    (hdf : (DensePoly.derivative f).isZero = false)
+    (hstate :
+      ∀ c w : FpPoly p, ∀ fuel : Nat,
+        yunFactorsDerivativeActiveReachable hp f c w fuel →
+          squareFreeContributionReachable c ∧
+            c.isZero = false ∧
+              w.isZero = false) :
+    isOne
+        (yunFactorsContributionWithLevel
+          (f / DensePoly.gcd f (DensePoly.derivative f))
+          (DensePoly.gcd f (DensePoly.derivative f))
+          base level fuel).2 = false →
+      (DensePoly.derivative
+          (yunFactorsContributionWithLevel
+            (f / DensePoly.gcd f (DensePoly.derivative f))
+            (DensePoly.gcd f (DensePoly.derivative f))
+            base level fuel).2).isZero = true := by
+  apply yunFactorsContributionWithLevel_residual_derivative_zero_of_unscaled
+  exact
+    yunFactorsContributionResidualDerivativeZero_of_derivative_split
+      hp f level fuel hfuel hzero hdf hstate
+
+/--
 Remaining assembly obligation for the derivative-active branch: the level-form
 Yun invariant identifies the local contribution and residual product, while
 the recursive IH closes the nontrivial repeated tail.
