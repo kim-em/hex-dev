@@ -2201,6 +2201,214 @@ private theorem dot_comm_int {n' : Nat} (u v : Vector Int n') :
     foldl_dot_comm_int (xs := List.finRange n') (u := u) (v := v)
       (accU := 0) (accV := 0) rfl
 
+private theorem rowSwap_row_eq_of_ne_int {n' m' : Nat}
+    (M : Matrix Int n' m') (i j r : Fin n')
+    (hri : r.val ≠ i.val) (hrj : r.val ≠ j.val) :
+    (Matrix.rowSwap M i j)[r] = M[r] := by
+  apply Vector.ext
+  intro c hc
+  have hr_ne_j : r ≠ j := fun h => hrj (congrArg Fin.val h)
+  have hr_ne_i : r ≠ i := fun h => hri (congrArg Fin.val h)
+  have hget := Matrix.rowSwap_getElem M i j r ⟨c, hc⟩
+  rw [if_neg hr_ne_j, if_neg hr_ne_i] at hget
+  simpa [Matrix.row] using hget
+
+private theorem rowSwap_row_left_int {n' m' : Nat}
+    (M : Matrix Int n' m') (i j : Fin n') :
+    (Matrix.rowSwap M i j)[i] = M[j] := by
+  apply Vector.ext
+  intro c hc
+  by_cases hij : i = j
+  · subst j
+    have hget := Matrix.rowSwap_getElem M i i i ⟨c, hc⟩
+    rw [if_pos rfl] at hget
+    simpa [Matrix.row] using hget
+  · have hget := Matrix.rowSwap_getElem M i j i ⟨c, hc⟩
+    rw [if_neg hij, if_pos rfl] at hget
+    simpa [Matrix.row] using hget
+
+private theorem rowSwap_row_right_int {n' m' : Nat}
+    (M : Matrix Int n' m') (i j : Fin n') :
+    (Matrix.rowSwap M i j)[j] = M[i] := by
+  apply Vector.ext
+  intro c hc
+  have hget := Matrix.rowSwap_getElem M i j j ⟨c, hc⟩
+  rw [if_pos rfl] at hget
+  simpa [Matrix.row] using hget
+
+private theorem rowSwap_getRow_eq_of_ne_val_int {n' m' : Nat}
+    (M : Matrix Int n' m') (i j : Fin n') (r : Nat) (hr : r < n')
+    (hri : r ≠ i.val) (hrj : r ≠ j.val) :
+    (Matrix.rowSwap M i j)[r]'hr = M[r]'hr := by
+  let rf : Fin n' := ⟨r, hr⟩
+  change (Matrix.rowSwap M i j)[rf] = M[rf]
+  exact rowSwap_row_eq_of_ne_int M i j rf hri hrj
+
+private theorem rowSwap_getRow_left_val_int {n' m' : Nat}
+    (M : Matrix Int n' m') (i j : Fin n') (hr : i.val < n') :
+    (Matrix.rowSwap M i j)[i.val]'hr = M[j] := by
+  apply Vector.ext
+  intro c hc
+  let ii : Fin n' := ⟨i.val, hr⟩
+  change (Matrix.rowSwap M i j)[ii][c] = M[j][c]
+  have hget := Matrix.rowSwap_getElem M i j ii ⟨c, hc⟩
+  by_cases hij : ii = j
+  · have hij' : i = j := by
+      apply Fin.ext
+      simpa [ii] using congrArg Fin.val hij
+    rw [if_pos hij] at hget
+    simpa [Matrix.row, hij'] using hget
+  · have hii : ii = i := Fin.ext rfl
+    rw [if_neg hij, if_pos hii] at hget
+    simpa [Matrix.row] using hget
+
+private theorem rowSwap_getRow_right_val_int {n' m' : Nat}
+    (M : Matrix Int n' m') (i j : Fin n') (hr : j.val < n') :
+    (Matrix.rowSwap M i j)[j.val]'hr = M[i] := by
+  apply Vector.ext
+  intro c hc
+  let jj : Fin n' := ⟨j.val, hr⟩
+  change (Matrix.rowSwap M i j)[jj][c] = M[i][c]
+  have hjj : jj = j := Fin.ext rfl
+  have hget := Matrix.rowSwap_getElem M i j jj ⟨c, hc⟩
+  rw [if_pos hjj] at hget
+  simpa [Matrix.row] using hget
+
+theorem scaledCoeffMatrix_rowSwap_adjacent_pivot_transpose
+    (b : Matrix Int n m) (km1 k : Fin n) (hkm1 : km1.val + 1 = k.val)
+    (hkm1k : km1.val < k.val) :
+    GramSchmidt.scaledCoeffMatrix (Matrix.rowSwap b km1 k) k km1 hkm1k =
+      (GramSchmidt.scaledCoeffMatrix b k km1 hkm1k).transpose := by
+  let t := km1.val + 1
+  let ht : t ≤ n := Nat.succ_le_of_lt km1.isLt
+  let last : Fin t := ⟨km1.val, Nat.lt_succ_self km1.val⟩
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro c hc
+  let p : Fin t := ⟨r, hr⟩
+  let q : Fin t := ⟨c, hc⟩
+  change
+    (GramSchmidt.scaledCoeffMatrix (Matrix.rowSwap b km1 k) k km1 hkm1k)[p][q] =
+      ((GramSchmidt.scaledCoeffMatrix b k km1 hkm1k).transpose)[p][q]
+  have hp_lt_k : p.val < k.val := by
+    dsimp [p, t]
+    omega
+  have hq_lt_k : q.val < k.val := by
+    dsimp [q, t]
+    omega
+  have hp_ne_k : (GramSchmidt.liftFinLE p ht).val ≠ k.val := by
+    dsimp [GramSchmidt.liftFinLE, p, t]
+    omega
+  have hq_ne_k : (GramSchmidt.liftFinLE q ht).val ≠ k.val := by
+    dsimp [GramSchmidt.liftFinLE, q, t]
+    omega
+  have hlast_val : last.val = km1.val := rfl
+  by_cases hq_last : q = last
+  · have hq_val : q.val = km1.val := by
+      simpa [last] using congrArg Fin.val hq_last
+    by_cases hp_last : p = last
+    · have hp_lift : GramSchmidt.liftFinLE p ht = km1 := by
+        apply Fin.ext
+        simpa [last, GramSchmidt.liftFinLE] using congrArg Fin.val hp_last
+      have hq_lift : GramSchmidt.liftFinLE q ht = km1 := by
+        apply Fin.ext
+        simpa [last, GramSchmidt.liftFinLE] using congrArg Fin.val hq_last
+      dsimp [GramSchmidt.scaledCoeffMatrix, Matrix.transpose, Matrix.col,
+        Matrix.row, Matrix.ofFn]
+      repeat rw [Vector.getElem_ofFn]
+      rw [if_pos hq_val]
+      rw [if_pos (by simpa [last] using congrArg Fin.val hp_last)]
+      rw [rowSwap_getRow_right_val_int]
+      rw [show (GramSchmidt.liftFinLE (⟨p.val, hr⟩ : Fin t) _) = km1 by
+        apply Fin.ext
+        dsimp [GramSchmidt.liftFinLE]
+        omega]
+      rw [rowSwap_getRow_left_val_int]
+      rw [show (GramSchmidt.liftFinLE (⟨q.val, hc⟩ : Fin t) _) = km1 by
+        apply Fin.ext
+        dsimp [GramSchmidt.liftFinLE]
+        omega]
+      exact dot_comm_int _ _
+    · have hp_ne_km1 : (GramSchmidt.liftFinLE p ht).val ≠ km1.val := by
+        intro h
+        exact hp_last (Fin.ext (by simpa [last, GramSchmidt.liftFinLE] using h))
+      have hq_lift : GramSchmidt.liftFinLE q ht = km1 := by
+        apply Fin.ext
+        simpa [last, GramSchmidt.liftFinLE] using congrArg Fin.val hq_last
+      have hp_val_ne : p.val ≠ km1.val := by
+        intro h
+        exact hp_last (Fin.ext (by simpa [last] using h))
+      dsimp [GramSchmidt.scaledCoeffMatrix, Matrix.transpose, Matrix.col,
+        Matrix.row, Matrix.ofFn]
+      repeat rw [Vector.getElem_ofFn]
+      rw [if_pos hq_val]
+      rw [if_neg hp_val_ne]
+      rw [rowSwap_getRow_right_val_int]
+      rw [rowSwap_getRow_eq_of_ne_val_int]
+      · rw [show (GramSchmidt.liftFinLE q _) = km1 by
+          apply Fin.ext
+          dsimp [GramSchmidt.liftFinLE]
+          omega]
+        exact dot_comm_int _ _
+      · dsimp [GramSchmidt.liftFinLE]
+        omega
+      · dsimp [GramSchmidt.liftFinLE]
+        omega
+  · have hq_ne_val : q.val ≠ km1.val := by
+      intro h
+      exact hq_last (Fin.ext (by simpa [last] using h))
+    by_cases hp_last : p = last
+    · have hp_val : p.val = km1.val := by
+        simpa [last] using congrArg Fin.val hp_last
+      have hp_lift : GramSchmidt.liftFinLE p ht = km1 := by
+        apply Fin.ext
+        simpa [last, GramSchmidt.liftFinLE] using congrArg Fin.val hp_last
+      have hq_ne_km1 : (GramSchmidt.liftFinLE q ht).val ≠ km1.val := by
+        intro h
+        exact hq_ne_val (by simpa [GramSchmidt.liftFinLE] using h)
+      dsimp [GramSchmidt.scaledCoeffMatrix, Matrix.transpose, Matrix.col,
+        Matrix.row, Matrix.ofFn]
+      repeat rw [Vector.getElem_ofFn]
+      rw [if_neg hq_ne_val]
+      rw [if_pos hp_val]
+      rw [show (GramSchmidt.liftFinLE (⟨p.val, hr⟩ : Fin t) _) = km1 by
+        apply Fin.ext
+        dsimp [GramSchmidt.liftFinLE]
+        omega]
+      rw [rowSwap_getRow_left_val_int]
+      rw [rowSwap_getRow_eq_of_ne_val_int]
+      · exact dot_comm_int _ _
+      · dsimp [GramSchmidt.liftFinLE]
+        omega
+      · dsimp [GramSchmidt.liftFinLE]
+        omega
+    · have hp_ne_val : p.val ≠ km1.val := by
+        intro h
+        exact hp_last (Fin.ext (by simpa [last] using h))
+      have hp_ne_km1 : (GramSchmidt.liftFinLE p ht).val ≠ km1.val := by
+        intro h
+        exact hp_ne_val (by simpa [GramSchmidt.liftFinLE] using h)
+      have hq_ne_km1 : (GramSchmidt.liftFinLE q ht).val ≠ km1.val := by
+        intro h
+        exact hq_ne_val (by simpa [GramSchmidt.liftFinLE] using h)
+      dsimp [GramSchmidt.scaledCoeffMatrix, Matrix.transpose, Matrix.col,
+        Matrix.row, Matrix.ofFn]
+      repeat rw [Vector.getElem_ofFn]
+      rw [if_neg hq_ne_val]
+      rw [if_neg hp_ne_val]
+      rw [rowSwap_getRow_eq_of_ne_val_int]
+      · rw [rowSwap_getRow_eq_of_ne_val_int]
+        · exact dot_comm_int _ _
+        · dsimp [GramSchmidt.liftFinLE]
+          omega
+        · dsimp [GramSchmidt.liftFinLE]
+          omega
+      · dsimp [GramSchmidt.liftFinLE]
+        omega
+      · dsimp [GramSchmidt.liftFinLE]
+        omega
+
 /-- A row of `Matrix.rowAdd M src dst c` away from `dst` is unchanged. -/
 private theorem rowAdd_row_eq_of_ne {R : Type u} [Mul R] [Add R] {n' m' : Nat}
     (M : Matrix R n' m') (src dst r : Fin n') (c : R) (hr : r.val ≠ dst.val) :
