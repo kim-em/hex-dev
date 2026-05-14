@@ -116,6 +116,33 @@ a_{ij}^{(k)} = (a_{kk}^{(k-1)} · a_{ij}^{(k-1)} - a_{ik}^{(k-1)} · a_{kj}^{(k-
 where `/` is `Int.divExact` (GMP-backed `mpz_divexact`) — the division is
 always exact, and the divisibility proof is carried.
 
+**Mathlib-free vs. Mathlib-bridge proof surface.** The following
+theorems live exclusively in `hex-matrix-mathlib` and **must not**
+be restated, reproven, or specialized inside `hex-matrix`,
+regardless of how convenient that would be for a downstream
+Mathlib-free consumer:
+
+| Theorem (or theorem family) | Mathlib-free layer obligation |
+|---|---|
+| `bareiss_eq_det` — any equation of the form `bareiss M = det M` over the Leibniz `det` | forbidden in `hex-matrix` |
+| `det_eq` — `Hex.det M = Matrix.det (matrixEquiv M)` | forbidden in `hex-matrix` |
+| Desnanot–Jacobi in any form (unscaled, scaled, bordered-minor) that connects `Hex.det` of submatrices through an adjugate identity | forbidden in `hex-matrix` |
+| `NonzeroBareissPivots`, `BareissNoPivotInvariant`, and the no-pivot bordered-minor invariant proof chain culminating in `bareissNoPivot_eq_det` | forbidden in `hex-matrix` |
+
+A Mathlib-free consumer that *appears to require* a theorem on
+this list is the failure mode caught by
+[PLAN/Conventions.md §Library placement is a hard precondition
+question 2](../../PLAN/Conventions.md). The repair is to relocate
+the consumer's bridging theorem to the sibling `*-mathlib` layer
+(or to redesign the consumer's proof surface so it does not need
+to connect Hex computation to Leibniz `det` at the Mathlib-free
+layer at all). It is **not** to manufacture a Mathlib-free proof
+of the listed theorem.
+
+Row-operation lemmas (`det_rowSwap`, `det_rowScale`, `det_rowAdd`)
+and equalities purely between Hex-local definitions remain in
+`hex-matrix` and are unaffected by this list.
+
 **Proof that `bareiss M = det M`:** Via the bordered-minor invariant.
 Define `μ(k; i, j) := det M[rows 0..k-1 ∪ {i} | cols 0..k-1 ∪ {j}]`.
 The invariant `a^{(k)}_{ij} = μ(k; i, j)` holds by induction, where
