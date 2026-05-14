@@ -893,6 +893,9 @@ private theorem zmod_sub_zero_zero :
 private theorem zmod_mul_zero (a : ZMod64 p) : a * 0 = 0 := by
   grind
 
+private theorem zmod_zero_mul (a : ZMod64 p) : 0 * a = 0 :=
+  Lean.Grind.Semiring.zero_mul a
+
 private theorem zmod_one_mul (a : ZMod64 p) : 1 * a = a := by
   grind
 
@@ -903,6 +906,28 @@ private theorem coeff_one (n : Nat) :
     (1 : FpPoly p).coeff n = if n = 0 then (1 : ZMod64 p) else 0 := by
   change (DensePoly.C (1 : ZMod64 p)).coeff n = if n = 0 then (1 : ZMod64 p) else 0
   exact DensePoly.coeff_C (1 : ZMod64 p) n
+
+theorem eval_C (c x : ZMod64 p) :
+    DensePoly.eval (FpPoly.C c) x = c := by
+  unfold FpPoly.C
+  exact DensePoly.eval_C c x (zmod_zero_mul x) (zmod_zero_add c)
+
+theorem eval_X [ZMod64.PrimeModulus p] (x : ZMod64 p) :
+    DensePoly.eval (FpPoly.X : FpPoly p) x = x := by
+  unfold FpPoly.X DensePoly.eval DensePoly.toArray DensePoly.monomial
+  have h1 : (1 : ZMod64 p) ≠ (Zero.zero : ZMod64 p) := by
+    intro h
+    have h2 : 2 ≤ p := (ZMod64.PrimeModulus.prime (p := p)).two_le
+    have htoNat : (1 : ZMod64 p).toNat = (0 : ZMod64 p).toNat :=
+      congrArg ZMod64.toNat h
+    rw [show ((1 : ZMod64 p).toNat) = 1 % p from ZMod64.toNat_one,
+        show ((0 : ZMod64 p).toNat) = 0 from ZMod64.toNat_zero,
+        Nat.mod_eq_of_lt (by omega : 1 < p)] at htoNat
+    exact absurd htoNat (by omega)
+  rw [dif_neg h1]
+  simp
+  change (((0 : ZMod64 p) * x + 1) * x + 0 = x)
+  rw [zmod_zero_mul, zmod_zero_add, zmod_one_mul, zmod_add_zero]
 
 theorem add_zero (f : FpPoly p) :
     f + 0 = f := by
