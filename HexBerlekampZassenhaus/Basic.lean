@@ -15,9 +15,6 @@ namespace Hex
 
 namespace ZPoly
 
-private def intModNat (z : Int) (m : Nat) : Nat :=
-  Int.toNat (z % Int.ofNat m)
-
 /-- The integer polynomial `X`. -/
 def X : ZPoly :=
   DensePoly.monomial 1 1
