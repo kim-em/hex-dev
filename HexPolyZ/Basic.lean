@@ -1273,6 +1273,12 @@ theorem leadingCoeff_normalizePrimitiveSign_pos_of_ne_zero (p : ZPoly)
       (normalizePrimitiveSign_ne_zero_of_ne_zero p hp)
   omega
 
+private theorem normalizePrimitiveSign_eq_self_of_leadingCoeff_nonneg
+    (p : ZPoly) (h : 0 ≤ DensePoly.leadingCoeff p) :
+    normalizePrimitiveSign p = p := by
+  unfold normalizePrimitiveSign
+  rw [if_neg (by omega)]
+
 theorem leadingCoeff_ratPolyPrimitivePart_nonneg (p : DensePoly Rat) :
     0 ≤ DensePoly.leadingCoeff (ratPolyPrimitivePart p) := by
   unfold ratPolyPrimitivePart
@@ -2793,6 +2799,15 @@ private theorem densePoly_eq_C_coeff_zero_of_size_le_one {R : Type _} [Zero R] [
       rw [hp_zero]
       rfl
 
+private theorem size_le_one_of_degree_getD_zero {R : Type _} [Zero R] [DecidableEq R]
+    (p : DensePoly R) (hdegree : p.degree?.getD 0 = 0) :
+    p.size ≤ 1 := by
+  unfold DensePoly.degree? at hdegree
+  by_cases hzero : p.size = 0
+  · omega
+  · simp [hzero] at hdegree
+    omega
+
 private theorem content_C_int (c : Int) :
     content (DensePoly.C c) = Int.ofNat c.natAbs := by
   simpa [content] using DensePoly.content_C c
@@ -3146,6 +3161,58 @@ theorem primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive
       simpa [p] using hprimitive_ne
     simpa [p, ratPrimitive, derivative] using
       ratPolyPrimitivePart_div_gcd_mul_primitive p hp_ne
+
+theorem primitiveSquareFreeDecomposition_squareFreeCore_eq_one_of_degree_zero
+    (f : ZPoly)
+    (hcore_ne : (primitiveSquareFreeDecomposition f).squareFreeCore ≠ 0)
+    (hdegree : (primitiveSquareFreeDecomposition f).squareFreeCore.degree?.getD 0 = 0) :
+    (primitiveSquareFreeDecomposition f).squareFreeCore = 1 := by
+  unfold primitiveSquareFreeDecomposition at hcore_ne hdegree ⊢
+  by_cases hzero : (primitivePart f).isZero = true
+  · simp [hzero] at hcore_ne
+  · simp [hzero] at hcore_ne hdegree ⊢
+    let p := primitivePart f
+    let ratPrimitive := toRatPoly p
+    let derivative := DensePoly.derivative ratPrimitive
+    by_cases hderivative : derivative.isZero = true
+    · rw [if_pos hderivative] at hcore_ne hdegree ⊢
+      have hderivative_eq : derivative = 0 :=
+        densePoly_eq_zero_of_isZero_true derivative hderivative
+      have hcontent_ne : content f ≠ 0 := by
+        intro hcontent
+        have hpart_zero : primitivePart f = 0 := by
+          simpa [primitivePart] using
+            DensePoly.primitivePart_eq_zero_of_content_eq_zero f
+              (by simpa [content] using hcontent)
+        have hisZero : (primitivePart f).isZero = true := by
+          rw [hpart_zero]
+          rfl
+        rw [hisZero] at hzero
+        contradiction
+      have hprimitive : Primitive p := by
+        simpa [p] using primitivePart_primitive f hcontent_ne
+      have hsize : p.size ≤ 1 := by
+        exact size_le_one_of_toRatPoly_derivative_zero p (by
+          simpa [derivative, ratPrimitive] using hderivative_eq)
+      exact normalizePrimitiveSign_eq_one_of_primitive_size_le_one p hprimitive hsize
+    · rw [if_neg hderivative] at hcore_ne hdegree ⊢
+      let repeatedRat := DensePoly.gcd ratPrimitive derivative
+      let quotientRat := ratPrimitive / repeatedRat
+      let core := ratPolyPrimitivePart quotientRat
+      have hsize : core.size ≤ 1 :=
+        size_le_one_of_degree_getD_zero core (by simpa [core] using hdegree)
+      have hcontent_ne : content core ≠ 0 :=
+        content_ne_zero_of_ne_zero core (by simpa [core] using hcore_ne)
+      have hprimitive : Primitive core :=
+        ratPolyPrimitivePart_primitive quotientRat (by simpa [core] using hcontent_ne)
+      have hnormalized : normalizePrimitiveSign core = 1 :=
+        normalizePrimitiveSign_eq_one_of_primitive_size_le_one core hprimitive hsize
+      have hlead_nonneg : 0 ≤ DensePoly.leadingCoeff core := by
+        simpa [core] using leadingCoeff_ratPolyPrimitivePart_nonneg quotientRat
+      have hself : normalizePrimitiveSign core = core :=
+        normalizePrimitiveSign_eq_self_of_leadingCoeff_nonneg core hlead_nonneg
+      rw [hself] at hnormalized
+      simpa [core] using hnormalized
 
 theorem leadingCoeff_squareFreeCore_nonneg (f : ZPoly) :
     0 ≤ DensePoly.leadingCoeff (primitiveSquareFreeDecomposition f).squareFreeCore := by

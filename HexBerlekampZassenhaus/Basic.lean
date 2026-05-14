@@ -1841,6 +1841,20 @@ private theorem shouldRecordPolynomialFactor_X :
   unfold shouldRecordPolynomialFactor
   simp [X_ne_zero, X_ne_one, X_ne_C_neg_one]
 
+private theorem normalizeFactorSign_one :
+    normalizeFactorSign (1 : ZPoly) = 1 := by
+  unfold normalizeFactorSign
+  have hnot : ¬ DensePoly.leadingCoeff (1 : ZPoly) < 0 := by
+    change ¬ DensePoly.leadingCoeff (DensePoly.C (1 : Int)) < 0
+    simp [DensePoly.leadingCoeff,
+      DensePoly.coeffs_C_of_ne_zero (by decide : (1 : Int) ≠ 0)]
+  rw [if_neg hnot]
+
+private theorem shouldRecordPolynomialFactor_one :
+    shouldRecordPolynomialFactor (1 : ZPoly) = false := by
+  unfold shouldRecordPolynomialFactor
+  simp
+
 private theorem mem_xPowerFactorArray_eq_X (power : Nat) (factor : ZPoly)
     (h : factor ∈ (xPowerFactorArray power).toList) :
     factor = ZPoly.X := by
@@ -4729,6 +4743,34 @@ private theorem repeatedPartFactorArray_shouldRecord_of_ne_zero
   simp [repeatedPart_ne_zero_of_ne_zero f hf, hne_one,
     repeatedPart_ne_C_neg_one_of_ne_zero f hf]
 
+private theorem polynomialNormalizationPrefixFactors_normalizeFactorSign_of_ne_zero
+    (f : ZPoly) (hf : f ≠ 0)
+    (factor : ZPoly)
+    (h : factor ∈ (polynomialNormalizationPrefixFactors (normalizeForFactor f)).toList) :
+    normalizeFactorSign factor = factor := by
+  unfold polynomialNormalizationPrefixFactors at h
+  rw [Array.toList_append] at h
+  simp only [List.mem_append] at h
+  cases h with
+  | inl hx =>
+      exact xPowerFactorArray_normalizeFactorSign _ factor hx
+  | inr hrep =>
+      exact repeatedPartFactorArray_normalizeFactorSign_of_ne_zero f hf factor hrep
+
+private theorem polynomialNormalizationPrefixFactors_shouldRecord_of_ne_zero
+    (f : ZPoly) (hf : f ≠ 0)
+    (factor : ZPoly)
+    (h : factor ∈ (polynomialNormalizationPrefixFactors (normalizeForFactor f)).toList) :
+    shouldRecordPolynomialFactor factor = true := by
+  unfold polynomialNormalizationPrefixFactors at h
+  rw [Array.toList_append] at h
+  simp only [List.mem_append] at h
+  cases h with
+  | inl hx =>
+      exact xPowerFactorArray_shouldRecord _ factor hx
+  | inr hrep =>
+      exact repeatedPartFactorArray_shouldRecord_of_ne_zero f hf factor hrep
+
 private theorem squareFreeCore_ne_zero_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
     (normalizeForFactor f).squareFreeCore ≠ 0 := by
   unfold normalizeForFactor
@@ -4759,6 +4801,88 @@ private theorem squareFreeCore_leadingCoeff_pos_of_ne_zero
       DensePoly.leadingCoeff (normalizeForFactor f).squareFreeCore ≠ 0 :=
     ZPoly.leadingCoeff_ne_zero_of_ne_zero _ hne
   omega
+
+private theorem squareFreeCore_eq_one_of_constant_of_ne_zero
+    (f : ZPoly) (hf : f ≠ 0)
+    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0) :
+    (normalizeForFactor f).squareFreeCore = 1 := by
+  unfold normalizeForFactor at hdeg ⊢
+  simpa using
+    ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_eq_one_of_degree_zero
+      (ZPoly.extractXPower (ZPoly.primitivePart f)).core
+      (by
+        simpa using squareFreeCore_ne_zero_of_ne_zero f hf)
+      hdeg
+
+private theorem filteredNormalizedFactors_append_one_of_all_recorded_normalized
+    (factors : List ZPoly)
+    (hnormalized :
+      ∀ factor ∈ factors, normalizeFactorSign factor = factor)
+    (hrecorded :
+      ∀ factor ∈ factors, shouldRecordPolynomialFactor factor = true) :
+    filteredNormalizedFactors (factors ++ [1]) = factors := by
+  induction factors with
+  | nil =>
+      rw [List.nil_append]
+      rw [filteredNormalizedFactors_cons_drop]
+      · rfl
+      · rw [normalizeFactorSign_one]
+        exact shouldRecordPolynomialFactor_one
+  | cons factor factors ih =>
+      have hfactor_normalized :
+          normalizeFactorSign factor = factor :=
+        hnormalized factor (by simp)
+      have hfactor_recorded :
+          shouldRecordPolynomialFactor factor = true :=
+        hrecorded factor (by simp)
+      have hkeep :
+          shouldRecordPolynomialFactor (normalizeFactorSign factor) = true := by
+        rw [hfactor_normalized]
+        exact hfactor_recorded
+      rw [List.cons_append]
+      rw [filteredNormalizedFactors_cons_keep _ hkeep, hfactor_normalized]
+      rw [ih
+        (fun factor hmem => hnormalized factor (by simp [hmem]))
+        (fun factor hmem => hrecorded factor (by simp [hmem]))]
+
+private theorem polyProduct_filteredNormalizedFactors_append_one_of_all_recorded_normalized
+    (factors : Array ZPoly)
+    (hnormalized :
+      ∀ factor ∈ factors.toList, normalizeFactorSign factor = factor)
+    (hrecorded :
+      ∀ factor ∈ factors.toList, shouldRecordPolynomialFactor factor = true) :
+    Array.polyProduct (filteredNormalizedFactors (factors ++ #[1]).toList).toArray =
+      Array.polyProduct factors := by
+  rw [Array.toList_append]
+  change Array.polyProduct
+      (filteredNormalizedFactors (factors.toList ++ [1])).toArray =
+    Array.polyProduct factors
+  rw [filteredNormalizedFactors_append_one_of_all_recorded_normalized
+    factors.toList hnormalized hrecorded]
+
+private theorem factorSlowWithBound_product_of_constant_branch
+    (f : ZPoly) (B : Nat)
+    (hf : f ≠ 0)
+    (hbranch : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0) :
+    Factorization.product (factorSlowWithBound f B) = f := by
+  unfold factorSlowWithBound factorSlowFactorsWithBound
+  rw [if_pos hbranch]
+  have hcore_one := squareFreeCore_eq_one_of_constant_of_ne_zero f hf hbranch
+  rw [hcore_one]
+  apply factorizationOfFactors_product_of_filtered_product
+  · exact reassemblePolynomialFactors_product_eq_input f #[1] (by
+      rw [polyProduct_singleton]
+      exact hcore_one.symm)
+  · unfold reassemblePolynomialFactors
+    rw [polyProduct_filteredNormalizedFactors_append_one_of_all_recorded_normalized]
+    rw [polyProduct_append, polyProduct_singleton]
+    exact (DensePoly.mul_one_right_poly (S := Int) _).symm
+    · intro factor hmem
+      exact polynomialNormalizationPrefixFactors_normalizeFactorSign_of_ne_zero
+        f hf factor hmem
+    · intro factor hmem
+      exact polynomialNormalizationPrefixFactors_shouldRecord_of_ne_zero
+        f hf factor hmem
 
 
 private theorem factorFastFactorsWithBound_product_of_some_of_all_recorded_normalized
