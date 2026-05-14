@@ -105,10 +105,16 @@ defining polynomial ``m(x)`` in ascending degree), ``a``, ``b``
 
 * ``add`` — returns ``(a + b) mod m`` as a coefficient list
   (ascending, trimmed of trailing zeros).
+* ``sub`` — returns ``(a - b) mod m`` as a coefficient list.
+* ``neg`` — returns ``(-a) mod m`` as a coefficient list.
 * ``mul`` — returns ``(a * b) mod m`` as a coefficient list.
 * ``reduce`` — interpret ``a`` as an unreduced polynomial (not
   required to satisfy ``deg a < deg m``) and return ``a mod m`` as
   a coefficient list.
+* ``inv`` — returns ``a^-1`` as a coefficient list.
+* ``div`` — returns ``a / b`` as a coefficient list.
+* ``pow`` — returns ``a^exponent`` as a coefficient list. The
+  exponent may be negative when ``a`` is nonzero.
 
 ### `nmod_poly_hensel` (Hensel-lift kernels over Z_{p^k}[x])
 
@@ -396,6 +402,16 @@ def _fq_default_add(req: dict[str, Any]) -> list[int]:
     return _fq_default_element_coeffs(ctx(req["a"]) + ctx(req["b"]))
 
 
+def _fq_default_sub(req: dict[str, Any]) -> list[int]:
+    ctx = _fq_default_ctx(int(req["p"]), req["modulus"])
+    return _fq_default_element_coeffs(ctx(req["a"]) - ctx(req["b"]))
+
+
+def _fq_default_neg(req: dict[str, Any]) -> list[int]:
+    ctx = _fq_default_ctx(int(req["p"]), req["modulus"])
+    return _fq_default_element_coeffs(-ctx(req["a"]))
+
+
 def _fq_default_mul(req: dict[str, Any]) -> list[int]:
     ctx = _fq_default_ctx(int(req["p"]), req["modulus"])
     return _fq_default_element_coeffs(ctx(req["a"]) * ctx(req["b"]))
@@ -406,10 +422,30 @@ def _fq_default_reduce(req: dict[str, Any]) -> list[int]:
     return _fq_default_element_coeffs(ctx(req["a"]))
 
 
+def _fq_default_inv(req: dict[str, Any]) -> list[int]:
+    ctx = _fq_default_ctx(int(req["p"]), req["modulus"])
+    return _fq_default_element_coeffs(ctx(req["a"]) ** (-1))
+
+
+def _fq_default_div(req: dict[str, Any]) -> list[int]:
+    ctx = _fq_default_ctx(int(req["p"]), req["modulus"])
+    return _fq_default_element_coeffs(ctx(req["a"]) / ctx(req["b"]))
+
+
+def _fq_default_pow(req: dict[str, Any]) -> list[int]:
+    ctx = _fq_default_ctx(int(req["p"]), req["modulus"])
+    return _fq_default_element_coeffs(ctx(req["a"]) ** int(req["exponent"]))
+
+
 _FQ_DEFAULT_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
     "add": _fq_default_add,
+    "sub": _fq_default_sub,
+    "neg": _fq_default_neg,
     "mul": _fq_default_mul,
     "reduce": _fq_default_reduce,
+    "inv": _fq_default_inv,
+    "div": _fq_default_div,
+    "pow": _fq_default_pow,
 }
 
 
