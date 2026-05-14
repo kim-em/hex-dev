@@ -4140,16 +4140,6 @@ instance instDecidableIrreducible (f : ZPoly) : Decidable (Irreducible f) :=
 end ZPoly
 
 /--
-Conditional product contract for the bounded factorization entry point.
-The bound hypothesis is the computational correctness assumption supplied by
-the later proof layer.
--/
-theorem factor_product_of_bound (f : ZPoly) (B : Nat)
-    (hB : ∀ g : ZPoly, g ∣ f → ∀ i, (g.coeff i).natAbs ≤ B) :
-    Factorization.product (factorWithBound f B) = f := by
-  sorry
-
-/--
 The primitive square-free layer in normalization reassembles the extracted
 `X`-free primitive core up to the rational unit introduced by clearing
 denominators.
@@ -6537,6 +6527,23 @@ private theorem factorFastWithBound_product_of_some
                       f B hf hdeg hB_pos
                       (choosePrimeData (normalizeForFactor f).squareFreeCore) rfl
                       hmulti (Or.inr hquad) coreFactors hcore h
+
+/--
+Conditional product contract for the bounded factorization entry point.
+The bound hypothesis is the computational correctness assumption supplied by
+the later proof layer.
+-/
+theorem factor_product_of_bound (f : ZPoly) (B : Nat)
+    (hB : ∀ g : ZPoly, g ∣ f → ∀ i, (g.coeff i).natAbs ≤ B) :
+    Factorization.product (factorWithBound f B) = f := by
+  unfold factorWithBound
+  cases hfast : factorFastWithBound f B with
+  | some φ =>
+      simpa [hfast, Option.getD] using
+        factorFastWithBound_product_of_some hfast
+  | none =>
+      simpa [hfast, Option.getD] using
+        factorSlowWithBound_product f B
 
 /--
 A successful integer certificate exposes the per-prime polynomial check fact:
