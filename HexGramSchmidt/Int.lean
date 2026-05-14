@@ -67,15 +67,16 @@ library. -/
 def memLattice (b : Matrix Int n m) (v : Vector Int m) : Prop :=
   ∃ c : Vector Int n, Matrix.rowCombination b c = v
 
-/-- Linear independence of the row prefix determinants used by the
-Gram-Schmidt theorem surface. -/
-def independent (b : Matrix Int n m) : Prop :=
-  ∀ k : Fin n, 0 < Matrix.det (Matrix.submatrix (Matrix.gramMatrix b) k)
-
 /-- The `k`-th Gram determinant: the determinant of the `k × k` leading
 principal Gram matrix of the integer input. -/
 def gramDet (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) : Nat :=
   (Matrix.bareiss (GramSchmidt.leadingGramMatrixInt b k hk)).toNat
+
+/-- Linear independence of the row prefix determinants used by the
+Gram-Schmidt theorem surface, stated over the Mathlib-free executable
+`gramDet` data. -/
+def independent (b : Matrix Int n m) : Prop :=
+  ∀ k : Fin n, 0 < gramDet b (k.val + 1) (Nat.succ_le_of_lt k.isLt)
 
 /-- Product of the squared Gram-Schmidt basis norms along the first `k` rows. -/
 noncomputable def gramSchmidtNormProduct (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
@@ -505,8 +506,9 @@ private theorem leadingGramMatrixInt_det_nonneg_pre
   rw [hgram]
   exact Matrix.det_gramMatrix_nonneg rowPrefix
 
-private theorem gramDet_pos_core (b : Matrix Int n m)
-    (hli : independent b) (k : Nat) (hk : k ≤ n) (hk' : 0 < k) :
+private theorem gramDet_pos_of_det_positive (b : Matrix Int n m)
+    (hdet : ∀ k : Fin n, 0 < Matrix.det (Matrix.submatrix (Matrix.gramMatrix b) k))
+    (k : Nat) (hk : k ≤ n) (hk' : 0 < k) :
     0 < gramDet b k hk := by
   cases k with
   | zero =>
@@ -515,7 +517,7 @@ private theorem gramDet_pos_core (b : Matrix Int n m)
       have hrn : r < n := Nat.lt_of_succ_le hk
       let last : Fin n := ⟨r, hrn⟩
       have hsub : 0 < Matrix.det (Matrix.submatrix (Matrix.gramMatrix b) last) :=
-        hli last
+        hdet last
       have hsub_eq :
           Matrix.submatrix (Matrix.gramMatrix b) last =
             GramSchmidt.leadingGramMatrixInt b (r + 1) hk := by
@@ -533,6 +535,33 @@ private theorem gramDet_pos_core (b : Matrix Int n m)
       have hnat_int : 0 < Int.ofNat (gramDet b (r + 1) hk) := by
         simpa [hdet_nat] using hdet_pos
       exact Int.ofNat_lt.mp hnat_int
+
+/-- A determinant-positive leading-Gram-prefix proof induces the executable
+`gramDet` independence predicate. This is useful for callers that already
+have determinant lemmas for special matrix families, while keeping the public
+predicate stated over Mathlib-free computed data. -/
+theorem independent_of_det_positive (b : Matrix Int n m)
+    (hdet : ∀ k : Fin n, 0 < Matrix.det (Matrix.submatrix (Matrix.gramMatrix b) k)) :
+    independent b := by
+  intro k
+  exact gramDet_pos_of_det_positive b hdet (k.val + 1) (Nat.succ_le_of_lt k.isLt)
+    (Nat.succ_pos k.val)
+
+theorem independent_one {n : Nat} : independent (1 : Matrix Int n n) := by
+  exact independent_of_det_positive (1 : Matrix Int n n) (by
+    intro k
+    rw [Matrix.gramMatrix_one, Matrix.submatrix_one, Matrix.det_one]
+    decide)
+
+private theorem gramDet_pos_core (b : Matrix Int n m)
+    (hli : independent b) (k : Nat) (hk : k ≤ n) (hk' : 0 < k) :
+    0 < gramDet b k hk := by
+  cases k with
+  | zero =>
+      omega
+  | succ r =>
+      have hrn : r < n := Nat.lt_of_succ_le hk
+      exact hli ⟨r, hrn⟩
 
 /-! ### Helpers for `gramDet_eq_prod_normSq_core`
 

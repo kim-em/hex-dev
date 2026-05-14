@@ -212,7 +212,7 @@ example : Matrix.memLattice typical8 typicalLatticeVec := by
 
 private def independentCheck (b : Matrix Int n m) : Bool :=
   (List.finRange n).all fun k =>
-    0 < Matrix.det (Matrix.submatrix (Matrix.gramMatrix b) k)
+    0 < GramSchmidt.Int.gramDet b (k.val + 1) (Nat.succ_le_of_lt k.isLt)
 
 private noncomputable def lllReducedCheck (b : Matrix Int n m) (δ : Rat) : Bool :=
   let basis := GramSchmidt.Int.basis b
