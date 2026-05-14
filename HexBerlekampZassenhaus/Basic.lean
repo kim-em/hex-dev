@@ -1676,6 +1676,42 @@ private theorem filteredNormalizedFactors_cons_drop
   unfold filteredNormalizedFactors
   simp [hdrop]
 
+private theorem filteredNormalizedFactors_eq_self_of_all_recorded_normalized
+    (factors : List ZPoly)
+    (hnormalized :
+      ∀ factor ∈ factors, normalizeFactorSign factor = factor)
+    (hrecorded :
+      ∀ factor ∈ factors, shouldRecordPolynomialFactor factor = true) :
+    filteredNormalizedFactors factors = factors := by
+  induction factors with
+  | nil => rfl
+  | cons factor factors ih =>
+      have hfactor_normalized :
+          normalizeFactorSign factor = factor :=
+        hnormalized factor (by simp)
+      have hfactor_recorded :
+          shouldRecordPolynomialFactor factor = true :=
+        hrecorded factor (by simp)
+      have hkeep :
+          shouldRecordPolynomialFactor (normalizeFactorSign factor) = true := by
+        rw [hfactor_normalized]
+        exact hfactor_recorded
+      rw [filteredNormalizedFactors_cons_keep factors hkeep, hfactor_normalized]
+      rw [ih
+        (fun factor hmem => hnormalized factor (by simp [hmem]))
+        (fun factor hmem => hrecorded factor (by simp [hmem]))]
+
+private theorem polyProduct_filteredNormalizedFactors_eq_self_of_all_recorded_normalized
+    (factors : Array ZPoly)
+    (hnormalized :
+      ∀ factor ∈ factors.toList, normalizeFactorSign factor = factor)
+    (hrecorded :
+      ∀ factor ∈ factors.toList, shouldRecordPolynomialFactor factor = true) :
+    Array.polyProduct (filteredNormalizedFactors factors.toList).toArray =
+      Array.polyProduct factors := by
+  rw [filteredNormalizedFactors_eq_self_of_all_recorded_normalized
+    factors.toList hnormalized hrecorded]
+
 private theorem multListProduct_collectAux
     (acc : List (ZPoly × Nat)) (factors : List ZPoly) :
     multListProduct (factors.foldl collectFactorStep acc) =
@@ -1741,6 +1777,30 @@ private theorem factorizationOfFactors_product
         multListProduct (collectFactorMultiplicities factors).toList =
       _
   rw [multListProduct_collectFactorMultiplicities]
+
+private theorem factorizationOfFactors_product_of_filtered_product
+    (f : ZPoly) (factors : Array ZPoly)
+    (hraw : DensePoly.C (signedContentScalar f) *
+      Array.polyProduct factors = f)
+    (hfiltered :
+      Array.polyProduct (filteredNormalizedFactors factors.toList).toArray =
+        Array.polyProduct factors) :
+    Factorization.product (factorizationOfFactors f factors) = f := by
+  rw [factorizationOfFactors_product, hfiltered]
+  exact hraw
+
+private theorem factorizationOfFactors_product_of_raw_product_of_all_recorded_normalized
+    (f : ZPoly) (factors : Array ZPoly)
+    (hraw : DensePoly.C (signedContentScalar f) *
+      Array.polyProduct factors = f)
+    (hnormalized :
+      ∀ factor ∈ factors.toList, normalizeFactorSign factor = factor)
+    (hrecorded :
+      ∀ factor ∈ factors.toList, shouldRecordPolynomialFactor factor = true) :
+    Factorization.product (factorizationOfFactors f factors) = f :=
+  factorizationOfFactors_product_of_filtered_product f factors hraw
+    (polyProduct_filteredNormalizedFactors_eq_self_of_all_recorded_normalized
+      factors hnormalized hrecorded)
 
 private theorem rat_scale_scale (u v : Rat) (p : DensePoly Rat) :
     DensePoly.scale u (DensePoly.scale v p) = DensePoly.scale (u * v) p := by
@@ -4454,6 +4514,33 @@ private theorem factorFastFactorsWithBound_polyProduct_of_some
                       (ZPoly.quadraticDoublingSteps
                         (precisionForCoeffBound B primeData.p) + 2)
                       coreFactors hcore)
+
+private theorem factorSlowWithBound_product_of_all_recorded_normalized
+    (f : ZPoly) (B : Nat)
+    (hnormalized :
+      ∀ factor ∈ (factorSlowFactorsWithBound f B).toList,
+        normalizeFactorSign factor = factor)
+    (hrecorded :
+      ∀ factor ∈ (factorSlowFactorsWithBound f B).toList,
+        shouldRecordPolynomialFactor factor = true) :
+    Factorization.product (factorSlowWithBound f B) = f := by
+  unfold factorSlowWithBound
+  exact
+    factorizationOfFactors_product_of_raw_product_of_all_recorded_normalized
+      f (factorSlowFactorsWithBound f B)
+      (factorSlowFactorsWithBound_polyProduct f B) hnormalized hrecorded
+
+private theorem factorFastFactorsWithBound_product_of_some_of_all_recorded_normalized
+    {f : ZPoly} {B : Nat} {factors : Array ZPoly}
+    (hfast : factorFastFactorsWithBound f B = some factors)
+    (hnormalized :
+      ∀ factor ∈ factors.toList, normalizeFactorSign factor = factor)
+    (hrecorded :
+      ∀ factor ∈ factors.toList, shouldRecordPolynomialFactor factor = true) :
+    Factorization.product (factorizationOfFactors f factors) = f :=
+  factorizationOfFactors_product_of_raw_product_of_all_recorded_normalized
+    f factors (factorFastFactorsWithBound_polyProduct_of_some hfast)
+    hnormalized hrecorded
 
 /--
 A successful integer certificate exposes the per-prime polynomial check fact:
