@@ -241,6 +241,13 @@ libraries:
     done_through: 3
     status: active
     phase4:
+      comparators:
+        - tool: "FLINT nmod_poly.is_irreducible via python-flint"
+          class: gating
+          goal: "Lean runRabinTestChecksum is at least as fast as FLINT nmod_poly.is_irreducible on shared canonical inputs at the largest eligible rung."
+        - tool: "FLINT nmod_poly.factor_distinct_deg via python-flint"
+          class: gating
+          goal: "Lean runDistinctDegreeChecksum is at least as fast as FLINT nmod_poly.factor_distinct_deg on shared canonical inputs at the largest eligible rung."
       input_families:
         - name: berlekamp-matrix
           description: Deterministic dense monic F_5 polynomials for Berlekamp Frobenius-matrix construction.
