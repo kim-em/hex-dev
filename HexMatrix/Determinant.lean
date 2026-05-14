@@ -9344,6 +9344,86 @@ theorem det_auxP
   rw [hfirst, hsecond, hminor]
   grind
 
+/-- Determinant of the Desnanot-Jacobi auxiliary adjugate matrix.
+
+The auxiliary matrix is the identity except in the first and last columns,
+where it carries the corresponding columns of `adjugate M`. Expanding along
+row `0` leaves exactly the two Desnanot corner products. -/
+theorem det_auxAdjugateM
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) :
+    det (auxAdjugateM M) =
+      det (deleteRowCol M (0 : Fin (n + 2)) (0 : Fin (n + 2))) *
+          det (deleteRowCol M (Fin.last (n + 1)) (Fin.last (n + 1))) -
+        det (deleteRowCol M (0 : Fin (n + 2)) (Fin.last (n + 1))) *
+          det (deleteRowCol M (Fin.last (n + 1)) (0 : Fin (n + 2))) := by
+  rw [det_auxAdjugateM_eq_endpoint_collapse]
+  rw [auxAdjugateM_apply_zero_zero_eq_det]
+  rw [auxAdjugateM_apply_zero_last_eq_cofactor]
+  rw [cofactor_of_even (auxAdjugateM M) (0 : Fin (n + 2)) (0 : Fin (n + 2)) (by simp)]
+  rw [det_deleteRowCol_auxAdjugateM_zero_zero]
+  unfold cofactor
+  rw [det_deleteRowCol_auxAdjugateM_zero_last]
+  have hsign_last :
+      cofactorSign (R := R) (Fin.last (n + 1)) (0 : Fin (n + 2)) =
+        (-1 : R) ^ (n + 1) := by
+    unfold cofactorSign
+    have h := cofactorSign_last_eq_pow (R := R) (0 : Fin (n + 2))
+    unfold cofactorSign at h
+    simp only [Fin.val_zero, Fin.val_last, Nat.add_zero, Nat.zero_add,
+      Nat.sub_zero] at h ⊢
+    exact h
+  have hsign_aux :
+      cofactorSign (R := R) (0 : Fin (n + 2)) (Fin.last (n + 1)) =
+        (-1 : R) ^ (n + 1) := by
+    have h := cofactorSign_last_eq_pow (R := R) (0 : Fin (n + 2))
+    simpa using h
+  rw [hsign_last, hsign_aux]
+  let A := det (deleteRowCol M (0 : Fin (n + 2)) (0 : Fin (n + 2)))
+  let B := det (deleteRowCol M (Fin.last (n + 1)) (Fin.last (n + 1)))
+  let C := det (deleteRowCol M (0 : Fin (n + 2)) (Fin.last (n + 1)))
+  let D := det (deleteRowCol M (Fin.last (n + 1)) (0 : Fin (n + 2)))
+  have hpow : ((-1 : R) ^ (n + 1)) * ((-1 : R) ^ (n + 1)) = 1 := by
+    exact neg_one_pow_mul_self (R := R) (n + 1)
+  show A * B + ((-1 : R) ^ (n + 1) * D) *
+      (((-1 : R) ^ (n + 1)) * -C) =
+    A * B - C * D
+  have hterm :
+      ((-1 : R) ^ (n + 1) * D) * (((-1 : R) ^ (n + 1)) * -C) =
+        -(C * D) := by
+    calc
+      ((-1 : R) ^ (n + 1) * D) * (((-1 : R) ^ (n + 1)) * -C) =
+          (((-1 : R) ^ (n + 1)) * ((-1 : R) ^ (n + 1))) * (D * -C) := by
+            grind
+      _ = D * -C := by rw [hpow]; grind
+      _ = -(C * D) := by grind
+  rw [hterm]
+  grind
+
+/-- Scaled Desnanot-Jacobi identity obtained from the auxiliary-matrix
+construction.
+
+This is the Mathlib-free part of the standard proof. Turning it into the
+unscaled commutative-ring identity requires the universal-polynomial
+cancellation layer tracked separately from this auxiliary-matrix assembly. -/
+theorem det_desnanot_jacobi_mul
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 2) (n + 2)) :
+    det M *
+      (det (deleteRowCol M (0 : Fin (n + 2)) (0 : Fin (n + 2))) *
+          det (deleteRowCol M (Fin.last (n + 1)) (Fin.last (n + 1))) -
+        det (deleteRowCol M (0 : Fin (n + 2)) (Fin.last (n + 1))) *
+          det (deleteRowCol M (Fin.last (n + 1)) (0 : Fin (n + 2)))) =
+      det M *
+        (det M *
+          det (deleteRowCol (deleteRowCol M (0 : Fin (n + 2)) (0 : Fin (n + 2)))
+            (Fin.last n) (Fin.last n))) := by
+  have hprod : det (M * auxAdjugateM M) = det (auxP M) := by
+    rw [mul_auxAdjugateM_eq_auxP]
+  rw [det_mul_auxAdjugateM, det_auxAdjugateM, det_auxP] at hprod
+  rw [hprod]
+  grind
+
 /-! ### Bareiss Desnanot source-entry helpers and structural submatrix equalities
 
 Following the Mathlib-side reindexing in `HexMatrixMathlib/Determinant/Core.lean`,
