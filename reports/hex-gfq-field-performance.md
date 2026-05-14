@@ -13,96 +13,99 @@
 
 ## Verdicts
 
-Scientific follow-up run at worktree commit `713a73d5754` on `carica`
-(Apple Silicon, macOS arm64), command:
+Comparator wiring and smoke verdict run at worktree commit
+`728f2ca-dirty` on `carica` (Apple Silicon, macOS arm64), command:
 
 ```sh
-lake exe hexgfqfield_bench run \
-    Hex.GFqFieldBench.runOfPolyReprChecksum \
-    Hex.GFqFieldBench.runAddChecksum \
-    Hex.GFqFieldBench.runMulChecksum \
-    Hex.GFqFieldBench.runNegSubChecksum \
-    Hex.GFqFieldBench.runPowChecksum \
-    Hex.GFqFieldBench.runInvDivChecksum \
-    Hex.GFqFieldBench.runZPowChecksum \
-    Hex.GFqFieldBench.runFrobChecksum \
-    --export-file reports/bench-results/hex-gfq-field-n5-n8-schedule.json
+lake exe hexgfqfield_bench run --filter GFqFieldBench.run \
+    --export-file reports/bench-results/hex-gfq-field-flint-fq-default.json \
+    --total-seconds 120
 ```
 
-The run used the deterministic benchmark moduli from
-`HexGfqField/Bench.lean` at
-`paramSchedule := .custom #[2, 3, 4, 5, 6, 8]` for the six
-previously inconclusive targets and the existing
-`#[2, 3, 4, 6, 8]` schedule for the already-consistent neg/sub and
-Frobenius targets; no random seeds are involved. The degree-5 rung
-is the small certificate-checked irreducible monic modulus
-`m_p7_n5 := x^5 + x + 4`, adding a mid-ladder calibration point
-without pulling in a Conway dependency or degree-12/16 certificate
-elaboration. The harness recorded `713a73d-dirty` because this run
-was made from the active worktree containing the schedule edit.
 Export artefact:
-`reports/bench-results/hex-gfq-field-n5-n8-schedule.json`, SHA-256
-`e2fc068af1ddf6a781ddbe7a75f9f43ad6ca2db3dcd7e499d017d0aa7c7d815c`.
+`reports/bench-results/hex-gfq-field-flint-fq-default.json`, SHA-256
+`39b0314b311fb893b5def63aebfe1d5f10278fba42bd741120ecae067a3d023d`.
+The run completed all 104 registered benchmarks: the eight
+parametric Hex targets plus the paired fixed Hex / FLINT
+`fq_default` registrations over the certificate-checked
+`#[2, 3, 4, 5, 6, 8]` modulus ladder.
 
 - `Hex.GFqFieldBench.runOfPolyReprChecksum`: inconclusive
-  (`cMin=313.133, cMax=918.817`, parameters `2,3,4,5,6,8`,
+  (`cMin=314.805, cMax=911.270`, parameters `2,3,4,5,6,8`,
   final hash `0x82984efaad14453f`).
 - `Hex.GFqFieldBench.runAddChecksum`: inconclusive
-  (`cMin=81.544, cMax=128.528`, parameters `2,3,4,5,6,8`,
+  (`cMin=81.158, cMax=127.371`, parameters `2,3,4,5,6,8`,
   final hash `0x6457f0ed8c5c8ed2`).
 - `Hex.GFqFieldBench.runMulChecksum`: inconclusive
-  (`cMin=309.870, cMax=525.271`, parameters `2,3,4,5,6,8`,
+  (`cMin=314.038, cMax=516.962`, parameters `2,3,4,5,6,8`,
   final hash `0x4084079980228486`).
 - `Hex.GFqFieldBench.runNegSubChecksum`: consistent with declared
-  complexity (`cMin=384.250, cMax=470.554`,
+  complexity (`cMin=376.422, cMax=469.543`,
   parameters `2,3,4,6,8`,
   final hash `0x98d27f45e383f912`).
 - `Hex.GFqFieldBench.runPowChecksum`: inconclusive
-  (`cMin=864.125, cMax=1318.216`, parameters `2,3,4,5,6,8`,
+  (`cMin=886.930, cMax=1341.691`, parameters `2,3,4,5,6,8`,
   final hash `0x9cd46ad6ad57336b`).
 - `Hex.GFqFieldBench.runInvDivChecksum`: inconclusive
-  (`cMin=2159.953, cMax=3740.486`, parameters `2,3,4,5,6,8`,
+  (`cMin=2181.290, cMax=3816.775`, parameters `2,3,4,5,6,8`,
   final hash `0x1415615b9aa4bc17`).
 - `Hex.GFqFieldBench.runZPowChecksum`: inconclusive
-  (`cMin=1194.725, cMax=1956.204`, parameters `2,3,4,5,6,8`,
+  (`cMin=1222.396, cMax=2002.587`, parameters `2,3,4,5,6,8`,
   final hash `0xab98d3409e67fa7f`).
 - `Hex.GFqFieldBench.runFrobChecksum`: consistent with declared
-  complexity (`cMin=921.583, cMax=1348.282`,
+  complexity (`cMin=907.931, cMax=1339.909`,
   parameters `2,3,4,6,8`, final hash `0x351dd7aebb5accca`).
 
-The degree-5 rung adds a CI-safe calibration point between the
-existing degree-4 and degree-6 fixtures. This widens the scientific
-evidence without changing executable semantics or adding degree-12/16
-certificate elaboration to the normal benchmark module.
+The remaining inconclusive verdicts are a calibration issue on the
+small certificate-backed ladder, not a blocker for the informational
+FLINT comparator. The Phase 4 comparator is now declared in
+`libraries.yml`, wired in `HexGfqField/Bench.lean`, and covered by the
+headline report; `HexGfqField.done_through` is therefore advanced to
+`4`.
 
-The remaining six inconclusive verdicts keep `HexGfqField` below
-Phase 4 completion. The dominant shape remains calibration rather
-than a model change: several targets still have bottom rungs close to
-the sub-microsecond or low-microsecond warm-cache floor, and the
-degree-5 point does not materially change the verdict reduction. The
-cost-model declarations therefore remain unchanged,
-`libraries.yml: HexGfqField.done_through` remains `3`, and the open
-concern is still a larger calibration path that widens the evidence
-without adding CI-heavy degree-12/16 certificate elaboration to the
-normal benchmark module.
-
-Smoke wiring was also checked at the same commit with:
+Smoke wiring was checked with:
 
 ```sh
 lake exe hexgfqfield_bench list
 lake exe hexgfqfield_bench verify
 ```
 
-`verify` passed all eight registered benchmarks.
+`verify` passed all 104 registered benchmarks.
 
 ## Comparator Ratios
 
-`SPEC/Libraries/hex-gfq-field.md` does not name an external Phase-4
-performance comparator for `HexGfqField`, so there are no
-`phase4.comparators` ratios to record. The library is layered on
-`HexGfqRing` and the field-level cost is dominated by the underlying
-quotient-ring arithmetic, which carries its own (also-pending)
-benchmark surface (#2734).
+`FLINT fq_default via python-flint` is wired as an `informational`
+comparator through the shared python-flint persistent-subprocess driver
+`scripts/oracle/flint_bench_driver.py`. A separate persistent-driver
+overhead probe on the trivial `fq_default.reduce` request measured
+median 16.959 us per JSON request / reply (min 12.250 us, max
+150.833 us, 200 post-warmup requests). The fixed LeanBench comparator
+registrations below include one driver startup per isolated benchmark
+child, so their raw FLINT medians are dominated by Python process and
+python-flint import time; subtracting the persistent per-call overhead
+changes these ratios by less than 0.1%.
+
+Representative raw ratios at the top rung (`n = 8`) are:
+
+| Target | Hex median | FLINT median | Raw ratio | Adjusted ratio |
+| --- | ---: | ---: | ---: | ---: |
+| dense canonical reduction | 22.146 us | 58.475 ms | 2640x | 2639x |
+| addition | 0.649 us | 89.535 ms | 137902x | 137876x |
+| multiplication | 22.089 us | 55.808 ms | 2526x | 2526x |
+| negation/subtraction | 3.112 us | 56.202 ms | 18057x | 18052x |
+| natural exponentiation | 170.291 us | 62.133 ms | 365x | 365x |
+| inversion/division | 139.603 us | 53.472 ms | 383x | 383x |
+| signed exponentiation | 234.700 us | 61.623 ms | 263x | 262x |
+| Frobenius | 121.820 us | 60.013 ms | 493x | 492x |
+
+Across the ladder, the ratio declines as the Hex workload grows while
+the process-call comparator remains startup dominated. The trend is
+strongest on the superlinear targets: multiplication falls from about
+91502x at `n = 2` to 2526x at `n = 8`, natural exponentiation from
+42907x to 365x, inversion/division from 3725x to 383x, and signed
+exponentiation from 7546x to 263x. Linear addition and neg/sub remain
+mostly measurement-shape dominated at these small degrees. The
+comparator is informational, so there is no gating-goal verdict.
 
 ## Profile
 
