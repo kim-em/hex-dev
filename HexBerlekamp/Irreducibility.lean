@@ -634,6 +634,37 @@ theorem checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_bools
   · exact of_decide_eq_true hcurrRed
   · exact eq_of_beq hmulCoeffs
 
+theorem degree?_getD_lt_of_size_le
+    {R : Type u} [Zero R] [DecidableEq R] (g : DensePoly R) {n : Nat}
+    (hnpos : 0 < n) (hsize : g.size ≤ n) :
+    g.degree?.getD 0 < n := by
+  unfold DensePoly.degree?
+  by_cases hzero : g.size = 0
+  · simp [hzero, hnpos]
+  · simp [hzero]
+    omega
+
+theorem checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (f prev curr quot : FpPoly 2)
+    (cert : SamePrimeIrreducibilityCertificate 2)
+    (quotients : Array (FpPoly 2)) (k : Nat)
+    (hprev : cert.powChain[k]? = some prev)
+    (hcurr : cert.powChain[k + 1]? = some curr)
+    (hquot : quotients[k]? = some quot)
+    (hfpos : 0 < f.degree?.getD 0)
+    (hprevSize : prev.size ≤ f.degree?.getD 0)
+    (hcurrSize : curr.size ≤ f.degree?.getD 0)
+    (hmulCoeffs : (prev * prev).coeffs = (curr + quot * f).coeffs) :
+    checkPowChainLinearIncrementalQuotientWitnessStep f cert quotients k = true := by
+  apply checkPowChainLinearIncrementalQuotientWitnessStep_of_entries
+      (prev := prev) (curr := curr) (quot := quot)
+  · exact hprev
+  · exact hcurr
+  · exact hquot
+  · exact degree?_getD_lt_of_size_le prev hfpos hprevSize
+  · exact degree?_getD_lt_of_size_le curr hfpos hcurrSize
+  · exact hmulCoeffs
+
 private theorem densePoly_eq_of_coeffs_eq
     {R : Type u} [Zero R] [DecidableEq R] {a b : DensePoly R}
     (h : a.coeffs = b.coeffs) : a = b := by

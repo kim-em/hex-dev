@@ -510,6 +510,36 @@ private def genericN32Cert : Berlekamp.IrreducibilityCertificate where
     genericMod genericMod_monic genericN32SamePrimeCert
     genericN32Quotients = true
 
+private theorem genericN32_step0_prev_reduced :
+    (polyP2 #[0, 1]).degree?.getD 0 < genericMod.degree?.getD 0 := by
+  have hdegree : genericMod.degree?.getD 0 = 32 := by
+    unfold genericMod Conway.packedGF2FpPoly DensePoly.degree? DensePoly.size
+    rfl
+  apply Berlekamp.degree?_getD_lt_of_size_le
+  · decide
+  · rw [hdegree]
+    unfold polyP2 FpPoly.ofCoeffs
+    exact Nat.le_trans (DensePoly.size_ofCoeffs_le _)
+      (by simp)
+
+private theorem genericN32_step0_curr_reduced :
+    (polyP2 #[0, 0, 1]).degree?.getD 0 < genericMod.degree?.getD 0 := by
+  have hdegree : genericMod.degree?.getD 0 = 32 := by
+    unfold genericMod Conway.packedGF2FpPoly DensePoly.degree? DensePoly.size
+    rfl
+  apply Berlekamp.degree?_getD_lt_of_size_le
+  · decide
+  · rw [hdegree]
+    unfold polyP2 FpPoly.ofCoeffs
+    exact Nat.le_trans (DensePoly.size_ofCoeffs_le _)
+      (by simp)
+
+private theorem genericN32_step0_reduced_bools :
+    decide ((polyP2 #[0, 1]).degree?.getD 0 < genericMod.degree?.getD 0) = true ∧
+      decide ((polyP2 #[0, 0, 1]).degree?.getD 0 < genericMod.degree?.getD 0) = true := by
+  exact ⟨decide_eq_true genericN32_step0_prev_reduced,
+    decide_eq_true genericN32_step0_curr_reduced⟩
+
 #guard
   Berlekamp.checkRabinBezoutWitnesses
     genericMod genericMod_monic genericN32SamePrimeCert = true
