@@ -546,6 +546,10 @@ private theorem genericN32_step0_reduced_bools :
     decide_eq_true genericN32_step0_curr_reduced⟩
 
 #guard
+  Berlekamp.quotientStepCoeffCheck 65
+    (polyP2 #[0, 1]) (polyP2 #[0, 0, 1]) (polyP2 #[]) genericMod = true
+
+#guard
   Berlekamp.checkRabinBezoutWitnesses
     genericMod genericMod_monic genericN32SamePrimeCert = true
 
