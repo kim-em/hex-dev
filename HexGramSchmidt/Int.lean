@@ -222,6 +222,47 @@ private theorem getArrayEntry_foldl_setArrayEntry_row_ne
       rw [getArrayEntry_setArrayEntry_of_row_ne]
       omega
 
+/-- A `foldl` that sets indices appearing in `xs` leaves untouched indices
+unchanged. Used to characterise the outer and inner sweeps of
+`stepScaledRows`. -/
+private theorem getElem!_foldl_set!_of_notMem
+    {α : Type} [Inhabited α]
+    (xs : List Nat) (arr : Array α) (f : Nat → α) (r : Nat)
+    (hr : r ∉ xs) :
+    (xs.foldl (fun next x => next.set! x (f x)) arr)[r]! = arr[r]! := by
+  induction xs generalizing arr with
+  | nil => simp
+  | cons x xs ih =>
+      have hx : r ≠ x := fun h => hr (h ▸ List.mem_cons_self)
+      have hxs : r ∉ xs := fun h => hr (List.mem_cons_of_mem _ h)
+      simp only [List.foldl_cons]
+      rw [ih _ hxs]
+      grind
+
+/-- A `foldl` that sets indices appearing in a `Nodup` list `xs` writes the
+final image `f r` at every member index `r` that is in-bounds for the input
+array. Used to read trailing entries of `stepScaledRows`. -/
+private theorem getElem!_foldl_set!_of_mem_nodup
+    {α : Type} [Inhabited α]
+    (xs : List Nat) (arr : Array α) (f : Nat → α) (r : Nat)
+    (hr : r ∈ xs) (hnodup : xs.Nodup) (hbound : r < arr.size) :
+    (xs.foldl (fun next x => next.set! x (f x)) arr)[r]! = f r := by
+  induction xs generalizing arr with
+  | nil => exact absurd hr (by simp)
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hnodup' : xs.Nodup := hnodup.tail
+      have hxnotmem : x ∉ xs := by
+        simp [List.nodup_cons] at hnodup
+        exact hnodup.1
+      rcases List.mem_cons.mp hr with hr_eq | hr_in
+      · subst hr_eq
+        rw [getElem!_foldl_set!_of_notMem _ _ _ _ hxnotmem]
+        have hsize : r < (arr.set! r (f r)).size := by simp [hbound]
+        grind
+      · have hbound' : r < (arr.set! x (f x)).size := by simp [hbound]
+        exact ih _ hr_in hnodup' hbound'
+
 private def writeScaledColumn (coeffs rows : Array (Array Int)) (n k : Nat) :
     Array (Array Int) :=
   Id.run do
