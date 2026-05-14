@@ -4365,6 +4365,39 @@ private theorem yunStep_residual_dvd_derivative_product_of_previous
     yunStep_residual_dvd_derivative_product_core
       c w y a z hcy hwy hcommon_az hprev
 
+private theorem yunFactorsPairwiseReachable_residual_dvd_derivative_product
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (fuel : Nat)
+    (hreachable : yunFactorsPairwiseReachable c w fuel) :
+    w ∣ DensePoly.derivative (c * w) := by
+  induction hreachable with
+  | derivativeSplit hp f fuel hdf =>
+      let g := DensePoly.gcd f (DensePoly.derivative f)
+      let c := f / g
+      have hprod : c * g = f := by
+        simpa [c, g] using div_gcd_mul_reconstruct f (DensePoly.derivative f)
+      have hg_dvd_df : g ∣ DensePoly.derivative f := by
+        simpa [g] using DensePoly.gcd_dvd_right f (DensePoly.derivative f)
+      simpa [c, g, hprod] using hg_dvd_df
+  | step c w fuel hprev ih =>
+      exact
+        yunStep_residual_dvd_derivative_product_of_previous
+          c w fuel hprev ih
+
+private theorem yunFactorsPairwiseReachable_terminal_residual_derivative_zero
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (fuel : Nat)
+    (hreachable : yunFactorsPairwiseReachable c w fuel)
+    (hc : isOne c = true) :
+    (DensePoly.derivative w).isZero = true := by
+  have hprod_dvd :
+      w ∣ DensePoly.derivative (c * w) :=
+    yunFactorsPairwiseReachable_residual_dvd_derivative_product c w fuel hreachable
+  have hc_eq : c = 1 := eq_one_of_isOne_true c hc
+  have hw_dvd_dw : w ∣ DensePoly.derivative w := by
+    simpa [hc_eq, one_mul] using hprod_dvd
+  exact derivative_isZero_true_of_dvd_self_derivative w hw_dvd_dw
+
 private theorem one_lt_size_of_isOne_false_of_reachable
     [ZMod64.PrimeModulus p]
     (c : FpPoly p)
