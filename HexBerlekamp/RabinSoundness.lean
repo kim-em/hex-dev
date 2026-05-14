@@ -173,6 +173,101 @@ The following declarations are stated with proofs deferred to their own
 follow-up issues. Every other declaration in this file is a small
 orchestration step on top of them. -/
 
+/-- Divisibility by `f` is equivalent to a zero canonical remainder. -/
+theorem dvd_iff_mod_eq_zero (f q : FpPoly p) :
+    f ∣ q ↔ q % f = 0 := by
+  haveI : DensePoly.DivModLaws (ZMod64 p) := inferInstance
+  refine ⟨DensePoly.mod_eq_zero_of_dvd q f, ?_⟩
+  intro hmod
+  refine ⟨q / f, ?_⟩
+  have h := DensePoly.div_mul_add_mod q f
+  rw [hmod, FpPoly.add_zero, FpPoly.mul_comm] at h
+  exact h.symm
+
+/-- `linearPow` has the same canonical remainder for bases with the same
+canonical remainder. -/
+theorem linearPow_mod_eq_of_mod_eq_mod (f h r : FpPoly p) (n : Nat)
+    (hmod : h % f = r % f) :
+    FpPoly.linearPow h n % f = FpPoly.linearPow r n % f := by
+  haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
+  induction n with
+  | zero =>
+      rfl
+  | succ n ih =>
+      calc
+        FpPoly.linearPow h (n + 1) % f
+            = (FpPoly.linearPow h n * h) % f := by rw [FpPoly.linearPow_succ]
+        _ = ((FpPoly.linearPow h n % f) * (h % f)) % f :=
+              @DensePoly.mod_mul_mod (ZMod64 p) inferInstance inferInstance
+                inferInstance (ZMod64.instDivModLawsZMod64Fp p) _ _ f
+        _ = ((FpPoly.linearPow r n % f) * (r % f)) % f := by rw [ih, hmod]
+        _ = (FpPoly.linearPow r n * r) % f :=
+              (@DensePoly.mod_mul_mod (ZMod64 p) inferInstance inferInstance
+                inferInstance (ZMod64.instDivModLawsZMod64Fp p) _ _ f).symm
+        _ = FpPoly.linearPow r (n + 1) % f := by rw [FpPoly.linearPow_succ]
+
+/-- Polynomial congruence modulo `f` is preserved by `linearPow`. -/
+theorem linearPow_congr_of_congr (f h r : FpPoly p) (n : Nat)
+    (hcongr : DensePoly.Congr h r f) :
+    DensePoly.Congr (FpPoly.linearPow h n) (FpPoly.linearPow r n) f := by
+  haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
+  apply @DensePoly.congr_of_mod_eq_mod (ZMod64 p) inferInstance inferInstance
+    inferInstance (ZMod64.instDivModLawsZMod64Fp p)
+  exact linearPow_mod_eq_of_mod_eq_mod f h r n
+    (@DensePoly.mod_eq_mod_of_congr (ZMod64 p) inferInstance inferInstance
+      inferInstance (ZMod64.instDivModLawsZMod64Fp p) h r f hcongr)
+
+omit [ZMod64.PrimeModulus p] in
+/-- Polynomial congruence modulo `f` is preserved by subtraction. -/
+theorem congr_sub_of_congr (f a b c d : FpPoly p)
+    (hab : DensePoly.Congr a b f) (hcd : DensePoly.Congr c d f) :
+    DensePoly.Congr (a - c) (b - d) f := by
+  have heq : (a - c) - (b - d) = (a - b) - (c - d) := by
+    apply DensePoly.ext_coeff
+    intro i
+    have hzero_sub : (0 : ZMod64 p) - 0 = 0 := by grind
+    repeat rw [DensePoly.coeff_sub _ _ _ hzero_sub]
+    grind
+  rw [DensePoly.Congr, heq]
+  exact DensePoly.dvd_sub_poly hab hcd
+
+/--
+Membership in the Frobenius fixed-kernel depends only on the residue class
+modulo the ambient polynomial.
+
+This is the representative-reduction lemma needed by the Berlekamp CRT
+construction: reducing a candidate modulo `f` preserves and reflects the
+absolute divisibility condition `f ∣ h^(p^k) - h`.
+-/
+theorem dvd_linearPow_sub_self_mod_iff
+    (f h : FpPoly p) (k : Nat) :
+    f ∣ (FpPoly.linearPow h (p ^ k) - h) ↔
+      f ∣ (FpPoly.linearPow (h % f) (p ^ k) - (h % f)) := by
+  haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
+  have hbase_mod : h % f = (h % f) % f := (DensePoly.mod_mod h f).symm
+  have hpow_mod :
+      FpPoly.linearPow h (p ^ k) % f =
+        FpPoly.linearPow (h % f) (p ^ k) % f :=
+    linearPow_mod_eq_of_mod_eq_mod f h (h % f) (p ^ k) hbase_mod
+  have hpow_congr :
+      DensePoly.Congr (FpPoly.linearPow h (p ^ k))
+        (FpPoly.linearPow (h % f) (p ^ k)) f :=
+    @DensePoly.congr_of_mod_eq_mod (ZMod64 p) inferInstance inferInstance
+      inferInstance (ZMod64.instDivModLawsZMod64Fp p) _ _ _ hpow_mod
+  have hbase_congr : DensePoly.Congr h (h % f) f :=
+    @DensePoly.congr_of_mod_eq_mod (ZMod64 p) inferInstance inferInstance
+      inferInstance (ZMod64.instDivModLawsZMod64Fp p) _ _ _ hbase_mod
+  have hdiff_congr :
+      DensePoly.Congr (FpPoly.linearPow h (p ^ k) - h)
+        (FpPoly.linearPow (h % f) (p ^ k) - (h % f)) f :=
+    congr_sub_of_congr f _ _ _ _ hpow_congr hbase_congr
+  have hdiff_mod :
+      (FpPoly.linearPow h (p ^ k) - h) % f =
+        (FpPoly.linearPow (h % f) (p ^ k) - (h % f)) % f :=
+    @DensePoly.mod_eq_mod_of_congr (ZMod64 p) inferInstance inferInstance
+      inferInstance (ZMod64.instDivModLawsZMod64Fp p) _ _ _ hdiff_congr
+  rw [dvd_iff_mod_eq_zero, dvd_iff_mod_eq_zero, hdiff_mod]
+
 /--
 Trivial case for `deg f = 0`: `frobeniusDiffMod` is already its own
 canonical remainder modulo `f`. When `deg f = 0` and `f` is monic, `f`
