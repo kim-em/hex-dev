@@ -1,4 +1,5 @@
 import HexBerlekampZassenhaus
+import HexBerlekampZassenhausMathlib.UFDPartition
 import HexPolyZMathlib.Basic
 import HexPolyZMathlib.Mignotte
 import Mathlib.RingTheory.Polynomial.UniqueFactorization
@@ -295,6 +296,127 @@ theorem checkIrreducibleCert_sound_zpoly
   exact
     (Hex.ZPoly.Irreducible_iff_polynomialIrreducible f).mpr
       (checkIrreducibleCert_sound f cert hcert)
+
+private theorem toPolynomial_foldl_mul (lst : List Hex.ZPoly) (init : Hex.ZPoly) :
+    HexPolyZMathlib.toPolynomial (lst.foldl (· * ·) init) =
+      (lst.map HexPolyZMathlib.toPolynomial).foldl (· * ·)
+        (HexPolyZMathlib.toPolynomial init) := by
+  induction lst generalizing init with
+  | nil => simp
+  | cons head tail ih =>
+      simp only [List.foldl_cons, List.map_cons]
+      rw [ih (init * head), HexPolyZMathlib.toPolynomial_mul]
+
+/-- The executable `Array.polyProduct` agrees with Mathlib's `List.prod`
+after pushing each factor through the `toPolynomial` bridge.  This is the
+algorithm-to-Mathlib translation needed to feed `Hex.ZPoly` factor lists
+into UFD arguments over `Polynomial ℤ`. -/
+private theorem toPolynomial_one_zpoly :
+    HexPolyZMathlib.toPolynomial (1 : Hex.ZPoly) = 1 := by
+  show HexPolyZMathlib.toPolynomial (Hex.DensePoly.C (1 : Int)) = 1
+  rw [HexPolyZMathlib.toPolynomial_C]
+  simp
+
+theorem polyProduct_toPolynomial (factors : Array Hex.ZPoly) :
+    HexPolyZMathlib.toPolynomial (Array.polyProduct factors) =
+      (factors.toList.map HexPolyZMathlib.toPolynomial).prod := by
+  show HexPolyZMathlib.toPolynomial (Array.foldl (· * ·) 1 factors) = _
+  rw [← Array.foldl_toList, toPolynomial_foldl_mul factors.toList 1,
+    toPolynomial_one_zpoly]
+  exact List.prod_eq_foldl.symm
+
+/-- A `Hex.ZPoly` factor that passes the executable `shouldRecordPolynomialFactor`
+check is non-zero and not a unit after transport to `Polynomial ℤ`.  The
+executable check rejects `0`, `1`, and `-1`, which are exactly the zero
+and unit constants on the Mathlib side. -/
+theorem toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord
+    {f : Hex.ZPoly} (h : Hex.shouldRecordPolynomialFactor f = true) :
+    HexPolyZMathlib.toPolynomial f ≠ 0 ∧
+      ¬ IsUnit (HexPolyZMathlib.toPolynomial f) := by
+  rw [Hex.shouldRecordPolynomialFactor] at h
+  -- `h : (f ≠ 0 && f ≠ 1 && f ≠ DensePoly.C (-1)) = true`
+  rw [Bool.and_eq_true, Bool.and_eq_true] at h
+  obtain ⟨⟨hne_zero, hne_one⟩, hne_neg_one⟩ := h
+  have hne_zero' : f ≠ 0 := by simpa using hne_zero
+  have hne_one' : f ≠ 1 := by simpa using hne_one
+  have hne_neg_one' : f ≠ Hex.DensePoly.C (-1) := by simpa using hne_neg_one
+  refine ⟨?_, ?_⟩
+  · intro hpoly
+    apply hne_zero'
+    apply HexPolyZMathlib.equiv.injective
+    simpa using hpoly
+  · intro hunit
+    have hisUnit : Hex.ZPoly.IsUnit f :=
+      (HexPolyZMathlib.isUnit_iff_toPolynomial_isUnit f).mpr hunit
+    rcases hisUnit with hone | hneg_one
+    · exact hne_one' (by simpa using hone)
+    · exact hne_neg_one' hneg_one
+
+/-- Algorithm-side packaging for the BHKS fast-core success branch in
+the form needed by UFD arguments over `Polynomial ℤ`.  Combines the
+existing product, divisibility, and `shouldRecord` invariants exposed
+in `HexBerlekampZassenhaus/Basic.lean` with the `toPolynomial` bridge.
+The remaining count-equality hypothesis is the open obligation of
+#4022 — once supplied, this lemma feeds directly into
+`HexBerlekampZassenhausMathlib.UFDPartition.irreducible_of_partition_card_eq_normalizedFactors_card`. -/
+theorem factorFastCoreWithBound_some_factor_irreducible_of_count
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
+    (hcore_ne : core ≠ 0)
+    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (hcount :
+      (coreFactors.toList.map HexPolyZMathlib.toPolynomial).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial core)).card) :
+    ∀ factor ∈ coreFactors.toList,
+      Irreducible (HexPolyZMathlib.toPolynomial factor) := by
+  set f := HexPolyZMathlib.toPolynomial core with hf_def
+  have hf_ne : f ≠ 0 := by
+    intro hzero
+    apply hcore_ne
+    apply HexPolyZMathlib.equiv.injective
+    simpa using hzero
+  set gs : List (Polynomial ℤ) :=
+    coreFactors.toList.map HexPolyZMathlib.toPolynomial with hgs_def
+  have hprod : Associated gs.prod f := by
+    have hp_core : Array.polyProduct coreFactors = core :=
+      Hex.factorFastCoreWithBound_product core B primeData k fuel coreFactors h
+    have hp_poly :
+        (coreFactors.toList.map HexPolyZMathlib.toPolynomial).prod =
+          HexPolyZMathlib.toPolynomial core := by
+      rw [← polyProduct_toPolynomial, hp_core]
+    rw [hgs_def, hp_poly, hf_def]
+  have hdvd_all :
+      ∀ factor ∈ coreFactors.toList, factor ∣ core :=
+    Hex.factorFastCoreWithBound_some_dvd core B primeData k fuel coreFactors h
+  have hrecord_all :
+      ∀ factor ∈ coreFactors.toList,
+        Hex.shouldRecordPolynomialFactor factor = true :=
+    Hex.factorFastCoreWithBound_some_shouldRecord h
+  have hne_all : ∀ g ∈ gs, g ≠ 0 := by
+    intro g hg
+    rw [hgs_def, List.mem_map] at hg
+    obtain ⟨factor, hfactor_mem, hg_eq⟩ := hg
+    rw [← hg_eq]
+    exact
+      (toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord
+        (hrecord_all factor hfactor_mem)).1
+  have hnonunit_all : ∀ g ∈ gs, ¬ IsUnit g := by
+    intro g hg
+    rw [hgs_def, List.mem_map] at hg
+    obtain ⟨factor, hfactor_mem, hg_eq⟩ := hg
+    rw [← hg_eq]
+    exact
+      (toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord
+        (hrecord_all factor hfactor_mem)).2
+  intro factor hfactor_mem
+  have hpolyfactor_mem :
+      HexPolyZMathlib.toPolynomial factor ∈ gs := by
+    rw [hgs_def, List.mem_map]
+    exact ⟨factor, hfactor_mem, rfl⟩
+  exact
+    HexBerlekampZassenhausMathlib.UFDPartition.irreducible_of_partition_card_eq_normalizedFactors_card
+      hf_ne gs hne_all hnonunit_all hprod hcount _ hpolyfactor_mem
 
 end
 

@@ -947,7 +947,11 @@ private def normalizeFactorSign (f : ZPoly) : ZPoly :=
   else
     f
 
-private def shouldRecordPolynomialFactor (f : ZPoly) : Bool :=
+/-- A polynomial factor is recorded by the factorization routines only
+when it is not zero and not a unit (`±1`).  Exposed publicly so that
+Mathlib bridges can transport the predicate into `¬ IsUnit` over
+`Polynomial ℤ`. -/
+def shouldRecordPolynomialFactor (f : ZPoly) : Bool :=
   f ≠ 0 && f ≠ 1 && f ≠ DensePoly.C (-1)
 
 private def bumpFactorMultiplicity (f : ZPoly) : List (ZPoly × Nat) → List (ZPoly × Nat)
@@ -3834,7 +3838,12 @@ def nextHenselPrecision (k B : Nat) : Nat :=
   else
     B
 
-private def factorFastCoreWithBound
+/-- BHKS fast-core recombination loop, exposed publicly so that Mathlib
+bridges can quantify over its success state.  Internally driven by the
+classified BHKS recovery `bhksRecoverClassified`; `none` indicates the
+loop exhausted its precision bound without producing a verified factor
+list. -/
+def factorFastCoreWithBound
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Nat → Nat → Option (Array ZPoly)
   | _k, 0 => none
   | k, fuel + 1 =>
@@ -5554,7 +5563,7 @@ private theorem bhksRecover?_product
 /-- A successful fixed-precision BHKS fast-recombination loop preserves the
 polynomial product: every success branch comes from the classified BHKS
 recovery success case, which already certifies `Array.polyProduct = core`. -/
-private theorem factorFastCoreWithBound_product
+theorem factorFastCoreWithBound_product
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) :
     ∀ k fuel coreFactors,
       factorFastCoreWithBound core B primeData k fuel = some coreFactors →
@@ -5637,7 +5646,7 @@ private theorem factorFastCoreWithBound_some_normalizeFactorSign
     (fun hrecover => bhksRecoverClassified_success_normalizeFactorSign hrecover)
     core B primeData k fuel coreFactors h
 
-private theorem factorFastCoreWithBound_some_shouldRecord
+theorem factorFastCoreWithBound_some_shouldRecord
     {core : ZPoly} {B : Nat} {primeData : PrimeChoiceData}
     {k fuel : Nat} {coreFactors : Array ZPoly}
     (h : factorFastCoreWithBound core B primeData k fuel = some coreFactors) :
@@ -5651,7 +5660,7 @@ private theorem factorFastCoreWithBound_some_shouldRecord
 input core. The success branch is the only branch that exits with
 `some coreFactors`, and `bhksRecoverClassified_success_dvd` certifies
 divisibility for each candidate at that exit. -/
-private theorem factorFastCoreWithBound_some_dvd
+theorem factorFastCoreWithBound_some_dvd
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) :
     ∀ k fuel coreFactors,
       factorFastCoreWithBound core B primeData k fuel = some coreFactors →
