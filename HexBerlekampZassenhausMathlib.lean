@@ -2,6 +2,7 @@ import HexBerlekampZassenhausMathlib.Basic
 import HexBerlekampZassenhausMathlib.BadVector
 import HexBerlekampZassenhausMathlib.BHKSBound
 import HexBerlekampZassenhausMathlib.ColumnSignature
+import HexBerlekampZassenhausMathlib.IntReductionMod
 import HexBerlekampZassenhausMathlib.Lattice
 import HexBerlekampZassenhausMathlib.Recovery
 import HexBerlekampZassenhausMathlib.Resultant
