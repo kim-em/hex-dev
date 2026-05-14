@@ -179,6 +179,18 @@ private theorem array_getElem!_set!_same {α : Type} [Inhabited α]
   rw [Array.getElem!_eq_getD]
   simp [Array.getD, Array.set!_eq_setIfInBounds, hi]
 
+private theorem array_getElem!_set!_ne {α : Type} [Inhabited α]
+    (xs : Array α) {i j : Nat} (hij : j ≠ i) (v : α) :
+    (xs.set! i v)[j]! = xs[j]! := by
+  rw [Array.getElem!_eq_getD, Array.getElem!_eq_getD]
+  unfold Array.set!
+  unfold Array.setIfInBounds
+  by_cases hi : i < xs.size
+  · simp [hi]
+    rw [Array.getElem?_set]
+    simp [hij.symm]
+  · simp [hi]
+
 private theorem getArrayEntry_setArrayEntry_of_row_ne
     (rows : Array (Array Int)) (row col r c : Nat) (value : Int) (hr : r ≠ row) :
     getArrayEntry (setArrayEntry rows row col value) r c = getArrayEntry rows r c := by
@@ -241,6 +253,26 @@ private theorem getArrayEntry_foldl_setArrayEntry_row_ne
       rw [getArrayEntry_setArrayEntry_of_row_ne]
       omega
 
+/-- A column-targeted `foldl` preserves rows whose index is absent from the
+write list. -/
+private theorem getArrayEntry_foldl_setArrayEntry_row_notMem
+    (xs : List Nat) (coeffs rows : Array (Array Int)) (k r c : Nat)
+    (hr : r ∉ xs) :
+    getArrayEntry
+        (xs.foldl (fun next x => setArrayEntry next x k (getArrayEntry rows x k)) coeffs)
+        r c =
+      getArrayEntry coeffs r c := by
+  induction xs generalizing coeffs with
+  | nil =>
+      simp
+  | cons x xs ih =>
+      have hrx : r ≠ x := fun h => hr (h ▸ List.mem_cons_self)
+      have hrxs : r ∉ xs := fun h => hr (List.mem_cons_of_mem _ h)
+      simp only [List.foldl_cons]
+      rw [ih (setArrayEntry coeffs x k (getArrayEntry rows x k)) hrxs]
+      rw [getArrayEntry_setArrayEntry_of_row_ne]
+      exact hrx
+
 /-- A column-targeted `foldl` of `setArrayEntry`s at column `k` leaves entries
 in any other column unchanged. -/
 private theorem getArrayEntry_foldl_setArrayEntry_col_ne
@@ -260,6 +292,46 @@ private theorem getArrayEntry_foldl_setArrayEntry_col_ne
         rw [getArrayEntry_setArrayEntry_of_col_ne _ _ _ _ _ hc]
       · rw [getArrayEntry_setArrayEntry_of_row_ne]
         exact hrow
+
+/-- A column-targeted `foldl` records the source-row value at an updated row.
+The row list is nodup, so the final write to `r` is the unique write to that
+row. -/
+private theorem getArrayEntry_foldl_setArrayEntry_col_mem
+    (xs : List Nat) (coeffs rows : Array (Array Int)) (k r : Nat)
+    (hrmem : r ∈ xs) (hnodup : xs.Nodup)
+    (hrow : r < coeffs.size) (hcol : k < coeffs[r]!.size) :
+    getArrayEntry
+        (xs.foldl (fun next x => setArrayEntry next x k (getArrayEntry rows x k)) coeffs)
+        r k =
+      getArrayEntry rows r k := by
+  induction xs generalizing coeffs with
+  | nil =>
+      exact absurd hrmem (by simp)
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hnodup' : xs.Nodup := hnodup.tail
+      have hxnotmem : x ∉ xs := by
+        simp [List.nodup_cons] at hnodup
+        exact hnodup.1
+      rcases List.mem_cons.mp hrmem with hr_eq | hr_in
+      · subst x
+        rw [getArrayEntry_foldl_setArrayEntry_row_notMem]
+        · exact getArrayEntry_setArrayEntry_self coeffs r k
+            (getArrayEntry rows r k) hrow hcol
+        · exact hxnotmem
+      · have hr_ne_x : r ≠ x := by
+          intro h
+          subst r
+          exact hxnotmem hr_in
+        have hrow' : r < (setArrayEntry coeffs x k (getArrayEntry rows x k)).size := by
+          simp [setArrayEntry, Array.set!_eq_setIfInBounds, Array.size_setIfInBounds, hrow]
+        have hcol' :
+            k < (setArrayEntry coeffs x k (getArrayEntry rows x k))[r]!.size := by
+          unfold setArrayEntry
+          rw [array_getElem!_set!_ne _ hr_ne_x]
+          exact hcol
+        exact ih (setArrayEntry coeffs x k (getArrayEntry rows x k))
+          hr_in hnodup' hrow' hcol'
 
 /-- A `foldl` that sets indices appearing in `xs` leaves untouched indices
 unchanged. Used to characterise the outer and inner sweeps of
@@ -356,6 +428,32 @@ private theorem getArrayEntry_writeScaledColumn_diag
     omega
   · omega
 
+/-- Below the current pivot row, `writeScaledColumn` records the current
+matrix-column value in the coefficient column. -/
+private theorem getArrayEntry_writeScaledColumn_below
+    (coeffs rows : Array (Array Int)) (n k i : Nat)
+    (hki : k < i) (hi : i < n)
+    (hrow : i < coeffs.size) (hcol : k < coeffs[i]!.size) :
+    getArrayEntry (writeScaledColumn coeffs rows n k) i k =
+      getArrayEntry rows i k := by
+  unfold writeScaledColumn
+  simp [Std.Legacy.Range.forIn_eq_forIn_range', Std.Legacy.Range.size]
+  have hmem : i ∈ List.range' (k + 1) (n - (k + 1)) := by
+    rw [List.mem_range']
+    exact ⟨i - (k + 1), by omega, by omega⟩
+  have hnodup : (List.range' (k + 1) (n - (k + 1))).Nodup := List.nodup_range'
+  have hrow' : i < (setArrayEntry coeffs k k (getArrayEntry rows k k)).size := by
+    simp [setArrayEntry, Array.set!_eq_setIfInBounds, Array.size_setIfInBounds, hrow]
+  have hcol' :
+      k < (setArrayEntry coeffs k k (getArrayEntry rows k k))[i]!.size := by
+    unfold setArrayEntry
+    rw [array_getElem!_set!_ne _ (show i ≠ k by omega)]
+    exact hcol
+  exact getArrayEntry_foldl_setArrayEntry_col_mem
+    (List.range' (k + 1) (n - (k + 1)))
+    (setArrayEntry coeffs k k (getArrayEntry rows k k)) rows k i
+    hmem hnodup hrow' hcol'
+
 /-- `writeScaledColumn` only updates entries in column `k`; entries in any
 other column are unchanged. -/
 private theorem getArrayEntry_writeScaledColumn_of_col_ne
@@ -391,7 +489,7 @@ private theorem setArrayEntry_rows_size
       Array.set!_eq_setIfInBounds]
     have hne : row ≠ r := fun h => hrow h.symm
     by_cases hbound : row < rows.size
-    · simp [Array.getElem?_setIfInBounds, hne]
+    · simp [hne]
     · simp [Array.setIfInBounds, hbound]
 
 /-- A `foldl` of `setArrayEntry` writes at column `k` preserves the
@@ -808,6 +906,73 @@ private theorem getArrayEntry_scaledCoeffArrayLoop_preserve_col_before_step
           rw [getArrayEntry_writeScaledColumn_of_col_ne]
           omega
       · simp only [hstep, ↓reduceIte]
+
+/-- If the array loop starts at column `state.step`, then the lower-triangle
+entry written in that column is the current matrix-column value. In the regular
+branch, the preservation lemma carries that captured column through the
+remaining fuel. -/
+private theorem getArrayEntry_scaledCoeffArrayLoop_capture_current_col
+    (n fuel : Nat) (state : ScaledCoeffArrayState) (i : Nat)
+    (hStep : state.step < n) (hji : state.step < i) (hi : i < n)
+    (h_coeffs_size : state.coeffs.size = n)
+    (h_coeffs_rows_size : ∀ r, r < n → state.coeffs[r]!.size = n) :
+    getArrayEntry (scaledCoeffArrayLoop n (fuel + 1) state).coeffs i state.step =
+      getArrayEntry state.matrix i state.step := by
+  have hrow : i < state.coeffs.size := by
+    rw [h_coeffs_size]; exact hi
+  have hcol : state.step < state.coeffs[i]!.size := by
+    rw [h_coeffs_rows_size i hi]; exact hStep
+  rw [scaledCoeffArrayLoop]
+  simp only [hStep, ↓reduceIte]
+  by_cases hNext : state.step + 1 < n
+  · simp only [hNext, ↓reduceIte]
+    by_cases hpivot : getArrayEntry state.matrix state.step state.step = 0
+    · simp only [hpivot, ↓reduceIte]
+      exact getArrayEntry_writeScaledColumn_below state.coeffs state.matrix n
+        state.step i hji hi hrow hcol
+    · simp only [hpivot, ↓reduceIte]
+      rw [getArrayEntry_scaledCoeffArrayLoop_preserve_col_before_step]
+      · exact getArrayEntry_writeScaledColumn_below state.coeffs state.matrix n
+          state.step i hji hi hrow hcol
+      · show state.step < state.step + 1
+        omega
+  · simp only [hNext, ↓reduceIte]
+    exact getArrayEntry_writeScaledColumn_below state.coeffs state.matrix n
+      state.step i hji hi hrow hcol
+
+/-- Matrix-state form of the current-column lower-triangle capture: for
+aligned array and no-pivot states, the coefficient written at the current
+column is exactly the pre-step matrix entry, not the later pivot-column value
+after the next elimination step clears it. -/
+private theorem scaledCoeffArrayLoop_lower_matches_current_step
+    {state_array : ScaledCoeffArrayState} {state_matrix : Matrix.BareissState n}
+    (h_step_eq : state_array.step = state_matrix.step)
+    (h_matrix_eq : rowsToMatrix state_array.matrix n = state_matrix.matrix)
+    (h_coeffs_size : state_array.coeffs.size = n)
+    (h_coeffs_rows_size : ∀ r, r < n → state_array.coeffs[r]!.size = n)
+    (fuel : Nat) (i : Fin n)
+    (hji : state_matrix.step < i.val) :
+    getArrayEntry (scaledCoeffArrayLoop n (fuel + 1) state_array).coeffs
+        i.val state_array.step =
+      state_matrix.matrix[i][
+        (⟨state_matrix.step, Nat.lt_trans hji i.isLt⟩ : Fin n)] := by
+  have hStepArray : state_array.step < n := by
+    rw [h_step_eq]
+    exact Nat.lt_trans hji i.isLt
+  have hjiArray : state_array.step < i.val := by
+    rw [h_step_eq]
+    exact hji
+  rw [getArrayEntry_scaledCoeffArrayLoop_capture_current_col n fuel state_array
+    i.val hStepArray hjiArray i.isLt h_coeffs_size h_coeffs_rows_size]
+  let col_array : Fin n := ⟨state_array.step, hStepArray⟩
+  let col_matrix : Fin n := ⟨state_matrix.step, Nat.lt_trans hji i.isLt⟩
+  have hcol_eq : col_array = col_matrix := Fin.ext h_step_eq
+  have hentry :
+      getArrayEntry state_array.matrix i.val state_array.step =
+        (rowsToMatrix state_array.matrix n)[i][col_array] := by
+    simp [rowsToMatrix, Matrix.ofFn, col_array]
+  rw [hentry, h_matrix_eq]
+  exact congrArg (fun c => state_matrix.matrix[i][c]) hcol_eq
 
 /-- Run one no-pivot fraction-free Gram elimination and record each scaled
 coefficient column immediately before the elimination step zeroes it. -/
