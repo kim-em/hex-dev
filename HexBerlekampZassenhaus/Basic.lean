@@ -2005,6 +2005,53 @@ private def integerRootCandidates (f : ZPoly) : List Int :=
 private def linearFactorForRoot (r : Int) : ZPoly :=
   DensePoly.ofCoeffs #[-r, 1]
 
+private theorem leadingCoeff_linearFactorForRoot (r : Int) :
+    DensePoly.leadingCoeff (linearFactorForRoot r) = (1 : Int) := by
+  unfold linearFactorForRoot
+  rfl
+
+private theorem linearFactorForRoot_size_eq_two (r : Int) :
+    (linearFactorForRoot r).size = 2 := by
+  unfold linearFactorForRoot
+  rfl
+
+private theorem linearFactorForRoot_ne_zero (r : Int) :
+    linearFactorForRoot r ≠ (0 : ZPoly) := by
+  intro h
+  have hsize := linearFactorForRoot_size_eq_two r
+  rw [h] at hsize
+  change (0 : ZPoly).size = 2 at hsize
+  have hzero : (0 : ZPoly).size = 0 := rfl
+  omega
+
+private theorem linearFactorForRoot_ne_one (r : Int) :
+    linearFactorForRoot r ≠ (1 : ZPoly) := by
+  intro h
+  have hsize := linearFactorForRoot_size_eq_two r
+  rw [h] at hsize
+  have hone : (1 : ZPoly).size = 1 := rfl
+  omega
+
+private theorem linearFactorForRoot_ne_C_neg_one (r : Int) :
+    linearFactorForRoot r ≠ DensePoly.C (-1 : Int) := by
+  intro h
+  have hsize := linearFactorForRoot_size_eq_two r
+  rw [h] at hsize
+  have hcsize : (DensePoly.C (-1 : Int)).size = 1 := rfl
+  omega
+
+private theorem normalizeFactorSign_linearFactorForRoot (r : Int) :
+    normalizeFactorSign (linearFactorForRoot r) = linearFactorForRoot r := by
+  unfold normalizeFactorSign
+  rw [leadingCoeff_linearFactorForRoot]
+  simp
+
+private theorem shouldRecordPolynomialFactor_linearFactorForRoot (r : Int) :
+    shouldRecordPolynomialFactor (linearFactorForRoot r) = true := by
+  unfold shouldRecordPolynomialFactor
+  simp [linearFactorForRoot_ne_zero, linearFactorForRoot_ne_one,
+    linearFactorForRoot_ne_C_neg_one]
+
 private def splitIntegerRootFactorsAux :
     ZPoly → List Int → Nat → Array ZPoly × ZPoly
   | target, _roots, 0 => (#[], target)
