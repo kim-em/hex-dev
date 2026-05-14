@@ -54,7 +54,7 @@ HexConway and constructs `FiniteField p (conwayPoly p n) ...`
 using HexGfqField's generic quotient-field machinery (or
 `GF2q` via HexGF2's packed representation for `p = 2`). The
 runtime cost is dominated by the underlying quotient-field
-arithmetic, which is covered by HexGfqRing's external comparator
+arithmetic, which is covered by HexGfqField's external comparator
 declaration (FLINT `fq_default`, informational); the `GF2q` path
 is covered by HexGF2's external comparator declaration
 (NTL `GF2X`, informational). HexGfq itself contributes only the
