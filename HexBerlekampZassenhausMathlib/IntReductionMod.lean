@@ -176,6 +176,31 @@ theorem Hex_ZPoly_Irreducible_of_irreducible_map_intCast_zmod
     (irreducible_of_isPrimitive_of_irreducible_map_intCast_zmod
       hprim hlc_map_ne hirr)
 
+/--
+Small-mod singleton branch core irreducibility, stated at the executable
+`Hex.ZPoly` level.
+
+The branch-specific executable facts identify the relevant modular image as
+`Hex.ZPoly.modP p core`; the coefficientwise commutation lemma rewrites its
+Mathlib irreducibility into the `Polynomial.map (Int.castRingHom (ZMod p))`
+hypothesis consumed by the primitive Gauss transfer above.
+-/
+theorem Hex_ZPoly_Irreducible_of_irreducible_modP
+    [Hex.ZMod64.Bounds p] [Fact (Nat.Prime p)]
+    {core : Hex.ZPoly}
+    (hprim : (HexPolyZMathlib.toPolynomial core).IsPrimitive)
+    (hlc_map_ne :
+      (Int.castRingHom (ZMod p))
+          (HexPolyZMathlib.toPolynomial core).leadingCoeff ≠ 0)
+    (hirr_modP :
+      Irreducible
+        (HexBerlekampMathlib.toMathlibPolynomial (Hex.ZPoly.modP p core))) :
+    Hex.ZPoly.Irreducible core :=
+  Hex_ZPoly_Irreducible_of_irreducible_map_intCast_zmod
+    hprim hlc_map_ne
+    (by
+      simpa [toMathlibPolynomial_modP_eq_map_intCast_zmod] using hirr_modP)
+
 end IntReductionMod
 
 end HexBerlekampZassenhausMathlib
