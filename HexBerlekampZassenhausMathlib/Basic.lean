@@ -1,4 +1,5 @@
 import HexBerlekampZassenhaus
+import HexBerlekampMathlib.Basic
 import HexBerlekampZassenhausMathlib.UFDPartition
 import HexPolyZMathlib.Basic
 import HexPolyZMathlib.Mignotte
@@ -325,6 +326,142 @@ theorem polyProduct_toPolynomial (factors : Array Hex.ZPoly) :
     toPolynomial_one_zpoly]
   exact List.prod_eq_foldl.symm
 
+/-- Index type for the modular factors stored in executable prime-choice data. -/
+abbrev ModPFactorIndex (primeData : Hex.PrimeChoiceData) : Type :=
+  Fin primeData.factorsModP.size
+
+/-- A finite subset of the modular factors stored in executable prime-choice data. -/
+abbrev ModPFactorSubset (primeData : Hex.PrimeChoiceData) : Type :=
+  Finset (ModPFactorIndex primeData)
+
+/-- The selected modular factor at an executable `PrimeChoiceData` index. -/
+def modPFactor (primeData : Hex.PrimeChoiceData)
+    (i : ModPFactorIndex primeData) : @Hex.FpPoly primeData.p primeData.bounds :=
+  primeData.factorsModP[i]
+
+/-- Product of the selected modular factors. -/
+def modPFactorProduct
+    (primeData : Hex.PrimeChoiceData) (S : ModPFactorSubset primeData) :
+    @Hex.FpPoly primeData.p primeData.bounds :=
+  letI := primeData.bounds
+  S.toList.foldl (fun acc i => acc * modPFactor primeData i) 1
+
+/--
+The monic modular image used for subset partition statements. This mirrors the
+executable prime-choice normalization: zero stays zero, and nonzero inputs are
+scaled by the inverse of their leading coefficient.
+-/
+def monicModPImage {p : Nat} [Hex.ZMod64.Bounds p] (f : Hex.FpPoly p) : Hex.FpPoly p :=
+  if f.isZero then
+    0
+  else
+    Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f)⁻¹ f
+
+/--
+An integer factor is represented modulo the selected prime by a subset of the
+recorded modular factors when the subset product is the monic modular image of
+that integer factor.
+-/
+def RepresentsIntegerFactorModP
+    (primeData : Hex.PrimeChoiceData) (factor : Hex.ZPoly)
+    (S : ModPFactorSubset primeData) : Prop :=
+  modPFactorProduct primeData S =
+    @monicModPImage primeData.p primeData.bounds
+      (@Hex.ZPoly.modP primeData.p primeData.bounds factor)
+
+/--
+Proof-facing package for the mod-`p` irreducible-factor subset partition over
+the executable `PrimeChoiceData` surface.
+
+The proposition parameters are hooks for the eventual admissible-prime and
+square-free-reduction hypotheses. Downstream consumers should depend on the
+existence and uniqueness projections below rather than on a particular analytic
+proof of this package.
+-/
+structure ModPSubsetPartitionHypotheses
+    (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (admissiblePrime squareFreeReduction : Prop) : Prop where
+  fModP_eq : primeData.fModP = @Hex.ZPoly.modP primeData.p primeData.bounds core
+  admissible_prime : admissiblePrime
+  square_free_reduction : squareFreeReduction
+  factors_irreducible :
+    ∀ i : ModPFactorIndex primeData,
+      Irreducible
+        (@HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds
+          (modPFactor primeData i))
+  exists_subset :
+    ∀ {factor : Hex.ZPoly},
+      Irreducible (HexPolyZMathlib.toPolynomial factor) →
+      factor ∣ core →
+      ∃ S : ModPFactorSubset primeData, RepresentsIntegerFactorModP primeData factor S
+  unique_subset :
+    ∀ {factor : Hex.ZPoly} {S T : ModPFactorSubset primeData},
+      Irreducible (HexPolyZMathlib.toPolynomial factor) →
+      factor ∣ core →
+      RepresentsIntegerFactorModP primeData factor S →
+      RepresentsIntegerFactorModP primeData factor T →
+      S = T
+
+/--
+Consumer-facing mod-`p` subset partition: an irreducible integer factor of the
+core has a unique representing subset of the selected modular factors.
+-/
+theorem existsUnique_modPFactorSubset_of_modPSubsetPartition
+    {core : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {admissiblePrime squareFreeReduction : Prop}
+    (h :
+      ModPSubsetPartitionHypotheses core primeData
+        admissiblePrime squareFreeReduction)
+    {factor : Hex.ZPoly}
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hdvd : factor ∣ core) :
+    ∃! S : ModPFactorSubset primeData, RepresentsIntegerFactorModP primeData factor S := by
+  rcases h.exists_subset hirr hdvd with ⟨S, hS⟩
+  refine ⟨S, hS, ?_⟩
+  intro T hT
+  exact (h.unique_subset (factor := factor) (S := S) (T := T) hirr hdvd hS hT).symm
+
+/-- Existence projection from the mod-`p` subset-partition package. -/
+theorem exists_modPFactorSubset_of_modPSubsetPartition
+    {core : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {admissiblePrime squareFreeReduction : Prop}
+    (h :
+      ModPSubsetPartitionHypotheses core primeData
+        admissiblePrime squareFreeReduction)
+    {factor : Hex.ZPoly}
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hdvd : factor ∣ core) :
+    ∃ S : ModPFactorSubset primeData, RepresentsIntegerFactorModP primeData factor S :=
+  h.exists_subset hirr hdvd
+
+/-- Uniqueness projection from the mod-`p` subset-partition package. -/
+theorem unique_modPFactorSubset_of_modPSubsetPartition
+    {core : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {admissiblePrime squareFreeReduction : Prop}
+    (h :
+      ModPSubsetPartitionHypotheses core primeData
+        admissiblePrime squareFreeReduction)
+    {factor : Hex.ZPoly} {S T : ModPFactorSubset primeData}
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hdvd : factor ∣ core)
+    (hS : RepresentsIntegerFactorModP primeData factor S)
+    (hT : RepresentsIntegerFactorModP primeData factor T) :
+    S = T :=
+  h.unique_subset (factor := factor) (S := S) (T := T) hirr hdvd hS hT
+
+/-- Irreducibility projection for a selected modular factor. -/
+theorem modPFactor_irreducible_of_modPSubsetPartition
+    {core : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {admissiblePrime squareFreeReduction : Prop}
+    (h :
+      ModPSubsetPartitionHypotheses core primeData
+        admissiblePrime squareFreeReduction)
+    (i : ModPFactorIndex primeData) :
+    Irreducible
+      (@HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds
+        (modPFactor primeData i)) :=
+  h.factors_irreducible i
+
 /-- Index type for the local factors stored in executable Hensel lift data. -/
 abbrev LiftedFactorIndex (d : Hex.LiftData) : Type :=
   Fin d.liftedFactors.size
@@ -340,6 +477,39 @@ def liftedFactor (d : Hex.LiftData) (i : LiftedFactorIndex d) : Hex.ZPoly :=
 /-- Product of the lifted local factors selected by a finite subset. -/
 def liftedFactorProduct (d : Hex.LiftData) (S : LiftedFactorSubset d) : Hex.ZPoly :=
   S.toList.foldl (fun acc i => acc * liftedFactor d i) 1
+
+/-- Transport a modular-factor index to the corresponding lifted-factor index. -/
+def liftedIndexOfModPIndex
+    (primeData : Hex.PrimeChoiceData) (d : Hex.LiftData)
+    (hsize : d.liftedFactors.size = primeData.factorsModP.size)
+    (i : ModPFactorIndex primeData) : LiftedFactorIndex d :=
+  ⟨i.val, by
+    rw [hsize]
+    exact i.isLt⟩
+
+/-- Embedding version of `liftedIndexOfModPIndex` for finite-set transport. -/
+def modPIndexToLiftedEmbedding
+    (primeData : Hex.PrimeChoiceData) (d : Hex.LiftData)
+    (hsize : d.liftedFactors.size = primeData.factorsModP.size) :
+    ModPFactorIndex primeData ↪ LiftedFactorIndex d where
+  toFun := liftedIndexOfModPIndex primeData d hsize
+  inj' := by
+    intro i j hij
+    apply Fin.ext
+    change i.val = j.val
+    have hval :=
+      congrArg (fun x : LiftedFactorIndex d => x.val) hij
+    simpa [liftedIndexOfModPIndex] using hval
+
+/--
+Transport a selected subset of modular factors to the corresponding selected
+subset of lifted factors, once the lift stage is known to preserve factor count.
+-/
+def liftedSubsetOfModPSubset
+    (primeData : Hex.PrimeChoiceData) (d : Hex.LiftData)
+    (hsize : d.liftedFactors.size = primeData.factorsModP.size)
+    (S : ModPFactorSubset primeData) : LiftedFactorSubset d :=
+  S.map (modPIndexToLiftedEmbedding primeData d hsize)
 
 /--
 Selected lifted-factor product scaled by the leading coefficient of the integer
