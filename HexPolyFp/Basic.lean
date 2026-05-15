@@ -1205,6 +1205,84 @@ private theorem evalCoeffPowerSumUpTo_const_mul
       rw [evalCoeffPowerSumUpTo_const_mul c coeff x n (base + 1)]
       grind
 
+private theorem evalCoeffPowerSumUpTo_rebase_mul
+    (coeff : Nat → ZMod64 p) (x : ZMod64 p) (shift : Nat) :
+    ∀ n base,
+      x ^ shift *
+          evalCoeffPowerSumUpTo (fun i => coeff (shift + i)) n base x =
+        evalCoeffPowerSumUpTo coeff n (shift + base) x
+  | 0, base => by
+      simp [evalCoeffPowerSumUpTo]
+      grind
+  | n + 1, base => by
+      simp only [evalCoeffPowerSumUpTo]
+      rw [Lean.Grind.Semiring.left_distrib]
+      rw [evalCoeffPowerSumUpTo_rebase_mul coeff x shift n (base + 1)]
+      have hpow :
+          x ^ shift * x ^ base = x ^ (shift + base) := by
+        exact (Lean.Grind.Semiring.pow_add x shift base).symm
+      have hterm :
+          x ^ shift * (coeff (shift + base) * x ^ base) =
+            coeff (shift + base) * x ^ (shift + base) := by
+        rw [← Lean.Grind.Semiring.mul_assoc]
+        rw [Lean.Grind.CommSemiring.mul_comm (x ^ shift) (coeff (shift + base))]
+        rw [Lean.Grind.Semiring.mul_assoc]
+        rw [hpow]
+      rw [hterm]
+      grind
+
+private theorem evalCoeffPowerSumUpTo_zero_prefix_shift
+    (coeff : Nat → ZMod64 p) (x : ZMod64 p) :
+    ∀ shift n,
+      evalCoeffPowerSumUpTo
+          (fun k => if k < shift then 0 else coeff (k - shift))
+          (shift + n) 0 x =
+        x ^ shift * evalCoeffPowerSumUpTo coeff n 0 x
+  | 0, n => by
+      simp only [Nat.zero_add]
+      rw [Lean.Grind.Semiring.pow_zero]
+      rw [Lean.Grind.Semiring.one_mul]
+      rfl
+  | shift + 1, n => by
+      rw [Nat.succ_add]
+      simp only [evalCoeffPowerSumUpTo]
+      have hhead :
+          (if 0 < shift + 1 then 0 else coeff (0 - (shift + 1))) *
+              x ^ 0 = (0 : ZMod64 p) := by
+        grind
+      rw [hhead, zmod_zero_add]
+      have htail :
+          evalCoeffPowerSumUpTo
+              (fun k => if k < shift + 1 then 0 else coeff (k - (shift + 1)))
+              (shift + n) 1 x =
+            x *
+              evalCoeffPowerSumUpTo
+                (fun k => if k < shift then 0 else coeff (k - shift))
+                (shift + n) 0 x := by
+        rw [← evalCoeffPowerSumUpTo_rebase_mul
+          (fun k => if k < shift + 1 then 0 else coeff (k - (shift + 1)))
+          x 1 (shift + n) 0]
+        have hx_one : x ^ 1 = x := by
+          rw [Lean.Grind.Semiring.pow_succ x 0]
+          rw [Lean.Grind.Semiring.pow_zero]
+          grind
+        rw [hx_one]
+        have hfun :
+            (fun i => if 1 + i < shift + 1 then 0 else coeff (1 + i - (shift + 1))) =
+              (fun k => if k < shift then 0 else coeff (k - shift)) := by
+          funext k
+          by_cases hk : k < shift
+          · have hk' : 1 + k < shift + 1 := by omega
+            simp [hk, hk']
+          · have hk' : ¬ 1 + k < shift + 1 := by omega
+            have hsub : 1 + k - (shift + 1) = k - shift := by omega
+            simp [hk, hk', hsub]
+        rw [hfun]
+      rw [htail]
+      rw [evalCoeffPowerSumUpTo_zero_prefix_shift coeff x shift n]
+      rw [Lean.Grind.Semiring.pow_succ x shift]
+      grind
+
 private theorem size_le_of_coeff_eq_zero_from (f : FpPoly p) (bound : Nat)
     (hzero : ∀ i, bound ≤ i → f.coeff i = 0) :
     f.size ≤ bound := by
@@ -1214,6 +1292,36 @@ private theorem size_le_of_coeff_eq_zero_from (f : FpPoly p) (bound : Nat)
     have hpos : 0 < f.size := by omega
     have htop_zero : f.coeff (f.size - 1) = 0 := hzero (f.size - 1) (by omega)
     exact False.elim (DensePoly.coeff_last_ne_zero_of_pos_size f hpos htop_zero)
+
+theorem eval_shift_scale_row (i : Nat) (c : ZMod64 p) (f : FpPoly p)
+    (x : ZMod64 p) :
+    DensePoly.eval (DensePoly.shift i (DensePoly.scale c f)) x =
+      (c * x ^ i) * DensePoly.eval f x := by
+  rw [eval_eq_coeff_power_sum_upTo_bound
+    (DensePoly.shift i (DensePoly.scale c f)) x (bound := i + f.size)]
+  · rw [eval_eq_coeff_power_sum_upTo_size f x]
+    have hcoeff :
+        (fun k => (DensePoly.shift i (DensePoly.scale c f)).coeff k) =
+          (fun k => if k < i then 0 else c * f.coeff (k - i)) := by
+      funext k
+      have hzero : c * (0 : ZMod64 p) = 0 := by grind
+      rw [DensePoly.coeff_shift_scale i c f k hzero]
+      rfl
+    rw [hcoeff]
+    rw [evalCoeffPowerSumUpTo_zero_prefix_shift
+      (fun k => c * f.coeff k) x i f.size]
+    rw [evalCoeffPowerSumUpTo_const_mul c (fun k => f.coeff k) x f.size 0]
+    grind
+  · apply size_le_of_coeff_eq_zero_from
+    intro k hk
+    have hzero : c * (0 : ZMod64 p) = 0 := by grind
+    rw [DensePoly.coeff_shift_scale i c f k hzero]
+    by_cases hki : k < i
+    · simp [hki]
+      rfl
+    · have hf : f.size ≤ k - i := by omega
+      simp [hki, DensePoly.coeff_eq_zero_of_size_le f hf]
+      exact hzero
 
 theorem eval_add (f h : FpPoly p) (x : ZMod64 p) :
     DensePoly.eval (f + h) x = DensePoly.eval f x + DensePoly.eval h x := by

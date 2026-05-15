@@ -201,6 +201,68 @@ theorem Hex_ZPoly_Irreducible_of_irreducible_modP
     (by
       simpa [toMathlibPolynomial_modP_eq_map_intCast_zmod] using hirr_modP)
 
+/--
+Variant of `Hex_ZPoly_Irreducible_of_irreducible_modP` for the
+`PrimeChoiceData` surface used by the Berlekamp-Zassenhaus branches.
+
+The executable prime-choice record stores the modular image as `fModP`; callers
+provide the existing equality identifying it with `Hex.ZPoly.modP p core`.
+-/
+theorem Hex_ZPoly_Irreducible_of_primeChoice_fModP
+    (primeData : Hex.PrimeChoiceData) [Fact (Nat.Prime primeData.p)]
+    {core : Hex.ZPoly}
+    (hfModP_eq :
+      primeData.fModP =
+        @Hex.ZPoly.modP primeData.p primeData.bounds core)
+    (hprim : (HexPolyZMathlib.toPolynomial core).IsPrimitive)
+    (hlc_map_ne :
+      (Int.castRingHom (ZMod primeData.p))
+          (HexPolyZMathlib.toPolynomial core).leadingCoeff ≠ 0)
+    (hirr_fModP :
+      Irreducible
+        (@HexBerlekampMathlib.toMathlibPolynomial primeData.p
+          primeData.bounds primeData.fModP)) :
+    Hex.ZPoly.Irreducible core := by
+  letI := primeData.bounds
+  refine Hex_ZPoly_Irreducible_of_irreducible_modP
+    (p := primeData.p) (core := core) hprim hlc_map_ne ?_
+  simpa [hfModP_eq] using hirr_fModP
+
+/--
+Small-mod singleton branch irreducibility package for the selected
+square-free core.
+
+The branch hypotheses mirror the executable shape:
+`factorWithBound_entry_mem_small_mod_singleton_raw` shows that the fast path
+reassembles from the singleton square-free core when the selected modular
+factor list has size at most one.  The mathematical irreducibility payload is
+kept as an explicit `PrimeChoiceData.fModP` irreducibility hypothesis, so the
+eventual Berlekamp singleton theorem can replace it directly.
+-/
+theorem squareFreeCore_irreducible_of_small_mod_singleton
+    (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (_hselected : primeData = Hex.choosePrimeData core)
+    (_hsmall : primeData.factorsModP.size ≤ 1)
+    (hprime : Nat.Prime primeData.p)
+    (hfModP_eq :
+      primeData.fModP =
+        @Hex.ZPoly.modP primeData.p primeData.bounds core)
+    (hprim :
+      (HexPolyZMathlib.toPolynomial core).IsPrimitive)
+    (hlc_map_ne :
+      (Int.castRingHom (ZMod primeData.p))
+        (HexPolyZMathlib.toPolynomial core).leadingCoeff ≠ 0)
+    (hirr_fModP :
+      Irreducible
+        (@HexBerlekampMathlib.toMathlibPolynomial primeData.p
+          primeData.bounds primeData.fModP)) :
+    Hex.ZPoly.Irreducible core := by
+  haveI : Fact (Nat.Prime primeData.p) := ⟨hprime⟩
+  exact Hex_ZPoly_Irreducible_of_primeChoice_fModP
+    (primeData := primeData)
+    (core := core)
+    hfModP_eq hprim hlc_map_ne hirr_fModP
+
 end IntReductionMod
 
 end HexBerlekampZassenhausMathlib
