@@ -2719,6 +2719,56 @@ theorem recombinationSearchMod_isSome_of_liftedSubset_candidate_eq_factor
   · simpa [heq] using hquot
 
 /--
+Matched-rest variant of
+`recombinationSearchMod_isSome_of_liftedSubset_candidate_eq_factor`.
+
+At a recursive recombination state, `localFactors` is no longer the full
+lifted-factor list; it is the order-preserving list of the remaining proof-side
+indices `J`.  If a represented subset `S ⊆ J` contains the current minimum
+remaining index, the matching predicate identifies its executable split and
+the ordinary one-step search lemma applies.
+-/
+theorem recombinationSearchModAux_isSome_of_liftedSubset_candidate_eq_factor_of_matches
+    {target factor quotient : Hex.ZPoly} {d : Hex.LiftData}
+    {J S : LiftedFactorSubset d} {localFactors : List Hex.ZPoly}
+    {fuel : Nat}
+    (htarget_ne_one : target ≠ 1)
+    (hmatches : LiftedFactorListMatches d J localFactors)
+    (hSJ : S ⊆ J)
+    (hne : J.Nonempty)
+    (hmin : J.min' hne ∈ S)
+    (heq : recombinationCandidate d S = factor)
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hsearch_rest :
+      (Hex.recombinationSearchModAux quotient (d.p ^ d.k)
+        (liftedSubsetSelectedList d (J \ S)) fuel).isSome = true)
+    (hquot :
+      Hex.exactQuotient? target (recombinationCandidate d S) = some quotient) :
+    (Hex.recombinationSearchModAux target (d.p ^ d.k) localFactors (fuel + 1)).isSome =
+      true := by
+  refine
+    Hex.recombinationSearchModAux_isSome_of_step
+      (target := target)
+      (candidate := factor)
+      (quotient := quotient)
+      (modulus := d.p ^ d.k)
+      (localFactors := localFactors)
+      (selected := liftedSubsetSelectedList d S)
+      (rest := liftedSubsetSelectedList d (J \ S))
+      (fuel := fuel)
+      htarget_ne_one
+      (liftedSubsetSplit_mem_subsetSplitsWithFirst_of_matches
+        hmatches hSJ hne hmin)
+      ?_
+      (by
+        simpa [heq] using
+          shouldRecord_recombinationCandidate_of_eq_factor heq hirr)
+      ?_
+      hsearch_rest
+  · simpa [recombinationCandidate] using heq.symm
+  · simpa [heq] using hquot
+
+/--
 Variant of
 `recombinationSearchMod_isSome_of_liftedSubset_candidate_eq_factor` that
 discharges the executable quotient check from ordinary divisibility plus the
