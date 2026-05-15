@@ -1,5 +1,6 @@
 import HexBerlekamp.Factor
 import HexBerlekamp.Irreducibility
+import HexBerlekamp.RabinSoundness
 import HexModArithMathlib
 import HexPolyMathlib
 import Mathlib.FieldTheory.Finite.GaloisField
@@ -247,6 +248,18 @@ theorem rabin_irreducible
   sorry
 
 /--
+Forward Rabin soundness: when the executable Rabin test accepts, the
+transported Mathlib polynomial is irreducible.
+-/
+theorem rabinTest_true_irreducible
+    (f : Hex.FpPoly p) (hmonic : Hex.DensePoly.Monic f)
+    [Fact (Nat.Prime p)] :
+    Hex.Berlekamp.rabinTest f hmonic = true →
+      Irreducible (toMathlibPolynomial f) := by
+  intro htest
+  exact (rabin_irreducible f hmonic (Hex.Berlekamp.basisSize f) rfl).mp htest
+
+/--
 Rabin's executable test is equivalent to Mathlib irreducibility with the
 explicit positive-degree hypothesis used by the finite-field proof.
 -/
@@ -268,7 +281,7 @@ theorem checkIrreducibilityCertificate_irreducible
     Hex.Berlekamp.checkIrreducibilityCertificate f hmonic cert = true →
       Irreducible (toMathlibPolynomial f) := by
   intro hcheck
-  exact (rabin_irreducible f hmonic (Hex.Berlekamp.basisSize f) rfl).mp
+  exact rabinTest_true_irreducible f hmonic
     (Hex.Berlekamp.checkIrreducibilityCertificate_rabinTest f hmonic cert hcheck)
 
 /-- Mathlib irreducibility over `Polynomial (ZMod p)` is classically decidable. -/
