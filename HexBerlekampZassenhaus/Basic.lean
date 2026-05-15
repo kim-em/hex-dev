@@ -938,7 +938,10 @@ private def signedContentScalar (f : ZPoly) : Int :=
   else
     ZPoly.content f
 
-private def normalizeFactorSign (f : ZPoly) : ZPoly :=
+/-- Normalize a polynomial factor's sign by negating it whenever the leading
+coefficient is negative.  The result has nonnegative leading coefficient and is
+associated to the input over `ℤ`. -/
+def normalizeFactorSign (f : ZPoly) : ZPoly :=
   if DensePoly.leadingCoeff f < 0 then
     DensePoly.scale (-1 : Int) f
   else
@@ -2987,7 +2990,8 @@ private def liftModulus (d : LiftData) : Nat :=
 def centeredLiftPoly (f : ZPoly) (m : Nat) : ZPoly :=
   DensePoly.ofCoeffs <| f.toArray.map fun coeff => centeredModNat coeff m
 
-private theorem coeff_centeredLiftPoly (f : ZPoly) (m i : Nat) :
+/-- Coefficientwise description of `centeredLiftPoly`. -/
+theorem coeff_centeredLiftPoly (f : ZPoly) (m i : Nat) :
     (centeredLiftPoly f m).coeff i = centeredModNat (f.coeff i) m := by
   have hzero : centeredModNat (0 : Int) m = 0 := centeredModNat_zero m
   unfold centeredLiftPoly

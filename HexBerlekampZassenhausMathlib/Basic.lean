@@ -819,6 +819,326 @@ theorem existsUnique_recoveringLiftedFactorSubset_at_defaultPrecision
   existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence
     h hcore_ne hirr hdvd hprecision
 
+/-! ### LiftedFactorSubset → executable recombination split bridge
+
+The executable recombination search at the lifted-factor surface enumerates
+order-preserving partitions of `d.liftedFactors.toList` via
+`Hex.subsetSplitsWithFirst`.  These helpers transport a proof-side
+`LiftedFactorSubset d` (a `Finset` of indices) into a concrete `(selected,
+rest)` partition that lies in the executable enumeration, with the
+selected/rejected lists ordered by their original `d.liftedFactors` index.
+
+The bridge product equality matches the executable
+`Array.polyProduct selected.toArray` against the proof-side
+`liftedFactorProduct d S` after transport to `Polynomial ℤ`, where
+multiplication is commutative and the order difference between the
+index-preserving partition and `S.toList` becomes a permutation.
+-/
+
+/-- Boolean indicator vector for `S`, indexed by the same `Fin` order as
+`d.liftedFactors.toList`. -/
+def liftedSubsetMask (d : Hex.LiftData) (S : LiftedFactorSubset d) : List Bool :=
+  (List.finRange d.liftedFactors.size).map fun i => decide (i ∈ S)
+
+theorem liftedSubsetMask_length (d : Hex.LiftData) (S : LiftedFactorSubset d) :
+    (liftedSubsetMask d S).length = d.liftedFactors.toList.length := by
+  unfold liftedSubsetMask; simp
+
+/-- The list of lifted factors selected by `S`, ordered by their original
+`d.liftedFactors` index. -/
+def liftedSubsetSelectedList (d : Hex.LiftData) (S : LiftedFactorSubset d) :
+    List Hex.ZPoly :=
+  (d.liftedFactors.toList.zip (liftedSubsetMask d S)).filterMap fun p =>
+    if p.2 then some p.1 else none
+
+/-- The list of lifted factors not selected by `S`, ordered by their original
+`d.liftedFactors` index. -/
+def liftedSubsetRejectedList (d : Hex.LiftData) (S : LiftedFactorSubset d) :
+    List Hex.ZPoly :=
+  (d.liftedFactors.toList.zip (liftedSubsetMask d S)).filterMap fun p =>
+    if p.2 then none else some p.1
+
+/-- Generalised partition lemma: for any list paired with a Boolean mask of
+matching length, the order-preserving selected/rejected partition lies in
+`Hex.subsetSplits`. -/
+private theorem subsetSplits_zip_filterMap_partition :
+    ∀ (xs : List Hex.ZPoly) (mask : List Bool), mask.length = xs.length →
+      ((xs.zip mask).filterMap (fun p => if p.2 then some p.1 else none),
+        (xs.zip mask).filterMap (fun p => if p.2 then none else some p.1)) ∈
+        Hex.subsetSplits xs := by
+  intro xs
+  induction xs with
+  | nil =>
+      intro mask hmask
+      have : mask = [] := List.length_eq_zero_iff.mp hmask
+      subst this
+      simpa using Hex.subsetSplits_nil_mem
+  | cons x xs ih =>
+      intro mask hmask
+      cases mask with
+      | nil => simp at hmask
+      | cons b bs =>
+          simp only [List.length_cons, Nat.add_right_cancel_iff] at hmask
+          rw [List.zip_cons_cons, List.filterMap_cons, List.filterMap_cons]
+          by_cases hb : b = true
+          · subst hb
+            simp only [if_true]
+            exact Hex.subsetSplits_cons_left_mem (ih bs hmask)
+          · have hb' : b = false := by cases b <;> simp_all
+            subst hb'
+            simp only
+            exact Hex.subsetSplits_cons_right_mem (ih bs hmask)
+
+/-- The lifted-factor subset partition lies in the executable
+`Hex.subsetSplits` enumeration of the lifted-factor list. -/
+theorem liftedSubsetSplit_mem_subsetSplits
+    (d : Hex.LiftData) (S : LiftedFactorSubset d) :
+    (liftedSubsetSelectedList d S, liftedSubsetRejectedList d S) ∈
+      Hex.subsetSplits d.liftedFactors.toList := by
+  unfold liftedSubsetSelectedList liftedSubsetRejectedList
+  exact subsetSplits_zip_filterMap_partition d.liftedFactors.toList
+    (liftedSubsetMask d S) (liftedSubsetMask_length d S)
+
+/-- Auxiliary partition lemma at the `subsetSplitsWithFirst` surface: when the
+mask starts with `true`, the partition lies in
+`Hex.subsetSplitsWithFirst (x :: xs)`. -/
+private theorem subsetSplitsWithFirst_zip_filterMap_partition
+    (x : Hex.ZPoly) (xs : List Hex.ZPoly) (bs : List Bool) (h : bs.length = xs.length) :
+    (((x :: xs).zip (true :: bs)).filterMap (fun p => if p.2 then some p.1 else none),
+      ((x :: xs).zip (true :: bs)).filterMap (fun p => if p.2 then none else some p.1)) ∈
+      Hex.subsetSplitsWithFirst (x :: xs) := by
+  rw [List.zip_cons_cons, List.filterMap_cons, List.filterMap_cons]
+  simp only [if_true]
+  exact Hex.subsetSplitsWithFirst_mem_cons (subsetSplits_zip_filterMap_partition xs bs h)
+
+/-- The first entry of `liftedSubsetMask d S`, via `head?`, records membership
+of index `0` in `S`. -/
+private theorem liftedSubsetMask_head?_eq_decide
+    (d : Hex.LiftData) (S : LiftedFactorSubset d)
+    (hpos : 0 < d.liftedFactors.size) :
+    (liftedSubsetMask d S).head? =
+      some (decide ((⟨0, hpos⟩ : LiftedFactorIndex d) ∈ S)) := by
+  unfold liftedSubsetMask
+  rw [List.head?_map]
+  have hfin : (List.finRange d.liftedFactors.size).head? =
+      some (⟨0, hpos⟩ : Fin d.liftedFactors.size) := by
+    have h : (List.finRange d.liftedFactors.size)[0]? =
+        some (⟨0, hpos⟩ : Fin d.liftedFactors.size) := by
+      rw [List.getElem?_eq_getElem (by simp; exact hpos)]
+      simp
+    simpa [List.head?_eq_getElem?] using h
+  rw [hfin]
+  rfl
+
+/-- General `filterMap`/`filter`-`map` equivalence: a `filterMap` whose body is
+either `some (f x)` or `none` is the same as filtering then mapping. -/
+private theorem List.filterMap_if_eq_map_filter
+    {α β : Type _} (l : List α) (p : α → Bool) (f : α → β) :
+    l.filterMap (fun x => if p x then some (f x) else none) =
+      (l.filter p).map f := by
+  induction l with
+  | nil => simp
+  | cons x xs ih =>
+      cases hp : p x with
+      | true => simp [hp, ih]
+      | false => simp [hp, ih]
+
+/-- The selected list has the clean `filter`/`map` characterisation needed for
+multiset/permutation reasoning. -/
+private theorem liftedSubsetSelectedList_eq_filter_map
+    (d : Hex.LiftData) (S : LiftedFactorSubset d) :
+    liftedSubsetSelectedList d S =
+      ((List.finRange d.liftedFactors.size).filter fun i => decide (i ∈ S)).map
+        (liftedFactor d) := by
+  unfold liftedSubsetSelectedList liftedSubsetMask liftedFactor
+  -- Rewrite d.liftedFactors.toList as a finRange map.
+  have hxs : d.liftedFactors.toList =
+      (List.finRange d.liftedFactors.size).map (fun i => d.liftedFactors[i]) := by
+    apply List.ext_getElem
+    · simp
+    · intro n h₁ h₂
+      simp [List.getElem_finRange]
+  rw [hxs, List.zip_map', List.filterMap_map]
+  simp only [Function.comp_def]
+  exact List.filterMap_if_eq_map_filter
+    (List.finRange d.liftedFactors.size) (fun i => decide (i ∈ S))
+    (fun i => d.liftedFactors[i])
+
+/-- The order-preserving filter of `List.finRange n` by membership in a Finset
+of `Fin n` is a permutation of the Finset's `toList`. -/
+private theorem finRange_filter_mem_perm_toList
+    {n : Nat} (S : Finset (Fin n)) :
+    ((List.finRange n).filter (fun i => decide (i ∈ S))).Perm S.toList := by
+  apply List.perm_of_nodup_nodup_toFinset_eq
+  · exact (List.nodup_finRange n).filter _
+  · exact S.nodup_toList
+  · simp [List.toFinset_filter, List.toFinset_finRange,
+      Finset.filter_univ_mem, Finset.toList_toFinset]
+
+/-- The transported recombination candidate product equals the proof-side
+lifted-factor product: both factor lists are permutations of each other in
+`Polynomial ℤ`, so commutativity collapses the order difference. -/
+theorem polyProduct_liftedSubsetSelectedList_eq_liftedFactorProduct
+    (d : Hex.LiftData) (S : LiftedFactorSubset d) :
+    Array.polyProduct (liftedSubsetSelectedList d S).toArray =
+      liftedFactorProduct d S := by
+  apply HexPolyZMathlib.equiv.injective
+  show HexPolyZMathlib.toPolynomial _ = HexPolyZMathlib.toPolynomial _
+  rw [polyProduct_toPolynomial, liftedSubsetSelectedList_eq_filter_map]
+  -- LHS: ((((List.finRange n).filter (· ∈ S)).map (liftedFactor d)).map toPolynomial).prod
+  rw [List.map_map]
+  -- LHS: (((List.finRange n).filter (· ∈ S)).map (toPolynomial ∘ liftedFactor d)).prod
+  -- Now compute RHS.
+  unfold liftedFactorProduct
+  rw [show (S.toList.foldl (fun acc i => acc * liftedFactor d i) (1 : Hex.ZPoly)) =
+        (S.toList.map (liftedFactor d)).foldl (· * ·) 1 from by
+    rw [List.foldl_map]]
+  rw [toPolynomial_foldl_mul, toPolynomial_one_zpoly, ← List.prod_eq_foldl, List.map_map]
+  -- Now both sides are List.prod over (... .map (toPolynomial ∘ liftedFactor d))
+  apply List.Perm.prod_eq
+  apply List.Perm.map
+  exact finRange_filter_mem_perm_toList S
+
+/-- When index `0` is in `S`, the lifted-factor subset partition lies in the
+`subsetSplitsWithFirst` enumeration that the recombination search iterates. -/
+theorem liftedSubsetSplit_mem_subsetSplitsWithFirst
+    (d : Hex.LiftData) (S : LiftedFactorSubset d)
+    (hpos : 0 < d.liftedFactors.size)
+    (h0 : (⟨0, hpos⟩ : LiftedFactorIndex d) ∈ S) :
+    (liftedSubsetSelectedList d S, liftedSubsetRejectedList d S) ∈
+      Hex.subsetSplitsWithFirst d.liftedFactors.toList := by
+  unfold liftedSubsetSelectedList liftedSubsetRejectedList
+  -- Decompose d.liftedFactors.toList and the mask into cons forms.
+  have hxs_pos : 0 < d.liftedFactors.toList.length := by simpa using hpos
+  have hmask_len := liftedSubsetMask_length d S
+  have hmask_head := liftedSubsetMask_head?_eq_decide d S hpos
+  rcases hxs : d.liftedFactors.toList with _ | ⟨x, xs⟩
+  · rw [hxs] at hxs_pos; simp at hxs_pos
+  rcases hmask : liftedSubsetMask d S with _ | ⟨b, bs⟩
+  · rw [hmask] at hmask_head; simp at hmask_head
+  -- Head bit is determined by `h0`.
+  rw [hmask] at hmask_head
+  simp [h0] at hmask_head
+  -- `hmask_head : b = true`
+  subst hmask_head
+  -- Lengths line up.
+  have hbs_len : bs.length = xs.length := by
+    rw [hmask, hxs] at hmask_len
+    simpa using hmask_len
+  exact subsetSplitsWithFirst_zip_filterMap_partition x xs bs hbs_len
+
+/-- The executable recombination candidate associated to a lifted-factor
+subset: this is the `Hex.ZPoly` value that the recombination search compares
+against the running target via `shouldRecordPolynomialFactor` /
+`exactQuotient?`.  Definitionally equal to the inline expression used inside
+`Hex.recombinationSearchModAux`. -/
+def recombinationCandidate (d : Hex.LiftData) (S : LiftedFactorSubset d) :
+    Hex.ZPoly :=
+  Hex.normalizeFactorSign <|
+    Hex.ZPoly.primitivePart <|
+      Hex.centeredLiftPoly
+        (Array.polyProduct (liftedSubsetSelectedList d S).toArray)
+        (d.p ^ d.k)
+
+/-- The `Hex.centeredLiftPoly` operation is invariant under prior reduction by
+the same modulus, so the A2 recovery equality phrased in terms of
+`reduceModPow` of the scaled lifted product can equivalently be stated as the
+direct centered lift of the scaled lifted product. -/
+private theorem centeredLiftPoly_reduceModPow_eq
+    (f : Hex.ZPoly) (p k : Nat) (hp : 0 < p) :
+    Hex.centeredLiftPoly (Hex.ZPoly.reduceModPow f p k) (p ^ k) =
+      Hex.centeredLiftPoly f (p ^ k) := by
+  have hpkpos : 0 < p ^ k := Nat.pow_pos hp
+  have hpkne : p ^ k ≠ 0 := Nat.ne_of_gt hpkpos
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  rw [Hex.coeff_centeredLiftPoly, Hex.coeff_centeredLiftPoly,
+    Hex.ZPoly.coeff_reduceModPow_eq_emod_of_pos _ _ _ _ hpkpos]
+  -- Goal: centeredModNat ((f.coeff n) % (p^k : Int)) (p^k) = centeredModNat (f.coeff n) (p^k)
+  unfold Hex.centeredModNat
+  rw [if_neg hpkne, if_neg hpkne]
+  -- both branches use r = z % m; the LHS computes ((f.coeff n) % m) % m which equals (f.coeff n) % m
+  rw [Int.emod_emod_of_dvd _ (dvd_refl _)]
+
+/-- The A2 recovery equality reformulated against the executable centred-lift
+of the **scaled** lifted product, ready to feed downstream packaging that
+relates the scaled centered lift to the unscaled `recombinationCandidate`.
+
+This is the cleanest form in which the proof-side recovery is expressed for
+later integration with executable-side normalisation reasoning (which removes
+the `lc(core)` scale and chooses a sign). -/
+theorem centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hdvd : factor ∣ core)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    Hex.centeredLiftPoly (scaledLiftedFactorProduct core d S) (d.p ^ d.k) =
+      factor := by
+  have h := centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision
+    hcore_ne hdvd hrep hprecision
+  rwa [centeredLiftPoly_reduceModPow_eq _ _ _ d.p_pos] at h
+
+/-- Converse to `toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord`: if the
+transported polynomial is non-zero and a non-unit, then the executable
+`shouldRecordPolynomialFactor` check passes.  Used to package executable
+witnesses for one recombination split from Mathlib-side irreducibility. -/
+theorem shouldRecordPolynomialFactor_of_toPolynomial_ne_zero_not_isUnit
+    {f : Hex.ZPoly}
+    (hne_zero : HexPolyZMathlib.toPolynomial f ≠ 0)
+    (hnonunit : ¬ IsUnit (HexPolyZMathlib.toPolynomial f)) :
+    Hex.shouldRecordPolynomialFactor f = true := by
+  have hf_ne_zero : f ≠ 0 := fun hf => hne_zero (by
+    rw [hf]; exact HexPolyZMathlib.toPolynomial_zero)
+  have hf_ne_one : f ≠ 1 := fun hf => hnonunit
+    ((HexPolyZMathlib.isUnit_iff_toPolynomial_isUnit f).mp (by rw [hf]; left; rfl))
+  have hf_ne_neg_one : f ≠ Hex.DensePoly.C (-1) := fun hf => hnonunit
+    ((HexPolyZMathlib.isUnit_iff_toPolynomial_isUnit f).mp (by rw [hf]; right; rfl))
+  unfold Hex.shouldRecordPolynomialFactor
+  simp [hf_ne_zero, hf_ne_one, hf_ne_neg_one]
+
+/-- An irreducible (after transport) `Hex.ZPoly` value passes the executable
+`shouldRecordPolynomialFactor` check.  Combines the previous lemma with
+`Irreducible`'s structural projections. -/
+theorem shouldRecordPolynomialFactor_of_irreducible_toPolynomial
+    {f : Hex.ZPoly}
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial f)) :
+    Hex.shouldRecordPolynomialFactor f = true :=
+  shouldRecordPolynomialFactor_of_toPolynomial_ne_zero_not_isUnit
+    hirr.ne_zero hirr.not_isUnit
+
+/-- One-step `shouldRecord` discharge for a recombination split: when the
+candidate equals an irreducible integer factor, the executable check passes. -/
+theorem shouldRecord_recombinationCandidate_of_eq_factor
+    {factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (heq : recombinationCandidate d S = factor)
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor)) :
+    Hex.shouldRecordPolynomialFactor (recombinationCandidate d S) = true := by
+  rw [heq]
+  exact shouldRecordPolynomialFactor_of_irreducible_toPolynomial hirr
+
+/-- One-step `exactQuotient?` discharge for a recombination split: when the
+candidate equals an integer divisor of `core` and is monic of positive degree,
+the executable exact-division check returns `some` of the proof-side cofactor. -/
+theorem exactQuotient?_recombinationCandidate_eq_some_of_eq_factor
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (heq : recombinationCandidate d S = factor)
+    (hmonic : Hex.DensePoly.Monic factor)
+    (hpos : 0 < factor.degree?.getD 0)
+    (hdvd : factor ∣ core) :
+    ∃ quotient,
+      Hex.exactQuotient? core (recombinationCandidate d S) = some quotient ∧
+        quotient * recombinationCandidate d S = core := by
+  obtain ⟨q, hq⟩ := hdvd
+  -- hq : core = factor * q
+  have hmul : q * factor = core := by
+    rw [Hex.DensePoly.mul_comm_poly (S := Int)]
+    exact hq.symm
+  refine ⟨q, ?_, ?_⟩
+  · rw [heq]
+    exact Hex.exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree hmonic hpos hmul
+  · rw [heq]; exact hmul
+
 /-- A `Hex.ZPoly` factor that passes the executable `shouldRecordPolynomialFactor`
 check is non-zero and not a unit after transport to `Polynomial ℤ`.  The
 executable check rejects `0`, `1`, and `-1`, which are exactly the zero
