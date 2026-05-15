@@ -200,4 +200,49 @@ theorem factorFastCoreWithBound_some_factor_count_eq
   · exact factorFastCoreWithBound_some_factor_count_ge trueSupports hcore_ne h
       htrue hpartition
 
+/-- Irreducibility for every factor emitted by a successful BHKS fast-core
+branch under the partition-refinement package.
+
+This packages the count equality from
+`factorFastCoreWithBound_some_factor_count_eq` into the older
+`factorFastCoreWithBound_some_factor_irreducible_of_count` scaffold, giving
+downstream factorization assembly a branch theorem that no longer has to
+thread the count equality manually. -/
+theorem factorFastCoreWithBound_some_factor_irreducible
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
+    {r : Nat} (trueSupports : Set (Set (Fin r)))
+    (hcore_ne : core ≠ 0)
+    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (htrue : BHKS.ForwardRecoveryInputs.ExpectedTrueFactors core
+      (BHKS.expectedIndicatorArrayOfSupports trueSupports) coreFactors)
+    (hpartition :
+      (BHKS.supportPartitionByMinColumn trueSupports).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial core)).card) :
+    ∀ factor ∈ coreFactors.toList,
+      Irreducible (HexPolyZMathlib.toPolynomial factor) :=
+  factorFastCoreWithBound_some_factor_irreducible_of_count hcore_ne h
+    (factorFastCoreWithBound_some_factor_count_eq trueSupports hcore_ne h
+      htrue hpartition)
+
+/-- `Hex.ZPoly`-predicate form of
+`factorFastCoreWithBound_some_factor_irreducible`. -/
+theorem factorFastCoreWithBound_some_factor_zpolyIrreducible
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
+    {r : Nat} (trueSupports : Set (Set (Fin r)))
+    (hcore_ne : core ≠ 0)
+    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (htrue : BHKS.ForwardRecoveryInputs.ExpectedTrueFactors core
+      (BHKS.expectedIndicatorArrayOfSupports trueSupports) coreFactors)
+    (hpartition :
+      (BHKS.supportPartitionByMinColumn trueSupports).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial core)).card) :
+    ∀ factor ∈ coreFactors.toList, Hex.ZPoly.Irreducible factor :=
+  factorFastCoreWithBound_some_factor_zpolyIrreducible_of_count hcore_ne h
+    (factorFastCoreWithBound_some_factor_count_eq trueSupports hcore_ne h
+      htrue hpartition)
+
 end HexBerlekampZassenhausMathlib
