@@ -84,7 +84,9 @@ Upper cardinality bound for a product partition in a UFD.
 If a non-zero element `f` is associated to the product of a list of non-zero
 non-unit factors, then that list cannot have more entries than the multiset of
 normalized irreducible factors of `f`. Each list entry contributes at least one
-normalized factor.
+normalized factor. Callers use this for algorithm branches that already expose
+product preservation and `shouldRecord`/non-unit facts, but have not yet proved
+irreducibility of the emitted factors.
 -/
 theorem length_le_normalizedFactors_card
     {α : Type*} [CommMonoidWithZero α] [NormalizationMonoid α]
@@ -140,7 +142,8 @@ multiset of normalized factors of `f` has exactly the length of the list.
 
 This is the converse cardinality direction to
 `length_le_normalizedFactors_card` for the already-certified irreducible
-partition case.
+partition case. It is kept as the exact equality form because the exported
+lower-bound theorem below is the shape used by branch-level callers.
 -/
 theorem normalizedFactors_card_eq_length_of_irreducible_partition
     {α : Type*} [CommMonoidWithZero α] [IsCancelMulZero α]
@@ -185,6 +188,10 @@ theorem normalizedFactors_card_le_length_of_irreducible_partition
 /--
 The normalized factors of a list product of irreducibles are exactly the
 normalizations of the list entries, viewed as a multiset.
+
+Use this when a uniqueness or scalar-splitting proof needs to replace the
+abstract UFD factor multiset of a certified product by the concrete flattened
+list of factors.
 -/
 theorem normalizedFactors_list_prod_eq_of_irreducible
     {α : Type*} [CommMonoidWithZero α] [IsCancelMulZero α]
@@ -199,6 +206,7 @@ theorem normalizedFactors_list_prod_eq_of_irreducible
     intro g hg
     exact hirr g (Multiset.mem_coe.mp hg))
 
+/-- A product of monic integer polynomials is monic. -/
 private theorem polynomial_list_prod_monic
     (gs : List (Polynomial ℤ)) (hmonic : ∀ g ∈ gs, g.Monic) :
     gs.prod.Monic := by
@@ -218,7 +226,9 @@ If two nonzero integer scalars multiply products of monic irreducible factors
 to the same polynomial, the scalars agree and the flattened products have the
 same normalized-factor multiset. This is the Mathlib/UFD core needed by the
 factorization uniqueness bridge after executable factor entries have been
-expanded by multiplicity.
+expanded by multiplicity. The theorem stays public as the clean monic
+specialization; current BZ factorization uniqueness uses the normalize-fixed
+variant below because executable factors are not necessarily monic.
 -/
 theorem scalar_eq_and_normalizedFactors_eq_of_monic_irreducible_product_eq
     (c d : ℤ) (xs ys : List (Polynomial ℤ))
@@ -261,7 +271,9 @@ If two nonzero integer scalars multiply products of nonconstant `normalize`-fixe
 irreducible integer polynomial factors to the same polynomial, the scalars
 agree and the flattened factor lists agree as multisets. Constant factors are
 ruled out by the `natDegree ≠ 0` hypothesis, so they cannot leak between the
-scalar prefix and the factor list.
+scalar prefix and the factor list. This is the exported shape used by
+`Factorization` uniqueness after translating executable factors to
+`Polynomial ℤ`.
 -/
 theorem scalar_eq_and_coe_eq_of_normalize_fixed_nonconst_irreducible_product_eq
     (c d : ℤ) (xs ys : List (Polynomial ℤ))
@@ -383,7 +395,9 @@ irreducible elements.
 This isolates the UFD half of the BHKS Group B / B8 certification theorem:
 the algorithm-specific work (establishing the cardinality equality from BHKS
 lattice success state) is handled separately and supplies the `hcount`
-hypothesis to this lemma.
+hypothesis to this lemma. Fast and exhaustive branch bridges should use this
+once they have product preservation, non-unit entries, and the final count
+equality.
 -/
 theorem irreducible_of_partition_card_eq_normalizedFactors_card
     {α : Type*} [CommMonoidWithZero α] [NormalizationMonoid α]
@@ -471,6 +485,9 @@ of `g` is a sub-multiset of `qs` up to normalization.
 This is the UFD half of the BZ certificate degree-obstruction argument:
 once an integer factor reduces to a divisor of the recorded modular factor
 product, its modular factorization is drawn from the recorded irreducibles.
+The polynomial degree lemma below is the usual public consumer-facing package;
+this theorem remains available for callers that need the raw sub-multiset
+relation.
 -/
 theorem normalizedFactors_le_map_normalize_of_dvd_prod_irreducibles
     {α : Type*} [CommMonoidWithZero α] [NormalizationMonoid α]
