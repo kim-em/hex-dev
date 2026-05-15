@@ -1710,6 +1710,54 @@ theorem primeFieldLinearProduct_dvd_xPowSubX_one :
     -- acc = 1, so e ∣ 1 follows from e ∣ acc
     exact he_acc
 
+omit [ZMod64.PrimeModulus p] in
+/-- The high coefficients of a prime-field linear factor vanish. -/
+private theorem primeFieldLinearFactor_coeff_high (c : ZMod64 p) {n : Nat}
+    (hn : 2 ≤ n) : (primeFieldLinearFactor c).coeff n = 0 := by
+  unfold primeFieldLinearFactor FpPoly.X FpPoly.C
+  rw [DensePoly.coeff_sub _ _ _ zmod64_zero_sub_zero]
+  rw [DensePoly.coeff_monomial, DensePoly.coeff_C]
+  have hn1 : ¬ n = 1 := by omega
+  have hn0 : ¬ n = 0 := by omega
+  simp [hn1, hn0]
+  have h0 : (Zero.zero : ZMod64 p) = 0 := rfl
+  rw [h0]
+  grind
+
+/-- Each prime-field linear factor has size 2 (it is genuinely degree 1). -/
+theorem primeFieldLinearFactor_size (c : ZMod64 p) :
+    (primeFieldLinearFactor c).size = 2 := by
+  have h_coeff_1_ne : (primeFieldLinearFactor c).coeff 1 ≠ 0 := by
+    rw [primeFieldLinearFactor_coeff_one c]
+    exact zmod64_one_ne_zero_of_prime
+  have h_lower : 2 ≤ (primeFieldLinearFactor c).size := by
+    apply Classical.byContradiction
+    intro h
+    have hle : (primeFieldLinearFactor c).size ≤ 1 := by omega
+    exact h_coeff_1_ne
+      (DensePoly.coeff_eq_zero_of_size_le _ hle)
+  have h_upper : (primeFieldLinearFactor c).size ≤ 2 := by
+    apply Classical.byContradiction
+    intro h
+    have hgt : 2 < (primeFieldLinearFactor c).size := by omega
+    have h_pos : 0 < (primeFieldLinearFactor c).size := by omega
+    have h_top_ne :
+        (primeFieldLinearFactor c).coeff
+          ((primeFieldLinearFactor c).size - 1) ≠ 0 :=
+      DensePoly.coeff_last_ne_zero_of_pos_size _ h_pos
+    apply h_top_ne
+    exact primeFieldLinearFactor_coeff_high c (by omega)
+  omega
+
+/-- Each prime-field linear factor is monic. -/
+theorem primeFieldLinearFactor_monic (c : ZMod64 p) :
+    DensePoly.Monic (primeFieldLinearFactor c) := by
+  unfold DensePoly.Monic
+  rw [DensePoly.leadingCoeff_eq_coeff_last _
+    (by rw [primeFieldLinearFactor_size]; omega)]
+  rw [primeFieldLinearFactor_size]
+  exact primeFieldLinearFactor_coeff_one c
+
 /-! ### Structural lemmas
 
 These small consequences only use the foundational lemmas above plus
