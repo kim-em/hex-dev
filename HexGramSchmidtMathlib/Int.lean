@@ -24,6 +24,43 @@ namespace Hex
 namespace GramSchmidt
 namespace Int
 
+/-- Non-singular branch of the Cramer/Bareiss bridge: when the no-pivot
+Bareiss pass over the Gram matrix reaches column `j` without recording a
+singular step, the executable scaled coefficient agrees with the public
+row-pivoted Bareiss determinant of the Cramer minor. -/
+theorem scaledCoeffs_eq_scaledCoeffMatrix_bareiss_of_no_singular
+    (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val)
+    (h_nonsing :
+      (Matrix.noPivotLoop j.val
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none) :
+    GramSchmidt.entry (scaledCoeffs b) i j =
+      Matrix.bareiss (GramSchmidt.scaledCoeffMatrix b i j hji) := by
+  have h_rows :=
+    scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix b i j hji h_nonsing
+  have h_scaled_nonsing :
+      (Matrix.noPivotLoop j.val
+          (Matrix.noPivotInitialState
+            (GramSchmidt.scaledCoeffMatrix b i j hji))).singularStep = none := by
+    rw [scaledCoeffMatrix_eq_borderedMinor b i j hji]
+    have h_sync :=
+      (noPivotLoop_full_eq_borderedMinor_at_trailing (Matrix.gramMatrix b) j.val
+        (Nat.lt_trans hji i.isLt)
+        (⟨j.val, Nat.lt_trans hji i.isLt⟩ : Fin n) i
+        (Nat.le_refl _) (Nat.le_of_lt hji)).2
+    exact h_sync ▸ h_nonsing
+  have h_bareiss :=
+    Matrix.bareiss_eq_noPivotLoop_last_of_no_singular
+      (GramSchmidt.scaledCoeffMatrix b i j hji) h_scaled_nonsing
+  have h_entry :
+      GramSchmidt.entry (scaledCoeffs b) i j =
+        (Matrix.noPivotLoop j.val
+          (Matrix.noPivotInitialState
+            (GramSchmidt.scaledCoeffMatrix b i j hji))).matrix[
+          Fin.last j.val][Fin.last j.val] := by
+    rw [scaledCoeffs_entry_eq_getArrayEntry]
+    exact h_rows
+  exact h_entry.trans h_bareiss.symm
+
 /-- Cramer/Bareiss bridge: below the diagonal, the integral scaled
 Gram-Schmidt coefficient is exactly the public Bareiss determinant of the
 Cramer minor `scaledCoeffMatrix`. This is the `bareiss`-form companion of

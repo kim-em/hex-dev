@@ -1102,6 +1102,125 @@ theorem noPivotLoop_rowSwaps (fuel : Nat) (state : BareissState n) :
           · simpa [k] using hp
       · simp [noPivotLoop_done fuel state hDone]
 
+/-- Once a no-pivot Bareiss state is already at the terminal step boundary,
+additional fuel leaves it unchanged. -/
+theorem noPivotLoop_id_at_done
+    {n : Nat} (fuel : Nat) (state : BareissState n)
+    (hDone : ¬ state.step + 1 < n) :
+    noPivotLoop fuel state = state := by
+  induction fuel with
+  | zero => rfl
+  | succ f _ih => exact noPivotLoop_done f state hDone
+
+/-- Once a no-pivot Bareiss state has recorded a zero pivot at the current
+step, additional fuel leaves that singular fixed point unchanged. -/
+theorem noPivotLoop_id_at_singular_fixedpoint
+    {n : Nat} (fuel : Nat) (state : BareissState n)
+    (hDone : state.step + 1 < n)
+    (hp : state.matrix[(⟨state.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)][
+        (⟨state.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)] = 0)
+    (hsing : state.singularStep = some state.step) :
+    noPivotLoop fuel state = state := by
+  induction fuel with
+  | zero => rfl
+  | succ f _ih =>
+      rw [noPivotLoop_singular_branch f state hDone hp]
+      cases state
+      simp at hsing ⊢
+      exact hsing.symm
+
+/-- Fuel composition for the no-pivot Bareiss loop: running `a + b` units of
+fuel from `state` equals running `b` more units after `a` initial units. -/
+theorem noPivotLoop_add
+    {n : Nat} (a b : Nat) (state : BareissState n) :
+    noPivotLoop (a + b) state = noPivotLoop b (noPivotLoop a state) := by
+  induction a generalizing state with
+  | zero =>
+      show noPivotLoop (0 + b) state = noPivotLoop b state
+      simp
+  | succ a' ih =>
+      by_cases hDone : state.step + 1 < n
+      · let k : Fin n :=
+          ⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩
+        by_cases hp : state.matrix[k][k] = 0
+        · have h_lhs :
+              noPivotLoop (a' + 1 + b) state =
+                {state with singularStep := some state.step} := by
+            have : a' + 1 + b = (a' + b) + 1 := by omega
+            rw [this]
+            exact noPivotLoop_singular_branch (a' + b) state hDone hp
+          have h_rhs_inner :
+              noPivotLoop (a' + 1) state =
+                {state with singularStep := some state.step} :=
+            noPivotLoop_singular_branch a' state hDone hp
+          rw [h_lhs, h_rhs_inner]
+          symm
+          let s' : BareissState n := {state with singularStep := some state.step}
+          have hDone_s' : s'.step + 1 < n := hDone
+          have hp_s' : s'.matrix[(⟨s'.step, Nat.lt_of_succ_lt hDone_s'⟩ : Fin n)][
+              (⟨s'.step, Nat.lt_of_succ_lt hDone_s'⟩ : Fin n)] = 0 := hp
+          have hsing_s' : s'.singularStep = some s'.step := rfl
+          exact noPivotLoop_id_at_singular_fixedpoint b s' hDone_s' hp_s' hsing_s'
+        · have h_lhs :
+              noPivotLoop (a' + 1 + b) state =
+                noPivotLoop (a' + b)
+                  { step := state.step + 1
+                    matrix := stepMatrix state.matrix state.step
+                      state.matrix[k][k] state.prevPivot
+                    prevPivot := state.matrix[k][k]
+                    rowSwaps := state.rowSwaps
+                    singularStep := none } := by
+            have : a' + 1 + b = (a' + b) + 1 := by omega
+            rw [this]
+            exact noPivotLoop_regular_branch (a' + b) state hDone hp
+          have h_rhs_inner :
+              noPivotLoop (a' + 1) state =
+                noPivotLoop a'
+                  { step := state.step + 1
+                    matrix := stepMatrix state.matrix state.step
+                      state.matrix[k][k] state.prevPivot
+                    prevPivot := state.matrix[k][k]
+                    rowSwaps := state.rowSwaps
+                    singularStep := none } :=
+            noPivotLoop_regular_branch a' state hDone hp
+          rw [h_lhs, h_rhs_inner]
+          exact ih _
+      · rw [noPivotLoop_id_at_done (a' + 1 + b) state hDone]
+        rw [noPivotLoop_id_at_done (a' + 1) state hDone]
+        exact (noPivotLoop_id_at_done b state hDone).symm
+
+/-- When a no-pivot Bareiss run records no singular step and has enough room,
+the `step` field advances by exactly the amount of consumed fuel. -/
+theorem noPivotLoop_step_eq_add_of_singularStep_none
+    {n : Nat} (fuel : Nat) (state : BareissState n)
+    (h_init : state.singularStep = none)
+    (h_room : state.step + fuel + 1 ≤ n)
+    (h_no_sing : (noPivotLoop fuel state).singularStep = none) :
+    (noPivotLoop fuel state).step = state.step + fuel := by
+  induction fuel generalizing state with
+  | zero =>
+      show state.step = state.step + 0
+      omega
+  | succ f ih =>
+      have hDone : state.step + 1 < n := by omega
+      by_cases hp : state.matrix[state.step][state.step] = 0
+      · rw [noPivotLoop_singular_branch f state hDone hp] at h_no_sing
+        simp at h_no_sing
+      · rw [noPivotLoop_regular_branch f state hDone hp] at h_no_sing
+        rw [noPivotLoop_regular_branch f state hDone hp]
+        have h_next_room : state.step + 1 + f + 1 ≤ n := by omega
+        have h_next_step := ih
+          { step := state.step + 1
+            matrix := stepMatrix state.matrix state.step
+              state.matrix[state.step][state.step] state.prevPivot
+            prevPivot := state.matrix[state.step][state.step]
+            rowSwaps := state.rowSwaps
+            singularStep := none }
+          rfl h_next_room h_no_sing
+        rw [h_next_step]
+        show state.step + 1 + f = state.step + (f + 1)
+        omega
+
 /-- When the no-pivot Bareiss loop completes `fuel` iterations without
 recording a singular step, the row-pivoted Bareiss loop produces an
 identical state: every diagonal pivot is nonzero, so the row search and
@@ -1190,6 +1309,34 @@ theorem bareiss_eq_bareissData_det (M : Matrix Int n n) :
         arrayLastDiag?, BareissData.lastDiag?, rowsToMatrix, Matrix.ofFn,
         arraySign, BareissData.sign]
       rfl
+
+/-- If the no-pivot Bareiss pass reaches the final pivot without recording a
+singular step, then the public row-pivoted `bareiss` determinant is exactly
+the no-pivot final diagonal entry. -/
+theorem bareiss_eq_noPivotLoop_last_of_no_singular {k : Nat}
+    (M : Matrix Int (k + 1) (k + 1))
+    (h_no_sing :
+      (noPivotLoop k (noPivotInitialState M)).singularStep = none) :
+    bareiss M =
+      (noPivotLoop k (noPivotInitialState M)).matrix[Fin.last k][Fin.last k] := by
+  let init := noPivotInitialState M
+  let stateK := noPivotLoop k init
+  have h_step : stateK.step = k := by
+    have h := noPivotLoop_step_eq_add_of_singularStep_none k init rfl
+      (by simp [init, noPivotInitialState]) h_no_sing
+    simpa [stateK, init, noPivotInitialState] using h
+  have hDone_stateK : ¬ stateK.step + 1 < k + 1 := by omega
+  have h_full_nopivot : noPivotLoop (k + 1) init = stateK := by
+    rw [noPivotLoop_add k 1 init]
+    exact noPivotLoop_id_at_done 1 stateK hDone_stateK
+  have h_full_sing : (noPivotLoop (k + 1) init).singularStep = none := by
+    rw [h_full_nopivot]
+    exact h_no_sing
+  have hpivot := pivotLoop_eq_noPivotLoop_of_no_singular (k + 1) init h_full_sing
+  rw [bareiss_eq_bareissData_det, bareissData_eq_finish_pivotLoop, hpivot, h_full_nopivot]
+  have hdet := BareissData.det_succ_eq (finish stateK) h_no_sing
+  rw [hdet]
+  simp [finish, BareissData.sign, stateK, init, noPivotInitialState, noPivotLoop_rowSwaps]
 
 /-- The Bareiss determinant agrees with the generic determinant. -/
 theorem bareiss_eq_det (M : Matrix Int n n) :
