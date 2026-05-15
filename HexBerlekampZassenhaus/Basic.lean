@@ -1168,7 +1168,7 @@ def factorProduct (d : PrimeFactorData) : @FpPoly d.p d.bounds :=
 def containsDegree (d : PrimeFactorData) (n : Nat) : Bool :=
   d.factorDegrees.toList.any fun degree => degree == n
 
-private def hasSubsetDegreeAux : List Nat → Nat → Bool
+def hasSubsetDegreeAux : List Nat → Nat → Bool
   | [], target => target == 0
   | degree :: degrees, target =>
       hasSubsetDegreeAux degrees target ||
