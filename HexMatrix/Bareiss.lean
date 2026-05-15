@@ -1102,6 +1102,42 @@ theorem noPivotLoop_rowSwaps (fuel : Nat) (state : BareissState n) :
           · simpa [k] using hp
       · simp [noPivotLoop_done fuel state hDone]
 
+/-- When the no-pivot Bareiss loop completes `fuel` iterations without
+recording a singular step, the row-pivoted Bareiss loop produces an
+identical state: every diagonal pivot is nonzero, so the row search and
+swap branches of `pivotLoop` are never entered and both loops apply the
+same `stepMatrix` updates. -/
+theorem pivotLoop_eq_noPivotLoop_of_no_singular {n : Nat}
+    (fuel : Nat) (state : BareissState n)
+    (h_no_sing : (noPivotLoop fuel state).singularStep = none) :
+    pivotLoop fuel state = noPivotLoop fuel state := by
+  induction fuel generalizing state with
+  | zero => rfl
+  | succ f ih =>
+      by_cases hDone : state.step + 1 < n
+      · by_cases hp : state.matrix[state.step][state.step] = 0
+        · -- `noPivotLoop` records `singularStep = some state.step`, contradicting
+          -- `h_no_sing`.
+          rw [noPivotLoop_singular_branch f state hDone hp] at h_no_sing
+          simp at h_no_sing
+        · -- Regular branch in both loops; recurse on the same updated state.
+          let next : BareissState n :=
+            { step := state.step + 1
+              matrix := stepMatrix state.matrix state.step
+                state.matrix[state.step][state.step] state.prevPivot
+              prevPivot := state.matrix[state.step][state.step]
+              rowSwaps := state.rowSwaps
+              singularStep := none }
+          rw [noPivotLoop_regular_branch f state hDone hp]
+          rw [pivotLoop_regular_branch_no_swap f state hDone hp]
+          show pivotLoop f next = noPivotLoop f next
+          apply ih
+          show (noPivotLoop f next).singularStep = none
+          rw [← noPivotLoop_regular_branch f state hDone hp]
+          exact h_no_sing
+      · rw [pivotLoop_done f state hDone]
+        rw [noPivotLoop_done f state hDone]
+
 /-- Initial state used by the no-pivot Bareiss recurrence. -/
 def noPivotInitialState (M : Matrix Int n n) : BareissState n :=
   { step := 0
