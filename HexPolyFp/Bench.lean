@@ -155,6 +155,28 @@ def linearFactor (i : Nat) : FpPoly 5 :=
 def weightedFactor (i : Nat) : SquareFreeFactor 5 :=
   { factor := linearFactor i, multiplicity := 1 }
 
+/--
+Balanced multiplicity distribution for the square-free decomposition fixture.
+
+The five distinct monic linear factors `(x - 0), (x - 1), …, (x - 4)` over
+`F_5` are assigned multiplicities `⌊n / 5⌋` each, with the first `n mod 5`
+factors taking an extra `+1`. The resulting product has total degree exactly
+`n`, exactly five distinct linear factors, and max multiplicity `⌈n / 5⌉`.
+
+Yun's algorithm on this fixture performs a constant-degree initial gcd of
+`(f, f')` whose Euclidean step is dominated by polynomial division of a
+degree-`n` polynomial by a degree-`n - 5` one, then iterates `⌈n / 5⌉`
+levels each doing `O(n)` work. Total cost is `O(n^2)`, with the constant
+factor controlled by `n`'s parity mod `5` rather than the input's random
+multiplicity distribution.
+-/
+def balancedSquareFreeFactors (n : Nat) : List (SquareFreeFactor 5) :=
+  let base := n / 5
+  let rem := n % 5
+  (List.range 5).map fun i =>
+    { factor := ofCoeffs #[ZMod64.ofNat 5 i, 1]
+      multiplicity := if i < rem then base + 1 else base }
+
 /-- Stable checksum for polynomial-valued benchmark results. -/
 def checksumPoly {p : Nat} [ZMod64.Bounds p] (f : FpPoly p) : UInt64 :=
   f.toArray.foldl (fun acc coeff => mixHash acc (hash coeff)) 0
@@ -194,7 +216,7 @@ def prepWeightedInput (n : Nat) : WeightedInput :=
 
 /-- Per-parameter fixture for square-free decomposition. -/
 def prepSquareFreeInput (n : Nat) : SquareFreeInput :=
-  { poly := weightedProduct ((List.range n).map weightedFactor) }
+  { poly := weightedProduct (balancedSquareFreeFactors n) }
 
 /-- Benchmark target: compute `base^exponent mod modulus`. -/
 def runPowModMonicChecksum (input : ModInput) : UInt64 :=
@@ -251,31 +273,38 @@ setup_benchmark runPowModMonicChecksum n => n * n * Nat.log2 (n + 1)
 This registration batches `n` fixed-prime Frobenius calls on dense degree-`n`
 monic moduli. Each call performs a constant number of quotient-ring
 square-and-multiply steps with quadratic dense multiplication/reduction, so the
-batch is cubic.
+batch is cubic. The schedule starts at `n = 16` because below that the
+constant-bit-length of `p = 65537` (17 bits of square-and-multiply work per
+call) is comparable to the modulus degree and the `n³` asymptote has not
+dominated; the largest rung `n = 80` keeps per-call wall time well under the
+four-second cap on the reference host.
 -/
 setup_benchmark runFrobeniusXModChecksum n => n * n * n
   with prep := prepFrobeniusInput
   where {
-    paramFloor := 8
-    paramCeiling := 48
-    paramSchedule := .custom #[8, 12, 16, 24, 32, 48]
+    paramFloor := 16
+    paramCeiling := 80
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 80]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
-    slopeTolerance := 0.25
+    slopeTolerance := 0.20
   }
 
 /-
 Here both the modulus degree and Frobenius height scale with `n`. The exponent
 `65537^n` has Theta(n) bits, so the quotient-ring square-and-multiply loop performs
-Theta(n) quadratic reduced multiplications.
+Theta(n) quadratic reduced multiplications. The schedule stops at `n = 64`
+because at `n = 96` the per-call wall time crosses the four-second cap on the
+reference host; trimming the truncating rung keeps every scheduled rung inside
+the cap.
 -/
 setup_benchmark runFrobeniusXPowModChecksum n => n * n * n
   with prep := prepFrobeniusPowInput
   where {
     paramFloor := 16
-    paramCeiling := 128
-    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
+    paramCeiling := 64
+    paramSchedule := .custom #[16, 24, 32, 48, 64]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -284,14 +313,17 @@ setup_benchmark runFrobeniusXPowModChecksum n => n * n * n
 /-
 Horner modular composition does one reduced multiplication per coefficient of
 the outer polynomial. With all reduced polynomials bounded by degree `n`, each
-step is quadratic, for Theta(n^3) total work.
+step is quadratic, for Theta(n^3) total work. The schedule stops at `n = 192`
+because at `n = 256` the per-call wall time crosses the four-second cap on
+the reference host; trimming the truncating rung keeps every scheduled rung
+inside the cap.
 -/
 setup_benchmark runComposeModMonicChecksum n => n * n * n
   with prep := prepComposeInput
   where {
     paramFloor := 32
-    paramCeiling := 256
-    paramSchedule := .custom #[32, 48, 64, 96, 128, 192, 256]
+    paramCeiling := 192
+    paramSchedule := .custom #[32, 48, 64, 96, 128, 192]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -314,20 +346,27 @@ setup_benchmark runWeightedProductChecksum n => n * n
   }
 
 /-
-This prepared family is a degree-`n` product of linear factors, built in `prep`.
-The timed Yun-style decomposition is dominated by dense Euclidean gcd/division
-work on degree-`n` inputs for this family, so the declared model is quadratic.
+This prepared family is the balanced product `∏_{i=0..4} (x - i)^{m_i}` over
+`F_5`, with multiplicities `m_i ∈ {⌊n/5⌋, ⌈n/5⌉}` summing to `n`. The
+five-distinct-factor structure with balanced multiplicities makes Yun's
+iteration count and per-iteration polynomial degrees deterministic functions
+of `n`, so the per-rung wall time scales smoothly with `n`. The timed
+decomposition is dominated by the initial dense Euclidean gcd of degree-`n`
+inputs plus `⌈n / 5⌉` Yun iterations each doing `O(n)` work, so the declared
+model is quadratic. The schedule starts at `n = 64` so the per-rung wall time
+is comfortably above the noise floor and stops at `n = 1024` to keep every
+rung inside the four-second cap on the reference host.
 -/
 setup_benchmark runSquareFreeDecompositionSummary n => n * n
   with prep := prepSquareFreeInput
   where {
-    paramFloor := 16
-    paramCeiling := 128
-    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
+    paramFloor := 64
+    paramCeiling := 1024
+    paramSchedule := .custom #[64, 96, 128, 192, 256, 384, 512, 768, 1024]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
-    slopeTolerance := 0.35
+    slopeTolerance := 0.20
   }
 
 end FpPolyBench
