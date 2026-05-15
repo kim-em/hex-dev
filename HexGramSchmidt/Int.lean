@@ -4666,6 +4666,77 @@ private theorem noPivotLoop_scaledCoeffMatrix_eq_borderedMinor_at_trailing
     ⟨j.val, Nat.lt_trans hji i.isLt⟩ i
     (Nat.le_refl _) (Nat.le_of_lt hji)
 
+/-- Outer-array length of the initial coefficient buffer. -/
+private theorem zeroRows_size (n : Nat) : (zeroRows n).size = n := by
+  simp [zeroRows, Array.size_map, Array.size_range]
+
+/-- Inner-row length of each row of the initial coefficient buffer. -/
+private theorem zeroRows_row_size (n : Nat) (r : Nat) (hr : r < n) :
+    (zeroRows n)[r]!.size = n := by
+  show ((Array.range n).map fun _ => (Array.range n).map fun _ : Nat => (0 : Int))[r]!.size = n
+  rw [Array.getElem!_eq_getD]
+  unfold Array.getD
+  simp only [Array.size_map, Array.size_range]
+  rw [dif_pos hr]
+  simp [Array.size_map, Array.size_range]
+
+/-- Non-singular top-level composite: when the no-pivot Bareiss pass over the
+full Gram matrix has not recorded a singular step before reaching column `j`,
+the executable scaled-coefficient array entry below the diagonal at `(i, j)`
+matches the trailing entry of the no-pivot Bareiss-style loop on the
+corresponding Cramer determinant matrix `scaledCoeffMatrix b i j hji`. This
+composes `scaledCoeffArrayLoop_lower_matches_target_column` (from #4103),
+`noPivotLoop_full_eq_borderedMinor_at_trailing` (from #4028), and the
+symmetry/transpose bridge `noPivotLoop_scaledCoeffMatrix_eq_borderedMinor_at_trailing`. -/
+private theorem scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix
+    (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val)
+    (h_nonsing :
+      (Matrix.noPivotLoop j.val
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none) :
+    getArrayEntry (scaledCoeffRows b) i.val j.val =
+      (Matrix.noPivotLoop j.val
+        (Matrix.noPivotInitialState
+          (GramSchmidt.scaledCoeffMatrix b i j hji))).matrix[
+        Fin.last j.val][Fin.last j.val] := by
+  -- Step 1: top-level state-level invariant via the non-singular target-column lemma.
+  have h_target_nonsing :
+      (Matrix.noPivotLoop (j.val - 0)
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none := by
+    simpa using h_nonsing
+  have h_lower :=
+    scaledCoeffArrayLoop_lower_matches_target_column
+      (state_array :=
+        { step := 0
+          matrix := gramRows b
+          coeffs := zeroRows n
+          prevPivot := 1 })
+      (state_matrix := Matrix.noPivotInitialState (Matrix.gramMatrix b))
+      (by rfl) (rowsToMatrix_gramRows b) (by rfl)
+      (zeroRows_size n) (zeroRows_row_size n)
+      n i j (Nat.zero_le _) hji
+      (by have := i.isLt; omega) h_target_nonsing
+  have h_state_level :
+      getArrayEntry (scaledCoeffRows b) i.val j.val =
+        (Matrix.noPivotLoop j.val
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[i][j] := by
+    show getArrayEntry
+        (scaledCoeffArrayLoop n n
+            { step := 0, matrix := gramRows b, coeffs := zeroRows n,
+              prevPivot := 1 }).coeffs i.val j.val = _
+    have h_step_eq : (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step = 0 := rfl
+    have h_sub : j.val - (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step = j.val := by
+      rw [h_step_eq]; omega
+    rw [h_lower, h_sub]
+  rw [h_state_level]
+  -- Step 2: bordered-minor sync at (row=i, col=j).
+  have h_bm :=
+    (noPivotLoop_full_eq_borderedMinor_at_trailing (Matrix.gramMatrix b) j.val
+      (Nat.lt_trans hji i.isLt) i j (Nat.le_of_lt hji) (Nat.le_refl _)).1
+  rw [h_bm]
+  -- Step 3: symmetry/transpose bridge to `scaledCoeffMatrix`.
+  exact
+    (noPivotLoop_scaledCoeffMatrix_eq_borderedMinor_at_trailing b i j hji).symm
+
 private theorem rowSwap_row_eq_of_ne_int {n' m' : Nat}
     (M : Matrix Int n' m') (i j r : Fin n')
     (hri : r.val ≠ i.val) (hrj : r.val ≠ j.val) :
