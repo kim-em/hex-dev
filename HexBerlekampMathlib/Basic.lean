@@ -166,6 +166,40 @@ theorem irreducible_dvd_of_not_isCoprime
   sorry
 
 /--
+The Rabin backward direction in the local `ZMod p` form: every irreducible
+polynomial of degree dividing `N` divides `X^(p^N) - X`.
+
+Used by the contrapositive direction of `rabinTest_true_irreducible` to lift
+divisibility of an irreducible factor `g` from the basis-size Frobenius
+polynomial down to the Frobenius polynomial at a maximal proper divisor.
+-/
+theorem irreducible_dvd_frobeniusPolynomial_of_natDegree_dvd
+    [Fact (Nat.Prime p)] {g : Polynomial (ZMod p)}
+    (hg_irreducible : Irreducible g) {N : Nat}
+    (hdvd : g.natDegree ∣ N) :
+    g ∣ frobeniusPolynomial p N := by
+  haveI : Fact (Irreducible g) := ⟨hg_irreducible⟩
+  have hg_ne_zero : g ≠ 0 := hg_irreducible.ne_zero
+  haveI : Module.Finite (ZMod p) (AdjoinRoot g) :=
+    (AdjoinRoot.powerBasis hg_ne_zero).finite
+  haveI : Finite (AdjoinRoot g) := Module.finite_of_finite (ZMod p)
+  haveI : Fintype (AdjoinRoot g) := Fintype.ofFinite _
+  have hcard : Fintype.card (AdjoinRoot g) = p ^ g.natDegree := by
+    rw [← Nat.card_eq_fintype_card,
+        ← FiniteField.pow_finrank_eq_natCard p (AdjoinRoot g),
+        PowerBasis.finrank (AdjoinRoot.powerBasis hg_ne_zero),
+        AdjoinRoot.powerBasis_dim hg_ne_zero]
+  have hroot_pow : (AdjoinRoot.root g) ^ (p ^ N) = AdjoinRoot.root g := by
+    obtain ⟨k, rfl⟩ := hdvd
+    rw [pow_mul]
+    have hpow := FiniteField.pow_card_pow (K := AdjoinRoot g) k (AdjoinRoot.root g)
+    rwa [hcard] at hpow
+  have hgoal : (AdjoinRoot.mk g) (frobeniusPolynomial p N) = 0 := by
+    show (AdjoinRoot.mk g) (X ^ p ^ N - X) = 0
+    rw [← AdjoinRoot.aeval_eq, map_sub, map_pow, Polynomial.aeval_X, hroot_pow, sub_self]
+  exact AdjoinRoot.mk_eq_zero.mp hgoal
+
+/--
 Divisor arithmetic used by Rabin's reducible contrapositive: a proper divisor
 `d` of `n` yields a prime `q` such that `q ∣ n` and `d ∣ n / q`.
 -/
@@ -290,7 +324,54 @@ theorem rabinTest_true_irreducible
     Hex.Berlekamp.rabinTest f hmonic = true →
       Irreducible (toMathlibPolynomial f) := by
   intro htest
-  exact (rabin_irreducible f hmonic (Hex.Berlekamp.basisSize f) rfl).mp htest
+  set fM := toMathlibPolynomial f
+  set n := Hex.Berlekamp.basisSize f
+  obtain ⟨hpos, hf_dvd, hcoprime⟩ :=
+    Rabin.rabinTest_true_to_mathlib_checks f hmonic rfl htest
+  have hfM_monic : fM.Monic := toMathlibPolynomial_monic f hmonic
+  have hfM_natDegree : fM.natDegree = n :=
+    natDegree_toMathlibPolynomial_eq_basisSize f hmonic
+  have hfM_pos : 0 < fM.natDegree := hfM_natDegree.symm ▸ hpos
+  refine ⟨fun hunit => by
+    have := Polynomial.natDegree_eq_zero_of_isUnit hunit
+    omega, ?_⟩
+  intro a b hab
+  by_contra hcontr
+  push Not at hcontr
+  obtain ⟨ha_not_unit, hb_not_unit⟩ := hcontr
+  have hfM_ne_zero : fM ≠ 0 := hfM_monic.ne_zero
+  have ha_ne_zero : a ≠ 0 := fun h => by
+    subst h; simp [zero_mul] at hab; exact hfM_ne_zero hab
+  have hb_ne_zero : b ≠ 0 := fun h => by
+    subst h; simp [mul_zero] at hab; exact hfM_ne_zero hab
+  -- Both factors are nonconstant divisors of a monic polynomial.
+  have hb_natDegree_pos : 0 < b.natDegree :=
+    Polynomial.natDegree_pos_of_not_isUnit_of_dvd_monic hfM_monic hb_not_unit
+      (hab ▸ dvd_mul_left b a)
+  have ha_natDegree_lt : a.natDegree < n := by
+    have hsum : a.natDegree + b.natDegree = n := by
+      rw [← hfM_natDegree, hab, Polynomial.natDegree_mul ha_ne_zero hb_ne_zero]
+    omega
+  -- Pick an irreducible factor `g` of `a`; then `g ∣ fM` and `g ∣ X^(p^n) - X`.
+  obtain ⟨g, hg_irr, hg_dvd_a⟩ :=
+    WfDvdMonoid.exists_irreducible_factor ha_not_unit ha_ne_zero
+  have hg_dvd_fM : g ∣ fM := hg_dvd_a.trans (hab ▸ dvd_mul_right a b)
+  have hg_natDegree_dvd_n : g.natDegree ∣ n :=
+    Rabin.natDegree_dvd_of_irreducible_dvd_frobeniusPolynomial
+      hg_irr (hg_dvd_fM.trans hf_dvd)
+  -- `natDegree g < n` because `natDegree g ≤ natDegree a < n`.
+  have hg_natDegree_lt : g.natDegree < n :=
+    lt_of_le_of_lt
+      (Polynomial.natDegree_le_of_dvd hg_dvd_a ha_ne_zero) ha_natDegree_lt
+  -- Route `natDegree g` through some maximal proper divisor of `n`.
+  obtain ⟨m, hm_mem, hg_natDegree_dvd_m⟩ :=
+    Hex.Berlekamp.exists_maximalProperDivisor_dvd
+      hg_irr.natDegree_pos hg_natDegree_dvd_n hg_natDegree_lt
+  -- The Rabin coprimality leg at `m` and the new substrate combine to force
+  -- `g` to be a unit, contradicting irreducibility.
+  exact hg_irr.not_isUnit ((hcoprime m hm_mem).isUnit_of_dvd' hg_dvd_fM
+    (Rabin.irreducible_dvd_frobeniusPolynomial_of_natDegree_dvd
+      hg_irr hg_natDegree_dvd_m))
 
 /--
 Rabin's executable test is equivalent to Mathlib irreducibility with the
