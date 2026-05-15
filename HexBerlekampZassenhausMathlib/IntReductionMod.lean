@@ -36,29 +36,9 @@ theorem toMathlibPolynomial_modP_eq_map_intCast_zmod
     [Hex.ZMod64.Bounds p] (f : Hex.ZPoly) :
     HexBerlekampMathlib.toMathlibPolynomial (Hex.ZPoly.modP p f) =
       (HexPolyZMathlib.toPolynomial f).map (Int.castRingHom (ZMod p)) := by
-  ext n
-  rw [HexBerlekampMathlib.coeff_toMathlibPolynomial, Hex.ZPoly.coeff_modP]
-  rw [Polynomial.coeff_map, HexPolyZMathlib.coeff_toPolynomial]
-  change
-    HexModArithMathlib.ZMod64.toZMod
-        (Hex.ZMod64.ofNat p (Hex.ZPoly.intModNat (f.coeff n) p)) =
-      ((f.coeff n : ℤ) : ZMod p)
-  apply ZMod.val_injective p
-  rw [HexModArithMathlib.ZMod64.val_toZMod, Hex.ZMod64.toNat_ofNat]
-  apply Int.ofNat.inj
-  change ((Hex.ZPoly.intModNat (f.coeff n) p % p : Nat) : ℤ) =
-    (((f.coeff n : ℤ) : ZMod p).val : ℤ)
-  rw [Int.natCast_mod, ZMod.val_intCast]
-  unfold Hex.ZPoly.intModNat
-  have hp : (p : ℤ) ≠ 0 :=
-    Int.ofNat_ne_zero.mpr (Nat.ne_of_gt (Hex.ZMod64.Bounds.pPos (p := p)))
-  have hcast :
-      ((f.coeff n % Int.ofNat p).toNat : ℤ) =
-        f.coeff n % Int.ofNat p :=
-    Int.toNat_of_nonneg (Int.emod_nonneg _ hp)
-  rw [hcast]
-  change f.coeff n % (p : ℤ) % (p : ℤ) = f.coeff n % (p : ℤ)
-  rw [Int.emod_emod]
+  exact
+    HexPolyZMathlib.eq_map_intCast_of_coeff_eq_toZMod_modP p f
+      (fun n => HexBerlekampMathlib.coeff_toMathlibPolynomial _ n)
 
 /--
 Reduction-mod-`p` Gauss lemma over `ℤ`: a primitive integer polynomial whose
