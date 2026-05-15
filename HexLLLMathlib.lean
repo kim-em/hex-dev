@@ -1,4 +1,5 @@
 import HexLLLMathlib.Basic
+import HexLLLMathlib.Independent
 
 /-!
 The `HexLLLMathlib` library bridges the executable `HexLLL` lattice surface to
