@@ -1762,6 +1762,76 @@ theorem exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_some
     | cons head tail => simp
   simp [Hex.exhaustiveCoreFactorsWithBound, hB, hrecombine, hnot_empty, hmem]
 
+/--
+Public-wrapper membership bridge for a first successful fixed-lift split.
+
+This composes the proof-facing first-success witness with
+`exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_some`, so later
+coverage proofs can discharge the executable-wrapper step without separately
+unpacking `recombinationSearchMod`.
+-/
+theorem exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_first_success
+    {core factor quotient : Hex.ZPoly} {B : Nat}
+    {primeData : Hex.PrimeChoiceData} {d : Hex.LiftData}
+    {selected rest restFactors : List Hex.ZPoly}
+    {pre suffix : List (List Hex.ZPoly × List Hex.ZPoly)}
+    (hB : B ≠ 0)
+    (hd :
+      d =
+        Hex.henselLiftData core (Hex.precisionForCoeffBound B primeData.p)
+          primeData)
+    (hcore_ne_one : core ≠ 1)
+    (hsplits :
+      Hex.subsetSplitsWithFirst d.liftedFactors.toList =
+        pre ++ (selected, rest) :: suffix)
+    (hprefix :
+      ∀ split ∈ pre,
+        (let candidate' :=
+          Hex.normalizeFactorSign <|
+            Hex.ZPoly.primitivePart <|
+              Hex.centeredLiftPoly (Array.polyProduct split.1.toArray)
+                (d.p ^ d.k)
+        if Hex.shouldRecordPolynomialFactor candidate' then
+          match Hex.exactQuotient? core candidate' with
+          | none => none
+          | some quotient' =>
+              match Hex.recombinationSearchModAux quotient' (d.p ^ d.k)
+                  split.2 d.liftedFactors.toList.length with
+              | none => none
+              | some r => some (candidate' :: r)
+        else none) = none)
+    (hfactor_def :
+      factor =
+        Hex.normalizeFactorSign
+          (Hex.ZPoly.primitivePart
+            (Hex.centeredLiftPoly (Array.polyProduct selected.toArray)
+              (d.p ^ d.k))))
+    (hrecord : Hex.shouldRecordPolynomialFactor factor = true)
+    (hquot : Hex.exactQuotient? core factor = some quotient)
+    (hsearch_rest :
+      Hex.recombinationSearchModAux quotient (d.p ^ d.k) rest
+          d.liftedFactors.toList.length =
+        some restFactors) :
+    factor ∈ (Hex.exhaustiveCoreFactorsWithBound core B primeData).toList := by
+  rcases
+    recombinationSearchMod_first_success_witness_of_step_of_prefix_none
+      (target := core)
+      (candidate := factor)
+      (quotient := quotient)
+      (modulus := d.p ^ d.k)
+      (localFactors := d.liftedFactors.toList)
+      (selected := selected)
+      (rest := rest)
+      (restFactors := restFactors)
+      (pre := pre)
+      (suffix := suffix)
+      hcore_ne_one hsplits hprefix hfactor_def hrecord hquot hsearch_rest with
+    ⟨factors, hsearch, hmem, _hrecord, _hrest⟩
+  exact
+    exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_some
+      (core := core) (factor := factor) (B := B) (primeData := primeData)
+      (d := d) (factors := factors) hB hd hsearch hmem
+
 /-- A `Hex.ZPoly` factor that passes the executable `shouldRecordPolynomialFactor`
 check is non-zero and not a unit after transport to `Polynomial ℤ`.  The
 executable check rejects `0`, `1`, and `-1`, which are exactly the zero
