@@ -819,6 +819,86 @@ theorem existsUnique_recoveringLiftedFactorSubset_at_defaultPrecision
   existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence
     h hcore_ne hirr hdvd hprecision
 
+/-! ### LiftedFactorSubset → executable recombination split bridge
+
+The executable recombination search at the lifted-factor surface enumerates
+order-preserving partitions of `d.liftedFactors.toList` via
+`Hex.subsetSplitsWithFirst`.  These helpers transport a proof-side
+`LiftedFactorSubset d` (a `Finset` of indices) into a concrete `(selected,
+rest)` partition that lies in the executable enumeration, with the
+selected/rejected lists ordered by their original `d.liftedFactors` index.
+
+The bridge product equality matches the executable
+`Array.polyProduct selected.toArray` against the proof-side
+`liftedFactorProduct d S` after transport to `Polynomial ℤ`, where
+multiplication is commutative and the order difference between the
+index-preserving partition and `S.toList` becomes a permutation.
+-/
+
+/-- Boolean indicator vector for `S`, indexed by the same `Fin` order as
+`d.liftedFactors.toList`. -/
+def liftedSubsetMask (d : Hex.LiftData) (S : LiftedFactorSubset d) : List Bool :=
+  (List.finRange d.liftedFactors.size).map fun i => decide (i ∈ S)
+
+theorem liftedSubsetMask_length (d : Hex.LiftData) (S : LiftedFactorSubset d) :
+    (liftedSubsetMask d S).length = d.liftedFactors.toList.length := by
+  unfold liftedSubsetMask; simp
+
+/-- The list of lifted factors selected by `S`, ordered by their original
+`d.liftedFactors` index. -/
+def liftedSubsetSelectedList (d : Hex.LiftData) (S : LiftedFactorSubset d) :
+    List Hex.ZPoly :=
+  (d.liftedFactors.toList.zip (liftedSubsetMask d S)).filterMap fun p =>
+    if p.2 then some p.1 else none
+
+/-- The list of lifted factors not selected by `S`, ordered by their original
+`d.liftedFactors` index. -/
+def liftedSubsetRejectedList (d : Hex.LiftData) (S : LiftedFactorSubset d) :
+    List Hex.ZPoly :=
+  (d.liftedFactors.toList.zip (liftedSubsetMask d S)).filterMap fun p =>
+    if p.2 then none else some p.1
+
+/-- Generalised partition lemma: for any list paired with a Boolean mask of
+matching length, the order-preserving selected/rejected partition lies in
+`Hex.subsetSplits`. -/
+private theorem subsetSplits_zip_filterMap_partition :
+    ∀ (xs : List Hex.ZPoly) (mask : List Bool), mask.length = xs.length →
+      ((xs.zip mask).filterMap (fun p => if p.2 then some p.1 else none),
+        (xs.zip mask).filterMap (fun p => if p.2 then none else some p.1)) ∈
+        Hex.subsetSplits xs := by
+  intro xs
+  induction xs with
+  | nil =>
+      intro mask hmask
+      have : mask = [] := List.length_eq_zero_iff.mp hmask
+      subst this
+      simpa using Hex.subsetSplits_nil_mem
+  | cons x xs ih =>
+      intro mask hmask
+      cases mask with
+      | nil => simp at hmask
+      | cons b bs =>
+          simp only [List.length_cons, Nat.add_right_cancel_iff] at hmask
+          rw [List.zip_cons_cons, List.filterMap_cons, List.filterMap_cons]
+          by_cases hb : b = true
+          · subst hb
+            simp only [if_true]
+            exact Hex.subsetSplits_cons_left_mem (ih bs hmask)
+          · have hb' : b = false := by cases b <;> simp_all
+            subst hb'
+            simp only
+            exact Hex.subsetSplits_cons_right_mem (ih bs hmask)
+
+/-- The lifted-factor subset partition lies in the executable
+`Hex.subsetSplits` enumeration of the lifted-factor list. -/
+theorem liftedSubsetSplit_mem_subsetSplits
+    (d : Hex.LiftData) (S : LiftedFactorSubset d) :
+    (liftedSubsetSelectedList d S, liftedSubsetRejectedList d S) ∈
+      Hex.subsetSplits d.liftedFactors.toList := by
+  unfold liftedSubsetSelectedList liftedSubsetRejectedList
+  exact subsetSplits_zip_filterMap_partition d.liftedFactors.toList
+    (liftedSubsetMask d S) (liftedSubsetMask_length d S)
+
 /-- A `Hex.ZPoly` factor that passes the executable `shouldRecordPolynomialFactor`
 check is non-zero and not a unit after transport to `Polynomial ℤ`.  The
 executable check rejects `0`, `1`, and `-1`, which are exactly the zero
