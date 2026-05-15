@@ -20,6 +20,20 @@ variable {p : Nat} [ZMod64.Bounds p]
 def basisSize (f : FpPoly p) : Nat :=
   f.degree?.getD 0
 
+private theorem size_pos_of_basisSize_pos (f : FpPoly p)
+    (h : 0 < basisSize f) : 0 < f.size := by
+  by_cases hfz : 0 < f.size
+  · exact hfz
+  · exfalso
+    have hfsize : f.size = 0 := Nat.eq_zero_of_not_pos hfz
+    unfold basisSize DensePoly.degree? at h
+    simp [hfsize] at h
+
+private theorem basisSize_eq_size_sub_one (f : FpPoly p)
+    (h : 0 < f.size) : basisSize f = f.size - 1 := by
+  unfold basisSize DensePoly.degree?
+  simp [Nat.ne_of_gt h]
+
 /-- Read a polynomial's first `degree f` coefficients as a vector. -/
 def coeffVector (f g : FpPoly p) : Vector (ZMod64 p) (basisSize f) :=
   Vector.ofFn fun i => g.coeff i.val
@@ -297,20 +311,10 @@ private theorem powModMonic_column_size_le
     (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val).size ≤
       basisSize f := by
   have hbasis_pos : 0 < basisSize f := Nat.lt_of_le_of_lt (Nat.zero_le _) j.isLt
-  have hf_size_pos : 0 < f.size := by
-    by_cases hfz : 0 < f.size
-    · exact hfz
-    · exfalso
-      have hfsize : f.size = 0 := Nat.eq_zero_of_not_pos hfz
-      unfold basisSize DensePoly.degree? at hbasis_pos
-      simp [hfsize] at hbasis_pos
-  have hf_deg_eq : f.degree?.getD 0 = f.size - 1 := by
-    unfold DensePoly.degree?
-    have hne : f.size ≠ 0 := Nat.ne_of_gt hf_size_pos
-    simp [hne]
-  have hbasis_eq : basisSize f = f.size - 1 := by
-    show f.degree?.getD 0 = f.size - 1
-    exact hf_deg_eq
+  have hf_size_pos : 0 < f.size := size_pos_of_basisSize_pos f hbasis_pos
+  have hbasis_eq : basisSize f = f.size - 1 :=
+    basisSize_eq_size_sub_one f hf_size_pos
+  have hf_deg_eq : f.degree?.getD 0 = f.size - 1 := hbasis_eq
   -- Case split on whether the column is the constant-1 column (j.val = 0)
   -- or a positive power.
   by_cases hj_zero : j.val = 0
@@ -352,8 +356,8 @@ private theorem powModMonic_column_size_le
         unfold DensePoly.degree?
         simp [Nat.ne_of_gt hsize_pos]
       rw [hdeg_eq, hf_deg_eq] at h_deg
-      -- Note: avoid `rw [hbasis_eq]` because it captures `Fin (basisSize f)`
-      -- in `j`'s type, breaking the motive.
+      -- Note: avoid rewriting `basisSize f` here because it captures
+      -- `Fin (basisSize f)` in `j`'s type, breaking the motive.
       omega
 
 /-- `composeCoeffPowerSumUpTo` written with the last term appended on the
@@ -585,17 +589,10 @@ private theorem matrixActionPolySum_eq_linearPow_mod
       exact DensePoly.zero_mod_eq_zero_core (S := ZMod64 p) f
     · apply DensePoly.mod_eq_self_of_degree_lt
       have hbasis_pos : 0 < basisSize f := Nat.pos_of_ne_zero h_basis_zero
-      have hf_size_pos : 0 < f.size := by
-        by_cases hfz : 0 < f.size
-        · exact hfz
-        · exfalso
-          have hfsize : f.size = 0 := Nat.eq_zero_of_not_pos hfz
-          unfold basisSize DensePoly.degree? at hbasis_pos
-          simp [hfsize] at hbasis_pos
-      have hf_deg_eq : f.degree?.getD 0 = f.size - 1 := by
-        unfold DensePoly.degree?
-        simp [Nat.ne_of_gt hf_size_pos]
-      have hbasis_eq : basisSize f = f.size - 1 := hf_deg_eq
+      have hf_size_pos : 0 < f.size := size_pos_of_basisSize_pos f hbasis_pos
+      have hbasis_eq : basisSize f = f.size - 1 :=
+        basisSize_eq_size_sub_one f hf_size_pos
+      have hf_deg_eq : f.degree?.getD 0 = f.size - 1 := hbasis_eq
       by_cases h_poly_size : (matrixActionPolySum f hmonic w).size = 0
       · have h_poly_deg :
             (matrixActionPolySum f hmonic w).degree?.getD 0 = 0 := by
