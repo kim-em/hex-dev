@@ -175,5 +175,59 @@ private theorem compose_eq_powerSum (f q : FpPoly p) :
   rw [foldl_compose_reverse_eq_composeScalarCoeffList q f.toArray.toList]
   exact composeScalarCoeffList_eq_powerSumFrom_zero q f.toArray.toList
 
+/-- `DensePoly.compose f q` agrees with the iterative Horner form. -/
+theorem compose_eq_composeScalarCoeffList (f q : FpPoly p) :
+    DensePoly.compose f q = composeScalarCoeffList f.toArray.toList q := by
+  unfold DensePoly.compose
+  exact foldl_compose_reverse_eq_composeScalarCoeffList q f.toArray.toList
+
+/-! ### Constant-polynomial homomorphism laws
+
+Small `C` homomorphism laws for `+`, `-`, `*` and `Neg` are needed to
+manipulate the coefficients of products like `f * (X - C c)`.
+-/
+
+private theorem zmod64_add_zero_zero_local :
+    (0 : ZMod64 p) + 0 = 0 := by grind
+
+private theorem zmod64_sub_zero_zero_local :
+    (0 : ZMod64 p) - 0 = 0 := by grind
+
+theorem C_add_eq (a b : ZMod64 p) :
+    (DensePoly.C (a + b) : FpPoly p) = DensePoly.C a + DensePoly.C b := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_C, DensePoly.coeff_add _ _ _ zmod64_add_zero_zero_local,
+    DensePoly.coeff_C, DensePoly.coeff_C]
+  cases n with
+  | zero => grind
+  | succ n =>
+      exact zmod64_add_zero_zero_local.symm
+
+theorem C_sub_eq (a b : ZMod64 p) :
+    (DensePoly.C (a - b) : FpPoly p) = DensePoly.C a - DensePoly.C b := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_C, DensePoly.coeff_sub _ _ _ zmod64_sub_zero_zero_local,
+    DensePoly.coeff_C, DensePoly.coeff_C]
+  cases n with
+  | zero => grind
+  | succ n =>
+      exact zmod64_sub_zero_zero_local.symm
+
+theorem C_mul_C_eq (a b : ZMod64 p) :
+    (DensePoly.C (a * b) : FpPoly p) = DensePoly.C a * DensePoly.C b := by
+  rw [FpPoly.C_mul_eq_scale]
+  apply DensePoly.ext_coeff
+  intro n
+  have hzero : a * (0 : ZMod64 p) = 0 := Lean.Grind.Semiring.mul_zero a
+  rw [DensePoly.coeff_scale _ _ _ hzero]
+  rw [DensePoly.coeff_C, DensePoly.coeff_C]
+  cases n with
+  | zero => simp
+  | succ n =>
+      simp
+      exact hzero
+
 end FpPoly
 end Hex
