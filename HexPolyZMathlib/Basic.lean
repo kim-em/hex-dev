@@ -1,6 +1,9 @@
 import HexPolyMathlib.Basic
+import HexHensel.Basic
+import HexModArithMathlib
 import Mathlib.Algebra.Polynomial.Degree.Units
 import Mathlib.Algebra.Ring.Int.Units
+import Mathlib.Data.ZMod.Basic
 import HexPolyZ
 
 /-!
@@ -96,6 +99,76 @@ theorem isUnit_iff_toPolynomial_isUnit (f : Hex.ZPoly) :
       simp [hf, hr]
     · right
       simp [hf, hr]
+
+/--
+The executable coefficientwise reduction `Hex.ZPoly.modP` agrees with
+Mathlib's coefficient map from `ℤ[X]` to `(ZMod p)[X]`, after transporting
+the executable `ZMod64 p` coefficients through the `ZMod64`/`ZMod` bridge.
+-/
+theorem coeff_toZMod_modP_eq_coeff_map_intCast
+    (p : Nat) [Hex.ZMod64.Bounds p] (f : Hex.ZPoly) (n : Nat) :
+    HexModArithMathlib.ZMod64.toZMod ((Hex.ZPoly.modP p f).coeff n) =
+      ((toPolynomial f).map (Int.castRingHom (ZMod p))).coeff n := by
+  rw [Polynomial.coeff_map, Hex.ZPoly.coeff_modP, coeff_toPolynomial]
+  change
+    HexModArithMathlib.ZMod64.toZMod
+        (Hex.ZMod64.ofNat p (Hex.ZPoly.intModNat (f.coeff n) p)) =
+      ((f.coeff n : ℤ) : ZMod p)
+  apply ZMod.val_injective p
+  rw [HexModArithMathlib.ZMod64.val_toZMod, Hex.ZMod64.toNat_ofNat]
+  apply Int.ofNat.inj
+  change ((Hex.ZPoly.intModNat (f.coeff n) p % p : Nat) : ℤ) =
+    (((f.coeff n : ℤ) : ZMod p).val : ℤ)
+  rw [Int.natCast_mod, ZMod.val_intCast]
+  unfold Hex.ZPoly.intModNat
+  have hp : (p : ℤ) ≠ 0 :=
+    Int.ofNat_ne_zero.mpr (Nat.ne_of_gt (Hex.ZMod64.Bounds.pPos (p := p)))
+  have hcast :
+      ((f.coeff n % Int.ofNat p).toNat : ℤ) =
+        f.coeff n % Int.ofNat p :=
+    Int.toNat_of_nonneg (Int.emod_nonneg _ hp)
+  rw [hcast]
+  change f.coeff n % (p : ℤ) % (p : ℤ) = f.coeff n % (p : ℤ)
+  rw [Int.emod_emod]
+
+/--
+Extensional bridge for any Mathlib polynomial over `ZMod p` whose
+coefficients are supplied by the executable `Hex.ZPoly.modP` image.
+Downstream finite-field polynomial transports can instantiate the coefficient
+hypothesis with their own `FpPoly` bridge lemma.
+-/
+theorem eq_map_intCast_of_coeff_eq_toZMod_modP
+    (p : Nat) [Hex.ZMod64.Bounds p] (f : Hex.ZPoly)
+    {q : Polynomial (ZMod p)}
+    (hq :
+      ∀ n, q.coeff n =
+        HexModArithMathlib.ZMod64.toZMod ((Hex.ZPoly.modP p f).coeff n)) :
+    q = (toPolynomial f).map (Int.castRingHom (ZMod p)) := by
+  ext n
+  rw [hq, coeff_toZMod_modP_eq_coeff_map_intCast]
+
+/--
+Divisibility of executable integer polynomials reduces modulo `p` after
+transporting both sides to Mathlib polynomials over `ZMod p`.
+-/
+theorem map_intCast_zmod_dvd_of_zpoly_dvd
+    (p : Nat) {g f : Hex.ZPoly} (hgf : g ∣ f) :
+    (toPolynomial g).map (Int.castRingHom (ZMod p)) ∣
+      (toPolynomial f).map (Int.castRingHom (ZMod p)) := by
+  rcases hgf with ⟨q, rfl⟩
+  refine ⟨(toPolynomial q).map (Int.castRingHom (ZMod p)), ?_⟩
+  rw [toPolynomial_mul, Polynomial.map_mul]
+
+/-- Reduction modulo `p` preserves natural degree when the leading coefficient
+survives the map to `ZMod p`. -/
+theorem natDegree_map_intCast_zmod_eq_of_leadingCoeff_ne_zero
+    (p : Nat) (g : Hex.ZPoly)
+    (hlc :
+      (Int.castRingHom (ZMod p)) (toPolynomial g).leadingCoeff ≠ 0) :
+    ((toPolynomial g).map (Int.castRingHom (ZMod p))).natDegree =
+      (toPolynomial g).natDegree :=
+  Polynomial.natDegree_map_of_leadingCoeff_ne_zero
+    (Int.castRingHom (ZMod p)) hlc
 
 end
 
