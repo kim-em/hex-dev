@@ -1,3 +1,5 @@
+import Mathlib.Algebra.Polynomial.BigOperators
+import Mathlib.Algebra.Polynomial.FieldDivision
 import Mathlib.RingTheory.UniqueFactorizationDomain.NormalizedFactors
 import Mathlib.Algebra.EuclideanDomain.Int
 import Mathlib.RingTheory.Polynomial.UniqueFactorization
@@ -336,6 +338,92 @@ theorem irreducible_of_partition_card_eq_normalizedFactors_card
     prod_normalizedFactors hg_ne
   rw [hp, Multiset.prod_singleton] at hassoc
   exact hassoc.irreducible hp_irr
+
+/--
+**UFD subset-factor lemma.**
+
+In a unique factorization monoid, if a non-zero element `g` divides the
+product of a multiset of irreducibles `qs`, then the normalized factorization
+of `g` is a sub-multiset of `qs` up to normalization.
+
+This is the UFD half of the BZ certificate degree-obstruction argument:
+once an integer factor reduces to a divisor of the recorded modular factor
+product, its modular factorization is drawn from the recorded irreducibles.
+-/
+theorem normalizedFactors_le_map_normalize_of_dvd_prod_irreducibles
+    {α : Type*} [CommMonoidWithZero α] [NormalizationMonoid α]
+    [UniqueFactorizationMonoid α]
+    {g : α} (hg : g ≠ 0)
+    {qs : Multiset α}
+    (hirr : ∀ q ∈ qs, Irreducible q)
+    (hdvd : g ∣ qs.prod) :
+    normalizedFactors g ≤ qs.map normalize := by
+  rcases qs.empty_or_exists_mem with rfl | ⟨b, hb⟩
+  · rw [Multiset.prod_zero] at hdvd
+    have hunit : IsUnit g := isUnit_of_dvd_one hdvd
+    rw [normalizedFactors_of_isUnit hunit]
+    exact Multiset.zero_le _
+  · haveI : Nontrivial α := nontrivial_of_ne b 0 (hirr b hb).ne_zero
+    have hprod_ne : qs.prod ≠ 0 :=
+      Multiset.prod_ne_zero fun hmem => (hirr 0 hmem).ne_zero rfl
+    have hnorm_prod : normalizedFactors qs.prod = qs.map normalize :=
+      normalizedFactors_prod_eq qs hirr
+    have hle : normalizedFactors g ≤ normalizedFactors qs.prod :=
+      (dvd_iff_normalizedFactors_le_normalizedFactors hg hprod_ne).mp hdvd
+    rw [hnorm_prod] at hle
+    exact hle
+
+/--
+**Polynomial subset-degree lemma.**
+
+Over a field `K`, if `g : K[X]` is non-zero and divides the product of a
+multiset of irreducible polynomials `qs`, then `g.natDegree` is the sum of
+some sub-multiset of `qs.map natDegree`.
+
+This is the degree-subset-sum packaging of
+`normalizedFactors_le_map_normalize_of_dvd_prod_irreducibles` that the BZ
+certificate degree-obstruction consumer needs: the recorded modular factor
+degrees are the `qs.map natDegree` values, and the contradiction with a
+"no subset sums to `g.natDegree`" obstruction comes from this lemma.
+-/
+theorem natDegree_eq_sum_subset_of_dvd_prod_irreducibles
+    {K : Type*} [Field K] [DecidableEq K]
+    {g : Polynomial K} (hg : g ≠ 0)
+    {qs : Multiset (Polynomial K)}
+    (hirr : ∀ q ∈ qs, Irreducible q)
+    (hdvd : g ∣ qs.prod) :
+    ∃ S : Multiset Nat, S ≤ qs.map Polynomial.natDegree ∧ g.natDegree = S.sum := by
+  have hle : normalizedFactors g ≤ qs.map normalize :=
+    normalizedFactors_le_map_normalize_of_dvd_prod_irreducibles hg hirr hdvd
+  refine ⟨(normalizedFactors g).map Polynomial.natDegree,
+    ?_, ?_⟩
+  · -- (normalizedFactors g).map natDegree ≤ qs.map natDegree
+    have hsub :
+        (normalizedFactors g).map Polynomial.natDegree ≤
+          (qs.map normalize).map Polynomial.natDegree :=
+      Multiset.map_le_map hle
+    have hcong :
+        (qs.map normalize).map Polynomial.natDegree =
+          qs.map Polynomial.natDegree := by
+      rw [Multiset.map_map]
+      refine Multiset.map_congr rfl ?_
+      intro q _
+      exact Polynomial.natDegree_eq_of_degree_eq Polynomial.degree_normalize
+    rw [hcong] at hsub
+    exact hsub
+  · -- g.natDegree = ((normalizedFactors g).map natDegree).sum
+    have hassoc : Associated (normalizedFactors g).prod g :=
+      prod_normalizedFactors hg
+    have hdeg_assoc :
+        ((normalizedFactors g).prod).natDegree = g.natDegree :=
+      Polynomial.natDegree_eq_of_degree_eq
+        (Polynomial.degree_eq_degree_of_associated hassoc)
+    have hprod_deg :
+        ((normalizedFactors g).prod).natDegree =
+          ((normalizedFactors g).map Polynomial.natDegree).sum :=
+      Polynomial.natDegree_multiset_prod _ (zero_notMem_normalizedFactors _)
+    rw [hprod_deg] at hdeg_assoc
+    exact hdeg_assoc.symm
 
 end UFDPartition
 
