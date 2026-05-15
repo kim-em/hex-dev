@@ -204,6 +204,433 @@ theorem berlekampColumn_powModMonic_mod_eq_linearPow_X
       FpPoly.linearPow FpPoly.X (p * j.val) % f :=
   berlekampColumn_poly_mod_eq_linearPow_X f hmonic j
 
+/-! ### Berlekamp matrix action on coefficient vectors
+
+The Berlekamp matrix `Q_f` is the matrix of the `g ↦ g^p` map on the
+quotient `F_p[X] / (f)` in the basis `{1, X, …, X^(n - 1)}`. Applied to
+the coefficient vector of `w` with `w.size ≤ n`, it produces the
+coefficient vector of `w^p mod f`. The proof factors through the
+compose-form Frobenius identity
+`compose w (linearPow X p) = linearPow w p`. -/
+
+/-- Polynomial-level representation of `berlekampMatrix · coeffVector f w`:
+the column-scaled sum `Σ_{j < n} C(w.coeff j) · powModMonic frobX f hmonic j`,
+where each column is already reduced modulo `f`. -/
+private def matrixActionPolySum (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (w : FpPoly p) : FpPoly p :=
+  (List.finRange (basisSize f)).foldl
+    (fun acc j =>
+      acc + DensePoly.C (w.coeff j.val) *
+        FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val)
+    0
+
+/-- Coefficient extraction commutes with a `+`-foldl over polynomials. -/
+private theorem foldl_add_poly_coeff {α : Type _}
+    (xs : List α) (g : α → FpPoly p) (init : FpPoly p) (i : Nat) :
+    (xs.foldl (fun acc x => acc + g x) init).coeff i =
+      xs.foldl (fun acc x => acc + (g x).coeff i) (init.coeff i) := by
+  induction xs generalizing init with
+  | nil => rfl
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have h_zero : ((0 : ZMod64 p) + 0) = 0 := by grind
+      rw [ih (init + g x), DensePoly.coeff_add init (g x) i h_zero]
+
+/-- `+`-foldl over a list is congruent when the inner step functions agree
+pointwise on the list. -/
+private theorem foldl_add_congr {α : Type _} {R : Type _} [Add R]
+    (xs : List α) (f g : α → R) (init : R)
+    (h : ∀ x ∈ xs, f x = g x) :
+    xs.foldl (fun acc x => acc + f x) init =
+      xs.foldl (fun acc x => acc + g x) init := by
+  induction xs generalizing init with
+  | nil => rfl
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hx : f x = g x := h x (by simp)
+      have hxs : ∀ y ∈ xs, f y = g y := fun y hy => h y (List.mem_cons_of_mem _ hy)
+      rw [hx]
+      exact ih _ hxs
+
+/-- The coefficient vector of `matrixActionPolySum` (over the first
+`basisSize f` indices) is the matrix-vector product
+`berlekampMatrix · coeffVector f w`. -/
+private theorem coeffVector_matrixActionPolySum_eq_mulVec
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) (w : FpPoly p) :
+    coeffVector f (matrixActionPolySum f hmonic w) =
+      Matrix.mulVec (berlekampMatrix f hmonic) (coeffVector f w) := by
+  apply Vector.ext
+  intro i hi
+  let ii : Fin (basisSize f) := ⟨i, hi⟩
+  rw [show (coeffVector f (matrixActionPolySum f hmonic w))[i] =
+        (matrixActionPolySum f hmonic w).coeff i from by
+      simp [coeffVector]]
+  unfold matrixActionPolySum
+  rw [foldl_add_poly_coeff (List.finRange (basisSize f))
+      (fun j => DensePoly.C (w.coeff j.val) *
+        FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val)
+      0 i]
+  rw [DensePoly.coeff_zero]
+  simp [HMul.hMul, Matrix.mulVec, Matrix.dot, Matrix.row, Hex.Vector.dotProduct]
+  apply foldl_add_congr
+  intro j _hj
+  show (DensePoly.C (w.coeff j.val) *
+        FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val).coeff i =
+    (berlekampMatrix f hmonic)[ii][j] * (coeffVector f w)[j.val]
+  rw [FpPoly.C_mul_eq_scale]
+  have h_zero : w.coeff j.val * (0 : ZMod64 p) = 0 := by grind
+  rw [DensePoly.coeff_scale _ _ _ h_zero]
+  rw [berlekampMatrix_entry_eq_powModMonic_coeff f hmonic ii j]
+  rw [show (coeffVector f w)[j.val] = w.coeff j.val from by simp [coeffVector]]
+  show w.coeff j.val *
+      (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val).coeff i =
+    (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val).coeff i *
+      w.coeff j.val
+  grind
+
+/-- The `j`-th column polynomial has size at most `basisSize f`, which is
+the underlying degree bound of `f`. -/
+private theorem powModMonic_column_size_le
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) (j : Fin (basisSize f)) :
+    (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val).size ≤
+      basisSize f := by
+  have hbasis_pos : 0 < basisSize f := Nat.lt_of_le_of_lt (Nat.zero_le _) j.isLt
+  have hf_size_pos : 0 < f.size := by
+    by_cases hfz : 0 < f.size
+    · exact hfz
+    · exfalso
+      have hfsize : f.size = 0 := Nat.eq_zero_of_not_pos hfz
+      unfold basisSize DensePoly.degree? at hbasis_pos
+      simp [hfsize] at hbasis_pos
+  have hf_deg_eq : f.degree?.getD 0 = f.size - 1 := by
+    unfold DensePoly.degree?
+    have hne : f.size ≠ 0 := Nat.ne_of_gt hf_size_pos
+    simp [hne]
+  have hbasis_eq : basisSize f = f.size - 1 := by
+    show f.degree?.getD 0 = f.size - 1
+    exact hf_deg_eq
+  -- Case split on whether the column is the constant-1 column (j.val = 0)
+  -- or a positive power.
+  by_cases hj_zero : j.val = 0
+  · -- j.val = 0: powModMonic ... 0 = 1
+    have h_pow_zero :
+        FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic 0 =
+          (1 : FpPoly p) := by
+      rw [← FpPoly.powModMonicLinear_eq_powModMonic]
+      rfl
+    rw [hj_zero, h_pow_zero]
+    have hC1 : (1 : FpPoly p) = DensePoly.C (1 : ZMod64 p) := rfl
+    rw [hC1]
+    exact Nat.le_trans (DensePoly.size_C_le_one _) (by omega : 1 ≤ basisSize f)
+  · have hj_pos : 0 < j.val := Nat.pos_of_ne_zero hj_zero
+    -- j.val ≥ 1: powModMonic is self-reduced via powModMonic_pos_self_mod.
+    -- Hence degree < f.degree, so size ≤ f.size - 1 = basisSize f.
+    have h_self :
+        (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val) % f =
+          FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val :=
+      FpPoly.powModMonic_pos_self_mod (FpPoly.frobeniusXMod f hmonic) f hmonic
+        j.val hj_pos
+    -- Translate self-reduction to a size bound.
+    have h_deg :
+        (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val).degree?.getD 0 <
+          f.degree?.getD 0 := by
+      rw [← h_self]
+      exact DensePoly.mod_degree_lt_of_pos_degree _ _ (by rw [hf_deg_eq]; omega)
+    -- Convert to a size bound.
+    by_cases hsize :
+        (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val).size = 0
+    · rw [hsize]
+      exact Nat.zero_le _
+    · have hsize_pos :
+          0 < (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val).size :=
+        Nat.pos_of_ne_zero hsize
+      have hdeg_eq :
+          (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val).degree?.getD 0 =
+            (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val).size - 1 := by
+        unfold DensePoly.degree?
+        simp [Nat.ne_of_gt hsize_pos]
+      rw [hdeg_eq, hf_deg_eq] at h_deg
+      -- Note: avoid `rw [hbasis_eq]` because it captures `Fin (basisSize f)`
+      -- in `j`'s type, breaking the motive.
+      omega
+
+/-- `composeCoeffPowerSumUpTo` written with the last term appended on the
+right. -/
+private theorem composeCoeffPowerSumUpTo_succ_right
+    [ZMod64.PrimeModulus p]
+    (coeff : Nat → ZMod64 p) (q : FpPoly p) (n : Nat) :
+    ∀ base,
+      FpPoly.composeCoeffPowerSumUpTo coeff (n + 1) base q =
+        FpPoly.composeCoeffPowerSumUpTo coeff n base q +
+          DensePoly.C (coeff (base + n)) * FpPoly.linearPow q (base + n) := by
+  induction n with
+  | zero =>
+      intro base
+      show DensePoly.C (coeff base) * FpPoly.linearPow q base + 0 =
+        0 + DensePoly.C (coeff (base + 0)) * FpPoly.linearPow q (base + 0)
+      rw [Nat.add_zero, FpPoly.zero_add, FpPoly.add_zero]
+  | succ n ih =>
+      intro base
+      show DensePoly.C (coeff base) * FpPoly.linearPow q base +
+          FpPoly.composeCoeffPowerSumUpTo coeff (n + 1) (base + 1) q =
+        (DensePoly.C (coeff base) * FpPoly.linearPow q base +
+          FpPoly.composeCoeffPowerSumUpTo coeff n (base + 1) q) +
+        DensePoly.C (coeff (base + (n + 1))) * FpPoly.linearPow q (base + (n + 1))
+      rw [ih (base + 1)]
+      rw [show base + 1 + n = base + (n + 1) from by omega]
+      rw [FpPoly.add_assoc]
+
+/-- `composeCoeffPowerSumUpTo … n 0 q` viewed as the `List.finRange n`-foldl
+sum `Σ_{j < n} C(coeff j) · linearPow q j`. -/
+private theorem composeCoeffPowerSumUpTo_eq_foldl_finRange
+    [ZMod64.PrimeModulus p]
+    (coeff : Nat → ZMod64 p) (q : FpPoly p) (n : Nat) :
+    FpPoly.composeCoeffPowerSumUpTo coeff n 0 q =
+      (List.finRange n).foldl
+        (fun acc j => acc + DensePoly.C (coeff j.val) * FpPoly.linearPow q j.val)
+        0 := by
+  induction n with
+  | zero =>
+      simp [FpPoly.composeCoeffPowerSumUpTo]
+  | succ n ih =>
+      rw [composeCoeffPowerSumUpTo_succ_right coeff q n 0]
+      rw [Nat.zero_add]
+      rw [ih]
+      rw [List.finRange_succ_last]
+      rw [List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      -- foldl over (finRange n).map Fin.castSucc = foldl over finRange n
+      have hmap :
+          ((List.finRange n).map Fin.castSucc).foldl
+              (fun acc j =>
+                acc + DensePoly.C (coeff j.val) * FpPoly.linearPow q j.val) 0 =
+            (List.finRange n).foldl
+              (fun acc j =>
+                acc + DensePoly.C (coeff j.val) * FpPoly.linearPow q j.val) 0 := by
+        rw [List.foldl_map]
+        rfl
+      rw [hmap]
+      -- Fin.last n has val = n.
+      simp only [Fin.val_last]
+
+/-- The polynomial `matrixActionPolySum f hmonic w` has size at most
+`basisSize f`: each summand has size at most `basisSize f`, and a foldl
+of `+` over such summands stays bounded. -/
+private theorem foldl_zero_of_each_zero
+    {α : Type _} (xs : List α) (g : α → ZMod64 p)
+    (h : ∀ x ∈ xs, g x = 0) :
+    xs.foldl (fun acc x => acc + g x) (0 : ZMod64 p) = 0 := by
+  induction xs with
+  | nil => rfl
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hx : g x = 0 := h x (by simp)
+      have hxs : ∀ y ∈ xs, g y = 0 := fun y hy => h y (List.mem_cons_of_mem _ hy)
+      rw [hx]
+      have h_zero : ((0 : ZMod64 p) + 0) = 0 := by grind
+      rw [h_zero]
+      exact ih hxs
+
+private theorem poly_size_le_of_coeff_eq_zero_from
+    (q : FpPoly p) (bound : Nat) (h : ∀ i, bound ≤ i → q.coeff i = 0) :
+    q.size ≤ bound := by
+  by_cases hle : q.size ≤ bound
+  · exact hle
+  · exfalso
+    have hgt : bound < q.size := Nat.lt_of_not_ge hle
+    have hpos : 0 < q.size := by omega
+    have htop_zero : q.coeff (q.size - 1) = 0 := h (q.size - 1) (by omega)
+    exact DensePoly.coeff_last_ne_zero_of_pos_size q hpos htop_zero
+
+private theorem matrixActionPolySum_size_le
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) (w : FpPoly p) :
+    (matrixActionPolySum f hmonic w).size ≤ basisSize f := by
+  apply poly_size_le_of_coeff_eq_zero_from (matrixActionPolySum f hmonic w) (basisSize f)
+  intro i hi
+  unfold matrixActionPolySum
+  rw [foldl_add_poly_coeff (List.finRange (basisSize f))
+      (fun j => DensePoly.C (w.coeff j.val) *
+        FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val)
+      0 i]
+  rw [DensePoly.coeff_zero]
+  apply foldl_zero_of_each_zero
+  intro j _hj
+  rw [FpPoly.C_mul_eq_scale]
+  have h_zero : w.coeff j.val * (0 : ZMod64 p) = 0 := by grind
+  rw [DensePoly.coeff_scale _ _ _ h_zero]
+  have hsize := powModMonic_column_size_le f hmonic j
+  rw [DensePoly.coeff_eq_zero_of_size_le _ (Nat.le_trans hsize hi)]
+  show w.coeff j.val * (Zero.zero : ZMod64 p) = 0
+  rw [show (Zero.zero : ZMod64 p) = 0 from rfl]
+  exact h_zero
+
+/-- Modular equivalence of `+`-foldls when init values and each term agree
+mod the modulus. -/
+private theorem foldl_add_mod_congr {α : Type _} [ZMod64.PrimeModulus p]
+    (xs : List α) (g h : α → FpPoly p) (mod : FpPoly p) (init1 init2 : FpPoly p)
+    (h_init : init1 % mod = init2 % mod)
+    (h_term : ∀ x ∈ xs, (g x) % mod = (h x) % mod) :
+    (xs.foldl (fun acc x => acc + g x) init1) % mod =
+      (xs.foldl (fun acc x => acc + h x) init2) % mod := by
+  induction xs generalizing init1 init2 with
+  | nil => exact h_init
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      apply ih
+      · have h_add1 : (init1 + g x) % mod = ((init1 % mod) + (g x % mod)) % mod :=
+          @DensePoly.mod_add_mod (ZMod64 p) inferInstance inferInstance inferInstance
+            (ZMod64.instDivModLawsZMod64Fp p) init1 (g x) mod
+        have h_add2 : (init2 + h x) % mod = ((init2 % mod) + (h x % mod)) % mod :=
+          @DensePoly.mod_add_mod (ZMod64 p) inferInstance inferInstance inferInstance
+            (ZMod64.instDivModLawsZMod64Fp p) init2 (h x) mod
+        rw [h_add1, h_add2, h_init, h_term x (by simp)]
+      · intro y hy
+        exact h_term y (List.mem_cons_of_mem _ hy)
+
+/-- The matrix-action polysum agrees modulo `f` with the corresponding
+`linearPow X (p · j)`-sum. -/
+private theorem matrixActionPolySum_mod_eq_polySumLin_mod
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) (w : FpPoly p) :
+    matrixActionPolySum f hmonic w % f =
+      (List.finRange (basisSize f)).foldl
+        (fun acc j =>
+          acc + DensePoly.C (w.coeff j.val) *
+            FpPoly.linearPow (FpPoly.linearPow FpPoly.X p) j.val)
+        0 % f := by
+  unfold matrixActionPolySum
+  apply foldl_add_mod_congr
+  · rfl
+  intro j _hj
+  -- Each column polynomial is congruent to its `linearPow` analogue modulo `f`.
+  show (DensePoly.C (w.coeff j.val) *
+        FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val) % f =
+      (DensePoly.C (w.coeff j.val) *
+        FpPoly.linearPow (FpPoly.linearPow FpPoly.X p) j.val) % f
+  have h_mm1 :
+      (DensePoly.C (w.coeff j.val) *
+          FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val) % f =
+        ((DensePoly.C (w.coeff j.val) % f) *
+          (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val % f)) % f :=
+    @DensePoly.mod_mul_mod (ZMod64 p) inferInstance inferInstance inferInstance
+      (ZMod64.instDivModLawsZMod64Fp p) _ _ f
+  have h_mm2 :
+      (DensePoly.C (w.coeff j.val) *
+          FpPoly.linearPow (FpPoly.linearPow FpPoly.X p) j.val) % f =
+        ((DensePoly.C (w.coeff j.val) % f) *
+          (FpPoly.linearPow (FpPoly.linearPow FpPoly.X p) j.val % f)) % f :=
+    @DensePoly.mod_mul_mod (ZMod64 p) inferInstance inferInstance inferInstance
+      (ZMod64.instDivModLawsZMod64Fp p) _ _ f
+  rw [h_mm1, h_mm2]
+  congr 1
+  congr 1
+  have h1 :
+      FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val % f =
+        FpPoly.linearPow (FpPoly.frobeniusXMod f hmonic) j.val % f :=
+    FpPoly.powModMonic_mod_eq_linearPow _ f hmonic j.val
+  have h2 :
+      FpPoly.linearPow (FpPoly.frobeniusXMod f hmonic) j.val % f =
+        FpPoly.linearPow (FpPoly.linearPow FpPoly.X p) j.val % f := by
+    apply FpPoly.linearPow_mod_eq_of_mod_eq_mod
+    show FpPoly.frobeniusXMod f hmonic % f = FpPoly.linearPow FpPoly.X p % f
+    unfold FpPoly.frobeniusXMod
+    exact FpPoly.powModMonic_mod_eq_linearPow FpPoly.X f hmonic p
+  exact h1.trans h2
+
+/-- The matrix-action polysum equals `linearPow w p mod f` when `w.size`
+fits in the basis. -/
+private theorem matrixActionPolySum_eq_linearPow_mod
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) (w : FpPoly p)
+    (hw : w.size ≤ basisSize f) :
+    matrixActionPolySum f hmonic w = FpPoly.linearPow w p % f := by
+  -- Step 1: polySum mod f = polySumLin mod f.
+  have hmod1 :
+      matrixActionPolySum f hmonic w % f =
+        (List.finRange (basisSize f)).foldl
+          (fun acc j =>
+            acc + DensePoly.C (w.coeff j.val) *
+              FpPoly.linearPow (FpPoly.linearPow FpPoly.X p) j.val)
+          0 % f :=
+    matrixActionPolySum_mod_eq_polySumLin_mod f hmonic w
+  -- Step 2: polySumLin = compose w (linearPow X p) = linearPow w p.
+  have hsum :
+      (List.finRange (basisSize f)).foldl
+          (fun acc j =>
+            acc + DensePoly.C (w.coeff j.val) *
+              FpPoly.linearPow (FpPoly.linearPow FpPoly.X p) j.val)
+          0 = FpPoly.linearPow w p := by
+    rw [← composeCoeffPowerSumUpTo_eq_foldl_finRange (fun i => w.coeff i)
+        (FpPoly.linearPow FpPoly.X p) (basisSize f)]
+    rw [← FpPoly.compose_eq_coeff_power_sum_upTo_bound w (FpPoly.linearPow FpPoly.X p) hw]
+    exact FpPoly.compose_w_linearPow_X w
+  rw [hsum] at hmod1
+  -- Step 3: polySum is self-reduced since its size is ≤ basisSize f.
+  have hself : matrixActionPolySum f hmonic w % f = matrixActionPolySum f hmonic w := by
+    have hsize := matrixActionPolySum_size_le f hmonic w
+    by_cases h_basis_zero : basisSize f = 0
+    · -- basisSize f = 0 means polySum.size = 0, so polySum = 0.
+      rw [h_basis_zero] at hsize
+      have h_zero : matrixActionPolySum f hmonic w = 0 := by
+        apply DensePoly.ext_coeff
+        intro n
+        show (matrixActionPolySum f hmonic w).coeff n = (0 : FpPoly p).coeff n
+        rw [DensePoly.coeff_eq_zero_of_size_le _ (by omega : _ ≤ n)]
+        rw [DensePoly.coeff_zero]
+        rfl
+      rw [h_zero]
+      exact DensePoly.zero_mod_eq_zero_core (S := ZMod64 p) f
+    · apply DensePoly.mod_eq_self_of_degree_lt
+      have hbasis_pos : 0 < basisSize f := Nat.pos_of_ne_zero h_basis_zero
+      have hf_size_pos : 0 < f.size := by
+        by_cases hfz : 0 < f.size
+        · exact hfz
+        · exfalso
+          have hfsize : f.size = 0 := Nat.eq_zero_of_not_pos hfz
+          unfold basisSize DensePoly.degree? at hbasis_pos
+          simp [hfsize] at hbasis_pos
+      have hf_deg_eq : f.degree?.getD 0 = f.size - 1 := by
+        unfold DensePoly.degree?
+        simp [Nat.ne_of_gt hf_size_pos]
+      have hbasis_eq : basisSize f = f.size - 1 := hf_deg_eq
+      by_cases h_poly_size : (matrixActionPolySum f hmonic w).size = 0
+      · have h_poly_deg :
+            (matrixActionPolySum f hmonic w).degree?.getD 0 = 0 := by
+          unfold DensePoly.degree?
+          simp [h_poly_size]
+        rw [h_poly_deg, hf_deg_eq]
+        omega
+      · have h_poly_pos : 0 < (matrixActionPolySum f hmonic w).size :=
+          Nat.pos_of_ne_zero h_poly_size
+        have h_poly_deg :
+            (matrixActionPolySum f hmonic w).degree?.getD 0 =
+              (matrixActionPolySum f hmonic w).size - 1 := by
+          unfold DensePoly.degree?
+          simp [Nat.ne_of_gt h_poly_pos]
+        rw [h_poly_deg, hf_deg_eq]
+        omega
+  -- Combine: polySum = polySum % f = linearPow w p % f.
+  rw [← hself]
+  exact hmod1
+
+/-- The Berlekamp matrix acts on the basis-`{1, X, …, X^(n-1)}` coefficient
+vector of `w` as the Frobenius map on `F_p[X] / (f)`: when `w` has degree
+less than `n = basisSize f`, multiplying `coeffVector f w` by
+`berlekampMatrix f hmonic` returns the coefficient vector of
+`w^p mod f`. The proof factors through the compose-form Frobenius identity
+`compose w (linearPow X p) = linearPow w p` from `HexPolyFp/Compose.lean`. -/
+theorem berlekampMatrix_mulVec_coeffVector_eq
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) (w : FpPoly p)
+    (hw : w.size ≤ basisSize f) :
+    Matrix.mulVec (berlekampMatrix f hmonic) (coeffVector f w) =
+      coeffVector f (FpPoly.linearPow w p % f) := by
+  rw [← coeffVector_matrixActionPolySum_eq_mulVec f hmonic w]
+  rw [matrixActionPolySum_eq_linearPow_mod f hmonic w hw]
+
 /-- The fixed-space matrix `Q_f - I` used in Berlekamp's kernel computation. -/
 def fixedSpaceMatrix (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [inst : Lean.Grind.Ring (ZMod64 p)] :
