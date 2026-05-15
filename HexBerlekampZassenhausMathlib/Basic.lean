@@ -1079,6 +1079,52 @@ theorem centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
     hcore_ne hdvd hrep hprecision
   rwa [centeredLiftPoly_reduceModPow_eq _ _ _ d.p_pos] at h
 
+private theorem densePoly_scale_one_int (f : Hex.ZPoly) :
+    Hex.DensePoly.scale (1 : Int) f = f := by
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  rw [Hex.DensePoly.coeff_scale (1 : Int) f n (by simp)]
+  simp
+
+/--
+Under a monic core hypothesis, the scaled recovery theorem identifies the
+unscaled executable recombination candidate with the represented integer
+factor.
+-/
+theorem recombinationCandidate_eq_factor_of_recovery
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (_hcore_record : Hex.shouldRecordPolynomialFactor core = true)
+    (hdvd : factor ∣ core)
+    (hfactor_prim : Hex.ZPoly.content factor = 1)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (_hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    recombinationCandidate d S = factor := by
+  have hlead : Hex.DensePoly.leadingCoeff core = (1 : Int) := by
+    simpa [Hex.DensePoly.Monic] using hcore_monic
+  have hscaled :
+      scaledLiftedFactorProduct core d S = liftedFactorProduct d S := by
+    unfold scaledLiftedFactorProduct
+    rw [hlead]
+    exact densePoly_scale_one_int (liftedFactorProduct d S)
+  have hcenter :
+      Hex.centeredLiftPoly (liftedFactorProduct d S) (d.p ^ d.k) = factor := by
+    have h :=
+      centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
+        hcore_ne hdvd hrep hprecision
+    rwa [hscaled] at h
+  unfold recombinationCandidate
+  rw [polyProduct_liftedSubsetSelectedList_eq_liftedFactorProduct, hcenter]
+  have hprimitive :
+      Hex.ZPoly.primitivePart factor = factor :=
+    Hex.ZPoly.primitivePart_eq_self_of_primitive factor
+      (by simpa [Hex.ZPoly.Primitive] using hfactor_prim)
+  rw [hprimitive]
+  exact hfactor_norm
+
 /-- Converse to `toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord`: if the
 transported polynomial is non-zero and a non-unit, then the executable
 `shouldRecordPolynomialFactor` check passes.  Used to package executable
