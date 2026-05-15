@@ -1686,6 +1686,64 @@ theorem existsUnique_liftedFactorSubset_of_henselSubsetCorrespondenceRest
   intro T hT
   exact h.unique_subset hirr hdvd hT.1 hSJ hT.2 hS
 
+/--
+Transport an induced Hensel subset correspondence through one emitted
+recombination factor.
+
+The emitted subset `S` is removed from the remaining index set.  The only
+non-structural obligation is the expected disjointness fact: every irreducible
+divisor of the quotient must be represented by a subset disjoint from the
+emitted subset.  Later coverage proofs discharge that from square-free
+factorisation/associatedness; this lemma packages the pure rest-state transport
+and reuses the parent state's uniqueness field.
+-/
+theorem henselSubsetCorrespondenceRest_transport_of_disjoint
+    {core target quotient emitted : Hex.ZPoly} {d : Hex.LiftData}
+    {J S : LiftedFactorSubset d}
+    (h : HenselSubsetCorrespondenceRest core d J target)
+    (hquot : quotient * emitted = target)
+    (hdisjoint :
+      ∀ {factor : Hex.ZPoly} {T : LiftedFactorSubset d},
+        Irreducible (HexPolyZMathlib.toPolynomial factor) →
+        factor ∣ quotient →
+        T ⊆ J →
+        RepresentsIntegerFactorAtLift core d factor T →
+        Disjoint T S) :
+    HenselSubsetCorrespondenceRest core d (J \ S) quotient where
+  exists_subset := by
+    intro factor hirr hdvd_quot
+    have hdvd_target : factor ∣ target := by
+      rcases hdvd_quot with ⟨q, hq⟩
+      refine ⟨q * emitted, ?_⟩
+      calc
+        target = quotient * emitted := hquot.symm
+        _ = (factor * q) * emitted := by rw [hq]
+        _ = factor * (q * emitted) := by
+          rw [Hex.DensePoly.mul_assoc_poly (S := Int)]
+    rcases h.exists_subset hirr hdvd_target with ⟨T, hTJ, hTrep⟩
+    have hTS : Disjoint T S := hdisjoint hirr hdvd_quot hTJ hTrep
+    refine ⟨T, ?_, hTrep⟩
+    intro i hi
+    exact Finset.mem_sdiff.mpr
+      ⟨hTJ hi, fun hiS => (Finset.disjoint_left.mp hTS) hi hiS⟩
+  unique_subset := by
+    intro factor T U hirr hdvd_quot hTJU hUJU hTrep hUrep
+    have hdvd_target : factor ∣ target := by
+      rcases hdvd_quot with ⟨q, hq⟩
+      refine ⟨q * emitted, ?_⟩
+      calc
+        target = quotient * emitted := hquot.symm
+        _ = (factor * q) * emitted := by rw [hq]
+        _ = factor * (q * emitted) := by
+          rw [Hex.DensePoly.mul_assoc_poly (S := Int)]
+    apply h.unique_subset hirr hdvd_target
+    · intro i hi
+      exact (Finset.mem_sdiff.mp (hTJU hi)).1
+    · intro i hi
+      exact (Finset.mem_sdiff.mp (hUJU hi)).1
+    · exact hTrep
+    · exact hUrep
+
 /-! ### LiftedFactorSubset → executable recombination split bridge
 
 The executable recombination search at the lifted-factor surface enumerates
