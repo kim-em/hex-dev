@@ -993,6 +993,48 @@ theorem exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_count
       (exhaustiveCoreFactorsWithBound_factor_irreducible_of_count
         hcore_ne hcore_record hcount factor hfactor_mem)
 
+/-- Slow exhaustive branch core-factor irreducibility for recorded
+`factorWithBound` entries.
+
+The executable branch-shape theorem exposes recorded entries through raw slow
+factors. This theorem packages the final step for the case where the recorded
+factor has already been identified with one of the exhaustive square-free-core
+factors.  The remaining Group A completeness obligation is isolated as the
+cardinality equality hypothesis. -/
+theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_count
+    {f : Hex.ZPoly} {B : Nat} {entry : Hex.ZPoly × Nat}
+    (_hbranch : Hex.factorWithBoundUsesExhaustiveBranch f B)
+    (_hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList)
+    (hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0)
+    (hcore_record :
+      Hex.shouldRecordPolynomialFactor
+        (Hex.normalizeForFactor f).squareFreeCore = true)
+    (hcount :
+      ((Hex.exhaustiveCoreFactorsWithBound
+          (Hex.normalizeForFactor f).squareFreeCore B
+          (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)).toList.map
+          HexPolyZMathlib.toPolynomial).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial
+            (Hex.normalizeForFactor f).squareFreeCore)).card)
+    (hcore_entry :
+      ∃ raw ∈
+        (Hex.exhaustiveCoreFactorsWithBound
+          (Hex.normalizeForFactor f).squareFreeCore B
+          (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)).toList,
+        entry.1 = raw) :
+    Hex.ZPoly.Irreducible entry.1 := by
+  rcases hcore_entry with ⟨raw, hraw_mem, hentry_eq⟩
+  have hirr_raw :
+      Hex.ZPoly.Irreducible raw :=
+    exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_count
+      (core := (Hex.normalizeForFactor f).squareFreeCore)
+      (B := B)
+      (primeData := Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+      hcore_ne hcore_record hcount raw hraw_mem
+  rw [hentry_eq]
+  exact hirr_raw
+
 /-- Algorithm-side packaging for the BHKS fast-core success branch in
 the form needed by UFD arguments over `Polynomial ℤ`.  Combines the
 existing product, divisibility, and `shouldRecord` invariants exposed
