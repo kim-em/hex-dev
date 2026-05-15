@@ -2480,6 +2480,131 @@ private theorem scaledCoeffArrayLoop_lower_matches
       h_step_eq h_matrix_eq h_prev_eq h_coeffs_size h_coeffs_rows_size
       (fuel + 1) i j h_step_le_j hji h_fuel h_target_nonsing
 
+/-- Singular dual of `scaledCoeffArrayLoop_lower_matches_target_column`.
+When the matrix-side `noPivotLoop` records a singular step strictly before
+reaching column `j`, the array loop halts at the singular column and the
+target column is left at its initial (unwritten) zero value. -/
+private theorem scaledCoeffArrayLoop_lower_zero_of_singular_before_target
+    {state_array : ScaledCoeffArrayState} {state_matrix : Matrix.BareissState n}
+    (h_step_eq : state_array.step = state_matrix.step)
+    (h_matrix_eq : rowsToMatrix state_array.matrix n = state_matrix.matrix)
+    (h_prev_eq : state_array.prevPivot = state_matrix.prevPivot)
+    (h_coeffs_size : state_array.coeffs.size = n)
+    (h_coeffs_rows_size : ∀ r, r < n → state_array.coeffs[r]!.size = n)
+    (h_coeffs_unwritten : ∀ r c : Fin n,
+      state_matrix.step < c.val → c.val < r.val →
+        getArrayEntry state_array.coeffs r.val c.val = 0)
+    (h_no_sing : state_matrix.singularStep = none)
+    (fuel : Nat) (i j : Fin n)
+    (h_step_le_j : state_matrix.step ≤ j.val)
+    (hji : j.val < i.val)
+    (h_fuel : j.val < state_matrix.step + fuel)
+    (s : Nat)
+    (h_sing : (Matrix.noPivotLoop (j.val - state_matrix.step) state_matrix).singularStep
+        = some s) :
+    getArrayEntry (scaledCoeffArrayLoop n fuel state_array).coeffs i.val j.val = 0 := by
+  induction fuel generalizing state_array state_matrix with
+  | zero => omega
+  | succ fuel' ih =>
+      by_cases h_at_target : state_matrix.step = j.val
+      · have hdist : j.val - state_matrix.step = 0 := by omega
+        rw [hdist, Matrix.noPivotLoop_zero_fuel] at h_sing
+        rw [h_no_sing] at h_sing
+        nomatch h_sing
+      · have h_step_lt_j : state_matrix.step < j.val :=
+          Nat.lt_of_le_of_ne h_step_le_j h_at_target
+        have hDone : state_matrix.step + 1 < n := by
+          have := i.isLt
+          omega
+        have h_step_lt_n : state_matrix.step < n := Nat.lt_of_succ_lt hDone
+        have hArrayStep : state_array.step < n := h_step_eq ▸ h_step_lt_n
+        have hArrayNext : state_array.step + 1 < n := h_step_eq ▸ hDone
+        let kFin : Fin n := ⟨state_matrix.step, h_step_lt_n⟩
+        have h_pivot_array_eq_matrix :
+            getArrayEntry state_array.matrix state_array.step state_array.step =
+              state_matrix.matrix[kFin][kFin] := by
+          rw [h_step_eq]
+          have := getArrayEntry_eq_rowsToMatrix (n := n) state_array.matrix kFin kFin
+          rw [this, h_matrix_eq]
+        by_cases hp : state_matrix.matrix[kFin][kFin] = 0
+        · exact scaledCoeffArrayLoop_lower_singular_after_step
+            (n := n) (state_array := state_array) (state_matrix := state_matrix)
+            h_step_eq h_matrix_eq h_coeffs_unwritten fuel' i j h_step_lt_j hji hDone hp
+        · have hp_array :
+              getArrayEntry state_array.matrix state_array.step state_array.step ≠ 0 := by
+            rw [h_pivot_array_eq_matrix]
+            exact hp
+          rw [scaledCoeffArrayLoop_regular_branch fuel' state_array hArrayStep
+            hArrayNext hp_array]
+          let new_array : ScaledCoeffArrayState :=
+            { step := state_array.step + 1
+              matrix := Matrix.stepArray state_array.matrix n state_array.step
+                (getArrayEntry state_array.matrix state_array.step state_array.step)
+                state_array.prevPivot
+              coeffs := writeScaledColumn state_array.coeffs state_array.matrix n
+                state_array.step
+              prevPivot := getArrayEntry state_array.matrix state_array.step state_array.step }
+          let new_matrix : Matrix.BareissState n :=
+            { step := state_matrix.step + 1
+              matrix := Matrix.stepMatrix state_matrix.matrix state_matrix.step
+                state_matrix.matrix[kFin][kFin]
+                state_matrix.prevPivot
+              prevPivot := state_matrix.matrix[kFin][kFin]
+              rowSwaps := state_matrix.rowSwaps
+              singularStep := none }
+          change getArrayEntry (scaledCoeffArrayLoop n fuel' new_array).coeffs i.val j.val = 0
+          have h_step_new : new_array.step = new_matrix.step := by
+            show state_array.step + 1 = state_matrix.step + 1
+            rw [h_step_eq]
+          have h_matrix_new : rowsToMatrix new_array.matrix n = new_matrix.matrix := by
+            show rowsToMatrix
+                (Matrix.stepArray state_array.matrix n state_array.step _
+                  state_array.prevPivot) n =
+              Matrix.stepMatrix state_matrix.matrix state_matrix.step _ state_matrix.prevPivot
+            rw [rowsToMatrix_stepArray_eq_stepMatrix, h_matrix_eq, h_pivot_array_eq_matrix,
+              h_step_eq, h_prev_eq]
+          have h_prev_new : new_array.prevPivot = new_matrix.prevPivot :=
+            h_pivot_array_eq_matrix
+          have h_coeffs_size_new : new_array.coeffs.size = n := by
+            show (writeScaledColumn _ _ _ _).size = n
+            rw [writeScaledColumn_size]
+            exact h_coeffs_size
+          have h_coeffs_rows_size_new : ∀ r, r < n → new_array.coeffs[r]!.size = n := by
+            intro r hr
+            show (writeScaledColumn _ _ _ _)[r]!.size = n
+            rw [writeScaledColumn_rows_size]
+            exact h_coeffs_rows_size r hr
+          have h_coeffs_unwritten_new : ∀ r c : Fin n,
+              new_matrix.step < c.val → c.val < r.val →
+                getArrayEntry new_array.coeffs r.val c.val = 0 := by
+            intro r c hsc hcr
+            show getArrayEntry
+                (writeScaledColumn state_array.coeffs state_array.matrix n
+                  state_array.step) r.val c.val = 0
+            have hsc' : state_matrix.step + 1 < c.val := hsc
+            have hc_ne_step : c.val ≠ state_array.step := by
+              rw [h_step_eq]; omega
+            rw [getArrayEntry_writeScaledColumn_of_col_ne _ _ _ _ _ _ hc_ne_step]
+            exact h_coeffs_unwritten r c (by omega) hcr
+          have h_no_sing_new : new_matrix.singularStep = none := rfl
+          have h_step_le_j_new : new_matrix.step ≤ j.val := by
+            show state_matrix.step + 1 ≤ j.val
+            omega
+          have h_fuel_new : j.val < new_matrix.step + fuel' := by
+            show j.val < state_matrix.step + 1 + fuel'
+            omega
+          have h_sing_new :
+              (Matrix.noPivotLoop (j.val - new_matrix.step) new_matrix).singularStep
+                = some s := by
+            have hdist :
+                j.val - state_matrix.step = (j.val - (state_matrix.step + 1)) + 1 := by
+              omega
+            rw [hdist, Matrix.noPivotLoop_regular_branch _ state_matrix hDone hp] at h_sing
+            simpa [new_matrix] using h_sing
+          exact ih h_step_new h_matrix_new h_prev_new h_coeffs_size_new
+            h_coeffs_rows_size_new h_coeffs_unwritten_new h_no_sing_new
+            h_step_le_j_new h_fuel_new h_sing_new
+
 /-- State-level diagonal correspondence between the scaled-coefficient array
 loop and the matrix-level `Matrix.noPivotLoop` on the same Gram-like data.
 
@@ -4744,6 +4869,51 @@ theorem scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix
   -- Step 3: symmetry/transpose bridge to `scaledCoeffMatrix`.
   exact
     (noPivotLoop_scaledCoeffMatrix_eq_borderedMinor_at_trailing b i j hji).symm
+
+/-- Singular dual of `scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix`.
+When the no-pivot Bareiss pass over the full Gram matrix records an early
+singular step before reaching column `j`, the integral scaled Gram-Schmidt
+coefficient below the diagonal at `(i, j)` is zero. The array loop halts at
+the recorded singular column and the target column is never written. -/
+theorem scaledCoeffs_eq_zero_of_singularStep_lt
+    (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val)
+    (s : Nat)
+    (h_sing : (Matrix.noPivotLoop j.val
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = some s)
+    (hsj : s < j.val) :
+    GramSchmidt.entry (scaledCoeffs b) i j = 0 := by
+  have h_unwritten : ∀ r c : Fin n,
+      (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step < c.val →
+        c.val < r.val →
+        getArrayEntry
+          ({ step := 0
+             matrix := gramRows b
+             coeffs := zeroRows n
+             prevPivot := 1 } : ScaledCoeffArrayState).coeffs r.val c.val = 0 := by
+    intro r c _ _
+    exact getArrayEntry_zeroRows n r.val c.val
+  have h_sub : j.val - (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step = j.val := by
+    show j.val - 0 = j.val
+    omega
+  rw [scaledCoeffs_entry_eq_getArrayEntry]
+  show getArrayEntry
+      (scaledCoeffArrayLoop n n
+        ({ step := 0
+           matrix := gramRows b
+           coeffs := zeroRows n
+           prevPivot := 1 } : ScaledCoeffArrayState)).coeffs i.val j.val = 0
+  refine scaledCoeffArrayLoop_lower_zero_of_singular_before_target
+    (state_array :=
+      { step := 0
+        matrix := gramRows b
+        coeffs := zeroRows n
+        prevPivot := 1 })
+    (state_matrix := Matrix.noPivotInitialState (Matrix.gramMatrix b))
+    rfl (rowsToMatrix_gramRows b) rfl
+    (zeroRows_size n) (zeroRows_row_size n) h_unwritten rfl n i j
+    (Nat.zero_le _) hji (by have := i.isLt; omega) s ?_
+  rw [h_sub]
+  exact h_sing
 
 private theorem rowSwap_row_eq_of_ne_int {n' m' : Nat}
     (M : Matrix Int n' m') (i j r : Fin n')
