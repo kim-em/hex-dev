@@ -2740,6 +2740,560 @@ theorem exists_kernelWitnessSplit?_some_of_witnessProduct_dvd_of_pos_degree
     (by simpa [splitFactorAt] using hdegree)
     (by simpa [splitFactorAt] using hne_input)
 
+/-! ### Bezout-coefficient bridge for square-free monic splits
+
+From any nontrivial product factorization of a square-free monic `f`, the
+common-divisor form `gcd a b ∣ 1` supplied by `common_dvd_one_of_squareFree_mul`
+scales the xgcd Bezout identity to `s * a + t * b = 1`. This bypasses the
+`Monic (DensePoly.gcd a b)` hypothesis required by the corresponding
+`_squareFree_split` wrapper, by using explicit Bezout coefficients to feed
+`crtZeroOneCandidate` directly. -/
+
+/-- From `gcd a b ∣ 1`, scale the xgcd Bezout identity by the cofactor of `1`
+to obtain explicit `s, t` with `s * a + t * b = 1`. -/
+private theorem exists_bezout_eq_one_of_gcd_dvd_one
+    (a b : FpPoly p) (hgcd_dvd : DensePoly.gcd a b ∣ (1 : FpPoly p)) :
+    ∃ s t : FpPoly p, s * a + t * b = 1 := by
+  rcases hgcd_dvd with ⟨e, he⟩
+  have hbez_raw :
+      (DensePoly.xgcd a b).left * a + (DensePoly.xgcd a b).right * b =
+        (DensePoly.xgcd a b).gcd := by
+    simpa using DensePoly.xgcd_bezout a b
+  have hxgcd_eq : (DensePoly.xgcd a b).gcd = DensePoly.gcd a b := rfl
+  refine ⟨e * (DensePoly.xgcd a b).left, e * (DensePoly.xgcd a b).right, ?_⟩
+  calc
+    e * (DensePoly.xgcd a b).left * a + e * (DensePoly.xgcd a b).right * b
+        = e * ((DensePoly.xgcd a b).left * a) +
+            e * ((DensePoly.xgcd a b).right * b) := by
+          rw [FpPoly.mul_assoc e (DensePoly.xgcd a b).left a,
+              FpPoly.mul_assoc e (DensePoly.xgcd a b).right b]
+      _ = e * ((DensePoly.xgcd a b).left * a +
+              (DensePoly.xgcd a b).right * b) :=
+          (FpPoly.left_distrib e _ _).symm
+      _ = e * (DensePoly.xgcd a b).gcd := by rw [hbez_raw]
+      _ = e * DensePoly.gcd a b := by rw [hxgcd_eq]
+      _ = DensePoly.gcd a b * e := FpPoly.mul_comm _ _
+      _ = 1 := he.symm
+
+omit [ZMod64.PrimeModulus p] in
+/-- The common-divisor form `∀ d, d ∣ a → d ∣ b → d ∣ 1` is also a consequence
+of an explicit `s * a + t * b = 1` Bezout identity, with no monicity required
+on the gcd. -/
+private theorem common_dvd_one_of_bezout
+    {a b s t : FpPoly p}
+    (hbez : s * a + t * b = 1) (d : FpPoly p)
+    (hda : d ∣ a) (hdb : d ∣ b) : d ∣ (1 : FpPoly p) := by
+  rcases hda with ⟨a', ha'⟩
+  rcases hdb with ⟨b', hb'⟩
+  refine ⟨s * a' + t * b', ?_⟩
+  have hs : s * (d * a') = d * (s * a') := by
+    calc s * (d * a')
+        = (s * d) * a' := (FpPoly.mul_assoc s d a').symm
+      _ = (d * s) * a' := by rw [FpPoly.mul_comm s d]
+      _ = d * (s * a') := FpPoly.mul_assoc d s a'
+  have ht : t * (d * b') = d * (t * b') := by
+    calc t * (d * b')
+        = (t * d) * b' := (FpPoly.mul_assoc t d b').symm
+      _ = (d * t) * b' := by rw [FpPoly.mul_comm t d]
+      _ = d * (t * b') := FpPoly.mul_assoc d t b'
+  calc 1
+      = s * a + t * b := hbez.symm
+    _ = s * (d * a') + t * (d * b') := by rw [ha', hb']
+    _ = d * (s * a') + d * (t * b') := by rw [hs, ht]
+    _ = d * (s * a' + t * b') := (FpPoly.left_distrib d _ _).symm
+
+/-- Reduced zero-one CRT witness from explicit Bezout coefficients. Parallels
+`exists_reduced_crtZeroOne_kernelWitness_of_coprime_split` but consumes an
+arbitrary Bezout pair `s * a + t * b = 1` instead of `gcd a b = 1`. -/
+private theorem exists_reduced_crtZeroOne_kernelWitness_of_bezout
+    (a b s t : FpPoly p)
+    (ha : DensePoly.Monic a) (hb : DensePoly.Monic b)
+    (ha_pos : 0 < a.degree?.getD 0) (hb_pos : 0 < b.degree?.getD 0)
+    (hbez : s * a + t * b = 1) :
+    ∃ h : FpPoly p,
+      h = crtZeroOneCandidate a b s t % (a * b) ∧
+      (a * b) ∣ (FpPoly.linearPow h p - h) ∧
+      ∀ c : ZMod64 p, ¬ DensePoly.Congr h (DensePoly.C c) (a * b) := by
+  let h0 := crtZeroOneCandidate a b s t
+  refine ⟨h0 % (a * b), rfl, ?_, ?_⟩
+  · have hleft : a ∣ (FpPoly.linearPow h0 p - h0) :=
+      dvd_linearPow_sub_self_of_congr_zero a h0
+        (crtZeroOneCandidate_congr_zero_left a b s t hbez)
+    have hright : b ∣ (FpPoly.linearPow h0 p - h0) :=
+      dvd_linearPow_sub_self_of_congr_one b h0
+        (crtZeroOneCandidate_congr_one_right a b s t hbez)
+    have hprod : a * b ∣ (FpPoly.linearPow h0 p - h0) :=
+      mul_dvd_of_dvd_dvd_common hleft hright (common_dvd_one_of_bezout hbez)
+    have hred :=
+      (dvd_linearPow_sub_self_mod_iff (a * b) h0 1).mp (by simpa using hprod)
+    simpa using hred
+  · intro c
+    apply not_congr_constant_mod_of_mod (a * b) h0 c
+    exact crtZeroOneCandidate_not_congr_constant_mod_product a b s t
+      ha hb ha_pos hb_pos hbez c
+
+/-- Reduced zero-one CRT witness for a monic split of a square-free product.
+Avoids the `Monic (DensePoly.gcd a b)` hypothesis of
+`exists_reduced_crtZeroOne_kernelWitness_of_squareFree_split` by routing
+through `common_dvd_one_of_squareFree_mul` and the Bezout-coefficient bridge.
+-/
+private theorem exists_reduced_crtZeroOne_kernelWitness_of_squareFree_monic_split
+    (a b : FpPoly p)
+    (ha : DensePoly.Monic a) (hb : DensePoly.Monic b)
+    (ha_pos : 0 < a.degree?.getD 0) (hb_pos : 0 < b.degree?.getD 0)
+    (hsf : DensePoly.gcd (a * b) (DensePoly.derivative (a * b)) = 1) :
+    ∃ h : FpPoly p,
+      (a * b) ∣ (FpPoly.linearPow h p - h) ∧
+      (∀ c : ZMod64 p, ¬ DensePoly.Congr h (DensePoly.C c) (a * b)) ∧
+      h.size ≤ (a * b).degree?.getD 0 := by
+  have hgcd_dvd_one : DensePoly.gcd a b ∣ (1 : FpPoly p) :=
+    common_dvd_one_of_squareFree_mul hsf
+      (DensePoly.gcd_dvd_left a b) (DensePoly.gcd_dvd_right a b)
+  obtain ⟨s, t, hbez⟩ := exists_bezout_eq_one_of_gcd_dvd_one a b hgcd_dvd_one
+  obtain ⟨h, hheq, hdvd, hnonconst⟩ :=
+    exists_reduced_crtZeroOne_kernelWitness_of_bezout
+      a b s t ha hb ha_pos hb_pos hbez
+  refine ⟨h, hdvd, hnonconst, ?_⟩
+  haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
+  have hab_pos : 0 < (a * b).degree?.getD 0 := by
+    have ha_ne : a ≠ 0 := ne_zero_of_pos_degree ha_pos
+    have hb_ne : b ≠ 0 := ne_zero_of_pos_degree hb_pos
+    rw [FpPoly.degree?_mul_eq_add_degree? a b ha_ne hb_ne]
+    omega
+  rw [hheq]
+  have hlt :=
+    DensePoly.mod_degree_lt_of_pos_degree
+      (crtZeroOneCandidate a b s t) (a * b) hab_pos
+  by_cases hsize :
+      (crtZeroOneCandidate a b s t % (a * b)).size = 0
+  · omega
+  · have hpos :
+        0 < (crtZeroOneCandidate a b s t % (a * b)).size :=
+      Nat.pos_of_ne_zero hsize
+    have hdeg_eq :
+        (crtZeroOneCandidate a b s t % (a * b)).degree?.getD 0 =
+          (crtZeroOneCandidate a b s t % (a * b)).size - 1 := by
+      unfold DensePoly.degree?
+      simp [Nat.ne_of_gt hpos]
+    omega
+
+/-! ### Berlekamp completeness composition
+
+Combining the CRT-produced kernel polynomial with the matrix-bridge iff
+yields the algebraic half of Berlekamp completeness: if no fixed-space
+kernel witness admits a Berlekamp split, the square-free monic input is
+irreducible. -/
+
+omit [ZMod64.PrimeModulus p] in
+/-- Foldl of zero terms over `ZMod64 p` starting from `0` stays at `0`. -/
+private theorem foldl_add_eq_zero_of_terms_zero
+    {α : Type _} (xs : List α) (g : α → ZMod64 p)
+    (hg : ∀ x ∈ xs, g x = 0) :
+    xs.foldl (fun acc x => acc + g x) 0 = 0 := by
+  induction xs with
+  | nil => rfl
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hx : g x = 0 := hg x (by simp)
+      have hxs : ∀ y ∈ xs, g y = 0 := fun y hy => hg y (List.mem_cons_of_mem _ hy)
+      have hzero_add : (0 : ZMod64 p) + g x = 0 := by rw [hx]; grind
+      rw [hzero_add]
+      exact ih hxs
+
+/-- Relate a `nullspaceBasisMatrix` entry to the corresponding basis polynomial
+coefficient. The `(i, k)` entry of the basis matrix equals the `i`-th coefficient
+of the `k`-th basis polynomial, for `i < basisSize f`. -/
+private theorem nullspaceBasisMatrix_entry_eq_basis_coeff
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (k : Fin (basisSize f -
+      Matrix.rref_rank (fixedSpaceMatrix f hmonic)))
+    (i : Nat) (hi : i < basisSize f) :
+    ((Matrix.nullspaceBasisMatrix (fixedSpaceMatrix f hmonic))[i]'hi)[k.val]'k.isLt =
+      ((fixedSpaceKernel f hmonic).get k).coeff i := by
+  -- Establish: ((fixedSpaceKernel f hmonic).get k).coeff i = coeffVector f (basis k) [i]
+  have hker_coeff :
+      ((fixedSpaceKernel f hmonic).get k).coeff i =
+        (coeffVector f ((fixedSpaceKernel f hmonic).get k))[i]'hi := by
+    unfold coeffVector
+    rw [Vector.getElem_ofFn]
+  -- coeffVector f (basis k) = (fixedSpaceKernelVectors f hmonic).get k
+  have hker_eq :
+      coeffVector f ((fixedSpaceKernel f hmonic).get k) =
+        (fixedSpaceKernelVectors f hmonic).get k := by
+    unfold fixedSpaceKernel
+    rw [Vector.get_ofFn, coeffVector_vectorToPoly]
+  rw [hker_coeff, hker_eq]
+  -- Goal: M'[i][k.val] = ((fixedSpaceKernelVectors f hmonic).get k)[i]
+  -- Express both sides through the shared `rref_isRREF` instance.
+  let E := Matrix.rref_isRREF (fixedSpaceMatrix f hmonic)
+  show (E.nullspaceMatrix[i]'hi)[k.val]'k.isLt = (E.nullspace.get k)[i]'hi
+  unfold Matrix.IsRREF.nullspace
+  rw [Vector.get_ofFn]
+  unfold Matrix.col
+  rw [Vector.getElem_ofFn]
+  rfl
+
+/--
+**Algebraic half of Berlekamp completeness for square-free inputs.**
+
+For a monic square-free `f ∈ F_p[x]`, if every fixed-space kernel witness fails
+to produce a Berlekamp split (`kernelWitnessSplit? f w = none`), then `f` is
+irreducible.
+
+The proof goes by contradiction: a nontrivial factorization `f = a₀ * b₀`
+yields a monic irreducible factor `g ∣ a₀` and a monic cofactor `b' = f / g`
+of positive degree. The reduced CRT zero-one witness from
+`exists_reduced_crtZeroOne_kernelWitness_of_squareFree_monic_split` produces
+a polynomial `h` of size `≤ basisSize f` with `f ∣ linearPow h p - h` and
+`h` nonconstant modulo `f`. The fixed-space iff
+(`isFixedSpaceKernelPolynomial_iff_dvd_linearPow_sub_self`) makes `h` an
+algebraic kernel polynomial; the spanning lemma
+`fixedSpaceKernelPolynomial_coeffVector_complete` decomposes its coefficient
+vector as a linear combination of basis polynomials. Because `h` is not a
+constant, at least one basis polynomial `w` must be nonconstant; the iff in
+the matrix→algebraic direction (`fixedSpaceKernel_sound`) and
+`dvd_primeFieldProduct_witness_of_dvd_linearPow_sub_self` lift `w` to a
+witness of `f ∣ Π_c (w − C c)`. The executable split surface
+`exists_kernelWitnessSplit?_some_of_witnessProduct_dvd_of_pos_degree` then
+produces `kernelWitnessSplit? f w = some _`, contradicting `hno_split`.
+-/
+theorem irreducible_of_no_kernelWitnessSplit_squareFree
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (hsquareFree : DensePoly.gcd f (DensePoly.derivative f) = 1)
+    (hno_split : ∀ w ∈ (fixedSpaceKernel f hmonic).toList,
+      kernelWitnessSplit? f w = none) :
+    FpPoly.Irreducible f := by
+  haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
+  -- f ≠ 0 from monicity.
+  have hf_ne_zero : f ≠ 0 := by
+    intro hzero
+    have hlead : f.leadingCoeff = 1 := hmonic
+    rw [hzero] at hlead
+    have hlead_zero : (0 : FpPoly p).leadingCoeff = 0 := by
+      change (0 : FpPoly p).coeffs.back?.getD 0 = 0
+      have hcoeffs : (0 : FpPoly p).coeffs = #[] := rfl
+      rw [hcoeffs]; rfl
+    rw [hlead_zero] at hlead
+    exact zmod64_one_ne_zero_local hlead.symm
+  refine ⟨hf_ne_zero, ?_⟩
+  intro a₀ b₀ hab
+  by_cases ha₀_unit : a₀.degree? = some 0
+  · exact Or.inl ha₀_unit
+  refine Or.inr ?_
+  by_cases hb₀_unit : b₀.degree? = some 0
+  · exact hb₀_unit
+  exfalso
+  -- Both factors are nonconstant.
+  have ha₀_ne_zero : a₀ ≠ 0 := factor_ne_zero_of_ne_zero hab hf_ne_zero
+  have hb₀_ne_zero : b₀ ≠ 0 := by
+    have hba : b₀ * a₀ = f := by rw [FpPoly.mul_comm]; exact hab
+    exact factor_ne_zero_of_ne_zero hba hf_ne_zero
+  have ha₀_pos : 0 < a₀.degree?.getD 0 :=
+    pos_degree_of_ne_zero_of_not_isUnit ha₀_ne_zero ha₀_unit
+  have hb₀_pos : 0 < b₀.degree?.getD 0 :=
+    pos_degree_of_ne_zero_of_not_isUnit hb₀_ne_zero hb₀_unit
+  have ha₀_lt_f : a₀.degree?.getD 0 < basisSize f :=
+    factor_degree_lt_basisSize hab ha₀_ne_zero hb₀_pos
+  -- Extract a monic irreducible factor `g` of `a₀`.
+  obtain ⟨g, _hg_irr, hg_monic, hg_dvd_a₀, hg_deg_pos, hg_deg_le_a₀⟩ :=
+    exists_monic_irreducible_factor_of_factor hmonic hab ha₀_pos
+  -- `g ∣ f` via `g ∣ a₀ ∣ f`.
+  have hg_dvd_f : g ∣ f := by
+    rcases hg_dvd_a₀ with ⟨r, hr⟩
+    refine ⟨r * b₀, ?_⟩
+    calc f = a₀ * b₀ := hab.symm
+      _ = (g * r) * b₀ := by rw [hr]
+      _ = g * (r * b₀) := FpPoly.mul_assoc g r b₀
+  have hg_ne_zero : g ≠ 0 := ne_zero_of_pos_degree hg_deg_pos
+  -- Cofactor `b' := f / g` with `g * b' = f`.
+  let b' : FpPoly p := f / g
+  have hf_eq : g * b' = f := (fp_eq_mul_div_of_dvd hg_dvd_f).symm
+  have hb'_ne_zero : b' ≠ 0 := by
+    intro hzero
+    rw [hzero, FpPoly.mul_zero] at hf_eq
+    exact hf_ne_zero hf_eq.symm
+  -- `b'` is monic: leading coefficient is forced by `g * b' = f` and both `g, f` monic.
+  have hb'_monic : DensePoly.Monic b' := by
+    have hlead : DensePoly.leadingCoeff f =
+        DensePoly.leadingCoeff g * DensePoly.leadingCoeff b' := by
+      rw [← hf_eq]
+      exact leadingCoeff_mul_fpoly g b' hg_ne_zero hb'_ne_zero
+    have hf_one : DensePoly.leadingCoeff f = 1 := hmonic
+    have hg_one : DensePoly.leadingCoeff g = 1 := hg_monic
+    unfold DensePoly.Monic
+    rw [hg_one, hf_one] at hlead
+    have hone_mul : (1 : ZMod64 p) * DensePoly.leadingCoeff b' =
+        DensePoly.leadingCoeff b' := by grind
+    rw [hone_mul] at hlead
+    exact hlead.symm
+  -- `b'` has positive degree.
+  have hg_lt_f : g.degree?.getD 0 < basisSize f :=
+    Nat.lt_of_le_of_lt hg_deg_le_a₀ ha₀_lt_f
+  have hb'_pos : 0 < b'.degree?.getD 0 := by
+    have hdeg_eq : (g * b').degree?.getD 0 =
+        g.degree?.getD 0 + b'.degree?.getD 0 :=
+      FpPoly.degree?_mul_eq_add_degree? g b' hg_ne_zero hb'_ne_zero
+    rw [hf_eq] at hdeg_eq
+    unfold basisSize at hg_lt_f
+    omega
+  -- Square-freeness on `g * b' = f`.
+  have hsf' : DensePoly.gcd (g * b') (DensePoly.derivative (g * b')) = 1 := by
+    rw [hf_eq]; exact hsquareFree
+  -- Reduced zero-one CRT witness `h`.
+  obtain ⟨h, h_dvd, h_nonconst, h_size⟩ :=
+    exists_reduced_crtZeroOne_kernelWitness_of_squareFree_monic_split
+      g b' hg_monic hb'_monic hg_deg_pos hb'_pos hsf'
+  rw [hf_eq] at h_dvd h_nonconst h_size
+  -- Size bound: `h.size ≤ basisSize f`.
+  have hh_size_le : h.size ≤ basisSize f := h_size
+  -- `h` is a fixed-space kernel polynomial.
+  have hh_kernel : IsFixedSpaceKernelPolynomial f hmonic h := by
+    rw [isFixedSpaceKernelPolynomial_iff_dvd_linearPow_sub_self f hmonic h hh_size_le]
+    exact h_dvd
+  -- Span as linear combination of basis vectors.
+  obtain ⟨c_coeff, hc_eq⟩ :=
+    fixedSpaceKernelPolynomial_coeffVector_complete f hmonic h hh_kernel
+  -- Notation for the basis matrix.
+  let M := fixedSpaceMatrix f hmonic
+  -- Set kernel dimension shorthand.
+  let ndim := basisSize f - Matrix.rref_rank M
+  -- Extract a nonconstant basis polynomial, contradicting `hno_split`.
+  -- Strategy: if every basis polynomial is a constant, then h is a constant,
+  -- contradicting h_nonconst applied to h.coeff 0.
+  have hbasis_size_le : ∀ k : Fin ndim,
+      ((fixedSpaceKernel f hmonic).get k).size ≤ basisSize f := by
+    intro k
+    have hker_eq :
+        (fixedSpaceKernel f hmonic).get k =
+          vectorToPoly ((fixedSpaceKernelVectors f hmonic).get k) := by
+      unfold fixedSpaceKernel
+      rw [Vector.get_ofFn]
+    rw [hker_eq]
+    unfold vectorToPoly
+    have hle :
+        (FpPoly.ofCoeffs
+            ((fixedSpaceKernelVectors f hmonic).get k).toArray).size ≤
+          ((fixedSpaceKernelVectors f hmonic).get k).toArray.size :=
+      DensePoly.size_ofCoeffs_le _
+    have hsz :
+        ((fixedSpaceKernelVectors f hmonic).get k).toArray.size = basisSize f :=
+      ((fixedSpaceKernelVectors f hmonic).get k).size_toArray
+    omega
+  by_cases hall_const :
+      ∀ k : Fin ndim, ((fixedSpaceKernel f hmonic).get k).size ≤ 1
+  · -- Every basis polynomial is a constant. Show `h` is a constant.
+    -- Specifically, prove `h.coeff i = 0` for all `i ≥ 1`.
+    have hh_coeff_zero : ∀ i, 1 ≤ i → h.coeff i = 0 := by
+      intro i hi
+      by_cases hi_lt : i < basisSize f
+      · -- Use hc_eq to extract h.coeff i as a linear combination.
+        have hi_fin : i < basisSize f := hi_lt
+        have hget :
+            (Matrix.mulVec (Matrix.nullspaceBasisMatrix M) c_coeff)[i]'hi_fin =
+              (coeffVector f h)[i]'hi_fin :=
+          congrArg (fun v : Vector (ZMod64 p) (basisSize f) => v[i]'hi_fin) hc_eq
+        -- Right-hand side is h.coeff i.
+        have hrhs : (coeffVector f h)[i]'hi_fin = h.coeff i := by
+          unfold coeffVector
+          rw [Vector.getElem_ofFn hi_fin]
+        -- Left-hand side expands to a foldl.
+        have hlhs :
+            (Matrix.mulVec (Matrix.nullspaceBasisMatrix M) c_coeff)[i]'hi_fin =
+              (List.finRange ndim).foldl
+                (fun acc k => acc +
+                  ((Matrix.nullspaceBasisMatrix M)[i]'hi_fin)[k.val]'k.isLt *
+                    c_coeff[k.val]'k.isLt) 0 := by
+          unfold Matrix.mulVec Matrix.dot Hex.Vector.dotProduct Matrix.row
+          rw [Vector.getElem_ofFn hi_fin]
+          rfl
+        rw [hlhs] at hget
+        rw [hrhs] at hget
+        -- All terms in the foldl are 0 because basis polynomials have size ≤ 1.
+        have hzero_terms : ∀ k ∈ List.finRange ndim,
+            ((Matrix.nullspaceBasisMatrix M)[i]'hi_fin)[k.val]'k.isLt *
+                c_coeff[k.val]'k.isLt = 0 := by
+          intro k _hk
+          rw [nullspaceBasisMatrix_entry_eq_basis_coeff f hmonic k i hi_fin]
+          have hk_const : ((fixedSpaceKernel f hmonic).get k).size ≤ 1 := hall_const k
+          have hcoeff_zero : ((fixedSpaceKernel f hmonic).get k).coeff i = 0 :=
+            DensePoly.coeff_eq_zero_of_size_le _ (by omega)
+          rw [hcoeff_zero]
+          grind
+        have hfoldl_zero :
+            (List.finRange ndim).foldl
+              (fun acc k => acc +
+                ((Matrix.nullspaceBasisMatrix M)[i]'hi_fin)[k.val]'k.isLt *
+                  c_coeff[k.val]'k.isLt) 0 = 0 :=
+          foldl_add_eq_zero_of_terms_zero (List.finRange ndim)
+            (fun k => ((Matrix.nullspaceBasisMatrix M)[i]'hi_fin)[k.val]'k.isLt *
+              c_coeff[k.val]'k.isLt)
+            hzero_terms
+        rw [hfoldl_zero] at hget
+        exact hget.symm
+      · have hi_ge : basisSize f ≤ i := Nat.le_of_not_lt hi_lt
+        exact DensePoly.coeff_eq_zero_of_size_le _ (Nat.le_trans hh_size_le hi_ge)
+    -- `h = DensePoly.C d` for a fresh `d`.
+    have hh_eq_C : ∃ d : ZMod64 p, h = DensePoly.C d := by
+      refine ⟨h.coeff 0, ?_⟩
+      apply DensePoly.ext_coeff
+      intro i
+      rw [DensePoly.coeff_C]
+      cases i with
+      | zero => simp
+      | succ i =>
+          rw [hh_coeff_zero (i + 1) (by omega)]
+          simp; rfl
+    obtain ⟨d, hd⟩ := hh_eq_C
+    -- Then `f ∣ h - C d` holds (the difference is 0).
+    apply h_nonconst d
+    refine ⟨0, ?_⟩
+    rw [hd, FpPoly.sub_self, FpPoly.mul_zero]
+  · -- Some basis polynomial is nonconstant. Use it to contradict hno_split.
+    obtain ⟨k, hk⟩ := Classical.not_forall.mp hall_const
+    let w : FpPoly p := (fixedSpaceKernel f hmonic).get k
+    have hw_size_ge : 1 < w.size := Nat.lt_of_not_le hk
+    -- w is in the kernel toList.
+    have hw_mem : w ∈ (fixedSpaceKernel f hmonic).toList := by
+      have hk_lt :
+          k.val < (fixedSpaceKernel f hmonic).toList.length := by
+        rw [Vector.length_toList]
+        exact k.isLt
+      have hget :
+          (fixedSpaceKernel f hmonic).toList[k.val]'hk_lt = w := by
+        rw [Vector.getElem_toList]
+        rfl
+      rw [← hget]
+      exact List.getElem_mem hk_lt
+    -- w is a kernel polynomial.
+    have hw_kernel : IsFixedSpaceKernelPolynomial f hmonic w :=
+      fixedSpaceKernel_sound f hmonic k
+    -- w has size ≤ basisSize f.
+    have hw_size_le : w.size ≤ basisSize f := hbasis_size_le k
+    -- Hence f ∣ linearPow w p - w.
+    have hw_dvd : f ∣ FpPoly.linearPow w p - w := by
+      rw [isFixedSpaceKernelPolynomial_iff_dvd_linearPow_sub_self
+        f hmonic w hw_size_le] at hw_kernel
+      exact hw_kernel
+    -- Apply prime-field product identity.
+    have hw_prod :
+        f ∣ (ZMod64.values p).foldl
+          (fun acc c => acc * (w - FpPoly.C c)) 1 :=
+      dvd_primeFieldProduct_witness_of_dvd_linearPow_sub_self hw_dvd
+    -- w is not congruent to any constant modulo f.
+    have hbasis_pos : 0 < basisSize f := by
+      have hgpos : 0 < g.degree?.getD 0 := hg_deg_pos
+      omega
+    have hw_nonconst : ∀ c : ZMod64 p, ¬ (f ∣ (w - FpPoly.C c)) := by
+      intro c hc
+      -- (w - C c) ≠ 0 because its leading coefficient at index (w.size - 1) is nonzero.
+      have hw_lead : w.coeff (w.size - 1) ≠ 0 :=
+        DensePoly.coeff_last_ne_zero_of_pos_size w (by omega)
+      have hC_coeff_high : (FpPoly.C c).coeff (w.size - 1) = 0 := by
+        change (DensePoly.C c).coeff (w.size - 1) = 0
+        rw [DensePoly.coeff_C]
+        have : w.size - 1 ≠ 0 := by omega
+        simp [this]; rfl
+      have hsub_at_top : (w - FpPoly.C c).coeff (w.size - 1) =
+          w.coeff (w.size - 1) - (FpPoly.C c).coeff (w.size - 1) := by
+        rw [DensePoly.coeff_sub _ _ _ zmod64_zero_sub_zero]
+      have hsub_top_ne : (w - FpPoly.C c).coeff (w.size - 1) ≠ 0 := by
+        rw [hsub_at_top, hC_coeff_high]
+        intro hzero
+        apply hw_lead
+        have hsubzero : w.coeff (w.size - 1) - (0 : ZMod64 p) =
+            w.coeff (w.size - 1) := by grind
+        rw [hsubzero] at hzero
+        exact hzero
+      have hwc_ne_zero : w - FpPoly.C c ≠ 0 := by
+        intro hwc_zero
+        apply hsub_top_ne
+        rw [hwc_zero]
+        change (0 : FpPoly p).coeff (w.size - 1) = 0
+        rw [DensePoly.coeff_zero]
+        rfl
+      -- (w - C c).size ≤ basisSize f via coefficient analysis above basisSize f.
+      have hwc_size_le : (w - FpPoly.C c).size ≤ basisSize f := by
+        apply Classical.byContradiction
+        intro hgt
+        have hgt : basisSize f < (w - FpPoly.C c).size := Nat.lt_of_not_le hgt
+        have hwc_pos : 0 < (w - FpPoly.C c).size := by omega
+        have hidx_ge : basisSize f ≤ (w - FpPoly.C c).size - 1 := by omega
+        have hlast_ne :
+            (w - FpPoly.C c).coeff ((w - FpPoly.C c).size - 1) ≠ 0 :=
+          DensePoly.coeff_last_ne_zero_of_pos_size _ hwc_pos
+        have hw_zero_top :
+            w.coeff ((w - FpPoly.C c).size - 1) = 0 :=
+          DensePoly.coeff_eq_zero_of_size_le _ (Nat.le_trans hw_size_le hidx_ge)
+        have hC_zero_top :
+            (FpPoly.C c).coeff ((w - FpPoly.C c).size - 1) = 0 := by
+          change (DensePoly.C c).coeff ((w - FpPoly.C c).size - 1) = 0
+          rw [DensePoly.coeff_C]
+          have hne : (w - FpPoly.C c).size - 1 ≠ 0 := by omega
+          simp [hne]; rfl
+        have hsub_top :
+            (w - FpPoly.C c).coeff ((w - FpPoly.C c).size - 1) =
+              w.coeff ((w - FpPoly.C c).size - 1) -
+                (FpPoly.C c).coeff ((w - FpPoly.C c).size - 1) := by
+          rw [DensePoly.coeff_sub _ _ _ zmod64_zero_sub_zero]
+        rw [hsub_top, hw_zero_top, hC_zero_top] at hlast_ne
+        apply hlast_ne
+        change (0 : ZMod64 p) - (0 : ZMod64 p) = 0
+        grind
+      -- (w - C c).degree < basisSize f, so (w - C c) % f = (w - C c).
+      have hwc_deg_lt : (w - FpPoly.C c).degree?.getD 0 < basisSize f := by
+        by_cases hsize : (w - FpPoly.C c).size = 0
+        · -- (w - C c) = 0, contradicting hwc_ne_zero.
+          exfalso
+          apply hwc_ne_zero
+          apply DensePoly.ext_coeff
+          intro i
+          rw [DensePoly.coeff_zero]
+          exact DensePoly.coeff_eq_zero_of_size_le _ (by omega)
+        · have hsize_pos : 0 < (w - FpPoly.C c).size := Nat.pos_of_ne_zero hsize
+          have hdeg : (w - FpPoly.C c).degree? =
+              some ((w - FpPoly.C c).size - 1) := by
+            unfold DensePoly.degree?
+            simp [hsize]
+          rw [hdeg]
+          simp
+          omega
+      have hwc_mod_self : (w - FpPoly.C c) % f = (w - FpPoly.C c) := by
+        apply DensePoly.mod_eq_self_of_degree_lt
+        change _ < basisSize f
+        exact hwc_deg_lt
+      have hwc_mod_zero : (w - FpPoly.C c) % f = 0 :=
+        DensePoly.mod_eq_zero_of_dvd _ _ hc
+      rw [hwc_mod_self] at hwc_mod_zero
+      exact hwc_ne_zero hwc_mod_zero
+    -- Now apply the executable split.
+    have hf_pos : 0 < f.degree?.getD 0 := by
+      have : 0 < basisSize f := hbasis_pos
+      unfold basisSize at this
+      exact this
+    obtain ⟨r, hsplit⟩ :=
+      exists_kernelWitnessSplit?_some_of_witnessProduct_dvd_of_pos_degree
+        hf_pos hw_prod hw_nonconst
+    have hno_w : kernelWitnessSplit? f w = none := hno_split w hw_mem
+    rw [hno_w] at hsplit
+    nomatch hsplit
+
+/--
+For a monic square-free `f` whose executable Berlekamp factorization returns
+at most one factor, `f` is irreducible. Composes the structural loop lemma
+`kernelWitnessSplit?_none_of_berlekampFactor_factors_length_le_one` with the
+algebraic completeness theorem
+`irreducible_of_no_kernelWitnessSplit_squareFree`.
+-/
+theorem berlekampFactor_singleton_irreducible
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (hsquareFree : DensePoly.gcd f (DensePoly.derivative f) = 1)
+    (hsmall : (berlekampFactor f hmonic).factors.length ≤ 1) :
+    FpPoly.Irreducible f :=
+  irreducible_of_no_kernelWitnessSplit_squareFree
+    f hmonic hsquareFree
+    (kernelWitnessSplit?_none_of_berlekampFactor_factors_length_le_one
+      f hmonic hsmall)
+
 end
 
 end Berlekamp
