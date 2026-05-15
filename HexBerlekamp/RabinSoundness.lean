@@ -1,4 +1,5 @@
 import HexBerlekamp.Irreducibility
+import HexBerlekamp.Factor
 import HexPolyFp.Quotient
 import HexPolyFp.QuotientFrobenius
 import HexArith.Nat.Pow
@@ -2677,6 +2678,29 @@ theorem exists_nontrivial_gcd_of_witnessProduct_dvd_of_pos_degree
     apply hnonconst c
     rw [← hgcd_eq_f]
     exact DensePoly.gcd_dvd_right f (w - FpPoly.C c)
+
+/--
+Executable composition of the square-free distribution step: once the
+witness-product divisibility hypothesis is available and the witness is not
+constant modulo `f`, the Berlekamp split search finds a concrete split result.
+
+The upstream derivation of `hdvd` from a fixed-space/kernel hypothesis is kept
+separate; this theorem only packages the local distribution result with the
+executable search reflection.
+-/
+theorem exists_kernelWitnessSplit?_some_of_witnessProduct_dvd_of_pos_degree
+    {f w : FpPoly p}
+    (hf_pos : 0 < f.degree?.getD 0)
+    (hdvd : f ∣ (ZMod64.values p).foldl
+        (fun acc c => acc * (w - FpPoly.C c)) 1)
+    (hnonconst : ∀ c : ZMod64 p, ¬ (f ∣ (w - FpPoly.C c))) :
+    ∃ r : SplitResult p, kernelWitnessSplit? f w = some r := by
+  obtain ⟨c, hnotZero, hdegree, hne_input⟩ :=
+    exists_nontrivial_gcd_of_witnessProduct_dvd_of_pos_degree hf_pos hdvd hnonconst
+  exact kernelWitnessSplit?_some_of_nontrivial_splitFactorAt f w c
+    (by simp [splitFactorAt, hnotZero])
+    (by simpa [splitFactorAt] using hdegree)
+    (by simpa [splitFactorAt] using hne_input)
 
 end
 
