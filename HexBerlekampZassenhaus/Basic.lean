@@ -5234,6 +5234,28 @@ private theorem firstSome_some
           cases h
           exact ⟨x, hx⟩
 
+private theorem firstSome_eq_some_of_append
+    {α β : Type} (pre suffix : List α) (x : α) (f : α → Option β) (y : β)
+    (hprefix : ∀ z ∈ pre, f z = none)
+    (hx : f x = some y) :
+    firstSome (pre ++ x :: suffix) f = some y := by
+  induction pre with
+  | nil =>
+      simp [firstSome, hx]
+  | cons z zs ih =>
+      change
+        (match f z with
+        | some y' => some y'
+        | none => firstSome (zs ++ x :: suffix) f) = some y
+      rw [hprefix z (by simp)]
+      exact ih (fun w hw => hprefix w (by simp [hw]))
+
+private theorem subsetSplitsWithFirst_mem_cons
+    {factor : ZPoly} {factors selected rest : List ZPoly}
+    (hmem : (selected, rest) ∈ subsetSplits factors) :
+    (factor :: selected, rest) ∈ subsetSplitsWithFirst (factor :: factors) := by
+  simp [subsetSplitsWithFirst, hmem]
+
 private theorem recombinationSearchAux_product
     (target : ZPoly) (localFactors factors : List ZPoly) (fuel : Nat)
     (hsearch : recombinationSearchAux target localFactors fuel = some factors) :
