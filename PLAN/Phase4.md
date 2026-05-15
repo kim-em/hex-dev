@@ -173,7 +173,7 @@ As of the merge of the PR introducing the new exit criteria above
 (profile coverage, headline report, gating-comparator wiring,
 Attribution rule, empty-Concerns), every library currently at
 `done_through ≥ 4` is re-evaluated under those criteria. The
-re-evaluation is queued via a single umbrella `human-oversight`
+re-evaluation is queued via a single umbrella `directive`
 issue with a checkbox per library; per-library follow-on issues
 are filed only when the audit identifies actual gaps. Libraries
 already passing all new criteria stay at `done_through: 4`
