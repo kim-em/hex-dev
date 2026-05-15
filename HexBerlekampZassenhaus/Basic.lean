@@ -5301,6 +5301,25 @@ def factor (f : ZPoly) : Factorization :=
 
 set_option maxHeartbeats 800000
 
+/-- The bounded public factorization is built from either the raw factor array
+chosen by the fast path, or from the slow fallback when the fast path returns
+`none`. -/
+theorem factorWithBound_eq_factorizationOfFactors (f : ZPoly) (B : Nat) :
+    ∃ rawFactors : Array ZPoly,
+      (factorFastFactorsWithBound f B = some rawFactors ∨
+        (factorFastFactorsWithBound f B = none ∧
+          rawFactors = factorSlowFactorsWithBound f B)) ∧
+      factorWithBound f B = factorizationOfFactors f rawFactors := by
+  cases hfast : factorFastFactorsWithBound f B with
+  | some rawFactors =>
+      refine ⟨rawFactors, Or.inl rfl, ?_⟩
+      simp only [factorWithBound, factorFastWithBound, hfast, Option.map_some,
+        Option.getD_some]
+  | none =>
+      refine ⟨factorSlowFactorsWithBound f B, Or.inr ⟨rfl, rfl⟩, ?_⟩
+      simp only [factorWithBound, factorFastWithBound, factorSlowWithBound, hfast,
+        Option.map_none, Option.getD_none]
+
 /-- Any recorded entry of `factorWithBound` comes from the raw factor array
 chosen by the fast path, or from the slow fallback when the fast path returns
 `none`, after the `collectFactorMultiplicities` sign-normalization step. -/
@@ -5312,17 +5331,11 @@ theorem factorWithBound_entry_mem_raw_source
         (factorFastFactorsWithBound f B = none ∧
           rawFactors = factorSlowFactorsWithBound f B)) ∧
       ∃ raw ∈ rawFactors.toList, entry.1 = normalizeFactorSign raw := by
-  cases hfast : factorFastFactorsWithBound f B with
-  | some rawFactors =>
-      refine ⟨rawFactors, Or.inl rfl, ?_⟩
-      apply factorizationOfFactors_entry_mem_normalized_raw
-      simpa only [factorWithBound, factorFastWithBound, hfast, Option.map_some,
-        Option.getD_some] using hmem
-  | none =>
-      refine ⟨factorSlowFactorsWithBound f B, Or.inr ⟨rfl, rfl⟩, ?_⟩
-      apply factorizationOfFactors_entry_mem_normalized_raw
-      simpa only [factorWithBound, factorFastWithBound, factorSlowWithBound, hfast,
-        Option.map_none, Option.getD_none] using hmem
+  obtain ⟨rawFactors, hrawFactors, hfactor⟩ :=
+    factorWithBound_eq_factorizationOfFactors f B
+  refine ⟨rawFactors, hrawFactors, ?_⟩
+  apply factorizationOfFactors_entry_mem_normalized_raw
+  simpa only [hfactor] using hmem
 
 /-- Every recorded entry of the bounded public factorization has positive
 multiplicity. -/
@@ -5330,15 +5343,10 @@ theorem factorWithBound_entry_multiplicity_pos
     (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
     (hmem : entry ∈ (factorWithBound f B).factors.toList) :
     0 < entry.2 := by
-  cases hfast : factorFastFactorsWithBound f B with
-  | some rawFactors =>
-      apply factorizationOfFactors_entry_multiplicity_pos
-      simpa only [factorWithBound, factorFastWithBound, hfast, Option.map_some,
-        Option.getD_some] using hmem
-  | none =>
-      apply factorizationOfFactors_entry_multiplicity_pos
-      simpa only [factorWithBound, factorFastWithBound, factorSlowWithBound, hfast,
-        Option.map_none, Option.getD_none] using hmem
+  obtain ⟨rawFactors, _hrawFactors, hfactor⟩ :=
+    factorWithBound_eq_factorizationOfFactors f B
+  apply factorizationOfFactors_entry_multiplicity_pos
+  simpa only [hfactor] using hmem
 
 /-- Every recorded entry of the bounded public factorization is fixed by
 `normalizeFactorSign`. -/
@@ -5346,15 +5354,10 @@ theorem factorWithBound_entry_normalizeFactorSign_id
     (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
     (hmem : entry ∈ (factorWithBound f B).factors.toList) :
     normalizeFactorSign entry.1 = entry.1 := by
-  cases hfast : factorFastFactorsWithBound f B with
-  | some rawFactors =>
-      apply factorizationOfFactors_entry_normalizeFactorSign_id
-      simpa only [factorWithBound, factorFastWithBound, hfast, Option.map_some,
-        Option.getD_some] using hmem
-  | none =>
-      apply factorizationOfFactors_entry_normalizeFactorSign_id
-      simpa only [factorWithBound, factorFastWithBound, factorSlowWithBound, hfast,
-        Option.map_none, Option.getD_none] using hmem
+  obtain ⟨rawFactors, _hrawFactors, hfactor⟩ :=
+    factorWithBound_eq_factorizationOfFactors f B
+  apply factorizationOfFactors_entry_normalizeFactorSign_id
+  simpa only [hfactor] using hmem
 
 /-- Every recorded entry of the bounded public factorization has positive
 leading coefficient. -/
@@ -5362,30 +5365,19 @@ theorem factorWithBound_entry_leadingCoeff_pos
     (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
     (hmem : entry ∈ (factorWithBound f B).factors.toList) :
     0 < DensePoly.leadingCoeff entry.1 := by
-  cases hfast : factorFastFactorsWithBound f B with
-  | some rawFactors =>
-      apply factorizationOfFactors_entry_leadingCoeff_pos
-      simpa only [factorWithBound, factorFastWithBound, hfast, Option.map_some,
-        Option.getD_some] using hmem
-  | none =>
-      apply factorizationOfFactors_entry_leadingCoeff_pos
-      simpa only [factorWithBound, factorFastWithBound, factorSlowWithBound, hfast,
-        Option.map_none, Option.getD_none] using hmem
+  obtain ⟨rawFactors, _hrawFactors, hfactor⟩ :=
+    factorWithBound_eq_factorizationOfFactors f B
+  apply factorizationOfFactors_entry_leadingCoeff_pos
+  simpa only [hfactor] using hmem
 
 /-- The bounded public factorization has no duplicate polynomial keys. -/
 theorem factorWithBound_pairwise_first
     (f : ZPoly) (B : Nat) :
     List.Pairwise (fun a b : ZPoly × Nat => a.1 ≠ b.1)
       (factorWithBound f B).factors.toList := by
-  cases hfast : factorFastFactorsWithBound f B with
-  | some rawFactors =>
-      simpa only [factorWithBound, factorFastWithBound, hfast, Option.map_some,
-        Option.getD_some] using
-        factorizationOfFactors_pairwise_first f rawFactors
-  | none =>
-      simpa only [factorWithBound, factorFastWithBound, factorSlowWithBound, hfast,
-        Option.map_none, Option.getD_none] using
-        factorizationOfFactors_pairwise_first f (factorSlowFactorsWithBound f B)
+  obtain ⟨rawFactors, _hrawFactors, hfactor⟩ :=
+    factorWithBound_eq_factorizationOfFactors f B
+  simpa only [hfactor] using factorizationOfFactors_pairwise_first f rawFactors
 
 /-- Every recorded entry of the default public factorization has positive
 multiplicity. -/
