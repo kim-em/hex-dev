@@ -326,6 +326,68 @@ theorem polyProduct_toPolynomial (factors : Array Hex.ZPoly) :
     toPolynomial_one_zpoly]
   exact List.prod_eq_foldl.symm
 
+/-- Expand factorization entries by multiplicity, forgetting their packed
+array shape. -/
+def flattenedFactorEntries (entries : List (Hex.ZPoly × Nat)) : List Hex.ZPoly :=
+  entries.flatMap fun entry => List.replicate entry.2 entry.1
+
+/-- Expand the polynomial entries of a `Hex.Factorization` by multiplicity. -/
+def factorizationFlattenedFactors (φ : Hex.Factorization) : List Hex.ZPoly :=
+  flattenedFactorEntries φ.factors.toList
+
+theorem factorPower_toPolynomial (f : Hex.ZPoly) (k : Nat) :
+    HexPolyZMathlib.toPolynomial (Hex.Factorization.factorPower f k) =
+      HexPolyZMathlib.toPolynomial f ^ k := by
+  induction k with
+  | zero =>
+      rw [Hex.Factorization.factorPower_zero, toPolynomial_one_zpoly]
+      simp
+  | succ k ih =>
+      rw [Hex.Factorization.factorPower_succ, HexPolyZMathlib.toPolynomial_mul, ih]
+      exact (pow_succ (HexPolyZMathlib.toPolynomial f) k).symm
+
+theorem map_toPolynomial_replicate_prod (f : Hex.ZPoly) (k : Nat) :
+    ((List.replicate k f).map HexPolyZMathlib.toPolynomial).prod =
+      HexPolyZMathlib.toPolynomial f ^ k := by
+  induction k with
+  | zero => simp
+  | succ k ih =>
+      rw [List.replicate_succ, List.map_cons, List.prod_cons, ih]
+      exact (pow_succ' (HexPolyZMathlib.toPolynomial f) k).symm
+
+private theorem factorizationProduct_toPolynomial_foldl
+    (entries : List (Hex.ZPoly × Nat)) (init : Hex.ZPoly) :
+    HexPolyZMathlib.toPolynomial
+        (entries.foldl
+          (fun acc entry => acc * Hex.Factorization.factorPower entry.1 entry.2)
+          init) =
+      HexPolyZMathlib.toPolynomial init *
+        ((flattenedFactorEntries entries).map HexPolyZMathlib.toPolynomial).prod := by
+  induction entries generalizing init with
+  | nil =>
+      simp [flattenedFactorEntries]
+  | cons entry entries ih =>
+      rw [List.foldl_cons, ih (init * Hex.Factorization.factorPower entry.1 entry.2)]
+      rw [HexPolyZMathlib.toPolynomial_mul, factorPower_toPolynomial]
+      simp [flattenedFactorEntries]
+      ring
+
+/-- Transport `Hex.Factorization.product` to Mathlib as the scalar times the
+product of the multiplicity-flattened transported factors. -/
+theorem factorizationProduct_toPolynomial (φ : Hex.Factorization) :
+    HexPolyZMathlib.toPolynomial φ.product =
+      Polynomial.C φ.scalar *
+        ((factorizationFlattenedFactors φ).map HexPolyZMathlib.toPolynomial).prod := by
+  rw [Hex.Factorization.product_eq_foldl_factorPower]
+  show HexPolyZMathlib.toPolynomial
+      (φ.factors.foldl
+        (fun acc factor => acc * Hex.Factorization.factorPower factor.1 factor.2)
+        (Hex.DensePoly.C φ.scalar)) = _
+  rw [← Array.foldl_toList]
+  rw [factorizationProduct_toPolynomial_foldl φ.factors.toList (Hex.DensePoly.C φ.scalar)]
+  rw [HexPolyZMathlib.toPolynomial_C]
+  rfl
+
 /-- Index type for the modular factors stored in executable prime-choice data. -/
 abbrev ModPFactorIndex (primeData : Hex.PrimeChoiceData) : Type :=
   Fin primeData.factorsModP.size
