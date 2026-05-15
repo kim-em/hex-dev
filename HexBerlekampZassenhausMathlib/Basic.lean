@@ -1612,6 +1612,80 @@ theorem existsUnique_recoveringLiftedFactorSubset_at_defaultPrecision
   existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence
     h hcore_ne hirr hdvd hprecision
 
+/--
+Induced subset-correspondence predicate for the recursive state of the
+exhaustive recombination search.
+
+After the search consumes a prefix of subsets, it recurses on a `target`
+polynomial (a quotient of `core` by the factors emitted so far) with a reduced
+index set `J ⊆ Finset.univ` of lifted-factor indices not yet selected.  This
+predicate packages the correspondence between irreducible integer divisors of
+`target` and their representing lifted-factor subsets, constrained to live in
+`J`.
+
+When `target = core` and `J = Finset.univ`, this reduces to the existence and
+uniqueness fields of `HenselSubsetCorrespondenceHypotheses`.  Downstream
+coverage proofs use the predicate to track the recursive state across one
+emission step at a time.
+-/
+structure HenselSubsetCorrespondenceRest
+    (core : Hex.ZPoly) (d : Hex.LiftData)
+    (J : LiftedFactorSubset d) (target : Hex.ZPoly) : Prop where
+  exists_subset :
+    ∀ {factor : Hex.ZPoly},
+      Irreducible (HexPolyZMathlib.toPolynomial factor) →
+      factor ∣ target →
+      ∃ S : LiftedFactorSubset d,
+        S ⊆ J ∧ RepresentsIntegerFactorAtLift core d factor S
+  unique_subset :
+    ∀ {factor : Hex.ZPoly} {S T : LiftedFactorSubset d},
+      Irreducible (HexPolyZMathlib.toPolynomial factor) →
+      factor ∣ target →
+      S ⊆ J →
+      T ⊆ J →
+      RepresentsIntegerFactorAtLift core d factor S →
+      RepresentsIntegerFactorAtLift core d factor T →
+      S = T
+
+/--
+Initial-state bridge: a Hensel subset correspondence implies the induced
+predicate at the full universe of lifted-factor indices with `target = core`.
+This is the entry point for downstream recursive-search coverage proofs.
+-/
+theorem henselSubsetCorrespondenceRest_initial
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
+    (h :
+      HenselSubsetCorrespondenceHypotheses core B primeData d
+        admissiblePrime successfulLift) :
+    HenselSubsetCorrespondenceRest core d Finset.univ core where
+  exists_subset := by
+    intro factor hirr hdvd
+    rcases h.exists_subset hirr hdvd with ⟨S, hS⟩
+    exact ⟨S, Finset.subset_univ S, hS⟩
+  unique_subset := by
+    intro factor S T hirr hdvd _hS_in _hT_in hS hT
+    exact h.unique_subset hirr hdvd hS hT
+
+/--
+Existence-uniqueness consumer view of the induced predicate, mirroring
+`existsUnique_liftedFactorSubset_of_henselSubsetCorrespondence` at the
+recursive-state surface.
+-/
+theorem existsUnique_liftedFactorSubset_of_henselSubsetCorrespondenceRest
+    {core target : Hex.ZPoly} {d : Hex.LiftData}
+    {J : LiftedFactorSubset d}
+    (h : HenselSubsetCorrespondenceRest core d J target)
+    {factor : Hex.ZPoly}
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hdvd : factor ∣ target) :
+    ∃! S : LiftedFactorSubset d,
+      S ⊆ J ∧ RepresentsIntegerFactorAtLift core d factor S := by
+  rcases h.exists_subset hirr hdvd with ⟨S, hSJ, hS⟩
+  refine ⟨S, ⟨hSJ, hS⟩, ?_⟩
+  intro T hT
+  exact h.unique_subset hirr hdvd hT.1 hSJ hT.2 hS
+
 /-! ### LiftedFactorSubset → executable recombination split bridge
 
 The executable recombination search at the lifted-factor surface enumerates
