@@ -3568,6 +3568,16 @@ theorem linearPow_add (f : FpPoly p) (m n : Nat) :
         _ = linearPow f m * (linearPow f n * f) := mul_assoc _ _ _
         _ = linearPow f m * linearPow f (n + 1) := rfl
 
+/-- Scalar evaluation distributes over `linearPow`: `eval (f^n) x = (eval f x)^n`. -/
+theorem eval_linearPow (f : FpPoly p) (n : Nat) (x : ZMod64 p) :
+    DensePoly.eval (linearPow f n) x = (DensePoly.eval f x) ^ n := by
+  induction n with
+  | zero =>
+      rw [linearPow_zero, Lean.Grind.Semiring.pow_zero]
+      exact eval_one x
+  | succ n ih =>
+      rw [linearPow_succ, eval_mul, ih, Lean.Grind.Semiring.pow_succ]
+
 /-- `linearPow (monomial k 1) n = monomial (k * n) 1`. -/
 theorem linearPow_monomial (k n : Nat) :
     linearPow (DensePoly.monomial k (1 : ZMod64 p)) n =
