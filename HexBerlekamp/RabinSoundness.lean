@@ -2480,6 +2480,204 @@ theorem isUnitPolynomial_gcd_quotient_of_squareFree
       (fp_swap_inner_mul (DensePoly.gcd (r / DensePoly.gcd r d) d) e a))
   exact isUnitPolynomial_of_squareFree_of_squared_dvd hsf hg2_dvd_r
 
+/-! ### Square-free divisor distribution across kernel-witness gcds
+
+These lemmas package Step 3 of the Berlekamp completeness argument
+(see `SPEC/Libraries/hex-berlekamp-mathlib.md`). Working from the
+witness-level product/divisibility form `f ∣ Π_{c ∈ F_p} (w - C c)`,
+they distribute the divisibility across the pairwise-coprime gcd
+factors `gcd f (w - C c)`. Combined with a non-constancy hypothesis on
+the witness (no single `(w - C c)` is divisible by `f`), this yields a
+nontrivial Berlekamp split candidate.
+
+The witness-level divisibility hypothesis is the consumer-facing
+interface; deriving it from `f ∣ FpPoly.linearPow w p - w` via the
+prime-field product identity is tracked separately (see #4160). -/
+
+omit [ZMod64.PrimeModulus p] in
+/-- The difference of two distinct witness linear factors collapses to
+the constant `C (d - c)`. -/
+private theorem witnessLinearFactor_sub_eq
+    (w : FpPoly p) (c d : ZMod64 p) :
+    (w - FpPoly.C c) - (w - FpPoly.C d)
+      = (DensePoly.C (d - c) : FpPoly p) := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_sub _ _ _ zmod64_zero_sub_zero]
+  rw [DensePoly.coeff_sub _ _ _ zmod64_zero_sub_zero]
+  rw [DensePoly.coeff_sub _ _ _ zmod64_zero_sub_zero]
+  show w.coeff n - (FpPoly.C c).coeff n - (w.coeff n - (FpPoly.C d).coeff n)
+    = (DensePoly.C (d - c) : FpPoly p).coeff n
+  rw [show (FpPoly.C c).coeff n = (DensePoly.C c : FpPoly p).coeff n from rfl,
+      show (FpPoly.C d).coeff n = (DensePoly.C d : FpPoly p).coeff n from rfl]
+  rw [DensePoly.coeff_C, DensePoly.coeff_C, DensePoly.coeff_C]
+  have h0 : (Zero.zero : ZMod64 p) = 0 := rfl
+  rw [h0]
+  by_cases hn : n = 0
+  · simp [hn]; grind
+  · simp [hn]; grind
+
+/-- Distinct witness linear factors `(w - C c)` and `(w - C d)` are
+coprime: their difference is a nonzero constant, so any common divisor
+divides `1`. -/
+theorem witnessLinearFactor_distinct_common_dvd_one
+    {w : FpPoly p} {c d : ZMod64 p} (hcd : c ≠ d) (e : FpPoly p)
+    (hec : e ∣ (w - FpPoly.C c))
+    (hed : e ∣ (w - FpPoly.C d)) :
+    e ∣ (1 : FpPoly p) := by
+  have hdiff : e ∣ ((w - FpPoly.C c) - (w - FpPoly.C d)) :=
+    DensePoly.dvd_sub_poly hec hed
+  rw [witnessLinearFactor_sub_eq w c d] at hdiff
+  have hdc_ne : (d - c) ≠ (0 : ZMod64 p) := by
+    intro hzero
+    apply hcd
+    have : c = d := by grind
+    exact this
+  exact dvd_trans_local hdiff (C_ne_zero_dvd_one hdc_ne)
+
+/-- Bezout-style cancellation through one witness linear factor: if `f`
+divides `acc * (w - C c)` and `gcd(f, w - C c)` is a unit polynomial,
+then `f ∣ acc`. -/
+private theorem dvd_of_witness_mul_of_gcd_isUnit
+    {f w acc : FpPoly p} {c : ZMod64 p}
+    (hdvd : f ∣ acc * (w - FpPoly.C c))
+    (hgcd : isUnitPolynomial (DensePoly.gcd f (w - FpPoly.C c)) = true) :
+    f ∣ acc := by
+  have hdvd' : f ∣ (w - FpPoly.C c) * acc := by
+    rw [FpPoly.mul_comm] at hdvd
+    exact hdvd
+  apply FpPoly.dvd_of_dvd_mul_of_common_dvd_one hdvd'
+  intro d hd_lin hd_f
+  exact dvd_one_of_isUnitPolynomial
+    (isUnitPolynomial_of_dvd_isUnitPolynomial
+      (DensePoly.dvd_gcd d f (w - FpPoly.C c) hd_f hd_lin) hgcd)
+
+/-- Coprime-cancellation through the foldl shape of the witness product:
+if every gcd `gcd(f, w - C c)` along the list `cs` is a unit polynomial,
+then `f` divides the accumulator. -/
+private theorem dvd_acc_of_foldl_witness_dvd_of_all_gcd_isUnit
+    (f w : FpPoly p) :
+    ∀ (cs : List (ZMod64 p)) (acc : FpPoly p),
+      f ∣ cs.foldl (fun a c => a * (w - FpPoly.C c)) acc →
+      (∀ c ∈ cs,
+        isUnitPolynomial (DensePoly.gcd f (w - FpPoly.C c)) = true) →
+      f ∣ acc := by
+  intro cs
+  induction cs with
+  | nil =>
+      intro acc hdvd _
+      simpa using hdvd
+  | cons c rest ih =>
+      intro acc hdvd hcoprime
+      simp only [List.foldl_cons] at hdvd
+      have hcoprime_rest :
+          ∀ c' ∈ rest,
+            isUnitPolynomial (DensePoly.gcd f (w - FpPoly.C c')) = true :=
+        fun c' hmem => hcoprime c' (List.mem_cons_of_mem _ hmem)
+      have hdvd_step : f ∣ acc * (w - FpPoly.C c) :=
+        ih _ hdvd hcoprime_rest
+      exact dvd_of_witness_mul_of_gcd_isUnit hdvd_step
+        (hcoprime c (List.mem_cons.mpr (Or.inl rfl)))
+
+/-- If `f` divides the witness product and every witness gcd is a unit,
+then `f ∣ 1`. -/
+private theorem dvd_one_of_witnessProduct_dvd_of_all_gcd_isUnit
+    {f w : FpPoly p}
+    (hdvd : f ∣ (ZMod64.values p).foldl
+        (fun acc c => acc * (w - FpPoly.C c)) 1)
+    (hgcd :
+      ∀ c : ZMod64 p,
+        isUnitPolynomial (DensePoly.gcd f (w - FpPoly.C c)) = true) :
+    f ∣ (1 : FpPoly p) :=
+  dvd_acc_of_foldl_witness_dvd_of_all_gcd_isUnit f w (ZMod64.values p) 1 hdvd
+    (fun c _ => hgcd c)
+
+/-- If `f` has positive degree, then `gcd(f, a)` is nonzero for any `a`. -/
+private theorem gcd_isZero_false_of_left_pos_degree
+    {f : FpPoly p} (a : FpPoly p) (hf_pos : 0 < f.degree?.getD 0) :
+    (DensePoly.gcd f a).isZero = false := by
+  have hf_ne : f ≠ 0 := ne_zero_of_pos_degree hf_pos
+  cases hg : (DensePoly.gcd f a).isZero with
+  | false => rfl
+  | true =>
+      exfalso
+      apply hf_ne
+      have hg_zero : DensePoly.gcd f a = 0 := by
+        apply DensePoly.ext_coeff
+        intro n
+        have hsize : (DensePoly.gcd f a).size = 0 := by
+          simpa [DensePoly.isZero, DensePoly.size,
+            Array.isEmpty_iff_size_eq_zero] using hg
+        rw [DensePoly.coeff_eq_zero_of_size_le _ (by omega : (DensePoly.gcd f a).size ≤ n),
+          DensePoly.coeff_zero]
+        rfl
+      rcases DensePoly.gcd_dvd_left f a with ⟨q, hq⟩
+      rw [hq, hg_zero, FpPoly.zero_mul]
+
+/-- Square-free divisor distribution (non-unit existence): if `f` has
+positive degree and divides the canonical witness product over `F_p`,
+some `gcd(f, w - C c)` is non-unit. This is the coprime-cancellation
+core of Step 3, working purely from the divisibility hypothesis. -/
+theorem exists_gcd_not_isUnit_of_witnessProduct_dvd_of_pos_degree
+    {f w : FpPoly p}
+    (hf_pos : 0 < f.degree?.getD 0)
+    (hdvd : f ∣ (ZMod64.values p).foldl
+        (fun acc c => acc * (w - FpPoly.C c)) 1) :
+    ∃ c : ZMod64 p,
+      isUnitPolynomial (DensePoly.gcd f (w - FpPoly.C c)) = false := by
+  apply Classical.byContradiction
+  intro hno
+  have hcoprime :
+      ∀ c : ZMod64 p,
+        isUnitPolynomial (DensePoly.gcd f (w - FpPoly.C c)) = true := by
+    intro c
+    cases hC : isUnitPolynomial (DensePoly.gcd f (w - FpPoly.C c)) with
+    | true => rfl
+    | false => exact absurd ⟨c, hC⟩ hno
+  have hf_dvd_one : f ∣ (1 : FpPoly p) :=
+    dvd_one_of_witnessProduct_dvd_of_all_gcd_isUnit hdvd hcoprime
+  have hf_unit : isUnitPolynomial f = true :=
+    isUnitPolynomial_of_dvd_isUnitPolynomial hf_dvd_one isUnitPolynomial_one_FpPoly
+  have hf_not_unit : isUnitPolynomial f = false :=
+    isUnitPolynomial_eq_false_of_pos_degree hf_pos
+  rw [hf_not_unit] at hf_unit
+  exact Bool.noConfusion hf_unit
+
+/-- Square-free divisor distribution (nontrivial split): under the
+non-constancy hypothesis that no single `(w - C c)` is divisible by `f`,
+some witness gcd is nonzero, nonconstant, and not equal to `f`. This is
+the form consumed by the executable Berlekamp split surface (see
+`HexBerlekamp.Berlekamp.kernelWitnessSplit?_some_of_nontrivial_splitFactorAt`).
+
+`f` does not need to be square-free for this statement; the deliverable
+shape exposes the square-freeness hypothesis at the call site, where
+the witness-level divisibility hypothesis itself is derived from
+square-freeness (#4160). -/
+theorem exists_nontrivial_gcd_of_witnessProduct_dvd_of_pos_degree
+    {f w : FpPoly p}
+    (hf_pos : 0 < f.degree?.getD 0)
+    (hdvd : f ∣ (ZMod64.values p).foldl
+        (fun acc c => acc * (w - FpPoly.C c)) 1)
+    (hnonconst : ∀ c : ZMod64 p, ¬ (f ∣ (w - FpPoly.C c))) :
+    ∃ c : ZMod64 p,
+      (DensePoly.gcd f (w - FpPoly.C c)).isZero = false ∧
+      (DensePoly.gcd f (w - FpPoly.C c)).degree? ≠ some 0 ∧
+      DensePoly.gcd f (w - FpPoly.C c) ≠ f := by
+  obtain ⟨c, hnotUnit⟩ :=
+    exists_gcd_not_isUnit_of_witnessProduct_dvd_of_pos_degree hf_pos hdvd
+  refine ⟨c, gcd_isZero_false_of_left_pos_degree _ hf_pos, ?_, ?_⟩
+  · intro hdeg
+    have hunit :
+        isUnitPolynomial (DensePoly.gcd f (w - FpPoly.C c)) = true := by
+      unfold isUnitPolynomial
+      rw [hdeg]
+    rw [hunit] at hnotUnit
+    exact Bool.noConfusion hnotUnit
+  · intro hgcd_eq_f
+    apply hnonconst c
+    rw [← hgcd_eq_f]
+    exact DensePoly.gcd_dvd_right f (w - FpPoly.C c)
+
 end
 
 end Berlekamp
