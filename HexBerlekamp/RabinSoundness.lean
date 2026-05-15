@@ -1758,6 +1758,129 @@ theorem primeFieldLinearFactor_monic (c : ZMod64 p) :
   rw [primeFieldLinearFactor_size]
   exact primeFieldLinearFactor_coeff_one c
 
+/-- Leading coefficient of a product equals the product of leading coefficients
+(no-zero-divisors form). -/
+private theorem leadingCoeff_mul_fpoly (a b : FpPoly p)
+    (ha : a ≠ 0) (hb : b ≠ 0) :
+    DensePoly.leadingCoeff (a * b)
+      = DensePoly.leadingCoeff a * DensePoly.leadingCoeff b := by
+  have ha_pos : 0 < a.size := FpPoly.size_pos_of_ne_zero ha
+  have hb_pos : 0 < b.size := FpPoly.size_pos_of_ne_zero hb
+  have hab_ne : a * b ≠ 0 := FpPoly.mul_ne_zero_of_ne_zero ha hb
+  have hab_pos : 0 < (a * b).size := FpPoly.size_pos_of_ne_zero hab_ne
+  have hsize := FpPoly.size_mul_eq_add_sub_one a b ha hb
+  have hindex : (a * b).size - 1 = a.size - 1 + (b.size - 1) := by omega
+  rw [DensePoly.leadingCoeff_eq_coeff_last (a * b) hab_pos]
+  rw [hindex]
+  rw [DensePoly.leadingCoeff_eq_coeff_last a ha_pos]
+  rw [DensePoly.leadingCoeff_eq_coeff_last b hb_pos]
+  exact ZMod64.coeff_mul_at_top a b ha_pos hb_pos
+
+/-- Multiplying two monic prime-field polynomials yields a monic polynomial. -/
+private theorem monic_mul_monic (a b : FpPoly p)
+    (ha_ne : a ≠ 0) (hb_ne : b ≠ 0)
+    (ha : DensePoly.Monic a) (hb : DensePoly.Monic b) :
+    DensePoly.Monic (a * b) := by
+  unfold DensePoly.Monic
+  rw [leadingCoeff_mul_fpoly a b ha_ne hb_ne]
+  unfold DensePoly.Monic at ha hb
+  rw [ha, hb]
+  grind
+
+/-- Foldl induction: size grows by one for each linear factor multiplied in. -/
+private theorem foldl_size_and_monic
+    (xs : List (ZMod64 p)) :
+    ∀ (acc : FpPoly p),
+      acc ≠ 0 →
+      DensePoly.Monic acc →
+      (xs.foldl (fun acc c => acc * (FpPoly.X - FpPoly.C c)) acc) ≠ 0 ∧
+      DensePoly.Monic (xs.foldl (fun acc c => acc * (FpPoly.X - FpPoly.C c)) acc) ∧
+      (xs.foldl (fun acc c => acc * (FpPoly.X - FpPoly.C c)) acc).size
+        = acc.size + xs.length := by
+  induction xs with
+  | nil =>
+      intro acc h_ne h_monic
+      refine ⟨h_ne, h_monic, ?_⟩
+      simp
+  | cons c rest ih =>
+      intro acc h_ne h_monic
+      simp only [List.foldl_cons]
+      have h_factor_ne : primeFieldLinearFactor c ≠ 0 :=
+        primeFieldLinearFactor_ne_zero c
+      have h_factor_monic : DensePoly.Monic (primeFieldLinearFactor c) :=
+        primeFieldLinearFactor_monic c
+      have h_factor_size : (primeFieldLinearFactor c).size = 2 :=
+        primeFieldLinearFactor_size c
+      have h_new_ne : acc * primeFieldLinearFactor c ≠ 0 :=
+        FpPoly.mul_ne_zero_of_ne_zero h_ne h_factor_ne
+      have h_new_monic : DensePoly.Monic (acc * primeFieldLinearFactor c) :=
+        monic_mul_monic acc (primeFieldLinearFactor c) h_ne h_factor_ne
+          h_monic h_factor_monic
+      have h_acc_pos : 0 < acc.size := FpPoly.size_pos_of_ne_zero h_ne
+      have h_new_size : (acc * primeFieldLinearFactor c).size = acc.size + 1 := by
+        rw [FpPoly.size_mul_eq_add_sub_one acc _ h_ne h_factor_ne, h_factor_size]
+        omega
+      have h_ih := ih (acc * (FpPoly.X - FpPoly.C c)) h_new_ne h_new_monic
+      refine ⟨h_ih.1, h_ih.2.1, ?_⟩
+      have h_new_size' : (acc * (FpPoly.X - FpPoly.C c)).size = acc.size + 1 :=
+        h_new_size
+      rw [h_ih.2.2, h_new_size']
+      simp [List.length_cons]
+      omega
+
+/-- The constant polynomial `1` over a prime modulus is nonzero. -/
+private theorem fpPoly_one_ne_zero : (1 : FpPoly p) ≠ 0 := by
+  intro h
+  have hcoeff := congrArg (fun f : FpPoly p => f.coeff 0) h
+  change (1 : FpPoly p).coeff 0 = (0 : FpPoly p).coeff 0 at hcoeff
+  rw [DensePoly.coeff_zero] at hcoeff
+  have hone_coeff : (1 : FpPoly p).coeff 0 = (1 : ZMod64 p) := by
+    change (DensePoly.C (1 : ZMod64 p)).coeff 0 = (1 : ZMod64 p)
+    rw [DensePoly.coeff_C]
+    simp
+  rw [hone_coeff] at hcoeff
+  exact zmod64_one_ne_zero_of_prime hcoeff
+
+/-- The constant polynomial `1` over a prime modulus has size `1`. -/
+private theorem fpPoly_one_size : (1 : FpPoly p).size = 1 := by
+  have h_le : (1 : FpPoly p).size ≤ 1 := by
+    change (DensePoly.C (1 : ZMod64 p) : FpPoly p).size ≤ 1
+    exact DensePoly.size_C_le_one (1 : ZMod64 p)
+  have h_ge : 1 ≤ (1 : FpPoly p).size := FpPoly.size_pos_of_ne_zero fpPoly_one_ne_zero
+  omega
+
+/-- The constant polynomial `1` over a prime modulus is monic. -/
+private theorem fpPoly_one_monic : DensePoly.Monic (1 : FpPoly p) := by
+  unfold DensePoly.Monic
+  rw [DensePoly.leadingCoeff_eq_coeff_last _ (by rw [fpPoly_one_size]; omega)]
+  rw [fpPoly_one_size]
+  change (DensePoly.C (1 : ZMod64 p)).coeff 0 = 1
+  rw [DensePoly.coeff_C]
+  simp
+
+/-- The canonical prime-field product has size `p + 1`. -/
+theorem primeFieldLinearProduct_size :
+    (primeFieldLinearProduct (p := p)).size = p + 1 := by
+  unfold primeFieldLinearProduct
+  have h := foldl_size_and_monic (p := p) (ZMod64.values p) 1
+    fpPoly_one_ne_zero fpPoly_one_monic
+  rw [h.2.2, fpPoly_one_size, ZMod64.values_length]
+  omega
+
+/-- The canonical prime-field product is nonzero. -/
+theorem primeFieldLinearProduct_ne_zero :
+    primeFieldLinearProduct (p := p) ≠ 0 := by
+  unfold primeFieldLinearProduct
+  exact (foldl_size_and_monic (p := p) (ZMod64.values p) 1
+    fpPoly_one_ne_zero fpPoly_one_monic).1
+
+/-- The canonical prime-field product is monic. -/
+theorem primeFieldLinearProduct_monic :
+    DensePoly.Monic (primeFieldLinearProduct (p := p)) := by
+  unfold primeFieldLinearProduct
+  exact (foldl_size_and_monic (p := p) (ZMod64.values p) 1
+    fpPoly_one_ne_zero fpPoly_one_monic).2.1
+
 /-! ### Structural lemmas
 
 These small consequences only use the foundational lemmas above plus
