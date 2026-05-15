@@ -199,6 +199,24 @@ theorem irreducible_dvd_frobeniusPolynomial_of_natDegree_dvd
     rw [← AdjoinRoot.aeval_eq, map_sub, map_pow, Polynomial.aeval_X, hroot_pow, sub_self]
   exact AdjoinRoot.mk_eq_zero.mp hgoal
 
+/-- Maximal proper divisors are positive. -/
+theorem maximalProperDivisors_pos {n d : Nat}
+    (hmem : d ∈ Hex.Berlekamp.maximalProperDivisors n) :
+    0 < d := by
+  unfold Hex.Berlekamp.maximalProperDivisors Hex.Berlekamp.properDivisors at hmem
+  simp only [List.mem_filter, List.mem_map, List.mem_range] at hmem
+  rcases hmem with ⟨⟨⟨k, _hk, rfl⟩, _hdvd⟩, _hmax⟩
+  exact Nat.succ_pos k
+
+/-- Maximal proper divisors are strictly below the ambient degree. -/
+theorem maximalProperDivisors_lt {n d : Nat}
+    (hmem : d ∈ Hex.Berlekamp.maximalProperDivisors n) :
+    d < n := by
+  unfold Hex.Berlekamp.maximalProperDivisors Hex.Berlekamp.properDivisors at hmem
+  simp only [List.mem_filter, List.mem_map, List.mem_range] at hmem
+  rcases hmem with ⟨⟨⟨k, hk, rfl⟩, _hdvd⟩, _hmax⟩
+  omega
+
 /--
 Divisor arithmetic used by Rabin's reducible contrapositive: a proper divisor
 `d` of `n` yields a prime `q` such that `q ∣ n` and `d ∣ n / q`.
@@ -305,16 +323,6 @@ theorem irreducible_of_berlekampFactor_factors_length_le_one
           simp [hfactors] at hsmall
 
 /--
-Rabin's executable test is equivalent to Mathlib irreducibility for the
-transported polynomial.
--/
-theorem rabin_irreducible
-    (f : Hex.FpPoly p) (hmonic : Hex.DensePoly.Monic f)
-    [Fact (Nat.Prime p)] (n : Nat) (_hdegree : Hex.Berlekamp.basisSize f = n) :
-    Hex.Berlekamp.rabinTest f hmonic = true ↔ Irreducible (toMathlibPolynomial f) := by
-  sorry
-
-/--
 Forward Rabin soundness: when the executable Rabin test accepts, the
 transported Mathlib polynomial is irreducible.
 -/
@@ -374,15 +382,56 @@ theorem rabinTest_true_irreducible
       hg_irr hg_natDegree_dvd_m))
 
 /--
+Rabin's executable test is equivalent to Mathlib irreducibility for the
+transported polynomial.
+-/
+theorem rabin_irreducible
+    (f : Hex.FpPoly p) (hmonic : Hex.DensePoly.Monic f)
+    [Fact (Nat.Prime p)] (n : Nat) (hdegree : Hex.Berlekamp.basisSize f = n) :
+    Hex.Berlekamp.rabinTest f hmonic = true ↔ Irreducible (toMathlibPolynomial f) := by
+  constructor
+  · exact rabinTest_true_irreducible f hmonic
+  · intro hirr
+    set fM := toMathlibPolynomial f
+    have hfM_monic : fM.Monic := toMathlibPolynomial_monic f hmonic
+    have hfM_natDegree : fM.natDegree = n := by
+      simpa [fM, hdegree] using natDegree_toMathlibPolynomial_eq_basisSize f hmonic
+    have hn_pos : 0 < n := by
+      have hpos : 0 < fM.natDegree :=
+        hfM_monic.natDegree_pos_of_not_isUnit hirr.not_isUnit
+      simpa [hfM_natDegree] using hpos
+    refine Rabin.rabinTest_true_of_mathlib_checks f hmonic hdegree ?_
+    refine ⟨hn_pos, ?_, ?_⟩
+    · have hdiv : fM.natDegree ∣ n := by
+        rw [hfM_natDegree]
+      simpa [fM] using
+        Rabin.irreducible_dvd_frobeniusPolynomial_of_natDegree_dvd
+          (p := p) (g := fM) hirr hdiv
+    · intro d hd_mem
+      by_contra hnot_coprime
+      have hdiv_d : fM ∣ Rabin.frobeniusPolynomial p d :=
+        Rabin.irreducible_dvd_of_not_isCoprime hirr hnot_coprime
+      have hn_dvd_d : n ∣ d := by
+        have hdeg_dvd :
+            fM.natDegree ∣ d :=
+          Rabin.natDegree_dvd_of_irreducible_dvd_frobeniusPolynomial
+            hirr hdiv_d
+        simpa [hfM_natDegree] using hdeg_dvd
+      have hd_pos : 0 < d := Rabin.maximalProperDivisors_pos hd_mem
+      have hn_le_d : n ≤ d := Nat.le_of_dvd hd_pos hn_dvd_d
+      have hd_lt_n : d < n := Rabin.maximalProperDivisors_lt hd_mem
+      exact (not_lt_of_ge hn_le_d) hd_lt_n
+
+/--
 Rabin's executable test is equivalent to Mathlib irreducibility with the
 explicit positive-degree hypothesis used by the finite-field proof.
 -/
 theorem rabin_irreducible_of_positive_degree
     (f : Hex.FpPoly p) (hmonic : Hex.DensePoly.Monic f)
     [Fact (Nat.Prime p)] {n : Nat}
-    (_hdegree : Hex.Berlekamp.basisSize f = n) (_hpos : 0 < n) :
+    (hdegree : Hex.Berlekamp.basisSize f = n) (_hpos : 0 < n) :
     Hex.Berlekamp.rabinTest f hmonic = true ↔ Irreducible (toMathlibPolynomial f) := by
-  sorry
+  exact rabin_irreducible f hmonic n hdegree
 
 /--
 Accepted executable irreducibility certificates imply Mathlib irreducibility
