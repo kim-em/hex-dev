@@ -2019,6 +2019,25 @@ theorem primeFieldProduct_X_eq_xPowSubX :
     primeFieldLinearProduct_monic
     xPowSubX_one_monic
 
+/-- Substituting `w` into `xPowSubX 1 = X^p - X` yields `linearPow w p - w`.
+This is deliverable 3 of issue #4187 and the missing transport step that
+takes the variable identity `primeFieldProduct_X_eq_xPowSubX` to its
+witness-substituted form. -/
+theorem compose_xPowSubX_one (w : FpPoly p) :
+    DensePoly.compose (xPowSubX (p := p) 1) w =
+      FpPoly.linearPow w p - w := by
+  have hxPow : xPowSubX (p := p) 1 = FpPoly.linearPow FpPoly.X p - FpPoly.X := by
+    unfold xPowSubX
+    show DensePoly.monomial (p ^ 1) (1 : ZMod64 p) - FpPoly.X =
+      FpPoly.linearPow FpPoly.X p - FpPoly.X
+    congr 1
+    rw [show (FpPoly.X : FpPoly p) = DensePoly.monomial 1 (1 : ZMod64 p) from rfl]
+    rw [FpPoly.linearPow_monomial_one]
+    congr 1
+    exact Nat.pow_one p
+  rw [hxPow]
+  exact FpPoly.compose_linearPow_X_sub_X w p
+
 /-! ### Structural lemmas
 
 These small consequences only use the foundational lemmas above plus
