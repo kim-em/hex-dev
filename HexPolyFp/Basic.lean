@@ -2474,6 +2474,92 @@ theorem eval_C_mul (c : ZMod64 p) (f : FpPoly p) (x : ZMod64 p) :
     rw [DensePoly.coeff_eq_zero_of_size_le f hi]
     exact hzero
 
+private theorem eval_one (x : ZMod64 p) :
+    DensePoly.eval (1 : FpPoly p) x = 1 := by
+  change DensePoly.eval (FpPoly.C (1 : ZMod64 p)) x = 1
+  exact eval_C 1 x
+
+private theorem fold_eval_shift_scale_rows
+    (xs : List Nat) (acc : FpPoly p) (f h : FpPoly p) (x : ZMod64 p) :
+    DensePoly.eval
+        (xs.foldl
+          (fun acc i => acc + DensePoly.shift i (DensePoly.scale (f.coeff i) h))
+          acc) x =
+      xs.foldl
+        (fun acc i => acc + (f.coeff i * x ^ i) * DensePoly.eval h x)
+        (DensePoly.eval acc x) := by
+  induction xs generalizing acc with
+  | nil =>
+      rfl
+  | cons i xs ih =>
+      simp only [List.foldl_cons]
+      rw [ih (acc + DensePoly.shift i (DensePoly.scale (f.coeff i) h))]
+      rw [eval_add]
+      rw [eval_shift_scale_row]
+
+private theorem fold_shift_scale_one_eq_self (f : FpPoly p) :
+    (List.range f.size).foldl
+        (fun acc i => acc + DensePoly.shift i (DensePoly.scale (f.coeff i) (1 : FpPoly p)))
+        (0 : FpPoly p) = f := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [coeff_mul_one_fold]
+  by_cases hn : n < f.size
+  · simp [hn]
+  · have hzero : f.coeff n = 0 :=
+      DensePoly.coeff_eq_zero_of_size_le f (Nat.le_of_not_gt hn)
+    simp [hn, hzero]
+
+private theorem mul_eq_fold_shift_scale_rows (f h : FpPoly p) :
+    f * h =
+      (List.range f.size).foldl
+        (fun acc i => acc + DensePoly.shift i (DensePoly.scale (f.coeff i) h))
+        (0 : FpPoly p) := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [coeff_mul]
+  rw [coeff_mul_fold]
+  unfold mulCoeffSum
+  rw [DensePoly.coeff_zero]
+  rfl
+
+theorem eval_mul (f h : FpPoly p) (x : ZMod64 p) :
+    DensePoly.eval (f * h) x = DensePoly.eval f x * DensePoly.eval h x := by
+  rw [mul_eq_fold_shift_scale_rows]
+  rw [fold_eval_shift_scale_rows]
+  rw [DensePoly.eval_zero]
+  have hf :
+      DensePoly.eval f x =
+        (List.range f.size).foldl
+          (fun acc i => acc + (f.coeff i * x ^ i) * DensePoly.eval (1 : FpPoly p) x)
+          (DensePoly.eval (0 : FpPoly p) x) := by
+    rw [← fold_eval_shift_scale_rows
+      (List.range f.size) (0 : FpPoly p) f (1 : FpPoly p) x]
+    rw [fold_shift_scale_one_eq_self]
+  rw [hf]
+  rw [DensePoly.eval_zero, eval_one]
+  have hone :
+      (List.range f.size).foldl
+          (fun acc i => acc + (f.coeff i * x ^ i) * (1 : ZMod64 p)) 0 =
+        (List.range f.size).foldl
+          (fun acc i => acc + f.coeff i * x ^ i) 0 := by
+    apply fold_add_congr
+    intro i _hi
+    grind
+  calc
+    (List.range f.size).foldl
+        (fun acc i => acc + (f.coeff i * x ^ i) * DensePoly.eval h x) 0
+        =
+      (List.range f.size).foldl
+          (fun acc i => acc + f.coeff i * x ^ i) 0 * DensePoly.eval h x := by
+        exact (fold_mul_right (p := p) (List.range f.size)
+          (fun i => f.coeff i * x ^ i) (DensePoly.eval h x)).symm
+    _ =
+      (List.range f.size).foldl
+          (fun acc i => acc + (f.coeff i * x ^ i) * (1 : ZMod64 p)) 0 *
+        DensePoly.eval h x := by
+        rw [hone]
+
 theorem scale_scale (c d : ZMod64 p) (f : FpPoly p) :
     DensePoly.scale c (DensePoly.scale d f) = DensePoly.scale (c * d) f := by
   apply DensePoly.ext_coeff
