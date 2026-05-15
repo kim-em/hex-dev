@@ -111,6 +111,7 @@ private def polyP2 (coeffs : Array Nat) : FpPoly 2 :=
 
 private theorem maxProperDiv_4 : Berlekamp.maximalProperDivisors 4 = [2] := by decide
 private theorem maxProperDiv_8 : Berlekamp.maximalProperDivisors 8 = [4] := by decide
+private theorem maxProperDiv_16 : Berlekamp.maximalProperDivisors 16 = [8] := by decide
 private theorem maxProperDiv_32 : Berlekamp.maximalProperDivisors 32 = [16] := by decide
 
 private def genericN4Cert : Berlekamp.IrreducibilityCertificate where
@@ -201,6 +202,481 @@ private theorem genericN8_irr :
       (by unfold Conway.packedGF2FpPoly; rfl)
       genericN8Cert
       genericN8Cert_check)
+
+private def genericN16Cert : Berlekamp.IrreducibilityCertificate where
+  p := 2
+  n := 16
+  powChain :=
+    #[polyP2 #[0, 1], polyP2 #[0, 0, 1], polyP2 #[0, 0, 0, 0, 1],
+      polyP2 #[0, 0, 0, 0, 0, 0, 0, 0, 1],
+      polyP2 #[1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+      polyP2 #[0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1],
+      polyP2 #[0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1],
+      polyP2 #[1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1],
+      polyP2 #[1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1],
+      polyP2 #[0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1],
+      polyP2 #[0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1],
+      polyP2 #[0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1],
+      polyP2 #[1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1],
+      polyP2 #[1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1],
+      polyP2 #[1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1],
+      polyP2 #[0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1],
+      polyP2 #[0, 1]]
+  bezout :=
+    #[{ left := polyP2 #[0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1],
+        right := polyP2 #[1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1] }]
+
+private def genericN16Mod : FpPoly 2 :=
+  Conway.packedGF2FpPoly 0x100B 16
+
+private theorem genericN16Mod_monic : DensePoly.Monic genericN16Mod := by
+  unfold genericN16Mod Conway.packedGF2FpPoly
+  rfl
+
+private theorem genericN16Mod_degree_eq : genericN16Mod.degree?.getD 0 = 16 := by
+  unfold genericN16Mod Conway.packedGF2FpPoly DensePoly.degree? DensePoly.size
+  rfl
+
+private theorem genericN16Mod_degree_pos : 0 < genericN16Mod.degree?.getD 0 := by
+  rw [genericN16Mod_degree_eq]
+  decide
+
+private theorem polyP2_size_le_16 {arr : Array Nat} (h : arr.size ≤ 16) :
+    (polyP2 arr).size ≤ genericN16Mod.degree?.getD 0 := by
+  rw [genericN16Mod_degree_eq]
+  unfold polyP2 FpPoly.ofCoeffs
+  exact Nat.le_trans (DensePoly.size_ofCoeffs_le _) (by simpa using h)
+
+private def genericN16SamePrimeCert :
+    Berlekamp.SamePrimeIrreducibilityCertificate 2 where
+  n := genericN16Cert.n
+  powChain := genericN16Cert.powChain
+  bezout := genericN16Cert.bezout
+
+private def genericN16Quotients : Array (FpPoly 2) :=
+  #[
+    polyP2 #[],
+    polyP2 #[],
+    polyP2 #[],
+    polyP2 #[1],
+    polyP2 #[1, 0, 0, 0, 1, 0, 0, 0, 1],
+    polyP2 #[0, 0, 0, 0, 1, 0, 1, 0, 1],
+    polyP2 #[1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1],
+    polyP2 #[0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1],
+    polyP2 #[1, 0, 0, 0, 0, 0, 1],
+    polyP2 #[0, 0, 1, 0, 0, 0, 0, 0, 1],
+    polyP2 #[0, 0, 0, 0, 0, 0, 1],
+    polyP2 #[1, 0, 1, 0, 0, 0, 0, 0, 1],
+    polyP2 #[0, 0, 0, 0, 1, 0, 1, 0, 1],
+    polyP2 #[0, 0, 1, 0, 1, 0, 1],
+    polyP2 #[1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
+    polyP2 #[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1]
+  ]
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN16_step0_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericN16Mod genericN16SamePrimeCert genericN16Quotients 0 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 1])
+    (curr := polyP2 #[0, 0, 1])
+    (quot := polyP2 #[])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericN16Mod_degree_pos
+  · exact polyP2_size_le_16 (by decide)
+  · exact polyP2_size_le_16 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN16_step1_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericN16Mod genericN16SamePrimeCert genericN16Quotients 1 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 0, 1])
+    (curr := polyP2 #[0, 0, 0, 0, 1])
+    (quot := polyP2 #[])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericN16Mod_degree_pos
+  · exact polyP2_size_le_16 (by decide)
+  · exact polyP2_size_le_16 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN16_step2_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericN16Mod genericN16SamePrimeCert genericN16Quotients 2 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 0, 0, 0, 1])
+    (curr := polyP2 #[0, 0, 0, 0, 0, 0, 0, 0, 1])
+    (quot := polyP2 #[])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericN16Mod_degree_pos
+  · exact polyP2_size_le_16 (by decide)
+  · exact polyP2_size_le_16 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN16_step3_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericN16Mod genericN16SamePrimeCert genericN16Quotients 3 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 0, 0, 0, 0, 0, 0, 0, 1])
+    (curr := polyP2 #[1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+    (quot := polyP2 #[1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericN16Mod_degree_pos
+  · exact polyP2_size_le_16 (by decide)
+  · exact polyP2_size_le_16 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN16_step4_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericN16Mod genericN16SamePrimeCert genericN16Quotients 4 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+    (curr := polyP2 #[0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1])
+    (quot := polyP2 #[1, 0, 0, 0, 1, 0, 0, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericN16Mod_degree_pos
+  · exact polyP2_size_le_16 (by decide)
+  · exact polyP2_size_le_16 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN16_step5_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericN16Mod genericN16SamePrimeCert genericN16Quotients 5 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1])
+    (curr := polyP2 #[0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1])
+    (quot := polyP2 #[0, 0, 0, 0, 1, 0, 1, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericN16Mod_degree_pos
+  · exact polyP2_size_le_16 (by decide)
+  · exact polyP2_size_le_16 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN16_step6_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericN16Mod genericN16SamePrimeCert genericN16Quotients 6 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1])
+    (curr := polyP2 #[1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1])
+    (quot := polyP2 #[1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericN16Mod_degree_pos
+  · exact polyP2_size_le_16 (by decide)
+  · exact polyP2_size_le_16 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN16_step7_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericN16Mod genericN16SamePrimeCert genericN16Quotients 7 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1])
+    (curr := polyP2 #[1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1])
+    (quot := polyP2 #[0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericN16Mod_degree_pos
+  · exact polyP2_size_le_16 (by decide)
+  · exact polyP2_size_le_16 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN16_step8_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericN16Mod genericN16SamePrimeCert genericN16Quotients 8 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1])
+    (curr := polyP2 #[0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1])
+    (quot := polyP2 #[1, 0, 0, 0, 0, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericN16Mod_degree_pos
+  · exact polyP2_size_le_16 (by decide)
+  · exact polyP2_size_le_16 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN16_step9_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericN16Mod genericN16SamePrimeCert genericN16Quotients 9 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1])
+    (curr := polyP2 #[0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1])
+    (quot := polyP2 #[0, 0, 1, 0, 0, 0, 0, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericN16Mod_degree_pos
+  · exact polyP2_size_le_16 (by decide)
+  · exact polyP2_size_le_16 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN16_step10_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericN16Mod genericN16SamePrimeCert genericN16Quotients 10 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1])
+    (curr := polyP2 #[0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1])
+    (quot := polyP2 #[0, 0, 0, 0, 0, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericN16Mod_degree_pos
+  · exact polyP2_size_le_16 (by decide)
+  · exact polyP2_size_le_16 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN16_step11_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericN16Mod genericN16SamePrimeCert genericN16Quotients 11 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1])
+    (curr := polyP2 #[1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1])
+    (quot := polyP2 #[1, 0, 1, 0, 0, 0, 0, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericN16Mod_degree_pos
+  · exact polyP2_size_le_16 (by decide)
+  · exact polyP2_size_le_16 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN16_step12_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericN16Mod genericN16SamePrimeCert genericN16Quotients 12 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1])
+    (curr := polyP2 #[1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1])
+    (quot := polyP2 #[0, 0, 0, 0, 1, 0, 1, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericN16Mod_degree_pos
+  · exact polyP2_size_le_16 (by decide)
+  · exact polyP2_size_le_16 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN16_step13_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericN16Mod genericN16SamePrimeCert genericN16Quotients 13 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1])
+    (curr := polyP2 #[1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1])
+    (quot := polyP2 #[0, 0, 1, 0, 1, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericN16Mod_degree_pos
+  · exact polyP2_size_le_16 (by decide)
+  · exact polyP2_size_le_16 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN16_step14_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericN16Mod genericN16SamePrimeCert genericN16Quotients 14 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1])
+    (curr := polyP2 #[0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1])
+    (quot := polyP2 #[1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericN16Mod_degree_pos
+  · exact polyP2_size_le_16 (by decide)
+  · exact polyP2_size_le_16 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN16_step15_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
+      genericN16Mod genericN16SamePrimeCert genericN16Quotients 15 = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
+    (prev := polyP2 #[0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1])
+    (curr := polyP2 #[0, 1])
+    (quot := polyP2 #[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1])
+  · rfl
+  · rfl
+  · rfl
+  · exact genericN16Mod_degree_pos
+  · exact polyP2_size_le_16 (by decide)
+  · exact polyP2_size_le_16 (by decide)
+  · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
+      Conway.packedGF2FpPoly]
+    decide
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN16QuotientWitnesses_check :
+    Berlekamp.checkPowChainLinearIncrementalQuotientWitnesses
+      genericN16Mod genericN16Mod_monic genericN16SamePrimeCert
+      genericN16Quotients = true := by
+  apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnesses_of_steps
+  · decide
+  · decide
+  · apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnesses_first_of_coeffs
+      (first := polyP2 #[0, 1])
+    · rfl
+    · simp [genericN16Mod, Conway.packedGF2FpPoly, polyP2, FpPoly.X,
+        DensePoly.monomial, FpPoly.modByMonic, DensePoly.modByMonic_eq_mod]
+      decide
+  · intro k hk
+    match k, hk with
+    | 0, _ => exact genericN16_step0_check
+    | 1, _ => exact genericN16_step1_check
+    | 2, _ => exact genericN16_step2_check
+    | 3, _ => exact genericN16_step3_check
+    | 4, _ => exact genericN16_step4_check
+    | 5, _ => exact genericN16_step5_check
+    | 6, _ => exact genericN16_step6_check
+    | 7, _ => exact genericN16_step7_check
+    | 8, _ => exact genericN16_step8_check
+    | 9, _ => exact genericN16_step9_check
+    | 10, _ => exact genericN16_step10_check
+    | 11, _ => exact genericN16_step11_check
+    | 12, _ => exact genericN16_step12_check
+    | 13, _ => exact genericN16_step13_check
+    | 14, _ => exact genericN16_step14_check
+    | 15, _ => exact genericN16_step15_check
+    | k + 16, h => exact absurd (show k + 16 < 16 from h) (by omega)
+
+private theorem genericN16PowChain_check :
+    Berlekamp.checkPowChainLinearIncremental
+      genericN16Mod genericN16Mod_monic genericN16SamePrimeCert = true :=
+  Berlekamp.checkPowChainLinearIncremental_of_quotientWitnesses
+    genericN16Mod genericN16Mod_monic genericN16SamePrimeCert
+    genericN16Quotients genericN16QuotientWitnesses_check
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN16_bezout :
+    Berlekamp.checkRabinBezoutWitnesses
+      genericN16Mod genericN16Mod_monic genericN16SamePrimeCert = true := by
+  unfold Berlekamp.checkRabinBezoutWitnesses Berlekamp.checkRabinBezoutWitness
+    Berlekamp.certifiedFrobeniusDiffMod
+  simp [genericN16SamePrimeCert, genericN16Cert, maxProperDiv_16,
+    genericN16Mod, Conway.packedGF2FpPoly, polyP2]
+  decide
+
+private theorem genericN16_basisSize :
+    genericN16SamePrimeCert.n = Berlekamp.basisSize genericN16Mod := by
+  decide
+
+private theorem genericN16_nPos : 0 < genericN16SamePrimeCert.n := by
+  decide
+
+private theorem genericN16Mod_modByMonic_X :
+    FpPoly.modByMonic genericN16Mod FpPoly.X genericN16Mod_monic = FpPoly.X := by
+  rw [FpPoly.modByMonic, DensePoly.modByMonic_eq_mod]
+  apply DensePoly.mod_eq_self_of_degree_lt
+  rw [genericN16Mod_degree_eq]
+  decide
+
+private theorem polyP2_zero_one_eq_X : (polyP2 #[0, 1] : FpPoly 2) = FpPoly.X := by
+  simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, FpPoly.X, DensePoly.monomial,
+        DensePoly.trimTrailingZeros, DensePoly.trimTrailingZerosList]
+  decide
+
+private theorem genericN16_finalEntry :
+    (polyP2 #[0, 1] : FpPoly 2) =
+      FpPoly.modByMonic genericN16Mod FpPoly.X genericN16Mod_monic := by
+  rw [genericN16Mod_modByMonic_X, polyP2_zero_one_eq_X]
+
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 10000000 in
+private theorem genericN16Cert_check :
+    Berlekamp.checkIrreducibilityCertificateLinearIncremental
+        (Conway.packedGF2FpPoly 0x100B 16)
+        (by unfold Conway.packedGF2FpPoly; rfl)
+        genericN16Cert = true := by
+  simp [Berlekamp.checkIrreducibilityCertificateLinearIncremental,
+    genericN16Cert, Berlekamp.IrreducibilityCertificate.toAmbient?]
+  exact ⟨⟨⟨genericN16_basisSize,
+    by simpa [genericN16SamePrimeCert] using genericN16PowChain_check⟩,
+    by simpa using genericN16_finalEntry⟩,
+    by simpa [genericN16SamePrimeCert] using genericN16_bezout⟩
+
+theorem genericN16_irr :
+    FpPoly.Irreducible (Conway.packedGF2FpPoly 0x100B 16) :=
+  Berlekamp.rabinTest_imp_irreducible (Conway.packedGF2FpPoly 0x100B 16)
+    (by unfold Conway.packedGF2FpPoly; rfl)
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      (Conway.packedGF2FpPoly 0x100B 16)
+      (by unfold Conway.packedGF2FpPoly; rfl)
+      genericN16Cert
+      genericN16Cert_check)
 
 /-! ## Per-degree fixtures
 
@@ -348,7 +824,7 @@ private theorem generic_pos : 0 < FpPoly.degree genericMod := by
   decide
 
 private theorem generic_irr : FpPoly.Irreducible genericMod := by
-  sorry
+  exact genericN16_irr
 
 private abbrev Packed : Type :=
   GF2n n lower (by decide) (by decide) packed_irr

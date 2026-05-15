@@ -1,4 +1,5 @@
 import Hex.Conformance.Emit
+import HexGfq.CrossCheck
 import HexGfq.Basic
 
 /-!
@@ -159,6 +160,10 @@ private theorem genericN8_irr :
       (by unfold Conway.packedGF2FpPoly; rfl)
       genericN8Cert
       genericN8Cert_check)
+
+private theorem genericN16_irr :
+    FpPoly.Irreducible (Conway.packedGF2FpPoly 0x100B 16) :=
+  Hex.GfqCrossCheck.genericN16_irr
 
 /-- Mask the low `n` bits of `w`, matching the canonical packed-form
 representative for an extension of degree `n`. -/
@@ -361,7 +366,7 @@ private theorem generic_pos : 0 < FpPoly.degree genericMod := by
   decide
 
 private theorem generic_irr : FpPoly.Irreducible genericMod := by
-  sorry
+  exact genericN16_irr
 
 private abbrev Packed : Type :=
   GF2n n lower (by decide) (by decide) packed_irr
