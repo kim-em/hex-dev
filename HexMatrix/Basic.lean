@@ -256,6 +256,23 @@ private theorem foldl_sum_mul_left {R : Type u} [Lean.Grind.Ring R]
       have hdist : c * (acc + f x) = c * acc + c * f x := by grind
       rw [hdist]
 
+private theorem foldl_sum_sub {R : Type u} [Lean.Grind.Ring R]
+    {α : Type v} (xs : List α) (f g : α → R) (accF accG : R) :
+    xs.foldl (fun acc x => acc + (f x - g x)) (accF - accG) =
+      xs.foldl (fun acc x => acc + f x) accF -
+        xs.foldl (fun acc x => acc + g x) accG := by
+  induction xs generalizing accF accG with
+  | nil =>
+      simp
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hstep :
+          accF - accG + (f x - g x) =
+            (accF + f x) - (accG + g x) := by
+        grind
+      rw [hstep]
+      exact ih (accF := accF + f x) (accG := accG + g x)
+
 private theorem foldl_indicator_mul_unique {R : Type u} [Lean.Grind.Ring R]
     {n : Nat} (xs : List (Fin n)) (i : Fin n) (f : Fin n → R)
     (hi : i ∈ xs) (hnodup : xs.Nodup) (acc : R) :
@@ -461,6 +478,39 @@ theorem mulVec_zero [Lean.Grind.Ring R] (A : Matrix R n m) :
   apply foldl_add_eq_acc_ring
   intro j _hj
   grind
+
+/-- Multiplication by `Q - I`, expressed entrywise, is `Q * v - v`. -/
+theorem sub_identity_mulVec [Lean.Grind.Ring R] (Q : Matrix R n n) (v : Vector R n) :
+    @mulVec R n n inferInstance inferInstance inferInstance
+        (ofFn fun i j => Q[i][j] - if i = j then 1 else 0) v =
+      @mulVec R n n inferInstance inferInstance inferInstance Q v - v := by
+  apply Vector.ext
+  intro i hi
+  let ii : Fin n := ⟨i, hi⟩
+  simp [mulVec, dot, row, Hex.Vector.dotProduct, ofFn]
+  change
+    (List.finRange n).foldl
+        (fun acc j => acc + (Q[ii][j] - if ii = j then 1 else 0) * v[j]) 0 =
+      (List.finRange n).foldl (fun acc j => acc + Q[ii][j] * v[j]) 0 - v[ii]
+  calc
+    (List.finRange n).foldl
+        (fun acc j => acc + (Q[ii][j] - if ii = j then 1 else 0) * v[j]) 0 =
+        (List.finRange n).foldl
+          (fun acc j => acc + (Q[ii][j] * v[j] - (if ii = j then 1 else 0) * v[j]))
+          ((0 : R) - 0) := by
+          have hzero : (0 : R) - 0 = 0 := by grind
+          rw [hzero]
+          apply foldl_sum_congr
+          intro j _hj
+          grind
+    _ = (List.finRange n).foldl (fun acc j => acc + Q[ii][j] * v[j]) 0 -
+          (List.finRange n).foldl
+            (fun acc j => acc + (if ii = j then 1 else 0) * v[j]) 0 := by
+          rw [foldl_sum_sub]
+    _ = (List.finRange n).foldl (fun acc j => acc + Q[ii][j] * v[j]) 0 - v[ii] := by
+          rw [foldl_indicator_mul_unique (List.finRange n) ii (fun j => v[j])
+            (List.mem_finRange _) (List.nodup_finRange n) 0]
+          grind
 
 /-- Squared Euclidean norm of a vector. -/
 def normSq [Mul R] [Add R] [OfNat R 0] (v : Vector R n) : R :=
