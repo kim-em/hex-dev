@@ -415,110 +415,13 @@ private theorem prime_seventy_one : Nat.Prime 71 := by
     | 71 => exact Or.inr rfl
     | _ + 72 => omega
 
-private def zmod64ZPow {p : Nat} [ZMod64.Bounds p] (a : ZMod64 p) : Int → ZMod64 p
-  | .ofNat n => a ^ n
-  | .negSucc n => (a ^ (n + 1))⁻¹
-
-private instance zmod64IntPow {p : Nat} [ZMod64.Bounds p] :
-    HPow (ZMod64 p) Int (ZMod64 p) where
-  hPow := zmod64ZPow
-
-private theorem zmod64_one_ne_zero_of_prime
-    {p : Nat} [ZMod64.Bounds p] (hp : Nat.Prime p) :
-    (1 : ZMod64 p) ≠ 0 := by
-  intro h
-  have hp2 : 2 ≤ p := hp.two_le
-  have htoNat : (1 : ZMod64 p).toNat = (0 : ZMod64 p).toNat :=
-    congrArg ZMod64.toNat h
-  rw [show ((1 : ZMod64 p).toNat) = 1 % p from ZMod64.toNat_one,
-      show ((0 : ZMod64 p).toNat) = 0 from ZMod64.toNat_zero,
-      Nat.mod_eq_of_lt (by omega : 1 < p)] at htoNat
-  omega
-
-private theorem zmod64_inv_zero {p : Nat} [ZMod64.Bounds p] :
-    (0 : ZMod64 p)⁻¹ = 0 := by
-  apply ZMod64.ext
-  apply UInt64.toNat_inj.mp
-  change (ZMod64.inv (0 : ZMod64 p)).toNat = (0 : ZMod64 p).toNat
-  rw [ZMod64.toNat_inv_def]
-  change (((HexArith.Int.extGcd 0 (Int.ofNat p)).2.1 % Int.ofNat p).toNat % p = 0)
-  have hs := HexArith.Int.extGcd_zero_left_s_ofNat p (ZMod64.Bounds.pPos (p := p))
-  rw [hs]
-  simp
-
-private theorem zmod64_inv_ne_zero_of_prime
-    {p : Nat} [ZMod64.Bounds p] (hp : Nat.Prime p)
-    {a : ZMod64 p} (ha : a ≠ 0) :
-    a⁻¹ ≠ 0 := by
-  intro hinv
-  have hone := ZMod64.inv_mul_eq_one_of_prime hp ha
-  change ZMod64.inv a = 0 at hinv
-  rw [hinv] at hone
-  have hzero : (0 : ZMod64 p) * a = 0 := by grind
-  rw [hzero] at hone
-  exact zmod64_one_ne_zero_of_prime hp hone.symm
-
-private theorem zmod64_inv_inv_of_prime
-    {p : Nat} [ZMod64.Bounds p] (hp : Nat.Prime p) (a : ZMod64 p) :
-    (a⁻¹)⁻¹ = a := by
-  by_cases ha : a = 0
-  · subst a
-    rw [zmod64_inv_zero (p := p)]
-    exact (zmod64_inv_zero (p := p))
-  · have hinv_ne := zmod64_inv_ne_zero_of_prime hp ha
-    have hleft : (a⁻¹)⁻¹ * a⁻¹ = (1 : ZMod64 p) :=
-      ZMod64.inv_mul_eq_one_of_prime hp hinv_ne
-    have hright : a * a⁻¹ = (1 : ZMod64 p) := by
-      rw [Lean.Grind.CommSemiring.mul_comm]
-      exact ZMod64.inv_mul_eq_one_of_prime hp ha
-    have hprod : (((a⁻¹)⁻¹ - a) * a⁻¹) = (0 : ZMod64 p) := by
-      rw [Lean.Grind.Ring.sub_eq_add_neg]
-      rw [Lean.Grind.Semiring.right_distrib]
-      rw [hleft]
-      grind
-    rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hprod with hdiff | hzero
-    · grind
-    · exact False.elim (hinv_ne hzero)
-
-private instance zmod64FieldOfPrime
-    {p : Nat} [ZMod64.Bounds p] (hp : Nat.Prime p) :
-    Lean.Grind.Field (ZMod64 p) := by
-  refine Lean.Grind.Field.mk ?_ ?_ ?_ ?_ ?_ ?_ ?_
-  · intro a b
-    rfl
-  · intro h
-    exact zmod64_one_ne_zero_of_prime hp h.symm
-  · exact zmod64_inv_zero
-  · intro a ha
-    rw [Lean.Grind.CommSemiring.mul_comm]
-    exact ZMod64.inv_mul_eq_one_of_prime hp ha
-  · intro a
-    exact Lean.Grind.Semiring.pow_zero a
-  · intro a n
-    change a ^ (n + 1) = a ^ n * a
-    exact Lean.Grind.Semiring.pow_succ a n
-  · intro a n
-    cases n with
-    | ofNat m =>
-        cases m with
-        | zero =>
-            show zmod64ZPow a (-Int.ofNat 0) = (zmod64ZPow a (Int.ofNat 0))⁻¹
-            rw [show (-Int.ofNat 0) = Int.ofNat 0 by rfl]
-            simp [zmod64ZPow]
-            have hpow0 : a ^ 0 = (1 : ZMod64 p) :=
-              Lean.Grind.Semiring.pow_zero a
-            rw [hpow0]
-            have hright : (1 : ZMod64 p)⁻¹ * 1 = (1 : ZMod64 p) := by
-              exact ZMod64.inv_mul_eq_one_of_prime hp (zmod64_one_ne_zero_of_prime hp)
-            have hmul : (1 : ZMod64 p)⁻¹ * 1 = (1 : ZMod64 p)⁻¹ := by
-              exact Lean.Grind.Semiring.mul_one ((1 : ZMod64 p)⁻¹)
-            rw [hmul] at hright
-            exact hright.symm
-        | succ m =>
-            rfl
-    | negSucc m =>
-        change a ^ (m + 1) = ((a ^ (m + 1))⁻¹)⁻¹
-        exact (zmod64_inv_inv_of_prime hp (a ^ (m + 1))).symm
+/-- Thin adapter promoting a `Nat.Prime p` witness to the shared
+`Lean.Grind.Field (ZMod64 p)` instance via `ZMod64.primeModulusOfPrime`. -/
+@[reducible]
+private def fieldOfNatPrime {p : Nat} [ZMod64.Bounds p] (hp : Nat.Prime p) :
+    Lean.Grind.Field (ZMod64 p) :=
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  inferInstance
 
 private structure SmallPrimeCandidate where
   p : Nat
@@ -535,25 +438,25 @@ structure PrimeCandidateScore where
 
 private def smallPrimeCandidates : List SmallPrimeCandidate :=
   [ { p := 3, bounds := bounds_three, prime := prime_three,
-      field := @zmod64FieldOfPrime 3 bounds_three prime_three },
+      field := @fieldOfNatPrime 3 bounds_three prime_three },
     { p := 5, bounds := bounds_five, prime := prime_five,
-      field := @zmod64FieldOfPrime 5 bounds_five prime_five },
+      field := @fieldOfNatPrime 5 bounds_five prime_five },
     { p := 7, bounds := bounds_seven, prime := prime_seven,
-      field := @zmod64FieldOfPrime 7 bounds_seven prime_seven },
+      field := @fieldOfNatPrime 7 bounds_seven prime_seven },
     { p := 11, bounds := bounds_eleven, prime := prime_eleven,
-      field := @zmod64FieldOfPrime 11 bounds_eleven prime_eleven },
+      field := @fieldOfNatPrime 11 bounds_eleven prime_eleven },
     { p := 13, bounds := bounds_thirteen, prime := prime_thirteen,
-      field := @zmod64FieldOfPrime 13 bounds_thirteen prime_thirteen },
+      field := @fieldOfNatPrime 13 bounds_thirteen prime_thirteen },
     { p := 17, bounds := bounds_seventeen, prime := prime_seventeen,
-      field := @zmod64FieldOfPrime 17 bounds_seventeen prime_seventeen },
+      field := @fieldOfNatPrime 17 bounds_seventeen prime_seventeen },
     { p := 19, bounds := bounds_nineteen, prime := prime_nineteen,
-      field := @zmod64FieldOfPrime 19 bounds_nineteen prime_nineteen },
+      field := @fieldOfNatPrime 19 bounds_nineteen prime_nineteen },
     { p := 23, bounds := bounds_twenty_three, prime := prime_twenty_three,
-      field := @zmod64FieldOfPrime 23 bounds_twenty_three prime_twenty_three },
+      field := @fieldOfNatPrime 23 bounds_twenty_three prime_twenty_three },
     { p := 31, bounds := bounds_thirty_one, prime := prime_thirty_one,
-      field := @zmod64FieldOfPrime 31 bounds_thirty_one prime_thirty_one },
+      field := @fieldOfNatPrime 31 bounds_thirty_one prime_thirty_one },
     { p := 71, bounds := bounds_seventy_one, prime := prime_seventy_one,
-      field := @zmod64FieldOfPrime 71 bounds_seventy_one prime_seventy_one } ]
+      field := @fieldOfNatPrime 71 bounds_seventy_one prime_seventy_one } ]
 
 /--
 Coerce an admissible nonzero modular image to its monic representative by
@@ -585,7 +488,7 @@ theorem monicModularImage_monic
     rw [FpPoly.leadingCoeff_eq_coeff_pred f hfpos]
     exact DensePoly.coeff_last_ne_zero_of_pos_size f hfpos
   have hinv_ne : (DensePoly.leadingCoeff f)⁻¹ ≠ (0 : ZMod64 p) :=
-    zmod64_inv_ne_zero_of_prime hp hlead_ne
+    ZMod64.inv_ne_zero_of_prime hp hlead_ne
   unfold DensePoly.Monic
   rw [FpPoly.leadingCoeff_scale_of_ne_zero_of_nonzero (p := p) hinv_ne f hfsize]
   exact ZMod64.inv_mul_eq_one_of_prime hp hlead_ne
@@ -1593,7 +1496,7 @@ private def fallbackPrimeChoiceData (f : ZPoly) : PrimeChoiceData :=
   letI := bounds_three
   let c : SmallPrimeCandidate :=
     { p := 3, bounds := bounds_three, prime := prime_three,
-      field := @zmod64FieldOfPrime 3 bounds_three prime_three }
+      field := @fieldOfNatPrime 3 bounds_three prime_three }
   let fModP := ZPoly.modP 3 f
   let factorsModP := berlekampFactorsModP f c
   { p := 3, fModP, factorsModP }
