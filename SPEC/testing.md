@@ -150,7 +150,7 @@ the library at `done_through ≤ 2`.
 
 3. **Explicit non-coverage is a tracking obligation.** An emitted
    operation that has no external oracle (whether deferred or
-   genuinely blocked) must be paired with an open `human-oversight`
+   genuinely blocked) must be paired with an open `directive`
    issue, linked from both `EmitFixtures.lean` and the corresponding
    oracle script's docstring. The library's `Conformance.lean`
    docstring must not claim the operation as covered. Self-consistency
