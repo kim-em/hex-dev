@@ -892,7 +892,7 @@ private theorem linearPow_linearPow_mul (a : FpPoly p) (m : Nat) :
       rw [FpPoly.linearPow_succ, linearPow_linearPow_mul a m n,
         Nat.mul_succ, FpPoly.linearPow_add]
 
-private theorem linearPow_zero_of_pos (n : Nat) (hn : 0 < n) :
+theorem linearPow_zero_of_pos (n : Nat) (hn : 0 < n) :
     FpPoly.linearPow (0 : FpPoly p) n = 0 := by
   cases n with
   | zero => omega
