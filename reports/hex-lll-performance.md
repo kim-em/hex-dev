@@ -15,7 +15,6 @@
 - `Hex.LLLBench.runFpylllFirstShortVectorBZRecombinationChecksum`: fixed, repeats `5`
 - `Hex.LLLBench.runIsabelleHarshCubicNormSq15`: fixed, repeats `3`
 - `Hex.LLLBench.runFirstShortVectorBZRecombinationNormSq`: fixed, repeats `3`
-- `Hex.LLLBench.runIsabelleRandomBoundedNormSq240`: fixed, repeats `3`
 - `Hex.LLLBench.runIsabelleHarshCubicNormSq45`: fixed, repeats `3`
 - `Hex.LLLBench.runFirstShortVectorBZRecombinationChecksum`: fixed, repeats `5`
 - `Hex.LLLBench.runIsabelleHarshCubicNormSq30`: fixed, repeats `3`
@@ -25,14 +24,37 @@
 - `Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq120`: fixed, repeats `3`
 - `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq30`: fixed, repeats `3`
 - `Hex.LLLBench.runFirstShortVectorRandomBounded30Checksum`: fixed, repeats `5`
+- `Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq45`: fixed, repeats `3`
 - `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq45`: fixed, repeats `3`
+- `Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq75`: fixed, repeats `3`
+- `Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq90`: fixed, repeats `3`
+- `Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq150`: fixed, repeats `3`
+- `Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq180`: fixed, repeats `3`
 - `Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq240`: fixed, repeats `3`
 - `Hex.LLLBench.runFpylllFirstShortVectorHarshCubic15Checksum`: fixed, repeats `5`
+- `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq20`: fixed, repeats `3`
+- `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq25`: fixed, repeats `3`
 - `Hex.LLLBench.runIsabelleRandomBoundedNormSq30`: fixed, repeats `3`
+- `Hex.LLLBench.runIsabelleRandomBoundedNormSq45`: fixed, repeats `3`
 - `Hex.LLLBench.runIsabelleRandomBoundedNormSq60`: fixed, repeats `3`
+- `Hex.LLLBench.runIsabelleRandomBoundedNormSq75`: fixed, repeats `3`
+- `Hex.LLLBench.runIsabelleRandomBoundedNormSq90`: fixed, repeats `3`
+- `Hex.LLLBench.runIsabelleRandomBoundedNormSq120`: fixed, repeats `3`
+- `Hex.LLLBench.runIsabelleRandomBoundedNormSq150`: fixed, repeats `3`
+- `Hex.LLLBench.runIsabelleRandomBoundedNormSq180`: fixed, repeats `3`
 - `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded30Checksum`: fixed, repeats `5`
 - `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq15`: fixed, repeats `3`
+- `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq35`: fixed, repeats `3`
+- `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq40`: fixed, repeats `3`
+- `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq50`: fixed, repeats `3`
+- `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq55`: fixed, repeats `3`
 - `Hex.LLLBench.runIsabelleBZRecombinationNormSq`: fixed, repeats `3`
+- `Hex.LLLBench.runIsabelleHarshCubicNormSq20`: fixed, repeats `3`
+- `Hex.LLLBench.runIsabelleHarshCubicNormSq25`: fixed, repeats `3`
+- `Hex.LLLBench.runIsabelleHarshCubicNormSq35`: fixed, repeats `3`
+- `Hex.LLLBench.runIsabelleHarshCubicNormSq40`: fixed, repeats `3`
+- `Hex.LLLBench.runIsabelleHarshCubicNormSq50`: fixed, repeats `3`
+- `Hex.LLLBench.runIsabelleHarshCubicNormSq55`: fixed, repeats `3`
 - `Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq60`: fixed, repeats `3`
 
 ## Verdicts
@@ -99,7 +121,31 @@ Smoke wiring was also checked with:
 
 ```sh
 lake exe hexlll_bench list
+lake exe hexlll_bench verify
 ```
+
+At current `main` commit `1c4a58fd4051872be9dc4f1cd676573d62583852`,
+the smoke verifier succeeds for all 52 registered HexLLL benchmarks,
+including the densified Isabelle ladder added after the scientific run below.
+
+The latest committed scientific artifact after the densified-ladder work is
+`reports/bench-results/hex-lll-e211854d1435.json`, SHA-256
+`2b12e967b4cfa017681558ea15928e7bbd14c2ec552888f17648ae8911ac83cd`,
+recorded at commit `e211854d1435fbd3db4739cd6dec5be66da2f857`. It keeps five
+parametric registrations below the Phase 4 exit bar:
+
+- `Hex.LLLBench.runSizeReduceChecksum`: `inconclusive`, verdict rows
+  `n = 80, 96, 128, 144`, final row `422.723 us`.
+- `Hex.LLLBench.runGramSchmidtCoeffChecksum`: `inconclusive`.
+- `Hex.LLLBench.runFirstShortVectorHarshCubicChecksum`: `inconclusive`,
+  verdict rows `n = 15, 30, 45`, final row `177.755 ms`.
+- `Hex.LLLBench.runOfBasisHarshCubicChecksum`: `inconclusive`, verdict row
+  `n = 18`, `3.965 ms`.
+- `Hex.LLLBench.runFirstShortVectorRandomBoundedChecksum`: `inconclusive`,
+  verdict rows `n = 30, 60, 120, 240`, final row `6.028 s`.
+
+Because `PLAN/Phase4.md` treats an inconclusive scientific verdict as a
+Phase 4 blocker, this report does not promote `HexLLL.done_through`.
 
 Informational `fpLLL via fpylll` comparator run at commit
 `ed9da7537e96cee75f395e46962d41775f615a53` on `carica` (Apple M2 Ultra,
@@ -150,15 +196,21 @@ runs `svp_verified`. Export artefact:
 
 - `bz-recombination`: Lean `runFirstShortVectorBZRecombinationNormSq` median
   `5.625 us`; Isabelle `runIsabelleBZRecombinationNormSq` median
-  `55.206 ms`; Lean/Isabelle ratio `0.000102` (`9814.4x` faster).
+  `55.206 ms`; raw Lean/Isabelle ratio `0.000102` (`9814.4x` faster).
 - `random-bounded`, bottom rung `n = 30`, seed `8`: Lean
   `runFirstShortVectorRandomBoundedNormSq30` median `5.462 ms`; Isabelle
-  `runIsabelleRandomBoundedNormSq30` median `50.289 ms`; Lean/Isabelle ratio
-  `0.108612` (`9.21x` faster).
+  `runIsabelleRandomBoundedNormSq30` median `50.289 ms`; raw Lean/Isabelle
+  ratio `0.108612` (`9.21x` faster).
 - `harsh-cubic`, bottom rung `n = 15`: Lean
   `runFirstShortVectorHarshCubicNormSq15` median `1.232 ms`; Isabelle
-  `runIsabelleHarshCubicNormSq15` median `49.995 ms`; Lean/Isabelle ratio
-  `0.024642` (`40.58x` faster).
+  `runIsabelleHarshCubicNormSq15` median `49.995 ms`; raw Lean/Isabelle
+  ratio `0.024642` (`40.58x` faster).
+
+The persistent Isabelle protocol overhead measured in `HexLLL/Bench.lean` is
+approximately `9 us` per steady-state request after the one-time GHC startup.
+Subtracting that protocol overhead from the Isabelle medians gives adjusted
+Lean/Isabelle ratios `0.000102` (`9812.8x` faster), `0.108631`
+(`9.21x` faster), and `0.024646` (`40.57x` faster), respectively.
 
 The gating goal is met in this snapshot: Lean is faster than the verified
 Isabelle extraction on all three shared bottom-rung inputs. The BZ ratio is
@@ -191,10 +243,14 @@ PATH="$PWD/.venv-oracles/bin:$PATH" lake exe hexlll_bench compare \
 - Harsh-cubic `n = 15`: Lean median `1.247 ms`, fpLLL median `84.130 ms`,
   fpLLL relative median `67.475x`; hashes agreed.
 
-The fpLLL figures include Python process startup and oracle parsing overhead
-for each fixed call, as specified by the process-call comparator registration.
-They are therefore useful as traceable external-comparator checks for the
-headline report, but they are not a gating performance signal for HexLLL.
+The persistent fpylll protocol overhead measured in `HexLLL/Bench.lean` is
+approximately `34 us` per steady-state request. Subtracting that protocol
+overhead from the fpLLL medians gives adjusted fpLLL relative medians
+`9452.9x`, `14.991x`, and `67.448x`, respectively. The fixed target still
+includes one Python plus `import fpylll` startup per measured child, as
+specified by the process-call comparator registration. These figures are
+therefore useful as traceable external-comparator checks for the headline
+report, but they are not a gating performance signal for HexLLL.
 
 ## Profile
 
@@ -261,3 +317,8 @@ entry bit-length grows with `n`, so the dominant constant lands in exact
 integer arithmetic.
 
 ## Concerns
+
+- [#4334](https://github.com/kim-em/hex/issues/4334): the latest committed
+  HexLLL scientific artifact records inconclusive verdicts for five
+  parametric registrations. `HexLLL.done_through` remains `3` until this is
+  resolved and the Concerns section can be emptied.
