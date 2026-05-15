@@ -1247,6 +1247,84 @@ theorem exactQuotient?_recombinationCandidate_eq_some_of_eq_factor
     exact Hex.exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree hmonic hpos hmul
   · rw [heq]; exact hmul
 
+/--
+Executable recombination-search success for one lifted subset.
+
+Once a proof-side lifted subset is known to contain the first remaining local
+factor, its ordered `(selected, rest)` partition is one of the splits traversed
+by `recombinationSearchMod`.  If the subset's executable candidate is an
+irreducible integer divisor of the current target and the recursive search on
+the quotient/rest problem succeeds, the surface recombination search succeeds.
+-/
+theorem recombinationSearchMod_isSome_of_liftedSubset_candidate_eq_factor
+    {core factor quotient : Hex.ZPoly} {d : Hex.LiftData}
+    {S : LiftedFactorSubset d}
+    (hcore_ne_one : core ≠ 1)
+    (hsize_pos : 0 < d.liftedFactors.size)
+    (hfirst : (⟨0, hsize_pos⟩ : LiftedFactorIndex d) ∈ S)
+    (heq : recombinationCandidate d S = factor)
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hsearch_rest :
+      (Hex.recombinationSearchModAux quotient (d.p ^ d.k)
+        (liftedSubsetRejectedList d S) d.liftedFactors.toList.length).isSome = true)
+    (hquot :
+      Hex.exactQuotient? core (recombinationCandidate d S) = some quotient) :
+    (Hex.recombinationSearchMod core (d.p ^ d.k)
+        d.liftedFactors.toList).isSome = true := by
+  refine
+    Hex.recombinationSearchMod_isSome_of_step
+      (target := core)
+      (candidate := factor)
+      (quotient := quotient)
+      (modulus := d.p ^ d.k)
+      (localFactors := d.liftedFactors.toList)
+      (selected := liftedSubsetSelectedList d S)
+      (rest := liftedSubsetRejectedList d S)
+      hcore_ne_one
+      (liftedSubsetSplit_mem_subsetSplitsWithFirst d S hsize_pos hfirst)
+      ?_
+      (by
+        simpa [heq] using
+          shouldRecord_recombinationCandidate_of_eq_factor heq hirr)
+      ?_
+      hsearch_rest
+  · simpa [recombinationCandidate] using heq.symm
+  · simpa [heq] using hquot
+
+/--
+Variant of
+`recombinationSearchMod_isSome_of_liftedSubset_candidate_eq_factor` that
+discharges the executable quotient check from ordinary divisibility plus the
+monic positive-degree hypotheses required by `exactQuotient?`.
+-/
+theorem recombinationSearchMod_isSome_of_liftedSubset_factor_dvd
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hcore_ne_one : core ≠ 1)
+    (hsize_pos : 0 < d.liftedFactors.size)
+    (hfirst : (⟨0, hsize_pos⟩ : LiftedFactorIndex d) ∈ S)
+    (heq : recombinationCandidate d S = factor)
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hmonic : Hex.DensePoly.Monic factor)
+    (hdegree : 0 < factor.degree?.getD 0)
+    (hdvd : factor ∣ core)
+    (hsearch_rest :
+      ∀ quotient,
+        Hex.exactQuotient? core (recombinationCandidate d S) = some quotient →
+        (Hex.recombinationSearchModAux quotient (d.p ^ d.k)
+          (liftedSubsetRejectedList d S) d.liftedFactors.toList.length).isSome = true) :
+    (Hex.recombinationSearchMod core (d.p ^ d.k)
+        d.liftedFactors.toList).isSome = true := by
+  rcases
+    exactQuotient?_recombinationCandidate_eq_some_of_eq_factor
+      (core := core) (factor := factor) (d := d) (S := S)
+      heq hmonic hdegree hdvd with
+    ⟨quotient, hquot, _hmul⟩
+  exact
+    recombinationSearchMod_isSome_of_liftedSubset_candidate_eq_factor
+      (core := core) (factor := factor) (quotient := quotient) (d := d)
+      (S := S) hcore_ne_one hsize_pos hfirst heq hirr
+      (hsearch_rest quotient hquot) hquot
+
 /-- A `Hex.ZPoly` factor that passes the executable `shouldRecordPolynomialFactor`
 check is non-zero and not a unit after transport to `Polynomial ℤ`.  The
 executable check rejects `0`, `1`, and `-1`, which are exactly the zero
