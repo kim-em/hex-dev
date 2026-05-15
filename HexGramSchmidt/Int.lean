@@ -2263,6 +2263,59 @@ private theorem scaledCoeffArrayLoop_lower_singular_matches
         (n := n) (state_array := state_array) (state_matrix := state_matrix)
         h_step_eq h_matrix_eq h_coeffs_unwritten fuel i j h_after hji hDone hp
 
+/-- State-level lower-triangle branch splitter for the scaled-coefficient
+array loop. At a real matrix step, a zero pivot is discharged by the packaged
+singular-column relation; a nonzero path to the target column is discharged by
+the non-singular target-column capture theorem. -/
+private theorem scaledCoeffArrayLoop_lower_matches
+    {state_array : ScaledCoeffArrayState} {state_matrix : Matrix.BareissState n}
+    (h_step_eq : state_array.step = state_matrix.step)
+    (h_matrix_eq : rowsToMatrix state_array.matrix n = state_matrix.matrix)
+    (h_prev_eq : state_array.prevPivot = state_matrix.prevPivot)
+    (h_coeffs_size : state_array.coeffs.size = n)
+    (h_coeffs_rows_size : ∀ r, r < n → state_array.coeffs[r]!.size = n)
+    (h_coeffs_processed : ∀ r c : Fin n,
+      c.val < state_matrix.step → c.val < r.val →
+        getArrayEntry state_array.coeffs r.val c.val = state_matrix.matrix[r][c])
+    (h_coeffs_unwritten : ∀ r c : Fin n,
+      state_matrix.step < c.val → c.val < r.val →
+        getArrayEntry state_array.coeffs r.val c.val = 0)
+    (fuel : Nat) (i j : Fin n)
+    (h_step_le_j : state_matrix.step ≤ j.val)
+    (hji : j.val < i.val)
+    (h_fuel : j.val < state_matrix.step + (fuel + 1))
+    (hDone : state_matrix.step + 1 < n) :
+    ((hp : state_matrix.matrix[
+        (⟨state_matrix.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)][
+        (⟨state_matrix.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)] = 0) →
+      (j.val < state_matrix.step ∧
+        getArrayEntry (scaledCoeffArrayLoop n (fuel + 1) state_array).coeffs i.val j.val =
+          state_matrix.matrix[i][j]) ∨
+      (j.val = state_matrix.step ∧
+        getArrayEntry (scaledCoeffArrayLoop n (fuel + 1) state_array).coeffs
+            i.val state_array.step =
+          state_matrix.matrix[i][j]) ∨
+      (state_matrix.step < j.val ∧
+        getArrayEntry (scaledCoeffArrayLoop n (fuel + 1) state_array).coeffs i.val j.val = 0)) ∧
+    ((hp : state_matrix.matrix[
+        (⟨state_matrix.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)][
+        (⟨state_matrix.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)] ≠ 0) →
+      (h_target_nonsing :
+        (Matrix.noPivotLoop (j.val - state_matrix.step) state_matrix).singularStep = none) →
+      getArrayEntry (scaledCoeffArrayLoop n (fuel + 1) state_array).coeffs i.val j.val =
+        (Matrix.noPivotLoop (j.val - state_matrix.step) state_matrix).matrix[i][j]) := by
+  constructor
+  · intro hp
+    exact scaledCoeffArrayLoop_lower_singular_matches
+      (n := n) (state_array := state_array) (state_matrix := state_matrix)
+      h_step_eq h_matrix_eq h_coeffs_size h_coeffs_rows_size
+      h_coeffs_processed h_coeffs_unwritten fuel i j hji hDone hp
+  · intro _hp h_target_nonsing
+    exact scaledCoeffArrayLoop_lower_matches_target_column
+      (n := n) (state_array := state_array) (state_matrix := state_matrix)
+      h_step_eq h_matrix_eq h_prev_eq h_coeffs_size h_coeffs_rows_size
+      (fuel + 1) i j h_step_le_j hji h_fuel h_target_nonsing
+
 /-- State-level diagonal correspondence between the scaled-coefficient array
 loop and the matrix-level `Matrix.noPivotLoop` on the same Gram-like data.
 
