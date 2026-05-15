@@ -149,4 +149,55 @@ end ForwardRecoveryInputs
 
 end BHKS
 
+/-- Lower cardinality bound for a successful BHKS fast-core branch whose
+emitted candidates have been certified through the B8 partition-refinement
+package: the recovery side data provides an `ExpectedTrueFactors` witness
+matching the support-driven indicator array, and the partition cardinality
+matches the integer-factor count. Together these supply the irreducibility
+hypothesis required by `factorFastCoreWithBound_some_factor_count_ge_of_irreducible`. -/
+theorem factorFastCoreWithBound_some_factor_count_ge
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
+    {r : Nat} (trueSupports : Set (Set (Fin r)))
+    (hcore_ne : core ≠ 0)
+    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (htrue : BHKS.ForwardRecoveryInputs.ExpectedTrueFactors core
+      (BHKS.expectedIndicatorArrayOfSupports trueSupports) coreFactors)
+    (hpartition :
+      (BHKS.supportPartitionByMinColumn trueSupports).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial core)).card) :
+    (UniqueFactorizationMonoid.normalizedFactors
+      (HexPolyZMathlib.toPolynomial core)).card ≤
+        (coreFactors.toList.map HexPolyZMathlib.toPolynomial).length :=
+  factorFastCoreWithBound_some_factor_count_ge_of_irreducible h
+    (BHKS.ForwardRecoveryInputs.ExpectedTrueFactors.irreducible_of_partition_count
+      trueSupports htrue hcore_ne hpartition)
+
+/-- Cardinality equality for a successful BHKS fast-core branch under the B8
+partition-refinement package.  Pairs `factorFastCoreWithBound_some_factor_count_le`
+with `factorFastCoreWithBound_some_factor_count_ge`, exposing the count
+equality requested by #4030 / #4055 in a form directly usable as the `hcount`
+hypothesis of `factorFastCoreWithBound_some_factor_irreducible_of_count` and
+`factorFastCoreWithBound_some_factor_zpolyIrreducible_of_count`. -/
+theorem factorFastCoreWithBound_some_factor_count_eq
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
+    {r : Nat} (trueSupports : Set (Set (Fin r)))
+    (hcore_ne : core ≠ 0)
+    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (htrue : BHKS.ForwardRecoveryInputs.ExpectedTrueFactors core
+      (BHKS.expectedIndicatorArrayOfSupports trueSupports) coreFactors)
+    (hpartition :
+      (BHKS.supportPartitionByMinColumn trueSupports).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial core)).card) :
+    (coreFactors.toList.map HexPolyZMathlib.toPolynomial).length =
+      (UniqueFactorizationMonoid.normalizedFactors
+        (HexPolyZMathlib.toPolynomial core)).card := by
+  apply le_antisymm
+  · exact factorFastCoreWithBound_some_factor_count_le hcore_ne h
+  · exact factorFastCoreWithBound_some_factor_count_ge trueSupports hcore_ne h
+      htrue hpartition
+
 end HexBerlekampZassenhausMathlib
