@@ -2006,6 +2006,204 @@ theorem LiftedFactorListMatches.rejected_of_subset
   rw [LiftedFactorListMatches_iff_eq_liftedSubsetSelectedList]
   exact liftedSubsetRejectedList_eq_liftedSubsetSelectedList_sdiff d S
 
+/-- The order-preserving filter of `List.finRange n` by membership in a Finset
+equals the sorted list of that Finset.  Two sorted lists with the same
+multiset of elements are equal, and `filter` of a sorted list is sorted. -/
+private theorem finRange_filter_eq_sort
+    {n : Nat} (J : Finset (Fin n)) :
+    (List.finRange n).filter (fun i => decide (i ∈ J)) = J.sort (· ≤ ·) := by
+  classical
+  apply List.Perm.eq_of_sortedLE
+  · exact ((List.sortedLT_finRange n).pairwise.imp le_of_lt).filter _ |>.sortedLE
+  · exact (J.sortedLT_sort).pairwise.imp le_of_lt |>.sortedLE
+  · exact (finRange_filter_mem_perm_toList J).trans (J.sort_perm_toList (· ≤ ·)).symm
+
+/-- The `head?` of the order-preserving filter of `List.finRange n` by
+membership in a nonempty Finset `J` is `J.min'`.  Combined with the matching
+predicate this identifies the head of `localFactors` with the lifted factor
+at `J.min'`. -/
+private theorem finRange_filter_head?_eq_min'
+    {n : Nat} (J : Finset (Fin n)) (hne : J.Nonempty) :
+    ((List.finRange n).filter (fun i => decide (i ∈ J))).head? =
+      some (J.min' hne) := by
+  classical
+  rw [finRange_filter_eq_sort]
+  have hpos : 0 < (J.sort (· ≤ ·)).length := by
+    rw [Finset.length_sort]; exact hne.card_pos
+  rw [List.head?_eq_getElem?, List.getElem?_eq_getElem hpos]
+  exact congrArg some Finset.sorted_zero_eq_min'
+
+/-- Head identification for a non-empty matching state: the head of
+`localFactors` is the lifted factor at `J.min'`.  Used by the recursive
+coverage proof to bridge the proof-side "first remaining index of `J`" to the
+executable-side head of `localFactors`. -/
+theorem LiftedFactorListMatches.head?_eq_liftedFactor_min'
+    {d : Hex.LiftData} {J : LiftedFactorSubset d} {localFactors : List Hex.ZPoly}
+    (h : LiftedFactorListMatches d J localFactors) (hne : J.Nonempty) :
+    localFactors.head? = some (liftedFactor d (J.min' hne)) := by
+  rw [h, List.head?_map, finRange_filter_head?_eq_min' J hne]
+  rfl
+
+/-- The order-preserving filter of `List.finRange n` by membership in `J ∩ S`
+equals the filter by `S` when `S ⊆ J`. Used to identify the selected sublist
+of a matched `localFactors` with `liftedSubsetSelectedList d S`. -/
+private theorem finRange_filter_mem_and_mem_eq_of_subset
+    {n : Nat} {J S : Finset (Fin n)} (hSJ : S ⊆ J) :
+    ((List.finRange n).filter fun i => decide (i ∈ J)).filter
+        (fun i => decide (i ∈ S)) =
+      (List.finRange n).filter fun i => decide (i ∈ S) := by
+  rw [List.filter_filter]
+  apply List.filter_congr
+  intro i _
+  by_cases hS : i ∈ S
+  · simp [hS, hSJ hS]
+  · simp [hS]
+
+/-- Dual of `finRange_filter_mem_and_mem_eq_of_subset`: filtering by membership
+in `J` then by non-membership in `S` (with `S ⊆ J`) is filtering by membership
+in `J \ S`. -/
+private theorem finRange_filter_mem_and_not_mem_eq_sdiff_of_subset
+    {n : Nat} {J S : Finset (Fin n)} :
+    ((List.finRange n).filter fun i => decide (i ∈ J)).filter
+        (fun i => decide (i ∉ S)) =
+      (List.finRange n).filter fun i => decide (i ∈ J \ S) := by
+  rw [List.filter_filter]
+  apply List.filter_congr
+  intro i _
+  by_cases hJ : i ∈ J
+  · by_cases hS : i ∈ S
+    · simp [hJ, hS, Finset.mem_sdiff]
+    · simp [hJ, hS, Finset.mem_sdiff]
+  · simp [hJ, Finset.mem_sdiff]
+
+/-- Generalised matching transition: removing `S ⊆ J` from a matching state
+yields a matching state for `J \ S` whose `localFactors` is
+`liftedSubsetSelectedList d (J \ S)`.  This is the recursive invariant
+transition used inside the recombination coverage proof. -/
+theorem LiftedFactorListMatches.sdiff_of_subset
+    {d : Hex.LiftData} {J S : LiftedFactorSubset d} :
+    LiftedFactorListMatches d (J \ S)
+      (liftedSubsetSelectedList d (J \ S)) :=
+  (LiftedFactorListMatches_iff_eq_liftedSubsetSelectedList d (J \ S) _).mpr rfl
+
+/-- Generalised partition lemma at the `subsetSplitsWithFirst` surface: for any
+matching state and any `S ⊆ J` containing `J.min'`, the order-preserving
+`(selected, rest)` partition of `localFactors` by `S` lies in
+`subsetSplitsWithFirst localFactors`.
+
+The selected component is `liftedSubsetSelectedList d S` (since `S ⊆ J`) and
+the rest component is `liftedSubsetSelectedList d (J \ S)`. -/
+theorem liftedSubsetSplit_mem_subsetSplitsWithFirst_of_matches
+    {d : Hex.LiftData} {J : LiftedFactorSubset d} {localFactors : List Hex.ZPoly}
+    (h : LiftedFactorListMatches d J localFactors)
+    {S : LiftedFactorSubset d} (hSJ : S ⊆ J) (hne : J.Nonempty)
+    (hmin : J.min' hne ∈ S) :
+    (liftedSubsetSelectedList d S, liftedSubsetSelectedList d (J \ S)) ∈
+      Hex.subsetSplitsWithFirst localFactors := by
+  classical
+  -- Step 1: decompose `localFactors` as `head :: tail`.
+  have hhead := h.head?_eq_liftedFactor_min' hne
+  rcases hloc : localFactors with _ | ⟨head, tail⟩
+  · rw [hloc] at hhead; simp at hhead
+  rw [hloc] at hhead
+  simp only [List.head?_cons, Option.some.injEq] at hhead
+  -- `hhead : head = liftedFactor d (J.min' hne)`.
+  -- Step 2: rewrite `localFactors` via the matching predicate.
+  have hloc_eq : head :: tail =
+      ((List.finRange d.liftedFactors.size).filter fun i => decide (i ∈ J)).map
+        (liftedFactor d) := by
+    rw [← hloc]; exact h
+  -- Step 3: zip with the membership mask for `S`.
+  set xs : List (Fin d.liftedFactors.size) :=
+    (List.finRange d.liftedFactors.size).filter (fun i => decide (i ∈ J))
+    with hxs_def
+  have hloc_eq' : head :: tail = xs.map (liftedFactor d) := hloc_eq
+  -- The mask paired with `xs` records membership in `S`.
+  set bs : List Bool := xs.map (fun i => decide (i ∈ S))
+  -- Step 4: the zip identifies the selected/rejected filterMaps.
+  have hzip :
+      (xs.map (liftedFactor d)).zip bs =
+        xs.map (fun i => (liftedFactor d i, decide (i ∈ S))) := by
+    rw [List.zip_map']
+  -- Step 5: identify the selected filterMap with `liftedSubsetSelectedList d S`.
+  have hsel :
+      ((xs.map (liftedFactor d)).zip bs).filterMap
+        (fun p => if p.2 then some p.1 else none) =
+          liftedSubsetSelectedList d S := by
+    rw [hzip, List.filterMap_map]
+    simp only [Function.comp_def]
+    rw [List.filterMap_if_eq_map_filter xs (fun i => decide (i ∈ S))
+      (liftedFactor d)]
+    rw [hxs_def, finRange_filter_mem_and_mem_eq_of_subset hSJ,
+      ← liftedSubsetSelectedList_eq_filter_map]
+  -- Step 6: identify the rejected filterMap with `liftedSubsetSelectedList d (J \ S)`.
+  have hrej :
+      ((xs.map (liftedFactor d)).zip bs).filterMap
+        (fun p => if p.2 then none else some p.1) =
+          liftedSubsetSelectedList d (J \ S) := by
+    rw [hzip, List.filterMap_map]
+    simp only [Function.comp_def]
+    -- Convert `if p then none else some` into `if !p then some else none`.
+    have hrewrite :
+        (fun i : Fin d.liftedFactors.size =>
+            if decide (i ∈ S) then (none : Option Hex.ZPoly)
+            else some (liftedFactor d i)) =
+          fun i => if decide (i ∉ S) then some (liftedFactor d i) else none := by
+      funext i
+      by_cases hi : i ∈ S
+      · simp [hi]
+      · simp [hi]
+    rw [hrewrite, List.filterMap_if_eq_map_filter xs
+      (fun i => decide (i ∉ S)) (liftedFactor d)]
+    rw [hxs_def, finRange_filter_mem_and_not_mem_eq_sdiff_of_subset,
+      ← liftedSubsetSelectedList_eq_filter_map]
+  -- Step 7: show `bs = true :: bs'` since the head index `J.min' hne ∈ S`.
+  have hxs_cons : ∃ ys, xs = (J.min' hne) :: ys := by
+    have hhead_xs : xs.head? = some (J.min' hne) := by
+      rw [hxs_def]; exact finRange_filter_head?_eq_min' J hne
+    cases hxs_case : xs with
+    | nil => rw [hxs_case] at hhead_xs; simp at hhead_xs
+    | cons x ys =>
+        rw [hxs_case] at hhead_xs
+        simp only [List.head?_cons, Option.some.injEq] at hhead_xs
+        exact ⟨ys, by rw [hhead_xs]⟩
+  obtain ⟨ys, hxs_cons_eq⟩ := hxs_cons
+  -- Step 8: bridge to `subsetSplitsWithFirst_zip_filterMap_partition`.
+  rw [hloc_eq', hxs_cons_eq, List.map_cons]
+  have hbs_cons : bs = true :: ys.map (fun i => decide (i ∈ S)) := by
+    show xs.map (fun i => decide (i ∈ S)) =
+      true :: ys.map (fun i => decide (i ∈ S))
+    rw [hxs_cons_eq, List.map_cons]
+    congr 1
+    simp [hmin]
+  -- The selected/rejected filterMaps via the cons form.
+  have hsel_cons :
+      liftedSubsetSelectedList d S =
+        ((liftedFactor d (J.min' hne) :: ys.map (liftedFactor d)).zip
+            (true :: ys.map (fun i => decide (i ∈ S)))).filterMap
+          (fun p => if p.2 then some p.1 else none) := by
+    have := hsel
+    rw [hxs_cons_eq, List.map_cons] at this
+    rw [hbs_cons] at this
+    exact this.symm
+  have hrej_cons :
+      liftedSubsetSelectedList d (J \ S) =
+        ((liftedFactor d (J.min' hne) :: ys.map (liftedFactor d)).zip
+            (true :: ys.map (fun i => decide (i ∈ S)))).filterMap
+          (fun p => if p.2 then none else some p.1) := by
+    have := hrej
+    rw [hxs_cons_eq, List.map_cons] at this
+    rw [hbs_cons] at this
+    exact this.symm
+  rw [hsel_cons, hrej_cons]
+  have hys_len_eq : (ys.map (fun i => decide (i ∈ S))).length =
+      (ys.map (liftedFactor d)).length := by simp
+  exact subsetSplitsWithFirst_zip_filterMap_partition
+    (liftedFactor d (J.min' hne))
+    (ys.map (liftedFactor d))
+    (ys.map (fun i => decide (i ∈ S)))
+    hys_len_eq
+
 /-- The transported recombination candidate product equals the proof-side
 lifted-factor product: both factor lists are permutations of each other in
 `Polynomial ℤ`, so commutativity collapses the order difference. -/
