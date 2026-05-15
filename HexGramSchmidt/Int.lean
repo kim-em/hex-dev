@@ -1407,6 +1407,162 @@ private theorem noPivotLoop_full_eq_borderedMinor_at_trailing
   rw [Matrix.borderedMinor_entry_last_last] at hcongr
   exact hcongr
 
+/-- The step field of a no-pivot Bareiss state advances by at most `fuel` after
+`fuel` loop iterations. Combined with `noPivotLoop_step_monotone`, this brackets
+the resulting step between the starting step and the starting step plus the
+fuel. -/
+private theorem noPivotLoop_step_le_add
+    {n : Nat} (fuel : Nat) (state : Matrix.BareissState n) :
+    (Matrix.noPivotLoop fuel state).step ≤ state.step + fuel := by
+  induction fuel generalizing state with
+  | zero =>
+      show state.step ≤ state.step + 0
+      omega
+  | succ f ih =>
+      by_cases hDone : state.step + 1 < n
+      · by_cases hp : state.matrix[state.step][state.step] = 0
+        · rw [Matrix.noPivotLoop_singular_branch f state hDone hp]
+          show state.step ≤ state.step + (f + 1)
+          omega
+        · rw [Matrix.noPivotLoop_regular_branch f state hDone hp]
+          calc (Matrix.noPivotLoop f
+              { step := state.step + 1
+                matrix := Matrix.stepMatrix state.matrix state.step
+                  state.matrix[state.step][state.step] state.prevPivot
+                prevPivot := state.matrix[state.step][state.step]
+                rowSwaps := state.rowSwaps
+                singularStep := none }).step
+              ≤ state.step + 1 + f := ih _
+            _ = state.step + (f + 1) := by omega
+      · rw [Matrix.noPivotLoop_done f state hDone]
+        show state.step ≤ state.step + (f + 1)
+        omega
+
+/-- Trailing-block symmetry is preserved by the no-pivot Bareiss loop: if the
+input state's matrix is symmetric at indices at or beyond `state.step`, then the
+resulting state's matrix is symmetric at indices at or beyond its `step`. The
+abstract version takes only the input symmetry hypothesis; the diagonal Bareiss
+update commutes through symmetry because the trailing block remains symmetric
+after each `stepMatrix` application. -/
+private theorem noPivotLoop_matrix_symm_preserve
+    {n : Nat} (fuel : Nat) :
+    ∀ (state : Matrix.BareissState n),
+      (∀ a b : Fin n, state.step ≤ a.val → state.step ≤ b.val →
+        state.matrix[a][b] = state.matrix[b][a]) →
+      ∀ (a b : Fin n),
+        (Matrix.noPivotLoop fuel state).step ≤ a.val →
+        (Matrix.noPivotLoop fuel state).step ≤ b.val →
+        (Matrix.noPivotLoop fuel state).matrix[a][b] =
+          (Matrix.noPivotLoop fuel state).matrix[b][a] := by
+  induction fuel with
+  | zero =>
+      intros state h_sym a b ha hb
+      change state.matrix[a][b] = state.matrix[b][a]
+      change state.step ≤ a.val at ha
+      change state.step ≤ b.val at hb
+      exact h_sym a b ha hb
+  | succ f ih =>
+      intros state h_sym a b ha hb
+      by_cases hDone : state.step + 1 < n
+      · by_cases hp : state.matrix[state.step][state.step] = 0
+        · -- Singular branch: result is `{state with singularStep := some state.step}`.
+          rw [Matrix.noPivotLoop_singular_branch f state hDone hp] at ha hb ⊢
+          change state.matrix[a][b] = state.matrix[b][a]
+          change state.step ≤ a.val at ha
+          change state.step ≤ b.val at hb
+          exact h_sym a b ha hb
+        · -- Regular branch: recurse on the updated state with step + 1.
+          rw [Matrix.noPivotLoop_regular_branch f state hDone hp] at ha hb ⊢
+          let kFin : Fin n := ⟨state.step, Nat.lt_of_succ_lt hDone⟩
+          have h_sym_new : ∀ (a' b' : Fin n),
+              state.step + 1 ≤ a'.val → state.step + 1 ≤ b'.val →
+              (Matrix.stepMatrix state.matrix state.step
+                  state.matrix[state.step][state.step] state.prevPivot)[a'][b']
+                = (Matrix.stepMatrix state.matrix state.step
+                  state.matrix[state.step][state.step] state.prevPivot)[b'][a'] := by
+            intros a' b' ha' hb'
+            have ha'_lt : state.step < a'.val := ha'
+            have hb'_lt : state.step < b'.val := hb'
+            rw [Matrix.stepMatrix_update_eq state.matrix state.step
+              state.matrix[state.step][state.step] state.prevPivot a' b' ha'_lt hb'_lt]
+            rw [Matrix.stepMatrix_update_eq state.matrix state.step
+              state.matrix[state.step][state.step] state.prevPivot b' a' hb'_lt ha'_lt]
+            -- Both sides reduce to `exactDiv` of similar expressions. Identify
+            -- the two `Fin n` indices at value `state.step` and use the
+            -- trailing-block symmetry of `state.matrix`.
+            have h_ab : state.matrix[a'][b'] = state.matrix[b'][a'] :=
+              h_sym a' b' (Nat.le_of_lt ha'_lt) (Nat.le_of_lt hb'_lt)
+            have h_ak : state.matrix[a'][kFin] = state.matrix[kFin][a'] :=
+              h_sym a' kFin (Nat.le_of_lt ha'_lt) (Nat.le_refl _)
+            have h_bk : state.matrix[b'][kFin] = state.matrix[kFin][b'] :=
+              h_sym b' kFin (Nat.le_of_lt hb'_lt) (Nat.le_refl _)
+            -- The two `Fin n` indices in the unfolded `stepMatrix_update_eq`
+            -- have value `state.step` and so equal `kFin` definitionally.
+            change Matrix.exactDiv (_ * state.matrix[a'][b']
+                - state.matrix[a'][kFin] * state.matrix[kFin][b']) _
+              = Matrix.exactDiv (_ * state.matrix[b'][a']
+                - state.matrix[b'][kFin] * state.matrix[kFin][a']) _
+            rw [h_ab, h_ak, h_bk]
+            congr 1
+            grind
+          exact ih
+            { step := state.step + 1
+              matrix := Matrix.stepMatrix state.matrix state.step
+                state.matrix[state.step][state.step] state.prevPivot
+              prevPivot := state.matrix[state.step][state.step]
+              rowSwaps := state.rowSwaps
+              singularStep := none }
+            (by
+              intros a' b' ha' hb'
+              exact h_sym_new a' b' ha' hb')
+            a b ha hb
+      · -- Boundary case: `noPivotLoop` returns the input state unchanged.
+        rw [Matrix.noPivotLoop_done f state hDone] at ha hb ⊢
+        change state.matrix[a][b] = state.matrix[b][a]
+        change state.step ≤ a.val at ha
+        change state.step ≤ b.val at hb
+        exact h_sym a b ha hb
+
+/-- Bridge between Bareiss-style trailing values on two bordered minors of a
+symmetric matrix obtained by swapping the border row and column. Composed from
+`noPivotLoop_full_eq_borderedMinor_at_trailing` (applied at both swapped
+positions) and `noPivotLoop_matrix_symm_preserve` (which transports the
+trailing-block symmetry of the input through the loop). -/
+private theorem noPivotLoop_borderedMinor_swap_at_trailing
+    {n : Nat} (M : Matrix Int n n)
+    (h_sym : ∀ a b : Fin n, M[a][b] = M[b][a])
+    (k : Nat) (hk : k < n) (i j : Fin n)
+    (hki : k ≤ i.val) (hkj : k ≤ j.val) :
+    (Matrix.noPivotLoop k (Matrix.noPivotInitialState
+        (Matrix.borderedMinor M k hk i j))).matrix[Fin.last k][Fin.last k] =
+    (Matrix.noPivotLoop k (Matrix.noPivotInitialState
+        (Matrix.borderedMinor M k hk j i))).matrix[Fin.last k][Fin.last k] := by
+  -- Reduce both sides through the full-matrix sync at swapped border positions.
+  have h_ij :=
+    (noPivotLoop_full_eq_borderedMinor_at_trailing M k hk i j hki hkj).1
+  have h_ji :=
+    (noPivotLoop_full_eq_borderedMinor_at_trailing M k hk j i hkj hki).1
+  rw [← h_ij, ← h_ji]
+  -- Reduce to symmetry of the full-matrix noPivotLoop at `(i, j)` vs `(j, i)`.
+  -- Both indices are bounded below by `k`, and the loop's resulting step is at
+  -- most `0 + k = k`, hence at most each of `i.val`, `j.val`.
+  have h_step_le := noPivotLoop_step_le_add k (Matrix.noPivotInitialState M)
+  have h_step0 : (Matrix.noPivotInitialState M).step = 0 := rfl
+  have h_step_bound :
+      (Matrix.noPivotLoop k (Matrix.noPivotInitialState M)).step ≤ k := by
+    rw [h_step0] at h_step_le
+    simpa using h_step_le
+  have h_init_sym :
+      ∀ a b : Fin n, (Matrix.noPivotInitialState M).step ≤ a.val →
+        (Matrix.noPivotInitialState M).step ≤ b.val →
+        (Matrix.noPivotInitialState M).matrix[a][b] =
+          (Matrix.noPivotInitialState M).matrix[b][a] := by
+    intros a b _ _
+    exact h_sym a b
+  exact noPivotLoop_matrix_symm_preserve k
+    (Matrix.noPivotInitialState M) h_init_sym i j
+    (Nat.le_trans h_step_bound hki) (Nat.le_trans h_step_bound hkj)
+
 /-- Run `noPivotLoop` on a full `n × n` matrix and on its `K × K` leading
 prefix from two BareissStates that agree on the leading prefix. While
 both runs are still synchronized (fuel fits within `K - state.step`),
@@ -4367,6 +4523,219 @@ private theorem dot_comm_int {n' : Nat} (u v : Vector Int n') :
   simpa [Matrix.dot, Hex.Vector.dotProduct] using
     foldl_dot_comm_int (xs := List.finRange n') (u := u) (v := v)
       (accU := 0) (accV := 0) rfl
+
+/-- The integer Gram matrix is symmetric: each entry equals the entry at the
+swapped index. Consumed by the no-pivot Bareiss symmetry/transpose bridge for
+bordered minors of `gramMatrix b`. -/
+private theorem gramMatrix_symm (b : Matrix Int n m) (a c : Fin n) :
+    (Matrix.gramMatrix b)[a][c] = (Matrix.gramMatrix b)[c][a] := by
+  show (Matrix.ofFn fun i j => Hex.Vector.dotProduct
+        (Matrix.row b i) (Matrix.row b j))[a][c]
+    = (Matrix.ofFn fun i j => Hex.Vector.dotProduct
+        (Matrix.row b i) (Matrix.row b j))[c][a]
+  simp [Matrix.ofFn, Vector.getElem_ofFn]
+  exact dot_comm_int _ _
+
+/-- The Cramer determinant matrix for the scaled Gram-Schmidt coefficient
+`(i, j)` (with `j < i`) is the bordered minor of `gramMatrix b` at level `j`
+with the border row index taken to be `j` and the border column index taken
+to be `i`. This is the definitional bridge between
+`GramSchmidt.scaledCoeffMatrix` and the bordered-minor machinery in
+`HexMatrix.Bareiss`. -/
+private theorem scaledCoeffMatrix_eq_borderedMinor
+    (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val) :
+    GramSchmidt.scaledCoeffMatrix b i j hji =
+      Matrix.borderedMinor (Matrix.gramMatrix b) j.val
+        (Nat.lt_trans hji i.isLt)
+        ⟨j.val, Nat.lt_trans hji i.isLt⟩ i := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro c hc
+  let pp : Fin (j.val + 1) := ⟨r, hr⟩
+  let cc : Fin (j.val + 1) := ⟨c, hc⟩
+  show (GramSchmidt.scaledCoeffMatrix b i j hji)[pp][cc] =
+    (Matrix.borderedMinor (Matrix.gramMatrix b) j.val
+        (Nat.lt_trans hji i.isLt)
+        ⟨j.val, Nat.lt_trans hji i.isLt⟩ i)[pp][cc]
+  -- Case split on whether the column index is the border (= j.val) or interior.
+  by_cases hcj : cc.val < j.val
+  · -- Interior column: both sides are `gramMatrix[r'][c']` with the
+    -- lifted-to-`Fin n` indices, since the bordered-minor `r` lookup falls into
+    -- the lt branch when `pp.val < j.val` and into the border (= j) row when
+    -- `pp.val = j.val`. Splitting on the row case mirrors the bordered minor.
+    by_cases hrj : pp.val < j.val
+    · have h_sc : (GramSchmidt.scaledCoeffMatrix b i j hji)[pp][cc] =
+          Matrix.dot
+            (Matrix.row b ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt
+              (Nat.succ_le_of_lt (Nat.lt_trans hji i.isLt))⟩)
+            (Matrix.row b ⟨cc.val, Nat.lt_of_lt_of_le cc.isLt
+              (Nat.succ_le_of_lt (Nat.lt_trans hji i.isLt))⟩) := by
+        have hcc_ne : cc.val ≠ j.val := Nat.ne_of_lt hcj
+        simp [GramSchmidt.scaledCoeffMatrix, Matrix.ofFn, GramSchmidt.liftFinLE, hcc_ne]
+      have h_bm : (Matrix.borderedMinor (Matrix.gramMatrix b) j.val
+            (Nat.lt_trans hji i.isLt)
+            ⟨j.val, Nat.lt_trans hji i.isLt⟩ i)[pp][cc] =
+          (Matrix.gramMatrix b)[
+            (⟨pp.val, Nat.lt_trans hrj (Nat.lt_trans hji i.isLt)⟩ : Fin n)][
+            (⟨cc.val, Nat.lt_trans hcj (Nat.lt_trans hji i.isLt)⟩ : Fin n)] := by
+        rw [Matrix.borderedMinor_entry_lt_lt (Matrix.gramMatrix b) j.val
+          (Nat.lt_trans hji i.isLt) ⟨j.val, Nat.lt_trans hji i.isLt⟩ i pp cc hrj hcj]
+      rw [h_sc, h_bm]
+      simp [Matrix.gramMatrix, Matrix.ofFn, Vector.getElem_ofFn, Matrix.dot]
+    · -- pp.val = j.val (since not < j.val and bounded by j.val + 1).
+      have hpr : pp.val = j.val :=
+        Nat.le_antisymm (Nat.lt_succ_iff.mp pp.isLt) (Nat.le_of_not_lt hrj)
+      have h_sc : (GramSchmidt.scaledCoeffMatrix b i j hji)[pp][cc] =
+          Matrix.dot
+            (Matrix.row b ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt
+              (Nat.succ_le_of_lt (Nat.lt_trans hji i.isLt))⟩)
+            (Matrix.row b ⟨cc.val, Nat.lt_of_lt_of_le cc.isLt
+              (Nat.succ_le_of_lt (Nat.lt_trans hji i.isLt))⟩) := by
+        have hcc_ne : cc.val ≠ j.val := Nat.ne_of_lt hcj
+        simp [GramSchmidt.scaledCoeffMatrix, Matrix.ofFn, GramSchmidt.liftFinLE, hcc_ne]
+      have h_bm : (Matrix.borderedMinor (Matrix.gramMatrix b) j.val
+            (Nat.lt_trans hji i.isLt)
+            ⟨j.val, Nat.lt_trans hji i.isLt⟩ i)[pp][cc] =
+          (Matrix.gramMatrix b)[(⟨j.val, Nat.lt_trans hji i.isLt⟩ : Fin n)][
+            (⟨cc.val, Nat.lt_trans hcj (Nat.lt_trans hji i.isLt)⟩ : Fin n)] := by
+        have hpr_not : ¬ pp.val < j.val := Nat.not_lt.mpr (Nat.le_of_eq hpr.symm)
+        simp [Matrix.borderedMinor, Matrix.ofFn, Vector.getElem_ofFn, hpr_not, hcj]
+      rw [h_sc, h_bm]
+      simp [Matrix.gramMatrix, Matrix.ofFn, Vector.getElem_ofFn, Matrix.dot]
+      congr 2
+      exact Fin.ext hpr
+  · -- Border column: cc.val = j.val.
+    have hcj_eq : cc.val = j.val :=
+      Nat.le_antisymm (Nat.lt_succ_iff.mp cc.isLt) (Nat.le_of_not_lt hcj)
+    by_cases hrj : pp.val < j.val
+    · have h_sc : (GramSchmidt.scaledCoeffMatrix b i j hji)[pp][cc] =
+          Matrix.dot
+            (Matrix.row b ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt
+              (Nat.succ_le_of_lt (Nat.lt_trans hji i.isLt))⟩)
+            (Matrix.row b i) := by
+        simp [GramSchmidt.scaledCoeffMatrix, Matrix.ofFn, GramSchmidt.liftFinLE, hcj_eq]
+      have h_bm : (Matrix.borderedMinor (Matrix.gramMatrix b) j.val
+            (Nat.lt_trans hji i.isLt)
+            ⟨j.val, Nat.lt_trans hji i.isLt⟩ i)[pp][cc] =
+          (Matrix.gramMatrix b)[
+            (⟨pp.val, Nat.lt_trans hrj (Nat.lt_trans hji i.isLt)⟩ : Fin n)][i] := by
+        simp [Matrix.borderedMinor, Matrix.ofFn, Vector.getElem_ofFn, hrj, hcj]
+      rw [h_sc, h_bm]
+      simp [Matrix.gramMatrix, Matrix.ofFn, Vector.getElem_ofFn, Matrix.dot]
+    · -- pp.val = j.val and cc.val = j.val: corner case.
+      have hpr_eq : pp.val = j.val :=
+        Nat.le_antisymm (Nat.lt_succ_iff.mp pp.isLt) (Nat.le_of_not_lt hrj)
+      have h_sc : (GramSchmidt.scaledCoeffMatrix b i j hji)[pp][cc] =
+          Matrix.dot
+            (Matrix.row b ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt
+              (Nat.succ_le_of_lt (Nat.lt_trans hji i.isLt))⟩)
+            (Matrix.row b i) := by
+        simp [GramSchmidt.scaledCoeffMatrix, Matrix.ofFn, GramSchmidt.liftFinLE, hcj_eq]
+      have h_bm : (Matrix.borderedMinor (Matrix.gramMatrix b) j.val
+            (Nat.lt_trans hji i.isLt)
+            ⟨j.val, Nat.lt_trans hji i.isLt⟩ i)[pp][cc] =
+          (Matrix.gramMatrix b)[(⟨j.val, Nat.lt_trans hji i.isLt⟩ : Fin n)][i] := by
+        have hpr_not : ¬ pp.val < j.val := hrj
+        simp [Matrix.borderedMinor, Matrix.ofFn, Vector.getElem_ofFn, hpr_not, hcj]
+      rw [h_sc, h_bm]
+      simp [Matrix.gramMatrix, Matrix.ofFn, Vector.getElem_ofFn, Matrix.dot]
+      congr 2
+      exact Fin.ext hpr_eq
+
+/-- The no-pivot Bareiss-style trailing value on `scaledCoeffMatrix b i j hji`
+agrees with the value on the bordered minor of `gramMatrix b` whose border
+row/column are swapped. The bridge composes the symmetry of `gramMatrix` (via
+`noPivotLoop_borderedMinor_swap_at_trailing`) with the definitional identity
+`scaledCoeffMatrix_eq_borderedMinor`. -/
+private theorem noPivotLoop_scaledCoeffMatrix_eq_borderedMinor_at_trailing
+    (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val) :
+    (Matrix.noPivotLoop j.val
+        (Matrix.noPivotInitialState
+          (GramSchmidt.scaledCoeffMatrix b i j hji))).matrix[
+          Fin.last j.val][Fin.last j.val] =
+    (Matrix.noPivotLoop j.val
+        (Matrix.noPivotInitialState
+          (Matrix.borderedMinor (Matrix.gramMatrix b) j.val
+            (Nat.lt_trans hji i.isLt) i j))).matrix[
+          Fin.last j.val][Fin.last j.val] := by
+  rw [scaledCoeffMatrix_eq_borderedMinor b i j hji]
+  exact noPivotLoop_borderedMinor_swap_at_trailing
+    (Matrix.gramMatrix b) (gramMatrix_symm (b := b))
+    j.val (Nat.lt_trans hji i.isLt)
+    ⟨j.val, Nat.lt_trans hji i.isLt⟩ i
+    (Nat.le_refl _) (Nat.le_of_lt hji)
+
+/-- Outer-array length of the initial coefficient buffer. -/
+private theorem zeroRows_size (n : Nat) : (zeroRows n).size = n := by
+  simp [zeroRows, Array.size_map, Array.size_range]
+
+/-- Inner-row length of each row of the initial coefficient buffer. -/
+private theorem zeroRows_row_size (n : Nat) (r : Nat) (hr : r < n) :
+    (zeroRows n)[r]!.size = n := by
+  show ((Array.range n).map fun _ => (Array.range n).map fun _ : Nat => (0 : Int))[r]!.size = n
+  rw [Array.getElem!_eq_getD]
+  unfold Array.getD
+  simp only [Array.size_map, Array.size_range]
+  rw [dif_pos hr]
+  simp [Array.size_map, Array.size_range]
+
+/-- Non-singular top-level composite: when the no-pivot Bareiss pass over the
+full Gram matrix has not recorded a singular step before reaching column `j`,
+the executable scaled-coefficient array entry below the diagonal at `(i, j)`
+matches the trailing entry of the no-pivot Bareiss-style loop on the
+corresponding Cramer determinant matrix `scaledCoeffMatrix b i j hji`. This
+composes `scaledCoeffArrayLoop_lower_matches_target_column` (from #4103),
+`noPivotLoop_full_eq_borderedMinor_at_trailing` (from #4028), and the
+symmetry/transpose bridge `noPivotLoop_scaledCoeffMatrix_eq_borderedMinor_at_trailing`. -/
+private theorem scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix
+    (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val)
+    (h_nonsing :
+      (Matrix.noPivotLoop j.val
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none) :
+    getArrayEntry (scaledCoeffRows b) i.val j.val =
+      (Matrix.noPivotLoop j.val
+        (Matrix.noPivotInitialState
+          (GramSchmidt.scaledCoeffMatrix b i j hji))).matrix[
+        Fin.last j.val][Fin.last j.val] := by
+  -- Step 1: top-level state-level invariant via the non-singular target-column lemma.
+  have h_target_nonsing :
+      (Matrix.noPivotLoop (j.val - 0)
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none := by
+    simpa using h_nonsing
+  have h_lower :=
+    scaledCoeffArrayLoop_lower_matches_target_column
+      (state_array :=
+        { step := 0
+          matrix := gramRows b
+          coeffs := zeroRows n
+          prevPivot := 1 })
+      (state_matrix := Matrix.noPivotInitialState (Matrix.gramMatrix b))
+      (by rfl) (rowsToMatrix_gramRows b) (by rfl)
+      (zeroRows_size n) (zeroRows_row_size n)
+      n i j (Nat.zero_le _) hji
+      (by have := i.isLt; omega) h_target_nonsing
+  have h_state_level :
+      getArrayEntry (scaledCoeffRows b) i.val j.val =
+        (Matrix.noPivotLoop j.val
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[i][j] := by
+    show getArrayEntry
+        (scaledCoeffArrayLoop n n
+            { step := 0, matrix := gramRows b, coeffs := zeroRows n,
+              prevPivot := 1 }).coeffs i.val j.val = _
+    have h_step_eq : (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step = 0 := rfl
+    have h_sub : j.val - (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step = j.val := by
+      rw [h_step_eq]; omega
+    rw [h_lower, h_sub]
+  rw [h_state_level]
+  -- Step 2: bordered-minor sync at (row=i, col=j).
+  have h_bm :=
+    (noPivotLoop_full_eq_borderedMinor_at_trailing (Matrix.gramMatrix b) j.val
+      (Nat.lt_trans hji i.isLt) i j (Nat.le_of_lt hji) (Nat.le_refl _)).1
+  rw [h_bm]
+  -- Step 3: symmetry/transpose bridge to `scaledCoeffMatrix`.
+  exact
+    (noPivotLoop_scaledCoeffMatrix_eq_borderedMinor_at_trailing b i j hji).symm
 
 private theorem rowSwap_row_eq_of_ne_int {n' m' : Nat}
     (M : Matrix Int n' m') (i j r : Fin n')
