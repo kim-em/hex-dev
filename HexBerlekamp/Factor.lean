@@ -480,7 +480,7 @@ private theorem splitFirstFactor?_length_succ_of_some
               rw [hrest] at h
               exact absurd h (by simp)
 
-private theorem berlekampFactorLoop_length_ge
+theorem berlekampFactorLoop_length_ge
     (witnesses : List (FpPoly p)) (fuel : Nat) (factors : List (FpPoly p)) :
     factors.length ≤ (berlekampFactorLoop witnesses fuel factors).length := by
   induction fuel generalizing factors with
@@ -496,6 +496,21 @@ private theorem berlekampFactorLoop_length_ge
           omega
       | none =>
           exact Nat.le_refl _
+
+/-- Executable Berlekamp factorization always retains at least one factor. -/
+theorem berlekampFactor_factors_ne_nil
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    [Lean.Grind.Field (ZMod64 p)] :
+    (berlekampFactor f hmonic).factors ≠ [] := by
+  intro hnil
+  have hlen :=
+    berlekampFactorLoop_length_ge
+      ((fixedSpaceKernel f hmonic).toList) (f.size + 1) [f]
+  change
+    ([f] : List (FpPoly p)).length ≤
+      (berlekampFactor f hmonic).factors.length at hlen
+  rw [hnil] at hlen
+  simp at hlen
 
 private theorem splitFirstFactor?_singleton_none_iff
     (witnesses : List (FpPoly p)) (f : FpPoly p) :
