@@ -1580,7 +1580,12 @@ private theorem choosePrimeDataScore_fold_isGoodPrime
           choosePrimeDataScoreStep_isGoodPrime f best c old hbest hold)
         hscore
 
-private def choosePrimeData? (f : ZPoly) : Option PrimeChoiceData :=
+/--
+Optional small-prime selection: returns `some` with the chosen `PrimeChoiceData`
+when at least one candidate in `smallPrimeCandidates` is good for `f`, and
+`none` otherwise (so callers can detect the fallback case).
+-/
+def choosePrimeData? (f : ZPoly) : Option PrimeChoiceData :=
   smallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none
   |>.map (fun score => score.data)
 
@@ -1606,7 +1611,7 @@ def choosePrimeData (f : ZPoly) : PrimeChoiceData :=
   | some data => data
   | none => fallbackPrimeChoiceData f
 
-private theorem choosePrimeData?_prime
+theorem choosePrimeData?_prime
     (f : ZPoly) (data : PrimeChoiceData)
     (hdata : choosePrimeData? f = some data) :
     Nat.Prime data.p := by
@@ -1622,7 +1627,7 @@ private theorem choosePrimeData?_prime
         (by intro old hnone; cases hnone)
         hscore
 
-private theorem choosePrimeData?_fModP_eq
+theorem choosePrimeData?_fModP_eq
     (f : ZPoly) (data : PrimeChoiceData)
     (hdata : choosePrimeData? f = some data) :
     data.fModP = @ZPoly.modP data.p data.bounds f := by
