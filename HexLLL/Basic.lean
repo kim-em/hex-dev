@@ -507,9 +507,7 @@ theorem sizeReduce_basis (s : LLLState n m) (k : Nat) :
       sizeReduce_foldl_basis (s := s) (k := k) (hk := hk) (xs := (List.finRange k).reverse)
   · simp [hk]
 
-/-- Size reduction preserves the executable Gram-determinant independence
-predicate. -/
-theorem sizeReduce_independent (s : LLLState n m) (k : Nat)
+private theorem sizeReduce_independent_core (s : LLLState n m) (k : Nat)
     (hind : s.b.independent) :
     (s.sizeReduce k).b.independent := by
   intro i
@@ -667,7 +665,7 @@ def lllAux (s : LLLState n m) (k : Nat) (δ : Rat)
     if lovaszLhs ≥ lovaszRhs then
       lllAux sReduced (k + 1) δ hδ hδ'
         (by
-          simpa [sReduced] using LLLState.sizeReduce_independent s k hind)
+          simpa [sReduced] using LLLState.sizeReduce_independent_core s k hind)
         (Nat.succ_pos k) (Nat.succ_le_of_lt hlt)
     else
       let sSwapped := sReduced.swapStep k
