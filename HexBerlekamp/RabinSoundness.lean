@@ -1635,6 +1635,81 @@ theorem primeFieldLinearFactor_distinct_common_dvd_one {c d : ZMod64 p}
     exact this
   exact dvd_trans_local hdiff (C_ne_zero_dvd_one hdc_ne)
 
+/-- If `a` is coprime with both `b` and `c`, it is coprime with `b * c`. -/
+private theorem coprime_mul_of_coprime_both (a b c : FpPoly p)
+    (h_ab : ∀ e : FpPoly p, e ∣ a → e ∣ b → e ∣ (1 : FpPoly p))
+    (h_ac : ∀ e : FpPoly p, e ∣ a → e ∣ c → e ∣ (1 : FpPoly p)) :
+    ∀ e : FpPoly p, e ∣ a → e ∣ b * c → e ∣ (1 : FpPoly p) := by
+  intro e he_a he_bc
+  have he_coprime_b : ∀ d : FpPoly p, d ∣ b → d ∣ e → d ∣ (1 : FpPoly p) :=
+    fun d hdb hde => h_ab d (dvd_trans_local hde he_a) hdb
+  have he_c : e ∣ c :=
+    FpPoly.dvd_of_dvd_mul_of_common_dvd_one he_bc he_coprime_b
+  exact h_ac e he_a he_c
+
+/-- Foldl-shape divisibility: if every linear factor in `xs` divides `f`,
+the cumulative `(acc * ∏ (X - C cᵢ))` divides `f` as long as `acc` is coprime
+with each new linear factor. -/
+private theorem foldl_primeFieldLinearProduct_dvd
+    (f : FpPoly p) (xs : List (ZMod64 p)) :
+    ∀ (acc : FpPoly p),
+      xs.Nodup →
+      acc ∣ f →
+      (∀ c ∈ xs, primeFieldLinearFactor c ∣ f) →
+      (∀ c ∈ xs, ∀ e : FpPoly p,
+        e ∣ acc → e ∣ primeFieldLinearFactor c → e ∣ (1 : FpPoly p)) →
+      xs.foldl (fun acc c => acc * (FpPoly.X - FpPoly.C c)) acc ∣ f := by
+  induction xs with
+  | nil =>
+      intro acc _ h_acc _ _
+      simpa using h_acc
+  | cons c rest ih =>
+      intro acc h_nodup h_acc h_factors h_coprime
+      simp only [List.foldl_cons]
+      have h_nodup_rest : rest.Nodup := (List.nodup_cons.mp h_nodup).2
+      have h_c_not_rest : c ∉ rest := (List.nodup_cons.mp h_nodup).1
+      have h_acc_new : acc * primeFieldLinearFactor c ∣ f :=
+        mul_dvd_of_dvd_dvd_common h_acc
+          (h_factors c ((List.mem_cons.mpr (Or.inl rfl))))
+          (h_coprime c ((List.mem_cons.mpr (Or.inl rfl))))
+      have h_coprime_new :
+          ∀ d ∈ rest, ∀ e : FpPoly p,
+            e ∣ (acc * primeFieldLinearFactor c) →
+            e ∣ primeFieldLinearFactor d → e ∣ (1 : FpPoly p) := by
+        intro d hd_mem e he_prod he_d
+        have hcd : c ≠ d := fun hcd_eq => h_c_not_rest (hcd_eq ▸ hd_mem)
+        have h1 : ∀ e' : FpPoly p,
+            e' ∣ primeFieldLinearFactor d → e' ∣ acc → e' ∣ (1 : FpPoly p) :=
+          fun e' he'_d he'_acc =>
+            h_coprime d (List.mem_cons_of_mem c hd_mem) e' he'_acc he'_d
+        have h2 : ∀ e' : FpPoly p,
+            e' ∣ primeFieldLinearFactor d →
+            e' ∣ primeFieldLinearFactor c → e' ∣ (1 : FpPoly p) :=
+          fun e' he'_d he'_c =>
+            primeFieldLinearFactor_distinct_common_dvd_one (Ne.symm hcd) e'
+              he'_d he'_c
+        exact coprime_mul_of_coprime_both
+          (primeFieldLinearFactor d) acc (primeFieldLinearFactor c) h1 h2
+          e he_d he_prod
+      have h_factors_rest :
+          ∀ d ∈ rest, primeFieldLinearFactor d ∣ f :=
+        fun d hd => h_factors d (List.mem_cons_of_mem c hd)
+      exact ih (acc * primeFieldLinearFactor c) h_nodup_rest h_acc_new
+        h_factors_rest h_coprime_new
+
+/-- The canonical prime-field product divides `xPowSubX 1`. -/
+theorem primeFieldLinearProduct_dvd_xPowSubX_one :
+    primeFieldLinearProduct (p := p) ∣ xPowSubX (p := p) 1 := by
+  unfold primeFieldLinearProduct
+  apply foldl_primeFieldLinearProduct_dvd
+  · exact ZMod64.values_nodup
+  · exact ⟨xPowSubX (p := p) 1, by rw [FpPoly.one_mul]⟩
+  · intro c _
+    exact primeFieldLinearFactor_dvd_xPowSubX_one c
+  · intro c _ e he_acc _
+    -- acc = 1, so e ∣ 1 follows from e ∣ acc
+    exact he_acc
+
 /-! ### Structural lemmas
 
 These small consequences only use the foundational lemmas above plus
