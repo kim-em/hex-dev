@@ -4,27 +4,68 @@ import HexGramSchmidt.Update
 Bridge-bound row-operation update theorems for `hex-gram-schmidt`.
 
 The theorems in this module relate `gramDet` / `scaledCoeffs` under the
-adjacent-swap row operation. Their statements are Hex-local, but their
-proofs cross the Mathlib boundary by reaching `Matrix.bareiss_eq_det`,
-so they live in the bridge layer per
-[SPEC/Libraries/hex-gram-schmidt.md "Proof path governs placement,
-not just statement"].
-
-HO-43 Round 2 scope: this module currently holds only the
-`adjacentSwap`-side relocations. The five size-reduce theorems
-(`gramDet_sizeReduce`, `scaledCoeffs_sizeReduce_pivot/lower/
-other_row/above_pivot`) remain in `HexGramSchmidt/Update.lean`
-pending a consumer-side refactor of `LLLState.sizeReduceColumn`
-in `HexLLL/Basic.lean` (cf. #3916); relocating them now would
-break the Mathlib-free `HexLLL.Basic` build, which would either
-force a `sorry` in `LLLState`'s structure field discharges
-(cascading `sorry` into `sizeReduce_independent`) or smuggle a
-bridge import into the Mathlib-free file.
+size-reduce (earlier-row-add) and adjacent-swap row operations. Their
+statements are Hex-local, but their proofs cross the Mathlib boundary by
+reaching `Matrix.bareiss_eq_det` through `gramDet_rowAdd_earlier` and the
+matrix-side `gramDet_adjacentSwap_of_ne` bridge respectively, so they live
+in the bridge layer per [SPEC/Libraries/hex-gram-schmidt.md "Proof path
+governs placement, not just statement"]. The size-reduce theorems are thin
+wrappers around `scaledCoeffs_rowAdd_pivot/lower/other_row/above_pivot` and
+`gramDet_rowAdd_earlier`, which themselves still live in Mathlib-free
+`HexGramSchmidt/Int.lean` and will migrate in HO-43 Round 3 (#4153).
 -/
 
 namespace Hex
 
 namespace GramSchmidt.Int
+
+/-! ### Size-reduce updates
+
+`GramSchmidt.Int.sizeReduce b j k r` is `Matrix.rowAdd b j k (-r)` (definitional),
+so the theorems below specialise the earlier-row-add updates in
+`HexGramSchmidt/Int.lean` to the LLL size-reduce row operation. They are kept
+in this bridge module because their proof path runs through
+`Matrix.bareiss_eq_det`. -/
+
+theorem gramDet_sizeReduce (b : Matrix Int n m) (j k : Fin n) (hjk : j.val < k.val)
+    (r : Int) (t : Nat) (ht : t ≤ n) :
+    gramDet (sizeReduce b j k r) t ht = gramDet b t ht := by
+  unfold sizeReduce
+  exact gramDet_rowAdd_earlier b j k (-r) t ht hjk
+
+theorem scaledCoeffs_sizeReduce_pivot (b : Matrix Int n m) (j k : Fin n)
+    (hjk : j.val < k.val) (r : Int) :
+    GramSchmidt.entry (scaledCoeffs (sizeReduce b j k r)) k j =
+      GramSchmidt.entry (scaledCoeffs b) k j -
+        r * Int.ofNat (gramDet b (j.val + 1) (Nat.succ_le_of_lt j.isLt)) := by
+  rw [sizeReduce]
+  rw [scaledCoeffs_rowAdd_pivot (b := b) (j := j) (k := k) hjk (-r)]
+  rw [Int.neg_mul, Lean.Grind.Ring.sub_eq_add_neg]
+
+theorem scaledCoeffs_sizeReduce_lower (b : Matrix Int n m) (l j k : Fin n)
+    (hlj : l.val < j.val) (hjk : j.val < k.val) (r : Int) :
+    GramSchmidt.entry (scaledCoeffs (sizeReduce b j k r)) k l =
+      GramSchmidt.entry (scaledCoeffs b) k l -
+        r * GramSchmidt.entry (scaledCoeffs b) j l := by
+  rw [sizeReduce]
+  rw [scaledCoeffs_rowAdd_lower (b := b) (l := l) (j := j) (k := k) hlj hjk (-r)]
+  rw [Int.neg_mul, Lean.Grind.Ring.sub_eq_add_neg]
+
+theorem scaledCoeffs_sizeReduce_other_row (b : Matrix Int n m) (j k : Fin n)
+    (hjk : j.val < k.val) (r : Int) (i : Fin n) (hik : i ≠ k) :
+    (scaledCoeffs (sizeReduce b j k r)).row i = (scaledCoeffs b).row i := by
+  rw [sizeReduce]
+  exact scaledCoeffs_rowAdd_other_row (b := b) (j := j) (k := k) hjk (-r) i hik
+
+theorem scaledCoeffs_sizeReduce_above_pivot (b : Matrix Int n m) (j k : Fin n)
+    (hjk : j.val < k.val) (r : Int) (l : Fin n)
+    (hjl : j.val < l.val) (hlk : l.val < k.val) :
+    GramSchmidt.entry (scaledCoeffs (sizeReduce b j k r)) k l =
+      GramSchmidt.entry (scaledCoeffs b) k l := by
+  rw [sizeReduce]
+  exact scaledCoeffs_rowAdd_above_pivot (b := b) (j := j) (k := k) hjk (-r) l hjl hlk
+
+/-! ### Adjacent-swap updates -/
 
 private theorem rowSwap_row_eq_of_ne_int {n' m' : Nat}
     (b : Matrix Int n' m') (i j r : Fin n') (hri : r ≠ i) (hrj : r ≠ j) :

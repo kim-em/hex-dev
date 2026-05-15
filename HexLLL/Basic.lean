@@ -292,8 +292,11 @@ def sizeReduceColumn (s : LLLState n m) (j k : Fin n) (hjk : j.val < k.val) :
                 ((GramSchmidt.Int.scaledCoeffs b').get ⟨k.val, hi⟩).get ⟨l, hl⟩ =
                   ((GramSchmidt.Int.scaledCoeffs s.b).get ⟨k.val, hi⟩).get ⟨l, hl⟩ -
                     r * ((GramSchmidt.Int.scaledCoeffs s.b).get ⟨j.val, j.isLt⟩).get
-                      ⟨l, Nat.lt_trans hlj j.isLt⟩ :=
-              GramSchmidt.Int.scaledCoeffs_sizeReduce_lower s.b ⟨l, hl⟩ j k hlj hjk r
+                      ⟨l, Nat.lt_trans hlj j.isLt⟩ := by
+              have h := GramSchmidt.Int.scaledCoeffs_rowAdd_lower s.b ⟨l, hl⟩ j k
+                hlj hjk (-r)
+              rw [Int.neg_mul, ← Lean.Grind.Ring.sub_eq_add_neg] at h
+              exact h
             rw [h_sc_lower, h_νkl, h_νjl]
           · -- Case C: l = j.val.
             subst hlj
@@ -315,12 +318,16 @@ def sizeReduceColumn (s : LLLState n m) (j k : Fin n) (hjk : j.val < k.val) :
             have h_ν_eq_sc :
                 (s.ν.get k).get j = ((GramSchmidt.Int.scaledCoeffs s.b).get k).get j :=
               s.ν_eq k.val j.val k.isLt j.isLt hjk
-            -- scaledCoeffs at the pivot under sizeReduce (no `hnorm` needed).
+            -- scaledCoeffs at the pivot under `rowAdd ... (-r)` (no `hnorm`
+            -- needed). The new entry equals the old entry plus `(-r) * d_{j+1}`,
+            -- which rearranges to a subtraction.
             have h_sc_pivot : ((GramSchmidt.Int.scaledCoeffs b').get k).get j =
                 ((GramSchmidt.Int.scaledCoeffs s.b).get k).get j -
                   r * Int.ofNat (GramSchmidt.Int.gramDet s.b (j.val + 1)
-                    (Nat.succ_le_of_lt j.isLt)) :=
-              GramSchmidt.Int.scaledCoeffs_sizeReduce_pivot s.b j k hjk r
+                    (Nat.succ_le_of_lt j.isLt)) := by
+              have h := GramSchmidt.Int.scaledCoeffs_rowAdd_pivot s.b j k hjk (-r)
+              rw [Int.neg_mul, ← Lean.Grind.Ring.sub_eq_add_neg] at h
+              exact h
             -- Combine to express ((s.ν.get k).get j - r * Int.ofNat dj1) as
             -- scaledCoeffs(b')[k][j].
             have h_lhs_eq : (s.ν.get k).get j - r * Int.ofNat dj1 =
@@ -346,8 +353,8 @@ def sizeReduceColumn (s : LLLState n m) (j k : Fin n) (hjk : j.val < k.val) :
             have h_sc_above :
                 ((GramSchmidt.Int.scaledCoeffs b').get ⟨k.val, hi⟩).get ⟨l, hl⟩ =
                   ((GramSchmidt.Int.scaledCoeffs s.b).get ⟨k.val, hi⟩).get ⟨l, hl⟩ :=
-              GramSchmidt.Int.scaledCoeffs_sizeReduce_above_pivot s.b j k hjk r ⟨l, hl⟩
-                hlj hli
+              GramSchmidt.Int.scaledCoeffs_rowAdd_above_pivot s.b j k hjk (-r)
+                ⟨l, hl⟩ hlj hli
             rw [h_sc_above]
             exact s.ν_eq k.val l k.isLt hl hli
         · -- Row i ≠ k.val: ν' agrees with s.ν, and scaledCoeffs(b') agrees with scaledCoeffs(s.b)
@@ -360,13 +367,17 @@ def sizeReduceColumn (s : LLLState n m) (j k : Fin n) (hjk : j.val < k.val) :
           have hsc_row :
               (GramSchmidt.Int.scaledCoeffs b').get ⟨i, hi⟩ =
                 (GramSchmidt.Int.scaledCoeffs s.b).get ⟨i, hi⟩ :=
-            GramSchmidt.Int.scaledCoeffs_sizeReduce_other_row s.b j k hjk r ⟨i, hi⟩ hik_fin
+            GramSchmidt.Int.scaledCoeffs_rowAdd_other_row s.b j k hjk (-r) ⟨i, hi⟩
+              hik_fin
           rw [hν_get, hsc_row]
           exact s.ν_eq i l hi hl hli
       d_eq := by
         intro i hi
         dsimp only [b']
-        rw [GramSchmidt.Int.gramDet_sizeReduce s.b j k hjk r i (Nat.le_of_lt_succ hi)]
+        show s.d.get ⟨i, hi⟩ =
+          GramSchmidt.Int.gramDet (Matrix.rowAdd s.b j k (-r)) i (Nat.le_of_lt_succ hi)
+        rw [GramSchmidt.Int.gramDet_rowAdd_earlier s.b j k (-r) i
+          (Nat.le_of_lt_succ hi) hjk]
         exact s.d_eq i hi }
   else
     s
