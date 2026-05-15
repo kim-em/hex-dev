@@ -1747,6 +1747,48 @@ theorem reassemblePolynomialFactors_mem_normalization_or_core
       factor ∈ coreFactors.toList :=
   reassemblePolynomialFactors_mem d coreFactors factor hmem
 
+/--
+The repeated-part expansion fully consumed the normalization residual, so
+`reassemblePolynomialFactors` uses its expanded branch rather than the
+non-decomposed repeated-part fallback.
+-/
+def reassemblyExpansionComplete
+    (d : FactorNormalizationData) (coreFactors : Array ZPoly) : Prop :=
+  (expandRepeatedPartFactorArray d.repeatedPart coreFactors).2 = 1
+
+/--
+Sharp membership split for the complete-expansion branch of reassembly.
+
+When the repeated part has been completely expanded by the supplied core
+factors, a reassembled raw factor is either an extracted `X`-power factor or one
+of the supplied core factors. In particular, it cannot be the non-decomposed
+`repeatedPartFactorArray` fallback.
+-/
+theorem reassemblePolynomialFactors_mem_xPower_or_core_of_expansionComplete
+    (d : FactorNormalizationData) (coreFactors : Array ZPoly) (factor : ZPoly)
+    (hcomplete : reassemblyExpansionComplete d coreFactors)
+    (hmem : factor ∈ (reassemblePolynomialFactors d coreFactors).toList) :
+    factor ∈ (xPowerFactorArray d.xPower).toList ∨
+      factor ∈ coreFactors.toList := by
+  unfold reassemblyExpansionComplete at hcomplete
+  unfold reassemblePolynomialFactors at hmem
+  generalize hexp : expandRepeatedPartFactorArray d.repeatedPart coreFactors = exp at hmem hcomplete
+  cases exp with
+  | mk expanded residual =>
+      simp only at hmem hcomplete
+      rw [if_pos hcomplete] at hmem
+      rw [Array.toList_append, Array.toList_append] at hmem
+      rcases List.mem_append.mp hmem with hxe | hcore
+      · rcases List.mem_append.mp hxe with hx | hexp_mem
+        · exact Or.inl hx
+        · right
+          have hexp_mem' :
+              factor ∈ (expandRepeatedPartFactorArray d.repeatedPart coreFactors).1.toList := by
+            rw [hexp]
+            exact hexp_mem
+          exact expandRepeatedPartFactorArray_mem _ _ _ hexp_mem'
+      · exact Or.inr hcore
+
 private theorem polyProduct_repeatedPartFactorArray_eq (repeatedPart : ZPoly) :
     Array.polyProduct (repeatedPartFactorArray repeatedPart) = repeatedPart := by
   rw [polyProduct_repeatedPartFactorArray]
@@ -4570,6 +4612,64 @@ theorem exhaustiveSlowRawFactorsWithBound_mem_normalization_or_core
     (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
       (choosePrimeData (normalizeForFactor f).squareFreeCore))
     factor hmem
+
+/--
+When the exhaustive slow branch's repeated-part expansion is complete, every
+recorded `factorWithBound` entry from that branch comes either from the
+extracted `X` power or from an exhaustive square-free-core factor. This is the
+branch-shape theorem that rules out the non-decomposed repeated-part fallback
+for callers that can prove the expansion-complete side condition.
+-/
+theorem factorWithBound_entry_mem_exhaustive_branch_xPower_or_core_of_reassemblyComplete
+    (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
+    (hbranch : factorWithBoundUsesExhaustiveBranch f B)
+    (hcomplete :
+      reassemblyExpansionComplete (normalizeForFactor f)
+        (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
+          (choosePrimeData (normalizeForFactor f).squareFreeCore)))
+    (hmem : entry ∈ (factorWithBound f B).factors.toList) :
+    ∃ raw,
+      (raw ∈ (xPowerFactorArray (normalizeForFactor f).xPower).toList ∨
+        raw ∈
+          (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
+            (choosePrimeData (normalizeForFactor f).squareFreeCore)).toList) ∧
+        entry.1 = normalizeFactorSign raw := by
+  rcases factorWithBound_entry_mem_exhaustive_branch_raw f B entry hbranch hmem with
+    ⟨raw, hraw_mem, hraw_norm⟩
+  refine ⟨raw, ?_, hraw_norm⟩
+  rw [exhaustiveSlowRawFactorsWithBound] at hraw_mem
+  exact
+    reassemblePolynomialFactors_mem_xPower_or_core_of_expansionComplete
+      (normalizeForFactor f)
+      (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
+        (choosePrimeData (normalizeForFactor f).squareFreeCore))
+      raw hcomplete hraw_mem
+
+/--
+Default-precision specialization of
+`factorWithBound_entry_mem_exhaustive_branch_xPower_or_core_of_reassemblyComplete`
+for the public `factor` entry point.
+-/
+theorem factor_entry_mem_exhaustive_branch_xPower_or_core_of_reassemblyComplete
+    (f : ZPoly) (entry : ZPoly × Nat)
+    (hbranch :
+      factorWithBoundUsesExhaustiveBranch f (ZPoly.defaultFactorCoeffBound f))
+    (hcomplete :
+      reassemblyExpansionComplete (normalizeForFactor f)
+        (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore
+          (ZPoly.defaultFactorCoeffBound f)
+          (choosePrimeData (normalizeForFactor f).squareFreeCore)))
+    (hmem : entry ∈ (factor f).factors.toList) :
+    ∃ raw,
+      (raw ∈ (xPowerFactorArray (normalizeForFactor f).xPower).toList ∨
+        raw ∈
+          (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore
+            (ZPoly.defaultFactorCoeffBound f)
+            (choosePrimeData (normalizeForFactor f).squareFreeCore)).toList) ∧
+        entry.1 = normalizeFactorSign raw := by
+  simpa [factor_eq_factorWithBound_default] using
+    factorWithBound_entry_mem_exhaustive_branch_xPower_or_core_of_reassemblyComplete
+      f (ZPoly.defaultFactorCoeffBound f) entry hbranch hcomplete hmem
 
 /-- In the fast-path small-mod singleton branch, every recorded
 `factorWithBound` entry comes from the normalization reassembly whose core array
