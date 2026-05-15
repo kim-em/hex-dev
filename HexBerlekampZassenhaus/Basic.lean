@@ -5643,6 +5643,111 @@ theorem recombinationSearchMod_isSome_of_step
   exact recombinationSearchModAux_isSome_of_step (fuel := localFactors.length)
     htarget_ne_one hsplit hcandidate_def hrecord hquot hsearch_rest
 
+/--
+Exact-output version of `recombinationSearchModAux_isSome_of_step`.
+
+The earlier completeness lemma is intentionally weak: it only proves that the
+search succeeds when a particular split would work.  This theorem is the
+concrete-output companion used by coverage proofs: if that split is positioned
+after a prefix whose recombination attempts all fail, then the executable
+`firstSome` traversal returns the candidate from this split as the head of the
+resulting factor list.
+-/
+theorem recombinationSearchModAux_eq_some_of_step_of_prefix_none
+    {target candidate quotient : ZPoly} {modulus fuel : Nat}
+    {localFactors selected rest restFactors : List ZPoly}
+    {pre suffix : List (List ZPoly × List ZPoly)}
+    (htarget_ne_one : target ≠ 1)
+    (hsplits :
+      subsetSplitsWithFirst localFactors = pre ++ (selected, rest) :: suffix)
+    (hprefix :
+      ∀ split ∈ pre,
+        (let candidate' :=
+          normalizeFactorSign <|
+            ZPoly.primitivePart <|
+              centeredLiftPoly (Array.polyProduct split.1.toArray) modulus
+        if shouldRecordPolynomialFactor candidate' then
+          match exactQuotient? target candidate' with
+          | none => none
+          | some quotient' =>
+              match recombinationSearchModAux quotient' modulus split.2 fuel with
+              | none => none
+              | some r => some (candidate' :: r)
+        else none) = none)
+    (hcandidate_def :
+      candidate = normalizeFactorSign
+        (ZPoly.primitivePart (centeredLiftPoly (Array.polyProduct selected.toArray) modulus)))
+    (hrecord : shouldRecordPolynomialFactor candidate = true)
+    (hquot : exactQuotient? target candidate = some quotient)
+    (hsearch_rest :
+      recombinationSearchModAux quotient modulus rest fuel = some restFactors) :
+    recombinationSearchModAux target modulus localFactors (fuel + 1) =
+      some (candidate :: restFactors) := by
+  unfold recombinationSearchModAux
+  rw [if_neg htarget_ne_one, hsplits]
+  refine firstSome_eq_some_of_append pre suffix (selected, rest) _ _ hprefix ?_
+  show (let candidate' :=
+          normalizeFactorSign <|
+            ZPoly.primitivePart <|
+              centeredLiftPoly (Array.polyProduct selected.toArray) modulus
+        if shouldRecordPolynomialFactor candidate' then
+          match exactQuotient? target candidate' with
+          | none => none
+          | some quotient' =>
+              match recombinationSearchModAux quotient' modulus rest fuel with
+              | none => none
+              | some r => some (candidate' :: r)
+        else none) = some (candidate :: restFactors)
+  rw [show (normalizeFactorSign <|
+            ZPoly.primitivePart <|
+              centeredLiftPoly (Array.polyProduct selected.toArray) modulus) = candidate
+        from hcandidate_def.symm]
+  rw [if_pos hrecord]
+  simp only [hquot, hsearch_rest]
+
+/--
+Surface exact-output companion for `recombinationSearchMod`.
+
+This hides the fuel parameter in the same way as
+`recombinationSearchMod_isSome_of_step`, while retaining the returned factor
+list when the selected split is the first successful split.
+-/
+theorem recombinationSearchMod_eq_some_of_step_of_prefix_none
+    {target candidate quotient : ZPoly} {modulus : Nat}
+    {localFactors selected rest restFactors : List ZPoly}
+    {pre suffix : List (List ZPoly × List ZPoly)}
+    (htarget_ne_one : target ≠ 1)
+    (hsplits :
+      subsetSplitsWithFirst localFactors = pre ++ (selected, rest) :: suffix)
+    (hprefix :
+      ∀ split ∈ pre,
+        (let candidate' :=
+          normalizeFactorSign <|
+            ZPoly.primitivePart <|
+              centeredLiftPoly (Array.polyProduct split.1.toArray) modulus
+        if shouldRecordPolynomialFactor candidate' then
+          match exactQuotient? target candidate' with
+          | none => none
+          | some quotient' =>
+              match recombinationSearchModAux quotient' modulus split.2 localFactors.length with
+              | none => none
+              | some r => some (candidate' :: r)
+        else none) = none)
+    (hcandidate_def :
+      candidate = normalizeFactorSign
+        (ZPoly.primitivePart (centeredLiftPoly (Array.polyProduct selected.toArray) modulus)))
+    (hrecord : shouldRecordPolynomialFactor candidate = true)
+    (hquot : exactQuotient? target candidate = some quotient)
+    (hsearch_rest :
+      recombinationSearchModAux quotient modulus rest localFactors.length = some restFactors) :
+    recombinationSearchMod target modulus localFactors =
+      some (candidate :: restFactors) := by
+  unfold recombinationSearchMod
+  exact
+    recombinationSearchModAux_eq_some_of_step_of_prefix_none
+      (fuel := localFactors.length) htarget_ne_one hsplits hprefix
+      hcandidate_def hrecord hquot hsearch_rest
+
 /-- When `recombinationSearchMod` succeeds on the lifted-factor list, the
 `recombineExhaustive` wrapper returns exactly the array of recovered factors.
 This is the bridge that lets downstream irreducibility proofs replace a
