@@ -297,6 +297,160 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton
     (core := core)
     hfModP_eq hprim hlc_map_ne hirr_fModP
 
+/--
+Small-mod singleton irreducibility composed without the explicit
+`hirr_fModP` hypothesis.
+
+Given a `choosePrimeData?` success witness and a singleton-bounded
+modular-factor count, the executable `factorsModP` array packaged by
+`choosePrimeData?_factorsModP_berlekamp_form` is the Berlekamp factor
+output for the monic modular image; the `irreducible_of_berlekampFactor_factors_length_le_one`
+no-split bridge then turns this into Mathlib irreducibility of the monic
+modular image, which transfers along `toMathlibPolynomial_scale` to
+Mathlib irreducibility of `fModP` and finally to integer-level
+irreducibility of `core`.
+
+The square-free precondition on the monic modular image is supplied
+explicitly: it follows mathematically from `squareFreeModP core p` plus
+a gcd-under-scaling invariance, which is not yet packaged at the
+`Hex.DensePoly` surface.
+-/
+theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
+    (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.choosePrimeData? core = some primeData)
+    (hsmall : primeData.factorsModP.size ≤ 1)
+    (hprim :
+      (HexPolyZMathlib.toPolynomial core).IsPrimitive)
+    (hlc_map_ne :
+      (Int.castRingHom (ZMod primeData.p))
+        (HexPolyZMathlib.toPolynomial core).leadingCoeff ≠ 0)
+    (hsquareFree_monic :
+      Hex.DensePoly.gcd
+        (@Hex.monicModularImage primeData.p primeData.bounds
+          (@Hex.ZPoly.modP primeData.p primeData.bounds core))
+        (Hex.DensePoly.derivative
+          (@Hex.monicModularImage primeData.p primeData.bounds
+            (@Hex.ZPoly.modP primeData.p primeData.bounds core))) = 1) :
+    Hex.ZPoly.Irreducible core := by
+  letI := primeData.bounds
+  have hprime_hex : Hex.Nat.Prime primeData.p :=
+    Hex.choosePrimeData?_prime core primeData hselected
+  have hprime : _root_.Nat.Prime primeData.p := by
+    refine _root_.Nat.prime_def_lt.mpr ⟨hprime_hex.two_le, ?_⟩
+    intro m hmlt hmdvd
+    rcases hprime_hex.right m hmdvd with h | h
+    · exact h
+    · exact absurd h (Nat.ne_of_lt hmlt)
+  haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
+  letI : Hex.ZMod64.PrimeModulus primeData.p := Hex.ZMod64.primeModulusOfPrime hprime_hex
+  obtain ⟨hzero, hfield, hfactors_eq⟩ :=
+    Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hselected
+  letI := hfield
+  -- Translate factorsModP.size ≤ 1 into bfact.factors.length ≤ 1.
+  have hfactors_len_le :
+      (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
+        (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
+        (Hex.monicModularImage_monic hprime_hex (Hex.ZPoly.modP primeData.p core) hzero)
+        hfield).factors.length ≤ 1 := by
+    have hsize :
+        (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
+          (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
+          (Hex.monicModularImage_monic hprime_hex (Hex.ZPoly.modP primeData.p core) hzero)
+          hfield).factors.toArray.size =
+          primeData.factorsModP.size := by
+      rw [hfactors_eq]
+    simp at hsize
+    omega
+  -- Apply the no-split bridge to obtain Mathlib irreducibility of the monic image.
+  have hirr_monic :
+      Irreducible
+        (HexBerlekampMathlib.toMathlibPolynomial
+          (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))) :=
+    HexBerlekampMathlib.irreducible_of_berlekampFactor_factors_length_le_one
+      (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
+      (Hex.monicModularImage_monic hprime_hex (Hex.ZPoly.modP primeData.p core) hzero)
+      hsquareFree_monic hfactors_len_le
+  -- Express monicModularImage fModP as scale (leadingCoeff fModP)⁻¹ fModP.
+  have hmonicImg_eq :
+      Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) =
+      Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core))⁻¹
+        (Hex.ZPoly.modP primeData.p core) := by
+    unfold Hex.monicModularImage
+    simp [hzero]
+  -- Push through the Mathlib bridge using toMathlibPolynomial_scale.
+  rw [hmonicImg_eq, toMathlibPolynomial_scale] at hirr_monic
+  -- The scaling constant is a unit (nonzero in the field).
+  have hfsize : 0 < (Hex.ZPoly.modP primeData.p core).size := by
+    rcases Nat.eq_zero_or_pos (Hex.ZPoly.modP primeData.p core).size with hsz | hsz
+    · exfalso
+      have hzero' : (Hex.ZPoly.modP primeData.p core).isZero = true := by
+        simpa [Hex.DensePoly.isZero, Hex.DensePoly.size,
+          Array.isEmpty_iff_size_eq_zero] using hsz
+      rw [hzero'] at hzero
+      exact Bool.noConfusion hzero
+    · exact hsz
+  have hlead_ne :
+      Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core) ≠ 0 := by
+    rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred _ hfsize]
+    exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size _ hfsize
+  have h_one_ne_zero : (1 : Hex.ZMod64 primeData.p) ≠ 0 := by
+    intro h
+    have htoNat : (1 : Hex.ZMod64 primeData.p).toNat =
+        (0 : Hex.ZMod64 primeData.p).toNat := congrArg Hex.ZMod64.toNat h
+    rw [show ((1 : Hex.ZMod64 primeData.p).toNat) = 1 % primeData.p from
+            Hex.ZMod64.toNat_one,
+        show ((0 : Hex.ZMod64 primeData.p).toNat) = 0 from Hex.ZMod64.toNat_zero,
+        Nat.mod_eq_of_lt (by have := hprime_hex.two_le; omega : 1 < primeData.p)]
+      at htoNat
+    omega
+  have hinv_ne :
+      (Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core))⁻¹ ≠ 0 := by
+    intro hinv
+    have hone :=
+      Hex.ZMod64.inv_mul_eq_one_of_prime hprime_hex hlead_ne
+    have hinv' :
+        Hex.ZMod64.inv (Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core)) =
+          (0 : Hex.ZMod64 primeData.p) := hinv
+    rw [hinv'] at hone
+    have hzeromul :
+        (0 : Hex.ZMod64 primeData.p) *
+          Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core) =
+        (0 : Hex.ZMod64 primeData.p) :=
+      Lean.Grind.Semiring.zero_mul _
+    rw [hzeromul] at hone
+    exact h_one_ne_zero hone.symm
+  have hinv_zmod_ne :
+      HexModArithMathlib.ZMod64.toZMod
+        (Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core))⁻¹ ≠ 0 := by
+    intro h
+    apply hinv_ne
+    have hinj := (HexModArithMathlib.ZMod64.equiv (p := primeData.p)).injective
+    apply hinj
+    simpa using h.trans HexModArithMathlib.ZMod64.toZMod_zero.symm
+  -- Polynomial.C of a nonzero element of a field is a unit.
+  have hC_unit :
+      IsUnit (Polynomial.C
+        (HexModArithMathlib.ZMod64.toZMod
+          (Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core))⁻¹)) :=
+    Polynomial.isUnit_C.mpr (isUnit_iff_ne_zero.mpr hinv_zmod_ne)
+  -- An irreducible polynomial times a unit is irreducible iff the polynomial is.
+  have hirr_fModP :
+      Irreducible
+        (HexBerlekampMathlib.toMathlibPolynomial (Hex.ZPoly.modP primeData.p core)) := by
+    have hassoc :
+        Associated
+          (Polynomial.C
+            (HexModArithMathlib.ZMod64.toZMod
+              (Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core))⁻¹) *
+              HexBerlekampMathlib.toMathlibPolynomial (Hex.ZPoly.modP primeData.p core))
+          (HexBerlekampMathlib.toMathlibPolynomial (Hex.ZPoly.modP primeData.p core)) :=
+      (associated_isUnit_mul_left_iff hC_unit).mpr (Associated.refl _)
+    exact hassoc.irreducible hirr_monic
+  -- Conclude integer-level irreducibility via the existing transfer.
+  exact Hex_ZPoly_Irreducible_of_irreducible_modP
+    (p := primeData.p) (core := core)
+    hprim hlc_map_ne hirr_fModP
+
 end IntReductionMod
 
 end HexBerlekampZassenhausMathlib
