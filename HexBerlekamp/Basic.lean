@@ -70,6 +70,76 @@ private def berlekampColumnPolys (f : FpPoly p) (hmonic : DensePoly.Monic f)
       berlekampColumnPolys f hmonic frobX k
         (FpPoly.modByMonic f (current * frobX) hmonic) (acc.push current)
 
+private theorem berlekampColumnPolys_toList_eq_powModMonicLinear
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) (frobX : FpPoly p)
+    (fuel offset : Nat) (acc : Array (FpPoly p)) :
+    (berlekampColumnPolys f hmonic frobX fuel
+        (FpPoly.powModMonicLinear frobX f hmonic offset) acc).toList =
+      acc.toList ++
+        (List.range fuel).map fun k => FpPoly.powModMonicLinear frobX f hmonic (offset + k) := by
+  induction fuel generalizing offset acc with
+  | zero =>
+      simp [berlekampColumnPolys]
+  | succ fuel ih =>
+      rw [berlekampColumnPolys]
+      have hstep :
+          FpPoly.modByMonic f
+              (FpPoly.powModMonicLinear frobX f hmonic offset * frobX) hmonic =
+            FpPoly.powModMonicLinear frobX f hmonic (offset + 1) := by
+        change FpPoly.modByMonic f
+              (FpPoly.powModMonicLinear frobX f hmonic offset * frobX) hmonic =
+            FpPoly.powModMonicLinear frobX f hmonic (offset + 1)
+        rw [show offset + 1 = Nat.succ offset by omega]
+        rfl
+      rw [hstep]
+      rw [ih (offset + 1)]
+      rw [Array.toList_push]
+      rw [List.range_succ_eq_map]
+      simp only [List.map_cons, List.map_map, List.append_assoc, List.append_cancel_left_eq]
+      apply List.cons_eq_cons.mpr
+      constructor
+      · rfl
+      · apply List.map_congr_left
+        intro k _hk
+        rw [show offset + 1 + k = offset + Nat.succ k by omega]
+        rfl
+
+private theorem array_toList_getD {α : Type}
+    (xs : Array α) (i : Nat) (fallback : α) :
+    xs.toList.getD i fallback = xs.getD i fallback := by
+  cases xs with
+  | mk data =>
+      rw [List.getD_eq_getElem?_getD]
+      unfold Array.getD Array.size Array.getInternal
+      by_cases hlt : i < data.length
+      · rw [dif_pos hlt]
+        simp [List.getElem?_eq_getElem hlt]
+      · rw [dif_neg hlt]
+        simp [List.getElem?_eq_none_iff.mpr (Nat.le_of_not_gt hlt)]
+
+private theorem list_getD_map_range
+    {α : Type} [Zero α] (fuel n : Nat) (g : Nat → α) (hn : n < fuel) :
+    ((List.range fuel).map g).getD n 0 = g n := by
+  rw [List.getD_eq_getElem?_getD]
+  have hlen : n < ((List.range fuel).map g).length := by
+    simp [hn]
+  rw [List.getElem?_eq_getElem hlen]
+  simp [List.getElem_map, List.getElem_range]
+
+private theorem berlekampColumnPolys_getD_eq_powModMonicLinear
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) (frobX : FpPoly p)
+    (j : Fin fuel) :
+    (berlekampColumnPolys f hmonic frobX fuel
+        (FpPoly.powModMonicLinear frobX f hmonic 0) #[]).getD j.val 0 =
+      FpPoly.powModMonicLinear frobX f hmonic j.val := by
+  have hlist := congrArg (fun xs : List (FpPoly p) => xs.getD j.val 0)
+    (berlekampColumnPolys_toList_eq_powModMonicLinear f hmonic frobX fuel 0 #[])
+  rw [← array_toList_getD
+    (berlekampColumnPolys f hmonic frobX fuel
+      (FpPoly.powModMonicLinear frobX f hmonic 0) #[]) j.val 0]
+  simpa [list_getD_map_range fuel j.val
+      (fun k => FpPoly.powModMonicLinear frobX f hmonic (0 + k)) j.isLt] using hlist
+
 /--
 The Berlekamp matrix `Q_f`, whose `j`-th column records the coordinates of
 `X^(p * j) mod f` in the basis `{1, X, ..., X^(n - 1)}`. Columns are computed
@@ -91,6 +161,30 @@ theorem berlekampMatrix_entry_eq_columnPolys_coeff
       ((berlekampColumnPolys f hmonic (FpPoly.frobeniusXMod f hmonic)
         (basisSize f) 1 #[])[j.val]?.getD 0).coeff i.val := by
   simp [berlekampMatrix, Matrix.ofFn]
+
+/-- A Berlekamp matrix entry is the corresponding coefficient of the public
+`powModMonic` column representative. -/
+theorem berlekampMatrix_entry_eq_powModMonic_coeff
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (i j : Fin (basisSize f)) :
+    (berlekampMatrix f hmonic)[i][j] =
+      (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val).coeff i.val := by
+  rw [berlekampMatrix_entry_eq_columnPolys_coeff]
+  have hpoly :
+      ((berlekampColumnPolys f hmonic (FpPoly.frobeniusXMod f hmonic)
+        (basisSize f) 1 #[])[j.val]?.getD 0) =
+        FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val := by
+    rw [← Array.getD_eq_getD_getElem?]
+    change (berlekampColumnPolys f hmonic (FpPoly.frobeniusXMod f hmonic)
+        (basisSize f)
+        (FpPoly.powModMonicLinear (FpPoly.frobeniusXMod f hmonic) f hmonic 0) #[]).getD
+        j.val 0 =
+      FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val
+    rw [berlekampColumnPolys_getD_eq_powModMonicLinear]
+    exact FpPoly.powModMonicLinear_eq_powModMonic
+      (FpPoly.frobeniusXMod f hmonic) f hmonic j.val
+  rw [hpoly]
 
 /-- A public Berlekamp column entry is the corresponding coefficient of the
 `powModMonic` column representative. -/
