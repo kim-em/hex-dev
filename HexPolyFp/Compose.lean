@@ -1,4 +1,6 @@
 import HexPolyFp.Basic
+import HexPolyFp.SquareFree
+import HexPolyFp.QuotientFrobenius
 
 /-!
 Non-modular composition laws for `DensePoly` over `FpPoly p`.
@@ -861,6 +863,139 @@ theorem compose_primeFieldLinearProduct [ZMod64.PrimeModulus p]
         (fun acc c => acc * (w - FpPoly.C c)) 1 := by
   rw [compose_foldl_X_sub_C]
   rw [compose_one]
+
+/-! ### Compose-form Frobenius
+
+The substitution identity `compose w (linearPow X p) = linearPow w p` over
+`F_p` packages Freshman's dream applied to a polynomial: viewing
+`w = ∑_i a_i X^i`, the right-hand side equals `∑_i a_i X^(p·i)` (using
+Fermat for the constants), which is exactly the left-hand side after
+unfolding the compose power-sum form. This is the foundational identity
+that the Berlekamp matrix bridge uses to read each column of
+`berlekampMatrix` as `coeffVector f (linearPow X (p·j) mod f)`. -/
+
+private theorem linearPow_linearPow_mul (a : FpPoly p) (m : Nat) :
+    ∀ n, FpPoly.linearPow (FpPoly.linearPow a m) n = FpPoly.linearPow a (m * n)
+  | 0 => by
+      rw [Nat.mul_zero]
+      rfl
+  | n + 1 => by
+      rw [FpPoly.linearPow_succ, linearPow_linearPow_mul a m n,
+        Nat.mul_succ, FpPoly.linearPow_add]
+
+private theorem linearPow_zero_of_pos (n : Nat) (hn : 0 < n) :
+    FpPoly.linearPow (0 : FpPoly p) n = 0 := by
+  cases n with
+  | zero => omega
+  | succ k =>
+      rw [FpPoly.linearPow_succ]
+      exact FpPoly.mul_zero (FpPoly.linearPow (0 : FpPoly p) k)
+
+private theorem composeCoeffPowerSumUpTo_subst_linearPow_X
+    [ZMod64.PrimeModulus p] (coeff : Nat → ZMod64 p) :
+    ∀ n base,
+      composeCoeffPowerSumUpTo coeff n base
+          (FpPoly.linearPow FpPoly.X p) =
+        FpPoly.linearPow
+          (composeCoeffPowerSumUpTo coeff n base FpPoly.X) p
+  | 0, _ => by
+      have hp_pos : 0 < p := by
+        have h2 : 2 ≤ p := (ZMod64.PrimeModulus.prime (p := p)).two_le
+        omega
+      simp only [composeCoeffPowerSumUpTo]
+      exact (linearPow_zero_of_pos p hp_pos).symm
+  | n + 1, base => by
+      simp only [composeCoeffPowerSumUpTo]
+      rw [composeCoeffPowerSumUpTo_subst_linearPow_X coeff n (base + 1)]
+      rw [FpPoly.linearPow_add_prime (ZMod64.PrimeModulus.prime (p := p))]
+      rw [FpPoly.linearPow_mul_base]
+      rw [Quotient.linearPow_C_pow_prime]
+      rw [linearPow_linearPow_mul FpPoly.X base p]
+      rw [linearPow_linearPow_mul FpPoly.X p base]
+      rw [Nat.mul_comm base p]
+
+private theorem composeCoeffPowerSumUpTo_X_coeff
+    [ZMod64.PrimeModulus p] (coeff : Nat → ZMod64 p) :
+    ∀ n base k,
+      (composeCoeffPowerSumUpTo coeff n base FpPoly.X).coeff k =
+        if base ≤ k ∧ k < base + n then coeff k else (Zero.zero : ZMod64 p)
+  | 0, base, k => by
+      simp only [composeCoeffPowerSumUpTo]
+      rw [DensePoly.coeff_zero]
+      have hneg : ¬ (base ≤ k ∧ k < base + 0) := by intro ⟨_, h⟩; omega
+      rw [if_neg hneg]
+      rfl
+  | n + 1, base, k => by
+      simp only [composeCoeffPowerSumUpTo]
+      rw [DensePoly.coeff_add _ _ _ zmod64_add_zero_zero_local]
+      rw [composeCoeffPowerSumUpTo_X_coeff coeff n (base + 1) k]
+      rw [show FpPoly.linearPow (FpPoly.X : FpPoly p) base
+              = DensePoly.monomial base (1 : ZMod64 p) from
+              FpPoly.linearPow_monomial_one base]
+      rw [show (DensePoly.C (coeff base) : FpPoly p) *
+              DensePoly.monomial base (1 : ZMod64 p)
+              = DensePoly.scale (coeff base)
+                  (DensePoly.monomial base (1 : ZMod64 p)) from
+              FpPoly.C_mul_eq_scale (coeff base)
+                (DensePoly.monomial base (1 : ZMod64 p))]
+      have hzz : (Zero.zero : ZMod64 p) = (0 : ZMod64 p) := rfl
+      have hmul_zero : coeff base * (Zero.zero : ZMod64 p) = Zero.zero := by
+        rw [hzz]; grind
+      rw [DensePoly.coeff_scale _ _ _ hmul_zero]
+      rw [DensePoly.coeff_monomial]
+      have hzz_add : (Zero.zero : ZMod64 p) + Zero.zero = Zero.zero :=
+        zmod64_add_zero_zero_local
+      by_cases hk_base : k = base
+      · rw [if_pos hk_base]
+        have hneg' : ¬ (base + 1 ≤ k ∧ k < base + 1 + n) := by
+          intro ⟨h, _⟩; omega
+        rw [if_neg hneg']
+        have hpos : base ≤ k ∧ k < base + (n + 1) := by
+          refine ⟨?_, ?_⟩ <;> omega
+        rw [if_pos hpos]
+        have hmul_one : coeff base * (1 : ZMod64 p) = coeff k := by
+          rw [hk_base]; grind
+        rw [hmul_one]
+        show coeff k + (Zero.zero : ZMod64 p) = coeff k
+        rw [hzz]; grind
+      · rw [if_neg hk_base]
+        rw [hmul_zero]
+        by_cases hkb : base ≤ k
+        · have hk1 : base + 1 ≤ k := by omega
+          by_cases hcond : k < base + (n + 1)
+          · have hcond' : k < base + 1 + n := by omega
+            rw [if_pos ⟨hk1, hcond'⟩, if_pos ⟨hkb, hcond⟩]
+            rw [hzz]; grind
+          · rw [if_neg (fun ⟨_, h⟩ => hcond (by omega))]
+            rw [if_neg (fun ⟨_, h⟩ => hcond h)]
+            exact hzz_add
+        · have hk1 : ¬ (base + 1 ≤ k) := by omega
+          rw [if_neg (fun ⟨h, _⟩ => hk1 h)]
+          rw [if_neg (fun ⟨h, _⟩ => hkb h)]
+          exact hzz_add
+
+private theorem composeCoeffPowerSumUpTo_self_X_eq_self
+    [ZMod64.PrimeModulus p] (w : FpPoly p) :
+    composeCoeffPowerSumUpTo (fun i => w.coeff i) w.size 0 FpPoly.X = w := by
+  apply DensePoly.ext_coeff
+  intro k
+  rw [composeCoeffPowerSumUpTo_X_coeff (fun i => w.coeff i) w.size 0 k]
+  by_cases hk : k < w.size
+  · simp [hk]
+  · have hk' : w.size ≤ k := Nat.le_of_not_gt hk
+    rw [if_neg (by intro ⟨_, h⟩; omega : ¬ (0 ≤ k ∧ k < 0 + w.size))]
+    exact (DensePoly.coeff_eq_zero_of_size_le w hk').symm
+
+/-- Compose-form Frobenius: substituting `linearPow X p` for `X` in `w`
+yields `linearPow w p`, over `F_p`. This is Freshman's dream packaged
+through the polynomial composition surface: viewed as
+`w = ∑_i a_i X^i`, the right-hand side equals `∑_i a_i X^(p·i)`. -/
+theorem compose_w_linearPow_X [ZMod64.PrimeModulus p] (w : FpPoly p) :
+    DensePoly.compose w (FpPoly.linearPow FpPoly.X p) =
+      FpPoly.linearPow w p := by
+  rw [compose_eq_coeff_power_sum_upTo_size w (FpPoly.linearPow FpPoly.X p)]
+  rw [composeCoeffPowerSumUpTo_subst_linearPow_X (fun i => w.coeff i) w.size 0]
+  rw [composeCoeffPowerSumUpTo_self_X_eq_self w]
 
 end FpPoly
 end Hex
