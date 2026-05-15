@@ -1792,6 +1792,97 @@ See SPEC/Libraries/hex-berlekamp-zassenhaus.md §"Slow path".
 def precisionForCoeffBound (B p : Nat) : Nat :=
   ceilLogP p (2 * B + 1)
 
+private theorem ceilLogPAux_ge_ell (p target : Nat) :
+    ∀ (fuel ell power : Nat),
+      ell ≤ ceilLogPAux p target fuel ell power := by
+  intro fuel
+  induction fuel with
+  | zero =>
+    intro ell power
+    simp [ceilLogPAux]
+  | succ fuel ih =>
+    intro ell power
+    unfold ceilLogPAux
+    split
+    · exact Nat.le_refl _
+    · exact Nat.le_trans (Nat.le_succ ell) (ih (ell + 1) (power * p))
+
+private theorem ceilLogPAux_pow_bound (p : Nat) :
+    ∀ (fuel target ell power : Nat),
+      target ≤ power * p ^ fuel →
+      target ≤ power * p ^ (ceilLogPAux p target fuel ell power - ell) := by
+  intro fuel
+  induction fuel with
+  | zero =>
+    intro target ell power h
+    simp only [ceilLogPAux, Nat.sub_self, Nat.pow_zero, Nat.mul_one]
+    simpa [Nat.pow_zero, Nat.mul_one] using h
+  | succ fuel ih =>
+    intro target ell power h
+    unfold ceilLogPAux
+    split
+    · rename_i h_le
+      simpa [Nat.sub_self, Nat.pow_zero, Nat.mul_one] using h_le
+    · have h_step : target ≤ (power * p) * p ^ fuel := by
+        have hrw : power * p ^ (fuel + 1) = (power * p) * p ^ fuel := by
+          rw [Nat.pow_succ, Nat.mul_comm (p ^ fuel) p, ← Nat.mul_assoc]
+        rw [hrw] at h
+        exact h
+      have ih_app := ih target (ell + 1) (power * p) h_step
+      have hge : ell + 1 ≤ ceilLogPAux p target fuel (ell + 1) (power * p) :=
+        ceilLogPAux_ge_ell p target fuel (ell + 1) (power * p)
+      have hk :
+          ceilLogPAux p target fuel (ell + 1) (power * p) - ell =
+            (ceilLogPAux p target fuel (ell + 1) (power * p) - (ell + 1)) + 1 := by
+        omega
+      rw [hk, Nat.pow_succ]
+      have hrw2 :
+          power *
+              (p ^ (ceilLogPAux p target fuel (ell + 1) (power * p) - (ell + 1)) *
+                p) =
+            (power * p) *
+              p ^ (ceilLogPAux p target fuel (ell + 1) (power * p) - (ell + 1)) := by
+        rw [Nat.mul_comm (p ^ _) p, ← Nat.mul_assoc]
+      rw [hrw2]
+      exact ih_app
+
+/--
+Correctness of `ceilLogP`: when `2 ≤ p`, the returned exponent satisfies
+`target ≤ p ^ ceilLogP p target`.
+
+This is the small spec consumed by `precisionForCoeffBound_spec` below; the
+strict-inequality Mignotte side condition `2 * B < p ^ precisionForCoeffBound B p`
+follows by chaining this with the target `target = 2 * B + 1`.
+-/
+theorem le_pow_ceilLogP {p : Nat} (hp : 2 ≤ p) (target : Nat) :
+    target ≤ p ^ ceilLogP p target := by
+  unfold ceilLogP
+  rw [if_neg (by omega : ¬ p ≤ 1)]
+  have hlt2 : target < 2 ^ target := Nat.lt_two_pow_self
+  have hle2 : (2 : Nat) ^ target ≤ 2 ^ (target + 1) :=
+    Nat.pow_le_pow_right (by decide) (Nat.le_succ _)
+  have hpow_p : (2 : Nat) ^ (target + 1) ≤ p ^ (target + 1) :=
+    Nat.pow_le_pow_left hp (target + 1)
+  have h_init : target ≤ 1 * p ^ (target + 1) := by
+    rw [Nat.one_mul]; omega
+  have h_spec := ceilLogPAux_pow_bound p (target + 1) target 0 1 h_init
+  simpa [Nat.sub_zero, Nat.one_mul] using h_spec
+
+/--
+The executable Mignotte precision exponent satisfies the Mignotte side
+condition `2 * B < p ^ precisionForCoeffBound B p` whenever the modulus is at
+least `2`.
+
+This is the reusable spec consumed by `ForwardRecoveryInputs` constructors that
+need to discharge the `mignotte_precision` field at the actual executable
+precision returned by `henselLiftData f (precisionForCoeffBound B p)`.
+-/
+theorem precisionForCoeffBound_spec {p : Nat} (hp : 2 ≤ p) (B : Nat) :
+    2 * B < p ^ precisionForCoeffBound B p := by
+  unfold precisionForCoeffBound
+  have h := le_pow_ceilLogP hp (2 * B + 1)
+  omega
+
 /-- Enumerate every way to partition a list of polynomials into a `(selected,
 unselected)` pair while preserving the original order in each component.  Used
 by the exhaustive recombination search to drive the slow path. -/
