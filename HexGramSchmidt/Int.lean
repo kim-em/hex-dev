@@ -1407,6 +1407,162 @@ private theorem noPivotLoop_full_eq_borderedMinor_at_trailing
   rw [Matrix.borderedMinor_entry_last_last] at hcongr
   exact hcongr
 
+/-- The step field of a no-pivot Bareiss state advances by at most `fuel` after
+`fuel` loop iterations. Combined with `noPivotLoop_step_monotone`, this brackets
+the resulting step between the starting step and the starting step plus the
+fuel. -/
+private theorem noPivotLoop_step_le_add
+    {n : Nat} (fuel : Nat) (state : Matrix.BareissState n) :
+    (Matrix.noPivotLoop fuel state).step ≤ state.step + fuel := by
+  induction fuel generalizing state with
+  | zero =>
+      show state.step ≤ state.step + 0
+      omega
+  | succ f ih =>
+      by_cases hDone : state.step + 1 < n
+      · by_cases hp : state.matrix[state.step][state.step] = 0
+        · rw [Matrix.noPivotLoop_singular_branch f state hDone hp]
+          show state.step ≤ state.step + (f + 1)
+          omega
+        · rw [Matrix.noPivotLoop_regular_branch f state hDone hp]
+          calc (Matrix.noPivotLoop f
+              { step := state.step + 1
+                matrix := Matrix.stepMatrix state.matrix state.step
+                  state.matrix[state.step][state.step] state.prevPivot
+                prevPivot := state.matrix[state.step][state.step]
+                rowSwaps := state.rowSwaps
+                singularStep := none }).step
+              ≤ state.step + 1 + f := ih _
+            _ = state.step + (f + 1) := by omega
+      · rw [Matrix.noPivotLoop_done f state hDone]
+        show state.step ≤ state.step + (f + 1)
+        omega
+
+/-- Trailing-block symmetry is preserved by the no-pivot Bareiss loop: if the
+input state's matrix is symmetric at indices at or beyond `state.step`, then the
+resulting state's matrix is symmetric at indices at or beyond its `step`. The
+abstract version takes only the input symmetry hypothesis; the diagonal Bareiss
+update commutes through symmetry because the trailing block remains symmetric
+after each `stepMatrix` application. -/
+private theorem noPivotLoop_matrix_symm_preserve
+    {n : Nat} (fuel : Nat) :
+    ∀ (state : Matrix.BareissState n),
+      (∀ a b : Fin n, state.step ≤ a.val → state.step ≤ b.val →
+        state.matrix[a][b] = state.matrix[b][a]) →
+      ∀ (a b : Fin n),
+        (Matrix.noPivotLoop fuel state).step ≤ a.val →
+        (Matrix.noPivotLoop fuel state).step ≤ b.val →
+        (Matrix.noPivotLoop fuel state).matrix[a][b] =
+          (Matrix.noPivotLoop fuel state).matrix[b][a] := by
+  induction fuel with
+  | zero =>
+      intros state h_sym a b ha hb
+      change state.matrix[a][b] = state.matrix[b][a]
+      change state.step ≤ a.val at ha
+      change state.step ≤ b.val at hb
+      exact h_sym a b ha hb
+  | succ f ih =>
+      intros state h_sym a b ha hb
+      by_cases hDone : state.step + 1 < n
+      · by_cases hp : state.matrix[state.step][state.step] = 0
+        · -- Singular branch: result is `{state with singularStep := some state.step}`.
+          rw [Matrix.noPivotLoop_singular_branch f state hDone hp] at ha hb ⊢
+          change state.matrix[a][b] = state.matrix[b][a]
+          change state.step ≤ a.val at ha
+          change state.step ≤ b.val at hb
+          exact h_sym a b ha hb
+        · -- Regular branch: recurse on the updated state with step + 1.
+          rw [Matrix.noPivotLoop_regular_branch f state hDone hp] at ha hb ⊢
+          let kFin : Fin n := ⟨state.step, Nat.lt_of_succ_lt hDone⟩
+          have h_sym_new : ∀ (a' b' : Fin n),
+              state.step + 1 ≤ a'.val → state.step + 1 ≤ b'.val →
+              (Matrix.stepMatrix state.matrix state.step
+                  state.matrix[state.step][state.step] state.prevPivot)[a'][b']
+                = (Matrix.stepMatrix state.matrix state.step
+                  state.matrix[state.step][state.step] state.prevPivot)[b'][a'] := by
+            intros a' b' ha' hb'
+            have ha'_lt : state.step < a'.val := ha'
+            have hb'_lt : state.step < b'.val := hb'
+            rw [Matrix.stepMatrix_update_eq state.matrix state.step
+              state.matrix[state.step][state.step] state.prevPivot a' b' ha'_lt hb'_lt]
+            rw [Matrix.stepMatrix_update_eq state.matrix state.step
+              state.matrix[state.step][state.step] state.prevPivot b' a' hb'_lt ha'_lt]
+            -- Both sides reduce to `exactDiv` of similar expressions. Identify
+            -- the two `Fin n` indices at value `state.step` and use the
+            -- trailing-block symmetry of `state.matrix`.
+            have h_ab : state.matrix[a'][b'] = state.matrix[b'][a'] :=
+              h_sym a' b' (Nat.le_of_lt ha'_lt) (Nat.le_of_lt hb'_lt)
+            have h_ak : state.matrix[a'][kFin] = state.matrix[kFin][a'] :=
+              h_sym a' kFin (Nat.le_of_lt ha'_lt) (Nat.le_refl _)
+            have h_bk : state.matrix[b'][kFin] = state.matrix[kFin][b'] :=
+              h_sym b' kFin (Nat.le_of_lt hb'_lt) (Nat.le_refl _)
+            -- The two `Fin n` indices in the unfolded `stepMatrix_update_eq`
+            -- have value `state.step` and so equal `kFin` definitionally.
+            change Matrix.exactDiv (_ * state.matrix[a'][b']
+                - state.matrix[a'][kFin] * state.matrix[kFin][b']) _
+              = Matrix.exactDiv (_ * state.matrix[b'][a']
+                - state.matrix[b'][kFin] * state.matrix[kFin][a']) _
+            rw [h_ab, h_ak, h_bk]
+            congr 1
+            grind
+          exact ih
+            { step := state.step + 1
+              matrix := Matrix.stepMatrix state.matrix state.step
+                state.matrix[state.step][state.step] state.prevPivot
+              prevPivot := state.matrix[state.step][state.step]
+              rowSwaps := state.rowSwaps
+              singularStep := none }
+            (by
+              intros a' b' ha' hb'
+              exact h_sym_new a' b' ha' hb')
+            a b ha hb
+      · -- Boundary case: `noPivotLoop` returns the input state unchanged.
+        rw [Matrix.noPivotLoop_done f state hDone] at ha hb ⊢
+        change state.matrix[a][b] = state.matrix[b][a]
+        change state.step ≤ a.val at ha
+        change state.step ≤ b.val at hb
+        exact h_sym a b ha hb
+
+/-- Bridge between Bareiss-style trailing values on two bordered minors of a
+symmetric matrix obtained by swapping the border row and column. Composed from
+`noPivotLoop_full_eq_borderedMinor_at_trailing` (applied at both swapped
+positions) and `noPivotLoop_matrix_symm_preserve` (which transports the
+trailing-block symmetry of the input through the loop). -/
+private theorem noPivotLoop_borderedMinor_swap_at_trailing
+    {n : Nat} (M : Matrix Int n n)
+    (h_sym : ∀ a b : Fin n, M[a][b] = M[b][a])
+    (k : Nat) (hk : k < n) (i j : Fin n)
+    (hki : k ≤ i.val) (hkj : k ≤ j.val) :
+    (Matrix.noPivotLoop k (Matrix.noPivotInitialState
+        (Matrix.borderedMinor M k hk i j))).matrix[Fin.last k][Fin.last k] =
+    (Matrix.noPivotLoop k (Matrix.noPivotInitialState
+        (Matrix.borderedMinor M k hk j i))).matrix[Fin.last k][Fin.last k] := by
+  -- Reduce both sides through the full-matrix sync at swapped border positions.
+  have h_ij :=
+    (noPivotLoop_full_eq_borderedMinor_at_trailing M k hk i j hki hkj).1
+  have h_ji :=
+    (noPivotLoop_full_eq_borderedMinor_at_trailing M k hk j i hkj hki).1
+  rw [← h_ij, ← h_ji]
+  -- Reduce to symmetry of the full-matrix noPivotLoop at `(i, j)` vs `(j, i)`.
+  -- Both indices are bounded below by `k`, and the loop's resulting step is at
+  -- most `0 + k = k`, hence at most each of `i.val`, `j.val`.
+  have h_step_le := noPivotLoop_step_le_add k (Matrix.noPivotInitialState M)
+  have h_step0 : (Matrix.noPivotInitialState M).step = 0 := rfl
+  have h_step_bound :
+      (Matrix.noPivotLoop k (Matrix.noPivotInitialState M)).step ≤ k := by
+    rw [h_step0] at h_step_le
+    simpa using h_step_le
+  have h_init_sym :
+      ∀ a b : Fin n, (Matrix.noPivotInitialState M).step ≤ a.val →
+        (Matrix.noPivotInitialState M).step ≤ b.val →
+        (Matrix.noPivotInitialState M).matrix[a][b] =
+          (Matrix.noPivotInitialState M).matrix[b][a] := by
+    intros a b _ _
+    exact h_sym a b
+  exact noPivotLoop_matrix_symm_preserve k
+    (Matrix.noPivotInitialState M) h_init_sym i j
+    (Nat.le_trans h_step_bound hki) (Nat.le_trans h_step_bound hkj)
+
 /-- Run `noPivotLoop` on a full `n × n` matrix and on its `K × K` leading
 prefix from two BareissStates that agree on the leading prefix. While
 both runs are still synchronized (fuel fits within `K - state.step`),
