@@ -304,7 +304,9 @@ private theorem foldl_select_index
           simp [hk, hk', hkm]
           grind
 
-private theorem coeff_mul_at_top
+/-- The top coefficient of a product of nonzero `ZMod64`-valued polynomials is the
+product of the leading coefficients. -/
+theorem coeff_mul_at_top
     (f g : DensePoly (ZMod64 p)) (hf : 0 < f.size) (hg : 0 < g.size) :
     (f * g).coeff (f.size - 1 + (g.size - 1)) =
       f.coeff (f.size - 1) * g.coeff (g.size - 1) := by
