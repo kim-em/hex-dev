@@ -416,6 +416,49 @@ Worker-created follow-up issues are encouraged when they improve
 queue quality. Do not require a separate planning round-trip just
 to split an issue that is clearly too large.
 
+### Directives never enter the replan queue
+
+`directive`-labelled issues encode SPEC/PLAN-mandated outcomes whose
+satisfaction is judgment-laden and is evaluated by the worker who
+publishes the satisfying PR. They cannot be rejected, overturned, or
+closed as "stale" by triage — only by a PR that satisfies them or by
+a SPEC change that removes the underlying obligation.
+
+This project is autonomous. Agents do **not** ask humans to break
+ties, choose between options, or unblock stuck issues. There is no
+human gate. A `directive` + `replan` combination implies "wait for a
+human to decide what's next," which has no resolver in this project
+and would lock the issue out indefinitely.
+
+Rules:
+
+1. **Workers must not flag a directive for replan.** `coordination
+   skip --replan` on a `directive` issue is forbidden. A worker that
+   cannot progress a directive in its session releases the claim
+   without applying the `replan` label, so the issue returns to the
+   claimable queue for the next worker.
+2. **Replan triage skips directives by design.** This filter stays as
+   it is — there is nothing for replan to do here, because directives
+   cannot be retired by triage. The behaviour is correct; what would
+   be wrong is for a directive to *be* in the replan queue.
+3. **Valid worker outcomes on a directive:** (a) full closure via a
+   PR satisfying the remaining deliverables; (b) partial PR plus an
+   issue-body update recording the residual scope, claim released;
+   (c) `blocked` label with `depends-on:` link to a prerequisite,
+   claim released; (d) no-progress claim release with an optional
+   note explaining what blocked the session, no labels changed
+   beyond removing `claimed`.
+4. **The only ways a directive closes:** a PR satisfying its
+   remaining deliverables, or a SPEC PR removing the underlying
+   obligation (in which case the closing comment links to the SPEC
+   PR).
+
+If you find yourself wanting to "decompose this directive into
+sub-issues so a planner can re-route" — stop. That path requires a
+human to break a tie that doesn't exist. Make whatever partial
+progress your session permits, publish it, update the residual on the
+parent directive, and release the claim.
+
 ### Partial progress is valuable
 
 Agents should not wait for total completion before contributing
