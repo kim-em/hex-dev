@@ -1507,6 +1507,35 @@ theorem recombinationCandidate_eq_factor_of_recovery
   rw [hprimitive]
   exact hfactor_norm
 
+/--
+Hensel-correspondence wrapper for the monic-core recovery theorem.
+
+Once a proof-side subset is known to represent an irreducible integer divisor
+at the Hensel lift, the executable recombination candidate is exactly that
+factor under the monic/primitive/sign-normalised hypotheses required by the
+centered-lift recovery bound.
+-/
+theorem recombinationCandidate_eq_factor_of_henselSubsetCorrespondence
+    {core factor : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
+    {S : LiftedFactorSubset d}
+    (_h :
+      HenselSubsetCorrespondenceHypotheses core B primeData d
+        admissiblePrime successfulLift)
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hcore_record : Hex.shouldRecordPolynomialFactor core = true)
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hdvd : factor ∣ core)
+    (hfactor_prim : Hex.ZPoly.content factor = 1)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    recombinationCandidate d S = factor :=
+  recombinationCandidate_eq_factor_of_recovery
+    hcore_ne hcore_monic hcore_record hdvd hfactor_prim hfactor_norm hirr
+    hrep hprecision
+
 /-- Converse to `toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord`: if the
 transported polynomial is non-zero and a non-unit, then the executable
 `shouldRecordPolynomialFactor` check passes.  Used to package executable
@@ -1644,6 +1673,94 @@ theorem recombinationSearchMod_isSome_of_liftedSubset_factor_dvd
       (core := core) (factor := factor) (quotient := quotient) (d := d)
       (S := S) hcore_ne_one hsize_pos hfirst heq hirr
       (hsearch_rest quotient hquot) hquot
+
+/--
+Proof-facing package for a first successful recombination split.
+
+The executable theorem in `HexBerlekampZassenhaus.Basic` returns an exact
+`some (candidate :: restFactors)` value.  This wrapper exposes the pieces that
+Mathlib-side coverage proofs need without requiring downstream statements to
+mention the internals of `firstSome`: the returned list, head membership,
+`shouldRecord`, exact quotient witness, and recursive-rest success.
+-/
+theorem recombinationSearchMod_first_success_witness_of_step_of_prefix_none
+    {target candidate quotient : Hex.ZPoly} {modulus : Nat}
+    {localFactors selected rest restFactors : List Hex.ZPoly}
+    {pre suffix : List (List Hex.ZPoly × List Hex.ZPoly)}
+    (htarget_ne_one : target ≠ 1)
+    (hsplits :
+      Hex.subsetSplitsWithFirst localFactors = pre ++ (selected, rest) :: suffix)
+    (hprefix :
+      ∀ split ∈ pre,
+        (let candidate' :=
+          Hex.normalizeFactorSign <|
+            Hex.ZPoly.primitivePart <|
+              Hex.centeredLiftPoly (Array.polyProduct split.1.toArray) modulus
+        if Hex.shouldRecordPolynomialFactor candidate' then
+          match Hex.exactQuotient? target candidate' with
+          | none => none
+          | some quotient' =>
+              match Hex.recombinationSearchModAux quotient' modulus split.2
+                  localFactors.length with
+              | none => none
+              | some r => some (candidate' :: r)
+        else none) = none)
+    (hcandidate_def :
+      candidate = Hex.normalizeFactorSign
+        (Hex.ZPoly.primitivePart
+          (Hex.centeredLiftPoly (Array.polyProduct selected.toArray) modulus)))
+    (hrecord : Hex.shouldRecordPolynomialFactor candidate = true)
+    (hquot : Hex.exactQuotient? target candidate = some quotient)
+    (hsearch_rest :
+      Hex.recombinationSearchModAux quotient modulus rest localFactors.length =
+        some restFactors) :
+    ∃ factors,
+      Hex.recombinationSearchMod target modulus localFactors = some factors ∧
+        candidate ∈ factors ∧
+        Hex.shouldRecordPolynomialFactor candidate = true ∧
+        (∃ quotient,
+          Hex.exactQuotient? target candidate = some quotient ∧
+            Hex.recombinationSearchModAux quotient modulus rest
+                localFactors.length = some restFactors) := by
+  refine ⟨candidate :: restFactors, ?_, ?_, hrecord, ?_⟩
+  · exact
+      Hex.recombinationSearchMod_eq_some_of_step_of_prefix_none
+        htarget_ne_one hsplits hprefix hcandidate_def hrecord hquot
+        hsearch_rest
+  · simp
+  · exact ⟨quotient, hquot, hsearch_rest⟩
+
+/--
+Membership bridge from a successful fixed-lift recombination search into the
+public exhaustive-core wrapper.  The non-empty branch is discharged by the
+factor membership witness, so downstream coverage proofs can use an exact
+`recombinationSearchMod` success without unfolding `exhaustiveCoreFactorsWithBound`.
+-/
+theorem exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_some
+    {core factor : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData} {factors : List Hex.ZPoly}
+    (hB : B ≠ 0)
+    (hd :
+      d =
+        Hex.henselLiftData core (Hex.precisionForCoeffBound B primeData.p)
+          primeData)
+    (hsearch :
+      Hex.recombinationSearchMod core (d.p ^ d.k)
+        d.liftedFactors.toList = some factors)
+    (hmem : factor ∈ factors) :
+    factor ∈ (Hex.exhaustiveCoreFactorsWithBound core B primeData).toList := by
+  subst d
+  have hrecombine :
+      Hex.recombineExhaustive core
+          (Hex.henselLiftData core (Hex.precisionForCoeffBound B primeData.p)
+            primeData) =
+        factors.toArray :=
+    Hex.recombineExhaustive_eq_of_recombinationSearchMod_some hsearch
+  have hnot_empty : factors.toArray.isEmpty = false := by
+    cases factors with
+    | nil => simp at hmem
+    | cons head tail => simp
+  simp [Hex.exhaustiveCoreFactorsWithBound, hB, hrecombine, hnot_empty, hmem]
 
 /-- A `Hex.ZPoly` factor that passes the executable `shouldRecordPolynomialFactor`
 check is non-zero and not a unit after transport to `Polynomial ℤ`.  The

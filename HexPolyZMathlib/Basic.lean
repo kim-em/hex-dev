@@ -170,6 +170,44 @@ theorem natDegree_map_intCast_zmod_eq_of_leadingCoeff_ne_zero
   Polynomial.natDegree_map_of_leadingCoeff_ne_zero
     (Int.castRingHom (ZMod p)) hlc
 
+/--
+Issue-spec rename of `map_intCast_zmod_dvd_of_zpoly_dvd`: divisibility of
+executable integer polynomials transports to divisibility of their Mathlib
+reductions modulo `p`.
+-/
+theorem dvd_modP_of_dvd
+    (p : Nat) {g f : Hex.ZPoly} (hgf : g ∣ f) :
+    (toPolynomial g).map (Int.castRingHom (ZMod p)) ∣
+      (toPolynomial f).map (Int.castRingHom (ZMod p)) :=
+  map_intCast_zmod_dvd_of_zpoly_dvd p hgf
+
+/--
+Core integer-to-`ZMod p` identity underlying the `modP` bridge: pushing an
+integer through `intModNat`/`ZMod64.ofNat` and then to Mathlib's `ZMod p` via
+`toZMod` agrees with the direct integer cast.
+-/
+theorem toZMod_ZMod64_ofNat_intModNat_eq_intCast
+    (p : Nat) [Hex.ZMod64.Bounds p] (z : ℤ) :
+    HexModArithMathlib.ZMod64.toZMod
+        (Hex.ZMod64.ofNat p (Hex.ZPoly.intModNat z p)) =
+      ((z : ℤ) : ZMod p) := by
+  apply ZMod.val_injective p
+  rw [HexModArithMathlib.ZMod64.val_toZMod, Hex.ZMod64.toNat_ofNat]
+  apply Int.ofNat.inj
+  change ((Hex.ZPoly.intModNat z p % p : Nat) : ℤ) =
+    (((z : ℤ) : ZMod p).val : ℤ)
+  rw [Int.natCast_mod, ZMod.val_intCast]
+  unfold Hex.ZPoly.intModNat
+  have hp : (p : ℤ) ≠ 0 :=
+    Int.ofNat_ne_zero.mpr (Nat.ne_of_gt (Hex.ZMod64.Bounds.pPos (p := p)))
+  have hcast :
+      ((z % Int.ofNat p).toNat : ℤ) =
+        z % Int.ofNat p :=
+    Int.toNat_of_nonneg (Int.emod_nonneg _ hp)
+  rw [hcast]
+  change z % (p : ℤ) % (p : ℤ) = z % (p : ℤ)
+  rw [Int.emod_emod]
+
 end
 
 end HexPolyZMathlib

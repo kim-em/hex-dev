@@ -1,5 +1,6 @@
 import HexBerlekamp.Factor
 import HexBerlekamp.Irreducibility
+import HexBerlekamp.RabinSoundness
 import HexModArithMathlib
 import HexPolyMathlib
 import Mathlib.FieldTheory.Finite.GaloisField
@@ -237,6 +238,39 @@ theorem irreducible_of_mem_berlekampFactor
   sorry
 
 /--
+If executable Berlekamp factorization cannot split a monic square-free input,
+then the input itself is irreducible after transport to Mathlib.
+
+The executable factor list is never empty; with length at most one, its head is
+therefore a member of the Berlekamp output, so the existing per-emitted-factor
+irreducibility theorem applies directly.
+-/
+theorem irreducible_of_berlekampFactor_factors_length_le_one
+    (f : Hex.FpPoly p) (hmonic : Hex.DensePoly.Monic f)
+    [Lean.Grind.Field (Hex.ZMod64 p)] [Hex.ZMod64.PrimeModulus p]
+    (hsquareFree : Hex.DensePoly.gcd f (Hex.DensePoly.derivative f) = 1)
+    (hsmall : (Hex.Berlekamp.berlekampFactor f hmonic).factors.length ≤ 1) :
+    Irreducible (toMathlibPolynomial f) := by
+  cases hfactors : (Hex.Berlekamp.berlekampFactor f hmonic).factors with
+  | nil =>
+      exact False.elim
+        (Hex.Berlekamp.berlekampFactor_factors_ne_nil f hmonic hfactors)
+  | cons g rest =>
+      cases rest with
+      | nil =>
+          have hg_eq : g = f := by
+            have hprod := Hex.Berlekamp.prod_berlekampFactor f hmonic hsquareFree
+            rw [Hex.Berlekamp.Factorization.product_def] at hprod
+            simp [hfactors, Hex.Berlekamp.factorProduct_cons] at hprod
+            exact hprod
+          have hirr_g :
+              Irreducible (toMathlibPolynomial g) :=
+            irreducible_of_mem_berlekampFactor f hmonic hsquareFree g (by simp [hfactors])
+          simpa [hg_eq] using hirr_g
+      | cons h rest =>
+          simp [hfactors] at hsmall
+
+/--
 Rabin's executable test is equivalent to Mathlib irreducibility for the
 transported polynomial.
 -/
@@ -245,6 +279,18 @@ theorem rabin_irreducible
     [Fact (Nat.Prime p)] (n : Nat) (_hdegree : Hex.Berlekamp.basisSize f = n) :
     Hex.Berlekamp.rabinTest f hmonic = true ↔ Irreducible (toMathlibPolynomial f) := by
   sorry
+
+/--
+Forward Rabin soundness: when the executable Rabin test accepts, the
+transported Mathlib polynomial is irreducible.
+-/
+theorem rabinTest_true_irreducible
+    (f : Hex.FpPoly p) (hmonic : Hex.DensePoly.Monic f)
+    [Fact (Nat.Prime p)] :
+    Hex.Berlekamp.rabinTest f hmonic = true →
+      Irreducible (toMathlibPolynomial f) := by
+  intro htest
+  exact (rabin_irreducible f hmonic (Hex.Berlekamp.basisSize f) rfl).mp htest
 
 /--
 Rabin's executable test is equivalent to Mathlib irreducibility with the
@@ -268,7 +314,7 @@ theorem checkIrreducibilityCertificate_irreducible
     Hex.Berlekamp.checkIrreducibilityCertificate f hmonic cert = true →
       Irreducible (toMathlibPolynomial f) := by
   intro hcheck
-  exact (rabin_irreducible f hmonic (Hex.Berlekamp.basisSize f) rfl).mp
+  exact rabinTest_true_irreducible f hmonic
     (Hex.Berlekamp.checkIrreducibilityCertificate_rabinTest f hmonic cert hcheck)
 
 /-- Mathlib irreducibility over `Polynomial (ZMod p)` is classically decidable. -/
