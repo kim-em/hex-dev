@@ -1382,19 +1382,29 @@ See SPEC/Libraries/hex-berlekamp-zassenhaus.md §"Slow path".
 def precisionForCoeffBound (B p : Nat) : Nat :=
   ceilLogP p (2 * B + 1)
 
-private def subsetSplits : List ZPoly → List (List ZPoly × List ZPoly)
+/-- Enumerate every way to partition a list of polynomials into a `(selected,
+unselected)` pair while preserving the original order in each component.  Used
+by the exhaustive recombination search to drive the slow path. -/
+def subsetSplits : List ZPoly → List (List ZPoly × List ZPoly)
   | [] => [([], [])]
   | factor :: factors =>
       let rest := subsetSplits factors
       rest.map (fun split => (split.1, factor :: split.2)) ++
         rest.map (fun split => (factor :: split.1, split.2))
 
-private def subsetSplitsWithFirst : List ZPoly → List (List ZPoly × List ZPoly)
+/-- Variant of `subsetSplits` that forces the first element of the input list
+into the `selected` component.  This is what the recombination search actually
+iterates over, since the head of the remaining local factors must end up in
+some recovered factor and tracking that explicitly avoids enumerating the same
+subset twice through different traversal orders. -/
+def subsetSplitsWithFirst : List ZPoly → List (List ZPoly × List ZPoly)
   | [] => []
   | factor :: factors =>
       (subsetSplits factors).map fun split => (factor :: split.1, split.2)
 
-private def firstSome {α β : Type} : List α → (α → Option β) → Option β
+/-- Return the first `some` produced by applying `f` to elements of `xs` in
+order, or `none` if every application is `none`. -/
+def firstSome {α β : Type} : List α → (α → Option β) → Option β
   | [], _ => none
   | x :: xs, f =>
       match f x with
@@ -3792,7 +3802,12 @@ then recurses on the quotient and unused local factors.
 def recombinationSearch (f : ZPoly) (localFactors : List ZPoly) : Option (List ZPoly) :=
   recombinationSearchAux f localFactors (localFactors.length + 1)
 
-private def recombinationSearchModAux
+/-- Fuelled auxiliary for `recombinationSearchMod`.  Recurses through
+`subsetSplitsWithFirst localFactors`: at every level the head local factor is
+forced into the candidate, the centred-lift result is normalised and checked
+against `shouldRecordPolynomialFactor`, and a successful `exactQuotient?`
+divides the search down to the remaining local factors and quotient. -/
+def recombinationSearchModAux
     (target : ZPoly) (modulus : Nat) (localFactors : List ZPoly) :
     Nat → Option (List ZPoly)
   | 0 => none
@@ -3815,11 +3830,17 @@ private def recombinationSearchModAux
           else
             none
 
-private def recombinationSearchMod
+/-- Exhaustive lifted-factor recombination search at a fixed modulus.  Drives
+the slow path by iterating subsets of the lifted local factors through
+`recombinationSearchModAux`. -/
+def recombinationSearchMod
     (f : ZPoly) (modulus : Nat) (localFactors : List ZPoly) : Option (List ZPoly) :=
   recombinationSearchModAux f modulus localFactors (localFactors.length + 1)
 
-private def recombineExhaustive (f : ZPoly) (d : LiftData) : Array ZPoly :=
+/-- Exhaustive recombination of the lifted local factors stored in `d`, run at
+the Hensel modulus `p^k = liftModulus d`.  Returns the recovered integer
+factors as an array on success and `#[]` when the search fails. -/
+def recombineExhaustive (f : ZPoly) (d : LiftData) : Array ZPoly :=
   match recombinationSearchMod f (liftModulus d) d.liftedFactors.toList with
   | some factors => factors.toArray
   | none => #[]
@@ -5250,11 +5271,58 @@ private theorem firstSome_eq_some_of_append
       rw [hprefix z (by simp)]
       exact ih (fun w hw => hprefix w (by simp [hw]))
 
-private theorem subsetSplitsWithFirst_mem_cons
+theorem subsetSplitsWithFirst_mem_cons
     {factor : ZPoly} {factors selected rest : List ZPoly}
     (hmem : (selected, rest) ∈ subsetSplits factors) :
     (factor :: selected, rest) ∈ subsetSplitsWithFirst (factor :: factors) := by
   simp [subsetSplitsWithFirst, hmem]
+
+/-- Constructor for `subsetSplits` membership on the empty list: the only
+partition of the empty list is `([], [])`. -/
+theorem subsetSplits_nil_mem :
+    (([], []) : List ZPoly × List ZPoly) ∈ subsetSplits [] := by
+  simp [subsetSplits]
+
+/-- Constructor for `subsetSplits` membership on a cons list, head selected:
+prepending `factor` to the `selected` side preserves enumerability. -/
+theorem subsetSplits_cons_left_mem
+    {factor : ZPoly} {factors selected rest : List ZPoly}
+    (h : (selected, rest) ∈ subsetSplits factors) :
+    (factor :: selected, rest) ∈ subsetSplits (factor :: factors) := by
+  unfold subsetSplits
+  refine List.mem_append.mpr (Or.inr ?_)
+  exact List.mem_map.mpr ⟨(selected, rest), h, rfl⟩
+
+/-- Constructor for `subsetSplits` membership on a cons list, head unselected:
+prepending `factor` to the `rest` side preserves enumerability. -/
+theorem subsetSplits_cons_right_mem
+    {factor : ZPoly} {factors selected rest : List ZPoly}
+    (h : (selected, rest) ∈ subsetSplits factors) :
+    (selected, factor :: rest) ∈ subsetSplits (factor :: factors) := by
+  unfold subsetSplits
+  refine List.mem_append.mpr (Or.inl ?_)
+  exact List.mem_map.mpr ⟨(selected, rest), h, rfl⟩
+
+/-- Existence companion to `firstSome_some`: if `f x = some y` for some `x ∈ xs`,
+then `firstSome xs f` is itself `some _`.  Used to chain executable completeness
+arguments: showing the search at the current step can succeed reduces to
+exhibiting a single subset whose candidate works. -/
+theorem firstSome_isSome_of_mem
+    {α β : Type} {xs : List α} {f : α → Option β} {x : α} {y : β}
+    (hmem : x ∈ xs) (hxy : f x = some y) :
+    (firstSome xs f).isSome = true := by
+  induction xs with
+  | nil => simp at hmem
+  | cons z zs ih =>
+      unfold firstSome
+      cases hfz : f z with
+      | some _ => simp
+      | none =>
+          rcases List.mem_cons.mp hmem with hxz | hxzs
+          · subst hxz
+            rw [hfz] at hxy
+            cases hxy
+          · simpa [hfz] using ih hxzs
 
 private theorem recombinationSearchAux_product
     (target : ZPoly) (localFactors factors : List ZPoly) (fuel : Nat)
@@ -5497,6 +5565,95 @@ private theorem recombineExhaustive_shouldRecord
       intro factor hmem
       exact recombinationSearchMod_shouldRecord f (liftModulus d)
         d.liftedFactors.toList factors hsearch factor (by simpa using hmem)
+
+/-- Base case for the exhaustive recombination search: when the running target
+has already been reduced to `1`, the search terminates and returns the empty
+factor list. -/
+theorem recombinationSearchModAux_one
+    (modulus : Nat) (localFactors : List ZPoly) (fuel : Nat) :
+    recombinationSearchModAux 1 modulus localFactors (fuel + 1) = some [] := by
+  unfold recombinationSearchModAux
+  simp
+
+/-- Executable completeness of `recombinationSearchModAux`: if a single
+exhaustive-search step can pick the candidate produced by centred-lifting
+`selected` (a subset of `localFactors` whose order-preserving partition has
+`rest` as complement), and the recursive search on the residual `(quotient,
+rest)` succeeds with the supplied fuel, then the search at the current step
+also succeeds.
+
+This is the Mathlib-free step lemma underpinning Group A coverage proofs: it
+exposes that any subset of the lifted local factors with a working candidate
+is enumerated by `subsetSplitsWithFirst`, and that the search descends through
+that candidate to the residual problem. -/
+theorem recombinationSearchModAux_isSome_of_step
+    {target candidate quotient : ZPoly} {modulus fuel : Nat}
+    {localFactors selected rest : List ZPoly}
+    (htarget_ne_one : target ≠ 1)
+    (hsplit : (selected, rest) ∈ subsetSplitsWithFirst localFactors)
+    (hcandidate_def :
+      candidate = normalizeFactorSign
+        (ZPoly.primitivePart (centeredLiftPoly (Array.polyProduct selected.toArray) modulus)))
+    (hrecord : shouldRecordPolynomialFactor candidate = true)
+    (hquot : exactQuotient? target candidate = some quotient)
+    (hsearch_rest :
+      (recombinationSearchModAux quotient modulus rest fuel).isSome = true) :
+    (recombinationSearchModAux target modulus localFactors (fuel + 1)).isSome = true := by
+  obtain ⟨restFactors, hrest⟩ := Option.isSome_iff_exists.mp hsearch_rest
+  unfold recombinationSearchModAux
+  rw [if_neg htarget_ne_one]
+  refine firstSome_isSome_of_mem (y := candidate :: restFactors) hsplit ?_
+  show (let candidate' := normalizeFactorSign <|
+            ZPoly.primitivePart <|
+              centeredLiftPoly (Array.polyProduct selected.toArray) modulus
+        if shouldRecordPolynomialFactor candidate' then
+          match exactQuotient? target candidate' with
+          | none => none
+          | some quotient' =>
+              match recombinationSearchModAux quotient' modulus rest fuel with
+              | none => none
+              | some r => some (candidate' :: r)
+        else none) = some (candidate :: restFactors)
+  rw [show (normalizeFactorSign <|
+            ZPoly.primitivePart <|
+              centeredLiftPoly (Array.polyProduct selected.toArray) modulus) = candidate
+        from hcandidate_def.symm]
+  rw [if_pos hrecord]
+  simp only [hquot, hrest]
+
+/-- Companion to `recombinationSearchModAux_isSome_of_step` at the
+`recombinationSearchMod` surface.  Hides the fuel parameter, requiring the
+caller to supply the recursive isSome witness already specialised to fuel
+`localFactors.length`.  Useful for downstream consumers that want to chain
+step lemmas with a fixed shared fuel budget. -/
+theorem recombinationSearchMod_isSome_of_step
+    {target candidate quotient : ZPoly} {modulus : Nat}
+    {localFactors selected rest : List ZPoly}
+    (htarget_ne_one : target ≠ 1)
+    (hsplit : (selected, rest) ∈ subsetSplitsWithFirst localFactors)
+    (hcandidate_def :
+      candidate = normalizeFactorSign
+        (ZPoly.primitivePart (centeredLiftPoly (Array.polyProduct selected.toArray) modulus)))
+    (hrecord : shouldRecordPolynomialFactor candidate = true)
+    (hquot : exactQuotient? target candidate = some quotient)
+    (hsearch_rest :
+      (recombinationSearchModAux quotient modulus rest localFactors.length).isSome = true) :
+    (recombinationSearchMod target modulus localFactors).isSome = true := by
+  unfold recombinationSearchMod
+  exact recombinationSearchModAux_isSome_of_step (fuel := localFactors.length)
+    htarget_ne_one hsplit hcandidate_def hrecord hquot hsearch_rest
+
+/-- When `recombinationSearchMod` succeeds on the lifted-factor list, the
+`recombineExhaustive` wrapper returns exactly the array of recovered factors.
+This is the bridge that lets downstream irreducibility proofs replace a
+`recombineExhaustive` term with a concrete factor list once the search is
+known to succeed. -/
+theorem recombineExhaustive_eq_of_recombinationSearchMod_some
+    {f : ZPoly} {d : LiftData} {factors : List ZPoly}
+    (h : recombinationSearchMod f (liftModulus d) d.liftedFactors.toList = some factors) :
+    recombineExhaustive f d = factors.toArray := by
+  unfold recombineExhaustive
+  rw [h]
 
 theorem exhaustiveCoreFactorsWithBound_normalizeFactorSign
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
