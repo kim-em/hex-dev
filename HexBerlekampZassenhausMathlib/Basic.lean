@@ -593,6 +593,36 @@ theorem toMathlibPolynomial_one {p : Nat} [Hex.ZMod64.Bounds p] :
   · simp only [hn, ↓reduceIte]
     exact HexModArithMathlib.ZMod64.toZMod_zero
 
+/-- The executable constant polynomial `DensePoly.C c` transports to Mathlib's
+`Polynomial.C` of the `ZMod p` cast of `c`. -/
+theorem toMathlibPolynomial_C {p : Nat} [Hex.ZMod64.Bounds p]
+    (c : Hex.ZMod64 p) :
+    HexBerlekampMathlib.toMathlibPolynomial (Hex.DensePoly.C c) =
+      Polynomial.C (HexModArithMathlib.ZMod64.toZMod c) := by
+  ext n
+  rw [HexBerlekampMathlib.coeff_toMathlibPolynomial, Hex.DensePoly.coeff_C,
+      Polynomial.coeff_C]
+  by_cases hn : n = 0
+  · simp [hn]
+  · simp only [hn, ↓reduceIte]
+    exact HexModArithMathlib.ZMod64.toZMod_zero
+
+/-- Coefficientwise scaling on `FpPoly p` transports across the Mathlib bridge
+to multiplication by the corresponding `Polynomial.C` of the `ZMod p` cast. -/
+theorem toMathlibPolynomial_scale {p : Nat} [Hex.ZMod64.Bounds p]
+    (c : Hex.ZMod64 p) (f : Hex.FpPoly p) :
+    HexBerlekampMathlib.toMathlibPolynomial (Hex.DensePoly.scale c f) =
+      Polynomial.C (HexModArithMathlib.ZMod64.toZMod c) *
+        HexBerlekampMathlib.toMathlibPolynomial f := by
+  ext n
+  rw [HexBerlekampMathlib.coeff_toMathlibPolynomial,
+      Polynomial.coeff_C_mul, HexBerlekampMathlib.coeff_toMathlibPolynomial]
+  have hzero : c * (Zero.zero : Hex.ZMod64 p) = (Zero.zero : Hex.ZMod64 p) := by
+    show c * (0 : Hex.ZMod64 p) = (0 : Hex.ZMod64 p)
+    grind
+  rw [Hex.DensePoly.coeff_scale c f n hzero]
+  exact HexModArithMathlib.ZMod64.toZMod_mul c (f.coeff n)
+
 /--
 List `foldl (· * ·)` of executable `FpPoly p` factors transports across the
 Mathlib bridge to the explicit Mathlib `List.prod` of the per-factor transports.

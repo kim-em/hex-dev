@@ -842,6 +842,46 @@ theorem isGoodPrime_squareFreeModP
   simpa [beq_iff_eq] using hgood.2
 
 /--
+A successful good-prime check rules out a vanishing modular image: the leading
+coefficient survives reduction modulo `p`, so the modular image retains at
+least one stored coefficient.
+-/
+theorem isGoodPrime_modP_isZero_false
+    (f : ZPoly) (p : Nat) [ZMod64.Bounds p]
+    (hgood : isGoodPrime f p = true) :
+    (ZPoly.modP p f).isZero = false := by
+  have hadm : leadingCoeffAdmissible f p := isGoodPrime_leadingCoeffAdmissible f p hgood
+  unfold leadingCoeffAdmissible at hadm
+  have hfsize : 0 < f.size := by
+    rcases Nat.eq_zero_or_pos f.size with hsize_zero | hfsize
+    · exfalso
+      apply hadm
+      have hcoeffs_zero : f.coeffs.size = 0 := by simpa [DensePoly.size] using hsize_zero
+      have hlead : DensePoly.leadingCoeff f = 0 := by
+        unfold DensePoly.leadingCoeff
+        rw [Array.back?_eq_getElem?]
+        simp [hcoeffs_zero]
+      unfold ZPoly.leadingCoeffModP
+      rw [hlead]
+      show (ZMod64.ofNat p (ZPoly.intModNat 0 p) : ZMod64 p) = 0
+      rfl
+    · exact hfsize
+  have hcoeff_ne : (ZPoly.modP p f).coeff (f.size - 1) ≠ 0 := by
+    rw [ZPoly.coeff_modP]
+    rw [← DensePoly.leadingCoeff_eq_coeff_last f hfsize]
+    exact hadm
+  cases hzero : (ZPoly.modP p f).isZero with
+  | false => rfl
+  | true =>
+      exfalso
+      have hsize : (ZPoly.modP p f).size = 0 := by
+        simpa [DensePoly.isZero, DensePoly.size, Array.isEmpty_iff_size_eq_zero] using hzero
+      have hzero_coeff :=
+        DensePoly.coeff_eq_zero_of_size_le (ZPoly.modP p f)
+          (show (ZPoly.modP p f).size ≤ f.size - 1 by omega)
+      exact hcoeff_ne hzero_coeff
+
+/--
 Data produced by modular prime selection: the selected prime, the image of the
 input polynomial over that prime field, and its modular factors.
 -/
@@ -1618,6 +1658,134 @@ theorem choosePrimeData?_isGoodPrime
       exact choosePrimeDataScore_fold_isGoodPrime f smallPrimeCandidates none score
         (by intro old hnone; cases hnone)
         hscore
+
+/--
+Invariant capturing that `data.factorsModP` is exactly the Berlekamp factor
+output for the monic modular image used by prime selection.  Phrased as an
+existential bundling the nonzero-image and field witnesses so that it
+threads through the executable prime-selection fold.
+-/
+private def factorsModPBerlekampForm
+    (f : ZPoly) (data : PrimeChoiceData) : Prop :=
+  letI := data.bounds
+  ∃ (hprime : Nat.Prime data.p)
+    (hzero : (ZPoly.modP data.p f).isZero = false)
+    (hfield : Lean.Grind.Field (ZMod64 data.p)),
+    data.factorsModP =
+      (@Berlekamp.berlekampFactor data.p data.bounds
+        (monicModularImage (ZPoly.modP data.p f))
+        (monicModularImage_monic hprime (ZPoly.modP data.p f) hzero)
+        hfield).factors.toArray
+
+private theorem primeChoiceDataScore_factorsModPBerlekampForm
+    (f : ZPoly) (c : SmallPrimeCandidate) (score : PrimeChoiceDataScore)
+    (hscore : primeChoiceDataScore f c = some score) :
+    factorsModPBerlekampForm f score.data := by
+  unfold primeChoiceDataScore at hscore
+  letI := c.bounds
+  by_cases hgood : isGoodPrime f c.p
+  · simp [hgood] at hscore
+    cases hscore
+    have hzero : (ZPoly.modP c.p f).isZero = false :=
+      isGoodPrime_modP_isZero_false f c.p hgood
+    refine ⟨c.prime, hzero, c.field, ?_⟩
+    show berlekampFactorsModP f c = _
+    exact berlekampFactorsModP_eq_of_isZero_false f c hzero
+  · simp [hgood] at hscore
+
+private theorem betterPrimeChoiceDataScore_factorsModPBerlekampForm
+    (f : ZPoly) (old new score : PrimeChoiceDataScore)
+    (hold : factorsModPBerlekampForm f old.data)
+    (hnew : factorsModPBerlekampForm f new.data)
+    (hscore : betterPrimeChoiceDataScore old new = score) :
+    factorsModPBerlekampForm f score.data := by
+  unfold betterPrimeChoiceDataScore at hscore
+  split at hscore
+  · cases hscore
+    exact hnew
+  · cases hscore
+    exact hold
+
+private theorem choosePrimeDataScoreStep_factorsModPBerlekampForm
+    (f : ZPoly) (best : Option PrimeChoiceDataScore) (c : SmallPrimeCandidate)
+    (score : PrimeChoiceDataScore)
+    (hbest : ∀ old, best = some old → factorsModPBerlekampForm f old.data)
+    (hscore : choosePrimeDataScoreStep f best c = some score) :
+    factorsModPBerlekampForm f score.data := by
+  unfold choosePrimeDataScoreStep at hscore
+  cases hbest_eq : best with
+  | none =>
+      cases hc_eq : primeChoiceDataScore f c with
+      | none =>
+          simp [hbest_eq, hc_eq] at hscore
+      | some new =>
+          simp [hbest_eq, hc_eq] at hscore
+          have hnew := primeChoiceDataScore_factorsModPBerlekampForm f c new hc_eq
+          subst score
+          exact hnew
+  | some old =>
+      cases hc_eq : primeChoiceDataScore f c with
+      | none =>
+          simp [hbest_eq, hc_eq] at hscore
+          have hold := hbest old hbest_eq
+          subst score
+          exact hold
+      | some new =>
+          simp [hbest_eq, hc_eq] at hscore
+          exact betterPrimeChoiceDataScore_factorsModPBerlekampForm f old new score
+            (hbest old hbest_eq)
+            (primeChoiceDataScore_factorsModPBerlekampForm f c new hc_eq)
+            hscore
+
+private theorem choosePrimeDataScore_fold_factorsModPBerlekampForm
+    (f : ZPoly) (candidates : List SmallPrimeCandidate)
+    (best : Option PrimeChoiceDataScore) (score : PrimeChoiceDataScore)
+    (hbest : ∀ old, best = some old → factorsModPBerlekampForm f old.data)
+    (hscore :
+      candidates.foldl (choosePrimeDataScoreStep f) best = some score) :
+    factorsModPBerlekampForm f score.data := by
+  induction candidates generalizing best with
+  | nil =>
+      exact hbest score hscore
+  | cons c candidates ih =>
+      exact ih (choosePrimeDataScoreStep f best c)
+        (fun old hold =>
+          choosePrimeDataScoreStep_factorsModPBerlekampForm f best c old hbest hold)
+        hscore
+
+/--
+When `choosePrimeData? f` succeeds, the stored modular factor array is exactly
+the Berlekamp factor output for the monic modular image of the selected
+candidate.  Mirrors the `_prime` / `_fModP_eq` / `_isGoodPrime` provenance
+chains, exposing the executable surface used by the small-mod singleton
+irreducibility composition.
+-/
+theorem choosePrimeData?_factorsModP_berlekamp_form
+    (f : ZPoly) (data : PrimeChoiceData)
+    (hdata : choosePrimeData? f = some data) :
+    letI := data.bounds
+    ∃ (hzero : (ZPoly.modP data.p f).isZero = false)
+      (hfield : Lean.Grind.Field (ZMod64 data.p)),
+      data.factorsModP =
+        (@Berlekamp.berlekampFactor data.p data.bounds
+          (monicModularImage (ZPoly.modP data.p f))
+          (monicModularImage_monic
+            (choosePrimeData?_prime f data hdata)
+            (ZPoly.modP data.p f) hzero)
+          hfield).factors.toArray := by
+  unfold choosePrimeData? at hdata
+  cases hscore :
+      smallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none with
+  | none =>
+      simp [hscore] at hdata
+  | some score =>
+      simp [hscore] at hdata
+      cases hdata
+      have hform :=
+        choosePrimeDataScore_fold_factorsModPBerlekampForm f smallPrimeCandidates none
+          score (by intro old hnone; cases hnone) hscore
+      obtain ⟨_, hzero, hfield, heq⟩ := hform
+      exact ⟨hzero, hfield, heq⟩
 
 /-- The prime selected by `choosePrimeData` is one of the fixed prime candidates. -/
 theorem choosePrimeData_prime (f : ZPoly) :
