@@ -1881,6 +1881,143 @@ theorem primeFieldLinearProduct_monic :
   exact (foldl_size_and_monic (p := p) (ZMod64.values p) 1
     fpPoly_one_ne_zero fpPoly_one_monic).2.1
 
+/-! ### `xPowSubX 1` shape and the final identity -/
+
+/-- The coefficient of `xPowSubX 1` at index `p` is `1` (the leading position). -/
+private theorem xPowSubX_one_coeff_p :
+    (xPowSubX (p := p) 1).coeff p = (1 : ZMod64 p) := by
+  unfold xPowSubX FpPoly.X
+  rw [Nat.pow_one]
+  rw [DensePoly.coeff_sub _ _ _ zmod64_zero_sub_zero]
+  rw [DensePoly.coeff_monomial, DensePoly.coeff_monomial]
+  have hp_pos : 2 ≤ p :=
+    Hex.Nat.Prime.two_le (ZMod64.PrimeModulus.prime (p := p))
+  have hp1 : ¬ p = 1 := by omega
+  simp [hp1]
+  have h0 : (Zero.zero : ZMod64 p) = 0 := rfl
+  rw [h0]
+  grind
+
+/-- High coefficients of `xPowSubX 1` vanish (`n > p`). -/
+private theorem xPowSubX_one_coeff_high {n : Nat} (hn : p < n) :
+    (xPowSubX (p := p) 1).coeff n = 0 := by
+  unfold xPowSubX FpPoly.X
+  rw [Nat.pow_one]
+  rw [DensePoly.coeff_sub _ _ _ zmod64_zero_sub_zero]
+  rw [DensePoly.coeff_monomial, DensePoly.coeff_monomial]
+  have hp_pos : 2 ≤ p :=
+    Hex.Nat.Prime.two_le (ZMod64.PrimeModulus.prime (p := p))
+  have hn_ne_p : ¬ n = p := by omega
+  have hn_ne_1 : ¬ n = 1 := by omega
+  simp [hn_ne_p, hn_ne_1]
+  have h0 : (Zero.zero : ZMod64 p) = 0 := rfl
+  rw [h0]
+  grind
+
+/-- `xPowSubX 1` has size `p + 1`. -/
+theorem xPowSubX_one_size : (xPowSubX (p := p) 1).size = p + 1 := by
+  have h_coeff_p_ne : (xPowSubX (p := p) 1).coeff p ≠ 0 := by
+    rw [xPowSubX_one_coeff_p]
+    exact zmod64_one_ne_zero_of_prime
+  have h_lower : p + 1 ≤ (xPowSubX (p := p) 1).size := by
+    apply Classical.byContradiction
+    intro h
+    have hle : (xPowSubX (p := p) 1).size ≤ p := by omega
+    exact h_coeff_p_ne (DensePoly.coeff_eq_zero_of_size_le _ hle)
+  have h_upper : (xPowSubX (p := p) 1).size ≤ p + 1 := by
+    apply Classical.byContradiction
+    intro h
+    have hgt : p + 1 < (xPowSubX (p := p) 1).size := by omega
+    have h_pos : 0 < (xPowSubX (p := p) 1).size := by omega
+    have h_top_ne :
+        (xPowSubX (p := p) 1).coeff ((xPowSubX (p := p) 1).size - 1) ≠ 0 :=
+      DensePoly.coeff_last_ne_zero_of_pos_size _ h_pos
+    apply h_top_ne
+    apply xPowSubX_one_coeff_high
+    omega
+  omega
+
+/-- `xPowSubX 1` is monic. -/
+theorem xPowSubX_one_monic :
+    DensePoly.Monic (xPowSubX (p := p) 1) := by
+  unfold DensePoly.Monic
+  rw [DensePoly.leadingCoeff_eq_coeff_last _
+    (by rw [xPowSubX_one_size]; omega)]
+  rw [xPowSubX_one_size]
+  change (xPowSubX (p := p) 1).coeff (p + 1 - 1) = 1
+  have : p + 1 - 1 = p := by omega
+  rw [this]
+  exact xPowSubX_one_coeff_p
+
+/-- A monic polynomial dividing another monic polynomial of equal size equals it. -/
+private theorem eq_of_dvd_of_size_eq_of_monic
+    {a b : FpPoly p} (ha_ne : a ≠ 0) (hb_ne : b ≠ 0)
+    (hdvd : a ∣ b) (hsize : a.size = b.size)
+    (ha_monic : DensePoly.Monic a) (hb_monic : DensePoly.Monic b) :
+    a = b := by
+  rcases hdvd with ⟨q, hq⟩
+  have hq_ne : q ≠ 0 := by
+    intro hq_zero
+    apply hb_ne
+    rw [hq, hq_zero, FpPoly.mul_zero]
+  have ha_pos : 0 < a.size := FpPoly.size_pos_of_ne_zero ha_ne
+  have hq_pos : 0 < q.size := FpPoly.size_pos_of_ne_zero hq_ne
+  have hb_eq_size : b.size = a.size + q.size - 1 := by
+    rw [hq]
+    exact FpPoly.size_mul_eq_add_sub_one a q ha_ne hq_ne
+  have hq_size_one : q.size = 1 := by
+    rw [hb_eq_size] at hsize
+    omega
+  -- q has size 1, so q = DensePoly.C (q.coeff 0).
+  have hq_eq_C : q = (DensePoly.C (q.coeff 0) : FpPoly p) := by
+    apply DensePoly.ext_coeff
+    intro n
+    rw [DensePoly.coeff_C]
+    cases n with
+    | zero => simp
+    | succ n =>
+        simp
+        apply DensePoly.coeff_eq_zero_of_size_le
+        omega
+  -- Leading coeff: 1 = leadingCoeff b = leadingCoeff a * leadingCoeff q = 1 * (q.coeff 0)
+  have hlead_eq : DensePoly.leadingCoeff b
+      = DensePoly.leadingCoeff a * DensePoly.leadingCoeff q := by
+    rw [hq]
+    exact leadingCoeff_mul_fpoly a q ha_ne hq_ne
+  have hq_lead : DensePoly.leadingCoeff q = q.coeff 0 := by
+    rw [DensePoly.leadingCoeff_eq_coeff_last _ hq_pos, hq_size_one]
+  have hq_coeff0 : q.coeff 0 = 1 := by
+    unfold DensePoly.Monic at ha_monic hb_monic
+    rw [ha_monic, hq_lead, hb_monic] at hlead_eq
+    have : (1 : ZMod64 p) = 1 * q.coeff 0 := hlead_eq
+    grind
+  rw [hq, hq_eq_C, hq_coeff0]
+  show a = a * (DensePoly.C (1 : ZMod64 p))
+  rw [show (DensePoly.C (1 : ZMod64 p) : FpPoly p) = 1 from rfl]
+  rw [FpPoly.mul_one]
+
+/-- The variable prime-field product identity: the canonical product over field
+constants equals `xPowSubX 1`. This is the headline deliverable for #4085. -/
+theorem primeFieldProduct_X_eq_xPowSubX :
+    (ZMod64.values p).foldl
+      (fun acc c => acc * (FpPoly.X - FpPoly.C c)) 1 =
+        xPowSubX (p := p) 1 := by
+  change primeFieldLinearProduct (p := p) = xPowSubX (p := p) 1
+  apply eq_of_dvd_of_size_eq_of_monic
+    primeFieldLinearProduct_ne_zero
+    (by
+      intro h
+      have h_coeff_p_ne : (xPowSubX (p := p) 1).coeff p ≠ 0 := by
+        rw [xPowSubX_one_coeff_p]
+        exact zmod64_one_ne_zero_of_prime
+      apply h_coeff_p_ne
+      rw [h]
+      exact DensePoly.coeff_zero p)
+    primeFieldLinearProduct_dvd_xPowSubX_one
+    (by rw [primeFieldLinearProduct_size, xPowSubX_one_size])
+    primeFieldLinearProduct_monic
+    xPowSubX_one_monic
+
 /-! ### Structural lemmas
 
 These small consequences only use the foundational lemmas above plus
