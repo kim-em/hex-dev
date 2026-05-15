@@ -353,7 +353,7 @@ private theorem powModMonicAux_pos_self_mod
           exact ih ((k + 1) / 2) hlt hpos2 _ _
 
 /-- For a positive exponent, `powModMonic` returns an already-reduced value. -/
-private theorem powModMonic_pos_self_mod
+theorem powModMonic_pos_self_mod
     [ZMod64.PrimeModulus p]
     (base f : FpPoly p) (hmonic : DensePoly.Monic f) (n : Nat) (hn : 0 < n) :
     (powModMonic base f hmonic n) % f = powModMonic base f hmonic n := by

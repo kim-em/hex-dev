@@ -356,7 +356,13 @@ private theorem compose_toArray_toList_eq_coeff_range (f : FpPoly p) :
     rw [compose_list_getD_map_range]
     simp [hi_size]
 
-private def composeCoeffPowerSumUpTo
+/-- Recursive sum form of compose. The compose-power-sum
+`Σ_{k=base}^{base+n-1} C(coeff k) · linearPow w k` recursively builds up
+the polynomial substitution: each step adds a single
+`C(coeff base) · linearPow w base` term and recurses with `base + 1`.
+This shape is matched by Berlekamp's matrix-action sum after replacing
+`linearPow w` with the reduced `powModMonic` columns. -/
+def composeCoeffPowerSumUpTo
     (coeff : Nat → ZMod64 p) :
     Nat → Nat → FpPoly p → FpPoly p
   | 0, _, _ => 0
@@ -433,7 +439,10 @@ private theorem composeCoeffPowerSumUpTo_le_extend
   exact composeCoeffPowerSumUpTo_le_extend_base
     coeff w (base := 0) (bound := bound) (by simpa using hzero) extra
 
-private theorem compose_eq_coeff_power_sum_upTo_bound (f w : FpPoly p)
+/-- `compose f w` equals `composeCoeffPowerSumUpTo` evaluated up to any
+upper bound that is at least `f.size`. Out-of-range coefficients of `f`
+vanish, so the recursion safely extends past `f.size`. -/
+theorem compose_eq_coeff_power_sum_upTo_bound (f w : FpPoly p)
     {bound : Nat} (hbound : f.size ≤ bound) :
     DensePoly.compose f w =
       composeCoeffPowerSumUpTo (fun i => f.coeff i) bound 0 w := by
