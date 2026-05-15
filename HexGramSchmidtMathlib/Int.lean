@@ -63,14 +63,42 @@ theorem scaledCoeffs_eq_scaledCoeffMatrix_bareiss_of_no_singular
 
 /-- Cramer/Bareiss bridge: below the diagonal, the integral scaled
 Gram-Schmidt coefficient is exactly the public Bareiss determinant of the
-Cramer minor `scaledCoeffMatrix`. This is the `bareiss`-form companion of
-the existing Mathlib-free `scaledCoeffs_eq_scaledCoeffMatrix_det`. -/
+Cramer minor `scaledCoeffMatrix`. The proof splits on whether the no-pivot
+Bareiss pass over `gramMatrix b` reaches column `j` without recording a
+singular step:
+
+- Non-singular branch: defer to
+  `scaledCoeffs_eq_scaledCoeffMatrix_bareiss_of_no_singular`.
+- Singular branch: both sides vanish — the executable scaled coefficient is
+  zero by `scaledCoeffs_eq_zero_of_singularStep_lt` (the lifted lower-column
+  singular lemma from #4166), and the public Bareiss determinant of the
+  Cramer minor is zero by `Matrix.bareiss_eq_det` composed with
+  `scaledCoeffMatrix_det_eq_zero_of_singularStep_lt`. The latter Mathlib-free
+  helper internally lifts partial-pass singularity to the full
+  `bareissNoPivotData` pass and applies the Cramer determinant identity.
+
+This case-split avoids the transitive dependency on the private sorry
+`scaledCoeffRows_lower_eq_scaledCoeffMatrix_bareiss` that the older chain
+proof carried via `scaledCoeffs_eq_scaledCoeffMatrix_det`. -/
 theorem scaledCoeffs_eq_scaledCoeffMatrix_bareiss
     (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val) :
     GramSchmidt.entry (scaledCoeffs b) i j =
       Matrix.bareiss (GramSchmidt.scaledCoeffMatrix b i j hji) := by
-  rw [scaledCoeffs_eq_scaledCoeffMatrix_det b i j hji,
-    Matrix.bareiss_eq_det]
+  cases h_sing : (Matrix.noPivotLoop j.val
+      (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep with
+  | none =>
+      exact scaledCoeffs_eq_scaledCoeffMatrix_bareiss_of_no_singular b i j hji h_sing
+  | some s =>
+      have hsj : s < j.val := by
+        have h := noPivotLoop_singularStep_lt j.val
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b)) rfl s h_sing
+        change s < 0 + j.val at h
+        omega
+      have h_lhs : GramSchmidt.entry (scaledCoeffs b) i j = 0 :=
+        scaledCoeffs_eq_zero_of_singularStep_lt b i j hji s h_sing hsj
+      have h_det := scaledCoeffMatrix_det_eq_zero_of_singularStep_lt
+        b i j hji s h_sing
+      rw [h_lhs, Matrix.bareiss_eq_det, h_det]
 
 end Int
 end GramSchmidt

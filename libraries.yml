@@ -388,7 +388,7 @@ libraries:
   HexBerlekampZassenhausMathlib:
     deps: [HexBerlekampZassenhaus, HexBerlekampMathlib, HexPolyZMathlib, HexMatrixMathlib]
     mathlib: true
-    done_through: 3
+    done_through: 2
     status: active
 
   # ---------- Planned (status: planned; SPEC ready, implementation deferred) ----------

@@ -36,14 +36,19 @@ Scientific registrations:
 
 Informational external comparator:
 
-* `fpLLL via fpylll`: process-call registrations shell out to
-  `scripts/oracle/lll_fpylll.py --bench-checksum`, which uses
-  `fpylll.LLL.reduction` with `delta = 0.75` (matching Lean's `δ = 3/4`).
-  The comparator is classified informational in `SPEC/Libraries/hex-lll.md`
-  because fpLLL's floating-point Gram-Schmidt implementation
-  (Nguyen-Stehle; fpylll 0.6 or newer supported by the existing oracle
-  driver) bypasses the exact-integer operand-size drift paid by this verified
-  implementation. Ratios are recorded for orientation but do not gate Phase 4.
+* `fpLLL via fpylll`: process-call registrations send each matrix to
+  `scripts/oracle/lll_fpylll_bench_driver.py`, the persistent
+  subprocess driver wired in HO-17 (#3660). The driver imports
+  `fpylll` once at startup and calls `fpylll.LLL.reduction` with
+  `delta = 0.75` (matching Lean's `δ = 3/4`) per request. The
+  comparator is classified informational in
+  `SPEC/Libraries/hex-lll.md` because fpLLL's floating-point
+  Gram-Schmidt implementation (Nguyen-Stehle; fpylll 0.6 or newer
+  supported by the existing oracle driver) bypasses the
+  exact-integer operand-size drift paid by this verified
+  implementation. Ratios are recorded for orientation but do not gate
+  Phase 4. The conformance-mode entry point remains
+  `scripts/oracle/lll_fpylll.py --check`.
 
 External comparator:
 
@@ -70,42 +75,66 @@ framed request to its stdin and reads one framed reply from its stdout.
 
 **Framing.** Each request is one line containing the input matrix in
 Haskell's `[[Integer]]` read syntax — exactly the string produced by
-`matrixHaskell` — terminated by `\n`. Each reply is one line containing
-the squared norm of the comparator's first reduced row, terminated by
-`\n`. The framing is shared with the fpylll driver wired in HO-17 so
-both comparators are framing-compatible.
+`matrixHaskell` — terminated by `\n`. The same request line feeds
+both the Isabelle and the fpylll persistent drivers; each emits a
+single scalar per request, terminated by `\n`. Isabelle returns the
+squared norm of its first reduced row; fpylll returns the integer
+first-row checksum matching `Hex.LLLBench.intVectorChecksum` (the
+scalar paired with `runFirstShortVector*Checksum`). Malformed
+fpylll requests come back as `ERROR: <message>`; the Lean parser
+treats any non-integer reply as a driver fault and triggers the
+retry path.
 
-**Lifetime.** The driver is spawned lazily on first use into
-`isabelleChildRef : IO.Ref (Option PersistentComparator)` and reused
-for every subsequent call in the same `hexlll_bench` process. The
-child's stdin is held by the bench process via `Child.takeStdin`; on
-process exit, the OS reaps the driver via EOF on stdin.
+**Lifetime.** Each driver is spawned lazily on first use into a
+module-level `IO.Ref (Option PersistentComparator)`
+(`isabelleChildRef` for Isabelle, `fpylllChildRef` for fpylll) and
+reused for every subsequent call in the same `hexlll_bench`
+process. The child's stdin is held by the bench process via
+`Child.takeStdin`; on process exit, the OS reaps each driver via
+EOF on stdin.
 
-**Error handling.** If `requestLine` raises any `IO` error, the bench
-wiring drops the cached child handle, re-spawns the driver from
-`scripts/oracle/setup_lll_isabelle.sh`, and retries the request once.
-Persistent failure (e.g. setup script failure or repeated driver
-crash) surfaces as an `IO.userError`.
+**Error handling.** If `requestLine` raises any `IO` error, the
+bench wiring drops the cached child handle, re-spawns the
+relevant driver (Isabelle from
+`scripts/oracle/setup_lll_isabelle.sh`; fpylll from the path in
+`HEX_LLL_FPYLLL_BENCH_DRIVER` or the default
+`scripts/oracle/lll_fpylll_bench_driver.py`), and retries the
+request once. Persistent failure (e.g. setup script failure or
+repeated driver crash) surfaces as an `IO.userError`.
 
 **Per-call overhead.** Piping 10000 trivial inputs
-(`[[1,0],[0,1]]`) through the patched binary on the audit host takes
-~110 ms wall total (median of 5 trials), of which ~22 ms is the
-one-time GHC startup; per-call protocol overhead is ~9 µs in
-steady state. This is three orders of magnitude below the previous
-~22 ms per-call GHC start-up plus `readFile` shape, and well below
-the 5 % overhead-to-measured-time floor `SPEC/benchmarking.md`
-requires for honest ratios.
+(`[[1,0],[0,1]]`) through the patched Isabelle binary on the audit
+host takes ~110 ms wall total (median of 5 trials), of which
+~22 ms is the one-time GHC startup; per-call Isabelle protocol
+overhead is ~9 µs in steady state. The persistent fpylll driver
+pays a one-time CPython + `import fpylll` startup and per-call
+steady-state overhead of ~34 µs (median of 5 trials of 1000
+trivial `[[1,0],[0,1]]` requests on the audit host). The previous
+shape paid ~116 ms per call to CPython start + fpylll import +
+single `fpylll.LLL.reduction`. Both persistent figures are three
+orders of magnitude below the per-call interpreter-start cost
+and well below the 5 % overhead-to-measured-time floor
+`SPEC/benchmarking.md` requires for honest ratios.
 
-**Interaction with `setup_fixed_benchmark`.** `lean-bench` spawns one
-fresh `hexlll_bench` child process per measured repeat of a fixed
-benchmark, so each repeat starts with a cold `isabelleChildRef`.
-The persistent harness still avoids per-call `IO.Process.output` and
-per-call `IO.FS.writeFile` round-trips inside one child, but the
-one-time GHC start cost is incurred per repeat at this benchmark
-shape. Wall-time-per-call for fixed `runIsabelle*` targets remains
-dominated by GHC startup; the protocol-overhead figure above is
-what determines whether comparator ratios qualify for the eligible
-range in HO-18's regenerated report.
+**Interaction with `setup_fixed_benchmark`.** `lean-bench` spawns
+one fresh `hexlll_bench` child process per measured repeat of a
+fixed benchmark, so each repeat starts with cold `isabelleChildRef`
+and `fpylllChildRef`. The persistent harness still avoids per-call
+`IO.Process.output` and per-call `IO.FS.writeFile` round-trips
+inside one child, but the one-time GHC start (Isabelle) /
+CPython + fpylll import (fpylll) cost is incurred per repeat at
+this benchmark shape. Wall-time-per-call for fixed `runIsabelle*`
+and `runFpylll*` targets remains dominated by interpreter startup;
+the protocol-overhead figures above determine whether comparator
+ratios qualify for the eligible range in HO-18's regenerated
+report.
+
+**Driver path overrides.** `HEX_LLL_FPYLLL_BENCH_DRIVER` overrides
+the default driver script path (relative to the bench process's
+cwd, which is the repo root under `lake exe`).
+`HEX_LLL_FPYLLL_BENCH_PYTHON` overrides the interpreter command
+(default `python3`). The Isabelle binary path is controlled by
+`HEX_LLL_ISABELLE_SVP` as before.
 -/
 
 namespace Hex.LLLBench
@@ -633,25 +662,6 @@ def runFirstShortVectorChecksum (input : FirstShortVectorInput) : Int :=
     (lll.firstShortVector input.basis (3 / 4)
       lllDeltaLower lllDeltaUpper input.hn input.hind)
 
-/-- Whitespace matrix format consumed by
-`scripts/oracle/lll_fpylll.py --bench-checksum`. -/
-def firstShortVectorMatrixInput (input : FirstShortVectorInput) : String :=
-  let entries :=
-    (List.finRange input.rows).flatMap fun i =>
-      (List.finRange input.cols).map fun j =>
-        toString ((input.basis.row i)[j])
-  s!"{input.rows} {input.cols}\n" ++ String.intercalate " " entries ++ "\n"
-
-/-- Invoke fpylll on one prepared basis and parse the first-row checksum. -/
-def runFpylllFirstShortVectorChecksum (input : FirstShortVectorInput) : IO Int := do
-  let stdout ← IO.Process.runCmdWithInput "python3"
-    #["scripts/oracle/lll_fpylll.py", "--bench-checksum"]
-    (firstShortVectorMatrixInput input)
-  let text := stdout.trimAscii.toString
-  match text.toInt? with
-  | some checksum => pure checksum
-  | none => throw <| IO.userError s!"fpylll checksum was not an integer: {text}"
-
 /-- Benchmark comparator observable: squared norm of Lean's first LLL vector.
 The verified-Isabelle Haskell extraction reports the same scalar. -/
 def runFirstShortVectorNormSq (input : FirstShortVectorInput) : Int :=
@@ -765,6 +775,74 @@ def runIsabelleShortVectorNormSq (_tag : String) (input : FirstShortVectorInput)
     IO Int := do
   let request := matrixHaskell input.basis
   parseIsabelleNormSq (← requestIsabelleLineWithRetry request 1)
+
+initialize fpylllChildRef : IO.Ref (Option PersistentComparator) ←
+  IO.mkRef none
+
+private def envOr (name : String) (default : String) : IO String := do
+  match (← IO.getEnv name) with
+  | some v => return v
+  | none => return default
+
+private def fpylllDriverPath : IO String :=
+  envOr "HEX_LLL_FPYLLL_BENCH_DRIVER" "scripts/oracle/lll_fpylll_bench_driver.py"
+
+private def fpylllPythonCommand : IO String :=
+  envOr "HEX_LLL_FPYLLL_BENCH_PYTHON" "python3"
+
+/-- Lazily spawn the persistent `lll_fpylll_bench_driver.py` driver,
+or return the cached handle. -/
+def resolveFpylllChild : IO PersistentComparator := do
+  if let some ch ← fpylllChildRef.get then
+    return ch
+  let py ← fpylllPythonCommand
+  let script ← fpylllDriverPath
+  let ch ← PersistentComparator.spawn py #[script]
+  fpylllChildRef.set (some ch)
+  return ch
+
+/-- Parse one reply line from `lll_fpylll_bench_driver.py`. The
+driver emits a single integer per request on success or a line
+beginning `ERROR:` on failure; treat the latter as a driver fault so
+the retry path can re-spawn. -/
+def parseFpylllChecksum (text : String) : IO Int := do
+  let trimmed := text.trimAscii.toString
+  if trimmed.startsWith "ERROR:" then
+    throw <| IO.userError s!"lll_fpylll_bench_driver: {trimmed}"
+  match trimmed.toInt? with
+  | some n => return n
+  | none =>
+    throw <| IO.userError
+      s!"lll_fpylll_bench_driver emitted non-integer output: {text}"
+
+/-- Send one matrix to the persistent fpylll driver and return the
+raw reply line.
+
+On process death, EOF before a reply line, or any IO error from the
+protocol, the cached handle is dropped, a fresh driver is spawned,
+and the call is retried once. Persistent failure surfaces as an
+`IO.userError` from the retry path. -/
+def requestFpylllLineWithRetry (request : String) : Nat → IO String
+  | 0 => do
+    let reply ← (← resolveFpylllChild).requestLine request
+    if reply.isEmpty then
+      throw <| IO.userError "lll_fpylll_bench_driver closed stdout before replying"
+    return reply
+  | Nat.succ remaining => do
+    try
+      let reply ← (← resolveFpylllChild).requestLine request
+      if reply.isEmpty then
+        throw <| IO.userError "lll_fpylll_bench_driver closed stdout before replying"
+      return reply
+    catch _ =>
+      fpylllChildRef.set none
+      requestFpylllLineWithRetry request remaining
+
+/-- Invoke fpylll on one prepared basis via the persistent driver
+and parse the first-row checksum. -/
+def runFpylllFirstShortVectorChecksum (input : FirstShortVectorInput) : IO Int := do
+  let request := matrixHaskell input.basis
+  parseFpylllChecksum (← requestFpylllLineWithRetry request 1)
 
 /-- Fixed benchmark target: BZ recombination hot path at `p = 5`, `k = 2`,
 and three lifted local factors. -/

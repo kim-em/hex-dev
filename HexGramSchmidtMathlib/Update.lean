@@ -454,6 +454,30 @@ theorem scaledCoeffs_adjacentSwap_lower_curr (b : Matrix Int n m)
           rw [hdet, hcoeff]
     _ = ((GramSchmidt.entry (scaledCoeffs b) km1 j : Int) : Rat) := hRHS.symm
 
+theorem scaledCoeffs_adjacentSwap_pivot (b : Matrix Int n m)
+    (k : Fin n) (hk : 0 < k.val) :
+    let km1 := GramSchmidt.prevRow k hk
+    GramSchmidt.entry (scaledCoeffs (adjacentSwap b k hk)) k km1 =
+      GramSchmidt.entry (scaledCoeffs b) k km1 := by
+  intro km1
+  have hkm1 : km1.val + 1 = k.val := by
+    dsimp [km1, GramSchmidt.prevRow]
+    omega
+  have hkm1k : km1.val < k.val := by omega
+  calc
+    GramSchmidt.entry (scaledCoeffs (adjacentSwap b k hk)) k km1
+        = Matrix.det
+            (GramSchmidt.scaledCoeffMatrix (Matrix.rowSwap b km1 k) k km1 hkm1k) := by
+          rw [scaledCoeffs_eq_scaledCoeffMatrix_det]
+          rfl
+    _ = Matrix.det ((GramSchmidt.scaledCoeffMatrix b k km1 hkm1k).transpose) := by
+          rw [GramSchmidt.Int.scaledCoeffMatrix_rowSwap_adjacent_pivot_transpose
+            (b := b) (km1 := km1) (k := k) hkm1 hkm1k]
+    _ = Matrix.det (GramSchmidt.scaledCoeffMatrix b k km1 hkm1k) := by
+          rw [Matrix.det_transpose]
+    _ = GramSchmidt.entry (scaledCoeffs b) k km1 := by
+          rw [← scaledCoeffs_eq_scaledCoeffMatrix_det]
+
 end GramSchmidt.Int
 
 end Hex
