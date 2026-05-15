@@ -1744,6 +1744,237 @@ theorem henselSubsetCorrespondenceRest_transport_of_disjoint
     · exact hTrep
     · exact hUrep
 
+/--
+Strengthened rest predicate that augments `HenselSubsetCorrespondenceRest`
+with the structural facts the recursive-coverage proof (issue #4301) needs:
+square-freeness of `target` in `Polynomial ℤ`, a cover field saying every
+remaining index lies in *some* representing subset, a pairwise-disjoint
+field for non-associated irreducible divisors, and a uniqueness-up-to-
+association field saying associated irreducible divisors of `target` share
+their representing subset.
+
+The doc-comment on `henselSubsetCorrespondenceRest_transport_of_disjoint`
+flags the disjointness obligation as "discharged from square-free
+factorisation by later coverage proofs"; this predicate packages exactly
+that information.
+
+The initial-state constructor (from `HenselSubsetCorrespondenceHypotheses`
+plus a square-free reduction hypothesis) is intentionally deferred to a
+follow-up issue: #4301 only needs the abstract predicate and its transport
+through one emitted recombination factor.
+-/
+structure LiftedFactorSubsetPartition
+    (core : Hex.ZPoly) (d : Hex.LiftData)
+    (J : LiftedFactorSubset d) (target : Hex.ZPoly) : Prop
+    extends HenselSubsetCorrespondenceRest core d J target where
+  target_squarefree : Squarefree (HexPolyZMathlib.toPolynomial target)
+  cover :
+    ∀ {i : LiftedFactorIndex d}, i ∈ J →
+      ∃ (f : Hex.ZPoly) (S : LiftedFactorSubset d),
+        Irreducible (HexPolyZMathlib.toPolynomial f) ∧
+        f ∣ target ∧
+        S ⊆ J ∧ i ∈ S ∧
+        RepresentsIntegerFactorAtLift core d f S
+  pairwise_disjoint :
+    ∀ {f g : Hex.ZPoly} {S T : LiftedFactorSubset d},
+      Irreducible (HexPolyZMathlib.toPolynomial f) →
+      f ∣ target →
+      S ⊆ J →
+      RepresentsIntegerFactorAtLift core d f S →
+      Irreducible (HexPolyZMathlib.toPolynomial g) →
+      g ∣ target →
+      T ⊆ J →
+      RepresentsIntegerFactorAtLift core d g T →
+      ¬ Associated (HexPolyZMathlib.toPolynomial f)
+        (HexPolyZMathlib.toPolynomial g) →
+      Disjoint S T
+  unique_up_to_associated :
+    ∀ {f g : Hex.ZPoly} {S T : LiftedFactorSubset d},
+      Irreducible (HexPolyZMathlib.toPolynomial f) →
+      f ∣ target →
+      S ⊆ J →
+      RepresentsIntegerFactorAtLift core d f S →
+      Irreducible (HexPolyZMathlib.toPolynomial g) →
+      g ∣ target →
+      T ⊆ J →
+      RepresentsIntegerFactorAtLift core d g T →
+      Associated (HexPolyZMathlib.toPolynomial f)
+        (HexPolyZMathlib.toPolynomial g) →
+      S = T
+
+/--
+Specialisation of `LiftedFactorSubsetPartition.cover` to `J.min'`: the
+minimum index of a nonempty remaining set lies in the representing subset
+of some irreducible divisor of `target`. This is the exact "cover at min"
+fact used by the recombination search to descend through `J.min'`'s split
+even when the chosen factor's representing subset does not contain it.
+-/
+theorem LiftedFactorSubsetPartition.cover_at_min
+    {core target : Hex.ZPoly} {d : Hex.LiftData}
+    {J : LiftedFactorSubset d}
+    (h : LiftedFactorSubsetPartition core d J target)
+    (hne : J.Nonempty) :
+    ∃ (f : Hex.ZPoly) (S : LiftedFactorSubset d),
+      Irreducible (HexPolyZMathlib.toPolynomial f) ∧
+      f ∣ target ∧
+      S ⊆ J ∧ J.min' hne ∈ S ∧
+      RepresentsIntegerFactorAtLift core d f S :=
+  h.cover (J.min'_mem hne)
+
+/--
+Transport a `LiftedFactorSubsetPartition` through one emitted recombination
+factor. The square-free assumption on `target` propagates to `quotient`
+(via `Squarefree.squarefree_of_dvd`), and discharges the disjointness
+obligation of `henselSubsetCorrespondenceRest_transport_of_disjoint` by
+ruling out non-trivial associated divisors of `quotient`.
+-/
+theorem liftedFactorSubsetPartition_transport
+    {core target quotient emitted : Hex.ZPoly} {d : Hex.LiftData}
+    {J S : LiftedFactorSubset d}
+    (h : LiftedFactorSubsetPartition core d J target)
+    (hquot : quotient * emitted = target)
+    (hSrepEmitted : RepresentsIntegerFactorAtLift core d emitted S)
+    (hSJ : S ⊆ J)
+    (hEmittedIrr : Irreducible (HexPolyZMathlib.toPolynomial emitted))
+    (hEmittedDvd : emitted ∣ target) :
+    LiftedFactorSubsetPartition core d (J \ S) quotient := by
+  -- Mathlib-side facts derived from `hquot`.
+  have hquot_poly :
+      HexPolyZMathlib.toPolynomial quotient *
+          HexPolyZMathlib.toPolynomial emitted =
+        HexPolyZMathlib.toPolynomial target := by
+    rw [← HexPolyZMathlib.toPolynomial_mul, hquot]
+  have hquot_dvd_target_poly :
+      HexPolyZMathlib.toPolynomial quotient ∣
+        HexPolyZMathlib.toPolynomial target :=
+    ⟨HexPolyZMathlib.toPolynomial emitted, hquot_poly.symm⟩
+  have hquot_sqfree :
+      Squarefree (HexPolyZMathlib.toPolynomial quotient) :=
+    Squarefree.squarefree_of_dvd hquot_dvd_target_poly h.target_squarefree
+  -- Helper: every irreducible divisor of `quotient` is non-associated to
+  -- `emitted` (otherwise `target` would not be square-free).
+  have hno_assoc_of_dvd_quot :
+      ∀ {factor : Hex.ZPoly},
+        Irreducible (HexPolyZMathlib.toPolynomial factor) →
+        factor ∣ quotient →
+        ¬ Associated (HexPolyZMathlib.toPolynomial factor)
+          (HexPolyZMathlib.toPolynomial emitted) := by
+    intro factor hirr hdvd_quot h_assoc
+    have h_fac_dvd_quot_poly :
+        HexPolyZMathlib.toPolynomial factor ∣
+          HexPolyZMathlib.toPolynomial quotient :=
+      HexPolyMathlib.toPolynomial_dvd hdvd_quot
+    have h_emit_dvd_quot_poly :
+        HexPolyZMathlib.toPolynomial emitted ∣
+          HexPolyZMathlib.toPolynomial quotient :=
+      h_assoc.symm.dvd.trans h_fac_dvd_quot_poly
+    have h_sq_dvd :
+        HexPolyZMathlib.toPolynomial emitted *
+            HexPolyZMathlib.toPolynomial emitted ∣
+          HexPolyZMathlib.toPolynomial target := by
+      rw [← hquot_poly]
+      exact mul_dvd_mul_right h_emit_dvd_quot_poly
+        (HexPolyZMathlib.toPolynomial emitted)
+    exact hEmittedIrr.not_isUnit
+      (h.target_squarefree _ h_sq_dvd)
+  -- Lift `· ∣ quotient` to `· ∣ target = quotient * emitted`.
+  have dvd_target_of_dvd_quotient :
+      ∀ {factor : Hex.ZPoly}, factor ∣ quotient → factor ∣ target := by
+    intro factor hdvd
+    rcases hdvd with ⟨q, hq⟩
+    refine ⟨q * emitted, ?_⟩
+    calc
+      target = quotient * emitted := hquot.symm
+      _ = (factor * q) * emitted := by rw [hq]
+      _ = factor * (q * emitted) := by
+        rw [Hex.DensePoly.mul_assoc_poly (S := Int)]
+  -- Disjointness obligation for `henselSubsetCorrespondenceRest_transport_of_disjoint`.
+  have hdisj :
+      ∀ {factor : Hex.ZPoly} {T : LiftedFactorSubset d},
+        Irreducible (HexPolyZMathlib.toPolynomial factor) →
+        factor ∣ quotient →
+        T ⊆ J →
+        RepresentsIntegerFactorAtLift core d factor T →
+        Disjoint T S := by
+    intro factor T hirr hdvd_quot hTJ hTrep
+    exact h.pairwise_disjoint hirr (dvd_target_of_dvd_quotient hdvd_quot)
+      hTJ hTrep hEmittedIrr hEmittedDvd hSJ hSrepEmitted
+      (hno_assoc_of_dvd_quot hirr hdvd_quot)
+  -- Build the rest part via the existing transport lemma.
+  have hrest :
+      HenselSubsetCorrespondenceRest core d (J \ S) quotient :=
+    henselSubsetCorrespondenceRest_transport_of_disjoint
+      h.toHenselSubsetCorrespondenceRest hquot hdisj
+  refine
+    { toHenselSubsetCorrespondenceRest := hrest
+      target_squarefree := hquot_sqfree
+      cover := ?_
+      pairwise_disjoint := ?_
+      unique_up_to_associated := ?_ }
+  -- Cover for the new state at any `i ∈ J \ S`.
+  · intro i hi_sdiff
+    have ⟨hi_J, hi_notS⟩ := Finset.mem_sdiff.mp hi_sdiff
+    obtain ⟨f, T, hirr, hdvd_target, hTJ, hi_T, hTrep⟩ := h.cover hi_J
+    -- Either `f ~ emitted` (which forces `T = S`, contradicting `i ∉ S`)
+    -- or `f` is prime-non-associated to `emitted` (so `f ∣ quotient`).
+    by_cases h_assoc :
+        Associated (HexPolyZMathlib.toPolynomial f)
+          (HexPolyZMathlib.toPolynomial emitted)
+    · exfalso
+      have hTS : T = S :=
+        h.unique_up_to_associated hirr hdvd_target hTJ hTrep
+          hEmittedIrr hEmittedDvd hSJ hSrepEmitted h_assoc
+      exact hi_notS (hTS ▸ hi_T)
+    · -- `f` is an irreducible (hence prime in `Polynomial ℤ`) divisor of
+      -- `quotient * emitted = target`, not associated to `emitted`, so it
+      -- divides `quotient`.
+      have hf_dvd_target_poly :
+          HexPolyZMathlib.toPolynomial f ∣
+            HexPolyZMathlib.toPolynomial target :=
+        HexPolyMathlib.toPolynomial_dvd hdvd_target
+      rw [← hquot_poly] at hf_dvd_target_poly
+      have hf_prime : Prime (HexPolyZMathlib.toPolynomial f) := hirr.prime
+      have hf_dvd_quot_poly :
+          HexPolyZMathlib.toPolynomial f ∣
+            HexPolyZMathlib.toPolynomial quotient := by
+        rcases hf_prime.dvd_or_dvd hf_dvd_target_poly with hq | he
+        · exact hq
+        · exact absurd (hirr.associated_of_dvd hEmittedIrr he) h_assoc
+      have hf_dvd_quot : f ∣ quotient := by
+        rcases hf_dvd_quot_poly with ⟨r, hr⟩
+        refine ⟨HexPolyZMathlib.ofPolynomial r, ?_⟩
+        apply HexPolyZMathlib.equiv.injective
+        show HexPolyZMathlib.toPolynomial quotient =
+          HexPolyZMathlib.toPolynomial (f * HexPolyZMathlib.ofPolynomial r)
+        rw [HexPolyZMathlib.toPolynomial_mul,
+          HexPolyZMathlib.toPolynomial_ofPolynomial]
+        exact hr
+      have hTS : Disjoint T S :=
+        hdisj hirr hf_dvd_quot hTJ hTrep
+      refine ⟨f, T, hirr, hf_dvd_quot, ?_, hi_T, hTrep⟩
+      intro j hj
+      rw [Finset.mem_sdiff]
+      refine ⟨hTJ hj, fun hjS => ?_⟩
+      exact Finset.disjoint_left.mp hTS hj hjS
+  -- Pairwise disjoint for the new state.
+  · intro f g T U hirr_f hdvd_f hTJ hTrep hirr_g hdvd_g hUJ hUrep hno_assoc
+    have hTJ_orig : T ⊆ J :=
+      fun i hi => (Finset.mem_sdiff.mp (hTJ hi)).1
+    have hUJ_orig : U ⊆ J :=
+      fun i hi => (Finset.mem_sdiff.mp (hUJ hi)).1
+    exact h.pairwise_disjoint hirr_f (dvd_target_of_dvd_quotient hdvd_f)
+      hTJ_orig hTrep hirr_g (dvd_target_of_dvd_quotient hdvd_g)
+      hUJ_orig hUrep hno_assoc
+  -- Unique-up-to-associated for the new state.
+  · intro f g T U hirr_f hdvd_f hTJ hTrep hirr_g hdvd_g hUJ hUrep h_assoc
+    have hTJ_orig : T ⊆ J :=
+      fun i hi => (Finset.mem_sdiff.mp (hTJ hi)).1
+    have hUJ_orig : U ⊆ J :=
+      fun i hi => (Finset.mem_sdiff.mp (hUJ hi)).1
+    exact h.unique_up_to_associated hirr_f (dvd_target_of_dvd_quotient hdvd_f)
+      hTJ_orig hTrep hirr_g (dvd_target_of_dvd_quotient hdvd_g)
+      hUJ_orig hUrep h_assoc
+
 /-! ### LiftedFactorSubset → executable recombination split bridge
 
 The executable recombination search at the lifted-factor surface enumerates
