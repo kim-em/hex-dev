@@ -602,6 +602,26 @@ private def berlekampFactorsModP (f : ZPoly) (c : SmallPrimeCandidate) :
   else
     #[]
 
+/--
+Defining equation for `berlekampFactorsModP` on a candidate whose modular image
+is nonzero: the factor array is exactly the executable Berlekamp factor list
+applied to the candidate's monic modular image.
+-/
+private theorem berlekampFactorsModP_eq_of_isZero_false
+    (f : ZPoly) (c : SmallPrimeCandidate) :
+    letI := c.bounds
+    letI := c.field
+    ∀ (hzero : (ZPoly.modP c.p f).isZero = false),
+      berlekampFactorsModP f c =
+        (Berlekamp.berlekampFactor
+          (monicModularImage (ZPoly.modP c.p f))
+          (monicModularImage_monic c.prime (ZPoly.modP c.p f) hzero)).factors.toArray := by
+  letI := c.bounds
+  letI := c.field
+  intro hzero
+  unfold berlekampFactorsModP
+  rw [dif_pos hzero]
+
 private def intCoeffModNat (z : Int) (p : Nat) : Nat :=
   Int.toNat (z % Int.ofNat p)
 
