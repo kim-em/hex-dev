@@ -298,6 +298,105 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton
     hfModP_eq hprim hlc_map_ne hirr_fModP
 
 /--
+Scaling a nonzero modular image to its monic representative preserves the
+executable square-free gcd check used by Berlekamp.
+-/
+private theorem gcd_monicModularImage_derivative_eq_one
+    {p : Nat} [Hex.ZMod64.Bounds p] [Fact (Nat.Prime p)]
+    (f : Hex.FpPoly p) (hzero : f.isZero = false)
+    (hsquareFree : Hex.DensePoly.gcd f (Hex.DensePoly.derivative f) = 1) :
+    Hex.DensePoly.gcd (Hex.monicModularImage f)
+        (Hex.DensePoly.derivative (Hex.monicModularImage f)) = 1 := by
+  let u : Hex.ZMod64 p := (Hex.DensePoly.leadingCoeff f)⁻¹
+  have hmonic_eq : Hex.monicModularImage f = Hex.DensePoly.scale u f := by
+    unfold Hex.monicModularImage
+    simp [hzero, u]
+  have hcop :
+      IsCoprime
+        (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f))
+        (Polynomial.derivative
+          (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f))) := by
+    have hcop_f :
+        IsCoprime
+          (HexBerlekampMathlib.toMathlibPolynomial f)
+          (Polynomial.derivative (HexBerlekampMathlib.toMathlibPolynomial f)) :=
+      HexBerlekampMathlib.toMathlibPolynomial_squareFree_coprime f hsquareFree
+    have hu_ne : HexModArithMathlib.ZMod64.toZMod u ≠ 0 := by
+      have hp_hex : Hex.Nat.Prime p := by
+        constructor
+        · exact (Fact.out : Nat.Prime p).two_le
+        · intro m hmdvd
+          rcases (Fact.out : Nat.Prime p).eq_one_or_self_of_dvd m hmdvd with h | h
+          · exact Or.inl h
+          · exact Or.inr h
+      have hlead_ne : Hex.DensePoly.leadingCoeff f ≠ 0 := by
+        have hpos : 0 < f.size := by
+          simpa [Hex.DensePoly.isZero, Hex.DensePoly.size,
+            Array.isEmpty_iff_size_eq_zero, Nat.pos_iff_ne_zero] using hzero
+        rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred f hpos]
+        exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size f hpos
+      intro hu_zero
+      have hone_hex : u * Hex.DensePoly.leadingCoeff f = (1 : Hex.ZMod64 p) := by
+        simpa [u] using Hex.ZMod64.inv_mul_eq_one_of_prime hp_hex hlead_ne
+      have hone_z :
+          HexModArithMathlib.ZMod64.toZMod u *
+              HexModArithMathlib.ZMod64.toZMod (Hex.DensePoly.leadingCoeff f) =
+            (1 : ZMod p) := by
+        rw [← HexModArithMathlib.ZMod64.toZMod_mul, hone_hex,
+          HexModArithMathlib.ZMod64.toZMod_one]
+      rw [hu_zero, zero_mul] at hone_z
+      exact zero_ne_one hone_z
+    have hC_unit :
+        IsUnit (Polynomial.C (HexModArithMathlib.ZMod64.toZMod u)) :=
+      Polynomial.isUnit_C.mpr (isUnit_iff_ne_zero.mpr hu_ne)
+    rw [hmonic_eq, toMathlibPolynomial_scale]
+    rw [Polynomial.derivative_C_mul]
+    exact (isCoprime_mul_unit_left hC_unit
+      (HexBerlekampMathlib.toMathlibPolynomial f)
+      (Polynomial.derivative (HexBerlekampMathlib.toMathlibPolynomial f))).mpr hcop_f
+  have hmath_gcd :
+      gcd
+        (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f))
+        (Polynomial.derivative
+          (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f))) = 1 := by
+    have hunit :
+        IsUnit
+          (gcd
+            (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f))
+            (Polynomial.derivative
+              (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f)))) :=
+      gcd_isUnit_iff_isRelPrime.mpr hcop.isRelPrime
+    have hnorm :
+        normalize
+          (gcd
+            (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f))
+            (Polynomial.derivative
+              (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f)))) =
+        gcd
+          (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f))
+          (Polynomial.derivative
+            (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f))) :=
+      normalize_gcd _ _
+    have hone :
+        normalize
+          (gcd
+            (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f))
+            (Polynomial.derivative
+              (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f)))) = 1 :=
+      normalize_eq_one.mpr hunit
+    simpa [hnorm] using hone
+  apply HexBerlekampMathlib.fpPolyEquiv.injective
+  change
+    HexBerlekampMathlib.toMathlibPolynomial
+        (Hex.DensePoly.gcd (Hex.monicModularImage f)
+          (Hex.DensePoly.derivative (Hex.monicModularImage f))) =
+      HexBerlekampMathlib.toMathlibPolynomial (1 : Hex.FpPoly p)
+  rw [HexBerlekampMathlib.toMathlibPolynomial_gcd,
+      HexBerlekampMathlib.toMathlibPolynomial_derivative,
+      toMathlibPolynomial_one]
+  exact hmath_gcd
+
+/--
 Small-mod singleton irreducibility composed without the explicit
 `hirr_fModP` hypothesis.
 
@@ -311,9 +410,9 @@ Mathlib irreducibility of `fModP` and finally to integer-level
 irreducibility of `core`.
 
 The square-free precondition on the monic modular image is supplied
-explicitly: it follows mathematically from `squareFreeModP core p` plus
-a gcd-under-scaling invariance, which is not yet packaged at the
-`Hex.DensePoly` surface.
+explicitly. Use
+`squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP`
+when the selected prime's executable `squareFreeModP` check should provide it.
 -/
 theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
@@ -450,6 +549,49 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
   exact Hex_ZPoly_Irreducible_of_irreducible_modP
     (p := primeData.p) (core := core)
     hprim hlc_map_ne hirr_fModP
+
+/--
+Small-mod singleton irreducibility for a selected good-prime record, deriving
+the Berlekamp square-free precondition for the monic modular image from the
+selected prime's executable `squareFreeModP` check.
+-/
+theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP
+    (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.choosePrimeData? core = some primeData)
+    (hsmall : primeData.factorsModP.size ≤ 1)
+    (hprim :
+      (HexPolyZMathlib.toPolynomial core).IsPrimitive)
+    (hlc_map_ne :
+      (Int.castRingHom (ZMod primeData.p))
+        (HexPolyZMathlib.toPolynomial core).leadingCoeff ≠ 0) :
+    Hex.ZPoly.Irreducible core := by
+  letI := primeData.bounds
+  have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
+    Hex.choosePrimeData?_isGoodPrime core primeData hselected
+  have hsquareFree : Hex.squareFreeModP core primeData.p :=
+    Hex.isGoodPrime_squareFreeModP core primeData.p hgood
+  obtain ⟨hzero, _hfield, _hfactors_eq⟩ :=
+    Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hselected
+  have hprime_hex : Hex.Nat.Prime primeData.p :=
+    Hex.choosePrimeData?_prime core primeData hselected
+  have hprime : _root_.Nat.Prime primeData.p := by
+    refine _root_.Nat.prime_def_lt.mpr ⟨hprime_hex.two_le, ?_⟩
+    intro m hmlt hmdvd
+    rcases hprime_hex.right m hmdvd with h | h
+    · exact h
+    · exact absurd h (Nat.ne_of_lt hmlt)
+  haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
+  have hsquareFree_monic :
+      Hex.DensePoly.gcd
+        (@Hex.monicModularImage primeData.p primeData.bounds
+          (@Hex.ZPoly.modP primeData.p primeData.bounds core))
+        (Hex.DensePoly.derivative
+          (@Hex.monicModularImage primeData.p primeData.bounds
+            (@Hex.ZPoly.modP primeData.p primeData.bounds core))) = 1 :=
+    gcd_monicModularImage_derivative_eq_one
+      (p := primeData.p) (Hex.ZPoly.modP primeData.p core) hzero hsquareFree
+  exact squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
+    core primeData hselected hsmall hprim hlc_map_ne hsquareFree_monic
 
 end IntReductionMod
 
