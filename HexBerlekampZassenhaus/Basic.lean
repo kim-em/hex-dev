@@ -555,13 +555,19 @@ private def smallPrimeCandidates : List SmallPrimeCandidate :=
     { p := 71, bounds := bounds_seventy_one, prime := prime_seventy_one,
       field := @zmod64FieldOfPrime 71 bounds_seventy_one prime_seventy_one } ]
 
-private def monicModularImage {p : Nat} [ZMod64.Bounds p] (f : FpPoly p) : FpPoly p :=
+/--
+Coerce an admissible nonzero modular image to its monic representative by
+dividing by its leading coefficient.  `monicModularImage f = scale c⁻¹ f`
+where `c = leadingCoeff f`; the zero branch is a placeholder used to keep
+the function total.
+-/
+def monicModularImage {p : Nat} [ZMod64.Bounds p] (f : FpPoly p) : FpPoly p :=
   if f.isZero then
     0
   else
     DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f
 
-private theorem monicModularImage_monic
+theorem monicModularImage_monic
     {p : Nat} [ZMod64.Bounds p] (hp : Nat.Prime p) (f : FpPoly p)
     (hgood : f.isZero = false) :
     DensePoly.Monic (monicModularImage f) := by
@@ -1442,6 +1448,78 @@ private theorem choosePrimeDataScore_fold_fModP_eq
           choosePrimeDataScoreStep_fModP_eq f best c old hbest hold)
         hscore
 
+private theorem primeChoiceDataScore_isGoodPrime
+    (f : ZPoly) (c : SmallPrimeCandidate) (score : PrimeChoiceDataScore)
+    (hscore : primeChoiceDataScore f c = some score) :
+    @isGoodPrime f score.data.p score.data.bounds = true := by
+  unfold primeChoiceDataScore at hscore
+  letI := c.bounds
+  by_cases hgood : isGoodPrime f c.p
+  · simp [hgood] at hscore
+    cases hscore
+    exact hgood
+  · simp [hgood] at hscore
+
+private theorem betterPrimeChoiceDataScore_isGoodPrime
+    (f : ZPoly) (old new score : PrimeChoiceDataScore)
+    (hold : @isGoodPrime f old.data.p old.data.bounds = true)
+    (hnew : @isGoodPrime f new.data.p new.data.bounds = true)
+    (hscore : betterPrimeChoiceDataScore old new = score) :
+    @isGoodPrime f score.data.p score.data.bounds = true := by
+  unfold betterPrimeChoiceDataScore at hscore
+  split at hscore
+  · cases hscore
+    exact hnew
+  · cases hscore
+    exact hold
+
+private theorem choosePrimeDataScoreStep_isGoodPrime
+    (f : ZPoly) (best : Option PrimeChoiceDataScore) (c : SmallPrimeCandidate)
+    (score : PrimeChoiceDataScore)
+    (hbest : ∀ old, best = some old →
+      @isGoodPrime f old.data.p old.data.bounds = true)
+    (hscore : choosePrimeDataScoreStep f best c = some score) :
+    @isGoodPrime f score.data.p score.data.bounds = true := by
+  unfold choosePrimeDataScoreStep at hscore
+  cases hbest_eq : best with
+  | none =>
+      cases hc_eq : primeChoiceDataScore f c with
+      | none =>
+          simp [hbest_eq, hc_eq] at hscore
+      | some new =>
+          simp [hbest_eq, hc_eq] at hscore
+          have hnew := primeChoiceDataScore_isGoodPrime f c new hc_eq
+          simpa [hscore] using hnew
+  | some old =>
+      cases hc_eq : primeChoiceDataScore f c with
+      | none =>
+          simp [hbest_eq, hc_eq] at hscore
+          have hold := hbest old hbest_eq
+          simpa [hscore] using hold
+      | some new =>
+          simp [hbest_eq, hc_eq] at hscore
+          exact betterPrimeChoiceDataScore_isGoodPrime f old new score
+            (hbest old hbest_eq)
+            (primeChoiceDataScore_isGoodPrime f c new hc_eq)
+            hscore
+
+private theorem choosePrimeDataScore_fold_isGoodPrime
+    (f : ZPoly) (candidates : List SmallPrimeCandidate)
+    (best : Option PrimeChoiceDataScore) (score : PrimeChoiceDataScore)
+    (hbest : ∀ old, best = some old →
+      @isGoodPrime f old.data.p old.data.bounds = true)
+    (hscore :
+      candidates.foldl (choosePrimeDataScoreStep f) best = some score) :
+    @isGoodPrime f score.data.p score.data.bounds = true := by
+  induction candidates generalizing best with
+  | nil =>
+      exact hbest score hscore
+  | cons c candidates ih =>
+      exact ih (choosePrimeDataScoreStep f best c)
+        (fun old hold =>
+          choosePrimeDataScoreStep_isGoodPrime f best c old hbest hold)
+        hscore
+
 private def choosePrimeData? (f : ZPoly) : Option PrimeChoiceData :=
   smallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none
   |>.map (fun score => score.data)
@@ -1497,6 +1575,27 @@ private theorem choosePrimeData?_fModP_eq
       simp [hscore] at hdata
       cases hdata
       exact choosePrimeDataScore_fold_fModP_eq f smallPrimeCandidates none score
+        (by intro old hnone; cases hnone)
+        hscore
+
+/--
+When `choosePrimeData? f` succeeds, the selected prime is a good prime for `f`
+in the executable sense (modulus at least three, leading coefficient survives
+reduction, modular image is square-free).
+-/
+theorem choosePrimeData?_isGoodPrime
+    (f : ZPoly) (data : PrimeChoiceData)
+    (hdata : choosePrimeData? f = some data) :
+    @isGoodPrime f data.p data.bounds = true := by
+  unfold choosePrimeData? at hdata
+  cases hscore :
+      smallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none with
+  | none =>
+      simp [hscore] at hdata
+  | some score =>
+      simp [hscore] at hdata
+      cases hdata
+      exact choosePrimeDataScore_fold_isGoodPrime f smallPrimeCandidates none score
         (by intro old hnone; cases hnone)
         hscore
 
