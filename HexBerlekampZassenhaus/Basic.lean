@@ -5224,6 +5224,55 @@ theorem factorWithBound_entry_mem_raw_source
       simpa only [factorWithBound, factorFastWithBound, factorSlowWithBound, hfast,
         Option.map_none, Option.getD_none] using hmem
 
+/-- Every recorded entry of the bounded public factorization has positive
+multiplicity. -/
+theorem factorWithBound_entry_multiplicity_pos
+    (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
+    (hmem : entry ∈ (factorWithBound f B).factors.toList) :
+    0 < entry.2 := by
+  cases hfast : factorFastFactorsWithBound f B with
+  | some rawFactors =>
+      apply factorizationOfFactors_entry_multiplicity_pos
+      simpa only [factorWithBound, factorFastWithBound, hfast, Option.map_some,
+        Option.getD_some] using hmem
+  | none =>
+      apply factorizationOfFactors_entry_multiplicity_pos
+      simpa only [factorWithBound, factorFastWithBound, factorSlowWithBound, hfast,
+        Option.map_none, Option.getD_none] using hmem
+
+/-- The bounded public factorization has no duplicate polynomial keys. -/
+theorem factorWithBound_pairwise_first
+    (f : ZPoly) (B : Nat) :
+    List.Pairwise (fun a b : ZPoly × Nat => a.1 ≠ b.1)
+      (factorWithBound f B).factors.toList := by
+  cases hfast : factorFastFactorsWithBound f B with
+  | some rawFactors =>
+      simpa only [factorWithBound, factorFastWithBound, hfast, Option.map_some,
+        Option.getD_some] using
+        factorizationOfFactors_pairwise_first f rawFactors
+  | none =>
+      simpa only [factorWithBound, factorFastWithBound, factorSlowWithBound, hfast,
+        Option.map_none, Option.getD_none] using
+        factorizationOfFactors_pairwise_first f (factorSlowFactorsWithBound f B)
+
+/-- Every recorded entry of the default public factorization has positive
+multiplicity. -/
+theorem factor_entry_multiplicity_pos
+    (f : ZPoly) (entry : ZPoly × Nat)
+    (hmem : entry ∈ (factor f).factors.toList) :
+    0 < entry.2 := by
+  simpa [factor_eq_factorWithBound_default] using
+    factorWithBound_entry_multiplicity_pos
+      f (ZPoly.defaultFactorCoeffBound f) entry hmem
+
+/-- The default public factorization has no duplicate polynomial keys. -/
+theorem factor_pairwise_first
+    (f : ZPoly) :
+    List.Pairwise (fun a b : ZPoly × Nat => a.1 ≠ b.1)
+      (factor f).factors.toList := by
+  simpa [factor_eq_factorWithBound_default] using
+    factorWithBound_pairwise_first f (ZPoly.defaultFactorCoeffBound f)
+
 /-- In the slow exhaustive fallback branch, every recorded `factorWithBound`
 entry comes from the public raw exhaustive slow-factor array, up to sign
 normalization by `collectFactorMultiplicities`. -/
