@@ -4524,6 +4524,148 @@ private theorem dot_comm_int {n' : Nat} (u v : Vector Int n') :
     foldl_dot_comm_int (xs := List.finRange n') (u := u) (v := v)
       (accU := 0) (accV := 0) rfl
 
+/-- The integer Gram matrix is symmetric: each entry equals the entry at the
+swapped index. Consumed by the no-pivot Bareiss symmetry/transpose bridge for
+bordered minors of `gramMatrix b`. -/
+private theorem gramMatrix_symm (b : Matrix Int n m) (a c : Fin n) :
+    (Matrix.gramMatrix b)[a][c] = (Matrix.gramMatrix b)[c][a] := by
+  show (Matrix.ofFn fun i j => Hex.Vector.dotProduct
+        (Matrix.row b i) (Matrix.row b j))[a][c]
+    = (Matrix.ofFn fun i j => Hex.Vector.dotProduct
+        (Matrix.row b i) (Matrix.row b j))[c][a]
+  simp [Matrix.ofFn, Vector.getElem_ofFn]
+  exact dot_comm_int _ _
+
+/-- The Cramer determinant matrix for the scaled Gram-Schmidt coefficient
+`(i, j)` (with `j < i`) is the bordered minor of `gramMatrix b` at level `j`
+with the border row index taken to be `j` and the border column index taken
+to be `i`. This is the definitional bridge between
+`GramSchmidt.scaledCoeffMatrix` and the bordered-minor machinery in
+`HexMatrix.Bareiss`. -/
+private theorem scaledCoeffMatrix_eq_borderedMinor
+    (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val) :
+    GramSchmidt.scaledCoeffMatrix b i j hji =
+      Matrix.borderedMinor (Matrix.gramMatrix b) j.val
+        (Nat.lt_trans hji i.isLt)
+        ⟨j.val, Nat.lt_trans hji i.isLt⟩ i := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro c hc
+  let pp : Fin (j.val + 1) := ⟨r, hr⟩
+  let cc : Fin (j.val + 1) := ⟨c, hc⟩
+  show (GramSchmidt.scaledCoeffMatrix b i j hji)[pp][cc] =
+    (Matrix.borderedMinor (Matrix.gramMatrix b) j.val
+        (Nat.lt_trans hji i.isLt)
+        ⟨j.val, Nat.lt_trans hji i.isLt⟩ i)[pp][cc]
+  -- Case split on whether the column index is the border (= j.val) or interior.
+  by_cases hcj : cc.val < j.val
+  · -- Interior column: both sides are `gramMatrix[r'][c']` with the
+    -- lifted-to-`Fin n` indices, since the bordered-minor `r` lookup falls into
+    -- the lt branch when `pp.val < j.val` and into the border (= j) row when
+    -- `pp.val = j.val`. Splitting on the row case mirrors the bordered minor.
+    by_cases hrj : pp.val < j.val
+    · have h_sc : (GramSchmidt.scaledCoeffMatrix b i j hji)[pp][cc] =
+          Matrix.dot
+            (Matrix.row b ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt
+              (Nat.succ_le_of_lt (Nat.lt_trans hji i.isLt))⟩)
+            (Matrix.row b ⟨cc.val, Nat.lt_of_lt_of_le cc.isLt
+              (Nat.succ_le_of_lt (Nat.lt_trans hji i.isLt))⟩) := by
+        have hcc_ne : cc.val ≠ j.val := Nat.ne_of_lt hcj
+        simp [GramSchmidt.scaledCoeffMatrix, Matrix.ofFn, GramSchmidt.liftFinLE, hcc_ne]
+      have h_bm : (Matrix.borderedMinor (Matrix.gramMatrix b) j.val
+            (Nat.lt_trans hji i.isLt)
+            ⟨j.val, Nat.lt_trans hji i.isLt⟩ i)[pp][cc] =
+          (Matrix.gramMatrix b)[
+            (⟨pp.val, Nat.lt_trans hrj (Nat.lt_trans hji i.isLt)⟩ : Fin n)][
+            (⟨cc.val, Nat.lt_trans hcj (Nat.lt_trans hji i.isLt)⟩ : Fin n)] := by
+        rw [Matrix.borderedMinor_entry_lt_lt (Matrix.gramMatrix b) j.val
+          (Nat.lt_trans hji i.isLt) ⟨j.val, Nat.lt_trans hji i.isLt⟩ i pp cc hrj hcj]
+      rw [h_sc, h_bm]
+      simp [Matrix.gramMatrix, Matrix.ofFn, Vector.getElem_ofFn, Matrix.dot]
+    · -- pp.val = j.val (since not < j.val and bounded by j.val + 1).
+      have hpr : pp.val = j.val :=
+        Nat.le_antisymm (Nat.lt_succ_iff.mp pp.isLt) (Nat.le_of_not_lt hrj)
+      have h_sc : (GramSchmidt.scaledCoeffMatrix b i j hji)[pp][cc] =
+          Matrix.dot
+            (Matrix.row b ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt
+              (Nat.succ_le_of_lt (Nat.lt_trans hji i.isLt))⟩)
+            (Matrix.row b ⟨cc.val, Nat.lt_of_lt_of_le cc.isLt
+              (Nat.succ_le_of_lt (Nat.lt_trans hji i.isLt))⟩) := by
+        have hcc_ne : cc.val ≠ j.val := Nat.ne_of_lt hcj
+        simp [GramSchmidt.scaledCoeffMatrix, Matrix.ofFn, GramSchmidt.liftFinLE, hcc_ne]
+      have h_bm : (Matrix.borderedMinor (Matrix.gramMatrix b) j.val
+            (Nat.lt_trans hji i.isLt)
+            ⟨j.val, Nat.lt_trans hji i.isLt⟩ i)[pp][cc] =
+          (Matrix.gramMatrix b)[(⟨j.val, Nat.lt_trans hji i.isLt⟩ : Fin n)][
+            (⟨cc.val, Nat.lt_trans hcj (Nat.lt_trans hji i.isLt)⟩ : Fin n)] := by
+        have hpr_not : ¬ pp.val < j.val := Nat.not_lt.mpr (Nat.le_of_eq hpr.symm)
+        simp [Matrix.borderedMinor, Matrix.ofFn, Vector.getElem_ofFn, hpr_not, hcj]
+      rw [h_sc, h_bm]
+      simp [Matrix.gramMatrix, Matrix.ofFn, Vector.getElem_ofFn, Matrix.dot]
+      congr 2
+      exact Fin.ext hpr
+  · -- Border column: cc.val = j.val.
+    have hcj_eq : cc.val = j.val :=
+      Nat.le_antisymm (Nat.lt_succ_iff.mp cc.isLt) (Nat.le_of_not_lt hcj)
+    by_cases hrj : pp.val < j.val
+    · have h_sc : (GramSchmidt.scaledCoeffMatrix b i j hji)[pp][cc] =
+          Matrix.dot
+            (Matrix.row b ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt
+              (Nat.succ_le_of_lt (Nat.lt_trans hji i.isLt))⟩)
+            (Matrix.row b i) := by
+        simp [GramSchmidt.scaledCoeffMatrix, Matrix.ofFn, GramSchmidt.liftFinLE, hcj_eq]
+      have h_bm : (Matrix.borderedMinor (Matrix.gramMatrix b) j.val
+            (Nat.lt_trans hji i.isLt)
+            ⟨j.val, Nat.lt_trans hji i.isLt⟩ i)[pp][cc] =
+          (Matrix.gramMatrix b)[
+            (⟨pp.val, Nat.lt_trans hrj (Nat.lt_trans hji i.isLt)⟩ : Fin n)][i] := by
+        simp [Matrix.borderedMinor, Matrix.ofFn, Vector.getElem_ofFn, hrj, hcj]
+      rw [h_sc, h_bm]
+      simp [Matrix.gramMatrix, Matrix.ofFn, Vector.getElem_ofFn, Matrix.dot]
+    · -- pp.val = j.val and cc.val = j.val: corner case.
+      have hpr_eq : pp.val = j.val :=
+        Nat.le_antisymm (Nat.lt_succ_iff.mp pp.isLt) (Nat.le_of_not_lt hrj)
+      have h_sc : (GramSchmidt.scaledCoeffMatrix b i j hji)[pp][cc] =
+          Matrix.dot
+            (Matrix.row b ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt
+              (Nat.succ_le_of_lt (Nat.lt_trans hji i.isLt))⟩)
+            (Matrix.row b i) := by
+        simp [GramSchmidt.scaledCoeffMatrix, Matrix.ofFn, GramSchmidt.liftFinLE, hcj_eq]
+      have h_bm : (Matrix.borderedMinor (Matrix.gramMatrix b) j.val
+            (Nat.lt_trans hji i.isLt)
+            ⟨j.val, Nat.lt_trans hji i.isLt⟩ i)[pp][cc] =
+          (Matrix.gramMatrix b)[(⟨j.val, Nat.lt_trans hji i.isLt⟩ : Fin n)][i] := by
+        have hpr_not : ¬ pp.val < j.val := hrj
+        simp [Matrix.borderedMinor, Matrix.ofFn, Vector.getElem_ofFn, hpr_not, hcj]
+      rw [h_sc, h_bm]
+      simp [Matrix.gramMatrix, Matrix.ofFn, Vector.getElem_ofFn, Matrix.dot]
+      congr 2
+      exact Fin.ext hpr_eq
+
+/-- The no-pivot Bareiss-style trailing value on `scaledCoeffMatrix b i j hji`
+agrees with the value on the bordered minor of `gramMatrix b` whose border
+row/column are swapped. The bridge composes the symmetry of `gramMatrix` (via
+`noPivotLoop_borderedMinor_swap_at_trailing`) with the definitional identity
+`scaledCoeffMatrix_eq_borderedMinor`. -/
+private theorem noPivotLoop_scaledCoeffMatrix_eq_borderedMinor_at_trailing
+    (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val) :
+    (Matrix.noPivotLoop j.val
+        (Matrix.noPivotInitialState
+          (GramSchmidt.scaledCoeffMatrix b i j hji))).matrix[
+          Fin.last j.val][Fin.last j.val] =
+    (Matrix.noPivotLoop j.val
+        (Matrix.noPivotInitialState
+          (Matrix.borderedMinor (Matrix.gramMatrix b) j.val
+            (Nat.lt_trans hji i.isLt) i j))).matrix[
+          Fin.last j.val][Fin.last j.val] := by
+  rw [scaledCoeffMatrix_eq_borderedMinor b i j hji]
+  exact noPivotLoop_borderedMinor_swap_at_trailing
+    (Matrix.gramMatrix b) (gramMatrix_symm (b := b))
+    j.val (Nat.lt_trans hji i.isLt)
+    ⟨j.val, Nat.lt_trans hji i.isLt⟩ i
+    (Nat.le_refl _) (Nat.le_of_lt hji)
+
 private theorem rowSwap_row_eq_of_ne_int {n' m' : Nat}
     (M : Matrix Int n' m') (i j r : Fin n')
     (hri : r.val ≠ i.val) (hrj : r.val ≠ j.val) :
