@@ -1,4 +1,5 @@
 import HexGramSchmidtMathlib.Basic
+import HexGramSchmidtMathlib.Update
 
 /-!
 The `HexGramSchmidtMathlib` library states the rowwise bridge between the
