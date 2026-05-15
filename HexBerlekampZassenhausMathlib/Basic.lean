@@ -930,6 +930,75 @@ private theorem liftedSubsetMask_head?_eq_decide
   rw [hfin]
   rfl
 
+/-- General `filterMap`/`filter`-`map` equivalence: a `filterMap` whose body is
+either `some (f x)` or `none` is the same as filtering then mapping. -/
+private theorem List.filterMap_if_eq_map_filter
+    {α β : Type _} (l : List α) (p : α → Bool) (f : α → β) :
+    l.filterMap (fun x => if p x then some (f x) else none) =
+      (l.filter p).map f := by
+  induction l with
+  | nil => simp
+  | cons x xs ih =>
+      cases hp : p x with
+      | true => simp [hp, ih]
+      | false => simp [hp, ih]
+
+/-- The selected list has the clean `filter`/`map` characterisation needed for
+multiset/permutation reasoning. -/
+private theorem liftedSubsetSelectedList_eq_filter_map
+    (d : Hex.LiftData) (S : LiftedFactorSubset d) :
+    liftedSubsetSelectedList d S =
+      ((List.finRange d.liftedFactors.size).filter fun i => decide (i ∈ S)).map
+        (liftedFactor d) := by
+  unfold liftedSubsetSelectedList liftedSubsetMask liftedFactor
+  -- Rewrite d.liftedFactors.toList as a finRange map.
+  have hxs : d.liftedFactors.toList =
+      (List.finRange d.liftedFactors.size).map (fun i => d.liftedFactors[i]) := by
+    apply List.ext_getElem
+    · simp
+    · intro n h₁ h₂
+      simp [List.getElem_finRange]
+  rw [hxs, List.zip_map', List.filterMap_map]
+  simp only [Function.comp_def]
+  exact List.filterMap_if_eq_map_filter
+    (List.finRange d.liftedFactors.size) (fun i => decide (i ∈ S))
+    (fun i => d.liftedFactors[i])
+
+/-- The order-preserving filter of `List.finRange n` by membership in a Finset
+of `Fin n` is a permutation of the Finset's `toList`. -/
+private theorem finRange_filter_mem_perm_toList
+    {n : Nat} (S : Finset (Fin n)) :
+    ((List.finRange n).filter (fun i => decide (i ∈ S))).Perm S.toList := by
+  apply List.perm_of_nodup_nodup_toFinset_eq
+  · exact (List.nodup_finRange n).filter _
+  · exact S.nodup_toList
+  · simp [List.toFinset_filter, List.toFinset_finRange,
+      Finset.filter_univ_mem, Finset.toList_toFinset]
+
+/-- The transported recombination candidate product equals the proof-side
+lifted-factor product: both factor lists are permutations of each other in
+`Polynomial ℤ`, so commutativity collapses the order difference. -/
+theorem polyProduct_liftedSubsetSelectedList_eq_liftedFactorProduct
+    (d : Hex.LiftData) (S : LiftedFactorSubset d) :
+    Array.polyProduct (liftedSubsetSelectedList d S).toArray =
+      liftedFactorProduct d S := by
+  apply HexPolyZMathlib.equiv.injective
+  show HexPolyZMathlib.toPolynomial _ = HexPolyZMathlib.toPolynomial _
+  rw [polyProduct_toPolynomial, liftedSubsetSelectedList_eq_filter_map]
+  -- LHS: ((((List.finRange n).filter (· ∈ S)).map (liftedFactor d)).map toPolynomial).prod
+  rw [List.map_map]
+  -- LHS: (((List.finRange n).filter (· ∈ S)).map (toPolynomial ∘ liftedFactor d)).prod
+  -- Now compute RHS.
+  unfold liftedFactorProduct
+  rw [show (S.toList.foldl (fun acc i => acc * liftedFactor d i) (1 : Hex.ZPoly)) =
+        (S.toList.map (liftedFactor d)).foldl (· * ·) 1 from by
+    rw [List.foldl_map]]
+  rw [toPolynomial_foldl_mul, toPolynomial_one_zpoly, ← List.prod_eq_foldl, List.map_map]
+  -- Now both sides are List.prod over (... .map (toPolynomial ∘ liftedFactor d))
+  apply List.Perm.prod_eq
+  apply List.Perm.map
+  exact finRange_filter_mem_perm_toList S
+
 /-- When index `0` is in `S`, the lifted-factor subset partition lies in the
 `subsetSplitsWithFirst` enumeration that the recombination search iterates. -/
 theorem liftedSubsetSplit_mem_subsetSplitsWithFirst
