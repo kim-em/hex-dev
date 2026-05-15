@@ -1154,6 +1154,62 @@ theorem factorFastCoreWithBound_some_factor_count_le
     HexBerlekampZassenhausMathlib.UFDPartition.length_le_normalizedFactors_card
       hf_ne gs hne_all hnonunit_all hprod
 
+/-- Lower cardinality bound for a successful BHKS fast-core branch whose
+emitted candidates have already been certified irreducible.
+
+The remaining BHKS/B8 work is to derive the `hirr` hypothesis from the
+equivalence-class partition-refinement argument for the concrete success
+state.  Once supplied, the abstract UFD partition theorem gives the reverse
+count inequality needed to pair with
+`factorFastCoreWithBound_some_factor_count_le`. -/
+theorem factorFastCoreWithBound_some_factor_count_ge_of_irreducible
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
+    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (hirr :
+      ∀ factor ∈ coreFactors.toList,
+        Irreducible (HexPolyZMathlib.toPolynomial factor)) :
+    (UniqueFactorizationMonoid.normalizedFactors
+      (HexPolyZMathlib.toPolynomial core)).card ≤
+        (coreFactors.toList.map HexPolyZMathlib.toPolynomial).length := by
+  set f := HexPolyZMathlib.toPolynomial core with hf_def
+  set gs : List (Polynomial ℤ) :=
+    coreFactors.toList.map HexPolyZMathlib.toPolynomial with hgs_def
+  have hprod : Associated gs.prod f := by
+    have hp_core : Array.polyProduct coreFactors = core :=
+      Hex.factorFastCoreWithBound_product core B primeData k fuel coreFactors h
+    have hp_poly :
+        (coreFactors.toList.map HexPolyZMathlib.toPolynomial).prod =
+          HexPolyZMathlib.toPolynomial core := by
+      rw [← polyProduct_toPolynomial, hp_core]
+    rw [hgs_def, hp_poly, hf_def]
+  have hirr_gs : ∀ g ∈ gs, Irreducible g := by
+    intro g hg
+    rw [hgs_def, List.mem_map] at hg
+    obtain ⟨factor, hfactor_mem, hg_eq⟩ := hg
+    rw [← hg_eq]
+    exact hirr factor hfactor_mem
+  exact
+    HexBerlekampZassenhausMathlib.UFDPartition.normalizedFactors_card_le_length_of_irreducible_partition
+      gs hirr_gs hprod
+
+/-- Cardinality equality for a successful BHKS fast-core branch once the
+BHKS/B8 proof has certified every emitted candidate irreducible. -/
+theorem factorFastCoreWithBound_some_factor_count_eq_of_irreducible
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
+    (hcore_ne : core ≠ 0)
+    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (hirr :
+      ∀ factor ∈ coreFactors.toList,
+        Irreducible (HexPolyZMathlib.toPolynomial factor)) :
+    (coreFactors.toList.map HexPolyZMathlib.toPolynomial).length =
+      (UniqueFactorizationMonoid.normalizedFactors
+        (HexPolyZMathlib.toPolynomial core)).card := by
+  apply le_antisymm
+  · exact factorFastCoreWithBound_some_factor_count_le hcore_ne h
+  · exact factorFastCoreWithBound_some_factor_count_ge_of_irreducible h hirr
+
 /-- Branch-local fast-core success irreducibility, expressed in the Mathlib-free
 `Hex.ZPoly.Irreducible` predicate. This is the `Hex.ZPoly` transport of
 `factorFastCoreWithBound_some_factor_irreducible_of_count`, obtained by
