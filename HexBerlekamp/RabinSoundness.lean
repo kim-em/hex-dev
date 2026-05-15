@@ -1542,6 +1542,24 @@ theorem rabinCoprimeTest_of_mem_maximalProperDivisors
     List.mem_map.mpr ⟨m, hm, rfl⟩
   exact hwitnesses _ hmem
 
+/-! ### Prime-field product identity -/
+
+/-- Every prime-field residue is a root of `xPowSubX 1`: this is Fermat's
+little theorem packaged through the executable `FpPoly` evaluation. -/
+theorem xPowSubX_one_eval_eq_zero (c : ZMod64 p) :
+    DensePoly.eval (xPowSubX (p := p) 1) c = 0 := by
+  unfold xPowSubX
+  rw [FpPoly.eval_sub, FpPoly.eval_monomial, FpPoly.eval_X]
+  rw [Nat.pow_one, ZMod64.pow_prime_of_prime_modulus]
+  grind
+
+/-- Each prime-field linear factor `X - C c` divides `xPowSubX 1`. -/
+theorem primeFieldLinearFactor_dvd_xPowSubX_one (c : ZMod64 p) :
+    primeFieldLinearFactor c ∣ xPowSubX (p := p) 1 := by
+  unfold primeFieldLinearFactor
+  exact FpPoly.X_sub_C_dvd_of_eval_eq_zero (xPowSubX (p := p) 1) c
+    (xPowSubX_one_eval_eq_zero c)
+
 /-! ### Structural lemmas
 
 These small consequences only use the foundational lemmas above plus
