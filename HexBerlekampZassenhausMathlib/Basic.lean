@@ -1027,6 +1027,118 @@ theorem liftedSubsetSplit_mem_subsetSplitsWithFirst
     simpa using hmask_len
   exact subsetSplitsWithFirst_zip_filterMap_partition x xs bs hbs_len
 
+/-- The executable recombination candidate associated to a lifted-factor
+subset: this is the `Hex.ZPoly` value that the recombination search compares
+against the running target via `shouldRecordPolynomialFactor` /
+`exactQuotient?`.  Definitionally equal to the inline expression used inside
+`Hex.recombinationSearchModAux`. -/
+def recombinationCandidate (d : Hex.LiftData) (S : LiftedFactorSubset d) :
+    Hex.ZPoly :=
+  Hex.normalizeFactorSign <|
+    Hex.ZPoly.primitivePart <|
+      Hex.centeredLiftPoly
+        (Array.polyProduct (liftedSubsetSelectedList d S).toArray)
+        (d.p ^ d.k)
+
+/-- The `Hex.centeredLiftPoly` operation is invariant under prior reduction by
+the same modulus, so the A2 recovery equality phrased in terms of
+`reduceModPow` of the scaled lifted product can equivalently be stated as the
+direct centered lift of the scaled lifted product. -/
+private theorem centeredLiftPoly_reduceModPow_eq
+    (f : Hex.ZPoly) (p k : Nat) (hp : 0 < p) :
+    Hex.centeredLiftPoly (Hex.ZPoly.reduceModPow f p k) (p ^ k) =
+      Hex.centeredLiftPoly f (p ^ k) := by
+  have hpkpos : 0 < p ^ k := Nat.pow_pos hp
+  have hpkne : p ^ k ≠ 0 := Nat.ne_of_gt hpkpos
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  rw [Hex.coeff_centeredLiftPoly, Hex.coeff_centeredLiftPoly,
+    Hex.ZPoly.coeff_reduceModPow_eq_emod_of_pos _ _ _ _ hpkpos]
+  -- Goal: centeredModNat ((f.coeff n) % (p^k : Int)) (p^k) = centeredModNat (f.coeff n) (p^k)
+  unfold Hex.centeredModNat
+  rw [if_neg hpkne, if_neg hpkne]
+  -- both branches use r = z % m; the LHS computes ((f.coeff n) % m) % m which equals (f.coeff n) % m
+  rw [Int.emod_emod_of_dvd _ (dvd_refl _)]
+
+/-- The A2 recovery equality reformulated against the executable centred-lift
+of the **scaled** lifted product, ready to feed downstream packaging that
+relates the scaled centered lift to the unscaled `recombinationCandidate`.
+
+This is the cleanest form in which the proof-side recovery is expressed for
+later integration with executable-side normalisation reasoning (which removes
+the `lc(core)` scale and chooses a sign). -/
+theorem centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hdvd : factor ∣ core)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    Hex.centeredLiftPoly (scaledLiftedFactorProduct core d S) (d.p ^ d.k) =
+      factor := by
+  have h := centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision
+    hcore_ne hdvd hrep hprecision
+  rwa [centeredLiftPoly_reduceModPow_eq _ _ _ d.p_pos] at h
+
+/-- Converse to `toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord`: if the
+transported polynomial is non-zero and a non-unit, then the executable
+`shouldRecordPolynomialFactor` check passes.  Used to package executable
+witnesses for one recombination split from Mathlib-side irreducibility. -/
+theorem shouldRecordPolynomialFactor_of_toPolynomial_ne_zero_not_isUnit
+    {f : Hex.ZPoly}
+    (hne_zero : HexPolyZMathlib.toPolynomial f ≠ 0)
+    (hnonunit : ¬ IsUnit (HexPolyZMathlib.toPolynomial f)) :
+    Hex.shouldRecordPolynomialFactor f = true := by
+  have hf_ne_zero : f ≠ 0 := fun hf => hne_zero (by
+    rw [hf]; exact HexPolyZMathlib.toPolynomial_zero)
+  have hf_ne_one : f ≠ 1 := fun hf => hnonunit
+    ((HexPolyZMathlib.isUnit_iff_toPolynomial_isUnit f).mp (by rw [hf]; left; rfl))
+  have hf_ne_neg_one : f ≠ Hex.DensePoly.C (-1) := fun hf => hnonunit
+    ((HexPolyZMathlib.isUnit_iff_toPolynomial_isUnit f).mp (by rw [hf]; right; rfl))
+  unfold Hex.shouldRecordPolynomialFactor
+  simp [hf_ne_zero, hf_ne_one, hf_ne_neg_one]
+
+/-- An irreducible (after transport) `Hex.ZPoly` value passes the executable
+`shouldRecordPolynomialFactor` check.  Combines the previous lemma with
+`Irreducible`'s structural projections. -/
+theorem shouldRecordPolynomialFactor_of_irreducible_toPolynomial
+    {f : Hex.ZPoly}
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial f)) :
+    Hex.shouldRecordPolynomialFactor f = true :=
+  shouldRecordPolynomialFactor_of_toPolynomial_ne_zero_not_isUnit
+    hirr.ne_zero hirr.not_isUnit
+
+/-- One-step `shouldRecord` discharge for a recombination split: when the
+candidate equals an irreducible integer factor, the executable check passes. -/
+theorem shouldRecord_recombinationCandidate_of_eq_factor
+    {factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (heq : recombinationCandidate d S = factor)
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor)) :
+    Hex.shouldRecordPolynomialFactor (recombinationCandidate d S) = true := by
+  rw [heq]
+  exact shouldRecordPolynomialFactor_of_irreducible_toPolynomial hirr
+
+/-- One-step `exactQuotient?` discharge for a recombination split: when the
+candidate equals an integer divisor of `core` and is monic of positive degree,
+the executable exact-division check returns `some` of the proof-side cofactor. -/
+theorem exactQuotient?_recombinationCandidate_eq_some_of_eq_factor
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (heq : recombinationCandidate d S = factor)
+    (hmonic : Hex.DensePoly.Monic factor)
+    (hpos : 0 < factor.degree?.getD 0)
+    (hdvd : factor ∣ core) :
+    ∃ quotient,
+      Hex.exactQuotient? core (recombinationCandidate d S) = some quotient ∧
+        quotient * recombinationCandidate d S = core := by
+  obtain ⟨q, hq⟩ := hdvd
+  -- hq : core = factor * q
+  have hmul : q * factor = core := by
+    rw [Hex.DensePoly.mul_comm_poly (S := Int)]
+    exact hq.symm
+  refine ⟨q, ?_, ?_⟩
+  · rw [heq]
+    exact Hex.exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree hmonic hpos hmul
+  · rw [heq]; exact hmul
+
 /-- A `Hex.ZPoly` factor that passes the executable `shouldRecordPolynomialFactor`
 check is non-zero and not a unit after transport to `Polynomial ℤ`.  The
 executable check rejects `0`, `1`, and `-1`, which are exactly the zero

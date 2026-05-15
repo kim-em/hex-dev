@@ -2990,7 +2990,8 @@ private def liftModulus (d : LiftData) : Nat :=
 def centeredLiftPoly (f : ZPoly) (m : Nat) : ZPoly :=
   DensePoly.ofCoeffs <| f.toArray.map fun coeff => centeredModNat coeff m
 
-private theorem coeff_centeredLiftPoly (f : ZPoly) (m i : Nat) :
+/-- Coefficientwise description of `centeredLiftPoly`. -/
+theorem coeff_centeredLiftPoly (f : ZPoly) (m i : Nat) :
     (centeredLiftPoly f m).coeff i = centeredModNat (f.coeff i) m := by
   have hzero : centeredModNat (0 : Int) m = 0 := centeredModNat_zero m
   unfold centeredLiftPoly
