@@ -1900,6 +1900,112 @@ private theorem finRange_filter_mem_perm_toList
   · simp [List.toFinset_filter, List.toFinset_finRange,
       Finset.filter_univ_mem, Finset.toList_toFinset]
 
+/-- The rejected list has the dual `filter`/`map` characterisation: it is the
+order-preserving filter of the universe of lifted-factor indices by
+non-membership in `S`, mapped through `liftedFactor d`. -/
+private theorem liftedSubsetRejectedList_eq_filter_map
+    (d : Hex.LiftData) (S : LiftedFactorSubset d) :
+    liftedSubsetRejectedList d S =
+      ((List.finRange d.liftedFactors.size).filter fun i => decide (i ∉ S)).map
+        (liftedFactor d) := by
+  unfold liftedSubsetRejectedList liftedSubsetMask liftedFactor
+  have hxs : d.liftedFactors.toList =
+      (List.finRange d.liftedFactors.size).map (fun i => d.liftedFactors[i]) := by
+    apply List.ext_getElem
+    · simp
+    · intro n h₁ h₂
+      simp [List.getElem_finRange]
+  rw [hxs, List.zip_map', List.filterMap_map]
+  simp only [Function.comp_def]
+  -- Convert `if p then none else some` into `if !p then some else none`.
+  have hrewrite :
+      (fun x : Fin d.liftedFactors.size =>
+          if decide (x ∈ S) then (none : Option Hex.ZPoly)
+          else some d.liftedFactors[x]) =
+        fun x : Fin d.liftedFactors.size =>
+          if decide (x ∉ S) then some d.liftedFactors[x] else none := by
+    funext x
+    by_cases hx : x ∈ S
+    · simp [hx]
+    · simp [hx]
+  rw [hrewrite]
+  exact List.filterMap_if_eq_map_filter
+    (List.finRange d.liftedFactors.size) (fun i => decide (i ∉ S))
+    (fun i => d.liftedFactors[i])
+
+/-- Predicate capturing that `localFactors` is the order-preserving list of
+lifted factors at the indices in `J`.  This is the invariant preserved by the
+recursive recombination search: at every level the executable's running
+`localFactors` is exactly the list of lifted factors at the remaining
+unconsumed indices.
+
+Used by the recursive coverage proof to bridge the proof-side
+`HenselSubsetCorrespondenceRest core d J target` to the executable list
+threaded through `Hex.recombinationSearchModAux`. -/
+def LiftedFactorListMatches (d : Hex.LiftData) (J : LiftedFactorSubset d)
+    (localFactors : List Hex.ZPoly) : Prop :=
+  localFactors =
+    ((List.finRange d.liftedFactors.size).filter fun i => decide (i ∈ J)).map
+      (liftedFactor d)
+
+/-- The matching predicate is equivalent to `localFactors = liftedSubsetSelectedList d J`,
+the cleanest form for connecting to the executable recombination split API. -/
+theorem LiftedFactorListMatches_iff_eq_liftedSubsetSelectedList
+    (d : Hex.LiftData) (J : LiftedFactorSubset d)
+    (localFactors : List Hex.ZPoly) :
+    LiftedFactorListMatches d J localFactors ↔
+      localFactors = liftedSubsetSelectedList d J := by
+  unfold LiftedFactorListMatches
+  rw [liftedSubsetSelectedList_eq_filter_map]
+
+/-- Initial-state instance: the full lifted-factor list matches the universe
+of indices.  This pairs with `henselSubsetCorrespondenceRest_initial` at the
+start of the recursive coverage induction. -/
+theorem LiftedFactorListMatches.univ (d : Hex.LiftData) :
+    LiftedFactorListMatches d Finset.univ d.liftedFactors.toList := by
+  unfold LiftedFactorListMatches liftedFactor
+  have hxs : d.liftedFactors.toList =
+      (List.finRange d.liftedFactors.size).map (fun i => d.liftedFactors[i]) := by
+    apply List.ext_getElem
+    · simp
+    · intro n h₁ h₂
+      simp [List.getElem_finRange]
+  rw [hxs]
+  congr 1
+  exact (List.filter_eq_self.mpr (by intro a _; simp)).symm
+
+/-- Cardinality bridge: a matched list has length equal to `J.card`.  This is
+the natural induction measure for the recursive coverage proof. -/
+theorem LiftedFactorListMatches.length_eq_card
+    {d : Hex.LiftData} {J : LiftedFactorSubset d} {localFactors : List Hex.ZPoly}
+    (h : LiftedFactorListMatches d J localFactors) :
+    localFactors.length = J.card := by
+  rw [h, List.length_map]
+  rw [(finRange_filter_mem_perm_toList J).length_eq, Finset.length_toList]
+
+/-- The rejected list of a subset `S` is exactly the selected list of the
+complementary universe minus `S`.  This is the executable-side identity that
+matches `liftedSubsetRejectedList d S` to `Finset.univ \ S`. -/
+theorem liftedSubsetRejectedList_eq_liftedSubsetSelectedList_sdiff
+    (d : Hex.LiftData) (S : LiftedFactorSubset d) :
+    liftedSubsetRejectedList d S = liftedSubsetSelectedList d (Finset.univ \ S) := by
+  rw [liftedSubsetRejectedList_eq_filter_map, liftedSubsetSelectedList_eq_filter_map]
+  congr 1
+  apply List.filter_congr
+  intro i _
+  simp [Finset.mem_sdiff]
+
+/-- Rejection-step instance: emitting `S` from the universal initial state
+leaves the executable's running `localFactors` matched to `Finset.univ \ S`.
+This is the universe-level case of the recursive invariant transition; the
+general `J ↦ J \ S` step lives in the recursive coverage proof and uses this
+lemma plus a partition-bridging lemma. -/
+theorem LiftedFactorListMatches.rejected_of_subset
+    (d : Hex.LiftData) (S : LiftedFactorSubset d) :
+    LiftedFactorListMatches d (Finset.univ \ S) (liftedSubsetRejectedList d S) := by
+  rw [LiftedFactorListMatches_iff_eq_liftedSubsetSelectedList]
+  exact liftedSubsetRejectedList_eq_liftedSubsetSelectedList_sdiff d S
+
 /-- The transported recombination candidate product equals the proof-side
 lifted-factor product: both factor lists are permutations of each other in
 `Polynomial ℤ`, so commutativity collapses the order difference. -/
