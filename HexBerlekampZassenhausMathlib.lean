@@ -4,6 +4,7 @@ import HexBerlekampZassenhausMathlib.BHKSBound
 import HexBerlekampZassenhausMathlib.ColumnSignature
 import HexBerlekampZassenhausMathlib.IntReductionMod
 import HexBerlekampZassenhausMathlib.Lattice
+import HexBerlekampZassenhausMathlib.PartitionRefinement
 import HexBerlekampZassenhausMathlib.Recovery
 import HexBerlekampZassenhausMathlib.Resultant
 import HexBerlekampZassenhausMathlib.SignatureClasses
