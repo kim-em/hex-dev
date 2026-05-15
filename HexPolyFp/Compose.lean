@@ -229,5 +229,68 @@ theorem C_mul_C_eq (a b : ZMod64 p) :
       simp
       exact hzero
 
+/-! ### Compose of `monomial k 1` and `linearPow X k`
+
+The composition `compose (linearPow X k) w = linearPow w k` follows by
+unfolding `linearPow X k` to `monomial k 1` and then reading off the
+explicit coefficient list `[0, …, 0, 1]` through the Horner power-sum
+form.
+-/
+
+private theorem composeCoeffPowerSumFrom_replicate_zero_append_one
+    [ZMod64.PrimeModulus p] (w : FpPoly p) :
+    ∀ (k base : Nat),
+      composeCoeffPowerSumFrom
+        ((List.replicate k (Zero.zero : ZMod64 p)) ++ [(1 : ZMod64 p)]) base w =
+          linearPow w (base + k)
+  | 0, base => by
+      simp only [List.replicate, List.nil_append]
+      show DensePoly.C (1 : ZMod64 p) * linearPow w base +
+          composeCoeffPowerSumFrom [] (base + 1) w = linearPow w (base + 0)
+      change (1 : FpPoly p) * linearPow w base + 0 = linearPow w (base + 0)
+      rw [FpPoly.one_mul, FpPoly.add_zero, Nat.add_zero]
+  | k + 1, base => by
+      simp only [List.replicate, List.cons_append]
+      show DensePoly.C (Zero.zero : ZMod64 p) * linearPow w base +
+          composeCoeffPowerSumFrom
+            (List.replicate k (Zero.zero : ZMod64 p) ++ [(1 : ZMod64 p)]) (base + 1) w =
+          linearPow w (base + (k + 1))
+      have hCz : (DensePoly.C (Zero.zero : ZMod64 p) : FpPoly p) = 0 := C_zero_eq_zero
+      rw [hCz, FpPoly.zero_mul, FpPoly.zero_add]
+      rw [composeCoeffPowerSumFrom_replicate_zero_append_one w k (base + 1)]
+      congr 1
+      omega
+
+private theorem monomial_one_toArray_toList_eq
+    [ZMod64.PrimeModulus p] (k : Nat) :
+    (DensePoly.monomial k (1 : ZMod64 p) : FpPoly p).toArray.toList =
+      List.replicate k (Zero.zero : ZMod64 p) ++ [(1 : ZMod64 p)] := by
+  have h1 : (1 : ZMod64 p) ≠ (Zero.zero : ZMod64 p) := one_ne_zero_of_prime
+  show ((DensePoly.monomial k (1 : ZMod64 p) : FpPoly p).coeffs.toList :
+    List (ZMod64 p)) = _
+  unfold DensePoly.monomial
+  rw [dif_neg h1]
+  show ((Array.replicate k (Zero.zero : ZMod64 p)).push (1 : ZMod64 p)).toList =
+    List.replicate k (Zero.zero : ZMod64 p) ++ [(1 : ZMod64 p)]
+  rw [Array.toList_push, Array.toList_replicate]
+
+private theorem compose_monomial_k_one_eq
+    [ZMod64.PrimeModulus p] (w : FpPoly p) (k : Nat) :
+    DensePoly.compose
+        ((DensePoly.monomial k (1 : ZMod64 p)) : FpPoly p) w =
+      linearPow w k := by
+  rw [compose_eq_powerSum, monomial_one_toArray_toList_eq,
+    composeCoeffPowerSumFrom_replicate_zero_append_one]
+  rw [Nat.zero_add]
+
+/-- `compose (linearPow X k) w = linearPow w k`. -/
+theorem compose_linearPow_X
+    [ZMod64.PrimeModulus p] (w : FpPoly p) (k : Nat) :
+    DensePoly.compose (FpPoly.linearPow FpPoly.X k) w = FpPoly.linearPow w k := by
+  show DensePoly.compose
+    (FpPoly.linearPow (DensePoly.monomial 1 (1 : ZMod64 p) : FpPoly p) k) w = _
+  rw [linearPow_monomial_one]
+  exact compose_monomial_k_one_eq w k
+
 end FpPoly
 end Hex
