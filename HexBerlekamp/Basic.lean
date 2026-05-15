@@ -631,18 +631,112 @@ theorem berlekampMatrix_mulVec_coeffVector_eq
   rw [← coeffVector_matrixActionPolySum_eq_mulVec f hmonic w]
   rw [matrixActionPolySum_eq_linearPow_mod f hmonic w hw]
 
+private def zmod64ZPow (a : ZMod64 p) : Int → ZMod64 p
+  | .ofNat n => a ^ n
+  | .negSucc n => (a ^ (n + 1))⁻¹
+
+private theorem zmod64_one_ne_zero_of_prime
+    (hp : Hex.Nat.Prime p) :
+    (1 : ZMod64 p) ≠ 0 := by
+  intro h
+  have hp2 : 2 ≤ p := hp.two_le
+  have htoNat : (1 : ZMod64 p).toNat = (0 : ZMod64 p).toNat :=
+    congrArg ZMod64.toNat h
+  rw [show ((1 : ZMod64 p).toNat) = 1 % p from ZMod64.toNat_one,
+      show ((0 : ZMod64 p).toNat) = 0 from ZMod64.toNat_zero,
+      Nat.mod_eq_of_lt (by omega : 1 < p)] at htoNat
+  omega
+
+private theorem zmod64_inv_zero :
+    (0 : ZMod64 p)⁻¹ = 0 := by
+  apply ZMod64.ext
+  apply UInt64.toNat_inj.mp
+  change (ZMod64.inv (0 : ZMod64 p)).toNat = (0 : ZMod64 p).toNat
+  rw [ZMod64.toNat_inv_def]
+  change (((HexArith.Int.extGcd 0 (Int.ofNat p)).2.1 % Int.ofNat p).toNat % p = 0)
+  have hs := HexArith.Int.extGcd_zero_left_s_ofNat p (ZMod64.Bounds.pPos (p := p))
+  rw [hs]
+  simp
+
+private theorem zmod64_inv_ne_zero_of_prime
+    (hp : Hex.Nat.Prime p) {a : ZMod64 p} (ha : a ≠ 0) :
+    a⁻¹ ≠ 0 := by
+  intro hinv
+  have hone := ZMod64.inv_mul_eq_one_of_prime hp ha
+  change ZMod64.inv a = 0 at hinv
+  rw [hinv] at hone
+  have hzero : (0 : ZMod64 p) * a = 0 := by grind
+  rw [hzero] at hone
+  exact zmod64_one_ne_zero_of_prime hp hone.symm
+
+private theorem zmod64_inv_inv_of_prime
+    (hp : Hex.Nat.Prime p) (a : ZMod64 p) :
+    (a⁻¹)⁻¹ = a := by
+  by_cases ha : a = 0
+  · subst a
+    rw [zmod64_inv_zero]
+    exact zmod64_inv_zero
+  · have hinv_ne := zmod64_inv_ne_zero_of_prime hp ha
+    have hleft : (a⁻¹)⁻¹ * a⁻¹ = (1 : ZMod64 p) :=
+      ZMod64.inv_mul_eq_one_of_prime hp hinv_ne
+    have hright : a * a⁻¹ = (1 : ZMod64 p) := by
+      rw [Lean.Grind.CommSemiring.mul_comm]
+      exact ZMod64.inv_mul_eq_one_of_prime hp ha
+    have hprod : (((a⁻¹)⁻¹ - a) * a⁻¹) = (0 : ZMod64 p) := by
+      rw [Lean.Grind.Ring.sub_eq_add_neg]
+      rw [Lean.Grind.Semiring.right_distrib]
+      rw [hleft]
+      grind
+    rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hprod with hdiff | hzero
+    · grind
+    · exact False.elim (hinv_ne hzero)
+
+instance zmod64FieldOfPrime [ZMod64.PrimeModulus p] :
+    Lean.Grind.Field (ZMod64 p) := by
+  letI : HPow (ZMod64 p) Int (ZMod64 p) := ⟨zmod64ZPow⟩
+  refine Lean.Grind.Field.mk ?_ ?_ ?_ ?_ ?_ ?_ ?_
+  · intro a b
+    rfl
+  · intro h
+    exact zmod64_one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) h.symm
+  · exact zmod64_inv_zero
+  · intro a ha
+    rw [Lean.Grind.CommSemiring.mul_comm]
+    exact ZMod64.inv_mul_eq_one_of_prime (ZMod64.PrimeModulus.prime (p := p)) ha
+  · intro a
+    exact Lean.Grind.Semiring.pow_zero a
+  · intro a n
+    change a ^ (n + 1) = a ^ n * a
+    exact Lean.Grind.Semiring.pow_succ a n
+  · intro a n
+    cases n with
+    | ofNat m =>
+        cases m with
+        | zero =>
+            show zmod64ZPow a (-Int.ofNat 0) = (zmod64ZPow a (Int.ofNat 0))⁻¹
+            rw [show (-Int.ofNat 0) = Int.ofNat 0 by rfl]
+            simp [zmod64ZPow]
+            have hpow0 : a ^ 0 = (1 : ZMod64 p) :=
+              Lean.Grind.Semiring.pow_zero a
+            rw [hpow0]
+            have h1ne : (1 : ZMod64 p) ≠ 0 :=
+              fun h => zmod64_one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) h
+            have hinv_one := ZMod64.inv_mul_eq_one_of_prime
+              (ZMod64.PrimeModulus.prime (p := p)) h1ne
+            rw [Lean.Grind.Semiring.mul_one] at hinv_one
+            exact hinv_one.symm
+        | succ m =>
+            rfl
+    | negSucc m =>
+        simp only [Int.neg_negSucc]
+        change a ^ (m + 1) = ((a ^ (m + 1))⁻¹)⁻¹
+        exact (zmod64_inv_inv_of_prime (ZMod64.PrimeModulus.prime (p := p)) (a ^ (m + 1))).symm
+
 /-- The fixed-space matrix `Q_f - I` used in Berlekamp's kernel computation. -/
-def fixedSpaceMatrix (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    [inst : Lean.Grind.Ring (ZMod64 p)] :
+def fixedSpaceMatrix (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     Matrix (ZMod64 p) (basisSize f) (basisSize f) :=
   let Q := berlekampMatrix f hmonic
-  Matrix.ofFn fun i j =>
-    @HSub.hSub (ZMod64 p) (ZMod64 p) (ZMod64 p)
-      (@instHSub (ZMod64 p) inst.toSub) Q[i][j]
-      (if i = j then
-        @OfNat.ofNat (ZMod64 p) 1 (inst.toSemiring.ofNat 1)
-      else
-        @OfNat.ofNat (ZMod64 p) 0 (inst.toSemiring.ofNat 0))
+  Matrix.ofFn fun i j => Q[i][j] - if i = j then 1 else 0
 
 /-- Convert a coefficient vector back to its polynomial representative. -/
 def vectorToPoly {n : Nat} (v : Vector (ZMod64 p) n) : FpPoly p :=
@@ -663,32 +757,21 @@ Berlekamp-local linear-algebra implementation.
 def fixedSpaceKernelVectors (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [inst : Lean.Grind.Field (ZMod64 p)] :
     Vector (Vector (ZMod64 p) (basisSize f))
-      (basisSize f - Matrix.rref_rank (fixedSpaceMatrix (inst := inst.toRing) f hmonic)) :=
-  Matrix.nullspace (fixedSpaceMatrix (inst := inst.toRing) f hmonic)
+      (basisSize f - Matrix.rref_rank (fixedSpaceMatrix f hmonic)) :=
+  Matrix.nullspace (fixedSpaceMatrix f hmonic)
 
 /-- The fixed-space kernel basis converted back to polynomial representatives. -/
 def fixedSpaceKernel (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [inst : Lean.Grind.Field (ZMod64 p)] :
     Vector (FpPoly p)
-      (basisSize f - Matrix.rref_rank (fixedSpaceMatrix (inst := inst.toRing) f hmonic)) :=
+      (basisSize f - Matrix.rref_rank (fixedSpaceMatrix f hmonic)) :=
   Vector.ofFn fun i => vectorToPoly ((fixedSpaceKernelVectors f hmonic).get i)
 
 /-- Vector-level executable Berlekamp kernel condition for the fixed-space
 matrix `Q_f - I`. -/
 def IsFixedSpaceKernelVector (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    (v : Vector (ZMod64 p) (basisSize f)) [inst : Lean.Grind.Field (ZMod64 p)] : Prop :=
-  @HMul.hMul (Matrix (ZMod64 p) (basisSize f) (basisSize f))
-      (Vector (ZMod64 p) (basisSize f)) (Vector (ZMod64 p) (basisSize f))
-      (@Matrix.instHMulVectorOfMulOfAddOfOfNatOfNatNat
-        (ZMod64 p) (basisSize f) (basisSize f)
-        inst.toCommSemiring.toMul inst.toCommSemiring.toAdd
-        (inst.toCommSemiring.toSemiring.ofNat 0))
-      (fixedSpaceMatrix (inst := inst.toRing) f hmonic) v =
-    @OfNat.ofNat (Vector (ZMod64 p) (basisSize f)) 0
-      (@Zero.toOfNat0 (Vector (ZMod64 p) (basisSize f))
-        (@Vector.instZero (ZMod64 p) (basisSize f)
-          (@Zero.ofOfNat0 (ZMod64 p)
-            (@Lean.Grind.Semiring.ofNat (ZMod64 p) inst.toCommSemiring.toSemiring 0))))
+    (v : Vector (ZMod64 p) (basisSize f)) : Prop :=
+  Matrix.mulVec (fixedSpaceMatrix f hmonic) v = 0
 
 private theorem vector_sub_eq_zero_iff_eq [Lean.Grind.Ring R] (u v : Vector R n) :
     u - v = 0 ↔ u = v := by
@@ -708,80 +791,41 @@ private theorem vector_sub_eq_zero_iff_eq [Lean.Grind.Ring R] (u v : Vector R n)
 fixed-space equation `Q_f * v = v`. -/
 theorem isFixedSpaceKernelVector_iff_berlekampMatrix_mulVec_eq
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    [inst : Lean.Grind.Field (ZMod64 p)] (v : Vector (ZMod64 p) (basisSize f)) :
+    [ZMod64.PrimeModulus p] (v : Vector (ZMod64 p) (basisSize f)) :
     IsFixedSpaceKernelVector f hmonic v ↔
-      @Matrix.mulVec (ZMod64 p) (basisSize f) (basisSize f)
-        inst.toCommSemiring.toMul inst.toCommSemiring.toAdd
-        (inst.toCommSemiring.toSemiring.ofNat 0) (berlekampMatrix f hmonic) v = v := by
+      Matrix.mulVec (berlekampMatrix f hmonic) v = v := by
   unfold IsFixedSpaceKernelVector
   dsimp only [fixedSpaceMatrix]
-  letI : Lean.Grind.Ring (ZMod64 p) := inst.toRing
-  change
-    @Matrix.mulVec (ZMod64 p) (basisSize f) (basisSize f)
-        inst.toCommSemiring.toMul inst.toCommSemiring.toAdd
-        (inst.toCommSemiring.toSemiring.ofNat 0)
-        (Matrix.ofFn fun i j =>
-          @HSub.hSub (ZMod64 p) (ZMod64 p) (ZMod64 p)
-            (@instHSub (ZMod64 p) inst.toSub) (berlekampMatrix f hmonic)[i][j]
-            (if i = j then
-              @OfNat.ofNat (ZMod64 p) 1 (inst.toCommSemiring.toSemiring.ofNat 1)
-            else
-              @OfNat.ofNat (ZMod64 p) 0 (inst.toCommSemiring.toSemiring.ofNat 0))) v =
-      @OfNat.ofNat (Vector (ZMod64 p) (basisSize f)) 0
-        (@Zero.toOfNat0 (Vector (ZMod64 p) (basisSize f))
-          (@Vector.instZero (ZMod64 p) (basisSize f)
-            (@Zero.ofOfNat0 (ZMod64 p)
-              (@Lean.Grind.Semiring.ofNat (ZMod64 p) inst.toCommSemiring.toSemiring 0)))) ↔
-    @Matrix.mulVec (ZMod64 p) (basisSize f) (basisSize f)
-        inst.toCommSemiring.toMul inst.toCommSemiring.toAdd
-        (inst.toCommSemiring.toSemiring.ofNat 0) (berlekampMatrix f hmonic) v = v
   have hsub :
-      @Matrix.mulVec (ZMod64 p) (basisSize f) (basisSize f)
-          inst.toCommSemiring.toMul inst.toCommSemiring.toAdd
-          (inst.toCommSemiring.toSemiring.ofNat 0)
-          (Matrix.ofFn fun i j =>
-            @HSub.hSub (ZMod64 p) (ZMod64 p) (ZMod64 p)
-              (@instHSub (ZMod64 p) inst.toSub) (berlekampMatrix f hmonic)[i][j]
-              (if i = j then
-                @OfNat.ofNat (ZMod64 p) 1 (inst.toCommSemiring.toSemiring.ofNat 1)
-              else
-                @OfNat.ofNat (ZMod64 p) 0 (inst.toCommSemiring.toSemiring.ofNat 0))) v =
-        @HSub.hSub (Vector (ZMod64 p) (basisSize f))
-          (Vector (ZMod64 p) (basisSize f)) (Vector (ZMod64 p) (basisSize f))
-          (@instHSub (Vector (ZMod64 p) (basisSize f))
-            (@Vector.instSub (ZMod64 p) (basisSize f) inst.toSub))
-          (@Matrix.mulVec (ZMod64 p) (basisSize f) (basisSize f)
-            inst.toCommSemiring.toMul inst.toCommSemiring.toAdd
-            (inst.toCommSemiring.toSemiring.ofNat 0) (berlekampMatrix f hmonic) v) v :=
+      Matrix.mulVec
+          (Matrix.ofFn fun i j => (berlekampMatrix f hmonic)[i][j] - if i = j then 1 else 0) v =
+        Matrix.mulVec (berlekampMatrix f hmonic) v - v :=
     Matrix.sub_identity_mulVec (berlekampMatrix f hmonic) v
   rw [hsub]
-  exact vector_sub_eq_zero_iff_eq
-    (@Matrix.mulVec (ZMod64 p) (basisSize f) (basisSize f)
-      inst.toCommSemiring.toMul inst.toCommSemiring.toAdd
-      (inst.toCommSemiring.toSemiring.ofNat 0) (berlekampMatrix f hmonic) v) v
+  exact vector_sub_eq_zero_iff_eq (Matrix.mulVec (berlekampMatrix f hmonic) v) v
 
 /-- Polynomial-level executable Berlekamp kernel condition, by reading the
 representative in the quotient basis used by `fixedSpaceMatrix`. -/
 def IsFixedSpaceKernelPolynomial (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    (g : FpPoly p) [Lean.Grind.Field (ZMod64 p)] : Prop :=
+    (g : FpPoly p) : Prop :=
   IsFixedSpaceKernelVector f hmonic (coeffVector f g)
 
 /-- Every vector returned by `fixedSpaceKernelVectors` satisfies the executable
 fixed-space kernel condition. -/
 theorem fixedSpaceKernelVectors_sound (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    [inst : Lean.Grind.Field (ZMod64 p)]
+    [ZMod64.PrimeModulus p]
     (k : Fin (basisSize f -
-      Matrix.rref_rank (fixedSpaceMatrix (inst := inst.toRing) f hmonic))) :
+      Matrix.rref_rank (fixedSpaceMatrix f hmonic))) :
     IsFixedSpaceKernelVector f hmonic ((fixedSpaceKernelVectors f hmonic).get k) := by
   unfold IsFixedSpaceKernelVector fixedSpaceKernelVectors
-  exact Matrix.nullspace_sound (fixedSpaceMatrix (inst := inst.toRing) f hmonic) k
+  simpa [HMul.hMul] using Matrix.nullspace_sound (fixedSpaceMatrix f hmonic) k
 
 /-- Every polynomial representative returned by `fixedSpaceKernel` satisfies the
 executable fixed-space kernel condition. -/
 theorem fixedSpaceKernel_sound (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    [inst : Lean.Grind.Field (ZMod64 p)]
+    [ZMod64.PrimeModulus p]
     (k : Fin (basisSize f -
-      Matrix.rref_rank (fixedSpaceMatrix (inst := inst.toRing) f hmonic))) :
+      Matrix.rref_rank (fixedSpaceMatrix f hmonic))) :
     IsFixedSpaceKernelPolynomial f hmonic ((fixedSpaceKernel f hmonic).get k) := by
   unfold IsFixedSpaceKernelPolynomial fixedSpaceKernel
   rw [Vector.get_ofFn, coeffVector_vectorToPoly]
@@ -790,36 +834,25 @@ theorem fixedSpaceKernel_sound (f : FpPoly p) (hmonic : DensePoly.Monic f)
 /-- Every vector satisfying the executable fixed-space kernel condition is a
 linear combination of the public nullspace-basis matrix for `Q_f - I`. -/
 theorem fixedSpaceKernelVectors_complete (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    [inst : Lean.Grind.Field (ZMod64 p)] (v : Vector (ZMod64 p) (basisSize f)) :
+    [ZMod64.PrimeModulus p] (v : Vector (ZMod64 p) (basisSize f)) :
     IsFixedSpaceKernelVector f hmonic v →
       ∃ c : Vector (ZMod64 p)
           (basisSize f -
-            Matrix.rref_rank (fixedSpaceMatrix (inst := inst.toRing) f hmonic)),
-        @Matrix.mulVec (ZMod64 p) (basisSize f)
-            (basisSize f -
-              Matrix.rref_rank (fixedSpaceMatrix (inst := inst.toRing) f hmonic))
-            inst.toCommSemiring.toMul inst.toCommSemiring.toAdd
-            (inst.toCommSemiring.toSemiring.ofNat 0)
-            (Matrix.nullspaceBasisMatrix
-              (fixedSpaceMatrix (inst := inst.toRing) f hmonic)) c = v := by
+            Matrix.rref_rank (fixedSpaceMatrix f hmonic)),
+        Matrix.mulVec (Matrix.nullspaceBasisMatrix (fixedSpaceMatrix f hmonic)) c = v := by
   intro hv
-  exact Matrix.nullspace_complete (fixedSpaceMatrix (inst := inst.toRing) f hmonic) v hv
+  simpa [HMul.hMul] using Matrix.nullspace_complete (fixedSpaceMatrix f hmonic) v hv
 
 /-- Polynomial representatives satisfying the executable fixed-space kernel
 condition have coefficient vectors in the span of the nullspace basis. -/
 theorem fixedSpaceKernelPolynomial_coeffVector_complete (f : FpPoly p)
-    (hmonic : DensePoly.Monic f) [inst : Lean.Grind.Field (ZMod64 p)] (g : FpPoly p) :
+    (hmonic : DensePoly.Monic f) [ZMod64.PrimeModulus p] (g : FpPoly p) :
     IsFixedSpaceKernelPolynomial f hmonic g →
       ∃ c : Vector (ZMod64 p)
           (basisSize f -
-            Matrix.rref_rank (fixedSpaceMatrix (inst := inst.toRing) f hmonic)),
-        @Matrix.mulVec (ZMod64 p) (basisSize f)
-            (basisSize f -
-              Matrix.rref_rank (fixedSpaceMatrix (inst := inst.toRing) f hmonic))
-            inst.toCommSemiring.toMul inst.toCommSemiring.toAdd
-            (inst.toCommSemiring.toSemiring.ofNat 0)
-            (Matrix.nullspaceBasisMatrix
-              (fixedSpaceMatrix (inst := inst.toRing) f hmonic)) c = coeffVector f g := by
+            Matrix.rref_rank (fixedSpaceMatrix f hmonic)),
+        Matrix.mulVec (Matrix.nullspaceBasisMatrix (fixedSpaceMatrix f hmonic)) c =
+          coeffVector f g := by
   intro hg
   exact fixedSpaceKernelVectors_complete f hmonic (coeffVector f g) hg
 
