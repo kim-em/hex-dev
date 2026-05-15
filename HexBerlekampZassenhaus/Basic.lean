@@ -2675,6 +2675,113 @@ private theorem foldl_collectFactorStep_mem_normalized_or_old
         right
         exact ⟨raw, by simp [hraw], hnorm⟩
 
+private theorem bumpFactorMultiplicity_entries_positive
+    (g : ZPoly) (acc : List (ZPoly × Nat))
+    (hpos : ∀ entry ∈ acc, 0 < entry.2) :
+    ∀ entry ∈ bumpFactorMultiplicity g acc, 0 < entry.2 := by
+  induction acc with
+  | nil =>
+      intro entry hmem
+      simp [bumpFactorMultiplicity] at hmem
+      rw [hmem]
+      simp
+  | cons head tail ih =>
+      intro entry hmem
+      unfold bumpFactorMultiplicity at hmem
+      by_cases heq : head.1 = g
+      · simp [heq] at hmem
+        rcases hmem with hentry | htail
+        · rw [hentry]
+          simp
+        · exact hpos entry (by simp [htail])
+      · simp [heq] at hmem
+        rcases hmem with hentry | htail
+        · rw [hentry]
+          exact hpos head (by simp)
+        · exact ih (fun entry hentry => hpos entry (by simp [hentry])) entry htail
+
+private theorem collectFactorStep_entries_positive
+    (acc : List (ZPoly × Nat)) (factor : ZPoly)
+    (hpos : ∀ entry ∈ acc, 0 < entry.2) :
+    ∀ entry ∈ collectFactorStep acc factor, 0 < entry.2 := by
+  unfold collectFactorStep
+  by_cases hrec : shouldRecordPolynomialFactor (normalizeFactorSign factor) = true
+  · intro entry hmem
+    simp [hrec] at hmem
+    exact
+      bumpFactorMultiplicity_entries_positive
+        (normalizeFactorSign factor) acc hpos entry hmem
+  · intro entry hmem
+    simp [hrec] at hmem
+    exact hpos entry hmem
+
+private theorem foldl_collectFactorStep_entries_positive
+    (factors : List ZPoly) (acc : List (ZPoly × Nat))
+    (hpos : ∀ entry ∈ acc, 0 < entry.2) :
+    ∀ entry ∈ factors.foldl collectFactorStep acc, 0 < entry.2 := by
+  induction factors generalizing acc with
+  | nil =>
+      simpa using hpos
+  | cons factor factors ih =>
+      simp only [List.foldl_cons]
+      exact ih (collectFactorStep acc factor)
+        (collectFactorStep_entries_positive acc factor hpos)
+
+private theorem bumpFactorMultiplicity_pairwise_first
+    (g : ZPoly) (acc : List (ZPoly × Nat))
+    (hpair : List.Pairwise (fun a b : ZPoly × Nat => a.1 ≠ b.1) acc) :
+    List.Pairwise (fun a b : ZPoly × Nat => a.1 ≠ b.1)
+      (bumpFactorMultiplicity g acc) := by
+  induction acc with
+  | nil =>
+      simp [bumpFactorMultiplicity]
+  | cons head tail ih =>
+      unfold bumpFactorMultiplicity
+      by_cases heq : head.1 = g
+      · cases hpair with
+        | cons hhead htail =>
+            simp [heq]
+            constructor
+            · intro a m hmem
+              simpa [heq] using hhead (a, m) hmem
+            · exact htail
+      · cases hpair with
+        | cons hhead htail =>
+            simp [heq]
+            constructor
+            · intro a m hmem hfirst
+              rcases bumpFactorMultiplicity_mem_normalized_or_old g tail (a, m) hmem with
+                hnorm | hold
+              · exact heq (hfirst.trans hnorm)
+              · exact hhead (a, m) hold hfirst
+            · exact ih htail
+
+private theorem collectFactorStep_pairwise_first
+    (acc : List (ZPoly × Nat)) (factor : ZPoly)
+    (hpair : List.Pairwise (fun a b : ZPoly × Nat => a.1 ≠ b.1) acc) :
+    List.Pairwise (fun a b : ZPoly × Nat => a.1 ≠ b.1)
+      (collectFactorStep acc factor) := by
+  unfold collectFactorStep
+  by_cases hrec : shouldRecordPolynomialFactor (normalizeFactorSign factor) = true
+  · simp [hrec]
+    exact bumpFactorMultiplicity_pairwise_first
+      (normalizeFactorSign factor) acc hpair
+  · simp [hrec]
+    exact hpair
+
+private theorem foldl_collectFactorStep_pairwise_first
+    (factors : List ZPoly) (acc : List (ZPoly × Nat))
+    (hpair : List.Pairwise (fun a b : ZPoly × Nat => a.1 ≠ b.1) acc) :
+    List.Pairwise (fun a b : ZPoly × Nat => a.1 ≠ b.1)
+      (factors.foldl collectFactorStep acc) := by
+  induction factors generalizing acc with
+  | nil =>
+      simpa using hpair
+  | cons factor factors ih =>
+      simp only [List.foldl_cons]
+      exact ih (collectFactorStep acc factor)
+        (collectFactorStep_pairwise_first acc factor hpair)
+
 /-- Every collected `(factor, multiplicity)` entry comes from some raw factor
 after sign normalization. This is the theorem-level wrapper for the
 `collectFactorMultiplicities` step. -/
@@ -2690,6 +2797,31 @@ theorem collectFactorMultiplicities_entry_mem_normalized_raw
   · simp at hold
   · exact hraw
 
+/-- Every collected factorization entry has positive multiplicity. -/
+theorem collectFactorMultiplicities_entry_multiplicity_pos
+    (factors : Array ZPoly) (entry : ZPoly × Nat)
+    (hmem : entry ∈ (collectFactorMultiplicities factors).toList) :
+    0 < entry.2 := by
+  rw [collectFactorMultiplicities_eq_foldl] at hmem
+  have hmem_fold : entry ∈ factors.toList.foldl collectFactorStep [] := by
+    simpa using hmem
+  exact
+    foldl_collectFactorStep_entries_positive factors.toList []
+      (by simp) entry hmem_fold
+
+/-- The collector emits no duplicate polynomial keys. -/
+theorem collectFactorMultiplicities_pairwise_first
+    (factors : Array ZPoly) :
+    List.Pairwise (fun a b : ZPoly × Nat => a.1 ≠ b.1)
+      (collectFactorMultiplicities factors).toList := by
+  rw [collectFactorMultiplicities_eq_foldl]
+  have hpair :
+      List.Pairwise (fun a b : ZPoly × Nat => a.1 ≠ b.1)
+        (factors.toList.foldl collectFactorStep []) :=
+    foldl_collectFactorStep_pairwise_first factors.toList [] (by simp)
+  rw [List.pairwise_reverse]
+  exact hpair.imp (fun hne h => hne h.symm)
+
 /-- Membership in a `Factorization` built from a raw factor array descends to
 membership in that raw array, up to sign normalization. -/
 theorem factorizationOfFactors_entry_mem_normalized_raw
@@ -2698,6 +2830,22 @@ theorem factorizationOfFactors_entry_mem_normalized_raw
     ∃ raw ∈ factors.toList, entry.1 = normalizeFactorSign raw := by
   unfold factorizationOfFactors at hmem
   exact collectFactorMultiplicities_entry_mem_normalized_raw factors entry hmem
+
+/-- Entries in a `Factorization` built from raw factors have positive multiplicity. -/
+theorem factorizationOfFactors_entry_multiplicity_pos
+    (f : ZPoly) (factors : Array ZPoly) (entry : ZPoly × Nat)
+    (hmem : entry ∈ (factorizationOfFactors f factors).factors.toList) :
+    0 < entry.2 := by
+  unfold factorizationOfFactors at hmem
+  exact collectFactorMultiplicities_entry_multiplicity_pos factors entry hmem
+
+/-- A `Factorization` built from raw factors has no duplicate polynomial keys. -/
+theorem factorizationOfFactors_pairwise_first
+    (f : ZPoly) (factors : Array ZPoly) :
+    List.Pairwise (fun a b : ZPoly × Nat => a.1 ≠ b.1)
+      (factorizationOfFactors f factors).factors.toList := by
+  unfold factorizationOfFactors
+  exact collectFactorMultiplicities_pairwise_first factors
 
 private theorem factorizationOfFactors_product
     (f : ZPoly) (factors : Array ZPoly) :
