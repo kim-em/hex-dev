@@ -1,4 +1,6 @@
 import Mathlib.RingTheory.UniqueFactorizationDomain.NormalizedFactors
+import Mathlib.Algebra.EuclideanDomain.Int
+import Mathlib.RingTheory.Polynomial.UniqueFactorization
 
 /-!
 Abstract UFD partition-cardinality bound used by the BHKS Group B
@@ -177,6 +179,74 @@ theorem normalizedFactors_card_le_length_of_irreducible_partition
     (hprod : Associated gs.prod f) :
     (normalizedFactors f).card ≤ gs.length := by
   rw [normalizedFactors_card_eq_length_of_irreducible_partition gs hirr hprod]
+
+/--
+The normalized factors of a list product of irreducibles are exactly the
+normalizations of the list entries, viewed as a multiset.
+-/
+theorem normalizedFactors_list_prod_eq_of_irreducible
+    {α : Type*} [CommMonoidWithZero α] [IsCancelMulZero α]
+    [NormalizationMonoid α] [UniqueFactorizationMonoid α]
+    (gs : List α) (hirr : ∀ g ∈ gs, Irreducible g) :
+    normalizedFactors gs.prod = ((gs : Multiset α).map normalize) := by
+  let s : Multiset α := (gs : Multiset α)
+  have hs_prod : s.prod = gs.prod := by
+    simp [s, Multiset.prod_coe]
+  rw [← hs_prod]
+  exact normalizedFactors_prod_eq s (by
+    intro g hg
+    exact hirr g (Multiset.mem_coe.mp hg))
+
+private theorem polynomial_list_prod_monic
+    (gs : List (Polynomial ℤ)) (hmonic : ∀ g ∈ gs, g.Monic) :
+    gs.prod.Monic := by
+  induction gs with
+  | nil =>
+      exact Polynomial.leadingCoeff_one
+  | cons g gs ih =>
+      rw [List.prod_cons]
+      exact (hmonic g (by simp)).mul
+        (ih (fun q hq => hmonic q (by simp [hq])))
+
+/--
+Uniqueness for scalar-prefixed products of flattened monic irreducible integer
+polynomial factors.
+
+If two nonzero integer scalars multiply products of monic irreducible factors
+to the same polynomial, the scalars agree and the flattened products have the
+same normalized-factor multiset. This is the Mathlib/UFD core needed by the
+factorization uniqueness bridge after executable factor entries have been
+expanded by multiplicity.
+-/
+theorem scalar_eq_and_normalizedFactors_eq_of_monic_irreducible_product_eq
+    (c d : ℤ) (xs ys : List (Polynomial ℤ))
+    (hc : c ≠ 0)
+    (hxirr : ∀ x ∈ xs, Irreducible x)
+    (hyirr : ∀ y ∈ ys, Irreducible y)
+    (hxmonic : ∀ x ∈ xs, x.Monic)
+    (hymonic : ∀ y ∈ ys, y.Monic)
+    (hprod :
+      Polynomial.C c * xs.prod = Polynomial.C d * ys.prod) :
+    c = d ∧
+      normalizedFactors xs.prod = normalizedFactors ys.prod := by
+  have hxprod_monic : xs.prod.Monic :=
+    polynomial_list_prod_monic xs hxmonic
+  have hyprod_monic : ys.prod.Monic :=
+    polynomial_list_prod_monic ys hymonic
+  have hscalar : c = d := by
+    have hlead := congrArg Polynomial.leadingCoeff hprod
+    rw [hxprod_monic.leadingCoeff_C_mul c,
+      hyprod_monic.leadingCoeff_C_mul d] at hlead
+    exact hlead
+  have hprod_eq : xs.prod = ys.prod := by
+    have hcancel :
+        Polynomial.C c * xs.prod = Polynomial.C c * ys.prod := by
+      simpa [hscalar] using hprod
+    exact mul_left_cancel₀ (Polynomial.C_ne_zero.mpr hc) hcancel
+  refine ⟨hscalar, ?_⟩
+  have hxnorm := normalizedFactors_list_prod_eq_of_irreducible xs hxirr
+  have hynorm := normalizedFactors_list_prod_eq_of_irreducible ys hyirr
+  simpa [hxnorm, hynorm] using congrArg normalizedFactors hprod_eq
 
 /--
 **Group B partition-cardinality bound (Mathlib-only UFD argument).**
