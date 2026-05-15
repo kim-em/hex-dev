@@ -252,52 +252,6 @@ theorem factor_polynomialIrreducible_of_nonUnit (f : Hex.ZPoly) :
     (Hex.ZPoly.Irreducible_iff_polynomialIrreducible entry.1).mp
       (factor_irreducible_of_nonUnit f entry hentry)
 
-/--
-Two irreducible executable factorizations of the same polynomial have the same
-signed scalar and the same polynomial factors with multiplicities.
--/
-theorem factor_unique (f : Hex.ZPoly) (φ ψ : Hex.Factorization) :
-    Hex.Factorization.product φ = f →
-    Hex.Factorization.product ψ = f →
-    (∀ entry ∈ φ.factors, Hex.ZPoly.Irreducible entry.1) →
-    (∀ entry ∈ ψ.factors, Hex.ZPoly.Irreducible entry.1) →
-    φ.scalar = ψ.scalar ∧ List.Perm φ.factors.toList ψ.factors.toList := by
-  sorry
-
-/--
-Uniqueness specialised against the default executable factorization, so callers
-only provide the competing product and irreducibility facts.
--/
-theorem factor_unique_of_product
-    (f : Hex.ZPoly) (φ : Hex.Factorization)
-    (hproduct : Hex.Factorization.product φ = f)
-    (hirr : ∀ entry ∈ φ.factors, Hex.ZPoly.Irreducible entry.1) :
-    φ.scalar = (Hex.factor f).scalar ∧
-      List.Perm φ.factors.toList (Hex.factor f).factors.toList :=
-  factor_unique f φ (Hex.factor f) hproduct (factor_product f) hirr
-    (factor_irreducible_of_nonUnit f)
-
-/--
-The executable integer-polynomial irreducibility checker is sound after
-transport to Mathlib's polynomial model.
--/
-theorem checkIrreducibleCert_sound
-    (f : Hex.ZPoly) (cert : Hex.ZPolyIrreducibilityCertificate) :
-    Hex.checkIrreducibleCert f cert = true → Irreducible (HexPolyZMathlib.toPolynomial f) := by
-  sorry
-
-/--
-The executable integer-polynomial irreducibility checker is sound for the
-Mathlib-free irreducibility predicate as well.
--/
-theorem checkIrreducibleCert_sound_zpoly
-    (f : Hex.ZPoly) (cert : Hex.ZPolyIrreducibilityCertificate) :
-    Hex.checkIrreducibleCert f cert = true → Hex.ZPoly.Irreducible f := by
-  intro hcert
-  exact
-    (Hex.ZPoly.Irreducible_iff_polynomialIrreducible f).mpr
-      (checkIrreducibleCert_sound f cert hcert)
-
 private theorem toPolynomial_foldl_mul (lst : List Hex.ZPoly) (init : Hex.ZPoly) :
     HexPolyZMathlib.toPolynomial (lst.foldl (· * ·) init) =
       (lst.map HexPolyZMathlib.toPolynomial).foldl (· * ·)
@@ -387,6 +341,246 @@ theorem factorizationProduct_toPolynomial (φ : Hex.Factorization) :
   rw [factorizationProduct_toPolynomial_foldl φ.factors.toList (Hex.DensePoly.C φ.scalar)]
   rw [HexPolyZMathlib.toPolynomial_C]
   rfl
+
+/--
+A nonzero `Hex.ZPoly` factor with `Hex.normalizeFactorSign` fixed has a
+nonnegative leading coefficient, so its Mathlib transport is
+`normalize`-fixed in `Polynomial ℤ`.
+-/
+private theorem normalize_toPolynomial_of_normalizeFactorSign_id
+    {f : Hex.ZPoly} (hne : f ≠ 0)
+    (h : Hex.normalizeFactorSign f = f) :
+    normalize (HexPolyZMathlib.toPolynomial f) = HexPolyZMathlib.toPolynomial f := by
+  have hlc_nonneg : 0 ≤ Hex.DensePoly.leadingCoeff f := by
+    by_contra hneg
+    rw [not_le] at hneg
+    apply hne
+    unfold Hex.normalizeFactorSign at h
+    rw [if_pos hneg] at h
+    apply Hex.DensePoly.ext_coeff
+    intro n
+    have hzero_mul : (-1 : Int) * (Zero.zero : Int) = (Zero.zero : Int) :=
+      mul_zero _
+    have hscale :
+        (Hex.DensePoly.scale (-1 : Int) f).coeff n = (-1 : Int) * f.coeff n :=
+      Hex.DensePoly.coeff_scale (-1 : Int) f n hzero_mul
+    have hcoeff_eq :
+        (Hex.DensePoly.scale (-1 : Int) f).coeff n = f.coeff n :=
+      congrArg (fun p => Hex.DensePoly.coeff p n) h
+    rw [hscale] at hcoeff_eq
+    rw [Hex.DensePoly.coeff_zero]
+    omega
+  have hlc_poly : 0 ≤ (HexPolyZMathlib.toPolynomial f).leadingCoeff := by
+    rw [HexPolyMathlib.leadingCoeff_toPolynomial]
+    exact hlc_nonneg
+  rw [normalize_apply, Polynomial.coe_normUnit, Int.normUnit_eq, if_pos hlc_poly,
+    Units.val_one, Polynomial.C_1, mul_one]
+
+private theorem mem_factorizationFlattenedFactors_iff
+    {φ : Hex.Factorization} {f : Hex.ZPoly} :
+    f ∈ factorizationFlattenedFactors φ ↔
+      ∃ entry ∈ φ.factors.toList, entry.2 ≠ 0 ∧ entry.1 = f := by
+  unfold factorizationFlattenedFactors flattenedFactorEntries
+  simp only [List.mem_flatMap, List.mem_replicate]
+  constructor
+  · rintro ⟨entry, hentry, hne_mul, rfl⟩
+    exact ⟨entry, hentry, hne_mul, rfl⟩
+  · rintro ⟨entry, hentry, hne_mul, rfl⟩
+    exact ⟨entry, hentry, hne_mul, rfl⟩
+
+/--
+The transport coercion of `factorizationFlattenedFactors` to a multiset
+equals the issue-spec multiplicity sum over the original entry list. -/
+private theorem coe_factorizationFlattenedFactors_eq
+    (φ : Hex.Factorization) :
+    (factorizationFlattenedFactors φ : Multiset Hex.ZPoly) =
+      (φ.factors.toList.map (fun e => Multiset.replicate e.2 e.1)).sum := by
+  unfold factorizationFlattenedFactors flattenedFactorEntries
+  induction φ.factors.toList with
+  | nil => simp
+  | cons head tail ih =>
+    show ((List.replicate head.2 head.1 ++
+          tail.flatMap (fun e => List.replicate e.2 e.1) : List Hex.ZPoly) :
+        Multiset Hex.ZPoly) =
+      Multiset.replicate head.2 head.1 +
+        (tail.map (fun e => Multiset.replicate e.2 e.1)).sum
+    rw [← Multiset.coe_add, Multiset.coe_replicate, ih]
+
+/--
+Two irreducible executable factorizations of the same nonzero polynomial
+have the same signed scalar and the same multiplicity-flattened multiset of
+polynomial factors. The corrected statement compares flattened normalized
+factors rather than raw `List.Perm`, since `Hex.Factorization` does not
+constrain factor sign, multiplicity packing, or constant factors. The
+`normalizeFactorSign` and `nonconst` hypotheses rule out the corresponding
+counterexamples.
+-/
+theorem factor_unique
+    (φ ψ : Hex.Factorization)
+    (hφ_norm : ∀ entry ∈ φ.factors, Hex.normalizeFactorSign entry.1 = entry.1)
+    (hψ_norm : ∀ entry ∈ ψ.factors, Hex.normalizeFactorSign entry.1 = entry.1)
+    (hφ_nonconst : ∀ entry ∈ φ.factors, 0 < entry.1.degree?.getD 0)
+    (hψ_nonconst : ∀ entry ∈ ψ.factors, 0 < entry.1.degree?.getD 0)
+    (hφ_irr : ∀ entry ∈ φ.factors, Hex.ZPoly.Irreducible entry.1)
+    (hψ_irr : ∀ entry ∈ ψ.factors, Hex.ZPoly.Irreducible entry.1)
+    (hφ_prod_ne : Hex.Factorization.product φ ≠ 0)
+    (hprod : Hex.Factorization.product φ = Hex.Factorization.product ψ) :
+    φ.scalar = ψ.scalar ∧
+      (φ.factors.toList.map (fun e => Multiset.replicate e.2 e.1)).sum =
+        (ψ.factors.toList.map (fun e => Multiset.replicate e.2 e.1)).sum := by
+  -- Derive flat-list properties from packed entry hypotheses.
+  have hφ_flat_ne :
+      ∀ f ∈ factorizationFlattenedFactors φ, f ≠ 0 := by
+    intro f hf
+    obtain ⟨entry, hentry, _, rfl⟩ := mem_factorizationFlattenedFactors_iff.mp hf
+    exact (hφ_irr entry (Array.mem_toList_iff.mp hentry)).not_zero
+  have hψ_flat_ne :
+      ∀ f ∈ factorizationFlattenedFactors ψ, f ≠ 0 := by
+    intro f hf
+    obtain ⟨entry, hentry, _, rfl⟩ := mem_factorizationFlattenedFactors_iff.mp hf
+    exact (hψ_irr entry (Array.mem_toList_iff.mp hentry)).not_zero
+  have hφ_flat_irr :
+      ∀ p ∈ (factorizationFlattenedFactors φ).map HexPolyZMathlib.toPolynomial,
+        Irreducible p := by
+    intro p hp
+    obtain ⟨f, hf, rfl⟩ := List.mem_map.mp hp
+    obtain ⟨entry, hentry, _, rfl⟩ := mem_factorizationFlattenedFactors_iff.mp hf
+    exact (Hex.ZPoly.Irreducible_iff_polynomialIrreducible entry.1).mp
+      (hφ_irr entry (Array.mem_toList_iff.mp hentry))
+  have hψ_flat_irr :
+      ∀ p ∈ (factorizationFlattenedFactors ψ).map HexPolyZMathlib.toPolynomial,
+        Irreducible p := by
+    intro p hp
+    obtain ⟨f, hf, rfl⟩ := List.mem_map.mp hp
+    obtain ⟨entry, hentry, _, rfl⟩ := mem_factorizationFlattenedFactors_iff.mp hf
+    exact (Hex.ZPoly.Irreducible_iff_polynomialIrreducible entry.1).mp
+      (hψ_irr entry (Array.mem_toList_iff.mp hentry))
+  have hφ_flat_norm :
+      ∀ p ∈ (factorizationFlattenedFactors φ).map HexPolyZMathlib.toPolynomial,
+        normalize p = p := by
+    intro p hp
+    obtain ⟨f, hf, rfl⟩ := List.mem_map.mp hp
+    obtain ⟨entry, hentry, _, rfl⟩ := mem_factorizationFlattenedFactors_iff.mp hf
+    have hns := hφ_norm entry (Array.mem_toList_iff.mp hentry)
+    have hne := (hφ_irr entry (Array.mem_toList_iff.mp hentry)).not_zero
+    exact normalize_toPolynomial_of_normalizeFactorSign_id hne hns
+  have hψ_flat_norm :
+      ∀ p ∈ (factorizationFlattenedFactors ψ).map HexPolyZMathlib.toPolynomial,
+        normalize p = p := by
+    intro p hp
+    obtain ⟨f, hf, rfl⟩ := List.mem_map.mp hp
+    obtain ⟨entry, hentry, _, rfl⟩ := mem_factorizationFlattenedFactors_iff.mp hf
+    have hns := hψ_norm entry (Array.mem_toList_iff.mp hentry)
+    have hne := (hψ_irr entry (Array.mem_toList_iff.mp hentry)).not_zero
+    exact normalize_toPolynomial_of_normalizeFactorSign_id hne hns
+  have hφ_flat_nonconst :
+      ∀ p ∈ (factorizationFlattenedFactors φ).map HexPolyZMathlib.toPolynomial,
+        p.natDegree ≠ 0 := by
+    intro p hp
+    obtain ⟨f, hf, rfl⟩ := List.mem_map.mp hp
+    obtain ⟨entry, hentry, _, rfl⟩ := mem_factorizationFlattenedFactors_iff.mp hf
+    rw [HexPolyMathlib.natDegree_toPolynomial entry.1]
+    have h := hφ_nonconst entry (Array.mem_toList_iff.mp hentry)
+    omega
+  have hψ_flat_nonconst :
+      ∀ p ∈ (factorizationFlattenedFactors ψ).map HexPolyZMathlib.toPolynomial,
+        p.natDegree ≠ 0 := by
+    intro p hp
+    obtain ⟨f, hf, rfl⟩ := List.mem_map.mp hp
+    obtain ⟨entry, hentry, _, rfl⟩ := mem_factorizationFlattenedFactors_iff.mp hf
+    rw [HexPolyMathlib.natDegree_toPolynomial entry.1]
+    have h := hψ_nonconst entry (Array.mem_toList_iff.mp hentry)
+    omega
+  -- Transport the product equality to Polynomial ℤ.
+  have hprod_poly :
+      Polynomial.C φ.scalar *
+          ((factorizationFlattenedFactors φ).map HexPolyZMathlib.toPolynomial).prod =
+        Polynomial.C ψ.scalar *
+          ((factorizationFlattenedFactors ψ).map HexPolyZMathlib.toPolynomial).prod := by
+    have h := congrArg HexPolyZMathlib.toPolynomial hprod
+    rw [factorizationProduct_toPolynomial, factorizationProduct_toPolynomial] at h
+    exact h
+  -- The transported product is nonzero, so the scalar `φ.scalar` is nonzero.
+  have hφ_scalar_ne : φ.scalar ≠ 0 := by
+    intro hzero
+    apply hφ_prod_ne
+    apply HexPolyZMathlib.equiv.injective
+    simp only [HexPolyZMathlib.equiv_apply]
+    rw [factorizationProduct_toPolynomial, hzero, Polynomial.C_0, zero_mul,
+      HexPolyZMathlib.toPolynomial_zero]
+  -- Apply the polynomial UFD helper from `UFDPartition`.
+  obtain ⟨hscalar, hflat_eq⟩ :=
+    UFDPartition.scalar_eq_and_coe_eq_of_normalize_fixed_nonconst_irreducible_product_eq
+      φ.scalar ψ.scalar
+      ((factorizationFlattenedFactors φ).map HexPolyZMathlib.toPolynomial)
+      ((factorizationFlattenedFactors ψ).map HexPolyZMathlib.toPolynomial)
+      hφ_scalar_ne hφ_flat_irr hψ_flat_irr hφ_flat_norm hψ_flat_norm
+      hφ_flat_nonconst hψ_flat_nonconst hprod_poly
+  refine ⟨hscalar, ?_⟩
+  -- Lift multiset equality back to `Hex.ZPoly`.
+  rw [← coe_factorizationFlattenedFactors_eq, ← coe_factorizationFlattenedFactors_eq]
+  -- Goal: (factorizationFlattenedFactors φ : Multiset _) = (factorizationFlattenedFactors ψ : Multiset _)
+  have hcoe_map_φ :
+      ((factorizationFlattenedFactors φ).map HexPolyZMathlib.toPolynomial :
+          Multiset (Polynomial ℤ)) =
+        ((factorizationFlattenedFactors φ : Multiset Hex.ZPoly)).map
+          HexPolyZMathlib.toPolynomial := by
+    simp [Multiset.map_coe]
+  have hcoe_map_ψ :
+      ((factorizationFlattenedFactors ψ).map HexPolyZMathlib.toPolynomial :
+          Multiset (Polynomial ℤ)) =
+        ((factorizationFlattenedFactors ψ : Multiset Hex.ZPoly)).map
+          HexPolyZMathlib.toPolynomial := by
+    simp [Multiset.map_coe]
+  rw [hcoe_map_φ, hcoe_map_ψ] at hflat_eq
+  exact Multiset.map_injective HexPolyZMathlib.equiv.injective hflat_eq
+
+/--
+Uniqueness specialised against the default executable factorization, so callers
+only provide the competing product, irreducibility, sign-normalization, and
+nonconstant-factor facts, plus that the input is nonzero. The default
+factorization's own well-formedness is supplied by
+`factor_irreducible_of_nonUnit` and forthcoming sibling lemmas.
+-/
+theorem factor_unique_of_product
+    (f : Hex.ZPoly) (φ : Hex.Factorization) (hf_ne : f ≠ 0)
+    (hproduct : Hex.Factorization.product φ = f)
+    (hφ_norm : ∀ entry ∈ φ.factors, Hex.normalizeFactorSign entry.1 = entry.1)
+    (hψ_norm : ∀ entry ∈ (Hex.factor f).factors,
+      Hex.normalizeFactorSign entry.1 = entry.1)
+    (hφ_nonconst : ∀ entry ∈ φ.factors, 0 < entry.1.degree?.getD 0)
+    (hψ_nonconst : ∀ entry ∈ (Hex.factor f).factors,
+      0 < entry.1.degree?.getD 0)
+    (hirr : ∀ entry ∈ φ.factors, Hex.ZPoly.Irreducible entry.1) :
+    φ.scalar = (Hex.factor f).scalar ∧
+      (φ.factors.toList.map (fun e => Multiset.replicate e.2 e.1)).sum =
+        ((Hex.factor f).factors.toList.map
+          (fun e => Multiset.replicate e.2 e.1)).sum :=
+  factor_unique φ (Hex.factor f) hφ_norm hψ_norm hφ_nonconst hψ_nonconst hirr
+    (factor_irreducible_of_nonUnit f)
+    (by rw [hproduct]; exact hf_ne)
+    (by rw [hproduct, factor_product f])
+
+/--
+The executable integer-polynomial irreducibility checker is sound after
+transport to Mathlib's polynomial model.
+-/
+theorem checkIrreducibleCert_sound
+    (f : Hex.ZPoly) (cert : Hex.ZPolyIrreducibilityCertificate) :
+    Hex.checkIrreducibleCert f cert = true → Irreducible (HexPolyZMathlib.toPolynomial f) := by
+  sorry
+
+/--
+The executable integer-polynomial irreducibility checker is sound for the
+Mathlib-free irreducibility predicate as well.
+-/
+theorem checkIrreducibleCert_sound_zpoly
+    (f : Hex.ZPoly) (cert : Hex.ZPolyIrreducibilityCertificate) :
+    Hex.checkIrreducibleCert f cert = true → Hex.ZPoly.Irreducible f := by
+  intro hcert
+  exact
+    (Hex.ZPoly.Irreducible_iff_polynomialIrreducible f).mpr
+      (checkIrreducibleCert_sound f cert hcert)
 
 /-- Index type for the modular factors stored in executable prime-choice data. -/
 abbrev ModPFactorIndex (primeData : Hex.PrimeChoiceData) : Type :=
