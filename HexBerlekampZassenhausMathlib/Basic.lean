@@ -899,6 +899,65 @@ theorem liftedSubsetSplit_mem_subsetSplits
   exact subsetSplits_zip_filterMap_partition d.liftedFactors.toList
     (liftedSubsetMask d S) (liftedSubsetMask_length d S)
 
+/-- Auxiliary partition lemma at the `subsetSplitsWithFirst` surface: when the
+mask starts with `true`, the partition lies in
+`Hex.subsetSplitsWithFirst (x :: xs)`. -/
+private theorem subsetSplitsWithFirst_zip_filterMap_partition
+    (x : Hex.ZPoly) (xs : List Hex.ZPoly) (bs : List Bool) (h : bs.length = xs.length) :
+    (((x :: xs).zip (true :: bs)).filterMap (fun p => if p.2 then some p.1 else none),
+      ((x :: xs).zip (true :: bs)).filterMap (fun p => if p.2 then none else some p.1)) ∈
+      Hex.subsetSplitsWithFirst (x :: xs) := by
+  rw [List.zip_cons_cons, List.filterMap_cons, List.filterMap_cons]
+  simp only [if_true]
+  exact Hex.subsetSplitsWithFirst_mem_cons (subsetSplits_zip_filterMap_partition xs bs h)
+
+/-- The first entry of `liftedSubsetMask d S`, via `head?`, records membership
+of index `0` in `S`. -/
+private theorem liftedSubsetMask_head?_eq_decide
+    (d : Hex.LiftData) (S : LiftedFactorSubset d)
+    (hpos : 0 < d.liftedFactors.size) :
+    (liftedSubsetMask d S).head? =
+      some (decide ((⟨0, hpos⟩ : LiftedFactorIndex d) ∈ S)) := by
+  unfold liftedSubsetMask
+  rw [List.head?_map]
+  have hfin : (List.finRange d.liftedFactors.size).head? =
+      some (⟨0, hpos⟩ : Fin d.liftedFactors.size) := by
+    have h : (List.finRange d.liftedFactors.size)[0]? =
+        some (⟨0, hpos⟩ : Fin d.liftedFactors.size) := by
+      rw [List.getElem?_eq_getElem (by simp; exact hpos)]
+      simp
+    simpa [List.head?_eq_getElem?] using h
+  rw [hfin]
+  rfl
+
+/-- When index `0` is in `S`, the lifted-factor subset partition lies in the
+`subsetSplitsWithFirst` enumeration that the recombination search iterates. -/
+theorem liftedSubsetSplit_mem_subsetSplitsWithFirst
+    (d : Hex.LiftData) (S : LiftedFactorSubset d)
+    (hpos : 0 < d.liftedFactors.size)
+    (h0 : (⟨0, hpos⟩ : LiftedFactorIndex d) ∈ S) :
+    (liftedSubsetSelectedList d S, liftedSubsetRejectedList d S) ∈
+      Hex.subsetSplitsWithFirst d.liftedFactors.toList := by
+  unfold liftedSubsetSelectedList liftedSubsetRejectedList
+  -- Decompose d.liftedFactors.toList and the mask into cons forms.
+  have hxs_pos : 0 < d.liftedFactors.toList.length := by simpa using hpos
+  have hmask_len := liftedSubsetMask_length d S
+  have hmask_head := liftedSubsetMask_head?_eq_decide d S hpos
+  rcases hxs : d.liftedFactors.toList with _ | ⟨x, xs⟩
+  · rw [hxs] at hxs_pos; simp at hxs_pos
+  rcases hmask : liftedSubsetMask d S with _ | ⟨b, bs⟩
+  · rw [hmask] at hmask_head; simp at hmask_head
+  -- Head bit is determined by `h0`.
+  rw [hmask] at hmask_head
+  simp [h0] at hmask_head
+  -- `hmask_head : b = true`
+  subst hmask_head
+  -- Lengths line up.
+  have hbs_len : bs.length = xs.length := by
+    rw [hmask, hxs] at hmask_len
+    simpa using hmask_len
+  exact subsetSplitsWithFirst_zip_filterMap_partition x xs bs hbs_len
+
 /-- A `Hex.ZPoly` factor that passes the executable `shouldRecordPolynomialFactor`
 check is non-zero and not a unit after transport to `Polynomial ℤ`.  The
 executable check rejects `0`, `1`, and `-1`, which are exactly the zero
