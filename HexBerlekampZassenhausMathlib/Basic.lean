@@ -846,66 +846,15 @@ theorem toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord
     · exact hne_one' (by simpa using hone)
     · exact hne_neg_one' hneg_one
 
-/-- Algorithm-side UFD packaging for the exhaustive square-free core branch.
+/-- Algorithm-side packaging for the exhaustive core branch in the form needed
+by UFD arguments over `Polynomial ℤ`.
 
-The executable exhaustive branch already proves that its emitted factors
-multiply back to `core` and pass `shouldRecordPolynomialFactor`.  Consequently
-the output length is bounded by the number of normalized irreducible factors of
-`core`; the reverse inequality is the A3 completeness obligation supplied by
-the Hensel/Mignotte enumeration argument. -/
-theorem exhaustiveCoreFactorsWithBound_factor_count_le
-    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
-    (hcore_ne : core ≠ 0)
-    (hcore_record : Hex.shouldRecordPolynomialFactor core = true) :
-    ((Hex.exhaustiveCoreFactorsWithBound core B primeData).toList.map
-        HexPolyZMathlib.toPolynomial).length ≤
-      (UniqueFactorizationMonoid.normalizedFactors
-        (HexPolyZMathlib.toPolynomial core)).card := by
-  set f := HexPolyZMathlib.toPolynomial core with hf_def
-  have hf_ne : f ≠ 0 := by
-    intro hzero
-    apply hcore_ne
-    apply HexPolyZMathlib.equiv.injective
-    simpa using hzero
-  set coreFactors := Hex.exhaustiveCoreFactorsWithBound core B primeData with hcoreFactors_def
-  set gs : List (Polynomial ℤ) :=
-    coreFactors.toList.map HexPolyZMathlib.toPolynomial with hgs_def
-  have hprod : Associated gs.prod f := by
-    have hp_core : Array.polyProduct coreFactors = core := by
-      rw [hcoreFactors_def]
-      exact Hex.exhaustiveCoreFactorsWithBound_product core B primeData
-    have hp_poly :
-        (coreFactors.toList.map HexPolyZMathlib.toPolynomial).prod =
-          HexPolyZMathlib.toPolynomial core := by
-      rw [← polyProduct_toPolynomial, hp_core]
-    rw [hgs_def, hp_poly, hf_def]
-  have hrecord_all :
-      ∀ factor ∈ coreFactors.toList,
-        Hex.shouldRecordPolynomialFactor factor = true := by
-    rw [hcoreFactors_def]
-    exact Hex.exhaustiveCoreFactorsWithBound_shouldRecord core B primeData hcore_record
-  have hne_all : ∀ g ∈ gs, g ≠ 0 := by
-    intro g hg
-    rw [hgs_def, List.mem_map] at hg
-    obtain ⟨factor, hfactor_mem, hg_eq⟩ := hg
-    rw [← hg_eq]
-    exact
-      (toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord
-        (hrecord_all factor hfactor_mem)).1
-  have hnonunit_all : ∀ g ∈ gs, ¬ IsUnit g := by
-    intro g hg
-    rw [hgs_def, List.mem_map] at hg
-    obtain ⟨factor, hfactor_mem, hg_eq⟩ := hg
-    rw [← hg_eq]
-    exact
-      (toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord
-        (hrecord_all factor hfactor_mem)).2
-  simpa [hcoreFactors_def, hgs_def, hf_def] using
-    HexBerlekampZassenhausMathlib.UFDPartition.length_le_normalizedFactors_card
-      hf_ne gs hne_all hnonunit_all hprod
-
-/-- Once the exhaustive square-free core branch has the A3 completeness count,
-every emitted core factor is irreducible over `Polynomial ℤ`. -/
+The executable exhaustive wrapper already proves that the returned candidates
+multiply back to the core and that every returned candidate passes
+`shouldRecordPolynomialFactor` whenever the core itself does.  Once the
+remaining Group A completeness work supplies the cardinality equality, the
+abstract UFD partition lemma turns those facts into irreducibility of every
+emitted core factor. -/
 theorem exhaustiveCoreFactorsWithBound_factor_irreducible_of_count
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
     (hcore_ne : core ≠ 0)
@@ -917,19 +866,19 @@ theorem exhaustiveCoreFactorsWithBound_factor_irreducible_of_count
           (HexPolyZMathlib.toPolynomial core)).card) :
     ∀ factor ∈ (Hex.exhaustiveCoreFactorsWithBound core B primeData).toList,
       Irreducible (HexPolyZMathlib.toPolynomial factor) := by
+  set coreFactors := Hex.exhaustiveCoreFactorsWithBound core B primeData with hcoreFactors_def
   set f := HexPolyZMathlib.toPolynomial core with hf_def
   have hf_ne : f ≠ 0 := by
     intro hzero
     apply hcore_ne
     apply HexPolyZMathlib.equiv.injective
-    simpa using hzero
-  set coreFactors := Hex.exhaustiveCoreFactorsWithBound core B primeData with hcoreFactors_def
+    simpa [hf_def] using hzero
   set gs : List (Polynomial ℤ) :=
     coreFactors.toList.map HexPolyZMathlib.toPolynomial with hgs_def
   have hprod : Associated gs.prod f := by
     have hp_core : Array.polyProduct coreFactors = core := by
-      rw [hcoreFactors_def]
-      exact Hex.exhaustiveCoreFactorsWithBound_product core B primeData
+      simpa [hcoreFactors_def] using
+        Hex.exhaustiveCoreFactorsWithBound_product core B primeData
     have hp_poly :
         (coreFactors.toList.map HexPolyZMathlib.toPolynomial).prod =
           HexPolyZMathlib.toPolynomial core := by
@@ -938,8 +887,8 @@ theorem exhaustiveCoreFactorsWithBound_factor_irreducible_of_count
   have hrecord_all :
       ∀ factor ∈ coreFactors.toList,
         Hex.shouldRecordPolynomialFactor factor = true := by
-    rw [hcoreFactors_def]
-    exact Hex.exhaustiveCoreFactorsWithBound_shouldRecord core B primeData hcore_record
+    simpa [hcoreFactors_def] using
+      Hex.exhaustiveCoreFactorsWithBound_shouldRecord core B primeData hcore_record
   have hne_all : ∀ g ∈ gs, g ≠ 0 := by
     intro g hg
     rw [hgs_def, List.mem_map] at hg
@@ -956,18 +905,76 @@ theorem exhaustiveCoreFactorsWithBound_factor_irreducible_of_count
     exact
       (toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord
         (hrecord_all factor hfactor_mem)).2
+  have hcount_gs :
+      gs.length = (UniqueFactorizationMonoid.normalizedFactors f).card := by
+    simpa [hgs_def, hcoreFactors_def, hf_def] using hcount
   intro factor hfactor_mem
   have hpolyfactor_mem :
       HexPolyZMathlib.toPolynomial factor ∈ gs := by
     rw [hgs_def, List.mem_map]
-    exact ⟨factor, by simpa [hcoreFactors_def] using hfactor_mem, rfl⟩
+    exact ⟨factor, hfactor_mem, rfl⟩
   exact
     HexBerlekampZassenhausMathlib.UFDPartition.irreducible_of_partition_card_eq_normalizedFactors_card
-      hf_ne gs hne_all hnonunit_all hprod
-      (by simpa [hcoreFactors_def, hgs_def, hf_def] using hcount)
-      _ hpolyfactor_mem
+      hf_ne gs hne_all hnonunit_all hprod hcount_gs _ hpolyfactor_mem
 
-/-- `Hex.ZPoly` transport of
+/-- Upper cardinality bound for the exhaustive core branch.
+
+The emitted factor list consists of non-zero non-units whose product is
+associated to `core`, so the abstract UFD partition bound applies after
+transporting the executable factors to `Polynomial ℤ`. -/
+theorem exhaustiveCoreFactorsWithBound_factor_count_le
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    (hcore_ne : core ≠ 0)
+    (hcore_record : Hex.shouldRecordPolynomialFactor core = true) :
+    ((Hex.exhaustiveCoreFactorsWithBound core B primeData).toList.map
+        HexPolyZMathlib.toPolynomial).length ≤
+      (UniqueFactorizationMonoid.normalizedFactors
+        (HexPolyZMathlib.toPolynomial core)).card := by
+  set coreFactors := Hex.exhaustiveCoreFactorsWithBound core B primeData with hcoreFactors_def
+  set f := HexPolyZMathlib.toPolynomial core with hf_def
+  have hf_ne : f ≠ 0 := by
+    intro hzero
+    apply hcore_ne
+    apply HexPolyZMathlib.equiv.injective
+    simpa [hf_def] using hzero
+  set gs : List (Polynomial ℤ) :=
+    coreFactors.toList.map HexPolyZMathlib.toPolynomial with hgs_def
+  have hprod : Associated gs.prod f := by
+    have hp_core : Array.polyProduct coreFactors = core := by
+      simpa [hcoreFactors_def] using
+        Hex.exhaustiveCoreFactorsWithBound_product core B primeData
+    have hp_poly :
+        (coreFactors.toList.map HexPolyZMathlib.toPolynomial).prod =
+          HexPolyZMathlib.toPolynomial core := by
+      rw [← polyProduct_toPolynomial, hp_core]
+    rw [hgs_def, hp_poly, hf_def]
+  have hrecord_all :
+      ∀ factor ∈ coreFactors.toList,
+        Hex.shouldRecordPolynomialFactor factor = true := by
+    simpa [hcoreFactors_def] using
+      Hex.exhaustiveCoreFactorsWithBound_shouldRecord core B primeData hcore_record
+  have hne_all : ∀ g ∈ gs, g ≠ 0 := by
+    intro g hg
+    rw [hgs_def, List.mem_map] at hg
+    obtain ⟨factor, hfactor_mem, hg_eq⟩ := hg
+    rw [← hg_eq]
+    exact
+      (toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord
+        (hrecord_all factor hfactor_mem)).1
+  have hnonunit_all : ∀ g ∈ gs, ¬ IsUnit g := by
+    intro g hg
+    rw [hgs_def, List.mem_map] at hg
+    obtain ⟨factor, hfactor_mem, hg_eq⟩ := hg
+    rw [← hg_eq]
+    exact
+      (toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord
+        (hrecord_all factor hfactor_mem)).2
+  exact
+    HexBerlekampZassenhausMathlib.UFDPartition.length_le_normalizedFactors_card
+      hf_ne gs hne_all hnonunit_all hprod
+
+/-- Exhaustive core branch irreducibility, expressed in the Mathlib-free
+`Hex.ZPoly.Irreducible` predicate.  This is the `Hex.ZPoly` transport of
 `exhaustiveCoreFactorsWithBound_factor_irreducible_of_count`. -/
 theorem exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_count
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}

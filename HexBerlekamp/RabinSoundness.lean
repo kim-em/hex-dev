@@ -478,6 +478,135 @@ theorem dvd_linearPow_sub_self_mod_iff
       inferInstance (ZMod64.instDivModLawsZMod64Fp p) _ _ _ hdiff_congr
   rw [dvd_iff_mod_eq_zero, dvd_iff_mod_eq_zero, hdiff_mod]
 
+omit [ZMod64.PrimeModulus p] in
+private theorem linearPow_zero_of_pos (n : Nat) (hn : 0 < n) :
+    FpPoly.linearPow (0 : FpPoly p) n = 0 := by
+  have hsucc : ∀ m : Nat, FpPoly.linearPow (0 : FpPoly p) (m + 1) = 0 := by
+    intro m
+    induction m with
+    | zero =>
+        rw [FpPoly.linearPow_succ]
+        exact FpPoly.one_mul 0
+    | succ m ih =>
+        rw [FpPoly.linearPow_succ, ih, FpPoly.zero_mul]
+  cases n with
+  | zero => omega
+  | succ n => exact hsucc n
+
+omit [ZMod64.PrimeModulus p] in
+private theorem linearPow_one (n : Nat) :
+    FpPoly.linearPow (1 : FpPoly p) n = 1 := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+      rw [FpPoly.linearPow_succ, ih, FpPoly.one_mul]
+
+private theorem dvd_linearPow_sub_self_of_congr_zero
+    (a h : FpPoly p) (hcongr : DensePoly.Congr h 0 a) :
+    a ∣ (FpPoly.linearPow h p - h) := by
+  have hp_pos : 0 < p := by
+    have h2 : 2 ≤ p := (ZMod64.PrimeModulus.prime (p := p)).two_le
+    omega
+  have hpow :
+      DensePoly.Congr (FpPoly.linearPow h p)
+        (FpPoly.linearPow (0 : FpPoly p) p) a :=
+    linearPow_congr_of_congr a h 0 p hcongr
+  have hdiff :
+      DensePoly.Congr (FpPoly.linearPow h p - h)
+        (FpPoly.linearPow (0 : FpPoly p) p - (0 : FpPoly p)) a :=
+    congr_sub_of_congr a _ _ _ _ hpow hcongr
+  rw [linearPow_zero_of_pos p hp_pos, FpPoly.sub_zero] at hdiff
+  change a ∣ (FpPoly.linearPow h p - h) - 0 at hdiff
+  rwa [FpPoly.sub_zero] at hdiff
+
+private theorem dvd_linearPow_sub_self_of_congr_one
+    (b h : FpPoly p) (hcongr : DensePoly.Congr h 1 b) :
+    b ∣ (FpPoly.linearPow h p - h) := by
+  have hpow :
+      DensePoly.Congr (FpPoly.linearPow h p)
+        (FpPoly.linearPow (1 : FpPoly p) p) b :=
+    linearPow_congr_of_congr b h 1 p hcongr
+  have hdiff :
+      DensePoly.Congr (FpPoly.linearPow h p - h)
+        (FpPoly.linearPow (1 : FpPoly p) p - (1 : FpPoly p)) b :=
+    congr_sub_of_congr b _ _ _ _ hpow hcongr
+  rw [linearPow_one p, FpPoly.sub_self] at hdiff
+  change b ∣ (FpPoly.linearPow h p - h) - 0 at hdiff
+  rwa [FpPoly.sub_zero] at hdiff
+
+private theorem mul_dvd_of_dvd_dvd_common
+    {a b q : FpPoly p}
+    (haq : a ∣ q) (hbq : b ∣ q)
+    (hcommon : ∀ d : FpPoly p, d ∣ a → d ∣ b → d ∣ (1 : FpPoly p)) :
+    a * b ∣ q := by
+  rcases hbq with ⟨r, hr⟩
+  have ha_dvd_br : a ∣ b * r := by
+    rw [← hr]
+    exact haq
+  have ha_dvd_r : a ∣ r :=
+    FpPoly.dvd_of_dvd_mul_of_common_dvd_one ha_dvd_br
+      (fun d hdb hda => hcommon d hda hdb)
+  rcases ha_dvd_r with ⟨s, hs⟩
+  refine ⟨s, ?_⟩
+  calc
+    q = b * r := hr
+    _ = b * (a * s) := by rw [hs]
+    _ = (b * a) * s := (FpPoly.mul_assoc b a s).symm
+    _ = (a * b) * s := by rw [FpPoly.mul_comm b a]
+
+private theorem not_congr_constant_mod_of_mod
+    (f h : FpPoly p) (c : ZMod64 p)
+    (hnot : ¬ DensePoly.Congr h (DensePoly.C c) f) :
+    ¬ DensePoly.Congr (h % f) (DensePoly.C c) f := by
+  intro hconst
+  haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
+  have hconst_mod :
+      (h % f) % f = (DensePoly.C c : FpPoly p) % f :=
+    @DensePoly.mod_eq_mod_of_congr (ZMod64 p) inferInstance inferInstance
+      inferInstance (ZMod64.instDivModLawsZMod64Fp p) _ _ _ hconst
+  have hbase_mod : h % f = (h % f) % f := (DensePoly.mod_mod h f).symm
+  apply hnot
+  apply @DensePoly.congr_of_mod_eq_mod (ZMod64 p) inferInstance inferInstance
+    inferInstance (ZMod64.instDivModLawsZMod64Fp p)
+  exact hbase_mod.trans hconst_mod
+
+/--
+Reduced zero-one CRT witness for a monic coprime product split.  The witness is
+Frobenius-fixed modulo `a * b` and is not congruent to any field constant
+modulo that product.
+-/
+theorem exists_reduced_crtZeroOne_kernelWitness_of_coprime_split
+    (a b : FpPoly p)
+    (ha : DensePoly.Monic a) (hb : DensePoly.Monic b)
+    (ha_pos : 0 < a.degree?.getD 0) (hb_pos : 0 < b.degree?.getD 0)
+    (hgcd : DensePoly.gcd a b = 1) :
+    ∃ h : FpPoly p,
+      h = crtZeroOneXGCDCandidate a b % (a * b) ∧
+      (a * b) ∣ (FpPoly.linearPow h (p ^ 1) - h) ∧
+      ∀ c : ZMod64 p, ¬ DensePoly.Congr h (DensePoly.C c) (a * b) := by
+  let h0 := crtZeroOneXGCDCandidate a b
+  refine ⟨h0 % (a * b), rfl, ?_, ?_⟩
+  · have hleft : a ∣ (FpPoly.linearPow h0 p - h0) :=
+      dvd_linearPow_sub_self_of_congr_zero a h0
+        (crtZeroOneXGCDCandidate_congr_zero_left a b hgcd)
+    have hright : b ∣ (FpPoly.linearPow h0 p - h0) :=
+      dvd_linearPow_sub_self_of_congr_one b h0
+        (crtZeroOneXGCDCandidate_congr_one_right a b hgcd)
+    have hprod : a * b ∣ (FpPoly.linearPow h0 p - h0) :=
+      mul_dvd_of_dvd_dvd_common hleft hright
+        (fun d hda hdb =>
+          by
+            rw [← hgcd]
+            exact DensePoly.dvd_gcd d a b hda hdb)
+    have hred :=
+      (dvd_linearPow_sub_self_mod_iff (a * b) h0 1).mp
+        (by simpa using hprod)
+    simpa using hred
+  · intro c
+    apply not_congr_constant_mod_of_mod (a * b) h0 c
+    exact crtZeroOneXGCDCandidate_not_congr_constant_mod_product
+      a b ha hb ha_pos hb_pos hgcd c
+
 /--
 Trivial case for `deg f = 0`: `frobeniusDiffMod` is already its own
 canonical remainder modulo `f`. When `deg f = 0` and `f` is monic, `f`
@@ -1798,6 +1927,29 @@ theorem common_dvd_one_of_squareFree_mul
       _ = (d * d) * (a' * b') := fp_swap_inner_mul d a' b'
   exact dvd_one_of_isUnitPolynomial
     (isUnitPolynomial_of_squareFree_of_squared_dvd hsquareFree hdd_dvd_ab)
+
+/--
+Square-free product specialization of
+`exists_reduced_crtZeroOne_kernelWitness_of_coprime_split`.  The extra monicity
+hypothesis on the executable gcd is the local bridge from the common-divisor
+form supplied by square-freeness to the `gcd a b = 1` surface used by the
+XGCD-backed CRT candidate.
+-/
+theorem exists_reduced_crtZeroOne_kernelWitness_of_squareFree_split
+    (a b : FpPoly p)
+    (ha : DensePoly.Monic a) (hb : DensePoly.Monic b)
+    (ha_pos : 0 < a.degree?.getD 0) (hb_pos : 0 < b.degree?.getD 0)
+    (hsquareFree : DensePoly.gcd (a * b) (DensePoly.derivative (a * b)) = 1)
+    (hgcd_monic : DensePoly.Monic (DensePoly.gcd a b)) :
+    ∃ h : FpPoly p,
+      h = crtZeroOneXGCDCandidate a b % (a * b) ∧
+      (a * b) ∣ (FpPoly.linearPow h (p ^ 1) - h) ∧
+      ∀ c : ZMod64 p, ¬ DensePoly.Congr h (DensePoly.C c) (a * b) := by
+  have hgcd : DensePoly.gcd a b = 1 :=
+    FpPoly.gcd_eq_one_of_monic_of_common_dvd_one a b hgcd_monic
+      (fun d hda hdb => common_dvd_one_of_squareFree_mul hsquareFree hda hdb)
+  exact exists_reduced_crtZeroOne_kernelWitness_of_coprime_split
+    a b ha hb ha_pos hb_pos hgcd
 
 theorem isUnitPolynomial_gcd_quotient_of_squareFree
     (r d : FpPoly p)

@@ -929,6 +929,46 @@ theorem eval_X [ZMod64.PrimeModulus p] (x : ZMod64 p) :
   change (((0 : ZMod64 p) * x + 1) * x + 0 = x)
   rw [zmod_zero_mul, zmod_zero_add, zmod_one_mul, zmod_add_zero]
 
+private theorem foldl_eval_replicate_zero (x : ZMod64 p) :
+    ∀ n acc,
+      (List.replicate n (0 : ZMod64 p)).foldl
+          (fun acc coeff => acc * x + coeff) acc =
+        acc * x ^ n := by
+  intro n
+  induction n with
+  | zero =>
+      intro acc
+      rw [Lean.Grind.Semiring.pow_zero]
+      exact (zmod_mul_one acc).symm
+  | succ n ih =>
+      intro acc
+      simp only [List.replicate_succ, List.foldl_cons]
+      rw [zmod_add_zero]
+      rw [ih (acc * x)]
+      rw [Lean.Grind.Semiring.pow_succ x n]
+      rw [Lean.Grind.Semiring.mul_assoc acc x (x ^ n)]
+      rw [Lean.Grind.CommSemiring.mul_comm x (x ^ n)]
+
+/-- Evaluating a monomial gives the coefficient times the corresponding power. -/
+theorem eval_monomial (n : Nat) (c x : ZMod64 p) :
+    DensePoly.eval (DensePoly.monomial n c : FpPoly p) x = c * x ^ n := by
+  by_cases hc : c = 0
+  · subst c
+    unfold DensePoly.monomial
+    rw [dif_pos (show (0 : ZMod64 p) = Zero.zero from rfl)]
+    exact (zmod_zero_mul (x ^ n)).symm
+  · unfold DensePoly.eval DensePoly.toArray DensePoly.monomial
+    have hc0 : ¬ c = (Zero.zero : ZMod64 p) := hc
+    rw [dif_neg hc0]
+    simp only [Array.toList_push, Array.toList_replicate, List.reverse_append,
+      List.reverse_cons, List.reverse_nil, List.nil_append, List.singleton_append,
+      List.foldl_cons]
+    change (List.replicate n (0 : ZMod64 p)).reverse.foldl
+        (fun acc coeff => acc * x + coeff) ((0 : ZMod64 p) * x + c) =
+      c * x ^ n
+    rw [zmod_zero_mul, zmod_zero_add, List.reverse_replicate]
+    exact foldl_eval_replicate_zero x n c
+
 private def evalCoeffPowerSumFrom :
     List (ZMod64 p) → Nat → ZMod64 p → ZMod64 p
   | [], _, _ => 0
@@ -1150,6 +1190,19 @@ private theorem evalCoeffPowerSumUpTo_sub
   | n + 1, base => by
       simp only [evalCoeffPowerSumUpTo]
       rw [evalCoeffPowerSumUpTo_sub f h x n (base + 1)]
+      grind
+
+private theorem evalCoeffPowerSumUpTo_const_mul
+    (c : ZMod64 p) (coeff : Nat → ZMod64 p) (x : ZMod64 p) :
+    ∀ n base,
+      evalCoeffPowerSumUpTo (fun i => c * coeff i) n base x =
+        c * evalCoeffPowerSumUpTo coeff n base x
+  | 0, _ => by
+      simp [evalCoeffPowerSumUpTo]
+      grind
+  | n + 1, base => by
+      simp only [evalCoeffPowerSumUpTo]
+      rw [evalCoeffPowerSumUpTo_const_mul c coeff x n (base + 1)]
       grind
 
 private theorem size_le_of_coeff_eq_zero_from (f : FpPoly p) (bound : Nat)
@@ -2293,6 +2346,26 @@ theorem C_mul_eq_scale (c : ZMod64 p) (f : FpPoly p) :
   rw [one_mul, scale_one_poly] at hscale
   exact hscale.symm
 
+theorem eval_C_mul (c : ZMod64 p) (f : FpPoly p) (x : ZMod64 p) :
+    DensePoly.eval (DensePoly.C c * f) x = c * DensePoly.eval f x := by
+  rw [C_mul_eq_scale]
+  rw [eval_eq_coeff_power_sum_upTo_bound (DensePoly.scale c f) x (bound := f.size)]
+  · rw [eval_eq_coeff_power_sum_upTo_size f x]
+    have hcoeff :
+        (fun i => (DensePoly.scale c f).coeff i) =
+          (fun i => c * f.coeff i) := by
+      funext i
+      have hzero : c * (0 : ZMod64 p) = 0 := by grind
+      rw [DensePoly.coeff_scale _ _ _ hzero]
+    rw [hcoeff]
+    exact evalCoeffPowerSumUpTo_const_mul c (fun i => f.coeff i) x f.size 0
+  · apply size_le_of_coeff_eq_zero_from
+    intro i hi
+    have hzero : c * (0 : ZMod64 p) = 0 := by grind
+    rw [DensePoly.coeff_scale _ _ _ hzero]
+    rw [DensePoly.coeff_eq_zero_of_size_le f hi]
+    exact hzero
+
 theorem scale_scale (c d : ZMod64 p) (f : FpPoly p) :
     DensePoly.scale c (DensePoly.scale d f) = DensePoly.scale (c * d) f := by
   apply DensePoly.ext_coeff
@@ -3068,6 +3141,164 @@ theorem coeff_monomial_mul (k : Nat) (c : ZMod64 p) (g : FpPoly p) (n : Nat) :
   · simp [hnk]
   · have hkn : k < n + 1 := by omega
     simp [hnk, hkn]
+
+private def scalarDividedDifferenceCoeffs :
+    List (ZMod64 p) → ZMod64 p → List (ZMod64 p)
+  | [], _ => []
+  | [_], _ => []
+  | _ :: c :: cs, α =>
+      evalScalarCoeffList (c :: cs) α :: scalarDividedDifferenceCoeffs (c :: cs) α
+
+private theorem zmod_Zero_zero_eq_zero :
+    (Zero.zero : ZMod64 p) = (0 : ZMod64 p) := by
+  apply zmod_eq_of_toNat_eq
+  change (Zero.zero : ZMod64 p).toNat = 0
+  exact ZMod64.toNat_zero
+
+private theorem scalarDividedDifferenceCoeffs_getD
+    (cs : List (ZMod64 p)) (α : ZMod64 p) (n : Nat) :
+    (scalarDividedDifferenceCoeffs cs α).getD n (0 : ZMod64 p) =
+      evalScalarCoeffList (cs.drop (n + 1)) α := by
+  induction cs generalizing n with
+  | nil =>
+      simp [scalarDividedDifferenceCoeffs, evalScalarCoeffList]
+  | cons c cs ih =>
+      cases cs with
+      | nil =>
+          cases n <;> simp [scalarDividedDifferenceCoeffs, evalScalarCoeffList]
+      | cons d ds =>
+          cases n with
+          | zero =>
+              simp [scalarDividedDifferenceCoeffs]
+          | succ n =>
+              simpa [scalarDividedDifferenceCoeffs, Nat.succ_eq_add_one, Nat.add_assoc]
+                using ih (n := n)
+
+private theorem evalScalarCoeffList_drop_eq_getD_add
+    (cs : List (ZMod64 p)) (α : ZMod64 p) (n : Nat) :
+    evalScalarCoeffList (cs.drop n) α =
+      cs.getD n (0 : ZMod64 p) +
+        α * evalScalarCoeffList (cs.drop (n + 1)) α := by
+  induction cs generalizing n with
+  | nil =>
+      simp [evalScalarCoeffList]
+      have hz : α * (0 : ZMod64 p) = 0 := by grind
+      rw [hz, zmod_add_zero]
+  | cons c cs ih =>
+      cases n with
+      | zero =>
+          rfl
+      | succ n =>
+          simpa [Nat.succ_eq_add_one, Nat.add_assoc] using ih (n := n)
+
+private theorem ofCoeffs_toArray_fp (f : FpPoly p) :
+    (DensePoly.ofCoeffs f.toArray : FpPoly p) = f := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_ofCoeffs]
+  rfl
+
+private theorem scalarDividedDifferenceCoeffs_getElem?_getD
+    (cs : List (ZMod64 p)) (α : ZMod64 p) (n : Nat) :
+    (scalarDividedDifferenceCoeffs cs α)[n]?.getD (0 : ZMod64 p) =
+      evalScalarCoeffList (cs.drop (n + 1)) α := by
+  simpa [List.getD] using scalarDividedDifferenceCoeffs_getD cs α n
+
+private theorem C_zero_fp :
+    FpPoly.C (0 : ZMod64 p) = (0 : FpPoly p) := by
+  apply DensePoly.ext_coeff
+  intro n
+  unfold FpPoly.C
+  rw [DensePoly.coeff_C, DensePoly.coeff_zero]
+  cases n <;> rfl
+
+private theorem scalar_linear_factor_mul_dividedDifference_coeff
+    (cs : List (ZMod64 p)) (α : ZMod64 p) (n : Nat) :
+    let q : FpPoly p :=
+      DensePoly.ofCoeffs (scalarDividedDifferenceCoeffs cs α).toArray
+    ((FpPoly.X - FpPoly.C α) * q).coeff n =
+      (if n = 0 then 0 else evalScalarCoeffList (cs.drop n) α) -
+        α * evalScalarCoeffList (cs.drop (n + 1)) α := by
+  intro q
+  have hzero_sub : (0 : ZMod64 p) - 0 = 0 := by grind
+  have hzero_add : (0 : ZMod64 p) + 0 = 0 := by grind
+  have hzero_mul : α * (0 : ZMod64 p) = 0 := by grind
+  have hneg_mul : (-(FpPoly.C α) : FpPoly p) * q = -(FpPoly.C α * q) := by
+    show (0 - FpPoly.C α) * q = 0 - FpPoly.C α * q
+    exact DensePoly.neg_mul_right_poly (FpPoly.C α) q
+  rw [sub_eq_add_neg, right_distrib]
+  rw [DensePoly.coeff_add _ _ _ hzero_add]
+  rw [hneg_mul]
+  rw [DensePoly.coeff_neg _ _ hzero_sub]
+  have hCmul : FpPoly.C α * q = DensePoly.scale α q := C_mul_eq_scale α q
+  rw [hCmul]
+  rw [DensePoly.coeff_scale _ _ _ hzero_mul]
+  rw [show FpPoly.X = (DensePoly.monomial 1 (1 : ZMod64 p) : FpPoly p) from rfl]
+  rw [coeff_monomial_mul]
+  rw [DensePoly.coeff_ofCoeffs_list, DensePoly.coeff_ofCoeffs_list]
+  rw [zmod_Zero_zero_eq_zero]
+  cases n with
+  | zero =>
+      simp
+      rw [scalarDividedDifferenceCoeffs_getElem?_getD cs α 0]
+      rw [show cs.drop 1 = cs.tail by cases cs <;> rfl]
+      rw [zmod_zero_add]
+      rfl
+  | succ n =>
+      simp
+      rw [scalarDividedDifferenceCoeffs_getElem?_getD cs α n]
+      rw [scalarDividedDifferenceCoeffs_getElem?_getD cs α (n + 1)]
+      grind
+
+private theorem ofCoeffs_eq_C_eval_add_linear_mul_dividedDifference
+    (cs : List (ZMod64 p)) (α : ZMod64 p) :
+    (DensePoly.ofCoeffs cs.toArray : FpPoly p) =
+      FpPoly.C (evalScalarCoeffList cs α) +
+        (FpPoly.X - FpPoly.C α) *
+          (DensePoly.ofCoeffs (scalarDividedDifferenceCoeffs cs α).toArray : FpPoly p) := by
+  apply DensePoly.ext_coeff
+  intro n
+  have hzero_add : (0 : ZMod64 p) + 0 = 0 := by grind
+  rw [DensePoly.coeff_add _ _ _ hzero_add]
+  rw [DensePoly.coeff_ofCoeffs_list]
+  rw [zmod_Zero_zero_eq_zero]
+  rw [show (FpPoly.C (evalScalarCoeffList cs α)).coeff n =
+      if n = 0 then evalScalarCoeffList cs α else (Zero.zero : ZMod64 p) by
+    unfold FpPoly.C
+    rw [DensePoly.coeff_C]]
+  rw [zmod_Zero_zero_eq_zero]
+  rw [scalar_linear_factor_mul_dividedDifference_coeff cs α n]
+  cases n with
+  | zero =>
+      have hdrop := evalScalarCoeffList_drop_eq_getD_add cs α 0
+      simp at hdrop ⊢
+      grind
+  | succ n =>
+      have hdrop := evalScalarCoeffList_drop_eq_getD_add cs α (n + 1)
+      simp at hdrop ⊢
+      grind
+
+/-- If `c` is a scalar root of `f`, then the linear factor `X - C c` divides `f`. -/
+theorem X_sub_C_dvd_of_eval_eq_zero
+    (f : FpPoly p) (c : ZMod64 p)
+    (hroot : DensePoly.eval f c = 0) :
+    (FpPoly.X - FpPoly.C c) ∣ f := by
+  let q : FpPoly p :=
+    DensePoly.ofCoeffs (scalarDividedDifferenceCoeffs f.toArray.toList c).toArray
+  refine ⟨q, ?_⟩
+  have hcoeffs :=
+    ofCoeffs_eq_C_eval_add_linear_mul_dividedDifference
+      (p := p) f.toArray.toList c
+  rw [eval_eq_coeff_power_sum] at hroot
+  have hroot_scalar : evalScalarCoeffList f.toArray.toList c = 0 := by
+    rw [evalScalarCoeffList_eq_powerSumFrom_zero, hroot]
+  rw [← ofCoeffs_toArray_fp f]
+  rw [hcoeffs]
+  rw [hroot_scalar]
+  rw [C_zero_fp]
+  change (0 : FpPoly p) +
+      (FpPoly.X - FpPoly.C c) * q = (FpPoly.X - FpPoly.C c) * q
+  exact zero_add ((FpPoly.X - FpPoly.C c) * q)
 
 /-- Multiplying two monic monomials adds their exponents. -/
 theorem monomial_mul_monomial (m n : Nat) :
