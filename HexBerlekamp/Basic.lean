@@ -752,20 +752,6 @@ theorem fixedSpaceKernelPolynomial_coeffVector_complete (f : FpPoly p)
   intro hg
   exact fixedSpaceKernelVectors_complete f hmonic (coeffVector f g) hg
 
-private theorem linearPow_zero_of_pos_aux (n : Nat) (hn : 0 < n) :
-    FpPoly.linearPow (0 : FpPoly p) n = 0 := by
-  have hsucc : ∀ m : Nat, FpPoly.linearPow (0 : FpPoly p) (m + 1) = 0 := by
-    intro m
-    induction m with
-    | zero =>
-        rw [FpPoly.linearPow_succ]
-        exact FpPoly.one_mul 0
-    | succ m ih =>
-        rw [FpPoly.linearPow_succ, ih, FpPoly.zero_mul]
-  cases n with
-  | zero => omega
-  | succ n => exact hsucc n
-
 private theorem eq_zero_of_size_eq_zero (w : FpPoly p) (hw : w.size = 0) :
     w = 0 := by
   apply DensePoly.ext_coeff
@@ -849,7 +835,7 @@ theorem isFixedSpaceKernelPolynomial_iff_dvd_linearPow_sub_self
     have hp_pos : 0 < p := Hex.ZMod64.Bounds.pPos
     constructor
     · intro _
-      rw [hw_zero, linearPow_zero_of_pos_aux p hp_pos, FpPoly.sub_zero]
+      rw [hw_zero, FpPoly.linearPow_zero_of_pos p hp_pos, FpPoly.sub_zero]
       exact DensePoly.dvd_zero_poly f
     · intro _
       unfold IsFixedSpaceKernelPolynomial IsFixedSpaceKernelVector
