@@ -1560,6 +1560,81 @@ theorem primeFieldLinearFactor_dvd_xPowSubX_one (c : ZMod64 p) :
   exact FpPoly.X_sub_C_dvd_of_eval_eq_zero (xPowSubX (p := p) 1) c
     (xPowSubX_one_eval_eq_zero c)
 
+omit [ZMod64.PrimeModulus p] in
+private theorem zmod64_zero_sub_zero :
+    (Zero.zero : ZMod64 p) - Zero.zero = Zero.zero := by
+  change ZMod64.sub (Zero.zero : ZMod64 p) Zero.zero = Zero.zero
+  apply ZMod64.ext
+  apply UInt64.toNat_inj.mp
+  change (ZMod64.sub (Zero.zero : ZMod64 p) Zero.zero).toNat =
+    (Zero.zero : ZMod64 p).toNat
+  rw [ZMod64.toNat_sub]
+  have hz : (Zero.zero : ZMod64 p).val.toNat = 0 := by
+    change (Zero.zero : ZMod64 p).toNat = 0
+    exact ZMod64.toNat_zero
+  simp [hz]
+
+omit [ZMod64.PrimeModulus p] in
+/-- The difference of two prime-field linear factors collapses to a constant. -/
+private theorem primeFieldLinearFactor_sub_eq (c d : ZMod64 p) :
+    primeFieldLinearFactor c - primeFieldLinearFactor d
+      = (DensePoly.C (d - c) : FpPoly p) := by
+  apply DensePoly.ext_coeff
+  intro n
+  unfold primeFieldLinearFactor FpPoly.X FpPoly.C
+  rw [DensePoly.coeff_sub _ _ _ zmod64_zero_sub_zero]
+  rw [DensePoly.coeff_sub _ _ _ zmod64_zero_sub_zero]
+  rw [DensePoly.coeff_sub _ _ _ zmod64_zero_sub_zero]
+  rw [DensePoly.coeff_monomial, DensePoly.coeff_C, DensePoly.coeff_C,
+      DensePoly.coeff_C]
+  have h0 : (Zero.zero : ZMod64 p) = 0 := rfl
+  rw [h0]
+  cases n with
+  | zero => simp; grind
+  | succ n =>
+      cases n with
+      | zero => simp; grind
+      | succ n => simp; grind
+
+/-- `DensePoly.C` of a nonzero residue divides `1` (it is a unit polynomial). -/
+private theorem C_ne_zero_dvd_one {a : ZMod64 p} (ha : a ≠ 0) :
+    (DensePoly.C a : FpPoly p) ∣ (1 : FpPoly p) := by
+  refine ⟨DensePoly.C (ZMod64.inv a), ?_⟩
+  show (1 : FpPoly p) = (DensePoly.C a : FpPoly p) * DensePoly.C (ZMod64.inv a)
+  have hmul : (DensePoly.C a : FpPoly p) * DensePoly.C (ZMod64.inv a)
+      = DensePoly.C (a * ZMod64.inv a) := by
+    rw [FpPoly.C_mul_eq_scale]
+    rw [show (DensePoly.C (ZMod64.inv a) : FpPoly p)
+          = DensePoly.scale (ZMod64.inv a) (1 : FpPoly p) from
+        (FpPoly.scale_one_poly (ZMod64.inv a)).symm]
+    rw [FpPoly.scale_scale, FpPoly.scale_one_poly]
+  rw [hmul, ZMod64.mul_inv_eq_one_of_ne_zero ha]
+  rfl
+
+omit [ZMod64.PrimeModulus p] in
+private theorem dvd_trans_local {a b c : FpPoly p}
+    (hab : a ∣ b) (hbc : b ∣ c) : a ∣ c := by
+  rcases hab with ⟨r, hr⟩
+  rcases hbc with ⟨s, hs⟩
+  refine ⟨r * s, ?_⟩
+  rw [hs, hr, FpPoly.mul_assoc]
+
+/-- Distinct prime-field linear factors are coprime: any common divisor is a unit. -/
+theorem primeFieldLinearFactor_distinct_common_dvd_one {c d : ZMod64 p}
+    (hcd : c ≠ d) (e : FpPoly p)
+    (hec : e ∣ primeFieldLinearFactor c)
+    (hed : e ∣ primeFieldLinearFactor d) :
+    e ∣ (1 : FpPoly p) := by
+  have hdiff : e ∣ (primeFieldLinearFactor c - primeFieldLinearFactor d) :=
+    DensePoly.dvd_sub_poly hec hed
+  rw [primeFieldLinearFactor_sub_eq c d] at hdiff
+  have hdc_ne : (d - c) ≠ (0 : ZMod64 p) := by
+    intro hzero
+    apply hcd
+    have : c = d := by grind
+    exact this
+  exact dvd_trans_local hdiff (C_ne_zero_dvd_one hdc_ne)
+
 /-! ### Structural lemmas
 
 These small consequences only use the foundational lemmas above plus
