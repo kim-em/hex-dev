@@ -34,6 +34,29 @@ def berlekampColumn (f : FpPoly p) (hmonic : DensePoly.Monic f)
   let image := FpPoly.powModMonic frobX f hmonic j.val
   coeffVector f image
 
+/-- The executable `j`-th Berlekamp column represents `X^(p*j)` modulo `f`. -/
+theorem berlekampColumn_poly_mod_eq_linearPow_X
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) (j : Fin (basisSize f)) :
+    (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val) % f =
+      FpPoly.linearPow FpPoly.X (p * j.val) % f := by
+  have hfrob :
+      (FpPoly.frobeniusXMod f hmonic) % f =
+        FpPoly.linearPow FpPoly.X p % f := by
+    unfold FpPoly.frobeniusXMod
+    exact FpPoly.powModMonic_mod_eq_linearPow FpPoly.X f hmonic p
+  calc
+    (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val) % f
+        = FpPoly.linearPow (FpPoly.frobeniusXMod f hmonic) j.val % f :=
+            FpPoly.powModMonic_mod_eq_linearPow
+              (FpPoly.frobeniusXMod f hmonic) f hmonic j.val
+    _ = FpPoly.linearPow (FpPoly.linearPow FpPoly.X p) j.val % f :=
+            FpPoly.linearPow_mod_eq_of_mod_eq_mod f
+              (FpPoly.frobeniusXMod f hmonic) (FpPoly.linearPow FpPoly.X p)
+              j.val hfrob
+    _ = FpPoly.linearPow FpPoly.X (p * j.val) % f := by
+            rw [FpPoly.linearPow_iterate_mul]
+
 /--
 Iteratively build the array of Berlekamp-matrix column polynomials
 `[1, frobX, frobX^2, …, frobX^(n - 1)]`, each reduced modulo `f`.

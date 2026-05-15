@@ -3570,6 +3570,15 @@ theorem linearPow_add (f : FpPoly p) (m n : Nat) :
         _ = linearPow f m * (linearPow f n * f) := mul_assoc _ _ _
         _ = linearPow f m * linearPow f (n + 1) := rfl
 
+/-- Iterated `linearPow` multiplies exponents. -/
+theorem linearPow_iterate_mul (f : FpPoly p) (m : Nat) :
+    ∀ n, linearPow (linearPow f m) n = linearPow f (m * n)
+  | 0 => by
+      simp [Nat.mul_zero]
+  | n + 1 => by
+      rw [linearPow_succ, linearPow_iterate_mul f m n, Nat.mul_succ,
+        linearPow_add]
+
 /-- Scalar evaluation distributes over `linearPow`: `eval (f^n) x = (eval f x)^n`. -/
 theorem eval_linearPow (f : FpPoly p) (n : Nat) (x : ZMod64 p) :
     DensePoly.eval (linearPow f n) x = (DensePoly.eval f x) ^ n := by

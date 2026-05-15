@@ -189,6 +189,37 @@ private theorem mod_powLinear_mod_eq
       rw [ih, DensePoly.mod_mod base f]
       rw [← DensePoly.DivModLaws.mod_mul_mod (powLinear base n) base f]
 
+private theorem linearPow_eq_powLinear (f : FpPoly p) (n : Nat) :
+    FpPoly.linearPow f n = powLinear f n := by
+  induction n with
+  | zero =>
+      rfl
+  | succ n ih =>
+      rw [FpPoly.linearPow_succ, powLinear_succ, ih]
+
+/-- `linearPow` has the same canonical remainder for bases with the same
+canonical remainder. -/
+theorem linearPow_mod_eq_of_mod_eq_mod (f h r : FpPoly p) (n : Nat)
+    [ZMod64.PrimeModulus p]
+    (hmod : h % f = r % f) :
+    FpPoly.linearPow h n % f = FpPoly.linearPow r n % f := by
+  haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
+  induction n with
+  | zero =>
+      rfl
+  | succ n ih =>
+      calc
+        FpPoly.linearPow h (n + 1) % f
+            = (FpPoly.linearPow h n * h) % f := by rw [FpPoly.linearPow_succ]
+        _ = ((FpPoly.linearPow h n % f) * (h % f)) % f :=
+              @DensePoly.mod_mul_mod (ZMod64 p) inferInstance inferInstance
+                inferInstance (ZMod64.instDivModLawsZMod64Fp p) _ _ f
+        _ = ((FpPoly.linearPow r n % f) * (r % f)) % f := by rw [ih, hmod]
+        _ = (FpPoly.linearPow r n * r) % f :=
+              (@DensePoly.mod_mul_mod (ZMod64 p) inferInstance inferInstance
+                inferInstance (ZMod64.instDivModLawsZMod64Fp p) _ _ f).symm
+        _ = FpPoly.linearPow r (n + 1) % f := by rw [FpPoly.linearPow_succ]
+
 /-- The structural power loop computes the same remainder as `powLinear`. -/
 private theorem powModMonicLinear_mod_eq
     [ZMod64.PrimeModulus p]
@@ -339,6 +370,13 @@ private theorem powModMonic_mod_eq
   rw [show modByMonic f base hmonic = base % f from
         DensePoly.modByMonic_eq_mod _ _ hmonic]
   rw [one_mul, mod_powLinear_mod_eq f base hmonic n]
+
+/-- `powModMonic` computes the same residue as `linearPow`. -/
+theorem powModMonic_mod_eq_linearPow
+    [ZMod64.PrimeModulus p]
+    (base f : FpPoly p) (hmonic : DensePoly.Monic f) (n : Nat) :
+    (powModMonic base f hmonic n) % f = (linearPow base n) % f := by
+  rw [powModMonic_mod_eq, linearPow_eq_powLinear]
 
 /--
 The kernel-reducible linear exponentiation path agrees with the existing
