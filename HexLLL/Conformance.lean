@@ -250,17 +250,7 @@ private def stateOf (b : Matrix Int n m) : LLLState n m :=
   let gs := GramSchmidt.Int.data b
   { b := b
     ν := gs.ν
-    d := gs.d
-    ν_eq := by
-      intro i j hi hj hji
-      simpa [GramSchmidt.Int.scaledCoeffs, gs, GramSchmidt.entry, Matrix.row] using
-        (rfl :
-          GramSchmidt.entry gs.ν ⟨i, hi⟩ ⟨j, hj⟩ =
-            GramSchmidt.entry gs.ν ⟨i, hi⟩ ⟨j, hj⟩)
-    d_eq := by
-      intro i hi
-      simpa [GramSchmidt.Int.gramDetVec, gs] using
-        GramSchmidt.Int.gramDetVec_eq_gramDet b i (Nat.le_of_lt_succ hi) }
+    d := gs.d }
 
 private def identityState : LLLState 8 8 := stateOf identity8
 private def zeroState : LLLState 8 8 := stateOf zero8

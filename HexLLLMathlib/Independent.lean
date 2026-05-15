@@ -12,7 +12,7 @@ namespace LLLState
 predicate.  This public theorem lives in the Mathlib bridge library so the
 Mathlib-free LLL core does not expose determinant-bound preservation surfaces. -/
 theorem sizeReduce_independent (s : LLLState n m) (k : Nat)
-    (hind : s.b.independent) :
+    (hind : s.b.independent) (hvalid : s.Valid) (hvalid' : (s.sizeReduce k).Valid) :
     (s.sizeReduce k).b.independent := by
   intro i
   have hd_vec :
@@ -25,9 +25,9 @@ theorem sizeReduce_independent (s : LLLState n m) (k : Nat)
       GramSchmidt.Int.gramDet (s.sizeReduce k).b (i.val + 1)
           (Nat.succ_le_of_lt i.isLt) =
         GramSchmidt.Int.gramDet s.b (i.val + 1) (Nat.succ_le_of_lt i.isLt) := by
-    rw [← (s.sizeReduce k).d_eq (i.val + 1) (Nat.succ_lt_succ i.isLt)]
+    rw [← hvalid'.d_eq (i.val + 1) (Nat.succ_lt_succ i.isLt)]
     rw [hd_vec]
-    rw [s.d_eq (i.val + 1) (Nat.succ_lt_succ i.isLt)]
+    rw [hvalid.d_eq (i.val + 1) (Nat.succ_lt_succ i.isLt)]
   rw [hgram]
   exact hind i
 
