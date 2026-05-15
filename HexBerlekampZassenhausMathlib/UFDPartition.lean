@@ -249,6 +249,128 @@ theorem scalar_eq_and_normalizedFactors_eq_of_monic_irreducible_product_eq
   simpa [hxnorm, hynorm] using congrArg normalizedFactors hprod_eq
 
 /--
+Variant of `scalar_eq_and_normalizedFactors_eq_of_monic_irreducible_product_eq`
+for nonconstant `normalize`-fixed irreducible integer polynomial factors, which
+is what the BZ uniqueness bridge actually has (the executable
+`normalizeFactorSign` only enforces a nonnegative leading coefficient, not a
+unit leading coefficient).
+
+If two nonzero integer scalars multiply products of nonconstant `normalize`-fixed
+irreducible integer polynomial factors to the same polynomial, the scalars
+agree and the flattened factor lists agree as multisets. Constant factors are
+ruled out by the `natDegree ≠ 0` hypothesis, so they cannot leak between the
+scalar prefix and the factor list.
+-/
+theorem scalar_eq_and_coe_eq_of_normalize_fixed_nonconst_irreducible_product_eq
+    (c d : ℤ) (xs ys : List (Polynomial ℤ))
+    (hc : c ≠ 0)
+    (hxirr : ∀ x ∈ xs, Irreducible x)
+    (hyirr : ∀ y ∈ ys, Irreducible y)
+    (hxnorm : ∀ x ∈ xs, normalize x = x)
+    (hynorm : ∀ y ∈ ys, normalize y = y)
+    (hxnonconst : ∀ x ∈ xs, x.natDegree ≠ 0)
+    (hynonconst : ∀ y ∈ ys, y.natDegree ≠ 0)
+    (hprod : Polynomial.C c * xs.prod = Polynomial.C d * ys.prod) :
+    c = d ∧ (xs : Multiset (Polynomial ℤ)) = (ys : Multiset _) := by
+  have hCc_ne : (Polynomial.C c : Polynomial ℤ) ≠ 0 := Polynomial.C_ne_zero.mpr hc
+  have hxs_zero_notMem : (0 : Polynomial ℤ) ∉ xs := fun h =>
+    (hxirr 0 h).ne_zero rfl
+  have hys_zero_notMem : (0 : Polynomial ℤ) ∉ ys := fun h =>
+    (hyirr 0 h).ne_zero rfl
+  have hxprod_ne : xs.prod ≠ 0 := List.prod_ne_zero hxs_zero_notMem
+  have hys_prod_ne : ys.prod ≠ 0 := List.prod_ne_zero hys_zero_notMem
+  have hd_ne : d ≠ 0 := by
+    intro hd0
+    rw [hd0, Polynomial.C_0, zero_mul] at hprod
+    exact mul_ne_zero hCc_ne hxprod_ne hprod
+  have hCd_ne : (Polynomial.C d : Polynomial ℤ) ≠ 0 := Polynomial.C_ne_zero.mpr hd_ne
+  -- The (multiset-of) flattened factors equals normalizedFactors of the product.
+  have hxnorm_factors :
+      normalizedFactors xs.prod = (xs : Multiset (Polynomial ℤ)) := by
+    rw [normalizedFactors_list_prod_eq_of_irreducible xs hxirr]
+    refine (Multiset.map_congr rfl ?_).trans (Multiset.map_id _)
+    intro x hx
+    simpa using hxnorm x (Multiset.mem_coe.mp hx)
+  have hynorm_factors :
+      normalizedFactors ys.prod = (ys : Multiset (Polynomial ℤ)) := by
+    rw [normalizedFactors_list_prod_eq_of_irreducible ys hyirr]
+    refine (Multiset.map_congr rfl ?_).trans (Multiset.map_id _)
+    intro y hy
+    simpa using hynorm y (Multiset.mem_coe.mp hy)
+  -- Split off the constant scalar contribution on each side.
+  have hsplit_x :
+      normalizedFactors (Polynomial.C c * xs.prod) =
+        normalizedFactors (Polynomial.C c) + (xs : Multiset (Polynomial ℤ)) := by
+    rw [normalizedFactors_mul hCc_ne hxprod_ne, hxnorm_factors]
+  have hsplit_y :
+      normalizedFactors (Polynomial.C d * ys.prod) =
+        normalizedFactors (Polynomial.C d) + (ys : Multiset (Polynomial ℤ)) := by
+    rw [normalizedFactors_mul hCd_ne hys_prod_ne, hynorm_factors]
+  have hfact_eq :
+      normalizedFactors (Polynomial.C c) + (xs : Multiset (Polynomial ℤ)) =
+        normalizedFactors (Polynomial.C d) + (ys : Multiset (Polynomial ℤ)) := by
+    rw [← hsplit_x, ← hsplit_y, hprod]
+  -- Each irreducible divisor of `C c` has `natDegree = 0`.
+  have hCc_factors_const :
+      ∀ q ∈ normalizedFactors (Polynomial.C c), q.natDegree = 0 := by
+    intro q hq
+    have hq_dvd : q ∣ Polynomial.C c := dvd_of_mem_normalizedFactors hq
+    have hbound : q.natDegree ≤ (Polynomial.C c).natDegree :=
+      Polynomial.natDegree_le_of_dvd hq_dvd hCc_ne
+    rw [Polynomial.natDegree_C] at hbound
+    exact Nat.le_zero.mp hbound
+  have hCd_factors_const :
+      ∀ q ∈ normalizedFactors (Polynomial.C d), q.natDegree = 0 := by
+    intro q hq
+    have hq_dvd : q ∣ Polynomial.C d := dvd_of_mem_normalizedFactors hq
+    have hbound : q.natDegree ≤ (Polynomial.C d).natDegree :=
+      Polynomial.natDegree_le_of_dvd hq_dvd hCd_ne
+    rw [Polynomial.natDegree_C] at hbound
+    exact Nat.le_zero.mp hbound
+  -- Filter both sides by `natDegree ≠ 0` to isolate the nonconstant factors.
+  have hfilter :
+      (xs : Multiset (Polynomial ℤ)) = (ys : Multiset _) := by
+    have key := congrArg
+      (Multiset.filter (fun p : Polynomial ℤ => p.natDegree ≠ 0)) hfact_eq
+    rw [Multiset.filter_add, Multiset.filter_add] at key
+    have hL1 :
+        (normalizedFactors (Polynomial.C c)).filter
+            (fun p : Polynomial ℤ => p.natDegree ≠ 0) = 0 := by
+      refine Multiset.filter_eq_nil.mpr ?_
+      intro q hq
+      simp [hCc_factors_const q hq]
+    have hL2 :
+        ((xs : Multiset (Polynomial ℤ))).filter
+            (fun p : Polynomial ℤ => p.natDegree ≠ 0) = xs := by
+      refine Multiset.filter_eq_self.mpr ?_
+      intro q hq
+      exact hxnonconst q (Multiset.mem_coe.mp hq)
+    have hR1 :
+        (normalizedFactors (Polynomial.C d)).filter
+            (fun p : Polynomial ℤ => p.natDegree ≠ 0) = 0 := by
+      refine Multiset.filter_eq_nil.mpr ?_
+      intro q hq
+      simp [hCd_factors_const q hq]
+    have hR2 :
+        ((ys : Multiset (Polynomial ℤ))).filter
+            (fun p : Polynomial ℤ => p.natDegree ≠ 0) = ys := by
+      refine Multiset.filter_eq_self.mpr ?_
+      intro q hq
+      exact hynonconst q (Multiset.mem_coe.mp hq)
+    rw [hL1, hL2, hR1, hR2, zero_add, zero_add] at key
+    exact key
+  -- Reduce to scalar equality via cancellation on the polynomial part.
+  have hprod_eq : xs.prod = ys.prod := by
+    have hms := congrArg Multiset.prod hfilter
+    simpa [Multiset.prod_coe] using hms
+  have hCcd : (Polynomial.C c : Polynomial ℤ) = Polynomial.C d := by
+    have heq : Polynomial.C c * xs.prod = Polynomial.C d * xs.prod := by
+      conv_rhs => rw [hprod_eq]
+      exact hprod
+    exact mul_right_cancel₀ hxprod_ne heq
+  exact ⟨Polynomial.C_injective hCcd, hfilter⟩
+
+/--
 **Group B partition-cardinality bound (Mathlib-only UFD argument).**
 
 In any unique factorization monoid, a non-zero element `f` admitting a list of
