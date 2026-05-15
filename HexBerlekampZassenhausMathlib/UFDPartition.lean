@@ -131,6 +131,54 @@ theorem length_le_normalizedFactors_card
     _ = (normalizedFactors f).card := hcard_sum.symm
 
 /--
+If a list of irreducible factors has product associated to `f`, then the
+multiset of normalized factors of `f` has exactly the length of the list.
+
+This is the converse cardinality direction to
+`length_le_normalizedFactors_card` for the already-certified irreducible
+partition case.
+-/
+theorem normalizedFactors_card_eq_length_of_irreducible_partition
+    {α : Type*} [CommMonoidWithZero α] [IsCancelMulZero α]
+    [NormalizationMonoid α] [UniqueFactorizationMonoid α]
+    {f : α} (gs : List α)
+    (hirr : ∀ g ∈ gs, Irreducible g)
+    (hprod : Associated gs.prod f) :
+    (normalizedFactors f).card = gs.length := by
+  let s : Multiset α := (gs : Multiset α)
+  have hs_prod : s.prod = gs.prod := by
+    simp [s, Multiset.prod_coe]
+  have hnorm_prod :
+      normalizedFactors gs.prod = s.map normalize := by
+    rw [← hs_prod]
+    exact normalizedFactors_prod_eq s (by
+      intro g hg
+      exact hirr g (Multiset.mem_coe.mp hg))
+  have heq : normalizedFactors f = s.map normalize := by
+    rw [← hnorm_prod]
+    exact hprod.normalizedFactors_eq.symm
+  calc
+    (normalizedFactors f).card = (s.map normalize).card := by rw [heq]
+    _ = s.card := Multiset.card_map normalize s
+    _ = gs.length := by simp [s]
+
+/--
+Lower cardinality bound for an irreducible product partition.
+
+When every emitted factor is already known irreducible and the product is
+associated to `f`, `f` cannot have more normalized irreducible factors than
+the emitted list.
+-/
+theorem normalizedFactors_card_le_length_of_irreducible_partition
+    {α : Type*} [CommMonoidWithZero α] [IsCancelMulZero α]
+    [NormalizationMonoid α] [UniqueFactorizationMonoid α]
+    {f : α} (gs : List α)
+    (hirr : ∀ g ∈ gs, Irreducible g)
+    (hprod : Associated gs.prod f) :
+    (normalizedFactors f).card ≤ gs.length := by
+  rw [normalizedFactors_card_eq_length_of_irreducible_partition gs hirr hprod]
+
+/--
 **Group B partition-cardinality bound (Mathlib-only UFD argument).**
 
 In any unique factorization monoid, a non-zero element `f` admitting a list of
