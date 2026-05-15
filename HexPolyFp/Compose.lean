@@ -85,7 +85,6 @@ private theorem one_ne_zero_of_prime [ZMod64.PrimeModulus p] :
       [(1 : ZMod64 p), Zero.zero] := rfl
   rw [hrev]
   simp only [List.foldl_cons, List.foldl_nil]
-  -- foldl proceeds: 0 → 0*q + C 1 = C 1 → (C 1)*q + C 0 = q + 0 = q
   have hstep1 : ((0 : FpPoly p) * q + DensePoly.C (1 : ZMod64 p)) = (1 : FpPoly p) := by
     rw [FpPoly.zero_mul, FpPoly.zero_add]
     rfl
@@ -94,6 +93,87 @@ private theorem one_ne_zero_of_prime [ZMod64.PrimeModulus p] :
   show q + DensePoly.C (Zero.zero : ZMod64 p) = q
   rw [show (DensePoly.C (Zero.zero : ZMod64 p) : FpPoly p) = 0 from C_zero_eq_zero]
   rw [FpPoly.add_zero]
+
+theorem compose_one [ZMod64.PrimeModulus p] (q : FpPoly p) :
+    DensePoly.compose (1 : FpPoly p) q = 1 := by
+  change DensePoly.compose (DensePoly.C (1 : ZMod64 p)) q = DensePoly.C 1
+  exact compose_C 1 q
+
+/-! ### Compose-as-sum characterization
+
+The Horner-form `DensePoly.compose` evaluates to the explicit sum
+`∑_i C (f.coeff i) * linearPow q i`. This characterization is proved by
+mirroring the `evalScalarCoeffList` / `evalCoeffPowerSumFrom`
+infrastructure used by scalar evaluation, but with `ZMod64` replaced by
+`FpPoly` and `(* x)` replaced by `(* q)`.
+-/
+
+/-- Polynomial-valued counterpart to `evalScalarCoeffList`. -/
+private def composeScalarCoeffList :
+    List (ZMod64 p) → FpPoly p → FpPoly p
+  | [], _ => 0
+  | c :: cs, q => DensePoly.C c + q * composeScalarCoeffList cs q
+
+/-- Polynomial-valued counterpart to `evalCoeffPowerSumFrom`. -/
+private def composeCoeffPowerSumFrom :
+    List (ZMod64 p) → Nat → FpPoly p → FpPoly p
+  | [], _, _ => 0
+  | c :: cs, base, q =>
+      DensePoly.C c * linearPow q base + composeCoeffPowerSumFrom cs (base + 1) q
+
+private theorem mul_composeCoeffPowerSumFrom_eq_succ (q : FpPoly p) :
+    ∀ cs base,
+      q * composeCoeffPowerSumFrom cs base q =
+        composeCoeffPowerSumFrom cs (base + 1) q
+  | [], _ => by
+      simp [composeCoeffPowerSumFrom, FpPoly.mul_zero]
+  | c :: cs, base => by
+      simp only [composeCoeffPowerSumFrom]
+      rw [FpPoly.left_distrib]
+      rw [mul_composeCoeffPowerSumFrom_eq_succ q cs (base + 1)]
+      congr 1
+      -- q * (C c * linearPow q base) = C c * linearPow q (base + 1)
+      rw [← FpPoly.mul_assoc]
+      rw [FpPoly.mul_comm q (DensePoly.C c)]
+      rw [FpPoly.mul_assoc]
+      congr 1
+      change q * linearPow q base = linearPow q (base + 1)
+      rw [linearPow_succ_left]
+
+private theorem composeScalarCoeffList_eq_powerSumFrom_zero (q : FpPoly p) :
+    ∀ cs,
+      composeScalarCoeffList cs q = composeCoeffPowerSumFrom cs 0 q
+  | [] => by
+      simp [composeScalarCoeffList, composeCoeffPowerSumFrom]
+  | c :: cs => by
+      simp only [composeScalarCoeffList, composeCoeffPowerSumFrom]
+      rw [composeScalarCoeffList_eq_powerSumFrom_zero q cs]
+      rw [mul_composeCoeffPowerSumFrom_eq_succ q cs 0]
+      congr 1
+      -- C c = C c * linearPow q 0
+      change DensePoly.C c = DensePoly.C c * 1
+      rw [FpPoly.mul_one]
+
+private theorem foldl_compose_reverse_eq_composeScalarCoeffList (q : FpPoly p) :
+    ∀ cs,
+      cs.reverse.foldl (fun acc c => acc * q + DensePoly.C c) (0 : FpPoly p) =
+        composeScalarCoeffList cs q
+  | [] => rfl
+  | c :: cs => by
+      rw [List.reverse_cons, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [foldl_compose_reverse_eq_composeScalarCoeffList q cs]
+      simp only [composeScalarCoeffList]
+      -- composeScalarCoeffList cs q * q + C c = C c + q * composeScalarCoeffList cs q
+      rw [FpPoly.add_comm]
+      rw [FpPoly.mul_comm q]
+
+/-- `DensePoly.compose` agrees with the iterative power-sum form. -/
+private theorem compose_eq_powerSum (f q : FpPoly p) :
+    DensePoly.compose f q = composeCoeffPowerSumFrom f.toArray.toList 0 q := by
+  unfold DensePoly.compose
+  rw [foldl_compose_reverse_eq_composeScalarCoeffList q f.toArray.toList]
+  exact composeScalarCoeffList_eq_powerSumFrom_zero q f.toArray.toList
 
 end FpPoly
 end Hex
