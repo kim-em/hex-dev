@@ -1313,6 +1313,115 @@ theorem exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_count
       (exhaustiveCoreFactorsWithBound_factor_irreducible_of_count
         hcore_ne hcore_record hcount factor hfactor_mem)
 
+/-- Lower cardinality bound for the exhaustive core branch under irreducibility
+of every emitted factor.
+
+The emitted factor list has product associated to `core`, so if each transported
+factor is irreducible, the abstract UFD partition lower-bound applies and gives
+the reverse count inequality paired with
+`exhaustiveCoreFactorsWithBound_factor_count_le`.
+
+The irreducibility hypothesis is the open obligation #4149 supplies via the
+Hensel subset coverage theorem at default precision. -/
+theorem exhaustiveCoreFactorsWithBound_factor_count_ge_of_irreducible
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    (hcore_ne : core ≠ 0)
+    (hirr :
+      ∀ factor ∈ (Hex.exhaustiveCoreFactorsWithBound core B primeData).toList,
+        Irreducible (HexPolyZMathlib.toPolynomial factor)) :
+    (UniqueFactorizationMonoid.normalizedFactors
+      (HexPolyZMathlib.toPolynomial core)).card ≤
+        ((Hex.exhaustiveCoreFactorsWithBound core B primeData).toList.map
+          HexPolyZMathlib.toPolynomial).length := by
+  set coreFactors := Hex.exhaustiveCoreFactorsWithBound core B primeData with hcoreFactors_def
+  set f := HexPolyZMathlib.toPolynomial core with hf_def
+  have _hf_ne : f ≠ 0 := by
+    intro hzero
+    apply hcore_ne
+    apply HexPolyZMathlib.equiv.injective
+    simpa [hf_def] using hzero
+  set gs : List (Polynomial ℤ) :=
+    coreFactors.toList.map HexPolyZMathlib.toPolynomial with hgs_def
+  have hprod : Associated gs.prod f := by
+    have hp_core : Array.polyProduct coreFactors = core := by
+      simpa [hcoreFactors_def] using
+        Hex.exhaustiveCoreFactorsWithBound_product core B primeData
+    have hp_poly :
+        (coreFactors.toList.map HexPolyZMathlib.toPolynomial).prod =
+          HexPolyZMathlib.toPolynomial core := by
+      rw [← polyProduct_toPolynomial, hp_core]
+    rw [hgs_def, hp_poly, hf_def]
+  have hirr_gs : ∀ g ∈ gs, Irreducible g := by
+    intro g hg
+    rw [hgs_def, List.mem_map] at hg
+    obtain ⟨factor, hfactor_mem, hg_eq⟩ := hg
+    rw [← hg_eq]
+    exact hirr factor (by simpa [hcoreFactors_def] using hfactor_mem)
+  exact
+    HexBerlekampZassenhausMathlib.UFDPartition.normalizedFactors_card_le_length_of_irreducible_partition
+      gs hirr_gs hprod
+
+/-- Cardinality equality for the exhaustive core branch under irreducibility of
+every emitted factor.  Pairs `exhaustiveCoreFactorsWithBound_factor_count_le`
+with `exhaustiveCoreFactorsWithBound_factor_count_ge_of_irreducible`, exposing
+the count equality in a form directly usable as the `hcount` hypothesis of
+`exhaustiveCoreFactorsWithBound_factor_irreducible_of_count` and
+`exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_count`. -/
+theorem exhaustiveCoreFactorsWithBound_factor_count_eq_of_irreducible
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    (hcore_ne : core ≠ 0)
+    (hcore_record : Hex.shouldRecordPolynomialFactor core = true)
+    (hirr :
+      ∀ factor ∈ (Hex.exhaustiveCoreFactorsWithBound core B primeData).toList,
+        Irreducible (HexPolyZMathlib.toPolynomial factor)) :
+    ((Hex.exhaustiveCoreFactorsWithBound core B primeData).toList.map
+        HexPolyZMathlib.toPolynomial).length =
+      (UniqueFactorizationMonoid.normalizedFactors
+        (HexPolyZMathlib.toPolynomial core)).card := by
+  apply le_antisymm
+  · exact exhaustiveCoreFactorsWithBound_factor_count_le hcore_ne hcore_record
+  · exact exhaustiveCoreFactorsWithBound_factor_count_ge_of_irreducible hcore_ne hirr
+
+/-- Convenience composition: under the same hypotheses as
+`exhaustiveCoreFactorsWithBound_factor_count_eq_of_irreducible`, every emitted
+factor is irreducible.  Routes through the cardinality equality and
+`exhaustiveCoreFactorsWithBound_factor_irreducible_of_count` so that slow
+exhaustive branch consumers can ask directly for irreducibility under the
+A1/A2/default-precision hypotheses once those are wired to the irreducibility
+hypothesis by #4149's coverage theorem. -/
+theorem exhaustiveCoreFactorsWithBound_factor_irreducible_of_irreducible
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    (hcore_ne : core ≠ 0)
+    (hcore_record : Hex.shouldRecordPolynomialFactor core = true)
+    (hirr :
+      ∀ factor ∈ (Hex.exhaustiveCoreFactorsWithBound core B primeData).toList,
+        Irreducible (HexPolyZMathlib.toPolynomial factor)) :
+    ∀ factor ∈ (Hex.exhaustiveCoreFactorsWithBound core B primeData).toList,
+      Irreducible (HexPolyZMathlib.toPolynomial factor) :=
+  exhaustiveCoreFactorsWithBound_factor_irreducible_of_count
+    hcore_ne hcore_record
+    (exhaustiveCoreFactorsWithBound_factor_count_eq_of_irreducible
+      hcore_ne hcore_record hirr)
+
+/-- Convenience composition: under the same hypotheses as
+`exhaustiveCoreFactorsWithBound_factor_count_eq_of_irreducible`, every emitted
+factor is irreducible in the Mathlib-free `Hex.ZPoly.Irreducible` predicate.
+Routes through the cardinality equality and
+`exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_count`. -/
+theorem exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_irreducible
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    (hcore_ne : core ≠ 0)
+    (hcore_record : Hex.shouldRecordPolynomialFactor core = true)
+    (hirr :
+      ∀ factor ∈ (Hex.exhaustiveCoreFactorsWithBound core B primeData).toList,
+        Irreducible (HexPolyZMathlib.toPolynomial factor)) :
+    ∀ factor ∈ (Hex.exhaustiveCoreFactorsWithBound core B primeData).toList,
+      Hex.ZPoly.Irreducible factor :=
+  exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_count
+    hcore_ne hcore_record
+    (exhaustiveCoreFactorsWithBound_factor_count_eq_of_irreducible
+      hcore_ne hcore_record hirr)
+
 /-- Slow exhaustive branch core-factor irreducibility for recorded
 `factorWithBound` entries.
 
