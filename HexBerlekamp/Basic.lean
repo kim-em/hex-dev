@@ -82,6 +82,34 @@ def berlekampMatrix (f : FpPoly p) (hmonic : DensePoly.Monic f) :
   let polys := berlekampColumnPolys f hmonic frobX (basisSize f) 1 #[]
   Matrix.ofFn fun i j => (polys[j.val]?.getD 0).coeff i.val
 
+/-- A Berlekamp matrix entry is the corresponding coefficient of the executable
+column-polynomial array used by `berlekampMatrix`. -/
+theorem berlekampMatrix_entry_eq_columnPolys_coeff
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (i j : Fin (basisSize f)) :
+    (berlekampMatrix f hmonic)[i][j] =
+      ((berlekampColumnPolys f hmonic (FpPoly.frobeniusXMod f hmonic)
+        (basisSize f) 1 #[])[j.val]?.getD 0).coeff i.val := by
+  simp [berlekampMatrix, Matrix.ofFn]
+
+/-- A public Berlekamp column entry is the corresponding coefficient of the
+`powModMonic` column representative. -/
+theorem berlekampColumn_entry_eq_powModMonic_coeff
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (i j : Fin (basisSize f)) :
+    (berlekampColumn f hmonic j)[i] =
+      (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val).coeff i.val := by
+  simp [berlekampColumn, coeffVector]
+
+/-- The public Berlekamp column representative has the expected `X^(p*j)`
+residue modulo `f`. -/
+theorem berlekampColumn_powModMonic_mod_eq_linearPow_X
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) (j : Fin (basisSize f)) :
+    (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val) % f =
+      FpPoly.linearPow FpPoly.X (p * j.val) % f :=
+  berlekampColumn_poly_mod_eq_linearPow_X f hmonic j
+
 /-- The fixed-space matrix `Q_f - I` used in Berlekamp's kernel computation. -/
 def fixedSpaceMatrix (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [inst : Lean.Grind.Ring (ZMod64 p)] :
