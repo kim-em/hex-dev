@@ -12,8 +12,8 @@
 
 ## Verdicts
 
-Scientific run at commit `cb0b816af3b0` on `carica` (Apple M2 Ultra,
-macOS 14.6.1, arm64), command:
+Scientific run at commit `cee076f68d9f` on `carica` (Apple M2 Ultra,
+macOS 15.6, arm64), command:
 
 ```sh
 lake exe hexpolyfp_bench run \
@@ -23,39 +23,41 @@ lake exe hexpolyfp_bench run \
     Hex.FpPolyBench.runFrobeniusXPowModChecksum \
     Hex.FpPolyBench.runPowModMonicChecksum \
     Hex.FpPolyBench.runComposeModMonicChecksum \
-    --export-file reports/bench-results/hex-poly-fp-cb0b816af3b0.json
+    --export-file reports/bench-results/hex-poly-fp-cee076f68d9f.json
 ```
 
 The run used deterministic fixtures from `HexPolyFp/Bench.lean`; no random
-seeds are involved. The harness recorded `cb0b816-dirty` because this
+seeds are involved. The harness recorded `cee076f-dirty` because this
 worktree had an unrelated pre-existing `.claude/CLAUDE.md` modification.
-Export artefact: `reports/bench-results/hex-poly-fp-cb0b816af3b0.json`,
+Export artefact: `reports/bench-results/hex-poly-fp-cee076f68d9f.json`,
 SHA-256
-`bd715b4bf14707b79b2c8d0b691e3d2755d6e1a8bb216633604c201e9850e584`.
+`0f88c003092f8618a98263dd887b819c4f9dd9cf51cab66074fe1dec8ff3a29f`.
 
 - `Hex.FpPolyBench.runFrobeniusXModChecksum`: consistent with declared
-  complexity (`cMin=4454.635`, `cMax=5644.450`, `β=-0.199`, parameters
+  complexity (`cMin=4477.355`, `cMax=5584.809`, `β=-0.184`, parameters
   `16,24,32,48,64,80`, `slopeTolerance=0.20`, final hash
   `0xac1417f1a37c7f40`).
 - `Hex.FpPolyBench.runWeightedProductChecksum`: consistent with declared
-  complexity (`cMin=184.912`, `cMax=190.695`, `β=-0.007`, parameters
+  complexity (`cMin=187.827`, `cMax=190.969`, `β=-0.001`, parameters
   `256,384,512,768,1024,1536,2048,3072,4096`, final hash
   `0x972bd3a6f2b6d429`).
 - `Hex.FpPolyBench.runSquareFreeDecompositionSummary`: consistent with
-  declared complexity (`cMin=82.051`, `cMax=310.928`, `β=-0.236`,
+  declared complexity (`cMin=83.103`, `cMax=311.692`, `β=-0.235`,
   parameters `64,96,128,192,256,384,512,768`, `slopeTolerance=0.30`,
-  final hash `0x66ff822aca96ce87`). The widened slope tolerance and the
-  fixture's residual `n`-to-`n` constant variance are recorded as a
-  Concern in §"Concerns" below.
+  final hash `0x66ff822aca96ce87`). The widened slope tolerance covers
+  the fixture's bounded `n`-to-`n` constant variance: rungs whose balanced
+  multiplicities divide `p = 5` take extra Yun shrink steps because those
+  factors vanish from `f'`, while the fitted asymptote remains consistent
+  with the declared `O(n^2)` model.
 - `Hex.FpPolyBench.runFrobeniusXPowModChecksum`: consistent with declared
-  complexity (`cMin=9791.609`, `cMax=10302.897`, parameters
+  complexity (`cMin=9739.644`, `cMax=10192.759`, parameters
   `16,24,32,48,64`, no cap-truncation advisory, final hash
   `0x6b9763a45f6b5d11`).
 - `Hex.FpPolyBench.runPowModMonicChecksum`: consistent with declared
-  complexity (`cMin=491.493`, `cMax=604.346`, `β=-0.075`, parameters
+  complexity (`cMin=485.430`, `cMax=604.917`, `β=-0.075`, parameters
   `64,96,128,192,256,384,512`, final hash `0x3f65c86be5e72dd5`).
 - `Hex.FpPolyBench.runComposeModMonicChecksum`: consistent with declared
-  complexity (`cMin=404.189`, `cMax=416.167`, `β=-0.018`, parameters
+  complexity (`cMin=398.802`, `cMax=414.557`, `β=-0.024`, parameters
   `32,48,64,96,128,192`, no cap-truncation advisory, final hash
   `0xee8f3ebaae233227`).
 
@@ -79,23 +81,21 @@ record in this snapshot.
 ## Profile
 
 Profiles were captured with `samply record --save-only
---unstable-presymbolicate` through the `hexpolyfp_bench profile` child path at
-commit `da69fc9e2e5c` on `carica` (Apple M2 Ultra, macOS 15.6, arm64),
-sampling at 1 kHz. The worktree was dirty only because `.claude/CLAUDE.md`
-carried a pre-existing agent-context change outside this report package. Raw
-profiler artefacts are developer-local under `/tmp/hex-profiles/` and are not
+--unstable-presymbolicate` through the `hexpolyfp_bench profile` child path on
+`carica` (Apple M2 Ultra, macOS 15.6, arm64), sampling at 1 kHz. The
+`quotient-powers`, `modular-composition`, and weighted-product
+`product-squarefree` profiles were captured at commit `713a73d5754c`; the
+Yun square-free decomposition profile was refreshed at commit
+`cee076f68d9f` after the fixture switch to `balancedSquareFreeFactors`.
+The worktree was dirty only because `.claude/CLAUDE.md` carried a
+pre-existing agent-context change outside this report package. Raw profiler
+artefacts are developer-local under `/tmp/hex-profiles/` and are not
 committed. Each profile below sums samples from the benchmark worker child
 thread, not the parent harness or the worker's lock-wait orchestration thread.
 Percentages are leaf counts and inclusive counts as a fraction of those
 worker-thread samples. Symbol attribution uses the samply `.syms.json` sidecar;
 Lean-mangled `lp_Hex_*` symbols are reported below in demangled form when the
 name is clear from the symbol.
-
-The square-free profile predates the fixture's switch to
-`balancedSquareFreeFactors`, but the new fixture's multiplicity
-distribution at parameter `128` coincides with the previous fixture's
-distribution at the same parameter (both yield `(26, 26, 26, 25, 25)`),
-so the dominant inclusive costs are unchanged.
 
 ### `quotient-powers`
 
@@ -196,29 +196,29 @@ lake exe hexpolyfp_bench profile \
     --param 128 \
     --profiler "samply record --save-only --unstable-presymbolicate \
         --include-args=6 --rate 1000 \
-        -o /tmp/hex-profiles/hex-poly-fp-squarefree-713a73d5754c.json --" \
+        -o /tmp/hex-profiles/hex-poly-fp-squarefree-cee076f68d9f.json --" \
     --target-inner-nanos 800000000
 ```
 
 Representative case: Yun square-free decomposition summary for a deterministic
-`F_5` product of linear factors at parameter `128`, no seed. Child row:
-`inner_repeats=128`, `per_call_nanos=4695993.820312`, result hash
-`0xc01a72c633d7eda5`. The worker thread recorded `618` sample rows with total
-sample weight `640`; sidecar:
-`/tmp/hex-profiles/hex-poly-fp-squarefree-713a73d5754c.syms.json`.
+`F_5` product built by `balancedSquareFreeFactors 128`, no seed. The
+balanced multiplicity tuple is `(26, 26, 26, 25, 25)`. Child row:
+`inner_repeats=128`, `per_call_nanos=5369378.906250`, result hash
+`0xc190ee24ddc83ab8`. The worker thread recorded `701` sample rows with total
+sample weight `721`; sidecar:
+`/tmp/hex-profiles/hex-poly-fp-squarefree-cee076f68d9f.syms.json`.
 
-Leaf samples were allocation/free `203 / 640 = 31.7%`, Lean runtime
-`191 / 640 = 29.8%`, other frames `95 / 640 = 14.8%`,
-own HexPolyFp/HexPoly/ZMod64 code `90 / 640 = 14.1%`, and GMP big-integer
-arithmetic `61 / 640 = 9.5%`. Top inclusive Hex costs were
-`FpPoly.squareFreeDecomposition` at `606 / 640 = 94.7%`,
-`FpPoly.squareFreeAuxRev` at `603 / 640 = 94.2%`,
-`FpPoly.yunFactorsWithLevel` at `568 / 640 = 88.8%`,
-`DensePoly.divModArray` at `478 / 640 = 74.7%`,
-`DensePoly.gcd` at `366 / 640 = 57.2%`,
-`DensePoly.xgcd` at `365 / 640 = 57.0%`, and `DensePoly.div` at
-`233 / 640 = 36.4%`. The sampled work maps to the registered square-free
-target through Yun's gcd/division chain.
+Leaf samples were Lean runtime `255 / 721 = 35.4%`, allocation/free
+`230 / 721 = 31.9%`, other frames `112 / 721 = 15.5%`,
+own HexPolyFp/HexPoly/ZMod64 code `68 / 721 = 9.4%`, and GMP big-integer
+arithmetic `56 / 721 = 7.8%`. Top inclusive Hex costs were
+`FpPoly.squareFreeDecomposition` and `FpPoly.squareFreeAuxRev` at
+`692 / 721 = 96.0%`, `FpPoly.yunFactorsWithLevel` at
+`658 / 721 = 91.3%`, `DensePoly.divModArray` at
+`557 / 721 = 77.3%`, `DensePoly.gcd`/`DensePoly.xgcd` at
+`417 / 721 = 57.8%`, and `DensePoly.div` at `274 / 721 = 38.0%`.
+The sampled work maps to the registered square-free target through Yun's
+gcd/division chain on the current balanced fixture.
 
 Across all four profiles, every dominant inclusive cost maps to a registered
 `Hex.FpPolyBench.*` target: quotient powers to `runPowModMonicChecksum`,
@@ -229,19 +229,4 @@ observed.
 
 ## Concerns
 
-- `Hex.FpPolyBench.runSquareFreeDecompositionSummary` runs at a widened
-  `slopeTolerance = 0.30` and exhibits a `cMax / cMin` constant ratio of
-  about `3.8x` across the scientific rungs. The variance is inherent to
-  the input family: at rungs where one or more of the five linear-factor
-  multiplicities divides `p = 5` (for the current schedule this happens
-  at `n = 96` and `n = 128`), the factor's contribution to `f'`
-  vanishes, the squarefree part `c_0` collapses to fewer distinct
-  factors, and the Yun ladder takes more shrink steps before exhausting
-  `c_0`. The asymptote stays `O(n^2)` on every rung, but the constant
-  jumps by a small integer factor. The scientific schedule already
-  trims the worst-case rung `n = 1024` (four multiplicities divisible
-  by `5` simultaneously, constant amplified by an order of magnitude);
-  a structurally cleaner fixture that exercises Yun's full multiplicity
-  ladder without ever triggering the formal-`p`-th-root special-case
-  branches would require either a larger prime field or a more
-  elaborate distinct-factor enumeration than `F_5` supports natively.
+None.
