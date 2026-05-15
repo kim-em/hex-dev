@@ -2204,6 +2204,65 @@ private theorem scaledCoeffArrayLoop_lower_singular_after_step
   · rw [h_step_eq]
     omega
 
+/-- Packaged early-singular lower-column relation. At a zero pivot before the
+last column, the array loop writes exactly the singular column and halts:
+earlier lower columns keep their processed matrix values, the singular column
+records the pre-step matrix entry, and later lower columns keep the unwritten
+zero tail. -/
+private theorem scaledCoeffArrayLoop_lower_singular_matches
+    {state_array : ScaledCoeffArrayState} {state_matrix : Matrix.BareissState n}
+    (h_step_eq : state_array.step = state_matrix.step)
+    (h_matrix_eq : rowsToMatrix state_array.matrix n = state_matrix.matrix)
+    (h_coeffs_size : state_array.coeffs.size = n)
+    (h_coeffs_rows_size : ∀ r, r < n → state_array.coeffs[r]!.size = n)
+    (h_coeffs_processed : ∀ r c : Fin n,
+      c.val < state_matrix.step → c.val < r.val →
+        getArrayEntry state_array.coeffs r.val c.val = state_matrix.matrix[r][c])
+    (h_coeffs_unwritten : ∀ r c : Fin n,
+      state_matrix.step < c.val → c.val < r.val →
+        getArrayEntry state_array.coeffs r.val c.val = 0)
+    (fuel : Nat) (i j : Fin n)
+    (hji : j.val < i.val)
+    (hDone : state_matrix.step + 1 < n)
+    (hp : state_matrix.matrix[
+        (⟨state_matrix.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)][
+        (⟨state_matrix.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)] = 0) :
+    (j.val < state_matrix.step ∧
+      getArrayEntry (scaledCoeffArrayLoop n (fuel + 1) state_array).coeffs i.val j.val =
+        state_matrix.matrix[i][j]) ∨
+    (j.val = state_matrix.step ∧
+      getArrayEntry (scaledCoeffArrayLoop n (fuel + 1) state_array).coeffs
+          i.val state_array.step =
+        state_matrix.matrix[i][j]) ∨
+    (state_matrix.step < j.val ∧
+      getArrayEntry (scaledCoeffArrayLoop n (fuel + 1) state_array).coeffs i.val j.val = 0) := by
+  by_cases h_before : j.val < state_matrix.step
+  · left
+    refine ⟨h_before, ?_⟩
+    exact scaledCoeffArrayLoop_lower_singular_before_step
+      (n := n) (state_array := state_array) (state_matrix := state_matrix)
+      h_step_eq h_matrix_eq h_coeffs_processed fuel i j h_before hji hDone hp
+  · by_cases h_current : j.val = state_matrix.step
+    · right
+      left
+      refine ⟨h_current, ?_⟩
+      have hstep_lt_i : state_matrix.step < i.val := by omega
+      have h_current_capture :=
+        scaledCoeffArrayLoop_lower_singular_current_step
+          (n := n) (state_array := state_array) (state_matrix := state_matrix)
+          h_step_eq h_matrix_eq h_coeffs_size h_coeffs_rows_size fuel i
+          hstep_lt_i hDone hp
+      let stepFin : Fin n := ⟨state_matrix.step, Nat.lt_trans hstep_lt_i i.isLt⟩
+      have hcol_eq : stepFin = j := Fin.ext h_current.symm
+      exact h_current_capture.trans (congrArg (fun c => state_matrix.matrix[i][c]) hcol_eq)
+    · right
+      right
+      have h_after : state_matrix.step < j.val := by omega
+      refine ⟨h_after, ?_⟩
+      exact scaledCoeffArrayLoop_lower_singular_after_step
+        (n := n) (state_array := state_array) (state_matrix := state_matrix)
+        h_step_eq h_matrix_eq h_coeffs_unwritten fuel i j h_after hji hDone hp
+
 /-- State-level diagonal correspondence between the scaled-coefficient array
 loop and the matrix-level `Matrix.noPivotLoop` on the same Gram-like data.
 
