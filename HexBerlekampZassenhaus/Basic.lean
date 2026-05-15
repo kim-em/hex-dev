@@ -938,7 +938,10 @@ private def signedContentScalar (f : ZPoly) : Int :=
   else
     ZPoly.content f
 
-private def normalizeFactorSign (f : ZPoly) : ZPoly :=
+/-- Normalize a polynomial factor's sign by negating it whenever the leading
+coefficient is negative.  The result has nonnegative leading coefficient and is
+associated to the input over `ℤ`. -/
+def normalizeFactorSign (f : ZPoly) : ZPoly :=
   if DensePoly.leadingCoeff f < 0 then
     DensePoly.scale (-1 : Int) f
   else
