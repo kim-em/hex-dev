@@ -1,5 +1,6 @@
 import HexBerlekamp.Irreducibility
 import HexBerlekamp.Factor
+import HexPolyFp.Compose
 import HexPolyFp.Quotient
 import HexPolyFp.QuotientFrobenius
 import HexArith.Nat.Pow
@@ -2037,6 +2038,24 @@ theorem compose_xPowSubX_one (w : FpPoly p) :
     exact Nat.pow_one p
   rw [hxPow]
   exact FpPoly.compose_linearPow_X_sub_X w p
+
+/-- Substituting an arbitrary witness into the prime-field product identity. -/
+theorem primeFieldProduct_witness_eq (w : FpPoly p) :
+    (ZMod64.values p).foldl
+      (fun acc c => acc * (w - FpPoly.C c)) 1 =
+        FpPoly.linearPow w p - w := by
+  rw [← FpPoly.compose_primeFieldLinearProduct w]
+  rw [primeFieldProduct_X_eq_xPowSubX]
+  exact compose_xPowSubX_one w
+
+/-- Divisibility by `w^p - w` transports to the canonical witness product. -/
+theorem dvd_primeFieldProduct_witness_of_dvd_linearPow_sub_self
+    {f w : FpPoly p}
+    (hdvd : f ∣ FpPoly.linearPow w p - w) :
+    f ∣ (ZMod64.values p).foldl
+      (fun acc c => acc * (w - FpPoly.C c)) 1 := by
+  rw [primeFieldProduct_witness_eq w]
+  exact hdvd
 
 /-! ### Structural lemmas
 
