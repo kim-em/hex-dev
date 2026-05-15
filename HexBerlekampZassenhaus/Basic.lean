@@ -2727,6 +2727,46 @@ private theorem foldl_collectFactorStep_entries_positive
       exact ih (collectFactorStep acc factor)
         (collectFactorStep_entries_positive acc factor hpos)
 
+private theorem bumpFactorMultiplicity_entries_recorded
+    (g : ZPoly) (acc : List (ZPoly × Nat))
+    (hrec : shouldRecordPolynomialFactor g = true)
+    (hacc : ∀ entry ∈ acc, shouldRecordPolynomialFactor entry.1 = true) :
+    ∀ entry ∈ bumpFactorMultiplicity g acc,
+      shouldRecordPolynomialFactor entry.1 = true := by
+  intro entry hmem
+  rcases bumpFactorMultiplicity_mem_normalized_or_old g acc entry hmem with hnorm | hold
+  · rw [hnorm]
+    exact hrec
+  · exact hacc entry hold
+
+private theorem collectFactorStep_entries_recorded
+    (acc : List (ZPoly × Nat)) (factor : ZPoly)
+    (hacc : ∀ entry ∈ acc, shouldRecordPolynomialFactor entry.1 = true) :
+    ∀ entry ∈ collectFactorStep acc factor,
+      shouldRecordPolynomialFactor entry.1 = true := by
+  unfold collectFactorStep
+  by_cases hrec : shouldRecordPolynomialFactor (normalizeFactorSign factor) = true
+  · intro entry hmem
+    simp [hrec] at hmem
+    exact bumpFactorMultiplicity_entries_recorded
+      (normalizeFactorSign factor) acc hrec hacc entry hmem
+  · intro entry hmem
+    simp [hrec] at hmem
+    exact hacc entry hmem
+
+private theorem foldl_collectFactorStep_entries_recorded
+    (factors : List ZPoly) (acc : List (ZPoly × Nat))
+    (hacc : ∀ entry ∈ acc, shouldRecordPolynomialFactor entry.1 = true) :
+    ∀ entry ∈ factors.foldl collectFactorStep acc,
+      shouldRecordPolynomialFactor entry.1 = true := by
+  induction factors generalizing acc with
+  | nil =>
+      simpa using hacc
+  | cons factor factors ih =>
+      simp only [List.foldl_cons]
+      exact ih (collectFactorStep acc factor)
+        (collectFactorStep_entries_recorded acc factor hacc)
+
 private theorem bumpFactorMultiplicity_pairwise_first
     (g : ZPoly) (acc : List (ZPoly × Nat))
     (hpair : List.Pairwise (fun a b : ZPoly × Nat => a.1 ≠ b.1) acc) :
@@ -2807,6 +2847,18 @@ theorem collectFactorMultiplicities_entry_multiplicity_pos
     simpa using hmem
   exact
     foldl_collectFactorStep_entries_positive factors.toList []
+      (by simp) entry hmem_fold
+
+/-- Every collected factorization entry passed the recorded-factor filter. -/
+theorem collectFactorMultiplicities_entry_shouldRecord
+    (factors : Array ZPoly) (entry : ZPoly × Nat)
+    (hmem : entry ∈ (collectFactorMultiplicities factors).toList) :
+    shouldRecordPolynomialFactor entry.1 = true := by
+  rw [collectFactorMultiplicities_eq_foldl] at hmem
+  have hmem_fold : entry ∈ factors.toList.foldl collectFactorStep [] := by
+    simpa using hmem
+  exact
+    foldl_collectFactorStep_entries_recorded factors.toList []
       (by simp) entry hmem_fold
 
 /-- The collector emits no duplicate polynomial keys. -/
@@ -3007,6 +3059,54 @@ private theorem normalizeFactorSign_idem (g : ZPoly) :
     normalizeFactorSign (normalizeFactorSign g) = normalizeFactorSign g :=
   normalizeFactorSign_eq_self_of_leadingCoeff_nonneg
     (normalizeFactorSign g) (normalizeFactorSign_leadingCoeff_nonneg g)
+
+/-- Collected factor entries are fixed points of `normalizeFactorSign`. -/
+theorem collectFactorMultiplicities_entry_normalizeFactorSign_id
+    (factors : Array ZPoly) (entry : ZPoly × Nat)
+    (hmem : entry ∈ (collectFactorMultiplicities factors).toList) :
+    normalizeFactorSign entry.1 = entry.1 := by
+  rcases collectFactorMultiplicities_entry_mem_normalized_raw factors entry hmem with
+    ⟨raw, _hraw_mem, hraw⟩
+  rw [hraw]
+  exact normalizeFactorSign_idem raw
+
+/-- Collected factor entries have positive leading coefficient. -/
+theorem collectFactorMultiplicities_entry_leadingCoeff_pos
+    (factors : Array ZPoly) (entry : ZPoly × Nat)
+    (hmem : entry ∈ (collectFactorMultiplicities factors).toList) :
+    0 < DensePoly.leadingCoeff entry.1 := by
+  have hnorm :=
+    collectFactorMultiplicities_entry_normalizeFactorSign_id factors entry hmem
+  have hnonneg : 0 ≤ DensePoly.leadingCoeff entry.1 := by
+    have h := normalizeFactorSign_leadingCoeff_nonneg entry.1
+    rwa [hnorm] at h
+  have hrecord :=
+    collectFactorMultiplicities_entry_shouldRecord factors entry hmem
+  have hne : entry.1 ≠ 0 := by
+    unfold shouldRecordPolynomialFactor at hrecord
+    simp at hrecord
+    exact hrecord.1.1
+  have hlead_ne : DensePoly.leadingCoeff entry.1 ≠ 0 :=
+    ZPoly.leadingCoeff_ne_zero_of_ne_zero entry.1 hne
+  omega
+
+/-- Entries in a `Factorization` built from raw factors are fixed points of
+`normalizeFactorSign`. -/
+theorem factorizationOfFactors_entry_normalizeFactorSign_id
+    (f : ZPoly) (factors : Array ZPoly) (entry : ZPoly × Nat)
+    (hmem : entry ∈ (factorizationOfFactors f factors).factors.toList) :
+    normalizeFactorSign entry.1 = entry.1 := by
+  unfold factorizationOfFactors at hmem
+  exact collectFactorMultiplicities_entry_normalizeFactorSign_id factors entry hmem
+
+/-- Entries in a `Factorization` built from raw factors have positive leading
+coefficient. -/
+theorem factorizationOfFactors_entry_leadingCoeff_pos
+    (f : ZPoly) (factors : Array ZPoly) (entry : ZPoly × Nat)
+    (hmem : entry ∈ (factorizationOfFactors f factors).factors.toList) :
+    0 < DensePoly.leadingCoeff entry.1 := by
+  unfold factorizationOfFactors at hmem
+  exact collectFactorMultiplicities_entry_leadingCoeff_pos factors entry hmem
 
 private theorem rat_scale_scale (u v : Rat) (p : DensePoly Rat) :
     DensePoly.scale u (DensePoly.scale v p) = DensePoly.scale (u * v) p := by
@@ -5240,6 +5340,38 @@ theorem factorWithBound_entry_multiplicity_pos
       simpa only [factorWithBound, factorFastWithBound, factorSlowWithBound, hfast,
         Option.map_none, Option.getD_none] using hmem
 
+/-- Every recorded entry of the bounded public factorization is fixed by
+`normalizeFactorSign`. -/
+theorem factorWithBound_entry_normalizeFactorSign_id
+    (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
+    (hmem : entry ∈ (factorWithBound f B).factors.toList) :
+    normalizeFactorSign entry.1 = entry.1 := by
+  cases hfast : factorFastFactorsWithBound f B with
+  | some rawFactors =>
+      apply factorizationOfFactors_entry_normalizeFactorSign_id
+      simpa only [factorWithBound, factorFastWithBound, hfast, Option.map_some,
+        Option.getD_some] using hmem
+  | none =>
+      apply factorizationOfFactors_entry_normalizeFactorSign_id
+      simpa only [factorWithBound, factorFastWithBound, factorSlowWithBound, hfast,
+        Option.map_none, Option.getD_none] using hmem
+
+/-- Every recorded entry of the bounded public factorization has positive
+leading coefficient. -/
+theorem factorWithBound_entry_leadingCoeff_pos
+    (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
+    (hmem : entry ∈ (factorWithBound f B).factors.toList) :
+    0 < DensePoly.leadingCoeff entry.1 := by
+  cases hfast : factorFastFactorsWithBound f B with
+  | some rawFactors =>
+      apply factorizationOfFactors_entry_leadingCoeff_pos
+      simpa only [factorWithBound, factorFastWithBound, hfast, Option.map_some,
+        Option.getD_some] using hmem
+  | none =>
+      apply factorizationOfFactors_entry_leadingCoeff_pos
+      simpa only [factorWithBound, factorFastWithBound, factorSlowWithBound, hfast,
+        Option.map_none, Option.getD_none] using hmem
+
 /-- The bounded public factorization has no duplicate polynomial keys. -/
 theorem factorWithBound_pairwise_first
     (f : ZPoly) (B : Nat) :
@@ -5263,6 +5395,26 @@ theorem factor_entry_multiplicity_pos
     0 < entry.2 := by
   simpa [factor_eq_factorWithBound_default] using
     factorWithBound_entry_multiplicity_pos
+      f (ZPoly.defaultFactorCoeffBound f) entry hmem
+
+/-- Every recorded entry of the default public factorization is fixed by
+`normalizeFactorSign`. -/
+theorem factor_entry_normalizeFactorSign_id
+    (f : ZPoly) (entry : ZPoly × Nat)
+    (hmem : entry ∈ (factor f).factors.toList) :
+    normalizeFactorSign entry.1 = entry.1 := by
+  simpa [factor_eq_factorWithBound_default] using
+    factorWithBound_entry_normalizeFactorSign_id
+      f (ZPoly.defaultFactorCoeffBound f) entry hmem
+
+/-- Every recorded entry of the default public factorization has positive
+leading coefficient. -/
+theorem factor_entry_leadingCoeff_pos
+    (f : ZPoly) (entry : ZPoly × Nat)
+    (hmem : entry ∈ (factor f).factors.toList) :
+    0 < DensePoly.leadingCoeff entry.1 := by
+  simpa [factor_eq_factorWithBound_default] using
+    factorWithBound_entry_leadingCoeff_pos
       f (ZPoly.defaultFactorCoeffBound f) entry hmem
 
 /-- The default public factorization has no duplicate polynomial keys. -/
