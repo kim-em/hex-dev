@@ -17,17 +17,17 @@ namespace HexLLLMathlib
 /-- Mathlib-side bridge from the executable LLL state scaled-coefficient
 certificate to the rational Gram-Schmidt coefficient relation. -/
 theorem lllState_ν_eq_coeffs
-    (s : Hex.LLLState n m)
+    (s : Hex.LLLState n m) (hvalid : s.Valid)
     (i j : Nat) (hi : i < n) (hj : j < n) (hji : j < i) :
     (((s.ν.get ⟨i, hi⟩).get ⟨j, hj⟩ : Int) : Rat) =
       (s.d.get ⟨j + 1, Nat.succ_lt_succ hj⟩ : Rat) *
         (((Hex.GramSchmidt.Int.coeffs s.b).get ⟨i, hi⟩).get ⟨j, hj⟩) := by
-  have hν := s.ν_eq i j hi hj hji
+  have hν := hvalid.ν_eq i j hi hj hji
   have hd :
       s.d.get ⟨j + 1, Nat.succ_lt_succ hj⟩ =
         Hex.GramSchmidt.Int.gramDet s.b (j + 1)
           (Nat.succ_le_of_lt (Nat.lt_trans hji hi)) :=
-    s.d_eq (j + 1) (Nat.succ_lt_succ hj)
+    hvalid.d_eq (j + 1) (Nat.succ_lt_succ hj)
   have hscaled :=
     Hex.GramSchmidt.Int.scaledCoeffs_eq s.b i j hi hji
   rw [hν, hd]
