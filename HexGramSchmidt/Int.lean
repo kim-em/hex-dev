@@ -134,7 +134,7 @@ private structure ScaledCoeffArrayState where
   coeffs : Array (Array Int)
   prevPivot : Int
 
-@[inline] private def getArrayEntry (rows : Array (Array Int)) (row col : Nat) : Int :=
+@[inline] def getArrayEntry (rows : Array (Array Int)) (row col : Nat) : Int :=
   rows[row]![col]!
 
 private def zeroRows (n : Nat) : Array (Array Int) :=
@@ -996,7 +996,7 @@ private theorem scaledCoeffArrayLoop_lower_matches_start_column
 
 /-- Run one no-pivot fraction-free Gram elimination and record each scaled
 coefficient column immediately before the elimination step zeroes it. -/
-private def scaledCoeffRows (b : Matrix Int n m) : Array (Array Int) :=
+def scaledCoeffRows (b : Matrix Int n m) : Array (Array Int) :=
   let state :=
     scaledCoeffArrayLoop n n
       { step := 0
@@ -1040,6 +1040,14 @@ determinant formula corresponding to `d_{j+1} * μ_{i,j}`; on the diagonal we
 store `d_{j+1}`, and entries above the diagonal are zero. -/
 def scaledCoeffs (b : Matrix Int n m) : Matrix Int n n :=
   (data b).ν
+
+/-- Entry-level packaging bridge from the public scaled-coefficient matrix
+back to the shared array pass that computes it. -/
+theorem scaledCoeffs_entry_eq_getArrayEntry
+    (b : Matrix Int n m) (i j : Fin n) :
+    GramSchmidt.entry (scaledCoeffs b) i j =
+      getArrayEntry (scaledCoeffRows b) i.val j.val := by
+  simp [scaledCoeffs, data, rowsToMatrix, GramSchmidt.entry, Matrix.row, Matrix.ofFn]
 
 /-- One Bareiss update step commutes with taking the leading `K × K`
 prefix: the leading prefix of the updated full matrix equals the result
@@ -1382,7 +1390,7 @@ the full `n × n` matrix agrees with the `(Fin.last k, Fin.last k)` entry of the
 noPivot Bareiss state after `k` iterations on the `(k + 1) × (k + 1)` bordered
 minor at `row, col`. The `singularStep` bookkeeping also agrees, mirroring the
 leading-prefix sync corollary. Requires `row, col` to lie in the trailing block. -/
-private theorem noPivotLoop_full_eq_borderedMinor_at_trailing
+theorem noPivotLoop_full_eq_borderedMinor_at_trailing
     {n : Nat} (M : Matrix Int n n) (k : Nat) (hk : k < n) (row col : Fin n)
     (hrow : k ≤ row.val) (hcol : k ≤ col.val) :
     let BM := Matrix.borderedMinor M k hk row col
@@ -4542,7 +4550,7 @@ with the border row index taken to be `j` and the border column index taken
 to be `i`. This is the definitional bridge between
 `GramSchmidt.scaledCoeffMatrix` and the bordered-minor machinery in
 `HexMatrix.Bareiss`. -/
-private theorem scaledCoeffMatrix_eq_borderedMinor
+theorem scaledCoeffMatrix_eq_borderedMinor
     (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val) :
     GramSchmidt.scaledCoeffMatrix b i j hji =
       Matrix.borderedMinor (Matrix.gramMatrix b) j.val
@@ -4688,7 +4696,7 @@ corresponding Cramer determinant matrix `scaledCoeffMatrix b i j hji`. This
 composes `scaledCoeffArrayLoop_lower_matches_target_column` (from #4103),
 `noPivotLoop_full_eq_borderedMinor_at_trailing` (from #4028), and the
 symmetry/transpose bridge `noPivotLoop_scaledCoeffMatrix_eq_borderedMinor_at_trailing`. -/
-private theorem scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix
+theorem scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix
     (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val)
     (h_nonsing :
       (Matrix.noPivotLoop j.val
