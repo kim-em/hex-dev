@@ -853,6 +853,132 @@ theorem fixedSpaceKernelPolynomial_coeffVector_complete (f : FpPoly p)
   intro hg
   exact fixedSpaceKernelVectors_complete f hmonic (coeffVector f g) hg
 
+private theorem linearPow_zero_of_pos_aux (n : Nat) (hn : 0 < n) :
+    FpPoly.linearPow (0 : FpPoly p) n = 0 := by
+  have hsucc : ∀ m : Nat, FpPoly.linearPow (0 : FpPoly p) (m + 1) = 0 := by
+    intro m
+    induction m with
+    | zero =>
+        rw [FpPoly.linearPow_succ]
+        exact FpPoly.one_mul 0
+    | succ m ih =>
+        rw [FpPoly.linearPow_succ, ih, FpPoly.zero_mul]
+  cases n with
+  | zero => omega
+  | succ n => exact hsucc n
+
+private theorem eq_zero_of_size_eq_zero (w : FpPoly p) (hw : w.size = 0) :
+    w = 0 := by
+  apply DensePoly.ext_coeff
+  intro n
+  show w.coeff n = (0 : FpPoly p).coeff n
+  rw [DensePoly.coeff_eq_zero_of_size_le w (by omega : w.size ≤ n),
+      DensePoly.coeff_zero]
+  rfl
+
+private theorem coeffVector_eq_iff_eq_of_size_le (f a b : FpPoly p)
+    (ha : a.size ≤ basisSize f) (hb : b.size ≤ basisSize f) :
+    coeffVector f a = coeffVector f b ↔ a = b := by
+  refine ⟨?_, ?_⟩
+  · intro hcoeff
+    apply DensePoly.ext_coeff
+    intro i
+    show a.coeff i = b.coeff i
+    by_cases hi : i < basisSize f
+    · have hget :=
+        congrArg (fun v : Vector (ZMod64 p) (basisSize f) => v[i]) hcoeff
+      simpa [coeffVector] using hget
+    · have hi' : basisSize f ≤ i := Nat.le_of_not_lt hi
+      rw [DensePoly.coeff_eq_zero_of_size_le a (Nat.le_trans ha hi'),
+          DensePoly.coeff_eq_zero_of_size_le b (Nat.le_trans hb hi')]
+  · intro heq
+    rw [heq]
+
+private theorem mod_eq_self_of_size_le_basis (f w : FpPoly p)
+    (hw : w.size ≤ basisSize f) (hbasis : 0 < basisSize f) :
+    w % f = w := by
+  apply DensePoly.mod_eq_self_of_degree_lt
+  show w.degree?.getD 0 < f.degree?.getD 0
+  change _ < basisSize f
+  by_cases hwsize : w.size = 0
+  · have hdeg : w.degree?.getD 0 = 0 := by
+      unfold DensePoly.degree?
+      simp [hwsize]
+    rw [hdeg]
+    exact hbasis
+  · have hw_pos : 0 < w.size := Nat.pos_of_ne_zero hwsize
+    have hw_deg : w.degree?.getD 0 = w.size - 1 := by
+      unfold DensePoly.degree?
+      simp [Nat.ne_of_gt hw_pos]
+    rw [hw_deg]
+    omega
+
+private theorem linearPow_mod_size_le_of_basis_pos
+    [ZMod64.PrimeModulus p]
+    (f w : FpPoly p) (hbasis : 0 < basisSize f) :
+    (FpPoly.linearPow w p % f).size ≤ basisSize f := by
+  haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
+  have hmod_lt :
+      (FpPoly.linearPow w p % f).degree?.getD 0 < f.degree?.getD 0 :=
+    DensePoly.mod_degree_lt_of_pos_degree _ _ hbasis
+  change _ < basisSize f at hmod_lt
+  by_cases hsize : (FpPoly.linearPow w p % f).size = 0
+  · omega
+  · have hpos : 0 < (FpPoly.linearPow w p % f).size := Nat.pos_of_ne_zero hsize
+    have hdeg_eq :
+        (FpPoly.linearPow w p % f).degree?.getD 0 =
+          (FpPoly.linearPow w p % f).size - 1 := by
+      unfold DensePoly.degree?
+      simp [Nat.ne_of_gt hpos]
+    omega
+
+/-- Polynomial-level kernel form of the Berlekamp / fixed-space kernel condition:
+for `w` of degree below `basisSize f`, `w` represents a fixed-space kernel
+polynomial iff `f` divides `w^p - w`. -/
+theorem isFixedSpaceKernelPolynomial_iff_dvd_linearPow_sub_self
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) (w : FpPoly p)
+    (hw : w.size ≤ basisSize f) :
+    IsFixedSpaceKernelPolynomial f hmonic w ↔
+      f ∣ FpPoly.linearPow w p - w := by
+  haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
+  by_cases hbasis_zero : basisSize f = 0
+  · -- Edge case: `basisSize f = 0`. Then `w = 0`, both sides are trivial.
+    have hw_size_zero : w.size = 0 := by
+      rw [hbasis_zero] at hw; omega
+    have hw_zero : w = 0 := eq_zero_of_size_eq_zero w hw_size_zero
+    have hp_pos : 0 < p := Hex.ZMod64.Bounds.pPos
+    constructor
+    · intro _
+      rw [hw_zero, linearPow_zero_of_pos_aux p hp_pos, FpPoly.sub_zero]
+      exact DensePoly.dvd_zero_poly f
+    · intro _
+      unfold IsFixedSpaceKernelPolynomial IsFixedSpaceKernelVector
+      apply Vector.ext
+      intro i hi
+      rw [hbasis_zero] at hi
+      omega
+  · have hbasis_pos : 0 < basisSize f := Nat.pos_of_ne_zero hbasis_zero
+    have hw_mod : w % f = w := mod_eq_self_of_size_le_basis f w hw hbasis_pos
+    unfold IsFixedSpaceKernelPolynomial
+    rw [isFixedSpaceKernelVector_iff_berlekampMatrix_mulVec_eq]
+    rw [berlekampMatrix_mulVec_coeffVector_eq f hmonic w hw]
+    rw [coeffVector_eq_iff_eq_of_size_le f _ _
+        (linearPow_mod_size_le_of_basis_pos f w hbasis_pos) hw]
+    refine ⟨?_, ?_⟩
+    · intro hmodeq
+      have hmod_eq : FpPoly.linearPow w p % f = w % f := by
+        rw [hw_mod]; exact hmodeq
+      exact @DensePoly.congr_of_mod_eq_mod (ZMod64 p) inferInstance inferInstance
+        inferInstance (ZMod64.instDivModLawsZMod64Fp p) _ _ _ hmod_eq
+    · intro hdvd
+      have hcongr : DensePoly.Congr (FpPoly.linearPow w p) w f := hdvd
+      have hmod_eq : FpPoly.linearPow w p % f = w % f :=
+        @DensePoly.mod_eq_mod_of_congr (ZMod64 p) inferInstance inferInstance
+          inferInstance (ZMod64.instDivModLawsZMod64Fp p) _ _ _ hcongr
+      rw [hw_mod] at hmod_eq
+      exact hmod_eq
+
 end Berlekamp
 
 end Hex
