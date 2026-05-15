@@ -41,6 +41,60 @@ theorem toMathlibPolynomial_modP_eq_map_intCast_zmod
       (fun n => HexBerlekampMathlib.coeff_toMathlibPolynomial _ n)
 
 /--
+The Mathlib `ZMod p`-cast of the leading coefficient of a `Hex.ZPoly` agrees
+with the executable `ZMod64`-valued `leadingCoeffModP` after transport along
+`ZMod64.toZMod`. This is the integer-side companion to the modular `modP`
+bridge: it lets a downstream consumer chain the executable good-prime
+hypothesis through to the Mathlib `Polynomial.map` natural-degree lemma.
+-/
+theorem intCast_zmod_leadingCoeff_eq_toZMod_leadingCoeffModP
+    [Hex.ZMod64.Bounds p] (f : Hex.ZPoly) :
+    (Int.castRingHom (ZMod p)) (HexPolyZMathlib.toPolynomial f).leadingCoeff =
+      HexModArithMathlib.ZMod64.toZMod (Hex.ZPoly.leadingCoeffModP f p) := by
+  rw [HexPolyMathlib.leadingCoeff_toPolynomial]
+  show ((Hex.DensePoly.leadingCoeff f : ℤ) : ZMod p) = _
+  rw [← HexPolyZMathlib.toZMod_ZMod64_ofNat_intModNat_eq_intCast p
+        (Hex.DensePoly.leadingCoeff f)]
+  rfl
+
+/--
+The Mathlib `ZMod p`-cast of the leading coefficient of a `Hex.ZPoly` is
+nonzero exactly when the executable `leadingCoeffModP` is. This packages the
+direction needed by the integer-factor degree-preservation step in
+`checkIrreducibleCert_sound`.
+-/
+theorem intCast_zmod_leadingCoeff_ne_zero_iff_leadingCoeffModP_ne_zero
+    [Hex.ZMod64.Bounds p] (f : Hex.ZPoly) :
+    (Int.castRingHom (ZMod p)) (HexPolyZMathlib.toPolynomial f).leadingCoeff ≠ 0 ↔
+      Hex.ZPoly.leadingCoeffModP f p ≠ 0 := by
+  rw [intCast_zmod_leadingCoeff_eq_toZMod_leadingCoeffModP]
+  constructor
+  · intro h heq
+    apply h
+    rw [heq, HexModArithMathlib.ZMod64.toZMod_zero]
+  · intro h heq
+    apply h
+    have hinj := (HexModArithMathlib.ZMod64.equiv (p := p)).injective
+    apply hinj
+    simpa using heq.trans HexModArithMathlib.ZMod64.toZMod_zero.symm
+
+/--
+Reduction modulo `p` preserves natural degree when the executable
+`leadingCoeffModP` data records a nonzero leading coefficient. This is the
+issue-spec `_of_unit_lc_mod_p` shape: the executable good-prime check supplies
+the `leadingCoeffModP ≠ 0` hypothesis, and `natDegree` is preserved along the
+Mathlib `Polynomial.map` reduction.
+-/
+theorem natDegree_map_intCast_zmod_eq_of_leadingCoeffModP_ne_zero
+    [Hex.ZMod64.Bounds p] (f : Hex.ZPoly)
+    (hadm : Hex.ZPoly.leadingCoeffModP f p ≠ 0) :
+    ((HexPolyZMathlib.toPolynomial f).map (Int.castRingHom (ZMod p))).natDegree =
+      (HexPolyZMathlib.toPolynomial f).natDegree :=
+  HexPolyZMathlib.natDegree_map_intCast_zmod_eq_of_leadingCoeff_ne_zero p f
+    ((intCast_zmod_leadingCoeff_ne_zero_iff_leadingCoeffModP_ne_zero
+      (p := p) (f := f)).mpr hadm)
+
+/--
 Reduction-mod-`p` Gauss lemma over `ℤ`: a primitive integer polynomial whose
 modular reduction is irreducible and whose leading coefficient is not killed
 by the reduction is itself irreducible.
