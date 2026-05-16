@@ -2614,6 +2614,66 @@ theorem recombinationCandidate_eq_factor_of_henselSubsetCorrespondence
     hcore_ne hcore_monic hcore_record hdvd hfactor_prim hfactor_norm hirr
     hrep hprecision
 
+/--
+A monic integer polynomial automatically has primitive content and is its own
+sign-normalisation. This packages the two normalisation hypotheses required
+by `recombinationCandidate_eq_factor_of_recovery` (`content factor = 1` and
+`normalizeFactorSign factor = factor`) into one consequence of `Monic factor`,
+together with restating the monic hypothesis itself.
+
+Intended use by the recursive coverage proof for `Hex.recombinationSearchModAux`
+(#4301): once the proof obtains a monic integer divisor of the current target
+via the Hensel-lift partition, this helper discharges the primitive and
+sign-normalised hypotheses of `recombinationCandidate_eq_factor_of_recovery`
+for that factor. Monicness itself is taken as a hypothesis here because the
+`LiftedFactorSubsetPartition.cover` field does not constrain the integer
+factor's leading-coefficient sign; the recursive coverage proof supplies it
+from a separate Hensel-lift normalisation argument.
+-/
+theorem monic_primitive_sign_normalized_of_monic
+    {factor : Hex.ZPoly} (hfactor_monic : Hex.DensePoly.Monic factor) :
+    Hex.DensePoly.Monic factor ∧
+      Hex.ZPoly.content factor = 1 ∧
+        Hex.normalizeFactorSign factor = factor := by
+  have hlead : Hex.DensePoly.leadingCoeff factor = (1 : Int) := hfactor_monic
+  have hcs_pos : 0 < factor.coeffs.size := by
+    rcases Nat.eq_zero_or_pos factor.coeffs.size with hcs_zero | hcs_pos
+    · exfalso
+      have hback_none : factor.coeffs.back? = none := by
+        rw [Array.back?_eq_getElem?]
+        simp [hcs_zero]
+      have hlc_zero : Hex.DensePoly.leadingCoeff factor = (0 : Int) := by
+        unfold Hex.DensePoly.leadingCoeff
+        rw [hback_none]
+        rfl
+      rw [hlc_zero] at hlead
+      exact absurd hlead (by decide)
+    · exact hcs_pos
+  have hsize_pos : 0 < factor.size := hcs_pos
+  have hcoeff_last : factor.coeff (factor.size - 1) = (1 : Int) := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last factor hsize_pos]
+    exact hlead
+  refine ⟨hfactor_monic, ?_, ?_⟩
+  · -- content factor = 1: content divides every coefficient, including the
+    --   leading coefficient 1, and content is non-negative, so content = 1.
+    have hdvd_one : Hex.ZPoly.content factor ∣ (1 : Int) := by
+      have := Hex.DensePoly.content_dvd_coeff factor (factor.size - 1)
+      rwa [hcoeff_last] at this
+    have hcontent_nonneg : (0 : Int) ≤ Hex.ZPoly.content factor := by
+      unfold Hex.ZPoly.content Hex.DensePoly.content
+      exact Int.natCast_nonneg _
+    rcases Int.isUnit_iff.mp (isUnit_of_dvd_one hdvd_one) with hpos | hneg
+    · exact hpos
+    · exfalso
+      rw [hneg] at hcontent_nonneg
+      exact absurd hcontent_nonneg (by decide)
+  · -- normalizeFactorSign factor = factor: leadingCoeff = 1 ≥ 0, so the sign
+    --   normaliser is the identity branch.
+    unfold Hex.normalizeFactorSign
+    have hnot_neg : ¬ Hex.DensePoly.leadingCoeff factor < 0 := by
+      rw [hlead]; decide
+    simp [hnot_neg]
+
 /-- Converse to `toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord`: if the
 transported polynomial is non-zero and a non-unit, then the executable
 `shouldRecordPolynomialFactor` check passes.  Used to package executable
