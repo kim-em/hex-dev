@@ -5750,6 +5750,146 @@ theorem representedFactor_dvd_recombinationCandidate_of_subset
       HexPolyZMathlib.toPolynomial_ofPolynomial]
     exact hr
 
+/--
+Prefix-none discharge under a `LiftedFactorSubsetPartition` (#4367 capstone).
+
+Consumer for the recursive coverage proof of
+`Hex.recombinationSearchModAux` (#4301).  Every executable split in `pre`
+— i.e. enumerated **before** the canonical boundary split
+`(liftedSubsetSelectedList d S, liftedSubsetSelectedList d (J \ S))` —
+returns `none` when threaded through one step of the recombination search,
+provided `S` is the representing subset of an irreducible integer factor at
+`J`'s minimum index.
+
+Proof outline.
+1. Apply `liftedSubsetSplit_prefix_exists_mem_sdiff_of_matches` (the
+   #4508 wrapper) to recover the proof-side subset `T ⊆ J` with
+   `J.min' ∈ T` whose canonical split equals `split`, and to obtain a
+   witness index `i ∈ J ∩ S \ T`.
+2. Identify the inline `candidate'` with `recombinationCandidate d T`
+   by definitional unfolding.
+3. Split on `Hex.shouldRecordPolynomialFactor (recombinationCandidate d T)`:
+   - `false`: the if-branch yields `none` directly.
+   - `true`: suppose `Hex.exactQuotient? target (recombinationCandidate d T)
+     = some quotient'`. Then
+     `coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd`
+     (#4395 / PR #4498) produces a representing subset `S_cov ⊆ T` with
+     `J.min' ∈ S_cov` representing some irreducible `f_cov`.  Together with
+     the hypothesised representing factor for `S`, the partition's
+     `pairwise_disjoint` field (via the shared `J.min'`) forces
+     `Associated factor f_cov`, then `unique_up_to_associated` collapses
+     `S = S_cov ⊆ T`.  But `i ∈ S \ T` from the wrapper, contradicting
+     `S ⊆ T`.
+
+The `hlocal_nodup` precondition is required by the wrapper for the
+mask-level bit-diff argument (without `Nodup`, the executable
+`subsetSplits` enumeration can produce collisions on shared masked lists).
+The consumer in #4301 threads `Nodup` from a Hensel-coprimality fact
+against the partition; a self-contained `liftedFactor d`-injectivity
+helper at the partition level is left as a separable sub-task.
+-/
+theorem liftedFactorSubsetPartition_prefix_none
+    {core target factor : Hex.ZPoly} {d : Hex.LiftData}
+    {J S : LiftedFactorSubset d} {localFactors : List Hex.ZPoly}
+    {fuel : Nat}
+    {pre suffix : List (List Hex.ZPoly × List Hex.ZPoly)}
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (htarget_dvd_core : target ∣ core)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (hmatches : LiftedFactorListMatches d J localFactors)
+    (hlocal_nodup : localFactors.Nodup)
+    (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hfactor_dvd_target : factor ∣ target)
+    (hSrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hSJ : S ⊆ J) (hne : J.Nonempty) (hmin : J.min' hne ∈ S)
+    (hsplits :
+      Hex.subsetSplitsWithFirst localFactors =
+        pre ++
+          (liftedSubsetSelectedList d S,
+           liftedSubsetSelectedList d (J \ S)) :: suffix) :
+    ∀ split ∈ pre,
+      (let candidate' :=
+        Hex.normalizeFactorSign <|
+          Hex.ZPoly.primitivePart <|
+            Hex.centeredLiftPoly (Array.polyProduct split.1.toArray)
+              (d.p ^ d.k)
+      if Hex.shouldRecordPolynomialFactor candidate' then
+        match Hex.exactQuotient? target candidate' with
+        | none => none
+        | some quotient' =>
+            match Hex.recombinationSearchModAux quotient' (d.p ^ d.k)
+                split.2 fuel with
+            | none => none
+            | some r => some (candidate' :: r)
+      else none) = none := by
+  intro split hsplit
+  -- Step 1: extract T and the witness from the wrapper.
+  obtain ⟨T, hTJ, hmin_in_T, hsplit_eq, i, hi_J, hi_S, hi_notT⟩ :=
+    liftedSubsetSplit_prefix_exists_mem_sdiff_of_matches
+      hlocal_nodup hmatches hSJ hne hmin hsplits hsplit
+  -- Substitute split with the canonical form.
+  subst hsplit_eq
+  -- The inline `candidate'` is definitionally `recombinationCandidate d T`.
+  show (if Hex.shouldRecordPolynomialFactor (recombinationCandidate d T) then
+      match Hex.exactQuotient? target (recombinationCandidate d T) with
+      | none => none
+      | some quotient' =>
+          match Hex.recombinationSearchModAux quotient' (d.p ^ d.k)
+              (liftedSubsetSelectedList d (J \ T)) fuel with
+          | none => none
+          | some r => some (recombinationCandidate d T :: r)
+      else none) = none
+  -- Step 2: case-split on `shouldRecordPolynomialFactor`.
+  by_cases hrec :
+      Hex.shouldRecordPolynomialFactor (recombinationCandidate d T) = true
+  · rw [if_pos hrec]
+    -- Step 3a: case on the exact-quotient outcome; the `some` branch is
+    -- contradictory.
+    cases hquot :
+        Hex.exactQuotient? target (recombinationCandidate d T) with
+    | none => rfl
+    | some quotient' =>
+      exfalso
+      -- Step 3b: cover-at-min produces a representing subset `S_cov ⊆ T`
+      -- with `J.min' ∈ S_cov`.
+      obtain ⟨f_cov, S_cov, hf_cov_irr, hf_cov_dvd_target, hS_cov_J,
+              hmin_in_S_cov, hS_cov_rep, hS_cov_T⟩ :=
+        coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd
+          hcore_ne hcore_monic hd_modulus hd_liftedFactor_monic
+          hd_liftedFactor_natDegree_pos hprecision hpartition
+          htarget_dvd_core hTJ hne hmin_in_T hrec hquot
+      -- Step 3c: `S` and `S_cov` both contain `J.min'`, so they are not
+      -- disjoint; `pairwise_disjoint` contrapositively forces
+      -- `Associated factor f_cov`.
+      have hnot_disjoint : ¬ Disjoint S S_cov := fun hdisj =>
+        Finset.disjoint_left.mp hdisj hmin hmin_in_S_cov
+      have hassoc :
+          Associated (HexPolyZMathlib.toPolynomial factor)
+            (HexPolyZMathlib.toPolynomial f_cov) := by
+        by_contra hnot_assoc
+        exact hnot_disjoint
+          (hpartition.pairwise_disjoint
+            hfactor_irr hfactor_dvd_target hSJ hSrep
+            hf_cov_irr hf_cov_dvd_target hS_cov_J hS_cov_rep hnot_assoc)
+      -- Step 3d: `unique_up_to_associated` then forces `S = S_cov ⊆ T`,
+      -- contradicting the witness `i ∈ S \ T`.
+      have hSeq : S = S_cov :=
+        hpartition.unique_up_to_associated
+          hfactor_irr hfactor_dvd_target hSJ hSrep
+          hf_cov_irr hf_cov_dvd_target hS_cov_J hS_cov_rep hassoc
+      have hi_S_cov : i ∈ S_cov := hSeq ▸ hi_S
+      exact hi_notT (hS_cov_T hi_S_cov)
+  · -- `shouldRecordPolynomialFactor = false`: the if-branch is `none`.
+    rw [if_neg hrec]
+
 /-- Algorithm-side packaging for the exhaustive core branch in the form needed
 by UFD arguments over `Polynomial ℤ`.
 
