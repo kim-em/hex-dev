@@ -1,3 +1,4 @@
+import HexGramSchmidtMathlib.Int
 import HexGramSchmidt.Update
 
 /-!
@@ -11,8 +12,7 @@ matrix-side `gramDet_adjacentSwap_of_ne` bridge respectively, so they live
 in the bridge layer per [SPEC/Libraries/hex-gram-schmidt.md "Proof path
 governs placement, not just statement"]. The size-reduce theorems are thin
 wrappers around `scaledCoeffs_rowAdd_pivot/lower/other_row/above_pivot` and
-`gramDet_rowAdd_earlier`, which themselves still live in Mathlib-free
-`HexGramSchmidt/Int.lean` and will migrate in HO-43 Round 3 (#4153).
+`gramDet_rowAdd_earlier`, which live in `HexGramSchmidtMathlib/Int.lean`.
 -/
 
 namespace Hex
