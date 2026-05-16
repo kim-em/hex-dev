@@ -411,6 +411,61 @@ theorem scaledCoeffs_rowAdd_above_pivot (b : Matrix Int n m) (j k : Fin n)
     _ = ((GramSchmidt.entry (scaledCoeffs b) k l : Int) : Rat) := hold.symm
 
 
+/-! ### Determinant-backed independence
+
+These determinant-positivity bridges for `gramDet` live in the bridge layer
+because their proofs identify `gramDet` with the Leibniz determinant of the
+leading Gram matrix via `HexMatrixMathlib.bareiss_eq_det` (packaged here as
+`leadingGramMatrixInt_det_eq_gramDet_int`). Consumers that already have a
+determinant lemma for a special matrix family can produce the public
+`independent` predicate stated over Mathlib-free computed data. -/
+
+private theorem gramDet_pos_of_det_positive (b : Matrix Int n m)
+    (hdet : ∀ k : Fin n, 0 < Matrix.det (Matrix.submatrix (Matrix.gramMatrix b) k))
+    (k : Nat) (hk : k ≤ n) (hk' : 0 < k) :
+    0 < gramDet b k hk := by
+  cases k with
+  | zero =>
+      omega
+  | succ r =>
+      have hrn : r < n := Nat.lt_of_succ_le hk
+      let last : Fin n := ⟨r, hrn⟩
+      have hsub : 0 < Matrix.det (Matrix.submatrix (Matrix.gramMatrix b) last) :=
+        hdet last
+      have hsub_eq :
+          Matrix.submatrix (Matrix.gramMatrix b) last =
+            GramSchmidt.leadingGramMatrixInt b (r + 1) hk := by
+        rw [Matrix.submatrix_eq_leadingPrefix]
+        rw [GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram]
+      have hdet_pos :
+          0 < Matrix.det (GramSchmidt.leadingGramMatrixInt b (r + 1) hk) := by
+        simpa [hsub_eq] using hsub
+      have hdet_nat :
+          Matrix.det (GramSchmidt.leadingGramMatrixInt b (r + 1) hk) =
+            Int.ofNat (gramDet b (r + 1) hk) :=
+        leadingGramMatrixInt_det_eq_gramDet_int b (r + 1) hk
+      have hnat_int : 0 < Int.ofNat (gramDet b (r + 1) hk) := by
+        simpa [hdet_nat] using hdet_pos
+      exact Int.ofNat_lt.mp hnat_int
+
+/-- A determinant-positive leading-Gram-prefix proof induces the executable
+`gramDet` independence predicate. This is useful for callers that already
+have determinant lemmas for special matrix families, while keeping the public
+predicate stated over Mathlib-free computed data. -/
+theorem independent_of_det_positive (b : Matrix Int n m)
+    (hdet : ∀ k : Fin n, 0 < Matrix.det (Matrix.submatrix (Matrix.gramMatrix b) k)) :
+    independent b := by
+  intro k
+  exact gramDet_pos_of_det_positive b hdet (k.val + 1) (Nat.succ_le_of_lt k.isLt)
+    (Nat.succ_pos k.val)
+
+theorem independent_one {n : Nat} : independent (1 : Matrix Int n n) := by
+  exact independent_of_det_positive (1 : Matrix Int n n) (by
+    intro k
+    rw [Matrix.gramMatrix_one, Matrix.submatrix_one, Matrix.det_one]
+    decide)
+
+
 end Int
 end GramSchmidt
 end Hex

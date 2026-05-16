@@ -361,7 +361,7 @@ libraries:
     done_through: 3
     status: active
   HexLLLMathlib:
-    deps: [HexLLL, HexMatrixMathlib]
+    deps: [HexLLL, HexMatrixMathlib, HexGramSchmidtMathlib]
     mathlib: true
     done_through: 3
     status: active
