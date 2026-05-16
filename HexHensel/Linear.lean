@@ -1410,7 +1410,7 @@ private theorem reduceModPow_degree?_eq_of_monic
     _ = f.degree? := by
       rw [degree?_eq_some_size_sub_one_of_monic f hmonic]
 
-private theorem reduceModPow_monic_of_monic
+theorem reduceModPow_monic_of_monic
     (p k : Nat) (f : ZPoly)
     (hp : 1 < p)
     (hmonic : DensePoly.Monic f) :

@@ -334,6 +334,335 @@ theorem multifactorLiftQuadratic_spec
   simpa [multifactorLiftQuadratic] using
     multifactorLiftQuadraticList_spec p k f factors.toList hk hp hinv
 
+private theorem int_eq_of_congr_of_bounds
+    {a b : Int} {m : Nat}
+    (hcongr : (a - b) % (m : Int) = 0)
+    (ha_nonneg : 0 ≤ a) (ha_lt : a < (m : Int))
+    (hb_nonneg : 0 ≤ b) (hb_lt : b < (m : Int)) :
+    a = b := by
+  have hmod_eq : a % (m : Int) = b % (m : Int) :=
+    Int.emod_eq_emod_iff_emod_sub_eq_zero.mpr hcongr
+  rw [Int.emod_eq_of_lt ha_nonneg ha_lt, Int.emod_eq_of_lt hb_nonneg hb_lt] at hmod_eq
+  exact hmod_eq
+
+private theorem int_eq_zero_of_mod_zero_of_bounds
+    {a : Int} {m : Nat}
+    (hm : 1 < m)
+    (hmod : a % (m : Int) = 0)
+    (ha_nonneg : 0 ≤ a) (ha_lt : a < (m : Int)) :
+    a = 0 := by
+  exact int_eq_of_congr_of_bounds (by simpa using hmod)
+    ha_nonneg ha_lt (by decide) (by exact_mod_cast (Nat.zero_lt_of_lt hm))
+
+/--
+If a bounded nonnegative cofactor `h` satisfies a coefficientwise congruence
+`g * h ≡ f (mod m)` against monic `g` and `f`, then `h` is monic. The proof
+compares the possible top coefficient of `g * h` with the top coefficient of
+`f`; the coefficient bounds rule out wraparound modulo `m`.
+-/
+theorem monic_of_congr_mul_monic_monic
+    {g h f : Hex.ZPoly} {m : Nat}
+    (hm : 1 < m)
+    (hcongr : Hex.ZPoly.congr (g * h) f m)
+    (hg_monic : Hex.DensePoly.Monic g)
+    (hf_monic : Hex.DensePoly.Monic f)
+    (hh_bound_lt : ∀ i, h.coeff i < Int.ofNat m)
+    (hh_bound_nonneg : ∀ i, 0 ≤ h.coeff i)
+    (hh_ne_zero : h ≠ 0) :
+    Hex.DensePoly.Monic h := by
+  have hg_ne_zero : g ≠ 0 := by
+    intro hg_zero
+    have hlead : Hex.DensePoly.leadingCoeff g = (0 : Int) := by
+      rw [hg_zero]
+      rfl
+    rw [hg_monic] at hlead
+    omega
+  have hf_ne_zero : f ≠ 0 := by
+    intro hf_zero
+    have hlead : Hex.DensePoly.leadingCoeff f = (0 : Int) := by
+      rw [hf_zero]
+      rfl
+    rw [hf_monic] at hlead
+    omega
+  have hg_pos : 0 < g.size := Hex.ZPoly.size_pos_of_ne_zero g hg_ne_zero
+  have hh_pos : 0 < h.size := Hex.ZPoly.size_pos_of_ne_zero h hh_ne_zero
+  have hf_pos : 0 < f.size := Hex.ZPoly.size_pos_of_ne_zero f hf_ne_zero
+  let gTop := g.size - 1
+  let hTop := h.size - 1
+  let fTop := f.size - 1
+  have hg_top : g.coeff gTop = (1 : Int) := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last g hg_pos]
+    exact hg_monic
+  have hf_top : f.coeff fTop = (1 : Int) := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last f hf_pos]
+    exact hf_monic
+  have hprod_size :
+      (g * h).size = g.size + h.size - 1 :=
+    Hex.ZPoly.mul_size_eq_top_succ_of_nonzero g h hg_pos hh_pos
+  have hsum_not_gt : ¬ fTop < gTop + hTop := by
+    intro hlt
+    have hf_zero : f.coeff (gTop + hTop) = 0 := by
+      apply Hex.DensePoly.coeff_eq_zero_of_size_le f
+      unfold fTop at hlt
+      omega
+    have hprod_top :
+        (g * h).coeff (gTop + hTop) = h.coeff hTop := by
+      have htop := Hex.ZPoly.coeff_mul_top g h hg_pos hh_pos
+      unfold gTop hTop
+      rw [htop]
+      rw [hg_top]
+      omega
+    have hmod : h.coeff hTop % (m : Int) = 0 := by
+      have hc := hcongr (gTop + hTop)
+      rw [hprod_top, hf_zero] at hc
+      simpa using hc
+    have hlead_zero : h.coeff hTop = 0 :=
+      int_eq_zero_of_mod_zero_of_bounds hm hmod
+        (hh_bound_nonneg hTop) (hh_bound_lt hTop)
+    have hlead_ne : h.coeff hTop ≠ 0 := by
+      unfold hTop
+      exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size h hh_pos
+    exact hlead_ne hlead_zero
+  have hsum_not_lt : ¬ gTop + hTop < fTop := by
+    intro hlt
+    have hprod_zero : (g * h).coeff fTop = 0 := by
+      apply Hex.DensePoly.coeff_eq_zero_of_size_le (g * h)
+      rw [hprod_size]
+      unfold gTop hTop fTop at hlt
+      omega
+    have hbad : (0 : Int) = 1 := by
+      have hc := hcongr fTop
+      rw [hprod_zero, hf_top] at hc
+      exact int_eq_of_congr_of_bounds hc
+        (by decide) (by exact_mod_cast (Nat.zero_lt_of_lt hm))
+        (by decide) (by exact_mod_cast hm)
+    omega
+  have hsum_eq : gTop + hTop = fTop := by omega
+  have hprod_top_at_f :
+      (g * h).coeff fTop = h.coeff hTop := by
+    rw [← hsum_eq]
+    change (g * h).coeff (g.size - 1 + (h.size - 1)) = h.coeff (h.size - 1)
+    rw [Hex.ZPoly.coeff_mul_top g h hg_pos hh_pos]
+    have hg_top' : g.coeff (g.size - 1) = (1 : Int) := by
+      simpa [gTop] using hg_top
+    rw [hg_top']
+    omega
+  have hlead_one : h.coeff hTop = (1 : Int) := by
+    have hc := hcongr fTop
+    rw [hprod_top_at_f, hf_top] at hc
+    exact int_eq_of_congr_of_bounds hc
+      (hh_bound_nonneg hTop) (hh_bound_lt hTop)
+      (by decide) (by exact_mod_cast hm)
+  rw [Hex.DensePoly.Monic]
+  rw [Hex.DensePoly.leadingCoeff_eq_coeff_last h hh_pos]
+  unfold hTop at hlead_one
+  exact hlead_one
+
+/--
+Specialisation of `monic_of_congr_mul_monic_monic` for cofactors already
+canonicalised by `Hex.ZPoly.reduceModPow`; its coefficients automatically lie
+in `[0, p^k)`.
+-/
+theorem monic_reduceModPow_of_congr_mul_monic_monic
+    {g h f : Hex.ZPoly} {p k : Nat}
+    (hm : 1 < p ^ k)
+    (hcongr : Hex.ZPoly.congr (g * Hex.ZPoly.reduceModPow h p k) f (p ^ k))
+    (hg_monic : Hex.DensePoly.Monic g)
+    (hf_monic : Hex.DensePoly.Monic f)
+    (hh_ne_zero : Hex.ZPoly.reduceModPow h p k ≠ 0) :
+    Hex.DensePoly.Monic (Hex.ZPoly.reduceModPow h p k) := by
+  have hpos : 0 < p ^ k := Nat.zero_lt_of_lt hm
+  have hpos_int : (0 : Int) < (p ^ k : Int) := by
+    exact_mod_cast hpos
+  apply monic_of_congr_mul_monic_monic hm hcongr hg_monic hf_monic
+  · intro i
+    rw [Hex.ZPoly.coeff_reduceModPow_eq_emod_of_pos _ _ _ _ hpos]
+    exact Int.emod_lt_of_pos _ hpos_int
+  · intro i
+    rw [Hex.ZPoly.coeff_reduceModPow_eq_emod_of_pos _ _ _ _ hpos]
+    exact Int.emod_nonneg _ (Int.ofNat_ne_zero.mpr (Nat.ne_of_gt hpos))
+  · exact hh_ne_zero
+
+/-- The lifted monic factor `lifted.g` produced by `henselLiftQuadratic` is
+monic. The quadratic doubling loop preserves `Monic acc.g` via
+`quadraticHenselStep_monic`; the final `reduceModPow` cleanup preserves it via
+`reduceModPow_monic_of_monic`. -/
+theorem henselLiftQuadratic_g_monic
+    (p k : Nat) [ZMod64.Bounds p]
+    (f g h s t : ZPoly)
+    (hk : 1 ≤ k)
+    (hp : 1 < p)
+    (hinv : QuadraticLiftLoopInvariant p f { g, h, s, t }) :
+    DensePoly.Monic (henselLiftQuadratic p k f g h s t).g := by
+  let init : QuadraticLiftResult := { g, h, s, t }
+  let fuel := quadraticDoublingSteps k
+  let looped := iterateQuadraticHensel p f 1 fuel init
+  have hstart : QuadraticLiftLoopInvariant (p ^ 1) f init := by
+    simpa [init] using hinv
+  have hloop :
+      QuadraticLiftLoopInvariant (p ^ (1 * 2 ^ fuel)) f looped :=
+    iterateQuadraticHensel_invariant p f 1 fuel init hp (by omega) hstart
+  have hg_monic : DensePoly.Monic looped.g := hloop.2.2
+  obtain ⟨k', rfl⟩ : ∃ k', k = k' + 1 := ⟨k - 1, by omega⟩
+  have hreduce_monic :
+      DensePoly.Monic (ZPoly.reduceModPow looped.g p (k' + 1)) :=
+    reduceModPow_monic_of_monic p k' looped.g hp hg_monic
+  simpa [henselLiftQuadratic, init, fuel, looped] using hreduce_monic
+
+/-- The lifted cofactor `lifted.h` produced by `henselLiftQuadratic` is monic
+when `f` is monic. Derived from the cofactor monic lemma
+`monic_reduceModPow_of_congr_mul_monic_monic` applied to the spec congruence
+`(lifted.g * lifted.h) ≡ f (mod p^k)` and `henselLiftQuadratic_g_monic`. -/
+theorem henselLiftQuadratic_h_monic
+    (p k : Nat) [ZMod64.Bounds p]
+    (f g h s t : ZPoly)
+    (hk : 1 ≤ k)
+    (hp : 1 < p)
+    (hf_monic : DensePoly.Monic f)
+    (hinv : QuadraticLiftLoopInvariant p f { g, h, s, t }) :
+    DensePoly.Monic (henselLiftQuadratic p k f g h s t).h := by
+  have hpk_gt_one : 1 < p ^ k := Nat.one_lt_pow (by omega : k ≠ 0) hp
+  have hpk_pos : 0 < p ^ k := Nat.zero_lt_of_lt hpk_gt_one
+  let init : QuadraticLiftResult := { g, h, s, t }
+  let fuel := quadraticDoublingSteps k
+  let looped := iterateQuadraticHensel p f 1 fuel init
+  have hg_monic_lifted :
+      DensePoly.Monic (henselLiftQuadratic p k f g h s t).g :=
+    henselLiftQuadratic_g_monic p k f g h s t hk hp hinv
+  have hspec_let := henselLiftQuadratic_spec p k f g h s t hk hp hinv
+  have hspec :
+      ZPoly.congr
+        ((henselLiftQuadratic p k f g h s t).g *
+          (henselLiftQuadratic p k f g h s t).h) f (p ^ k) := hspec_let
+  have hh_eq :
+      (henselLiftQuadratic p k f g h s t).h =
+        ZPoly.reduceModPow looped.h p k := by
+    simp [henselLiftQuadratic, init, fuel, looped]
+  have hcongr_form :
+      ZPoly.congr
+        ((henselLiftQuadratic p k f g h s t).g *
+          ZPoly.reduceModPow looped.h p k) f (p ^ k) := by
+    rw [← hh_eq]; exact hspec
+  have hh_ne_zero : (henselLiftQuadratic p k f g h s t).h ≠ 0 := by
+    intro hzero
+    have hf_ne_zero : f ≠ 0 := by
+      intro hf_z
+      have hlead : DensePoly.leadingCoeff f = (0 : Int) := by
+        rw [hf_z]; rfl
+      rw [hf_monic] at hlead
+      omega
+    have hf_pos : 0 < f.size := ZPoly.size_pos_of_ne_zero f hf_ne_zero
+    have hf_top : f.coeff (f.size - 1) = (1 : Int) := by
+      rw [← DensePoly.leadingCoeff_eq_coeff_last f hf_pos]
+      exact hf_monic
+    have hmul_zero :
+        (henselLiftQuadratic p k f g h s t).g *
+          (henselLiftQuadratic p k f g h s t).h = 0 := by
+      rw [hzero, DensePoly.mul_comm_poly (S := Int)]
+      exact DensePoly.zero_mul _
+    have hspec_zero :
+        ZPoly.congr (0 : ZPoly) f (p ^ k) := by
+      rw [← hmul_zero]; exact hspec
+    have hc := hspec_zero (f.size - 1)
+    rw [DensePoly.coeff_zero, hf_top] at hc
+    have hdvd : (p ^ k : Int) ∣ ((0 : Int) - 1) :=
+      Int.dvd_of_emod_eq_zero hc
+    have hdvd_one : (p ^ k : Int) ∣ (1 : Int) := by
+      have : (p ^ k : Int) ∣ -(1 : Int) := by simpa using hdvd
+      simpa using (Int.dvd_neg).mp this
+    have hdvd_one_nat : p ^ k ∣ 1 := by
+      have h := Int.ofNat_dvd.mp (by exact_mod_cast hdvd_one)
+      exact h
+    have : p ^ k = 1 := Nat.eq_one_of_dvd_one hdvd_one_nat
+    omega
+  have hh_red_ne_zero : ZPoly.reduceModPow looped.h p k ≠ 0 := by
+    rw [← hh_eq]; exact hh_ne_zero
+  have hmonic_reduce :
+      DensePoly.Monic (ZPoly.reduceModPow looped.h p k) :=
+    monic_reduceModPow_of_congr_mul_monic_monic
+      (g := (henselLiftQuadratic p k f g h s t).g)
+      (h := looped.h) (f := f) (p := p) (k := k)
+      hpk_gt_one hcongr_form hg_monic_lifted hf_monic hh_red_ne_zero
+  rw [hh_eq]; exact hmonic_reduce
+
+private theorem multifactorLiftQuadraticList_each_monic
+    (p k : Nat) [ZMod64.Bounds p]
+    (f : ZPoly) (factors : List ZPoly)
+    (hk : 1 ≤ k)
+    (hp : 1 < p)
+    (hf_monic : DensePoly.Monic f)
+    (hinv : QuadraticMultifactorLiftInvariant p k f factors) :
+    ∀ entry ∈ (multifactorLiftQuadraticList p k f factors).toList,
+      DensePoly.Monic entry := by
+  induction factors generalizing f with
+  | nil =>
+      simp [multifactorLiftQuadraticList]
+  | cons g rest ih =>
+      cases rest with
+      | nil =>
+          intro entry hmem
+          have hentry_eq : entry = ZPoly.reduceModPow f p k := by
+            simp [multifactorLiftQuadraticList] at hmem
+            exact hmem
+          rw [hentry_eq]
+          obtain ⟨k', rfl⟩ : ∃ k', k = k' + 1 := ⟨k - 1, by omega⟩
+          exact reduceModPow_monic_of_monic p k' f hp hf_monic
+      | cons h tail =>
+          intro entry hmem
+          rcases hinv with ⟨hstart, htail⟩
+          let restFactors := (h :: tail).toArray
+          let splitProduct := Array.polyProduct restFactors
+          let xgcd := normalizedXGCD p g splitProduct
+          let s := FpPoly.liftToZ xgcd.left
+          let t := FpPoly.liftToZ xgcd.right
+          let lifted := henselLiftQuadratic p k f g splitProduct s t
+          have hh_monic : DensePoly.Monic lifted.h := by
+            simpa [lifted, splitProduct, restFactors, xgcd, s, t] using
+              henselLiftQuadratic_h_monic p k f g splitProduct s t hk hp hf_monic
+                (by simpa [restFactors, splitProduct, xgcd, s, t] using hstart)
+          have hg_monic : DensePoly.Monic lifted.g := by
+            simpa [lifted, splitProduct, restFactors, xgcd, s, t] using
+              henselLiftQuadratic_g_monic p k f g splitProduct s t hk hp
+                (by simpa [restFactors, splitProduct, xgcd, s, t] using hstart)
+          have htail' :
+              QuadraticMultifactorLiftInvariant p k lifted.h (h :: tail) := by
+            simpa [lifted, splitProduct, restFactors, xgcd, s, t] using htail
+          have hmem' :
+              entry = lifted.g ∨
+                entry ∈
+                  (multifactorLiftQuadraticList p k lifted.h (h :: tail)).toList := by
+            have hexpand :
+                (multifactorLiftQuadraticList p k f (g :: h :: tail)).toList =
+                  lifted.g ::
+                    (multifactorLiftQuadraticList p k lifted.h (h :: tail)).toList := by
+              simp [multifactorLiftQuadraticList, restFactors, splitProduct,
+                xgcd, s, t, lifted]
+            rw [hexpand] at hmem
+            simpa using hmem
+          rcases hmem' with hg_eq | hh_mem
+          · rw [hg_eq]; exact hg_monic
+          · exact ih lifted.h hh_monic htail' entry hh_mem
+
+/-- Every output of `multifactorLiftQuadratic` is monic when the input
+polynomial `f` is monic and the quadratic multifactor lift invariant package
+holds. -/
+theorem multifactorLiftQuadratic_each_monic
+    (p k : Nat) [ZMod64.Bounds p]
+    (f : ZPoly) (factors : Array ZPoly)
+    (hk : 1 ≤ k)
+    (hp : 1 < p)
+    (hf_monic : DensePoly.Monic f)
+    (hinv : QuadraticMultifactorLiftInvariant p k f factors.toList) :
+    ∀ i : Fin (multifactorLiftQuadratic p k f factors).size,
+      DensePoly.Monic (multifactorLiftQuadratic p k f factors)[i] := by
+  intro i
+  have hmem :
+      (multifactorLiftQuadratic p k f factors)[i] ∈
+        (multifactorLiftQuadratic p k f factors).toList :=
+    Array.getElem_mem_toList i.isLt
+  exact multifactorLiftQuadraticList_each_monic p k f factors.toList hk hp
+    hf_monic hinv _ hmem
+
 end ZPoly
 
 end Hex
