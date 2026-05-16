@@ -2793,6 +2793,334 @@ theorem liftedSubsetSelectedList_eq_mask_partition_of_matches
     obtain ⟨a, b⟩ := p
     cases b <;> rfl
 
+/-- Structural enumeration-order content of `Hex.subsetSplits` on a `Nodup`
+input: if the `mask_S`-induced split sits at the boundary `pre ++ _ :: suffix`
+and the `mask_T`-induced split sits somewhere inside `pre`, then `mask_S` has
+a `true` at some position where `mask_T` is `false`.
+
+The `Nodup` precondition rules out the duplicate-element ambiguity where a
+mask's induced split happens to land in the `false`-branch image of an
+inductive step despite the mask's head bit being `true`. Once duplicates are
+excluded, the cons step has exactly four sub-cases on the head bits
+`(mask_S.head, mask_T.head)`: `(true, false)` yields `i = 0` directly,
+`(false, true)` is structurally impossible because `mask_T`'s split lands in
+the second half of `Hex.subsetSplits (x :: xs')` (after `mask_S`'s split),
+and the head-matching cases recurse into the tail.
+
+Used by the matched-state prefix-with-bit-difference lemma
+`liftedSubsetSplit_prefix_exists_mem_sdiff_of_matches` after promoting the
+matched J-filter index list (which is `Nodup`) into scope. -/
+private theorem subsetSplits_prefix_exists_bit_diff_aux
+    {xs : List Hex.ZPoly} (hxs_nodup : xs.Nodup)
+    {mask_S mask_T : List Bool}
+    (hSlen : mask_S.length = xs.length)
+    (hTlen : mask_T.length = xs.length)
+    {pre suffix : List (List Hex.ZPoly × List Hex.ZPoly)}
+    (hsplits :
+      Hex.subsetSplits xs =
+        pre ++
+          ((xs.zip mask_S).filterMap (fun p => if p.2 then some p.1 else none),
+           (xs.zip mask_S).filterMap (fun p => if p.2 then none else some p.1))
+            :: suffix)
+    (hT_in_pre :
+      ((xs.zip mask_T).filterMap (fun p => if p.2 then some p.1 else none),
+       (xs.zip mask_T).filterMap (fun p => if p.2 then none else some p.1))
+         ∈ pre) :
+    ∃ i, ∃ hi : i < xs.length,
+      mask_T[i]'(hTlen ▸ hi) = false ∧
+      mask_S[i]'(hSlen ▸ hi) = true := by
+  induction xs generalizing mask_S mask_T pre suffix with
+  | nil =>
+      -- Base case: subsetSplits [] = [([], [])], so pre = [] and hT_in_pre is False.
+      cases mask_S with
+      | nil =>
+        cases mask_T with
+        | nil =>
+          -- hsplits : [([], [])] = pre ++ ([], []) :: suffix; derive pre = []
+          have hlen := congrArg List.length hsplits
+          simp [Hex.subsetSplits, List.length_append, List.length_cons] at hlen
+          have hpre_nil : pre = [] := List.length_eq_zero_iff.mp (by omega)
+          subst hpre_nil
+          simp at hT_in_pre
+        | cons => simp at hTlen
+      | cons => simp at hSlen
+  | cons x xs' ih =>
+      have hx_notin : x ∉ xs' := (List.nodup_cons.mp hxs_nodup).1
+      have hxs'_nodup : xs'.Nodup := (List.nodup_cons.mp hxs_nodup).2
+      cases mask_S with
+      | nil => simp at hSlen
+      | cons bS msS =>
+        cases mask_T with
+        | nil => simp at hTlen
+        | cons bT msT =>
+          simp only [List.length_cons, Nat.add_right_cancel_iff] at hSlen hTlen
+          -- L_false and L_true are the two halves of subsetSplits (x :: xs').
+          set L_false :=
+            (Hex.subsetSplits xs').map (fun s => (s.1, x :: s.2)) with hLfalse_def
+          set L_true :=
+            (Hex.subsetSplits xs').map (fun s => (x :: s.1, s.2)) with hLtrue_def
+          have hsplits' : Hex.subsetSplits (x :: xs') = L_false ++ L_true := by
+            show (let rest := Hex.subsetSplits xs';
+                  rest.map (fun split => (split.1, x :: split.2)) ++
+                    rest.map (fun split => (x :: split.1, split.2))) = _
+            rfl
+          rw [hsplits'] at hsplits
+          -- Abbreviate tail-mask filterMaps for S and T.
+          set tailSel_S : List Hex.ZPoly :=
+            (xs'.zip msS).filterMap (fun p => if p.2 then some p.1 else none)
+            with htailSel_S_def
+          set tailRest_S : List Hex.ZPoly :=
+            (xs'.zip msS).filterMap (fun p => if p.2 then none else some p.1)
+            with htailRest_S_def
+          set tailSel_T : List Hex.ZPoly :=
+            (xs'.zip msT).filterMap (fun p => if p.2 then some p.1 else none)
+            with htailSel_T_def
+          set tailRest_T : List Hex.ZPoly :=
+            (xs'.zip msT).filterMap (fun p => if p.2 then none else some p.1)
+            with htailRest_T_def
+          -- The tail-induced split of xs' under msS / msT.
+          have htailSplit_S_mem : (tailSel_S, tailRest_S) ∈ Hex.subsetSplits xs' :=
+            subsetSplits_zip_filterMap_partition xs' msS hSlen
+          have htailSplit_T_mem : (tailSel_T, tailRest_T) ∈ Hex.subsetSplits xs' :=
+            subsetSplits_zip_filterMap_partition xs' msT hTlen
+          -- Lemma: with `x ∉ xs'`, no L_false entry has its selected starting
+          -- with `x`, and no L_true entry has its rest starting with `x`.
+          -- Lemma: with `x ∉ xs'`, no L_false entry has selected starting with `x`,
+          -- and no L_true entry has rest starting with `x`. Used to commit to a
+          -- specific half based on the head bit of mask_S / mask_T.
+          have hx_notin_split_sel :
+              ∀ {a b : List Hex.ZPoly}, (a, b) ∈ Hex.subsetSplits xs' → x ∉ a := by
+            intro a b hab hxa
+            obtain ⟨m, hmlen, hsel_eq, _⟩ := subsetSplits_mem_exists_mask hab
+            rw [hsel_eq, List.mem_filterMap] at hxa
+            obtain ⟨⟨a', b'⟩, hpair_mem, hpair_eq⟩ := hxa
+            have hax' : a' ∈ xs' := (List.of_mem_zip hpair_mem).1
+            cases b' with
+            | true =>
+                simp at hpair_eq
+                exact hx_notin (hpair_eq ▸ hax')
+            | false => simp at hpair_eq
+          have hx_notin_split_rest :
+              ∀ {a b : List Hex.ZPoly}, (a, b) ∈ Hex.subsetSplits xs' → x ∉ b := by
+            intro a b hab hxb
+            obtain ⟨m, hmlen, _, hrest_eq⟩ := subsetSplits_mem_exists_mask hab
+            rw [hrest_eq, List.mem_filterMap] at hxb
+            obtain ⟨⟨a', b'⟩, hpair_mem, hpair_eq⟩ := hxb
+            have hax' : a' ∈ xs' := (List.of_mem_zip hpair_mem).1
+            cases b' with
+            | true => simp at hpair_eq
+            | false =>
+                simp at hpair_eq
+                exact hx_notin (hpair_eq ▸ hax')
+          -- Simplification helpers for evaluating the cons step of zip + filterMap
+          -- once the head bit is fixed.
+          have eval_sel_false : ∀ (m : List Bool),
+              ((x :: xs').zip (false :: m)).filterMap
+                  (fun p => if p.2 then some p.1 else none) =
+                (xs'.zip m).filterMap (fun p => if p.2 then some p.1 else none) := by
+            intro m
+            simp [List.zip_cons_cons]
+          have eval_rest_false : ∀ (m : List Bool),
+              ((x :: xs').zip (false :: m)).filterMap
+                  (fun p => if p.2 then none else some p.1) =
+                x :: (xs'.zip m).filterMap (fun p => if p.2 then none else some p.1) := by
+            intro m
+            simp [List.zip_cons_cons]
+          have eval_sel_true : ∀ (m : List Bool),
+              ((x :: xs').zip (true :: m)).filterMap
+                  (fun p => if p.2 then some p.1 else none) =
+                x :: (xs'.zip m).filterMap (fun p => if p.2 then some p.1 else none) := by
+            intro m
+            simp [List.zip_cons_cons]
+          have eval_rest_true : ∀ (m : List Bool),
+              ((x :: xs').zip (true :: m)).filterMap
+                  (fun p => if p.2 then none else some p.1) =
+                (xs'.zip m).filterMap (fun p => if p.2 then none else some p.1) := by
+            intro m
+            simp [List.zip_cons_cons]
+          -- Case-split on the head bits.
+          cases bS with
+          | false =>
+            rw [eval_sel_false, eval_rest_false] at hsplits
+            -- Shape: split_S = (tailSel_S, x :: tailRest_S). Show split_S ∉ L_true.
+            have hsplitS_notin_Ltrue : (tailSel_S, x :: tailRest_S) ∉ L_true := by
+              intro h
+              obtain ⟨⟨a, b⟩, hab, hab_eq⟩ := List.mem_map.mp h
+              simp only [Prod.mk.injEq] at hab_eq
+              obtain ⟨ha, _⟩ := hab_eq
+              have hx_in_tailSel_S : x ∈ tailSel_S := ha ▸ List.mem_cons_self
+              -- tailSel_S = (xs'.zip msS).filterMap selected; selected entries ⊆ xs'.
+              rw [htailSel_S_def, List.mem_filterMap] at hx_in_tailSel_S
+              obtain ⟨⟨a', b'⟩, hpair_mem, hpair_eq⟩ := hx_in_tailSel_S
+              have hax' : a' ∈ xs' := (List.of_mem_zip hpair_mem).1
+              cases b' with
+              | true => simp at hpair_eq; exact hx_notin (hpair_eq ▸ hax')
+              | false => simp at hpair_eq
+            cases bT with
+            | false =>
+              -- (false, false): both splits in L_false.
+              rw [eval_sel_false, eval_rest_false] at hT_in_pre
+              -- Decompose hsplits.
+              rcases (List.append_eq_append_iff).mp hsplits with
+                ⟨e, _, hLt_eq⟩ | ⟨e, hLf_eq, hsuff_eq⟩
+              · -- Case 1: split_S ∈ L_true. Contradiction.
+                exfalso
+                have : (tailSel_S, x :: tailRest_S) ∈ L_true := by
+                  rw [hLt_eq]; exact List.mem_append_right _ List.mem_cons_self
+                exact hsplitS_notin_Ltrue this
+              · -- Case 2: L_false = pre ++ e ∧ split_S :: suffix = e ++ L_true.
+                -- Extract decomposition of subsetSplits xs' from L_false = (...).map f.
+                rw [hLfalse_def] at hLf_eq
+                obtain ⟨preIdx, suffIdx, hsplitsXs', hpreIdx_eq, hsuffIdx_eq⟩ :=
+                  List.map_eq_append_iff.mp hLf_eq
+                cases suffIdx with
+                | nil =>
+                  exfalso
+                  simp only [List.map_nil] at hsuffIdx_eq
+                  subst hsuffIdx_eq
+                  simp only [List.nil_append] at hsuff_eq
+                  have : (tailSel_S, x :: tailRest_S) ∈ L_true := by
+                    rw [← hsuff_eq]; exact List.mem_cons_self
+                  exact hsplitS_notin_Ltrue this
+                | cons headIdx tailIdx =>
+                  simp only [List.map_cons] at hsuffIdx_eq
+                  subst hsuffIdx_eq
+                  -- hsuff_eq : split_S :: suffix =
+                  --   (headIdx.1, x :: headIdx.2) :: tailIdx.map f ++ L_true
+                  rw [List.cons_append] at hsuff_eq
+                  injection hsuff_eq with hsplit_eq _hsuffix_eq
+                  -- hsplit_eq : (tailSel_S, x :: tailRest_S) = (headIdx.1, x :: headIdx.2)
+                  simp only [Prod.mk.injEq, List.cons.injEq, true_and] at hsplit_eq
+                  obtain ⟨hsel_S_eq, hrest_S_eq⟩ := hsplit_eq
+                  -- Reconstruct: headIdx = (tailSel_S, tailRest_S).
+                  obtain ⟨headSel, headRest⟩ := headIdx
+                  simp only at hsel_S_eq hrest_S_eq
+                  subst hsel_S_eq; subst hrest_S_eq
+                  -- Now: hsplitsXs' : subsetSplits xs' = preIdx ++ (tailSel_S, tailRest_S) :: tailIdx
+                  -- Need: (tailSel_T, tailRest_T) ∈ preIdx (from split_T ∈ pre).
+                  have hsplitT_in_preIdx : (tailSel_T, tailRest_T) ∈ preIdx := by
+                    rw [← hpreIdx_eq] at hT_in_pre
+                    obtain ⟨⟨a, b⟩, hab, hab_eq⟩ := List.mem_map.mp hT_in_pre
+                    simp only [Prod.mk.injEq, List.cons.injEq, true_and] at hab_eq
+                    obtain ⟨ha, hb⟩ := hab_eq
+                    convert hab
+                    · exact ha.symm
+                    · exact hb.symm
+                  -- Apply IH (using simped length hypotheses).
+                  have hSlen' : msS.length = xs'.length := by simpa using hSlen
+                  have hTlen' : msT.length = xs'.length := by simpa using hTlen
+                  obtain ⟨i', hi', hmsT_i', hmsS_i'⟩ :=
+                    ih hxs'_nodup hSlen' hTlen' hsplitsXs' hsplitT_in_preIdx
+                  -- Translate to mask_S = false :: msS, mask_T = false :: msT.
+                  refine ⟨i' + 1, by simp; omega, ?_, ?_⟩
+                  · simp only [List.getElem_cons_succ]; exact hmsT_i'
+                  · simp only [List.getElem_cons_succ]; exact hmsS_i'
+            | true =>
+              -- (false, true): impossible with x ∉ xs'.
+              rw [eval_sel_true, eval_rest_true] at hT_in_pre
+              exfalso
+              -- Shape facts: split_S ∉ L_true (rest starts with x; L_true rests don't).
+              have hsplitS_notin_Ltrue :
+                  (tailSel_S, x :: tailRest_S) ∉ L_true := by
+                intro h
+                obtain ⟨⟨a, b⟩, hab, hab_eq⟩ := List.mem_map.mp h
+                simp only [Prod.mk.injEq] at hab_eq
+                obtain ⟨_, hb⟩ := hab_eq
+                have hxb : x ∈ b := hb ▸ List.mem_cons_self
+                exact hx_notin_split_rest hab hxb
+              have hsplitT_notin_Lfalse :
+                  (x :: tailSel_T, tailRest_T) ∉ L_false := by
+                intro h
+                obtain ⟨⟨a, b⟩, hab, hab_eq⟩ := List.mem_map.mp h
+                simp only [Prod.mk.injEq] at hab_eq
+                obtain ⟨ha, _⟩ := hab_eq
+                have hxa : x ∈ a := ha ▸ List.mem_cons_self
+                exact hx_notin_split_sel hab hxa
+              -- Decompose hsplits via List.append_eq_append_iff.
+              -- For L_false ++ L_true = pre ++ split_S :: suffix, the two cases are:
+              -- (1) ∃ e, pre = L_false ++ e ∧ L_true = e ++ split_S :: suffix. (pre extends past L_false)
+              -- (2) ∃ e, L_false = pre ++ e ∧ split_S :: suffix = e ++ L_true. (pre is prefix of L_false)
+              rcases (List.append_eq_append_iff).mp hsplits with
+                ⟨e, _, hLt_eq⟩ | ⟨e, hLf_eq, _⟩
+              · -- Case 1: split_S ∈ L_true. Contradiction.
+                have hsplitS_in_Ltrue : (tailSel_S, x :: tailRest_S) ∈ L_true := by
+                  rw [hLt_eq]
+                  exact List.mem_append_right _ (List.mem_cons_self)
+                exact hsplitS_notin_Ltrue hsplitS_in_Ltrue
+              · -- Case 2: pre ⊆ L_false; split_T ∈ pre ⊆ L_false. Contradiction.
+                have hsplitT_in_Lfalse : (x :: tailSel_T, tailRest_T) ∈ L_false := by
+                  rw [hLf_eq]; exact List.mem_append_left _ hT_in_pre
+                exact hsplitT_notin_Lfalse hsplitT_in_Lfalse
+          | true =>
+            rw [eval_sel_true, eval_rest_true] at hsplits
+            cases bT with
+            | false =>
+              -- (true, false): i = 0 works.
+              refine ⟨0, by simp, ?_, ?_⟩ <;> rfl
+            | true =>
+              -- (true, true): both splits in L_true. Recurse.
+              rw [eval_sel_true, eval_rest_true] at hT_in_pre
+              -- Shape: split_S = (x :: tailSel_S, tailRest_S). Show split_S ∉ L_false.
+              have hsplitS_notin_Lfalse : (x :: tailSel_S, tailRest_S) ∉ L_false := by
+                intro h
+                obtain ⟨⟨a, b⟩, hab, hab_eq⟩ := List.mem_map.mp h
+                simp only [Prod.mk.injEq] at hab_eq
+                obtain ⟨ha, _⟩ := hab_eq
+                have hx_in_a : x ∈ a := ha ▸ List.mem_cons_self
+                exact hx_notin_split_sel hab hx_in_a
+              have hsplitT_notin_Lfalse : (x :: tailSel_T, tailRest_T) ∉ L_false := by
+                intro h
+                obtain ⟨⟨a, b⟩, hab, hab_eq⟩ := List.mem_map.mp h
+                simp only [Prod.mk.injEq] at hab_eq
+                obtain ⟨ha, _⟩ := hab_eq
+                have hx_in_a : x ∈ a := ha ▸ List.mem_cons_self
+                exact hx_notin_split_sel hab hx_in_a
+              -- Decompose hsplits.
+              rcases (List.append_eq_append_iff).mp hsplits with
+                ⟨e, hpre_eq, hLt_eq⟩ | ⟨e, hLf_eq, _hsuff_eq⟩
+              · -- Case 1: pre = L_false ++ e_pre, L_true = e_pre ++ split_S :: suffix.
+                rw [hLtrue_def] at hLt_eq
+                obtain ⟨preIdx, suffIdx, hsplitsXs', hpreIdx_eq, hsuffIdx_eq⟩ :=
+                  List.map_eq_append_iff.mp hLt_eq
+                cases suffIdx with
+                | nil =>
+                  exfalso
+                  simp only [List.map_nil] at hsuffIdx_eq
+                  exact List.cons_ne_nil _ _ hsuffIdx_eq.symm
+                | cons headIdx tailIdx =>
+                  simp only [List.map_cons] at hsuffIdx_eq
+                  injection hsuffIdx_eq with hsplit_eq _hsuffix_eq
+                  simp only [Prod.mk.injEq, List.cons.injEq, true_and] at hsplit_eq
+                  obtain ⟨hsel_S_eq, hrest_S_eq⟩ := hsplit_eq
+                  obtain ⟨headSel, headRest⟩ := headIdx
+                  simp only at hsel_S_eq hrest_S_eq
+                  subst hsel_S_eq; subst hrest_S_eq
+                  -- Now hsplitsXs' : subsetSplits xs' = preIdx ++ (tailSel_S, tailRest_S) :: tailIdx
+                  have hsplitT_in_preIdx : (tailSel_T, tailRest_T) ∈ preIdx := by
+                    rw [hpre_eq] at hT_in_pre
+                    rw [List.mem_append] at hT_in_pre
+                    rcases hT_in_pre with hLf | hE
+                    · exact (hsplitT_notin_Lfalse hLf).elim
+                    · rw [← hpreIdx_eq] at hE
+                      obtain ⟨⟨a, b⟩, hab, hab_eq⟩ := List.mem_map.mp hE
+                      simp only [Prod.mk.injEq, List.cons.injEq, true_and] at hab_eq
+                      obtain ⟨ha, hb⟩ := hab_eq
+                      convert hab
+                      · exact ha.symm
+                      · exact hb.symm
+                  have hSlen' : msS.length = xs'.length := by simpa using hSlen
+                  have hTlen' : msT.length = xs'.length := by simpa using hTlen
+                  obtain ⟨i', hi', hmsT_i', hmsS_i'⟩ :=
+                    ih hxs'_nodup hSlen' hTlen' hsplitsXs' hsplitT_in_preIdx
+                  refine ⟨i' + 1, by simp; omega, ?_, ?_⟩
+                  · simp only [List.getElem_cons_succ]; exact hmsT_i'
+                  · simp only [List.getElem_cons_succ]; exact hmsS_i'
+              · -- Case 2: L_false = pre ++ e, split_T ∈ pre ⊆ L_false. Contradiction.
+                exfalso
+                have hsplitT_in_Lfalse : (x :: tailSel_T, tailRest_T) ∈ L_false := by
+                  rw [hLf_eq]; exact List.mem_append_left _ hT_in_pre
+                exact hsplitT_notin_Lfalse hsplitT_in_Lfalse
+
 /-- Prefix characterization at the matched-state `subsetSplitsWithFirst`
 surface: given an arbitrary executable split `split ∈ pre` appearing before a
 chosen matched `S`-split in `Hex.subsetSplitsWithFirst localFactors`, there is
