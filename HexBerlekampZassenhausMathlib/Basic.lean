@@ -2492,6 +2492,272 @@ theorem liftedSubsetSplit_mem_subsetSplitsWithFirst_of_matches
     (ys.map (fun i => decide (i ∈ S)))
     hys_len_eq
 
+/-- Filter of a `Nodup` list by membership in the `toFinset` of a Boolean-mask
+`filterMap` equals the `filterMap` itself.  This is the key combinatorial step
+in the converse to `liftedSubsetSplit_mem_subsetSplitsWithFirst_of_matches`:
+the executable enumeration recovers an index-level Finset from a polynomial-
+level mask. -/
+private theorem List.nodup_filter_mem_toFinset_zip_filterMap_selected
+    {α : Type*} [DecidableEq α]
+    (xs : List α) (bs : List Bool) (hxs : xs.Nodup) (hlen : bs.length = xs.length) :
+    xs.filter (fun x => decide (x ∈ ((xs.zip bs).filterMap
+        (fun p => if p.2 then some p.1 else none)).toFinset)) =
+      (xs.zip bs).filterMap (fun p => if p.2 then some p.1 else none) := by
+  induction xs generalizing bs with
+  | nil => simp
+  | cons x xs ih =>
+      cases bs with
+      | nil => simp at hlen
+      | cons b bs =>
+          simp only [List.length_cons, Nat.add_right_cancel_iff] at hlen
+          have hxs_nodup : xs.Nodup := (List.nodup_cons.mp hxs).2
+          have hx_notin : x ∉ xs := (List.nodup_cons.mp hxs).1
+          set tailSelected : List α :=
+            (xs.zip bs).filterMap (fun p => if p.2 then some p.1 else none)
+            with htailSelected_def
+          cases b with
+          | true =>
+              -- Both sides reduce to forms involving `x :: tailSelected` via
+              -- definitional reduction of `filterMap` on `(x, true) :: ...`.
+              show (x :: xs).filter
+                  (fun y => decide (y ∈ (x :: tailSelected).toFinset)) =
+                x :: tailSelected
+              rw [show (x :: xs).filter
+                      (fun y => decide (y ∈ (x :: tailSelected).toFinset)) =
+                    x :: xs.filter
+                      (fun y => decide (y ∈ (x :: tailSelected).toFinset)) from
+                List.filter_cons_of_pos (by simp)]
+              congr 1
+              -- For y ∈ xs, y ≠ x, so membership reduces to tailSelected.toFinset.
+              have hcongr : ∀ y ∈ xs,
+                  decide (y ∈ (x :: tailSelected).toFinset) =
+                    decide (y ∈ tailSelected.toFinset) := by
+                intro y hy
+                have hyne : y ≠ x := fun heq => hx_notin (heq ▸ hy)
+                simp [List.toFinset_cons, hyne]
+              rw [List.filter_congr hcongr]
+              exact ih bs hxs_nodup hlen
+          | false =>
+              -- `filterMap` on `(x, false) :: ...` drops x; both sides reduce
+              -- to `tailSelected` definitionally.
+              show (x :: xs).filter
+                  (fun y => decide (y ∈ tailSelected.toFinset)) = tailSelected
+              have hx_notin_tail : x ∉ tailSelected := by
+                rw [htailSelected_def, List.mem_filterMap]
+                rintro ⟨⟨a, b'⟩, hp_mem, hp_eq⟩
+                have ha_xs : a ∈ xs := (List.of_mem_zip hp_mem).1
+                cases b' with
+                | true =>
+                    simp only [if_true, Option.some.injEq] at hp_eq
+                    rw [← hp_eq] at hx_notin
+                    exact hx_notin ha_xs
+                | false => simp at hp_eq
+              rw [show (x :: xs).filter
+                      (fun y => decide (y ∈ tailSelected.toFinset)) =
+                    xs.filter
+                      (fun y => decide (y ∈ tailSelected.toFinset)) from
+                List.filter_cons_of_neg (by simp [hx_notin_tail])]
+              exact ih bs hxs_nodup hlen
+
+/-- Dual of `nodup_filter_mem_toFinset_zip_filterMap_selected`: filtering by
+non-membership in the selected `toFinset` recovers the rest filterMap. -/
+private theorem List.nodup_filter_not_mem_toFinset_zip_filterMap_rest
+    {α : Type*} [DecidableEq α]
+    (xs : List α) (bs : List Bool) (hxs : xs.Nodup) (hlen : bs.length = xs.length) :
+    xs.filter (fun x => decide (x ∉ ((xs.zip bs).filterMap
+        (fun p => if p.2 then some p.1 else none)).toFinset)) =
+      (xs.zip bs).filterMap (fun p => if p.2 then none else some p.1) := by
+  induction xs generalizing bs with
+  | nil => simp
+  | cons x xs ih =>
+      cases bs with
+      | nil => simp at hlen
+      | cons b bs =>
+          simp only [List.length_cons, Nat.add_right_cancel_iff] at hlen
+          have hxs_nodup : xs.Nodup := (List.nodup_cons.mp hxs).2
+          have hx_notin : x ∉ xs := (List.nodup_cons.mp hxs).1
+          set tailSelected : List α :=
+            (xs.zip bs).filterMap (fun p => if p.2 then some p.1 else none)
+            with htailSelected_def
+          set tailRest : List α :=
+            (xs.zip bs).filterMap (fun p => if p.2 then none else some p.1)
+          cases b with
+          | true =>
+              -- selected at (x, true) = some x, rest at (x, true) = none.
+              show (x :: xs).filter
+                  (fun y => decide (y ∉ (x :: tailSelected).toFinset)) = tailRest
+              rw [show (x :: xs).filter
+                      (fun y => decide (y ∉ (x :: tailSelected).toFinset)) =
+                    xs.filter
+                      (fun y => decide (y ∉ (x :: tailSelected).toFinset)) from
+                List.filter_cons_of_neg (by simp)]
+              have hcongr : ∀ y ∈ xs,
+                  decide (y ∉ (x :: tailSelected).toFinset) =
+                    decide (y ∉ tailSelected.toFinset) := by
+                intro y hy
+                have hyne : y ≠ x := fun heq => hx_notin (heq ▸ hy)
+                simp [List.toFinset_cons, hyne]
+              rw [List.filter_congr hcongr]
+              exact ih bs hxs_nodup hlen
+          | false =>
+              -- selected at (x, false) = none, rest at (x, false) = some x.
+              show (x :: xs).filter
+                  (fun y => decide (y ∉ tailSelected.toFinset)) = x :: tailRest
+              have hx_notin_tail : x ∉ tailSelected := by
+                rw [htailSelected_def, List.mem_filterMap]
+                rintro ⟨⟨a, b'⟩, hp_mem, hp_eq⟩
+                have ha_xs : a ∈ xs := (List.of_mem_zip hp_mem).1
+                cases b' with
+                | true =>
+                    simp only [if_true, Option.some.injEq] at hp_eq
+                    rw [← hp_eq] at hx_notin
+                    exact hx_notin ha_xs
+                | false => simp at hp_eq
+              rw [show (x :: xs).filter
+                      (fun y => decide (y ∉ tailSelected.toFinset)) =
+                    x :: xs.filter
+                      (fun y => decide (y ∉ tailSelected.toFinset)) from
+                List.filter_cons_of_pos (by simp [hx_notin_tail])]
+              congr 1
+              exact ih bs hxs_nodup hlen
+
+/-- Mask-to-subset bridge: given a Boolean mask of matching length over the
+tail of a matched `localFactors` list, there is a `LiftedFactorSubset d`
+(containing `J.min'` and contained in `J`) whose `(selected, rest)` list
+partition equals the matched-list mask partition.  The natural converse of
+`liftedSubsetSplit_mem_subsetSplitsWithFirst_of_matches`, used to recover a
+proof-side lifted-factor subset from an arbitrary executable split. -/
+theorem liftedSubsetSelectedList_eq_mask_partition_of_matches
+    {d : Hex.LiftData} {J : LiftedFactorSubset d}
+    {localFactors : List Hex.ZPoly}
+    (hmatches : LiftedFactorListMatches d J localFactors)
+    (hne : J.Nonempty)
+    {head : Hex.ZPoly} {tail : List Hex.ZPoly}
+    (hloc : localFactors = head :: tail)
+    (mask : List Bool) (hmask_len : mask.length = tail.length) :
+    ∃ T : LiftedFactorSubset d,
+      T ⊆ J ∧ J.min' hne ∈ T ∧
+      liftedSubsetSelectedList d T =
+        head :: (tail.zip mask).filterMap (fun p => if p.2 then some p.1 else none) ∧
+      liftedSubsetSelectedList d (J \ T) =
+        (tail.zip mask).filterMap (fun p => if p.2 then none else some p.1) := by
+  classical
+  -- The J-filter index list, starting at J.min'.
+  set xs : List (LiftedFactorIndex d) :=
+    (List.finRange d.liftedFactors.size).filter (fun i => decide (i ∈ J)) with hxs_def
+  have hxs_head : xs.head? = some (J.min' hne) := finRange_filter_head?_eq_min' J hne
+  obtain ⟨ys, hxs_eq⟩ : ∃ ys, xs = (J.min' hne) :: ys := by
+    cases hxs_case : xs with
+    | nil => rw [hxs_case] at hxs_head; simp at hxs_head
+    | cons x ys =>
+        rw [hxs_case] at hxs_head
+        simp only [List.head?_cons, Option.some.injEq] at hxs_head
+        exact ⟨ys, by rw [hxs_head]⟩
+  -- xs is Nodup, hence ys is Nodup and J.min' ∉ ys.
+  have hxs_nodup : xs.Nodup := (List.nodup_finRange _).filter _
+  rw [hxs_eq] at hxs_nodup
+  have hys_nodup : ys.Nodup := (List.nodup_cons.mp hxs_nodup).2
+  have hmin_notin_ys : J.min' hne ∉ ys := (List.nodup_cons.mp hxs_nodup).1
+  -- Identify head and tail via the matching predicate.
+  have hloc_via_xs : localFactors = xs.map (liftedFactor d) := hmatches
+  rw [hxs_eq, List.map_cons] at hloc_via_xs
+  rw [hloc] at hloc_via_xs
+  obtain ⟨hhead_eq, htail_eq⟩ :
+      head = liftedFactor d (J.min' hne) ∧ tail = ys.map (liftedFactor d) := by
+    simp only [List.cons.injEq] at hloc_via_xs
+    exact hloc_via_xs
+  -- mask length matches ys length.
+  have hys_mask_len : mask.length = ys.length := by
+    rw [hmask_len, htail_eq, List.length_map]
+  -- The tail-selected index list and T.
+  set tailSelected : List (LiftedFactorIndex d) :=
+    (ys.zip mask).filterMap (fun p => if p.2 then some p.1 else none)
+    with htailSelected_def
+  set T : LiftedFactorSubset d :=
+    insert (J.min' hne) tailSelected.toFinset with hT_def
+  -- tailSelected is a sublist of ys.
+  have htailSelected_subset_ys : ∀ x ∈ tailSelected, x ∈ ys := by
+    intro x hx
+    rw [htailSelected_def, List.mem_filterMap] at hx
+    obtain ⟨⟨a, b⟩, hp_mem, hp_eq⟩ := hx
+    have ha_ys : a ∈ ys := (List.of_mem_zip hp_mem).1
+    cases b with
+    | true => simp only [if_true, Option.some.injEq] at hp_eq; rw [← hp_eq]; exact ha_ys
+    | false => simp at hp_eq
+  -- T ⊆ J.
+  have hTJ : T ⊆ J := by
+    intro x hx
+    rw [hT_def] at hx
+    rcases Finset.mem_insert.mp hx with hmin | htf
+    · rw [hmin]; exact J.min'_mem hne
+    · rw [List.mem_toFinset] at htf
+      have hx_ys : x ∈ ys := htailSelected_subset_ys x htf
+      have hx_xs : x ∈ xs := by rw [hxs_eq]; exact List.mem_cons_of_mem _ hx_ys
+      rw [hxs_def, List.mem_filter] at hx_xs
+      exact of_decide_eq_true hx_xs.2
+  -- J.min' ∈ T.
+  have hmin_in_T : J.min' hne ∈ T := by
+    rw [hT_def]; exact Finset.mem_insert_self _ _
+  refine ⟨T, hTJ, hmin_in_T, ?_, ?_⟩
+  · -- Selected list equality.
+    rw [liftedSubsetSelectedList_eq_filter_map]
+    -- Reduce (finRange n).filter (· ∈ T) to xs.filter (· ∈ T) via T ⊆ J.
+    rw [show (List.finRange d.liftedFactors.size).filter (fun i => decide (i ∈ T)) =
+            xs.filter (fun i => decide (i ∈ T)) from by
+      rw [hxs_def]; exact (finRange_filter_mem_and_mem_eq_of_subset hTJ).symm]
+    rw [hxs_eq]
+    rw [show (J.min' hne :: ys).filter (fun i => decide (i ∈ T)) =
+            J.min' hne :: ys.filter (fun i => decide (i ∈ T)) from
+      List.filter_cons_of_pos (by simp [hmin_in_T])]
+    rw [List.map_cons]
+    rw [hhead_eq, htail_eq]
+    congr 1
+    -- (ys.filter (· ∈ T)).map (liftedFactor d) =
+    --   ((ys.map (liftedFactor d)).zip mask).filterMap selected
+    have hys_filter_eq :
+        ys.filter (fun i => decide (i ∈ T)) =
+          ys.filter (fun i => decide (i ∈ tailSelected.toFinset)) := by
+      apply List.filter_congr
+      intro y hy
+      have hyne : y ≠ J.min' hne := fun heq => hmin_notin_ys (heq ▸ hy)
+      simp [hT_def, hyne]
+    rw [hys_filter_eq]
+    rw [List.nodup_filter_mem_toFinset_zip_filterMap_selected ys mask hys_nodup
+      hys_mask_len]
+    rw [List.zip_map_left, List.filterMap_map, List.map_filterMap]
+    congr 1
+    funext p
+    obtain ⟨a, b⟩ := p
+    cases b <;> rfl
+  · -- Rest list equality.
+    rw [liftedSubsetSelectedList_eq_filter_map]
+    rw [show ((List.finRange d.liftedFactors.size).filter
+            (fun i => decide (i ∈ J \ T))) =
+            xs.filter (fun i => decide (i ∉ T)) from by
+      rw [hxs_def]
+      exact (finRange_filter_mem_and_not_mem_eq_sdiff_of_subset
+        (J := J) (S := T)).symm]
+    rw [hxs_eq]
+    rw [show (J.min' hne :: ys).filter (fun i => decide (i ∉ T)) =
+            ys.filter (fun i => decide (i ∉ T)) from
+      List.filter_cons_of_neg (by simp [hmin_in_T])]
+    rw [htail_eq]
+    have hys_filter_eq :
+        ys.filter (fun i => decide (i ∉ T)) =
+          ys.filter (fun i => decide (i ∉ tailSelected.toFinset)) := by
+      apply List.filter_congr
+      intro y hy
+      have hyne : y ≠ J.min' hne := fun heq => hmin_notin_ys (heq ▸ hy)
+      simp [hT_def, hyne]
+    rw [hys_filter_eq]
+    rw [List.nodup_filter_not_mem_toFinset_zip_filterMap_rest ys mask hys_nodup
+      hys_mask_len]
+    rw [List.zip_map_left, List.filterMap_map, List.map_filterMap]
+    congr 1
+    funext p
+    obtain ⟨a, b⟩ := p
+    cases b <;> rfl
+
 /-- The transported recombination candidate product equals the proof-side
 lifted-factor product: both factor lists are permutations of each other in
 `Polynomial ℤ`, so commutativity collapses the order difference. -/
