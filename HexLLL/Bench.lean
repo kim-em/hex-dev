@@ -160,12 +160,11 @@ instance : Hashable StateInput where
   hash input :=
     hash (input.rows, input.cols, input.j.val, input.k.val)
 
-/-- Matrix input for benchmarking `LLLState.ofBasis` itself. -/
+/-- Matrix input for benchmarking `LLLState.ofBasisUnchecked` itself. -/
 structure OfBasisInput where
   rows : Nat
   cols : Nat
   basis : Matrix Int rows cols
-  hind : basis.independent
   j : Fin rows
   k : Fin rows
   hjk : j.val < k.val
@@ -174,13 +173,12 @@ instance : Hashable OfBasisInput where
   hash input :=
     hash (input.rows, input.cols, input.j.val, input.k.val)
 
-/-- Prepared basis for `lll.firstShortVector` benchmarks. -/
+/-- Prepared basis for `lll.firstShortVectorUnchecked` benchmarks. -/
 structure FirstShortVectorInput where
   rows : Nat
   cols : Nat
   basis : Matrix Int rows cols
   hn : 1 ≤ rows
-  hind : basis.independent
 
 instance : Hashable FirstShortVectorInput where
   hash input := hash (input.rows, input.cols)
@@ -221,18 +219,9 @@ def matrixOfFlat (input : IntBasisInput) : Matrix Int input.rows input.cols :=
 def generatedBasis (rows salt : Nat) : Matrix Int rows rows :=
   Matrix.ofFn fun i j => entryValue rows rows i.val j.val salt
 
-private theorem generatedBasis_independent (rows salt : Nat) :
-    (generatedBasis rows salt).independent := by
-  apply Matrix.independent_of_upperTriangular_pos_diag
-  · intro i j hij
-    simp [generatedBasis, Matrix.ofFn, Vector.getElem_ofFn, entryValue, hij]
-  · intro i
-    simp [generatedBasis, Matrix.ofFn, Vector.getElem_ofFn, entryValue]
-    omega
-
-/-- Build the certified executable LLL state for a deterministic matrix. -/
-def stateOf (b : Matrix Int n m) (hind : b.independent) : LLLState n m :=
-  LLLState.ofBasis b hind
+/-- Build the executable LLL state for a deterministic matrix. -/
+def stateOf (b : Matrix Int n m) : LLLState n m :=
+  LLLState.ofBasisUnchecked b
 
 /-- Per-parameter fixture: a prepared `(n + 3) x (n + 3)` LLL state. -/
 def prepStateInput (n : Nat) : StateInput :=
@@ -243,7 +232,7 @@ def prepStateInput (n : Nat) : StateInput :=
   let k : Fin rows := ⟨n + 2, by simp [rows]⟩
   { rows := rows
     cols := cols
-    state := stateOf basis (generatedBasis_independent rows 197)
+    state := stateOf basis
     j := j
     k := k
     hjk := by
@@ -272,9 +261,7 @@ def bzRecombinationInput : FirstShortVectorInput :=
   { rows := 3
     cols := 3
     basis := bzRecombinationBasis
-    hn := by decide
-    hind := by
-      apply Matrix.independent_of_upperTriangular_pos_diag <;> decide }
+    hn := by decide }
 
 instance : Nonempty FirstShortVectorInput :=
   ⟨bzRecombinationInput⟩
@@ -305,14 +292,6 @@ def randomBoundedBasis (n seed : Nat) : Matrix Int n n :=
     else
       randomBoundedEntry (lcgIterate seed (i.val * n + j.val + 1))
 
-private theorem randomBoundedBasis_independent (n seed : Nat) :
-    (randomBoundedBasis n seed).independent := by
-  apply Matrix.independent_of_upperTriangular_pos_diag
-  · intro i j hij
-    simp [randomBoundedBasis, Matrix.ofFn, Vector.getElem_ofFn, hij]
-  · intro i
-    simp [randomBoundedBasis, Matrix.ofFn, Vector.getElem_ofFn]
-
 /-- Committed seed for the random-bounded family. The `#guard` below checks
 that after size-reducing row 1 against row 0, the first Lovasz comparison
 fails, so the next LLL outer-loop step performs a swap. -/
@@ -327,14 +306,13 @@ def prepRandomBoundedInput (n : Nat) : FirstShortVectorInput :=
     cols := rows
     basis := basis
     hn := by
-      exact Nat.le_max_right n 1
-    hind := randomBoundedBasis_independent rows randomBoundedSwapSeed }
+      exact Nat.le_max_right n 1 }
 
 /-- Check that the first Lovasz comparison fails after the first
 size-reduction pass, forcing at least one swap in the subsequent LLL step. -/
 def firstLovaszCheckForcesSwap (input : FirstShortVectorInput) : Bool :=
   if hrows : 2 < input.rows then
-    let sReduced := (LLLState.ofBasis input.basis input.hind).sizeReduce 1
+    let sReduced := (LLLState.ofBasisUnchecked input.basis).sizeReduce 1
     let f0 : Fin input.rows := ⟨0, by omega⟩
     let f1 : Fin input.rows := ⟨1, by omega⟩
     let d0 : Fin (input.rows + 1) := ⟨0, by omega⟩
@@ -371,17 +349,6 @@ def harshCubicBasis (n : Nat) : Matrix Int n n :=
     else
       noise
 
-private theorem harshCubicBasis_independent (n : Nat) :
-    (harshCubicBasis n).independent := by
-  apply Matrix.independent_of_upperTriangular_pos_diag
-  · intro i j hij
-    simp [harshCubicBasis, Matrix.ofFn, Vector.getElem_ofFn, hij]
-  · intro i
-    have hscale : (0 : Int) < harshCubicScale n := by
-      dsimp [harshCubicScale]
-      exact_mod_cast Nat.pow_pos (by decide : 0 < 2)
-    simpa [harshCubicBasis, Matrix.ofFn, Vector.getElem_ofFn] using hscale
-
 /-- Parametric harsh-cubic input family. The scientific ladder is densified at
 `n in {15, 20, 25, 30, 35, 40, 45, 50, 55}`. -/
 def prepHarshCubicInput (n : Nat) : FirstShortVectorInput :=
@@ -391,8 +358,7 @@ def prepHarshCubicInput (n : Nat) : FirstShortVectorInput :=
     cols := rows
     basis := basis
     hn := by
-      exact Nat.le_max_right n 1
-    hind := harshCubicBasis_independent rows }
+      exact Nat.le_max_right n 1 }
 
 def getCachedInput (ref : IO.Ref (Option FirstShortVectorInput))
     (mk : Unit → FirstShortVectorInput) : IO FirstShortVectorInput := do
@@ -483,46 +449,21 @@ def ofBasisHarshCubicEntry (rows row col salt : Nat) : Int :=
 def ofBasisRandomBoundedBasis (rows salt : Nat) : Matrix Int rows rows :=
   Matrix.ofFn fun i j => ofBasisRandomBoundedEntry rows i.val j.val salt
 
-private theorem ofBasisRandomBoundedBasis_independent (rows salt : Nat) :
-    (ofBasisRandomBoundedBasis rows salt).independent := by
-  apply Matrix.independent_of_upperTriangular_pos_diag
-  · intro i j hij
-    simp [ofBasisRandomBoundedBasis, Matrix.ofFn, Vector.getElem_ofFn,
-      ofBasisRandomBoundedEntry, hij]
-  · intro i
-    simp [ofBasisRandomBoundedBasis, Matrix.ofFn, Vector.getElem_ofFn,
-      ofBasisRandomBoundedEntry]
-    omega
-
 /-- Deterministic row-major square basis for the harsh-cubic family. -/
 def ofBasisHarshCubicBasis (rows salt : Nat) : Matrix Int rows rows :=
   Matrix.ofFn fun i j => ofBasisHarshCubicEntry rows i.val j.val salt
 
-private theorem ofBasisHarshCubicBasis_independent (rows salt : Nat) :
-    (ofBasisHarshCubicBasis rows salt).independent := by
-  apply Matrix.independent_of_upperTriangular_pos_diag
-  · intro i j hij
-    simp [ofBasisHarshCubicBasis, Matrix.ofFn, Vector.getElem_ofFn,
-      ofBasisHarshCubicEntry, hij]
-  · intro i
-    have hpos : (0 : Int) <
-        Int.ofNat (2 ^ (3 * rows + ((i.val + 2 * i.val + salt) % 5))) := by
-      exact Int.ofNat_lt.mpr (Nat.pow_pos (by decide : 0 < 2))
-    simpa [ofBasisHarshCubicBasis, Matrix.ofFn, Vector.getElem_ofFn,
-      ofBasisHarshCubicEntry] using hpos
-
-/-- General constructor for an `LLLState.ofBasis` benchmark fixture.
+/-- General constructor for an `LLLState.ofBasisUnchecked` benchmark fixture.
 The benchmark parameter maps to `rows = n + 3`, so the final two row indices
 are always available for the result checksum. -/
-def prepOfBasisInput (n cols : Nat) (basis : Matrix Int (n + 3) cols)
-    (hind : basis.independent) : OfBasisInput :=
+def prepOfBasisInput (n cols : Nat) (basis : Matrix Int (n + 3) cols) :
+    OfBasisInput :=
   let rows := n + 3
   let j : Fin rows := ⟨n + 1, by simp [rows]⟩
   let k : Fin rows := ⟨n + 2, by simp [rows]⟩
   { rows := rows
     cols := cols
     basis := basis
-    hind := hind
     j := j
     k := k
     hjk := by
@@ -533,19 +474,19 @@ def prepOfBasisInput (n cols : Nat) (basis : Matrix Int (n + 3) cols)
 def prepOfBasisBzRecombinationInput (n : Nat) : OfBasisInput :=
   let rows := n + 3
   let basis := generatedBasis rows 311
-  prepOfBasisInput n rows basis (generatedBasis_independent rows 311)
+  prepOfBasisInput n rows basis
 
 /-- Per-parameter fixture for the random-bounded input family. -/
 def prepOfBasisRandomBoundedInput (n : Nat) : OfBasisInput :=
   let rows := n + 3
   let basis := ofBasisRandomBoundedBasis rows 509
-  prepOfBasisInput n rows basis (ofBasisRandomBoundedBasis_independent rows 509)
+  prepOfBasisInput n rows basis
 
 /-- Per-parameter fixture for the harsh-cubic input family. -/
 def prepOfBasisHarshCubicInput (n : Nat) : OfBasisInput :=
   let rows := n + 3
   let basis := ofBasisHarshCubicBasis rows 887
-  prepOfBasisInput n rows basis (ofBasisHarshCubicBasis_independent rows 887)
+  prepOfBasisInput n rows basis
 
 /-- Stable checksum for integer vectors. -/
 def intVectorChecksum (v : Vector Int n) : Int :=
@@ -637,7 +578,7 @@ def ofBasisHarshCubicComplexity (n : Nat) : Nat :=
 
 /-- Benchmark target: construct the initial integer LLL state for a basis. -/
 def runOfBasisChecksum (input : OfBasisInput) : Int :=
-  let s := LLLState.ofBasis input.basis input.hind
+  let s := LLLState.ofBasisUnchecked input.basis
   stateUpdateChecksum s input.j input.k
 
 /-- Benchmark target for the BZ recombination input family. -/
@@ -692,15 +633,15 @@ private theorem lllDeltaUpper : (3 / 4 : Rat) ≤ 1 := by
 /-- Benchmark target: run LLL on one prepared basis and checksum the first row. -/
 def runFirstShortVectorChecksum (input : FirstShortVectorInput) : Int :=
   intVectorChecksum
-    (lll.firstShortVector input.basis (3 / 4)
-      lllDeltaLower lllDeltaUpper input.hn input.hind)
+    (lll.firstShortVectorUnchecked input.basis (3 / 4)
+      lllDeltaLower lllDeltaUpper input.hn)
 
 /-- Benchmark comparator observable: squared norm of Lean's first LLL vector.
 The verified-Isabelle Haskell extraction reports the same scalar. -/
 def runFirstShortVectorNormSq (input : FirstShortVectorInput) : Int :=
   Vector.intNormSq
-    (lll.firstShortVector input.basis (3 / 4)
-      lllDeltaLower lllDeltaUpper input.hn input.hind)
+    (lll.firstShortVectorUnchecked input.basis (3 / 4)
+      lllDeltaLower lllDeltaUpper input.hn)
 
 def intRowHaskell (v : Vector Int n) : String :=
   "[" ++ String.intercalate "," ((List.finRange n).map fun j => toString v[j]) ++ "]"
