@@ -195,6 +195,93 @@ private theorem congr_mul_reduceModPow_pair
   · exact ZPoly.congr_reduceModPow g p k (Nat.pow_pos (ZMod64.Bounds.pPos (p := p)))
   · exact ZPoly.congr_reduceModPow h p k (Nat.pow_pos (ZMod64.Bounds.pPos (p := p)))
 
+/--
+Throughout the quadratic doubling loop, the cofactor `acc.h` only changes by
+quantities divisible by the current modulus. In particular, the final cofactor
+is still congruent to the initial cofactor modulo the base prime `p`.
+-/
+private theorem iterateQuadraticHensel_h_congr_mod_base
+    (p : Nat) [ZMod64.Bounds p]
+    (f : ZPoly) (current fuel : Nat) (acc : QuadraticLiftResult)
+    (hp : 1 < p)
+    (hcurrent : 1 ≤ current)
+    (hinv : QuadraticLiftLoopInvariant (p ^ current) f acc) :
+    ZPoly.congr (iterateQuadraticHensel p f current fuel acc).h acc.h p := by
+  induction fuel generalizing current acc with
+  | zero =>
+      simpa [iterateQuadraticHensel] using ZPoly.congr_refl acc.h p
+  | succ fuel ih =>
+      let m := p ^ current
+      let next := quadraticHenselStep m f acc.g acc.h acc.s acc.t
+      have hm : 1 < m := Nat.one_lt_pow (Nat.ne_of_gt hcurrent) hp
+      have hprod_m : ZPoly.congr (acc.g * acc.h) f m := hinv.1
+      have hh_step_m : ZPoly.congr next.h acc.h m :=
+        (ZPoly.quadraticHenselStep_factor_congr_mod_base m f acc.g acc.h acc.s acc.t
+          hm hprod_m).2
+      have hp_dvd_m : p ∣ m := by
+        dsimp [m]
+        have hdvd : p ^ 1 ∣ p ^ current := Nat.pow_dvd_pow p hcurrent
+        simpa [Nat.pow_one] using hdvd
+      have hh_step_p : ZPoly.congr next.h acc.h p :=
+        congr_of_modulus_dvd next.h acc.h hp_dvd_m hh_step_m
+      have hnext_inv : QuadraticLiftLoopInvariant (p ^ (2 * current)) f next := by
+        have hstep : QuadraticLiftLoopInvariant (m * m) f next := by
+          simpa [m, next] using
+            quadraticLiftLoopInvariant_step m f acc hm hinv
+        have hpow : m * m = p ^ (2 * current) := by
+          dsimp [m]
+          rw [← Nat.pow_add]
+          congr 1
+          omega
+        simpa [hpow] using hstep
+      have htail :
+          ZPoly.congr
+            (iterateQuadraticHensel p f (2 * current) fuel next).h next.h p :=
+        ih (current := 2 * current) (acc := next) (by omega) hnext_inv
+      have hresult :
+          (iterateQuadraticHensel p f current (fuel + 1) acc) =
+            iterateQuadraticHensel p f (2 * current) fuel next := by
+        simp [iterateQuadraticHensel, m, next]
+      rw [hresult]
+      exact ZPoly.congr_trans _ _ _ p htail hh_step_p
+
+/--
+The cofactor produced by `henselLiftQuadratic` is congruent to the input
+cofactor modulo `p`. The quadratic doubling loop only adjusts `h` by quantities
+divisible by `p`, and the final `reduceModPow` cleanup is congruent to its
+input modulo `p^k`, hence modulo `p`.
+
+This is the surface used downstream by the multifactor `_of_factorsModP`
+boundary theorem: it lets the recursive call on `lifted.h, rest` reuse the
+same mod-`p` product hypothesis the caller supplies for the head split.
+-/
+theorem henselLiftQuadratic_h_congr_mod_base
+    (p k : Nat) [ZMod64.Bounds p]
+    (f g h s t : ZPoly)
+    (hk : 1 ≤ k)
+    (hp : 1 < p)
+    (hinv : QuadraticLiftLoopInvariant p f { g, h, s, t }) :
+    ZPoly.congr (henselLiftQuadratic p k f g h s t).h h p := by
+  let init : QuadraticLiftResult := { g, h, s, t }
+  let fuel := quadraticDoublingSteps k
+  let looped := iterateQuadraticHensel p f 1 fuel init
+  have hstart : QuadraticLiftLoopInvariant (p ^ 1) f init := by
+    simpa [init] using hinv
+  have hloop_h : ZPoly.congr looped.h h p := by
+    have hcongr :=
+      iterateQuadraticHensel_h_congr_mod_base p f 1 fuel init hp (by omega) hstart
+    simpa [init] using hcongr
+  have hreduce_pk : ZPoly.congr (ZPoly.reduceModPow looped.h p k) looped.h (p ^ k) :=
+    ZPoly.congr_reduceModPow looped.h p k (Nat.pow_pos (ZMod64.Bounds.pPos (p := p)))
+  have hreduce_p : ZPoly.congr (ZPoly.reduceModPow looped.h p k) looped.h p := by
+    have hpow_one : p ^ 1 = p := Nat.pow_one p
+    have hcongr := congr_of_pow_le p 1 k _ _ hk hreduce_pk
+    simpa [hpow_one] using hcongr
+  have heq : (henselLiftQuadratic p k f g h s t).h = ZPoly.reduceModPow looped.h p k := by
+    simp [henselLiftQuadratic, init, fuel, looped]
+  rw [heq]
+  exact ZPoly.congr_trans _ _ _ p hreduce_p hloop_h
+
 /-- The binary quadratic wrapper lifts a factorisation to congruence modulo `p^k`. -/
 theorem henselLiftQuadratic_spec
     (p k : Nat) [ZMod64.Bounds p]

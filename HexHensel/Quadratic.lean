@@ -2199,5 +2199,98 @@ theorem quadraticHenselStep_monic
   unfold quadraticHenselStep
   exact quadraticHenselStep_g_update_monic m f g h s t hm hmonic
 
+/--
+After a quadratic Hensel step, both the updated leading factor `r.g` and the
+updated complementary factor `r.h` are congruent to the corresponding input
+factors modulo `m`. The quadratic correction only touches the data modulo
+`m^2 \ m`, so the input factorisation is preserved at the base modulus.
+-/
+theorem quadraticHenselStep_factor_congr_mod_base
+    (m : Nat) (f g h s t : ZPoly)
+    (hm : 1 < m)
+    (hprod : ZPoly.congr (g * h) f m) :
+    ZPoly.congr (quadraticHenselStep m f g h s t).g g m ∧
+      ZPoly.congr (quadraticHenselStep m f g h s t).h h m := by
+  unfold quadraticHenselStep
+  have hm0 : 0 < m := Nat.lt_trans Nat.zero_lt_one hm
+  let e := QuadraticLiftResult.factorError f g h
+  let te := mulModSquare t e m
+  let factorQR := divModMonicModSquare te g m
+  let qFactor := factorQR.1
+  let rFactor := factorQR.2
+  let g' := addModSquare g rFactor m
+  let hCorrection := addModSquare (mulModSquare s e m) (mulModSquare qFactor h m) m
+  let h' := addModSquare h hCorrection m
+  have he : ZPoly.congr e 0 m := by
+    have hf : ZPoly.congr f (g * h) m := ZPoly.congr_symm (g * h) f m hprod
+    simpa [e, QuadraticLiftResult.factorError, sub_self_eq_zero (g * h)] using
+      congr_sub f (g * h) (g * h) (g * h) m hf (ZPoly.congr_refl (g * h) m)
+  have hte : ZPoly.congr te 0 m := by
+    have hmul : ZPoly.congr (mulModSquare t e m) (t * e) (m * m) :=
+      mulModSquare_congr m t e hm0
+    have hmulBase : ZPoly.congr (t * e) 0 m :=
+      mul_right_zero_mod_base m t e he
+    exact ZPoly.congr_trans te (t * e) 0 m
+      (congr_of_square_mod m te (t * e) (by simpa [te] using hmul)) hmulBase
+  have hpair : (qFactor, rFactor) = divModMonicModSquare te g m := by
+    simp [factorQR, qFactor, rFactor]
+  have hqr : ZPoly.congr qFactor 0 m ∧ ZPoly.congr rFactor 0 m :=
+    divModMonicModSquare_zero_mod_base m te g qFactor rFactor hte hpair
+  have hzero_add (a : ZPoly) : a + (0 : ZPoly) = a := by
+    apply DensePoly.ext_coeff
+    intro i
+    rw [DensePoly.coeff_add, DensePoly.coeff_zero]
+    · omega
+    · rfl
+  have hg' : ZPoly.congr g' g m := by
+    have hadd : ZPoly.congr (addModSquare g rFactor m) (g + rFactor) (m * m) :=
+      addModSquare_congr m g rFactor hm0
+    have hbase : ZPoly.congr (g + rFactor) (g + 0) m :=
+      ZPoly.congr_add g rFactor g 0 m (ZPoly.congr_refl g m) hqr.2
+    exact ZPoly.congr_trans g' (g + rFactor) g m
+      (congr_of_square_mod m g' (g + rFactor) (by simpa [g'] using hadd))
+      (by simpa [hzero_add] using hbase)
+  have hCorrection_zero : ZPoly.congr hCorrection 0 m := by
+    have hseSq : ZPoly.congr (mulModSquare s e m) (s * e) (m * m) :=
+      mulModSquare_congr m s e hm0
+    have hse : ZPoly.congr (mulModSquare s e m) 0 m := by
+      have hmulBase : ZPoly.congr (s * e) 0 m :=
+        mul_right_zero_mod_base m s e he
+      exact ZPoly.congr_trans (mulModSquare s e m) (s * e) 0 m
+        (congr_of_square_mod m (mulModSquare s e m) (s * e) hseSq) hmulBase
+    have hqhSq : ZPoly.congr (mulModSquare qFactor h m) (qFactor * h) (m * m) :=
+      mulModSquare_congr m qFactor h hm0
+    have hqh : ZPoly.congr (mulModSquare qFactor h m) 0 m := by
+      have hmulBase : ZPoly.congr (qFactor * h) 0 m := by
+        simpa [DensePoly.zero_mul] using
+          ZPoly.congr_mul qFactor h 0 h m hqr.1 (ZPoly.congr_refl h m)
+      exact ZPoly.congr_trans (mulModSquare qFactor h m) (qFactor * h) 0 m
+        (congr_of_square_mod m (mulModSquare qFactor h m) (qFactor * h) hqhSq)
+        hmulBase
+    have hadd :
+        ZPoly.congr
+          (addModSquare (mulModSquare s e m) (mulModSquare qFactor h m) m)
+          (mulModSquare s e m + mulModSquare qFactor h m)
+          (m * m) :=
+      addModSquare_congr m (mulModSquare s e m) (mulModSquare qFactor h m) hm0
+    have hsum : ZPoly.congr (mulModSquare s e m + mulModSquare qFactor h m) 0 m := by
+      simpa [DensePoly.zero_add] using
+        ZPoly.congr_add (mulModSquare s e m) (mulModSquare qFactor h m) 0 0 m hse hqh
+    exact ZPoly.congr_trans hCorrection
+      (mulModSquare s e m + mulModSquare qFactor h m) 0 m
+      (congr_of_square_mod m hCorrection
+        (mulModSquare s e m + mulModSquare qFactor h m)
+        (by simpa [hCorrection] using hadd))
+      hsum
+  have hh' : ZPoly.congr h' h m := by
+    have hadd : ZPoly.congr (addModSquare h hCorrection m) (h + hCorrection) (m * m) :=
+      addModSquare_congr m h hCorrection hm0
+    have hbase : ZPoly.congr (h + hCorrection) (h + 0) m :=
+      ZPoly.congr_add h hCorrection h 0 m (ZPoly.congr_refl h m) hCorrection_zero
+    exact ZPoly.congr_trans h' (h + hCorrection) h m
+      (congr_of_square_mod m h' (h + hCorrection) (by simpa [h'] using hadd))
+      (by simpa [hzero_add] using hbase)
+  exact ⟨hg', hh'⟩
+
 end ZPoly
 end Hex
