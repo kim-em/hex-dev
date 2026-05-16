@@ -529,6 +529,9 @@ theorem divModArray_scaleLead_congr [Sub R] [Mul R]
     rw [divModArrayAux_scaleLead_congr q.toArray (q.size - 1) hscale]
     simp
 
+/-- For a positive-degree divisor and any scaling function that cancels the leading coefficient,
+the array-backed long-division loop returns a remainder strictly smaller in degree than the
+divisor. -/
 theorem divModArray_remainder_degree_lt_of_pos_degree [Sub R] [Mul R]
     (p q : DensePoly R) (scaleLead : R → R)
     (hdegree : 0 < q.degree?.getD 0)
@@ -652,6 +655,10 @@ def divMod [One R] [Add R] [Sub R] [Mul R] [Div R]
   else
     divModArray p q (fun coeff => coeff / q.leadingCoeff)
 
+/-- For a positive-degree divisor, the field-style `divMod` returns a remainder strictly smaller
+in degree, given an explicit cancellation hypothesis for the coefficient ring. Concrete coefficient
+libraries discharge `hcancel` once and re-export this as the unconditional
+`divMod_remainder_degree_lt_of_pos_degree` via the `DivModLaws` instance. -/
 theorem divMod_remainder_degree_lt_of_pos_degree_core [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R)
     (hdegree : 0 < q.degree?.getD 0)
@@ -664,6 +671,9 @@ theorem divMod_remainder_degree_lt_of_pos_degree_core [One R] [Add R] [Sub R] [M
     exact divModArray_remainder_degree_lt_of_pos_degree p q
       (fun coeff => coeff / q.leadingCoeff) hdegree hcancel
 
+/-- For a size-one (degree-zero, nonzero) divisor, the field-style `divMod` returns zero
+remainder, given an explicit cancellation hypothesis for the coefficient ring. Concrete coefficient
+libraries discharge `hcancel` once and re-export the result via the `DivModLaws` instance. -/
 theorem divMod_remainder_eq_zero_of_degree_zero_core [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R)
     (hqsize : q.size = 1)
@@ -730,6 +740,8 @@ theorem divMod_remainder_eq_zero_of_degree_zero_core [One R] [Add R] [Sub R] [Mu
   rw [coeff_ofCoeffs]
   exact hzero_final i (by omega)
 
+/-- Dividing by a size-zero (zero) polynomial returns the dividend as remainder.
+The companion `divMod_eq_zero_self_of_size_zero_core` gives the full quotient-and-remainder pair. -/
 theorem divMod_remainder_eq_self_of_size_zero_core [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) (hqsize : q.size = 0) :
     (divMod p q).2 = p := by
@@ -773,9 +785,11 @@ def modByMonic [One R] [Add R] [Sub R] [Mul R]
     (p q : DensePoly R) (hmonic : Monic q) : DensePoly R :=
   (divModMonic p q hmonic).2
 
+/-- The `/` notation on dense polynomials dispatches to `DensePoly.div`. -/
 instance [One R] [Add R] [Sub R] [Mul R] [Div R] : Div (DensePoly R) where
   div := div
 
+/-- The `%` notation on dense polynomials dispatches to `DensePoly.mod`. -/
 instance [One R] [Add R] [Sub R] [Mul R] [Div R] : Mod (DensePoly R) where
   mod := mod
 
@@ -814,7 +828,7 @@ def gcd [One R] [Add R] [Sub R] [Mul R] [Div R]
   (xgcd p q).gcd
 
 /-- The executable gcd of two zero dense polynomials is zero. -/
-theorem gcd_zero_zero [One R] [Add R] [Sub R] [Mul R] [Div R] :
+@[simp] theorem gcd_zero_zero [One R] [Add R] [Sub R] [Mul R] [Div R] :
     gcd (0 : DensePoly R) (0 : DensePoly R) = 0 := by
   rfl
 
@@ -865,33 +879,40 @@ class GcdLaws (R : Type u) [Zero R] [DecidableEq R] [One R] [Add R] [Sub R] [Mul
       let r := xgcd p q
       r.left * p + r.right * q = r.gcd
 
+/-- Euclidean division spec: the field-style quotient and remainder reconstruct the dividend. -/
 theorem divMod_spec [One R] [Add R] [Sub R] [Mul R] [Div R] [DivModLaws R]
     (p q : DensePoly R) :
     let qr := divMod p q
     qr.1 * q + qr.2 = p := by
   exact DivModLaws.divMod_spec p q
 
+/-- The polynomial gcd divides the left argument. -/
 theorem gcd_dvd_left [One R] [Add R] [Sub R] [Mul R] [Div R] [GcdLaws R]
     (p q : DensePoly R) :
     gcd p q ∣ p := by
   exact GcdLaws.gcd_dvd_left p q
 
+/-- The polynomial gcd divides the right argument. -/
 theorem gcd_dvd_right [One R] [Add R] [Sub R] [Mul R] [Div R] [GcdLaws R]
     (p q : DensePoly R) :
     gcd p q ∣ q := by
   exact GcdLaws.gcd_dvd_right p q
 
+/-- Every common divisor of `p` and `q` divides `gcd p q`. -/
 theorem dvd_gcd [One R] [Add R] [Sub R] [Mul R] [Div R] [GcdLaws R]
     (d p q : DensePoly R) :
     d ∣ p → d ∣ q → d ∣ gcd p q := by
   exact GcdLaws.dvd_gcd d p q
 
+/-- Bezout identity: the extended-gcd coefficients reconstruct the gcd as
+`left * p + right * q`. -/
 theorem xgcd_bezout [One R] [Add R] [Sub R] [Mul R] [Div R] [GcdLaws R]
     (p q : DensePoly R) :
     let r := xgcd p q
     r.left * p + r.right * q = r.gcd := by
   exact GcdLaws.xgcd_bezout p q
 
+/-- `modByMonic` is definitionally the second component of `divModMonic`. -/
 theorem modByMonic_eq_divModMonic [One R] [Add R] [Sub R] [Mul R]
     (p q : DensePoly R) (hq : Monic q) :
     modByMonic p q hq = (divModMonic p q hq).2 := by
@@ -908,6 +929,7 @@ theorem modByMonic_zero [One R] [Add R] [Sub R] [Mul R]
     change (ofCoeffs (#[] : Array R) : DensePoly R) = 0
     rfl
 
+/-- The `%` notation unfolds to the second component of `divMod`. -/
 theorem mod_eq_divMod [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) :
     p % q = (divMod p q).2 := by
@@ -930,6 +952,8 @@ theorem zero_mod_eq_zero_core {S : Type _}
     unfold divModArray
     simp [hzero, isZero, size, toArray, divModArrayAux]
 
+/-- If the dividend already has degree strictly below the divisor, `divMod` short-circuits to
+`(0, p)` without entering the long-division loop. -/
 theorem divMod_eq_zero_self_of_degree_lt [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) :
     p.degree?.getD 0 < q.degree?.getD 0 → divMod p q = (0, p) := by
@@ -970,6 +994,8 @@ private theorem ofCoeffs_set!_eq_add_monomial {S : Type _}
     · intro h
       exact hn h.symm
 
+/-- The array-backed long-division loop also short-circuits to `(0, p)` when the dividend
+already has degree below the divisor. -/
 theorem divModArray_eq_zero_self_of_degree_lt [Sub R] [Mul R]
     (p q : DensePoly R) (scaleLead : R → R)
     (hdeg : p.degree?.getD 0 < q.degree?.getD 0) :
@@ -1071,23 +1097,27 @@ theorem mod_degree_lt_of_pos_degree [One R] [Add R] [Sub R] [Mul R] [Div R]
     0 < q.degree?.getD 0 → (p % q).degree?.getD 0 < q.degree?.getD 0 := by
   simpa [DensePoly.mod] using divMod_remainder_degree_lt_of_pos_degree p q
 
+/-- Euclidean division identity: `(p / q) * q + (p % q) = p`. -/
 theorem div_mul_add_mod [One R] [Add R] [Sub R] [Mul R] [Div R] [DivModLaws R]
     (p q : DensePoly R) :
     (p / q) * q + (p % q) = p := by
   simpa [DensePoly.div, DensePoly.mod] using divMod_spec p q
 
+/-- If `q ∣ p`, then `p % q = 0`. -/
 theorem mod_eq_zero_of_dvd [One R] [Add R] [Sub R] [Mul R] [Div R] [DivModLaws R]
     (p q : DensePoly R) :
     q ∣ p → p % q = 0 := by
   exact DivModLaws.mod_eq_zero_of_dvd p q
 
+/-- Monic division and the generic `%` notation agree when the divisor is monic. -/
 theorem modByMonic_eq_mod [One R] [Add R] [Sub R] [Mul R] [Div R]
     [DivModLaws R]
     (p q : DensePoly R) (hq : Monic q) :
     modByMonic p q hq = p % q := by
   rw [modByMonic_eq_divModMonic, mod_eq_divMod, divModMonic_eq_divMod_of_monic p q hq]
 
-theorem mod_mod [One R] [Add R] [Sub R] [Mul R] [Div R]
+/-- The remainder modulo `q` is idempotent under `% q`. -/
+@[simp] theorem mod_mod [One R] [Add R] [Sub R] [Mul R] [Div R]
     [DivModLaws R]
     (p q : DensePoly R) :
     (p % q) % q = p % q := by
