@@ -1062,9 +1062,9 @@ final product check) pass through unchanged to `ofIndicatorCandidateFacts`.
 def ofCapSeparation
     {f : Hex.ZPoly} {d : Hex.LiftData}
     (rows_pos : HasPositiveDimension f d)
-    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
     (trueSupports :
       Set (Set (Fin (projectedRowsOfLiftData f d rows_pos).factorCount)))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
     (hcap_le : Hex.factorFastPrecisionCap f ≤ d.k)
     (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
     (hcap :
@@ -1115,9 +1115,9 @@ so callers consume the support-driven indicator partition directly.
 noncomputable def ofCapSeparationCanonicalIndicators
     {f : Hex.ZPoly} {d : Hex.LiftData}
     (rows_pos : HasPositiveDimension f d)
-    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
     (trueSupports :
       Set (Set (Fin (projectedRowsOfLiftData f d rows_pos).factorCount)))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
     (hcap_le : Hex.factorFastPrecisionCap f ≤ d.k)
     (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
     (hcap :
@@ -1148,8 +1148,8 @@ noncomputable def ofCapSeparationCanonicalIndicators
     projectedRowsOfLiftData_eq_trueFactorIndicatorLattice_of_cap
       f d rows_pos localFactorIndex localFactorDegree H trueSupports
       hcap_le C hC_nonneg hC hcap
-  ofCapSeparation rows_pos localFactorIndex localFactorDegree H
-    trueSupports hcap_le C hC_nonneg hC hcap mignotte_precision
+  ofCapSeparation rows_pos trueSupports localFactorIndex localFactorDegree H
+    hcap_le C hC_nonneg hC hcap mignotte_precision
     (expectedIndicatorArrayOfSupports trueSupports)
     (equivalenceClassIndicatorsOfLiftData_eq_expectedIndicatorArrayOfSupports
       rows_pos trueSupports lattice_eq_indicators)
@@ -1167,12 +1167,9 @@ under `hp : 2 ≤ d.p`).
 noncomputable def ofCapSeparationCanonicalIndicatorsAtPrecisionForCoeffBound
     {f : Hex.ZPoly} {d : Hex.LiftData}
     (rows_pos : HasPositiveDimension f d)
-    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
     (trueSupports :
       Set (Set (Fin (projectedRowsOfLiftData f d rows_pos).factorCount)))
-    (hp : 2 ≤ d.p)
-    (hk : d.k =
-      Hex.precisionForCoeffBound (Hex.factorFastPrecisionCap f) d.p)
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
     (hcap_le : Hex.factorFastPrecisionCap f ≤ d.k)
     (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
     (hcap :
@@ -1180,6 +1177,9 @@ noncomputable def ofCapSeparationCanonicalIndicatorsAtPrecisionForCoeffBound
         (badVectorWitnessOfLiftData f d rows_pos localFactorIndex
           localFactorDegree H)
         trueSupports)
+    (hp : 2 ≤ d.p)
+    (hk : d.k =
+      Hex.precisionForCoeffBound (Hex.factorFastPrecisionCap f) d.p)
     (nondegenerate :
       Hex.bhksDegenerateIndicatorPartition
           (projectedRowsOfLiftData f d rows_pos)
@@ -1195,8 +1195,9 @@ noncomputable def ofCapSeparationCanonicalIndicatorsAtPrecisionForCoeffBound
             some (expectedFactors.getD i 0, quotient))
     (product_eq : Array.polyProduct expectedFactors = f) :
     ForwardRecoveryInputs f d :=
-  ofCapSeparationCanonicalIndicators rows_pos localFactorIndex localFactorDegree H
-    trueSupports hcap_le C hC_nonneg hC hcap
+  ofCapSeparationCanonicalIndicators rows_pos trueSupports
+    localFactorIndex localFactorDegree H
+    hcap_le C hC_nonneg hC hcap
     (mignotte_precision_of_liftData_precisionForCoeffBound_factorFastPrecisionCap
       f d hp hk)
     nondegenerate expectedFactors hsize hcandidate product_eq
@@ -1298,9 +1299,9 @@ cap-level BHKS separation and the residual B7/A2 obligations,
 theorem bhksRecover_eq_some_of_capSeparation
     (f : Hex.ZPoly) (d : Hex.LiftData)
     (rows_pos : HasPositiveDimension f d)
-    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
     (trueSupports :
       Set (Set (Fin (projectedRowsOfLiftData f d rows_pos).factorCount)))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
     (hcap_le : Hex.factorFastPrecisionCap f ≤ d.k)
     (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
     (hcap :
@@ -1326,8 +1327,8 @@ theorem bhksRecover_eq_some_of_capSeparation
     (product_eq : Array.polyProduct expectedFactors = f) :
     Hex.bhksRecover? f d = some expectedFactors :=
   bhksRecover_eq_some_of_forwardInputs f d
-    (ForwardRecoveryInputs.ofCapSeparation rows_pos localFactorIndex
-      localFactorDegree H trueSupports hcap_le C hC_nonneg hC hcap
+    (ForwardRecoveryInputs.ofCapSeparation rows_pos trueSupports
+      localFactorIndex localFactorDegree H hcap_le C hC_nonneg hC hcap
       mignotte_precision expectedIndicators indicators_match nondegenerate
       expectedFactors hsize hcandidate product_eq)
 
@@ -1427,7 +1428,6 @@ theorem factorFast_ne_none_of_capSeparationCanonicalIndicatorsAtPrecisionForCoef
           (Hex.precisionForCoeffBound
             (Hex.factorFastPrecisionCap f) primeData.p)
           primeData))
-    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
     (trueSupports :
       Set (Set (Fin (projectedRowsOfLiftData
         (Hex.normalizeForFactor f).squareFreeCore
@@ -1437,6 +1437,26 @@ theorem factorFast_ne_none_of_capSeparationCanonicalIndicatorsAtPrecisionForCoef
             (Hex.factorFastPrecisionCap f) primeData.p)
           primeData)
         rows_pos).factorCount)))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (hcap_le :
+      Hex.factorFastPrecisionCap (Hex.normalizeForFactor f).squareFreeCore ≤
+      (Hex.henselLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.precisionForCoeffBound
+          (Hex.factorFastPrecisionCap f) primeData.p)
+        primeData).k)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (hcap :
+      ExecutableCapSeparationHypotheses
+        (badVectorWitnessOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.henselLiftData
+            (Hex.normalizeForFactor f).squareFreeCore
+            (Hex.precisionForCoeffBound
+              (Hex.factorFastPrecisionCap f) primeData.p)
+            primeData)
+          rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
     (hB_pos : 1 ≤ Hex.factorFastPrecisionCap f)
     (hnormalized :
       primeData = Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
@@ -1460,25 +1480,6 @@ theorem factorFast_ne_none_of_capSeparationCanonicalIndicatorsAtPrecisionForCoef
           (Hex.precisionForCoeffBound
             (Hex.factorFastPrecisionCap f) primeData.p)
           primeData).p)
-    (hcap_le :
-      Hex.factorFastPrecisionCap (Hex.normalizeForFactor f).squareFreeCore ≤
-      (Hex.henselLiftData
-        (Hex.normalizeForFactor f).squareFreeCore
-        (Hex.precisionForCoeffBound
-          (Hex.factorFastPrecisionCap f) primeData.p)
-        primeData).k)
-    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
-    (hcap :
-      ExecutableCapSeparationHypotheses
-        (badVectorWitnessOfLiftData
-          (Hex.normalizeForFactor f).squareFreeCore
-          (Hex.henselLiftData
-            (Hex.normalizeForFactor f).squareFreeCore
-            (Hex.precisionForCoeffBound
-              (Hex.factorFastPrecisionCap f) primeData.p)
-            primeData)
-          rows_pos localFactorIndex localFactorDegree H)
-        trueSupports)
     (nondegenerate :
       Hex.bhksDegenerateIndicatorPartition
           (projectedRowsOfLiftData
@@ -1511,8 +1512,8 @@ theorem factorFast_ne_none_of_capSeparationCanonicalIndicatorsAtPrecisionForCoef
     Hex.factorFast f ≠ none :=
   factorFast_ne_none_of_forwardInputs_at_cap f primeData hB_pos hnormalized
     (ForwardRecoveryInputs.ofCapSeparationCanonicalIndicatorsAtPrecisionForCoeffBound
-      rows_pos localFactorIndex localFactorDegree H trueSupports
-      hp hk hcap_le C hC_nonneg hC hcap nondegenerate
+      rows_pos trueSupports localFactorIndex localFactorDegree H
+      hcap_le C hC_nonneg hC hcap hp hk nondegenerate
       expectedFactors hsize hcandidate product_eq)
 
 /--
