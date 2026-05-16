@@ -3053,6 +3053,40 @@ theorem monic_primitive_sign_normalized_of_monic
       rw [hlead]; decide
     simp [hnot_neg]
 
+/--
+Thin umbrella wrapper exposing per-output monicness of `Hex.henselLiftData` in
+the Mathlib-facing surface.
+
+`Hex.henselLiftData` produces its `liftedFactors` by invoking
+`Hex.ZPoly.multifactorLiftQuadratic`, and the executable proof
+`Hex.ZPoly.multifactorLiftQuadratic_each_monic` already supplies monicness of
+every output index given monicness of the input core and the quadratic
+multifactor lift invariant. This wrapper simply re-exposes that conclusion at
+the `henselLiftData` umbrella for downstream consumers
+(notably `monic_primitive_sign_normalized_of_monic` above, which discharges
+the primitivity and sign-normalisation hypotheses required by
+`recombinationCandidate_eq_factor_of_recovery` once monicness is in hand).
+-/
+theorem henselLiftData_liftedFactor_monic
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hprime_invariant :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant
+        primeData.p B core
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList)
+    (hp : 1 < primeData.p)
+    (hB : 1 ≤ B) :
+    ∀ i : Fin (Hex.henselLiftData core B primeData).liftedFactors.size,
+      Hex.DensePoly.Monic
+        (Hex.henselLiftData core B primeData).liftedFactors[i] := by
+  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  intro i
+  exact Hex.ZPoly.multifactorLiftQuadratic_each_monic
+    primeData.p B core
+    (primeData.factorsModP.map Hex.FpPoly.liftToZ)
+    hB hp hcore_monic hprime_invariant i
+
 /-- Converse to `toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord`: if the
 transported polynomial is non-zero and a non-unit, then the executable
 `shouldRecordPolynomialFactor` check passes.  Used to package executable
