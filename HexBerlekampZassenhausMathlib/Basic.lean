@@ -3000,13 +3000,14 @@ private theorem densePoly_scale_one_int (f : Hex.ZPoly) :
 /--
 Under a monic core hypothesis, the scaled recovery theorem identifies the
 unscaled executable recombination candidate with the represented integer
-factor.
+factor.  This is the core recovery statement; the older
+`recombinationCandidate_eq_factor_of_recovery` wrapper also accepts the
+executable record-filter hypothesis needed by some callers.
 -/
-theorem recombinationCandidate_eq_factor_of_recovery
+theorem recombinationCandidate_eq_factor_of_recovery_of_monic_core
     {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
     (hcore_ne : core ≠ 0)
     (hcore_monic : Hex.DensePoly.Monic core)
-    (_hcore_record : Hex.shouldRecordPolynomialFactor core = true)
     (hdvd : factor ∣ core)
     (hfactor_prim : Hex.ZPoly.content factor = 1)
     (hfactor_norm : Hex.normalizeFactorSign factor = factor)
@@ -3035,6 +3036,26 @@ theorem recombinationCandidate_eq_factor_of_recovery
       (by simpa [Hex.ZPoly.Primitive] using hfactor_prim)
   rw [hprimitive]
   exact hfactor_norm
+
+/--
+Under a monic core hypothesis, the scaled recovery theorem identifies the
+unscaled executable recombination candidate with the represented integer
+factor.
+-/
+theorem recombinationCandidate_eq_factor_of_recovery
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (_hcore_record : Hex.shouldRecordPolynomialFactor core = true)
+    (hdvd : factor ∣ core)
+    (hfactor_prim : Hex.ZPoly.content factor = 1)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (_hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    recombinationCandidate d S = factor :=
+  recombinationCandidate_eq_factor_of_recovery_of_monic_core
+    hcore_ne hcore_monic hdvd hfactor_prim hfactor_norm _hirr hrep hprecision
 
 /--
 Hensel-correspondence wrapper for the monic-core recovery theorem.
@@ -3506,6 +3527,71 @@ theorem natDegree_toPolynomial_recombinationCandidate_eq_sum
   show (HexPolyZMathlib.toPolynomial (liftedFactor d i)).leadingCoeff = 1
   rw [HexPolyMathlib.leadingCoeff_toPolynomial]
   exact hd_liftedFactor_monic i
+
+/--
+The Mathlib-transported `natDegree` of a represented integer factor equals the
+sum of the Mathlib-transported `natDegree`s of the lifted factors in the
+representing subset.
+
+The proof identifies the represented factor with its recombination candidate
+by centered-lift recovery, then reuses
+`natDegree_toPolynomial_recombinationCandidate_eq_sum`.
+-/
+theorem natDegree_toPolynomial_eq_sum_of_represents
+    {core factor : Hex.ZPoly} {d : Hex.LiftData}
+    {S : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hdvd : factor ∣ core)
+    (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hfactor_prim : Hex.ZPoly.content factor = 1)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S) :
+    (HexPolyZMathlib.toPolynomial factor).natDegree =
+      ∑ i ∈ S,
+        (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree := by
+  have hrec_eq : recombinationCandidate d S = factor :=
+    recombinationCandidate_eq_factor_of_recovery_of_monic_core
+      hcore_ne hcore_monic hdvd hfactor_prim hfactor_norm hfactor_irr
+      hrep hprecision
+  have hlead : Hex.DensePoly.leadingCoeff core = (1 : Int) := hcore_monic
+  have hscaled :
+      scaledLiftedFactorProduct core d S = liftedFactorProduct d S := by
+    unfold scaledLiftedFactorProduct
+    rw [hlead]
+    exact densePoly_scale_one_int (liftedFactorProduct d S)
+  have hcenter :
+      Hex.centeredLiftPoly (liftedFactorProduct d S) (d.p ^ d.k) = factor := by
+    have h := centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
+      hcore_ne hdvd hrep hprecision
+    rwa [hscaled] at h
+  have hfactor_ne : factor ≠ 0 := by
+    intro hf
+    rcases hdvd with ⟨q, hq⟩
+    rw [hf, Hex.DensePoly.zero_mul (S := Int) q] at hq
+    exact hcore_ne hq
+  have hpk_pos : 0 < d.p ^ d.k := Nat.pow_pos d.p_pos
+  have hpk_ge_two : 2 ≤ d.p ^ d.k := by
+    rcases Nat.eq_or_lt_of_le
+        (Nat.one_le_iff_ne_zero.mpr (Nat.ne_of_gt hpk_pos)) with hpk1 | hpk_gt
+    · exfalso
+      apply hfactor_ne
+      apply Hex.DensePoly.ext_coeff
+      intro i
+      rw [← hcenter, Hex.coeff_centeredLiftPoly, ← hpk1,
+        Hex.DensePoly.coeff_zero]
+      unfold Hex.centeredModNat
+      have h1ne : (1 : Nat) ≠ 0 := by decide
+      simp only [if_neg h1ne]
+      simp
+    · omega
+  rw [← hrec_eq]
+  exact natDegree_toPolynomial_recombinationCandidate_eq_sum
+    hpk_ge_two hd_liftedFactor_monic S
 
 /--
 Integer-factor monic capstone for the Hensel-lifted subset correspondence.
