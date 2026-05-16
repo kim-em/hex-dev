@@ -386,7 +386,7 @@ libraries:
     done_through: 3
     status: active
   HexBerlekampZassenhausMathlib:
-    deps: [HexBerlekampZassenhaus, HexBerlekampMathlib, HexPolyZMathlib, HexMatrixMathlib]
+    deps: [HexBerlekampZassenhaus, HexBerlekampMathlib, HexPolyZMathlib, HexMatrixMathlib, HexLLLMathlib]
     mathlib: true
     done_through: 2
     status: active
