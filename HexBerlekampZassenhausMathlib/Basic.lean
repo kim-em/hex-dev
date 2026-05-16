@@ -2769,6 +2769,87 @@ theorem recombinationSearchModAux_isSome_of_liftedSubset_candidate_eq_factor_of_
   · simpa [heq] using hquot
 
 /--
+Exact-output matched-rest variant of
+`recombinationSearchModAux_isSome_of_liftedSubset_candidate_eq_factor_of_matches`.
+
+When the split selected from a matched remaining-index set is the first
+successful executable split, the returned factor list has the represented
+factor at its head. This is the local first-success bridge needed by the
+recursive coverage proof before it reasons about earlier successful splits.
+-/
+theorem recombinationSearchModAux_first_success_witness_of_liftedSubset_candidate_eq_factor_of_matches
+    {target factor quotient : Hex.ZPoly} {d : Hex.LiftData}
+    {J S : LiftedFactorSubset d} {localFactors : List Hex.ZPoly}
+    {fuel : Nat} {restFactors : List Hex.ZPoly}
+    {pre suffix : List (List Hex.ZPoly × List Hex.ZPoly)}
+    (htarget_ne_one : target ≠ 1)
+    (hmatches : LiftedFactorListMatches d J localFactors)
+    (hSJ : S ⊆ J)
+    (hne : J.Nonempty)
+    (hmin : J.min' hne ∈ S)
+    (hsplits :
+      Hex.subsetSplitsWithFirst localFactors =
+        pre ++
+          (liftedSubsetSelectedList d S, liftedSubsetSelectedList d (J \ S)) ::
+            suffix)
+    (hprefix :
+      ∀ split ∈ pre,
+        (let candidate' :=
+          Hex.normalizeFactorSign <|
+            Hex.ZPoly.primitivePart <|
+              Hex.centeredLiftPoly (Array.polyProduct split.1.toArray)
+                (d.p ^ d.k)
+        if Hex.shouldRecordPolynomialFactor candidate' then
+          match Hex.exactQuotient? target candidate' with
+          | none => none
+          | some quotient' =>
+              match Hex.recombinationSearchModAux quotient' (d.p ^ d.k) split.2 fuel with
+              | none => none
+              | some r => some (candidate' :: r)
+        else none) = none)
+    (heq : recombinationCandidate d S = factor)
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hsearch_rest :
+      Hex.recombinationSearchModAux quotient (d.p ^ d.k)
+        (liftedSubsetSelectedList d (J \ S)) fuel = some restFactors)
+    (hquot :
+      Hex.exactQuotient? target (recombinationCandidate d S) = some quotient) :
+    ∃ result,
+      Hex.recombinationSearchModAux target (d.p ^ d.k) localFactors (fuel + 1) =
+          some result ∧
+        ∃ emitted ∈ result,
+          Associated (HexPolyZMathlib.toPolynomial emitted)
+            (HexPolyZMathlib.toPolynomial factor) := by
+  have _hsplit_mem :
+      (liftedSubsetSelectedList d S, liftedSubsetSelectedList d (J \ S)) ∈
+        Hex.subsetSplitsWithFirst localFactors :=
+    liftedSubsetSplit_mem_subsetSplitsWithFirst_of_matches
+      hmatches hSJ hne hmin
+  refine ⟨factor :: restFactors, ?_, ?_⟩
+  · exact
+      Hex.recombinationSearchModAux_eq_some_of_step_of_prefix_none
+        (target := target)
+        (candidate := factor)
+        (quotient := quotient)
+        (modulus := d.p ^ d.k)
+        (localFactors := localFactors)
+        (selected := liftedSubsetSelectedList d S)
+        (rest := liftedSubsetSelectedList d (J \ S))
+        (restFactors := restFactors)
+        (pre := pre)
+        (suffix := suffix)
+        (fuel := fuel)
+        htarget_ne_one hsplits hprefix
+        (by simpa [recombinationCandidate] using heq.symm)
+        (by
+          simpa [heq] using
+            shouldRecord_recombinationCandidate_of_eq_factor heq hirr)
+        (by simpa [heq] using hquot)
+        hsearch_rest
+  · refine ⟨factor, by simp, ?_⟩
+    exact Associated.refl (HexPolyZMathlib.toPolynomial factor)
+
+/--
 Variant of
 `recombinationSearchMod_isSome_of_liftedSubset_candidate_eq_factor` that
 discharges the executable quotient check from ordinary divisibility plus the
