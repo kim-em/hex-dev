@@ -3166,17 +3166,15 @@ theorem liftedSubsetSplit_prefix_mem_of_matches
 
 Given that `localFactors` matches `J` and `J` is nonempty, `localFactors`
 decomposes as `liftedFactor d (J.min' hne) :: ys.map (liftedFactor d)` for
-some `ys` that is `Nodup`, missing `J.min' hne`, and contained in `J`. For
-any `S ⊆ J` containing `J.min' hne`, the `(S, J \ S)` partition has the
-canonical mask form indexed by `ys.map (· ∈ S)`. -/
+some `ys` contained in `J`. For any `S ⊆ J` containing `J.min' hne`, the
+`(S, J \ S)` partition has the canonical mask form indexed by
+`ys.map (· ∈ S)`. -/
 private theorem LiftedFactorListMatches.exists_tail_indices
     {d : Hex.LiftData} {J : LiftedFactorSubset d}
     {localFactors : List Hex.ZPoly}
     (hmatches : LiftedFactorListMatches d J localFactors)
     (hne : J.Nonempty) :
     ∃ (ys : List (LiftedFactorIndex d)),
-      ys.Nodup ∧
-      J.min' hne ∉ ys ∧
       (∀ y ∈ ys, y ∈ J) ∧
       localFactors = liftedFactor d (J.min' hne) :: ys.map (liftedFactor d) ∧
       ∀ (S : LiftedFactorSubset d), S ⊆ J → J.min' hne ∈ S →
@@ -3203,15 +3201,7 @@ private theorem LiftedFactorListMatches.exists_tail_indices
         rw [hxsIdx_case] at hxsIdx_head
         simp only [List.head?_cons, Option.some.injEq] at hxsIdx_head
         exact ⟨ys, by rw [hxsIdx_head]⟩
-  refine ⟨ys, ?_, ?_, ?_, ?_, ?_⟩
-  · -- Nodup ys
-    have hxsIdx_nodup : xsIdx.Nodup := (List.nodup_finRange _).filter _
-    rw [hxsIdx_eq] at hxsIdx_nodup
-    exact (List.nodup_cons.mp hxsIdx_nodup).2
-  · -- J.min' hne ∉ ys
-    have hxsIdx_nodup : xsIdx.Nodup := (List.nodup_finRange _).filter _
-    rw [hxsIdx_eq] at hxsIdx_nodup
-    exact (List.nodup_cons.mp hxsIdx_nodup).1
+  refine ⟨ys, ?_, ?_, ?_⟩
   · -- ∀ y ∈ ys, y ∈ J
     intro y hy
     have hy_xsIdx : y ∈ xsIdx := by rw [hxsIdx_eq]; exact List.mem_cons_of_mem _ hy
@@ -3312,7 +3302,7 @@ theorem liftedSubsetSplit_prefix_exists_mem_sdiff_of_matches
     liftedSubsetSplit_prefix_mem_of_matches hmatches hne hsplits hsplit
   refine ⟨T, hTJ, hmin_in_T, hsplit_eq, ?_⟩
   -- Step 2: decompose localFactors and obtain canonical mask equations.
-  obtain ⟨ys, hys_nodup, hmin_notin_ys, hys_in_J, hloc_eq, hS_eqs⟩ :=
+  obtain ⟨ys, hys_in_J, hloc_eq, hS_eqs⟩ :=
     hmatches.exists_tail_indices hne
   obtain ⟨hS_sel_cons, hS_rest_eq⟩ := hS_eqs S hSJ hmin
   obtain ⟨hT_sel_cons, hT_rest_eq⟩ := hS_eqs T hTJ hmin_in_T
