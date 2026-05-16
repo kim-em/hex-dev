@@ -2803,6 +2803,47 @@ theorem recombinationSearchMod_isSome_of_liftedSubset_factor_dvd
       (hsearch_rest quotient hquot) hquot
 
 /--
+Matched-rest variant of
+`recombinationSearchMod_isSome_of_liftedSubset_factor_dvd`: discharges the
+executable quotient check from divisibility plus monic positive-degree
+hypotheses at the recursive recombination state, where the running
+`localFactors` list matches an arbitrary remaining-index set `J` and the
+candidate subset `S ⊆ J` contains the current minimum remaining index.
+-/
+theorem recombinationSearchModAux_isSome_of_liftedSubset_factor_dvd_of_matches
+    {target factor : Hex.ZPoly} {d : Hex.LiftData}
+    {J S : LiftedFactorSubset d} {localFactors : List Hex.ZPoly}
+    {fuel : Nat}
+    (htarget_ne_one : target ≠ 1)
+    (hmatches : LiftedFactorListMatches d J localFactors)
+    (hSJ : S ⊆ J)
+    (hne : J.Nonempty)
+    (hmin : J.min' hne ∈ S)
+    (heq : recombinationCandidate d S = factor)
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hmonic : Hex.DensePoly.Monic factor)
+    (hdegree : 0 < factor.degree?.getD 0)
+    (hdvd : factor ∣ target)
+    (hsearch_rest :
+      ∀ quotient,
+        Hex.exactQuotient? target (recombinationCandidate d S) = some quotient →
+        (Hex.recombinationSearchModAux quotient (d.p ^ d.k)
+          (liftedSubsetSelectedList d (J \ S)) fuel).isSome = true) :
+    (Hex.recombinationSearchModAux target (d.p ^ d.k) localFactors
+        (fuel + 1)).isSome = true := by
+  rcases
+    exactQuotient?_recombinationCandidate_eq_some_of_eq_factor
+      (core := target) (factor := factor) (d := d) (S := S)
+      heq hmonic hdegree hdvd with
+    ⟨quotient, hquot, _hmul⟩
+  exact
+    recombinationSearchModAux_isSome_of_liftedSubset_candidate_eq_factor_of_matches
+      (target := target) (factor := factor) (quotient := quotient) (d := d)
+      (J := J) (S := S) (localFactors := localFactors) (fuel := fuel)
+      htarget_ne_one hmatches hSJ hne hmin heq hirr
+      (hsearch_rest quotient hquot) hquot
+
+/--
 Proof-facing package for a first successful recombination split.
 
 The executable theorem in `HexBerlekampZassenhaus.Basic` returns an exact
