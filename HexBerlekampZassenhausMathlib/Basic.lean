@@ -6402,6 +6402,141 @@ theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_count
       (factorFastCoreWithBound_some_factor_irreducible_of_count
         hcore_ne h hcount factor hfactor_mem)
 
+/--
+Universal-quantifier auxiliary for the recursive coverage capstone (#4301):
+under a `LiftedFactorSubsetPartition core d J target` rest-state predicate,
+`Hex.recombinationSearchModAux` returns `some result` and **every**
+irreducible integer divisor of `target` is associated to some emitted
+candidate in `result`.
+
+The deliverable theorem
+`recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition`
+specialises this universal statement to a fixed `factor` hypothesis.
+
+Proof outline (induction on `fuel`):
+* `fuel = 0`: `J.card < 0` is impossible.
+* `fuel = fuel' + 1`:
+  - If `J = ∅`: the partition's inherited `exists_subset` forces every
+    irreducible divisor of `target` to be represented by `∅`, contradicting
+    `not_represents_empty_of_irreducible_dvd_core`. Therefore `target` has
+    no irreducible divisors; combined with `target` monic and
+    `target ∣ core`, this gives `target = 1` and the executable returns
+    `some []`. The universal claim is vacuous (no irreducibles divide 1).
+  - If `J` is nonempty: `LiftedFactorSubsetPartition.cover_at_min` provides
+    an irreducible divisor `f_cov` of `target` whose representing subset
+    `S_cov` contains `J.min'`. The recovery theorem
+    `recombinationCandidate_eq_factor_of_recovery_of_monic_core` identifies
+    `recombinationCandidate d S_cov = f_cov`; the executable split membership
+    comes from `liftedSubsetSplit_mem_subsetSplitsWithFirst_of_matches`;
+    the prefix-none obligation is discharged by
+    `liftedFactorSubsetPartition_prefix_none` (with nodup from
+    `LiftedFactorListMatches.nodup_of_injOn`); the partition transports via
+    `liftedFactorSubsetPartition_transport` and matches via
+    `LiftedFactorListMatches.sdiff_of_subset`. The inductive hypothesis on
+    `(quotient, J \ S_cov)` then both supplies the recursive-rest success
+    witness and covers every irreducible divisor of `quotient`. For an
+    arbitrary irreducible `factor ∣ target`, the partition's
+    `pairwise_disjoint` (contrapositive via the shared `S_cov` ownership of
+    `J.min'`) and `unique_up_to_associated` fields decide whether
+    `factor` is associated to `f_cov` (in which case `f_cov` itself is the
+    emitted witness) or `factor ∣ quotient` (in which case the inductive
+    hypothesis supplies the witness in the recursive tail).
+-/
+private theorem recombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hd_liftedFactor_inj : Function.Injective (liftedFactor d))
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    ∀ {target : Hex.ZPoly} {J : LiftedFactorSubset d}
+      {localFactors : List Hex.ZPoly} {fuel : Nat},
+      Hex.DensePoly.Monic target →
+      target ∣ core →
+      LiftedFactorSubsetPartition core d J target →
+      LiftedFactorListMatches d J localFactors →
+      J.card < fuel →
+      ∃ result,
+        Hex.recombinationSearchModAux target (d.p ^ d.k) localFactors fuel =
+          some result ∧
+        ∀ factor : Hex.ZPoly,
+          Irreducible (HexPolyZMathlib.toPolynomial factor) →
+          factor ∣ target →
+          ∃ emitted ∈ result,
+            Associated (HexPolyZMathlib.toPolynomial emitted)
+              (HexPolyZMathlib.toPolynomial factor) := by
+  intro target J localFactors fuel htarget_monic htarget_dvd_core hpartition
+    hmatches hfuel
+  induction fuel generalizing target J localFactors with
+  | zero => omega
+  | succ fuel' ih =>
+    by_cases htarget_eq_one : target = 1
+    · -- `target = 1` branch: the executable returns `some []` directly, and the
+      -- universal claim is vacuous because no irreducible divides `1`.
+      subst htarget_eq_one
+      refine ⟨[], ?_, ?_⟩
+      · show Hex.recombinationSearchModAux 1 (d.p ^ d.k) localFactors (fuel' + 1) =
+          some []
+        unfold Hex.recombinationSearchModAux
+        simp
+      · intro factor hirr hdvd
+        exfalso
+        have hfactor_dvd_one_poly :
+            HexPolyZMathlib.toPolynomial factor ∣ (1 : Polynomial ℤ) := by
+          rw [show (1 : Polynomial ℤ) = HexPolyZMathlib.toPolynomial 1 from
+            toPolynomial_one_zpoly.symm]
+          exact HexPolyMathlib.toPolynomial_dvd hdvd
+        exact hirr.not_isUnit (isUnit_of_dvd_one hfactor_dvd_one_poly)
+    · -- `target ≠ 1` branch.
+      sorry
+
+/--
+Recursive coverage capstone for `Hex.recombinationSearchModAux` (#4301).
+
+Given a `LiftedFactorSubsetPartition core d J target` rest-state predicate at
+a recursive recombination level, and an irreducible integer divisor `factor`
+of `target`, the executable recombination search returns `some result` with
+`factor` (up to `Associated`) among the emitted candidates.
+
+Thin wrapper around the universally-quantified auxiliary
+`recombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition`,
+which carries out the actual fuel-based induction. -/
+theorem recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition
+    {core target factor : Hex.ZPoly} {d : Hex.LiftData}
+    {J : LiftedFactorSubset d} {localFactors : List Hex.ZPoly} {fuel : Nat}
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hd_liftedFactor_inj : Function.Injective (liftedFactor d))
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (htarget_monic : Hex.DensePoly.Monic target)
+    (htarget_dvd_core : target ∣ core)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (hmatches : LiftedFactorListMatches d J localFactors)
+    (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hfactor_dvd_target : factor ∣ target)
+    (hfuel : J.card < fuel) :
+    ∃ result,
+      Hex.recombinationSearchModAux target (d.p ^ d.k) localFactors fuel =
+        some result ∧
+      ∃ emitted ∈ result,
+        Associated (HexPolyZMathlib.toPolynomial emitted)
+          (HexPolyZMathlib.toPolynomial factor) := by
+  obtain ⟨result, hresult, hcovers⟩ :=
+    recombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition
+      hcore_ne hcore_monic hd_modulus hd_liftedFactor_monic
+      hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
+      htarget_monic htarget_dvd_core hpartition hmatches hfuel
+  exact ⟨result, hresult, hcovers factor hfactor_irr hfactor_dvd_target⟩
+
 end
 
 end HexBerlekampZassenhausMathlib
