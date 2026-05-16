@@ -1,4 +1,5 @@
 import HexLLL.Basic
+import HexGramSchmidtMathlib.Int
 
 /-!
 Bridge-facing independence theorems for `HexLLL`.
