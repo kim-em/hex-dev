@@ -132,6 +132,67 @@ theorem leadingGramMatrixInt_det_eq_gramDet_int
   leadingGramMatrixInt_det_eq_gramDet_int_of_nonneg b t ht
     (leadingGramMatrixInt_det_nonneg b t ht)
 
+/-- The leading executable Gram determinants of a square upper-triangular
+integer matrix with strictly positive diagonal are positive.
+
+This theorem is bridge-only: its proof identifies the executable `gramDet`
+with the Leibniz determinant of the leading Gram matrix via
+`Matrix.bareiss_eq_det`. -/
+theorem gramDet_pos_of_upperTriangular_pos_diag
+    {n : Nat} (M : Matrix Int n n)
+    (hzero : ∀ i j : Fin n, j.val < i.val -> M[i][j] = 0)
+    (hdiag : ∀ i : Fin n, 0 < M[i][i])
+    (k : Nat) (hk : k ≤ n) (hk' : 0 < k) :
+    0 < gramDet M k hk := by
+  cases k with
+  | zero =>
+      omega
+  | succ r =>
+      have hrn : r < n := Nat.lt_of_succ_le hk
+      have hlead :
+          Matrix.gramMatrix (Matrix.leadingRows M (r + 1) hk) =
+            Matrix.leadingPrefix (Matrix.gramMatrix M) (r + 1) hk := by
+        apply Vector.ext
+        intro i hi
+        apply Vector.ext
+        intro j hj
+        let iFin : Fin (r + 1) := ⟨i, hi⟩
+        let jFin : Fin (r + 1) := ⟨j, hj⟩
+        let ii : Fin n := ⟨i, Nat.lt_of_lt_of_le hi hk⟩
+        let jj : Fin n := ⟨j, Nat.lt_of_lt_of_le hj hk⟩
+        have hrow_i :
+            Matrix.row (Matrix.leadingRows M (r + 1) hk) iFin =
+              Matrix.row M ii := by
+          apply Vector.ext
+          intro c hc
+          simp [Matrix.row, Matrix.leadingRows, Matrix.ofFn, iFin, ii]
+        have hrow_j :
+            Matrix.row (Matrix.leadingRows M (r + 1) hk) jFin =
+              Matrix.row M jj := by
+          apply Vector.ext
+          intro c hc
+          simp [Matrix.row, Matrix.leadingRows, Matrix.ofFn, jFin, jj]
+        have hdot :
+            Matrix.dot (Matrix.row (Matrix.leadingRows M (r + 1) hk) iFin)
+                (Matrix.row (Matrix.leadingRows M (r + 1) hk) jFin) =
+              Matrix.dot (Matrix.row M ii) (Matrix.row M jj) := by
+          rw [hrow_i, hrow_j]
+        simpa [Matrix.gramMatrix, Matrix.leadingPrefix, Matrix.ofFn, iFin, jFin, ii, jj]
+          using hdot
+      have hdet_pos :
+          0 < Matrix.det (GramSchmidt.leadingGramMatrixInt M (r + 1) hk) := by
+        have hpos :=
+          Matrix.det_gramMatrix_leadingRows_pos_of_upperTriangular_pos_diag M hzero hdiag
+            (r + 1) hk
+        rwa [hlead, ← GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram] at hpos
+      have hdet_nat :
+          Matrix.det (GramSchmidt.leadingGramMatrixInt M (r + 1) hk) =
+            Int.ofNat (gramDet M (r + 1) hk) :=
+        leadingGramMatrixInt_det_eq_gramDet_int M (r + 1) hk
+      have hnat_int : 0 < Int.ofNat (gramDet M (r + 1) hk) := by
+        simpa [hdet_nat] using hdet_pos
+      exact Int.ofNat_lt.mp hnat_int
+
 
 /-- The executable scaled-coefficient pivot entry changes predictably under
 an earlier-row addition. This packages the Cramer/Bareiss pivot identity at
