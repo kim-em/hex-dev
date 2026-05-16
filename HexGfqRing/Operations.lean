@@ -418,6 +418,7 @@ canonical reduction of the difference of their canonical representatives. -/
       reduceMod f (reduceMod f a - reduceMod f b) :=
   rfl
 
+/-- Representative-level left-zero law used to build the quotient `Lean.Grind.Semiring`. -/
 theorem repr_zero_add {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) :
     repr (0 + x) = repr x := by
@@ -430,6 +431,7 @@ theorem repr_zero_add {f : FpPoly p} {hf : 0 < FpPoly.degree f}
           rw [FpPoly.zero_add]
     _ = repr x := reduceMod_repr x
 
+/-- Representative-level right-zero law used to build the quotient `Lean.Grind.Semiring`. -/
 theorem repr_add_zero {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) :
     repr (x + 0) = repr x := by
@@ -442,11 +444,13 @@ theorem repr_add_zero {f : FpPoly p} {hf : 0 < FpPoly.degree f}
           rw [FpPoly.add_zero]
     _ = repr x := reduceMod_repr x
 
+/-- Representative-level commutativity of addition used by quotient additive reasoning. -/
 theorem repr_add_comm {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x y : PolyQuotient f hf) :
     repr (x + y) = repr (y + x) := by
   simp [repr_add, FpPoly.add_comm]
 
+/-- Representative-level associativity of addition used to build the quotient `Lean.Grind.Semiring`. -/
 theorem repr_add_assoc {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x y z : PolyQuotient f hf) :
     repr ((x + y) + z) = repr (x + (y + z)) := by
@@ -460,6 +464,7 @@ theorem repr_add_assoc {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     _ = reduceMod f (repr x + reduceMod f (repr y + repr z)) := by
           exact (reduceMod_add_right_reduceMod f (repr x) (repr y + repr z)).symm
 
+/-- Representative-level left zero multiplication used by the quotient semiring instance. -/
 theorem repr_zero_mul {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) :
     repr (0 * x) = 0 := by
@@ -472,6 +477,7 @@ theorem repr_zero_mul {f : FpPoly p} {hf : 0 < FpPoly.degree f}
           rw [FpPoly.zero_mul]
     _ = 0 := reduceMod_zero f hf
 
+/-- Representative-level right zero multiplication used by the quotient semiring instance. -/
 theorem repr_mul_zero {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) :
     repr (x * 0) = 0 := by
@@ -484,6 +490,7 @@ theorem repr_mul_zero {f : FpPoly p} {hf : 0 < FpPoly.degree f}
           rw [FpPoly.mul_zero]
     _ = 0 := reduceMod_zero f hf
 
+/-- Representative-level left identity law for multiplication used by the quotient semiring instance. -/
 theorem repr_one_mul {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) :
     repr (1 * x) = repr x := by
@@ -497,6 +504,7 @@ theorem repr_one_mul {f : FpPoly p} {hf : 0 < FpPoly.degree f}
           rw [FpPoly.one_mul]
     _ = repr x := reduceMod_repr x
 
+/-- Representative-level right identity law for multiplication used by the quotient semiring instance. -/
 theorem repr_mul_one {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) :
     repr (x * 1) = repr x := by
@@ -510,11 +518,13 @@ theorem repr_mul_one {f : FpPoly p} {hf : 0 < FpPoly.degree f}
           rw [FpPoly.mul_one]
     _ = repr x := reduceMod_repr x
 
+/-- Representative-level commutativity of multiplication used by the quotient commutative ring instance. -/
 theorem repr_mul_comm {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x y : PolyQuotient f hf) :
     repr (x * y) = repr (y * x) := by
   simp [repr_mul, FpPoly.mul_comm]
 
+/-- Representative-level associativity of multiplication used to build the quotient `Lean.Grind.Semiring`. -/
 theorem repr_mul_assoc {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x y z : PolyQuotient f hf) :
     repr ((x * y) * z) = repr (x * (y * z)) := by
@@ -528,6 +538,7 @@ theorem repr_mul_assoc {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     _ = reduceMod f (repr x * reduceMod f (repr y * repr z)) := by
           exact (reduceMod_mul_right_reduceMod f (repr x) (repr y * repr z)).symm
 
+/-- Representative-level left distributivity used to build the quotient `Lean.Grind.Semiring`. -/
 theorem repr_left_distrib {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x y z : PolyQuotient f hf) :
     repr (x * (y + z)) = repr (x * y + x * z) := by
@@ -542,6 +553,7 @@ theorem repr_left_distrib {f : FpPoly p} {hf : 0 < FpPoly.degree f}
           (reduceMod f (repr x * repr y) + reduceMod f (repr x * repr z)) := by
           exact reduceMod_add_reduceMod_congr f (repr x * repr y) (repr x * repr z)
 
+/-- Representative-level right distributivity used to build the quotient `Lean.Grind.Semiring`. -/
 theorem repr_right_distrib {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x y z : PolyQuotient f hf) :
     repr ((x + y) * z) = repr (x * z + y * z) := by
@@ -556,6 +568,7 @@ theorem repr_right_distrib {f : FpPoly p} {hf : 0 < FpPoly.degree f}
           (reduceMod f (repr x * repr z) + reduceMod f (repr y * repr z)) := by
           exact reduceMod_add_reduceMod_congr f (repr x * repr z) (repr y * repr z)
 
+/-- Representative-level left inverse law used to build the quotient `Lean.Grind.Ring`. -/
 theorem repr_neg_add_self {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) :
     repr (-x + x) = 0 := by
@@ -569,6 +582,7 @@ theorem repr_neg_add_self {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     _ = 0 := by
           exact reduceMod_zero f hf
 
+/-- Representative-level right inverse law available for quotient additive reasoning. -/
 theorem repr_add_neg_self {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) :
     repr (x + -x) = 0 := by
@@ -582,6 +596,7 @@ theorem repr_add_neg_self {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     _ = 0 := by
           exact reduceMod_zero f hf
 
+/-- Representative-level subtraction self-cancellation available for quotient additive reasoning. -/
 theorem repr_sub_self {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) :
     repr (x - x) = 0 := by
@@ -592,6 +607,7 @@ theorem repr_sub_self {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     _ = 0 := by
       exact reduceMod_zero f hf
 
+/-- Quotient-level subtraction law used directly by the `Lean.Grind.Ring` instance. -/
 theorem sub_eq_add_neg {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x y : PolyQuotient f hf) :
     x - y = x + -y := by
