@@ -1325,6 +1325,18 @@ def RepresentsIntegerFactorAtLift
     Hex.ZPoly.reduceModPow factor d.p d.k
 
 /--
+Proof-side form of the executable recombination candidate, using the selected
+lifted-factor product directly.  The executable-list version is introduced
+later, after the list-selection bridge has been developed, and is proved equal
+to this definition.
+-/
+def liftedFactorProductCandidate (d : Hex.LiftData) (S : LiftedFactorSubset d) :
+    Hex.ZPoly :=
+  Hex.normalizeFactorSign <|
+    Hex.ZPoly.primitivePart <|
+      Hex.centeredLiftPoly (liftedFactorProduct d S) (d.p ^ d.k)
+
+/--
 Proof-facing package for the square-free Hensel subset correspondence over the
 executable `PrimeChoiceData`/`LiftData` surface.
 
@@ -1801,6 +1813,15 @@ structure LiftedFactorSubsetPartition
       Associated (HexPolyZMathlib.toPolynomial f)
         (HexPolyZMathlib.toPolynomial g) →
       S = T
+  support_subset_of_dvd_recombinationCandidate :
+    ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
+      Irreducible (HexPolyZMathlib.toPolynomial f) →
+      f ∣ target →
+      T ⊆ J →
+      f ∣ liftedFactorProductCandidate d T →
+      S ⊆ J →
+      RepresentsIntegerFactorAtLift core d f S →
+      S ⊆ T
 
 /--
 Specialisation of `LiftedFactorSubsetPartition.cover` to `J.min'`: the
@@ -1910,7 +1931,8 @@ theorem liftedFactorSubsetPartition_transport
       target_squarefree := hquot_sqfree
       cover := ?_
       pairwise_disjoint := ?_
-      unique_up_to_associated := ?_ }
+      unique_up_to_associated := ?_
+      support_subset_of_dvd_recombinationCandidate := ?_ }
   -- Cover for the new state at any `i ∈ J \ S`.
   · intro i hi_sdiff
     have ⟨hi_J, hi_notS⟩ := Finset.mem_sdiff.mp hi_sdiff
@@ -1974,6 +1996,19 @@ theorem liftedFactorSubsetPartition_transport
     exact h.unique_up_to_associated hirr_f (dvd_target_of_dvd_quotient hdvd_f)
       hTJ_orig hTrep hirr_g (dvd_target_of_dvd_quotient hdvd_g)
       hUJ_orig hUrep h_assoc
+  -- Support containment for candidates in the transported state.
+  · intro f U T hirr hdvd_quot hTJ hfactor_dvd_candidate hUJ hUrep
+    have hTJ_orig : T ⊆ J :=
+      fun i hi => (Finset.mem_sdiff.mp (hTJ hi)).1
+    have hUJ_orig : U ⊆ J :=
+      fun i hi => (Finset.mem_sdiff.mp (hUJ hi)).1
+    have hUT :
+        U ⊆ T :=
+      h.support_subset_of_dvd_recombinationCandidate hirr
+        (dvd_target_of_dvd_quotient hdvd_quot) hTJ_orig
+        hfactor_dvd_candidate hUJ_orig hUrep
+    intro i hiU
+    exact hUT hiU
 
 /-! ### LiftedFactorSubset → executable recombination split bridge
 
@@ -2878,6 +2913,43 @@ def recombinationCandidate (d : Hex.LiftData) (S : LiftedFactorSubset d) :
       Hex.centeredLiftPoly
         (Array.polyProduct (liftedSubsetSelectedList d S).toArray)
         (d.p ^ d.k)
+
+/-- The executable-list recombination candidate agrees with the proof-side
+product candidate. -/
+theorem recombinationCandidate_eq_liftedFactorProductCandidate
+    (d : Hex.LiftData) (S : LiftedFactorSubset d) :
+    recombinationCandidate d S = liftedFactorProductCandidate d S := by
+  unfold recombinationCandidate liftedFactorProductCandidate
+  rw [polyProduct_liftedSubsetSelectedList_eq_liftedFactorProduct]
+
+/--
+Structural support containment for a divisor of an executable recombination
+candidate under a lifted-factor subset partition.
+
+This is the projection consumed by the cover-at-min assembler: an irreducible
+integer factor represented by `S` cannot divide the candidate built from `T`
+unless all local factors in `S` were selected by `T`.
+-/
+theorem representingSubset_subset_of_dvd_recombinationCandidate
+    {core target f : Hex.ZPoly} {d : Hex.LiftData}
+    {J T S : LiftedFactorSubset d}
+    (_hcore_ne : core ≠ 0)
+    (_hcore_monic : Hex.DensePoly.Monic core)
+    (_hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (hTJ : T ⊆ J)
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial f))
+    (hfactor_dvd_target : f ∣ target)
+    (hfactor_dvd_candidate : f ∣ recombinationCandidate d T)
+    (hSJ : S ⊆ J)
+    (hrep : RepresentsIntegerFactorAtLift core d f S) :
+    S ⊆ T := by
+  apply hpartition.support_subset_of_dvd_recombinationCandidate
+    hirr hfactor_dvd_target hTJ
+  · rw [← recombinationCandidate_eq_liftedFactorProductCandidate]
+    exact hfactor_dvd_candidate
+  · exact hSJ
+  · exact hrep
 
 /-- The `Hex.centeredLiftPoly` operation is invariant under prior reduction by
 the same modulus, so the A2 recovery equality phrased in terms of
