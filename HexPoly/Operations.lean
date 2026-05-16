@@ -70,7 +70,12 @@ theorem coeff_scale [Mul R] (c : R) (p : DensePoly R) (n : Nat)
   rw [coeff_ofCoeffs_list]
   simpa [coeff] using list_getD_map_mul_zero (R := R) c p.toArray.toList n hzero
 
-theorem coeff_shift (n : Nat) (p : DensePoly R) (k : Nat) :
+@[simp] theorem coeff_scale_semiring {S : Type u} [Lean.Grind.Semiring S] [DecidableEq S]
+    (c : S) (p : DensePoly S) (n : Nat) :
+    (scale c p).coeff n = c * p.coeff n :=
+  coeff_scale c p n (Lean.Grind.Semiring.mul_zero c)
+
+@[simp] theorem coeff_shift (n : Nat) (p : DensePoly R) (k : Nat) :
     (shift n p).coeff k =
       if k < n then (Zero.zero : R) else p.coeff (k - n) := by
   unfold shift
@@ -99,6 +104,13 @@ theorem coeff_shift_scale [Mul R] (i : Nat) (c : R) (p : DensePoly R) (k : Nat)
   by_cases hk : k < i
   · simp [hk]
   · simp [hk, coeff_scale, hzero]
+
+@[simp] theorem coeff_shift_scale_semiring
+    {S : Type u} [Lean.Grind.Semiring S] [DecidableEq S]
+    (i : Nat) (c : S) (p : DensePoly S) (k : Nat) :
+    (shift i (scale c p)).coeff k =
+      if k < i then (Zero.zero : S) else c * p.coeff (k - i) :=
+  coeff_shift_scale i c p k (Lean.Grind.Semiring.mul_zero c)
 
 /-- Add two dense polynomials coefficientwise. -/
 def add [Add R] (p q : DensePoly R) : DensePoly R :=
