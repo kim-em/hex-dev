@@ -354,7 +354,7 @@ theorem coeff_neg [Sub R] (p : DensePoly R) (n : Nat)
   change (neg p).coeff n = ((0 : R) - p.coeff n)
   simp [neg, coeff_sub, hzero]
 
-theorem eval_zero [Add R] [Mul R] (x : R) :
+@[simp] theorem eval_zero [Add R] [Mul R] (x : R) :
     eval (0 : DensePoly R) x = 0 := by
   rfl
 
@@ -375,9 +375,23 @@ theorem eval_C [Add R] [Mul R] (c x : R)
   · change c ≠ Zero.zero at hc
     simp [eval, toArray, coeffs_C_of_ne_zero hc, hzero_mul, hzero_add]
 
-theorem derivative_zero [NatCast R] [Mul R] :
+@[simp] theorem derivative_zero [NatCast R] [Mul R] :
     derivative (0 : DensePoly R) = 0 := by
   rfl
+
+/-- Characterising coefficient law for the formal derivative: the coefficient of
+`x^n` in `derivative p` is `(n + 1) * p.coeff (n + 1)`. The explicit zero law
+`((n + 1 : Nat) : R) * 0 = 0` is needed because the generic `NatCast`/`Mul`/`Zero`
+interface does not guarantee it, mirroring the hypothesis on `coeff_scale`. -/
+theorem coeff_derivative [NatCast R] [Mul R] (p : DensePoly R) (n : Nat)
+    (hzero : ((n + 1 : Nat) : R) * (Zero.zero : R) = (Zero.zero : R)) :
+    (derivative p).coeff n = ((n + 1 : Nat) : R) * p.coeff (n + 1) := by
+  unfold derivative
+  rw [coeff_ofCoeffs_list, list_getD_map_range]
+  by_cases hn : n < p.size - 1
+  · simp [hn]
+  · have hp : p.size ≤ n + 1 := by omega
+    rw [coeff_eq_zero_of_size_le p hp, if_neg hn, hzero]
 
 end DensePoly
 end Hex
