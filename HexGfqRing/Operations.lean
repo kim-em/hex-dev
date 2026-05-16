@@ -231,7 +231,8 @@ theorem natCast_eq_of_mod_eq
     ((ZMod64.natCast_eq_natCast_iff (p := p) m n).2 h)
 
 /-- Equality of natural-number casts is equivalent to equality of the underlying reduced
-constant polynomials. -/
+constant polynomials. Internal stepping stone toward `natCast_eq_natCast_iff_mod_eq`; the forward
+direction projects quotient-level natCast equality to `reduceMod`-level equality. -/
 theorem natCast_eq_natCast_iff_reduceMod_const_eq
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (m n : Nat) :
     ((m : PolyQuotient f hf) = n) ↔
@@ -244,20 +245,9 @@ theorem natCast_eq_natCast_iff_reduceMod_const_eq
     apply ext
     simpa [repr_natCast] using h
 
-private theorem coeff_zero_C (c : ZMod64 p) : (FpPoly.C c).coeff 0 = c := by
-  by_cases hc : c = 0
-  · subst c
-    change (DensePoly.C (0 : ZMod64 p)).coeff 0 = 0
-    have hcoeffs : (DensePoly.C (0 : ZMod64 p)).coeffs = #[] :=
-      DensePoly.coeffs_C_zero
-    have hzero : (Zero.zero : ZMod64 p) = (0 : ZMod64 p) := by
-      change ZMod64.zero = ZMod64.natCast p 0
-      rfl
-    simpa [DensePoly.coeff, hcoeffs] using hzero
-  · change (DensePoly.C c).coeff 0 = c
-    simp [DensePoly.coeff, DensePoly.coeffs_C_of_ne_zero hc]
-
-/-- Equality of natural-number casts in the quotient ring is exactly equality modulo `p`. -/
+/-- Equality of natural-number casts in the quotient ring is exactly equality modulo `p`.
+This is the user-facing iff form (consumed for example by `Lean.Grind.IsCharP` on the field
+layer); the reverse direction reduces to `natCast_eq_of_mod_eq`. -/
 theorem natCast_eq_natCast_iff_mod_eq
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (m n : Nat) :
     ((m : PolyQuotient f hf) = n) ↔ m % p = n % p := by
@@ -276,7 +266,7 @@ theorem natCast_eq_natCast_iff_mod_eq
       simpa [hmred, hnred] using hrepr
     have hz : (m : ZMod64 p) = (n : ZMod64 p) := by
       have hcoeff := congrArg (fun g : FpPoly p => g.coeff 0) hconst
-      simpa [coeff_zero_C] using hcoeff
+      simpa [FpPoly.C] using hcoeff
     exact (ZMod64.natCast_eq_natCast_iff (p := p) m n).1 hz
   · intro h
     exact natCast_eq_of_mod_eq f hf h
