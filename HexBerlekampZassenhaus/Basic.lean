@@ -971,7 +971,11 @@ def exactQuotient? (target candidate : ZPoly) : Option ZPoly :=
     else
       none
 
-private theorem exactQuotient?_product
+/-- Successful exact-division extracts a multiplication witness:
+`exactQuotient? target candidate = some quotient` implies
+`quotient * candidate = target`. Forward companion of
+`exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree`. -/
+theorem exactQuotient?_product
     {target candidate quotient : ZPoly}
     (hquot : exactQuotient? target candidate = some quotient) :
     quotient * candidate = target := by

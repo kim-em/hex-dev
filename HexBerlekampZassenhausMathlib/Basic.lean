@@ -3169,6 +3169,90 @@ theorem toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord
     · exact hne_one' (by simpa using hone)
     · exact hne_neg_one' hneg_one
 
+/--
+Forward bridge from a successful executable recombination candidate quotient
+to a proof-side irreducible divisor of `target` together with its representing
+subset under a `LiftedFactorSubsetPartition`.
+
+Given a `LiftedFactorSubsetPartition core d J target` and an arbitrary lifted
+subset `T`, the hypotheses
+
+* `Hex.shouldRecordPolynomialFactor (recombinationCandidate d T) = true`, and
+* `Hex.exactQuotient? target (recombinationCandidate d T) = some quotient`
+
+are the two executable facts that any "non-`none` body" of one step in the
+recombination search produces.  The lemma packages from these:
+
+* the explicit product witness `quotient * recombinationCandidate d T = target`
+  (via `Hex.exactQuotient?_product`),
+* the proof-side divisibility `recombinationCandidate d T ∣ target`, and
+* an irreducible factor `g` of the candidate (via UFD existence in
+  `Polynomial ℤ`) that, via the partition's inherited
+  `HenselSubsetCorrespondenceRest.exists_subset`, is itself an irreducible
+  divisor of `target` with representing subset `S ⊆ J`.
+
+Used by the prefix-none assembler in the recursive coverage proof for
+`Hex.recombinationSearchModAux` (#4367/#4301) to compare an earlier executable
+split's selected subset against the partition's representing subsets using
+`pairwise_disjoint` / `unique_up_to_associated`.
+-/
+theorem exists_representingSubset_dvd_recombinationCandidate_of_exactQuotient
+    {core target quotient : Hex.ZPoly} {d : Hex.LiftData}
+    {J T : LiftedFactorSubset d}
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (hrecord :
+      Hex.shouldRecordPolynomialFactor (recombinationCandidate d T) = true)
+    (hquot :
+      Hex.exactQuotient? target (recombinationCandidate d T) = some quotient) :
+    quotient * recombinationCandidate d T = target ∧
+      recombinationCandidate d T ∣ target ∧
+        ∃ (g : Hex.ZPoly) (S : LiftedFactorSubset d),
+          Irreducible (HexPolyZMathlib.toPolynomial g) ∧
+          g ∣ target ∧
+          g ∣ recombinationCandidate d T ∧
+          S ⊆ J ∧
+          RepresentsIntegerFactorAtLift core d g S := by
+  -- Quotient equation and divisibility from `exactQuotient?_product`.
+  have hmul : quotient * recombinationCandidate d T = target :=
+    Hex.exactQuotient?_product hquot
+  have hcand_dvd_target : recombinationCandidate d T ∣ target := by
+    refine ⟨quotient, ?_⟩
+    rw [Hex.DensePoly.mul_comm_poly (S := Int)]
+    exact hmul.symm
+  -- Candidate is nonzero and not a unit after transport to `Polynomial ℤ`.
+  obtain ⟨hcand_poly_ne_zero, hcand_poly_nonunit⟩ :=
+    toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord hrecord
+  -- UFD existence: extract an irreducible factor of the candidate in
+  -- `Polynomial ℤ`.
+  obtain ⟨gPoly, hg_irr, hg_dvd_cand_poly⟩ :=
+    WfDvdMonoid.exists_irreducible_factor hcand_poly_nonunit hcand_poly_ne_zero
+  -- Bridge the irreducible factor back to a `Hex.ZPoly` divisor of the
+  -- candidate.
+  let g : Hex.ZPoly := HexPolyZMathlib.ofPolynomial gPoly
+  have hg_toPolynomial : HexPolyZMathlib.toPolynomial g = gPoly :=
+    HexPolyZMathlib.toPolynomial_ofPolynomial gPoly
+  have hg_dvd_cand : g ∣ recombinationCandidate d T := by
+    rcases hg_dvd_cand_poly with ⟨r, hr⟩
+    refine ⟨HexPolyZMathlib.ofPolynomial r, ?_⟩
+    apply HexPolyZMathlib.equiv.injective
+    simp only [HexPolyZMathlib.equiv_apply, HexPolyZMathlib.toPolynomial_mul,
+      HexPolyZMathlib.toPolynomial_ofPolynomial]
+    rw [hg_toPolynomial]
+    exact hr
+  have hg_dvd_target : g ∣ target := by
+    rcases hg_dvd_cand with ⟨r₁, hr₁⟩
+    rcases hcand_dvd_target with ⟨r₂, hr₂⟩
+    refine ⟨r₁ * r₂, ?_⟩
+    rw [hr₂, hr₁, Hex.DensePoly.mul_assoc_poly (S := Int)]
+  have hg_irr_toPoly : Irreducible (HexPolyZMathlib.toPolynomial g) := by
+    rw [hg_toPolynomial]; exact hg_irr
+  -- Apply the partition's inherited `exists_subset` to obtain the representing
+  -- subset for `g`.
+  obtain ⟨S, hSJ, hSrep⟩ :=
+    hpartition.exists_subset hg_irr_toPoly hg_dvd_target
+  exact ⟨hmul, hcand_dvd_target, g, S, hg_irr_toPoly, hg_dvd_target, hg_dvd_cand,
+    hSJ, hSrep⟩
+
 /-- Algorithm-side packaging for the exhaustive core branch in the form needed
 by UFD arguments over `Polynomial ℤ`.
 
