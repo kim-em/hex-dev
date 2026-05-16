@@ -4244,6 +4244,85 @@ theorem exists_representingSubset_dvd_recombinationCandidate_of_exactQuotient
   exact ⟨hmul, hcand_dvd_target, g, S, hg_irr_toPoly, hg_dvd_target, hg_dvd_cand,
     hSJ, hSrep⟩
 
+/-! ### Monicness of the executable recombination candidate -/
+
+/--
+Under monic lifted local factors and modulus `2 ≤ d.p ^ d.k`, the executable
+recombination candidate `recombinationCandidate d T` is monic for every lifted
+subset `T`.
+
+The proof mirrors the chain inside
+`natDegree_toPolynomial_recombinationCandidate_eq_sum`: the lifted-factor product
+is monic by `liftedFactorProduct_monic`, the centered lift preserves monicness
+under the modulus bound (`monic_centeredLiftPoly_of_monic`), and a monic
+polynomial is fixed by `primitivePart` and `normalizeFactorSign` (via
+`monic_primitive_sign_normalized_of_monic`), so the full normalisation chain
+collapses to the centred lift, which is monic.
+-/
+theorem recombinationCandidate_monic
+    {d : Hex.LiftData}
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic : ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (T : LiftedFactorSubset d) :
+    Hex.DensePoly.Monic (recombinationCandidate d T) := by
+  set lp := liftedFactorProduct d T with hlp_def
+  have hlp_monic : Hex.DensePoly.Monic lp :=
+    liftedFactorProduct_monic d T (fun i _ => hd_liftedFactor_monic i)
+  have hcl_monic :
+      Hex.DensePoly.Monic (Hex.centeredLiftPoly lp (d.p ^ d.k)) :=
+    monic_centeredLiftPoly_of_monic hlp_monic hd_modulus
+  obtain ⟨_, hcontent, hnorm⟩ :=
+    monic_primitive_sign_normalized_of_monic hcl_monic
+  have hprim :
+      Hex.ZPoly.primitivePart (Hex.centeredLiftPoly lp (d.p ^ d.k)) =
+        Hex.centeredLiftPoly lp (d.p ^ d.k) :=
+    Hex.ZPoly.primitivePart_eq_self_of_primitive _
+      (by simpa [Hex.ZPoly.Primitive] using hcontent)
+  have hrec_eq :
+      recombinationCandidate d T = Hex.centeredLiftPoly lp (d.p ^ d.k) := by
+    unfold recombinationCandidate
+    rw [polyProduct_liftedSubsetSelectedList_eq_liftedFactorProduct, ← hlp_def,
+      hprim, hnorm]
+  rw [hrec_eq]
+  exact hcl_monic
+
+/-- The `Polynomial ℤ` image of a monic-conditions recombination candidate is
+monic. Consumer-side packaging of `recombinationCandidate_monic` through
+`HexPolyMathlib.leadingCoeff_toPolynomial`. -/
+theorem toPolynomial_recombinationCandidate_monic
+    {d : Hex.LiftData}
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic : ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (T : LiftedFactorSubset d) :
+    (HexPolyZMathlib.toPolynomial (recombinationCandidate d T)).Monic := by
+  show (HexPolyZMathlib.toPolynomial (recombinationCandidate d T)).leadingCoeff = 1
+  rw [HexPolyMathlib.leadingCoeff_toPolynomial]
+  exact recombinationCandidate_monic hd_modulus hd_liftedFactor_monic T
+
+/-- The `Polynomial ℤ` image of a recombination candidate inherits squarefreeness
+from a square-free `target`, given `candidate ∣ target` (supplied by the
+executable quotient witness `hquot`).
+
+The reverse-coverage proof for the main candidate divisibility theorem
+(see `representedFactor_dvd_recombinationCandidate_of_subset`, #4457) needs
+`toPolynomial candidate` square-free to factor it into a Multiset of pairwise
+non-associated irreducibles. -/
+theorem toPolynomial_recombinationCandidate_squarefree
+    {core target quotient : Hex.ZPoly} {d : Hex.LiftData}
+    {J T : LiftedFactorSubset d}
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (hquot :
+      Hex.exactQuotient? target (recombinationCandidate d T) = some quotient) :
+    Squarefree (HexPolyZMathlib.toPolynomial (recombinationCandidate d T)) := by
+  have hmul : quotient * recombinationCandidate d T = target :=
+    Hex.exactQuotient?_product hquot
+  have hcand_dvd_target : recombinationCandidate d T ∣ target := by
+    refine ⟨quotient, ?_⟩
+    rw [Hex.DensePoly.mul_comm_poly (S := Int)]
+    exact hmul.symm
+  exact Squarefree.squarefree_of_dvd
+    (HexPolyMathlib.toPolynomial_dvd hcand_dvd_target) hpartition.target_squarefree
+
 /-- Algorithm-side packaging for the exhaustive core branch in the form needed
 by UFD arguments over `Polynomial ℤ`.
 
