@@ -352,6 +352,20 @@ def QuadraticMultifactorLiftInvariant
       QuadraticLiftLoopInvariant p f { g, h, s, t } ∧
         QuadraticMultifactorLiftInvariant p k lifted.h rest
 
+/--
+The split-coprimality boundary data needed to initialise every quadratic split
+in the sequential multifactor tree from factors modulo `p`.
+-/
+def QuadraticMultifactorCoprimeSplits
+    (p : Nat) [ZMod64.Bounds p] : List (FpPoly p) → Prop
+  | [] => True
+  | [_g] => True
+  | g :: rest =>
+      let h := Array.polyProduct ((rest.map FpPoly.liftToZ).toArray)
+      let xgcd := normalizedXGCD p (FpPoly.liftToZ g) h
+      xgcd.gcd = (1 : FpPoly p) ∧
+        QuadraticMultifactorCoprimeSplits p rest
+
 private theorem multifactorLiftQuadraticList_spec
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) (factors : List ZPoly)
@@ -697,6 +711,99 @@ theorem henselLiftQuadratic_h_monic
       (h := looped.h) (f := f) (p := p) (k := k)
       hpk_gt_one hcongr_form hg_monic_lifted hf_monic hh_red_ne_zero
   rw [hh_eq]; exact hmonic_reduce
+
+/--
+Build the recursive quadratic multifactor lift invariant from the natural
+mod-`p` boundary facts: monic lifted factors, product congruence, and coprime
+sequential splits.
+-/
+theorem quadraticMultifactorLiftInvariant_of_factorsModP
+    (p k : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
+    (f : ZPoly) (factors : List (FpPoly p))
+    (hp : 1 < p)
+    (hk : 1 ≤ k)
+    (hf_monic : DensePoly.Monic f)
+    (hfactors_monic : ∀ g ∈ factors, DensePoly.Monic g)
+    (hproduct_mod_p :
+      ZPoly.congr
+        (Array.polyProduct ((factors.map FpPoly.liftToZ).toArray))
+        f p)
+    (hcoprime : QuadraticMultifactorCoprimeSplits p factors)
+    (hnonempty : factors ≠ []) :
+    QuadraticMultifactorLiftInvariant p k f
+      (factors.map FpPoly.liftToZ) := by
+  induction factors generalizing f with
+  | nil =>
+      exact (hnonempty rfl).elim
+  | cons g rest ih =>
+      cases rest with
+      | nil =>
+          simp [QuadraticMultifactorLiftInvariant]
+      | cons h tail =>
+          let restFactorsFp : List (FpPoly p) := h :: tail
+          let restFactorsZ : List ZPoly := restFactorsFp.map FpPoly.liftToZ
+          let splitProduct := Array.polyProduct restFactorsZ.toArray
+          let xgcd := normalizedXGCD p (FpPoly.liftToZ g) splitProduct
+          let s := FpPoly.liftToZ xgcd.left
+          let t := FpPoly.liftToZ xgcd.right
+          let lifted := henselLiftQuadratic p k f (FpPoly.liftToZ g)
+            splitProduct s t
+          have hprod_split :
+              ZPoly.congr (FpPoly.liftToZ g * splitProduct) f p := by
+            simpa [restFactorsFp, restFactorsZ, splitProduct,
+              polyProduct_cons_toArray] using hproduct_mod_p
+          have hcoprime_split :
+              xgcd.gcd = (1 : FpPoly p) := by
+            simpa [QuadraticMultifactorCoprimeSplits, restFactorsFp,
+              restFactorsZ, splitProduct, xgcd] using hcoprime.1
+          have hbezout :
+              ZPoly.congr (s * FpPoly.liftToZ g + t * splitProduct) 1 p := by
+            simpa [s, t, xgcd] using
+              normalizedXGCD_liftToZ_bezout_congr_of_gcd_eq_one
+                p (FpPoly.liftToZ g) splitProduct hcoprime_split
+          have hg_monic : DensePoly.Monic (FpPoly.liftToZ g) :=
+            FpPoly.monic_liftToZ_of_monic g hp
+              (hfactors_monic g (by simp))
+          have hstart :
+              QuadraticLiftLoopInvariant p f
+                { g := FpPoly.liftToZ g, h := splitProduct, s := s, t := t } :=
+            QuadraticLiftLoopInvariant.of_product_bezout_monic
+              hprod_split hbezout hg_monic
+          have hh_congr :
+              ZPoly.congr lifted.h splitProduct p := by
+            simpa [lifted, splitProduct, xgcd, s, t] using
+              henselLiftQuadratic_h_congr_mod_base p k f
+                (FpPoly.liftToZ g) splitProduct s t hk hp hstart
+          have htail_product :
+              ZPoly.congr
+                (Array.polyProduct
+                  (((h :: tail).map FpPoly.liftToZ).toArray))
+                lifted.h p := by
+            simpa [restFactorsFp, restFactorsZ, splitProduct] using
+              ZPoly.congr_symm lifted.h splitProduct p hh_congr
+          have hh_monic : DensePoly.Monic lifted.h := by
+            simpa [lifted, splitProduct, xgcd, s, t] using
+              henselLiftQuadratic_h_monic p k f (FpPoly.liftToZ g)
+                splitProduct s t hk hp hf_monic hstart
+          have htail_monic :
+              ∀ g' ∈ (h :: tail), DensePoly.Monic g' := by
+            intro g' hg'
+            exact hfactors_monic g' (by simp [hg'])
+          have htail_coprime :
+              QuadraticMultifactorCoprimeSplits p (h :: tail) := by
+            simpa [QuadraticMultifactorCoprimeSplits, restFactorsFp,
+              restFactorsZ, splitProduct, xgcd] using hcoprime.2
+          have htail_nonempty : (h :: tail) ≠ [] := by simp
+          have htail_inv :
+              QuadraticMultifactorLiftInvariant p k lifted.h
+                ((h :: tail).map FpPoly.liftToZ) :=
+            ih lifted.h hh_monic htail_monic htail_product htail_coprime
+              htail_nonempty
+          exact ⟨by
+            simpa [restFactorsFp, restFactorsZ, splitProduct, xgcd, s, t,
+              lifted] using hstart, by
+            simpa [restFactorsFp, restFactorsZ, splitProduct, xgcd, s, t,
+              lifted] using htail_inv⟩
 
 private theorem multifactorLiftQuadraticList_each_monic
     (p k : Nat) [ZMod64.Bounds p]
