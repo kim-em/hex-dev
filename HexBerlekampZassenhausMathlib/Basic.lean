@@ -5337,14 +5337,12 @@ private theorem not_represents_empty_of_irreducible_dvd_core
     · rw [if_pos hi]
       exact centeredModNat_one_of_two_le hpk_ge_two
     · rw [if_neg hi]
-      change Hex.centeredModNat (0 : Int) (d.p ^ d.k) = (0 : Int)
       exact Hex.centeredModNat_zero (d.p ^ d.k)
   rw [hclpone] at hrec
   -- `factor = 1` after transport contradicts irreducibility (1 is a unit).
   have hpolyfactor_eq : HexPolyZMathlib.toPolynomial factor = 1 := by
     rw [← hrec]; exact toPolynomial_one_zpoly
-  rw [hpolyfactor_eq] at hfactor_irr
-  exact not_irreducible_one hfactor_irr
+  exact not_irreducible_one (hpolyfactor_eq ▸ hfactor_irr)
 
 /--
 Main candidate divisibility theorem for the Mathlib bridge of the
@@ -5427,8 +5425,7 @@ theorem representedFactor_dvd_recombinationCandidate_of_subset
       obtain ⟨u, hu⟩ := hfactor_dvd_target
       obtain ⟨v, hv⟩ := htarget_dvd_core
       refine ⟨u * v, ?_⟩
-      rw [hv, hu]
-      exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
+      rw [hv, hu, Hex.DensePoly.mul_assoc_poly (S := Int)]
     -- Derive `2 ≤ d.p^d.k` from `factor ≠ 0` and the centered-lift recovery,
     -- matching the pattern used in `representsIntegerFactorAtLift_monic`.
     have hd_modulus : 2 ≤ d.p ^ d.k := by
@@ -5477,8 +5474,7 @@ theorem representedFactor_dvd_recombinationCandidate_of_subset
         obtain ⟨r₁, hr₁⟩ := hg_dvd_cand
         obtain ⟨r₂, hr₂⟩ := hcand_dvd_target
         refine ⟨r₁ * r₂, ?_⟩
-        rw [hr₂, hr₁]
-        exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
+        rw [hr₂, hr₁, Hex.DensePoly.mul_assoc_poly (S := Int)]
       -- `i ∈ S ∩ S_g`, so `S` and `S_g` are not disjoint.
       have hnot_disjoint : ¬ Disjoint S S_g := by
         intro hdisj
