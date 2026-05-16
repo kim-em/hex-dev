@@ -3219,6 +3219,57 @@ theorem exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree
   rw [hdivMod_eq]
   simp [hmul]
 
+/--
+Non-monic packaging companion for `exactQuotient?_product`.
+
+For non-monic integer polynomials, an exact product equation alone does not
+identify the executable quotient: `DensePoly.divMod` performs coefficient
+division in `ℤ`, so downstream proofs must also supply the concrete
+`divMod` result.  This lemma records the remaining wrapper logic of
+`exactQuotient?`: a recorded non-unit candidate with zero executable
+remainder and the checked product equation is accepted with the witnessed
+quotient.
+-/
+theorem exactQuotient?_eq_some_of_divMod_eq_of_shouldRecord
+    {target candidate quotient : ZPoly}
+    (hrecord : shouldRecordPolynomialFactor candidate = true)
+    (hdivMod : DensePoly.divMod target candidate = (quotient, 0))
+    (hmul : quotient * candidate = target) :
+    exactQuotient? target candidate = some quotient := by
+  have hrecord_props :
+      (candidate ≠ 0 ∧ candidate ≠ 1) ∧
+        candidate ≠ DensePoly.C (-1 : Int) := by
+    simpa [shouldRecordPolynomialFactor] using hrecord
+  have hcandidate_ne : candidate ≠ 0 := by
+    exact hrecord_props.1.1
+  have hcandidate_ne_one : candidate ≠ 1 := by
+    exact hrecord_props.1.2
+  have hsize_pos : 0 < candidate.size := by
+    rcases Nat.lt_or_ge 0 candidate.size with h | h
+    · exact h
+    · exfalso
+      apply hcandidate_ne
+      apply DensePoly.ext_coeff
+      intro n
+      rw [DensePoly.coeff_zero]
+      exact DensePoly.coeff_eq_zero_of_size_le candidate (by omega)
+  have hisZero_false : candidate.isZero = false := by
+    unfold DensePoly.isZero
+    have hne : candidate.coeffs ≠ #[] := by
+      intro hempty
+      have : candidate.size = 0 := by
+        change candidate.coeffs.size = 0
+        rw [hempty]
+        rfl
+      omega
+    simpa using hne
+  unfold exactQuotient?
+  rw [hisZero_false]
+  simp only [Bool.false_or, decide_eq_true_eq]
+  rw [if_neg hcandidate_ne_one]
+  rw [hdivMod]
+  simp [hmul]
+
 private def positiveDivisors (n : Nat) : List Nat :=
   (List.range (n + 1)).filter fun d => d != 0 && n % d == 0
 
