@@ -52,9 +52,18 @@ total=0
 for bench in "$@"; do
   echo "::group::$bench"
   start=$(date +%s)
-  # Run list + verify as a pair. `set -e` propagates failure out.
-  lake exe "$bench" list
-  lake exe "$bench" verify
+  # Run list + verify as a pair. GitHub Actions builds these executables
+  # in the preceding step, so prefer the binary directly there; `lake exe`
+  # can spend the smoke budget on Lake replay checks rather than bench
+  # verification. Local runs keep `lake exe` so stale binaries are rebuilt.
+  bench_exe=".lake/build/bin/$bench"
+  if [ "${GITHUB_ACTIONS:-}" = "true" ] && [ -x "$bench_exe" ]; then
+    "$bench_exe" list
+    "$bench_exe" verify
+  else
+    lake exe "$bench" list
+    lake exe "$bench" verify
+  fi
   end=$(date +%s)
   elapsed=$((end - start))
   total=$((total + elapsed))
