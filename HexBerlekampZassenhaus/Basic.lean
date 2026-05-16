@@ -5001,7 +5001,12 @@ def exhaustiveSlowRawFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
     (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
       (choosePrimeData (normalizeForFactor f).squareFreeCore))
 
-private def factorSlowFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
+/-- Raw factor array produced by the slow exhaustive recombination branch.
+
+Exposed publicly so the Mathlib bridge layer can express per-branch
+irreducibility hypotheses for the assembled output theorem.  Internal callers
+still go through the `factorSlow` wrapper. -/
+def factorSlowFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
   let normalized := normalizeForFactor f
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
     reassemblePolynomialFactors normalized #[normalized.squareFreeCore]
@@ -5068,7 +5073,12 @@ API.
 def factorSlow (f : ZPoly) : Factorization :=
   factorSlowWithBound f (ZPoly.defaultFactorCoeffBound f)
 
-private def factorFastFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
+/-- Raw factor array produced by the fast BHKS branch, when it succeeds.
+
+Exposed publicly so the Mathlib bridge layer can express per-branch
+irreducibility hypotheses for the assembled output theorem.  Internal callers
+still go through the `factorFast` wrapper. -/
+def factorFastFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
   let normalized := normalizeForFactor f
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
     some (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
@@ -5840,6 +5850,24 @@ theorem reassemblePolynomialFactors_xPower_irreducible
     (hx : factor ∈ (xPowerFactorArray d.xPower).toList) :
     ZPoly.Irreducible factor :=
   xPowerFactorArray_irreducible d.xPower factor hx
+
+/-- Lift core-factor irreducibility through the reassembly.  When the
+repeated-part expansion fully consumes its residual (so the reassembly emits
+only `X` powers and the supplied core factors), every emitted raw factor is
+irreducible.  This is the Mathlib-free "reassemble lift" consumed by the
+assembled per-branch output theorem to discharge the `xPower` half of each
+branch automatically. -/
+theorem reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
+    (d : FactorNormalizationData) (coreFactors : Array ZPoly)
+    (hcomplete : reassemblyExpansionComplete d coreFactors)
+    (h_core : ∀ factor ∈ coreFactors.toList, ZPoly.Irreducible factor)
+    {factor : ZPoly}
+    (hmem : factor ∈ (reassemblePolynomialFactors d coreFactors).toList) :
+    ZPoly.Irreducible factor := by
+  rcases reassemblePolynomialFactors_mem_xPower_or_core_of_expansionComplete
+      d coreFactors factor hcomplete hmem with hx | hcore
+  · exact xPowerFactorArray_irreducible d.xPower factor hx
+  · exact h_core factor hcore
 
 /-- Membership classifier for the constant square-free-core branch. The only
 raw factors requiring irreducibility content are extracted powers of `X`; the

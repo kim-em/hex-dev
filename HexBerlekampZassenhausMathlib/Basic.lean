@@ -7202,13 +7202,80 @@ private theorem polynomialIrreducible_toPolynomial_normalizeFactorSign_of_zpolyI
   · rw [if_neg hlc]
     exact hirr_poly
 
-/-- `Hex.ZPoly.Irreducible` is preserved by `Hex.normalizeFactorSign`. -/
-private theorem zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible
+/-- `Hex.ZPoly.Irreducible` is preserved by `Hex.normalizeFactorSign`.
+
+Exposed publicly so the assembled per-branch output theorem can lift raw
+factor irreducibility to entry irreducibility (entries pass through
+`collectFactorMultiplicities`, which normalises each raw factor's sign). -/
+theorem zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible
     {f : Hex.ZPoly} (hirr : Hex.ZPoly.Irreducible f) :
     Hex.ZPoly.Irreducible (Hex.normalizeFactorSign f) :=
   (Hex.ZPoly.Irreducible_iff_polynomialIrreducible _).mpr
     (polynomialIrreducible_toPolynomial_normalizeFactorSign_of_zpolyIrreducible
       hirr)
+
+/-- **#4008 assembled per-branch output theorem.**
+
+Every recorded entry of `Hex.factorWithBound f B` is `Hex.ZPoly.Irreducible`
+once each branch's chosen raw factor array is irreducible.  The single
+hypothesis `h_raw` is dispatched by the public fast/slow case-split exposed
+through `Hex.factorWithBound_entry_mem_raw_source`: it asks the consumer to
+prove that every raw factor produced by the chosen branch (the fast BHKS
+output when `factorFastFactorsWithBound = some _`, or the slow exhaustive
+output when `factorFastFactorsWithBound = none`) is `Hex.ZPoly.Irreducible`.
+The recorded entry's first component is the `Hex.normalizeFactorSign`-image
+of one such raw factor, so `zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible`
+discharges the sign-normalisation step.
+
+Combined with the Mathlib-free reassembly lift
+`Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible`,
+the typical downstream consumer (e.g. `factorWithBound_entries_irreducible` of
+#3987, or the capstone `factor_irreducible_of_nonUnit` of #4170) feeds in
+core-factor irreducibility for each sub-branch (singleton, fast-core, slow
+exhaustive, quadratic, constant) plus `reassemblyExpansionComplete`, and the
+extracted-`X` half is handled automatically by `xPowerFactorArray_irreducible`.
+
+The hypothesis is stated in the symmetric "raw factors are irreducible" form
+rather than enumerating each sub-branch because the same raw-to-entry lift
+applies uniformly across all branches; case-by-case dispatch lives in the
+consumer where the supporting per-branch theorems naturally compose. -/
+theorem factorWithBound_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible
+    {f : Hex.ZPoly} {B : Nat} {entry : Hex.ZPoly × Nat}
+    (hmem : entry ∈ (Hex.factorWithBound f B).factors.toList)
+    (h_raw :
+      ∀ rawFactors : Array Hex.ZPoly,
+        (Hex.factorFastFactorsWithBound f B = some rawFactors ∨
+          (Hex.factorFastFactorsWithBound f B = none ∧
+            rawFactors = Hex.factorSlowFactorsWithBound f B)) →
+        ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Irreducible raw) :
+    Hex.ZPoly.Irreducible entry.1 := by
+  obtain ⟨rawFactors, hsource, raw, hraw_mem, hentry_eq⟩ :=
+    Hex.factorWithBound_entry_mem_raw_source f B entry hmem
+  rw [hentry_eq]
+  exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible
+    (h_raw rawFactors hsource raw hraw_mem)
+
+/-- Default-precision specialisation of
+`factorWithBound_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible` for
+the public `Hex.factor` entry point.  This is the form consumed by the
+HO-1 capstone `factor_irreducible_of_nonUnit` (#4170). -/
+theorem factor_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible
+    {f : Hex.ZPoly} {entry : Hex.ZPoly × Nat}
+    (hmem : entry ∈ (Hex.factor f).factors.toList)
+    (h_raw :
+      ∀ rawFactors : Array Hex.ZPoly,
+        (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
+            some rawFactors ∨
+          (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
+              none ∧
+            rawFactors =
+              Hex.factorSlowFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f))) →
+        ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Irreducible raw) :
+    Hex.ZPoly.Irreducible entry.1 :=
+  factorWithBound_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible
+    (B := Hex.ZPoly.defaultFactorCoeffBound f)
+    (by simpa [Hex.factor_eq_factorWithBound_default] using hmem)
+    h_raw
 
 /-- **#4006 slow-path bridge (deliverable 2).**
 
