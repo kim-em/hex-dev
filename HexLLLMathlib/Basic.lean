@@ -1,4 +1,5 @@
 import HexLLL.Basic
+import HexGramSchmidtMathlib.Int
 import HexMatrixMathlib.RankSpanNullspace
 import Mathlib.Analysis.InnerProductSpace.GramSchmidtOrtho
 

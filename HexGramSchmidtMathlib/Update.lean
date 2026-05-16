@@ -518,6 +518,58 @@ theorem scaledCoeffs_adjacentSwap_pivot (b : Matrix Int n m)
     _ = GramSchmidt.entry (scaledCoeffs b) k km1 := by
           rw [← scaledCoeffs_eq_scaledCoeffMatrix_det]
 
+
+theorem gramDet_adjacentSwap_pivot (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.val)
+    (hdet : gramDet b k.val (Nat.le_of_lt k.isLt) ≠ 0) :
+    let km1 := GramSchmidt.prevRow k hk
+    let B : Int := GramSchmidt.entry (scaledCoeffs b) k km1
+    ((gramDet (adjacentSwap b k hk) k.val (Nat.le_of_lt k.isLt) : Nat) : Int) =
+      (((gramDet b (k.val + 1) (Nat.succ_le_of_lt k.isLt) : Nat) : Int) *
+          ((gramDet b km1.val (Nat.le_of_lt km1.isLt) : Nat) : Int) + B ^ 2) /
+        ((gramDet b k.val (Nat.le_of_lt k.isLt) : Nat) : Int) := by
+  let km1 := GramSchmidt.prevRow k hk
+  let B : Int := GramSchmidt.entry (scaledCoeffs b) k km1
+  have hkm1 : km1.val + 1 = k.val := by
+    dsimp [km1, GramSchmidt.prevRow]; omega
+  have hprod :=
+    GramSchmidt.Int.gramDet_rowSwap_adjacent_pivot_product
+      (b := b) (km1 := km1) (k := k) hkm1
+  -- `hprod` is in terms of `Matrix.rowSwap`; `adjacentSwap` is exactly that.
+  have hdk_pos :
+      ((gramDet b k.val (Nat.le_of_lt k.isLt) : Nat) : Int) ≠ 0 := by
+    intro h
+    apply hdet
+    exact Int.ofNat.inj h
+  -- From dprime_int * dk_int = (rhs) and dk_int ≠ 0, deduce dprime_int = rhs / dk_int.
+  -- Goal: ((gramDet (adjacentSwap b k hk) k.val ...) : Int) = (rhs) / dk_int.
+  show ((gramDet (Matrix.rowSwap b km1 k) k.val (Nat.le_of_lt k.isLt) : Nat) : Int) =
+      (((gramDet b (k.val + 1) (Nat.succ_le_of_lt k.isLt) : Nat) : Int) *
+          ((gramDet b km1.val (Nat.le_of_lt km1.isLt) : Nat) : Int) + B ^ 2) /
+        ((gramDet b k.val (Nat.le_of_lt k.isLt) : Nat) : Int)
+  rw [← hprod]
+  exact (Int.mul_ediv_cancel _ hdk_pos).symm
+
+theorem adjacentSwap_gramDetNumerator_dvd (b : Matrix Int n m)
+    (k : Fin n) (hk : 0 < k.val)
+    (hdet : gramDet b k.val (Nat.le_of_lt k.isLt) ≠ 0) :
+    adjacentSwapDenom b k ∣ adjacentSwapGramDetNumerator b k hk := by
+  let km1 := GramSchmidt.prevRow k hk
+  have hkm1 : km1.val + 1 = k.val := by
+    dsimp [km1, GramSchmidt.prevRow]; omega
+  have hprod :=
+    GramSchmidt.Int.gramDet_rowSwap_adjacent_pivot_product
+      (b := b) (km1 := km1) (k := k) hkm1
+  -- The numerator equals dprime_int * dk_int, hence dk_int divides it.
+  show ((gramDet b k.val (Nat.le_of_lt k.isLt) : Nat) : Int) ∣
+      adjacentSwapGramDetNumerator b k hk
+  show ((gramDet b k.val (Nat.le_of_lt k.isLt) : Nat) : Int) ∣
+      ((gramDet b (k.val + 1) (Nat.succ_le_of_lt k.isLt) : Nat) : Int) *
+          ((gramDet b km1.val (Nat.le_of_lt km1.isLt) : Nat) : Int) +
+        (GramSchmidt.entry (scaledCoeffs b) k km1) ^ 2
+  rw [← hprod]
+  exact ⟨((gramDet (Matrix.rowSwap b km1 k) k.val (Nat.le_of_lt k.isLt) : Nat) : Int),
+    Int.mul_comm _ _⟩
+
 end GramSchmidt.Int
 
 end Hex
