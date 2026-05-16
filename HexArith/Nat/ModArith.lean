@@ -10,8 +10,9 @@ Montgomery inversion over `R = 2^k`.
 namespace Nat
 
 /--
-An odd number is coprime to every power of two; this is the shape needed for
-Montgomery inversion over `R = 2^k`.
+An odd number is coprime to every power of two. Montgomery inversion uses this
+exact named bridge to discharge the `Nat.Coprime p (2 ^ k)` side condition for
+the radix `R = 2^k`.
 -/
 theorem coprime_pow_two_of_odd {p k : Nat} (hp : p % 2 = 1) :
     Nat.Coprime p (2 ^ k) := by
