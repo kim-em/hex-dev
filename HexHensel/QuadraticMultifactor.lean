@@ -889,6 +889,173 @@ theorem quadraticMultifactorLiftInvariant_of_factorsModP
             simpa [restFactorsFp, restFactorsZ, splitProduct, xgcd, s, t,
               lifted] using htail_inv⟩
 
+/-- Output length of `multifactorLiftQuadraticList` matches the input list length.
+This is the structural fact used by indexed per-output statements such as
+`multifactorLiftQuadraticList_each_congr_mod_base`. -/
+private theorem multifactorLiftQuadraticList_toList_length
+    (p k : Nat) [ZMod64.Bounds p] (f : ZPoly) (factors : List ZPoly) :
+    (multifactorLiftQuadraticList p k f factors).toList.length = factors.length := by
+  induction factors generalizing f with
+  | nil => simp [multifactorLiftQuadraticList]
+  | cons g rest ih =>
+      cases rest with
+      | nil => simp [multifactorLiftQuadraticList]
+      | cons h tail =>
+          let restFactors := (h :: tail).toArray
+          let splitProduct := Array.polyProduct restFactors
+          let xgcd := normalizedXGCD p g splitProduct
+          let s := FpPoly.liftToZ xgcd.left
+          let t := FpPoly.liftToZ xgcd.right
+          let lifted := henselLiftQuadratic p k f g splitProduct s t
+          have hexpand :
+              (multifactorLiftQuadraticList p k f (g :: h :: tail)).toList =
+                lifted.g ::
+                  (multifactorLiftQuadraticList p k lifted.h (h :: tail)).toList := by
+            simp [multifactorLiftQuadraticList, restFactors, splitProduct,
+              xgcd, s, t, lifted]
+          rw [hexpand]
+          simp [ih lifted.h]
+
+private theorem multifactorLiftQuadratic_size_eq_input
+    (p k : Nat) [ZMod64.Bounds p] (f : ZPoly) (factors : Array ZPoly) :
+    (multifactorLiftQuadratic p k f factors).size = factors.size := by
+  unfold multifactorLiftQuadratic
+  rw [Array.size_eq_length_toList,
+    multifactorLiftQuadraticList_toList_length, ← Array.size_eq_length_toList]
+
+/-- Helper: list-level per-output mod-`p` preservation, stated via `getD 0` to
+avoid index-proof motive issues. Each entry of
+`(multifactorLiftQuadraticList p k f factors).toList` is congruent modulo `p`
+to the corresponding entry of `factors`. -/
+private theorem multifactorLiftQuadraticList_each_congr_mod_base
+    (p k : Nat) [ZMod64.Bounds p]
+    (f : ZPoly) (factors : List ZPoly)
+    (hk : 1 ≤ k)
+    (hp : 1 < p)
+    (hf_monic : DensePoly.Monic f)
+    (hfactors_monic : ∀ g ∈ factors, DensePoly.Monic g)
+    (hinv : QuadraticMultifactorLiftInvariant p k f factors)
+    (hproduct : ZPoly.congr (Array.polyProduct factors.toArray) f p) :
+    ∀ (i : Nat),
+      ZPoly.congr
+        ((multifactorLiftQuadraticList p k f factors).toList[i]?.getD 0)
+        (factors[i]?.getD 0) p := by
+  induction factors generalizing f with
+  | nil =>
+      intro i
+      simp [multifactorLiftQuadraticList]
+      exact ZPoly.congr_refl 0 p
+  | cons g rest ih =>
+      cases rest with
+      | nil =>
+          intro i
+          have hsingleton :
+              (multifactorLiftQuadraticList p k f [g]).toList =
+                [ZPoly.reduceModPow f p k] := by
+            simp [multifactorLiftQuadraticList]
+          rw [hsingleton]
+          match i with
+          | 0 =>
+              simp only [List.getElem?_cons_zero, Option.getD_some]
+              have hprod_g : ZPoly.congr g f p := by
+                have hpprod : Array.polyProduct [g].toArray = g := by
+                  simp [polyProduct_singleton]
+                rw [hpprod] at hproduct
+                exact hproduct
+              have hreduce :
+                  ZPoly.congr (ZPoly.reduceModPow f p k) f p := by
+                have hreduce_pk : ZPoly.congr (ZPoly.reduceModPow f p k) f (p ^ k) :=
+                  ZPoly.congr_reduceModPow f p k (Nat.pow_pos (ZMod64.Bounds.pPos (p := p)))
+                have hreduce_p : ZPoly.congr (ZPoly.reduceModPow f p k) f (p ^ 1) :=
+                  congr_of_pow_le p 1 k _ _ hk hreduce_pk
+                simpa [Nat.pow_one] using hreduce_p
+              exact ZPoly.congr_trans _ _ _ p hreduce (ZPoly.congr_symm _ _ _ hprod_g)
+          | Nat.succ i' =>
+              simp
+              exact ZPoly.congr_refl 0 p
+      | cons h tail =>
+          intro i
+          rcases hinv with ⟨hstart, htail⟩
+          let restFactors := (h :: tail).toArray
+          let splitProduct := Array.polyProduct restFactors
+          let xgcd := normalizedXGCD p g splitProduct
+          let s := FpPoly.liftToZ xgcd.left
+          let t := FpPoly.liftToZ xgcd.right
+          let lifted := henselLiftQuadratic p k f g splitProduct s t
+          have hstart' :
+              QuadraticLiftLoopInvariant p f { g, h := splitProduct, s, t } := by
+            simpa [restFactors, splitProduct, xgcd, s, t] using hstart
+          have htail' :
+              QuadraticMultifactorLiftInvariant p k lifted.h (h :: tail) := by
+            simpa [lifted, splitProduct, restFactors, xgcd, s, t] using htail
+          have hh_monic : DensePoly.Monic lifted.h := by
+            simpa [lifted, splitProduct, restFactors, xgcd, s, t] using
+              henselLiftQuadratic_h_monic p k f g splitProduct s t hk hp hf_monic hstart'
+          have htail_factors_monic :
+              ∀ q ∈ (h :: tail), DensePoly.Monic q := by
+            intro q hq
+            exact hfactors_monic q (by simp [hq])
+          have hh_congr_p : ZPoly.congr lifted.h splitProduct p := by
+            simpa [lifted, splitProduct, restFactors, xgcd, s, t] using
+              henselLiftQuadratic_h_congr_mod_base p k f g splitProduct s t hk hp hstart'
+          have htail_product :
+              ZPoly.congr (Array.polyProduct (h :: tail).toArray) lifted.h p :=
+            ZPoly.congr_symm _ _ _ hh_congr_p
+          have ihtail :=
+            ih lifted.h hh_monic htail_factors_monic htail' htail_product
+          have hexpand :
+              (multifactorLiftQuadraticList p k f (g :: h :: tail)).toList =
+                lifted.g ::
+                  (multifactorLiftQuadraticList p k lifted.h (h :: tail)).toList := by
+            simp [multifactorLiftQuadraticList, restFactors, splitProduct,
+              xgcd, s, t, lifted]
+          rw [hexpand]
+          match i with
+          | 0 =>
+              simp only [List.getElem?_cons_zero, Option.getD_some]
+              have hg_congr_p : ZPoly.congr lifted.g g p := by
+                simpa [lifted, splitProduct, restFactors, xgcd, s, t] using
+                  henselLiftQuadratic_g_congr_mod_base p k f g splitProduct s t hk hp hstart'
+              exact hg_congr_p
+          | Nat.succ i' =>
+              simp only [List.getElem?_cons_succ]
+              exact ihtail i'
+
+/-- Each output of `multifactorLiftQuadratic` is congruent modulo `p` to the
+corresponding input factor, given the monic / lift-invariant / mod-`p` product
+hypotheses of `quadraticMultifactorLiftInvariant_of_factorsModP`.
+
+This is the per-output mod-`p` preservation surface consumed by the Mathlib
+bridge `henselLiftData_liftedFactor_injective` (#4525): pairing it with
+`Nodup` of the original modular factor list shows distinct lifted factors
+remain distinct as integer polynomials.
+
+The size equality `multifactorLiftQuadratic_size_eq_input` is the companion
+fact bridging output array indices to input array indices. -/
+theorem multifactorLiftQuadratic_each_congr_mod_base
+    (p k : Nat) [ZMod64.Bounds p]
+    (f : ZPoly) (factors : Array ZPoly)
+    (hk : 1 ≤ k)
+    (hp : 1 < p)
+    (hf_monic : DensePoly.Monic f)
+    (hfactors_monic : ∀ g ∈ factors, DensePoly.Monic g)
+    (hinv : QuadraticMultifactorLiftInvariant p k f factors.toList)
+    (hproduct : ZPoly.congr (Array.polyProduct factors) f p) :
+    ∀ (i : Nat),
+      ZPoly.congr
+        ((multifactorLiftQuadratic p k f factors).toList[i]?.getD 0)
+        (factors.toList[i]?.getD 0) p := by
+  intro i
+  have hfactors_monic_list : ∀ g ∈ factors.toList, DensePoly.Monic g := by
+    intro g hg
+    exact hfactors_monic g (by simpa using hg)
+  have hproduct_list :
+      ZPoly.congr (Array.polyProduct factors.toList.toArray) f p := by
+    simpa using hproduct
+  exact
+    multifactorLiftQuadraticList_each_congr_mod_base p k f factors.toList hk hp
+      hf_monic hfactors_monic_list hinv hproduct_list i
+
 private theorem multifactorLiftQuadraticList_each_monic
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) (factors : List ZPoly)
