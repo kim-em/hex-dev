@@ -71,6 +71,7 @@ def ofPoly (f : FpPoly p) (hf : 0 < FpPoly.degree f) (g : FpPoly p) :
 def repr {f : FpPoly p} {hf : 0 < FpPoly.degree f} (x : PolyQuotient f hf) : FpPoly p :=
   x.1
 
+/-- Quotient elements have decidable equality by comparing their canonical representatives. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} : DecidableEq (PolyQuotient f hf) := by
   intro x y
   match decEq x.1 y.1 with
@@ -90,7 +91,7 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} : DecidableEq (PolyQuotient f
   Subtype.ext h
 
 /-- A quotient element equals the canonical zero iff its representative reduces to zero. -/
-theorem eq_zero_iff_repr_eq_zero
+@[simp] theorem eq_zero_iff_repr_eq_zero
     {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) :
     x = ofPoly f hf 0 ↔ repr x = reduceMod f 0 := by
@@ -101,8 +102,8 @@ theorem eq_zero_iff_repr_eq_zero
     apply ext
     simpa using hx
 
-/-- A quotient element differs from the canonical zero iff its representative does. -/
-theorem ne_zero_iff_repr_ne_zero
+/-- A quotient element differs from the canonical zero iff its representative reduces nonzero. -/
+@[simp] theorem ne_zero_iff_repr_ne_zero
     {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) :
     x ≠ ofPoly f hf 0 ↔ repr x ≠ reduceMod f 0 := by
@@ -113,7 +114,7 @@ theorem ne_zero_iff_repr_ne_zero
     exact hx ((eq_zero_iff_repr_eq_zero x).1 hzero)
 
 /-- Canonical representatives have degree strictly below the modulus. -/
-theorem degree_repr_lt_degree {f : FpPoly p} {hf : 0 < FpPoly.degree f}
+@[simp] theorem degree_repr_lt_degree {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) :
     FpPoly.degree (repr x) < FpPoly.degree f := by
   rcases x.2 with ⟨g, hx⟩
