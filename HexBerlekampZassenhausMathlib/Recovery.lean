@@ -878,6 +878,125 @@ def ofMignottePrecisionExpectedFactors
     (productOfExpectedFactors htrue)
 
 /--
+Mignotte-precision `ForwardRecoveryInputs` constructor targeting the canonical
+support-driven indicator array.  Mirrors
+`ofMignottePrecisionCandidateProducts` but selects
+`expectedIndicators := expectedIndicatorArrayOfSupports trueSupports`
+internally and discharges `indicators_match` via
+`equivalenceClassIndicatorsOfLiftData_eq_expectedIndicatorArrayOfSupports`,
+removing the duplicated B7 indicator-array plumbing from callers.
+
+The remaining fields (`mignotte_precision`, `nondegenerate`,
+`selectedFactors`, `expectedFactors`, per-indicator Mignotte reconstruction
+facts, and the final product check) pass through unchanged.  The candidate
+facts are stated against the canonical indicator array
+`expectedIndicatorArrayOfSupports trueSupports`, so callers consume the
+support-driven indicator partition directly.
+-/
+noncomputable def ofMignottePrecisionCanonicalIndicators
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    (rows_pos : HasPositiveDimension f d)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData f d rows_pos).factorCount)))
+    (lattice_eq_indicators :
+      BHKS.projectedRowSpanInt (projectedRowsOfLiftData f d rows_pos) =
+        BHKS.trueFactorIndicatorLattice trueSupports)
+    (mignotte_precision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound f < d.p ^ d.k)
+    (nondegenerate :
+      Hex.bhksDegenerateIndicatorPartition
+          (projectedRowsOfLiftData f d rows_pos)
+          (expectedIndicatorArrayOfSupports trueSupports) = false)
+    (selectedFactors : Array (Array Hex.ZPoly))
+    (expectedFactors : Array Hex.ZPoly)
+    (hf_ne_zero : f ≠ 0)
+    (hsize :
+      expectedFactors.size = (expectedIndicatorArrayOfSupports trueSupports).size)
+    (hselected :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        Hex.bhksIndicatorSelectedFactors d.liftedFactors
+            ((expectedIndicatorArrayOfSupports trueSupports).getD i #[]) =
+          some (selectedFactors.getD i #[]))
+    (hdivides :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        expectedFactors.getD i 0 ∣ f)
+    (hprimitive :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        Hex.ZPoly.Primitive (expectedFactors.getD i 0))
+    (hsign :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        0 ≤ Hex.DensePoly.leadingCoeff (expectedFactors.getD i 0))
+    (hmonic :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        Hex.DensePoly.Monic (expectedFactors.getD i 0))
+    (hdegree :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        0 < (expectedFactors.getD i 0).degree?.getD 0)
+    (hproduct :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        Hex.ZPoly.reduceModPow
+            (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f)
+              (Array.polyProduct (selectedFactors.getD i #[])))
+            d.p d.k =
+          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0) d.p d.k)
+    (product_eq : Array.polyProduct expectedFactors = f) :
+    ForwardRecoveryInputs f d :=
+  ofMignottePrecisionCandidateProducts
+    rows_pos trueSupports lattice_eq_indicators mignotte_precision
+    (expectedIndicatorArrayOfSupports trueSupports)
+    (equivalenceClassIndicatorsOfLiftData_eq_expectedIndicatorArrayOfSupports
+      rows_pos trueSupports lattice_eq_indicators)
+    nondegenerate selectedFactors expectedFactors hf_ne_zero hsize
+    hselected hdivides hprimitive hsign hmonic hdegree hproduct product_eq
+
+/--
+Mignotte-precision `ForwardRecoveryInputs` constructor from the expected
+true-factor package, targeting the canonical support-driven indicator array.
+This is the canonical-indicator wrapper corresponding to
+`ofMignottePrecisionExpectedFactors`; callers identify the true factor list
+once, and the final product check is extracted by `productOfExpectedFactors`.
+-/
+noncomputable def ofMignottePrecisionCanonicalIndicatorsExpectedFactors
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    (rows_pos : HasPositiveDimension f d)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData f d rows_pos).factorCount)))
+    (lattice_eq_indicators :
+      BHKS.projectedRowSpanInt (projectedRowsOfLiftData f d rows_pos) =
+        BHKS.trueFactorIndicatorLattice trueSupports)
+    (mignotte_precision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound f < d.p ^ d.k)
+    (nondegenerate :
+      Hex.bhksDegenerateIndicatorPartition
+          (projectedRowsOfLiftData f d rows_pos)
+          (expectedIndicatorArrayOfSupports trueSupports) = false)
+    (selectedFactors : Array (Array Hex.ZPoly))
+    (expectedFactors : Array Hex.ZPoly)
+    (hf_ne_zero : f ≠ 0)
+    (htrue :
+      ExpectedTrueFactors f
+        (expectedIndicatorArrayOfSupports trueSupports) expectedFactors)
+    (hselected :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        Hex.bhksIndicatorSelectedFactors d.liftedFactors
+            ((expectedIndicatorArrayOfSupports trueSupports).getD i #[]) =
+          some (selectedFactors.getD i #[]))
+    (hproduct :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        Hex.ZPoly.reduceModPow
+            (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f)
+              (Array.polyProduct (selectedFactors.getD i #[])))
+            d.p d.k =
+          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0) d.p d.k) :
+    ForwardRecoveryInputs f d :=
+  ofMignottePrecisionCanonicalIndicators
+    rows_pos trueSupports lattice_eq_indicators mignotte_precision
+    nondegenerate selectedFactors expectedFactors hf_ne_zero htrue.size_eq
+    hselected htrue.divides htrue.primitive htrue.leadingCoeff_nonneg
+    htrue.monic htrue.positive_degree hproduct
+    (productOfExpectedFactors htrue)
+
+/--
 Build `ForwardRecoveryInputs f d` from cap-level BHKS separation plus the
 abstract B7/A2 obligations.
 
