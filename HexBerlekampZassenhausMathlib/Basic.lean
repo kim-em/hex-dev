@@ -2945,17 +2945,10 @@ private theorem subsetSplits_prefix_exists_bit_diff_aux
             -- Shape: split_S = (tailSel_S, x :: tailRest_S). Show split_S ∉ L_true.
             have hsplitS_notin_Ltrue : (tailSel_S, x :: tailRest_S) ∉ L_true := by
               intro h
-              obtain ⟨⟨a, b⟩, hab, hab_eq⟩ := List.mem_map.mp h
+              obtain ⟨⟨a, _⟩, hab, hab_eq⟩ := List.mem_map.mp h
               simp only [Prod.mk.injEq] at hab_eq
               obtain ⟨ha, _⟩ := hab_eq
-              have hx_in_tailSel_S : x ∈ tailSel_S := ha ▸ List.mem_cons_self
-              -- tailSel_S = (xs'.zip msS).filterMap selected; selected entries ⊆ xs'.
-              rw [htailSel_S_def, List.mem_filterMap] at hx_in_tailSel_S
-              obtain ⟨⟨a', b'⟩, hpair_mem, hpair_eq⟩ := hx_in_tailSel_S
-              have hax' : a' ∈ xs' := (List.of_mem_zip hpair_mem).1
-              cases b' with
-              | true => simp at hpair_eq; exact hx_notin (hpair_eq ▸ hax')
-              | false => simp at hpair_eq
+              exact hx_notin_split_sel htailSplit_S_mem (ha ▸ List.mem_cons_self)
             cases bT with
             | false =>
               -- (false, false): both splits in L_false.
@@ -3060,21 +3053,13 @@ private theorem subsetSplits_prefix_exists_bit_diff_aux
             | true =>
               -- (true, true): both splits in L_true. Recurse.
               rw [eval_sel_true, eval_rest_true] at hT_in_pre
-              -- Shape: split_S = (x :: tailSel_S, tailRest_S). Show split_S ∉ L_false.
-              have hsplitS_notin_Lfalse : (x :: tailSel_S, tailRest_S) ∉ L_false := by
-                intro h
-                obtain ⟨⟨a, b⟩, hab, hab_eq⟩ := List.mem_map.mp h
-                simp only [Prod.mk.injEq] at hab_eq
-                obtain ⟨ha, _⟩ := hab_eq
-                have hx_in_a : x ∈ a := ha ▸ List.mem_cons_self
-                exact hx_notin_split_sel hab hx_in_a
+              -- Shape: split_T = (x :: tailSel_T, tailRest_T). Show split_T ∉ L_false.
               have hsplitT_notin_Lfalse : (x :: tailSel_T, tailRest_T) ∉ L_false := by
                 intro h
-                obtain ⟨⟨a, b⟩, hab, hab_eq⟩ := List.mem_map.mp h
+                obtain ⟨⟨a, _⟩, hab, hab_eq⟩ := List.mem_map.mp h
                 simp only [Prod.mk.injEq] at hab_eq
                 obtain ⟨ha, _⟩ := hab_eq
-                have hx_in_a : x ∈ a := ha ▸ List.mem_cons_self
-                exact hx_notin_split_sel hab hx_in_a
+                exact hx_notin_split_sel hab (ha ▸ List.mem_cons_self)
               -- Decompose hsplits.
               rcases (List.append_eq_append_iff).mp hsplits with
                 ⟨e, hpre_eq, hLt_eq⟩ | ⟨e, hLf_eq, _hsuff_eq⟩
