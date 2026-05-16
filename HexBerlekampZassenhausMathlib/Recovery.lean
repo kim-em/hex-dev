@@ -1347,6 +1347,121 @@ theorem factorFast_ne_none_of_forwardInputs_at_cap
     f primeData hB_pos hnormalized hinputs
     (Hex.cap_mem_henselPrecisionSchedule _)
 
+/--
+HO-4 leaf capstone: compose
+`ForwardRecoveryInputs.ofCapSeparationCanonicalIndicatorsAtPrecisionForCoeffBound`
+with `factorFast_ne_none_of_forwardInputs_at_cap`.
+
+Given cap-level BHKS separation on the normalized square-free core lift, B7
+non-degeneracy of the canonical support-driven indicator partition, and the
+A2/exact-division candidate facts (a candidate-product witness per indicator,
+plus the final product check), the public `Hex.factorFast f` returns `some _`.
+
+This is the natural HO-4 leaf entry point for callers that arrive with
+executable cap separation: the two-step
+`ForwardRecoveryInputs` construction and the `factorFast`-success forward
+inference fold into a single application.  See
+`ofCapSeparationCanonicalIndicatorsAtPrecisionForCoeffBound` for the producer
+side and `factorFast_ne_none_of_forwardInputs_at_cap` for the consumer side.
+-/
+theorem factorFast_ne_none_of_capSeparationCanonicalIndicatorsAtPrecisionForCoeffBound
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.henselLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.precisionForCoeffBound
+            (Hex.factorFastPrecisionCap f) primeData.p)
+          primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.henselLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.precisionForCoeffBound
+            (Hex.factorFastPrecisionCap f) primeData.p)
+          primeData)
+        rows_pos).factorCount)))
+    (hB_pos : 1 ≤ Hex.factorFastPrecisionCap f)
+    (hnormalized :
+      primeData = Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+    (hp :
+      2 ≤ (Hex.henselLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.precisionForCoeffBound
+          (Hex.factorFastPrecisionCap f) primeData.p)
+        primeData).p)
+    (hk :
+      (Hex.henselLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.precisionForCoeffBound
+          (Hex.factorFastPrecisionCap f) primeData.p)
+        primeData).k =
+      Hex.precisionForCoeffBound
+        (Hex.factorFastPrecisionCap
+          (Hex.normalizeForFactor f).squareFreeCore)
+        (Hex.henselLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.precisionForCoeffBound
+            (Hex.factorFastPrecisionCap f) primeData.p)
+          primeData).p)
+    (hcap_le :
+      Hex.factorFastPrecisionCap (Hex.normalizeForFactor f).squareFreeCore ≤
+      (Hex.henselLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.precisionForCoeffBound
+          (Hex.factorFastPrecisionCap f) primeData.p)
+        primeData).k)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (hcap :
+      ExecutableCapSeparationHypotheses
+        (badVectorWitnessOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.henselLiftData
+            (Hex.normalizeForFactor f).squareFreeCore
+            (Hex.precisionForCoeffBound
+              (Hex.factorFastPrecisionCap f) primeData.p)
+            primeData)
+          rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    (nondegenerate :
+      Hex.bhksDegenerateIndicatorPartition
+          (projectedRowsOfLiftData
+            (Hex.normalizeForFactor f).squareFreeCore
+            (Hex.henselLiftData
+              (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.precisionForCoeffBound
+                (Hex.factorFastPrecisionCap f) primeData.p)
+              primeData)
+            rows_pos)
+          (expectedIndicatorArrayOfSupports trueSupports) = false)
+    (expectedFactors : Array Hex.ZPoly)
+    (hsize : expectedFactors.size =
+      (expectedIndicatorArrayOfSupports trueSupports).size)
+    (hcandidate :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        ∃ quotient,
+          Hex.bhksIndicatorCandidate?
+              (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.henselLiftData
+                (Hex.normalizeForFactor f).squareFreeCore
+                (Hex.precisionForCoeffBound
+                  (Hex.factorFastPrecisionCap f) primeData.p)
+                primeData)
+              ((expectedIndicatorArrayOfSupports trueSupports).getD i #[]) =
+            some (expectedFactors.getD i 0, quotient))
+    (product_eq :
+      Array.polyProduct expectedFactors =
+        (Hex.normalizeForFactor f).squareFreeCore) :
+    Hex.factorFast f ≠ none :=
+  factorFast_ne_none_of_forwardInputs_at_cap f primeData hB_pos hnormalized
+    (ForwardRecoveryInputs.ofCapSeparationCanonicalIndicatorsAtPrecisionForCoeffBound
+      rows_pos localFactorIndex localFactorDegree H trueSupports
+      hp hk hcap_le C hC_nonneg hC hcap nondegenerate
+      expectedFactors hsize hcandidate product_eq)
+
 end BHKS
 
 end HexBerlekampZassenhausMathlib
