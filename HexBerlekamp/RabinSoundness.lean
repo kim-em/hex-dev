@@ -3337,6 +3337,33 @@ theorem berlekampFactor_singleton_irreducible
     (kernelWitnessSplit?_none_of_berlekampFactor_factors_length_le_one
       f hmonic hsmall)
 
+/--
+The executable Berlekamp factor list of a square-free monic input has no
+duplicates.  Composes the abstract loop invariant
+`Hex.Berlekamp.berlekampFactor_factors_nodup_of_no_squared`
+(`HexBerlekamp/Factor.lean`) with the squareness-implies-`isUnitPolynomial`
+result `Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd`.
+-/
+theorem berlekampFactor_factors_nodup
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (hsquareFree : DensePoly.gcd f (DensePoly.derivative f) = 1) :
+    (berlekampFactor f hmonic).factors.Nodup := by
+  apply berlekampFactor_factors_nodup_of_no_squared
+  intro g hgg hpos
+  have hunit : isUnitPolynomial g = true :=
+    isUnitPolynomial_of_squareFree_of_squared_dvd hsquareFree hgg
+  have hdeg : g.degree? = some 0 := by
+    unfold isUnitPolynomial at hunit
+    cases hd : g.degree? with
+    | none => rw [hd] at hunit; simp at hunit
+    | some k =>
+        rw [hd] at hunit
+        cases k with
+        | zero => rfl
+        | succ _ => simp at hunit
+  rw [hdeg] at hpos
+  simp at hpos
+
 end
 
 end Berlekamp
