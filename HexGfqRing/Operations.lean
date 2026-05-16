@@ -302,12 +302,6 @@ theorem natCast_eq_natCast_iff_mod_eq
     repr (x ^ n) = repr (pow x n) :=
   rfl
 
-/-- Public alias for `reduceMod_add_reduceMod_congr`: reducing both summands before quotient
-reduction preserves the canonical representative. -/
-theorem reduceMod_add_reduceMod (f : FpPoly p) (a b : FpPoly p) :
-    reduceMod f (a + b) = reduceMod f (reduceMod f a + reduceMod f b) :=
-  reduceMod_add_reduceMod_congr f a b
-
 /-- Public alias for `reduceMod_mul_reduceMod_congr`: reducing both factors before quotient
 reduction preserves the canonical representative. -/
 theorem reduceMod_mul_reduceMod (f : FpPoly p) (a b : FpPoly p) :
@@ -337,43 +331,6 @@ theorem reduceMod_mul_reduceMod (f : FpPoly p) (a b : FpPoly p) :
 @[simp] theorem ofPoly_const_eq_const
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (c : ZMod64 p) :
     ofPoly f hf (FpPoly.C c) = const f hf c :=
-  rfl
-
-/-- Reducing both summands before constructing the quotient does not change the
-quotient sum. This is the non-simp direction used when a proof wants to expose
-the canonical representatives inside an `ofPoly`. -/
-theorem ofPoly_add_reduceMod
-    (f : FpPoly p) (hf : 0 < FpPoly.degree f) (a b : FpPoly p) :
-    ofPoly f hf (a + b) = ofPoly f hf (reduceMod f a + reduceMod f b) := by
-  apply ext
-  change reduceMod f (a + b) =
-    reduceMod f (reduceMod f a + reduceMod f b)
-  exact reduceMod_add_reduceMod_congr f a b
-
-/-- Reducing both factors before constructing the quotient does not change the
-quotient product. Kept out of the simp set so simplification normalizes through
-`repr`, not toward larger `ofPoly` expressions. -/
-theorem ofPoly_mul_reduceMod
-    (f : FpPoly p) (hf : 0 < FpPoly.degree f) (a b : FpPoly p) :
-    ofPoly f hf (a * b) = ofPoly f hf (reduceMod f a * reduceMod f b) := by
-  apply ext
-  change reduceMod f (a * b) =
-    reduceMod f (reduceMod f a * reduceMod f b)
-  exact reduceMod_mul_reduceMod_congr f a b
-
-/-- Negating a quotient constructor is the same quotient element as constructing
-from the negated canonical representative. -/
-theorem ofPoly_neg_reduceMod
-    (f : FpPoly p) (hf : 0 < FpPoly.degree f) (a : FpPoly p) :
-    -(ofPoly f hf a) = ofPoly f hf (-reduceMod f a) :=
-  rfl
-
-/-- Subtracting two quotient constructors is the same quotient element as
-constructing from the difference of their canonical representatives. -/
-theorem ofPoly_sub_reduceMod
-    (f : FpPoly p) (hf : 0 < FpPoly.degree f) (a b : FpPoly p) :
-    ofPoly f hf a - ofPoly f hf b =
-      ofPoly f hf (reduceMod f a - reduceMod f b) :=
   rfl
 
 /-- The representative of a sum of constructed quotient elements is the
@@ -572,31 +529,6 @@ theorem repr_neg_add_self {f : FpPoly p} {hf : 0 < FpPoly.degree f}
           rw [FpPoly.add_left_neg]
     _ = 0 := by
           exact reduceMod_zero f hf
-
-/-- Representative-level right inverse law available for quotient additive reasoning. -/
-theorem repr_add_neg_self {f : FpPoly p} {hf : 0 < FpPoly.degree f}
-    (x : PolyQuotient f hf) :
-    repr (x + -x) = 0 := by
-  rw [repr_add, repr_neg]
-  calc
-    reduceMod f (repr x + reduceMod f (-repr x))
-        = reduceMod f (repr x + -repr x) := by
-          exact reduceMod_add_right_reduceMod f (repr x) (-repr x)
-    _ = reduceMod f 0 := by
-          rw [FpPoly.add_right_neg]
-    _ = 0 := by
-          exact reduceMod_zero f hf
-
-/-- Representative-level subtraction self-cancellation available for quotient additive reasoning. -/
-theorem repr_sub_self {f : FpPoly p} {hf : 0 < FpPoly.degree f}
-    (x : PolyQuotient f hf) :
-    repr (x - x) = 0 := by
-  rw [repr_sub]
-  calc
-    reduceMod f (repr x - repr x) = reduceMod f 0 := by
-      rw [FpPoly.sub_self]
-    _ = 0 := by
-      exact reduceMod_zero f hf
 
 /-- Quotient-level subtraction law used directly by the `Lean.Grind.Ring` instance. -/
 theorem sub_eq_add_neg {f : FpPoly p} {hf : 0 < FpPoly.degree f}
