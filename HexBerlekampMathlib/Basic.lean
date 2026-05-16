@@ -290,6 +290,39 @@ theorem irreducible_of_mem_berlekampFactor
   sorry
 
 /--
+Bridge-surface re-export of the Mathlib-free Nodup property of the executable
+Berlekamp factor list of a monic square-free input.  Discharged from the
+polymorphic abstract loop invariant
+`Hex.Berlekamp.berlekampFactor_factors_nodup_of_no_squared` plus the
+squareness-implies-unit chain `isUnitPolynomial_of_squareFree_of_squared_dvd`,
+matching the proof of the section-level `Hex.Berlekamp.berlekampFactor_factors_nodup`
+in `HexBerlekamp/RabinSoundness.lean`.  Stated polymorphic over the field
+instance so that downstream Mathlib-bridge consumers (e.g.
+`factorsModP_nodup_of_factorsModPBerlekampForm`) can apply it to the
+existentially-bound field witness carried by `factorsModPBerlekampForm`.
+-/
+theorem berlekampFactor_factors_nodup
+    (f : Hex.FpPoly p) (hmonic : Hex.DensePoly.Monic f)
+    [Lean.Grind.Field (Hex.ZMod64 p)] [Hex.ZMod64.PrimeModulus p]
+    (hsquareFree : Hex.DensePoly.gcd f (Hex.DensePoly.derivative f) = 1) :
+    (Hex.Berlekamp.berlekampFactor f hmonic).factors.Nodup := by
+  apply Hex.Berlekamp.berlekampFactor_factors_nodup_of_no_squared
+  intro g hgg hpos
+  have hunit : Hex.Berlekamp.isUnitPolynomial g = true :=
+    Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd hsquareFree hgg
+  have hdeg : Hex.DensePoly.degree? g = some 0 := by
+    unfold Hex.Berlekamp.isUnitPolynomial at hunit
+    cases hd : Hex.DensePoly.degree? g with
+    | none => rw [hd] at hunit; simp at hunit
+    | some k =>
+        rw [hd] at hunit
+        cases k with
+        | zero => rfl
+        | succ _ => simp at hunit
+  rw [hdeg] at hpos
+  simp at hpos
+
+/--
 If executable Berlekamp factorization cannot split a monic square-free input,
 then the input itself is irreducible after transport to Mathlib.
 
