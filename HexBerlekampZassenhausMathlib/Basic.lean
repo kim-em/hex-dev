@@ -4371,6 +4371,128 @@ theorem toPolynomial_recombinationCandidate_squarefree
   exact Squarefree.squarefree_of_dvd
     (HexPolyMathlib.toPolynomial_dvd hcand_dvd_target) hpartition.target_squarefree
 
+/-- Reverse-coverage finite degree-counting step (issue #4468).
+
+Given a `LiftedFactorSubsetPartition core d J target` and a subset `T ⊆ J`,
+suppose `gs` is a finite family of `Hex.ZPoly` elements such that each
+`g ∈ gs` is
+
+* an irreducible divisor of `target` and of `recombinationCandidate d T`,
+* represented at the lift by a subset `S_of g ⊆ T ⊆ J`,
+* primitive (`content = 1`) and sign-normalized,
+
+and the family is pairwise non-associated in `Polynomial ℤ` (so that the
+partition's `pairwise_disjoint` field makes the `S_of g` pairwise disjoint).
+If the candidate's `natDegree` decomposes as the sum of the `natDegree`s of
+the family, then every index `i ∈ T` lies in some `S_of g`.
+
+This is the finite Finset bookkeeping ingredient of the reverse-coverage
+existence lemma (successor split from #4465). It does not extract irreducible
+factors itself; the downstream `mem_T_iff_exists_irreducibleFactor_representingSubset`
+assembler (#4467) supplies `gs` from `UniqueFactorizationMonoid.normalizedFactors`
+together with the non-association hypothesis. -/
+theorem exists_mem_representedSubset_of_degree_cover
+    {core target : Hex.ZPoly} {d : Hex.LiftData}
+    {J T : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (htarget_dvd_core : target ∣ core)
+    (_hTJ : T ⊆ J)
+    (gs : Finset Hex.ZPoly)
+    (S_of : Hex.ZPoly → LiftedFactorSubset d)
+    (h_each : ∀ g ∈ gs,
+      Irreducible (HexPolyZMathlib.toPolynomial g) ∧
+      g ∣ target ∧
+      g ∣ recombinationCandidate d T ∧
+      RepresentsIntegerFactorAtLift core d g (S_of g) ∧
+      S_of g ⊆ J ∧
+      S_of g ⊆ T ∧
+      Hex.ZPoly.content g = 1 ∧
+      Hex.normalizeFactorSign g = g)
+    (h_pairwise_not_associated :
+      ∀ ⦃g h : Hex.ZPoly⦄, g ∈ gs → h ∈ gs → g ≠ h →
+        ¬ Associated (HexPolyZMathlib.toPolynomial g)
+          (HexPolyZMathlib.toPolynomial h))
+    (h_degree_total :
+      (HexPolyZMathlib.toPolynomial (recombinationCandidate d T)).natDegree =
+        ∑ g ∈ gs, (HexPolyZMathlib.toPolynomial g).natDegree) :
+    ∀ {i : LiftedFactorIndex d}, i ∈ T → ∃ g ∈ gs, i ∈ S_of g := by
+  set f : LiftedFactorIndex d → Nat :=
+    fun j => (HexPolyZMathlib.toPolynomial (liftedFactor d j)).natDegree
+  -- Candidate-side: natDegree(recombinationCandidate d T) = ∑ j ∈ T, f j.
+  have h_cand_eq :
+      (HexPolyZMathlib.toPolynomial (recombinationCandidate d T)).natDegree =
+        ∑ j ∈ T, f j :=
+    natDegree_toPolynomial_recombinationCandidate_eq_sum
+      hd_modulus hd_liftedFactor_monic T
+  -- Each represented factor: natDegree(g) = ∑ j ∈ S_of g, f j.
+  have h_g_eq : ∀ g ∈ gs,
+      (HexPolyZMathlib.toPolynomial g).natDegree = ∑ j ∈ S_of g, f j := by
+    intro g hg
+    obtain ⟨hg_irr, hg_dvd, _, hg_rep, _, _, hg_cont, hg_norm⟩ := h_each g hg
+    have hg_dvd_core : g ∣ core := by
+      obtain ⟨q, hq⟩ := hg_dvd
+      obtain ⟨v, hv⟩ := htarget_dvd_core
+      refine ⟨q * v, ?_⟩
+      rw [hv, hq]
+      exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
+    exact natDegree_toPolynomial_eq_sum_of_represents
+      hcore_ne hcore_monic hd_liftedFactor_monic hprecision hg_dvd_core
+      hg_irr hg_cont hg_norm hg_rep
+  -- Pairwise disjointness of the representing subsets, via partition.
+  have h_pwdisj : Set.PairwiseDisjoint (↑gs : Set Hex.ZPoly) S_of := by
+    intro g hg h hh hgh
+    obtain ⟨hg_irr, hg_dvd, _, hg_rep, hg_SJ, _, _, _⟩ := h_each g hg
+    obtain ⟨hh_irr, hh_dvd, _, hh_rep, hh_SJ, _, _, _⟩ := h_each h hh
+    exact hpartition.pairwise_disjoint hg_irr hg_dvd hg_SJ hg_rep
+      hh_irr hh_dvd hh_SJ hh_rep
+      (h_pairwise_not_associated hg hh hgh)
+  -- The biUnion is contained in T.
+  have h_sub : gs.biUnion S_of ⊆ T := by
+    intro j hj
+    obtain ⟨g, hg, hjg⟩ := Finset.mem_biUnion.mp hj
+    exact (h_each g hg).2.2.2.2.2.1 hjg
+  -- ∑ T f = ∑ (gs.biUnion S_of) f.
+  have h_sum_eq :
+      ∑ j ∈ T, f j = ∑ j ∈ gs.biUnion S_of, f j := by
+    have h_step : ∑ j ∈ gs.biUnion S_of, f j = ∑ g ∈ gs, ∑ j ∈ S_of g, f j :=
+      Finset.sum_biUnion h_pwdisj
+    rw [h_step, ← h_cand_eq, h_degree_total]
+    exact Finset.sum_congr rfl h_g_eq
+  -- ∑ (T \ biUnion) f = 0 by additive splitting on the subset.
+  have h_zero : ∑ j ∈ T \ gs.biUnion S_of, f j = 0 := by
+    have h_split :
+        (∑ j ∈ T \ gs.biUnion S_of, f j) +
+            (∑ j ∈ gs.biUnion S_of, f j) =
+          ∑ j ∈ T, f j :=
+      Finset.sum_sdiff h_sub
+    omega
+  -- Positivity of each summand forces T \ biUnion to be empty.
+  have h_empty : T \ gs.biUnion S_of = ∅ := by
+    by_contra hne
+    obtain ⟨j, hj⟩ := Finset.nonempty_iff_ne_empty.mpr hne
+    have h_le : f j ≤ ∑ k ∈ T \ gs.biUnion S_of, f k :=
+      Finset.single_le_sum (f := f) (fun _ _ => Nat.zero_le _) hj
+    have h_pos : 0 < f j := hd_liftedFactor_natDegree_pos j
+    omega
+  -- Conclude pointwise coverage.
+  intro i hi
+  have hi_in_bU : i ∈ gs.biUnion S_of := by
+    by_contra h_not
+    have h_in_sdiff : i ∈ T \ gs.biUnion S_of :=
+      Finset.mem_sdiff.mpr ⟨hi, h_not⟩
+    rw [h_empty] at h_in_sdiff
+    exact Finset.notMem_empty _ h_in_sdiff
+  exact Finset.mem_biUnion.mp hi_in_bU
+
 /--
 Package a normalized irreducible factor of a recombination candidate as an
 executable `Hex.ZPoly` factor with the represented subset facts needed by the
