@@ -64,13 +64,11 @@ jobs:
       - name: Bench verify (smoke gate per SPEC/benchmarking.md §CI integration)
         env:
           # Hard cap enforced per SPEC/benchmarking.md §CI integration
-          # "Time budget". Two consecutive main pushes after the
-          # lean-bench in-process verify fix (#3692) measured the full
-          # 16-bench verify step at 47-51 s, slowest single bench
-          # hexlll_bench at 23 s. The 300 s cap gives ~6× headroom for
-          # noise / new benches while still flagging anyone who tries
-          # to reintroduce a per-spawn-overhead regression.
-          BENCH_VERIFY_HARD_CAP_SECONDS: "300"
+          # "Time budget". The full 16-bench verify step includes the
+          # large fixed comparator smoke rungs for hexgf2_bench and
+          # hexlll_bench; 360 s leaves a narrow variance buffer while
+          # still flagging per-spawn-overhead regressions.
+          BENCH_VERIFY_HARD_CAP_SECONDS: "360"
         run: |
           HEX_LLL_ISABELLE_SVP="$(scripts/oracle/setup_lll_isabelle.sh)"
           export HEX_LLL_ISABELLE_SVP

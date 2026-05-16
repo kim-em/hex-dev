@@ -140,6 +140,74 @@ theorem mignotte_precision_of_liftData_factorFastPrecisionCap_succ
   exact mignotte_precision_at_factorFastPrecisionCap_succ f hp
 
 /--
+Mignotte-precision discharge at the executable precision returned by
+`precisionForCoeffBound (defaultFactorCoeffBound f) p`.  This is the cleanest
+call shape for `ForwardRecoveryInputs` constructors that lift to exactly the
+Mignotte bound: the stored precision is `precisionForCoeffBound B p` for
+`B = defaultFactorCoeffBound f`, and the Mignotte side condition follows
+directly from `Hex.precisionForCoeffBound_spec`.
+-/
+theorem mignotte_precision_at_precisionForCoeffBound_defaultFactorCoeffBound
+    (f : Hex.ZPoly) {p : Nat} (hp : 2 ≤ p) :
+    2 * Hex.ZPoly.defaultFactorCoeffBound f <
+      p ^ Hex.precisionForCoeffBound (Hex.ZPoly.defaultFactorCoeffBound f) p :=
+  Hex.precisionForCoeffBound_spec hp (Hex.ZPoly.defaultFactorCoeffBound f)
+
+/--
+Mignotte-precision discharge at the executable precision returned by
+`precisionForCoeffBound (factorFastPrecisionCap f) p`.  This is the call shape
+used by the public `factorFast` path: the stored precision is
+`precisionForCoeffBound B p` for `B = factorFastPrecisionCap f`, and the
+Mignotte side condition follows from `Hex.precisionForCoeffBound_spec` chained
+with `defaultFactorCoeffBound_le_factorFastPrecisionCap`.
+-/
+theorem mignotte_precision_at_precisionForCoeffBound_factorFastPrecisionCap
+    (f : Hex.ZPoly) {p : Nat} (hp : 2 ≤ p) :
+    2 * Hex.ZPoly.defaultFactorCoeffBound f <
+      p ^ Hex.precisionForCoeffBound (Hex.factorFastPrecisionCap f) p := by
+  have h_cap :
+      2 * Hex.factorFastPrecisionCap f <
+        p ^ Hex.precisionForCoeffBound (Hex.factorFastPrecisionCap f) p :=
+    Hex.precisionForCoeffBound_spec hp (Hex.factorFastPrecisionCap f)
+  have h_bound :
+      Hex.ZPoly.defaultFactorCoeffBound f ≤ Hex.factorFastPrecisionCap f :=
+    Hex.defaultFactorCoeffBound_le_factorFastPrecisionCap f
+  omega
+
+/--
+`LiftData`-shaped wrapper for the Mignotte precision side condition consumed by
+`BHKS.ForwardRecoveryInputs`, instantiated at the executable precision returned
+by `henselLiftData f (precisionForCoeffBound (defaultFactorCoeffBound f) p) primeData`.
+The stored precision matches `precisionForCoeffBound (defaultFactorCoeffBound f) d.p`,
+and the Mignotte side condition follows directly from
+`mignotte_precision_at_precisionForCoeffBound_defaultFactorCoeffBound`.
+-/
+theorem mignotte_precision_of_liftData_precisionForCoeffBound_defaultFactorCoeffBound
+    (f : Hex.ZPoly) (d : Hex.LiftData) (hp : 2 ≤ d.p)
+    (hk : d.k =
+      Hex.precisionForCoeffBound (Hex.ZPoly.defaultFactorCoeffBound f) d.p) :
+    2 * Hex.ZPoly.defaultFactorCoeffBound f < d.p ^ d.k := by
+  rw [hk]
+  exact mignotte_precision_at_precisionForCoeffBound_defaultFactorCoeffBound f hp
+
+/--
+`LiftData`-shaped wrapper for the Mignotte precision side condition consumed by
+`BHKS.ForwardRecoveryInputs`, instantiated at the executable precision returned
+by `henselLiftData f (precisionForCoeffBound (factorFastPrecisionCap f) p) primeData`.
+This is the public `factorFast` call shape: the stored precision matches
+`precisionForCoeffBound (factorFastPrecisionCap f) d.p`, and the Mignotte side
+condition follows from
+`mignotte_precision_at_precisionForCoeffBound_factorFastPrecisionCap`.
+-/
+theorem mignotte_precision_of_liftData_precisionForCoeffBound_factorFastPrecisionCap
+    (f : Hex.ZPoly) (d : Hex.LiftData) (hp : 2 ≤ d.p)
+    (hk : d.k =
+      Hex.precisionForCoeffBound (Hex.factorFastPrecisionCap f) d.p) :
+    2 * Hex.ZPoly.defaultFactorCoeffBound f < d.p ^ d.k := by
+  rw [hk]
+  exact mignotte_precision_at_precisionForCoeffBound_factorFastPrecisionCap f hp
+
+/--
 At any precision at least `factorFastPrecisionCap f`, the BHKS paper threshold
 is bounded by that precision, under the project `0 ≤ C ≤ 2` constant
 assumption.
