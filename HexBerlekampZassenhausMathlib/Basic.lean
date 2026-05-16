@@ -7174,6 +7174,123 @@ theorem exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCo
     hcore_ne hcore_record hcount_eq factor ?_
   simpa [hcoreFactors_def, hB_def] using hfactor_mem
 
+/-- Mathlib-side irreducibility transports through `Hex.normalizeFactorSign`:
+the sign normalisation differs from the input by at most a `(-1)` factor, so
+the transported polynomial differs by the unit `-1` and `Associated.irreducible`
+applies. -/
+private theorem polynomialIrreducible_toPolynomial_normalizeFactorSign_of_zpolyIrreducible
+    {f : Hex.ZPoly} (hirr : Hex.ZPoly.Irreducible f) :
+    Irreducible (HexPolyZMathlib.toPolynomial (Hex.normalizeFactorSign f)) := by
+  have hirr_poly : Irreducible (HexPolyZMathlib.toPolynomial f) :=
+    (Hex.ZPoly.Irreducible_iff_polynomialIrreducible f).mp hirr
+  unfold Hex.normalizeFactorSign
+  by_cases hlc : Hex.DensePoly.leadingCoeff f < 0
+  · rw [if_pos hlc]
+    have hzero_mul : (-1 : Int) * (0 : Int) = 0 := by simp
+    have heq :
+        HexPolyZMathlib.toPolynomial (Hex.DensePoly.scale (-1 : Int) f) =
+          -HexPolyZMathlib.toPolynomial f := by
+      ext n
+      rw [HexPolyZMathlib.coeff_toPolynomial,
+        Hex.DensePoly.coeff_scale (-1 : Int) f n hzero_mul,
+        Polynomial.coeff_neg, HexPolyZMathlib.coeff_toPolynomial]
+      ring
+    rw [heq]
+    exact
+      (Associated.neg_right (Associated.refl (HexPolyZMathlib.toPolynomial f))).irreducible
+        hirr_poly
+  · rw [if_neg hlc]
+    exact hirr_poly
+
+/-- `Hex.ZPoly.Irreducible` is preserved by `Hex.normalizeFactorSign`. -/
+private theorem zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible
+    {f : Hex.ZPoly} (hirr : Hex.ZPoly.Irreducible f) :
+    Hex.ZPoly.Irreducible (Hex.normalizeFactorSign f) :=
+  (Hex.ZPoly.Irreducible_iff_polynomialIrreducible _).mpr
+    (polynomialIrreducible_toPolynomial_normalizeFactorSign_of_zpolyIrreducible
+      hirr)
+
+/-- **#4006 slow-path bridge (deliverable 2).**
+
+Connects the branch-local irreducibility theorem
+`exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence`
+to the slow-path exhaustive-branch shape `factorWithBound_entry_mem_exhaustive_branch_raw`
+(#4041), so downstream slow-path consumers can move directly from "this
+recorded `factorWithBound` entry was emitted by the exhaustive branch and
+identifies with a `Hex.normalizeFactorSign`-image of an exhaustive
+square-free-core factor" to "the entry is irreducible as a `Hex.ZPoly`".
+
+The bridge specialises the hypothesis set of deliverable 1 to
+`primeData = Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore`
+(the slow path's actual prime-data source) and the outer coefficient bound
+`B = Hex.ZPoly.defaultFactorCoeffBound (Hex.normalizeForFactor f).squareFreeCore`
+(the bound at which deliverable 1's coverage hypothesis is well-formed).
+The `hbranch` and `hentry_mem` arguments are not used by the proof, but
+they document the consumer-side entry point: a typical caller threads them
+through `factorWithBound_entry_mem_exhaustive_branch_raw` and
+`exhaustiveSlowRawFactorsWithBound_mem_normalization_or_core` to obtain the
+`hcore_entry` witness. -/
+theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence
+    {f : Hex.ZPoly} {entry : Hex.ZPoly × Nat}
+    {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
+    (_hbranch :
+      Hex.factorWithBoundUsesExhaustiveBranch f
+        (Hex.ZPoly.defaultFactorCoeffBound
+          (Hex.normalizeForFactor f).squareFreeCore))
+    (_hentry_mem :
+      entry ∈ (Hex.factorWithBound f
+        (Hex.ZPoly.defaultFactorCoeffBound
+          (Hex.normalizeForFactor f).squareFreeCore)).factors.toList)
+    (h :
+      HenselSubsetCorrespondenceHypotheses
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.precisionForCoeffBound
+          (Hex.ZPoly.defaultFactorCoeffBound
+            (Hex.normalizeForFactor f).squareFreeCore)
+          (Hex.choosePrimeData
+            (Hex.normalizeForFactor f).squareFreeCore).p)
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+        d admissiblePrime successfulLift)
+    (hpartition :
+      LiftedFactorSubsetPartition
+        (Hex.normalizeForFactor f).squareFreeCore d Finset.univ
+        (Hex.normalizeForFactor f).squareFreeCore)
+    (hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0)
+    (hcore_monic :
+      Hex.DensePoly.Monic (Hex.normalizeForFactor f).squareFreeCore)
+    (hcore_record :
+      Hex.shouldRecordPolynomialFactor
+        (Hex.normalizeForFactor f).squareFreeCore = true)
+    (hB_ne_zero :
+      Hex.ZPoly.defaultFactorCoeffBound
+        (Hex.normalizeForFactor f).squareFreeCore ≠ 0)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hd_liftedFactor_inj : Function.Injective (liftedFactor d))
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound
+        (Hex.normalizeForFactor f).squareFreeCore < d.p ^ d.k)
+    (hcore_entry :
+      ∃ raw ∈ (Hex.exhaustiveCoreFactorsWithBound
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.defaultFactorCoeffBound
+            (Hex.normalizeForFactor f).squareFreeCore)
+          (Hex.choosePrimeData
+            (Hex.normalizeForFactor f).squareFreeCore)).toList,
+        entry.1 = Hex.normalizeFactorSign raw) :
+    Hex.ZPoly.Irreducible entry.1 := by
+  obtain ⟨raw, hraw_mem, hentry_eq⟩ := hcore_entry
+  have hirr_raw : Hex.ZPoly.Irreducible raw :=
+    exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence
+      h hpartition hcore_ne hcore_monic hcore_record hB_ne_zero hd_modulus
+      hd_liftedFactor_monic hd_liftedFactor_natDegree_pos hd_liftedFactor_inj
+      hprecision raw hraw_mem
+  rw [hentry_eq]
+  exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hirr_raw
+
 end
 
 end HexBerlekampZassenhausMathlib
