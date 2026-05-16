@@ -58,6 +58,59 @@ def subBorrow (a b : UInt64) (bin : Bool) : UInt64 × Bool :=
   else
     (.ofNat (word + a.toNat - rhs), true)
 
+/-- Low-word projection of `addCarry` as Nat reduction modulo `2^64`. -/
+@[simp]
+theorem toNat_addCarry_fst (a b : UInt64) (cin : Bool) :
+    (addCarry a b cin).1.toNat = (a.toNat + b.toNat + cin.toNat) % word := by
+  simp [addCarry, word]
+
+/-- The outgoing carry bit of `addCarry` is set exactly when the exact sum overflows. -/
+theorem addCarry_snd (a b : UInt64) (cin : Bool) :
+    (addCarry a b cin).2 = decide (word ≤ a.toNat + b.toNat + cin.toNat) := by
+  simp [addCarry]
+
+/-- Low-word projection of `subBorrow` after one-word wrapping. -/
+@[simp]
+theorem toNat_subBorrow_fst (a b : UInt64) (bin : Bool) :
+    (subBorrow a b bin).1.toNat =
+      (word + a.toNat - (b.toNat + bin.toNat)) % word := by
+  let rhs := b.toNat + bin.toNat
+  have ha : a.toNat < word := by
+    simpa [word, UInt64.size] using UInt64.toNat_lt_size a
+  have hb : b.toNat < word := by
+    simpa [word, UInt64.size] using UInt64.toNat_lt_size b
+  have hbin : bin.toNat ≤ 1 := by
+    cases bin <;> decide
+  by_cases hle : rhs ≤ a.toNat
+  · have hdiff_lt : a.toNat - rhs < word := by omega
+    have hdiff_lt' : a.toNat - rhs < 2 ^ 64 := by
+      simpa [word] using hdiff_lt
+    have hwrap_eq : word + a.toNat - rhs = word + (a.toNat - rhs) := by omega
+    have hmod : (word + a.toNat - rhs) % word = a.toNat - rhs := by
+      rw [hwrap_eq, Nat.add_mod_left, Nat.mod_eq_of_lt hdiff_lt]
+    dsimp [subBorrow]
+    simp [rhs, hle]
+    rw [Nat.mod_eq_of_lt hdiff_lt']
+    simpa [rhs] using hmod.symm
+  · have hwrap_lt : word + a.toNat - rhs < word := by omega
+    have hwrap_lt' : word + a.toNat - rhs < 2 ^ 64 := by
+      simpa [word] using hwrap_lt
+    have hmod : (word + a.toNat - rhs) % word = word + a.toNat - rhs :=
+      Nat.mod_eq_of_lt hwrap_lt
+    dsimp [subBorrow]
+    simp [rhs, hle]
+    rw [Nat.mod_eq_of_lt hwrap_lt']
+    simpa [rhs] using hmod.symm
+
+/-- The outgoing borrow bit of `subBorrow` is set exactly when the subtrahend is larger. -/
+theorem subBorrow_snd (a b : UInt64) (bin : Bool) :
+    (subBorrow a b bin).2 = decide (a.toNat < b.toNat + bin.toNat) := by
+  by_cases hle : b.toNat + bin.toNat ≤ a.toNat
+  · have hnot : ¬ a.toNat < b.toNat + bin.toNat := by omega
+    simp [subBorrow, hle, hnot]
+  · have hlt : a.toNat < b.toNat + bin.toNat := by omega
+    simp [subBorrow, hle, hlt]
+
 private theorem toNat_ofNat_quot_mul_lt_word (a b : UInt64) :
     (UInt64.ofNat (a.toNat * b.toNat / word)).toNat =
       a.toNat * b.toNat / word := by
