@@ -3031,6 +3031,55 @@ private theorem gramDet_pos_of_det_positive (b : Matrix Int n m)
         simpa [hdet_nat] using hdet_pos
       exact Int.ofNat_lt.mp hnat_int
 
+/-- The leading executable Gram determinants of a square upper-triangular
+integer matrix with strictly positive diagonal are positive. -/
+theorem gramDet_pos_of_upperTriangular_pos_diag
+    {n : Nat} (M : Matrix Int n n)
+    (hzero : ∀ i j : Fin n, j.val < i.val -> M[i][j] = 0)
+    (hdiag : ∀ i : Fin n, 0 < M[i][i])
+    (k : Nat) (hk : k ≤ n) (hk' : 0 < k) :
+    0 < gramDet M k hk := by
+  exact gramDet_pos_of_det_positive M (by
+    intro r
+    have hpos :=
+      Matrix.det_gramMatrix_leadingRows_pos_of_upperTriangular_pos_diag M hzero hdiag
+        (r.val + 1) (Nat.succ_le_of_lt r.isLt)
+    have hgram :
+        Matrix.gramMatrix
+            (Matrix.leadingRows M (r.val + 1) (Nat.succ_le_of_lt r.isLt)) =
+          Matrix.submatrix (Matrix.gramMatrix M) r := by
+      apply Vector.ext
+      intro i hi
+      apply Vector.ext
+      intro j hj
+      let iFin : Fin (r.val + 1) := ⟨i, hi⟩
+      let jFin : Fin (r.val + 1) := ⟨j, hj⟩
+      let ii : Fin n := ⟨i, Nat.lt_of_lt_of_le hi (Nat.succ_le_of_lt r.isLt)⟩
+      let jj : Fin n := ⟨j, Nat.lt_of_lt_of_le hj (Nat.succ_le_of_lt r.isLt)⟩
+      have hrow_i :
+          Matrix.row (Matrix.leadingRows M (r.val + 1) (Nat.succ_le_of_lt r.isLt))
+              iFin = Matrix.row M ii := by
+        apply Vector.ext
+        intro c hc
+        simp [Matrix.row, Matrix.leadingRows, Matrix.ofFn, iFin, ii]
+      have hrow_j :
+          Matrix.row (Matrix.leadingRows M (r.val + 1) (Nat.succ_le_of_lt r.isLt))
+              jFin = Matrix.row M jj := by
+        apply Vector.ext
+        intro c hc
+        simp [Matrix.row, Matrix.leadingRows, Matrix.ofFn, jFin, jj]
+      have hdot :
+          Matrix.dot
+              (Matrix.row (Matrix.leadingRows M (r.val + 1) (Nat.succ_le_of_lt r.isLt))
+                iFin)
+              (Matrix.row (Matrix.leadingRows M (r.val + 1) (Nat.succ_le_of_lt r.isLt))
+                jFin) =
+            Matrix.dot (Matrix.row M ii) (Matrix.row M jj) := by
+        rw [hrow_i, hrow_j]
+      simpa [Matrix.gramMatrix, Matrix.submatrix, Matrix.ofFn, iFin, jFin, ii, jj] using
+        hdot
+    rwa [hgram] at hpos) k hk hk'
+
 /-- A determinant-positive leading-Gram-prefix proof induces the executable
 `gramDet` independence predicate. This is useful for callers that already
 have determinant lemmas for special matrix families, while keeping the public
