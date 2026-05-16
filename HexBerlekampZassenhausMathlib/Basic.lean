@@ -4876,6 +4876,266 @@ theorem exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd
     rw [hr, hq, Hex.DensePoly.mul_assoc_poly (S := Int)]
   exact ⟨f, S, hf_irr, hf_dvd_target, hf_dvd_candidate, hSJ, hiS, hrep⟩
 
+/--
+An irreducible integer factor of the core is never represented by the empty
+subset.  The recovery equation
+`centeredLiftPoly (scaledLiftedFactorProduct core d ∅) (d.p^d.k) = factor`
+collapses (under a monic core) to `centeredLiftPoly 1 (d.p^d.k) = factor`,
+which forces `factor = 1` whenever `d.p^d.k ≥ 2`; the residual `d.p^d.k = 1`
+case forces `factor = 0`.  Both outcomes contradict irreducibility of
+`HexPolyZMathlib.toPolynomial factor`.
+
+Used by `representedFactor_dvd_recombinationCandidate_of_subset` (#4457) to
+close the `S = ∅` subcase of the squarefreeness contradiction.
+-/
+private theorem not_represents_empty_of_irreducible_dvd_core
+    {core factor : Hex.ZPoly} {d : Hex.LiftData}
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hfactor_dvd : factor ∣ core)
+    (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor)) :
+    ¬ RepresentsIntegerFactorAtLift core d factor
+      (∅ : LiftedFactorSubset d) := by
+  intro hrep
+  -- Recovery equation: `centeredLiftPoly (scaledLiftedFactorProduct core d ∅) _ = factor`.
+  have hrec :
+      Hex.centeredLiftPoly
+          (scaledLiftedFactorProduct core d (∅ : LiftedFactorSubset d))
+          (d.p ^ d.k) = factor :=
+    centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
+      hcore_ne hfactor_dvd hrep hprecision
+  -- `liftedFactorProduct d ∅ = 1`: foldl on the empty `toList`.
+  have hempty_lp :
+      liftedFactorProduct d (∅ : LiftedFactorSubset d) = (1 : Hex.ZPoly) := by
+    unfold liftedFactorProduct
+    simp
+  -- Under monicness of `core`, the scale factor is `1`, so the scaled product
+  -- collapses to `1`.
+  have hlead : Hex.DensePoly.leadingCoeff core = (1 : Int) := hcore_monic
+  have hscaled :
+      scaledLiftedFactorProduct core d (∅ : LiftedFactorSubset d) =
+        (1 : Hex.ZPoly) := by
+    unfold scaledLiftedFactorProduct
+    rw [hlead, hempty_lp]
+    exact densePoly_scale_one_int (1 : Hex.ZPoly)
+  rw [hscaled] at hrec
+  -- `factor ∣ core` and `core ≠ 0` give `factor ≠ 0`.
+  have hfactor_ne : factor ≠ 0 := by
+    intro hf
+    rcases hfactor_dvd with ⟨q, hq⟩
+    rw [hf, Hex.DensePoly.zero_mul (S := Int) q] at hq
+    exact hcore_ne hq
+  -- Promote `0 < d.p^d.k` to `2 ≤ d.p^d.k` via the `d.p^d.k = 1 ⇒ factor = 0`
+  -- collapse of the centered lift (matching the pattern used in
+  -- `representsIntegerFactorAtLift_monic`).
+  have hpk_pos : 0 < d.p ^ d.k := Nat.pow_pos d.p_pos
+  have hpk_ge_two : 2 ≤ d.p ^ d.k := by
+    rcases Nat.eq_or_lt_of_le
+        (Nat.one_le_iff_ne_zero.mpr (Nat.ne_of_gt hpk_pos)) with hpk1 | hpk_gt
+    · exfalso
+      apply hfactor_ne
+      apply Hex.DensePoly.ext_coeff
+      intro i
+      rw [← hrec, Hex.coeff_centeredLiftPoly, ← hpk1,
+        Hex.DensePoly.coeff_zero]
+      unfold Hex.centeredModNat
+      have h1ne : (1 : Nat) ≠ 0 := by decide
+      simp only [if_neg h1ne]
+      simp
+    · omega
+  -- `centeredLiftPoly 1 (d.p^d.k) = 1` once `2 ≤ d.p^d.k`.
+  have hclpone :
+      Hex.centeredLiftPoly (1 : Hex.ZPoly) (d.p ^ d.k) = (1 : Hex.ZPoly) := by
+    apply Hex.DensePoly.ext_coeff
+    intro i
+    rw [Hex.coeff_centeredLiftPoly]
+    show Hex.centeredModNat
+        ((Hex.DensePoly.C (1 : Int)).coeff i) (d.p ^ d.k) =
+      (Hex.DensePoly.C (1 : Int)).coeff i
+    rw [Hex.DensePoly.coeff_C]
+    by_cases hi : i = 0
+    · rw [if_pos hi]
+      exact centeredModNat_one_of_two_le hpk_ge_two
+    · rw [if_neg hi]
+      change Hex.centeredModNat (0 : Int) (d.p ^ d.k) = (0 : Int)
+      exact Hex.centeredModNat_zero (d.p ^ d.k)
+  rw [hclpone] at hrec
+  -- `factor = 1` after transport contradicts irreducibility (1 is a unit).
+  have hpolyfactor_eq : HexPolyZMathlib.toPolynomial factor = 1 := by
+    rw [← hrec]; exact toPolynomial_one_zpoly
+  rw [hpolyfactor_eq] at hfactor_irr
+  exact not_irreducible_one hfactor_irr
+
+/--
+Main candidate divisibility theorem for the Mathlib bridge of the
+Berlekamp-Zassenhaus recombination search (#4430 capstone).
+
+Given a `LiftedFactorSubsetPartition core d J target` and a subset `T ⊆ J`,
+suppose the candidate `recombinationCandidate d T` is recordable and admits
+an exact quotient against `target`.  If an irreducible integer factor
+`factor` of `target` is represented at the Hensel lift by some `S ⊆ T`,
+then `factor` divides the recombination candidate.
+
+Proof outline.  The exact-quotient equation
+`quotient * recombinationCandidate d T = target` and the irreducibility of
+`toPolynomial factor` (so it is prime in `Polynomial ℤ` by UFD) split the
+divisibility into two cases:
+
+* `toPolynomial factor ∣ toPolynomial (recombinationCandidate d T)` —
+  transport back via `ofPolynomial` to obtain the desired
+  `factor ∣ recombinationCandidate d T`.
+* `toPolynomial factor ∣ toPolynomial quotient` — assemble a contradiction:
+  when `S` is non-empty, pick any `i ∈ S ⊆ T` and apply
+  `mem_T_iff_exists_irreducibleFactor_representingSubset` (#4469) to obtain
+  an irreducible divisor `g` of the candidate whose representing subset
+  `S_g` also contains `i`; the partition's `pairwise_disjoint` field
+  contrapositively forces `Associated (toPolynomial factor) (toPolynomial g)`,
+  so `toPolynomial factor ∣ toPolynomial (recombinationCandidate d T)` and
+  hence `(toPolynomial factor)^2 ∣ toPolynomial target`, contradicting
+  squarefreeness via `Irreducible.not_unit`.  When `S = ∅`, the recovery
+  equation forces `factor = 1` (or `factor = 0` in the degenerate
+  `d.p^d.k = 1` regime), again contradicting irreducibility — packaged in
+  `not_represents_empty_of_irreducible_dvd_core`.
+-/
+theorem representedFactor_dvd_recombinationCandidate_of_subset
+    {core target factor quotient : Hex.ZPoly} {d : Hex.LiftData}
+    {J S T : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hd_liftedFactor_monic : ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (htarget_dvd_core : target ∣ core)
+    (hTJ : T ⊆ J)
+    (hSJ : S ⊆ J)
+    (hrecord :
+      Hex.shouldRecordPolynomialFactor (recombinationCandidate d T) = true)
+    (hquot :
+      Hex.exactQuotient? target (recombinationCandidate d T) = some quotient)
+    (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hfactor_dvd_target : factor ∣ target)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hST : S ⊆ T) :
+    factor ∣ recombinationCandidate d T := by
+  -- Quotient equation and `candidate ∣ target` from `exactQuotient?_product`.
+  have hmul : quotient * recombinationCandidate d T = target :=
+    Hex.exactQuotient?_product hquot
+  have hcand_dvd_target : recombinationCandidate d T ∣ target := by
+    refine ⟨quotient, ?_⟩
+    rw [Hex.DensePoly.mul_comm_poly (S := Int)]
+    exact hmul.symm
+  have hpoly_mul :
+      HexPolyZMathlib.toPolynomial quotient *
+          HexPolyZMathlib.toPolynomial (recombinationCandidate d T) =
+        HexPolyZMathlib.toPolynomial target := by
+    rw [← HexPolyZMathlib.toPolynomial_mul, hmul]
+  -- UFD prime step on `toPolynomial factor`.
+  have hfactor_prime : Prime (HexPolyZMathlib.toPolynomial factor) :=
+    UniqueFactorizationMonoid.irreducible_iff_prime.mp hfactor_irr
+  have hpoly_factor_dvd_target :
+      HexPolyZMathlib.toPolynomial factor ∣
+        HexPolyZMathlib.toPolynomial target :=
+    HexPolyMathlib.toPolynomial_dvd hfactor_dvd_target
+  rw [← hpoly_mul] at hpoly_factor_dvd_target
+  rcases hfactor_prime.dvd_or_dvd hpoly_factor_dvd_target with hp_dvd_q | hp_dvd_c
+  · -- Case B: `toPolynomial factor ∣ toPolynomial quotient` — derive contradiction.
+    exfalso
+    have hfactor_dvd_core : factor ∣ core := by
+      obtain ⟨u, hu⟩ := hfactor_dvd_target
+      obtain ⟨v, hv⟩ := htarget_dvd_core
+      refine ⟨u * v, ?_⟩
+      rw [hv, hu]
+      exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
+    -- Derive `2 ≤ d.p^d.k` from `factor ≠ 0` and the centered-lift recovery,
+    -- matching the pattern used in `representsIntegerFactorAtLift_monic`.
+    have hd_modulus : 2 ≤ d.p ^ d.k := by
+      have hrec :
+          Hex.centeredLiftPoly
+              (scaledLiftedFactorProduct core d S) (d.p ^ d.k) = factor :=
+        centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
+          hcore_ne hfactor_dvd_core hrep hprecision
+      have hfactor_ne : factor ≠ 0 := by
+        intro hf
+        rcases hfactor_dvd_core with ⟨q, hq⟩
+        rw [hf, Hex.DensePoly.zero_mul (S := Int) q] at hq
+        exact hcore_ne hq
+      have hpk_pos : 0 < d.p ^ d.k := Nat.pow_pos d.p_pos
+      rcases Nat.eq_or_lt_of_le
+          (Nat.one_le_iff_ne_zero.mpr (Nat.ne_of_gt hpk_pos)) with hpk1 | hpk_gt
+      · exfalso
+        apply hfactor_ne
+        apply Hex.DensePoly.ext_coeff
+        intro i
+        rw [← hrec, Hex.coeff_centeredLiftPoly, ← hpk1,
+          Hex.DensePoly.coeff_zero]
+        unfold Hex.centeredModNat
+        have h1ne : (1 : Nat) ≠ 0 := by decide
+        simp only [if_neg h1ne]
+        simp
+      · omega
+    by_cases hS_empty : S = (∅ : LiftedFactorSubset d)
+    · -- Subcase B2: `S = ∅` — packaged by the empty-support helper.
+      apply not_represents_empty_of_irreducible_dvd_core
+        hcore_ne hcore_monic hprecision hfactor_dvd_core hfactor_irr
+      rw [hS_empty] at hrep
+      exact hrep
+    · -- Subcase B1: `S` non-empty.  Pick `i ∈ S ⊆ T`, apply #4469 to obtain
+      -- `g, S_g` with `i ∈ S_g`, then use `pairwise_disjoint` contrapositively
+      -- to conclude `Associated (toPolynomial factor) (toPolynomial g)`.
+      have hS_ne : S.Nonempty := Finset.nonempty_iff_ne_empty.mpr hS_empty
+      obtain ⟨i, hiS⟩ := hS_ne
+      have hiT : i ∈ T := hST hiS
+      obtain ⟨g, S_g, hg_irr, hg_dvd_cand, hg_rep, hSg_J, hi_Sg⟩ :=
+        mem_T_iff_exists_irreducibleFactor_representingSubset
+          hcore_ne hcore_monic hd_modulus hd_liftedFactor_monic
+          hd_liftedFactor_natDegree_pos hprecision hpartition htarget_dvd_core
+          hTJ hrecord hquot hiT
+      have hg_dvd_target : g ∣ target := by
+        obtain ⟨r₁, hr₁⟩ := hg_dvd_cand
+        obtain ⟨r₂, hr₂⟩ := hcand_dvd_target
+        refine ⟨r₁ * r₂, ?_⟩
+        rw [hr₂, hr₁]
+        exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
+      -- `i ∈ S ∩ S_g`, so `S` and `S_g` are not disjoint.
+      have hnot_disjoint : ¬ Disjoint S S_g := by
+        intro hdisj
+        exact (Finset.disjoint_left.mp hdisj hiS) hi_Sg
+      have hassoc :
+          Associated (HexPolyZMathlib.toPolynomial factor)
+            (HexPolyZMathlib.toPolynomial g) := by
+        by_contra hnot_assoc
+        exact hnot_disjoint
+          (hpartition.pairwise_disjoint
+            hfactor_irr hfactor_dvd_target hSJ hrep
+            hg_irr hg_dvd_target hSg_J hg_rep hnot_assoc)
+      -- `factor ∣ g ∣ candidate` (poly side) and `factor ∣ quotient` (poly side)
+      -- give `factor² ∣ target` (poly side), contradicting squarefreeness.
+      have hp_factor_dvd_cand :
+          HexPolyZMathlib.toPolynomial factor ∣
+            HexPolyZMathlib.toPolynomial (recombinationCandidate d T) :=
+        hassoc.dvd.trans (HexPolyMathlib.toPolynomial_dvd hg_dvd_cand)
+      have hsqdvd :
+          HexPolyZMathlib.toPolynomial factor *
+              HexPolyZMathlib.toPolynomial factor ∣
+            HexPolyZMathlib.toPolynomial target := by
+        rw [← hpoly_mul]
+        exact mul_dvd_mul hp_dvd_q hp_factor_dvd_cand
+      exact hfactor_irr.not_isUnit
+        (hpartition.target_squarefree _ hsqdvd)
+  · -- Case A: `toPolynomial factor ∣ toPolynomial (recombinationCandidate d T)`.
+    -- Transport back to `Hex.ZPoly` via `ofPolynomial`.
+    rcases hp_dvd_c with ⟨r, hr⟩
+    refine ⟨HexPolyZMathlib.ofPolynomial r, ?_⟩
+    apply HexPolyZMathlib.equiv.injective
+    simp only [HexPolyZMathlib.equiv_apply, HexPolyZMathlib.toPolynomial_mul,
+      HexPolyZMathlib.toPolynomial_ofPolynomial]
+    exact hr
+
 /-- Algorithm-side packaging for the exhaustive core branch in the form needed
 by UFD arguments over `Polynomial ℤ`.
 
