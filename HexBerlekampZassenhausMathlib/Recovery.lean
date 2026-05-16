@@ -997,6 +997,57 @@ noncomputable def ofMignottePrecisionCanonicalIndicatorsExpectedFactors
     (productOfExpectedFactors htrue)
 
 /--
+Mignotte-precision `ForwardRecoveryInputs` constructor specialised to the
+public `factorFast` lift shape `d = henselLiftData f (precisionForCoeffBound
+(factorFastPrecisionCap f) primeData.p) primeData`.  Drops the
+`mignotte_precision` side condition (discharged via
+`mignotte_precision_of_liftData_precisionForCoeffBound_factorFastPrecisionCap`
+under `hp : 2 ≤ d.p` and the lift-data shape equation `hk`).  Mirrors
+`ofCapSeparationCanonicalIndicatorsAtPrecisionForCoeffBound` for the Mignotte
+chain that arrives with the `ExpectedTrueFactors` package directly.
+-/
+noncomputable def ofMignottePrecisionCanonicalIndicatorsExpectedFactorsAtPrecisionForCoeffBound
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    (rows_pos : HasPositiveDimension f d)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData f d rows_pos).factorCount)))
+    (lattice_eq_indicators :
+      BHKS.projectedRowSpanInt (projectedRowsOfLiftData f d rows_pos) =
+        BHKS.trueFactorIndicatorLattice trueSupports)
+    (hp : 2 ≤ d.p)
+    (hk : d.k =
+      Hex.precisionForCoeffBound (Hex.factorFastPrecisionCap f) d.p)
+    (nondegenerate :
+      Hex.bhksDegenerateIndicatorPartition
+          (projectedRowsOfLiftData f d rows_pos)
+          (expectedIndicatorArrayOfSupports trueSupports) = false)
+    (selectedFactors : Array (Array Hex.ZPoly))
+    (expectedFactors : Array Hex.ZPoly)
+    (hf_ne_zero : f ≠ 0)
+    (htrue :
+      ExpectedTrueFactors f
+        (expectedIndicatorArrayOfSupports trueSupports) expectedFactors)
+    (hselected :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        Hex.bhksIndicatorSelectedFactors d.liftedFactors
+            ((expectedIndicatorArrayOfSupports trueSupports).getD i #[]) =
+          some (selectedFactors.getD i #[]))
+    (hproduct :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        Hex.ZPoly.reduceModPow
+            (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f)
+              (Array.polyProduct (selectedFactors.getD i #[])))
+            d.p d.k =
+          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0) d.p d.k) :
+    ForwardRecoveryInputs f d :=
+  ofMignottePrecisionCanonicalIndicatorsExpectedFactors
+    rows_pos trueSupports lattice_eq_indicators
+    (mignotte_precision_of_liftData_precisionForCoeffBound_factorFastPrecisionCap
+      f d hp hk)
+    nondegenerate selectedFactors expectedFactors hf_ne_zero htrue
+    hselected hproduct
+
+/--
 Build `ForwardRecoveryInputs f d` from cap-level BHKS separation plus the
 abstract B7/A2 obligations.
 
@@ -1461,6 +1512,141 @@ theorem factorFast_ne_none_of_capSeparationCanonicalIndicatorsAtPrecisionForCoef
       rows_pos localFactorIndex localFactorDegree H trueSupports
       hp hk hcap_le C hC_nonneg hC hcap nondegenerate
       expectedFactors hsize hcandidate product_eq)
+
+/--
+HO-4 leaf capstone: compose
+`ForwardRecoveryInputs.ofMignottePrecisionCanonicalIndicatorsExpectedFactorsAtPrecisionForCoeffBound`
+with `factorFast_ne_none_of_forwardInputs_at_cap`.
+
+Given the B7 canonical lattice identification on the normalized square-free
+core lift, B7 non-degeneracy of the canonical support-driven indicator
+partition, and the A2/exact-division Mignotte reconstruction facts (an
+indicator-selected factor list per indicator, the `ExpectedTrueFactors`
+package, and the per-indicator scaled-product reduction check), the public
+`Hex.factorFast f` returns `some _`.
+
+This is the Mignotte-side HO-4 leaf entry point parallel to
+`factorFast_ne_none_of_capSeparationCanonicalIndicatorsAtPrecisionForCoeffBound`:
+the two-step `ForwardRecoveryInputs` construction and the `factorFast`-success
+forward inference fold into a single application.  See
+`ofMignottePrecisionCanonicalIndicatorsExpectedFactorsAtPrecisionForCoeffBound`
+for the producer side and `factorFast_ne_none_of_forwardInputs_at_cap` for the
+consumer side.
+-/
+theorem factorFast_ne_none_of_mignottePrecisionCanonicalIndicatorsExpectedFactorsAtPrecisionForCoeffBound
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.henselLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.precisionForCoeffBound
+            (Hex.factorFastPrecisionCap f) primeData.p)
+          primeData))
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.henselLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.precisionForCoeffBound
+            (Hex.factorFastPrecisionCap f) primeData.p)
+          primeData)
+        rows_pos).factorCount)))
+    (lattice_eq_indicators :
+      BHKS.projectedRowSpanInt
+          (projectedRowsOfLiftData
+            (Hex.normalizeForFactor f).squareFreeCore
+            (Hex.henselLiftData
+              (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.precisionForCoeffBound
+                (Hex.factorFastPrecisionCap f) primeData.p)
+              primeData)
+            rows_pos) =
+        BHKS.trueFactorIndicatorLattice trueSupports)
+    (hB_pos : 1 ≤ Hex.factorFastPrecisionCap f)
+    (hnormalized :
+      primeData = Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+    (hp :
+      2 ≤ (Hex.henselLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.precisionForCoeffBound
+          (Hex.factorFastPrecisionCap f) primeData.p)
+        primeData).p)
+    (hk :
+      (Hex.henselLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.precisionForCoeffBound
+          (Hex.factorFastPrecisionCap f) primeData.p)
+        primeData).k =
+      Hex.precisionForCoeffBound
+        (Hex.factorFastPrecisionCap
+          (Hex.normalizeForFactor f).squareFreeCore)
+        (Hex.henselLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.precisionForCoeffBound
+            (Hex.factorFastPrecisionCap f) primeData.p)
+          primeData).p)
+    (nondegenerate :
+      Hex.bhksDegenerateIndicatorPartition
+          (projectedRowsOfLiftData
+            (Hex.normalizeForFactor f).squareFreeCore
+            (Hex.henselLiftData
+              (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.precisionForCoeffBound
+                (Hex.factorFastPrecisionCap f) primeData.p)
+              primeData)
+            rows_pos)
+          (expectedIndicatorArrayOfSupports trueSupports) = false)
+    (selectedFactors : Array (Array Hex.ZPoly))
+    (expectedFactors : Array Hex.ZPoly)
+    (hf_ne_zero : (Hex.normalizeForFactor f).squareFreeCore ≠ 0)
+    (htrue :
+      ForwardRecoveryInputs.ExpectedTrueFactors
+        (Hex.normalizeForFactor f).squareFreeCore
+        (expectedIndicatorArrayOfSupports trueSupports) expectedFactors)
+    (hselected :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        Hex.bhksIndicatorSelectedFactors
+            (Hex.henselLiftData
+              (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.precisionForCoeffBound
+                (Hex.factorFastPrecisionCap f) primeData.p)
+              primeData).liftedFactors
+            ((expectedIndicatorArrayOfSupports trueSupports).getD i #[]) =
+          some (selectedFactors.getD i #[]))
+    (hproduct :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        Hex.ZPoly.reduceModPow
+            (Hex.DensePoly.scale
+              (Hex.DensePoly.leadingCoeff
+                (Hex.normalizeForFactor f).squareFreeCore)
+              (Array.polyProduct (selectedFactors.getD i #[])))
+            (Hex.henselLiftData
+              (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.precisionForCoeffBound
+                (Hex.factorFastPrecisionCap f) primeData.p)
+              primeData).p
+            (Hex.henselLiftData
+              (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.precisionForCoeffBound
+                (Hex.factorFastPrecisionCap f) primeData.p)
+              primeData).k =
+          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0)
+            (Hex.henselLiftData
+              (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.precisionForCoeffBound
+                (Hex.factorFastPrecisionCap f) primeData.p)
+              primeData).p
+            (Hex.henselLiftData
+              (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.precisionForCoeffBound
+                (Hex.factorFastPrecisionCap f) primeData.p)
+              primeData).k) :
+    Hex.factorFast f ≠ none :=
+  factorFast_ne_none_of_forwardInputs_at_cap f primeData hB_pos hnormalized
+    (ForwardRecoveryInputs.ofMignottePrecisionCanonicalIndicatorsExpectedFactorsAtPrecisionForCoeffBound
+      rows_pos trueSupports lattice_eq_indicators hp hk nondegenerate
+      selectedFactors expectedFactors hf_ne_zero htrue hselected hproduct)
 
 end BHKS
 
