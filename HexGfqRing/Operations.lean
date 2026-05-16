@@ -715,24 +715,34 @@ private theorem nsmul_eq_linearNSmul
   rw [nsmul_go_eq_acc_add_linearNSmul]
   exact linearNSmul_zero_add_raw (linearNSmul x n)
 
+/-- Unfolded base of the `nsmul` recurrence: zero scalar multiplication yields the quotient zero.
+The implementation `nsmul.go` runs binary decomposition (via `linearNSmul`); this lemma exposes
+the textbook recurrence shape that `Lean.Grind.Semiring`'s `nsmul_zero` axiom field consumes. -/
 @[simp] theorem nsmul_zero {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) :
     nsmul 0 x = 0 := by
   rw [nsmul_eq_linearNSmul]
   rfl
 
+/-- Unfolded step of the `nsmul` recurrence. This is a theorem about the projected behaviour, not
+the implementation strategy: `nsmul.go` uses binary decomposition (via `linearNSmul_double` /
+`linearNSmul_double_add_one`) per the SPEC's prohibition on the textbook `n+1 ↦ pred + 1`
+recursion. Consumed by `Lean.Grind.Semiring`'s `nsmul_succ` axiom field. -/
 @[simp] theorem nsmul_succ {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (n : Nat) (x : PolyQuotient f hf) :
     nsmul (n + 1) x = nsmul n x + x := by
   rw [nsmul_eq_linearNSmul, nsmul_eq_linearNSmul]
   rfl
 
+/-- Canonical representative of `nsmul 0 x` is the reduction of `0`. -/
 @[simp] theorem repr_nsmul_zero {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) :
     repr (nsmul 0 x) = reduceMod f 0 := by
   rw [nsmul_zero]
   rfl
 
+/-- Canonical representative of `nsmul (n + 1) x` is the reduction of the sum of the previous
+nsmul's representative and `repr x`. -/
 @[simp] theorem repr_nsmul_succ {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (n : Nat) (x : PolyQuotient f hf) :
     repr (nsmul (n + 1) x) = reduceMod f (repr (nsmul n x) + repr x) := by
@@ -786,6 +796,8 @@ private theorem const_add (f : FpPoly p) (hf : 0 < FpPoly.degree f) (a b : ZMod6
     simpa using hf
   rw [ha, hb, ← fpPoly_C_add]
 
+/-- The `OfNat` literal at `n + 1` decomposes as the `OfNat` literal at `n` plus one in the
+quotient ring. Witnesses the `Lean.Grind.Semiring.natCast_succ` axiom field. -/
 theorem natCast_succ (f : FpPoly p) (hf : 0 < FpPoly.degree f) (n : Nat) :
     (OfNat.ofNat (α := PolyQuotient f hf) (n + 1)) =
       OfNat.ofNat (α := PolyQuotient f hf) n + 1 := by
@@ -796,6 +808,8 @@ theorem natCast_succ (f : FpPoly p) (hf : 0 < FpPoly.degree f) (n : Nat) :
   rw [hsucc]
   exact const_add f hf (n : ZMod64 p) (1 : ZMod64 p)
 
+/-- Natural scalar multiplication agrees with multiplication by the corresponding `natCast`.
+Witnesses the `Lean.Grind.Semiring.nsmul_eq_natCast_mul` axiom field. -/
 theorem nsmul_eq_natCast_mul {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (n : Nat) (x : PolyQuotient f hf) :
     n • x = (Nat.cast n : PolyQuotient f hf) * x := by
@@ -824,52 +838,72 @@ theorem nsmul_eq_natCast_mul {f : FpPoly p} {hf : 0 < FpPoly.degree f}
             exact natCast_succ f hf n
           rw [hcast]
 
+/-- Integer cast of a non-negative integer unfolds to the corresponding `natCast`. -/
 @[simp] theorem intCast_ofNat
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (n : Nat) :
     intCast f hf (.ofNat n) = natCast f hf n :=
   rfl
 
+/-- Integer cast of `-(n + 1)` is the negation of the `(n + 1)` natural-number cast. -/
 @[simp] theorem intCast_negSucc
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (n : Nat) :
     intCast f hf (.negSucc n) = -(natCast f hf (n + 1)) :=
   rfl
 
+/-- Canonical representative of `intCast (Int.ofNat n)` is the reduction of `C (n : ZMod64 p)`. -/
 @[simp] theorem repr_intCast_ofNat
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (n : Nat) :
     repr (intCast f hf (.ofNat n)) = reduceMod f (FpPoly.C (n : ZMod64 p)) :=
   rfl
 
+/-- Canonical representative of `intCast (Int.negSucc n)` is the reduction of the negation of the
+reduced `C (n + 1 : ZMod64 p)`. The double `reduceMod` is the projection of the negation of the
+canonical `natCast` representative. -/
 @[simp] theorem repr_intCast_negSucc
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (n : Nat) :
     repr (intCast f hf (.negSucc n)) =
       reduceMod f (-reduceMod f (FpPoly.C ((n + 1 : Nat) : ZMod64 p))) :=
   rfl
 
+/-- Integer scalar multiplication by a non-negative integer unfolds to natural scalar
+multiplication. -/
 @[simp] theorem zsmul_ofNat {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (n : Nat) (x : PolyQuotient f hf) :
     zsmul (.ofNat n) x = nsmul n x :=
   rfl
 
+/-- Integer scalar multiplication by `-(n + 1)` is the negation of the `(n + 1)` natural scalar
+multiplication. -/
 @[simp] theorem zsmul_negSucc {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (n : Nat) (x : PolyQuotient f hf) :
     zsmul (.negSucc n) x = -(nsmul (n + 1) x) :=
   rfl
 
+/-- Canonical representative of `zsmul (Int.ofNat n) x` reduces to the `nsmul`-level
+representative. -/
 @[simp] theorem repr_zsmul_ofNat {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (n : Nat) (x : PolyQuotient f hf) :
     repr (zsmul (.ofNat n) x) = repr (nsmul n x) :=
   rfl
 
+/-- Canonical representative of `zsmul (Int.negSucc n) x` is the reduction of the negation of the
+`(n + 1)` natural scalar multiplication's representative. -/
 @[simp] theorem repr_zsmul_negSucc {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (n : Nat) (x : PolyQuotient f hf) :
     repr (zsmul (.negSucc n) x) = reduceMod f (-repr (nsmul (n + 1) x)) :=
   rfl
 
+/-- Negation of the quotient zero is the quotient zero. Used by `neg_zsmul_eq` and
+`intCast_neg_eq` (the `Lean.Grind.Ring.neg_zsmul` / `intCast_neg` axiom witnesses) for the
+boundary `n = 0` case. -/
 theorem neg_zero_eq {f : FpPoly p} {hf : 0 < FpPoly.degree f} :
     -(0 : PolyQuotient f hf) = 0 := by
   apply ext
   rw [repr_neg, repr_zero, reduceMod_zero f hf, FpPoly.neg_zero, reduceMod_zero f hf]
 
+/-- Double negation in the quotient ring is the identity. Proved by the textbook additive-group
+calculation `-(-x) = -(-x) + (-x + x) = (-(-x) + -x) + x = 0 + x = x`. Used by `neg_zsmul_eq`
+and `intCast_neg_eq` for the `Int.negSucc` case. -/
 theorem neg_neg_eq {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) :
     -(-x) = x := by
@@ -894,6 +928,10 @@ theorem neg_neg_eq {f : FpPoly p} {hf : 0 < FpPoly.degree f}
       apply ext
       exact repr_zero_add x
 
+/-- Negation distributes over integer scalar multiplication. Witnesses the
+`Lean.Grind.Ring.neg_zsmul` axiom field. The three branches handle `i = Int.ofNat 0`,
+`i = Int.ofNat (n + 1)`, and `i = Int.negSucc n` separately because `Int.neg` evaluates
+differently on each. -/
 theorem neg_zsmul_eq {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (i : Int) (a : PolyQuotient f hf) :
     -i • a = -(i • a) := by
@@ -909,6 +947,8 @@ theorem neg_zsmul_eq {f : FpPoly p} {hf : 0 < FpPoly.degree f}
   | negSucc n =>
       exact (neg_neg_eq (nsmul (n + 1) a)).symm
 
+/-- Negation distributes over integer cast. Witnesses the `Lean.Grind.Ring.intCast_neg` axiom
+field. Three branches mirror `neg_zsmul_eq`. -/
 theorem intCast_neg_eq (f : FpPoly p) (hf : 0 < FpPoly.degree f)
     (i : Int) :
     ↑(-i) = -(↑i : PolyQuotient f hf) := by
