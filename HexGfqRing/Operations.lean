@@ -50,7 +50,8 @@ def sub {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x y : PolyQuotient f hf) : PolyQuotient f hf :=
   ofPoly f hf (repr x - repr y)
 
-/-- Quotient exponentiation uses square-and-multiply on the exponent bits. -/
+/-- Quotient exponentiation by square-and-multiply on the exponent bits, costing
+`O(log n)` quotient-ring multiplications. -/
 def pow {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) (n : Nat) : PolyQuotient f hf :=
   let rec go (acc base : PolyQuotient f hf) (k : Nat) : PolyQuotient f hf :=
@@ -968,6 +969,10 @@ theorem intCast_neg_eq (f : FpPoly p) (hf : 0 < FpPoly.degree f)
   | negSucc n =>
       exact (neg_neg_eq (natCast f hf (n + 1))).symm
 
+/-- Proof-only linear recurrence `x^(n+1) = x^n * x`, used to discharge the
+`pow_zero` / `pow_succ` fields of the `Lean.Grind.Semiring` instance. The
+executable `pow` is square-and-multiply (`O(log n)`); `pow_eq_linearPow` ties
+the two together. -/
 private def linearPow {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) : Nat → PolyQuotient f hf
   | 0 => 1
@@ -1077,6 +1082,9 @@ private theorem pow_go_eq_acc_mul_linearPow
               _ = mul acc (linearPow base k) := by
                     rw [← hk_eq]
 
+/-- The executable square-and-multiply `pow` returns the same element as the
+proof-only linear recurrence `linearPow`. The `Lean.Grind.Semiring` instance
+rewrites by this equality to discharge its `pow_succ` field. -/
 private theorem pow_eq_linearPow
     {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) (n : Nat) :
