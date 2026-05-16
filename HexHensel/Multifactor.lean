@@ -129,6 +129,30 @@ theorem polyProduct_singleton_append (g : ZPoly) (rest : Array ZPoly) :
       simpa [Array.polyProduct, one_mul_zpoly] using
         list_foldl_mul_eq_mul_foldl_one g xs
 
+/-- `Array.polyProduct` of the empty array is the multiplicative unit. -/
+theorem polyProduct_empty :
+    Array.polyProduct (#[] : Array ZPoly) = 1 :=
+  rfl
+
+/-- `Array.polyProduct` splits as a product across array concatenation. -/
+theorem polyProduct_append (xs ys : Array ZPoly) :
+    Array.polyProduct (xs ++ ys) =
+      Array.polyProduct xs * Array.polyProduct ys := by
+  rw [Array.polyProduct, Array.foldl_append]
+  cases ys with
+  | mk ylist =>
+      simpa [Array.polyProduct] using list_foldl_mul_eq_mul_foldl_one
+        (Array.foldl (fun acc factor => acc * factor) 1 xs) ylist
+
+/-- `Array.polyProduct` over `(g :: rest).toArray` factors the head out as a
+left multiplication. The `List`-flavoured analogue of
+`polyProduct_singleton_append`. -/
+theorem polyProduct_cons_toArray (g : ZPoly) (rest : List ZPoly) :
+    Array.polyProduct (g :: rest).toArray =
+      g * Array.polyProduct rest.toArray := by
+  simpa [Array.polyProduct, one_mul_zpoly] using
+    (list_foldl_mul_eq_mul_foldl_one g rest)
+
 private theorem multifactorLiftList_spec
     (p k : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
     (f : ZPoly) (factors : List ZPoly)
