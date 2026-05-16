@@ -592,13 +592,13 @@ The `Bench verify` step has two enforced budgets:
   output for visibility. This is a warning, not a fail —
   GitHub-hosted runner perf variance is real (2-3× single-run noise
   is normal), and a single-PR flake should not block merges.
-- **Repo-wide hard cap at 10 wallclock minutes** (transitional; see
-  below). The total time for the `Bench verify` step (build + run,
-  summed across all libraries) MUST be under the cap. Crossing it
-  fails the build with a per-library breakdown so the offender is
-  obvious. The 10-minute cap is staged: once outliers are
-  remediated, the cap ratchets to **5 wallclock minutes**, which is
-  the long-term target.
+- **Repo-wide hard cap configured in CI**. The total time for the
+  `Bench verify` step (build + run, summed across all libraries)
+  MUST be under the cap. Crossing it fails the build with a
+  per-library breakdown so the offender is obvious. The cap may carry
+  a small variance buffer for GitHub-hosted runner noise, but the
+  long-term target remains **5 wallclock minutes** once slow fixed
+  smoke rungs are remediated.
 
 When a library trips either:
 
