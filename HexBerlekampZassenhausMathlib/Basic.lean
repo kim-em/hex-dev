@@ -7051,6 +7051,129 @@ theorem exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence
       (B := Hex.ZPoly.defaultFactorCoeffBound core)
       hB_ne_zero h.lift_eq hsearchMod hemitted_mem
 
+/-- **#4006 slow-path capstone.**
+
+Branch-local irreducibility for the exhaustive square-free-core branch:
+every factor emitted by `Hex.exhaustiveCoreFactorsWithBound core
+(Hex.ZPoly.defaultFactorCoeffBound core) primeData` is irreducible in
+`Hex.ZPoly` whenever the standard good-prime / Hensel / recombination
+hypothesis set (`HenselSubsetCorrespondenceHypotheses` and
+`LiftedFactorSubsetPartition` at the full-universe subset) holds for
+a square-free, monic core.
+
+The argument composes three landed pieces:
+
+* `exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence`
+  (#4274), which produces, for every irreducible `Polynomial ℤ` divisor
+  of `core`, an emitted factor associated to it.
+* `UFDPartition.normalizedFactors_card_le_length_of_coverage`, which
+  converts that coverage (under square-freeness of `toPolynomial core`)
+  into the lower count bound `card (normalizedFactors (toPolynomial core))
+  ≤ (emitted.map toPolynomial).length`.
+* `exhaustiveCoreFactorsWithBound_factor_count_le`, which supplies the
+  matching upper count bound; together they yield the count equality
+  consumed by `exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_count`.
+
+The square-freeness of `toPolynomial core` is read off
+`hpartition.target_squarefree` at `target = core`, so the only new
+input beyond the coverage signature is `hcore_record`, required by the
+existing UFD count-le wrapper. -/
+theorem exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence
+    {core : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
+    (h :
+      HenselSubsetCorrespondenceHypotheses core
+        (Hex.precisionForCoeffBound (Hex.ZPoly.defaultFactorCoeffBound core)
+          primeData.p)
+        primeData d admissiblePrime successfulLift)
+    (hpartition :
+      LiftedFactorSubsetPartition core d Finset.univ core)
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hcore_record : Hex.shouldRecordPolynomialFactor core = true)
+    (hB_ne_zero : Hex.ZPoly.defaultFactorCoeffBound core ≠ 0)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hd_liftedFactor_inj : Function.Injective (liftedFactor d))
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    ∀ factor ∈
+      (Hex.exhaustiveCoreFactorsWithBound core
+        (Hex.ZPoly.defaultFactorCoeffBound core) primeData).toList,
+      Hex.ZPoly.Irreducible factor := by
+  set B := Hex.ZPoly.defaultFactorCoeffBound core with hB_def
+  set coreFactors := Hex.exhaustiveCoreFactorsWithBound core B primeData
+    with hcoreFactors_def
+  set f := HexPolyZMathlib.toPolynomial core with hf_def
+  have hf_ne : f ≠ 0 := by
+    intro hzero
+    apply hcore_ne
+    apply HexPolyZMathlib.equiv.injective
+    simpa [hf_def] using hzero
+  have hcore_squarefree : Squarefree f := hpartition.target_squarefree
+  set gs : List (Polynomial ℤ) :=
+    coreFactors.toList.map HexPolyZMathlib.toPolynomial with hgs_def
+  -- Coverage at the `Polynomial ℤ` level for each `q ∈ normalizedFactors f`.
+  have hcoverage : ∀ q ∈ UniqueFactorizationMonoid.normalizedFactors f,
+      ∃ g ∈ gs, Associated g q := by
+    intro q hq
+    have hq_irr : Irreducible q :=
+      UniqueFactorizationMonoid.irreducible_of_normalized_factor q hq
+    have hq_dvd : q ∣ f :=
+      UniqueFactorizationMonoid.dvd_of_mem_normalizedFactors hq
+    set factor : Hex.ZPoly := HexPolyZMathlib.ofPolynomial q with hfactor_def
+    have htoP : HexPolyZMathlib.toPolynomial factor = q := by
+      simp [hfactor_def]
+    have hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor) := by
+      rw [htoP]; exact hq_irr
+    have hfactor_dvd : factor ∣ core := by
+      rcases hq_dvd with ⟨r, hr⟩
+      refine ⟨HexPolyZMathlib.ofPolynomial r, ?_⟩
+      apply HexPolyZMathlib.equiv.injective
+      show HexPolyZMathlib.toPolynomial core =
+        HexPolyZMathlib.toPolynomial (factor * HexPolyZMathlib.ofPolynomial r)
+      rw [HexPolyZMathlib.toPolynomial_mul, htoP,
+        HexPolyZMathlib.toPolynomial_ofPolynomial, ← hf_def]
+      exact hr
+    obtain ⟨emitted, hemitted_mem, hassoc⟩ :=
+      exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence
+        h hpartition hcore_ne hcore_monic hB_ne_zero hd_modulus
+        hd_liftedFactor_monic hd_liftedFactor_natDegree_pos hd_liftedFactor_inj
+        hfactor_irr hfactor_dvd hprecision
+    refine ⟨HexPolyZMathlib.toPolynomial emitted, ?_, ?_⟩
+    · rw [hgs_def, List.mem_map]
+      refine ⟨emitted, ?_, rfl⟩
+      simpa [hcoreFactors_def, hB_def] using hemitted_mem
+    · rw [htoP] at hassoc
+      exact hassoc
+  -- Count lower bound from coverage.
+  have hcount_ge :
+      (UniqueFactorizationMonoid.normalizedFactors f).card ≤ gs.length :=
+    HexBerlekampZassenhausMathlib.UFDPartition.normalizedFactors_card_le_length_of_coverage
+      hf_ne hcore_squarefree gs hcoverage
+  -- Count upper bound from the existing UFD wrapper.
+  have hcount_le : gs.length ≤
+      (UniqueFactorizationMonoid.normalizedFactors f).card := by
+    have := exhaustiveCoreFactorsWithBound_factor_count_le
+      (core := core) (B := B) (primeData := primeData) hcore_ne hcore_record
+    simpa [hgs_def, hf_def, hcoreFactors_def] using this
+  have hcount_eq :
+      (coreFactors.toList.map HexPolyZMathlib.toPolynomial).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial core)).card := by
+    have : gs.length =
+        (UniqueFactorizationMonoid.normalizedFactors f).card :=
+      le_antisymm hcount_le hcount_ge
+    simpa [hgs_def, hf_def] using this
+  intro factor hfactor_mem
+  refine exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_count
+    (core := core) (B := B) (primeData := primeData)
+    hcore_ne hcore_record hcount_eq factor ?_
+  simpa [hcoreFactors_def, hB_def] using hfactor_mem
+
 end
 
 end HexBerlekampZassenhausMathlib
