@@ -4493,6 +4493,118 @@ theorem exists_mem_representedSubset_of_degree_cover
     exact Finset.notMem_empty _ h_in_sdiff
   exact Finset.mem_biUnion.mp hi_in_bU
 
+/--
+Package a normalized irreducible factor of a recombination candidate as an
+executable `Hex.ZPoly` factor with the represented subset facts needed by the
+reverse-coverage degree argument.
+
+The normalized-factor membership supplies an irreducible divisor of
+`toPolynomial (recombinationCandidate d T)`. Since the candidate is monic, that
+normalized divisor is monic too. Transporting the divisor back through
+`HexPolyZMathlib.ofPolynomial` gives a `Hex.ZPoly` divisor of the candidate and
+hence of `target`; the partition then provides its representing subset, and the
+support-containment field forces that subset to lie in `T`.
+-/
+theorem exists_representingSubset_of_mem_normalizedFactors_recombinationCandidate
+    {core target quotient : Hex.ZPoly} {d : Hex.LiftData}
+    {J T : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic : ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (_htarget_dvd_core : target ∣ core)
+    (hTJ : T ⊆ J)
+    (hrecord :
+      Hex.shouldRecordPolynomialFactor (recombinationCandidate d T) = true)
+    (hquot :
+      Hex.exactQuotient? target (recombinationCandidate d T) = some quotient)
+    {gPoly : Polynomial ℤ}
+    (hg_mem : gPoly ∈ UniqueFactorizationMonoid.normalizedFactors
+      (HexPolyZMathlib.toPolynomial (recombinationCandidate d T))) :
+    ∃ (g : Hex.ZPoly) (S_g : LiftedFactorSubset d),
+      HexPolyZMathlib.toPolynomial g = gPoly ∧
+      Irreducible (HexPolyZMathlib.toPolynomial g) ∧
+      g ∣ target ∧
+      g ∣ recombinationCandidate d T ∧
+      RepresentsIntegerFactorAtLift core d g S_g ∧
+      S_g ⊆ J ∧
+      S_g ⊆ T ∧
+      Hex.ZPoly.content g = 1 ∧
+      Hex.normalizeFactorSign g = g := by
+  obtain ⟨hcand_poly_ne_zero, _hcand_poly_nonunit⟩ :=
+    toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord hrecord
+  have hg_norm :=
+    (UniqueFactorizationMonoid.mem_normalizedFactors_iff'
+      (p := gPoly) (x := HexPolyZMathlib.toPolynomial (recombinationCandidate d T))
+      hcand_poly_ne_zero).mp hg_mem
+  rcases hg_norm with ⟨hg_irr, hg_normalized, hg_dvd_cand_poly⟩
+  let g : Hex.ZPoly := HexPolyZMathlib.ofPolynomial gPoly
+  have hg_toPolynomial : HexPolyZMathlib.toPolynomial g = gPoly :=
+    HexPolyZMathlib.toPolynomial_ofPolynomial gPoly
+  have hg_irr_toPoly : Irreducible (HexPolyZMathlib.toPolynomial g) := by
+    rw [hg_toPolynomial]
+    exact hg_irr
+  have hg_dvd_cand : g ∣ recombinationCandidate d T := by
+    rcases hg_dvd_cand_poly with ⟨r, hr⟩
+    refine ⟨HexPolyZMathlib.ofPolynomial r, ?_⟩
+    apply HexPolyZMathlib.equiv.injective
+    simp only [HexPolyZMathlib.equiv_apply, HexPolyZMathlib.toPolynomial_mul,
+      HexPolyZMathlib.toPolynomial_ofPolynomial]
+    rw [hg_toPolynomial]
+    exact hr
+  have hcand_dvd_target : recombinationCandidate d T ∣ target := by
+    have hmul : quotient * recombinationCandidate d T = target :=
+      Hex.exactQuotient?_product hquot
+    refine ⟨quotient, ?_⟩
+    rw [Hex.DensePoly.mul_comm_poly (S := Int)]
+    exact hmul.symm
+  have hg_dvd_target : g ∣ target := by
+    rcases hg_dvd_cand with ⟨r₁, hr₁⟩
+    rcases hcand_dvd_target with ⟨r₂, hr₂⟩
+    refine ⟨r₁ * r₂, ?_⟩
+    rw [hr₂, hr₁, Hex.DensePoly.mul_assoc_poly (S := Int)]
+  obtain ⟨S_g, hSJ, hSrep⟩ :=
+    hpartition.exists_subset hg_irr_toPoly hg_dvd_target
+  have hST : S_g ⊆ T :=
+    representingSubset_subset_of_dvd_recombinationCandidate
+      hcore_ne hcore_monic hprecision hpartition hTJ hg_irr_toPoly
+      hg_dvd_target hg_dvd_cand hSJ hSrep
+  have hcand_monic_poly :
+      (HexPolyZMathlib.toPolynomial (recombinationCandidate d T)).Monic :=
+    toPolynomial_recombinationCandidate_monic hd_modulus hd_liftedFactor_monic T
+  have hg_monic_poly : gPoly.Monic := by
+    rcases hg_dvd_cand_poly with ⟨r, hr⟩
+    have hr_ne : r ≠ 0 := by
+      intro hr_zero
+      apply hcand_monic_poly.ne_zero
+      rw [hr, hr_zero, mul_zero]
+    have hlead_mul : gPoly.leadingCoeff * r.leadingCoeff = (1 : Int) := by
+      have hlead := Polynomial.leadingCoeff_mul gPoly r
+      rw [← hr, hcand_monic_poly.leadingCoeff] at hlead
+      simpa using hlead.symm
+    have hlead_normalized :
+        normalize gPoly.leadingCoeff = gPoly.leadingCoeff := by
+      have hlead := congrArg Polynomial.leadingCoeff hg_normalized
+      rwa [Polynomial.leadingCoeff_normalize] at hlead
+    have hlead_nonneg : 0 ≤ gPoly.leadingCoeff :=
+      Int.nonneg_of_normalize_eq_self hlead_normalized
+    rcases Int.mul_eq_one_iff_eq_one_or_neg_one.mp hlead_mul with hpos | hneg
+    · exact hpos.1
+    · exfalso
+      rw [hneg.1] at hlead_nonneg
+      omega
+  have hg_monic_hex : Hex.DensePoly.Monic g := by
+    have hlead : (HexPolyZMathlib.toPolynomial g).leadingCoeff = 1 := by
+      rw [hg_toPolynomial]
+      exact hg_monic_poly
+    rwa [HexPolyMathlib.leadingCoeff_toPolynomial] at hlead
+  obtain ⟨_, hg_content, hg_norm_sign⟩ :=
+    monic_primitive_sign_normalized_of_monic hg_monic_hex
+  exact ⟨g, S_g, hg_toPolynomial, hg_irr_toPoly, hg_dvd_target, hg_dvd_cand,
+    hSrep, hSJ, hST, hg_content, hg_norm_sign⟩
+
 /-- Algorithm-side packaging for the exhaustive core branch in the form needed
 by UFD arguments over `Polynomial ℤ`.
 

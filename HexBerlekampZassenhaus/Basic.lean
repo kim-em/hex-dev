@@ -3685,10 +3685,9 @@ The result is the executable `L'` row data consumed by the later RREF /
 equivalence-class recovery stage.
 -/
 def bhksProjectedRows (L : BhksLatticeBasis)
-    (hrows : 1 ≤ L.factorCount + L.coeffWidth)
-    (hind : L.basis.independent) : BhksProjectedRows :=
+    (hrows : 1 ≤ L.factorCount + L.coeffWidth) : BhksProjectedRows :=
   let reducedRows :=
-    lll.shortVectors L.basis (3 / 4) lll_delta_lower lll_delta_upper hrows hind
+    lll.shortVectorsUnchecked L.basis (3 / 4) lll_delta_lower lll_delta_upper hrows
   let reducedBasis :=
     bhksRowsArrayToMatrix (L.factorCount + L.coeffWidth) reducedRows
   { factorCount := L.factorCount
@@ -4542,7 +4541,7 @@ and accepts only when the verified candidates multiply back to `f`.
 private def bhksRecoverClassified (f : ZPoly) (d : LiftData) : BhksRecoveryResult :=
   let L := bhksLatticeBasis f d.p d.k d.liftedFactors
   if hrows : 1 ≤ L.factorCount + L.coeffWidth then
-    let projected := bhksProjectedRows L hrows (bhksLiftData_latticeBasis_independent f d)
+    let projected := bhksProjectedRows L hrows
     let indicators := bhksEquivalenceClassIndicators projected
     if bhksDegenerateIndicatorPartition projected indicators then
       .degenerate
@@ -4573,18 +4572,15 @@ theorem bhksRecover?_eq_some_of_checks
       (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth)
     (hnondeg :
       bhksDegenerateIndicatorPartition
-          (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
-            hrows (bhksLiftData_latticeBasis_independent f d))
+          (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)
           (bhksEquivalenceClassIndicators
             (bhksProjectedRows
-              (bhksLatticeBasis f d.p d.k d.liftedFactors)
-              hrows (bhksLiftData_latticeBasis_independent f d))) = false)
+              (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)) = false)
     (hcand :
       bhksIndicatorCandidates? f d
           (bhksEquivalenceClassIndicators
             (bhksProjectedRows
-              (bhksLatticeBasis f d.p d.k d.liftedFactors)
-              hrows (bhksLiftData_latticeBasis_independent f d))) =
+              (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)) =
         some candidates)
     (hprod : Array.polyProduct candidates = f) :
     bhksRecover? f d = some candidates := by
@@ -6828,17 +6824,16 @@ private theorem bhksRecoverClassified_success_product
   · rw [dif_pos hrows] at hrecover
     by_cases hdeg :
         bhksDegenerateIndicatorPartition
-          (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows
-            (bhksLiftData_latticeBasis_independent f d))
+          (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)
           (bhksEquivalenceClassIndicators
             (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
-              hrows (bhksLiftData_latticeBasis_independent f d))) = true
+              hrows)) = true
     · simp [hdeg] at hrecover
     · simp only [hdeg, Bool.false_eq_true, if_false] at hrecover
       cases hcand : bhksIndicatorCandidates? f d
           (bhksEquivalenceClassIndicators
             (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
-              hrows (bhksLiftData_latticeBasis_independent f d))) with
+              hrows)) with
       | none => simp [hcand] at hrecover
       | some cands =>
           simp only [hcand] at hrecover
@@ -6866,7 +6861,6 @@ private theorem bhksRecoverClassified_success_all_of_candidates
   · rw [dif_pos hrows] at hrecover
     let projected :=
       bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows
-        (bhksLiftData_latticeBasis_independent f d)
     let indicators := bhksEquivalenceClassIndicators projected
     by_cases hdeg : bhksDegenerateIndicatorPartition projected indicators = true
     · simp [projected, indicators, hdeg] at hrecover
@@ -6914,7 +6908,6 @@ private theorem bhksRecoverClassified_success_dvd
   · rw [dif_pos hrows] at hrecover
     let projected :=
       bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows
-        (bhksLiftData_latticeBasis_independent f d)
     let indicators := bhksEquivalenceClassIndicators projected
     by_cases hdeg : bhksDegenerateIndicatorPartition projected indicators = true
     · simp [projected, indicators, hdeg] at hrecover

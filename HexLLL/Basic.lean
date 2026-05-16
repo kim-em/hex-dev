@@ -452,14 +452,21 @@ theorem potential_eq_gramDetProduct (s : LLLState n m) (hvalid : s.Valid) :
         1 := by
   simp [potential, hvalid.d_eq]
 
-/-- Initial `LLLState` constructor: build the integer state directly from a
-basis matrix. The `ν` field is the integral scaled Gram-Schmidt coefficient
-matrix and the `d` field is the leading Gram-determinant vector. -/
-def ofBasis (b : Matrix Int n m) (_hind : b.independent) : LLLState n m :=
+/-- Proof-free executable `LLLState` constructor. Mathlib-free callers that
+only need executable output (benchmarks, fixture emitters, BHKS projected-row
+computation) can use this directly without manufacturing a `b.independent`
+proof. The proof-carrying `ofBasis` is a thin wrapper. -/
+def ofBasisUnchecked (b : Matrix Int n m) : LLLState n m :=
   let gs := GramSchmidt.Int.data b
   { b
     ν := gs.ν
     d := gs.d }
+
+/-- Initial `LLLState` constructor: build the integer state directly from a
+basis matrix. The `ν` field is the integral scaled Gram-Schmidt coefficient
+matrix and the `d` field is the leading Gram-determinant vector. -/
+def ofBasis (b : Matrix Int n m) (_hind : b.independent) : LLLState n m :=
+  ofBasisUnchecked b
 
 /-- The canonical constructor packages the executable Gram-Schmidt data. -/
 theorem ofBasis_valid (b : Matrix Int n m) (hind : b.independent) :
@@ -467,9 +474,9 @@ theorem ofBasis_valid (b : Matrix Int n m) (hind : b.independent) :
   let gs := GramSchmidt.Int.data b
   constructor
   · intro i j hi hj hji
-    simp [ofBasis, GramSchmidt.Int.scaledCoeffs]
+    simp [ofBasis, ofBasisUnchecked, GramSchmidt.Int.scaledCoeffs]
   · intro i hi
-    simpa [ofBasis, GramSchmidt.Int.gramDetVec, gs] using
+    simpa [ofBasis, ofBasisUnchecked, GramSchmidt.Int.gramDetVec, gs] using
       GramSchmidt.Int.gramDetVec_eq_gramDet b i (Nat.le_of_lt_succ hi)
 
 end LLLState
@@ -513,26 +520,47 @@ termination_by (s.potential, n - k)
 decreasing_by
   all_goals sorry
 
-/-- Top-level LLL entry point. Builds the canonical integer state via
-`LLLState.ofBasis` and dispatches to `lllAux`. -/
-def lll (b : Matrix Int n m) (δ : Rat)
-    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent) :
+/-- Proof-free executable LLL entry point. Builds the canonical integer state
+via `LLLState.ofBasisUnchecked` and dispatches to `lllAux`. Mathlib-free
+executable callers that do not need a proof-facing specification (benchmarks,
+fixture emitters, BHKS projected-row computation) use this directly. -/
+def lllUnchecked (b : Matrix Int n m) (δ : Rat)
+    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) :
     Matrix Int n m :=
-  lllAux (LLLState.ofBasis b hind) 1 δ hδ hδ' (Nat.le_refl 1) hn
+  lllAux (LLLState.ofBasisUnchecked b) 1 δ hδ hδ' (Nat.le_refl 1) hn
+
+/-- Top-level LLL entry point. Thin wrapper over `lllUnchecked` retaining the
+proof-facing `b.independent` argument for callers that already carry it. -/
+def lll (b : Matrix Int n m) (δ : Rat)
+    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (_hind : b.independent) :
+    Matrix Int n m :=
+  lllUnchecked b δ hδ hδ' hn
+
+/-- Proof-free executable variant of `lll.firstShortVector`. -/
+def lll.firstShortVectorUnchecked (b : Matrix Int n m) (δ : Rat)
+    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) :
+    Vector Int m :=
+  (lllUnchecked b δ hδ hδ' hn)[0]
 
 /-- The first row of the reduced basis (shortest vector under the LLL
 guarantee). Canonical short-vector entry point for downstream consumers
 such as `hex-berlekamp-zassenhaus` recombination. -/
 def lll.firstShortVector (b : Matrix Int n m) (δ : Rat)
-    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent) :
+    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (_hind : b.independent) :
     Vector Int m :=
-  (lll b δ hδ hδ' hn hind)[0]
+  lll.firstShortVectorUnchecked b δ hδ hδ' hn
+
+/-- Proof-free executable variant of `lll.shortVectors`. -/
+def lll.shortVectorsUnchecked (b : Matrix Int n m) (δ : Rat)
+    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) :
+    Array (Vector Int m) :=
+  (lllUnchecked b δ hδ hδ' hn).toArray
 
 /-- The full reduced basis viewed as an ordered array of candidate short
 vectors. -/
 def lll.shortVectors (b : Matrix Int n m) (δ : Rat)
-    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent) :
+    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (_hind : b.independent) :
     Array (Vector Int m) :=
-  (lll b δ hδ hδ' hn hind).toArray
+  lll.shortVectorsUnchecked b δ hδ hδ' hn
 
 end Hex

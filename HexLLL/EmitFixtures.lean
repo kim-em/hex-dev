@@ -44,18 +44,13 @@ private theorem lll_delta_upper : (3 / 4 : Rat) ≤ 1 := by
   grind
 
 /-- Emit one `(lattice, result)` pair: serialise the input basis and
-the reduced basis Lean returns from `lll b (3/4) ...`. -/
+the reduced basis Lean returns from `lllUnchecked b (3/4) ...`. -/
 private def emitCase (id : String) {n m : Nat} (hn : 1 ≤ n)
-    (b : Matrix Int n m) (hind : b.independent) : IO Unit := do
+    (b : Matrix Int n m) : IO Unit := do
   emitLatticeFixture lib id (basisRows b)
   let r : Matrix Int n m :=
-    lll b (3 / 4) lll_delta_lower lll_delta_upper hn hind
+    lllUnchecked b (3 / 4) lll_delta_lower lll_delta_upper hn
   emitResult lib id "lll" (latticeValue (basisRows r))
-
-private theorem squareUpperIndependent {n : Nat} (b : Matrix Int n n)
-    (hzero : ∀ i j : Fin n, j.val < i.val -> b[i][j] = 0)
-    (hdiag : ∀ i : Fin n, 0 < b[i][i]) : b.independent :=
-  Matrix.independent_of_upperTriangular_pos_diag b hzero hdiag
 
 /-! ## Known-reducible bases.
 
@@ -117,18 +112,6 @@ private def reducible5 : Matrix Int 5 5 :=
     | 4, 4 => 1
     | _, _ => 0
 
-private theorem reducible2_independent : reducible2.independent := by
-  apply squareUpperIndependent <;> decide
-
-private theorem reducible3_independent : reducible3.independent := by
-  apply squareUpperIndependent <;> decide
-
-private theorem reducible4_independent : reducible4.independent := by
-  apply squareUpperIndependent <;> decide
-
-private theorem reducible5_independent : reducible5.independent := by
-  apply squareUpperIndependent <;> decide
-
 /-! ## BZ-shaped triangular lattice basis.
 
 Rows index lifted local factors and retain a small upper-triangular coefficient
@@ -147,9 +130,6 @@ private def bzCoeff (factor col : Nat) : Int :=
 private def bzBasis : Matrix Int 3 3 :=
   Matrix.ofFn fun i j =>
     bzCoeff i.val j.val
-
-private theorem bzBasis_independent : bzBasis.independent := by
-  apply squareUpperIndependent <;> decide
 
 /-! ## Random integer bases.
 
@@ -181,41 +161,21 @@ private def randomBasis (n : Nat) (seed window : Nat) : Matrix Int n n :=
     else
       foldEntry (lcgIterate seed (i.val * n + j.val + 1)) window
 
-private theorem randomBasis_independent (n seed window : Nat) :
-    (randomBasis n seed window).independent := by
-  apply Matrix.independent_of_upperTriangular_pos_diag
-  · intro i j hij
-    simp [randomBasis, Matrix.ofFn, Vector.getElem_ofFn, hij]
-  · intro i
-    simp [randomBasis, Matrix.ofFn, Vector.getElem_ofFn]
-
 private def random4 : Matrix Int 4 4 := randomBasis 4 1 30
 private def random6 : Matrix Int 6 6 := randomBasis 6 7 30
 private def random8 : Matrix Int 8 8 := randomBasis 8 13 30
 private def random10 : Matrix Int 10 10 := randomBasis 10 23 30
 
-private theorem random4_independent : random4.independent :=
-  randomBasis_independent 4 1 30
-
-private theorem random6_independent : random6.independent :=
-  randomBasis_independent 6 7 30
-
-private theorem random8_independent : random8.independent :=
-  randomBasis_independent 8 13 30
-
-private theorem random10_independent : random10.independent :=
-  randomBasis_independent 10 23 30
-
 end Hex.LLLEmit
 
 open Hex.LLLEmit in
 def main : IO Unit := do
-  emitCase "reducible/d2" (by decide) reducible2 reducible2_independent
-  emitCase "reducible/d3" (by decide) reducible3 reducible3_independent
-  emitCase "reducible/d4" (by decide) reducible4 reducible4_independent
-  emitCase "reducible/d5" (by decide) reducible5 reducible5_independent
-  emitCase "bz/p5k2/3factors" (by decide) bzBasis bzBasis_independent
-  emitCase "random/d4" (by decide) random4 random4_independent
-  emitCase "random/d6" (by decide) random6 random6_independent
-  emitCase "random/d8" (by decide) random8 random8_independent
-  emitCase "random/d10" (by decide) random10 random10_independent
+  emitCase "reducible/d2" (by decide) reducible2
+  emitCase "reducible/d3" (by decide) reducible3
+  emitCase "reducible/d4" (by decide) reducible4
+  emitCase "reducible/d5" (by decide) reducible5
+  emitCase "bz/p5k2/3factors" (by decide) bzBasis
+  emitCase "random/d4" (by decide) random4
+  emitCase "random/d6" (by decide) random6
+  emitCase "random/d8" (by decide) random8
+  emitCase "random/d10" (by decide) random10
