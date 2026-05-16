@@ -45,9 +45,12 @@ def Factorization.product (result : Factorization p) : FpPoly p :=
 def splitFactorAt (f witness : FpPoly p) (c : ZMod64 p) : FpPoly p :=
   DensePoly.gcd f (witness - FpPoly.C c)
 
-/-- `true` exactly when the gcd candidate is nonconstant and not all of `f`. -/
+/-- `true` exactly when the gcd candidate is nonconstant and strictly smaller
+than `f` in size (i.e. strictly smaller in degree). Strict size suffices to
+imply `g ≠ f`; the strict form additionally rules out non-identity unit
+multiples `g = u · f`, which is what the downstream `Nodup` argument needs. -/
 private def isNontrivialSplitFactor (f g : FpPoly p) : Bool :=
-  !g.isZero && g.degree? ≠ some 0 && g ≠ f
+  !g.isZero && g.degree? ≠ some 0 && g.size < f.size
 
 /-- Search the constants `0, 1, ..., p - 1` for a nontrivial Berlekamp split. -/
 private def kernelWitnessSplitAux (f witness : FpPoly p) : Nat → Nat → Option (SplitResult p)
@@ -166,12 +169,20 @@ private theorem isNontrivialSplitFactor_degree_ne_zero
   cases hz : g.isZero <;> simp [hz] at h
   exact h.1
 
-private theorem isNontrivialSplitFactor_ne_input
+private theorem isNontrivialSplitFactor_size_lt
     (f g : FpPoly p) (h : isNontrivialSplitFactor f g = true) :
-    g ≠ f := by
+    g.size < f.size := by
   unfold isNontrivialSplitFactor at h
   cases hz : g.isZero <;> simp [hz] at h
   exact h.2
+
+private theorem isNontrivialSplitFactor_ne_input
+    (f g : FpPoly p) (h : isNontrivialSplitFactor f g = true) :
+    g ≠ f := by
+  intro hg
+  have hsize := isNontrivialSplitFactor_size_lt f g h
+  rw [hg] at hsize
+  exact Nat.lt_irrefl _ hsize
 
 private theorem isNontrivialSplitFactor_ne_one
     (f g : FpPoly p) (h : isNontrivialSplitFactor f g = true) :
@@ -277,16 +288,45 @@ theorem kernelWitnessSplit_nontrivial
     !r.factor.isZero ∧ r.factor ≠ 1 ∧ r.factor ≠ f := by
   exact kernelWitnessSplitAux_nontrivial f witness p 0 r hsplit
 
+private theorem kernelWitnessSplitAux_size_lt
+    (f witness : FpPoly p) (fuel c : Nat) (r : SplitResult p)
+    (hsplit : kernelWitnessSplitAux f witness fuel c = some r) :
+    r.factor.size < f.size := by
+  induction fuel generalizing c with
+  | zero =>
+      simp [kernelWitnessSplitAux] at hsplit
+  | succ fuel ih =>
+      unfold kernelWitnessSplitAux at hsplit
+      let splitConstant := ZMod64.ofNat p c
+      let factor := splitFactorAt f witness splitConstant
+      by_cases hnon : isNontrivialSplitFactor f factor
+      · simp [splitConstant, factor, hnon] at hsplit
+        cases hsplit
+        exact isNontrivialSplitFactor_size_lt f factor hnon
+      · simp [splitConstant, factor, hnon] at hsplit
+        exact ih (c + 1) hsplit
+
+/--
+Any successful Berlekamp split returns a factor strictly smaller in size than
+the input.  This is the strict-descent companion of `kernelWitnessSplit_nontrivial`
+and is what drives the `Nodup` invariant on the running factor list.
+-/
+theorem kernelWitnessSplit_size_lt
+    (f witness : FpPoly p) (r : SplitResult p)
+    (hsplit : kernelWitnessSplit? f witness = some r) :
+    r.factor.size < f.size :=
+  kernelWitnessSplitAux_size_lt f witness p 0 r hsplit
+
 /--
 Executable search reflection for one field constant: if the gcd candidate
-attached to `c` is nonzero, nonconstant, and not the full input, then the
-bounded Berlekamp witness search succeeds.
+attached to `c` is nonzero, nonconstant, and strictly smaller in size than
+the input, then the bounded Berlekamp witness search succeeds.
 -/
 theorem kernelWitnessSplit?_some_of_nontrivial_splitFactorAt
     (f witness : FpPoly p) (c : ZMod64 p)
     (hnotZero : !(splitFactorAt f witness c).isZero)
     (hdegree : (splitFactorAt f witness c).degree? ≠ some 0)
-    (hne_input : splitFactorAt f witness c ≠ f) :
+    (hsize_lt : (splitFactorAt f witness c).size < f.size) :
     ∃ r : SplitResult p, kernelWitnessSplit? f witness = some r := by
   have hc_lt : c.toNat < p := c.toNat_lt
   have hc_eq : ZMod64.ofNat p c.toNat = c := ZMod64.ofNat_toNat c
@@ -296,7 +336,7 @@ theorem kernelWitnessSplit?_some_of_nontrivial_splitFactorAt
     unfold isNontrivialSplitFactor
     rw [Nat.zero_add, hc_eq]
     cases hz : (splitFactorAt f witness c).isZero <;> simp [hz] at hnotZero ⊢
-    exact ⟨hdegree, hne_input⟩
+    exact ⟨hdegree, hsize_lt⟩
   exact kernelWitnessSplitAux_some_of_nontrivial_offset f witness p 0 c.toNat hc_lt hnon
 
 private theorem splitWithWitnesses?_product_spec
@@ -591,6 +631,500 @@ theorem kernelWitnessSplit?_none_of_berlekampFactor_factors_length_le_one
   rw [splitFirstFactor?_singleton_none_iff,
       splitWithWitnesses?_none_iff_forall] at hsplit
   exact hsplit
+
+/-! ### `Nodup` invariant on `berlekampFactor.factors`
+
+The running factor list maintained by the executable Berlekamp loop is
+`Nodup` whenever no positive-degree polynomial squares to a divisor of the
+input.  That hypothesis is fed in abstractly here so that the inductive
+proof lives in this file without depending on the algebraic
+`squareFree`-implies-`isUnitPolynomial` chain from
+`HexBerlekamp/RabinSoundness.lean`.  See
+`Hex.Berlekamp.berlekampFactor_factors_nodup` in
+`HexBerlekamp/RabinSoundness.lean` for the user-facing wrapper that
+discharges the abstract hypothesis from `gcd f f' = 1`. -/
+
+private theorem pos_degree_of_ne_zero_of_degree_ne_zero
+    {a : FpPoly p} (ha_ne_zero : a ≠ 0)
+    (ha_deg : a.degree? ≠ some 0) :
+    0 < a.degree?.getD 0 := by
+  have ha_size_pos : 0 < a.size := by
+    apply Nat.pos_of_ne_zero
+    intro hsize
+    apply ha_ne_zero
+    apply DensePoly.ext_coeff
+    intro i
+    rw [DensePoly.coeff_zero]
+    exact DensePoly.coeff_eq_zero_of_size_le a (by omega)
+  have ha_size_ne_zero : a.size ≠ 0 := Nat.pos_iff_ne_zero.mp ha_size_pos
+  have hdeg : a.degree? = some (a.size - 1) := by
+    unfold DensePoly.degree?
+    simp [ha_size_ne_zero]
+  rw [hdeg] at ha_deg
+  rw [hdeg]
+  have hne : a.size - 1 ≠ 0 := fun h => ha_deg (by rw [h])
+  simp
+  omega
+
+private theorem isNontrivialSplitFactor_factor_pos_degree
+    (f g : FpPoly p) (h : isNontrivialSplitFactor f g = true) :
+    0 < g.degree?.getD 0 := by
+  have hnotZero := isNontrivialSplitFactor_not_zero f g h
+  have hdegree := isNontrivialSplitFactor_degree_ne_zero f g h
+  have hne_zero : g ≠ 0 := by
+    intro hg
+    rw [hg] at hnotZero
+    have : (0 : FpPoly p).isZero = true := rfl
+    rw [this] at hnotZero
+    simp at hnotZero
+  exact pos_degree_of_ne_zero_of_degree_ne_zero hne_zero hdegree
+
+private theorem kernelWitnessSplitAux_factor_pos_degree
+    (f witness : FpPoly p) (fuel c : Nat) (r : SplitResult p)
+    (hsplit : kernelWitnessSplitAux f witness fuel c = some r) :
+    0 < r.factor.degree?.getD 0 := by
+  induction fuel generalizing c with
+  | zero =>
+      simp [kernelWitnessSplitAux] at hsplit
+  | succ fuel ih =>
+      unfold kernelWitnessSplitAux at hsplit
+      let splitConstant := ZMod64.ofNat p c
+      let factor := splitFactorAt f witness splitConstant
+      by_cases hnon : isNontrivialSplitFactor f factor
+      · simp [splitConstant, factor, hnon] at hsplit
+        cases hsplit
+        exact isNontrivialSplitFactor_factor_pos_degree f factor hnon
+      · simp [splitConstant, factor, hnon] at hsplit
+        exact ih (c + 1) hsplit
+
+theorem kernelWitnessSplit_factor_pos_degree
+    (f witness : FpPoly p) (r : SplitResult p)
+    (hsplit : kernelWitnessSplit? f witness = some r) :
+    0 < r.factor.degree?.getD 0 :=
+  kernelWitnessSplitAux_factor_pos_degree f witness p 0 r hsplit
+
+private theorem splitWithWitnesses?_factor_pos_degree
+    (f : FpPoly p) (witnesses : List (FpPoly p))
+    {r : SplitResult p}
+    (h : splitWithWitnesses? f witnesses = some r) :
+    0 < r.factor.degree?.getD 0 := by
+  induction witnesses with
+  | nil => simp [splitWithWitnesses?] at h
+  | cons w ws ih =>
+      rw [splitWithWitnesses?] at h
+      cases hk : kernelWitnessSplit? f w with
+      | some r' =>
+          rw [hk] at h
+          simp only [Option.some.injEq] at h
+          subst h
+          exact kernelWitnessSplit_factor_pos_degree f w r' hk
+      | none =>
+          rw [hk] at h
+          exact ih h
+
+private theorem splitWithWitnesses?_size_lt
+    (f : FpPoly p) (witnesses : List (FpPoly p))
+    {r : SplitResult p}
+    (h : splitWithWitnesses? f witnesses = some r) :
+    r.factor.size < f.size := by
+  induction witnesses with
+  | nil => simp [splitWithWitnesses?] at h
+  | cons w ws ih =>
+      rw [splitWithWitnesses?] at h
+      cases hk : kernelWitnessSplit? f w with
+      | some r' =>
+          rw [hk] at h
+          simp only [Option.some.injEq] at h
+          subst h
+          exact kernelWitnessSplit_size_lt f w r' hk
+      | none =>
+          rw [hk] at h
+          exact ih h
+
+private theorem splitWithWitnesses?_cofactor_pos_degree
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (witnesses : List (FpPoly p))
+    (hf_ne : f ≠ 0)
+    {r : SplitResult p}
+    (h : splitWithWitnesses? f witnesses = some r) :
+    0 < r.cofactor.degree?.getD 0 := by
+  have hfac_pos := splitWithWitnesses?_factor_pos_degree f witnesses h
+  have hsize_lt := splitWithWitnesses?_size_lt f witnesses h
+  have hprod := splitWithWitnesses?_product_spec f witnesses h
+  -- r.factor * r.cofactor = f, both nonzero, with strict size descent on factor.
+  have hfac_ne : r.factor ≠ 0 := by
+    intro hr
+    rw [hr] at hfac_pos
+    have : (0 : FpPoly p).degree? = none := rfl
+    rw [this] at hfac_pos
+    simp at hfac_pos
+  have hcof_ne : r.cofactor ≠ 0 := by
+    intro hr
+    rw [hr] at hprod
+    rw [FpPoly.mul_zero] at hprod
+    exact hf_ne hprod.symm
+  have hfac_dvd : r.factor ∣ f := ⟨r.cofactor, hprod.symm⟩
+  have hcof_dvd : r.cofactor ∣ f := by
+    refine ⟨r.factor, ?_⟩
+    rw [FpPoly.mul_comm]
+    exact hprod.symm
+  have hsize_sum : r.factor.size + r.cofactor.size = f.size + 1 := by
+    have hf_size_eq : f.size = (r.factor * r.cofactor).size := by rw [hprod]
+    rw [hf_size_eq]
+    rw [FpPoly.size_mul_eq_add_sub_one r.factor r.cofactor hfac_ne hcof_ne]
+    have hf_size_pos : 0 < f.size := FpPoly.size_pos_of_ne_zero hf_ne
+    have hfac_size_pos : 0 < r.factor.size := FpPoly.size_pos_of_ne_zero hfac_ne
+    have hcof_size_pos : 0 < r.cofactor.size := FpPoly.size_pos_of_ne_zero hcof_ne
+    omega
+  have hcof_size_ge_2 : 2 ≤ r.cofactor.size := by omega
+  apply pos_degree_of_ne_zero_of_degree_ne_zero hcof_ne
+  have hcof_size_ne : r.cofactor.size ≠ 0 := by omega
+  intro hdeg
+  unfold DensePoly.degree? at hdeg
+  simp [hcof_size_ne] at hdeg
+  omega
+
+/-- An element of a list of `FpPoly p` divides the product of the list. -/
+private theorem dvd_factorProduct_of_mem
+    [ZMod64.PrimeModulus p]
+    (xs : List (FpPoly p)) {g : FpPoly p} (hg : g ∈ xs) :
+    g ∣ factorProduct xs := by
+  induction xs with
+  | nil => exact absurd hg List.not_mem_nil
+  | cons x rest ih =>
+    rcases List.mem_cons.mp hg with hx | hx
+    · subst hx
+      rw [factorProduct_cons]
+      exact ⟨factorProduct rest, rfl⟩
+    · rcases ih hx with ⟨k, hk⟩
+      refine ⟨x * k, ?_⟩
+      rw [factorProduct_cons, hk]
+      calc x * (g * k)
+          = (x * g) * k := (DensePoly.mul_assoc_poly x g k).symm
+        _ = (g * x) * k :=
+            congrArg (fun y => y * k) (DensePoly.mul_comm_poly x g)
+        _ = g * (x * k) := DensePoly.mul_assoc_poly g x k
+
+/-- A polynomial that divides both `a` and `b` squares-divides `a * b`. -/
+private theorem squared_dvd_of_dvd_dvd
+    [ZMod64.PrimeModulus p]
+    {a b g : FpPoly p} (hga : g ∣ a) (hgb : g ∣ b) :
+    g * g ∣ a * b := by
+  rcases hga with ⟨a', ha'⟩
+  rcases hgb with ⟨b', hb'⟩
+  refine ⟨a' * b', ?_⟩
+  rw [ha', hb']
+  calc g * a' * (g * b')
+      = g * (a' * (g * b')) := DensePoly.mul_assoc_poly g a' (g * b')
+    _ = g * ((a' * g) * b') :=
+        congrArg (g * ·) (DensePoly.mul_assoc_poly a' g b').symm
+    _ = g * ((g * a') * b') :=
+        congrArg (fun x => g * (x * b')) (DensePoly.mul_comm_poly a' g)
+    _ = g * (g * (a' * b')) :=
+        congrArg (g * ·) (DensePoly.mul_assoc_poly g a' b')
+    _ = g * g * (a' * b') := (DensePoly.mul_assoc_poly g g (a' * b')).symm
+
+/-- `factorProduct rest` divides `factorProduct (fac :: rest)`. -/
+private theorem factorProduct_tail_dvd_cons
+    [ZMod64.PrimeModulus p]
+    (fac : FpPoly p) (rest : List (FpPoly p)) :
+    factorProduct rest ∣ factorProduct (fac :: rest) := by
+  rw [factorProduct_cons]
+  exact ⟨fac, DensePoly.mul_comm_poly fac (factorProduct rest)⟩
+
+/-- Loop invariant preserved by one `splitFirstFactor?` step: when every
+entry of the factor list has positive degree and no positive-degree
+polynomial squares to a divisor of `factorProduct xs`, then a successful
+split returns a `Nodup` list whose entries again all have positive
+degree. -/
+private theorem splitFirstFactor?_invariant
+    [ZMod64.PrimeModulus p]
+    (witnesses : List (FpPoly p))
+    {xs xs' : List (FpPoly p)}
+    (h_nodup : xs.Nodup)
+    (h_pos : ∀ g ∈ xs, 0 < g.degree?.getD 0)
+    (h_no_squared : ∀ g : FpPoly p,
+        g * g ∣ factorProduct xs → ¬ (0 < g.degree?.getD 0))
+    (h_split : splitFirstFactor? witnesses xs = some xs') :
+    xs'.Nodup ∧ (∀ g ∈ xs', 0 < g.degree?.getD 0) := by
+  induction xs generalizing xs' with
+  | nil => simp [splitFirstFactor?] at h_split
+  | cons fac rest ih =>
+      rw [splitFirstFactor?] at h_split
+      have h_fac_pos : 0 < fac.degree?.getD 0 := h_pos fac List.mem_cons_self
+      have h_fac_ne_zero : fac ≠ 0 := by
+        intro hzero
+        rw [hzero] at h_fac_pos
+        have : (0 : FpPoly p).degree? = none := rfl
+        rw [this] at h_fac_pos
+        simp at h_fac_pos
+      have h_fac_notmem : fac ∉ rest := (List.nodup_cons.mp h_nodup).1
+      have h_rest_nodup : rest.Nodup := (List.nodup_cons.mp h_nodup).2
+      have h_rest_pos : ∀ g ∈ rest, 0 < g.degree?.getD 0 :=
+        fun g hg => h_pos g (List.mem_cons_of_mem fac hg)
+      cases hsplit : splitWithWitnesses? fac witnesses with
+      | some split =>
+          rw [hsplit] at h_split
+          simp only [Option.some.injEq] at h_split
+          subst h_split
+          have h_factor_pos := splitWithWitnesses?_factor_pos_degree fac witnesses hsplit
+          have h_cofactor_pos :=
+            splitWithWitnesses?_cofactor_pos_degree fac witnesses h_fac_ne_zero hsplit
+          have h_prod := splitWithWitnesses?_product_spec fac witnesses hsplit
+          -- factorProduct (split.factor :: split.cofactor :: rest)
+          --   = split.factor * (split.cofactor * factorProduct rest)
+          --   = (split.factor * split.cofactor) * factorProduct rest
+          --   = fac * factorProduct rest = factorProduct (fac :: rest)
+          have h_factorProduct_eq :
+              factorProduct (split.factor :: split.cofactor :: rest)
+                = factorProduct (fac :: rest) := by
+            rw [factorProduct_cons split.factor (split.cofactor :: rest),
+                factorProduct_cons split.cofactor rest,
+                factorProduct_cons fac rest]
+            calc split.factor * (split.cofactor * factorProduct rest)
+                = (split.factor * split.cofactor) * factorProduct rest :=
+                  (DensePoly.mul_assoc_poly split.factor split.cofactor _).symm
+              _ = fac * factorProduct rest := by rw [h_prod]
+          -- Set up the squared-divisor hypothesis on the new list's product.
+          have h_no_squared_new : ∀ g : FpPoly p,
+              g * g ∣ factorProduct (split.factor :: split.cofactor :: rest) →
+                ¬ (0 < g.degree?.getD 0) := by
+            intro g hgg
+            rw [h_factorProduct_eq] at hgg
+            exact h_no_squared g hgg
+          -- Show Nodup of split.factor :: split.cofactor :: rest.
+          have h_fac_dvd : split.factor ∣ fac := ⟨split.cofactor, h_prod.symm⟩
+          have h_cof_dvd : split.cofactor ∣ fac :=
+            ⟨split.factor, by rw [← h_prod]; exact FpPoly.mul_comm _ _⟩
+          have h_factorProduct_xs : factorProduct (fac :: rest) = fac * factorProduct rest :=
+            factorProduct_cons fac rest
+          -- split.factor ≠ split.cofactor.
+          have h_factor_ne_cofactor : split.factor ≠ split.cofactor := by
+            intro heq
+            have hgg : split.factor * split.factor ∣ factorProduct (fac :: rest) := by
+              rw [h_factorProduct_xs]
+              have hfac_eq : fac = split.factor * split.cofactor := h_prod.symm
+              rw [hfac_eq, ← heq]
+              exact ⟨factorProduct rest, rfl⟩
+            exact h_no_squared split.factor hgg h_factor_pos
+          -- split.factor ∉ rest.
+          have h_factor_notmem : split.factor ∉ rest := by
+            intro hmem
+            have hfac_dvd_rest : split.factor ∣ factorProduct rest :=
+              dvd_factorProduct_of_mem rest hmem
+            have hgg : split.factor * split.factor ∣ factorProduct (fac :: rest) := by
+              rw [h_factorProduct_xs]
+              exact squared_dvd_of_dvd_dvd h_fac_dvd hfac_dvd_rest
+            exact h_no_squared split.factor hgg h_factor_pos
+          -- split.cofactor ∉ rest.
+          have h_cofactor_notmem : split.cofactor ∉ rest := by
+            intro hmem
+            have hcof_dvd_rest : split.cofactor ∣ factorProduct rest :=
+              dvd_factorProduct_of_mem rest hmem
+            have hgg : split.cofactor * split.cofactor ∣ factorProduct (fac :: rest) := by
+              rw [h_factorProduct_xs]
+              exact squared_dvd_of_dvd_dvd h_cof_dvd hcof_dvd_rest
+            exact h_no_squared split.cofactor hgg h_cofactor_pos
+          -- Assemble Nodup.
+          have h_nodup' :
+              (split.factor :: split.cofactor :: rest).Nodup := by
+            apply List.nodup_cons.mpr
+            refine ⟨?_, ?_⟩
+            · intro hmem
+              rcases List.mem_cons.mp hmem with heq | hmem'
+              · exact h_factor_ne_cofactor heq
+              · exact h_factor_notmem hmem'
+            apply List.nodup_cons.mpr
+            exact ⟨h_cofactor_notmem, h_rest_nodup⟩
+          refine ⟨h_nodup', ?_⟩
+          intro g hg
+          rcases List.mem_cons.mp hg with heq | hmem
+          · subst heq; exact h_factor_pos
+          rcases List.mem_cons.mp hmem with heq | hmem'
+          · subst heq; exact h_cofactor_pos
+          exact h_rest_pos g hmem'
+      | none =>
+          rw [hsplit] at h_split
+          cases hrest : splitFirstFactor? witnesses rest with
+          | some rest' =>
+              rw [hrest] at h_split
+              simp only [Option.some.injEq] at h_split
+              subst h_split
+              -- IH on rest with appropriate hypotheses.
+              have h_no_squared_rest : ∀ g : FpPoly p,
+                  g * g ∣ factorProduct rest → ¬ (0 < g.degree?.getD 0) := by
+                intro g hgg
+                have htrans : g * g ∣ factorProduct (fac :: rest) := by
+                  rcases hgg with ⟨k, hk⟩
+                  refine ⟨fac * k, ?_⟩
+                  calc factorProduct (fac :: rest)
+                      = fac * factorProduct rest := factorProduct_cons fac rest
+                    _ = fac * (g * g * k) := by rw [hk]
+                    _ = (fac * (g * g)) * k :=
+                        (DensePoly.mul_assoc_poly fac (g * g) k).symm
+                    _ = ((g * g) * fac) * k :=
+                        congrArg (fun y => y * k) (DensePoly.mul_comm_poly fac (g * g))
+                    _ = (g * g) * (fac * k) :=
+                        DensePoly.mul_assoc_poly (g * g) fac k
+                exact h_no_squared g htrans
+              have ⟨h_rest'_nodup, h_rest'_pos⟩ :=
+                ih h_rest_nodup h_rest_pos h_no_squared_rest hrest
+              -- factorProduct rest' = factorProduct rest.
+              have h_rest_prod_eq : factorProduct rest' = factorProduct rest :=
+                factorProduct_splitFirstFactor?_eq witnesses hrest
+              -- Goal: (fac :: rest').Nodup ∧ ∀ g ∈ fac :: rest', pos degree.
+              -- Need fac ∉ rest'.
+              have h_fac_notmem' : fac ∉ rest' := by
+                intro hmem
+                have hfac_dvd_rest' : fac ∣ factorProduct rest' :=
+                  dvd_factorProduct_of_mem rest' hmem
+                rw [h_rest_prod_eq] at hfac_dvd_rest'
+                have hfac_dvd_self : fac ∣ fac := ⟨1, (DensePoly.mul_one_right_poly fac).symm⟩
+                have hgg : fac * fac ∣ factorProduct (fac :: rest) := by
+                  rw [factorProduct_cons]
+                  exact squared_dvd_of_dvd_dvd hfac_dvd_self hfac_dvd_rest'
+                exact h_no_squared fac hgg h_fac_pos
+              refine ⟨?_, ?_⟩
+              · exact List.nodup_cons.mpr ⟨h_fac_notmem', h_rest'_nodup⟩
+              intro g hg
+              rcases List.mem_cons.mp hg with heq | hmem
+              · subst heq; exact h_fac_pos
+              · exact h_rest'_pos g hmem
+          | none =>
+              rw [hrest] at h_split
+              exact absurd h_split (by simp)
+
+private theorem berlekampFactorLoop_invariant
+    [ZMod64.PrimeModulus p]
+    (witnesses : List (FpPoly p)) (fuel : Nat) (factors : List (FpPoly p))
+    (h_nodup : factors.Nodup)
+    (h_pos : ∀ g ∈ factors, 0 < g.degree?.getD 0)
+    (h_no_squared : ∀ g : FpPoly p,
+        g * g ∣ factorProduct factors → ¬ (0 < g.degree?.getD 0)) :
+    (berlekampFactorLoop witnesses fuel factors).Nodup ∧
+      (∀ g ∈ berlekampFactorLoop witnesses fuel factors, 0 < g.degree?.getD 0) := by
+  induction fuel generalizing factors with
+  | zero => exact ⟨h_nodup, h_pos⟩
+  | succ fuel ih =>
+      rw [berlekampFactorLoop]
+      cases hsplit : splitFirstFactor? witnesses factors with
+      | some factors' =>
+          have ⟨h_nodup', h_pos'⟩ :=
+            splitFirstFactor?_invariant witnesses h_nodup h_pos h_no_squared hsplit
+          -- factorProduct factors' = factorProduct factors (existing lemma)
+          have h_prod_eq : factorProduct factors' = factorProduct factors :=
+            factorProduct_splitFirstFactor?_eq witnesses hsplit
+          have h_no_squared' : ∀ g : FpPoly p,
+              g * g ∣ factorProduct factors' → ¬ (0 < g.degree?.getD 0) := by
+            intro g hgg
+            rw [h_prod_eq] at hgg
+            exact h_no_squared g hgg
+          exact ih factors' h_nodup' h_pos' h_no_squared'
+      | none => exact ⟨h_nodup, h_pos⟩
+
+/-- Abstract form of `berlekampFactor.factors.Nodup`: when no positive-degree
+polynomial squares to a divisor of `f`, the executable Berlekamp factor list
+has no duplicates.  The Mathlib-free squareness-implies-irreducibility chain
+discharges this hypothesis from `gcd f f' = 1`; see
+`Hex.Berlekamp.berlekampFactor_factors_nodup` in
+`HexBerlekamp/RabinSoundness.lean`. -/
+theorem berlekampFactor_factors_nodup_of_no_squared
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    [Lean.Grind.Field (ZMod64 p)]
+    [ZMod64.PrimeModulus p]
+    (h_no_squared : ∀ g : FpPoly p,
+        g * g ∣ f → ¬ (0 < g.degree?.getD 0)) :
+    (berlekampFactor f hmonic).factors.Nodup := by
+  -- Case split on whether f has positive degree.
+  have h_singleton_nodup : ([f] : List (FpPoly p)).Nodup :=
+    List.nodup_cons.mpr ⟨List.not_mem_nil, List.nodup_nil⟩
+  by_cases h_f_pos : 0 < f.degree?.getD 0
+  · -- Positive-degree case: use the loop invariant.
+    have h_init_pos : ∀ g ∈ ([f] : List (FpPoly p)), 0 < g.degree?.getD 0 := by
+      intro g hg
+      rw [List.mem_singleton] at hg
+      subst hg
+      exact h_f_pos
+    have h_init_prod : factorProduct ([f] : List (FpPoly p)) = f := by
+      rw [factorProduct_cons, factorProduct_nil]
+      exact DensePoly.mul_one_right_poly f
+    have h_init_no_squared : ∀ g : FpPoly p,
+        g * g ∣ factorProduct ([f] : List (FpPoly p)) → ¬ (0 < g.degree?.getD 0) := by
+      intro g hgg
+      rw [h_init_prod] at hgg
+      exact h_no_squared g hgg
+    exact (berlekampFactorLoop_invariant ((fixedSpaceKernel f hmonic).toList)
+      (f.size + 1) [f] h_singleton_nodup h_init_pos h_init_no_squared).1
+  · -- Degree 0: any returned split must have positive-degree factor of strictly
+    -- smaller size, which is impossible when `f.size ≤ 1`.  The loop therefore
+    -- preserves the initial singleton `[f]`, which is trivially `Nodup`.
+    -- Step 1: derive `f.size ≤ 1` from the negation of pos degree.
+    have h_f_size_le_one : f.size ≤ 1 := by
+      rcases Nat.lt_or_ge f.size 2 with hlt | hge
+      · omega
+      · exfalso
+        apply h_f_pos
+        have hsize_ne : f.size ≠ 0 := by omega
+        have hdeg_eq : f.degree? = some (f.size - 1) := by
+          unfold DensePoly.degree?
+          simp [hsize_ne]
+        rw [hdeg_eq]
+        simp
+        omega
+    -- Step 2: every kernel split is impossible.
+    have h_no_split : ∀ w ∈ ((fixedSpaceKernel f hmonic).toList),
+        kernelWitnessSplit? f w = none := by
+      intro w _hw
+      cases hopt : kernelWitnessSplit? f w with
+      | none => rfl
+      | some r =>
+          exfalso
+          have hsize_lt := kernelWitnessSplit_size_lt f w r hopt
+          have hfac_pos := kernelWitnessSplit_factor_pos_degree f w r hopt
+          -- r.factor.size ≥ 2 from pos degree.
+          have hfac_size_ge_two : 2 ≤ r.factor.size := by
+            rcases Nat.lt_or_ge r.factor.size 2 with hlt | hge
+            · exfalso
+              -- r.factor.size ≤ 1
+              cases hfac_size : r.factor.size with
+              | zero =>
+                  have hfac_eq_zero : r.factor = 0 := by
+                    apply DensePoly.ext_coeff
+                    intro i
+                    rw [DensePoly.coeff_zero]
+                    exact DensePoly.coeff_eq_zero_of_size_le r.factor (by omega)
+                  rw [hfac_eq_zero] at hfac_pos
+                  have hzero : (0 : FpPoly p).degree? = none := rfl
+                  rw [hzero] at hfac_pos
+                  simp at hfac_pos
+              | succ k =>
+                  have hk : k = 0 := by omega
+                  subst hk
+                  have hdeg : r.factor.degree? = some 0 := by
+                    unfold DensePoly.degree?
+                    simp [hfac_size]
+                  rw [hdeg] at hfac_pos
+                  simp at hfac_pos
+            · exact hge
+          omega
+    -- Step 3: the loop preserves [f].
+    have h_loop : ∀ fuel,
+        berlekampFactorLoop ((fixedSpaceKernel f hmonic).toList) fuel [f] = [f] := by
+      intro fuel
+      induction fuel with
+      | zero => rfl
+      | succ fuel _ih_fuel =>
+          rw [berlekampFactorLoop]
+          have h_sff_none :
+              splitFirstFactor? ((fixedSpaceKernel f hmonic).toList) [f] = none := by
+            rw [splitFirstFactor?_singleton_none_iff,
+                splitWithWitnesses?_none_iff_forall]
+            exact h_no_split
+          rw [h_sff_none]
+    show (berlekampFactor f hmonic).factors.Nodup
+    change (berlekampFactorLoop _ (f.size + 1) [f]).Nodup
+    rw [h_loop]
+    exact h_singleton_nodup
 
 end Berlekamp
 

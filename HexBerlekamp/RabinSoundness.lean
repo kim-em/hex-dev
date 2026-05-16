@@ -2733,12 +2733,55 @@ theorem exists_kernelWitnessSplit?_some_of_witnessProduct_dvd_of_pos_degree
         (fun acc c => acc * (w - FpPoly.C c)) 1)
     (hnonconst : ∀ c : ZMod64 p, ¬ (f ∣ (w - FpPoly.C c))) :
     ∃ r : SplitResult p, kernelWitnessSplit? f w = some r := by
-  obtain ⟨c, hnotZero, hdegree, hne_input⟩ :=
+  obtain ⟨c, hnotZero, hdegree, _hne_input⟩ :=
     exists_nontrivial_gcd_of_witnessProduct_dvd_of_pos_degree hf_pos hdvd hnonconst
+  have hsize_lt : (DensePoly.gcd f (w - FpPoly.C c)).size < f.size := by
+    have hf_ne : f ≠ 0 := ne_zero_of_pos_degree hf_pos
+    have hgcd_dvd_f : DensePoly.gcd f (w - FpPoly.C c) ∣ f :=
+      DensePoly.gcd_dvd_left _ _
+    have hgcd_dvd_h : DensePoly.gcd f (w - FpPoly.C c) ∣ (w - FpPoly.C c) :=
+      DensePoly.gcd_dvd_right _ _
+    apply Classical.byContradiction
+    intro hge
+    have hge : f.size ≤ (DensePoly.gcd f (w - FpPoly.C c)).size := Nat.le_of_not_lt hge
+    have hsize_le : (DensePoly.gcd f (w - FpPoly.C c)).size ≤ f.size :=
+      FpPoly.size_le_of_dvd_of_ne_zero hgcd_dvd_f hf_ne
+    have hquot_size : (f / DensePoly.gcd f (w - FpPoly.C c)).size = 1 := by
+      have hsplit :=
+        FpPoly.size_div_add_size_eq_size_add_one_of_dvd hgcd_dvd_f hf_ne
+      omega
+    have hquot_unit :
+        isUnitPolynomial (f / DensePoly.gcd f (w - FpPoly.C c)) = true := by
+      unfold isUnitPolynomial
+      have hquot_deg : (f / DensePoly.gcd f (w - FpPoly.C c)).degree? = some 0 := by
+        unfold DensePoly.degree?
+        simp [hquot_size]
+      rw [hquot_deg]
+    have hquot_dvd_one :
+        (f / DensePoly.gcd f (w - FpPoly.C c)) ∣ (1 : FpPoly p) :=
+      dvd_one_of_isUnitPolynomial hquot_unit
+    rcases hquot_dvd_one with ⟨e, he⟩
+    have hf_eq :
+        f = DensePoly.gcd f (w - FpPoly.C c) *
+            (f / DensePoly.gcd f (w - FpPoly.C c)) :=
+      fp_eq_mul_div_of_dvd hgcd_dvd_f
+    have hke : (f / DensePoly.gcd f (w - FpPoly.C c)) * e = 1 := he.symm
+    have hf_dvd_gcd : f ∣ DensePoly.gcd f (w - FpPoly.C c) := by
+      refine ⟨e, ?_⟩
+      calc DensePoly.gcd f (w - FpPoly.C c)
+          = DensePoly.gcd f (w - FpPoly.C c) * 1 :=
+            (DensePoly.mul_one_right_poly _).symm
+        _ = DensePoly.gcd f (w - FpPoly.C c) *
+              ((f / DensePoly.gcd f (w - FpPoly.C c)) * e) := by rw [hke]
+        _ = (DensePoly.gcd f (w - FpPoly.C c) *
+              (f / DensePoly.gcd f (w - FpPoly.C c))) * e :=
+            (FpPoly.mul_assoc _ _ _).symm
+        _ = f * e := by rw [← hf_eq]
+    exact hnonconst c (fp_dvd_trans hf_dvd_gcd hgcd_dvd_h)
   exact kernelWitnessSplit?_some_of_nontrivial_splitFactorAt f w c
     (by simp [splitFactorAt, hnotZero])
     (by simpa [splitFactorAt] using hdegree)
-    (by simpa [splitFactorAt] using hne_input)
+    (by simpa [splitFactorAt] using hsize_lt)
 
 /-! ### Bezout-coefficient bridge for square-free monic splits
 
@@ -3293,6 +3336,33 @@ theorem berlekampFactor_singleton_irreducible
     f hmonic hsquareFree
     (kernelWitnessSplit?_none_of_berlekampFactor_factors_length_le_one
       f hmonic hsmall)
+
+/--
+The executable Berlekamp factor list of a square-free monic input has no
+duplicates.  Composes the abstract loop invariant
+`Hex.Berlekamp.berlekampFactor_factors_nodup_of_no_squared`
+(`HexBerlekamp/Factor.lean`) with the squareness-implies-`isUnitPolynomial`
+result `Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd`.
+-/
+theorem berlekampFactor_factors_nodup
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (hsquareFree : DensePoly.gcd f (DensePoly.derivative f) = 1) :
+    (berlekampFactor f hmonic).factors.Nodup := by
+  apply berlekampFactor_factors_nodup_of_no_squared
+  intro g hgg hpos
+  have hunit : isUnitPolynomial g = true :=
+    isUnitPolynomial_of_squareFree_of_squared_dvd hsquareFree hgg
+  have hdeg : g.degree? = some 0 := by
+    unfold isUnitPolynomial at hunit
+    cases hd : g.degree? with
+    | none => rw [hd] at hunit; simp at hunit
+    | some k =>
+        rw [hd] at hunit
+        cases k with
+        | zero => rfl
+        | succ _ => simp at hunit
+  rw [hdeg] at hpos
+  simp at hpos
 
 end
 
