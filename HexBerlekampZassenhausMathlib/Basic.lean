@@ -6764,6 +6764,83 @@ theorem recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPa
       htarget_monic htarget_dvd_core hpartition hmatches hfuel
   exact ⟨result, hresult, hcovers factor hfactor_irr hfactor_dvd_target⟩
 
+/--
+Final public coverage theorem (#4274 capstone): every irreducible integer
+divisor of `core` appears, up to `Associated`, among the factors emitted by
+`Hex.exhaustiveCoreFactorsWithBound`.
+
+Composes
+`recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition`
+(#4524) with `exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_some`
+at `J = Finset.univ`, `target = core`, `localFactors = d.liftedFactors.toList`,
+`fuel = d.liftedFactors.toList.length + 1`.
+
+The initial-state `LiftedFactorSubsetPartition core d Finset.univ core` is
+threaded as a hypothesis: building it from `HenselSubsetCorrespondenceHypotheses`
+plus square-free reduction is a separable downstream task (cf. the
+`LiftedFactorSubsetPartition` doc-comment).
+
+The `B` parameter of `Hex.exhaustiveCoreFactorsWithBound core B primeData` is
+the raw coefficient bound (`Hex.ZPoly.defaultFactorCoeffBound core`), not the
+precision exponent (`Hex.precisionForCoeffBound (defaultFactorCoeffBound core)
+primeData.p`); the precision exponent appears inside
+`HenselSubsetCorrespondenceHypotheses` and matches the wrapper's inner Hensel
+lift call.
+-/
+theorem exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence
+    {core : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
+    (h :
+      HenselSubsetCorrespondenceHypotheses core
+        (Hex.precisionForCoeffBound (Hex.ZPoly.defaultFactorCoeffBound core)
+          primeData.p)
+        primeData d admissiblePrime successfulLift)
+    (hpartition :
+      LiftedFactorSubsetPartition core d Finset.univ core)
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hB_ne_zero : Hex.ZPoly.defaultFactorCoeffBound core ≠ 0)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hd_liftedFactor_inj : Function.Injective (liftedFactor d))
+    {factor : Hex.ZPoly}
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hdvd : factor ∣ core)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    ∃ emitted ∈
+      (Hex.exhaustiveCoreFactorsWithBound core
+        (Hex.ZPoly.defaultFactorCoeffBound core) primeData).toList,
+      Associated
+        (HexPolyZMathlib.toPolynomial emitted)
+        (HexPolyZMathlib.toPolynomial factor) := by
+  have hmatches :
+      LiftedFactorListMatches d Finset.univ d.liftedFactors.toList :=
+    LiftedFactorListMatches.univ d
+  have hfuel : (Finset.univ : LiftedFactorSubset d).card <
+      d.liftedFactors.toList.length + 1 := by
+    rw [← LiftedFactorListMatches.length_eq_card hmatches]
+    exact Nat.lt_succ_self _
+  obtain ⟨result, hsearchAux, emitted, hemitted_mem, hassoc⟩ :=
+    recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition
+      (J := Finset.univ)
+      (fuel := d.liftedFactors.toList.length + 1)
+      hcore_ne hcore_monic hd_modulus hd_liftedFactor_monic
+      hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
+      hcore_monic (Hex.DensePoly.dvd_refl_poly core) hpartition hmatches hirr hdvd hfuel
+  have hsearchMod :
+      Hex.recombinationSearchMod core (d.p ^ d.k) d.liftedFactors.toList =
+        some result := by
+    unfold Hex.recombinationSearchMod
+    exact hsearchAux
+  refine ⟨emitted, ?_, hassoc⟩
+  exact
+    exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_some
+      (B := Hex.ZPoly.defaultFactorCoeffBound core)
+      hB_ne_zero h.lift_eq hsearchMod hemitted_mem
+
 end
 
 end HexBerlekampZassenhausMathlib
