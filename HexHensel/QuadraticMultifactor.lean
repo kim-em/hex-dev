@@ -86,6 +86,16 @@ def QuadraticLiftLoopInvariant
     ZPoly.congr (acc.s * acc.g + acc.t * acc.h) 1 m ∧
     DensePoly.Monic acc.g
 
+/-- Constructor for the initial quadratic split invariant from the three
+proof obligations supplied by factor-product, Bezout, and monicness facts. -/
+theorem QuadraticLiftLoopInvariant.of_product_bezout_monic
+    {m : Nat} {f g h s t : ZPoly}
+    (hprod : ZPoly.congr (g * h) f m)
+    (hbezout : ZPoly.congr (s * g + t * h) 1 m)
+    (hg_monic : DensePoly.Monic g) :
+    QuadraticLiftLoopInvariant m f { g, h, s, t } :=
+  ⟨hprod, hbezout, hg_monic⟩
+
 /--
 One quadratic step preserves the loop invariant while replacing `m` by `m*m`.
 

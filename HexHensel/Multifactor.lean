@@ -33,6 +33,57 @@ def normalizedXGCD
     left := DensePoly.scale unitInv raw.left
     right := DensePoly.scale unitInv raw.right }
 
+/-- The normalised xgcd witnesses still satisfy the Bezout identity, now for
+the normalised gcd component. -/
+theorem normalizedXGCD_bezout
+    (p : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
+    (g h : ZPoly) :
+    let xgcd := normalizedXGCD p g h
+    xgcd.left * modP p g + xgcd.right * modP p h = xgcd.gcd := by
+  unfold normalizedXGCD
+  let raw := DensePoly.xgcd (modP p g) (modP p h)
+  let unitInv := (DensePoly.leadingCoeff raw.gcd)⁻¹
+  have hraw : raw.left * modP p g + raw.right * modP p h = raw.gcd := by
+    simpa [raw] using DensePoly.xgcd_bezout (modP p g) (modP p h)
+  change
+    DensePoly.scale unitInv raw.left * modP p g +
+        DensePoly.scale unitInv raw.right * modP p h =
+      DensePoly.scale unitInv raw.gcd
+  rw [← FpPoly.scale_mul_left, ← FpPoly.scale_mul_left,
+    ← FpPoly.scale_add, hraw]
+
+/-- If the normalised xgcd component is `1`, its lifted witnesses give the
+integer-polynomial Bezout congruence needed to initialise a Hensel split. -/
+theorem normalizedXGCD_liftToZ_bezout_congr_of_gcd_eq_one
+    (p : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
+    (g h : ZPoly)
+    (hgcd :
+      let xgcd := normalizedXGCD p g h
+      xgcd.gcd = (1 : FpPoly p)) :
+    let xgcd := normalizedXGCD p g h
+    congr
+      (FpPoly.liftToZ xgcd.left * g + FpPoly.liftToZ xgcd.right * h)
+      1 p := by
+  let xgcd := normalizedXGCD p g h
+  have hmod :
+      modP p (FpPoly.liftToZ xgcd.left * g + FpPoly.liftToZ xgcd.right * h) =
+        (1 : FpPoly p) := by
+    rw [modP_add, modP_lift_mul_left, modP_lift_mul_left]
+    calc
+      xgcd.left * modP p g + xgcd.right * modP p h = xgcd.gcd := by
+        simpa [xgcd] using normalizedXGCD_bezout p g h
+      _ = 1 := by
+        simpa [xgcd] using hgcd
+  have hlift_expr :
+      congr (FpPoly.liftToZ (1 : FpPoly p))
+        (FpPoly.liftToZ xgcd.left * g + FpPoly.liftToZ xgcd.right * h) p :=
+    congr_liftToZ_of_modP_eq p (1 : FpPoly p)
+      (FpPoly.liftToZ xgcd.left * g + FpPoly.liftToZ xgcd.right * h) hmod
+  have hlift_one :
+      congr (FpPoly.liftToZ (1 : FpPoly p)) (1 : ZPoly) p :=
+    congr_liftToZ_of_modP_eq p (1 : FpPoly p) (1 : ZPoly) (modP_one p)
+  exact congr_trans _ _ _ p (congr_symm _ _ _ hlift_expr) hlift_one
+
 private def multifactorLiftList
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) : List ZPoly → Array ZPoly
