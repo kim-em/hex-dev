@@ -509,13 +509,6 @@ private theorem distinctDegreeLoop_frobenius_state_step
   rw [hstate]
   exact (FpPoly.frobeniusXPowMod_succ f hmonic d).symm
 
-private theorem frobeniusXMod_eq_frobeniusXPowMod_one
-    (f : FpPoly p) (hmonic : DensePoly.Monic f) :
-    FpPoly.frobeniusXMod f hmonic =
-      FpPoly.frobeniusXPowMod f hmonic 1 := by
-  unfold FpPoly.frobeniusXMod FpPoly.frobeniusXPowMod
-  rw [Nat.pow_one]
-
 private theorem finishDegreePower_bucket_degree
     (d : Nat) (residual acc : FpPoly p) :
     ∀ bucket : DegreeBucket p,
@@ -1029,7 +1022,7 @@ private theorem distinctDegreeFactor_bucket_matches
   let frobX := FpPoly.frobeniusXMod f hmonic
   exact distinctDegreeLoop_bucket_matches f hmonic xMod hsquareFree
     (basisSize f + 1) 1 frobX f [] rfl
-    (frobeniusXMod_eq_frobeniusXPowMod_one f hmonic)
+    (FpPoly.frobeniusXMod_eq_frobeniusXPowMod_one f hmonic)
     (DensePoly.dvd_refl_poly f) (by simp)
 
 /--

@@ -67,6 +67,7 @@ def frobeniusXPowModLinear (f : FpPoly p) (hmonic : DensePoly.Monic f) (k : Nat)
     FpPoly p :=
   powModMonicLinear X f hmonic (p ^ k)
 
+/-- The zeroth Frobenius power is the canonical representative of `X` modulo `f`. -/
 @[simp] theorem frobeniusXPowMod_zero
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f) :
@@ -379,8 +380,10 @@ theorem powModMonic_mod_eq_linearPow
   rw [powModMonic_mod_eq, linearPow_eq_powLinear]
 
 /--
-The kernel-reducible linear exponentiation path agrees with the existing
-square-and-multiply implementation.
+The kernel-reducible linear exponentiation path agrees with the production
+square-and-multiply implementation. It is intentionally not a global simp rule:
+some conformance proofs unfold the linear evaluator to get kernel-reduced closed
+terms.
 -/
 theorem powModMonicLinear_eq_powModMonic
     [ZMod64.PrimeModulus p]
@@ -407,17 +410,33 @@ theorem powModMonicLinear_eq_powModMonic
             (powModMonic_mod_eq base f hmonic (n + 1)).symm
         _ = powModMonic base f hmonic (n + 1) := hpow_self
 
+/--
+The kernel-reducible `X^p mod f` evaluator agrees with the production
+Frobenius generator.
+-/
 theorem frobeniusXModLinear_eq_frobeniusXMod
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     frobeniusXModLinear f hmonic = frobeniusXMod f hmonic := by
   exact powModMonicLinear_eq_powModMonic X f hmonic p
 
+/--
+The kernel-reducible `X^(p^k) mod f` evaluator agrees with the production
+Frobenius power routine.
+-/
 theorem frobeniusXPowModLinear_eq_frobeniusXPowMod
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f) (k : Nat) :
     frobeniusXPowModLinear f hmonic k = frobeniusXPowMod f hmonic k := by
   exact powModMonicLinear_eq_powModMonic X f hmonic (p ^ k)
+
+/-- The basic Frobenius generator is the first indexed Frobenius power. -/
+theorem frobeniusXMod_eq_frobeniusXPowMod_one
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) :
+    frobeniusXMod f hmonic =
+      frobeniusXPowMod f hmonic 1 := by
+  unfold frobeniusXMod frobeniusXPowMod
+  rw [Nat.pow_one]
 
 /-- Successor step for `frobeniusXPowMod`: raising the previous Frobenius
 image to the `p`-th power (mod `f`) advances the index by one. -/
