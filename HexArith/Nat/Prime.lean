@@ -20,14 +20,16 @@ def choose : Nat -> Nat -> Nat
   | 0, _ + 1 => 0
   | n + 1, k + 1 => choose n k + choose n (k + 1)
 
-/-- `choose n 0 = 1`: the rightmost column of Pascal's triangle. -/
+/-- `choose n 0 = 1`: the zeroth column of Pascal's triangle. -/
 @[simp] theorem choose_zero_right (n : Nat) : choose n 0 = 1 := by
   induction n with
   | zero => rfl
   | succ n ih => simp [choose]
 
-/-- `choose 0 (k + 1) = 0`: nontrivial entries vanish in the top row of Pascal's
-triangle. -/
+/--
+`choose 0 (k + 1) = 0`: nontrivial entries vanish in the top row of Pascal's
+triangle.
+-/
 @[simp] theorem choose_zero_succ (k : Nat) : choose 0 (k + 1) = 0 := by
   rfl
 
@@ -36,8 +38,10 @@ triangle. -/
     choose (n + 1) (k + 1) = choose n k + choose n (k + 1) := by
   rfl
 
-/-- Entries past the diagonal of Pascal's triangle vanish: `choose n k = 0` whenever
-`n < k`. -/
+/--
+Entries past the diagonal of Pascal's triangle vanish: `choose n k = 0`
+whenever `n < k`.
+-/
 theorem choose_eq_zero_of_lt {n k : Nat} (h : n < k) : choose n k = 0 := by
   induction n generalizing k with
   | zero =>
@@ -64,7 +68,8 @@ theorem choose_eq_zero_of_lt {n k : Nat} (h : n < k) : choose n k = 0 := by
 
 /--
 A natural number is prime when it is at least `2` and its positive divisors are
-trivial.
+trivial. This is the Mathlib-free prime predicate used by downstream modular
+arithmetic layers.
 -/
 def Prime (p : Nat) : Prop :=
   2 ≤ p ∧ ∀ m : Nat, m ∣ p → m = 1 ∨ m = p
@@ -85,7 +90,10 @@ private theorem coprime_of_not_dvd {p a : Nat} (hp : Hex.Nat.Prime p)
     rw [← hgcd]
     exact Nat.gcd_dvd_right p a
 
-/-- Euclid's lemma: if a prime divides a product, it divides one of the factors. -/
+/--
+Euclid's lemma for the local prime predicate: if a prime divides a product, it
+divides one of the factors.
+-/
 theorem dvd_mul {p a b : Nat} (hp : Hex.Nat.Prime p) (h : p ∣ a * b) :
     p ∣ a ∨ p ∣ b := by
   by_cases hb : p ∣ b
@@ -273,14 +281,16 @@ private theorem pow_prime_mod_from_add_pow {p : Nat} (hp : Prime p) (a : Nat)
 
 /--
 Every nontrivial binomial coefficient in the `p`th row of Pascal's triangle is
-divisible by `p` when `p` is prime.
+divisible by `p` when `p` is prime. This is the binomial-divisibility fact used
+to erase the middle terms in `add_pow_prime_mod`.
 -/
 theorem choose_prime_dvd {p k : Nat} (hp : Prime p) (hk : 0 < k) (hk' : k < p) :
     p ∣ choose p k := by
   exact choose_prime_dvd_from_mul_identity hp hk hk'
 
 /--
-Freshman's dream modulo a prime: all middle binomial terms vanish.
+Freshman's dream modulo a prime: `(a + b)^p` is congruent to `a^p + b^p`
+modulo `p`, because all middle binomial terms vanish.
 -/
 theorem add_pow_prime_mod {p : Nat} (hp : Prime p) (a b : Nat) :
     (a + b) ^ p % p = (a ^ p + b ^ p) % p := by
@@ -288,7 +298,9 @@ theorem add_pow_prime_mod {p : Nat} (hp : Prime p) (a b : Nat) :
     choose_prime_dvd hp hk hk')
 
 /--
-Fermat's little theorem in the form used by downstream modular arithmetic code.
+Fermat's little theorem in the residue form used by downstream modular
+arithmetic code: raising a natural number to the `p`th power preserves its
+residue modulo a prime `p`.
 -/
 theorem pow_prime_mod {p : Nat} (hp : Prime p) (a : Nat) :
     a ^ p % p = a % p := by
