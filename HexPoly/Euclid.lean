@@ -929,36 +929,12 @@ theorem zero_mod_eq_zero_core {S : Type _}
   · rw [if_neg hpos]
     unfold divModArray
     simp [hzero, isZero, size, toArray, divModArrayAux]
-    by_cases hm : m.coeffs = #[]
-    · rw [if_pos hm]
-    · rw [if_neg hm]
-      change (ofCoeffs #[] : DensePoly S) = 0
-      rfl
 
 theorem divMod_eq_zero_self_of_degree_lt [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) :
     p.degree?.getD 0 < q.degree?.getD 0 → divMod p q = (0, p) := by
   intro hdeg
   simp [divMod, hdeg]
-
-private theorem ofCoeffs_replicate_zero (n : Nat) :
-    (ofCoeffs (Array.replicate n (Zero.zero : R)) : DensePoly R) = 0 := by
-  apply ext_coeff
-  intro i
-  rw [coeff_ofCoeffs]
-  change (Array.replicate n (Zero.zero : R)).getD i (Zero.zero : R) = (Zero.zero : R)
-  simp [Array.getD]
-
-private theorem ofCoeffs_empty :
-    (ofCoeffs (#[] : Array R) : DensePoly R) = 0 := by
-  rfl
-
-private theorem ofCoeffs_toArray (p : DensePoly R) :
-    ofCoeffs p.toArray = p := by
-  apply ext_coeff
-  intro i
-  rw [coeff_ofCoeffs]
-  rfl
 
 private theorem ofCoeffs_set!_eq_add_monomial {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
@@ -4079,11 +4055,6 @@ private theorem zero_mod_eq_zero {S : Type _}
   · rw [if_neg hpos]
     unfold divModArray
     simp [hzero, isZero, size, toArray, divModArrayAux]
-    by_cases hm : m.coeffs = #[]
-    · rw [if_pos hm]
-    · rw [if_neg hm]
-      change (ofCoeffs #[] : DensePoly S) = 0
-      rfl
 
 private theorem mod_eq_mod_of_dvd_sub {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]

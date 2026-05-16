@@ -311,6 +311,17 @@ def degree? (p : DensePoly R) : Option Nat :=
 @[simp] theorem size_zero : (0 : DensePoly R).size = 0 := by
   rfl
 
+/-- `isZero` is the Boolean test for having no stored coefficients. -/
+theorem isZero_eq_true_iff (p : DensePoly R) :
+    p.isZero = true ↔ p.size = 0 := by
+  simp [isZero, size]
+
+/-- A polynomial is nonzero exactly when it stores at least one coefficient. -/
+theorem isZero_eq_false_iff (p : DensePoly R) :
+    p.isZero = false ↔ 0 < p.size := by
+  rw [← Bool.not_eq_true, isZero_eq_true_iff]
+  exact ⟨fun h => Nat.pos_of_ne_zero h, fun h hzero => by omega⟩
+
 /-- The constant polynomial `C 0` collapses to the zero polynomial, so its coefficient array is
 empty. -/
 @[simp] theorem coeffs_C_zero : (C (0 : R)).coeffs = #[] := by
@@ -343,13 +354,58 @@ either `degree? = none` (when `c = 0`) and `getD 0 = 0`, or `degree? = some 0` (
   · change c ≠ Zero.zero at hc
     simp [C, ofCoeffs, trimTrailingZeros, trimTrailingZerosList, hc, degree?, size]
 
+/-- The zero polynomial is the only dense polynomial with no degree. -/
+theorem degree?_eq_none_iff (p : DensePoly R) :
+    p.degree? = none ↔ p.size = 0 := by
+  unfold degree?
+  by_cases h : p.size = 0
+  · simp [h]
+  · simp [h]
+
+/-- A nonzero dense polynomial has degree one less than its stored coefficient count. -/
+theorem degree?_eq_some_of_pos_size (p : DensePoly R) (hpos : 0 < p.size) :
+    p.degree? = some (p.size - 1) := by
+  unfold degree?
+  rw [dif_neg (Nat.ne_of_gt hpos)]
+
 /-- The support of a dense polynomial, listed in ascending degree order. -/
 def support (p : DensePoly R) : List Nat :=
   (List.range p.size).filter fun i => p.coeff i ≠ (Zero.zero : R)
 
+/-- Membership in `support` is coefficient nonzeroness inside the stored range. -/
+theorem mem_support {p : DensePoly R} {i : Nat} :
+    i ∈ p.support ↔ i < p.size ∧ p.coeff i ≠ (Zero.zero : R) := by
+  simp [support]
+
+/-- The zero polynomial has empty support. -/
+@[simp] theorem support_zero : (0 : DensePoly R).support = [] := by
+  simp [support]
+
 /-- Return the underlying normalized coefficient array. -/
 def toArray (p : DensePoly R) : Array R :=
   p.coeffs
+
+/-- Normalizing the already-normalized coefficient array reconstructs the same polynomial. -/
+theorem ofCoeffs_toArray (p : DensePoly R) :
+    ofCoeffs p.toArray = p := by
+  apply ext_coeff
+  intro i
+  rw [coeff_ofCoeffs]
+  rfl
+
+/-- Normalizing an empty coefficient array gives the zero polynomial. -/
+@[simp] theorem ofCoeffs_empty :
+    (ofCoeffs (#[] : Array R) : DensePoly R) = 0 := by
+  rfl
+
+/-- An array consisting only of zeros normalizes to the zero polynomial. -/
+theorem ofCoeffs_replicate_zero (n : Nat) :
+    (ofCoeffs (Array.replicate n (Zero.zero : R)) : DensePoly R) = 0 := by
+  apply ext_coeff
+  intro i
+  rw [coeff_ofCoeffs]
+  change (Array.replicate n (Zero.zero : R)).getD i (Zero.zero : R) = (Zero.zero : R)
+  simp [Array.getD]
 
 end DensePoly
 end Hex
