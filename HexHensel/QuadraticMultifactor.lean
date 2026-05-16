@@ -916,7 +916,10 @@ private theorem multifactorLiftQuadraticList_toList_length
           rw [hexpand]
           simp [ih lifted.h]
 
-private theorem multifactorLiftQuadratic_size_eq_input
+/-- The `multifactorLiftQuadratic` output has one entry per input factor.
+Used by the Mathlib-bridge injectivity umbrella to relate output array
+indices to original modular-factor indices. -/
+theorem multifactorLiftQuadratic_size_eq_input
     (p k : Nat) [ZMod64.Bounds p] (f : ZPoly) (factors : Array ZPoly) :
     (multifactorLiftQuadratic p k f factors).size = factors.size := by
   unfold multifactorLiftQuadratic
