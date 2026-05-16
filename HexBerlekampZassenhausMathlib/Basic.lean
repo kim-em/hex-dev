@@ -3177,6 +3177,261 @@ theorem liftedSubsetSplit_prefix_mem_of_matches
   -- `T`-selected/rest pair.
   rw [hsel_eq, hrest_eq, ← hT_sel, ← hT_rest]
 
+/-- Canonical mask decomposition of a matched-state at its head index.
+
+Given that `localFactors` matches `J` and `J` is nonempty, `localFactors`
+decomposes as `liftedFactor d (J.min' hne) :: ys.map (liftedFactor d)` for
+some `ys` that is `Nodup`, missing `J.min' hne`, and contained in `J`. For
+any `S ⊆ J` containing `J.min' hne`, the `(S, J \ S)` partition has the
+canonical mask form indexed by `ys.map (· ∈ S)`. -/
+private theorem LiftedFactorListMatches.exists_tail_indices
+    {d : Hex.LiftData} {J : LiftedFactorSubset d}
+    {localFactors : List Hex.ZPoly}
+    (hmatches : LiftedFactorListMatches d J localFactors)
+    (hne : J.Nonempty) :
+    ∃ (ys : List (LiftedFactorIndex d)),
+      ys.Nodup ∧
+      J.min' hne ∉ ys ∧
+      (∀ y ∈ ys, y ∈ J) ∧
+      localFactors = liftedFactor d (J.min' hne) :: ys.map (liftedFactor d) ∧
+      ∀ (S : LiftedFactorSubset d), S ⊆ J → J.min' hne ∈ S →
+        liftedSubsetSelectedList d S =
+          liftedFactor d (J.min' hne) ::
+            ((ys.map (liftedFactor d)).zip
+                (ys.map (fun i => decide (i ∈ S)))).filterMap
+              (fun p => if p.2 then some p.1 else none) ∧
+        liftedSubsetSelectedList d (J \ S) =
+          ((ys.map (liftedFactor d)).zip
+              (ys.map (fun i => decide (i ∈ S)))).filterMap
+            (fun p => if p.2 then none else some p.1) := by
+  classical
+  -- Set up the J-filter index list and decompose at its head.
+  set xsIdx : List (LiftedFactorIndex d) :=
+    (List.finRange d.liftedFactors.size).filter (fun i => decide (i ∈ J))
+    with hxsIdx_def
+  have hxsIdx_head : xsIdx.head? = some (J.min' hne) :=
+    finRange_filter_head?_eq_min' J hne
+  obtain ⟨ys, hxsIdx_eq⟩ : ∃ ys, xsIdx = (J.min' hne) :: ys := by
+    cases hxsIdx_case : xsIdx with
+    | nil => rw [hxsIdx_case] at hxsIdx_head; simp at hxsIdx_head
+    | cons x ys =>
+        rw [hxsIdx_case] at hxsIdx_head
+        simp only [List.head?_cons, Option.some.injEq] at hxsIdx_head
+        exact ⟨ys, by rw [hxsIdx_head]⟩
+  refine ⟨ys, ?_, ?_, ?_, ?_, ?_⟩
+  · -- Nodup ys
+    have hxsIdx_nodup : xsIdx.Nodup := (List.nodup_finRange _).filter _
+    rw [hxsIdx_eq] at hxsIdx_nodup
+    exact (List.nodup_cons.mp hxsIdx_nodup).2
+  · -- J.min' hne ∉ ys
+    have hxsIdx_nodup : xsIdx.Nodup := (List.nodup_finRange _).filter _
+    rw [hxsIdx_eq] at hxsIdx_nodup
+    exact (List.nodup_cons.mp hxsIdx_nodup).1
+  · -- ∀ y ∈ ys, y ∈ J
+    intro y hy
+    have hy_xsIdx : y ∈ xsIdx := by rw [hxsIdx_eq]; exact List.mem_cons_of_mem _ hy
+    rw [hxsIdx_def, List.mem_filter] at hy_xsIdx
+    exact of_decide_eq_true hy_xsIdx.2
+  · -- localFactors = head :: ys.map liftedFactor
+    have : localFactors = xsIdx.map (liftedFactor d) := hmatches
+    rw [hxsIdx_eq, List.map_cons] at this
+    exact this
+  · -- The S-partition canonical mask equations.
+    intro S hSJ hmin
+    -- Common computation: zip of two maps over the same list.
+    have hzip :
+        (ys.map (liftedFactor d)).zip (ys.map (fun i => decide (i ∈ S))) =
+          ys.map (fun i => (liftedFactor d i, decide (i ∈ S))) := by
+      rw [List.zip_map']
+    refine ⟨?_, ?_⟩
+    · -- liftedSubsetSelectedList d S = head :: filterMap selected
+      rw [liftedSubsetSelectedList_eq_filter_map]
+      rw [show (List.finRange d.liftedFactors.size).filter
+              (fun i => decide (i ∈ S)) =
+            xsIdx.filter (fun i => decide (i ∈ S)) from by
+        rw [hxsIdx_def]
+        exact (finRange_filter_mem_and_mem_eq_of_subset hSJ).symm]
+      rw [hxsIdx_eq]
+      rw [show (J.min' hne :: ys).filter (fun i => decide (i ∈ S)) =
+              J.min' hne :: ys.filter (fun i => decide (i ∈ S)) from
+        List.filter_cons_of_pos (by simp [hmin])]
+      rw [List.map_cons]
+      congr 1
+      rw [hzip, List.filterMap_map]
+      simp only [Function.comp_def]
+      exact (List.filterMap_if_eq_map_filter ys
+        (fun i => decide (i ∈ S)) (liftedFactor d)).symm
+    · -- liftedSubsetSelectedList d (J \ S) = filterMap rest
+      rw [liftedSubsetSelectedList_eq_filter_map]
+      rw [show (List.finRange d.liftedFactors.size).filter
+              (fun i => decide (i ∈ J \ S)) =
+            xsIdx.filter (fun i => decide (i ∉ S)) from by
+        rw [hxsIdx_def]
+        exact (finRange_filter_mem_and_not_mem_eq_sdiff_of_subset
+          (J := J) (S := S)).symm]
+      rw [hxsIdx_eq]
+      rw [show (J.min' hne :: ys).filter (fun i => decide (i ∉ S)) =
+              ys.filter (fun i => decide (i ∉ S)) from
+        List.filter_cons_of_neg (by simp [hmin])]
+      rw [hzip, List.filterMap_map]
+      simp only [Function.comp_def]
+      have hrewrite :
+          (fun i : LiftedFactorIndex d =>
+              if decide (i ∈ S) then (none : Option Hex.ZPoly)
+              else some (liftedFactor d i)) =
+            fun i => if decide (i ∉ S) then some (liftedFactor d i) else none := by
+        funext i
+        by_cases hi : i ∈ S
+        · simp [hi]
+        · simp [hi]
+      rw [hrewrite]
+      exact (List.filterMap_if_eq_map_filter ys
+        (fun i => decide (i ∉ S)) (liftedFactor d)).symm
+
+/-- Strengthening of `liftedSubsetSplit_prefix_mem_of_matches`: when the
+matched `localFactors` is `Nodup` and the boundary split is the canonical
+`(S, J \ S)` partition, every prefix `split ∈ pre` admits a witness index
+`i ∈ J ∩ S` that is **not** in the recovered subset `T`.
+
+The `Nodup` hypothesis is required to lift the executable mask-level bit
+difference (provided by `subsetSplits_prefix_exists_bit_diff_aux`) back to a
+proof-side `LiftedFactorIndex d` difference, since `liftedFactor d` is
+otherwise allowed to collide on distinct indices. Consumers thread this
+hypothesis from a Hensel-coprimality fact at the recombination call site
+(`liftedFactor d` injective on the J-filter index list).
+
+Used by the recursive coverage assembler for the prefix-none case: an
+arbitrary executable split appearing before the `S`-split must miss at least
+one of the `S`-indices, witnessing recombination-search progress. -/
+theorem liftedSubsetSplit_prefix_exists_mem_sdiff_of_matches
+    {d : Hex.LiftData} {J S : LiftedFactorSubset d}
+    {localFactors : List Hex.ZPoly}
+    {pre suffix : List (List Hex.ZPoly × List Hex.ZPoly)}
+    (hlocal_nodup : localFactors.Nodup)
+    (hmatches : LiftedFactorListMatches d J localFactors)
+    (hSJ : S ⊆ J) (hne : J.Nonempty) (hmin : J.min' hne ∈ S)
+    (hsplits :
+      Hex.subsetSplitsWithFirst localFactors =
+        pre ++
+          (liftedSubsetSelectedList d S,
+           liftedSubsetSelectedList d (J \ S)) :: suffix)
+    {split : List Hex.ZPoly × List Hex.ZPoly} (hsplit : split ∈ pre) :
+    ∃ (T : LiftedFactorSubset d),
+      T ⊆ J ∧ J.min' hne ∈ T ∧
+      split = (liftedSubsetSelectedList d T,
+               liftedSubsetSelectedList d (J \ T)) ∧
+      ∃ i ∈ J, i ∈ S ∧ i ∉ T := by
+  classical
+  -- Step 1: get T from the prefix-mem lemma.
+  obtain ⟨T, hTJ, hmin_in_T, hsplit_eq⟩ :=
+    liftedSubsetSplit_prefix_mem_of_matches hmatches hne hsplits hsplit
+  refine ⟨T, hTJ, hmin_in_T, hsplit_eq, ?_⟩
+  -- Step 2: decompose localFactors and obtain canonical mask equations.
+  obtain ⟨ys, hys_nodup, hmin_notin_ys, hys_in_J, hloc_eq, hS_eqs⟩ :=
+    hmatches.exists_tail_indices hne
+  obtain ⟨hS_sel_cons, hS_rest_eq⟩ := hS_eqs S hSJ hmin
+  obtain ⟨hT_sel_cons, hT_rest_eq⟩ := hS_eqs T hTJ hmin_in_T
+  -- Useful abbreviations.
+  set head : Hex.ZPoly := liftedFactor d (J.min' hne)
+  set tail : List Hex.ZPoly := ys.map (liftedFactor d)
+  set mask_S : List Bool := ys.map (fun i => decide (i ∈ S)) with hmask_S_def
+  set mask_T : List Bool := ys.map (fun i => decide (i ∈ T)) with hmask_T_def
+  have hmask_S_len : mask_S.length = tail.length := by
+    simp [hmask_S_def, tail]
+  have hmask_T_len : mask_T.length = tail.length := by
+    simp [hmask_T_def, tail]
+  -- Tail Nodup (from hlocal_nodup).
+  rw [hloc_eq] at hlocal_nodup
+  have htail_nodup : tail.Nodup := (List.nodup_cons.mp hlocal_nodup).2
+  -- Step 3: lift `hsplits` to a `subsetSplits tail` decomposition.
+  have hsswf_eq :
+      Hex.subsetSplitsWithFirst localFactors =
+        (Hex.subsetSplits tail).map (fun s => (head :: s.1, s.2)) := by
+    rw [hloc_eq]
+    show (Hex.subsetSplits tail).map _ = _
+    rfl
+  -- The boundary split (S-sel, (J\S)-sel) in the cons-canonical form.
+  have hS_boundary_eq :
+      (liftedSubsetSelectedList d S, liftedSubsetSelectedList d (J \ S)) =
+        (fun s : List Hex.ZPoly × List Hex.ZPoly => (head :: s.1, s.2))
+          ((tail.zip mask_S).filterMap (fun p => if p.2 then some p.1 else none),
+           (tail.zip mask_S).filterMap (fun p => if p.2 then none else some p.1)) := by
+    simp only [Prod.mk.injEq]
+    refine ⟨?_, ?_⟩
+    · rw [hS_sel_cons]
+    · rw [hS_rest_eq]
+  rw [hsswf_eq, hS_boundary_eq] at hsplits
+  -- Apply List.map_eq_append_iff to get a decomposition of subsetSplits tail.
+  obtain ⟨preIdx, suffIdx, hsplitsTail, hpreIdx_eq, hsuffIdx_eq⟩ :=
+    List.map_eq_append_iff.mp hsplits
+  cases suffIdx with
+  | nil =>
+      exfalso
+      simp only [List.map_nil] at hsuffIdx_eq
+      exact List.cons_ne_nil _ _ hsuffIdx_eq.symm
+  | cons headIdx tailIdx =>
+      simp only [List.map_cons] at hsuffIdx_eq
+      injection hsuffIdx_eq with hboundary_eq _hsuffix_map_eq
+      -- hboundary_eq : (head :: headIdx.1, headIdx.2) =
+      --   (head :: mask_S filterMap selected, mask_S filterMap rest)
+      simp only [Prod.mk.injEq, List.cons.injEq, true_and] at hboundary_eq
+      obtain ⟨hheadIdx_sel, hheadIdx_rest⟩ := hboundary_eq
+      obtain ⟨headIdxSel, headIdxRest⟩ := headIdx
+      simp only at hheadIdx_sel hheadIdx_rest
+      subst hheadIdx_sel
+      subst hheadIdx_rest
+      -- hsplitsTail : subsetSplits tail =
+      --   preIdx ++ ((tail.zip mask_S).filterMap selected,
+      --              (tail.zip mask_S).filterMap rest) :: tailIdx
+      -- Step 4: identify split = f((tail.zip mask_T).filterMap selected, ...).
+      have hsplit_eq_canonical :
+          split = (fun s : List Hex.ZPoly × List Hex.ZPoly => (head :: s.1, s.2))
+            ((tail.zip mask_T).filterMap (fun p => if p.2 then some p.1 else none),
+             (tail.zip mask_T).filterMap (fun p => if p.2 then none else some p.1)) := by
+        rw [hsplit_eq]
+        simp only [Prod.mk.injEq]
+        refine ⟨?_, ?_⟩
+        · rw [hT_sel_cons]
+        · rw [hT_rest_eq]
+      -- pre = preIdx.map f and split ∈ pre.
+      rw [← hpreIdx_eq] at hsplit
+      rw [hsplit_eq_canonical] at hsplit
+      obtain ⟨innerT, hinnerT_mem, hinnerT_eq⟩ := List.mem_map.mp hsplit
+      -- innerT ∈ preIdx and f(innerT) = f(canonical_T_inner). By injectivity, innerT =
+      -- canonical_T_inner.
+      simp only [Prod.mk.injEq, List.cons.injEq, true_and] at hinnerT_eq
+      obtain ⟨hT_inner_sel_eq, hT_inner_rest_eq⟩ := hinnerT_eq
+      obtain ⟨innerTSel, innerTRest⟩ := innerT
+      simp only at hT_inner_sel_eq hT_inner_rest_eq
+      subst hT_inner_sel_eq
+      subst hT_inner_rest_eq
+      -- innerT-canonical ∈ preIdx.
+      -- Step 5: apply the mask-level helper.
+      obtain ⟨i', hi', hmsT_i', hmsS_i'⟩ :=
+        subsetSplits_prefix_exists_bit_diff_aux htail_nodup
+          hmask_S_len hmask_T_len hsplitsTail hinnerT_mem
+      -- Step 6: translate i' to ys[i'].
+      have hi'_ys : i' < ys.length := by
+        have : tail.length = ys.length := by simp [tail]
+        rw [this] at hi'
+        exact hi'
+      refine ⟨ys[i'], ?_, ?_, ?_⟩
+      · exact hys_in_J ys[i'] (List.getElem_mem _)
+      · -- ys[i'] ∈ S, from mask_S[i'] = true.
+        have h_mask_S_val : mask_S[i'] = decide (ys[i'] ∈ S) := by
+          simp [hmask_S_def]
+        have : decide (ys[i'] ∈ S) = true := by
+          rw [← h_mask_S_val]
+          exact hmsS_i'
+        exact of_decide_eq_true this
+      · -- ys[i'] ∉ T, from mask_T[i'] = false.
+        have h_mask_T_val : mask_T[i'] = decide (ys[i'] ∈ T) := by
+          simp [hmask_T_def]
+        have : decide (ys[i'] ∈ T) = false := by
+          rw [← h_mask_T_val]
+          exact hmsT_i'
+        exact of_decide_eq_false this
+
 /-- The transported recombination candidate product equals the proof-side
 lifted-factor product: both factor lists are permutations of each other in
 `Polynomial ℤ`, so commutativity collapses the order difference. -/
