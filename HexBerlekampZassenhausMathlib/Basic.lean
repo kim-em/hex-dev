@@ -4876,6 +4876,56 @@ theorem exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd
     rw [hr, hq, Hex.DensePoly.mul_assoc_poly (S := Int)]
   exact ⟨f, S, hf_irr, hf_dvd_target, hf_dvd_candidate, hSJ, hiS, hrep⟩
 
+/--
+Cover-at-min containment from recombination-candidate support: when the
+recorded candidate at `T ⊆ J` exactly divides `target`, the cover witness at
+`J.min'` has its representing subset contained in `T`.
+
+This is the form consumed by the prefix-none recombination-search assembler:
+it combines the reverse-support coverage packaging
+(`exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd`) applied
+at `i := J.min' hne` with the forward-support containment
+(`representingSubset_subset_of_dvd_recombinationCandidate`) to obtain the
+single cover factor whose representing subset both contains `J.min' hne`
+and is contained in `T`.
+-/
+theorem coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd
+    {core target quotient : Hex.ZPoly} {d : Hex.LiftData}
+    {J T : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (htarget_dvd_core : target ∣ core)
+    (hTJ : T ⊆ J)
+    (hne : J.Nonempty)
+    (hmin_in_T : J.min' hne ∈ T)
+    (hrecord :
+      Hex.shouldRecordPolynomialFactor (recombinationCandidate d T) = true)
+    (hquot :
+      Hex.exactQuotient? target (recombinationCandidate d T) = some quotient) :
+    ∃ (f : Hex.ZPoly) (S : LiftedFactorSubset d),
+      Irreducible (HexPolyZMathlib.toPolynomial f) ∧
+      f ∣ target ∧
+      S ⊆ J ∧ J.min' hne ∈ S ∧
+      RepresentsIntegerFactorAtLift core d f S ∧
+      S ⊆ T := by
+  obtain ⟨f, S, hf_irr, hf_dvd_target, hf_dvd_cand, hSJ, hmin_in_S, hrep⟩ :=
+    exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd
+      hcore_ne hcore_monic hd_modulus hd_liftedFactor_monic
+      hd_liftedFactor_natDegree_pos hprecision hpartition htarget_dvd_core
+      hTJ hrecord hquot hmin_in_T
+  have hST : S ⊆ T :=
+    representingSubset_subset_of_dvd_recombinationCandidate
+      hcore_ne hcore_monic hprecision hpartition hTJ hf_irr
+      hf_dvd_target hf_dvd_cand hSJ hrep
+  exact ⟨f, S, hf_irr, hf_dvd_target, hSJ, hmin_in_S, hrep, hST⟩
+
 /-- Algorithm-side packaging for the exhaustive core branch in the form needed
 by UFD arguments over `Polynomial ℤ`.
 
