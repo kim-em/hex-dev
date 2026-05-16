@@ -1916,63 +1916,21 @@ def firstSome {α β : Type} : List α → (α → Option β) → Option β
       | some y => some y
       | none => firstSome xs f
 
-private theorem one_mul_zpoly (g : ZPoly) :
-    (1 : ZPoly) * g = g := by
-  rw [DensePoly.mul_comm_poly (S := Int), DensePoly.mul_one_right_poly]
-
-private theorem list_foldl_mul_eq_mul_foldl_one (g : ZPoly) (xs : List ZPoly) :
-    xs.foldl (fun acc factor => acc * factor) g =
-      g * xs.foldl (fun acc factor => acc * factor) 1 := by
-  induction xs generalizing g with
-  | nil =>
-      simpa using (DensePoly.mul_one_right_poly (S := Int) g).symm
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      rw [one_mul_zpoly]
-      calc
-        xs.foldl (fun acc factor => acc * factor) (g * x) =
-            (g * x) * xs.foldl (fun acc factor => acc * factor) 1 := ih (g * x)
-        _ = g * (x * xs.foldl (fun acc factor => acc * factor) 1) := by
-            rw [DensePoly.mul_assoc_poly (S := Int)]
-        _ = g * xs.foldl (fun acc factor => acc * factor) x := by
-            rw [ih x]
-
-private theorem polyProduct_cons_toArray (g : ZPoly) (rest : List ZPoly) :
-    Array.polyProduct (g :: rest).toArray = g * Array.polyProduct rest.toArray := by
-  simpa [Array.polyProduct, one_mul_zpoly] using
-    (list_foldl_mul_eq_mul_foldl_one g rest)
-
-private theorem polyProduct_singleton (g : ZPoly) :
-    Array.polyProduct #[g] = g := by
-  simpa [Array.polyProduct] using one_mul_zpoly g
-
-private theorem polyProduct_empty :
-    Array.polyProduct (#[] : Array ZPoly) = 1 := by
-  rfl
-
-private theorem polyProduct_append (xs ys : Array ZPoly) :
-    Array.polyProduct (xs ++ ys) = Array.polyProduct xs * Array.polyProduct ys := by
-  rw [Array.polyProduct, Array.foldl_append]
-  cases ys with
-  | mk ylist =>
-      simpa [Array.polyProduct] using list_foldl_mul_eq_mul_foldl_one
-        (Array.foldl (fun acc factor => acc * factor) 1 xs) ylist
-
 private theorem polyProduct_contentFactorArray (content : Int) :
     Array.polyProduct (contentFactorArray content) =
       if content = 1 then 1 else DensePoly.C content := by
   unfold contentFactorArray
   by_cases hcontent : content = 1
-  · simp [hcontent, polyProduct_empty]
-  · simp [hcontent, polyProduct_singleton]
+  · simp [hcontent, ZPoly.polyProduct_empty]
+  · simp [hcontent, ZPoly.polyProduct_singleton]
 
 private theorem polyProduct_repeatedPartFactorArray (repeatedPart : ZPoly) :
     Array.polyProduct (repeatedPartFactorArray repeatedPart) =
       if repeatedPart = 1 then 1 else repeatedPart := by
   unfold repeatedPartFactorArray
   by_cases hrepeated : repeatedPart = 1
-  · simp [hrepeated, polyProduct_empty]
-  · simp [hrepeated, polyProduct_singleton]
+  · simp [hrepeated, ZPoly.polyProduct_empty]
+  · simp [hrepeated, ZPoly.polyProduct_singleton]
 
 private theorem polyProduct_replicate_X_zero :
     Array.polyProduct ((List.replicate 0 ZPoly.X).toArray) = 1 := by
@@ -1981,7 +1939,7 @@ private theorem polyProduct_replicate_X_zero :
 private theorem polyProduct_replicate_X_succ (power : Nat) :
     Array.polyProduct ((List.replicate (power + 1) ZPoly.X).toArray) =
       ZPoly.X * Array.polyProduct ((List.replicate power ZPoly.X).toArray) := by
-  simpa [List.replicate] using polyProduct_cons_toArray ZPoly.X (List.replicate power ZPoly.X)
+  simpa [List.replicate] using ZPoly.polyProduct_cons_toArray ZPoly.X (List.replicate power ZPoly.X)
 
 private theorem polyProduct_xPowerFactorArray_zero :
     Array.polyProduct (xPowerFactorArray 0) = 1 := by
@@ -2036,7 +1994,7 @@ private theorem polyProduct_xPowerFactorArray_mul (power : Nat) (f : ZPoly) :
   induction power with
   | zero =>
       rw [polyProduct_xPowerFactorArray_zero]
-      rw [one_mul_zpoly, shift_zero]
+      rw [ZPoly.one_mul_zpoly, shift_zero]
   | succ power ih =>
       rw [polyProduct_xPowerFactorArray_succ]
       rw [DensePoly.mul_assoc_poly (S := Int)]
@@ -2097,7 +2055,7 @@ private theorem extractXPower_product (f : ZPoly) :
   cases split with
   | mk power core =>
       simp only
-      rw [polyProduct_append, polyProduct_singleton]
+      rw [ZPoly.polyProduct_append, ZPoly.polyProduct_singleton]
       rw [polyProduct_xPowerFactorArray_mul]
       have hreassemble := splitInitialZeros_reassembles f.toArray.toList
       rw [hsplit] at hreassemble
@@ -2110,7 +2068,7 @@ private theorem polyProduct_polynomialNormalizationPrefixFactors
       Array.polyProduct (xPowerFactorArray d.xPower) *
         Array.polyProduct (repeatedPartFactorArray d.repeatedPart) := by
   unfold polynomialNormalizationPrefixFactors
-  rw [polyProduct_append]
+  rw [ZPoly.polyProduct_append]
 
 private theorem polyPow_zero_lemma (g : ZPoly) :
     Factorization.polyPow g 0 = (1 : ZPoly) := rfl
@@ -2124,7 +2082,7 @@ private theorem polyProduct_replicate_toArray (q : ZPoly) (m : Nat) :
   | zero => rfl
   | succ m ih =>
       rw [List.replicate_succ]
-      rw [polyProduct_cons_toArray]
+      rw [ZPoly.polyProduct_cons_toArray]
       rw [ih]
       rw [polyPow_succ_lemma]
       rw [DensePoly.mul_comm_poly (S := Int)]
@@ -2136,13 +2094,13 @@ private theorem consumeExactPower_invariant
   induction fuel generalizing target with
   | zero =>
       show Factorization.polyPow candidate 0 * target = target
-      rw [polyPow_zero_lemma, one_mul_zpoly]
+      rw [polyPow_zero_lemma, ZPoly.one_mul_zpoly]
   | succ fuel ih =>
       unfold consumeExactPower
       cases hex : exactQuotient? target candidate with
       | none =>
           simp only
-          rw [polyPow_zero_lemma, one_mul_zpoly]
+          rw [polyPow_zero_lemma, ZPoly.one_mul_zpoly]
       | some quot =>
           have hquot : quot * candidate = target := exactQuotient?_product hex
           have hih := ih quot
@@ -2162,13 +2120,13 @@ private theorem expandRepeatedPartFactorsAux_invariant
   induction coreFactors generalizing rp with
   | nil =>
       show Array.polyProduct #[] * rp = rp
-      rw [polyProduct_empty, one_mul_zpoly]
+      rw [ZPoly.polyProduct_empty, ZPoly.one_mul_zpoly]
   | cons q qs ih =>
       unfold expandRepeatedPartFactorsAux
       have hcep := consumeExactPower_invariant rp q fuel
       have hih := ih (consumeExactPower rp q fuel).1
       simp only
-      rw [polyProduct_append]
+      rw [ZPoly.polyProduct_append]
       rw [polyProduct_replicate_toArray]
       rw [DensePoly.mul_assoc_poly (S := Int)]
       rw [hih]
@@ -2310,11 +2268,11 @@ private theorem polyProduct_reassemblePolynomialFactors
       · rw [if_pos hres]
         rw [hres] at hinv
         rw [DensePoly.mul_one_right_poly (S := Int)] at hinv
-        rw [polyProduct_append, polyProduct_append]
+        rw [ZPoly.polyProduct_append, ZPoly.polyProduct_append]
         rw [polyProduct_xPowerFactorArray_mul]
         rw [hinv]
       · rw [if_neg hres]
-        rw [polyProduct_append, polyProduct_polynomialNormalizationPrefixFactors]
+        rw [ZPoly.polyProduct_append, polyProduct_polynomialNormalizationPrefixFactors]
         rw [polyProduct_xPowerFactorArray_mul]
         rw [polyProduct_repeatedPartFactorArray_eq]
 
@@ -2324,7 +2282,7 @@ private theorem polyProduct_normalizationPrefixFactors (d : FactorNormalizationD
         (Array.polyProduct (xPowerFactorArray d.xPower) *
           Array.polyProduct (repeatedPartFactorArray d.repeatedPart)) := by
   unfold normalizationPrefixFactors
-  rw [polyProduct_append, polyProduct_append]
+  rw [ZPoly.polyProduct_append, ZPoly.polyProduct_append]
   rw [DensePoly.mul_assoc_poly (S := Int)]
 
 private theorem polyPow_zero (g : ZPoly) :
@@ -2335,7 +2293,7 @@ private theorem polyPow_succ (g : ZPoly) (n : Nat) :
 
 private theorem polyPow_one (g : ZPoly) :
     Factorization.polyPow g 1 = g := by
-  rw [polyPow_succ, polyPow_zero, one_mul_zpoly]
+  rw [polyPow_succ, polyPow_zero, ZPoly.one_mul_zpoly]
 
 private def multListProduct (mults : List (ZPoly × Nat)) : ZPoly :=
   mults.foldl (fun acc m => acc * Factorization.polyPow m.1 m.2) 1
@@ -2351,7 +2309,7 @@ private theorem multListFoldl_eq_mul_foldl_one (acc : ZPoly) (mults : List (ZPol
       simpa using (DensePoly.mul_one_right_poly (S := Int) acc).symm
   | cons m ms ih =>
       simp only [List.foldl_cons]
-      rw [one_mul_zpoly]
+      rw [ZPoly.one_mul_zpoly]
       calc
         ms.foldl (fun acc m => acc * Factorization.polyPow m.1 m.2)
             (acc * Factorization.polyPow m.1 m.2) =
@@ -2369,7 +2327,7 @@ private theorem multListProduct_cons (m : ZPoly × Nat) (ms : List (ZPoly × Nat
     multListProduct (m :: ms) =
       Factorization.polyPow m.1 m.2 * multListProduct ms := by
   simp only [multListProduct, List.foldl_cons]
-  rw [one_mul_zpoly]
+  rw [ZPoly.one_mul_zpoly]
   exact multListFoldl_eq_mul_foldl_one (Factorization.polyPow m.1 m.2) ms
 
 private theorem multListProduct_singleton (m : ZPoly × Nat) :
@@ -2382,7 +2340,7 @@ private theorem multListProduct_append (xs ys : List (ZPoly × Nat)) :
   induction xs with
   | nil =>
       rw [List.nil_append, multListProduct_nil]
-      rw [one_mul_zpoly]
+      rw [ZPoly.one_mul_zpoly]
   | cons m ms ih =>
       rw [List.cons_append]
       rw [multListProduct_cons, multListProduct_cons, ih]
@@ -2586,7 +2544,7 @@ private theorem multListProduct_collectAux
               simp [hrec]]
         rw [ih (bumpFactorMultiplicity (normalizeFactorSign f) acc)]
         rw [multListProduct_bumpFactorMultiplicity]
-        rw [polyProduct_cons_toArray]
+        rw [ZPoly.polyProduct_cons_toArray]
         rw [DensePoly.mul_comm_poly (S := Int) (normalizeFactorSign f)
               (multListProduct acc)]
         rw [DensePoly.mul_assoc_poly (S := Int)]
@@ -2609,7 +2567,7 @@ private theorem multListProduct_collectFactorMultiplicities
   show multListProduct (factors.toList.foldl collectFactorStep []).reverse = _
   rw [multListProduct_reverse]
   have hcol := multListProduct_collectAux [] factors.toList
-  rw [multListProduct_nil, one_mul_zpoly] at hcol
+  rw [multListProduct_nil, ZPoly.one_mul_zpoly] at hcol
   exact hcol
 
 private theorem bumpFactorMultiplicity_mem_normalized_or_old
@@ -5960,7 +5918,7 @@ private theorem extractXPower_core_primitive_of_ne_zero
             #[(ZPoly.extractXPower (ZPoly.primitivePart f)).core]) =
           ZPoly.primitivePart f :=
       extractXPower_product (ZPoly.primitivePart f)
-    rw [polyProduct_append, polyProduct_singleton, polyProduct_xPowerFactorArray_mul] at hex
+    rw [ZPoly.polyProduct_append, ZPoly.polyProduct_singleton, polyProduct_xPowerFactorArray_mul] at hex
     exact hex
   -- Step 2: f ≠ 0 → content f ≠ 0.
   have hcontent_f_ne : ZPoly.content f ≠ 0 := by
@@ -6056,7 +6014,7 @@ private theorem normalizeForFactor_reassembles_with_signed_unit
         Array.polyProduct (xPowerFactorArray xData.power ++ #[xData.core]) =
           ZPoly.primitivePart f := by
       simpa [xData] using extractXPower_product (ZPoly.primitivePart f)
-    rw [polyProduct_append, polyProduct_singleton, polyProduct_xPowerFactorArray_mul] at hex
+    rw [ZPoly.polyProduct_append, ZPoly.polyProduct_singleton, polyProduct_xPowerFactorArray_mul] at hex
     exact hex
   rcases ZPoly.primitiveSquareFreeDecomposition_reassembly_signed xData.core hcore_ne with
     ⟨ε, hε, hsq⟩
@@ -6357,7 +6315,7 @@ private theorem recombinationSearchAux_product
                 calc
                   Array.polyProduct (Array.polyProduct split.1.toArray :: rest).toArray =
                       Array.polyProduct split.1.toArray * Array.polyProduct rest.toArray := by
-                    exact polyProduct_cons_toArray (Array.polyProduct split.1.toArray) rest
+                    exact ZPoly.polyProduct_cons_toArray (Array.polyProduct split.1.toArray) rest
                   _ = Array.polyProduct split.1.toArray * quotient := by
                     rw [hrest]
                   _ = quotient * Array.polyProduct split.1.toArray := by
@@ -6411,7 +6369,7 @@ private theorem recombinationSearchModAux_product
                   calc
                     Array.polyProduct (candidate :: rest).toArray =
                         candidate * Array.polyProduct rest.toArray := by
-                      exact polyProduct_cons_toArray candidate rest
+                      exact ZPoly.polyProduct_cons_toArray candidate rest
                     _ = candidate * quotient := by
                       rw [hrest]
                     _ = quotient * candidate := by
@@ -7069,12 +7027,12 @@ theorem exhaustiveCoreFactorsWithBound_product
     Array.polyProduct (exhaustiveCoreFactorsWithBound core B primeData) = core := by
   rw [exhaustiveCoreFactorsWithBound]
   by_cases hB : B = 0
-  · simp [hB, polyProduct_singleton]
+  · simp [hB, ZPoly.polyProduct_singleton]
   · simp only [hB, if_false]
     by_cases hempty :
         (recombineExhaustive core
             (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)).isEmpty
-    · simp [hempty, polyProduct_singleton]
+    · simp [hempty, ZPoly.polyProduct_singleton]
     · simp only [hempty]
       cases hsearch : recombinationSearchMod core
           (liftModulus
@@ -7102,7 +7060,7 @@ private theorem polyProduct_push (factors : Array ZPoly) (factor : ZPoly) :
   | mk xs =>
       induction xs generalizing factor with
       | nil =>
-          simp [Array.polyProduct, one_mul_zpoly]
+          simp [Array.polyProduct, ZPoly.one_mul_zpoly]
       | cons x xs ih =>
           simp [Array.polyProduct, List.foldl_cons] at ih ⊢
 
@@ -7153,7 +7111,7 @@ private theorem splitIntegerRootFactorsAux_product
                         Array.polyProduct (#[linearFactorForRoot root] ++ restFactors) =
                         restResidual *
                           (linearFactorForRoot root * Array.polyProduct restFactors) := by
-                          rw [polyProduct_append, polyProduct_singleton]
+                          rw [ZPoly.polyProduct_append, ZPoly.polyProduct_singleton]
                     _ = restResidual *
                           (Array.polyProduct restFactors * linearFactorForRoot root) := by
                           rw [DensePoly.mul_comm_poly (S := Int)
@@ -7347,7 +7305,7 @@ private theorem splitIntegerRootFactorsAux_polyProduct_leadingCoeff_pos
                   rcases hsplit with ⟨hfactors, hresidual⟩
                   subst factors
                   subst residual
-                  rw [polyProduct_append, polyProduct_singleton]
+                  rw [ZPoly.polyProduct_append, ZPoly.polyProduct_singleton]
                   apply ZPoly.leadingCoeff_mul_pos_of_pos
                   · rw [leadingCoeff_linearFactorForRoot]
                     omega
@@ -7604,7 +7562,7 @@ private theorem quadraticIntegerRootFactors?_product
       by_cases hres_one : split.2 = 1
       · rw [if_pos hres_one] at hquad
         cases hquad
-        simpa [hres_one, one_mul_zpoly] using hsplit_prod
+        simpa [hres_one, ZPoly.one_mul_zpoly] using hsplit_prod
       · rw [if_neg hres_one] at hquad
         by_cases hres_deg : split.2.degree?.getD 0 ≤ 1
         · rw [if_pos hres_deg] at hquad
@@ -7624,7 +7582,7 @@ private theorem factorSlowFactorsWithBound_polyProduct
   by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
   · simp only [hdeg, if_true]
     exact reassemblePolynomialFactors_product_eq_input f
-      #[(normalizeForFactor f).squareFreeCore] (by simp [polyProduct_singleton])
+      #[(normalizeForFactor f).squareFreeCore] (by simp [ZPoly.polyProduct_singleton])
   · simp only [hdeg, if_false]
     cases hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
     | some coreFactors =>
@@ -7649,7 +7607,7 @@ private theorem factorFastFactorsWithBound_polyProduct_of_some
     have hfactors := Option.some.inj hfast
     rw [← hfactors]
     exact reassemblePolynomialFactors_product_eq_input f
-      #[(normalizeForFactor f).squareFreeCore] (by simp [polyProduct_singleton])
+      #[(normalizeForFactor f).squareFreeCore] (by simp [ZPoly.polyProduct_singleton])
   · simp only [hdeg, if_false] at hfast
     by_cases hB0 : B = 0
     · simp [hB0] at hfast
@@ -7664,7 +7622,7 @@ private theorem factorFastFactorsWithBound_polyProduct_of_some
           rw [← hfactors]
           exact reassemblePolynomialFactors_product_eq_input f
             #[(normalizeForFactor f).squareFreeCore]
-            (by simp [polyProduct_singleton])
+            (by simp [ZPoly.polyProduct_singleton])
         · simp only [primeData, hsmall, if_false] at hfast
           cases hcore :
               factorFastCoreWithBound (normalizeForFactor f).squareFreeCore
@@ -7703,7 +7661,7 @@ private theorem factorFastFactorsWithBound_polyProduct_of_some
               rw [← hfactors]
               exact reassemblePolynomialFactors_product_eq_input f
                 #[(normalizeForFactor f).squareFreeCore]
-                (by simp [polyProduct_singleton])
+                (by simp [ZPoly.polyProduct_singleton])
             · simp only [primeData, hsmall, if_false] at hfast
               cases hcore :
                   factorFastCoreWithBound (normalizeForFactor f).squareFreeCore
@@ -8036,11 +7994,11 @@ private theorem factorSlowWithBound_product_of_constant_branch
   rw [hcore_one]
   apply factorizationOfFactors_product_of_filtered_product
   · exact reassemblePolynomialFactors_product_eq_input f #[1] (by
-      rw [polyProduct_singleton]
+      rw [ZPoly.polyProduct_singleton]
       exact hcore_one.symm)
   · rw [reassemblePolynomialFactors_singleton_one_eq]
     rw [polyProduct_filteredNormalizedFactors_append_one_of_all_recorded_normalized]
-    rw [polyProduct_append, polyProduct_singleton]
+    rw [ZPoly.polyProduct_append, ZPoly.polyProduct_singleton]
     exact (DensePoly.mul_one_right_poly (S := Int) _).symm
     · intro factor hmem
       exact polynomialNormalizationPrefixFactors_normalizeFactorSign_of_ne_zero
@@ -8157,11 +8115,11 @@ private theorem factorFastWithBound_product_of_constant_branch
   rw [hcore_one]
   apply factorizationOfFactors_product_of_filtered_product
   · exact reassemblePolynomialFactors_product_eq_input f #[1] (by
-      rw [polyProduct_singleton]
+      rw [ZPoly.polyProduct_singleton]
       exact hcore_one.symm)
   · rw [reassemblePolynomialFactors_singleton_one_eq]
     rw [polyProduct_filteredNormalizedFactors_append_one_of_all_recorded_normalized]
-    rw [polyProduct_append, polyProduct_singleton]
+    rw [ZPoly.polyProduct_append, ZPoly.polyProduct_singleton]
     exact (DensePoly.mul_one_right_poly (S := Int) _).symm
     · intro factor hmem
       exact polynomialNormalizationPrefixFactors_normalizeFactorSign_of_ne_zero
