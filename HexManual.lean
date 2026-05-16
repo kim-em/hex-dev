@@ -1,0 +1,31 @@
+import VersoManual
+
+import HexManual.Chapters.HexGfqRing
+
+open Verso.Genre Manual
+open Verso.Genre.Manual.InlineLean
+
+set_option pp.rawOnError true
+
+/-!
+The `HexManual` Verso aggregator. Each per-library reference chapter
+lives at `HexManual/Chapters/<LibraryName>.lean` and is included
+below. As additional libraries clear Phase 6 their chapters get
+added to this aggregator.
+-/
+
+#doc (Manual) "Hex" =>
+%%%
+authors := ["The hex project"]
+shortTitle := "hex"
+%%%
+
+`hex` is a Mathlib-free executable computational algebra stack
+covering finite fields, polynomial factorization, and lattice
+reduction, together with a separately maintained Mathlib bridge
+layer that re-exports the executable theory as theorems about the
+corresponding Mathlib structures. This manual collects per-library
+reference chapters for the libraries that have reached the
+documentation phase of the development plan.
+
+{include 0 HexManual.Chapters.HexGfqRing}

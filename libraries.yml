@@ -210,7 +210,7 @@ libraries:
   HexGfqRing:
     deps: [HexPolyFp]
     mathlib: false
-    done_through: 6
+    done_through: 7
     status: active
     phase4:
       input_families:
