@@ -3180,6 +3180,54 @@ theorem henselLiftData_liftedFactor_monic
     (primeData.factorsModP.map Hex.FpPoly.liftToZ)
     hB hp hcore_monic hprime_invariant i
 
+/--
+Composed convenience wrapper: combines
+`Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData` with
+`henselLiftData_liftedFactor_monic` so that a Mathlib-bridge consumer can
+discharge per-output monicness of `Hex.henselLiftData` from the
+`choosePrimeData` boundary facts directly, without having to construct the
+internal `QuadraticMultifactorLiftInvariant` themselves.
+
+The upstream wrapper
+`Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData`
+(in `HexBerlekampZassenhaus/Basic.lean`) packages the per-factor monicness,
+mod-`p` product congruence, sequential split coprimality, and nonempty witness
+into the abstract invariant; this wrapper then feeds it into the abstract-
+invariant version `henselLiftData_liftedFactor_monic` above.
+-/
+theorem henselLiftData_liftedFactor_monic_of_choosePrimeData
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hp_prime : Hex.Nat.Prime primeData.p)
+    (hp : 1 < primeData.p)
+    (hB : 1 ≤ B)
+    (hfactors_monic :
+      letI := primeData.bounds
+      ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g)
+    (hproduct_mod_p :
+      letI := primeData.bounds
+      Hex.ZPoly.congr
+        (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
+        core primeData.p)
+    (hcoprime :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorCoprimeSplits primeData.p
+        primeData.factorsModP.toList)
+    (hnonempty : primeData.factorsModP.toList ≠ []) :
+    ∀ i : Fin (Hex.henselLiftData core B primeData).liftedFactors.size,
+      Hex.DensePoly.Monic
+        (Hex.henselLiftData core B primeData).liftedFactors[i] := by
+  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  have hinv :
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant
+        primeData.p B core
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList :=
+    Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData
+      core B primeData hp_prime hp hB hcore_monic
+      hfactors_monic hproduct_mod_p hcoprime hnonempty
+  exact henselLiftData_liftedFactor_monic core B primeData
+    hcore_monic hinv hp hB
+
 /-- Monic integer polynomials have positive stored size. -/
 private theorem zpoly_size_pos_of_monic {f : Hex.ZPoly}
     (h : Hex.DensePoly.Monic f) : 0 < f.size := by
