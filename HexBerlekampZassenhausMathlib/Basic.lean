@@ -3198,6 +3198,134 @@ private theorem zpoly_monic_mul {a b : Hex.ZPoly}
   decide
 
 /--
+Bridge `liftedFactorProduct d S` to a `Finset.prod` over `S` after transport to
+`Polynomial ℤ`. The executable foldl form unfolds through `toPolynomial_foldl_mul`
+and the resulting `List.prod` is then identified with the Mathlib `Finset.prod`
+via `Finset.prod_map_toList`.
+
+This is the algebra-to-`Finset.prod` bridge needed by the disjoint-union splitting
+lemma `liftedFactorProduct_eq_mul_sdiff_of_subset`.
+-/
+theorem toPolynomial_liftedFactorProduct
+    (d : Hex.LiftData) (S : LiftedFactorSubset d) :
+    HexPolyZMathlib.toPolynomial (liftedFactorProduct d S) =
+      ∏ i ∈ S, HexPolyZMathlib.toPolynomial (liftedFactor d i) := by
+  unfold liftedFactorProduct
+  rw [show
+      (S.toList.foldl (fun acc i => acc * liftedFactor d i) (1 : Hex.ZPoly)) =
+        (S.toList.map (liftedFactor d)).foldl (· * ·) 1 from by
+    rw [List.foldl_map]]
+  rw [toPolynomial_foldl_mul, toPolynomial_one_zpoly, ← List.prod_eq_foldl,
+    List.map_map]
+  exact Finset.prod_map_toList S (fun i => HexPolyZMathlib.toPolynomial (liftedFactor d i))
+
+/--
+Multiplicative splitting for `liftedFactorProduct` along the disjoint
+decomposition `T = S ⊔ (T \ S)` when `S ⊆ T`.
+
+This is the executable analogue of `Finset.prod_sdiff` for the foldl product
+over `LiftedFactorSubset d`. Proved by transporting to `Polynomial ℤ` via
+`toPolynomial_liftedFactorProduct` and applying `Finset.prod_sdiff` there,
+then inverting through `HexPolyZMathlib.equiv.injective`.
+-/
+theorem liftedFactorProduct_eq_mul_sdiff_of_subset
+    {d : Hex.LiftData} {S T : LiftedFactorSubset d} (hST : S ⊆ T) :
+    liftedFactorProduct d T =
+      liftedFactorProduct d S * liftedFactorProduct d (T \ S) := by
+  apply HexPolyZMathlib.equiv.injective
+  show HexPolyZMathlib.toPolynomial _ = HexPolyZMathlib.toPolynomial _
+  rw [HexPolyZMathlib.toPolynomial_mul,
+    toPolynomial_liftedFactorProduct, toPolynomial_liftedFactorProduct,
+    toPolynomial_liftedFactorProduct]
+  rw [← Finset.prod_sdiff hST, mul_comm]
+
+/--
+Multiplicative splitting for `liftedFactorProduct` along a disjoint union.
+
+Specialisation of `liftedFactorProduct_eq_mul_sdiff_of_subset` to the case where
+`T = S ∪ U` with `S` and `U` disjoint, so `T \ S = U` and the product factors
+as `liftedFactorProduct d (S ∪ U) = liftedFactorProduct d S *
+liftedFactorProduct d U`.
+-/
+theorem liftedFactorProduct_union_of_disjoint
+    {d : Hex.LiftData} {S U : LiftedFactorSubset d}
+    (hdisj : Disjoint S U) :
+    liftedFactorProduct d (S ∪ U) =
+      liftedFactorProduct d S * liftedFactorProduct d U := by
+  have hSsub : S ⊆ S ∪ U := Finset.subset_union_left
+  have hsdiff : (S ∪ U) \ S = U := by
+    ext i
+    simp only [Finset.mem_sdiff, Finset.mem_union]
+    refine ⟨?_, ?_⟩
+    · rintro ⟨hmem, hnotS⟩
+      rcases hmem with hS | hU
+      · exact absurd hS hnotS
+      · exact hU
+    · intro hU
+      refine ⟨Or.inr hU, ?_⟩
+      intro hS
+      exact (Finset.disjoint_left.mp hdisj hS hU).elim
+  rw [liftedFactorProduct_eq_mul_sdiff_of_subset hSsub, hsdiff]
+
+/--
+`Hex.ZPoly.congr` follows from coefficientwise equality of the canonical
+reductions modulo `p ^ k`. The forward direction is
+`Hex.ZPoly.reduceModPow_eq_of_congr`; this is the reverse direction, derived
+by transitivity through `Hex.ZPoly.congr_reduceModPow` on both sides.
+-/
+private theorem congr_of_reduceModPow_eq
+    (f g : Hex.ZPoly) (p k : Nat) (hpk : 0 < p ^ k)
+    (h : Hex.ZPoly.reduceModPow f p k = Hex.ZPoly.reduceModPow g p k) :
+    Hex.ZPoly.congr f g (p ^ k) := by
+  have hf : Hex.ZPoly.congr (Hex.ZPoly.reduceModPow f p k) f (p ^ k) :=
+    Hex.ZPoly.congr_reduceModPow f p k hpk
+  have hg : Hex.ZPoly.congr (Hex.ZPoly.reduceModPow g p k) g (p ^ k) :=
+    Hex.ZPoly.congr_reduceModPow g p k hpk
+  rw [h] at hf
+  exact Hex.ZPoly.congr_trans _ _ _ _
+    (Hex.ZPoly.congr_symm _ _ _ hf) hg
+
+/--
+Multiplicative closure of `RepresentsIntegerFactorAtLift` along a disjoint
+decomposition `S ∪ T` of representing subsets under a monic core. If `S`
+represents the integer factor `f` and `T` (disjoint from `S`) represents `g`,
+then `S ∪ T` represents `f * g`.
+
+Combines `liftedFactorProduct_union_of_disjoint` with the multiplicative
+congruence `Hex.ZPoly.congr_mul`.
+-/
+theorem representsIntegerFactorAtLift_mul_of_monic_core
+    {core f g : Hex.ZPoly} {d : Hex.LiftData}
+    {S T : LiftedFactorSubset d}
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hdisj : Disjoint S T)
+    (hf_rep : RepresentsIntegerFactorAtLift core d f S)
+    (hg_rep : RepresentsIntegerFactorAtLift core d g T) :
+    RepresentsIntegerFactorAtLift core d (f * g) (S ∪ T) := by
+  unfold RepresentsIntegerFactorAtLift at hf_rep hg_rep ⊢
+  have hlead : Hex.DensePoly.leadingCoeff core = (1 : Int) := hcore_monic
+  have hpk_pos : 0 < d.p ^ d.k := Nat.pow_pos d.p_pos
+  have hscaled :
+      ∀ (U : LiftedFactorSubset d),
+        scaledLiftedFactorProduct core d U = liftedFactorProduct d U := by
+    intro U
+    unfold scaledLiftedFactorProduct
+    rw [hlead]
+    exact densePoly_scale_one_int (liftedFactorProduct d U)
+  rw [hscaled S] at hf_rep
+  rw [hscaled T] at hg_rep
+  rw [hscaled (S ∪ T), liftedFactorProduct_union_of_disjoint hdisj]
+  have hcongr_f : Hex.ZPoly.congr (liftedFactorProduct d S) f (d.p ^ d.k) :=
+    congr_of_reduceModPow_eq _ _ _ _ hpk_pos hf_rep
+  have hcongr_g : Hex.ZPoly.congr (liftedFactorProduct d T) g (d.p ^ d.k) :=
+    congr_of_reduceModPow_eq _ _ _ _ hpk_pos hg_rep
+  have hcongr_mul :
+      Hex.ZPoly.congr (liftedFactorProduct d S * liftedFactorProduct d T)
+        (f * g) (d.p ^ d.k) :=
+    Hex.ZPoly.congr_mul _ _ _ _ _ hcongr_f hcongr_g
+  exact Hex.ZPoly.reduceModPow_eq_of_congr _ _ _ _ hcongr_mul
+
+/--
 Monic-product closure for `liftedFactorProduct`: when every selected lifted
 factor is monic, the executable foldl product over the subset is monic too.
 The induction unfolds `Finset.toList` and chains `zpoly_monic_mul` through each
