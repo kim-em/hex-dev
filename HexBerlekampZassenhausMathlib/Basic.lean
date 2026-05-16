@@ -2919,25 +2919,25 @@ private theorem subsetSplits_prefix_exists_bit_diff_aux
                   (fun p => if p.2 then some p.1 else none) =
                 (xs'.zip m).filterMap (fun p => if p.2 then some p.1 else none) := by
             intro m
-            simp [List.zip_cons_cons, List.filterMap_cons]
+            simp [List.zip_cons_cons]
           have eval_rest_false : ∀ (m : List Bool),
               ((x :: xs').zip (false :: m)).filterMap
                   (fun p => if p.2 then none else some p.1) =
                 x :: (xs'.zip m).filterMap (fun p => if p.2 then none else some p.1) := by
             intro m
-            simp [List.zip_cons_cons, List.filterMap_cons]
+            simp [List.zip_cons_cons]
           have eval_sel_true : ∀ (m : List Bool),
               ((x :: xs').zip (true :: m)).filterMap
                   (fun p => if p.2 then some p.1 else none) =
                 x :: (xs'.zip m).filterMap (fun p => if p.2 then some p.1 else none) := by
             intro m
-            simp [List.zip_cons_cons, List.filterMap_cons]
+            simp [List.zip_cons_cons]
           have eval_rest_true : ∀ (m : List Bool),
               ((x :: xs').zip (true :: m)).filterMap
                   (fun p => if p.2 then none else some p.1) =
                 (xs'.zip m).filterMap (fun p => if p.2 then none else some p.1) := by
             intro m
-            simp [List.zip_cons_cons, List.filterMap_cons]
+            simp [List.zip_cons_cons]
           -- Case-split on the head bits.
           cases bS with
           | false =>
