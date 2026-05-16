@@ -3410,6 +3410,103 @@ theorem monic_centeredLiftPoly_of_monic
     hg'_size_eq]
   exact hcoeff_top
 
+/-- Centred-lift preserves stored size when the input is monic and the modulus
+is at least two. The leading coefficient `1` survives the centred reduction
+(forcing `g'.size ≥ g.size`) and `DensePoly.ofCoeffs` never grows the array
+(forcing `g'.size ≤ g.size`). -/
+private theorem size_centeredLiftPoly_eq_of_monic
+    {g : Hex.ZPoly} (hg : Hex.DensePoly.Monic g) {m : Nat} (hm : 2 ≤ m) :
+    (Hex.centeredLiftPoly g m).size = g.size := by
+  have hg_size_pos : 0 < g.size := zpoly_size_pos_of_monic hg
+  have hg_lead : g.coeff (g.size - 1) = (1 : Int) := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last g hg_size_pos]; exact hg
+  set g' := Hex.centeredLiftPoly g m with hg'_def
+  have hcoeff : ∀ i, g'.coeff i = Hex.centeredModNat (g.coeff i) m :=
+    fun i => Hex.coeff_centeredLiftPoly g m i
+  have hcoeff_top : g'.coeff (g.size - 1) = (1 : Int) := by
+    rw [hcoeff, hg_lead]; exact centeredModNat_one_of_two_le hm
+  have hg'_size_ge : g.size ≤ g'.size := by
+    by_contra hlt
+    have hlt' : g'.size < g.size := Nat.lt_of_not_ge hlt
+    have hle : g'.size ≤ g.size - 1 := Nat.le_pred_of_lt hlt'
+    have h_zero := Hex.DensePoly.coeff_eq_zero_of_size_le g' hle
+    rw [hcoeff_top] at h_zero
+    exact absurd h_zero (by decide)
+  have hg'_size_le : g'.size ≤ g.size := by
+    rw [hg'_def]
+    unfold Hex.centeredLiftPoly
+    have h := Hex.DensePoly.size_ofCoeffs_le
+      (g.toArray.map fun coeff => Hex.centeredModNat coeff m)
+    rw [Array.size_map] at h
+    exact h
+  exact le_antisymm hg'_size_le hg'_size_ge
+
+/--
+The Mathlib-transported `natDegree` of the executable recombination candidate
+over a lifted-factor subset equals the sum of the Mathlib-transported
+`natDegree`s of the selected lifted factors.
+
+Under the modulus condition `2 ≤ d.p ^ d.k` and monicness of every lifted
+factor, the candidate's `centeredLiftPoly`/`primitivePart`/`normalizeFactorSign`
+chain collapses to a single monic polynomial whose stored size is the same as
+the underlying lifted-factor product, so its Mathlib-side `natDegree` is the
+sum over the subset.
+
+This is the candidate-side ingredient of the reverse-coverage degree-counting
+argument in the `representedFactor_dvd_recombinationCandidate_of_subset`
+divisibility theorem; see issue #4439.
+-/
+theorem natDegree_toPolynomial_recombinationCandidate_eq_sum
+    {d : Hex.LiftData}
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (T : LiftedFactorSubset d) :
+    (HexPolyZMathlib.toPolynomial (recombinationCandidate d T)).natDegree =
+      ∑ i ∈ T,
+        (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree := by
+  set lp := liftedFactorProduct d T with hlp_def
+  -- lp is monic from monicness of each lifted factor.
+  have hlp_monic : Hex.DensePoly.Monic lp :=
+    liftedFactorProduct_monic d T (fun i _ => hd_liftedFactor_monic i)
+  -- centeredLiftPoly preserves monicness under the modulus condition.
+  have hcl_monic := monic_centeredLiftPoly_of_monic hlp_monic hd_modulus
+  set cl := Hex.centeredLiftPoly lp (d.p ^ d.k) with hcl_def
+  -- A monic poly has trivial content and trivial sign normalisation.
+  obtain ⟨_, hcontent, hnorm⟩ := monic_primitive_sign_normalized_of_monic hcl_monic
+  have hprim : Hex.ZPoly.primitivePart cl = cl :=
+    Hex.ZPoly.primitivePart_eq_self_of_primitive cl
+      (by simpa [Hex.ZPoly.Primitive] using hcontent)
+  -- Combining, the candidate is just the centered lift of the product.
+  have hrec_eq : recombinationCandidate d T = cl := by
+    unfold recombinationCandidate
+    rw [polyProduct_liftedSubsetSelectedList_eq_liftedFactorProduct,
+      ← hlp_def, ← hcl_def, hprim, hnorm]
+  rw [hrec_eq]
+  -- The centered lift has the same stored size as the product.
+  have hsize_eq : cl.size = lp.size :=
+    size_centeredLiftPoly_eq_of_monic hlp_monic hd_modulus
+  -- `natDegree (toPolynomial _)` is `size - 1` on a nonzero (monic) poly.
+  have hcl_size_pos : 0 < cl.size := zpoly_size_pos_of_monic hcl_monic
+  have hlp_size_pos : 0 < lp.size := zpoly_size_pos_of_monic hlp_monic
+  have hcl_natDeg :
+      (HexPolyZMathlib.toPolynomial cl).natDegree = cl.size - 1 := by
+    rw [HexPolyMathlib.natDegree_toPolynomial]
+    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hcl_size_pos]
+  have hlp_natDeg :
+      (HexPolyZMathlib.toPolynomial lp).natDegree = lp.size - 1 := by
+    rw [HexPolyMathlib.natDegree_toPolynomial]
+    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hlp_size_pos]
+  rw [hcl_natDeg, hsize_eq, ← hlp_natDeg, hlp_def, toPolynomial_liftedFactorProduct]
+  -- Mathlib `natDegree_prod_of_monic` over monic factors.
+  apply Polynomial.natDegree_prod_of_monic
+  intro i _
+  -- Monicness of `toPolynomial (liftedFactor d i)` from monicness of the
+  -- lifted factor itself via `HexPolyMathlib.leadingCoeff_toPolynomial`.
+  show (HexPolyZMathlib.toPolynomial (liftedFactor d i)).leadingCoeff = 1
+  rw [HexPolyMathlib.leadingCoeff_toPolynomial]
+  exact hd_liftedFactor_monic i
+
 /--
 Integer-factor monic capstone for the Hensel-lifted subset correspondence.
 
