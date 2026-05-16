@@ -2758,6 +2758,62 @@ theorem liftedSubsetSelectedList_eq_mask_partition_of_matches
     obtain ⟨a, b⟩ := p
     cases b <;> rfl
 
+/-- Prefix characterization at the matched-state `subsetSplitsWithFirst`
+surface: given an arbitrary executable split `split ∈ pre` appearing before a
+chosen matched `S`-split in `Hex.subsetSplitsWithFirst localFactors`, there is
+a proof-side lifted-factor subset `T ⊆ J` containing `J.min'` whose
+order-preserving `(selected, rest)` partition equals `split`.
+
+Combines the executable-enumeration mask converse
+`subsetSplitsWithFirst_mem_exists_tail_mask` with the mask-to-subset bridge
+`liftedSubsetSelectedList_eq_mask_partition_of_matches`. Used by the
+prefix-none discharge in the recursive coverage proof.
+
+The conclusion is independent of the `S`-side shape constraints (`S ⊆ J` and
+`J.min' hne ∈ S`) that the consumer typically has in scope: the prefix
+characterization is a structural property of the executable enumeration. The
+consumer call site keeps those hypotheses for the suffix `(S, J \ S)` entry
+itself, but does not need to thread them through this lemma. -/
+theorem liftedSubsetSplit_prefix_mem_of_matches
+    {d : Hex.LiftData} {J S : LiftedFactorSubset d}
+    {localFactors : List Hex.ZPoly}
+    {pre suffix : List (List Hex.ZPoly × List Hex.ZPoly)}
+    (hmatches : LiftedFactorListMatches d J localFactors)
+    (hne : J.Nonempty)
+    (hsplits :
+      Hex.subsetSplitsWithFirst localFactors =
+        pre ++
+          (liftedSubsetSelectedList d S,
+           liftedSubsetSelectedList d (J \ S)) :: suffix)
+    {split : List Hex.ZPoly × List Hex.ZPoly} (hsplit : split ∈ pre) :
+    ∃ T : LiftedFactorSubset d,
+      T ⊆ J ∧ J.min' hne ∈ T ∧
+      split = (liftedSubsetSelectedList d T,
+               liftedSubsetSelectedList d (J \ T)) := by
+  classical
+  -- Step 1: lift `hsplit ∈ pre` to membership in the full enumeration.
+  have hsplit_mem_all : split ∈ Hex.subsetSplitsWithFirst localFactors := by
+    rw [hsplits]
+    exact List.mem_append_left _ hsplit
+  -- Step 2: decompose `localFactors` as `head :: tail` via the matching predicate.
+  have hhead := hmatches.head?_eq_liftedFactor_min' hne
+  rcases hloc : localFactors with _ | ⟨head, tail⟩
+  · rw [hloc] at hhead; simp at hhead
+  rw [hloc] at hsplit_mem_all
+  -- Step 3: destructure the split prod.
+  obtain ⟨ssel, srest⟩ := split
+  -- Step 4: pull out a Boolean tail mask via the executable converse.
+  obtain ⟨mask, hmask_len, hsel_eq, hrest_eq⟩ :=
+    subsetSplitsWithFirst_mem_exists_tail_mask hsplit_mem_all
+  -- Step 5: convert the mask back to a proof-side `LiftedFactorSubset` `T`.
+  obtain ⟨T, hTJ, hmin_in_T, hT_sel, hT_rest⟩ :=
+    liftedSubsetSelectedList_eq_mask_partition_of_matches
+      hmatches hne hloc mask hmask_len
+  refine ⟨T, hTJ, hmin_in_T, ?_⟩
+  -- Step 6: chain the cons-form equalities to identify `split` with the
+  -- `T`-selected/rest pair.
+  rw [hsel_eq, hrest_eq, ← hT_sel, ← hT_rest]
+
 /-- The transported recombination candidate product equals the proof-side
 lifted-factor product: both factor lists are permutations of each other in
 `Polynomial ℤ`, so commutativity collapses the order difference. -/
