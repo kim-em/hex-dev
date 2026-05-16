@@ -611,45 +611,34 @@ theorem sub_eq_add_neg {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     _ = reduceMod f (repr x + reduceMod f (-repr y)) := by
           exact (reduceMod_add_right_reduceMod f (repr x) (-repr y)).symm
 
+/-- Textbook iterated addition `x + x + ⋯ + x` (`n` summands), used only as a proof
+device. The public `nsmul` runs binary decomposition via `nsmul.go`; this textbook
+form mediates between that implementation and the `Lean.Grind.Semiring` axioms via
+`nsmul_eq_linearNSmul`. -/
 private def linearNSmul {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) : Nat → PolyQuotient f hf
   | 0 => 0
   | n + 1 => linearNSmul x n + x
 
+/-- Recurrence base of `linearNSmul`. Consumed indirectly by the public `nsmul_zero`
+through `nsmul_eq_linearNSmul`. -/
 @[simp] private theorem linearNSmul_zero {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) :
     linearNSmul x 0 = 0 :=
   rfl
 
+/-- Recurrence step of `linearNSmul`. This is the textbook `n+1 ↦ pred + 1` shape
+that `Lean.Grind.Semiring.nsmul_succ` consumes (via `nsmul_eq_linearNSmul`); the
+shape is forbidden for the implementation `nsmul.go`, which uses binary
+decomposition. -/
 @[simp] private theorem linearNSmul_succ {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) (n : Nat) :
     linearNSmul x (n + 1) = linearNSmul x n + x :=
   rfl
 
-private theorem linearNSmul_add_assoc_raw {f : FpPoly p} {hf : 0 < FpPoly.degree f}
-    (a b c : PolyQuotient f hf) :
-    add (add a b) c = add a (add b c) := by
-  apply ext
-  exact repr_add_assoc a b c
-
-private theorem linearNSmul_add_comm {f : FpPoly p} {hf : 0 < FpPoly.degree f}
-    (a b : PolyQuotient f hf) :
-    a + b = b + a := by
-  apply ext
-  exact repr_add_comm a b
-
-private theorem linearNSmul_add_zero_raw {f : FpPoly p} {hf : 0 < FpPoly.degree f}
-    (a : PolyQuotient f hf) :
-    add a 0 = a := by
-  apply ext
-  exact repr_add_zero a
-
-private theorem linearNSmul_zero_add_raw {f : FpPoly p} {hf : 0 < FpPoly.degree f}
-    (a : PolyQuotient f hf) :
-    add (zero f hf) a = a := by
-  apply ext
-  exact repr_zero_add a
-
+/-- Even-index binary-decomposition gateway: doubling the base lets the recurrence
+step over two summands at once. Consumed by `nsmul_go_eq_acc_add_linearNSmul`'s
+even-residue branch. -/
 private theorem linearNSmul_double {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) (n : Nat) :
     linearNSmul x (2 * n) = linearNSmul (add x x) n := by
@@ -657,19 +646,22 @@ private theorem linearNSmul_double {f : FpPoly p} {hf : 0 < FpPoly.degree f}
   | zero =>
       rfl
   | succ n ih =>
-      have htwo : 2 * (n + 1) = 2 * n + 2 := by omega
-      rw [htwo]
-      change linearNSmul x ((2 * n + 1) + 1) =
-        linearNSmul (add x x) n + add x x
-      rw [linearNSmul_succ, linearNSmul_succ, ih]
-      exact linearNSmul_add_assoc_raw (linearNSmul (x + x) n) x x
+      have htwo : 2 * (n + 1) = 2 * n + 1 + 1 := by omega
+      rw [htwo, linearNSmul_succ, linearNSmul_succ, ih, linearNSmul_succ]
+      exact ext (repr_add_assoc (linearNSmul (x + x) n) x x)
 
+/-- Odd-index binary-decomposition gateway: one summand peels off and the rest
+collapses to the doubled-base recurrence. Consumed by
+`nsmul_go_eq_acc_add_linearNSmul`'s odd-residue branch. -/
 private theorem linearNSmul_double_add_one {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) (n : Nat) :
     linearNSmul x (2 * n + 1) = add x (linearNSmul (add x x) n) := by
   rw [linearNSmul_succ, linearNSmul_double]
-  exact linearNSmul_add_comm (linearNSmul (x + x) n) x
+  exact ext (repr_add_comm (linearNSmul (x + x) n) x)
 
+/-- Strong-recursion bridge between the binary-decomposition loop `nsmul.go` and
+the textbook recurrence `linearNSmul`: any accumulator-base-counter triple
+factors as `acc + linearNSmul base k`. Consumed by `nsmul_eq_linearNSmul`. -/
 private theorem nsmul_go_eq_acc_add_linearNSmul
     {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (acc base : PolyQuotient f hf) (k : Nat) :
@@ -678,7 +670,9 @@ private theorem nsmul_go_eq_acc_add_linearNSmul
   | ind k ih =>
       rw [nsmul.go.eq_def]
       by_cases hk : k = 0
-      · simp [hk, linearNSmul_add_zero_raw]
+      · subst hk
+        simp only [↓reduceDIte, linearNSmul_zero]
+        exact (ext (repr_add_zero acc)).symm
       · rw [dif_neg hk]
         have hlt : k / 2 < k :=
           Nat.div_lt_self (Nat.pos_of_ne_zero hk) (by decide : 1 < 2)
@@ -707,20 +701,23 @@ private theorem nsmul_go_eq_acc_add_linearNSmul
                   = add (add acc base) (linearNSmul (add base base) (k / 2)) := by
                     exact ih (k / 2) hlt (add acc base) (add base base)
               _ = add acc (add base (linearNSmul (add base base) (k / 2))) := by
-                    exact @linearNSmul_add_assoc_raw p _ _ f hf acc base
-                      (linearNSmul (add base base) (k / 2))
+                    exact ext (repr_add_assoc acc base
+                      (linearNSmul (add base base) (k / 2)))
               _ = add acc (linearNSmul base (2 * (k / 2) + 1)) := by
                     rw [linearNSmul_double_add_one]
               _ = add acc (linearNSmul base k) := by
                     rw [← hk_eq]
 
+/-- Public bridge between the binary-decomposition implementation `nsmul` and the
+textbook recurrence `linearNSmul`. Consumed by `nsmul_zero` / `nsmul_succ` to
+expose the recurrence shape that `Lean.Grind.Semiring` axiom fields require. -/
 private theorem nsmul_eq_linearNSmul
     {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) (n : Nat) :
     nsmul n x = linearNSmul x n := by
   change nsmul.go (zero f hf) x n = linearNSmul x n
   rw [nsmul_go_eq_acc_add_linearNSmul]
-  exact linearNSmul_zero_add_raw (linearNSmul x n)
+  exact ext (repr_zero_add (linearNSmul x n))
 
 /-- Unfolded base of the `nsmul` recurrence: zero scalar multiplication yields the quotient zero.
 The implementation `nsmul.go` runs binary decomposition (via `linearNSmul`); this lemma exposes
