@@ -2,6 +2,7 @@ import Mathlib.Algebra.Polynomial.BigOperators
 import Mathlib.Algebra.Polynomial.FieldDivision
 import Mathlib.RingTheory.UniqueFactorizationDomain.NormalizedFactors
 import Mathlib.Algebra.EuclideanDomain.Int
+import Mathlib.Algebra.Squarefree.Basic
 import Mathlib.RingTheory.Polynomial.UniqueFactorization
 
 /-!
@@ -184,6 +185,75 @@ theorem normalizedFactors_card_le_length_of_irreducible_partition
     (hprod : Associated gs.prod f) :
     (normalizedFactors f).card ≤ gs.length := by
   rw [normalizedFactors_card_eq_length_of_irreducible_partition gs hirr hprod]
+
+/--
+Lower cardinality bound for a coverage-style square-free partition.
+
+When `f` is square-free and every irreducible factor of `f` is associated to
+some emitted entry in `gs`, the emitted list has at least as many entries as
+`f` has normalized irreducible factors.  Combined with
+`length_le_normalizedFactors_card`, this gives the cardinality equality
+needed by `irreducible_of_partition_card_eq_normalizedFactors_card`.
+
+Distinct normalized factors of a square-free `f` cannot share an emitted
+witness (associated normalized elements are equal), so the witness map is
+injective and the image cardinality bounds the list length. -/
+theorem normalizedFactors_card_le_length_of_coverage
+    {α : Type*} [CommMonoidWithZero α] [IsCancelMulZero α]
+    [NormalizationMonoid α] [UniqueFactorizationMonoid α]
+    {f : α} (hf : f ≠ 0) (hsf : Squarefree f)
+    (gs : List α)
+    (hcover : ∀ q ∈ normalizedFactors f, ∃ g ∈ gs, Associated g q) :
+    (normalizedFactors f).card ≤ gs.length := by
+  classical
+  have hnodup : (normalizedFactors f).Nodup :=
+    (UniqueFactorizationMonoid.squarefree_iff_nodup_normalizedFactors hf).mp hsf
+  let φ : α → α := fun q =>
+    if hq : ∃ g ∈ gs, Associated g q then hq.choose else q
+  have hφ_mem : ∀ q ∈ normalizedFactors f, φ q ∈ gs := by
+    intro q hq
+    have hex : ∃ g ∈ gs, Associated g q := hcover q hq
+    have hφq : φ q = hex.choose := dif_pos hex
+    rw [hφq]
+    exact hex.choose_spec.1
+  have hφ_assoc : ∀ q ∈ normalizedFactors f, Associated (φ q) q := by
+    intro q hq
+    have hex : ∃ g ∈ gs, Associated g q := hcover q hq
+    have hφq : φ q = hex.choose := dif_pos hex
+    rw [hφq]
+    exact hex.choose_spec.2
+  have hφ_inj : ∀ q₁ ∈ normalizedFactors f, ∀ q₂ ∈ normalizedFactors f,
+      φ q₁ = φ q₂ → q₁ = q₂ := by
+    intro q₁ hq₁ q₂ hq₂ heq
+    have h₁ := hφ_assoc q₁ hq₁
+    have h₂ := hφ_assoc q₂ hq₂
+    have hassoc : Associated q₁ q₂ := h₁.symm.trans (heq ▸ h₂)
+    have hn₁ : normalize q₁ = q₁ :=
+      normalize_normalized_factor q₁ hq₁
+    have hn₂ : normalize q₂ = q₂ :=
+      normalize_normalized_factor q₂ hq₂
+    rw [← hn₁, ← hn₂]
+    exact normalize_eq_normalize_iff_associated.mpr hassoc
+  let image : Multiset α := (normalizedFactors f).map φ
+  have himage_card : image.card = (normalizedFactors f).card := by
+    simp [image, Multiset.card_map]
+  have himage_nodup : image.Nodup :=
+    Multiset.Nodup.map_on hφ_inj hnodup
+  have himage_subset : ∀ x ∈ image, x ∈ gs.toFinset := by
+    intro x hx
+    rcases Multiset.mem_map.mp hx with ⟨q, hq, rfl⟩
+    exact List.mem_toFinset.mpr (hφ_mem q hq)
+  have himage_toFinset_card : image.toFinset.card = image.card :=
+    Multiset.toFinset_card_of_nodup himage_nodup
+  have himage_subset_finset : image.toFinset ⊆ gs.toFinset := by
+    intro x hx
+    rw [Multiset.mem_toFinset] at hx
+    exact himage_subset x hx
+  calc (normalizedFactors f).card
+      = image.card := himage_card.symm
+    _ = image.toFinset.card := himage_toFinset_card.symm
+    _ ≤ gs.toFinset.card := Finset.card_le_card himage_subset_finset
+    _ ≤ gs.length := List.toFinset_card_le gs
 
 /--
 The normalized factors of a list product of irreducibles are exactly the
