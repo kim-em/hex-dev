@@ -2671,6 +2671,155 @@ theorem recombinationCandidate_eq_factor_of_henselSubsetCorrespondence
     hcore_ne hcore_monic hcore_record hdvd hfactor_prim hfactor_norm hirr
     hrep hprecision
 
+private theorem int_eq_of_congr_of_bounds
+    {a b : Int} {m : Nat}
+    (hcongr : (a - b) % (m : Int) = 0)
+    (ha_nonneg : 0 ≤ a) (ha_lt : a < (m : Int))
+    (hb_nonneg : 0 ≤ b) (hb_lt : b < (m : Int)) :
+    a = b := by
+  have hmod_eq : a % (m : Int) = b % (m : Int) :=
+    Int.emod_eq_emod_iff_emod_sub_eq_zero.mpr hcongr
+  rw [Int.emod_eq_of_lt ha_nonneg ha_lt, Int.emod_eq_of_lt hb_nonneg hb_lt] at hmod_eq
+  exact hmod_eq
+
+private theorem int_eq_zero_of_mod_zero_of_bounds
+    {a : Int} {m : Nat}
+    (hm : 1 < m)
+    (hmod : a % (m : Int) = 0)
+    (ha_nonneg : 0 ≤ a) (ha_lt : a < (m : Int)) :
+    a = 0 := by
+  exact int_eq_of_congr_of_bounds (by simpa using hmod)
+    ha_nonneg ha_lt (by decide) (by exact_mod_cast (Nat.zero_lt_of_lt hm))
+
+/--
+If a bounded nonnegative cofactor `h` satisfies a coefficientwise congruence
+`g * h ≡ f (mod m)` against monic `g` and `f`, then `h` is monic. The proof
+compares the possible top coefficient of `g * h` with the top coefficient of
+`f`; the coefficient bounds rule out wraparound modulo `m`.
+-/
+theorem monic_of_congr_mul_monic_monic
+    {g h f : Hex.ZPoly} {m : Nat}
+    (hm : 1 < m)
+    (hcongr : Hex.ZPoly.congr (g * h) f m)
+    (hg_monic : Hex.DensePoly.Monic g)
+    (hf_monic : Hex.DensePoly.Monic f)
+    (hh_bound_lt : ∀ i, h.coeff i < Int.ofNat m)
+    (hh_bound_nonneg : ∀ i, 0 ≤ h.coeff i)
+    (hh_ne_zero : h ≠ 0) :
+    Hex.DensePoly.Monic h := by
+  have hg_ne_zero : g ≠ 0 := by
+    intro hg_zero
+    have hlead : Hex.DensePoly.leadingCoeff g = (0 : Int) := by
+      rw [hg_zero]
+      rfl
+    rw [hg_monic] at hlead
+    omega
+  have hf_ne_zero : f ≠ 0 := by
+    intro hf_zero
+    have hlead : Hex.DensePoly.leadingCoeff f = (0 : Int) := by
+      rw [hf_zero]
+      rfl
+    rw [hf_monic] at hlead
+    omega
+  have hg_pos : 0 < g.size := Hex.ZPoly.size_pos_of_ne_zero g hg_ne_zero
+  have hh_pos : 0 < h.size := Hex.ZPoly.size_pos_of_ne_zero h hh_ne_zero
+  have hf_pos : 0 < f.size := Hex.ZPoly.size_pos_of_ne_zero f hf_ne_zero
+  let gTop := g.size - 1
+  let hTop := h.size - 1
+  let fTop := f.size - 1
+  have hg_top : g.coeff gTop = (1 : Int) := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last g hg_pos]
+    exact hg_monic
+  have hf_top : f.coeff fTop = (1 : Int) := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last f hf_pos]
+    exact hf_monic
+  have hprod_size :
+      (g * h).size = g.size + h.size - 1 :=
+    Hex.ZPoly.mul_size_eq_top_succ_of_nonzero g h hg_pos hh_pos
+  have hsum_not_gt : ¬ fTop < gTop + hTop := by
+    intro hlt
+    have hf_zero : f.coeff (gTop + hTop) = 0 := by
+      apply Hex.DensePoly.coeff_eq_zero_of_size_le f
+      unfold fTop at hlt
+      omega
+    have hprod_top :
+        (g * h).coeff (gTop + hTop) = h.coeff hTop := by
+      have htop := Hex.ZPoly.coeff_mul_top g h hg_pos hh_pos
+      unfold gTop hTop
+      rw [htop]
+      rw [hg_top]
+      omega
+    have hmod : h.coeff hTop % (m : Int) = 0 := by
+      have hc := hcongr (gTop + hTop)
+      rw [hprod_top, hf_zero] at hc
+      simpa using hc
+    have hlead_zero : h.coeff hTop = 0 :=
+      int_eq_zero_of_mod_zero_of_bounds hm hmod
+        (hh_bound_nonneg hTop) (hh_bound_lt hTop)
+    have hlead_ne : h.coeff hTop ≠ 0 := by
+      unfold hTop
+      exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size h hh_pos
+    exact hlead_ne hlead_zero
+  have hsum_not_lt : ¬ gTop + hTop < fTop := by
+    intro hlt
+    have hprod_zero : (g * h).coeff fTop = 0 := by
+      apply Hex.DensePoly.coeff_eq_zero_of_size_le (g * h)
+      rw [hprod_size]
+      unfold gTop hTop fTop at hlt
+      omega
+    have hbad : (0 : Int) = 1 := by
+      have hc := hcongr fTop
+      rw [hprod_zero, hf_top] at hc
+      exact int_eq_of_congr_of_bounds hc
+        (by decide) (by exact_mod_cast (Nat.zero_lt_of_lt hm))
+        (by decide) (by exact_mod_cast hm)
+    omega
+  have hsum_eq : gTop + hTop = fTop := by omega
+  have hprod_top_at_f :
+      (g * h).coeff fTop = h.coeff hTop := by
+    rw [← hsum_eq]
+    change (g * h).coeff (g.size - 1 + (h.size - 1)) = h.coeff (h.size - 1)
+    rw [Hex.ZPoly.coeff_mul_top g h hg_pos hh_pos]
+    have hg_top' : g.coeff (g.size - 1) = (1 : Int) := by
+      simpa [gTop] using hg_top
+    rw [hg_top']
+    omega
+  have hlead_one : h.coeff hTop = (1 : Int) := by
+    have hc := hcongr fTop
+    rw [hprod_top_at_f, hf_top] at hc
+    exact int_eq_of_congr_of_bounds hc
+      (hh_bound_nonneg hTop) (hh_bound_lt hTop)
+      (by decide) (by exact_mod_cast hm)
+  rw [Hex.DensePoly.Monic]
+  rw [Hex.DensePoly.leadingCoeff_eq_coeff_last h hh_pos]
+  unfold hTop at hlead_one
+  exact hlead_one
+
+/--
+Specialisation of `monic_of_congr_mul_monic_monic` for cofactors already
+canonicalised by `Hex.ZPoly.reduceModPow`; its coefficients automatically lie
+in `[0, p^k)`.
+-/
+theorem monic_reduceModPow_of_congr_mul_monic_monic
+    {g h f : Hex.ZPoly} {p k : Nat}
+    (hm : 1 < p ^ k)
+    (hcongr : Hex.ZPoly.congr (g * Hex.ZPoly.reduceModPow h p k) f (p ^ k))
+    (hg_monic : Hex.DensePoly.Monic g)
+    (hf_monic : Hex.DensePoly.Monic f)
+    (hh_ne_zero : Hex.ZPoly.reduceModPow h p k ≠ 0) :
+    Hex.DensePoly.Monic (Hex.ZPoly.reduceModPow h p k) := by
+  have hpos : 0 < p ^ k := Nat.zero_lt_of_lt hm
+  have hpos_int : (0 : Int) < (p ^ k : Int) := by
+    exact_mod_cast hpos
+  apply monic_of_congr_mul_monic_monic hm hcongr hg_monic hf_monic
+  · intro i
+    rw [Hex.ZPoly.coeff_reduceModPow_eq_emod_of_pos _ _ _ _ hpos]
+    exact Int.emod_lt_of_pos _ hpos_int
+  · intro i
+    rw [Hex.ZPoly.coeff_reduceModPow_eq_emod_of_pos _ _ _ _ hpos]
+    exact Int.emod_nonneg _ (Int.ofNat_ne_zero.mpr (Nat.ne_of_gt hpos))
+  · exact hh_ne_zero
+
 /--
 A monic integer polynomial automatically has primitive content and is its own
 sign-normalisation. This packages the two normalisation hypotheses required
