@@ -16,7 +16,7 @@ namespace Hex
 namespace GramSchmidt
 
 /-- Promote an index into a shorter prefix to the ambient matrix height. -/
-private def liftFinLE (i : Fin k) (hk : k ≤ n) : Fin n :=
+def liftFinLE (i : Fin k) (hk : k ≤ n) : Fin n :=
   ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
 
 /-- Leading principal Gram matrix of the first `k` rows of an integer basis. -/
@@ -97,7 +97,7 @@ private def bareissDiagNat (data : Matrix.BareissData n) (r : Nat) (hr : r < n) 
 elimination pass over the full Gram matrix. This helper is only used for Gram
 matrices: once a leading row prefix is singular, every larger leading prefix is
 also singular, so all later leading determinants are zero. -/
-private def gramDetVecEntry (data : Matrix.BareissData n) (k : Fin (n + 1)) : Nat :=
+def gramDetVecEntry (data : Matrix.BareissData n) (k : Fin (n + 1)) : Nat :=
   match hk : k.val with
   | 0 => 1
   | r + 1 =>
@@ -119,7 +119,7 @@ private theorem gramDetVecEntry_eq_zero_of_singularStep_lt
 
 /-- Specialization of the encoded zero-tail fact to the no-pivot executable
 data used by the Gram determinant vector pass. -/
-private theorem gramDetVecEntry_noPivot_eq_zero_of_singularStep_lt
+theorem gramDetVecEntry_noPivot_eq_zero_of_singularStep_lt
     (b : Matrix Int n m) (s r : Nat) (hr : r < n)
     (hsing : (Matrix.bareissNoPivotData (Matrix.gramMatrix b)).singularStep = some s)
     (hs : s < r + 1) :
@@ -157,7 +157,7 @@ private theorem getArrayEntry_gramRows (b : Matrix Int n m) (i j : Fin n) :
     getArrayEntry (gramRows b) i.val j.val = (Matrix.gramMatrix b)[i][j] := by
   simp [getArrayEntry, gramRows, Matrix.gramMatrix, Matrix.dot, Matrix.ofFn]
 
-private def rowsToMatrix (rows : Array (Array Int)) (n : Nat) : Matrix Int n n :=
+def rowsToMatrix (rows : Array (Array Int)) (n : Nat) : Matrix Int n n :=
   Matrix.ofFn fun i j => getArrayEntry rows i.val j.val
 
 private theorem rowsToMatrix_gramRows (b : Matrix Int n m) :
@@ -1682,7 +1682,7 @@ private theorem noPivotLoop_id_at_done
 /-- Once the no-pivot Bareiss loop has marked the current step singular
 (`state.singularStep = some state.step` with a zero pivot at that step),
 any further fuel is a no-op. -/
-private theorem noPivotLoop_id_at_singular_fixedpoint
+theorem noPivotLoop_id_at_singular_fixedpoint
     {n : Nat} (fuel : Nat) (state : Matrix.BareissState n)
     (hDone : state.step + 1 < n)
     (hp : state.matrix[(⟨state.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)][(⟨state.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)] = 0)
@@ -1701,7 +1701,7 @@ private theorem noPivotLoop_id_at_singular_fixedpoint
 
 /-- Fuel composition for the no-pivot Bareiss loop: running `a + b` units of
 fuel from `state` equals running `b` more units after `a` initial units. -/
-private theorem noPivotLoop_add
+theorem noPivotLoop_add
     {n : Nat} (a b : Nat) (state : Matrix.BareissState n) :
     Matrix.noPivotLoop (a + b) state =
       Matrix.noPivotLoop b (Matrix.noPivotLoop a state) := by
@@ -1768,7 +1768,7 @@ private theorem noPivotLoop_add
 step, the result has either no singular step, or it has a singular step
 that matches the current `step` field together with a zero pivot at that
 position. -/
-private theorem noPivotLoop_singular_inv
+theorem noPivotLoop_singular_inv
     {n : Nat} (fuel : Nat) (state : Matrix.BareissState n)
     (h_init : state.singularStep = none) :
     (Matrix.noPivotLoop fuel state).singularStep = none ∨
@@ -2900,7 +2900,7 @@ private theorem gramDetVecEntry_eq_leadingPrefix_bareiss
 
 /-- The no-pivot Bareiss pass over the full Gram matrix records the same
 leading-prefix determinant as the public `gramDet` API at every vector slot. -/
-private theorem gramDetVecEntry_eq_gramDet
+theorem gramDetVecEntry_eq_gramDet
     (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
     gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
         ⟨k, Nat.lt_succ_of_le hk⟩ =
