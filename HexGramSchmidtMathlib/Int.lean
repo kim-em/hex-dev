@@ -1,4 +1,5 @@
 import HexGramSchmidt.Int
+import HexMatrixMathlib.Determinant
 
 /-!
 Mathlib bridge lemma for the executable Cramer-style scaled coefficient
@@ -9,15 +10,15 @@ scaled-coefficient array entry as the no-pivot Bareiss trailing value on
 `GramSchmidt.scaledCoeffMatrix` (via `scaledCoeffRows_lower_eq_…`). The
 public Bareiss algorithm `Matrix.bareiss`, however, may insert a row swap
 when a diagonal pivot is zero, so the executable array entry need not
-match the public Bareiss value on the Cramer minor without crossing to
-`Matrix.bareiss_eq_det`: the geometric vanishing in the singular branch
-is visible only through the Leibniz determinant.
+match the public Bareiss value on the Cramer minor without crossing the
+Bareiss/Leibniz determinant identity: the geometric vanishing in the
+singular branch is visible only through the Leibniz determinant.
 
 Per `SPEC/Libraries/hex-gram-schmidt.md` ("Proof path governs placement,
 not just statement"), this bridge therefore lives in
-`HexGramSchmidtMathlib`. The proof consumes the existing
-`Matrix.bareiss_eq_det` sorry in `HexMatrix/Bareiss.lean`, which is owned
-by `hex-matrix-mathlib`.
+`HexGramSchmidtMathlib`. The proof consumes the bridge-side identity
+`HexMatrixMathlib.bareiss_eq_det`, which is owned by
+`hex-matrix-mathlib`.
 -/
 
 namespace Hex
@@ -72,7 +73,7 @@ singular step:
 - Singular branch: both sides vanish — the executable scaled coefficient is
   zero by `scaledCoeffs_eq_zero_of_singularStep_lt` (the lifted lower-column
   singular lemma from #4166), and the public Bareiss determinant of the
-  Cramer minor is zero by `Matrix.bareiss_eq_det` composed with
+  Cramer minor is zero by `HexMatrixMathlib.bareiss_eq_det` composed with
   `scaledCoeffMatrix_det_eq_zero_of_singularStep_lt`. The latter Mathlib-free
   helper internally lifts partial-pass singularity to the full
   `bareissNoPivotData` pass and applies the Cramer determinant identity.
@@ -98,7 +99,7 @@ theorem scaledCoeffs_eq_scaledCoeffMatrix_bareiss
         scaledCoeffs_eq_zero_of_singularStep_lt b i j hji s h_sing hsj
       have h_det := scaledCoeffMatrix_det_eq_zero_of_singularStep_lt
         b i j hji s h_sing
-      rw [h_lhs, Matrix.bareiss_eq_det, h_det]
+      rw [h_lhs, HexMatrixMathlib.bareiss_eq_det, h_det]
 
 
 /-- Below the diagonal, the executable integral scaled coefficient is exactly
@@ -108,7 +109,7 @@ theorem scaledCoeffs_eq_scaledCoeffMatrix_det
     GramSchmidt.entry (scaledCoeffs b) i j =
       Matrix.det (GramSchmidt.scaledCoeffMatrix b i j hji) := by
   rw [scaledCoeffs_eq_scaledCoeffMatrix_bareiss]
-  exact Matrix.bareiss_eq_det (GramSchmidt.scaledCoeffMatrix b i j hji)
+  exact HexMatrixMathlib.bareiss_eq_det (GramSchmidt.scaledCoeffMatrix b i j hji)
 
 
 /-- Conditional form of the leading Gram determinant bridge. The remaining
@@ -120,7 +121,7 @@ theorem leadingGramMatrixInt_det_eq_gramDet_int_of_nonneg
     (hdet : 0 ≤ Matrix.det (GramSchmidt.leadingGramMatrixInt b t ht)) :
     Matrix.det (GramSchmidt.leadingGramMatrixInt b t ht) =
       Int.ofNat (gramDet b t ht) := by
-  rw [gramDet, Matrix.bareiss_eq_det]
+  rw [gramDet, HexMatrixMathlib.bareiss_eq_det]
   exact (Int.toNat_of_nonneg hdet).symm
 
 /-- The public `Nat` Gram determinant casts back to the signed determinant of
@@ -137,7 +138,7 @@ integer matrix with strictly positive diagonal are positive.
 
 This theorem is bridge-only: its proof identifies the executable `gramDet`
 with the Leibniz determinant of the leading Gram matrix via
-`Matrix.bareiss_eq_det`. -/
+`HexMatrixMathlib.bareiss_eq_det`. -/
 theorem gramDet_pos_of_upperTriangular_pos_diag
     {n : Nat} (M : Matrix Int n n)
     (hzero : ∀ i j : Fin n, j.val < i.val -> M[i][j] = 0)
@@ -236,7 +237,7 @@ theorem gramDet_rowAdd_earlier
   by_cases hkt : k.val < t
   · -- Inside case: bareiss = det, then det_rowAdd / det_colAdd preserve.
     rw [leadingGramMatrixInt_rowAdd_inside b j k c t ht hjk hkt]
-    rw [Matrix.bareiss_eq_det, Matrix.bareiss_eq_det]
+    rw [HexMatrixMathlib.bareiss_eq_det, HexMatrixMathlib.bareiss_eq_det]
     -- Indices and inequality between `jt` and `kt` in `Fin t`.
     have hjt_ne_kt : (⟨j.val, Nat.lt_trans hjk hkt⟩ : Fin t) ≠ ⟨k.val, hkt⟩ := by
       intro h
