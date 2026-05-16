@@ -1741,6 +1741,74 @@ def henselLiftData (f : ZPoly) (B : Nat) (d : PrimeChoiceData) : LiftData :=
 @[simp] theorem henselLiftData_k (f : ZPoly) (B : Nat) (d : PrimeChoiceData) :
     (henselLiftData f B d).k = B := rfl
 
+namespace ZPoly
+
+/--
+`PrimeChoiceData`-shaped wrapper around
+`Hex.ZPoly.quadraticMultifactorLiftInvariant_of_factorsModP`.
+
+Given monic `core`, an admissible `1 ≤ B`, and the minimal modular boundary
+facts about `primeData.factorsModP` -- per-factor monicness, product
+congruence modulo `primeData.p`, sequential split coprimality, and a
+nonempty witness -- this produces the recursive quadratic multifactor lift
+invariant on the lifted modular factors that `henselLiftData` consumes.
+
+The Mathlib-free downstream consumer
+`HexBerlekampZassenhausMathlib.henselLiftData_liftedFactor_monic` already
+feeds this invariant into `Hex.ZPoly.multifactorLiftQuadratic_each_monic`.
+-/
+theorem QuadraticMultifactorLiftInvariant_of_choosePrimeData
+    (core : ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hp_prime : Nat.Prime primeData.p)
+    (hp : 1 < primeData.p)
+    (hB : 1 ≤ B)
+    (hcore_monic : DensePoly.Monic core)
+    (hfactors_monic :
+      letI := primeData.bounds
+      ∀ g ∈ primeData.factorsModP, DensePoly.Monic g)
+    (hproduct_mod_p :
+      letI := primeData.bounds
+      ZPoly.congr
+        (Array.polyProduct (primeData.factorsModP.map FpPoly.liftToZ))
+        core primeData.p)
+    (hcoprime :
+      letI := primeData.bounds
+      QuadraticMultifactorCoprimeSplits primeData.p
+        primeData.factorsModP.toList)
+    (hnonempty : primeData.factorsModP.toList ≠ []) :
+    letI := primeData.bounds
+    QuadraticMultifactorLiftInvariant primeData.p B core
+      (primeData.factorsModP.map FpPoly.liftToZ).toList := by
+  letI := primeData.bounds
+  haveI : ZMod64.PrimeModulus primeData.p :=
+    ZMod64.primeModulusOfPrime hp_prime
+  have hfactors_monic_list :
+      ∀ g ∈ primeData.factorsModP.toList, DensePoly.Monic g := by
+    intro g hg
+    exact hfactors_monic g (by simpa using hg)
+  have hproduct_mod_p_list :
+      ZPoly.congr
+        (Array.polyProduct
+          ((primeData.factorsModP.toList.map FpPoly.liftToZ).toArray))
+        core primeData.p := by
+    have hmap_eq :
+        (primeData.factorsModP.toList.map FpPoly.liftToZ).toArray
+          = primeData.factorsModP.map FpPoly.liftToZ := by
+      rw [← Array.toList_map]
+    rw [hmap_eq]; exact hproduct_mod_p
+  have hkey :=
+    Hex.ZPoly.quadraticMultifactorLiftInvariant_of_factorsModP
+      primeData.p B core primeData.factorsModP.toList
+      hp hB hcore_monic hfactors_monic_list hproduct_mod_p_list
+      hcoprime hnonempty
+  have hmap_list :
+      (primeData.factorsModP.map FpPoly.liftToZ).toList
+        = primeData.factorsModP.toList.map FpPoly.liftToZ := by simp
+  rw [hmap_list]
+  exact hkey
+
+end ZPoly
+
 /--
 Integer upper bound for the BHKS fast-recombination precision schedule.
 
