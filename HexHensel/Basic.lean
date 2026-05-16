@@ -211,6 +211,117 @@ theorem modP_liftToZ (f : FpPoly p) :
   intro i
   exact modP_liftToZ_coeff f i
 
+private theorem zmod64_toNat_one_of_one_lt (hp : 1 < p) :
+    ZMod64.toNat (1 : ZMod64 p) = 1 := by
+  rw [show (1 : ZMod64 p) = ZMod64.one from rfl]
+  rw [ZMod64.toNat_one, Nat.mod_eq_of_lt hp]
+
+private theorem zmod64_toNat_zero :
+    ZMod64.toNat (0 : ZMod64 p) = 0 := by
+  rw [show (0 : ZMod64 p) = ZMod64.zero from rfl]
+  rw [ZMod64.toNat_zero]
+
+private theorem liftToZ_size_pos_of_monic
+    (f : FpPoly p)
+    (hp : 1 < p)
+    (hf : DensePoly.Monic f) :
+    0 < (liftToZ f).size := by
+  by_cases hpos : 0 < (liftToZ f).size
+  · exact hpos
+  have hsize : (liftToZ f).size = 0 := Nat.eq_zero_of_not_pos hpos
+  have hcoeff_zero : (liftToZ f).coeff (f.size - 1) = 0 := by
+    exact DensePoly.coeff_eq_zero_of_size_le (liftToZ f)
+      (by rw [hsize]; exact Nat.zero_le _)
+  have hf_pos : 0 < f.size := by
+    by_cases hf_pos : 0 < f.size
+    · exact hf_pos
+    have hf_size : f.size = 0 := Nat.eq_zero_of_not_pos hf_pos
+    have hlead_zero : f.leadingCoeff = 0 := by
+      cases f with
+      | mk coeffs normalized =>
+          simp [DensePoly.size] at hf_size
+          simp [DensePoly.leadingCoeff, hf_size]
+          rfl
+    have hlead_one : f.leadingCoeff = 1 := hf
+    have hone_zero : (1 : ZMod64 p) = 0 := by
+      rw [← hlead_one, hlead_zero]
+    have hnat : (1 : ZMod64 p).toNat = (0 : ZMod64 p).toNat := congrArg ZMod64.toNat hone_zero
+    rw [zmod64_toNat_one_of_one_lt hp, zmod64_toNat_zero] at hnat
+    cases hnat
+  have hlast : f.coeff (f.size - 1) = 1 := by
+    rw [← DensePoly.leadingCoeff_eq_coeff_last f hf_pos]
+    exact hf
+  have hcoeff_one : (liftToZ f).coeff (f.size - 1) = 1 := by
+    rw [coeff_liftToZ, hlast]
+    change (Int.ofNat (ZMod64.toNat (1 : ZMod64 p)) : Int) = 1
+    rw [zmod64_toNat_one_of_one_lt hp]
+    rfl
+  rw [hcoeff_one] at hcoeff_zero
+  exact (Int.zero_ne_one hcoeff_zero.symm).elim
+
+/--
+The canonical integer lift of a monic polynomial over `F_p` is monic, provided
+the modulus is nontrivial. The `1 < p` hypothesis is necessary because
+`1 : ZMod64 1` has representative zero.
+-/
+theorem monic_liftToZ_of_monic
+    (f : FpPoly p)
+    (hp : 1 < p)
+    (hf : DensePoly.Monic f) :
+    DensePoly.Monic (liftToZ f) := by
+  have hpos : 0 < (liftToZ f).size :=
+    liftToZ_size_pos_of_monic f hp hf
+  rw [DensePoly.Monic, DensePoly.leadingCoeff_eq_coeff_last (liftToZ f) hpos]
+  rw [coeff_liftToZ]
+  have hf_pos : 0 < f.size := by
+    by_cases hf_pos : 0 < f.size
+    · exact hf_pos
+    have hf_size : f.size = 0 := Nat.eq_zero_of_not_pos hf_pos
+    have hlead_zero : f.leadingCoeff = 0 := by
+      cases f with
+      | mk coeffs normalized =>
+          simp [DensePoly.size] at hf_size
+          simp [DensePoly.leadingCoeff, hf_size]
+          rfl
+    have hlead_one : f.leadingCoeff = 1 := hf
+    have hone_zero : (1 : ZMod64 p) = 0 := by
+      rw [← hlead_one, hlead_zero]
+    have hnat : (1 : ZMod64 p).toNat = (0 : ZMod64 p).toNat := congrArg ZMod64.toNat hone_zero
+    rw [zmod64_toNat_one_of_one_lt hp, zmod64_toNat_zero] at hnat
+    cases hnat
+  have hlast : f.coeff (f.size - 1) = 1 := by
+    rw [← DensePoly.leadingCoeff_eq_coeff_last f hf_pos]
+    exact hf
+  have hcoeff_one_at_f : (liftToZ f).coeff (f.size - 1) = 1 := by
+    rw [coeff_liftToZ, hlast]
+    change (Int.ofNat (ZMod64.toNat (1 : ZMod64 p)) : Int) = 1
+    rw [zmod64_toNat_one_of_one_lt hp]
+    rfl
+  have hle : (liftToZ f).size ≤ f.size := by
+    unfold liftToZ
+    simpa using
+      (DensePoly.size_ofCoeffs_le
+        (((List.range f.size).map
+          (fun i => Int.ofNat (f.coeff i).toNat)).toArray))
+  have hge : f.size ≤ (liftToZ f).size := by
+    by_cases hle_size : f.size ≤ (liftToZ f).size
+    · exact hle_size
+    have hlt_size : (liftToZ f).size < f.size := Nat.lt_of_not_ge hle_size
+    have hle_idx : (liftToZ f).size ≤ f.size - 1 :=
+      Nat.le_pred_of_lt hlt_size
+    have hzero :
+        (liftToZ f).coeff (f.size - 1) = 0 :=
+      DensePoly.coeff_eq_zero_of_size_le (liftToZ f) hle_idx
+    rw [hcoeff_one_at_f] at hzero
+    exact (Int.zero_ne_one hzero.symm).elim
+  have hsize_eq : (liftToZ f).size = f.size := Nat.le_antisymm hle hge
+  have hidx : (liftToZ f).size - 1 = f.size - 1 := by
+    rw [hsize_eq]
+  rw [hidx, hlast]
+  change (Int.ofNat (ZMod64.toNat (1 : ZMod64 p)) : Int) = 1
+  rw [zmod64_toNat_one_of_one_lt hp]
+  rfl
+
 /-- A polynomial is congruent modulo `p` to the canonical integer lift of its reduction. -/
 theorem congr_liftToZ_modP (f : ZPoly) :
     ZPoly.congr (liftToZ (ZPoly.modP p f)) f p := by
