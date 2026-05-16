@@ -45,9 +45,12 @@ def Factorization.product (result : Factorization p) : FpPoly p :=
 def splitFactorAt (f witness : FpPoly p) (c : ZMod64 p) : FpPoly p :=
   DensePoly.gcd f (witness - FpPoly.C c)
 
-/-- `true` exactly when the gcd candidate is nonconstant and not all of `f`. -/
+/-- `true` exactly when the gcd candidate is nonconstant and strictly smaller
+than `f` in size (i.e. strictly smaller in degree). Strict size suffices to
+imply `g ≠ f`; the strict form additionally rules out non-identity unit
+multiples `g = u · f`, which is what the downstream `Nodup` argument needs. -/
 private def isNontrivialSplitFactor (f g : FpPoly p) : Bool :=
-  !g.isZero && g.degree? ≠ some 0 && g ≠ f
+  !g.isZero && g.degree? ≠ some 0 && g.size < f.size
 
 /-- Search the constants `0, 1, ..., p - 1` for a nontrivial Berlekamp split. -/
 private def kernelWitnessSplitAux (f witness : FpPoly p) : Nat → Nat → Option (SplitResult p)
@@ -166,12 +169,20 @@ private theorem isNontrivialSplitFactor_degree_ne_zero
   cases hz : g.isZero <;> simp [hz] at h
   exact h.1
 
-private theorem isNontrivialSplitFactor_ne_input
+private theorem isNontrivialSplitFactor_size_lt
     (f g : FpPoly p) (h : isNontrivialSplitFactor f g = true) :
-    g ≠ f := by
+    g.size < f.size := by
   unfold isNontrivialSplitFactor at h
   cases hz : g.isZero <;> simp [hz] at h
   exact h.2
+
+private theorem isNontrivialSplitFactor_ne_input
+    (f g : FpPoly p) (h : isNontrivialSplitFactor f g = true) :
+    g ≠ f := by
+  intro hg
+  have hsize := isNontrivialSplitFactor_size_lt f g h
+  rw [hg] at hsize
+  exact Nat.lt_irrefl _ hsize
 
 private theorem isNontrivialSplitFactor_ne_one
     (f g : FpPoly p) (h : isNontrivialSplitFactor f g = true) :
@@ -279,14 +290,14 @@ theorem kernelWitnessSplit_nontrivial
 
 /--
 Executable search reflection for one field constant: if the gcd candidate
-attached to `c` is nonzero, nonconstant, and not the full input, then the
-bounded Berlekamp witness search succeeds.
+attached to `c` is nonzero, nonconstant, and strictly smaller in size than
+the input, then the bounded Berlekamp witness search succeeds.
 -/
 theorem kernelWitnessSplit?_some_of_nontrivial_splitFactorAt
     (f witness : FpPoly p) (c : ZMod64 p)
     (hnotZero : !(splitFactorAt f witness c).isZero)
     (hdegree : (splitFactorAt f witness c).degree? ≠ some 0)
-    (hne_input : splitFactorAt f witness c ≠ f) :
+    (hsize_lt : (splitFactorAt f witness c).size < f.size) :
     ∃ r : SplitResult p, kernelWitnessSplit? f witness = some r := by
   have hc_lt : c.toNat < p := c.toNat_lt
   have hc_eq : ZMod64.ofNat p c.toNat = c := ZMod64.ofNat_toNat c
@@ -296,7 +307,7 @@ theorem kernelWitnessSplit?_some_of_nontrivial_splitFactorAt
     unfold isNontrivialSplitFactor
     rw [Nat.zero_add, hc_eq]
     cases hz : (splitFactorAt f witness c).isZero <;> simp [hz] at hnotZero ⊢
-    exact ⟨hdegree, hne_input⟩
+    exact ⟨hdegree, hsize_lt⟩
   exact kernelWitnessSplitAux_some_of_nontrivial_offset f witness p 0 c.toNat hc_lt hnon
 
 private theorem splitWithWitnesses?_product_spec
