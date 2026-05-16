@@ -7277,6 +7277,58 @@ theorem factor_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible
     (by simpa [Hex.factor_eq_factorWithBound_default] using hmem)
     h_raw
 
+/-- **#3987 assembled output theorem.**
+
+Every recorded entry of `Hex.factorWithBound f B` is `Hex.ZPoly.Irreducible`,
+universally quantified, once each branch's chosen raw factor array is
+irreducible.  This is the `∀ entry`-quantified form of #4008's per-entry
+output theorem `factorWithBound_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible`,
+shaped to match the existing `factor_irreducible_of_nonUnit` signature (Array
+membership on `.factors`).
+
+The single hypothesis `h_raw` is dispatched by the public fast/slow case-split
+exposed through `Hex.factorWithBound_entry_mem_raw_source`.  The typical
+downstream consumer composes it from the per-branch core-factor irreducibility
+theorems (slow-path exhaustive #4006, small-mod singleton #4200, fast BHKS
+#4202, residual-fallback exclusion #4199) via the Mathlib-free reassembly lift
+`Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible`,
+together with `reassemblyExpansionComplete`; the extracted-`X` half of each
+branch is handled automatically by the `xPowerFactorArray_irreducible`
+foundational witness from #3996.  Unconditional discharge of `h_raw` for the
+default-precision path is the capstone task tracked by #4170. -/
+theorem factorWithBound_entries_irreducible
+    (f : Hex.ZPoly) (B : Nat)
+    (h_raw :
+      ∀ rawFactors : Array Hex.ZPoly,
+        (Hex.factorFastFactorsWithBound f B = some rawFactors ∨
+          (Hex.factorFastFactorsWithBound f B = none ∧
+            rawFactors = Hex.factorSlowFactorsWithBound f B)) →
+        ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Irreducible raw) :
+    ∀ entry ∈ (Hex.factorWithBound f B).factors, Hex.ZPoly.Irreducible entry.1 := by
+  intro entry hentry
+  exact factorWithBound_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible
+    (Array.mem_toList_iff.mpr hentry) h_raw
+
+/-- Default-precision specialisation of `factorWithBound_entries_irreducible`
+for the public `Hex.factor` entry point.  Matches the signature of
+`factor_irreducible_of_nonUnit` (#4170 capstone) modulo the `h_raw` hypothesis;
+unconditional discharge of `h_raw` is tracked by #4170. -/
+theorem factor_entries_irreducible
+    (f : Hex.ZPoly)
+    (h_raw :
+      ∀ rawFactors : Array Hex.ZPoly,
+        (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
+            some rawFactors ∨
+          (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
+              none ∧
+            rawFactors =
+              Hex.factorSlowFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f))) →
+        ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Irreducible raw) :
+    ∀ entry ∈ (Hex.factor f).factors, Hex.ZPoly.Irreducible entry.1 := by
+  intro entry hentry
+  exact factor_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible
+    (Array.mem_toList_iff.mpr hentry) h_raw
+
 /-- **#4006 slow-path bridge (deliverable 2).**
 
 Connects the branch-local irreducibility theorem
