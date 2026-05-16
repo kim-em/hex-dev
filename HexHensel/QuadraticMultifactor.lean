@@ -292,6 +292,90 @@ theorem henselLiftQuadratic_h_congr_mod_base
   rw [heq]
   exact ZPoly.congr_trans _ _ _ p hreduce_p hloop_h
 
+/--
+Throughout the quadratic doubling loop, the leading factor `acc.g` only changes
+by quantities divisible by the current modulus. In particular, the final
+leading factor is still congruent to the initial leading factor modulo the base
+prime `p`. Parallel to `iterateQuadraticHensel_h_congr_mod_base`.
+-/
+private theorem iterateQuadraticHensel_g_congr_mod_base
+    (p : Nat) [ZMod64.Bounds p]
+    (f : ZPoly) (current fuel : Nat) (acc : QuadraticLiftResult)
+    (hp : 1 < p)
+    (hcurrent : 1 ≤ current)
+    (hinv : QuadraticLiftLoopInvariant (p ^ current) f acc) :
+    ZPoly.congr (iterateQuadraticHensel p f current fuel acc).g acc.g p := by
+  induction fuel generalizing current acc with
+  | zero =>
+      simpa [iterateQuadraticHensel] using ZPoly.congr_refl acc.g p
+  | succ fuel ih =>
+      let m := p ^ current
+      let next := quadraticHenselStep m f acc.g acc.h acc.s acc.t
+      have hm : 1 < m := Nat.one_lt_pow (Nat.ne_of_gt hcurrent) hp
+      have hprod_m : ZPoly.congr (acc.g * acc.h) f m := hinv.1
+      have hg_step_m : ZPoly.congr next.g acc.g m :=
+        (ZPoly.quadraticHenselStep_factor_congr_mod_base m f acc.g acc.h acc.s acc.t
+          hm hprod_m).1
+      have hp_dvd_m : p ∣ m := by
+        dsimp [m]
+        have hdvd : p ^ 1 ∣ p ^ current := Nat.pow_dvd_pow p hcurrent
+        simpa [Nat.pow_one] using hdvd
+      have hg_step_p : ZPoly.congr next.g acc.g p :=
+        congr_of_modulus_dvd next.g acc.g hp_dvd_m hg_step_m
+      have hnext_inv : QuadraticLiftLoopInvariant (p ^ (2 * current)) f next := by
+        have hstep : QuadraticLiftLoopInvariant (m * m) f next := by
+          simpa [m, next] using
+            quadraticLiftLoopInvariant_step m f acc hm hinv
+        have hpow : m * m = p ^ (2 * current) := by
+          dsimp [m]
+          rw [← Nat.pow_add]
+          congr 1
+          omega
+        simpa [hpow] using hstep
+      have htail :
+          ZPoly.congr
+            (iterateQuadraticHensel p f (2 * current) fuel next).g next.g p :=
+        ih (current := 2 * current) (acc := next) (by omega) hnext_inv
+      have hresult :
+          (iterateQuadraticHensel p f current (fuel + 1) acc) =
+            iterateQuadraticHensel p f (2 * current) fuel next := by
+        simp [iterateQuadraticHensel, m, next]
+      rw [hresult]
+      exact ZPoly.congr_trans _ _ _ p htail hg_step_p
+
+/--
+The leading factor produced by `henselLiftQuadratic` is congruent to the input
+leading factor modulo `p`. Parallel to `henselLiftQuadratic_h_congr_mod_base`;
+used downstream to show each output of `multifactorLiftQuadratic` reduces mod
+`p` to its corresponding input factor.
+-/
+theorem henselLiftQuadratic_g_congr_mod_base
+    (p k : Nat) [ZMod64.Bounds p]
+    (f g h s t : ZPoly)
+    (hk : 1 ≤ k)
+    (hp : 1 < p)
+    (hinv : QuadraticLiftLoopInvariant p f { g, h, s, t }) :
+    ZPoly.congr (henselLiftQuadratic p k f g h s t).g g p := by
+  let init : QuadraticLiftResult := { g, h, s, t }
+  let fuel := quadraticDoublingSteps k
+  let looped := iterateQuadraticHensel p f 1 fuel init
+  have hstart : QuadraticLiftLoopInvariant (p ^ 1) f init := by
+    simpa [init] using hinv
+  have hloop_g : ZPoly.congr looped.g g p := by
+    have hcongr :=
+      iterateQuadraticHensel_g_congr_mod_base p f 1 fuel init hp (by omega) hstart
+    simpa [init] using hcongr
+  have hreduce_pk : ZPoly.congr (ZPoly.reduceModPow looped.g p k) looped.g (p ^ k) :=
+    ZPoly.congr_reduceModPow looped.g p k (Nat.pow_pos (ZMod64.Bounds.pPos (p := p)))
+  have hreduce_p : ZPoly.congr (ZPoly.reduceModPow looped.g p k) looped.g p := by
+    have hpow_one : p ^ 1 = p := Nat.pow_one p
+    have hcongr := congr_of_pow_le p 1 k _ _ hk hreduce_pk
+    simpa [hpow_one] using hcongr
+  have heq : (henselLiftQuadratic p k f g h s t).g = ZPoly.reduceModPow looped.g p k := by
+    simp [henselLiftQuadratic, init, fuel, looped]
+  rw [heq]
+  exact ZPoly.congr_trans _ _ _ p hreduce_p hloop_g
+
 /-- The binary quadratic wrapper lifts a factorisation to congruence modulo `p^k`. -/
 theorem henselLiftQuadratic_spec
     (p k : Nat) [ZMod64.Bounds p]
