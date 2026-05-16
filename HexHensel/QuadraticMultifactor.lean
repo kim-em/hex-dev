@@ -359,6 +359,10 @@ If a bounded nonnegative cofactor `h` satisfies a coefficientwise congruence
 `g * h ≡ f (mod m)` against monic `g` and `f`, then `h` is monic. The proof
 compares the possible top coefficient of `g * h` with the top coefficient of
 `f`; the coefficient bounds rule out wraparound modulo `m`.
+
+Consumed by `monic_reduceModPow_of_congr_mul_monic_monic`, which specialises
+this to the `reduceModPow`-canonicalised cofactor consumed by
+`henselLiftQuadratic_h_monic`.
 -/
 theorem monic_of_congr_mul_monic_monic
     {g h f : Hex.ZPoly} {m : Nat}
@@ -462,6 +466,10 @@ theorem monic_of_congr_mul_monic_monic
 Specialisation of `monic_of_congr_mul_monic_monic` for cofactors already
 canonicalised by `Hex.ZPoly.reduceModPow`; its coefficients automatically lie
 in `[0, p^k)`.
+
+Consumed by `henselLiftQuadratic_h_monic`, where the spec congruence
+`(lifted.g * lifted.h) ≡ f (mod p^k)` already supplies a `reduceModPow`-form
+cofactor.
 -/
 theorem monic_reduceModPow_of_congr_mul_monic_monic
     {g h f : Hex.ZPoly} {p k : Nat}
@@ -486,7 +494,11 @@ theorem monic_reduceModPow_of_congr_mul_monic_monic
 /-- The lifted monic factor `lifted.g` produced by `henselLiftQuadratic` is
 monic. The quadratic doubling loop preserves `Monic acc.g` via
 `quadraticHenselStep_monic`; the final `reduceModPow` cleanup preserves it via
-`reduceModPow_monic_of_monic`. -/
+`reduceModPow_monic_of_monic`.
+
+Consumed (alongside `henselLiftQuadratic_h_monic`) by
+`multifactorLiftQuadratic_each_monic` to discharge per-output monicness inside
+the sequential split tree. -/
 theorem henselLiftQuadratic_g_monic
     (p k : Nat) [ZMod64.Bounds p]
     (f g h s t : ZPoly)
@@ -512,7 +524,11 @@ theorem henselLiftQuadratic_g_monic
 /-- The lifted cofactor `lifted.h` produced by `henselLiftQuadratic` is monic
 when `f` is monic. Derived from the cofactor monic lemma
 `monic_reduceModPow_of_congr_mul_monic_monic` applied to the spec congruence
-`(lifted.g * lifted.h) ≡ f (mod p^k)` and `henselLiftQuadratic_g_monic`. -/
+`(lifted.g * lifted.h) ≡ f (mod p^k)` and `henselLiftQuadratic_g_monic`.
+
+Consumed (alongside `henselLiftQuadratic_g_monic`) by
+`multifactorLiftQuadratic_each_monic` to discharge per-output monicness inside
+the sequential split tree. -/
 theorem henselLiftQuadratic_h_monic
     (p k : Nat) [ZMod64.Bounds p]
     (f g h s t : ZPoly)
@@ -645,7 +661,11 @@ private theorem multifactorLiftQuadraticList_each_monic
 
 /-- Every output of `multifactorLiftQuadratic` is monic when the input
 polynomial `f` is monic and the quadratic multifactor lift invariant package
-holds. -/
+holds.
+
+Driven by `henselLiftQuadratic_g_monic` and `henselLiftQuadratic_h_monic`
+applied at each sequential split node. Consumed by the Mathlib-facing umbrella
+`HexBerlekampZassenhausMathlib.henselLiftData_liftedFactor_monic`. -/
 theorem multifactorLiftQuadratic_each_monic
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) (factors : Array ZPoly)
