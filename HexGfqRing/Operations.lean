@@ -1118,9 +1118,8 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} : Lean.Grind.Semiring (PolyQu
     apply ext
     simp [repr_zero, reduceMod_zero f hf, repr_mul_zero a]
   · intro a
-    apply ext
-    change repr (pow.go (one f hf) a 0) = repr (1 : PolyQuotient f hf)
-    unfold pow.go
+    change pow a 0 = 1
+    rw [pow_eq_linearPow]
     rfl
   · intro a n
     change pow a (n + 1) = pow a n * a
@@ -1153,7 +1152,7 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} : Lean.Grind.CommRing (PolyQu
   refine Lean.Grind.CommRing.mk ?_
   intro a b
   apply ext
-  simpa using repr_mul_comm a b
+  exact repr_mul_comm a b
 
 end GFqRing
 
