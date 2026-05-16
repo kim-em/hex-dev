@@ -3159,6 +3159,201 @@ theorem henselLiftData_liftedFactor_monic
     (primeData.factorsModP.map Hex.FpPoly.liftToZ)
     hB hp hcore_monic hprime_invariant i
 
+/-- Monic integer polynomials have positive stored size. -/
+private theorem zpoly_size_pos_of_monic {f : Hex.ZPoly}
+    (h : Hex.DensePoly.Monic f) : 0 < f.size := by
+  have hlead : Hex.DensePoly.leadingCoeff f = (1 : Int) := h
+  rcases Nat.eq_zero_or_pos f.coeffs.size with hcs_zero | hcs_pos
+  · exfalso
+    have hback_none : f.coeffs.back? = none := by
+      rw [Array.back?_eq_getElem?]; simp [hcs_zero]
+    have hlc_zero : Hex.DensePoly.leadingCoeff f = (0 : Int) := by
+      unfold Hex.DensePoly.leadingCoeff; rw [hback_none]; rfl
+    rw [hlc_zero] at hlead
+    exact absurd hlead (by decide)
+  · exact hcs_pos
+
+private theorem zpoly_ne_zero_of_monic {f : Hex.ZPoly}
+    (h : Hex.DensePoly.Monic f) : f ≠ 0 := by
+  intro hf
+  have hpos := zpoly_size_pos_of_monic h
+  rw [hf] at hpos
+  exact absurd hpos (by simp)
+
+private theorem zpoly_monic_one : Hex.DensePoly.Monic (1 : Hex.ZPoly) := by
+  show Hex.DensePoly.leadingCoeff (1 : Hex.ZPoly) = (1 : Int)
+  change Hex.DensePoly.leadingCoeff (Hex.DensePoly.C (1 : Int)) = (1 : Int)
+  simp [Hex.DensePoly.leadingCoeff,
+    Hex.DensePoly.coeffs_C_of_ne_zero (by decide : (1 : Int) ≠ 0)]
+
+private theorem zpoly_monic_mul {a b : Hex.ZPoly}
+    (ha : Hex.DensePoly.Monic a) (hb : Hex.DensePoly.Monic b) :
+    Hex.DensePoly.Monic (a * b) := by
+  have ha_ne := zpoly_ne_zero_of_monic ha
+  have hb_ne := zpoly_ne_zero_of_monic hb
+  show Hex.DensePoly.leadingCoeff (a * b) = (1 : Int)
+  rw [Hex.ZPoly.leadingCoeff_mul_of_nonzero a b ha_ne hb_ne,
+    show Hex.DensePoly.leadingCoeff a = 1 from ha,
+    show Hex.DensePoly.leadingCoeff b = 1 from hb]
+  decide
+
+/--
+Monic-product closure for `liftedFactorProduct`: when every selected lifted
+factor is monic, the executable foldl product over the subset is monic too.
+The induction unfolds `Finset.toList` and chains `zpoly_monic_mul` through each
+`*` step starting from `Monic (1 : ZPoly)`.
+-/
+theorem liftedFactorProduct_monic
+    (d : Hex.LiftData) (S : LiftedFactorSubset d)
+    (hmonic : ∀ i ∈ S, Hex.DensePoly.Monic (liftedFactor d i)) :
+    Hex.DensePoly.Monic (liftedFactorProduct d S) := by
+  unfold liftedFactorProduct
+  suffices h : ∀ (l : List (LiftedFactorIndex d)) (acc : Hex.ZPoly),
+      Hex.DensePoly.Monic acc →
+      (∀ i ∈ l, Hex.DensePoly.Monic (liftedFactor d i)) →
+      Hex.DensePoly.Monic
+        (l.foldl (fun acc i => acc * liftedFactor d i) acc) by
+    refine h S.toList 1 zpoly_monic_one ?_
+    intro i hi
+    exact hmonic i ((Finset.mem_toList).mp hi)
+  intro l
+  induction l with
+  | nil =>
+    intro acc hacc _
+    simpa using hacc
+  | cons x rest ih =>
+    intro acc hacc hl
+    simp only [List.foldl_cons]
+    apply ih
+    · exact zpoly_monic_mul hacc (hl x List.mem_cons_self)
+    · intro i hi; exact hl i (List.mem_cons_of_mem _ hi)
+
+/-- `centeredModNat 1 m = 1` when `m ≥ 2`: the value `1` lies in the centred
+half-window and is preserved by the centred-reduction operation. -/
+private theorem centeredModNat_one_of_two_le {m : Nat} (hm : 2 ≤ m) :
+    Hex.centeredModNat (1 : Int) m = (1 : Int) := by
+  by_cases hm3 : 3 ≤ m
+  · have hbound : (1 : Int).natAbs ≤ (1 : Nat) := by decide
+    have hsep : 2 * (1 : Nat) < m := by omega
+    have h := Hex.centeredModNat_emod_eq_of_natAbs_le (1 : Int) m 1 hbound hsep
+    have h1mod : (1 : Int) % (m : Int) = 1 :=
+      Int.emod_eq_of_lt (by decide) (by exact_mod_cast (show 1 < m by omega))
+    rwa [h1mod] at h
+  · have hm2 : m = 2 := by omega
+    subst hm2
+    rfl
+
+/--
+Centred-lift preserves monicness once the modulus is at least two.
+
+The leading coefficient `1` of a monic input survives the centred-reduction
+(`centeredModNat 1 m = 1` for `m ≥ 2`) and `DensePoly.ofCoeffs` does not trim
+it, so the output preserves both size and leading coefficient.
+-/
+theorem monic_centeredLiftPoly_of_monic
+    {g : Hex.ZPoly} (hg : Hex.DensePoly.Monic g) {m : Nat} (hm : 2 ≤ m) :
+    Hex.DensePoly.Monic (Hex.centeredLiftPoly g m) := by
+  have hg_size_pos : 0 < g.size := zpoly_size_pos_of_monic hg
+  have hg_lead : g.coeff (g.size - 1) = (1 : Int) := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last g hg_size_pos]; exact hg
+  set g' := Hex.centeredLiftPoly g m with hg'_def
+  have hcoeff : ∀ i, g'.coeff i = Hex.centeredModNat (g.coeff i) m :=
+    fun i => Hex.coeff_centeredLiftPoly g m i
+  have hcoeff_top : g'.coeff (g.size - 1) = (1 : Int) := by
+    rw [hcoeff, hg_lead]; exact centeredModNat_one_of_two_le hm
+  have hg'_size_ge : g.size ≤ g'.size := by
+    by_contra hlt
+    have hlt' : g'.size < g.size := Nat.lt_of_not_ge hlt
+    have hle : g'.size ≤ g.size - 1 := Nat.le_pred_of_lt hlt'
+    have h_zero := Hex.DensePoly.coeff_eq_zero_of_size_le g' hle
+    rw [hcoeff_top] at h_zero
+    exact absurd h_zero (by decide)
+  have hg'_size_le : g'.size ≤ g.size := by
+    rw [hg'_def]
+    unfold Hex.centeredLiftPoly
+    have h := Hex.DensePoly.size_ofCoeffs_le
+      (g.toArray.map fun coeff => Hex.centeredModNat coeff m)
+    rw [Array.size_map] at h
+    -- `g.toArray.size = g.coeffs.size = g.size` definitionally
+    exact h
+  have hg'_size_eq : g'.size = g.size := le_antisymm hg'_size_le hg'_size_ge
+  show Hex.DensePoly.leadingCoeff g' = (1 : Int)
+  rw [Hex.DensePoly.leadingCoeff_eq_coeff_last g' (hg'_size_eq ▸ hg_size_pos),
+    hg'_size_eq]
+  exact hcoeff_top
+
+/--
+Integer-factor monic capstone for the Hensel-lifted subset correspondence.
+
+Given an integer factor `factor` of `target ∣ core` that is represented at the
+Hensel lift by the subset `S`, plus monicness of the core and of every lifted
+local factor, and the Mignotte precision bound, the represented factor is
+itself monic.
+
+This is the consumer-side packaging that discharges the `Monic factor`
+hypothesis needed by `recombinationCandidate_eq_factor_of_recovery` (via
+`monic_primitive_sign_normalized_of_monic`). The proof chains
+`liftedFactorProduct_monic` with the centred-lift recovery
+(`centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery`) and
+`monic_centeredLiftPoly_of_monic`; the precision hypothesis upgrades to
+`2 ≤ d.p ^ d.k` because otherwise the centred lift collapses to zero,
+contradicting `factor ∣ core` with `core ≠ 0`.
+-/
+theorem representsIntegerFactorAtLift_monic
+    {core target factor : Hex.ZPoly} {d : Hex.LiftData}
+    {S : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hfactor_dvd_target : factor ∣ target)
+    (htarget_dvd_core : target ∣ core)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S) :
+    Hex.DensePoly.Monic factor := by
+  have hfactor_dvd_core : factor ∣ core := by
+    obtain ⟨u, hu⟩ := hfactor_dvd_target
+    obtain ⟨v, hv⟩ := htarget_dvd_core
+    refine ⟨u * v, ?_⟩
+    rw [hv, hu]
+    exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
+  have hprod_monic : Hex.DensePoly.Monic (liftedFactorProduct d S) :=
+    liftedFactorProduct_monic d S (fun i _ => hd_liftedFactor_monic i)
+  have hlead : Hex.DensePoly.leadingCoeff core = (1 : Int) := hcore_monic
+  have hscaled :
+      scaledLiftedFactorProduct core d S = liftedFactorProduct d S := by
+    unfold scaledLiftedFactorProduct
+    rw [hlead]
+    exact densePoly_scale_one_int (liftedFactorProduct d S)
+  have hcenter :
+      Hex.centeredLiftPoly (liftedFactorProduct d S) (d.p ^ d.k) = factor := by
+    have h := centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
+      hcore_ne hfactor_dvd_core hrep hprecision
+    rwa [hscaled] at h
+  have hfactor_ne : factor ≠ 0 := by
+    intro hf
+    rcases hfactor_dvd_core with ⟨q, hq⟩
+    rw [hf, Hex.DensePoly.zero_mul (S := Int) q] at hq
+    exact hcore_ne hq
+  have hpk_pos : 0 < d.p ^ d.k := Nat.pow_pos d.p_pos
+  have hpk_ge_two : 2 ≤ d.p ^ d.k := by
+    rcases Nat.eq_or_lt_of_le
+        (Nat.one_le_iff_ne_zero.mpr (Nat.ne_of_gt hpk_pos)) with hpk1 | hpk_gt
+    · exfalso
+      apply hfactor_ne
+      apply Hex.DensePoly.ext_coeff
+      intro i
+      rw [← hcenter, Hex.coeff_centeredLiftPoly, ← hpk1,
+        Hex.DensePoly.coeff_zero]
+      unfold Hex.centeredModNat
+      have h1ne : (1 : Nat) ≠ 0 := by decide
+      simp only [if_neg h1ne]
+      simp
+    · omega
+  rw [← hcenter]
+  exact monic_centeredLiftPoly_of_monic hprod_monic hpk_ge_two
+
 /-- Converse to `toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord`: if the
 transported polynomial is non-zero and a non-unit, then the executable
 `shouldRecordPolynomialFactor` check passes.  Used to package executable
