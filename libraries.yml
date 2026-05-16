@@ -351,7 +351,7 @@ libraries:
     done_through: 3
     status: active
   HexGramSchmidtMathlib:
-    deps: [HexGramSchmidt]
+    deps: [HexGramSchmidt, HexMatrixMathlib]
     mathlib: true
     done_through: 3
     status: active
