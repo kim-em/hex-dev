@@ -348,6 +348,9 @@ theorem reduceMod_mul_reduceMod (f : FpPoly p) (a b : FpPoly p) :
     ofPoly f hf (FpPoly.C c) = const f hf c :=
   rfl
 
+/-- Reducing both summands before constructing the quotient does not change the
+quotient sum. This is the non-simp direction used when a proof wants to expose
+the canonical representatives inside an `ofPoly`. -/
 theorem ofPoly_add_reduceMod
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (a b : FpPoly p) :
     ofPoly f hf (a + b) = ofPoly f hf (reduceMod f a + reduceMod f b) := by
@@ -356,6 +359,9 @@ theorem ofPoly_add_reduceMod
     reduceMod f (reduceMod f a + reduceMod f b)
   exact reduceMod_add_reduceMod_congr f a b
 
+/-- Reducing both factors before constructing the quotient does not change the
+quotient product. Kept out of the simp set so simplification normalizes through
+`repr`, not toward larger `ofPoly` expressions. -/
 theorem ofPoly_mul_reduceMod
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (a b : FpPoly p) :
     ofPoly f hf (a * b) = ofPoly f hf (reduceMod f a * reduceMod f b) := by
@@ -364,34 +370,48 @@ theorem ofPoly_mul_reduceMod
     reduceMod f (reduceMod f a * reduceMod f b)
   exact reduceMod_mul_reduceMod_congr f a b
 
+/-- Negating a quotient constructor is the same quotient element as constructing
+from the negated canonical representative. -/
 theorem ofPoly_neg_reduceMod
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (a : FpPoly p) :
     -(ofPoly f hf a) = ofPoly f hf (-reduceMod f a) :=
   rfl
 
+/-- Subtracting two quotient constructors is the same quotient element as
+constructing from the difference of their canonical representatives. -/
 theorem ofPoly_sub_reduceMod
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (a b : FpPoly p) :
     ofPoly f hf a - ofPoly f hf b =
       ofPoly f hf (reduceMod f a - reduceMod f b) :=
   rfl
 
+/-- The representative of a sum of constructed quotient elements is the
+canonical reduction of the unreduced polynomial sum. This is the simp normal form
+for addition through `ofPoly`. -/
 @[simp] theorem repr_add_ofPoly
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (a b : FpPoly p) :
     repr (ofPoly f hf a + ofPoly f hf b) = reduceMod f (a + b) := by
   change reduceMod f (reduceMod f a + reduceMod f b) = reduceMod f (a + b)
   exact (reduceMod_add_reduceMod_congr f a b).symm
 
+/-- The representative of a product of constructed quotient elements is the
+canonical reduction of the unreduced polynomial product. This is the simp normal
+form for multiplication through `ofPoly`. -/
 @[simp] theorem repr_mul_ofPoly
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (a b : FpPoly p) :
     repr (ofPoly f hf a * ofPoly f hf b) = reduceMod f (a * b) := by
   change reduceMod f (reduceMod f a * reduceMod f b) = reduceMod f (a * b)
   exact (reduceMod_mul_reduceMod_congr f a b).symm
 
+/-- The representative of a negated constructed quotient element is the
+canonical reduction of the negated canonical representative. -/
 @[simp] theorem repr_neg_ofPoly
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (a : FpPoly p) :
     repr (-(ofPoly f hf a)) = reduceMod f (-reduceMod f a) :=
   rfl
 
+/-- The representative of a difference of constructed quotient elements is the
+canonical reduction of the difference of their canonical representatives. -/
 @[simp] theorem repr_sub_ofPoly
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (a b : FpPoly p) :
     repr (ofPoly f hf a - ofPoly f hf b) =
