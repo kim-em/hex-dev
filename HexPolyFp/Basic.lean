@@ -2173,7 +2173,7 @@ theorem coeff_mul_shift_scale_one
             by_cases hnj : n < j
             · have hne : j ≠ n - i := by omega
               rw [if_pos hnj, if_neg hne]
-            · simp [hnj]
+            · simp [hnj, -DensePoly.coeff_shift]
               have hzero : c * (0 : ZMod64 p) = 0 := by grind
               rw [DensePoly.coeff_shift_scale i c (1 : FpPoly p) (n - j) hzero]
               by_cases hlt : n - j < i
@@ -2218,7 +2218,7 @@ theorem coeff_mul_shift_scale_one
       unfold mulCoeffTerm
       by_cases hnj : n < j
       · simp [hnj]
-      · simp [hnj]
+      · simp [hnj, -DensePoly.coeff_shift]
         have hzero : c * (0 : ZMod64 p) = 0 := by grind
         rw [DensePoly.coeff_shift_scale i c (1 : FpPoly p) (n - j) hzero]
         have hlt : n - j < i := by omega
