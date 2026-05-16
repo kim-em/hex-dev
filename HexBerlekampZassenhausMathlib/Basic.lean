@@ -2045,6 +2045,43 @@ private theorem subsetSplits_zip_filterMap_partition :
             simp only
             exact Hex.subsetSplits_cons_right_mem (ih bs hmask)
 
+/-- Converse to `subsetSplits_zip_filterMap_partition`: every executable
+`subsetSplits` member is induced by a Boolean mask over the input list. -/
+theorem subsetSplits_mem_exists_mask :
+    ∀ {xs selected rest : List Hex.ZPoly},
+      (selected, rest) ∈ Hex.subsetSplits xs →
+        ∃ mask : List Bool,
+          mask.length = xs.length ∧
+            selected =
+              (xs.zip mask).filterMap (fun p => if p.2 then some p.1 else none) ∧
+            rest =
+              (xs.zip mask).filterMap (fun p => if p.2 then none else some p.1)
+  | [], selected, rest, h => by
+      simp [Hex.subsetSplits] at h
+      rcases h with ⟨rfl, rfl⟩
+      exact ⟨[], rfl, rfl, rfl⟩
+  | x :: xs, selected, rest, h => by
+      unfold Hex.subsetSplits at h
+      rcases List.mem_append.mp h with hright | hleft
+      · rcases List.mem_map.mp hright with ⟨split, hsplit, hsplit_eq⟩
+        rcases split with ⟨selectedTail, restTail⟩
+        simp only at hsplit_eq
+        rcases hsplit_eq with ⟨rfl, rfl⟩
+        rcases subsetSplits_mem_exists_mask hsplit with
+          ⟨mask, hmask_len, hselected, hrest⟩
+        refine ⟨false :: mask, by simp [hmask_len], ?_, ?_⟩
+        · simp [hselected]
+        · simp [hrest]
+      · rcases List.mem_map.mp hleft with ⟨split, hsplit, hsplit_eq⟩
+        rcases split with ⟨selectedTail, restTail⟩
+        simp only at hsplit_eq
+        rcases hsplit_eq with ⟨rfl, rfl⟩
+        rcases subsetSplits_mem_exists_mask hsplit with
+          ⟨mask, hmask_len, hselected, hrest⟩
+        refine ⟨true :: mask, by simp [hmask_len], ?_, ?_⟩
+        · simp [hselected]
+        · simp [hrest]
+
 /-- The lifted-factor subset partition lies in the executable
 `Hex.subsetSplits` enumeration of the lifted-factor list. -/
 theorem liftedSubsetSplit_mem_subsetSplits
@@ -2066,6 +2103,26 @@ private theorem subsetSplitsWithFirst_zip_filterMap_partition
   rw [List.zip_cons_cons, List.filterMap_cons, List.filterMap_cons]
   simp only [if_true]
   exact Hex.subsetSplitsWithFirst_mem_cons (subsetSplits_zip_filterMap_partition xs bs h)
+
+/-- Converse at the `subsetSplitsWithFirst` surface: every split comes from a
+Boolean mask over the tail, with the head forced into the selected side. -/
+theorem subsetSplitsWithFirst_mem_exists_tail_mask
+    {x : Hex.ZPoly} {xs selected rest : List Hex.ZPoly}
+    (h : (selected, rest) ∈ Hex.subsetSplitsWithFirst (x :: xs)) :
+    ∃ mask : List Bool,
+      mask.length = xs.length ∧
+        selected =
+          x :: (xs.zip mask).filterMap (fun p => if p.2 then some p.1 else none) ∧
+        rest =
+          (xs.zip mask).filterMap (fun p => if p.2 then none else some p.1) := by
+  unfold Hex.subsetSplitsWithFirst at h
+  rcases List.mem_map.mp h with ⟨split, hsplit, hsplit_eq⟩
+  rcases split with ⟨selectedTail, restTail⟩
+  simp only at hsplit_eq
+  rcases hsplit_eq with ⟨rfl, rfl⟩
+  rcases subsetSplits_mem_exists_mask hsplit with
+    ⟨mask, hmask_len, hselected, hrest⟩
+  exact ⟨mask, hmask_len, by simp [hselected], hrest⟩
 
 /-- The first entry of `liftedSubsetMask d S`, via `head?`, records membership
 of index `0` in `S`. -/
