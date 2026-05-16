@@ -2306,6 +2306,29 @@ theorem LiftedFactorListMatches.length_eq_card
   rw [h, List.length_map]
   rw [(finRange_filter_mem_perm_toList J).length_eq, Finset.length_toList]
 
+/-- A matched `localFactors` is `Nodup` whenever `liftedFactor d` is injective
+on the index set `J`.
+
+Discharges the `hlocal_nodup` hypothesis of
+`liftedSubsetSplit_prefix_exists_mem_sdiff_of_matches` and
+`liftedFactorSubsetPartition_prefix_none`.  The `Set.InjOn` premise is a
+Hensel-coprimality fact about the local factors of `d`: distinct lifted
+factors are pairwise coprime, so when monic they are not equal as
+polynomials.  Producing the injectivity witness from partition data (or
+directly from `henselLiftData` invariants) is the consumer's responsibility
+in #4301; this shim covers only the pure list-level step. -/
+theorem LiftedFactorListMatches.nodup_of_injOn
+    {d : Hex.LiftData} {J : LiftedFactorSubset d}
+    {localFactors : List Hex.ZPoly}
+    (h : LiftedFactorListMatches d J localFactors)
+    (hinj : Set.InjOn (liftedFactor d) (J : Set (LiftedFactorIndex d))) :
+    localFactors.Nodup := by
+  rw [h]
+  refine List.Nodup.map_on ?_ ((List.nodup_finRange _).filter _)
+  intro x hx y hy hxy
+  rw [List.mem_filter] at hx hy
+  exact hinj (of_decide_eq_true hx.2) (of_decide_eq_true hy.2) hxy
+
 /-- The rejected list of a subset `S` is exactly the selected list of the
 complementary universe minus `S`.  This is the executable-side identity that
 matches `liftedSubsetRejectedList d S` to `Finset.univ \ S`. -/
