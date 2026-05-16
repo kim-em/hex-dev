@@ -3967,6 +3967,99 @@ theorem henselLiftData_liftedFactor_injective
     (List.Nodup.getElem_inj_iff hfactorsModP_nodup).mp hlist_eq
   exact Fin.ext hidx_eq
 
+/-- `choosePrimeData`-shaped consumer wrapper for the Berlekamp factor `Nodup`
+property: given the `factorsModPBerlekampForm` invariant (which records that
+`primeData.factorsModP` is the Berlekamp factor array of the monic modular
+image of the input) together with a successful `isGoodPrime` check (which
+certifies the modular image is square-free), the stored factor list has no
+duplicates.
+
+Proof: extract the existential witnesses from `factorsModPBerlekampForm` to
+view `data.factorsModP.toList` as the Berlekamp factor list of
+`monicModularImage (modP data.p f)`, then apply the polymorphic abstract
+loop invariant `Hex.Berlekamp.berlekampFactor_factors_nodup_of_no_squared`.
+The squareness-free hypothesis is discharged by transferring any `g * g`
+divisor through `monicModularImage modP_f ∣ modP_f` (via
+`Hex.FpPoly.dvd_scale_self_of_ne_zero`) and applying
+`Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd` to the
+modular squarefreeness obtained from `Hex.isGoodPrime_squareFreeModP`.
+
+This is the wrapper that lets a Mathlib-bridge consumer of
+`henselLiftData_liftedFactor_injective_of_choosePrimeData` (below) discharge
+the `hfactorsModP_nodup` parameter from the `choosePrimeData?` facts alone,
+without constructing the Berlekamp `Nodup` argument by hand. -/
+theorem factorsModP_nodup_of_factorsModPBerlekampForm
+    (f : Hex.ZPoly) (data : Hex.PrimeChoiceData)
+    (hform : Hex.factorsModPBerlekampForm f data)
+    (hgood :
+      letI := data.bounds
+      Hex.isGoodPrime f data.p = true) :
+    data.factorsModP.toList.Nodup := by
+  letI : Hex.ZMod64.Bounds data.p := data.bounds
+  obtain ⟨hprime, hzero, hfield, heq⟩ := hform
+  letI : Hex.ZMod64.PrimeModulus data.p := Hex.ZMod64.primeModulusOfPrime hprime
+  -- Square-free precondition on the modular image, extracted from `isGoodPrime`.
+  have hsf :
+      Hex.DensePoly.gcd (Hex.ZPoly.modP data.p f)
+          (Hex.DensePoly.derivative (Hex.ZPoly.modP data.p f)) = 1 :=
+    Hex.isGoodPrime_squareFreeModP f data.p hgood
+  -- `monicModularImage modP_f ∣ modP_f`: dividing by the leading coefficient
+  -- scales by a nonzero element, and a unit-scaled polynomial divides the
+  -- original via `dvd_scale_self_of_ne_zero`.
+  have hmod_size_pos : 0 < (Hex.ZPoly.modP data.p f).size := by
+    rcases Nat.eq_zero_or_pos (Hex.ZPoly.modP data.p f).size with hsize_zero | hsize_pos
+    · exfalso
+      have hiszero : (Hex.ZPoly.modP data.p f).isZero = true := by
+        simpa [Hex.DensePoly.isZero, Hex.DensePoly.size,
+          Array.isEmpty_iff_size_eq_zero] using hsize_zero
+      rw [hiszero] at hzero
+      contradiction
+    · exact hsize_pos
+  have hlead_ne :
+      Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP data.p f) ≠
+        (0 : Hex.ZMod64 data.p) := by
+    rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred (Hex.ZPoly.modP data.p f) hmod_size_pos]
+    exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size
+      (Hex.ZPoly.modP data.p f) hmod_size_pos
+  have hinv_ne :
+      (Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP data.p f))⁻¹ ≠
+        (0 : Hex.ZMod64 data.p) :=
+    Hex.ZMod64.inv_ne_zero_of_prime hprime hlead_ne
+  have hmonicImage_dvd :
+      Hex.monicModularImage (Hex.ZPoly.modP data.p f) ∣
+        Hex.ZPoly.modP data.p f := by
+    unfold Hex.monicModularImage
+    simp only [hzero, Bool.false_eq_true, ↓reduceIte]
+    exact Hex.FpPoly.dvd_scale_self_of_ne_zero hinv_ne (Hex.ZPoly.modP data.p f)
+  -- Berlekamp factor list of the monic modular image has no duplicates.
+  have hNodup :
+      (@Hex.Berlekamp.berlekampFactor data.p data.bounds
+        (Hex.monicModularImage (Hex.ZPoly.modP data.p f))
+        (Hex.monicModularImage_monic hprime (Hex.ZPoly.modP data.p f) hzero)
+        hfield).factors.Nodup := by
+    apply Hex.Berlekamp.berlekampFactor_factors_nodup_of_no_squared
+    intro g hgg hpos
+    have hg_dvd_mod : g * g ∣ Hex.ZPoly.modP data.p f := by
+      rcases hgg with ⟨r, hr⟩
+      rcases hmonicImage_dvd with ⟨s, hs⟩
+      exact ⟨r * s, by rw [hs, hr, Hex.FpPoly.mul_assoc]⟩
+    have hunit : Hex.Berlekamp.isUnitPolynomial g = true :=
+      Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd hsf hg_dvd_mod
+    have hdeg : Hex.DensePoly.degree? g = some 0 := by
+      unfold Hex.Berlekamp.isUnitPolynomial at hunit
+      cases hd : Hex.DensePoly.degree? g with
+      | none => rw [hd] at hunit; simp at hunit
+      | some k =>
+          rw [hd] at hunit
+          cases k with
+          | zero => rfl
+          | succ _ => simp at hunit
+    rw [hdeg] at hpos
+    simp at hpos
+  -- Transport `Nodup` from the Berlekamp factor list to `data.factorsModP.toList`.
+  rw [heq]
+  simpa using hNodup
+
 /-- Composed convenience wrapper: combines
 `Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData` with
 `henselLiftData_liftedFactor_injective` so that a Mathlib-bridge consumer can
@@ -3981,11 +4074,11 @@ Consumed by
 `exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence` (#4274).
 
 The `factorsModP.toList.Nodup` hypothesis is the load-bearing ingredient;
-it is currently consumer-supplied because the underlying Berlekamp factor
-output `Nodup` property is not yet exposed as a `choosePrimeData` invariant
-(see follow-up issue for the discharge). The companion monicness umbrella
-`henselLiftData_liftedFactor_monic_of_choosePrimeData` lives one theorem
-above. -/
+discharge from the `choosePrimeData?` facts is provided by
+`factorsModP_nodup_of_factorsModPBerlekampForm` above (combined with
+`Hex.choosePrimeData?_factorsModP_berlekamp_form`).  The companion monicness
+umbrella `henselLiftData_liftedFactor_monic_of_choosePrimeData` lives one
+theorem above. -/
 theorem henselLiftData_liftedFactor_injective_of_choosePrimeData
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hcore_monic : Hex.DensePoly.Monic core)

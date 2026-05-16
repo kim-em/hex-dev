@@ -1577,7 +1577,7 @@ output for the monic modular image used by prime selection.  Phrased as an
 existential bundling the nonzero-image and field witnesses so that it
 threads through the executable prime-selection fold.
 -/
-private def factorsModPBerlekampForm
+def factorsModPBerlekampForm
     (f : ZPoly) (data : PrimeChoiceData) : Prop :=
   letI := data.bounds
   ∃ (hprime : Nat.Prime data.p)
