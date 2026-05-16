@@ -928,6 +928,109 @@ def ofCapSeparation
     expectedIndicators indicators_match nondegenerate
     expectedFactors hsize hcandidate product_eq
 
+/--
+Cap-separation form of `ForwardRecoveryInputs` targeting the canonical
+support-driven indicator array.  Mirrors `ofCapSeparation` but selects
+`expectedIndicators := expectedIndicatorArrayOfSupports trueSupports`
+internally and discharges `indicators_match` via
+`equivalenceClassIndicatorsOfLiftData_eq_expectedIndicatorArrayOfSupports`,
+removing the duplicated B7 indicator-array plumbing from callers.
+
+The remaining fields (`mignotte_precision`, `nondegenerate`,
+`expectedFactors`, per-indicator candidate facts, and the final product
+check) pass through unchanged.  The candidate facts are stated against the
+canonical indicator array `expectedIndicatorArrayOfSupports trueSupports`,
+so callers consume the support-driven indicator partition directly.
+-/
+noncomputable def ofCapSeparationCanonicalIndicators
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    (rows_pos : HasPositiveDimension f d)
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData f d rows_pos).factorCount)))
+    (hcap_le : Hex.factorFastPrecisionCap f ≤ d.k)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (hcap :
+      ExecutableCapSeparationHypotheses
+        (badVectorWitnessOfLiftData f d rows_pos localFactorIndex
+          localFactorDegree H)
+        trueSupports)
+    (mignotte_precision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound f < d.p ^ d.k)
+    (nondegenerate :
+      Hex.bhksDegenerateIndicatorPartition
+          (projectedRowsOfLiftData f d rows_pos)
+          (expectedIndicatorArrayOfSupports trueSupports) = false)
+    (expectedFactors : Array Hex.ZPoly)
+    (hsize :
+      expectedFactors.size = (expectedIndicatorArrayOfSupports trueSupports).size)
+    (hcandidate :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        ∃ quotient,
+          Hex.bhksIndicatorCandidate? f d
+              ((expectedIndicatorArrayOfSupports trueSupports).getD i #[]) =
+            some (expectedFactors.getD i 0, quotient))
+    (product_eq : Array.polyProduct expectedFactors = f) :
+    ForwardRecoveryInputs f d :=
+  have lattice_eq_indicators :
+      BHKS.projectedRowSpanInt (projectedRowsOfLiftData f d rows_pos) =
+        BHKS.trueFactorIndicatorLattice trueSupports :=
+    projectedRowsOfLiftData_eq_trueFactorIndicatorLattice_of_cap
+      f d rows_pos localFactorIndex localFactorDegree H trueSupports
+      hcap_le C hC_nonneg hC hcap
+  ofCapSeparation rows_pos localFactorIndex localFactorDegree H
+    trueSupports hcap_le C hC_nonneg hC hcap mignotte_precision
+    (expectedIndicatorArrayOfSupports trueSupports)
+    (equivalenceClassIndicatorsOfLiftData_eq_expectedIndicatorArrayOfSupports
+      rows_pos trueSupports lattice_eq_indicators)
+    nondegenerate expectedFactors hsize hcandidate product_eq
+
+/--
+Cap-separation `ForwardRecoveryInputs` constructor specialised to the public
+`factorFast` lift shape `d = henselLiftData f (precisionForCoeffBound
+(factorFastPrecisionCap f) primeData.p) primeData`.  Drops both the explicit
+`expectedIndicators`/`indicators_match` plumbing (canonical support-driven
+indicator array) and the `mignotte_precision` side condition (discharged via
+`mignotte_precision_of_liftData_precisionForCoeffBound_factorFastPrecisionCap`
+under `hp : 2 ≤ d.p`).
+-/
+noncomputable def ofCapSeparationCanonicalIndicatorsAtPrecisionForCoeffBound
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    (rows_pos : HasPositiveDimension f d)
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData f d rows_pos).factorCount)))
+    (hp : 2 ≤ d.p)
+    (hk : d.k =
+      Hex.precisionForCoeffBound (Hex.factorFastPrecisionCap f) d.p)
+    (hcap_le : Hex.factorFastPrecisionCap f ≤ d.k)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (hcap :
+      ExecutableCapSeparationHypotheses
+        (badVectorWitnessOfLiftData f d rows_pos localFactorIndex
+          localFactorDegree H)
+        trueSupports)
+    (nondegenerate :
+      Hex.bhksDegenerateIndicatorPartition
+          (projectedRowsOfLiftData f d rows_pos)
+          (expectedIndicatorArrayOfSupports trueSupports) = false)
+    (expectedFactors : Array Hex.ZPoly)
+    (hsize :
+      expectedFactors.size = (expectedIndicatorArrayOfSupports trueSupports).size)
+    (hcandidate :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        ∃ quotient,
+          Hex.bhksIndicatorCandidate? f d
+              ((expectedIndicatorArrayOfSupports trueSupports).getD i #[]) =
+            some (expectedFactors.getD i 0, quotient))
+    (product_eq : Array.polyProduct expectedFactors = f) :
+    ForwardRecoveryInputs f d :=
+  ofCapSeparationCanonicalIndicators rows_pos localFactorIndex localFactorDegree H
+    trueSupports hcap_le C hC_nonneg hC hcap
+    (mignotte_precision_of_liftData_precisionForCoeffBound_factorFastPrecisionCap
+      f d hp hk)
+    nondegenerate expectedFactors hsize hcandidate product_eq
+
 /-- Promote a SPEC-input bundle to the immediate recovery hypotheses
 consumed by `bhksRecover_eq_some_of_recovery`.  The promotion is a
 field-by-field repackaging that uses `indicators_match` to substitute
