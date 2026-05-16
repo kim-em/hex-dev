@@ -1414,6 +1414,8 @@ executable cap separation: the two-step
 inference fold into a single application.  See
 `ofCapSeparationCanonicalIndicatorsAtPrecisionForCoeffBound` for the producer
 side and `factorFast_ne_none_of_forwardInputs_at_cap` for the consumer side.
+The Mignotte-side parallel entry point is
+`factorFast_ne_none_of_mignottePrecisionCanonicalIndicatorsExpectedFactorsAtPrecisionForCoeffBound`.
 -/
 theorem factorFast_ne_none_of_capSeparationCanonicalIndicatorsAtPrecisionForCoeffBound
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
