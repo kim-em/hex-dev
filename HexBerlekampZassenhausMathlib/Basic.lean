@@ -4326,59 +4326,58 @@ private theorem monicModularImage_modP_eq_of_monic
   simp only [hzero, Bool.false_eq_true, ↓reduceIte]
   rw [hmodP_lead_one, hone_inv, Hex.FpPoly.scale_one_left]
 
+/-- Reducing a `polyProduct` of canonically-lifted `FpPoly p` factors back
+modulo `p` recovers the in-field `factorProduct`.  This identifies the
+integer-side product carried by `Array.polyProduct` with the
+`FpPoly p`-side product `Hex.Berlekamp.factorProduct`, threading the
+multiplicative-homomorphism property of `modP` through each lifted factor.
+
+Substrate identification for both
+`factorsModP_polyProduct_congr_of_factorsModPBerlekampForm` (via the
+`polyProduct_map_liftToZ_congr_factorProduct` corollary just below) and
+`factorsModP_coprime_of_factorsModPBerlekampForm` (which rewrites
+`modP p (Array.polyProduct ...)` to the direct `factorProduct`
+viewpoint where pairwise-coprime arguments apply). -/
+private theorem modP_polyProduct_liftToZ_eq_factorProduct
+    {p : Nat} [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
+    (xs : List (Hex.FpPoly p)) :
+    Hex.ZPoly.modP p (Array.polyProduct ((xs.map Hex.FpPoly.liftToZ).toArray)) =
+      Hex.Berlekamp.factorProduct xs := by
+  induction xs with
+  | nil =>
+      show Hex.ZPoly.modP p (Array.polyProduct (#[] : Array Hex.ZPoly)) =
+        Hex.Berlekamp.factorProduct ([] : List (Hex.FpPoly p))
+      rw [Hex.ZPoly.polyProduct_empty]
+      exact Hex.ZPoly.modP_one p
+  | cons x rest ih =>
+      have hcons :
+          Array.polyProduct (((x :: rest).map Hex.FpPoly.liftToZ).toArray) =
+            Hex.FpPoly.liftToZ x *
+              Array.polyProduct ((rest.map Hex.FpPoly.liftToZ).toArray) := by
+        rw [List.map_cons]
+        exact Hex.ZPoly.polyProduct_cons_toArray (Hex.FpPoly.liftToZ x) _
+      rw [hcons, Hex.ZPoly.modP_lift_mul_left p x _, ih,
+        Hex.Berlekamp.factorProduct_cons]
+
 /-- Bridge from the FpPoly factor product to the integer-side ordered product
 through `liftToZ`: lifting a foldl product is congruent mod `p` to the foldl
 product of the lifts. Stated as a list-level helper so we can apply it after
-unfolding `factorsModP.toList`. -/
+unfolding `factorsModP.toList`.
+
+Corollary of `modP_polyProduct_liftToZ_eq_factorProduct`: that lemma reduces
+the `polyProduct` of lifted factors back to `factorProduct`, and
+`congr_liftToZ_of_modP_eq` then converts the equation into the `congr` shape
+expected by the `_polyProduct_congr_` discharger. -/
 private theorem polyProduct_map_liftToZ_congr_factorProduct
     {p : Nat} [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
     (factors : List (Hex.FpPoly p)) :
     Hex.ZPoly.congr
       (Array.polyProduct ((factors.map Hex.FpPoly.liftToZ).toArray))
       (Hex.FpPoly.liftToZ (Hex.Berlekamp.factorProduct factors))
-      p := by
-  induction factors with
-  | nil =>
-      -- factorProduct [] = 1, polyProduct (([] : List _).map _).toArray = polyProduct #[] = 1
-      have hcong_one :
-          Hex.ZPoly.congr (Hex.FpPoly.liftToZ (1 : Hex.FpPoly p)) (1 : Hex.ZPoly) p :=
-        Hex.ZPoly.congr_liftToZ_of_modP_eq p (1 : Hex.FpPoly p) (1 : Hex.ZPoly)
-          (Hex.ZPoly.modP_one p)
-      show Hex.ZPoly.congr
-        (Array.polyProduct (([] : List (Hex.FpPoly p)).map Hex.FpPoly.liftToZ).toArray)
-        (Hex.FpPoly.liftToZ (Hex.Berlekamp.factorProduct ([] : List (Hex.FpPoly p)))) p
-      change Hex.ZPoly.congr (Array.polyProduct (#[] : Array Hex.ZPoly))
-        (Hex.FpPoly.liftToZ (1 : Hex.FpPoly p)) p
-      rw [Hex.ZPoly.polyProduct_empty]
-      exact Hex.ZPoly.congr_symm _ _ _ hcong_one
-  | cons g rest ih =>
-      -- ((g :: rest).map liftToZ).toArray = (liftToZ g :: rest.map liftToZ).toArray
-      have hpolyProduct_eq :
-          Array.polyProduct (((g :: rest).map Hex.FpPoly.liftToZ).toArray) =
-            Hex.FpPoly.liftToZ g *
-              Array.polyProduct ((rest.map Hex.FpPoly.liftToZ).toArray) := by
-        change Array.polyProduct ((Hex.FpPoly.liftToZ g :: rest.map Hex.FpPoly.liftToZ).toArray) =
-          Hex.FpPoly.liftToZ g *
-            Array.polyProduct ((rest.map Hex.FpPoly.liftToZ).toArray)
-        exact Hex.ZPoly.polyProduct_cons_toArray (Hex.FpPoly.liftToZ g)
-          (rest.map Hex.FpPoly.liftToZ)
-      rw [hpolyProduct_eq, Hex.Berlekamp.factorProduct_cons]
-      -- Goal: congr (liftToZ g * polyProduct (rest.map liftToZ).toArray)
-      --             (liftToZ (g * factorProduct rest)) p
-      have hmul :
-          Hex.ZPoly.congr
-            (Hex.FpPoly.liftToZ (g * Hex.Berlekamp.factorProduct rest))
-            (Hex.FpPoly.liftToZ g * Hex.FpPoly.liftToZ (Hex.Berlekamp.factorProduct rest))
-            p :=
-        Hex.ZPoly.liftToZ_mul_congr p g (Hex.Berlekamp.factorProduct rest)
-      have hcongr_factor :
-          Hex.ZPoly.congr
-            (Hex.FpPoly.liftToZ g * Array.polyProduct ((rest.map Hex.FpPoly.liftToZ).toArray))
-            (Hex.FpPoly.liftToZ g * Hex.FpPoly.liftToZ (Hex.Berlekamp.factorProduct rest))
-            p :=
-        Hex.ZPoly.congr_mul _ _ _ _ p
-          (Hex.ZPoly.congr_refl _ p) ih
-      exact Hex.ZPoly.congr_trans _ _ _ p hcongr_factor (Hex.ZPoly.congr_symm _ _ _ hmul)
+      p :=
+  Hex.ZPoly.congr_symm _ _ _
+    (Hex.ZPoly.congr_liftToZ_of_modP_eq p _ _
+      (modP_polyProduct_liftToZ_eq_factorProduct factors))
 
 /-- Discharge of the `polyProduct (factorsModP.map liftToZ) ≡ core (mod p)`
 premise on `henselLiftData_liftedFactor_monic_of_choosePrimeData` (and the two
@@ -4491,38 +4490,6 @@ theorem factorsModP_ne_nil_of_factorsModPBerlekampForm
       (Hex.monicModularImage_monic hprime (Hex.ZPoly.modP primeData.p core) hzero)
   rw [heq]
   simpa using hbl_ne
-
-/-- Reducing a `polyProduct` of canonically-lifted `FpPoly p` factors back
-modulo `p` recovers the in-field `factorProduct`.  This identifies the
-integer-side product carried by `Array.polyProduct` with the
-`FpPoly p`-side product `Hex.Berlekamp.factorProduct`, threading the
-multiplicative-homomorphism property of `modP` through each lifted factor.
-
-Used as a substrate identification for the
-`factorsModP_coprime_of_factorsModPBerlekampForm` discharger below: the
-quadratic multifactor split predicate's `xgcd` is computed against
-`modP p (Array.polyProduct ...)`, and this lemma rewrites that to the
-direct `factorProduct` viewpoint where pairwise-coprime arguments apply. -/
-private theorem modP_polyProduct_liftToZ_eq_factorProduct
-    {p : Nat} [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
-    (xs : List (Hex.FpPoly p)) :
-    Hex.ZPoly.modP p (Array.polyProduct ((xs.map Hex.FpPoly.liftToZ).toArray)) =
-      Hex.Berlekamp.factorProduct xs := by
-  induction xs with
-  | nil =>
-      show Hex.ZPoly.modP p (Array.polyProduct (#[] : Array Hex.ZPoly)) =
-        Hex.Berlekamp.factorProduct ([] : List (Hex.FpPoly p))
-      rw [Hex.ZPoly.polyProduct_empty]
-      exact Hex.ZPoly.modP_one p
-  | cons x rest ih =>
-      have hcons :
-          Array.polyProduct (((x :: rest).map Hex.FpPoly.liftToZ).toArray) =
-            Hex.FpPoly.liftToZ x *
-              Array.polyProduct ((rest.map Hex.FpPoly.liftToZ).toArray) := by
-        rw [List.map_cons]
-        exact Hex.ZPoly.polyProduct_cons_toArray (Hex.FpPoly.liftToZ x) _
-      rw [hcons, Hex.ZPoly.modP_lift_mul_left p x _, ih,
-        Hex.Berlekamp.factorProduct_cons]
 
 /-- Generalized inductive helper for the `factorsModP_coprime` discharger.
 
