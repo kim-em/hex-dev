@@ -19,14 +19,6 @@ noncomputable section
 
 open Polynomial
 
-private def isUnitFactor (g : Hex.ZPoly) : Bool :=
-  match g.degree? with
-  | some 0 => g.coeff 0 == 1 || g.coeff 0 == -1
-  | _ => false
-
-private def nonUnitFactorCount (φ : Hex.Factorization) : Nat :=
-  (φ.factors.toList.filter fun entry => !isUnitFactor entry.1).length
-
 /--
 The transported degree of an executable divisor is bounded by the executable
 degree of the ambient nonzero polynomial.
@@ -139,39 +131,11 @@ theorem defaultFactorCoeffBound_valid
 /--
 Executable irreducibility predicate for transported integer polynomials.
 
-Constant polynomials are decided by integer primality. Nonconstant
-polynomials must have unit content and exactly one nonunit factor in the
-default executable Berlekamp-Zassenhaus factorization.
+The checker delegates to the Mathlib-free `Hex.ZPoly` executable predicate
+after transporting the Mathlib polynomial into the project representation.
 -/
 def irreducibleByFactorization (f : Polynomial ℤ) : Bool :=
-  let fz := HexPolyZMathlib.ofPolynomial f
-  match fz.degree? with
-  | none => false
-  | some 0 => decide (Nat.Prime (fz.coeff 0).natAbs)
-  | some (_ + 1) =>
-      decide ((Hex.ZPoly.content fz).natAbs = 1) &&
-        nonUnitFactorCount (Hex.factor fz) == 1
-
-/--
-The executable factorization predicate agrees with Mathlib irreducibility over
-`Polynomial ℤ`.
--/
-@[simp]
-theorem irreducibleByFactorization_iff (f : Polynomial ℤ) :
-    irreducibleByFactorization f = true ↔ Irreducible f := by
-  sorry
-
-/--
-Mathlib irreducibility over `Polynomial ℤ` is decidable through the executable
-Berlekamp-Zassenhaus factorization surface.
--/
-instance irreducibleDecidablePred :
-    DecidablePred (fun f : Polynomial ℤ => Irreducible f) :=
-  fun f =>
-    if h : irreducibleByFactorization f = true then
-      isTrue ((irreducibleByFactorization_iff f).mp h)
-    else
-      isFalse (fun hf => h ((irreducibleByFactorization_iff f).mpr hf))
+  Hex.ZPoly.isIrreducible (HexPolyZMathlib.ofPolynomial f)
 
 /-- The default executable factorization multiplies back to the input. -/
 @[simp]
@@ -231,6 +195,40 @@ Mathlib-free executable irreducibility predicate.
 theorem Hex.ZPoly.polynomialIrreducible_iff_irreducible (f : Hex.ZPoly) :
     Irreducible (HexPolyZMathlib.toPolynomial f) ↔ Hex.ZPoly.Irreducible f :=
   (Hex.ZPoly.Irreducible_iff_polynomialIrreducible f).symm
+
+/--
+The executable factorization predicate agrees with Mathlib irreducibility over
+`Polynomial ℤ`.
+-/
+@[simp]
+theorem irreducibleByFactorization_iff (f : Polynomial ℤ) :
+    irreducibleByFactorization f = true ↔ Irreducible f := by
+  rw [irreducibleByFactorization]
+  constructor
+  · intro h
+    have hhex :
+        Hex.ZPoly.Irreducible (HexPolyZMathlib.ofPolynomial f) :=
+      (Hex.ZPoly.isIrreducible_iff _).mp h
+    simpa [HexPolyZMathlib.toPolynomial_ofPolynomial] using
+      (Hex.ZPoly.Irreducible_iff_polynomialIrreducible
+        (HexPolyZMathlib.ofPolynomial f)).mp hhex
+  · intro h
+    exact (Hex.ZPoly.isIrreducible_iff _).mpr <|
+      (Hex.ZPoly.Irreducible_iff_polynomialIrreducible
+        (HexPolyZMathlib.ofPolynomial f)).mpr <| by
+          simpa [HexPolyZMathlib.toPolynomial_ofPolynomial] using h
+
+/--
+Mathlib irreducibility over `Polynomial ℤ` is decidable through the executable
+Berlekamp-Zassenhaus factorization surface.
+-/
+instance irreducibleDecidablePred :
+    DecidablePred (fun f : Polynomial ℤ => Irreducible f) :=
+  fun f =>
+    if h : irreducibleByFactorization f = true then
+      isTrue ((irreducibleByFactorization_iff f).mp h)
+    else
+      isFalse (fun hf => h ((irreducibleByFactorization_iff f).mpr hf))
 
 /--
 Every polynomial factor emitted by the default executable factorization is
