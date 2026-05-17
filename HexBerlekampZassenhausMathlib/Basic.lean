@@ -7183,6 +7183,52 @@ private theorem size_centeredLiftPoly_eq_of_pos_leadingCoeff_bound
     exact h
   exact le_antisymm hg'_size_le hg'_size_ge
 
+/-- `Hex.normalizeFactorSign` preserves stored size: it either returns the input
+unchanged or negates every coefficient via `DensePoly.scale (-1)`, and scaling by
+the nonzero integer `-1` preserves stored size. -/
+private theorem size_normalizeFactorSign_eq (f : Hex.ZPoly) :
+    (Hex.normalizeFactorSign f).size = f.size := by
+  unfold Hex.normalizeFactorSign
+  by_cases hneg : Hex.DensePoly.leadingCoeff f < 0
+  · rw [if_pos hneg]
+    exact Hex.ZPoly.scale_size_of_nonzero (-1 : Int) f (by decide)
+  · rw [if_neg hneg]
+
+/-- `Hex.ZPoly.primitivePart` preserves stored size on nonzero inputs.
+
+Reconstruct `f = scale (content f) (primitivePart f)` via
+`content_mul_primitivePart`, then apply `Hex.ZPoly.scale_size_of_nonzero` with
+the fact that `content f ≠ 0` whenever `f ≠ 0`. -/
+private theorem size_primitivePart_eq_of_ne_zero {f : Hex.ZPoly} (hf : f ≠ 0) :
+    (Hex.ZPoly.primitivePart f).size = f.size := by
+  have hcontent_ne : (Hex.ZPoly.content f : Int) ≠ 0 := by
+    intro hcontent
+    apply hf
+    have hpart_zero : Hex.ZPoly.primitivePart f = 0 := by
+      simpa [Hex.ZPoly.primitivePart] using
+        Hex.DensePoly.primitivePart_eq_zero_of_content_eq_zero f
+          (by simpa [Hex.ZPoly.content] using hcontent)
+    have hreconstruct := Hex.ZPoly.content_mul_primitivePart f
+    rw [hcontent, hpart_zero] at hreconstruct
+    have : Hex.DensePoly.scale (0 : Int) (0 : Hex.ZPoly) = (0 : Hex.ZPoly) := by
+      apply Hex.DensePoly.ext_coeff
+      intro n
+      rw [Hex.DensePoly.coeff_scale (R := Int) (0 : Int) (0 : Hex.ZPoly) n
+        (Int.zero_mul 0), Hex.DensePoly.coeff_zero]
+      exact Int.zero_mul _
+    rw [this] at hreconstruct
+    exact hreconstruct.symm
+  have h_rec := Hex.ZPoly.content_mul_primitivePart f
+  have h_scale_size :
+      (Hex.DensePoly.scale (Hex.ZPoly.content f) (Hex.ZPoly.primitivePart f)).size =
+        (Hex.ZPoly.primitivePart f).size :=
+    Hex.ZPoly.scale_size_of_nonzero (Hex.ZPoly.content f)
+      (Hex.ZPoly.primitivePart f) hcontent_ne
+  calc (Hex.ZPoly.primitivePart f).size
+      = (Hex.DensePoly.scale (Hex.ZPoly.content f)
+          (Hex.ZPoly.primitivePart f)).size := h_scale_size.symm
+    _ = f.size := by rw [h_rec]
+
 /--
 Primitive + positive-leading-core variant of
 `natDegree_toPolynomial_eq_sum_of_represents` (#4646).
