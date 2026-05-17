@@ -1262,174 +1262,6 @@ theorem factor_quadratic_branch_entry_irreducible_of_quadraticRoots
   rw [hentry_eq]
   exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hraw_irr
 
-/-- **#4579 HO-1 substrate — residual irreducibility helper for `quadraticIntegerRootFactors?`.**
-
-The optional residual emitted by `Hex.quadraticIntegerRootFactors?` is
-`Hex.ZPoly.Irreducible` whenever:
-
-* the source polynomial `core` is primitive when transported to `Polynomial ℤ`,
-* `core` has positive leading coefficient (so the integer-root splitter cannot
-  produce a `-1` residual without breaking the product identity),
-* `quadraticIntegerRootFactors? core` succeeds, and
-* the residual was actually appended to `coreFactors`, i.e. `residual ≠ 1`.
-
-The proof routes through Gauss's lemma
-(`Polynomial.IsPrimitive.Int.irreducible_iff_irreducible_map_cast`) to reduce
-irreducibility over `ℤ[X]` to irreducibility over `ℚ[X]`, where the degree-1
-case is handled by `Polynomial.irreducible_of_degree_eq_one`. The degree-0
-case is ruled out by primitivity + positivity (the residual would have to be
-a unit, hence `±1`, and `hres_ne_one` together with positive leading
-coefficient on `core` rules out both).
-
-Consumed by the slow-path quadratic arm umbrella
-`factor_slow_quadratic_branch_entry_irreducible_of_choosePrimeData` (#4575,
-below), and intended for the in-flight fast-path quadratic arm umbrella
-(#4571) which has the same residual irreducibility obligation. -/
-theorem quadraticIntegerRootFactors?_residual_irreducible_of_isPrimitive
-    {core : Hex.ZPoly} {coreFactors : Array Hex.ZPoly}
-    (hprim : (HexPolyZMathlib.toPolynomial core).IsPrimitive)
-    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
-    (hquad : Hex.quadraticIntegerRootFactors? core = some coreFactors)
-    (hres_ne_one :
-      (Hex.splitIntegerRootFactorsAux core
-        (Hex.integerRootCandidates core)
-        (Hex.integerRootCandidates core).length).2 ≠ 1) :
-    Hex.ZPoly.Irreducible
-      (Hex.splitIntegerRootFactorsAux core
-        (Hex.integerRootCandidates core)
-        (Hex.integerRootCandidates core).length).2 := by
-  -- Abbreviate the splitter output.
-  set roots := Hex.integerRootCandidates core
-  set split := Hex.splitIntegerRootFactorsAux core roots roots.length
-  -- Structural facts about the splitter.
-  have hsplit_prod : split.2 * Array.polyProduct split.1 = core :=
-    Hex.splitIntegerRootFactorsAux_product core roots roots.length _ _ rfl
-  have hsplit_lc_pos :
-      0 < Hex.DensePoly.leadingCoeff (Array.polyProduct split.1) :=
-    Hex.splitIntegerRootFactorsAux_polyProduct_leadingCoeff_pos
-      core roots roots.length _ _ rfl
-  have hsplit_poly_ne : Array.polyProduct split.1 ≠ 0 := by
-    intro hzero
-    rw [hzero] at hsplit_lc_pos
-    change 0 < (0 : Int) at hsplit_lc_pos
-    omega
-  have hres_ne_zero : split.2 ≠ 0 := by
-    intro hzero
-    have hcore_zero : core = 0 := by
-      rw [← hsplit_prod, hzero]
-      exact Hex.DensePoly.zero_mul _
-    rw [hcore_zero] at hcore_lc_pos
-    change 0 < (0 : Int) at hcore_lc_pos
-    omega
-  -- Leading coefficient of `split.2` is positive.
-  have hlc :
-      Hex.DensePoly.leadingCoeff core =
-        Hex.DensePoly.leadingCoeff split.2 *
-          Hex.DensePoly.leadingCoeff (Array.polyProduct split.1) := by
-    rw [← hsplit_prod]
-    exact Hex.ZPoly.leadingCoeff_mul_of_nonzero split.2 _ hres_ne_zero hsplit_poly_ne
-  have hres_lc_pos : 0 < Hex.DensePoly.leadingCoeff split.2 := by
-    have hprod_pos : 0 < Hex.DensePoly.leadingCoeff split.2 *
-        Hex.DensePoly.leadingCoeff (Array.polyProduct split.1) := hlc ▸ hcore_lc_pos
-    exact (mul_pos_iff_of_pos_right hsplit_lc_pos).mp hprod_pos
-  -- Transport the product identity to `Polynomial ℤ`, so `toPolynomial split.2`
-  -- divides `toPolynomial core` and inherits primitivity.
-  have hsplit_prod_poly :
-      HexPolyZMathlib.toPolynomial split.2 *
-        HexPolyZMathlib.toPolynomial (Array.polyProduct split.1) =
-        HexPolyZMathlib.toPolynomial core := by
-    rw [← HexPolyZMathlib.toPolynomial_mul, hsplit_prod]
-  have hres_dvd :
-      HexPolyZMathlib.toPolynomial split.2 ∣ HexPolyZMathlib.toPolynomial core :=
-    ⟨_, hsplit_prod_poly.symm⟩
-  have hres_prim : (HexPolyZMathlib.toPolynomial split.2).IsPrimitive :=
-    Polynomial.isPrimitive_of_dvd hprim hres_dvd
-  -- The residual has `Polynomial.natDegree` equal to its executable `degree?`.
-  have hres_natDegree :
-      (HexPolyZMathlib.toPolynomial split.2).natDegree = split.2.degree?.getD 0 :=
-    HexPolyMathlib.natDegree_toPolynomial split.2
-  -- The residual's executable `degree?.getD 0` is `≤ 1` (from `hquad`'s
-  -- conditional branch structure: the residual is appended only when
-  -- `split.2.degree?.getD 0 ≤ 1`; the other return paths either return `none`
-  -- or never trigger because `split.2 ≠ 1`).
-  have hres_deg_le_one : split.2.degree?.getD 0 ≤ 1 := by
-    unfold Hex.quadraticIntegerRootFactors? at hquad
-    by_cases hdeg : core.degree?.getD 0 = 2
-    · rw [if_pos hdeg] at hquad
-      by_cases hsize : split.1.size = 0
-      · rw [if_pos hsize] at hquad
-        cases hquad
-      · rw [if_neg hsize] at hquad
-        by_cases hres_one : split.2 = 1
-        · exact absurd hres_one hres_ne_one
-        · rw [if_neg hres_one] at hquad
-          by_cases hres_deg : split.2.degree?.getD 0 ≤ 1
-          · exact hres_deg
-          · rw [if_neg hres_deg] at hquad
-            cases hquad
-    · rw [if_neg hdeg] at hquad
-      cases hquad
-  -- Transport to `Polynomial ℤ`: `toPolynomial split.2 ≠ 0` (since `split.2 ≠ 0`)
-  -- and its `natDegree ≤ 1`.
-  have hres_poly_ne : HexPolyZMathlib.toPolynomial split.2 ≠ 0 := by
-    intro h
-    apply hres_ne_zero
-    exact HexPolyZMathlib.equiv.injective (by simpa using h)
-  have hres_natDeg_le_one :
-      (HexPolyZMathlib.toPolynomial split.2).natDegree ≤ 1 := by
-    rw [hres_natDegree]; exact hres_deg_le_one
-  -- Bridge to `ZPoly.Irreducible` via `Hex.ZPoly.polynomialIrreducible_iff_irreducible`.
-  rw [← HexBerlekampZassenhausMathlib.Hex.ZPoly.polynomialIrreducible_iff_irreducible]
-  -- Case split on `natDegree`.
-  by_cases hnd0 : (HexPolyZMathlib.toPolynomial split.2).natDegree = 0
-  · -- Degree-0 case: residual is a constant. Primitive ⟹ unit ⟹ `±1`.
-    -- Positive leading coefficient excludes `-1`; `hres_ne_one` excludes `1`.
-    exfalso
-    obtain ⟨c, hc⟩ : ∃ c : ℤ, HexPolyZMathlib.toPolynomial split.2 = Polynomial.C c :=
-      ⟨_, Polynomial.eq_C_of_natDegree_eq_zero hnd0⟩
-    have hc_unit : IsUnit c := by
-      have hC_prim : (Polynomial.C c).IsPrimitive := hc ▸ hres_prim
-      exact Polynomial.isPrimitive_iff_isUnit_of_C_dvd.mp hC_prim c (dvd_refl _)
-    -- The constant `c` equals the leading coefficient of `split.2`.
-    have hc_eq_lc : c = Hex.DensePoly.leadingCoeff split.2 := by
-      have hlc_poly :
-          (HexPolyZMathlib.toPolynomial split.2).leadingCoeff =
-            Hex.DensePoly.leadingCoeff split.2 :=
-        HexPolyMathlib.leadingCoeff_toPolynomial split.2
-      rw [hc, Polynomial.leadingCoeff_C] at hlc_poly
-      exact hlc_poly
-    have hc_pos : 0 < c := hc_eq_lc ▸ hres_lc_pos
-    -- A unit `c > 0` in `ℤ` is `1`.
-    have hc_one : c = 1 := by
-      rcases Int.isUnit_iff.mp hc_unit with h1 | hneg
-      · exact h1
-      · rw [hneg] at hc_pos
-        exact absurd hc_pos (by decide)
-    -- Hence `split.2 = DensePoly.C 1 = 1`, contradicting `hres_ne_one`.
-    have hres_eq_one : split.2 = 1 := by
-      have hsplit_eq_C : split.2 = Hex.DensePoly.C c := by
-        apply HexPolyZMathlib.equiv.injective
-        simpa using hc
-      rw [hsplit_eq_C, hc_one]
-      rfl
-    exact hres_ne_one hres_eq_one
-  · -- Degree-1 case: primitive linear over ℤ is irreducible via Gauss + ℚ degree-1.
-    have hnd_one : (HexPolyZMathlib.toPolynomial split.2).natDegree = 1 := by
-      omega
-    have hres_deg :
-        (HexPolyZMathlib.toPolynomial split.2).degree = 1 := by
-      rw [Polynomial.degree_eq_natDegree hres_poly_ne, hnd_one]
-      rfl
-    have hres_map_deg :
-        ((HexPolyZMathlib.toPolynomial split.2).map (Int.castRingHom ℚ)).degree = 1 := by
-      rw [Polynomial.degree_map_eq_of_injective (Int.cast_injective)]
-      exact hres_deg
-    have hres_map_irr :
-        Irreducible ((HexPolyZMathlib.toPolynomial split.2).map (Int.castRingHom ℚ)) :=
-      Polynomial.irreducible_of_degree_eq_one hres_map_deg
-    exact (Polynomial.IsPrimitive.Int.irreducible_iff_irreducible_map_cast hres_prim).mpr
-      hres_map_irr
-
 /-- **#4575 HO-1 substrate — slow-path quadratic integer-root arm umbrella.**
 
 Per-branch HO-1 component for the slow-path **quadratic integer-root** arm of
@@ -1456,16 +1288,25 @@ Composes:
   (`HexBerlekampZassenhaus/Basic.lean`) — the Mathlib-free branch-shape
   lemma identifying each recorded entry as the sign-normalisation of a raw
   factor in the quadratic-core reassembly;
-* `Hex.reassemblePolynomialFactors_mem_xPower_or_core_of_expansionComplete`
-  — the membership classifier for the complete-expansion branch of
-  reassembly: under `hcomplete`, each raw factor is either an extracted
-  `X`-power factor or one of the supplied core factors;
-* `Hex.xPowerFactorArray_irreducible` — `X`-power factors are irreducible;
-* `Hex.quadraticIntegerRootFactors?_factor_irreducible_of_ne_residual` — every
-  non-residual quadratic core factor is `Hex.ZPoly.Irreducible` directly;
+* `Hex.quadraticIntegerRootFactors?_factor_irreducible_of_primitive` — the
+  Mathlib-free executable irreducibility of every coreFactor, residual or
+  not, under primitivity;
+* `IntReductionMod.zpoly_primitive_of_toPolynomial_isPrimitive` +
+  `IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive`
+  (from #4545) — the primitivity bridge for the squarefree core;
+* `Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero` — the positive-leading-
+  coefficient invariant for the squarefree core;
+* `Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible`
+  — the Mathlib-free reassembly lift turning per-core-factor irreducibility
+  into raw factor irreducibility under the `hcomplete` side condition;
 * `zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible` — the
   sign-normalisation lift from raw factor irreducibility to entry
   irreducibility.
+
+This umbrella shares its shape with the fast-path quadratic arm umbrella
+`factor_quadratic_branch_entry_irreducible_of_quadraticRoots` above; only the
+branch-shape lemma differs (`_slow_quadratic_branch_raw` keys off
+`hfast_none` instead of `1 < B`).
 
 Sibling arms: the fast-path constant arm #4565
 (`factor_constant_branch_entry_irreducible_of_choosePrimeData`); the fast-path
@@ -1474,18 +1315,9 @@ small-mod singleton arm #4564
 the fast-path quadratic arm #4571
 (`factor_quadratic_branch_entry_irreducible_of_quadraticRoots`, above);
 the slow-path exhaustive arm #4561 (in flight); the fast BHKS arm gated on
-directive #2567.
-
-The residual sub-case is discharged by the `#4579` substrate helper
-`quadraticIntegerRootFactors?_residual_irreducible_of_isPrimitive` (above);
-the primitivity hypothesis comes from
-`IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive`,
-the positive leading coefficient from
-`Hex.ZPoly.leadingCoeff_squareFreeCore_nonneg` upgraded via `hdeg`, and
-`residual ≠ 1` by contradiction with the recorded-entry `shouldRecord`
-filter. -/
+directive #2567. -/
 theorem factor_slow_quadratic_branch_entry_irreducible_of_choosePrimeData
-    (f : Hex.ZPoly) (_hf_ne : f ≠ 0)
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
     (B : Nat)
     (entry : Hex.ZPoly × Nat)
     (hdeg :
@@ -1500,72 +1332,32 @@ theorem factor_slow_quadratic_branch_entry_irreducible_of_choosePrimeData
       Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
         coreFactors) :
     Hex.ZPoly.Irreducible entry.1 := by
-  -- Branch-shape lemma: entry is the sign-normalisation of a raw factor in
-  -- the quadratic-core reassembly.
+  -- Branch-shape lemma: entry = normalizeFactorSign raw for raw ∈ reassembly.
   obtain ⟨raw, hraw_mem, hentry_eq⟩ :=
     Hex.factorWithBound_entry_mem_slow_quadratic_branch_raw f B entry hdeg
       hquad hfast_none hentry_mem
-  -- Combined classifier under `hcomplete`: raw is either irreducible directly
-  -- or equals the optional residual emitted by the integer-root splitter.
-  rcases
-      Hex.reassemblePolynomialFactors_quadratic_irreducible_or_residual_of_expansionComplete
-        (Hex.normalizeForFactor f) hquad hcomplete hraw_mem with
-      hirr | hres
-  · -- Direct irreducibility: lift to entry via sign-normalisation.
-    rw [hentry_eq]
-    exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hirr
-  · -- Residual subcase. Apply the `#4579` substrate helper
-    -- `quadraticIntegerRootFactors?_residual_irreducible_of_isPrimitive`,
-    -- discharging its preconditions: `hprim` from the substrate
-    -- `IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive`,
-    -- `hcore_lc_pos` from `leadingCoeff_squareFreeCore_nonneg` upgraded to
-    -- strict positivity via `hdeg` (degree-2 implies nonzero leading coeff),
-    -- and `hres_ne_one` by contradiction with the `shouldRecord` filter:
-    -- if the residual were `1`, then `entry.1 = normalizeFactorSign 1 = 1`,
-    -- but recorded entries are filtered to exclude `1`.
-    have hcore_ne_zero : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 := by
-      intro hzero
-      apply hdeg
-      rw [hzero]
-      rfl
-    have hcore_lc_pos :
-        0 < Hex.DensePoly.leadingCoeff (Hex.normalizeForFactor f).squareFreeCore := by
-      have hnonneg :
-          0 ≤ Hex.DensePoly.leadingCoeff (Hex.normalizeForFactor f).squareFreeCore := by
-        unfold Hex.normalizeForFactor
-        exact Hex.ZPoly.leadingCoeff_squareFreeCore_nonneg _
-      have hne :
-          Hex.DensePoly.leadingCoeff (Hex.normalizeForFactor f).squareFreeCore ≠ 0 :=
-        Hex.ZPoly.leadingCoeff_ne_zero_of_ne_zero _ hcore_ne_zero
-      omega
-    have hres_ne_one :
-        (Hex.splitIntegerRootFactorsAux
-            (Hex.normalizeForFactor f).squareFreeCore
-            (Hex.integerRootCandidates (Hex.normalizeForFactor f).squareFreeCore)
-            (Hex.integerRootCandidates
-              (Hex.normalizeForFactor f).squareFreeCore).length).2 ≠ 1 := by
-      intro hone
-      have hraw_one : raw = 1 := hres.trans hone
-      have hentry_one : entry.1 = 1 := by
-        rw [hentry_eq, hraw_one]
-        unfold Hex.normalizeFactorSign
-        have hnot : ¬ Hex.DensePoly.leadingCoeff (1 : Hex.ZPoly) < 0 := by
-          change ¬ Hex.DensePoly.leadingCoeff (Hex.DensePoly.C (1 : Int)) < 0
-          simp [Hex.DensePoly.leadingCoeff,
-            Hex.DensePoly.coeffs_C_of_ne_zero (by decide : (1 : Int) ≠ 0)]
-        rw [if_neg hnot]
-      have hrecord : Hex.shouldRecordPolynomialFactor entry.1 = true :=
-        Hex.factorWithBound_entry_shouldRecord f B entry hentry_mem
-      rw [hentry_one] at hrecord
-      unfold Hex.shouldRecordPolynomialFactor at hrecord
-      simp at hrecord
-    have hraw_irr : Hex.ZPoly.Irreducible raw := by
-      rw [hres]
-      exact quadraticIntegerRootFactors?_residual_irreducible_of_isPrimitive
-        (IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive
-          f _hf_ne)
-        hcore_lc_pos hquad hres_ne_one
-    rw [hentry_eq]
-    exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hraw_irr
+  -- Primitivity of squareFreeCore via the Mathlib bridge.
+  have hcore_primitive :
+      Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore :=
+    IntReductionMod.zpoly_primitive_of_toPolynomial_isPrimitive
+      (IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive
+        f hf_ne)
+  have hcore_pos :
+      0 < Hex.DensePoly.leadingCoeff
+        (Hex.normalizeForFactor f).squareFreeCore :=
+    Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf_ne
+  -- Every coreFactor is irreducible.
+  have hcore_factors_irr :
+      ∀ cf ∈ coreFactors.toList, Hex.ZPoly.Irreducible cf := fun cf hcf_mem =>
+    Hex.quadraticIntegerRootFactors?_factor_irreducible_of_primitive
+      hcore_pos hcore_primitive hquad hcf_mem
+  -- Reassembly lift: every raw factor is irreducible when reassembly is
+  -- expansion-complete and every core factor is irreducible.
+  have hraw_irr : Hex.ZPoly.Irreducible raw :=
+    Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
+      (Hex.normalizeForFactor f) coreFactors hcomplete hcore_factors_irr hraw_mem
+  -- Sign-normalisation lifts to entry irreducibility.
+  rw [hentry_eq]
+  exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hraw_irr
 
 end HexBerlekampZassenhausMathlib
