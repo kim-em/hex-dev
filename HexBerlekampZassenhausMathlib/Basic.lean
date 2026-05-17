@@ -344,11 +344,13 @@ theorem factorizationProduct_toPolynomial (φ : Hex.Factorization) :
   rfl
 
 /--
-A nonzero `Hex.ZPoly` factor with `Hex.normalizeFactorSign` fixed has a
-nonnegative leading coefficient, so its Mathlib transport is
-`normalize`-fixed in `Polynomial ℤ`.
+A nonzero executable integer polynomial fixed by `Hex.normalizeFactorSign`
+transports to a `normalize`-fixed polynomial over `ℤ`.
+
+This is the reusable sign-normalization bridge for Mathlib-side factorization
+arguments over `Hex.ZPoly` factors.
 -/
-private theorem normalize_toPolynomial_of_normalizeFactorSign_id
+theorem normalize_toPolynomial_of_normalizeFactorSign_id
     {f : Hex.ZPoly} (hne : f ≠ 0)
     (h : Hex.normalizeFactorSign f = f) :
     normalize (HexPolyZMathlib.toPolynomial f) = HexPolyZMathlib.toPolynomial f := by
