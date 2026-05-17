@@ -1624,6 +1624,84 @@ theorem normalizeForFactor_repeatedPart_normalizedFactor_covered_by_coreFactors
     (Hex.ZPoly.Irreducible_iff_polynomialIrreducible q).mp (hirr q hq_mem)
   exact hr_irr.associated_of_dvd hq_irr_poly hr_dvd_qPoly
 
+/-- Local copy of the integer-polynomial bridge for the executable unit. -/
+private theorem toPolynomial_one_zpoly :
+    HexPolyZMathlib.toPolynomial (1 : Hex.ZPoly) = 1 := by
+  show HexPolyZMathlib.toPolynomial (Hex.DensePoly.C (1 : Int)) = 1
+  rw [HexPolyZMathlib.toPolynomial_C]
+  simp
+
+/--
+The executable fold of packed powers agrees with the corresponding
+`Polynomial ℤ` product after transporting every factor through
+`toPolynomial`.
+
+This is the transport half of the #4611 exponent-decomposition theorem:
+once the UFD argument supplies the polynomial-level powers in core-factor
+order, this lemma converts that certificate back to the exact `ZPoly` fold
+shape expected by the Mathlib-free expansion helper.
+-/
+private theorem toPolynomial_factorPower_foldl_aux
+    (entries : List (Hex.ZPoly × Nat)) (init : Hex.ZPoly) :
+    HexPolyZMathlib.toPolynomial
+        ((entries.map
+          (fun qe => Hex.Factorization.factorPower qe.1 qe.2)).foldl (· * ·) init) =
+      HexPolyZMathlib.toPolynomial init *
+        (entries.map
+          (fun qe => HexPolyZMathlib.toPolynomial qe.1 ^ qe.2)).prod := by
+  induction entries generalizing init with
+  | nil =>
+      simp
+  | cons qe entries ih =>
+      rw [List.map_cons, List.foldl_cons, ih, HexPolyZMathlib.toPolynomial_mul,
+        factorPower_toPolynomial]
+      simp [List.prod_cons, mul_assoc]
+
+private theorem toPolynomial_factorPower_foldl
+    (entries : List (Hex.ZPoly × Nat)) :
+    HexPolyZMathlib.toPolynomial
+        ((entries.map
+          (fun qe => Hex.Factorization.factorPower qe.1 qe.2)).foldl (· * ·) 1) =
+      (entries.map
+        (fun qe => HexPolyZMathlib.toPolynomial qe.1 ^ qe.2)).prod := by
+  rw [toPolynomial_factorPower_foldl_aux, toPolynomial_one_zpoly, one_mul]
+
+/--
+Polynomial-to-executable bridge for the #4611 repeated-part power
+decomposition.
+
+The remaining mathematical side condition is the polynomial-level exact
+decomposition `hpoly_decomp`.  In downstream use this is the part supplied by
+the normalized-factor/UFD exponent extraction: #4745 already gives support of
+the repeated part inside the supplied core factors, and the caller must still
+show that the chosen exponents multiply to the transported repeated part.
+This theorem then converts that certificate into the exact executable
+`Factorization.factorPower` fold consumed by
+`Hex.expandRepeatedPartFactorArray_residual_eq_one_of_pow_decomposition`.
+-/
+theorem normalizeForFactor_repeatedPart_isPow_polyProduct_of_irreducible_factors_cover
+    (f : Hex.ZPoly) (_hf : f ≠ 0)
+    (coreFactors : Array Hex.ZPoly)
+    (_hirr : ∀ q ∈ coreFactors.toList, Hex.ZPoly.Irreducible q)
+    (_hprod : Array.polyProduct coreFactors =
+      (Hex.normalizeForFactor f).squareFreeCore)
+    (exponents : List Nat)
+    (hlen : exponents.length = coreFactors.size)
+    (hpoly_decomp :
+      HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).repeatedPart =
+        ((coreFactors.toList.zip exponents).map
+          (fun qe => HexPolyZMathlib.toPolynomial qe.1 ^ qe.2)).prod) :
+    ∃ exponents : List Nat,
+      exponents.length = coreFactors.size ∧
+      (Hex.normalizeForFactor f).repeatedPart =
+        ((coreFactors.toList.zip exponents).map
+          (fun qe => Hex.Factorization.factorPower qe.1 qe.2)).foldl (· * ·) 1 := by
+  refine ⟨exponents, hlen, ?_⟩
+  apply HexPolyZMathlib.equiv.injective
+  simp only [HexPolyZMathlib.equiv_apply]
+  rw [toPolynomial_factorPower_foldl]
+  exact hpoly_decomp
+
 
 end IntReductionMod
 
