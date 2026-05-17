@@ -3832,6 +3832,27 @@ theorem monic_primitive_sign_normalized_of_monic
     simp [hnot_neg]
 
 /--
+Size of the lifted-factor array equals the size of the modular-factor array.
+
+This is the `factor_count_eq` field that `HenselSubsetLiftHypotheses` (line
+1425 above) requires for the executable `Hex.choosePrimeData` /
+`Hex.henselLiftData` surface. The lifted-factor array is
+`Hex.ZPoly.multifactorLiftQuadratic primeData.p B core
+  (primeData.factorsModP.map Hex.FpPoly.liftToZ)`, whose size equals the
+input map's size by `Hex.ZPoly.multifactorLiftQuadratic_size_eq_input`; the
+map preserves size by `Array.size_map`. -/
+theorem henselLiftData_liftedFactors_size_eq
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData) :
+    (Hex.henselLiftData core B primeData).liftedFactors.size =
+      primeData.factorsModP.size := by
+  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  show (Hex.ZPoly.multifactorLiftQuadratic primeData.p B core
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ)).size
+      = primeData.factorsModP.size
+  rw [Hex.ZPoly.multifactorLiftQuadratic_size_eq_input]
+  simp
+
+/--
 Thin umbrella wrapper exposing per-output monicness of `Hex.henselLiftData` in
 the Mathlib-facing surface.
 
