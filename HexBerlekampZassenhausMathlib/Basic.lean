@@ -7318,6 +7318,181 @@ private theorem size_centeredLiftPoly_eq_of_pos_leadingCoeff_bound
     exact h
   exact le_antisymm hg'_size_le hg'_size_ge
 
+/-- `Hex.normalizeFactorSign` preserves stored size: it either returns the input
+unchanged or negates every coefficient via `DensePoly.scale (-1)`, and scaling by
+the nonzero integer `-1` preserves stored size. -/
+private theorem size_normalizeFactorSign_eq (f : Hex.ZPoly) :
+    (Hex.normalizeFactorSign f).size = f.size := by
+  unfold Hex.normalizeFactorSign
+  by_cases hneg : Hex.DensePoly.leadingCoeff f < 0
+  · rw [if_pos hneg]
+    exact Hex.ZPoly.scale_size_of_nonzero (-1 : Int) f (by decide)
+  · rw [if_neg hneg]
+
+/-- `Hex.ZPoly.primitivePart` preserves stored size on nonzero inputs.
+
+Reconstruct `f = scale (content f) (primitivePart f)` via
+`content_mul_primitivePart`, then apply `Hex.ZPoly.scale_size_of_nonzero` with
+the fact that `content f ≠ 0` whenever `f ≠ 0`. -/
+private theorem size_primitivePart_eq_of_ne_zero {f : Hex.ZPoly} (hf : f ≠ 0) :
+    (Hex.ZPoly.primitivePart f).size = f.size := by
+  have hcontent_ne : (Hex.ZPoly.content f : Int) ≠ 0 := by
+    intro hcontent
+    apply hf
+    have hpart_zero : Hex.ZPoly.primitivePart f = 0 := by
+      simpa [Hex.ZPoly.primitivePart] using
+        Hex.DensePoly.primitivePart_eq_zero_of_content_eq_zero f
+          (by simpa [Hex.ZPoly.content] using hcontent)
+    have hreconstruct := Hex.ZPoly.content_mul_primitivePart f
+    rw [hcontent, hpart_zero] at hreconstruct
+    have : Hex.DensePoly.scale (0 : Int) (0 : Hex.ZPoly) = (0 : Hex.ZPoly) := by
+      apply Hex.DensePoly.ext_coeff
+      intro n
+      rw [Hex.DensePoly.coeff_scale (R := Int) (0 : Int) (0 : Hex.ZPoly) n
+        (Int.zero_mul 0), Hex.DensePoly.coeff_zero]
+      exact Int.zero_mul _
+    rw [this] at hreconstruct
+    exact hreconstruct.symm
+  have h_rec := Hex.ZPoly.content_mul_primitivePart f
+  have h_scale_size :
+      (Hex.DensePoly.scale (Hex.ZPoly.content f) (Hex.ZPoly.primitivePart f)).size =
+        (Hex.ZPoly.primitivePart f).size :=
+    Hex.ZPoly.scale_size_of_nonzero (Hex.ZPoly.content f)
+      (Hex.ZPoly.primitivePart f) hcontent_ne
+  calc (Hex.ZPoly.primitivePart f).size
+      = (Hex.DensePoly.scale (Hex.ZPoly.content f)
+          (Hex.ZPoly.primitivePart f)).size := h_scale_size.symm
+    _ = f.size := by rw [h_rec]
+
+/-- The Mathlib-transported `natDegree` of the scaled recombination candidate
+over a lifted-factor subset equals the sum of the Mathlib-transported
+`natDegree`s of the selected lifted factors, given primitive + positive-leading
+`core` and the Mignotte precision bound.
+
+The candidate goes through `centeredLiftPoly ∘ primitivePart ∘ normalizeFactorSign`
+on top of `scaledLiftedFactorProduct = scale (lc core) (liftedFactorProduct)`.
+Each step preserves stored size: scaling by the nonzero leading coefficient,
+centred-lift under the positive-leading bound, primitive part on a nonzero
+input, and sign normalisation. Combined with `lp.size = ∑ + 1` for the monic
+lifted-factor product, the candidate's natDegree decomposes as a sum.
+
+Companion scaled variant of `natDegree_toPolynomial_recombinationCandidate_eq_sum`.
+Consumed by the scaled cover-at-min chain for the primitive recursive
+recombination coverage proof (#4647 / #4737). -/
+theorem natDegree_toPolynomial_scaledRecombinationCandidate_eq_sum
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (hcore_ne : core ≠ 0)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (T : LiftedFactorSubset d) :
+    (HexPolyZMathlib.toPolynomial
+        (scaledRecombinationCandidate core d T)).natDegree =
+      ∑ i ∈ T,
+        (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree := by
+  set lp := liftedFactorProduct d T with hlp_def
+  have hlp_monic : Hex.DensePoly.Monic lp :=
+    liftedFactorProduct_monic d T (fun i _ => hd_liftedFactor_monic i)
+  have hlp_size_pos : 0 < lp.size := zpoly_size_pos_of_monic hlp_monic
+  have hcore_lc_ne : Hex.DensePoly.leadingCoeff core ≠ (0 : Int) :=
+    ne_of_gt hcore_lc_pos
+  have hslp_size :
+      (scaledLiftedFactorProduct core d T).size = lp.size := by
+    unfold scaledLiftedFactorProduct
+    exact size_scale_eq_of_monic_of_ne_zero hcore_lc_ne hlp_monic
+  have hslp_lc :
+      Hex.DensePoly.leadingCoeff (scaledLiftedFactorProduct core d T) =
+        Hex.DensePoly.leadingCoeff core := by
+    unfold scaledLiftedFactorProduct
+    rw [Hex.ZPoly.leadingCoeff_scale_of_nonzero
+      (Hex.DensePoly.leadingCoeff core) lp hcore_lc_ne,
+      show Hex.DensePoly.leadingCoeff lp = (1 : Int) from hlp_monic]
+    ring
+  have hslp_lc_pos :
+      0 < Hex.DensePoly.leadingCoeff (scaledLiftedFactorProduct core d T) := by
+    rw [hslp_lc]; exact hcore_lc_pos
+  have hcore_size_pos : 0 < core.size := by
+    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
+    · exfalso
+      have hback_none : core.coeffs.back? = none := by
+        rw [Array.back?_eq_getElem?]
+        have hcoeffs_size : core.coeffs.size = 0 := by
+          simpa [Hex.DensePoly.size] using hzero
+        simp [hcoeffs_size]
+      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
+        unfold Hex.DensePoly.leadingCoeff
+        rw [hback_none]
+        rfl
+      rw [hlc_zero] at hcore_lc_pos
+      omega
+    · exact hpos
+  have hcore_lc_bound :
+      (Hex.DensePoly.leadingCoeff core).natAbs ≤
+        Hex.ZPoly.defaultFactorCoeffBound core := by
+    have hcore_dvd_self : core ∣ core :=
+      ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
+    have hbound :=
+      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
+        (core.size - 1)
+    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
+    exact hbound
+  have hslp_lc_bound :
+      (Hex.DensePoly.leadingCoeff (scaledLiftedFactorProduct core d T)).natAbs ≤
+        Hex.ZPoly.defaultFactorCoeffBound core := by
+    rwa [hslp_lc]
+  have hcl_size :
+      (Hex.centeredLiftPoly (scaledLiftedFactorProduct core d T)
+          (d.p ^ d.k)).size =
+        (scaledLiftedFactorProduct core d T).size :=
+    size_centeredLiftPoly_eq_of_pos_leadingCoeff_bound
+      hslp_lc_pos hslp_lc_bound hprecision
+  have hcl_size_pos :
+      0 < (Hex.centeredLiftPoly (scaledLiftedFactorProduct core d T)
+          (d.p ^ d.k)).size := by
+    rw [hcl_size, hslp_size]; exact hlp_size_pos
+  have hcl_ne :
+      Hex.centeredLiftPoly (scaledLiftedFactorProduct core d T) (d.p ^ d.k)
+        ≠ 0 := by
+    intro h
+    have h0 :
+        (Hex.centeredLiftPoly (scaledLiftedFactorProduct core d T)
+            (d.p ^ d.k)).size = 0 := by
+      rw [h]; rfl
+    omega
+  have hpp_size :
+      (Hex.ZPoly.primitivePart
+          (Hex.centeredLiftPoly (scaledLiftedFactorProduct core d T)
+            (d.p ^ d.k))).size =
+        (Hex.centeredLiftPoly (scaledLiftedFactorProduct core d T)
+            (d.p ^ d.k)).size :=
+    size_primitivePart_eq_of_ne_zero hcl_ne
+  have hsc_size :
+      (scaledRecombinationCandidate core d T).size = lp.size := by
+    show (Hex.normalizeFactorSign
+        (Hex.ZPoly.primitivePart
+          (Hex.centeredLiftPoly (scaledLiftedFactorProduct core d T)
+            (d.p ^ d.k)))).size = lp.size
+    rw [size_normalizeFactorSign_eq, hpp_size, hcl_size, hslp_size]
+  have hsc_size_pos : 0 < (scaledRecombinationCandidate core d T).size := by
+    rw [hsc_size]; exact hlp_size_pos
+  have hsc_natDeg :
+      (HexPolyZMathlib.toPolynomial
+          (scaledRecombinationCandidate core d T)).natDegree =
+        (scaledRecombinationCandidate core d T).size - 1 := by
+    rw [HexPolyMathlib.natDegree_toPolynomial]
+    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hsc_size_pos]
+  have hlp_natDeg :
+      (HexPolyZMathlib.toPolynomial lp).natDegree = lp.size - 1 := by
+    rw [HexPolyMathlib.natDegree_toPolynomial]
+    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hlp_size_pos]
+  rw [hsc_natDeg, hsc_size, ← hlp_natDeg, hlp_def, toPolynomial_liftedFactorProduct]
+  apply Polynomial.natDegree_prod_of_monic
+  intro i _
+  show (HexPolyZMathlib.toPolynomial (liftedFactor d i)).leadingCoeff = 1
+  rw [HexPolyMathlib.leadingCoeff_toPolynomial]
+  exact hd_liftedFactor_monic i
+
 /--
 Primitive + positive-leading-core variant of
 `natDegree_toPolynomial_eq_sum_of_represents` (#4646).
@@ -8134,6 +8309,28 @@ theorem toPolynomial_recombinationCandidate_squarefree
   have hmul : quotient * recombinationCandidate d T = target :=
     Hex.exactQuotient?_product hquot
   have hcand_dvd_target : recombinationCandidate d T ∣ target := by
+    refine ⟨quotient, ?_⟩
+    rw [Hex.DensePoly.mul_comm_poly (S := Int)]
+    exact hmul.symm
+  exact Squarefree.squarefree_of_dvd
+    (HexPolyMathlib.toPolynomial_dvd hcand_dvd_target) hpartition.target_squarefree
+
+/-- Scaled-candidate counterpart of `toPolynomial_recombinationCandidate_squarefree`:
+inherits squarefreeness from a squarefree `target` via the exact-quotient witness.
+Consumed by the scaled `mem_T_iff_*` chain for the primitive recursive
+recombination coverage proof (#4647 / #4737). -/
+theorem toPolynomial_scaledRecombinationCandidate_squarefree
+    {core target quotient : Hex.ZPoly} {d : Hex.LiftData}
+    {J T : LiftedFactorSubset d}
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (hquot :
+      Hex.exactQuotient? target (scaledRecombinationCandidate core d T) =
+        some quotient) :
+    Squarefree (HexPolyZMathlib.toPolynomial
+      (scaledRecombinationCandidate core d T)) := by
+  have hmul : quotient * scaledRecombinationCandidate core d T = target :=
+    Hex.exactQuotient?_product hquot
+  have hcand_dvd_target : scaledRecombinationCandidate core d T ∣ target := by
     refine ⟨quotient, ?_⟩
     rw [Hex.DensePoly.mul_comm_poly (S := Int)]
     exact hmul.symm
