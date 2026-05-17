@@ -8857,7 +8857,7 @@ first case contradicts `Irreducible q₁`. Used by downstream HO-1 dischargers
 to translate the Mathlib structural fact's "pairwise non-associate
 irreducible factors" condition into the direct non-divisibility hypothesis
 consumed by `expandRepeatedPartFactorArray_residual_eq_one_of_pow_decomposition`. -/
-private theorem irreducible_not_dvd_of_not_associated
+theorem irreducible_not_dvd_of_not_associated
     {q₁ q₂ : ZPoly} (hq₁ : ZPoly.Irreducible q₁) (hq₂ : ZPoly.Irreducible q₂)
     (hassoc : ¬ ZPoly.Associated q₁ q₂) :
     ¬ q₁ ∣ q₂ := by
