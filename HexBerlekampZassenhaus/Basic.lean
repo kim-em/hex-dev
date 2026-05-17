@@ -6213,6 +6213,14 @@ class Irreducible (f : ZPoly) : Prop where
   no_factors :
     ∀ a b : ZPoly, f = a * b → ZPoly.IsUnit a ∨ ZPoly.IsUnit b
 
+/-- Mathlib-free associatedness predicate for integer polynomials: `a` and
+`b` are associated when `b = a * u` for some `ZPoly`-unit `u` (i.e. `u = ±1`).
+Used by HO-1 substrate dischargers to bridge "Mathlib-side irreducible factor
+of the square-free core" to the direct non-divisibility hypothesis required
+by the greedy expansion helper. -/
+def Associated (a b : ZPoly) : Prop :=
+  ∃ u : ZPoly, ZPoly.IsUnit u ∧ b = a * u
+
 private def isNatPrime (n : Nat) : Bool :=
   2 ≤ n && !((List.range n).any fun d => 2 ≤ d && d * d ≤ n && n % d == 0)
 
@@ -8794,6 +8802,226 @@ private theorem expandRepeatedPartFactorArray_singleton_one (rp : ZPoly) :
   show ((List.replicate 0 (1 : ZPoly)).toArray ++ ((#[] : Array ZPoly), rp).1,
       ((#[] : Array ZPoly), rp).2) = (#[], rp)
   simp
+
+/-- **#4603 HO-1 substrate — irreducibility/non-associate bridge.** Two
+irreducible integer polynomials that are not associated do not divide one
+another: if `q₁` divides `q₂` and both are irreducible, the irreducibility
+decomposition `q₂ = q₁ * w` forces either `q₁` or `w` to be a unit, and the
+first case contradicts `Irreducible q₁`. Used by downstream HO-1 dischargers
+to translate the Mathlib structural fact's "pairwise non-associate
+irreducible factors" condition into the direct non-divisibility hypothesis
+consumed by `expandRepeatedPartFactorArray_residual_eq_one_of_pow_decomposition`. -/
+private theorem irreducible_not_dvd_of_not_associated
+    {q₁ q₂ : ZPoly} (hq₁ : ZPoly.Irreducible q₁) (hq₂ : ZPoly.Irreducible q₂)
+    (hassoc : ¬ ZPoly.Associated q₁ q₂) :
+    ¬ q₁ ∣ q₂ := by
+  intro hdvd
+  rcases hdvd with ⟨w, hw⟩
+  rcases hq₂.no_factors q₁ w hw with hunit_q | hunit_w
+  · exact hq₁.not_unit hunit_q
+  · exact hassoc ⟨w, hunit_w, hw⟩
+
+/-- Converse of `exactQuotient?_product`: when `candidate` does not divide
+`target` in `ZPoly`, the exact-quotient probe necessarily returns `none`.
+A direct contrapositive of the witness extraction. -/
+private theorem exactQuotient?_eq_none_of_not_dvd
+    {target candidate : ZPoly}
+    (hnot_dvd : ¬ candidate ∣ target) :
+    exactQuotient? target candidate = none := by
+  cases hcase : exactQuotient? target candidate with
+  | none => rfl
+  | some w =>
+      exfalso
+      apply hnot_dvd
+      have hmul : w * candidate = target := exactQuotient?_product hcase
+      refine ⟨w, ?_⟩
+      rw [← hmul]
+      exact DensePoly.mul_comm_poly (S := Int) w candidate
+
+/-- Greedy peel of `candidate^?` from `target` exits at multiplicity zero
+when `candidate` does not divide `target`. Combines
+`exactQuotient?_eq_none_of_not_dvd` with one unfold of `consumeExactPower`. -/
+private theorem consumeExactPower_eq_self_zero_of_not_dvd
+    {target candidate : ZPoly}
+    (hnot_dvd : ¬ candidate ∣ target) (fuel : Nat) :
+    consumeExactPower target candidate fuel = (target, 0) := by
+  cases fuel with
+  | zero => rfl
+  | succ n =>
+      unfold consumeExactPower
+      rw [exactQuotient?_eq_none_of_not_dvd hnot_dvd]
+
+/-- **#4603 HO-1 substrate — single-factor expansion helper.** For a monic
+positive-degree integer polynomial `q` that does not divide a residual `r`,
+the greedy `consumeExactPower` on `q ^ k * r` extracts exactly `k` copies of
+`q` and returns `r` as the residual, provided the fuel covers `k + 1`
+iterations. The monic positive-degree hypothesis is what makes
+`exactQuotient?` agree with `ZPoly`-level divisibility (via
+`exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree`); the
+`¬ q ∣ r` hypothesis closes off the last `consumeExactPower` step at
+multiplicity `k`. Consumed by
+`expandRepeatedPartFactorArray_residual_eq_one_of_pow_decomposition` to
+recurse one head factor at a time. -/
+private theorem consumeExactPower_pow_mul_of_not_dvd
+    (q r : ZPoly) (k : Nat)
+    (hq_monic : DensePoly.Monic q)
+    (hq_degree : 0 < q.degree?.getD 0)
+    (hnot_dvd : ¬ q ∣ r)
+    (fuel : Nat) (hfuel : k + 1 ≤ fuel) :
+    consumeExactPower (Factorization.polyPow q k * r) q fuel = (r, k) := by
+  induction k generalizing fuel with
+  | zero =>
+      rw [polyPow_zero_lemma, ZPoly.one_mul_zpoly]
+      exact consumeExactPower_eq_self_zero_of_not_dvd hnot_dvd fuel
+  | succ m ih =>
+      cases fuel with
+      | zero => omega
+      | succ fuel' =>
+          have hfuel' : m + 1 ≤ fuel' := by omega
+          have htarget_eq :
+              (Factorization.polyPow q m * r) * q =
+                Factorization.polyPow q (m + 1) * r := by
+            rw [polyPow_succ_lemma]
+            rw [DensePoly.mul_assoc_poly (S := Int) (Factorization.polyPow q m) r q]
+            rw [DensePoly.mul_comm_poly (S := Int) r q]
+            rw [← DensePoly.mul_assoc_poly (S := Int) (Factorization.polyPow q m) q r]
+          have hquot :
+              exactQuotient? (Factorization.polyPow q (m + 1) * r) q =
+                some (Factorization.polyPow q m * r) :=
+            exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree
+              hq_monic hq_degree htarget_eq
+          unfold consumeExactPower
+          rw [hquot]
+          simp only
+          rw [ih fuel' hfuel']
+
+/-- **#4603 HO-1 substrate — list-level pow-decomposition expansion helper.**
+Given a list of monic positive-degree polynomials and a matching list of
+exponents, if the running residual `rp` factors as
+`(∏ (qᵢ, eᵢ) ∈ pairs, qᵢ ^ eᵢ)` and each head factor fails to divide its
+suffix product (the "tail non-divisibility" prefix witness), then
+`expandRepeatedPartFactorsAux` reduces the residual to `1`. Proved by
+induction on the core-factor list, peeling off one head factor at a time
+via `consumeExactPower_pow_mul_of_not_dvd`. The fuel budget must cover each
+individual exponent (which is automatic for the default
+`rp.size + 1` budget when the core factors are nonzero). -/
+private theorem expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decomposition :
+    ∀ (coreFactors : List ZPoly) (exponents : List Nat) (rp : ZPoly) (fuel : Nat),
+      exponents.length = coreFactors.length →
+      (∀ q ∈ coreFactors, DensePoly.Monic q) →
+      (∀ q ∈ coreFactors, 0 < q.degree?.getD 0) →
+      (∀ pre q e suf,
+        coreFactors.zip exponents = pre ++ (q, e) :: suf →
+        ¬ q ∣ (suf.map (fun (qe : ZPoly × Nat) =>
+                Factorization.polyPow qe.1 qe.2)).foldl (· * ·) 1) →
+      rp = ((coreFactors.zip exponents).map
+              (fun (qe : ZPoly × Nat) => Factorization.polyPow qe.1 qe.2)).foldl (· * ·) 1 →
+      (∀ (qe : ZPoly × Nat), qe ∈ coreFactors.zip exponents → qe.2 + 1 ≤ fuel) →
+      (expandRepeatedPartFactorsAux coreFactors rp fuel).2 = 1 := by
+  intro coreFactors
+  induction coreFactors with
+  | nil =>
+      intro exponents rp fuel _ _ _ _ hdecomp _
+      unfold expandRepeatedPartFactorsAux
+      simp only [List.zip_nil_left, List.map_nil, List.foldl_nil] at hdecomp
+      exact hdecomp
+  | cons q qs ih =>
+      intro exponents rp fuel hlen hmonic hdegree hnot_dvd_tail hdecomp hfuel
+      cases exponents with
+      | nil => simp at hlen
+      | cons e es =>
+          have hq_monic : DensePoly.Monic q := hmonic q List.mem_cons_self
+          have hq_degree : 0 < q.degree?.getD 0 := hdegree q List.mem_cons_self
+          have hzip_eq : (q :: qs).zip (e :: es) = (q, e) :: qs.zip es := rfl
+          let tailProduct : ZPoly :=
+            ((qs.zip es).map
+              (fun (qe : ZPoly × Nat) => Factorization.polyPow qe.1 qe.2)).foldl (· * ·) 1
+          have htail_def :
+              tailProduct =
+                ((qs.zip es).map
+                  (fun (qe : ZPoly × Nat) => Factorization.polyPow qe.1 qe.2)).foldl
+                    (· * ·) 1 := rfl
+          have hrp_eq : rp = Factorization.polyPow q e * tailProduct := by
+            rw [hdecomp, hzip_eq]
+            simp only [List.map_cons, List.foldl_cons]
+            rw [ZPoly.one_mul_zpoly]
+            exact ZPoly.list_foldl_mul_eq_mul_foldl_one
+              (Factorization.polyPow q e)
+              ((qs.zip es).map
+                (fun (qe : ZPoly × Nat) => Factorization.polyPow qe.1 qe.2))
+          have hnot_dvd_head : ¬ q ∣ tailProduct := by
+            rw [htail_def]
+            exact hnot_dvd_tail [] q e (qs.zip es) (by rw [hzip_eq, List.nil_append])
+          have hfuel_head : e + 1 ≤ fuel :=
+            hfuel (q, e) (by rw [hzip_eq]; exact List.mem_cons_self)
+          have hcep :
+              consumeExactPower rp q fuel = (tailProduct, e) := by
+            rw [hrp_eq]
+            exact consumeExactPower_pow_mul_of_not_dvd q tailProduct e
+              hq_monic hq_degree hnot_dvd_head fuel hfuel_head
+          unfold expandRepeatedPartFactorsAux
+          rw [hcep]
+          simp only
+          have hlen' : es.length = qs.length := by
+            simpa using hlen
+          have hmonic' : ∀ q' ∈ qs, DensePoly.Monic q' :=
+            fun q' hq' => hmonic q' (List.mem_cons_of_mem _ hq')
+          have hdegree' : ∀ q' ∈ qs, 0 < q'.degree?.getD 0 :=
+            fun q' hq' => hdegree q' (List.mem_cons_of_mem _ hq')
+          have hnot_dvd_tail' :
+              ∀ pre q' e' suf,
+                qs.zip es = pre ++ (q', e') :: suf →
+                ¬ q' ∣ (suf.map (fun (qe : ZPoly × Nat) =>
+                          Factorization.polyPow qe.1 qe.2)).foldl (· * ·) 1 := by
+            intro pre q' e' suf hsplit
+            apply hnot_dvd_tail ((q, e) :: pre) q' e' suf
+            rw [hzip_eq, List.cons_append, hsplit]
+          have hfuel' :
+              ∀ (qe : ZPoly × Nat), qe ∈ qs.zip es → qe.2 + 1 ≤ fuel := by
+            intro qe hqe
+            apply hfuel qe
+            rw [hzip_eq]
+            exact List.mem_cons_of_mem _ hqe
+          exact ih es tailProduct fuel hlen' hmonic' hdegree'
+            hnot_dvd_tail' htail_def hfuel'
+
+/-- **#4603 HO-1 substrate — array-level pow-decomposition expansion helper.**
+Public surface for `expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decomposition`
+that targets `expandRepeatedPartFactorArray` directly. Given a list of monic
+positive-degree core factors, a matching list of exponents, a head-product
+decomposition `rp = ∏ qᵢ ^ eᵢ`, and pairwise tail-non-divisibility for each
+head factor relative to the suffix product, the greedy expansion completely
+consumes `rp` and reports residual `1`. The downstream discharger
+`reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero` (HO-1
+substrate sub-issue C) supplies the structural decomposition (Mathlib-side,
+from sub-issue #4602) and consumes this helper to conclude
+`reassemblyExpansionComplete` on the quadratic arms. Compare the small-mod
+singleton sibling `expandRepeatedPartFactorArray_pow_singleton` (#4597
+deliverable 2), which specialises this shape to a single irreducible. -/
+theorem expandRepeatedPartFactorArray_residual_eq_one_of_pow_decomposition
+    (rp : ZPoly) (coreFactors : Array ZPoly)
+    (hmonic : ∀ q ∈ coreFactors.toList, DensePoly.Monic q)
+    (hdegree : ∀ q ∈ coreFactors.toList, 0 < q.degree?.getD 0)
+    (exponents : List Nat)
+    (hlen : exponents.length = coreFactors.size)
+    (hnot_dvd_tail :
+      ∀ pre q e suf,
+        coreFactors.toList.zip exponents = pre ++ (q, e) :: suf →
+        ¬ q ∣ (suf.map (fun (qe : ZPoly × Nat) =>
+                Factorization.polyPow qe.1 qe.2)).foldl (· * ·) 1)
+    (hdecomp :
+      rp = ((coreFactors.toList.zip exponents).map
+              (fun (qe : ZPoly × Nat) => Factorization.polyPow qe.1 qe.2)).foldl (· * ·) 1)
+    (hfuel :
+      ∀ (qe : ZPoly × Nat),
+        qe ∈ coreFactors.toList.zip exponents → qe.2 + 1 ≤ rp.size + 1) :
+    (expandRepeatedPartFactorArray rp coreFactors).2 = 1 := by
+  unfold expandRepeatedPartFactorArray
+  have hlen' : exponents.length = coreFactors.toList.length := by
+    simpa using hlen
+  exact expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decomposition
+    coreFactors.toList exponents rp (rp.size + 1)
+    hlen' hmonic hdegree hnot_dvd_tail hdecomp hfuel
 
 /-- The reassembled output for a single-`1` core list is exactly the
 normalization prefix followed by `1`. Both branches of `reassemblePolynomialFactors`
