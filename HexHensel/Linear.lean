@@ -34,6 +34,11 @@ def coeffwiseDiv (f : ZPoly) (m : Nat) : ZPoly :=
     simp [hi, hcoeff]
     rfl
 
+/-- Recover `f - g` from its truncated coefficient-wise division by `m` when
+`g ≡ f (mod m)`: the congruence forces `m` to exactly divide each coefficient
+of `f - g`, so the truncating `coeffwiseDiv` followed by `DensePoly.scale` of
+`m` loses nothing. Consumed by the correction-proof chain in `linearHenselStep`
+to justify that the lifted coefficient correction is exact mod `p^k`. -/
 private theorem scale_coeffwiseDiv_sub_of_congr
     (f g : ZPoly) (m : Nat) (hfg : ZPoly.congr g f m) :
     DensePoly.scale (Int.ofNat m) (coeffwiseDiv (f - g) m) = f - g := by
@@ -54,7 +59,12 @@ private theorem scale_coeffwiseDiv_sub_of_congr
 
 end ZPoly
 
-/-- Result of one linear Hensel lift step. -/
+/--
+Result of one linear Hensel lift step, packaging the lifted first factor `g`
+and the lifted complementary factor `h`. Callers can pattern-match on the
+two projections directly, or rewrite via the unfolding simp lemmas
+`linearHenselStep_g` / `linearHenselStep_h`.
+-/
 structure LinearLiftResult where
   /-- The lifted first factor. -/
   g : ZPoly
@@ -142,6 +152,13 @@ private theorem congr_mul_reduceModPow_pair
   · exact ZPoly.congr_reduceModPow g p k (Nat.pow_pos (ZMod64.Bounds.pPos (p := p)))
   · exact ZPoly.congr_reduceModPow h p k (Nat.pow_pos (ZMod64.Bounds.pPos (p := p)))
 
+/-- The algebraic rearrangement
+`r * hMod + gMod * (s * eMod + q * hMod) = eMod`,
+given the Euclidean division `q * gMod + r = t * eMod` and the Bezout identity
+`s * gMod + t * hMod = 1` over `FpPoly p`. This identity is what makes one
+linear Hensel correction step exact mod `p`: it is the rearrangement called
+on by the correction-proof chain to discharge the mod-`p` residue between the
+naive correction `q * hMod` and the actual lifted increment. -/
 private theorem linearHenselStep_correction_identity
     (p : Nat) [ZMod64.Bounds p]
     (gMod hMod eMod s t q r : FpPoly p)
