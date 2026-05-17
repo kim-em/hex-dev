@@ -6300,6 +6300,207 @@ theorem representsIntegerFactorAtLift_primitive
     exact hcore_lc_pos
   exact ⟨hfactor_primitive, hfactor_lc_pos⟩
 
+/-- Scaling a monic integer polynomial by a nonzero constant preserves its
+stored size: the leading coefficient becomes `c * 1 = c ≠ 0`, and `scale` never
+grows the array. -/
+private theorem size_scale_eq_of_monic_of_ne_zero
+    {c : Int} (hc : c ≠ 0) {f : Hex.ZPoly} (hmonic : Hex.DensePoly.Monic f) :
+    (Hex.DensePoly.scale c f).size = f.size := by
+  have hf_size_pos : 0 < f.size := zpoly_size_pos_of_monic hmonic
+  have hf_lead : f.coeff (f.size - 1) = (1 : Int) := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last f hf_size_pos]; exact hmonic
+  set g := Hex.DensePoly.scale c f with hg_def
+  have hcoeff_top : g.coeff (f.size - 1) = c := by
+    rw [hg_def, Hex.DensePoly.coeff_scale (R := Int) c f _ (Int.mul_zero _),
+      hf_lead]; ring
+  have hg_size_ge : f.size ≤ g.size := by
+    by_contra hlt
+    have hlt' : g.size < f.size := Nat.lt_of_not_ge hlt
+    have hle : g.size ≤ f.size - 1 := Nat.le_pred_of_lt hlt'
+    have h_zero := Hex.DensePoly.coeff_eq_zero_of_size_le g hle
+    rw [hcoeff_top] at h_zero
+    exact hc h_zero
+  have hg_size_le : g.size ≤ f.size := by
+    rw [hg_def]
+    unfold Hex.DensePoly.scale
+    have h := Hex.DensePoly.size_ofCoeffs_le
+      ((f.toArray.toList.map fun a => c * a).toArray)
+    rw [List.size_toArray, List.length_map] at h
+    simpa [Hex.DensePoly.size] using h
+  exact le_antisymm hg_size_le hg_size_ge
+
+/-- Centred-lift preserves stored size when the leading coefficient is strictly
+positive and lies inside the Mignotte half-window. Companion to
+`leadingCoeff_centeredLiftPoly_of_pos_leadingCoeff_bound`. -/
+private theorem size_centeredLiftPoly_eq_of_pos_leadingCoeff_bound
+    {g : Hex.ZPoly} {m B : Nat}
+    (hg_lc_pos : 0 < Hex.DensePoly.leadingCoeff g)
+    (hbound_lc : (Hex.DensePoly.leadingCoeff g).natAbs ≤ B)
+    (hsep : 2 * B < m) :
+    (Hex.centeredLiftPoly g m).size = g.size := by
+  have hg_size_pos : 0 < g.size := by
+    rcases Nat.eq_zero_or_pos g.size with hzero | hpos
+    · exfalso
+      have hback_none : g.coeffs.back? = none := by
+        rw [Array.back?_eq_getElem?]
+        have hcoeffs_size : g.coeffs.size = 0 := by
+          simpa [Hex.DensePoly.size] using hzero
+        simp [hcoeffs_size]
+      have hlc_zero : Hex.DensePoly.leadingCoeff g = (0 : Int) := by
+        unfold Hex.DensePoly.leadingCoeff
+        rw [hback_none]
+        rfl
+      rw [hlc_zero] at hg_lc_pos
+      omega
+    · exact hpos
+  have hg_lead :
+      g.coeff (g.size - 1) = Hex.DensePoly.leadingCoeff g := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last g hg_size_pos]
+  set g' := Hex.centeredLiftPoly g m with hg'_def
+  have hcoeff : ∀ i, g'.coeff i = Hex.centeredModNat (g.coeff i) m :=
+    fun i => Hex.coeff_centeredLiftPoly g m i
+  have hcoeff_top : g'.coeff (g.size - 1) = Hex.DensePoly.leadingCoeff g := by
+    rw [hcoeff, hg_lead]
+    exact centeredModNat_eq_of_pos_natAbs_le hg_lc_pos hbound_lc hsep
+  have hg'_size_ge : g.size ≤ g'.size := by
+    by_contra hlt
+    have hlt' : g'.size < g.size := Nat.lt_of_not_ge hlt
+    have hle : g'.size ≤ g.size - 1 := Nat.le_pred_of_lt hlt'
+    have h_zero := Hex.DensePoly.coeff_eq_zero_of_size_le g' hle
+    rw [hcoeff_top] at h_zero
+    exact (ne_of_gt hg_lc_pos) h_zero
+  have hg'_size_le : g'.size ≤ g.size := by
+    rw [hg'_def]
+    unfold Hex.centeredLiftPoly
+    have h := Hex.DensePoly.size_ofCoeffs_le
+      (g.toArray.map fun coeff => Hex.centeredModNat coeff m)
+    rw [Array.size_map] at h
+    exact h
+  exact le_antisymm hg'_size_le hg'_size_ge
+
+/--
+Primitive + positive-leading-core variant of
+`natDegree_toPolynomial_eq_sum_of_represents` (#4646).
+
+For primitive non-monic `core`, the represented factor's natDegree equals the
+sum of natDegrees of the selected lifted factors. The proof routes through the
+scaled recovery identity `scaledRecombinationCandidate core d S = factor`
+(#4652) and the size identities
+`factor.size = (scaledLiftedFactorProduct core d S).size =
+ (liftedFactorProduct d S).size`. Scaling by `C (lc core)` and the centred lift
+both preserve stored size under the Mignotte half-window bound on `lc core`,
+so the sum decomposition `natDegree_prod_of_monic` over `liftedFactorProduct`
+applies unchanged. The `hcore_primitive` and `hfactor_irr` hypotheses are
+threaded for API uniformity with the monic variant but are not used by the
+proof; the natDegree extraction depends only on the leading-coefficient bound
+and the primitive/sign-normalised facts on `factor` consumed by #4652.
+-/
+theorem natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core
+    {core factor : Hex.ZPoly} {d : Hex.LiftData}
+    {S : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (_hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hdvd : factor ∣ core)
+    (_hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hfactor_prim : Hex.ZPoly.content factor = 1)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S) :
+    (HexPolyZMathlib.toPolynomial factor).natDegree =
+      ∑ i ∈ S,
+        (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree := by
+  -- The scaled recovery identifies the scaled recombination candidate with `factor`.
+  have _hrec_scaled : scaledRecombinationCandidate core d S = factor :=
+    scaledRecombinationCandidate_eq_factor_of_recovery
+      hcore_ne hdvd hfactor_prim hfactor_norm hrep hprecision
+  -- Centred-lift form of the recovery.
+  have hcenter :
+      Hex.centeredLiftPoly (scaledLiftedFactorProduct core d S) (d.p ^ d.k) =
+        factor :=
+    centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
+      hcore_ne hdvd hrep hprecision
+  -- Monic lifted-factor product.
+  set lp := liftedFactorProduct d S with hlp_def
+  have hlp_monic : Hex.DensePoly.Monic lp :=
+    liftedFactorProduct_monic d S (fun i _ => hd_liftedFactor_monic i)
+  have hlp_size_pos : 0 < lp.size := zpoly_size_pos_of_monic hlp_monic
+  -- Scaled product has lc = lc core (> 0) and the same size as `lp`.
+  have hcore_lc_ne : Hex.DensePoly.leadingCoeff core ≠ (0 : Int) :=
+    ne_of_gt hcore_lc_pos
+  have hslp_size : (scaledLiftedFactorProduct core d S).size = lp.size := by
+    unfold scaledLiftedFactorProduct
+    exact size_scale_eq_of_monic_of_ne_zero hcore_lc_ne hlp_monic
+  have hslp_lc :
+      Hex.DensePoly.leadingCoeff (scaledLiftedFactorProduct core d S) =
+        Hex.DensePoly.leadingCoeff core := by
+    unfold scaledLiftedFactorProduct
+    rw [Hex.ZPoly.leadingCoeff_scale_of_nonzero
+      (Hex.DensePoly.leadingCoeff core) lp hcore_lc_ne,
+      show Hex.DensePoly.leadingCoeff lp = (1 : Int) from hlp_monic]
+    ring
+  have hslp_lc_pos :
+      0 < Hex.DensePoly.leadingCoeff (scaledLiftedFactorProduct core d S) := by
+    rw [hslp_lc]; exact hcore_lc_pos
+  -- Bound on `lc core` against the Mignotte half-window.
+  have hcore_size_pos : 0 < core.size := by
+    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
+    · exfalso
+      have hback_none : core.coeffs.back? = none := by
+        rw [Array.back?_eq_getElem?]
+        have hcoeffs_size : core.coeffs.size = 0 := by
+          simpa [Hex.DensePoly.size] using hzero
+        simp [hcoeffs_size]
+      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
+        unfold Hex.DensePoly.leadingCoeff
+        rw [hback_none]
+        rfl
+      rw [hlc_zero] at hcore_lc_pos
+      omega
+    · exact hpos
+  have hcore_lc_bound :
+      (Hex.DensePoly.leadingCoeff core).natAbs ≤
+        Hex.ZPoly.defaultFactorCoeffBound core := by
+    have hcore_dvd_self : core ∣ core :=
+      ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
+    have hbound :=
+      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
+        (core.size - 1)
+    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
+    exact hbound
+  have hslp_lc_bound :
+      (Hex.DensePoly.leadingCoeff (scaledLiftedFactorProduct core d S)).natAbs ≤
+        Hex.ZPoly.defaultFactorCoeffBound core := by
+    rwa [hslp_lc]
+  -- Centred lift preserves the size of the scaled product.
+  have hcl_size :
+      (Hex.centeredLiftPoly (scaledLiftedFactorProduct core d S) (d.p ^ d.k)).size =
+        (scaledLiftedFactorProduct core d S).size :=
+    size_centeredLiftPoly_eq_of_pos_leadingCoeff_bound
+      hslp_lc_pos hslp_lc_bound hprecision
+  -- Combine the size identities to get `factor.size = lp.size`.
+  have hfactor_size : factor.size = lp.size := by
+    rw [← hcenter, hcl_size, hslp_size]
+  -- Convert to `natDegree` via `HexPolyMathlib.natDegree_toPolynomial`.
+  have hfactor_natDeg :
+      (HexPolyZMathlib.toPolynomial factor).natDegree = factor.size - 1 := by
+    rw [HexPolyMathlib.natDegree_toPolynomial]
+    simp [Hex.DensePoly.degree?, Nat.ne_of_gt (hfactor_size ▸ hlp_size_pos)]
+  have hlp_natDeg :
+      (HexPolyZMathlib.toPolynomial lp).natDegree = lp.size - 1 := by
+    rw [HexPolyMathlib.natDegree_toPolynomial]
+    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hlp_size_pos]
+  rw [hfactor_natDeg, hfactor_size, ← hlp_natDeg, hlp_def, toPolynomial_liftedFactorProduct]
+  -- Sum decomposition over monic lifted factors.
+  apply Polynomial.natDegree_prod_of_monic
+  intro i _
+  show (HexPolyZMathlib.toPolynomial (liftedFactor d i)).leadingCoeff = 1
+  rw [HexPolyMathlib.leadingCoeff_toPolynomial]
+  exact hd_liftedFactor_monic i
+
 /-- Converse to `toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord`: if the
 transported polynomial is non-zero and a non-unit, then the executable
 `shouldRecordPolynomialFactor` check passes.  Used to package executable
@@ -7601,6 +7802,135 @@ private theorem not_represents_empty_of_irreducible_dvd_core
   -- `factor = 1` after transport contradicts irreducibility (1 is a unit).
   have hpolyfactor_eq : HexPolyZMathlib.toPolynomial factor = 1 := by
     rw [← hrec]; exact toPolynomial_one_zpoly
+  exact not_irreducible_one (hpolyfactor_eq ▸ hfactor_irr)
+
+/--
+Primitive + positive-leading-core variant of
+`not_represents_empty_of_irreducible_dvd_core` (#4646).
+
+For primitive non-monic `core`, the empty-prefix collapse becomes
+`scaledLiftedFactorProduct core d ∅ = C (lc core)`, and the centred-lift
+recovery forces `factor = C (lc core)`. Together with
+`Primitive core` and `factor ∣ core`, the primitivity definition of
+`Polynomial ℤ` forces `lc core` to be a unit. With `0 < lc core` this gives
+`lc core = 1`, so `factor = 1`, contradicting irreducibility. The
+`d.p^d.k = 1` degenerate case is excluded as in the monic proof.
+-/
+private theorem not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core
+    {core factor : Hex.ZPoly} {d : Hex.LiftData}
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hfactor_dvd : factor ∣ core)
+    (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor)) :
+    ¬ RepresentsIntegerFactorAtLift core d factor
+      (∅ : LiftedFactorSubset d) := by
+  intro hrep
+  -- Recovery equation: `centeredLiftPoly (scaledLiftedFactorProduct core d ∅) _ = factor`.
+  have hrec :
+      Hex.centeredLiftPoly
+          (scaledLiftedFactorProduct core d (∅ : LiftedFactorSubset d))
+          (d.p ^ d.k) = factor :=
+    centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
+      hcore_ne hfactor_dvd hrep hprecision
+  -- `liftedFactorProduct d ∅ = 1`: foldl on the empty `toList`.
+  have hempty_lp :
+      liftedFactorProduct d (∅ : LiftedFactorSubset d) = (1 : Hex.ZPoly) := by
+    unfold liftedFactorProduct
+    simp
+  -- The scaled product on the empty subset is the constant `C (lc core)`.
+  have hslp_eq_C :
+      scaledLiftedFactorProduct core d (∅ : LiftedFactorSubset d) =
+        Hex.DensePoly.C (Hex.DensePoly.leadingCoeff core) := by
+    apply Hex.DensePoly.ext_coeff
+    intro n
+    unfold scaledLiftedFactorProduct
+    rw [hempty_lp, Hex.DensePoly.coeff_scale (R := Int) _ _ _ (Int.mul_zero _)]
+    show Hex.DensePoly.leadingCoeff core *
+        (Hex.DensePoly.C (1 : Int)).coeff n =
+      (Hex.DensePoly.C (Hex.DensePoly.leadingCoeff core)).coeff n
+    rw [Hex.DensePoly.coeff_C, Hex.DensePoly.coeff_C]
+    by_cases hn : n = 0
+    · rw [if_pos hn, if_pos hn]; ring
+    · rw [if_neg hn, if_neg hn]; ring
+  -- `factor ∣ core` and `core ≠ 0` give `factor ≠ 0`.
+  have hfactor_ne : factor ≠ 0 := by
+    intro hf
+    rcases hfactor_dvd with ⟨q, hq⟩
+    rw [hf, Hex.DensePoly.zero_mul (S := Int) q] at hq
+    exact hcore_ne hq
+  -- Bound the leading coefficient of `core` against the Mignotte half-window.
+  have hcore_size_pos : 0 < core.size := by
+    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
+    · exfalso
+      have hback_none : core.coeffs.back? = none := by
+        rw [Array.back?_eq_getElem?]
+        have hcoeffs_size : core.coeffs.size = 0 := by
+          simpa [Hex.DensePoly.size] using hzero
+        simp [hcoeffs_size]
+      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
+        unfold Hex.DensePoly.leadingCoeff
+        rw [hback_none]
+        rfl
+      rw [hlc_zero] at hcore_lc_pos
+      omega
+    · exact hpos
+  have hcore_lc_bound :
+      (Hex.DensePoly.leadingCoeff core).natAbs ≤
+        Hex.ZPoly.defaultFactorCoeffBound core := by
+    have hcore_dvd_self : core ∣ core :=
+      ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
+    have hbound :=
+      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
+        (core.size - 1)
+    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
+    exact hbound
+  -- The bound and positivity together imply `2 ≤ d.p^d.k`.
+  have hlc_natAbs_pos : 0 < (Hex.DensePoly.leadingCoeff core).natAbs := by
+    have hlc_ge_one : 1 ≤ Hex.DensePoly.leadingCoeff core := hcore_lc_pos
+    have := Int.natAbs_of_nonneg (le_of_lt hcore_lc_pos)
+    omega
+  have hbound_pos : 0 < Hex.ZPoly.defaultFactorCoeffBound core := by omega
+  have hpk_ge_two : 2 ≤ d.p ^ d.k := by omega
+  -- The centred lift of `C (lc core)` (under the bound) is `C (lc core)`.
+  have hfactor_eq : factor = Hex.DensePoly.C (Hex.DensePoly.leadingCoeff core) := by
+    rw [← hrec, hslp_eq_C]
+    apply Hex.DensePoly.ext_coeff
+    intro n
+    rw [Hex.coeff_centeredLiftPoly, Hex.DensePoly.coeff_C]
+    by_cases hn : n = 0
+    · rw [if_pos hn]
+      exact centeredModNat_eq_of_pos_natAbs_le hcore_lc_pos hcore_lc_bound hprecision
+    · rw [if_neg hn]
+      exact Hex.centeredModNat_zero (d.p ^ d.k)
+  -- `Primitive core` and `C (lc core) ∣ core` imply `IsUnit (lc core)`.
+  have hcore_poly_primitive :
+      (HexPolyZMathlib.toPolynomial core).IsPrimitive :=
+    toPolynomial_isPrimitive_of_zpoly_primitive_basic hcore_primitive
+  have hC_dvd_corePoly :
+      Polynomial.C (Hex.DensePoly.leadingCoeff core) ∣
+        HexPolyZMathlib.toPolynomial core := by
+    have htop_factor_dvd_core :
+        HexPolyZMathlib.toPolynomial factor ∣ HexPolyZMathlib.toPolynomial core :=
+      HexPolyMathlib.toPolynomial_dvd hfactor_dvd
+    have : HexPolyZMathlib.toPolynomial factor =
+        Polynomial.C (Hex.DensePoly.leadingCoeff core) := by
+      rw [hfactor_eq, HexPolyZMathlib.toPolynomial_C]
+    rwa [this] at htop_factor_dvd_core
+  have hlc_isUnit : IsUnit (Hex.DensePoly.leadingCoeff core) :=
+    hcore_poly_primitive _ hC_dvd_corePoly
+  -- `0 < lc core` and `IsUnit lc core` force `lc core = 1`.
+  have hlc_one : Hex.DensePoly.leadingCoeff core = 1 := by
+    rcases Int.isUnit_iff.mp hlc_isUnit with h | h
+    · exact h
+    · rw [h] at hcore_lc_pos; omega
+  -- Now `factor = C 1 = 1`, contradicting irreducibility.
+  rw [hlc_one] at hfactor_eq
+  have hfactor_one : factor = 1 := hfactor_eq
+  have hpolyfactor_eq : HexPolyZMathlib.toPolynomial factor = 1 := by
+    rw [hfactor_one]; exact toPolynomial_one_zpoly
   exact not_irreducible_one (hpolyfactor_eq ▸ hfactor_irr)
 
 /--
