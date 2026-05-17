@@ -8835,6 +8835,18 @@ private theorem integerRootCandidates_nodup (f : ZPoly) :
     simp at hpred
     omega
 
+/-- **#4747 HO-1 substrate — `normalizeFactorSign` identity on quadratic-arm
+core factors.** Every factor emitted by `quadraticIntegerRootFactors? core` is a
+fixed point of `normalizeFactorSign`. For linear factors `linearFactorForRoot r`,
+the leading coefficient is `1`; for the optional residual, positivity of its
+leading coefficient is forced by `0 < DensePoly.leadingCoeff core` combined with
+the splitter invariant
+`splitIntegerRootFactorsAux_polyProduct_leadingCoeff_pos`. Consumed by the
+Mathlib-bridge discharger
+`reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero` to discharge
+the `hnorm` precondition of
+`normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover`
+(#4759). -/
 theorem quadraticIntegerRootFactors?_normalizeFactorSign
     {core : ZPoly} {factors : Array ZPoly}
     (hcore_pos : 0 < DensePoly.leadingCoeff core)
@@ -9322,6 +9334,178 @@ theorem quadraticIntegerRootFactors?_product
           exact hsplit_prod
         · rw [if_neg hres_deg] at hquad
           contradiction
+  · simp [hdeg] at hquad
+
+/-- **#4747 HO-1 substrate — public surface for the polyProduct invariant of the
+quadratic integer-root branch.** Whenever `quadraticIntegerRootFactors? core`
+returns `some coreFactors`, the executable `Array.polyProduct` of the recorded
+factors reconstructs `core` exactly. Public wrapper of the private
+`quadraticIntegerRootFactors?_product`, consumed by the Mathlib-bridge
+discharger `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`
+(`HexBerlekampZassenhausMathlib/IntReductionMod.lean`) when feeding the
+factorPower repeated-part decomposition (#4759) and the no-tail divisibility
+lemma (#4807) into `Hex.reassemblyExpansionComplete`. Sibling dischargers:
+constant arm `Hex.reassemblyExpansionComplete_constant_of_ne_zero` (#4585 /
+PR #4598); small-mod singleton arm
+`Hex.reassemblyExpansionComplete_singleton_of_irreducible` (#4597). -/
+theorem polyProduct_quadraticIntegerRootFactors?_some
+    {core : ZPoly} {coreFactors : Array ZPoly}
+    (hquad : quadraticIntegerRootFactors? core = some coreFactors) :
+    Array.polyProduct coreFactors = core :=
+  quadraticIntegerRootFactors?_product hquad
+
+/-- **#4747 HO-1 substrate — every factor emitted by `quadraticIntegerRootFactors?`
+has dense size two.** The branch is only entered when
+`core.degree?.getD 0 = 2`. Linear factors emitted by the splitter are
+`linearFactorForRoot r = X - r`, which has size `2` by
+`linearFactorForRoot_size_eq_two`. The optional final residual has
+`degree?.getD 0 ≤ 1` by construction, so its size is `≤ 2`; the case
+`size = 1` (constant residual) is incompatible with primitivity of `core`
+combined with positivity of `leadingCoeff core` (the same argument used in
+`quadraticIntegerRootFactors?_residual_irreducible` to rule out non-unit
+constant residuals).
+
+Consumed by the Mathlib-bridge discharger
+`reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero` to
+discharge the per-factor `0 < q.degree?.getD 0` and `0 < leadingCoeff q`
+preconditions of the non-monic expansion-complete surface
+`expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc`. -/
+theorem quadraticIntegerRootFactors?_factor_size_eq_two
+    {core : ZPoly} {coreFactors : Array ZPoly}
+    (hcore_pos : 0 < DensePoly.leadingCoeff core)
+    (hcore_primitive : ZPoly.Primitive core)
+    (hquad : quadraticIntegerRootFactors? core = some coreFactors)
+    {factor : ZPoly} (hmem : factor ∈ coreFactors.toList) :
+    factor.size = 2 := by
+  unfold quadraticIntegerRootFactors? at hquad
+  by_cases hdeg : core.degree?.getD 0 = 2
+  · simp only [hdeg, if_true] at hquad
+    let roots := integerRootCandidates core
+    let split := splitIntegerRootFactorsAux core roots roots.length
+    obtain ⟨rs, _hsub, hshape⟩ :=
+      splitIntegerRootFactorsAux_factors_form
+        (target := core) (roots := roots) (fuel := roots.length)
+        (factors := split.1) (residual := split.2) rfl
+    have hsplit_size :
+        ∀ f ∈ split.1.toList, f.size = 2 := by
+      intro f hf
+      rw [hshape] at hf
+      obtain ⟨r, _, rfl⟩ := List.mem_map.mp hf
+      exact linearFactorForRoot_size_eq_two r
+    by_cases hsize : split.1.size = 0
+    · simp [roots, split, hsize] at hquad
+    · simp only [roots, split, hsize, if_false] at hquad
+      by_cases hres_one : split.2 = 1
+      · rw [if_pos hres_one] at hquad
+        cases hquad
+        exact hsplit_size factor hmem
+      · rw [if_neg hres_one] at hquad
+        by_cases hres_deg : split.2.degree?.getD 0 ≤ 1
+        · rw [if_pos hres_deg] at hquad
+          cases hquad
+          rw [Array.toList_push] at hmem
+          rcases List.mem_append.mp hmem with hsplit_mem | hres_mem
+          · exact hsplit_size factor hsplit_mem
+          · -- Residual case: derive size = 2 by ruling out size = 1 via primitivity.
+            have hfactor_eq : factor = split.2 := by
+              rcases List.mem_singleton.mp hres_mem with rfl
+              rfl
+            rw [hfactor_eq]
+            have hsplit_prod :
+                split.2 * Array.polyProduct split.1 = core := by
+              simpa [split, roots] using
+                splitIntegerRootFactorsAux_product core roots roots.length
+                  split.1 split.2 rfl
+            have hsplit_lc_pos :
+                0 < DensePoly.leadingCoeff (Array.polyProduct split.1) := by
+              simpa [split, roots] using
+                splitIntegerRootFactorsAux_polyProduct_leadingCoeff_pos core roots
+                  roots.length split.1 split.2 rfl
+            have hsplit_poly_ne : Array.polyProduct split.1 ≠ 0 := by
+              intro hzero
+              rw [hzero] at hsplit_lc_pos
+              change 0 < (0 : Int) at hsplit_lc_pos
+              omega
+            have hcore_ne : core ≠ 0 := by
+              intro hzero
+              rw [hzero] at hcore_pos
+              change 0 < (0 : Int) at hcore_pos
+              omega
+            have hres_ne_zero : split.2 ≠ 0 := by
+              intro hzero
+              apply hcore_ne
+              rw [← hsplit_prod, hzero, DensePoly.zero_mul]
+            have hres_size_pos : 0 < split.2.size :=
+              ZPoly.size_pos_of_ne_zero split.2 hres_ne_zero
+            have hres_size_le : split.2.size ≤ 2 := by
+              unfold DensePoly.degree? at hres_deg
+              have hnz : split.2.size ≠ 0 := by omega
+              simp [hnz] at hres_deg
+              omega
+            have hcore_lc :
+                DensePoly.leadingCoeff core =
+                  DensePoly.leadingCoeff split.2 *
+                    DensePoly.leadingCoeff (Array.polyProduct split.1) := by
+              rw [← hsplit_prod]
+              exact ZPoly.leadingCoeff_mul_of_nonzero
+                split.2 (Array.polyProduct split.1) hres_ne_zero hsplit_poly_ne
+            rcases (by omega : split.2.size = 1 ∨ split.2.size = 2) with h_one | h_two
+            · exfalso
+              have hres_eq : split.2 = DensePoly.C (split.2.coeff 0) :=
+                ZPoly.eq_C_of_size_eq_one split.2 h_one
+              have hcore_expand :
+                  core = DensePoly.C (split.2.coeff 0) * Array.polyProduct split.1 := by
+                rw [← hsplit_prod]
+                exact congrArg (· * Array.polyProduct split.1) hres_eq
+              have hcoeff_core : ∀ n, core.coeff n =
+                  split.2.coeff 0 * (Array.polyProduct split.1).coeff n := by
+                intro n
+                rw [hcore_expand, ZPoly.C_mul_eq_scale,
+                  DensePoly.coeff_scale (R := Int) (split.2.coeff 0) _ n (Int.mul_zero _)]
+              have hc_dvd : ∀ n, ((split.2.coeff 0).natAbs : Int) ∣ core.coeff n := by
+                intro n
+                rw [hcoeff_core]
+                exact Int.natAbs_dvd.mpr ⟨_, rfl⟩
+              have hc_dvd_content :
+                  ((split.2.coeff 0).natAbs : Int) ∣ ZPoly.content core :=
+                ZPoly.dvd_content_of_nat_dvd_coeff core _ hc_dvd
+              rw [show ZPoly.content core = 1 from hcore_primitive] at hc_dvd_content
+              have hc_ne : split.2.coeff 0 ≠ 0 := by
+                intro h
+                apply hres_ne_zero
+                rw [hres_eq, h]; rfl
+              have hres_lc : DensePoly.leadingCoeff split.2 = split.2.coeff 0 := by
+                rw [DensePoly.leadingCoeff_eq_coeff_last split.2 (by omega)]
+                congr 1; omega
+              rw [hres_lc] at hcore_lc
+              have hc_pos : 0 < split.2.coeff 0 := by
+                rcases Int.lt_or_lt_of_ne hc_ne with hlt | hgt
+                · exfalso
+                  have : DensePoly.leadingCoeff core < 0 := by
+                    rw [hcore_lc]
+                    exact Int.mul_neg_of_neg_of_pos hlt hsplit_lc_pos
+                  omega
+                · exact hgt
+              have hnat_dvd : (split.2.coeff 0).natAbs ∣ (1 : Nat) :=
+                Int.ofNat_dvd.mp (by simpa using hc_dvd_content)
+              have hnat_le : (split.2.coeff 0).natAbs ≤ 1 :=
+                Nat.le_of_dvd (by omega) hnat_dvd
+              have hnat_pos : 1 ≤ (split.2.coeff 0).natAbs := by
+                rcases Nat.eq_zero_or_pos (split.2.coeff 0).natAbs with hz | hp
+                · exact absurd (Int.natAbs_eq_zero.mp hz) hc_ne
+                · exact hp
+              have hnat_eq : (split.2.coeff 0).natAbs = 1 := by omega
+              have hc_eq_one : split.2.coeff 0 = 1 := by
+                rcases Int.natAbs_eq (split.2.coeff 0) with hpos | hneg
+                · rw [hpos, hnat_eq]; rfl
+                · exfalso
+                  have : split.2.coeff 0 = -1 := by rw [hneg, hnat_eq]; rfl
+                  omega
+              apply hres_one
+              rw [hres_eq, hc_eq_one]
+              rfl
+            · exact h_two
+        · simp [roots, split, hres_deg] at hquad
   · simp [hdeg] at hquad
 
 private theorem toRatPoly_linearFactorForRoot_size (r : Int) :
