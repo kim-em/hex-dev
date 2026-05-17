@@ -1170,6 +1170,89 @@ theorem berlekampFactor_factors_nodup_of_no_squared
     rw [h_loop]
     exact h_singleton_nodup
 
+/-- Under the no-squared invariant on `factorProduct`, distinct factors in a
+list of `FpPoly p` are pairwise coprime: no positive-degree polynomial
+divides two distinct positions.  This is a direct consequence of the
+no-squared invariant and the fact that any two list entries multiply to a
+factor of `factorProduct`. -/
+private theorem factorProduct_pairwise_no_common_pos_divisor
+    [ZMod64.PrimeModulus p]
+    (factors : List (FpPoly p))
+    (h_no_squared : ∀ g : FpPoly p,
+        g * g ∣ factorProduct factors → ¬ (0 < g.degree?.getD 0)) :
+    factors.Pairwise (fun a b =>
+      ∀ d : FpPoly p, d ∣ a → d ∣ b → ¬ (0 < d.degree?.getD 0)) := by
+  induction factors with
+  | nil => exact List.Pairwise.nil
+  | cons fac rest ih =>
+      refine List.Pairwise.cons ?_ ?_
+      · -- For each b ∈ rest, fac and b have no common positive-degree divisor.
+        intro b hb d hd_fac hd_b
+        have hb_dvd_rest : b ∣ factorProduct rest :=
+          dvd_factorProduct_of_mem rest hb
+        have hd_dvd_rest : d ∣ factorProduct rest := by
+          rcases hd_b with ⟨k, hk⟩
+          rcases hb_dvd_rest with ⟨q, hq⟩
+          refine ⟨k * q, ?_⟩
+          rw [hq, hk]; exact DensePoly.mul_assoc_poly d k q
+        have hdd_dvd : d * d ∣ fac * factorProduct rest :=
+          squared_dvd_of_dvd_dvd hd_fac hd_dvd_rest
+        have hprod_eq : fac * factorProduct rest = factorProduct (fac :: rest) :=
+          (factorProduct_cons fac rest).symm
+        rw [hprod_eq] at hdd_dvd
+        exact h_no_squared d hdd_dvd
+      · -- Inductive hypothesis: rest is pairwise coprime.
+        apply ih
+        intro g hg_dvd
+        have h_rest_dvd : factorProduct rest ∣ factorProduct (fac :: rest) :=
+          factorProduct_tail_dvd_cons fac rest
+        rcases hg_dvd with ⟨k, hk⟩
+        rcases h_rest_dvd with ⟨q, hq⟩
+        refine h_no_squared g ⟨k * q, ?_⟩
+        rw [hq, hk]; exact DensePoly.mul_assoc_poly (g * g) k q
+
+/-- The Berlekamp factor list's product equals the input polynomial.  This is
+the squarefree-free core of `prod_berlekampFactor`: the proof that the
+splitting loop preserves `factorProduct` does not use the squarefree
+hypothesis, so the product equality holds for every monic input. -/
+theorem factorProduct_berlekampFactor
+    [Lean.Grind.Field (ZMod64 p)]
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) :
+    factorProduct (berlekampFactor f hmonic).factors = f := by
+  rw [show (berlekampFactor f hmonic).factors
+        = berlekampFactorLoop ((fixedSpaceKernel f hmonic).toList)
+            (f.size + 1) [f] from rfl]
+  rw [factorProduct_berlekampFactorLoop_eq, factorProduct_cons, factorProduct_nil]
+  exact DensePoly.mul_one_right_poly f
+
+/-- Abstract pairwise-coprime form of `berlekampFactor`'s output: when no
+positive-degree polynomial squares to a divisor of `f`, distinct factors in
+the returned list share no positive-degree common divisor.  This strengthens
+`berlekampFactor_factors_nodup_of_no_squared` from "distinct values" to "no
+shared positive-degree divisor".  The Mathlib-free squareness-implies-
+irreducibility chain discharges the no-squared hypothesis from
+`gcd f f' = 1`; see callers that pair this with
+`isUnitPolynomial_of_squareFree_of_squared_dvd`. -/
+theorem berlekampFactor_factors_pairwise_coprime
+    [Lean.Grind.Field (ZMod64 p)]
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (h_no_squared : ∀ g : FpPoly p,
+        g * g ∣ f → ¬ (0 < g.degree?.getD 0)) :
+    (berlekampFactor f hmonic).factors.Pairwise (fun a b =>
+      ∀ d : FpPoly p, d ∣ a → d ∣ b → ¬ (0 < d.degree?.getD 0)) := by
+  have h_prod_eq : factorProduct (berlekampFactor f hmonic).factors = f :=
+    factorProduct_berlekampFactor f hmonic
+  have h_no_squared' : ∀ g : FpPoly p,
+      g * g ∣ factorProduct (berlekampFactor f hmonic).factors →
+        ¬ (0 < g.degree?.getD 0) := by
+    intro g hgg
+    rw [h_prod_eq] at hgg
+    exact h_no_squared g hgg
+  exact factorProduct_pairwise_no_common_pos_divisor
+    (berlekampFactor f hmonic).factors h_no_squared'
+
 /-- Positivity-only variant of the single-step `splitFirstFactor?` invariant:
 positive degree of every factor is preserved by a successful split, without
 requiring the squareness-free hypothesis used by the joint Nodup/positivity

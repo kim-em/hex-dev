@@ -4704,6 +4704,372 @@ theorem factorsModP_ne_nil_of_factorsModPBerlekampForm
   rw [heq]
   simpa [List.map_eq_nil_iff] using hbl_ne
 
+/-- Reducing a `polyProduct` of canonically-lifted `FpPoly p` factors back
+modulo `p` recovers the in-field `factorProduct`.  This identifies the
+integer-side product carried by `Array.polyProduct` with the
+`FpPoly p`-side product `Hex.Berlekamp.factorProduct`, threading the
+multiplicative-homomorphism property of `modP` through each lifted factor.
+
+Used as a substrate identification for the
+`factorsModP_coprime_of_factorsModPBerlekampForm` discharger below: the
+quadratic multifactor split predicate's `xgcd` is computed against
+`modP p (Array.polyProduct ...)`, and this lemma rewrites that to the
+direct `factorProduct` viewpoint where pairwise-coprime arguments apply. -/
+private theorem modP_polyProduct_liftToZ_eq_factorProduct
+    {p : Nat} [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
+    (xs : List (Hex.FpPoly p)) :
+    Hex.ZPoly.modP p (Array.polyProduct ((xs.map Hex.FpPoly.liftToZ).toArray)) =
+      Hex.Berlekamp.factorProduct xs := by
+  induction xs with
+  | nil =>
+      show Hex.ZPoly.modP p (Array.polyProduct (#[] : Array Hex.ZPoly)) =
+        Hex.Berlekamp.factorProduct ([] : List (Hex.FpPoly p))
+      rw [Hex.ZPoly.polyProduct_empty]
+      exact Hex.ZPoly.modP_one p
+  | cons x rest ih =>
+      have hcons :
+          Array.polyProduct (((x :: rest).map Hex.FpPoly.liftToZ).toArray) =
+            Hex.FpPoly.liftToZ x *
+              Array.polyProduct ((rest.map Hex.FpPoly.liftToZ).toArray) := by
+        rw [List.map_cons]
+        exact Hex.ZPoly.polyProduct_cons_toArray (Hex.FpPoly.liftToZ x) _
+      rw [hcons, Hex.ZPoly.modP_lift_mul_left p x _, ih,
+        Hex.Berlekamp.factorProduct_cons]
+
+/-- Generalized inductive helper for the `factorsModP_coprime` discharger.
+
+For any list of factors in `FpPoly p` whose `factorProduct` divides a
+nonzero polynomial `X` with no positive-degree squared divisor, the
+recursive predicate `Hex.ZPoly.QuadraticMultifactorCoprimeSplits` holds.
+
+The recursion peels one head factor `g` off at a time:
+* `xgcd.gcd = 1` follows from the pairwise-coprime view of `g` against
+  `factorProduct rest`, identified via `modP_polyProduct_liftToZ_eq_factorProduct`.
+* The recursive tail satisfies the same divisibility-into-`X` invariant via
+  `factorProduct rest ∣ factorProduct (g :: rest) ∣ X`. -/
+private theorem quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
+    {p : Nat} [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
+    [Lean.Grind.Field (Hex.ZMod64 p)]
+    (X : Hex.FpPoly p)
+    (hX_ne : X ≠ 0)
+    (h_no_squared : ∀ d : Hex.FpPoly p,
+        d * d ∣ X → ¬ (0 < d.degree?.getD 0))
+    (xs : List (Hex.FpPoly p))
+    (h_dvd : Hex.Berlekamp.factorProduct xs ∣ X) :
+    Hex.ZPoly.QuadraticMultifactorCoprimeSplits p xs := by
+  induction xs with
+  | nil => exact True.intro
+  | cons g rest ih =>
+      cases rest with
+      | nil => exact True.intro
+      | cons h tail =>
+          -- The recursive predicate at `g :: h :: tail` expects
+          -- `xgcd.gcd = 1` and `QuadraticMultifactorCoprimeSplits p (h :: tail)`.
+          refine ⟨?_, ?_⟩
+          · -- `xgcd.gcd = 1` for the head split.
+            -- Unfold `normalizedXGCD` and identify the raw EEA gcd.
+            change
+              (Hex.ZPoly.normalizedXGCD p (Hex.FpPoly.liftToZ g)
+                (Array.polyProduct
+                  (((h :: tail).map Hex.FpPoly.liftToZ).toArray))).gcd =
+                (1 : Hex.FpPoly p)
+            -- Reduce both `modP`-arguments to `FpPoly p` shape.
+            have hmodP_g : Hex.ZPoly.modP p (Hex.FpPoly.liftToZ g) = g :=
+              Hex.FpPoly.modP_liftToZ g
+            have hmodP_tail :
+                Hex.ZPoly.modP p
+                    (Array.polyProduct
+                      (((h :: tail).map Hex.FpPoly.liftToZ).toArray)) =
+                  Hex.Berlekamp.factorProduct (h :: tail) :=
+              modP_polyProduct_liftToZ_eq_factorProduct (h :: tail)
+            -- The raw EEA gcd is `DensePoly.gcd g (factorProduct (h :: tail))`.
+            set rawGcd : Hex.FpPoly p :=
+              Hex.DensePoly.gcd g (Hex.Berlekamp.factorProduct (h :: tail))
+              with hrawGcd_def
+            -- `normalizedXGCD.gcd = scale (lc⁻¹) rawGcd`.
+            have hnorm_def :
+                (Hex.ZPoly.normalizedXGCD p (Hex.FpPoly.liftToZ g)
+                  (Array.polyProduct
+                    (((h :: tail).map Hex.FpPoly.liftToZ).toArray))).gcd =
+                  Hex.DensePoly.scale
+                    (Hex.DensePoly.leadingCoeff rawGcd)⁻¹ rawGcd := by
+              show Hex.DensePoly.scale
+                  (Hex.DensePoly.leadingCoeff
+                    (Hex.DensePoly.xgcd
+                      (Hex.ZPoly.modP p (Hex.FpPoly.liftToZ g))
+                      (Hex.ZPoly.modP p
+                        (Array.polyProduct
+                          (((h :: tail).map Hex.FpPoly.liftToZ).toArray)))).gcd)⁻¹
+                  (Hex.DensePoly.xgcd
+                    (Hex.ZPoly.modP p (Hex.FpPoly.liftToZ g))
+                    (Hex.ZPoly.modP p
+                      (Array.polyProduct
+                        (((h :: tail).map Hex.FpPoly.liftToZ).toArray)))).gcd =
+                Hex.DensePoly.scale
+                  (Hex.DensePoly.leadingCoeff rawGcd)⁻¹ rawGcd
+              rw [hmodP_g, hmodP_tail, hrawGcd_def]
+              rfl
+            rw [hnorm_def]
+            -- The rest: show `scale (lc rawGcd)⁻¹ rawGcd = 1`.  This needs
+            -- `rawGcd` to be a nonzero constant in `FpPoly p`.
+            -- Step 1: `rawGcd² ∣ X`.
+            have hrawGcd_dvd_g : rawGcd ∣ g :=
+              Hex.DensePoly.gcd_dvd_left g (Hex.Berlekamp.factorProduct (h :: tail))
+            have hrawGcd_dvd_tail :
+                rawGcd ∣ Hex.Berlekamp.factorProduct (h :: tail) :=
+              Hex.DensePoly.gcd_dvd_right g (Hex.Berlekamp.factorProduct (h :: tail))
+            have hrawGcd_sq_dvd_prod :
+                rawGcd * rawGcd ∣ g * Hex.Berlekamp.factorProduct (h :: tail) := by
+              rcases hrawGcd_dvd_g with ⟨ka, hka⟩
+              rcases hrawGcd_dvd_tail with ⟨kb, hkb⟩
+              refine ⟨ka * kb, ?_⟩
+              rw [hka, hkb]
+              -- (rawGcd * ka) * (rawGcd * kb) = (rawGcd * rawGcd) * (ka * kb)
+              calc rawGcd * ka * (rawGcd * kb)
+                  = rawGcd * (ka * (rawGcd * kb)) :=
+                      Hex.DensePoly.mul_assoc_poly _ _ _
+                _ = rawGcd * (ka * rawGcd * kb) :=
+                      congrArg (rawGcd * ·)
+                        (Hex.DensePoly.mul_assoc_poly _ _ _).symm
+                _ = rawGcd * (rawGcd * ka * kb) :=
+                      congrArg (fun x => rawGcd * (x * kb))
+                        (Hex.DensePoly.mul_comm_poly _ _)
+                _ = rawGcd * (rawGcd * (ka * kb)) :=
+                      congrArg (rawGcd * ·)
+                        (Hex.DensePoly.mul_assoc_poly _ _ _)
+                _ = rawGcd * rawGcd * (ka * kb) :=
+                      (Hex.DensePoly.mul_assoc_poly _ _ _).symm
+            have hcons_prod :
+                g * Hex.Berlekamp.factorProduct (h :: tail) =
+                  Hex.Berlekamp.factorProduct (g :: h :: tail) :=
+              (Hex.Berlekamp.factorProduct_cons g (h :: tail)).symm
+            have hrawGcd_sq_dvd_X : rawGcd * rawGcd ∣ X := by
+              rw [hcons_prod] at hrawGcd_sq_dvd_prod
+              rcases hrawGcd_sq_dvd_prod with ⟨k, hk⟩
+              rcases h_dvd with ⟨q, hq⟩
+              refine ⟨k * q, ?_⟩
+              rw [hq, hk]; exact Hex.DensePoly.mul_assoc_poly _ _ _
+            -- Step 2: rawGcd has degree ≤ 0 by no-squared on X.
+            have hrawGcd_not_pos :
+                ¬ (0 < rawGcd.degree?.getD 0) :=
+              h_no_squared rawGcd hrawGcd_sq_dvd_X
+            -- Step 3: rawGcd ≠ 0 (via `rawGcd * rawGcd ∣ X` with `X ≠ 0`).
+            have hrawGcd_ne : rawGcd ≠ 0 := by
+              intro hraw
+              apply hX_ne
+              rcases hrawGcd_sq_dvd_X with ⟨k, hk⟩
+              rw [hraw, Hex.FpPoly.zero_mul, Hex.FpPoly.zero_mul] at hk
+              exact hk
+            -- Step 4: rawGcd.size = 1.
+            have hrawGcd_size_pos : 0 < rawGcd.size := by
+              apply Nat.pos_of_ne_zero
+              intro hsize
+              apply hrawGcd_ne
+              apply Hex.DensePoly.ext_coeff
+              intro i
+              rw [Hex.DensePoly.coeff_zero]
+              exact Hex.DensePoly.coeff_eq_zero_of_size_le rawGcd (by omega)
+            have hrawGcd_size_one : rawGcd.size = 1 := by
+              by_contra hsize_ne
+              apply hrawGcd_not_pos
+              have hsize_ge_two : 2 ≤ rawGcd.size := by omega
+              have hdeg_form : rawGcd.degree? = some (rawGcd.size - 1) := by
+                unfold Hex.DensePoly.degree?
+                have hne : rawGcd.size ≠ 0 := Nat.pos_iff_ne_zero.mp hrawGcd_size_pos
+                simp [hne]
+              rw [hdeg_form]; simp; omega
+            -- Step 5: lc rawGcd ≠ 0.
+            have hlc_ne :
+                Hex.DensePoly.leadingCoeff rawGcd ≠ (0 : Hex.ZMod64 p) := by
+              rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred rawGcd hrawGcd_size_pos]
+              exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size rawGcd hrawGcd_size_pos
+            -- Step 6: rawGcd.coeff 0 = lc rawGcd.
+            have hrawGcd_coeff_zero :
+                rawGcd.coeff 0 = Hex.DensePoly.leadingCoeff rawGcd := by
+              rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred rawGcd hrawGcd_size_pos]
+              congr 1; omega
+            -- Step 7: scale lc⁻¹ rawGcd = 1.
+            apply Hex.DensePoly.ext_coeff
+            intro n
+            have hzero_mul :
+                (Hex.DensePoly.leadingCoeff rawGcd)⁻¹ * (0 : Hex.ZMod64 p) = 0 :=
+              Lean.Grind.Semiring.mul_zero _
+            rw [Hex.DensePoly.coeff_scale
+              (Hex.DensePoly.leadingCoeff rawGcd)⁻¹ rawGcd n hzero_mul]
+            change (Hex.DensePoly.leadingCoeff rawGcd)⁻¹ * rawGcd.coeff n =
+              (Hex.DensePoly.C (1 : Hex.ZMod64 p)).coeff n
+            rw [Hex.DensePoly.coeff_C]
+            cases n with
+            | zero =>
+                rw [hrawGcd_coeff_zero]
+                simp
+                exact Hex.ZMod64.inv_mul_eq_one_of_prime
+                  (Hex.ZMod64.PrimeModulus.prime (p := p)) hlc_ne
+            | succ k =>
+                have hcoeff_zero : rawGcd.coeff (k + 1) = (0 : Hex.ZMod64 p) :=
+                  Hex.DensePoly.coeff_eq_zero_of_size_le rawGcd (by omega)
+                rw [hcoeff_zero, if_neg (Nat.succ_ne_zero k)]
+                exact hzero_mul
+          · -- Inductive call on `h :: tail`.
+            have hrest_dvd :
+                Hex.Berlekamp.factorProduct (h :: tail) ∣ X := by
+              have hcons_eq :
+                  Hex.Berlekamp.factorProduct (g :: h :: tail) =
+                    g * Hex.Berlekamp.factorProduct (h :: tail) :=
+                Hex.Berlekamp.factorProduct_cons g (h :: tail)
+              have htail_dvd_cons :
+                  Hex.Berlekamp.factorProduct (h :: tail) ∣
+                    Hex.Berlekamp.factorProduct (g :: h :: tail) := by
+                refine ⟨g, ?_⟩
+                rw [hcons_eq]; exact Hex.DensePoly.mul_comm_poly _ _
+              rcases htail_dvd_cons with ⟨k, hk⟩
+              rcases h_dvd with ⟨q, hq⟩
+              refine ⟨k * q, ?_⟩
+              rw [hq, hk]; exact Hex.DensePoly.mul_assoc_poly _ _ _
+            exact ih hrest_dvd
+
+/-- Discharge of the coprime-splits boundary premise on
+`Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData`: given the
+`factorsModPBerlekampForm` invariant (which records that `primeData.factorsModP`
+is the Berlekamp factor array of the monic modular image of the input)
+together with a successful `isGoodPrime` check, the recursive sequential-split
+coprime predicate `QuadraticMultifactorCoprimeSplits` holds on the stored
+factor list.
+
+Proof: extract the Berlekamp witnesses from `hform`; transport modular
+squarefreeness from `isGoodPrime` through `monicModularImage`; apply the
+generalized `quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared`
+helper with `X := monicModularImage (modP p core)` to walk the list.  The
+no-squared invariant on the modular image is the local Mathlib-bridge form
+of `gcd_monicModularImage_derivative_eq_one`, instantiated through
+`Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd`.
+
+This is the third in the chain of `factorsModP`-side dischargers
+(`factorsModP_nodup_of_factorsModPBerlekampForm`,
+`factorsModP_natDegree_pos_of_factorsModPBerlekampForm`, this one), each
+mapping the abstract `factorsModPBerlekampForm` invariant plus an
+`isGoodPrime` certificate to a piece of the four-tuple
+`(hfactors_monic, hproduct_mod_p, hcoprime, hnonempty)` that the umbrella
+`QuadraticMultifactorLiftInvariant_of_choosePrimeData` consumes. -/
+theorem factorsModP_coprime_of_factorsModPBerlekampForm
+    (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hform : Hex.factorsModPBerlekampForm core primeData)
+    (hgood :
+      letI := primeData.bounds
+      Hex.isGoodPrime core primeData.p = true) :
+    letI := primeData.bounds
+    Hex.ZPoly.QuadraticMultifactorCoprimeSplits primeData.p
+      primeData.factorsModP.toList := by
+  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  obtain ⟨hprime, hzero, hfield, heq⟩ := hform
+  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+    Hex.ZMod64.primeModulusOfPrime hprime
+  -- The modular image is square-free under `isGoodPrime`.
+  have hsf :
+      Hex.DensePoly.gcd (Hex.ZPoly.modP primeData.p core)
+          (Hex.DensePoly.derivative (Hex.ZPoly.modP primeData.p core)) = 1 :=
+    Hex.isGoodPrime_squareFreeModP core primeData.p hgood
+  -- `monicModularImage` divides `modP p core`, so the no-squared invariant
+  -- transports through the unit scaling.
+  have hmod_size_pos : 0 < (Hex.ZPoly.modP primeData.p core).size := by
+    rcases Nat.eq_zero_or_pos (Hex.ZPoly.modP primeData.p core).size with hsz | hsz
+    · exfalso
+      have hiszero : (Hex.ZPoly.modP primeData.p core).isZero = true := by
+        simpa [Hex.DensePoly.isZero, Hex.DensePoly.size,
+          Array.isEmpty_iff_size_eq_zero] using hsz
+      rw [hiszero] at hzero
+      contradiction
+    · exact hsz
+  have hmodP_lead_ne :
+      Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core) ≠
+        (0 : Hex.ZMod64 primeData.p) := by
+    rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred _ hmod_size_pos]
+    exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size _ hmod_size_pos
+  have hinv_ne :
+      (Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core))⁻¹ ≠
+        (0 : Hex.ZMod64 primeData.p) :=
+    Hex.ZMod64.inv_ne_zero_of_prime hprime hmodP_lead_ne
+  have hmonicImage_dvd :
+      Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) ∣
+        Hex.ZPoly.modP primeData.p core := by
+    unfold Hex.monicModularImage
+    simp only [hzero, Bool.false_eq_true, ↓reduceIte]
+    exact Hex.FpPoly.dvd_scale_self_of_ne_zero hinv_ne
+      (Hex.ZPoly.modP primeData.p core)
+  -- The no-squared invariant on the monic modular image.
+  have h_no_squared :
+      ∀ d : Hex.FpPoly primeData.p,
+        d * d ∣ Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) →
+          ¬ (0 < d.degree?.getD 0) := by
+    intro d hdd hpos
+    have hd_dvd_mod : d * d ∣ Hex.ZPoly.modP primeData.p core := by
+      rcases hdd with ⟨r, hr⟩
+      rcases hmonicImage_dvd with ⟨s, hs⟩
+      exact ⟨r * s, by rw [hs, hr, Hex.FpPoly.mul_assoc]⟩
+    have hunit : Hex.Berlekamp.isUnitPolynomial d = true :=
+      Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd hsf hd_dvd_mod
+    have hdeg : Hex.DensePoly.degree? d = some 0 := by
+      unfold Hex.Berlekamp.isUnitPolynomial at hunit
+      cases hd : Hex.DensePoly.degree? d with
+      | none => rw [hd] at hunit; simp at hunit
+      | some k =>
+          rw [hd] at hunit
+          cases k with
+          | zero => rfl
+          | succ _ => simp at hunit
+    rw [hdeg] at hpos
+    simp at hpos
+  -- The Berlekamp factor list has product equal to the monic modular image.
+  have h_factorProduct :
+      Hex.Berlekamp.factorProduct
+        (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
+          (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
+          (Hex.monicModularImage_monic hprime _ hzero) hfield).factors =
+        Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) :=
+    Hex.Berlekamp.factorProduct_berlekampFactor _ _
+  -- Pull out positivity of each Berlekamp factor: relies on positivity of the
+  -- modular image, which holds when its size is ≥ 2.  We unconditionally have
+  -- size ≥ 1 (nonzero); for size = 1 the Berlekamp list is `[f]` itself, and
+  -- the recursive predicate is trivial on a singleton list, so positivity is
+  -- only required when there are ≥ 2 factors.  We sidestep this by using the
+  -- `factorProduct ∣ X` chain directly: the helper does not require positivity,
+  -- only the no-squared invariant on `X`.
+  -- Monic modular image is nonzero (it's a nonzero scalar of a nonzero poly).
+  have hmonicImage_ne :
+      Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) ≠ 0 := by
+    intro h0
+    have hmon_size :
+        (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)).size =
+          (Hex.ZPoly.modP primeData.p core).size := by
+      unfold Hex.monicModularImage
+      simp only [hzero, Bool.false_eq_true, ↓reduceIte]
+      exact Hex.FpPoly.scale_size_eq_of_ne_zero (p := primeData.p) hinv_ne _
+    have hsize_zero :
+        (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)).size = 0 := by
+      rw [h0]; rfl
+    rw [hmon_size] at hsize_zero
+    omega
+  -- Apply the generalized helper.
+  have h_dvd_X :
+      Hex.Berlekamp.factorProduct
+        (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
+          (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
+          (Hex.monicModularImage_monic hprime _ hzero) hfield).factors ∣
+        Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) := by
+    rw [h_factorProduct]
+    exact Hex.DensePoly.dvd_refl_poly _
+  have hcps :
+      Hex.ZPoly.QuadraticMultifactorCoprimeSplits primeData.p
+        (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
+          (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
+          (Hex.monicModularImage_monic hprime _ hzero) hfield).factors :=
+    quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
+      (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
+      hmonicImage_ne h_no_squared _ h_dvd_X
+  -- Transport to the `factorsModP.toList` view.
+  rw [heq]
+  simpa using hcps
+
 /-- Composed convenience wrapper: combines
 `Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData` with
 `henselLiftData_liftedFactor_injective` so that a Mathlib-bridge consumer can
