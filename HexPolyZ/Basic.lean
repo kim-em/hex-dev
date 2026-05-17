@@ -1217,6 +1217,29 @@ theorem divMod_eq_of_monic_mul_eq
   change qr = (quotient, 0)
   exact Prod.ext hquot hrem
 
+/-- Non-monic exact-multiple divMod identity: if the divisor `candidate` has positive
+leading coefficient and positive degree, and the dividend factors as
+`quotient * candidate`, the executable dense-polynomial division returns the
+witnessed quotient and zero remainder. Sits one level above
+`divMod_eq_of_monic_mul_eq`, dropping the monic requirement at the cost of
+needing `0 < candidate.leadingCoeff` to discharge the integer-division exactness
+side-conditions. -/
+theorem divMod_eq_of_pos_lc_pos_degree_mul_eq
+    (target candidate quotient : ZPoly)
+    (hpos_lc : 0 < DensePoly.leadingCoeff candidate)
+    (hdegree : 0 < candidate.degree?.getD 0)
+    (hmul : quotient * candidate = target) :
+    DensePoly.divMod target candidate = (quotient, 0) := by
+  have hlc_ne : DensePoly.leadingCoeff candidate ≠ 0 := by omega
+  apply DensePoly.divMod_eq_of_polynomial_mul target candidate quotient hdegree
+  · intro a
+    exact Int.mul_ediv_cancel a hlc_ne
+  · intro a ha hzero
+    rcases Int.mul_eq_zero.mp hzero with h | h
+    · exact ha h
+    · exact hlc_ne h
+  · exact hmul
+
 theorem primitiveSquareFreeDecomposition_primitive (f : ZPoly) :
     (primitiveSquareFreeDecomposition f).primitive = primitivePart f := by
   by_cases hzero : (primitivePart f).isZero = true
