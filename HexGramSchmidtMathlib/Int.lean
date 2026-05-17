@@ -25,6 +25,27 @@ namespace Hex
 namespace GramSchmidt
 namespace Int
 
+/-- Bridge-layer capstone for the Gram determinant vector: the no-pivot
+Bareiss pass over the full Gram matrix records, at slot `r + 1`, the same
+leading-prefix determinant as the public row-pivoted Bareiss surface on that
+prefix.
+
+This theorem lives in `HexGramSchmidtMathlib` because the proof path for the
+underlying `gramDet`/Bareiss identification crosses the matrix determinant
+bridge. Mathlib-free consumers should use the executable `gramDet` API
+instead of depending on this Bareiss-facing statement. -/
+theorem gramDetVecEntry_eq_leadingPrefix_bareiss
+    (b : Matrix Int n m) (r : Nat) (hr : r < n) :
+    gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
+        ⟨r + 1, Nat.succ_lt_succ hr⟩ =
+      (Matrix.bareiss
+        (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+          (Nat.succ_le_of_lt hr))).toNat := by
+  have hentry :=
+    gramDetVecEntry_eq_gramDet (b := b) (k := r + 1)
+      (hk := Nat.succ_le_of_lt hr)
+  simpa [gramDet, GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram] using hentry
+
 /-- The fraction-free scaled-coefficient loop records, below the diagonal, the
 Bareiss determinant of the Cramer matrix for the corresponding
 Gram-Schmidt coefficient. This is the executable-array invariant needed to
