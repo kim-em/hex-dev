@@ -2110,15 +2110,6 @@ private theorem rowAdd_row_eq_of_ne {R : Type u} [Mul R] [Add R] {n' m' : Nat}
     (x := Vector.ofFn fun k => M[dst][k] + c * M[src][k])
     dst.isLt r.isLt (fun heq => hr heq.symm)
 
-/-- The row of `Matrix.rowAdd M src dst c` at index `dst` is the entry-wise
-sum `M[dst] + c * M[src]`. -/
-private theorem rowAdd_row_at {R : Type u} [Mul R] [Add R] {n' m' : Nat}
-    (M : Matrix R n' m') (src dst : Fin n') (c : R) :
-    (Matrix.rowAdd M src dst c)[dst] =
-      Vector.ofFn fun k => M[dst][k] + c * M[src][k] := by
-  unfold Matrix.rowAdd
-  simp
-
 /-- Inductive helper for `dot_rowAdd_row_at_left`: distribution along a foldl. -/
 private theorem foldl_dot_rowAdd_at {n' m' : Nat}
     (M : Matrix Int n' m') (src dst : Fin n') (c : Int) (w : Vector Int m')
