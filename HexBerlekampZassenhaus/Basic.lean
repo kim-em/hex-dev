@@ -3004,7 +3004,11 @@ private theorem shouldRecordPolynomialFactor_X :
   unfold shouldRecordPolynomialFactor
   simp [X_ne_zero, X_ne_one, X_ne_C_neg_one]
 
-private theorem normalizeFactorSign_one :
+/-- The sign-normalisation of `1` is `1`.  Exposed publicly so Mathlib-side
+per-branch umbrellas (in particular the fast-path constant arm, where the
+singleton square-free core collapses to `1`) can normalise the unit core
+without re-deriving the leading-coefficient computation inline. -/
+theorem normalizeFactorSign_one :
     normalizeFactorSign (1 : ZPoly) = 1 := by
   unfold normalizeFactorSign
   have hnot : ¬ DensePoly.leadingCoeff (1 : ZPoly) < 0 := by
@@ -3013,7 +3017,12 @@ private theorem normalizeFactorSign_one :
       DensePoly.coeffs_C_of_ne_zero (by decide : (1 : Int) ≠ 0)]
   rw [if_neg hnot]
 
-private theorem shouldRecordPolynomialFactor_one :
+/-- The `shouldRecordPolynomialFactor` filter rejects the unit `1`.  Exposed
+publicly so Mathlib-side per-branch umbrellas can contradict
+`factorWithBound_entry_shouldRecord` directly when an entry collapses to a
+unit (in particular the fast-path constant arm, where the singleton
+square-free core is `1`). -/
+theorem shouldRecordPolynomialFactor_one :
     shouldRecordPolynomialFactor (1 : ZPoly) = false := by
   unfold shouldRecordPolynomialFactor
   simp
