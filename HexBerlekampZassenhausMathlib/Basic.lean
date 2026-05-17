@@ -1,9 +1,12 @@
 import HexBerlekampZassenhaus
 import HexBerlekampMathlib.Basic
 import HexBerlekampZassenhausMathlib.UFDPartition
+import HexHenselMathlib.Correctness
 import HexPolyZMathlib.Basic
 import HexPolyZMathlib.Mignotte
+import Mathlib.RingTheory.Coprime.Lemmas
 import Mathlib.RingTheory.Polynomial.UniqueFactorization
+import Mathlib.RingTheory.PrincipalIdealDomain
 
 /-!
 Mathlib-facing correctness surface for `HexBerlekampZassenhaus`.
@@ -6458,6 +6461,274 @@ theorem henselLiftData_liftedSubset_product_congr_mod_base
   exact Hex.ZPoly.congr_symm _ _ _
     (Hex.ZPoly.congr_liftToZ_of_modP_eq primeData.p (modPFactorProduct primeData S)
       (liftedFactorProduct d (liftedSubsetOfModPSubset primeData d hsize S)) hmodP)
+
+/-! ### Subset/complement coprimality of Hensel-lifted factors mod `p`
+
+The next group of theorems supplies the `IsCoprime` input over
+`(ZMod primeData.p)[X]` required by `HexHenselMathlib.hensel_unique` when
+applied to the subset/complement pair of Hensel-lifted factor products.
+
+The subset-product and complement-product reductions modulo `p` are
+bridged through `henselLiftData_liftedSubset_product_congr_mod_base` and
+the canonical `liftToZ` identification, landing in
+`HexBerlekampMathlib.toMathlibPolynomial` over the `modPFactorProduct`
+view. Pairwise non-association of the monic `modPFactor` entries
+(`factorsModP_nodup_of_factorsModPBerlekampForm`) then supplies the
+standard UFD-style coprimality over `Polynomial (ZMod primeData.p)`. -/
+
+/-- The `modPIndexToLiftedEmbedding` is surjective once the lift stage
+preserves factor count: it is the value-preserving `Fin` cast, which is a
+bijection between sets of equal cardinality. -/
+private theorem modPIndexToLiftedEmbedding_surjective
+    (primeData : Hex.PrimeChoiceData) (d : Hex.LiftData)
+    (hsize : d.liftedFactors.size = primeData.factorsModP.size) :
+    Function.Surjective (modPIndexToLiftedEmbedding primeData d hsize) := by
+  intro j
+  refine ⟨⟨j.val, hsize ▸ j.isLt⟩, ?_⟩
+  exact Fin.ext rfl
+
+/-- `Finset.univ.map (modPIndexToLiftedEmbedding ...)` is the lifted-side
+universe. -/
+private theorem map_univ_modPIndexToLiftedEmbedding
+    (primeData : Hex.PrimeChoiceData) (d : Hex.LiftData)
+    (hsize : d.liftedFactors.size = primeData.factorsModP.size) :
+    (Finset.univ : ModPFactorSubset primeData).map
+        (modPIndexToLiftedEmbedding primeData d hsize) =
+      (Finset.univ : LiftedFactorSubset d) :=
+  Finset.map_univ_of_surjective
+    (modPIndexToLiftedEmbedding_surjective primeData d hsize)
+
+/-- The lifted-side complement of a `liftedSubsetOfModPSubset` is itself
+a `liftedSubsetOfModPSubset`, of the mod-`p`-side complement. Lets
+subset/complement reasoning on the lifted side reduce to subset/complement
+reasoning on the mod-`p` side. -/
+private theorem liftedSubsetOfModPSubset_compl_eq
+    (primeData : Hex.PrimeChoiceData) (d : Hex.LiftData)
+    (hsize : d.liftedFactors.size = primeData.factorsModP.size)
+    (S : ModPFactorSubset primeData) :
+    liftedSubsetOfModPSubset primeData d hsize (Finset.univ \ S) =
+      (Finset.univ : LiftedFactorSubset d) \
+        liftedSubsetOfModPSubset primeData d hsize S := by
+  unfold liftedSubsetOfModPSubset
+  rw [Finset.map_sdiff,
+    map_univ_modPIndexToLiftedEmbedding primeData d hsize]
+
+/--
+Mathlib transport of a Hensel-lifted-subset product, mapped down to
+`Polynomial (ZMod primeData.p)`, equals the Mathlib transport of the
+corresponding `modPFactor` subset product.
+
+Combines `henselLiftData_liftedSubset_product_congr_mod_base` (the
+`ZPoly.congr` form, lifted to map equality via
+`HexHenselMathlib.zpoly_congr_toPolynomial_map_eq`) with
+`Hex.FpPoly.modP_liftToZ` and
+`toMathlibPolynomial_modP_eq_map_intCast_zmod`. -/
+private theorem toPolynomial_liftedSubset_map_intCast_zmod_eq_toMathlibPolynomial
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hprime_invariant :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant
+        primeData.p B core
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList)
+    (hp : 1 < primeData.p)
+    (hB : 1 ≤ B)
+    (hfactors_monic :
+      letI := primeData.bounds
+      ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g)
+    (hproduct_mod_p :
+      letI := primeData.bounds
+      Hex.ZPoly.congr
+        (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
+        core primeData.p)
+    (S : ModPFactorSubset primeData) :
+    letI := primeData.bounds
+    let d := Hex.henselLiftData core B primeData
+    let hsize := henselLiftData_liftedFactors_size_eq core B primeData
+    (HexPolyZMathlib.toPolynomial
+        (liftedFactorProduct d (liftedSubsetOfModPSubset primeData d hsize S))).map
+          (Int.castRingHom (ZMod primeData.p)) =
+      HexBerlekampMathlib.toMathlibPolynomial (modPFactorProduct primeData S) := by
+  letI := primeData.bounds
+  intro d hsize
+  have hcongr :=
+    henselLiftData_liftedSubset_product_congr_mod_base core B primeData
+      hcore_monic hprime_invariant hp hB hfactors_monic hproduct_mod_p S
+  have hmap_eq :=
+    HexHenselMathlib.zpoly_congr_toPolynomial_map_eq
+      (liftedFactorProduct d (liftedSubsetOfModPSubset primeData d hsize S))
+      (Hex.FpPoly.liftToZ (modPFactorProduct primeData S))
+      primeData.p hcongr
+  rw [hmap_eq]
+  rw [← toMathlibPolynomial_modP_eq_map_intCast_zmod
+    (Hex.FpPoly.liftToZ (modPFactorProduct primeData S)),
+    Hex.FpPoly.modP_liftToZ]
+
+/-- Two `modPFactor` entries with distinct indices are unequal: a direct index
+form of the `Nodup` invariant carried by `factorsModPBerlekampForm`. -/
+private theorem modPFactor_ne_of_ne
+    {primeData : Hex.PrimeChoiceData}
+    (hfactors_nodup : primeData.factorsModP.toList.Nodup)
+    {i j : ModPFactorIndex primeData} (hij : i ≠ j) :
+    letI := primeData.bounds
+    modPFactor primeData i ≠ modPFactor primeData j := by
+  letI := primeData.bounds
+  intro h
+  apply hij
+  have hi_list : i.val < primeData.factorsModP.toList.length := by
+    rw [Array.length_toList]; exact i.isLt
+  have hj_list : j.val < primeData.factorsModP.toList.length := by
+    rw [Array.length_toList]; exact j.isLt
+  have hlist_i :
+      primeData.factorsModP.toList[i.val]'hi_list =
+        primeData.factorsModP[i.val]'i.isLt := by
+    rw [Array.getElem_toList]
+  have hlist_j :
+      primeData.factorsModP.toList[j.val]'hj_list =
+        primeData.factorsModP[j.val]'j.isLt := by
+    rw [Array.getElem_toList]
+  have hlist_eq :
+      primeData.factorsModP.toList[i.val]'hi_list =
+        primeData.factorsModP.toList[j.val]'hj_list := by
+    rw [hlist_i, hlist_j]; exact h
+  exact Fin.ext ((List.Nodup.getElem_inj_iff hfactors_nodup).mp hlist_eq)
+
+/-- Two Mathlib-transported monic irreducible mod-`p` factors with distinct
+indices are coprime in `Polynomial (ZMod primeData.p)`.
+
+The proof uses pairwise non-association (distinct monic polynomials are
+non-associated) plus `Irreducible.associated_of_dvd` to derive non-divisibility,
+then closes via `Irreducible.coprime_iff_not_dvd` in the PID
+`Polynomial (ZMod primeData.p)` (which has `IsBezout` once
+`Fact (Nat.Prime primeData.p)` makes `ZMod primeData.p` a field). -/
+private theorem isCoprime_toMathlibPolynomial_modPFactor_of_ne
+    {primeData : Hex.PrimeChoiceData}
+    (hprime : _root_.Nat.Prime primeData.p)
+    (hfactors_monic :
+      letI := primeData.bounds
+      ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g)
+    (hfactors_irr :
+      letI := primeData.bounds
+      ∀ i : ModPFactorIndex primeData,
+        Irreducible
+          (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)))
+    (hfactors_nodup : primeData.factorsModP.toList.Nodup)
+    {i j : ModPFactorIndex primeData} (hij : i ≠ j) :
+    letI := primeData.bounds
+    IsCoprime
+      (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i))
+      (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData j)) := by
+  letI := primeData.bounds
+  haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
+  have hi_monic_fp : Hex.DensePoly.Monic (modPFactor primeData i) :=
+    hfactors_monic _ (Array.getElem_mem _)
+  have hj_monic_fp : Hex.DensePoly.Monic (modPFactor primeData j) :=
+    hfactors_monic _ (Array.getElem_mem _)
+  have hi_monic :
+      (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)).Monic :=
+    HexBerlekampMathlib.toMathlibPolynomial_monic _ hi_monic_fp
+  have hj_monic :
+      (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData j)).Monic :=
+    HexBerlekampMathlib.toMathlibPolynomial_monic _ hj_monic_fp
+  have hne_fp : modPFactor primeData i ≠ modPFactor primeData j :=
+    modPFactor_ne_of_ne hfactors_nodup hij
+  have hne_math :
+      HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i) ≠
+        HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData j) := by
+    intro h
+    exact hne_fp (HexBerlekampMathlib.fpPolyEquiv.injective h)
+  have hnassoc : ¬ Associated
+      (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i))
+      (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData j)) := by
+    intro hassoc
+    exact hne_math (Polynomial.eq_of_monic_of_associated hi_monic hj_monic hassoc)
+  rw [(hfactors_irr i).coprime_iff_not_dvd]
+  intro hdvd
+  exact hnassoc ((hfactors_irr i).associated_of_dvd (hfactors_irr j) hdvd)
+
+/--
+Subset/complement coprimality of Hensel-lifted factor products modulo
+`primeData.p`.
+
+After mapping both products into `Polynomial (ZMod primeData.p)`, the
+selected lifted-factor subset's product and the complementary subset's
+product are coprime: each lifted product reduces (via
+`henselLiftData_liftedSubset_product_congr_mod_base` and
+`Hex.FpPoly.modP_liftToZ`) to the corresponding `modPFactor` subset
+product, and the `modPFactor` entries are pairwise distinct monic
+irreducibles in `Polynomial (ZMod primeData.p)`, so any subset and its
+complement are coprime.
+
+This is the `IsCoprime` input over `(ZMod primeData.p)[X]` consumed by
+`HexHenselMathlib.hensel_unique` when applied to the subset/complement
+pair of Hensel-lifted factor products (#4761 precursor for #4733).
+-/
+theorem henselLiftData_liftedSubset_complement_isCoprime_mod_p
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hprime : _root_.Nat.Prime primeData.p)
+    (hprime_invariant :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant
+        primeData.p B core
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList)
+    (hp : 1 < primeData.p)
+    (hB : 1 ≤ B)
+    (hfactors_monic :
+      letI := primeData.bounds
+      ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g)
+    (hproduct_mod_p :
+      letI := primeData.bounds
+      Hex.ZPoly.congr
+        (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
+        core primeData.p)
+    (hfactors_irr :
+      letI := primeData.bounds
+      ∀ i : ModPFactorIndex primeData,
+        Irreducible
+          (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)))
+    (hfactors_nodup : primeData.factorsModP.toList.Nodup)
+    (S : ModPFactorSubset primeData) :
+    letI := primeData.bounds
+    let d := Hex.henselLiftData core B primeData
+    let hsize := henselLiftData_liftedFactors_size_eq core B primeData
+    IsCoprime
+      ((HexPolyZMathlib.toPolynomial
+          (liftedFactorProduct d (liftedSubsetOfModPSubset primeData d hsize S))).map
+        (Int.castRingHom (ZMod primeData.p)))
+      ((HexPolyZMathlib.toPolynomial
+          (liftedFactorProduct d ((Finset.univ : LiftedFactorSubset d) \
+            liftedSubsetOfModPSubset primeData d hsize S))).map
+        (Int.castRingHom (ZMod primeData.p))) := by
+  letI := primeData.bounds
+  intro d hsize
+  haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
+  -- Rewrite both lifted products via the modP bridge to `toMathlibPolynomial`
+  -- of `modPFactorProduct`. The complement requires the
+  -- `liftedSubsetOfModPSubset_compl_eq` rewrite first.
+  rw [← liftedSubsetOfModPSubset_compl_eq primeData d hsize S]
+  rw [toPolynomial_liftedSubset_map_intCast_zmod_eq_toMathlibPolynomial
+      core B primeData hcore_monic hprime_invariant hp hB
+      hfactors_monic hproduct_mod_p S,
+    toPolynomial_liftedSubset_map_intCast_zmod_eq_toMathlibPolynomial
+      core B primeData hcore_monic hprime_invariant hp hB
+      hfactors_monic hproduct_mod_p (Finset.univ \ S)]
+  -- Expand both `modPFactorProduct`s into `Finset.prod` of
+  -- `toMathlibPolynomial (modPFactor _)` via the bridge.
+  rw [toMathlibPolynomial_modPFactorProduct,
+    toMathlibPolynomial_modPFactorProduct]
+  -- Apply `IsCoprime.prod_left_iff` and `IsCoprime.prod_right_iff` to
+  -- reduce to per-pair coprimality between distinct modPFactors.
+  rw [IsCoprime.prod_left_iff]
+  intro i hi
+  rw [IsCoprime.prod_right_iff]
+  intro j hj
+  apply isCoprime_toMathlibPolynomial_modPFactor_of_ne
+    hprime hfactors_monic hfactors_irr hfactors_nodup
+  intro hij
+  rw [hij] at hi
+  rcases Finset.mem_sdiff.mp hj with ⟨_, hj_not⟩
+  exact hj_not hi
 
 /--
 Multiplicative splitting for `liftedFactorProduct` along the disjoint
