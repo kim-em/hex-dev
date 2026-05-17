@@ -112,13 +112,13 @@ def coeffWords (words : Array UInt64) (n : Nat) : Bool :=
   (((word >>> (n % 64).toUInt64) &&& 1) != 0)
 
 /-- Trailing-zero normalization preserves every packed coefficient word. -/
-theorem normalizeWords_get?_getD (words : Array UInt64) (i : Nat) :
+@[simp] theorem normalizeWords_get?_getD (words : Array UInt64) (i : Nat) :
     ((normalizeWords words)[i]?).getD 0 = (words[i]?).getD 0 := by
   simpa [normalizeWords, Array.getD, List.getD] using
     trimTrailingZeroWordsList_getD words.toList i
 
 /-- Trailing-zero normalization preserves packed coefficients. -/
-theorem coeffWords_normalizeWords (words : Array UInt64) (n : Nat) :
+@[simp] theorem coeffWords_normalizeWords (words : Array UInt64) (n : Nat) :
     coeffWords (normalizeWords words) n = coeffWords words n := by
   rw [coeffWords, coeffWords, normalizeWords_get?_getD]
 
