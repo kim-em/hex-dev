@@ -1182,20 +1182,12 @@ theorem factor_constant_branch_entry_irreducible_of_choosePrimeData
       simpa using hcore_mem
     have hcore_one : (Hex.normalizeForFactor f).squareFreeCore = 1 :=
       Hex.squareFreeCore_eq_one_of_constant_of_ne_zero f hf_ne hdeg
-    have hraw_one : raw = 1 := hraw_eq.trans hcore_one
     have hentry_one : entry.1 = 1 := by
-      rw [hentry_eq, hraw_one]
-      unfold Hex.normalizeFactorSign
-      have hnot : ¬ Hex.DensePoly.leadingCoeff (1 : Hex.ZPoly) < 0 := by
-        change ¬ Hex.DensePoly.leadingCoeff (Hex.DensePoly.C (1 : Int)) < 0
-        simp [Hex.DensePoly.leadingCoeff,
-          Hex.DensePoly.coeffs_C_of_ne_zero (by decide : (1 : Int) ≠ 0)]
-      rw [if_neg hnot]
+      rw [hentry_eq, hraw_eq, hcore_one, Hex.normalizeFactorSign_one]
     have hrecord : Hex.shouldRecordPolynomialFactor entry.1 = true :=
       Hex.factorWithBound_entry_shouldRecord f B entry hentry_mem
-    rw [hentry_one] at hrecord
-    unfold Hex.shouldRecordPolynomialFactor at hrecord
-    simp at hrecord
+    rw [hentry_one, Hex.shouldRecordPolynomialFactor_one] at hrecord
+    exact Bool.false_ne_true hrecord
 
 /-- **#4571 HO-1 substrate — fast-path quadratic arm umbrella.**
 
