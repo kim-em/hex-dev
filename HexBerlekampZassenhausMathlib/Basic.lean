@@ -12034,6 +12034,46 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData
   exact existsUnique_modPFactorSubset_of_choosePrimeData_of_some core
     hirr hdvd hcore_ne hsome
 
+/-- **HO-1 substrate (#4688).**
+
+`ModPSubsetPartitionHypotheses` constructor at the executable
+`Hex.choosePrimeData` boundary.
+
+Composes:
+
+* `Hex.choosePrimeData_fModP_eq_modP` for `fModP_eq`;
+* `trivial` for the `True` `admissible_prime` / `square_free_reduction` hooks;
+* `factors_irreducible_of_choosePrimeData_of_some` (#4686) for the per-factor
+  irreducibility component;
+* `existsUnique_modPFactorSubset_of_choosePrimeData` (#4693) for both the
+  existence and uniqueness components.
+
+The `hsome` hypothesis excludes the fallback `p = 3` branch where the
+mod-`p` factorisation invariant does not hold; downstream consumers
+discharge it from the same `choosePrimeData?` chain that supplies the
+other partition fields. -/
+theorem modPSubsetPartitionHypotheses_of_choosePrimeData
+    (core : Hex.ZPoly)
+    (hsome : Hex.choosePrimeData? core = some (Hex.choosePrimeData core)) :
+    let primeData := Hex.choosePrimeData core
+    ModPSubsetPartitionHypotheses core primeData True True := by
+  intro primeData
+  refine
+    { fModP_eq := ?_
+      admissible_prime := trivial
+      square_free_reduction := trivial
+      factors_irreducible := ?_
+      exists_subset := ?_
+      unique_subset := ?_ }
+  · exact Hex.choosePrimeData_fModP_eq_modP core
+  · exact factors_irreducible_of_choosePrimeData_of_some core primeData hsome
+  · intro factor hirr hdvd
+    exact (existsUnique_modPFactorSubset_of_choosePrimeData core hirr hdvd hsome).exists
+  · intro factor S T hirr hdvd hS hT
+    rcases existsUnique_modPFactorSubset_of_choosePrimeData core hirr hdvd hsome with
+      ⟨_, _, huniq⟩
+    exact (huniq S hS).trans (huniq T hT).symm
+
 end
 
 end HexBerlekampZassenhausMathlib
