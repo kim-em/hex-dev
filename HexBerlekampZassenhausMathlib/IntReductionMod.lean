@@ -1914,6 +1914,60 @@ theorem normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible
     (coreFactors.toList.map HexPolyZMathlib.toPolynomial).toFinset
     (by intro r hr; rw [Multiset.mem_toFinset] at hr; exact hsubset r hr)
 
+/-- **#4597 HO-1 substrate — small-mod singleton arm `factorPower` shape of
+the repeated part.** Singleton specialisation of
+`normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover`
+(#4759, the final-assembly successor of the decomposed #4746): when the
+normalized square-free core is itself irreducible, the repeated part is
+exactly a `Hex.Factorization.factorPower` of the square-free core. The
+`hnorm` precondition of the general theorem is discharged by
+`Hex.squareFreeCore_normalizeFactorSign_of_ne_zero` (the normalized
+square-free core has positive leading coefficient, hence its
+sign-normalisation is the identity). Consumed by the public discharger
+`Hex.reassemblyExpansionComplete_singleton_of_irreducible` (#4597
+deliverable 3) to dispatch the singleton expansion specialisation
+`Hex.expandRepeatedPartFactorArray_pow_singleton` (#4597 deliverable 2).
+Sibling dischargers: constant arm
+`Hex.reassemblyExpansionComplete_constant_of_ne_zero` (#4585 / PR #4598);
+quadratic arms tracked by #4747. -/
+theorem normalizeForFactor_repeatedPart_isFactorPower_squareFreeCore_of_irreducible
+    (f : Hex.ZPoly) (hf : f ≠ 0)
+    (hirr : Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore) :
+    ∃ k : Nat,
+      (Hex.normalizeForFactor f).repeatedPart =
+        Hex.Factorization.factorPower (Hex.normalizeForFactor f).squareFreeCore k := by
+  set core := (Hex.normalizeForFactor f).squareFreeCore with hcore_def
+  have hirr_arr :
+      ∀ q ∈ (#[core] : Array Hex.ZPoly).toList, Hex.ZPoly.Irreducible q := by
+    intro q hq
+    have hq_eq : q = core := by simpa using hq
+    exact hq_eq ▸ hirr
+  have hprod : Array.polyProduct (#[core] : Array Hex.ZPoly) = core :=
+    Hex.ZPoly.polyProduct_singleton core
+  have hnorm :
+      ∀ q ∈ (#[core] : Array Hex.ZPoly).toList, Hex.normalizeFactorSign q = q := by
+    intro q hq
+    have hq_eq : q = core := by simpa using hq
+    subst hq_eq
+    exact Hex.squareFreeCore_normalizeFactorSign_of_ne_zero f hf
+  obtain ⟨exponents, hlen, hdecomp⟩ :=
+    normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover
+      f hf #[core] hirr_arr hprod hnorm
+  -- Singleton `coreFactors` collapses the exponent list to `[k]` for some `k`.
+  have hsize : (#[core] : Array Hex.ZPoly).size = 1 := rfl
+  rw [hsize] at hlen
+  cases exponents with
+  | nil => simp at hlen
+  | cons k es =>
+      cases es with
+      | cons _ _ => simp at hlen
+      | nil =>
+          refine ⟨k, ?_⟩
+          simp only [List.zip_cons_cons, List.zip_nil_right, List.map_cons,
+            List.map_nil, List.foldl_cons, List.foldl_nil,
+            Hex.ZPoly.one_mul_zpoly] at hdecomp
+          exact hdecomp
+
 end IntReductionMod
 
 /-- **#4549 substrate (HO-1), outer-bound specialisation, rewired for #4553.**

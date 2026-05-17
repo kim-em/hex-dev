@@ -9424,7 +9424,13 @@ theorem reassemblyExpansionComplete_constant_of_ne_zero
   rw [hcore_one, expandRepeatedPartFactorArray_singleton_one]
   exact hrep_one
 
-private theorem squareFreeCore_normalizeFactorSign_of_ne_zero
+/-- The normalized square-free core has positive leading coefficient
+(`squareFreeCore_leadingCoeff_pos_of_ne_zero`), so its sign-normalisation
+is the identity. Exposed publicly for HO-1 substrate consumers in the
+Mathlib bridge (notably the small-mod singleton arm specialisation of
+`normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover`,
+which discharges its `hnorm` precondition with this lemma). -/
+theorem squareFreeCore_normalizeFactorSign_of_ne_zero
     (f : ZPoly) (hf : f ≠ 0) :
     normalizeFactorSign (normalizeForFactor f).squareFreeCore =
       (normalizeForFactor f).squareFreeCore := by
