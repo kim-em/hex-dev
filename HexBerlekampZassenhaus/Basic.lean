@@ -9189,6 +9189,39 @@ theorem expandRepeatedPartFactorArray_residual_eq_one_of_pow_decomposition
     coreFactors.toList exponents rp (rp.size + 1)
     hlen' hmonic hdegree hnot_dvd_tail hdecomp hfuel
 
+/-- Public `factorPower` spelling of
+`expandRepeatedPartFactorArray_residual_eq_one_of_pow_decomposition`.
+
+The underlying expansion proof was developed against the private recursive
+power helper used by `Factorization.product`; downstream Mathlib-side
+assemblers cannot name that helper. This wrapper exposes the same contract
+using `Factorization.factorPower`, whose definition is judgmentally the same
+power operation and is part of the public API. -/
+theorem expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition
+    (rp : ZPoly) (coreFactors : Array ZPoly)
+    (hmonic : ∀ q ∈ coreFactors.toList, DensePoly.Monic q)
+    (hdegree : ∀ q ∈ coreFactors.toList, 0 < q.degree?.getD 0)
+    (exponents : List Nat)
+    (hlen : exponents.length = coreFactors.size)
+    (hnot_dvd_tail :
+      ∀ pre q e suf,
+        coreFactors.toList.zip exponents = pre ++ (q, e) :: suf →
+        ¬ q ∣ (suf.map (fun (qe : ZPoly × Nat) =>
+                Factorization.factorPower qe.1 qe.2)).foldl (· * ·) 1)
+    (hdecomp :
+      rp = ((coreFactors.toList.zip exponents).map
+              (fun (qe : ZPoly × Nat) =>
+                Factorization.factorPower qe.1 qe.2)).foldl (· * ·) 1)
+    (hfuel :
+      ∀ (qe : ZPoly × Nat),
+        qe ∈ coreFactors.toList.zip exponents → qe.2 + 1 ≤ rp.size + 1) :
+    (expandRepeatedPartFactorArray rp coreFactors).2 = 1 := by
+  refine expandRepeatedPartFactorArray_residual_eq_one_of_pow_decomposition
+    rp coreFactors hmonic hdegree exponents hlen ?_ ?_ hfuel
+  · intro pre q e suf hsplit
+    simpa [Factorization.factorPower] using hnot_dvd_tail pre q e suf hsplit
+  · simpa [Factorization.factorPower] using hdecomp
+
 /-- The reassembled output for a single-`1` core list is exactly the
 normalization prefix followed by `1`. Both branches of `reassemblePolynomialFactors`
 collapse to this shape because the expansion never extracts anything when the
