@@ -1148,6 +1148,205 @@ def monicModPImage {p : Nat} [Hex.ZMod64.Bounds p] (f : Hex.FpPoly p) : Hex.FpPo
   else
     Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f)⁻¹ f
 
+theorem monicModPImage_eq_monicModularImage
+    {p : Nat} [Hex.ZMod64.Bounds p] (f : Hex.FpPoly p) :
+    monicModPImage f = Hex.monicModularImage f := by
+  rfl
+
+theorem monicModPImage_zero {p : Nat} [Hex.ZMod64.Bounds p] :
+    @monicModPImage p _ 0 = 0 := by
+  rfl
+
+theorem monicModPImage_ne_zero_of_ne_zero
+    {p : Nat} [Hex.ZMod64.Bounds p] [Fact (Hex.Nat.Prime p)]
+    {f : Hex.FpPoly p} (hf : f.isZero = false) :
+    monicModPImage f ≠ 0 := by
+  rw [monicModPImage_eq_monicModularImage]
+  have hf_ne : f ≠ 0 := by
+    intro hzero
+    subst hzero
+    contradiction
+  exact Hex.monicModularImage_ne_zero_of_ne_zero (Fact.out : Hex.Nat.Prime p) hf_ne
+
+theorem monicModPImage_monic_of_ne_zero
+    {p : Nat} [Hex.ZMod64.Bounds p]
+    (hprime : Hex.Nat.Prime p) {f : Hex.FpPoly p} (hf : f.isZero = false) :
+    Hex.DensePoly.Monic (monicModPImage f) := by
+  rw [monicModPImage_eq_monicModularImage]
+  exact Hex.monicModularImage_monic hprime f hf
+
+theorem monicModPImage_dvd_self_of_ne_zero
+    {p : Nat} [Hex.ZMod64.Bounds p]
+    (hprime : Hex.Nat.Prime p) {f : Hex.FpPoly p} (hf : f.isZero = false) :
+    monicModPImage f ∣ f := by
+  letI : Hex.ZMod64.PrimeModulus p := Hex.ZMod64.primeModulusOfPrime hprime
+  unfold monicModPImage
+  simp only [hf, Bool.false_eq_true, ↓reduceIte]
+  have hf_ne : f ≠ 0 := by
+    intro hzero
+    subst hzero
+    contradiction
+  have hf_size_pos : 0 < f.size := Hex.FpPoly.size_pos_of_ne_zero hf_ne
+  have hlead_ne : Hex.DensePoly.leadingCoeff f ≠ (0 : Hex.ZMod64 p) := by
+    rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred f hf_size_pos]
+    exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size f hf_size_pos
+  have hinv_ne : (Hex.DensePoly.leadingCoeff f)⁻¹ ≠ (0 : Hex.ZMod64 p) :=
+    Hex.ZMod64.inv_ne_zero_of_prime hprime hlead_ne
+  exact Hex.FpPoly.dvd_scale_self_of_ne_zero hinv_ne f
+
+theorem dvd_monicModPImage_of_dvd
+    {p : Nat} [Hex.ZMod64.Bounds p]
+    (_hprime : Hex.Nat.Prime p) {f : Hex.FpPoly p}
+    (hf : f.isZero = false) :
+    f ∣ monicModPImage f := by
+  unfold monicModPImage
+  simp only [hf, Bool.false_eq_true, ↓reduceIte]
+  refine ⟨Hex.DensePoly.C (Hex.DensePoly.leadingCoeff f)⁻¹, ?_⟩
+  calc
+    Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f)⁻¹ f
+        = Hex.DensePoly.C (Hex.DensePoly.leadingCoeff f)⁻¹ * f := by
+          rw [Hex.FpPoly.C_mul_eq_scale]
+    _ = f * Hex.DensePoly.C (Hex.DensePoly.leadingCoeff f)⁻¹ :=
+          Hex.DensePoly.mul_comm_poly _ _
+
+theorem modP_mul
+    (p : Nat) [Hex.ZMod64.Bounds p] (f g : Hex.ZPoly) :
+    Hex.ZPoly.modP p (f * g) = Hex.ZPoly.modP p f * Hex.ZPoly.modP p g := by
+  have hprod :
+      Hex.ZPoly.congr
+        (Hex.FpPoly.liftToZ (Hex.ZPoly.modP p f * Hex.ZPoly.modP p g))
+        (f * g) p := by
+    exact Hex.ZPoly.congr_trans
+      (Hex.FpPoly.liftToZ (Hex.ZPoly.modP p f * Hex.ZPoly.modP p g))
+      (Hex.FpPoly.liftToZ (Hex.ZPoly.modP p f) * Hex.FpPoly.liftToZ (Hex.ZPoly.modP p g))
+      (f * g) p
+      (Hex.ZPoly.liftToZ_mul_congr p (Hex.ZPoly.modP p f) (Hex.ZPoly.modP p g))
+      (Hex.ZPoly.congr_mul
+        (Hex.FpPoly.liftToZ (Hex.ZPoly.modP p f))
+        (Hex.FpPoly.liftToZ (Hex.ZPoly.modP p g))
+        f g p
+        (Hex.FpPoly.congr_liftToZ_modP (p := p) f)
+        (Hex.FpPoly.congr_liftToZ_modP (p := p) g))
+  have hmod := Hex.ZPoly.modP_eq_of_congr p
+    (Hex.FpPoly.liftToZ (Hex.ZPoly.modP p f * Hex.ZPoly.modP p g))
+    (f * g) hprod
+  simpa [Hex.FpPoly.modP_liftToZ] using hmod.symm
+
+theorem modP_dvd_modP_of_dvd
+    (p : Nat) [Hex.ZMod64.Bounds p] {factor core : Hex.ZPoly}
+    (hdvd : factor ∣ core) :
+    Hex.ZPoly.modP p factor ∣ Hex.ZPoly.modP p core := by
+  rcases hdvd with ⟨q, hq⟩
+  refine ⟨Hex.ZPoly.modP p q, ?_⟩
+  rw [hq, modP_mul]
+
+theorem monicModPImage_dvd_monicModularImage_of_dvd_of_choosePrimeData?_some
+    {core factor : Hex.ZPoly}
+    (hdvd : factor ∣ core)
+    (_hcore_ne : core ≠ 0)
+    {primeData : Hex.PrimeChoiceData}
+    (hsome : Hex.choosePrimeData? core = some primeData) :
+    letI := primeData.bounds
+    @monicModPImage primeData.p primeData.bounds
+        (@Hex.ZPoly.modP primeData.p primeData.bounds factor) ∣
+      Hex.monicModularImage
+        (@Hex.ZPoly.modP primeData.p primeData.bounds core) := by
+  letI := primeData.bounds
+  have hprime : Hex.Nat.Prime primeData.p :=
+    Hex.choosePrimeData?_prime core primeData hsome
+  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+    Hex.ZMod64.primeModulusOfPrime hprime
+  have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
+    Hex.choosePrimeData?_isGoodPrime core primeData hsome
+  have hcore_iszero :
+      (@Hex.ZPoly.modP primeData.p primeData.bounds core).isZero = false :=
+    Hex.isGoodPrime_modP_isZero_false core primeData.p hgood
+  have hcore_mod_ne : @Hex.ZPoly.modP primeData.p primeData.bounds core ≠ 0 := by
+    intro hzero
+    rw [hzero] at hcore_iszero
+    contradiction
+  have hfactor_dvd_core :
+      @Hex.ZPoly.modP primeData.p primeData.bounds factor ∣
+        @Hex.ZPoly.modP primeData.p primeData.bounds core :=
+    modP_dvd_modP_of_dvd primeData.p hdvd
+  have hfactor_iszero :
+      (@Hex.ZPoly.modP primeData.p primeData.bounds factor).isZero = false := by
+    cases hzero : (@Hex.ZPoly.modP primeData.p primeData.bounds factor).isZero with
+    | false => rfl
+    | true =>
+        exfalso
+        have hfactor_zero :
+            @Hex.ZPoly.modP primeData.p primeData.bounds factor = 0 := by
+          apply Hex.DensePoly.ext_coeff
+          intro n
+          have hsize : (@Hex.ZPoly.modP primeData.p primeData.bounds factor).size = 0 := by
+            change (@Hex.ZPoly.modP primeData.p primeData.bounds factor).coeffs.isEmpty = true at hzero
+            simpa [Hex.DensePoly.size, Array.isEmpty_iff_size_eq_zero] using hzero
+          rw [Hex.DensePoly.coeff_eq_zero_of_size_le
+            (@Hex.ZPoly.modP primeData.p primeData.bounds factor) (by omega)]
+          exact Hex.DensePoly.coeff_zero n
+        rcases hfactor_dvd_core with ⟨q, hq⟩
+        apply hcore_mod_ne
+        rw [hfactor_zero, Hex.FpPoly.zero_mul] at hq
+        exact hq
+  have hmonic_factor_dvd_factor :
+      @monicModPImage primeData.p primeData.bounds
+          (@Hex.ZPoly.modP primeData.p primeData.bounds factor) ∣
+        @Hex.ZPoly.modP primeData.p primeData.bounds factor :=
+    monicModPImage_dvd_self_of_ne_zero hprime hfactor_iszero
+  have hmonic_factor_dvd_core :
+      @monicModPImage primeData.p primeData.bounds
+          (@Hex.ZPoly.modP primeData.p primeData.bounds factor) ∣
+        @Hex.ZPoly.modP primeData.p primeData.bounds core := by
+    rcases hmonic_factor_dvd_factor with ⟨q₁, hq₁⟩
+    rcases hfactor_dvd_core with ⟨q₂, hq₂⟩
+    refine ⟨q₁ * q₂, ?_⟩
+    calc
+      @Hex.ZPoly.modP primeData.p primeData.bounds core
+          = (@Hex.ZPoly.modP primeData.p primeData.bounds factor) * q₂ := hq₂
+      _ = ((@monicModPImage primeData.p primeData.bounds
+              (@Hex.ZPoly.modP primeData.p primeData.bounds factor)) * q₁) * q₂ :=
+            congrArg (fun x => x * q₂) hq₁
+      _ = (@monicModPImage primeData.p primeData.bounds
+              (@Hex.ZPoly.modP primeData.p primeData.bounds factor)) * (q₁ * q₂) :=
+            Hex.DensePoly.mul_assoc_poly _ _ _
+  have hcore_dvd_monic :
+      @Hex.ZPoly.modP primeData.p primeData.bounds core ∣
+        Hex.monicModularImage
+          (@Hex.ZPoly.modP primeData.p primeData.bounds core) := by
+    unfold Hex.monicModularImage
+    simp only [hcore_iszero, Bool.false_eq_true, ↓reduceIte]
+    refine ⟨Hex.DensePoly.C
+        (Hex.DensePoly.leadingCoeff
+          (@Hex.ZPoly.modP primeData.p primeData.bounds core))⁻¹, ?_⟩
+    calc
+      Hex.DensePoly.scale
+          (Hex.DensePoly.leadingCoeff
+            (@Hex.ZPoly.modP primeData.p primeData.bounds core))⁻¹
+          (@Hex.ZPoly.modP primeData.p primeData.bounds core)
+          = Hex.DensePoly.C
+              (Hex.DensePoly.leadingCoeff
+                (@Hex.ZPoly.modP primeData.p primeData.bounds core))⁻¹ *
+            (@Hex.ZPoly.modP primeData.p primeData.bounds core) := by
+            rw [Hex.FpPoly.C_mul_eq_scale]
+      _ = (@Hex.ZPoly.modP primeData.p primeData.bounds core) *
+            Hex.DensePoly.C
+              (Hex.DensePoly.leadingCoeff
+                (@Hex.ZPoly.modP primeData.p primeData.bounds core))⁻¹ :=
+            Hex.DensePoly.mul_comm_poly _ _
+  rcases hmonic_factor_dvd_core with ⟨q₁, hq₁⟩
+  rcases hcore_dvd_monic with ⟨q₂, hq₂⟩
+  refine ⟨q₁ * q₂, ?_⟩
+  calc
+    Hex.monicModularImage (@Hex.ZPoly.modP primeData.p primeData.bounds core)
+        = (@Hex.ZPoly.modP primeData.p primeData.bounds core) * q₂ := hq₂
+    _ = ((@monicModPImage primeData.p primeData.bounds
+            (@Hex.ZPoly.modP primeData.p primeData.bounds factor)) * q₁) * q₂ :=
+          congrArg (fun x => x * q₂) hq₁
+    _ = (@monicModPImage primeData.p primeData.bounds
+            (@Hex.ZPoly.modP primeData.p primeData.bounds factor)) * (q₁ * q₂) :=
+          Hex.DensePoly.mul_assoc_poly _ _ _
+
 /--
 An integer factor is represented modulo the selected prime by a subset of the
 recorded modular factors when the subset product is the monic modular image of
