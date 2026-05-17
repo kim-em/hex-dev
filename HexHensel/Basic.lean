@@ -10,6 +10,9 @@ reductions and lifts that later Hensel steps reuse.
 -/
 namespace Hex
 
+/-- Indexed lookup into `(List.range size).map f`: returns `f n` for `n < size` and the
+zero default otherwise. Shared coefficient-lookup plumbing used by the `modP`, `reduceModPow`,
+and `liftToZ` bridges in this file. -/
 private theorem list_getD_map_range {α : Type} [Zero α] (size n : Nat) (f : Nat → α) :
     ((List.range size).map f).getD n (Zero.zero : α) =
       if n < size then f n else (Zero.zero : α) := by
@@ -19,19 +22,34 @@ private theorem list_getD_map_range {α : Type} [Zero α] (size n : Nat) (f : Na
 
 namespace ZPoly
 
+/--
+Canonical nonnegative representative of `z` modulo `m`.
+
+Computes `Int.toNat (z % m)`; for `0 < m` this is the unique value in `[0, m)`
+congruent to `z`. Used coefficientwise by `modP` and `reduceModPow` to land
+integer coefficients in the standard representative window before transport
+to `FpPoly` or back into `ZPoly`.
+-/
 def intModNat (z : Int) (m : Nat) : Nat :=
   Int.toNat (z % Int.ofNat m)
 
+/-- `intModNat` is the canonical nonnegative representative: re-coercing to `Int`
+recovers the ordinary integer remainder. Used to bridge the `Nat`-valued executable
+reduction with `Int`-level congruence reasoning. -/
 private theorem intModNat_eq_emod (z : Int) {m : Nat} (hm : 0 < m) :
     Int.ofNat (intModNat z m) = z % (m : Int) := by
   unfold intModNat
   exact Int.toNat_of_nonneg (Int.emod_nonneg _ (Int.ofNat_ne_zero.mpr (Nat.ne_of_gt hm)))
 
+/-- The canonical representative of `z` and `z` itself differ by a multiple of `m`.
+Used to discharge the per-coefficient congruence obligation in `congr_reduceModPow`. -/
 private theorem intModNat_sub_self_emod (z : Int) {m : Nat} (hm : 0 < m) :
     (Int.ofNat (intModNat z m) - z) % (m : Int) = 0 := by
   rw [intModNat_eq_emod z hm]
   exact Int.emod_eq_zero_of_dvd (Int.dvd_sub_self_of_emod_eq rfl)
 
+/-- Congruent integers have the same canonical representative. Used coefficientwise to
+prove that `reduceModPow` and `modP` are well-defined on congruence classes. -/
 private theorem intModNat_eq_of_congr {a b : Int} {m : Nat} (h : (a - b) % (m : Int) = 0) :
     Int.ofNat (intModNat a m) = Int.ofNat (intModNat b m) := by
   have hmod : a % (m : Int) = b % (m : Int) :=
@@ -48,6 +66,8 @@ def reduceModPow (f : ZPoly) (p k : Nat) : ZPoly :=
   DensePoly.ofCoeffs <|
     (List.range f.size).map (fun i => Int.ofNat (intModNat (f.coeff i) (p ^ k))) |>.toArray
 
+/-- Coefficientwise characterisation of `modP`: the `i`-th coefficient of the reduction
+is the `ZMod64` image of the canonical representative of the original coefficient. -/
 @[simp] theorem coeff_modP (p : Nat) [ZMod64.Bounds p] (f : ZPoly) (i : Nat) :
     (modP p f).coeff i = ZMod64.ofNat p (intModNat (f.coeff i) p) := by
   unfold modP FpPoly.ofCoeffs
@@ -60,6 +80,8 @@ def reduceModPow (f : ZPoly) (p k : Nat) : ZPoly :=
     change (ZMod64.zero : ZMod64 p) = ZMod64.ofNat p 0
     rfl
 
+/-- Coefficientwise characterisation of `reduceModPow`: each coefficient is replaced
+by its canonical nonnegative representative in `[0, p^k)`. -/
 @[simp] theorem coeff_reduceModPow (f : ZPoly) (p k i : Nat) :
     (reduceModPow f p k).coeff i = Int.ofNat (intModNat (f.coeff i) (p ^ k)) := by
   unfold reduceModPow
@@ -71,6 +93,7 @@ def reduceModPow (f : ZPoly) (p k : Nat) : ZPoly :=
     simp [hi, hcoeff, intModNat]
     rfl
 
+/-- If a coefficient is already divisible by `p^k`, its `reduceModPow` image vanishes. -/
 theorem coeff_reduceModPow_eq_zero_of_emod
     (f : ZPoly) (p k i : Nat)
     (hzero : f.coeff i % Int.ofNat (p ^ k) = 0) :
@@ -80,6 +103,8 @@ theorem coeff_reduceModPow_eq_zero_of_emod
   rw [hzero]
   rfl
 
+/-- For positive modulus `p^k`, the reduced coefficient equals the integer remainder
+`f.coeff i % p^k`. Bridges the `Nat`-valued executable representative with `Int.emod`. -/
 theorem coeff_reduceModPow_eq_emod_of_pos
     (f : ZPoly) (p k i : Nat) (hpk : 0 < p ^ k) :
     (reduceModPow f p k).coeff i = f.coeff i % Int.ofNat (p ^ k) := by
@@ -151,7 +176,7 @@ theorem modP_eq_of_congr (p : Nat) [ZMod64.Bounds p] (f g : ZPoly)
   rw [hnat]
 
 /-- Reducing modulo `p^(k+1)` does not change the reduction modulo `p`. -/
-theorem modP_reduceModPow
+@[simp] theorem modP_reduceModPow
     (p k : Nat) [ZMod64.Bounds p] (f : ZPoly) :
     modP p (reduceModPow f p (k + 1)) = modP p f := by
   apply modP_eq_of_congr
@@ -174,6 +199,8 @@ def liftToZ (f : FpPoly p) : ZPoly :=
   DensePoly.ofCoeffs <|
     (List.range f.size).map (fun i => Int.ofNat (f.coeff i).toNat) |>.toArray
 
+/-- Coefficientwise characterisation of `liftToZ`: each coefficient is the standard
+nonnegative `Nat` representative of the corresponding `ZMod64` element. -/
 @[simp] theorem coeff_liftToZ (f : FpPoly p) (i : Nat) :
     (liftToZ f).coeff i = Int.ofNat (f.coeff i).toNat := by
   unfold liftToZ
@@ -205,22 +232,30 @@ theorem modP_liftToZ_coeff (f : FpPoly p) (i : Nat) :
   rw [ZMod64.toNat_ofNat, hmod, Nat.mod_eq_of_lt (f.coeff i).toNat_lt]
 
 /-- Reducing a canonical lift back modulo `p` recovers the original polynomial. -/
-theorem modP_liftToZ (f : FpPoly p) :
+@[simp] theorem modP_liftToZ (f : FpPoly p) :
     ZPoly.modP p (liftToZ f) = f := by
   apply DensePoly.ext_coeff
   intro i
   exact modP_liftToZ_coeff f i
 
+/-- Specialised `toNat` reduction for `(1 : ZMod64 p)` when `1 < p`, avoiding the
+`1 % p` form that blocks rewriting in monicity proofs of `liftToZ`. -/
 private theorem zmod64_toNat_one_of_one_lt (hp : 1 < p) :
     ZMod64.toNat (1 : ZMod64 p) = 1 := by
   rw [show (1 : ZMod64 p) = ZMod64.one from rfl]
   rw [ZMod64.toNat_one, Nat.mod_eq_of_lt hp]
 
+/-- Specialised `toNat` reduction for `(0 : ZMod64 p)`, dual to
+`zmod64_toNat_one_of_one_lt`; lets monicity proofs derive `1 ≠ 0` from the lifted
+representatives. -/
 private theorem zmod64_toNat_zero :
     ZMod64.toNat (0 : ZMod64 p) = 0 := by
   rw [show (0 : ZMod64 p) = ZMod64.zero from rfl]
   rw [ZMod64.toNat_zero]
 
+/-- Size-positivity step for the monicity-preservation proof: a monic `FpPoly p`
+with `1 < p` lifts to a `ZPoly` of positive size. Factored out to keep the
+`leadingCoeff` rewrite in `monic_liftToZ_of_monic` linear. -/
 private theorem liftToZ_size_pos_of_monic
     (f : FpPoly p)
     (hp : 1 < p)
