@@ -8878,6 +8878,87 @@ private theorem quadraticIntegerRootFactors?_product
           contradiction
   · simp [hdeg] at hquad
 
+private theorem toRatPoly_linearFactorForRoot_size (r : Int) :
+    (ZPoly.toRatPoly (linearFactorForRoot r)).size = 2 := by
+  rw [ZPoly.size_toRatPoly]
+  exact linearFactorForRoot_size_eq_two r
+
+private theorem toRatPoly_linearFactorForRoot_ne_zero (r : Int) :
+    ZPoly.toRatPoly (linearFactorForRoot r) ≠ 0 :=
+  ZPoly.toRatPoly_ne_zero_of_ne_zero (linearFactorForRoot r)
+    (linearFactorForRoot_ne_zero r)
+
+private theorem toRatPoly_dvd {p q : ZPoly} (h : p ∣ q) :
+    ZPoly.toRatPoly p ∣ ZPoly.toRatPoly q := by
+  rcases h with ⟨k, hk⟩
+  exact ⟨ZPoly.toRatPoly k, by rw [hk, ZPoly.toRatPoly_mul]⟩
+
+/-- A polynomial that is square-free over `Rat` (in the `Hex.ZPoly.SquareFreeRat`
+sense) is not divisible by `(X - r)²` for any integer root `r`.
+
+This is consumed by the pairwise non-association proof for
+`quadraticIntegerRootFactors? core` (#4785, downstream of the
+`reassemblyExpansionComplete` discharger #4747): if the residual final
+factor were associated to an extracted linear factor `linearFactorForRoot r`,
+then `linearFactorForRoot r * linearFactorForRoot r` would divide `core`,
+which this lemma rules out under squarefreeness. The `(X - r)` shape of
+`linearFactorForRoot r` lets us avoid a generic
+`p² ∣ f → ¬ SquareFreeRat f` lemma: we work directly with the rational
+derivative product rule, the divisor argument is reduced to
+`(X - r).size = 2 ≤ gcd.size` after lifting to `DensePoly Rat`. -/
+private theorem linearFactor_squared_not_dvd_of_squareFreeRat
+    {core : ZPoly} (hne : core ≠ 0) (hsq : Hex.ZPoly.SquareFreeRat core)
+    {r : Int} :
+    ¬ (linearFactorForRoot r * linearFactorForRoot r) ∣ core := by
+  intro hdvd
+  rcases hdvd with ⟨g, hg⟩
+  -- Lift the witness equation `core = L * L * g` to `DensePoly Rat`.
+  let L' := ZPoly.toRatPoly (linearFactorForRoot r)
+  let g' := ZPoly.toRatPoly g
+  let coreRat := ZPoly.toRatPoly core
+  have hcoreRat_eq : coreRat = L' * (L' * g') := by
+    show ZPoly.toRatPoly core = _
+    rw [hg, ZPoly.toRatPoly_mul, ZPoly.toRatPoly_mul, DensePoly.mul_assoc_poly]
+  -- Divisibilities of `coreRat` and `derivative coreRat` by `L'`.
+  have hL'_dvd_L'g' : L' ∣ L' * g' := ⟨g', rfl⟩
+  have hL'_dvd_coreRat : L' ∣ coreRat := by
+    rw [hcoreRat_eq]; exact ⟨L' * g', rfl⟩
+  have hL'_dvd_deriv : L' ∣ DensePoly.derivative coreRat := by
+    rw [hcoreRat_eq, DensePoly.derivative_mul L' (L' * g')]
+    apply DensePoly.dvd_add_poly
+    · exact DensePoly.dvd_mul_left_poly (DensePoly.derivative L') hL'_dvd_L'g'
+    · exact ⟨DensePoly.derivative (L' * g'), rfl⟩
+  -- Combine into divisibility of the gcd.
+  have hL'_dvd_gcd : L' ∣ DensePoly.gcd coreRat (DensePoly.derivative coreRat) :=
+    DensePoly.dvd_gcd L' _ _ hL'_dvd_coreRat hL'_dvd_deriv
+  -- Size argument: `L'.size = 2 ≤ gcd.size`, but squarefreeness says `gcd.size ≤ 1`.
+  have hL'_size : L'.size = 2 := toRatPoly_linearFactorForRoot_size r
+  have hL'_size_ne : L'.size ≠ 0 := by omega
+  have hcoreRat_ne : coreRat ≠ 0 :=
+    ZPoly.toRatPoly_ne_zero_of_ne_zero core hne
+  have hgcd_dvd_coreRat :=
+    DensePoly.gcd_dvd_left coreRat (DensePoly.derivative coreRat)
+  have hgcd_ne :
+      DensePoly.gcd coreRat (DensePoly.derivative coreRat) ≠ 0 := by
+    intro h
+    apply hcoreRat_ne
+    rcases hgcd_dvd_coreRat with ⟨k, hk⟩
+    rw [h, DensePoly.zero_mul] at hk
+    exact hk
+  have hgcd_size_ne :
+      (DensePoly.gcd coreRat (DensePoly.derivative coreRat)).size ≠ 0 := by
+    intro hsize
+    apply hgcd_ne
+    apply DensePoly.ext_coeff
+    intro n
+    rw [DensePoly.coeff_eq_zero_of_size_le _ (by omega)]
+    exact (DensePoly.coeff_zero n).symm
+  have hsize_le :=
+    ZPoly.rat_size_le_of_dvd_nonzero hL'_size_ne hgcd_size_ne hL'_dvd_gcd
+  have hsq' :
+      (DensePoly.gcd coreRat (DensePoly.derivative coreRat)).size ≤ 1 := hsq
+  omega
+
 private theorem factorSlowFactorsWithBound_polyProduct
     (f : ZPoly) (B : Nat) :
     DensePoly.C (signedContentScalar f) *

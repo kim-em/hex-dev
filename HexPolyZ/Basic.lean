@@ -108,7 +108,7 @@ theorem toRatPoly_scale_int (c : Int) (f : ZPoly) :
   rw [coeff_toRatPoly]
   simp
 
-private theorem size_toRatPoly (f : ZPoly) :
+theorem size_toRatPoly (f : ZPoly) :
     (toRatPoly f).size = f.size := by
   apply Nat.le_antisymm
   · by_cases hle : (toRatPoly f).size ≤ f.size
@@ -142,7 +142,7 @@ private theorem size_toRatPoly (f : ZPoly) :
         exact hrat_zero
       exact Rat.intCast_eq_zero_iff.mp hcast_zero
 
-private theorem toRatPoly_ne_zero_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
+theorem toRatPoly_ne_zero_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
     toRatPoly f ≠ 0 := by
   intro hrat
   apply hf
@@ -2132,7 +2132,7 @@ private theorem rat_size_le_one_of_mul_dvd_self
       have hcontr : r.size ≤ (d * r).size - 1 + (k.size - 1) := by omega
       omega
 
-private theorem rat_size_le_of_dvd_nonzero
+theorem rat_size_le_of_dvd_nonzero
     {d r : DensePoly Rat} (hd : d.size ≠ 0) (hr : r.size ≠ 0) :
     d ∣ r → d.size ≤ r.size := by
   intro hdiv
