@@ -7642,6 +7642,104 @@ theorem factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorr
   rw [hentry_eq]
   exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hirr_raw
 
+/-- **#4543 substrate (HO-1).**
+
+Generic constructor for `HenselSubsetCorrespondenceHypotheses` over the
+executable `Hex.choosePrimeData`/`Hex.henselLiftData` surface, parametric
+in the core and the precision count `B` passed to `Hex.henselLiftData`.
+
+The slow exhaustive branch of `Hex.factorWithBound f B₀` (in particular the
+public entry point `Hex.factor f`, where `B₀ = Hex.ZPoly.defaultFactorCoeffBound f`)
+calls
+`Hex.henselLiftData core (Hex.precisionForCoeffBound B₀ primeData.p) primeData`
+on `core = (Hex.normalizeForFactor f).squareFreeCore` and
+`primeData = Hex.choosePrimeData core`.  Specialising this constructor at
+that `B := Hex.precisionForCoeffBound (Hex.ZPoly.defaultFactorCoeffBound f)
+primeData.p` therefore produces a value with the exact shape consumed by
+`factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence`
+(the outer-bound slow-path wrapper landed in PR #4537), unblocking the
+slow-path arm of the HO-1 capstone `factor_irreducible_of_nonUnit` (#4170).
+See `henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData`
+below for the specialisation.
+
+The `admissiblePrime` and `successfulLift` proposition hooks are
+instantiated with `True`; the downstream consumers depend on the
+`exists_subset`/`unique_subset` projections rather than on the hook
+propositions themselves (the hooks are markers reserved for a future
+analytic Hensel proof that needs to surface those predicates).
+
+The `exists_subset` and `unique_subset` fields encode the analytic
+square-free Hensel subset correspondence: every irreducible integer
+factor of `core` admits a unique subset of the executable lifted local
+factors whose `Hex.DensePoly.scale (leadingCoeff core)`-scaled product
+agrees with the factor modulo the Hensel modulus `d.p ^ d.k`.  A
+Mathlib-free proof would require either BHKS Theorem 5.2 machinery
+(tracked by #2567) or the classical square-free Hensel lemma transported
+to the executable `Hex.ZPoly` surface (not yet ported into
+`HexBerlekampZassenhausMathlib`).  Per #4543's explicit fallback
+allowance, the analytic obligation is left as a single localised `sorry`
+inside the `henselSubsetCorrespondence_analytic_obligation` helper;
+the constructor itself is `sorry`-free.  This is sorry-equivalent to the
+current slow-path arm of #4170 (which sits behind a single opaque
+`sorry` of the same analytic content), while exposing a strictly more
+useful API for the HO-1 assembly. -/
+private theorem henselSubsetCorrespondence_analytic_obligation
+    (core : Hex.ZPoly) (B : Nat) :
+    let primeData := Hex.choosePrimeData core
+    let d := Hex.henselLiftData core B primeData
+    ∀ {factor : Hex.ZPoly},
+      Irreducible (HexPolyZMathlib.toPolynomial factor) →
+      factor ∣ core →
+      ∃! S : LiftedFactorSubset d, RepresentsIntegerFactorAtLift core d factor S := by
+  intro primeData d factor _ _
+  sorry
+
+/-- **#4543 substrate (HO-1).**
+
+`HenselSubsetCorrespondenceHypotheses` value at the executable
+`Hex.choosePrimeData` / `Hex.henselLiftData` surface, parametric in the
+precision count `B`.  See `henselSubsetCorrespondence_analytic_obligation`
+for the single localised analytic `sorry` and the discussion of why the
+fallback is acceptable here. -/
+theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData
+    (core : Hex.ZPoly) (B : Nat) :
+    let primeData := Hex.choosePrimeData core
+    let d := Hex.henselLiftData core B primeData
+    HenselSubsetCorrespondenceHypotheses core B primeData d True True := by
+  intro primeData d
+  refine
+    { lift_eq := rfl
+      admissible_prime := trivial
+      successful_lift := trivial
+      exists_subset := ?_
+      unique_subset := ?_ }
+  · intro factor hirr hdvd
+    exact (henselSubsetCorrespondence_analytic_obligation core B hirr hdvd).exists
+  · intro factor S T hirr hdvd hS hT
+    rcases henselSubsetCorrespondence_analytic_obligation core B hirr hdvd with
+      ⟨_, _, huniq⟩
+    exact (huniq S hS).trans (huniq T hT).symm
+
+/-- **#4543 substrate (HO-1), outer-bound specialisation.**
+
+Specialisation of `henselSubsetCorrespondenceHypotheses_of_choosePrimeData`
+at the precision count actually consumed by the slow exhaustive branch
+of `Hex.factor f` (i.e. `Hex.factorWithBound f
+(Hex.ZPoly.defaultFactorCoeffBound f)`).  The resulting structure value
+has the exact `core`/`B`/`primeData`/`d` shape expected by
+`factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence`
+(PR #4537), so the HO-1 slow-path assembly can apply that wrapper
+directly. -/
+theorem henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData
+    (f : Hex.ZPoly) :
+    let core := (Hex.normalizeForFactor f).squareFreeCore
+    let primeData := Hex.choosePrimeData core
+    let B := Hex.precisionForCoeffBound
+      (Hex.ZPoly.defaultFactorCoeffBound f) primeData.p
+    let d := Hex.henselLiftData core B primeData
+    HenselSubsetCorrespondenceHypotheses core B primeData d True True :=
+  henselSubsetCorrespondenceHypotheses_of_choosePrimeData _ _
+
 end
 
 end HexBerlekampZassenhausMathlib
