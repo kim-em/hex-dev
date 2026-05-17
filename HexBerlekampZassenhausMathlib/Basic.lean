@@ -6079,6 +6079,227 @@ theorem representsIntegerFactorAtLift_monic
   rw [← hcenter]
   exact monic_centeredLiftPoly_of_monic hprod_monic hpk_ge_two
 
+/--
+Bridge from the executable `Hex.ZPoly.Primitive` predicate to Mathlib's
+`Polynomial.IsPrimitive` on the transported polynomial.
+-/
+private theorem toPolynomial_isPrimitive_of_zpoly_primitive_basic
+    {f : Hex.ZPoly} (hprim : Hex.ZPoly.Primitive f) :
+    (HexPolyZMathlib.toPolynomial f).IsPrimitive := by
+  intro r hdvd
+  have hcoeff : ∀ n, r ∣ f.coeff n := by
+    intro n
+    have h :=
+      (Polynomial.C_dvd_iff_dvd_coeff r (HexPolyZMathlib.toPolynomial f)).mp hdvd n
+    rwa [HexPolyZMathlib.coeff_toPolynomial] at h
+  have hnatAbs_dvd : ∀ n, (r.natAbs : ℤ) ∣ f.coeff n := fun n =>
+    Int.natAbs_dvd.mpr (hcoeff n)
+  have hr_dvd_content : (r.natAbs : ℤ) ∣ Hex.ZPoly.content f :=
+    Hex.ZPoly.dvd_content_of_nat_dvd_coeff f r.natAbs hnatAbs_dvd
+  rw [show Hex.ZPoly.content f = 1 from hprim] at hr_dvd_content
+  have hone : r.natAbs ∣ 1 := by exact_mod_cast hr_dvd_content
+  exact Int.isUnit_iff_natAbs_eq.mpr (Nat.eq_one_of_dvd_one hone)
+
+/--
+Reverse bridge from Mathlib's `Polynomial.IsPrimitive` on the transported
+polynomial to the executable `Hex.ZPoly.Primitive` predicate.
+-/
+private theorem zpoly_primitive_of_toPolynomial_isPrimitive_basic
+    {f : Hex.ZPoly}
+    (hprim : (HexPolyZMathlib.toPolynomial f).IsPrimitive) :
+    Hex.ZPoly.Primitive f := by
+  show Hex.ZPoly.content f = 1
+  have hC_dvd :
+      Polynomial.C (Hex.ZPoly.content f) ∣ HexPolyZMathlib.toPolynomial f := by
+    rw [Polynomial.C_dvd_iff_dvd_coeff]
+    intro n
+    rw [HexPolyZMathlib.coeff_toPolynomial]
+    exact Hex.ZPoly.content_dvd_coeff f n
+  have hIsUnit : IsUnit (Hex.ZPoly.content f) := hprim _ hC_dvd
+  have hcontent_nonneg : 0 ≤ Hex.ZPoly.content f := by
+    show 0 ≤ Hex.DensePoly.content _
+    unfold Hex.DensePoly.content
+    exact Int.natCast_nonneg _
+  rcases Int.isUnit_iff.mp hIsUnit with hone | hneg
+  · exact hone
+  · rw [hneg] at hcontent_nonneg
+    omega
+
+private theorem centeredModNat_eq_of_pos_natAbs_le
+    {z : Int} {m B : Nat}
+    (hz_pos : 0 < z) (hbound : z.natAbs ≤ B) (hsep : 2 * B < m) :
+    Hex.centeredModNat z m = z := by
+  have hz_nonneg : 0 ≤ z := le_of_lt hz_pos
+  have hltNat : z.natAbs < m := by omega
+  have hlt : z < (m : Int) := by
+    have hz_le_abs : z ≤ (z.natAbs : Int) := by
+      rw [Int.natAbs_of_nonneg hz_nonneg]
+    have habs_lt : (z.natAbs : Int) < (m : Int) := by exact_mod_cast hltNat
+    exact lt_of_le_of_lt hz_le_abs habs_lt
+  have hmod : z % (m : Int) = z := Int.emod_eq_of_lt hz_nonneg hlt
+  have hcenter :=
+    Hex.centeredModNat_emod_eq_of_natAbs_le z m B hbound hsep
+  rwa [hmod] at hcenter
+
+/--
+Centred-lift preserves a strictly positive leading coefficient that lies inside
+the Mignotte half-window.
+-/
+private theorem leadingCoeff_centeredLiftPoly_of_pos_leadingCoeff_bound
+    {g : Hex.ZPoly} {m B : Nat}
+    (hg_lc_pos : 0 < Hex.DensePoly.leadingCoeff g)
+    (hbound_lc : (Hex.DensePoly.leadingCoeff g).natAbs ≤ B)
+    (hsep : 2 * B < m) :
+    Hex.DensePoly.leadingCoeff (Hex.centeredLiftPoly g m) =
+      Hex.DensePoly.leadingCoeff g := by
+  have hg_size_pos : 0 < g.size := by
+    rcases Nat.eq_zero_or_pos g.size with hzero | hpos
+    · exfalso
+      have hback_none : g.coeffs.back? = none := by
+        rw [Array.back?_eq_getElem?]
+        have hcoeffs_size : g.coeffs.size = 0 := by
+          simpa [Hex.DensePoly.size] using hzero
+        simp [hcoeffs_size]
+      have hlc_zero : Hex.DensePoly.leadingCoeff g = (0 : Int) := by
+        unfold Hex.DensePoly.leadingCoeff
+        rw [hback_none]
+        rfl
+      rw [hlc_zero] at hg_lc_pos
+      omega
+    · exact hpos
+  have hg_lead :
+      g.coeff (g.size - 1) = Hex.DensePoly.leadingCoeff g := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last g hg_size_pos]
+  set g' := Hex.centeredLiftPoly g m with hg'_def
+  have hcoeff : ∀ i, g'.coeff i = Hex.centeredModNat (g.coeff i) m :=
+    fun i => Hex.coeff_centeredLiftPoly g m i
+  have hcoeff_top :
+      g'.coeff (g.size - 1) = Hex.DensePoly.leadingCoeff g := by
+    rw [hcoeff, hg_lead]
+    exact centeredModNat_eq_of_pos_natAbs_le hg_lc_pos hbound_lc hsep
+  have hg'_size_ge : g.size ≤ g'.size := by
+    by_contra hlt
+    have hlt' : g'.size < g.size := Nat.lt_of_not_ge hlt
+    have hle : g'.size ≤ g.size - 1 := Nat.le_pred_of_lt hlt'
+    have h_zero := Hex.DensePoly.coeff_eq_zero_of_size_le g' hle
+    rw [hcoeff_top] at h_zero
+    exact (ne_of_gt hg_lc_pos) h_zero
+  have hg'_size_le : g'.size ≤ g.size := by
+    rw [hg'_def]
+    unfold Hex.centeredLiftPoly
+    have h := Hex.DensePoly.size_ofCoeffs_le
+      (g.toArray.map fun coeff => Hex.centeredModNat coeff m)
+    rw [Array.size_map] at h
+    exact h
+  have hg'_size_eq : g'.size = g.size := le_antisymm hg'_size_le hg'_size_ge
+  show Hex.DensePoly.leadingCoeff g' = Hex.DensePoly.leadingCoeff g
+  rw [Hex.DensePoly.leadingCoeff_eq_coeff_last g' (hg'_size_eq ▸ hg_size_pos),
+    hg'_size_eq]
+  exact hcoeff_top
+
+/--
+Primitive/positive-leading capstone for represented factors under a primitive
+non-monic core.
+
+Given an integer factor `factor` of `target ∣ core` represented at the Hensel
+lift, primitive `core`, positive leading coefficient for `core`, monic lifted
+local factors, and Mignotte precision, the represented factor is primitive and
+has positive leading coefficient.
+-/
+theorem representsIntegerFactorAtLift_primitive
+    {core target factor : Hex.ZPoly} {d : Hex.LiftData}
+    {S : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hfactor_dvd_target : factor ∣ target)
+    (htarget_dvd_core : target ∣ core)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S) :
+    Hex.ZPoly.Primitive factor ∧ 0 < Hex.DensePoly.leadingCoeff factor := by
+  have hfactor_dvd_core : factor ∣ core := by
+    obtain ⟨u, hu⟩ := hfactor_dvd_target
+    obtain ⟨v, hv⟩ := htarget_dvd_core
+    refine ⟨u * v, ?_⟩
+    rw [hv, hu]
+    exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
+  have hfactor_poly_primitive :
+      (HexPolyZMathlib.toPolynomial factor).IsPrimitive := by
+    have hcore_poly_primitive :
+        (HexPolyZMathlib.toPolynomial core).IsPrimitive :=
+      toPolynomial_isPrimitive_of_zpoly_primitive_basic hcore_primitive
+    exact isPrimitive_of_dvd hcore_poly_primitive
+      (HexPolyMathlib.toPolynomial_dvd hfactor_dvd_core)
+  have hfactor_primitive : Hex.ZPoly.Primitive factor :=
+    zpoly_primitive_of_toPolynomial_isPrimitive_basic hfactor_poly_primitive
+  have hprod_monic : Hex.DensePoly.Monic (liftedFactorProduct d S) :=
+    liftedFactorProduct_monic d S (fun i _ => hd_liftedFactor_monic i)
+  have hcore_lc_ne : Hex.DensePoly.leadingCoeff core ≠ (0 : Int) :=
+    ne_of_gt hcore_lc_pos
+  have hscaled_lc :
+      Hex.DensePoly.leadingCoeff (scaledLiftedFactorProduct core d S) =
+        Hex.DensePoly.leadingCoeff core := by
+    unfold scaledLiftedFactorProduct
+    rw [Hex.ZPoly.leadingCoeff_scale_of_nonzero
+      (Hex.DensePoly.leadingCoeff core) (liftedFactorProduct d S) hcore_lc_ne,
+      show Hex.DensePoly.leadingCoeff (liftedFactorProduct d S) = (1 : Int)
+        from hprod_monic]
+    ring
+  have hcore_size_pos : 0 < core.size := by
+    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
+    · exfalso
+      have hback_none : core.coeffs.back? = none := by
+        rw [Array.back?_eq_getElem?]
+        have hcoeffs_size : core.coeffs.size = 0 := by
+          simpa [Hex.DensePoly.size] using hzero
+        simp [hcoeffs_size]
+      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
+        unfold Hex.DensePoly.leadingCoeff
+        rw [hback_none]
+        rfl
+      rw [hlc_zero] at hcore_lc_pos
+      omega
+    · exact hpos
+  have hcore_lc_bound :
+      (Hex.DensePoly.leadingCoeff core).natAbs ≤
+        Hex.ZPoly.defaultFactorCoeffBound core := by
+    have hcore_dvd_self : core ∣ core := by
+      refine ⟨(1 : Hex.ZPoly), ?_⟩
+      exact (Hex.DensePoly.mul_one_right_poly core).symm
+    have hbound :=
+      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
+        (core.size - 1)
+    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
+    exact hbound
+  have hscaled_lc_pos :
+      0 < Hex.DensePoly.leadingCoeff (scaledLiftedFactorProduct core d S) := by
+    rw [hscaled_lc]
+    exact hcore_lc_pos
+  have hscaled_lc_bound :
+      (Hex.DensePoly.leadingCoeff (scaledLiftedFactorProduct core d S)).natAbs ≤
+        Hex.ZPoly.defaultFactorCoeffBound core := by
+    rwa [hscaled_lc]
+  have hcenter :
+      Hex.centeredLiftPoly (scaledLiftedFactorProduct core d S) (d.p ^ d.k) =
+        factor :=
+    centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
+      hcore_ne hfactor_dvd_core hrep hprecision
+  have hcenter_lc :
+      Hex.DensePoly.leadingCoeff
+          (Hex.centeredLiftPoly (scaledLiftedFactorProduct core d S)
+            (d.p ^ d.k)) =
+        Hex.DensePoly.leadingCoeff (scaledLiftedFactorProduct core d S) :=
+    leadingCoeff_centeredLiftPoly_of_pos_leadingCoeff_bound
+      hscaled_lc_pos hscaled_lc_bound hprecision
+  have hfactor_lc_pos : 0 < Hex.DensePoly.leadingCoeff factor := by
+    rw [hcenter] at hcenter_lc
+    rw [hcenter_lc, hscaled_lc]
+    exact hcore_lc_pos
+  exact ⟨hfactor_primitive, hfactor_lc_pos⟩
+
 /-- Converse to `toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord`: if the
 transported polynomial is non-zero and a non-unit, then the executable
 `shouldRecordPolynomialFactor` check passes.  Used to package executable
