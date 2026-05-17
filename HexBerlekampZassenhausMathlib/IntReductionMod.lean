@@ -1914,6 +1914,146 @@ theorem normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible
     (coreFactors.toList.map HexPolyZMathlib.toPolynomial).toFinset
     (by intro r hr; rw [Multiset.mem_toFinset] at hr; exact hsubset r hr)
 
+/-- **HO-1 substrate — no-tail-divisibility for an irreducible cover of the
+square-free core.**
+
+Given an irreducible cover `coreFactors` of `(Hex.normalizeForFactor f).squareFreeCore`
+and any exponent list of matching length, splitting the zipped list
+`coreFactors.toList.zip exponents` at any position `(pre, (q, e), suf)` yields a
+suffix whose `factorPower`-fold product is not divisible by `q`.
+
+This is the list-shaped generalisation of
+`Hex.irreducible_not_dvd_one` (which handles the singleton-suffix case where
+the product collapses to `1`) and is the precondition consumed by the
+exhaustive arm of
+`Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition`.
+
+The proof transports both `q` and the suffix product to `Polynomial ℤ` through
+`HexPolyZMathlib.equiv`, uses the squarefree square-free core to obtain
+`Nodup` of the transported core-factor list, and finishes with a UFD
+prime-divides-product argument: `toPolynomial q` is prime in `Polynomial ℤ`,
+so any divisor witness would force `q` to coincide with some entry in `suf`
+(by `Associated` ⟹ `normalize`-fixed equality, then injectivity), contradicting
+`Nodup`. -/
+theorem factorPower_cover_not_dvd_tail_of_irreducible_squarefree
+    (f : Hex.ZPoly) (hf : f ≠ 0)
+    (coreFactors : Array Hex.ZPoly)
+    (hirr : ∀ q ∈ coreFactors.toList, Hex.ZPoly.Irreducible q)
+    (hprod : Array.polyProduct coreFactors =
+      (Hex.normalizeForFactor f).squareFreeCore)
+    (hnorm : ∀ q ∈ coreFactors.toList, Hex.normalizeFactorSign q = q)
+    (exponents : List Nat)
+    (hlen : exponents.length = coreFactors.size) :
+    ∀ pre q e suf,
+      coreFactors.toList.zip exponents = pre ++ (q, e) :: suf →
+      ¬ q ∣ (suf.map (fun (qe : Hex.ZPoly × Nat) =>
+              Hex.Factorization.factorPower qe.1 qe.2)).foldl (· * ·) 1 := by
+  classical
+  intro pre q e suf hsplit hdvd
+  -- Transported square-free core and its squarefreeness.
+  set S : Polynomial ℤ :=
+    HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).squareFreeCore with hS_def
+  have hS_sqfree : Squarefree S :=
+    normalizeForFactor_squareFreeCore_toPolynomial_squarefree f hf
+  -- Transported core-factor list product equals `S`.
+  have hS_eq : (coreFactors.toList.map HexPolyZMathlib.toPolynomial).prod = S := by
+    show _ = HexPolyZMathlib.toPolynomial _
+    rw [← hprod, polyProduct_toPolynomial]
+  -- Each transported core factor is irreducible.
+  have hPq_irr : ∀ q' ∈ coreFactors.toList,
+      Irreducible (HexPolyZMathlib.toPolynomial q') := fun q' hq' =>
+    (Hex.ZPoly.Irreducible_iff_polynomialIrreducible q').mp (hirr q' hq')
+  -- Each transported core factor is `normalize`-fixed.
+  have hPq_norm : ∀ q' ∈ coreFactors.toList,
+      normalize (HexPolyZMathlib.toPolynomial q') = HexPolyZMathlib.toPolynomial q' :=
+    fun q' hq' => normalize_toPolynomial_of_normalizeFactorSign_id
+      (hirr q' hq').not_zero (hnorm q' hq')
+  -- Transported core-factor list is `Nodup` (squarefree product + irreducible entries).
+  have hPq_list_nodup :
+      (coreFactors.toList.map HexPolyZMathlib.toPolynomial).Nodup := by
+    apply List.nodup_of_prod_squarefree
+    · intro p hp
+      obtain ⟨q', hq', rfl⟩ := List.mem_map.mp hp
+      exact hPq_irr q' hq'
+    · rw [hS_eq]; exact hS_sqfree
+  -- Original core-factor list is `Nodup` (pulls back through injective `toPolynomial`).
+  have hcore_nodup : coreFactors.toList.Nodup :=
+    List.Nodup.of_map HexPolyZMathlib.toPolynomial hPq_list_nodup
+  -- The zip's first-projection equals `coreFactors.toList` (lengths match).
+  have hzip_fst :
+      (coreFactors.toList.zip exponents).map Prod.fst = coreFactors.toList := by
+    apply List.map_fst_zip
+    rw [hlen]; simp
+  -- Apply that to both sides of `hsplit`.
+  have hcore_split :
+      coreFactors.toList = pre.map Prod.fst ++ q :: suf.map Prod.fst := by
+    have := congrArg (List.map Prod.fst) hsplit
+    rw [hzip_fst] at this
+    simpa using this
+  -- `q` does not occur in `suf.map Prod.fst` (Nodup).
+  have hq_not_in_suf : ∀ qe ∈ suf, q ≠ qe.1 := by
+    intro qe hqe_mem hq_eq
+    have hcore_nodup' : (pre.map Prod.fst ++ q :: suf.map Prod.fst).Nodup :=
+      hcore_split ▸ hcore_nodup
+    obtain ⟨_, hcons_nodup, _⟩ := (List.nodup_append).mp hcore_nodup'
+    have hq_notin : q ∉ suf.map Prod.fst := (List.nodup_cons.mp hcons_nodup).1
+    apply hq_notin
+    rw [hq_eq]
+    exact List.mem_map.mpr ⟨qe, hqe_mem, rfl⟩
+  -- `q` itself sits in `coreFactors.toList`.
+  have hq_mem : q ∈ coreFactors.toList := by
+    rw [hcore_split]
+    exact List.mem_append_right _ List.mem_cons_self
+  -- Transport the divisibility hypothesis to `Polynomial ℤ`.
+  have htrans_dvd :
+      HexPolyZMathlib.toPolynomial q ∣
+        (suf.map (fun qe => HexPolyZMathlib.toPolynomial qe.1 ^ qe.2)).prod := by
+    rw [← toPolynomial_factorPower_foldl]
+    rcases hdvd with ⟨w, hw⟩
+    refine ⟨HexPolyZMathlib.toPolynomial w, ?_⟩
+    rw [hw, HexPolyZMathlib.toPolynomial_mul]
+  -- `toPolynomial q` is irreducible, hence prime in the UFD `Polynomial ℤ`.
+  have hPq_irr_q : Irreducible (HexPolyZMathlib.toPolynomial q) := hPq_irr q hq_mem
+  have hPq_prime : Prime (HexPolyZMathlib.toPolynomial q) :=
+    UniqueFactorizationMonoid.irreducible_iff_prime.mp hPq_irr_q
+  -- Prime divides the list product, hence divides some power-entry.
+  obtain ⟨entry, hentry_mem, hPq_dvd_entry⟩ :=
+    (Prime.dvd_prod_iff hPq_prime).mp htrans_dvd
+  rcases List.mem_map.mp hentry_mem with ⟨qe, hqe_mem, hentry_eq⟩
+  subst hentry_eq
+  -- Prime dividing a power divides the base.
+  have hPq_dvd_base :
+      HexPolyZMathlib.toPolynomial q ∣ HexPolyZMathlib.toPolynomial qe.1 :=
+    hPq_prime.dvd_of_dvd_pow hPq_dvd_entry
+  -- `qe.1` is one of the core factors.
+  have hqe_in_core : qe.1 ∈ coreFactors.toList := by
+    rw [hcore_split]
+    exact List.mem_append_right _
+      (List.mem_cons_of_mem _ (List.mem_map.mpr ⟨qe, hqe_mem, rfl⟩))
+  -- Both transported factors are irreducible; the divisibility forces them to be
+  -- `Associated`.
+  have hPqe_irr : Irreducible (HexPolyZMathlib.toPolynomial qe.1) :=
+    hPq_irr qe.1 hqe_in_core
+  have hassoc :
+      Associated (HexPolyZMathlib.toPolynomial q) (HexPolyZMathlib.toPolynomial qe.1) :=
+    hPq_irr_q.associated_of_dvd hPqe_irr hPq_dvd_base
+  -- Both are `normalize`-fixed, so `Associated` collapses to equality.
+  have hq_norm : normalize (HexPolyZMathlib.toPolynomial q) = HexPolyZMathlib.toPolynomial q :=
+    hPq_norm q hq_mem
+  have hqe_norm :
+      normalize (HexPolyZMathlib.toPolynomial qe.1) = HexPolyZMathlib.toPolynomial qe.1 :=
+    hPq_norm qe.1 hqe_in_core
+  have hP_eq :
+      HexPolyZMathlib.toPolynomial q = HexPolyZMathlib.toPolynomial qe.1 := by
+    have hnormeq :
+        normalize (HexPolyZMathlib.toPolynomial q) =
+          normalize (HexPolyZMathlib.toPolynomial qe.1) :=
+      normalize_eq_normalize_iff_associated.mpr hassoc
+    rw [hq_norm, hqe_norm] at hnormeq
+    exact hnormeq
+  -- Injectivity of `toPolynomial` finishes: `q = qe.1`, contradicting `hq_not_in_suf`.
+  exact hq_not_in_suf qe hqe_mem (HexPolyZMathlib.equiv.injective hP_eq)
+
 /-- **#4597 HO-1 substrate — small-mod singleton arm `factorPower` shape of
 the repeated part.** Singleton specialisation of
 `normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover`
