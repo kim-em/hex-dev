@@ -1,10 +1,13 @@
 import HexHensel
 import Mathlib.Algebra.Polynomial.Basic
 import Mathlib.Algebra.Polynomial.Coeff
+import Mathlib.Algebra.Polynomial.Degree.Domain
 import Mathlib.Algebra.Polynomial.Eval.Coeff
+import Mathlib.Algebra.Polynomial.Monic
 import Mathlib.Data.ZMod.Basic
 import Mathlib.RingTheory.Coprime.Lemmas
 import Mathlib.RingTheory.Nilpotent.Basic
+import Mathlib.Tactic.LinearCombination
 
 /-!
 Initial coprimality-lifting infrastructure for `HexHenselMathlib`.
@@ -148,6 +151,34 @@ theorem coprime_mod_p_lifts (g h : Polynomial ℤ) (p : ℕ) (k : ℕ)
         (A.map Φpk * g.map Φpk + B.map Φpk * h.map Φpk) := by ring
   rw [hregroup, hcombo_pk, ← hwu]
   exact Units.inv_mul wu
+
+/--
+Coprime monic cancellation with a strict degree bound.
+
+If `a * h + b * g = 0` in `R[X]` for a commutative domain `R`, where
+`g` is monic and `IsCoprime g h`, then `a.natDegree < g.natDegree`
+forces both `a = 0` and `b = 0`.
+
+This is the load-bearing analytic step for the binary-Hensel uniqueness
+theorem `hensel_unique` (`HexHenselMathlib/Correctness.lean`): after
+reducing the integer-polynomial difference equation modulo `p`, the
+problem becomes a coprime cancellation in `Polynomial (ZMod p)`, with
+the strict degree bound following from the monicity of both `g` and `g'`
+at the same `natDegree`.
+-/
+theorem isCoprime_cancel_of_natDegree_lt
+    {R : Type*} [CommRing R] [IsDomain R]
+    {g h a b : Polynomial R} (hg : g.Monic) (hcop : IsCoprime g h)
+    (heq : a * h + b * g = 0)
+    (hdeg : a.natDegree < g.natDegree) :
+    a = 0 ∧ b = 0 := by
+  have hdvd_ah : g ∣ a * h := ⟨-b, by linear_combination heq⟩
+  have hdvd_a : g ∣ a := hcop.dvd_of_dvd_mul_right hdvd_ah
+  have ha : a = 0 := Polynomial.eq_zero_of_dvd_of_natDegree_lt hdvd_a hdeg
+  refine ⟨ha, ?_⟩
+  rw [ha, zero_mul, zero_add] at heq
+  have hg_ne : g ≠ 0 := hg.ne_zero
+  exact (mul_eq_zero.mp heq).resolve_right hg_ne
 
 end
 
