@@ -3018,6 +3018,26 @@ theorem mul_ne_zero_of_ne_zero
   have habsize : (a * b).size = 0 := by rw [hmul]; rfl
   omega
 
+/-- Leading coefficient of a product equals the product of leading coefficients
+on nonzero `FpPoly p` factors: the top-coefficient lemma `coeff_mul_at_top` plus
+the size identity `size_mul_eq_add_sub_one` give this directly. -/
+theorem leadingCoeff_mul
+    [ZMod64.PrimeModulus p] (a b : FpPoly p)
+    (ha : a ≠ 0) (hb : b ≠ 0) :
+    DensePoly.leadingCoeff (a * b)
+      = DensePoly.leadingCoeff a * DensePoly.leadingCoeff b := by
+  have ha_pos : 0 < a.size := size_pos_of_ne_zero ha
+  have hb_pos : 0 < b.size := size_pos_of_ne_zero hb
+  have hab_ne : a * b ≠ 0 := mul_ne_zero_of_ne_zero ha hb
+  have hab_pos : 0 < (a * b).size := size_pos_of_ne_zero hab_ne
+  have hsize := size_mul_eq_add_sub_one a b ha hb
+  have hindex : (a * b).size - 1 = a.size - 1 + (b.size - 1) := by omega
+  rw [DensePoly.leadingCoeff_eq_coeff_last (a * b) hab_pos]
+  rw [hindex]
+  rw [DensePoly.leadingCoeff_eq_coeff_last a ha_pos]
+  rw [DensePoly.leadingCoeff_eq_coeff_last b hb_pos]
+  exact ZMod64.coeff_mul_at_top a b ha_pos hb_pos
+
 /-- Right cancellation for multiplication by a nonzero `FpPoly p` polynomial. -/
 theorem mul_right_cancel_of_ne_zero
     [ZMod64.PrimeModulus p] {a b c : FpPoly p}

@@ -493,6 +493,237 @@ theorem monicModularImage_monic
   rw [FpPoly.leadingCoeff_scale_of_ne_zero_of_nonzero (p := p) hinv_ne f hfsize]
   exact ZMod64.inv_mul_eq_one_of_prime hp hlead_ne
 
+/-- A nonzero `FpPoly p` translates to `isZero = false`. -/
+private theorem isZero_false_of_ne_zero
+    {p : Nat} [ZMod64.Bounds p] {f : FpPoly p} (hf : f ≠ 0) :
+    f.isZero = false := by
+  cases hz : f.isZero with
+  | false => rfl
+  | true =>
+      exfalso
+      apply hf
+      apply DensePoly.ext_coeff
+      intro n
+      have hsize : f.size = 0 := by
+        change f.coeffs.isEmpty = true at hz
+        simpa [DensePoly.size, Array.isEmpty_iff_size_eq_zero] using hz
+      rw [DensePoly.coeff_eq_zero_of_size_le f (by omega)]
+      exact DensePoly.coeff_zero n
+
+/-- `monicModularImage` of a nonzero polynomial is nonzero (it's a unit scalar of
+the original). -/
+theorem monicModularImage_ne_zero_of_ne_zero
+    {p : Nat} [ZMod64.Bounds p] (hp : Nat.Prime p) {f : FpPoly p} (hf : f ≠ 0) :
+    monicModularImage f ≠ 0 := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  have hf_iszero : f.isZero = false := isZero_false_of_ne_zero hf
+  unfold monicModularImage
+  simp only [hf_iszero, Bool.false_eq_true, ↓reduceIte]
+  have hf_size_pos : 0 < f.size := FpPoly.size_pos_of_ne_zero hf
+  have hlead_ne : DensePoly.leadingCoeff f ≠ (0 : ZMod64 p) := by
+    rw [FpPoly.leadingCoeff_eq_coeff_pred f hf_size_pos]
+    exact DensePoly.coeff_last_ne_zero_of_pos_size f hf_size_pos
+  have hinv_ne : (DensePoly.leadingCoeff f)⁻¹ ≠ (0 : ZMod64 p) :=
+    ZMod64.inv_ne_zero_of_prime hp hlead_ne
+  intro h
+  have hsize_zero : (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f).size = 0 := by
+    rw [h]; rfl
+  rw [FpPoly.scale_size_eq_of_ne_zero (p := p) hinv_ne f] at hsize_zero
+  exact (Nat.pos_iff_ne_zero.mp hf_size_pos) hsize_zero
+
+/-- `monicModularImage` is the identity on monic polynomials: dividing by a
+leading coefficient of `1` is a no-op. -/
+theorem monicModularImage_eq_self_of_monic
+    {p : Nat} [ZMod64.Bounds p] (hp : Nat.Prime p) (f : FpPoly p)
+    (hmonic : DensePoly.Monic f) :
+    monicModularImage f = f := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  -- Monic forces `f` to be nonzero: otherwise `leadingCoeff f = 0` but `Monic`
+  -- says `leadingCoeff f = 1`.
+  have hf_ne : f ≠ 0 := by
+    intro h
+    subst h
+    have hlead_zero : DensePoly.leadingCoeff (0 : FpPoly p) = 0 := rfl
+    unfold DensePoly.Monic at hmonic
+    rw [hlead_zero] at hmonic
+    exact ZMod64.one_ne_zero_of_prime hp hmonic.symm
+  have hf_iszero : f.isZero = false := isZero_false_of_ne_zero hf_ne
+  unfold monicModularImage
+  simp only [hf_iszero, Bool.false_eq_true, ↓reduceIte]
+  unfold DensePoly.Monic at hmonic
+  rw [hmonic]
+  -- (1 : ZMod64 p)⁻¹ = 1
+  have hone_ne : (1 : ZMod64 p) ≠ 0 :=
+    fun h => ZMod64.one_ne_zero_of_prime hp h
+  have hone_inv : (1 : ZMod64 p)⁻¹ = (1 : ZMod64 p) := by
+    have hleft : (1 : ZMod64 p)⁻¹ * (1 : ZMod64 p) = 1 :=
+      ZMod64.inv_mul_eq_one_of_prime hp hone_ne
+    grind
+  show DensePoly.scale ((1 : ZMod64 p)⁻¹) f = f
+  rw [hone_inv, FpPoly.scale_one_left]
+
+/-- Multiplicativity of `monicModularImage` on nonzero polynomials.  The leading
+coefficient of a product is the product of leading coefficients (no-zero-divisors
+over a prime field), so dividing both sides by their leading coefficients agrees
+with dividing the product by its leading coefficient. -/
+theorem monicModularImage_mul_of_nonzero
+    {p : Nat} [ZMod64.Bounds p] (hp : Nat.Prime p) {a b : FpPoly p}
+    (ha : a ≠ 0) (hb : b ≠ 0) :
+    monicModularImage (a * b) = monicModularImage a * monicModularImage b := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  have hab : a * b ≠ 0 := FpPoly.mul_ne_zero_of_ne_zero ha hb
+  have ha_iszero : a.isZero = false := isZero_false_of_ne_zero ha
+  have hb_iszero : b.isZero = false := isZero_false_of_ne_zero hb
+  have hab_iszero : (a * b).isZero = false := isZero_false_of_ne_zero hab
+  have ha_size_pos : 0 < a.size := FpPoly.size_pos_of_ne_zero ha
+  have hb_size_pos : 0 < b.size := FpPoly.size_pos_of_ne_zero hb
+  have hlead_a : DensePoly.leadingCoeff a ≠ (0 : ZMod64 p) := by
+    rw [FpPoly.leadingCoeff_eq_coeff_pred a ha_size_pos]
+    exact DensePoly.coeff_last_ne_zero_of_pos_size a ha_size_pos
+  have hlead_b : DensePoly.leadingCoeff b ≠ (0 : ZMod64 p) := by
+    rw [FpPoly.leadingCoeff_eq_coeff_pred b hb_size_pos]
+    exact DensePoly.coeff_last_ne_zero_of_pos_size b hb_size_pos
+  have hlead_ab :
+      DensePoly.leadingCoeff (a * b) = DensePoly.leadingCoeff a * DensePoly.leadingCoeff b :=
+    FpPoly.leadingCoeff_mul a b ha hb
+  have hlead_ab_ne : DensePoly.leadingCoeff (a * b) ≠ (0 : ZMod64 p) := by
+    rw [hlead_ab]
+    intro h
+    rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp h with h | h
+    · exact hlead_a h
+    · exact hlead_b h
+  -- `((lc a) * (lc b))⁻¹ = (lc a)⁻¹ * (lc b)⁻¹`: standard field fact, proven
+  -- via `(x⁻¹ * y⁻¹) * (x * y) = 1` plus uniqueness of inverse via cancellation.
+  have hinv_distrib :
+      (DensePoly.leadingCoeff a * DensePoly.leadingCoeff b)⁻¹ =
+        (DensePoly.leadingCoeff a)⁻¹ * (DensePoly.leadingCoeff b)⁻¹ := by
+    -- Show the candidate is a left inverse.
+    have hleft :
+        ((DensePoly.leadingCoeff a)⁻¹ * (DensePoly.leadingCoeff b)⁻¹) *
+          (DensePoly.leadingCoeff a * DensePoly.leadingCoeff b) = 1 := by
+      have ha_inv : (DensePoly.leadingCoeff a)⁻¹ * DensePoly.leadingCoeff a = 1 :=
+        ZMod64.inv_mul_eq_one_of_prime hp hlead_a
+      have hb_inv : (DensePoly.leadingCoeff b)⁻¹ * DensePoly.leadingCoeff b = 1 :=
+        ZMod64.inv_mul_eq_one_of_prime hp hlead_b
+      grind
+    -- Show the canonical inverse is also a left inverse.
+    have habinv_ne :
+        DensePoly.leadingCoeff a * DensePoly.leadingCoeff b ≠ (0 : ZMod64 p) := by
+      rw [← hlead_ab]; exact hlead_ab_ne
+    have hcanon :
+        (DensePoly.leadingCoeff a * DensePoly.leadingCoeff b)⁻¹ *
+          (DensePoly.leadingCoeff a * DensePoly.leadingCoeff b) = 1 :=
+      ZMod64.inv_mul_eq_one_of_prime hp habinv_ne
+    -- Cancellation: `(c - d) * x = 0` and `x ≠ 0` ⇒ `c = d`.
+    have hdiff :
+        ((DensePoly.leadingCoeff a * DensePoly.leadingCoeff b)⁻¹ -
+          ((DensePoly.leadingCoeff a)⁻¹ * (DensePoly.leadingCoeff b)⁻¹)) *
+          (DensePoly.leadingCoeff a * DensePoly.leadingCoeff b) = 0 := by
+      grind
+    rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hdiff with hz | hz
+    · grind
+    · exact False.elim (habinv_ne hz)
+  -- LHS computation.
+  unfold monicModularImage
+  simp only [ha_iszero, hb_iszero, hab_iszero, Bool.false_eq_true, ↓reduceIte]
+  rw [hlead_ab, hinv_distrib]
+  -- Goal: scale ((lc a)⁻¹ * (lc b)⁻¹) (a * b) = scale (lc a)⁻¹ a * scale (lc b)⁻¹ b
+  -- Calc through scale_scale + scale_mul_left + mul_comm to align both sides.
+  calc DensePoly.scale ((DensePoly.leadingCoeff a)⁻¹ * (DensePoly.leadingCoeff b)⁻¹) (a * b)
+      = DensePoly.scale (DensePoly.leadingCoeff a)⁻¹
+          (DensePoly.scale (DensePoly.leadingCoeff b)⁻¹ (a * b)) := by
+        rw [← FpPoly.scale_scale]
+    _ = DensePoly.scale (DensePoly.leadingCoeff a)⁻¹
+          (DensePoly.scale (DensePoly.leadingCoeff b)⁻¹ (b * a)) := by
+        rw [FpPoly.mul_comm a b]
+    _ = DensePoly.scale (DensePoly.leadingCoeff a)⁻¹
+          (DensePoly.scale (DensePoly.leadingCoeff b)⁻¹ b * a) := by
+        rw [FpPoly.scale_mul_left]
+    _ = DensePoly.scale (DensePoly.leadingCoeff a)⁻¹
+          (a * DensePoly.scale (DensePoly.leadingCoeff b)⁻¹ b) := by
+        rw [FpPoly.mul_comm (DensePoly.scale (DensePoly.leadingCoeff b)⁻¹ b) a]
+    _ = DensePoly.scale (DensePoly.leadingCoeff a)⁻¹ a *
+          DensePoly.scale (DensePoly.leadingCoeff b)⁻¹ b := by
+        rw [FpPoly.scale_mul_left]
+
+/-- The constant polynomial `1` over a prime modulus is nonzero. -/
+private theorem fpPoly_one_ne_zero
+    {p : Nat} [ZMod64.Bounds p] (hp : Nat.Prime p) : (1 : FpPoly p) ≠ 0 := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  intro h
+  have hcoeff := congrArg (fun f : FpPoly p => f.coeff 0) h
+  change (1 : FpPoly p).coeff 0 = (0 : FpPoly p).coeff 0 at hcoeff
+  rw [DensePoly.coeff_zero] at hcoeff
+  have hone_coeff : (1 : FpPoly p).coeff 0 = (1 : ZMod64 p) := by
+    change (DensePoly.C (1 : ZMod64 p)).coeff 0 = (1 : ZMod64 p)
+    rw [DensePoly.coeff_C]
+    simp
+  rw [hone_coeff] at hcoeff
+  exact ZMod64.one_ne_zero_of_prime hp hcoeff
+
+/-- The constant polynomial `1` over a prime modulus is monic. -/
+private theorem fpPoly_one_monic
+    {p : Nat} [ZMod64.Bounds p] (hp : Nat.Prime p) :
+    DensePoly.Monic (1 : FpPoly p) := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  have hsize : (1 : FpPoly p).size = 1 := by
+    have h_le : (1 : FpPoly p).size ≤ 1 := by
+      change (DensePoly.C (1 : ZMod64 p) : FpPoly p).size ≤ 1
+      exact DensePoly.size_C_le_one (1 : ZMod64 p)
+    have h_ge : 1 ≤ (1 : FpPoly p).size :=
+      FpPoly.size_pos_of_ne_zero (fpPoly_one_ne_zero hp)
+    omega
+  unfold DensePoly.Monic
+  rw [DensePoly.leadingCoeff_eq_coeff_last (1 : FpPoly p) (by omega)]
+  rw [hsize]
+  change (DensePoly.C (1 : ZMod64 p)).coeff (1 - 1) = 1
+  rw [DensePoly.coeff_C]
+  simp
+
+/-- `Hex.Berlekamp.factorProduct` of a list whose elements are all nonzero is
+itself nonzero (over a prime field). -/
+private theorem factorProduct_ne_zero_of_forall_ne_zero
+    {p : Nat} [ZMod64.Bounds p] (hp : Nat.Prime p)
+    (l : List (FpPoly p)) (hne : ∀ g ∈ l, g ≠ 0) :
+    Hex.Berlekamp.factorProduct l ≠ 0 := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  induction l with
+  | nil => exact fpPoly_one_ne_zero hp
+  | cons h tail ih =>
+      rw [Hex.Berlekamp.factorProduct_cons]
+      exact FpPoly.mul_ne_zero_of_ne_zero
+        (hne h List.mem_cons_self)
+        (ih (fun g hg => hne g (List.mem_cons_of_mem _ hg)))
+
+/-- `monicModularImage` is multiplicative across `Hex.Berlekamp.factorProduct`
+on lists of nonzero factors: pulling each factor through `monicModularImage`
+before taking the product agrees with applying `monicModularImage` to the raw
+product.  Inductive consequence of `monicModularImage_mul_of_nonzero` plus
+`monicModularImage_eq_self_of_monic` at the base case `factorProduct [] = 1`. -/
+theorem factorProduct_map_monicModularImage_eq_monicModularImage_factorProduct
+    {p : Nat} [ZMod64.Bounds p] (hp : Nat.Prime p)
+    (l : List (FpPoly p)) (hne : ∀ g ∈ l, g ≠ 0) :
+    Hex.Berlekamp.factorProduct (l.map monicModularImage) =
+      monicModularImage (Hex.Berlekamp.factorProduct l) := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  induction l with
+  | nil =>
+      simp only [List.map_nil]
+      rw [Hex.Berlekamp.factorProduct_nil]
+      -- Goal: 1 = monicModularImage 1
+      rw [monicModularImage_eq_self_of_monic hp 1 (fpPoly_one_monic hp)]
+  | cons head tail ih =>
+      have hhead_ne : head ≠ 0 := hne head List.mem_cons_self
+      have htail_ne : ∀ g ∈ tail, g ≠ 0 :=
+        fun g hg => hne g (List.mem_cons_of_mem _ hg)
+      have htail_prod_ne : Hex.Berlekamp.factorProduct tail ≠ 0 :=
+        factorProduct_ne_zero_of_forall_ne_zero hp tail htail_ne
+      have ih_eq := ih htail_ne
+      simp only [List.map_cons]
+      rw [Hex.Berlekamp.factorProduct_cons, Hex.Berlekamp.factorProduct_cons]
+      rw [ih_eq]
+      rw [monicModularImage_mul_of_nonzero hp hhead_ne htail_prod_ne]
+
 private def berlekampFactorsModP (f : ZPoly) (c : SmallPrimeCandidate) :
     Array (@FpPoly c.p c.bounds) :=
   letI := c.bounds
