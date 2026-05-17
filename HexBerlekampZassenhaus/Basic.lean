@@ -5642,6 +5642,35 @@ theorem factorWithBound_entry_mem_constant_branch_raw
   simpa only [factorWithBound, factorFastWithBound, hfast, Option.map_some,
     Option.getD_some] using hmem
 
+/-- In the fast-path quadratic integer-root branch, every recorded
+`factorWithBound` entry comes from the normalization reassembly whose core array
+is the `quadraticIntegerRootFactors?` output for the square-free core. This is
+the branch-shape lemma needed by Mathlib-side quadratic-branch irreducibility
+proofs; it leaves the mathematical proof that each core factor is irreducible
+to the bridge layer. The `B > 1` hypothesis is required to enter the quadratic
+dispatch (the `B = 1` arm of `factorFastFactorsWithBound` does not consult
+`quadraticIntegerRootFactors?`). -/
+theorem factorWithBound_entry_mem_quadratic_branch_raw
+    (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
+    (hB_gt_one : 1 < B)
+    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    {coreFactors : Array ZPoly}
+    (hquad :
+      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore
+        = some coreFactors)
+    (hmem : entry ∈ (factorWithBound f B).factors.toList) :
+    ∃ raw ∈
+        (reassemblePolynomialFactors (normalizeForFactor f) coreFactors).toList,
+      entry.1 = normalizeFactorSign raw := by
+  have hfast :
+      factorFastFactorsWithBound f B =
+        some (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) := by
+    unfold factorFastFactorsWithBound
+    rw [if_neg hdeg, if_neg (by omega : B ≠ 0), if_neg (by omega : B ≠ 1), hquad]
+  apply factorizationOfFactors_entry_mem_normalized_raw
+  simpa only [factorWithBound, factorFastWithBound, hfast, Option.map_some,
+    Option.getD_some] using hmem
+
 /-- In the fast-path BHKS fast-core success branch, every recorded
 `factorWithBound` entry comes from the normalization reassembly whose core array
 is the successful `factorFastCoreWithBound` output for the chosen prime data.
