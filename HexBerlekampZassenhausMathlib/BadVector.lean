@@ -323,6 +323,43 @@ def projectedVectorArray (W : ExecutableBadVectorWitness)
     (v : Fin W.projectedRows.factorCount → ℤ) : Array Int :=
   (List.ofFn v).toArray
 
+/--
+Canonical executable bad-vector witness for a fixed projected vector.
+
+The auxiliary polynomial field is computed by the same BHKS construction used
+in the executable CLD layer, and the selected local-factor degree is read from
+the selected lifted factor.  This constructor discharges the structural part of
+the BHKS bad-vector setup; the rational coprimality and resultant divisibility
+clauses remain the genuine BHKS Lemma 3.2 algebraic obligations.
+-/
+def ofProjectedVector
+    (input : Hex.ZPoly) (liftData : Hex.LiftData)
+    (hrows :
+      1 ≤
+        (Hex.bhksLatticeBasis input liftData.p liftData.k
+            liftData.liftedFactors).factorCount +
+          (Hex.bhksLatticeBasis input liftData.p liftData.k
+            liftData.liftedFactors).coeffWidth)
+    (localFactorIndex : Nat)
+    (v :
+      Fin (Hex.bhksProjectedRows
+        (Hex.bhksLatticeBasis input liftData.p liftData.k
+          liftData.liftedFactors) hrows).factorCount → ℤ) :
+    ExecutableBadVectorWitness where
+  input := input
+  liftData := liftData
+  lattice := Hex.bhksLatticeBasis input liftData.p liftData.k liftData.liftedFactors
+  projectedRows :=
+    Hex.bhksProjectedRows
+      (Hex.bhksLatticeBasis input liftData.p liftData.k liftData.liftedFactors)
+      hrows
+  localFactorIndex := localFactorIndex
+  localFactorDegree :=
+    (liftData.liftedFactors.getD localFactorIndex 0).degree?.getD 0
+  H := BHKS.auxiliaryPolynomial input liftData (List.ofFn v).toArray
+  lattice_matches_lift := rfl
+  projected_factor_count := rfl
+
 /-- `projectedVectorArray` is the canonical array representative of a
 proof-facing projected vector. -/
 theorem projectedVectorFn_projectedVectorArray
@@ -398,6 +435,68 @@ def isBhksBadVectorSetup_of_projected_not_indicator
       resultant_divisible_by_p_pow := hdiv }
   · simpa [projectedVectorFn_projectedVectorArray] using hin
   · simpa [projectedVectorFn_projectedVectorArray] using hnot
+
+/--
+Concrete fixed-vector bad-vector setup constructor.
+
+For a projected vector `v ∈ L' \ W`, the witness built by
+`ofProjectedVector` has the canonical auxiliary polynomial by construction and
+uses the executable selected local-factor degree.  Callers still provide the
+positive-degree fact and the two resultant hypotheses; this is the intended
+boundary before the full BHKS Lemma 3.2 proof.
+-/
+def isBhksBadVectorSetup_of_projectedVector
+    (input : Hex.ZPoly) (liftData : Hex.LiftData)
+    (hrows :
+      1 ≤
+        (Hex.bhksLatticeBasis input liftData.p liftData.k
+            liftData.liftedFactors).factorCount +
+          (Hex.bhksLatticeBasis input liftData.p liftData.k
+            liftData.liftedFactors).coeffWidth)
+    (localFactorIndex : Nat)
+    (v :
+      Fin (Hex.bhksProjectedRows
+        (Hex.bhksLatticeBasis input liftData.p liftData.k
+          liftData.liftedFactors) hrows).factorCount → ℤ)
+    (trueSupports :
+      Set (Set (Fin (Hex.bhksProjectedRows
+        (Hex.bhksLatticeBasis input liftData.p liftData.k
+          liftData.liftedFactors) hrows).factorCount)))
+    (hin :
+      v ∈ BHKS.projectedRowSpanInt
+        (Hex.bhksProjectedRows
+          (Hex.bhksLatticeBasis input liftData.p liftData.k
+            liftData.liftedFactors) hrows))
+    (hnot :
+      v ∉ BHKS.trueFactorIndicatorLattice trueSupports)
+    (hdegree :
+      0 < (liftData.liftedFactors.getD localFactorIndex 0).degree?.getD 0)
+    (hcoprime :
+      IsCoprime
+        ((ofProjectedVector input liftData hrows localFactorIndex v).inputPolynomial.map
+          (Int.castRingHom ℚ))
+        ((ofProjectedVector input liftData hrows localFactorIndex v).auxiliaryPolynomial.map
+          (Int.castRingHom ℚ)))
+    (hdiv :
+      (((ofProjectedVector input liftData hrows localFactorIndex v).liftData.p ^
+          ((ofProjectedVector input liftData hrows localFactorIndex v).liftData.k *
+            (ofProjectedVector input liftData hrows localFactorIndex v).localFactorDegree) :
+          Nat) : ℤ) ∣
+        Polynomial.resultant
+          (ofProjectedVector input liftData hrows localFactorIndex v).inputPolynomial
+          (ofProjectedVector input liftData hrows localFactorIndex v).auxiliaryPolynomial) :
+    IsBhksBadVectorSetup
+      (ofProjectedVector input liftData hrows localFactorIndex v) := by
+  let W := ofProjectedVector input liftData hrows localFactorIndex v
+  exact
+    isBhksBadVectorSetup_of_projected_not_indicator
+      W trueSupports v
+      (by
+        simp [W, ofProjectedVector, projectedVectorArray])
+      hin hnot
+      (by
+        simpa [W, ofProjectedVector] using hdegree)
+      hcoprime hdiv
 
 /--
 Per-vector algebraic bridge needed to turn a projected vector in `L' \ W` into
