@@ -4131,6 +4131,236 @@ theorem henselLiftData_liftedFactor_injective_of_choosePrimeData
   exact henselLiftData_liftedFactor_injective core B primeData
     hcore_monic hinv hp hB hfactors_monic hproduct_mod_p hfactorsModP_nodup
 
+/--
+Abstract-invariant umbrella for positive natural degree of each lifted factor
+produced by `Hex.henselLiftData`.
+
+Mirrors `henselLiftData_liftedFactor_monic` and `_injective`: takes the
+recursive `QuadraticMultifactorLiftInvariant` package together with the
+per-output mod-`p` product congruence and a per-factor natural-degree
+positivity premise on the lift of each input `factorsModP` entry, and
+concludes that every lifted factor's transported Mathlib polynomial has
+positive natural degree.
+
+The proof routes through `Hex.ZPoly.multifactorLiftQuadratic_each_congr_mod_base`
+to identify each lifted factor's mod-`p` reduction with the corresponding
+modular factor (after `FpPoly.liftToZ`), then transports through the
+`toMathlibPolynomial`/`Polynomial.map` bridge.  Both the lifted factor and
+its modular pre-image are monic, so reduction modulo `p` preserves natural
+degree (their `Polynomial.map (Int.castRingHom (ZMod p))` images have the
+same natural degree as the unmapped polynomials), and the modular images
+agree by congruence.
+
+This is the natDegree-positivity discharge consumed by the outer-bound
+slow-path wrapper
+`factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence`
+(see line 7590 below). -/
+theorem henselLiftData_liftedFactor_natDegree_pos
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hprime_invariant :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant
+        primeData.p B core
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList)
+    (hp : 1 < primeData.p)
+    (hB : 1 ≤ B)
+    (hfactors_monic :
+      letI := primeData.bounds
+      ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g)
+    (hproduct_mod_p :
+      letI := primeData.bounds
+      Hex.ZPoly.congr
+        (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
+        core primeData.p)
+    (hfactors_natDegree_pos :
+      letI := primeData.bounds
+      ∀ g ∈ primeData.factorsModP,
+        0 < (HexPolyZMathlib.toPolynomial (Hex.FpPoly.liftToZ g)).natDegree) :
+    ∀ i : Fin (Hex.henselLiftData core B primeData).liftedFactors.size,
+      0 < (HexPolyZMathlib.toPolynomial
+            (liftedFactor (Hex.henselLiftData core B primeData) i)).natDegree := by
+  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  haveI : Fact (1 < primeData.p) := ⟨hp⟩
+  intro i
+  change 0 < (HexPolyZMathlib.toPolynomial
+    (Hex.henselLiftData core B primeData).liftedFactors[i]).natDegree
+  -- 1. Each lifted factor is monic.
+  have hlifted_monic :
+      Hex.DensePoly.Monic
+        (Hex.henselLiftData core B primeData).liftedFactors[i] :=
+    henselLiftData_liftedFactor_monic core B primeData
+      hcore_monic hprime_invariant hp hB i
+  -- 2. Index gymnastics: identify the lifted factor with the multifactor output
+  --    at the corresponding modular index.
+  set arr :=
+    Hex.ZPoly.multifactorLiftQuadratic primeData.p B core
+      (primeData.factorsModP.map Hex.FpPoly.liftToZ) with harr_def
+  have hd_factors :
+      (Hex.henselLiftData core B primeData).liftedFactors = arr := by
+    simp [Hex.henselLiftData, harr_def]
+  have harr_size :
+      arr.size = primeData.factorsModP.size := by
+    rw [harr_def, Hex.ZPoly.multifactorLiftQuadratic_size_eq_input]
+    simp
+  have hd_size :
+      (Hex.henselLiftData core B primeData).liftedFactors.size =
+        primeData.factorsModP.size := by
+    rw [hd_factors]; exact harr_size
+  have hi_modP : i.val < primeData.factorsModP.size := by
+    rw [← hd_size]; exact i.isLt
+  have hi_arr : i.val < arr.size := by rw [harr_size]; exact hi_modP
+  have hi_map :
+      i.val < (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList.length := by
+    rw [Array.length_toList, Array.size_map]; exact hi_modP
+  have hi_arr_list : i.val < arr.toList.length := by
+    rw [Array.length_toList]; exact hi_arr
+  -- 3. Per-output mod-`p` congruence at index `i.val`.
+  have hfactors_monic_arr :
+      ∀ g ∈ (primeData.factorsModP.map Hex.FpPoly.liftToZ),
+        Hex.DensePoly.Monic g := by
+    intro g hg
+    rw [Array.mem_map] at hg
+    obtain ⟨f0, hf0_mem, hf0_eq⟩ := hg
+    rw [← hf0_eq]
+    exact Hex.FpPoly.monic_liftToZ_of_monic f0 hp (hfactors_monic f0 hf0_mem)
+  have hcongr_i :=
+    Hex.ZPoly.multifactorLiftQuadratic_each_congr_mod_base
+      primeData.p B core (primeData.factorsModP.map Hex.FpPoly.liftToZ)
+      hB hp hcore_monic hfactors_monic_arr hprime_invariant hproduct_mod_p i.val
+  have hgetD_arr :
+      arr.toList[i.val]?.getD 0 = arr[i.val]'hi_arr := by
+    rw [List.getElem?_eq_getElem hi_arr_list, Option.getD_some, Array.getElem_toList]
+  have hgetD_factors :
+      (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList[i.val]?.getD 0 =
+        Hex.FpPoly.liftToZ (primeData.factorsModP[i.val]'hi_modP) := by
+    rw [List.getElem?_eq_getElem hi_map, Option.getD_some,
+      Array.getElem_toList, Array.getElem_map]
+  rw [hgetD_arr, hgetD_factors] at hcongr_i
+  -- Identify `arr[i.val]` with the lifted factor at index `i`.
+  -- Both `arr` and `(henselLiftData ...).liftedFactors` are definitionally
+  -- the same `multifactorLiftQuadratic` invocation.
+  have hlifted_eq :
+      arr[i.val]'hi_arr =
+        (Hex.henselLiftData core B primeData).liftedFactors[i] := by
+    show arr[i.val]'hi_arr =
+      (Hex.henselLiftData core B primeData).liftedFactors[i.val]'i.isLt
+    rfl
+  rw [hlifted_eq] at hcongr_i
+  -- 4. Use the bridge between executable mod-`p` reduction and Mathlib's
+  --    `Polynomial.map (Int.castRingHom (ZMod p))` to identify natural degrees.
+  set lifted := (Hex.henselLiftData core B primeData).liftedFactors[i] with hlifted_def
+  set modular := primeData.factorsModP[i.val]'hi_modP with hmodular_def
+  -- The mod-`p` reduction of the lifted factor equals the modular factor.
+  have hmodP_eq :
+      Hex.ZPoly.modP primeData.p lifted = modular := by
+    have h₁ : Hex.ZPoly.modP primeData.p lifted =
+        Hex.ZPoly.modP primeData.p (Hex.FpPoly.liftToZ modular) :=
+      Hex.ZPoly.modP_eq_of_congr _ _ _ hcongr_i
+    rw [h₁, Hex.FpPoly.modP_liftToZ]
+  -- Common helper: `(1 : ZMod p) ≠ 0` since `p > 1`.
+  have hone_ne_zero : (1 : ZMod primeData.p) ≠ 0 := one_ne_zero
+  -- The lifted factor's transported polynomial has leading coefficient `1`.
+  have hlifted_lead :
+      (HexPolyZMathlib.toPolynomial lifted).leadingCoeff = (1 : Int) := by
+    rw [HexPolyMathlib.leadingCoeff_toPolynomial]; exact hlifted_monic
+  have hlifted_lead_cast :
+      (Int.castRingHom (ZMod primeData.p))
+          (HexPolyZMathlib.toPolynomial lifted).leadingCoeff ≠ 0 := by
+    rw [hlifted_lead]; simp [hone_ne_zero]
+  -- The lift of the modular factor is monic, so its transported polynomial
+  -- also has leading coefficient `1`.
+  have hmodular_mem : modular ∈ primeData.factorsModP := by
+    simp [hmodular_def, Array.getElem_mem]
+  have hliftZ_monic : Hex.DensePoly.Monic (Hex.FpPoly.liftToZ modular) :=
+    Hex.FpPoly.monic_liftToZ_of_monic modular hp (hfactors_monic modular hmodular_mem)
+  have hliftZ_lead :
+      (HexPolyZMathlib.toPolynomial (Hex.FpPoly.liftToZ modular)).leadingCoeff =
+        (1 : Int) := by
+    rw [HexPolyMathlib.leadingCoeff_toPolynomial]; exact hliftZ_monic
+  have hliftZ_lead_cast :
+      (Int.castRingHom (ZMod primeData.p))
+          (HexPolyZMathlib.toPolynomial
+            (Hex.FpPoly.liftToZ modular)).leadingCoeff ≠ 0 := by
+    rw [hliftZ_lead]; simp [hone_ne_zero]
+  -- Bridge: natural degree of the transported lifted factor equals the natural
+  -- degree of its mod-`p` image's Mathlib transport.
+  have hnatDeg_lifted :
+      (HexPolyZMathlib.toPolynomial lifted).natDegree =
+        (HexBerlekampMathlib.toMathlibPolynomial
+          (Hex.ZPoly.modP primeData.p lifted)).natDegree := by
+    rw [toMathlibPolynomial_modP_eq_map_intCast_zmod lifted]
+    exact (HexPolyZMathlib.natDegree_map_intCast_zmod_eq_of_leadingCoeff_ne_zero
+      primeData.p lifted hlifted_lead_cast).symm
+  have hnatDeg_liftZ :
+      (HexPolyZMathlib.toPolynomial (Hex.FpPoly.liftToZ modular)).natDegree =
+        (HexBerlekampMathlib.toMathlibPolynomial
+          (Hex.ZPoly.modP primeData.p (Hex.FpPoly.liftToZ modular))).natDegree := by
+    rw [toMathlibPolynomial_modP_eq_map_intCast_zmod (Hex.FpPoly.liftToZ modular)]
+    exact (HexPolyZMathlib.natDegree_map_intCast_zmod_eq_of_leadingCoeff_ne_zero
+      primeData.p (Hex.FpPoly.liftToZ modular) hliftZ_lead_cast).symm
+  -- Tie them together: both equal natDegree of toMathlibPolynomial modular.
+  have hnatDeg_eq :
+      (HexPolyZMathlib.toPolynomial lifted).natDegree =
+        (HexPolyZMathlib.toPolynomial (Hex.FpPoly.liftToZ modular)).natDegree := by
+    rw [hnatDeg_lifted, hnatDeg_liftZ, hmodP_eq, Hex.FpPoly.modP_liftToZ]
+  -- Apply the premise on the modular side.
+  have hpos_modular :
+      0 < (HexPolyZMathlib.toPolynomial (Hex.FpPoly.liftToZ modular)).natDegree :=
+    hfactors_natDegree_pos modular hmodular_mem
+  -- Conclude.
+  exact hnatDeg_eq ▸ hpos_modular
+
+/-- Composed convenience wrapper: combines
+`Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData` with
+`henselLiftData_liftedFactor_natDegree_pos` so that a Mathlib-bridge consumer
+can discharge positive natural degree of every lifted factor from the
+`choosePrimeData` boundary facts plus per-modular-factor natural-degree
+positivity.
+
+The per-modular-factor natural-degree positivity premise mirrors the
+`hfactorsModP_nodup` premise on the injectivity umbrella (#4525): it is
+exposed as an explicit hypothesis here because discharging it from
+`choosePrimeData` invariants requires composing with `factorsModPBerlekampForm`
+and the underlying Berlekamp factor-degree positivity, which lives in a
+separate substrate task. -/
+theorem henselLiftData_liftedFactor_natDegree_pos_of_choosePrimeData
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hp_prime : Hex.Nat.Prime primeData.p)
+    (hp : 1 < primeData.p)
+    (hB : 1 ≤ B)
+    (hfactors_monic :
+      letI := primeData.bounds
+      ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g)
+    (hproduct_mod_p :
+      letI := primeData.bounds
+      Hex.ZPoly.congr
+        (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
+        core primeData.p)
+    (hcoprime :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorCoprimeSplits primeData.p
+        primeData.factorsModP.toList)
+    (hnonempty : primeData.factorsModP.toList ≠ [])
+    (hfactors_natDegree_pos :
+      letI := primeData.bounds
+      ∀ g ∈ primeData.factorsModP,
+        0 < (HexPolyZMathlib.toPolynomial (Hex.FpPoly.liftToZ g)).natDegree) :
+    ∀ i : Fin (Hex.henselLiftData core B primeData).liftedFactors.size,
+      0 < (HexPolyZMathlib.toPolynomial
+            (liftedFactor (Hex.henselLiftData core B primeData) i)).natDegree := by
+  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  have hinv :
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant
+        primeData.p B core
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList :=
+    Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData
+      core B primeData hp_prime hp hB hcore_monic
+      hfactors_monic hproduct_mod_p hcoprime hnonempty
+  exact henselLiftData_liftedFactor_natDegree_pos core B primeData
+    hcore_monic hinv hp hB hfactors_monic hproduct_mod_p hfactors_natDegree_pos
+
 /-- Monic integer polynomials have positive stored size. -/
 private theorem zpoly_size_pos_of_monic {f : Hex.ZPoly}
     (h : Hex.DensePoly.Monic f) : 0 < f.size := by
