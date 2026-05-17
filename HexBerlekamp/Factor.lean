@@ -481,8 +481,7 @@ product of the returned factors for square-free monic inputs.
 theorem prod_berlekampFactor
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [Lean.Grind.Field (ZMod64 p)]
-    [ZMod64.PrimeModulus p]
-    (_hsquareFree : DensePoly.gcd f (DensePoly.derivative f) = 1) :
+    [ZMod64.PrimeModulus p] :
     (berlekampFactor f hmonic).product = f := by
   simp only [Factorization.product_def]
   exact factorProduct_berlekampFactor f hmonic
@@ -1343,6 +1342,49 @@ theorem berlekampFactor_factors_pos_degree
     (f.size + 1) [f], 0 < g.degree?.getD 0
   exact berlekampFactorLoop_pos_invariant ((fixedSpaceKernel f hmonic).toList)
     (f.size + 1) [f] h_init_pos
+
+/-- For a monic input of size ≤ 1, the executable Berlekamp factor list is
+exactly the singleton `[f]`.  The Berlekamp loop only adds entries via
+nontrivial splits (which require positive-degree gcd outputs), and a polynomial
+of size ≤ 1 has no positive-degree divisors, so the loop preserves the initial
+singleton `[f]`. -/
+theorem berlekampFactor_factors_eq_singleton_of_size_le_one
+    [Lean.Grind.Field (ZMod64 p)]
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (hsize : f.size ≤ 1) :
+    (berlekampFactor f hmonic).factors = [f] := by
+  have h_no_split : ∀ w ∈ ((fixedSpaceKernel f hmonic).toList),
+      kernelWitnessSplit? f w = none := by
+    intro w _hw
+    cases hopt : kernelWitnessSplit? f w with
+    | none => rfl
+    | some r =>
+        exfalso
+        have hsize_lt := kernelWitnessSplit_size_lt f w r hopt
+        have hnt := kernelWitnessSplit_nontrivial f w r hopt
+        -- r.factor.size < f.size ≤ 1, so r.factor.size = 0, so r.factor = 0.
+        have hfac_size_zero : r.factor.size = 0 := by omega
+        have hfac_iszero : r.factor.isZero = true := by
+          change r.factor.coeffs.isEmpty = true
+          simpa [DensePoly.size, Array.isEmpty_iff_size_eq_zero] using hfac_size_zero
+        rw [hfac_iszero] at hnt
+        simp at hnt
+  have h_loop : ∀ fuel,
+      berlekampFactorLoop ((fixedSpaceKernel f hmonic).toList) fuel [f] = [f] := by
+    intro fuel
+    induction fuel with
+    | zero => rfl
+    | succ fuel _ih_fuel =>
+        rw [berlekampFactorLoop]
+        have h_sff_none :
+            splitFirstFactor? ((fixedSpaceKernel f hmonic).toList) [f] = none := by
+          rw [splitFirstFactor?_singleton_none_iff,
+              splitWithWitnesses?_none_iff_forall]
+          exact h_no_split
+        rw [h_sff_none]
+  change berlekampFactorLoop _ _ [f] = [f]
+  exact h_loop _
 
 end Berlekamp
 

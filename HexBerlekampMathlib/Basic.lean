@@ -344,7 +344,7 @@ theorem irreducible_of_berlekampFactor_factors_length_le_one
       cases rest with
       | nil =>
           have hg_eq : g = f := by
-            have hprod := Hex.Berlekamp.prod_berlekampFactor f hmonic hsquareFree
+            have hprod := Hex.Berlekamp.prod_berlekampFactor f hmonic
             rw [Hex.Berlekamp.Factorization.product_def] at hprod
             simp [hfactors, Hex.Berlekamp.factorProduct_cons] at hprod
             exact hprod
