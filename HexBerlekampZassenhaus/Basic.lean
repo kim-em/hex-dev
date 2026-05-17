@@ -7788,6 +7788,127 @@ private theorem recombinationSearchMod_shouldRecord
   recombinationSearchModAux_shouldRecord
     f modulus localFactors factors (localFactors.length + 1) hsearch
 
+private theorem scaledRecombinationSearchModAux_normalizeFactorSign
+    (coreLc : Int) (target : ZPoly) (modulus : Nat)
+    (localFactors factors : List ZPoly) (fuel : Nat)
+    (hsearch :
+      scaledRecombinationSearchModAux coreLc target modulus localFactors fuel
+        = some factors) :
+    ∀ factor ∈ factors, normalizeFactorSign factor = factor := by
+  induction fuel generalizing target localFactors factors with
+  | zero =>
+      simp [scaledRecombinationSearchModAux] at hsearch
+  | succ fuel ih =>
+      unfold scaledRecombinationSearchModAux at hsearch
+      by_cases htarget : target = 1
+      · simp [htarget] at hsearch
+        cases hsearch
+        simp
+      · simp [htarget] at hsearch
+        rcases firstSome_some hsearch with ⟨split, hsplit⟩
+        let candidate :=
+          normalizeFactorSign <|
+            ZPoly.primitivePart <|
+              centeredLiftPoly
+                (DensePoly.scale coreLc (Array.polyProduct split.1.toArray))
+                modulus
+        by_cases hrecord : shouldRecordPolynomialFactor candidate = true
+        · simp [candidate, hrecord] at hsplit
+          cases hquot : exactQuotient? target candidate with
+          | none =>
+              simp [candidate, hquot] at hsplit
+          | some quotient =>
+              simp [candidate, hquot] at hsplit
+              cases hrec :
+                  scaledRecombinationSearchModAux coreLc quotient modulus
+                    split.2 fuel with
+              | none =>
+                  simp [hrec] at hsplit
+              | some rest =>
+                  simp [hrec] at hsplit
+                  cases hsplit
+                  intro factor hmem
+                  simp at hmem
+                  cases hmem with
+                  | inl hfactor =>
+                      rw [hfactor]
+                      exact normalizeFactorSign_idem
+                        (ZPoly.primitivePart <|
+                          centeredLiftPoly
+                            (DensePoly.scale coreLc
+                              (Array.polyProduct split.1.toArray))
+                            modulus)
+                  | inr hrest =>
+                      exact ih quotient split.2 rest hrec factor hrest
+        · simp [candidate, hrecord] at hsplit
+
+private theorem scaledRecombinationSearchModAux_shouldRecord
+    (coreLc : Int) (target : ZPoly) (modulus : Nat)
+    (localFactors factors : List ZPoly) (fuel : Nat)
+    (hsearch :
+      scaledRecombinationSearchModAux coreLc target modulus localFactors fuel
+        = some factors) :
+    ∀ factor ∈ factors, shouldRecordPolynomialFactor factor = true := by
+  induction fuel generalizing target localFactors factors with
+  | zero =>
+      simp [scaledRecombinationSearchModAux] at hsearch
+  | succ fuel ih =>
+      unfold scaledRecombinationSearchModAux at hsearch
+      by_cases htarget : target = 1
+      · simp [htarget] at hsearch
+        cases hsearch
+        simp
+      · simp [htarget] at hsearch
+        rcases firstSome_some hsearch with ⟨split, hsplit⟩
+        let candidate :=
+          normalizeFactorSign <|
+            ZPoly.primitivePart <|
+              centeredLiftPoly
+                (DensePoly.scale coreLc (Array.polyProduct split.1.toArray))
+                modulus
+        by_cases hrecord : shouldRecordPolynomialFactor candidate = true
+        · simp [candidate, hrecord] at hsplit
+          cases hquot : exactQuotient? target candidate with
+          | none =>
+              simp [candidate, hquot] at hsplit
+          | some quotient =>
+              simp [candidate, hquot] at hsplit
+              cases hrec :
+                  scaledRecombinationSearchModAux coreLc quotient modulus
+                    split.2 fuel with
+              | none =>
+                  simp [hrec] at hsplit
+              | some rest =>
+                  simp [hrec] at hsplit
+                  cases hsplit
+                  intro factor hmem
+                  simp at hmem
+                  cases hmem with
+                  | inl hfactor =>
+                      rw [hfactor]
+                      exact hrecord
+                  | inr hrest =>
+                      exact ih quotient split.2 rest hrec factor hrest
+        · simp [candidate, hrecord] at hsplit
+
+private theorem scaledRecombinationSearchMod_normalizeFactorSign
+    (coreLc : Int) (f : ZPoly) (modulus : Nat)
+    (localFactors factors : List ZPoly)
+    (hsearch :
+      scaledRecombinationSearchMod coreLc f modulus localFactors = some factors) :
+    ∀ factor ∈ factors, normalizeFactorSign factor = factor :=
+  scaledRecombinationSearchModAux_normalizeFactorSign
+    coreLc f modulus localFactors factors (localFactors.length + 1) hsearch
+
+private theorem scaledRecombinationSearchMod_shouldRecord
+    (coreLc : Int) (f : ZPoly) (modulus : Nat)
+    (localFactors factors : List ZPoly)
+    (hsearch :
+      scaledRecombinationSearchMod coreLc f modulus localFactors = some factors) :
+    ∀ factor ∈ factors, shouldRecordPolynomialFactor factor = true :=
+  scaledRecombinationSearchModAux_shouldRecord
+    coreLc f modulus localFactors factors (localFactors.length + 1) hsearch
+
 private theorem recombineExhaustive_product
     (f : ZPoly) (d : LiftData) (factors : List ZPoly)
     (hsearch :
