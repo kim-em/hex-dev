@@ -1112,8 +1112,11 @@ theorem factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData
 Per-branch HO-1 component for the fast-path **constant square-free core** arm
 of the capstone `factor_irreducible_of_nonUnit` (#4170): every entry recorded
 by `Hex.factorWithBound f B` in the constant branch is
-`Hex.ZPoly.Irreducible`, given only `f ≠ 0`, the constant-core marker
-`hdeg`, and the reassembly expansion-complete side condition `hcomplete`.
+`Hex.ZPoly.Irreducible`, given only `f ≠ 0` and the constant-core marker
+`hdeg`. The reassembly expansion-complete side condition is discharged
+internally via `Hex.reassemblyExpansionComplete_constant_of_ne_zero` (#4585 /
+PR #4598), so the umbrella no longer requires an explicit `hcomplete`
+premise.
 
 The constant branch is the earliest dispatch in `factorFastFactorsWithBound`
 (triggered when `(normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0`)
@@ -1156,11 +1159,14 @@ theorem factor_constant_branch_entry_irreducible_of_choosePrimeData
     (entry : Hex.ZPoly × Nat)
     (hdeg :
       (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0)
-    (hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList)
-    (hcomplete :
-      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
-        #[(Hex.normalizeForFactor f).squareFreeCore]) :
+    (hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList) :
     Hex.ZPoly.Irreducible entry.1 := by
+  -- Discharge the reassembly expansion-complete side condition internally
+  -- using the constant-arm discharger (#4585 / PR #4598).
+  have hcomplete :
+      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
+        #[(Hex.normalizeForFactor f).squareFreeCore] :=
+    Hex.reassemblyExpansionComplete_constant_of_ne_zero f hf_ne hdeg
   -- Branch-shape lemma: entry is the sign-normalisation of a raw factor in
   -- the singleton-core reassembly.
   obtain ⟨raw, hraw_mem, hentry_eq⟩ :=
