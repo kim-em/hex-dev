@@ -583,6 +583,74 @@ theorem normalizedFactors_le_map_normalize_of_dvd_prod_irreducibles
     exact hle
 
 /--
+**UFD subset existence and uniqueness for squarefree-product divisors.**
+
+In a unique factorization monoid, if `factors` is a `Nodup` multiset of
+normalize-fixed irreducibles and `d` is a normalize-fixed divisor of
+`factors.prod`, then there is a unique sub-multiset `S ≤ factors` whose
+product equals `d`. The witness is `normalizedFactors d`; uniqueness uses
+`normalizedFactors_prod_eq` to recover any candidate from its product.
+
+This is the abstract Mathlib half of the
+`existsUnique_modPFactorSubset_of_choosePrimeData` assembly: the final
+consumer instantiates `α := Polynomial (ZMod p)` and transports the
+resulting sub-multiset through an executable factor-list indexing.
+-/
+theorem existsUnique_subset_product_eq_of_dvd_of_squarefree_prod
+    {α : Type*} [CommMonoidWithZero α] [NormalizationMonoid α]
+    [UniqueFactorizationMonoid α]
+    {factors : Multiset α}
+    (hirr : ∀ q ∈ factors, Irreducible q)
+    (hnorm : ∀ q ∈ factors, normalize q = q)
+    (_hnodup : factors.Nodup)
+    {d : α} (hd_norm : normalize d = d) (hd_dvd : d ∣ factors.prod) :
+    ∃! S : Multiset α, S ≤ factors ∧ S.prod = d := by
+  classical
+  rcases factors.empty_or_exists_mem with rfl | ⟨b, hb⟩
+  · -- factors = ∅: `d ∣ 1` ⟹ `d` is a unit ⟹ `d = 1` (using `normalize d = d`).
+    rw [Multiset.prod_zero] at hd_dvd
+    have hd_unit : IsUnit d := isUnit_of_dvd_one hd_dvd
+    have hd_one : d = 1 := by
+      rw [← hd_norm]; exact normalize_eq_one.mpr hd_unit
+    refine ⟨0, ⟨Multiset.zero_le _, ?_⟩, ?_⟩
+    · rw [Multiset.prod_zero, hd_one]
+    · rintro S ⟨hSle, _⟩
+      exact Multiset.le_zero.mp hSle
+  · -- factors ≠ ∅: pick `b ∈ factors` to derive `Nontrivial α`.
+    haveI : Nontrivial α := nontrivial_of_ne b 0 (hirr b hb).ne_zero
+    have hprod_ne : factors.prod ≠ 0 :=
+      Multiset.prod_ne_zero fun hmem => (hirr 0 hmem).ne_zero rfl
+    have hd_ne : d ≠ 0 := by
+      intro hd0
+      rw [hd0] at hd_dvd
+      exact hprod_ne (zero_dvd_iff.mp hd_dvd)
+    have hmap_id : factors.map normalize = factors := by
+      refine (Multiset.map_congr rfl ?_).trans (Multiset.map_id _)
+      intro q hq
+      simpa using hnorm q hq
+    refine ⟨normalizedFactors d, ⟨?_, ?_⟩, ?_⟩
+    · have hle : normalizedFactors d ≤ factors.map normalize :=
+        normalizedFactors_le_map_normalize_of_dvd_prod_irreducibles hd_ne hirr hd_dvd
+      rw [hmap_id] at hle
+      exact hle
+    · rw [UniqueFactorizationMonoid.prod_normalizedFactors_eq hd_ne, hd_norm]
+    · rintro S ⟨hSle, hSprod⟩
+      have hS_subset : ∀ q ∈ S, q ∈ factors :=
+        fun q hq => Multiset.mem_of_le hSle hq
+      have hSirr : ∀ q ∈ S, Irreducible q :=
+        fun q hq => hirr q (hS_subset q hq)
+      have hSnorm : ∀ q ∈ S, normalize q = q :=
+        fun q hq => hnorm q (hS_subset q hq)
+      have hSmap_id : S.map normalize = S := by
+        refine (Multiset.map_congr rfl ?_).trans (Multiset.map_id _)
+        intro q hq
+        simpa using hSnorm q hq
+      have hSfactors : normalizedFactors S.prod = S.map normalize :=
+        normalizedFactors_prod_eq S hSirr
+      rw [hSmap_id, hSprod] at hSfactors
+      exact hSfactors.symm
+
+/--
 **Polynomial subset-degree lemma.**
 
 Over a field `K`, if `g : K[X]` is non-zero and divides the product of a
