@@ -13466,6 +13466,66 @@ theorem modPSubsetPartitionHypotheses_of_choosePrimeData
       ⟨_, _, huniq⟩
     exact (huniq S hS).trans (huniq T hT).symm
 
+/-- **#4697 substrate (HO-1).**
+
+Assembly constructor for `HenselSubsetLiftHypotheses` at the executable
+`Hex.choosePrimeData` / `Hex.henselLiftData` surface.
+
+The constructor composes:
+
+* `henselLiftData_liftedFactors_size_eq` (PR #4698) for `factor_count_eq`;
+* the supplied forward transport `hlifted_of_modP` for `represents_lifted_of_modP`
+  (sourced in practice from `henselLiftData_represents_lifted_of_modP`, landed
+  in #4733, once the caller has discharged its analytic prerequisites);
+* the landed descent wrapper `henselLiftData_represents_modP_of_lifted`
+  (PR #4739) for `represents_modP_of_lifted`, instantiated with the supplied
+  `hmod` / `hcorr` partition-and-correspondence inputs together with
+  `hlifted_of_modP`.
+
+The four proposition hooks `admissible_prime`, `square_free_reduction`,
+`successful_lift`, `coprime_lift` are instantiated with `True`.
+
+Downstream consumer: `henselSubsetCorrespondence_of_modPSubsetPartition`
+(line above), which composes this value with `hmod` to recover the
+`HenselSubsetCorrespondenceHypotheses` package on the lifted surface. -/
+theorem henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData
+    (core : Hex.ZPoly) (B : Nat)
+    (hmod :
+      ModPSubsetPartitionHypotheses core (Hex.choosePrimeData core) True True)
+    (hcorr :
+      HenselSubsetCorrespondenceHypotheses core B (Hex.choosePrimeData core)
+        (Hex.henselLiftData core B (Hex.choosePrimeData core)) True True)
+    (hlifted_of_modP :
+      ∀ {factor : Hex.ZPoly} {S : ModPFactorSubset (Hex.choosePrimeData core)},
+        Irreducible (HexPolyZMathlib.toPolynomial factor) →
+        factor ∣ core →
+        RepresentsIntegerFactorModP (Hex.choosePrimeData core) factor S →
+        RepresentsIntegerFactorAtLift core
+          (Hex.henselLiftData core B (Hex.choosePrimeData core)) factor
+          (liftedSubsetOfModPSubset (Hex.choosePrimeData core)
+            (Hex.henselLiftData core B (Hex.choosePrimeData core))
+            (henselLiftData_liftedFactors_size_eq core B (Hex.choosePrimeData core))
+            S)) :
+    let primeData := Hex.choosePrimeData core
+    let d := Hex.henselLiftData core B primeData
+    HenselSubsetLiftHypotheses core B primeData d True True True True := by
+  intro primeData d
+  refine
+    { lift_eq := rfl
+      factor_count_eq := henselLiftData_liftedFactors_size_eq core B primeData
+      admissible_prime := trivial
+      square_free_reduction := trivial
+      successful_lift := trivial
+      coprime_lift := trivial
+      represents_lifted_of_modP := ?_
+      represents_modP_of_lifted := ?_ }
+  · intro factor S hirr hdvd hrep
+    exact hlifted_of_modP hirr hdvd hrep
+  · intro factor T hirr hdvd hT
+    exact henselLiftData_represents_modP_of_lifted hmod hcorr
+      (henselLiftData_liftedFactors_size_eq core B primeData)
+      hlifted_of_modP hirr hdvd hT
+
 end
 
 end HexBerlekampZassenhausMathlib
