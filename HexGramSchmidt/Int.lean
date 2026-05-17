@@ -2982,25 +2982,6 @@ theorem scaledCoeffs_upper (b : Matrix Int n m)
       exact getArrayEntry_zeroRows n r c)
     i j hij
 
-/-- Leading integer Gram determinants are nonnegative. -/
-theorem leadingGramMatrixInt_det_nonneg
-    (b : Matrix Int n m) (t : Nat) (ht : t ≤ n) :
-    0 ≤ Matrix.det (GramSchmidt.leadingGramMatrixInt b t ht) := by
-  let rowPrefix : Matrix Int t m :=
-    Matrix.ofFn fun i j =>
-      (b.row ⟨i.val, Nat.lt_of_lt_of_le i.isLt ht⟩)[j]
-  have hgram :
-      GramSchmidt.leadingGramMatrixInt b t ht =
-        Matrix.gramMatrix rowPrefix := by
-    apply Vector.ext
-    intro i hi
-    apply Vector.ext
-    intro j hj
-    simp [GramSchmidt.leadingGramMatrixInt, rowPrefix, Matrix.gramMatrix, Matrix.dot,
-      Matrix.row, Matrix.ofFn, GramSchmidt.liftFinLE]
-  rw [hgram]
-  exact Matrix.det_gramMatrix_nonneg rowPrefix
-
 theorem normSq_latticeVec_ge_min_basis_normSq
     (b : Matrix Int n m) (hli : independent b)
     (v : Vector Int m) (hv : memLattice b v) (hv' : v ≠ 0) :
@@ -3503,7 +3484,11 @@ end GramSchmidt.Int
 
 namespace GramSchmidt.Rat
 
-/-- The `k`-th Gram determinant for a rational input matrix. -/
+/-- The `k`-th Gram determinant for a rational input matrix.
+
+This remains Mathlib-free API: it is the direct Hex determinant definition used
+by rational Gram-Schmidt consumers, not a theorem identifying an executable Hex
+output with a Leibniz determinant. -/
 def gramDet (b : Matrix Rat n m) (k : Nat) (hk : k ≤ n) : Rat :=
   Matrix.det (GramSchmidt.leadingGramMatrixRat b k hk)
 
