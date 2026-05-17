@@ -8423,6 +8423,210 @@ theorem exhaustiveCoreFactorsWithBound_product
             (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)
             xs hsearch
 
+/-- The leading coefficient of an `Array.polyProduct` over a list of polynomials
+with strictly positive leading coefficients is strictly positive. Chains
+`ZPoly.leadingCoeff_mul_pos_of_pos` through the foldl unfold given by
+`ZPoly.polyProduct_cons_toArray`. -/
+private theorem leadingCoeff_polyProduct_toArray_pos :
+    ∀ (factors : List ZPoly),
+      (∀ q ∈ factors, 0 < DensePoly.leadingCoeff q) →
+      0 < DensePoly.leadingCoeff (Array.polyProduct factors.toArray) := by
+  intro factors
+  induction factors with
+  | nil =>
+      intro _
+      change 0 < DensePoly.leadingCoeff (Array.polyProduct (#[] : Array ZPoly))
+      change 0 < DensePoly.leadingCoeff (1 : ZPoly)
+      decide
+  | cons head rest ih =>
+      intro hpos
+      have hhead_pos : 0 < DensePoly.leadingCoeff head := hpos head List.mem_cons_self
+      have hrest_pos : ∀ q ∈ rest, 0 < DensePoly.leadingCoeff q :=
+        fun q hq => hpos q (List.mem_cons_of_mem _ hq)
+      rw [ZPoly.polyProduct_cons_toArray]
+      exact ZPoly.leadingCoeff_mul_pos_of_pos head _ hhead_pos (ih hrest_pos)
+
+/-- If the executable `Array.polyProduct` of a list of polynomials is monic and
+every entry has positive leading coefficient, then every entry is monic.
+
+The product of positive integer leading coefficients equals the monic product's
+leading coefficient `1`; since each factor is a positive integer, each must
+itself be `1`. Used by the exhaustive-arm reassembly discharger to recover
+monicness of emitted core factors from monicness of the squarefree core. -/
+private theorem polyProduct_toArray_monic_factors_monic_of_pos_lc :
+    ∀ (factors : List ZPoly),
+      DensePoly.Monic (Array.polyProduct factors.toArray) →
+      (∀ q ∈ factors, 0 < DensePoly.leadingCoeff q) →
+      ∀ q ∈ factors, DensePoly.Monic q := by
+  intro factors
+  induction factors with
+  | nil =>
+      intro _ _ q hq
+      cases hq
+  | cons head rest ih =>
+      intro hmonic hpos q hq
+      have hhead_pos : 0 < DensePoly.leadingCoeff head := hpos head List.mem_cons_self
+      have hrest_pos : ∀ q' ∈ rest, 0 < DensePoly.leadingCoeff q' :=
+        fun q' hq' => hpos q' (List.mem_cons_of_mem _ hq')
+      have hhead_ne : head ≠ 0 := by
+        intro h0
+        rw [h0] at hhead_pos
+        change (0 : Int) < DensePoly.leadingCoeff (0 : ZPoly) at hhead_pos
+        have hzero : DensePoly.leadingCoeff (0 : ZPoly) = 0 := by decide
+        rw [hzero] at hhead_pos
+        exact absurd hhead_pos (by decide)
+      have hrest_lc_pos : 0 < DensePoly.leadingCoeff (Array.polyProduct rest.toArray) :=
+        leadingCoeff_polyProduct_toArray_pos rest hrest_pos
+      have hrest_prod_ne : Array.polyProduct rest.toArray ≠ 0 := by
+        intro h0
+        rw [h0] at hrest_lc_pos
+        change (0 : Int) < DensePoly.leadingCoeff (0 : ZPoly) at hrest_lc_pos
+        have hzero : DensePoly.leadingCoeff (0 : ZPoly) = 0 := by decide
+        rw [hzero] at hrest_lc_pos
+        exact absurd hrest_lc_pos (by decide)
+      have hprod_eq :
+          Array.polyProduct (head :: rest).toArray =
+            head * Array.polyProduct rest.toArray :=
+        ZPoly.polyProduct_cons_toArray head rest
+      have hlc_mul :
+          DensePoly.leadingCoeff (head * Array.polyProduct rest.toArray) =
+            DensePoly.leadingCoeff head *
+              DensePoly.leadingCoeff (Array.polyProduct rest.toArray) :=
+        ZPoly.leadingCoeff_mul_of_nonzero head _ hhead_ne hrest_prod_ne
+      have hmonic_unfold :
+          DensePoly.leadingCoeff (Array.polyProduct (head :: rest).toArray) = 1 :=
+        hmonic
+      have hone :
+          DensePoly.leadingCoeff head *
+              DensePoly.leadingCoeff (Array.polyProduct rest.toArray) = 1 := by
+        rw [← hlc_mul, ← hprod_eq]
+        exact hmonic_unfold
+      have ha : 1 ≤ DensePoly.leadingCoeff head := hhead_pos
+      have hb : 1 ≤ DensePoly.leadingCoeff (Array.polyProduct rest.toArray) :=
+        hrest_lc_pos
+      -- From `a * b = 1` with `a ≥ 1`, `b ≥ 1`: `a * 1 ≤ a * b = 1`, so `a ≤ 1`.
+      -- Combined with `a ≥ 1`, `a = 1`.
+      have hhead_eq : DensePoly.leadingCoeff head = 1 := by
+        have hupper :
+            DensePoly.leadingCoeff head * 1 ≤
+              DensePoly.leadingCoeff head *
+                DensePoly.leadingCoeff (Array.polyProduct rest.toArray) :=
+          Int.mul_le_mul (Int.le_refl _) hb (by decide : (0 : Int) ≤ 1)
+            (by omega : (0 : Int) ≤ DensePoly.leadingCoeff head)
+        rw [Int.mul_one, hone] at hupper
+        omega
+      have hrest_eq :
+          DensePoly.leadingCoeff (Array.polyProduct rest.toArray) = 1 := by
+        have hone' := hone
+        rw [hhead_eq, Int.one_mul] at hone'
+        exact hone'
+      have hrest_monic : DensePoly.Monic (Array.polyProduct rest.toArray) := hrest_eq
+      have hhead_monic : DensePoly.Monic head := hhead_eq
+      rw [List.mem_cons] at hq
+      rcases hq with hh | hr
+      · rw [hh]; exact hhead_monic
+      · exact ih hrest_monic hrest_pos q hr
+
+/-- Every emitted factor of the exhaustive recombination wrapper is monic when
+the input core is monic with positive degree. The product chain
+(`exhaustiveCoreFactorsWithBound_product` together with the executable
+sign-normalisation and `shouldRecord` invariants
+`exhaustiveCoreFactorsWithBound_normalizeFactorSign` /
+`exhaustiveCoreFactorsWithBound_shouldRecord`) forces each emitted factor's
+leading coefficient to be a positive integer dividing `1`, hence itself `1`. -/
+theorem exhaustiveCoreFactorsWithBound_monic
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    (hcore_monic : DensePoly.Monic core)
+    (hcore_record : shouldRecordPolynomialFactor core = true) :
+    ∀ factor ∈ (exhaustiveCoreFactorsWithBound core B primeData).toList,
+      DensePoly.Monic factor := by
+  have hcore_norm : normalizeFactorSign core = core :=
+    normalizeFactorSign_eq_self_of_leadingCoeff_nonneg core
+      (by rw [show DensePoly.leadingCoeff core = 1 from hcore_monic]; decide)
+  have hprod :
+      Array.polyProduct (exhaustiveCoreFactorsWithBound core B primeData) = core :=
+    exhaustiveCoreFactorsWithBound_product core B primeData
+  have hprod_monic :
+      DensePoly.Monic (Array.polyProduct
+        (exhaustiveCoreFactorsWithBound core B primeData)) := by
+    rw [hprod]; exact hcore_monic
+  -- Transport to the list-level helper.
+  have hprod_monic' :
+      DensePoly.Monic (Array.polyProduct
+        (exhaustiveCoreFactorsWithBound core B primeData).toList.toArray) := by
+    rw [Array.toArray_toList]; exact hprod_monic
+  have hemit_norm :=
+    exhaustiveCoreFactorsWithBound_normalizeFactorSign core B primeData hcore_norm
+  have hemit_record :=
+    exhaustiveCoreFactorsWithBound_shouldRecord core B primeData hcore_record
+  have hpos :
+      ∀ q ∈ (exhaustiveCoreFactorsWithBound core B primeData).toList,
+        0 < DensePoly.leadingCoeff q := by
+    intro q hq
+    have hq_norm : normalizeFactorSign q = q := hemit_norm q hq
+    have hq_record : shouldRecordPolynomialFactor q = true := hemit_record q hq
+    have hq_ne : q ≠ 0 := by
+      unfold shouldRecordPolynomialFactor at hq_record
+      simp at hq_record
+      exact hq_record.1.1
+    have hq_lc_nonneg : 0 ≤ DensePoly.leadingCoeff q := by
+      rw [← hq_norm]
+      exact normalizeFactorSign_leadingCoeff_nonneg q
+    have hq_lc_ne : DensePoly.leadingCoeff q ≠ 0 :=
+      ZPoly.leadingCoeff_ne_zero_of_ne_zero q hq_ne
+    omega
+  exact polyProduct_toArray_monic_factors_monic_of_pos_lc
+    (exhaustiveCoreFactorsWithBound core B primeData).toList hprod_monic' hpos
+
+/-- Every emitted factor of the exhaustive recombination wrapper has positive
+`degree?` when the input core is monic and `shouldRecord = true`. A monic
+polynomial of `degree? = 0` is the constant `1`, which is excluded by
+`shouldRecord`, so every emitted factor has positive degree. -/
+theorem exhaustiveCoreFactorsWithBound_degree_pos
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    (hcore_monic : DensePoly.Monic core)
+    (hcore_record : shouldRecordPolynomialFactor core = true) :
+    ∀ factor ∈ (exhaustiveCoreFactorsWithBound core B primeData).toList,
+      0 < factor.degree?.getD 0 := by
+  intro q hq
+  have hq_monic : DensePoly.Monic q :=
+    exhaustiveCoreFactorsWithBound_monic core B primeData hcore_monic hcore_record q hq
+  have hemit_record :=
+    exhaustiveCoreFactorsWithBound_shouldRecord core B primeData hcore_record
+  have hq_record : shouldRecordPolynomialFactor q = true := hemit_record q hq
+  -- shouldRecord excludes `q = 1`. A monic `q` with `degree? = 0` is `1`.
+  rcases Nat.eq_zero_or_pos (q.degree?.getD 0) with hdeg_eq | hpos
+  case inr => exact hpos
+  case inl =>
+    exfalso
+    have hq_ne : q ≠ 0 := by
+      intro h0
+      have hlc1 : DensePoly.leadingCoeff q = 1 := hq_monic
+      rw [h0] at hlc1
+      have hlc0 : DensePoly.leadingCoeff (0 : ZPoly) = 0 := by decide
+      omega
+    have hq_size_pos : 0 < q.size := ZPoly.size_pos_of_ne_zero q hq_ne
+    have hdeg_unfold : q.degree?.getD 0 =
+        (if q.size = 0 then 0 else q.size - 1) := by
+      unfold DensePoly.degree?
+      by_cases h : q.size = 0 <;> simp [h]
+    rw [hdeg_unfold] at hdeg_eq
+    have hsize_eq : q.size = 1 := by
+      by_cases h : q.size = 0
+      · omega
+      · split at hdeg_eq <;> omega
+    have hq_eq_C : q = DensePoly.C (q.coeff 0) := ZPoly.eq_C_of_size_eq_one q hsize_eq
+    have hq_lc : DensePoly.leadingCoeff q = q.coeff 0 := by
+      rw [DensePoly.leadingCoeff_eq_coeff_last q hq_size_pos]
+      congr 1; omega
+    have hq_lc1 : DensePoly.leadingCoeff q = 1 := hq_monic
+    have hq_coeff0 : q.coeff 0 = 1 := by rw [← hq_lc]; exact hq_lc1
+    have hq_one : q = 1 := by
+      rw [hq_eq_C, hq_coeff0]
+      rfl
+    unfold shouldRecordPolynomialFactor at hq_record
+    simp [hq_one] at hq_record
+
 private theorem polyProduct_push (factors : Array ZPoly) (factor : ZPoly) :
     Array.polyProduct (factors.push factor) =
       Array.polyProduct factors * factor := by
