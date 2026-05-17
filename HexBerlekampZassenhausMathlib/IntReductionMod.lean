@@ -1914,6 +1914,141 @@ theorem normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible
     (coreFactors.toList.map HexPolyZMathlib.toPolynomial).toFinset
     (by intro r hr; rw [Multiset.mem_toFinset] at hr; exact hsubset r hr)
 
+/-- **#4597 HO-1 substrate — small-mod singleton arm `factorPower` shape of
+the repeated part.** Singleton specialisation of
+`normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover`
+(#4759, the final-assembly successor of the decomposed #4746): when the
+normalized square-free core is itself irreducible, the repeated part is
+exactly a `Hex.Factorization.factorPower` of the square-free core. The
+`hnorm` precondition of the general theorem is discharged by
+`Hex.squareFreeCore_normalizeFactorSign_of_ne_zero` (the normalized
+square-free core has positive leading coefficient, hence its
+sign-normalisation is the identity). Consumed by the public discharger
+`Hex.reassemblyExpansionComplete_singleton_of_irreducible` (#4597
+deliverable 3) to dispatch the singleton expansion specialisation
+`Hex.expandRepeatedPartFactorArray_pow_singleton` (#4597 deliverable 2).
+Sibling dischargers: constant arm
+`Hex.reassemblyExpansionComplete_constant_of_ne_zero` (#4585 / PR #4598);
+quadratic arms tracked by #4747. -/
+theorem normalizeForFactor_repeatedPart_isFactorPower_squareFreeCore_of_irreducible
+    (f : Hex.ZPoly) (hf : f ≠ 0)
+    (hirr : Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore) :
+    ∃ k : Nat,
+      (Hex.normalizeForFactor f).repeatedPart =
+        Hex.Factorization.factorPower (Hex.normalizeForFactor f).squareFreeCore k := by
+  set core := (Hex.normalizeForFactor f).squareFreeCore with hcore_def
+  have hirr_arr :
+      ∀ q ∈ (#[core] : Array Hex.ZPoly).toList, Hex.ZPoly.Irreducible q := by
+    intro q hq
+    have hq_eq : q = core := by simpa using hq
+    exact hq_eq ▸ hirr
+  have hprod : Array.polyProduct (#[core] : Array Hex.ZPoly) = core :=
+    Hex.ZPoly.polyProduct_singleton core
+  have hnorm :
+      ∀ q ∈ (#[core] : Array Hex.ZPoly).toList, Hex.normalizeFactorSign q = q := by
+    intro q hq
+    have hq_eq : q = core := by simpa using hq
+    subst hq_eq
+    exact Hex.squareFreeCore_normalizeFactorSign_of_ne_zero f hf
+  obtain ⟨exponents, hlen, hdecomp⟩ :=
+    normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover
+      f hf #[core] hirr_arr hprod hnorm
+  -- Singleton `coreFactors` collapses the exponent list to `[k]` for some `k`.
+  have hsize : (#[core] : Array Hex.ZPoly).size = 1 := rfl
+  rw [hsize] at hlen
+  cases exponents with
+  | nil => simp at hlen
+  | cons k es =>
+      cases es with
+      | cons _ _ => simp at hlen
+      | nil =>
+          refine ⟨k, ?_⟩
+          simp only [List.zip_cons_cons, List.zip_nil_right, List.map_cons,
+            List.map_nil, List.foldl_cons, List.foldl_nil,
+            Hex.ZPoly.one_mul_zpoly] at hdecomp
+          exact hdecomp
+
+/-- **#4597 HO-1 substrate — small-mod singleton arm `hcomplete` discharger
+(Mathlib bridge, deliverable 3).** When the normalized square-free core is
+itself irreducible, the singleton-core reassembly is expansion-complete:
+the `repeatedPart` of `normalizeForFactor f` is exactly a
+`Hex.Factorization.factorPower` of the square-free core (deliverable 1),
+and that factorPower is consumed completely by
+`Hex.expandRepeatedPartFactorArray` (deliverable 2). Consumed by the
+small-mod singleton arm umbrella
+`factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData`
+(#4564 / PR #4581) so callers can drop the explicit `hcomplete` premise
+once the eventual capstone wiring (#4170) lands.
+
+**Substrate gap (Gap 1):** the explicit `hmonic` premise on the
+square-free core mirrors the same gap labelled "Gap 1" in the exhaustive
+arm umbrella `factor_exhaustive_branch_entry_irreducible_of_choosePrimeData`
+(#4561). The underlying executable extraction
+(`consumeExactPower_pow_mul_of_not_dvd` and the
+`expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition`
+wrapper) currently requires monicness of the core factor; dropping the
+hypothesis would require a non-monic divMod/exactQuotient generalisation
+in `HexPolyZ/Basic.lean`. The premise is documented as an explicit shim
+so downstream consumers thread it consistently until the substrate work
+lands.
+
+Sibling dischargers: constant arm
+`Hex.reassemblyExpansionComplete_constant_of_ne_zero` (#4585 / PR #4598);
+quadratic arm tracked by #4747. -/
+theorem reassemblyExpansionComplete_singleton_of_irreducible
+    (f : Hex.ZPoly) (hf : f ≠ 0)
+    (hirr : Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore)
+    (hmonic : Hex.DensePoly.Monic (Hex.normalizeForFactor f).squareFreeCore)
+    (hdeg :
+      0 < (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0) :
+    Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
+      #[(Hex.normalizeForFactor f).squareFreeCore] := by
+  obtain ⟨k, hk⟩ :=
+    normalizeForFactor_repeatedPart_isFactorPower_squareFreeCore_of_irreducible
+      f hf hirr
+  set core := (Hex.normalizeForFactor f).squareFreeCore with hcore_def
+  -- Size of `core` is at least 2 from positive degree.
+  have hcore_size_ge_two : 2 ≤ core.size := by
+    have hdeg_unfold : core.degree?.getD 0 =
+        (if core.size = 0 then 0 else core.size - 1) := by
+      unfold Hex.DensePoly.degree?
+      by_cases h : core.size = 0 <;> simp [h]
+    rw [hdeg_unfold] at hdeg
+    by_cases h : core.size = 0
+    · simp [h] at hdeg
+    · split at hdeg <;> omega
+  -- For monic `core` with `core.size ≥ 2`, the executable `factorPower` of
+  -- order `m` has size at least `m + 1`. This gives the fuel bound
+  -- `k + 1 ≤ (factorPower core k).size + 1` consumed by deliverable 2.
+  have hfactorPower_size_ge :
+      ∀ m, m + 1 ≤ (Hex.Factorization.factorPower core m).size := by
+    intro m
+    induction m with
+    | zero =>
+        show 1 ≤ (1 : Hex.ZPoly).size
+        rfl
+    | succ n ih =>
+        rw [Hex.Factorization.factorPower_succ]
+        have hprev_pos : 0 < (Hex.Factorization.factorPower core n).size := by
+          omega
+        have hcore_pos : 0 < core.size := by omega
+        have hmul_size :
+            (Hex.Factorization.factorPower core n * core).size =
+              (Hex.Factorization.factorPower core n).size + core.size - 1 :=
+          Hex.ZPoly.mul_size_eq_top_succ_of_nonzero _ _ hprev_pos hcore_pos
+        omega
+  have hfuel :
+      k + 1 ≤ (Hex.normalizeForFactor f).repeatedPart.size + 1 := by
+    have := hfactorPower_size_ge k
+    rw [hk]
+    omega
+  -- Apply deliverable 2 to conclude residual = 1.
+  unfold Hex.reassemblyExpansionComplete
+  have hexpand :=
+    Hex.expandRepeatedPartFactorArray_pow_singleton
+      core k hmonic hdeg hirr (Hex.normalizeForFactor f).repeatedPart hk hfuel
+  rw [hexpand]
+
 end IntReductionMod
 
 /-- **#4549 substrate (HO-1), outer-bound specialisation, rewired for #4553.**

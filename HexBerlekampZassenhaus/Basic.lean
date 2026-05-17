@@ -9222,6 +9222,103 @@ theorem expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decompositi
     simpa [Factorization.factorPower] using hnot_dvd_tail pre q e suf hsplit
   · simpa [Factorization.factorPower] using hdecomp
 
+/-- An irreducible `ZPoly` does not divide the unit `1`. Used by the small-mod
+singleton arm specialisation `expandRepeatedPartFactorArray_pow_singleton`
+(#4597 deliverable 2) to discharge the wrapper's tail-non-divisibility
+precondition for the singleton case, where the suffix product collapses to
+`1` and the only obligation is `¬ q ∣ 1`. The proof is a direct size argument:
+`size_le_of_dvd_nonzero` would force `q.size ≤ 1`, but irreducibility (via the
+non-zero, non-unit conditions on the leading coefficient) forces `q.size ≥ 2`. -/
+private theorem irreducible_not_dvd_one {q : ZPoly}
+    (hq_irr : ZPoly.Irreducible q) : ¬ q ∣ (1 : ZPoly) := by
+  intro hdvd
+  have hq_ne : q ≠ 0 := hq_irr.not_zero
+  have hone_ne : (1 : ZPoly) ≠ 0 := by
+    intro h
+    have : (1 : ZPoly).size = 1 := rfl
+    rw [h] at this
+    exact absurd this (by decide)
+  have hq_size_le : q.size ≤ (1 : ZPoly).size :=
+    ZPoly.size_le_of_dvd_nonzero hq_ne hone_ne hdvd
+  have h1 : (1 : ZPoly).size = 1 := rfl
+  have hq_pos : 0 < q.size := ZPoly.size_pos_of_ne_zero q hq_ne
+  have hq_one : q.size = 1 := by omega
+  -- A `q` of size 1 is constant, hence the leading coefficient appears at
+  -- index 0; combined with `q ∣ 1` forcing the leading coefficient to be a
+  -- unit in `ℤ`, this contradicts `not_unit`.
+  have hq_eq : q = DensePoly.C (q.coeff 0) := ZPoly.eq_C_of_size_eq_one q hq_one
+  rcases hdvd with ⟨w, hw⟩
+  -- hw : (1 : ZPoly) = q * w
+  have hw_ne : w ≠ 0 := by
+    intro hw_zero
+    rw [hw_zero] at hw
+    -- (1 : ZPoly) = q * 0 = 0, contradicting hone_ne
+    rw [DensePoly.mul_comm_poly, DensePoly.zero_mul] at hw
+    exact hone_ne hw
+  have hw_pos : 0 < w.size := ZPoly.size_pos_of_ne_zero w hw_ne
+  have hqw_size : (q * w).size = q.size + w.size - 1 :=
+    ZPoly.mul_size_eq_top_succ_of_nonzero q w hq_pos hw_pos
+  rw [← hw, h1] at hqw_size
+  have hw_one : w.size = 1 := by omega
+  have hlead :
+      DensePoly.leadingCoeff q * DensePoly.leadingCoeff w = (1 : Int) := by
+    have := ZPoly.leadingCoeff_mul_of_nonzero q w hq_ne hw_ne
+    rw [← hw] at this
+    have : DensePoly.leadingCoeff q * DensePoly.leadingCoeff w =
+        DensePoly.leadingCoeff (1 : ZPoly) := this.symm
+    rw [this]
+    rfl
+  have hq_lead : DensePoly.leadingCoeff q = q.coeff 0 := by
+    rw [DensePoly.leadingCoeff_eq_coeff_last q (by omega)]
+    congr 1; omega
+  rw [hq_lead] at hlead
+  have hcoeff_unit : q.coeff 0 = 1 ∨ q.coeff 0 = -1 :=
+    ZPoly.int_factor_one_eq_unit hlead
+  apply hq_irr.not_unit
+  rcases hcoeff_unit with h | h
+  · left; rw [hq_eq, h]
+  · right; rw [hq_eq, h]
+
+/-- **#4597 HO-1 substrate — small-mod singleton arm expansion specialisation.**
+Singleton specialisation of
+`expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition`:
+when the repeated part `rp` is the `k`-th `Hex.Factorization.factorPower` of an
+irreducible monic positive-degree `q`, expanding against the singleton core
+`#[q]` consumes the repeated part exactly, emitting `k` copies of `q` and
+reporting residual `1`. Consumed by the small-mod singleton arm umbrella
+`factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData`
+(#4564 / PR #4581) via the public discharger
+`Hex.reassemblyExpansionComplete_singleton_of_irreducible` (#4597
+deliverable 3). Sibling specialisations: constant arm
+`reassemblyExpansionComplete_constant_of_ne_zero` (#4585 / PR #4598);
+quadratic arm tracked by #4747. -/
+theorem expandRepeatedPartFactorArray_pow_singleton
+    (q : ZPoly) (k : Nat)
+    (hq_monic : DensePoly.Monic q)
+    (hq_degree : 0 < q.degree?.getD 0)
+    (hq_irr : ZPoly.Irreducible q)
+    (rp : ZPoly) (hrp : rp = Factorization.factorPower q k)
+    (hfuel : k + 1 ≤ rp.size + 1) :
+    expandRepeatedPartFactorArray rp #[q] =
+      ((List.replicate k q).toArray, 1) := by
+  have hnot_dvd : ¬ q ∣ (1 : ZPoly) := irreducible_not_dvd_one hq_irr
+  have hmul : rp = Factorization.polyPow q k * 1 := by
+    rw [hrp]; exact (DensePoly.mul_one_right_poly _).symm
+  have hcep : consumeExactPower rp q (rp.size + 1) = (1, k) := by
+    rw [hmul]
+    apply consumeExactPower_pow_mul_of_not_dvd q 1 k hq_monic hq_degree hnot_dvd
+    rw [← hmul]; exact hfuel
+  unfold expandRepeatedPartFactorArray
+  show expandRepeatedPartFactorsAux [q] rp (rp.size + 1) = _
+  unfold expandRepeatedPartFactorsAux
+  rw [hcep]
+  show ((List.replicate k q).toArray ++
+      (expandRepeatedPartFactorsAux [] (1 : ZPoly) (rp.size + 1)).1,
+      (expandRepeatedPartFactorsAux [] (1 : ZPoly) (rp.size + 1)).2) =
+    ((List.replicate k q).toArray, 1)
+  unfold expandRepeatedPartFactorsAux
+  simp
+
 /-- The reassembled output for a single-`1` core list is exactly the
 normalization prefix followed by `1`. Both branches of `reassemblePolynomialFactors`
 collapse to this shape because the expansion never extracts anything when the
@@ -9327,7 +9424,13 @@ theorem reassemblyExpansionComplete_constant_of_ne_zero
   rw [hcore_one, expandRepeatedPartFactorArray_singleton_one]
   exact hrep_one
 
-private theorem squareFreeCore_normalizeFactorSign_of_ne_zero
+/-- The normalized square-free core has positive leading coefficient
+(`squareFreeCore_leadingCoeff_pos_of_ne_zero`), so its sign-normalisation
+is the identity. Exposed publicly for HO-1 substrate consumers in the
+Mathlib bridge (notably the small-mod singleton arm specialisation of
+`normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover`,
+which discharges its `hnorm` precondition with this lemma). -/
+theorem squareFreeCore_normalizeFactorSign_of_ne_zero
     (f : ZPoly) (hf : f ≠ 0) :
     normalizeFactorSign (normalizeForFactor f).squareFreeCore =
       (normalizeForFactor f).squareFreeCore := by
