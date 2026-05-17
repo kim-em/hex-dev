@@ -112,13 +112,13 @@ def coeffWords (words : Array UInt64) (n : Nat) : Bool :=
   (((word >>> (n % 64).toUInt64) &&& 1) != 0)
 
 /-- Trailing-zero normalization preserves every packed coefficient word. -/
-theorem normalizeWords_get?_getD (words : Array UInt64) (i : Nat) :
+@[simp] theorem normalizeWords_get?_getD (words : Array UInt64) (i : Nat) :
     ((normalizeWords words)[i]?).getD 0 = (words[i]?).getD 0 := by
   simpa [normalizeWords, Array.getD, List.getD] using
     trimTrailingZeroWordsList_getD words.toList i
 
 /-- Trailing-zero normalization preserves packed coefficients. -/
-theorem coeffWords_normalizeWords (words : Array UInt64) (n : Nat) :
+@[simp] theorem coeffWords_normalizeWords (words : Array UInt64) (n : Nat) :
     coeffWords (normalizeWords words) n = coeffWords words n := by
   rw [coeffWords, coeffWords, normalizeWords_get?_getD]
 
@@ -398,6 +398,8 @@ private theorem oneHotWord_bit_toNat {hot bit : Nat} (hhot : hot < 64) (hbit : b
     Nat.one_shiftLeft, Nat.mod_eq_of_lt hhot, Nat.mod_eq_of_lt hbit,
     Nat.mod_eq_of_lt hpow]
 
+/-- Querying the one-hot word `1 <<< bit` at position `bit` returns the bit it
+encodes. -/
 theorem oneHotWord_bit_self {bit : Nat} (hbit : bit < 64) :
     (((((1 : UInt64) <<< bit.toUInt64) >>> bit.toUInt64) &&& 1) != 0) = true := by
   rw [UInt64.bne_zero_eq_toNat_bne_zero]
@@ -405,6 +407,8 @@ theorem oneHotWord_bit_self {bit : Nat} (hbit : bit < 64) :
   rw [hnat]
   simpa [Nat.testBit] using Nat.testBit_two_pow_self (n := bit)
 
+/-- Querying the one-hot word `1 <<< hot` at any position other than `hot`
+returns a clear bit. -/
 theorem oneHotWord_bit_ne {hot bit : Nat} (hhot : hot < 64) (hbit : bit < 64)
     (hne : hot ≠ bit) :
     (((((1 : UInt64) <<< hot.toUInt64) >>> bit.toUInt64) &&& 1) != 0) = false := by
@@ -413,6 +417,8 @@ theorem oneHotWord_bit_ne {hot bit : Nat} (hhot : hot < 64) (hbit : bit < 64)
   rw [hnat]
   simpa [Nat.testBit] using Nat.testBit_two_pow_of_ne (n := hot) (m := bit) hne
 
+/-- The one-hot word `1 <<< bit` is nonzero whenever `bit` is a valid in-word
+position. -/
 theorem oneHotWord_ne_zero {bit : Nat} (hbit : bit < 64) :
     ((1 : UInt64) <<< bit.toUInt64) ≠ 0 := by
   intro h
@@ -429,6 +435,7 @@ def ofWords (words : Array UInt64) : GF2Poly :=
       simpa [normalizedWords, normalizeWords, GF2PolyNormalized] using
         trimTrailingZeroWordsList_getLast?_ne_zero words.toList }
 
+/-- Wrapping the empty word array gives the empty packed representation. -/
 @[simp] theorem words_ofWords_empty : (ofWords #[]).words = #[] := by
   rfl
 
@@ -439,6 +446,7 @@ def zero : GF2Poly :=
 instance : Zero GF2Poly where
   zero := zero
 
+/-- The empty word array represents the zero polynomial. -/
 @[simp] theorem ofWords_empty : ofWords #[] = 0 := by
   apply ext_words
   rfl
@@ -454,13 +462,17 @@ instance : One GF2Poly where
 def ofUInt64 (w : UInt64) : GF2Poly :=
   ofWords #[w]
 
+/-- A single zero word normalizes to the empty packed representation. -/
 @[simp] theorem words_ofWords_single_zero : (ofWords #[(0 : UInt64)]).words = #[] := by
   rfl
 
+/-- A pair of zero words normalizes to the empty packed representation. -/
 @[simp] theorem words_ofWords_pair_zero :
     (ofWords #[(0 : UInt64), (0 : UInt64)]).words = #[] := by
   rfl
 
+/-- A single nonzero word is already normalized and is its own packed
+representation. -/
 @[simp] theorem words_ofWords_single_nonzero {w : UInt64} (hw : w ≠ 0) :
     (ofWords #[w]).words = #[w] := by
   simp [ofWords, normalizeWords, trimTrailingZeroWordsList, hw]
