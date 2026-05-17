@@ -19,8 +19,12 @@ private def natDivMod (a b : Nat) : Nat × Nat :=
   (a / b, a % b)
 
 /--
-Compute the greatest common divisor of `a` and `b` together with
-Bezout coefficients.
+Pure natural-number extended GCD.
+
+`HexArith.extGcd a b` returns `(g, s, t)` with `g = Nat.gcd a b` and
+`s * a + t * b = g` after coercing the inputs to `Int`. Use
+`HexArith.Int.extGcd` for the GMP-backed integer API and
+`HexArith.UInt64.extGcd` for machine-word inputs.
 -/
 def extGcd (a b : Nat) : Nat × Int × Int :=
   if hb : b = 0 then
@@ -35,12 +39,19 @@ decreasing_by
   simp_wf
   simpa [natDivMod] using (Nat.mod_lt a (Nat.pos_iff_ne_zero.2 hb))
 
+/-- Integer form of `Nat.mod_add_div`, matching the Bezout-step algebra. -/
 private theorem int_ofNat_mod_add_div (a b : Nat) :
     ((a % b : Nat) : Int) + ((a / b : Nat) : Int) * (b : Int) = (a : Int) := by
   have h := Nat.mod_add_div a b
   rw [Nat.mul_comm] at h
   exact_mod_cast h
 
+/--
+One Euclidean unwind step for the natural-number Bezout certificate.
+
+If the recursive call proves a linear combination for `(b, r)`, this rewrites
+it into the corresponding certificate for `(a, b)` using `a = r + q * b`.
+-/
 private theorem extGcd_bezout_step
     (a b q r : Nat) (s t g : Int)
     (hqr : ((r : Nat) : Int) + ((q : Nat) : Int) * (b : Int) = (a : Int))
@@ -161,17 +172,27 @@ decreasing_by
     exact Int.ofNat_lt.mp hnatAbs_lt
 
 /--
-Pure Lean integer extended GCD used as the logical reference and portable
-fallback for the GMP-backed public integer API.
+Pure Lean integer extended GCD.
+
+`Hex.pureIntExtGcd` is the proof reference and portable fallback for
+`HexArith.Int.extGcd`; callers that want the project public integer API should
+use `HexArith.Int.extGcd` instead.
 -/
 def pureIntExtGcd (a b : Int) : Nat × Int × Int :=
   pureIntExtGcd.go a b 1 0 0 1
 
+/-- Remainder step for the gcd component of the pure integer algorithm. -/
 private theorem pureIntExtGcd_gcd_step (a b : Int) :
     Int.gcd b (a % b) = Int.gcd a b := by
   rw [← Int.ediv_mul_add_emod a b]
   simp [Int.gcd_comm]
 
+/--
+One Euclidean update for the integer Bezout coefficients.
+
+The loop invariant stores two linear combinations, one for `old_r` and one for
+`r`; subtracting `q` times the second row gives the invariant for `old_r % r`.
+-/
 private theorem pureIntExtGcd_linear_step
     (old_r r old_s s old_t t a b q : Int)
     (hold : old_s * a + old_t * b = old_r)
@@ -189,6 +210,13 @@ private theorem pureIntExtGcd_linear_step
     _ = old_r % r := by
           omega
 
+/--
+Loop invariant for `pureIntExtGcd.go`.
+
+The accumulator rows encode linear combinations of the original inputs `a` and
+`b`; the result normalizes the gcd to a natural number while preserving the
+returned Bezout certificate.
+-/
 private theorem pureIntExtGcd_go_spec
     (old_r r old_s s old_t t a b : Int)
     (hold : old_s * a + old_t * b = old_r)
@@ -309,7 +337,7 @@ namespace HexArith
 namespace Int
 
 /--
-Extended GCD on integers.
+Public extended GCD on integers.
 
 Trusted runtime contract: the `lean_hex_mpz_gcdext` attachment may replace this
 pure Lean reference with a GMP-backed implementation that returns the same
@@ -390,7 +418,13 @@ end Int
 
 namespace UInt64
 
-/-- Public `UInt64` extended GCD API surface. -/
+/--
+Extended GCD on machine words.
+
+The input words are interpreted by their natural representatives. The gcd is
+returned as a `UInt64`, while the Bezout coefficients remain signed integers so
+the certificate can be stated over `Int.ofNat a.toNat` and `Int.ofNat b.toNat`.
+-/
 def extGcd (a b : UInt64) : UInt64 × Int × Int :=
   let (g, s, t) := HexArith.Int.extGcd (Int.ofNat a.toNat) (Int.ofNat b.toNat)
   (UInt64.ofNat g, s, t)
