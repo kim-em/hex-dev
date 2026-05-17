@@ -186,7 +186,7 @@ private theorem linearHenselStep_correction_identity
 /-- Reducing the integer `1` polynomial modulo `p` yields the `FpPoly p`
 identity. Bottom-of-recursion case for the `modP p` algebra rewrites consumed
 by the linear Hensel step's correctness chain. -/
-theorem modP_one (p : Nat) [ZMod64.Bounds p] :
+@[simp] theorem modP_one (p : Nat) [ZMod64.Bounds p] :
     ZPoly.modP p (1 : ZPoly) = (1 : FpPoly p) := by
   have hcong : ZPoly.congr (FpPoly.liftToZ (1 : FpPoly p)) (1 : ZPoly) p := by
     intro i
@@ -552,7 +552,7 @@ theorem liftToZ_mul_congr
 of a sum is the sum of residues. Standard ring-homomorphism rewrite for
 `modP p` used by the linear Hensel step proof to split `modP p (g·h + ...)`
 into manageable pieces. -/
-theorem modP_add
+@[simp] theorem modP_add
     (p : Nat) [ZMod64.Bounds p] (f g : ZPoly) :
     ZPoly.modP p (f + g) = ZPoly.modP p f + ZPoly.modP p g := by
   have hliftAdd :
