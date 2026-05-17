@@ -280,8 +280,7 @@ theorem coeff_ofBoolListFrom_ge (start : Nat) :
         cases b with
         | true =>
             have h_left : ((if (true : Bool) then monomial n
-                else (0 : GF2Poly))).coeff n = true := by
-              simpa using coeff_monomial_self n
+                else (0 : GF2Poly))).coeff n = true := by simp
             rw [h_left]
             rfl
         | false =>

@@ -521,14 +521,17 @@ def degree? (p : GF2Poly) : Option Nat :=
 def degree (p : GF2Poly) : Nat :=
   p.degree?.getD 0
 
+/-- A normalized packed polynomial is `isZero` iff its stored word array is empty. -/
 @[simp] theorem isZero_eq_true_iff_words_eq_empty (p : GF2Poly) :
     p.isZero = true ↔ p.words = #[] := by
   simp [isZero]
 
+/-- A normalized packed polynomial is non-`isZero` iff its stored word array is nonempty. -/
 @[simp] theorem isZero_eq_false_iff_words_ne_empty (p : GF2Poly) :
     p.isZero = false ↔ p.words ≠ #[] := by
   simp [isZero]
 
+/-- `isZero` agrees with propositional equality to the zero polynomial. -/
 @[simp] theorem isZero_iff_eq_zero (p : GF2Poly) :
     p.isZero = true ↔ p = 0 := by
   constructor
@@ -539,20 +542,24 @@ def degree (p : GF2Poly) : Nat :=
     subst h
     rfl
 
+/-- A polynomial that runs the `isZero` Boolean check is propositionally zero. -/
 theorem eq_zero_of_isZero {p : GF2Poly} (h : p.isZero = true) :
     p = 0 :=
   (isZero_iff_eq_zero p).mp h
 
+/-- The zero polynomial passes the `isZero` Boolean check. -/
 theorem isZero_of_eq_zero {p : GF2Poly} (h : p = 0) :
     p.isZero = true :=
   (isZero_iff_eq_zero p).mpr h
 
+/-- The degree search returns `none` for any polynomial passing `isZero`. -/
 theorem degree?_eq_none_of_isZero {p : GF2Poly} (h : p.isZero = true) :
     p.degree? = none := by
   have hp : p = 0 := eq_zero_of_isZero h
   subst hp
   rfl
 
+/-- A successful degree search certifies the polynomial is not `isZero`. -/
 theorem isZero_false_of_degree?_eq_some {p : GF2Poly} {d : Nat}
     (h : p.degree? = some d) :
     p.isZero = false := by
@@ -563,6 +570,7 @@ theorem isZero_false_of_degree?_eq_some {p : GF2Poly} {d : Nat}
   rw [h] at hnone
   contradiction
 
+/-- A successful degree search certifies the polynomial is not equal to zero. -/
 theorem ne_zero_of_degree?_eq_some {p : GF2Poly} {d : Nat}
     (h : p.degree? = some d) :
     p ≠ 0 := by
@@ -572,6 +580,7 @@ theorem ne_zero_of_degree?_eq_some {p : GF2Poly} {d : Nat}
   rw [hzero] at hfalse
   contradiction
 
+/-- The default-`0` degree extracts the witness of a successful degree search. -/
 @[simp] theorem degree_eq_of_degree?_eq_some {p : GF2Poly} {d : Nat}
     (h : p.degree? = some d) :
     p.degree = d := by
@@ -826,21 +835,27 @@ theorem ext_coeff {p q : GF2Poly}
   apply ext_of_wordCount_eq (wordCount_eq_of_coeff_eq hcoeff)
   exact hcoeff
 
+/-- The zero polynomial is canonically represented by the empty word array. -/
 @[simp] theorem words_zero : (0 : GF2Poly).words = #[] := by
   rfl
 
+/-- The zero polynomial stores no machine words. -/
 @[simp] theorem wordCount_zero : (0 : GF2Poly).wordCount = 0 := by
   rfl
 
+/-- The zero polynomial passes the `isZero` Boolean check. -/
 @[simp] theorem isZero_zero : (0 : GF2Poly).isZero = true := by
   rfl
 
+/-- Every coefficient of the zero polynomial is clear. -/
 @[simp] theorem coeff_zero (n : Nat) : (0 : GF2Poly).coeff n = false := by
   simp [coeff, coeffWords]
 
+/-- The zero polynomial has no degree witness. -/
 @[simp] theorem degree?_zero : (0 : GF2Poly).degree? = none := by
   rfl
 
+/-- The default-`0` degree of the zero polynomial is `0`. -/
 @[simp] theorem degree_zero : (0 : GF2Poly).degree = 0 := by
   rfl
 
@@ -957,10 +972,12 @@ private theorem trimTrailingZeroWordsList_replicate_zero_append_nonzero
           (0 : UInt64) :: (List.replicate n (0 : UInt64) ++ [w])
       simp [trimTrailingZeroWordsList, ih]
 
+/-- Normalization wipes an all-zero packed word array down to the canonical empty array. -/
 theorem normalizeWords_replicate_zero (n : Nat) :
     normalizeWords (Array.replicate n (0 : UInt64)) = #[] := by
   simp [normalizeWords, trimTrailingZeroWordsList_replicate_zero]
 
+/-- Raw packed XOR of a word array with itself produces the all-zero array of the same size. -/
 theorem xorWords_self (xs : Array UInt64) :
     xorWords xs xs = Array.replicate xs.size (0 : UInt64) := by
   apply Array.ext
@@ -968,6 +985,7 @@ theorem xorWords_self (xs : Array UInt64) :
   · intro i _ _
     simp [xorWords]
 
+/-- Every element of `F_2[x]` is its own additive inverse: `p + p = 0`. -/
 @[simp] theorem add_self (p : GF2Poly) :
     p + p = 0 := by
   apply ext_words
@@ -979,6 +997,7 @@ theorem xorWords_self (xs : Array UInt64) :
     _ = #[] := by
           simp [ofWords, normalizeWords_replicate_zero]
 
+/-- Zero is the left identity for `F_2[x]` addition. -/
 @[simp] theorem zero_add (p : GF2Poly) :
     0 + p = p := by
   apply ext_coeff
@@ -986,6 +1005,7 @@ theorem xorWords_self (xs : Array UInt64) :
   rw [coeff_add_eq_bne, coeff_zero]
   cases p.coeff n <;> rfl
 
+/-- Zero is the right identity for `F_2[x]` addition. -/
 @[simp] theorem add_zero (p : GF2Poly) :
     p + 0 = p := by
   apply ext_coeff
@@ -993,6 +1013,7 @@ theorem xorWords_self (xs : Array UInt64) :
   rw [coeff_add_eq_bne, coeff_zero]
   cases p.coeff n <;> rfl
 
+/-- Packed `F_2[x]` addition is commutative. -/
 theorem add_comm (p q : GF2Poly) :
     p + q = q + p := by
   apply ext_coeff
@@ -1000,6 +1021,7 @@ theorem add_comm (p q : GF2Poly) :
   rw [coeff_add_eq_bne, coeff_add_eq_bne]
   cases p.coeff n <;> cases q.coeff n <;> rfl
 
+/-- Packed `F_2[x]` addition is associative. -/
 theorem add_assoc (p q r : GF2Poly) :
     (p + q) + r = p + (q + r) := by
   apply ext_coeff
@@ -1007,6 +1029,7 @@ theorem add_assoc (p q r : GF2Poly) :
   rw [coeff_add_eq_bne, coeff_add_eq_bne, coeff_add_eq_bne, coeff_add_eq_bne]
   cases p.coeff n <;> cases q.coeff n <;> cases r.coeff n <;> rfl
 
+/-- Adding `p` twice on the left cancels: `p + (p + q) = q`. -/
 @[simp] theorem add_add_cancel_left (p q : GF2Poly) :
     p + (p + q) = q := by
   apply ext_coeff
@@ -1014,6 +1037,7 @@ theorem add_assoc (p q r : GF2Poly) :
   rw [coeff_add_eq_bne, coeff_add_eq_bne]
   cases p.coeff n <;> cases q.coeff n <;> rfl
 
+/-- Adding `q` twice on the right cancels: `(p + q) + q = p`. -/
 @[simp] theorem add_add_cancel_right (p q : GF2Poly) :
     (p + q) + q = p := by
   apply ext_coeff
@@ -1117,6 +1141,8 @@ private theorem shiftLeftBitsList_getD_low_bit
     (shiftLeftBitsList_getD_low_bit_with_prev
       (ws := ws) (prev := 0) hshiftPos hshift hi hold htarget)
 
+/-- Sub-word `shiftLeftBitsList` preserves the source coefficient when the
+shifted bit stays inside the same machine word. -/
 theorem coeffWords_shiftLeftBitsList_same_word
     (words : Array UInt64) {shift n : Nat}
     (hshiftPos : 0 < shift) (hshift : shift < 64)
@@ -1141,6 +1167,8 @@ theorem coeffWords_shiftLeftBitsList_same_word
   exact shiftLeftBitsList_getD_high_bit
     (ws := words.toList) hshiftPos hshift (by simpa using hword) hnbit hbit
 
+/-- Sub-word `shiftLeftBitsList` preserves the source coefficient when the
+shifted bit crosses into the next machine word. -/
 theorem coeffWords_shiftLeftBitsList_carry_word
     (words : Array UInt64) {shift n : Nat}
     (hshiftPos : 0 < shift) (hshift : shift < 64)
@@ -1166,6 +1194,8 @@ theorem coeffWords_shiftLeftBitsList_carry_word
   exact shiftLeftBitsList_getD_low_bit
     (ws := words.toList) hshiftPos hshift (by simpa using hword) hnbit hbit
 
+/-- Sub-word `shiftLeftBitsList` preserves every source coefficient stored in
+the input words. -/
 theorem coeffWords_shiftLeftBitsList_add
     (words : Array UInt64) {shift n : Nat}
     (hshiftPos : 0 < shift) (hshift : shift < 64)
@@ -1177,6 +1207,8 @@ theorem coeffWords_shiftLeftBitsList_add
   · exact coeffWords_shiftLeftBitsList_carry_word words hshiftPos hshift hword
       (Nat.le_of_not_gt hbit)
 
+/-- The full shift-left assembly preserves the source coefficient at every
+in-bounds index when the bit-shift component is nonzero. -/
 theorem coeffWords_replicate_append_shiftLeftBitsList_add
     (words : Array UInt64) {k n : Nat}
     (hbitShift : k % 64 ≠ 0) (hword : n / 64 < words.size) :
@@ -1232,6 +1264,8 @@ theorem coeffWords_replicate_append_shiftLeftBitsList_add
       coeffWords_shiftLeftBitsList_carry_word
         words hshiftPos hshift hword hcarry
 
+/-- A word-aligned shift-left assembly preserves every source coefficient
+(no in-word bit shift is needed). -/
 theorem coeffWords_replicate_append_add_of_mod_eq_zero
     (words : Array UInt64) {k n : Nat} (hbitShift : k % 64 = 0) :
     coeffWords ((Array.replicate (k / 64) (0 : UInt64)) ++ words) (n + k) =
@@ -1319,6 +1353,8 @@ private theorem shiftLeftBitsList_getD_length_high_bit_false
         shiftLeftBitsList_getD_length_high_bit_false_with_prev
           ws w hshiftPos hshift hbit hle
 
+/-- The full shift-left assembly returns a clear coefficient at any index whose
+source word lies above the stored input. -/
 theorem coeffWords_replicate_append_shiftLeftBitsList_add_of_not_word
     (words : Array UInt64) {k n : Nat}
     (hbitShift : k % 64 ≠ 0) (hword : ¬ n / 64 < words.size) :
@@ -1399,6 +1435,8 @@ theorem coeffWords_replicate_append_shiftLeftBitsList_add_of_not_word
       simpa using hout
     simp [coeffWords, hdiv, hmod, hgetAppend, hnone]
 
+/-- The full shift-left assembly returns a clear coefficient strictly below the
+shift amount: indices below `k` are zero-padded. -/
 theorem coeffWords_replicate_append_shiftLeftBitsList_lt
     (words : Array UInt64) {k n : Nat}
     (_hbitShift : k % 64 ≠ 0) (hn : n < k) :
@@ -1504,7 +1542,7 @@ theorem coeff_monomial (n m : Nat) :
   simp [monomial]
 
 /-- The coefficient of the defining degree of a monomial is set. -/
-theorem coeff_monomial_self (n : Nat) :
+@[simp] theorem coeff_monomial_self (n : Nat) :
     (monomial n).coeff n = true := by
   rw [coeff_monomial]
   have hbit : n % 64 < 64 := Nat.mod_lt n (by decide : 0 < 64)
@@ -1576,7 +1614,7 @@ theorem coeff_monomial_ne {n m : Nat} (h : m ≠ n) :
     simp
 
 /-- The packed degree search recovers the degree of a monomial. -/
-theorem degree?_monomial (n : Nat) :
+@[simp] theorem degree?_monomial (n : Nat) :
     (monomial n).degree? = some n := by
   have hbit : n % 64 < 64 := Nat.mod_lt n (by decide : 0 < 64)
   have hne : ((1 : UInt64) <<< (n % 64).toUInt64) ≠ 0 :=
