@@ -4074,19 +4074,17 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
     rw [hdeg] at hpos
     simp at hpos
   -- The product of the Berlekamp factors equals the monic modular image
-  -- (by `prod_berlekampFactor`; the unused `_hsquareFree` parameter was
-  -- removed from `prod_berlekampFactor`'s signature).
+  -- (by `factorProduct_berlekampFactor`).
   have hprod :
       Hex.Berlekamp.factorProduct
           (@Hex.Berlekamp.berlekampFactor data.p data.bounds
             (Hex.monicModularImage (Hex.ZPoly.modP data.p f))
             (Hex.monicModularImage_monic hprime (Hex.ZPoly.modP data.p f) hzero)
             hfield).factors =
-        Hex.monicModularImage (Hex.ZPoly.modP data.p f) := by
-    have := Hex.Berlekamp.prod_berlekampFactor
+        Hex.monicModularImage (Hex.ZPoly.modP data.p f) :=
+    Hex.Berlekamp.factorProduct_berlekampFactor
       (Hex.monicModularImage (Hex.ZPoly.modP data.p f))
       (Hex.monicModularImage_monic hprime (Hex.ZPoly.modP data.p f) hzero)
-    simpa [Hex.Berlekamp.Factorization.product] using this
   -- Now show that `monicModularImage` is injective on the Berlekamp factor list:
   -- two distinct factors that agree under `monicModularImage` would be unit
   -- multiples, contradicting square-freeness of the monic image.
@@ -4640,13 +4638,11 @@ theorem factorsModP_polyProduct_congr_of_factorsModPBerlekampForm
   have hprod_eq_raw :
       Hex.Berlekamp.factorProduct raw =
         Hex.ZPoly.modP primeData.p core := by
-    have hp_berlekamp :=
-      Hex.Berlekamp.prod_berlekampFactor (p := primeData.p)
-        (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
-        hmonicImage_monic
-    rw [Hex.Berlekamp.Factorization.product_def] at hp_berlekamp
-    show Hex.Berlekamp.factorProduct _ = _
-    rw [hp_berlekamp, hmonicImage_eq]
+    show Hex.Berlekamp.factorProduct
+        (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
+          (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
+          hmonicImage_monic hfield).factors = _
+    rw [Hex.Berlekamp.factorProduct_berlekampFactor, hmonicImage_eq]
   -- Each raw factor is nonzero (positive degree in the typical case; singleton
   -- `[monicImg]` in the degenerate size-≤-1 case, and `monicImg` is monic).
   have hraw_ne : ∀ g ∈ raw, g ≠ 0 :=
