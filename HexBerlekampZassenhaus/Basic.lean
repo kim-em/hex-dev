@@ -5962,7 +5962,7 @@ The `X`-free part of the primitive part of a nonzero integer polynomial is itsel
 primitive. Stripping initial zero coefficients does not introduce a common factor
 because the original primitive part already has unit content.
 -/
-private theorem extractXPower_core_primitive_of_ne_zero
+theorem extractXPower_core_primitive_of_ne_zero
     (f : ZPoly) (hf : f ≠ 0) :
     ZPoly.Primitive (ZPoly.extractXPower (ZPoly.primitivePart f)).core := by
   -- Step 1: shift xData.power xData.core = primitivePart f.
@@ -7755,7 +7755,7 @@ private theorem factorSlowWithBound_product_of_all_recorded_normalized
       f (factorSlowFactorsWithBound f B)
       (factorSlowFactorsWithBound_polyProduct f B) hnormalized hrecorded
 
-private theorem extractXPower_core_ne_zero_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
+theorem extractXPower_core_ne_zero_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
     (ZPoly.extractXPower (ZPoly.primitivePart f)).core ≠ 0 :=
   ZPoly.ne_zero_of_primitive _ (extractXPower_core_primitive_of_ne_zero f hf)
 

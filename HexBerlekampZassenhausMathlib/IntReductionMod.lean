@@ -593,6 +593,115 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squ
   exact squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
     core primeData hselected hsmall hprim hlc_map_ne hsquareFree_monic
 
+/-! ### Substrate discharges for the small-mod singleton branch
+
+The two lemmas below feed `squareFreeCore_irreducible_of_small_mod_singleton`
+its `hprim` and `hlc_map_ne` side-conditions from the executable invariants
+that `normalizeForFactor` and `choosePrimeData?` already maintain. They
+form the substrate for the small-mod singleton arm of the HO-1 capstone
+`factor_irreducible_of_nonUnit` (issue #4170, decomposed in #4544).
+-/
+
+/--
+Bridge from the executable `Hex.ZPoly.Primitive` predicate to Mathlib's
+`Polynomial.IsPrimitive` on the transported polynomial.
+
+If the integer-coefficient gcd of `f` is `1`, then any integer `r` whose
+constant polynomial `C r` divides `toPolynomial f` must divide every
+coefficient of `f`, hence divides the executable `content f = 1`, hence
+`|r| = 1`, hence `r` is a unit.
+-/
+theorem toPolynomial_isPrimitive_of_zpoly_primitive
+    {f : Hex.ZPoly} (hprim : Hex.ZPoly.Primitive f) :
+    (HexPolyZMathlib.toPolynomial f).IsPrimitive := by
+  intro r hdvd
+  have hcoeff : ∀ n, r ∣ f.coeff n := by
+    intro n
+    have h :=
+      (Polynomial.C_dvd_iff_dvd_coeff r (HexPolyZMathlib.toPolynomial f)).mp hdvd n
+    rwa [HexPolyZMathlib.coeff_toPolynomial] at h
+  have hnatAbs_dvd : ∀ n, (r.natAbs : ℤ) ∣ f.coeff n := fun n =>
+    Int.natAbs_dvd.mpr (hcoeff n)
+  have hr_dvd_content : (r.natAbs : ℤ) ∣ Hex.ZPoly.content f :=
+    Hex.ZPoly.dvd_content_of_nat_dvd_coeff f r.natAbs hnatAbs_dvd
+  rw [show Hex.ZPoly.content f = 1 from hprim] at hr_dvd_content
+  have hone : r.natAbs ∣ 1 := by exact_mod_cast hr_dvd_content
+  exact Int.isUnit_iff_natAbs_eq.mpr (Nat.eq_one_of_dvd_one hone)
+
+/--
+The square-free core extracted by `normalizeForFactor` is primitive
+over `Polynomial ℤ` whenever the input integer polynomial is nonzero.
+
+The proof routes through the executable `Hex.ZPoly.Primitive` predicate
+on `squareFreeCore * repeatedPart` (from
+`primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive`),
+transports it to `Polynomial ℤ` via
+`toPolynomial_isPrimitive_of_zpoly_primitive`, and drops to the square-free
+factor via Mathlib's `Polynomial.isPrimitive_of_dvd`.
+
+This discharges the `hprim` hypothesis required by
+`squareFreeCore_irreducible_of_small_mod_singleton`.
+-/
+theorem normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive
+    (f : Hex.ZPoly) (hf : f ≠ 0) :
+    (HexPolyZMathlib.toPolynomial
+        (Hex.normalizeForFactor f).squareFreeCore).IsPrimitive := by
+  have hcore_ne :
+      (Hex.ZPoly.extractXPower (Hex.ZPoly.primitivePart f)).core ≠ 0 :=
+    Hex.extractXPower_core_ne_zero_of_ne_zero f hf
+  have hprod_prim :
+      Hex.ZPoly.Primitive
+        ((Hex.normalizeForFactor f).squareFreeCore *
+          (Hex.normalizeForFactor f).repeatedPart) := by
+    simpa [Hex.normalizeForFactor] using
+      Hex.ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive
+        _ hcore_ne
+  have hprod_isPrim :
+      (HexPolyZMathlib.toPolynomial
+          ((Hex.normalizeForFactor f).squareFreeCore *
+            (Hex.normalizeForFactor f).repeatedPart)).IsPrimitive :=
+    toPolynomial_isPrimitive_of_zpoly_primitive hprod_prim
+  rw [HexPolyZMathlib.toPolynomial_mul] at hprod_isPrim
+  exact isPrimitive_of_dvd hprod_isPrim
+    ⟨HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).repeatedPart, rfl⟩
+
+/--
+Bridge from the executable `isGoodPrime` invariant to the Mathlib
+`Int.castRingHom (ZMod p)`-cast leading-coefficient nonvanishing
+required by the reduction-mod-`p` machinery.
+
+The good-prime predicate carries `leadingCoeffAdmissible`, i.e. the
+executable `leadingCoeffModP` is nonzero; the iff bridge
+`intCast_zmod_leadingCoeff_ne_zero_iff_leadingCoeffModP_ne_zero`
+translates that into the Mathlib cast form.
+-/
+theorem leadingCoeff_castRingHom_ne_zero_of_isGoodPrime
+    [Hex.ZMod64.Bounds p] (f : Hex.ZPoly)
+    (hgood : Hex.isGoodPrime f p = true) :
+    (Int.castRingHom (ZMod p)) (HexPolyZMathlib.toPolynomial f).leadingCoeff ≠ 0 :=
+  (intCast_zmod_leadingCoeff_ne_zero_iff_leadingCoeffModP_ne_zero
+    (p := p) (f := f)).mpr (Hex.isGoodPrime_leadingCoeffAdmissible f p hgood)
+
+/--
+Variant of `leadingCoeff_castRingHom_ne_zero_of_isGoodPrime` specialised
+to a `choosePrimeData?`-selected good prime.
+
+Discharges the `hlc_map_ne` hypothesis required by
+`squareFreeCore_irreducible_of_small_mod_singleton` when the executable
+prime selection succeeds: the chosen prime's `ZMod`-cast leading
+coefficient is nonzero because `choosePrimeData?_isGoodPrime` certifies
+the `isGoodPrime` invariant.
+-/
+theorem choosePrimeData?_leadingCoeff_castRingHom_ne_zero
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.choosePrimeData? f = some primeData) :
+    (Int.castRingHom (ZMod primeData.p))
+        (HexPolyZMathlib.toPolynomial f).leadingCoeff ≠ 0 := by
+  letI := primeData.bounds
+  exact
+    leadingCoeff_castRingHom_ne_zero_of_isGoodPrime f
+      (Hex.choosePrimeData?_isGoodPrime f primeData hselected)
+
 end IntReductionMod
 
 end HexBerlekampZassenhausMathlib
