@@ -702,6 +702,27 @@ theorem normalizeForFactor_repeatedPart_toPolynomial_isPrimitive
     ⟨HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).squareFreeCore, by
       rw [mul_comm]⟩
 
+/--
+The repeated part extracted by `normalizeForFactor` is already
+`normalize`-fixed after transport to `Polynomial ℤ`.
+
+This packages the executable nonnegative-leading-coefficient invariant in the
+form expected by UFD uniqueness arguments.
+-/
+theorem normalizeForFactor_repeatedPart_toPolynomial_normalize
+    (f : Hex.ZPoly) (_hf : f ≠ 0) :
+    normalize (HexPolyZMathlib.toPolynomial
+        (Hex.normalizeForFactor f).repeatedPart) =
+      HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).repeatedPart := by
+  have hlc_nonneg :
+      0 ≤ (HexPolyZMathlib.toPolynomial
+        (Hex.normalizeForFactor f).repeatedPart).leadingCoeff := by
+    rw [HexPolyMathlib.leadingCoeff_toPolynomial]
+    unfold Hex.normalizeForFactor
+    exact Hex.ZPoly.leadingCoeff_repeatedPart_nonneg _
+  rw [normalize_apply, Polynomial.coe_normUnit, Int.normUnit_eq, if_pos hlc_nonneg,
+    Units.val_one, Polynomial.C_1, mul_one]
+
 private theorem isPrimitive_pow {p : Polynomial ℤ} (hp : p.IsPrimitive) (N : Nat) :
     (p ^ N).IsPrimitive := by
   induction N with
@@ -1657,7 +1678,14 @@ private theorem toPolynomial_factorPower_foldl_aux
         factorPower_toPolynomial]
       simp [List.prod_cons, mul_assoc]
 
-private theorem toPolynomial_factorPower_foldl
+/--
+The ordered executable product of public `Hex.Factorization.factorPower`
+entries agrees with the ordered `Polynomial ℤ` product of transported powers.
+
+This is the product bridge consumed by repeated-part exponent decompositions
+before invoking the Mathlib-free expansion helper.
+-/
+theorem toPolynomial_factorPower_foldl
     (entries : List (Hex.ZPoly × Nat)) :
     HexPolyZMathlib.toPolynomial
         ((entries.map
