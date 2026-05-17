@@ -1077,7 +1077,7 @@ theorem factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData
   -- the singleton-core reassembly.
   obtain ⟨raw, hraw_mem, hentry_eq⟩ :=
     Hex.factorWithBound_entry_mem_small_mod_singleton_raw f B entry hB_pos
-      hdeg hsmall hquadratic hentry_mem
+      hdeg hchoose hsmall hquadratic hentry_mem
   -- Singleton-core irreducibility from the chosen prime's Berlekamp form,
   -- with `hprim` and `hlc_map_ne` discharged by the #4545 substrate.
   have hcore_irr :
@@ -1106,6 +1106,63 @@ theorem factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData
   -- irreducibility.
   rw [hentry_eq]
   exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hraw_irr
+
+/-- **#4605 HO-1 substrate — `hchoose`-free small-mod singleton arm umbrella.**
+
+Capstone-facing variant of
+`factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData`
+that takes no separate `hchoose` premise. The witness that `choosePrimeData?`
+selected a good prime is packed into the strengthened branch predicate
+`hsmall_chosen`, which is the **exact predicate** the post-#4605
+`factorFastFactorsWithBound` dispatcher tests when deciding whether to fire
+the singleton arm: `(choosePrimeData? sf).isSome ∧ size ≤ 1`. The dispatcher
+restriction guarantees that this conjunction is *necessary* (not just
+sufficient) for the singleton branch to fire — when `choosePrimeData?` returns
+`none` the fast path returns `none` and `factorWithBound` falls through to the
+slow exhaustive path, so the singleton branch-shape lemma's conclusion does
+not apply in that case.
+
+The eventual capstone wiring for the small-mod singleton arm composes this
+with the `hcomplete` discharger from #4597 to produce a fully
+hypothesis-discharged per-branch component. -/
+theorem factor_small_mod_singleton_branch_entry_irreducible
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
+    (B : Nat) (hB_pos : 1 ≤ B)
+    (entry : Hex.ZPoly × Nat)
+    (hdeg :
+      (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (hsmall_chosen :
+      (Hex.choosePrimeData?
+          (Hex.normalizeForFactor f).squareFreeCore).isSome ∧
+        (Hex.choosePrimeData
+            (Hex.normalizeForFactor f).squareFreeCore).factorsModP.size ≤ 1)
+    (hquadratic :
+      B = 1 ∨
+        Hex.quadraticIntegerRootFactors?
+          (Hex.normalizeForFactor f).squareFreeCore = none)
+    (hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList)
+    (hcomplete :
+      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
+        #[(Hex.normalizeForFactor f).squareFreeCore]) :
+    Hex.ZPoly.Irreducible entry.1 := by
+  -- Derive the explicit `choosePrimeData?` equation from the `isSome` witness
+  -- packed into `hsmall_chosen`.
+  have hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
+        some (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore) := by
+    cases hc :
+        Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore with
+    | none =>
+        rw [hc] at hsmall_chosen
+        exact absurd hsmall_chosen.1 (by simp)
+    | some pd =>
+        have hpd :
+            Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore = pd := by
+          unfold Hex.choosePrimeData; rw [hc]
+        rw [hpd]
+  exact factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData
+    f hf_ne B hB_pos entry hdeg hsmall_chosen.2 hquadratic hentry_mem hcomplete
+    hchoose
 
 /-- **#4565 HO-1 substrate — fast-path constant arm umbrella.**
 
