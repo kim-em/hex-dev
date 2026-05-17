@@ -1451,14 +1451,16 @@ in `HexBerlekampZassenhausMathlib/Basic.lean`) by:
   the `choosePrimeData?_factorsModP_berlekamp_form` and
   `choosePrimeData?_isGoodPrime` provenance chains from `hchoose`;
 * deriving `hcore_ne` from `hcore_monic`, `hcore_record` from the branch
-  marker `hbranch.2.1`, and `hB_ne_zero` from `hd_modulus`;
+  marker `hbranch.2.1`, `hB_ne_zero` from
+  `defaultFactorCoeffBound_pos_of_ne_zero` (#4637), and `hd_modulus`
+  from `precisionForCoeffBound_spec` combined with `B ≥ 1`;
 * internally case-splitting via
   `factorWithBound_entry_mem_exhaustive_branch_xPower_or_core_of_reassemblyComplete`
   on whether the entry's raw source is an extracted `X`-power factor (closed
   by `xPowerFactorArray_irreducible`) or an exhaustive core factor (closed by
   the wrapper itself).
 
-The umbrella inherits five explicit substrate-shim premises that document
+The umbrella inherits three explicit substrate-shim premises that document
 genuine gaps in the discharger stack at the time of landing:
 
 * **Gap 1** — `hcore_monic`: the squarefree core is not generally monic
@@ -1473,12 +1475,7 @@ genuine gaps in the discharger stack at the time of landing:
   PR #4598) for the constant arm. The exhaustive arm's `coreFactors`
   depends on the recombination output shape rather than a fixed array, so a
   separate substrate sub-issue is required.
-* **Gap 3a** — `hd_modulus`: requires the modulus invariant
-  `2 ≤ d.p ^ d.k` at the outer-bound shape. Derivable from `primeData.p ≥ 2`
-  (via `choosePrimeData?_prime`) together with a substrate lemma asserting
-  `defaultFactorCoeffBound f ≥ 1` for `f ≠ 0` (currently absent from
-  `HexPolyZ/Mignotte.lean`).
-* **Gap 3b** — `hprecision`: requires the core-shape Mignotte invariant
+* **Gap 3** — `hprecision`: requires the core-shape Mignotte invariant
   `2 * defaultFactorCoeffBound core < d.p ^ d.k`. The closed
   `precisionForCoeffBound_spec` gives the *outer*-shape variant
   `2 * defaultFactorCoeffBound f < d.p ^ d.k`; bridging to the core shape
@@ -1486,7 +1483,11 @@ genuine gaps in the discharger stack at the time of landing:
   resolution; the recommended fix is the abstract-bound refactor of
   `centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision`).
 
-Downstream consumers (notably the HO-1 capstone #4170) must thread the five
+(The sibling Gap 3a/3b shim premises `hB_ne_zero` / `hd_modulus` were
+discharged by #4637 via `defaultFactorCoeffBound_pos_of_ne_zero` and
+`precisionForCoeffBound_spec`.)
+
+Downstream consumers (notably the HO-1 capstone #4170) must thread the three
 shim premises until the substrate work lands. A follow-up issue can then
 drop them and recover the minimal-hypotheses umbrella signature. Until
 then, the umbrella delivers exactly the chain of substrate composition
@@ -1519,18 +1520,7 @@ theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.defaultFactorCoeffBound f)
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)))
-    -- Gap 3a (substrate): explicit until `defaultFactorCoeffBound_pos_of_ne_zero`
-    -- lands; this would let `hd_modulus` and this premise both be derived from
-    -- `f ≠ 0` and `primeData.p ≥ 2` via `precisionForCoeffBound_spec`.
-    (hB_ne_zero : Hex.ZPoly.defaultFactorCoeffBound f ≠ 0)
-    -- Gap 3b (substrate): explicit until `defaultFactorCoeffBound_pos_of_ne_zero`
-    -- lands (see `hB_ne_zero`).
-    (hd_modulus :
-      2 ≤ (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p ^
-        Hex.precisionForCoeffBound
-          (Hex.ZPoly.defaultFactorCoeffBound f)
-          (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p)
-    -- Gap 3c (substrate): explicit until the squareFreeCore-bound monotonicity
+    -- Gap 3 (substrate): explicit until the squareFreeCore-bound monotonicity
     -- (#4539, closed without resolution) is supplied by the abstract-bound
     -- refactor at the wrapper's call site.
     (hprecision :
@@ -1570,7 +1560,27 @@ theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData
       Hex.isGoodPrime (Hex.normalizeForFactor f).squareFreeCore
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p = true :=
     Hex.choosePrimeData?_isGoodPrime _ _ hchoose
-  -- Derive `B ≥ 1` from `hd_modulus` (so `henselLiftData` umbrellas apply).
+  -- Mignotte-substrate positivity of the executable coefficient bound
+  -- (#4637 / `defaultFactorCoeffBound_pos_of_ne_zero`).
+  have hbound_pos : 0 < Hex.ZPoly.defaultFactorCoeffBound f :=
+    Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero hf_ne
+  have hB_ne_zero : Hex.ZPoly.defaultFactorCoeffBound f ≠ 0 := hbound_pos.ne'
+  -- Mignotte side condition `2 * B < p ^ prec` from `precisionForCoeffBound_spec`.
+  have hspec :
+      2 * Hex.ZPoly.defaultFactorCoeffBound f <
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p ^
+          Hex.precisionForCoeffBound
+            (Hex.ZPoly.defaultFactorCoeffBound f)
+            (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p :=
+    Hex.precisionForCoeffBound_spec hp_prime.two_le _
+  -- Modulus invariant `2 ≤ p ^ prec`: from `2 ≤ 2 * B < p ^ prec` (since `B ≥ 1`).
+  have hd_modulus :
+      2 ≤ (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p ^
+        Hex.precisionForCoeffBound
+          (Hex.ZPoly.defaultFactorCoeffBound f)
+          (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p := by
+    omega
+  -- Derive `prec ≥ 1` from `hd_modulus` (so `henselLiftData` umbrellas apply).
   have hB_pos : 1 ≤ Hex.precisionForCoeffBound
       (Hex.ZPoly.defaultFactorCoeffBound f)
       (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p := by
