@@ -84,6 +84,12 @@ theorem normalizedXGCD_liftToZ_bezout_congr_of_gcd_eq_one
     congr_liftToZ_of_modP_eq p (1 : FpPoly p) (1 : ZPoly) (modP_one p)
   exact congr_trans _ _ _ p (congr_symm _ _ _ hlift_expr) hlift_one
 
+/-- Recursive list-shape worker behind `multifactorLift`. At each
+non-singleton step it lifts the head factor `g` against the running
+complementary product `Array.polyProduct rest.toArray` via `henselLift`, and
+recurses with `lifted.h` as the new target on `rest`. The singleton case
+returns the input reduced modulo `p^k`; the empty case returns the empty
+array. -/
 private def multifactorLiftList
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) : List ZPoly → Array ZPoly
@@ -108,9 +114,19 @@ def multifactorLift
 /--
 Recursive preconditions required by the sequential multifactor lift.
 
-Each nontrivial split must supply exactly the invariant package consumed by
-`henselLift_spec`, and the recursive tail must satisfy the same contract for
-the lifted complementary factor.
+In the `g :: h :: tail` arm, the four conjuncts are exactly the inputs
+`henselLift_spec` consumes for the binary split of `g` against the running
+complementary product `Array.polyProduct (h :: tail).toArray`, followed by the
+recursive precondition for the lifted complement:
+
+1. `LinearLiftLoopInvariant` at `n = 1` — initial state for the linear loop;
+2. the step-degree invariant at every iteration `n ≥ 1`;
+3. the step-Bezout congruence at every iteration `n ≥ 1`;
+4. `MultifactorLiftInvariant` for the recursive tail with `lifted.h` as the
+   new target.
+
+The base cases impose the trivial obligations: `congr 1 f (p ^ k)` for the
+empty list and no preconditions for a singleton.
 -/
 def MultifactorLiftInvariant
     (p k : Nat) [ZMod64.Bounds p]
@@ -207,6 +223,10 @@ theorem polyProduct_cons_toArray (g : ZPoly) (rest : List ZPoly) :
   simpa [Array.polyProduct, one_mul_zpoly] using
     (list_foldl_mul_eq_mul_foldl_one g rest)
 
+/-- Induction-on-`factors` correctness statement feeding
+`multifactorLift_spec`: the ordered product of the lifted factors is
+congruent to `f` modulo `p^k`, provided each recursive binary split supplies
+the linear Hensel invariant package threaded by `MultifactorLiftInvariant`. -/
 private theorem multifactorLiftList_spec
     (p k : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
     (f : ZPoly) (factors : List ZPoly)
