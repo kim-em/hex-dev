@@ -2054,6 +2054,62 @@ theorem factorPower_cover_not_dvd_tail_of_irreducible_squarefree
   -- Injectivity of `toPolynomial` finishes: `q = qe.1`, contradicting `hq_not_in_suf`.
   exact hq_not_in_suf qe hqe_mem (HexPolyZMathlib.equiv.injective hP_eq)
 
+/-- **#4808 substrate — expansion-complete from an irreducible square-free
+cover.**
+
+Generic assembler for exhaustive-style core factor arrays.  Given an
+irreducible factor cover of `(Hex.normalizeForFactor f).squareFreeCore`, the
+repeated-part `factorPower` decomposition from
+`normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover`
+and the no-tail-divisibility theorem
+`factorPower_cover_not_dvd_tail_of_irreducible_squarefree` supply the two
+semantic hypotheses of the executable expansion helper.
+
+The remaining `hmonic`, `hdegree`, and `hfuel` hypotheses are executable
+compatibility shims required by
+`Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition`.
+They are intentionally explicit here so branch-specific callers can discharge
+or thread them without hiding another analytic obligation. -/
+theorem reassemblyExpansionComplete_of_irreducible_squarefree_cover
+    (f : Hex.ZPoly) (hf : f ≠ 0)
+    (coreFactors : Array Hex.ZPoly)
+    (hirr : ∀ q ∈ coreFactors.toList, Hex.ZPoly.Irreducible q)
+    (hprod : Array.polyProduct coreFactors =
+      (Hex.normalizeForFactor f).squareFreeCore)
+    (hnorm : ∀ q ∈ coreFactors.toList, Hex.normalizeFactorSign q = q)
+    (hmonic : ∀ q ∈ coreFactors.toList, Hex.DensePoly.Monic q)
+    (hdegree : ∀ q ∈ coreFactors.toList, 0 < q.degree?.getD 0)
+    (hfuel :
+      ∀ exponents : List Nat,
+        exponents.length = coreFactors.size →
+        (Hex.normalizeForFactor f).repeatedPart =
+          ((coreFactors.toList.zip exponents).map
+            (fun qe => Hex.Factorization.factorPower qe.1 qe.2)).foldl (· * ·) 1 →
+        ∀ (qe : Hex.ZPoly × Nat),
+          qe ∈ coreFactors.toList.zip exponents →
+            qe.2 + 1 ≤ (Hex.normalizeForFactor f).repeatedPart.size + 1) :
+    Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f) coreFactors := by
+  classical
+  obtain ⟨exponents, hlen, hdecomp⟩ :=
+    normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover
+      f hf coreFactors hirr hprod hnorm
+  have hnot_dvd_tail :
+      ∀ pre q e suf,
+        coreFactors.toList.zip exponents = pre ++ (q, e) :: suf →
+        ¬ q ∣ (suf.map (fun (qe : Hex.ZPoly × Nat) =>
+                Hex.Factorization.factorPower qe.1 qe.2)).foldl (· * ·) 1 :=
+    factorPower_cover_not_dvd_tail_of_irreducible_squarefree
+      f hf coreFactors hirr hprod hnorm exponents hlen
+  have hfuel' :
+      ∀ (qe : Hex.ZPoly × Nat),
+        qe ∈ coreFactors.toList.zip exponents →
+          qe.2 + 1 ≤ (Hex.normalizeForFactor f).repeatedPart.size + 1 := by
+    exact hfuel exponents hlen hdecomp
+  unfold Hex.reassemblyExpansionComplete
+  exact Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition
+    (Hex.normalizeForFactor f).repeatedPart coreFactors hmonic hdegree
+    exponents hlen hnot_dvd_tail hdecomp hfuel'
+
 /-- **#4597 HO-1 substrate — small-mod singleton arm `factorPower` shape of
 the repeated part.** Singleton specialisation of
 `normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover`
