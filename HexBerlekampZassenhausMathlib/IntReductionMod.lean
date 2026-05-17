@@ -1572,6 +1572,58 @@ theorem normalizeForFactor_repeatedPart_toPolynomial_dvd_squareFreeCore_pow
       (normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive f hf) N)).mpr ?_
   simpa using hN
 
+/--
+Every normalized irreducible factor of the repeated part is represented,
+up to association in `Polynomial ℤ`, by one of the supplied irreducible
+core factors.
+
+This is the normalized-factor support step consumed by the successor
+exponent-list construction for
+`normalizeForFactor_repeatedPart_isPow_polyProduct_of_irreducible_factors_cover`.
+It combines the landed repeated-part power-divisibility theorem with the
+`polyProduct_toPolynomial` bridge for the supplied `coreFactors`.
+-/
+theorem normalizeForFactor_repeatedPart_normalizedFactor_covered_by_coreFactors
+    (f : Hex.ZPoly) (hf : f ≠ 0)
+    (coreFactors : Array Hex.ZPoly)
+    (hirr : ∀ q ∈ coreFactors.toList, Hex.ZPoly.Irreducible q)
+    (hprod : Array.polyProduct coreFactors =
+      (Hex.normalizeForFactor f).squareFreeCore) :
+    ∀ r ∈ UniqueFactorizationMonoid.normalizedFactors
+        (HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).repeatedPart),
+      ∃ q ∈ coreFactors.toList,
+        Associated r (HexPolyZMathlib.toPolynomial q) := by
+  intro r hr
+  let R : Polynomial ℤ :=
+    HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).repeatedPart
+  let S : Polynomial ℤ :=
+    HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).squareFreeCore
+  have hr_irr : Irreducible r :=
+    UniqueFactorizationMonoid.irreducible_of_normalized_factor r hr
+  have hr_prime : Prime r :=
+    UniqueFactorizationMonoid.irreducible_iff_prime.mp hr_irr
+  have hr_dvd_R : r ∣ R :=
+    UniqueFactorizationMonoid.dvd_of_mem_normalizedFactors hr
+  obtain ⟨N, hR_dvd_pow⟩ :=
+    normalizeForFactor_repeatedPart_toPolynomial_dvd_squareFreeCore_pow f hf
+  have hr_dvd_pow : r ∣ S ^ N := dvd_trans hr_dvd_R hR_dvd_pow
+  have hr_dvd_S : r ∣ S := hr_prime.dvd_of_dvd_pow hr_dvd_pow
+  have hS_prod :
+      S = (coreFactors.toList.map HexPolyZMathlib.toPolynomial).prod := by
+    dsimp [S]
+    rw [← hprod, polyProduct_toPolynomial]
+  have hr_dvd_prod :
+      r ∣ (coreFactors.toList.map HexPolyZMathlib.toPolynomial).prod := by
+    rwa [← hS_prod]
+  obtain ⟨qPoly, hqPoly_mem, hr_dvd_qPoly⟩ :=
+    (Prime.dvd_prod_iff hr_prime).mp hr_dvd_prod
+  rcases List.mem_map.mp hqPoly_mem with ⟨q, hq_mem, hqPoly_eq⟩
+  refine ⟨q, hq_mem, ?_⟩
+  subst qPoly
+  have hq_irr_poly : Irreducible (HexPolyZMathlib.toPolynomial q) :=
+    (Hex.ZPoly.Irreducible_iff_polynomialIrreducible q).mp (hirr q hq_mem)
+  exact hr_irr.associated_of_dvd hq_irr_poly hr_dvd_qPoly
+
 
 end IntReductionMod
 
