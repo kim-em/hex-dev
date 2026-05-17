@@ -1338,10 +1338,5 @@ theorem bareiss_eq_noPivotLoop_last_of_no_singular {k : Nat}
   rw [hdet]
   simp [finish, BareissData.sign, stateK, init, noPivotInitialState, noPivotLoop_rowSwaps]
 
-/-- The Bareiss determinant agrees with the generic determinant. -/
-theorem bareiss_eq_det (M : Matrix Int n n) :
-    bareiss M = det M := by
-  sorry
-
 end Matrix
 end Hex
