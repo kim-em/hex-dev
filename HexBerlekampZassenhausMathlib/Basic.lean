@@ -4192,30 +4192,6 @@ theorem henselLiftData_liftedFactors_size_eq
   simp
 
 /--
-Bridge `modPFactorProduct primeData S` to a `Finset.prod` after transport to
-Mathlib polynomials over `ZMod p`.
-
-This is the modular analogue of `toPolynomial_liftedFactorProduct`: it exposes
-the executable foldl product as a commutative finite product, which lets
-subset-transport proofs ignore the implementation order of `Finset.toList`.
--/
-private theorem toMathlibPolynomial_modPFactorProduct
-    (primeData : Hex.PrimeChoiceData) (S : ModPFactorSubset primeData) :
-    letI := primeData.bounds
-    HexBerlekampMathlib.toMathlibPolynomial (modPFactorProduct primeData S) =
-      ∏ i ∈ S, HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i) := by
-  letI := primeData.bounds
-  unfold modPFactorProduct
-  rw [show
-      (S.toList.foldl (fun acc i => acc * modPFactor primeData i)
-          (1 : @Hex.FpPoly primeData.p primeData.bounds)) =
-        (S.toList.map (modPFactor primeData)).foldl (· * ·) 1 from by
-    rw [List.foldl_map]]
-  rw [toMathlibPolynomial_listFoldlMul_one, List.map_map]
-  exact Finset.prod_map_toList S
-    (fun i => HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i))
-
-/--
 Thin umbrella wrapper exposing per-output monicness of `Hex.henselLiftData` in
 the Mathlib-facing surface.
 
@@ -11370,6 +11346,361 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData
     exact hsup hirr hdvd_target hdvd_cand hSrep
   · intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
     exact hscaled_sup hirr hdvd_target hdvd_cand hSrep
+
+/-! ### `ModPSubsetPartitionHypotheses` existence/uniqueness assembly
+
+These theorems compose the `monicModPImage` divisibility bridge,
+`factors_irreducible_of_choosePrimeData_of_some`, and the UFD subset
+existence/uniqueness lemma from `UFDPartition.lean` to discharge the
+`exists_subset` / `unique_subset` fields of `ModPSubsetPartitionHypotheses`
+in the `choosePrimeData? core = some primeData` branch. The wrapper
+exposes the consumer-facing shape under the same `hsome` hypothesis. -/
+
+/-- `factorsModP.toList` mapped to Mathlib polynomials has product equal to the
+Mathlib transport of `monicModularImage (modP p core)`. -/
+private lemma toMathlibPolynomial_factorsModP_product_eq_monicModularImage
+    {core : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    (hsome : Hex.choosePrimeData? core = some primeData) :
+    letI := primeData.bounds
+    ((primeData.factorsModP.toList : Multiset _).map
+        HexBerlekampMathlib.toMathlibPolynomial).prod =
+      HexBerlekampMathlib.toMathlibPolynomial
+        (Hex.monicModularImage
+          (@Hex.ZPoly.modP primeData.p primeData.bounds core)) := by
+  letI := primeData.bounds
+  have hprime : Hex.Nat.Prime primeData.p :=
+    Hex.choosePrimeData?_prime core primeData hsome
+  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+    Hex.ZMod64.primeModulusOfPrime hprime
+  obtain ⟨hzero, hfield, hfactors_eq⟩ :=
+    Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hsome
+  letI := hfield
+  set raw :=
+      (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
+        (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
+        (Hex.monicModularImage_monic hprime _ hzero)
+        hfield).factors with hraw_def
+  have hraw_ne : ∀ g ∈ raw, g ≠ 0 :=
+    Hex.Berlekamp.berlekampFactor_factors_ne_zero
+      (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
+      (Hex.monicModularImage_monic hprime _ hzero)
+  have hmonic_image_monic :
+      Hex.DensePoly.Monic
+        (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)) :=
+    Hex.monicModularImage_monic hprime _ hzero
+  have hprod_raw :
+      Hex.Berlekamp.factorProduct raw =
+        Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) :=
+    Hex.Berlekamp.factorProduct_berlekampFactor _ _
+  have hprod_mapped :
+      Hex.Berlekamp.factorProduct (raw.map Hex.monicModularImage) =
+        Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) := by
+    rw [Hex.factorProduct_map_monicModularImage_eq_monicModularImage_factorProduct
+        hprime raw hraw_ne, hprod_raw]
+    exact Hex.monicModularImage_eq_self_of_monic hprime _ hmonic_image_monic
+  have hlist : primeData.factorsModP.toList = raw.map Hex.monicModularImage := by
+    rw [hfactors_eq]
+  have hbridge :
+      (primeData.factorsModP.toList.map HexBerlekampMathlib.toMathlibPolynomial).prod =
+        HexBerlekampMathlib.toMathlibPolynomial
+          (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)) := by
+    rw [hlist]
+    rw [← toMathlibPolynomial_listFoldlMul_one (raw.map Hex.monicModularImage)]
+    show HexBerlekampMathlib.toMathlibPolynomial
+        (Hex.Berlekamp.factorProduct (raw.map Hex.monicModularImage)) = _
+    rw [hprod_mapped]
+  rw [← hbridge]
+  exact Multiset.prod_coe _
+
+/-- `Finset.univ.val.map` of the indexed Mathlib factor function recovers the
+mapped-to-Mathlib multiset of `factorsModP.toList`. -/
+private lemma univ_val_map_modPFactor_eq_factorsModP_map
+    (primeData : Hex.PrimeChoiceData) :
+    letI := primeData.bounds
+    ((Finset.univ : Finset (ModPFactorIndex primeData)).val.map fun i =>
+        HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)) =
+      ((primeData.factorsModP.toList : Multiset _).map
+        HexBerlekampMathlib.toMathlibPolynomial) := by
+  letI := primeData.bounds
+  unfold modPFactor
+  rw [Finset.val_univ_fin]
+  rw [show (primeData.factorsModP.toList : List _) =
+        List.ofFn (fun i : Fin primeData.factorsModP.size => primeData.factorsModP[i]) from
+        List.ofFn_getElem.symm]
+  rw [Multiset.map_coe, Multiset.map_coe]
+  congr 1
+  rw [List.ofFn_eq_map, List.map_map]
+  rfl
+
+/-- A submultiset of an injective Finset image can be recovered by filtering. -/
+private lemma map_filter_eq_of_le_map_val
+    {α β : Type*} [DecidableEq β]
+    {f : α → β} (hf_inj : Function.Injective f)
+    (S : Finset α)
+    {t : Multiset β}
+    (h : t ≤ S.val.map f) :
+    (S.filter (fun a => f a ∈ t)).val.map f = t := by
+  classical
+  have hSnodup : S.val.Nodup := S.nodup
+  have hmap_nodup : (S.val.map f).Nodup := hSnodup.map hf_inj
+  have ht_nodup : t.Nodup := Multiset.nodup_of_le h hmap_nodup
+  have hSfilter_nodup : (S.filter (fun a => f a ∈ t)).val.Nodup :=
+    (S.filter _).nodup
+  have hLHS_nodup :
+      ((S.filter (fun a => f a ∈ t)).val.map f).Nodup :=
+    hSfilter_nodup.map hf_inj
+  refine Multiset.Nodup.ext hLHS_nodup ht_nodup |>.mpr ?_
+  intro x
+  constructor
+  · intro hx
+    rw [Multiset.mem_map] at hx
+    obtain ⟨a, ha_mem, ha_eq⟩ := hx
+    rw [Finset.mem_val, Finset.mem_filter] at ha_mem
+    rw [← ha_eq]; exact ha_mem.2
+  · intro hxt
+    have hxmap : x ∈ S.val.map f := Multiset.mem_of_le h hxt
+    rw [Multiset.mem_map] at hxmap
+    obtain ⟨a, ha_mem, ha_eq⟩ := hxmap
+    rw [Multiset.mem_map]
+    refine ⟨a, ?_, ha_eq⟩
+    rw [Finset.mem_val, Finset.mem_filter]
+    refine ⟨ha_mem, ?_⟩
+    rw [ha_eq]; exact hxt
+
+/-- Final assembly: the analyzable `choosePrimeData? core = some primeData`
+branch of the integer-irreducible → mod-`p` representing-subset existence
+and uniqueness statement. -/
+theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
+    (core : Hex.ZPoly) {factor : Hex.ZPoly}
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hdvd : factor ∣ core)
+    (hcore_ne : core ≠ 0)
+    {primeData : Hex.PrimeChoiceData}
+    (hsome : Hex.choosePrimeData? core = some primeData) :
+    ∃! S : ModPFactorSubset primeData,
+      RepresentsIntegerFactorModP primeData factor S := by
+  classical
+  letI := primeData.bounds
+  have hprime : Hex.Nat.Prime primeData.p :=
+    Hex.choosePrimeData?_prime core primeData hsome
+  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+    Hex.ZMod64.primeModulusOfPrime hprime
+  have hprime_root : _root_.Nat.Prime primeData.p := by
+    refine _root_.Nat.prime_def_lt.mpr ⟨hprime.two_le, ?_⟩
+    intro m hmlt hmdvd
+    rcases hprime.right m hmdvd with h | h
+    · exact h
+    · exact absurd h (Nat.ne_of_lt hmlt)
+  haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime_root⟩
+  obtain ⟨hzero, hfield, hfactors_eq⟩ :=
+    Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hsome
+  have hform : Hex.factorsModPBerlekampForm core primeData :=
+    ⟨hprime, hzero, hfield, hfactors_eq⟩
+  have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
+    Hex.choosePrimeData?_isGoodPrime core primeData hsome
+  have hnodup : primeData.factorsModP.toList.Nodup :=
+    factorsModP_nodup_of_factorsModPBerlekampForm core primeData hform hgood
+  letI := hfield
+  -- Set up abbreviations.
+  set f : ModPFactorIndex primeData → Polynomial (ZMod primeData.p) :=
+      fun i => HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)
+      with hf_def
+  set factorsM : Multiset (Polynomial (ZMod primeData.p)) :=
+      ((primeData.factorsModP.toList : Multiset _).map
+        HexBerlekampMathlib.toMathlibPolynomial) with hfactorsM_def
+  set mathD : Polynomial (ZMod primeData.p) :=
+      HexBerlekampMathlib.toMathlibPolynomial
+        (@monicModPImage primeData.p primeData.bounds
+          (@Hex.ZPoly.modP primeData.p primeData.bounds factor))
+      with hmathD_def
+  -- `factorsM` equals the univ-image of `f`.
+  have hfactorsM_univ : factorsM = Finset.univ.val.map f :=
+    (univ_val_map_modPFactor_eq_factorsModP_map primeData).symm
+  -- `toMathlibPolynomial` is injective via `fpPolyEquiv`.
+  have hinjPoly :
+      Function.Injective
+        (HexBerlekampMathlib.toMathlibPolynomial : Hex.FpPoly primeData.p → _) :=
+    HexBerlekampMathlib.fpPolyEquiv.injective
+  -- `modPFactor` is injective on `Fin n` (via factorsModP.toList.Nodup).
+  have hmodPFactor_inj :
+      Function.Injective (modPFactor primeData) := by
+    intro i j hij
+    have h_get_i :
+        primeData.factorsModP.toList[i.val]'(by
+          rw [Array.length_toList]; exact i.isLt) = primeData.factorsModP[i] := by
+      simp
+    have h_get_j :
+        primeData.factorsModP.toList[j.val]'(by
+          rw [Array.length_toList]; exact j.isLt) = primeData.factorsModP[j] := by
+      simp
+    have h_eq :
+        primeData.factorsModP.toList[i.val]'(by
+            rw [Array.length_toList]; exact i.isLt) =
+          primeData.factorsModP.toList[j.val]'(by
+            rw [Array.length_toList]; exact j.isLt) := by
+      rw [h_get_i, h_get_j]; exact hij
+    exact Fin.ext (List.Nodup.getElem_inj_iff hnodup |>.mp h_eq)
+  -- `f` is injective.
+  have hf_inj : Function.Injective f := fun i j hij =>
+    hmodPFactor_inj (hinjPoly hij)
+  -- factorsM is nodup.
+  have hfactorsM_nodup : factorsM.Nodup := by
+    rw [hfactorsM_def]
+    exact (Multiset.coe_nodup.mpr hnodup).map hinjPoly
+  -- Each q in factorsM is irreducible.
+  have hirr_each : ∀ q ∈ factorsM, Irreducible q := by
+    intro q hq
+    rw [hfactorsM_def, Multiset.mem_map] at hq
+    obtain ⟨g, hg_mem, hg_eq⟩ := hq
+    rw [Multiset.mem_coe] at hg_mem
+    obtain ⟨i, hi⟩ := List.mem_iff_get.mp hg_mem
+    have hi_eq : modPFactor primeData ⟨i.val, by
+        rw [← Array.length_toList]; exact i.isLt⟩ = g := by
+      unfold modPFactor
+      have hget : primeData.factorsModP.toList.get i = g := hi
+      simpa [List.get_eq_getElem] using hget
+    rw [← hg_eq, ← hi_eq]
+    exact factors_irreducible_of_choosePrimeData_of_some core primeData hsome _
+  -- Each q in factorsM is monic, hence normalize-fixed.
+  have hmonic_each : ∀ q ∈ factorsM, q.Monic := by
+    intro q hq
+    rw [hfactorsM_def, Multiset.mem_map] at hq
+    obtain ⟨g, hg_mem, hg_eq⟩ := hq
+    rw [Multiset.mem_coe] at hg_mem
+    have hg_monic : Hex.DensePoly.Monic g :=
+      factorsModP_monic_of_factorsModPBerlekampForm core primeData hform g
+        (Array.mem_toList_iff.mp hg_mem)
+    rw [← hg_eq]
+    exact HexBerlekampMathlib.toMathlibPolynomial_monic g hg_monic
+  have hnorm_each : ∀ q ∈ factorsM, normalize q = q := fun q hq =>
+    (hmonic_each q hq).normalize_eq_self
+  -- mathD is monic, hence normalize-fixed.
+  have hmonicModPImage_monic :
+      Hex.DensePoly.Monic
+        (@monicModPImage primeData.p primeData.bounds
+          (@Hex.ZPoly.modP primeData.p primeData.bounds factor)) := by
+    apply monicModPImage_monic_of_ne_zero hprime
+    -- factor must not vanish mod p; derived from the bridge facts.
+    have hfactor_dvd_core_modP :
+        @Hex.ZPoly.modP primeData.p primeData.bounds factor ∣
+          @Hex.ZPoly.modP primeData.p primeData.bounds core :=
+      modP_dvd_modP_of_dvd primeData.p hdvd
+    have hcore_modP_iszero :
+        (@Hex.ZPoly.modP primeData.p primeData.bounds core).isZero = false :=
+      Hex.isGoodPrime_modP_isZero_false core primeData.p hgood
+    cases hzero_factor :
+        (@Hex.ZPoly.modP primeData.p primeData.bounds factor).isZero with
+    | false => rfl
+    | true =>
+        exfalso
+        have hfactor_modP_zero :
+            @Hex.ZPoly.modP primeData.p primeData.bounds factor = 0 := by
+          apply Hex.DensePoly.ext_coeff
+          intro k
+          have hsize :
+              (@Hex.ZPoly.modP primeData.p primeData.bounds factor).size = 0 := by
+            change
+              (@Hex.ZPoly.modP primeData.p primeData.bounds factor).coeffs.isEmpty
+                = true at hzero_factor
+            simpa [Hex.DensePoly.size, Array.isEmpty_iff_size_eq_zero] using hzero_factor
+          rw [Hex.DensePoly.coeff_eq_zero_of_size_le _ (by omega)]
+          exact Hex.DensePoly.coeff_zero k
+        rcases hfactor_dvd_core_modP with ⟨q, hq⟩
+        rw [hfactor_modP_zero, Hex.FpPoly.zero_mul] at hq
+        rw [hq] at hcore_modP_iszero
+        exact Bool.noConfusion hcore_modP_iszero
+  have hmathD_monic : mathD.Monic := by
+    rw [hmathD_def]
+    exact HexBerlekampMathlib.toMathlibPolynomial_monic _ hmonicModPImage_monic
+  have hmathD_norm : normalize mathD = mathD := hmathD_monic.normalize_eq_self
+  -- mathD ∣ factorsM.prod.
+  have hbridge_dvd :
+      @monicModPImage primeData.p primeData.bounds
+          (@Hex.ZPoly.modP primeData.p primeData.bounds factor) ∣
+        Hex.monicModularImage
+          (@Hex.ZPoly.modP primeData.p primeData.bounds core) :=
+    monicModPImage_dvd_monicModularImage_of_dvd_of_choosePrimeData?_some
+      hdvd hcore_ne hsome
+  have hmathD_dvd : mathD ∣ factorsM.prod := by
+    rw [hfactorsM_def]
+    rw [toMathlibPolynomial_factorsModP_product_eq_monicModularImage hsome]
+    rw [hmathD_def]
+    rcases hbridge_dvd with ⟨c, hc⟩
+    refine ⟨HexBerlekampMathlib.toMathlibPolynomial c, ?_⟩
+    rw [hc, toMathlibPolynomial_mul]
+  -- Apply the UFD lemma.
+  obtain ⟨T, ⟨hT_le, hT_prod⟩, hT_uniq⟩ :=
+    HexBerlekampZassenhausMathlib.UFDPartition.existsUnique_subset_product_eq_of_dvd_of_squarefree_prod
+      hirr_each hnorm_each hfactorsM_nodup hmathD_norm hmathD_dvd
+  -- Construct S from T.
+  set Stwit : ModPFactorSubset primeData :=
+      Finset.univ.filter (fun i : ModPFactorIndex primeData => f i ∈ T) with hStwit_def
+  have hStwit_map : Stwit.val.map f = T := by
+    rw [hStwit_def]
+    have hle : T ≤ Finset.univ.val.map f := by
+      rw [← hfactorsM_univ]; exact hT_le
+    exact map_filter_eq_of_le_map_val hf_inj Finset.univ hle
+  refine ⟨Stwit, ?_, ?_⟩
+  · -- Existence.
+    show modPFactorProduct primeData Stwit =
+        @monicModPImage primeData.p primeData.bounds
+          (@Hex.ZPoly.modP primeData.p primeData.bounds factor)
+    apply hinjPoly
+    rw [toMathlibPolynomial_modPFactorProduct]
+    show (∏ i ∈ Stwit, f i) = mathD
+    rw [Finset.prod_eq_multiset_prod, hStwit_map]; exact hT_prod
+  · -- Uniqueness.
+    intro S' hS'
+    have hS'_prod :
+        modPFactorProduct primeData S' =
+          @monicModPImage primeData.p primeData.bounds
+            (@Hex.ZPoly.modP primeData.p primeData.bounds factor) := hS'
+    apply Finset.val_inj.mp
+    apply Multiset.map_injective hf_inj
+    have hS'_map_le : S'.val.map f ≤ factorsM := by
+      rw [hfactorsM_univ]
+      apply Multiset.map_le_map
+      exact Finset.val_le_iff.mpr (Finset.subset_univ _)
+    have hS'_map_prod : (S'.val.map f).prod = mathD := by
+      rw [← Finset.prod_eq_multiset_prod, ← toMathlibPolynomial_modPFactorProduct,
+        hS'_prod]
+    have hS'_T : S'.val.map f = T :=
+      hT_uniq _ ⟨hS'_map_le, hS'_map_prod⟩
+    rw [hS'_T, ← hStwit_map]
+
+/-- Consumer-facing wrapper, exposing the `let primeData := choosePrimeData core`
+shape required by the `ModPSubsetPartitionHypotheses` constructor. The
+strengthening hypothesis `hsome` excludes the fallback `p = 3` branch where the
+mod-`p` factorisation invariant does not hold; downstream consumers discharge it
+from the same `choosePrimeData?` chain that supplies the other partition
+fields. -/
+theorem existsUnique_modPFactorSubset_of_choosePrimeData
+    (core : Hex.ZPoly) {factor : Hex.ZPoly}
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hdvd : factor ∣ core)
+    (hsome : Hex.choosePrimeData? core = some (Hex.choosePrimeData core)) :
+    let primeData := Hex.choosePrimeData core
+    ∃! S : ModPFactorSubset primeData,
+      RepresentsIntegerFactorModP primeData factor S := by
+  intro primeData
+  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  -- `core ≠ 0` from `isGoodPrime` (which forces `(modP p core).isZero = false`).
+  have hcore_ne : core ≠ 0 := by
+    intro hcore_zero
+    have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
+      Hex.choosePrimeData?_isGoodPrime core primeData hsome
+    have hcore_modP_iszero :
+        (@Hex.ZPoly.modP primeData.p primeData.bounds core).isZero = false :=
+      Hex.isGoodPrime_modP_isZero_false core primeData.p hgood
+    have hzero_modP : @Hex.ZPoly.modP primeData.p primeData.bounds 0 = 0 := by
+      apply Hex.DensePoly.ext_coeff
+      intro k
+      rw [Hex.ZPoly.coeff_modP, Hex.DensePoly.coeff_zero]
+      rfl
+    rw [hcore_zero, hzero_modP] at hcore_modP_iszero
+    exact Bool.noConfusion hcore_modP_iszero
+  exact existsUnique_modPFactorSubset_of_choosePrimeData_of_some core
+    hirr hdvd hcore_ne hsome
 
 end
 
