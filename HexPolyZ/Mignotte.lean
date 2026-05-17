@@ -358,5 +358,84 @@ theorem coeffL2NormBound_le_defaultFactorCoeffBound (f : ZPoly) :
     (mignotteCoeffBound_le_defaultFactorCoeffBound f
       (k := 0) (j := 0) (Nat.zero_le _) (Nat.zero_le _))
 
+/-- An additive natural-number `foldl` only increases (or preserves) its
+accumulator. -/
+private theorem le_foldl_add_self {α : Type} (xs : List α) (g : α → Nat)
+    (init : Nat) :
+    init ≤ xs.foldl (fun acc y => acc + g y) init := by
+  induction xs generalizing init with
+  | nil => simp
+  | cons y ys ih =>
+      simp only [List.foldl_cons]
+      exact Nat.le_trans (Nat.le_add_right init (g y)) (ih (init + g y))
+
+/-- For an additive natural-number `foldl`, each summand at a member index is
+bounded by the result. -/
+private theorem le_foldl_add_of_mem {α : Type} (xs : List α) (g : α → Nat)
+    {x : α} {init : Nat} (hx : x ∈ xs) :
+    g x ≤ xs.foldl (fun acc y => acc + g y) init := by
+  induction xs generalizing init with
+  | nil => cases hx
+  | cons head tail ih =>
+      simp only [List.mem_cons] at hx
+      simp only [List.foldl_cons]
+      cases hx with
+      | inl h =>
+          subst h
+          exact Nat.le_trans (Nat.le_add_left (g x) init)
+            (le_foldl_add_self tail g (init + g x))
+      | inr h => exact ih h
+
+/-- The ceiling square root is positive on positive inputs. -/
+private theorem ceilSqrt_pos_of_pos {n : Nat} (hn : 0 < n) :
+    0 < ceilSqrt n := by
+  have h : n ≤ (ceilSqrt n) ^ 2 := le_ceilSqrt_sq n
+  by_cases hpos : 0 < ceilSqrt n
+  · exact hpos
+  · exfalso
+    have hsq : ceilSqrt n = 0 := by omega
+    rw [hsq, Nat.pow_two, Nat.zero_mul] at h
+    omega
+
+/-- A nonzero integer polynomial has positive squared Euclidean coefficient
+norm: the last stored coefficient is nonzero and contributes a positive
+summand to the fold. -/
+theorem coeffNormSq_pos_of_ne_zero {f : ZPoly} (hf : f ≠ 0) :
+    0 < coeffNormSq f := by
+  have hsize : 0 < f.size := size_pos_of_ne_zero f hf
+  have hi_lt : f.size - 1 < f.size := by omega
+  have hi_mem : f.size - 1 ∈ List.range f.size := List.mem_range.mpr hi_lt
+  have hcoeff_ne : f.coeff (f.size - 1) ≠ 0 :=
+    DensePoly.coeff_last_ne_zero_of_pos_size f hsize
+  have hnatabs : 0 < (f.coeff (f.size - 1)).natAbs :=
+    Nat.pos_of_ne_zero (fun h => hcoeff_ne (Int.natAbs_eq_zero.mp h))
+  have hsq_pos : 0 < (f.coeff (f.size - 1)).natAbs ^ 2 := by
+    rw [Nat.pow_two]; exact Nat.mul_pos hnatabs hnatabs
+  unfold coeffNormSq
+  exact Nat.lt_of_lt_of_le hsq_pos
+    (le_foldl_add_of_mem (List.range f.size)
+      (fun i => (f.coeff i).natAbs ^ 2) hi_mem)
+
+/-- A nonzero integer polynomial has positive conservative Euclidean
+coefficient-norm upper bound. -/
+theorem coeffL2NormBound_pos_of_ne_zero {f : ZPoly} (hf : f ≠ 0) :
+    0 < coeffL2NormBound f := by
+  unfold coeffL2NormBound
+  exact ceilSqrt_pos_of_pos (coeffNormSq_pos_of_ne_zero hf)
+
+/--
+A nonzero integer polynomial has positive uniform default factor coefficient
+bound.
+
+This is the Mignotte-side substrate fact downstream consumers need to derive
+`B ≠ 0` and the precision-modulus invariant `2 ≤ p ^ precisionForCoeffBound B p`
+from `f ≠ 0` alone (combined with the standard `p ≥ 2` provenance from
+`choosePrimeData?_prime` and `precisionForCoeffBound_spec`).
+-/
+theorem defaultFactorCoeffBound_pos_of_ne_zero {f : ZPoly} (hf : f ≠ 0) :
+    0 < defaultFactorCoeffBound f :=
+  Nat.lt_of_lt_of_le (coeffL2NormBound_pos_of_ne_zero hf)
+    (coeffL2NormBound_le_defaultFactorCoeffBound f)
+
 end ZPoly
 end Hex
