@@ -6419,6 +6419,313 @@ private theorem int_factor_one_eq_unit {x y : Int} (h : x * y = 1) :
     rw [heq, hxnat_eq]
     rfl
 
+/-- Correctness lemma for `isNatPrime`: the Boolean check reduces to the
+elementary characterisation that `n ≥ 2` and no divisor `d` with
+`2 ≤ d ≤ √n` divides `n`. -/
+private theorem isNatPrime_iff (n : Nat) :
+    isNatPrime n = true ↔
+      2 ≤ n ∧ ∀ d : Nat, 2 ≤ d → d * d ≤ n → ¬ d ∣ n := by
+  unfold isNatPrime
+  rw [Bool.and_eq_true, decide_eq_true_iff, Bool.not_eq_true', List.any_eq_false]
+  refine Iff.intro ?fwd ?bwd
+  case fwd =>
+    rintro ⟨h2, hany⟩
+    refine ⟨h2, fun d hd2 hdd_le hdvd => ?_⟩
+    have hd_lt_n : d < n := by
+      have h2d_le_dd : 2 * d ≤ d * d := Nat.mul_le_mul_right d hd2
+      have h2d_le_n : 2 * d ≤ n := Nat.le_trans h2d_le_dd hdd_le
+      omega
+    have hmem : d ∈ List.range n := List.mem_range.mpr hd_lt_n
+    have hpred_ne_true : ¬
+        ((decide (2 ≤ d) && decide (d * d ≤ n) && (n % d == 0)) = true) :=
+      hany d hmem
+    apply hpred_ne_true
+    have h1 : (decide (2 ≤ d)) = true := decide_eq_true hd2
+    have h2 : (decide (d * d ≤ n)) = true := decide_eq_true hdd_le
+    have h3 : (n % d == 0) = true := by
+      rw [beq_iff_eq]
+      exact Nat.mod_eq_zero_of_dvd hdvd
+    rw [h1, h2, h3]
+    rfl
+  case bwd =>
+    rintro ⟨h2, hno⟩
+    refine ⟨h2, fun d hmem => ?_⟩
+    have hd_lt_n : d < n := List.mem_range.mp hmem
+    intro hpred_true
+    rw [Bool.and_eq_true, Bool.and_eq_true, decide_eq_true_iff,
+      decide_eq_true_iff, beq_iff_eq] at hpred_true
+    obtain ⟨⟨hd2, hdd_le⟩, hmod⟩ := hpred_true
+    exact hno d hd2 hdd_le (Nat.dvd_of_mod_eq_zero hmod)
+
+/-- `DensePoly.C` on integers commutes with multiplication: `C (a*b) = C a * C b`.
+Used by the constant-polynomial Irreducible characterisation to split integer
+factorisations into polynomial factorisations and back. -/
+private theorem zpoly_C_mul_C (a b : Int) :
+    DensePoly.C (a * b) = (DensePoly.C a : ZPoly) * DensePoly.C b := by
+  rw [ZPoly.C_mul_eq_scale]
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_scale (R := Int) a (DensePoly.C b) n (Int.mul_zero a),
+      DensePoly.coeff_C, DensePoly.coeff_C]
+  by_cases hn : n = 0
+  · simp [hn]
+  · rw [if_neg hn, if_neg hn]
+    exact (Int.mul_zero a).symm
+
+/-- Size of `DensePoly.C k` for nonzero `k` is exactly `1`. -/
+private theorem zpoly_size_C_of_ne_zero {k : Int} (hk : k ≠ 0) :
+    (DensePoly.C k : ZPoly).size = 1 := by
+  unfold DensePoly.size
+  rw [DensePoly.coeffs_C_of_ne_zero hk]
+  rfl
+
+/-- A constant polynomial `DensePoly.C k` is `ZPoly.Irreducible` whenever
+`k.natAbs` is prime in the elementary `isNatPrime` sense. -/
+private theorem irreducible_C_of_isNatPrime
+    {k : Int} (hp : isNatPrime k.natAbs = true) :
+    ZPoly.Irreducible (DensePoly.C k) := by
+  obtain ⟨hp2, hpno⟩ := (isNatPrime_iff k.natAbs).mp hp
+  have hk_ne : k ≠ 0 := by
+    intro hzero
+    rw [hzero] at hp2
+    change 2 ≤ (0 : Int).natAbs at hp2
+    simp at hp2
+  have hk_natAbs_ne_one : k.natAbs ≠ 1 := by omega
+  have hC_ne : DensePoly.C k ≠ 0 := by
+    intro hzero
+    have : (DensePoly.C k).coeff 0 = (DensePoly.C (0 : Int)).coeff 0 := by
+      rw [hzero]
+      rfl
+    rw [DensePoly.coeff_C, DensePoly.coeff_C] at this
+    simp at this
+    exact hk_ne this
+  refine
+    { not_zero := hC_ne
+      not_unit := ?_
+      no_factors := ?_ }
+  · intro hunit
+    rcases hunit with hone | hneg
+    · have hk1 : k = 1 := by
+        have hc : (DensePoly.C k).coeff 0 = (DensePoly.C (1 : Int)).coeff 0 :=
+          congrArg (fun p => DensePoly.coeff p 0) hone
+        rw [DensePoly.coeff_C, DensePoly.coeff_C] at hc
+        simpa using hc
+      apply hk_natAbs_ne_one
+      rw [hk1]
+      rfl
+    · have hkn1 : k = -1 := by
+        have hc : (DensePoly.C k).coeff 0 = (DensePoly.C (-1 : Int)).coeff 0 :=
+          congrArg (fun p => DensePoly.coeff p 0) hneg
+        rw [DensePoly.coeff_C, DensePoly.coeff_C] at hc
+        simpa using hc
+      apply hk_natAbs_ne_one
+      rw [hkn1]
+      rfl
+  · intro a b hab
+    by_cases ha_zero : a = 0
+    · exfalso
+      apply hC_ne
+      rw [hab, ha_zero, DensePoly.zero_mul]
+    by_cases hb_zero : b = 0
+    · exfalso
+      apply hC_ne
+      rw [hab, hb_zero, DensePoly.mul_comm_poly, DensePoly.zero_mul]
+    have ha_pos : 0 < a.size := ZPoly.size_pos_of_ne_zero a ha_zero
+    have hb_pos : 0 < b.size := ZPoly.size_pos_of_ne_zero b hb_zero
+    have hC_size : (DensePoly.C k).size = 1 := zpoly_size_C_of_ne_zero hk_ne
+    have hab_size :
+        (a * b).size = a.size + b.size - 1 :=
+      ZPoly.mul_size_eq_top_succ_of_nonzero a b ha_pos hb_pos
+    rw [← hab] at hab_size
+    rw [hC_size] at hab_size
+    have ha_one : a.size = 1 := by omega
+    have hb_one : b.size = 1 := by omega
+    have ha_eq : a = DensePoly.C (a.coeff 0) := eq_C_of_size_eq_one a ha_one
+    have hb_eq : b = DensePoly.C (b.coeff 0) := eq_C_of_size_eq_one b hb_one
+    have ha_coeff_ne : a.coeff 0 ≠ 0 := by
+      intro h
+      apply ha_zero
+      rw [ha_eq, h]
+      rfl
+    have hb_coeff_ne : b.coeff 0 ≠ 0 := by
+      intro h
+      apply hb_zero
+      rw [hb_eq, h]
+      rfl
+    -- (C a₀) * (C b₀) = C (a₀ * b₀) = C k, so a₀ * b₀ = k
+    have hprod_C : DensePoly.C (a.coeff 0 * b.coeff 0) = DensePoly.C k := by
+      calc DensePoly.C (a.coeff 0 * b.coeff 0)
+          = DensePoly.C (a.coeff 0) * DensePoly.C (b.coeff 0) :=
+            zpoly_C_mul_C _ _
+        _ = a * b := by rw [← ha_eq, ← hb_eq]
+        _ = DensePoly.C k := hab.symm
+    have hcoeff_prod : a.coeff 0 * b.coeff 0 = k := by
+      have hc : (DensePoly.C (a.coeff 0 * b.coeff 0)).coeff 0 =
+          (DensePoly.C k).coeff 0 :=
+        congrArg (fun p => DensePoly.coeff p 0) hprod_C
+      rw [DensePoly.coeff_C, DensePoly.coeff_C] at hc
+      simpa using hc
+    have hnat_prod :
+        (a.coeff 0).natAbs * (b.coeff 0).natAbs = k.natAbs := by
+      have := Int.natAbs_mul (a.coeff 0) (b.coeff 0)
+      rw [hcoeff_prod] at this
+      exact this.symm
+    by_cases ha_unit : ZPoly.IsUnit a
+    · exact Or.inl ha_unit
+    by_cases hb_unit : ZPoly.IsUnit b
+    · exact Or.inr hb_unit
+    exfalso
+    have ha_natAbs_pos : 0 < (a.coeff 0).natAbs := by
+      rcases Nat.eq_zero_or_pos (a.coeff 0).natAbs with hzero | hpos
+      · exact absurd (Int.natAbs_eq_zero.mp hzero) ha_coeff_ne
+      · exact hpos
+    have hb_natAbs_pos : 0 < (b.coeff 0).natAbs := by
+      rcases Nat.eq_zero_or_pos (b.coeff 0).natAbs with hzero | hpos
+      · exact absurd (Int.natAbs_eq_zero.mp hzero) hb_coeff_ne
+      · exact hpos
+    have ha_natAbs_ge_two : 2 ≤ (a.coeff 0).natAbs := by
+      have ha_natAbs_ne_one : (a.coeff 0).natAbs ≠ 1 := by
+        intro hone
+        apply ha_unit
+        rcases Int.natAbs_eq (a.coeff 0) with heq | heq
+        · left; rw [ha_eq, heq, hone]; rfl
+        · right; rw [ha_eq, heq, hone]; rfl
+      omega
+    have hb_natAbs_ge_two : 2 ≤ (b.coeff 0).natAbs := by
+      have hb_natAbs_ne_one : (b.coeff 0).natAbs ≠ 1 := by
+        intro hone
+        apply hb_unit
+        rcases Int.natAbs_eq (b.coeff 0) with heq | heq
+        · left; rw [hb_eq, heq, hone]; rfl
+        · right; rw [hb_eq, heq, hone]; rfl
+      omega
+    rcases Nat.le_total (a.coeff 0).natAbs (b.coeff 0).natAbs with hle | hle
+    · have hsq_le : (a.coeff 0).natAbs * (a.coeff 0).natAbs ≤ k.natAbs := by
+        calc (a.coeff 0).natAbs * (a.coeff 0).natAbs
+            ≤ (a.coeff 0).natAbs * (b.coeff 0).natAbs :=
+              Nat.mul_le_mul_left _ hle
+          _ = k.natAbs := hnat_prod
+      have hdvd : (a.coeff 0).natAbs ∣ k.natAbs :=
+        ⟨(b.coeff 0).natAbs, hnat_prod.symm⟩
+      exact hpno (a.coeff 0).natAbs ha_natAbs_ge_two hsq_le hdvd
+    · have hsq_le : (b.coeff 0).natAbs * (b.coeff 0).natAbs ≤ k.natAbs := by
+        calc (b.coeff 0).natAbs * (b.coeff 0).natAbs
+            ≤ (a.coeff 0).natAbs * (b.coeff 0).natAbs :=
+              Nat.mul_le_mul_right _ hle
+          _ = k.natAbs := hnat_prod
+      have hdvd : (b.coeff 0).natAbs ∣ k.natAbs :=
+        ⟨(a.coeff 0).natAbs, by rw [Nat.mul_comm]; exact hnat_prod.symm⟩
+      exact hpno (b.coeff 0).natAbs hb_natAbs_ge_two hsq_le hdvd
+
+/-- An irreducible constant polynomial `DensePoly.C k` (for `k ≠ 0`) has
+`k.natAbs` prime in the elementary `isNatPrime` sense. -/
+private theorem isNatPrime_natAbs_of_irreducible_C
+    {k : Int} (hk_ne : k ≠ 0) (hirr : ZPoly.Irreducible (DensePoly.C k)) :
+    isNatPrime k.natAbs = true := by
+  rw [isNatPrime_iff]
+  have hk_natAbs_pos : 0 < k.natAbs := by
+    rcases Nat.eq_zero_or_pos k.natAbs with hzero | hpos
+    · exact absurd (Int.natAbs_eq_zero.mp hzero) hk_ne
+    · exact hpos
+  have hk_natAbs_ne_one : k.natAbs ≠ 1 := by
+    intro hone
+    apply hirr.not_unit
+    rcases Int.natAbs_eq k with heq | heq
+    · left
+      rw [heq, hone]
+      rfl
+    · right
+      rw [heq, hone]
+      rfl
+  have hk_natAbs_ge_two : 2 ≤ k.natAbs := by omega
+  refine ⟨hk_natAbs_ge_two, fun d hd2 hdd_le hdvd => ?_⟩
+  obtain ⟨e, he⟩ := hdvd
+  have he_pos : 0 < e := by
+    rcases Nat.eq_zero_or_pos e with hzero | hpos
+    · rw [hzero] at he
+      simp at he
+      omega
+    · exact hpos
+  have he_ge_two : 2 ≤ e := by
+    have h_le : d * d ≤ d * e := by rw [← he]; exact hdd_le
+    have hd_pos : 0 < d := by omega
+    have hde : d ≤ e := Nat.le_of_mul_le_mul_left h_le hd_pos
+    omega
+  -- |k| = d * e, so either k = (d : Int) * e or k = -((d : Int) * e).
+  rcases Int.natAbs_eq k with heq | heq
+  · have hk_eq : k = (d : Int) * (e : Int) := by
+      rw [heq, he, Int.natCast_mul]
+    have hC_split :
+        DensePoly.C k = DensePoly.C (d : Int) * DensePoly.C (e : Int) := by
+      rw [hk_eq, zpoly_C_mul_C]
+    rcases hirr.no_factors _ _ hC_split with hua | hub
+    · rcases hua with hone | hneg
+      · have hd_eq : (d : Int) = 1 := by
+          have hc : (DensePoly.C (d : Int)).coeff 0 =
+              (DensePoly.C (1 : Int)).coeff 0 :=
+            congrArg (fun p => DensePoly.coeff p 0) hone
+          rw [DensePoly.coeff_C, DensePoly.coeff_C] at hc
+          simpa using hc
+        omega
+      · have hd_eq : (d : Int) = -1 := by
+          have hc : (DensePoly.C (d : Int)).coeff 0 =
+              (DensePoly.C (-1 : Int)).coeff 0 :=
+            congrArg (fun p => DensePoly.coeff p 0) hneg
+          rw [DensePoly.coeff_C, DensePoly.coeff_C] at hc
+          simp at hc
+        omega
+    · rcases hub with hone | hneg
+      · have he_eq : (e : Int) = 1 := by
+          have hc : (DensePoly.C (e : Int)).coeff 0 =
+              (DensePoly.C (1 : Int)).coeff 0 :=
+            congrArg (fun p => DensePoly.coeff p 0) hone
+          rw [DensePoly.coeff_C, DensePoly.coeff_C] at hc
+          simpa using hc
+        omega
+      · have he_eq : (e : Int) = -1 := by
+          have hc : (DensePoly.C (e : Int)).coeff 0 =
+              (DensePoly.C (-1 : Int)).coeff 0 :=
+            congrArg (fun p => DensePoly.coeff p 0) hneg
+          rw [DensePoly.coeff_C, DensePoly.coeff_C] at hc
+          simp at hc
+        omega
+  · have hk_eq : k = (-(d : Int)) * (e : Int) := by
+      rw [heq, he, Int.natCast_mul, Int.neg_mul]
+    have hC_split :
+        DensePoly.C k = DensePoly.C (-(d : Int)) * DensePoly.C (e : Int) := by
+      rw [hk_eq, zpoly_C_mul_C]
+    rcases hirr.no_factors _ _ hC_split with hua | hub
+    · rcases hua with hone | hneg
+      · have hd_eq : (-(d : Int)) = 1 := by
+          have hc : (DensePoly.C (-(d : Int))).coeff 0 =
+              (DensePoly.C (1 : Int)).coeff 0 :=
+            congrArg (fun p => DensePoly.coeff p 0) hone
+          rw [DensePoly.coeff_C, DensePoly.coeff_C] at hc
+          simpa using hc
+        omega
+      · have hd_eq : (-(d : Int)) = -1 := by
+          have hc : (DensePoly.C (-(d : Int))).coeff 0 =
+              (DensePoly.C (-1 : Int)).coeff 0 :=
+            congrArg (fun p => DensePoly.coeff p 0) hneg
+          rw [DensePoly.coeff_C, DensePoly.coeff_C] at hc
+          simpa using hc
+        omega
+    · rcases hub with hone | hneg
+      · have he_eq : (e : Int) = 1 := by
+          have hc : (DensePoly.C (e : Int)).coeff 0 =
+              (DensePoly.C (1 : Int)).coeff 0 :=
+            congrArg (fun p => DensePoly.coeff p 0) hone
+          rw [DensePoly.coeff_C, DensePoly.coeff_C] at hc
+          simpa using hc
+        omega
+      · have he_eq : (e : Int) = -1 := by
+          have hc : (DensePoly.C (e : Int)).coeff 0 =
+              (DensePoly.C (-1 : Int)).coeff 0 :=
+            congrArg (fun p => DensePoly.coeff p 0) hneg
+          rw [DensePoly.coeff_C, DensePoly.coeff_C] at hc
+          simp at hc
+        omega
+
 /-- A monic integer polynomial of dense size two is irreducible. The proof
 splits any factorization `f = a * b` by dense size: degree arithmetic forces
 one factor to be a constant `±1`, so the constant factor is a `ZPoly` unit. -/
