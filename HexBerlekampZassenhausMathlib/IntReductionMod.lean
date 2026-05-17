@@ -5,6 +5,7 @@ import Mathlib.RingTheory.Polynomial.Content
 import Mathlib.Algebra.Polynomial.Degree.Lemmas
 import Mathlib.Algebra.Polynomial.Eval.Degree
 import Mathlib.Algebra.Polynomial.Eval.Irreducible
+import Mathlib.FieldTheory.Separable
 
 /-!
 Reduction-mod-`p` irreducibility lemma for primitive integer polynomials, used
@@ -665,6 +666,260 @@ theorem normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive
   exact isPrimitive_of_dvd hprod_isPrim
     ⟨HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).repeatedPart, rfl⟩
 
+/-! ### Squarefree transport for the square-free core
+
+The lemmas below bridge the executable `Hex.ZPoly.SquareFreeRat` invariant
+(from `Hex.ZPoly.primitiveSquareFreeDecomposition_squareFreeCore`) to
+Mathlib's `Squarefree` over `Polynomial ℤ` via the rational image.  The
+chain is:
+
+1. `toPolynomial_derivative` — `HexPolyMathlib.toPolynomial` intertwines
+   the executable `Hex.DensePoly.derivative` with `Polynomial.derivative`.
+2. `toPolynomial_toRatPoly_eq_map_intCast` — `HexPolyMathlib.toPolynomial`
+   applied to the rational view of an integer polynomial agrees with the
+   integer-side `toPolynomial` composed with `Polynomial.map`
+   `(Int.castRingHom ℚ)`.
+3. `isCoprime_toPolynomial_map_intCast_derivative_of_squareFreeRat` — the
+   executable square-free invariant transports to coprimeness with the
+   formal derivative over `Polynomial ℚ`, using
+   `HexPolyMathlib.toPolynomial_gcd_associated` over the field `ℚ`.
+4. `squarefree_of_isPrimitive_of_squarefree_map_intCast` — the Gauss-style
+   descent: a primitive integer polynomial is squarefree whenever its
+   rational image is.
+
+The main theorem then combines `_isPrimitive` with the executable
+square-free invariant for `normalizeForFactor f`. -/
+
+/--
+The executable formal derivative on `Hex.DensePoly R` agrees with Mathlib's
+`Polynomial.derivative` under the `HexPolyMathlib.toPolynomial` bridge, for
+any commutative semiring with decidable equality.
+-/
+theorem toPolynomial_derivative
+    {R : Type*} [CommSemiring R] [DecidableEq R] (p : Hex.DensePoly R) :
+    HexPolyMathlib.toPolynomial (Hex.DensePoly.derivative p) =
+      Polynomial.derivative (HexPolyMathlib.toPolynomial p) := by
+  ext n
+  rw [HexPolyMathlib.coeff_toPolynomial,
+      Hex.DensePoly.coeff_derivative p n (mul_zero _),
+      Polynomial.coeff_derivative,
+      HexPolyMathlib.coeff_toPolynomial]
+  push_cast
+  ring
+
+/--
+The rational view of an integer polynomial through the executable
+`Hex.ZPoly.toRatPoly` agrees with the integer-side `toPolynomial`
+post-composed with `Polynomial.map (Int.castRingHom ℚ)`.  This is the
+identity that lets the executable `SquareFreeRat` invariant be read as
+a Mathlib statement about the rational image of `toPolynomial f`.
+-/
+theorem toPolynomial_toRatPoly_eq_map_intCast (f : Hex.ZPoly) :
+    HexPolyMathlib.toPolynomial (Hex.ZPoly.toRatPoly f) =
+      (HexPolyZMathlib.toPolynomial f).map (Int.castRingHom ℚ) := by
+  ext n
+  rw [HexPolyMathlib.coeff_toPolynomial, Polynomial.coeff_map,
+      HexPolyZMathlib.coeff_toPolynomial, Hex.ZPoly.coeff_toRatPoly]
+  rfl
+
+/--
+The executable `Hex.ZPoly.SquareFreeRat` invariant transports to
+`IsCoprime` of the rational image of `toPolynomial f` with its formal
+derivative.  This is the field-side discharge of the squarefree
+predicate: once the executable rational gcd is shown to be a unit (which
+follows from `(gcd …).size ≤ 1` together with `f ≠ 0`), the
+gcd-associatedness bridge `HexPolyMathlib.toPolynomial_gcd_associated`
+forces the Mathlib gcd to be a unit too, which is `IsCoprime`.
+-/
+theorem isCoprime_toPolynomial_map_intCast_derivative_of_squareFreeRat
+    (f : Hex.ZPoly) (hf : f ≠ 0) (hsf : Hex.ZPoly.SquareFreeRat f) :
+    IsCoprime ((HexPolyZMathlib.toPolynomial f).map (Int.castRingHom ℚ))
+      ((HexPolyZMathlib.toPolynomial f).map (Int.castRingHom ℚ)).derivative := by
+  -- Re-express the goal in `HexPolyMathlib` terms over `Polynomial ℚ`.
+  have hp_eq :
+      (HexPolyZMathlib.toPolynomial f).map (Int.castRingHom ℚ) =
+        HexPolyMathlib.toPolynomial (Hex.ZPoly.toRatPoly f) :=
+    (toPolynomial_toRatPoly_eq_map_intCast f).symm
+  have hp'_eq :
+      ((HexPolyZMathlib.toPolynomial f).map (Int.castRingHom ℚ)).derivative =
+        HexPolyMathlib.toPolynomial
+          (Hex.DensePoly.derivative (Hex.ZPoly.toRatPoly f)) := by
+    rw [hp_eq, ← toPolynomial_derivative]
+  rw [hp'_eq, hp_eq]
+  -- Reduce coprimeness to the Mathlib gcd being a unit.
+  rw [← EuclideanDomain.gcd_isUnit_iff]
+  -- The Mathlib gcd is associated to the transported executable gcd.
+  have hassoc :=
+    HexPolyMathlib.toPolynomial_gcd_associated
+      (Hex.ZPoly.toRatPoly f) (Hex.DensePoly.derivative (Hex.ZPoly.toRatPoly f))
+  refine (hassoc.isUnit_iff).mp ?_
+  -- The transported executable gcd is `C (G.coeff 0)` with `G.coeff 0 ≠ 0`.
+  set G := Hex.DensePoly.gcd (Hex.ZPoly.toRatPoly f)
+    (Hex.DensePoly.derivative (Hex.ZPoly.toRatPoly f)) with hG_def
+  have hsize : G.size ≤ 1 := hsf
+  -- `G ≠ 0` because it divides the nonzero `toRatPoly f`.
+  have hg_ne : Hex.ZPoly.toRatPoly f ≠ 0 := by
+    intro hg
+    apply hf
+    apply Hex.DensePoly.ext_coeff
+    intro n
+    have hcoeff : ((f.coeff n : Int) : Rat) = 0 := by
+      rw [← Hex.ZPoly.coeff_toRatPoly, hg, Hex.DensePoly.coeff_zero]
+    rw [Hex.DensePoly.coeff_zero]
+    exact_mod_cast hcoeff
+  have hG_ne : G ≠ 0 := by
+    intro hG_zero
+    apply hg_ne
+    have hdvd : G ∣ Hex.ZPoly.toRatPoly f :=
+      Hex.DensePoly.gcd_dvd_left _ _
+    rw [hG_zero] at hdvd
+    rcases hdvd with ⟨r, hr⟩
+    rw [hr, Hex.DensePoly.zero_mul]
+  have hG_size_pos : 0 < G.size := by
+    rcases Nat.eq_zero_or_pos G.size with h | h
+    · exfalso
+      apply hG_ne
+      apply Hex.DensePoly.ext_coeff
+      intro n
+      rw [Hex.DensePoly.coeff_zero]
+      exact Hex.DensePoly.coeff_eq_zero_of_size_le G (by omega)
+    · exact h
+  have hG_size_eq : G.size = 1 := le_antisymm hsize hG_size_pos
+  -- Last (= only) coefficient of `G` is nonzero, so `toPolynomial G = C (G.coeff 0)`.
+  have hG_coeff_zero_ne : G.coeff 0 ≠ 0 := by
+    have h := Hex.DensePoly.coeff_last_ne_zero_of_pos_size G hG_size_pos
+    simpa [hG_size_eq] using h
+  have hG_eq_C :
+      HexPolyMathlib.toPolynomial G = Polynomial.C (G.coeff 0) := by
+    apply Polynomial.ext
+    intro n
+    rw [HexPolyMathlib.coeff_toPolynomial, Polynomial.coeff_C]
+    by_cases hn : n = 0
+    · simp [hn]
+    · rw [if_neg hn]
+      exact Hex.DensePoly.coeff_eq_zero_of_size_le G (by
+        cases n with
+        | zero => exact absurd rfl hn
+        | succ k => omega)
+  rw [hG_eq_C]
+  exact (Polynomial.isUnit_C).mpr (isUnit_iff_ne_zero.mpr hG_coeff_zero_ne)
+
+/--
+Gauss-style descent for squarefreeness: a primitive integer polynomial is
+squarefree iff its rational image is, and in particular the implication
+from rational to integer follows.
+
+Given `p : Polynomial ℤ` primitive and `Squarefree (p.map (Int.castRingHom ℚ))`,
+any square factor `q² ∣ p` lifts to `(q.map …)² ∣ p.map …`, forcing
+`q.map …` to be a unit; the injective cast then pins `q` to a nonzero
+constant `C n`, and primitivity of `p` plus `C (n * n) ∣ p` forces `n * n`
+(hence `n`, hence `q`) to be a unit in `ℤ[X]`.
+-/
+theorem squarefree_of_isPrimitive_of_squarefree_map_intCast
+    {p : Polynomial ℤ} (hp : p.IsPrimitive)
+    (hsf : Squarefree (p.map (Int.castRingHom ℚ))) :
+    Squarefree p := by
+  intro q hq
+  -- Map the square factorisation to `Polynomial ℚ`.
+  have hmap :
+      (q.map (Int.castRingHom ℚ)) * (q.map (Int.castRingHom ℚ)) ∣
+        p.map (Int.castRingHom ℚ) := by
+    rw [← Polynomial.map_mul]
+    exact Polynomial.map_dvd _ hq
+  have hunit_Q : IsUnit (q.map (Int.castRingHom ℚ)) := hsf _ hmap
+  -- A unit in `Polynomial ℚ` has `natDegree 0`.
+  have hnd_map : (q.map (Int.castRingHom ℚ)).natDegree = 0 :=
+    Polynomial.natDegree_eq_zero_of_isUnit hunit_Q
+  -- The integer cast `Int.castRingHom ℚ` is injective, so `q.natDegree = 0`.
+  have hcast_inj : Function.Injective (Int.castRingHom ℚ) :=
+    Int.cast_injective
+  have hnd_q : q.natDegree = 0 := by
+    rw [← Polynomial.natDegree_map_eq_of_injective hcast_inj q]
+    exact hnd_map
+  -- So `q = C n` for some `n : ℤ`.
+  obtain ⟨n, hn⟩ : ∃ n, q = Polynomial.C n :=
+    ⟨q.coeff 0, Polynomial.eq_C_of_natDegree_eq_zero hnd_q⟩
+  -- Then `C (n * n) ∣ p`, and primitivity forces `IsUnit (n * n)`.
+  have hCnn_dvd : Polynomial.C (n * n) ∣ p := by
+    rw [show Polynomial.C (n * n) = q * q by rw [hn, ← Polynomial.C_mul]]
+    exact hq
+  have hnn_unit : IsUnit (n * n) :=
+    (Polynomial.isPrimitive_iff_isUnit_of_C_dvd.mp hp) _ hCnn_dvd
+  have hn_unit : IsUnit n := by
+    rw [show n * n = n ^ 2 by ring] at hnn_unit
+    exact (isUnit_pow_iff (by decide : (2 : ℕ) ≠ 0)).mp hnn_unit
+  -- Hence `q = C n` is a unit in `Polynomial ℤ`.
+  rw [hn]
+  exact Polynomial.isUnit_C.mpr hn_unit
+
+/--
+The square-free core extracted by `normalizeForFactor` is squarefree over
+`Polynomial ℤ` whenever the input integer polynomial is nonzero.
+
+The proof composes the rational-side squarefreeness obtained from the
+executable `Hex.ZPoly.SquareFreeRat` invariant
+(`primitiveSquareFreeDecomposition_squareFreeCore`,
+`HexPolyZ/Basic.lean:2997`) via `Separable.squarefree` with the
+Gauss-style descent
+`squarefree_of_isPrimitive_of_squarefree_map_intCast`, using the
+existing primitivity bridge
+`normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive`.
+
+This discharges the explicit `hcore_sqfree` hypothesis previously threaded
+through `liftedFactorSubsetPartition_outerBound_of_choosePrimeData`
+(`HexBerlekampZassenhausMathlib/Basic.lean`); the outer-bound
+specialisation is rewired to consume `f ≠ 0` directly. -/
+theorem normalizeForFactor_squareFreeCore_toPolynomial_squarefree
+    (f : Hex.ZPoly) (hf : f ≠ 0) :
+    Squarefree
+      (HexPolyZMathlib.toPolynomial
+        (Hex.normalizeForFactor f).squareFreeCore) := by
+  -- Executable `SquareFreeRat` invariant on the square-free core.
+  have hcore_ne :
+      (Hex.ZPoly.extractXPower (Hex.ZPoly.primitivePart f)).core ≠ 0 :=
+    Hex.extractXPower_core_ne_zero_of_ne_zero f hf
+  -- The square-free core of `normalizeForFactor f` is nonzero.  We argue
+  -- from primitivity of the product `squareFreeCore * repeatedPart`:
+  -- if the core were zero, the product would be zero, contradicting
+  -- primitivity (the zero polynomial has zero content).
+  have hcore_sq_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 := by
+    intro hzero
+    have hprod_prim :
+        Hex.ZPoly.Primitive
+          ((Hex.normalizeForFactor f).squareFreeCore *
+            (Hex.normalizeForFactor f).repeatedPart) := by
+      simpa [Hex.normalizeForFactor] using
+        Hex.ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive
+          _ hcore_ne
+    have hprod_ne :
+        (Hex.normalizeForFactor f).squareFreeCore *
+          (Hex.normalizeForFactor f).repeatedPart ≠ 0 :=
+      Hex.ZPoly.ne_zero_of_primitive _ hprod_prim
+    apply hprod_ne
+    rw [hzero, Hex.DensePoly.zero_mul]
+  have hsf_rat :
+      Hex.ZPoly.SquareFreeRat (Hex.normalizeForFactor f).squareFreeCore := by
+    have :=
+      Hex.ZPoly.primitiveSquareFreeDecomposition_squareFreeCore
+        (Hex.ZPoly.extractXPower (Hex.ZPoly.primitivePart f)).core
+        (by
+          simpa [Hex.normalizeForFactor] using hcore_sq_ne)
+    simpa [Hex.normalizeForFactor] using this
+  -- Build coprimeness with the derivative over `Polynomial ℚ`.
+  have hcoprime :=
+    isCoprime_toPolynomial_map_intCast_derivative_of_squareFreeRat
+      (Hex.normalizeForFactor f).squareFreeCore hcore_sq_ne hsf_rat
+  -- Squarefree of the rational image via `Separable.squarefree`.
+  have hsf_Q :
+      Squarefree
+        ((HexPolyZMathlib.toPolynomial
+            (Hex.normalizeForFactor f).squareFreeCore).map
+          (Int.castRingHom ℚ)) :=
+    Polynomial.Separable.squarefree hcoprime
+  -- Gauss descent: primitive + squarefree over ℚ ⇒ squarefree over ℤ.
+  exact squarefree_of_isPrimitive_of_squarefree_map_intCast
+    (normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive f hf) hsf_Q
+
 /--
 Bridge from the executable `isGoodPrime` invariant to the Mathlib
 `Int.castRingHom (ZMod p)`-cast leading-coefficient nonvanishing
@@ -703,5 +958,35 @@ theorem choosePrimeData?_leadingCoeff_castRingHom_ne_zero
       (Hex.choosePrimeData?_isGoodPrime f primeData hselected)
 
 end IntReductionMod
+
+/-- **#4549 substrate (HO-1), outer-bound specialisation, rewired for #4553.**
+
+Specialisation of `liftedFactorSubsetPartition_of_choosePrimeData`
+(`HexBerlekampZassenhausMathlib/Basic.lean`) at the precision count
+actually consumed by the slow exhaustive branch of `Hex.factor f`
+(i.e. `Hex.factorWithBound f (Hex.ZPoly.defaultFactorCoeffBound f)`).
+The resulting partition value has the exact `core` / `d` /
+`J = Finset.univ` / `target = core` shape expected by the `hpartition`
+hypothesis of
+`factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence`
+(PR #4537), so the HO-1 slow-path assembly can apply that wrapper
+directly together with the #4543 substrate value at the same outer-bound
+shape.
+
+The explicit `hcore_sqfree` hypothesis previously threaded through this
+constructor is now discharged internally from `f ≠ 0` via
+`IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree`.
+Downstream HO-1 assemblies only need to supply the much weaker non-zero
+premise on `f`. -/
+theorem liftedFactorSubsetPartition_outerBound_of_choosePrimeData
+    (f : Hex.ZPoly) (hf : f ≠ 0) :
+    let core := (Hex.normalizeForFactor f).squareFreeCore
+    let primeData := Hex.choosePrimeData core
+    let B := Hex.precisionForCoeffBound
+      (Hex.ZPoly.defaultFactorCoeffBound f) primeData.p
+    let d := Hex.henselLiftData core B primeData
+    LiftedFactorSubsetPartition core d Finset.univ core :=
+  liftedFactorSubsetPartition_of_choosePrimeData _ _
+    (IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree f hf)
 
 end HexBerlekampZassenhausMathlib
