@@ -9424,6 +9424,26 @@ theorem det_desnanot_jacobi_mul
   rw [hprod]
   grind
 
+/-- Unscaled Desnanot-Jacobi identity over `Int`.
+
+Specialises `det_desnanot_jacobi_mul` to `R = Int` and cancels the common
+`det M` factor on both sides using `Int.eq_of_mul_eq_mul_left`. The hypothesis
+`det M ≠ 0` is essential: without it the cancellation step is invalid even
+over the integers, and a generic unconditional unscaled form requires the
+universal-polynomial cancellation layer rather than integral-domain
+cancellation. -/
+theorem det_desnanot_jacobi_int
+    {n : Nat} (M : Matrix Int (n + 2) (n + 2))
+    (hM : det M ≠ 0) :
+    det (deleteRowCol M (0 : Fin (n + 2)) (0 : Fin (n + 2))) *
+        det (deleteRowCol M (Fin.last (n + 1)) (Fin.last (n + 1))) -
+      det (deleteRowCol M (0 : Fin (n + 2)) (Fin.last (n + 1))) *
+        det (deleteRowCol M (Fin.last (n + 1)) (0 : Fin (n + 2))) =
+      det M *
+        det (deleteRowCol (deleteRowCol M (0 : Fin (n + 2)) (0 : Fin (n + 2)))
+            (Fin.last n) (Fin.last n)) :=
+  Int.eq_of_mul_eq_mul_left hM (det_desnanot_jacobi_mul M)
+
 /-! ### Bareiss Desnanot source-entry helpers and structural submatrix equalities
 
 Following the Mathlib-side reindexing in `HexMatrixMathlib/Determinant/Core.lean`,
