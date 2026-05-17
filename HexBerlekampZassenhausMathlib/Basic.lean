@@ -3512,6 +3512,28 @@ def recombinationCandidate (d : Hex.LiftData) (S : LiftedFactorSubset d) :
         (Array.polyProduct (liftedSubsetSelectedList d S).toArray)
         (d.p ^ d.k)
 
+/-- Scaled variant of `recombinationCandidate`: centred lift of the *scaled*
+selected lifted-factor product, primitivised and sign-normalised.
+
+For monic `core`, `scaledLiftedFactorProduct = liftedFactorProduct`, so the
+scaled candidate definitionally agrees with `recombinationCandidate`. For
+primitive non-monic `core` they diverge: `scaledLiftedFactorProduct ≡ factor`
+modulo `d.p ^ d.k` (the invariant supplied by
+`RepresentsIntegerFactorAtLift`), whereas the unscaled `liftedFactorProduct`
+is `scale (lc(core)⁻¹) · scaledLiftedFactorProduct` and need not normalise
+back to `factor` after primitive-part + sign-normalisation. A concrete model
+records this on issue #4643: with modulus `101`, `leadingCoeff core = 2`, and
+`factor = 2X + 1`, an unscaled product with residues `[51, 1]` carries the
+correct scaled residues but its unscaled normalisation is `X - 50`, not
+`2X + 1`. The scaled candidate is therefore the right substrate to feed the
+primitive non-monic recombination chain. -/
+def scaledRecombinationCandidate
+    (core : Hex.ZPoly) (d : Hex.LiftData) (S : LiftedFactorSubset d) :
+    Hex.ZPoly :=
+  Hex.normalizeFactorSign <|
+    Hex.ZPoly.primitivePart <|
+      Hex.centeredLiftPoly (scaledLiftedFactorProduct core d S) (d.p ^ d.k)
+
 /-- The executable-list recombination candidate agrees with the proof-side
 product candidate. -/
 theorem recombinationCandidate_eq_liftedFactorProductCandidate
@@ -3683,6 +3705,71 @@ theorem recombinationCandidate_eq_factor_of_henselSubsetCorrespondence
   recombinationCandidate_eq_factor_of_recovery
     hcore_ne hcore_monic hcore_record hdvd hfactor_prim hfactor_norm hirr
     hrep hprecision
+
+/--
+Primitive non-monic recovery substrate: the scaled recombination candidate
+equals the represented integer `factor` under primitive/sign-normalised
+hypotheses on `factor` plus the standard Mignotte-precision and representation
+hypotheses. This is the corrected first recovery step for the primitive
+non-monic recombination chain (parent #4638, replaces stale #4643).
+
+Unlike `recombinationCandidate_eq_factor_of_recovery_of_monic_core`, this
+theorem does *not* require `Monic core` and does *not* route through the
+leading-coefficient collapse `scaledLiftedFactorProduct = liftedFactorProduct`.
+The inner equality is supplied directly by
+`centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery`;
+`primitivePart_eq_self_of_primitive` and the supplied `normalizeFactorSign`
+fixed-point discharge the outer normalisation pipeline.
+
+Downstream consumers (#4644, #4646, #4647, #4648) call this in place of the
+monic-core recovery when the core hypotheses are
+`core ≠ 0 ∧ Primitive core ∧ 0 < leadingCoeff core`; the primitive/sign
+hypotheses on `factor` are supplied by their primitive-factor packaging step.
+-/
+theorem scaledRecombinationCandidate_eq_factor_of_recovery
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hdvd : factor ∣ core)
+    (hfactor_prim : Hex.ZPoly.content factor = 1)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    scaledRecombinationCandidate core d S = factor := by
+  unfold scaledRecombinationCandidate
+  rw [centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
+        hcore_ne hdvd hrep hprecision]
+  have hprimitive : Hex.ZPoly.primitivePart factor = factor :=
+    Hex.ZPoly.primitivePart_eq_self_of_primitive factor
+      (by simpa [Hex.ZPoly.Primitive] using hfactor_prim)
+  rw [hprimitive]
+  exact hfactor_norm
+
+/--
+Hensel-correspondence wrapper for the primitive-core scaled recovery theorem.
+
+Primitive-core analogue of
+`recombinationCandidate_eq_factor_of_henselSubsetCorrespondence`: once a
+proof-side subset is known to represent an irreducible integer divisor at the
+Hensel lift, the *scaled* recombination candidate is exactly that factor under
+the primitive/sign-normalised hypotheses required by the centered-lift
+recovery bound.
+-/
+theorem scaledRecombinationCandidate_eq_factor_of_henselSubsetCorrespondence
+    {core factor : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
+    {S : LiftedFactorSubset d}
+    (_h :
+      HenselSubsetCorrespondenceHypotheses core B primeData d
+        admissiblePrime successfulLift)
+    (hcore_ne : core ≠ 0)
+    (hdvd : factor ∣ core)
+    (hfactor_prim : Hex.ZPoly.content factor = 1)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    scaledRecombinationCandidate core d S = factor :=
+  scaledRecombinationCandidate_eq_factor_of_recovery
+    hcore_ne hdvd hfactor_prim hfactor_norm hrep hprecision
 
 /--
 A monic integer polynomial automatically has primitive content and is its own
