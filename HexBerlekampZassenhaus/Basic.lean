@@ -7639,6 +7639,34 @@ theorem quadraticIntegerRootFactors?_factor_irreducible_of_ne_residual
         · simp [roots, split, hres_deg] at hquad
   · simp [hdeg] at hquad
 
+/-- Reassembled quadratic-root branch classifier under complete expansion.
+Each raw factor is either irreducible or equals the optional residual emitted
+by the integer-root splitter. The complete-expansion side condition strips out
+the normalization repeated-part fallback case present in the unconditional
+classifier `reassemblePolynomialFactors_quadratic_irreducible_or_repeated_or_residual`. -/
+theorem reassemblePolynomialFactors_quadratic_irreducible_or_residual_of_expansionComplete
+    (d : FactorNormalizationData) {coreFactors : Array ZPoly} {factor : ZPoly}
+    (hquad : quadraticIntegerRootFactors? d.squareFreeCore = some coreFactors)
+    (hcomplete : reassemblyExpansionComplete d coreFactors)
+    (hmem : factor ∈ (reassemblePolynomialFactors d coreFactors).toList) :
+    ZPoly.Irreducible factor ∨
+      factor =
+        (splitIntegerRootFactorsAux d.squareFreeCore
+          (integerRootCandidates d.squareFreeCore)
+          (integerRootCandidates d.squareFreeCore).length).2 := by
+  rcases reassemblePolynomialFactors_mem_xPower_or_core_of_expansionComplete d
+      coreFactors factor hcomplete hmem with hx | hcore
+  · exact Or.inl (xPowerFactorArray_irreducible d.xPower factor hx)
+  · by_cases hres :
+        factor =
+          (splitIntegerRootFactorsAux d.squareFreeCore
+            (integerRootCandidates d.squareFreeCore)
+            (integerRootCandidates d.squareFreeCore).length).2
+    · exact Or.inr hres
+    · exact Or.inl
+        (quadraticIntegerRootFactors?_factor_irreducible_of_ne_residual
+          hquad hcore hres)
+
 /-- Membership classifier for a reassembled quadratic-root branch. A raw factor
 is either one of the already-proved irreducible normalization/root factors, the
 normalization repeated-part fallback, or the optional residual appended by the

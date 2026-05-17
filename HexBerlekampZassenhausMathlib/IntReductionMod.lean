@@ -1167,4 +1167,96 @@ theorem factor_constant_branch_entry_irreducible_of_choosePrimeData
     unfold Hex.shouldRecordPolynomialFactor at hrecord
     simp at hrecord
 
+/-- **#4575 HO-1 substrate — slow-path quadratic integer-root arm umbrella.**
+
+Per-branch HO-1 component for the slow-path **quadratic integer-root** arm of
+the capstone `factor_irreducible_of_nonUnit` (#4170): every entry recorded by
+`Hex.factorWithBound f B` in this arm is `Hex.ZPoly.Irreducible`, given the
+branch markers, the `hfast_none` slow-dispatch witness, and the reassembly
+expansion-complete side condition.
+
+The slow-quadratic branch is reachable through the public `Hex.factor` entry
+exactly when `factorFastFactorsWithBound f B = none` (so the public
+`factorWithBound = (fast).getD (slow)` falls through to `factorSlow`) and the
+slow path then takes its `match quadraticIntegerRootFactors? = some _` arm.
+Per the issue (#4575), this corresponds to one of:
+
+* `B = 0`, or
+* `B = 1 ∧ size > 1 ∧ factorFastCoreWithBound = none ∧ quadratic = some _`.
+
+In case (3) of the fast-path `none` enumeration the slow path takes its
+exhaustive branch (since the quadratic short-circuit is `none` there), so it
+is not reachable here.
+
+Composes:
+* `Hex.factorWithBound_entry_mem_slow_quadratic_branch_raw`
+  (`HexBerlekampZassenhaus/Basic.lean`) — the Mathlib-free branch-shape
+  lemma identifying each recorded entry as the sign-normalisation of a raw
+  factor in the quadratic-core reassembly;
+* `Hex.reassemblePolynomialFactors_mem_xPower_or_core_of_expansionComplete`
+  — the membership classifier for the complete-expansion branch of
+  reassembly: under `hcomplete`, each raw factor is either an extracted
+  `X`-power factor or one of the supplied core factors;
+* `Hex.xPowerFactorArray_irreducible` — `X`-power factors are irreducible;
+* `Hex.quadraticIntegerRootFactors?_factor_irreducible_of_ne_residual` — every
+  non-residual quadratic core factor is `Hex.ZPoly.Irreducible` directly;
+* `zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible` — the
+  sign-normalisation lift from raw factor irreducibility to entry
+  irreducibility.
+
+Sibling arms: the fast-path constant arm #4565
+(`factor_constant_branch_entry_irreducible_of_choosePrimeData`); the fast-path
+small-mod singleton arm #4564
+(`factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData`);
+the fast-path quadratic arm #4571 (in flight); the slow-path exhaustive arm
+#4561 (in flight); the fast BHKS arm gated on directive #2567.
+
+The residual sub-case carries a single localised `sorry` per the
+sub-issue allowance documented in #4575. The obligation is `ZPoly.Irreducible`
+of the optional residual emitted by the integer-root splitter; it is
+independent of the slow-vs-fast dispatch and is the natural successor task.
+See the in-source `sorry` for the precise statement. -/
+theorem factor_slow_quadratic_branch_entry_irreducible_of_choosePrimeData
+    (f : Hex.ZPoly) (_hf_ne : f ≠ 0)
+    (B : Nat)
+    (entry : Hex.ZPoly × Nat)
+    (hdeg :
+      (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    {coreFactors : Array Hex.ZPoly}
+    (hquad :
+      Hex.quadraticIntegerRootFactors?
+        (Hex.normalizeForFactor f).squareFreeCore = some coreFactors)
+    (hfast_none : Hex.factorFastFactorsWithBound f B = none)
+    (hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList)
+    (hcomplete :
+      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
+        coreFactors) :
+    Hex.ZPoly.Irreducible entry.1 := by
+  -- Branch-shape lemma: entry is the sign-normalisation of a raw factor in
+  -- the quadratic-core reassembly.
+  obtain ⟨raw, hraw_mem, hentry_eq⟩ :=
+    Hex.factorWithBound_entry_mem_slow_quadratic_branch_raw f B entry hdeg
+      hquad hfast_none hentry_mem
+  -- Combined classifier under `hcomplete`: raw is either irreducible directly
+  -- or equals the optional residual emitted by the integer-root splitter.
+  rcases
+      Hex.reassemblePolynomialFactors_quadratic_irreducible_or_residual_of_expansionComplete
+        (Hex.normalizeForFactor f) hquad hcomplete hraw_mem with
+      hirr | hres
+  · -- Direct irreducibility: lift to entry via sign-normalisation.
+    rw [hentry_eq]
+    exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hirr
+  · -- Residual subcase. The optional residual emitted by
+    -- `quadraticIntegerRootFactors?` is `Hex.ZPoly.Irreducible` once the core
+    -- is primitive (via
+    -- `normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive`) and the
+    -- residual is filtered to be neither `1` nor `-1` by the recorded-entry
+    -- filter. The proof is independent of the slow-vs-fast dispatch and is
+    -- the natural successor task per the #4575 sub-issue allowance.
+    have hraw_irr : Hex.ZPoly.Irreducible raw := by
+      rw [hres]
+      sorry
+    rw [hentry_eq]
+    exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hraw_irr
+
 end HexBerlekampZassenhausMathlib
