@@ -2717,4 +2717,201 @@ theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData
       hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
       hd_liftedFactor_inj hprecision ⟨raw, hcore_mem, hentry_eq⟩
 
+set_option maxHeartbeats 4000000 in
+/-- **#4806 HO-1 substrate — exhaustive-arm expansion-precondition packaging
+(precursor to #4627).**
+
+Companion to the slow-path exhaustive-arm umbrella
+`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData` (#4561):
+delivers, for the default `Hex.factorWithBound` precision in the slow
+exhaustive arm, the per-element preconditions of
+`Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition`
+that are currently provable from the existing wrapper stack. #4627 will
+consume this packaging together with the #4759 repeated-part `factorPower`
+decomposition to discharge `reassemblyExpansionComplete_exhaustive_of_ne_zero`.
+
+The three conjuncts are routed as follows:
+
+* `Hex.shouldRecordPolynomialFactor q = true`
+  — via `Hex.exhaustiveCoreFactorsWithBound_shouldRecord` from the branch-
+  derived `Hex.shouldRecordPolynomialFactor (Hex.normalizeForFactor f).squareFreeCore = true`;
+* `Hex.normalizeFactorSign q = q`
+  — via `Hex.exhaustiveCoreFactorsWithBound_normalizeFactorSign` from
+  `Hex.squareFreeCore_normalizeFactorSign_of_ne_zero`;
+* `Hex.ZPoly.Irreducible q`
+  — via `exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence`
+  at the outer-bound shape (the same wrapper consumed by the sibling umbrella).
+
+**Substrate gaps — narrowed scope per #4806.** The expansion wrapper additionally
+requires `Hex.DensePoly.Monic q` and `0 < q.degree?.getD 0` on every emitted
+factor. Neither is currently exposed for arbitrary `Hex.recombineExhaustive`
+output: by inspection of `Hex.recombinationSearchModAux`, every emitted factor
+is structurally
+`Hex.normalizeFactorSign (Hex.ZPoly.primitivePart (Hex.centeredLiftPoly
+  (Array.polyProduct selected.toArray) modulus))` for some `selected` ranging
+over `Hex.subsetSplits d.liftedFactors.toList`. Monicness and positive degree
+both then follow from `recombinationCandidate_monic` (`HexBerlekampZassenhausMathlib/Basic.lean`)
+and `natDegree_toPolynomial_recombinationCandidate_eq_sum`, but only after a
+bridge identifying each emitted `selected` with `liftedSubsetSelectedList d S`
+for some `LiftedFactorSubset d`. That bridge has not yet been built — neither
+`recombineExhaustive_monic` nor `recombineExhaustive_natDegree_pos` (nor any
+generalisation through `recombinationSearchMod`) exists in
+`HexBerlekampZassenhaus/Basic.lean`. Both pieces are deferred to a successor
+substrate sub-issue. Until that lands, downstream consumer #4627 must thread
+the missing monicness and positive-degree facts as additional hypotheses,
+mirroring the gap-shim precedent set by the sibling umbrella's `hcomplete`
+and `hprecision` premises (Gap 2 and Gap 3 of the #4561 documentation).
+
+The four substrate-shim premises (`hf_ne`, `hbranch`, `hchoose`, `hcore_monic`,
+`hprecision`) match the sibling umbrella verbatim so the two theorems share
+their substrate-derivation idiom and downstream callers can thread both with
+the same evidence bundle. Notably absent from this signature: the `hcomplete`
+premise (this packaging is precisely the substrate #4627 will use to discharge
+that premise) and the `hentry_mem` premise (this packaging yields a universal
+conclusion over the entire core-factors array). -/
+theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
+    (hbranch : Hex.factorWithBoundUsesExhaustiveBranch f
+      (Hex.ZPoly.defaultFactorCoeffBound f))
+    (hchoose : Hex.choosePrimeData?
+      (Hex.normalizeForFactor f).squareFreeCore = some
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore))
+    (hcore_monic : Hex.DensePoly.Monic
+      (Hex.normalizeForFactor f).squareFreeCore)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound
+        (Hex.normalizeForFactor f).squareFreeCore <
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p ^
+          Hex.precisionForCoeffBound
+            (Hex.ZPoly.defaultFactorCoeffBound f)
+            (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p) :
+    (∀ q ∈ (Hex.exhaustiveCoreFactorsWithBound
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.defaultFactorCoeffBound f)
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)).toList,
+      Hex.shouldRecordPolynomialFactor q = true) ∧
+    (∀ q ∈ (Hex.exhaustiveCoreFactorsWithBound
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.defaultFactorCoeffBound f)
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)).toList,
+      Hex.normalizeFactorSign q = q) ∧
+    (∀ q ∈ (Hex.exhaustiveCoreFactorsWithBound
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.defaultFactorCoeffBound f)
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)).toList,
+      Hex.ZPoly.Irreducible q) := by
+  -- Substrate setup mirrors `factor_exhaustive_branch_entry_irreducible_of_choosePrimeData`.
+  have hdeg : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 :=
+    hbranch.2.1
+  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 := by
+    intro hzero
+    have hlead : Hex.DensePoly.leadingCoeff
+        (Hex.normalizeForFactor f).squareFreeCore = 1 := hcore_monic
+    rw [hzero] at hlead
+    exact absurd hlead (by decide)
+  have hp_prime : Hex.Nat.Prime
+      (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p :=
+    Hex.choosePrimeData?_prime _ _ hchoose
+  have hp : 1 <
+      (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p :=
+    hp_prime.two_le
+  have hform : Hex.factorsModPBerlekampForm
+      (Hex.normalizeForFactor f).squareFreeCore
+      (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore) := by
+    obtain ⟨hzero, hfield, heq⟩ :=
+      Hex.choosePrimeData?_factorsModP_berlekamp_form _ _ hchoose
+    exact ⟨hp_prime, hzero, hfield, heq⟩
+  have hgood :
+      letI := (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).bounds
+      Hex.isGoodPrime (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p = true :=
+    Hex.choosePrimeData?_isGoodPrime _ _ hchoose
+  have hbound_pos : 0 < Hex.ZPoly.defaultFactorCoeffBound f :=
+    Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero hf_ne
+  have hB_ne_zero : Hex.ZPoly.defaultFactorCoeffBound f ≠ 0 := hbound_pos.ne'
+  have hspec :
+      2 * Hex.ZPoly.defaultFactorCoeffBound f <
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p ^
+          Hex.precisionForCoeffBound
+            (Hex.ZPoly.defaultFactorCoeffBound f)
+            (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p :=
+    Hex.precisionForCoeffBound_spec hp_prime.two_le _
+  have hd_modulus :
+      2 ≤ (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p ^
+        Hex.precisionForCoeffBound
+          (Hex.ZPoly.defaultFactorCoeffBound f)
+          (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p := by
+    omega
+  have hB_pos : 1 ≤ Hex.precisionForCoeffBound
+      (Hex.ZPoly.defaultFactorCoeffBound f)
+      (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p := by
+    by_contra hB_lt
+    have hB_eq : Hex.precisionForCoeffBound
+        (Hex.ZPoly.defaultFactorCoeffBound f)
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p =
+        0 := by omega
+    rw [hB_eq, pow_zero] at hd_modulus
+    omega
+  have hfactors_monic :=
+    factorsModP_monic_of_factorsModPBerlekampForm _ _ hform
+  have hproduct_mod_p :=
+    factorsModP_polyProduct_congr_of_factorsModPBerlekampForm _ _
+      hcore_monic hform hgood
+  have hcoprime :=
+    factorsModP_coprime_of_factorsModPBerlekampForm _ _ hform hgood
+  have hnonempty :=
+    factorsModP_ne_nil_of_factorsModPBerlekampForm _ _ hform
+  have hd_liftedFactor_monic := fun i =>
+    henselLiftData_liftedFactor_monic_of_choosePrimeData
+      (Hex.normalizeForFactor f).squareFreeCore _ _
+      hcore_monic hp_prime hp hB_pos
+      hfactors_monic hproduct_mod_p hcoprime hnonempty i
+  have hcore_deg_pos : 0 < (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 :=
+    Nat.pos_of_ne_zero hdeg
+  have hd_liftedFactor_natDegree_pos :=
+    henselLiftData_liftedFactor_natDegree_pos_of_factorsModPBerlekampForm
+      (Hex.normalizeForFactor f).squareFreeCore _ _
+      hcore_monic hp_prime hp hB_pos
+      hfactors_monic hproduct_mod_p hcoprime hnonempty hform hgood hcore_deg_pos
+  have hd_liftedFactor_inj :=
+    henselLiftData_liftedFactor_injective_of_factorsModPBerlekampForm
+      (Hex.normalizeForFactor f).squareFreeCore _ _
+      hcore_monic hp_prime hp hB_pos
+      hfactors_monic hproduct_mod_p hcoprime hnonempty hform hgood
+  have hcore_record : Hex.shouldRecordPolynomialFactor
+      (Hex.normalizeForFactor f).squareFreeCore = true := by
+    have hne_one : (Hex.normalizeForFactor f).squareFreeCore ≠ 1 := by
+      intro hone
+      apply hdeg
+      rw [hone]
+      exact Hex.DensePoly.degree?_C_getD 1
+    have hne_neg_one :
+        (Hex.normalizeForFactor f).squareFreeCore ≠ Hex.DensePoly.C (-1 : Int) := by
+      intro hneg
+      apply hdeg
+      rw [hneg]
+      exact Hex.DensePoly.degree?_C_getD (-1)
+    unfold Hex.shouldRecordPolynomialFactor
+    simp [hcore_ne, hne_one, hne_neg_one]
+  refine ⟨?_, ?_, ?_⟩
+  · -- shouldRecord on every emitted factor.
+    exact Hex.exhaustiveCoreFactorsWithBound_shouldRecord
+      (Hex.normalizeForFactor f).squareFreeCore
+      (Hex.ZPoly.defaultFactorCoeffBound f)
+      (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+      hcore_record
+  · -- normalizeFactorSign on every emitted factor.
+    exact Hex.exhaustiveCoreFactorsWithBound_normalizeFactorSign
+      (Hex.normalizeForFactor f).squareFreeCore
+      (Hex.ZPoly.defaultFactorCoeffBound f)
+      (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+      (Hex.squareFreeCore_normalizeFactorSign_of_ne_zero f hf_ne)
+  · -- Irreducibility on every emitted factor.
+    exact exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence
+      (henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData f)
+      (liftedFactorSubsetPartition_outerBound_of_choosePrimeData f hf_ne)
+      hcore_ne hcore_monic hcore_record hB_ne_zero
+      hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
+      hd_liftedFactor_inj hprecision
+
 end HexBerlekampZassenhausMathlib
