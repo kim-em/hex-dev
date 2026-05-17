@@ -37,7 +37,7 @@ the factorization, from which certificates are extracted.
 
 `hex-berlekamp` proves the computational invariant (no Mathlib):
 ```lean
-theorem prod_berlekampFactor (f : FpPoly p) (hf : squareFree f) :
+theorem prod_berlekampFactor (f : FpPoly p) :
     (berlekampFactor f).prod = f
 ```
 
