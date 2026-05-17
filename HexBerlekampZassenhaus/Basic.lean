@@ -494,7 +494,7 @@ theorem monicModularImage_monic
   exact ZMod64.inv_mul_eq_one_of_prime hp hlead_ne
 
 /-- A nonzero `FpPoly p` translates to `isZero = false`. -/
-private theorem isZero_false_of_ne_zero
+theorem isZero_false_of_ne_zero
     {p : Nat} [ZMod64.Bounds p] {f : FpPoly p} (hf : f ≠ 0) :
     f.isZero = false := by
   cases hz : f.isZero with

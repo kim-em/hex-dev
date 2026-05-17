@@ -5063,6 +5063,51 @@ theorem factorsModP_coprime_of_factorsModPBerlekampForm
   rw [heq]
   simpa using hcps
 
+/-- Discharge of the per-modular-factor monicness premise on
+`henselLiftData_liftedFactor_monic_of_choosePrimeData` (and the two other
+umbrellas at lines 5136 and 5200) from the `factorsModPBerlekampForm` invariant
+alone.
+
+`primeData.factorsModP` is, under the Option-3 wrap in `berlekampFactorsModP`,
+exactly `((berlekampFactor monicImg).factors.map monicModularImage).toArray`.
+Every entry is therefore the `monicModularImage` of some raw Berlekamp factor,
+which is monic by `monicModularImage_monic` provided the raw factor is nonzero.
+The raw-factor nonzeroness is `berlekampFactor_factors_ne_zero` (positive-degree
+case via `berlekampFactor_factors_pos_degree`, degenerate `[monicImg]` case
+because `monicImg` is monic).
+
+No `hgood` or `hcore_monic` premise is needed: the discharge follows from the
+shape of `factorsModPBerlekampForm` and Berlekamp-output structural facts
+alone.  This is the fourth and last of the
+`QuadraticMultifactorLiftInvariant` boundary dischargers (together with
+`factorsModP_ne_nil_*`, `factorsModP_polyProduct_congr_*`, and
+`factorsModP_coprime_*`) that the umbrellas consume via
+`QuadraticMultifactorLiftInvariant_of_choosePrimeData`. -/
+theorem factorsModP_monic_of_factorsModPBerlekampForm
+    (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hform : Hex.factorsModPBerlekampForm core primeData) :
+    letI := primeData.bounds
+    ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g := by
+  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  obtain ⟨hprime, hzero, hfield, heq⟩ := hform
+  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+    Hex.ZMod64.primeModulusOfPrime hprime
+  have hmonicImage_monic :
+      Hex.DensePoly.Monic (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)) :=
+    Hex.monicModularImage_monic hprime (Hex.ZPoly.modP primeData.p core) hzero
+  -- Each entry of `factorsModP` is `monicModularImage g'` for some `g'` in the
+  -- raw Berlekamp output, and each such `g'` is nonzero.
+  intro g hg
+  rw [heq] at hg
+  rw [List.mem_toArray, List.mem_map] at hg
+  obtain ⟨g', hg'_mem, hg'_eq⟩ := hg
+  have hg'_ne : g' ≠ 0 :=
+    Hex.Berlekamp.berlekampFactor_factors_ne_zero
+      (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
+      hmonicImage_monic g' hg'_mem
+  rw [← hg'_eq]
+  exact Hex.monicModularImage_monic hprime g' (Hex.isZero_false_of_ne_zero hg'_ne)
+
 /-- Composed convenience wrapper: combines
 `Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData` with
 `henselLiftData_liftedFactor_injective` so that a Mathlib-bridge consumer can
