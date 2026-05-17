@@ -9,7 +9,10 @@ together with the initial theorem surface describing the updated invariants.
 -/
 namespace Hex
 
-/-- Result of one quadratic Hensel lift step. -/
+/-- Output of one quadratic Hensel doubling step. The four fields package the
+updated leading factor `g` (monic, the input `g` corrected modulo `m^2`), the
+updated complementary factor `h`, and the updated Bezout witnesses `s`, `t`
+satisfying `s * g + t * h ≡ 1 (mod m^2)`. -/
 structure QuadraticLiftResult where
   g : ZPoly
   h : ZPoly
@@ -22,11 +25,17 @@ namespace QuadraticLiftResult
 def reduceModSquare (f : ZPoly) (m : Nat) : ZPoly :=
   ZPoly.reduceModPow f m 2
 
-/-- The factor error corrected during the quadratic Hensel step. -/
+/-- Residue `f - g * h` corrected by the factor update of the quadratic Hensel
+step: starting from `g * h ≡ f (mod m)`, this quantity is divisible by `m` and
+its lift drives the first-order correction that achieves `g' * h' ≡ f (mod
+m^2)`. -/
 def factorError (f g h : ZPoly) : ZPoly :=
   f - g * h
 
-/-- The Bezout error corrected after the factor update. -/
+/-- Residue `s * g + t * h - 1` corrected by the Bezout update of the quadratic
+Hensel step: after the factor update, this quantity measured against the new
+factors is divisible by `m` and its lift drives the witness correction that
+achieves `s' * g' + t' * h' ≡ 1 (mod m^2)`. -/
 def bezoutError (g h s t : ZPoly) : ZPoly :=
   s * g + t * h - 1
 
@@ -1776,7 +1785,13 @@ private theorem quadraticHenselStep_factor_error_add_exact
   · rfl
   · rfl
 
-/-- One quadratic Hensel correction step from modulus `m` to modulus `m^2`. -/
+/-- One quadratic Hensel correction step from modulus `m` to modulus `m^2`.
+
+Inputs: the target polynomial `f`, the current monic factor `g`, the
+complementary factor `h`, and the Bezout witnesses `s`, `t` for the current
+factorisation. Preconditions consumed by the spec theorems below are `g`
+monic, `g * h ≡ f (mod m)`, and `s * g + t * h ≡ 1 (mod m)`; the returned
+`QuadraticLiftResult` then satisfies the same conjuncts modulo `m^2`. -/
 def quadraticHenselStep
     (m : Nat) (f g h s t : ZPoly) : QuadraticLiftResult :=
   let e := QuadraticLiftResult.factorError f g h
@@ -2203,7 +2218,8 @@ theorem quadraticHenselStep_monic
 After a quadratic Hensel step, both the updated leading factor `r.g` and the
 updated complementary factor `r.h` are congruent to the corresponding input
 factors modulo `m`. The quadratic correction only touches the data modulo
-`m^2 \ m`, so the input factorisation is preserved at the base modulus.
+`m^2` beyond what is already determined modulo `m`, so the input
+factorisation is preserved at the base modulus.
 -/
 theorem quadraticHenselStep_factor_congr_mod_base
     (m : Nat) (f g h s t : ZPoly)
