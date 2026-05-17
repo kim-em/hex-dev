@@ -8201,6 +8201,154 @@ private theorem splitIntegerRootFactorsAux_polyProduct_leadingCoeff_pos
                     omega
                   · exact ih quotient roots restFactors restResidual hrest
 
+/-- The factors emitted by `splitIntegerRootFactorsAux` are exactly the
+images of some sublist of the input `roots` list under `linearFactorForRoot`.
+Sibling of `splitIntegerRootFactorsAux_product` / `_irreducible` / etc.
+Consumed by the #4785 pairwise non-association proof to read off the
+distinct-roots invariant via `List.Sublist`-then-`Nodup` transfer. -/
+private theorem splitIntegerRootFactorsAux_factors_distinct_roots
+    (target : ZPoly) (roots : List Int) (fuel : Nat) :
+    ∀ factors residual,
+      splitIntegerRootFactorsAux target roots fuel = (factors, residual) →
+        ∃ rs : List Int, rs.Sublist roots ∧
+          factors.toList = rs.map linearFactorForRoot := by
+  induction fuel generalizing target roots with
+  | zero =>
+      intro factors residual hsplit
+      rw [splitIntegerRootFactorsAux] at hsplit
+      injection hsplit with hfactors hresidual
+      subst factors
+      refine ⟨[], ?_, ?_⟩
+      · exact List.nil_sublist roots
+      · simp
+  | succ fuel ih =>
+      intro factors residual hsplit
+      cases roots with
+      | nil =>
+          rw [splitIntegerRootFactorsAux] at hsplit
+          injection hsplit with hfactors hresidual
+          subst factors
+          refine ⟨[], ?_, ?_⟩
+          · exact List.nil_sublist _
+          · simp
+      | cons root roots =>
+          unfold splitIntegerRootFactorsAux at hsplit
+          cases hquot : exactQuotient? target (linearFactorForRoot root) with
+          | none =>
+              simp [hquot] at hsplit
+              rcases ih target roots factors residual hsplit with
+                ⟨rs, hsub, hshape⟩
+              exact ⟨rs, hsub.cons root, hshape⟩
+          | some quotient =>
+              simp [hquot] at hsplit
+              cases hrest : splitIntegerRootFactorsAux quotient roots fuel with
+              | mk restFactors restResidual =>
+                  simp [hrest] at hsplit
+                  rcases hsplit with ⟨hfactors, hresidual⟩
+                  subst factors
+                  subst residual
+                  rcases ih quotient roots restFactors restResidual hrest with
+                    ⟨rs, hsub, hshape⟩
+                  refine ⟨root :: rs, ?_, ?_⟩
+                  · exact hsub.cons_cons root
+                  · rw [Array.toList_append]
+                    simp [hshape]
+
+/-- Public wrapper of the splitter distinct-roots invariant: factors emitted
+by `splitIntegerRootFactorsAux` are `linearFactorForRoot rᵢ` for some sublist
+`rs` of the input `roots`. Composed with `roots.Nodup` (e.g. via
+`integerRootCandidates_nodup`) to read off pairwise distinctness of the
+factor roots, used by the #4785 linear-vs-linear pairwise non-association
+case. -/
+theorem splitIntegerRootFactorsAux_factors_form
+    {target : ZPoly} {roots : List Int} {fuel : Nat}
+    {factors : Array ZPoly} {residual : ZPoly}
+    (hsplit : splitIntegerRootFactorsAux target roots fuel = (factors, residual)) :
+    ∃ rs : List Int, rs.Sublist roots ∧
+      factors.toList = rs.map linearFactorForRoot :=
+  splitIntegerRootFactorsAux_factors_distinct_roots target roots fuel
+    factors residual hsplit
+
+/-- `positiveDivisors n` returns a duplicate-free list of natural divisors:
+the underlying source `List.range (n + 1)` is `Nodup`, and `List.filter`
+preserves this. -/
+private theorem positiveDivisors_nodup (n : Nat) :
+    (positiveDivisors n).Nodup := by
+  unfold positiveDivisors
+  exact (List.nodup_range : (List.range (n + 1)).Nodup).filter _
+
+/-- Helper: `Nodup` of the per-divisor pair-list flat-map is preserved as
+long as every divisor is positive. The positivity rules out `d = -d` and
+ensures `[d, -d]` and `[d', -d']` are disjoint for distinct positive
+`d ≠ d'`. -/
+private theorem nodup_flatMap_pos_divisor_pairs (ds : List Nat)
+    (hds_nodup : ds.Nodup) (hds_pos : ∀ d ∈ ds, 0 < d) :
+    (ds.flatMap fun d => [Int.ofNat d, -Int.ofNat d]).Nodup := by
+  induction ds with
+  | nil => simp
+  | cons d rest ih =>
+      simp only [List.flatMap_cons]
+      rcases List.nodup_cons.mp hds_nodup with ⟨hd_not_mem, hrest_nodup⟩
+      have hd_pos : 0 < d := hds_pos d (by simp)
+      have hrest_pos : ∀ d' ∈ rest, 0 < d' := by
+        intro d' hd'
+        exact hds_pos d' (by simp [hd'])
+      have ih' := ih hrest_nodup hrest_pos
+      rw [List.nodup_append]
+      refine ⟨?_, ih', ?_⟩
+      · -- `[Int.ofNat d, -Int.ofNat d].Nodup`
+        simp only [List.nodup_cons, List.mem_singleton, List.not_mem_nil,
+          List.nodup_nil, and_true, not_false_eq_true]
+        intro hself
+        have hd_int : (d : Int) > 0 := by exact_mod_cast hd_pos
+        have : (Int.ofNat d : Int) = -(Int.ofNat d : Int) := hself
+        have hcoe : (Int.ofNat d : Int) = (d : Int) := rfl
+        rw [hcoe] at this
+        omega
+      · -- Disjointness with the rest of the flatMap
+        intro a ha_pair b hb_rest hab
+        rcases List.mem_flatMap.mp hb_rest with ⟨d', hd'_mem, hb_mem⟩
+        have hd'_pos : 0 < d' := hrest_pos d' hd'_mem
+        have hd_ne_d' : d ≠ d' := by
+          intro hde
+          apply hd_not_mem
+          rw [hde]
+          exact hd'_mem
+        have hd_int : (d : Int) > 0 := by exact_mod_cast hd_pos
+        have hd'_int : (d' : Int) > 0 := by exact_mod_cast hd'_pos
+        have hd_int_ne : (d : Int) ≠ (d' : Int) := by
+          intro h
+          have : d = d' := by exact_mod_cast h
+          exact hd_ne_d' this
+        have hcoe : (Int.ofNat d : Int) = (d : Int) := rfl
+        have hcoe' : (Int.ofNat d' : Int) = (d' : Int) := rfl
+        -- Concretely unfold membership in the two-element list.
+        have ha_dec : a = Int.ofNat d ∨ a = -Int.ofNat d := by
+          simpa using ha_pair
+        have hb_dec : b = Int.ofNat d' ∨ b = -Int.ofNat d' := by
+          simpa using hb_mem
+        rcases ha_dec with ha | ha <;> rcases hb_dec with hb | hb <;>
+          (rw [ha, hcoe] at hab; rw [hb, hcoe'] at hab; omega)
+
+/-- `integerRootCandidates f` returns a duplicate-free list of candidate
+integer roots: positive divisors are distinct, and the per-divisor pair
+`[d, -d]` is duplicate-free for `d ≠ 0` (which `positiveDivisors` ensures by
+filtering out `d = 0`). The two pairs for distinct positive `d₁ ≠ d₂` share
+no elements either. Consumed by the #4785 pairwise non-association proof
+together with `splitIntegerRootFactorsAux_factors_form` to read off
+pairwise distinctness of the factor roots. -/
+private theorem integerRootCandidates_nodup (f : ZPoly) :
+    (integerRootCandidates f).Nodup := by
+  unfold integerRootCandidates
+  apply nodup_flatMap_pos_divisor_pairs
+  · exact positiveDivisors_nodup _
+  · intro d hd
+    unfold positiveDivisors at hd
+    rw [List.mem_filter] at hd
+    rcases hd with ⟨_hmem, hpred⟩
+    simp at hpred
+    omega
+
 private theorem quadraticIntegerRootFactors?_normalizeFactorSign
     {core : ZPoly} {factors : Array ZPoly}
     (hcore_pos : 0 < DensePoly.leadingCoeff core)
