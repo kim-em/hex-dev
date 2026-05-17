@@ -2245,6 +2245,213 @@ theorem reassemblyExpansionComplete_singleton_of_irreducible
       core k hmonic hdeg hirr (Hex.normalizeForFactor f).repeatedPart hk hfuel
   rw [hexpand]
 
+/-- **#4747 HO-1 substrate — quadratic integer-root arm reassembly-expansion
+discharger (Mathlib bridge).** When the normalized square-free core
+`(normalizeForFactor f).squareFreeCore` factors through the executable
+`quadraticIntegerRootFactors?` short-circuit (returning `some coreFactors`),
+the reassembly of the recorded core factors is expansion-complete: the
+`repeatedPart` of `normalizeForFactor f` is exactly the
+`Factorization.factorPower` foldl product over the core-factor / exponent
+pairs supplied by #4759, and that fold is consumed completely by
+`Hex.expandRepeatedPartFactorArray`. Consumed by the slow-path and fast-path
+quadratic arm umbrellas
+(`factor_quadratic_branch_entry_irreducible_of_quadraticRoots` #4571 and
+`factor_slow_quadratic_branch_entry_irreducible_of_choosePrimeData` #4575)
+so the eventual capstone wiring (#4170) can drop the explicit `hcomplete`
+premise on the quadratic arms.
+
+Composes:
+
+* `Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero` and the Mathlib bridge
+  `zpoly_primitive_of_toPolynomial_isPrimitive` ∘
+  `normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive` (#4545) —
+  the squareFreeCore positive-leading-coefficient and primitivity invariants;
+* `Hex.quadraticIntegerRootFactors?_factor_irreducible_of_primitive` — every
+  emitted core factor is irreducible under primitivity;
+* `Hex.polyProduct_quadraticIntegerRootFactors?_some` (#4747 plumbing) —
+  the polyProduct = squareFreeCore invariant;
+* `Hex.quadraticIntegerRootFactors?_normalizeFactorSign` (#4747 plumbing) —
+  the per-factor `normalizeFactorSign` identity, discharging the `hnorm`
+  precondition of #4759;
+* `Hex.quadraticIntegerRootFactors?_factor_size_eq_two` (#4747 plumbing) —
+  every core factor has dense size two, supplying the per-factor positive
+  leading coefficient and positive degree preconditions of the non-monic
+  expansion-complete surface;
+* `normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover`
+  (#4759) — the structural `factorPower` decomposition of the repeated part;
+* `factorPower_cover_not_dvd_tail_of_irreducible_squarefree` (#4807) — the
+  per-position tail-non-divisibility certificate;
+* `Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc`
+  (#4778) — the non-monic public expansion-complete surface; the non-monic
+  version is required because `quadraticIntegerRootFactors?` may emit a
+  primitive non-monic residual (e.g. `2X + 3` from
+  `(X-1)(2X+3) = 2X^2 + X - 3`).
+
+Sibling dischargers: constant arm
+`Hex.reassemblyExpansionComplete_constant_of_ne_zero` (#4585 / PR #4598);
+small-mod singleton arm `reassemblyExpansionComplete_singleton_of_irreducible`
+(#4597); exhaustive arm — tracked by #4848. -/
+theorem reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero
+    (f : Hex.ZPoly) (hf : f ≠ 0)
+    {coreFactors : Array Hex.ZPoly}
+    (hquad : Hex.quadraticIntegerRootFactors?
+              (Hex.normalizeForFactor f).squareFreeCore = some coreFactors) :
+    Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f) coreFactors := by
+  classical
+  -- Discharge prerequisites for the squareFreeCore.
+  have hcore_pos := Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf
+  have hcore_primitive :
+      Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore :=
+    zpoly_primitive_of_toPolynomial_isPrimitive
+      (normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive f hf)
+  -- Per-factor invariants from the quadratic branch.
+  have hirr : ∀ q ∈ coreFactors.toList, Hex.ZPoly.Irreducible q := fun q hq =>
+    Hex.quadraticIntegerRootFactors?_factor_irreducible_of_primitive
+      hcore_pos hcore_primitive hquad hq
+  have hprod :
+      Array.polyProduct coreFactors =
+        (Hex.normalizeForFactor f).squareFreeCore :=
+    Hex.polyProduct_quadraticIntegerRootFactors?_some hquad
+  have hnorm : ∀ q ∈ coreFactors.toList, Hex.normalizeFactorSign q = q :=
+    Hex.quadraticIntegerRootFactors?_normalizeFactorSign hcore_pos hquad
+  have hsize_two : ∀ q ∈ coreFactors.toList, q.size = 2 := fun q hq =>
+    Hex.quadraticIntegerRootFactors?_factor_size_eq_two
+      hcore_pos hcore_primitive hquad hq
+  -- factorPower decomposition (#4759).
+  obtain ⟨exponents, hlen, hdecomp⟩ :=
+    normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover
+      f hf coreFactors hirr hprod hnorm
+  -- No-tail divisibility (#4807).
+  have hnot_dvd_tail :=
+    factorPower_cover_not_dvd_tail_of_irreducible_squarefree
+      f hf coreFactors hirr hprod hnorm exponents hlen
+  -- Per-factor pos_lc.  From `normalizeFactorSign q = q`, the leading
+  -- coefficient is nonneg (otherwise `scale (-1) q = q` would force `q = 0`),
+  -- and combined with irreducibility (hence `q ≠ 0`) it is strictly positive.
+  have hpos_lc :
+      ∀ q ∈ coreFactors.toList, 0 < Hex.DensePoly.leadingCoeff q := by
+    intro q hq
+    have hq_ne : q ≠ 0 := (hirr q hq).not_zero
+    have hq_norm := hnorm q hq
+    have hq_nonneg : 0 ≤ Hex.DensePoly.leadingCoeff q := by
+      by_contra hlt
+      have hlt' : Hex.DensePoly.leadingCoeff q < 0 := lt_of_not_ge hlt
+      unfold Hex.normalizeFactorSign at hq_norm
+      rw [if_pos hlt'] at hq_norm
+      apply hq_ne
+      apply Hex.DensePoly.ext_coeff
+      intro n
+      have hcoeff :
+          (Hex.DensePoly.scale (-1 : Int) q).coeff n = q.coeff n := by
+        rw [hq_norm]
+      rw [Hex.DensePoly.coeff_scale (R := Int) (-1) q n
+        (by decide : (-1 : Int) * 0 = 0)] at hcoeff
+      rw [Hex.DensePoly.coeff_zero]
+      omega
+    have hq_lc_ne : Hex.DensePoly.leadingCoeff q ≠ 0 :=
+      Hex.ZPoly.leadingCoeff_ne_zero_of_ne_zero q hq_ne
+    omega
+  -- Per-factor degree positivity (from `q.size = 2`).
+  have hdegree :
+      ∀ q ∈ coreFactors.toList, 0 < q.degree?.getD 0 := by
+    intro q hq
+    have hsize := hsize_two q hq
+    show 0 < q.degree?.getD 0
+    unfold Hex.DensePoly.degree?
+    simp [hsize]
+  -- Repeated part is nonzero (from primitivity of its toPolynomial image).
+  have hrp_ne_zero : (Hex.normalizeForFactor f).repeatedPart ≠ 0 := by
+    intro hzero
+    have hR_prim :=
+      normalizeForFactor_repeatedPart_toPolynomial_isPrimitive f hf
+    apply hR_prim.ne_zero
+    show HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).repeatedPart = 0
+    rw [hzero]
+    exact HexPolyZMathlib.toPolynomial_zero
+  -- Inline helper: any element of a list divides the foldl-mul product seeded
+  -- at 1.  Mirrors the proof shape of `linearFactor_dvd_listFoldl_of_mem`
+  -- (`HexBerlekampZassenhaus/Basic.lean:9646`) for arbitrary ZPoly elements.
+  have dvd_foldl_one_of_mem :
+      ∀ (x : Hex.ZPoly) (xs : List Hex.ZPoly),
+        x ∈ xs → x ∣ xs.foldl (· * ·) (1 : Hex.ZPoly) := by
+    intro x xs
+    induction xs with
+    | nil =>
+        intro hmem
+        exact absurd hmem List.not_mem_nil
+    | cons y ys ih =>
+        intro hmem
+        rcases List.mem_cons.mp hmem with rfl | hin
+        · rw [List.foldl_cons, Hex.ZPoly.one_mul_zpoly,
+              Hex.ZPoly.list_foldl_mul_eq_mul_foldl_one]
+          exact ⟨ys.foldl (· * ·) 1, rfl⟩
+        · rw [List.foldl_cons, Hex.ZPoly.one_mul_zpoly,
+              Hex.ZPoly.list_foldl_mul_eq_mul_foldl_one y ys]
+          obtain ⟨k, hk⟩ := ih hin
+          refine ⟨y * k, ?_⟩
+          rw [hk, ← Hex.DensePoly.mul_assoc_poly (S := Int),
+              Hex.DensePoly.mul_comm_poly (S := Int) y x,
+              Hex.DensePoly.mul_assoc_poly (S := Int)]
+  -- For each `q` with `2 ≤ q.size`, `factorPower q e` has size at least `e + 1`.
+  -- Mirrors the `hfactorPower_size_ge` inline argument in
+  -- `reassemblyExpansionComplete_singleton_of_irreducible` above.
+  have factorPower_size_lb :
+      ∀ (q : Hex.ZPoly) (e : Nat),
+        2 ≤ q.size → e + 1 ≤ (Hex.Factorization.factorPower q e).size := by
+    intro q e hq_size
+    induction e with
+    | zero =>
+        show 1 ≤ (1 : Hex.ZPoly).size
+        rfl
+    | succ n ih =>
+        rw [Hex.Factorization.factorPower_succ]
+        have hprev_size_pos :
+            0 < (Hex.Factorization.factorPower q n).size := by omega
+        have hq_size_pos : 0 < q.size := by omega
+        have hmul_size :
+            (Hex.Factorization.factorPower q n * q).size =
+              (Hex.Factorization.factorPower q n).size + q.size - 1 :=
+          Hex.ZPoly.mul_size_eq_top_succ_of_nonzero _ _ hprev_size_pos hq_size_pos
+        omega
+  -- Fuel bound.  Each `factorPower qe.1 qe.2` divides the decomposition
+  -- foldl product (= `repeatedPart`); combined with `size_le_of_dvd_nonzero`
+  -- and the size lower bound this gives `qe.2 + 1 ≤ rp.size + 1`.
+  have hfuel :
+      ∀ (qe : Hex.ZPoly × Nat),
+        qe ∈ coreFactors.toList.zip exponents →
+          qe.2 + 1 ≤ (Hex.normalizeForFactor f).repeatedPart.size + 1 := by
+    intro qe hqe_mem
+    have hq_mem : qe.1 ∈ coreFactors.toList := List.of_mem_zip hqe_mem |>.1
+    have hq_size := hsize_two qe.1 hq_mem
+    have hfp_size_lb :
+        qe.2 + 1 ≤ (Hex.Factorization.factorPower qe.1 qe.2).size :=
+      factorPower_size_lb qe.1 qe.2 (by omega)
+    have hfp_ne_zero : Hex.Factorization.factorPower qe.1 qe.2 ≠ 0 := by
+      intro hzero
+      rw [hzero] at hfp_size_lb
+      have h0 : (0 : Hex.ZPoly).size = 0 := rfl
+      omega
+    have hfp_mem :
+        Hex.Factorization.factorPower qe.1 qe.2 ∈
+          ((coreFactors.toList.zip exponents).map
+            (fun qe' => Hex.Factorization.factorPower qe'.1 qe'.2)) :=
+      List.mem_map.mpr ⟨qe, hqe_mem, rfl⟩
+    have hfp_dvd_rp :
+        Hex.Factorization.factorPower qe.1 qe.2 ∣
+          (Hex.normalizeForFactor f).repeatedPart := by
+      rw [hdecomp]
+      exact dvd_foldl_one_of_mem _ _ hfp_mem
+    have hfp_size_le :
+        (Hex.Factorization.factorPower qe.1 qe.2).size ≤
+          (Hex.normalizeForFactor f).repeatedPart.size :=
+      Hex.ZPoly.size_le_of_dvd_nonzero hfp_ne_zero hrp_ne_zero hfp_dvd_rp
+    omega
+  -- Apply the non-monic factorPower expansion-complete helper.
+  unfold Hex.reassemblyExpansionComplete
+  exact Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc
+    (Hex.normalizeForFactor f).repeatedPart coreFactors hpos_lc hdegree
+    exponents hlen hnot_dvd_tail hdecomp hfuel
+
 end IntReductionMod
 
 /-- **#4549 substrate (HO-1), outer-bound specialisation, rewired for #4553.**
