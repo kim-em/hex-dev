@@ -9053,6 +9053,249 @@ private theorem linearFactor_squared_not_dvd_of_squareFreeRat
       (DensePoly.gcd coreRat (DensePoly.derivative coreRat)).size ≤ 1 := hsq
   omega
 
+/-- Distinct integer roots produce non-`ZPoly`-associated `linearFactorForRoot`
+outputs. Both `linearFactorForRoot r` and `linearFactorForRoot s` are monic, so
+the unit factor `u` in any `Associated` witness `LF s = LF r * u` is forced to
+`C 1` (the `C (-1)` branch flips the leading coefficient). With `u = C 1`,
+comparing the constant coefficient yields `-r = -s`, contradicting `r ≠ s`.
+Consumed by the linear-vs-linear case of
+`quadraticIntegerRootFactors?_pairwise_not_associated` (#4785). -/
+private theorem linearFactorForRoot_not_associated_of_ne
+    {r s : Int} (hrs : r ≠ s) :
+    ¬ ZPoly.Associated (linearFactorForRoot r) (linearFactorForRoot s) := by
+  rintro ⟨u, hu, heq⟩
+  rcases hu with hu1 | hu_neg
+  · -- `u = C 1`, so `LF s = LF r`; comparing `coeff 0` gives `-s = -r`.
+    have h_eq : linearFactorForRoot s = linearFactorForRoot r := by
+      rw [heq, hu1]
+      change linearFactorForRoot r * (1 : ZPoly) = linearFactorForRoot r
+      exact DensePoly.mul_one_right_poly (S := Int) _
+    have hs_coeff : (linearFactorForRoot s).coeff 0 = -s := by
+      unfold linearFactorForRoot
+      rw [DensePoly.coeff_ofCoeffs]
+      rfl
+    have hr_coeff : (linearFactorForRoot r).coeff 0 = -r := by
+      unfold linearFactorForRoot
+      rw [DensePoly.coeff_ofCoeffs]
+      rfl
+    have hcoeff_eq : (linearFactorForRoot s).coeff 0 =
+        (linearFactorForRoot r).coeff 0 := by rw [h_eq]
+    rw [hs_coeff, hr_coeff] at hcoeff_eq
+    omega
+  · -- `u = C (-1)`, so leading coefficient becomes `1 * (-1) = -1 ≠ 1`.
+    have hLFr_ne : linearFactorForRoot r ≠ 0 := linearFactorForRoot_ne_zero r
+    have hCneg_ne : DensePoly.C (-1 : Int) ≠ (0 : ZPoly) := by
+      intro hz
+      have hsize : (DensePoly.C (-1 : Int)).size = 1 := rfl
+      rw [hz] at hsize
+      change (0 : ZPoly).size = 1 at hsize
+      have h0 : (0 : ZPoly).size = 0 := rfl
+      omega
+    have hlc_eq :
+        DensePoly.leadingCoeff (linearFactorForRoot s) =
+          DensePoly.leadingCoeff (linearFactorForRoot r) *
+            DensePoly.leadingCoeff (DensePoly.C (-1 : Int)) := by
+      rw [heq, hu_neg]
+      exact ZPoly.leadingCoeff_mul_of_nonzero _ _ hLFr_ne hCneg_ne
+    have hC_lc : DensePoly.leadingCoeff (DensePoly.C (-1 : Int)) = (-1 : Int) := by
+      simp [DensePoly.leadingCoeff,
+        DensePoly.coeffs_C_of_ne_zero (by decide : (-1 : Int) ≠ 0)]
+    rw [leadingCoeff_linearFactorForRoot, leadingCoeff_linearFactorForRoot,
+        hC_lc] at hlc_eq
+    omega
+
+/-- If `r ∈ rs`, then `linearFactorForRoot r` divides the left-fold product
+of `rs.map linearFactorForRoot`. Proven by induction on `rs`: the head case is
+direct, and the tail case lifts the inductive divisor over a single left
+multiplication using `list_foldl_mul_eq_mul_foldl_one`. Consumed by the
+linear-vs-residual case of
+`quadraticIntegerRootFactors?_pairwise_not_associated` (#4785) to extract
+a copy of `linearFactorForRoot r` from `Array.polyProduct split.1` and pair
+it with the residual to yield `(linearFactorForRoot r)^2 ∣ core`, then refuted
+via `linearFactor_squared_not_dvd_of_squareFreeRat`. -/
+private theorem linearFactor_dvd_listFoldl_of_mem
+    {rs : List Int} {r : Int} (hmem : r ∈ rs) :
+    linearFactorForRoot r ∣
+      (rs.map linearFactorForRoot).foldl (· * ·) (1 : ZPoly) := by
+  induction rs with
+  | nil => exact absurd hmem List.not_mem_nil
+  | cons head tail ih =>
+    rw [List.map_cons, List.foldl_cons, ZPoly.one_mul_zpoly,
+        ZPoly.list_foldl_mul_eq_mul_foldl_one (linearFactorForRoot head)
+          (tail.map linearFactorForRoot)]
+    rcases List.mem_cons.mp hmem with rfl | hin
+    · exact ⟨(tail.map linearFactorForRoot).foldl (· * ·) 1, rfl⟩
+    · obtain ⟨k, hk⟩ := ih hin
+      refine ⟨linearFactorForRoot head * k, ?_⟩
+      rw [hk,
+          ← DensePoly.mul_assoc_poly (S := Int) (linearFactorForRoot head)
+            (linearFactorForRoot r) k,
+          DensePoly.mul_comm_poly (S := Int) (linearFactorForRoot head)
+            (linearFactorForRoot r),
+          DensePoly.mul_assoc_poly (S := Int) (linearFactorForRoot r)
+            (linearFactorForRoot head) k]
+
+/-- **#4785 HO-1 substrate — pairwise non-association of the quadratic
+integer-root branch output.** The factors emitted by
+`quadraticIntegerRootFactors? core` are pairwise non-`ZPoly`-associated
+whenever `core` is primitive, has positive leading coefficient, and is
+square-free over `Rat[x]`.
+
+Linear-vs-linear pairs follow from `splitIntegerRootFactorsAux_factors_form`
+(the splitter records `linearFactorForRoot rᵢ` for distinct roots `rᵢ`
+forming a `Sublist` of `integerRootCandidates core`, which is `Nodup`) and
+`linearFactorForRoot_not_associated_of_ne`.
+
+Linear-vs-residual pairs are ruled out by case analysis on the
+`ZPoly.Associated` unit factor `u`: the `u = C (-1)` branch contradicts the
+residual's positive leading coefficient (inherited from `core`'s positive
+leading coefficient via the splitter's monic-product invariant), and the
+`u = C 1` branch produces `(linearFactorForRoot r)^2 ∣ core`, refuted by
+`linearFactor_squared_not_dvd_of_squareFreeRat`.
+
+Bridges with `irreducible_not_dvd_of_not_associated` (HO-1 substrate #4603)
+into the `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`
+discharger (#4747 residual). -/
+theorem quadraticIntegerRootFactors?_pairwise_not_associated
+    {core : ZPoly} (hcore_lc_pos : 0 < DensePoly.leadingCoeff core)
+    (hcore_primitive : ZPoly.Primitive core)
+    (hcore_squarefree : Hex.ZPoly.SquareFreeRat core)
+    {coreFactors : Array ZPoly}
+    (hquad : quadraticIntegerRootFactors? core = some coreFactors) :
+    coreFactors.toList.Pairwise (fun q₁ q₂ => ¬ ZPoly.Associated q₁ q₂) := by
+  have hcore_ne : core ≠ 0 := by
+    intro hz
+    rw [hz] at hcore_lc_pos
+    change 0 < (0 : Int) at hcore_lc_pos
+    omega
+  -- Acknowledge the primitivity hypothesis (kept in the signature for
+  -- symmetry with the `_factor_irreducible_of_primitive` wrapper; the
+  -- residual-leading-coefficient argument and the squared-divisibility
+  -- contradiction discharge the linear-vs-residual case without it).
+  have _ := hcore_primitive
+  unfold quadraticIntegerRootFactors? at hquad
+  by_cases hdeg : core.degree?.getD 0 = 2
+  · simp only [hdeg, if_true] at hquad
+    let roots := integerRootCandidates core
+    let split := splitIntegerRootFactorsAux core roots roots.length
+    have hroots_nodup : roots.Nodup := integerRootCandidates_nodup core
+    obtain ⟨rs, hsub, hshape⟩ :=
+      splitIntegerRootFactorsAux_factors_form (target := core) (roots := roots)
+        (fuel := roots.length) (factors := split.1) (residual := split.2) rfl
+    have hrs_nodup : rs.Nodup := hsub.nodup hroots_nodup
+    -- Pairwise non-association on the splitter's recorded linears.
+    have hLL :
+        (split.1.toList).Pairwise (fun q₁ q₂ => ¬ ZPoly.Associated q₁ q₂) := by
+      rw [hshape, List.pairwise_map]
+      exact hrs_nodup.imp (fun hne => linearFactorForRoot_not_associated_of_ne hne)
+    by_cases hsize : split.1.size = 0
+    · simp [roots, split, hsize] at hquad
+    · simp only [roots, split, hsize, if_false] at hquad
+      by_cases hres_one : split.2 = 1
+      · rw [if_pos hres_one] at hquad
+        cases hquad
+        exact hLL
+      · rw [if_neg hres_one] at hquad
+        by_cases hres_deg : split.2.degree?.getD 0 ≤ 1
+        · rw [if_pos hres_deg] at hquad
+          cases hquad
+          rw [Array.toList_push]
+          -- Residual leading-coefficient invariants.
+          have hsplit_prod :
+              split.2 * Array.polyProduct split.1 = core :=
+            splitIntegerRootFactorsAux_product core roots roots.length
+              split.1 split.2 rfl
+          have hpoly_lc_pos :
+              0 < DensePoly.leadingCoeff (Array.polyProduct split.1) :=
+            splitIntegerRootFactorsAux_polyProduct_leadingCoeff_pos core roots
+              roots.length split.1 split.2 rfl
+          have hpoly_ne : Array.polyProduct split.1 ≠ 0 := by
+            intro hz
+            rw [hz] at hpoly_lc_pos
+            change 0 < (0 : Int) at hpoly_lc_pos
+            omega
+          have hres_ne : split.2 ≠ 0 := by
+            intro hz
+            apply hcore_ne
+            rw [← hsplit_prod, hz, DensePoly.zero_mul]
+          have hcore_lc_eq :
+              DensePoly.leadingCoeff core =
+                DensePoly.leadingCoeff split.2 *
+                  DensePoly.leadingCoeff (Array.polyProduct split.1) := by
+            rw [← hsplit_prod]
+            exact ZPoly.leadingCoeff_mul_of_nonzero split.2 _ hres_ne hpoly_ne
+          have hres_lc_pos : 0 < DensePoly.leadingCoeff split.2 := by
+            have hres_lc_ne :
+                DensePoly.leadingCoeff split.2 ≠ 0 :=
+              ZPoly.leadingCoeff_ne_zero_of_ne_zero split.2 hres_ne
+            rcases Int.lt_or_lt_of_ne hres_lc_ne with hlt | hgt
+            · exfalso
+              have hcore_neg : DensePoly.leadingCoeff core < 0 := by
+                rw [hcore_lc_eq]
+                exact Int.mul_neg_of_neg_of_pos hlt hpoly_lc_pos
+              omega
+            · exact hgt
+          -- Bridge `Array.polyProduct split.1` to the list left-fold form.
+          have hpolyProd_eq :
+              Array.polyProduct split.1 =
+                (rs.map linearFactorForRoot).foldl (· * ·) (1 : ZPoly) := by
+            unfold Array.polyProduct
+            rw [← Array.foldl_toList, hshape]
+          have hcross :
+              ∀ a ∈ split.1.toList, ¬ ZPoly.Associated a split.2 := by
+            rw [hshape]
+            intro a ha
+            obtain ⟨r, hr_rs, rfl⟩ := List.mem_map.mp ha
+            rintro ⟨u, hu, heq⟩
+            rcases hu with hu1 | hu_neg
+            · -- `u = C 1`: `split.2 = LF r`, so `(LF r)^2 ∣ core`.
+              have hsplit2_eq : split.2 = linearFactorForRoot r := by
+                rw [heq, hu1]
+                change linearFactorForRoot r * (1 : ZPoly) = linearFactorForRoot r
+                exact DensePoly.mul_one_right_poly (S := Int) _
+              have hLF_dvd :
+                  linearFactorForRoot r ∣ Array.polyProduct split.1 := by
+                rw [hpolyProd_eq]
+                exact linearFactor_dvd_listFoldl_of_mem hr_rs
+              obtain ⟨k, hk⟩ := hLF_dvd
+              have hdvd :
+                  linearFactorForRoot r * linearFactorForRoot r ∣ core := by
+                refine ⟨k, ?_⟩
+                rw [← hsplit_prod, hsplit2_eq, hk,
+                    DensePoly.mul_assoc_poly (S := Int)]
+              exact linearFactor_squared_not_dvd_of_squareFreeRat
+                hcore_ne hcore_squarefree hdvd
+            · -- `u = C (-1)`: leading coefficient of `split.2` becomes `-1`.
+              have hCneg_ne : DensePoly.C (-1 : Int) ≠ (0 : ZPoly) := by
+                intro hz
+                have hsize : (DensePoly.C (-1 : Int)).size = 1 := rfl
+                rw [hz] at hsize
+                change (0 : ZPoly).size = 1 at hsize
+                have h0 : (0 : ZPoly).size = 0 := rfl
+                omega
+              have hC_lc :
+                  DensePoly.leadingCoeff (DensePoly.C (-1 : Int)) = (-1 : Int) := by
+                simp [DensePoly.leadingCoeff,
+                  DensePoly.coeffs_C_of_ne_zero (by decide : (-1 : Int) ≠ 0)]
+              have hlc_eq :
+                  DensePoly.leadingCoeff split.2 =
+                    DensePoly.leadingCoeff (linearFactorForRoot r) *
+                      DensePoly.leadingCoeff (DensePoly.C (-1 : Int)) := by
+                rw [heq, hu_neg]
+                exact ZPoly.leadingCoeff_mul_of_nonzero _ _
+                  (linearFactorForRoot_ne_zero r) hCneg_ne
+              rw [leadingCoeff_linearFactorForRoot, hC_lc] at hlc_eq
+              rw [hlc_eq] at hres_lc_pos
+              omega
+          rw [List.pairwise_append]
+          refine ⟨hLL, List.pairwise_singleton _ _, ?_⟩
+          intro a ha b hb
+          rw [List.mem_singleton] at hb
+          rw [hb]
+          exact hcross a ha
+        · simp [roots, split, hres_deg] at hquad
+  · simp [hdeg] at hquad
+
 private theorem factorSlowFactorsWithBound_polyProduct
     (f : ZPoly) (B : Nat) :
     DensePoly.C (signedContentScalar f) *
