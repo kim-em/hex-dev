@@ -12684,6 +12684,49 @@ theorem scaledRecombinationSearchModAux_some_factor_associated_of_liftedFactorSu
   exact ⟨result, hresult, hcovers factor hfactor_irr hfactor_dvd_target⟩
 
 /--
+Primitive + positive-leading public wrapper for the scaled recombination
+search.  This is the #4648 boundary form of the old monic-core
+`recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition`
+surface: callers with a primitive positive-leading core and recursive target
+use the scaled executable search directly, while the monic wrapper remains
+available for existing unscaled callers.
+-/
+theorem recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition_of_primitive_pos_lc_core
+    {core target factor : Hex.ZPoly} {d : Hex.LiftData}
+    {J : LiftedFactorSubset d} {localFactors : List Hex.ZPoly} {fuel : Nat}
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hd_liftedFactor_inj : Function.Injective (liftedFactor d))
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (htarget_primitive : Hex.ZPoly.Primitive target)
+    (htarget_lc_pos : 0 < Hex.DensePoly.leadingCoeff target)
+    (htarget_dvd_core : target ∣ core)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (hmatches : LiftedFactorListMatches d J localFactors)
+    (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hfactor_dvd_target : factor ∣ target)
+    (hfuel : J.card < fuel) :
+    ∃ result,
+      Hex.scaledRecombinationSearchModAux (Hex.DensePoly.leadingCoeff core)
+          target (d.p ^ d.k) localFactors fuel =
+        some result ∧
+      ∃ emitted ∈ result,
+        Associated (HexPolyZMathlib.toPolynomial emitted)
+          (HexPolyZMathlib.toPolynomial factor) := by
+  exact
+    scaledRecombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition
+      hcore_ne hcore_primitive hcore_lc_pos hd_modulus hd_liftedFactor_monic
+      hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
+      htarget_primitive htarget_lc_pos htarget_dvd_core hpartition hmatches
+      hfactor_irr hfactor_dvd_target hfuel
+
+/--
 Final public coverage theorem (#4274 capstone): every irreducible integer
 divisor of `core` appears, up to `Associated`, among the factors emitted by
 `Hex.exhaustiveCoreFactorsWithBound`.
