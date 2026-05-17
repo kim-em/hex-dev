@@ -2755,8 +2755,16 @@ arm umbrellas (#4564 / #4565 / #4571 / #4575).
 
 The slow-path constant and quadratic sub-branches are tracked separately
 (`squareFreeCore.degree?.getD 0 = 0` and `quadraticIntegerRootFactors? =
-some _` respectively); the fast BHKS branch is gated on directive #2567. -/
-theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData
+some _` respectively); the fast BHKS branch is gated on directive #2567.
+
+**#4848:** the original `hcomplete` premise (Gap 2) is no longer free.
+The public surface
+`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData` derives it
+from `reassemblyExpansionComplete_exhaustive_of_ne_zero` before invoking
+this internal residual; the residual is exposed via a private auxiliary
+so the heartbeat-sensitive wrapper application here is not re-elaborated
+through the discharger. -/
+private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux
     (f : Hex.ZPoly) (hf_ne : f ≠ 0)
     (entry : Hex.ZPoly × Nat)
     (hbranch : Hex.factorWithBoundUsesExhaustiveBranch f
@@ -2766,21 +2774,13 @@ theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData
     (hchoose : Hex.choosePrimeData?
       (Hex.normalizeForFactor f).squareFreeCore = some
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore))
-    -- Gap 1: explicit until a `Monic`-relaxation refactor of the upstream
-    -- wrapper lands (or a producer for `squareFreeCore`-monicness arrives).
     (hcore_monic : Hex.DensePoly.Monic
       (Hex.normalizeForFactor f).squareFreeCore)
-    -- Gap 2: explicit until the
-    -- `reassemblyExpansionComplete_exhaustive_of_ne_zero` discharger lands
-    -- (sibling of #4585 for the exhaustive arm).
     (hcomplete : Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
       (Hex.exhaustiveCoreFactorsWithBound
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.defaultFactorCoeffBound f)
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)))
-    -- Gap 3 (substrate): explicit until the squareFreeCore-bound monotonicity
-    -- (#4539, closed without resolution) is supplied by the abstract-bound
-    -- refactor at the wrapper's call site.
     (hprecision :
       2 * Hex.ZPoly.defaultFactorCoeffBound
         (Hex.normalizeForFactor f).squareFreeCore <
@@ -3340,5 +3340,58 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero
   -- Apply the generic assembler.
   exact IntReductionMod.reassemblyExpansionComplete_of_irreducible_squarefree_cover
     f hf_ne coreFactors hirr hprod hnorm hmonic hdegree hfuel
+
+/-- **#4561 / #4848 HO-1 substrate — slow exhaustive-arm umbrella, with the
+`hcomplete` premise dropped via the #4848 discharger.**
+
+Public surface of the exhaustive-arm HO-1 umbrella. The free `hcomplete`
+premise documented as "Gap 2" in #4561 is now discharged internally via
+`reassemblyExpansionComplete_exhaustive_of_ne_zero` (#4848), so downstream
+callers (notably the HO-1 capstone #4170) only need to thread the
+remaining Gap 1 (`hcore_monic`) and Gap 3 (`hprecision`) shim premises
+until those substrate follow-ups land.
+
+The body proceeds in two steps:
+
+1. Apply `reassemblyExpansionComplete_exhaustive_of_ne_zero` to construct
+   the `hcomplete` witness from `(f, hf_ne, hbranch, hchoose, hcore_monic,
+   hprecision)`.
+2. Apply the internal residual
+   `factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux`,
+   which carries the existing wrapper composition unchanged.
+
+Factoring through the internal residual avoids the heartbeat spike the
+previous direct rewiring attempt exposed at the existing wrapper
+application. -/
+theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
+    (entry : Hex.ZPoly × Nat)
+    (hbranch : Hex.factorWithBoundUsesExhaustiveBranch f
+      (Hex.ZPoly.defaultFactorCoeffBound f))
+    (hentry_mem : entry ∈ (Hex.factorWithBound f
+      (Hex.ZPoly.defaultFactorCoeffBound f)).factors.toList)
+    (hchoose : Hex.choosePrimeData?
+      (Hex.normalizeForFactor f).squareFreeCore = some
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore))
+    -- Gap 1: explicit until a `Monic`-relaxation refactor of the upstream
+    -- wrapper lands (or a producer for `squareFreeCore`-monicness arrives).
+    (hcore_monic : Hex.DensePoly.Monic
+      (Hex.normalizeForFactor f).squareFreeCore)
+    -- Gap 3 (substrate): explicit until the squareFreeCore-bound monotonicity
+    -- (#4539, closed without resolution) is supplied by the abstract-bound
+    -- refactor at the wrapper's call site.
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound
+        (Hex.normalizeForFactor f).squareFreeCore <
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p ^
+          Hex.precisionForCoeffBound
+            (Hex.ZPoly.defaultFactorCoeffBound f)
+            (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p) :
+    Hex.ZPoly.Irreducible entry.1 :=
+  factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux
+    f hf_ne entry hbranch hentry_mem hchoose hcore_monic
+    (reassemblyExpansionComplete_exhaustive_of_ne_zero
+      f hf_ne hbranch hchoose hcore_monic hprecision)
+    hprecision
 
 end HexBerlekampZassenhausMathlib
