@@ -1730,6 +1730,189 @@ theorem normalizeForFactor_repeatedPart_isPow_polyProduct_of_irreducible_factors
   rw [toPolynomial_factorPower_foldl]
   exact hpoly_decomp
 
+/-- Self-zip distributes through `List.map` on the second component. -/
+private theorem zip_map_self {α β : Type*} (l : List α) (f : α → β) :
+    l.zip (l.map f) = l.map (fun x => (x, f x)) := by
+  induction l with
+  | nil => rfl
+  | cons a l ih => simp [List.zip_cons_cons, ih]
+
+/--
+If a list product in a commutative monoid with zero is squarefree and every
+element of the list is irreducible, the list is `Nodup`.
+-/
+private theorem List.nodup_of_prod_squarefree
+    {α : Type*} [CommMonoidWithZero α] [DecidableEq α]
+    (l : List α) (hirr : ∀ a ∈ l, Irreducible a)
+    (hsq : Squarefree l.prod) :
+    l.Nodup := by
+  rw [← Multiset.coe_nodup, Multiset.nodup_iff_count_le_one]
+  intro p
+  by_contra hcontra
+  have hcount : 1 < Multiset.count p (l : Multiset α) := Nat.lt_of_not_ge hcontra
+  have hp_mem : p ∈ l := by
+    rw [← Multiset.mem_coe]
+    exact Multiset.count_pos.mp (by omega)
+  have hp_irr : Irreducible p := hirr p hp_mem
+  -- `p * p ∣ l.prod`: peel two occurrences of `p` from the list.
+  have hp_mul_dvd : p * p ∣ l.prod := by
+    have hle : Multiset.replicate 2 p ≤ (l : Multiset α) := by
+      rw [Multiset.le_iff_count]
+      intro x
+      by_cases hx : x = p
+      · subst hx
+        rw [Multiset.count_replicate_self]
+        omega
+      · rw [Multiset.count_replicate, if_neg (Ne.symm hx)]
+        exact Nat.zero_le _
+    have hdvd_prod := Multiset.prod_dvd_prod_of_le hle
+    rw [Multiset.prod_replicate, Multiset.prod_coe] at hdvd_prod
+    rw [sq] at hdvd_prod
+    exact hdvd_prod
+  exact hp_irr.not_isUnit (hsq _ hp_mul_dvd)
+
+/--
+**#4611/#4746 capstone — `Factorization.factorPower` decomposition of the
+repeated part.**
+
+Every irreducible cover of `(Hex.normalizeForFactor f).squareFreeCore` lifts
+to an exponent list whose `Hex.Factorization.factorPower`-fold reconstructs
+`(Hex.normalizeForFactor f).repeatedPart` in `Hex.ZPoly`. This is the form
+consumed by the public Mathlib-free expansion wrapper
+`Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition`.
+
+The proof composes three landed substrates:
+
+* `normalizeForFactor_repeatedPart_normalizedFactor_covered_by_coreFactors`
+  (#4749), which guarantees every normalized factor of the repeated part is
+  Associated to one of the supplied core factors;
+* the normalize bridges
+  `normalizeForFactor_repeatedPart_toPolynomial_normalize` and
+  `HexBerlekampZassenhausMathlib.normalize_toPolynomial_of_normalizeFactorSign_id`
+  (#4758), which align the repeated part and each supplied core factor with
+  the `normalize`-fixed UFD canonical form in `Polynomial ℤ`;
+* `normalizeForFactor_squareFreeCore_toPolynomial_squarefree`, which (via the
+  local `List.nodup_of_prod_squarefree` helper) makes the transported
+  core-factor list pairwise distinct so that exponents per position are
+  unambiguous, and Mathlib's `Finset.prod_multiset_count_of_subset`
+  re-expresses `(normalizedFactors R).prod` as a finset-product over the
+  list's `toFinset`.
+
+The constructed exponents are
+`exponents[i] = Multiset.count (toPolynomial coreFactors[i]) (normalizedFactors R)`
+where `R = toPolynomial (normalizeForFactor f).repeatedPart`.
+
+The `hnorm` hypothesis (`Hex.normalizeFactorSign q = q` for each supplied core
+factor) is downstream-friendly: every arm discharger reaches this point after
+`multifactorLiftQuadratic`, where the lifted factors are monic, so
+`normalizeFactorSign q = q` is immediate from monicity (`leadingCoeff = 1`).
+-/
+theorem normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover
+    (f : Hex.ZPoly) (hf : f ≠ 0)
+    (coreFactors : Array Hex.ZPoly)
+    (hirr : ∀ q ∈ coreFactors.toList, Hex.ZPoly.Irreducible q)
+    (hprod : Array.polyProduct coreFactors =
+      (Hex.normalizeForFactor f).squareFreeCore)
+    (hnorm : ∀ q ∈ coreFactors.toList, Hex.normalizeFactorSign q = q) :
+    ∃ exponents : List Nat,
+      exponents.length = coreFactors.size ∧
+      (Hex.normalizeForFactor f).repeatedPart =
+        ((coreFactors.toList.zip exponents).map
+          (fun qe => Hex.Factorization.factorPower qe.1 qe.2)).foldl (· * ·) 1 := by
+  classical
+  -- Abbreviations.
+  set R : Polynomial ℤ :=
+    HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).repeatedPart with hR_def
+  set S : Polynomial ℤ :=
+    HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).squareFreeCore with hS_def
+  -- Side facts on `R`.
+  have hR_norm : normalize R = R :=
+    normalizeForFactor_repeatedPart_toPolynomial_normalize f hf
+  have hR_prim : R.IsPrimitive :=
+    normalizeForFactor_repeatedPart_toPolynomial_isPrimitive f hf
+  have hR_ne_zero : R ≠ 0 := hR_prim.ne_zero
+  -- Side facts on each `HexPolyZMathlib.toPolynomial q` for `q ∈ coreFactors`.
+  have hPq_irr : ∀ q ∈ coreFactors.toList,
+      Irreducible (HexPolyZMathlib.toPolynomial q) := fun q hq =>
+    (Hex.ZPoly.Irreducible_iff_polynomialIrreducible q).mp (hirr q hq)
+  have hPq_norm : ∀ q ∈ coreFactors.toList,
+      normalize (HexPolyZMathlib.toPolynomial q) = HexPolyZMathlib.toPolynomial q :=
+    fun q hq => normalize_toPolynomial_of_normalizeFactorSign_id
+      (hirr q hq).not_zero (hnorm q hq)
+  -- Bridge the executable product `polyProduct` into a `List.prod` in
+  -- `Polynomial ℤ`.
+  have hS_eq : (coreFactors.toList.map HexPolyZMathlib.toPolynomial).prod = S := by
+    show _ = HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).squareFreeCore
+    rw [← hprod, polyProduct_toPolynomial]
+  have hS_sqfree : Squarefree S :=
+    normalizeForFactor_squareFreeCore_toPolynomial_squarefree f hf
+  have hS_ne_zero : S ≠ 0 := hS_sqfree.ne_zero
+  -- The transported core-factor list is `Nodup` (every duplicate would let a
+  -- square of an irreducible divide the squarefree `S`).
+  have hPq_list_nodup : (coreFactors.toList.map HexPolyZMathlib.toPolynomial).Nodup := by
+    apply List.nodup_of_prod_squarefree
+    · intro p hp
+      obtain ⟨q, hq, rfl⟩ := List.mem_map.mp hp
+      exact hPq_irr q hq
+    · rw [hS_eq]; exact hS_sqfree
+  -- Every normalized factor of `R` is one of the transported core factors.
+  have hcover := normalizeForFactor_repeatedPart_normalizedFactor_covered_by_coreFactors
+    f hf coreFactors hirr hprod
+  have hsubset : ∀ r ∈ UniqueFactorizationMonoid.normalizedFactors R,
+      r ∈ (coreFactors.toList.map HexPolyZMathlib.toPolynomial : List _).toFinset := by
+    intro r hr
+    obtain ⟨q, hq, hassoc⟩ := hcover r hr
+    have hr_norm : normalize r = r :=
+      UniqueFactorizationMonoid.normalize_normalized_factor r hr
+    have hr_eq : r = HexPolyZMathlib.toPolynomial q := by
+      have hassoc_norm : normalize r = normalize (HexPolyZMathlib.toPolynomial q) :=
+        normalize_eq_normalize_iff.mpr (dvd_dvd_iff_associated.mpr hassoc)
+      rw [hr_norm, hPq_norm q hq] at hassoc_norm
+      exact hassoc_norm
+    rw [List.mem_toFinset, List.mem_map]
+    exact ⟨q, hq, hr_eq.symm⟩
+  -- Define the exponent list as a count over the multiset of normalized factors.
+  set exponents : List Nat :=
+    coreFactors.toList.map (fun q =>
+      Multiset.count (HexPolyZMathlib.toPolynomial q)
+        (UniqueFactorizationMonoid.normalizedFactors R)) with hexponents_def
+  have hlen : exponents.length = coreFactors.size := by
+    simp [exponents]
+  -- Apply the existing `_isPow` wrapper.
+  refine normalizeForFactor_repeatedPart_isPow_polyProduct_of_irreducible_factors_cover
+    f hf coreFactors hirr hprod exponents hlen ?_
+  -- Fold the unfolded `toPolynomial …` back into `R` so subsequent rewrites match.
+  change R = _
+  -- The RHS reduces to a `List.map` over `coreFactors.toList.map toPolynomial`
+  -- whose entries are `p ^ count p (normalizedFactors R)`. Using `Nodup`, that
+  -- list-prod equals a `Finset.prod` over the `toFinset`; `R = (normalizedFactors R).prod`
+  -- closes the goal via `prod_multiset_count_of_subset`.
+  have hRHS_eq :
+      ((coreFactors.toList.zip exponents).map
+        (fun qe => HexPolyZMathlib.toPolynomial qe.1 ^ qe.2)).prod
+      = ((coreFactors.toList.map HexPolyZMathlib.toPolynomial).map
+          (fun p => p ^ Multiset.count p
+            (UniqueFactorizationMonoid.normalizedFactors R))).prod := by
+    rw [show coreFactors.toList.zip exponents
+          = coreFactors.toList.map (fun q => (q,
+              Multiset.count (HexPolyZMathlib.toPolynomial q)
+                (UniqueFactorizationMonoid.normalizedFactors R)))
+        from zip_map_self _ _]
+    simp [List.map_map, Function.comp_def]
+  rw [hRHS_eq]
+  rw [← List.prod_toFinset _ hPq_list_nodup]
+  -- Goal: R = ∏ p ∈ (coreFactors.toList.map toPoly).toFinset, p ^ count p (normalizedFactors R)
+  have hR_prod_norm :
+      (UniqueFactorizationMonoid.normalizedFactors R).prod = R := by
+    have := UniqueFactorizationMonoid.prod_normalizedFactors_eq hR_ne_zero
+    rw [hR_norm] at this
+    exact this
+  conv_lhs => rw [← hR_prod_norm]
+  -- Goal: (normalizedFactors R).prod = ∏ p ∈ list.toFinset, p ^ count p (normalizedFactors R)
+  exact Finset.prod_multiset_count_of_subset
+    (UniqueFactorizationMonoid.normalizedFactors R)
+    (coreFactors.toList.map HexPolyZMathlib.toPolynomial).toFinset
+    (by intro r hr; rw [Multiset.mem_toFinset] at hr; exact hsubset r hr)
 
 end IntReductionMod
 
