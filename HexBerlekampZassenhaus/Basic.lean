@@ -5414,9 +5414,8 @@ private theorem factorFastFactorsWithBound_eq_some_of_core_success
     rw [if_neg hnotsingleton]
     rw [hcore]
 
-set_option maxHeartbeats 4000000 in
 /-- Classify the raw fast-path factor array by the dispatch branch that
-emitted it. Mirrors `factorSlowFactorsWithBound_branch` (line 5043) for the
+emitted it. Mirrors `factorSlowFactorsWithBound_branch` (line 5275) for the
 fast path, which has more sub-cases due to the BHKS / quadratic-root /
 small-mod prime classification cascade.
 
