@@ -499,16 +499,22 @@ private def berlekampFactorsModP (f : ZPoly) (c : SmallPrimeCandidate) :
   letI := c.field
   let fModP := ZPoly.modP c.p f
   if hzero : fModP.isZero = false then
-    (Berlekamp.berlekampFactor
+    ((Berlekamp.berlekampFactor
       (monicModularImage fModP)
-      (monicModularImage_monic c.prime fModP hzero)).factors.toArray
+      (monicModularImage_monic c.prime fModP hzero)).factors.map
+        monicModularImage).toArray
   else
     #[]
 
 /--
 Defining equation for `berlekampFactorsModP` on a candidate whose modular image
-is nonzero: the factor array is exactly the executable Berlekamp factor list
-applied to the candidate's monic modular image.
+is nonzero: the factor array is the executable Berlekamp factor list applied to
+the candidate's monic modular image, with each factor post-processed through
+`monicModularImage` to normalise it to its monic associate.  The EEA-based
+`DensePoly.gcd` returns each Berlekamp split factor up to a unit scalar, so the
+extraction layer applies the leading-coefficient inverse scaling here, isolating
+the normalisation step to this consumer without touching
+`HexBerlekamp/Factor.lean`.
 -/
 private theorem berlekampFactorsModP_eq_of_isZero_false
     (f : ZPoly) (c : SmallPrimeCandidate) :
@@ -516,9 +522,10 @@ private theorem berlekampFactorsModP_eq_of_isZero_false
     letI := c.field
     ∀ (hzero : (ZPoly.modP c.p f).isZero = false),
       berlekampFactorsModP f c =
-        (Berlekamp.berlekampFactor
+        ((Berlekamp.berlekampFactor
           (monicModularImage (ZPoly.modP c.p f))
-          (monicModularImage_monic c.prime (ZPoly.modP c.p f) hzero)).factors.toArray := by
+          (monicModularImage_monic c.prime (ZPoly.modP c.p f) hzero)).factors.map
+            monicModularImage).toArray := by
   letI := c.bounds
   letI := c.field
   intro hzero
@@ -1584,10 +1591,10 @@ def factorsModPBerlekampForm
     (hzero : (ZPoly.modP data.p f).isZero = false)
     (hfield : Lean.Grind.Field (ZMod64 data.p)),
     data.factorsModP =
-      (@Berlekamp.berlekampFactor data.p data.bounds
+      ((@Berlekamp.berlekampFactor data.p data.bounds
         (monicModularImage (ZPoly.modP data.p f))
         (monicModularImage_monic hprime (ZPoly.modP data.p f) hzero)
-        hfield).factors.toArray
+        hfield).factors.map monicModularImage).toArray
 
 private theorem primeChoiceDataScore_factorsModPBerlekampForm
     (f : ZPoly) (c : SmallPrimeCandidate) (score : PrimeChoiceDataScore)
@@ -1679,12 +1686,12 @@ theorem choosePrimeData?_factorsModP_berlekamp_form
     ∃ (hzero : (ZPoly.modP data.p f).isZero = false)
       (hfield : Lean.Grind.Field (ZMod64 data.p)),
       data.factorsModP =
-        (@Berlekamp.berlekampFactor data.p data.bounds
+        ((@Berlekamp.berlekampFactor data.p data.bounds
           (monicModularImage (ZPoly.modP data.p f))
           (monicModularImage_monic
             (choosePrimeData?_prime f data hdata)
             (ZPoly.modP data.p f) hzero)
-          hfield).factors.toArray := by
+          hfield).factors.map monicModularImage).toArray := by
   unfold choosePrimeData? at hdata
   cases hscore :
       smallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none with

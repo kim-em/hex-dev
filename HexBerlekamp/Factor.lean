@@ -805,6 +805,51 @@ private theorem dvd_factorProduct_of_mem
             congrArg (fun y => y * k) (DensePoly.mul_comm_poly x g)
         _ = g * (x * k) := DensePoly.mul_assoc_poly g x k
 
+/-- Two distinct elements of a `Nodup` list of `FpPoly p` have a product that
+divides the list's product. -/
+theorem mul_dvd_factorProduct_of_mem_of_ne
+    [ZMod64.PrimeModulus p]
+    {xs : List (FpPoly p)} (h_nodup : xs.Nodup)
+    {a b : FpPoly p} (ha : a ∈ xs) (hb : b ∈ xs) (hab : a ≠ b) :
+    a * b ∣ factorProduct xs := by
+  induction xs with
+  | nil => exact absurd ha List.not_mem_nil
+  | cons x rest ih =>
+    have h_rest_nodup : rest.Nodup := (List.nodup_cons.mp h_nodup).2
+    rw [factorProduct_cons]
+    rcases List.mem_cons.mp ha with hax | har
+    · -- a = x
+      subst hax
+      rcases List.mem_cons.mp hb with hbx | hbr
+      · subst hbx; exact absurd rfl hab
+      · -- a = x, b ∈ rest. factorProduct (x :: rest) = a * factorProduct rest.
+        rcases dvd_factorProduct_of_mem rest hbr with ⟨q, hq⟩
+        refine ⟨q, ?_⟩
+        rw [hq]
+        exact (DensePoly.mul_assoc_poly a b q).symm
+    · -- a ∈ rest
+      rcases List.mem_cons.mp hb with hbx | hbr
+      · -- a ∈ rest, b = x. factorProduct (x :: rest) = b * factorProduct rest.
+        subst hbx
+        rcases dvd_factorProduct_of_mem rest har with ⟨q, hq⟩
+        refine ⟨q, ?_⟩
+        rw [hq]
+        -- Goal: b * (a * q) = a * b * q
+        calc b * (a * q)
+            = (b * a) * q := (DensePoly.mul_assoc_poly _ _ _).symm
+          _ = (a * b) * q :=
+              congrArg (· * q) (DensePoly.mul_comm_poly _ _)
+      · -- both a, b ∈ rest
+        rcases ih h_rest_nodup har hbr with ⟨q, hq⟩
+        refine ⟨x * q, ?_⟩
+        rw [hq]
+        -- Goal: x * (a * b * q) = a * b * (x * q)
+        calc x * (a * b * q)
+            = (x * (a * b)) * q := (DensePoly.mul_assoc_poly _ _ _).symm
+          _ = ((a * b) * x) * q :=
+              congrArg (· * q) (DensePoly.mul_comm_poly _ _)
+          _ = (a * b) * (x * q) := DensePoly.mul_assoc_poly _ _ _
+
 /-- A polynomial that divides both `a` and `b` squares-divides `a * b`. -/
 private theorem squared_dvd_of_dvd_dvd
     [ZMod64.PrimeModulus p]

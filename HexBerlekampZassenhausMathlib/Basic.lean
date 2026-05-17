@@ -4490,7 +4490,7 @@ theorem factorsModP_ne_nil_of_factorsModPBerlekampForm
       (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
       (Hex.monicModularImage_monic hprime (Hex.ZPoly.modP primeData.p core) hzero)
   rw [heq]
-  simpa using hbl_ne
+  simpa [List.map_eq_nil_iff] using hbl_ne
 
 /-- Composed convenience wrapper: combines
 `Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData` with
