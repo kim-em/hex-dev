@@ -8295,39 +8295,6 @@ theorem quadraticIntegerRootFactors?_factor_irreducible_of_primitive
   · exact quadraticIntegerRootFactors?_factor_irreducible_of_ne_residual
       hquad hmem hres
 
-/-- Membership classifier for a reassembled quadratic-root branch. A raw factor
-is either one of the already-proved irreducible normalization/root factors, the
-normalization repeated-part fallback, or the optional residual appended by the
-quadratic splitter. -/
-theorem reassemblePolynomialFactors_quadratic_irreducible_or_repeated_or_residual
-    (d : FactorNormalizationData) {coreFactors : Array ZPoly} {factor : ZPoly}
-    (hquad : quadraticIntegerRootFactors? d.squareFreeCore = some coreFactors)
-    (hmem : factor ∈ (reassemblePolynomialFactors d coreFactors).toList) :
-    ZPoly.Irreducible factor ∨
-      factor ∈ (repeatedPartFactorArray d.repeatedPart).toList ∨
-      factor =
-        (splitIntegerRootFactorsAux d.squareFreeCore
-          (integerRootCandidates d.squareFreeCore)
-          (integerRootCandidates d.squareFreeCore).length).2 := by
-  rcases reassemblePolynomialFactors_mem d coreFactors factor hmem with hprefix | hcore
-  · unfold polynomialNormalizationPrefixFactors at hprefix
-    rw [Array.toList_append] at hprefix
-    simp only [List.mem_append] at hprefix
-    cases hprefix with
-    | inl hx =>
-        exact Or.inl (xPowerFactorArray_irreducible d.xPower factor hx)
-    | inr hrep =>
-        exact Or.inr (Or.inl hrep)
-  · by_cases hres :
-        factor =
-          (splitIntegerRootFactorsAux d.squareFreeCore
-            (integerRootCandidates d.squareFreeCore)
-            (integerRootCandidates d.squareFreeCore).length).2
-    · exact Or.inr (Or.inr hres)
-    · exact Or.inl
-        (quadraticIntegerRootFactors?_factor_irreducible_of_ne_residual
-          hquad hcore hres)
-
 private theorem quadraticIntegerRootFactors?_product
     {core : ZPoly} {factors : Array ZPoly}
     (hquad : quadraticIntegerRootFactors? core = some factors) :
