@@ -9980,7 +9980,7 @@ theorem extractXPower_core_ne_zero_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
     (ZPoly.extractXPower (ZPoly.primitivePart f)).core ≠ 0 :=
   ZPoly.ne_zero_of_primitive _ (extractXPower_core_primitive_of_ne_zero f hf)
 
-private theorem repeatedPart_ne_zero_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
+theorem repeatedPart_ne_zero_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
     (normalizeForFactor f).repeatedPart ≠ 0 := by
   unfold normalizeForFactor
   simp only
