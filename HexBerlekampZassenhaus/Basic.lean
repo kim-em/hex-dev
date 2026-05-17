@@ -1937,6 +1937,45 @@ theorem choosePrimeData?_factorsModP_berlekamp_form
       obtain ⟨_, hzero, hfield, heq⟩ := hform
       exact ⟨hzero, hfield, heq⟩
 
+/--
+Small-mod singleton executable branch fact for the selected monic modular
+image.
+
+When `choosePrimeData?` succeeds and the public `factorsModP` field has size at
+most one, the underlying Berlekamp factor list for
+`monicModularImage (ZPoly.modP data.p f)` also has length at most one.  This is
+the Mathlib-free shape fact needed before applying Berlekamp soundness in a
+caller that already imports the heavier Rabin proof module.
+-/
+theorem choosePrimeData?_berlekampFactor_factors_length_le_one_of_small
+    (f : ZPoly) (data : PrimeChoiceData)
+    (hdata : choosePrimeData? f = some data)
+    (hsmall : data.factorsModP.size ≤ 1) :
+    letI := data.bounds
+    ∃ (hzero : (@ZPoly.modP data.p data.bounds f).isZero = false)
+      (hfield : Lean.Grind.Field (ZMod64 data.p)),
+      (@Berlekamp.berlekampFactor data.p data.bounds
+        (@monicModularImage data.p data.bounds
+          (@ZPoly.modP data.p data.bounds f))
+        (monicModularImage_monic
+          (choosePrimeData?_prime f data hdata)
+          (@ZPoly.modP data.p data.bounds f) hzero)
+        hfield).factors.length ≤ 1 := by
+  letI := data.bounds
+  obtain ⟨hzero, hfield, hform⟩ :=
+    choosePrimeData?_factorsModP_berlekamp_form f data hdata
+  refine ⟨hzero, hfield, ?_⟩
+  have hlen :
+      (@Berlekamp.berlekampFactor data.p data.bounds
+        (@monicModularImage data.p data.bounds
+          (@ZPoly.modP data.p data.bounds f))
+        (monicModularImage_monic
+          (choosePrimeData?_prime f data hdata)
+          (@ZPoly.modP data.p data.bounds f) hzero)
+        hfield).factors.length ≤ 1 := by
+    simpa [hform] using hsmall
+  exact hlen
+
 /-- The prime selected by `choosePrimeData` is one of the fixed prime candidates. -/
 theorem choosePrimeData_prime (f : ZPoly) :
     Nat.Prime (choosePrimeData f).p := by
