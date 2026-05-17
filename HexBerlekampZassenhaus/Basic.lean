@@ -3366,7 +3366,7 @@ private def splitIntegerRootFactorsAux :
           (#[factor] ++ rest.1, rest.2)
       | none => splitIntegerRootFactorsAux target roots fuel
 
-private def quadraticIntegerRootFactors? (core : ZPoly) : Option (Array ZPoly) :=
+def quadraticIntegerRootFactors? (core : ZPoly) : Option (Array ZPoly) :=
   if core.degree?.getD 0 = 2 then
     let roots := integerRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
