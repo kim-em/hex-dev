@@ -22,7 +22,10 @@ namespace ZPoly
 
 /-- Iterate `quadraticHenselStep` on a Bezout-witnessed factorisation,
 doubling the modulus exponent each time. The first index is the current
-modulus exponent; the second is the number of remaining doubling steps. -/
+modulus exponent; the second is the number of remaining doubling steps.
+After `fuel` steps the loop has reached exponent `current * 2 ^ fuel`;
+this counting is the doubling-loop fact consumed by
+`iterateQuadraticHensel_invariant`. -/
 private def iterateQuadraticHensel
     (p : Nat) [ZMod64.Bounds p] (f : ZPoly) :
     Nat → Nat → QuadraticLiftResult → QuadraticLiftResult
@@ -33,7 +36,11 @@ private def iterateQuadraticHensel
       iterateQuadraticHensel p f (2 * current) fuel next
 
 /-- Number of quadratic-doubling steps needed to reach precision `p^k`
-from data valid modulo `p`. -/
+from data valid modulo `p`. Returns `0` when `k ≤ 1` (no doubling needed)
+and `⌊log₂ (k - 1)⌋ + 1` otherwise, the least `n` with `k ≤ 2 ^ n`.
+The bound `k ≤ 2 ^ quadraticDoublingSteps k` is what
+`henselLiftQuadratic_spec` consumes to descend from the loop modulus
+`p ^ (2 ^ quadraticDoublingSteps k)` back to the requested `p ^ k`. -/
 def quadraticDoublingSteps (k : Nat) : Nat :=
   if k ≤ 1 then 0 else (k - 1).log2 + 1
 
@@ -53,6 +60,13 @@ def henselLiftQuadratic
     s := ZPoly.reduceModPow lifted.s p k
     t := ZPoly.reduceModPow lifted.t p k }
 
+/-- Recursive list-shape worker behind `multifactorLiftQuadratic`. At each
+non-singleton step it lifts the head factor `g` against the running
+complementary product `Array.polyProduct rest.toArray` via
+`henselLiftQuadratic`, and recurses with `lifted.h` as the new target on
+`rest`. The singleton case returns the input reduced modulo `p^k`; the
+empty case returns the empty array. Mirrors `multifactorLiftList` in
+`HexHensel.Multifactor` but uses the quadratic doubling primitive. -/
 private def multifactorLiftQuadraticList
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) : List ZPoly → Array ZPoly
@@ -79,7 +93,18 @@ def multifactorLiftQuadratic
     (f : ZPoly) (factors : Array ZPoly) : Array ZPoly :=
   multifactorLiftQuadraticList p k f factors.toList
 
-/-- The proof state carried by one quadratic Hensel loop modulus. -/
+/-- The proof state carried by one quadratic Hensel loop modulus `m`. A
+caller writing proofs against this invariant must supply three conjuncts,
+in this order:
+
+1. **Product congruence**: `acc.g * acc.h ≡ f (mod m)`;
+2. **Bezout congruence**: `acc.s * acc.g + acc.t * acc.h ≡ 1 (mod m)`;
+3. **Leading factor monic**: `acc.g` is monic.
+
+The constructor `QuadraticLiftLoopInvariant.of_product_bezout_monic`
+takes the three facts in the same order. Together they are exactly the
+preconditions consumed by one application of `quadraticHenselStep` (and,
+inductively, by the doubling loop in `iterateQuadraticHensel`). -/
 def QuadraticLiftLoopInvariant
     (m : Nat) (f : ZPoly) (acc : QuadraticLiftResult) : Prop :=
   ZPoly.congr (acc.g * acc.h) f m ∧
@@ -376,7 +401,13 @@ theorem henselLiftQuadratic_g_congr_mod_base
   rw [heq]
   exact ZPoly.congr_trans _ _ _ p hreduce_p hloop_g
 
-/-- The binary quadratic wrapper lifts a factorisation to congruence modulo `p^k`. -/
+/-- Public correctness contract for the binary quadratic wrapper: starting
+from a `QuadraticLiftLoopInvariant p f { g, h, s, t }` (product
+congruence + Bezout + `Monic g`, all mod `p`), the lifted pair
+satisfies `lifted.g * lifted.h ≡ f (mod p^k)`. The proof routes the
+invariant through the doubling loop to obtain the product congruence at
+the loop modulus `p ^ (2 ^ quadraticDoublingSteps k)`, then descends to
+`p^k` using `k ≤ 2 ^ quadraticDoublingSteps k`. -/
 theorem henselLiftQuadratic_spec
     (p k : Nat) [ZMod64.Bounds p]
     (f g h s t : ZPoly)
@@ -418,9 +449,18 @@ theorem henselLiftQuadratic_spec
 /--
 Recursive preconditions required by the sequential quadratic multifactor lift.
 
-Each nontrivial split carries the initial quadratic loop invariant needed by
-`henselLiftQuadratic`; the recursive tail carries the same contract for the
-lifted complementary factor.
+In the `g :: h :: tail` arm, the two conjuncts are exactly the inputs
+`henselLiftQuadratic_spec` consumes for the binary split of `g` against the
+running complementary product `Array.polyProduct (h :: tail).toArray`,
+followed by the recursive precondition for the lifted complement:
+
+1. `QuadraticLiftLoopInvariant` at modulus `p` — initial state package
+   (product congruence, Bezout, monicness) for the binary doubling loop;
+2. `QuadraticMultifactorLiftInvariant` for the recursive tail with
+   `lifted.h` as the new target.
+
+The base cases impose the trivial obligations: `congr 1 f (p ^ k)` for the
+empty list (vacuous product) and no preconditions for a singleton.
 -/
 def QuadraticMultifactorLiftInvariant
     (p k : Nat) [ZMod64.Bounds p]
@@ -439,6 +479,15 @@ def QuadraticMultifactorLiftInvariant
 /--
 The split-coprimality boundary data needed to initialise every quadratic split
 in the sequential multifactor tree from factors modulo `p`.
+
+In the `g :: h :: tail` arm the requirement is that the normalised XGCD of
+`g` against the lifted complementary product `Array.polyProduct ((h :: tail).map FpPoly.liftToZ).toArray`
+returns `gcd = 1` in `FpPoly p`, and that the same coprimality holds
+recursively on the tail. The base cases (empty list, singleton) are vacuous.
+
+Consumed by `quadraticMultifactorLiftInvariant_of_factorsModP`: the
+per-split `gcd = 1` lifts via `normalizedXGCD_liftToZ_bezout_congr_of_gcd_eq_one`
+into the Bezout half of `QuadraticLiftLoopInvariant`.
 -/
 def QuadraticMultifactorCoprimeSplits
     (p : Nat) [ZMod64.Bounds p] : List (FpPoly p) → Prop
@@ -450,6 +499,11 @@ def QuadraticMultifactorCoprimeSplits
       xgcd.gcd = (1 : FpPoly p) ∧
         QuadraticMultifactorCoprimeSplits p rest
 
+/-- Induction-on-`factors` correctness statement feeding
+`multifactorLiftQuadratic_spec`: the ordered product of the lifted
+factors is congruent to `f` modulo `p^k`, provided each recursive binary
+split supplies the quadratic Hensel invariant package threaded by
+`QuadraticMultifactorLiftInvariant`. -/
 private theorem multifactorLiftQuadraticList_spec
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) (factors : List ZPoly)
@@ -798,8 +852,23 @@ theorem henselLiftQuadratic_h_monic
 
 /--
 Build the recursive quadratic multifactor lift invariant from the natural
-mod-`p` boundary facts: monic lifted factors, product congruence, and coprime
-sequential splits.
+mod-`p` boundary facts. The caller supplies, for the list of `FpPoly p`
+factors lifted via `FpPoly.liftToZ`:
+
+* `hf_monic` and `hfactors_monic` — `f` and every factor is monic
+  (each split's leading factor is monic; `f` itself is needed
+  recursively as the doubling-loop's target stays monic);
+* `hproduct_mod_p` — the lifted ordered product is congruent to `f` mod `p`
+  (feeds the product half of `QuadraticLiftLoopInvariant`);
+* `hcoprime : QuadraticMultifactorCoprimeSplits p factors` — every split's
+  normalised XGCD has `gcd = 1` over `FpPoly p` (feeds the Bezout half
+  via `normalizedXGCD_liftToZ_bezout_congr_of_gcd_eq_one`);
+* `hnonempty` — the factor list is nonempty (rules out the vacuous base
+  case which would force `congr 1 f (p^k)`).
+
+The recursive tail re-establishes the same package using
+`henselLiftQuadratic_h_congr_mod_base` for the lifted complementary factor
+and `henselLiftQuadratic_h_monic` for its monicness.
 -/
 theorem quadraticMultifactorLiftInvariant_of_factorsModP
     (p k : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
