@@ -1635,6 +1635,50 @@ theorem unique_liftedFactorSubset_of_henselSubsetCorrespondence
   h.unique_subset (factor := factor) (S := S) (T := T) hirr hdvd hS hT
 
 /--
+Descent wrapper for lifted Hensel subset representations.
+
+Once the mod-`p` subset partition, the lifted-subset correspondence, and the
+forward mod-`p`-to-lift transport are available, any lifted representation of
+an irreducible integer factor is the canonical lift of its unique mod-`p`
+representing subset.  This packages the purely structural part of the descent
+argument; the analytic Hensel facts remain supplied by the input hypotheses.
+-/
+theorem henselLiftData_represents_modP_of_lifted
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData}
+    {admissiblePrime squareFreeReduction successfulLift : Prop}
+    (hmod :
+      ModPSubsetPartitionHypotheses core primeData
+        admissiblePrime squareFreeReduction)
+    (hcorr :
+      HenselSubsetCorrespondenceHypotheses core B primeData d
+        admissiblePrime successfulLift)
+    (hsize : d.liftedFactors.size = primeData.factorsModP.size)
+    (hlifted_of_modP :
+      ∀ {factor : Hex.ZPoly} {S : ModPFactorSubset primeData},
+        Irreducible (HexPolyZMathlib.toPolynomial factor) →
+        factor ∣ core →
+        RepresentsIntegerFactorModP primeData factor S →
+        RepresentsIntegerFactorAtLift core d factor
+          (liftedSubsetOfModPSubset primeData d hsize S))
+    {factor : Hex.ZPoly} {T : LiftedFactorSubset d}
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hdvd : factor ∣ core)
+    (hT : RepresentsIntegerFactorAtLift core d factor T) :
+    ∃ S : ModPFactorSubset primeData,
+      T = liftedSubsetOfModPSubset primeData d hsize S ∧
+        RepresentsIntegerFactorModP primeData factor S := by
+  rcases hmod.exists_subset hirr hdvd with ⟨S, hS_mod⟩
+  have hS_lift :
+      RepresentsIntegerFactorAtLift core d factor
+        (liftedSubsetOfModPSubset primeData d hsize S) :=
+    hlifted_of_modP hirr hdvd hS_mod
+  have hT_eq :
+      T = liftedSubsetOfModPSubset primeData d hsize S := by
+    exact (hcorr.unique_subset hirr hdvd hS_lift hT).symm
+  exact ⟨S, hT_eq, hS_mod⟩
+
+/--
 Proof-facing package for transporting the mod-`p` subset partition through a
 successful Hensel lift.
 
