@@ -6508,6 +6508,113 @@ theorem liftedFactorProduct_union_of_disjoint
   rw [liftedFactorProduct_eq_mul_sdiff_of_subset hSsub, hsdiff]
 
 /--
+The full lifted-factor product over `Finset.univ` collapses to the executable
+`Array.polyProduct` of the raw lifted-factor array.
+
+The proof routes through `HexPolyZMathlib.equiv.injective`: under the
+`toPolynomial` bridge, both sides expand to the same finite product over
+`Fin d.liftedFactors.size`, using `toPolynomial_liftedFactorProduct`,
+`polyProduct_toPolynomial`, and `Finset.prod_univ_fun_getElem` modulo the
+`Array.length_toList` size identification.
+
+This is the structural bridge needed to feed the multifactor-lift product
+spec into subset-based recombination reasoning.
+-/
+theorem liftedFactorProduct_univ_eq_polyProduct_liftedFactors
+    (d : Hex.LiftData) :
+    liftedFactorProduct d (Finset.univ : Finset (LiftedFactorIndex d)) =
+      Array.polyProduct d.liftedFactors := by
+  apply HexPolyZMathlib.equiv.injective
+  show HexPolyZMathlib.toPolynomial _ = HexPolyZMathlib.toPolynomial _
+  rw [toPolynomial_liftedFactorProduct, polyProduct_toPolynomial,
+    ← Fin.prod_univ_fun_getElem d.liftedFactors.toList HexPolyZMathlib.toPolynomial]
+  have hlen : d.liftedFactors.toList.length = d.liftedFactors.size :=
+    Array.length_toList
+  refine Fintype.prod_equiv (finCongr hlen.symm) _ _ ?_
+  intro i
+  show HexPolyZMathlib.toPolynomial d.liftedFactors[i.val] =
+    HexPolyZMathlib.toPolynomial d.liftedFactors.toList[i.val]
+  rw [Array.getElem_toList]
+
+/--
+Under the recursive quadratic multifactor lift invariant, the product of all
+Hensel-lifted local factors is congruent to `core` modulo `primeData.p ^ B`.
+
+This is the umbrella wrapper combining
+`liftedFactorProduct_univ_eq_polyProduct_liftedFactors` with
+`Hex.ZPoly.multifactorLiftQuadratic_spec` so downstream subset-recombination
+proofs can split the full product through
+`liftedFactorProduct_eq_mul_sdiff_of_subset`.
+-/
+theorem henselLiftData_liftedFactorProduct_univ_congr_core
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hprime_invariant :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant
+        primeData.p B core
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList)
+    (hp : 1 < primeData.p)
+    (hB : 1 ≤ B) :
+    letI := primeData.bounds
+    Hex.ZPoly.congr
+      (liftedFactorProduct (Hex.henselLiftData core B primeData)
+        (Finset.univ : Finset
+          (LiftedFactorIndex (Hex.henselLiftData core B primeData))))
+      core (primeData.p ^ B) := by
+  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  rw [liftedFactorProduct_univ_eq_polyProduct_liftedFactors]
+  change Hex.ZPoly.congr
+    (Array.polyProduct
+      (Hex.ZPoly.multifactorLiftQuadratic primeData.p B core
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ)))
+    core (primeData.p ^ B)
+  exact Hex.ZPoly.multifactorLiftQuadratic_spec primeData.p B core
+    (primeData.factorsModP.map Hex.FpPoly.liftToZ) hB hp hprime_invariant
+
+/--
+The lifted-factor product over a subset times the lifted-factor product over
+its complement (within `Finset.univ`) is congruent to `core` modulo
+`primeData.p ^ B`, under the recursive quadratic multifactor lift invariant.
+
+This packages the mod-`p^k` factorization input required by Hensel
+uniqueness consumers (`HexHenselMathlib.hensel_unique`): the subset product
+plays the role of `g` and the complement product plays the role of `h` in
+`g * h ≡ core (mod p^k)`. The proof combines the full-product congruence
+(`henselLiftData_liftedFactorProduct_univ_congr_core`) with the multiplicative
+splitting `liftedFactorProduct_eq_mul_sdiff_of_subset`.
+-/
+theorem henselLiftData_liftedFactorProduct_subset_complement_congr_core
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hprime_invariant :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant
+        primeData.p B core
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList)
+    (hp : 1 < primeData.p)
+    (hB : 1 ≤ B)
+    (S : LiftedFactorSubset (Hex.henselLiftData core B primeData)) :
+    letI := primeData.bounds
+    Hex.ZPoly.congr
+      (liftedFactorProduct (Hex.henselLiftData core B primeData) S *
+        liftedFactorProduct (Hex.henselLiftData core B primeData)
+          (Finset.univ \ S))
+      core (primeData.p ^ B) := by
+  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  have hfull :=
+    henselLiftData_liftedFactorProduct_univ_congr_core core B primeData
+      hprime_invariant hp hB
+  have hsplit :
+      liftedFactorProduct (Hex.henselLiftData core B primeData)
+          (Finset.univ : Finset
+            (LiftedFactorIndex (Hex.henselLiftData core B primeData))) =
+        liftedFactorProduct (Hex.henselLiftData core B primeData) S *
+          liftedFactorProduct (Hex.henselLiftData core B primeData)
+            (Finset.univ \ S) :=
+    liftedFactorProduct_eq_mul_sdiff_of_subset (Finset.subset_univ S)
+  rw [← hsplit]
+  exact hfull
+
+/--
 `Hex.ZPoly.congr` follows from coefficientwise equality of the canonical
 reductions modulo `p ^ k`. The forward direction is
 `Hex.ZPoly.reduceModPow_eq_of_congr`; this is the reverse direction, derived
@@ -6595,6 +6702,34 @@ theorem liftedFactorProduct_monic
     apply ih
     · exact zpoly_monic_mul hacc (hl x List.mem_cons_self)
     · intro i hi; exact hl i (List.mem_cons_of_mem _ hi)
+
+/--
+Monicity of the Hensel-lifted subset product under the quadratic multifactor
+lift invariant.
+
+Each Hensel-lifted local factor is monic
+(`henselLiftData_liftedFactor_monic`), and the foldl product of monic factors
+is monic (`liftedFactorProduct_monic`), so any selected subset product is
+monic. This is the monicity input required by
+`HexHenselMathlib.hensel_unique` for the selected factor.
+-/
+theorem henselLiftData_liftedFactorProduct_monic
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hprime_invariant :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant
+        primeData.p B core
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList)
+    (hp : 1 < primeData.p)
+    (hB : 1 ≤ B)
+    (S : LiftedFactorSubset (Hex.henselLiftData core B primeData)) :
+    Hex.DensePoly.Monic
+      (liftedFactorProduct (Hex.henselLiftData core B primeData) S) :=
+  liftedFactorProduct_monic (Hex.henselLiftData core B primeData) S
+    (fun i _ =>
+      henselLiftData_liftedFactor_monic core B primeData hcore_monic
+        hprime_invariant hp hB i)
 
 /-- `centeredModNat 1 m = 1` when `m ≥ 2`: the value `1` lies in the centred
 half-window and is preserved by the centred-reduction operation. -/
