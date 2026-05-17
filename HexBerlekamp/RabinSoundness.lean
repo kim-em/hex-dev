@@ -2375,9 +2375,26 @@ private theorem dvd_derivative_of_squared_dvd
     _ = g * (k * h + g * DensePoly.derivative h) :=
         (DensePoly.mul_add_right_poly g (k * h) (g * DensePoly.derivative h)).symm
 
+/-- Adapter from the strict executable-gcd form of square-freeness
+(`DensePoly.gcd r r' = 1`) to the relaxed common-divisor form
+(`∀ d, d ∣ r → d ∣ r' → isUnitPolynomial d`).  The relaxed form is the
+shape the soundness chain culminating in `berlekampFactor_singleton_irreducible`
+consumes; the strict form is what existing in-tree callers carry, so this
+adapter lets them feed the chain unchanged. -/
+theorem squareFree_common_of_gcd_eq_one
+    {r : FpPoly p}
+    (hsf : DensePoly.gcd r (DensePoly.derivative r) = 1) :
+    ∀ d, d ∣ r → d ∣ DensePoly.derivative r → isUnitPolynomial d = true := by
+  intro d hda hdb
+  have hd_dvd_gcd : d ∣ DensePoly.gcd r (DensePoly.derivative r) :=
+    DensePoly.dvd_gcd d r (DensePoly.derivative r) hda hdb
+  rw [hsf] at hd_dvd_gcd
+  exact isUnitPolynomial_of_dvd_isUnitPolynomial hd_dvd_gcd isUnitPolynomial_one_FpPoly
+
+omit [ZMod64.PrimeModulus p] in
 theorem isUnitPolynomial_of_squareFree_of_squared_dvd
     {r g : FpPoly p}
-    (hsf : DensePoly.gcd r (DensePoly.derivative r) = 1)
+    (hsf : ∀ d, d ∣ r → d ∣ DensePoly.derivative r → isUnitPolynomial d = true)
     (hgg : g * g ∣ r) :
     isUnitPolynomial g = true := by
   have hgr : g ∣ r := by
@@ -2386,10 +2403,7 @@ theorem isUnitPolynomial_of_squareFree_of_squared_dvd
     rw [hb]
     exact DensePoly.mul_assoc_poly g g b
   have hgr' : g ∣ DensePoly.derivative r := dvd_derivative_of_squared_dvd hgg
-  have hg_dvd_one : g ∣ (1 : FpPoly p) := by
-    rw [← hsf]
-    exact DensePoly.dvd_gcd g r (DensePoly.derivative r) hgr hgr'
-  exact isUnitPolynomial_of_dvd_isUnitPolynomial hg_dvd_one isUnitPolynomial_one_FpPoly
+  exact hsf g hgr hgr'
 
 /-- Helper: `c ∣ r → r = c * (r / c)` for FpPoly. -/
 private theorem fp_eq_mul_div_of_dvd
@@ -2430,7 +2444,8 @@ private theorem fp_swap_left_mul (c g a : FpPoly p) :
 
 theorem common_dvd_one_of_squareFree_mul
     {a b d : FpPoly p}
-    (hsquareFree : DensePoly.gcd (a * b) (DensePoly.derivative (a * b)) = 1)
+    (hsquareFree : ∀ e, e ∣ (a * b) → e ∣ DensePoly.derivative (a * b) →
+      isUnitPolynomial e = true)
     (hda : d ∣ a) (hdb : d ∣ b) :
     d ∣ (1 : FpPoly p) := by
   have hdd_dvd_ab : d * d ∣ a * b := by
@@ -2454,7 +2469,8 @@ theorem exists_reduced_crtZeroOne_kernelWitness_of_squareFree_split
     (a b : FpPoly p)
     (ha : DensePoly.Monic a) (hb : DensePoly.Monic b)
     (ha_pos : 0 < a.degree?.getD 0) (hb_pos : 0 < b.degree?.getD 0)
-    (hsquareFree : DensePoly.gcd (a * b) (DensePoly.derivative (a * b)) = 1)
+    (hsquareFree : ∀ d, d ∣ (a * b) → d ∣ DensePoly.derivative (a * b) →
+      isUnitPolynomial d = true)
     (hgcd_monic : DensePoly.Monic (DensePoly.gcd a b)) :
     ∃ h : FpPoly p,
       h = crtZeroOneXGCDCandidate a b % (a * b) ∧
@@ -2517,7 +2533,8 @@ theorem isUnitPolynomial_gcd_quotient_of_squareFree
       exact h
     exact hr_eq.trans (hstep2.trans
       (fp_swap_inner_mul (DensePoly.gcd (r / DensePoly.gcd r d) d) e a))
-  exact isUnitPolynomial_of_squareFree_of_squared_dvd hsf hg2_dvd_r
+  exact isUnitPolynomial_of_squareFree_of_squared_dvd
+    (squareFree_common_of_gcd_eq_one hsf) hg2_dvd_r
 
 /-! ### Square-free divisor distribution across kernel-witness gcds
 
@@ -2884,7 +2901,8 @@ private theorem exists_reduced_crtZeroOne_kernelWitness_of_squareFree_monic_spli
     (a b : FpPoly p)
     (ha : DensePoly.Monic a) (hb : DensePoly.Monic b)
     (ha_pos : 0 < a.degree?.getD 0) (hb_pos : 0 < b.degree?.getD 0)
-    (hsf : DensePoly.gcd (a * b) (DensePoly.derivative (a * b)) = 1) :
+    (hsf : ∀ d, d ∣ (a * b) → d ∣ DensePoly.derivative (a * b) →
+      isUnitPolynomial d = true) :
     ∃ h : FpPoly p,
       (a * b) ∣ (FpPoly.linearPow h p - h) ∧
       (∀ c : ZMod64 p, ¬ DensePoly.Congr h (DensePoly.C c) (a * b)) ∧
@@ -3002,7 +3020,8 @@ produces `kernelWitnessSplit? f w = some _`, contradicting `hno_split`.
 -/
 theorem irreducible_of_no_kernelWitnessSplit_squareFree
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    (hsquareFree : DensePoly.gcd f (DensePoly.derivative f) = 1)
+    (hsquareFree : ∀ d, d ∣ f → d ∣ DensePoly.derivative f →
+      isUnitPolynomial d = true)
     (hno_split : ∀ w ∈ (fixedSpaceKernel f hmonic).toList,
       kernelWitnessSplit? f w = none) :
     FpPoly.Irreducible f := by
@@ -3080,7 +3099,8 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree
     unfold basisSize at hg_lt_f
     omega
   -- Square-freeness on `g * b' = f`.
-  have hsf' : DensePoly.gcd (g * b') (DensePoly.derivative (g * b')) = 1 := by
+  have hsf' : ∀ d, d ∣ (g * b') → d ∣ DensePoly.derivative (g * b') →
+      isUnitPolynomial d = true := by
     rw [hf_eq]; exact hsquareFree
   -- Reduced zero-one CRT witness `h`.
   obtain ⟨h, h_dvd, h_nonconst, h_size⟩ :=
@@ -3329,7 +3349,8 @@ algebraic completeness theorem
 -/
 theorem berlekampFactor_singleton_irreducible
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    (hsquareFree : DensePoly.gcd f (DensePoly.derivative f) = 1)
+    (hsquareFree : ∀ d, d ∣ f → d ∣ DensePoly.derivative f →
+      isUnitPolynomial d = true)
     (hsmall : (berlekampFactor f hmonic).factors.length ≤ 1) :
     FpPoly.Irreducible f :=
   irreducible_of_no_kernelWitnessSplit_squareFree
@@ -3351,7 +3372,8 @@ theorem berlekampFactor_factors_nodup
   apply berlekampFactor_factors_nodup_of_no_squared
   intro g hgg hpos
   have hunit : isUnitPolynomial g = true :=
-    isUnitPolynomial_of_squareFree_of_squared_dvd hsquareFree hgg
+    isUnitPolynomial_of_squareFree_of_squared_dvd
+      (squareFree_common_of_gcd_eq_one hsquareFree) hgg
   have hdeg : g.degree? = some 0 := by
     unfold isUnitPolynomial at hunit
     cases hd : g.degree? with

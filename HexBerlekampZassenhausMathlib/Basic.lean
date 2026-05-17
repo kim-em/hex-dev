@@ -4598,7 +4598,8 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
       rcases hmonicImage_dvd with ⟨s, hs⟩
       exact ⟨r * s, by rw [hs, hr, Hex.FpPoly.mul_assoc]⟩
     have hunit : Hex.Berlekamp.isUnitPolynomial g = true :=
-      Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd hsf hg_dvd_mod
+      Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd
+        (Hex.Berlekamp.squareFree_common_of_gcd_eq_one hsf) hg_dvd_mod
     have hdeg : Hex.DensePoly.degree? g = some 0 := by
       unfold Hex.Berlekamp.isUnitPolynomial at hunit
       cases hd : Hex.DensePoly.degree? g with
@@ -4762,7 +4763,8 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
         exact ⟨r * s, by rw [hs, hr, Hex.FpPoly.mul_assoc]⟩
       -- Square-freeness implies g₂ is a unit polynomial (degree 0).
       have hunit : Hex.Berlekamp.isUnitPolynomial g₂ = true :=
-        Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd hsf hg₂sq_dvd_modP
+        Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd
+          (Hex.Berlekamp.squareFree_common_of_gcd_eq_one hsf) hg₂sq_dvd_modP
       have hdeg_zero : Hex.DensePoly.degree? g₂ = some 0 := by
         unfold Hex.Berlekamp.isUnitPolynomial at hunit
         cases hd : Hex.DensePoly.degree? g₂ with
@@ -5520,7 +5522,8 @@ theorem factorsModP_coprime_of_factorsModPBerlekampForm
       rcases hmonicImage_dvd with ⟨s, hs⟩
       exact ⟨r * s, by rw [hs, hr, Hex.FpPoly.mul_assoc]⟩
     have hunit : Hex.Berlekamp.isUnitPolynomial d = true :=
-      Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd hsf hd_dvd_mod
+      Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd
+        (Hex.Berlekamp.squareFree_common_of_gcd_eq_one hsf) hd_dvd_mod
     have hdeg : Hex.DensePoly.degree? d = some 0 := by
       unfold Hex.Berlekamp.isUnitPolynomial at hunit
       cases hd : Hex.DensePoly.degree? d with
