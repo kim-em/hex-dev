@@ -841,6 +841,44 @@ private theorem getArrayEntry_zeroRows (n i j : Nat) :
   · by_cases hj : j < n <;> simp [zeroRows, getArrayEntry, hi, hj]
   · simp [zeroRows, getArrayEntry, hi, getArrayEntry_default_row]
 
+/-- Outer-array length of the initial Gram row buffer. -/
+private theorem gramRows_size (b : Matrix Int n m) : (gramRows b).size = n := by
+  simp [gramRows, Array.size_map, Array.size_range]
+
+/-- Inner-row length of each row of the initial Gram row buffer. -/
+private theorem gramRows_row_size (b : Matrix Int n m) (r : Nat) (hr : r < n) :
+    (gramRows b)[r]!.size = n := by
+  show ((Array.range n).map fun row =>
+      (Array.range n).map fun col =>
+        if hrow : row < n then
+          if hcol : col < n then
+            let i : Fin n := ⟨row, hrow⟩
+            let j : Fin n := ⟨col, hcol⟩
+            Matrix.dot (b.row i) (b.row j)
+          else
+            0
+        else
+          0)[r]!.size = n
+  rw [Array.getElem!_eq_getD]
+  unfold Array.getD
+  simp only [Array.size_map, Array.size_range]
+  rw [dif_pos hr]
+  simp [Array.size_map, Array.size_range]
+
+/-- Outer-array length of the initial coefficient buffer. -/
+private theorem zeroRows_size (n : Nat) : (zeroRows n).size = n := by
+  simp [zeroRows, Array.size_map, Array.size_range]
+
+/-- Inner-row length of each row of the initial coefficient buffer. -/
+private theorem zeroRows_row_size (n : Nat) (r : Nat) (hr : r < n) :
+    (zeroRows n)[r]!.size = n := by
+  show ((Array.range n).map fun _ => (Array.range n).map fun _ : Nat => (0 : Int))[r]!.size = n
+  rw [Array.getElem!_eq_getD]
+  unfold Array.getD
+  simp only [Array.size_map, Array.size_range]
+  rw [dif_pos hr]
+  simp [Array.size_map, Array.size_range]
+
 private theorem getArrayEntry_scaledCoeffArrayLoop_above
     (n fuel : Nat) (state : ScaledCoeffArrayState)
     (hcoeffs : ∀ i j, i < j → getArrayEntry state.coeffs i j = 0)
@@ -2928,6 +2966,59 @@ theorem gramDetVecEntry_eq_gramDet
 /-- The scaled-coefficient array loop writes the same diagonal determinant
 values as `gramDetVecEntry`, including the zero tail after an early singular
 no-pivot Bareiss step. -/
+private theorem scaledCoeffRows_diag_toNat_eq_gramDetVecEntry
+    (b : Matrix Int n m) (i : Nat) (hi : i < n) :
+    (getArrayEntry (scaledCoeffRows b) i i).toNat =
+      gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
+        ⟨i + 1, Nat.succ_lt_succ hi⟩ := by
+  let iFin : Fin n := ⟨i, hi⟩
+  have hdiag :=
+    scaledCoeffArrayLoop_diag_matches
+      (state_array :=
+        { step := 0
+          matrix := gramRows b
+          coeffs := zeroRows n
+          prevPivot := 1 })
+      (state_matrix := Matrix.noPivotInitialState (Matrix.gramMatrix b))
+      (by rfl) (rowsToMatrix_gramRows b) (by rfl) (by rfl)
+      (gramRows_size b) (gramRows_row_size b)
+      (zeroRows_size n) (zeroRows_row_size n)
+      (by
+        intro j hjs hjn
+        exfalso
+        simp [Matrix.noPivotInitialState] at hjs)
+      (by
+        intro j _hjs _hjn
+        exact getArrayEntry_zeroRows n j j)
+      n iFin (by
+        left
+        simp [Matrix.noPivotInitialState, iFin, hi])
+  show (getArrayEntry
+      (scaledCoeffArrayLoop n n
+        { step := 0
+          matrix := gramRows b
+          coeffs := zeroRows n
+          prevPivot := 1 }).coeffs i i).toNat =
+    gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
+      ⟨i + 1, Nat.succ_lt_succ hi⟩
+  rcases hdiag with ⟨h_sing, h_eq⟩ | ⟨s, h_sing, h_cases⟩
+  · simp only [Matrix.bareissNoPivotData, gramDetVecEntry, Matrix.finish,
+      bareissDiagNat, h_sing]
+    exact congrArg Int.toNat h_eq
+  · simp only [Matrix.bareissNoPivotData, gramDetVecEntry, Matrix.finish,
+      bareissDiagNat, h_sing]
+    rcases h_cases with ⟨hsi, h_zero⟩ | ⟨his, h_eq⟩
+    · have hsi' : s ≤ i := by
+        simpa [iFin] using hsi
+      have hs_lt : s < i + 1 := by omega
+      rw [if_pos hs_lt]
+      exact congrArg Int.toNat h_zero
+    · have his' : i < s := by
+        simpa [iFin] using his
+      have hs_not_lt : ¬ s < i + 1 := by omega
+      rw [if_neg hs_not_lt]
+      exact congrArg Int.toNat h_eq
+
 private theorem scaledCoeffRows_diag_eq_gramDetVecEntry
     (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     getArrayEntry (scaledCoeffRows b) i i =
@@ -2958,8 +3049,9 @@ theorem gramDetVec_eq_gramDet (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
       simp [gramDetVec, data, gramDetVecFromScaledCoeffRows]
   | succ r =>
       have hr : r < n := Nat.lt_of_succ_le hk
-      have hdiag := scaledCoeffRows_diag_eq_gramDet (b := b) r hr
-      simpa [gramDetVec, data, gramDetVecFromScaledCoeffRows] using congrArg Int.toNat hdiag
+      have hdiag := scaledCoeffRows_diag_toNat_eq_gramDetVecEntry (b := b) r hr
+      rw [gramDetVecEntry_eq_gramDet (b := b) (r + 1) (Nat.succ_le_of_lt hr)] at hdiag
+      simpa [gramDetVec, data, gramDetVecFromScaledCoeffRows] using hdiag
 
 
 theorem scaledCoeffs_diag (b : Matrix Int n m) (i : Nat) (hi : i < n) :
@@ -2967,6 +3059,18 @@ theorem scaledCoeffs_diag (b : Matrix Int n m) (i : Nat) (hi : i < n) :
       Int.ofNat (gramDet b (i + 1) (Nat.succ_le_of_lt hi)) := by
   simpa [scaledCoeffs, data, rowsToMatrix, GramSchmidt.entry, Matrix.row, Matrix.ofFn] using
     scaledCoeffRows_diag_eq_gramDet (b := b) i hi
+
+/-- Nat-level diagonal synchronization for the public scaled-coefficient
+matrix. This is the Mathlib-free diagonal fact exposed by the shared array
+pass; the stronger Int-valued diagonal statement additionally needs a
+nonnegativity bridge for the Bareiss/Gram determinant slot. -/
+theorem scaledCoeffs_diag_toNat (b : Matrix Int n m) (i : Nat) (hi : i < n) :
+    (GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨i, hi⟩).toNat =
+      gramDet b (i + 1) (Nat.succ_le_of_lt hi) := by
+  have hdiag := scaledCoeffRows_diag_toNat_eq_gramDetVecEntry (b := b) i hi
+  rw [gramDetVecEntry_eq_gramDet (b := b) (i + 1) (Nat.succ_le_of_lt hi)] at hdiag
+  simpa [scaledCoeffs, data, rowsToMatrix, GramSchmidt.entry, Matrix.row, Matrix.ofFn] using
+    hdiag
 
 theorem scaledCoeffs_upper (b : Matrix Int n m)
     (i j : Nat) (hi : i < n) (hj : j < n) (hij : i < j) :
@@ -3151,20 +3255,6 @@ private theorem noPivotLoop_scaledCoeffMatrix_eq_borderedMinor_at_trailing
     j.val (Nat.lt_trans hji i.isLt)
     ⟨j.val, Nat.lt_trans hji i.isLt⟩ i
     (Nat.le_refl _) (Nat.le_of_lt hji)
-
-/-- Outer-array length of the initial coefficient buffer. -/
-private theorem zeroRows_size (n : Nat) : (zeroRows n).size = n := by
-  simp [zeroRows, Array.size_map, Array.size_range]
-
-/-- Inner-row length of each row of the initial coefficient buffer. -/
-private theorem zeroRows_row_size (n : Nat) (r : Nat) (hr : r < n) :
-    (zeroRows n)[r]!.size = n := by
-  show ((Array.range n).map fun _ => (Array.range n).map fun _ : Nat => (0 : Int))[r]!.size = n
-  rw [Array.getElem!_eq_getD]
-  unfold Array.getD
-  simp only [Array.size_map, Array.size_range]
-  rw [dif_pos hr]
-  simp [Array.size_map, Array.size_range]
 
 /-- Non-singular top-level composite: when the no-pivot Bareiss pass over the
 full Gram matrix has not recorded a singular step before reaching column `j`,
