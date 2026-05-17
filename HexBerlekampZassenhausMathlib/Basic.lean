@@ -4520,6 +4520,70 @@ theorem henselLiftData_liftedFactor_natDegree_pos_of_choosePrimeData
   exact henselLiftData_liftedFactor_natDegree_pos core B primeData
     hcore_monic hinv hp hB hfactors_monic hproduct_mod_p hfactors_natDegree_pos
 
+/-- Fully composed natural-degree-positivity umbrella for every lifted factor of
+`Hex.henselLiftData`, parametrised on the `factorsModPBerlekampForm` invariant
+instead of an explicit per-modular-factor positivity premise.
+
+This is the natural-degree analog of the composition pattern made available by
+`factorsModP_nodup_of_factorsModPBerlekampForm` (line 4010) for the `_injective`
+family: it drops `hfactors_natDegree_pos` from
+`henselLiftData_liftedFactor_natDegree_pos_of_choosePrimeData` (line 4486) by
+discharging that premise through
+`factorsModP_natDegree_pos_of_factorsModPBerlekampForm` (line 4104), which in
+turn folds in `Hex.Berlekamp.berlekampFactor_factors_pos_degree`.
+
+The discharge requires three facts on `core` and `primeData`:
+
+* `hform : Hex.factorsModPBerlekampForm core primeData` — recorded by
+  `Hex.choosePrimeData?_factorsModP_berlekamp_form` (`HexBerlekampZassenhaus/
+  Basic.lean`);
+* `hgood : Hex.isGoodPrime core primeData.p = true` — recorded by
+  `Hex.choosePrimeData?_isGoodPrime`;
+* `hcore_pos : 0 < core.degree?.getD 0` — supplied by the caller (the slow-path
+  arm of the HO-1 capstone uses `normalizeForFactor.squareFreeCore` as `core`,
+  which has positive degree on every non-unit input).
+
+The signature otherwise mirrors `_of_choosePrimeData` exactly, so downstream
+consumers that already construct `hfactors_natDegree_pos` by hand are
+unaffected; they continue to use the explicit-premise umbrella. -/
+theorem henselLiftData_liftedFactor_natDegree_pos_of_factorsModPBerlekampForm
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hp_prime : Hex.Nat.Prime primeData.p)
+    (hp : 1 < primeData.p)
+    (hB : 1 ≤ B)
+    (hfactors_monic :
+      letI := primeData.bounds
+      ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g)
+    (hproduct_mod_p :
+      letI := primeData.bounds
+      Hex.ZPoly.congr
+        (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
+        core primeData.p)
+    (hcoprime :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorCoprimeSplits primeData.p
+        primeData.factorsModP.toList)
+    (hnonempty : primeData.factorsModP.toList ≠ [])
+    (hform : Hex.factorsModPBerlekampForm core primeData)
+    (hgood :
+      letI := primeData.bounds
+      Hex.isGoodPrime core primeData.p = true)
+    (hcore_pos : 0 < core.degree?.getD 0) :
+    ∀ i : Fin (Hex.henselLiftData core B primeData).liftedFactors.size,
+      0 < (HexPolyZMathlib.toPolynomial
+            (liftedFactor (Hex.henselLiftData core B primeData) i)).natDegree := by
+  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  have hfactors_natDegree_pos :
+      letI := primeData.bounds
+      ∀ g ∈ primeData.factorsModP,
+        0 < (HexPolyZMathlib.toPolynomial (Hex.FpPoly.liftToZ g)).natDegree :=
+    factorsModP_natDegree_pos_of_factorsModPBerlekampForm
+      core primeData hform hgood hcore_pos
+  exact henselLiftData_liftedFactor_natDegree_pos_of_choosePrimeData
+    core B primeData hcore_monic hp_prime hp hB hfactors_monic
+    hproduct_mod_p hcoprime hnonempty hfactors_natDegree_pos
+
 /-- Monic integer polynomials have positive stored size. -/
 private theorem zpoly_size_pos_of_monic {f : Hex.ZPoly}
     (h : Hex.DensePoly.Monic f) : 0 < f.size := by
