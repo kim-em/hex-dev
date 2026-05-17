@@ -8261,38 +8261,6 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData
   · intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
     exact hsup hirr hdvd_target hdvd_cand hSrep
 
-/-- **#4549 substrate (HO-1), outer-bound specialisation.**
-
-Specialisation of `liftedFactorSubsetPartition_of_choosePrimeData` at
-the precision count actually consumed by the slow exhaustive branch of
-`Hex.factor f` (i.e. `Hex.factorWithBound f
-(Hex.ZPoly.defaultFactorCoeffBound f)`).  The resulting partition value
-has the exact `core` / `d` / `J = Finset.univ` / `target = core` shape
-expected by the `hpartition` hypothesis of
-`factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence`
-(PR #4537, line 7590), so the HO-1 slow-path assembly can apply that
-wrapper directly together with the #4543 substrate value at the same
-outer-bound shape.
-
-Square-freeness of
-`HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).squareFreeCore`
-is taken as an explicit hypothesis: downstream HO-1 assemblies discharge
-it from the existing `squareFreeCore` invariants (or via a separate
-Mathlib-level bridge from `Hex.ZPoly.SquareFreeRat`).  -/
-theorem liftedFactorSubsetPartition_outerBound_of_choosePrimeData
-    (f : Hex.ZPoly)
-    (hcore_sqfree :
-      Squarefree
-        (HexPolyZMathlib.toPolynomial
-          (Hex.normalizeForFactor f).squareFreeCore)) :
-    let core := (Hex.normalizeForFactor f).squareFreeCore
-    let primeData := Hex.choosePrimeData core
-    let B := Hex.precisionForCoeffBound
-      (Hex.ZPoly.defaultFactorCoeffBound f) primeData.p
-    let d := Hex.henselLiftData core B primeData
-    LiftedFactorSubsetPartition core d Finset.univ core :=
-  liftedFactorSubsetPartition_of_choosePrimeData _ _ hcore_sqfree
-
 end
 
 end HexBerlekampZassenhausMathlib
