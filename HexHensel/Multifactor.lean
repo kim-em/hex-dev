@@ -146,6 +146,7 @@ theorem one_mul_zpoly (g : ZPoly) :
   rw [DensePoly.mul_comm_poly (S := Int), DensePoly.mul_one_right_poly]
 
 /-- `Array.polyProduct` of a singleton array is just the element. -/
+@[simp]
 theorem polyProduct_singleton (g : ZPoly) :
     Array.polyProduct #[g] = g := by
   simpa [Array.polyProduct] using one_mul_zpoly g
@@ -181,11 +182,13 @@ theorem polyProduct_singleton_append (g : ZPoly) (rest : Array ZPoly) :
         list_foldl_mul_eq_mul_foldl_one g xs
 
 /-- `Array.polyProduct` of the empty array is the multiplicative unit. -/
+@[simp]
 theorem polyProduct_empty :
     Array.polyProduct (#[] : Array ZPoly) = 1 :=
   rfl
 
 /-- `Array.polyProduct` splits as a product across array concatenation. -/
+@[simp]
 theorem polyProduct_append (xs ys : Array ZPoly) :
     Array.polyProduct (xs ++ ys) =
       Array.polyProduct xs * Array.polyProduct ys := by
