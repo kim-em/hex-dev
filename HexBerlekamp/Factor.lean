@@ -1386,6 +1386,46 @@ theorem berlekampFactor_factors_eq_singleton_of_size_le_one
   change berlekampFactorLoop _ _ [f] = [f]
   exact h_loop _
 
+/-- Every factor in the Berlekamp factor list is nonzero.  Splits the positive-
+degree case (where every factor has positive degree via
+`berlekampFactor_factors_pos_degree`) from the size-≤-1 case (where the factor
+list is the singleton `[f]` and `f` is monic, hence nonzero). -/
+theorem berlekampFactor_factors_ne_zero
+    [Lean.Grind.Field (ZMod64 p)]
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) :
+    ∀ g ∈ (berlekampFactor f hmonic).factors, g ≠ 0 := by
+  by_cases hf_pos : 0 < f.degree?.getD 0
+  · intro g hg
+    have hg_pos := berlekampFactor_factors_pos_degree f hmonic hf_pos g hg
+    intro h
+    rw [h] at hg_pos
+    simp [DensePoly.degree?] at hg_pos
+  · -- f.size ≤ 1: factors = [f], which is monic hence nonzero.
+    have hf_size_le : f.size ≤ 1 := by
+      rcases Nat.lt_or_ge f.size 2 with hlt | hge
+      · omega
+      · exfalso
+        apply hf_pos
+        have hsize_ne : f.size ≠ 0 := by omega
+        have hdeg_eq : f.degree? = some (f.size - 1) := by
+          unfold DensePoly.degree?
+          simp [hsize_ne]
+        rw [hdeg_eq]
+        simp
+        omega
+    have hfactors_eq := berlekampFactor_factors_eq_singleton_of_size_le_one f hmonic hf_size_le
+    rw [hfactors_eq]
+    intro g hg
+    rw [List.mem_singleton] at hg
+    subst hg
+    intro h
+    subst h
+    have hlead_zero : DensePoly.leadingCoeff (0 : FpPoly p) = 0 := rfl
+    unfold DensePoly.Monic at hmonic
+    rw [hlead_zero] at hmonic
+    exact ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) hmonic.symm
+
 end Berlekamp
 
 end Hex

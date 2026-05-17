@@ -4608,7 +4608,7 @@ theorem factorsModP_polyProduct_congr_of_factorsModPBerlekampForm
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
     (hcore_monic : Hex.DensePoly.Monic core)
     (hform : Hex.factorsModPBerlekampForm core primeData)
-    (hgood :
+    (_hgood :
       letI := primeData.bounds
       Hex.isGoodPrime core primeData.p = true) :
     letI := primeData.bounds
@@ -4629,35 +4629,43 @@ theorem factorsModP_polyProduct_congr_of_factorsModPBerlekampForm
   have hmonicImage_monic :
       Hex.DensePoly.Monic (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)) :=
     Hex.monicModularImage_monic hprime (Hex.ZPoly.modP primeData.p core) hzero
-  -- Square-freeness of `monicModularImage (modP p core)` follows from
-  -- `isGoodPrime`'s square-freeness of `modP p core`, transported through
-  -- `hmonicImage_eq`.
-  have hsf_monic :
-      Hex.DensePoly.gcd (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
-          (Hex.DensePoly.derivative
-            (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))) = 1 := by
-    rw [hmonicImage_eq]
-    exact Hex.isGoodPrime_squareFreeModP core primeData.p hgood
-  -- `(berlekampFactor monicImg).product = monicImg = modP p core`.
-  have hprod_eq :
-      Hex.Berlekamp.factorProduct
-        (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
-          (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
-          hmonicImage_monic hfield).factors =
+  -- Raw Berlekamp factor list: under the Option-3 wrap, `primeData.factorsModP`
+  -- is `raw.map monicModularImage` (then `.toArray`), so the bridge lemma must
+  -- apply to the mapped list, not `raw`.
+  let raw :=
+      (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
+        (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
+        hmonicImage_monic hfield).factors
+  -- `factorProduct raw = monicImg = modP p core` (the latter because `core` is monic).
+  have hprod_eq_raw :
+      Hex.Berlekamp.factorProduct raw =
         Hex.ZPoly.modP primeData.p core := by
     have hp_berlekamp :=
       Hex.Berlekamp.prod_berlekampFactor (p := primeData.p)
         (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
-        hmonicImage_monic hsf_monic
+        hmonicImage_monic
     rw [Hex.Berlekamp.Factorization.product_def] at hp_berlekamp
+    show Hex.Berlekamp.factorProduct _ = _
     rw [hp_berlekamp, hmonicImage_eq]
-  -- Apply the bridge lemma at the Berlekamp factor list.
+  -- Each raw factor is nonzero (positive degree in the typical case; singleton
+  -- `[monicImg]` in the degenerate size-≤-1 case, and `monicImg` is monic).
+  have hraw_ne : ∀ g ∈ raw, g ≠ 0 :=
+    Hex.Berlekamp.berlekampFactor_factors_ne_zero
+      (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
+      hmonicImage_monic
+  -- Push `monicModularImage` through `factorProduct`:
+  -- `factorProduct (raw.map monicModularImage) = monicModularImage (factorProduct raw)
+  --   = monicModularImage (modP p core) = modP p core`.
+  have hprod_eq_mapped :
+      Hex.Berlekamp.factorProduct (raw.map Hex.monicModularImage) =
+        Hex.ZPoly.modP primeData.p core := by
+    rw [Hex.factorProduct_map_monicModularImage_eq_monicModularImage_factorProduct
+        hprime raw hraw_ne, hprod_eq_raw, hmonicImage_eq]
+  -- Apply the bridge lemma at the *mapped* Berlekamp factor list.
   have hbridge :=
     polyProduct_map_liftToZ_congr_factorProduct (p := primeData.p)
-      (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
-        (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
-        hmonicImage_monic hfield).factors
-  rw [hprod_eq] at hbridge
+      (raw.map Hex.monicModularImage)
+  rw [hprod_eq_mapped] at hbridge
   -- Combine the bridge with `congr_liftToZ_modP` to land at `core` (mod p).
   have hmodP_congr :
       Hex.ZPoly.congr
@@ -4895,6 +4903,7 @@ private theorem quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
               rw [hq, hk]; exact Hex.DensePoly.mul_assoc_poly _ _ _
             exact ih hrest_dvd
 
+set_option maxHeartbeats 400000 in
 /-- Discharge of the coprime-splits boundary premise on
 `Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData`: given the
 `factorsModPBerlekampForm` invariant (which records that `primeData.factorsModP`
@@ -4917,7 +4926,12 @@ This is the third in the chain of `factorsModP`-side dischargers
 mapping the abstract `factorsModPBerlekampForm` invariant plus an
 `isGoodPrime` certificate to a piece of the four-tuple
 `(hfactors_monic, hproduct_mod_p, hcoprime, hnonempty)` that the umbrella
-`QuadraticMultifactorLiftInvariant_of_choosePrimeData` consumes. -/
+`QuadraticMultifactorLiftInvariant_of_choosePrimeData` consumes.
+
+The Option-3 wrap of `berlekampFactorsModP` (apply `monicModularImage` per
+factor) lifts the helper application from the raw Berlekamp factor list to
+the mapped list via the multiplicativity bridge
+`factorProduct_map_monicModularImage_eq_monicModularImage_factorProduct`. -/
 theorem factorsModP_coprime_of_factorsModPBerlekampForm
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
     (hform : Hex.factorsModPBerlekampForm core primeData)
@@ -4986,21 +5000,22 @@ theorem factorsModP_coprime_of_factorsModPBerlekampForm
           | succ _ => simp at hunit
     rw [hdeg] at hpos
     simp at hpos
+  -- Monic image is monic (consumed by Berlekamp's signature and idempotence).
+  have hmonicImage_monic :
+      Hex.DensePoly.Monic (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)) :=
+    Hex.monicModularImage_monic hprime (Hex.ZPoly.modP primeData.p core) hzero
+  -- Raw Berlekamp factor list: under the Option-3 wrap, `primeData.factorsModP`
+  -- is `raw.map monicModularImage` (then `.toArray`), so the helper must be
+  -- applied at the mapped list.
+  let raw :=
+      (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
+        (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
+        hmonicImage_monic hfield).factors
   -- The Berlekamp factor list has product equal to the monic modular image.
   have h_factorProduct :
-      Hex.Berlekamp.factorProduct
-        (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
-          (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
-          (Hex.monicModularImage_monic hprime _ hzero) hfield).factors =
+      Hex.Berlekamp.factorProduct raw =
         Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) :=
     Hex.Berlekamp.factorProduct_berlekampFactor _ _
-  -- Pull out positivity of each Berlekamp factor: relies on positivity of the
-  -- modular image, which holds when its size is ≥ 2.  We unconditionally have
-  -- size ≥ 1 (nonzero); for size = 1 the Berlekamp list is `[f]` itself, and
-  -- the recursive predicate is trivial on a singleton list, so positivity is
-  -- only required when there are ≥ 2 factors.  We sidestep this by using the
-  -- `factorProduct ∣ X` chain directly: the helper does not require positivity,
-  -- only the no-squared invariant on `X`.
   -- Monic modular image is nonzero (it's a nonzero scalar of a nonzero poly).
   have hmonicImage_ne :
       Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) ≠ 0 := by
@@ -5016,23 +5031,34 @@ theorem factorsModP_coprime_of_factorsModPBerlekampForm
       rw [h0]; rfl
     rw [hmon_size] at hsize_zero
     omega
-  -- Apply the generalized helper.
-  have h_dvd_X :
-      Hex.Berlekamp.factorProduct
-        (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
-          (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
-          (Hex.monicModularImage_monic hprime _ hzero) hfield).factors ∣
+  -- Each raw Berlekamp factor is nonzero (positive degree typically, singleton
+  -- [monicImg] in the degenerate size-≤-1 case).
+  have hraw_ne : ∀ g ∈ raw, g ≠ 0 :=
+    Hex.Berlekamp.berlekampFactor_factors_ne_zero
+      (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
+      hmonicImage_monic
+  -- Push `monicModularImage` through `factorProduct`: the mapped product
+  -- equals `monicModularImage (factorProduct raw) = monicModularImage (monicImg)
+  -- = monicImg` (the last step uses that `monicImg` is already monic).
+  have hprod_mapped :
+      Hex.Berlekamp.factorProduct (raw.map Hex.monicModularImage) =
         Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) := by
+    rw [Hex.factorProduct_map_monicModularImage_eq_monicModularImage_factorProduct
+        hprime raw hraw_ne]
     rw [h_factorProduct]
+    exact Hex.monicModularImage_eq_self_of_monic hprime _ hmonicImage_monic
+  -- Apply the generalized helper at the mapped list.
+  have h_dvd_X_mapped :
+      Hex.Berlekamp.factorProduct (raw.map Hex.monicModularImage) ∣
+        Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) := by
+    rw [hprod_mapped]
     exact Hex.DensePoly.dvd_refl_poly _
   have hcps :
       Hex.ZPoly.QuadraticMultifactorCoprimeSplits primeData.p
-        (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
-          (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
-          (Hex.monicModularImage_monic hprime _ hzero) hfield).factors :=
+        (raw.map Hex.monicModularImage) :=
     quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
       (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
-      hmonicImage_ne h_no_squared _ h_dvd_X
+      hmonicImage_ne h_no_squared _ h_dvd_X_mapped
   -- Transport to the `factorsModP.toList` view.
   rw [heq]
   simpa using hcps
