@@ -4595,9 +4595,8 @@ other umbrellas at lines 4549, 4613) from the `factorsModPBerlekampForm`
 invariant plus a successful `isGoodPrime` check.  Requires `core` to be monic
 so that the leading coefficient of `modP p core` is `1`, hence
 `monicModularImage (modP p core) = modP p core`; under that identification
-`prod_berlekampFactor` (which needs square-freeness of the monic image, here
-obtained directly from `isGoodPrime_squareFreeModP`) returns `modP p core`,
-and the bridge to the integer side is closed by `congr_liftToZ_modP`.
+`factorProduct_berlekampFactor` returns `modP p core`, and the bridge to the
+integer side is closed by `congr_liftToZ_modP`.
 
 The added `hcore_monic` premise costs downstream consumers nothing: the
 umbrellas they feed already require it.  No additional `1 < p` premise is

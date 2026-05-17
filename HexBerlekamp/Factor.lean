@@ -476,13 +476,12 @@ theorem factorProduct_berlekampFactor
 
 /--
 The executable Berlekamp factorization preserves the input polynomial as the
-product of the returned factors for square-free monic inputs.
+product of the returned factors for any monic input.
 -/
 theorem prod_berlekampFactor
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [Lean.Grind.Field (ZMod64 p)]
-    [ZMod64.PrimeModulus p]
-    (_hsquareFree : DensePoly.gcd f (DensePoly.derivative f) = 1) :
+    [ZMod64.PrimeModulus p] :
     (berlekampFactor f hmonic).product = f := by
   simp only [Factorization.product_def]
   exact factorProduct_berlekampFactor f hmonic
