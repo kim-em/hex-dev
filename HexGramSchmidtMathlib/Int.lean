@@ -16,9 +16,9 @@ singular branch is visible only through the Leibniz determinant.
 
 Per `SPEC/Libraries/hex-gram-schmidt.md` ("Proof path governs placement,
 not just statement"), this bridge therefore lives in
-`HexGramSchmidtMathlib`. The proof consumes the bridge-side identity
-`HexMatrixMathlib.bareiss_eq_det`, which is owned by
-`hex-matrix-mathlib`.
+`HexGramSchmidtMathlib`. The proof reaches the executable determinant
+surface by composing `HexMatrixMathlib.bareiss_eq_mathlib_det` with
+`HexMatrixMathlib.det_eq.symm`, both owned by `hex-matrix-mathlib`.
 -/
 
 namespace Hex
@@ -45,8 +45,12 @@ private theorem scaledCoeffMatrix_bareiss_eq_det
           Int) : Rat) =
       ((Matrix.det
         (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ hj) :
-          Int) : Rat) := by
-  rw [HexMatrixMathlib.bareiss_eq_det]
+          Int) : Rat) :=
+  by exact_mod_cast
+    (HexMatrixMathlib.bareiss_eq_mathlib_det
+        (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ hj)).trans
+      (HexMatrixMathlib.det_eq
+        (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ hj)).symm
 
 /-- Leading integer Gram determinants are nonnegative. -/
 theorem leadingGramMatrixInt_det_nonneg
@@ -991,7 +995,7 @@ private theorem gramDet_rat_eq_progressMatrix_zero_det (b : Matrix Int n m)
   have hdet_int :
       Matrix.det (GramSchmidt.leadingGramMatrixInt b k hk) =
         Int.ofNat (gramDet b k hk) := by
-    rw [gramDet, HexMatrixMathlib.bareiss_eq_det]
+    rw [gramDet, HexMatrixMathlib.bareiss_eq_mathlib_det, ← HexMatrixMathlib.det_eq]
     exact (Int.toNat_of_nonneg (leadingGramMatrixInt_det_nonneg b k hk)).symm
   have hstep1 : ((gramDet b k hk : Int) : Rat) =
       ((Matrix.det (GramSchmidt.leadingGramMatrixInt b k hk) : Int) : Rat) := by
@@ -1511,7 +1515,7 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
       have hdet_int :
           Matrix.det (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc) =
             Int.ofNat (gramDet b (j + 1) hjsuc) := by
-        rw [gramDet, HexMatrixMathlib.bareiss_eq_det]
+        rw [gramDet, HexMatrixMathlib.bareiss_eq_mathlib_det, ← HexMatrixMathlib.det_eq]
         exact (Int.toNat_of_nonneg
           (leadingGramMatrixInt_det_nonneg b (j + 1) hjsuc)).symm
       rw [hdet_int]
@@ -1941,7 +1945,8 @@ singular step:
 - Singular branch: both sides vanish — the executable scaled coefficient is
   zero by `scaledCoeffs_eq_zero_of_singularStep_lt` (the lifted lower-column
   singular lemma from #4166), and the public Bareiss determinant of the
-  Cramer minor is zero by `HexMatrixMathlib.bareiss_eq_det` composed with
+  Cramer minor is zero by composing `HexMatrixMathlib.bareiss_eq_mathlib_det`,
+  `HexMatrixMathlib.det_eq.symm`, and
   `scaledCoeffMatrix_det_eq_zero_of_singularStep_lt`. The latter Mathlib-free
   helper internally lifts partial-pass singularity to the full
   `bareissNoPivotData` pass and applies the Cramer determinant identity.
@@ -1967,7 +1972,11 @@ theorem scaledCoeffs_eq_scaledCoeffMatrix_bareiss
         scaledCoeffs_eq_zero_of_singularStep_lt b i j hji s h_sing hsj
       have h_det := scaledCoeffMatrix_det_eq_zero_of_singularStep_lt
         b i j hji s h_sing
-      rw [h_lhs, HexMatrixMathlib.bareiss_eq_det, h_det]
+      have hbareiss_zero :
+          Hex.Matrix.bareiss (GramSchmidt.scaledCoeffMatrix b i j hji) = 0 :=
+        ((HexMatrixMathlib.bareiss_eq_mathlib_det _).trans
+          (HexMatrixMathlib.det_eq _).symm).trans h_det
+      rw [h_lhs, hbareiss_zero]
 
 
 /-- Below the diagonal, the executable integral scaled coefficient is exactly
@@ -1977,7 +1986,10 @@ theorem scaledCoeffs_eq_scaledCoeffMatrix_det
     GramSchmidt.entry (scaledCoeffs b) i j =
       Matrix.det (GramSchmidt.scaledCoeffMatrix b i j hji) := by
   rw [scaledCoeffs_eq_scaledCoeffMatrix_bareiss]
-  exact HexMatrixMathlib.bareiss_eq_det (GramSchmidt.scaledCoeffMatrix b i j hji)
+  exact
+    (HexMatrixMathlib.bareiss_eq_mathlib_det
+        (GramSchmidt.scaledCoeffMatrix b i j hji)).trans
+      (HexMatrixMathlib.det_eq (GramSchmidt.scaledCoeffMatrix b i j hji)).symm
 
 
 /-- Conditional form of the leading Gram determinant bridge. The remaining
@@ -1989,7 +2001,7 @@ theorem leadingGramMatrixInt_det_eq_gramDet_int_of_nonneg
     (hdet : 0 ≤ Matrix.det (GramSchmidt.leadingGramMatrixInt b t ht)) :
     Matrix.det (GramSchmidt.leadingGramMatrixInt b t ht) =
       Int.ofNat (gramDet b t ht) := by
-  rw [gramDet, HexMatrixMathlib.bareiss_eq_det]
+  rw [gramDet, HexMatrixMathlib.bareiss_eq_mathlib_det, ← HexMatrixMathlib.det_eq]
   exact (Int.toNat_of_nonneg hdet).symm
 
 /-- The public `Nat` Gram determinant casts back to the signed determinant of
@@ -2005,8 +2017,9 @@ theorem leadingGramMatrixInt_det_eq_gramDet_int
 integer matrix with strictly positive diagonal are positive.
 
 This theorem is bridge-only: its proof identifies the executable `gramDet`
-with the Leibniz determinant of the leading Gram matrix via
-`HexMatrixMathlib.bareiss_eq_det`. -/
+with the Leibniz determinant of the leading Gram matrix via the composition
+of `HexMatrixMathlib.bareiss_eq_mathlib_det` and
+`HexMatrixMathlib.det_eq.symm`. -/
 theorem gramDet_pos_of_upperTriangular_pos_diag
     {n : Nat} (M : Matrix Int n n)
     (hzero : ∀ i j : Fin n, j.val < i.val -> M[i][j] = 0)
@@ -2518,7 +2531,14 @@ theorem gramDet_rowAdd_earlier
   by_cases hkt : k.val < t
   · -- Inside case: bareiss = det, then det_rowAdd / det_colAdd preserve.
     rw [leadingGramMatrixInt_rowAdd_inside b j k c t ht hjk hkt]
-    rw [HexMatrixMathlib.bareiss_eq_det, HexMatrixMathlib.bareiss_eq_det]
+    -- Bridge `bareiss = det` via Mathlib's `Matrix.det ∘ matrixEquiv`, composing
+    -- `bareiss_eq_mathlib_det` with `det_eq.symm` to keep the executable
+    -- determinant surface visible to `det_colAdd` / `det_rowAdd`.
+    have hbareiss_det : ∀ (M : Hex.Matrix Int t t),
+        Hex.Matrix.bareiss M = Hex.Matrix.det M := fun M =>
+      (HexMatrixMathlib.bareiss_eq_mathlib_det M).trans
+        (HexMatrixMathlib.det_eq M).symm
+    rw [hbareiss_det, hbareiss_det]
     -- Indices and inequality between `jt` and `kt` in `Fin t`.
     have hjt_ne_kt : (⟨j.val, Nat.lt_trans hjk hkt⟩ : Fin t) ≠ ⟨k.val, hkt⟩ := by
       intro h
@@ -2696,10 +2716,11 @@ theorem scaledCoeffs_rowAdd_above_pivot (b : Matrix Int n m) (j k : Fin n)
 
 These determinant-positivity bridges for `gramDet` live in the bridge layer
 because their proofs identify `gramDet` with the Leibniz determinant of the
-leading Gram matrix via `HexMatrixMathlib.bareiss_eq_det` (packaged here as
-`leadingGramMatrixInt_det_eq_gramDet_int`). Consumers that already have a
-determinant lemma for a special matrix family can produce the public
-`independent` predicate stated over Mathlib-free computed data. -/
+leading Gram matrix via the composition of
+`HexMatrixMathlib.bareiss_eq_mathlib_det` and `HexMatrixMathlib.det_eq.symm`
+(packaged here as `leadingGramMatrixInt_det_eq_gramDet_int`). Consumers that
+already have a determinant lemma for a special matrix family can produce the
+public `independent` predicate stated over Mathlib-free computed data. -/
 
 private theorem gramDet_pos_of_det_positive (b : Matrix Int n m)
     (hdet : ∀ k : Fin n, 0 < Matrix.det (Matrix.submatrix (Matrix.gramMatrix b) k))
