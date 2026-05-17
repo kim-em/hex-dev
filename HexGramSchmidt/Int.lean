@@ -2984,8 +2984,7 @@ private theorem scaledCoeffRows_diag_toNat_eq_gramDetVecEntry
       (gramRows_size b) (gramRows_row_size b)
       (zeroRows_size n) (zeroRows_row_size n)
       (by
-        intro j hjs hjn
-        exfalso
+        intro j hjs _hjn
         simp [Matrix.noPivotInitialState] at hjs)
       (by
         intro j _hjs _hjn
@@ -3028,6 +3027,27 @@ private theorem scaledCoeffRows_diag_eq_gramDetVecEntry
   sorry
 
 /-- The scaled-coefficient loop stores the next leading Gram determinant on
+the diagonal, at the executable Nat boundary. -/
+private theorem scaledCoeffRows_diag_toNat_eq_gramDet
+    (b : Matrix Int n m) (i : Nat) (hi : i < n) :
+    (getArrayEntry (scaledCoeffRows b) i i).toNat =
+      gramDet b (i + 1) (Nat.succ_le_of_lt hi) := by
+  rw [scaledCoeffRows_diag_toNat_eq_gramDetVecEntry (b := b) i hi]
+  rw [gramDetVecEntry_eq_gramDet (b := b) (i + 1) (Nat.succ_le_of_lt hi)]
+
+/-- If the diagonal executable entry is known nonnegative, the Nat-level
+diagonal synchronization can be lifted back to the corresponding Int equality.
+That nonnegativity is a bridge-layer obligation for Gram determinants. -/
+private theorem scaledCoeffRows_diag_eq_gramDet_of_nonneg
+    (b : Matrix Int n m) (i : Nat) (hi : i < n)
+    (hnonneg : 0 ≤ getArrayEntry (scaledCoeffRows b) i i) :
+    getArrayEntry (scaledCoeffRows b) i i =
+      Int.ofNat (gramDet b (i + 1) (Nat.succ_le_of_lt hi)) := by
+  have hdiag := scaledCoeffRows_diag_toNat_eq_gramDet (b := b) i hi
+  rw [← hdiag]
+  exact (Int.toNat_of_nonneg hnonneg).symm
+
+/-- The scaled-coefficient loop stores the next leading Gram determinant on
 the diagonal. -/
 private theorem scaledCoeffRows_diag_eq_gramDet
     (b : Matrix Int n m) (i : Nat) (hi : i < n) :
@@ -3049,8 +3069,7 @@ theorem gramDetVec_eq_gramDet (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
       simp [gramDetVec, data, gramDetVecFromScaledCoeffRows]
   | succ r =>
       have hr : r < n := Nat.lt_of_succ_le hk
-      have hdiag := scaledCoeffRows_diag_toNat_eq_gramDetVecEntry (b := b) r hr
-      rw [gramDetVecEntry_eq_gramDet (b := b) (r + 1) (Nat.succ_le_of_lt hr)] at hdiag
+      have hdiag := scaledCoeffRows_diag_toNat_eq_gramDet (b := b) r hr
       simpa [gramDetVec, data, gramDetVecFromScaledCoeffRows] using hdiag
 
 
@@ -3067,10 +3086,17 @@ nonnegativity bridge for the Bareiss/Gram determinant slot. -/
 theorem scaledCoeffs_diag_toNat (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     (GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨i, hi⟩).toNat =
       gramDet b (i + 1) (Nat.succ_le_of_lt hi) := by
-  have hdiag := scaledCoeffRows_diag_toNat_eq_gramDetVecEntry (b := b) i hi
-  rw [gramDetVecEntry_eq_gramDet (b := b) (i + 1) (Nat.succ_le_of_lt hi)] at hdiag
   simpa [scaledCoeffs, data, rowsToMatrix, GramSchmidt.entry, Matrix.row, Matrix.ofFn] using
-    hdiag
+    scaledCoeffRows_diag_toNat_eq_gramDet (b := b) i hi
+
+theorem scaledCoeffs_diag_of_nonneg
+    (b : Matrix Int n m) (i : Nat) (hi : i < n)
+    (hnonneg : 0 ≤ GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨i, hi⟩) :
+    GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨i, hi⟩ =
+      Int.ofNat (gramDet b (i + 1) (Nat.succ_le_of_lt hi)) := by
+  have hdiag := scaledCoeffs_diag_toNat (b := b) i hi
+  rw [← hdiag]
+  exact (Int.toNat_of_nonneg hnonneg).symm
 
 theorem scaledCoeffs_upper (b : Matrix Int n m)
     (i j : Nat) (hi : i < n) (hj : j < n) (hij : i < j) :
