@@ -5676,6 +5676,41 @@ theorem factorWithBound_entry_mem_fast_core_success_raw
   simpa only [factorWithBound, factorFastWithBound, hfast, Option.map_some,
     Option.getD_some] using hmem
 
+/-- In the slow-path quadratic integer-root branch, every recorded
+`factorWithBound` entry comes from the normalization reassembly whose core array
+is the `coreFactors` produced by `quadraticIntegerRootFactors?`. This branch
+fires when the fast path returns `none` (e.g. `B = 0`, or `B = 1` with the
+fast-core check missing) and the slow path then sees a non-constant square-free
+core for which `quadraticIntegerRootFactors?` succeeds. The branch-shape lemma
+mirrors `factorWithBound_entry_mem_small_mod_singleton_raw`; it leaves the
+mathematical irreducibility argument for the core factors to the bridge
+layer. -/
+theorem factorWithBound_entry_mem_slow_quadratic_branch_raw
+    (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
+    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    {coreFactors : Array ZPoly}
+    (hquad :
+      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore
+        = some coreFactors)
+    (hfast_none : factorFastFactorsWithBound f B = none)
+    (hmem : entry ∈ (factorWithBound f B).factors.toList) :
+    ∃ raw ∈
+        (reassemblePolynomialFactors (normalizeForFactor f) coreFactors).toList,
+      entry.1 = normalizeFactorSign raw := by
+  rcases factorWithBound_entry_mem_raw_source f B entry hmem with
+    ⟨rawFactors, hsource, raw, hraw_mem, hraw_norm⟩
+  cases hsource with
+  | inl hfast_some =>
+      rw [hfast_some] at hfast_none
+      cases hfast_none
+  | inr hslow =>
+      rcases hslow with ⟨_, hrawFactors⟩
+      subst rawFactors
+      refine ⟨raw, ?_, hraw_norm⟩
+      unfold factorSlowFactorsWithBound at hraw_mem
+      simp only [if_neg hdeg, hquad] at hraw_mem
+      exact hraw_mem
+
 private def quadraticSquareRegression : ZPoly :=
   let q : ZPoly := DensePoly.ofCoeffs #[-1, 0, 1]
   q * q
