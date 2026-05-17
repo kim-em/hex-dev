@@ -63,6 +63,8 @@ private theorem list_getD_map_range (size n : Nat) (f : Nat → R) :
   · simp [hn, List.getD]
   · simp [hn, List.getD]
 
+/-- Coefficient law for scalar multiplication. The explicit zero law records the fact that
+scaling a missing coefficient still gives the default coefficient `0`. -/
 theorem coeff_scale [Mul R] (c : R) (p : DensePoly R) (n : Nat)
     (hzero : c * (Zero.zero : R) = (Zero.zero : R)) :
     (scale c p).coeff n = c * p.coeff n := by
@@ -70,11 +72,15 @@ theorem coeff_scale [Mul R] (c : R) (p : DensePoly R) (n : Nat)
   rw [coeff_ofCoeffs_list]
   simpa [coeff] using list_getD_map_mul_zero (R := R) c p.toArray.toList n hzero
 
+/-- Semiring-specialized coefficient law for scalar multiplication, registered as a normalizing
+rewrite because the required `c * 0 = 0` law is available from the semiring structure. -/
 @[simp] theorem coeff_scale_semiring {S : Type u} [Lean.Grind.Semiring S] [DecidableEq S]
     (c : S) (p : DensePoly S) (n : Nat) :
     (scale c p).coeff n = c * p.coeff n :=
   coeff_scale c p n (Lean.Grind.Semiring.mul_zero c)
 
+/-- Coefficient law for shifting by `x^n`: coefficients below `n` are zero and later
+coefficients are read from the original polynomial with the index shifted down. -/
 @[simp] theorem coeff_shift (n : Nat) (p : DensePoly R) (k : Nat) :
     (shift n p).coeff k =
       if k < n then (Zero.zero : R) else p.coeff (k - n) := by
@@ -96,6 +102,8 @@ theorem coeff_scale [Mul R] (c : R) (p : DensePoly R) (n : Nat)
     rw [coeff_ofCoeffs_list]
     simpa [coeff] using list_getD_replicate_append_zero (R := R) n k p.toArray.toList
 
+/-- Combined coefficient law for a scaled shift. The zero-law hypothesis is the only algebraic
+fact needed to normalize coefficients that are outside the support. -/
 theorem coeff_shift_scale [Mul R] (i : Nat) (c : R) (p : DensePoly R) (k : Nat)
     (hzero : c * (Zero.zero : R) = (Zero.zero : R)) :
     (shift i (scale c p)).coeff k =
@@ -105,6 +113,8 @@ theorem coeff_shift_scale [Mul R] (i : Nat) (c : R) (p : DensePoly R) (k : Nat)
   · simp [hk]
   · simp [hk, coeff_scale, hzero]
 
+/-- Semiring-specialized coefficient law for a scaled shift, registered as a normalizing rewrite
+for the common algebraic setting. -/
 @[simp] theorem coeff_shift_scale_semiring
     {S : Type u} [Lean.Grind.Semiring S] [DecidableEq S]
     (i : Nat) (c : S) (p : DensePoly S) (k : Nat) :
@@ -276,6 +286,8 @@ private theorem list_foldl_ignore (xs : List Nat) (init : R) :
   | cons _ xs ih =>
       simpa using ih init
 
+/-- Characterising coefficient law for multiplication: each coefficient of `p * q` is computed by
+the same nested schoolbook fold as the executable multiplication loop. -/
 theorem coeff_mul [Add R] [Mul R] (p q : DensePoly R) (n : Nat) :
     (p * q).coeff n = mulCoeffSum p q n := by
   change (mul p q).coeff n = mulCoeffSum p q n
@@ -356,16 +368,20 @@ theorem coeff_sub [Sub R] (p q : DensePoly R) (n : Nat)
     have hq : q.size ≤ n := Nat.le_trans (Nat.le_max_right p.size q.size) hmax
     simp [hn, coeff_eq_zero_of_size_le p hp, coeff_eq_zero_of_size_le q hq, hzero]
 
+/-- The zero polynomial has coefficient `0` at every index. -/
 @[simp] theorem coeff_zero (n : Nat) :
     (0 : DensePoly R).coeff n = (0 : R) := by
   exact coeff_eq_zero_of_size_le (0 : DensePoly R) (by simp)
 
+/-- Coefficient law for negation, expressed through subtraction from zero. The explicit zero law
+is inherited from the generic subtraction coefficient theorem. -/
 theorem coeff_neg [Sub R] (p : DensePoly R) (n : Nat)
     (hzero : (Zero.zero : R) - (Zero.zero : R) = (Zero.zero : R)) :
     (-p).coeff n = ((0 : R) - p.coeff n) := by
   change (neg p).coeff n = ((0 : R) - p.coeff n)
   simp [neg, coeff_sub, hzero]
 
+/-- Horner evaluation sends the zero dense polynomial to `0`. -/
 @[simp] theorem eval_zero [Add R] [Mul R] (x : R) :
     eval (0 : DensePoly R) x = 0 := by
   rfl
@@ -387,6 +403,7 @@ theorem eval_C [Add R] [Mul R] (c x : R)
   · change c ≠ Zero.zero at hc
     simp [eval, toArray, coeffs_C_of_ne_zero hc, hzero_mul, hzero_add]
 
+/-- The formal derivative of the zero polynomial is zero. -/
 @[simp] theorem derivative_zero [NatCast R] [Mul R] :
     derivative (0 : DensePoly R) = 0 := by
   rfl
