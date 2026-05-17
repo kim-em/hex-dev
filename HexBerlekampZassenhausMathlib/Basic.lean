@@ -1138,6 +1138,30 @@ def modPFactorProduct
   S.toList.foldl (fun acc i => acc * modPFactor primeData i) 1
 
 /--
+Bridge the executable modular subset product to a Mathlib `Finset.prod`.
+
+The executable surface stores subset products as a left fold over
+`Finset.toList`; after transporting each `FpPoly` to Mathlib, commutativity
+identifies that fold with the canonical finite-set product.
+-/
+theorem toMathlibPolynomial_modPFactorProduct
+    (primeData : Hex.PrimeChoiceData) (S : ModPFactorSubset primeData) :
+    letI := primeData.bounds
+    HexBerlekampMathlib.toMathlibPolynomial (modPFactorProduct primeData S) =
+      ∏ i ∈ S,
+        HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i) := by
+  letI := primeData.bounds
+  unfold modPFactorProduct
+  rw [show
+      (S.toList.foldl (fun acc i => acc * modPFactor primeData i)
+          (1 : @Hex.FpPoly primeData.p primeData.bounds)) =
+        (S.toList.map (modPFactor primeData)).foldl (· * ·) 1 from by
+    rw [List.foldl_map]]
+  rw [toMathlibPolynomial_listFoldlMul_one, List.map_map]
+  exact Finset.prod_map_toList S
+    (fun i => HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i))
+
+/--
 The monic modular image used for subset partition statements. This mirrors the
 executable prime-choice normalization: zero stays zero, and nonzero inputs are
 scaled by the inverse of their leading coefficient.
