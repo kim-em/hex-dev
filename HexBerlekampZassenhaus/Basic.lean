@@ -5899,6 +5899,127 @@ private theorem irreducible_of_size_two_monic
 theorem irreducible_X : ZPoly.Irreducible ZPoly.X :=
   irreducible_of_size_two_monic ZPoly.X rfl rfl
 
+/-- A primitive integer polynomial of dense size two is irreducible. Mirrors
+`irreducible_of_size_two_monic` but uses primitivity (`content f = 1`) instead
+of monicness to derive that a degree-zero factor must be `±1`: if `f = C c * b`
+then `c` divides every coefficient of `f`, hence `c` divides `content f = 1`,
+forcing `c ∈ {±1}`. -/
+private theorem irreducible_of_size_two_primitive
+    (f : ZPoly) (hf_size : f.size = 2)
+    (hf_prim : ZPoly.Primitive f) :
+    ZPoly.Irreducible f := by
+  have hf_ne : f ≠ 0 := by
+    intro hzero
+    rw [hzero] at hf_size
+    change (0 : Nat) = 2 at hf_size
+    omega
+  refine
+    { not_zero := hf_ne
+      not_unit := ?_
+      no_factors := ?_ }
+  · intro hunit
+    rcases hunit with hone | hneg
+    · rw [hone] at hf_size
+      have h1 : (DensePoly.C (1 : Int)).size = 1 := rfl
+      omega
+    · rw [hneg] at hf_size
+      have hneg_size : (DensePoly.C (-1 : Int)).size = 1 := rfl
+      omega
+  · intro a b hf_ab
+    by_cases ha_zero : a = 0
+    · exfalso
+      apply hf_ne
+      rw [hf_ab, ha_zero, DensePoly.zero_mul]
+    by_cases hb_zero : b = 0
+    · exfalso
+      apply hf_ne
+      rw [hf_ab, hb_zero]
+      change a * (0 : ZPoly) = 0
+      rw [DensePoly.mul_comm_poly, DensePoly.zero_mul]
+    have ha_pos : 0 < a.size := ZPoly.size_pos_of_ne_zero a ha_zero
+    have hb_pos : 0 < b.size := ZPoly.size_pos_of_ne_zero b hb_zero
+    have hab_size :
+        (a * b).size = a.size + b.size - 1 :=
+      ZPoly.mul_size_eq_top_succ_of_nonzero a b ha_pos hb_pos
+    rw [← hf_ab] at hab_size
+    rw [hf_size] at hab_size
+    have hsum : a.size + b.size = 3 := by omega
+    have ha_size_le : a.size ≤ 2 := by omega
+    have hb_size_le : b.size ≤ 2 := by omega
+    have ha_size_eq_one_or_two : a.size = 1 ∨ a.size = 2 := by omega
+    -- Helper: if `g = C c * h`, then `c` divides every coefficient of `g`,
+    -- so `(c.natAbs : Int)` divides `content g`.
+    have const_dvd_content :
+        ∀ (g h : ZPoly) (c : Int),
+          g = DensePoly.C c * h → ((c.natAbs : Int) : Int) ∣ ZPoly.content g := by
+      intro g h c hg_eq
+      apply ZPoly.dvd_content_of_nat_dvd_coeff
+      intro n
+      have hcoeff : g.coeff n = c * h.coeff n := by
+        rw [hg_eq, C_mul_eq_scale,
+          DensePoly.coeff_scale (R := Int) c h n (Int.mul_zero _)]
+      refine Int.natAbs_dvd.mpr ?_
+      rw [hcoeff]
+      exact ⟨h.coeff n, rfl⟩
+    -- Helper: if `c.natAbs` divides `1` and `c ≠ 0`, then `c ∈ {1, -1}`.
+    have nat_factor_one :
+        ∀ (c : Int), c ≠ 0 → ((c.natAbs : Int) : Int) ∣ (1 : Int) →
+          c = 1 ∨ c = -1 := by
+      intro c hc_ne hdvd
+      have hnat_dvd : c.natAbs ∣ (1 : Nat) := by
+        have := Int.ofNat_dvd.mp (by simpa using hdvd)
+        exact this
+      have hnat_le : c.natAbs ≤ 1 := Nat.le_of_dvd (by omega) hnat_dvd
+      have hnat_pos : 1 ≤ c.natAbs := by
+        rcases Nat.eq_zero_or_pos c.natAbs with hzero | hpos
+        · exact absurd (Int.natAbs_eq_zero.mp hzero) hc_ne
+        · exact hpos
+      have hnat_eq : c.natAbs = 1 := by omega
+      rcases Int.natAbs_eq c with heq | heq
+      · left; rw [heq, hnat_eq]; rfl
+      · right; rw [heq, hnat_eq]; rfl
+    rcases ha_size_eq_one_or_two with ha_one | ha_two
+    · -- a.size = 1, so a is constant; show IsUnit a
+      left
+      have ha_eq : a = DensePoly.C (a.coeff 0) := eq_C_of_size_eq_one a ha_one
+      have hf_eq : f = DensePoly.C (a.coeff 0) * b :=
+        hf_ab.trans (congrArg (· * b) ha_eq)
+      have hac_ne_zero : a.coeff 0 ≠ 0 := by
+        intro h
+        apply ha_zero
+        rw [ha_eq, h]
+        rfl
+      have hcontent_one : ZPoly.content f = 1 := hf_prim
+      have hac_dvd_content :
+          ((a.coeff 0).natAbs : Int) ∣ ZPoly.content f :=
+        const_dvd_content f b (a.coeff 0) hf_eq
+      rw [hcontent_one] at hac_dvd_content
+      rcases nat_factor_one (a.coeff 0) hac_ne_zero hac_dvd_content with
+        hone | hneg
+      · left; rw [ha_eq, hone]
+      · right; rw [ha_eq, hneg]
+    · -- a.size = 2, so b.size = 1; symmetric case via commutativity
+      right
+      have hb_one : b.size = 1 := by omega
+      have hb_eq : b = DensePoly.C (b.coeff 0) := eq_C_of_size_eq_one b hb_one
+      have hf_eq : f = DensePoly.C (b.coeff 0) * a :=
+        (hf_ab.trans (DensePoly.mul_comm_poly a b)).trans
+          (congrArg (· * a) hb_eq)
+      have hbc_ne_zero : b.coeff 0 ≠ 0 := by
+        intro h
+        apply hb_zero
+        rw [hb_eq, h]
+        rfl
+      have hcontent_one : ZPoly.content f = 1 := hf_prim
+      have hbc_dvd_content :
+          ((b.coeff 0).natAbs : Int) ∣ ZPoly.content f :=
+        const_dvd_content f a (b.coeff 0) hf_eq
+      rw [hcontent_one] at hbc_dvd_content
+      rcases nat_factor_one (b.coeff 0) hbc_ne_zero hbc_dvd_content with
+        hone | hneg
+      · left; rw [hb_eq, hone]
+      · right; rw [hb_eq, hneg]
+
 end ZPoly
 
 /-- Every factor emitted by the extracted `X`-power normalization array is
