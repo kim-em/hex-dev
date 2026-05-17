@@ -8,6 +8,7 @@ import Mathlib.Algebra.Polynomial.Eval.Irreducible
 import Mathlib.FieldTheory.Separable
 import Mathlib.FieldTheory.Perfect
 import Mathlib.RingTheory.Polynomial.Radical
+import Mathlib.RingTheory.Polynomial.GaussLemma
 
 /-!
 Reduction-mod-`p` irreducibility lemma for primitive integer polynomials, used
@@ -700,6 +701,14 @@ theorem normalizeForFactor_repeatedPart_toPolynomial_isPrimitive
   exact isPrimitive_of_dvd hprod_isPrim
     ⟨HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).squareFreeCore, by
       rw [mul_comm]⟩
+
+private theorem isPrimitive_pow {p : Polynomial ℤ} (hp : p.IsPrimitive) (N : Nat) :
+    (p ^ N).IsPrimitive := by
+  induction N with
+  | zero =>
+      simp
+  | succ N ih =>
+      simpa [pow_succ] using ih.mul hp
 
 /-! ### Squarefree transport for the square-free core
 
@@ -1539,6 +1548,29 @@ theorem normalizeForFactor_repeatedPart_map_intCast_dvd_squareFreeCore_map_intCa
         rw [← hToPoly_repeatedRat]; exact hgcd_assoc
       exact (associated_unit_mul_left R (Polynomial.C w) hCw_unit).symm.trans hCwR_assoc
     exact rp_dvd_sf_pow_of_associated hP_ne hR_gcd hP_assoc
+
+/--
+The repeated part of `normalizeForFactor f` divides a power of the
+square-free core over integer polynomials.
+
+This is the integer Gauss-descent form of
+`normalizeForFactor_repeatedPart_map_intCast_dvd_squareFreeCore_map_intCast_pow`.
+-/
+theorem normalizeForFactor_repeatedPart_toPolynomial_dvd_squareFreeCore_pow
+    (f : Hex.ZPoly) (hf : f ≠ 0) :
+    ∃ N : Nat,
+      HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).repeatedPart ∣
+      (HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).squareFreeCore) ^ N := by
+  obtain ⟨N, hN⟩ :=
+    normalizeForFactor_repeatedPart_map_intCast_dvd_squareFreeCore_map_intCast_pow f hf
+  refine ⟨N, ?_⟩
+  refine (Polynomial.IsPrimitive.Int.dvd_iff_map_cast_dvd_map_cast
+    (HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).repeatedPart)
+    ((HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).squareFreeCore) ^ N)
+    (normalizeForFactor_repeatedPart_toPolynomial_isPrimitive f hf)
+    (isPrimitive_pow
+      (normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive f hf) N)).mpr ?_
+  simpa using hN
 
 
 end IntReductionMod
