@@ -4081,6 +4081,30 @@ theorem henselLiftData_liftedFactors_size_eq
   simp
 
 /--
+Bridge `modPFactorProduct primeData S` to a `Finset.prod` after transport to
+Mathlib polynomials over `ZMod p`.
+
+This is the modular analogue of `toPolynomial_liftedFactorProduct`: it exposes
+the executable foldl product as a commutative finite product, which lets
+subset-transport proofs ignore the implementation order of `Finset.toList`.
+-/
+private theorem toMathlibPolynomial_modPFactorProduct
+    (primeData : Hex.PrimeChoiceData) (S : ModPFactorSubset primeData) :
+    letI := primeData.bounds
+    HexBerlekampMathlib.toMathlibPolynomial (modPFactorProduct primeData S) =
+      ∏ i ∈ S, HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i) := by
+  letI := primeData.bounds
+  unfold modPFactorProduct
+  rw [show
+      (S.toList.foldl (fun acc i => acc * modPFactor primeData i)
+          (1 : @Hex.FpPoly primeData.p primeData.bounds)) =
+        (S.toList.map (modPFactor primeData)).foldl (· * ·) 1 from by
+    rw [List.foldl_map]]
+  rw [toMathlibPolynomial_listFoldlMul_one, List.map_map]
+  exact Finset.prod_map_toList S
+    (fun i => HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i))
+
+/--
 Thin umbrella wrapper exposing per-output monicness of `Hex.henselLiftData` in
 the Mathlib-facing surface.
 
@@ -4319,6 +4343,91 @@ theorem henselLiftData_liftedFactor_injective
   have hidx_eq : i.val = j.val :=
     (List.Nodup.getElem_inj_iff hfactorsModP_nodup).mp hlist_eq
   exact Fin.ext hidx_eq
+
+/--
+Each lifted factor produced by `Hex.henselLiftData` reduces modulo the base
+prime to the corresponding modular factor selected by `PrimeChoiceData`.
+
+This is a direct indexed form of
+`Hex.ZPoly.multifactorLiftQuadratic_each_congr_mod_base`, specialised to the
+`Hex.henselLiftData` umbrella and the `liftedIndexOfModPIndex` transport.
+-/
+theorem henselLiftData_liftedFactor_modP_eq_modPFactor
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hprime_invariant :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant
+        primeData.p B core
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList)
+    (hp : 1 < primeData.p)
+    (hB : 1 ≤ B)
+    (hfactors_monic :
+      letI := primeData.bounds
+      ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g)
+    (hproduct_mod_p :
+      letI := primeData.bounds
+      Hex.ZPoly.congr
+        (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
+        core primeData.p)
+    (i : ModPFactorIndex primeData) :
+    letI := primeData.bounds
+    Hex.ZPoly.modP primeData.p
+      (liftedFactor (Hex.henselLiftData core B primeData)
+        (liftedIndexOfModPIndex primeData (Hex.henselLiftData core B primeData)
+          (henselLiftData_liftedFactors_size_eq core B primeData) i)) =
+      modPFactor primeData i := by
+  letI := primeData.bounds
+  set arr :=
+    Hex.ZPoly.multifactorLiftQuadratic primeData.p B core
+      (primeData.factorsModP.map Hex.FpPoly.liftToZ) with harr_def
+  have harr_size :
+      arr.size = primeData.factorsModP.size := by
+    rw [harr_def, Hex.ZPoly.multifactorLiftQuadratic_size_eq_input]
+    simp
+  have hi_arr : i.val < arr.size := by
+    rw [harr_size]
+    exact i.isLt
+  have hi_map :
+      i.val < (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList.length := by
+    rw [Array.length_toList, Array.size_map]
+    exact i.isLt
+  have hi_arr_list : i.val < arr.toList.length := by
+    rw [Array.length_toList]
+    exact hi_arr
+  have hfactors_monic_arr :
+      ∀ g ∈ (primeData.factorsModP.map Hex.FpPoly.liftToZ),
+        Hex.DensePoly.Monic g := by
+    intro g hg
+    rw [Array.mem_map] at hg
+    obtain ⟨f0, hf0_mem, hf0_eq⟩ := hg
+    rw [← hf0_eq]
+    exact Hex.FpPoly.monic_liftToZ_of_monic f0 hp (hfactors_monic f0 hf0_mem)
+  have hcongr_i :=
+    Hex.ZPoly.multifactorLiftQuadratic_each_congr_mod_base
+      primeData.p B core (primeData.factorsModP.map Hex.FpPoly.liftToZ)
+      hB hp hcore_monic hfactors_monic_arr hprime_invariant hproduct_mod_p i.val
+  have hgetD_arr :
+      arr.toList[i.val]?.getD 0 = arr[i.val]'hi_arr := by
+    rw [List.getElem?_eq_getElem hi_arr_list, Option.getD_some, Array.getElem_toList]
+  have hgetD_factors :
+      (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList[i.val]?.getD 0 =
+        Hex.FpPoly.liftToZ (primeData.factorsModP[i.val]'i.isLt) := by
+    rw [List.getElem?_eq_getElem hi_map, Option.getD_some,
+      Array.getElem_toList, Array.getElem_map]
+  rw [hgetD_arr, hgetD_factors] at hcongr_i
+  have hlifted_eq :
+      liftedFactor (Hex.henselLiftData core B primeData)
+        (liftedIndexOfModPIndex primeData (Hex.henselLiftData core B primeData)
+          (henselLiftData_liftedFactors_size_eq core B primeData) i) =
+        arr[i.val]'hi_arr := by
+    rfl
+  rw [hlifted_eq]
+  have hmodP :
+      Hex.ZPoly.modP primeData.p (arr[i.val]'hi_arr) =
+        Hex.ZPoly.modP primeData.p (Hex.FpPoly.liftToZ (modPFactor primeData i)) :=
+    Hex.ZPoly.modP_eq_of_congr primeData.p _ _ hcongr_i
+  simpa [modPFactor, Hex.FpPoly.modP_liftToZ] using hmodP
 
 /-- `choosePrimeData`-shaped consumer wrapper for the Berlekamp factor `Nodup`
 property: given the `factorsModPBerlekampForm` invariant (which records that
@@ -6184,6 +6293,84 @@ theorem toPolynomial_liftedFactorProduct
   rw [toPolynomial_foldl_mul, toPolynomial_one_zpoly, ← List.prod_eq_foldl,
     List.map_map]
   exact Finset.prod_map_toList S (fun i => HexPolyZMathlib.toPolynomial (liftedFactor d i))
+
+/--
+Product-level base-modulus preservation for the lifted factors selected by a
+modular-factor subset.
+
+After transporting `S` through `liftedSubsetOfModPSubset`, the product of the
+corresponding Hensel-lifted factors is congruent modulo `primeData.p` to the
+canonical integer lift of the original modular subset product.
+-/
+theorem henselLiftData_liftedSubset_product_congr_mod_base
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hprime_invariant :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant
+        primeData.p B core
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList)
+    (hp : 1 < primeData.p)
+    (hB : 1 ≤ B)
+    (hfactors_monic :
+      letI := primeData.bounds
+      ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g)
+    (hproduct_mod_p :
+      letI := primeData.bounds
+      Hex.ZPoly.congr
+        (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
+        core primeData.p) :
+    ∀ S : ModPFactorSubset primeData,
+      letI := primeData.bounds
+      Hex.ZPoly.congr
+        (liftedFactorProduct (Hex.henselLiftData core B primeData)
+          (liftedSubsetOfModPSubset primeData
+            (Hex.henselLiftData core B primeData)
+            (henselLiftData_liftedFactors_size_eq core B primeData) S))
+        (Hex.FpPoly.liftToZ (modPFactorProduct primeData S))
+        primeData.p := by
+  letI := primeData.bounds
+  intro S
+  let d := Hex.henselLiftData core B primeData
+  let hsize := henselLiftData_liftedFactors_size_eq core B primeData
+  let emb := modPIndexToLiftedEmbedding primeData d hsize
+  have hmodP :
+      Hex.ZPoly.modP primeData.p
+          (liftedFactorProduct d (liftedSubsetOfModPSubset primeData d hsize S)) =
+        modPFactorProduct primeData S := by
+    apply HexBerlekampMathlib.fpPolyEquiv.injective
+    change
+      HexBerlekampMathlib.toMathlibPolynomial
+          (Hex.ZPoly.modP primeData.p
+            (liftedFactorProduct d (liftedSubsetOfModPSubset primeData d hsize S))) =
+        HexBerlekampMathlib.toMathlibPolynomial (modPFactorProduct primeData S)
+    rw [toMathlibPolynomial_modP_eq_map_intCast_zmod,
+      toPolynomial_liftedFactorProduct, toMathlibPolynomial_modPFactorProduct]
+    rw [Polynomial.map_prod]
+    change
+      (∏ i ∈ S.map emb,
+        (HexPolyZMathlib.toPolynomial (liftedFactor d i)).map
+          (Int.castRingHom (ZMod primeData.p))) =
+        ∏ i ∈ S, HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)
+    rw [Finset.prod_map S emb]
+    refine Finset.prod_congr rfl ?_
+    intro i _hi
+    have hfactor_modP :=
+      henselLiftData_liftedFactor_modP_eq_modPFactor core B primeData
+        hcore_monic hprime_invariant hp hB hfactors_monic hproduct_mod_p i
+    have hfactor_modP' :
+        Hex.ZPoly.modP primeData.p (liftedFactor d (emb i)) =
+          modPFactor primeData i := by
+      simpa [d, emb, hsize] using hfactor_modP
+    change
+      (HexPolyZMathlib.toPolynomial (liftedFactor d (emb i))).map
+          (Int.castRingHom (ZMod primeData.p)) =
+        HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)
+    rw [← toMathlibPolynomial_modP_eq_map_intCast_zmod
+      (liftedFactor d (emb i)), hfactor_modP']
+  exact Hex.ZPoly.congr_symm _ _ _
+    (Hex.ZPoly.congr_liftToZ_of_modP_eq primeData.p (modPFactorProduct primeData S)
+      (liftedFactorProduct d (liftedSubsetOfModPSubset primeData d hsize S)) hmodP)
 
 /--
 Multiplicative splitting for `liftedFactorProduct` along the disjoint
