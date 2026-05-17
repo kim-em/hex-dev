@@ -7641,6 +7641,60 @@ private theorem zpoly_primitive_of_toPolynomial_isPrimitive_basic
   · rw [hneg] at hcontent_nonneg
     omega
 
+private theorem zpoly_ne_zero_of_pos_lc {f : Hex.ZPoly}
+    (hpos : 0 < Hex.DensePoly.leadingCoeff f) : f ≠ 0 := by
+  intro hf
+  rw [hf] at hpos
+  have hzero_lc : Hex.DensePoly.leadingCoeff (0 : Hex.ZPoly) = 0 := rfl
+  rw [hzero_lc] at hpos
+  omega
+
+private theorem zpoly_eq_one_of_toPolynomial_isUnit_of_pos_lc
+    {f : Hex.ZPoly}
+    (hpos : 0 < Hex.DensePoly.leadingCoeff f)
+    (hunit : IsUnit (HexPolyZMathlib.toPolynomial f)) :
+    f = 1 := by
+  have hunit_z : Hex.ZPoly.IsUnit f :=
+    (HexPolyZMathlib.isUnit_iff_toPolynomial_isUnit f).mpr hunit
+  rcases hunit_z with hunit_one | hunit_neg
+  · rw [hunit_one]
+    rfl
+  · exfalso
+    rw [hunit_neg] at hpos
+    change 0 < Hex.DensePoly.leadingCoeff (Hex.DensePoly.C (-1 : Int)) at hpos
+    simp [Hex.DensePoly.leadingCoeff, Hex.DensePoly.coeffs_C_of_ne_zero] at hpos
+
+private theorem zpoly_primitive_of_dvd_primitive_basic
+    {factor target : Hex.ZPoly}
+    (htarget_primitive : Hex.ZPoly.Primitive target)
+    (hfactor_dvd_target : factor ∣ target) :
+    Hex.ZPoly.Primitive factor := by
+  apply zpoly_primitive_of_toPolynomial_isPrimitive_basic
+  exact isPrimitive_of_dvd
+    (toPolynomial_isPrimitive_of_zpoly_primitive_basic htarget_primitive)
+    (HexPolyMathlib.toPolynomial_dvd hfactor_dvd_target)
+
+private theorem zpoly_left_pos_lc_of_mul_eq_of_pos_lc
+    {left right target : Hex.ZPoly}
+    (hmul : left * right = target)
+    (hright_pos : 0 < Hex.DensePoly.leadingCoeff right)
+    (htarget_pos : 0 < Hex.DensePoly.leadingCoeff target) :
+    0 < Hex.DensePoly.leadingCoeff left := by
+  have hright_ne : right ≠ 0 := zpoly_ne_zero_of_pos_lc hright_pos
+  have htarget_ne : target ≠ 0 := zpoly_ne_zero_of_pos_lc htarget_pos
+  have hleft_ne : left ≠ 0 := by
+    intro hleft
+    apply htarget_ne
+    rw [← hmul, hleft, Hex.DensePoly.zero_mul]
+  have hlc :=
+    Hex.ZPoly.leadingCoeff_mul_of_nonzero left right hleft_ne hright_ne
+  have hprod_pos :
+      0 < Hex.DensePoly.leadingCoeff left *
+        Hex.DensePoly.leadingCoeff right := by
+    rw [← hlc, hmul]
+    exact htarget_pos
+  nlinarith
+
 private theorem centeredModNat_eq_of_pos_natAbs_le
     {z : Int} {m B : Nat}
     (hz_pos : 0 < z) (hbound : z.natAbs ≤ B) (hsep : 2 * B < m) :
