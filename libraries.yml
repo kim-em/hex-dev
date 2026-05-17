@@ -305,7 +305,7 @@ libraries:
   HexBerlekampZassenhaus:
     deps: [HexBerlekamp, HexHensel, HexLLL]
     mathlib: false
-    done_through: 1
+    done_through: 2
     status: active
     phase4:
       input_families:
