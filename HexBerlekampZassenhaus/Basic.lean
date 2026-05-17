@@ -3543,6 +3543,46 @@ theorem exactQuotient?_eq_some_of_divMod_eq_of_shouldRecord
   rw [hdivMod]
   simp [hmul]
 
+/-- Non-monic converse to `exactQuotient?_product` for divisors with positive
+leading coefficient.  Drops the `Monic` hypothesis from
+`exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree` in favour of
+`0 < leadingCoeff candidate`, routing the executable division through
+`divMod_eq_of_pos_lc_pos_degree_mul_eq` and packaging the result with
+`exactQuotient?_eq_some_of_divMod_eq_of_shouldRecord`.  Positive degree alone
+discharges `shouldRecordPolynomialFactor`, since `0`, `C 1`, and `C (-1)` all
+have `degree?.getD 0 = 0`. -/
+theorem exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq
+    {target candidate quotient : ZPoly}
+    (hpos_lc : 0 < DensePoly.leadingCoeff candidate)
+    (hdegree : 0 < candidate.degree?.getD 0)
+    (hmul : quotient * candidate = target) :
+    exactQuotient? target candidate = some quotient := by
+  have hrecord : shouldRecordPolynomialFactor candidate = true := by
+    have hne_zero : candidate ≠ 0 := by
+      intro hzero
+      have hdeg : candidate.degree?.getD 0 = 0 := by
+        rw [hzero]; simp [DensePoly.degree?]
+      omega
+    have hne_one : candidate ≠ 1 := by
+      intro hone
+      have hdeg : candidate.degree?.getD 0 = 0 := by
+        rw [hone]
+        change (DensePoly.C (1 : Int)).degree?.getD 0 = 0
+        exact DensePoly.degree?_C_getD 1
+      omega
+    have hne_neg_one : candidate ≠ DensePoly.C (-1 : Int) := by
+      intro hneg
+      have hdeg : candidate.degree?.getD 0 = 0 := by
+        rw [hneg]
+        exact DensePoly.degree?_C_getD (-1)
+      omega
+    unfold shouldRecordPolynomialFactor
+    simp [hne_zero, hne_one, hne_neg_one]
+  have hdivMod_eq : DensePoly.divMod target candidate = (quotient, 0) :=
+    ZPoly.divMod_eq_of_pos_lc_pos_degree_mul_eq target candidate quotient
+      hpos_lc hdegree hmul
+  exact exactQuotient?_eq_some_of_divMod_eq_of_shouldRecord hrecord hdivMod_eq hmul
+
 private def positiveDivisors (n : Nat) : List Nat :=
   (List.range (n + 1)).filter fun d => d != 0 && n % d == 0
 
