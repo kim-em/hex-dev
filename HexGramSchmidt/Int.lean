@@ -3018,6 +3018,14 @@ private theorem scaledCoeffRows_diag_toNat_eq_gramDetVecEntry
       rw [if_neg hs_not_lt]
       exact congrArg Int.toNat h_eq
 
+private theorem scaledCoeffRows_diag_eq_gramDetVecEntry
+    (b : Matrix Int n m) (i : Nat) (hi : i < n) :
+    getArrayEntry (scaledCoeffRows b) i i =
+      Int.ofNat
+        (gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
+          ⟨i + 1, Nat.succ_lt_succ hi⟩) := by
+  sorry
+
 /-- The scaled-coefficient loop stores the next leading Gram determinant on
 the diagonal, at the executable Nat boundary. -/
 private theorem scaledCoeffRows_diag_toNat_eq_gramDet
@@ -3039,6 +3047,15 @@ private theorem scaledCoeffRows_diag_eq_gramDet_of_nonneg
   rw [← hdiag]
   exact (Int.toNat_of_nonneg hnonneg).symm
 
+/-- The scaled-coefficient loop stores the next leading Gram determinant on
+the diagonal. -/
+private theorem scaledCoeffRows_diag_eq_gramDet
+    (b : Matrix Int n m) (i : Nat) (hi : i < n) :
+    getArrayEntry (scaledCoeffRows b) i i =
+      Int.ofNat (gramDet b (i + 1) (Nat.succ_le_of_lt hi)) := by
+  rw [scaledCoeffRows_diag_eq_gramDetVecEntry (b := b) i hi]
+  rw [gramDetVecEntry_eq_gramDet (b := b) (i + 1) (Nat.succ_le_of_lt hi)]
+
 theorem gramDet_zero (b : Matrix Int n m) :
     gramDet b 0 (Nat.zero_le n) = 1 := by
   rfl
@@ -3055,6 +3072,12 @@ theorem gramDetVec_eq_gramDet (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
       have hdiag := scaledCoeffRows_diag_toNat_eq_gramDet (b := b) r hr
       simpa [gramDetVec, data, gramDetVecFromScaledCoeffRows] using hdiag
 
+
+theorem scaledCoeffs_diag (b : Matrix Int n m) (i : Nat) (hi : i < n) :
+    GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨i, hi⟩ =
+      Int.ofNat (gramDet b (i + 1) (Nat.succ_le_of_lt hi)) := by
+  simpa [scaledCoeffs, data, rowsToMatrix, GramSchmidt.entry, Matrix.row, Matrix.ofFn] using
+    scaledCoeffRows_diag_eq_gramDet (b := b) i hi
 
 /-- Nat-level diagonal synchronization for the public scaled-coefficient
 matrix. This is the Mathlib-free diagonal fact exposed by the shared array
