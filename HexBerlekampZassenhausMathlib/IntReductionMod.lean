@@ -668,6 +668,39 @@ theorem normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive
   exact isPrimitive_of_dvd hprod_isPrim
     ⟨HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).repeatedPart, rfl⟩
 
+/--
+The repeated part extracted by `normalizeForFactor` is primitive over
+`Polynomial ℤ` whenever the input integer polynomial is nonzero.
+
+This is the companion Gauss-descent input to
+`normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive` for the
+structural divisibility theorem consumed by the exponent-extraction
+successor (#4611).
+-/
+theorem normalizeForFactor_repeatedPart_toPolynomial_isPrimitive
+    (f : Hex.ZPoly) (hf : f ≠ 0) :
+    (HexPolyZMathlib.toPolynomial
+        (Hex.normalizeForFactor f).repeatedPart).IsPrimitive := by
+  have hcore_ne :
+      (Hex.ZPoly.extractXPower (Hex.ZPoly.primitivePart f)).core ≠ 0 :=
+    Hex.extractXPower_core_ne_zero_of_ne_zero f hf
+  have hprod_prim :
+      Hex.ZPoly.Primitive
+        ((Hex.normalizeForFactor f).squareFreeCore *
+          (Hex.normalizeForFactor f).repeatedPart) := by
+    simpa [Hex.normalizeForFactor] using
+      Hex.ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive
+        _ hcore_ne
+  have hprod_isPrim :
+      (HexPolyZMathlib.toPolynomial
+          ((Hex.normalizeForFactor f).squareFreeCore *
+            (Hex.normalizeForFactor f).repeatedPart)).IsPrimitive :=
+    toPolynomial_isPrimitive_of_zpoly_primitive hprod_prim
+  rw [HexPolyZMathlib.toPolynomial_mul] at hprod_isPrim
+  exact isPrimitive_of_dvd hprod_isPrim
+    ⟨HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).squareFreeCore, by
+      rw [mul_comm]⟩
+
 /-! ### Squarefree transport for the square-free core
 
 The lemmas below bridge the executable `Hex.ZPoly.SquareFreeRat` invariant
