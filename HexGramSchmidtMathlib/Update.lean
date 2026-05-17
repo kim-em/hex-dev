@@ -7,12 +7,12 @@ Bridge-bound row-operation update theorems for `hex-gram-schmidt`.
 The theorems in this module relate `gramDet` / `scaledCoeffs` under the
 size-reduce (earlier-row-add) and adjacent-swap row operations. Their
 statements are Hex-local, but their proofs cross the Mathlib boundary by
-reaching `HexMatrixMathlib.bareiss_eq_det` through `gramDet_rowAdd_earlier`
-and the matrix-side `gramDet_adjacentSwap_of_ne` bridge respectively, so
-they live in the bridge layer per [SPEC/Libraries/hex-gram-schmidt.md
-"Proof path governs placement, not just statement"]. The size-reduce
-theorems are thin wrappers around
-`scaledCoeffs_rowAdd_pivot/lower/other_row/above_pivot` and
+composing `HexMatrixMathlib.bareiss_eq_mathlib_det` with
+`HexMatrixMathlib.det_eq.symm` through `gramDet_rowAdd_earlier` and the
+matrix-side `gramDet_adjacentSwap_of_ne` bridge respectively, so they live
+in the bridge layer per [SPEC/Libraries/hex-gram-schmidt.md "Proof path
+governs placement, not just statement"]. The size-reduce theorems are thin
+wrappers around `scaledCoeffs_rowAdd_pivot/lower/other_row/above_pivot` and
 `gramDet_rowAdd_earlier`, which live in `HexGramSchmidtMathlib/Int.lean`.
 -/
 
@@ -25,8 +25,9 @@ namespace GramSchmidt.Int
 `GramSchmidt.Int.sizeReduce b j k r` is `Matrix.rowAdd b j k (-r)` (definitional),
 so the theorems below specialise the earlier-row-add updates in
 `HexGramSchmidt/Int.lean` to the LLL size-reduce row operation. They are kept
-in this bridge module because their proof path runs through
-`HexMatrixMathlib.bareiss_eq_det`. -/
+in this bridge module because their proof path composes
+`HexMatrixMathlib.bareiss_eq_mathlib_det` with
+`HexMatrixMathlib.det_eq.symm`. -/
 
 theorem gramDet_sizeReduce (b : Matrix Int n m) (j k : Fin n) (hjk : j.val < k.val)
     (r : Int) (t : Nat) (ht : t ≤ n) :
@@ -408,7 +409,14 @@ theorem gramDet_adjacentSwap_of_ne (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.
   congr 1
   by_cases hkt : k.val < t
   · rw [leadingGramMatrixInt_rowSwap_inside (b := b) (km1 := km1) (k := k) hkm1k t ht hkt]
-    rw [HexMatrixMathlib.bareiss_eq_det, HexMatrixMathlib.bareiss_eq_det]
+    -- Bridge `bareiss = det` via Mathlib's `Matrix.det ∘ matrixEquiv`, composing
+    -- `bareiss_eq_mathlib_det` with `det_eq.symm` to keep the executable
+    -- determinant surface visible to `det_rowSwap_transpose_rowSwap_transpose`.
+    have hbareiss_det : ∀ (M : Hex.Matrix Int t t),
+        Hex.Matrix.bareiss M = Hex.Matrix.det M := fun M =>
+      (HexMatrixMathlib.bareiss_eq_mathlib_det M).trans
+        (HexMatrixMathlib.det_eq M).symm
+    rw [hbareiss_det, hbareiss_det]
     apply det_rowSwap_transpose_rowSwap_transpose
     intro h
     have : km1.val = k.val := by
