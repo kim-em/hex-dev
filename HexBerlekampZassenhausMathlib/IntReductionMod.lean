@@ -1299,6 +1299,247 @@ private theorem rp_dvd_sf_pow_of_associated
   refine ⟨N, ?_⟩
   exact hR_divR.dvd.trans (hdivR_pow.trans (pow_dvd_pow_of_dvd hS_rad.dvd N))
 
+/--
+Identify `(primitiveSquareFreeDecomposition p).repeatedPart = 1` when the
+executable rational derivative vanishes (Case B of the executable structure).
+Isolated as a private helper so the unfold-then-case-split block lives
+behind a clean interface and avoids `whnf` heartbeat issues in callers.
+-/
+private theorem psd_repeatedPart_eq_one_of_derivative_isZero
+    (p : Hex.ZPoly)
+    (hpp_isZero_false : (Hex.ZPoly.primitivePart p).isZero = false)
+    (hderiv : (Hex.DensePoly.derivative
+      (Hex.ZPoly.toRatPoly (Hex.ZPoly.primitivePart p))).isZero = true) :
+    (Hex.ZPoly.primitiveSquareFreeDecomposition p).repeatedPart = 1 := by
+  unfold Hex.ZPoly.primitiveSquareFreeDecomposition
+  simp [hpp_isZero_false, hderiv]
+
+/--
+Identify `(primitiveSquareFreeDecomposition p).repeatedPart` as the
+rational primitive part of `gcd ratPrimitive ratPrimitive.derivative`
+in Case C (executable rational derivative nonzero). Private helper
+mirroring `psd_repeatedPart_eq_one_of_derivative_isZero`.
+-/
+private theorem psd_repeatedPart_eq_ratPolyPrimitivePart_gcd_of_derivative_not_isZero
+    (p : Hex.ZPoly)
+    (hpp_isZero_false : (Hex.ZPoly.primitivePart p).isZero = false)
+    (hderiv : (Hex.DensePoly.derivative
+      (Hex.ZPoly.toRatPoly (Hex.ZPoly.primitivePart p))).isZero = false) :
+    (Hex.ZPoly.primitiveSquareFreeDecomposition p).repeatedPart =
+      Hex.ZPoly.ratPolyPrimitivePart
+        (Hex.DensePoly.gcd
+          (Hex.ZPoly.toRatPoly (Hex.ZPoly.primitivePart p))
+          (Hex.DensePoly.derivative
+            (Hex.ZPoly.toRatPoly (Hex.ZPoly.primitivePart p)))) := by
+  unfold Hex.ZPoly.primitiveSquareFreeDecomposition
+  simp [hpp_isZero_false, hderiv]
+
+/--
+Specialisation of the abstract `rp_dvd_sf_pow_of_associated` step to the
+executable `normalizeForFactor` surface, transported to `Polynomial ℚ`
+via `HexPolyZMathlib.toPolynomial` and `Polynomial.map (Int.castRingHom ℚ)`.
+
+This is the rational-side divisibility theorem consumed by the integer
+Gauss descent of #4618 (via sibling #4676) and ultimately by the
+exponent-extraction step of #4611.
+-/
+theorem normalizeForFactor_repeatedPart_map_intCast_dvd_squareFreeCore_map_intCast_pow
+    (f : Hex.ZPoly) (hf : f ≠ 0) :
+    ∃ N : Nat,
+      (HexPolyZMathlib.toPolynomial
+        (Hex.normalizeForFactor f).repeatedPart).map (Int.castRingHom ℚ) ∣
+      ((HexPolyZMathlib.toPolynomial
+        (Hex.normalizeForFactor f).squareFreeCore).map (Int.castRingHom ℚ)) ^ N := by
+  -- The executable `normalizeForFactor` peels off the `X^k` prefix from the
+  -- primitive part of `f` and feeds the result through
+  -- `primitiveSquareFreeDecomposition`. We name the resulting primitive
+  -- nonzero polynomial `core` and reduce to the `core`-level statement.
+  set core : Hex.ZPoly := (Hex.ZPoly.extractXPower (Hex.ZPoly.primitivePart f)).core
+    with hcore_def
+  have hcore_ne : core ≠ 0 := Hex.extractXPower_core_ne_zero_of_ne_zero f hf
+  have hcore_prim : Hex.ZPoly.Primitive core :=
+    Hex.extractXPower_core_primitive_of_ne_zero f hf
+  have hpp : Hex.ZPoly.primitivePart core = core :=
+    Hex.ZPoly.primitivePart_eq_self_of_primitive _ hcore_prim
+  -- Rewrite the executable goal in the `core`-level form.
+  have hsf_eq : (Hex.normalizeForFactor f).squareFreeCore =
+      (Hex.ZPoly.primitiveSquareFreeDecomposition core).squareFreeCore := rfl
+  have hrp_eq : (Hex.normalizeForFactor f).repeatedPart =
+      (Hex.ZPoly.primitiveSquareFreeDecomposition core).repeatedPart := rfl
+  rw [hsf_eq, hrp_eq]
+  -- Move the goal into the rational view through the integer-to-rational bridge.
+  rw [← toPolynomial_toRatPoly_eq_map_intCast,
+      ← toPolynomial_toRatPoly_eq_map_intCast]
+  -- Name the rational images.
+  set sf : Hex.ZPoly := (Hex.ZPoly.primitiveSquareFreeDecomposition core).squareFreeCore
+    with hsf_def
+  set rp : Hex.ZPoly := (Hex.ZPoly.primitiveSquareFreeDecomposition core).repeatedPart
+    with hrp_def
+  set P : Polynomial ℚ := HexPolyMathlib.toPolynomial (Hex.ZPoly.toRatPoly core) with hP_def
+  set R : Polynomial ℚ := HexPolyMathlib.toPolynomial (Hex.ZPoly.toRatPoly rp) with hR_def
+  set S : Polynomial ℚ := HexPolyMathlib.toPolynomial (Hex.ZPoly.toRatPoly sf) with hS_def
+  -- `toRatPoly core ≠ 0` (inline analogue of the private `toRatPoly_ne_zero_of_ne_zero`).
+  have hrat_ne : Hex.ZPoly.toRatPoly core ≠ 0 := by
+    intro hzero
+    apply hcore_ne
+    apply Hex.DensePoly.ext_coeff
+    intro n
+    have hcoeff : ((core.coeff n : Int) : Rat) = 0 := by
+      rw [← Hex.ZPoly.coeff_toRatPoly, hzero, Hex.DensePoly.coeff_zero]
+    rw [Hex.DensePoly.coeff_zero]
+    exact_mod_cast hcoeff
+  -- `P ≠ 0`: route through `Polynomial.map_ne_zero_iff` on the integer-side bridge.
+  have hP_ne : P ≠ 0 := by
+    rw [hP_def, toPolynomial_toRatPoly_eq_map_intCast]
+    refine (Polynomial.map_ne_zero_iff Int.cast_injective).mpr ?_
+    intro h
+    apply hcore_ne
+    exact HexPolyZMathlib.equiv.injective (by simpa using h)
+  -- Apply the rational reassembly to extract `unit` with
+  -- `toRatPoly core = scale unit (toRatPoly sf * toRatPoly rp)`.
+  rcases Hex.ZPoly.primitiveSquareFreeDecomposition_reassembly_over_rat core with
+    ⟨unit, hunit⟩
+  rw [Hex.ZPoly.primitiveSquareFreeDecomposition_primitive, hpp] at hunit
+  -- `unit ≠ 0` (else `scale unit _ = 0`).
+  have hunit_ne : unit ≠ 0 := by
+    intro huzero
+    apply hrat_ne
+    rw [hunit, huzero]
+    apply Hex.DensePoly.ext_coeff
+    intro n
+    rw [Hex.DensePoly.coeff_scale (R := Rat) 0 _ n (mul_zero 0),
+        Hex.DensePoly.coeff_zero, zero_mul]
+  -- `P = C unit * (S * R)`.
+  have hP_factor : P = Polynomial.C unit * (S * R) := by
+    rw [hP_def, hunit, toPolynomial_scale, HexPolyMathlib.toPolynomial_mul]
+  have hCunit_unit : IsUnit (Polynomial.C unit) :=
+    isUnit_C.mpr (isUnit_iff_ne_zero.mpr hunit_ne)
+  -- `Associated P (S * R)`.
+  have hP_assoc : Associated P (S * R) := by
+    rw [hP_factor]
+    exact associated_unit_mul_left (S * R) (Polynomial.C unit) hCunit_unit
+  -- `(primitivePart core).isZero = false` from `core ≠ 0` and `primitivePart core = core`.
+  have hpp_isZero_false : (Hex.ZPoly.primitivePart core).isZero = false := by
+    rw [Hex.DensePoly.isZero_eq_false_iff]
+    have hcore_ne' : Hex.ZPoly.primitivePart core ≠ 0 := by rw [hpp]; exact hcore_ne
+    rcases Nat.eq_zero_or_pos (Hex.ZPoly.primitivePart core).size with hsz | hsz
+    · exfalso
+      apply hcore_ne'
+      apply Hex.DensePoly.ext_coeff
+      intro n
+      rw [Hex.DensePoly.coeff_zero]
+      exact Hex.DensePoly.coeff_eq_zero_of_size_le _ (by omega)
+    · exact hsz
+  -- Case-split on whether the rational derivative vanishes.
+  by_cases hderiv :
+      (Hex.DensePoly.derivative
+        (Hex.ZPoly.toRatPoly (Hex.ZPoly.primitivePart core))).isZero = true
+  · -- Case B: derivative vanishes, so `rp = 1` and `P` is a constant unit.
+    have hrp_one : rp = 1 :=
+      psd_repeatedPart_eq_one_of_derivative_isZero core hpp_isZero_false hderiv
+    -- `R = 1` by transport.
+    have hR_one : R = 1 := by
+      rw [hR_def, hrp_one, Hex.ZPoly.toRatPoly_one]
+      show HexPolyMathlib.toPolynomial (Hex.DensePoly.C (1 : Rat)) = 1
+      rw [HexPolyMathlib.toPolynomial_C]
+      exact map_one Polynomial.C
+    -- `(toRatPoly core).derivative = 0` from the `isZero` flag (using `primitivePart core = core`).
+    have hderiv_pp : Hex.DensePoly.derivative
+        (Hex.ZPoly.toRatPoly (Hex.ZPoly.primitivePart core)) = 0 := by
+      have hsize : (Hex.DensePoly.derivative
+          (Hex.ZPoly.toRatPoly (Hex.ZPoly.primitivePart core))).size = 0 :=
+        (Hex.DensePoly.isZero_eq_true_iff _).mp hderiv
+      apply Hex.DensePoly.ext_coeff
+      intro n
+      rw [Hex.DensePoly.coeff_zero]
+      exact Hex.DensePoly.coeff_eq_zero_of_size_le _ (by omega)
+    have hderiv_core_zero : Hex.DensePoly.derivative (Hex.ZPoly.toRatPoly core) = 0 := by
+      rw [← hpp]; exact hderiv_pp
+    -- `P.derivative = 0`.
+    have hPderiv_zero : Polynomial.derivative P = 0 := by
+      rw [hP_def, ← toPolynomial_derivative, hderiv_core_zero, HexPolyMathlib.toPolynomial_zero]
+    -- `P` is a unit: derivative zero + char zero + nonzero ⇒ nonzero constant.
+    have hP_isUnit : IsUnit P := by
+      have hP_eq_C : P = Polynomial.C (P.coeff 0) := eq_C_of_derivative_eq_zero hPderiv_zero
+      have hcoeff_ne : P.coeff 0 ≠ 0 := by
+        intro h
+        apply hP_ne
+        rw [hP_eq_C, h, map_zero]
+      rw [hP_eq_C]
+      exact isUnit_C.mpr (isUnit_iff_ne_zero.mpr hcoeff_ne)
+    -- `R = 1 ~ gcd P 0 = P` (using `gcd_zero_right` and `IsUnit P`).
+    have hR_gcd : Associated R (EuclideanDomain.gcd P (Polynomial.derivative P)) := by
+      rw [hR_one, hPderiv_zero, EuclideanDomain.gcd_zero_right]
+      exact (associated_one_iff_isUnit.mpr hP_isUnit).symm
+    exact rp_dvd_sf_pow_of_associated hP_ne hR_gcd hP_assoc
+  · -- Case C: derivative is nonzero; `rp = ratPolyPrimitivePart (gcd ratPrim ratPrim.derivative)`.
+    have hderiv_false : (Hex.DensePoly.derivative
+        (Hex.ZPoly.toRatPoly (Hex.ZPoly.primitivePart core))).isZero = false := by
+      cases h : (Hex.DensePoly.derivative
+          (Hex.ZPoly.toRatPoly (Hex.ZPoly.primitivePart core))).isZero
+      · rfl
+      · exact absurd h hderiv
+    -- Identify `rp` via the case-C helper. Work with `primitivePart core`-shaped terms.
+    have hrp_pp_eq : rp =
+        Hex.ZPoly.ratPolyPrimitivePart
+          (Hex.DensePoly.gcd
+            (Hex.ZPoly.toRatPoly (Hex.ZPoly.primitivePart core))
+            (Hex.DensePoly.derivative
+              (Hex.ZPoly.toRatPoly (Hex.ZPoly.primitivePart core)))) :=
+      psd_repeatedPart_eq_ratPolyPrimitivePart_gcd_of_derivative_not_isZero
+        core hpp_isZero_false hderiv_false
+    -- Use `hpp` to identify with `toRatPoly core`.
+    set ratPrim : Hex.DensePoly Rat := Hex.ZPoly.toRatPoly core with hratPrim_def
+    set der : Hex.DensePoly Rat := Hex.DensePoly.derivative ratPrim with hder_def
+    set repeatedRat : Hex.DensePoly Rat := Hex.DensePoly.gcd ratPrim der with hrepeatedRat_def
+    have hrp_eq_repeatedRat : rp = Hex.ZPoly.ratPolyPrimitivePart repeatedRat := by
+      rw [hrp_pp_eq]
+      congr 1
+      rw [hpp]
+    rcases Hex.ZPoly.ratPolyPrimitivePart_rational_associate repeatedRat with ⟨w, hw⟩
+    rw [← hrp_eq_repeatedRat] at hw
+    -- `repeatedRat ≠ 0` because `repeatedRat ∣ ratPrim` and `ratPrim ≠ 0`.
+    have hrepeatedRat_ne : repeatedRat ≠ 0 := by
+      intro hzero
+      have hdvd : repeatedRat ∣ ratPrim := Hex.DensePoly.gcd_dvd_left ratPrim der
+      rw [hzero] at hdvd
+      rcases hdvd with ⟨r, hr⟩
+      apply hrat_ne
+      change ratPrim = 0
+      rw [hr]
+      exact Hex.DensePoly.zero_mul _
+    -- `w ≠ 0`.
+    have hw_ne : w ≠ 0 := by
+      intro hzero
+      apply hrepeatedRat_ne
+      rw [hw, hzero]
+      apply Hex.DensePoly.ext_coeff
+      intro n
+      rw [Hex.DensePoly.coeff_scale (R := Rat) 0 _ n (mul_zero 0),
+          Hex.DensePoly.coeff_zero, zero_mul]
+    have hCw_unit : IsUnit (Polynomial.C w) :=
+      isUnit_C.mpr (isUnit_iff_ne_zero.mpr hw_ne)
+    -- `toPolynomial repeatedRat ~ gcd P P.derivative`.
+    have hToPoly_ratPrim : HexPolyMathlib.toPolynomial ratPrim = P := by rw [hP_def]
+    have hToPoly_der : HexPolyMathlib.toPolynomial der = Polynomial.derivative P := by
+      rw [hder_def, toPolynomial_derivative, hToPoly_ratPrim]
+    have hgcd_assoc :
+        Associated (HexPolyMathlib.toPolynomial repeatedRat)
+          (EuclideanDomain.gcd P (Polynomial.derivative P)) := by
+      have := HexPolyMathlib.toPolynomial_gcd_associated ratPrim der
+      rw [hToPoly_ratPrim, hToPoly_der] at this
+      exact this
+    -- `toPolynomial repeatedRat = C w * R`.
+    have hToPoly_repeatedRat : HexPolyMathlib.toPolynomial repeatedRat = Polynomial.C w * R := by
+      rw [hw, toPolynomial_scale, ← hR_def]
+    -- `R ~ gcd P P.derivative` by cancelling `C w`.
+    have hR_gcd : Associated R (EuclideanDomain.gcd P (Polynomial.derivative P)) := by
+      have hCwR_assoc : Associated (Polynomial.C w * R)
+          (EuclideanDomain.gcd P (Polynomial.derivative P)) := by
+        rw [← hToPoly_repeatedRat]; exact hgcd_assoc
+      exact (associated_unit_mul_left R (Polynomial.C w) hCw_unit).symm.trans hCwR_assoc
+    exact rp_dvd_sf_pow_of_associated hP_ne hR_gcd hP_assoc
+
 
 end IntReductionMod
 
