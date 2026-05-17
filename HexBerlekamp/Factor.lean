@@ -1126,6 +1126,101 @@ theorem berlekampFactor_factors_nodup_of_no_squared
     rw [h_loop]
     exact h_singleton_nodup
 
+/-- Positivity-only variant of the single-step `splitFirstFactor?` invariant:
+positive degree of every factor is preserved by a successful split, without
+requiring the squareness-free hypothesis used by the joint Nodup/positivity
+invariant.  Positivity is preserved because each new factor produced by
+`splitWithWitnesses?` has strictly positive degree, and remaining unchanged
+entries already had positive degree by assumption. -/
+private theorem splitFirstFactor?_pos_invariant
+    [ZMod64.PrimeModulus p]
+    (witnesses : List (FpPoly p))
+    {xs xs' : List (FpPoly p)}
+    (h_pos : ∀ g ∈ xs, 0 < g.degree?.getD 0)
+    (h_split : splitFirstFactor? witnesses xs = some xs') :
+    ∀ g ∈ xs', 0 < g.degree?.getD 0 := by
+  induction xs generalizing xs' with
+  | nil => simp [splitFirstFactor?] at h_split
+  | cons fac rest ih =>
+      rw [splitFirstFactor?] at h_split
+      have h_fac_pos : 0 < fac.degree?.getD 0 := h_pos fac List.mem_cons_self
+      have h_fac_ne_zero : fac ≠ 0 := by
+        intro hzero
+        rw [hzero] at h_fac_pos
+        have : (0 : FpPoly p).degree? = none := rfl
+        rw [this] at h_fac_pos
+        simp at h_fac_pos
+      have h_rest_pos : ∀ g ∈ rest, 0 < g.degree?.getD 0 :=
+        fun g hg => h_pos g (List.mem_cons_of_mem fac hg)
+      cases hsplit : splitWithWitnesses? fac witnesses with
+      | some split =>
+          rw [hsplit] at h_split
+          simp only [Option.some.injEq] at h_split
+          subst h_split
+          have h_factor_pos := splitWithWitnesses?_factor_pos_degree fac witnesses hsplit
+          have h_cofactor_pos :=
+            splitWithWitnesses?_cofactor_pos_degree fac witnesses h_fac_ne_zero hsplit
+          intro g hg
+          rcases List.mem_cons.mp hg with heq | hmem
+          · subst heq; exact h_factor_pos
+          rcases List.mem_cons.mp hmem with heq | hmem'
+          · subst heq; exact h_cofactor_pos
+          exact h_rest_pos g hmem'
+      | none =>
+          rw [hsplit] at h_split
+          cases hrest : splitFirstFactor? witnesses rest with
+          | some rest' =>
+              rw [hrest] at h_split
+              simp only [Option.some.injEq] at h_split
+              subst h_split
+              have h_rest'_pos := ih h_rest_pos hrest
+              intro g hg
+              rcases List.mem_cons.mp hg with heq | hmem
+              · subst heq; exact h_fac_pos
+              · exact h_rest'_pos g hmem
+          | none =>
+              rw [hrest] at h_split
+              exact absurd h_split (by simp)
+
+/-- Positivity-only variant of `berlekampFactorLoop_invariant`: positive degree
+of every entry is preserved by the entire splitting loop, without requiring
+the squareness-free hypothesis. -/
+private theorem berlekampFactorLoop_pos_invariant
+    [ZMod64.PrimeModulus p]
+    (witnesses : List (FpPoly p)) (fuel : Nat) (factors : List (FpPoly p))
+    (h_pos : ∀ g ∈ factors, 0 < g.degree?.getD 0) :
+    ∀ g ∈ berlekampFactorLoop witnesses fuel factors, 0 < g.degree?.getD 0 := by
+  induction fuel generalizing factors with
+  | zero => exact h_pos
+  | succ fuel ih =>
+      rw [berlekampFactorLoop]
+      cases hsplit : splitFirstFactor? witnesses factors with
+      | some factors' =>
+          have h_pos' := splitFirstFactor?_pos_invariant witnesses h_pos hsplit
+          exact ih factors' h_pos'
+      | none => exact h_pos
+
+/-- Abstract form of `berlekampFactor`'s output factor-degree positivity: if
+the input polynomial has positive degree, then every factor in the executable
+Berlekamp factor list has positive degree.  The squareness-free hypothesis
+needed by `berlekampFactor_factors_nodup_of_no_squared` is not needed here:
+positivity is preserved by every loop step regardless of square-freeness. -/
+theorem berlekampFactor_factors_pos_degree
+    [Lean.Grind.Field (ZMod64 p)]
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (hf_pos : 0 < f.degree?.getD 0) :
+    ∀ g ∈ (berlekampFactor f hmonic).factors, 0 < g.degree?.getD 0 := by
+  have h_init_pos : ∀ g ∈ ([f] : List (FpPoly p)), 0 < g.degree?.getD 0 := by
+    intro g hg
+    rw [List.mem_singleton] at hg
+    subst hg
+    exact hf_pos
+  change ∀ g ∈ berlekampFactorLoop ((fixedSpaceKernel f hmonic).toList)
+    (f.size + 1) [f], 0 < g.degree?.getD 0
+  exact berlekampFactorLoop_pos_invariant ((fixedSpaceKernel f hmonic).toList)
+    (f.size + 1) [f] h_init_pos
+
 end Berlekamp
 
 end Hex

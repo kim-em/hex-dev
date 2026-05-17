@@ -4079,6 +4079,165 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
   rw [heq]
   simpa using hNodup
 
+/-- Discharge of the per-modular-factor natural-degree positivity premise on
+`henselLiftData_liftedFactor_natDegree_pos`: given the `factorsModPBerlekampForm`
+invariant (which records that `primeData.factorsModP` is the Berlekamp factor
+array of the monic modular image of the input) together with a successful
+`isGoodPrime` check and a positive-degree input polynomial, every modular factor
+lifts back to a positive-natural-degree Mathlib polynomial over `ℤ`.
+
+Proof: extract the existential witnesses from `factorsModPBerlekampForm` to view
+`data.factorsModP` as the Berlekamp factor list of `monicModularImage (modP data.p f)`,
+then apply the polymorphic abstract `Hex.Berlekamp.berlekampFactor_factors_pos_degree`.
+The required positivity of the monic modular image follows from `isGoodPrime`'s
+leading-coefficient admissibility (which preserves degree through `modP`) together
+with the input's positive degree.  The bridge from `0 < g.degree?.getD 0` on each
+`FpPoly p` factor to `0 < (toPolynomial (liftToZ g)).natDegree` on the integer
+side is `HexPolyMathlib.natDegree_toPolynomial` plus the (inline) observation
+that `liftToZ` preserves size on any nonzero `FpPoly p`.
+
+This is the sibling of `factorsModP_nodup_of_factorsModPBerlekampForm`: it lets a
+Mathlib-bridge consumer of `henselLiftData_liftedFactor_natDegree_pos_of_choosePrimeData`
+discharge the `hfactors_natDegree_pos` premise from the `choosePrimeData?` facts
+alone, without constructing the per-modular-factor natural-degree witnesses by
+hand. -/
+theorem factorsModP_natDegree_pos_of_factorsModPBerlekampForm
+    (f : Hex.ZPoly) (data : Hex.PrimeChoiceData)
+    (hform : Hex.factorsModPBerlekampForm f data)
+    (hgood :
+      letI := data.bounds
+      Hex.isGoodPrime f data.p = true)
+    (hf_pos : 0 < f.degree?.getD 0) :
+    letI := data.bounds
+    ∀ g ∈ data.factorsModP,
+      0 < (HexPolyZMathlib.toPolynomial (Hex.FpPoly.liftToZ g)).natDegree := by
+  letI : Hex.ZMod64.Bounds data.p := data.bounds
+  obtain ⟨hprime, hzero, hfield, heq⟩ := hform
+  letI : Hex.ZMod64.PrimeModulus data.p := Hex.ZMod64.primeModulusOfPrime hprime
+  -- Step A: 0 < (monicModularImage (modP data.p f)).degree?.getD 0
+  have hfsize_ge_two : 2 ≤ f.size := by
+    unfold Hex.DensePoly.degree? at hf_pos
+    by_cases hfs0 : f.size = 0
+    · simp [hfs0] at hf_pos
+    · simp [hfs0] at hf_pos
+      omega
+  have hfsize_pos : 0 < f.size := by omega
+  have hadm : Hex.leadingCoeffAdmissible f data.p :=
+    Hex.isGoodPrime_leadingCoeffAdmissible f data.p hgood
+  have hcoeff_modP_ne :
+      (Hex.ZPoly.modP data.p f).coeff (f.size - 1) ≠
+        (0 : Hex.ZMod64 data.p) := by
+    rw [Hex.ZPoly.coeff_modP, ← Hex.DensePoly.leadingCoeff_eq_coeff_last f hfsize_pos]
+    exact hadm
+  have hmodP_size_le : (Hex.ZPoly.modP data.p f).size ≤ f.size := by
+    unfold Hex.ZPoly.modP Hex.FpPoly.ofCoeffs
+    have := Hex.DensePoly.size_ofCoeffs_le
+      (((List.range f.size).map fun i =>
+          Hex.ZMod64.ofNat data.p (Hex.ZPoly.intModNat (f.coeff i) data.p)).toArray)
+    simpa using this
+  have hmodP_size_ge : f.size ≤ (Hex.ZPoly.modP data.p f).size := by
+    by_contra h
+    have hlt : (Hex.ZPoly.modP data.p f).size < f.size := Nat.not_le.mp h
+    have hle : (Hex.ZPoly.modP data.p f).size ≤ f.size - 1 := Nat.le_pred_of_lt hlt
+    exact hcoeff_modP_ne
+      (Hex.DensePoly.coeff_eq_zero_of_size_le (Hex.ZPoly.modP data.p f) hle)
+  have hmodP_size_eq : (Hex.ZPoly.modP data.p f).size = f.size :=
+    Nat.le_antisymm hmodP_size_le hmodP_size_ge
+  have hmodP_size_ge_two : 2 ≤ (Hex.ZPoly.modP data.p f).size := by
+    rw [hmodP_size_eq]; exact hfsize_ge_two
+  have hmod_size_pos : 0 < (Hex.ZPoly.modP data.p f).size := by omega
+  have hmodP_lead_ne :
+      Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP data.p f) ≠
+        (0 : Hex.ZMod64 data.p) := by
+    rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred (Hex.ZPoly.modP data.p f) hmod_size_pos]
+    exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size
+      (Hex.ZPoly.modP data.p f) hmod_size_pos
+  have hinv_ne :
+      (Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP data.p f))⁻¹ ≠
+        (0 : Hex.ZMod64 data.p) :=
+    Hex.ZMod64.inv_ne_zero_of_prime hprime hmodP_lead_ne
+  have hmonicImage_size :
+      (Hex.monicModularImage (Hex.ZPoly.modP data.p f)).size =
+        (Hex.ZPoly.modP data.p f).size := by
+    unfold Hex.monicModularImage
+    simp only [hzero, Bool.false_eq_true, ↓reduceIte]
+    exact Hex.FpPoly.scale_size_eq_of_ne_zero (p := data.p) hinv_ne _
+  have hmonicImage_size_ge_two :
+      2 ≤ (Hex.monicModularImage (Hex.ZPoly.modP data.p f)).size := by
+    rw [hmonicImage_size]; exact hmodP_size_ge_two
+  have hmonicImage_pos :
+      0 < (Hex.monicModularImage (Hex.ZPoly.modP data.p f)).degree?.getD 0 := by
+    unfold Hex.DensePoly.degree?
+    have hne : (Hex.monicModularImage (Hex.ZPoly.modP data.p f)).size ≠ 0 := by omega
+    simp [hne]; omega
+  -- Step B: positivity for every entry in the Berlekamp factor list.
+  have hFactorsPos :
+      ∀ h ∈ (@Hex.Berlekamp.berlekampFactor data.p data.bounds
+              (Hex.monicModularImage (Hex.ZPoly.modP data.p f))
+              (Hex.monicModularImage_monic hprime (Hex.ZPoly.modP data.p f) hzero)
+              hfield).factors,
+        0 < h.degree?.getD 0 :=
+    Hex.Berlekamp.berlekampFactor_factors_pos_degree
+      (Hex.monicModularImage (Hex.ZPoly.modP data.p f))
+      (Hex.monicModularImage_monic hprime (Hex.ZPoly.modP data.p f) hzero)
+      hmonicImage_pos
+  -- Step C: transport positivity from FpPoly factors to integer-side `toPolynomial`.
+  intro g hg
+  -- Membership: g ∈ data.factorsModP corresponds to g ∈ berlekampFactor.factors via heq.
+  have hg_factors :
+      g ∈ (@Hex.Berlekamp.berlekampFactor data.p data.bounds
+            (Hex.monicModularImage (Hex.ZPoly.modP data.p f))
+            (Hex.monicModularImage_monic hprime (Hex.ZPoly.modP data.p f) hzero)
+            hfield).factors := by
+    rw [heq] at hg
+    simpa using hg
+  have hg_pos : 0 < g.degree?.getD 0 := hFactorsPos g hg_factors
+  -- Show 0 < g.size from hg_pos.
+  have hg_size_pos : 0 < g.size := by
+    unfold Hex.DensePoly.degree? at hg_pos
+    by_cases hgz : g.size = 0
+    · simp [hgz] at hg_pos
+    · exact Nat.pos_of_ne_zero hgz
+  -- Bridge: (liftToZ g).size = g.size, hence (liftToZ g).degree? = g.degree?.
+  have hg_lead_ne : g.coeff (g.size - 1) ≠ (0 : Hex.ZMod64 data.p) :=
+    Hex.DensePoly.coeff_last_ne_zero_of_pos_size g hg_size_pos
+  have hg_lead_toNat_ne : (g.coeff (g.size - 1)).toNat ≠ 0 := by
+    intro h
+    apply hg_lead_ne
+    have heq_zero : g.coeff (g.size - 1) = Hex.ZMod64.zero := by
+      apply (Hex.ZMod64.eq_iff_toNat_eq _ _).mpr
+      rw [Hex.ZMod64.toNat_zero, h]
+    exact heq_zero
+  have hlift_coeff_ne :
+      (Hex.FpPoly.liftToZ g).coeff (g.size - 1) ≠ (0 : Int) := by
+    rw [Hex.FpPoly.coeff_liftToZ]
+    intro h
+    exact hg_lead_toNat_ne (by simpa [Int.ofNat_eq_zero] using h)
+  have hlift_size_le : (Hex.FpPoly.liftToZ g).size ≤ g.size := by
+    unfold Hex.FpPoly.liftToZ
+    have := Hex.DensePoly.size_ofCoeffs_le
+      (((List.range g.size).map fun i => Int.ofNat (g.coeff i).toNat).toArray)
+    simpa using this
+  have hlift_size_ge : g.size ≤ (Hex.FpPoly.liftToZ g).size := by
+    by_contra h
+    have hlt : (Hex.FpPoly.liftToZ g).size < g.size := Nat.not_le.mp h
+    have hle : (Hex.FpPoly.liftToZ g).size ≤ g.size - 1 := Nat.le_pred_of_lt hlt
+    exact hlift_coeff_ne
+      (Hex.DensePoly.coeff_eq_zero_of_size_le (Hex.FpPoly.liftToZ g) hle)
+  have hlift_size_eq : (Hex.FpPoly.liftToZ g).size = g.size :=
+    Nat.le_antisymm hlift_size_le hlift_size_ge
+  have hlift_degree_eq :
+      (Hex.FpPoly.liftToZ g).degree? = g.degree? := by
+    unfold Hex.DensePoly.degree?
+    rw [hlift_size_eq]
+  -- Conclude using natDegree_toPolynomial.
+  have hnatDeg_eq :
+      (HexPolyZMathlib.toPolynomial (Hex.FpPoly.liftToZ g)).natDegree =
+        (Hex.FpPoly.liftToZ g).degree?.getD 0 :=
+    HexPolyMathlib.natDegree_toPolynomial _
+  rw [hnatDeg_eq, hlift_degree_eq]
+  exact hg_pos
+
 /-- Composed convenience wrapper: combines
 `Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData` with
 `henselLiftData_liftedFactor_injective` so that a Mathlib-bridge consumer can
