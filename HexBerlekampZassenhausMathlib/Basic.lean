@@ -1557,6 +1557,17 @@ def liftedFactorProductCandidate (d : Hex.LiftData) (S : LiftedFactorSubset d) :
     Hex.ZPoly.primitivePart <|
       Hex.centeredLiftPoly (liftedFactorProduct d S) (d.p ^ d.k)
 
+/-- Scaled variant of the recombination candidate: centred lift of the
+leading-coefficient-scaled selected lifted-factor product, primitivised and
+sign-normalised.  This is the primitive non-monic substrate used by the scaled
+recombination search. -/
+def scaledRecombinationCandidate
+    (core : Hex.ZPoly) (d : Hex.LiftData) (S : LiftedFactorSubset d) :
+    Hex.ZPoly :=
+  Hex.normalizeFactorSign <|
+    Hex.ZPoly.primitivePart <|
+      Hex.centeredLiftPoly (scaledLiftedFactorProduct core d S) (d.p ^ d.k)
+
 /--
 Proof-facing package for the square-free Hensel subset correspondence over the
 executable `PrimeChoiceData`/`LiftData` surface.
@@ -2106,6 +2117,15 @@ structure LiftedFactorSubsetPartition
       S ⊆ J →
       RepresentsIntegerFactorAtLift core d f S →
       S ⊆ T
+  support_subset_of_dvd_scaledRecombinationCandidate :
+    ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
+      Irreducible (HexPolyZMathlib.toPolynomial f) →
+      f ∣ target →
+      T ⊆ J →
+      f ∣ scaledRecombinationCandidate core d T →
+      S ⊆ J →
+      RepresentsIntegerFactorAtLift core d f S →
+      S ⊆ T
 
 /--
 Specialisation of `LiftedFactorSubsetPartition.cover` to `J.min'`: the
@@ -2216,7 +2236,8 @@ theorem liftedFactorSubsetPartition_transport
       cover := ?_
       pairwise_disjoint := ?_
       unique_up_to_associated := ?_
-      support_subset_of_dvd_recombinationCandidate := ?_ }
+      support_subset_of_dvd_recombinationCandidate := ?_
+      support_subset_of_dvd_scaledRecombinationCandidate := ?_ }
   -- Cover for the new state at any `i ∈ J \ S`.
   · intro i hi_sdiff
     have ⟨hi_J, hi_notS⟩ := Finset.mem_sdiff.mp hi_sdiff
@@ -2289,6 +2310,19 @@ theorem liftedFactorSubsetPartition_transport
     have hUT :
         U ⊆ T :=
       h.support_subset_of_dvd_recombinationCandidate hirr
+        (dvd_target_of_dvd_quotient hdvd_quot) hTJ_orig
+        hfactor_dvd_candidate hUJ_orig hUrep
+    intro i hiU
+    exact hUT hiU
+  -- Scaled-support containment for candidates in the transported state.
+  · intro f U T hirr hdvd_quot hTJ hfactor_dvd_candidate hUJ hUrep
+    have hTJ_orig : T ⊆ J :=
+      fun i hi => (Finset.mem_sdiff.mp (hTJ hi)).1
+    have hUJ_orig : U ⊆ J :=
+      fun i hi => (Finset.mem_sdiff.mp (hUJ hi)).1
+    have hUT :
+        U ⊆ T :=
+      h.support_subset_of_dvd_scaledRecombinationCandidate hirr
         (dvd_target_of_dvd_quotient hdvd_quot) hTJ_orig
         hfactor_dvd_candidate hUJ_orig hUrep
     intro i hiU
@@ -3779,28 +3813,6 @@ def recombinationCandidate (d : Hex.LiftData) (S : LiftedFactorSubset d) :
         (Array.polyProduct (liftedSubsetSelectedList d S).toArray)
         (d.p ^ d.k)
 
-/-- Scaled variant of `recombinationCandidate`: centred lift of the *scaled*
-selected lifted-factor product, primitivised and sign-normalised.
-
-For monic `core`, `scaledLiftedFactorProduct = liftedFactorProduct`, so the
-scaled candidate definitionally agrees with `recombinationCandidate`. For
-primitive non-monic `core` they diverge: `scaledLiftedFactorProduct ≡ factor`
-modulo `d.p ^ d.k` (the invariant supplied by
-`RepresentsIntegerFactorAtLift`), whereas the unscaled `liftedFactorProduct`
-is `scale (lc(core)⁻¹) · scaledLiftedFactorProduct` and need not normalise
-back to `factor` after primitive-part + sign-normalisation. A concrete model
-records this on issue #4643: with modulus `101`, `leadingCoeff core = 2`, and
-`factor = 2X + 1`, an unscaled product with residues `[51, 1]` carries the
-correct scaled residues but its unscaled normalisation is `X - 50`, not
-`2X + 1`. The scaled candidate is therefore the right substrate to feed the
-primitive non-monic recombination chain. -/
-def scaledRecombinationCandidate
-    (core : Hex.ZPoly) (d : Hex.LiftData) (S : LiftedFactorSubset d) :
-    Hex.ZPoly :=
-  Hex.normalizeFactorSign <|
-    Hex.ZPoly.primitivePart <|
-      Hex.centeredLiftPoly (scaledLiftedFactorProduct core d S) (d.p ^ d.k)
-
 /-- The executable-list recombination candidate agrees with the proof-side
 product candidate. -/
 theorem recombinationCandidate_eq_liftedFactorProductCandidate
@@ -3866,6 +3878,37 @@ theorem representingSubset_subset_of_dvd_recombinationCandidate_of_primitive_pos
     exact hfactor_dvd_candidate
   · exact hSJ
   · exact hrep
+
+/-- Primitive + positive-leading-core support containment for scaled
+recombination candidates (#4736).
+
+This is the scaled-candidate analogue of
+`representingSubset_subset_of_dvd_recombinationCandidate_of_primitive_pos_lc_core`.
+The extra primitive/sign/target-divisibility hypotheses match the recovery
+pipeline used by the primitive recursive recombination chain; the actual
+support conclusion is supplied by the scaled analytic support field of
+`LiftedFactorSubsetPartition`, not by identifying scaled and unscaled
+candidates. -/
+theorem representingSubset_subset_of_dvd_scaledRecombinationCandidate_of_primitive_pos_lc_core
+    {core target f : Hex.ZPoly} {d : Hex.LiftData}
+    {J T S : LiftedFactorSubset d}
+    (_hcore_ne : core ≠ 0)
+    (_hcore_primitive : Hex.ZPoly.Primitive core)
+    (_hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (_hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (_htarget_dvd_core : target ∣ core)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (hTJ : T ⊆ J)
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial f))
+    (hfactor_dvd_target : f ∣ target)
+    (_hfactor_prim : Hex.ZPoly.content f = 1)
+    (_hfactor_norm : Hex.normalizeFactorSign f = f)
+    (hfactor_dvd_candidate : f ∣ scaledRecombinationCandidate core d T)
+    (hSJ : S ⊆ J)
+    (hrep : RepresentsIntegerFactorAtLift core d f S) :
+    S ⊆ T := by
+  exact hpartition.support_subset_of_dvd_scaledRecombinationCandidate
+    hirr hfactor_dvd_target hTJ hfactor_dvd_candidate hSJ hrep
 
 /-- The `Hex.centeredLiftPoly` operation is invariant under prior reduction by
 the same modulus, so the A2 recovery equality phrased in terms of
@@ -11202,6 +11245,8 @@ of #4543 alone:
 * `support_subset_of_dvd_recombinationCandidate` — if an irreducible
   divisor of `core` divides a recombination candidate, its representing
   subset is contained in the candidate's selection set.
+* `support_subset_of_dvd_scaledRecombinationCandidate` — the analogous
+  support containment for scaled recombination candidates.
 
 A Mathlib-free proof of this obligation would require either BHKS
 Theorem 5.2 machinery (tracked by #2567) or the classical square-free
@@ -11256,7 +11301,13 @@ private theorem liftedFactorSubsetPartition_analytic_obligation
                 f ∣ core →
                   f ∣ liftedFactorProductCandidate d T →
                     RepresentsIntegerFactorAtLift core d f S →
-                      S ⊆ T) := by
+                      S ⊆ T) ∧
+            (∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
+                Irreducible (HexPolyZMathlib.toPolynomial f) →
+                  f ∣ core →
+                    f ∣ scaledRecombinationCandidate core d T →
+                      RepresentsIntegerFactorAtLift core d f S →
+                        S ⊆ T) := by
   intro primeData d
   sorry
 
@@ -11282,9 +11333,10 @@ Composes:
   `henselSubsetCorrespondenceHypotheses_of_choosePrimeData` (#4543,
   line 7704) for `toHenselSubsetCorrespondenceRest`;
 * `hcore_sqfree` for `target_squarefree`;
-* the analytic obligation helper above for the four genuinely analytic
+* the analytic obligation helper above for the five genuinely analytic
   fields (`cover`, `pairwise_disjoint`, `unique_up_to_associated`,
-  `support_subset_of_dvd_recombinationCandidate`).
+  `support_subset_of_dvd_recombinationCandidate`,
+  `support_subset_of_dvd_scaledRecombinationCandidate`).
 
 The constructor body is `sorry`-free; the only analytic `sorry`
 introduced by #4549 is inside
@@ -11296,7 +11348,7 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData
     let d := Hex.henselLiftData core B primeData
     LiftedFactorSubsetPartition core d Finset.univ core := by
   intro primeData d
-  obtain ⟨hcover, hdisj, huniq, hsup⟩ :=
+  obtain ⟨hcover, hdisj, huniq, hsup, hscaled_sup⟩ :=
     liftedFactorSubsetPartition_analytic_obligation core B
   refine
     { toHenselSubsetCorrespondenceRest :=
@@ -11306,7 +11358,8 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData
       cover := ?_
       pairwise_disjoint := ?_
       unique_up_to_associated := ?_
-      support_subset_of_dvd_recombinationCandidate := ?_ }
+      support_subset_of_dvd_recombinationCandidate := ?_
+      support_subset_of_dvd_scaledRecombinationCandidate := ?_ }
   · intro i hi
     exact hcover hi
   · intro f g S T hirr_f hdvd_f _ hSrep hirr_g hdvd_g _ hTrep hnoassoc
@@ -11315,6 +11368,8 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData
     exact huniq hirr_f hdvd_f hSrep hirr_g hdvd_g hTrep hassoc
   · intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
     exact hsup hirr hdvd_target hdvd_cand hSrep
+  · intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
+    exact hscaled_sup hirr hdvd_target hdvd_cand hSrep
 
 end
 
