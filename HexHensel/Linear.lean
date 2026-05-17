@@ -183,6 +183,9 @@ private theorem linearHenselStep_correction_identity
     _ = eMod := by
           rw [FpPoly.one_mul]
 
+/-- Reducing the integer `1` polynomial modulo `p` yields the `FpPoly p`
+identity. Bottom-of-recursion case for the `modP p` algebra rewrites consumed
+by the linear Hensel step's correctness chain. -/
 theorem modP_one (p : Nat) [ZMod64.Bounds p] :
     ZPoly.modP p (1 : ZPoly) = (1 : FpPoly p) := by
   have hcong : ZPoly.congr (FpPoly.liftToZ (1 : FpPoly p)) (1 : ZPoly) p := by
@@ -214,6 +217,11 @@ theorem modP_one (p : Nat) [ZMod64.Bounds p] :
   exact Eq.trans (ZPoly.modP_eq_of_congr p _ _ (ZPoly.congr_symm _ _ _ hcong))
     (FpPoly.modP_liftToZ (p := p) (1 : FpPoly p))
 
+/-- A `modP p` equality converts to a `ZPoly.congr` against the lift: if
+`modP p z = u` then the lifted-back-to-`ZPoly` representative `FpPoly.liftToZ u`
+agrees with `z` coefficientwise modulo `p`. Used by the correction-proof chain
+when an `FpPoly`-side computation has produced the canonical residue and the
+caller needs to feed it back into the integer-side congruence. -/
 theorem congr_liftToZ_of_modP_eq
     (p : Nat) [ZMod64.Bounds p] (u : FpPoly p) (z : ZPoly)
     (h : ZPoly.modP p z = u) :
@@ -256,6 +264,11 @@ private theorem zmod_add_zero_zero (p : Nat) [ZMod64.Bounds p] :
     simp
   simpa [ZMod64.toNat_eq_val, ZMod64.toNat_zero] using hto
 
+/-- `FpPoly.liftToZ` is additive modulo `p`: the integer lift of a sum is
+coefficientwise congruent to the sum of the integer lifts. Together with
+`liftToZ_mul_congr` this is the bridge used by `modP_add` /
+`modP_lift_mul_left` / `modP_lift_mul_right` to push `modP p` through the
+`+`/`·` structure of the linear Hensel correction. -/
 theorem liftToZ_add_congr
     (p : Nat) [ZMod64.Bounds p] (f g : FpPoly p) :
     ZPoly.congr (FpPoly.liftToZ (f + g)) (FpPoly.liftToZ f + FpPoly.liftToZ g) p := by
@@ -288,6 +301,11 @@ private theorem zmod_mul_lift_congr
         simp [Int.ofNat_eq_natCast]]
   exact Int.emod_eq_zero_of_dvd hdiv
 
+/-- Per-term coefficient congruence at the lifted product diagonal: the `i`th
+diagonal contribution to the `n`th coefficient of `f * g` over `FpPoly p`,
+lifted to `Int`, agrees mod `p` with the corresponding `DensePoly.mulCoeffStep`
+contribution over `FpPoly.liftToZ f · FpPoly.liftToZ g`. Gates the diagonal
+fold underlying `liftToZ_mul_congr`. -/
 private theorem liftToZ_mulCoeffTerm_congr
     (p : Nat) [ZMod64.Bounds p] (f g : FpPoly p) (n i : Nat) :
     (Int.ofNat (FpPoly.mulCoeffTerm f g n i).toNat -
@@ -366,6 +384,11 @@ private theorem fold_mulCoeff_outer_eq_diagonal_int
       rw [fold_mulCoeffStep_eq_diagonal_int]
       exact ih (acc + intDiagonalMulCoeffTerm p q n i)
 
+/-- Reifies the executable nested-fold `DensePoly.mulCoeffSum p q n` into the
+flat diagonal-sum `Σ_{i < p.size} intDiagonalMulCoeffTerm p q n i` over `Int`.
+This bridge identity is what lets `liftToZ_mul_congr` reason about the lifted
+product coefficient as an additive `Int` sum, where the per-term congruence
+from `liftToZ_mulCoeffTerm_diagonal_congr` propagates cleanly. -/
 private theorem mulCoeffSum_eq_diagonal_int (p q : ZPoly) (n : Nat) :
     DensePoly.mulCoeffSum p q n =
       (List.range p.size).foldl (fun acc i => acc + intDiagonalMulCoeffTerm p q n i) 0 := by
@@ -479,6 +502,12 @@ private theorem zmod_add_lift_congr_of_terms
       _ = (p : Int) * (k1 + k2) := by grind
   exact Int.emod_eq_zero_of_dvd htotal
 
+/-- Inductive lift transport carrying the per-term diagonal congruence
+(`liftToZ_mulCoeffTerm_diagonal_congr`) across the diagonal fold. The
+hypothesis `hacc` says the seed `acc` lifted to `Int` agrees mod `p` with the
+integer-side seed `accZ`; the conclusion says that property is preserved after
+adding the next diagonal contribution on both sides. Driver of the inductive
+step in `liftToZ_mul_congr`. -/
 private theorem fold_liftToZ_mulCoeffTerm_congr
     (p : Nat) [ZMod64.Bounds p] (f g : FpPoly p) (n : Nat) (xs : List Nat)
     (acc : ZMod64 p) (accZ : Int)
@@ -500,6 +529,12 @@ private theorem fold_liftToZ_mulCoeffTerm_congr
         (intDiagonalMulCoeffTerm (FpPoly.liftToZ f) (FpPoly.liftToZ g) n i)
         hacc (liftToZ_mulCoeffTerm_diagonal_congr p f g n i)
 
+/-- `FpPoly.liftToZ` is multiplicative modulo `p`: the integer lift of a
+product is coefficientwise congruent to the product of the integer lifts.
+Multiplicative companion of `liftToZ_add_congr`; together they bridge the
+`FpPoly`-side ring operations into `ZPoly.congr` form, which the `modP` push
+lemmas (`modP_add`, `modP_lift_mul_left`, `modP_lift_mul_right`) consume to
+expose the linear Hensel correction's mod-`p` structure. -/
 theorem liftToZ_mul_congr
     (p : Nat) [ZMod64.Bounds p] (f g : FpPoly p) :
     ZPoly.congr (FpPoly.liftToZ (f * g)) (FpPoly.liftToZ f * FpPoly.liftToZ g) p := by
@@ -513,6 +548,10 @@ theorem liftToZ_mul_congr
     rw [ZMod64.toNat_zero]
     simp)
 
+/-- `ZPoly.modP p` distributes over addition: the canonical mod-`p` residue
+of a sum is the sum of residues. Standard ring-homomorphism rewrite for
+`modP p` used by the linear Hensel step proof to split `modP p (g·h + ...)`
+into manageable pieces. -/
 theorem modP_add
     (p : Nat) [ZMod64.Bounds p] (f g : ZPoly) :
     ZPoly.modP p (f + g) = ZPoly.modP p f + ZPoly.modP p g := by
@@ -539,6 +578,11 @@ theorem modP_add
       (ZPoly.congr_symm _ _ _ hsum))
     (FpPoly.modP_liftToZ (p := p) (ZPoly.modP p f + ZPoly.modP p g))
 
+/-- `modP p` reduces a `liftToZ`-on-the-left product to the `FpPoly`-side
+factor times the `modP` of the integer side: `modP p (liftToZ r · h) =
+r · modP p h`. Companion of `modP_lift_mul_right`; consumed by the linear
+Hensel step's correctness chain to push `modP p` past the
+`s * eMod`-shaped half of the correction product. -/
 theorem modP_lift_mul_left
     (p : Nat) [ZMod64.Bounds p] (r : FpPoly p) (h : ZPoly) :
     ZPoly.modP p (FpPoly.liftToZ r * h) = r * ZPoly.modP p h := by
@@ -559,6 +603,11 @@ theorem modP_lift_mul_left
       (ZPoly.congr_symm _ _ _ hprod))
     (FpPoly.modP_liftToZ (p := p) (r * hMod))
 
+/-- `modP p` reduces a `liftToZ`-on-the-right product to the `modP` of the
+integer side times the `FpPoly`-side factor: `modP p (g · liftToZ hCorrection)
+= modP p g · hCorrection`. Companion of `modP_lift_mul_left`; consumed by the
+linear Hensel step's correctness chain to push `modP p` past the
+`q * hMod`-shaped half of the correction product. -/
 theorem modP_lift_mul_right
     (p : Nat) [ZMod64.Bounds p] (g : ZPoly) (hCorrection : FpPoly p) :
     ZPoly.modP p (g * FpPoly.liftToZ hCorrection) =
@@ -583,6 +632,10 @@ theorem modP_lift_mul_right
       (FpPoly.liftToZ (gMod * hCorrection)) (ZPoly.congr_symm _ _ _ hprod))
     (FpPoly.modP_liftToZ (p := p) (gMod * hCorrection))
 
+/-- Combined `modP_add` + `modP_lift_mul_left` + `modP_lift_mul_right` rewrite
+in the exact `liftToZ r · h + g · liftToZ hCorrection` shape produced by the
+linear Hensel correction step. Single-rewrite entry point consumed by the
+linear-Hensel correctness chain in place of three separate `modP` pushes. -/
 theorem modP_add_lift_mul
     (p : Nat) [ZMod64.Bounds p] (g h : ZPoly) (r hCorrection : FpPoly p) :
     ZPoly.modP p (FpPoly.liftToZ r * h + g * FpPoly.liftToZ hCorrection) =
