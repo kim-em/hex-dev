@@ -8180,6 +8180,28 @@ theorem toPolynomial_recombinationCandidate_squarefree
   exact Squarefree.squarefree_of_dvd
     (HexPolyMathlib.toPolynomial_dvd hcand_dvd_target) hpartition.target_squarefree
 
+/-- Scaled-candidate counterpart of `toPolynomial_recombinationCandidate_squarefree`:
+inherits squarefreeness from a squarefree `target` via the exact-quotient witness.
+Consumed by the scaled `mem_T_iff_*` chain for the primitive recursive
+recombination coverage proof (#4647 / #4737). -/
+theorem toPolynomial_scaledRecombinationCandidate_squarefree
+    {core target quotient : Hex.ZPoly} {d : Hex.LiftData}
+    {J T : LiftedFactorSubset d}
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (hquot :
+      Hex.exactQuotient? target (scaledRecombinationCandidate core d T) =
+        some quotient) :
+    Squarefree (HexPolyZMathlib.toPolynomial
+      (scaledRecombinationCandidate core d T)) := by
+  have hmul : quotient * scaledRecombinationCandidate core d T = target :=
+    Hex.exactQuotient?_product hquot
+  have hcand_dvd_target : scaledRecombinationCandidate core d T ∣ target := by
+    refine ⟨quotient, ?_⟩
+    rw [Hex.DensePoly.mul_comm_poly (S := Int)]
+    exact hmul.symm
+  exact Squarefree.squarefree_of_dvd
+    (HexPolyMathlib.toPolynomial_dvd hcand_dvd_target) hpartition.target_squarefree
+
 /-- Reverse-coverage finite degree-counting step (issue #4468).
 
 Given a `LiftedFactorSubsetPartition core d J target` and a subset `T ⊆ J`,
