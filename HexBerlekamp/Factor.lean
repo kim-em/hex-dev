@@ -460,6 +460,20 @@ private theorem factorProduct_berlekampFactorLoop_eq
       exact factorProduct_splitFirstFactor?_eq witnesses hsplit
     | none => rfl
 
+/-- The Berlekamp factor list's product equals the input polynomial.  The
+splitting loop preserves `factorProduct` without using square-freeness, so the
+product equality holds for every monic input. -/
+theorem factorProduct_berlekampFactor
+    [Lean.Grind.Field (ZMod64 p)]
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) :
+    factorProduct (berlekampFactor f hmonic).factors = f := by
+  rw [show (berlekampFactor f hmonic).factors
+        = berlekampFactorLoop ((fixedSpaceKernel f hmonic).toList)
+            (f.size + 1) [f] from rfl]
+  rw [factorProduct_berlekampFactorLoop_eq, factorProduct_cons, factorProduct_nil]
+  exact DensePoly.mul_one_right_poly f
+
 /--
 The executable Berlekamp factorization preserves the input polynomial as the
 product of the returned factors for square-free monic inputs.
@@ -471,11 +485,7 @@ theorem prod_berlekampFactor
     (_hsquareFree : DensePoly.gcd f (DensePoly.derivative f) = 1) :
     (berlekampFactor f hmonic).product = f := by
   simp only [Factorization.product_def]
-  rw [show (berlekampFactor f hmonic).factors
-        = berlekampFactorLoop ((fixedSpaceKernel f hmonic).toList)
-            (f.size + 1) [f] from rfl]
-  rw [factorProduct_berlekampFactorLoop_eq, factorProduct_cons, factorProduct_nil]
-  exact DensePoly.mul_one_right_poly f
+  exact factorProduct_berlekampFactor f hmonic
 
 /-! ### Singleton-output loop structure
 
@@ -1166,21 +1176,6 @@ private theorem factorProduct_pairwise_no_common_pos_divisor
         rcases h_rest_dvd with ⟨q, hq⟩
         refine h_no_squared g ⟨k * q, ?_⟩
         rw [hq, hk]; exact DensePoly.mul_assoc_poly (g * g) k q
-
-/-- The Berlekamp factor list's product equals the input polynomial.  This is
-the squarefree-free core of `prod_berlekampFactor`: the proof that the
-splitting loop preserves `factorProduct` does not use the squarefree
-hypothesis, so the product equality holds for every monic input. -/
-theorem factorProduct_berlekampFactor
-    [Lean.Grind.Field (ZMod64 p)]
-    [ZMod64.PrimeModulus p]
-    (f : FpPoly p) (hmonic : DensePoly.Monic f) :
-    factorProduct (berlekampFactor f hmonic).factors = f := by
-  rw [show (berlekampFactor f hmonic).factors
-        = berlekampFactorLoop ((fixedSpaceKernel f hmonic).toList)
-            (f.size + 1) [f] from rfl]
-  rw [factorProduct_berlekampFactorLoop_eq, factorProduct_cons, factorProduct_nil]
-  exact DensePoly.mul_one_right_poly f
 
 /-- Abstract pairwise-coprime form of `berlekampFactor`'s output: when no
 positive-degree polynomial squares to a divisor of `f`, distinct factors in
