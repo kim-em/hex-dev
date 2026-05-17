@@ -7970,6 +7970,170 @@ theorem henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData
     HenselSubsetCorrespondenceHypotheses core B primeData d True True :=
   henselSubsetCorrespondenceHypotheses_of_choosePrimeData _ _
 
+/-- **#4549 substrate (HO-1), analytic obligation.**
+
+The genuinely analytic content of the
+`LiftedFactorSubsetPartition core d Finset.univ core` constructor over
+the executable `Hex.choosePrimeData`/`Hex.henselLiftData` surface.
+Packages the four fields that cannot be derived purely from the
+`HenselSubsetCorrespondenceHypotheses`/`unique_subset` infrastructure
+of #4543 alone:
+
+* `cover` — every lifted-factor index is contained in some representing
+  subset of an irreducible integer divisor of `core`;
+* `pairwise_disjoint` — non-associated irreducible divisors of `core`
+  have disjoint representing subsets;
+* `unique_up_to_associated` — associated irreducible divisors of `core`
+  share their representing subset;
+* `support_subset_of_dvd_recombinationCandidate` — if an irreducible
+  divisor of `core` divides a recombination candidate, its representing
+  subset is contained in the candidate's selection set.
+
+A Mathlib-free proof of this obligation would require either BHKS
+Theorem 5.2 machinery (tracked by #2567) or the classical square-free
+Hensel correspondence + partition completeness lemma transported to the
+executable `Hex.ZPoly` surface (not yet ported into
+`HexBerlekampZassenhausMathlib`).  Per #4549's explicit fallback
+allowance (mirroring the #4543 pattern), the four-field package is left
+as a single localised `sorry` here; the parametric constructor that
+routes through this helper is `sorry`-free.  This is sorry-equivalent
+to the current slow-path arm of #4170, while exposing a strictly more
+useful API for the HO-1 assembly.
+
+Note: the issue text suggested deriving `pairwise_disjoint` /
+`unique_up_to_associated` from `unique_subset` alone, but
+`RepresentsIntegerFactorAtLift` is not invariant under unit factors
+in `Polynomial ℤ` (the predicate uses signed `reduceModPow` equality
+of the scaled lifted product against the factor), so both fields are
+genuinely analytic in the same sense as `cover` and bundled here. -/
+private theorem liftedFactorSubsetPartition_analytic_obligation
+    (core : Hex.ZPoly) (B : Nat) :
+    let primeData := Hex.choosePrimeData core
+    let d := Hex.henselLiftData core B primeData
+    (∀ {i : LiftedFactorIndex d},
+        i ∈ (Finset.univ : LiftedFactorSubset d) →
+          ∃ (f : Hex.ZPoly) (S : LiftedFactorSubset d),
+            Irreducible (HexPolyZMathlib.toPolynomial f) ∧
+              f ∣ core ∧
+                S ⊆ (Finset.univ : LiftedFactorSubset d) ∧
+                  i ∈ S ∧ RepresentsIntegerFactorAtLift core d f S) ∧
+      (∀ {f g : Hex.ZPoly} {S T : LiftedFactorSubset d},
+          Irreducible (HexPolyZMathlib.toPolynomial f) →
+            f ∣ core →
+              RepresentsIntegerFactorAtLift core d f S →
+                Irreducible (HexPolyZMathlib.toPolynomial g) →
+                  g ∣ core →
+                    RepresentsIntegerFactorAtLift core d g T →
+                      ¬ Associated (HexPolyZMathlib.toPolynomial f)
+                          (HexPolyZMathlib.toPolynomial g) →
+                        Disjoint S T) ∧
+        (∀ {f g : Hex.ZPoly} {S T : LiftedFactorSubset d},
+            Irreducible (HexPolyZMathlib.toPolynomial f) →
+              f ∣ core →
+                RepresentsIntegerFactorAtLift core d f S →
+                  Irreducible (HexPolyZMathlib.toPolynomial g) →
+                    g ∣ core →
+                      RepresentsIntegerFactorAtLift core d g T →
+                        Associated (HexPolyZMathlib.toPolynomial f)
+                            (HexPolyZMathlib.toPolynomial g) →
+                          S = T) ∧
+          (∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
+              Irreducible (HexPolyZMathlib.toPolynomial f) →
+                f ∣ core →
+                  f ∣ liftedFactorProductCandidate d T →
+                    RepresentsIntegerFactorAtLift core d f S →
+                      S ⊆ T) := by
+  intro primeData d
+  sorry
+
+/-- **#4549 substrate (HO-1).**
+
+Parametric constructor for `LiftedFactorSubsetPartition core d
+Finset.univ core` over the executable `Hex.choosePrimeData` /
+`Hex.henselLiftData` surface, parametric in the core and the precision
+count `B` passed to `Hex.henselLiftData`.
+
+Square-freeness of `HexPolyZMathlib.toPolynomial core` is taken as an
+explicit hypothesis `hcore_sqfree`: the outer-bound specialisation
+below threads it in at
+`core = (Hex.normalizeForFactor f).squareFreeCore` (where it is
+expected to hold by construction), and downstream HO-1 assemblies
+supply it from the consumer's own square-free-core invariants.  This
+matches the issue's option (a) for handling
+`target_squarefree`.
+
+Composes:
+
+* `henselSubsetCorrespondenceRest_initial` (line 1686) applied to
+  `henselSubsetCorrespondenceHypotheses_of_choosePrimeData` (#4543,
+  line 7704) for `toHenselSubsetCorrespondenceRest`;
+* `hcore_sqfree` for `target_squarefree`;
+* the analytic obligation helper above for the four genuinely analytic
+  fields (`cover`, `pairwise_disjoint`, `unique_up_to_associated`,
+  `support_subset_of_dvd_recombinationCandidate`).
+
+The constructor body is `sorry`-free; the only analytic `sorry`
+introduced by #4549 is inside
+`liftedFactorSubsetPartition_analytic_obligation` above. -/
+theorem liftedFactorSubsetPartition_of_choosePrimeData
+    (core : Hex.ZPoly) (B : Nat)
+    (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core)) :
+    let primeData := Hex.choosePrimeData core
+    let d := Hex.henselLiftData core B primeData
+    LiftedFactorSubsetPartition core d Finset.univ core := by
+  intro primeData d
+  obtain ⟨hcover, hdisj, huniq, hsup⟩ :=
+    liftedFactorSubsetPartition_analytic_obligation core B
+  refine
+    { toHenselSubsetCorrespondenceRest :=
+        henselSubsetCorrespondenceRest_initial
+          (henselSubsetCorrespondenceHypotheses_of_choosePrimeData core B)
+      target_squarefree := hcore_sqfree
+      cover := ?_
+      pairwise_disjoint := ?_
+      unique_up_to_associated := ?_
+      support_subset_of_dvd_recombinationCandidate := ?_ }
+  · intro i hi
+    exact hcover hi
+  · intro f g S T hirr_f hdvd_f _ hSrep hirr_g hdvd_g _ hTrep hnoassoc
+    exact hdisj hirr_f hdvd_f hSrep hirr_g hdvd_g hTrep hnoassoc
+  · intro f g S T hirr_f hdvd_f _ hSrep hirr_g hdvd_g _ hTrep hassoc
+    exact huniq hirr_f hdvd_f hSrep hirr_g hdvd_g hTrep hassoc
+  · intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
+    exact hsup hirr hdvd_target hdvd_cand hSrep
+
+/-- **#4549 substrate (HO-1), outer-bound specialisation.**
+
+Specialisation of `liftedFactorSubsetPartition_of_choosePrimeData` at
+the precision count actually consumed by the slow exhaustive branch of
+`Hex.factor f` (i.e. `Hex.factorWithBound f
+(Hex.ZPoly.defaultFactorCoeffBound f)`).  The resulting partition value
+has the exact `core` / `d` / `J = Finset.univ` / `target = core` shape
+expected by the `hpartition` hypothesis of
+`factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence`
+(PR #4537, line 7590), so the HO-1 slow-path assembly can apply that
+wrapper directly together with the #4543 substrate value at the same
+outer-bound shape.
+
+Square-freeness of
+`HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).squareFreeCore`
+is taken as an explicit hypothesis: downstream HO-1 assemblies discharge
+it from the existing `squareFreeCore` invariants (or via a separate
+Mathlib-level bridge from `Hex.ZPoly.SquareFreeRat`).  -/
+theorem liftedFactorSubsetPartition_outerBound_of_choosePrimeData
+    (f : Hex.ZPoly)
+    (hcore_sqfree :
+      Squarefree
+        (HexPolyZMathlib.toPolynomial
+          (Hex.normalizeForFactor f).squareFreeCore)) :
+    let core := (Hex.normalizeForFactor f).squareFreeCore
+    let primeData := Hex.choosePrimeData core
+    let B := Hex.precisionForCoeffBound
+      (Hex.ZPoly.defaultFactorCoeffBound f) primeData.p
+    let d := Hex.henselLiftData core B primeData
+    LiftedFactorSubsetPartition core d Finset.univ core :=
+  liftedFactorSubsetPartition_of_choosePrimeData _ _ hcore_sqfree
+
 end
 
 end HexBerlekampZassenhausMathlib
