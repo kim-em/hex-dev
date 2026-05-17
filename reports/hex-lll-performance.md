@@ -192,77 +192,128 @@ All three fixed fpLLL registrations matched their expected hashes.
 
 ## Comparator Ratios
 
-The `verified Isabelle LLL (AFP LLL_Basis_Reduction; Haskell extraction from Zenodo 2636367)`
-comparator was measured at the bottom shared rung for each
-`phase4.input_families` entry, command:
+The gating comparator is `verified Isabelle LLL (AFP LLL_Basis_Reduction; Haskell extraction from Zenodo 2636367)`, declared in `SPEC/Libraries/hex-lll.md`. The persistent-subprocess harness for it was wired in HO-16 (#3676); the matching fpylll persistent driver was wired in HO-17 (#4186). The densified `random-bounded` and `harsh-cubic` ladders are the post-HO-18 fixed-benchmark schedules — `random-bounded` `n ∈ {30, 45, 60, 75, 90, 120, 150, 180}`, `harsh-cubic` `n ∈ {15, 20, 25, 30, 35, 40, 45, 50, 55}` — per the post-#3657 §"Headline reports" densification rule.
+
+### Per-call comparator overhead
+
+Both gating and informational comparators are wired through the persistent-subprocess protocol described at the top of `HexLLL/Bench.lean`. The per-call protocol overhead, measured on the audit host, is:
+
+- `Isabelle` (gating): **~9 µs** per steady-state request after the one-time GHC startup.
+- `fpLLL via fpylll` (informational): **~34 µs** per steady-state request after the one-time CPython + `import fpylll` startup.
+
+Both figures are three orders of magnitude below the 5 % overhead-to-measured-time floor that `SPEC/benchmarking.md` requires for honest ratios on any rung where wall time exceeds a few hundred microseconds. Within `setup_fixed_benchmark` shape the GHC / CPython interpreter startup is incurred per measured repeat (the harness spawns one fresh child per repeat); the overhead figures above are protocol-only — they do **not** include interpreter startup, which is itself part of the per-call wall recorded for fixed `runIsabelle*` and `runFpylll*` targets.
+
+### Densified Lean + Isabelle sweep
+
+Combined Lean + Isabelle sweep at commit `3f7424ac778477ec58b1a2e496930533279c5671` on `carica` (Apple M2 Ultra, macOS 14.6.1), recorded `2026-05-17T20:59:42Z`. The host carried concurrent benchmarking load during the run (1/5/15-minute load averages `8.97/10.67/11.53` at sweep start). Absolute Lean and Isabelle wall times in the rung tables below are inflated by an estimated 2-3× relative to a quiet-host baseline; the **ratio** between Lean and Isabelle on each rung is much less affected because both sides share the contention. The gating-goal verdict below should therefore be read as a "passes under load" result, not a release-quality quiet-hardware verdict; [#4334](https://github.com/kim-em/hex/issues/4334) documents the quiet-hardware retry that is required for a Phase 4 promotion.
+
+Sweep command:
 
 ```sh
-lake exe hexlll_bench run Hex.LLLBench.runIsabelleBZRecombinationNormSq Hex.LLLBench.runIsabelleRandomBoundedNormSq30 Hex.LLLBench.runIsabelleHarshCubicNormSq15 --export-file reports/bench-results/hex-lll-isabelle-bottom-e211854d1435.json
+lake exe hexlll_bench run \
+  Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq30 \
+  Hex.LLLBench.runIsabelleRandomBoundedNormSq30 \
+  Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq45 \
+  Hex.LLLBench.runIsabelleRandomBoundedNormSq45 \
+  Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq60 \
+  Hex.LLLBench.runIsabelleRandomBoundedNormSq60 \
+  Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq75 \
+  Hex.LLLBench.runIsabelleRandomBoundedNormSq75 \
+  Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq90 \
+  Hex.LLLBench.runIsabelleRandomBoundedNormSq90 \
+  Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq120 \
+  Hex.LLLBench.runIsabelleRandomBoundedNormSq120 \
+  Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq150 \
+  Hex.LLLBench.runIsabelleRandomBoundedNormSq150 \
+  Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq180 \
+  Hex.LLLBench.runIsabelleRandomBoundedNormSq180 \
+  Hex.LLLBench.runFirstShortVectorHarshCubicNormSq15 \
+  Hex.LLLBench.runIsabelleHarshCubicNormSq15 \
+  Hex.LLLBench.runFirstShortVectorHarshCubicNormSq20 \
+  Hex.LLLBench.runIsabelleHarshCubicNormSq20 \
+  Hex.LLLBench.runFirstShortVectorHarshCubicNormSq25 \
+  Hex.LLLBench.runIsabelleHarshCubicNormSq25 \
+  Hex.LLLBench.runFirstShortVectorHarshCubicNormSq30 \
+  Hex.LLLBench.runIsabelleHarshCubicNormSq30 \
+  Hex.LLLBench.runFirstShortVectorHarshCubicNormSq35 \
+  Hex.LLLBench.runIsabelleHarshCubicNormSq35 \
+  Hex.LLLBench.runFirstShortVectorHarshCubicNormSq40 \
+  Hex.LLLBench.runIsabelleHarshCubicNormSq40 \
+  Hex.LLLBench.runFirstShortVectorHarshCubicNormSq45 \
+  Hex.LLLBench.runIsabelleHarshCubicNormSq45 \
+  Hex.LLLBench.runFirstShortVectorHarshCubicNormSq50 \
+  Hex.LLLBench.runIsabelleHarshCubicNormSq50 \
+  Hex.LLLBench.runFirstShortVectorHarshCubicNormSq55 \
+  Hex.LLLBench.runIsabelleHarshCubicNormSq55 \
+  Hex.LLLBench.runFirstShortVectorBZRecombinationNormSq \
+  Hex.LLLBench.runIsabelleBZRecombinationNormSq \
+  --export-file reports/bench-results/hex-lll-densified-fa57a699.json
 ```
 
-Comparator source: `scripts/oracle/setup_lll_isabelle.sh` downloads and
-verifies Zenodo record `2636367`, archive SHA-256
-`5c975aeb2033540b8f9a05d2ffac87dca0f258e887a5807edefbe60178a547e0`, then
-runs `svp_verified`. Export artefact:
-`reports/bench-results/hex-lll-isabelle-bottom-e211854d1435.json`.
+Export artefact: `reports/bench-results/hex-lll-densified-fa57a699.json`, SHA-256 `64b596ea0feb27835d2f844082b43a059c47f3fba8673741ea15baf468054490`.
 
-- `bz-recombination`: Lean `runFirstShortVectorBZRecombinationNormSq` median
-  `5.625 us`; Isabelle `runIsabelleBZRecombinationNormSq` median
-  `55.206 ms`; raw Lean/Isabelle ratio `0.000102` (`9814.4x` faster).
-- `random-bounded`, bottom rung `n = 30`, seed `8`: Lean
-  `runFirstShortVectorRandomBoundedNormSq30` median `5.462 ms`; Isabelle
-  `runIsabelleRandomBoundedNormSq30` median `50.289 ms`; raw Lean/Isabelle
-  ratio `0.108612` (`9.21x` faster).
-- `harsh-cubic`, bottom rung `n = 15`: Lean
-  `runFirstShortVectorHarshCubicNormSq15` median `1.232 ms`; Isabelle
-  `runIsabelleHarshCubicNormSq15` median `49.995 ms`; raw Lean/Isabelle
-  ratio `0.024642` (`40.58x` faster).
+Comparator source: `scripts/oracle/setup_lll_isabelle.sh` downloads and verifies Zenodo record `2636367`, archive SHA-256 `5c975aeb2033540b8f9a05d2ffac87dca0f258e887a5807edefbe60178a547e0`, then runs `svp_verified`.
 
-The persistent Isabelle protocol overhead measured in `HexLLL/Bench.lean` is
-approximately `9 us` per steady-state request after the one-time GHC startup.
-Subtracting that protocol overhead from the Isabelle medians gives adjusted
-Lean/Isabelle ratios `0.000102` (`9812.8x` faster), `0.108631`
-(`9.21x` faster), and `0.024646` (`40.57x` faster), respectively.
+### random-bounded ladder
 
-The gating goal is met in this snapshot: Lean is faster than the verified
-Isabelle extraction on all three shared bottom-rung inputs. The BZ ratio is
-dominated by the fixed process and input overhead in the Isabelle executable,
-but even the larger random-bounded case leaves a comfortable margin.
+| `n` | Lean median | Isabelle median | overhead % | raw ratio | adjusted ratio | speedup (adj) | status |
+|---:|---:|---:|---:|---:|---:|---:|:---|
+| 30 | 18.403 ms | 91.382 ms | 0.010% | 0.2014 | 0.2014 | Lean 4.97× faster | eligible |
+| 45 | 69.406 ms | 157.874 ms | 0.006% | 0.4396 | 0.4397 | Lean 2.27× faster | eligible |
+| 60 | 179.295 ms | 262.130 ms | 0.003% | 0.6840 | 0.6840 | Lean 1.46× faster | eligible |
+| 75 | 371.360 ms | 484.874 ms | 0.002% | 0.7659 | 0.7659 | Lean 1.31× faster | eligible |
+| 90 | 650.187 ms | 814.541 ms | 0.001% | 0.7982 | 0.7982 | Lean 1.25× faster | eligible |
+| 120 | 1.839 s | 2.177 s | 0.000% | 0.8449 | 0.8449 | Lean 1.18× faster | eligible |
+| 150 | 3.778 s | 4.363 s | 0.000% | 0.8660 | 0.8660 | Lean 1.15× faster | eligible |
+| 180 | 6.939 s | 8.258 s | 0.000% | 0.8403 | 0.8403 | Lean 1.19× faster | eligible |
 
-`SPEC/Libraries/hex-lll.md` classifies the fpLLL comparator as informational.
-The ratios below are fixed bottom-rung comparisons of Lean's first-short-vector
-checksum target against the process-call fpLLL target, with Lean as the
-baseline:
+**Trend.** Across the eligible range `n = 30..180`, the adjusted Lean/Isabelle ratio moves from `0.2014` to `0.8403` (+317.2%): climbing (Lean's relative cost grows toward Isabelle's).
+
+**Gating-goal verdict (largest eligible rung `n = 180`).** Lean `6.939 s` vs Isabelle adjusted `8.258 s`; adjusted ratio `0.8403` (Lean 1.19× faster). Gating-goal verdict: **met**.
+
+### harsh-cubic ladder
+
+| `n` | Lean median | Isabelle median | overhead % | raw ratio | adjusted ratio | speedup (adj) | status |
+|---:|---:|---:|---:|---:|---:|---:|:---|
+| 15 | 938.687 us | 69.272 ms | 0.013% | 0.0136 | 0.0136 | Lean 73.79× faster | eligible |
+| 20 | 3.205 ms | 121.872 ms | 0.007% | 0.0263 | 0.0263 | Lean 38.02× faster | eligible |
+| 25 | 8.851 ms | 96.276 ms | 0.009% | 0.0919 | 0.0919 | Lean 10.88× faster | eligible |
+| 30 | 22.043 ms | 100.099 ms | 0.009% | 0.2202 | 0.2202 | Lean 4.54× faster | eligible |
+| 35 | 49.550 ms | 90.136 ms | 0.010% | 0.5497 | 0.5498 | Lean 1.82× faster | eligible |
+| 40 | 104.809 ms | 139.664 ms | 0.006% | 0.7504 | 0.7505 | Lean 1.33× faster | eligible |
+| 45 | 203.650 ms | 188.458 ms | 0.005% | 1.0806 | 1.0807 | Lean 1.08× slower | eligible |
+| 50 | 377.610 ms | 268.652 ms | 0.003% | 1.4056 | 1.4056 | Lean 1.41× slower | eligible |
+| 55 | 670.973 ms | 449.885 ms | 0.002% | 1.4914 | 1.4915 | Lean 1.49× slower | eligible |
+
+**Trend.** Across the eligible range `n = 15..55`, the adjusted Lean/Isabelle ratio moves from `0.0136` to `1.4915` (+10905.1%): climbing (Lean's relative cost grows toward Isabelle's).
+
+**Gating-goal verdict (largest eligible rung `n = 55`).** Lean `670.973 ms` vs Isabelle adjusted `449.876 ms`; adjusted ratio `1.4915` (Lean 1.49× slower). Gating-goal verdict: **not met**.
+
+### bz-recombination (context only)
+
+- Lean `runFirstShortVectorBZRecombinationNormSq` median: `3.498 us`; Isabelle `runIsabelleBZRecombinationNormSq` median: `94.964 ms`; raw ratio `3.68e-05`; adjusted ratio `3.68e-05` (Lean 27145.61× faster).
+
+Per the HO-18 issue body, the BZ family is reported for context only: its tiny matrix means per-call wall time on either side is dominated by process and input-marshalling overhead in the Isabelle executable, so the gating-goal verdict relies on `random-bounded` and `harsh-cubic`, not on this rung.
+
+### fpLLL via fpylll (informational)
+
+`SPEC/Libraries/hex-lll.md` classifies the fpLLL comparator as informational. The most recent informational fpLLL sweep is from commit `ed9da7537e96cee75f395e46962d41775f615a53` on `carica` (Apple M2 Ultra, macOS), command:
 
 ```sh
-PATH="$PWD/.venv-oracles/bin:$PATH" lake exe hexlll_bench compare \
-  Hex.LLLBench.runFirstShortVectorBZRecombinationChecksum \
-  Hex.LLLBench.runFpylllFirstShortVectorBZRecombinationChecksum
-
-PATH="$PWD/.venv-oracles/bin:$PATH" lake exe hexlll_bench compare \
-  Hex.LLLBench.runFirstShortVectorRandomBounded30Checksum \
-  Hex.LLLBench.runFpylllFirstShortVectorRandomBounded30Checksum
-
-PATH="$PWD/.venv-oracles/bin:$PATH" lake exe hexlll_bench compare \
-  Hex.LLLBench.runFirstShortVectorHarshCubic15Checksum \
-  Hex.LLLBench.runFpylllFirstShortVectorHarshCubic15Checksum
+PATH="$PWD/.venv-oracles/bin:$PATH" lake exe hexlll_bench run \
+  Hex.LLLBench.runFpylllFirstShortVectorBZRecombinationChecksum \
+  Hex.LLLBench.runFpylllFirstShortVectorRandomBounded30Checksum \
+  Hex.LLLBench.runFpylllFirstShortVectorHarshCubic15Checksum \
+  --export-file reports/bench-results/hex-lll-fpylll-ed9da7537e96.json
 ```
 
-- BZ recombination: Lean median `8.833 us`, fpLLL median `83.531 ms`, fpLLL
-  relative median `9456.748x`; hashes agreed.
-- Random-bounded `n = 30`: Lean median `5.752 ms`, fpLLL median `86.261 ms`,
-  fpLLL relative median `14.996x`; hashes agreed.
-- Harsh-cubic `n = 15`: Lean median `1.247 ms`, fpLLL median `84.130 ms`,
-  fpLLL relative median `67.475x`; hashes agreed.
+Export artefact: `reports/bench-results/hex-lll-fpylll-ed9da7537e96.json`, SHA-256 `9a2d74112dd5581db820854019a4ff9941dfd7b806678b4aae310cadf3e666e9`.
 
-The persistent fpylll protocol overhead measured in `HexLLL/Bench.lean` is
-approximately `34 us` per steady-state request. Subtracting that protocol
-overhead from the fpLLL medians gives adjusted fpLLL relative medians
-`9452.9x`, `14.991x`, and `67.448x`, respectively. The fixed target still
-includes one Python plus `import fpylll` startup per measured child, as
-specified by the process-call comparator registration. These figures are
-therefore useful as traceable external-comparator checks for the headline
-report, but they are not a gating performance signal for HexLLL.
+- `bz-recombination`: Lean median `8.833 us`, fpLLL median `83.531 ms`, fpLLL relative median `9456.748×` (raw); adjusted for ~34 µs protocol overhead, `9452.9×`.
+- `random-bounded` `n = 30`: Lean median `5.752 ms`, fpLLL median `86.261 ms`, fpLLL relative median `14.996×` (raw); adjusted `14.991×`.
+- `harsh-cubic` `n = 15`: Lean median `1.247 ms`, fpLLL median `84.130 ms`, fpLLL relative median `67.475×` (raw); adjusted `67.448×`.
+
+The fpLLL fixed-mode targets still incur one CPython + `import fpylll` startup per measured child (per the process-call comparator registration), so these figures are useful as traceable external-comparator checks but are not a gating performance signal for HexLLL. A densified fpLLL ladder remains out of scope for HO-18 because fpylll is informational, not gating.
 
 ## Profile
 
@@ -334,3 +385,17 @@ integer arithmetic.
   HexLLL scientific artifact records inconclusive verdicts for five
   parametric registrations. `HexLLL.done_through` remains `3` until this is
   resolved and the Concerns section can be emptied.
+- [#4334](https://github.com/kim-em/hex/issues/4334) (HO-18 §"Comparator
+  Ratios" subsidiary): the densified `random-bounded` and `harsh-cubic`
+  sweeps committed in `reports/bench-results/hex-lll-densified-fa57a699.json`
+  were collected on a heavily contended `carica` and reproduce two
+  adverse-trend findings that the post-#3657 SPEC flags as Concerns: the
+  `random-bounded` adjusted Lean/Isabelle ratio climbs from `0.20` at
+  `n = 30` to `0.84` at `n = 180` (the verdict is still met but the trend
+  is climbing), and the `harsh-cubic` adjusted ratio crosses 1 at `n = 45`
+  and reaches `1.49` at `n = 55` (Lean is `~1.5×` slower than Isabelle at
+  the largest eligible rung, so the gating-goal verdict is **not met** for
+  this family under load). The quiet-hardware retry already required by
+  #4334 is the path to confirm or refute these findings; family-specific
+  follow-on HOs are deferred until that retry produces clean data. While
+  this Concern is open, `HexLLL.done_through` remains `3`.
