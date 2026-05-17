@@ -6633,6 +6633,100 @@ private theorem irreducible_of_size_two_primitive
 
 end ZPoly
 
+/-- `Hex.normalizeFactorSign` preserves `Hex.ZPoly.Irreducible`: the
+sign-normalised polynomial equals either the original or its `-1` scaling,
+and `-1` is a `ZPoly` unit, so the no-proper-factorization predicate
+transfers. Mathlib-free counterpart of the Mathlib-side
+`zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible`
+(`HexBerlekampZassenhausMathlib/Basic.lean:12543`).  Consumed by the
+Mathlib-free `factor_factors_irreducible` assembly (#4825). -/
+theorem zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible
+    {f : ZPoly} (hirr : ZPoly.Irreducible f) :
+    ZPoly.Irreducible (normalizeFactorSign f) := by
+  unfold normalizeFactorSign
+  by_cases hlc : DensePoly.leadingCoeff f < 0
+  · rw [if_pos hlc]
+    -- Sign-flipped branch: `DensePoly.scale (-1) f`.
+    have hmulzero : (-1 : Int) * (0 : Int) = 0 := by decide
+    -- `scale (-1)` is an involution on `ZPoly`.
+    have hinvol : ∀ g : ZPoly,
+        DensePoly.scale (-1 : Int) (DensePoly.scale (-1 : Int) g) = g := by
+      intro g
+      apply DensePoly.ext_coeff
+      intro n
+      rw [DensePoly.coeff_scale (R := Int) (-1) _ n hmulzero,
+          DensePoly.coeff_scale (R := Int) (-1) g n hmulzero]
+      omega
+    have hscale_C_one : DensePoly.scale (-1 : Int) (DensePoly.C (1 : Int)) =
+        DensePoly.C (-1 : Int) := by
+      apply DensePoly.ext_coeff
+      intro n
+      rw [DensePoly.coeff_scale (R := Int) (-1) _ n hmulzero,
+          DensePoly.coeff_C, DensePoly.coeff_C]
+      by_cases hn : n = 0
+      · simp [hn]
+      · rw [if_neg hn, if_neg hn]; omega
+    have hscale_C_neg_one : DensePoly.scale (-1 : Int) (DensePoly.C (-1 : Int)) =
+        DensePoly.C (1 : Int) := by
+      apply DensePoly.ext_coeff
+      intro n
+      rw [DensePoly.coeff_scale (R := Int) (-1) _ n hmulzero,
+          DensePoly.coeff_C, DensePoly.coeff_C]
+      by_cases hn : n = 0
+      · simp [hn]
+      · rw [if_neg hn, if_neg hn]; omega
+    have hscale_mul_left : ∀ a b : ZPoly,
+        DensePoly.scale (-1 : Int) (a * b) = DensePoly.scale (-1 : Int) a * b := by
+      intro a b
+      rw [← ZPoly.C_mul_eq_scale, ← ZPoly.C_mul_eq_scale,
+          DensePoly.mul_assoc_poly (S := Int)]
+    refine
+      { not_zero := ?_
+        not_unit := ?_
+        no_factors := ?_ }
+    · -- `scale (-1) f ≠ 0`.
+      intro h
+      apply hirr.not_zero
+      have hcong := congrArg (DensePoly.scale (-1 : Int)) h
+      rw [hinvol, DensePoly.scale_neg_one_zero] at hcong
+      exact hcong
+    · -- `scale (-1) f` is not a unit.
+      intro hunit
+      apply hirr.not_unit
+      rcases hunit with h1 | hnegone
+      · -- `scale (-1) f = C 1` ⟹ `f = C (-1)`, which is a unit.
+        right
+        have hcong := congrArg (DensePoly.scale (-1 : Int)) h1
+        rw [hinvol, hscale_C_one] at hcong
+        exact hcong
+      · -- `scale (-1) f = C (-1)` ⟹ `f = C 1`, which is a unit.
+        left
+        have hcong := congrArg (DensePoly.scale (-1 : Int)) hnegone
+        rw [hinvol, hscale_C_neg_one] at hcong
+        exact hcong
+    · -- Factor preservation.
+      intro a b hab
+      have hf_eq : f = DensePoly.scale (-1 : Int) a * b := by
+        have hcong := congrArg (DensePoly.scale (-1 : Int)) hab
+        rw [hinvol, hscale_mul_left] at hcong
+        exact hcong
+      rcases hirr.no_factors _ _ hf_eq with hsa | hb
+      · left
+        rcases hsa with h1 | hnegone
+        · -- `scale (-1) a = C 1` ⟹ `a = C (-1)`, a unit.
+          right
+          have hcong := congrArg (DensePoly.scale (-1 : Int)) h1
+          rw [hinvol, hscale_C_one] at hcong
+          exact hcong
+        · -- `scale (-1) a = C (-1)` ⟹ `a = C 1`, a unit.
+          left
+          have hcong := congrArg (DensePoly.scale (-1 : Int)) hnegone
+          rw [hinvol, hscale_C_neg_one] at hcong
+          exact hcong
+      · exact Or.inr hb
+  · rw [if_neg hlc]
+    exact hirr
+
 /-- Every factor emitted by the extracted `X`-power normalization array is
 irreducible. -/
 theorem xPowerFactorArray_irreducible
