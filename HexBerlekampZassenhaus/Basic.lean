@@ -5417,6 +5417,20 @@ theorem factorWithBound_entry_leadingCoeff_pos
   apply factorizationOfFactors_entry_leadingCoeff_pos
   simpa only [hfactor] using hmem
 
+/-- Every recorded entry of the bounded public factorization passes the
+`shouldRecordPolynomialFactor` filter: the entry's polynomial is nonzero and
+not a unit (`±1`).  Exposed publicly so Mathlib-side per-branch umbrellas can
+rule out unit cores from the recorded entry set. -/
+theorem factorWithBound_entry_shouldRecord
+    (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
+    (hmem : entry ∈ (factorWithBound f B).factors.toList) :
+    shouldRecordPolynomialFactor entry.1 = true := by
+  obtain ⟨rawFactors, _hrawFactors, hfactor⟩ :=
+    factorWithBound_eq_factorizationOfFactors f B
+  have hmem' : entry ∈ (collectFactorMultiplicities rawFactors).toList := by
+    simpa only [hfactor, factorizationOfFactors] using hmem
+  exact collectFactorMultiplicities_entry_shouldRecord rawFactors entry hmem'
+
 /-- The bounded public factorization has no duplicate polynomial keys. -/
 theorem factorWithBound_pairwise_first
     (f : ZPoly) (B : Nat) :
@@ -5599,6 +5613,31 @@ theorem factorWithBound_entry_mem_small_mod_singleton_raw
         | inr hnone => exact hnone
       rw [hquad]
       rw [if_pos hsmall]
+  apply factorizationOfFactors_entry_mem_normalized_raw
+  simpa only [factorWithBound, factorFastWithBound, hfast, Option.map_some,
+    Option.getD_some] using hmem
+
+/-- In the fast-path constant square-free-core branch, every recorded
+`factorWithBound` entry comes from the normalization reassembly whose core
+array is the singleton `#[squareFreeCore]`. The constant branch is the
+earliest dispatch in `factorFastFactorsWithBound` and is unconditional on the
+recombination budget `B`, the small-mod prime data, and the quadratic-root
+short-circuit, so the signature requires only the constant-core marker
+`hdeg`. -/
+theorem factorWithBound_entry_mem_constant_branch_raw
+    (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
+    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0)
+    (hmem : entry ∈ (factorWithBound f B).factors.toList) :
+    ∃ raw ∈
+        (reassemblePolynomialFactors (normalizeForFactor f)
+          #[(normalizeForFactor f).squareFreeCore]).toList,
+      entry.1 = normalizeFactorSign raw := by
+  have hfast :
+      factorFastFactorsWithBound f B =
+        some (reassemblePolynomialFactors (normalizeForFactor f)
+          #[(normalizeForFactor f).squareFreeCore]) := by
+    unfold factorFastFactorsWithBound
+    rw [if_pos hdeg]
   apply factorizationOfFactors_entry_mem_normalized_raw
   simpa only [factorWithBound, factorFastWithBound, hfast, Option.map_some,
     Option.getD_some] using hmem
@@ -7952,7 +7991,12 @@ private theorem squareFreeCore_leadingCoeff_pos_of_ne_zero
     ZPoly.leadingCoeff_ne_zero_of_ne_zero _ hne
   omega
 
-private theorem squareFreeCore_eq_one_of_constant_of_ne_zero
+/-- When the normalized square-free core has degree zero (and `f ≠ 0`), the
+primitive square-free decomposition forces the core to be exactly `1`.  Exposed
+publicly so Mathlib-side per-branch umbrellas (in particular the fast-path
+constant arm) can rule out the singleton-core entry from the recorded factor
+set. -/
+theorem squareFreeCore_eq_one_of_constant_of_ne_zero
     (f : ZPoly) (hf : f ≠ 0)
     (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0) :
     (normalizeForFactor f).squareFreeCore = 1 := by

@@ -1077,4 +1077,94 @@ theorem factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData
   rw [hentry_eq]
   exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hraw_irr
 
+/-- **#4565 HO-1 substrate — fast-path constant arm umbrella.**
+
+Per-branch HO-1 component for the fast-path **constant square-free core** arm
+of the capstone `factor_irreducible_of_nonUnit` (#4170): every entry recorded
+by `Hex.factorWithBound f B` in the constant branch is
+`Hex.ZPoly.Irreducible`, given only `f ≠ 0`, the constant-core marker
+`hdeg`, and the reassembly expansion-complete side condition `hcomplete`.
+
+The constant branch is the earliest dispatch in `factorFastFactorsWithBound`
+(triggered when `(normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0`)
+and is unconditional on the recombination budget `B`, the small-mod prime
+data, and the quadratic-root short-circuit, so the umbrella requires no
+`hB_pos` / `hsmall` / `hquadratic` / `hchoose` premises.  The naming suffix
+`_of_choosePrimeData` is retained for parity with the singleton arm #4564 (it
+is documentary here — the constant branch does not invoke `choosePrimeData`).
+
+Composes:
+* `Hex.factorWithBound_entry_mem_constant_branch_raw`
+  (`HexBerlekampZassenhaus/Basic.lean`) — the Mathlib-free branch-shape
+  lemma identifying each recorded entry as the sign-normalisation of a raw
+  factor in the singleton-core reassembly;
+* `Hex.reassemblePolynomialFactors_mem_xPower_or_core_of_expansionComplete`
+  — the membership classifier for the complete-expansion branch of
+  reassembly: under `hcomplete`, each raw factor is either an extracted
+  `X`-power factor or one of the supplied core factors (here the singleton
+  `#[squareFreeCore]`);
+* `Hex.xPowerFactorArray_irreducible` — `X`-power factors are irreducible
+  (each is `X`);
+* `Hex.squareFreeCore_eq_one_of_constant_of_ne_zero` — in the constant
+  branch the primitive square-free core collapses to `1`, so the
+  singleton-core entry would be the unit `1`;
+* `Hex.factorWithBound_entry_shouldRecord` — recorded entries pass the
+  `shouldRecordPolynomialFactor` filter, hence cannot equal `1`; this rules
+  out the singleton-core entry, leaving only the `X`-power case;
+* `zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible` — the
+  sign-normalisation lift from raw factor irreducibility to entry
+  irreducibility.
+
+Sibling arms: the small-mod singleton arm #4564
+(`factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData`)
+covers the `... ≠ 0` fast-path case with `factorsModP.size ≤ 1`; the slow
+exhaustive arm (#4561, in flight) covers the slow-path exhaustive case;
+the fast BHKS arm is gated on directive #2567. -/
+theorem factor_constant_branch_entry_irreducible_of_choosePrimeData
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
+    (B : Nat)
+    (entry : Hex.ZPoly × Nat)
+    (hdeg :
+      (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0)
+    (hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList)
+    (hcomplete :
+      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
+        #[(Hex.normalizeForFactor f).squareFreeCore]) :
+    Hex.ZPoly.Irreducible entry.1 := by
+  -- Branch-shape lemma: entry is the sign-normalisation of a raw factor in
+  -- the singleton-core reassembly.
+  obtain ⟨raw, hraw_mem, hentry_eq⟩ :=
+    Hex.factorWithBound_entry_mem_constant_branch_raw f B entry hdeg hentry_mem
+  -- Reassembly classifier under `hcomplete`: raw is either an extracted
+  -- `X`-power factor or the singleton core entry.
+  rcases Hex.reassemblePolynomialFactors_mem_xPower_or_core_of_expansionComplete
+      (Hex.normalizeForFactor f) #[(Hex.normalizeForFactor f).squareFreeCore]
+      raw hcomplete hraw_mem with hx | hcore_mem
+  · -- `X`-power case: raw is `X`, directly irreducible; sign-normalise.
+    rw [hentry_eq]
+    exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible
+      (Hex.xPowerFactorArray_irreducible (Hex.normalizeForFactor f).xPower raw
+        hx)
+  · -- Singleton-core case: raw = squareFreeCore = 1, so entry.1 = 1, which
+    -- contradicts `shouldRecordPolynomialFactor entry.1 = true`.
+    exfalso
+    have hraw_eq : raw = (Hex.normalizeForFactor f).squareFreeCore := by
+      simpa using hcore_mem
+    have hcore_one : (Hex.normalizeForFactor f).squareFreeCore = 1 :=
+      Hex.squareFreeCore_eq_one_of_constant_of_ne_zero f hf_ne hdeg
+    have hraw_one : raw = 1 := hraw_eq.trans hcore_one
+    have hentry_one : entry.1 = 1 := by
+      rw [hentry_eq, hraw_one]
+      unfold Hex.normalizeFactorSign
+      have hnot : ¬ Hex.DensePoly.leadingCoeff (1 : Hex.ZPoly) < 0 := by
+        change ¬ Hex.DensePoly.leadingCoeff (Hex.DensePoly.C (1 : Int)) < 0
+        simp [Hex.DensePoly.leadingCoeff,
+          Hex.DensePoly.coeffs_C_of_ne_zero (by decide : (1 : Int) ≠ 0)]
+      rw [if_neg hnot]
+    have hrecord : Hex.shouldRecordPolynomialFactor entry.1 = true :=
+      Hex.factorWithBound_entry_shouldRecord f B entry hentry_mem
+    rw [hentry_one] at hrecord
+    unfold Hex.shouldRecordPolynomialFactor at hrecord
+    simp at hrecord
+
 end HexBerlekampZassenhausMathlib
