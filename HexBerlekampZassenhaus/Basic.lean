@@ -9292,7 +9292,7 @@ reporting residual `1`. Consumed by the small-mod singleton arm umbrella
 deliverable 3). Sibling specialisations: constant arm
 `reassemblyExpansionComplete_constant_of_ne_zero` (#4585 / PR #4598);
 quadratic arm tracked by #4747. -/
-private theorem expandRepeatedPartFactorArray_pow_singleton
+theorem expandRepeatedPartFactorArray_pow_singleton
     (q : ZPoly) (k : Nat)
     (hq_monic : DensePoly.Monic q)
     (hq_degree : 0 < q.degree?.getD 0)
