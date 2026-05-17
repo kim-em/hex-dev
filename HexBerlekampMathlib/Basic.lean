@@ -309,7 +309,8 @@ theorem berlekampFactor_factors_nodup
   apply Hex.Berlekamp.berlekampFactor_factors_nodup_of_no_squared
   intro g hgg hpos
   have hunit : Hex.Berlekamp.isUnitPolynomial g = true :=
-    Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd hsquareFree hgg
+    Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd
+      (Hex.Berlekamp.squareFree_common_of_gcd_eq_one hsquareFree) hgg
   have hdeg : Hex.DensePoly.degree? g = some 0 := by
     unfold Hex.Berlekamp.isUnitPolynomial at hunit
     cases hd : Hex.DensePoly.degree? g with

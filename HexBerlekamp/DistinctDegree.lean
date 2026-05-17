@@ -810,7 +810,8 @@ private theorem isUnitPolynomial_gcd_quotient_of_squareFree_divisor
             _ = g * (g * (e * a)) := by
                 exact congrArg (g * ·) (DensePoly.mul_assoc_poly g e a)
             _ = (g * g) * (e * a) := (DensePoly.mul_assoc_poly g g (e * a)).symm
-  exact isUnitPolynomial_of_squareFree_of_squared_dvd hsf
+  exact isUnitPolynomial_of_squareFree_of_squared_dvd
+    (squareFree_common_of_gcd_eq_one hsf)
     (dvd_trans_poly hg2_dvd_r hrf)
 
 private theorem distinctDegreePowerLoop_bucket_dvd_diff_of_squareFree_divisor
