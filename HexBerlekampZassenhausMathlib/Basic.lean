@@ -1547,6 +1547,25 @@ If a subset of the executable lifted factors represents an integer divisor of
 `core` modulo the Hensel modulus, and that modulus is beyond twice the default
 Mignotte coefficient bound for `core`, then the executable centred-lift
 operation recovers the integer factor exactly.
+
+**Refactor anchor (#4539 resolution / HO-1 alternative route).**  The
+core-shape `hprecision` here is the cause of the `defaultFactorCoeffBound
+core ≤ defaultFactorCoeffBound f` monotonicity obligation called out by
+the wrapper
+`factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence`
+(see its docstring).  A future variant of this theorem can take an
+abstract `B' : Nat` plus a validity hypothesis
+`hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'` in place of `hprecision`'s
+hard-coded `defaultFactorCoeffBound core`; the proof body just passes
+`B'` and `hvalid` straight into `centeredLiftPoly_eq_of_reduceModPow_eq`
+(which already accepts an abstract bound).  Propagating that
+abstraction up through `recombinationSearchModAux_*`,
+`exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence`,
+and `exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence`
+lets HO-1 consumers instantiate `B' := defaultFactorCoeffBound f` and
+discharge `hvalid` via `defaultFactorCoeffBound_valid f` (using
+`factor ∣ core ∣ f`) — bypassing the squareFreeCore-bound monotonicity
+entirely.
 -/
 theorem centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision
     {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
@@ -7434,11 +7453,41 @@ by `collectFactorMultiplicities`.
 The Mignotte invariant `hprecision : 2 * defaultFactorCoeffBound core <
 d.p^d.k` operates on `core = (normalizeForFactor f).squareFreeCore` (the
 square-free core, not the public input `f`) and is supplied externally;
-this matches the #4006 sibling's invariant shape exactly.  Constructing
-`hprecision` from the outer slow-path precision
-`d.p ^ d.k > 2 * defaultFactorCoeffBound f` requires the monotonicity
-`defaultFactorCoeffBound core ≤ defaultFactorCoeffBound f`, which is a
-separable executable-layer obligation for the HO-1 consumer (#4170).
+this matches the #4006 sibling's invariant shape exactly.
+
+The natural construction route from the outer slow-path precision
+`d.p ^ d.k > 2 * defaultFactorCoeffBound f` is the monotonicity
+`defaultFactorCoeffBound core ≤ defaultFactorCoeffBound f`.  A
+Mathlib-free proof of that monotonicity proved elusive: the degree-half
+goes through (`deg core ≤ deg f`), but the L2-norm half fails in
+general (`coeffL2NormBound core` may exceed `coeffL2NormBound f`).
+Empirically the monotonicity held on every concrete case checked, and
+no counterexample has been produced; closing the proof would require
+Mahler-measure or Mignotte-derived L2 machinery not currently in
+`HexPolyZ/`.  This was tracked as #4539 (`squareFreeCore` bound
+monotonicity question).
+
+The **recommended HO-1 path** (#4170) bypasses the monotonicity entirely
+by re-parameterising the precision-using sub-theorem
+`centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision`
+(around line 1551 above) to accept an *abstract* bound `B' : Nat` plus
+a uniform-validity hypothesis
+`hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`, and propagating that
+abstraction up through `recombinationSearchModAux_...`,
+`exhaustiveCoreFactorsWithBound_coverage_...`, and
+`exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_...`.
+The consumer can then instantiate `B' := defaultFactorCoeffBound f` and
+discharge `hvalid` via `defaultFactorCoeffBound_valid f hf_ne factor
+hfactor_dvd_f` — `factor` is a divisor of `core`, `core` divides `f`
+(after content + X-power + repeated-part normalisation), so
+`factor ∣ f` and the validity follows.  The outer-form
+`2 * defaultFactorCoeffBound f < d.p^d.k` then holds directly from the
+executable's precision construction without any monotonicity step.
+
+This wrapper continues to take the core-shape `hprecision` so that the
+existing #4006 chain compiles unchanged; the abstract-bound refactor is
+a separable upstream task that adds an alternative consumer surface
+without breaking this one.
 
 The `hbranch` and `hentry_mem` arguments are not used by the proof, but
 they document the consumer-side entry point: a typical caller threads them
