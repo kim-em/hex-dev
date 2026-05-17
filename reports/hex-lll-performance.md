@@ -30,7 +30,6 @@
 - `Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq90`: fixed, repeats `3`
 - `Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq150`: fixed, repeats `3`
 - `Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq180`: fixed, repeats `3`
-- `Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq240`: fixed, repeats `3`
 - `Hex.LLLBench.runFpylllFirstShortVectorHarshCubic15Checksum`: fixed, repeats `5`
 - `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq20`: fixed, repeats `3`
 - `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq25`: fixed, repeats `3`
@@ -146,6 +145,19 @@ parametric registrations below the Phase 4 exit bar:
 
 Because `PLAN/Phase4.md` treats an inconclusive scientific verdict as a
 Phase 4 blocker, this report does not promote `HexLLL.done_through`.
+
+The current fixed comparator registrations use the post-HO-18 densified
+headline ladders:
+
+- `random-bounded`: `n = 30, 45, 60, 75, 90, 120, 150, 180`.
+- `harsh-cubic`: `n = 15, 20, 25, 30, 35, 40, 45, 50, 55`.
+- `bz-recombination`: one tiny fixed row, retained only as contextual
+  comparator evidence because process overhead dominates this family.
+
+No committed artifact currently contains the full densified Lean/Isabelle
+comparator sweep for those ladders. Until that artifact exists, the largest
+eligible-rung gating verdict required by HO-18 cannot be recomputed from this
+report, and `HexLLL.done_through` remains at `3`.
 
 Informational `fpLLL via fpylll` comparator run at commit
 `ed9da7537e96cee75f395e46962d41775f615a53` on `carica` (Apple M2 Ultra,
