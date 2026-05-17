@@ -52,7 +52,8 @@ private theorem scaledCoeffMatrix_bareiss_eq_det
       (HexMatrixMathlib.det_eq
         (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ hj)).symm
 
-private theorem leadingGramMatrixInt_det_nonneg_pre
+/-- Leading integer Gram determinants are nonnegative. -/
+theorem leadingGramMatrixInt_det_nonneg
     (b : Matrix Int n m) (t : Nat) (ht : t ≤ n) :
     0 ≤ Matrix.det (GramSchmidt.leadingGramMatrixInt b t ht) := by
   let rowPrefix : Matrix Int t m :=
@@ -990,12 +991,12 @@ private theorem gramDet_rat_eq_progressMatrix_zero_det (b : Matrix Int n m)
     (k : Nat) (hk : k ≤ n) :
     (gramDet b k hk : Rat) = Matrix.det (progressMatrix b k hk 0) := by
   -- (gramDet b k hk : Rat) = ((Matrix.det leadingGramMatrixInt b k hk : Int) : Rat)
-  -- via leadingGramMatrixInt_det_nonneg_pre + bareiss_eq_det.
+  -- via leadingGramMatrixInt_det_nonneg + bareiss_eq_det.
   have hdet_int :
       Matrix.det (GramSchmidt.leadingGramMatrixInt b k hk) =
         Int.ofNat (gramDet b k hk) := by
     rw [gramDet, HexMatrixMathlib.bareiss_eq_mathlib_det, ← HexMatrixMathlib.det_eq]
-    exact (Int.toNat_of_nonneg (leadingGramMatrixInt_det_nonneg_pre b k hk)).symm
+    exact (Int.toNat_of_nonneg (leadingGramMatrixInt_det_nonneg b k hk)).symm
   have hstep1 : ((gramDet b k hk : Int) : Rat) =
       ((Matrix.det (GramSchmidt.leadingGramMatrixInt b k hk) : Int) : Rat) := by
     rw [hdet_int]
@@ -1516,7 +1517,7 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
             Int.ofNat (gramDet b (j + 1) hjsuc) := by
         rw [gramDet, HexMatrixMathlib.bareiss_eq_mathlib_det, ← HexMatrixMathlib.det_eq]
         exact (Int.toNat_of_nonneg
-          (leadingGramMatrixInt_det_nonneg_pre b (j + 1) hjsuc)).symm
+          (leadingGramMatrixInt_det_nonneg b (j + 1) hjsuc)).symm
       rw [hdet_int]
       rfl
     rw [hdetG]
