@@ -4927,6 +4927,52 @@ def recombineExhaustive (f : ZPoly) (d : LiftData) : Array ZPoly :=
   | some factors => factors.toArray
   | none => #[]
 
+/-- Scaled-candidate variant of `recombinationSearchModAux`.
+
+The per-step candidate is built from the lifted-factor product *after* scaling
+by the integer `coreLc` parameter (intended to be the leading coefficient of
+the integer core polynomial), then centre-lifted, primitivised, and
+sign-normalised.  For `coreLc = 1` the inner `DensePoly.scale 1 _ = _`
+collapse recovers the original unscaled `recombinationSearchModAux` candidate
+shape; for primitive non-monic cores the scaled product is the substrate
+identified by `RepresentsIntegerFactorAtLift`, so this variant is the basis of
+the primitive recursive coverage chain. -/
+def scaledRecombinationSearchModAux
+    (coreLc : Int) (target : ZPoly) (modulus : Nat) (localFactors : List ZPoly) :
+    Nat → Option (List ZPoly)
+  | 0 => none
+  | fuel + 1 =>
+      if target = 1 then
+        some []
+      else
+        firstSome (subsetSplitsWithFirst localFactors) fun split =>
+          let candidate :=
+            normalizeFactorSign <|
+              ZPoly.primitivePart <|
+                centeredLiftPoly
+                  (DensePoly.scale coreLc (Array.polyProduct split.1.toArray))
+                  modulus
+          if shouldRecordPolynomialFactor candidate then
+            match exactQuotient? target candidate with
+            | none => none
+            | some quotient =>
+                match scaledRecombinationSearchModAux coreLc quotient modulus
+                    split.2 fuel with
+                | none => none
+                | some rest => some (candidate :: rest)
+          else
+            none
+
+/-- Surface wrapper for `scaledRecombinationSearchModAux` mirroring
+`recombinationSearchMod`: drives the search with fuel `localFactors.length + 1`,
+which suffices to exhaust the recursion since every step strictly shrinks the
+remaining local-factor list. -/
+def scaledRecombinationSearchMod
+    (coreLc : Int) (f : ZPoly) (modulus : Nat) (localFactors : List ZPoly) :
+    Option (List ZPoly) :=
+  scaledRecombinationSearchModAux coreLc f modulus localFactors
+    (localFactors.length + 1)
+
 /-- Initial Hensel precision used by the fast BHKS doubling schedule. -/
 def initialHenselPrecision (B : Nat) : Nat :=
   if B ≤ 4 then B else 4
@@ -7429,6 +7475,81 @@ theorem recombinationSearchModAux_eq_some_of_step_of_prefix_none
   rw [show (normalizeFactorSign <|
             ZPoly.primitivePart <|
               centeredLiftPoly (Array.polyProduct selected.toArray) modulus) = candidate
+        from hcandidate_def.symm]
+  rw [if_pos hrecord]
+  simp only [hquot, hsearch_rest]
+
+/--
+Scaled-candidate counterpart of `recombinationSearchModAux_eq_some_of_step_of_prefix_none`.
+
+Structurally identical to the unscaled step lemma, with the inner `let
+candidate' := ...` expression in both the prefix-none hypothesis and the goal
+applying `DensePoly.scale coreLc` to the lifted-factor product before
+centre-lifting.  This is the step driver the primitive recursive coverage
+proof in #4647 will use, where the candidate is recovered from the integer
+factor via `scaledRecombinationCandidate_eq_factor_of_recovery`.
+-/
+theorem scaledRecombinationSearchModAux_eq_some_of_step_of_prefix_none
+    {coreLc : Int} {target candidate quotient : ZPoly} {modulus fuel : Nat}
+    {localFactors selected rest restFactors : List ZPoly}
+    {pre suffix : List (List ZPoly × List ZPoly)}
+    (htarget_ne_one : target ≠ 1)
+    (hsplits :
+      subsetSplitsWithFirst localFactors = pre ++ (selected, rest) :: suffix)
+    (hprefix :
+      ∀ split ∈ pre,
+        (let candidate' :=
+          normalizeFactorSign <|
+            ZPoly.primitivePart <|
+              centeredLiftPoly
+                (DensePoly.scale coreLc (Array.polyProduct split.1.toArray))
+                modulus
+        if shouldRecordPolynomialFactor candidate' then
+          match exactQuotient? target candidate' with
+          | none => none
+          | some quotient' =>
+              match scaledRecombinationSearchModAux coreLc quotient' modulus
+                  split.2 fuel with
+              | none => none
+              | some r => some (candidate' :: r)
+        else none) = none)
+    (hcandidate_def :
+      candidate = normalizeFactorSign
+        (ZPoly.primitivePart
+          (centeredLiftPoly
+            (DensePoly.scale coreLc (Array.polyProduct selected.toArray))
+            modulus)))
+    (hrecord : shouldRecordPolynomialFactor candidate = true)
+    (hquot : exactQuotient? target candidate = some quotient)
+    (hsearch_rest :
+      scaledRecombinationSearchModAux coreLc quotient modulus rest fuel =
+        some restFactors) :
+    scaledRecombinationSearchModAux coreLc target modulus localFactors
+        (fuel + 1) =
+      some (candidate :: restFactors) := by
+  unfold scaledRecombinationSearchModAux
+  rw [if_neg htarget_ne_one, hsplits]
+  refine firstSome_eq_some_of_append pre suffix (selected, rest) _ _ hprefix ?_
+  show (let candidate' :=
+          normalizeFactorSign <|
+            ZPoly.primitivePart <|
+              centeredLiftPoly
+                (DensePoly.scale coreLc (Array.polyProduct selected.toArray))
+                modulus
+        if shouldRecordPolynomialFactor candidate' then
+          match exactQuotient? target candidate' with
+          | none => none
+          | some quotient' =>
+              match scaledRecombinationSearchModAux coreLc quotient' modulus
+                  rest fuel with
+              | none => none
+              | some r => some (candidate' :: r)
+        else none) = some (candidate :: restFactors)
+  rw [show (normalizeFactorSign <|
+            ZPoly.primitivePart <|
+              centeredLiftPoly
+                (DensePoly.scale coreLc (Array.polyProduct selected.toArray))
+                modulus) = candidate
         from hcandidate_def.symm]
   rw [if_pos hrecord]
   simp only [hquot, hsearch_rest]
