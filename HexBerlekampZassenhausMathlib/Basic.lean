@@ -4073,9 +4073,197 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
           | succ _ => simp at hunit
     rw [hdeg] at hpos
     simp at hpos
-  -- Transport `Nodup` from the Berlekamp factor list to `data.factorsModP.toList`.
+  -- The product of the Berlekamp factors equals the monic modular image
+  -- (by `prod_berlekampFactor`; the unused `_hsquareFree` parameter was
+  -- removed from `prod_berlekampFactor`'s signature).
+  have hprod :
+      Hex.Berlekamp.factorProduct
+          (@Hex.Berlekamp.berlekampFactor data.p data.bounds
+            (Hex.monicModularImage (Hex.ZPoly.modP data.p f))
+            (Hex.monicModularImage_monic hprime (Hex.ZPoly.modP data.p f) hzero)
+            hfield).factors =
+        Hex.monicModularImage (Hex.ZPoly.modP data.p f) := by
+    have := Hex.Berlekamp.prod_berlekampFactor
+      (Hex.monicModularImage (Hex.ZPoly.modP data.p f))
+      (Hex.monicModularImage_monic hprime (Hex.ZPoly.modP data.p f) hzero)
+    simpa [Hex.Berlekamp.Factorization.product] using this
+  -- Now show that `monicModularImage` is injective on the Berlekamp factor list:
+  -- two distinct factors that agree under `monicModularImage` would be unit
+  -- multiples, contradicting square-freeness of the monic image.
+  set factors :=
+      (@Hex.Berlekamp.berlekampFactor data.p data.bounds
+        (Hex.monicModularImage (Hex.ZPoly.modP data.p f))
+        (Hex.monicModularImage_monic hprime (Hex.ZPoly.modP data.p f) hzero)
+        hfield).factors with hfactors_def
+  have hinj_on :
+      ∀ g₁ ∈ factors, ∀ g₂ ∈ factors,
+        Hex.monicModularImage g₁ = Hex.monicModularImage g₂ → g₁ = g₂ := by
+    intro g₁ hg₁ g₂ hg₂ heqm
+    by_contra hne
+    -- Both factors are nonzero: their monic images agree, and a zero factor
+    -- has `monicModularImage = 0` while a nonzero factor has nonzero
+    -- `monicModularImage` (positive leading coefficient).  But we use a
+    -- more direct argument via square-freeness, so we just extract
+    -- nonzero-ness from positive degree.
+    -- Factors of a monic square-free polynomial have positive degree, so are
+    -- nonzero.  However, the discharger does not assume input positive degree,
+    -- so we handle the degenerate `factors = [1]` case via length.
+    -- If factors has fewer than 2 distinct elements, hg₁/hg₂/hne contradict.
+    -- Use `mul_dvd_factorProduct_of_mem_of_ne` to extract `g₁ * g₂ ∣ factorProduct`.
+    have hg₁_dvd_g₂ :
+        g₁ * g₂ ∣ Hex.Berlekamp.factorProduct factors :=
+      Hex.Berlekamp.mul_dvd_factorProduct_of_mem_of_ne hNodup hg₁ hg₂ hne
+    -- Hence g₁ * g₂ ∣ monicImage modP_f.
+    rw [hprod] at hg₁_dvd_g₂
+    -- Hence g₁ * g₂ ∣ modP_f.  Construct the dvd witness manually because the
+    -- `dvd` instance for `FpPoly p` is `instDvdOfAddOfMul`, not the default
+    -- `semigroupDvd`, and `dvd_trans` doesn't see through that.
+    have hg₁g₂_dvd_modP :
+        g₁ * g₂ ∣ Hex.ZPoly.modP data.p f := by
+      rcases hg₁_dvd_g₂ with ⟨r, hr⟩
+      rcases hmonicImage_dvd with ⟨s, hs⟩
+      exact ⟨r * s, by rw [hs, hr, Hex.FpPoly.mul_assoc]⟩
+    -- From `monicModularImage g₁ = monicModularImage g₂`, both being nonzero,
+    -- we get `g₁ = scale u g₂` for some nonzero `u`.  Use this to conclude
+    -- `g₂² ∣ modP_f`, contradicting square-freeness.
+    -- First we need positive degree of g₁, g₂ to know they're nonzero.
+    -- For this, we case on whether `monicImage modP_f` has positive degree.
+    by_cases hpos_image :
+        0 < (Hex.monicModularImage (Hex.ZPoly.modP data.p f)).degree?.getD 0
+    · -- Positive-degree input: every Berlekamp factor has positive degree.
+      have hg_pos :
+          ∀ g ∈ factors, 0 < g.degree?.getD 0 :=
+        Hex.Berlekamp.berlekampFactor_factors_pos_degree
+          (Hex.monicModularImage (Hex.ZPoly.modP data.p f))
+          (Hex.monicModularImage_monic hprime (Hex.ZPoly.modP data.p f) hzero)
+          hpos_image
+      have hg₁_pos : 0 < g₁.degree?.getD 0 := hg_pos g₁ hg₁
+      have hg₂_pos : 0 < g₂.degree?.getD 0 := hg_pos g₂ hg₂
+      have hg₁_size_pos : 0 < g₁.size := by
+        unfold Hex.DensePoly.degree? at hg₁_pos
+        by_cases hsz : g₁.size = 0
+        · simp [hsz] at hg₁_pos
+        · exact Nat.pos_of_ne_zero hsz
+      have hg₂_size_pos : 0 < g₂.size := by
+        unfold Hex.DensePoly.degree? at hg₂_pos
+        by_cases hsz : g₂.size = 0
+        · simp [hsz] at hg₂_pos
+        · exact Nat.pos_of_ne_zero hsz
+      -- Show g₁ = scale u g₂ for u = lc g₁ · (lc g₂)⁻¹ ≠ 0.
+      have hg₁_lead_ne :
+          Hex.DensePoly.leadingCoeff g₁ ≠ (0 : Hex.ZMod64 data.p) :=
+        Hex.FpPoly.leadingCoeff_ne_zero_of_pos_degree g₁ hg₁_pos
+      have hg₂_lead_ne :
+          Hex.DensePoly.leadingCoeff g₂ ≠ (0 : Hex.ZMod64 data.p) :=
+        Hex.FpPoly.leadingCoeff_ne_zero_of_pos_degree g₂ hg₂_pos
+      have hg₁_isZero : g₁.isZero = false := by
+        cases hz : g₁.isZero with
+        | false => rfl
+        | true =>
+          exfalso
+          have hsize_zero : g₁.size = 0 := by
+            change g₁.coeffs.isEmpty = true at hz
+            simpa [Hex.DensePoly.size, Array.isEmpty_iff_size_eq_zero] using hz
+          omega
+      have hg₂_isZero : g₂.isZero = false := by
+        cases hz : g₂.isZero with
+        | false => rfl
+        | true =>
+          exfalso
+          have hsize_zero : g₂.size = 0 := by
+            change g₂.coeffs.isEmpty = true at hz
+            simpa [Hex.DensePoly.size, Array.isEmpty_iff_size_eq_zero] using hz
+          omega
+      -- Express both monicModularImages explicitly: `scale (lc gᵢ)⁻¹ gᵢ`.
+      have hmm₁_eq :
+          Hex.monicModularImage g₁ =
+            Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff g₁)⁻¹ g₁ := by
+        unfold Hex.monicModularImage
+        simp [hg₁_isZero]
+      have hmm₂_eq :
+          Hex.monicModularImage g₂ =
+            Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff g₂)⁻¹ g₂ := by
+        unfold Hex.monicModularImage
+        simp [hg₂_isZero]
+      rw [hmm₁_eq, hmm₂_eq] at heqm
+      -- Apply `scale (lc g₁)` to both sides to recover `g₁` on the LHS.
+      have hscaled :
+          Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff g₁)
+            (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff g₁)⁻¹ g₁) =
+          Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff g₁)
+            (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff g₂)⁻¹ g₂) := by
+        rw [heqm]
+      rw [Hex.FpPoly.scale_scale,
+          show Hex.DensePoly.leadingCoeff g₁ *
+            (Hex.DensePoly.leadingCoeff g₁)⁻¹ = (1 : Hex.ZMod64 data.p) from
+              Hex.ZMod64.mul_inv_eq_one_of_prime hprime hg₁_lead_ne,
+          Hex.FpPoly.scale_one_left g₁,
+          Hex.FpPoly.scale_scale] at hscaled
+      -- Now `hscaled : g₁ = scale (lc g₁ * (lc g₂)⁻¹) g₂`.
+      set u := Hex.DensePoly.leadingCoeff g₁ *
+                 (Hex.DensePoly.leadingCoeff g₂)⁻¹ with hu_def
+      have hu_ne : u ≠ (0 : Hex.ZMod64 data.p) := by
+        intro h0
+        rw [hu_def] at h0
+        rcases Hex.ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero
+            (Hex.ZMod64.PrimeModulus.prime (p := data.p)) h0 with h1 | h2
+        · exact hg₁_lead_ne h1
+        · exact (Hex.ZMod64.inv_ne_zero_of_prime hprime hg₂_lead_ne) h2
+      have hg₁_eq_scale : g₁ = Hex.DensePoly.scale u g₂ := hscaled
+      -- Then g₁ * g₂ = scale u (g₂²), and g₂² ∣ scale u (g₂²) since u ≠ 0.
+      have hg₁g₂_eq : g₁ * g₂ = Hex.DensePoly.scale u (g₂ * g₂) := by
+        rw [hg₁_eq_scale, Hex.FpPoly.scale_mul_left]
+      have hg₂sq_dvd : g₂ * g₂ ∣ Hex.DensePoly.scale u (g₂ * g₂) := by
+        refine ⟨Hex.DensePoly.C u, ?_⟩
+        -- Goal: scale u (g₂ * g₂) = g₂ * g₂ * C u
+        calc Hex.DensePoly.scale u (g₂ * g₂)
+            = Hex.DensePoly.C u * (g₂ * g₂) := (Hex.FpPoly.C_mul_eq_scale u (g₂ * g₂)).symm
+          _ = (g₂ * g₂) * Hex.DensePoly.C u :=
+              Hex.DensePoly.mul_comm_poly _ _
+      have hg₂sq_dvd_modP : g₂ * g₂ ∣ Hex.ZPoly.modP data.p f := by
+        rw [hg₁g₂_eq] at hg₁g₂_dvd_modP
+        rcases hg₂sq_dvd with ⟨r, hr⟩
+        rcases hg₁g₂_dvd_modP with ⟨s, hs⟩
+        exact ⟨r * s, by rw [hs, hr, Hex.FpPoly.mul_assoc]⟩
+      -- Square-freeness implies g₂ is a unit polynomial (degree 0).
+      have hunit : Hex.Berlekamp.isUnitPolynomial g₂ = true :=
+        Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd hsf hg₂sq_dvd_modP
+      have hdeg_zero : Hex.DensePoly.degree? g₂ = some 0 := by
+        unfold Hex.Berlekamp.isUnitPolynomial at hunit
+        cases hd : Hex.DensePoly.degree? g₂ with
+        | none => rw [hd] at hunit; simp at hunit
+        | some k =>
+            rw [hd] at hunit
+            cases k with
+            | zero => rfl
+            | succ _ => simp at hunit
+      rw [hdeg_zero] at hg₂_pos
+      simp at hg₂_pos
+    · -- Degenerate case: the monic image has degree 0.  Then it has size ≤ 1,
+      -- and the Berlekamp factor list is the singleton `[monicImage modP_f]`.
+      -- Hence `g₁ = g₂` (both equal to the unique factor), contradicting `hne`.
+      have hsize_le_one : (Hex.monicModularImage (Hex.ZPoly.modP data.p f)).size ≤ 1 := by
+        by_contra h
+        push_neg at h
+        apply hpos_image
+        have hsize_ne : (Hex.monicModularImage (Hex.ZPoly.modP data.p f)).size ≠ 0 := by
+          omega
+        unfold Hex.DensePoly.degree?
+        simp [hsize_ne]
+        omega
+      have hfactors_eq :
+          factors = [Hex.monicModularImage (Hex.ZPoly.modP data.p f)] :=
+        Hex.Berlekamp.berlekampFactor_factors_eq_singleton_of_size_le_one
+          (Hex.monicModularImage (Hex.ZPoly.modP data.p f))
+          (Hex.monicModularImage_monic hprime (Hex.ZPoly.modP data.p f) hzero)
+          hsize_le_one
+      rw [hfactors_eq] at hg₁ hg₂
+      rw [List.mem_singleton] at hg₁ hg₂
+      exact hne (hg₁.trans hg₂.symm)
+  -- Transport `Nodup` from the post-mapped Berlekamp factor list to
+  -- `data.factorsModP.toList`.
   rw [heq]
-  simpa using hNodup
+  simpa using List.Nodup.map_on hinj_on hNodup
 
 /-- Discharge of the per-modular-factor natural-degree positivity premise on
 `henselLiftData_liftedFactor_natDegree_pos`: given the `factorsModPBerlekampForm`
@@ -4181,15 +4369,39 @@ theorem factorsModP_natDegree_pos_of_factorsModPBerlekampForm
       hmonicImage_pos
   -- Step C: transport positivity from FpPoly factors to integer-side `toPolynomial`.
   intro g hg
-  -- Membership: g ∈ data.factorsModP corresponds to g ∈ berlekampFactor.factors via heq.
-  have hg_factors :
-      g ∈ (@Hex.Berlekamp.berlekampFactor data.p data.bounds
-            (Hex.monicModularImage (Hex.ZPoly.modP data.p f))
-            (Hex.monicModularImage_monic hprime (Hex.ZPoly.modP data.p f) hzero)
-            hfield).factors := by
-    rw [heq] at hg
-    simpa using hg
-  have hg_pos : 0 < g.degree?.getD 0 := hFactorsPos g hg_factors
+  -- Membership: g ∈ data.factorsModP corresponds to g = monicModularImage h for
+  -- some h ∈ berlekampFactor.factors via heq.
+  rw [heq] at hg
+  simp only [List.mem_toArray, List.mem_map] at hg
+  obtain ⟨h, hh_mem, rfl⟩ := hg
+  -- Positivity of `h`.
+  have hh_pos : 0 < h.degree?.getD 0 := hFactorsPos h hh_mem
+  -- Show `monicModularImage h` has positive degree (preserved by nonzero scaling).
+  have hh_size_pos : 0 < h.size := by
+    unfold Hex.DensePoly.degree? at hh_pos
+    by_cases hsz : h.size = 0
+    · simp [hsz] at hh_pos
+    · exact Nat.pos_of_ne_zero hsz
+  have hh_lead_ne : Hex.DensePoly.leadingCoeff h ≠ (0 : Hex.ZMod64 data.p) :=
+    Hex.FpPoly.leadingCoeff_ne_zero_of_pos_degree h hh_pos
+  have hh_isZero : h.isZero = false := by
+    cases hz : h.isZero with
+    | false => rfl
+    | true =>
+      exfalso
+      have hsize_zero : h.size = 0 := by
+        change h.coeffs.isEmpty = true at hz
+        simpa [Hex.DensePoly.size, Array.isEmpty_iff_size_eq_zero] using hz
+      omega
+  have hg_degree_eq :
+      (Hex.monicModularImage h).degree? = h.degree? := by
+    unfold Hex.monicModularImage
+    simp only [hh_isZero, Bool.false_eq_true, ↓reduceIte]
+    exact Hex.FpPoly.scale_degree?_eq_of_ne_zero
+      (Hex.ZMod64.inv_ne_zero_of_prime hprime hh_lead_ne) h
+  have hg_pos : 0 < (Hex.monicModularImage h).degree?.getD 0 := by
+    rw [hg_degree_eq]; exact hh_pos
+  set g := Hex.monicModularImage h with hg_def
   -- Show 0 < g.size from hg_pos.
   have hg_size_pos : 0 < g.size := by
     unfold Hex.DensePoly.degree? at hg_pos
