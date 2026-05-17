@@ -815,6 +815,51 @@ private theorem dvd_factorProduct_of_mem
             congrArg (fun y => y * k) (DensePoly.mul_comm_poly x g)
         _ = g * (x * k) := DensePoly.mul_assoc_poly g x k
 
+/-- Two distinct elements of a `Nodup` list of `FpPoly p` have a product that
+divides the list's product. -/
+theorem mul_dvd_factorProduct_of_mem_of_ne
+    [ZMod64.PrimeModulus p]
+    {xs : List (FpPoly p)} (h_nodup : xs.Nodup)
+    {a b : FpPoly p} (ha : a ∈ xs) (hb : b ∈ xs) (hab : a ≠ b) :
+    a * b ∣ factorProduct xs := by
+  induction xs with
+  | nil => exact absurd ha List.not_mem_nil
+  | cons x rest ih =>
+    have h_rest_nodup : rest.Nodup := (List.nodup_cons.mp h_nodup).2
+    rw [factorProduct_cons]
+    rcases List.mem_cons.mp ha with hax | har
+    · -- a = x
+      subst hax
+      rcases List.mem_cons.mp hb with hbx | hbr
+      · subst hbx; exact absurd rfl hab
+      · -- a = x, b ∈ rest. factorProduct (x :: rest) = a * factorProduct rest.
+        rcases dvd_factorProduct_of_mem rest hbr with ⟨q, hq⟩
+        refine ⟨q, ?_⟩
+        rw [hq]
+        exact (DensePoly.mul_assoc_poly a b q).symm
+    · -- a ∈ rest
+      rcases List.mem_cons.mp hb with hbx | hbr
+      · -- a ∈ rest, b = x. factorProduct (x :: rest) = b * factorProduct rest.
+        subst hbx
+        rcases dvd_factorProduct_of_mem rest har with ⟨q, hq⟩
+        refine ⟨q, ?_⟩
+        rw [hq]
+        -- Goal: b * (a * q) = a * b * q
+        calc b * (a * q)
+            = (b * a) * q := (DensePoly.mul_assoc_poly _ _ _).symm
+          _ = (a * b) * q :=
+              congrArg (· * q) (DensePoly.mul_comm_poly _ _)
+      · -- both a, b ∈ rest
+        rcases ih h_rest_nodup har hbr with ⟨q, hq⟩
+        refine ⟨x * q, ?_⟩
+        rw [hq]
+        -- Goal: x * (a * b * q) = a * b * (x * q)
+        calc x * (a * b * q)
+            = (x * (a * b)) * q := (DensePoly.mul_assoc_poly _ _ _).symm
+          _ = ((a * b) * x) * q :=
+              congrArg (· * q) (DensePoly.mul_comm_poly _ _)
+          _ = (a * b) * (x * q) := DensePoly.mul_assoc_poly _ _ _
+
 /-- A polynomial that divides both `a` and `b` squares-divides `a * b`. -/
 private theorem squared_dvd_of_dvd_dvd
     [ZMod64.PrimeModulus p]
@@ -1298,6 +1343,89 @@ theorem berlekampFactor_factors_pos_degree
     (f.size + 1) [f], 0 < g.degree?.getD 0
   exact berlekampFactorLoop_pos_invariant ((fixedSpaceKernel f hmonic).toList)
     (f.size + 1) [f] h_init_pos
+
+/-- For a monic input of size ≤ 1, the executable Berlekamp factor list is
+exactly the singleton `[f]`.  The Berlekamp loop only adds entries via
+nontrivial splits (which require positive-degree gcd outputs), and a polynomial
+of size ≤ 1 has no positive-degree divisors, so the loop preserves the initial
+singleton `[f]`. -/
+theorem berlekampFactor_factors_eq_singleton_of_size_le_one
+    [Lean.Grind.Field (ZMod64 p)]
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (hsize : f.size ≤ 1) :
+    (berlekampFactor f hmonic).factors = [f] := by
+  have h_no_split : ∀ w ∈ ((fixedSpaceKernel f hmonic).toList),
+      kernelWitnessSplit? f w = none := by
+    intro w _hw
+    cases hopt : kernelWitnessSplit? f w with
+    | none => rfl
+    | some r =>
+        exfalso
+        have hsize_lt := kernelWitnessSplit_size_lt f w r hopt
+        have hnt := kernelWitnessSplit_nontrivial f w r hopt
+        -- r.factor.size < f.size ≤ 1, so r.factor.size = 0, so r.factor = 0.
+        have hfac_size_zero : r.factor.size = 0 := by omega
+        have hfac_iszero : r.factor.isZero = true := by
+          change r.factor.coeffs.isEmpty = true
+          simpa [DensePoly.size, Array.isEmpty_iff_size_eq_zero] using hfac_size_zero
+        rw [hfac_iszero] at hnt
+        simp at hnt
+  have h_loop : ∀ fuel,
+      berlekampFactorLoop ((fixedSpaceKernel f hmonic).toList) fuel [f] = [f] := by
+    intro fuel
+    induction fuel with
+    | zero => rfl
+    | succ fuel _ih_fuel =>
+        rw [berlekampFactorLoop]
+        have h_sff_none :
+            splitFirstFactor? ((fixedSpaceKernel f hmonic).toList) [f] = none := by
+          rw [splitFirstFactor?_singleton_none_iff,
+              splitWithWitnesses?_none_iff_forall]
+          exact h_no_split
+        rw [h_sff_none]
+  change berlekampFactorLoop _ _ [f] = [f]
+  exact h_loop _
+
+/-- Every factor in the Berlekamp factor list is nonzero.  Splits the positive-
+degree case (where every factor has positive degree via
+`berlekampFactor_factors_pos_degree`) from the size-≤-1 case (where the factor
+list is the singleton `[f]` and `f` is monic, hence nonzero). -/
+theorem berlekampFactor_factors_ne_zero
+    [Lean.Grind.Field (ZMod64 p)]
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) :
+    ∀ g ∈ (berlekampFactor f hmonic).factors, g ≠ 0 := by
+  by_cases hf_pos : 0 < f.degree?.getD 0
+  · intro g hg
+    have hg_pos := berlekampFactor_factors_pos_degree f hmonic hf_pos g hg
+    intro h
+    rw [h] at hg_pos
+    simp [DensePoly.degree?] at hg_pos
+  · -- f.size ≤ 1: factors = [f], which is monic hence nonzero.
+    have hf_size_le : f.size ≤ 1 := by
+      rcases Nat.lt_or_ge f.size 2 with hlt | hge
+      · omega
+      · exfalso
+        apply hf_pos
+        have hsize_ne : f.size ≠ 0 := by omega
+        have hdeg_eq : f.degree? = some (f.size - 1) := by
+          unfold DensePoly.degree?
+          simp [hsize_ne]
+        rw [hdeg_eq]
+        simp
+        omega
+    have hfactors_eq := berlekampFactor_factors_eq_singleton_of_size_le_one f hmonic hf_size_le
+    rw [hfactors_eq]
+    intro g hg
+    rw [List.mem_singleton] at hg
+    subst hg
+    intro h
+    subst h
+    have hlead_zero : DensePoly.leadingCoeff (0 : FpPoly p) = 0 := rfl
+    unfold DensePoly.Monic at hmonic
+    rw [hlead_zero] at hmonic
+    exact ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) hmonic.symm
 
 end Berlekamp
 

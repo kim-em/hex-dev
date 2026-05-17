@@ -456,10 +456,10 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
         (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
           (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
           (Hex.monicModularImage_monic hprime_hex (Hex.ZPoly.modP primeData.p core) hzero)
-          hfield).factors.toArray.size =
+          hfield).factors.length =
           primeData.factorsModP.size := by
       rw [hfactors_eq]
-    simp at hsize
+      simp [List.length_map]
     omega
   -- Apply the no-split bridge to obtain Mathlib irreducibility of the monic image.
   have hirr_monic :
