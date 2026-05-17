@@ -59,6 +59,7 @@ instance : CoeOut (ZMod64 p) Nat where
 def normalize (p n : Nat) : Nat :=
   n % p
 
+/-- Normalization always returns a canonical representative below the modulus. -/
 theorem normalize_lt (p n : Nat) [Bounds p] : normalize p n < p :=
   Nat.mod_lt _ (Bounds.pPos (p := p))
 
@@ -442,13 +443,16 @@ instance : Pow (ZMod64 p) Nat where
 instance : Inv (ZMod64 p) where
   inv := ZMod64.inv
 
+/-- The canonical representative of the zero residue is `0`. -/
 @[simp] theorem toNat_zero : (ZMod64.zero : ZMod64 p).toNat = 0 := by
   rw [ZMod64.zero, toNat_ofNat]
   exact Nat.zero_mod _
 
+/-- The canonical representative of the one residue is `1 % p`. -/
 @[simp] theorem toNat_one : (ZMod64.one : ZMod64 p).toNat = 1 % p := by
   rw [ZMod64.one, toNat_ofNat]
 
+/-- Addition agrees with addition of canonical representatives modulo `p`. -/
 @[simp] theorem toNat_add (a b : ZMod64 p) :
     (add a b).toNat = (a.toNat + b.toNat) % p := by
   unfold add
@@ -498,6 +502,7 @@ instance : Inv (ZMod64 p) where
           simpa [modulusWord, UInt64.toNat_ofNatLT, hsum_toNat] using hpSum
         rw [Nat.mod_eq_of_lt (by omega)]
 
+/-- Subtraction agrees with modular subtraction of canonical representatives. -/
 @[simp] theorem toNat_sub (a b : ZMod64 p) :
     (sub a b).toNat = (a.toNat + (p - b.toNat)) % p := by
   unfold sub
@@ -537,10 +542,17 @@ instance : Inv (ZMod64 p) where
       rw [Nat.mod_eq_of_lt hlt]
       omega
 
+/-- Multiplication agrees with multiplication of canonical representatives modulo `p`. -/
 @[simp] theorem toNat_mul (a b : ZMod64 p) :
     (mul a b).toNat = (a.toNat * b.toNat) % p := by
   rw [mul, toNat_ofNat]
 
+/--
+Definition-level representative equation for the extended-GCD inverse candidate.
+
+Most callers should prefer `inv_mul_eq_one_of_coprime`; this lemma exposes the
+exact executable residue produced by `inv`.
+-/
 @[simp] theorem toNat_inv_def (a : ZMod64 p) :
     (inv a).toNat =
       (Int.toNat ((let (_, s, _) := HexArith.Int.extGcd (Int.ofNat a.toNat) (Int.ofNat p); s)
@@ -686,6 +698,7 @@ private theorem pow_go_toNat (base acc : ZMod64 p) (k : Nat) :
             rw [toNat_mul, toNat_mul]
             exact nat_mod_mul_pow_square_odd acc.toNat base.toNat (m + 1) p heven
 
+/-- Exponentiation agrees with natural-power reduction of the canonical representative. -/
 @[simp] theorem toNat_pow (a : ZMod64 p) (n : Nat) :
     (pow a n).toNat = a.toNat ^ n % p := by
   rw [pow]
@@ -694,6 +707,10 @@ private theorem pow_go_toNat (base acc : ZMod64 p) (k : Nat) :
   rw [← Nat.mod_mul_mod]
   simp
 
+/--
+The extended-GCD inverse candidate is a left inverse whenever the representative
+is coprime to the modulus.
+-/
 theorem inv_mul_eq_one (a : ZMod64 p) (hcop : Nat.Coprime a.toNat p) :
     (mul (inv a) a).toNat = 1 % p := by
   rw [toNat_mul, toNat_inv_def]
@@ -721,18 +738,23 @@ theorem inv_mul_eq_one_of_coprime (a : ZMod64 p) (hcop : Nat.Coprime a.toNat p) 
     mul (inv a) a = ZMod64.one := by
   rw [eq_iff_toNat_eq, inv_mul_eq_one a hcop, toNat_one]
 
+/-- Addition produces a canonical representative below the modulus. -/
 theorem add_lt_modulus (a b : ZMod64 p) : (add a b).toNat < p := by
   exact (add a b).isLt
 
+/-- Subtraction produces a canonical representative below the modulus. -/
 theorem sub_lt_modulus (a b : ZMod64 p) : (sub a b).toNat < p := by
   exact (sub a b).isLt
 
+/-- Multiplication produces a canonical representative below the modulus. -/
 theorem mul_lt_modulus (a b : ZMod64 p) : (mul a b).toNat < p := by
   simpa [toNat_mul] using normalize_lt p (a.toNat * b.toNat)
 
+/-- Exponentiation produces a canonical representative below the modulus. -/
 theorem pow_lt_modulus (a : ZMod64 p) (n : Nat) : (pow a n).toNat < p := by
   exact (pow a n).isLt
 
+/-- Inversion produces a canonical representative below the modulus. -/
 theorem inv_lt_modulus (a : ZMod64 p) : (inv a).toNat < p := by
   exact (inv a).isLt
 
