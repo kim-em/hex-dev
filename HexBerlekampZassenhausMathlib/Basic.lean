@@ -7092,6 +7092,47 @@ theorem exactQuotient?_recombinationCandidate_eq_some_of_eq_factor
     exact Hex.exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree hmonic hpos hmul
   · rw [heq]; exact hmul
 
+/-- Scaled-candidate counterpart of `shouldRecord_recombinationCandidate_of_eq_factor`.
+When the scaled candidate equals an irreducible integer factor, the executable
+record check passes. -/
+theorem shouldRecord_scaledRecombinationCandidate_of_eq_factor
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (heq : scaledRecombinationCandidate core d S = factor)
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor)) :
+    Hex.shouldRecordPolynomialFactor (scaledRecombinationCandidate core d S) =
+      true := by
+  rw [heq]
+  exact shouldRecordPolynomialFactor_of_irreducible_toPolynomial hirr
+
+/-- Scaled-candidate counterpart of `exactQuotient?_recombinationCandidate_eq_some_of_eq_factor`.
+When the scaled candidate equals a monic integer divisor of `target` of
+positive degree, the executable exact-division check on `target` returns
+`some` of the proof-side cofactor.
+
+Used by the primitive recursive coverage proof in #4647 against the new
+`Hex.scaledRecombinationSearchModAux` executable, paired with the recovery
+identity `scaledRecombinationCandidate_eq_factor_of_recovery` from #4652. -/
+theorem exactQuotient?_scaledRecombinationCandidate_eq_some_of_eq_factor
+    {core target factor : Hex.ZPoly} {d : Hex.LiftData}
+    {S : LiftedFactorSubset d}
+    (heq : scaledRecombinationCandidate core d S = factor)
+    (hmonic : Hex.DensePoly.Monic factor)
+    (hpos : 0 < factor.degree?.getD 0)
+    (hdvd : factor ∣ target) :
+    ∃ quotient,
+      Hex.exactQuotient? target (scaledRecombinationCandidate core d S) =
+        some quotient ∧
+        quotient * scaledRecombinationCandidate core d S = target := by
+  obtain ⟨q, hq⟩ := hdvd
+  -- hq : target = factor * q
+  have hmul : q * factor = target := by
+    rw [Hex.DensePoly.mul_comm_poly (S := Int)]
+    exact hq.symm
+  refine ⟨q, ?_, ?_⟩
+  · rw [heq]
+    exact Hex.exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree hmonic hpos hmul
+  · rw [heq]; exact hmul
+
 /--
 Executable recombination-search success for one lifted subset.
 
