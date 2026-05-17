@@ -4238,6 +4238,37 @@ theorem factorsModP_natDegree_pos_of_factorsModPBerlekampForm
   rw [hnatDeg_eq, hlift_degree_eq]
   exact hg_pos
 
+/-- Discharge of the `primeData.factorsModP.toList ≠ []` premise on the lifted-factor
+umbrellas: the `factorsModPBerlekampForm` invariant records that
+`primeData.factorsModP` is exactly the Berlekamp factor array of the monic modular
+image, and `Hex.Berlekamp.berlekampFactor_factors_ne_nil` guarantees the Berlekamp
+factor list is nonempty for any monic input.
+
+No `hgood` premise is needed: nonemptiness is preserved by `berlekampFactor`
+regardless of square-freeness, and `factorsModPBerlekampForm` already bundles the
+nonzero-image witness used to construct the monic image.
+
+Used together with `factorsModP_monic_*`, `factorsModP_polyProduct_congr_*`, and
+`factorsModP_coprime_*` to discharge the four `QuadraticMultifactorLiftInvariant`
+boundary hypotheses fed into the umbrellas via
+`Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData`. -/
+theorem factorsModP_ne_nil_of_factorsModPBerlekampForm
+    (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hform : Hex.factorsModPBerlekampForm core primeData) :
+    primeData.factorsModP.toList ≠ [] := by
+  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  obtain ⟨hprime, hzero, hfield, heq⟩ := hform
+  have hbl_ne :
+      (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
+        (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
+        (Hex.monicModularImage_monic hprime (Hex.ZPoly.modP primeData.p core) hzero)
+        hfield).factors ≠ [] :=
+    Hex.Berlekamp.berlekampFactor_factors_ne_nil
+      (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
+      (Hex.monicModularImage_monic hprime (Hex.ZPoly.modP primeData.p core) hzero)
+  rw [heq]
+  simpa using hbl_ne
+
 /-- Composed convenience wrapper: combines
 `Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData` with
 `henselLiftData_liftedFactor_injective` so that a Mathlib-bridge consumer can
