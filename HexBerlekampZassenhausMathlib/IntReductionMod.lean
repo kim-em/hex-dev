@@ -6,6 +6,8 @@ import Mathlib.Algebra.Polynomial.Degree.Lemmas
 import Mathlib.Algebra.Polynomial.Eval.Degree
 import Mathlib.Algebra.Polynomial.Eval.Irreducible
 import Mathlib.FieldTheory.Separable
+import Mathlib.FieldTheory.Perfect
+import Mathlib.RingTheory.Polynomial.Radical
 
 /-!
 Reduction-mod-`p` irreducibility lemma for primitive integer polynomials, used
@@ -986,6 +988,184 @@ theorem zpoly_primitive_of_toPolynomial_isPrimitive
   rcases Int.isUnit_iff.mp hIsUnit with hone | hneg
   · exact hone
   · rw [hneg] at hcontent_nonneg; omega
+
+/--
+Helper for the coprime inductive step of
+`gcd_derivative_associated_divRadical_of_charZero`. In any `GCDMonoid`,
+divisibility into a product factors through the component gcds:
+`g ∣ x * y → g ∣ gcd g x * gcd g y`. Two applications of
+`dvd_gcd_mul_of_dvd_mul` (in `Mathlib/Algebra/GCDMonoid/Basic.lean`) deliver
+the result without needing coprimality of `x` and `y`.
+-/
+private lemma dvd_gcd_mul_gcd_of_dvd_mul {α : Type*} [EuclideanDomain α]
+    [DecidableEq α] {g x y : α} (h : g ∣ x * y) :
+    g ∣ EuclideanDomain.gcd g x * EuclideanDomain.gcd g y := by
+  letI : GCDMonoid α := EuclideanDomain.gcdMonoid α
+  show g ∣ gcd g x * gcd g y
+  have h1 : g ∣ gcd g x * y := dvd_gcd_mul_of_dvd_mul h
+  rw [mul_comm] at h1
+  have h2 : g ∣ gcd g y * gcd g x := dvd_gcd_mul_of_dvd_mul h1
+  rwa [mul_comm] at h2
+
+/--
+**#4617 substrate (HO-1, sub-issue of #4610).**
+
+For a polynomial `p` over a characteristic-zero field `K`, the executable gcd
+`gcd p p'` is associated to `divRadical p = p / radical p`.
+
+Mathlib already supplies the easy direction
+`divRadical p ∣ gcd p p'` (via `divRadical_dvd_self` and
+`divRadical_dvd_derivative` in `Mathlib/RingTheory/Polynomial/Radical.lean`).
+The reverse direction `gcd p p' ∣ divRadical p` is the char-0 multiplicity
+fact: for a prime `q` in `K[X]` and `p = q^e * f` coprime to `q`, in
+char-0 the derivative `p'` has `q`-multiplicity exactly `e - 1`, so
+`gcd p p'` has `q`-multiplicity `min(e, e-1) = e - 1`.
+
+The proof goes by `UniqueFactorizationMonoid.induction_on_coprime`. The
+prime-power case uses `dvd_prime_pow` to extract a candidate exponent and
+discharges the saturating case by combining char-0 with separability
+(`PerfectField.separable_of_irreducible` from `PerfectField.ofCharZero`).
+The coprime case uses the `GCDMonoid` lemma `dvd_gcd_mul_of_dvd_mul`
+applied twice to factor divisibility through component gcds, then chains
+each component to the inductive hypothesis via `IsCoprime.dvd_of_dvd_mul_right`.
+No new `axiom`, `native_decide`, `sorry`, `TODO`, or `FIXME`.
+-/
+theorem Polynomial.gcd_derivative_associated_divRadical_of_charZero
+    {K : Type*} [Field K] [DecidableEq K] [CharZero K]
+    (p : Polynomial K) :
+    Associated (EuclideanDomain.gcd p (Polynomial.derivative p))
+      (EuclideanDomain.divRadical p) := by
+  induction p using UniqueFactorizationMonoid.induction_on_coprime with
+  | h0 =>
+    rw [Polynomial.derivative_zero, EuclideanDomain.gcd_zero_left,
+      EuclideanDomain.divRadical, UniqueFactorizationMonoid.radical_zero,
+      EuclideanDomain.div_one]
+  | @h1 u hu =>
+    obtain ⟨c, _hc, rfl⟩ := Polynomial.isUnit_iff.mp hu
+    rw [Polynomial.derivative_C, EuclideanDomain.gcd_zero_right,
+      EuclideanDomain.divRadical, UniqueFactorizationMonoid.radical_of_isUnit hu,
+      EuclideanDomain.div_one]
+  | @hpr q k hq =>
+    cases k with
+    | zero =>
+      rw [pow_zero, Polynomial.derivative_one, EuclideanDomain.gcd_zero_right,
+        EuclideanDomain.divRadical, UniqueFactorizationMonoid.radical_one,
+        EuclideanDomain.div_one]
+    | succ k =>
+      have hq_ne : q ≠ 0 := hq.ne_zero
+      have hnorm_q_ne : normalize q ≠ 0 := by rwa [Ne, normalize_eq_zero]
+      -- (a) divRadical (q^(k+1)) is associated to q^k.
+      have hdivR_assoc :
+          Associated (EuclideanDomain.divRadical (q ^ (k + 1))) (q ^ k) := by
+        have hradq :
+            UniqueFactorizationMonoid.radical (q ^ (k + 1)) = normalize q :=
+          UniqueFactorizationMonoid.radical_pow_of_prime hq (Nat.succ_ne_zero _)
+        have heq : normalize q * EuclideanDomain.divRadical (q ^ (k + 1))
+            = q * q ^ k := by
+          have hmd := EuclideanDomain.radical_mul_divRadical (a := q ^ (k + 1))
+          rw [hradq] at hmd
+          rw [hmd, pow_succ, mul_comm]
+        exact Associated.of_mul_left (Associated.of_eq heq)
+          (normalize_associated q) hnorm_q_ne
+      -- (b) gcd q^(k+1) (derivative q^(k+1)) is associated to q^k.
+      have hgcd_assoc : Associated
+          (EuclideanDomain.gcd (q ^ (k + 1)) (Polynomial.derivative (q ^ (k + 1))))
+          (q ^ k) := by
+        set g := EuclideanDomain.gcd (q ^ (k + 1))
+          (Polynomial.derivative (q ^ (k + 1))) with hg_def
+        -- (b.i) q^k ∣ g.
+        have hqk_dvd_g : q ^ k ∣ g := by
+          refine EuclideanDomain.dvd_gcd ?_ ?_
+          · exact pow_dvd_pow q (Nat.le_succ k)
+          · rw [Polynomial.derivative_pow_succ]
+            exact (dvd_mul_left _ _).mul_right _
+        -- (b.ii) g ∣ q^k.
+        have hg_dvd_qk : g ∣ q ^ k := by
+          have hg_dvd_pow : g ∣ q ^ (k + 1) := EuclideanDomain.gcd_dvd_left _ _
+          obtain ⟨m, hm_le, hm_assoc⟩ := (dvd_prime_pow hq (k + 1)).1 hg_dvd_pow
+          have hm_lt : m < k + 1 := by
+            rcases lt_or_eq_of_le hm_le with h | h
+            · exact h
+            · exfalso
+              subst h
+              have hg_dvd_deriv : g ∣ Polynomial.derivative (q ^ (k + 1)) :=
+                EuclideanDomain.gcd_dvd_right _ _
+              have hpow_dvd_deriv : q ^ (k + 1) ∣
+                  Polynomial.derivative (q ^ (k + 1)) :=
+                hm_assoc.symm.dvd.trans hg_dvd_deriv
+              rw [Polynomial.derivative_pow_succ] at hpow_dvd_deriv
+              have hcancel : q ∣ Polynomial.C ((k : K) + 1) *
+                  Polynomial.derivative q := by
+                rw [show q ^ (k + 1) = q ^ k * q from pow_succ q k,
+                  mul_comm (Polynomial.C _) (q ^ k), mul_assoc] at hpow_dvd_deriv
+                exact (mul_dvd_mul_iff_left (pow_ne_zero _ hq_ne)).mp
+                  hpow_dvd_deriv
+              have hk1_ne : ((k : K) + 1) ≠ 0 := by
+                exact_mod_cast Nat.succ_ne_zero k
+              have hC_unit : IsUnit (Polynomial.C ((k : K) + 1)) :=
+                Polynomial.isUnit_C.mpr (isUnit_iff_ne_zero.mpr hk1_ne)
+              have hq_dvd_deriv : q ∣ Polynomial.derivative q :=
+                (IsUnit.dvd_mul_left hC_unit).mp hcancel
+              have hsep : (q : Polynomial K).Separable :=
+                PerfectField.separable_of_irreducible hq.irreducible
+              have hcop : IsCoprime q (Polynomial.derivative q) := hsep
+              exact hq.not_unit (hcop.isUnit_of_dvd' dvd_rfl hq_dvd_deriv)
+          have hm_le_k : m ≤ k := Nat.lt_succ_iff.mp hm_lt
+          exact hm_assoc.dvd.trans (pow_dvd_pow q hm_le_k)
+        exact associated_of_dvd_dvd hg_dvd_qk hqk_dvd_g
+      exact hgcd_assoc.trans hdivR_assoc.symm
+  | @hcp x y hxy ihx ihy =>
+    have hcop : IsCoprime x y := hxy.isCoprime
+    have hdivR_xy :
+        EuclideanDomain.divRadical (x * y) =
+          EuclideanDomain.divRadical x * EuclideanDomain.divRadical y :=
+      EuclideanDomain.divRadical_mul hcop
+    set g := EuclideanDomain.gcd (x * y) (Polynomial.derivative (x * y))
+      with hg_def
+    -- Forward: divRadical (xy) ∣ g (from Mathlib).
+    have hfwd : EuclideanDomain.divRadical (x * y) ∣ g := by
+      refine EuclideanDomain.dvd_gcd ?_ ?_
+      · exact EuclideanDomain.divRadical_dvd_self _
+      · exact divRadical_dvd_derivative _
+    -- Reverse: g ∣ divRadical (xy).
+    have hrev : g ∣ EuclideanDomain.divRadical (x * y) := by
+      rw [hdivR_xy]
+      have hg_dvd_xy : g ∣ x * y := EuclideanDomain.gcd_dvd_left _ _
+      have hg_dvd_prod : g ∣ EuclideanDomain.gcd g x * EuclideanDomain.gcd g y :=
+        dvd_gcd_mul_gcd_of_dvd_mul hg_dvd_xy
+      set gx := EuclideanDomain.gcd g x with hgx_def
+      set gy := EuclideanDomain.gcd g y with hgy_def
+      have hgx_dvd_divR : gx ∣ EuclideanDomain.divRadical x := by
+        have hgx_x : gx ∣ x := EuclideanDomain.gcd_dvd_right _ _
+        have hgx_g : gx ∣ g := EuclideanDomain.gcd_dvd_left _ _
+        have hgx_deriv_xy : gx ∣ Polynomial.derivative (x * y) :=
+          hgx_g.trans (EuclideanDomain.gcd_dvd_right _ _)
+        rw [Polynomial.derivative_mul] at hgx_deriv_xy
+        have hgx_xdy : gx ∣ x * Polynomial.derivative y := hgx_x.mul_right _
+        have hgx_dxy : gx ∣ Polynomial.derivative x * y :=
+          (dvd_add_left hgx_xdy).mp hgx_deriv_xy
+        have hcop_gxy : IsCoprime gx y :=
+          IsCoprime.of_isCoprime_of_dvd_left hcop hgx_x
+        have hgx_dx : gx ∣ Polynomial.derivative x :=
+          hcop_gxy.dvd_of_dvd_mul_right hgx_dxy
+        exact (EuclideanDomain.dvd_gcd hgx_x hgx_dx).trans ihx.dvd
+      have hgy_dvd_divR : gy ∣ EuclideanDomain.divRadical y := by
+        have hgy_y : gy ∣ y := EuclideanDomain.gcd_dvd_right _ _
+        have hgy_g : gy ∣ g := EuclideanDomain.gcd_dvd_left _ _
+        have hgy_deriv_xy : gy ∣ Polynomial.derivative (x * y) :=
+          hgy_g.trans (EuclideanDomain.gcd_dvd_right _ _)
+        rw [Polynomial.derivative_mul] at hgy_deriv_xy
+        have hgy_dxy : gy ∣ Polynomial.derivative x * y := hgy_y.mul_left _
+        have hgy_xdy : gy ∣ x * Polynomial.derivative y :=
+          (dvd_add_right hgy_dxy).mp hgy_deriv_xy
+        have hcop_gyx : IsCoprime gy x :=
+          IsCoprime.of_isCoprime_of_dvd_left hcop.symm hgy_y
+        have hgy_dy : gy ∣ Polynomial.derivative y := by
+          rw [mul_comm] at hgy_xdy
+          exact hcop_gyx.dvd_of_dvd_mul_right hgy_xdy
+        exact (EuclideanDomain.dvd_gcd hgy_y hgy_dy).trans ihy.dvd
+      exact hg_dvd_prod.trans (mul_dvd_mul hgx_dvd_divR hgy_dvd_divR)
+    exact associated_of_dvd_dvd hrev hfwd
 
 end IntReductionMod
 
