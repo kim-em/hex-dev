@@ -1200,6 +1200,106 @@ theorem Polynomial.gcd_derivative_associated_divRadical_of_charZero
       exact hg_dvd_prod.trans (mul_dvd_mul hgx_dvd_divR hgy_dvd_divR)
     exact associated_of_dvd_dvd hrev hfwd
 
+/-! ### Rational repeatedPart-divides-squareFreeCore-power transport (#4675)
+
+Substrate helpers consumed by the integer Gauss descent of #4618 (via
+the sibling #4676). The abstract Polynomial-ℚ structure factoring out of
+the executable rational decomposition: `divRadical` divides a power of
+`radical` (in any UFD), `toPolynomial` of a coefficient-scaled
+`DensePoly` is a constant multiplication, and the char-0 gcd-divRadical
+identity composes with the radical-power inequality to produce
+`R ∣ S ^ N` from associatedness with `gcd(P, P')` and a factorisation
+`P ~ S * R`.
+
+The specialisation to `(normalizeForFactor f).{repeatedPart, squareFreeCore}`
+remains in a successor sub-issue. -/
+
+/--
+Local UFD helper: in a Euclidean-domain UFD with a normalization monoid,
+the `divRadical` of a nonzero element divides some power of its
+`radical`.
+
+Proof: `exists_squarefree_dvd_pow_of_ne_zero` provides a squarefree `y`
+with `y ∣ a` and `a ∣ y ^ n`. Squarefree elements are radical, so
+`y ∣ radical y`, and `y ∣ a` lifts to `radical y ∣ radical a`; hence
+`y ∣ radical a` and `y ^ n ∣ (radical a) ^ n`. Transitivity through
+`divRadical_dvd_self` gives `divRadical a ∣ (radical a) ^ n`.
+-/
+private theorem divRadical_dvd_radical_pow_of_ne_zero
+    {E : Type*} [EuclideanDomain E] [NormalizationMonoid E]
+    [UniqueFactorizationMonoid E] {a : E} (ha : a ≠ 0) :
+    ∃ N : Nat, EuclideanDomain.divRadical a ∣
+      (UniqueFactorizationMonoid.radical a) ^ N := by
+  obtain ⟨y, n, hy_sf, hy_dvd, ha_dvd⟩ :=
+    exists_squarefree_dvd_pow_of_ne_zero ha
+  refine ⟨n, ?_⟩
+  have hy_ne : y ≠ 0 := hy_sf.ne_zero
+  have hy_dvd_rad : y ∣ UniqueFactorizationMonoid.radical y :=
+    hy_sf.isRadical.dvd_radical hy_ne
+  have hrad_dvd_rad :
+      UniqueFactorizationMonoid.radical y ∣
+        UniqueFactorizationMonoid.radical a :=
+    UniqueFactorizationMonoid.radical_dvd_radical hy_dvd ha
+  have hy_dvd_rad_a : y ∣ UniqueFactorizationMonoid.radical a :=
+    hy_dvd_rad.trans hrad_dvd_rad
+  have hyn_dvd :
+      y ^ n ∣ (UniqueFactorizationMonoid.radical a) ^ n :=
+    pow_dvd_pow_of_dvd hy_dvd_rad_a n
+  exact (EuclideanDomain.divRadical_dvd_self a).trans
+    (ha_dvd.trans hyn_dvd)
+
+/--
+`HexPolyMathlib.toPolynomial` intertwines coefficient scaling with Mathlib's
+constant-multiplication, for any semiring base. This is the rational analogue
+of the integer-side `Hex.ZPoly.C_mul_eq_scale` used to lift the executable
+`DensePoly.scale` to a `Polynomial.C` multiplication, without needing a
+`GcdMonoid` or `Semiring` instance beyond what `toPolynomial` already requires.
+-/
+private theorem toPolynomial_scale {R : Type*} [CommSemiring R] [DecidableEq R]
+    (c : R) (p : Hex.DensePoly R) :
+    HexPolyMathlib.toPolynomial (Hex.DensePoly.scale c p) =
+      Polynomial.C c * HexPolyMathlib.toPolynomial p := by
+  ext n
+  rw [HexPolyMathlib.coeff_toPolynomial,
+    Hex.DensePoly.coeff_scale c p n (mul_zero c),
+    Polynomial.coeff_C_mul, HexPolyMathlib.coeff_toPolynomial]
+
+/--
+The abstract divisibility step for #4675: given a nonzero `Polynomial K`
+(with `K` a characteristic-zero field) decomposed as `P ~ S * R` where
+`R` is associated to the executable gcd `gcd P P'`, the polynomial `R`
+divides some power of `S`.
+
+This packages the char-0 gcd-divRadical identity together with the UFD
+helper `divRadical_dvd_radical_pow_of_ne_zero` and the `Associated.of_mul_right`
+cancellation step.
+-/
+private theorem rp_dvd_sf_pow_of_associated
+    {K : Type*} [Field K] [DecidableEq K] [CharZero K]
+    {P R S : Polynomial K} (hP : P ≠ 0)
+    (hR_gcd : Associated R
+      (EuclideanDomain.gcd P (Polynomial.derivative P)))
+    (hP_eq : Associated P (S * R)) :
+    ∃ N : Nat, R ∣ S ^ N := by
+  have hR_divR : Associated R (EuclideanDomain.divRadical P) :=
+    hR_gcd.trans (Polynomial.gcd_derivative_associated_divRadical_of_charZero P)
+  obtain ⟨N, hdivR_pow⟩ := divRadical_dvd_radical_pow_of_ne_zero hP
+  have h1 : Associated P (S * EuclideanDomain.divRadical P) :=
+    hP_eq.trans (Associated.mul_left S hR_divR)
+  have h2 : Associated (UniqueFactorizationMonoid.radical P *
+      EuclideanDomain.divRadical P) (S * EuclideanDomain.divRadical P) := by
+    have hrad : UniqueFactorizationMonoid.radical P *
+        EuclideanDomain.divRadical P = P :=
+      EuclideanDomain.radical_mul_divRadical
+    rw [hrad]; exact h1
+  have hdivR_ne : EuclideanDomain.divRadical P ≠ 0 :=
+    EuclideanDomain.divRadical_ne_zero hP
+  have hS_rad : Associated (UniqueFactorizationMonoid.radical P) S :=
+    Associated.of_mul_right h2 Associated.rfl hdivR_ne
+  refine ⟨N, ?_⟩
+  exact hR_divR.dvd.trans (hdivR_pow.trans (pow_dvd_pow_of_dvd hS_rad.dvd N))
+
+
 end IntReductionMod
 
 /-- **#4549 substrate (HO-1), outer-bound specialisation, rewired for #4553.**
