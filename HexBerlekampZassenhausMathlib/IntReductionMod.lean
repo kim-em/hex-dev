@@ -957,6 +957,36 @@ theorem choosePrimeData?_leadingCoeff_castRingHom_ne_zero
     leadingCoeff_castRingHom_ne_zero_of_isGoodPrime f
       (Hex.choosePrimeData?_isGoodPrime f primeData hselected)
 
+/--
+Reverse bridge from Mathlib's `Polynomial.IsPrimitive` on the transported
+polynomial to the executable `Hex.ZPoly.Primitive` predicate.
+
+Apply `IsPrimitive` at the constant polynomial `C (content f)` (which divides
+`toPolynomial f` because `content f` divides every integer coefficient), to
+conclude `IsUnit (content f)` in `ℤ`. Combined with the non-negativity of
+`Hex.ZPoly.content` (it is `Int.ofNat` of `DensePoly.contentNat`), this forces
+`content f = 1`.
+-/
+theorem zpoly_primitive_of_toPolynomial_isPrimitive
+    {f : Hex.ZPoly}
+    (hprim : (HexPolyZMathlib.toPolynomial f).IsPrimitive) :
+    Hex.ZPoly.Primitive f := by
+  show Hex.ZPoly.content f = 1
+  have hC_dvd :
+      Polynomial.C (Hex.ZPoly.content f) ∣ HexPolyZMathlib.toPolynomial f := by
+    rw [Polynomial.C_dvd_iff_dvd_coeff]
+    intro n
+    rw [HexPolyZMathlib.coeff_toPolynomial]
+    exact Hex.ZPoly.content_dvd_coeff f n
+  have hIsUnit : IsUnit (Hex.ZPoly.content f) := hprim _ hC_dvd
+  have hcontent_nonneg : 0 ≤ Hex.ZPoly.content f := by
+    show 0 ≤ Hex.DensePoly.content f
+    unfold Hex.DensePoly.content
+    exact Int.natCast_nonneg _
+  rcases Int.isUnit_iff.mp hIsUnit with hone | hneg
+  · exact hone
+  · rw [hneg] at hcontent_nonneg; omega
+
 end IntReductionMod
 
 /-- **#4549 substrate (HO-1), outer-bound specialisation, rewired for #4553.**
@@ -1166,5 +1196,78 @@ theorem factor_constant_branch_entry_irreducible_of_choosePrimeData
     rw [hentry_one] at hrecord
     unfold Hex.shouldRecordPolynomialFactor at hrecord
     simp at hrecord
+
+/-- **#4571 HO-1 substrate — fast-path quadratic arm umbrella.**
+
+Per-branch HO-1 component for the fast-path quadratic integer-root arm of the
+capstone `factor_irreducible_of_nonUnit` (#4170): every entry recorded by
+`Hex.factorWithBound f B` in this fast-path branch is `Hex.ZPoly.Irreducible`,
+given `f ≠ 0`, `1 < B`, the branch marker hypotheses (`hdeg`, `hquad`), and
+the reassembly expansion-complete side condition.
+
+Composes:
+* `Hex.factorWithBound_entry_mem_quadratic_branch_raw` — the Mathlib-free
+  branch-shape lemma identifying each recorded entry as the
+  sign-normalisation of a raw factor in the quadratic-branch reassembly;
+* `Hex.quadraticIntegerRootFactors?_factor_irreducible_of_primitive` — the
+  Mathlib-free executable irreducibility of every coreFactor, residual or
+  not, under primitivity;
+* `IntReductionMod.zpoly_primitive_of_toPolynomial_isPrimitive` +
+  `IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive`
+  (from #4545) — the primitivity bridge for the squarefree core;
+* `Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero` — the positive-leading-
+  coefficient invariant for the squarefree core;
+* `Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible`
+  — the Mathlib-free reassembly lift turning per-core-factor irreducibility
+  into raw factor irreducibility under the `hcomplete` side condition;
+* `zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible` — the
+  sign-normalisation lift from raw factor irreducibility to entry
+  irreducibility.
+
+The slow-path exhaustive arm (#4561), the fast-path constant arm
+(#4565 / #4572, landed), the small-mod singleton arm (#4562 / #4564, landed),
+and the fast BHKS arm (gated on #2567) are separate concerns and out of scope
+here. -/
+theorem factor_quadratic_branch_entry_irreducible_of_quadraticRoots
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
+    (B : Nat) (hB_gt_one : 1 < B)
+    (entry : Hex.ZPoly × Nat)
+    (hdeg :
+      (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    {coreFactors : Array Hex.ZPoly}
+    (hquad :
+      Hex.quadraticIntegerRootFactors?
+        (Hex.normalizeForFactor f).squareFreeCore = some coreFactors)
+    (hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList)
+    (hcomplete :
+      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f) coreFactors) :
+    Hex.ZPoly.Irreducible entry.1 := by
+  -- Branch-shape lemma: entry = normalizeFactorSign raw for raw ∈ reassembly.
+  obtain ⟨raw, hraw_mem, hentry_eq⟩ :=
+    Hex.factorWithBound_entry_mem_quadratic_branch_raw f B entry hB_gt_one hdeg
+      hquad hentry_mem
+  -- Primitivity of squareFreeCore via the Mathlib bridge.
+  have hcore_primitive :
+      Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore :=
+    IntReductionMod.zpoly_primitive_of_toPolynomial_isPrimitive
+      (IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive
+        f hf_ne)
+  have hcore_pos :
+      0 < Hex.DensePoly.leadingCoeff
+        (Hex.normalizeForFactor f).squareFreeCore :=
+    Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf_ne
+  -- Every coreFactor is irreducible.
+  have hcore_factors_irr :
+      ∀ cf ∈ coreFactors.toList, Hex.ZPoly.Irreducible cf := fun cf hcf_mem =>
+    Hex.quadraticIntegerRootFactors?_factor_irreducible_of_primitive
+      hcore_pos hcore_primitive hquad hcf_mem
+  -- Reassembly lift: every raw factor is irreducible when reassembly is
+  -- expansion-complete and every core factor is irreducible.
+  have hraw_irr : Hex.ZPoly.Irreducible raw :=
+    Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
+      (Hex.normalizeForFactor f) coreFactors hcomplete hcore_factors_irr hraw_mem
+  -- Sign-normalisation lifts to entry irreducibility.
+  rw [hentry_eq]
+  exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hraw_irr
 
 end HexBerlekampZassenhausMathlib

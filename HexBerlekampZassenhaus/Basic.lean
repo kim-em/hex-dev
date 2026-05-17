@@ -7762,7 +7762,12 @@ constants dividing every coefficient of the primitive core); hence the
 residual, when emitted, has size two and is irreducible by the
 `irreducible_of_size_two_primitive` companion of `_monic`, applied to the
 residual's own primitivity inherited from the product `split.2 *
-polyProduct split.1 = core`. -/
+polyProduct split.1 = core`.
+
+This helper exists for `_factor_irreducible_of_primitive` (the public
+combined wrapper); consumers outside this file should prefer the wrapper
+because its signature avoids referencing the file-`private`
+`splitIntegerRootFactorsAux` and `integerRootCandidates`. -/
 private theorem quadraticIntegerRootFactors?_residual_irreducible
     {core : ZPoly} {factors : Array ZPoly}
     (hcore_pos : 0 < DensePoly.leadingCoeff core)
@@ -7977,6 +7982,36 @@ private theorem quadraticIntegerRootFactors?_residual_irreducible
                   (hab.trans (DensePoly.mul_comm_poly a b))
         · simp [roots, split, hres_deg] at hquad
   · simp [hdeg] at hquad
+
+/-- Every factor emitted by the quadratic integer-root branch is irreducible
+when the core is primitive with positive leading coefficient. Non-residual
+factors come from the integer-root splitter (linear, hence irreducible);
+the optional final residual is also irreducible because primitivity rules
+out degree-`0` residuals (non-unit constants would divide every coefficient
+of the primitive core) and the function's degree filter restricts residuals
+to size two, where the `irreducible_of_size_two_primitive` companion of
+`_monic` applies via the constant-factor argument on `core`.
+
+This is the public wrapper consumed by Mathlib-bridge consumers: its
+signature avoids referencing the file-`private` `splitIntegerRootFactorsAux`
+and `integerRootCandidates` (the residual is identified internally via
+case analysis). -/
+theorem quadraticIntegerRootFactors?_factor_irreducible_of_primitive
+    {core : ZPoly} {factors : Array ZPoly}
+    (hcore_pos : 0 < DensePoly.leadingCoeff core)
+    (hcore_primitive : ZPoly.Primitive core)
+    (hquad : quadraticIntegerRootFactors? core = some factors)
+    {factor : ZPoly}
+    (hmem : factor ∈ factors.toList) :
+    ZPoly.Irreducible factor := by
+  by_cases hres :
+      factor =
+        (splitIntegerRootFactorsAux core (integerRootCandidates core)
+          (integerRootCandidates core).length).2
+  · exact quadraticIntegerRootFactors?_residual_irreducible
+      hcore_pos hcore_primitive hquad hmem hres
+  · exact quadraticIntegerRootFactors?_factor_irreducible_of_ne_residual
+      hquad hmem hres
 
 /-- Membership classifier for a reassembled quadratic-root branch. A raw factor
 is either one of the already-proved irreducible normalization/root factors, the
@@ -8352,7 +8387,7 @@ private theorem squareFreeCore_ne_zero_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
   rw [hzero]
   exact DensePoly.zero_mul _
 
-private theorem squareFreeCore_leadingCoeff_pos_of_ne_zero
+theorem squareFreeCore_leadingCoeff_pos_of_ne_zero
     (f : ZPoly) (hf : f ≠ 0) :
     0 < DensePoly.leadingCoeff (normalizeForFactor f).squareFreeCore := by
   have hne := squareFreeCore_ne_zero_of_ne_zero f hf
