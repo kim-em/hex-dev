@@ -2787,6 +2787,26 @@ private theorem size_le_one_of_toRatPoly_derivative_zero (p : ZPoly)
   have hrat := rat_size_le_one_of_derivative_zero (toRatPoly p) hderivative
   simpa [size_toRatPoly p] using hrat
 
+private theorem rat_derivative_size_le_pred (p : DensePoly Rat) :
+    (DensePoly.derivative p).size ≤ p.size - 1 := by
+  unfold DensePoly.derivative
+  have hle := DensePoly.size_ofCoeffs_le
+    ((List.range (p.size - 1)).map
+      (fun i => ((i + 1 : Nat) : Rat) * p.coeff (i + 1))).toArray
+  have hlen :
+      ((List.range (p.size - 1)).map
+        (fun i => ((i + 1 : Nat) : Rat) * p.coeff (i + 1))).toArray.size =
+      p.size - 1 := by
+    simp
+  omega
+
+private theorem rat_derivative_zero_of_size_le_one (p : DensePoly Rat)
+    (hp : p.size ≤ 1) :
+    DensePoly.derivative p = 0 := by
+  have hle := rat_derivative_size_le_pred p
+  apply rat_eq_zero_of_size_zero
+  omega
+
 private theorem densePoly_eq_C_coeff_zero_of_size_le_one {R : Type _} [Zero R] [DecidableEq R]
     (p : DensePoly R) (hsize : p.size ≤ 1) :
     p = DensePoly.C (p.coeff 0) := by
@@ -3216,6 +3236,106 @@ theorem primitiveSquareFreeDecomposition_squareFreeCore_eq_one_of_degree_zero
         normalizePrimitiveSign_eq_self_of_leadingCoeff_nonneg core hlead_nonneg
       rw [hself] at hnormalized
       simpa [core] using hnormalized
+
+/-- Companion to `primitiveSquareFreeDecomposition_squareFreeCore_eq_one_of_degree_zero`:
+when the recorded square-free core has degree zero (and is nonzero), the recorded
+`repeatedPart` collapses to `1`. The derivative-zero branch settles the goal by the
+literal `repeatedPart := 1` field, while the derivative-nonzero branch is ruled out
+via the gcd-derivative degree arithmetic (`derivative.size ≤ ratPrimitive.size - 1`
+combined with the quotient being a rational unit). -/
+theorem primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeCore_degree_zero
+    (f : ZPoly)
+    (hcore_ne : (primitiveSquareFreeDecomposition f).squareFreeCore ≠ 0)
+    (hdegree : (primitiveSquareFreeDecomposition f).squareFreeCore.degree?.getD 0 = 0) :
+    (primitiveSquareFreeDecomposition f).repeatedPart = 1 := by
+  unfold primitiveSquareFreeDecomposition at hcore_ne hdegree ⊢
+  by_cases hzero : (primitivePart f).isZero = true
+  · simp [hzero] at hcore_ne
+  · simp [hzero] at hcore_ne hdegree ⊢
+    let p := primitivePart f
+    let ratPrimitive := toRatPoly p
+    let derivative := DensePoly.derivative ratPrimitive
+    by_cases hderivative : derivative.isZero = true
+    · -- Case 2: `repeatedPart := 1` by definition.
+      rw [if_pos hderivative]
+    · -- Case 3: rule out via gcd-derivative degree arithmetic.
+      exfalso
+      rw [if_neg hderivative] at hcore_ne hdegree
+      let repeatedRat := DensePoly.gcd ratPrimitive derivative
+      let quotientRat := ratPrimitive / repeatedRat
+      let core := ratPolyPrimitivePart quotientRat
+      -- `core.size ≤ 1` from `hdegree` (matching the `_squareFreeCore` analogue).
+      have hcore_size : core.size ≤ 1 :=
+        size_le_one_of_degree_getD_zero core (by simpa [core] using hdegree)
+      have hcore_ne' : core ≠ 0 := by simpa [core] using hcore_ne
+      have hcore_prim : Primitive core :=
+        ratPolyPrimitivePart_primitive quotientRat
+          (content_ne_zero_of_ne_zero core hcore_ne')
+      have hcore_lead_nonneg : 0 ≤ DensePoly.leadingCoeff core :=
+        leadingCoeff_ratPolyPrimitivePart_nonneg quotientRat
+      have hcore_normalize : normalizePrimitiveSign core = 1 :=
+        normalizePrimitiveSign_eq_one_of_primitive_size_le_one core hcore_prim hcore_size
+      have hcore_self : normalizePrimitiveSign core = core :=
+        normalizePrimitiveSign_eq_self_of_leadingCoeff_nonneg core hcore_lead_nonneg
+      have hcore_eq_one : core = 1 := hcore_self ▸ hcore_normalize
+      -- `primitivePart f ≠ 0` (since `(primitivePart f).isZero ≠ true`).
+      have hp_ne : primitivePart f ≠ 0 := by
+        intro h
+        apply hzero
+        rw [h]
+        rfl
+      have hratPrim_ne : ratPrimitive ≠ 0 :=
+        toRatPoly_ne_zero_of_ne_zero (primitivePart f) hp_ne
+      have hratPrim_size_ne : ratPrimitive.size ≠ 0 := by
+        intro h
+        exact hratPrim_ne (rat_eq_zero_of_size_zero ratPrimitive h)
+      -- `derivative ≠ 0` from `hderivative`.
+      have hder_ne : derivative ≠ 0 := by
+        intro h
+        apply hderivative
+        change derivative.isZero = true
+        rw [h]
+        rfl
+      have hder_size_ne : derivative.size ≠ 0 := by
+        intro h
+        exact hder_ne (rat_eq_zero_of_size_zero derivative h)
+      -- `ratPrimitive.size ≥ 2` (converse of `rat_size_le_one_of_derivative_zero`).
+      have hratPrim_size_ge_two : 2 ≤ ratPrimitive.size := by
+        by_cases hle : 2 ≤ ratPrimitive.size
+        · exact hle
+        · have hlt : ratPrimitive.size < 2 := Nat.lt_of_not_ge hle
+          exact absurd
+            (rat_derivative_zero_of_size_le_one ratPrimitive (by omega)) hder_ne
+      -- `core = 1` + `rational_associate` ⇒ `quotientRat = scale u 1` for some `u : Rat`.
+      rcases ratPolyPrimitivePart_rational_associate quotientRat with ⟨u, hu⟩
+      change quotientRat = DensePoly.scale u (toRatPoly core) at hu
+      rw [show core = 1 from hcore_eq_one, toRatPoly_one] at hu
+      -- `ratPrimitive = quotientRat * repeatedRat` (reconstruction).
+      have hreconstruct : quotientRat * repeatedRat = ratPrimitive :=
+        rat_div_gcd_mul_reconstruct ratPrimitive derivative
+      by_cases hu_zero : u = 0
+      · -- `u = 0` ⇒ `quotientRat = 0` ⇒ `ratPrimitive = 0`, contradicting `hratPrim_ne`.
+        apply hratPrim_ne
+        rw [← hreconstruct, hu, hu_zero, rat_scale_zero, DensePoly.zero_mul]
+      · -- `u ≠ 0`: `ratPrimitive = scale u repeatedRat`, so the sizes agree.
+        have hratPrim_eq_scale : ratPrimitive = DensePoly.scale u repeatedRat := by
+          rw [← hreconstruct, hu]
+          have hmul := rat_scale_mul_scale u 1 1 repeatedRat
+          rw [rat_scale_one, Rat.mul_one,
+            DensePoly.mul_comm_poly (1 : DensePoly Rat) repeatedRat,
+            DensePoly.mul_one_right_poly] at hmul
+          exact hmul
+        have hsize_eq : ratPrimitive.size = repeatedRat.size := by
+          rw [hratPrim_eq_scale]
+          exact rat_scale_size_of_ne_zero hu_zero repeatedRat
+        have hrep_size_ne : repeatedRat.size ≠ 0 := hsize_eq ▸ hratPrim_size_ne
+        have hrep_dvd_der : repeatedRat ∣ derivative :=
+          DensePoly.gcd_dvd_right ratPrimitive derivative
+        have hrep_le_der : repeatedRat.size ≤ derivative.size :=
+          rat_size_le_of_dvd_nonzero hrep_size_ne hder_size_ne hrep_dvd_der
+        have hder_le_pred : derivative.size ≤ ratPrimitive.size - 1 :=
+          rat_derivative_size_le_pred ratPrimitive
+        omega
 
 theorem leadingCoeff_squareFreeCore_nonneg (f : ZPoly) :
     0 ≤ DensePoly.leadingCoeff (primitiveSquareFreeDecomposition f).squareFreeCore := by

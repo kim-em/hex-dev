@@ -8461,6 +8461,46 @@ theorem squareFreeCore_eq_one_of_constant_of_ne_zero
         simpa using squareFreeCore_ne_zero_of_ne_zero f hf)
       hdeg
 
+/-- Companion to `squareFreeCore_eq_one_of_constant_of_ne_zero`: the recorded
+`repeatedPart` collapses to `1` in the constant branch. -/
+private theorem normalizeForFactor_repeatedPart_eq_one_of_constant
+    (f : ZPoly) (hf : f ≠ 0)
+    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0) :
+    (normalizeForFactor f).repeatedPart = 1 := by
+  unfold normalizeForFactor at hdeg ⊢
+  simpa using
+    ZPoly.primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeCore_degree_zero
+      (ZPoly.extractXPower (ZPoly.primitivePart f)).core
+      (by
+        simpa using squareFreeCore_ne_zero_of_ne_zero f hf)
+      hdeg
+
+/-- **#4585 HO-1 substrate — fast-path constant arm `reassemblyExpansionComplete`
+discharger.** When the recorded square-free core has degree zero (and `f ≠ 0`),
+the singleton-core reassembly is automatically expansion-complete: the
+square-free core collapses to `1` via
+`squareFreeCore_eq_one_of_constant_of_ne_zero`, the singleton-`1` expansion is
+the identity via `expandRepeatedPartFactorArray_singleton_one`, and the residual
+`(normalizeForFactor f).repeatedPart` is forced to `1` by
+`normalizeForFactor_repeatedPart_eq_one_of_constant` (the constant-branch
+specialisation of
+`ZPoly.primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeCore_degree_zero`).
+Consumed by the fast-path constant arm umbrella
+`factor_constant_branch_entry_irreducible_of_choosePrimeData` (#4565) so it can
+drop its explicit `hcomplete` hypothesis. The small-mod singleton (#4564),
+slow-quadratic (#4575), and fast-quadratic (#4571) `hcomplete` dischargers are
+siblings tracked separately. -/
+theorem reassemblyExpansionComplete_constant_of_ne_zero
+    (f : ZPoly) (hf : f ≠ 0)
+    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0) :
+    reassemblyExpansionComplete (normalizeForFactor f)
+      #[(normalizeForFactor f).squareFreeCore] := by
+  have hcore_one := squareFreeCore_eq_one_of_constant_of_ne_zero f hf hdeg
+  have hrep_one := normalizeForFactor_repeatedPart_eq_one_of_constant f hf hdeg
+  unfold reassemblyExpansionComplete
+  rw [hcore_one, expandRepeatedPartFactorArray_singleton_one]
+  exact hrep_one
+
 private theorem squareFreeCore_normalizeFactorSign_of_ne_zero
     (f : ZPoly) (hf : f ≠ 0) :
     normalizeFactorSign (normalizeForFactor f).squareFreeCore =
