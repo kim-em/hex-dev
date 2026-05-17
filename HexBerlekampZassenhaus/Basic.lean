@@ -3308,7 +3308,10 @@ theorem exactQuotient?_eq_some_of_divMod_eq_of_shouldRecord
 private def positiveDivisors (n : Nat) : List Nat :=
   (List.range (n + 1)).filter fun d => d != 0 && n % d == 0
 
-private def integerRootCandidates (f : ZPoly) : List Int :=
+/-- Candidates for integer roots of `f`: positive divisors of the constant
+coefficient together with their negatives. Used by the integer-root splitter
+in the quadratic core branch. -/
+def integerRootCandidates (f : ZPoly) : List Int :=
   (positiveDivisors (f.coeff 0).natAbs).flatMap fun d =>
     let r : Int := Int.ofNat d
     [r, -r]
@@ -3363,7 +3366,10 @@ private theorem shouldRecordPolynomialFactor_linearFactorForRoot (r : Int) :
   simp [linearFactorForRoot_ne_zero, linearFactorForRoot_ne_one,
     linearFactorForRoot_ne_C_neg_one]
 
-private def splitIntegerRootFactorsAux :
+/-- Greedy integer-root splitter: divides `target` repeatedly by `linearFactorForRoot r`
+for each `r : Int` in `roots` for which the division is exact, accumulating the
+linear factors and returning the final residual as the second component of the pair. -/
+def splitIntegerRootFactorsAux :
     ZPoly → List Int → Nat → Array ZPoly × ZPoly
   | target, _roots, 0 => (#[], target)
   | target, [], _fuel + 1 => (#[], target)
@@ -7352,7 +7358,9 @@ private theorem polyProduct_push (factors : Array ZPoly) (factor : ZPoly) :
       | cons x xs ih =>
           simp [Array.polyProduct, List.foldl_cons] at ih ⊢
 
-private theorem splitIntegerRootFactorsAux_product
+/-- Product identity for the integer-root splitter: the recorded linear
+factors multiplied by the final residual recover the original `target`. -/
+theorem splitIntegerRootFactorsAux_product
     (target : ZPoly) (roots : List Int) (fuel : Nat) :
     ∀ factors residual,
       splitIntegerRootFactorsAux target roots fuel = (factors, residual) →
@@ -7555,7 +7563,10 @@ theorem splitIntegerRootFactorsAux_factor_irreducible
   splitIntegerRootFactorsAux_irreducible target roots fuel factors residual
     hsplit factor hmem
 
-private theorem splitIntegerRootFactorsAux_polyProduct_leadingCoeff_pos
+/-- The product of the linear factors recorded by the integer-root splitter
+has positive leading coefficient (a product of monic linear factors is
+monic with leading coefficient `1`). -/
+theorem splitIntegerRootFactorsAux_polyProduct_leadingCoeff_pos
     (target : ZPoly) (roots : List Int) (fuel : Nat) :
     ∀ factors residual,
       splitIntegerRootFactorsAux target roots fuel = (factors, residual) →
