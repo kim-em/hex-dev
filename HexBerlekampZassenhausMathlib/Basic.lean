@@ -3516,8 +3516,9 @@ def recombinationCandidate (d : Hex.LiftData) (S : LiftedFactorSubset d) :
 selected lifted-factor product, primitivised and sign-normalised.
 
 For monic `core`, `scaledLiftedFactorProduct = liftedFactorProduct`, so the
-scaled candidate definitionally agrees with `recombinationCandidate`. For
-primitive non-monic `core` they diverge: `scaledLiftedFactorProduct ≡ factor`
+scaled candidate agrees with `recombinationCandidate` through the existing
+monic scaling and product-transport lemmas. For primitive non-monic `core` they
+diverge: `scaledLiftedFactorProduct ≡ factor`
 modulo `d.p ^ d.k` (the invariant supplied by
 `RepresentsIntegerFactorAtLift`), whereas the unscaled `liftedFactorProduct`
 is `scale (lc(core)⁻¹) · scaledLiftedFactorProduct` and need not normalise
