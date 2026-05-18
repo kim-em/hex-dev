@@ -5594,7 +5594,7 @@ theorem factorsModP_polyProduct_congr_of_factorsModPBerlekampForm
   have hcongr_mon :=
     factorsModP_polyProduct_congr_of_factorsModPBerlekampForm_of_primitive_pos_lc_core
       core primeData
-      (monic_primitive_sign_normalized_of_monic hcore_monic).2.1
+      (zpoly_primitive_of_monic hcore_monic)
       (hcore_monic ▸ (by decide : (0 : Int) < 1))
       ⟨hprime, hzero, hfield, heq⟩ hgood
   rw [hmonicImage_eq] at hcongr_mon
