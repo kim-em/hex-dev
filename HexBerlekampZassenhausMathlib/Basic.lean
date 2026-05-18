@@ -9056,6 +9056,44 @@ theorem exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_some
   simp [Hex.exhaustiveCoreFactorsWithBound, hB, hscaled, hnot_empty, hmem]
 
 /--
+Scaled-candidate counterpart of
+`exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_some`.
+
+`Hex.exhaustiveCoreFactorsWithBound` calls the scaled recombination
+`recombineScaledExhaustive` at `coreLc = Hex.DensePoly.leadingCoeff core`, so
+coverage proofs that reach a successful scaled search return a membership
+statement in the public wrapper directly through this bridge — no
+`Monic core` hypothesis and no unfolding of `exhaustiveCoreFactorsWithBound`
+needed at the call site.
+-/
+theorem exhaustiveCoreFactorsWithBound_mem_of_scaledRecombinationSearchMod_some
+    {core factor : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData} {factors : List Hex.ZPoly}
+    (hB : B ≠ 0)
+    (hd :
+      d =
+        Hex.henselLiftData core (Hex.precisionForCoeffBound B primeData.p)
+          primeData)
+    (hsearch :
+      Hex.scaledRecombinationSearchMod (Hex.DensePoly.leadingCoeff core)
+          core (d.p ^ d.k) d.liftedFactors.toList =
+        some factors)
+    (hmem : factor ∈ factors) :
+    factor ∈ (Hex.exhaustiveCoreFactorsWithBound core B primeData).toList := by
+  subst d
+  have hrecombine :
+      Hex.recombineScaledExhaustive (Hex.DensePoly.leadingCoeff core) core
+          (Hex.henselLiftData core (Hex.precisionForCoeffBound B primeData.p)
+            primeData) =
+        factors.toArray :=
+    Hex.recombineScaledExhaustive_eq_of_scaledRecombinationSearchMod_some hsearch
+  have hnot_empty : factors.toArray.isEmpty = false := by
+    cases factors with
+    | nil => simp at hmem
+    | cons head tail => simp
+  simp [Hex.exhaustiveCoreFactorsWithBound, hB, hrecombine, hnot_empty, hmem]
+
+/--
 Public-wrapper membership bridge for a first successful fixed-lift split.
 
 This composes the proof-facing first-success witness with
