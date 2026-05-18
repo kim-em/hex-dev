@@ -8353,21 +8353,6 @@ theorem representsIntegerFactorAtLift_primitive
     refine ⟨u * v, ?_⟩
     rw [hv, hu]
     exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
-  have hcore_size_pos : 0 < core.size := by
-    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
-    · exfalso
-      have hback_none : core.coeffs.back? = none := by
-        rw [Array.back?_eq_getElem?]
-        have hcoeffs_size : core.coeffs.size = 0 := by
-          simpa [Hex.DensePoly.size] using hzero
-        simp [hcoeffs_size]
-      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
-        unfold Hex.DensePoly.leadingCoeff
-        rw [hback_none]
-        rfl
-      rw [hlc_zero] at hcore_lc_pos
-      omega
-    · exact hpos
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact representsIntegerFactorAtLift_primitive_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
@@ -11047,21 +11032,6 @@ private theorem zpoly_primitive_scaledRecombinationCandidate
     (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
     (T : LiftedFactorSubset d) :
     Hex.ZPoly.Primitive (scaledRecombinationCandidate core d T) := by
-  have hcore_size_pos : 0 < core.size := by
-    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
-    · exfalso
-      have hback_none : core.coeffs.back? = none := by
-        rw [Array.back?_eq_getElem?]
-        have hcoeffs_size : core.coeffs.size = 0 := by
-          simpa [Hex.DensePoly.size] using hzero
-        simp [hcoeffs_size]
-      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
-        unfold Hex.DensePoly.leadingCoeff
-        rw [hback_none]
-        rfl
-      rw [hlc_zero] at hcore_lc_pos
-      omega
-    · exact hpos
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact zpoly_primitive_scaledRecombinationCandidate_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core) hcore_lc_le
@@ -11249,21 +11219,6 @@ theorem exists_representingSubset_of_mem_normalizedFactors_scaledRecombinationCa
       S_g ⊆ T ∧
       Hex.ZPoly.content g = 1 ∧
       Hex.normalizeFactorSign g = g := by
-  have hcore_size_pos : 0 < core.size := by
-    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
-    · exfalso
-      have hback_none : core.coeffs.back? = none := by
-        rw [Array.back?_eq_getElem?]
-        have hcoeffs_size : core.coeffs.size = 0 := by
-          simpa [Hex.DensePoly.size] using hzero
-        simp [hcoeffs_size]
-      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
-        unfold Hex.DensePoly.leadingCoeff
-        rw [hback_none]
-        rfl
-      rw [hlc_zero] at hcore_lc_pos
-      omega
-    · exact hpos
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   have hcand_dvd_target :
       scaledRecombinationCandidate core d T ∣ target := by
@@ -12158,23 +12113,6 @@ theorem coverAtMin_representingSubset_subset_of_scaledRecombinationCandidate_dvd
       S ⊆ J ∧ J.min' hne ∈ S ∧
       RepresentsIntegerFactorAtLift core d f S ∧
       S ⊆ T := by
-  have hcore_size_pos : 0 < core.size := by
-    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
-    · exfalso
-      have hback_none : core.coeffs.back? = none := by
-        rw [Array.back?_eq_getElem?]
-        have hcoeffs_size : core.coeffs.size = 0 := by
-          simpa [Hex.DensePoly.size] using hzero
-        simp [hcoeffs_size]
-      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
-        unfold Hex.DensePoly.leadingCoeff
-        rw [hback_none]
-        rfl
-      rw [hlc_zero] at hcore_lc_pos
-      omega
-    · exact hpos
-  have hcore_dvd_self : core ∣ core :=
-    ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   have hcand_dvd_target :
       scaledRecombinationCandidate core d T ∣ target := by
@@ -13138,23 +13076,6 @@ theorem liftedFactorSubsetPartition_prefix_none_of_primitive_pos_lc_core_scaled
             | none => none
             | some r => some (candidate' :: r)
       else none) = none := by
-  have hcore_size_pos : 0 < core.size := by
-    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
-    · exfalso
-      have hback_none : core.coeffs.back? = none := by
-        rw [Array.back?_eq_getElem?]
-        have hcoeffs_size : core.coeffs.size = 0 := by
-          simpa [Hex.DensePoly.size] using hzero
-        simp [hcoeffs_size]
-      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
-        unfold Hex.DensePoly.leadingCoeff
-        rw [hback_none]
-        rfl
-      rw [hlc_zero] at hcore_lc_pos
-      omega
-    · exact hpos
-  have hcore_dvd_self : core ∣ core :=
-    ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact liftedFactorSubsetPartition_prefix_none_of_primitive_pos_lc_core_scaled_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
@@ -14326,23 +14247,6 @@ private theorem scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorS
               (HexPolyZMathlib.toPolynomial factor) := by
   intro target J localFactors fuel htarget_primitive htarget_lc_pos
     htarget_dvd_core hpartition hmatches hfuel
-  have hcore_size_pos : 0 < core.size := by
-    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
-    · exfalso
-      have hback_none : core.coeffs.back? = none := by
-        rw [Array.back?_eq_getElem?]
-        have hcoeffs_size : core.coeffs.size = 0 := by
-          simpa [Hex.DensePoly.size] using hzero
-        simp [hcoeffs_size]
-      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
-        unfold Hex.DensePoly.leadingCoeff
-        rw [hback_none]
-        rfl
-      rw [hlc_zero] at hcore_lc_pos
-      omega
-    · exact hpos
-  have hcore_dvd_self : core ∣ core :=
-    ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
@@ -14489,23 +14393,6 @@ theorem scaledRecombinationSearchModAux_some_factor_associated_of_liftedFactorSu
       ∃ emitted ∈ result,
         Associated (HexPolyZMathlib.toPolynomial emitted)
           (HexPolyZMathlib.toPolynomial factor) := by
-  have hcore_size_pos : 0 < core.size := by
-    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
-    · exfalso
-      have hback_none : core.coeffs.back? = none := by
-        rw [Array.back?_eq_getElem?]
-        have hcoeffs_size : core.coeffs.size = 0 := by
-          simpa [Hex.DensePoly.size] using hzero
-        simp [hcoeffs_size]
-      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
-        unfold Hex.DensePoly.leadingCoeff
-        rw [hback_none]
-        rfl
-      rw [hlc_zero] at hcore_lc_pos
-      omega
-    · exact hpos
-  have hcore_dvd_self : core ∣ core :=
-    ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact scaledRecombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
@@ -14606,23 +14493,6 @@ theorem recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPa
       ∃ emitted ∈ result,
         Associated (HexPolyZMathlib.toPolynomial emitted)
           (HexPolyZMathlib.toPolynomial factor) := by
-  have hcore_size_pos : 0 < core.size := by
-    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
-    · exfalso
-      have hback_none : core.coeffs.back? = none := by
-        rw [Array.back?_eq_getElem?]
-        have hcoeffs_size : core.coeffs.size = 0 := by
-          simpa [Hex.DensePoly.size] using hzero
-        simp [hcoeffs_size]
-      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
-        unfold Hex.DensePoly.leadingCoeff
-        rw [hback_none]
-        rfl
-      rw [hlc_zero] at hcore_lc_pos
-      omega
-    · exact hpos
-  have hcore_dvd_self : core ∣ core :=
-    ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition_of_primitive_pos_lc_core_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
@@ -14769,23 +14639,6 @@ theorem exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence
       Associated
         (HexPolyZMathlib.toPolynomial emitted)
         (HexPolyZMathlib.toPolynomial factor) := by
-  have hcore_size_pos : 0 < core.size := by
-    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
-    · exfalso
-      have hback_none : core.coeffs.back? = none := by
-        rw [Array.back?_eq_getElem?]
-        have hcoeffs_size : core.coeffs.size = 0 := by
-          simpa [Hex.DensePoly.size] using hzero
-        simp [hcoeffs_size]
-      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
-        unfold Hex.DensePoly.leadingCoeff
-        rw [hback_none]
-        rfl
-      rw [hlc_zero] at hcore_lc_pos
-      omega
-    · exact hpos
-  have hcore_dvd_self : core ∣ core :=
-    ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence_of_bound
     h hpartition hcore_ne hcore_primitive hcore_lc_pos hB_ne_zero hd_modulus
@@ -14960,23 +14813,6 @@ theorem exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCo
     ∀ factor ∈
       (Hex.exhaustiveCoreFactorsWithBound core B primeData).toList,
       Hex.ZPoly.Irreducible factor := by
-  have hcore_size_pos : 0 < core.size := by
-    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
-    · exfalso
-      have hback_none : core.coeffs.back? = none := by
-        rw [Array.back?_eq_getElem?]
-        have hcoeffs_size : core.coeffs.size = 0 := by
-          simpa [Hex.DensePoly.size] using hzero
-        simp [hcoeffs_size]
-      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
-        unfold Hex.DensePoly.leadingCoeff
-        rw [hback_none]
-        rfl
-      rw [hlc_zero] at hcore_lc_pos
-      omega
-    · exact hpos
-  have hcore_dvd_self : core ∣ core :=
-    ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
     h hpartition hcore_ne hcore_primitive hcore_lc_pos hcore_record hB_ne_zero
@@ -15309,23 +15145,6 @@ theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselS
   have hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core := by
     rw [show Hex.DensePoly.leadingCoeff core = (1 : Int) from hcore_monic]
     decide
-  have hcore_size_pos : 0 < core.size := by
-    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
-    · exfalso
-      have hback_none : core.coeffs.back? = none := by
-        rw [Array.back?_eq_getElem?]
-        have hcoeffs_size : core.coeffs.size = 0 := by
-          simpa [Hex.DensePoly.size] using hzero
-        simp [hcoeffs_size]
-      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
-        unfold Hex.DensePoly.leadingCoeff
-        rw [hback_none]
-        rfl
-      rw [hlc_zero] at hcore_lc_pos
-      omega
-    · exact hpos
-  have hcore_dvd_self : core ∣ core :=
-    ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
     _hbranch _hentry_mem h hpartition hcore_ne hcore_monic hcore_record hB_ne_zero
@@ -15506,23 +15325,6 @@ theorem factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorr
         entry.1 = Hex.normalizeFactorSign raw) :
     Hex.ZPoly.Irreducible entry.1 := by
   set core := (Hex.normalizeForFactor f).squareFreeCore with hcore_def
-  have hcore_size_pos : 0 < core.size := by
-    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
-    · exfalso
-      have hback_none : core.coeffs.back? = none := by
-        rw [Array.back?_eq_getElem?]
-        have hcoeffs_size : core.coeffs.size = 0 := by
-          simpa [Hex.DensePoly.size] using hzero
-        simp [hcoeffs_size]
-      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
-        unfold Hex.DensePoly.leadingCoeff
-        rw [hback_none]
-        rfl
-      rw [hlc_zero] at hcore_lc_pos
-      omega
-    · exact hpos
-  have hcore_dvd_self : core ∣ core :=
-    ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
     _hbranch _hentry_mem h hpartition hcore_ne hcore_primitive hcore_lc_pos
