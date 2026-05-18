@@ -2528,6 +2528,402 @@ private theorem luebeckConwayPolynomialOfCoeffs_13_6_irreducible :
   rw [hpoly]
   exact luebeckConwayPolynomial_13_6_irreducible
 
+private theorem luebeckConwayPolynomialOfCoeffs_2_1_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 2 [1, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_2_1
+  change some (luebeckConwayPolynomialOfCoeffs 2 [1, 1]) =
+    some luebeckConwayPolynomial_2_1 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 2 [1, 1] =
+      luebeckConwayPolynomial_2_1 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_2_1_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_2_2_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_2_2
+  change some (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 1]) =
+    some luebeckConwayPolynomial_2_2 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 2 [1, 1, 1] =
+      luebeckConwayPolynomial_2_2 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_2_2_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_2_3_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_2_3
+  change some (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 0, 1]) =
+    some luebeckConwayPolynomial_2_3 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 2 [1, 1, 0, 1] =
+      luebeckConwayPolynomial_2_3 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_2_3_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_2_4_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 0, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_2_4
+  change some (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 0, 0, 1]) =
+    some luebeckConwayPolynomial_2_4 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 2 [1, 1, 0, 0, 1] =
+      luebeckConwayPolynomial_2_4 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_2_4_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_2_5_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 2 [1, 0, 1, 0, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_2_5
+  change some (luebeckConwayPolynomialOfCoeffs 2 [1, 0, 1, 0, 0, 1]) =
+    some luebeckConwayPolynomial_2_5 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 2 [1, 0, 1, 0, 0, 1] =
+      luebeckConwayPolynomial_2_5 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_2_5_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_2_6_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 0, 1, 1, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_2_6
+  change some (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 0, 1, 1, 0, 1]) =
+    some luebeckConwayPolynomial_2_6 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 2 [1, 1, 0, 1, 1, 0, 1] =
+      luebeckConwayPolynomial_2_6 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_2_6_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_3_1_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 3 [1, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_3_1
+  change some (luebeckConwayPolynomialOfCoeffs 3 [1, 1]) =
+    some luebeckConwayPolynomial_3_1 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 3 [1, 1] =
+      luebeckConwayPolynomial_3_1 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_3_1_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_3_2_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 3 [2, 2, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_3_2
+  change some (luebeckConwayPolynomialOfCoeffs 3 [2, 2, 1]) =
+    some luebeckConwayPolynomial_3_2 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 3 [2, 2, 1] =
+      luebeckConwayPolynomial_3_2 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_3_2_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_3_3_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 3 [1, 2, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_3_3
+  change some (luebeckConwayPolynomialOfCoeffs 3 [1, 2, 0, 1]) =
+    some luebeckConwayPolynomial_3_3 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 3 [1, 2, 0, 1] =
+      luebeckConwayPolynomial_3_3 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_3_3_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_3_4_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 3 [2, 0, 0, 2, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_3_4
+  change some (luebeckConwayPolynomialOfCoeffs 3 [2, 0, 0, 2, 1]) =
+    some luebeckConwayPolynomial_3_4 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 3 [2, 0, 0, 2, 1] =
+      luebeckConwayPolynomial_3_4 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_3_4_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_3_5_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 3 [1, 2, 0, 0, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_3_5
+  change some (luebeckConwayPolynomialOfCoeffs 3 [1, 2, 0, 0, 0, 1]) =
+    some luebeckConwayPolynomial_3_5 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 3 [1, 2, 0, 0, 0, 1] =
+      luebeckConwayPolynomial_3_5 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_3_5_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_3_6_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 3 [2, 2, 1, 0, 2, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_3_6
+  change some (luebeckConwayPolynomialOfCoeffs 3 [2, 2, 1, 0, 2, 0, 1]) =
+    some luebeckConwayPolynomial_3_6 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 3 [2, 2, 1, 0, 2, 0, 1] =
+      luebeckConwayPolynomial_3_6 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_3_6_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_5_1_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 5 [3, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_5_1
+  change some (luebeckConwayPolynomialOfCoeffs 5 [3, 1]) =
+    some luebeckConwayPolynomial_5_1 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 5 [3, 1] =
+      luebeckConwayPolynomial_5_1 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_5_1_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_5_2_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 5 [2, 4, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_5_2
+  change some (luebeckConwayPolynomialOfCoeffs 5 [2, 4, 1]) =
+    some luebeckConwayPolynomial_5_2 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 5 [2, 4, 1] =
+      luebeckConwayPolynomial_5_2 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_5_2_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_5_3_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 5 [3, 3, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_5_3
+  change some (luebeckConwayPolynomialOfCoeffs 5 [3, 3, 0, 1]) =
+    some luebeckConwayPolynomial_5_3 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 5 [3, 3, 0, 1] =
+      luebeckConwayPolynomial_5_3 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_5_3_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_5_4_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 5 [2, 4, 4, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_5_4
+  change some (luebeckConwayPolynomialOfCoeffs 5 [2, 4, 4, 0, 1]) =
+    some luebeckConwayPolynomial_5_4 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 5 [2, 4, 4, 0, 1] =
+      luebeckConwayPolynomial_5_4 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_5_4_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_5_5_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 5 [3, 4, 0, 0, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_5_5
+  change some (luebeckConwayPolynomialOfCoeffs 5 [3, 4, 0, 0, 0, 1]) =
+    some luebeckConwayPolynomial_5_5 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 5 [3, 4, 0, 0, 0, 1] =
+      luebeckConwayPolynomial_5_5 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_5_5_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_5_6_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 5 [2, 0, 1, 4, 1, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_5_6
+  change some (luebeckConwayPolynomialOfCoeffs 5 [2, 0, 1, 4, 1, 0, 1]) =
+    some luebeckConwayPolynomial_5_6 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 5 [2, 0, 1, 4, 1, 0, 1] =
+      luebeckConwayPolynomial_5_6 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_5_6_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_7_1_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 7 [4, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_7_1
+  change some (luebeckConwayPolynomialOfCoeffs 7 [4, 1]) =
+    some luebeckConwayPolynomial_7_1 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 7 [4, 1] =
+      luebeckConwayPolynomial_7_1 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_7_1_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_7_2_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 7 [3, 6, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_7_2
+  change some (luebeckConwayPolynomialOfCoeffs 7 [3, 6, 1]) =
+    some luebeckConwayPolynomial_7_2 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 7 [3, 6, 1] =
+      luebeckConwayPolynomial_7_2 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_7_2_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_7_3_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 7 [4, 0, 6, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_7_3
+  change some (luebeckConwayPolynomialOfCoeffs 7 [4, 0, 6, 1]) =
+    some luebeckConwayPolynomial_7_3 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 7 [4, 0, 6, 1] =
+      luebeckConwayPolynomial_7_3 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_7_3_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_7_4_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 7 [3, 4, 5, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_7_4
+  change some (luebeckConwayPolynomialOfCoeffs 7 [3, 4, 5, 0, 1]) =
+    some luebeckConwayPolynomial_7_4 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 7 [3, 4, 5, 0, 1] =
+      luebeckConwayPolynomial_7_4 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_7_4_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_7_5_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 7 [4, 1, 0, 0, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_7_5
+  change some (luebeckConwayPolynomialOfCoeffs 7 [4, 1, 0, 0, 0, 1]) =
+    some luebeckConwayPolynomial_7_5 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 7 [4, 1, 0, 0, 0, 1] =
+      luebeckConwayPolynomial_7_5 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_7_5_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_7_6_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 7 [3, 6, 4, 5, 1, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_7_6
+  change some (luebeckConwayPolynomialOfCoeffs 7 [3, 6, 4, 5, 1, 0, 1]) =
+    some luebeckConwayPolynomial_7_6 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 7 [3, 6, 4, 5, 1, 0, 1] =
+      luebeckConwayPolynomial_7_6 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_7_6_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_11_1_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 11 [9, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_11_1
+  change some (luebeckConwayPolynomialOfCoeffs 11 [9, 1]) =
+    some luebeckConwayPolynomial_11_1 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 11 [9, 1] =
+      luebeckConwayPolynomial_11_1 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_11_1_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_11_2_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 11 [2, 7, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_11_2
+  change some (luebeckConwayPolynomialOfCoeffs 11 [2, 7, 1]) =
+    some luebeckConwayPolynomial_11_2 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 11 [2, 7, 1] =
+      luebeckConwayPolynomial_11_2 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_11_2_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_11_3_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 11 [9, 2, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_11_3
+  change some (luebeckConwayPolynomialOfCoeffs 11 [9, 2, 0, 1]) =
+    some luebeckConwayPolynomial_11_3 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 11 [9, 2, 0, 1] =
+      luebeckConwayPolynomial_11_3 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_11_3_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_11_4_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 11 [2, 10, 8, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_11_4
+  change some (luebeckConwayPolynomialOfCoeffs 11 [2, 10, 8, 0, 1]) =
+    some luebeckConwayPolynomial_11_4 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 11 [2, 10, 8, 0, 1] =
+      luebeckConwayPolynomial_11_4 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_11_4_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_11_5_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 11 [9, 0, 10, 0, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_11_5
+  change some (luebeckConwayPolynomialOfCoeffs 11 [9, 0, 10, 0, 0, 1]) =
+    some luebeckConwayPolynomial_11_5 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 11 [9, 0, 10, 0, 0, 1] =
+      luebeckConwayPolynomial_11_5 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_11_5_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_11_6_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 11 [2, 7, 6, 4, 3, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_11_6
+  change some (luebeckConwayPolynomialOfCoeffs 11 [2, 7, 6, 4, 3, 0, 1]) =
+    some luebeckConwayPolynomial_11_6 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 11 [2, 7, 6, 4, 3, 0, 1] =
+      luebeckConwayPolynomial_11_6 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_11_6_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_13_1_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 13 [11, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_13_1
+  change some (luebeckConwayPolynomialOfCoeffs 13 [11, 1]) =
+    some luebeckConwayPolynomial_13_1 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 13 [11, 1] =
+      luebeckConwayPolynomial_13_1 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_13_1_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_13_2_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 13 [2, 12, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_13_2
+  change some (luebeckConwayPolynomialOfCoeffs 13 [2, 12, 1]) =
+    some luebeckConwayPolynomial_13_2 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 13 [2, 12, 1] =
+      luebeckConwayPolynomial_13_2 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_13_2_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_13_3_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 13 [11, 2, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_13_3
+  change some (luebeckConwayPolynomialOfCoeffs 13 [11, 2, 0, 1]) =
+    some luebeckConwayPolynomial_13_3 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 13 [11, 2, 0, 1] =
+      luebeckConwayPolynomial_13_3 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_13_3_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_13_4_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 13 [2, 12, 3, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_13_4
+  change some (luebeckConwayPolynomialOfCoeffs 13 [2, 12, 3, 0, 1]) =
+    some luebeckConwayPolynomial_13_4 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 13 [2, 12, 3, 0, 1] =
+      luebeckConwayPolynomial_13_4 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_13_4_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_13_5_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 13 [11, 4, 0, 0, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_13_5
+  change some (luebeckConwayPolynomialOfCoeffs 13 [11, 4, 0, 0, 0, 1]) =
+    some luebeckConwayPolynomial_13_5 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 13 [11, 4, 0, 0, 0, 1] =
+      luebeckConwayPolynomial_13_5 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_13_5_monic
+
+private theorem luebeckConwayPolynomialOfCoeffs_13_6_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 13 [2, 11, 11, 10, 0, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_13_6
+  change some (luebeckConwayPolynomialOfCoeffs 13 [2, 11, 11, 10, 0, 0, 1]) =
+    some luebeckConwayPolynomial_13_6 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 13 [2, 11, 11, 10, 0, 0, 1] =
+      luebeckConwayPolynomial_13_6 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_13_6_monic
+
 /-- Every committed imported entry in the current Tier 1 slice comes with
 an irreducibility witness. -/
 theorem luebeckConwayPolynomial?_irreducible
@@ -2612,6 +3008,91 @@ theorem luebeckConwayPolynomial?_irreducible
     exact luebeckConwayPolynomialOfCoeffs_13_5_irreducible
   · cases hcoeffs
     exact luebeckConwayPolynomialOfCoeffs_13_6_irreducible
+  · cases hcoeffs
+
+/-- Every committed Tier 1 Conway entry in the current table is monic. -/
+theorem luebeckConwayPolynomial?_monic
+    {p n : Nat} [ZMod64.Bounds p] {f : FpPoly p}
+    (h : luebeckConwayPolynomial? p n = some f) :
+    DensePoly.Monic f := by
+  unfold luebeckConwayPolynomial? at h
+  rw [Option.map_eq_some_iff] at h
+  obtain ⟨coeffs, hcoeffs, hf⟩ := h
+  subst hf
+  unfold luebeckConwayCoeffs? at hcoeffs
+  split at hcoeffs
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_2_1_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_2_2_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_2_3_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_2_4_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_2_5_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_2_6_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_3_1_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_3_2_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_3_3_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_3_4_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_3_5_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_3_6_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_5_1_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_5_2_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_5_3_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_5_4_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_5_5_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_5_6_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_7_1_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_7_2_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_7_3_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_7_4_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_7_5_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_7_6_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_11_1_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_11_2_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_11_3_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_11_4_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_11_5_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_11_6_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_13_1_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_13_2_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_13_3_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_13_4_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_13_5_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_13_6_monic
   · cases hcoeffs
 
 /-- A committed Conway entry packages the current Tier 1 lookup hit for a
@@ -2740,6 +3221,13 @@ theorem conwayPoly_irreducible
     (p n : Nat) [ZMod64.Bounds p] (h : SupportedEntry p n) :
     FpPoly.Irreducible (conwayPoly p n h) := by
   exact luebeckConwayPolynomial?_irreducible
+    (f := conwayPoly p n h) (luebeckConwayPolynomial?_conwayPoly h)
+
+/-- Supported Conway entries carry the imported monicity witness. -/
+theorem conwayPoly_monic
+    (p n : Nat) [ZMod64.Bounds p] (h : SupportedEntry p n) :
+    DensePoly.Monic (conwayPoly p n h) := by
+  exact luebeckConwayPolynomial?_monic
     (f := conwayPoly p n h) (luebeckConwayPolynomial?_conwayPoly h)
 
 end Conway
