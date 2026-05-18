@@ -3145,8 +3145,7 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
   have hdeg : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 :=
     hbranch.2.1
   -- Discharge `hcore_ne` from `hcore_monic`.
-  have hcore_ne :=
-    zpoly_ne_zero_of_monic (f := (Hex.normalizeForFactor f).squareFreeCore) hcore_monic
+  have hcore_ne := zpoly_ne_zero_of_monic hcore_monic
   -- Provenance facts from `hchoose`.
   have hp_prime : Hex.Nat.Prime
       (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p :=
@@ -3405,8 +3404,7 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
             (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p) :
     Hex.ZPoly.Irreducible entry.1 := by
   -- Discharge `hcore_ne` from `hcore_monic` (needed by the dischargers below).
-  have hcore_ne :=
-    zpoly_ne_zero_of_monic (f := (Hex.normalizeForFactor f).squareFreeCore) hcore_monic
+  have hcore_ne := zpoly_ne_zero_of_monic hcore_monic
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux_of_bound
     f hf_ne entry hbranch hentry_mem hchoose hcore_monic hcomplete
@@ -3468,8 +3466,7 @@ theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeDat
   -- Substrate setup mirrors `factor_exhaustive_branch_entry_irreducible_of_choosePrimeData`.
   have hdeg : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 :=
     hbranch.2.1
-  have hcore_ne :=
-    zpoly_ne_zero_of_monic (f := (Hex.normalizeForFactor f).squareFreeCore) hcore_monic
+  have hcore_ne := zpoly_ne_zero_of_monic hcore_monic
   have hp_prime : Hex.Nat.Prime
       (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p :=
     Hex.choosePrimeData?_prime _ _ hchoose
@@ -3666,8 +3663,7 @@ theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeDat
         (Hex.ZPoly.defaultFactorCoeffBound f)
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)).toList,
       Hex.ZPoly.Irreducible q) := by
-  have hcore_ne :=
-    zpoly_ne_zero_of_monic (f := (Hex.normalizeForFactor f).squareFreeCore) hcore_monic
+  have hcore_ne := zpoly_ne_zero_of_monic hcore_monic
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData_of_bound
     f hf_ne hbranch hchoose hcore_monic
@@ -3788,8 +3784,7 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_bound
   -- hypothesis + monicness.
   have hdeg :
       (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 := hbranch.2.1
-  have hcore_ne :=
-    zpoly_ne_zero_of_monic (f := (Hex.normalizeForFactor f).squareFreeCore) hcore_monic
+  have hcore_ne := zpoly_ne_zero_of_monic hcore_monic
   have hcore_record : Hex.shouldRecordPolynomialFactor
       (Hex.normalizeForFactor f).squareFreeCore = true := by
     have hne_one : (Hex.normalizeForFactor f).squareFreeCore ≠ 1 := by
@@ -3941,8 +3936,7 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.defaultFactorCoeffBound f)
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)) := by
-  have hcore_ne :=
-    zpoly_ne_zero_of_monic (f := (Hex.normalizeForFactor f).squareFreeCore) hcore_monic
+  have hcore_ne := zpoly_ne_zero_of_monic hcore_monic
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact reassemblyExpansionComplete_exhaustive_of_ne_zero_of_bound
     f hf_ne hbranch hchoose hcore_monic
@@ -4276,8 +4270,7 @@ theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData
             (Hex.ZPoly.defaultFactorCoeffBound f)
             (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p) :
     Hex.ZPoly.Irreducible entry.1 := by
-  have hcore_ne :=
-    zpoly_ne_zero_of_monic (f := (Hex.normalizeForFactor f).squareFreeCore) hcore_monic
+  have hcore_ne := zpoly_ne_zero_of_monic hcore_monic
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound
     f hf_ne entry hbranch hentry_mem hchoose hcore_monic
