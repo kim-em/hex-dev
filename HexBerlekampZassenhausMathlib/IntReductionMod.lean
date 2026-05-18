@@ -4289,9 +4289,7 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_co
     (defaultFactorCoeffBound_valid (Hex.normalizeForFactor f).squareFreeCore hcore_ne)
     hprecision
 
-/-- **Abstract-bound sibling of the #4561 / #4848 HO-1 exhaustive-arm umbrella.**
-
-Abstract-bound `_of_bound` companion to
+/-- Abstract-bound variant of
 `factor_exhaustive_branch_entry_irreducible_of_choosePrimeData`: the
 concrete inner-form Mignotte precision on the squarefree core
 `2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.normalizeForFactor f).squareFreeCore < d.p ^ d.k`
@@ -4358,7 +4356,14 @@ The body proceeds in two steps:
 
 Factoring through the internal residual avoids the heartbeat spike the
 previous direct rewiring attempt exposed at the existing wrapper
-application. -/
+application.
+
+Thin wrapper over
+`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound`
+that instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound
+(Hex.normalizeForFactor f).squareFreeCore` and discharges the abstract
+bound hypotheses via `defaultFactorCoeffBound_valid` paired with
+`leadingCoeff_eq_coeff_last`. -/
 theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData
     (f : Hex.ZPoly) (hf_ne : f ≠ 0)
     (entry : Hex.ZPoly × Nat)
