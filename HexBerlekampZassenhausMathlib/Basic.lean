@@ -14774,11 +14774,14 @@ the raw coefficient bound, distinct from the precision exponent
 lift call.  The Mignotte invariant
 `2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k` is supplied as
 `hprecision`; consumers wiring `B = Hex.ZPoly.defaultFactorCoeffBound core`
-discharge it from the `precisionForCoeffBound` definition directly, while
-consumers wiring a larger `B` (e.g. the public outer
-`Hex.ZPoly.defaultFactorCoeffBound f` used by `Hex.factor f`) discharge it via
-the bound monotonicity
-`defaultFactorCoeffBound core ≤ B`.
+discharge it from the `precisionForCoeffBound` definition directly.  Consumers
+wiring a larger `B` (e.g. the public outer
+`Hex.ZPoly.defaultFactorCoeffBound f` used by `Hex.factor f`) should call the
+abstract-bound sibling
+`exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence_of_bound`
+directly: it accepts an abstract bound `B'` and discharges the validity
+hypothesis via `defaultFactorCoeffBound_valid` paired with
+`leadingCoeff_eq_coeff_last`, bypassing any monotonicity step.
 
 Thin wrapper over
 `exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence_of_bound`
@@ -15502,39 +15505,21 @@ d.p^d.k` operates on `core = (normalizeForFactor f).squareFreeCore` (the
 square-free core, not the public input `f`) and is supplied externally;
 this matches the #4006 sibling's invariant shape exactly.
 
-The natural construction route from the outer slow-path precision
-`d.p ^ d.k > 2 * defaultFactorCoeffBound f` is the monotonicity
-`defaultFactorCoeffBound core ≤ defaultFactorCoeffBound f`.  A
-Mathlib-free proof of that monotonicity proved elusive: the degree-half
-goes through (`deg core ≤ deg f`), but the L2-norm half fails in
-general (`coeffL2NormBound core` may exceed `coeffL2NormBound f`).
-Empirically the monotonicity held on every concrete case checked, and
-no counterexample has been produced; closing the proof would require
-Mahler-measure or Mignotte-derived L2 machinery not currently in
-`HexPolyZ/`.  This was tracked as #4539 (`squareFreeCore` bound
-monotonicity question).
+For HO-1 consumers wiring `B' := Hex.ZPoly.defaultFactorCoeffBound f`, the
+canonical surface is the abstract-bound sibling
+`factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound`
+above: it accepts the universal divisor-coefficient bound
+`hvalid : ∀ g ∣ core, ∀ i, (g.coeff i).natAbs ≤ B'` plus the outer-shape
+Mignotte precision `2 * B' < d.p ^ d.k` directly, with no monotonicity
+step required.  (The `squareFreeCore`-bound monotonicity question was
+tracked as #4539 and closed without resolution; the `_of_bound` cascade
+superseded it.)
 
-The **recommended HO-1 path** (#4170) bypasses the monotonicity entirely
-by re-parameterising the precision-using sub-theorem
-`centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision`
-(around line 1551 above) to accept an *abstract* bound `B' : Nat` plus
-a uniform-validity hypothesis
-`hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`, and propagating that
-abstraction up through `recombinationSearchModAux_...`,
-`exhaustiveCoreFactorsWithBound_coverage_...`, and
-`exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_...`.
-The consumer can then instantiate `B' := defaultFactorCoeffBound f` and
-discharge `hvalid` via `defaultFactorCoeffBound_valid f hf_ne factor
-hfactor_dvd_f` — `factor` is a divisor of `core`, `core` divides `f`
-(after content + X-power + repeated-part normalisation), so
-`factor ∣ f` and the validity follows.  The outer-form
-`2 * defaultFactorCoeffBound f < d.p^d.k` then holds directly from the
-executable's precision construction without any monotonicity step.
-
-This wrapper continues to take the core-shape `hprecision` so that the
-existing #4006 chain compiles unchanged; the abstract-bound refactor is
-a separable upstream task that adds an alternative consumer surface
-without breaking this one.
+Thin wrapper over
+`factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound`
+that instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound core` and
+discharges the abstract bound hypotheses via `defaultFactorCoeffBound_valid`
+paired with `leadingCoeff_eq_coeff_last`.
 
 The `hbranch` and `hentry_mem` arguments are not used by the proof, but
 they document the consumer-side entry point: a typical caller threads them
