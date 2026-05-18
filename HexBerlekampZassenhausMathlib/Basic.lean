@@ -6737,6 +6737,12 @@ theorem zpoly_ne_zero_of_monic {f : Hex.ZPoly}
   rw [hf] at hpos
   exact absurd hpos (by simp)
 
+theorem zpoly_lc_pos_of_monic {f : Hex.ZPoly}
+    (h : Hex.DensePoly.Monic f) :
+    0 < Hex.DensePoly.leadingCoeff f := by
+  rw [show Hex.DensePoly.leadingCoeff f = (1 : Int) from h]
+  decide
+
 private theorem zpoly_monic_one : Hex.DensePoly.Monic (1 : Hex.ZPoly) := by
   show Hex.DensePoly.leadingCoeff (1 : Hex.ZPoly) = (1 : Int)
   change Hex.DensePoly.leadingCoeff (Hex.DensePoly.C (1 : Int)) = (1 : Int)
@@ -14996,11 +15002,7 @@ theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselS
   have hcore_primitive :
       Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore :=
     (monic_primitive_sign_normalized_of_monic hcore_monic).2.1
-  have hcore_lc_pos :
-      0 < Hex.DensePoly.leadingCoeff (Hex.normalizeForFactor f).squareFreeCore := by
-    rw [show Hex.DensePoly.leadingCoeff (Hex.normalizeForFactor f).squareFreeCore =
-      (1 : Int) from hcore_monic]
-    decide
+  have hcore_lc_pos := zpoly_lc_pos_of_monic hcore_monic
   have hirr_raw : Hex.ZPoly.Irreducible raw :=
     exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
       h hpartition hcore_ne hcore_primitive hcore_lc_pos hcore_record hB_ne_zero
@@ -15089,9 +15091,7 @@ theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselS
         entry.1 = Hex.normalizeFactorSign raw) :
     Hex.ZPoly.Irreducible entry.1 := by
   set core := (Hex.normalizeForFactor f).squareFreeCore with hcore_def
-  have hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core := by
-    rw [show Hex.DensePoly.leadingCoeff core = (1 : Int) from hcore_monic]
-    decide
+  have hcore_lc_pos := zpoly_lc_pos_of_monic hcore_monic
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
     _hbranch _hentry_mem h hpartition hcore_ne hcore_monic hcore_record hB_ne_zero

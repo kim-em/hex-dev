@@ -3254,11 +3254,7 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
     have hcore_primitive :
         Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore :=
       (monic_primitive_sign_normalized_of_monic hcore_monic).2.1
-    have hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff
-        (Hex.normalizeForFactor f).squareFreeCore := by
-      rw [show Hex.DensePoly.leadingCoeff (Hex.normalizeForFactor f).squareFreeCore =
-        (1 : Int) from hcore_monic]
-      decide
+    have hcore_lc_pos := zpoly_lc_pos_of_monic hcore_monic
     exact factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
       hbranch hentry_mem
       (henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData f)
@@ -3575,11 +3571,7 @@ theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeDat
     have hcore_primitive :
         Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore :=
       (monic_primitive_sign_normalized_of_monic hcore_monic).2.1
-    have hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff
-        (Hex.normalizeForFactor f).squareFreeCore := by
-      rw [show Hex.DensePoly.leadingCoeff (Hex.normalizeForFactor f).squareFreeCore =
-        (1 : Int) from hcore_monic]
-      decide
+    have hcore_lc_pos := zpoly_lc_pos_of_monic hcore_monic
     exact exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
       (henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData f)
       (liftedFactorSubsetPartition_outerBound_of_choosePrimeData f hf_ne)
