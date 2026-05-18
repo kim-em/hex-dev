@@ -333,12 +333,9 @@ private theorem gcd_monicModularImage_derivative_eq_one
           rcases (Fact.out : Nat.Prime p).eq_one_or_self_of_dvd m hmdvd with h | h
           · exact Or.inl h
           · exact Or.inr h
-      have hlead_ne : Hex.DensePoly.leadingCoeff f ≠ 0 := by
-        have hpos : 0 < f.size := by
-          simpa [Hex.DensePoly.isZero, Hex.DensePoly.size,
-            Array.isEmpty_iff_size_eq_zero, Nat.pos_iff_ne_zero] using hzero
-        rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred f hpos]
-        exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size f hpos
+      have hlead_ne : Hex.DensePoly.leadingCoeff f ≠ 0 :=
+        fpPoly_leadingCoeff_ne_zero_of_size_pos f
+          ((Hex.DensePoly.isZero_eq_false_iff _).mp hzero)
       intro hu_zero
       have hone_hex : u * Hex.DensePoly.leadingCoeff f = (1 : Hex.ZMod64 p) := by
         simpa [u] using Hex.ZMod64.inv_mul_eq_one_of_prime hp_hex hlead_ne
@@ -483,19 +480,11 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
   -- Push through the Mathlib bridge using toMathlibPolynomial_scale.
   rw [hmonicImg_eq, toMathlibPolynomial_scale] at hirr_monic
   -- The scaling constant is a unit (nonzero in the field).
-  have hfsize : 0 < (Hex.ZPoly.modP primeData.p core).size := by
-    rcases Nat.eq_zero_or_pos (Hex.ZPoly.modP primeData.p core).size with hsz | hsz
-    · exfalso
-      have hzero' : (Hex.ZPoly.modP primeData.p core).isZero = true := by
-        simpa [Hex.DensePoly.isZero, Hex.DensePoly.size,
-          Array.isEmpty_iff_size_eq_zero] using hsz
-      rw [hzero'] at hzero
-      exact Bool.noConfusion hzero
-    · exact hsz
+  have hfsize : 0 < (Hex.ZPoly.modP primeData.p core).size :=
+    (Hex.DensePoly.isZero_eq_false_iff _).mp hzero
   have hlead_ne :
-      Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core) ≠ 0 := by
-    rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred _ hfsize]
-    exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size _ hfsize
+      Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core) ≠ 0 :=
+    fpPoly_leadingCoeff_ne_zero_of_size_pos (Hex.ZPoly.modP primeData.p core) hfsize
   have h_one_ne_zero : (1 : Hex.ZMod64 primeData.p) ≠ 0 := by
     intro h
     have htoNat : (1 : Hex.ZMod64 primeData.p).toNat =
@@ -632,6 +621,20 @@ theorem toPolynomial_isPrimitive_of_zpoly_primitive
   have hone : r.natAbs ∣ 1 := by exact_mod_cast hr_dvd_content
   exact Int.isUnit_iff_natAbs_eq.mpr (Nat.eq_one_of_dvd_one hone)
 
+/-- The product `squareFreeCore * repeatedPart` extracted from a nonzero
+integer polynomial by `Hex.normalizeForFactor` is executably primitive. -/
+theorem normalizeForFactor_squareFreeCore_mul_repeatedPart_primitive_of_ne_zero
+    (f : Hex.ZPoly) (hf : f ≠ 0) :
+    Hex.ZPoly.Primitive
+      ((Hex.normalizeForFactor f).squareFreeCore *
+        (Hex.normalizeForFactor f).repeatedPart) := by
+  have hcore_ne :
+      (Hex.ZPoly.extractXPower (Hex.ZPoly.primitivePart f)).core ≠ 0 :=
+    Hex.extractXPower_core_ne_zero_of_ne_zero f hf
+  simpa [Hex.normalizeForFactor] using
+    Hex.ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive
+      _ hcore_ne
+
 /--
 The square-free core extracted by `normalizeForFactor` is primitive
 over `Polynomial ℤ` whenever the input integer polynomial is nonzero.
@@ -650,16 +653,8 @@ theorem normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive
     (f : Hex.ZPoly) (hf : f ≠ 0) :
     (HexPolyZMathlib.toPolynomial
         (Hex.normalizeForFactor f).squareFreeCore).IsPrimitive := by
-  have hcore_ne :
-      (Hex.ZPoly.extractXPower (Hex.ZPoly.primitivePart f)).core ≠ 0 :=
-    Hex.extractXPower_core_ne_zero_of_ne_zero f hf
-  have hprod_prim :
-      Hex.ZPoly.Primitive
-        ((Hex.normalizeForFactor f).squareFreeCore *
-          (Hex.normalizeForFactor f).repeatedPart) := by
-    simpa [Hex.normalizeForFactor] using
-      Hex.ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive
-        _ hcore_ne
+  have hprod_prim :=
+    normalizeForFactor_squareFreeCore_mul_repeatedPart_primitive_of_ne_zero f hf
   have hprod_isPrim :
       (HexPolyZMathlib.toPolynomial
           ((Hex.normalizeForFactor f).squareFreeCore *
@@ -676,22 +671,14 @@ The repeated part extracted by `normalizeForFactor` is primitive over
 This is the companion Gauss-descent input to
 `normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive` for the
 structural divisibility theorem consumed by the exponent-extraction
-successor (#4611).
+successor.
 -/
 theorem normalizeForFactor_repeatedPart_toPolynomial_isPrimitive
     (f : Hex.ZPoly) (hf : f ≠ 0) :
     (HexPolyZMathlib.toPolynomial
         (Hex.normalizeForFactor f).repeatedPart).IsPrimitive := by
-  have hcore_ne :
-      (Hex.ZPoly.extractXPower (Hex.ZPoly.primitivePart f)).core ≠ 0 :=
-    Hex.extractXPower_core_ne_zero_of_ne_zero f hf
-  have hprod_prim :
-      Hex.ZPoly.Primitive
-        ((Hex.normalizeForFactor f).squareFreeCore *
-          (Hex.normalizeForFactor f).repeatedPart) := by
-    simpa [Hex.normalizeForFactor] using
-      Hex.ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive
-        _ hcore_ne
+  have hprod_prim :=
+    normalizeForFactor_squareFreeCore_mul_repeatedPart_primitive_of_ne_zero f hf
   have hprod_isPrim :
       (HexPolyZMathlib.toPolynomial
           ((Hex.normalizeForFactor f).squareFreeCore *
@@ -939,23 +926,14 @@ theorem normalizeForFactor_squareFreeCore_toPolynomial_squarefree
     Squarefree
       (HexPolyZMathlib.toPolynomial
         (Hex.normalizeForFactor f).squareFreeCore) := by
-  -- Executable `SquareFreeRat` invariant on the square-free core.
-  have hcore_ne :
-      (Hex.ZPoly.extractXPower (Hex.ZPoly.primitivePart f)).core ≠ 0 :=
-    Hex.extractXPower_core_ne_zero_of_ne_zero f hf
   -- The square-free core of `normalizeForFactor f` is nonzero.  We argue
   -- from primitivity of the product `squareFreeCore * repeatedPart`:
   -- if the core were zero, the product would be zero, contradicting
   -- primitivity (the zero polynomial has zero content).
   have hcore_sq_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 := by
     intro hzero
-    have hprod_prim :
-        Hex.ZPoly.Primitive
-          ((Hex.normalizeForFactor f).squareFreeCore *
-            (Hex.normalizeForFactor f).repeatedPart) := by
-      simpa [Hex.normalizeForFactor] using
-        Hex.ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive
-          _ hcore_ne
+    have hprod_prim :=
+      normalizeForFactor_squareFreeCore_mul_repeatedPart_primitive_of_ne_zero f hf
     have hprod_ne :
         (Hex.normalizeForFactor f).squareFreeCore *
           (Hex.normalizeForFactor f).repeatedPart ≠ 0 :=
@@ -1051,6 +1029,20 @@ theorem zpoly_primitive_of_toPolynomial_isPrimitive
   rcases Int.isUnit_iff.mp hIsUnit with hone | hneg
   · exact hone
   · rw [hneg] at hcontent_nonneg; omega
+
+/--
+The square-free core extracted by `normalizeForFactor` is executably
+primitive whenever the input integer polynomial is nonzero.
+
+The proof transports
+`normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive` back to
+`Hex.ZPoly` via `zpoly_primitive_of_toPolynomial_isPrimitive`.
+-/
+theorem normalizeForFactor_squareFreeCore_primitive_of_ne_zero
+    (f : Hex.ZPoly) (hf : f ≠ 0) :
+    Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore :=
+  zpoly_primitive_of_toPolynomial_isPrimitive
+    (normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive f hf)
 
 /--
 Helper for the coprime inductive step of
@@ -1449,17 +1441,9 @@ theorem normalizeForFactor_repeatedPart_map_intCast_dvd_squareFreeCore_map_intCa
     rw [hP_factor]
     exact associated_unit_mul_left (S * R) (Polynomial.C unit) hCunit_unit
   -- `(primitivePart core).isZero = false` from `core ≠ 0` and `primitivePart core = core`.
-  have hpp_isZero_false : (Hex.ZPoly.primitivePart core).isZero = false := by
-    rw [Hex.DensePoly.isZero_eq_false_iff]
-    have hcore_ne' : Hex.ZPoly.primitivePart core ≠ 0 := by rw [hpp]; exact hcore_ne
-    rcases Nat.eq_zero_or_pos (Hex.ZPoly.primitivePart core).size with hsz | hsz
-    · exfalso
-      apply hcore_ne'
-      apply Hex.DensePoly.ext_coeff
-      intro n
-      rw [Hex.DensePoly.coeff_zero]
-      exact Hex.DensePoly.coeff_eq_zero_of_size_le _ (by omega)
-    · exact hsz
+  have hpp_isZero_false : (Hex.ZPoly.primitivePart core).isZero = false :=
+    (Hex.DensePoly.isZero_eq_false_iff _).mpr
+      (Hex.ZPoly.size_pos_of_ne_zero _ (by rw [hpp]; exact hcore_ne))
   -- Case-split on whether the rational derivative vanishes.
   by_cases hderiv :
       (Hex.DensePoly.derivative
@@ -1504,11 +1488,8 @@ theorem normalizeForFactor_repeatedPart_map_intCast_dvd_squareFreeCore_map_intCa
     exact rp_dvd_sf_pow_of_associated hP_ne hR_gcd hP_assoc
   · -- Case C: derivative is nonzero; `rp = ratPolyPrimitivePart (gcd ratPrim ratPrim.derivative)`.
     have hderiv_false : (Hex.DensePoly.derivative
-        (Hex.ZPoly.toRatPoly (Hex.ZPoly.primitivePart core))).isZero = false := by
-      cases h : (Hex.DensePoly.derivative
-          (Hex.ZPoly.toRatPoly (Hex.ZPoly.primitivePart core))).isZero
-      · rfl
-      · exact absurd h hderiv
+        (Hex.ZPoly.toRatPoly (Hex.ZPoly.primitivePart core))).isZero = false :=
+      Bool.eq_false_iff.mpr hderiv
     -- Identify `rp` via the case-C helper. Work with `primitivePart core`-shaped terms.
     have hrp_pp_eq : rp =
         Hex.ZPoly.ratPolyPrimitivePart
@@ -2110,6 +2091,58 @@ theorem reassemblyExpansionComplete_of_irreducible_squarefree_cover
     (Hex.normalizeForFactor f).repeatedPart coreFactors hmonic hdegree
     exponents hlen hnot_dvd_tail hdecomp hfuel'
 
+/-- Non-monic `_of_pos_lc` sibling of
+`reassemblyExpansionComplete_of_irreducible_squarefree_cover`: replaces the
+per-factor `Monic q` premise with `0 < leadingCoeff q`, delegating to the
+non-monic leaf substrate
+`Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc`
+(`HexBerlekampZassenhaus/Basic.lean`, landed in #4778). Mid-layer surface for
+consumers wanting to delegate to the assembler under a primitive + pos-lc
+precondition; the existing quadratic-arm consumer
+`reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero` (below)
+bypasses the mid-layer by routing through the leaf directly, but the
+umbrella-internal rewiring of
+`reassemblyExpansionComplete_exhaustive_of_ne_zero` consumes this sibling. -/
+theorem reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_pos_lc
+    (f : Hex.ZPoly) (hf : f ≠ 0)
+    (coreFactors : Array Hex.ZPoly)
+    (hirr : ∀ q ∈ coreFactors.toList, Hex.ZPoly.Irreducible q)
+    (hprod : Array.polyProduct coreFactors =
+      (Hex.normalizeForFactor f).squareFreeCore)
+    (hnorm : ∀ q ∈ coreFactors.toList, Hex.normalizeFactorSign q = q)
+    (hpos_lc : ∀ q ∈ coreFactors.toList, 0 < Hex.DensePoly.leadingCoeff q)
+    (hdegree : ∀ q ∈ coreFactors.toList, 0 < q.degree?.getD 0)
+    (hfuel :
+      ∀ exponents : List Nat,
+        exponents.length = coreFactors.size →
+        (Hex.normalizeForFactor f).repeatedPart =
+          ((coreFactors.toList.zip exponents).map
+            (fun qe => Hex.Factorization.factorPower qe.1 qe.2)).foldl (· * ·) 1 →
+        ∀ (qe : Hex.ZPoly × Nat),
+          qe ∈ coreFactors.toList.zip exponents →
+            qe.2 + 1 ≤ (Hex.normalizeForFactor f).repeatedPart.size + 1) :
+    Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f) coreFactors := by
+  classical
+  obtain ⟨exponents, hlen, hdecomp⟩ :=
+    normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover
+      f hf coreFactors hirr hprod hnorm
+  have hnot_dvd_tail :
+      ∀ pre q e suf,
+        coreFactors.toList.zip exponents = pre ++ (q, e) :: suf →
+        ¬ q ∣ (suf.map (fun (qe : Hex.ZPoly × Nat) =>
+                Hex.Factorization.factorPower qe.1 qe.2)).foldl (· * ·) 1 :=
+    factorPower_cover_not_dvd_tail_of_irreducible_squarefree
+      f hf coreFactors hirr hprod hnorm exponents hlen
+  have hfuel' :
+      ∀ (qe : Hex.ZPoly × Nat),
+        qe ∈ coreFactors.toList.zip exponents →
+          qe.2 + 1 ≤ (Hex.normalizeForFactor f).repeatedPart.size + 1 := by
+    exact hfuel exponents hlen hdecomp
+  unfold Hex.reassemblyExpansionComplete
+  exact Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc
+    (Hex.normalizeForFactor f).repeatedPart coreFactors hpos_lc hdegree
+    exponents hlen hnot_dvd_tail hdecomp hfuel'
+
 /-- **#4597 HO-1 substrate — small-mod singleton arm `factorPower` shape of
 the repeated part.** Singleton specialisation of
 `normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover`
@@ -2245,6 +2278,132 @@ theorem reassemblyExpansionComplete_singleton_of_irreducible
       core k hmonic hdeg hirr (Hex.normalizeForFactor f).repeatedPart hk hfuel
   rw [hexpand]
 
+/-- **#4956 HO-1 substrate — small-mod singleton arm `hcomplete` discharger,
+non-monic primitive sibling (Mathlib bridge).** Companion to the monic
+`reassemblyExpansionComplete_singleton_of_irreducible` above. Drops the
+`hmonic` premise on the square-free core in favour of `0 < leadingCoeff core`,
+producing the same `Hex.reassemblyExpansionComplete` conclusion. The proof
+routes through the non-monic array-level public surface
+`Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc`
+(`HexBerlekampZassenhaus/Basic.lean:11777`, #4778), with the
+no-tail-divisibility precondition discharged by
+`factorPower_cover_not_dvd_tail_of_irreducible_squarefree` (#4807).
+The singleton-arm umbrella
+`factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData`
+threads `hcomplete` from the caller, so the value of this sibling is in
+letting downstream dispatchers discharge `hcomplete` under a non-monic
+primitive `squareFreeCore` (e.g. the `2X + 3` residual from
+`(X-1)(2X+3) = 2X^2 + X - 3`). Closes the singleton-arm Gap 1 documented
+on the monic sibling at the discharger layer. -/
+theorem reassemblyExpansionComplete_singleton_of_irreducible_of_pos_lc
+    (f : Hex.ZPoly) (hf : f ≠ 0)
+    (hirr : Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore)
+    (hpos_lc : 0 < Hex.DensePoly.leadingCoeff
+      (Hex.normalizeForFactor f).squareFreeCore)
+    (hdeg :
+      0 < (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0) :
+    Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
+      #[(Hex.normalizeForFactor f).squareFreeCore] := by
+  obtain ⟨k, hk⟩ :=
+    normalizeForFactor_repeatedPart_isFactorPower_squareFreeCore_of_irreducible
+      f hf hirr
+  set core := (Hex.normalizeForFactor f).squareFreeCore with hcore_def
+  -- Size of `core` is at least 2 from positive degree (monicness-agnostic).
+  have hcore_size_ge_two : 2 ≤ core.size := by
+    have hdeg_unfold : core.degree?.getD 0 =
+        (if core.size = 0 then 0 else core.size - 1) := by
+      unfold Hex.DensePoly.degree?
+      by_cases h : core.size = 0 <;> simp [h]
+    rw [hdeg_unfold] at hdeg
+    by_cases h : core.size = 0
+    · simp [h] at hdeg
+    · split at hdeg <;> omega
+  -- For `core.size ≥ 2`, `factorPower core m` has size at least `m + 1`
+  -- (monicness-agnostic; uses `mul_size_eq_top_succ_of_nonzero`).
+  have hfactorPower_size_ge :
+      ∀ m, m + 1 ≤ (Hex.Factorization.factorPower core m).size := by
+    intro m
+    induction m with
+    | zero =>
+        show 1 ≤ (1 : Hex.ZPoly).size
+        rfl
+    | succ n ih =>
+        rw [Hex.Factorization.factorPower_succ]
+        have hprev_pos : 0 < (Hex.Factorization.factorPower core n).size := by
+          omega
+        have hcore_pos : 0 < core.size := by omega
+        have hmul_size :
+            (Hex.Factorization.factorPower core n * core).size =
+              (Hex.Factorization.factorPower core n).size + core.size - 1 :=
+          Hex.ZPoly.mul_size_eq_top_succ_of_nonzero _ _ hprev_pos hcore_pos
+        omega
+  have hfuel :
+      k + 1 ≤ (Hex.normalizeForFactor f).repeatedPart.size + 1 := by
+    have := hfactorPower_size_ge k
+    rw [hk]
+    omega
+  -- Singleton-shape preconditions for the array-level public non-monic surface.
+  have hirr_arr :
+      ∀ q ∈ (#[core] : Array Hex.ZPoly).toList, Hex.ZPoly.Irreducible q := by
+    intro q hq
+    have hq_eq : q = core := by simpa using hq
+    exact hq_eq ▸ hirr
+  have hprod : Array.polyProduct (#[core] : Array Hex.ZPoly) = core :=
+    Hex.ZPoly.polyProduct_singleton core
+  have hnorm :
+      ∀ q ∈ (#[core] : Array Hex.ZPoly).toList,
+        Hex.normalizeFactorSign q = q := by
+    intro q hq
+    have hq_eq : q = core := by simpa using hq
+    subst hq_eq
+    exact Hex.squareFreeCore_normalizeFactorSign_of_ne_zero f hf
+  have hpos_lc_arr :
+      ∀ q ∈ (#[core] : Array Hex.ZPoly).toList,
+        0 < Hex.DensePoly.leadingCoeff q := by
+    intro q hq
+    have hq_eq : q = core := by simpa using hq
+    exact hq_eq ▸ hpos_lc
+  have hdegree_arr :
+      ∀ q ∈ (#[core] : Array Hex.ZPoly).toList, 0 < q.degree?.getD 0 := by
+    intro q hq
+    have hq_eq : q = core := by simpa using hq
+    exact hq_eq ▸ hdeg
+  have hlen' :
+      ([k] : List Nat).length = (#[core] : Array Hex.ZPoly).size := by decide
+  -- No-tail-divisibility for the singleton split — discharged by the generic
+  -- `factorPower_cover_not_dvd_tail_of_irreducible_squarefree` helper (#4807).
+  have hnot_dvd_tail :=
+    factorPower_cover_not_dvd_tail_of_irreducible_squarefree
+      f hf #[core] hirr_arr hprod hnorm [k] hlen'
+  -- `factorPower` decomposition collapses on the singleton split to `hk`.
+  -- `#[core].toList.zip [k]` reduces to `[(core, k)]` by definitional
+  -- computation; the foldl then collapses to `1 * factorPower core k`.
+  have hdecomp :
+      (Hex.normalizeForFactor f).repeatedPart =
+        (((#[core] : Array Hex.ZPoly).toList.zip [k]).map
+          (fun (qe : Hex.ZPoly × Nat) =>
+            Hex.Factorization.factorPower qe.1 qe.2)).foldl (· * ·) 1 := by
+    show (Hex.normalizeForFactor f).repeatedPart =
+      1 * Hex.Factorization.factorPower core k
+    rw [Hex.ZPoly.one_mul_zpoly]
+    exact hk
+  -- Fuel bound for the singleton zip pair `(core, k)`.
+  have hfuel' :
+      ∀ (qe : Hex.ZPoly × Nat),
+        qe ∈ (#[core] : Array Hex.ZPoly).toList.zip [k] →
+          qe.2 + 1 ≤ (Hex.normalizeForFactor f).repeatedPart.size + 1 := by
+    intro qe hqe
+    -- `hqe : qe ∈ [(core, k)]` reduces to `qe = (core, k)`.
+    have hqe_eq : qe = (core, k) := by
+      have : qe ∈ ([(core, k)] : List (Hex.ZPoly × Nat)) := hqe
+      simpa using this
+    rw [hqe_eq]
+    exact hfuel
+  unfold Hex.reassemblyExpansionComplete
+  exact Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc
+    (Hex.normalizeForFactor f).repeatedPart #[core] hpos_lc_arr hdegree_arr
+    [k] hlen' hnot_dvd_tail hdecomp hfuel'
+
 /-- **#4747 HO-1 substrate — quadratic integer-root arm reassembly-expansion
 discharger (Mathlib bridge).** When the normalized square-free core
 `(normalizeForFactor f).squareFreeCore` factors through the executable
@@ -2300,10 +2459,7 @@ theorem reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero
   classical
   -- Discharge prerequisites for the squareFreeCore.
   have hcore_pos := Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf
-  have hcore_primitive :
-      Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore :=
-    zpoly_primitive_of_toPolynomial_isPrimitive
-      (normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive f hf)
+  have hcore_primitive := normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf
   -- Per-factor invariants from the quadratic branch.
   have hirr : ∀ q ∈ coreFactors.toList, Hex.ZPoly.Irreducible q := fun q hq =>
     Hex.quadraticIntegerRootFactors?_factor_irreducible_of_primitive
@@ -2489,9 +2645,12 @@ theorem liftedFactorSubsetPartition_outerBound_of_choosePrimeData
 Per-branch HO-1 component for the small-mod singleton arm of the capstone
 `factor_irreducible_of_nonUnit` (#4170): every entry recorded by
 `Hex.factorWithBound f B` in this fast-path branch is `Hex.ZPoly.Irreducible`,
-given only `f ≠ 0`, the branch marker hypotheses, the executable
-`choosePrimeData?` success witness `hchoose`, and the reassembly
-expansion-complete side condition.
+given only `f ≠ 0`, the branch marker hypotheses, and the executable
+`choosePrimeData?` success witness `hchoose`. The reassembly
+expansion-complete side condition is discharged internally via
+`IntReductionMod.reassemblyExpansionComplete_singleton_of_irreducible_of_pos_lc`
+(#4956 / PR #4961), so the umbrella no longer requires an explicit
+`hcomplete` premise.
 
 Composes:
 * `Hex.factorWithBound_entry_mem_small_mod_singleton_raw`
@@ -2505,9 +2664,17 @@ Composes:
   (`IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive`
   and `IntReductionMod.choosePrimeData?_leadingCoeff_castRingHom_ne_zero`),
   which produce `hprim` and `hlc_map_ne` from `f ≠ 0` and `hchoose`;
+* `IntReductionMod.reassemblyExpansionComplete_singleton_of_irreducible_of_pos_lc`
+  — the non-monic primitive singleton-arm `hcomplete` discharger from
+  #4956 / PR #4961, producing the reassembly expansion-complete side
+  condition internally from `hcore_irr`,
+  `Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero`, and the positive
+  squarefree-core degree derived from the umbrella's existing `hdeg`
+  premise;
 * `Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible`
   — the Mathlib-free reassembly lift turning singleton-core irreducibility
-  into raw factor irreducibility under the `hcomplete` side condition;
+  into raw factor irreducibility under the internally-discharged
+  expansion-complete side condition;
 * `zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible` — the
   sign-normalisation lift from raw factor irreducibility to entry
   irreducibility.
@@ -2529,9 +2696,6 @@ theorem factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData
         Hex.quadraticIntegerRootFactors?
           (Hex.normalizeForFactor f).squareFreeCore = none)
     (hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList)
-    (hcomplete :
-      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
-        #[(Hex.normalizeForFactor f).squareFreeCore])
     (hchoose :
       Hex.choosePrimeData?
         (Hex.normalizeForFactor f).squareFreeCore = some
@@ -2553,6 +2717,16 @@ theorem factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData
         f hf_ne)
       (IntReductionMod.choosePrimeData?_leadingCoeff_castRingHom_ne_zero
         _ _ hchoose)
+  -- Discharge the reassembly expansion-complete side condition internally
+  -- using the non-monic primitive singleton-arm discharger
+  -- (#4956 / PR #4961).
+  have hcomplete :
+      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
+        #[(Hex.normalizeForFactor f).squareFreeCore] :=
+    IntReductionMod.reassemblyExpansionComplete_singleton_of_irreducible_of_pos_lc
+      f hf_ne hcore_irr
+      (Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf_ne)
+      (Nat.pos_of_ne_zero hdeg)
   -- Lift singleton-core irreducibility through the reassembly to raw factor
   -- irreducibility.
   have h_core_array :
@@ -2587,9 +2761,11 @@ sufficient) for the singleton branch to fire — when `choosePrimeData?` returns
 slow exhaustive path, so the singleton branch-shape lemma's conclusion does
 not apply in that case.
 
-The eventual capstone wiring for the small-mod singleton arm composes this
-with the `hcomplete` discharger from #4597 to produce a fully
-hypothesis-discharged per-branch component. -/
+The reassembly expansion-complete side condition is discharged internally
+by the `_of_choosePrimeData` umbrella above (via
+`IntReductionMod.reassemblyExpansionComplete_singleton_of_irreducible_of_pos_lc`,
+#4956 / PR #4961), so this wrapper does not require an explicit
+`hcomplete` premise either. -/
 theorem factor_small_mod_singleton_branch_entry_irreducible
     (f : Hex.ZPoly) (hf_ne : f ≠ 0)
     (B : Nat) (hB_pos : 1 ≤ B)
@@ -2605,10 +2781,7 @@ theorem factor_small_mod_singleton_branch_entry_irreducible
       B = 1 ∨
         Hex.quadraticIntegerRootFactors?
           (Hex.normalizeForFactor f).squareFreeCore = none)
-    (hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList)
-    (hcomplete :
-      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
-        #[(Hex.normalizeForFactor f).squareFreeCore]) :
+    (hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList) :
     Hex.ZPoly.Irreducible entry.1 := by
   -- Derive the explicit `choosePrimeData?` equation from the `isSome` witness
   -- packed into `hsmall_chosen`.
@@ -2626,7 +2799,7 @@ theorem factor_small_mod_singleton_branch_entry_irreducible
           unfold Hex.choosePrimeData; rw [hc]
         rw [hpd]
   exact factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData
-    f hf_ne B hB_pos entry hdeg hsmall_chosen.2 hquadratic hentry_mem hcomplete
+    f hf_ne B hB_pos entry hdeg hsmall_chosen.2 hquadratic hentry_mem
     hchoose
 
 /-- **#4565 HO-1 substrate — fast-path constant arm umbrella.**
@@ -2722,8 +2895,10 @@ theorem factor_constant_branch_entry_irreducible_of_choosePrimeData
 Per-branch HO-1 component for the fast-path quadratic integer-root arm of the
 capstone `factor_irreducible_of_nonUnit` (#4170): every entry recorded by
 `Hex.factorWithBound f B` in this fast-path branch is `Hex.ZPoly.Irreducible`,
-given `f ≠ 0`, `1 < B`, the branch marker hypotheses (`hdeg`, `hquad`), and
-the reassembly expansion-complete side condition.
+given `f ≠ 0`, `1 < B`, and the branch marker hypotheses (`hdeg`, `hquad`).
+The reassembly expansion-complete side condition is discharged internally via
+`IntReductionMod.reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`
+(#4747), so the umbrella no longer requires an explicit `hcomplete` premise.
 
 Composes:
 * `Hex.factorWithBound_entry_mem_quadratic_branch_raw` — the Mathlib-free
@@ -2758,20 +2933,21 @@ theorem factor_quadratic_branch_entry_irreducible_of_quadraticRoots
     (hquad :
       Hex.quadraticIntegerRootFactors?
         (Hex.normalizeForFactor f).squareFreeCore = some coreFactors)
-    (hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList)
-    (hcomplete :
-      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f) coreFactors) :
+    (hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList) :
     Hex.ZPoly.Irreducible entry.1 := by
+  -- Discharge the reassembly expansion-complete side condition internally
+  -- using the quadratic-arm discharger (#4747).
+  have hcomplete :
+      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f) coreFactors :=
+    IntReductionMod.reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero
+      f hf_ne hquad
   -- Branch-shape lemma: entry = normalizeFactorSign raw for raw ∈ reassembly.
   obtain ⟨raw, hraw_mem, hentry_eq⟩ :=
     Hex.factorWithBound_entry_mem_quadratic_branch_raw f B entry hB_gt_one hdeg
       hquad hentry_mem
   -- Primitivity of squareFreeCore via the Mathlib bridge.
-  have hcore_primitive :
-      Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore :=
-    IntReductionMod.zpoly_primitive_of_toPolynomial_isPrimitive
-      (IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive
-        f hf_ne)
+  have hcore_primitive :=
+    IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf_ne
   have hcore_pos :
       0 < Hex.DensePoly.leadingCoeff
         (Hex.normalizeForFactor f).squareFreeCore :=
@@ -2795,8 +2971,10 @@ theorem factor_quadratic_branch_entry_irreducible_of_quadraticRoots
 Per-branch HO-1 component for the slow-path **quadratic integer-root** arm of
 the capstone `factor_irreducible_of_nonUnit` (#4170): every entry recorded by
 `Hex.factorWithBound f B` in this arm is `Hex.ZPoly.Irreducible`, given the
-branch markers, the `hfast_none` slow-dispatch witness, and the reassembly
-expansion-complete side condition.
+branch markers and the `hfast_none` slow-dispatch witness. The reassembly
+expansion-complete side condition is discharged internally via
+`IntReductionMod.reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`
+(#4747), so the umbrella no longer requires an explicit `hcomplete` premise.
 
 The slow-quadratic branch is reachable through the public `Hex.factor` entry
 exactly when `factorFastFactorsWithBound f B = none` (so the public
@@ -2855,21 +3033,21 @@ theorem factor_slow_quadratic_branch_entry_irreducible_of_choosePrimeData
       Hex.quadraticIntegerRootFactors?
         (Hex.normalizeForFactor f).squareFreeCore = some coreFactors)
     (hfast_none : Hex.factorFastFactorsWithBound f B = none)
-    (hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList)
-    (hcomplete :
-      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
-        coreFactors) :
+    (hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList) :
     Hex.ZPoly.Irreducible entry.1 := by
+  -- Discharge the reassembly expansion-complete side condition internally
+  -- using the quadratic-arm discharger (#4747).
+  have hcomplete :
+      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f) coreFactors :=
+    IntReductionMod.reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero
+      f hf_ne hquad
   -- Branch-shape lemma: entry = normalizeFactorSign raw for raw ∈ reassembly.
   obtain ⟨raw, hraw_mem, hentry_eq⟩ :=
     Hex.factorWithBound_entry_mem_slow_quadratic_branch_raw f B entry hdeg
       hquad hfast_none hentry_mem
   -- Primitivity of squareFreeCore via the Mathlib bridge.
-  have hcore_primitive :
-      Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore :=
-    IntReductionMod.zpoly_primitive_of_toPolynomial_isPrimitive
-      (IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive
-        f hf_ne)
+  have hcore_primitive :=
+    IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf_ne
   have hcore_pos :
       0 < Hex.DensePoly.leadingCoeff
         (Hex.normalizeForFactor f).squareFreeCore :=
@@ -2889,89 +3067,21 @@ theorem factor_slow_quadratic_branch_entry_irreducible_of_choosePrimeData
   exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hraw_irr
 
 set_option maxHeartbeats 4000000 in
-/-- **#4561 HO-1 substrate — slow-path exhaustive arm umbrella.**
+/-- Abstract-bound variant of
+`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux`: the
+concrete inner-form Mignotte precision on the squarefree core
+`2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.normalizeForFactor f).squareFreeCore < d.p ^ d.k`
+is replaced by `2 * B' < d.p ^ d.k` against an abstract bound `B'`, paired
+with the leading-coefficient bound on the core
+(`(Hex.DensePoly.leadingCoeff core).natAbs ≤ B'`) and the universal divisor
+coefficient bound (`∀ g ∣ core, ∀ i, (g.coeff i).natAbs ≤ B'`).
 
-Per-branch HO-1 component for the slow-path **exhaustive recombination** arm of
-the capstone `factor_irreducible_of_nonUnit` (#4170): every entry recorded by
-`Hex.factorWithBound f (Hex.ZPoly.defaultFactorCoeffBound f)` in this slow
-exhaustive branch is `Hex.ZPoly.Irreducible`, given `f ≠ 0`, the branch marker
-`hbranch`, the executable `choosePrimeData?` success witness `hchoose`, and the
-explicit substrate-shim premises listed below.
-
-Specialises the outer-bound slow-path wrapper #4537
-(`factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence`
-in `HexBerlekampZassenhausMathlib/Basic.lean`) by:
-
-* discharging the wrapper's `h` premise via the #4543 substrate constructor
-  `henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData`;
-* discharging the wrapper's `hpartition` via the #4554 substrate constructor
-  `liftedFactorSubsetPartition_outerBound_of_choosePrimeData`;
-* composing the lifted-factor monicness / natDegree-positivity / injectivity
-  umbrellas (`henselLiftData_liftedFactor_monic_of_choosePrimeData` and the
-  two `_of_factorsModPBerlekampForm` siblings #4556, #4559) with the four
-  boundary dischargers `factorsModP_monic_of_factorsModPBerlekampForm` (#4567),
-  `factorsModP_ne_nil_of_factorsModPBerlekampForm` (#4570),
-  `factorsModP_polyProduct_congr_of_factorsModPBerlekampForm` (#4573), and
-  `factorsModP_coprime_of_factorsModPBerlekampForm` (#4574), fed in turn by
-  the `choosePrimeData?_factorsModP_berlekamp_form` and
-  `choosePrimeData?_isGoodPrime` provenance chains from `hchoose`;
-* deriving `hcore_ne` from `hcore_monic`, `hcore_record` from the branch
-  marker `hbranch.2.1`, `hB_ne_zero` from
-  `defaultFactorCoeffBound_pos_of_ne_zero` (#4637), and `hd_modulus`
-  from `precisionForCoeffBound_spec` combined with `B ≥ 1`;
-* internally case-splitting via
-  `factorWithBound_entry_mem_exhaustive_branch_xPower_or_core_of_reassemblyComplete`
-  on whether the entry's raw source is an extracted `X`-power factor (closed
-  by `xPowerFactorArray_irreducible`) or an exhaustive core factor (closed by
-  the wrapper itself).
-
-The umbrella inherits three explicit substrate-shim premises that document
-genuine gaps in the discharger stack at the time of landing:
-
-* **Gap 1** — `hcore_monic`: the squarefree core is not generally monic
-  (`(normalizeForFactor f).squareFreeCore` is primitive with positive leading
-  coefficient via `squareFreeCore_leadingCoeff_pos_of_ne_zero` but the
-  leading coefficient can exceed `1`). Removable when the wrapper's
-  `Monic core` premise is relaxed to `Primitive + 0 < leadingCoeff` (or when
-  an internal monicising-by-scaling refactor lands).
-* **Gap 2** — `hcomplete`: no
-  `reassemblyExpansionComplete_exhaustive_of_ne_zero` discharger exists
-  analogous to `reassemblyExpansionComplete_constant_of_ne_zero` (#4585 /
-  PR #4598) for the constant arm. The exhaustive arm's `coreFactors`
-  depends on the recombination output shape rather than a fixed array, so a
-  separate substrate sub-issue is required.
-* **Gap 3** — `hprecision`: requires the core-shape Mignotte invariant
-  `2 * defaultFactorCoeffBound core < d.p ^ d.k`. The closed
-  `precisionForCoeffBound_spec` gives the *outer*-shape variant
-  `2 * defaultFactorCoeffBound f < d.p ^ d.k`; bridging to the core shape
-  requires the monotonicity question tracked by #4539 (closed without
-  resolution; the recommended fix is the abstract-bound refactor of
-  `centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision`).
-
-(The sibling Gap 3a/3b shim premises `hB_ne_zero` / `hd_modulus` were
-discharged by #4637 via `defaultFactorCoeffBound_pos_of_ne_zero` and
-`precisionForCoeffBound_spec`.)
-
-Downstream consumers (notably the HO-1 capstone #4170) must thread the three
-shim premises until the substrate work lands. A follow-up issue can then
-drop them and recover the minimal-hypotheses umbrella signature. Until
-then, the umbrella delivers exactly the chain of substrate composition
-specified by #4561 with the substrate gaps relocated to explicit premises
-in keeping with the narrowed-scope precedent set by the sibling fast-path
-arm umbrellas (#4564 / #4565 / #4571 / #4575).
-
-The slow-path constant and quadratic sub-branches are tracked separately
-(`squareFreeCore.degree?.getD 0 = 0` and `quadraticIntegerRootFactors? =
-some _` respectively); the fast BHKS branch is gated on directive #2567.
-
-**#4848:** the original `hcomplete` premise (Gap 2) is no longer free.
-The public surface
-`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData` derives it
-from `reassemblyExpansionComplete_exhaustive_of_ne_zero` before invoking
-this internal residual; the residual is exposed via a private auxiliary
-so the heartbeat-sensitive wrapper application here is not re-elaborated
-through the discharger. -/
-private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux
+The proof body mirrors the (now-wrapper) original verbatim except that the
+forward call to
+`factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence`
+becomes its `_of_bound` sibling (#4947), threading `B'`, `hcore_lc_le`,
+`hvalid`, `hprecision`. -/
+private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux_of_bound
     (f : Hex.ZPoly) (hf_ne : f ≠ 0)
     (entry : Hex.ZPoly × Nat)
     (hbranch : Hex.factorWithBoundUsesExhaustiveBranch f
@@ -2988,9 +3098,13 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.defaultFactorCoeffBound f)
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)))
+    (B' : Nat)
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff
+        (Hex.normalizeForFactor f).squareFreeCore).natAbs ≤ B')
+    (hvalid : ∀ g : Hex.ZPoly, g ∣ (Hex.normalizeForFactor f).squareFreeCore →
+      ∀ i, (g.coeff i).natAbs ≤ B')
     (hprecision :
-      2 * Hex.ZPoly.defaultFactorCoeffBound
-        (Hex.normalizeForFactor f).squareFreeCore <
+      2 * B' <
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p ^
           Hex.precisionForCoeffBound
             (Hex.ZPoly.defaultFactorCoeffBound f)
@@ -3001,12 +3115,7 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
   have hdeg : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 :=
     hbranch.2.1
   -- Discharge `hcore_ne` from `hcore_monic`.
-  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 := by
-    intro hzero
-    have hlead : Hex.DensePoly.leadingCoeff
-        (Hex.normalizeForFactor f).squareFreeCore = 1 := hcore_monic
-    rw [hzero] at hlead
-    exact absurd hlead (by decide)
+  have hcore_ne := zpoly_ne_zero_of_monic hcore_monic
   -- Provenance facts from `hchoose`.
   have hp_prime : Hex.Nat.Prime
       (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p :=
@@ -3111,68 +3220,184 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
     rw [hentry_eq]
     exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible
       (Hex.xPowerFactorArray_irreducible (Hex.normalizeForFactor f).xPower raw hx)
-  · -- Exhaustive-core case: apply the outer-bound slow-path wrapper.
-    exact factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence
+  · -- Exhaustive-core case: apply the outer-bound slow-path wrapper's
+    -- `_of_bound` sibling (#4947).
+    have hcore_primitive := zpoly_primitive_of_monic hcore_monic
+    have hcore_lc_pos := zpoly_lc_pos_of_monic hcore_monic
+    exact factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
       hbranch hentry_mem
       (henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData f)
       (liftedFactorSubsetPartition_outerBound_of_choosePrimeData f hf_ne)
-      hcore_ne hcore_monic hcore_record hB_ne_zero
+      hcore_ne hcore_primitive hcore_lc_pos hcore_record hB_ne_zero
       hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
-      hd_liftedFactor_inj hprecision ⟨raw, hcore_mem, hentry_eq⟩
+      hd_liftedFactor_inj B' hcore_lc_le hvalid hprecision
+      ⟨raw, hcore_mem, hentry_eq⟩
 
 set_option maxHeartbeats 4000000 in
-/-- **#4806 HO-1 substrate — exhaustive-arm expansion-precondition packaging
-(precursor to #4627).**
+/-- **#4561 HO-1 substrate — slow-path exhaustive arm umbrella.**
 
-Companion to the slow-path exhaustive-arm umbrella
-`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData` (#4561):
-delivers, for the default `Hex.factorWithBound` precision in the slow
-exhaustive arm, the per-element preconditions of
-`Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition`
-that are currently provable from the existing wrapper stack. #4627 will
-consume this packaging together with the #4759 repeated-part `factorPower`
-decomposition to discharge `reassemblyExpansionComplete_exhaustive_of_ne_zero`.
+Per-branch HO-1 component for the slow-path **exhaustive recombination** arm of
+the capstone `factor_irreducible_of_nonUnit` (#4170): every entry recorded by
+`Hex.factorWithBound f (Hex.ZPoly.defaultFactorCoeffBound f)` in this slow
+exhaustive branch is `Hex.ZPoly.Irreducible`, given `f ≠ 0`, the branch marker
+`hbranch`, the executable `choosePrimeData?` success witness `hchoose`, and the
+explicit substrate-shim premises listed below.
 
-The three conjuncts are routed as follows:
+Specialises the outer-bound slow-path wrapper #4537
+(`factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence`
+in `HexBerlekampZassenhausMathlib/Basic.lean`) by:
 
-* `Hex.shouldRecordPolynomialFactor q = true`
-  — via `Hex.exhaustiveCoreFactorsWithBound_shouldRecord` from the branch-
-  derived `Hex.shouldRecordPolynomialFactor (Hex.normalizeForFactor f).squareFreeCore = true`;
-* `Hex.normalizeFactorSign q = q`
-  — via `Hex.exhaustiveCoreFactorsWithBound_normalizeFactorSign` from
-  `Hex.squareFreeCore_normalizeFactorSign_of_ne_zero`;
-* `Hex.ZPoly.Irreducible q`
-  — via `exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence`
-  at the outer-bound shape (the same wrapper consumed by the sibling umbrella).
+* discharging the wrapper's `h` premise via the #4543 substrate constructor
+  `henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData`;
+* discharging the wrapper's `hpartition` via the #4554 substrate constructor
+  `liftedFactorSubsetPartition_outerBound_of_choosePrimeData`;
+* composing the lifted-factor monicness / natDegree-positivity / injectivity
+  umbrellas (`henselLiftData_liftedFactor_monic_of_choosePrimeData` and the
+  two `_of_factorsModPBerlekampForm` siblings #4556, #4559) with the four
+  boundary dischargers `factorsModP_monic_of_factorsModPBerlekampForm` (#4567),
+  `factorsModP_ne_nil_of_factorsModPBerlekampForm` (#4570),
+  `factorsModP_polyProduct_congr_of_factorsModPBerlekampForm` (#4573), and
+  `factorsModP_coprime_of_factorsModPBerlekampForm` (#4574), fed in turn by
+  the `choosePrimeData?_factorsModP_berlekamp_form` and
+  `choosePrimeData?_isGoodPrime` provenance chains from `hchoose`;
+* deriving `hcore_ne` from `hcore_monic`, `hcore_record` from the branch
+  marker `hbranch.2.1`, `hB_ne_zero` from
+  `defaultFactorCoeffBound_pos_of_ne_zero` (#4637), and `hd_modulus`
+  from `precisionForCoeffBound_spec` combined with `B ≥ 1`;
+* internally case-splitting via
+  `factorWithBound_entry_mem_exhaustive_branch_xPower_or_core_of_reassemblyComplete`
+  on whether the entry's raw source is an extracted `X`-power factor (closed
+  by `xPowerFactorArray_irreducible`) or an exhaustive core factor (closed by
+  the wrapper itself).
 
-**Substrate gaps — narrowed scope per #4806.** The expansion wrapper additionally
-requires `Hex.DensePoly.Monic q` and `0 < q.degree?.getD 0` on every emitted
-factor. Neither is currently exposed for arbitrary `Hex.recombineExhaustive`
-output: by inspection of `Hex.recombinationSearchModAux`, every emitted factor
-is structurally
-`Hex.normalizeFactorSign (Hex.ZPoly.primitivePart (Hex.centeredLiftPoly
-  (Array.polyProduct selected.toArray) modulus))` for some `selected` ranging
-over `Hex.subsetSplits d.liftedFactors.toList`. Monicness and positive degree
-both then follow from `recombinationCandidate_monic` (`HexBerlekampZassenhausMathlib/Basic.lean`)
-and `natDegree_toPolynomial_recombinationCandidate_eq_sum`, but only after a
-bridge identifying each emitted `selected` with `liftedSubsetSelectedList d S`
-for some `LiftedFactorSubset d`. That bridge has not yet been built — neither
-`recombineExhaustive_monic` nor `recombineExhaustive_natDegree_pos` (nor any
-generalisation through `recombinationSearchMod`) exists in
-`HexBerlekampZassenhaus/Basic.lean`. Both pieces are deferred to a successor
-substrate sub-issue. Until that lands, downstream consumer #4627 must thread
-the missing monicness and positive-degree facts as additional hypotheses,
-mirroring the gap-shim precedent set by the sibling umbrella's `hcomplete`
-and `hprecision` premises (Gap 2 and Gap 3 of the #4561 documentation).
+The umbrella inherits three explicit substrate-shim premises that document
+genuine gaps in the discharger stack at the time of landing:
 
-The four substrate-shim premises (`hf_ne`, `hbranch`, `hchoose`, `hcore_monic`,
-`hprecision`) match the sibling umbrella verbatim so the two theorems share
-their substrate-derivation idiom and downstream callers can thread both with
-the same evidence bundle. Notably absent from this signature: the `hcomplete`
-premise (this packaging is precisely the substrate #4627 will use to discharge
-that premise) and the `hentry_mem` premise (this packaging yields a universal
-conclusion over the entire core-factors array). -/
-theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData
+* **Gap 1** — `hcore_monic`: the squarefree core is not generally monic
+  (`(normalizeForFactor f).squareFreeCore` is primitive with positive leading
+  coefficient via `squareFreeCore_leadingCoeff_pos_of_ne_zero` but the
+  leading coefficient can exceed `1`). Removable when the wrapper's
+  `Monic core` premise is relaxed to `Primitive + 0 < leadingCoeff` (or when
+  an internal monicising-by-scaling refactor lands).
+* **Gap 2** — `hcomplete`: no
+  `reassemblyExpansionComplete_exhaustive_of_ne_zero` discharger exists
+  analogous to `reassemblyExpansionComplete_constant_of_ne_zero` (#4585 /
+  PR #4598) for the constant arm. The exhaustive arm's `coreFactors`
+  depends on the recombination output shape rather than a fixed array, so a
+  separate substrate sub-issue is required.
+* **Gap 3** — `hprecision`: requires the core-shape Mignotte invariant
+  `2 * defaultFactorCoeffBound core < d.p ^ d.k`. The closed
+  `precisionForCoeffBound_spec` gives the *outer*-shape variant
+  `2 * defaultFactorCoeffBound f < d.p ^ d.k`; bridging to the core shape
+  requires the monotonicity question tracked by #4539 (closed without
+  resolution; the recommended fix is the abstract-bound refactor of
+  `centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision`).
+
+(The sibling Gap 3a/3b shim premises `hB_ne_zero` / `hd_modulus` were
+discharged by #4637 via `defaultFactorCoeffBound_pos_of_ne_zero` and
+`precisionForCoeffBound_spec`.)
+
+Downstream consumers (notably the HO-1 capstone #4170 / #4819)
+currently route through the public umbrella's `_of_bound` sibling
+`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound`
+(which discharges Gap 3 against an abstract bound) and supply
+`hcore_monic` directly. Closing the
+remaining Gap 1 requires a directive-level decision per #4880; see
+the **#4880 / #4940** addendum below.
+
+The slow-path constant and quadratic sub-branches are tracked separately
+(`squareFreeCore.degree?.getD 0 = 0` and `quadraticIntegerRootFactors? =
+some _` respectively); the fast BHKS branch is gated on directive #2567.
+
+**#4848:** the original `hcomplete` premise (Gap 2) is no longer free.
+The public surface
+`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData` derives it
+from `reassemblyExpansionComplete_exhaustive_of_ne_zero` before invoking
+this internal residual; the residual is exposed via a private auxiliary
+so the heartbeat-sensitive wrapper application here is not re-elaborated
+through the discharger.
+
+**#4982:** the original `hprecision` shim (Gap 3) now has an
+abstract-bound route. The sibling
+`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound`
+(landed in PR #4982 as
+`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound`)
+replaces the core-shape
+`hprecision` with the abstract triple `(B', hcore_lc_le, hvalid,
+hprecision : 2 * B' < d.p ^ d.k)`. Downstream consumers wanting
+to discharge `hprecision` against an outer-shape Mignotte witness
+(notably the HO-1 capstone #4170 / #4819) should route through the
+`_of_bound` sibling rather than the wrapper here.
+
+**#4880 / #4940:** the original `hcore_monic` shim (Gap 1) is
+directive-level blocked. The #4940 substrate audit established that
+the upstream `multifactorLiftQuadratic_each_monic`
+(`HexHensel/QuadraticMultifactor.lean:1196`) carries a per-output
+monicness conclusion that is false for non-monic primitive core, so
+the helper-2/3/4 substrate chain cannot supply a `_of_primitive_pos_lc_core`
+sibling at the present API surface. Removal of Gap 1 from this umbrella
+requires a directive-level architectural decision per #4880
+(Option A — consumer-side recombination invariant co-redesign across
+the `_of_primitive_pos_lc_core` chain; Option B — executable-side
+monicising-by-scaling refactor of `exhaustiveCoreFactorsWithBound`
+or a `henselLiftData_scaled` variant).
+
+Thin wrapper over
+`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux_of_bound`
+that instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound
+(Hex.normalizeForFactor f).squareFreeCore` and discharges the abstract
+bound hypotheses via `defaultFactorCoeffBound_valid` paired with
+`leadingCoeff_eq_coeff_last`. -/
+private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
+    (entry : Hex.ZPoly × Nat)
+    (hbranch : Hex.factorWithBoundUsesExhaustiveBranch f
+      (Hex.ZPoly.defaultFactorCoeffBound f))
+    (hentry_mem : entry ∈ (Hex.factorWithBound f
+      (Hex.ZPoly.defaultFactorCoeffBound f)).factors.toList)
+    (hchoose : Hex.choosePrimeData?
+      (Hex.normalizeForFactor f).squareFreeCore = some
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore))
+    (hcore_monic : Hex.DensePoly.Monic
+      (Hex.normalizeForFactor f).squareFreeCore)
+    (hcomplete : Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
+      (Hex.exhaustiveCoreFactorsWithBound
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.defaultFactorCoeffBound f)
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)))
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound
+        (Hex.normalizeForFactor f).squareFreeCore <
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p ^
+          Hex.precisionForCoeffBound
+            (Hex.ZPoly.defaultFactorCoeffBound f)
+            (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p) :
+    Hex.ZPoly.Irreducible entry.1 := by
+  -- Discharge `hcore_ne` from `hcore_monic` (needed by the dischargers below).
+  have hcore_ne := zpoly_ne_zero_of_monic hcore_monic
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
+  exact factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux_of_bound
+    f hf_ne entry hbranch hentry_mem hchoose hcore_monic hcomplete
+    (Hex.ZPoly.defaultFactorCoeffBound
+      (Hex.normalizeForFactor f).squareFreeCore)
+    hcore_lc_le
+    (defaultFactorCoeffBound_valid
+      (Hex.normalizeForFactor f).squareFreeCore hcore_ne)
+    hprecision
+
+set_option maxHeartbeats 4000000 in
+/-- Abstract-bound variant of
+`exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData`:
+the concrete `2 * defaultFactorCoeffBound squareFreeCore < d.p ^ d.k`
+Mignotte precision is replaced by `2 * B' < d.p ^ d.k` against an
+abstract bound `B'`, paired with the leading-coefficient bound on the
+core and the universal divisor coefficient bound `∀ g ∣ core, ∀ i,
+(g.coeff i).natAbs ≤ B'`. The proof body mirrors the (now-wrapper)
+original verbatim, except that the forward call to
+`exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence`
+becomes its `_of_bound` sibling, threading `B'`, `hcore_lc_le`,
+`hvalid`, `hprecision`. -/
+theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData_of_bound
     (f : Hex.ZPoly) (hf_ne : f ≠ 0)
     (hbranch : Hex.factorWithBoundUsesExhaustiveBranch f
       (Hex.ZPoly.defaultFactorCoeffBound f))
@@ -3181,9 +3406,14 @@ theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeDat
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore))
     (hcore_monic : Hex.DensePoly.Monic
       (Hex.normalizeForFactor f).squareFreeCore)
+    (B' : Nat)
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff
+        (Hex.normalizeForFactor f).squareFreeCore).natAbs ≤ B')
+    (hvalid : ∀ g : Hex.ZPoly,
+        g ∣ (Hex.normalizeForFactor f).squareFreeCore →
+        ∀ i, (g.coeff i).natAbs ≤ B')
     (hprecision :
-      2 * Hex.ZPoly.defaultFactorCoeffBound
-        (Hex.normalizeForFactor f).squareFreeCore <
+      2 * B' <
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p ^
           Hex.precisionForCoeffBound
             (Hex.ZPoly.defaultFactorCoeffBound f)
@@ -3206,12 +3436,7 @@ theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeDat
   -- Substrate setup mirrors `factor_exhaustive_branch_entry_irreducible_of_choosePrimeData`.
   have hdeg : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 :=
     hbranch.2.1
-  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 := by
-    intro hzero
-    have hlead : Hex.DensePoly.leadingCoeff
-        (Hex.normalizeForFactor f).squareFreeCore = 1 := hcore_monic
-    rw [hzero] at hlead
-    exact absurd hlead (by decide)
+  have hcore_ne := zpoly_ne_zero_of_monic hcore_monic
   have hp_prime : Hex.Nat.Prime
       (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p :=
     Hex.choosePrimeData?_prime _ _ hchoose
@@ -3310,12 +3535,112 @@ theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeDat
       (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
       (Hex.squareFreeCore_normalizeFactorSign_of_ne_zero f hf_ne)
   · -- Irreducibility on every emitted factor.
-    exact exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence
+    have hcore_primitive := zpoly_primitive_of_monic hcore_monic
+    have hcore_lc_pos := zpoly_lc_pos_of_monic hcore_monic
+    exact exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
       (henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData f)
       (liftedFactorSubsetPartition_outerBound_of_choosePrimeData f hf_ne)
-      hcore_ne hcore_monic hcore_record hB_ne_zero
+      hcore_ne hcore_primitive hcore_lc_pos hcore_record hB_ne_zero
       hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
-      hd_liftedFactor_inj hprecision
+      hd_liftedFactor_inj B' hcore_lc_le hvalid hprecision
+
+/-- **#4806 HO-1 substrate — exhaustive-arm expansion-precondition packaging
+(precursor to #4627).**
+
+Companion to the slow-path exhaustive-arm umbrella
+`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData` (#4561):
+delivers, for the default `Hex.factorWithBound` precision in the slow
+exhaustive arm, the per-element preconditions of
+`Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition`
+that are currently provable from the existing wrapper stack. #4627 will
+consume this packaging together with the #4759 repeated-part `factorPower`
+decomposition to discharge `reassemblyExpansionComplete_exhaustive_of_ne_zero`.
+
+The three conjuncts are routed as follows:
+
+* `Hex.shouldRecordPolynomialFactor q = true`
+  — via `Hex.exhaustiveCoreFactorsWithBound_shouldRecord` from the branch-
+  derived `Hex.shouldRecordPolynomialFactor (Hex.normalizeForFactor f).squareFreeCore = true`;
+* `Hex.normalizeFactorSign q = q`
+  — via `Hex.exhaustiveCoreFactorsWithBound_normalizeFactorSign` from
+  `Hex.squareFreeCore_normalizeFactorSign_of_ne_zero`;
+* `Hex.ZPoly.Irreducible q`
+  — via `exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence`
+  at the outer-bound shape (the same wrapper consumed by the sibling umbrella).
+
+**Substrate gaps — narrowed scope per #4806.** The expansion wrapper additionally
+requires `Hex.DensePoly.Monic q` and `0 < q.degree?.getD 0` on every emitted
+factor. Neither is currently exposed for arbitrary `Hex.recombineExhaustive`
+output: by inspection of `Hex.recombinationSearchModAux`, every emitted factor
+is structurally
+`Hex.normalizeFactorSign (Hex.ZPoly.primitivePart (Hex.centeredLiftPoly
+  (Array.polyProduct selected.toArray) modulus))` for some `selected` ranging
+over `Hex.subsetSplits d.liftedFactors.toList`. Monicness and positive degree
+both then follow from `recombinationCandidate_monic` (`HexBerlekampZassenhausMathlib/Basic.lean`)
+and `natDegree_toPolynomial_recombinationCandidate_eq_sum`, but only after a
+bridge identifying each emitted `selected` with `liftedSubsetSelectedList d S`
+for some `LiftedFactorSubset d`. That bridge has not yet been built — neither
+`recombineExhaustive_monic` nor `recombineExhaustive_natDegree_pos` (nor any
+generalisation through `recombinationSearchMod`) exists in
+`HexBerlekampZassenhaus/Basic.lean`. Both pieces are deferred to a successor
+substrate sub-issue. Until that lands, downstream consumer #4627 must thread
+the missing monicness and positive-degree facts as additional hypotheses,
+mirroring the gap-shim precedent set by the sibling umbrella's `hcomplete`
+and `hprecision` premises (Gap 2 and Gap 3 of the #4561 documentation).
+
+The four substrate-shim premises (`hf_ne`, `hbranch`, `hchoose`, `hcore_monic`,
+`hprecision`) match the sibling umbrella verbatim so the two theorems share
+their substrate-derivation idiom and downstream callers can thread both with
+the same evidence bundle. Notably absent from this signature: the `hcomplete`
+premise (this packaging is precisely the substrate #4627 will use to discharge
+that premise) and the `hentry_mem` premise (this packaging yields a universal
+conclusion over the entire core-factors array).
+
+Thin wrapper over
+`exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData_of_bound`
+that instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound
+(Hex.normalizeForFactor f).squareFreeCore` and discharges the abstract
+bound hypotheses via `defaultFactorCoeffBound_valid` paired with
+`leadingCoeff_eq_coeff_last`. -/
+theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
+    (hbranch : Hex.factorWithBoundUsesExhaustiveBranch f
+      (Hex.ZPoly.defaultFactorCoeffBound f))
+    (hchoose : Hex.choosePrimeData?
+      (Hex.normalizeForFactor f).squareFreeCore = some
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore))
+    (hcore_monic : Hex.DensePoly.Monic
+      (Hex.normalizeForFactor f).squareFreeCore)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound
+        (Hex.normalizeForFactor f).squareFreeCore <
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p ^
+          Hex.precisionForCoeffBound
+            (Hex.ZPoly.defaultFactorCoeffBound f)
+            (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p) :
+    (∀ q ∈ (Hex.exhaustiveCoreFactorsWithBound
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.defaultFactorCoeffBound f)
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)).toList,
+      Hex.shouldRecordPolynomialFactor q = true) ∧
+    (∀ q ∈ (Hex.exhaustiveCoreFactorsWithBound
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.defaultFactorCoeffBound f)
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)).toList,
+      Hex.normalizeFactorSign q = q) ∧
+    (∀ q ∈ (Hex.exhaustiveCoreFactorsWithBound
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.defaultFactorCoeffBound f)
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)).toList,
+      Hex.ZPoly.Irreducible q) := by
+  have hcore_ne := zpoly_ne_zero_of_monic hcore_monic
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
+  exact exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData_of_bound
+    f hf_ne hbranch hchoose hcore_monic
+    (Hex.ZPoly.defaultFactorCoeffBound (Hex.normalizeForFactor f).squareFreeCore)
+    hcore_lc_le
+    (defaultFactorCoeffBound_valid (Hex.normalizeForFactor f).squareFreeCore hcore_ne)
+    hprecision
 
 /-- Divisibility propagation through `List.foldl (· * ·)` on `Hex.ZPoly`: if
 `x` divides the accumulator at any point, it divides the final foldl. Used by
@@ -3389,37 +3714,17 @@ private theorem factorPower_size_lower_bound
         Hex.ZPoly.mul_size_eq_top_succ_of_nonzero _ _ hprev_pos hq_pos
       omega
 
-/-- **#4848 / #4808 residual — exhaustive-arm `reassemblyExpansionComplete`
-discharger.**
-
-Specialised companion to the slow-path exhaustive-arm umbrella
-`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData` (#4561). The
-`hcomplete` premise of that umbrella is exactly
-`Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
-  (Hex.exhaustiveCoreFactorsWithBound ...)`; this discharger constructs that
-witness from the substrate stack the umbrella already exposes:
-
-* the generic Mathlib-bridge assembler
-  `IntReductionMod.reassemblyExpansionComplete_of_irreducible_squarefree_cover`
-  (#4840), composing the repeated-part `factorPower` decomposition (#4759)
-  and the no-tail divisibility lemma (#4807) into the executable
-  expansion contract;
-* the exhaustive-arm emit-side properties:
-  `Hex.exhaustiveCoreFactorsWithBound_product` for the cover identity,
-  `Hex.exhaustiveCoreFactorsWithBound_monic` and
-  `Hex.exhaustiveCoreFactorsWithBound_degree_pos` (new) for the monicness
-  and positive-degree per-factor preconditions, and the
-  `exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData`
-  package (#4806) for irreducibility / sign-normalisation;
-* a fuel bound, derived by combining the factorPower divisibility chain
-  (each emitted factor's `factorPower` divides the foldl product, hence the
-  repeated part) with the `factorPower_size_lower_bound` size estimate.
-
-After this lands, callers of the exhaustive umbrella no longer need to thread
-a free `hcomplete` premise; the umbrella's other shim premises (`hcore_monic`
-Gap 1 and `hprecision` Gap 3) are retained until their respective substrate
-follow-ups land. -/
-theorem reassemblyExpansionComplete_exhaustive_of_ne_zero
+/-- Abstract-bound variant of `reassemblyExpansionComplete_exhaustive_of_ne_zero`:
+the concrete `2 * defaultFactorCoeffBound squareFreeCore < d.p ^ d.k` Mignotte
+precision is replaced by `2 * B' < d.p ^ d.k` against an abstract bound `B'`,
+paired with the leading-coefficient bound on the core and the universal
+divisor coefficient bound `∀ g ∣ core, ∀ i, (g.coeff i).natAbs ≤ B'`. The
+proof body mirrors the (now-wrapper) original verbatim, except the forward
+call to
+`exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData`
+becomes its `_of_bound` sibling, threading `B'`, `hcore_lc_le`, `hvalid`,
+`hprecision`. -/
+theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_bound
     (f : Hex.ZPoly) (hf_ne : f ≠ 0)
     (hbranch : Hex.factorWithBoundUsesExhaustiveBranch f
       (Hex.ZPoly.defaultFactorCoeffBound f))
@@ -3428,9 +3733,14 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore))
     (hcore_monic : Hex.DensePoly.Monic
       (Hex.normalizeForFactor f).squareFreeCore)
+    (B' : Nat)
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff
+        (Hex.normalizeForFactor f).squareFreeCore).natAbs ≤ B')
+    (hvalid : ∀ g : Hex.ZPoly,
+        g ∣ (Hex.normalizeForFactor f).squareFreeCore →
+        ∀ i, (g.coeff i).natAbs ≤ B')
     (hprecision :
-      2 * Hex.ZPoly.defaultFactorCoeffBound
-        (Hex.normalizeForFactor f).squareFreeCore <
+      2 * B' <
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p ^
           Hex.precisionForCoeffBound
             (Hex.ZPoly.defaultFactorCoeffBound f)
@@ -3444,13 +3754,7 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero
   -- hypothesis + monicness.
   have hdeg :
       (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 := hbranch.2.1
-  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 := by
-    intro h0
-    have hlc : Hex.DensePoly.leadingCoeff
-        (Hex.normalizeForFactor f).squareFreeCore = 1 := hcore_monic
-    rw [h0] at hlc
-    have hzero : Hex.DensePoly.leadingCoeff (0 : Hex.ZPoly) = 0 := by decide
-    omega
+  have hcore_ne := zpoly_ne_zero_of_monic hcore_monic
   have hcore_record : Hex.shouldRecordPolynomialFactor
       (Hex.normalizeForFactor f).squareFreeCore = true := by
     have hne_one : (Hex.normalizeForFactor f).squareFreeCore ≠ 1 := by
@@ -3466,10 +3770,11 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero
       exact Hex.DensePoly.degree?_C_getD (-1)
     unfold Hex.shouldRecordPolynomialFactor
     simp [hcore_ne, hne_one, hne_neg_one]
-  -- #4806 package for `(shouldRecord, normalizeFactorSign, Irreducible)`.
+  -- #4806 package for `(shouldRecord, normalizeFactorSign, Irreducible)` at the
+  -- abstract bound `B'`.
   obtain ⟨_, hnorm, hirr⟩ :=
-    exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData
-      f hf_ne hbranch hchoose hcore_monic hprecision
+    exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData_of_bound
+      f hf_ne hbranch hchoose hcore_monic B' hcore_lc_le hvalid hprecision
   -- New substrate: monicness and positive-degree of every emitted factor.
   have hmonic :=
     Hex.exhaustiveCoreFactorsWithBound_monic
@@ -3509,12 +3814,10 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero
           qe ∈ coreFactors.toList.zip exponents →
             qe.2 + 1 ≤ (Hex.normalizeForFactor f).repeatedPart.size + 1 := by
     intro exponents _ hdecomp qe hqe
-    -- qe.1 ∈ coreFactors.toList from the zip membership.
     have hq_mem : qe.1 ∈ coreFactors.toList := by
       have := List.of_mem_zip hqe
       exact this.1
     have hq_deg : 0 < qe.1.degree?.getD 0 := hdegree qe.1 hq_mem
-    -- factorPower qe.1 qe.2 ≠ 0 (from q.size ≥ 2 by factorPower size lower bound).
     have hfp_size_lb : qe.2 + 1 ≤ (Hex.Factorization.factorPower qe.1 qe.2).size :=
       factorPower_size_lower_bound hq_deg qe.2
     have hfp_ne : Hex.Factorization.factorPower qe.1 qe.2 ≠ 0 := by
@@ -3522,7 +3825,6 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero
       have : (Hex.Factorization.factorPower qe.1 qe.2).size = 0 := by
         rw [h0]; rfl
       omega
-    -- factorPower divides the foldl product.
     have hfp_in_map :
         Hex.Factorization.factorPower qe.1 qe.2 ∈
           (coreFactors.toList.zip exponents).map
@@ -3534,12 +3836,10 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero
           ((coreFactors.toList.zip exponents).map
             (fun qe => Hex.Factorization.factorPower qe.1 qe.2)).foldl (· * ·) 1 :=
       mem_dvd_foldl_mul_zpoly _ 1 _ hfp_in_map
-    -- Lift to divisibility of repeatedPart.
     have hfp_dvd_rp :
         Hex.Factorization.factorPower qe.1 qe.2 ∣
           (Hex.normalizeForFactor f).repeatedPart := by
       rw [hdecomp]; exact hfp_dvd
-    -- Size bound from divisibility.
     have hsize_le : (Hex.Factorization.factorPower qe.1 qe.2).size ≤
         (Hex.normalizeForFactor f).repeatedPart.size :=
       Hex.ZPoly.size_le_of_dvd_nonzero hfp_ne hrp_ne hfp_dvd_rp
@@ -3548,28 +3848,369 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero
   exact IntReductionMod.reassemblyExpansionComplete_of_irreducible_squarefree_cover
     f hf_ne coreFactors hirr hprod hnorm hmonic hdegree hfuel
 
+/-- **#4848 / #4808 residual — exhaustive-arm `reassemblyExpansionComplete`
+discharger.**
+
+Specialised companion to the slow-path exhaustive-arm umbrella
+`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData` (#4561). The
+`hcomplete` premise of that umbrella is exactly
+`Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
+  (Hex.exhaustiveCoreFactorsWithBound ...)`; this discharger constructs that
+witness from the substrate stack the umbrella already exposes:
+
+* the generic Mathlib-bridge assembler
+  `IntReductionMod.reassemblyExpansionComplete_of_irreducible_squarefree_cover`
+  (#4840), composing the repeated-part `factorPower` decomposition (#4759)
+  and the no-tail divisibility lemma (#4807) into the executable
+  expansion contract;
+* the exhaustive-arm emit-side properties:
+  `Hex.exhaustiveCoreFactorsWithBound_product` for the cover identity,
+  `Hex.exhaustiveCoreFactorsWithBound_monic` and
+  `Hex.exhaustiveCoreFactorsWithBound_degree_pos` (new) for the monicness
+  and positive-degree per-factor preconditions, and the
+  `exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData`
+  package (#4806) for irreducibility / sign-normalisation;
+* a fuel bound, derived by combining the factorPower divisibility chain
+  (each emitted factor's `factorPower` divides the foldl product, hence the
+  repeated part) with the `factorPower_size_lower_bound` size estimate.
+
+After this lands, callers of the exhaustive umbrella no longer need to thread
+a free `hcomplete` premise; the umbrella's other shim premises (`hcore_monic`
+Gap 1 and `hprecision` Gap 3) are retained until their respective substrate
+follow-ups land.
+
+Thin wrapper over
+`reassemblyExpansionComplete_exhaustive_of_ne_zero_of_bound`
+that instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound
+(Hex.normalizeForFactor f).squareFreeCore` and discharges the abstract
+bound hypotheses via `defaultFactorCoeffBound_valid` paired with
+`leadingCoeff_eq_coeff_last`. -/
+theorem reassemblyExpansionComplete_exhaustive_of_ne_zero
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
+    (hbranch : Hex.factorWithBoundUsesExhaustiveBranch f
+      (Hex.ZPoly.defaultFactorCoeffBound f))
+    (hchoose : Hex.choosePrimeData?
+      (Hex.normalizeForFactor f).squareFreeCore = some
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore))
+    (hcore_monic : Hex.DensePoly.Monic
+      (Hex.normalizeForFactor f).squareFreeCore)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound
+        (Hex.normalizeForFactor f).squareFreeCore <
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p ^
+          Hex.precisionForCoeffBound
+            (Hex.ZPoly.defaultFactorCoeffBound f)
+            (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p) :
+    Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
+      (Hex.exhaustiveCoreFactorsWithBound
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.defaultFactorCoeffBound f)
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)) := by
+  have hcore_ne := zpoly_ne_zero_of_monic hcore_monic
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
+  exact reassemblyExpansionComplete_exhaustive_of_ne_zero_of_bound
+    f hf_ne hbranch hchoose hcore_monic
+    (Hex.ZPoly.defaultFactorCoeffBound (Hex.normalizeForFactor f).squareFreeCore)
+    hcore_lc_le
+    (defaultFactorCoeffBound_valid (Hex.normalizeForFactor f).squareFreeCore hcore_ne)
+    hprecision
+
+/-- Abstract-bound variant of
+`reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_core`:
+the concrete `2 * defaultFactorCoeffBound squareFreeCore < d.p ^ d.k` Mignotte
+precision is replaced by `2 * B' < d.p ^ d.k` against an abstract bound `B'`,
+paired with the leading-coefficient bound on the core and the universal
+divisor coefficient bound `∀ g ∣ core, ∀ i, (g.coeff i).natAbs ≤ B'`. The
+proof body mirrors the (now-wrapper) original verbatim, except the forward
+call to
+`exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData`
+becomes its `_of_bound` sibling, threading `B'`, `hcore_lc_le`, `hvalid`,
+`hprecision`. -/
+theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_core_of_bound
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
+    (hbranch : Hex.factorWithBoundUsesExhaustiveBranch f
+      (Hex.ZPoly.defaultFactorCoeffBound f))
+    (hchoose : Hex.choosePrimeData?
+      (Hex.normalizeForFactor f).squareFreeCore = some
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore))
+    (hcore_primitive : Hex.ZPoly.Primitive
+      (Hex.normalizeForFactor f).squareFreeCore)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff
+      (Hex.normalizeForFactor f).squareFreeCore)
+    (hcore_monic : Hex.DensePoly.Monic
+      (Hex.normalizeForFactor f).squareFreeCore)
+    (B' : Nat)
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff
+        (Hex.normalizeForFactor f).squareFreeCore).natAbs ≤ B')
+    (hvalid : ∀ g : Hex.ZPoly,
+        g ∣ (Hex.normalizeForFactor f).squareFreeCore →
+        ∀ i, (g.coeff i).natAbs ≤ B')
+    (hprecision :
+      2 * B' <
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p ^
+          Hex.precisionForCoeffBound
+            (Hex.ZPoly.defaultFactorCoeffBound f)
+            (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p) :
+    Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
+      (Hex.exhaustiveCoreFactorsWithBound
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.defaultFactorCoeffBound f)
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)) := by
+  -- Substrate setup: discharge `hcore_record` and `hcore_ne` from `hbranch` +
+  -- `hcore_lc_pos`.
+  have hdeg :
+      (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 := hbranch.2.1
+  have hcore_ne := zpoly_ne_zero_of_pos_lc hcore_lc_pos
+  have hcore_record : Hex.shouldRecordPolynomialFactor
+      (Hex.normalizeForFactor f).squareFreeCore = true := by
+    have hne_one : (Hex.normalizeForFactor f).squareFreeCore ≠ 1 := by
+      intro hone
+      apply hdeg
+      rw [hone]
+      exact Hex.DensePoly.degree?_C_getD 1
+    have hne_neg_one :
+        (Hex.normalizeForFactor f).squareFreeCore ≠ Hex.DensePoly.C (-1 : Int) := by
+      intro hneg
+      apply hdeg
+      rw [hneg]
+      exact Hex.DensePoly.degree?_C_getD (-1)
+    unfold Hex.shouldRecordPolynomialFactor
+    simp [hcore_ne, hne_one, hne_neg_one]
+  -- #4806 package for `(shouldRecord, normalizeFactorSign, Irreducible)` at the
+  -- abstract bound `B'`.
+  obtain ⟨_, hnorm, hirr⟩ :=
+    exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData_of_bound
+      f hf_ne hbranch hchoose hcore_monic B' hcore_lc_le hvalid hprecision
+  -- Weakened-input substrates: positive-degree from #4946 deliv 6, primitivity
+  -- from #4946 deliv 5.
+  have hdegree :=
+    Hex.exhaustiveCoreFactorsWithBound_degree_pos_of_primitive_pos_lc_core
+      (Hex.normalizeForFactor f).squareFreeCore
+      (Hex.ZPoly.defaultFactorCoeffBound f)
+      (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+      hcore_primitive hcore_lc_pos hcore_record
+  -- polyProduct = squareFreeCore.
+  have hprod :=
+    Hex.exhaustiveCoreFactorsWithBound_product
+      (Hex.normalizeForFactor f).squareFreeCore
+      (Hex.ZPoly.defaultFactorCoeffBound f)
+      (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+  set coreFactors := Hex.exhaustiveCoreFactorsWithBound
+      (Hex.normalizeForFactor f).squareFreeCore
+      (Hex.ZPoly.defaultFactorCoeffBound f)
+      (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+    with hcoreFactors_def
+  -- Per-factor pos_lc: combine `q ≠ 0` (from irreducibility) with
+  -- `normalizeFactorSign q = q` (forcing `leadingCoeff q ≥ 0`).
+  have hpos_lc : ∀ q ∈ coreFactors.toList, 0 < Hex.DensePoly.leadingCoeff q := by
+    intro q hq
+    have hq_ne : q ≠ 0 := (hirr q hq).not_zero
+    have hq_norm : Hex.normalizeFactorSign q = q := hnorm q hq
+    have hq_nonneg : 0 ≤ Hex.DensePoly.leadingCoeff q := by
+      by_contra hlt
+      have hlt' : Hex.DensePoly.leadingCoeff q < 0 := lt_of_not_ge hlt
+      unfold Hex.normalizeFactorSign at hq_norm
+      rw [if_pos hlt'] at hq_norm
+      apply hq_ne
+      apply Hex.DensePoly.ext_coeff
+      intro n
+      have hcoeff :
+          (Hex.DensePoly.scale (-1 : Int) q).coeff n = q.coeff n := by
+        rw [hq_norm]
+      rw [Hex.DensePoly.coeff_scale (R := Int) (-1) q n
+        (by decide : (-1 : Int) * 0 = 0)] at hcoeff
+      rw [Hex.DensePoly.coeff_zero]
+      omega
+    have hq_lc_ne : Hex.DensePoly.leadingCoeff q ≠ 0 :=
+      Hex.ZPoly.leadingCoeff_ne_zero_of_ne_zero q hq_ne
+    omega
+  -- Fuel bound: identical to the monic version.
+  have hrp_ne :
+      (Hex.normalizeForFactor f).repeatedPart ≠ 0 :=
+    Hex.repeatedPart_ne_zero_of_ne_zero f hf_ne
+  have hfuel :
+      ∀ exponents : List Nat,
+        exponents.length = coreFactors.size →
+        (Hex.normalizeForFactor f).repeatedPart =
+          ((coreFactors.toList.zip exponents).map
+            (fun qe => Hex.Factorization.factorPower qe.1 qe.2)).foldl (· * ·) 1 →
+        ∀ (qe : Hex.ZPoly × Nat),
+          qe ∈ coreFactors.toList.zip exponents →
+            qe.2 + 1 ≤ (Hex.normalizeForFactor f).repeatedPart.size + 1 := by
+    intro exponents _ hdecomp qe hqe
+    have hq_mem : qe.1 ∈ coreFactors.toList := by
+      have := List.of_mem_zip hqe
+      exact this.1
+    have hq_deg : 0 < qe.1.degree?.getD 0 := hdegree qe.1 hq_mem
+    have hfp_size_lb : qe.2 + 1 ≤ (Hex.Factorization.factorPower qe.1 qe.2).size :=
+      factorPower_size_lower_bound hq_deg qe.2
+    have hfp_ne : Hex.Factorization.factorPower qe.1 qe.2 ≠ 0 := by
+      intro h0
+      have : (Hex.Factorization.factorPower qe.1 qe.2).size = 0 := by
+        rw [h0]; rfl
+      omega
+    have hfp_in_map :
+        Hex.Factorization.factorPower qe.1 qe.2 ∈
+          (coreFactors.toList.zip exponents).map
+            (fun qe => Hex.Factorization.factorPower qe.1 qe.2) := by
+      rw [List.mem_map]
+      exact ⟨qe, hqe, rfl⟩
+    have hfp_dvd :
+        Hex.Factorization.factorPower qe.1 qe.2 ∣
+          ((coreFactors.toList.zip exponents).map
+            (fun qe => Hex.Factorization.factorPower qe.1 qe.2)).foldl (· * ·) 1 :=
+      mem_dvd_foldl_mul_zpoly _ 1 _ hfp_in_map
+    have hfp_dvd_rp :
+        Hex.Factorization.factorPower qe.1 qe.2 ∣
+          (Hex.normalizeForFactor f).repeatedPart := by
+      rw [hdecomp]; exact hfp_dvd
+    have hsize_le : (Hex.Factorization.factorPower qe.1 qe.2).size ≤
+        (Hex.normalizeForFactor f).repeatedPart.size :=
+      Hex.ZPoly.size_le_of_dvd_nonzero hfp_ne hrp_ne hfp_dvd_rp
+    omega
+  -- Apply the `_of_pos_lc` assembler from #4949.
+  exact IntReductionMod.reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_pos_lc
+    f hf_ne coreFactors hirr hprod hnorm hpos_lc hdegree hfuel
+
+/-- Weakened-conclusion sibling of
+`reassemblyExpansionComplete_exhaustive_of_ne_zero`: the per-emitted-factor
+monicness requirement on the assembler call is dropped, threading
+`Primitive` + `0 < leadingCoeff` on the squareFreeCore instead.
+
+Three substitutions versus the monic original:
+
+* per-factor `Monic q` is replaced by per-factor `0 < leadingCoeff q`,
+  derived from `exhaustiveCoreFactorsWithBound_primitive` (#4946 deliv 5)
+  together with the `normalizeFactorSign q = q` invariant (existing,
+  `exhaustiveCoreFactorsWithBound_normalizeFactorSign`) — same shape as
+  the quadratic-arm derivation in
+  `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`
+  above;
+* the per-factor positive-degree substrate is supplied by
+  `exhaustiveCoreFactorsWithBound_degree_pos_of_primitive_pos_lc_core`
+  (#4946 deliv 6) instead of the monic-input
+  `exhaustiveCoreFactorsWithBound_degree_pos`;
+* the mid-layer assembler is
+  `reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_pos_lc`
+  (the `_of_pos_lc` sibling landed via #4949) rather than the monic
+  parent.
+
+The `hcore_monic` premise is retained as a temporary upstream-consumer
+shim: the upstream
+`exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData`
+call internally threads `hcore_monic` into the helper-2/3/4 substrate,
+which the #4940 investigation confirmed is architecturally infeasible to
+relax at the present API surface. This sibling drops the assembler-side
+monic dependency only; full relaxation awaits a directive-level refactor
+of helpers 2-4 per #4880.
+
+Thin wrapper over
+`reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_core_of_bound`
+that instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound
+(Hex.normalizeForFactor f).squareFreeCore` and discharges the abstract
+bound hypotheses via `defaultFactorCoeffBound_valid` paired with
+`leadingCoeff_eq_coeff_last`. -/
+theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_core
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
+    (hbranch : Hex.factorWithBoundUsesExhaustiveBranch f
+      (Hex.ZPoly.defaultFactorCoeffBound f))
+    (hchoose : Hex.choosePrimeData?
+      (Hex.normalizeForFactor f).squareFreeCore = some
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore))
+    (hcore_primitive : Hex.ZPoly.Primitive
+      (Hex.normalizeForFactor f).squareFreeCore)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff
+      (Hex.normalizeForFactor f).squareFreeCore)
+    (hcore_monic : Hex.DensePoly.Monic
+      (Hex.normalizeForFactor f).squareFreeCore)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound
+        (Hex.normalizeForFactor f).squareFreeCore <
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p ^
+          Hex.precisionForCoeffBound
+            (Hex.ZPoly.defaultFactorCoeffBound f)
+            (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p) :
+    Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
+      (Hex.exhaustiveCoreFactorsWithBound
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.defaultFactorCoeffBound f)
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)) := by
+  have hcore_ne := zpoly_ne_zero_of_pos_lc hcore_lc_pos
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
+  exact reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_core_of_bound
+    f hf_ne hbranch hchoose hcore_primitive hcore_lc_pos hcore_monic
+    (Hex.ZPoly.defaultFactorCoeffBound (Hex.normalizeForFactor f).squareFreeCore)
+    hcore_lc_le
+    (defaultFactorCoeffBound_valid (Hex.normalizeForFactor f).squareFreeCore hcore_ne)
+    hprecision
+
+/-- Abstract-bound variant of
+`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData`: the
+concrete inner-form Mignotte precision on the squarefree core
+`2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.normalizeForFactor f).squareFreeCore < d.p ^ d.k`
+is replaced by `2 * B' < d.p ^ d.k` against an abstract bound `B'`, paired
+with the leading-coefficient bound on the core
+(`(Hex.DensePoly.leadingCoeff core).natAbs ≤ B'`) and the universal divisor
+coefficient bound (`∀ g ∣ core, ∀ i, (g.coeff i).natAbs ≤ B'`).
+
+The proof body mirrors the (now-wrapper) original verbatim — the two
+forward calls to `reassemblyExpansionComplete_exhaustive_of_ne_zero` and
+`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux`
+become their `_of_bound` siblings, threading `B'`, `hcore_lc_le`,
+`hvalid`, `hprecision`. -/
+theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
+    (entry : Hex.ZPoly × Nat)
+    (hbranch : Hex.factorWithBoundUsesExhaustiveBranch f
+      (Hex.ZPoly.defaultFactorCoeffBound f))
+    (hentry_mem : entry ∈ (Hex.factorWithBound f
+      (Hex.ZPoly.defaultFactorCoeffBound f)).factors.toList)
+    (hchoose : Hex.choosePrimeData?
+      (Hex.normalizeForFactor f).squareFreeCore = some
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore))
+    (hcore_monic : Hex.DensePoly.Monic
+      (Hex.normalizeForFactor f).squareFreeCore)
+    (B' : Nat)
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff
+        (Hex.normalizeForFactor f).squareFreeCore).natAbs ≤ B')
+    (hvalid : ∀ g : Hex.ZPoly,
+        g ∣ (Hex.normalizeForFactor f).squareFreeCore →
+        ∀ i, (g.coeff i).natAbs ≤ B')
+    (hprecision :
+      2 * B' <
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p ^
+          Hex.precisionForCoeffBound
+            (Hex.ZPoly.defaultFactorCoeffBound f)
+            (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p) :
+    Hex.ZPoly.Irreducible entry.1 :=
+  factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux_of_bound
+    f hf_ne entry hbranch hentry_mem hchoose hcore_monic
+    (reassemblyExpansionComplete_exhaustive_of_ne_zero_of_bound
+      f hf_ne hbranch hchoose hcore_monic
+      B' hcore_lc_le hvalid hprecision)
+    B' hcore_lc_le hvalid hprecision
+
 /-- **#4561 / #4848 HO-1 substrate — slow exhaustive-arm umbrella, with the
 `hcomplete` premise dropped via the #4848 discharger.**
 
-Public surface of the exhaustive-arm HO-1 umbrella. The free `hcomplete`
-premise documented as "Gap 2" in #4561 is now discharged internally via
-`reassemblyExpansionComplete_exhaustive_of_ne_zero` (#4848), so downstream
-callers (notably the HO-1 capstone #4170) only need to thread the
-remaining Gap 1 (`hcore_monic`) and Gap 3 (`hprecision`) shim premises
-until those substrate follow-ups land.
+Public surface of the exhaustive-arm HO-1 umbrella. Gap 2
+(`hcomplete`) is discharged internally via
+`reassemblyExpansionComplete_exhaustive_of_ne_zero` (#4848). Gap 3
+(`hprecision`) is exposed in this wrapper's signature against the
+core-shape Mignotte threshold; downstream consumers wanting the
+abstract-bound surface (notably the HO-1 capstone #4170 / #4819)
+should route through the `_of_bound` sibling
+`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound`
+(PR #4982). Gap 1 (`hcore_monic`) remains directive-level blocked per
+#4880 / #4940 audit; see the `_aux` docstring above for the full
+architectural finding.
 
-The body proceeds in two steps:
-
-1. Apply `reassemblyExpansionComplete_exhaustive_of_ne_zero` to construct
-   the `hcomplete` witness from `(f, hf_ne, hbranch, hchoose, hcore_monic,
-   hprecision)`.
-2. Apply the internal residual
-   `factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux`,
-   which carries the existing wrapper composition unchanged.
-
-Factoring through the internal residual avoids the heartbeat spike the
-previous direct rewiring attempt exposed at the existing wrapper
-application. -/
+Thin wrapper over
+`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound`
+that instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound
+(Hex.normalizeForFactor f).squareFreeCore` and discharges the abstract
+bound hypotheses via `defaultFactorCoeffBound_valid` paired with
+`leadingCoeff_eq_coeff_last`. -/
 theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData
     (f : Hex.ZPoly) (hf_ne : f ≠ 0)
     (entry : Hex.ZPoly × Nat)
@@ -3580,13 +4221,15 @@ theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData
     (hchoose : Hex.choosePrimeData?
       (Hex.normalizeForFactor f).squareFreeCore = some
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore))
-    -- Gap 1: explicit until a `Monic`-relaxation refactor of the upstream
-    -- wrapper lands (or a producer for `squareFreeCore`-monicness arrives).
+    -- Gap 1: directive-level blocked per #4880 / #4940 (helpers 2/3/4
+    -- architectural infeasibility at the present API surface).
     (hcore_monic : Hex.DensePoly.Monic
       (Hex.normalizeForFactor f).squareFreeCore)
-    -- Gap 3 (substrate): explicit until the squareFreeCore-bound monotonicity
-    -- (#4539, closed without resolution) is supplied by the abstract-bound
-    -- refactor at the wrapper's call site.
+    -- Gap 3 (substrate): explicit on this wrapper; downstream consumers
+    -- wanting an outer-shape bound should route through the `_of_bound`
+    -- sibling
+    -- `factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound`
+    -- (PR #4982).
     (hprecision :
       2 * Hex.ZPoly.defaultFactorCoeffBound
         (Hex.normalizeForFactor f).squareFreeCore <
@@ -3594,11 +4237,14 @@ theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData
           Hex.precisionForCoeffBound
             (Hex.ZPoly.defaultFactorCoeffBound f)
             (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p) :
-    Hex.ZPoly.Irreducible entry.1 :=
-  factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux
+    Hex.ZPoly.Irreducible entry.1 := by
+  have hcore_ne := zpoly_ne_zero_of_monic hcore_monic
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
+  exact factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound
     f hf_ne entry hbranch hentry_mem hchoose hcore_monic
-    (reassemblyExpansionComplete_exhaustive_of_ne_zero
-      f hf_ne hbranch hchoose hcore_monic hprecision)
+    (Hex.ZPoly.defaultFactorCoeffBound (Hex.normalizeForFactor f).squareFreeCore)
+    hcore_lc_le
+    (defaultFactorCoeffBound_valid (Hex.normalizeForFactor f).squareFreeCore hcore_ne)
     hprecision
 
 end HexBerlekampZassenhausMathlib
