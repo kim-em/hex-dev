@@ -4216,6 +4216,33 @@ theorem recombinationCandidate_eq_factor_of_henselSubsetCorrespondence
     (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
     hcore_ne hcore_monic hcore_record hirr hfactor_prim hfactor_norm hrep hprecision
 
+/-- Abstract-bound variant of
+`scaledRecombinationCandidate_eq_factor_of_recovery`: takes `B' : Nat`,
+`hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`, and
+`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`defaultFactorCoeffBound core` precision constraint.  The body mirrors
+the original but invokes the `_of_bound` centered-lift recovery theorem
+instead of the core-shape one.  The original core-shape theorem is a
+wrapper around this variant. -/
+theorem scaledRecombinationCandidate_eq_factor_of_recovery_of_bound
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (B' : Nat)
+    (hvalid : ∀ i, (factor.coeff i).natAbs ≤ B')
+    (hcore_ne : core ≠ 0)
+    (hfactor_prim : Hex.ZPoly.content factor = 1)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hprecision : 2 * B' < d.p ^ d.k) :
+    scaledRecombinationCandidate core d S = factor := by
+  unfold scaledRecombinationCandidate
+  rw [centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound
+        B' hvalid hrep hprecision]
+  have hprimitive : Hex.ZPoly.primitivePart factor = factor :=
+    Hex.ZPoly.primitivePart_eq_self_of_primitive factor
+      (by simpa [Hex.ZPoly.Primitive] using hfactor_prim)
+  rw [hprimitive]
+  exact hfactor_norm
+
 /--
 Primitive non-monic recovery substrate: the scaled recombination candidate
 equals the represented integer `factor` under primitive/sign-normalised
@@ -4235,6 +4262,11 @@ Downstream consumers (#4644, #4646, #4647, #4648) call this in place of the
 monic-core recovery when the core hypotheses are
 `core ≠ 0 ∧ Primitive core ∧ 0 < leadingCoeff core`; the primitive/sign
 hypotheses on `factor` are supplied by their primitive-factor packaging step.
+
+This is a thin wrapper over
+`scaledRecombinationCandidate_eq_factor_of_recovery_of_bound` that
+instantiates `B' := defaultFactorCoeffBound core` and discharges
+`hvalid` via `defaultFactorCoeffBound_valid core hcore_ne factor hdvd`.
 -/
 theorem scaledRecombinationCandidate_eq_factor_of_recovery
     {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
@@ -4244,15 +4276,36 @@ theorem scaledRecombinationCandidate_eq_factor_of_recovery
     (hfactor_norm : Hex.normalizeFactorSign factor = factor)
     (hrep : RepresentsIntegerFactorAtLift core d factor S)
     (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
-    scaledRecombinationCandidate core d S = factor := by
-  unfold scaledRecombinationCandidate
-  rw [centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
-        hcore_ne hdvd hrep hprecision]
-  have hprimitive : Hex.ZPoly.primitivePart factor = factor :=
-    Hex.ZPoly.primitivePart_eq_self_of_primitive factor
-      (by simpa [Hex.ZPoly.Primitive] using hfactor_prim)
-  rw [hprimitive]
-  exact hfactor_norm
+    scaledRecombinationCandidate core d S = factor :=
+  scaledRecombinationCandidate_eq_factor_of_recovery_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound core)
+    (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
+    hcore_ne hfactor_prim hfactor_norm hrep hprecision
+
+/-- Abstract-bound variant of
+`scaledRecombinationCandidate_eq_factor_of_henselSubsetCorrespondence`:
+takes `B' : Nat`, `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`, and
+`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`defaultFactorCoeffBound core` precision constraint.  Body is a
+one-line delegation to
+`scaledRecombinationCandidate_eq_factor_of_recovery_of_bound`. -/
+theorem scaledRecombinationCandidate_eq_factor_of_henselSubsetCorrespondence_of_bound
+    {core factor : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
+    {S : LiftedFactorSubset d}
+    (_h :
+      HenselSubsetCorrespondenceHypotheses core B primeData d
+        admissiblePrime successfulLift)
+    (B' : Nat)
+    (hvalid : ∀ i, (factor.coeff i).natAbs ≤ B')
+    (hcore_ne : core ≠ 0)
+    (hfactor_prim : Hex.ZPoly.content factor = 1)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hprecision : 2 * B' < d.p ^ d.k) :
+    scaledRecombinationCandidate core d S = factor :=
+  scaledRecombinationCandidate_eq_factor_of_recovery_of_bound
+    B' hvalid hcore_ne hfactor_prim hfactor_norm hrep hprecision
 
 /--
 Hensel-correspondence wrapper for the primitive-core scaled recovery theorem.
@@ -4263,6 +4316,11 @@ proof-side subset is known to represent an irreducible integer divisor at the
 Hensel lift, the *scaled* recombination candidate is exactly that factor under
 the primitive/sign-normalised hypotheses required by the centered-lift
 recovery bound.
+
+This is a thin wrapper over
+`scaledRecombinationCandidate_eq_factor_of_henselSubsetCorrespondence_of_bound`
+that instantiates `B' := defaultFactorCoeffBound core` and discharges
+`hvalid` via `defaultFactorCoeffBound_valid core hcore_ne factor hdvd`.
 -/
 theorem scaledRecombinationCandidate_eq_factor_of_henselSubsetCorrespondence
     {core factor : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
@@ -4278,8 +4336,10 @@ theorem scaledRecombinationCandidate_eq_factor_of_henselSubsetCorrespondence
     (hrep : RepresentsIntegerFactorAtLift core d factor S)
     (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
     scaledRecombinationCandidate core d S = factor :=
-  scaledRecombinationCandidate_eq_factor_of_recovery
-    hcore_ne hdvd hfactor_prim hfactor_norm hrep hprecision
+  scaledRecombinationCandidate_eq_factor_of_henselSubsetCorrespondence_of_bound
+    _h (Hex.ZPoly.defaultFactorCoeffBound core)
+    (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
+    hcore_ne hfactor_prim hfactor_norm hrep hprecision
 
 /--
 A monic integer polynomial automatically has primitive content and is its own
