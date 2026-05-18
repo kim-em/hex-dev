@@ -632,6 +632,20 @@ theorem toPolynomial_isPrimitive_of_zpoly_primitive
   have hone : r.natAbs ∣ 1 := by exact_mod_cast hr_dvd_content
   exact Int.isUnit_iff_natAbs_eq.mpr (Nat.eq_one_of_dvd_one hone)
 
+/-- The product `squareFreeCore * repeatedPart` extracted from a nonzero
+integer polynomial by `Hex.normalizeForFactor` is executably primitive. -/
+theorem normalizeForFactor_squareFreeCore_mul_repeatedPart_primitive_of_ne_zero
+    (f : Hex.ZPoly) (hf : f ≠ 0) :
+    Hex.ZPoly.Primitive
+      ((Hex.normalizeForFactor f).squareFreeCore *
+        (Hex.normalizeForFactor f).repeatedPart) := by
+  have hcore_ne :
+      (Hex.ZPoly.extractXPower (Hex.ZPoly.primitivePart f)).core ≠ 0 :=
+    Hex.extractXPower_core_ne_zero_of_ne_zero f hf
+  simpa [Hex.normalizeForFactor] using
+    Hex.ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive
+      _ hcore_ne
+
 /--
 The square-free core extracted by `normalizeForFactor` is primitive
 over `Polynomial ℤ` whenever the input integer polynomial is nonzero.
@@ -650,16 +664,8 @@ theorem normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive
     (f : Hex.ZPoly) (hf : f ≠ 0) :
     (HexPolyZMathlib.toPolynomial
         (Hex.normalizeForFactor f).squareFreeCore).IsPrimitive := by
-  have hcore_ne :
-      (Hex.ZPoly.extractXPower (Hex.ZPoly.primitivePart f)).core ≠ 0 :=
-    Hex.extractXPower_core_ne_zero_of_ne_zero f hf
-  have hprod_prim :
-      Hex.ZPoly.Primitive
-        ((Hex.normalizeForFactor f).squareFreeCore *
-          (Hex.normalizeForFactor f).repeatedPart) := by
-    simpa [Hex.normalizeForFactor] using
-      Hex.ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive
-        _ hcore_ne
+  have hprod_prim :=
+    normalizeForFactor_squareFreeCore_mul_repeatedPart_primitive_of_ne_zero f hf
   have hprod_isPrim :
       (HexPolyZMathlib.toPolynomial
           ((Hex.normalizeForFactor f).squareFreeCore *
@@ -682,16 +688,8 @@ theorem normalizeForFactor_repeatedPart_toPolynomial_isPrimitive
     (f : Hex.ZPoly) (hf : f ≠ 0) :
     (HexPolyZMathlib.toPolynomial
         (Hex.normalizeForFactor f).repeatedPart).IsPrimitive := by
-  have hcore_ne :
-      (Hex.ZPoly.extractXPower (Hex.ZPoly.primitivePart f)).core ≠ 0 :=
-    Hex.extractXPower_core_ne_zero_of_ne_zero f hf
-  have hprod_prim :
-      Hex.ZPoly.Primitive
-        ((Hex.normalizeForFactor f).squareFreeCore *
-          (Hex.normalizeForFactor f).repeatedPart) := by
-    simpa [Hex.normalizeForFactor] using
-      Hex.ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive
-        _ hcore_ne
+  have hprod_prim :=
+    normalizeForFactor_squareFreeCore_mul_repeatedPart_primitive_of_ne_zero f hf
   have hprod_isPrim :
       (HexPolyZMathlib.toPolynomial
           ((Hex.normalizeForFactor f).squareFreeCore *
@@ -939,23 +937,14 @@ theorem normalizeForFactor_squareFreeCore_toPolynomial_squarefree
     Squarefree
       (HexPolyZMathlib.toPolynomial
         (Hex.normalizeForFactor f).squareFreeCore) := by
-  -- Executable `SquareFreeRat` invariant on the square-free core.
-  have hcore_ne :
-      (Hex.ZPoly.extractXPower (Hex.ZPoly.primitivePart f)).core ≠ 0 :=
-    Hex.extractXPower_core_ne_zero_of_ne_zero f hf
   -- The square-free core of `normalizeForFactor f` is nonzero.  We argue
   -- from primitivity of the product `squareFreeCore * repeatedPart`:
   -- if the core were zero, the product would be zero, contradicting
   -- primitivity (the zero polynomial has zero content).
   have hcore_sq_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 := by
     intro hzero
-    have hprod_prim :
-        Hex.ZPoly.Primitive
-          ((Hex.normalizeForFactor f).squareFreeCore *
-            (Hex.normalizeForFactor f).repeatedPart) := by
-      simpa [Hex.normalizeForFactor] using
-        Hex.ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive
-          _ hcore_ne
+    have hprod_prim :=
+      normalizeForFactor_squareFreeCore_mul_repeatedPart_primitive_of_ne_zero f hf
     have hprod_ne :
         (Hex.normalizeForFactor f).squareFreeCore *
           (Hex.normalizeForFactor f).repeatedPart ≠ 0 :=
