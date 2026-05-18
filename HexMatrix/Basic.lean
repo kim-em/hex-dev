@@ -170,6 +170,20 @@ instance [Mul R] [Add R] [OfNat R 0] : HMul (Matrix R n m) (Vector R m) (Vector 
 instance [Mul R] [Add R] [OfNat R 0] : HMul (Matrix R n m) (Matrix R m k) (Matrix R n k) where
   hMul := mul
 
+/-- Entry characterization for matrix-vector multiplication. -/
+@[simp] theorem mulVec_getElem [Mul R] [Add R] [OfNat R 0]
+    (M : Matrix R n m) (v : Vector R m) (i : Fin n) :
+    (M * v)[i] = dot (row M i) v := by
+  show (mulVec M v)[i] = dot (row M i) v
+  simp [mulVec]
+
+/-- Entry characterization for matrix multiplication. -/
+@[simp] theorem mul_getElem [Mul R] [Add R] [OfNat R 0]
+    (M : Matrix R n m) (N : Matrix R m k) (i : Fin n) (j : Fin k) :
+    (M * N)[i][j] = dot (row M i) (col N j) := by
+  show (mul M N)[i][j] = dot (row M i) (col N j)
+  rw [mul, getElem_ofFn]
+
 private theorem foldl_add_eq_acc_ring {R : Type u} [Lean.Grind.Ring R]
     {α : Type v} (xs : List α) (f : α → R) (acc : R)
     (hf : ∀ x ∈ xs, f x = 0) :
@@ -559,6 +573,12 @@ def ratNormSq (v : Vector Rat n) : Rat :=
 /-- Gram matrix of the rows of a dense matrix. -/
 def gramMatrix [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) : Matrix R n n :=
   ofFn fun i j => Hex.Vector.dotProduct (row M i) (row M j)
+
+/-- Entry characterization for the Gram matrix of the rows of a dense matrix. -/
+@[simp] theorem gramMatrix_getElem [Mul R] [Add R] [OfNat R 0]
+    (M : Matrix R n m) (i j : Fin n) :
+    (gramMatrix M)[i][j] = Hex.Vector.dotProduct (row M i) (row M j) := by
+  rw [gramMatrix, getElem_ofFn]
 
 /-- Leading principal `(k + 1) × (k + 1)` submatrix of a square matrix. -/
 def submatrix (M : Matrix R n n) (k : Fin n) : Matrix R (k.val + 1) (k.val + 1) :=
