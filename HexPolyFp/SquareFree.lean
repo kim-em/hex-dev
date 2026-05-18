@@ -1240,7 +1240,12 @@ private theorem zmod64_mul_zero (a : ZMod64 p) :
     a * 0 = 0 := by
   grind
 
-private theorem leadingCoeff_ne_zero_of_isZero_false
+/-- Nonzero executable `FpPoly` values have nonzero leading coefficient.
+
+The proof converts `isZero = false` to positive dense-polynomial size, then
+uses the invariant that the last stored coefficient of a positive-size dense
+polynomial is nonzero. -/
+theorem fpPoly_leadingCoeff_ne_zero_of_isZero_false
     (f : FpPoly p) (hzero : f.isZero = false) :
     DensePoly.leadingCoeff f ≠ 0 := by
   have hpos : 0 < f.size := by
@@ -1297,7 +1302,7 @@ private theorem normalizeMonic_nonzero_reconstruct
     DensePoly.C (normalizeMonic f).1 * (normalizeMonic f).2 = f := by
   rw [normalizeMonic_nonzero f hzero]
   rw [C_mul_eq_scale, scale_scale]
-  have hlead_ne := leadingCoeff_ne_zero_of_isZero_false f hzero
+  have hlead_ne := fpPoly_leadingCoeff_ne_zero_of_isZero_false f hzero
   rw [zmod64_mul_inv_eq_one_of_prime_ne_zero hp hlead_ne]
   exact scale_one_left f
 
@@ -1312,7 +1317,7 @@ private theorem normalizeMonic_nonzero_monic
     [ZMod64.PrimeModulus p] (f : FpPoly p) (hzero : f.isZero = false) :
     DensePoly.Monic (normalizeMonic f).2 := by
   rw [normalizeMonic_nonzero f hzero]
-  have hlead_ne := leadingCoeff_ne_zero_of_isZero_false f hzero
+  have hlead_ne := fpPoly_leadingCoeff_ne_zero_of_isZero_false f hzero
   have hinv_ne : (DensePoly.leadingCoeff f)⁻¹ ≠ (0 : ZMod64 p) := by
     intro hinv
     change ZMod64.inv (DensePoly.leadingCoeff f) = (0 : ZMod64 p) at hinv
@@ -4710,7 +4715,7 @@ private theorem constant_nonzero_dvd
   have hg_pos : 0 < g.size := size_pos_of_isZero_false g hg_zero
   have hg_size : g.size = 1 := by omega
   let unit := DensePoly.leadingCoeff g
-  have hunit_ne : unit ≠ 0 := leadingCoeff_ne_zero_of_isZero_false g hg_zero
+  have hunit_ne : unit ≠ 0 := fpPoly_leadingCoeff_ne_zero_of_isZero_false g hg_zero
   have hg_eq_C : g = DensePoly.C unit := by
     apply DensePoly.ext_coeff
     intro n
@@ -7124,7 +7129,7 @@ private theorem normalizeMonic_squareFreeContributionReachable
     change DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f = 1
     change (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f).size = 1 at hsize
     let unit := DensePoly.leadingCoeff f
-    have hunit_ne : unit ≠ 0 := leadingCoeff_ne_zero_of_isZero_false f hzero
+    have hunit_ne : unit ≠ 0 := fpPoly_leadingCoeff_ne_zero_of_isZero_false f hzero
     have hinv_ne : unit⁻¹ ≠ 0 :=
       zmod64_inv_ne_zero_of_prime_ne_zero hp hunit_ne
     have hunit_inv : unit⁻¹ * unit = 1 := by
