@@ -3095,9 +3095,7 @@ theorem factor_slow_quadratic_branch_entry_irreducible_of_choosePrimeData
   exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hraw_irr
 
 set_option maxHeartbeats 4000000 in
-/-- **Abstract-bound sibling of the #4561 / #4848 internal residual.**
-
-Abstract-bound `_of_bound` companion to
+/-- Abstract-bound variant of
 `factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux`: the
 concrete inner-form Mignotte precision on the squarefree core
 `2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.normalizeForFactor f).squareFreeCore < d.p ^ d.k`
@@ -3356,7 +3354,14 @@ The public surface
 from `reassemblyExpansionComplete_exhaustive_of_ne_zero` before invoking
 this internal residual; the residual is exposed via a private auxiliary
 so the heartbeat-sensitive wrapper application here is not re-elaborated
-through the discharger. -/
+through the discharger.
+
+Thin wrapper over
+`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux_of_bound`
+that instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound
+(Hex.normalizeForFactor f).squareFreeCore` and discharges the abstract
+bound hypotheses via `defaultFactorCoeffBound_valid` paired with
+`leadingCoeff_eq_coeff_last`. -/
 private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux
     (f : Hex.ZPoly) (hf_ne : f ≠ 0)
     (entry : Hex.ZPoly × Nat)
@@ -3411,6 +3416,11 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
       rw [hlc_zero] at hlc_one
       exact absurd hlc_one (by decide)
     · exact hpos
+  have hcore_dvd_self :
+      (Hex.normalizeForFactor f).squareFreeCore ∣
+        (Hex.normalizeForFactor f).squareFreeCore :=
+    ⟨(1 : Hex.ZPoly),
+      (Hex.DensePoly.mul_one_right_poly _).symm⟩
   -- Discharge `hcore_lc_le` at the default-bound instantiation
   -- via `defaultFactorCoeffBound_valid` paired with `leadingCoeff_eq_coeff_last`
   -- (mirroring the rewiring pattern established by #4935 / #4936 / #4938 / #4944).
@@ -3421,7 +3431,7 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
     have hbound :=
       defaultFactorCoeffBound_valid
         (Hex.normalizeForFactor f).squareFreeCore hcore_ne
-        (Hex.normalizeForFactor f).squareFreeCore (dvd_refl _)
+        (Hex.normalizeForFactor f).squareFreeCore hcore_dvd_self
         ((Hex.normalizeForFactor f).squareFreeCore.size - 1)
     rw [Hex.DensePoly.leadingCoeff_eq_coeff_last _ hcore_size_pos]
     exact hbound
@@ -3435,7 +3445,7 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
     hprecision
 
 set_option maxHeartbeats 4000000 in
-/-- Abstract-bound sibling of
+/-- Abstract-bound variant of
 `exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData`:
 the concrete `2 * defaultFactorCoeffBound squareFreeCore < d.p ^ d.k`
 Mignotte precision is replaced by `2 * B' < d.p ^ d.k` against an
@@ -3796,7 +3806,7 @@ private theorem factorPower_size_lower_bound
         Hex.ZPoly.mul_size_eq_top_succ_of_nonzero _ _ hprev_pos hq_pos
       omega
 
-/-- Abstract-bound sibling of `reassemblyExpansionComplete_exhaustive_of_ne_zero`:
+/-- Abstract-bound variant of `reassemblyExpansionComplete_exhaustive_of_ne_zero`:
 the concrete `2 * defaultFactorCoeffBound squareFreeCore < d.p ^ d.k` Mignotte
 precision is replaced by `2 * B' < d.p ^ d.k` against an abstract bound `B'`,
 paired with the leading-coefficient bound on the core and the universal
@@ -3965,7 +3975,14 @@ witness from the substrate stack the umbrella already exposes:
 After this lands, callers of the exhaustive umbrella no longer need to thread
 a free `hcomplete` premise; the umbrella's other shim premises (`hcore_monic`
 Gap 1 and `hprecision` Gap 3) are retained until their respective substrate
-follow-ups land. -/
+follow-ups land.
+
+Thin wrapper over
+`reassemblyExpansionComplete_exhaustive_of_ne_zero_of_bound`
+that instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound
+(Hex.normalizeForFactor f).squareFreeCore` and discharges the abstract
+bound hypotheses via `defaultFactorCoeffBound_valid` paired with
+`leadingCoeff_eq_coeff_last`. -/
 theorem reassemblyExpansionComplete_exhaustive_of_ne_zero
     (f : Hex.ZPoly) (hf_ne : f ≠ 0)
     (hbranch : Hex.factorWithBoundUsesExhaustiveBranch f
@@ -4018,7 +4035,7 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero
     (defaultFactorCoeffBound_valid (Hex.normalizeForFactor f).squareFreeCore hcore_ne)
     hprecision
 
-/-- Abstract-bound sibling of
+/-- Abstract-bound variant of
 `reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_core`:
 the concrete `2 * defaultFactorCoeffBound squareFreeCore < d.p ^ d.k` Mignotte
 precision is replaced by `2 * B' < d.p ^ d.k` against an abstract bound `B'`,
@@ -4209,7 +4226,14 @@ call internally threads `hcore_monic` into the helper-2/3/4 substrate,
 which the #4940 investigation confirmed is architecturally infeasible to
 relax at the present API surface. This sibling drops the assembler-side
 monic dependency only; full relaxation awaits a directive-level refactor
-of helpers 2-4 per #4880. -/
+of helpers 2-4 per #4880.
+
+Thin wrapper over
+`reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_core_of_bound`
+that instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound
+(Hex.normalizeForFactor f).squareFreeCore` and discharges the abstract
+bound hypotheses via `defaultFactorCoeffBound_valid` paired with
+`leadingCoeff_eq_coeff_last`. -/
 theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_core
     (f : Hex.ZPoly) (hf_ne : f ≠ 0)
     (hbranch : Hex.factorWithBoundUsesExhaustiveBranch f
