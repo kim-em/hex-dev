@@ -3584,9 +3584,11 @@ def linearPow (f : FpPoly p) : Nat → FpPoly p
 
 @[simp] theorem linearPow_zero (f : FpPoly p) : linearPow f 0 = 1 := rfl
 
+/-- Successor exponents append one right multiplication by the base. -/
 theorem linearPow_succ (f : FpPoly p) (n : Nat) :
     linearPow f (n + 1) = linearPow f n * f := rfl
 
+/-- Successor exponents may also be read as one left multiplication by the base. -/
 theorem linearPow_succ_left (f : FpPoly p) (n : Nat) :
     linearPow f (n + 1) = f * linearPow f n := by
   induction n with
@@ -3600,6 +3602,12 @@ theorem linearPow_succ_left (f : FpPoly p) (n : Nat) :
         _ = f * (linearPow f n * f) := mul_assoc f (linearPow f n) f
         _ = f * linearPow f (n + 1) := rfl
 
+/-- The first `linearPow` of a polynomial is the polynomial itself. -/
+theorem linearPow_one (f : FpPoly p) :
+    linearPow f 1 = f := by
+  rw [linearPow_succ, linearPow_zero, one_mul]
+
+/-- `linearPow` turns exponent addition into polynomial multiplication. -/
 theorem linearPow_add (f : FpPoly p) (m n : Nat) :
     linearPow f (m + n) = linearPow f m * linearPow f n := by
   induction n with
@@ -3656,6 +3664,34 @@ theorem linearPow_monomial_one (n : Nat) :
   have h := linearPow_monomial (p := p) 1 n
   rw [Nat.one_mul] at h
   exact h
+
+/-- `linearPow X n` is the degree-`n` monomial. -/
+theorem linearPow_X (n : Nat) :
+    linearPow (FpPoly.X : FpPoly p) n =
+      DensePoly.monomial n (1 : ZMod64 p) := by
+  exact linearPow_monomial_one (p := p) n
+
+private theorem C_mul_C (a b : ZMod64 p) :
+    FpPoly.C a * FpPoly.C b = FpPoly.C (a * b) := by
+  unfold FpPoly.C
+  rw [C_mul_eq_scale]
+  apply DensePoly.ext_coeff
+  intro n
+  have hzero : a * (0 : ZMod64 p) = 0 := by grind
+  rw [DensePoly.coeff_scale _ _ _ hzero, DensePoly.coeff_C, DensePoly.coeff_C]
+  cases n with
+  | zero => rfl
+  | succ n => rfl
+
+/-- `linearPow` of a constant polynomial stays constant. -/
+theorem linearPow_C (c : ZMod64 p) (n : Nat) :
+    linearPow (FpPoly.C c) n = FpPoly.C (c ^ n) := by
+  induction n with
+  | zero =>
+      rw [linearPow_zero, Lean.Grind.Semiring.pow_zero]
+      rfl
+  | succ n ih =>
+      rw [linearPow_succ, ih, Lean.Grind.Semiring.pow_succ, C_mul_C]
 
 /-- The polynomial-level subtraction-multiplication identity: `(P - 1) * Y = P * Y - Y`. -/
 private theorem sub_one_mul_eq (P Y : FpPoly p) :
