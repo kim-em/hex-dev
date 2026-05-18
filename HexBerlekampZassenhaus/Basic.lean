@@ -3486,6 +3486,23 @@ private theorem normalizeFactorSign_idem (g : ZPoly) :
   normalizeFactorSign_eq_self_of_leadingCoeff_nonneg
     (normalizeFactorSign g) (normalizeFactorSign_leadingCoeff_nonneg g)
 
+/-- Sign normalisation preserves primitivity: the `if_neg` branch is the
+identity, and the `if_pos` branch scales by `-1`, which preserves content
+by `DensePoly.content_scale_neg_one`. -/
+private theorem normalizeFactorSign_primitive (f : ZPoly)
+    (h : ZPoly.Primitive f) :
+    ZPoly.Primitive (normalizeFactorSign f) := by
+  unfold normalizeFactorSign
+  by_cases hlead : DensePoly.leadingCoeff f < 0
+  · rw [if_pos hlead]
+    show ZPoly.content (DensePoly.scale (-1 : Int) f) = 1
+    rw [show ZPoly.content (DensePoly.scale (-1 : Int) f)
+          = DensePoly.content (DensePoly.scale (-1 : Int) f) from rfl,
+        DensePoly.content_scale_neg_one f]
+    exact h
+  · rw [if_neg hlead]
+    exact h
+
 /-- Collected factor entries are fixed points of `normalizeFactorSign`. -/
 theorem collectFactorMultiplicities_entry_normalizeFactorSign_id
     (factors : Array ZPoly) (entry : ZPoly × Nat)
