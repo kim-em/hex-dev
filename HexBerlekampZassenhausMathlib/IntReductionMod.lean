@@ -1443,17 +1443,9 @@ theorem normalizeForFactor_repeatedPart_map_intCast_dvd_squareFreeCore_map_intCa
     rw [hP_factor]
     exact associated_unit_mul_left (S * R) (Polynomial.C unit) hCunit_unit
   -- `(primitivePart core).isZero = false` from `core ≠ 0` and `primitivePart core = core`.
-  have hpp_isZero_false : (Hex.ZPoly.primitivePart core).isZero = false := by
-    rw [Hex.DensePoly.isZero_eq_false_iff]
-    have hcore_ne' : Hex.ZPoly.primitivePart core ≠ 0 := by rw [hpp]; exact hcore_ne
-    rcases Nat.eq_zero_or_pos (Hex.ZPoly.primitivePart core).size with hsz | hsz
-    · exfalso
-      apply hcore_ne'
-      apply Hex.DensePoly.ext_coeff
-      intro n
-      rw [Hex.DensePoly.coeff_zero]
-      exact Hex.DensePoly.coeff_eq_zero_of_size_le _ (by omega)
-    · exact hsz
+  have hpp_isZero_false : (Hex.ZPoly.primitivePart core).isZero = false :=
+    (Hex.DensePoly.isZero_eq_false_iff _).mpr
+      (Hex.ZPoly.size_pos_of_ne_zero _ (by rw [hpp]; exact hcore_ne))
   -- Case-split on whether the rational derivative vanishes.
   by_cases hderiv :
       (Hex.DensePoly.derivative
