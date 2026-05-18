@@ -20,8 +20,7 @@ Covered edge cases:
 - unsupported degree zero, unsupported larger binary degree, and an
   unsupported prime outside the committed slice
 - a binary higher-degree `SupportedEntry` (`(2, 4)`) and an odd-prime
-  `SupportedEntry` constructed locally from the public hit lemma and an
-  inline prime witness (`(3, 1)`)
+  `SupportedEntry` slice (`(3, 1)`, `(3, 2)`, `(3, 3)`)
 -/
 
 namespace Hex
@@ -100,25 +99,7 @@ private def coeffs? (p n : Nat) [ZMod64.Bounds p] : Option (List Nat) :=
   some (conwayPoly 2 4 supportedEntry_2_4)
 #guard 0 < FpPoly.degree (conwayPoly 2 4 supportedEntry_2_4)
 
--- Odd-prime entry: `(3, 1)`. No `SupportedEntry` for an odd prime is
--- exported from `HexConway/Basic.lean`, so we construct one locally from
--- the public hit lemma and an inline prime witness for `3`.
-private theorem prime_three : Hex.Nat.Prime 3 := by
-  constructor
-  · decide
-  · intro m hm
-    have hmle : m ≤ 3 := Nat.le_of_dvd (by decide : 0 < 3) hm
-    have hcases : m = 0 ∨ m = 1 ∨ m = 2 ∨ m = 3 := by omega
-    rcases hcases with rfl | rfl | rfl | rfl
-    · simp at hm
-    · exact Or.inl rfl
-    · simp at hm
-    · exact Or.inr rfl
-
-private def supportedEntry_3_1 : SupportedEntry 3 1 :=
-  ⟨luebeckConwayPolynomial_3_1, prime_three,
-    luebeckConwayPolynomial?_hit_3_1⟩
-
+-- Odd-prime entry: `(3, 1)`, using the exported supported entry.
 #guard coeffNats supportedEntry_3_1.poly = [1, 1]
 #guard supportedEntry_3_1.poly = luebeckConwayPolynomial_3_1
 #guard luebeckConwayPolynomial? 3 1 = some supportedEntry_3_1.poly
@@ -126,6 +107,24 @@ private def supportedEntry_3_1 : SupportedEntry 3 1 :=
 #guard luebeckConwayPolynomial? 3 1 =
   some (conwayPoly 3 1 supportedEntry_3_1)
 #guard 0 < FpPoly.degree (conwayPoly 3 1 supportedEntry_3_1)
+
+-- Odd-prime entry: `(3, 2)`, using the exported supported entry.
+#guard coeffNats supportedEntry_3_2.poly = [2, 2, 1]
+#guard supportedEntry_3_2.poly = luebeckConwayPolynomial_3_2
+#guard luebeckConwayPolynomial? 3 2 = some supportedEntry_3_2.poly
+#guard conwayPoly 3 2 supportedEntry_3_2 = luebeckConwayPolynomial_3_2
+#guard luebeckConwayPolynomial? 3 2 =
+  some (conwayPoly 3 2 supportedEntry_3_2)
+#guard 0 < FpPoly.degree (conwayPoly 3 2 supportedEntry_3_2)
+
+-- Odd-prime entry: `(3, 3)`, using the exported supported entry.
+#guard coeffNats supportedEntry_3_3.poly = [1, 2, 0, 1]
+#guard supportedEntry_3_3.poly = luebeckConwayPolynomial_3_3
+#guard luebeckConwayPolynomial? 3 3 = some supportedEntry_3_3.poly
+#guard conwayPoly 3 3 supportedEntry_3_3 = luebeckConwayPolynomial_3_3
+#guard luebeckConwayPolynomial? 3 3 =
+  some (conwayPoly 3 3 supportedEntry_3_3)
+#guard 0 < FpPoly.degree (conwayPoly 3 3 supportedEntry_3_3)
 
 end ConwayConformance
 end Conway

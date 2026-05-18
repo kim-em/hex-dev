@@ -132,7 +132,8 @@ theorem prime_two : Hex.Nat.Prime 2 := by
 instance instPrimeModulusTwo : ZMod64.PrimeModulus 2 :=
   ZMod64.primeModulusOfPrime prime_two
 
-private theorem prime_three : Hex.Nat.Prime 3 := by
+/-- `Hex.Nat.Prime` witness for `p = 3`, the first committed odd Conway prime. -/
+theorem prime_three : Hex.Nat.Prime 3 := by
   constructor
   · decide
   · intro m hm
@@ -2653,6 +2654,22 @@ def supportedEntry_2_6 : SupportedEntry 2 6 :=
   ⟨luebeckConwayPolynomial_2_6,
     supportedEntry_2_1.prime,
     luebeckConwayPolynomial?_hit_2_6⟩
+
+/-- The current committed table supports `C(3, 1)`. -/
+def supportedEntry_3_1 : SupportedEntry 3 1 :=
+  ⟨luebeckConwayPolynomial_3_1, prime_three, luebeckConwayPolynomial?_hit_3_1⟩
+
+/-- The current committed table supports `C(3, 2)`. -/
+def supportedEntry_3_2 : SupportedEntry 3 2 :=
+  ⟨luebeckConwayPolynomial_3_2,
+    supportedEntry_3_1.prime,
+    luebeckConwayPolynomial?_hit_3_2⟩
+
+/-- The current committed table supports `C(3, 3)`. -/
+def supportedEntry_3_3 : SupportedEntry 3 3 :=
+  ⟨luebeckConwayPolynomial_3_3,
+    supportedEntry_3_1.prime,
+    luebeckConwayPolynomial?_hit_3_3⟩
 
 /-- Recover the committed Conway modulus for a supported entry. -/
 def conwayPoly (p n : Nat) [ZMod64.Bounds p] (h : SupportedEntry p n) : FpPoly p :=
