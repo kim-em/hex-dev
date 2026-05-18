@@ -8882,6 +8882,27 @@ theorem exhaustiveCoreFactorsWithBound_shouldRecord
       exact recombineScaledExhaustive_shouldRecord (DensePoly.leadingCoeff core) core
         (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)
 
+/-- Every emitted factor of the exhaustive recombination wrapper is
+primitive when the input core is primitive. The two `#[core]` short-circuit
+branches return the input itself; the genuine recombination branch
+dispatches to `recombineScaledExhaustive_primitive`. -/
+theorem exhaustiveCoreFactorsWithBound_primitive
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    (hcore_primitive : ZPoly.Primitive core) :
+    ∀ factor ∈ (exhaustiveCoreFactorsWithBound core B primeData).toList,
+      ZPoly.Primitive factor := by
+  rw [exhaustiveCoreFactorsWithBound]
+  by_cases hB : B = 0
+  · simp [hB, hcore_primitive]
+  · simp only [hB, if_false]
+    by_cases hempty :
+        (recombineScaledExhaustive (DensePoly.leadingCoeff core) core
+            (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)).isEmpty
+    · simp [hempty, hcore_primitive]
+    · simp only [hempty]
+      exact recombineScaledExhaustive_primitive (DensePoly.leadingCoeff core) core
+        (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)
+
 private theorem bhksRecoverClassified_success_product
     {f : ZPoly} {d : LiftData} {candidates : Array ZPoly}
     (hrecover : bhksRecoverClassified f d = .success candidates) :
