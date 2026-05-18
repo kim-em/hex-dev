@@ -223,6 +223,20 @@ theorem polyProduct_cons_toArray (g : ZPoly) (rest : List ZPoly) :
   simpa [Array.polyProduct, one_mul_zpoly] using
     (list_foldl_mul_eq_mul_foldl_one g rest)
 
+/-- `Array.polyProduct` of a two-element array is the product of the two
+entries. -/
+@[simp]
+theorem polyProduct_pair (g h : ZPoly) :
+    Array.polyProduct #[g, h] = g * h := by
+  simpa [polyProduct_singleton] using polyProduct_cons_toArray g [h]
+
+/-- `Array.polyProduct` over a zero-length replicated list is the
+multiplicative unit. -/
+@[simp]
+theorem polyProduct_replicate_zero_toArray (g : ZPoly) :
+    Array.polyProduct (List.replicate 0 g).toArray = 1 := by
+  rfl
+
 /-- Induction-on-`factors` correctness statement feeding
 `multifactorLift_spec`: the ordered product of the lifted factors is
 congruent to `f` modulo `p^k`, provided each recursive binary split supplies
