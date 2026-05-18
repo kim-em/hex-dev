@@ -10259,9 +10259,15 @@ Together with the forward divisor extraction
 theorem supplies the bidirectional content the main candidate divisibility
 theorem (#4457) needs to relate every `i ∈ T` to a partition-representing
 irreducible divisor of the recombination candidate. -/
-theorem mem_T_iff_exists_irreducibleFactor_representingSubset
+theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_bound
     {core target quotient : Hex.ZPoly} {d : Hex.LiftData}
     {J T : LiftedFactorSubset d}
+    (B' : Nat)
+    (hvalid : ∀ g : Hex.ZPoly,
+      HexPolyZMathlib.toPolynomial g ∈
+        UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial (recombinationCandidate d T)) →
+      ∀ i, (g.coeff i).natAbs ≤ B')
     (hcore_ne : core ≠ 0)
     (hcore_monic : Hex.DensePoly.Monic core)
     (hd_modulus : 2 ≤ d.p ^ d.k)
@@ -10269,7 +10275,7 @@ theorem mem_T_iff_exists_irreducibleFactor_representingSubset
       ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
     (hd_liftedFactor_natDegree_pos :
       ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
-    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hprecision : 2 * B' < d.p ^ d.k)
     (hpartition : LiftedFactorSubsetPartition core d J target)
     (htarget_dvd_core : target ∣ core)
     (hTJ : T ⊆ J)
@@ -10349,8 +10355,8 @@ theorem mem_T_iff_exists_irreducibleFactor_representingSubset
     intro g hgPoly
     obtain ⟨g', S_g, h_eq, h_irr, h_dvd_t, h_dvd_c, h_rep, h_SJ, h_ST,
         h_cont, h_norm⟩ :=
-      exists_representingSubset_of_mem_normalizedFactors_recombinationCandidate
-        hcore_ne hcore_monic hd_modulus hd_liftedFactor_monic hprecision
+      exists_representingSubset_of_mem_normalizedFactors_recombinationCandidate_of_bound
+        B' hvalid hcore_ne hcore_monic hd_modulus hd_liftedFactor_monic hprecision
         hpartition htarget_dvd_core hTJ hrecord hquot hgPoly
     have hg_eq : g' = g := by
       have := congrArg HexPolyZMathlib.ofPolynomial h_eq
@@ -10450,14 +10456,75 @@ theorem mem_T_iff_exists_irreducibleFactor_representingSubset
       Polynomial.natDegree_multiset_prod_of_monic _ hnf_monic]
   -- Apply the finite degree-cover lemma.
   obtain ⟨g, hg_in_gs, hi_in_Sg⟩ :=
-    exists_mem_representedSubset_of_degree_cover
-      hcore_ne hcore_monic hd_modulus hd_liftedFactor_monic
+    exists_mem_representedSubset_of_degree_cover_of_bound
+      B' hcore_ne hcore_monic hd_modulus hd_liftedFactor_monic
       hd_liftedFactor_natDegree_pos hprecision hpartition htarget_dvd_core hTJ
-      gs S_of h_each h_pairwise h_degree_total hi
+      gs S_of h_each (fun g hg => hvalid g (mem_gs.mp hg))
+      h_pairwise h_degree_total hi
   -- Extract the bridge witness for `g`.
   have hg_norm := mem_gs.mp hg_in_gs
   obtain ⟨h_irr, _, h_dvd_c, h_rep, h_SJ, _, _, _⟩ := h_each g hg_in_gs
   exact ⟨g, S_of g, h_irr, h_dvd_c, h_rep, h_SJ, hi_in_Sg⟩
+
+/-- Default-bound wrapper for
+`mem_T_iff_exists_irreducibleFactor_representingSubset_of_bound`. -/
+theorem mem_T_iff_exists_irreducibleFactor_representingSubset
+    {core target quotient : Hex.ZPoly} {d : Hex.LiftData}
+    {J T : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (htarget_dvd_core : target ∣ core)
+    (hTJ : T ⊆ J)
+    (hrecord :
+      Hex.shouldRecordPolynomialFactor (recombinationCandidate d T) = true)
+    (hquot :
+      Hex.exactQuotient? target (recombinationCandidate d T) = some quotient)
+    {i : LiftedFactorIndex d} (hi : i ∈ T) :
+    ∃ (g : Hex.ZPoly) (S_g : LiftedFactorSubset d),
+      Irreducible (HexPolyZMathlib.toPolynomial g) ∧
+      g ∣ recombinationCandidate d T ∧
+      RepresentsIntegerFactorAtLift core d g S_g ∧
+      S_g ⊆ J ∧ i ∈ S_g := by
+  have hcand_dvd_target : recombinationCandidate d T ∣ target := by
+    have hmul : quotient * recombinationCandidate d T = target :=
+      Hex.exactQuotient?_product hquot
+    refine ⟨quotient, ?_⟩
+    rw [Hex.DensePoly.mul_comm_poly (S := Int)]
+    exact hmul.symm
+  have hcand_dvd_core : recombinationCandidate d T ∣ core := by
+    rcases hcand_dvd_target with ⟨r₁, hr₁⟩
+    rcases htarget_dvd_core with ⟨r₂, hr₂⟩
+    refine ⟨r₁ * r₂, ?_⟩
+    rw [hr₂, hr₁, Hex.DensePoly.mul_assoc_poly (S := Int)]
+  refine mem_T_iff_exists_irreducibleFactor_representingSubset_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound core)
+    (fun g hg_mem' => ?_)
+    hcore_ne hcore_monic hd_modulus hd_liftedFactor_monic
+    hd_liftedFactor_natDegree_pos hprecision hpartition htarget_dvd_core
+    hTJ hrecord hquot hi
+  have hg_poly_dvd : HexPolyZMathlib.toPolynomial g ∣
+      HexPolyZMathlib.toPolynomial (recombinationCandidate d T) :=
+    UniqueFactorizationMonoid.dvd_of_mem_normalizedFactors hg_mem'
+  have hg_dvd_cand : g ∣ recombinationCandidate d T := by
+    rcases hg_poly_dvd with ⟨r, hr⟩
+    refine ⟨HexPolyZMathlib.ofPolynomial r, ?_⟩
+    apply HexPolyZMathlib.equiv.injective
+    simp only [HexPolyZMathlib.equiv_apply, HexPolyZMathlib.toPolynomial_mul,
+      HexPolyZMathlib.toPolynomial_ofPolynomial]
+    exact hr
+  have hg_dvd_core : g ∣ core := by
+    rcases hg_dvd_cand with ⟨r₁, hr₁⟩
+    rcases hcand_dvd_core with ⟨r₂, hr₂⟩
+    refine ⟨r₁ * r₂, ?_⟩
+    rw [hr₂, hr₁, Hex.DensePoly.mul_assoc_poly (S := Int)]
+  exact defaultFactorCoeffBound_valid core hcore_ne g hg_dvd_core
 
 /-- Primitive + positive-leading-core variant of
 `mem_T_iff_exists_irreducibleFactor_representingSubset` (#4646 chain).
