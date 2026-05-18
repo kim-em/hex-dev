@@ -11196,26 +11196,21 @@ theorem coverAtMin_representingSubset_subset_of_scaledRecombinationCandidate_dvd
       hf_dvd_cand hSJ hrep
   exact ⟨f, S, hf_irr, hf_dvd_target, hSJ, hmin_in_S, hrep, hST⟩
 
-/--
-An irreducible integer factor of the core is never represented by the empty
-subset.  The recovery equation
-`centeredLiftPoly (scaledLiftedFactorProduct core d ∅) (d.p^d.k) = factor`
-collapses (under a monic core) to `centeredLiftPoly 1 (d.p^d.k) = factor`,
-which forces `factor = 1` whenever `d.p^d.k ≥ 2`; the residual `d.p^d.k = 1`
-case forces `factor = 0`.  Both outcomes contradict irreducibility of
-`HexPolyZMathlib.toPolynomial factor`.
-
-Used by `representedFactor_dvd_recombinationCandidate_of_subset` (#4457) to
-close the `S = ∅` subcase of the squarefreeness contradiction.
--/
-private theorem not_represents_empty_of_irreducible_dvd_core
+/-- Abstract-bound variant of `not_represents_empty_of_irreducible_dvd_core`:
+takes `B' : Nat`, `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`, and
+`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`defaultFactorCoeffBound core` precision constraint.  Delegates to
+`centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound`
+for the recovery equation. -/
+private theorem not_represents_empty_of_irreducible_dvd_core_of_bound
     {core factor : Hex.ZPoly} {d : Hex.LiftData}
+    (B' : Nat)
+    (hvalid : ∀ i, (factor.coeff i).natAbs ≤ B')
     (hcore_ne : core ≠ 0)
     (hcore_monic : Hex.DensePoly.Monic core)
-    (hprecision :
-      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
     (hfactor_dvd : factor ∣ core)
-    (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor)) :
+    (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hprecision : 2 * B' < d.p ^ d.k) :
     ¬ RepresentsIntegerFactorAtLift core d factor
       (∅ : LiftedFactorSubset d) := by
   intro hrep
@@ -11224,8 +11219,8 @@ private theorem not_represents_empty_of_irreducible_dvd_core
       Hex.centeredLiftPoly
           (scaledLiftedFactorProduct core d (∅ : LiftedFactorSubset d))
           (d.p ^ d.k) = factor :=
-    centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
-      hcore_ne hfactor_dvd hrep hprecision
+    centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound
+      B' hvalid hrep hprecision
   -- `liftedFactorProduct d ∅ = 1`: foldl on the empty `toList`.
   have hempty_lp :
       liftedFactorProduct d (∅ : LiftedFactorSubset d) = (1 : Hex.ZPoly) := by
@@ -11287,26 +11282,57 @@ private theorem not_represents_empty_of_irreducible_dvd_core
   exact not_irreducible_one (hpolyfactor_eq ▸ hfactor_irr)
 
 /--
-Primitive + positive-leading-core variant of
-`not_represents_empty_of_irreducible_dvd_core` (#4646).
+An irreducible integer factor of the core is never represented by the empty
+subset.  The recovery equation
+`centeredLiftPoly (scaledLiftedFactorProduct core d ∅) (d.p^d.k) = factor`
+collapses (under a monic core) to `centeredLiftPoly 1 (d.p^d.k) = factor`,
+which forces `factor = 1` whenever `d.p^d.k ≥ 2`; the residual `d.p^d.k = 1`
+case forces `factor = 0`.  Both outcomes contradict irreducibility of
+`HexPolyZMathlib.toPolynomial factor`.
 
-For primitive non-monic `core`, the empty-prefix collapse becomes
-`scaledLiftedFactorProduct core d ∅ = C (lc core)`, and the centred-lift
-recovery forces `factor = C (lc core)`. Together with
-`Primitive core` and `factor ∣ core`, the primitivity definition of
-`Polynomial ℤ` forces `lc core` to be a unit. With `0 < lc core` this gives
-`lc core = 1`, so `factor = 1`, contradicting irreducibility. The
-`d.p^d.k = 1` degenerate case is excluded as in the monic proof.
+Used by `representedFactor_dvd_recombinationCandidate_of_subset` (#4457) to
+close the `S = ∅` subcase of the squarefreeness contradiction.
+
+This is a thin wrapper over
+`not_represents_empty_of_irreducible_dvd_core_of_bound` that instantiates
+`B' := defaultFactorCoeffBound core` and discharges `hvalid` via
+`defaultFactorCoeffBound_valid core hcore_ne factor hfactor_dvd`.
 -/
-private theorem not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core
+private theorem not_represents_empty_of_irreducible_dvd_core
     {core factor : Hex.ZPoly} {d : Hex.LiftData}
     (hcore_ne : core ≠ 0)
-    (hcore_primitive : Hex.ZPoly.Primitive core)
-    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_monic : Hex.DensePoly.Monic core)
     (hprecision :
       2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
     (hfactor_dvd : factor ∣ core)
     (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor)) :
+    ¬ RepresentsIntegerFactorAtLift core d factor
+      (∅ : LiftedFactorSubset d) :=
+  not_represents_empty_of_irreducible_dvd_core_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound core)
+    (defaultFactorCoeffBound_valid core hcore_ne factor hfactor_dvd)
+    hcore_ne hcore_monic hfactor_dvd hfactor_irr hprecision
+
+/-- Abstract-bound variant of
+`not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core`:
+takes `B' : Nat`, `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`,
+`hcore_lc_bound : (lc core).natAbs ≤ B'`, and
+`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`defaultFactorCoeffBound core` precision constraint.  Since `core` and
+`factor` are different polynomials, `hvalid` alone cannot bound the
+leading coefficient of `core`; the wrapper discharges `hcore_lc_bound`
+via `defaultFactorCoeffBound_valid` applied to `core ∣ core`. -/
+private theorem not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core_of_bound
+    {core factor : Hex.ZPoly} {d : Hex.LiftData}
+    (B' : Nat)
+    (hvalid : ∀ i, (factor.coeff i).natAbs ≤ B')
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_lc_bound : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hfactor_dvd : factor ∣ core)
+    (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hprecision : 2 * B' < d.p ^ d.k) :
     ¬ RepresentsIntegerFactorAtLift core d factor
       (∅ : LiftedFactorSubset d) := by
   intro hrep
@@ -11315,8 +11341,8 @@ private theorem not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc
       Hex.centeredLiftPoly
           (scaledLiftedFactorProduct core d (∅ : LiftedFactorSubset d))
           (d.p ^ d.k) = factor :=
-    centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
-      hcore_ne hfactor_dvd hrep hprecision
+    centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound
+      B' hvalid hrep hprecision
   -- `liftedFactorProduct d ∅ = 1`: foldl on the empty `toList`.
   have hempty_lp :
       liftedFactorProduct d (∅ : LiftedFactorSubset d) = (1 : Hex.ZPoly) := by
@@ -11343,38 +11369,12 @@ private theorem not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc
     rcases hfactor_dvd with ⟨q, hq⟩
     rw [hf, Hex.DensePoly.zero_mul (S := Int) q] at hq
     exact hcore_ne hq
-  -- Bound the leading coefficient of `core` against the Mignotte half-window.
-  have hcore_size_pos : 0 < core.size := by
-    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
-    · exfalso
-      have hback_none : core.coeffs.back? = none := by
-        rw [Array.back?_eq_getElem?]
-        have hcoeffs_size : core.coeffs.size = 0 := by
-          simpa [Hex.DensePoly.size] using hzero
-        simp [hcoeffs_size]
-      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
-        unfold Hex.DensePoly.leadingCoeff
-        rw [hback_none]
-        rfl
-      rw [hlc_zero] at hcore_lc_pos
-      omega
-    · exact hpos
-  have hcore_lc_bound :
-      (Hex.DensePoly.leadingCoeff core).natAbs ≤
-        Hex.ZPoly.defaultFactorCoeffBound core := by
-    have hcore_dvd_self : core ∣ core :=
-      ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
-    have hbound :=
-      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
-        (core.size - 1)
-    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
-    exact hbound
   -- The bound and positivity together imply `2 ≤ d.p^d.k`.
   have hlc_natAbs_pos : 0 < (Hex.DensePoly.leadingCoeff core).natAbs := by
     have hlc_ge_one : 1 ≤ Hex.DensePoly.leadingCoeff core := hcore_lc_pos
     have := Int.natAbs_of_nonneg (le_of_lt hcore_lc_pos)
     omega
-  have hbound_pos : 0 < Hex.ZPoly.defaultFactorCoeffBound core := by omega
+  have hB'_pos : 0 < B' := by omega
   have hpk_ge_two : 2 ≤ d.p ^ d.k := by omega
   -- The centred lift of `C (lc core)` (under the bound) is `C (lc core)`.
   have hfactor_eq : factor = Hex.DensePoly.C (Hex.DensePoly.leadingCoeff core) := by
@@ -11414,6 +11414,68 @@ private theorem not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc
   have hpolyfactor_eq : HexPolyZMathlib.toPolynomial factor = 1 := by
     rw [hfactor_one]; exact toPolynomial_one_zpoly
   exact not_irreducible_one (hpolyfactor_eq ▸ hfactor_irr)
+
+/--
+Primitive + positive-leading-core variant of
+`not_represents_empty_of_irreducible_dvd_core` (#4646).
+
+For primitive non-monic `core`, the empty-prefix collapse becomes
+`scaledLiftedFactorProduct core d ∅ = C (lc core)`, and the centred-lift
+recovery forces `factor = C (lc core)`. Together with
+`Primitive core` and `factor ∣ core`, the primitivity definition of
+`Polynomial ℤ` forces `lc core` to be a unit. With `0 < lc core` this gives
+`lc core = 1`, so `factor = 1`, contradicting irreducibility. The
+`d.p^d.k = 1` degenerate case is excluded as in the monic proof.
+
+This is a thin wrapper over
+`not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core_of_bound`
+that instantiates `B' := defaultFactorCoeffBound core`, discharges
+`hvalid` via `defaultFactorCoeffBound_valid core hcore_ne factor hfactor_dvd`,
+and discharges the leading-coefficient bound via the same lemma applied to
+`core ∣ core`.
+-/
+private theorem not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core
+    {core factor : Hex.ZPoly} {d : Hex.LiftData}
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hfactor_dvd : factor ∣ core)
+    (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor)) :
+    ¬ RepresentsIntegerFactorAtLift core d factor
+      (∅ : LiftedFactorSubset d) := by
+  -- Bound the leading coefficient of `core` against the Mignotte half-window.
+  have hcore_size_pos : 0 < core.size := by
+    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
+    · exfalso
+      have hback_none : core.coeffs.back? = none := by
+        rw [Array.back?_eq_getElem?]
+        have hcoeffs_size : core.coeffs.size = 0 := by
+          simpa [Hex.DensePoly.size] using hzero
+        simp [hcoeffs_size]
+      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
+        unfold Hex.DensePoly.leadingCoeff
+        rw [hback_none]
+        rfl
+      rw [hlc_zero] at hcore_lc_pos
+      omega
+    · exact hpos
+  have hcore_lc_bound :
+      (Hex.DensePoly.leadingCoeff core).natAbs ≤
+        Hex.ZPoly.defaultFactorCoeffBound core := by
+    have hcore_dvd_self : core ∣ core :=
+      ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
+    have hbound :=
+      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
+        (core.size - 1)
+    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
+    exact hbound
+  exact not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound core)
+    (defaultFactorCoeffBound_valid core hcore_ne factor hfactor_dvd)
+    hcore_ne hcore_primitive hcore_lc_pos hcore_lc_bound hfactor_dvd hfactor_irr
+    hprecision
 
 /--
 Main candidate divisibility theorem for the Mathlib bridge of the
