@@ -682,7 +682,7 @@ The repeated part extracted by `normalizeForFactor` is primitive over
 This is the companion Gauss-descent input to
 `normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive` for the
 structural divisibility theorem consumed by the exponent-extraction
-successor (#4611).
+successor.
 -/
 theorem normalizeForFactor_repeatedPart_toPolynomial_isPrimitive
     (f : Hex.ZPoly) (hf : f ≠ 0) :
@@ -1042,9 +1042,12 @@ theorem zpoly_primitive_of_toPolynomial_isPrimitive
   · rw [hneg] at hcontent_nonneg; omega
 
 /--
-Composition of `normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive`
-and `zpoly_primitive_of_toPolynomial_isPrimitive`: from `f ≠ 0` derive
-`Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore` in one step.
+The square-free core extracted by `normalizeForFactor` is executably
+primitive whenever the input integer polynomial is nonzero.
+
+The proof transports
+`normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive` back to
+`Hex.ZPoly` via `zpoly_primitive_of_toPolynomial_isPrimitive`.
 -/
 theorem normalizeForFactor_squareFreeCore_primitive_of_ne_zero
     (f : Hex.ZPoly) (hf : f ≠ 0) :
