@@ -4341,7 +4341,7 @@ theorem scaledRecombinationCandidate_eq_factor_of_recovery_of_bound
     {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
     (B' : Nat)
     (hvalid : ∀ i, (factor.coeff i).natAbs ≤ B')
-    (hcore_ne : core ≠ 0)
+    (_hcore_ne : core ≠ 0)
     (hfactor_prim : Hex.ZPoly.content factor = 1)
     (hfactor_norm : Hex.normalizeFactorSign factor = factor)
     (hrep : RepresentsIntegerFactorAtLift core d factor S)
@@ -8265,7 +8265,7 @@ theorem representsIntegerFactorAtLift_primitive_of_bound
     (B' : Nat)
     (hvalid : ∀ i, (factor.coeff i).natAbs ≤ B')
     (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
-    (hcore_ne : core ≠ 0)
+    (_hcore_ne : core ≠ 0)
     (hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hd_liftedFactor_monic :
@@ -8515,7 +8515,7 @@ and `zpoly_primitive_scaledRecombinationCandidate_of_bound`. -/
 theorem natDegree_toPolynomial_scaledRecombinationCandidate_eq_sum_of_bound
     {core : Hex.ZPoly} {d : Hex.LiftData}
     (B' : Nat)
-    (hcore_ne : core ≠ 0)
+    (_hcore_ne : core ≠ 0)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hd_liftedFactor_monic :
       ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
@@ -8673,7 +8673,7 @@ theorem natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core_of_
     (B' : Nat)
     (hvalid : ∀ i, (factor.coeff i).natAbs ≤ B')
     (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
-    (hcore_ne : core ≠ 0)
+    (_hcore_ne : core ≠ 0)
     (_hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hd_liftedFactor_monic :
@@ -10867,7 +10867,7 @@ private theorem zpoly_primitive_scaledRecombinationCandidate_of_bound
     {core : Hex.ZPoly} {d : Hex.LiftData}
     (B' : Nat)
     (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
-    (hcore_ne : core ≠ 0)
+    (_hcore_ne : core ≠ 0)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hd_liftedFactor_monic : ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
     (hprecision : 2 * B' < d.p ^ d.k)
