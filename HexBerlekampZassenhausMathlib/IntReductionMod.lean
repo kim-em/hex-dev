@@ -1490,11 +1490,8 @@ theorem normalizeForFactor_repeatedPart_map_intCast_dvd_squareFreeCore_map_intCa
     exact rp_dvd_sf_pow_of_associated hP_ne hR_gcd hP_assoc
   · -- Case C: derivative is nonzero; `rp = ratPolyPrimitivePart (gcd ratPrim ratPrim.derivative)`.
     have hderiv_false : (Hex.DensePoly.derivative
-        (Hex.ZPoly.toRatPoly (Hex.ZPoly.primitivePart core))).isZero = false := by
-      cases h : (Hex.DensePoly.derivative
-          (Hex.ZPoly.toRatPoly (Hex.ZPoly.primitivePart core))).isZero
-      · rfl
-      · exact absurd h hderiv
+        (Hex.ZPoly.toRatPoly (Hex.ZPoly.primitivePart core))).isZero = false :=
+      Bool.eq_false_iff.mpr hderiv
     -- Identify `rp` via the case-C helper. Work with `primitivePart core`-shaped terms.
     have hrp_pp_eq : rp =
         Hex.ZPoly.ratPolyPrimitivePart
