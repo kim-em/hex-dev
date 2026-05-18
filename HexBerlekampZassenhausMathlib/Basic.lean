@@ -6730,6 +6730,7 @@ private theorem zpoly_size_pos_of_monic {f : Hex.ZPoly}
     exact absurd hlead (by decide)
   · exact hcs_pos
 
+/-- Monic integer polynomials are nonzero. -/
 theorem zpoly_ne_zero_of_monic {f : Hex.ZPoly}
     (h : Hex.DensePoly.Monic f) : f ≠ 0 := by
   intro hf
@@ -6737,6 +6738,7 @@ theorem zpoly_ne_zero_of_monic {f : Hex.ZPoly}
   rw [hf] at hpos
   exact absurd hpos (by simp)
 
+/-- Monic integer polynomials have positive leading coefficient. -/
 theorem zpoly_lc_pos_of_monic {f : Hex.ZPoly}
     (h : Hex.DensePoly.Monic f) :
     0 < Hex.DensePoly.leadingCoeff f := by
@@ -8124,6 +8126,7 @@ private theorem zpoly_primitive_of_toPolynomial_isPrimitive_basic
   · rw [hneg] at hcontent_nonneg
     omega
 
+/-- A `Hex.ZPoly` with positive leading coefficient is nonzero. -/
 theorem zpoly_ne_zero_of_pos_lc {f : Hex.ZPoly}
     (hpos : 0 < Hex.DensePoly.leadingCoeff f) : f ≠ 0 := by
   intro hf
