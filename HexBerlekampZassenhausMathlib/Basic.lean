@@ -7994,12 +7994,8 @@ theorem representsIntegerFactorAtLift_monic_of_bound
     (hrep : RepresentsIntegerFactorAtLift core d factor S)
     (hprecision : 2 * B' < d.p ^ d.k) :
     Hex.DensePoly.Monic factor := by
-  have hfactor_dvd_core : factor ∣ core := by
-    obtain ⟨u, hu⟩ := hfactor_dvd_target
-    obtain ⟨v, hv⟩ := htarget_dvd_core
-    refine ⟨u * v, ?_⟩
-    rw [hv, hu]
-    exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
+  have hfactor_dvd_core : factor ∣ core :=
+    zpoly_dvd_trans hfactor_dvd_target htarget_dvd_core
   have hprod_monic : Hex.DensePoly.Monic (liftedFactorProduct d S) :=
     liftedFactorProduct_monic d S (fun i _ => hd_liftedFactor_monic i)
   have hlead : Hex.DensePoly.leadingCoeff core = (1 : Int) := hcore_monic
@@ -8071,12 +8067,8 @@ theorem representsIntegerFactorAtLift_monic
     (htarget_dvd_core : target ∣ core)
     (hrep : RepresentsIntegerFactorAtLift core d factor S) :
     Hex.DensePoly.Monic factor := by
-  have hfactor_dvd_core : factor ∣ core := by
-    obtain ⟨u, hu⟩ := hfactor_dvd_target
-    obtain ⟨v, hv⟩ := htarget_dvd_core
-    refine ⟨u * v, ?_⟩
-    rw [hv, hu]
-    exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
+  have hfactor_dvd_core : factor ∣ core :=
+    zpoly_dvd_trans hfactor_dvd_target htarget_dvd_core
   exact representsIntegerFactorAtLift_monic_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     (defaultFactorCoeffBound_valid core hcore_ne factor hfactor_dvd_core)
@@ -8287,12 +8279,8 @@ theorem representsIntegerFactorAtLift_primitive_of_bound
     (hrep : RepresentsIntegerFactorAtLift core d factor S)
     (hprecision : 2 * B' < d.p ^ d.k) :
     Hex.ZPoly.Primitive factor ∧ 0 < Hex.DensePoly.leadingCoeff factor := by
-  have hfactor_dvd_core : factor ∣ core := by
-    obtain ⟨u, hu⟩ := hfactor_dvd_target
-    obtain ⟨v, hv⟩ := htarget_dvd_core
-    refine ⟨u * v, ?_⟩
-    rw [hv, hu]
-    exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
+  have hfactor_dvd_core : factor ∣ core :=
+    zpoly_dvd_trans hfactor_dvd_target htarget_dvd_core
   have hfactor_poly_primitive :
       (HexPolyZMathlib.toPolynomial factor).IsPrimitive := by
     have hcore_poly_primitive :
@@ -8370,12 +8358,8 @@ theorem representsIntegerFactorAtLift_primitive
     (htarget_dvd_core : target ∣ core)
     (hrep : RepresentsIntegerFactorAtLift core d factor S) :
     Hex.ZPoly.Primitive factor ∧ 0 < Hex.DensePoly.leadingCoeff factor := by
-  have hfactor_dvd_core : factor ∣ core := by
-    obtain ⟨u, hu⟩ := hfactor_dvd_target
-    obtain ⟨v, hv⟩ := htarget_dvd_core
-    refine ⟨u * v, ?_⟩
-    rw [hv, hu]
-    exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
+  have hfactor_dvd_core : factor ∣ core :=
+    zpoly_dvd_trans hfactor_dvd_target htarget_dvd_core
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact representsIntegerFactorAtLift_primitive_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
@@ -12362,11 +12346,8 @@ theorem representedFactor_dvd_recombinationCandidate_of_subset
   rcases hfactor_prime.dvd_or_dvd hpoly_factor_dvd_target with hp_dvd_q | hp_dvd_c
   · -- Case B: `toPolynomial factor ∣ toPolynomial quotient` — derive contradiction.
     exfalso
-    have hfactor_dvd_core : factor ∣ core := by
-      obtain ⟨u, hu⟩ := hfactor_dvd_target
-      obtain ⟨v, hv⟩ := htarget_dvd_core
-      refine ⟨u * v, ?_⟩
-      rw [hv, hu, Hex.DensePoly.mul_assoc_poly (S := Int)]
+    have hfactor_dvd_core : factor ∣ core :=
+      zpoly_dvd_trans hfactor_dvd_target htarget_dvd_core
     -- Derive `2 ≤ d.p^d.k` from `factor ≠ 0` and the centered-lift recovery,
     -- matching the pattern used in `representsIntegerFactorAtLift_monic`.
     have hd_modulus : 2 ≤ d.p ^ d.k := by
@@ -12411,11 +12392,8 @@ theorem representedFactor_dvd_recombinationCandidate_of_subset
           hcore_ne hcore_monic hd_modulus hd_liftedFactor_monic
           hd_liftedFactor_natDegree_pos hprecision hpartition htarget_dvd_core
           hTJ hrecord hquot hiT
-      have hg_dvd_target : g ∣ target := by
-        obtain ⟨r₁, hr₁⟩ := hg_dvd_cand
-        obtain ⟨r₂, hr₂⟩ := hcand_dvd_target
-        refine ⟨r₁ * r₂, ?_⟩
-        rw [hr₂, hr₁, Hex.DensePoly.mul_assoc_poly (S := Int)]
+      have hg_dvd_target : g ∣ target :=
+        zpoly_dvd_trans hg_dvd_cand hcand_dvd_target
       -- `i ∈ S ∩ S_g`, so `S` and `S_g` are not disjoint.
       have hnot_disjoint : ¬ Disjoint S S_g := by
         intro hdisj
