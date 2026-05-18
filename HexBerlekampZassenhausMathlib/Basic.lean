@@ -6730,7 +6730,7 @@ private theorem zpoly_size_pos_of_monic {f : Hex.ZPoly}
     exact absurd hlead (by decide)
   · exact hcs_pos
 
-private theorem zpoly_ne_zero_of_monic {f : Hex.ZPoly}
+theorem zpoly_ne_zero_of_monic {f : Hex.ZPoly}
     (h : Hex.DensePoly.Monic f) : f ≠ 0 := by
   intro hf
   have hpos := zpoly_size_pos_of_monic h
@@ -8107,7 +8107,7 @@ private theorem zpoly_primitive_of_toPolynomial_isPrimitive_basic
   · rw [hneg] at hcontent_nonneg
     omega
 
-private theorem zpoly_ne_zero_of_pos_lc {f : Hex.ZPoly}
+theorem zpoly_ne_zero_of_pos_lc {f : Hex.ZPoly}
     (hpos : 0 < Hex.DensePoly.leadingCoeff f) : f ≠ 0 := by
   intro hf
   rw [hf] at hpos
