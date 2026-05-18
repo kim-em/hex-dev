@@ -2062,6 +2062,18 @@ theorem existsUnique_liftedFactorSubset_of_henselSubsetCorrespondenceRest
   intro T hT
   exact h.unique_subset hirr hdvd hT.1 hSJ hT.2 hS
 
+/-- Transitivity of `Hex.ZPoly`-level divisibility. Discharges the
+`core = g * (q * v)` step explicitly via `Hex.DensePoly.mul_assoc_poly`
+because `Hex.ZPoly` does not synthesise a Mathlib `Semigroup` instance
+at this layer. -/
+private theorem zpoly_dvd_trans
+    {a b c : Hex.ZPoly} (hab : a ∣ b) (hbc : b ∣ c) : a ∣ c := by
+  obtain ⟨q, hq⟩ := hab
+  obtain ⟨v, hv⟩ := hbc
+  refine ⟨q * v, ?_⟩
+  rw [hv, hq]
+  exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
+
 /--
 Transport an induced Hensel subset correspondence through one emitted
 recombination factor.
@@ -2088,14 +2100,8 @@ theorem henselSubsetCorrespondenceRest_transport_of_disjoint
     HenselSubsetCorrespondenceRest core d (J \ S) quotient where
   exists_subset := by
     intro factor hirr hdvd_quot
-    have hdvd_target : factor ∣ target := by
-      rcases hdvd_quot with ⟨q, hq⟩
-      refine ⟨q * emitted, ?_⟩
-      calc
-        target = quotient * emitted := hquot.symm
-        _ = (factor * q) * emitted := by rw [hq]
-        _ = factor * (q * emitted) := by
-          rw [Hex.DensePoly.mul_assoc_poly (S := Int)]
+    have hdvd_target : factor ∣ target :=
+      zpoly_dvd_trans hdvd_quot ⟨emitted, hquot.symm⟩
     rcases h.exists_subset hirr hdvd_target with ⟨T, hTJ, hTrep⟩
     have hTS : Disjoint T S := hdisjoint hirr hdvd_quot hTJ hTrep
     refine ⟨T, ?_, hTrep⟩
@@ -2104,14 +2110,8 @@ theorem henselSubsetCorrespondenceRest_transport_of_disjoint
       ⟨hTJ hi, fun hiS => (Finset.disjoint_left.mp hTS) hi hiS⟩
   unique_subset := by
     intro factor T U hirr hdvd_quot hTJU hUJU hTrep hUrep
-    have hdvd_target : factor ∣ target := by
-      rcases hdvd_quot with ⟨q, hq⟩
-      refine ⟨q * emitted, ?_⟩
-      calc
-        target = quotient * emitted := hquot.symm
-        _ = (factor * q) * emitted := by rw [hq]
-        _ = factor * (q * emitted) := by
-          rw [Hex.DensePoly.mul_assoc_poly (S := Int)]
+    have hdvd_target : factor ∣ target :=
+      zpoly_dvd_trans hdvd_quot ⟨emitted, hquot.symm⟩
     apply h.unique_subset hirr hdvd_target
     · intro i hi
       exact (Finset.mem_sdiff.mp (hTJU hi)).1
@@ -2273,15 +2273,8 @@ theorem liftedFactorSubsetPartition_transport
       (h.target_squarefree _ h_sq_dvd)
   -- Lift `· ∣ quotient` to `· ∣ target = quotient * emitted`.
   have dvd_target_of_dvd_quotient :
-      ∀ {factor : Hex.ZPoly}, factor ∣ quotient → factor ∣ target := by
-    intro factor hdvd
-    rcases hdvd with ⟨q, hq⟩
-    refine ⟨q * emitted, ?_⟩
-    calc
-      target = quotient * emitted := hquot.symm
-      _ = (factor * q) * emitted := by rw [hq]
-      _ = factor * (q * emitted) := by
-        rw [Hex.DensePoly.mul_assoc_poly (S := Int)]
+      ∀ {factor : Hex.ZPoly}, factor ∣ quotient → factor ∣ target :=
+    fun hdvd => zpoly_dvd_trans hdvd ⟨emitted, hquot.symm⟩
   -- Disjointness obligation for `henselSubsetCorrespondenceRest_transport_of_disjoint`.
   have hdisj :
       ∀ {factor : Hex.ZPoly} {T : LiftedFactorSubset d},
@@ -6751,18 +6744,6 @@ private theorem zpoly_monic_mul {a b : Hex.ZPoly}
     show Hex.DensePoly.leadingCoeff a = 1 from ha,
     show Hex.DensePoly.leadingCoeff b = 1 from hb]
   decide
-
-/-- Transitivity of `Hex.ZPoly`-level divisibility. Discharges the
-`core = g * (q * v)` step explicitly via `Hex.DensePoly.mul_assoc_poly`
-because `Hex.ZPoly` does not synthesise a Mathlib `Semigroup` instance
-at this layer. -/
-private theorem zpoly_dvd_trans
-    {a b c : Hex.ZPoly} (hab : a ∣ b) (hbc : b ∣ c) : a ∣ c := by
-  obtain ⟨q, hq⟩ := hab
-  obtain ⟨v, hv⟩ := hbc
-  refine ⟨q * v, ?_⟩
-  rw [hv, hq]
-  exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
 
 /--
 Bridge `liftedFactorProduct d S` to a `Finset.prod` over `S` after transport to
