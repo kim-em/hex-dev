@@ -333,10 +333,9 @@ private theorem gcd_monicModularImage_derivative_eq_one
           rcases (Fact.out : Nat.Prime p).eq_one_or_self_of_dvd m hmdvd with h | h
           · exact Or.inl h
           · exact Or.inr h
-      have hlead_ne : Hex.DensePoly.leadingCoeff f ≠ 0 := by
-        have hpos : 0 < f.size := (Hex.DensePoly.isZero_eq_false_iff _).mp hzero
-        rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred f hpos]
-        exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size f hpos
+      have hlead_ne : Hex.DensePoly.leadingCoeff f ≠ 0 :=
+        fpPoly_leadingCoeff_ne_zero_of_size_pos f
+          ((Hex.DensePoly.isZero_eq_false_iff _).mp hzero)
       intro hu_zero
       have hone_hex : u * Hex.DensePoly.leadingCoeff f = (1 : Hex.ZMod64 p) := by
         simpa [u] using Hex.ZMod64.inv_mul_eq_one_of_prime hp_hex hlead_ne
@@ -484,9 +483,8 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
   have hfsize : 0 < (Hex.ZPoly.modP primeData.p core).size :=
     (Hex.DensePoly.isZero_eq_false_iff _).mp hzero
   have hlead_ne :
-      Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core) ≠ 0 := by
-    rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred _ hfsize]
-    exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size _ hfsize
+      Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core) ≠ 0 :=
+    fpPoly_leadingCoeff_ne_zero_of_size_pos (Hex.ZPoly.modP primeData.p core) hfsize
   have h_one_ne_zero : (1 : Hex.ZMod64 primeData.p) ≠ 0 := by
     intro h
     have htoNat : (1 : Hex.ZMod64 primeData.p).toNat =

@@ -1219,6 +1219,18 @@ theorem monicModPImage_monic_of_ne_zero
   rw [monicModPImage_eq_monicModularImage]
   exact Hex.monicModularImage_monic hprime f hf
 
+/-- Nonvanishing of the leading coefficient for a positive-size
+`Hex.FpPoly p`. Composes `Hex.FpPoly.leadingCoeff_eq_coeff_pred`, which
+rewrites the leading coefficient to `f.coeff (f.size - 1)`, with
+`Hex.DensePoly.coeff_last_ne_zero_of_pos_size`, the invariant that the
+size-pred coefficient of a positive-size `Hex.DensePoly` is nonzero. -/
+theorem fpPoly_leadingCoeff_ne_zero_of_size_pos
+    {p : Nat} [Hex.ZMod64.Bounds p] (f : Hex.FpPoly p)
+    (hf_size_pos : 0 < f.size) :
+    Hex.DensePoly.leadingCoeff f ≠ (0 : Hex.ZMod64 p) := by
+  rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred f hf_size_pos]
+  exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size f hf_size_pos
+
 theorem monicModPImage_dvd_self_of_ne_zero
     {p : Nat} [Hex.ZMod64.Bounds p]
     (hprime : Hex.Nat.Prime p) {f : Hex.FpPoly p} (hf : f.isZero = false) :
@@ -1231,9 +1243,8 @@ theorem monicModPImage_dvd_self_of_ne_zero
     subst hzero
     contradiction
   have hf_size_pos : 0 < f.size := Hex.FpPoly.size_pos_of_ne_zero hf_ne
-  have hlead_ne : Hex.DensePoly.leadingCoeff f ≠ (0 : Hex.ZMod64 p) := by
-    rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred f hf_size_pos]
-    exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size f hf_size_pos
+  have hlead_ne : Hex.DensePoly.leadingCoeff f ≠ (0 : Hex.ZMod64 p) :=
+    fpPoly_leadingCoeff_ne_zero_of_size_pos f hf_size_pos
   have hinv_ne : (Hex.DensePoly.leadingCoeff f)⁻¹ ≠ (0 : Hex.ZMod64 p) :=
     Hex.ZMod64.inv_ne_zero_of_prime hprime hlead_ne
   exact Hex.FpPoly.dvd_scale_self_of_ne_zero hinv_ne f
@@ -1310,6 +1321,37 @@ private theorem fpPoly_isZero_false_of_dvd_of_isZero_false
       rw [hq] at hb
       exact Bool.noConfusion hb
 
+/-- Transitivity of `Hex.FpPoly p`-level divisibility. Discharges the
+`c = a * (q * v)` step explicitly via `Hex.FpPoly.mul_assoc` because the
+`Dvd` instance on `Hex.FpPoly p` is the bespoke `instDvdOfAddOfMul`
+(witness shape `b = a * r`), and `dvd_trans` does not see through that. -/
+private theorem fpPoly_dvd_trans
+    {p : Nat} [Hex.ZMod64.Bounds p]
+    {a b c : Hex.FpPoly p} (hab : a ∣ b) (hbc : b ∣ c) : a ∣ c := by
+  obtain ⟨q, hq⟩ := hab
+  obtain ⟨v, hv⟩ := hbc
+  refine ⟨q * v, ?_⟩
+  rw [hv, hq]
+  exact Hex.FpPoly.mul_assoc _ _ _
+
+/-- Products of divisors divide products at the executable `Hex.FpPoly p`
+level. The `Dvd` instance on `Hex.FpPoly p` is the bespoke
+`instDvdOfAddOfMul` (witness shape `b = a * r`), so Mathlib's
+`mul_dvd_mul` does not see through it. -/
+private theorem fpPoly_mul_dvd_mul
+    {p : Nat} [Hex.ZMod64.Bounds p]
+    {a b c d : Hex.FpPoly p} (hab : a ∣ b) (hcd : c ∣ d) :
+    a * c ∣ b * d := by
+  obtain ⟨q, hq⟩ := hab
+  obtain ⟨v, hv⟩ := hcd
+  refine ⟨q * v, ?_⟩
+  rw [hq, hv]
+  rw [Hex.FpPoly.mul_assoc a q (c * v)]
+  rw [← Hex.FpPoly.mul_assoc q c v]
+  rw [Hex.FpPoly.mul_comm q c]
+  rw [Hex.FpPoly.mul_assoc c q v]
+  rw [← Hex.FpPoly.mul_assoc a c (q * v)]
+
 theorem monicModPImage_dvd_monicModularImage_of_dvd_of_choosePrimeData?_some
     {core factor : Hex.ZPoly}
     (hdvd : factor ∣ core)
@@ -1350,19 +1392,8 @@ theorem monicModPImage_dvd_monicModularImage_of_dvd_of_choosePrimeData?_some
   have hmonic_factor_dvd_core :
       @monicModPImage primeData.p primeData.bounds
           (@Hex.ZPoly.modP primeData.p primeData.bounds factor) ∣
-        @Hex.ZPoly.modP primeData.p primeData.bounds core := by
-    rcases hmonic_factor_dvd_factor with ⟨q₁, hq₁⟩
-    rcases hfactor_dvd_core with ⟨q₂, hq₂⟩
-    refine ⟨q₁ * q₂, ?_⟩
-    calc
-      @Hex.ZPoly.modP primeData.p primeData.bounds core
-          = (@Hex.ZPoly.modP primeData.p primeData.bounds factor) * q₂ := hq₂
-      _ = ((@monicModPImage primeData.p primeData.bounds
-              (@Hex.ZPoly.modP primeData.p primeData.bounds factor)) * q₁) * q₂ :=
-            congrArg (fun x => x * q₂) hq₁
-      _ = (@monicModPImage primeData.p primeData.bounds
-              (@Hex.ZPoly.modP primeData.p primeData.bounds factor)) * (q₁ * q₂) :=
-            Hex.DensePoly.mul_assoc_poly _ _ _
+        @Hex.ZPoly.modP primeData.p primeData.bounds core :=
+    fpPoly_dvd_trans hmonic_factor_dvd_factor hfactor_dvd_core
   have hcore_dvd_monic :
       @Hex.ZPoly.modP primeData.p primeData.bounds core ∣
         Hex.monicModularImage
@@ -1387,18 +1418,7 @@ theorem monicModPImage_dvd_monicModularImage_of_dvd_of_choosePrimeData?_some
               (Hex.DensePoly.leadingCoeff
                 (@Hex.ZPoly.modP primeData.p primeData.bounds core))⁻¹ :=
             Hex.DensePoly.mul_comm_poly _ _
-  rcases hmonic_factor_dvd_core with ⟨q₁, hq₁⟩
-  rcases hcore_dvd_monic with ⟨q₂, hq₂⟩
-  refine ⟨q₁ * q₂, ?_⟩
-  calc
-    Hex.monicModularImage (@Hex.ZPoly.modP primeData.p primeData.bounds core)
-        = (@Hex.ZPoly.modP primeData.p primeData.bounds core) * q₂ := hq₂
-    _ = ((@monicModPImage primeData.p primeData.bounds
-            (@Hex.ZPoly.modP primeData.p primeData.bounds factor)) * q₁) * q₂ :=
-          congrArg (fun x => x * q₂) hq₁
-    _ = (@monicModPImage primeData.p primeData.bounds
-            (@Hex.ZPoly.modP primeData.p primeData.bounds factor)) * (q₁ * q₂) :=
-          Hex.DensePoly.mul_assoc_poly _ _ _
+  exact fpPoly_dvd_trans hmonic_factor_dvd_core hcore_dvd_monic
 
 /--
 An integer factor is represented modulo the selected prime by a subset of the
@@ -4470,6 +4490,36 @@ private theorem zpoly_size_pos_of_monic {f : Hex.ZPoly}
     exact absurd hlead (by decide)
   · exact hcs_pos
 
+/-- Monic integer polynomials are primitive (content 1). -/
+theorem zpoly_primitive_of_monic {f : Hex.ZPoly}
+    (h : Hex.DensePoly.Monic f) : Hex.ZPoly.Primitive f := by
+  have hlead : Hex.DensePoly.leadingCoeff f = (1 : Int) := h
+  have hcs_pos : 0 < f.coeffs.size := zpoly_size_pos_of_monic h
+  have hsize_pos : 0 < f.size := hcs_pos
+  have hcoeff_last : f.coeff (f.size - 1) = (1 : Int) := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last f hsize_pos]
+    exact hlead
+  have hdvd_one : Hex.ZPoly.content f ∣ (1 : Int) := by
+    have := Hex.DensePoly.content_dvd_coeff f (f.size - 1)
+    rwa [hcoeff_last] at this
+  have hcontent_nonneg : (0 : Int) ≤ Hex.ZPoly.content f := by
+    unfold Hex.ZPoly.content Hex.DensePoly.content
+    exact Int.natCast_nonneg _
+  rcases Int.isUnit_iff.mp (isUnit_of_dvd_one hdvd_one) with hpos | hneg
+  · exact hpos
+  · exfalso
+    rw [hneg] at hcontent_nonneg
+    exact absurd hcontent_nonneg (by decide)
+
+/-- Monic integer polynomials are fixed by `Hex.normalizeFactorSign`. -/
+theorem zpoly_normalize_factor_sign_of_monic {f : Hex.ZPoly}
+    (h : Hex.DensePoly.Monic f) : Hex.normalizeFactorSign f = f := by
+  have hlead : Hex.DensePoly.leadingCoeff f = (1 : Int) := h
+  unfold Hex.normalizeFactorSign
+  have hnot_neg : ¬ Hex.DensePoly.leadingCoeff f < 0 := by
+    rw [hlead]; decide
+  simp [hnot_neg]
+
 /--
 A monic integer polynomial automatically has primitive content and is its own
 sign-normalisation. This packages the two normalisation hypotheses required
@@ -4490,34 +4540,10 @@ theorem monic_primitive_sign_normalized_of_monic
     {factor : Hex.ZPoly} (hfactor_monic : Hex.DensePoly.Monic factor) :
     Hex.DensePoly.Monic factor ∧
       Hex.ZPoly.content factor = 1 ∧
-        Hex.normalizeFactorSign factor = factor := by
-  have hlead : Hex.DensePoly.leadingCoeff factor = (1 : Int) := hfactor_monic
-  have hcs_pos : 0 < factor.coeffs.size :=
-    zpoly_size_pos_of_monic hfactor_monic
-  have hsize_pos : 0 < factor.size := hcs_pos
-  have hcoeff_last : factor.coeff (factor.size - 1) = (1 : Int) := by
-    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last factor hsize_pos]
-    exact hlead
-  refine ⟨hfactor_monic, ?_, ?_⟩
-  · -- content factor = 1: content divides every coefficient, including the
-    --   leading coefficient 1, and content is non-negative, so content = 1.
-    have hdvd_one : Hex.ZPoly.content factor ∣ (1 : Int) := by
-      have := Hex.DensePoly.content_dvd_coeff factor (factor.size - 1)
-      rwa [hcoeff_last] at this
-    have hcontent_nonneg : (0 : Int) ≤ Hex.ZPoly.content factor := by
-      unfold Hex.ZPoly.content Hex.DensePoly.content
-      exact Int.natCast_nonneg _
-    rcases Int.isUnit_iff.mp (isUnit_of_dvd_one hdvd_one) with hpos | hneg
-    · exact hpos
-    · exfalso
-      rw [hneg] at hcontent_nonneg
-      exact absurd hcontent_nonneg (by decide)
-  · -- normalizeFactorSign factor = factor: leadingCoeff = 1 ≥ 0, so the sign
-    --   normaliser is the identity branch.
-    unfold Hex.normalizeFactorSign
-    have hnot_neg : ¬ Hex.DensePoly.leadingCoeff factor < 0 := by
-      rw [hlead]; decide
-    simp [hnot_neg]
+        Hex.normalizeFactorSign factor = factor :=
+  ⟨hfactor_monic,
+    zpoly_primitive_of_monic hfactor_monic,
+    zpoly_normalize_factor_sign_of_monic hfactor_monic⟩
 
 /--
 Size of the lifted-factor array equals the size of the modular-factor array.
@@ -4908,10 +4934,8 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
     (Hex.DensePoly.isZero_eq_false_iff _).mp hzero
   have hlead_ne :
       Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP data.p f) ≠
-        (0 : Hex.ZMod64 data.p) := by
-    rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred (Hex.ZPoly.modP data.p f) hmod_size_pos]
-    exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size
-      (Hex.ZPoly.modP data.p f) hmod_size_pos
+        (0 : Hex.ZMod64 data.p) :=
+    fpPoly_leadingCoeff_ne_zero_of_size_pos (Hex.ZPoly.modP data.p f) hmod_size_pos
   have hinv_ne :
       (Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP data.p f))⁻¹ ≠
         (0 : Hex.ZMod64 data.p) :=
@@ -4930,10 +4954,8 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
         hfield).factors.Nodup := by
     apply Hex.Berlekamp.berlekampFactor_factors_nodup_of_no_squared
     intro g hgg hpos
-    have hg_dvd_mod : g * g ∣ Hex.ZPoly.modP data.p f := by
-      rcases hgg with ⟨r, hr⟩
-      rcases hmonicImage_dvd with ⟨s, hs⟩
-      exact ⟨r * s, by rw [hs, hr, Hex.FpPoly.mul_assoc]⟩
+    have hg_dvd_mod : g * g ∣ Hex.ZPoly.modP data.p f :=
+      fpPoly_dvd_trans hgg hmonicImage_dvd
     have hunit : Hex.Berlekamp.isUnitPolynomial g = true :=
       Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd
         (Hex.Berlekamp.squareFree_common_of_gcd_eq_one hsf) hg_dvd_mod
@@ -4988,14 +5010,8 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
       Hex.Berlekamp.mul_dvd_factorProduct_of_mem_of_ne hNodup hg₁ hg₂ hne
     -- Hence g₁ * g₂ ∣ monicImage modP_f.
     rw [hprod] at hg₁_dvd_g₂
-    -- Hence g₁ * g₂ ∣ modP_f.  Construct the dvd witness manually because the
-    -- `dvd` instance for `FpPoly p` is `instDvdOfAddOfMul`, not the default
-    -- `semigroupDvd`, and `dvd_trans` doesn't see through that.
-    have hg₁g₂_dvd_modP :
-        g₁ * g₂ ∣ Hex.ZPoly.modP data.p f := by
-      rcases hg₁_dvd_g₂ with ⟨r, hr⟩
-      rcases hmonicImage_dvd with ⟨s, hs⟩
-      exact ⟨r * s, by rw [hs, hr, Hex.FpPoly.mul_assoc]⟩
+    have hg₁g₂_dvd_modP : g₁ * g₂ ∣ Hex.ZPoly.modP data.p f :=
+      fpPoly_dvd_trans hg₁_dvd_g₂ hmonicImage_dvd
     -- From `monicModularImage g₁ = monicModularImage g₂`, both being nonzero,
     -- we get `g₁ = scale u g₂` for some nonzero `u`.  Use this to conclude
     -- `g₂² ∣ modP_f`, contradicting square-freeness.
@@ -5081,9 +5097,7 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
               Hex.DensePoly.mul_comm_poly _ _
       have hg₂sq_dvd_modP : g₂ * g₂ ∣ Hex.ZPoly.modP data.p f := by
         rw [hg₁g₂_eq] at hg₁g₂_dvd_modP
-        rcases hg₂sq_dvd with ⟨r, hr⟩
-        rcases hg₁g₂_dvd_modP with ⟨s, hs⟩
-        exact ⟨r * s, by rw [hs, hr, Hex.FpPoly.mul_assoc]⟩
+        exact fpPoly_dvd_trans hg₂sq_dvd hg₁g₂_dvd_modP
       -- Square-freeness implies g₂ is a unit polynomial (degree 0).
       have hunit : Hex.Berlekamp.isUnitPolynomial g₂ = true :=
         Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd
@@ -5194,10 +5208,8 @@ theorem factorsModP_natDegree_pos_of_factorsModPBerlekampForm
   have hmod_size_pos : 0 < (Hex.ZPoly.modP data.p f).size := by omega
   have hmodP_lead_ne :
       Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP data.p f) ≠
-        (0 : Hex.ZMod64 data.p) := by
-    rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred (Hex.ZPoly.modP data.p f) hmod_size_pos]
-    exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size
-      (Hex.ZPoly.modP data.p f) hmod_size_pos
+        (0 : Hex.ZMod64 data.p) :=
+    fpPoly_leadingCoeff_ne_zero_of_size_pos (Hex.ZPoly.modP data.p f) hmod_size_pos
   have hinv_ne :
       (Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP data.p f))⁻¹ ≠
         (0 : Hex.ZMod64 data.p) :=
@@ -5683,36 +5695,15 @@ private theorem quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
                 rawGcd ∣ Hex.Berlekamp.factorProduct (h :: tail) :=
               Hex.DensePoly.gcd_dvd_right g (Hex.Berlekamp.factorProduct (h :: tail))
             have hrawGcd_sq_dvd_prod :
-                rawGcd * rawGcd ∣ g * Hex.Berlekamp.factorProduct (h :: tail) := by
-              rcases hrawGcd_dvd_g with ⟨ka, hka⟩
-              rcases hrawGcd_dvd_tail with ⟨kb, hkb⟩
-              refine ⟨ka * kb, ?_⟩
-              rw [hka, hkb]
-              -- (rawGcd * ka) * (rawGcd * kb) = (rawGcd * rawGcd) * (ka * kb)
-              calc rawGcd * ka * (rawGcd * kb)
-                  = rawGcd * (ka * (rawGcd * kb)) :=
-                      Hex.DensePoly.mul_assoc_poly _ _ _
-                _ = rawGcd * (ka * rawGcd * kb) :=
-                      congrArg (rawGcd * ·)
-                        (Hex.DensePoly.mul_assoc_poly _ _ _).symm
-                _ = rawGcd * (rawGcd * ka * kb) :=
-                      congrArg (fun x => rawGcd * (x * kb))
-                        (Hex.DensePoly.mul_comm_poly _ _)
-                _ = rawGcd * (rawGcd * (ka * kb)) :=
-                      congrArg (rawGcd * ·)
-                        (Hex.DensePoly.mul_assoc_poly _ _ _)
-                _ = rawGcd * rawGcd * (ka * kb) :=
-                      (Hex.DensePoly.mul_assoc_poly _ _ _).symm
+                rawGcd * rawGcd ∣ g * Hex.Berlekamp.factorProduct (h :: tail) :=
+              fpPoly_mul_dvd_mul hrawGcd_dvd_g hrawGcd_dvd_tail
             have hcons_prod :
                 g * Hex.Berlekamp.factorProduct (h :: tail) =
                   Hex.Berlekamp.factorProduct (g :: h :: tail) :=
               (Hex.Berlekamp.factorProduct_cons g (h :: tail)).symm
             have hrawGcd_sq_dvd_X : rawGcd * rawGcd ∣ X := by
               rw [hcons_prod] at hrawGcd_sq_dvd_prod
-              rcases hrawGcd_sq_dvd_prod with ⟨k, hk⟩
-              rcases h_dvd with ⟨q, hq⟩
-              refine ⟨k * q, ?_⟩
-              rw [hq, hk]; exact Hex.DensePoly.mul_assoc_poly _ _ _
+              exact fpPoly_dvd_trans hrawGcd_sq_dvd_prod h_dvd
             -- Step 2: rawGcd has degree ≤ 0 by no-squared on X.
             have hrawGcd_not_pos :
                 ¬ (0 < rawGcd.degree?.getD 0) :=
@@ -5744,9 +5735,8 @@ private theorem quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
               rw [hdeg_form]; simp; omega
             -- Step 5: lc rawGcd ≠ 0.
             have hlc_ne :
-                Hex.DensePoly.leadingCoeff rawGcd ≠ (0 : Hex.ZMod64 p) := by
-              rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred rawGcd hrawGcd_size_pos]
-              exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size rawGcd hrawGcd_size_pos
+                Hex.DensePoly.leadingCoeff rawGcd ≠ (0 : Hex.ZMod64 p) :=
+              fpPoly_leadingCoeff_ne_zero_of_size_pos rawGcd hrawGcd_size_pos
             -- Step 6: rawGcd.coeff 0 = lc rawGcd.
             have hrawGcd_coeff_zero :
                 rawGcd.coeff 0 = Hex.DensePoly.leadingCoeff rawGcd := by
@@ -5786,10 +5776,7 @@ private theorem quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
                     Hex.Berlekamp.factorProduct (g :: h :: tail) := by
                 refine ⟨g, ?_⟩
                 rw [hcons_eq]; exact Hex.DensePoly.mul_comm_poly _ _
-              rcases htail_dvd_cons with ⟨k, hk⟩
-              rcases h_dvd with ⟨q, hq⟩
-              refine ⟨k * q, ?_⟩
-              rw [hq, hk]; exact Hex.DensePoly.mul_assoc_poly _ _ _
+              exact fpPoly_dvd_trans htail_dvd_cons h_dvd
             exact ih hrest_dvd
 
 set_option maxHeartbeats 400000 in
@@ -5845,9 +5832,9 @@ theorem factorsModP_coprime_of_factorsModPBerlekampForm
     (Hex.DensePoly.isZero_eq_false_iff _).mp hzero
   have hmodP_lead_ne :
       Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core) ≠
-        (0 : Hex.ZMod64 primeData.p) := by
-    rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred _ hmod_size_pos]
-    exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size _ hmod_size_pos
+        (0 : Hex.ZMod64 primeData.p) :=
+    fpPoly_leadingCoeff_ne_zero_of_size_pos
+      (Hex.ZPoly.modP primeData.p core) hmod_size_pos
   have hinv_ne :
       (Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core))⁻¹ ≠
         (0 : Hex.ZMod64 primeData.p) :=
@@ -5865,10 +5852,8 @@ theorem factorsModP_coprime_of_factorsModPBerlekampForm
         d * d ∣ Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) →
           ¬ (0 < d.degree?.getD 0) := by
     intro d hdd hpos
-    have hd_dvd_mod : d * d ∣ Hex.ZPoly.modP primeData.p core := by
-      rcases hdd with ⟨r, hr⟩
-      rcases hmonicImage_dvd with ⟨s, hs⟩
-      exact ⟨r * s, by rw [hs, hr, Hex.FpPoly.mul_assoc]⟩
+    have hd_dvd_mod : d * d ∣ Hex.ZPoly.modP primeData.p core :=
+      fpPoly_dvd_trans hdd hmonicImage_dvd
     have hunit : Hex.Berlekamp.isUnitPolynomial d = true :=
       Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd
         (Hex.Berlekamp.squareFree_common_of_gcd_eq_one hsf) hd_dvd_mod
@@ -6027,10 +6012,9 @@ private theorem gcd_monicModularImage_derivative_eq_one_local
           rcases (Fact.out : Nat.Prime p).eq_one_or_self_of_dvd m hmdvd with h | h
           · exact Or.inl h
           · exact Or.inr h
-      have hlead_ne : Hex.DensePoly.leadingCoeff f ≠ 0 := by
-        have hpos : 0 < f.size := (Hex.DensePoly.isZero_eq_false_iff _).mp hzero
-        rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred f hpos]
-        exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size f hpos
+      have hlead_ne : Hex.DensePoly.leadingCoeff f ≠ 0 :=
+        fpPoly_leadingCoeff_ne_zero_of_size_pos f
+          ((Hex.DensePoly.isZero_eq_false_iff _).mp hzero)
       intro hu_zero
       have hone_hex : u * Hex.DensePoly.leadingCoeff f = (1 : Hex.ZMod64 p) := by
         simpa [u] using Hex.ZMod64.inv_mul_eq_one_of_prime hp_hex hlead_ne
@@ -6186,9 +6170,8 @@ theorem factors_irreducible_of_factorsModPBerlekampForm
   have hg'_size_pos : 0 < g'.size :=
     (Hex.DensePoly.isZero_eq_false_iff _).mp hg'_isZero
   have hg'_lead_ne :
-      Hex.DensePoly.leadingCoeff g' ≠ (0 : Hex.ZMod64 primeData.p) := by
-    rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred g' hg'_size_pos]
-    exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size g' hg'_size_pos
+      Hex.DensePoly.leadingCoeff g' ≠ (0 : Hex.ZMod64 primeData.p) :=
+    fpPoly_leadingCoeff_ne_zero_of_size_pos g' hg'_size_pos
   have hg'_inv_ne :
       (Hex.DensePoly.leadingCoeff g')⁻¹ ≠ (0 : Hex.ZMod64 primeData.p) := by
     intro hinv
@@ -6682,16 +6665,6 @@ theorem zpoly_lc_pos_of_monic {f : Hex.ZPoly}
     0 < Hex.DensePoly.leadingCoeff f := by
   rw [show Hex.DensePoly.leadingCoeff f = (1 : Int) from h]
   decide
-
-/-- Monic integer polynomials are primitive (content 1). -/
-theorem zpoly_primitive_of_monic {f : Hex.ZPoly}
-    (h : Hex.DensePoly.Monic f) : Hex.ZPoly.Primitive f :=
-  (monic_primitive_sign_normalized_of_monic h).2.1
-
-/-- Monic integer polynomials are fixed by `Hex.normalizeFactorSign`. -/
-theorem zpoly_normalize_factor_sign_of_monic {f : Hex.ZPoly}
-    (h : Hex.DensePoly.Monic f) : Hex.normalizeFactorSign f = f :=
-  (monic_primitive_sign_normalized_of_monic h).2.2
 
 private theorem zpoly_monic_one : Hex.DensePoly.Monic (1 : Hex.ZPoly) := by
   show Hex.DensePoly.leadingCoeff (1 : Hex.ZPoly) = (1 : Int)
