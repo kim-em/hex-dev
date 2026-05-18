@@ -131,6 +131,21 @@ theorem defaultFactorCoeffBound_valid
     have hgcoeff_zero : g.coeff i = 0 := hcoeff_eq ▸ hcoeff_zero
     simp [hgcoeff_zero]
 
+/-- The default factor coefficient bound dominates the natural absolute value
+of the leading coefficient of any nonzero executable polynomial. Standard
+packaging of `defaultFactorCoeffBound_valid` at
+`g := f, hgf := f ∣ f, i := f.size - 1` paired with
+`leadingCoeff_eq_coeff_last`. -/
+theorem defaultFactorCoeffBound_leadingCoeff_natAbs_le
+    {f : Hex.ZPoly} (hf : f ≠ 0) :
+    (Hex.DensePoly.leadingCoeff f).natAbs ≤
+      Hex.ZPoly.defaultFactorCoeffBound f := by
+  have hsize_pos : 0 < f.size := Hex.ZPoly.size_pos_of_ne_zero _ hf
+  have hf_dvd_self : f ∣ f :=
+    ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly f).symm⟩
+  rw [Hex.DensePoly.leadingCoeff_eq_coeff_last f hsize_pos]
+  exact defaultFactorCoeffBound_valid f hf f hf_dvd_self (f.size - 1)
+
 /--
 Executable irreducibility predicate for transported integer polynomials.
 
@@ -8353,17 +8368,7 @@ theorem representsIntegerFactorAtLift_primitive
       rw [hlc_zero] at hcore_lc_pos
       omega
     · exact hpos
-  have hcore_lc_le :
-      (Hex.DensePoly.leadingCoeff core).natAbs ≤
-        Hex.ZPoly.defaultFactorCoeffBound core := by
-    have hcore_dvd_self : core ∣ core := by
-      refine ⟨(1 : Hex.ZPoly), ?_⟩
-      exact (Hex.DensePoly.mul_one_right_poly core).symm
-    have hbound :=
-      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
-        (core.size - 1)
-    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
-    exact hbound
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact representsIntegerFactorAtLift_primitive_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     (defaultFactorCoeffBound_valid core hcore_ne factor hfactor_dvd_core)
@@ -11057,16 +11062,7 @@ private theorem zpoly_primitive_scaledRecombinationCandidate
       rw [hlc_zero] at hcore_lc_pos
       omega
     · exact hpos
-  have hcore_lc_le :
-      (Hex.DensePoly.leadingCoeff core).natAbs ≤
-        Hex.ZPoly.defaultFactorCoeffBound core := by
-    have hcore_dvd_self : core ∣ core :=
-      ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
-    have hbound :=
-      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
-        (core.size - 1)
-    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
-    exact hbound
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact zpoly_primitive_scaledRecombinationCandidate_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core) hcore_lc_le
     hcore_ne hcore_lc_pos hd_liftedFactor_monic hprecision T
@@ -11268,16 +11264,7 @@ theorem exists_representingSubset_of_mem_normalizedFactors_scaledRecombinationCa
       rw [hlc_zero] at hcore_lc_pos
       omega
     · exact hpos
-  have hcore_lc_le :
-      (Hex.DensePoly.leadingCoeff core).natAbs ≤
-        Hex.ZPoly.defaultFactorCoeffBound core := by
-    have hcore_dvd_self : core ∣ core :=
-      ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
-    have hbound :=
-      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
-        (core.size - 1)
-    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
-    exact hbound
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   have hcand_dvd_target :
       scaledRecombinationCandidate core d T ∣ target := by
     have hmul : quotient * scaledRecombinationCandidate core d T = target :=
@@ -12188,14 +12175,7 @@ theorem coverAtMin_representingSubset_subset_of_scaledRecombinationCandidate_dvd
     · exact hpos
   have hcore_dvd_self : core ∣ core :=
     ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
-  have hcore_lc_le :
-      (Hex.DensePoly.leadingCoeff core).natAbs ≤
-        Hex.ZPoly.defaultFactorCoeffBound core := by
-    have hbound :=
-      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
-        (core.size - 1)
-    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
-    exact hbound
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   have hcand_dvd_target :
       scaledRecombinationCandidate core d T ∣ target := by
     have hmul : quotient * scaledRecombinationCandidate core d T = target :=
@@ -13175,14 +13155,7 @@ theorem liftedFactorSubsetPartition_prefix_none_of_primitive_pos_lc_core_scaled
     · exact hpos
   have hcore_dvd_self : core ∣ core :=
     ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
-  have hcore_lc_le :
-      (Hex.DensePoly.leadingCoeff core).natAbs ≤
-        Hex.ZPoly.defaultFactorCoeffBound core := by
-    have hbound :=
-      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
-        (core.size - 1)
-    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
-    exact hbound
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact liftedFactorSubsetPartition_prefix_none_of_primitive_pos_lc_core_scaled_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     hcore_lc_le
@@ -14370,14 +14343,7 @@ private theorem scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorS
     · exact hpos
   have hcore_dvd_self : core ∣ core :=
     ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
-  have hcore_lc_le :
-      (Hex.DensePoly.leadingCoeff core).natAbs ≤
-        Hex.ZPoly.defaultFactorCoeffBound core := by
-    have hbound :=
-      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
-        (core.size - 1)
-    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
-    exact hbound
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     hcore_lc_le
@@ -14540,14 +14506,7 @@ theorem scaledRecombinationSearchModAux_some_factor_associated_of_liftedFactorSu
     · exact hpos
   have hcore_dvd_self : core ∣ core :=
     ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
-  have hcore_lc_le :
-      (Hex.DensePoly.leadingCoeff core).natAbs ≤
-        Hex.ZPoly.defaultFactorCoeffBound core := by
-    have hbound :=
-      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
-        (core.size - 1)
-    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
-    exact hbound
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact scaledRecombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     hcore_lc_le
@@ -14664,14 +14623,7 @@ theorem recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPa
     · exact hpos
   have hcore_dvd_self : core ∣ core :=
     ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
-  have hcore_lc_le :
-      (Hex.DensePoly.leadingCoeff core).natAbs ≤
-        Hex.ZPoly.defaultFactorCoeffBound core := by
-    have hbound :=
-      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
-        (core.size - 1)
-    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
-    exact hbound
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition_of_primitive_pos_lc_core_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     hcore_lc_le
@@ -14831,14 +14783,7 @@ theorem exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence
     · exact hpos
   have hcore_dvd_self : core ∣ core :=
     ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
-  have hcore_lc_le :
-      (Hex.DensePoly.leadingCoeff core).natAbs ≤
-        Hex.ZPoly.defaultFactorCoeffBound core := by
-    have hbound :=
-      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
-        (core.size - 1)
-    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
-    exact hbound
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence_of_bound
     h hpartition hcore_ne hcore_primitive hcore_lc_pos hB_ne_zero hd_modulus
     hd_liftedFactor_monic hd_liftedFactor_natDegree_pos hd_liftedFactor_inj
@@ -15029,14 +14974,7 @@ theorem exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCo
     · exact hpos
   have hcore_dvd_self : core ∣ core :=
     ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
-  have hcore_lc_le :
-      (Hex.DensePoly.leadingCoeff core).natAbs ≤
-        Hex.ZPoly.defaultFactorCoeffBound core := by
-    have hbound :=
-      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
-        (core.size - 1)
-    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
-    exact hbound
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
     h hpartition hcore_ne hcore_primitive hcore_lc_pos hcore_record hB_ne_zero
     hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
@@ -15385,14 +15323,7 @@ theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselS
     · exact hpos
   have hcore_dvd_self : core ∣ core :=
     ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
-  have hcore_lc_le :
-      (Hex.DensePoly.leadingCoeff core).natAbs ≤
-        Hex.ZPoly.defaultFactorCoeffBound core := by
-    have hbound :=
-      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
-        (core.size - 1)
-    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
-    exact hbound
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
     _hbranch _hentry_mem h hpartition hcore_ne hcore_monic hcore_record hB_ne_zero
     hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
@@ -15607,14 +15538,7 @@ theorem factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorr
     · exact hpos
   have hcore_dvd_self : core ∣ core :=
     ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
-  have hcore_lc_le :
-      (Hex.DensePoly.leadingCoeff core).natAbs ≤
-        Hex.ZPoly.defaultFactorCoeffBound core := by
-    have hbound :=
-      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
-        (core.size - 1)
-    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
-    exact hbound
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
     _hbranch _hentry_mem h hpartition hcore_ne hcore_primitive hcore_lc_pos
     hcore_record hB_ne_zero hd_modulus hd_liftedFactor_monic
