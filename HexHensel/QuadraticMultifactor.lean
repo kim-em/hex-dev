@@ -44,6 +44,27 @@ The bound `k ≤ 2 ^ quadraticDoublingSteps k` is what
 def quadraticDoublingSteps (k : Nat) : Nat :=
   if k ≤ 1 then 0 else (k - 1).log2 + 1
 
+/-- Zero requested precision needs no quadratic doubling steps. -/
+@[simp] theorem quadraticDoublingSteps_zero :
+    quadraticDoublingSteps 0 = 0 := by
+  simp [quadraticDoublingSteps]
+
+/-- Precision `p^1` is the input precision, so it needs no doubling steps. -/
+@[simp] theorem quadraticDoublingSteps_one :
+    quadraticDoublingSteps 1 = 0 := by
+  simp [quadraticDoublingSteps]
+
+/--
+Requested precision above `p^1` needs at least one quadratic doubling step.
+
+This lets callers reason about the wrapper's nontrivial branch without
+unfolding the logarithmic definition.
+-/
+theorem quadraticDoublingSteps_pos_of_one_lt {k : Nat} (hk : 1 < k) :
+    0 < quadraticDoublingSteps k := by
+  have hnot : ¬ k ≤ 1 := Nat.not_le_of_gt hk
+  simp [quadraticDoublingSteps, hnot]
+
 /-- Lift a Bezout-witnessed factorisation modulo `p` to one valid modulo
 `p^k` by iterating `quadraticHenselStep`.
 
@@ -164,7 +185,14 @@ private theorem congr_of_pow_le
     ZPoly.congr f g (p ^ a) :=
   congr_of_modulus_dvd f g (Nat.pow_dvd_pow p hab) hfg
 
-private theorem le_two_pow_quadraticDoublingSteps (k : Nat) :
+/--
+The doubling count reaches the requested precision exponent.
+
+After `quadraticDoublingSteps k` iterations from precision exponent `1`, the
+quadratic wrapper has reached exponent `2 ^ quadraticDoublingSteps k`, which
+is at least `k`.
+-/
+theorem le_two_pow_quadraticDoublingSteps (k : Nat) :
     k ≤ 2 ^ quadraticDoublingSteps k := by
   by_cases hk : k ≤ 1
   · simp [quadraticDoublingSteps, hk]
