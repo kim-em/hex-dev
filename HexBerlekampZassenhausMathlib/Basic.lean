@@ -5020,24 +5020,10 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
       have hg₂_lead_ne :
           Hex.DensePoly.leadingCoeff g₂ ≠ (0 : Hex.ZMod64 data.p) :=
         Hex.FpPoly.leadingCoeff_ne_zero_of_pos_degree g₂ hg₂_pos
-      have hg₁_isZero : g₁.isZero = false := by
-        cases hz : g₁.isZero with
-        | false => rfl
-        | true =>
-          exfalso
-          have hsize_zero : g₁.size = 0 := by
-            change g₁.coeffs.isEmpty = true at hz
-            simpa [Hex.DensePoly.size, Array.isEmpty_iff_size_eq_zero] using hz
-          omega
-      have hg₂_isZero : g₂.isZero = false := by
-        cases hz : g₂.isZero with
-        | false => rfl
-        | true =>
-          exfalso
-          have hsize_zero : g₂.size = 0 := by
-            change g₂.coeffs.isEmpty = true at hz
-            simpa [Hex.DensePoly.size, Array.isEmpty_iff_size_eq_zero] using hz
-          omega
+      have hg₁_isZero : g₁.isZero = false :=
+        (Hex.DensePoly.isZero_eq_false_iff _).mpr hg₁_size_pos
+      have hg₂_isZero : g₂.isZero = false :=
+        (Hex.DensePoly.isZero_eq_false_iff _).mpr hg₂_size_pos
       -- Express both monicModularImages explicitly: `scale (lc gᵢ)⁻¹ gᵢ`.
       have hmm₁_eq :
           Hex.monicModularImage g₁ =
@@ -5249,15 +5235,8 @@ theorem factorsModP_natDegree_pos_of_factorsModPBerlekampForm
     · exact Nat.pos_of_ne_zero hsz
   have hh_lead_ne : Hex.DensePoly.leadingCoeff h ≠ (0 : Hex.ZMod64 data.p) :=
     Hex.FpPoly.leadingCoeff_ne_zero_of_pos_degree h hh_pos
-  have hh_isZero : h.isZero = false := by
-    cases hz : h.isZero with
-    | false => rfl
-    | true =>
-      exfalso
-      have hsize_zero : h.size = 0 := by
-        change h.coeffs.isEmpty = true at hz
-        simpa [Hex.DensePoly.size, Array.isEmpty_iff_size_eq_zero] using hz
-      omega
+  have hh_isZero : h.isZero = false :=
+    (Hex.DensePoly.isZero_eq_false_iff _).mpr hh_size_pos
   have hg_degree_eq :
       (Hex.monicModularImage h).degree? = h.degree? := by
     unfold Hex.monicModularImage
@@ -7415,14 +7394,7 @@ private theorem modP_isZero_false_of_monic
       rw [hcoeff_zero] at hmodP_coeff_lead
       exact hone_ne_zero hmodP_coeff_lead.symm
     · exact hsz
-  cases hz : (Hex.ZPoly.modP p f).isZero with
-  | false => rfl
-  | true =>
-    exfalso
-    have hsize_zero : (Hex.ZPoly.modP p f).size = 0 := by
-      simpa [Hex.DensePoly.isZero, Hex.DensePoly.size,
-        Array.isEmpty_iff_size_eq_zero] using hz
-    omega
+  exact (Hex.DensePoly.isZero_eq_false_iff _).mpr hmodP_size_pos
 
 /-- `monicModPImage` is the identity on the mod-`p` reduction of a monic
 integer polynomial, since the leading coefficient `1` reduces to `1` and
