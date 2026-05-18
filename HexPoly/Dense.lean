@@ -431,6 +431,25 @@ theorem degree?_eq_some_of_pos_size (p : DensePoly R) (hpos : 0 < p.size) :
   unfold degree?
   rw [dif_neg (Nat.ne_of_gt hpos)]
 
+/-- A monomial with nonzero coefficient has degree exactly its exponent. -/
+theorem degree?_monomial_of_ne_zero {n : Nat} {c : R} (hc : c ≠ (0 : R)) :
+    (monomial n c).degree? = some n := by
+  have hsize : (monomial n c).size = n + 1 := size_monomial_of_ne_zero hc
+  rw [degree?_eq_some_of_pos_size _ (hsize ▸ Nat.succ_pos n), hsize, Nat.add_sub_cancel]
+
+/-- The default-0 degree of a monomial with nonzero coefficient is its exponent. -/
+theorem degree?_monomial_getD_of_ne_zero {n : Nat} {c : R} (hc : c ≠ (0 : R)) :
+    (monomial n c).degree?.getD 0 = n := by
+  rw [degree?_monomial_of_ne_zero hc, Option.getD_some]
+
+/-- A monomial with nonzero coefficient is not the zero polynomial. -/
+theorem monomial_ne_zero_of_ne_zero {n : Nat} {c : R} (hc : c ≠ (0 : R)) :
+    (monomial n c) ≠ (0 : DensePoly R) := by
+  intro h
+  have hsize : (monomial n c).size = n + 1 := size_monomial_of_ne_zero hc
+  rw [h, size_zero] at hsize
+  exact Nat.succ_ne_zero n hsize.symm
+
 /-- The support of a dense polynomial, listed in ascending degree order. -/
 def support (p : DensePoly R) : List Nat :=
   (List.range p.size).filter fun i => p.coeff i ≠ (Zero.zero : R)
