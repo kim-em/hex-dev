@@ -578,6 +578,225 @@ theorem adjacentSwap_gramDetNumerator_dvd (b : Matrix Int n m)
   exact ⟨((gramDet (Matrix.rowSwap b km1 k) k.val (Nat.le_of_lt k.isLt) : Nat) : Int),
     Int.mul_comm _ _⟩
 
+/-! ### Adjacent-swap scaled-coefficient identity for rows above the pivot
+
+For `i > k`, after swapping adjacent rows `km1, k` (with `km1.val + 1 = k.val`),
+the executable Bareiss determinant of the scaled-coefficient Cramer minor
+`scaledCoeffMatrix (rowSwap b km1 k) i km1` times the pivot Gram determinant
+`d_k = gramDet b k.val` equals the integer numerator
+
+  `d_{km1} * nu[i][k] + B * nu[i][km1]`
+
+where `B = nu[k][km1]`. The proof linearises `nu'[i][km1]` (as a `Rat`) through
+the basis identity `basis (rowSwap b km1 k) [km1] = basis b [k] + μ * basis b [km1]`
+(via `basis_rowSwap_adjacent_prev`), bridges `bareiss → nu'` via
+`scaledCoeffs_eq_scaledCoeffMatrix_bareiss`, and discharges with `ring`. -/
+theorem bareiss_scaledCoeffMatrix_rowSwap_above_prev
+    (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.val)
+    (i : Fin n) (hki : k.val < i.val)
+    (hdet : gramDet b k.val (Nat.le_of_lt k.isLt) ≠ 0) :
+    let km1 := GramSchmidt.prevRow k hk
+    let hkm1i : km1.val < i.val := by
+      dsimp [km1, GramSchmidt.prevRow]; omega
+    Hex.Matrix.bareiss (GramSchmidt.scaledCoeffMatrix
+        (Matrix.rowSwap b km1 k) i km1 hkm1i) *
+      ((gramDet b k.val (Nat.le_of_lt k.isLt) : Nat) : Int) =
+      adjacentSwapScaledCoeffAbovePrevNumerator b k hk i := by
+  intro km1 hkm1i
+  -- Bridge bareiss → scaledCoeffs via the Mathlib-side identification.
+  rw [← scaledCoeffs_eq_scaledCoeffMatrix_bareiss
+      (Matrix.rowSwap b km1 k) i km1 hkm1i]
+  -- The remaining Int goal: `scaledCoeffs b' i km1 * d_k = numerator`.
+  -- Reduce to a rational identity.
+  apply intCast_rat_injective_local
+  -- Local abbreviations on the rational side.
+  have hkm1 : km1.val + 1 = k.val := by
+    dsimp [km1, GramSchmidt.prevRow]; omega
+  have hkm1k : km1.val < k.val := by omega
+  have hkm1_lt_i : km1.val < i.val := hkm1i
+  have hk_le_n : k.val ≤ n := Nat.le_of_lt k.isLt
+  have hkm1_le_n : km1.val ≤ n := Nat.le_of_lt km1.isLt
+  have hk1_le_n : k.val + 1 ≤ n := Nat.succ_le_of_lt k.isLt
+  have hkm1_succ_le : km1.val + 1 ≤ n := Nat.succ_le_of_lt km1.isLt
+  -- Rational shorthand: G, Nkm1, Nk, μ on the original basis.
+  set μ : Rat := GramSchmidt.entry (coeffs b) k km1 with hμ_def
+  set prev : Vector Rat m := (basis b).row km1 with hprev_def
+  set curr : Vector Rat m := (basis b).row k with hcurr_def
+  set G : Rat := gramSchmidtNormProduct b km1.val hkm1_le_n with hG_def
+  set Nkm1 : Rat := Vector.normSq prev with hNkm1_def
+  set Nk : Rat := Vector.normSq curr with hNk_def
+  -- Rational expressions for the Gram determinants.
+  have hdkm1_rat : (gramDet b km1.val hkm1_le_n : Rat) = G :=
+    gramDet_eq_prod_normSq_uncond b km1.val hkm1_le_n
+  have hdk_rat : (gramDet b k.val hk_le_n : Rat) = G * Nkm1 := by
+    have h_succ := gramDet_succ_rat b km1.val hkm1_succ_le
+    have hgd_eq :
+        gramDet b (km1.val + 1) hkm1_succ_le = gramDet b k.val hk_le_n :=
+      gramDet_subst_val b _ _ _ _ hkm1
+    rw [← hgd_eq, h_succ]
+  have hdkp1_rat : (gramDet b (k.val + 1) hk1_le_n : Rat) = G * Nkm1 * Nk := by
+    have h_succ := gramDet_succ_rat b k.val hk1_le_n
+    have hgnp_k_eq :
+        gramSchmidtNormProduct b k.val hk_le_n =
+          gramSchmidtNormProduct b (km1.val + 1) hkm1_succ_le :=
+      gramSchmidtNormProduct_subst_val b _ _ _ _ hkm1.symm
+    rw [h_succ, hgnp_k_eq,
+        gramSchmidtNormProduct_succ b km1.val hkm1_succ_le]
+  -- Basis orthogonality between curr and prev.
+  have horth : Matrix.dot curr prev = 0 :=
+    basis_orthogonal b k.val km1.val k.isLt km1.isLt (by omega)
+  -- New basis row at km1 of the swapped matrix.
+  have hbasis_swap :
+      (basis (Matrix.rowSwap b km1 k)).row km1 = curr + μ • prev :=
+    basis_rowSwap_adjacent_prev b km1 k hkm1
+  -- normSq of the new basis row at km1.
+  have hN'_eq : Vector.normSq ((basis (Matrix.rowSwap b km1 k)).row km1) =
+      Nk + μ ^ 2 * Nkm1 := by
+    rw [hbasis_swap]
+    exact normSq_add_smul_orthogonal_rat curr prev μ horth
+  -- gramDet (rowSwap b km1 k) k.val = G * (Nk + μ^2 * Nkm1).
+  have hdprime_rat :
+      (gramDet (Matrix.rowSwap b km1 k) k.val hk_le_n : Rat) =
+        G * (Nk + μ ^ 2 * Nkm1) := by
+    have h_succ :=
+      gramDet_succ_rat (Matrix.rowSwap b km1 k) km1.val hkm1_succ_le
+    have hgd_eq :
+        gramDet (Matrix.rowSwap b km1 k) (km1.val + 1) hkm1_succ_le =
+          gramDet (Matrix.rowSwap b km1 k) k.val hk_le_n :=
+      gramDet_subst_val (Matrix.rowSwap b km1 k) _ _ _ _ hkm1
+    rw [← hgd_eq, h_succ,
+        gramSchmidtNormProduct_rowSwap_below b km1 k hkm1k]
+    show G * Vector.normSq ((basis (Matrix.rowSwap b km1 k)).row
+        ⟨km1.val, km1.isLt⟩) = G * (Nk + μ ^ 2 * Nkm1)
+    rw [hN'_eq]
+  -- B = d_k * μ.
+  have hB_rat :
+      ((GramSchmidt.entry (scaledCoeffs b) k km1 : Int) : Rat) = G * Nkm1 * μ := by
+    rw [scaledCoeffs_eq b k.val km1.val k.isLt hkm1k]
+    have hgd_eq :
+        gramDet b (km1.val + 1)
+            (Nat.succ_le_of_lt (Nat.lt_trans hkm1k k.isLt)) =
+          gramDet b k.val hk_le_n :=
+      gramDet_subst_val b _ _ _ _ hkm1
+    show (gramDet b (km1.val + 1) _ : Rat) *
+        GramSchmidt.entry (coeffs b) ⟨k.val, k.isLt⟩
+          ⟨km1.val, Nat.lt_trans hkm1k k.isLt⟩ = G * Nkm1 * μ
+    rw [hgd_eq, hdk_rat]
+  -- nu[i][k] = d_{k+1} * c[i][k] = G * Nkm1 * Nk * c[i][k]
+  have hnuik_rat :
+      ((GramSchmidt.entry (scaledCoeffs b) i k : Int) : Rat) =
+        G * Nkm1 * Nk * GramSchmidt.entry (coeffs b) i k := by
+    have heq := scaledCoeffs_eq b i.val k.val i.isLt hki
+    show ((GramSchmidt.entry (scaledCoeffs b) ⟨i.val, i.isLt⟩
+        ⟨k.val, Nat.lt_trans hki i.isLt⟩ : Int) : Rat) = _
+    rw [heq, hdkp1_rat]
+  -- nu[i][km1] = d_k * c[i][km1] = G * Nkm1 * c[i][km1]
+  have hnuikm1_rat :
+      ((GramSchmidt.entry (scaledCoeffs b) i km1 : Int) : Rat) =
+        G * Nkm1 * GramSchmidt.entry (coeffs b) i km1 := by
+    have heq := scaledCoeffs_eq b i.val km1.val i.isLt hkm1_lt_i
+    have hgd_eq :
+        gramDet b (km1.val + 1)
+            (Nat.succ_le_of_lt (Nat.lt_trans hkm1_lt_i i.isLt)) =
+          gramDet b k.val hk_le_n :=
+      gramDet_subst_val b _ _ _ _ hkm1
+    show ((GramSchmidt.entry (scaledCoeffs b) ⟨i.val, i.isLt⟩
+        ⟨km1.val, Nat.lt_trans hkm1_lt_i i.isLt⟩ : Int) : Rat) = _
+    rw [heq, hgd_eq, hdk_rat]
+  -- For i > k, the i-th row of b' = rowSwap b km1 k equals the i-th row of b.
+  have hrow_b'_i : (Matrix.rowSwap b km1 k)[i] = b[i] := by
+    have hi_ne_km1 : (i : Fin n) ≠ km1 := fun h => by
+      have : i.val = km1.val := congrArg Fin.val h
+      omega
+    have hi_ne_k : (i : Fin n) ≠ k := fun h => by
+      have : i.val = k.val := congrArg Fin.val h
+      omega
+    exact rowSwap_row_eq_of_ne_int b km1 k i hi_ne_km1 hi_ne_k
+  have hcastRow_b'i :
+      Vector.map (fun x : Int => (x : Rat)) ((Matrix.rowSwap b km1 k).row i) =
+        Vector.map (fun x : Int => (x : Rat)) (b.row i) := by
+    show Vector.map (fun x : Int => (x : Rat)) ((Matrix.rowSwap b km1 k)[i]) = _
+    rw [hrow_b'_i]
+    rfl
+  -- Inner products of basis(b)[k] and basis(b)[km1] with cast(b.row i).
+  have hdotk : Matrix.dot curr
+        (Vector.map (fun x : Int => (x : Rat)) (b.row i)) =
+      GramSchmidt.entry (coeffs b) i k * Nk := by
+    have h := dot_basis_castRow_eq_coeffs_mul_normSq b i.val k.val i.isLt hki
+    show Matrix.dot ((basis b).row ⟨k.val, k.isLt⟩) _ = _
+    rw [h]
+  have hdotkm1 : Matrix.dot prev
+        (Vector.map (fun x : Int => (x : Rat)) (b.row i)) =
+      GramSchmidt.entry (coeffs b) i km1 * Nkm1 := by
+    have h := dot_basis_castRow_eq_coeffs_mul_normSq b i.val km1.val i.isLt hkm1_lt_i
+    show Matrix.dot ((basis b).row ⟨km1.val, km1.isLt⟩) _ = _
+    rw [h]
+  -- Inner product of basis(b')[km1] with cast(b'.row i) = c[i][k] * Nk + μ * c[i][km1] * Nkm1.
+  have hdot_b'_km1 :
+      Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row km1)
+          (Vector.map (fun x : Int => (x : Rat)) ((Matrix.rowSwap b km1 k).row i)) =
+        GramSchmidt.entry (coeffs b) i k * Nk +
+          μ * (GramSchmidt.entry (coeffs b) i km1 * Nkm1) := by
+    rw [hcastRow_b'i, hbasis_swap]
+    -- dot (curr + μ • prev) (cast b.row i)
+    --   = dot curr (cast b.row i) + μ * dot prev (cast b.row i)
+    rw [dot_add_left_rat, dot_smul_left_rat]
+    rw [hdotk, hdotkm1]
+  -- Key Rat identity: nu'[i][km1] = G * <basis(b')[km1], cast(b'.row i)>.
+  -- The proof uses scaledCoeffs_eq for b', plus dot_basis_castRow on b', plus
+  -- the fact that d_k(b') = G * |basis(b')[km1]|^2 so the cancellation is clean.
+  have hnu'_rat :
+      ((GramSchmidt.entry (scaledCoeffs (Matrix.rowSwap b km1 k)) i km1 : Int) : Rat) =
+        G * (GramSchmidt.entry (coeffs b) i k * Nk +
+            μ * (GramSchmidt.entry (coeffs b) i km1 * Nkm1)) := by
+    -- nu'[i][km1] = d_k(b') * c'[i][km1] = G * |basis(b')[km1]|^2 * c'[i][km1]
+    -- And c'[i][km1] * |basis(b')[km1]|^2 = dot basis(b')[km1] (cast b'.row i)
+    have hcoeff_normSq :
+        GramSchmidt.entry (coeffs (Matrix.rowSwap b km1 k)) i km1 *
+          Vector.normSq ((basis (Matrix.rowSwap b km1 k)).row km1) =
+        Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row km1)
+          (Vector.map (fun x : Int => (x : Rat))
+            ((Matrix.rowSwap b km1 k).row i)) := by
+      have h := dot_basis_castRow_eq_coeffs_mul_normSq
+        (Matrix.rowSwap b km1 k) i.val km1.val i.isLt hkm1_lt_i
+      show GramSchmidt.entry (coeffs (Matrix.rowSwap b km1 k)) ⟨i.val, i.isLt⟩
+            ⟨km1.val, Nat.lt_trans hkm1_lt_i i.isLt⟩ *
+          Vector.normSq ((basis (Matrix.rowSwap b km1 k)).row
+            ⟨km1.val, km1.isLt⟩) = _
+      exact h.symm
+    -- Apply scaledCoeffs_eq for b'.
+    have heq := scaledCoeffs_eq (Matrix.rowSwap b km1 k) i.val km1.val i.isLt hkm1_lt_i
+    show ((GramSchmidt.entry (scaledCoeffs (Matrix.rowSwap b km1 k)) ⟨i.val, i.isLt⟩
+            ⟨km1.val, Nat.lt_trans hkm1_lt_i i.isLt⟩ : Int) : Rat) = _
+    rw [heq]
+    -- The exponent km1.val + 1 in scaledCoeffs_eq matches k.val via hkm1.
+    have hgd_eq :
+        gramDet (Matrix.rowSwap b km1 k) (km1.val + 1)
+            (Nat.succ_le_of_lt (Nat.lt_trans hkm1_lt_i i.isLt)) =
+          gramDet (Matrix.rowSwap b km1 k) k.val hk_le_n :=
+      gramDet_subst_val (Matrix.rowSwap b km1 k) _ _ _ _ hkm1
+    rw [hgd_eq, hdprime_rat]
+    -- Now goal: G * (Nk + μ^2 * Nkm1) * c'[i][km1] = G * inner
+    -- Use: c'[i][km1] * (Nk + μ^2 * Nkm1) = inner  (via hcoeff_normSq + hN'_eq).
+    have hcoeff_inner :
+        GramSchmidt.entry (coeffs (Matrix.rowSwap b km1 k))
+            ⟨i.val, i.isLt⟩
+            ⟨km1.val, Nat.lt_trans hkm1_lt_i i.isLt⟩ *
+          (Nk + μ ^ 2 * Nkm1) =
+        GramSchmidt.entry (coeffs b) i k * Nk +
+          μ * (GramSchmidt.entry (coeffs b) i km1 * Nkm1) := by
+      rw [← hN'_eq]
+      rw [hcoeff_normSq]
+      exact hdot_b'_km1
+    linear_combination G * hcoeff_inner
+  -- Combine all rational identities and discharge by ring.
+  -- Goal: ↑(nu'[i][km1] * d_k) = ↑(numerator)
+  -- numerator = d_{km1} * nu[i][k] + B * nu[i][km1]
+  unfold adjacentSwapScaledCoeffAbovePrevNumerator adjacentSwapPivotCoeff
+  push_cast
+  rw [hnu'_rat, hdk_rat, hdkm1_rat, hnuik_rat, hnuikm1_rat, hB_rat]
+  ring
+
 end GramSchmidt.Int
 
 end Hex
