@@ -2900,8 +2900,10 @@ theorem factor_constant_branch_entry_irreducible_of_choosePrimeData
 Per-branch HO-1 component for the fast-path quadratic integer-root arm of the
 capstone `factor_irreducible_of_nonUnit` (#4170): every entry recorded by
 `Hex.factorWithBound f B` in this fast-path branch is `Hex.ZPoly.Irreducible`,
-given `f ≠ 0`, `1 < B`, the branch marker hypotheses (`hdeg`, `hquad`), and
-the reassembly expansion-complete side condition.
+given `f ≠ 0`, `1 < B`, and the branch marker hypotheses (`hdeg`, `hquad`).
+The reassembly expansion-complete side condition is discharged internally via
+`IntReductionMod.reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`
+(#4747), so the umbrella no longer requires an explicit `hcomplete` premise.
 
 Composes:
 * `Hex.factorWithBound_entry_mem_quadratic_branch_raw` — the Mathlib-free
@@ -2936,10 +2938,14 @@ theorem factor_quadratic_branch_entry_irreducible_of_quadraticRoots
     (hquad :
       Hex.quadraticIntegerRootFactors?
         (Hex.normalizeForFactor f).squareFreeCore = some coreFactors)
-    (hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList)
-    (hcomplete :
-      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f) coreFactors) :
+    (hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList) :
     Hex.ZPoly.Irreducible entry.1 := by
+  -- Discharge the reassembly expansion-complete side condition internally
+  -- using the quadratic-arm discharger (#4747).
+  have hcomplete :
+      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f) coreFactors :=
+    IntReductionMod.reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero
+      f hf_ne hquad
   -- Branch-shape lemma: entry = normalizeFactorSign raw for raw ∈ reassembly.
   obtain ⟨raw, hraw_mem, hentry_eq⟩ :=
     Hex.factorWithBound_entry_mem_quadratic_branch_raw f B entry hB_gt_one hdeg
@@ -2973,8 +2979,10 @@ theorem factor_quadratic_branch_entry_irreducible_of_quadraticRoots
 Per-branch HO-1 component for the slow-path **quadratic integer-root** arm of
 the capstone `factor_irreducible_of_nonUnit` (#4170): every entry recorded by
 `Hex.factorWithBound f B` in this arm is `Hex.ZPoly.Irreducible`, given the
-branch markers, the `hfast_none` slow-dispatch witness, and the reassembly
-expansion-complete side condition.
+branch markers and the `hfast_none` slow-dispatch witness. The reassembly
+expansion-complete side condition is discharged internally via
+`IntReductionMod.reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`
+(#4747), so the umbrella no longer requires an explicit `hcomplete` premise.
 
 The slow-quadratic branch is reachable through the public `Hex.factor` entry
 exactly when `factorFastFactorsWithBound f B = none` (so the public
@@ -3033,11 +3041,14 @@ theorem factor_slow_quadratic_branch_entry_irreducible_of_choosePrimeData
       Hex.quadraticIntegerRootFactors?
         (Hex.normalizeForFactor f).squareFreeCore = some coreFactors)
     (hfast_none : Hex.factorFastFactorsWithBound f B = none)
-    (hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList)
-    (hcomplete :
-      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
-        coreFactors) :
+    (hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList) :
     Hex.ZPoly.Irreducible entry.1 := by
+  -- Discharge the reassembly expansion-complete side condition internally
+  -- using the quadratic-arm discharger (#4747).
+  have hcomplete :
+      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f) coreFactors :=
+    IntReductionMod.reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero
+      f hf_ne hquad
   -- Branch-shape lemma: entry = normalizeFactorSign raw for raw ∈ reassembly.
   obtain ⟨raw, hraw_mem, hentry_eq⟩ :=
     Hex.factorWithBound_entry_mem_slow_quadratic_branch_raw f B entry hdeg
