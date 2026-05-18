@@ -138,7 +138,7 @@ private theorem dot_self_eq_zero_get (v : Vector Rat m)
   exact foldl_dot_self_eq_zero_of_mem (xs := List.finRange m) (v := v)
     (acc := 0) (by decide) (by simpa [Matrix.dot, Hex.Vector.dotProduct] using hzero) i hmem
 
-private theorem dot_zero_of_dot_self_zero (row v : Vector Rat m)
+theorem dot_zero_of_dot_self_zero (row v : Vector Rat m)
     (hzero : Matrix.dot v v = 0) :
     Matrix.dot row v = 0 := by
   unfold Matrix.dot Hex.Vector.dotProduct

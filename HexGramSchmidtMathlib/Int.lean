@@ -206,7 +206,7 @@ private theorem det_intCast {k : Nat} (M : Matrix Int k k) :
   exact detTerm_intCast M perm
 
 /-- Right-side dot product distributes over vector addition. -/
-private theorem dot_add_right_rat {m' : Nat} (u v w : Vector Rat m') :
+theorem dot_add_right_rat {m' : Nat} (u v w : Vector Rat m') :
     Matrix.dot u (v + w) = Matrix.dot u v + Matrix.dot u w := by
   unfold Matrix.dot Hex.Vector.dotProduct
   have h :
@@ -234,7 +234,7 @@ private theorem dot_add_right_rat {m' : Nat} (u v w : Vector Rat m') :
   simpa [hzero] using h (List.finRange m') 0 0
 
 /-- Right-side dot product distributes over scalar multiplication. -/
-private theorem dot_smul_right_rat {m' : Nat} (s : Rat) (u v : Vector Rat m') :
+theorem dot_smul_right_rat {m' : Nat} (s : Rat) (u v : Vector Rat m') :
     Matrix.dot u (s • v) = s * Matrix.dot u v := by
   unfold Matrix.dot Hex.Vector.dotProduct
   have h :
@@ -1068,7 +1068,7 @@ theorem gramDet_pos (b : Matrix Int n m)
 factor multiplies the `k`-fold product by `Vector.normSq ((basis b).row ⟨k, _⟩)`.
 This is a `List.finRange` cancellation lemma; positivity of the leading Gram
 determinant is handled separately by `gramDet_pos`. -/
-private theorem gramSchmidtNormProduct_succ (b : Matrix Int n m)
+theorem gramSchmidtNormProduct_succ (b : Matrix Int n m)
     (k : Nat) (hk : k + 1 ≤ n) :
     gramSchmidtNormProduct b (k + 1) hk =
       gramSchmidtNormProduct b k (Nat.le_of_succ_le hk) *
@@ -1390,7 +1390,7 @@ private theorem dot_basis_basisPrefixProjection_eq_origProjCoords_mul_normSq
 
 /-- The Gram-determinant succession: `(gramDet (j+1) : Rat)` factors as
 `(gramSchmidtNormProduct j) * normSq(basis[j])`. -/
-private theorem gramDet_succ_rat
+theorem gramDet_succ_rat
     (b : Matrix Int n m) (j : Nat) (hjsuc : j + 1 ≤ n) :
     (gramDet b (j + 1) hjsuc : Rat) =
       gramSchmidtNormProduct b j (Nat.le_of_succ_le hjsuc) *
@@ -1746,13 +1746,13 @@ private theorem intCast_rat_injective_int_eq {a b : Int} (h : (a : Rat) = (b : R
   have hsub : a - b = 0 := Rat.intCast_eq_zero_iff.mp hz
   omega
 
-private theorem dot_add_left_rat {m' : Nat} (u v w : Vector Rat m') :
+theorem dot_add_left_rat {m' : Nat} (u v w : Vector Rat m') :
     Matrix.dot (u + v) w = Matrix.dot u w + Matrix.dot v w := by
   rw [dot_comm_rat (u := u + v) (v := w)]
   rw [dot_add_right_rat (u := w) (v := u) (w := v)]
   rw [dot_comm_rat (u := w) (v := u), dot_comm_rat (u := w) (v := v)]
 
-private theorem dot_smul_left_rat {m' : Nat} (s : Rat) (u v : Vector Rat m') :
+theorem dot_smul_left_rat {m' : Nat} (s : Rat) (u v : Vector Rat m') :
     Matrix.dot (s • u) v = s * Matrix.dot u v := by
   rw [dot_comm_rat (u := s • u) (v := v)]
   rw [dot_smul_right_rat (s := s) (u := v) (v := u)]
@@ -1760,7 +1760,7 @@ private theorem dot_smul_left_rat {m' : Nat} (s : Rat) (u v : Vector Rat m') :
 
 /-- Pythagoras: if `curr ⊥ prev`, then the squared norm of `curr + μ • prev`
 splits as `‖curr‖² + μ² · ‖prev‖²`. -/
-private theorem normSq_add_smul_orthogonal_rat {m' : Nat}
+theorem normSq_add_smul_orthogonal_rat {m' : Nat}
     (curr prev : Vector Rat m') (μ : Rat)
     (horth : Matrix.dot curr prev = 0) :
     Vector.normSq (curr + μ • prev) =
@@ -1782,7 +1782,7 @@ private theorem normSq_add_smul_orthogonal_rat {m' : Nat}
 /-- For `j < km1.val`, the Gram-Schmidt basis row is unchanged by the swap
 of rows `km1, k`. The norm-square product over indices `< km1.val` therefore
 agrees on `b` and `Matrix.rowSwap b km1 k`. -/
-private theorem gramSchmidtNormProduct_rowSwap_below
+theorem gramSchmidtNormProduct_rowSwap_below
     (b : Matrix Int n m) (km1 k : Fin n) (hkm1k : km1.val < k.val) :
     gramSchmidtNormProduct (Matrix.rowSwap b km1 k) km1.val
         (Nat.le_of_lt km1.isLt) =
@@ -1799,7 +1799,7 @@ private theorem gramSchmidtNormProduct_rowSwap_below
 determinant casts to the rational `gramSchmidtNormProduct` without requiring
 linear independence. The `independent` hypothesis in the public theorem is
 not actually used by the proof. -/
-private theorem gramDet_eq_prod_normSq_uncond (b : Matrix Int n m)
+theorem gramDet_eq_prod_normSq_uncond (b : Matrix Int n m)
     (k : Nat) (hk : k ≤ n) :
     (gramDet b k hk : Rat) = gramSchmidtNormProduct b k hk := by
   rw [gramDet_rat_eq_progressMatrix_zero_det b k hk]
@@ -1810,7 +1810,7 @@ private theorem gramDet_eq_prod_normSq_uncond (b : Matrix Int n m)
 /-- `gramDet` is independent of the propositional `≤ n` proof, and depends only
 on the Nat value `k`. Two `gramDet` calls with equal `Nat` arguments produce
 equal values. -/
-private theorem gramDet_subst_val
+theorem gramDet_subst_val
     (b : Matrix Int n m) (j₁ j₂ : Nat) (h₁ : j₁ ≤ n) (h₂ : j₂ ≤ n)
     (he : j₁ = j₂) :
     gramDet b j₁ h₁ = gramDet b j₂ h₂ := by
@@ -1818,7 +1818,7 @@ private theorem gramDet_subst_val
   rfl
 
 /-- Same as `gramDet_subst_val` for `gramSchmidtNormProduct`. -/
-private theorem gramSchmidtNormProduct_subst_val
+theorem gramSchmidtNormProduct_subst_val
     (b : Matrix Int n m) (j₁ j₂ : Nat) (h₁ : j₁ ≤ n) (h₂ : j₂ ≤ n)
     (he : j₁ = j₂) :
     gramSchmidtNormProduct b j₁ h₁ = gramSchmidtNormProduct b j₂ h₂ := by
@@ -1917,6 +1917,102 @@ theorem gramDet_rowSwap_adjacent_pivot_product
   rw [hdprime_rat, hdk_rat, hdkp1_rat, hdkm1_rat, hB_rat]
   grind
 
+/-- All-zero foldl: when every term in the foldl is zero, the result equals
+the initial accumulator. -/
+private theorem foldl_add_zero_of_all_zero_rat {α : Type}
+    (f : α → Rat) (xs : List α) (h : ∀ x ∈ xs, f x = 0) (acc : Rat) :
+    xs.foldl (fun acc' x => acc' + f x) acc = acc := by
+  induction xs generalizing acc with
+  | nil => rfl
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hx : f x = 0 := h x (by simp)
+      rw [hx, Rat.add_zero]
+      exact ih (fun y hy => h y (by simp [hy])) acc
+
+/-- Foldl isolation: when every term except the `j`-th vanishes, the foldl
+over `List.finRange i` collapses to `f ⟨j, hj⟩`. -/
+private theorem foldl_finRange_isolate_rat :
+    ∀ (i : Nat) (j : Nat) (hj : j < i) (f : Fin i → Rat),
+      (∀ q : Fin i, q.val ≠ j → f q = 0) →
+      (List.finRange i).foldl (fun acc q => acc + f q) 0 = f ⟨j, hj⟩
+  | 0, _, hj, _, _ => absurd hj (Nat.not_lt_zero _)
+  | i + 1, j, hj, f, h_zero => by
+      rw [List.finRange_succ_last, List.foldl_append, List.foldl_map]
+      simp only [List.foldl_cons, List.foldl_nil]
+      by_cases hj_eq : j = i
+      · -- j = i: the `Fin.last i` term contributes `f ⟨j, hj⟩`.
+        subst hj_eq
+        have hzero_pre : ∀ q : Fin j, f (Fin.castSucc q) = 0 := by
+          intro q
+          apply h_zero
+          have : (Fin.castSucc q).val = q.val := rfl
+          rw [this]
+          exact Nat.ne_of_lt q.isLt
+        have hmem_zero : ∀ q ∈ List.finRange j, f (Fin.castSucc q) = 0 := by
+          intro q _
+          exact hzero_pre q
+        have hfold_zero :
+            (List.finRange j).foldl
+                (fun (acc : Rat) (q : Fin j) => acc + f (Fin.castSucc q)) 0 = 0 :=
+          foldl_add_zero_of_all_zero_rat (fun q => f (Fin.castSucc q))
+            (List.finRange j) hmem_zero 0
+        rw [hfold_zero, Rat.zero_add]
+        rfl
+      · -- j < i: recurse on the smaller range.
+        have hjlt : j < i := by omega
+        have hlast_zero : f (Fin.last i) = 0 := by
+          apply h_zero
+          have : (Fin.last i).val = i := rfl
+          rw [this]
+          omega
+        rw [hlast_zero, Rat.add_zero]
+        have hzero_pre : ∀ q : Fin i, q.val ≠ j → f (Fin.castSucc q) = 0 := by
+          intro q hq_ne
+          apply h_zero
+          have : (Fin.castSucc q).val = q.val := rfl
+          rw [this]
+          exact hq_ne
+        have hih := foldl_finRange_isolate_rat i j hjlt
+          (fun q => f (Fin.castSucc q)) hzero_pre
+        rw [hih]
+        rfl
+
+/-- Dotting the `j`-th Gram-Schmidt basis row with the integer-cast `i`-th
+input row picks out the `(i, j)` Gram-Schmidt coefficient weighted by the
+squared norm of the basis row. Holds unconditionally: when the basis row is
+zero, both sides vanish (orthogonality + the `if`-branch in
+`coeffs_lower_projection`). -/
+theorem dot_basis_castRow_eq_coeffs_mul_normSq
+    (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < i) :
+    Matrix.dot ((basis b).row ⟨j, Nat.lt_trans hj hi⟩)
+        (Vector.map (fun x : Int => (x : Rat)) (b.row ⟨i, hi⟩)) =
+      GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ *
+        Vector.normSq ((basis b).row ⟨j, Nat.lt_trans hj hi⟩) := by
+  have hjlt : j < n := Nat.lt_trans hj hi
+  -- Expand `castIntRow b i` via `basis_decomposition`.
+  have hrow := castIntRow_decomposition b i hi
+  show Matrix.dot ((basis b).row ⟨j, hjlt⟩) (castIntRow b ⟨i, hi⟩) = _
+  rw [hrow]
+  rw [dot_add_right_rat]
+  -- First term: `dot basis[j] basis[i] = 0` by orthogonality (j ≠ i).
+  rw [basis_orthogonal b j i hjlt hi (Nat.ne_of_lt hj)]
+  rw [Rat.zero_add]
+  -- Second term: linearise the prefixCombination, then isolate the j-th index.
+  rw [dot_prefixCombination_right_rat (coeffs := coeffs b) (basisM := basis b)
+      (i := i) (hi := hi) (u := (basis b).row ⟨j, hjlt⟩)]
+  have h_zero_term : ∀ q : Fin i, q.val ≠ j →
+      GramSchmidt.entry (coeffs b) ⟨i, hi⟩
+            ⟨q.val, Nat.lt_trans q.isLt hi⟩ *
+          Matrix.dot ((basis b).row ⟨j, hjlt⟩)
+            ((basis b).row ⟨q.val, Nat.lt_trans q.isLt hi⟩) = 0 := by
+    intro q hqj
+    have hq_lt_n : q.val < n := Nat.lt_trans q.isLt hi
+    rw [basis_orthogonal b j q.val hjlt hq_lt_n fun h => hqj h.symm]
+    grind
+  rw [foldl_finRange_isolate_rat i j hj _ h_zero_term]
+  -- After isolation: c[i][j] * dot basis[j] basis[j] = c[i][j] * normSq basis[j].
+  rfl
 
 /-- Non-singular branch of the Cramer/Bareiss bridge: when the no-pivot
 Bareiss pass over the Gram matrix reaches column `j` without recording a
