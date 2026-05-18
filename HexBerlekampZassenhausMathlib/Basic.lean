@@ -1197,6 +1197,19 @@ theorem monicModPImage_eq_monicModularImage
     monicModPImage f = Hex.monicModularImage f := by
   rfl
 
+/-- For a nonzero `Hex.FpPoly p`, `Hex.monicModularImage` is exactly the
+leading-coefficient inverse scaling of the input. This records the direct
+`if f.isZero then 0 else scale (lc f)⁻¹ f` branch of the definition, avoiding
+repeated local `unfold Hex.monicModularImage; simp [hf]` derivations at the
+call sites that need this equation. -/
+private theorem monicModularImage_eq_scale_inv_leadingCoeff_of_isZero_false
+    {p : Nat} [Hex.ZMod64.Bounds p] {f : Hex.FpPoly p}
+    (hf : f.isZero = false) :
+    Hex.monicModularImage f =
+        Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f)⁻¹ f := by
+  unfold Hex.monicModularImage
+  simp [hf]
+
 theorem monicModPImage_zero {p : Nat} [Hex.ZMod64.Bounds p] :
     @monicModPImage p _ 0 = 0 := by
   rfl
@@ -5025,14 +5038,12 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
       -- Express both monicModularImages explicitly: `scale (lc gᵢ)⁻¹ gᵢ`.
       have hmm₁_eq :
           Hex.monicModularImage g₁ =
-            Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff g₁)⁻¹ g₁ := by
-        unfold Hex.monicModularImage
-        simp [hg₁_isZero]
+            Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff g₁)⁻¹ g₁ :=
+        monicModularImage_eq_scale_inv_leadingCoeff_of_isZero_false hg₁_isZero
       have hmm₂_eq :
           Hex.monicModularImage g₂ =
-            Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff g₂)⁻¹ g₂ := by
-        unfold Hex.monicModularImage
-        simp [hg₂_isZero]
+            Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff g₂)⁻¹ g₂ :=
+        monicModularImage_eq_scale_inv_leadingCoeff_of_isZero_false hg₂_isZero
       rw [hmm₁_eq, hmm₂_eq] at heqm
       -- Apply `scale (lc g₁)` to both sides to recover `g₁` on the LHS.
       have hscaled :
@@ -5983,8 +5994,8 @@ private theorem gcd_monicModularImage_derivative_eq_one_local
         (Hex.DensePoly.derivative (Hex.monicModularImage f)) = 1 := by
   let u : Hex.ZMod64 p := (Hex.DensePoly.leadingCoeff f)⁻¹
   have hmonic_eq : Hex.monicModularImage f = Hex.DensePoly.scale u f := by
-    unfold Hex.monicModularImage
-    simp [hzero, u]
+    simpa [u] using
+      monicModularImage_eq_scale_inv_leadingCoeff_of_isZero_false hzero
   have hcop :
       IsCoprime
         (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f))
@@ -6193,9 +6204,8 @@ theorem factors_irreducible_of_factorsModPBerlekampForm
     Polynomial.isUnit_C.mpr (isUnit_iff_ne_zero.mpr hinv_zmod_ne)
   have hmonic_eq :
       Hex.monicModularImage g' =
-        Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff g')⁻¹ g' := by
-    unfold Hex.monicModularImage
-    simp [hg'_isZero]
+        Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff g')⁻¹ g' :=
+    monicModularImage_eq_scale_inv_leadingCoeff_of_isZero_false hg'_isZero
   have hmath_eq :
       HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage g') =
         Polynomial.C
