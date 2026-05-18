@@ -5452,14 +5452,102 @@ private theorem polyProduct_map_liftToZ_congr_factorProduct
     (Hex.ZPoly.congr_liftToZ_of_modP_eq p _ _
       (modP_polyProduct_liftToZ_eq_factorProduct factors))
 
+/-- Primitive + positive-leading-coefficient sibling of
+`factorsModP_polyProduct_congr_of_factorsModPBerlekampForm`: the
+Berlekamp factor product over `primeData.factorsModP` is congruent mod
+`p` to `liftToZ (monicModularImage (modP p core))`, the canonical monic
+representative of `modP p core`.
+
+The proof mirrors the monic version up to (but not including) the
+`monicModularImage_modP_eq_of_monic` collapse: `factorProduct` on the
+raw Berlekamp factor list returns the monic input
+`monicModularImage (modP p core)` by `factorProduct_berlekampFactor`,
+`factorProduct_map_monicModularImage_eq_monicModularImage_factorProduct`
+pushes `monicModularImage` through the outer map, and
+`monicModularImage_eq_self_of_monic` collapses the resulting double
+application because `monicModularImage (modP p core)` is already monic
+(via `monicModularImage_monic`).  The monic wrapper above adds the
+final `monicModularImage (modP p core) = modP p core` step that
+requires `hcore_monic`.
+
+`_hcore_primitive`, `_hcore_lc_pos`, and `_hgood` are not consumed by
+the proof; they are threaded for API parity with the broader
+`_of_primitive_pos_lc_core` propagation chain. -/
+theorem factorsModP_polyProduct_congr_of_factorsModPBerlekampForm_of_primitive_pos_lc_core
+    (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (_hcore_primitive : Hex.ZPoly.Primitive core)
+    (_hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hform : Hex.factorsModPBerlekampForm core primeData)
+    (_hgood :
+      letI := primeData.bounds
+      Hex.isGoodPrime core primeData.p = true) :
+    letI := primeData.bounds
+    Hex.ZPoly.congr
+      (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
+      (Hex.FpPoly.liftToZ
+        (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)))
+      primeData.p := by
+  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  obtain ⟨hprime, hzero, hfield, heq⟩ := hform
+  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+    Hex.ZMod64.primeModulusOfPrime hprime
+  -- `monicModularImage (modP p core)` is monic.
+  have hmonicImage_monic :
+      Hex.DensePoly.Monic (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)) :=
+    Hex.monicModularImage_monic hprime (Hex.ZPoly.modP primeData.p core) hzero
+  -- Raw Berlekamp factor list of the monic image.
+  let raw :=
+      (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
+        (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
+        hmonicImage_monic hfield).factors
+  -- `factorProduct raw = monicModularImage (modP p core)` (input recovered;
+  -- no `hcore_monic` needed here — the monic premise of `factorProduct_berlekampFactor`
+  -- is supplied by `monicModularImage_monic`).
+  have hprod_eq_raw :
+      Hex.Berlekamp.factorProduct raw =
+        Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) := by
+    show Hex.Berlekamp.factorProduct
+        (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
+          (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
+          hmonicImage_monic hfield).factors = _
+    rw [Hex.Berlekamp.factorProduct_berlekampFactor]
+  -- Each raw factor is nonzero.
+  have hraw_ne : ∀ g ∈ raw, g ≠ 0 :=
+    Hex.Berlekamp.berlekampFactor_factors_ne_zero
+      (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
+      hmonicImage_monic
+  -- `monicModularImage` is idempotent on its own image (the image is monic).
+  have hmonicImage_idem :
+      Hex.monicModularImage (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)) =
+        Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) :=
+    Hex.monicModularImage_eq_self_of_monic hprime _ hmonicImage_monic
+  -- Push `monicModularImage` through `factorProduct`, then apply idempotence:
+  -- `factorProduct (raw.map monicModularImage) = monicModularImage (factorProduct raw)
+  --   = monicModularImage (monicModularImage (modP p core))
+  --   = monicModularImage (modP p core)`.
+  have hprod_eq_mapped :
+      Hex.Berlekamp.factorProduct (raw.map Hex.monicModularImage) =
+        Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) := by
+    rw [Hex.factorProduct_map_monicModularImage_eq_monicModularImage_factorProduct
+        hprime raw hraw_ne, hprod_eq_raw, hmonicImage_idem]
+  -- Apply the bridge lemma at the *mapped* Berlekamp factor list.
+  have hbridge :=
+    polyProduct_map_liftToZ_congr_factorProduct (p := primeData.p)
+      (raw.map Hex.monicModularImage)
+  rw [hprod_eq_mapped] at hbridge
+  -- `primeData.factorsModP = (raw.map monicModularImage).toArray` by `heq`.
+  rw [heq, List.map_toArray]
+  exact hbridge
+
 /-- Discharge of the `polyProduct (factorsModP.map liftToZ) ≡ core (mod p)`
 premise on `henselLiftData_liftedFactor_monic_of_choosePrimeData` (and the two
 other umbrellas at lines 4549, 4613) from the `factorsModPBerlekampForm`
 invariant plus a successful `isGoodPrime` check.  Requires `core` to be monic
 so that the leading coefficient of `modP p core` is `1`, hence
 `monicModularImage (modP p core) = modP p core`; under that identification
-`factorProduct_berlekampFactor` returns `modP p core`, and the bridge to the
-integer side is closed by `congr_liftToZ_modP`.
+the `_of_primitive_pos_lc_core` sibling above (which lands at
+`liftToZ (monicModularImage (modP p core))`) collapses to `liftToZ (modP p core)`,
+and the bridge to the integer side is closed by `congr_liftToZ_modP`.
 
 The added `hcore_monic` premise costs downstream consumers nothing: the
 umbrellas they feed already require it.  No additional `1 < p` premise is
@@ -5468,7 +5556,7 @@ theorem factorsModP_polyProduct_congr_of_factorsModPBerlekampForm
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
     (hcore_monic : Hex.DensePoly.Monic core)
     (hform : Hex.factorsModPBerlekampForm core primeData)
-    (_hgood :
+    (hgood :
       letI := primeData.bounds
       Hex.isGoodPrime core primeData.p = true) :
     letI := primeData.bounds
@@ -5485,58 +5573,18 @@ theorem factorsModP_polyProduct_congr_of_factorsModPBerlekampForm
       Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) =
         Hex.ZPoly.modP primeData.p core :=
     monicModularImage_modP_eq_of_monic core hcore_monic hprime hp hzero
-  -- `monicModularImage (modP p core)` is monic (consumed by Berlekamp's signature).
-  have hmonicImage_monic :
-      Hex.DensePoly.Monic (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)) :=
-    Hex.monicModularImage_monic hprime (Hex.ZPoly.modP primeData.p core) hzero
-  -- Raw Berlekamp factor list: under the Option-3 wrap, `primeData.factorsModP`
-  -- is `raw.map monicModularImage` (then `.toArray`), so the bridge lemma must
-  -- apply to the mapped list, not `raw`.
-  let raw :=
-      (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
-        (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
-        hmonicImage_monic hfield).factors
-  -- `factorProduct raw = monicImg = modP p core` (the latter because `core` is monic).
-  have hprod_eq_raw :
-      Hex.Berlekamp.factorProduct raw =
-        Hex.ZPoly.modP primeData.p core := by
-    show Hex.Berlekamp.factorProduct
-        (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
-          (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
-          hmonicImage_monic hfield).factors = _
-    rw [Hex.Berlekamp.factorProduct_berlekampFactor, hmonicImage_eq]
-  -- Each raw factor is nonzero (positive degree in the typical case; singleton
-  -- `[monicImg]` in the degenerate size-≤-1 case, and `monicImg` is monic).
-  have hraw_ne : ∀ g ∈ raw, g ≠ 0 :=
-    Hex.Berlekamp.berlekampFactor_factors_ne_zero
-      (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
-      hmonicImage_monic
-  -- Push `monicModularImage` through `factorProduct`:
-  -- `factorProduct (raw.map monicModularImage) = monicModularImage (factorProduct raw)
-  --   = monicModularImage (modP p core) = modP p core`.
-  have hprod_eq_mapped :
-      Hex.Berlekamp.factorProduct (raw.map Hex.monicModularImage) =
-        Hex.ZPoly.modP primeData.p core := by
-    rw [Hex.factorProduct_map_monicModularImage_eq_monicModularImage_factorProduct
-        hprime raw hraw_ne, hprod_eq_raw, hmonicImage_eq]
-  -- Apply the bridge lemma at the *mapped* Berlekamp factor list.
-  have hbridge :=
-    polyProduct_map_liftToZ_congr_factorProduct (p := primeData.p)
-      (raw.map Hex.monicModularImage)
-  rw [hprod_eq_mapped] at hbridge
-  -- Combine the bridge with `congr_liftToZ_modP` to land at `core` (mod p).
-  have hmodP_congr :
-      Hex.ZPoly.congr
-        (Hex.FpPoly.liftToZ (Hex.ZPoly.modP primeData.p core)) core primeData.p :=
-    Hex.FpPoly.congr_liftToZ_modP core
-  have hbridge' :
-      Hex.ZPoly.congr
-        (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
-        (Hex.FpPoly.liftToZ (Hex.ZPoly.modP primeData.p core))
-        primeData.p := by
-    rw [heq, List.map_toArray]
-    exact hbridge
-  exact Hex.ZPoly.congr_trans _ _ _ _ hbridge' hmodP_congr
+  -- Delegate to the `_of_primitive_pos_lc_core` sibling, landing at
+  -- `liftToZ (monicModularImage (modP p core))`; the monicising layer
+  -- is a no-op on monic input, so `rw [hmonicImage_eq]` collapses it.
+  have hcongr_mon :=
+    factorsModP_polyProduct_congr_of_factorsModPBerlekampForm_of_primitive_pos_lc_core
+      core primeData
+      (monic_primitive_sign_normalized_of_monic hcore_monic).2.1
+      (hcore_monic ▸ (by decide : (0 : Int) < 1))
+      ⟨hprime, hzero, hfield, heq⟩ hgood
+  rw [hmonicImage_eq] at hcongr_mon
+  -- Close to `≡ core (mod p)` via `congr_liftToZ_modP`.
+  exact Hex.ZPoly.congr_trans _ _ _ _ hcongr_mon (Hex.FpPoly.congr_liftToZ_modP core)
 
 /-- Discharge of the `primeData.factorsModP.toList ≠ []` premise on the lifted-factor
 umbrellas: the `factorsModPBerlekampForm` invariant records that
