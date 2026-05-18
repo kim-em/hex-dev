@@ -15287,6 +15287,83 @@ theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselS
   rw [hentry_eq]
   exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hirr_raw
 
+/--
+Abstract-bound variant of
+`factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence`:
+the concrete
+`2 * defaultFactorCoeffBound (normalizeForFactor f).squareFreeCore < d.p ^ d.k`
+Mignotte precision on the square-free core is replaced by `2 * B' < d.p ^ d.k`
+against an abstract bound `B'`, paired with the leading-coefficient bound on
+the core and the universal divisor coefficient bound
+`∀ g ∣ core, ∀ i, (g.coeff i).natAbs ≤ B'`. The proof body mirrors the
+(now-wrapper) original verbatim, except that the forward call to the
+slow-path capstone
+`exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence`
+becomes its `_of_bound` sibling, threading `B'`, `hcore_lc_le`, `hvalid`,
+`hprecision`.
+-/
+theorem factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
+    {f : Hex.ZPoly} {entry : Hex.ZPoly × Nat}
+    {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
+    (_hbranch :
+      Hex.factorWithBoundUsesExhaustiveBranch f
+        (Hex.ZPoly.defaultFactorCoeffBound f))
+    (_hentry_mem :
+      entry ∈ (Hex.factorWithBound f
+        (Hex.ZPoly.defaultFactorCoeffBound f)).factors.toList)
+    (h :
+      HenselSubsetCorrespondenceHypotheses
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.precisionForCoeffBound
+          (Hex.ZPoly.defaultFactorCoeffBound f)
+          (Hex.choosePrimeData
+            (Hex.normalizeForFactor f).squareFreeCore).p)
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+        d admissiblePrime successfulLift)
+    (hpartition :
+      LiftedFactorSubsetPartition
+        (Hex.normalizeForFactor f).squareFreeCore d Finset.univ
+        (Hex.normalizeForFactor f).squareFreeCore)
+    (hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0)
+    (hcore_primitive :
+      Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore)
+    (hcore_lc_pos :
+      0 < Hex.DensePoly.leadingCoeff (Hex.normalizeForFactor f).squareFreeCore)
+    (hcore_record :
+      Hex.shouldRecordPolynomialFactor
+        (Hex.normalizeForFactor f).squareFreeCore = true)
+    (hB_ne_zero : Hex.ZPoly.defaultFactorCoeffBound f ≠ 0)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hd_liftedFactor_inj : Function.Injective (liftedFactor d))
+    (B' : Nat)
+    (hcore_lc_le :
+      (Hex.DensePoly.leadingCoeff
+        (Hex.normalizeForFactor f).squareFreeCore).natAbs ≤ B')
+    (hvalid :
+      ∀ g : Hex.ZPoly, g ∣ (Hex.normalizeForFactor f).squareFreeCore →
+        ∀ i, (g.coeff i).natAbs ≤ B')
+    (hprecision : 2 * B' < d.p ^ d.k)
+    (hcore_entry :
+      ∃ raw ∈ (Hex.exhaustiveCoreFactorsWithBound
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.defaultFactorCoeffBound f)
+          (Hex.choosePrimeData
+            (Hex.normalizeForFactor f).squareFreeCore)).toList,
+        entry.1 = Hex.normalizeFactorSign raw) :
+    Hex.ZPoly.Irreducible entry.1 := by
+  obtain ⟨raw, hraw_mem, hentry_eq⟩ := hcore_entry
+  have hirr_raw : Hex.ZPoly.Irreducible raw :=
+    exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
+      h hpartition hcore_ne hcore_primitive hcore_lc_pos hcore_record hB_ne_zero
+      hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
+      hd_liftedFactor_inj B' hcore_lc_le hvalid hprecision raw hraw_mem
+  rw [hentry_eq]
+  exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hirr_raw
+
 /-- **#4536 outer-bound slow-path bridge.**
 
 The consumer-facing variant of
@@ -15400,14 +15477,39 @@ theorem factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorr
             (Hex.normalizeForFactor f).squareFreeCore)).toList,
         entry.1 = Hex.normalizeFactorSign raw) :
     Hex.ZPoly.Irreducible entry.1 := by
-  obtain ⟨raw, hraw_mem, hentry_eq⟩ := hcore_entry
-  have hirr_raw : Hex.ZPoly.Irreducible raw :=
-    exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence
-      h hpartition hcore_ne hcore_primitive hcore_lc_pos hcore_record hB_ne_zero
-      hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
-      hd_liftedFactor_inj hprecision raw hraw_mem
-  rw [hentry_eq]
-  exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hirr_raw
+  set core := (Hex.normalizeForFactor f).squareFreeCore with hcore_def
+  have hcore_size_pos : 0 < core.size := by
+    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
+    · exfalso
+      have hback_none : core.coeffs.back? = none := by
+        rw [Array.back?_eq_getElem?]
+        have hcoeffs_size : core.coeffs.size = 0 := by
+          simpa [Hex.DensePoly.size] using hzero
+        simp [hcoeffs_size]
+      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
+        unfold Hex.DensePoly.leadingCoeff
+        rw [hback_none]
+        rfl
+      rw [hlc_zero] at hcore_lc_pos
+      omega
+    · exact hpos
+  have hcore_dvd_self : core ∣ core :=
+    ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
+  have hcore_lc_le :
+      (Hex.DensePoly.leadingCoeff core).natAbs ≤
+        Hex.ZPoly.defaultFactorCoeffBound core := by
+    have hbound :=
+      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
+        (core.size - 1)
+    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
+    exact hbound
+  exact factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
+    _hbranch _hentry_mem h hpartition hcore_ne hcore_primitive hcore_lc_pos
+    hcore_record hB_ne_zero hd_modulus hd_liftedFactor_monic
+    hd_liftedFactor_natDegree_pos hd_liftedFactor_inj
+    (Hex.ZPoly.defaultFactorCoeffBound core)
+    hcore_lc_le (defaultFactorCoeffBound_valid core hcore_ne) hprecision
+    hcore_entry
 
 /-- **#4543 substrate (HO-1).**
 
