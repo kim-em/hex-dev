@@ -224,44 +224,14 @@ theorem coeffs_adjacentSwap_pivot (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.v
       (b := b) (km1 := km1) (k := k) hkm1 hdenom
 
 
-theorem scaledCoeffs_adjacentSwap_above_prev (b : Matrix Int n m)
-    (k : Fin n) (hk : 0 < k.val) (i : Fin n) (hik : k.val < i.val)
-    (hdet : gramDet b k.val (Nat.le_of_lt k.isLt) ≠ 0) :
-    let km1 := GramSchmidt.prevRow k hk
-    let B : Int := GramSchmidt.entry (scaledCoeffs b) k km1
-    let dk' : Int :=
-      (((gramDet b (k.val + 1) (Nat.succ_le_of_lt k.isLt) : Nat) : Int) *
-          ((gramDet b km1.val (Nat.le_of_lt km1.isLt) : Nat) : Int) + B ^ 2) /
-        ((gramDet b k.val (Nat.le_of_lt k.isLt) : Nat) : Int)
-    ((GramSchmidt.entry (scaledCoeffs (adjacentSwap b k hk)) i km1 : Int) : Int) =
-      (GramSchmidt.entry (scaledCoeffs b) i km1 * dk' +
-          GramSchmidt.entry (scaledCoeffs b) i k * B) /
-        ((gramDet b k.val (Nat.le_of_lt k.isLt) : Nat) : Int) := by
-  sorry
-
-theorem adjacentSwap_scaledCoeffAbovePrevNumerator_dvd (b : Matrix Int n m)
-    (k : Fin n) (hk : 0 < k.val) (i : Fin n) (hik : k.val < i.val)
-    (hdet : gramDet b k.val (Nat.le_of_lt k.isLt) ≠ 0) :
-    adjacentSwapDenom b k ∣ adjacentSwapScaledCoeffAbovePrevNumerator b k hk i := by
-  sorry
-
-theorem scaledCoeffs_adjacentSwap_above_curr (b : Matrix Int n m)
-    (k : Fin n) (hk : 0 < k.val) (i : Fin n) (hik : k.val < i.val)
-    (hdet : gramDet b k.val (Nat.le_of_lt k.isLt) ≠ 0) :
-    let km1 := GramSchmidt.prevRow k hk
-    let B : Int := GramSchmidt.entry (scaledCoeffs b) k km1
-    ((GramSchmidt.entry (scaledCoeffs (adjacentSwap b k hk)) i k : Int) : Int) =
-      (GramSchmidt.entry (scaledCoeffs b) i k *
-          ((gramDet b km1.val (Nat.le_of_lt km1.isLt) : Nat) : Int) -
-        GramSchmidt.entry (scaledCoeffs b) i km1 * B) /
-      ((gramDet b k.val (Nat.le_of_lt k.isLt) : Nat) : Int) := by
-  sorry
-
-theorem adjacentSwap_scaledCoeffAboveCurrNumerator_dvd (b : Matrix Int n m)
-    (k : Fin n) (hk : 0 < k.val) (i : Fin n) (hik : k.val < i.val)
-    (hdet : gramDet b k.val (Nat.le_of_lt k.isLt) ≠ 0) :
-    adjacentSwapDenom b k ∣ adjacentSwapScaledCoeffAboveCurrNumerator b k hk i := by
-  sorry
+/-! The four `adjacentSwap` scaled-coefficient identities for rows above the
+pivot (`scaledCoeffs_adjacentSwap_above_prev`, `_above_curr`, and the two
+`_dvd` companions) live in `HexGramSchmidtMathlib/Update.lean`. Their proof
+path goes through `bareiss_scaledCoeffMatrix_rowSwap_above_prev` /
+`_above_curr` (the bordered-minor identities), which cross the Bareiss / det
+bridge and so cannot be proved in the Mathlib-free core per
+[SPEC/Libraries/hex-gram-schmidt.md "Proof path governs placement, not just
+statement"]. -/
 
 end GramSchmidt.Int
 
