@@ -1284,6 +1284,19 @@ theorem modP_dvd_modP_of_dvd
   refine ⟨Hex.ZPoly.modP p q, ?_⟩
   rw [hq, modP_mul]
 
+/-- Transitivity of `Hex.FpPoly p`-level divisibility. Discharges the
+`c = a * (q * v)` step explicitly via `Hex.FpPoly.mul_assoc` because the
+`Dvd` instance on `Hex.FpPoly p` is the bespoke `instDvdOfAddOfMul`
+(witness shape `b = a * r`), and `dvd_trans` does not see through that. -/
+private theorem fpPoly_dvd_trans
+    {p : Nat} [Hex.ZMod64.Bounds p]
+    {a b c : Hex.FpPoly p} (hab : a ∣ b) (hbc : b ∣ c) : a ∣ c := by
+  obtain ⟨q, hq⟩ := hab
+  obtain ⟨v, hv⟩ := hbc
+  refine ⟨q * v, ?_⟩
+  rw [hv, hq]
+  exact Hex.FpPoly.mul_assoc _ _ _
+
 theorem monicModPImage_dvd_monicModularImage_of_dvd_of_choosePrimeData?_some
     {core factor : Hex.ZPoly}
     (hdvd : factor ∣ core)
