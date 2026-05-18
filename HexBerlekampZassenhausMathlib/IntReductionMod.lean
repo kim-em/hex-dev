@@ -3336,13 +3336,12 @@ genuine gaps in the discharger stack at the time of landing:
 discharged by #4637 via `defaultFactorCoeffBound_pos_of_ne_zero` and
 `precisionForCoeffBound_spec`.)
 
-Downstream consumers (notably the HO-1 capstone #4170) must thread the three
-shim premises until the substrate work lands. A follow-up issue can then
-drop them and recover the minimal-hypotheses umbrella signature. Until
-then, the umbrella delivers exactly the chain of substrate composition
-specified by #4561 with the substrate gaps relocated to explicit premises
-in keeping with the narrowed-scope precedent set by the sibling fast-path
-arm umbrellas (#4564 / #4565 / #4571 / #4575).
+Downstream consumers (notably the HO-1 capstone #4170 / #4819)
+currently route through the public umbrella's
+`_of_bound` sibling at line 4328 (which discharges Gap 3 against an
+abstract bound) and supply `hcore_monic` directly. Closing the
+remaining Gap 1 requires a directive-level decision per #4880; see
+the **#4880 / #4940** addendum below.
 
 The slow-path constant and quadratic sub-branches are tracked separately
 (`squareFreeCore.degree?.getD 0 = 0` and `quadraticIntegerRootFactors? =
@@ -3355,6 +3354,29 @@ from `reassemblyExpansionComplete_exhaustive_of_ne_zero` before invoking
 this internal residual; the residual is exposed via a private auxiliary
 so the heartbeat-sensitive wrapper application here is not re-elaborated
 through the discharger.
+
+**#4982:** the original `hprecision` shim (Gap 3) now has an
+abstract-bound route. The sibling
+`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound`
+(landed in PR #4982 at line 4328) replaces the core-shape
+`hprecision` with the abstract triple `(B', hcore_lc_le, hvalid,
+hprecision : 2 * B' < d.p ^ d.k)`. Downstream consumers wanting
+to discharge `hprecision` against an outer-shape Mignotte witness
+(notably the HO-1 capstone #4170 / #4819) should route through the
+`_of_bound` sibling rather than the wrapper here.
+
+**#4880 / #4940:** the original `hcore_monic` shim (Gap 1) is
+directive-level blocked. The #4940 substrate audit established that
+the upstream `multifactorLiftQuadratic_each_monic`
+(`HexHensel/QuadraticMultifactor.lean:1196`) carries a per-output
+monicness conclusion that is false for non-monic primitive core, so
+the helper-2/3/4 substrate chain cannot supply a `_of_primitive_pos_lc_core`
+sibling at the present API surface. Removal of Gap 1 from this umbrella
+requires a directive-level architectural decision per #4880
+(Option A — consumer-side recombination invariant co-redesign across
+the `_of_primitive_pos_lc_core` chain; Option B — executable-side
+monicising-by-scaling refactor of `exhaustiveCoreFactorsWithBound`
+or a `henselLiftData_scaled` variant).
 
 Thin wrapper over
 `factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux_of_bound`
@@ -4338,12 +4360,16 @@ theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound
 /-- **#4561 / #4848 HO-1 substrate — slow exhaustive-arm umbrella, with the
 `hcomplete` premise dropped via the #4848 discharger.**
 
-Public surface of the exhaustive-arm HO-1 umbrella. The free `hcomplete`
-premise documented as "Gap 2" in #4561 is now discharged internally via
-`reassemblyExpansionComplete_exhaustive_of_ne_zero` (#4848), so downstream
-callers (notably the HO-1 capstone #4170) only need to thread the
-remaining Gap 1 (`hcore_monic`) and Gap 3 (`hprecision`) shim premises
-until those substrate follow-ups land.
+Public surface of the exhaustive-arm HO-1 umbrella. Gap 2
+(`hcomplete`) is discharged internally via
+`reassemblyExpansionComplete_exhaustive_of_ne_zero` (#4848). Gap 3
+(`hprecision`) is exposed in this wrapper's signature against the
+core-shape Mignotte threshold; downstream consumers wanting the
+abstract-bound surface (notably the HO-1 capstone #4170 / #4819)
+should route through the `_of_bound` sibling at line 4328 (PR
+#4982). Gap 1 (`hcore_monic`) remains directive-level blocked per
+#4880 / #4940 audit; see the `_aux` docstring above for the full
+architectural finding.
 
 The body proceeds in two steps:
 
@@ -4374,13 +4400,13 @@ theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData
     (hchoose : Hex.choosePrimeData?
       (Hex.normalizeForFactor f).squareFreeCore = some
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore))
-    -- Gap 1: explicit until a `Monic`-relaxation refactor of the upstream
-    -- wrapper lands (or a producer for `squareFreeCore`-monicness arrives).
+    -- Gap 1: directive-level blocked per #4880 / #4940 (helpers 2/3/4
+    -- architectural infeasibility at the present API surface).
     (hcore_monic : Hex.DensePoly.Monic
       (Hex.normalizeForFactor f).squareFreeCore)
-    -- Gap 3 (substrate): explicit until the squareFreeCore-bound monotonicity
-    -- (#4539, closed without resolution) is supplied by the abstract-bound
-    -- refactor at the wrapper's call site.
+    -- Gap 3 (substrate): explicit on this wrapper; downstream consumers
+    -- wanting an outer-shape bound should route through the `_of_bound`
+    -- sibling at line 4328 (PR #4982).
     (hprecision :
       2 * Hex.ZPoly.defaultFactorCoeffBound
         (Hex.normalizeForFactor f).squareFreeCore <
