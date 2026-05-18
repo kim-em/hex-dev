@@ -115,14 +115,6 @@ theorem rowAdd_getElem [Mul R] [Add R]
           dst.isLt r.isLt hval)
     simpa [rowAdd] using congrArg (fun row => row[k]) hrow
 
-/-- Entry of a matrix product as a dot product of a row of the left factor and a
-column of the right factor. -/
-private theorem mul_getElem [Mul R] [Add R] [OfNat R 0]
-    (A : Matrix R n m) (B : Matrix R m k) (r : Fin n) (l : Fin k) :
-    (A * B)[r][l] = Hex.Vector.dotProduct A[r] (col B l) := by
-  show (mul A B)[r][l] = Hex.Vector.dotProduct A[r] (col B l)
-  simp [mul, ofFn, dot, row, Vector.getElem_ofFn]
-
 private theorem foldl_sum_congr_aux {R : Type u} [Add R] {α : Type v}
     (xs : List α) (f g : α → R) (acc : R)
     (h : ∀ x ∈ xs, f x = g x) :
@@ -232,7 +224,7 @@ theorem rowSwap_mul [Lean.Grind.Ring R]
       let kk : Fin m := ⟨k', hk⟩
       show (rowSwap A i j)[rr][kk] = A[i][kk]
       rw [rowSwap_getElem]; rw [if_pos hrj]
-    rw [hrow]
+    rw [show row (rowSwap A i j) rr = row A i by simpa [row] using hrow]
   · rw [if_neg hrj]
     by_cases hri : rr = i
     · rw [if_pos hri]
@@ -242,7 +234,7 @@ theorem rowSwap_mul [Lean.Grind.Ring R]
         let kk : Fin m := ⟨k', hk⟩
         show (rowSwap A i j)[rr][kk] = A[j][kk]
         rw [rowSwap_getElem]; rw [if_neg hrj, if_pos hri]
-      rw [hrow]
+      rw [show row (rowSwap A i j) rr = row A j by simpa [row] using hrow]
     · rw [if_neg hri]
       rw [mul_getElem A B rr ll]
       have hrow : (rowSwap A i j)[rr] = A[rr] := by
@@ -250,7 +242,7 @@ theorem rowSwap_mul [Lean.Grind.Ring R]
         let kk : Fin m := ⟨k', hk⟩
         show (rowSwap A i j)[rr][kk] = A[rr][kk]
         rw [rowSwap_getElem]; rw [if_neg hrj, if_neg hri]
-      rw [hrow]
+      rw [show row (rowSwap A i j) rr = row A rr by simpa [row] using hrow]
 
 /-- Multiplication by `B` commutes with row scaling on the left factor. -/
 theorem rowScale_mul [Lean.Grind.Ring R]
@@ -275,7 +267,8 @@ theorem rowScale_mul [Lean.Grind.Ring R]
       show (rowScale A i s)[rr][kk] = (Vector.ofFn fun k' => s * A[i][k'])[kk]
       rw [rowScale_getElem]
       simp [hri]
-    rw [hrow]
+    rw [show row (rowScale A i s) rr = Vector.ofFn (fun k' => s * A[i][k']) by
+      simpa [row] using hrow]
     exact dotProduct_smul_ofFn_left s A[i] (col B ll)
   · rw [if_neg hri]
     rw [mul_getElem A B rr ll]
@@ -285,7 +278,7 @@ theorem rowScale_mul [Lean.Grind.Ring R]
       show (rowScale A i s)[rr][kk] = A[rr][kk]
       rw [rowScale_getElem]
       simp [hri]
-    rw [hrow]
+    rw [show row (rowScale A i s) rr = row A rr by simpa [row] using hrow]
 
 /-- Multiplication by `B` commutes with the row-add operation on the left
 factor. -/
@@ -313,7 +306,9 @@ theorem rowAdd_mul [Lean.Grind.Ring R]
         (Vector.ofFn fun k' => A[dst][k'] + s * A[src][k'])[kk]
       rw [rowAdd_getElem]
       simp [hrd]
-    rw [hrow]
+    rw [show row (rowAdd A src dst s) rr =
+        Vector.ofFn (fun k' => A[dst][k'] + s * A[src][k']) by
+      simpa [row] using hrow]
     exact dotProduct_add_smul_ofFn_left A[dst] A[src] (col B ll) s
   · rw [if_neg hrd]
     rw [mul_getElem A B rr ll]
@@ -323,7 +318,7 @@ theorem rowAdd_mul [Lean.Grind.Ring R]
       show (rowAdd A src dst s)[rr][kk] = A[rr][kk]
       rw [rowAdd_getElem]
       simp [hrd]
-    rw [hrow]
+    rw [show row (rowAdd A src dst s) rr = row A rr by simpa [row] using hrow]
 
 /-- If `T * M = E`, then `rowSwap T i j * M = rowSwap E i j`: row swap on the
 transform side preserves the equation `T * M = E` when applied to both `T` and
