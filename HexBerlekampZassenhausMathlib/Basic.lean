@@ -7997,27 +7997,35 @@ private theorem leadingCoeff_centeredLiftPoly_of_pos_leadingCoeff_bound
   exact hcoeff_top
 
 /--
-Primitive/positive-leading capstone for represented factors under a primitive
-non-monic core.
+Abstract-bound variant of `representsIntegerFactorAtLift_primitive`: takes
+`B' : Nat`, `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`,
+`hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B'`, and
+`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`defaultFactorCoeffBound core` precision constraint.
 
-Given an integer factor `factor` of `target ∣ core` represented at the Hensel
-lift, primitive `core`, positive leading coefficient for `core`, monic lifted
-local factors, and Mignotte precision, the represented factor is primitive and
-has positive leading coefficient.
+The leading-coefficient transport step
+(`leadingCoeff_centeredLiftPoly_of_pos_leadingCoeff_bound`) requires its
+bound and precision arguments to match — abstracting only over `factor`'s
+coefficient bound is not enough, since the transport runs on
+`scaledLiftedFactorProduct core d S` whose leading coefficient equals
+`lc core`.  The `hcore_lc_le` hypothesis supplies the needed bound on
+`lc core` in terms of the abstract `B'`.
 -/
-theorem representsIntegerFactorAtLift_primitive
+theorem representsIntegerFactorAtLift_primitive_of_bound
     {core target factor : Hex.ZPoly} {d : Hex.LiftData}
     {S : LiftedFactorSubset d}
+    (B' : Nat)
+    (hvalid : ∀ i, (factor.coeff i).natAbs ≤ B')
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
     (hcore_ne : core ≠ 0)
     (hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hd_liftedFactor_monic :
       ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
-    (hprecision :
-      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
     (hfactor_dvd_target : factor ∣ target)
     (htarget_dvd_core : target ∣ core)
-    (hrep : RepresentsIntegerFactorAtLift core d factor S) :
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hprecision : 2 * B' < d.p ^ d.k) :
     Hex.ZPoly.Primitive factor ∧ 0 < Hex.DensePoly.leadingCoeff factor := by
   have hfactor_dvd_core : factor ∣ core := by
     obtain ⟨u, hu⟩ := hfactor_dvd_target
@@ -8047,6 +8055,67 @@ theorem representsIntegerFactorAtLift_primitive
       show Hex.DensePoly.leadingCoeff (liftedFactorProduct d S) = (1 : Int)
         from hprod_monic]
     ring
+  have hscaled_lc_pos :
+      0 < Hex.DensePoly.leadingCoeff (scaledLiftedFactorProduct core d S) := by
+    rw [hscaled_lc]
+    exact hcore_lc_pos
+  have hscaled_lc_bound :
+      (Hex.DensePoly.leadingCoeff (scaledLiftedFactorProduct core d S)).natAbs ≤
+        B' := by
+    rw [hscaled_lc]
+    exact hcore_lc_le
+  have hcenter :
+      Hex.centeredLiftPoly (scaledLiftedFactorProduct core d S) (d.p ^ d.k) =
+        factor :=
+    centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound
+      B' hvalid hrep hprecision
+  have hcenter_lc :
+      Hex.DensePoly.leadingCoeff
+          (Hex.centeredLiftPoly (scaledLiftedFactorProduct core d S)
+            (d.p ^ d.k)) =
+        Hex.DensePoly.leadingCoeff (scaledLiftedFactorProduct core d S) :=
+    leadingCoeff_centeredLiftPoly_of_pos_leadingCoeff_bound
+      hscaled_lc_pos hscaled_lc_bound hprecision
+  have hfactor_lc_pos : 0 < Hex.DensePoly.leadingCoeff factor := by
+    rw [hcenter] at hcenter_lc
+    rw [hcenter_lc, hscaled_lc]
+    exact hcore_lc_pos
+  exact ⟨hfactor_primitive, hfactor_lc_pos⟩
+
+/--
+Primitive/positive-leading capstone for represented factors under a primitive
+non-monic core.
+
+Given an integer factor `factor` of `target ∣ core` represented at the Hensel
+lift, primitive `core`, positive leading coefficient for `core`, monic lifted
+local factors, and Mignotte precision, the represented factor is primitive and
+has positive leading coefficient.
+
+This is a thin wrapper over
+`representsIntegerFactorAtLift_primitive_of_bound` that instantiates
+`B' := defaultFactorCoeffBound core` and discharges the abstract bound
+hypotheses via `defaultFactorCoeffBound_valid`.
+-/
+theorem representsIntegerFactorAtLift_primitive
+    {core target factor : Hex.ZPoly} {d : Hex.LiftData}
+    {S : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hfactor_dvd_target : factor ∣ target)
+    (htarget_dvd_core : target ∣ core)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S) :
+    Hex.ZPoly.Primitive factor ∧ 0 < Hex.DensePoly.leadingCoeff factor := by
+  have hfactor_dvd_core : factor ∣ core := by
+    obtain ⟨u, hu⟩ := hfactor_dvd_target
+    obtain ⟨v, hv⟩ := htarget_dvd_core
+    refine ⟨u * v, ?_⟩
+    rw [hv, hu]
+    exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
   have hcore_size_pos : 0 < core.size := by
     rcases Nat.eq_zero_or_pos core.size with hzero | hpos
     · exfalso
@@ -8062,7 +8131,7 @@ theorem representsIntegerFactorAtLift_primitive
       rw [hlc_zero] at hcore_lc_pos
       omega
     · exact hpos
-  have hcore_lc_bound :
+  have hcore_lc_le :
       (Hex.DensePoly.leadingCoeff core).natAbs ≤
         Hex.ZPoly.defaultFactorCoeffBound core := by
     have hcore_dvd_self : core ∣ core := by
@@ -8073,31 +8142,12 @@ theorem representsIntegerFactorAtLift_primitive
         (core.size - 1)
     rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
     exact hbound
-  have hscaled_lc_pos :
-      0 < Hex.DensePoly.leadingCoeff (scaledLiftedFactorProduct core d S) := by
-    rw [hscaled_lc]
-    exact hcore_lc_pos
-  have hscaled_lc_bound :
-      (Hex.DensePoly.leadingCoeff (scaledLiftedFactorProduct core d S)).natAbs ≤
-        Hex.ZPoly.defaultFactorCoeffBound core := by
-    rwa [hscaled_lc]
-  have hcenter :
-      Hex.centeredLiftPoly (scaledLiftedFactorProduct core d S) (d.p ^ d.k) =
-        factor :=
-    centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
-      hcore_ne hfactor_dvd_core hrep hprecision
-  have hcenter_lc :
-      Hex.DensePoly.leadingCoeff
-          (Hex.centeredLiftPoly (scaledLiftedFactorProduct core d S)
-            (d.p ^ d.k)) =
-        Hex.DensePoly.leadingCoeff (scaledLiftedFactorProduct core d S) :=
-    leadingCoeff_centeredLiftPoly_of_pos_leadingCoeff_bound
-      hscaled_lc_pos hscaled_lc_bound hprecision
-  have hfactor_lc_pos : 0 < Hex.DensePoly.leadingCoeff factor := by
-    rw [hcenter] at hcenter_lc
-    rw [hcenter_lc, hscaled_lc]
-    exact hcore_lc_pos
-  exact ⟨hfactor_primitive, hfactor_lc_pos⟩
+  exact representsIntegerFactorAtLift_primitive_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound core)
+    (defaultFactorCoeffBound_valid core hcore_ne factor hfactor_dvd_core)
+    hcore_lc_le
+    hcore_ne hcore_primitive hcore_lc_pos hd_liftedFactor_monic
+    hfactor_dvd_target htarget_dvd_core hrep hprecision
 
 /-- Scaling a monic integer polynomial by a nonzero constant preserves its
 stored size: the leading coefficient becomes `c * 1 = c ≠ 0`, and `scale` never
