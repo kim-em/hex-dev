@@ -8222,6 +8222,104 @@ private theorem scaledRecombinationSearchModAux_shouldRecord
                       exact ih quotient split.2 rest hrec factor hrest
         · simp [candidate, hrecord] at hsplit
 
+private theorem scaledRecombinationSearchModAux_primitive
+    (coreLc : Int) (target : ZPoly) (modulus : Nat)
+    (localFactors factors : List ZPoly) (fuel : Nat)
+    (hsearch :
+      scaledRecombinationSearchModAux coreLc target modulus localFactors fuel
+        = some factors) :
+    ∀ factor ∈ factors, ZPoly.Primitive factor := by
+  induction fuel generalizing target localFactors factors with
+  | zero =>
+      simp [scaledRecombinationSearchModAux] at hsearch
+  | succ fuel ih =>
+      unfold scaledRecombinationSearchModAux at hsearch
+      by_cases htarget : target = 1
+      · simp [htarget] at hsearch
+        cases hsearch
+        simp
+      · simp [htarget] at hsearch
+        rcases firstSome_some hsearch with ⟨split, hsplit⟩
+        let candidate :=
+          normalizeFactorSign <|
+            ZPoly.primitivePart <|
+              centeredLiftPoly
+                (DensePoly.scale coreLc (Array.polyProduct split.1.toArray))
+                modulus
+        by_cases hrecord : shouldRecordPolynomialFactor candidate = true
+        · simp [candidate, hrecord] at hsplit
+          cases hquot : exactQuotient? target candidate with
+          | none =>
+              simp [candidate, hquot] at hsplit
+          | some quotient =>
+              simp [candidate, hquot] at hsplit
+              cases hrec :
+                  scaledRecombinationSearchModAux coreLc quotient modulus
+                    split.2 fuel with
+              | none =>
+                  simp [hrec] at hsplit
+              | some rest =>
+                  simp [hrec] at hsplit
+                  cases hsplit
+                  intro factor hmem
+                  simp at hmem
+                  cases hmem with
+                  | inl hfactor =>
+                      rw [hfactor]
+                      -- The head emitted candidate is primitive: from
+                      -- `hrecord` we get nonzeroness of the candidate, which
+                      -- (via `normalizeFactorSign_ne_zero_of_ne_zero`)
+                      -- propagates back through `primitivePart`'s
+                      -- zero-condition (`primitivePart_eq_zero_of_content_eq_zero`)
+                      -- to `content (centeredLift ...) ≠ 0`, hence
+                      -- `Primitive (primitivePart (centeredLift ...))` by
+                      -- `primitivePart_primitive`, and finally
+                      -- `Primitive (normalizeFactorSign ...)` by deliverable 1.
+                      have hcand_ne :
+                          normalizeFactorSign (ZPoly.primitivePart
+                              (centeredLiftPoly
+                                (DensePoly.scale coreLc
+                                  (Array.polyProduct split.1.toArray))
+                                modulus)) ≠ 0 := by
+                        unfold shouldRecordPolynomialFactor at hrecord
+                        simp at hrecord
+                        exact hrecord.1.1
+                      have hpp_ne :
+                          ZPoly.primitivePart
+                              (centeredLiftPoly
+                                (DensePoly.scale coreLc
+                                  (Array.polyProduct split.1.toArray))
+                                modulus) ≠ 0 := by
+                        intro hpp
+                        apply hcand_ne
+                        rw [hpp]
+                        unfold normalizeFactorSign
+                        rw [if_neg
+                          (by decide : ¬ DensePoly.leadingCoeff (0 : ZPoly) < 0)]
+                      have hcontent_ne :
+                          ZPoly.content
+                              (centeredLiftPoly
+                                (DensePoly.scale coreLc
+                                  (Array.polyProduct split.1.toArray))
+                                modulus) ≠ 0 := by
+                        intro hcontent
+                        apply hpp_ne
+                        show DensePoly.primitivePart _ = 0
+                        exact DensePoly.primitivePart_eq_zero_of_content_eq_zero _
+                          (by simpa [ZPoly.content] using hcontent)
+                      have hpp_primitive :
+                          ZPoly.Primitive
+                            (ZPoly.primitivePart
+                              (centeredLiftPoly
+                                (DensePoly.scale coreLc
+                                  (Array.polyProduct split.1.toArray))
+                                modulus)) :=
+                        ZPoly.primitivePart_primitive _ hcontent_ne
+                      exact normalizeFactorSign_primitive _ hpp_primitive
+                  | inr hrest =>
+                      exact ih quotient split.2 rest hrec factor hrest
+        · simp [candidate, hrecord] at hsplit
+
 private theorem scaledRecombinationSearchMod_normalizeFactorSign
     (coreLc : Int) (f : ZPoly) (modulus : Nat)
     (localFactors factors : List ZPoly)
