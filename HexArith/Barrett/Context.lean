@@ -104,4 +104,37 @@ theorem mulMod_zero_right (ctx : BarrettCtx p) (a : UInt64) (ha : a < p) :
     exact Nat.lt_trans (by decide : 0 < 1) ctx.p_gt
   simpa using mulMod_eq ctx a 0 ha hzero
 
+/-- One is a left identity for Barrett modular multiplication on reduced residues. -/
+@[simp]
+theorem mulMod_one_left (ctx : BarrettCtx p) (a : UInt64) (ha : a < p) :
+    ctx.mulMod 1 a = a := by
+  have hone : (1 : UInt64) < p := by
+    rw [UInt64.lt_iff_toNat_lt]
+    simpa using ctx.p_gt
+  have ha' : a.toNat < p.toNat := by
+    simpa [UInt64.lt_iff_toNat_lt] using ha
+  apply UInt64.toNat_inj.mp
+  rw [toNat_mulMod ctx 1 a hone ha]
+  simp [Nat.mod_eq_of_lt ha']
+
+/-- One is a right identity for Barrett modular multiplication on reduced residues. -/
+@[simp]
+theorem mulMod_one_right (ctx : BarrettCtx p) (a : UInt64) (ha : a < p) :
+    ctx.mulMod a 1 = a := by
+  have hone : (1 : UInt64) < p := by
+    rw [UInt64.lt_iff_toNat_lt]
+    simpa using ctx.p_gt
+  have ha' : a.toNat < p.toNat := by
+    simpa [UInt64.lt_iff_toNat_lt] using ha
+  apply UInt64.toNat_inj.mp
+  rw [toNat_mulMod ctx a 1 ha hone]
+  simp [Nat.mod_eq_of_lt ha']
+
+/-- Barrett modular multiplication is commutative on reduced residues. -/
+theorem mulMod_comm (ctx : BarrettCtx p) (a b : UInt64)
+    (ha : a < p) (hb : b < p) :
+    ctx.mulMod a b = ctx.mulMod b a := by
+  apply UInt64.toNat_inj.mp
+  rw [toNat_mulMod ctx a b ha hb, toNat_mulMod ctx b a hb ha, Nat.mul_comm]
+
 end BarrettCtx
