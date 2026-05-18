@@ -8495,7 +8495,7 @@ private theorem size_primitivePart_eq_of_ne_zero {f : Hex.ZPoly} (hf : f ≠ 0) 
           (Hex.ZPoly.primitivePart f)).size := h_scale_size.symm
     _ = f.size := by rw [h_rec]
 
-/-- Abstract-bound sibling of
+/-- Abstract-bound variant of
 `natDegree_toPolynomial_scaledRecombinationCandidate_eq_sum`: takes
 `B' : Nat`, `hcore_lc_bound : (lc core).natAbs ≤ B'`, and
 `hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
@@ -10926,7 +10926,7 @@ private theorem normalizeFactorSign_scaledRecombinationCandidate_eq
     omega
   rw [if_neg hnot]
 
-/-- Abstract-bound sibling of `zpoly_primitive_scaledRecombinationCandidate`:
+/-- Abstract-bound variant of `zpoly_primitive_scaledRecombinationCandidate`:
 takes `B' : Nat`,
 `hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B'`, and
 `hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
