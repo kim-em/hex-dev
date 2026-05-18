@@ -41,6 +41,12 @@ theorem leadingCoeff_eq_coeff_last (p : DensePoly R) (hpos : 0 < p.size) :
     simpa [size] using Nat.sub_one_lt_of_lt hpos
   rw [Array.getD_eq_getD_getElem?]
 
+/-- The leading coefficient of a nonzero normalized dense polynomial is nonzero. -/
+theorem leadingCoeff_ne_zero_of_pos_size (p : DensePoly R) (hpos : 0 < p.size) :
+    p.leadingCoeff ≠ (Zero.zero : R) := by
+  rw [leadingCoeff_eq_coeff_last p hpos]
+  exact coeff_last_ne_zero_of_pos_size p hpos
+
 private def arrayDegreeAux (coeffs : Array R) : Nat → Option Nat
   | 0 => none
   | fuel + 1 =>
@@ -3666,9 +3672,8 @@ theorem divMod_eq_of_polynomial_mul {S : Type _}
     by_cases h : q.size = 0
     · simp [h] at hdegree
     · simp [h] at hdegree; omega
-  have hq_lead_ne : q.leadingCoeff ≠ (Zero.zero : S) := by
-    rw [leadingCoeff_eq_coeff_last q hq_pos]
-    exact coeff_last_ne_zero_of_pos_size q hq_pos
+  have hq_lead_ne : q.leadingCoeff ≠ (Zero.zero : S) :=
+    leadingCoeff_ne_zero_of_pos_size q hq_pos
   have hq_isZero : q.isZero = false := by
     have hq_size_ne_zero : q.coeffs.size ≠ 0 := by change q.size ≠ 0; omega
     simpa [isZero, Array.isEmpty_iff_size_eq_zero] using hq_size_ne_zero
