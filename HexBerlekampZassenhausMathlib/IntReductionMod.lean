@@ -3990,8 +3990,7 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_co
   -- `hcore_lc_pos`.
   have hdeg :
       (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 := hbranch.2.1
-  have hcore_ne :=
-    zpoly_ne_zero_of_pos_lc (f := (Hex.normalizeForFactor f).squareFreeCore) hcore_lc_pos
+  have hcore_ne := zpoly_ne_zero_of_pos_lc hcore_lc_pos
   have hcore_record : Hex.shouldRecordPolynomialFactor
       (Hex.normalizeForFactor f).squareFreeCore = true := by
     have hne_one : (Hex.normalizeForFactor f).squareFreeCore ≠ 1 := by
@@ -4166,8 +4165,7 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_co
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.defaultFactorCoeffBound f)
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)) := by
-  have hcore_ne :=
-    zpoly_ne_zero_of_pos_lc (f := (Hex.normalizeForFactor f).squareFreeCore) hcore_lc_pos
+  have hcore_ne := zpoly_ne_zero_of_pos_lc hcore_lc_pos
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_core_of_bound
     f hf_ne hbranch hchoose hcore_primitive hcore_lc_pos hcore_monic
