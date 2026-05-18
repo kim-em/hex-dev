@@ -154,6 +154,183 @@ theorem monicModularImage_modP_irreducible_of_choosePrimeData?_small
     (f := Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
     hmonic hcommon hlen
 
+/--
+A factor of a primitive `ZPoly` product is itself primitive: `content (p * q) = 1`
+together with non-negativity of integer content forces `content p = 1`.
+
+Used to discharge the `ZPoly.Primitive core` precondition of
+`Irreducible_of_modP_irreducible_of_primitive_of_admissible` from the
+`primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive` invariant. -/
+private theorem ZPoly_Primitive_left_of_mul (p q : Hex.ZPoly)
+    (h : Hex.ZPoly.Primitive (p * q)) : Hex.ZPoly.Primitive p := by
+  have hone : Hex.ZPoly.content p * Hex.ZPoly.content q = 1 := by
+    rw [← Hex.ZPoly.content_mul]
+    exact h
+  have hp_nn : 0 ≤ Hex.ZPoly.content p := by
+    show 0 ≤ Hex.DensePoly.content p
+    rw [Hex.DensePoly.content]
+    exact Int.natCast_nonneg _
+  have hdvd : Hex.ZPoly.content p ∣ (1 : Int) := ⟨Hex.ZPoly.content q, hone.symm⟩
+  have habs : (Hex.ZPoly.content p).natAbs ∣ (1 : Nat) := by
+    have := Int.natAbs_dvd_natAbs.mpr hdvd
+    simpa using this
+  have habs_le : (Hex.ZPoly.content p).natAbs ≤ 1 := Nat.le_of_dvd (by omega) habs
+  have hp_ne : Hex.ZPoly.content p ≠ 0 := by
+    intro hzero
+    rw [hzero, Int.zero_mul] at hone
+    omega
+  have habs_pos : 1 ≤ (Hex.ZPoly.content p).natAbs := by
+    rcases Nat.eq_zero_or_pos (Hex.ZPoly.content p).natAbs with hz | hp
+    · exact absurd (Int.natAbs_eq_zero.mp hz) hp_ne
+    · exact hp
+  have habs_eq : (Hex.ZPoly.content p).natAbs = 1 := by omega
+  show Hex.ZPoly.content p = 1
+  rcases Int.natAbs_eq (Hex.ZPoly.content p) with heq | heq
+  · rw [heq, habs_eq]; rfl
+  · rw [heq, habs_eq] at hp_nn
+    omega
+
+/--
+Generic core-level small-mod singleton irreducibility lemma: given a primitive
+`ZPoly` whose `degree` is positive, a `choosePrimeData?` success witness, and a
+singleton-bounded Berlekamp factor count, the core is `ZPoly.Irreducible`.
+
+Composes
+`monicModularImage_modP_irreducible_of_choosePrimeData?_small`
+(`FpPoly`-irreducibility of the monic modular image at the selected good prime)
+with the Gauss reduction-mod-`p` transfer
+`Hex.ZPoly.Irreducible_of_modP_irreducible_of_primitive_of_admissible`
+via `FpPoly.irreducible_of_scale_of_ne_zero` applied to the unit-scaling
+equation `monicModularImage r = scale (leadingCoeff r)⁻¹ r`. -/
+private theorem zpoly_irreducible_of_choosePrimeData?_small_of_primitive
+    (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hchoose : Hex.choosePrimeData? core = some primeData)
+    (hsmall : primeData.factorsModP.size ≤ 1)
+    (hprim : Hex.ZPoly.Primitive core)
+    (hsize_gt_one : 1 < core.size) :
+    Hex.ZPoly.Irreducible core := by
+  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  -- Standard prime/admissibility chain.
+  have hprime : Hex.Nat.Prime primeData.p :=
+    Hex.choosePrimeData?_prime core primeData hchoose
+  have hgood : Hex.isGoodPrime core primeData.p = true :=
+    Hex.choosePrimeData?_isGoodPrime core primeData hchoose
+  have hadm : Hex.leadingCoeffAdmissible core primeData.p :=
+    Hex.isGoodPrime_leadingCoeffAdmissible core primeData.p hgood
+  -- `FpPoly.Irreducible (monicModularImage (modP p core))` from the singleton lemma.
+  have hirr_monic :
+      Hex.FpPoly.Irreducible
+        (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)) :=
+    monicModularImage_modP_irreducible_of_choosePrimeData?_small
+      core primeData hchoose hsmall
+  -- Transfer to `FpPoly.Irreducible (modP p core)` via the unit-scale equation.
+  have hisZero : (Hex.ZPoly.modP primeData.p core).isZero = false :=
+    Hex.isGoodPrime_modP_isZero_false core primeData.p hgood
+  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+    Hex.ZMod64.primeModulusOfPrime hprime
+  have hr_size_pos : 0 < (Hex.ZPoly.modP primeData.p core).size := by
+    rcases Nat.eq_zero_or_pos (Hex.ZPoly.modP primeData.p core).size with hsz | hsz
+    · exfalso
+      have hisz : (Hex.ZPoly.modP primeData.p core).isZero = true := by
+        simpa [Hex.DensePoly.isZero, Hex.DensePoly.size,
+          Array.isEmpty_iff_size_eq_zero] using hsz
+      rw [hisz] at hisZero
+      contradiction
+    · exact hsz
+  have hlead_ne :
+      Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core) ≠
+        (0 : Hex.ZMod64 primeData.p) := by
+    rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred _ hr_size_pos]
+    exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size _ hr_size_pos
+  have hinv_ne :
+      (Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core))⁻¹ ≠
+        (0 : Hex.ZMod64 primeData.p) :=
+    Hex.ZMod64.inv_ne_zero_of_prime hprime hlead_ne
+  have hmmi_eq :
+      Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) =
+        Hex.DensePoly.scale
+          (Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core))⁻¹
+          (Hex.ZPoly.modP primeData.p core) := by
+    unfold Hex.monicModularImage
+    rw [show (Hex.ZPoly.modP primeData.p core).isZero = false from hisZero]
+    rfl
+  rw [hmmi_eq] at hirr_monic
+  have hirr_modP : Hex.FpPoly.Irreducible (Hex.ZPoly.modP primeData.p core) :=
+    Hex.FpPoly.irreducible_of_scale_of_ne_zero hinv_ne hirr_monic
+  -- Apply the Gauss reduction-mod-`p` transfer.
+  exact Hex.ZPoly.Irreducible_of_modP_irreducible_of_primitive_of_admissible
+    core primeData.p hprime hprim hadm hsize_gt_one hirr_modP
+
+/--
+Small-mod singleton branch irreducibility for the square-free core of
+`Hex.normalizeForFactor f`, packaged Mathlib-free.
+
+Composes
+`monicModularImage_modP_irreducible_of_choosePrimeData?_small`
+(`FpPoly`-irreducibility of the monic modular image at the selected good prime)
+with the Gauss reduction-mod-`p` transfer
+`Hex.ZPoly.Irreducible_of_modP_irreducible_of_primitive_of_admissible`
+to lift `Hex.ZPoly.Irreducible` from the modular image back to the
+square-free core.
+
+Side conditions discharged internally:
+
+* `Hex.ZPoly.Primitive core` from the
+  `primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive`
+  invariant on `(extractXPower (primitivePart f)).core`.
+* `leadingCoeffAdmissible core primeData.p` from
+  `choosePrimeData?_isGoodPrime` and `isGoodPrime_leadingCoeffAdmissible`.
+* `1 < core.size` from `hdeg` (non-constancy marker also used by the capstone
+  consumer to dispatch into this branch).
+
+This is the Mathlib-free analog of
+`IntReductionMod.squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP`
+in `HexBerlekampZassenhausMathlib/IntReductionMod.lean`. -/
+theorem squareFreeCore_irreducible_of_small_mod_singleton
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
+        some
+          (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore))
+    (hsmall :
+      (Hex.choosePrimeData
+          (Hex.normalizeForFactor f).squareFreeCore).factorsModP.size ≤ 1)
+    (hdeg :
+      (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0) :
+    Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore := by
+  -- `1 < core.size` from `hdeg`.
+  have hcore_size_gt_one : 1 < (Hex.normalizeForFactor f).squareFreeCore.size := by
+    rcases Nat.lt_or_ge 1 (Hex.normalizeForFactor f).squareFreeCore.size with h | hle
+    · exact h
+    · exfalso
+      apply hdeg
+      show (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
+      unfold Hex.DensePoly.degree?
+      by_cases hz : (Hex.normalizeForFactor f).squareFreeCore.size = 0
+      · simp [hz]
+      · simp [hz]
+        omega
+  -- `ZPoly.Primitive ((normalizeForFactor f).squareFreeCore)` from
+  -- `primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive`.
+  have hprim_core : Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore := by
+    have hxcore_ne :
+        (Hex.ZPoly.extractXPower (Hex.ZPoly.primitivePart f)).core ≠ 0 :=
+      Hex.extractXPower_core_ne_zero_of_ne_zero f hf_ne
+    have hprod :=
+      Hex.ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive
+        (Hex.ZPoly.extractXPower (Hex.ZPoly.primitivePart f)).core hxcore_ne
+    -- `(normalizeForFactor f).squareFreeCore =
+    --   (primitiveSquareFreeDecomposition xCore).squareFreeCore` by definition.
+    have hcore_eq :
+        (Hex.normalizeForFactor f).squareFreeCore =
+          (Hex.ZPoly.primitiveSquareFreeDecomposition
+              (Hex.ZPoly.extractXPower (Hex.ZPoly.primitivePart f)).core).squareFreeCore :=
+      rfl
+    rw [hcore_eq]
+    exact ZPoly_Primitive_left_of_mul _ _ hprod
+  exact zpoly_irreducible_of_choosePrimeData?_small_of_primitive _ _ hchoose hsmall
+    hprim_core hcore_size_gt_one
+
 end SmallModSingleton
 
 end BerlekampZassenhaus
