@@ -8498,7 +8498,7 @@ private theorem size_primitivePart_eq_of_ne_zero {f : Hex.ZPoly} (hf : f ≠ 0) 
 
 /-- Abstract-bound variant of
 `natDegree_toPolynomial_scaledRecombinationCandidate_eq_sum`: takes
-`B' : Nat`, `hcore_lc_bound : (lc core).natAbs ≤ B'`, and
+`B' : Nat`, `hcore_lc_le : (lc core).natAbs ≤ B'`, and
 `hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
 `defaultFactorCoeffBound core` precision constraint.
 
@@ -8506,9 +8506,9 @@ The single precision consumer in the proof body is
 `size_centeredLiftPoly_eq_of_pos_leadingCoeff_bound`, which requires a
 leading-coefficient bound on `scaledLiftedFactorProduct core d T`. That
 leading coefficient is `lc core`, so the hypothesis-supplied
-`hcore_lc_bound` discharges the precondition directly.
+`hcore_lc_le` discharges the precondition directly.
 
-Follows the `(B', hcore_lc_bound, hprecision)` parameter ordering
+Follows the `(B', hcore_lc_le, hprecision)` parameter ordering
 established by `representsIntegerFactorAtLift_primitive_of_bound`,
 `natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core_of_bound`,
 and `zpoly_primitive_scaledRecombinationCandidate_of_bound`. -/
@@ -8519,7 +8519,7 @@ theorem natDegree_toPolynomial_scaledRecombinationCandidate_eq_sum_of_bound
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hd_liftedFactor_monic :
       ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
-    (hcore_lc_bound : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
     (hprecision : 2 * B' < d.p ^ d.k)
     (T : LiftedFactorSubset d) :
     (HexPolyZMathlib.toPolynomial
@@ -8618,7 +8618,7 @@ lifted-factor product, the candidate's natDegree decomposes as a sum.
 Thin wrapper over
 `natDegree_toPolynomial_scaledRecombinationCandidate_eq_sum_of_bound` that
 instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound core` and discharges
-`hcore_lc_bound` via `defaultFactorCoeffBound_valid core hcore_ne core
+`hcore_lc_le` via `defaultFactorCoeffBound_valid core hcore_ne core
 hcore_dvd_self` at index `core.size - 1`, converted to the leading
 coefficient via `leadingCoeff_eq_coeff_last`.
 
@@ -8637,15 +8637,15 @@ theorem natDegree_toPolynomial_scaledRecombinationCandidate_eq_sum
         (scaledRecombinationCandidate core d T)).natDegree =
       ∑ i ∈ T,
         (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree := by
-  have hcore_lc_bound := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact natDegree_toPolynomial_scaledRecombinationCandidate_eq_sum_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
-    hcore_ne hcore_lc_pos hd_liftedFactor_monic hcore_lc_bound hprecision T
+    hcore_ne hcore_lc_pos hd_liftedFactor_monic hcore_lc_le hprecision T
 
 /-- Abstract-bound variant of
 `natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core`:
 takes `B' : Nat`, `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`,
-`hcore_lc_bound : (lc core).natAbs ≤ B'`, and
+`hcore_lc_le : (lc core).natAbs ≤ B'`, and
 `hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
 `defaultFactorCoeffBound core` precision constraint.
 
@@ -8657,7 +8657,7 @@ in place of the core-shape recovery. Both changes make this sibling
 independent of `scaledRecombinationCandidate_eq_factor_of_recovery`
 and hence of the scaled recovery-candidate `_of_bound` chain (#4882).
 
-Note: this sibling needs `hcore_lc_bound` in addition to `hvalid`
+Note: this sibling needs `hcore_lc_le` in addition to `hvalid`
 because the size-preservation step
 `size_centeredLiftPoly_eq_of_pos_leadingCoeff_bound` consumes a
 leading-coefficient bound on `scaledLiftedFactorProduct core d S`,
@@ -8672,7 +8672,7 @@ theorem natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core_of_
     {S : LiftedFactorSubset d}
     (B' : Nat)
     (hvalid : ∀ i, (factor.coeff i).natAbs ≤ B')
-    (hcore_lc_bound : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
     (hcore_ne : core ≠ 0)
     (_hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
@@ -8787,11 +8787,11 @@ theorem natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core
     (HexPolyZMathlib.toPolynomial factor).natDegree =
       ∑ i ∈ S,
         (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree := by
-  have hcore_lc_bound := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
-    hcore_lc_bound hcore_ne hcore_primitive hcore_lc_pos hd_liftedFactor_monic
+    hcore_lc_le hcore_ne hcore_primitive hcore_lc_pos hd_liftedFactor_monic
     hdvd hfactor_irr hfactor_prim hfactor_norm hrep hprecision
 
 /-- Converse to `toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord`: if the
@@ -9799,7 +9799,7 @@ theorem exists_mem_representedSubset_of_degree_cover
 `exists_mem_representedSubset_of_degree_cover_of_primitive_pos_lc_core`:
 takes `B' : Nat`, a per-factor coefficient bound
 `hvalid : ∀ g ∈ gs, ∀ i, (g.coeff i).natAbs ≤ B'`, the leading-coefficient
-bound `hcore_lc_bound : (leadingCoeff core).natAbs ≤ B'`, and
+bound `hcore_lc_le : (leadingCoeff core).natAbs ≤ B'`, and
 `hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
 `defaultFactorCoeffBound core` precision constraint. The proof mirrors the
 core-shape original but invokes the `_of_bound` sibling
@@ -9812,7 +9812,7 @@ theorem exists_mem_representedSubset_of_degree_cover_of_primitive_pos_lc_core_of
     (hcore_ne : core ≠ 0)
     (hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
-    (hcore_lc_bound : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
     (hd_modulus : 2 ≤ d.p ^ d.k)
     (hd_liftedFactor_monic :
       ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
@@ -9860,7 +9860,7 @@ theorem exists_mem_representedSubset_of_degree_cover_of_primitive_pos_lc_core_of
       rw [hv, hq]
       exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
     exact natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core_of_bound
-      B' (hvalid g hg) hcore_lc_bound hcore_ne hcore_primitive hcore_lc_pos
+      B' (hvalid g hg) hcore_lc_le hcore_ne hcore_primitive hcore_lc_pos
       hd_liftedFactor_monic hg_dvd_core hg_irr hg_cont hg_norm hg_rep hprecision
   have h_pwdisj : Set.PairwiseDisjoint (↑gs : Set Hex.ZPoly) S_of := by
     intro g hg h hh hgh
@@ -9914,7 +9914,7 @@ This is a thin wrapper over
 `exists_mem_representedSubset_of_degree_cover_of_primitive_pos_lc_core_of_bound`
 that instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound core`. The per-factor
 `hvalid` is discharged via the divisor chain `g ∣ target ∣ core` plus
-`defaultFactorCoeffBound_valid`; `hcore_lc_bound` is discharged via
+`defaultFactorCoeffBound_valid`; `hcore_lc_le` is discharged via
 `defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self (core.size - 1)`
 together with `leadingCoeff_eq_coeff_last`.
 -/
@@ -9953,7 +9953,7 @@ theorem exists_mem_representedSubset_of_degree_cover_of_primitive_pos_lc_core
       (HexPolyZMathlib.toPolynomial (recombinationCandidate d T)).natDegree =
         ∑ g ∈ gs, (HexPolyZMathlib.toPolynomial g).natDegree) :
     ∀ {i : LiftedFactorIndex d}, i ∈ T → ∃ g ∈ gs, i ∈ S_of g := by
-  have hcore_lc_bound := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   have hvalid : ∀ g ∈ gs, ∀ i,
       (g.coeff i).natAbs ≤ Hex.ZPoly.defaultFactorCoeffBound core := by
     intro g hg i
@@ -9968,7 +9968,7 @@ theorem exists_mem_representedSubset_of_degree_cover_of_primitive_pos_lc_core
   intro i hi
   exact exists_mem_representedSubset_of_degree_cover_of_primitive_pos_lc_core_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
-    hcore_ne hcore_primitive hcore_lc_pos hcore_lc_bound hd_modulus
+    hcore_ne hcore_primitive hcore_lc_pos hcore_lc_le hd_modulus
     hd_liftedFactor_monic hd_liftedFactor_natDegree_pos hprecision hpartition
     htarget_dvd_core _hTJ gs S_of h_each hvalid
     h_pairwise_not_associated h_degree_total hi
@@ -11208,7 +11208,7 @@ theorem exists_representingSubset_of_mem_normalizedFactors_scaledRecombinationCa
 `exists_mem_representedSubset_of_degree_cover_of_scaledRecombinationCandidate_of_primitive_pos_lc_core`:
 takes `B' : Nat`, a per-factor coefficient bound
 `hvalid : ∀ g ∈ gs, ∀ i, (g.coeff i).natAbs ≤ B'`, the leading-coefficient
-bound `hcore_lc_bound : (leadingCoeff core).natAbs ≤ B'`, and
+bound `hcore_lc_le : (leadingCoeff core).natAbs ≤ B'`, and
 `hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
 `defaultFactorCoeffBound core` precision constraint. The proof mirrors the
 core-shape original but invokes the `_of_bound` siblings
@@ -11223,7 +11223,7 @@ theorem exists_mem_representedSubset_of_degree_cover_of_scaledRecombinationCandi
     (hcore_ne : core ≠ 0)
     (hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
-    (hcore_lc_bound : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
     (hd_liftedFactor_monic :
       ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
     (hd_liftedFactor_natDegree_pos :
@@ -11260,7 +11260,7 @@ theorem exists_mem_representedSubset_of_degree_cover_of_scaledRecombinationCandi
           (scaledRecombinationCandidate core d T)).natDegree =
         ∑ j ∈ T, f j :=
     natDegree_toPolynomial_scaledRecombinationCandidate_eq_sum_of_bound
-      B' hcore_ne hcore_lc_pos hd_liftedFactor_monic hcore_lc_bound hprecision T
+      B' hcore_ne hcore_lc_pos hd_liftedFactor_monic hcore_lc_le hprecision T
   have h_g_eq : ∀ g ∈ gs,
       (HexPolyZMathlib.toPolynomial g).natDegree = ∑ j ∈ S_of g, f j := by
     intro g hg
@@ -11272,7 +11272,7 @@ theorem exists_mem_representedSubset_of_degree_cover_of_scaledRecombinationCandi
       rw [hv, hq]
       exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
     exact natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core_of_bound
-      B' (hvalid g hg) hcore_lc_bound hcore_ne hcore_primitive hcore_lc_pos
+      B' (hvalid g hg) hcore_lc_le hcore_ne hcore_primitive hcore_lc_pos
       hd_liftedFactor_monic hg_dvd_core hg_irr hg_cont hg_norm hg_rep hprecision
   have h_pwdisj : Set.PairwiseDisjoint (↑gs : Set Hex.ZPoly) S_of := by
     intro g hg h hh hgh
@@ -11320,7 +11320,7 @@ theorem exists_mem_representedSubset_of_degree_cover_of_scaledRecombinationCandi
 This is the `defaultFactorCoeffBound core`-instantiated thin wrapper for
 `exists_mem_representedSubset_of_degree_cover_of_scaledRecombinationCandidate_of_primitive_pos_lc_core_of_bound`:
 the per-factor `hvalid` is discharged via the divisor chain `g ∣ target ∣ core`
-plus `defaultFactorCoeffBound_valid`; `hcore_lc_bound` is discharged via
+plus `defaultFactorCoeffBound_valid`; `hcore_lc_le` is discharged via
 `defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self (core.size - 1)`
 together with `leadingCoeff_eq_coeff_last`. -/
 theorem exists_mem_representedSubset_of_degree_cover_of_scaledRecombinationCandidate_of_primitive_pos_lc_core
@@ -11358,7 +11358,7 @@ theorem exists_mem_representedSubset_of_degree_cover_of_scaledRecombinationCandi
           (scaledRecombinationCandidate core d T)).natDegree =
         ∑ g ∈ gs, (HexPolyZMathlib.toPolynomial g).natDegree) :
     ∀ {i : LiftedFactorIndex d}, i ∈ T → ∃ g ∈ gs, i ∈ S_of g := by
-  have hcore_lc_bound := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   have hvalid : ∀ g ∈ gs, ∀ i,
       (g.coeff i).natAbs ≤ Hex.ZPoly.defaultFactorCoeffBound core := by
     intro g hg i
@@ -11373,7 +11373,7 @@ theorem exists_mem_representedSubset_of_degree_cover_of_scaledRecombinationCandi
   intro i hi
   exact exists_mem_representedSubset_of_degree_cover_of_scaledRecombinationCandidate_of_primitive_pos_lc_core_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
-    hcore_ne hcore_primitive hcore_lc_pos hcore_lc_bound
+    hcore_ne hcore_primitive hcore_lc_pos hcore_lc_le
     hd_liftedFactor_monic hd_liftedFactor_natDegree_pos hprecision hpartition
     htarget_dvd_core _hTJ gs S_of h_each hvalid
     h_pairwise_not_associated h_degree_total hi
@@ -11382,7 +11382,7 @@ theorem exists_mem_representedSubset_of_degree_cover_of_scaledRecombinationCandi
 `mem_T_iff_exists_irreducibleFactor_representingSubset_of_scaledRecombinationCandidate_of_primitive_pos_lc_core`:
 takes `B' : Nat`, the universal coefficient bound `hvalid` over the
 candidate's normalised factors, the leading-coefficient bound
-`hcore_lc_bound`, and `hprecision : 2 * B' < d.p ^ d.k` in place of the
+`hcore_lc_le`, and `hprecision : 2 * B' < d.p ^ d.k` in place of the
 core-shape `defaultFactorCoeffBound core` precision constraint. The
 proof body mirrors the original (now-wrapper) with two call-site
 substitutions: the per-normalised-factor bridge
@@ -11390,12 +11390,12 @@ substitutions: the per-normalised-factor bridge
 and the final degree-cover application
 (`exists_mem_representedSubset_of_degree_cover_of_scaledRecombinationCandidate_of_primitive_pos_lc_core_of_bound`)
 both use their `_of_bound` siblings, threaded with `B'`,
-`hcore_lc_bound`, `hvalid`, and `hprecision`. -/
+`hcore_lc_le`, `hvalid`, and `hprecision`. -/
 theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_scaledRecombinationCandidate_of_primitive_pos_lc_core_of_bound
     {core target quotient : Hex.ZPoly} {d : Hex.LiftData}
     {J T : LiftedFactorSubset d}
     (B' : Nat)
-    (hcore_lc_bound : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
     (hvalid : ∀ g : Hex.ZPoly,
       HexPolyZMathlib.toPolynomial g ∈
         UniqueFactorizationMonoid.normalizedFactors
@@ -11477,7 +11477,7 @@ theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_scaledRecombina
     obtain ⟨g', S_g, h_eq, h_irr, h_dvd_t, h_dvd_c, h_rep, h_SJ, h_ST,
         h_cont, h_norm⟩ :=
       exists_representingSubset_of_mem_normalizedFactors_scaledRecombinationCandidate_of_primitive_pos_lc_core_of_bound
-        B' hvalid hcore_lc_bound hcore_ne hcore_primitive hcore_lc_pos
+        B' hvalid hcore_lc_le hcore_ne hcore_primitive hcore_lc_pos
         hd_liftedFactor_monic hprecision hpartition htarget_dvd_core hTJ
         hrecord hquot hgPoly
     have hg_eq : g' = g := by
@@ -11575,7 +11575,7 @@ theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_scaledRecombina
         (UniqueFactorizationMonoid.zero_notMem_normalizedFactors _)]
   obtain ⟨g, hg_in_gs, hi_in_Sg⟩ :=
     exists_mem_representedSubset_of_degree_cover_of_scaledRecombinationCandidate_of_primitive_pos_lc_core_of_bound
-      B' hcore_ne hcore_primitive hcore_lc_pos hcore_lc_bound
+      B' hcore_ne hcore_primitive hcore_lc_pos hcore_lc_le
       hd_liftedFactor_monic hd_liftedFactor_natDegree_pos hprecision hpartition
       htarget_dvd_core hTJ gs S_of h_each
       (fun g hg => hvalid g (mem_gs.mp hg))
@@ -11623,7 +11623,7 @@ theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_scaledRecombina
       g ∣ scaledRecombinationCandidate core d T ∧
       RepresentsIntegerFactorAtLift core d g S_g ∧
       S_g ⊆ J ∧ i ∈ S_g := by
-  have hcore_lc_bound := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   have hcand_dvd_target :
       scaledRecombinationCandidate core d T ∣ target := by
     have hmul : quotient * scaledRecombinationCandidate core d T = target :=
@@ -11644,7 +11644,7 @@ theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_scaledRecombina
     rw [Hex.DensePoly.mul_assoc_poly (S := Int)]
   refine mem_T_iff_exists_irreducibleFactor_representingSubset_of_scaledRecombinationCandidate_of_primitive_pos_lc_core_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
-    hcore_lc_bound
+    hcore_lc_le
     (fun g hg_mem => ?_)
     hcore_ne hcore_primitive hcore_lc_pos hd_liftedFactor_monic
     hd_liftedFactor_natDegree_pos hprecision hpartition htarget_dvd_core hTJ
@@ -11672,19 +11672,19 @@ theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_scaledRecombina
 
 /-- Abstract-bound variant of
 `exists_representingSubset_of_mem_T_of_scaledRecombinationCandidate_dvd_of_primitive_pos_lc_core`:
-takes `B' : Nat`, the leading-coefficient bound `hcore_lc_bound`, the
+takes `B' : Nat`, the leading-coefficient bound `hcore_lc_le`, the
 universal coefficient bound `hvalid` over the candidate's normalised
 factors, and `hprecision : 2 * B' < d.p ^ d.k` in place of the
 core-shape `defaultFactorCoeffBound core` precision constraint. The
 proof body mirrors the original (now-wrapper) with one call-site
 substitution: the per-T membership-equivalence lemma
 `mem_T_iff_exists_irreducibleFactor_representingSubset_of_scaledRecombinationCandidate_of_primitive_pos_lc_core_of_bound`
-is threaded with `B'`, `hcore_lc_bound`, `hvalid`, and `hprecision`. -/
+is threaded with `B'`, `hcore_lc_le`, `hvalid`, and `hprecision`. -/
 theorem exists_representingSubset_of_mem_T_of_scaledRecombinationCandidate_dvd_of_primitive_pos_lc_core_of_bound
     {core target quotient : Hex.ZPoly} {d : Hex.LiftData}
     {J T : LiftedFactorSubset d}
     (B' : Nat)
-    (hcore_lc_bound : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
     (hvalid : ∀ g : Hex.ZPoly,
       HexPolyZMathlib.toPolynomial g ∈
         UniqueFactorizationMonoid.normalizedFactors
@@ -11718,7 +11718,7 @@ theorem exists_representingSubset_of_mem_T_of_scaledRecombinationCandidate_dvd_o
       RepresentsIntegerFactorAtLift core d f S := by
   obtain ⟨f, S, hf_irr, hf_dvd_candidate, hrep, hSJ, hiS⟩ :=
     mem_T_iff_exists_irreducibleFactor_representingSubset_of_scaledRecombinationCandidate_of_primitive_pos_lc_core_of_bound
-      B' hcore_lc_bound hvalid hcore_ne hcore_primitive hcore_lc_pos
+      B' hcore_lc_le hvalid hcore_ne hcore_primitive hcore_lc_pos
       hd_liftedFactor_monic hd_liftedFactor_natDegree_pos hprecision hpartition
       htarget_dvd_core hTJ hrecord hquot hi
   have hcand_dvd_target :
@@ -11772,7 +11772,7 @@ theorem exists_representingSubset_of_mem_T_of_scaledRecombinationCandidate_dvd_o
       S ⊆ J ∧
       i ∈ S ∧
       RepresentsIntegerFactorAtLift core d f S := by
-  have hcore_lc_bound := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   have hcand_dvd_target :
       scaledRecombinationCandidate core d T ∣ target := by
     have hmul : quotient * scaledRecombinationCandidate core d T = target :=
@@ -11792,7 +11792,7 @@ theorem exists_representingSubset_of_mem_T_of_scaledRecombinationCandidate_dvd_o
     rw [Hex.DensePoly.mul_assoc_poly (S := Int)]
   refine exists_representingSubset_of_mem_T_of_scaledRecombinationCandidate_dvd_of_primitive_pos_lc_core_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
-    hcore_lc_bound
+    hcore_lc_le
     (fun g hg_mem => ?_)
     hcore_ne hcore_primitive hcore_lc_pos hd_liftedFactor_monic
     hd_liftedFactor_natDegree_pos hprecision hpartition htarget_dvd_core hTJ
@@ -12146,11 +12146,11 @@ private theorem not_represents_empty_of_irreducible_dvd_core
 /-- Abstract-bound variant of
 `not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core`:
 takes `B' : Nat`, `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`,
-`hcore_lc_bound : (lc core).natAbs ≤ B'`, and
+`hcore_lc_le : (lc core).natAbs ≤ B'`, and
 `hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
 `defaultFactorCoeffBound core` precision constraint.  Since `core` and
 `factor` are different polynomials, `hvalid` alone cannot bound the
-leading coefficient of `core`; the wrapper discharges `hcore_lc_bound`
+leading coefficient of `core`; the wrapper discharges `hcore_lc_le`
 via `defaultFactorCoeffBound_valid` applied to `core ∣ core`. -/
 private theorem not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core_of_bound
     {core factor : Hex.ZPoly} {d : Hex.LiftData}
@@ -12159,7 +12159,7 @@ private theorem not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc
     (hcore_ne : core ≠ 0)
     (hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
-    (hcore_lc_bound : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
     (hfactor_dvd : factor ∣ core)
     (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor))
     (hprecision : 2 * B' < d.p ^ d.k) :
@@ -12214,7 +12214,7 @@ private theorem not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc
     rw [Hex.coeff_centeredLiftPoly, Hex.DensePoly.coeff_C]
     by_cases hn : n = 0
     · rw [if_pos hn]
-      exact centeredModNat_eq_of_pos_natAbs_le hcore_lc_pos hcore_lc_bound hprecision
+      exact centeredModNat_eq_of_pos_natAbs_le hcore_lc_pos hcore_lc_le hprecision
     · rw [if_neg hn]
       exact Hex.centeredModNat_zero (d.p ^ d.k)
   -- `Primitive core` and `C (lc core) ∣ core` imply `IsUnit (lc core)`.
@@ -12276,11 +12276,11 @@ private theorem not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc
     ¬ RepresentsIntegerFactorAtLift core d factor
       (∅ : LiftedFactorSubset d) := by
   -- Bound the leading coefficient of `core` against the Mignotte half-window.
-  have hcore_lc_bound := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     (defaultFactorCoeffBound_valid core hcore_ne factor hfactor_dvd)
-    hcore_ne hcore_primitive hcore_lc_pos hcore_lc_bound hfactor_dvd hfactor_irr
+    hcore_ne hcore_primitive hcore_lc_pos hcore_lc_le hfactor_dvd hfactor_irr
     hprecision
 
 /--
