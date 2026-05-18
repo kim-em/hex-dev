@@ -502,6 +502,11 @@ instance : Inv (ZMod64 p) where
           simpa [modulusWord, UInt64.toNat_ofNatLT, hsum_toNat] using hpSum
         rw [Nat.mod_eq_of_lt (by omega)]
 
+/-- Addition is the residue built from the sum of canonical representatives. -/
+theorem add_eq_ofNat (a b : ZMod64 p) :
+    add a b = ofNat p (a.toNat + b.toNat) := by
+  rw [eq_iff_toNat_eq, toNat_add, toNat_ofNat]
+
 /-- Subtraction agrees with modular subtraction of canonical representatives. -/
 @[simp] theorem toNat_sub (a b : ZMod64 p) :
     (sub a b).toNat = (a.toNat + (p - b.toNat)) % p := by
@@ -542,10 +547,20 @@ instance : Inv (ZMod64 p) where
       rw [Nat.mod_eq_of_lt hlt]
       omega
 
+/-- Subtraction is the residue built from the modular difference of representatives. -/
+theorem sub_eq_ofNat (a b : ZMod64 p) :
+    sub a b = ofNat p (a.toNat + (p - b.toNat)) := by
+  rw [eq_iff_toNat_eq, toNat_sub, toNat_ofNat]
+
 /-- Multiplication agrees with multiplication of canonical representatives modulo `p`. -/
 @[simp] theorem toNat_mul (a b : ZMod64 p) :
     (mul a b).toNat = (a.toNat * b.toNat) % p := by
   rw [mul, toNat_ofNat]
+
+/-- Multiplication is the residue built from the product of canonical representatives. -/
+theorem mul_eq_ofNat (a b : ZMod64 p) :
+    mul a b = ofNat p (a.toNat * b.toNat) := by
+  rw [eq_iff_toNat_eq, toNat_mul, toNat_ofNat]
 
 /--
 Definition-level representative equation for the extended-GCD inverse candidate.
@@ -706,6 +721,11 @@ private theorem pow_go_toNat (base acc : ZMod64 p) (k : Nat) :
   rw [toNat_one]
   rw [← Nat.mod_mul_mod]
   simp
+
+/-- Exponentiation is the residue built from the representative's natural power. -/
+theorem pow_eq_ofNat (a : ZMod64 p) (n : Nat) :
+    pow a n = ofNat p (a.toNat ^ n) := by
+  rw [eq_iff_toNat_eq, toNat_pow, toNat_ofNat]
 
 /--
 The extended-GCD inverse candidate is a left inverse whenever the representative
