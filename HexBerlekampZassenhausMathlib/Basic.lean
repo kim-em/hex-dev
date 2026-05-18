@@ -10919,6 +10919,54 @@ at `i := J.min' hne` with the forward-support containment
 single cover factor whose representing subset both contains `J.min' hne`
 and is contained in `T`.
 -/
+theorem coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd_of_bound
+    {core target quotient : Hex.ZPoly} {d : Hex.LiftData}
+    {J T : LiftedFactorSubset d}
+    (B' : Nat)
+    (hvalid : ∀ g : Hex.ZPoly,
+      HexPolyZMathlib.toPolynomial g ∈
+        UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial (recombinationCandidate d T)) →
+      ∀ i, (g.coeff i).natAbs ≤ B')
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hprecision : 2 * B' < d.p ^ d.k)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (htarget_dvd_core : target ∣ core)
+    (hTJ : T ⊆ J)
+    (hne : J.Nonempty)
+    (hmin_in_T : J.min' hne ∈ T)
+    (hrecord :
+      Hex.shouldRecordPolynomialFactor (recombinationCandidate d T) = true)
+    (hquot :
+      Hex.exactQuotient? target (recombinationCandidate d T) = some quotient) :
+    ∃ (f : Hex.ZPoly) (S : LiftedFactorSubset d),
+      Irreducible (HexPolyZMathlib.toPolynomial f) ∧
+      f ∣ target ∧
+      S ⊆ J ∧ J.min' hne ∈ S ∧
+      RepresentsIntegerFactorAtLift core d f S ∧
+      S ⊆ T := by
+  obtain ⟨f, S, hf_irr, hf_dvd_target, hf_dvd_cand, hSJ, hmin_in_S, hrep⟩ :=
+    exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd_of_bound
+      B' hvalid hcore_ne hcore_monic hd_modulus hd_liftedFactor_monic
+      hd_liftedFactor_natDegree_pos hprecision hpartition htarget_dvd_core hTJ
+      hrecord hquot hmin_in_T
+  have hST : S ⊆ T :=
+    hpartition.support_subset_of_dvd_recombinationCandidate
+      hf_irr hf_dvd_target hTJ
+      (by
+        rw [← recombinationCandidate_eq_liftedFactorProductCandidate]
+        exact hf_dvd_cand)
+      hSJ hrep
+  exact ⟨f, S, hf_irr, hf_dvd_target, hSJ, hmin_in_S, hrep, hST⟩
+
+/-- Default-bound wrapper for
+`coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd_of_bound`. -/
 theorem coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd
     {core target quotient : Hex.ZPoly} {d : Hex.LiftData}
     {J T : LiftedFactorSubset d}
@@ -10945,16 +10993,32 @@ theorem coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd
       S ⊆ J ∧ J.min' hne ∈ S ∧
       RepresentsIntegerFactorAtLift core d f S ∧
       S ⊆ T := by
-  obtain ⟨f, S, hf_irr, hf_dvd_target, hf_dvd_cand, hSJ, hmin_in_S, hrep⟩ :=
-    exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd
-      hcore_ne hcore_monic hd_modulus hd_liftedFactor_monic
-      hd_liftedFactor_natDegree_pos hprecision hpartition htarget_dvd_core
-      hTJ hrecord hquot hmin_in_T
-  have hST : S ⊆ T :=
-    representingSubset_subset_of_dvd_recombinationCandidate
-      hcore_ne hcore_monic hprecision hpartition hTJ hf_irr
-      hf_dvd_target hf_dvd_cand hSJ hrep
-  exact ⟨f, S, hf_irr, hf_dvd_target, hSJ, hmin_in_S, hrep, hST⟩
+  have hcand_dvd_target : recombinationCandidate d T ∣ target := by
+    have hmul : quotient * recombinationCandidate d T = target :=
+      Hex.exactQuotient?_product hquot
+    refine ⟨quotient, ?_⟩
+    rw [Hex.DensePoly.mul_comm_poly (S := Int)]
+    exact hmul.symm
+  have hcand_dvd_core : recombinationCandidate d T ∣ core :=
+    zpoly_dvd_trans hcand_dvd_target htarget_dvd_core
+  refine coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound core)
+    (fun g hg_mem' => ?_)
+    hcore_ne hcore_monic hd_modulus hd_liftedFactor_monic
+    hd_liftedFactor_natDegree_pos hprecision hpartition htarget_dvd_core hTJ
+    hne hmin_in_T hrecord hquot
+  have hg_poly_dvd : HexPolyZMathlib.toPolynomial g ∣
+      HexPolyZMathlib.toPolynomial (recombinationCandidate d T) :=
+    UniqueFactorizationMonoid.dvd_of_mem_normalizedFactors hg_mem'
+  have hg_dvd_cand : g ∣ recombinationCandidate d T := by
+    rcases hg_poly_dvd with ⟨r, hr⟩
+    refine ⟨HexPolyZMathlib.ofPolynomial r, ?_⟩
+    apply HexPolyZMathlib.equiv.injective
+    simp only [HexPolyZMathlib.equiv_apply, HexPolyZMathlib.toPolynomial_mul,
+      HexPolyZMathlib.toPolynomial_ofPolynomial]
+    exact hr
+  have hg_dvd_core : g ∣ core := zpoly_dvd_trans hg_dvd_cand hcand_dvd_core
+  exact defaultFactorCoeffBound_valid core hcore_ne g hg_dvd_core
 
 /-- Abstract-bound primitive + positive-leading-core variant of
 `exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd` (#4646 chain).
