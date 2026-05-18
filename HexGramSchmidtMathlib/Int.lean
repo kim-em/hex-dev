@@ -2091,6 +2091,318 @@ theorem dot_basis_castRow_eq_coeffs_mul_normSq
   -- After isolation: c[i][j] * dot basis[j] basis[j] = c[i][j] * normSq basis[j].
   rfl
 
+/-- Foldl isolation for two indices: when every term except those at `j₁` and `j₂`
+vanishes, the foldl over `List.finRange i` collapses to `f ⟨j₁, hj₁⟩ + f ⟨j₂, hj₂⟩`. -/
+private theorem foldl_finRange_isolate_two_rat :
+    ∀ (i : Nat) (j₁ j₂ : Nat) (hj₁ : j₁ < i) (hj₂ : j₂ < i) (hne : j₁ ≠ j₂)
+      (f : Fin i → Rat),
+      (∀ q : Fin i, q.val ≠ j₁ → q.val ≠ j₂ → f q = 0) →
+      (List.finRange i).foldl (fun acc q => acc + f q) 0 =
+        f ⟨j₁, hj₁⟩ + f ⟨j₂, hj₂⟩
+  | 0, _, _, hj₁, _, _, _, _ => absurd hj₁ (Nat.not_lt_zero _)
+  | i + 1, j₁, j₂, hj₁, hj₂, hne, f, h_zero => by
+    rw [List.finRange_succ_last, List.foldl_append, List.foldl_map]
+    simp only [List.foldl_cons, List.foldl_nil]
+    by_cases h1 : j₁ = i
+    · -- j₁ = i; then j₂ < i and j₂ ≠ i.
+      subst h1
+      have hj₂_lt : j₂ < j₁ := by
+        have h_le : j₂ ≤ j₁ := Nat.lt_succ_iff.mp hj₂
+        exact Nat.lt_of_le_of_ne h_le (fun h => hne h.symm)
+      have hzero_pre : ∀ q : Fin j₁, q.val ≠ j₂ → f (Fin.castSucc q) = 0 := by
+        intro q hqj₂
+        apply h_zero
+        · show q.val ≠ j₁
+          exact Nat.ne_of_lt q.isLt
+        · show q.val ≠ j₂
+          exact hqj₂
+      have hih := foldl_finRange_isolate_rat j₁ j₂ hj₂_lt
+        (fun q => f (Fin.castSucc q)) hzero_pre
+      rw [hih]
+      have h_cast_j₂ : (Fin.castSucc ⟨j₂, hj₂_lt⟩ : Fin (j₁ + 1)) = ⟨j₂, hj₂⟩ := by
+        apply Fin.ext; rfl
+      have h_last : (Fin.last j₁ : Fin (j₁ + 1)) = ⟨j₁, hj₁⟩ := by
+        apply Fin.ext; rfl
+      show f (Fin.castSucc ⟨j₂, hj₂_lt⟩) + f (Fin.last j₁) = f ⟨j₁, hj₁⟩ + f ⟨j₂, hj₂⟩
+      rw [h_cast_j₂, h_last]
+      ring
+    · by_cases h2 : j₂ = i
+      · -- j₂ = i; then j₁ < i.
+        subst h2
+        have hj₁_lt : j₁ < j₂ := by
+          have h_le : j₁ ≤ j₂ := Nat.lt_succ_iff.mp hj₁
+          exact Nat.lt_of_le_of_ne h_le h1
+        have hzero_pre : ∀ q : Fin j₂, q.val ≠ j₁ → f (Fin.castSucc q) = 0 := by
+          intro q hqj₁
+          apply h_zero
+          · show q.val ≠ j₁
+            exact hqj₁
+          · show q.val ≠ j₂
+            exact Nat.ne_of_lt q.isLt
+        have hih := foldl_finRange_isolate_rat j₂ j₁ hj₁_lt
+          (fun q => f (Fin.castSucc q)) hzero_pre
+        rw [hih]
+        have h_cast_j₁ : (Fin.castSucc ⟨j₁, hj₁_lt⟩ : Fin (j₂ + 1)) = ⟨j₁, hj₁⟩ := by
+          apply Fin.ext; rfl
+        have h_last : (Fin.last j₂ : Fin (j₂ + 1)) = ⟨j₂, hj₂⟩ := by
+          apply Fin.ext; rfl
+        show f (Fin.castSucc ⟨j₁, hj₁_lt⟩) + f (Fin.last j₂) = f ⟨j₁, hj₁⟩ + f ⟨j₂, hj₂⟩
+        rw [h_cast_j₁, h_last]
+      · -- Both j₁ < i, j₂ < i: last term vanishes, recurse.
+        have hj₁_lt : j₁ < i := by
+          have h_le : j₁ ≤ i := Nat.lt_succ_iff.mp hj₁
+          exact Nat.lt_of_le_of_ne h_le h1
+        have hj₂_lt : j₂ < i := by
+          have h_le : j₂ ≤ i := Nat.lt_succ_iff.mp hj₂
+          exact Nat.lt_of_le_of_ne h_le h2
+        have hlast_zero : f (Fin.last i) = 0 := by
+          apply h_zero
+          · show (Fin.last i).val ≠ j₁
+            show i ≠ j₁
+            exact fun h => h1 h.symm
+          · show (Fin.last i).val ≠ j₂
+            show i ≠ j₂
+            exact fun h => h2 h.symm
+        rw [hlast_zero, Rat.add_zero]
+        have hzero_pre : ∀ q : Fin i, q.val ≠ j₁ → q.val ≠ j₂ → f (Fin.castSucc q) = 0 := by
+          intro q hqj₁ hqj₂
+          apply h_zero
+          · show q.val ≠ j₁
+            exact hqj₁
+          · show q.val ≠ j₂
+            exact hqj₂
+        have hih := foldl_finRange_isolate_two_rat i j₁ j₂ hj₁_lt hj₂_lt hne
+          (fun q => f (Fin.castSucc q)) hzero_pre
+        rw [hih]
+        have h_cast_j₁ : (Fin.castSucc ⟨j₁, hj₁_lt⟩ : Fin (i + 1)) = ⟨j₁, hj₁⟩ := by
+          apply Fin.ext; rfl
+        have h_cast_j₂ : (Fin.castSucc ⟨j₂, hj₂_lt⟩ : Fin (i + 1)) = ⟨j₂, hj₂⟩ := by
+          apply Fin.ext; rfl
+        show f (Fin.castSucc ⟨j₁, hj₁_lt⟩) + f (Fin.castSucc ⟨j₂, hj₂_lt⟩) =
+          f ⟨j₁, hj₁⟩ + f ⟨j₂, hj₂⟩
+        rw [h_cast_j₁, h_cast_j₂]
+
+/-- For an adjacent row swap `b' = rowSwap b km1 k` with `km1.val + 1 = k.val`,
+the dot product of the swapped `k`-th basis row with the original `km1`-th basis
+row equals the squared norm of the swapped `k`-th basis row. Equivalently,
+`dot u_k prev = ||u_k||²`, where `u_k = (basis b').row k` and `prev = (basis b).row km1`.
+
+The proof routes both sides through `dot u_k (cast b.row km1) = dot u_k (cast b'.row k)`
+(the cast vectors agree because `b'.row k = b.row km1` from the row swap),
+expanding each side via `basis_decomposition`. The prefix combinations vanish on
+both sides because `u_k = (basis b').row k` is orthogonal to every `(basis b').row q`
+with `q < k`, and the relevant `(basis b).row q` agrees with `(basis b').row q`
+for `q < km1`. -/
+theorem dot_basis_rowSwap_curr_prev_eq_normSq
+    (b : Matrix Int n m) (km1 k : Fin n) (hkm1 : km1.val + 1 = k.val) :
+    Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k) ((basis b).row km1) =
+      Vector.normSq ((basis (Matrix.rowSwap b km1 k)).row k) := by
+  have hkm1k : km1.val < k.val := by omega
+  -- Row equality: (rowSwap b km1 k).row k = b.row km1.
+  have hrow_eq : (Matrix.rowSwap b km1 k).row k = b.row km1 := by
+    apply Vector.ext
+    intro idx hidx
+    let c : Fin m := ⟨idx, hidx⟩
+    change (Matrix.rowSwap b km1 k)[k][c] = b[km1][c]
+    rw [Matrix.rowSwap_getElem]
+    simp
+  -- prefixCombination of b at km1 vanishes against u_k.
+  have hpfx_b_zero :
+      Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k)
+          (GramSchmidt.prefixCombination (coeffs b) (basis b) km1.val km1.isLt) = 0 := by
+    apply dot_prefixCombination_right_eq_zero_of_dot_zero
+    intro q
+    have hq_lt_km1 : q.val < km1.val := q.isLt
+    have hq_lt_k : q.val < k.val := by omega
+    have hq_lt_n : q.val < n := Nat.lt_trans q.isLt km1.isLt
+    have hbeq : (basis b).row ⟨q.val, hq_lt_n⟩ =
+        (basis (Matrix.rowSwap b km1 k)).row ⟨q.val, hq_lt_n⟩ :=
+      (basis_rowSwap_of_before b km1 k ⟨q.val, hq_lt_n⟩ hkm1k hq_lt_km1).symm
+    rw [hbeq]
+    exact basis_orthogonal (Matrix.rowSwap b km1 k) k.val q.val k.isLt hq_lt_n
+      (Nat.ne_of_gt hq_lt_k)
+  -- prefixCombination of b' at k vanishes against u_k.
+  have hpfx_b'_zero :
+      Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k)
+          (GramSchmidt.prefixCombination (coeffs (Matrix.rowSwap b km1 k))
+            (basis (Matrix.rowSwap b km1 k)) k.val k.isLt) = 0 := by
+    apply dot_prefixCombination_right_eq_zero_of_dot_zero
+    intro q
+    have hq_lt_k : q.val < k.val := q.isLt
+    have hq_lt_n : q.val < n := Nat.lt_trans q.isLt k.isLt
+    exact basis_orthogonal (Matrix.rowSwap b km1 k) k.val q.val k.isLt hq_lt_n
+      (Nat.ne_of_gt hq_lt_k)
+  -- dot u_k (cast b.row km1) = dot u_k (basis b.row km1)
+  have hdot_cast_b_km1 :
+      Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k)
+          (Vector.map (fun x : Int => (x : Rat)) (b.row km1)) =
+      Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k) ((basis b).row km1) := by
+    have hdec := basis_decomposition b km1.val km1.isLt
+    show Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k)
+        (Vector.map (fun x : Int => (x : Rat)) (b.row ⟨km1.val, km1.isLt⟩)) = _
+    rw [hdec, dot_add_right_rat, hpfx_b_zero, Rat.add_zero]
+  -- dot u_k (cast b'.row k) = ||u_k||²
+  have hdot_cast_b'_k :
+      Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k)
+          (Vector.map (fun x : Int => (x : Rat)) ((Matrix.rowSwap b km1 k).row k)) =
+      Vector.normSq ((basis (Matrix.rowSwap b km1 k)).row k) := by
+    have hdec := basis_decomposition (Matrix.rowSwap b km1 k) k.val k.isLt
+    show Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k)
+        (Vector.map (fun x : Int => (x : Rat)) ((Matrix.rowSwap b km1 k).row ⟨k.val, k.isLt⟩)) = _
+    rw [hdec, dot_add_right_rat, hpfx_b'_zero, Rat.add_zero]
+    rfl
+  -- cast b.row km1 = cast b'.row k via hrow_eq.
+  have hcast_eq :
+      Vector.map (fun x : Int => (x : Rat)) ((Matrix.rowSwap b km1 k).row k) =
+      Vector.map (fun x : Int => (x : Rat)) (b.row km1) := by
+    rw [hrow_eq]
+  -- Combine.
+  rw [← hdot_cast_b_km1, ← hcast_eq, hdot_cast_b'_k]
+
+/-- For an adjacent row swap `b' = rowSwap b km1 k` with `km1.val + 1 = k.val`,
+the dot product of the swapped `k`-th basis row with the integer-cast `i`-th
+input row (for `i > k`) decomposes as the dot product of `u_k` with the original
+`km1`-th basis row times a linear combination of the original `km1`-th and
+`k`-th coefficients of row `i`.
+
+Concretely, with `μ = c[k][km1]`:
+  `dot u_k (cast b.row i) = (dot u_k prev) * (c[i][km1] - μ * c[i][k])`
+
+This is the "Cramer-style" dot product expansion that, combined with
+`dot_basis_rowSwap_curr_prev_eq_normSq`, lets us extract `c'[i][k]` from the
+b'-side Cramer formula `c'[i][k] * ||u_k||² = dot u_k (cast b.row i)`. -/
+theorem dot_basis_rowSwap_curr_castRow_eq
+    (b : Matrix Int n m) (km1 k : Fin n) (hkm1 : km1.val + 1 = k.val)
+    (i : Fin n) (hki : k.val < i.val) :
+    Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k)
+        (Vector.map (fun x : Int => (x : Rat)) (b.row i)) =
+      Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k) ((basis b).row km1) *
+        (GramSchmidt.entry (coeffs b) i ⟨km1.val, Nat.lt_trans (Nat.lt_of_succ_le
+          (le_of_eq hkm1)) k.isLt⟩ -
+         GramSchmidt.entry (coeffs b) k ⟨km1.val, Nat.lt_trans (Nat.lt_of_succ_le
+          (le_of_eq hkm1)) k.isLt⟩ *
+         GramSchmidt.entry (coeffs b) i k) := by
+  have hkm1k : km1.val < k.val := by omega
+  have hkm1_lt_i : km1.val < i.val := by omega
+  have hkm1_lt_n : km1.val < n := Nat.lt_trans hkm1k k.isLt
+  -- The dot product `D = dot u_k prev`.
+  set D : Rat := Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k) ((basis b).row km1) with hD_def
+  -- Step A: dot u_k cast b.row i = dot u_k basis b.row i + dot u_k prefixCombination(b, i)
+  have hdec_b_i := basis_decomposition b i.val i.isLt
+  show Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k)
+      (Vector.map (fun x : Int => (x : Rat)) (b.row ⟨i.val, i.isLt⟩)) = _
+  rw [hdec_b_i, dot_add_right_rat]
+  -- dot u_k basis b.row i = 0 (basis b.row i = basis b'.row i and orthogonality).
+  have hdot_basis_i :
+      Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k) ((basis b).row ⟨i.val, i.isLt⟩) = 0 := by
+    have hbasis_eq : (basis b).row ⟨i.val, i.isLt⟩ =
+        (basis (Matrix.rowSwap b km1 k)).row ⟨i.val, i.isLt⟩ :=
+      (basis_rowSwap_of_after b km1 k ⟨i.val, i.isLt⟩ hkm1 hki).symm
+    rw [hbasis_eq]
+    exact basis_orthogonal (Matrix.rowSwap b km1 k) k.val i.val k.isLt i.isLt (Nat.ne_of_lt hki)
+  rw [hdot_basis_i, Rat.zero_add]
+  -- Linearise dot u_k prefixCombination(b, i) into a foldl.
+  rw [dot_prefixCombination_right_rat (coeffs := coeffs b) (basisM := basis b)
+      (i := i.val) (hi := i.isLt) (u := (basis (Matrix.rowSwap b km1 k)).row k)]
+  -- Apply two-isolate at j₁ = km1.val, j₂ = k.val.
+  have hkm1_ne_k_val : km1.val ≠ k.val := by omega
+  -- Define f
+  set f : Fin i.val → Rat := fun q =>
+    GramSchmidt.entry (coeffs b) ⟨i.val, i.isLt⟩
+        ⟨q.val, Nat.lt_trans q.isLt i.isLt⟩ *
+      Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k)
+        ((basis b).row ⟨q.val, Nat.lt_trans q.isLt i.isLt⟩) with hf_def
+  -- For q ≠ km1, k: f q = 0.
+  have h_zero : ∀ q : Fin i.val, q.val ≠ km1.val → q.val ≠ k.val → f q = 0 := by
+    intro q hq_km1 hq_k
+    have hq_lt_n : q.val < n := Nat.lt_trans q.isLt i.isLt
+    -- basis b.row q = basis b'.row q  (either q < km1 or q > k)
+    have hbasis_eq_q : (basis b).row ⟨q.val, hq_lt_n⟩ =
+        (basis (Matrix.rowSwap b km1 k)).row ⟨q.val, hq_lt_n⟩ := by
+      by_cases hcase : q.val < km1.val
+      · exact (basis_rowSwap_of_before b km1 k ⟨q.val, hq_lt_n⟩ hkm1k hcase).symm
+      · have hge_km1 : km1.val ≤ q.val := Nat.le_of_not_lt hcase
+        have h_gt_km1 : km1.val < q.val := Nat.lt_of_le_of_ne hge_km1 (fun h => hq_km1 h.symm)
+        have h_gt_k : k.val < q.val := by omega
+        exact (basis_rowSwap_of_after b km1 k ⟨q.val, hq_lt_n⟩ hkm1 h_gt_k).symm
+    show GramSchmidt.entry (coeffs b) ⟨i.val, i.isLt⟩ _ *
+        Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k)
+          ((basis b).row ⟨q.val, Nat.lt_trans q.isLt i.isLt⟩) = 0
+    rw [hbasis_eq_q]
+    rw [basis_orthogonal (Matrix.rowSwap b km1 k) k.val q.val k.isLt hq_lt_n
+      (fun h => hq_k h.symm)]
+    grind
+  have hfoldl_eq :
+      (List.finRange i.val).foldl (fun (acc : Rat) (q : Fin i.val) => acc + f q) 0 =
+      f ⟨km1.val, hkm1_lt_i⟩ + f ⟨k.val, hki⟩ :=
+    foldl_finRange_isolate_two_rat i.val km1.val k.val hkm1_lt_i hki hkm1_ne_k_val f h_zero
+  -- The foldl on the goal matches our `f`.
+  show (List.finRange i.val).foldl
+      (fun (acc : Rat) (q : Fin i.val) =>
+        acc + GramSchmidt.entry (coeffs b) ⟨i.val, i.isLt⟩
+              ⟨q.val, Nat.lt_trans q.isLt i.isLt⟩ *
+            Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k)
+              ((basis b).row ⟨q.val, Nat.lt_trans q.isLt i.isLt⟩)) 0 = _
+  rw [show (fun (acc : Rat) (q : Fin i.val) =>
+        acc + GramSchmidt.entry (coeffs b) ⟨i.val, i.isLt⟩
+              ⟨q.val, Nat.lt_trans q.isLt i.isLt⟩ *
+            Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k)
+              ((basis b).row ⟨q.val, Nat.lt_trans q.isLt i.isLt⟩)) =
+       (fun (acc : Rat) (q : Fin i.val) => acc + f q) from rfl]
+  rw [hfoldl_eq]
+  -- Compute f at km1 and k.
+  -- f ⟨km1.val, _⟩ = c[i][km1] * dot u_k (basis b.row km1) = c[i][km1] * D
+  -- f ⟨k.val, _⟩ = c[i][k] * dot u_k (basis b.row k) = c[i][k] * dot u_k curr
+  -- Use orthogonality: u_k ⊥ basis b'.row km1 = curr + μ * prev.
+  --   ⟹ dot u_k curr + μ * D = 0 ⟹ dot u_k curr = -μ * D.
+  set μ : Rat := GramSchmidt.entry (coeffs b) k km1 with hμ_def
+  have hbasis_swap :
+      (basis (Matrix.rowSwap b km1 k)).row km1 = (basis b).row k + μ • (basis b).row km1 :=
+    basis_rowSwap_adjacent_prev b km1 k hkm1
+  have hdot_swap_zero :
+      Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k)
+        ((basis (Matrix.rowSwap b km1 k)).row km1) = 0 :=
+    basis_orthogonal (Matrix.rowSwap b km1 k) k.val km1.val k.isLt km1.isLt
+      (fun h => Nat.lt_irrefl km1.val (h ▸ hkm1k))
+  -- Expand the orthogonality via the basis swap.
+  have hdot_curr :
+      Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k) ((basis b).row k) = -μ * D := by
+    have h := hdot_swap_zero
+    rw [hbasis_swap] at h
+    rw [dot_add_right_rat, dot_smul_right_rat] at h
+    -- h : dot u_k curr + μ * (dot u_k prev) = 0
+    -- i.e., dot u_k curr + μ * D = 0
+    -- ⟹ dot u_k curr = -μ * D
+    have hD_eq : Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k)
+        ((basis b).row km1) = D := rfl
+    rw [hD_eq] at h
+    linarith
+  -- Now evaluate f at km1 and k.
+  show f ⟨km1.val, hkm1_lt_i⟩ + f ⟨k.val, hki⟩ = D * _
+  have hf_km1 : f ⟨km1.val, hkm1_lt_i⟩ =
+      GramSchmidt.entry (coeffs b) i ⟨km1.val, hkm1_lt_n⟩ * D := by
+    show GramSchmidt.entry (coeffs b) ⟨i.val, i.isLt⟩ ⟨km1.val, _⟩ *
+        Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k)
+          ((basis b).row ⟨km1.val, _⟩) = _
+    show GramSchmidt.entry (coeffs b) ⟨i.val, i.isLt⟩ ⟨km1.val, hkm1_lt_n⟩ *
+        Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k)
+          ((basis b).row ⟨km1.val, hkm1_lt_n⟩) =
+        GramSchmidt.entry (coeffs b) i ⟨km1.val, hkm1_lt_n⟩ * D
+    have hi_eq : (⟨i.val, i.isLt⟩ : Fin n) = i := Fin.ext rfl
+    have hkm1_eq : (⟨km1.val, hkm1_lt_n⟩ : Fin n) = km1 := Fin.ext rfl
+    rw [hi_eq, hkm1_eq]
+  have hf_k : f ⟨k.val, hki⟩ =
+      GramSchmidt.entry (coeffs b) i k * (-μ * D) := by
+    show GramSchmidt.entry (coeffs b) ⟨i.val, i.isLt⟩ ⟨k.val, _⟩ *
+        Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k)
+          ((basis b).row ⟨k.val, _⟩) = _
+    have hi_eq : (⟨i.val, i.isLt⟩ : Fin n) = i := Fin.ext rfl
+    have hk_eq : (⟨k.val, Nat.lt_trans hki i.isLt⟩ : Fin n) = k := Fin.ext rfl
+    rw [hi_eq, hk_eq]
+    rw [hdot_curr]
+  rw [hf_km1, hf_k]
+  ring
+
 /-- Below the diagonal, the executable integral scaled coefficient is exactly
 the Cramer determinant encoded by `scaledCoeffMatrix`. -/
 theorem scaledCoeffs_eq_scaledCoeffMatrix_det
