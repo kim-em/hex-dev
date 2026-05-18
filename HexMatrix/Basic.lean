@@ -80,17 +80,49 @@ namespace Matrix
 def ofFn (f : Fin n → Fin m → R) : Matrix R n m :=
   Vector.ofFn fun i => Vector.ofFn fun j => f i j
 
+/-- Entry access for a matrix built from an entry function. -/
+@[simp] theorem getElem_ofFn (f : Fin n → Fin m → R) (i : Fin n) (j : Fin m) :
+    (ofFn f)[i][j] = f i j := by
+  simp [ofFn]
+
 /-- The `i`-th row of a matrix. -/
 def row (M : Matrix R n m) (i : Fin n) : Vector R m :=
   M[i]
+
+/-- Entry access for a selected matrix row. -/
+@[simp] theorem row_getElem (M : Matrix R n m) (i : Fin n) (j : Fin m) :
+    (row M i)[j] = M[i][j] := by
+  rfl
 
 /-- The `j`-th column of a matrix. -/
 def col (M : Matrix R n m) (j : Fin m) : Vector R n :=
   Vector.ofFn fun i => M[i][j]
 
+/-- Entry access for a selected matrix column. -/
+@[simp] theorem col_getElem (M : Matrix R n m) (j : Fin m) (i : Fin n) :
+    (col M j)[i] = M[i][j] := by
+  simp [col]
+
 /-- The transpose of a dense matrix. -/
 def transpose (M : Matrix R n m) : Matrix R m n :=
   Vector.ofFn fun j => col M j
+
+/-- Entry access for the transpose of a dense matrix. -/
+@[simp] theorem transpose_getElem (M : Matrix R n m) (i : Fin m) (j : Fin n) :
+    (transpose M)[i][j] = M[j][i] := by
+  simp [transpose, col]
+
+/-- Transposing a dense matrix twice returns the original matrix. -/
+@[simp] theorem transpose_transpose (M : Matrix R n m) :
+    transpose (transpose M) = M := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let ii : Fin n := ⟨i, hi⟩
+  let jj : Fin m := ⟨j, hj⟩
+  show (transpose (transpose M))[ii][jj] = M[ii][jj]
+  rw [transpose_getElem, transpose_getElem]
 
 /-- The all-zero matrix. -/
 protected def zero [OfNat R 0] : Matrix R n m :=
@@ -360,8 +392,8 @@ theorem transpose_mul_of_mul_comm [Lean.Grind.Ring R]
   intro j hj
   let ii : Fin k := ⟨i, hi⟩
   let jj : Fin n := ⟨j, hj⟩
-  unfold transpose col
-  simp only [Vector.getElem_ofFn]
+  change (Matrix.transpose (A * B))[ii][jj] = (Matrix.transpose B * Matrix.transpose A)[ii][jj]
+  rw [transpose_getElem]
   change (A * B)[jj][ii] = (Matrix.transpose B * Matrix.transpose A)[ii][jj]
   simp [HMul.hMul, mul, dot, row, col, transpose, Hex.Vector.dotProduct, ofFn]
   change
@@ -677,10 +709,7 @@ theorem transpose_one [OfNat R 0] [OfNat R 1] {n : Nat} :
   let ii : Fin n := ⟨i, hi⟩
   let jj : Fin n := ⟨j, hj⟩
   show (Matrix.transpose (1 : Matrix R n n))[ii][jj] = (1 : Matrix R n n)[ii][jj]
-  have hflip : (Matrix.transpose (1 : Matrix R n n))[ii][jj] =
-      (1 : Matrix R n n)[jj][ii] := by
-    simp [transpose, col, Vector.getElem_ofFn]
-  rw [hflip, getElem_one, getElem_one]
+  rw [transpose_getElem, getElem_one, getElem_one]
   by_cases hij : ii = jj
   · have hji : jj = ii := hij.symm
     rw [if_pos hij, if_pos hji]
