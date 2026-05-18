@@ -1113,6 +1113,22 @@ theorem leadingCoeff_modP_eq_leadingCoeffModP_of_admissible
   rw [hsize]
   exact coeff_modP_top_eq_leadingCoeffModP f p hfsize
 
+/-- `ZPoly.modP p` never increases the executable dense size: the
+coefficientwise reduction maps into a length-`f.size` coefficient list, which
+`FpPoly.ofCoeffs` then trims of trailing zeros. -/
+private theorem size_modP_le (p : Nat) [ZMod64.Bounds p] (f : ZPoly) :
+    (ZPoly.modP p f).size ≤ f.size := by
+  show (ZPoly.modP p f).coeffs.size ≤ f.size
+  unfold ZPoly.modP FpPoly.ofCoeffs
+  have h := DensePoly.size_ofCoeffs_le
+    (R := ZMod64 p)
+    ((List.range f.size).map
+      (fun i => ZMod64.ofNat p (ZPoly.intModNat (f.coeff i) p))).toArray
+  have hlen : ((List.range f.size).map
+      (fun i => ZMod64.ofNat p (ZPoly.intModNat (f.coeff i) p))).toArray.size =
+        f.size := by simp
+  simpa [DensePoly.size, hlen] using h
+
 /--
 Data produced by modular prime selection: the selected prime, the image of the
 input polynomial over that prime field, and its modular factors.
@@ -7098,6 +7114,187 @@ private theorem irreducible_of_size_two_primitive
         hone | hneg
       · left; rw [hb_eq, hone]
       · right; rw [hb_eq, hneg]
+
+/-- Mathlib-free Gauss reduction-mod-`p` transfer: a primitive integer
+polynomial whose leading coefficient survives reduction modulo a prime `p` and
+whose modular image is `FpPoly`-irreducible is itself `ZPoly.Irreducible`.
+
+The `hnotConstant : 1 < f.size` precondition rules out the size-one constant
+case explicitly: the executable `FpPoly.Irreducible` predicate only asserts the
+factorization disjunction (it does not internally exclude constants the way
+Mathlib's `_root_.Irreducible` does via `not_isUnit`), so the non-unit clause
+for `f` is supplied at the `ZPoly` level. A primitive `ZPoly` of `size > 1` is
+automatically not a `ZPoly` unit (units have size `1`).
+
+Mathlib analog:
+`HexBerlekampZassenhausMathlib.irreducible_of_isPrimitive_of_irreducible_map_intCast_zmod`
+(`HexBerlekampZassenhausMathlib/IntReductionMod.lean:106`). -/
+theorem Irreducible_of_modP_irreducible_of_primitive_of_admissible
+    (f : ZPoly) (p : Nat) [ZMod64.Bounds p]
+    (hprime : Nat.Prime p)
+    (hprim : ZPoly.Primitive f)
+    (hadm : leadingCoeffAdmissible f p)
+    (hnotConstant : 1 < f.size)
+    (hirr : FpPoly.Irreducible (ZPoly.modP p f)) :
+    ZPoly.Irreducible f := by
+  haveI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hprime
+  have hf_size_pos : 0 < f.size :=
+    leadingCoeffAdmissible_size_pos f p hadm
+  have hf_ne : f ≠ 0 := by
+    intro hzero
+    rw [hzero] at hf_size_pos
+    change (0 : Nat) < 0 at hf_size_pos
+    omega
+  have hmodP_f_ne : ZPoly.modP p f ≠ 0 :=
+    modP_ne_zero_of_leadingCoeffAdmissible f p hadm
+  have hmodP_f_size : (ZPoly.modP p f).size = f.size :=
+    size_modP_eq_of_leadingCoeffAdmissible f p hadm
+  refine
+    { not_zero := hf_ne
+      not_unit := ?_
+      no_factors := ?_ }
+  · -- `1 < f.size` rules out `f = C ±1`, the two possible unit shapes.
+    intro hunit
+    rcases hunit with hone | hneg
+    · rw [hone] at hnotConstant
+      have h1 : (DensePoly.C (1 : Int)).size = 1 := rfl
+      omega
+    · rw [hneg] at hnotConstant
+      have hneg_size : (DensePoly.C (-1 : Int)).size = 1 := rfl
+      omega
+  · intro a b hf_ab
+    have ha_ne : a ≠ 0 := by
+      intro h
+      apply hf_ne
+      rw [hf_ab, h, DensePoly.zero_mul]
+    have hb_ne : b ≠ 0 := by
+      intro h
+      apply hf_ne
+      rw [hf_ab, h]
+      change a * (0 : ZPoly) = 0
+      rw [DensePoly.mul_comm_poly, DensePoly.zero_mul]
+    have ha_size_pos : 0 < a.size := ZPoly.size_pos_of_ne_zero a ha_ne
+    have hb_size_pos : 0 < b.size := ZPoly.size_pos_of_ne_zero b hb_ne
+    have hab_size : f.size = a.size + b.size - 1 := by
+      rw [hf_ab]
+      exact ZPoly.mul_size_eq_top_succ_of_nonzero a b ha_size_pos hb_size_pos
+    -- `modP p` distributes over multiplication.
+    have hmodP_eq : ZPoly.modP p f = ZPoly.modP p a * ZPoly.modP p b := by
+      rw [hf_ab, ZPoly.modP_mul]
+    have hmodP_a_size_le : (ZPoly.modP p a).size ≤ a.size := size_modP_le p a
+    have hmodP_b_size_le : (ZPoly.modP p b).size ≤ b.size := size_modP_le p b
+    have hmodP_a_ne : ZPoly.modP p a ≠ 0 := by
+      intro h
+      apply hmodP_f_ne
+      rw [hmodP_eq, h]
+      exact DensePoly.zero_mul _
+    have hmodP_b_ne : ZPoly.modP p b ≠ 0 := by
+      intro h
+      apply hmodP_f_ne
+      rw [hmodP_eq, h]
+      exact (DensePoly.mul_comm_poly (ZPoly.modP p a) 0).trans
+        (DensePoly.zero_mul _)
+    have hmodP_ab_size :
+        (ZPoly.modP p a * ZPoly.modP p b).size =
+          (ZPoly.modP p a).size + (ZPoly.modP p b).size - 1 :=
+      FpPoly.size_mul_eq_add_sub_one
+        (ZPoly.modP p a) (ZPoly.modP p b) hmodP_a_ne hmodP_b_ne
+    have hmodP_a_size_pos : 0 < (ZPoly.modP p a).size :=
+      FpPoly.size_pos_of_ne_zero hmodP_a_ne
+    have hmodP_b_size_pos : 0 < (ZPoly.modP p b).size :=
+      FpPoly.size_pos_of_ne_zero hmodP_b_ne
+    -- Size arithmetic forces the modular images to retain the original sizes.
+    have hsum :
+        (ZPoly.modP p a).size + (ZPoly.modP p b).size = a.size + b.size := by
+      have heq :
+          (ZPoly.modP p a * ZPoly.modP p b).size = a.size + b.size - 1 := by
+        rw [← hmodP_eq, hmodP_f_size, hab_size]
+      rw [hmodP_ab_size] at heq
+      omega
+    have hmodP_a_size_eq : (ZPoly.modP p a).size = a.size := by omega
+    have hmodP_b_size_eq : (ZPoly.modP p b).size = b.size := by omega
+    -- `degree? = some 0` is equivalent to `size = 1` on a nonzero `DensePoly`.
+    have hdeg_size :
+        ∀ {g : FpPoly p}, g.degree? = some 0 → g.size = 1 := by
+      intro g hdeg
+      unfold DensePoly.degree? at hdeg
+      by_cases hg_size : g.size = 0
+      · rw [dif_pos hg_size] at hdeg
+        simp at hdeg
+      · rw [dif_neg hg_size] at hdeg
+        injection hdeg with hdeg
+        omega
+    obtain ⟨_, hsplit⟩ := hirr
+    have hcase := hsplit (ZPoly.modP p a) (ZPoly.modP p b) hmodP_eq.symm
+    -- Local helper: a primitive product with one constant factor forces that
+    -- factor to be `±1`, i.e. a `ZPoly` unit.
+    have const_factor_isUnit :
+        ∀ (g h : ZPoly) (c : Int),
+          g = DensePoly.C c * h → c ≠ 0 → ZPoly.content g = 1 →
+            ZPoly.IsUnit (DensePoly.C c) := by
+      intro g h c hg_eq hc_ne hcontent_one
+      have hc_dvd_content : ((c.natAbs : Int) : Int) ∣ ZPoly.content g := by
+        apply ZPoly.dvd_content_of_nat_dvd_coeff
+        intro n
+        have hcoeff : g.coeff n = c * h.coeff n := by
+          rw [hg_eq, ZPoly.C_mul_eq_scale,
+            DensePoly.coeff_scale (R := Int) c h n (Int.mul_zero _)]
+        refine Int.natAbs_dvd.mpr ?_
+        rw [hcoeff]
+        exact ⟨h.coeff n, rfl⟩
+      rw [hcontent_one] at hc_dvd_content
+      have hnat_dvd : c.natAbs ∣ (1 : Nat) := by
+        have := Int.ofNat_dvd.mp (by simpa using hc_dvd_content)
+        exact this
+      have hnat_le : c.natAbs ≤ 1 := Nat.le_of_dvd (by omega) hnat_dvd
+      have hnat_pos : 1 ≤ c.natAbs := by
+        rcases Nat.eq_zero_or_pos c.natAbs with hzero | hpos
+        · exact absurd (Int.natAbs_eq_zero.mp hzero) hc_ne
+        · exact hpos
+      have hnat_eq : c.natAbs = 1 := by omega
+      rcases Int.natAbs_eq c with heq | heq
+      · left
+        rw [heq, hnat_eq]
+        rfl
+      · right
+        rw [heq, hnat_eq]
+        rfl
+    rcases hcase with hca | hcb
+    · -- `modP p a` is constant ⇒ `a` is constant ⇒ `a` is a unit.
+      left
+      have hmodP_a_size_one : (ZPoly.modP p a).size = 1 := hdeg_size hca
+      have ha_size_one : a.size = 1 := by omega
+      have ha_eq : a = DensePoly.C (a.coeff 0) := eq_C_of_size_eq_one a ha_size_one
+      have hac_ne : a.coeff 0 ≠ 0 := by
+        intro h
+        apply ha_ne
+        rw [ha_eq, h]
+        rfl
+      have hf_eq : f = DensePoly.C (a.coeff 0) * b :=
+        hf_ab.trans (congrArg (· * b) ha_eq)
+      have hac_isUnit :=
+        const_factor_isUnit f b (a.coeff 0) hf_eq hac_ne hprim
+      rcases hac_isUnit with hone | hneg
+      · left; rw [ha_eq]; exact hone
+      · right; rw [ha_eq]; exact hneg
+    · -- Symmetric case: `modP p b` is constant ⇒ `b` is constant ⇒ `b` is a unit.
+      right
+      have hmodP_b_size_one : (ZPoly.modP p b).size = 1 := hdeg_size hcb
+      have hb_size_one : b.size = 1 := by omega
+      have hb_eq : b = DensePoly.C (b.coeff 0) := eq_C_of_size_eq_one b hb_size_one
+      have hbc_ne : b.coeff 0 ≠ 0 := by
+        intro h
+        apply hb_ne
+        rw [hb_eq, h]
+        rfl
+      have hf_eq : f = DensePoly.C (b.coeff 0) * a :=
+        (hf_ab.trans (DensePoly.mul_comm_poly a b)).trans
+          (congrArg (· * a) hb_eq)
+      have hbc_isUnit :=
+        const_factor_isUnit f a (b.coeff 0) hf_eq hbc_ne hprim
+      rcases hbc_isUnit with hone | hneg
+      · left; rw [hb_eq]; exact hone
+      · right; rw [hb_eq]; exact hneg
 
 end ZPoly
 
