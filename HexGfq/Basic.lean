@@ -240,9 +240,34 @@ def repr {h : Conway.SupportedEntry p n} (x : GFq p n h) : FpPoly p :=
     repr x = GFqField.repr x :=
   rfl
 
+/-- Two canonical `GFq` elements are equal when their reduced polynomial
+representatives agree. -/
+@[ext] theorem ext {h : Conway.SupportedEntry p n} {x y : GFq p n h}
+    (hxy : repr x = repr y) :
+    x = y := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime h.prime
+  apply GFqField.ext
+  apply GFqRing.ext
+  simpa [repr, GFqField.repr] using hxy
+
 @[simp] theorem repr_ofPoly (h : Conway.SupportedEntry p n) (g : FpPoly p) :
     repr (ofPoly h g) = GFqRing.reduceMod (modulus h) g :=
   rfl
+
+/-- Two `GFq.ofPoly` constructors produce the same field element exactly when
+their inputs have the same reduced representative modulo the selected Conway
+polynomial. -/
+theorem ofPoly_eq_ofPoly_iff_reduceMod_eq
+    (h : Conway.SupportedEntry p n) (f g : FpPoly p) :
+    ofPoly h f = ofPoly h g ↔
+      GFqRing.reduceMod (modulus h) f = GFqRing.reduceMod (modulus h) g := by
+  constructor
+  · intro hfg
+    have hrepr := congrArg repr hfg
+    simpa using hrepr
+  · intro hred
+    apply ext
+    simpa using hred
 
 end GFq
 
@@ -327,6 +352,16 @@ def repr (x : GF2q n) : UInt64 :=
 /-- `GF2q.repr` is the packed-word value stored by `GF2n`. -/
 @[simp] theorem repr_eq_val (x : GF2q n) :
     repr x = x.val :=
+  rfl
+
+/-- Two optimized `GF2q` elements are equal when their packed representatives
+agree. -/
+@[ext] theorem ext {x y : GF2q n} (hxy : repr x = repr y) :
+    x = y := by
+  cases x
+  cases y
+  simp [repr] at hxy
+  subst hxy
   rfl
 
 @[simp] theorem repr_ofWord (w : UInt64) :
