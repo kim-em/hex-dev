@@ -925,11 +925,16 @@ theorem coeff_add_eq_bne (p q : GF2Poly) (n : Nat) :
   rw [coeff_add]
   simp [coeffWords, xorWords_get?_getD, coeff, UInt64.bit_xor_bne]
 
+/-- Simp-facing form of coefficientwise addition over packed `GF(2)` polynomials. -/
+@[simp] theorem coeff_add_bne (p q : GF2Poly) (n : Nat) :
+    (p + q).coeff n = (p.coeff n != q.coeff n) :=
+  coeff_add_eq_bne p q n
+
 /-- Equal set coefficients cancel under `GF(2)` addition. -/
 theorem coeff_add_of_true_true {p q : GF2Poly} {n : Nat}
     (hp : p.coeff n = true) (hq : q.coeff n = true) :
     (p + q).coeff n = false := by
-  rw [coeff_add_eq_bne, hp, hq]
+  rw [coeff_add_bne, hp, hq]
   rfl
 
 /-- Raw packed addition cancels each word against itself. -/
@@ -948,6 +953,11 @@ theorem coeffWords_xorWords_self (xs : Array UInt64) (n : Nat) :
 theorem coeff_add_self (p : GF2Poly) (n : Nat) :
     (p + p).coeff n = false := by
   rw [coeff_add, coeffWords_xorWords_self]
+
+/-- Simp-facing coefficient form of characteristic-two self-cancellation. -/
+@[simp] theorem coeff_add_self_false (p : GF2Poly) (n : Nat) :
+    (p + p).coeff n = false :=
+  coeff_add_self p n
 
 private theorem trimTrailingZeroWordsList_replicate_zero (n : Nat) :
     trimTrailingZeroWordsList (List.replicate n (0 : UInt64)) = [] := by
@@ -1002,23 +1012,26 @@ theorem xorWords_self (xs : Array UInt64) :
     0 + p = p := by
   apply ext_coeff
   intro n
-  rw [coeff_add_eq_bne, coeff_zero]
-  cases p.coeff n <;> rfl
+  simp
+
+/-- Adding zero on the left leaves packed `GF(2)` coefficients unchanged. -/
+@[simp] theorem coeff_add_zero_left_bool (p : GF2Poly) (n : Nat) :
+    (0 + p).coeff n = p.coeff n := by
+  simp
 
 /-- Zero is the right identity for `F_2[x]` addition. -/
 @[simp] theorem add_zero (p : GF2Poly) :
     p + 0 = p := by
   apply ext_coeff
   intro n
-  rw [coeff_add_eq_bne, coeff_zero]
-  cases p.coeff n <;> rfl
+  simp
 
 /-- Packed `F_2[x]` addition is commutative. -/
 theorem add_comm (p q : GF2Poly) :
     p + q = q + p := by
   apply ext_coeff
   intro n
-  rw [coeff_add_eq_bne, coeff_add_eq_bne]
+  rw [coeff_add_bne, coeff_add_bne]
   cases p.coeff n <;> cases q.coeff n <;> rfl
 
 /-- Packed `F_2[x]` addition is associative. -/
@@ -1026,7 +1039,7 @@ theorem add_assoc (p q r : GF2Poly) :
     (p + q) + r = p + (q + r) := by
   apply ext_coeff
   intro n
-  rw [coeff_add_eq_bne, coeff_add_eq_bne, coeff_add_eq_bne, coeff_add_eq_bne]
+  rw [coeff_add_bne, coeff_add_bne, coeff_add_bne, coeff_add_bne]
   cases p.coeff n <;> cases q.coeff n <;> cases r.coeff n <;> rfl
 
 /-- Adding `p` twice on the left cancels: `p + (p + q) = q`. -/
@@ -1034,7 +1047,7 @@ theorem add_assoc (p q r : GF2Poly) :
     p + (p + q) = q := by
   apply ext_coeff
   intro n
-  rw [coeff_add_eq_bne, coeff_add_eq_bne]
+  rw [coeff_add_bne, coeff_add_bne]
   cases p.coeff n <;> cases q.coeff n <;> rfl
 
 /-- Adding `q` twice on the right cancels: `(p + q) + q = p`. -/
@@ -1042,7 +1055,7 @@ theorem add_assoc (p q r : GF2Poly) :
     (p + q) + q = p := by
   apply ext_coeff
   intro n
-  rw [coeff_add_eq_bne, coeff_add_eq_bne]
+  rw [coeff_add_bne, coeff_add_bne]
   cases p.coeff n <;> cases q.coeff n <;> rfl
 
 /-- Shift a normalized word list left by `bitShift ∈ [1, 63]`. -/
@@ -1716,7 +1729,7 @@ step used by long division. -/
 theorem coeff_division_step_cancel {rem q : GF2Poly} {rd qd : Nat}
     (hrem : rem.degree? = some rd) (hq : q.degree? = some qd) (hrd : ¬ rd < qd) :
     (rem + q.mulXk (rd - qd)).coeff rd = false := by
-  rw [coeff_add_eq_bne]
+  rw [coeff_add_bne]
   rw [coeff_eq_true_of_degree?_eq_some hrem]
   rw [coeff_mulXk_division_step hq hrd]
   rfl
@@ -1761,7 +1774,7 @@ theorem division_step_degree_lt {rem q : GF2Poly} {rd qd : Nat}
           coeff_eq_false_of_degree?_lt hshiftDegree hrd_lt_d
         have hnextfalse : next.coeff d = false := by
           dsimp [next]
-          rw [coeff_add_eq_bne, hremfalse, hshiftfalse]
+          rw [coeff_add_bne, hremfalse, hshiftfalse]
           rfl
         rw [hnextfalse] at hdcoeff
         contradiction
