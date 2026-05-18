@@ -427,7 +427,6 @@ private structure SmallPrimeCandidate where
   p : Nat
   [bounds : ZMod64.Bounds p]
   prime : Nat.Prime p
-  field : Lean.Grind.Field (ZMod64 p)
 
 /-- A scored admissible small-prime candidate for default prime selection. -/
 structure PrimeCandidateScore where
@@ -437,26 +436,16 @@ structure PrimeCandidateScore where
   factorCount : Nat
 
 private def smallPrimeCandidates : List SmallPrimeCandidate :=
-  [ { p := 3, bounds := bounds_three, prime := prime_three,
-      field := @fieldOfNatPrime 3 bounds_three prime_three },
-    { p := 5, bounds := bounds_five, prime := prime_five,
-      field := @fieldOfNatPrime 5 bounds_five prime_five },
-    { p := 7, bounds := bounds_seven, prime := prime_seven,
-      field := @fieldOfNatPrime 7 bounds_seven prime_seven },
-    { p := 11, bounds := bounds_eleven, prime := prime_eleven,
-      field := @fieldOfNatPrime 11 bounds_eleven prime_eleven },
-    { p := 13, bounds := bounds_thirteen, prime := prime_thirteen,
-      field := @fieldOfNatPrime 13 bounds_thirteen prime_thirteen },
-    { p := 17, bounds := bounds_seventeen, prime := prime_seventeen,
-      field := @fieldOfNatPrime 17 bounds_seventeen prime_seventeen },
-    { p := 19, bounds := bounds_nineteen, prime := prime_nineteen,
-      field := @fieldOfNatPrime 19 bounds_nineteen prime_nineteen },
-    { p := 23, bounds := bounds_twenty_three, prime := prime_twenty_three,
-      field := @fieldOfNatPrime 23 bounds_twenty_three prime_twenty_three },
-    { p := 31, bounds := bounds_thirty_one, prime := prime_thirty_one,
-      field := @fieldOfNatPrime 31 bounds_thirty_one prime_thirty_one },
-    { p := 71, bounds := bounds_seventy_one, prime := prime_seventy_one,
-      field := @fieldOfNatPrime 71 bounds_seventy_one prime_seventy_one } ]
+  [ { p := 3, bounds := bounds_three, prime := prime_three },
+    { p := 5, bounds := bounds_five, prime := prime_five },
+    { p := 7, bounds := bounds_seven, prime := prime_seven },
+    { p := 11, bounds := bounds_eleven, prime := prime_eleven },
+    { p := 13, bounds := bounds_thirteen, prime := prime_thirteen },
+    { p := 17, bounds := bounds_seventeen, prime := prime_seventeen },
+    { p := 19, bounds := bounds_nineteen, prime := prime_nineteen },
+    { p := 23, bounds := bounds_twenty_three, prime := prime_twenty_three },
+    { p := 31, bounds := bounds_thirty_one, prime := prime_thirty_one },
+    { p := 71, bounds := bounds_seventy_one, prime := prime_seventy_one } ]
 
 /--
 Coerce an admissible nonzero modular image to its monic representative by
@@ -727,7 +716,7 @@ theorem factorProduct_map_monicModularImage_eq_monicModularImage_factorProduct
 private def berlekampFactorsModP (f : ZPoly) (c : SmallPrimeCandidate) :
     Array (@FpPoly c.p c.bounds) :=
   letI := c.bounds
-  letI := c.field
+  letI := fieldOfNatPrime c.prime
   let fModP := ZPoly.modP c.p f
   if hzero : fModP.isZero = false then
     ((Berlekamp.berlekampFactor
@@ -750,7 +739,7 @@ the normalisation step to this consumer without touching
 private theorem berlekampFactorsModP_eq_of_isZero_false
     (f : ZPoly) (c : SmallPrimeCandidate) :
     letI := c.bounds
-    letI := c.field
+    letI := fieldOfNatPrime c.prime
     ∀ (hzero : (ZPoly.modP c.p f).isZero = false),
       berlekampFactorsModP f c =
         ((Berlekamp.berlekampFactor
@@ -758,7 +747,7 @@ private theorem berlekampFactorsModP_eq_of_isZero_false
           (monicModularImage_monic c.prime (ZPoly.modP c.p f) hzero)).factors.map
             monicModularImage).toArray := by
   letI := c.bounds
-  letI := c.field
+  letI := fieldOfNatPrime c.prime
   intro hzero
   unfold berlekampFactorsModP
   rw [dif_pos hzero]
@@ -1737,8 +1726,7 @@ def choosePrimeData? (f : ZPoly) : Option PrimeChoiceData :=
 private def fallbackPrimeChoiceData (f : ZPoly) : PrimeChoiceData :=
   letI := bounds_three
   let c : SmallPrimeCandidate :=
-    { p := 3, bounds := bounds_three, prime := prime_three,
-      field := @fieldOfNatPrime 3 bounds_three prime_three }
+    { p := 3, bounds := bounds_three, prime := prime_three }
   let fModP := ZPoly.modP 3 f
   let factorsModP := berlekampFactorsModP f c
   { p := 3, fModP, factorsModP }
@@ -1812,21 +1800,25 @@ theorem choosePrimeData?_isGoodPrime
 /--
 Invariant capturing that `data.factorsModP` is exactly the Berlekamp factor
 output for the monic modular image used by prime selection.  Phrased as an
-existential bundling the nonzero-image and field witnesses so that it
-threads through the executable prime-selection fold.
+existential bundling the prime witness and the nonzero-image proof so that
+it threads through the executable prime-selection fold; the `Lean.Grind.Field`
+instance required by `Berlekamp.berlekampFactor` is constructed explicitly
+from `hprime`, so callers can match it against any field instance built from
+the same prime witness via proof irrelevance of `ZMod64.PrimeModulus`.
 -/
 def factorsModPBerlekampForm
     (f : ZPoly) (data : PrimeChoiceData) : Prop :=
   letI := data.bounds
   ∃ (hprime : Nat.Prime data.p)
-    (hzero : (ZPoly.modP data.p f).isZero = false)
-    (hfield : Lean.Grind.Field (ZMod64 data.p)),
+    (hzero : (ZPoly.modP data.p f).isZero = false),
     data.factorsModP =
       ((@Berlekamp.berlekampFactor data.p data.bounds
         (monicModularImage (ZPoly.modP data.p f))
         (monicModularImage_monic hprime (ZPoly.modP data.p f) hzero)
-        hfield).factors.map monicModularImage).toArray
+        (@zmod64FieldOfPrime data.p data.bounds
+          (ZMod64.primeModulusOfPrime hprime))).factors.map monicModularImage).toArray
 
+set_option maxHeartbeats 800000 in
 private theorem primeChoiceDataScore_factorsModPBerlekampForm
     (f : ZPoly) (c : SmallPrimeCandidate) (score : PrimeChoiceDataScore)
     (hscore : primeChoiceDataScore f c = some score) :
@@ -1838,11 +1830,12 @@ private theorem primeChoiceDataScore_factorsModPBerlekampForm
     cases hscore
     have hzero : (ZPoly.modP c.p f).isZero = false :=
       isGoodPrime_modP_isZero_false f c.p hgood
-    refine ⟨c.prime, hzero, c.field, ?_⟩
+    refine ⟨c.prime, hzero, ?_⟩
     show berlekampFactorsModP f c = _
     exact berlekampFactorsModP_eq_of_isZero_false f c hzero
   · simp [hgood] at hscore
 
+set_option maxHeartbeats 800000 in
 private theorem betterPrimeChoiceDataScore_factorsModPBerlekampForm
     (f : ZPoly) (old new score : PrimeChoiceDataScore)
     (hold : factorsModPBerlekampForm f old.data)
@@ -1914,15 +1907,17 @@ theorem choosePrimeData?_factorsModP_berlekamp_form
     (f : ZPoly) (data : PrimeChoiceData)
     (hdata : choosePrimeData? f = some data) :
     letI := data.bounds
-    ∃ (hzero : (ZPoly.modP data.p f).isZero = false)
-      (hfield : Lean.Grind.Field (ZMod64 data.p)),
+    ∃ (hzero : (ZPoly.modP data.p f).isZero = false),
       data.factorsModP =
         ((@Berlekamp.berlekampFactor data.p data.bounds
           (monicModularImage (ZPoly.modP data.p f))
           (monicModularImage_monic
             (choosePrimeData?_prime f data hdata)
             (ZPoly.modP data.p f) hzero)
-          hfield).factors.map monicModularImage).toArray := by
+          (@zmod64FieldOfPrime data.p data.bounds
+            (ZMod64.primeModulusOfPrime
+              (choosePrimeData?_prime f data hdata)))).factors.map
+                monicModularImage).toArray := by
   unfold choosePrimeData? at hdata
   cases hscore :
       smallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none with
@@ -1934,8 +1929,8 @@ theorem choosePrimeData?_factorsModP_berlekamp_form
       have hform :=
         choosePrimeDataScore_fold_factorsModPBerlekampForm f smallPrimeCandidates none
           score (by intro old hnone; cases hnone) hscore
-      obtain ⟨_, hzero, hfield, heq⟩ := hform
-      exact ⟨hzero, hfield, heq⟩
+      obtain ⟨_, hzero, heq⟩ := hform
+      exact ⟨hzero, heq⟩
 
 /--
 Small-mod singleton executable branch fact for the selected monic modular
@@ -1952,19 +1947,20 @@ theorem choosePrimeData?_berlekampFactor_factors_length_le_one_of_small
     (hdata : choosePrimeData? f = some data)
     (hsmall : data.factorsModP.size ≤ 1) :
     letI := data.bounds
-    ∃ (hzero : (@ZPoly.modP data.p data.bounds f).isZero = false)
-      (hfield : Lean.Grind.Field (ZMod64 data.p)),
+    ∃ (hzero : (@ZPoly.modP data.p data.bounds f).isZero = false),
       (@Berlekamp.berlekampFactor data.p data.bounds
         (@monicModularImage data.p data.bounds
           (@ZPoly.modP data.p data.bounds f))
         (monicModularImage_monic
           (choosePrimeData?_prime f data hdata)
           (@ZPoly.modP data.p data.bounds f) hzero)
-        hfield).factors.length ≤ 1 := by
+        (@zmod64FieldOfPrime data.p data.bounds
+          (ZMod64.primeModulusOfPrime
+            (choosePrimeData?_prime f data hdata)))).factors.length ≤ 1 := by
   letI := data.bounds
-  obtain ⟨hzero, hfield, hform⟩ :=
+  obtain ⟨hzero, hform⟩ :=
     choosePrimeData?_factorsModP_berlekamp_form f data hdata
-  refine ⟨hzero, hfield, ?_⟩
+  refine ⟨hzero, ?_⟩
   have hlen :
       (@Berlekamp.berlekampFactor data.p data.bounds
         (@monicModularImage data.p data.bounds
@@ -1972,7 +1968,9 @@ theorem choosePrimeData?_berlekampFactor_factors_length_le_one_of_small
         (monicModularImage_monic
           (choosePrimeData?_prime f data hdata)
           (@ZPoly.modP data.p data.bounds f) hzero)
-        hfield).factors.length ≤ 1 := by
+        (@zmod64FieldOfPrime data.p data.bounds
+          (ZMod64.primeModulusOfPrime
+            (choosePrimeData?_prime f data hdata)))).factors.length ≤ 1 := by
     simpa [hform] using hsmall
   exact hlen
 

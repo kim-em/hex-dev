@@ -1,6 +1,7 @@
 import HexBerlekampZassenhaus.Basic
 import HexBerlekampZassenhaus.Conformance
 import HexBerlekampZassenhaus.CrossCheck
+import HexBerlekampZassenhaus.SmallModSingleton
 
 /-!
 The `HexBerlekampZassenhaus` library exposes the executable integer
