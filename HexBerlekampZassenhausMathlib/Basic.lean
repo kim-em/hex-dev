@@ -6743,6 +6743,11 @@ theorem zpoly_lc_pos_of_monic {f : Hex.ZPoly}
   rw [show Hex.DensePoly.leadingCoeff f = (1 : Int) from h]
   decide
 
+/-- Monic integer polynomials are primitive (content 1). -/
+theorem zpoly_primitive_of_monic {f : Hex.ZPoly}
+    (h : Hex.DensePoly.Monic f) : Hex.ZPoly.Primitive f :=
+  (monic_primitive_sign_normalized_of_monic h).2.1
+
 private theorem zpoly_monic_one : Hex.DensePoly.Monic (1 : Hex.ZPoly) := by
   show Hex.DensePoly.leadingCoeff (1 : Hex.ZPoly) = (1 : Int)
   change Hex.DensePoly.leadingCoeff (Hex.DensePoly.C (1 : Int)) = (1 : Int)
@@ -14884,9 +14889,7 @@ theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselS
         entry.1 = Hex.normalizeFactorSign raw) :
     Hex.ZPoly.Irreducible entry.1 := by
   obtain ⟨raw, hraw_mem, hentry_eq⟩ := hcore_entry
-  have hcore_primitive :
-      Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore :=
-    (monic_primitive_sign_normalized_of_monic hcore_monic).2.1
+  have hcore_primitive := zpoly_primitive_of_monic hcore_monic
   have hcore_lc_pos := zpoly_lc_pos_of_monic hcore_monic
   have hirr_raw : Hex.ZPoly.Irreducible raw :=
     exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound

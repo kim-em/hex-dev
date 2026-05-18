@@ -3251,9 +3251,7 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
       (Hex.xPowerFactorArray_irreducible (Hex.normalizeForFactor f).xPower raw hx)
   · -- Exhaustive-core case: apply the outer-bound slow-path wrapper's
     -- `_of_bound` sibling (#4947).
-    have hcore_primitive :
-        Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore :=
-      (monic_primitive_sign_normalized_of_monic hcore_monic).2.1
+    have hcore_primitive := zpoly_primitive_of_monic hcore_monic
     have hcore_lc_pos := zpoly_lc_pos_of_monic hcore_monic
     exact factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
       hbranch hentry_mem
@@ -3568,9 +3566,7 @@ theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeDat
       (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
       (Hex.squareFreeCore_normalizeFactorSign_of_ne_zero f hf_ne)
   · -- Irreducibility on every emitted factor.
-    have hcore_primitive :
-        Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore :=
-      (monic_primitive_sign_normalized_of_monic hcore_monic).2.1
+    have hcore_primitive := zpoly_primitive_of_monic hcore_monic
     have hcore_lc_pos := zpoly_lc_pos_of_monic hcore_monic
     exact exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
       (henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData f)
