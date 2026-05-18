@@ -805,13 +805,7 @@ private theorem coeff_monomial_mul
     rw [DensePoly.coeff_monomial] at hcoeff
     have hc : c = 0 := by simpa using hcoeff
     subst c
-    simp [diagonalCoeffTerm]
-    intro hsize _hn
-    have hzero_size : (DensePoly.monomial k (0 : Int) : ZPoly).size = 0 := by
-      unfold DensePoly.monomial
-      have hz : (0 : Int) = Zero.zero := rfl
-      simp [hz]
-    omega
+    simp
 
 private theorem coeff_mulModSquare_monomial_high
     (m k : Nat) (c : Int) (q : ZPoly) (n : Nat)

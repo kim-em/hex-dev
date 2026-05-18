@@ -344,6 +344,69 @@ theorem size_C_le_one (c : R) : (C c).size ≤ 1 := by
   · change c ≠ Zero.zero at hc
     simp [C, ofCoeffs, trimTrailingZeros, trimTrailingZerosList, hc, size]
 
+/-- The zero constant polynomial stores no coefficients. -/
+@[simp] theorem size_C_zero : (C (0 : R)).size = 0 := by
+  change (C (0 : R)).coeffs.size = 0
+  simp
+
+/-- A nonzero constant polynomial stores exactly its scalar coefficient. -/
+theorem size_C_of_ne_zero {c : R} (hc : c ≠ (0 : R)) : (C c).size = 1 := by
+  change (C c).coeffs.size = 1
+  rw [coeffs_C_of_ne_zero hc]
+  rfl
+
+/-- A constant polynomial is zero exactly when its scalar is zero. -/
+theorem isZero_C_eq_true_iff (c : R) : (C c).isZero = true ↔ c = (0 : R) := by
+  constructor
+  · intro hzero
+    by_cases hc : c = (0 : R)
+    · exact hc
+    · have hsize : (C c).size = 0 := (isZero_eq_true_iff (C c)).1 hzero
+      have hone : (C c).size = 1 := size_C_of_ne_zero hc
+      exact False.elim (Nat.succ_ne_zero 0 (hone.symm.trans hsize))
+  · intro hc
+    subst c
+    change (C (Zero.zero : R)).isZero = true
+    rw [isZero_eq_true_iff]
+    exact size_C_zero
+
+/-- The monomial with zero coefficient is the zero polynomial. -/
+@[simp] theorem monomial_zero (n : Nat) : monomial n (0 : R) = 0 := by
+  change monomial n (Zero.zero : R) = 0
+  rw [monomial, dif_pos rfl]
+
+/-- A monomial with nonzero coefficient stores exactly the `n + 1` coefficients up to degree `n`.
+-/
+theorem size_monomial_of_ne_zero {n : Nat} {c : R} (hc : c ≠ (0 : R)) :
+    (monomial n c).size = n + 1 := by
+  change c ≠ Zero.zero at hc
+  rw [monomial, dif_neg hc]
+  change ((Array.replicate n (Zero.zero : R)).push c).size = n + 1
+  simp
+
+/-- A monomial is zero exactly when its coefficient is zero. -/
+theorem isZero_monomial_eq_true_iff (n : Nat) (c : R) :
+    (monomial n c).isZero = true ↔ c = (0 : R) := by
+  constructor
+  · intro hzero
+    by_cases hc : c = (0 : R)
+    · exact hc
+    · have hsize : (monomial n c).size = 0 := (isZero_eq_true_iff (monomial n c)).1 hzero
+      have hmono : (monomial n c).size = n + 1 := size_monomial_of_ne_zero (n := n) hc
+      exact False.elim (Nat.succ_ne_zero n (hmono.symm.trans hsize))
+  · intro hc
+    subst c
+    change (monomial n (0 : R)).isZero = true
+    rw [monomial_zero, isZero_eq_true_iff]
+    exact size_zero
+
+/-- A monomial with nonzero coefficient is not the zero polynomial. -/
+theorem isZero_monomial_eq_false_of_ne_zero {n : Nat} {c : R} (hc : c ≠ (0 : R)) :
+    (monomial n c).isZero = false := by
+  rw [← Bool.not_eq_true]
+  intro hzero
+  exact hc ((isZero_monomial_eq_true_iff n c).1 hzero)
+
 /-- The `degree?` of a constant polynomial, defaulted to `0`, is `0` regardless of the scalar:
 either `degree? = none` (when `c = 0`) and `getD 0 = 0`, or `degree? = some 0` (otherwise). -/
 @[simp] theorem degree?_C_getD (c : R) : (C c).degree?.getD 0 = 0 := by
