@@ -2110,6 +2110,58 @@ theorem reassemblyExpansionComplete_of_irreducible_squarefree_cover
     (Hex.normalizeForFactor f).repeatedPart coreFactors hmonic hdegree
     exponents hlen hnot_dvd_tail hdecomp hfuel'
 
+/-- Non-monic `_of_pos_lc` sibling of
+`reassemblyExpansionComplete_of_irreducible_squarefree_cover`: replaces the
+per-factor `Monic q` premise with `0 < leadingCoeff q`, delegating to the
+non-monic leaf substrate
+`Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc`
+(`HexBerlekampZassenhaus/Basic.lean`, landed in #4778). Mid-layer surface for
+consumers wanting to delegate to the assembler under a primitive + pos-lc
+precondition; the existing quadratic-arm consumer
+`reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero` (below)
+bypasses the mid-layer by routing through the leaf directly, but the
+umbrella-internal rewiring of
+`reassemblyExpansionComplete_exhaustive_of_ne_zero` consumes this sibling. -/
+theorem reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_pos_lc
+    (f : Hex.ZPoly) (hf : f ≠ 0)
+    (coreFactors : Array Hex.ZPoly)
+    (hirr : ∀ q ∈ coreFactors.toList, Hex.ZPoly.Irreducible q)
+    (hprod : Array.polyProduct coreFactors =
+      (Hex.normalizeForFactor f).squareFreeCore)
+    (hnorm : ∀ q ∈ coreFactors.toList, Hex.normalizeFactorSign q = q)
+    (hpos_lc : ∀ q ∈ coreFactors.toList, 0 < Hex.DensePoly.leadingCoeff q)
+    (hdegree : ∀ q ∈ coreFactors.toList, 0 < q.degree?.getD 0)
+    (hfuel :
+      ∀ exponents : List Nat,
+        exponents.length = coreFactors.size →
+        (Hex.normalizeForFactor f).repeatedPart =
+          ((coreFactors.toList.zip exponents).map
+            (fun qe => Hex.Factorization.factorPower qe.1 qe.2)).foldl (· * ·) 1 →
+        ∀ (qe : Hex.ZPoly × Nat),
+          qe ∈ coreFactors.toList.zip exponents →
+            qe.2 + 1 ≤ (Hex.normalizeForFactor f).repeatedPart.size + 1) :
+    Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f) coreFactors := by
+  classical
+  obtain ⟨exponents, hlen, hdecomp⟩ :=
+    normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover
+      f hf coreFactors hirr hprod hnorm
+  have hnot_dvd_tail :
+      ∀ pre q e suf,
+        coreFactors.toList.zip exponents = pre ++ (q, e) :: suf →
+        ¬ q ∣ (suf.map (fun (qe : Hex.ZPoly × Nat) =>
+                Hex.Factorization.factorPower qe.1 qe.2)).foldl (· * ·) 1 :=
+    factorPower_cover_not_dvd_tail_of_irreducible_squarefree
+      f hf coreFactors hirr hprod hnorm exponents hlen
+  have hfuel' :
+      ∀ (qe : Hex.ZPoly × Nat),
+        qe ∈ coreFactors.toList.zip exponents →
+          qe.2 + 1 ≤ (Hex.normalizeForFactor f).repeatedPart.size + 1 := by
+    exact hfuel exponents hlen hdecomp
+  unfold Hex.reassemblyExpansionComplete
+  exact Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc
+    (Hex.normalizeForFactor f).repeatedPart coreFactors hpos_lc hdegree
+    exponents hlen hnot_dvd_tail hdecomp hfuel'
+
 /-- **#4597 HO-1 substrate — small-mod singleton arm `factorPower` shape of
 the repeated part.** Singleton specialisation of
 `normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover`
