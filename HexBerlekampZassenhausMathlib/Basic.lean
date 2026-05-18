@@ -14011,17 +14011,33 @@ private theorem recombinationSearchModAux_some_and_covers_of_liftedFactorSubsetP
         exact ⟨emitted, List.mem_cons_of_mem _ hemitted_mem, hemitted_assoc⟩
 
 /--
-Primitive + positive-leading analogue of
-`recombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition`.
-
-This is the scaled recursive coverage auxiliary for primitive non-monic cores:
-the executable step is `Hex.scaledRecombinationSearchModAux`, candidates are
-identified by `scaledRecombinationCandidate_eq_factor_of_recovery`, and the
-recursive target invariant is `Hex.ZPoly.Primitive target` plus positive
-leading coefficient instead of monicity.
+Abstract-bound variant of
+`scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition`:
+the concrete `2 * defaultFactorCoeffBound core < d.p ^ d.k` Mignotte
+precision is replaced by `2 * B' < d.p ^ d.k` against an abstract bound
+`B'`, paired with the leading-coefficient bound on `core` and the
+universal divisor coefficient bound `∀ g ∣ core, ∀ i, (g.coeff i).natAbs
+≤ B'`. The proof body otherwise mirrors the (now-wrapper) original
+verbatim: at each of the five `_of_bound` substrate call sites
+(`not_represents_empty_..._of_primitive_pos_lc_core_of_bound` in the
+empty-`J` step, `representsIntegerFactorAtLift_primitive_of_bound` and
+`scaledRecombinationCandidate_eq_factor_of_recovery_of_bound` at the
+cover-at-min recovery, `natDegree_toPolynomial_eq_sum_of_represents_..._of_bound`
+for the natDegree positivity, and
+`liftedFactorSubsetPartition_prefix_none_of_primitive_pos_lc_core_scaled_of_bound`
+for the prefix-none discharge), the per-factor `hvalid` is specialised
+to the local divisor (`g` in the empty-`J` step, `f_cov` for the other
+three per-factor consumers) by `hvalid g hg_dvd_core` /
+`hvalid f_cov hf_cov_dvd_core`, while the prefix-none consumer receives
+the universal `hvalid`, `hcore_lc_le`, `B'`, and `hprecision`
+unchanged. In the recursive IH call, the outer abstract-bound
+hypotheses are captured by closure.
 -/
-private theorem scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition
+private theorem scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition_of_bound
     {core : Hex.ZPoly} {d : Hex.LiftData}
+    (B' : Nat)
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hvalid : ∀ g : Hex.ZPoly, g ∣ core → ∀ i, (g.coeff i).natAbs ≤ B')
     (hcore_ne : core ≠ 0)
     (hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
@@ -14031,7 +14047,7 @@ private theorem scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorS
     (hd_liftedFactor_natDegree_pos :
       ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
     (hd_liftedFactor_inj : Function.Injective (liftedFactor d))
-    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    (hprecision : 2 * B' < d.p ^ d.k) :
     ∀ {target : Hex.ZPoly} {J : LiftedFactorSubset d}
       {localFactors : List Hex.ZPoly} {fuel : Nat},
       Hex.ZPoly.Primitive target →
@@ -14125,9 +14141,9 @@ private theorem scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorS
           rcases htarget_dvd_core with ⟨r2, hr2⟩
           refine ⟨r1 * r2, ?_⟩
           rw [hr2, hr1, Hex.DensePoly.mul_assoc_poly (S := Int)]
-        apply not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core
-          hcore_ne hcore_primitive hcore_lc_pos hprecision hg_dvd_core
-          hg_irr_toPoly
+        apply not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core_of_bound
+          B' (hvalid g hg_dvd_core) hcore_ne hcore_primitive hcore_lc_pos
+          hcore_lc_le hg_dvd_core hg_irr_toPoly hprecision
         rw [← hS_empty]; exact hSrep
       obtain ⟨f_cov, S_cov, hf_cov_irr, hf_cov_dvd_target, hS_cov_J,
               hmin_in_S_cov, hS_cov_rep⟩ :=
@@ -14138,23 +14154,25 @@ private theorem scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorS
         refine ⟨r1 * r2, ?_⟩
         rw [hr2, hr1, Hex.DensePoly.mul_assoc_poly (S := Int)]
       obtain ⟨hf_cov_primitive, hf_cov_lc_pos⟩ :=
-        representsIntegerFactorAtLift_primitive hcore_ne hcore_primitive
-          hcore_lc_pos hd_liftedFactor_monic hprecision hf_cov_dvd_target
-          htarget_dvd_core hS_cov_rep
+        representsIntegerFactorAtLift_primitive_of_bound
+          B' (hvalid f_cov hf_cov_dvd_core) hcore_lc_le hcore_ne
+          hcore_primitive hcore_lc_pos hd_liftedFactor_monic
+          hf_cov_dvd_target htarget_dvd_core hS_cov_rep hprecision
       have hf_cov_content : Hex.ZPoly.content f_cov = 1 := hf_cov_primitive
       have hf_cov_norm : Hex.normalizeFactorSign f_cov = f_cov := by
         unfold Hex.normalizeFactorSign
         rw [if_neg (by omega)]
       have hrec_eq : scaledRecombinationCandidate core d S_cov = f_cov :=
-        scaledRecombinationCandidate_eq_factor_of_recovery
-          hcore_ne hf_cov_dvd_core hf_cov_content hf_cov_norm hS_cov_rep
-          hprecision
+        scaledRecombinationCandidate_eq_factor_of_recovery_of_bound
+          B' (hvalid f_cov hf_cov_dvd_core) hcore_ne hf_cov_content
+          hf_cov_norm hS_cov_rep hprecision
       have hf_cov_natDeg_pos :
           0 < (HexPolyZMathlib.toPolynomial f_cov).natDegree := by
-        rw [natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core
-          hcore_ne hcore_primitive hcore_lc_pos hd_liftedFactor_monic
-          hprecision hf_cov_dvd_core hf_cov_irr hf_cov_content hf_cov_norm
-          hS_cov_rep]
+        rw [natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core_of_bound
+          B' (hvalid f_cov hf_cov_dvd_core) hcore_lc_le hcore_ne
+          hcore_primitive hcore_lc_pos hd_liftedFactor_monic
+          hf_cov_dvd_core hf_cov_irr hf_cov_content hf_cov_norm
+          hS_cov_rep hprecision]
         apply Finset.sum_pos (fun i _ => hd_liftedFactor_natDegree_pos i)
         exact ⟨J.min' hJ_ne, hmin_in_S_cov⟩
       have hf_cov_degree_pos : 0 < f_cov.degree?.getD 0 := by
@@ -14210,11 +14228,12 @@ private theorem scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorS
       have hlocal_nodup : localFactors.Nodup :=
         hmatches.nodup_of_injOn hd_liftedFactor_inj.injOn
       have hprefix :=
-        liftedFactorSubsetPartition_prefix_none_of_primitive_pos_lc_core_scaled
-          hcore_ne hcore_primitive hcore_lc_pos hd_modulus hd_liftedFactor_monic
-          hd_liftedFactor_natDegree_pos hprecision htarget_dvd_core hpartition
-          hmatches hlocal_nodup hf_cov_irr hf_cov_dvd_target hS_cov_rep
-          hS_cov_J hJ_ne hmin_in_S_cov hsplits (fuel := fuel')
+        liftedFactorSubsetPartition_prefix_none_of_primitive_pos_lc_core_scaled_of_bound
+          B' hcore_lc_le hvalid hcore_ne hcore_primitive hcore_lc_pos
+          hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
+          hprecision htarget_dvd_core hpartition hmatches hlocal_nodup
+          hf_cov_irr hf_cov_dvd_target hS_cov_rep hS_cov_J hJ_ne
+          hmin_in_S_cov hsplits (fuel := fuel')
       have hrecord :
           Hex.shouldRecordPolynomialFactor
               (scaledRecombinationCandidate core d S_cov) =
@@ -14285,6 +14304,87 @@ private theorem scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorS
         obtain ⟨emitted, hemitted_mem, hemitted_assoc⟩ :=
           hrest_covers factor hfactor_irr hfactor_dvd_quotient
         exact ⟨emitted, List.mem_cons_of_mem _ hemitted_mem, hemitted_assoc⟩
+
+/--
+Primitive + positive-leading analogue of
+`recombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition`.
+
+This is the scaled recursive coverage auxiliary for primitive non-monic cores:
+the executable step is `Hex.scaledRecombinationSearchModAux`, candidates are
+identified by `scaledRecombinationCandidate_eq_factor_of_recovery`, and the
+recursive target invariant is `Hex.ZPoly.Primitive target` plus positive
+leading coefficient instead of monicity.
+
+Thin wrapper over
+`scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition_of_bound`
+that instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound core` and
+discharges the abstract bound hypotheses via `defaultFactorCoeffBound_valid`
+paired with `leadingCoeff_eq_coeff_last`.
+-/
+private theorem scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hd_liftedFactor_inj : Function.Injective (liftedFactor d))
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    ∀ {target : Hex.ZPoly} {J : LiftedFactorSubset d}
+      {localFactors : List Hex.ZPoly} {fuel : Nat},
+      Hex.ZPoly.Primitive target →
+      0 < Hex.DensePoly.leadingCoeff target →
+      target ∣ core →
+      LiftedFactorSubsetPartition core d J target →
+      LiftedFactorListMatches d J localFactors →
+      J.card < fuel →
+      ∃ result,
+        Hex.scaledRecombinationSearchModAux (Hex.DensePoly.leadingCoeff core)
+            target (d.p ^ d.k) localFactors fuel =
+          some result ∧
+        ∀ factor : Hex.ZPoly,
+          Irreducible (HexPolyZMathlib.toPolynomial factor) →
+          factor ∣ target →
+          ∃ emitted ∈ result,
+            Associated (HexPolyZMathlib.toPolynomial emitted)
+              (HexPolyZMathlib.toPolynomial factor) := by
+  intro target J localFactors fuel htarget_primitive htarget_lc_pos
+    htarget_dvd_core hpartition hmatches hfuel
+  have hcore_size_pos : 0 < core.size := by
+    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
+    · exfalso
+      have hback_none : core.coeffs.back? = none := by
+        rw [Array.back?_eq_getElem?]
+        have hcoeffs_size : core.coeffs.size = 0 := by
+          simpa [Hex.DensePoly.size] using hzero
+        simp [hcoeffs_size]
+      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
+        unfold Hex.DensePoly.leadingCoeff
+        rw [hback_none]
+        rfl
+      rw [hlc_zero] at hcore_lc_pos
+      omega
+    · exact hpos
+  have hcore_dvd_self : core ∣ core :=
+    ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
+  have hcore_lc_le :
+      (Hex.DensePoly.leadingCoeff core).natAbs ≤
+        Hex.ZPoly.defaultFactorCoeffBound core := by
+    have hbound :=
+      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
+        (core.size - 1)
+    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
+    exact hbound
+  exact scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound core)
+    hcore_lc_le
+    (defaultFactorCoeffBound_valid core hcore_ne)
+    hcore_ne hcore_primitive hcore_lc_pos hd_modulus hd_liftedFactor_monic
+    hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
+    htarget_primitive htarget_lc_pos htarget_dvd_core hpartition hmatches hfuel
 
 /--
 Recursive coverage capstone for `Hex.recombinationSearchModAux` (#4301).
