@@ -612,6 +612,21 @@ theorem natCast_eq_natCast_iff_mod_eq
       x.toQuotient * y.toQuotient :=
   rfl
 
+/-- Negation projects to the quotient-ring additive inverse. -/
+@[simp] theorem toQuotient_neg
+    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
+    (x : FiniteField f hf hp hirr) :
+    (-x : FiniteField f hf hp hirr).toQuotient = -x.toQuotient :=
+  rfl
+
+/-- Subtraction projects to the quotient-ring difference. -/
+@[simp] theorem toQuotient_sub
+    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
+    (x y : FiniteField f hf hp hirr) :
+    (x - y : FiniteField f hf hp hirr).toQuotient =
+      x.toQuotient - y.toQuotient :=
+  rfl
+
 @[simp] theorem toQuotient_nsmul
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (n : Nat) (x : FiniteField f hf hp hirr) :
@@ -708,6 +723,12 @@ theorem inv_mul_cancel
 @[simp] theorem repr_zero
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p) (hirr : FpPoly.Irreducible f) :
     repr (0 : FiniteField f hf hp hirr) = GFqRing.reduceMod f 0 :=
+  rfl
+
+/-- The multiplicative-identity representative is the reduced form of `1`. -/
+@[simp] theorem repr_one
+    (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p) (hirr : FpPoly.Irreducible f) :
+    repr (1 : FiniteField f hf hp hirr) = GFqRing.reduceMod f 1 :=
   rfl
 
 @[simp] theorem repr_add
