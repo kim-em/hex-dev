@@ -13416,7 +13416,8 @@ theorem exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence
     (hpartition :
       LiftedFactorSubsetPartition core d Finset.univ core)
     (hcore_ne : core ≠ 0)
-    (hcore_monic : Hex.DensePoly.Monic core)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hB_ne_zero : B ≠ 0)
     (hd_modulus : 2 ≤ d.p ^ d.k)
     (hd_liftedFactor_monic :
@@ -13441,21 +13442,23 @@ theorem exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence
     rw [← LiftedFactorListMatches.length_eq_card hmatches]
     exact Nat.lt_succ_self _
   obtain ⟨result, hsearchAux, emitted, hemitted_mem, hassoc⟩ :=
-    recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition
+    recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition_of_primitive_pos_lc_core
       (J := Finset.univ)
       (fuel := d.liftedFactors.toList.length + 1)
-      hcore_ne hcore_monic hd_modulus hd_liftedFactor_monic
+      hcore_ne hcore_primitive hcore_lc_pos hd_modulus hd_liftedFactor_monic
       hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
-      hcore_monic (Hex.DensePoly.dvd_refl_poly core) hpartition hmatches hirr hdvd hfuel
+      hcore_primitive hcore_lc_pos (Hex.DensePoly.dvd_refl_poly core)
+      hpartition hmatches hirr hdvd hfuel
   have hsearchMod :
-      Hex.recombinationSearchMod core (d.p ^ d.k) d.liftedFactors.toList =
+      Hex.scaledRecombinationSearchMod (Hex.DensePoly.leadingCoeff core) core
+          (d.p ^ d.k) d.liftedFactors.toList =
         some result := by
-    unfold Hex.recombinationSearchMod
+    unfold Hex.scaledRecombinationSearchMod
     exact hsearchAux
   refine ⟨emitted, ?_, hassoc⟩
   exact
-    exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_some
-      (B := B) hB_ne_zero hcore_monic h.lift_eq hsearchMod hemitted_mem
+    exhaustiveCoreFactorsWithBound_mem_of_scaledRecombinationSearchMod_some
+      (B := B) hB_ne_zero h.lift_eq hsearchMod hemitted_mem
 
 /-- **#4006 slow-path capstone.**
 
@@ -13494,7 +13497,8 @@ theorem exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCo
     (hpartition :
       LiftedFactorSubsetPartition core d Finset.univ core)
     (hcore_ne : core ≠ 0)
-    (hcore_monic : Hex.DensePoly.Monic core)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hcore_record : Hex.shouldRecordPolynomialFactor core = true)
     (hB_ne_zero : B ≠ 0)
     (hd_modulus : 2 ≤ d.p ^ d.k)
@@ -13543,7 +13547,7 @@ theorem exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCo
       exact hr
     obtain ⟨emitted, hemitted_mem, hassoc⟩ :=
       exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence
-        h hpartition hcore_ne hcore_monic hB_ne_zero hd_modulus
+        h hpartition hcore_ne hcore_primitive hcore_lc_pos hB_ne_zero hd_modulus
         hd_liftedFactor_monic hd_liftedFactor_natDegree_pos hd_liftedFactor_inj
         hfactor_irr hfactor_dvd hprecision
     refine ⟨HexPolyZMathlib.toPolynomial emitted, ?_, ?_⟩
@@ -13805,11 +13809,19 @@ theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselS
         entry.1 = Hex.normalizeFactorSign raw) :
     Hex.ZPoly.Irreducible entry.1 := by
   obtain ⟨raw, hraw_mem, hentry_eq⟩ := hcore_entry
+  have hcore_primitive :
+      Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore :=
+    (monic_primitive_sign_normalized_of_monic hcore_monic).2.1
+  have hcore_lc_pos :
+      0 < Hex.DensePoly.leadingCoeff (Hex.normalizeForFactor f).squareFreeCore := by
+    rw [show Hex.DensePoly.leadingCoeff (Hex.normalizeForFactor f).squareFreeCore =
+      (1 : Int) from hcore_monic]
+    decide
   have hirr_raw : Hex.ZPoly.Irreducible raw :=
     exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence
-      h hpartition hcore_ne hcore_monic hcore_record hB_ne_zero hd_modulus
-      hd_liftedFactor_monic hd_liftedFactor_natDegree_pos hd_liftedFactor_inj
-      hprecision raw hraw_mem
+      h hpartition hcore_ne hcore_primitive hcore_lc_pos hcore_record hB_ne_zero
+      hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
+      hd_liftedFactor_inj hprecision raw hraw_mem
   rw [hentry_eq]
   exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hirr_raw
 
@@ -13901,8 +13913,10 @@ theorem factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorr
         (Hex.normalizeForFactor f).squareFreeCore d Finset.univ
         (Hex.normalizeForFactor f).squareFreeCore)
     (hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0)
-    (hcore_monic :
-      Hex.DensePoly.Monic (Hex.normalizeForFactor f).squareFreeCore)
+    (hcore_primitive :
+      Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore)
+    (hcore_lc_pos :
+      0 < Hex.DensePoly.leadingCoeff (Hex.normalizeForFactor f).squareFreeCore)
     (hcore_record :
       Hex.shouldRecordPolynomialFactor
         (Hex.normalizeForFactor f).squareFreeCore = true)
@@ -13927,9 +13941,9 @@ theorem factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorr
   obtain ⟨raw, hraw_mem, hentry_eq⟩ := hcore_entry
   have hirr_raw : Hex.ZPoly.Irreducible raw :=
     exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence
-      h hpartition hcore_ne hcore_monic hcore_record hB_ne_zero hd_modulus
-      hd_liftedFactor_monic hd_liftedFactor_natDegree_pos hd_liftedFactor_inj
-      hprecision raw hraw_mem
+      h hpartition hcore_ne hcore_primitive hcore_lc_pos hcore_record hB_ne_zero
+      hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
+      hd_liftedFactor_inj hprecision raw hraw_mem
   rw [hentry_eq]
   exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hirr_raw
 

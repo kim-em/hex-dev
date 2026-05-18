@@ -3112,11 +3112,19 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
     exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible
       (Hex.xPowerFactorArray_irreducible (Hex.normalizeForFactor f).xPower raw hx)
   · -- Exhaustive-core case: apply the outer-bound slow-path wrapper.
+    have hcore_primitive :
+        Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore :=
+      (monic_primitive_sign_normalized_of_monic hcore_monic).2.1
+    have hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff
+        (Hex.normalizeForFactor f).squareFreeCore := by
+      rw [show Hex.DensePoly.leadingCoeff (Hex.normalizeForFactor f).squareFreeCore =
+        (1 : Int) from hcore_monic]
+      decide
     exact factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence
       hbranch hentry_mem
       (henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData f)
       (liftedFactorSubsetPartition_outerBound_of_choosePrimeData f hf_ne)
-      hcore_ne hcore_monic hcore_record hB_ne_zero
+      hcore_ne hcore_primitive hcore_lc_pos hcore_record hB_ne_zero
       hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
       hd_liftedFactor_inj hprecision ⟨raw, hcore_mem, hentry_eq⟩
 
@@ -3310,10 +3318,18 @@ theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeDat
       (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
       (Hex.squareFreeCore_normalizeFactorSign_of_ne_zero f hf_ne)
   · -- Irreducibility on every emitted factor.
+    have hcore_primitive :
+        Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore :=
+      (monic_primitive_sign_normalized_of_monic hcore_monic).2.1
+    have hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff
+        (Hex.normalizeForFactor f).squareFreeCore := by
+      rw [show Hex.DensePoly.leadingCoeff (Hex.normalizeForFactor f).squareFreeCore =
+        (1 : Int) from hcore_monic]
+      decide
     exact exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence
       (henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData f)
       (liftedFactorSubsetPartition_outerBound_of_choosePrimeData f hf_ne)
-      hcore_ne hcore_monic hcore_record hB_ne_zero
+      hcore_ne hcore_primitive hcore_lc_pos hcore_record hB_ne_zero
       hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
       hd_liftedFactor_inj hprecision
 
