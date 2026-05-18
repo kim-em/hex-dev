@@ -2297,6 +2297,132 @@ theorem reassemblyExpansionComplete_singleton_of_irreducible
       core k hmonic hdeg hirr (Hex.normalizeForFactor f).repeatedPart hk hfuel
   rw [hexpand]
 
+/-- **#4956 HO-1 substrate — small-mod singleton arm `hcomplete` discharger,
+non-monic primitive sibling (Mathlib bridge).** Companion to the monic
+`reassemblyExpansionComplete_singleton_of_irreducible` above. Drops the
+`hmonic` premise on the square-free core in favour of `0 < leadingCoeff core`,
+producing the same `Hex.reassemblyExpansionComplete` conclusion. The proof
+routes through the non-monic array-level public surface
+`Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc`
+(`HexBerlekampZassenhaus/Basic.lean:11777`, #4778), with the
+no-tail-divisibility precondition discharged by
+`factorPower_cover_not_dvd_tail_of_irreducible_squarefree` (#4807).
+The singleton-arm umbrella
+`factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData`
+threads `hcomplete` from the caller, so the value of this sibling is in
+letting downstream dispatchers discharge `hcomplete` under a non-monic
+primitive `squareFreeCore` (e.g. the `2X + 3` residual from
+`(X-1)(2X+3) = 2X^2 + X - 3`). Closes the singleton-arm Gap 1 documented
+on the monic sibling at the discharger layer. -/
+theorem reassemblyExpansionComplete_singleton_of_irreducible_of_pos_lc
+    (f : Hex.ZPoly) (hf : f ≠ 0)
+    (hirr : Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore)
+    (hpos_lc : 0 < Hex.DensePoly.leadingCoeff
+      (Hex.normalizeForFactor f).squareFreeCore)
+    (hdeg :
+      0 < (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0) :
+    Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
+      #[(Hex.normalizeForFactor f).squareFreeCore] := by
+  obtain ⟨k, hk⟩ :=
+    normalizeForFactor_repeatedPart_isFactorPower_squareFreeCore_of_irreducible
+      f hf hirr
+  set core := (Hex.normalizeForFactor f).squareFreeCore with hcore_def
+  -- Size of `core` is at least 2 from positive degree (monicness-agnostic).
+  have hcore_size_ge_two : 2 ≤ core.size := by
+    have hdeg_unfold : core.degree?.getD 0 =
+        (if core.size = 0 then 0 else core.size - 1) := by
+      unfold Hex.DensePoly.degree?
+      by_cases h : core.size = 0 <;> simp [h]
+    rw [hdeg_unfold] at hdeg
+    by_cases h : core.size = 0
+    · simp [h] at hdeg
+    · split at hdeg <;> omega
+  -- For `core.size ≥ 2`, `factorPower core m` has size at least `m + 1`
+  -- (monicness-agnostic; uses `mul_size_eq_top_succ_of_nonzero`).
+  have hfactorPower_size_ge :
+      ∀ m, m + 1 ≤ (Hex.Factorization.factorPower core m).size := by
+    intro m
+    induction m with
+    | zero =>
+        show 1 ≤ (1 : Hex.ZPoly).size
+        rfl
+    | succ n ih =>
+        rw [Hex.Factorization.factorPower_succ]
+        have hprev_pos : 0 < (Hex.Factorization.factorPower core n).size := by
+          omega
+        have hcore_pos : 0 < core.size := by omega
+        have hmul_size :
+            (Hex.Factorization.factorPower core n * core).size =
+              (Hex.Factorization.factorPower core n).size + core.size - 1 :=
+          Hex.ZPoly.mul_size_eq_top_succ_of_nonzero _ _ hprev_pos hcore_pos
+        omega
+  have hfuel :
+      k + 1 ≤ (Hex.normalizeForFactor f).repeatedPart.size + 1 := by
+    have := hfactorPower_size_ge k
+    rw [hk]
+    omega
+  -- Singleton-shape preconditions for the array-level public non-monic surface.
+  have hirr_arr :
+      ∀ q ∈ (#[core] : Array Hex.ZPoly).toList, Hex.ZPoly.Irreducible q := by
+    intro q hq
+    have hq_eq : q = core := by simpa using hq
+    exact hq_eq ▸ hirr
+  have hprod : Array.polyProduct (#[core] : Array Hex.ZPoly) = core :=
+    Hex.ZPoly.polyProduct_singleton core
+  have hnorm :
+      ∀ q ∈ (#[core] : Array Hex.ZPoly).toList,
+        Hex.normalizeFactorSign q = q := by
+    intro q hq
+    have hq_eq : q = core := by simpa using hq
+    subst hq_eq
+    exact Hex.squareFreeCore_normalizeFactorSign_of_ne_zero f hf
+  have hpos_lc_arr :
+      ∀ q ∈ (#[core] : Array Hex.ZPoly).toList,
+        0 < Hex.DensePoly.leadingCoeff q := by
+    intro q hq
+    have hq_eq : q = core := by simpa using hq
+    exact hq_eq ▸ hpos_lc
+  have hdegree_arr :
+      ∀ q ∈ (#[core] : Array Hex.ZPoly).toList, 0 < q.degree?.getD 0 := by
+    intro q hq
+    have hq_eq : q = core := by simpa using hq
+    exact hq_eq ▸ hdeg
+  have hlen' :
+      ([k] : List Nat).length = (#[core] : Array Hex.ZPoly).size := by decide
+  -- No-tail-divisibility for the singleton split — discharged by the generic
+  -- `factorPower_cover_not_dvd_tail_of_irreducible_squarefree` helper (#4807).
+  have hnot_dvd_tail :=
+    factorPower_cover_not_dvd_tail_of_irreducible_squarefree
+      f hf #[core] hirr_arr hprod hnorm [k] hlen'
+  -- `factorPower` decomposition collapses on the singleton split to `hk`.
+  -- `#[core].toList.zip [k]` reduces to `[(core, k)]` by definitional
+  -- computation; the foldl then collapses to `1 * factorPower core k`.
+  have hdecomp :
+      (Hex.normalizeForFactor f).repeatedPart =
+        (((#[core] : Array Hex.ZPoly).toList.zip [k]).map
+          (fun (qe : Hex.ZPoly × Nat) =>
+            Hex.Factorization.factorPower qe.1 qe.2)).foldl (· * ·) 1 := by
+    show (Hex.normalizeForFactor f).repeatedPart =
+      1 * Hex.Factorization.factorPower core k
+    rw [Hex.ZPoly.one_mul_zpoly]
+    exact hk
+  -- Fuel bound for the singleton zip pair `(core, k)`.
+  have hfuel' :
+      ∀ (qe : Hex.ZPoly × Nat),
+        qe ∈ (#[core] : Array Hex.ZPoly).toList.zip [k] →
+          qe.2 + 1 ≤ (Hex.normalizeForFactor f).repeatedPart.size + 1 := by
+    intro qe hqe
+    -- `hqe : qe ∈ [(core, k)]` reduces to `qe = (core, k)`.
+    have hqe_eq : qe = (core, k) := by
+      have : qe ∈ ([(core, k)] : List (Hex.ZPoly × Nat)) := hqe
+      simpa using this
+    rw [hqe_eq]
+    exact hfuel
+  unfold Hex.reassemblyExpansionComplete
+  exact Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc
+    (Hex.normalizeForFactor f).repeatedPart #[core] hpos_lc_arr hdegree_arr
+    [k] hlen' hnot_dvd_tail hdecomp hfuel'
+
 /-- **#4747 HO-1 substrate — quadratic integer-root arm reassembly-expansion
 discharger (Mathlib bridge).** When the normalized square-free core
 `(normalizeForFactor f).squareFreeCore` factors through the executable
