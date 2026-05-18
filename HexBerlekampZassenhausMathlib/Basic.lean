@@ -8921,11 +8921,20 @@ Membership bridge from a successful fixed-lift recombination search into the
 public exhaustive-core wrapper.  The non-empty branch is discharged by the
 factor membership witness, so downstream coverage proofs can use an exact
 `recombinationSearchMod` success without unfolding `exhaustiveCoreFactorsWithBound`.
+
+The monic core hypothesis is required because `exhaustiveCoreFactorsWithBound`
+runs the *scaled* recombination at `coreLc = Hex.DensePoly.leadingCoeff core`,
+while the supplied witness comes from the *unscaled* search; under
+`hcore_monic` the two coincide via the
+`recombineScaledExhaustive_eq_recombineExhaustive_of_one` collapse.  A
+companion `_of_scaledRecombinationSearchMod_some` wrapper that drops the
+monic hypothesis is a follow-up sub-issue.
 -/
 theorem exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_some
     {core factor : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
     {d : Hex.LiftData} {factors : List Hex.ZPoly}
     (hB : B ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
     (hd :
       d =
         Hex.henselLiftData core (Hex.precisionForCoeffBound B primeData.p)
@@ -8936,17 +8945,25 @@ theorem exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_some
     (hmem : factor ∈ factors) :
     factor ∈ (Hex.exhaustiveCoreFactorsWithBound core B primeData).toList := by
   subst d
+  have hlc : Hex.DensePoly.leadingCoeff core = 1 := hcore_monic
   have hrecombine :
       Hex.recombineExhaustive core
           (Hex.henselLiftData core (Hex.precisionForCoeffBound B primeData.p)
             primeData) =
         factors.toArray :=
     Hex.recombineExhaustive_eq_of_recombinationSearchMod_some hsearch
+  have hscaled :
+      Hex.recombineScaledExhaustive (Hex.DensePoly.leadingCoeff core) core
+          (Hex.henselLiftData core (Hex.precisionForCoeffBound B primeData.p)
+            primeData) =
+        factors.toArray := by
+    rw [hlc, Hex.recombineScaledExhaustive_eq_recombineExhaustive_of_one]
+    exact hrecombine
   have hnot_empty : factors.toArray.isEmpty = false := by
     cases factors with
     | nil => simp at hmem
     | cons head tail => simp
-  simp [Hex.exhaustiveCoreFactorsWithBound, hB, hrecombine, hnot_empty, hmem]
+  simp [Hex.exhaustiveCoreFactorsWithBound, hB, hscaled, hnot_empty, hmem]
 
 /--
 Public-wrapper membership bridge for a first successful fixed-lift split.
@@ -8962,6 +8979,7 @@ theorem exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_first_succe
     {selected rest restFactors : List Hex.ZPoly}
     {pre suffix : List (List Hex.ZPoly × List Hex.ZPoly)}
     (hB : B ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
     (hd :
       d =
         Hex.henselLiftData core (Hex.precisionForCoeffBound B primeData.p)
@@ -9016,7 +9034,7 @@ theorem exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_first_succe
   exact
     exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_some
       (core := core) (factor := factor) (B := B) (primeData := primeData)
-      (d := d) (factors := factors) hB hd hsearch hmem
+      (d := d) (factors := factors) hB hcore_monic hd hsearch hmem
 
 /-- A `Hex.ZPoly` factor that passes the executable `shouldRecordPolynomialFactor`
 check is non-zero and not a unit after transport to `Polynomial ℤ`.  The
@@ -13033,7 +13051,7 @@ theorem exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence
   refine ⟨emitted, ?_, hassoc⟩
   exact
     exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_some
-      (B := B) hB_ne_zero h.lift_eq hsearchMod hemitted_mem
+      (B := B) hB_ne_zero hcore_monic h.lift_eq hsearchMod hemitted_mem
 
 /-- **#4006 slow-path capstone.**
 

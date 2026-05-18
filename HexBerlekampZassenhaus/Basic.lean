@@ -5483,7 +5483,8 @@ def exhaustiveCoreFactorsWithBound
   else
     let liftData :=
       henselLiftData core (precisionForCoeffBound B primeData.p) primeData
-    let factors := recombineExhaustive core liftData
+    let factors :=
+      recombineScaledExhaustive (DensePoly.leadingCoeff core) core liftData
     if factors.isEmpty then
       #[core]
     else
@@ -8168,6 +8169,67 @@ private theorem recombineScaledExhaustive_product
   simp [hsearch, scaledRecombinationSearchMod_product coreLc f (liftModulus d)
     d.liftedFactors.toList factors hsearch]
 
+/-- Pointwise: scaling a `ZPoly` by the integer `1` is a no-op. -/
+private theorem densePoly_int_scale_one (p : ZPoly) :
+    DensePoly.scale (1 : Int) p = p := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_scale (R := Int) 1 p n (Int.mul_zero 1)]
+  exact Int.one_mul (p.coeff n)
+
+/-- `scaledRecombinationSearchModAux` at `coreLc = 1` collapses to the unscaled
+`recombinationSearchModAux`: the only difference between the two routines is the
+inner `DensePoly.scale coreLc` applied to the lifted-factor product, which is a
+no-op when `coreLc = 1`. -/
+private theorem scaledRecombinationSearchModAux_eq_recombinationSearchModAux_of_one
+    (target : ZPoly) (modulus : Nat) (localFactors : List ZPoly) (fuel : Nat) :
+    scaledRecombinationSearchModAux 1 target modulus localFactors fuel =
+      recombinationSearchModAux target modulus localFactors fuel := by
+  induction fuel generalizing target localFactors with
+  | zero => rfl
+  | succ fuel ih =>
+      unfold scaledRecombinationSearchModAux recombinationSearchModAux
+      by_cases htarget : target = 1
+      · simp [htarget]
+      · simp only [htarget, if_false]
+        congr 1
+        funext split
+        simp only [densePoly_int_scale_one]
+        by_cases hrecord :
+            shouldRecordPolynomialFactor (normalizeFactorSign <|
+                ZPoly.primitivePart <|
+                  centeredLiftPoly (Array.polyProduct split.1.toArray) modulus) = true
+        · simp only [hrecord, if_true]
+          cases hquot : exactQuotient? target (normalizeFactorSign <|
+              ZPoly.primitivePart <|
+                centeredLiftPoly (Array.polyProduct split.1.toArray) modulus) with
+          | none => rfl
+          | some quotient =>
+              simp only [ih]
+        · simp only [hrecord, Bool.false_eq_true, if_false]
+
+/-- Surface-level collapse: `scaledRecombinationSearchMod 1 = recombinationSearchMod`. -/
+private theorem scaledRecombinationSearchMod_eq_recombinationSearchMod_of_one
+    (f : ZPoly) (modulus : Nat) (localFactors : List ZPoly) :
+    scaledRecombinationSearchMod 1 f modulus localFactors =
+      recombinationSearchMod f modulus localFactors := by
+  unfold scaledRecombinationSearchMod recombinationSearchMod
+  exact scaledRecombinationSearchModAux_eq_recombinationSearchModAux_of_one
+    f modulus localFactors (localFactors.length + 1)
+
+/-- Executable collapse: `recombineScaledExhaustive 1 = recombineExhaustive`.
+
+The scaled and unscaled exhaustive recombination wrappers agree when the
+scaling coefficient is `1` (i.e., for monic cores).  Used by the Mathlib-side
+`exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_some` to bridge
+an unscaled search witness into the scaled executable call site introduced by
+the swap. -/
+theorem recombineScaledExhaustive_eq_recombineExhaustive_of_one
+    (f : ZPoly) (d : LiftData) :
+    recombineScaledExhaustive 1 f d = recombineExhaustive f d := by
+  unfold recombineScaledExhaustive recombineExhaustive
+  rw [scaledRecombinationSearchMod_eq_recombinationSearchMod_of_one]
+
 /-- Base case for the exhaustive recombination search: when the running target
 has already been reduced to `1`, the search terminates and returns the empty
 factor list. -/
@@ -8459,11 +8521,11 @@ theorem exhaustiveCoreFactorsWithBound_normalizeFactorSign
   · simp [hB, hcore]
   · simp only [hB, if_false]
     by_cases hempty :
-        (recombineExhaustive core
+        (recombineScaledExhaustive (DensePoly.leadingCoeff core) core
             (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)).isEmpty
     · simp [hempty, hcore]
     · simp only [hempty]
-      exact recombineExhaustive_normalizeFactorSign core
+      exact recombineScaledExhaustive_normalizeFactorSign (DensePoly.leadingCoeff core) core
         (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)
 
 theorem exhaustiveCoreFactorsWithBound_shouldRecord
@@ -8476,11 +8538,11 @@ theorem exhaustiveCoreFactorsWithBound_shouldRecord
   · simp [hB, hcore]
   · simp only [hB, if_false]
     by_cases hempty :
-        (recombineExhaustive core
+        (recombineScaledExhaustive (DensePoly.leadingCoeff core) core
             (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)).isEmpty
     · simp [hempty, hcore]
     · simp only [hempty]
-      exact recombineExhaustive_shouldRecord core
+      exact recombineScaledExhaustive_shouldRecord (DensePoly.leadingCoeff core) core
         (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)
 
 private theorem bhksRecoverClassified_success_product
@@ -8750,8 +8812,8 @@ theorem factorFastCoreWithBound_some_dvd
 
 /-- The exhaustive recombination wrapper preserves the polynomial product
 unconditionally: every branch returns either `#[core]` (singleton, trivially
-multiplying to `core`) or the result of a successful `recombinationSearchMod`
-call (`recombineExhaustive_product`). -/
+multiplying to `core`) or the result of a successful
+`scaledRecombinationSearchMod` call (`recombineScaledExhaustive_product`). -/
 theorem exhaustiveCoreFactorsWithBound_product
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) :
     Array.polyProduct (exhaustiveCoreFactorsWithBound core B primeData) = core := by
@@ -8760,26 +8822,26 @@ theorem exhaustiveCoreFactorsWithBound_product
   · simp [hB, ZPoly.polyProduct_singleton]
   · simp only [hB, if_false]
     by_cases hempty :
-        (recombineExhaustive core
+        (recombineScaledExhaustive (DensePoly.leadingCoeff core) core
             (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)).isEmpty
     · simp [hempty, ZPoly.polyProduct_singleton]
     · simp only [hempty]
-      cases hsearch : recombinationSearchMod core
+      cases hsearch : scaledRecombinationSearchMod (DensePoly.leadingCoeff core) core
           (liftModulus
             (henselLiftData core (precisionForCoeffBound B primeData.p) primeData))
           (henselLiftData core (precisionForCoeffBound B primeData.p)
             primeData).liftedFactors.toList with
       | none =>
           have hnil :
-              recombineExhaustive core
+              recombineScaledExhaustive (DensePoly.leadingCoeff core) core
                 (henselLiftData core (precisionForCoeffBound B primeData.p)
                   primeData) = #[] := by
-            rw [recombineExhaustive]
+            rw [recombineScaledExhaustive]
             simp [hsearch]
           rw [hnil] at hempty
           simp at hempty
       | some xs =>
-          exact recombineExhaustive_product core
+          exact recombineScaledExhaustive_product (DensePoly.leadingCoeff core) core
             (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)
             xs hsearch
 
