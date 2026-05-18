@@ -9407,6 +9407,77 @@ theorem exhaustiveCoreFactorsWithBound_degree_pos
     unfold shouldRecordPolynomialFactor at hq_record
     simp [hq_one] at hq_record
 
+/-- Weakened-conclusion sibling of `exhaustiveCoreFactorsWithBound_degree_pos`:
+every emitted factor of the exhaustive recombination wrapper has positive
+`degree?` when the input core is primitive with positive leading coefficient
+and `shouldRecord = true`. A size-`1` emitted factor combines
+`Primitive q` (forcing `|q.coeff 0| = 1`) with `normalizeFactorSign q = q`
+(forcing `q.coeff 0 ≥ 0`) to conclude `q = 1`, which is excluded by
+`shouldRecord`. -/
+theorem exhaustiveCoreFactorsWithBound_degree_pos_of_primitive_pos_lc_core
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    (hcore_primitive : ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < DensePoly.leadingCoeff core)
+    (hcore_record : shouldRecordPolynomialFactor core = true) :
+    ∀ factor ∈ (exhaustiveCoreFactorsWithBound core B primeData).toList,
+      0 < factor.degree?.getD 0 := by
+  intro q hq
+  have hcore_norm : normalizeFactorSign core = core :=
+    normalizeFactorSign_eq_self_of_leadingCoeff_nonneg core (by omega)
+  have hemit_norm :=
+    exhaustiveCoreFactorsWithBound_normalizeFactorSign core B primeData hcore_norm
+  have hemit_record :=
+    exhaustiveCoreFactorsWithBound_shouldRecord core B primeData hcore_record
+  have hemit_primitive :=
+    exhaustiveCoreFactorsWithBound_primitive core B primeData hcore_primitive
+  have hq_norm : normalizeFactorSign q = q := hemit_norm q hq
+  have hq_record : shouldRecordPolynomialFactor q = true := hemit_record q hq
+  have hq_primitive : ZPoly.Primitive q := hemit_primitive q hq
+  rcases Nat.eq_zero_or_pos (q.degree?.getD 0) with hdeg_eq | hpos
+  case inr => exact hpos
+  case inl =>
+    exfalso
+    have hq_ne : q ≠ 0 := by
+      unfold shouldRecordPolynomialFactor at hq_record
+      simp at hq_record
+      exact hq_record.1.1
+    have hq_size_pos : 0 < q.size := ZPoly.size_pos_of_ne_zero q hq_ne
+    have hdeg_unfold : q.degree?.getD 0 =
+        (if q.size = 0 then 0 else q.size - 1) := by
+      unfold DensePoly.degree?
+      by_cases h : q.size = 0 <;> simp [h]
+    rw [hdeg_unfold] at hdeg_eq
+    have hsize_eq : q.size = 1 := by
+      by_cases h : q.size = 0
+      · omega
+      · split at hdeg_eq <;> omega
+    have hq_eq_C : q = DensePoly.C (q.coeff 0) := ZPoly.eq_C_of_size_eq_one q hsize_eq
+    have hq_lc : DensePoly.leadingCoeff q = q.coeff 0 := by
+      rw [DensePoly.leadingCoeff_eq_coeff_last q hq_size_pos]
+      congr 1; omega
+    have hq_lc_nonneg : 0 ≤ DensePoly.leadingCoeff q := by
+      rw [← hq_norm]
+      exact normalizeFactorSign_leadingCoeff_nonneg q
+    have hq_coeff0_nonneg : 0 ≤ q.coeff 0 := by rw [← hq_lc]; exact hq_lc_nonneg
+    -- Primitive q + q = C (q.coeff 0) ⇒ |q.coeff 0| = 1, then ≥ 0 ⇒ = 1.
+    have hcontent_q_eq : ZPoly.content q = Int.ofNat (q.coeff 0).natAbs :=
+      (congrArg DensePoly.content hq_eq_C).trans (DensePoly.content_C (q.coeff 0))
+    have hcontent_q_one : ZPoly.content q = 1 := hq_primitive
+    have habs1 : (q.coeff 0).natAbs = 1 := by
+      have hcast : (((q.coeff 0).natAbs : Int)) = (1 : Int) := by
+        rw [← Int.ofNat_eq_natCast, ← hcontent_q_eq]; exact hcontent_q_one
+      exact_mod_cast hcast
+    have hq_coeff0_eq : q.coeff 0 = 1 := by
+      rcases Int.natAbs_eq (q.coeff 0) with h | h
+      · rw [h, habs1]; rfl
+      · rw [h, habs1] at hq_coeff0_nonneg
+        omega
+    have hq_one : q = 1 := by
+      rw [hq_eq_C, hq_coeff0_eq]
+      rfl
+    unfold shouldRecordPolynomialFactor at hq_record
+    simp [hq_one] at hq_record
+
 private theorem polyProduct_push (factors : Array ZPoly) (factor : ZPoly) :
     Array.polyProduct (factors.push factor) =
       Array.polyProduct factors * factor := by
