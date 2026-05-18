@@ -11473,29 +11473,30 @@ theorem exists_mem_representedSubset_of_degree_cover_of_scaledRecombinationCandi
     htarget_dvd_core _hTJ gs S_of h_each hvalid
     h_pairwise_not_associated h_degree_total hi
 
-/-- Scaled-candidate counterpart of
-`mem_T_iff_exists_irreducibleFactor_representingSubset_of_primitive_pos_lc_core`.
-
-The scaled candidate is primitive (not monic) with nonnegative leading
-coefficient by construction. The proof mirrors the unscaled primitive variant
-with three substitutions:
-
-* `toPolynomial_recombinationCandidate_squarefree` →
-  `toPolynomial_scaledRecombinationCandidate_squarefree`;
-* `hcand_monic.normalize_eq_self` → `normalize_toPolynomial_of_normalizeFactorSign_id`
-  applied to the scaled candidate's `normalizeFactorSign` fixed-point property;
-* `Polynomial.natDegree_multiset_prod_of_monic _ hnf_monic` →
-  `Polynomial.natDegree_multiset_prod _ (zero_notMem_normalizedFactors _)`
-  (the unconditional multiset natDegree decomposition over `Polynomial ℤ`,
-  valid because `Polynomial ℤ` is an integral domain and `0 ∉ normalizedFactors`).
-
-The per-factor packaging is sourced from
-`exists_representingSubset_of_mem_normalizedFactors_scaledRecombinationCandidate_of_primitive_pos_lc_core`
-and the final degree-cover application uses
-`exists_mem_representedSubset_of_degree_cover_of_scaledRecombinationCandidate_of_primitive_pos_lc_core`. -/
-theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_scaledRecombinationCandidate_of_primitive_pos_lc_core
+/-- Abstract-bound variant of
+`mem_T_iff_exists_irreducibleFactor_representingSubset_of_scaledRecombinationCandidate_of_primitive_pos_lc_core`:
+takes `B' : Nat`, the universal coefficient bound `hvalid` over the
+candidate's normalised factors, the leading-coefficient bound
+`hcore_lc_bound`, and `hprecision : 2 * B' < d.p ^ d.k` in place of the
+core-shape `defaultFactorCoeffBound core` precision constraint. The
+proof body mirrors the original (now-wrapper) with two call-site
+substitutions: the per-normalised-factor bridge
+(`exists_representingSubset_of_mem_normalizedFactors_scaledRecombinationCandidate_of_primitive_pos_lc_core_of_bound`)
+and the final degree-cover application
+(`exists_mem_representedSubset_of_degree_cover_of_scaledRecombinationCandidate_of_primitive_pos_lc_core_of_bound`)
+both use their `_of_bound` siblings, threaded with `B'`,
+`hcore_lc_bound`, `hvalid`, and `hprecision`. -/
+theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_scaledRecombinationCandidate_of_primitive_pos_lc_core_of_bound
     {core target quotient : Hex.ZPoly} {d : Hex.LiftData}
     {J T : LiftedFactorSubset d}
+    (B' : Nat)
+    (hcore_lc_bound : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hvalid : ∀ g : Hex.ZPoly,
+      HexPolyZMathlib.toPolynomial g ∈
+        UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial
+            (scaledRecombinationCandidate core d T)) →
+      ∀ i, (g.coeff i).natAbs ≤ B')
     (hcore_ne : core ≠ 0)
     (hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
@@ -11503,7 +11504,7 @@ theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_scaledRecombina
       ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
     (hd_liftedFactor_natDegree_pos :
       ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
-    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hprecision : 2 * B' < d.p ^ d.k)
     (hpartition : LiftedFactorSubsetPartition core d J target)
     (htarget_dvd_core : target ∣ core)
     (hTJ : T ⊆ J)
@@ -11570,9 +11571,10 @@ theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_scaledRecombina
     intro g hgPoly
     obtain ⟨g', S_g, h_eq, h_irr, h_dvd_t, h_dvd_c, h_rep, h_SJ, h_ST,
         h_cont, h_norm⟩ :=
-      exists_representingSubset_of_mem_normalizedFactors_scaledRecombinationCandidate_of_primitive_pos_lc_core
-        hcore_ne hcore_primitive hcore_lc_pos hd_liftedFactor_monic
-        hprecision hpartition htarget_dvd_core hTJ hrecord hquot hgPoly
+      exists_representingSubset_of_mem_normalizedFactors_scaledRecombinationCandidate_of_primitive_pos_lc_core_of_bound
+        B' hvalid hcore_lc_bound hcore_ne hcore_primitive hcore_lc_pos
+        hd_liftedFactor_monic hprecision hpartition htarget_dvd_core hTJ
+        hrecord hquot hgPoly
     have hg_eq : g' = g := by
       have := congrArg HexPolyZMathlib.ofPolynomial h_eq
       simpa [HexPolyZMathlib.ofPolynomial_toPolynomial] using this
@@ -11667,13 +11669,125 @@ theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_scaledRecombina
       Polynomial.natDegree_multiset_prod _
         (UniqueFactorizationMonoid.zero_notMem_normalizedFactors _)]
   obtain ⟨g, hg_in_gs, hi_in_Sg⟩ :=
-    exists_mem_representedSubset_of_degree_cover_of_scaledRecombinationCandidate_of_primitive_pos_lc_core
-      hcore_ne hcore_primitive hcore_lc_pos hd_liftedFactor_monic
-      hd_liftedFactor_natDegree_pos hprecision hpartition htarget_dvd_core hTJ
-      gs S_of h_each h_pairwise h_degree_total hi
+    exists_mem_representedSubset_of_degree_cover_of_scaledRecombinationCandidate_of_primitive_pos_lc_core_of_bound
+      B' hcore_ne hcore_primitive hcore_lc_pos hcore_lc_bound
+      hd_liftedFactor_monic hd_liftedFactor_natDegree_pos hprecision hpartition
+      htarget_dvd_core hTJ gs S_of h_each
+      (fun g hg => hvalid g (mem_gs.mp hg))
+      h_pairwise h_degree_total hi
   have _hg_norm := mem_gs.mp hg_in_gs
   obtain ⟨h_irr, _, h_dvd_c, h_rep, h_SJ, _, _, _⟩ := h_each g hg_in_gs
   exact ⟨g, S_of g, h_irr, h_dvd_c, h_rep, h_SJ, hi_in_Sg⟩
+
+/-- Scaled-candidate counterpart of
+`mem_T_iff_exists_irreducibleFactor_representingSubset_of_primitive_pos_lc_core`.
+
+The scaled candidate is primitive (not monic) with nonnegative leading
+coefficient by construction. This is the `defaultFactorCoeffBound core`-
+instantiated thin wrapper for
+`mem_T_iff_exists_irreducibleFactor_representingSubset_of_scaledRecombinationCandidate_of_primitive_pos_lc_core_of_bound`:
+each normalised factor `g` of the candidate divides the candidate, which
+divides `target` (via `hquot`), which divides `core` (via
+`htarget_dvd_core`), so `defaultFactorCoeffBound_valid` discharges the
+universal bound hypothesis; the core leading-coefficient bound is
+discharged via the self-divisibility instance of the same lemma combined
+with `leadingCoeff_eq_coeff_last`. -/
+theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_scaledRecombinationCandidate_of_primitive_pos_lc_core
+    {core target quotient : Hex.ZPoly} {d : Hex.LiftData}
+    {J T : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (htarget_dvd_core : target ∣ core)
+    (hTJ : T ⊆ J)
+    (hrecord :
+      Hex.shouldRecordPolynomialFactor
+          (scaledRecombinationCandidate core d T) = true)
+    (hquot :
+      Hex.exactQuotient? target (scaledRecombinationCandidate core d T) =
+        some quotient)
+    {i : LiftedFactorIndex d} (hi : i ∈ T) :
+    ∃ (g : Hex.ZPoly) (S_g : LiftedFactorSubset d),
+      Irreducible (HexPolyZMathlib.toPolynomial g) ∧
+      g ∣ scaledRecombinationCandidate core d T ∧
+      RepresentsIntegerFactorAtLift core d g S_g ∧
+      S_g ⊆ J ∧ i ∈ S_g := by
+  have hcore_size_pos : 0 < core.size := by
+    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
+    · exfalso
+      have hback_none : core.coeffs.back? = none := by
+        rw [Array.back?_eq_getElem?]
+        have hcoeffs_size : core.coeffs.size = 0 := by
+          simpa [Hex.DensePoly.size] using hzero
+        simp [hcoeffs_size]
+      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
+        unfold Hex.DensePoly.leadingCoeff
+        rw [hback_none]
+        rfl
+      rw [hlc_zero] at hcore_lc_pos
+      omega
+    · exact hpos
+  have hcore_dvd_self : core ∣ core :=
+    ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
+  have hcore_lc_bound :
+      (Hex.DensePoly.leadingCoeff core).natAbs ≤
+        Hex.ZPoly.defaultFactorCoeffBound core := by
+    have hbound :=
+      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
+        (core.size - 1)
+    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
+    exact hbound
+  have hcand_dvd_target :
+      scaledRecombinationCandidate core d T ∣ target := by
+    have hmul : quotient * scaledRecombinationCandidate core d T = target :=
+      Hex.exactQuotient?_product hquot
+    refine ⟨quotient, ?_⟩
+    rw [Hex.DensePoly.mul_comm_poly (S := Int)]
+    exact hmul.symm
+  have hcand_dvd_core :
+      scaledRecombinationCandidate core d T ∣ core := by
+    rcases hcand_dvd_target with ⟨r₁, hr₁⟩
+    rcases htarget_dvd_core with ⟨r₂, hr₂⟩
+    refine ⟨r₁ * r₂, ?_⟩
+    -- See `exists_representingSubset_of_mem_normalizedFactors_scaledRecombinationCandidate_of_primitive_pos_lc_core`
+    -- wrapper: restrict the rewrite to the LHS so the `core` argument
+    -- inside `scaledRecombinationCandidate core d T` is not recursively
+    -- re-expanded.
+    conv_lhs => rw [hr₂, hr₁]
+    rw [Hex.DensePoly.mul_assoc_poly (S := Int)]
+  refine mem_T_iff_exists_irreducibleFactor_representingSubset_of_scaledRecombinationCandidate_of_primitive_pos_lc_core_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound core)
+    hcore_lc_bound
+    (fun g hg_mem => ?_)
+    hcore_ne hcore_primitive hcore_lc_pos hd_liftedFactor_monic
+    hd_liftedFactor_natDegree_pos hprecision hpartition htarget_dvd_core hTJ
+    hrecord hquot hi
+  -- Discharge `hvalid` for arbitrary normalised factor `g` of the
+  -- scaled candidate by chaining `g ∣ candidate ∣ target ∣ core` and
+  -- invoking `defaultFactorCoeffBound_valid`.
+  have hg_poly_dvd : HexPolyZMathlib.toPolynomial g ∣
+      HexPolyZMathlib.toPolynomial
+        (scaledRecombinationCandidate core d T) :=
+    UniqueFactorizationMonoid.dvd_of_mem_normalizedFactors hg_mem
+  have hg_dvd_cand : g ∣ scaledRecombinationCandidate core d T := by
+    rcases hg_poly_dvd with ⟨r, hr⟩
+    refine ⟨HexPolyZMathlib.ofPolynomial r, ?_⟩
+    apply HexPolyZMathlib.equiv.injective
+    simp only [HexPolyZMathlib.equiv_apply, HexPolyZMathlib.toPolynomial_mul,
+      HexPolyZMathlib.toPolynomial_ofPolynomial]
+    exact hr
+  have hg_dvd_core : g ∣ core := by
+    rcases hg_dvd_cand with ⟨r₁, hr₁⟩
+    rcases hcand_dvd_core with ⟨r₂, hr₂⟩
+    refine ⟨r₁ * r₂, ?_⟩
+    rw [hr₂, hr₁, Hex.DensePoly.mul_assoc_poly (S := Int)]
+  exact defaultFactorCoeffBound_valid core hcore_ne g hg_dvd_core
 
 /-- Scaled-candidate counterpart of
 `exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd_of_primitive_pos_lc_core`.
