@@ -334,9 +334,7 @@ private theorem gcd_monicModularImage_derivative_eq_one
           · exact Or.inl h
           · exact Or.inr h
       have hlead_ne : Hex.DensePoly.leadingCoeff f ≠ 0 := by
-        have hpos : 0 < f.size := by
-          simpa [Hex.DensePoly.isZero, Hex.DensePoly.size,
-            Array.isEmpty_iff_size_eq_zero, Nat.pos_iff_ne_zero] using hzero
+        have hpos : 0 < f.size := (Hex.DensePoly.isZero_eq_false_iff _).mp hzero
         rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred f hpos]
         exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size f hpos
       intro hu_zero
@@ -483,15 +481,8 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
   -- Push through the Mathlib bridge using toMathlibPolynomial_scale.
   rw [hmonicImg_eq, toMathlibPolynomial_scale] at hirr_monic
   -- The scaling constant is a unit (nonzero in the field).
-  have hfsize : 0 < (Hex.ZPoly.modP primeData.p core).size := by
-    rcases Nat.eq_zero_or_pos (Hex.ZPoly.modP primeData.p core).size with hsz | hsz
-    · exfalso
-      have hzero' : (Hex.ZPoly.modP primeData.p core).isZero = true := by
-        simpa [Hex.DensePoly.isZero, Hex.DensePoly.size,
-          Array.isEmpty_iff_size_eq_zero] using hsz
-      rw [hzero'] at hzero
-      exact Bool.noConfusion hzero
-    · exact hsz
+  have hfsize : 0 < (Hex.ZPoly.modP primeData.p core).size :=
+    (Hex.DensePoly.isZero_eq_false_iff _).mp hzero
   have hlead_ne :
       Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core) ≠ 0 := by
     rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred _ hfsize]

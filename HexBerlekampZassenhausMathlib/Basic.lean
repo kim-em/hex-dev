@@ -4902,15 +4902,8 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
   -- `monicModularImage modP_f ∣ modP_f`: dividing by the leading coefficient
   -- scales by a nonzero element, and a unit-scaled polynomial divides the
   -- original via `dvd_scale_self_of_ne_zero`.
-  have hmod_size_pos : 0 < (Hex.ZPoly.modP data.p f).size := by
-    rcases Nat.eq_zero_or_pos (Hex.ZPoly.modP data.p f).size with hsize_zero | hsize_pos
-    · exfalso
-      have hiszero : (Hex.ZPoly.modP data.p f).isZero = true := by
-        simpa [Hex.DensePoly.isZero, Hex.DensePoly.size,
-          Array.isEmpty_iff_size_eq_zero] using hsize_zero
-      rw [hiszero] at hzero
-      contradiction
-    · exact hsize_pos
+  have hmod_size_pos : 0 < (Hex.ZPoly.modP data.p f).size :=
+    (Hex.DensePoly.isZero_eq_false_iff _).mp hzero
   have hlead_ne :
       Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP data.p f) ≠
         (0 : Hex.ZMod64 data.p) := by
@@ -5867,15 +5860,8 @@ theorem factorsModP_coprime_of_factorsModPBerlekampForm
     Hex.isGoodPrime_squareFreeModP core primeData.p hgood
   -- `monicModularImage` divides `modP p core`, so the no-squared invariant
   -- transports through the unit scaling.
-  have hmod_size_pos : 0 < (Hex.ZPoly.modP primeData.p core).size := by
-    rcases Nat.eq_zero_or_pos (Hex.ZPoly.modP primeData.p core).size with hsz | hsz
-    · exfalso
-      have hiszero : (Hex.ZPoly.modP primeData.p core).isZero = true := by
-        simpa [Hex.DensePoly.isZero, Hex.DensePoly.size,
-          Array.isEmpty_iff_size_eq_zero] using hsz
-      rw [hiszero] at hzero
-      contradiction
-    · exact hsz
+  have hmod_size_pos : 0 < (Hex.ZPoly.modP primeData.p core).size :=
+    (Hex.DensePoly.isZero_eq_false_iff _).mp hzero
   have hmodP_lead_ne :
       Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core) ≠
         (0 : Hex.ZMod64 primeData.p) := by
@@ -6061,9 +6047,7 @@ private theorem gcd_monicModularImage_derivative_eq_one_local
           · exact Or.inl h
           · exact Or.inr h
       have hlead_ne : Hex.DensePoly.leadingCoeff f ≠ 0 := by
-        have hpos : 0 < f.size := by
-          simpa [Hex.DensePoly.isZero, Hex.DensePoly.size,
-            Array.isEmpty_iff_size_eq_zero, Nat.pos_iff_ne_zero] using hzero
+        have hpos : 0 < f.size := (Hex.DensePoly.isZero_eq_false_iff _).mp hzero
         rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred f hpos]
         exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size f hpos
       intro hu_zero
@@ -6218,15 +6202,8 @@ theorem factors_irreducible_of_factorsModPBerlekampForm
     hraw_irr g' hg'_mem
   have hg'_ne : g' ≠ 0 := hraw_ne g' hg'_mem
   have hg'_isZero : g'.isZero = false := Hex.isZero_false_of_ne_zero hg'_ne
-  have hg'_size_pos : 0 < g'.size := by
-    rcases Nat.eq_zero_or_pos g'.size with hsz | hsz
-    · exfalso
-      have hiszero : g'.isZero = true := by
-        simpa [Hex.DensePoly.isZero, Hex.DensePoly.size,
-          Array.isEmpty_iff_size_eq_zero] using hsz
-      rw [hiszero] at hg'_isZero
-      exact Bool.noConfusion hg'_isZero
-    · exact hsz
+  have hg'_size_pos : 0 < g'.size :=
+    (Hex.DensePoly.isZero_eq_false_iff _).mp hg'_isZero
   have hg'_lead_ne :
       Hex.DensePoly.leadingCoeff g' ≠ (0 : Hex.ZMod64 primeData.p) := by
     rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred g' hg'_size_pos]
