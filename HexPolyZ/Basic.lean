@@ -690,6 +690,12 @@ theorem primitive_mul (p q : ZPoly)
     Primitive (p * q) := by
   simpa [Primitive, content] using DensePoly.content_mul_of_primitive p q hp hq
 
+/-- `ZPoly`-level wrapper for `DensePoly.content_mul`: the content of a
+product of integer polynomials is the product of their contents. -/
+theorem content_mul (p q : ZPoly) :
+    content (p * q) = content p * content q := by
+  simpa [content] using DensePoly.content_mul p q
+
 /-- The top coefficient of a product of nonzero integer polynomials is the
 product of their top coefficients. -/
 theorem coeff_mul_top (p q : ZPoly)

@@ -1011,6 +1011,108 @@ theorem isGoodPrime_modP_isZero_false
           (show (ZPoly.modP p f).size ≤ f.size - 1 by omega)
       exact hcoeff_ne hzero_coeff
 
+/-- `leadingCoeffAdmissible` forces the source polynomial to have at least one
+stored coefficient: the empty coefficient array would force
+`leadingCoeffModP` to vanish. -/
+theorem leadingCoeffAdmissible_size_pos
+    (f : ZPoly) (p : Nat) [ZMod64.Bounds p]
+    (hadm : leadingCoeffAdmissible f p) :
+    0 < f.size := by
+  unfold leadingCoeffAdmissible at hadm
+  rcases Nat.eq_zero_or_pos f.size with hsize_zero | hfsize
+  · exfalso
+    apply hadm
+    have hcoeffs_zero : f.coeffs.size = 0 := by simpa [DensePoly.size] using hsize_zero
+    have hlead : DensePoly.leadingCoeff f = 0 := by
+      unfold DensePoly.leadingCoeff
+      rw [Array.back?_eq_getElem?]
+      simp [hcoeffs_zero]
+    unfold ZPoly.leadingCoeffModP
+    rw [hlead]
+    show (ZMod64.ofNat p (ZPoly.intModNat 0 p) : ZMod64 p) = 0
+    rfl
+  · exact hfsize
+
+/-- The top coefficient of `ZPoly.modP p f` matches `leadingCoeffModP` and is
+nonzero precisely when admissibility holds: the modular image keeps its last
+slot populated, so no trailing trim collapses below `f.size - 1`. -/
+private theorem coeff_modP_top_eq_leadingCoeffModP
+    (f : ZPoly) (p : Nat) [ZMod64.Bounds p]
+    (hfsize : 0 < f.size) :
+    (ZPoly.modP p f).coeff (f.size - 1) = ZPoly.leadingCoeffModP f p := by
+  rw [ZPoly.coeff_modP]
+  rw [← DensePoly.leadingCoeff_eq_coeff_last f hfsize]
+  rfl
+
+/-- Under `leadingCoeffAdmissible`, the modular image is nonzero. Companion of
+`isGoodPrime_modP_isZero_false` but with the weaker admissibility hypothesis
+(no square-free or `3 ≤ p` requirement). -/
+theorem modP_ne_zero_of_leadingCoeffAdmissible
+    (f : ZPoly) (p : Nat) [ZMod64.Bounds p]
+    (hadm : leadingCoeffAdmissible f p) :
+    ZPoly.modP p f ≠ 0 := by
+  have hfsize := leadingCoeffAdmissible_size_pos f p hadm
+  have hcoeff_ne : (ZPoly.modP p f).coeff (f.size - 1) ≠ 0 := by
+    rw [coeff_modP_top_eq_leadingCoeffModP f p hfsize]
+    exact hadm
+  intro hzero
+  apply hcoeff_ne
+  rw [hzero]
+  rfl
+
+/-- Under `leadingCoeffAdmissible`, the modular image has the same size as the
+input: the top coefficient survives reduction, so the trailing-zero trim does
+nothing. -/
+theorem size_modP_eq_of_leadingCoeffAdmissible
+    (f : ZPoly) (p : Nat) [ZMod64.Bounds p]
+    (hadm : leadingCoeffAdmissible f p) :
+    (ZPoly.modP p f).size = f.size := by
+  have hfsize := leadingCoeffAdmissible_size_pos f p hadm
+  have hcoeff_ne : (ZPoly.modP p f).coeff (f.size - 1) ≠ 0 := by
+    rw [coeff_modP_top_eq_leadingCoeffModP f p hfsize]
+    exact hadm
+  have hge : f.size ≤ (ZPoly.modP p f).size := by
+    rcases Nat.lt_or_ge (ZPoly.modP p f).size f.size with hlt | hge
+    · exfalso
+      apply hcoeff_ne
+      exact DensePoly.coeff_eq_zero_of_size_le _ (by omega)
+    · exact hge
+  have hle : (ZPoly.modP p f).size ≤ f.size := by
+    show (ZPoly.modP p f).coeffs.size ≤ f.size
+    unfold ZPoly.modP FpPoly.ofCoeffs
+    have h := DensePoly.size_ofCoeffs_le
+      (R := ZMod64 p)
+      ((List.range f.size).map
+        (fun i => ZMod64.ofNat p (ZPoly.intModNat (f.coeff i) p))).toArray
+    have hlen : ((List.range f.size).map
+        (fun i => ZMod64.ofNat p (ZPoly.intModNat (f.coeff i) p))).toArray.size =
+          f.size := by simp
+    simpa [DensePoly.size, hlen] using h
+  omega
+
+/-- Under `leadingCoeffAdmissible`, the modular image has the same `degree?` as
+the input. -/
+theorem degree?_modP_eq_of_leadingCoeffAdmissible
+    (f : ZPoly) (p : Nat) [ZMod64.Bounds p]
+    (hadm : leadingCoeffAdmissible f p) :
+    (ZPoly.modP p f).degree? = f.degree? := by
+  have hsize := size_modP_eq_of_leadingCoeffAdmissible f p hadm
+  unfold DensePoly.degree?
+  rw [hsize]
+
+/-- Under `leadingCoeffAdmissible`, the leading coefficient of the modular
+image matches `leadingCoeffModP`. -/
+theorem leadingCoeff_modP_eq_leadingCoeffModP_of_admissible
+    (f : ZPoly) (p : Nat) [ZMod64.Bounds p]
+    (hadm : leadingCoeffAdmissible f p) :
+    DensePoly.leadingCoeff (ZPoly.modP p f) = ZPoly.leadingCoeffModP f p := by
+  have hfsize := leadingCoeffAdmissible_size_pos f p hadm
+  have hsize := size_modP_eq_of_leadingCoeffAdmissible f p hadm
+  have hmod_size_pos : 0 < (ZPoly.modP p f).size := by omega
+  rw [DensePoly.leadingCoeff_eq_coeff_last _ hmod_size_pos]
+  rw [hsize]
+  exact coeff_modP_top_eq_leadingCoeffModP f p hfsize
+
 /--
 Data produced by modular prime selection: the selected prime, the image of the
 input polynomial over that prime field, and its modular factors.

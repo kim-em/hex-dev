@@ -5335,6 +5335,67 @@ theorem content_mul_of_primitive (p q : DensePoly Int)
     have hr_ge : 2 ≤ r := hr.1
     omega
 
+/-- Gauss's lemma on content (multiplicative form): the content of a product
+of integer polynomials is the product of their contents. Strengthens
+`content_mul_of_primitive` to non-primitive inputs by decomposing each
+factor into its content and primitive part. -/
+theorem content_mul (p q : DensePoly Int) :
+    content (p * q) = content p * content q := by
+  by_cases hcp : content p = 0
+  · have hp_zero : p = 0 := by
+      apply ext_coeff
+      intro n
+      have hcnp : contentNat p = 0 := by
+        have h' : Int.ofNat (contentNat p) = Int.ofNat 0 := hcp
+        exact Int.ofNat_inj.mp h'
+      have hdvd : (contentNat p : Int) ∣ p.coeff n := contentNat_dvd_coeff p n
+      rw [hcnp] at hdvd
+      rcases hdvd with ⟨k, hk⟩
+      rw [coeff_zero]
+      simpa using hk
+    rw [hp_zero, zero_mul, content_zero, Int.zero_mul]
+  by_cases hcq : content q = 0
+  · have hq_zero : q = 0 := by
+      apply ext_coeff
+      intro n
+      have hcnq : contentNat q = 0 := by
+        have h' : Int.ofNat (contentNat q) = Int.ofNat 0 := hcq
+        exact Int.ofNat_inj.mp h'
+      have hdvd : (contentNat q : Int) ∣ q.coeff n := contentNat_dvd_coeff q n
+      rw [hcnq] at hdvd
+      rcases hdvd with ⟨k, hk⟩
+      rw [coeff_zero]
+      simpa using hk
+    have hpzero : p * (0 : DensePoly Int) = 0 := by
+      rw [mul_comm_poly p (0 : DensePoly Int)]
+      exact zero_mul p
+    rw [hq_zero, hpzero, content_zero, Int.mul_zero]
+  have hp_prim : content (primitivePart p) = 1 := primitivePart_primitive p hcp
+  have hq_prim : content (primitivePart q) = 1 := primitivePart_primitive q hcq
+  have hpq_prim : content (primitivePart p * primitivePart q) = 1 :=
+    content_mul_of_primitive _ _ hp_prim hq_prim
+  have hpq_eq :
+      p * q = scale (content p * content q) (primitivePart p * primitivePart q) := by
+    apply ext_coeff
+    intro n
+    have hp_decomp : p = scale (content p) (primitivePart p) :=
+      (content_mul_primitivePart p).symm
+    have hq_decomp : q = scale (content q) (primitivePart q) :=
+      (content_mul_primitivePart q).symm
+    rw [show (p * q).coeff n = ((scale (content p) (primitivePart p)) *
+          (scale (content q) (primitivePart q))).coeff n from by
+        rw [← hp_decomp, ← hq_decomp]]
+    rw [coeff_scale_mul_scale]
+    rw [coeff_scale (content p * content q) (primitivePart p * primitivePart q) n
+      (Int.mul_zero _)]
+  rw [hpq_eq, content_scale_int, hpq_prim, Int.mul_one]
+  -- The product `content p * content q` is nonneg (both are `Int.ofNat`-coerced),
+  -- so its `natAbs` round-trip equals itself.
+  show Int.ofNat (content p * content q).natAbs = content p * content q
+  show Int.ofNat (Int.ofNat (contentNat p) * Int.ofNat (contentNat q)).natAbs =
+    Int.ofNat (contentNat p) * Int.ofNat (contentNat q)
+  rfl
+
 /-- Gauss's lemma on content (divisibility form): if a natural number `d`
 divides every coefficient of `p * q`, then it divides `contentNat p *
 contentNat q`. This is the divisibility witness needed by the McCoy row
