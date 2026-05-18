@@ -1219,6 +1219,18 @@ theorem monicModPImage_monic_of_ne_zero
   rw [monicModPImage_eq_monicModularImage]
   exact Hex.monicModularImage_monic hprime f hf
 
+/-- Nonvanishing of the leading coefficient for a positive-size
+`Hex.FpPoly p`. Composes `Hex.FpPoly.leadingCoeff_eq_coeff_pred`, which
+rewrites the leading coefficient to `f.coeff (f.size - 1)`, with
+`Hex.DensePoly.coeff_last_ne_zero_of_pos_size`, the invariant that the
+size-pred coefficient of a positive-size `Hex.DensePoly` is nonzero. -/
+theorem fpPoly_leadingCoeff_ne_zero_of_size_pos
+    {p : Nat} [Hex.ZMod64.Bounds p] (f : Hex.FpPoly p)
+    (hf_size_pos : 0 < f.size) :
+    Hex.DensePoly.leadingCoeff f ≠ (0 : Hex.ZMod64 p) := by
+  rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred f hf_size_pos]
+  exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size f hf_size_pos
+
 theorem monicModPImage_dvd_self_of_ne_zero
     {p : Nat} [Hex.ZMod64.Bounds p]
     (hprime : Hex.Nat.Prime p) {f : Hex.FpPoly p} (hf : f.isZero = false) :
@@ -1231,9 +1243,8 @@ theorem monicModPImage_dvd_self_of_ne_zero
     subst hzero
     contradiction
   have hf_size_pos : 0 < f.size := Hex.FpPoly.size_pos_of_ne_zero hf_ne
-  have hlead_ne : Hex.DensePoly.leadingCoeff f ≠ (0 : Hex.ZMod64 p) := by
-    rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred f hf_size_pos]
-    exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size f hf_size_pos
+  have hlead_ne : Hex.DensePoly.leadingCoeff f ≠ (0 : Hex.ZMod64 p) :=
+    fpPoly_leadingCoeff_ne_zero_of_size_pos f hf_size_pos
   have hinv_ne : (Hex.DensePoly.leadingCoeff f)⁻¹ ≠ (0 : Hex.ZMod64 p) :=
     Hex.ZMod64.inv_ne_zero_of_prime hprime hlead_ne
   exact Hex.FpPoly.dvd_scale_self_of_ne_zero hinv_ne f
@@ -4896,10 +4907,8 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
     (Hex.DensePoly.isZero_eq_false_iff _).mp hzero
   have hlead_ne :
       Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP data.p f) ≠
-        (0 : Hex.ZMod64 data.p) := by
-    rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred (Hex.ZPoly.modP data.p f) hmod_size_pos]
-    exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size
-      (Hex.ZPoly.modP data.p f) hmod_size_pos
+        (0 : Hex.ZMod64 data.p) :=
+    fpPoly_leadingCoeff_ne_zero_of_size_pos (Hex.ZPoly.modP data.p f) hmod_size_pos
   have hinv_ne :
       (Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP data.p f))⁻¹ ≠
         (0 : Hex.ZMod64 data.p) :=
@@ -5172,10 +5181,8 @@ theorem factorsModP_natDegree_pos_of_factorsModPBerlekampForm
   have hmod_size_pos : 0 < (Hex.ZPoly.modP data.p f).size := by omega
   have hmodP_lead_ne :
       Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP data.p f) ≠
-        (0 : Hex.ZMod64 data.p) := by
-    rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred (Hex.ZPoly.modP data.p f) hmod_size_pos]
-    exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size
-      (Hex.ZPoly.modP data.p f) hmod_size_pos
+        (0 : Hex.ZMod64 data.p) :=
+    fpPoly_leadingCoeff_ne_zero_of_size_pos (Hex.ZPoly.modP data.p f) hmod_size_pos
   have hinv_ne :
       (Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP data.p f))⁻¹ ≠
         (0 : Hex.ZMod64 data.p) :=
@@ -5719,9 +5726,8 @@ private theorem quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
               rw [hdeg_form]; simp; omega
             -- Step 5: lc rawGcd ≠ 0.
             have hlc_ne :
-                Hex.DensePoly.leadingCoeff rawGcd ≠ (0 : Hex.ZMod64 p) := by
-              rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred rawGcd hrawGcd_size_pos]
-              exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size rawGcd hrawGcd_size_pos
+                Hex.DensePoly.leadingCoeff rawGcd ≠ (0 : Hex.ZMod64 p) :=
+              fpPoly_leadingCoeff_ne_zero_of_size_pos rawGcd hrawGcd_size_pos
             -- Step 6: rawGcd.coeff 0 = lc rawGcd.
             have hrawGcd_coeff_zero :
                 rawGcd.coeff 0 = Hex.DensePoly.leadingCoeff rawGcd := by
@@ -5817,9 +5823,9 @@ theorem factorsModP_coprime_of_factorsModPBerlekampForm
     (Hex.DensePoly.isZero_eq_false_iff _).mp hzero
   have hmodP_lead_ne :
       Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core) ≠
-        (0 : Hex.ZMod64 primeData.p) := by
-    rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred _ hmod_size_pos]
-    exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size _ hmod_size_pos
+        (0 : Hex.ZMod64 primeData.p) :=
+    fpPoly_leadingCoeff_ne_zero_of_size_pos
+      (Hex.ZPoly.modP primeData.p core) hmod_size_pos
   have hinv_ne :
       (Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core))⁻¹ ≠
         (0 : Hex.ZMod64 primeData.p) :=
@@ -5997,10 +6003,9 @@ private theorem gcd_monicModularImage_derivative_eq_one_local
           rcases (Fact.out : Nat.Prime p).eq_one_or_self_of_dvd m hmdvd with h | h
           · exact Or.inl h
           · exact Or.inr h
-      have hlead_ne : Hex.DensePoly.leadingCoeff f ≠ 0 := by
-        have hpos : 0 < f.size := (Hex.DensePoly.isZero_eq_false_iff _).mp hzero
-        rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred f hpos]
-        exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size f hpos
+      have hlead_ne : Hex.DensePoly.leadingCoeff f ≠ 0 :=
+        fpPoly_leadingCoeff_ne_zero_of_size_pos f
+          ((Hex.DensePoly.isZero_eq_false_iff _).mp hzero)
       intro hu_zero
       have hone_hex : u * Hex.DensePoly.leadingCoeff f = (1 : Hex.ZMod64 p) := by
         simpa [u] using Hex.ZMod64.inv_mul_eq_one_of_prime hp_hex hlead_ne
@@ -6156,9 +6161,8 @@ theorem factors_irreducible_of_factorsModPBerlekampForm
   have hg'_size_pos : 0 < g'.size :=
     (Hex.DensePoly.isZero_eq_false_iff _).mp hg'_isZero
   have hg'_lead_ne :
-      Hex.DensePoly.leadingCoeff g' ≠ (0 : Hex.ZMod64 primeData.p) := by
-    rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred g' hg'_size_pos]
-    exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size g' hg'_size_pos
+      Hex.DensePoly.leadingCoeff g' ≠ (0 : Hex.ZMod64 primeData.p) :=
+    fpPoly_leadingCoeff_ne_zero_of_size_pos g' hg'_size_pos
   have hg'_inv_ne :
       (Hex.DensePoly.leadingCoeff g')⁻¹ ≠ (0 : Hex.ZMod64 primeData.p) := by
     intro hinv
