@@ -1284,6 +1284,32 @@ theorem modP_dvd_modP_of_dvd
   refine ⟨Hex.ZPoly.modP p q, ?_⟩
   rw [hq, modP_mul]
 
+/-- Divisibility at the `Hex.FpPoly p` layer preserves `isZero = false`:
+if `a ∣ b` and `b.isZero = false` then `a.isZero = false`. The bespoke
+`Dvd` instance for `Hex.FpPoly p` is `instDvdOfAddOfMul`, not Mathlib's
+`semigroupDvd`, so Mathlib's `dvd`-based zero-propagation lemmas do not
+apply at this layer and the boolean-`isZero` contrapositive is rebuilt
+directly here. -/
+private theorem fpPoly_isZero_false_of_dvd_of_isZero_false
+    {p : Nat} [Hex.ZMod64.Bounds p] {a b : Hex.FpPoly p}
+    (hab : a ∣ b) (hb : b.isZero = false) : a.isZero = false := by
+  cases ha : a.isZero with
+  | false => rfl
+  | true =>
+      exfalso
+      have ha_zero : a = 0 := by
+        apply Hex.DensePoly.ext_coeff
+        intro n
+        have hsize : a.size = 0 := by
+          change a.coeffs.isEmpty = true at ha
+          simpa [Hex.DensePoly.size, Array.isEmpty_iff_size_eq_zero] using ha
+        rw [Hex.DensePoly.coeff_eq_zero_of_size_le a (by omega)]
+        exact Hex.DensePoly.coeff_zero n
+      rcases hab with ⟨q, hq⟩
+      rw [ha_zero, Hex.FpPoly.zero_mul] at hq
+      rw [hq] at hb
+      exact Bool.noConfusion hb
+
 theorem monicModPImage_dvd_monicModularImage_of_dvd_of_choosePrimeData?_some
     {core factor : Hex.ZPoly}
     (hdvd : factor ∣ core)
@@ -1314,25 +1340,8 @@ theorem monicModPImage_dvd_monicModularImage_of_dvd_of_choosePrimeData?_some
         @Hex.ZPoly.modP primeData.p primeData.bounds core :=
     modP_dvd_modP_of_dvd primeData.p hdvd
   have hfactor_iszero :
-      (@Hex.ZPoly.modP primeData.p primeData.bounds factor).isZero = false := by
-    cases hzero : (@Hex.ZPoly.modP primeData.p primeData.bounds factor).isZero with
-    | false => rfl
-    | true =>
-        exfalso
-        have hfactor_zero :
-            @Hex.ZPoly.modP primeData.p primeData.bounds factor = 0 := by
-          apply Hex.DensePoly.ext_coeff
-          intro n
-          have hsize : (@Hex.ZPoly.modP primeData.p primeData.bounds factor).size = 0 := by
-            change (@Hex.ZPoly.modP primeData.p primeData.bounds factor).coeffs.isEmpty = true at hzero
-            simpa [Hex.DensePoly.size, Array.isEmpty_iff_size_eq_zero] using hzero
-          rw [Hex.DensePoly.coeff_eq_zero_of_size_le
-            (@Hex.ZPoly.modP primeData.p primeData.bounds factor) (by omega)]
-          exact Hex.DensePoly.coeff_zero n
-        rcases hfactor_dvd_core with ⟨q, hq⟩
-        apply hcore_mod_ne
-        rw [hfactor_zero, Hex.FpPoly.zero_mul] at hq
-        exact hq
+      (@Hex.ZPoly.modP primeData.p primeData.bounds factor).isZero = false :=
+    fpPoly_isZero_false_of_dvd_of_isZero_false hfactor_dvd_core hcore_iszero
   have hmonic_factor_dvd_factor :
       @monicModPImage primeData.p primeData.bounds
           (@Hex.ZPoly.modP primeData.p primeData.bounds factor) ∣
@@ -15425,27 +15434,8 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
     have hcore_modP_iszero :
         (@Hex.ZPoly.modP primeData.p primeData.bounds core).isZero = false :=
       Hex.isGoodPrime_modP_isZero_false core primeData.p hgood
-    cases hzero_factor :
-        (@Hex.ZPoly.modP primeData.p primeData.bounds factor).isZero with
-    | false => rfl
-    | true =>
-        exfalso
-        have hfactor_modP_zero :
-            @Hex.ZPoly.modP primeData.p primeData.bounds factor = 0 := by
-          apply Hex.DensePoly.ext_coeff
-          intro k
-          have hsize :
-              (@Hex.ZPoly.modP primeData.p primeData.bounds factor).size = 0 := by
-            change
-              (@Hex.ZPoly.modP primeData.p primeData.bounds factor).coeffs.isEmpty
-                = true at hzero_factor
-            simpa [Hex.DensePoly.size, Array.isEmpty_iff_size_eq_zero] using hzero_factor
-          rw [Hex.DensePoly.coeff_eq_zero_of_size_le _ (by omega)]
-          exact Hex.DensePoly.coeff_zero k
-        rcases hfactor_dvd_core_modP with ⟨q, hq⟩
-        rw [hfactor_modP_zero, Hex.FpPoly.zero_mul] at hq
-        rw [hq] at hcore_modP_iszero
-        exact Bool.noConfusion hcore_modP_iszero
+    exact fpPoly_isZero_false_of_dvd_of_isZero_false
+      hfactor_dvd_core_modP hcore_modP_iszero
   have hmathD_monic : mathD.Monic := by
     rw [hmathD_def]
     exact HexBerlekampMathlib.toMathlibPolynomial_monic _ hmonicModPImage_monic
