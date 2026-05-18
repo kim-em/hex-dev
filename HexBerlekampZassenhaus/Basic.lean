@@ -5058,6 +5058,22 @@ def scaledRecombinationSearchMod
   scaledRecombinationSearchModAux coreLc f modulus localFactors
     (localFactors.length + 1)
 
+/-- Exhaustive recombination of the lifted local factors stored in `d`,
+using the *scaled* candidate shape parameterised by the integer leading
+coefficient `coreLc`.  Returns the recovered integer factors as an array
+on success and `#[]` when the search fails.
+
+For `coreLc = 1` the inner scaling collapses and this coincides with
+`recombineExhaustive`; for primitive non-monic cores `coreLc` is taken
+to be the core's leading coefficient and the recovered factors are
+primitive normalised divisors of the core. -/
+def recombineScaledExhaustive
+    (coreLc : Int) (f : ZPoly) (d : LiftData) : Array ZPoly :=
+  match scaledRecombinationSearchMod coreLc f (liftModulus d)
+      d.liftedFactors.toList with
+  | some factors => factors.toArray
+  | none => #[]
+
 /-- Initial Hensel precision used by the fast BHKS doubling schedule. -/
 def initialHenselPrecision (B : Nat) : Nat :=
   if B ≤ 4 then B else 4
@@ -7947,6 +7963,37 @@ private theorem recombineExhaustive_shouldRecord
       exact recombinationSearchMod_shouldRecord f (liftModulus d)
         d.liftedFactors.toList factors hsearch factor (by simpa using hmem)
 
+private theorem recombineScaledExhaustive_normalizeFactorSign
+    (coreLc : Int) (f : ZPoly) (d : LiftData) :
+    ∀ factor ∈ (recombineScaledExhaustive coreLc f d).toList,
+      normalizeFactorSign factor = factor := by
+  unfold recombineScaledExhaustive
+  cases hsearch :
+      scaledRecombinationSearchMod coreLc f (liftModulus d)
+        d.liftedFactors.toList with
+  | none =>
+      simp
+  | some factors =>
+      intro factor hmem
+      exact scaledRecombinationSearchMod_normalizeFactorSign coreLc f
+        (liftModulus d) d.liftedFactors.toList factors hsearch factor
+        (by simpa using hmem)
+
+private theorem recombineScaledExhaustive_shouldRecord
+    (coreLc : Int) (f : ZPoly) (d : LiftData) :
+    ∀ factor ∈ (recombineScaledExhaustive coreLc f d).toList,
+      shouldRecordPolynomialFactor factor = true := by
+  unfold recombineScaledExhaustive
+  cases hsearch :
+      scaledRecombinationSearchMod coreLc f (liftModulus d)
+        d.liftedFactors.toList with
+  | none =>
+      simp
+  | some factors =>
+      intro factor hmem
+      exact scaledRecombinationSearchMod_shouldRecord coreLc f (liftModulus d)
+        d.liftedFactors.toList factors hsearch factor (by simpa using hmem)
+
 /-- Base case for the exhaustive recombination search: when the running target
 has already been reduced to `1`, the search terminates and returns the empty
 factor list. -/
@@ -8214,6 +8261,18 @@ theorem recombineExhaustive_eq_of_recombinationSearchMod_some
     (h : recombinationSearchMod f (liftModulus d) d.liftedFactors.toList = some factors) :
     recombineExhaustive f d = factors.toArray := by
   unfold recombineExhaustive
+  rw [h]
+
+/-- Scaled-candidate counterpart of
+`recombineExhaustive_eq_of_recombinationSearchMod_some`: when the scaled
+search succeeds on the lifted-factor list, `recombineScaledExhaustive`
+returns exactly the array of recovered factors. -/
+theorem recombineScaledExhaustive_eq_of_scaledRecombinationSearchMod_some
+    {coreLc : Int} {f : ZPoly} {d : LiftData} {factors : List ZPoly}
+    (h : scaledRecombinationSearchMod coreLc f (liftModulus d)
+        d.liftedFactors.toList = some factors) :
+    recombineScaledExhaustive coreLc f d = factors.toArray := by
+  unfold recombineScaledExhaustive
   rw [h]
 
 theorem exhaustiveCoreFactorsWithBound_normalizeFactorSign
