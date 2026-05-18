@@ -3904,6 +3904,39 @@ theorem representingSubset_subset_of_dvd_recombinationCandidate
   · exact hSJ
   · exact hrep
 
+/-- Abstract-bound variant of
+`representingSubset_subset_of_dvd_recombinationCandidate`: takes
+`_B' : Nat`, `_hvalid : ∀ i, (f.coeff i).natAbs ≤ _B'`, and
+`_hprecision : 2 * _B' < d.p ^ d.k` in place of the core-shape
+`defaultFactorCoeffBound core` precision constraint.  Both the
+abstract bound and the precision hypothesis are vestigial here (the
+proof body delegates to the structural support field of
+`LiftedFactorSubsetPartition`, which never consumes precision); they
+are threaded purely for API parity with the broader `_of_bound`
+propagation chain. -/
+theorem representingSubset_subset_of_dvd_recombinationCandidate_of_bound
+    {core target f : Hex.ZPoly} {d : Hex.LiftData}
+    {J T S : LiftedFactorSubset d}
+    (_B' : Nat)
+    (_hvalid : ∀ i, (f.coeff i).natAbs ≤ _B')
+    (_hcore_ne : core ≠ 0)
+    (_hcore_monic : Hex.DensePoly.Monic core)
+    (_hprecision : 2 * _B' < d.p ^ d.k)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (hTJ : T ⊆ J)
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial f))
+    (hfactor_dvd_target : f ∣ target)
+    (hfactor_dvd_candidate : f ∣ recombinationCandidate d T)
+    (hSJ : S ⊆ J)
+    (hrep : RepresentsIntegerFactorAtLift core d f S) :
+    S ⊆ T := by
+  apply hpartition.support_subset_of_dvd_recombinationCandidate
+    hirr hfactor_dvd_target hTJ
+  · rw [← recombinationCandidate_eq_liftedFactorProductCandidate]
+    exact hfactor_dvd_candidate
+  · exact hSJ
+  · exact hrep
+
 /-- Primitive + positive-leading-core variant of
 `representingSubset_subset_of_dvd_recombinationCandidate` (#4646 chain).
 
@@ -3918,6 +3951,38 @@ theorem representingSubset_subset_of_dvd_recombinationCandidate_of_primitive_pos
     (_hcore_primitive : Hex.ZPoly.Primitive core)
     (_hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (_hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (hTJ : T ⊆ J)
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial f))
+    (hfactor_dvd_target : f ∣ target)
+    (hfactor_dvd_candidate : f ∣ recombinationCandidate d T)
+    (hSJ : S ⊆ J)
+    (hrep : RepresentsIntegerFactorAtLift core d f S) :
+    S ⊆ T := by
+  apply hpartition.support_subset_of_dvd_recombinationCandidate
+    hirr hfactor_dvd_target hTJ
+  · rw [← recombinationCandidate_eq_liftedFactorProductCandidate]
+    exact hfactor_dvd_candidate
+  · exact hSJ
+  · exact hrep
+
+/-- Abstract-bound variant of
+`representingSubset_subset_of_dvd_recombinationCandidate_of_primitive_pos_lc_core`:
+takes `_B' : Nat`, `_hvalid : ∀ i, (f.coeff i).natAbs ≤ _B'`, and
+`_hprecision : 2 * _B' < d.p ^ d.k` in place of the core-shape
+`defaultFactorCoeffBound core` precision constraint.  Both the
+abstract bound and the precision hypothesis are vestigial here; they
+are threaded purely for API parity with the broader `_of_bound`
+propagation chain. -/
+theorem representingSubset_subset_of_dvd_recombinationCandidate_of_primitive_pos_lc_core_of_bound
+    {core target f : Hex.ZPoly} {d : Hex.LiftData}
+    {J T S : LiftedFactorSubset d}
+    (_B' : Nat)
+    (_hvalid : ∀ i, (f.coeff i).natAbs ≤ _B')
+    (_hcore_ne : core ≠ 0)
+    (_hcore_primitive : Hex.ZPoly.Primitive core)
+    (_hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (_hprecision : 2 * _B' < d.p ^ d.k)
     (hpartition : LiftedFactorSubsetPartition core d J target)
     (hTJ : T ⊆ J)
     (hirr : Irreducible (HexPolyZMathlib.toPolynomial f))
@@ -3950,6 +4015,39 @@ theorem representingSubset_subset_of_dvd_scaledRecombinationCandidate_of_primiti
     (_hcore_primitive : Hex.ZPoly.Primitive core)
     (_hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (_hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (_htarget_dvd_core : target ∣ core)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (hTJ : T ⊆ J)
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial f))
+    (hfactor_dvd_target : f ∣ target)
+    (_hfactor_prim : Hex.ZPoly.content f = 1)
+    (_hfactor_norm : Hex.normalizeFactorSign f = f)
+    (hfactor_dvd_candidate : f ∣ scaledRecombinationCandidate core d T)
+    (hSJ : S ⊆ J)
+    (hrep : RepresentsIntegerFactorAtLift core d f S) :
+    S ⊆ T := by
+  exact hpartition.support_subset_of_dvd_scaledRecombinationCandidate
+    hirr hfactor_dvd_target hTJ hfactor_dvd_candidate hSJ hrep
+
+/-- Abstract-bound variant of
+`representingSubset_subset_of_dvd_scaledRecombinationCandidate_of_primitive_pos_lc_core`:
+takes `_B' : Nat`, `_hvalid : ∀ i, (f.coeff i).natAbs ≤ _B'`, and
+`_hprecision : 2 * _B' < d.p ^ d.k` in place of the core-shape
+`defaultFactorCoeffBound core` precision constraint.  Both the
+abstract bound and the precision hypothesis are vestigial here (the
+proof body delegates to the scaled support field of
+`LiftedFactorSubsetPartition`, which never consumes precision); they
+are threaded purely for API parity with the broader `_of_bound`
+propagation chain. -/
+theorem representingSubset_subset_of_dvd_scaledRecombinationCandidate_of_primitive_pos_lc_core_of_bound
+    {core target f : Hex.ZPoly} {d : Hex.LiftData}
+    {J T S : LiftedFactorSubset d}
+    (_B' : Nat)
+    (_hvalid : ∀ i, (f.coeff i).natAbs ≤ _B')
+    (_hcore_ne : core ≠ 0)
+    (_hcore_primitive : Hex.ZPoly.Primitive core)
+    (_hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (_hprecision : 2 * _B' < d.p ^ d.k)
     (_htarget_dvd_core : target ∣ core)
     (hpartition : LiftedFactorSubsetPartition core d J target)
     (hTJ : T ⊆ J)
