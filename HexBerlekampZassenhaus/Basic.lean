@@ -8329,6 +8329,15 @@ private theorem scaledRecombinationSearchMod_normalizeFactorSign
   scaledRecombinationSearchModAux_normalizeFactorSign
     coreLc f modulus localFactors factors (localFactors.length + 1) hsearch
 
+private theorem scaledRecombinationSearchMod_primitive
+    (coreLc : Int) (f : ZPoly) (modulus : Nat)
+    (localFactors factors : List ZPoly)
+    (hsearch :
+      scaledRecombinationSearchMod coreLc f modulus localFactors = some factors) :
+    ∀ factor ∈ factors, ZPoly.Primitive factor :=
+  scaledRecombinationSearchModAux_primitive
+    coreLc f modulus localFactors factors (localFactors.length + 1) hsearch
+
 private theorem scaledRecombinationSearchMod_shouldRecord
     (coreLc : Int) (f : ZPoly) (modulus : Nat)
     (localFactors factors : List ZPoly)
@@ -8389,6 +8398,22 @@ private theorem recombineScaledExhaustive_normalizeFactorSign
   | some factors =>
       intro factor hmem
       exact scaledRecombinationSearchMod_normalizeFactorSign coreLc f
+        (liftModulus d) d.liftedFactors.toList factors hsearch factor
+        (by simpa using hmem)
+
+private theorem recombineScaledExhaustive_primitive
+    (coreLc : Int) (f : ZPoly) (d : LiftData) :
+    ∀ factor ∈ (recombineScaledExhaustive coreLc f d).toList,
+      ZPoly.Primitive factor := by
+  unfold recombineScaledExhaustive
+  cases hsearch :
+      scaledRecombinationSearchMod coreLc f (liftModulus d)
+        d.liftedFactors.toList with
+  | none =>
+      simp
+  | some factors =>
+      intro factor hmem
+      exact scaledRecombinationSearchMod_primitive coreLc f
         (liftModulus d) d.liftedFactors.toList factors hsearch factor
         (by simpa using hmem)
 
