@@ -9418,11 +9418,7 @@ theorem exists_representingSubset_dvd_recombinationCandidate_of_exactQuotient
       HexPolyZMathlib.toPolynomial_ofPolynomial]
     rw [hg_toPolynomial]
     exact hr
-  have hg_dvd_target : g ∣ target := by
-    rcases hg_dvd_cand with ⟨r₁, hr₁⟩
-    rcases hcand_dvd_target with ⟨r₂, hr₂⟩
-    refine ⟨r₁ * r₂, ?_⟩
-    rw [hr₂, hr₁, Hex.DensePoly.mul_assoc_poly (S := Int)]
+  have hg_dvd_target : g ∣ target := zpoly_dvd_trans hg_dvd_cand hcand_dvd_target
   have hg_irr_toPoly : Irreducible (HexPolyZMathlib.toPolynomial g) := by
     rw [hg_toPolynomial]; exact hg_irr
   -- Apply the partition's inherited `exists_subset` to obtain the representing
@@ -9590,12 +9586,7 @@ theorem exists_mem_representedSubset_of_degree_cover_of_bound
       (HexPolyZMathlib.toPolynomial g).natDegree = ∑ j ∈ S_of g, f j := by
     intro g hg
     obtain ⟨hg_irr, hg_dvd, _, hg_rep, _, _, hg_cont, hg_norm⟩ := h_each g hg
-    have hg_dvd_core : g ∣ core := by
-      obtain ⟨q, hq⟩ := hg_dvd
-      obtain ⟨v, hv⟩ := htarget_dvd_core
-      refine ⟨q * v, ?_⟩
-      rw [hv, hq]
-      exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
+    have hg_dvd_core : g ∣ core := zpoly_dvd_trans hg_dvd htarget_dvd_core
     exact natDegree_toPolynomial_eq_sum_of_represents_of_bound
       B' (hvalid g hg) hcore_ne hcore_monic hd_liftedFactor_monic
       hg_dvd_core hg_irr hg_cont hg_norm hg_rep hprecision
@@ -9777,12 +9768,7 @@ theorem exists_mem_representedSubset_of_degree_cover_of_primitive_pos_lc_core_of
       (HexPolyZMathlib.toPolynomial g).natDegree = ∑ j ∈ S_of g, f j := by
     intro g hg
     obtain ⟨hg_irr, hg_dvd, _, hg_rep, _, _, hg_cont, hg_norm⟩ := h_each g hg
-    have hg_dvd_core : g ∣ core := by
-      obtain ⟨q, hq⟩ := hg_dvd
-      obtain ⟨v, hv⟩ := htarget_dvd_core
-      refine ⟨q * v, ?_⟩
-      rw [hv, hq]
-      exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
+    have hg_dvd_core : g ∣ core := zpoly_dvd_trans hg_dvd htarget_dvd_core
     exact natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core_of_bound
       B' (hvalid g hg) hcore_lc_le hcore_ne hcore_primitive hcore_lc_pos
       hd_liftedFactor_monic hg_dvd_core hg_irr hg_cont hg_norm hg_rep hprecision
@@ -9959,11 +9945,7 @@ theorem exists_representingSubset_of_mem_normalizedFactors_recombinationCandidat
     refine ⟨quotient, ?_⟩
     rw [Hex.DensePoly.mul_comm_poly (S := Int)]
     exact hmul.symm
-  have hg_dvd_target : g ∣ target := by
-    rcases hg_dvd_cand with ⟨r₁, hr₁⟩
-    rcases hcand_dvd_target with ⟨r₂, hr₂⟩
-    refine ⟨r₁ * r₂, ?_⟩
-    rw [hr₂, hr₁, Hex.DensePoly.mul_assoc_poly (S := Int)]
+  have hg_dvd_target : g ∣ target := zpoly_dvd_trans hg_dvd_cand hcand_dvd_target
   obtain ⟨S_g, hSJ, hSrep⟩ :=
     hpartition.exists_subset hg_irr_toPoly hg_dvd_target
   have hST : S_g ⊆ T :=
@@ -10071,11 +10053,7 @@ theorem exists_representingSubset_of_mem_normalizedFactors_recombinationCandidat
     refine ⟨quotient, ?_⟩
     rw [Hex.DensePoly.mul_comm_poly (S := Int)]
     exact hmul.symm
-  have hg_dvd_target : g ∣ target := by
-    rcases hg_dvd_cand with ⟨r₁, hr₁⟩
-    rcases hcand_dvd_target with ⟨r₂, hr₂⟩
-    refine ⟨r₁ * r₂, ?_⟩
-    rw [hr₂, hr₁, Hex.DensePoly.mul_assoc_poly (S := Int)]
+  have hg_dvd_target : g ∣ target := zpoly_dvd_trans hg_dvd_cand hcand_dvd_target
   obtain ⟨S_g, hSJ, hSrep⟩ :=
     hpartition.exists_subset hg_irr_toPoly hg_dvd_target
   have hST : S_g ⊆ T :=
@@ -10580,11 +10558,7 @@ theorem exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd
     refine ⟨quotient, ?_⟩
     rw [Hex.DensePoly.mul_comm_poly (S := Int)]
     exact hmul.symm
-  have hf_dvd_target : f ∣ target := by
-    rcases hf_dvd_candidate with ⟨q, hq⟩
-    rcases hcand_dvd_target with ⟨r, hr⟩
-    refine ⟨q * r, ?_⟩
-    rw [hr, hq, Hex.DensePoly.mul_assoc_poly (S := Int)]
+  have hf_dvd_target : f ∣ target := zpoly_dvd_trans hf_dvd_candidate hcand_dvd_target
   exact ⟨f, S, hf_irr, hf_dvd_target, hf_dvd_candidate, hSJ, hiS, hrep⟩
 
 /--
@@ -10681,11 +10655,7 @@ theorem exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd_of_prim
     refine ⟨quotient, ?_⟩
     rw [Hex.DensePoly.mul_comm_poly (S := Int)]
     exact hmul.symm
-  have hf_dvd_target : f ∣ target := by
-    rcases hf_dvd_candidate with ⟨q, hq⟩
-    rcases hcand_dvd_target with ⟨r, hr⟩
-    refine ⟨q * r, ?_⟩
-    rw [hr, hq, Hex.DensePoly.mul_assoc_poly (S := Int)]
+  have hf_dvd_target : f ∣ target := zpoly_dvd_trans hf_dvd_candidate hcand_dvd_target
   exact ⟨f, S, hf_irr, hf_dvd_target, hf_dvd_candidate, hSJ, hiS, hrep⟩
 
 /-- Primitive + positive-leading-core variant of
@@ -10980,11 +10950,7 @@ theorem exists_representingSubset_of_mem_normalizedFactors_scaledRecombinationCa
     refine ⟨quotient, ?_⟩
     rw [Hex.DensePoly.mul_comm_poly (S := Int)]
     exact hmul.symm
-  have hg_dvd_target : g ∣ target := by
-    rcases hg_dvd_cand with ⟨r₁, hr₁⟩
-    rcases hcand_dvd_target with ⟨r₂, hr₂⟩
-    refine ⟨r₁ * r₂, ?_⟩
-    rw [hr₂, hr₁, Hex.DensePoly.mul_assoc_poly (S := Int)]
+  have hg_dvd_target : g ∣ target := zpoly_dvd_trans hg_dvd_cand hcand_dvd_target
   -- Primitivity of the candidate transports to `Polynomial ℤ`, where it
   -- propagates to every divisor, including `gPoly`.
   have hcand_primitive : Hex.ZPoly.Primitive
@@ -11090,16 +11056,8 @@ theorem exists_representingSubset_of_mem_normalizedFactors_scaledRecombinationCa
     rw [Hex.DensePoly.mul_comm_poly (S := Int)]
     exact hmul.symm
   have hcand_dvd_core :
-      scaledRecombinationCandidate core d T ∣ core := by
-    rcases hcand_dvd_target with ⟨r₁, hr₁⟩
-    rcases htarget_dvd_core with ⟨r₂, hr₂⟩
-    refine ⟨r₁ * r₂, ?_⟩
-    -- `core` appears both bare on the LHS and inside the
-    -- `scaledRecombinationCandidate core d T` term on the RHS; restrict
-    -- the rewrite chain to the LHS so the candidate's `core` argument
-    -- stays untouched.
-    conv_lhs => rw [hr₂, hr₁]
-    rw [Hex.DensePoly.mul_assoc_poly (S := Int)]
+      scaledRecombinationCandidate core d T ∣ core :=
+    zpoly_dvd_trans hcand_dvd_target htarget_dvd_core
   refine exists_representingSubset_of_mem_normalizedFactors_scaledRecombinationCandidate_of_primitive_pos_lc_core_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     (fun g hg_mem' => ?_)
@@ -11120,11 +11078,7 @@ theorem exists_representingSubset_of_mem_normalizedFactors_scaledRecombinationCa
     simp only [HexPolyZMathlib.equiv_apply, HexPolyZMathlib.toPolynomial_mul,
       HexPolyZMathlib.toPolynomial_ofPolynomial]
     exact hr
-  have hg_dvd_core : g ∣ core := by
-    rcases hg_dvd_cand with ⟨r₁, hr₁⟩
-    rcases hcand_dvd_core with ⟨r₂, hr₂⟩
-    refine ⟨r₁ * r₂, ?_⟩
-    rw [hr₂, hr₁, Hex.DensePoly.mul_assoc_poly (S := Int)]
+  have hg_dvd_core : g ∣ core := zpoly_dvd_trans hg_dvd_cand hcand_dvd_core
   exact defaultFactorCoeffBound_valid core hcore_ne g hg_dvd_core
 
 /-- Abstract-bound variant of
@@ -11188,12 +11142,7 @@ theorem exists_mem_representedSubset_of_degree_cover_of_scaledRecombinationCandi
       (HexPolyZMathlib.toPolynomial g).natDegree = ∑ j ∈ S_of g, f j := by
     intro g hg
     obtain ⟨hg_irr, hg_dvd, _, hg_rep, _, _, hg_cont, hg_norm⟩ := h_each g hg
-    have hg_dvd_core : g ∣ core := by
-      obtain ⟨q, hq⟩ := hg_dvd
-      obtain ⟨v, hv⟩ := htarget_dvd_core
-      refine ⟨q * v, ?_⟩
-      rw [hv, hq]
-      exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
+    have hg_dvd_core : g ∣ core := zpoly_dvd_trans hg_dvd htarget_dvd_core
     exact natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core_of_bound
       B' (hvalid g hg) hcore_lc_le hcore_ne hcore_primitive hcore_lc_pos
       hd_liftedFactor_monic hg_dvd_core hg_irr hg_cont hg_norm hg_rep hprecision
@@ -11550,16 +11499,8 @@ theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_scaledRecombina
     rw [Hex.DensePoly.mul_comm_poly (S := Int)]
     exact hmul.symm
   have hcand_dvd_core :
-      scaledRecombinationCandidate core d T ∣ core := by
-    rcases hcand_dvd_target with ⟨r₁, hr₁⟩
-    rcases htarget_dvd_core with ⟨r₂, hr₂⟩
-    refine ⟨r₁ * r₂, ?_⟩
-    -- See `exists_representingSubset_of_mem_normalizedFactors_scaledRecombinationCandidate_of_primitive_pos_lc_core`
-    -- wrapper: restrict the rewrite to the LHS so the `core` argument
-    -- inside `scaledRecombinationCandidate core d T` is not recursively
-    -- re-expanded.
-    conv_lhs => rw [hr₂, hr₁]
-    rw [Hex.DensePoly.mul_assoc_poly (S := Int)]
+      scaledRecombinationCandidate core d T ∣ core :=
+    zpoly_dvd_trans hcand_dvd_target htarget_dvd_core
   refine mem_T_iff_exists_irreducibleFactor_representingSubset_of_scaledRecombinationCandidate_of_primitive_pos_lc_core_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     hcore_lc_le
@@ -11581,11 +11522,7 @@ theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_scaledRecombina
     simp only [HexPolyZMathlib.equiv_apply, HexPolyZMathlib.toPolynomial_mul,
       HexPolyZMathlib.toPolynomial_ofPolynomial]
     exact hr
-  have hg_dvd_core : g ∣ core := by
-    rcases hg_dvd_cand with ⟨r₁, hr₁⟩
-    rcases hcand_dvd_core with ⟨r₂, hr₂⟩
-    refine ⟨r₁ * r₂, ?_⟩
-    rw [hr₂, hr₁, Hex.DensePoly.mul_assoc_poly (S := Int)]
+  have hg_dvd_core : g ∣ core := zpoly_dvd_trans hg_dvd_cand hcand_dvd_core
   exact defaultFactorCoeffBound_valid core hcore_ne g hg_dvd_core
 
 /-- Abstract-bound variant of
@@ -11646,11 +11583,7 @@ theorem exists_representingSubset_of_mem_T_of_scaledRecombinationCandidate_dvd_o
     refine ⟨quotient, ?_⟩
     rw [Hex.DensePoly.mul_comm_poly (S := Int)]
     exact hmul.symm
-  have hf_dvd_target : f ∣ target := by
-    rcases hf_dvd_candidate with ⟨q, hq⟩
-    rcases hcand_dvd_target with ⟨r, hr⟩
-    refine ⟨q * r, ?_⟩
-    rw [hr, hq, Hex.DensePoly.mul_assoc_poly (S := Int)]
+  have hf_dvd_target : f ∣ target := zpoly_dvd_trans hf_dvd_candidate hcand_dvd_target
   exact ⟨f, S, hf_irr, hf_dvd_target, hf_dvd_candidate, hSJ, hiS, hrep⟩
 
 /-- Scaled-candidate counterpart of
@@ -11699,15 +11632,8 @@ theorem exists_representingSubset_of_mem_T_of_scaledRecombinationCandidate_dvd_o
     rw [Hex.DensePoly.mul_comm_poly (S := Int)]
     exact hmul.symm
   have hcand_dvd_core :
-      scaledRecombinationCandidate core d T ∣ core := by
-    rcases hcand_dvd_target with ⟨r₁, hr₁⟩
-    rcases htarget_dvd_core with ⟨r₂, hr₂⟩
-    refine ⟨r₁ * r₂, ?_⟩
-    -- Restrict the rewrite to the LHS so the `core` argument inside
-    -- `scaledRecombinationCandidate core d T` is not recursively
-    -- re-expanded (same scaled-cascade gotcha as the prerequisite wrapper).
-    conv_lhs => rw [hr₂, hr₁]
-    rw [Hex.DensePoly.mul_assoc_poly (S := Int)]
+      scaledRecombinationCandidate core d T ∣ core :=
+    zpoly_dvd_trans hcand_dvd_target htarget_dvd_core
   refine exists_representingSubset_of_mem_T_of_scaledRecombinationCandidate_dvd_of_primitive_pos_lc_core_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     hcore_lc_le
@@ -11729,11 +11655,7 @@ theorem exists_representingSubset_of_mem_T_of_scaledRecombinationCandidate_dvd_o
     simp only [HexPolyZMathlib.equiv_apply, HexPolyZMathlib.toPolynomial_mul,
       HexPolyZMathlib.toPolynomial_ofPolynomial]
     exact hr
-  have hg_dvd_core : g ∣ core := by
-    rcases hg_dvd_cand with ⟨r₁, hr₁⟩
-    rcases hcand_dvd_core with ⟨r₂, hr₂⟩
-    refine ⟨r₁ * r₂, ?_⟩
-    rw [hr₂, hr₁, Hex.DensePoly.mul_assoc_poly (S := Int)]
+  have hg_dvd_core : g ∣ core := zpoly_dvd_trans hg_dvd_cand hcand_dvd_core
   exact defaultFactorCoeffBound_valid core hcore_ne g hg_dvd_core
 
 /-- Abstract-bound variant of
@@ -11907,15 +11829,8 @@ theorem coverAtMin_representingSubset_subset_of_scaledRecombinationCandidate_dvd
     rw [Hex.DensePoly.mul_comm_poly (S := Int)]
     exact hmul.symm
   have hcand_dvd_core :
-      scaledRecombinationCandidate core d T ∣ core := by
-    rcases hcand_dvd_target with ⟨r₁, hr₁⟩
-    rcases htarget_dvd_core with ⟨r₂, hr₂⟩
-    refine ⟨r₁ * r₂, ?_⟩
-    -- Restrict the rewrite to the LHS so the `core` argument inside
-    -- `scaledRecombinationCandidate core d T` is not recursively
-    -- re-expanded (scaled-cascade gotcha).
-    conv_lhs => rw [hr₂, hr₁]
-    rw [Hex.DensePoly.mul_assoc_poly (S := Int)]
+      scaledRecombinationCandidate core d T ∣ core :=
+    zpoly_dvd_trans hcand_dvd_target htarget_dvd_core
   refine coverAtMin_representingSubset_subset_of_scaledRecombinationCandidate_dvd_of_primitive_pos_lc_core_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     hcore_lc_le
@@ -11937,11 +11852,7 @@ theorem coverAtMin_representingSubset_subset_of_scaledRecombinationCandidate_dvd
     simp only [HexPolyZMathlib.equiv_apply, HexPolyZMathlib.toPolynomial_mul,
       HexPolyZMathlib.toPolynomial_ofPolynomial]
     exact hr
-  have hg_dvd_core : g ∣ core := by
-    rcases hg_dvd_cand with ⟨r₁, hr₁⟩
-    rcases hcand_dvd_core with ⟨r₂, hr₂⟩
-    refine ⟨r₁ * r₂, ?_⟩
-    rw [hr₂, hr₁, Hex.DensePoly.mul_assoc_poly (S := Int)]
+  have hg_dvd_core : g ∣ core := zpoly_dvd_trans hg_dvd_cand hcand_dvd_core
   exact defaultFactorCoeffBound_valid core hcore_ne g hg_dvd_core
 
 /-- Abstract-bound variant of `not_represents_empty_of_irreducible_dvd_core`:
@@ -12707,15 +12618,8 @@ theorem liftedFactorSubsetPartition_prefix_none_of_primitive_pos_lc_core_scaled_
         rw [Hex.DensePoly.mul_comm_poly (S := Int)]
         exact hmul.symm
       have hcand_dvd_core :
-          scaledRecombinationCandidate core d T ∣ core := by
-        rcases hcand_dvd_target with ⟨r₁, hr₁⟩
-        rcases htarget_dvd_core with ⟨r₂, hr₂⟩
-        refine ⟨r₁ * r₂, ?_⟩
-        -- LHS-only rewrite to dodge the scaled-cascade gotcha — `core`
-        -- appears both bare on the LHS and inside the candidate's `core`
-        -- argument on the RHS.
-        conv_lhs => rw [hr₂, hr₁]
-        rw [Hex.DensePoly.mul_assoc_poly (S := Int)]
+          scaledRecombinationCandidate core d T ∣ core :=
+        zpoly_dvd_trans hcand_dvd_target htarget_dvd_core
       have hvalid'_T : ∀ g : Hex.ZPoly,
           HexPolyZMathlib.toPolynomial g ∈
             UniqueFactorizationMonoid.normalizedFactors
@@ -12734,11 +12638,8 @@ theorem liftedFactorSubsetPartition_prefix_none_of_primitive_pos_lc_core_scaled_
           simp only [HexPolyZMathlib.equiv_apply, HexPolyZMathlib.toPolynomial_mul,
             HexPolyZMathlib.toPolynomial_ofPolynomial]
           exact hr
-        have hg_dvd_core : g ∣ core := by
-          rcases hg_dvd_cand with ⟨r₁, hr₁⟩
-          rcases hcand_dvd_core with ⟨r₂, hr₂⟩
-          refine ⟨r₁ * r₂, ?_⟩
-          rw [hr₂, hr₁, Hex.DensePoly.mul_assoc_poly (S := Int)]
+        have hg_dvd_core : g ∣ core :=
+          zpoly_dvd_trans hg_dvd_cand hcand_dvd_core
         exact hvalid g hg_dvd_core
       obtain ⟨f_cov, S_cov, hf_cov_irr, hf_cov_dvd_target, hS_cov_J,
               hmin_in_S_cov, hS_cov_rep, hS_cov_T⟩ :=
@@ -13482,11 +13383,8 @@ private theorem recombinationSearchModAux_some_and_covers_of_liftedFactorSubsetP
         have hS_empty : S = ∅ := by
           rw [hJ_empty] at hSJ
           exact Finset.subset_empty.mp hSJ
-        have hg_dvd_core : g ∣ core := by
-          rcases hg_dvd_target with ⟨r1, hr1⟩
-          rcases htarget_dvd_core with ⟨r2, hr2⟩
-          refine ⟨r1 * r2, ?_⟩
-          rw [hr2, hr1, Hex.DensePoly.mul_assoc_poly (S := Int)]
+        have hg_dvd_core : g ∣ core :=
+          zpoly_dvd_trans hg_dvd_target htarget_dvd_core
         apply not_represents_empty_of_irreducible_dvd_core hcore_ne hcore_monic
           hprecision hg_dvd_core hg_irr_toPoly
         rw [← hS_empty]; exact hSrep
@@ -13495,11 +13393,8 @@ private theorem recombinationSearchModAux_some_and_covers_of_liftedFactorSubsetP
       obtain ⟨f_cov, S_cov, hf_cov_irr, hf_cov_dvd_target, hS_cov_J,
               hmin_in_S_cov, hS_cov_rep⟩ :=
         hpartition.cover_at_min hJ_ne
-      have hf_cov_dvd_core : f_cov ∣ core := by
-        rcases hf_cov_dvd_target with ⟨r1, hr1⟩
-        rcases htarget_dvd_core with ⟨r2, hr2⟩
-        refine ⟨r1 * r2, ?_⟩
-        rw [hr2, hr1, Hex.DensePoly.mul_assoc_poly (S := Int)]
+      have hf_cov_dvd_core : f_cov ∣ core :=
+        zpoly_dvd_trans hf_cov_dvd_target htarget_dvd_core
       have hf_cov_monic : Hex.DensePoly.Monic f_cov :=
         representsIntegerFactorAtLift_monic hcore_ne hcore_monic
           hd_liftedFactor_monic hprecision hf_cov_dvd_target htarget_dvd_core
@@ -13534,10 +13429,10 @@ private theorem recombinationSearchModAux_some_and_covers_of_liftedFactorSubsetP
             HexPolyZMathlib.toPolynomial target := by
         rw [← HexPolyZMathlib.toPolynomial_mul, hquot_eq]
       -- Step 5: `quotient` is monic and divides `core`.
-      have hquot_dvd_core : quotient ∣ core := by
-        rcases htarget_dvd_core with ⟨r, hr⟩
-        refine ⟨f_cov * r, ?_⟩
-        rw [hr, ← hquot_eq, Hex.DensePoly.mul_assoc_poly (S := Int)]
+      have hquot_dvd_target : quotient ∣ target :=
+        ⟨f_cov, hquot_eq.symm⟩
+      have hquot_dvd_core : quotient ∣ core :=
+        zpoly_dvd_trans hquot_dvd_target htarget_dvd_core
       have hf_cov_poly_monic :
           (HexPolyZMathlib.toPolynomial f_cov).Monic := by
         show (HexPolyZMathlib.toPolynomial f_cov).leadingCoeff = 1
@@ -13787,11 +13682,8 @@ private theorem scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorS
         have hS_empty : S = ∅ := by
           rw [hJ_empty] at hSJ
           exact Finset.subset_empty.mp hSJ
-        have hg_dvd_core : g ∣ core := by
-          rcases hg_dvd_target with ⟨r1, hr1⟩
-          rcases htarget_dvd_core with ⟨r2, hr2⟩
-          refine ⟨r1 * r2, ?_⟩
-          rw [hr2, hr1, Hex.DensePoly.mul_assoc_poly (S := Int)]
+        have hg_dvd_core : g ∣ core :=
+          zpoly_dvd_trans hg_dvd_target htarget_dvd_core
         apply not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core_of_bound
           B' (hvalid g hg_dvd_core) hcore_ne hcore_primitive hcore_lc_pos
           hcore_lc_le hg_dvd_core hg_irr_toPoly hprecision
@@ -13799,11 +13691,8 @@ private theorem scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorS
       obtain ⟨f_cov, S_cov, hf_cov_irr, hf_cov_dvd_target, hS_cov_J,
               hmin_in_S_cov, hS_cov_rep⟩ :=
         hpartition.cover_at_min hJ_ne
-      have hf_cov_dvd_core : f_cov ∣ core := by
-        rcases hf_cov_dvd_target with ⟨r1, hr1⟩
-        rcases htarget_dvd_core with ⟨r2, hr2⟩
-        refine ⟨r1 * r2, ?_⟩
-        rw [hr2, hr1, Hex.DensePoly.mul_assoc_poly (S := Int)]
+      have hf_cov_dvd_core : f_cov ∣ core :=
+        zpoly_dvd_trans hf_cov_dvd_target htarget_dvd_core
       obtain ⟨hf_cov_primitive, hf_cov_lc_pos⟩ :=
         representsIntegerFactorAtLift_primitive_of_bound
           B' (hvalid f_cov hf_cov_dvd_core) hcore_lc_le hcore_ne
@@ -13838,12 +13727,10 @@ private theorem scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorS
               HexPolyZMathlib.toPolynomial f_cov =
             HexPolyZMathlib.toPolynomial target := by
         rw [← HexPolyZMathlib.toPolynomial_mul, hquot_eq]
-      have hquot_dvd_core : quotient ∣ core := by
-        rcases htarget_dvd_core with ⟨r, hr⟩
-        refine ⟨f_cov * r, ?_⟩
-        rw [hr, ← hquot_eq, Hex.DensePoly.mul_assoc_poly (S := Int)]
       have hquot_dvd_target : quotient ∣ target :=
         ⟨f_cov, hquot_eq.symm⟩
+      have hquot_dvd_core : quotient ∣ core :=
+        zpoly_dvd_trans hquot_dvd_target htarget_dvd_core
       have hquot_primitive : Hex.ZPoly.Primitive quotient :=
         zpoly_primitive_of_dvd_primitive_basic htarget_primitive hquot_dvd_target
       have hquot_lc_pos : 0 < Hex.DensePoly.leadingCoeff quotient :=
