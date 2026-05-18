@@ -9563,29 +9563,18 @@ theorem toPolynomial_scaledRecombinationCandidate_squarefree
   exact Squarefree.squarefree_of_dvd
     (HexPolyMathlib.toPolynomial_dvd hcand_dvd_target) hpartition.target_squarefree
 
-/-- Reverse-coverage finite degree-counting step (issue #4468).
-
-Given a `LiftedFactorSubsetPartition core d J target` and a subset `T ⊆ J`,
-suppose `gs` is a finite family of `Hex.ZPoly` elements such that each
-`g ∈ gs` is
-
-* an irreducible divisor of `target` and of `recombinationCandidate d T`,
-* represented at the lift by a subset `S_of g ⊆ T ⊆ J`,
-* primitive (`content = 1`) and sign-normalized,
-
-and the family is pairwise non-associated in `Polynomial ℤ` (so that the
-partition's `pairwise_disjoint` field makes the `S_of g` pairwise disjoint).
-If the candidate's `natDegree` decomposes as the sum of the `natDegree`s of
-the family, then every index `i ∈ T` lies in some `S_of g`.
-
-This is the finite Finset bookkeeping ingredient of the reverse-coverage
-existence lemma (successor split from #4465). It does not extract irreducible
-factors itself; the downstream `mem_T_iff_exists_irreducibleFactor_representingSubset`
-assembler (#4467) supplies `gs` from `UniqueFactorizationMonoid.normalizedFactors`
-together with the non-association hypothesis. -/
-theorem exists_mem_representedSubset_of_degree_cover
+/-- Abstract-bound variant of `exists_mem_representedSubset_of_degree_cover`:
+takes `B' : Nat`, a per-factor coefficient bound
+`hvalid : ∀ g ∈ gs, ∀ i, (g.coeff i).natAbs ≤ B'`, and
+`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`defaultFactorCoeffBound core` precision constraint. The proof mirrors
+the core-shape original but invokes the `_of_bound` sibling
+`natDegree_toPolynomial_eq_sum_of_represents_of_bound` at the per-factor
+`natDegree` identity step. -/
+theorem exists_mem_representedSubset_of_degree_cover_of_bound
     {core target : Hex.ZPoly} {d : Hex.LiftData}
     {J T : LiftedFactorSubset d}
+    (B' : Nat)
     (hcore_ne : core ≠ 0)
     (hcore_monic : Hex.DensePoly.Monic core)
     (hd_modulus : 2 ≤ d.p ^ d.k)
@@ -9593,8 +9582,7 @@ theorem exists_mem_representedSubset_of_degree_cover
       ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
     (hd_liftedFactor_natDegree_pos :
       ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
-    (hprecision :
-      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hprecision : 2 * B' < d.p ^ d.k)
     (hpartition : LiftedFactorSubsetPartition core d J target)
     (htarget_dvd_core : target ∣ core)
     (_hTJ : T ⊆ J)
@@ -9609,6 +9597,7 @@ theorem exists_mem_representedSubset_of_degree_cover
       S_of g ⊆ T ∧
       Hex.ZPoly.content g = 1 ∧
       Hex.normalizeFactorSign g = g)
+    (hvalid : ∀ g ∈ gs, ∀ i, (g.coeff i).natAbs ≤ B')
     (h_pairwise_not_associated :
       ∀ ⦃g h : Hex.ZPoly⦄, g ∈ gs → h ∈ gs → g ≠ h →
         ¬ Associated (HexPolyZMathlib.toPolynomial g)
@@ -9636,9 +9625,9 @@ theorem exists_mem_representedSubset_of_degree_cover
       refine ⟨q * v, ?_⟩
       rw [hv, hq]
       exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
-    exact natDegree_toPolynomial_eq_sum_of_represents
-      hcore_ne hcore_monic hd_liftedFactor_monic hprecision hg_dvd_core
-      hg_irr hg_cont hg_norm hg_rep
+    exact natDegree_toPolynomial_eq_sum_of_represents_of_bound
+      B' (hvalid g hg) hcore_ne hcore_monic hd_liftedFactor_monic
+      hg_dvd_core hg_irr hg_cont hg_norm hg_rep hprecision
   -- Pairwise disjointness of the representing subsets, via partition.
   have h_pwdisj : Set.PairwiseDisjoint (↑gs : Set Hex.ZPoly) S_of := by
     intro g hg h hh hgh
@@ -9685,20 +9674,37 @@ theorem exists_mem_representedSubset_of_degree_cover
     exact Finset.notMem_empty _ h_in_sdiff
   exact Finset.mem_biUnion.mp hi_in_bU
 
-/--
-Primitive + positive-leading-core variant of
-`exists_mem_representedSubset_of_degree_cover` (#4646 chain).
+/-- Reverse-coverage finite degree-counting step (issue #4468).
 
-Identical to the monic variant except the per-factor natDegree identity routes
-through `natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core`
-instead of the monic-core version.
--/
-theorem exists_mem_representedSubset_of_degree_cover_of_primitive_pos_lc_core
+Given a `LiftedFactorSubsetPartition core d J target` and a subset `T ⊆ J`,
+suppose `gs` is a finite family of `Hex.ZPoly` elements such that each
+`g ∈ gs` is
+
+* an irreducible divisor of `target` and of `recombinationCandidate d T`,
+* represented at the lift by a subset `S_of g ⊆ T ⊆ J`,
+* primitive (`content = 1`) and sign-normalized,
+
+and the family is pairwise non-associated in `Polynomial ℤ` (so that the
+partition's `pairwise_disjoint` field makes the `S_of g` pairwise disjoint).
+If the candidate's `natDegree` decomposes as the sum of the `natDegree`s of
+the family, then every index `i ∈ T` lies in some `S_of g`.
+
+This is the finite Finset bookkeeping ingredient of the reverse-coverage
+existence lemma (successor split from #4465). It does not extract irreducible
+factors itself; the downstream `mem_T_iff_exists_irreducibleFactor_representingSubset`
+assembler (#4467) supplies `gs` from `UniqueFactorizationMonoid.normalizedFactors`
+together with the non-association hypothesis.
+
+This is a thin wrapper over `exists_mem_representedSubset_of_degree_cover_of_bound`
+that instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound core` and discharges
+`hvalid` per-factor: each `g ∈ gs` divides `target` via `h_each`, hence divides
+`core` via `htarget_dvd_core`, and `defaultFactorCoeffBound_valid` supplies the
+coefficient bound. -/
+theorem exists_mem_representedSubset_of_degree_cover
     {core target : Hex.ZPoly} {d : Hex.LiftData}
     {J T : LiftedFactorSubset d}
     (hcore_ne : core ≠ 0)
-    (hcore_primitive : Hex.ZPoly.Primitive core)
-    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_monic : Hex.DensePoly.Monic core)
     (hd_modulus : 2 ≤ d.p ^ d.k)
     (hd_liftedFactor_monic :
       ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
@@ -9728,6 +9734,72 @@ theorem exists_mem_representedSubset_of_degree_cover_of_primitive_pos_lc_core
       (HexPolyZMathlib.toPolynomial (recombinationCandidate d T)).natDegree =
         ∑ g ∈ gs, (HexPolyZMathlib.toPolynomial g).natDegree) :
     ∀ {i : LiftedFactorIndex d}, i ∈ T → ∃ g ∈ gs, i ∈ S_of g := by
+  have hvalid : ∀ g ∈ gs, ∀ i,
+      (g.coeff i).natAbs ≤ Hex.ZPoly.defaultFactorCoeffBound core := by
+    intro g hg i
+    obtain ⟨_, hg_dvd_target, _, _, _, _, _, _⟩ := h_each g hg
+    have hg_dvd_core : g ∣ core := by
+      obtain ⟨q, hq⟩ := hg_dvd_target
+      obtain ⟨v, hv⟩ := htarget_dvd_core
+      refine ⟨q * v, ?_⟩
+      rw [hv, hq]
+      exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
+    exact defaultFactorCoeffBound_valid core hcore_ne g hg_dvd_core i
+  intro i hi
+  exact exists_mem_representedSubset_of_degree_cover_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound core)
+    hcore_ne hcore_monic hd_modulus hd_liftedFactor_monic
+    hd_liftedFactor_natDegree_pos hprecision hpartition
+    htarget_dvd_core _hTJ gs S_of h_each hvalid
+    h_pairwise_not_associated h_degree_total hi
+
+/-- Abstract-bound variant of
+`exists_mem_representedSubset_of_degree_cover_of_primitive_pos_lc_core`:
+takes `B' : Nat`, a per-factor coefficient bound
+`hvalid : ∀ g ∈ gs, ∀ i, (g.coeff i).natAbs ≤ B'`, the leading-coefficient
+bound `hcore_lc_bound : (leadingCoeff core).natAbs ≤ B'`, and
+`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`defaultFactorCoeffBound core` precision constraint. The proof mirrors the
+core-shape original but invokes the `_of_bound` sibling
+`natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core_of_bound`
+at the per-factor `natDegree` identity step. -/
+theorem exists_mem_representedSubset_of_degree_cover_of_primitive_pos_lc_core_of_bound
+    {core target : Hex.ZPoly} {d : Hex.LiftData}
+    {J T : LiftedFactorSubset d}
+    (B' : Nat)
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_lc_bound : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hprecision : 2 * B' < d.p ^ d.k)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (htarget_dvd_core : target ∣ core)
+    (_hTJ : T ⊆ J)
+    (gs : Finset Hex.ZPoly)
+    (S_of : Hex.ZPoly → LiftedFactorSubset d)
+    (h_each : ∀ g ∈ gs,
+      Irreducible (HexPolyZMathlib.toPolynomial g) ∧
+      g ∣ target ∧
+      g ∣ recombinationCandidate d T ∧
+      RepresentsIntegerFactorAtLift core d g (S_of g) ∧
+      S_of g ⊆ J ∧
+      S_of g ⊆ T ∧
+      Hex.ZPoly.content g = 1 ∧
+      Hex.normalizeFactorSign g = g)
+    (hvalid : ∀ g ∈ gs, ∀ i, (g.coeff i).natAbs ≤ B')
+    (h_pairwise_not_associated :
+      ∀ ⦃g h : Hex.ZPoly⦄, g ∈ gs → h ∈ gs → g ≠ h →
+        ¬ Associated (HexPolyZMathlib.toPolynomial g)
+          (HexPolyZMathlib.toPolynomial h))
+    (h_degree_total :
+      (HexPolyZMathlib.toPolynomial (recombinationCandidate d T)).natDegree =
+        ∑ g ∈ gs, (HexPolyZMathlib.toPolynomial g).natDegree) :
+    ∀ {i : LiftedFactorIndex d}, i ∈ T → ∃ g ∈ gs, i ∈ S_of g := by
   set f : LiftedFactorIndex d → Nat :=
     fun j => (HexPolyZMathlib.toPolynomial (liftedFactor d j)).natDegree
   have h_cand_eq :
@@ -9745,9 +9817,9 @@ theorem exists_mem_representedSubset_of_degree_cover_of_primitive_pos_lc_core
       refine ⟨q * v, ?_⟩
       rw [hv, hq]
       exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
-    exact natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core
-      hcore_ne hcore_primitive hcore_lc_pos hd_liftedFactor_monic hprecision
-      hg_dvd_core hg_irr hg_cont hg_norm hg_rep
+    exact natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core_of_bound
+      B' (hvalid g hg) hcore_lc_bound hcore_ne hcore_primitive hcore_lc_pos
+      hd_liftedFactor_monic hg_dvd_core hg_irr hg_cont hg_norm hg_rep hprecision
   have h_pwdisj : Set.PairwiseDisjoint (↑gs : Set Hex.ZPoly) S_of := by
     intro g hg h hh hgh
     obtain ⟨hg_irr, hg_dvd, _, hg_rep, hg_SJ, _, _, _⟩ := h_each g hg
@@ -9787,6 +9859,101 @@ theorem exists_mem_representedSubset_of_degree_cover_of_primitive_pos_lc_core
     rw [h_empty] at h_in_sdiff
     exact Finset.notMem_empty _ h_in_sdiff
   exact Finset.mem_biUnion.mp hi_in_bU
+
+/--
+Primitive + positive-leading-core variant of
+`exists_mem_representedSubset_of_degree_cover` (#4646 chain).
+
+Identical to the monic variant except the per-factor natDegree identity routes
+through `natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core`
+instead of the monic-core version.
+
+This is a thin wrapper over
+`exists_mem_representedSubset_of_degree_cover_of_primitive_pos_lc_core_of_bound`
+that instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound core`. The per-factor
+`hvalid` is discharged via the divisor chain `g ∣ target ∣ core` plus
+`defaultFactorCoeffBound_valid`; `hcore_lc_bound` is discharged via
+`defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self (core.size - 1)`
+together with `leadingCoeff_eq_coeff_last`.
+-/
+theorem exists_mem_representedSubset_of_degree_cover_of_primitive_pos_lc_core
+    {core target : Hex.ZPoly} {d : Hex.LiftData}
+    {J T : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (htarget_dvd_core : target ∣ core)
+    (_hTJ : T ⊆ J)
+    (gs : Finset Hex.ZPoly)
+    (S_of : Hex.ZPoly → LiftedFactorSubset d)
+    (h_each : ∀ g ∈ gs,
+      Irreducible (HexPolyZMathlib.toPolynomial g) ∧
+      g ∣ target ∧
+      g ∣ recombinationCandidate d T ∧
+      RepresentsIntegerFactorAtLift core d g (S_of g) ∧
+      S_of g ⊆ J ∧
+      S_of g ⊆ T ∧
+      Hex.ZPoly.content g = 1 ∧
+      Hex.normalizeFactorSign g = g)
+    (h_pairwise_not_associated :
+      ∀ ⦃g h : Hex.ZPoly⦄, g ∈ gs → h ∈ gs → g ≠ h →
+        ¬ Associated (HexPolyZMathlib.toPolynomial g)
+          (HexPolyZMathlib.toPolynomial h))
+    (h_degree_total :
+      (HexPolyZMathlib.toPolynomial (recombinationCandidate d T)).natDegree =
+        ∑ g ∈ gs, (HexPolyZMathlib.toPolynomial g).natDegree) :
+    ∀ {i : LiftedFactorIndex d}, i ∈ T → ∃ g ∈ gs, i ∈ S_of g := by
+  have hcore_dvd_self : core ∣ core :=
+    ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
+  have hcore_size_pos : 0 < core.size := by
+    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
+    · exfalso
+      have hback_none : core.coeffs.back? = none := by
+        rw [Array.back?_eq_getElem?]
+        have hcoeffs_size : core.coeffs.size = 0 := by
+          simpa [Hex.DensePoly.size] using hzero
+        simp [hcoeffs_size]
+      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
+        unfold Hex.DensePoly.leadingCoeff
+        rw [hback_none]
+        rfl
+      rw [hlc_zero] at hcore_lc_pos
+      omega
+    · exact hpos
+  have hcore_lc_bound :
+      (Hex.DensePoly.leadingCoeff core).natAbs ≤
+        Hex.ZPoly.defaultFactorCoeffBound core := by
+    have hbound :=
+      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
+        (core.size - 1)
+    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
+    exact hbound
+  have hvalid : ∀ g ∈ gs, ∀ i,
+      (g.coeff i).natAbs ≤ Hex.ZPoly.defaultFactorCoeffBound core := by
+    intro g hg i
+    obtain ⟨_, hg_dvd_target, _, _, _, _, _, _⟩ := h_each g hg
+    have hg_dvd_core : g ∣ core := by
+      obtain ⟨q, hq⟩ := hg_dvd_target
+      obtain ⟨v, hv⟩ := htarget_dvd_core
+      refine ⟨q * v, ?_⟩
+      rw [hv, hq]
+      exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
+    exact defaultFactorCoeffBound_valid core hcore_ne g hg_dvd_core i
+  intro i hi
+  exact exists_mem_representedSubset_of_degree_cover_of_primitive_pos_lc_core_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound core)
+    hcore_ne hcore_primitive hcore_lc_pos hcore_lc_bound hd_modulus
+    hd_liftedFactor_monic hd_liftedFactor_natDegree_pos hprecision hpartition
+    htarget_dvd_core _hTJ gs S_of h_each hvalid
+    h_pairwise_not_associated h_degree_total hi
 
 /--
 Package a normalized irreducible factor of a recombination candidate as an
