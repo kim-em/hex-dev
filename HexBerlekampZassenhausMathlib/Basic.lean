@@ -10087,8 +10087,10 @@ theorem exists_representingSubset_of_mem_normalizedFactors_recombinationCandidat
       rw [hg_toPolynomial]
       exact hg_monic_poly
     rwa [HexPolyMathlib.leadingCoeff_toPolynomial] at hlead
-  obtain ⟨_, hg_content, hg_norm_sign⟩ :=
-    monic_primitive_sign_normalized_of_monic hg_monic_hex
+  have hg_content : Hex.ZPoly.content g = 1 :=
+    zpoly_primitive_of_monic hg_monic_hex
+  have hg_norm_sign : Hex.normalizeFactorSign g = g :=
+    zpoly_normalize_factor_sign_of_monic hg_monic_hex
   exact ⟨g, S_g, hg_toPolynomial, hg_irr_toPoly, hg_dvd_target, hg_dvd_cand,
     hSrep, hSJ, hST, hg_content, hg_norm_sign⟩
 
@@ -10197,8 +10199,10 @@ theorem exists_representingSubset_of_mem_normalizedFactors_recombinationCandidat
       rw [hg_toPolynomial]
       exact hg_monic_poly
     rwa [HexPolyMathlib.leadingCoeff_toPolynomial] at hlead
-  obtain ⟨_, hg_content, hg_norm_sign⟩ :=
-    monic_primitive_sign_normalized_of_monic hg_monic_hex
+  have hg_content : Hex.ZPoly.content g = 1 :=
+    zpoly_primitive_of_monic hg_monic_hex
+  have hg_norm_sign : Hex.normalizeFactorSign g = g :=
+    zpoly_normalize_factor_sign_of_monic hg_monic_hex
   exact ⟨g, S_g, hg_toPolynomial, hg_irr_toPoly, hg_dvd_target, hg_dvd_cand,
     hSrep, hSJ, hST, hg_content, hg_norm_sign⟩
 
@@ -13599,8 +13603,10 @@ private theorem recombinationSearchModAux_some_and_covers_of_liftedFactorSubsetP
         representsIntegerFactorAtLift_monic hcore_ne hcore_monic
           hd_liftedFactor_monic hprecision hf_cov_dvd_target htarget_dvd_core
           hS_cov_rep
-      obtain ⟨_, hf_cov_prim, hf_cov_norm⟩ :=
-        monic_primitive_sign_normalized_of_monic hf_cov_monic
+      have hf_cov_prim : Hex.ZPoly.content f_cov = 1 :=
+        zpoly_primitive_of_monic hf_cov_monic
+      have hf_cov_norm : Hex.normalizeFactorSign f_cov = f_cov :=
+        zpoly_normalize_factor_sign_of_monic hf_cov_monic
       have hrec_eq : recombinationCandidate d S_cov = f_cov :=
         recombinationCandidate_eq_factor_of_recovery_of_monic_core
           hcore_ne hcore_monic hf_cov_dvd_core hf_cov_prim hf_cov_norm
