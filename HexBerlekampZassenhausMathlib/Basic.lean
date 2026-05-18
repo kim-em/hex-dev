@@ -7753,34 +7753,27 @@ theorem natDegree_toPolynomial_eq_sum_of_represents
     hpk_ge_two hd_liftedFactor_monic S
 
 /--
-Integer-factor monic capstone for the Hensel-lifted subset correspondence.
-
-Given an integer factor `factor` of `target ∣ core` that is represented at the
-Hensel lift by the subset `S`, plus monicness of the core and of every lifted
-local factor, and the Mignotte precision bound, the represented factor is
-itself monic.
-
-This is the consumer-side packaging that discharges the `Monic factor`
-hypothesis needed by `recombinationCandidate_eq_factor_of_recovery` (via
-`monic_primitive_sign_normalized_of_monic`). The proof chains
-`liftedFactorProduct_monic` with the centred-lift recovery
-(`centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery`) and
-`monic_centeredLiftPoly_of_monic`; the precision hypothesis upgrades to
-`2 ≤ d.p ^ d.k` because otherwise the centred lift collapses to zero,
-contradicting `factor ∣ core` with `core ≠ 0`.
+Abstract-bound variant of `representsIntegerFactorAtLift_monic`: takes
+`B' : Nat`, `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`, and
+`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`defaultFactorCoeffBound core` precision constraint. All remaining
+hypotheses are unchanged; the proof mirrors
+`representsIntegerFactorAtLift_monic` with the recovery call delegated to
+`centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound`.
 -/
-theorem representsIntegerFactorAtLift_monic
+theorem representsIntegerFactorAtLift_monic_of_bound
     {core target factor : Hex.ZPoly} {d : Hex.LiftData}
     {S : LiftedFactorSubset d}
+    (B' : Nat)
+    (hvalid : ∀ i, (factor.coeff i).natAbs ≤ B')
     (hcore_ne : core ≠ 0)
     (hcore_monic : Hex.DensePoly.Monic core)
     (hd_liftedFactor_monic :
       ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
-    (hprecision :
-      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
     (hfactor_dvd_target : factor ∣ target)
     (htarget_dvd_core : target ∣ core)
-    (hrep : RepresentsIntegerFactorAtLift core d factor S) :
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hprecision : 2 * B' < d.p ^ d.k) :
     Hex.DensePoly.Monic factor := by
   have hfactor_dvd_core : factor ∣ core := by
     obtain ⟨u, hu⟩ := hfactor_dvd_target
@@ -7798,8 +7791,9 @@ theorem representsIntegerFactorAtLift_monic
     exact densePoly_scale_one_int (liftedFactorProduct d S)
   have hcenter :
       Hex.centeredLiftPoly (liftedFactorProduct d S) (d.p ^ d.k) = factor := by
-    have h := centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
-      hcore_ne hfactor_dvd_core hrep hprecision
+    have h :=
+      centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound
+        B' hvalid hrep hprecision
     rwa [hscaled] at h
   have hfactor_ne : factor ≠ 0 := by
     intro hf
@@ -7823,6 +7817,52 @@ theorem representsIntegerFactorAtLift_monic
     · omega
   rw [← hcenter]
   exact monic_centeredLiftPoly_of_monic hprod_monic hpk_ge_two
+
+/--
+Integer-factor monic capstone for the Hensel-lifted subset correspondence.
+
+Given an integer factor `factor` of `target ∣ core` that is represented at the
+Hensel lift by the subset `S`, plus monicness of the core and of every lifted
+local factor, and the Mignotte precision bound, the represented factor is
+itself monic.
+
+This is the consumer-side packaging that discharges the `Monic factor`
+hypothesis needed by `recombinationCandidate_eq_factor_of_recovery` (via
+`monic_primitive_sign_normalized_of_monic`). The proof chains
+`liftedFactorProduct_monic` with the centred-lift recovery
+(`centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery`) and
+`monic_centeredLiftPoly_of_monic`; the precision hypothesis upgrades to
+`2 ≤ d.p ^ d.k` because otherwise the centred lift collapses to zero,
+contradicting `factor ∣ core` with `core ≠ 0`.
+
+Thin wrapper over `representsIntegerFactorAtLift_monic_of_bound` that
+instantiates `B' := defaultFactorCoeffBound core` and discharges `hvalid`
+via `defaultFactorCoeffBound_valid core hcore_ne factor hfactor_dvd_core`.
+-/
+theorem representsIntegerFactorAtLift_monic
+    {core target factor : Hex.ZPoly} {d : Hex.LiftData}
+    {S : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hfactor_dvd_target : factor ∣ target)
+    (htarget_dvd_core : target ∣ core)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S) :
+    Hex.DensePoly.Monic factor := by
+  have hfactor_dvd_core : factor ∣ core := by
+    obtain ⟨u, hu⟩ := hfactor_dvd_target
+    obtain ⟨v, hv⟩ := htarget_dvd_core
+    refine ⟨u * v, ?_⟩
+    rw [hv, hu]
+    exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
+  exact representsIntegerFactorAtLift_monic_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound core)
+    (defaultFactorCoeffBound_valid core hcore_ne factor hfactor_dvd_core)
+    hcore_ne hcore_monic hd_liftedFactor_monic
+    hfactor_dvd_target htarget_dvd_core hrep hprecision
 
 /--
 Bridge from the executable `Hex.ZPoly.Primitive` predicate to Mathlib's
