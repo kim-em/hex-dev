@@ -578,6 +578,36 @@ into manageable pieces. -/
       (ZPoly.congr_symm _ _ _ hsum))
     (FpPoly.modP_liftToZ (p := p) (ZPoly.modP p f + ZPoly.modP p g))
 
+/-- `ZPoly.modP p` distributes over multiplication: the canonical mod-`p`
+residue of a product is the product of residues. Multiplicative companion
+of `modP_add`; the Mathlib-free Gauss-transfer chain consumes this to
+expose `modP p (f * g)` in its factored form. -/
+@[simp] theorem modP_mul
+    (p : Nat) [ZMod64.Bounds p] (f g : ZPoly) :
+    ZPoly.modP p (f * g) = ZPoly.modP p f * ZPoly.modP p g := by
+  have hliftMul :
+      ZPoly.congr
+        (FpPoly.liftToZ (ZPoly.modP p f * ZPoly.modP p g))
+        (FpPoly.liftToZ (ZPoly.modP p f) * FpPoly.liftToZ (ZPoly.modP p g)) p :=
+    liftToZ_mul_congr p (ZPoly.modP p f) (ZPoly.modP p g)
+  have hpieces :
+      ZPoly.congr
+        (FpPoly.liftToZ (ZPoly.modP p f) * FpPoly.liftToZ (ZPoly.modP p g))
+        (f * g) p :=
+    ZPoly.congr_mul _ _ _ _ p
+      (FpPoly.congr_liftToZ_modP (p := p) f)
+      (FpPoly.congr_liftToZ_modP (p := p) g)
+  have hprod :
+      ZPoly.congr
+        (FpPoly.liftToZ (ZPoly.modP p f * ZPoly.modP p g))
+        (f * g) p :=
+    ZPoly.congr_trans _ _ _ p hliftMul hpieces
+  exact Eq.trans
+    (ZPoly.modP_eq_of_congr p (f * g)
+      (FpPoly.liftToZ (ZPoly.modP p f * ZPoly.modP p g))
+      (ZPoly.congr_symm _ _ _ hprod))
+    (FpPoly.modP_liftToZ (p := p) (ZPoly.modP p f * ZPoly.modP p g))
+
 /-- `modP p` reduces a `liftToZ`-on-the-left product to the `FpPoly`-side
 factor times the `modP` of the integer side: `modP p (liftToZ r · h) =
 r · modP p h`. Companion of `modP_lift_mul_right`; consumed by the linear
