@@ -1354,19 +1354,8 @@ theorem monicModPImage_dvd_monicModularImage_of_dvd_of_choosePrimeData?_some
   have hmonic_factor_dvd_core :
       @monicModPImage primeData.p primeData.bounds
           (@Hex.ZPoly.modP primeData.p primeData.bounds factor) ∣
-        @Hex.ZPoly.modP primeData.p primeData.bounds core := by
-    rcases hmonic_factor_dvd_factor with ⟨q₁, hq₁⟩
-    rcases hfactor_dvd_core with ⟨q₂, hq₂⟩
-    refine ⟨q₁ * q₂, ?_⟩
-    calc
-      @Hex.ZPoly.modP primeData.p primeData.bounds core
-          = (@Hex.ZPoly.modP primeData.p primeData.bounds factor) * q₂ := hq₂
-      _ = ((@monicModPImage primeData.p primeData.bounds
-              (@Hex.ZPoly.modP primeData.p primeData.bounds factor)) * q₁) * q₂ :=
-            congrArg (fun x => x * q₂) hq₁
-      _ = (@monicModPImage primeData.p primeData.bounds
-              (@Hex.ZPoly.modP primeData.p primeData.bounds factor)) * (q₁ * q₂) :=
-            Hex.DensePoly.mul_assoc_poly _ _ _
+        @Hex.ZPoly.modP primeData.p primeData.bounds core :=
+    fpPoly_dvd_trans hmonic_factor_dvd_factor hfactor_dvd_core
   have hcore_dvd_monic :
       @Hex.ZPoly.modP primeData.p primeData.bounds core ∣
         Hex.monicModularImage
@@ -1391,18 +1380,7 @@ theorem monicModPImage_dvd_monicModularImage_of_dvd_of_choosePrimeData?_some
               (Hex.DensePoly.leadingCoeff
                 (@Hex.ZPoly.modP primeData.p primeData.bounds core))⁻¹ :=
             Hex.DensePoly.mul_comm_poly _ _
-  rcases hmonic_factor_dvd_core with ⟨q₁, hq₁⟩
-  rcases hcore_dvd_monic with ⟨q₂, hq₂⟩
-  refine ⟨q₁ * q₂, ?_⟩
-  calc
-    Hex.monicModularImage (@Hex.ZPoly.modP primeData.p primeData.bounds core)
-        = (@Hex.ZPoly.modP primeData.p primeData.bounds core) * q₂ := hq₂
-    _ = ((@monicModPImage primeData.p primeData.bounds
-            (@Hex.ZPoly.modP primeData.p primeData.bounds factor)) * q₁) * q₂ :=
-          congrArg (fun x => x * q₂) hq₁
-    _ = (@monicModPImage primeData.p primeData.bounds
-            (@Hex.ZPoly.modP primeData.p primeData.bounds factor)) * (q₁ * q₂) :=
-          Hex.DensePoly.mul_assoc_poly _ _ _
+  exact fpPoly_dvd_trans hmonic_factor_dvd_core hcore_dvd_monic
 
 /--
 An integer factor is represented modulo the selected prime by a subset of the
@@ -4934,10 +4912,8 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
         hfield).factors.Nodup := by
     apply Hex.Berlekamp.berlekampFactor_factors_nodup_of_no_squared
     intro g hgg hpos
-    have hg_dvd_mod : g * g ∣ Hex.ZPoly.modP data.p f := by
-      rcases hgg with ⟨r, hr⟩
-      rcases hmonicImage_dvd with ⟨s, hs⟩
-      exact ⟨r * s, by rw [hs, hr, Hex.FpPoly.mul_assoc]⟩
+    have hg_dvd_mod : g * g ∣ Hex.ZPoly.modP data.p f :=
+      fpPoly_dvd_trans hgg hmonicImage_dvd
     have hunit : Hex.Berlekamp.isUnitPolynomial g = true :=
       Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd
         (Hex.Berlekamp.squareFree_common_of_gcd_eq_one hsf) hg_dvd_mod
@@ -4992,14 +4968,8 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
       Hex.Berlekamp.mul_dvd_factorProduct_of_mem_of_ne hNodup hg₁ hg₂ hne
     -- Hence g₁ * g₂ ∣ monicImage modP_f.
     rw [hprod] at hg₁_dvd_g₂
-    -- Hence g₁ * g₂ ∣ modP_f.  Construct the dvd witness manually because the
-    -- `dvd` instance for `FpPoly p` is `instDvdOfAddOfMul`, not the default
-    -- `semigroupDvd`, and `dvd_trans` doesn't see through that.
-    have hg₁g₂_dvd_modP :
-        g₁ * g₂ ∣ Hex.ZPoly.modP data.p f := by
-      rcases hg₁_dvd_g₂ with ⟨r, hr⟩
-      rcases hmonicImage_dvd with ⟨s, hs⟩
-      exact ⟨r * s, by rw [hs, hr, Hex.FpPoly.mul_assoc]⟩
+    have hg₁g₂_dvd_modP : g₁ * g₂ ∣ Hex.ZPoly.modP data.p f :=
+      fpPoly_dvd_trans hg₁_dvd_g₂ hmonicImage_dvd
     -- From `monicModularImage g₁ = monicModularImage g₂`, both being nonzero,
     -- we get `g₁ = scale u g₂` for some nonzero `u`.  Use this to conclude
     -- `g₂² ∣ modP_f`, contradicting square-freeness.
@@ -5085,9 +5055,7 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
               Hex.DensePoly.mul_comm_poly _ _
       have hg₂sq_dvd_modP : g₂ * g₂ ∣ Hex.ZPoly.modP data.p f := by
         rw [hg₁g₂_eq] at hg₁g₂_dvd_modP
-        rcases hg₂sq_dvd with ⟨r, hr⟩
-        rcases hg₁g₂_dvd_modP with ⟨s, hs⟩
-        exact ⟨r * s, by rw [hs, hr, Hex.FpPoly.mul_assoc]⟩
+        exact fpPoly_dvd_trans hg₂sq_dvd hg₁g₂_dvd_modP
       -- Square-freeness implies g₂ is a unit polynomial (degree 0).
       have hunit : Hex.Berlekamp.isUnitPolynomial g₂ = true :=
         Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd
@@ -5713,10 +5681,7 @@ private theorem quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
               (Hex.Berlekamp.factorProduct_cons g (h :: tail)).symm
             have hrawGcd_sq_dvd_X : rawGcd * rawGcd ∣ X := by
               rw [hcons_prod] at hrawGcd_sq_dvd_prod
-              rcases hrawGcd_sq_dvd_prod with ⟨k, hk⟩
-              rcases h_dvd with ⟨q, hq⟩
-              refine ⟨k * q, ?_⟩
-              rw [hq, hk]; exact Hex.DensePoly.mul_assoc_poly _ _ _
+              exact fpPoly_dvd_trans hrawGcd_sq_dvd_prod h_dvd
             -- Step 2: rawGcd has degree ≤ 0 by no-squared on X.
             have hrawGcd_not_pos :
                 ¬ (0 < rawGcd.degree?.getD 0) :=
@@ -5790,10 +5755,7 @@ private theorem quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
                     Hex.Berlekamp.factorProduct (g :: h :: tail) := by
                 refine ⟨g, ?_⟩
                 rw [hcons_eq]; exact Hex.DensePoly.mul_comm_poly _ _
-              rcases htail_dvd_cons with ⟨k, hk⟩
-              rcases h_dvd with ⟨q, hq⟩
-              refine ⟨k * q, ?_⟩
-              rw [hq, hk]; exact Hex.DensePoly.mul_assoc_poly _ _ _
+              exact fpPoly_dvd_trans htail_dvd_cons h_dvd
             exact ih hrest_dvd
 
 set_option maxHeartbeats 400000 in
@@ -5869,10 +5831,8 @@ theorem factorsModP_coprime_of_factorsModPBerlekampForm
         d * d ∣ Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) →
           ¬ (0 < d.degree?.getD 0) := by
     intro d hdd hpos
-    have hd_dvd_mod : d * d ∣ Hex.ZPoly.modP primeData.p core := by
-      rcases hdd with ⟨r, hr⟩
-      rcases hmonicImage_dvd with ⟨s, hs⟩
-      exact ⟨r * s, by rw [hs, hr, Hex.FpPoly.mul_assoc]⟩
+    have hd_dvd_mod : d * d ∣ Hex.ZPoly.modP primeData.p core :=
+      fpPoly_dvd_trans hdd hmonicImage_dvd
     have hunit : Hex.Berlekamp.isUnitPolynomial d = true :=
       Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd
         (Hex.Berlekamp.squareFree_common_of_gcd_eq_one hsf) hd_dvd_mod
