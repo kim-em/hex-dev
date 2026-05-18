@@ -6772,6 +6772,18 @@ private theorem zpoly_monic_mul {a b : Hex.ZPoly}
     show Hex.DensePoly.leadingCoeff b = 1 from hb]
   decide
 
+/-- Transitivity of `Hex.ZPoly`-level divisibility. Discharges the
+`core = g * (q * v)` step explicitly via `Hex.DensePoly.mul_assoc_poly`
+because `Hex.ZPoly` does not synthesise a Mathlib `Semigroup` instance
+at this layer. -/
+private theorem zpoly_dvd_trans
+    {a b c : Hex.ZPoly} (hab : a ∣ b) (hbc : b ∣ c) : a ∣ c := by
+  obtain ⟨q, hq⟩ := hab
+  obtain ⟨v, hv⟩ := hbc
+  refine ⟨q * v, ?_⟩
+  rw [hv, hq]
+  exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
+
 /--
 Bridge `liftedFactorProduct d S` to a `Finset.prod` over `S` after transport to
 `Polynomial ℤ`. The executable foldl form unfolds through `toPolynomial_foldl_mul`
@@ -9790,12 +9802,7 @@ theorem exists_mem_representedSubset_of_degree_cover
       (g.coeff i).natAbs ≤ Hex.ZPoly.defaultFactorCoeffBound core := by
     intro g hg i
     obtain ⟨_, hg_dvd_target, _, _, _, _, _, _⟩ := h_each g hg
-    have hg_dvd_core : g ∣ core := by
-      obtain ⟨q, hq⟩ := hg_dvd_target
-      obtain ⟨v, hv⟩ := htarget_dvd_core
-      refine ⟨q * v, ?_⟩
-      rw [hv, hq]
-      exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
+    have hg_dvd_core : g ∣ core := zpoly_dvd_trans hg_dvd_target htarget_dvd_core
     exact defaultFactorCoeffBound_valid core hcore_ne g hg_dvd_core i
   intro i hi
   exact exists_mem_representedSubset_of_degree_cover_of_bound
@@ -9968,12 +9975,7 @@ theorem exists_mem_representedSubset_of_degree_cover_of_primitive_pos_lc_core
       (g.coeff i).natAbs ≤ Hex.ZPoly.defaultFactorCoeffBound core := by
     intro g hg i
     obtain ⟨_, hg_dvd_target, _, _, _, _, _, _⟩ := h_each g hg
-    have hg_dvd_core : g ∣ core := by
-      obtain ⟨q, hq⟩ := hg_dvd_target
-      obtain ⟨v, hv⟩ := htarget_dvd_core
-      refine ⟨q * v, ?_⟩
-      rw [hv, hq]
-      exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
+    have hg_dvd_core : g ∣ core := zpoly_dvd_trans hg_dvd_target htarget_dvd_core
     exact defaultFactorCoeffBound_valid core hcore_ne g hg_dvd_core i
   intro i hi
   exact exists_mem_representedSubset_of_degree_cover_of_primitive_pos_lc_core_of_bound
@@ -11377,12 +11379,7 @@ theorem exists_mem_representedSubset_of_degree_cover_of_scaledRecombinationCandi
       (g.coeff i).natAbs ≤ Hex.ZPoly.defaultFactorCoeffBound core := by
     intro g hg i
     obtain ⟨_, hg_dvd_target, _, _, _, _, _, _⟩ := h_each g hg
-    have hg_dvd_core : g ∣ core := by
-      obtain ⟨q, hq⟩ := hg_dvd_target
-      obtain ⟨v, hv⟩ := htarget_dvd_core
-      refine ⟨q * v, ?_⟩
-      rw [hv, hq]
-      exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
+    have hg_dvd_core : g ∣ core := zpoly_dvd_trans hg_dvd_target htarget_dvd_core
     exact defaultFactorCoeffBound_valid core hcore_ne g hg_dvd_core i
   intro i hi
   exact exists_mem_representedSubset_of_degree_cover_of_scaledRecombinationCandidate_of_primitive_pos_lc_core_of_bound
