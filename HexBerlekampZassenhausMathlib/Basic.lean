@@ -4454,6 +4454,20 @@ theorem scaledRecombinationCandidate_eq_factor_of_henselSubsetCorrespondence
     (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
     hcore_ne hfactor_prim hfactor_norm hrep hprecision
 
+/-- Monic integer polynomials have positive stored size. -/
+private theorem zpoly_size_pos_of_monic {f : Hex.ZPoly}
+    (h : Hex.DensePoly.Monic f) : 0 < f.size := by
+  have hlead : Hex.DensePoly.leadingCoeff f = (1 : Int) := h
+  rcases Nat.eq_zero_or_pos f.coeffs.size with hcs_zero | hcs_pos
+  · exfalso
+    have hback_none : f.coeffs.back? = none := by
+      rw [Array.back?_eq_getElem?]; simp [hcs_zero]
+    have hlc_zero : Hex.DensePoly.leadingCoeff f = (0 : Int) := by
+      unfold Hex.DensePoly.leadingCoeff; rw [hback_none]; rfl
+    rw [hlc_zero] at hlead
+    exact absurd hlead (by decide)
+  · exact hcs_pos
+
 /--
 A monic integer polynomial automatically has primitive content and is its own
 sign-normalisation. This packages the two normalisation hypotheses required
@@ -4476,19 +4490,8 @@ theorem monic_primitive_sign_normalized_of_monic
       Hex.ZPoly.content factor = 1 ∧
         Hex.normalizeFactorSign factor = factor := by
   have hlead : Hex.DensePoly.leadingCoeff factor = (1 : Int) := hfactor_monic
-  have hcs_pos : 0 < factor.coeffs.size := by
-    rcases Nat.eq_zero_or_pos factor.coeffs.size with hcs_zero | hcs_pos
-    · exfalso
-      have hback_none : factor.coeffs.back? = none := by
-        rw [Array.back?_eq_getElem?]
-        simp [hcs_zero]
-      have hlc_zero : Hex.DensePoly.leadingCoeff factor = (0 : Int) := by
-        unfold Hex.DensePoly.leadingCoeff
-        rw [hback_none]
-        rfl
-      rw [hlc_zero] at hlead
-      exact absurd hlead (by decide)
-    · exact hcs_pos
+  have hcs_pos : 0 < factor.coeffs.size :=
+    zpoly_size_pos_of_monic hfactor_monic
   have hsize_pos : 0 < factor.size := hcs_pos
   have hcoeff_last : factor.coeff (factor.size - 1) = (1 : Int) := by
     rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last factor hsize_pos]
@@ -5323,20 +5326,6 @@ theorem factorsModP_natDegree_pos_of_factorsModPBerlekampForm
     HexPolyMathlib.natDegree_toPolynomial _
   rw [hnatDeg_eq, hlift_degree_eq]
   exact hg_pos
-
-/-- Monic integer polynomials have positive stored size. -/
-private theorem zpoly_size_pos_of_monic {f : Hex.ZPoly}
-    (h : Hex.DensePoly.Monic f) : 0 < f.size := by
-  have hlead : Hex.DensePoly.leadingCoeff f = (1 : Int) := h
-  rcases Nat.eq_zero_or_pos f.coeffs.size with hcs_zero | hcs_pos
-  · exfalso
-    have hback_none : f.coeffs.back? = none := by
-      rw [Array.back?_eq_getElem?]; simp [hcs_zero]
-    have hlc_zero : Hex.DensePoly.leadingCoeff f = (0 : Int) := by
-      unfold Hex.DensePoly.leadingCoeff; rw [hback_none]; rfl
-    rw [hlc_zero] at hlead
-    exact absurd hlead (by decide)
-  · exact hcs_pos
 
 /-- For a monic integer polynomial `core` and a prime modulus `p > 1`, the
 monic modular image of `modP p core` is just `modP p core` itself: the leading
