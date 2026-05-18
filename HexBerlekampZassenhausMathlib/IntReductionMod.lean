@@ -3411,28 +3411,6 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
   -- Discharge `hcore_ne` from `hcore_monic` (needed by the dischargers below).
   have hcore_ne :=
     zpoly_ne_zero_of_monic (f := (Hex.normalizeForFactor f).squareFreeCore) hcore_monic
-  -- `0 < core.size` so `leadingCoeff_eq_coeff_last` applies.
-  have hcore_size_pos : 0 < (Hex.normalizeForFactor f).squareFreeCore.size := by
-    rcases Nat.eq_zero_or_pos
-        (Hex.normalizeForFactor f).squareFreeCore.size with hzero | hpos
-    · exfalso
-      have hback_none :
-          (Hex.normalizeForFactor f).squareFreeCore.coeffs.back? = none := by
-        rw [Array.back?_eq_getElem?]
-        have hcoeffs_size :
-            (Hex.normalizeForFactor f).squareFreeCore.coeffs.size = 0 := by
-          simpa [Hex.DensePoly.size] using hzero
-        simp [hcoeffs_size]
-      have hlc_zero : Hex.DensePoly.leadingCoeff
-          (Hex.normalizeForFactor f).squareFreeCore = (0 : Int) := by
-        unfold Hex.DensePoly.leadingCoeff
-        rw [hback_none]
-        rfl
-      have hlc_one : Hex.DensePoly.leadingCoeff
-          (Hex.normalizeForFactor f).squareFreeCore = 1 := hcore_monic
-      rw [hlc_zero] at hlc_one
-      exact absurd hlc_one (by decide)
-    · exact hpos
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux_of_bound
     f hf_ne entry hbranch hentry_mem hchoose hcore_monic hcomplete
