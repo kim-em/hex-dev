@@ -79,6 +79,19 @@ namespace Prime
 /-- Every prime is at least `2`. -/
 theorem two_le {p : Nat} (hp : Hex.Nat.Prime p) : 2 ≤ p := hp.1
 
+/-- Every prime is greater than `1`. -/
+theorem one_lt {p : Nat} (hp : Hex.Nat.Prime p) : 1 < p := hp.two_le
+
+/-- Every prime is positive. -/
+theorem pos {p : Nat} (hp : Hex.Nat.Prime p) : 0 < p :=
+  Nat.lt_of_lt_of_le (by decide) hp.two_le
+
+/-- Every prime is nonzero. -/
+theorem ne_zero {p : Nat} (hp : Hex.Nat.Prime p) : p ≠ 0 := Nat.ne_of_gt hp.pos
+
+/-- Every prime is distinct from `1`. -/
+theorem ne_one {p : Nat} (hp : Hex.Nat.Prime p) : p ≠ 1 := Nat.ne_of_gt hp.one_lt
+
 private theorem coprime_of_not_dvd {p a : Nat} (hp : Hex.Nat.Prime p)
     (ha : ¬ p ∣ a) : Nat.Coprime p a := by
   rw [Nat.Coprime]
