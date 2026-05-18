@@ -3143,12 +3143,8 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
   have hdeg : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 :=
     hbranch.2.1
   -- Discharge `hcore_ne` from `hcore_monic`.
-  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 := by
-    intro hzero
-    have hlead : Hex.DensePoly.leadingCoeff
-        (Hex.normalizeForFactor f).squareFreeCore = 1 := hcore_monic
-    rw [hzero] at hlead
-    exact absurd hlead (by decide)
+  have hcore_ne :=
+    zpoly_ne_zero_of_monic (f := (Hex.normalizeForFactor f).squareFreeCore) hcore_monic
   -- Provenance facts from `hchoose`.
   have hp_prime : Hex.Nat.Prime
       (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p :=
@@ -3413,12 +3409,8 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
             (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p) :
     Hex.ZPoly.Irreducible entry.1 := by
   -- Discharge `hcore_ne` from `hcore_monic` (needed by the dischargers below).
-  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 := by
-    intro hzero
-    have hlead : Hex.DensePoly.leadingCoeff
-        (Hex.normalizeForFactor f).squareFreeCore = 1 := hcore_monic
-    rw [hzero] at hlead
-    exact absurd hlead (by decide)
+  have hcore_ne :=
+    zpoly_ne_zero_of_monic (f := (Hex.normalizeForFactor f).squareFreeCore) hcore_monic
   -- `0 < core.size` so `leadingCoeff_eq_coeff_last` applies.
   have hcore_size_pos : 0 < (Hex.normalizeForFactor f).squareFreeCore.size := by
     rcases Nat.eq_zero_or_pos
@@ -3502,12 +3494,8 @@ theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeDat
   -- Substrate setup mirrors `factor_exhaustive_branch_entry_irreducible_of_choosePrimeData`.
   have hdeg : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 :=
     hbranch.2.1
-  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 := by
-    intro hzero
-    have hlead : Hex.DensePoly.leadingCoeff
-        (Hex.normalizeForFactor f).squareFreeCore = 1 := hcore_monic
-    rw [hzero] at hlead
-    exact absurd hlead (by decide)
+  have hcore_ne :=
+    zpoly_ne_zero_of_monic (f := (Hex.normalizeForFactor f).squareFreeCore) hcore_monic
   have hp_prime : Hex.Nat.Prime
       (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p :=
     Hex.choosePrimeData?_prime _ _ hchoose
@@ -3710,12 +3698,8 @@ theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeDat
         (Hex.ZPoly.defaultFactorCoeffBound f)
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)).toList,
       Hex.ZPoly.Irreducible q) := by
-  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 := by
-    intro hzero
-    have hlead : Hex.DensePoly.leadingCoeff
-        (Hex.normalizeForFactor f).squareFreeCore = 1 := hcore_monic
-    rw [hzero] at hlead
-    exact absurd hlead (by decide)
+  have hcore_ne :=
+    zpoly_ne_zero_of_monic (f := (Hex.normalizeForFactor f).squareFreeCore) hcore_monic
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData_of_bound
     f hf_ne hbranch hchoose hcore_monic
@@ -3836,13 +3820,8 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_bound
   -- hypothesis + monicness.
   have hdeg :
       (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 := hbranch.2.1
-  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 := by
-    intro h0
-    have hlc : Hex.DensePoly.leadingCoeff
-        (Hex.normalizeForFactor f).squareFreeCore = 1 := hcore_monic
-    rw [h0] at hlc
-    have hzero : Hex.DensePoly.leadingCoeff (0 : Hex.ZPoly) = 0 := by decide
-    omega
+  have hcore_ne :=
+    zpoly_ne_zero_of_monic (f := (Hex.normalizeForFactor f).squareFreeCore) hcore_monic
   have hcore_record : Hex.shouldRecordPolynomialFactor
       (Hex.normalizeForFactor f).squareFreeCore = true := by
     have hne_one : (Hex.normalizeForFactor f).squareFreeCore ≠ 1 := by
@@ -3994,12 +3973,8 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.defaultFactorCoeffBound f)
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)) := by
-  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 := by
-    intro h0
-    have hlc : Hex.DensePoly.leadingCoeff
-        (Hex.normalizeForFactor f).squareFreeCore = 1 := hcore_monic
-    rw [h0] at hlc
-    exact absurd hlc (by decide)
+  have hcore_ne :=
+    zpoly_ne_zero_of_monic (f := (Hex.normalizeForFactor f).squareFreeCore) hcore_monic
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact reassemblyExpansionComplete_exhaustive_of_ne_zero_of_bound
     f hf_ne hbranch hchoose hcore_monic
@@ -4053,11 +4028,8 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_co
   -- `hcore_lc_pos`.
   have hdeg :
       (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 := hbranch.2.1
-  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 := by
-    intro h0
-    rw [h0] at hcore_lc_pos
-    have hzero : Hex.DensePoly.leadingCoeff (0 : Hex.ZPoly) = 0 := by decide
-    omega
+  have hcore_ne :=
+    zpoly_ne_zero_of_pos_lc (f := (Hex.normalizeForFactor f).squareFreeCore) hcore_lc_pos
   have hcore_record : Hex.shouldRecordPolynomialFactor
       (Hex.normalizeForFactor f).squareFreeCore = true := by
     have hne_one : (Hex.normalizeForFactor f).squareFreeCore ≠ 1 := by
@@ -4232,11 +4204,8 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_co
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.defaultFactorCoeffBound f)
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)) := by
-  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 := by
-    intro h0
-    rw [h0] at hcore_lc_pos
-    have hzero : Hex.DensePoly.leadingCoeff (0 : Hex.ZPoly) = 0 := by decide
-    omega
+  have hcore_ne :=
+    zpoly_ne_zero_of_pos_lc (f := (Hex.normalizeForFactor f).squareFreeCore) hcore_lc_pos
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_core_of_bound
     f hf_ne hbranch hchoose hcore_primitive hcore_lc_pos hcore_monic
@@ -4339,12 +4308,8 @@ theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData
             (Hex.ZPoly.defaultFactorCoeffBound f)
             (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p) :
     Hex.ZPoly.Irreducible entry.1 := by
-  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 := by
-    intro h0
-    have hlc : Hex.DensePoly.leadingCoeff
-        (Hex.normalizeForFactor f).squareFreeCore = 1 := hcore_monic
-    rw [h0] at hlc
-    exact absurd hlc (by decide)
+  have hcore_ne :=
+    zpoly_ne_zero_of_monic (f := (Hex.normalizeForFactor f).squareFreeCore) hcore_monic
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound
     f hf_ne entry hbranch hentry_mem hchoose hcore_monic
