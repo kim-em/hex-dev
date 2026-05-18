@@ -403,6 +403,13 @@ theorem eval_C [Add R] [Mul R] (c x : R)
   · change c ≠ Zero.zero at hc
     simp [eval, toArray, coeffs_C_of_ne_zero hc, hzero_mul, hzero_add]
 
+/-- Semiring-specialized evaluation law for constants. This packages the
+zero-multiplication and zero-addition laws needed by the generic `eval_C`. -/
+@[simp] theorem eval_C_semiring {S : Type u} [Lean.Grind.Semiring S] [DecidableEq S]
+    (c x : S) :
+    eval (C c) x = c :=
+  eval_C c x (Lean.Grind.Semiring.zero_mul x) (by grind)
+
 /-- The formal derivative of the zero polynomial is zero. -/
 @[simp] theorem derivative_zero [NatCast R] [Mul R] :
     derivative (0 : DensePoly R) = 0 := by
@@ -421,6 +428,16 @@ theorem coeff_derivative [NatCast R] [Mul R] (p : DensePoly R) (n : Nat)
   · simp [hn]
   · have hp : p.size ≤ n + 1 := by omega
     rw [coeff_eq_zero_of_size_le p hp, if_neg hn, hzero]
+
+attribute [local instance 1100] Lean.Grind.Semiring.natCast
+
+/-- Semiring-specialized coefficient law for the formal derivative, registered
+as a normalizing rewrite because semirings provide the required `a * 0 = 0`
+law. -/
+@[simp] theorem coeff_derivative_semiring {S : Type u}
+    [Lean.Grind.Semiring S] [DecidableEq S] (p : DensePoly S) (n : Nat) :
+    (derivative p).coeff n = ((n + 1 : Nat) : S) * p.coeff (n + 1) := by
+  exact coeff_derivative p n (Lean.Grind.Semiring.mul_zero _)
 
 end DensePoly
 end Hex

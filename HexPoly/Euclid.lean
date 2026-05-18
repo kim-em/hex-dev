@@ -2083,23 +2083,6 @@ private theorem weighted_diagonal_fold_commring
     have hidx : n + 1 - i = n - i + 1 := by omega
     rw [hidx])
 
-private theorem coeff_derivative_commring [DecidableEq S]
-    (p : DensePoly S) (n : Nat) :
-    (derivative p).coeff n = ((n + 1 : Nat) : S) * p.coeff (n + 1) := by
-  unfold derivative
-  rw [coeff_ofCoeffs_list]
-  change
-    ((List.range (p.size - 1)).map
-        (fun i => ((i + 1 : Nat) : S) * p.coeff (i + 1))).getD n 0 =
-      ((n + 1 : Nat) : S) * p.coeff (n + 1)
-  by_cases hn : n < p.size - 1
-  · simp [hn, List.getD]
-  · have hp : p.size ≤ n + 1 := by omega
-    have hcoeff : p.coeff (n + 1) = 0 :=
-      coeff_eq_zero_of_size_le p hp
-    simp [hn, List.getD, hcoeff]
-    exact (Lean.Grind.Semiring.mul_zero _).symm
-
 theorem mulCoeffSum_derivative_product_rule [DecidableEq S]
     (p q : DensePoly S) (n : Nat) :
     ((n + 1 : Nat) : S) * mulCoeffSum p q (n + 1) =
@@ -2128,7 +2111,7 @@ theorem mulCoeffSum_derivative_product_rule [DecidableEq S]
     have hi' : i < n + 1 := List.mem_range.mp hi
     have hnot : ¬ n < i := by omega
     unfold diagonalMulCoeffTerm
-    simp [hnot, coeff_derivative_commring p i]
+    simp [hnot, coeff_derivative_semiring p i]
     have hidx : n - i = n + 1 - (i + 1) := by omega
     rw [hidx]
     grind
@@ -2137,7 +2120,7 @@ theorem mulCoeffSum_derivative_product_rule [DecidableEq S]
     have hi' : i < n + 1 := List.mem_range.mp hi
     have hnot : ¬ n < i := by omega
     unfold diagonalMulCoeffTerm
-    simp [hnot, coeff_derivative_commring q (n - i)]
+    simp [hnot, coeff_derivative_semiring q (n - i)]
     have hidx : n - i + 1 = n + 1 - i := by omega
     rw [hidx]
     grind
@@ -2148,7 +2131,7 @@ theorem derivative_mul [DecidableEq S]
       derivative p * q + p * derivative q := by
   apply DensePoly.ext_coeff
   intro n
-  rw [coeff_derivative_commring]
+  rw [coeff_derivative_semiring]
   rw [coeff_mul p q (n + 1)]
   rw [coeff_add (derivative p * q) (p * derivative q) n
     (Lean.Grind.Semiring.add_zero (0 : S))]
