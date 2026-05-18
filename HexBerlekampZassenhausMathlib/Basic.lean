@@ -7687,35 +7687,34 @@ theorem natDegree_toPolynomial_recombinationCandidate_eq_sum
   rw [HexPolyMathlib.leadingCoeff_toPolynomial]
   exact hd_liftedFactor_monic i
 
-/--
-The Mathlib-transported `natDegree` of a represented integer factor equals the
-sum of the Mathlib-transported `natDegree`s of the lifted factors in the
-representing subset.
-
-The proof identifies the represented factor with its recombination candidate
-by centered-lift recovery, then reuses
-`natDegree_toPolynomial_recombinationCandidate_eq_sum`.
--/
-theorem natDegree_toPolynomial_eq_sum_of_represents
+/-- Abstract-bound variant of `natDegree_toPolynomial_eq_sum_of_represents`:
+takes `B' : Nat`, `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`, and
+`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`defaultFactorCoeffBound core` precision constraint.  The proof mirrors
+the core-shape original but invokes the `_of_bound` siblings
+`recombinationCandidate_eq_factor_of_recovery_of_monic_core_of_bound` and
+`centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound`. -/
+theorem natDegree_toPolynomial_eq_sum_of_represents_of_bound
     {core factor : Hex.ZPoly} {d : Hex.LiftData}
     {S : LiftedFactorSubset d}
+    (B' : Nat)
+    (hvalid : ∀ i, (factor.coeff i).natAbs ≤ B')
     (hcore_ne : core ≠ 0)
     (hcore_monic : Hex.DensePoly.Monic core)
     (hd_liftedFactor_monic :
       ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
-    (hprecision :
-      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
     (hdvd : factor ∣ core)
     (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor))
     (hfactor_prim : Hex.ZPoly.content factor = 1)
     (hfactor_norm : Hex.normalizeFactorSign factor = factor)
-    (hrep : RepresentsIntegerFactorAtLift core d factor S) :
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hprecision : 2 * B' < d.p ^ d.k) :
     (HexPolyZMathlib.toPolynomial factor).natDegree =
       ∑ i ∈ S,
         (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree := by
   have hrec_eq : recombinationCandidate d S = factor :=
-    recombinationCandidate_eq_factor_of_recovery_of_monic_core
-      hcore_ne hcore_monic hdvd hfactor_prim hfactor_norm hfactor_irr
+    recombinationCandidate_eq_factor_of_recovery_of_monic_core_of_bound
+      B' hvalid hcore_ne hcore_monic hfactor_prim hfactor_norm hfactor_irr
       hrep hprecision
   have hlead : Hex.DensePoly.leadingCoeff core = (1 : Int) := hcore_monic
   have hscaled :
@@ -7725,8 +7724,9 @@ theorem natDegree_toPolynomial_eq_sum_of_represents
     exact densePoly_scale_one_int (liftedFactorProduct d S)
   have hcenter :
       Hex.centeredLiftPoly (liftedFactorProduct d S) (d.p ^ d.k) = factor := by
-    have h := centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
-      hcore_ne hdvd hrep hprecision
+    have h :=
+      centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound
+        B' hvalid hrep hprecision
     rwa [hscaled] at h
   have hfactor_ne : factor ≠ 0 := by
     intro hf
@@ -7751,6 +7751,42 @@ theorem natDegree_toPolynomial_eq_sum_of_represents
   rw [← hrec_eq]
   exact natDegree_toPolynomial_recombinationCandidate_eq_sum
     hpk_ge_two hd_liftedFactor_monic S
+
+/--
+The Mathlib-transported `natDegree` of a represented integer factor equals the
+sum of the Mathlib-transported `natDegree`s of the lifted factors in the
+representing subset.
+
+The proof identifies the represented factor with its recombination candidate
+by centered-lift recovery, then reuses
+`natDegree_toPolynomial_recombinationCandidate_eq_sum`.
+
+This is a thin wrapper over `natDegree_toPolynomial_eq_sum_of_represents_of_bound`
+that instantiates `B' := defaultFactorCoeffBound core` and discharges `hvalid`
+via `defaultFactorCoeffBound_valid core hcore_ne factor hdvd`.
+-/
+theorem natDegree_toPolynomial_eq_sum_of_represents
+    {core factor : Hex.ZPoly} {d : Hex.LiftData}
+    {S : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hdvd : factor ∣ core)
+    (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hfactor_prim : Hex.ZPoly.content factor = 1)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S) :
+    (HexPolyZMathlib.toPolynomial factor).natDegree =
+      ∑ i ∈ S,
+        (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree :=
+  natDegree_toPolynomial_eq_sum_of_represents_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound core)
+    (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
+    hcore_ne hcore_monic hd_liftedFactor_monic hdvd hfactor_irr
+    hfactor_prim hfactor_norm hrep hprecision
 
 /--
 Integer-factor monic capstone for the Hensel-lifted subset correspondence.
