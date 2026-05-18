@@ -1244,6 +1244,26 @@ theorem fpPoly_leadingCoeff_ne_zero_of_size_pos
   rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred f hf_size_pos]
   exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size f hf_size_pos
 
+/-- For a nonzero `Hex.FpPoly p`, the monic modular image divides the input.
+This packages the nonzero branch of `Hex.monicModularImage`: the branch scales
+by the inverse of a nonzero leading coefficient, and unit-scaling preserves
+divisibility back to the original polynomial. -/
+private theorem monicModularImage_dvd_self_of_isZero_false
+    {p : Nat} [Hex.ZMod64.Bounds p] (hprime : Hex.Nat.Prime p)
+    {f : Hex.FpPoly p} (hf : f.isZero = false) :
+    Hex.monicModularImage f ∣ f := by
+  letI : Hex.ZMod64.PrimeModulus p := Hex.ZMod64.primeModulusOfPrime hprime
+  have hsize_pos : 0 < f.size :=
+    (Hex.DensePoly.isZero_eq_false_iff _).mp hf
+  have hlead_ne :
+      Hex.DensePoly.leadingCoeff f ≠ (0 : Hex.ZMod64 p) :=
+    fpPoly_leadingCoeff_ne_zero_of_size_pos f hsize_pos
+  have hinv_ne :
+      (Hex.DensePoly.leadingCoeff f)⁻¹ ≠ (0 : Hex.ZMod64 p) :=
+    Hex.ZMod64.inv_ne_zero_of_prime hprime hlead_ne
+  rw [monicModularImage_eq_scale_inv_leadingCoeff_of_isZero_false hf]
+  exact Hex.FpPoly.dvd_scale_self_of_ne_zero hinv_ne f
+
 theorem monicModPImage_dvd_self_of_ne_zero
     {p : Nat} [Hex.ZMod64.Bounds p]
     (hprime : Hex.Nat.Prime p) {f : Hex.FpPoly p} (hf : f.isZero = false) :
@@ -4934,22 +4954,10 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
   -- `monicModularImage modP_f ∣ modP_f`: dividing by the leading coefficient
   -- scales by a nonzero element, and a unit-scaled polynomial divides the
   -- original via `dvd_scale_self_of_ne_zero`.
-  have hmod_size_pos : 0 < (Hex.ZPoly.modP data.p f).size :=
-    (Hex.DensePoly.isZero_eq_false_iff _).mp hzero
-  have hlead_ne :
-      Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP data.p f) ≠
-        (0 : Hex.ZMod64 data.p) :=
-    fpPoly_leadingCoeff_ne_zero_of_size_pos (Hex.ZPoly.modP data.p f) hmod_size_pos
-  have hinv_ne :
-      (Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP data.p f))⁻¹ ≠
-        (0 : Hex.ZMod64 data.p) :=
-    Hex.ZMod64.inv_ne_zero_of_prime hprime hlead_ne
   have hmonicImage_dvd :
       Hex.monicModularImage (Hex.ZPoly.modP data.p f) ∣
-        Hex.ZPoly.modP data.p f := by
-    unfold Hex.monicModularImage
-    simp only [hzero, Bool.false_eq_true, ↓reduceIte]
-    exact Hex.FpPoly.dvd_scale_self_of_ne_zero hinv_ne (Hex.ZPoly.modP data.p f)
+        Hex.ZPoly.modP data.p f :=
+    monicModularImage_dvd_self_of_isZero_false hprime hzero
   -- Berlekamp factor list of the monic modular image has no duplicates.
   have hNodup :
       (@Hex.Berlekamp.berlekampFactor data.p data.bounds
@@ -5830,24 +5838,10 @@ theorem factorsModP_coprime_of_factorsModPBerlekampForm
     Hex.isGoodPrime_squareFreeModP core primeData.p hgood
   -- `monicModularImage` divides `modP p core`, so the no-squared invariant
   -- transports through the unit scaling.
-  have hmod_size_pos : 0 < (Hex.ZPoly.modP primeData.p core).size :=
-    (Hex.DensePoly.isZero_eq_false_iff _).mp hzero
-  have hmodP_lead_ne :
-      Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core) ≠
-        (0 : Hex.ZMod64 primeData.p) :=
-    fpPoly_leadingCoeff_ne_zero_of_size_pos
-      (Hex.ZPoly.modP primeData.p core) hmod_size_pos
-  have hinv_ne :
-      (Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core))⁻¹ ≠
-        (0 : Hex.ZMod64 primeData.p) :=
-    Hex.ZMod64.inv_ne_zero_of_prime hprime hmodP_lead_ne
   have hmonicImage_dvd :
       Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) ∣
-        Hex.ZPoly.modP primeData.p core := by
-    unfold Hex.monicModularImage
-    simp only [hzero, Bool.false_eq_true, ↓reduceIte]
-    exact Hex.FpPoly.dvd_scale_self_of_ne_zero hinv_ne
-      (Hex.ZPoly.modP primeData.p core)
+        Hex.ZPoly.modP primeData.p core :=
+    monicModularImage_dvd_self_of_isZero_false hprime hzero
   -- The no-squared invariant on the monic modular image.
   have h_no_squared :
       ∀ d : Hex.FpPoly primeData.p,
