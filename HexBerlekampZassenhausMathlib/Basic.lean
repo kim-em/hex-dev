@@ -14845,34 +14845,20 @@ theorem exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence
     hirr hdvd (Hex.ZPoly.defaultFactorCoeffBound core)
     hcore_lc_le (defaultFactorCoeffBound_valid core hcore_ne) hprecision
 
-/-- **#4006 slow-path capstone.**
-
-Branch-local irreducibility for the exhaustive square-free-core branch:
-every factor emitted by `Hex.exhaustiveCoreFactorsWithBound core
-(Hex.ZPoly.defaultFactorCoeffBound core) primeData` is irreducible in
-`Hex.ZPoly` whenever the standard good-prime / Hensel / recombination
-hypothesis set (`HenselSubsetCorrespondenceHypotheses` and
-`LiftedFactorSubsetPartition` at the full-universe subset) holds for
-a square-free, monic core.
-
-The argument composes three landed pieces:
-
-* `exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence`
-  (#4274), which produces, for every irreducible `Polynomial ℤ` divisor
-  of `core`, an emitted factor associated to it.
-* `UFDPartition.normalizedFactors_card_le_length_of_coverage`, which
-  converts that coverage (under square-freeness of `toPolynomial core`)
-  into the lower count bound `card (normalizedFactors (toPolynomial core))
-  ≤ (emitted.map toPolynomial).length`.
-* `exhaustiveCoreFactorsWithBound_factor_count_le`, which supplies the
-  matching upper count bound; together they yield the count equality
-  consumed by `exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_count`.
-
-The square-freeness of `toPolynomial core` is read off
-`hpartition.target_squarefree` at `target = core`, so the only new
-input beyond the coverage signature is `hcore_record`, required by the
-existing UFD count-le wrapper. -/
-theorem exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence
+/--
+Abstract-bound variant of
+`exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence`:
+the concrete `2 * defaultFactorCoeffBound core < d.p ^ d.k` Mignotte
+precision is replaced by `2 * B' < d.p ^ d.k` against an abstract bound
+`B'`, paired with the leading-coefficient bound on `core` and the
+universal divisor coefficient bound `∀ g ∣ core, ∀ i, (g.coeff i).natAbs
+≤ B'`. The proof body mirrors the (now-wrapper) original verbatim,
+except that the forward call to
+`exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence`
+becomes its `_of_bound` sibling, threading `B'`, `hcore_lc_le`,
+`hvalid`, `hprecision`.
+-/
+theorem exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
     {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
     (h :
@@ -14892,8 +14878,10 @@ theorem exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCo
     (hd_liftedFactor_natDegree_pos :
       ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
     (hd_liftedFactor_inj : Function.Injective (liftedFactor d))
-    (hprecision :
-      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    (B' : Nat)
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hvalid : ∀ g : Hex.ZPoly, g ∣ core → ∀ i, (g.coeff i).natAbs ≤ B')
+    (hprecision : 2 * B' < d.p ^ d.k) :
     ∀ factor ∈
       (Hex.exhaustiveCoreFactorsWithBound core B primeData).toList,
       Hex.ZPoly.Irreducible factor := by
@@ -14931,10 +14919,10 @@ theorem exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCo
         HexPolyZMathlib.toPolynomial_ofPolynomial, ← hf_def]
       exact hr
     obtain ⟨emitted, hemitted_mem, hassoc⟩ :=
-      exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence
+      exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence_of_bound
         h hpartition hcore_ne hcore_primitive hcore_lc_pos hB_ne_zero hd_modulus
         hd_liftedFactor_monic hd_liftedFactor_natDegree_pos hd_liftedFactor_inj
-        hfactor_irr hfactor_dvd hprecision
+        hfactor_irr hfactor_dvd B' hcore_lc_le hvalid hprecision
     refine ⟨HexPolyZMathlib.toPolynomial emitted, ?_, ?_⟩
     · rw [hgs_def, List.mem_map]
       refine ⟨emitted, ?_, rfl⟩
@@ -14965,6 +14953,95 @@ theorem exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCo
     (core := core) (B := B) (primeData := primeData)
     hcore_ne hcore_record hcount_eq factor ?_
   simpa [hcoreFactors_def] using hfactor_mem
+
+/-- **#4006 slow-path capstone.**
+
+Branch-local irreducibility for the exhaustive square-free-core branch:
+every factor emitted by `Hex.exhaustiveCoreFactorsWithBound core
+(Hex.ZPoly.defaultFactorCoeffBound core) primeData` is irreducible in
+`Hex.ZPoly` whenever the standard good-prime / Hensel / recombination
+hypothesis set (`HenselSubsetCorrespondenceHypotheses` and
+`LiftedFactorSubsetPartition` at the full-universe subset) holds for
+a square-free, monic core.
+
+The argument composes three landed pieces:
+
+* `exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence`
+  (#4274), which produces, for every irreducible `Polynomial ℤ` divisor
+  of `core`, an emitted factor associated to it.
+* `UFDPartition.normalizedFactors_card_le_length_of_coverage`, which
+  converts that coverage (under square-freeness of `toPolynomial core`)
+  into the lower count bound `card (normalizedFactors (toPolynomial core))
+  ≤ (emitted.map toPolynomial).length`.
+* `exhaustiveCoreFactorsWithBound_factor_count_le`, which supplies the
+  matching upper count bound; together they yield the count equality
+  consumed by `exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_count`.
+
+The square-freeness of `toPolynomial core` is read off
+`hpartition.target_squarefree` at `target = core`, so the only new
+input beyond the coverage signature is `hcore_record`, required by the
+existing UFD count-le wrapper.
+
+Thin wrapper over
+`exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound`
+that instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound core` and
+discharges the abstract bound hypotheses via `defaultFactorCoeffBound_valid`
+paired with `leadingCoeff_eq_coeff_last`. -/
+theorem exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
+    (h :
+      HenselSubsetCorrespondenceHypotheses core
+        (Hex.precisionForCoeffBound B primeData.p)
+        primeData d admissiblePrime successfulLift)
+    (hpartition :
+      LiftedFactorSubsetPartition core d Finset.univ core)
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_record : Hex.shouldRecordPolynomialFactor core = true)
+    (hB_ne_zero : B ≠ 0)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hd_liftedFactor_inj : Function.Injective (liftedFactor d))
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    ∀ factor ∈
+      (Hex.exhaustiveCoreFactorsWithBound core B primeData).toList,
+      Hex.ZPoly.Irreducible factor := by
+  have hcore_size_pos : 0 < core.size := by
+    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
+    · exfalso
+      have hback_none : core.coeffs.back? = none := by
+        rw [Array.back?_eq_getElem?]
+        have hcoeffs_size : core.coeffs.size = 0 := by
+          simpa [Hex.DensePoly.size] using hzero
+        simp [hcoeffs_size]
+      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
+        unfold Hex.DensePoly.leadingCoeff
+        rw [hback_none]
+        rfl
+      rw [hlc_zero] at hcore_lc_pos
+      omega
+    · exact hpos
+  have hcore_dvd_self : core ∣ core :=
+    ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
+  have hcore_lc_le :
+      (Hex.DensePoly.leadingCoeff core).natAbs ≤
+        Hex.ZPoly.defaultFactorCoeffBound core := by
+    have hbound :=
+      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
+        (core.size - 1)
+    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
+    exact hbound
+  exact exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
+    h hpartition hcore_ne hcore_primitive hcore_lc_pos hcore_record hB_ne_zero
+    hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
+    hd_liftedFactor_inj (Hex.ZPoly.defaultFactorCoeffBound core)
+    hcore_lc_le (defaultFactorCoeffBound_valid core hcore_ne) hprecision
 
 /-- Mathlib-side irreducibility transports through `Hex.normalizeFactorSign`:
 the sign normalisation differs from the input by at most a `(-1)` factor, so
