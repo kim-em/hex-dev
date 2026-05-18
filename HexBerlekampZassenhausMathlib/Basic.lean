@@ -10670,17 +10670,22 @@ private theorem normalizeFactorSign_scaledRecombinationCandidate_eq
     omega
   rw [if_neg hnot]
 
-/-- The scaled recombination candidate is primitive whenever `core` is nonzero
-and has positive leading coefficient (so the centred-lift size machinery
-applies). The construction `normalizeFactorSign ∘ primitivePart` gives content
-`1` whenever the inner centred lift is nonzero, and `normalizeFactorSign`
-preserves content. -/
-private theorem zpoly_primitive_scaledRecombinationCandidate
+/-- Abstract-bound sibling of `zpoly_primitive_scaledRecombinationCandidate`:
+takes `B' : Nat`,
+`hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B'`, and
+`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`defaultFactorCoeffBound core` precision constraint.  The body mirrors the
+original but invokes `size_centeredLiftPoly_eq_of_pos_leadingCoeff_bound`
+with the abstract `B'` rather than `defaultFactorCoeffBound core`.  The
+original core-shape theorem is a wrapper around this variant. -/
+private theorem zpoly_primitive_scaledRecombinationCandidate_of_bound
     {core : Hex.ZPoly} {d : Hex.LiftData}
+    (B' : Nat)
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
     (hcore_ne : core ≠ 0)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hd_liftedFactor_monic : ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
-    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hprecision : 2 * B' < d.p ^ d.k)
     (T : LiftedFactorSubset d) :
     Hex.ZPoly.Primitive (scaledRecombinationCandidate core d T) := by
   -- Inline the size machinery from
@@ -10708,35 +10713,10 @@ private theorem zpoly_primitive_scaledRecombinationCandidate
   have hslp_lc_pos :
       0 < Hex.DensePoly.leadingCoeff (scaledLiftedFactorProduct core d T) := by
     rw [hslp_lc]; exact hcore_lc_pos
-  have hcore_size_pos : 0 < core.size := by
-    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
-    · exfalso
-      have hback_none : core.coeffs.back? = none := by
-        rw [Array.back?_eq_getElem?]
-        have hcoeffs_size : core.coeffs.size = 0 := by
-          simpa [Hex.DensePoly.size] using hzero
-        simp [hcoeffs_size]
-      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
-        unfold Hex.DensePoly.leadingCoeff
-        rw [hback_none]
-        rfl
-      rw [hlc_zero] at hcore_lc_pos
-      omega
-    · exact hpos
-  have hcore_lc_bound :
-      (Hex.DensePoly.leadingCoeff core).natAbs ≤
-        Hex.ZPoly.defaultFactorCoeffBound core := by
-    have hcore_dvd_self : core ∣ core :=
-      ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
-    have hbound :=
-      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
-        (core.size - 1)
-    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
-    exact hbound
   have hslp_lc_bound :
       (Hex.DensePoly.leadingCoeff (scaledLiftedFactorProduct core d T)).natAbs ≤
-        Hex.ZPoly.defaultFactorCoeffBound core := by
-    rwa [hslp_lc]
+        B' := by
+    rw [hslp_lc]; exact hcore_lc_le
   have hcl_size :
       (Hex.centeredLiftPoly (scaledLiftedFactorProduct core d T)
           (d.p ^ d.k)).size =
@@ -10787,6 +10767,53 @@ private theorem zpoly_primitive_scaledRecombinationCandidate
   unfold scaledRecombinationCandidate
   rw [content_normalizeFactorSign_eq]
   exact Hex.ZPoly.primitivePart_primitive _ hcl_content_ne
+
+/-- The scaled recombination candidate is primitive whenever `core` is nonzero
+and has positive leading coefficient (so the centred-lift size machinery
+applies). The construction `normalizeFactorSign ∘ primitivePart` gives content
+`1` whenever the inner centred lift is nonzero, and `normalizeFactorSign`
+preserves content.
+
+Thin wrapper over `zpoly_primitive_scaledRecombinationCandidate_of_bound` that
+instantiates `B' := defaultFactorCoeffBound core` and discharges
+`hcore_lc_le` via `defaultFactorCoeffBound_valid core hcore_ne core
+(dvd_refl core) (core.size - 1)`. -/
+private theorem zpoly_primitive_scaledRecombinationCandidate
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (hcore_ne : core ≠ 0)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_liftedFactor_monic : ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (T : LiftedFactorSubset d) :
+    Hex.ZPoly.Primitive (scaledRecombinationCandidate core d T) := by
+  have hcore_size_pos : 0 < core.size := by
+    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
+    · exfalso
+      have hback_none : core.coeffs.back? = none := by
+        rw [Array.back?_eq_getElem?]
+        have hcoeffs_size : core.coeffs.size = 0 := by
+          simpa [Hex.DensePoly.size] using hzero
+        simp [hcoeffs_size]
+      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
+        unfold Hex.DensePoly.leadingCoeff
+        rw [hback_none]
+        rfl
+      rw [hlc_zero] at hcore_lc_pos
+      omega
+    · exact hpos
+  have hcore_lc_le :
+      (Hex.DensePoly.leadingCoeff core).natAbs ≤
+        Hex.ZPoly.defaultFactorCoeffBound core := by
+    have hcore_dvd_self : core ∣ core :=
+      ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
+    have hbound :=
+      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
+        (core.size - 1)
+    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
+    exact hbound
+  exact zpoly_primitive_scaledRecombinationCandidate_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound core) hcore_lc_le
+    hcore_ne hcore_lc_pos hd_liftedFactor_monic hprecision T
 
 /-- Scaled-candidate counterpart of
 `exists_representingSubset_of_mem_normalizedFactors_recombinationCandidate_of_primitive_pos_lc_core`.
