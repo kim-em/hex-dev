@@ -971,6 +971,30 @@ theorem eval_monomial (n : Nat) (c x : ZMod64 p) :
     rw [zmod_zero_mul, zmod_zero_add, List.reverse_replicate]
     exact foldl_eval_replicate_zero x n c
 
+/-- Coefficients of the constant polynomial wrapper are constant at degree zero and zero elsewhere. -/
+@[simp] theorem coeff_C (c : ZMod64 p) (n : Nat) :
+    (FpPoly.C c).coeff n = if n = 0 then c else 0 := by
+  unfold FpPoly.C
+  exact DensePoly.coeff_C c n
+
+/-- The degree-zero coefficient of the indeterminate wrapper is zero. -/
+@[simp] theorem coeff_X_zero :
+    ((FpPoly.X : FpPoly p)).coeff 0 = 0 := by
+  unfold FpPoly.X
+  simpa using DensePoly.coeff_monomial 1 (1 : ZMod64 p) 0
+
+/-- The degree-one coefficient of the indeterminate wrapper is one. -/
+@[simp] theorem coeff_X_one :
+    ((FpPoly.X : FpPoly p)).coeff 1 = 1 := by
+  unfold FpPoly.X
+  simpa using DensePoly.coeff_monomial 1 (1 : ZMod64 p) 1
+
+/-- Coefficients of the indeterminate wrapper are one at degree one and zero elsewhere. -/
+@[simp] theorem coeff_X (n : Nat) :
+    ((FpPoly.X : FpPoly p)).coeff n = if n = 1 then 1 else 0 := by
+  unfold FpPoly.X
+  exact DensePoly.coeff_monomial 1 (1 : ZMod64 p) n
+
 private def evalCoeffPowerSumFrom :
     List (ZMod64 p) → Nat → ZMod64 p → ZMod64 p
   | [], _, _ => 0
