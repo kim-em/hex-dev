@@ -2667,9 +2667,12 @@ theorem liftedFactorSubsetPartition_outerBound_of_choosePrimeData
 Per-branch HO-1 component for the small-mod singleton arm of the capstone
 `factor_irreducible_of_nonUnit` (#4170): every entry recorded by
 `Hex.factorWithBound f B` in this fast-path branch is `Hex.ZPoly.Irreducible`,
-given only `f ≠ 0`, the branch marker hypotheses, the executable
-`choosePrimeData?` success witness `hchoose`, and the reassembly
-expansion-complete side condition.
+given only `f ≠ 0`, the branch marker hypotheses, and the executable
+`choosePrimeData?` success witness `hchoose`. The reassembly
+expansion-complete side condition is discharged internally via
+`IntReductionMod.reassemblyExpansionComplete_singleton_of_irreducible_of_pos_lc`
+(#4956 / PR #4961), so the umbrella no longer requires an explicit
+`hcomplete` premise.
 
 Composes:
 * `Hex.factorWithBound_entry_mem_small_mod_singleton_raw`
@@ -2683,9 +2686,17 @@ Composes:
   (`IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive`
   and `IntReductionMod.choosePrimeData?_leadingCoeff_castRingHom_ne_zero`),
   which produce `hprim` and `hlc_map_ne` from `f ≠ 0` and `hchoose`;
+* `IntReductionMod.reassemblyExpansionComplete_singleton_of_irreducible_of_pos_lc`
+  — the non-monic primitive singleton-arm `hcomplete` discharger from
+  #4956 / PR #4961, producing the reassembly expansion-complete side
+  condition internally from `hcore_irr`,
+  `Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero`, and the positive
+  squarefree-core degree derived from the umbrella's existing `hdeg`
+  premise;
 * `Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible`
   — the Mathlib-free reassembly lift turning singleton-core irreducibility
-  into raw factor irreducibility under the `hcomplete` side condition;
+  into raw factor irreducibility under the internally-discharged
+  expansion-complete side condition;
 * `zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible` — the
   sign-normalisation lift from raw factor irreducibility to entry
   irreducibility.
@@ -2707,9 +2718,6 @@ theorem factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData
         Hex.quadraticIntegerRootFactors?
           (Hex.normalizeForFactor f).squareFreeCore = none)
     (hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList)
-    (hcomplete :
-      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
-        #[(Hex.normalizeForFactor f).squareFreeCore])
     (hchoose :
       Hex.choosePrimeData?
         (Hex.normalizeForFactor f).squareFreeCore = some
@@ -2731,6 +2739,16 @@ theorem factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData
         f hf_ne)
       (IntReductionMod.choosePrimeData?_leadingCoeff_castRingHom_ne_zero
         _ _ hchoose)
+  -- Discharge the reassembly expansion-complete side condition internally
+  -- using the non-monic primitive singleton-arm discharger
+  -- (#4956 / PR #4961).
+  have hcomplete :
+      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
+        #[(Hex.normalizeForFactor f).squareFreeCore] :=
+    IntReductionMod.reassemblyExpansionComplete_singleton_of_irreducible_of_pos_lc
+      f hf_ne hcore_irr
+      (Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf_ne)
+      (Nat.pos_of_ne_zero hdeg)
   -- Lift singleton-core irreducibility through the reassembly to raw factor
   -- irreducibility.
   have h_core_array :
@@ -2765,9 +2783,11 @@ sufficient) for the singleton branch to fire — when `choosePrimeData?` returns
 slow exhaustive path, so the singleton branch-shape lemma's conclusion does
 not apply in that case.
 
-The eventual capstone wiring for the small-mod singleton arm composes this
-with the `hcomplete` discharger from #4597 to produce a fully
-hypothesis-discharged per-branch component. -/
+The reassembly expansion-complete side condition is discharged internally
+by the `_of_choosePrimeData` umbrella above (via
+`IntReductionMod.reassemblyExpansionComplete_singleton_of_irreducible_of_pos_lc`,
+#4956 / PR #4961), so this wrapper does not require an explicit
+`hcomplete` premise either. -/
 theorem factor_small_mod_singleton_branch_entry_irreducible
     (f : Hex.ZPoly) (hf_ne : f ≠ 0)
     (B : Nat) (hB_pos : 1 ≤ B)
@@ -2783,10 +2803,7 @@ theorem factor_small_mod_singleton_branch_entry_irreducible
       B = 1 ∨
         Hex.quadraticIntegerRootFactors?
           (Hex.normalizeForFactor f).squareFreeCore = none)
-    (hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList)
-    (hcomplete :
-      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
-        #[(Hex.normalizeForFactor f).squareFreeCore]) :
+    (hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList) :
     Hex.ZPoly.Irreducible entry.1 := by
   -- Derive the explicit `choosePrimeData?` equation from the `isSome` witness
   -- packed into `hsmall_chosen`.
@@ -2804,7 +2821,7 @@ theorem factor_small_mod_singleton_branch_entry_irreducible
           unfold Hex.choosePrimeData; rw [hc]
         rw [hpd]
   exact factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData
-    f hf_ne B hB_pos entry hdeg hsmall_chosen.2 hquadratic hentry_mem hcomplete
+    f hf_ne B hB_pos entry hdeg hsmall_chosen.2 hquadratic hentry_mem
     hchoose
 
 /-- **#4565 HO-1 substrate — fast-path constant arm umbrella.**
