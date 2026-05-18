@@ -4265,6 +4265,54 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_co
     (defaultFactorCoeffBound_valid (Hex.normalizeForFactor f).squareFreeCore hcore_ne)
     hprecision
 
+/-- **Abstract-bound sibling of the #4561 / #4848 HO-1 exhaustive-arm umbrella.**
+
+Abstract-bound `_of_bound` companion to
+`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData`: the
+concrete inner-form Mignotte precision on the squarefree core
+`2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.normalizeForFactor f).squareFreeCore < d.p ^ d.k`
+is replaced by `2 * B' < d.p ^ d.k` against an abstract bound `B'`, paired
+with the leading-coefficient bound on the core
+(`(Hex.DensePoly.leadingCoeff core).natAbs ≤ B'`) and the universal divisor
+coefficient bound (`∀ g ∣ core, ∀ i, (g.coeff i).natAbs ≤ B'`).
+
+The proof body mirrors the (now-wrapper) original verbatim — the two
+forward calls to `reassemblyExpansionComplete_exhaustive_of_ne_zero` and
+`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux`
+become their `_of_bound` siblings, threading `B'`, `hcore_lc_le`,
+`hvalid`, `hprecision`. -/
+theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
+    (entry : Hex.ZPoly × Nat)
+    (hbranch : Hex.factorWithBoundUsesExhaustiveBranch f
+      (Hex.ZPoly.defaultFactorCoeffBound f))
+    (hentry_mem : entry ∈ (Hex.factorWithBound f
+      (Hex.ZPoly.defaultFactorCoeffBound f)).factors.toList)
+    (hchoose : Hex.choosePrimeData?
+      (Hex.normalizeForFactor f).squareFreeCore = some
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore))
+    (hcore_monic : Hex.DensePoly.Monic
+      (Hex.normalizeForFactor f).squareFreeCore)
+    (B' : Nat)
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff
+        (Hex.normalizeForFactor f).squareFreeCore).natAbs ≤ B')
+    (hvalid : ∀ g : Hex.ZPoly,
+        g ∣ (Hex.normalizeForFactor f).squareFreeCore →
+        ∀ i, (g.coeff i).natAbs ≤ B')
+    (hprecision :
+      2 * B' <
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p ^
+          Hex.precisionForCoeffBound
+            (Hex.ZPoly.defaultFactorCoeffBound f)
+            (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p) :
+    Hex.ZPoly.Irreducible entry.1 :=
+  factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux_of_bound
+    f hf_ne entry hbranch hentry_mem hchoose hcore_monic
+    (reassemblyExpansionComplete_exhaustive_of_ne_zero_of_bound
+      f hf_ne hbranch hchoose hcore_monic
+      B' hcore_lc_le hvalid hprecision)
+    B' hcore_lc_le hvalid hprecision
+
 /-- **#4561 / #4848 HO-1 substrate — slow exhaustive-arm umbrella, with the
 `hcomplete` premise dropped via the #4848 discharger.**
 
@@ -4311,11 +4359,36 @@ theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData
           Hex.precisionForCoeffBound
             (Hex.ZPoly.defaultFactorCoeffBound f)
             (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p) :
-    Hex.ZPoly.Irreducible entry.1 :=
-  factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux
+    Hex.ZPoly.Irreducible entry.1 := by
+  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 := by
+    intro h0
+    have hlc : Hex.DensePoly.leadingCoeff
+        (Hex.normalizeForFactor f).squareFreeCore = 1 := hcore_monic
+    rw [h0] at hlc
+    exact absurd hlc (by decide)
+  have hcore_size_pos : 0 < (Hex.normalizeForFactor f).squareFreeCore.size :=
+    Hex.ZPoly.size_pos_of_ne_zero _ hcore_ne
+  have hcore_dvd_self :
+      (Hex.normalizeForFactor f).squareFreeCore ∣
+        (Hex.normalizeForFactor f).squareFreeCore :=
+    ⟨(1 : Hex.ZPoly),
+      (Hex.DensePoly.mul_one_right_poly _).symm⟩
+  have hcore_lc_le :
+      (Hex.DensePoly.leadingCoeff
+          (Hex.normalizeForFactor f).squareFreeCore).natAbs ≤
+        Hex.ZPoly.defaultFactorCoeffBound
+          (Hex.normalizeForFactor f).squareFreeCore := by
+    have hbound :=
+      defaultFactorCoeffBound_valid (Hex.normalizeForFactor f).squareFreeCore
+        hcore_ne (Hex.normalizeForFactor f).squareFreeCore hcore_dvd_self
+        ((Hex.normalizeForFactor f).squareFreeCore.size - 1)
+    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last _ hcore_size_pos]
+    exact hbound
+  exact factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound
     f hf_ne entry hbranch hentry_mem hchoose hcore_monic
-    (reassemblyExpansionComplete_exhaustive_of_ne_zero
-      f hf_ne hbranch hchoose hcore_monic hprecision)
+    (Hex.ZPoly.defaultFactorCoeffBound (Hex.normalizeForFactor f).squareFreeCore)
+    hcore_lc_le
+    (defaultFactorCoeffBound_valid (Hex.normalizeForFactor f).squareFreeCore hcore_ne)
     hprecision
 
 end HexBerlekampZassenhausMathlib
