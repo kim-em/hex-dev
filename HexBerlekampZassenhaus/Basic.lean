@@ -7992,6 +7992,80 @@ private theorem recombineScaledExhaustive_shouldRecord
       exact scaledRecombinationSearchMod_shouldRecord coreLc f (liftModulus d)
         d.liftedFactors.toList factors hsearch factor (by simpa using hmem)
 
+private theorem scaledRecombinationSearchModAux_product
+    (coreLc : Int) (target : ZPoly) (modulus : Nat)
+    (localFactors factors : List ZPoly) (fuel : Nat)
+    (hsearch :
+      scaledRecombinationSearchModAux coreLc target modulus localFactors fuel
+        = some factors) :
+    Array.polyProduct factors.toArray = target := by
+  induction fuel generalizing target localFactors factors with
+  | zero =>
+      simp [scaledRecombinationSearchModAux] at hsearch
+  | succ fuel ih =>
+      unfold scaledRecombinationSearchModAux at hsearch
+      by_cases htarget : target = 1
+      · simp [htarget] at hsearch
+        cases hsearch
+        simpa [Array.polyProduct] using htarget.symm
+      · simp [htarget] at hsearch
+        rcases firstSome_some hsearch with ⟨split, hsplit⟩
+        let candidate :=
+          normalizeFactorSign <|
+            ZPoly.primitivePart <|
+              centeredLiftPoly
+                (DensePoly.scale coreLc (Array.polyProduct split.1.toArray))
+                modulus
+        by_cases hrecord : shouldRecordPolynomialFactor candidate = true
+        · simp [candidate, hrecord] at hsplit
+          cases hquot : exactQuotient? target candidate with
+          | none =>
+              simp [candidate, hquot] at hsplit
+          | some quotient =>
+              simp [candidate, hquot] at hsplit
+              cases hrec :
+                  scaledRecombinationSearchModAux coreLc quotient modulus
+                    split.2 fuel with
+              | none =>
+                  simp [hrec] at hsplit
+              | some rest =>
+                  simp [hrec] at hsplit
+                  cases hsplit
+                  have hrest :
+                      Array.polyProduct rest.toArray = quotient :=
+                    ih quotient split.2 rest hrec
+                  have hquot_prod : quotient * candidate = target :=
+                    exactQuotient?_product hquot
+                  calc
+                    Array.polyProduct (candidate :: rest).toArray =
+                        candidate * Array.polyProduct rest.toArray := by
+                      exact ZPoly.polyProduct_cons_toArray candidate rest
+                    _ = candidate * quotient := by
+                      rw [hrest]
+                    _ = quotient * candidate := by
+                      rw [DensePoly.mul_comm_poly (S := Int)]
+                    _ = target := hquot_prod
+        · simp [candidate, hrecord] at hsplit
+
+private theorem scaledRecombinationSearchMod_product
+    (coreLc : Int) (f : ZPoly) (modulus : Nat)
+    (localFactors factors : List ZPoly)
+    (hsearch :
+      scaledRecombinationSearchMod coreLc f modulus localFactors = some factors) :
+    Array.polyProduct factors.toArray = f := by
+  exact scaledRecombinationSearchModAux_product
+    coreLc f modulus localFactors factors (localFactors.length + 1) hsearch
+
+private theorem recombineScaledExhaustive_product
+    (coreLc : Int) (f : ZPoly) (d : LiftData) (factors : List ZPoly)
+    (hsearch :
+      scaledRecombinationSearchMod coreLc f (liftModulus d) d.liftedFactors.toList =
+        some factors) :
+    Array.polyProduct (recombineScaledExhaustive coreLc f d) = f := by
+  unfold recombineScaledExhaustive
+  simp [hsearch, scaledRecombinationSearchMod_product coreLc f (liftModulus d)
+    d.liftedFactors.toList factors hsearch]
+
 /-- Base case for the exhaustive recombination search: when the running target
 has already been reduced to `1`, the search terminates and returns the empty
 factor list. -/
