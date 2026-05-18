@@ -5324,6 +5324,20 @@ theorem factorsModP_natDegree_pos_of_factorsModPBerlekampForm
   rw [hnatDeg_eq, hlift_degree_eq]
   exact hg_pos
 
+/-- Monic integer polynomials have positive stored size. -/
+private theorem zpoly_size_pos_of_monic {f : Hex.ZPoly}
+    (h : Hex.DensePoly.Monic f) : 0 < f.size := by
+  have hlead : Hex.DensePoly.leadingCoeff f = (1 : Int) := h
+  rcases Nat.eq_zero_or_pos f.coeffs.size with hcs_zero | hcs_pos
+  · exfalso
+    have hback_none : f.coeffs.back? = none := by
+      rw [Array.back?_eq_getElem?]; simp [hcs_zero]
+    have hlc_zero : Hex.DensePoly.leadingCoeff f = (0 : Int) := by
+      unfold Hex.DensePoly.leadingCoeff; rw [hback_none]; rfl
+    rw [hlc_zero] at hlead
+    exact absurd hlead (by decide)
+  · exact hcs_pos
+
 /-- For a monic integer polynomial `core` and a prime modulus `p > 1`, the
 monic modular image of `modP p core` is just `modP p core` itself: the leading
 coefficient of the modular image is `1` (since `core`'s is `1` and reduces to
@@ -5335,16 +5349,7 @@ private theorem monicModularImage_modP_eq_of_monic
     (hzero : (Hex.ZPoly.modP p core).isZero = false) :
     Hex.monicModularImage (Hex.ZPoly.modP p core) = Hex.ZPoly.modP p core := by
   -- `core.size > 0` from monicness.
-  have hcore_size_pos : 0 < core.size := by
-    by_contra hneg
-    have hsize_zero : core.size = 0 := Nat.eq_zero_of_not_pos hneg
-    have hlead_zero : Hex.DensePoly.leadingCoeff core = 0 := by
-      cases core with
-      | mk coeffs normalized =>
-          simp [Hex.DensePoly.size] at hsize_zero
-          simp [Hex.DensePoly.leadingCoeff, hsize_zero]
-    have : (0 : Int) = 1 := by rw [← hlead_zero]; exact hcore_monic
-    exact (by decide : (0 : Int) ≠ 1) this
+  have hcore_size_pos : 0 < core.size := zpoly_size_pos_of_monic hcore_monic
   have hcore_lead_one : core.coeff (core.size - 1) = 1 := by
     rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
     exact hcore_monic
@@ -6715,20 +6720,6 @@ theorem henselLiftData_liftedFactor_injective_of_factorsModPBerlekampForm
   exact henselLiftData_liftedFactor_injective_of_choosePrimeData
     core B primeData hcore_monic hp_prime hp hB hfactors_monic
     hproduct_mod_p hcoprime hnonempty hfactorsModP_nodup
-
-/-- Monic integer polynomials have positive stored size. -/
-private theorem zpoly_size_pos_of_monic {f : Hex.ZPoly}
-    (h : Hex.DensePoly.Monic f) : 0 < f.size := by
-  have hlead : Hex.DensePoly.leadingCoeff f = (1 : Int) := h
-  rcases Nat.eq_zero_or_pos f.coeffs.size with hcs_zero | hcs_pos
-  · exfalso
-    have hback_none : f.coeffs.back? = none := by
-      rw [Array.back?_eq_getElem?]; simp [hcs_zero]
-    have hlc_zero : Hex.DensePoly.leadingCoeff f = (0 : Int) := by
-      unfold Hex.DensePoly.leadingCoeff; rw [hback_none]; rfl
-    rw [hlc_zero] at hlead
-    exact absurd hlead (by decide)
-  · exact hcs_pos
 
 /-- Monic integer polynomials are nonzero. -/
 theorem zpoly_ne_zero_of_monic {f : Hex.ZPoly}
