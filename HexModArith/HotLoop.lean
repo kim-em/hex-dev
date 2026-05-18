@@ -134,6 +134,43 @@ multiplication surface.
       rw [toNat_mulMod]
       exact (ZMod64.toNat_mul a b).symm)
 
+/--
+Barrett hot-loop multiplication by one on the left returns the original
+standard residue.
+-/
+@[simp] theorem mulMod_one_left (ctx : BarrettCtx p) (a : ZMod64 p) :
+    ctx.mulMod 1 a = a := by
+  rw [mulMod_eq_mul]
+  apply (ZMod64.eq_iff_toNat_eq (1 * a) a).mpr
+  change (ZMod64.mul 1 a).toNat = a.toNat
+  rw [ZMod64.toNat_mul]
+  change ((ZMod64.one : ZMod64 p).toNat * a.toNat) % p = a.toNat
+  rw [ZMod64.toNat_one]
+  simpa [ZMod64.toNat_eq_val] using Nat.mod_eq_of_lt a.toNat_lt
+
+/--
+Barrett hot-loop multiplication by one on the right returns the original
+standard residue.
+-/
+@[simp] theorem mulMod_one_right (ctx : BarrettCtx p) (a : ZMod64 p) :
+    ctx.mulMod a 1 = a := by
+  rw [mulMod_eq_mul]
+  apply (ZMod64.eq_iff_toNat_eq (a * 1) a).mpr
+  change (ZMod64.mul a 1).toNat = a.toNat
+  rw [ZMod64.toNat_mul]
+  change (a.toNat * (ZMod64.one : ZMod64 p).toNat) % p = a.toNat
+  rw [ZMod64.toNat_one]
+  simpa [ZMod64.toNat_eq_val] using Nat.mod_eq_of_lt a.toNat_lt
+
+/-- Barrett hot-loop multiplication is commutative on standard residues. -/
+theorem mulMod_comm (ctx : BarrettCtx p) (a b : ZMod64 p) :
+    ctx.mulMod a b = ctx.mulMod b a := by
+  rw [mulMod_eq_mul, mulMod_eq_mul]
+  apply (ZMod64.eq_iff_toNat_eq (a * b) (b * a)).mpr
+  change (ZMod64.mul a b).toNat = (ZMod64.mul b a).toNat
+  rw [ZMod64.toNat_mul, ZMod64.toNat_mul]
+  exact Nat.mul_comm a.toNat b.toNat ▸ rfl
+
 end BarrettCtx
 
 namespace MontCtx
@@ -290,6 +327,47 @@ leaving Montgomery form agrees with ordinary `ZMod64` multiplication.
       (ctx.fromMont (ctx.mulMont (ctx.toMont a) (ctx.toMont b))) (a * b)).mpr (by
         rw [toNat_mulMont]
         exact (ZMod64.toNat_mul a b).symm)
+
+/--
+The Montgomery round trip for a wrapped product returns the original residue
+when the left standard input is one.
+-/
+@[simp] theorem fromMont_mulMont_toMont_one_left (ctx : MontCtx p) (a : ZMod64 p) :
+    ctx.fromMont (ctx.mulMont (ctx.toMont 1) (ctx.toMont a)) = a := by
+  rw [fromMont_mulMont_toMont]
+  apply (ZMod64.eq_iff_toNat_eq (1 * a) a).mpr
+  change (ZMod64.mul 1 a).toNat = a.toNat
+  rw [ZMod64.toNat_mul]
+  change ((ZMod64.one : ZMod64 p).toNat * a.toNat) % p = a.toNat
+  rw [ZMod64.toNat_one]
+  simpa [ZMod64.toNat_eq_val] using Nat.mod_eq_of_lt a.toNat_lt
+
+/--
+The Montgomery round trip for a wrapped product returns the original residue
+when the right standard input is one.
+-/
+@[simp] theorem fromMont_mulMont_toMont_one_right (ctx : MontCtx p) (a : ZMod64 p) :
+    ctx.fromMont (ctx.mulMont (ctx.toMont a) (ctx.toMont 1)) = a := by
+  rw [fromMont_mulMont_toMont]
+  apply (ZMod64.eq_iff_toNat_eq (a * 1) a).mpr
+  change (ZMod64.mul a 1).toNat = a.toNat
+  rw [ZMod64.toNat_mul]
+  change (a.toNat * (ZMod64.one : ZMod64 p).toNat) % p = a.toNat
+  rw [ZMod64.toNat_one]
+  simpa [ZMod64.toNat_eq_val] using Nat.mod_eq_of_lt a.toNat_lt
+
+/--
+The Montgomery round trip for a wrapped product is commutative on standard
+residue inputs.
+-/
+theorem fromMont_mulMont_toMont_comm (ctx : MontCtx p) (a b : ZMod64 p) :
+    ctx.fromMont (ctx.mulMont (ctx.toMont a) (ctx.toMont b)) =
+      ctx.fromMont (ctx.mulMont (ctx.toMont b) (ctx.toMont a)) := by
+  rw [fromMont_mulMont_toMont, fromMont_mulMont_toMont]
+  apply (ZMod64.eq_iff_toNat_eq (a * b) (b * a)).mpr
+  change (ZMod64.mul a b).toNat = (ZMod64.mul b a).toNat
+  rw [ZMod64.toNat_mul, ZMod64.toNat_mul]
+  exact Nat.mul_comm a.toNat b.toNat ▸ rfl
 
 end MontCtx
 
