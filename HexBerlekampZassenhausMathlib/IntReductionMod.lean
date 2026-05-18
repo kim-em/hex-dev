@@ -3337,9 +3337,10 @@ discharged by #4637 via `defaultFactorCoeffBound_pos_of_ne_zero` and
 `precisionForCoeffBound_spec`.)
 
 Downstream consumers (notably the HO-1 capstone #4170 / #4819)
-currently route through the public umbrella's
-`_of_bound` sibling at line 4328 (which discharges Gap 3 against an
-abstract bound) and supply `hcore_monic` directly. Closing the
+currently route through the public umbrella's `_of_bound` sibling
+`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound`
+(which discharges Gap 3 against an abstract bound) and supply
+`hcore_monic` directly. Closing the
 remaining Gap 1 requires a directive-level decision per #4880; see
 the **#4880 / #4940** addendum below.
 
@@ -3358,7 +3359,9 @@ through the discharger.
 **#4982:** the original `hprecision` shim (Gap 3) now has an
 abstract-bound route. The sibling
 `factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound`
-(landed in PR #4982 at line 4328) replaces the core-shape
+(landed in PR #4982 as
+`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound`)
+replaces the core-shape
 `hprecision` with the abstract triple `(B', hcore_lc_le, hvalid,
 hprecision : 2 * B' < d.p ^ d.k)`. Downstream consumers wanting
 to discharge `hprecision` against an outer-shape Mignotte witness
@@ -4323,23 +4326,11 @@ Public surface of the exhaustive-arm HO-1 umbrella. Gap 2
 (`hprecision`) is exposed in this wrapper's signature against the
 core-shape Mignotte threshold; downstream consumers wanting the
 abstract-bound surface (notably the HO-1 capstone #4170 / #4819)
-should route through the `_of_bound` sibling at line 4328 (PR
-#4982). Gap 1 (`hcore_monic`) remains directive-level blocked per
+should route through the `_of_bound` sibling
+`factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound`
+(PR #4982). Gap 1 (`hcore_monic`) remains directive-level blocked per
 #4880 / #4940 audit; see the `_aux` docstring above for the full
 architectural finding.
-
-The body proceeds in two steps:
-
-1. Apply `reassemblyExpansionComplete_exhaustive_of_ne_zero` to construct
-   the `hcomplete` witness from `(f, hf_ne, hbranch, hchoose, hcore_monic,
-   hprecision)`.
-2. Apply the internal residual
-   `factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux`,
-   which carries the existing wrapper composition unchanged.
-
-Factoring through the internal residual avoids the heartbeat spike the
-previous direct rewiring attempt exposed at the existing wrapper
-application.
 
 Thin wrapper over
 `factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound`
@@ -4363,7 +4354,9 @@ theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData
       (Hex.normalizeForFactor f).squareFreeCore)
     -- Gap 3 (substrate): explicit on this wrapper; downstream consumers
     -- wanting an outer-shape bound should route through the `_of_bound`
-    -- sibling at line 4328 (PR #4982).
+    -- sibling
+    -- `factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound`
+    -- (PR #4982).
     (hprecision :
       2 * Hex.ZPoly.defaultFactorCoeffBound
         (Hex.normalizeForFactor f).squareFreeCore <
