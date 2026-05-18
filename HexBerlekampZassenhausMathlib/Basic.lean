@@ -8352,51 +8352,57 @@ theorem natDegree_toPolynomial_scaledRecombinationCandidate_eq_sum
   rw [HexPolyMathlib.leadingCoeff_toPolynomial]
   exact hd_liftedFactor_monic i
 
-/--
-Primitive + positive-leading-core variant of
-`natDegree_toPolynomial_eq_sum_of_represents` (#4646).
+/-- Abstract-bound variant of
+`natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core`:
+takes `B' : Nat`, `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`,
+`hcore_lc_bound : (lc core).natAbs ≤ B'`, and
+`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`defaultFactorCoeffBound core` precision constraint.
 
-For primitive non-monic `core`, the represented factor's natDegree equals the
-sum of natDegrees of the selected lifted factors. The proof routes through the
-scaled recovery identity `scaledRecombinationCandidate core d S = factor`
-(#4652) and the size identities
-`factor.size = (scaledLiftedFactorProduct core d S).size =
- (liftedFactorProduct d S).size`. Scaling by `C (lc core)` and the centred lift
-both preserve stored size under the Mignotte half-window bound on `lc core`,
-so the sum decomposition `natDegree_prod_of_monic` over `liftedFactorProduct`
-applies unchanged. The `hcore_primitive` and `hfactor_irr` hypotheses are
-threaded for API uniformity with the monic variant but are not used by the
-proof; the natDegree extraction depends only on the leading-coefficient bound
-and the primitive/sign-normalised facts on `factor` consumed by #4652.
+The unscaled `_hrec_scaled` step from the existing proof is dropped
+entirely — its result was never consumed — and the centred-lift
+recovery call is routed through
+`centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound`
+in place of the core-shape recovery. Both changes make this sibling
+independent of `scaledRecombinationCandidate_eq_factor_of_recovery`
+and hence of the scaled recovery-candidate `_of_bound` chain (#4882).
+
+Note: this sibling needs `hcore_lc_bound` in addition to `hvalid`
+because the size-preservation step
+`size_centeredLiftPoly_eq_of_pos_leadingCoeff_bound` consumes a
+leading-coefficient bound on `scaledLiftedFactorProduct core d S`,
+whose leading coefficient is `lc core`. Without a `B'`-shape bound
+on `lc core` itself, the abstract-precision hypothesis cannot
+discharge that lemma's separation requirement. The existing
+core-shape wrapper supplies this from
+`defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self`.
 -/
-theorem natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core
+theorem natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core_of_bound
     {core factor : Hex.ZPoly} {d : Hex.LiftData}
     {S : LiftedFactorSubset d}
+    (B' : Nat)
+    (hvalid : ∀ i, (factor.coeff i).natAbs ≤ B')
+    (hcore_lc_bound : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
     (hcore_ne : core ≠ 0)
     (_hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hd_liftedFactor_monic :
       ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
-    (hprecision :
-      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
-    (hdvd : factor ∣ core)
+    (_hdvd : factor ∣ core)
     (_hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor))
-    (hfactor_prim : Hex.ZPoly.content factor = 1)
-    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
-    (hrep : RepresentsIntegerFactorAtLift core d factor S) :
+    (_hfactor_prim : Hex.ZPoly.content factor = 1)
+    (_hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hprecision : 2 * B' < d.p ^ d.k) :
     (HexPolyZMathlib.toPolynomial factor).natDegree =
       ∑ i ∈ S,
         (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree := by
-  -- The scaled recovery identifies the scaled recombination candidate with `factor`.
-  have _hrec_scaled : scaledRecombinationCandidate core d S = factor :=
-    scaledRecombinationCandidate_eq_factor_of_recovery
-      hcore_ne hdvd hfactor_prim hfactor_norm hrep hprecision
-  -- Centred-lift form of the recovery.
+  -- Centred-lift form of the recovery, abstract-bound variant.
   have hcenter :
       Hex.centeredLiftPoly (scaledLiftedFactorProduct core d S) (d.p ^ d.k) =
         factor :=
-    centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
-      hcore_ne hdvd hrep hprecision
+    centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound
+      B' hvalid hrep hprecision
   -- Monic lifted-factor product.
   set lp := liftedFactorProduct d S with hlp_def
   have hlp_monic : Hex.DensePoly.Monic lp :=
@@ -8419,35 +8425,9 @@ theorem natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core
   have hslp_lc_pos :
       0 < Hex.DensePoly.leadingCoeff (scaledLiftedFactorProduct core d S) := by
     rw [hslp_lc]; exact hcore_lc_pos
-  -- Bound on `lc core` against the Mignotte half-window.
-  have hcore_size_pos : 0 < core.size := by
-    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
-    · exfalso
-      have hback_none : core.coeffs.back? = none := by
-        rw [Array.back?_eq_getElem?]
-        have hcoeffs_size : core.coeffs.size = 0 := by
-          simpa [Hex.DensePoly.size] using hzero
-        simp [hcoeffs_size]
-      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
-        unfold Hex.DensePoly.leadingCoeff
-        rw [hback_none]
-        rfl
-      rw [hlc_zero] at hcore_lc_pos
-      omega
-    · exact hpos
-  have hcore_lc_bound :
-      (Hex.DensePoly.leadingCoeff core).natAbs ≤
-        Hex.ZPoly.defaultFactorCoeffBound core := by
-    have hcore_dvd_self : core ∣ core :=
-      ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
-    have hbound :=
-      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
-        (core.size - 1)
-    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
-    exact hbound
   have hslp_lc_bound :
       (Hex.DensePoly.leadingCoeff (scaledLiftedFactorProduct core d S)).natAbs ≤
-        Hex.ZPoly.defaultFactorCoeffBound core := by
+        B' := by
     rwa [hslp_lc]
   -- Centred lift preserves the size of the scaled product.
   have hcl_size :
@@ -8474,6 +8454,79 @@ theorem natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core
   show (HexPolyZMathlib.toPolynomial (liftedFactor d i)).leadingCoeff = 1
   rw [HexPolyMathlib.leadingCoeff_toPolynomial]
   exact hd_liftedFactor_monic i
+
+/--
+Primitive + positive-leading-core variant of
+`natDegree_toPolynomial_eq_sum_of_represents` (#4646).
+
+For primitive non-monic `core`, the represented factor's natDegree equals the
+sum of natDegrees of the selected lifted factors. The proof routes through the
+scaled recovery identity `scaledRecombinationCandidate core d S = factor`
+(#4652) and the size identities
+`factor.size = (scaledLiftedFactorProduct core d S).size =
+ (liftedFactorProduct d S).size`. Scaling by `C (lc core)` and the centred lift
+both preserve stored size under the Mignotte half-window bound on `lc core`,
+so the sum decomposition `natDegree_prod_of_monic` over `liftedFactorProduct`
+applies unchanged. The `hcore_primitive` and `hfactor_irr` hypotheses are
+threaded for API uniformity with the monic variant but are not used by the
+proof; the natDegree extraction depends only on the leading-coefficient bound
+and the primitive/sign-normalised facts on `factor` consumed by #4652.
+
+This is a thin wrapper over
+`natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core_of_bound`
+that instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound core` and discharges
+`hvalid` via `defaultFactorCoeffBound_valid core hcore_ne factor hdvd` and the
+leading-coefficient bound via
+`defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self`.
+-/
+theorem natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core
+    {core factor : Hex.ZPoly} {d : Hex.LiftData}
+    {S : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hdvd : factor ∣ core)
+    (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hfactor_prim : Hex.ZPoly.content factor = 1)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S) :
+    (HexPolyZMathlib.toPolynomial factor).natDegree =
+      ∑ i ∈ S,
+        (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree := by
+  have hcore_dvd_self : core ∣ core :=
+    ⟨(1 : Hex.ZPoly), (Hex.DensePoly.mul_one_right_poly core).symm⟩
+  have hcore_size_pos : 0 < core.size := by
+    rcases Nat.eq_zero_or_pos core.size with hzero | hpos
+    · exfalso
+      have hback_none : core.coeffs.back? = none := by
+        rw [Array.back?_eq_getElem?]
+        have hcoeffs_size : core.coeffs.size = 0 := by
+          simpa [Hex.DensePoly.size] using hzero
+        simp [hcoeffs_size]
+      have hlc_zero : Hex.DensePoly.leadingCoeff core = (0 : Int) := by
+        unfold Hex.DensePoly.leadingCoeff
+        rw [hback_none]
+        rfl
+      rw [hlc_zero] at hcore_lc_pos
+      omega
+    · exact hpos
+  have hcore_lc_bound :
+      (Hex.DensePoly.leadingCoeff core).natAbs ≤
+        Hex.ZPoly.defaultFactorCoeffBound core := by
+    have hbound :=
+      defaultFactorCoeffBound_valid core hcore_ne core hcore_dvd_self
+        (core.size - 1)
+    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last core hcore_size_pos]
+    exact hbound
+  exact natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound core)
+    (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
+    hcore_lc_bound hcore_ne hcore_primitive hcore_lc_pos hd_liftedFactor_monic
+    hdvd hfactor_irr hfactor_prim hfactor_norm hrep hprecision
 
 /-- Converse to `toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord`: if the
 transported polynomial is non-zero and a non-unit, then the executable
