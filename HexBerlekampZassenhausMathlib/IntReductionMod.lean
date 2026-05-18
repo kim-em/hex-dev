@@ -1053,6 +1053,17 @@ theorem zpoly_primitive_of_toPolynomial_isPrimitive
   · rw [hneg] at hcontent_nonneg; omega
 
 /--
+Composition of `normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive`
+and `zpoly_primitive_of_toPolynomial_isPrimitive`: from `f ≠ 0` derive
+`Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore` in one step.
+-/
+theorem normalizeForFactor_squareFreeCore_primitive_of_ne_zero
+    (f : Hex.ZPoly) (hf : f ≠ 0) :
+    Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore :=
+  zpoly_primitive_of_toPolynomial_isPrimitive
+    (normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive f hf)
+
+/--
 Helper for the coprime inductive step of
 `gcd_derivative_associated_divRadical_of_charZero`. In any `GCDMonoid`,
 divisibility into a product factors through the component gcds:
@@ -2478,10 +2489,7 @@ theorem reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero
   classical
   -- Discharge prerequisites for the squareFreeCore.
   have hcore_pos := Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf
-  have hcore_primitive :
-      Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore :=
-    zpoly_primitive_of_toPolynomial_isPrimitive
-      (normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive f hf)
+  have hcore_primitive := normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf
   -- Per-factor invariants from the quadratic branch.
   have hirr : ∀ q ∈ coreFactors.toList, Hex.ZPoly.Irreducible q := fun q hq =>
     Hex.quadraticIntegerRootFactors?_factor_irreducible_of_primitive
@@ -2968,11 +2976,8 @@ theorem factor_quadratic_branch_entry_irreducible_of_quadraticRoots
     Hex.factorWithBound_entry_mem_quadratic_branch_raw f B entry hB_gt_one hdeg
       hquad hentry_mem
   -- Primitivity of squareFreeCore via the Mathlib bridge.
-  have hcore_primitive :
-      Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore :=
-    IntReductionMod.zpoly_primitive_of_toPolynomial_isPrimitive
-      (IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive
-        f hf_ne)
+  have hcore_primitive :=
+    IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf_ne
   have hcore_pos :
       0 < Hex.DensePoly.leadingCoeff
         (Hex.normalizeForFactor f).squareFreeCore :=
@@ -3071,11 +3076,8 @@ theorem factor_slow_quadratic_branch_entry_irreducible_of_choosePrimeData
     Hex.factorWithBound_entry_mem_slow_quadratic_branch_raw f B entry hdeg
       hquad hfast_none hentry_mem
   -- Primitivity of squareFreeCore via the Mathlib bridge.
-  have hcore_primitive :
-      Hex.ZPoly.Primitive (Hex.normalizeForFactor f).squareFreeCore :=
-    IntReductionMod.zpoly_primitive_of_toPolynomial_isPrimitive
-      (IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive
-        f hf_ne)
+  have hcore_primitive :=
+    IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf_ne
   have hcore_pos :
       0 < Hex.DensePoly.leadingCoeff
         (Hex.normalizeForFactor f).squareFreeCore :=
