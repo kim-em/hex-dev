@@ -1297,6 +1297,24 @@ private theorem fpPoly_dvd_trans
   rw [hv, hq]
   exact Hex.FpPoly.mul_assoc _ _ _
 
+/-- Products of divisors divide products at the executable `Hex.FpPoly p`
+level. The `Dvd` instance on `Hex.FpPoly p` is the bespoke
+`instDvdOfAddOfMul` (witness shape `b = a * r`), so Mathlib's
+`mul_dvd_mul` does not see through it. -/
+private theorem fpPoly_mul_dvd_mul
+    {p : Nat} [Hex.ZMod64.Bounds p]
+    {a b c d : Hex.FpPoly p} (hab : a ∣ b) (hcd : c ∣ d) :
+    a * c ∣ b * d := by
+  obtain ⟨q, hq⟩ := hab
+  obtain ⟨v, hv⟩ := hcd
+  refine ⟨q * v, ?_⟩
+  rw [hq, hv]
+  rw [Hex.FpPoly.mul_assoc a q (c * v)]
+  rw [← Hex.FpPoly.mul_assoc q c v]
+  rw [Hex.FpPoly.mul_comm q c]
+  rw [Hex.FpPoly.mul_assoc c q v]
+  rw [← Hex.FpPoly.mul_assoc a c (q * v)]
+
 theorem monicModPImage_dvd_monicModularImage_of_dvd_of_choosePrimeData?_some
     {core factor : Hex.ZPoly}
     (hdvd : factor ∣ core)
@@ -5661,26 +5679,8 @@ private theorem quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
                 rawGcd ∣ Hex.Berlekamp.factorProduct (h :: tail) :=
               Hex.DensePoly.gcd_dvd_right g (Hex.Berlekamp.factorProduct (h :: tail))
             have hrawGcd_sq_dvd_prod :
-                rawGcd * rawGcd ∣ g * Hex.Berlekamp.factorProduct (h :: tail) := by
-              rcases hrawGcd_dvd_g with ⟨ka, hka⟩
-              rcases hrawGcd_dvd_tail with ⟨kb, hkb⟩
-              refine ⟨ka * kb, ?_⟩
-              rw [hka, hkb]
-              -- (rawGcd * ka) * (rawGcd * kb) = (rawGcd * rawGcd) * (ka * kb)
-              calc rawGcd * ka * (rawGcd * kb)
-                  = rawGcd * (ka * (rawGcd * kb)) :=
-                      Hex.DensePoly.mul_assoc_poly _ _ _
-                _ = rawGcd * (ka * rawGcd * kb) :=
-                      congrArg (rawGcd * ·)
-                        (Hex.DensePoly.mul_assoc_poly _ _ _).symm
-                _ = rawGcd * (rawGcd * ka * kb) :=
-                      congrArg (fun x => rawGcd * (x * kb))
-                        (Hex.DensePoly.mul_comm_poly _ _)
-                _ = rawGcd * (rawGcd * (ka * kb)) :=
-                      congrArg (rawGcd * ·)
-                        (Hex.DensePoly.mul_assoc_poly _ _ _)
-                _ = rawGcd * rawGcd * (ka * kb) :=
-                      (Hex.DensePoly.mul_assoc_poly _ _ _).symm
+                rawGcd * rawGcd ∣ g * Hex.Berlekamp.factorProduct (h :: tail) :=
+              fpPoly_mul_dvd_mul hrawGcd_dvd_g hrawGcd_dvd_tail
             have hcons_prod :
                 g * Hex.Berlekamp.factorProduct (h :: tail) =
                   Hex.Berlekamp.factorProduct (g :: h :: tail) :=
