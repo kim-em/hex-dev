@@ -11896,6 +11896,72 @@ theorem expandRepeatedPartFactorArray_pow_singleton
   unfold expandRepeatedPartFactorsAux
   simp
 
+/-- **#4955 substrate — non-monic singleton arm expansion specialisation.**
+Non-monic counterpart of `expandRepeatedPartFactorArray_pow_singleton`:
+replaces the `Monic q` premise by `0 < leadingCoeff q`, with a
+**weakened conclusion** — only the residual projection `.2 = 1`, not the
+full pair. The full-pair version has no non-monic counterpart at the
+executable layer (`consumeExactPower_pow_mul_of_not_dvd` is genuinely
+monic-only; under non-monic `q`, the recursive `consumeExactPower` step's
+quotient is not in general a power of `q`, even if the residual collapses
+to `1`). The residual-only form suffices for the mid-layer
+`_of_pos_lc` sibling of
+`reassemblyExpansionComplete_singleton_of_irreducible` (#4956), which
+unfolds `reassemblyExpansionComplete` to `(expand ...).2 = 1`. The
+proof routes through the array-level public surface
+`expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc`
+(#4778) specialised to `coreFactors = #[q]`, `exponents = [k]`. -/
+theorem expandRepeatedPartFactorArray_pow_singleton_of_pos_lc
+    (q : ZPoly) (k : Nat)
+    (hq_pos_lc : 0 < DensePoly.leadingCoeff q)
+    (hq_degree : 0 < q.degree?.getD 0)
+    (hq_irr : ZPoly.Irreducible q)
+    (rp : ZPoly) (hrp : rp = Factorization.factorPower q k)
+    (hfuel : k + 1 ≤ rp.size + 1) :
+    (expandRepeatedPartFactorArray rp #[q]).2 = 1 := by
+  have hsingleton_toList : (#[q] : Array ZPoly).toList = [q] := rfl
+  refine expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc
+    rp #[q] ?hpos_lc ?hdegree [k] ?hlen ?hnot_dvd_tail ?hdecomp ?hfuel
+  · intro q' hq'
+    rw [hsingleton_toList] at hq'
+    have : q' = q := by simpa using hq'
+    rw [this]; exact hq_pos_lc
+  · intro q' hq'
+    rw [hsingleton_toList] at hq'
+    have : q' = q := by simpa using hq'
+    rw [this]; exact hq_degree
+  · rfl
+  · intro pre q' e suf hsplit
+    -- The zip reduces to `[(q, k)]`; length forces `pre = []` and `suf = []`.
+    rw [hsingleton_toList] at hsplit
+    have hzip : ([q] : List ZPoly).zip [k] = [(q, k)] := rfl
+    rw [hzip] at hsplit
+    have hlen_eq : 1 = pre.length + (suf.length + 1) := by
+      have := congrArg List.length hsplit
+      simpa using this
+    have hpre_len : pre.length = 0 := by omega
+    have hsuf_len : suf.length = 0 := by omega
+    have hpre : pre = [] := List.length_eq_zero_iff.mp hpre_len
+    have hsuf : suf = [] := List.length_eq_zero_iff.mp hsuf_len
+    subst hpre; subst hsuf
+    -- hsplit : [(q, k)] = [(q', e)]
+    have hq'_eq : q' = q := by
+      have h := hsplit
+      simp at h
+      exact h.1.symm
+    simp only [List.map_nil, List.foldl_nil]
+    rw [hq'_eq]
+    exact irreducible_not_dvd_one hq_irr
+  · rw [hrp, hsingleton_toList]
+    simp only [List.zip_cons_cons, List.zip_nil_right, List.map_cons, List.map_nil,
+      List.foldl_cons, List.foldl_nil, ZPoly.one_mul_zpoly]
+  · intro qe hqe
+    rw [hsingleton_toList] at hqe
+    simp only [List.zip_cons_cons, List.zip_nil_right, List.mem_cons,
+      List.not_mem_nil, or_false] at hqe
+    rw [hqe]
+    exact hfuel
+
 /-- The reassembled output for a single-`1` core list is exactly the
 normalization prefix followed by `1`. Both branches of `reassemblePolynomialFactors`
 collapse to this shape because the expansion never extracts anything when the
