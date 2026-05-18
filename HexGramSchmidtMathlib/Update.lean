@@ -1006,6 +1006,74 @@ theorem bareiss_scaledCoeffMatrix_rowSwap_above_curr
   rw [hnu'_rat, hdk_rat, hdkp1_rat, hB_rat, hnuik_rat, hnuikm1_rat]
   linear_combination (G * Nkm1) * hkey
 
+/-! ### Adjacent-swap scaled-coefficient quotient formulas for rows above the pivot
+
+For `i > k`, after the adjacent swap of rows `km1, k`, the new scaled
+coefficients at the `km1` and `k` columns are integer quotients of the
+corresponding `adjacentSwapScaledCoeff*Numerator` definitions by the
+pre-swap pivot `adjacentSwapDenom b k = gramDet b k.val`. Both pairs follow
+from the bordered-minor identities `bareiss_scaledCoeffMatrix_rowSwap_above_prev`
+and `_above_curr` once we bridge `bareiss → scaledCoeffs` via
+`scaledCoeffs_eq_scaledCoeffMatrix_bareiss`. -/
+
+theorem adjacentSwap_scaledCoeffAbovePrevNumerator_dvd (b : Matrix Int n m)
+    (k : Fin n) (hk : 0 < k.val) (i : Fin n) (hki : k.val < i.val)
+    (hdet : gramDet b k.val (Nat.le_of_lt k.isLt) ≠ 0) :
+    adjacentSwapDenom b k ∣ adjacentSwapScaledCoeffAbovePrevNumerator b k hk i := by
+  have h := bareiss_scaledCoeffMatrix_rowSwap_above_prev b k hk i hki hdet
+  show ((gramDet b k.val (Nat.le_of_lt k.isLt) : Nat) : Int) ∣
+      adjacentSwapScaledCoeffAbovePrevNumerator b k hk i
+  rw [← h]
+  exact ⟨_, Int.mul_comm _ _⟩
+
+theorem adjacentSwap_scaledCoeffAboveCurrNumerator_dvd (b : Matrix Int n m)
+    (k : Fin n) (hk : 0 < k.val) (i : Fin n) (hki : k.val < i.val)
+    (hdet : gramDet b k.val (Nat.le_of_lt k.isLt) ≠ 0) :
+    adjacentSwapDenom b k ∣ adjacentSwapScaledCoeffAboveCurrNumerator b k hk i := by
+  have h := bareiss_scaledCoeffMatrix_rowSwap_above_curr b k hk i hki hdet
+  show ((gramDet b k.val (Nat.le_of_lt k.isLt) : Nat) : Int) ∣
+      adjacentSwapScaledCoeffAboveCurrNumerator b k hk i
+  rw [← h]
+  exact ⟨_, Int.mul_comm _ _⟩
+
+theorem scaledCoeffs_adjacentSwap_above_prev (b : Matrix Int n m)
+    (k : Fin n) (hk : 0 < k.val) (i : Fin n) (hki : k.val < i.val)
+    (hdet : gramDet b k.val (Nat.le_of_lt k.isLt) ≠ 0) :
+    GramSchmidt.entry (scaledCoeffs (adjacentSwap b k hk)) i
+        (GramSchmidt.prevRow k hk) =
+      adjacentSwapScaledCoeffAbovePrevNumerator b k hk i / adjacentSwapDenom b k := by
+  have hkm1i : (GramSchmidt.prevRow k hk).val < i.val := by
+    dsimp [GramSchmidt.prevRow]; omega
+  have hdk_pos : ((gramDet b k.val (Nat.le_of_lt k.isLt) : Nat) : Int) ≠ 0 := by
+    intro hzero; exact hdet (Int.ofNat.inj hzero)
+  have h := bareiss_scaledCoeffMatrix_rowSwap_above_prev b k hk i hki hdet
+  have hbridge := scaledCoeffs_eq_scaledCoeffMatrix_bareiss
+    (Matrix.rowSwap b (GramSchmidt.prevRow k hk) k) i (GramSchmidt.prevRow k hk) hkm1i
+  show GramSchmidt.entry
+        (scaledCoeffs (Matrix.rowSwap b (GramSchmidt.prevRow k hk) k))
+        i (GramSchmidt.prevRow k hk) =
+      adjacentSwapScaledCoeffAbovePrevNumerator b k hk i /
+        ((gramDet b k.val (Nat.le_of_lt k.isLt) : Nat) : Int)
+  rw [hbridge, ← h]
+  exact (Int.mul_ediv_cancel _ hdk_pos).symm
+
+theorem scaledCoeffs_adjacentSwap_above_curr (b : Matrix Int n m)
+    (k : Fin n) (hk : 0 < k.val) (i : Fin n) (hki : k.val < i.val)
+    (hdet : gramDet b k.val (Nat.le_of_lt k.isLt) ≠ 0) :
+    GramSchmidt.entry (scaledCoeffs (adjacentSwap b k hk)) i k =
+      adjacentSwapScaledCoeffAboveCurrNumerator b k hk i / adjacentSwapDenom b k := by
+  have hdk_pos : ((gramDet b k.val (Nat.le_of_lt k.isLt) : Nat) : Int) ≠ 0 := by
+    intro hzero; exact hdet (Int.ofNat.inj hzero)
+  have h := bareiss_scaledCoeffMatrix_rowSwap_above_curr b k hk i hki hdet
+  have hbridge := scaledCoeffs_eq_scaledCoeffMatrix_bareiss
+    (Matrix.rowSwap b (GramSchmidt.prevRow k hk) k) i k hki
+  show GramSchmidt.entry
+        (scaledCoeffs (Matrix.rowSwap b (GramSchmidt.prevRow k hk) k)) i k =
+      adjacentSwapScaledCoeffAboveCurrNumerator b k hk i /
+        ((gramDet b k.val (Nat.le_of_lt k.isLt) : Nat) : Int)
+  rw [hbridge, ← h]
+  exact (Int.mul_ediv_cancel _ hdk_pos).symm
+
 end GramSchmidt.Int
 
 end Hex
