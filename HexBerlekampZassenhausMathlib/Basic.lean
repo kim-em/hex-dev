@@ -8119,6 +8119,19 @@ theorem zpoly_ne_zero_of_pos_lc {f : Hex.ZPoly}
   rw [hzero_lc] at hpos
   omega
 
+/-- A `Hex.ZPoly` with positive leading coefficient has positive stored size. -/
+private theorem zpoly_size_pos_of_pos_lc {f : Hex.ZPoly}
+    (hpos : 0 < Hex.DensePoly.leadingCoeff f) : 0 < f.size := by
+  rcases Nat.eq_zero_or_pos f.coeffs.size with hcs_zero | hcs_pos
+  · exfalso
+    have hback_none : f.coeffs.back? = none := by
+      rw [Array.back?_eq_getElem?]; simp [hcs_zero]
+    have hlc_zero : Hex.DensePoly.leadingCoeff f = (0 : Int) := by
+      unfold Hex.DensePoly.leadingCoeff; rw [hback_none]; rfl
+    rw [hlc_zero] at hpos
+    omega
+  · exact hcs_pos
+
 private theorem zpoly_eq_one_of_toPolynomial_isUnit_of_pos_lc
     {f : Hex.ZPoly}
     (hpos : 0 < Hex.DensePoly.leadingCoeff f)
@@ -8192,21 +8205,7 @@ private theorem leadingCoeff_centeredLiftPoly_of_pos_leadingCoeff_bound
     (hsep : 2 * B < m) :
     Hex.DensePoly.leadingCoeff (Hex.centeredLiftPoly g m) =
       Hex.DensePoly.leadingCoeff g := by
-  have hg_size_pos : 0 < g.size := by
-    rcases Nat.eq_zero_or_pos g.size with hzero | hpos
-    · exfalso
-      have hback_none : g.coeffs.back? = none := by
-        rw [Array.back?_eq_getElem?]
-        have hcoeffs_size : g.coeffs.size = 0 := by
-          simpa [Hex.DensePoly.size] using hzero
-        simp [hcoeffs_size]
-      have hlc_zero : Hex.DensePoly.leadingCoeff g = (0 : Int) := by
-        unfold Hex.DensePoly.leadingCoeff
-        rw [hback_none]
-        rfl
-      rw [hlc_zero] at hg_lc_pos
-      omega
-    · exact hpos
+  have hg_size_pos : 0 < g.size := zpoly_size_pos_of_pos_lc hg_lc_pos
   have hg_lead :
       g.coeff (g.size - 1) = Hex.DensePoly.leadingCoeff g := by
     rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last g hg_size_pos]
@@ -8395,21 +8394,7 @@ private theorem size_centeredLiftPoly_eq_of_pos_leadingCoeff_bound
     (hbound_lc : (Hex.DensePoly.leadingCoeff g).natAbs ≤ B)
     (hsep : 2 * B < m) :
     (Hex.centeredLiftPoly g m).size = g.size := by
-  have hg_size_pos : 0 < g.size := by
-    rcases Nat.eq_zero_or_pos g.size with hzero | hpos
-    · exfalso
-      have hback_none : g.coeffs.back? = none := by
-        rw [Array.back?_eq_getElem?]
-        have hcoeffs_size : g.coeffs.size = 0 := by
-          simpa [Hex.DensePoly.size] using hzero
-        simp [hcoeffs_size]
-      have hlc_zero : Hex.DensePoly.leadingCoeff g = (0 : Int) := by
-        unfold Hex.DensePoly.leadingCoeff
-        rw [hback_none]
-        rfl
-      rw [hlc_zero] at hg_lc_pos
-      omega
-    · exact hpos
+  have hg_size_pos : 0 < g.size := zpoly_size_pos_of_pos_lc hg_lc_pos
   have hg_lead :
       g.coeff (g.size - 1) = Hex.DensePoly.leadingCoeff g := by
     rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last g hg_size_pos]
