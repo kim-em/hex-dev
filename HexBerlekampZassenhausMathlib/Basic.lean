@@ -4452,6 +4452,36 @@ private theorem zpoly_size_pos_of_monic {f : Hex.ZPoly}
     exact absurd hlead (by decide)
   · exact hcs_pos
 
+/-- Monic integer polynomials are primitive (content 1). -/
+theorem zpoly_primitive_of_monic {f : Hex.ZPoly}
+    (h : Hex.DensePoly.Monic f) : Hex.ZPoly.Primitive f := by
+  have hlead : Hex.DensePoly.leadingCoeff f = (1 : Int) := h
+  have hcs_pos : 0 < f.coeffs.size := zpoly_size_pos_of_monic h
+  have hsize_pos : 0 < f.size := hcs_pos
+  have hcoeff_last : f.coeff (f.size - 1) = (1 : Int) := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last f hsize_pos]
+    exact hlead
+  have hdvd_one : Hex.ZPoly.content f ∣ (1 : Int) := by
+    have := Hex.DensePoly.content_dvd_coeff f (f.size - 1)
+    rwa [hcoeff_last] at this
+  have hcontent_nonneg : (0 : Int) ≤ Hex.ZPoly.content f := by
+    unfold Hex.ZPoly.content Hex.DensePoly.content
+    exact Int.natCast_nonneg _
+  rcases Int.isUnit_iff.mp (isUnit_of_dvd_one hdvd_one) with hpos | hneg
+  · exact hpos
+  · exfalso
+    rw [hneg] at hcontent_nonneg
+    exact absurd hcontent_nonneg (by decide)
+
+/-- Monic integer polynomials are fixed by `Hex.normalizeFactorSign`. -/
+theorem zpoly_normalize_factor_sign_of_monic {f : Hex.ZPoly}
+    (h : Hex.DensePoly.Monic f) : Hex.normalizeFactorSign f = f := by
+  have hlead : Hex.DensePoly.leadingCoeff f = (1 : Int) := h
+  unfold Hex.normalizeFactorSign
+  have hnot_neg : ¬ Hex.DensePoly.leadingCoeff f < 0 := by
+    rw [hlead]; decide
+  simp [hnot_neg]
+
 /--
 A monic integer polynomial automatically has primitive content and is its own
 sign-normalisation. This packages the two normalisation hypotheses required
@@ -4472,34 +4502,10 @@ theorem monic_primitive_sign_normalized_of_monic
     {factor : Hex.ZPoly} (hfactor_monic : Hex.DensePoly.Monic factor) :
     Hex.DensePoly.Monic factor ∧
       Hex.ZPoly.content factor = 1 ∧
-        Hex.normalizeFactorSign factor = factor := by
-  have hlead : Hex.DensePoly.leadingCoeff factor = (1 : Int) := hfactor_monic
-  have hcs_pos : 0 < factor.coeffs.size :=
-    zpoly_size_pos_of_monic hfactor_monic
-  have hsize_pos : 0 < factor.size := hcs_pos
-  have hcoeff_last : factor.coeff (factor.size - 1) = (1 : Int) := by
-    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last factor hsize_pos]
-    exact hlead
-  refine ⟨hfactor_monic, ?_, ?_⟩
-  · -- content factor = 1: content divides every coefficient, including the
-    --   leading coefficient 1, and content is non-negative, so content = 1.
-    have hdvd_one : Hex.ZPoly.content factor ∣ (1 : Int) := by
-      have := Hex.DensePoly.content_dvd_coeff factor (factor.size - 1)
-      rwa [hcoeff_last] at this
-    have hcontent_nonneg : (0 : Int) ≤ Hex.ZPoly.content factor := by
-      unfold Hex.ZPoly.content Hex.DensePoly.content
-      exact Int.natCast_nonneg _
-    rcases Int.isUnit_iff.mp (isUnit_of_dvd_one hdvd_one) with hpos | hneg
-    · exact hpos
-    · exfalso
-      rw [hneg] at hcontent_nonneg
-      exact absurd hcontent_nonneg (by decide)
-  · -- normalizeFactorSign factor = factor: leadingCoeff = 1 ≥ 0, so the sign
-    --   normaliser is the identity branch.
-    unfold Hex.normalizeFactorSign
-    have hnot_neg : ¬ Hex.DensePoly.leadingCoeff factor < 0 := by
-      rw [hlead]; decide
-    simp [hnot_neg]
+        Hex.normalizeFactorSign factor = factor :=
+  ⟨hfactor_monic,
+    zpoly_primitive_of_monic hfactor_monic,
+    zpoly_normalize_factor_sign_of_monic hfactor_monic⟩
 
 /--
 Size of the lifted-factor array equals the size of the modular-factor array.
@@ -6646,16 +6652,6 @@ theorem zpoly_lc_pos_of_monic {f : Hex.ZPoly}
     0 < Hex.DensePoly.leadingCoeff f := by
   rw [show Hex.DensePoly.leadingCoeff f = (1 : Int) from h]
   decide
-
-/-- Monic integer polynomials are primitive (content 1). -/
-theorem zpoly_primitive_of_monic {f : Hex.ZPoly}
-    (h : Hex.DensePoly.Monic f) : Hex.ZPoly.Primitive f :=
-  (monic_primitive_sign_normalized_of_monic h).2.1
-
-/-- Monic integer polynomials are fixed by `Hex.normalizeFactorSign`. -/
-theorem zpoly_normalize_factor_sign_of_monic {f : Hex.ZPoly}
-    (h : Hex.DensePoly.Monic f) : Hex.normalizeFactorSign f = f :=
-  (monic_primitive_sign_normalized_of_monic h).2.2
 
 private theorem zpoly_monic_one : Hex.DensePoly.Monic (1 : Hex.ZPoly) := by
   show Hex.DensePoly.leadingCoeff (1 : Hex.ZPoly) = (1 : Int)
