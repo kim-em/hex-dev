@@ -906,4 +906,17 @@ theorem powMod_eq (a n p : Nat) (hp : p > 0) :
         exact hfit_lt (by simpa [hpmod] using hmodlt)
       simp [hfit_lt, powModNat_eq a n p hp]
 
+/-- Modular exponentiation with exponent zero returns the residue of `1`. -/
+@[simp]
+theorem powMod_zero_exp (a p : Nat) (hp : p > 0) :
+    powMod a 0 p = 1 % p := by
+  simpa using powMod_eq a 0 p hp
+
+/-- Modular exponentiation modulo one returns zero. -/
+@[simp]
+theorem powMod_modulus_one (a n : Nat) :
+    powMod a n 1 = 0 := by
+  rw [powMod_eq a n 1 (by decide)]
+  exact Nat.mod_one (a ^ n)
+
 end HexArith
