@@ -1822,6 +1822,30 @@ def henselSubsetCorrespondence_of_modPSubsetPartition
     exact (huniq S hS).trans (huniq T hT).symm
 
 /--
+Abstract-bound variant of
+`centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision`: takes an
+arbitrary `B' : Nat` and an explicit validity hypothesis
+`hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'` in place of the core-shape
+`defaultFactorCoeffBound core` precision constraint.  The body just
+threads `B'` and `hvalid` into `centeredLiftPoly_eq_of_reduceModPow_eq`
+(which already accepts an abstract bound).  The original core-shape
+theorem is a wrapper around this variant.
+-/
+theorem centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision_of_bound
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (B' : Nat)
+    (hvalid : ∀ i, (factor.coeff i).natAbs ≤ B')
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hprecision : 2 * B' < d.p ^ d.k) :
+    Hex.centeredLiftPoly
+        (Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k)
+        (d.p ^ d.k) =
+      factor :=
+  Hex.centeredLiftPoly_eq_of_reduceModPow_eq
+    factor (scaledLiftedFactorProduct core d S) d.p d.k
+    B' hvalid hprecision hrep
+
+/--
 Mignotte recoverability for one represented integer factor.
 
 If a subset of the executable lifted factors represents an integer divisor of
@@ -1829,24 +1853,14 @@ If a subset of the executable lifted factors represents an integer divisor of
 Mignotte coefficient bound for `core`, then the executable centred-lift
 operation recovers the integer factor exactly.
 
-**Refactor anchor (#4539 resolution / HO-1 alternative route).**  The
-core-shape `hprecision` here is the cause of the `defaultFactorCoeffBound
-core ≤ defaultFactorCoeffBound f` monotonicity obligation called out by
-the wrapper
-`factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence`
-(see its docstring).  A future variant of this theorem can take an
-abstract `B' : Nat` plus a validity hypothesis
-`hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'` in place of `hprecision`'s
-hard-coded `defaultFactorCoeffBound core`; the proof body just passes
-`B'` and `hvalid` straight into `centeredLiftPoly_eq_of_reduceModPow_eq`
-(which already accepts an abstract bound).  Propagating that
-abstraction up through `recombinationSearchModAux_*`,
-`exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence`,
-and `exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence`
-lets HO-1 consumers instantiate `B' := defaultFactorCoeffBound f` and
-discharge `hvalid` via `defaultFactorCoeffBound_valid f` (using
-`factor ∣ core ∣ f`) — bypassing the squareFreeCore-bound monotonicity
-entirely.
+This is a thin wrapper over the abstract-bound variant
+`centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision_of_bound`
+that instantiates `B' := defaultFactorCoeffBound core` and discharges
+`hvalid` via `defaultFactorCoeffBound_valid core hcore_ne factor hdvd`.
+HO-1 consumers should prefer the `_of_bound` variant directly with
+`B' := defaultFactorCoeffBound f`, bypassing the squareFreeCore-bound
+monotonicity obligation called out by
+`factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence`.
 -/
 theorem centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision
     {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
@@ -1857,19 +1871,59 @@ theorem centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision
     Hex.centeredLiftPoly
         (Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k)
         (d.p ^ d.k) =
-      factor := by
-  exact
-    Hex.centeredLiftPoly_eq_of_reduceModPow_eq
-      factor (scaledLiftedFactorProduct core d S) d.p d.k
-      (Hex.ZPoly.defaultFactorCoeffBound core)
-      (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
-      hprecision hrep
+      factor :=
+  centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound core)
+    (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
+    hrep hprecision
+
+/--
+Abstract-bound variant of
+`existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence`:
+takes `B' : Nat`, `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`, and
+`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`defaultFactorCoeffBound core` precision constraint.  The body mirrors
+the original but invokes the `_of_bound` recovery theorem instead of
+the core-shape one.
+-/
+theorem existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence_of_bound
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
+    (h :
+      HenselSubsetCorrespondenceHypotheses core B primeData d
+        admissiblePrime successfulLift)
+    {factor : Hex.ZPoly}
+    (B' : Nat)
+    (hvalid : ∀ i, (factor.coeff i).natAbs ≤ B')
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hdvd : factor ∣ core)
+    (hprecision : 2 * B' < d.p ^ d.k) :
+    ∃! S : LiftedFactorSubset d,
+      RepresentsIntegerFactorAtLift core d factor S ∧
+        Hex.centeredLiftPoly
+            (Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k)
+            (d.p ^ d.k) =
+          factor := by
+  rcases h.exists_subset hirr hdvd with ⟨S, hS⟩
+  refine ⟨S, ⟨hS, ?_⟩, ?_⟩
+  · exact
+      centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision_of_bound
+        B' hvalid hS hprecision
+  · intro T hT
+    exact
+      (h.unique_subset (factor := factor) (S := S) (T := T)
+        hirr hdvd hS hT.1).symm
 
 /--
 Group A2 packaged for downstream exhaustive-search proofs: under the Hensel
 subset-correspondence hypotheses, each irreducible integer factor has a unique
 lifted-factor subset whose scaled product both represents it modulo the Hensel
 modulus and centred-lifts back to the factor exactly at Mignotte precision.
+
+This is a thin wrapper over
+`existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence_of_bound`
+that instantiates `B' := defaultFactorCoeffBound core` and discharges
+`hvalid` via `defaultFactorCoeffBound_valid core hcore_ne factor hdvd`.
 -/
 theorem existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
@@ -1887,16 +1941,11 @@ theorem existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence
         Hex.centeredLiftPoly
             (Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k)
             (d.p ^ d.k) =
-          factor := by
-  rcases h.exists_subset hirr hdvd with ⟨S, hS⟩
-  refine ⟨S, ⟨hS, ?_⟩, ?_⟩
-  · exact
-      centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision
-        hcore_ne hdvd hS hprecision
-  · intro T hT
-    exact
-      (h.unique_subset (factor := factor) (S := S) (T := T)
-        hirr hdvd hS hT.1).symm
+          factor :=
+  existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence_of_bound
+    h (Hex.ZPoly.defaultFactorCoeffBound core)
+    (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
+    hirr hdvd hprecision
 
 /--
 The A2 recoverability package specialized to the slow exhaustive path's
@@ -3935,13 +3984,35 @@ private theorem centeredLiftPoly_reduceModPow_eq
   -- both branches use r = z % m; the LHS computes ((f.coeff n) % m) % m which equals (f.coeff n) % m
   rw [Int.emod_emod_of_dvd _ (dvd_refl _)]
 
+/-- Abstract-bound variant of
+`centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery`:
+takes `B' : Nat`, `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`, and
+`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`defaultFactorCoeffBound core` precision constraint. -/
+theorem centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (B' : Nat)
+    (hvalid : ∀ i, (factor.coeff i).natAbs ≤ B')
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hprecision : 2 * B' < d.p ^ d.k) :
+    Hex.centeredLiftPoly (scaledLiftedFactorProduct core d S) (d.p ^ d.k) =
+      factor := by
+  have h := centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision_of_bound
+    B' hvalid hrep hprecision
+  rwa [centeredLiftPoly_reduceModPow_eq _ _ _ d.p_pos] at h
+
 /-- The A2 recovery equality reformulated against the executable centred-lift
 of the **scaled** lifted product, ready to feed downstream packaging that
 relates the scaled centered lift to the unscaled `recombinationCandidate`.
 
 This is the cleanest form in which the proof-side recovery is expressed for
 later integration with executable-side normalisation reasoning (which removes
-the `lc(core)` scale and chooses a sign). -/
+the `lc(core)` scale and chooses a sign).
+
+This is a thin wrapper over
+`centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound`
+that instantiates `B' := defaultFactorCoeffBound core` and discharges
+`hvalid` via `defaultFactorCoeffBound_valid core hcore_ne factor hdvd`. -/
 theorem centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
     {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
     (hcore_ne : core ≠ 0)
@@ -3949,10 +4020,11 @@ theorem centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
     (hrep : RepresentsIntegerFactorAtLift core d factor S)
     (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
     Hex.centeredLiftPoly (scaledLiftedFactorProduct core d S) (d.p ^ d.k) =
-      factor := by
-  have h := centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision
-    hcore_ne hdvd hrep hprecision
-  rwa [centeredLiftPoly_reduceModPow_eq _ _ _ d.p_pos] at h
+      factor :=
+  centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound core)
+    (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
+    hrep hprecision
 
 private theorem densePoly_scale_one_int (f : Hex.ZPoly) :
     Hex.DensePoly.scale (1 : Int) f = f := by
