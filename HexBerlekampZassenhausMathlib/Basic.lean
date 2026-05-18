@@ -6748,6 +6748,11 @@ theorem zpoly_primitive_of_monic {f : Hex.ZPoly}
     (h : Hex.DensePoly.Monic f) : Hex.ZPoly.Primitive f :=
   (monic_primitive_sign_normalized_of_monic h).2.1
 
+/-- Monic integer polynomials are fixed by `Hex.normalizeFactorSign`. -/
+theorem zpoly_normalize_factor_sign_of_monic {f : Hex.ZPoly}
+    (h : Hex.DensePoly.Monic f) : Hex.normalizeFactorSign f = f :=
+  (monic_primitive_sign_normalized_of_monic h).2.2
+
 private theorem zpoly_monic_one : Hex.DensePoly.Monic (1 : Hex.ZPoly) := by
   show Hex.DensePoly.leadingCoeff (1 : Hex.ZPoly) = (1 : Int)
   change Hex.DensePoly.leadingCoeff (Hex.DensePoly.C (1 : Int)) = (1 : Int)
@@ -7825,10 +7830,11 @@ theorem natDegree_toPolynomial_recombinationCandidate_eq_sum
   have hcl_monic := monic_centeredLiftPoly_of_monic hlp_monic hd_modulus
   set cl := Hex.centeredLiftPoly lp (d.p ^ d.k) with hcl_def
   -- A monic poly has trivial content and trivial sign normalisation.
-  obtain ⟨_, hcontent, hnorm⟩ := monic_primitive_sign_normalized_of_monic hcl_monic
+  have hnorm : Hex.normalizeFactorSign cl = cl :=
+    zpoly_normalize_factor_sign_of_monic hcl_monic
   have hprim : Hex.ZPoly.primitivePart cl = cl :=
     Hex.ZPoly.primitivePart_eq_self_of_primitive cl
-      (by simpa [Hex.ZPoly.Primitive] using hcontent)
+      (zpoly_primitive_of_monic hcl_monic)
   -- Combining, the candidate is just the centered lift of the product.
   have hrec_eq : recombinationCandidate d T = cl := by
     unfold recombinationCandidate
@@ -9531,13 +9537,14 @@ theorem recombinationCandidate_monic
   have hcl_monic :
       Hex.DensePoly.Monic (Hex.centeredLiftPoly lp (d.p ^ d.k)) :=
     monic_centeredLiftPoly_of_monic hlp_monic hd_modulus
-  obtain ⟨_, hcontent, hnorm⟩ :=
-    monic_primitive_sign_normalized_of_monic hcl_monic
+  have hnorm : Hex.normalizeFactorSign (Hex.centeredLiftPoly lp (d.p ^ d.k)) =
+      Hex.centeredLiftPoly lp (d.p ^ d.k) :=
+    zpoly_normalize_factor_sign_of_monic hcl_monic
   have hprim :
       Hex.ZPoly.primitivePart (Hex.centeredLiftPoly lp (d.p ^ d.k)) =
         Hex.centeredLiftPoly lp (d.p ^ d.k) :=
     Hex.ZPoly.primitivePart_eq_self_of_primitive _
-      (by simpa [Hex.ZPoly.Primitive] using hcontent)
+      (zpoly_primitive_of_monic hcl_monic)
   have hrec_eq :
       recombinationCandidate d T = Hex.centeredLiftPoly lp (d.p ^ d.k) := by
     unfold recombinationCandidate
