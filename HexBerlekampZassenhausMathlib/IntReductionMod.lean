@@ -3616,6 +3616,183 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero
   exact IntReductionMod.reassemblyExpansionComplete_of_irreducible_squarefree_cover
     f hf_ne coreFactors hirr hprod hnorm hmonic hdegree hfuel
 
+/-- Weakened-conclusion sibling of
+`reassemblyExpansionComplete_exhaustive_of_ne_zero`: the per-emitted-factor
+monicness requirement on the assembler call is dropped, threading
+`Primitive` + `0 < leadingCoeff` on the squareFreeCore instead.
+
+Three substitutions versus the monic original:
+
+* per-factor `Monic q` is replaced by per-factor `0 < leadingCoeff q`,
+  derived from `exhaustiveCoreFactorsWithBound_primitive` (#4946 deliv 5)
+  together with the `normalizeFactorSign q = q` invariant (existing,
+  `exhaustiveCoreFactorsWithBound_normalizeFactorSign`) — same shape as
+  the quadratic-arm derivation in
+  `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`
+  above;
+* the per-factor positive-degree substrate is supplied by
+  `exhaustiveCoreFactorsWithBound_degree_pos_of_primitive_pos_lc_core`
+  (#4946 deliv 6) instead of the monic-input
+  `exhaustiveCoreFactorsWithBound_degree_pos`;
+* the mid-layer assembler is
+  `reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_pos_lc`
+  (the `_of_pos_lc` sibling landed via #4949) rather than the monic
+  parent.
+
+The `hcore_monic` premise is retained as a temporary upstream-consumer
+shim: the upstream
+`exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData`
+call internally threads `hcore_monic` into the helper-2/3/4 substrate,
+which the #4940 investigation confirmed is architecturally infeasible to
+relax at the present API surface. This sibling drops the assembler-side
+monic dependency only; full relaxation awaits a directive-level refactor
+of helpers 2-4 per #4880. -/
+theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_core
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
+    (hbranch : Hex.factorWithBoundUsesExhaustiveBranch f
+      (Hex.ZPoly.defaultFactorCoeffBound f))
+    (hchoose : Hex.choosePrimeData?
+      (Hex.normalizeForFactor f).squareFreeCore = some
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore))
+    (hcore_primitive : Hex.ZPoly.Primitive
+      (Hex.normalizeForFactor f).squareFreeCore)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff
+      (Hex.normalizeForFactor f).squareFreeCore)
+    (hcore_monic : Hex.DensePoly.Monic
+      (Hex.normalizeForFactor f).squareFreeCore)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound
+        (Hex.normalizeForFactor f).squareFreeCore <
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p ^
+          Hex.precisionForCoeffBound
+            (Hex.ZPoly.defaultFactorCoeffBound f)
+            (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p) :
+    Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
+      (Hex.exhaustiveCoreFactorsWithBound
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.defaultFactorCoeffBound f)
+        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)) := by
+  -- Substrate setup: discharge `hcore_record` and `hcore_ne` from `hbranch` +
+  -- `hcore_lc_pos`.
+  have hdeg :
+      (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 := hbranch.2.1
+  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 := by
+    intro h0
+    rw [h0] at hcore_lc_pos
+    have hzero : Hex.DensePoly.leadingCoeff (0 : Hex.ZPoly) = 0 := by decide
+    omega
+  have hcore_record : Hex.shouldRecordPolynomialFactor
+      (Hex.normalizeForFactor f).squareFreeCore = true := by
+    have hne_one : (Hex.normalizeForFactor f).squareFreeCore ≠ 1 := by
+      intro hone
+      apply hdeg
+      rw [hone]
+      exact Hex.DensePoly.degree?_C_getD 1
+    have hne_neg_one :
+        (Hex.normalizeForFactor f).squareFreeCore ≠ Hex.DensePoly.C (-1 : Int) := by
+      intro hneg
+      apply hdeg
+      rw [hneg]
+      exact Hex.DensePoly.degree?_C_getD (-1)
+    unfold Hex.shouldRecordPolynomialFactor
+    simp [hcore_ne, hne_one, hne_neg_one]
+  -- #4806 package for `(shouldRecord, normalizeFactorSign, Irreducible)`.
+  obtain ⟨_, hnorm, hirr⟩ :=
+    exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData
+      f hf_ne hbranch hchoose hcore_monic hprecision
+  -- Weakened-input substrates: positive-degree from #4946 deliv 6, primitivity
+  -- from #4946 deliv 5.
+  have hdegree :=
+    Hex.exhaustiveCoreFactorsWithBound_degree_pos_of_primitive_pos_lc_core
+      (Hex.normalizeForFactor f).squareFreeCore
+      (Hex.ZPoly.defaultFactorCoeffBound f)
+      (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+      hcore_primitive hcore_lc_pos hcore_record
+  -- polyProduct = squareFreeCore.
+  have hprod :=
+    Hex.exhaustiveCoreFactorsWithBound_product
+      (Hex.normalizeForFactor f).squareFreeCore
+      (Hex.ZPoly.defaultFactorCoeffBound f)
+      (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+  set coreFactors := Hex.exhaustiveCoreFactorsWithBound
+      (Hex.normalizeForFactor f).squareFreeCore
+      (Hex.ZPoly.defaultFactorCoeffBound f)
+      (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+    with hcoreFactors_def
+  -- Per-factor pos_lc: combine `q ≠ 0` (from irreducibility) with
+  -- `normalizeFactorSign q = q` (forcing `leadingCoeff q ≥ 0`).  Same shape as
+  -- the quadratic-arm pattern in
+  -- `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`.
+  have hpos_lc : ∀ q ∈ coreFactors.toList, 0 < Hex.DensePoly.leadingCoeff q := by
+    intro q hq
+    have hq_ne : q ≠ 0 := (hirr q hq).not_zero
+    have hq_norm : Hex.normalizeFactorSign q = q := hnorm q hq
+    have hq_nonneg : 0 ≤ Hex.DensePoly.leadingCoeff q := by
+      by_contra hlt
+      have hlt' : Hex.DensePoly.leadingCoeff q < 0 := lt_of_not_ge hlt
+      unfold Hex.normalizeFactorSign at hq_norm
+      rw [if_pos hlt'] at hq_norm
+      apply hq_ne
+      apply Hex.DensePoly.ext_coeff
+      intro n
+      have hcoeff :
+          (Hex.DensePoly.scale (-1 : Int) q).coeff n = q.coeff n := by
+        rw [hq_norm]
+      rw [Hex.DensePoly.coeff_scale (R := Int) (-1) q n
+        (by decide : (-1 : Int) * 0 = 0)] at hcoeff
+      rw [Hex.DensePoly.coeff_zero]
+      omega
+    have hq_lc_ne : Hex.DensePoly.leadingCoeff q ≠ 0 :=
+      Hex.ZPoly.leadingCoeff_ne_zero_of_ne_zero q hq_ne
+    omega
+  -- Fuel bound: identical to the monic version.
+  have hrp_ne :
+      (Hex.normalizeForFactor f).repeatedPart ≠ 0 :=
+    Hex.repeatedPart_ne_zero_of_ne_zero f hf_ne
+  have hfuel :
+      ∀ exponents : List Nat,
+        exponents.length = coreFactors.size →
+        (Hex.normalizeForFactor f).repeatedPart =
+          ((coreFactors.toList.zip exponents).map
+            (fun qe => Hex.Factorization.factorPower qe.1 qe.2)).foldl (· * ·) 1 →
+        ∀ (qe : Hex.ZPoly × Nat),
+          qe ∈ coreFactors.toList.zip exponents →
+            qe.2 + 1 ≤ (Hex.normalizeForFactor f).repeatedPart.size + 1 := by
+    intro exponents _ hdecomp qe hqe
+    have hq_mem : qe.1 ∈ coreFactors.toList := by
+      have := List.of_mem_zip hqe
+      exact this.1
+    have hq_deg : 0 < qe.1.degree?.getD 0 := hdegree qe.1 hq_mem
+    have hfp_size_lb : qe.2 + 1 ≤ (Hex.Factorization.factorPower qe.1 qe.2).size :=
+      factorPower_size_lower_bound hq_deg qe.2
+    have hfp_ne : Hex.Factorization.factorPower qe.1 qe.2 ≠ 0 := by
+      intro h0
+      have : (Hex.Factorization.factorPower qe.1 qe.2).size = 0 := by
+        rw [h0]; rfl
+      omega
+    have hfp_in_map :
+        Hex.Factorization.factorPower qe.1 qe.2 ∈
+          (coreFactors.toList.zip exponents).map
+            (fun qe => Hex.Factorization.factorPower qe.1 qe.2) := by
+      rw [List.mem_map]
+      exact ⟨qe, hqe, rfl⟩
+    have hfp_dvd :
+        Hex.Factorization.factorPower qe.1 qe.2 ∣
+          ((coreFactors.toList.zip exponents).map
+            (fun qe => Hex.Factorization.factorPower qe.1 qe.2)).foldl (· * ·) 1 :=
+      mem_dvd_foldl_mul_zpoly _ 1 _ hfp_in_map
+    have hfp_dvd_rp :
+        Hex.Factorization.factorPower qe.1 qe.2 ∣
+          (Hex.normalizeForFactor f).repeatedPart := by
+      rw [hdecomp]; exact hfp_dvd
+    have hsize_le : (Hex.Factorization.factorPower qe.1 qe.2).size ≤
+        (Hex.normalizeForFactor f).repeatedPart.size :=
+      Hex.ZPoly.size_le_of_dvd_nonzero hfp_ne hrp_ne hfp_dvd_rp
+    omega
+  -- Apply the `_of_pos_lc` assembler from #4949.
+  exact IntReductionMod.reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_pos_lc
+    f hf_ne coreFactors hirr hprod hnorm hpos_lc hdegree hfuel
+
 /-- **#4561 / #4848 HO-1 substrate — slow exhaustive-arm umbrella, with the
 `hcomplete` premise dropped via the #4848 discharger.**
 
