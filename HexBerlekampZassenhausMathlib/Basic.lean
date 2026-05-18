@@ -4033,23 +4033,25 @@ private theorem densePoly_scale_one_int (f : Hex.ZPoly) :
   rw [Hex.DensePoly.coeff_scale (1 : Int) f n (by simp)]
   simp
 
-/--
-Under a monic core hypothesis, the scaled recovery theorem identifies the
-unscaled executable recombination candidate with the represented integer
-factor.  This is the core recovery statement; the older
-`recombinationCandidate_eq_factor_of_recovery` wrapper also accepts the
-executable record-filter hypothesis needed by some callers.
--/
-theorem recombinationCandidate_eq_factor_of_recovery_of_monic_core
+/-- Abstract-bound variant of
+`recombinationCandidate_eq_factor_of_recovery_of_monic_core`: takes
+`B' : Nat`, `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`, and
+`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`defaultFactorCoeffBound core` precision constraint.  The proof mirrors
+the core-shape original but invokes
+`centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound`
+in place of the core-shape recovery theorem. -/
+theorem recombinationCandidate_eq_factor_of_recovery_of_monic_core_of_bound
     {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
-    (hcore_ne : core ≠ 0)
+    (B' : Nat)
+    (hvalid : ∀ i, (factor.coeff i).natAbs ≤ B')
+    (_hcore_ne : core ≠ 0)
     (hcore_monic : Hex.DensePoly.Monic core)
-    (hdvd : factor ∣ core)
     (hfactor_prim : Hex.ZPoly.content factor = 1)
     (hfactor_norm : Hex.normalizeFactorSign factor = factor)
     (_hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
     (hrep : RepresentsIntegerFactorAtLift core d factor S)
-    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    (hprecision : 2 * B' < d.p ^ d.k) :
     recombinationCandidate d S = factor := by
   have hlead : Hex.DensePoly.leadingCoeff core = (1 : Int) := by
     simpa [Hex.DensePoly.Monic] using hcore_monic
@@ -4061,8 +4063,8 @@ theorem recombinationCandidate_eq_factor_of_recovery_of_monic_core
   have hcenter :
       Hex.centeredLiftPoly (liftedFactorProduct d S) (d.p ^ d.k) = factor := by
     have h :=
-      centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
-        hcore_ne hdvd hrep hprecision
+      centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound
+        B' hvalid hrep hprecision
     rwa [hscaled] at h
   unfold recombinationCandidate
   rw [polyProduct_liftedSubsetSelectedList_eq_liftedFactorProduct, hcenter]
@@ -4076,7 +4078,62 @@ theorem recombinationCandidate_eq_factor_of_recovery_of_monic_core
 /--
 Under a monic core hypothesis, the scaled recovery theorem identifies the
 unscaled executable recombination candidate with the represented integer
+factor.  This is the core recovery statement; the older
+`recombinationCandidate_eq_factor_of_recovery` wrapper also accepts the
+executable record-filter hypothesis needed by some callers.
+
+This is a thin wrapper over
+`recombinationCandidate_eq_factor_of_recovery_of_monic_core_of_bound`
+that instantiates `B' := defaultFactorCoeffBound core` and discharges
+`hvalid` via `defaultFactorCoeffBound_valid core hcore_ne factor hdvd`.
+-/
+theorem recombinationCandidate_eq_factor_of_recovery_of_monic_core
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hdvd : factor ∣ core)
+    (hfactor_prim : Hex.ZPoly.content factor = 1)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (_hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    recombinationCandidate d S = factor :=
+  recombinationCandidate_eq_factor_of_recovery_of_monic_core_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound core)
+    (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
+    hcore_ne hcore_monic hfactor_prim hfactor_norm _hirr hrep hprecision
+
+/-- Abstract-bound variant of
+`recombinationCandidate_eq_factor_of_recovery`: takes `B' : Nat`,
+`hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`, and
+`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`defaultFactorCoeffBound core` precision constraint.  Delegates to
+`recombinationCandidate_eq_factor_of_recovery_of_monic_core_of_bound`. -/
+theorem recombinationCandidate_eq_factor_of_recovery_of_bound
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (B' : Nat)
+    (hvalid : ∀ i, (factor.coeff i).natAbs ≤ B')
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (_hcore_record : Hex.shouldRecordPolynomialFactor core = true)
+    (hfactor_prim : Hex.ZPoly.content factor = 1)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (_hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hprecision : 2 * B' < d.p ^ d.k) :
+    recombinationCandidate d S = factor :=
+  recombinationCandidate_eq_factor_of_recovery_of_monic_core_of_bound
+    B' hvalid hcore_ne hcore_monic hfactor_prim hfactor_norm _hirr hrep hprecision
+
+/--
+Under a monic core hypothesis, the scaled recovery theorem identifies the
+unscaled executable recombination candidate with the represented integer
 factor.
+
+This is a thin wrapper over
+`recombinationCandidate_eq_factor_of_recovery_of_bound` that instantiates
+`B' := defaultFactorCoeffBound core` and discharges `hvalid` via
+`defaultFactorCoeffBound_valid core hcore_ne factor hdvd`.
 -/
 theorem recombinationCandidate_eq_factor_of_recovery
     {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
@@ -4090,8 +4147,38 @@ theorem recombinationCandidate_eq_factor_of_recovery
     (hrep : RepresentsIntegerFactorAtLift core d factor S)
     (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
     recombinationCandidate d S = factor :=
-  recombinationCandidate_eq_factor_of_recovery_of_monic_core
-    hcore_ne hcore_monic hdvd hfactor_prim hfactor_norm _hirr hrep hprecision
+  recombinationCandidate_eq_factor_of_recovery_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound core)
+    (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
+    hcore_ne hcore_monic _hcore_record hfactor_prim hfactor_norm _hirr hrep hprecision
+
+/-- Abstract-bound variant of
+`recombinationCandidate_eq_factor_of_henselSubsetCorrespondence`: takes
+`B' : Nat`, `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`, and
+`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`defaultFactorCoeffBound core` precision constraint.  Delegates to
+`recombinationCandidate_eq_factor_of_recovery_of_bound`. -/
+theorem recombinationCandidate_eq_factor_of_henselSubsetCorrespondence_of_bound
+    {core factor : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
+    {S : LiftedFactorSubset d}
+    (_h :
+      HenselSubsetCorrespondenceHypotheses core B primeData d
+        admissiblePrime successfulLift)
+    (B' : Nat)
+    (hvalid : ∀ i, (factor.coeff i).natAbs ≤ B')
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hcore_record : Hex.shouldRecordPolynomialFactor core = true)
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hfactor_prim : Hex.ZPoly.content factor = 1)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hprecision : 2 * B' < d.p ^ d.k) :
+    recombinationCandidate d S = factor :=
+  recombinationCandidate_eq_factor_of_recovery_of_bound
+    B' hvalid hcore_ne hcore_monic hcore_record hfactor_prim hfactor_norm hirr
+    hrep hprecision
 
 /--
 Hensel-correspondence wrapper for the monic-core recovery theorem.
@@ -4100,6 +4187,11 @@ Once a proof-side subset is known to represent an irreducible integer divisor
 at the Hensel lift, the executable recombination candidate is exactly that
 factor under the monic/primitive/sign-normalised hypotheses required by the
 centered-lift recovery bound.
+
+This is a thin wrapper over
+`recombinationCandidate_eq_factor_of_henselSubsetCorrespondence_of_bound`
+that instantiates `B' := defaultFactorCoeffBound core` and discharges
+`hvalid` via `defaultFactorCoeffBound_valid core hcore_ne factor hdvd`.
 -/
 theorem recombinationCandidate_eq_factor_of_henselSubsetCorrespondence
     {core factor : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
@@ -4118,9 +4210,11 @@ theorem recombinationCandidate_eq_factor_of_henselSubsetCorrespondence
     (hrep : RepresentsIntegerFactorAtLift core d factor S)
     (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
     recombinationCandidate d S = factor :=
-  recombinationCandidate_eq_factor_of_recovery
-    hcore_ne hcore_monic hcore_record hdvd hfactor_prim hfactor_norm hirr
-    hrep hprecision
+  recombinationCandidate_eq_factor_of_henselSubsetCorrespondence_of_bound
+    _h
+    (Hex.ZPoly.defaultFactorCoeffBound core)
+    (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
+    hcore_ne hcore_monic hcore_record hirr hfactor_prim hfactor_norm hrep hprecision
 
 /--
 Primitive non-monic recovery substrate: the scaled recombination candidate
