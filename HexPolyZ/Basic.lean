@@ -14,6 +14,17 @@ namespace Hex
 from `HexPoly`. -/
 abbrev ZPoly := DensePoly Int
 
+instance : DensePoly.AddZeroLaw Int where
+  add_zero_zero := rfl
+
+instance : DensePoly.SubZeroLaw Int where
+  sub_zero_zero := rfl
+
+instance : DensePoly.ZeroSubNegLaw Int where
+  zero_sub_eq_neg := by
+    intro a
+    exact Int.zero_sub a
+
 namespace ZPoly
 
 /-- Coefficientwise congruence modulo `m`. -/
