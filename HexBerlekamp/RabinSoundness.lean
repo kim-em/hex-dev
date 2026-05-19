@@ -1219,7 +1219,6 @@ private theorem xPowSubX_factor (k : Nat) :
     grind
   · have hn_not_lt : ¬ n < 1 := by omega
     simp [hn_not_lt]
-    rw [DensePoly.coeff_monomial]
     simp only [Lean.Grind.Semiring.one_mul]
     by_cases hnpow : n = p ^ k
     · by_cases hk0 : k = 0
