@@ -2437,6 +2437,15 @@ theorem leadingGramMatrixInt_det_eq_gramDet_int
   leadingGramMatrixInt_det_eq_gramDet_int_of_nonneg b t ht
     (leadingGramMatrixInt_det_nonneg b t ht)
 
+/-- Bridge-layer unconditional diagonal synchronization for the public
+scaled-coefficient matrix. The Mathlib-free core exposes the Nat-level version
+and the conditional Int lift; the required nonnegativity of the Gram/Bareiss
+diagonal slot is supplied in this bridge layer. -/
+theorem scaledCoeffs_diag (b : Matrix Int n m) (i : Nat) (hi : i < n) :
+    GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨i, hi⟩ =
+      Int.ofNat (gramDet b (i + 1) (Nat.succ_le_of_lt hi)) := by
+  sorry
+
 /-- The leading executable Gram determinants of a square upper-triangular
 integer matrix with strictly positive diagonal are positive.
 
