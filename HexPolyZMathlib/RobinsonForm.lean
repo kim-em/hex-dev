@@ -366,42 +366,74 @@ private theorem mahlerMeasure_eq_norm_leadingCoeff_of_roots_le_one {p : ℂ[X]}
     exact max_eq_left (h α hα)
   rw [hprod, mul_one]
 
-theorem mahlerMeasure_robinsonForm_derivative (p : ℂ[X]) :
-    p.robinsonForm.derivative.mahlerMeasure = p.natDegree * p.mahlerMeasure := by
+theorem norm_root_derivative_le_of_roots_le_one {p : ℂ[X]}
+    (hroots : ∀ α ∈ p.roots, ‖α‖ ≤ 1) {β : ℂ}
+    (hβ : β ∈ p.derivative.roots) : ‖β‖ ≤ 1 := by
+  have hd_ne : p.derivative ≠ 0 := by
+    intro h
+    rw [h, roots_zero] at hβ
+    exact absurd hβ (Multiset.notMem_zero β)
+  have hp_ne : p ≠ 0 := by
+    intro h
+    apply hd_ne
+    rw [h, derivative_zero]
+  have hp_deg : 0 < p.degree := by
+    by_contra h
+    rw [not_lt] at h
+    have hnatDeg : p.natDegree = 0 := by
+      have hle : p.natDegree ≤ 0 := natDegree_le_of_degree_le h
+      omega
+    exact hd_ne (derivative_of_natDegree_zero hnatDeg)
+  have hβ_eval : eval β p.derivative = 0 := (mem_roots hd_ne).mp hβ
+  have hβ_rootSet : β ∈ p.derivative.rootSet ℂ := by
+    rw [mem_rootSet_of_ne hd_ne]
+    simpa using hβ_eval
+  have hβ_convex : β ∈ convexHull ℝ (p.rootSet ℂ) :=
+    rootSet_derivative_subset_convexHull_rootSet hp_deg hβ_rootSet
+  have hsub : p.rootSet ℂ ⊆ Metric.closedBall (0 : ℂ) 1 := by
+    intro γ hγ
+    rw [mem_rootSet_of_ne hp_ne] at hγ
+    rw [Metric.mem_closedBall, dist_zero_right]
+    apply hroots
+    rw [mem_roots hp_ne]
+    simpa using hγ
+  have hconv : Convex ℝ (Metric.closedBall (0 : ℂ) 1) := convex_closedBall 0 1
+  have hchm := convexHull_min hsub hconv hβ_convex
+  rwa [Metric.mem_closedBall, dist_zero_right] at hchm
+
+theorem mahlerMeasure_derivative_eq_natDegree_mul_of_roots_le_one
+    (p : ℂ[X]) (hroots : ∀ α ∈ p.roots, ‖α‖ ≤ 1) :
+    p.derivative.mahlerMeasure = p.natDegree * p.mahlerMeasure := by
   by_cases hp : p = 0
   · simp [hp]
   by_cases hnatDeg : p.natDegree = 0
-  · have hrf_nat : p.robinsonForm.natDegree = 0 := by
-      rw [natDegree_robinsonForm]; exact hnatDeg
-    have hderiv : p.robinsonForm.derivative = 0 := derivative_of_natDegree_zero hrf_nat
+  · have hderiv : p.derivative = 0 := derivative_of_natDegree_zero hnatDeg
     rw [hderiv, mahlerMeasure_zero, hnatDeg]
     simp
   have hnatpos : 0 < p.natDegree := Nat.pos_of_ne_zero hnatDeg
-  have hrf_natpos : 0 < p.robinsonForm.natDegree := by
-    rw [natDegree_robinsonForm]; exact hnatpos
-  have hrf_ne : p.robinsonForm ≠ 0 := by
-    intro h
-    rw [h, natDegree_zero] at hrf_natpos
-    exact lt_irrefl 0 hrf_natpos
-  have hMM_deriv : p.robinsonForm.derivative.mahlerMeasure =
-      ‖p.robinsonForm.derivative.leadingCoeff‖ := by
+  have hMM_deriv : p.derivative.mahlerMeasure =
+      ‖p.derivative.leadingCoeff‖ := by
     apply mahlerMeasure_eq_norm_leadingCoeff_of_roots_le_one
-    intro α; exact norm_root_robinsonForm_derivative_le
-  have hsub : p.robinsonForm.natDegree - 1 + 1 = p.robinsonForm.natDegree :=
-    Nat.sub_add_cancel hrf_natpos
-  have hdeg_deriv : p.robinsonForm.derivative.natDegree = p.robinsonForm.natDegree - 1 :=
-    natDegree_eq_of_degree_eq_some (degree_derivative_eq p.robinsonForm hrf_natpos)
-  have hcast : ((p.robinsonForm.natDegree - 1 : ℕ) : ℂ) + 1 = (p.robinsonForm.natDegree : ℂ) := by
-    rw [Nat.cast_sub hrf_natpos, Nat.cast_one]; ring
-  have hlead_deriv : p.robinsonForm.derivative.leadingCoeff =
-      p.robinsonForm.leadingCoeff * (p.robinsonForm.natDegree : ℂ) := by
+    intro α; exact norm_root_derivative_le_of_roots_le_one hroots
+  have hsub : p.natDegree - 1 + 1 = p.natDegree :=
+    Nat.sub_add_cancel hnatpos
+  have hdeg_deriv : p.derivative.natDegree = p.natDegree - 1 :=
+    natDegree_eq_of_degree_eq_some (degree_derivative_eq p hnatpos)
+  have hcast : ((p.natDegree - 1 : ℕ) : ℂ) + 1 = (p.natDegree : ℂ) := by
+    rw [Nat.cast_sub hnatpos, Nat.cast_one]; ring
+  have hlead_deriv : p.derivative.leadingCoeff =
+      p.leadingCoeff * (p.natDegree : ℂ) := by
     unfold leadingCoeff
     rw [hdeg_deriv, coeff_derivative, hsub, hcast]
-  have hMM_rf : p.robinsonForm.mahlerMeasure = ‖p.robinsonForm.leadingCoeff‖ := by
-    apply mahlerMeasure_eq_norm_leadingCoeff_of_roots_le_one
-    intro α; exact norm_root_robinsonForm_le
-  rw [hMM_deriv, hlead_deriv, norm_mul, Complex.norm_natCast, ← hMM_rf,
-    mahlerMeasure_robinsonForm, natDegree_robinsonForm, mul_comm]
+  have hMM_p : p.mahlerMeasure = ‖p.leadingCoeff‖ := by
+    exact mahlerMeasure_eq_norm_leadingCoeff_of_roots_le_one hroots
+  rw [hMM_deriv, hlead_deriv, norm_mul, Complex.norm_natCast, ← hMM_p, mul_comm]
+
+theorem mahlerMeasure_robinsonForm_derivative (p : ℂ[X]) :
+    p.robinsonForm.derivative.mahlerMeasure = p.natDegree * p.mahlerMeasure := by
+  rw [mahlerMeasure_derivative_eq_natDegree_mul_of_roots_le_one p.robinsonForm
+    (by intro α; exact norm_root_robinsonForm_le), natDegree_robinsonForm,
+    mahlerMeasure_robinsonForm]
 
 end
 
