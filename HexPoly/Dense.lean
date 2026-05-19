@@ -530,17 +530,38 @@ theorem mem_support_monomial {n : Nat} {c : R} {i : Nat} :
 def toArray (p : DensePoly R) : Array R :=
   p.coeffs
 
+/-- The exposed normalized coefficient array has the same size as the polynomial. -/
+@[simp] theorem toArray_size (p : DensePoly R) :
+    p.toArray.size = p.size := by
+  rfl
+
+/-- Reading the exposed normalized coefficient array with default `0` is the polynomial
+coefficient function. -/
+@[simp] theorem toArray_getD (p : DensePoly R) (n : Nat) :
+    p.toArray.getD n (Zero.zero : R) = p.coeff n := by
+  rfl
+
 /-- Normalizing the already-normalized coefficient array reconstructs the same polynomial. -/
-theorem ofCoeffs_toArray (p : DensePoly R) :
+@[simp] theorem ofCoeffs_toArray (p : DensePoly R) :
     ofCoeffs p.toArray = p := by
   apply ext_coeff
   intro i
   rw [coeff_ofCoeffs]
   rfl
 
+/-- Building from the exposed normalized coefficient list reconstructs the same polynomial. -/
+@[simp] theorem ofList_toArray_toList (p : DensePoly R) :
+    ofList p.toArray.toList = p := by
+  simp [ofList]
+
 /-- Normalizing an empty coefficient array gives the zero polynomial. -/
 @[simp] theorem ofCoeffs_empty :
     (ofCoeffs (#[] : Array R) : DensePoly R) = 0 := by
+  rfl
+
+/-- Normalizing an empty coefficient list gives the zero polynomial. -/
+@[simp] theorem ofList_nil :
+    (ofList ([] : List R) : DensePoly R) = 0 := by
   rfl
 
 /-- An array consisting only of zeros normalizes to the zero polynomial. -/
