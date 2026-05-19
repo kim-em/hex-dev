@@ -212,10 +212,8 @@ private theorem twoWordProduct_lt_p_word (ctx : MontCtx p) (a b : UInt64)
     Nat.mul_lt_mul_of_pos_left ctx.p_lt_R ctx.p_pos
   calc
     (a * b).toNat + (UInt64.mulHi a b).toNat * UInt64.word
-        = (UInt64.mulHi a b).toNat * UInt64.word + (a * b).toNat := by
-          rw [Nat.add_comm]
-    _ = a.toNat * b.toNat := by
-          exact UInt64.mulHi_mulLo a b
+        = a.toNat * b.toNat := by
+          exact UInt64.mulLo_add_mulHi a b
     _ < p.toNat * p.toNat := hprod_lt_p2
     _ < p.toNat * UInt64.word := hp2_lt_pword
 
@@ -325,8 +323,7 @@ theorem toNat_toMont (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
           = ((a * ctx.r2).toNat + (UInt64.mulHi a ctx.r2).toNat * UInt64.word) %
               p.toNat := hredc
       _ = (a.toNat * ctx.r2.toNat) % p.toNat := by
-            rw [Nat.add_comm]
-            rw [UInt64.mulHi_mulLo a ctx.r2]
+            rw [UInt64.mulLo_add_mulHi a ctx.r2]
   have hto_lt_nat : (ctx.toMont a).toNat < p.toNat := by
     unfold toMont
     rw [toNat_redc ctx (UInt64.mulHi a ctx.r2) (a * ctx.r2) hT]
@@ -376,8 +373,7 @@ private theorem mulMont_repr_word (ctx : MontCtx p) (a b : UInt64)
         = ((a * b).toNat + (UInt64.mulHi a b).toNat * UInt64.word) % p.toNat :=
           hredc
     _ = (a.toNat * b.toNat) % p.toNat := by
-          rw [Nat.add_comm]
-          rw [UInt64.mulHi_mulLo a b]
+          rw [UInt64.mulLo_add_mulHi a b]
 
 /-- Montgomery conversion returns a canonical residue. -/
 theorem toMont_lt (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
