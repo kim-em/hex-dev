@@ -540,6 +540,26 @@ agree. -/
   apply UInt64.toNat_inj.mp
   simp [GF2Poly.canonicalWordLT, Nat.mod_eq_of_lt hn1]
 
+/-- The packed representative of a natural-number literal is stored by the
+packed backend's characteristic-two natural cast. -/
+@[simp] theorem repr_natCast (k : Nat) :
+    repr (Nat.cast k : GF2q n) =
+      (GF2n.natCast
+        (n := n) (irr := h.lower)
+        (hn := h.degree_pos) (hn64 := h.degree_lt_word)
+        (hirr := h.packed_irreducible) k).val :=
+  rfl
+
+/-- The packed representative of an integer literal is stored by the packed
+backend's characteristic-two integer cast. -/
+@[simp] theorem repr_intCast (k : Int) :
+    repr (Int.cast k : GF2q n) =
+      (GF2n.intCast
+        (n := n) (irr := h.lower)
+        (hn := h.degree_pos) (hn64 := h.degree_lt_word)
+        (hirr := h.packed_irreducible) k).val :=
+  rfl
+
 /-- In characteristic two, negation preserves the packed representative. -/
 @[simp] theorem repr_neg (x : GF2q n) :
     repr (-x) = repr x :=
