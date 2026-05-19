@@ -3177,6 +3177,40 @@ def supportedEntry_3_3 : SupportedEntry 3 3 :=
     supportedEntry_3_1.prime,
     luebeckConwayPolynomial?_hit_3_3⟩
 
+/-- The current committed table supports `C(5, 1)`. -/
+def supportedEntry_5_1 : SupportedEntry 5 1 :=
+  ⟨luebeckConwayPolynomial_5_1, prime_five, luebeckConwayPolynomial?_hit_5_1⟩
+
+/-- The current committed table supports `C(5, 2)`. -/
+def supportedEntry_5_2 : SupportedEntry 5 2 :=
+  ⟨luebeckConwayPolynomial_5_2,
+    supportedEntry_5_1.prime,
+    luebeckConwayPolynomial?_hit_5_2⟩
+
+/-- The current committed table supports `C(5, 3)`. -/
+def supportedEntry_5_3 : SupportedEntry 5 3 :=
+  ⟨luebeckConwayPolynomial_5_3,
+    supportedEntry_5_1.prime,
+    luebeckConwayPolynomial?_hit_5_3⟩
+
+/-- The current committed table supports `C(5, 4)`. -/
+def supportedEntry_5_4 : SupportedEntry 5 4 :=
+  ⟨luebeckConwayPolynomial_5_4,
+    supportedEntry_5_1.prime,
+    luebeckConwayPolynomial?_hit_5_4⟩
+
+/-- The current committed table supports `C(5, 5)`. -/
+def supportedEntry_5_5 : SupportedEntry 5 5 :=
+  ⟨luebeckConwayPolynomial_5_5,
+    supportedEntry_5_1.prime,
+    luebeckConwayPolynomial?_hit_5_5⟩
+
+/-- The current committed table supports `C(5, 6)`. -/
+def supportedEntry_5_6 : SupportedEntry 5 6 :=
+  ⟨luebeckConwayPolynomial_5_6,
+    supportedEntry_5_1.prime,
+    luebeckConwayPolynomial?_hit_5_6⟩
+
 /-- Recover the committed Conway modulus for a supported entry. -/
 def conwayPoly (p n : Nat) [ZMod64.Bounds p] (h : SupportedEntry p n) : FpPoly p :=
   h.poly
