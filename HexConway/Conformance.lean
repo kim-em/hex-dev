@@ -262,6 +262,59 @@ private def coeffs? (p n : Nat) [ZMod64.Bounds p] : Option (List Nat) :=
   some (conwayPoly 5 6 supportedEntry_5_6)
 #guard 0 < FpPoly.degree (conwayPoly 5 6 supportedEntry_5_6)
 
+-- Odd-prime entry: `(13, 1)`, using the exported supported entry.
+#guard coeffNats supportedEntry_13_1.poly = [11, 1]
+#guard supportedEntry_13_1.poly = luebeckConwayPolynomial_13_1
+#guard luebeckConwayPolynomial? 13 1 = some supportedEntry_13_1.poly
+#guard conwayPoly 13 1 supportedEntry_13_1 = luebeckConwayPolynomial_13_1
+#guard luebeckConwayPolynomial? 13 1 =
+  some (conwayPoly 13 1 supportedEntry_13_1)
+#guard 0 < FpPoly.degree (conwayPoly 13 1 supportedEntry_13_1)
+
+-- Odd-prime entry: `(13, 2)`, using the exported supported entry.
+#guard coeffNats supportedEntry_13_2.poly = [2, 12, 1]
+#guard supportedEntry_13_2.poly = luebeckConwayPolynomial_13_2
+#guard luebeckConwayPolynomial? 13 2 = some supportedEntry_13_2.poly
+#guard conwayPoly 13 2 supportedEntry_13_2 = luebeckConwayPolynomial_13_2
+#guard luebeckConwayPolynomial? 13 2 =
+  some (conwayPoly 13 2 supportedEntry_13_2)
+#guard 0 < FpPoly.degree (conwayPoly 13 2 supportedEntry_13_2)
+
+-- Odd-prime entry: `(13, 3)`, using the exported supported entry.
+#guard coeffNats supportedEntry_13_3.poly = [11, 2, 0, 1]
+#guard supportedEntry_13_3.poly = luebeckConwayPolynomial_13_3
+#guard luebeckConwayPolynomial? 13 3 = some supportedEntry_13_3.poly
+#guard conwayPoly 13 3 supportedEntry_13_3 = luebeckConwayPolynomial_13_3
+#guard luebeckConwayPolynomial? 13 3 =
+  some (conwayPoly 13 3 supportedEntry_13_3)
+#guard 0 < FpPoly.degree (conwayPoly 13 3 supportedEntry_13_3)
+
+-- Odd-prime entry: `(13, 4)`, using the exported supported entry.
+#guard coeffNats supportedEntry_13_4.poly = [2, 12, 3, 0, 1]
+#guard supportedEntry_13_4.poly = luebeckConwayPolynomial_13_4
+#guard luebeckConwayPolynomial? 13 4 = some supportedEntry_13_4.poly
+#guard conwayPoly 13 4 supportedEntry_13_4 = luebeckConwayPolynomial_13_4
+#guard luebeckConwayPolynomial? 13 4 =
+  some (conwayPoly 13 4 supportedEntry_13_4)
+#guard 0 < FpPoly.degree (conwayPoly 13 4 supportedEntry_13_4)
+
+-- Odd-prime entry: `(13, 5)`, using the exported supported entry.
+#guard coeffNats supportedEntry_13_5.poly = [11, 4, 0, 0, 0, 1]
+#guard supportedEntry_13_5.poly = luebeckConwayPolynomial_13_5
+#guard luebeckConwayPolynomial? 13 5 = some supportedEntry_13_5.poly
+#guard conwayPoly 13 5 supportedEntry_13_5 = luebeckConwayPolynomial_13_5
+#guard luebeckConwayPolynomial? 13 5 =
+  some (conwayPoly 13 5 supportedEntry_13_5)
+#guard 0 < FpPoly.degree (conwayPoly 13 5 supportedEntry_13_5)
+
+-- Odd-prime entry: `(13, 6)`, using the exported supported entry.
+#guard coeffNats supportedEntry_13_6.poly = [2, 11, 11, 10, 0, 0, 1]
+#guard supportedEntry_13_6.poly = luebeckConwayPolynomial_13_6
+#guard luebeckConwayPolynomial? 13 6 = some supportedEntry_13_6.poly
+#guard conwayPoly 13 6 supportedEntry_13_6 = luebeckConwayPolynomial_13_6
+#guard luebeckConwayPolynomial? 13 6 =
+  some (conwayPoly 13 6 supportedEntry_13_6)
+#guard 0 < FpPoly.degree (conwayPoly 13 6 supportedEntry_13_6)
 -- Odd-prime entry: `(11, 1)`, using the exported supported entry.
 #guard coeffNats supportedEntry_11_1.poly = [9, 1]
 #guard supportedEntry_11_1.poly = luebeckConwayPolynomial_11_1
