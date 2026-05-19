@@ -758,6 +758,14 @@ representatives. -/
     repr (x - y) = GFqRing.reduceMod f (repr x - repr y) :=
   rfl
 
+/-- The representative of a nonzero inverse is the inverse polynomial representative. -/
+@[simp] theorem repr_inv_of_ne_zero
+    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
+    {x : FiniteField f hf hp hirr} (hx : x ≠ zero f hf hp hirr) :
+    repr (x⁻¹ : FiniteField f hf hp hirr) =
+      GFqRing.repr (GFqRing.ofPoly f hf (invPoly x.toQuotient)) := by
+  simpa [repr] using congrArg GFqRing.repr (toQuotient_inv_of_ne_zero hx)
+
 @[simp] theorem repr_pow
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) (n : Nat) :
