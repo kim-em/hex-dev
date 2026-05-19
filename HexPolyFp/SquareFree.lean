@@ -244,9 +244,8 @@ private theorem scale_add_scalar (c d : ZMod64 p) (f : FpPoly p) :
   have hzero_cd : (c + d) * (0 : ZMod64 p) = 0 := by grind
   have hzero_c : c * (0 : ZMod64 p) = 0 := by grind
   have hzero_d : d * (0 : ZMod64 p) = 0 := by grind
-  have hzero_add : (0 : ZMod64 p) + 0 = 0 := by grind
   rw [DensePoly.coeff_scale _ _ _ hzero_cd]
-  rw [DensePoly.coeff_add _ _ _ hzero_add]
+  rw [DensePoly.coeff_add_semiring]
   rw [DensePoly.coeff_scale _ _ _ hzero_c]
   rw [DensePoly.coeff_scale _ _ _ hzero_d]
   grind
@@ -492,8 +491,7 @@ private theorem powLinearBinomSum_succ_row
       rw [← hdistL]
       apply DensePoly.ext_coeff
       intro i
-      have hzero_add : (0 : ZMod64 p) + 0 = 0 := by grind
-      repeat rw [DensePoly.coeff_add _ _ _ hzero_add]
+      repeat rw [DensePoly.coeff_add_semiring]
       grind
 
 private theorem powLinearBinomTerm_above
@@ -788,7 +786,7 @@ private theorem coeff_foldl_coeffTerm_coeff
   | cons i xs ih =>
       simp only [List.foldl_cons]
       rw [ih (acc + coeffTerm g i)]
-      rw [DensePoly.coeff_add _ _ _ zmod64_add_zero_zero_coeff]
+      rw [DensePoly.coeff_add_semiring]
 
 private theorem coeffFold_coeff_index_fold (g : FpPoly p) (m n : Nat) :
     (coeffFold g m).coeff n =
@@ -868,7 +866,7 @@ private theorem coeffFold_coeff (g : FpPoly p) (m n : Nat) :
       simp only [List.foldl_cons, List.foldl_nil]
       change ((List.range m).foldl (fun acc i => acc + coeffTerm g i) 0 +
           coeffTerm g m).coeff n = if n < m + 1 then g.coeff n else 0
-      rw [DensePoly.coeff_add _ _ _ zmod64_add_zero_zero_coeff]
+      rw [DensePoly.coeff_add_semiring]
       change (coeffFold g m).coeff n + (coeffTerm g m).coeff n =
         if n < m + 1 then g.coeff n else 0
       rw [ih, coeffTerm_coeff]
@@ -1019,7 +1017,7 @@ private theorem coeffFoldPowerCoeff_prime_coeff
         rw [List.range_succ, List.foldl_append]
         simp only [List.foldl_cons, List.foldl_nil]
       rw [hsucc, powLinear_add_prime hp,
-        DensePoly.coeff_add _ _ _ zmod64_add_zero_zero_coeff,
+        DensePoly.coeff_add_semiring,
         ih, powLinear_coeffTerm_coeff]
       by_cases hmod : n % p = 0
       · rw [if_pos hmod, if_pos hmod]
@@ -1092,7 +1090,7 @@ private theorem powLinear_add_prime_coeff
     (powLinear (f + g) p).coeff n =
       (powLinear f p).coeff n + (powLinear g p).coeff n := by
   rw [powLinear_add_prime hp f g]
-  exact DensePoly.coeff_add _ _ _ zmod64_add_zero_zero_coeff
+  exact DensePoly.coeff_add_semiring _ _ _
 
 /--
 Freshman's-dream coefficient support for a `p`th power over `F_p[x]`.
