@@ -937,6 +937,29 @@ theorem coeff_add_of_true_true {p q : GF2Poly} {n : Nat}
   rw [coeff_add_bne, hp, hq]
   rfl
 
+/-- A set left coefficient and clear right coefficient remain set under
+`GF(2)` addition. -/
+theorem coeff_add_of_true_false {p q : GF2Poly} {n : Nat}
+    (hp : p.coeff n = true) (hq : q.coeff n = false) :
+    (p + q).coeff n = true := by
+  rw [coeff_add_bne, hp, hq]
+  rfl
+
+/-- A clear left coefficient and set right coefficient remain set under
+`GF(2)` addition. -/
+theorem coeff_add_of_false_true {p q : GF2Poly} {n : Nat}
+    (hp : p.coeff n = false) (hq : q.coeff n = true) :
+    (p + q).coeff n = true := by
+  rw [coeff_add_bne, hp, hq]
+  rfl
+
+/-- Clear coefficients remain clear under `GF(2)` addition. -/
+theorem coeff_add_of_false_false {p q : GF2Poly} {n : Nat}
+    (hp : p.coeff n = false) (hq : q.coeff n = false) :
+    (p + q).coeff n = false := by
+  rw [coeff_add_bne, hp, hq]
+  rfl
+
 /-- Raw packed addition cancels each word against itself. -/
 theorem xorWords_self_getD (xs : Array UInt64) (i : Nat) :
     (xorWords xs xs).getD i 0 = 0 := by
