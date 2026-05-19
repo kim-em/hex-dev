@@ -126,6 +126,16 @@ instance : SMul Int (ZMod64 p) where
 @[simp] theorem toNat_natCast (n : Nat) : (natCast p n).toNat = n % p := by
   rw [natCast, toNat_ofNat]
 
+/-- Natural casts are residues built from the cast representative. -/
+theorem natCast_eq_ofNat (n : Nat) :
+    natCast p n = ofNat p n := by
+  rfl
+
+/-- Operator-level form of `natCast_eq_ofNat`. -/
+theorem natCast_op_eq_ofNat (n : Nat) :
+    (n : ZMod64 p) = ofNat p n := by
+  simpa using natCast_eq_ofNat (p := p) n
+
 @[simp] theorem toNat_neg (a : ZMod64 p) : (neg a).toNat = (p - a.toNat) % p := by
   unfold neg
   by_cases hp : p = UInt64.word
@@ -154,9 +164,29 @@ instance : SMul Int (ZMod64 p) where
         omega
       rw [Nat.mod_eq_of_lt hlt]
 
+/-- Negation is the residue built from the complementary representative. -/
+theorem neg_eq_ofNat (a : ZMod64 p) :
+    neg a = ofNat p (p - a.toNat) := by
+  rw [eq_iff_toNat_eq, toNat_neg, toNat_ofNat]
+
+/-- Operator-level form of `neg_eq_ofNat`. -/
+theorem neg_op_eq_ofNat (a : ZMod64 p) :
+    -a = ofNat p (p - a.toNat) := by
+  simpa using neg_eq_ofNat a
+
 @[simp] theorem toNat_nsmul (n : Nat) (a : ZMod64 p) :
     (nsmul n a).toNat = (n * a.toNat) % p := by
   rw [nsmul, toNat_ofNat]
+
+/-- Natural scalar multiplication is the residue built from the scaled representative. -/
+theorem nsmul_eq_ofNat (n : Nat) (a : ZMod64 p) :
+    nsmul n a = ofNat p (n * a.toNat) := by
+  rw [eq_iff_toNat_eq, toNat_nsmul, toNat_ofNat]
+
+/-- Operator-level form of `nsmul_eq_ofNat`. -/
+theorem nsmul_op_eq_ofNat (n : Nat) (a : ZMod64 p) :
+    n • a = ofNat p (n * a.toNat) := by
+  simpa using nsmul_eq_ofNat n a
 
 @[simp] theorem toNat_intCast_ofNat (n : Nat) :
     (intCast p (.ofNat n)).toNat = n % p := by
