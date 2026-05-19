@@ -450,10 +450,11 @@ theorem coeff_add [Add R] (p q : DensePoly R) (n : Nat)
 
 /-- Semiring-specialized coefficient law for addition. -/
 @[simp] theorem coeff_add_semiring {S : Type u}
-    [Zero S] [Add S] [Lean.Grind.Semiring S] [DecidableEq S] [AddZeroLaw S]
-    (p q : DensePoly S) (n : Nat) :
+    [Zero S] [Add S] [Lean.Grind.Semiring S] [DecidableEq S]
+    (p q : DensePoly S) (n : Nat)
+    (hzero : AddZeroLaw S := by infer_instance) :
     (p + q).coeff n = p.coeff n + q.coeff n :=
-  coeff_add p q n AddZeroLaw.add_zero_zero
+  coeff_add p q n hzero.add_zero_zero
 
 /-- Coefficient law for subtraction. The explicit zero law is needed because the generic
 `Sub`/`Zero` interface does not imply `0 - 0 = 0`. -/
@@ -473,10 +474,11 @@ theorem coeff_sub [Sub R] (p q : DensePoly R) (n : Nat)
 
 /-- Ring-specialized coefficient law for subtraction. -/
 @[simp] theorem coeff_sub_ring {S : Type u}
-    [Zero S] [Sub S] [Lean.Grind.Ring S] [DecidableEq S] [SubZeroLaw S]
-    (p q : DensePoly S) (n : Nat) :
+    [Zero S] [Sub S] [Lean.Grind.Ring S] [DecidableEq S]
+    (p q : DensePoly S) (n : Nat)
+    (hzero : SubZeroLaw S := by infer_instance) :
     (p - q).coeff n = p.coeff n - q.coeff n :=
-  coeff_sub p q n SubZeroLaw.sub_zero_zero
+  coeff_sub p q n hzero.sub_zero_zero
 
 /-- The zero polynomial has coefficient `0` at every index. -/
 @[simp] theorem coeff_zero (n : Nat) :
@@ -493,13 +495,14 @@ theorem coeff_neg [Sub R] (p : DensePoly R) (n : Nat)
 
 /-- Ring-specialized coefficient law for negation. -/
 @[simp] theorem coeff_neg_ring {S : Type u}
-    [Zero S] [Sub S] [Neg S] [Lean.Grind.Ring S] [DecidableEq S] [SubZeroLaw S]
-    [ZeroSubNegLaw S]
-    (p : DensePoly S) (n : Nat) :
+    [Zero S] [Sub S] [Neg S] [Lean.Grind.Ring S] [DecidableEq S]
+    (p : DensePoly S) (n : Nat)
+    (hsub : SubZeroLaw S := by infer_instance)
+    (hneg : ZeroSubNegLaw S := by infer_instance) :
     (-p).coeff n = -(p.coeff n) := by
-  have h := coeff_neg p n SubZeroLaw.sub_zero_zero
+  have h := coeff_neg p n hsub.sub_zero_zero
   rw [h]
-  exact ZeroSubNegLaw.zero_sub_eq_neg (p.coeff n)
+  exact hneg.zero_sub_eq_neg (p.coeff n)
 
 /-- Semiring-specialized right zero law for dense polynomial addition. -/
 @[simp] theorem add_zero_semiring {S : Type u}
