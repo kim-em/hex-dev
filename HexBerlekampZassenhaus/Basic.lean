@@ -2506,7 +2506,6 @@ private theorem splitInitialZeros_reassembles (coeffs : List Int) :
                     simpa [hn] using hcoeff_n
                   simpa [hsucc, Nat.succ_sub_succ_eq_sub] using hvalue
       · simp [hcoeff]
-        exact shift_zero (DensePoly.ofCoeffs (coeff :: coeffs).toArray)
 
 private theorem extractXPower_product (f : ZPoly) :
     let xData := ZPoly.extractXPower f
