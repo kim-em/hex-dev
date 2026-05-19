@@ -451,8 +451,8 @@ theorem coeff_add [Add R] (p q : DensePoly R) (n : Nat)
 /-- Semiring-specialized coefficient law for addition. -/
 @[simp] theorem coeff_add_semiring {S : Type u}
     [Zero S] [Add S] [Lean.Grind.Semiring S] [DecidableEq S]
-    (hzero : AddZeroLaw S := by infer_instance)
-    (p q : DensePoly S) (n : Nat) :
+    (p q : DensePoly S) (n : Nat)
+    (hzero : AddZeroLaw S := by infer_instance) :
     (p + q).coeff n = p.coeff n + q.coeff n :=
   coeff_add p q n hzero.add_zero_zero
 
@@ -475,8 +475,8 @@ theorem coeff_sub [Sub R] (p q : DensePoly R) (n : Nat)
 /-- Ring-specialized coefficient law for subtraction. -/
 @[simp] theorem coeff_sub_ring {S : Type u}
     [Zero S] [Sub S] [Lean.Grind.Ring S] [DecidableEq S]
-    (hzero : SubZeroLaw S := by infer_instance)
-    (p q : DensePoly S) (n : Nat) :
+    (p q : DensePoly S) (n : Nat)
+    (hzero : SubZeroLaw S := by infer_instance) :
     (p - q).coeff n = p.coeff n - q.coeff n :=
   coeff_sub p q n hzero.sub_zero_zero
 
@@ -496,9 +496,9 @@ theorem coeff_neg [Sub R] (p : DensePoly R) (n : Nat)
 /-- Ring-specialized coefficient law for negation. -/
 @[simp] theorem coeff_neg_ring {S : Type u}
     [Zero S] [Sub S] [Neg S] [Lean.Grind.Ring S] [DecidableEq S]
+    (p : DensePoly S) (n : Nat)
     (hsub : SubZeroLaw S := by infer_instance)
-    (hneg : ZeroSubNegLaw S := by infer_instance)
-    (p : DensePoly S) (n : Nat) :
+    (hneg : ZeroSubNegLaw S := by infer_instance) :
     (-p).coeff n = -(p.coeff n) := by
   have h := coeff_neg p n hsub.sub_zero_zero
   rw [h]
