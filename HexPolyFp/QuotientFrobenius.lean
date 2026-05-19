@@ -286,10 +286,9 @@ private theorem coeff_fpPolyMonoSum (f : FpPoly p) (m k : Nat) :
       rw [if_neg hk]
       rfl
   | succ m ih =>
-      have hzero_add : (0 : ZMod64 p) + 0 = 0 := by grind
       show (fpPolyMonoSum f m + DensePoly.monomial m (f.coeff m)).coeff k =
         if k < m + 1 then f.coeff k else 0
-      rw [DensePoly.coeff_add _ _ _ hzero_add]
+      rw [DensePoly.coeff_add_semiring]
       rw [ih]
       rw [DensePoly.coeff_monomial m (f.coeff m) k]
       by_cases hk_lt_m : k < m
