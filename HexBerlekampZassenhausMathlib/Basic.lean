@@ -14767,6 +14767,52 @@ private theorem scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorS
     htarget_primitive htarget_lc_pos htarget_dvd_core hpartition hmatches hfuel
 
 /--
+Abstract-bound variant of
+`recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition`:
+the concrete `2 * defaultFactorCoeffBound core < d.p ^ d.k` Mignotte
+precision is replaced by `2 * B' < d.p ^ d.k` against an abstract bound
+`B'`, paired with the leading-coefficient bound on `core` and the
+universal divisor coefficient bound `∀ g ∣ core, ∀ i, (g.coeff i).natAbs
+≤ B'`. Thin wrapper over
+`recombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition_of_bound`
+that extracts the per-factor coverage at the supplied `factor`.
+-/
+theorem recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition_of_bound
+    {core target factor : Hex.ZPoly} {d : Hex.LiftData}
+    {J : LiftedFactorSubset d} {localFactors : List Hex.ZPoly} {fuel : Nat}
+    (B' : Nat)
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hvalid : ∀ g : Hex.ZPoly, g ∣ core → ∀ i, (g.coeff i).natAbs ≤ B')
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hd_liftedFactor_inj : Function.Injective (liftedFactor d))
+    (hprecision : 2 * B' < d.p ^ d.k)
+    (htarget_monic : Hex.DensePoly.Monic target)
+    (htarget_dvd_core : target ∣ core)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (hmatches : LiftedFactorListMatches d J localFactors)
+    (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hfactor_dvd_target : factor ∣ target)
+    (hfuel : J.card < fuel) :
+    ∃ result,
+      Hex.recombinationSearchModAux target (d.p ^ d.k) localFactors fuel =
+        some result ∧
+      ∃ emitted ∈ result,
+        Associated (HexPolyZMathlib.toPolynomial emitted)
+          (HexPolyZMathlib.toPolynomial factor) := by
+  obtain ⟨result, hresult, hcovers⟩ :=
+    recombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition_of_bound
+      B' hvalid hcore_ne hcore_monic hd_modulus hd_liftedFactor_monic
+      hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
+      htarget_monic htarget_dvd_core hpartition hmatches hfuel
+  exact ⟨result, hresult, hcovers factor hfactor_irr hfactor_dvd_target⟩
+
+/--
 Recursive coverage capstone for `Hex.recombinationSearchModAux` (#4301).
 
 Given a `LiftedFactorSubsetPartition core d J target` rest-state predicate at
@@ -14774,9 +14820,12 @@ a recursive recombination level, and an irreducible integer divisor `factor`
 of `target`, the executable recombination search returns `some result` with
 `factor` (up to `Associated`) among the emitted candidates.
 
-Thin wrapper around the universally-quantified auxiliary
-`recombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition`,
-which carries out the actual fuel-based induction. -/
+Thin wrapper over
+`recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition_of_bound`
+that instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound core` and
+discharges the abstract bound hypotheses via
+`defaultFactorCoeffBound_leadingCoeff_natAbs_le` paired with
+`defaultFactorCoeffBound_valid`. -/
 theorem recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition
     {core target factor : Hex.ZPoly} {d : Hex.LiftData}
     {J : LiftedFactorSubset d} {localFactors : List Hex.ZPoly} {fuel : Nat}
@@ -14802,12 +14851,15 @@ theorem recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPa
       ∃ emitted ∈ result,
         Associated (HexPolyZMathlib.toPolynomial emitted)
           (HexPolyZMathlib.toPolynomial factor) := by
-  obtain ⟨result, hresult, hcovers⟩ :=
-    recombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition
-      hcore_ne hcore_monic hd_modulus hd_liftedFactor_monic
-      hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
-      htarget_monic htarget_dvd_core hpartition hmatches hfuel
-  exact ⟨result, hresult, hcovers factor hfactor_irr hfactor_dvd_target⟩
+  have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
+  exact recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound core)
+    hcore_lc_le
+    (defaultFactorCoeffBound_valid core hcore_ne)
+    hcore_ne hcore_monic hd_modulus hd_liftedFactor_monic
+    hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
+    htarget_monic htarget_dvd_core hpartition hmatches
+    hfactor_irr hfactor_dvd_target hfuel
 
 /--
 Abstract-bound variant of
