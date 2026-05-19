@@ -262,6 +262,19 @@ theorem ofPolynomial_add [Semiring R] [DecidableEq R] (p q : Polynomial R) :
   rw [Hex.DensePoly.coeff_add _ _ _ (by show (0 : R) + 0 = 0; simp)]
   simp [coeff_ofPolynomial, Polynomial.coeff_add]
 
+/-- `ofPolynomial` sends Mathlib's monomial to the executable monomial. -/
+@[simp]
+theorem ofPolynomial_monomial [Semiring R] [DecidableEq R] (n : Nat) (c : R) :
+    ofPolynomial (Polynomial.monomial n c) = Hex.DensePoly.monomial n c := by
+  apply Hex.DensePoly.ext_coeff
+  intro i
+  rw [coeff_ofPolynomial, Hex.DensePoly.coeff_monomial,
+      Polynomial.coeff_monomial]
+  by_cases hi : i = n
+  · simp [hi]
+  · simp [hi, Ne.symm hi]
+    rfl
+
 @[simp]
 theorem toPolynomial_zero [Semiring R] [DecidableEq R] :
     toPolynomial (0 : Hex.DensePoly R) = 0 := by
