@@ -3,6 +3,7 @@ import Mathlib.Algebra.Polynomial.Coeff
 import Mathlib.Algebra.Polynomial.Degree.Defs
 import Mathlib.Algebra.Polynomial.Degree.Lemmas
 import Mathlib.Algebra.Polynomial.Degree.Operations
+import Mathlib.Algebra.Polynomial.Derivative
 import Mathlib.Algebra.Polynomial.Monomial
 import HexPoly
 
@@ -357,6 +358,16 @@ theorem toPolynomial_mul [Semiring R] [DecidableEq R] (p q : Hex.DensePoly R) :
     have hi_lt : i < n + 1 := Finset.mem_range.mp hi
     omega
   simp [denseDiagonalMulCoeffTerm, hle]
+
+@[simp]
+theorem toPolynomial_derivative [CommSemiring R] [DecidableEq R] (p : Hex.DensePoly R) :
+    toPolynomial p.derivative = Polynomial.derivative (toPolynomial p) := by
+  ext n
+  rw [coeff_toPolynomial, Hex.DensePoly.coeff_derivative p n (by
+    change ((n + 1 : Nat) : R) * (0 : R) = 0
+    rw [mul_zero]),
+    Polynomial.coeff_derivative, coeff_toPolynomial]
+  rw [Nat.cast_add, Nat.cast_one, mul_comm]
 
 @[simp]
 theorem toPolynomial_ofPolynomial [CommRing R] [DecidableEq R] (p : Polynomial R) :
