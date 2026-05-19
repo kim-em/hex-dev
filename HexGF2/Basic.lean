@@ -530,6 +530,16 @@ theorem coeff_ofUInt64_eq_false_of_ge_64 (w : UInt64) {i : Nat} (hi : 64 ≤ i) 
   | succ _ =>
       simp [coeffWords, hidx]
 
+/-- Input `0` to `ofUInt64` is the zero polynomial. -/
+@[simp] theorem ofUInt64_zero : ofUInt64 0 = (0 : GF2Poly) := by
+  change ofWords #[(0 : UInt64)] = ofWords #[]
+  apply ext_words
+  exact words_ofWords_single_zero
+
+/-- Input `1` to `ofUInt64` is the unit polynomial. -/
+@[simp] theorem ofUInt64_one : ofUInt64 1 = (1 : GF2Poly) := by
+  rfl
+
 /-- The packed single-word constructor preserves the underlying machine word. -/
 theorem ofUInt64_injective : Function.Injective ofUInt64 := by
   intro a b h
