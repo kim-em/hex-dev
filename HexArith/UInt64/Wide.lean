@@ -91,11 +91,23 @@ theorem addCarry_eq_of_no_overflow (a b : UInt64) (cin : Bool)
   have hnot : ¬ word ≤ a.toNat + b.toNat + cin.toNat := by omega
   simp [addCarry, hnot]
 
+/-- If exact add-with-carry does not overflow, the low word is the exact sum. -/
+theorem addCarry_fst_eq_of_no_overflow (a b : UInt64) (cin : Bool)
+    (h : a.toNat + b.toNat + cin.toNat < word) :
+    (addCarry a b cin).1 = UInt64.ofNat (a.toNat + b.toNat + cin.toNat) := by
+  simpa using congrArg Prod.fst (addCarry_eq_of_no_overflow a b cin h)
+
 /-- If exact add-with-carry overflows, `addCarry` returns the wrapped low word and carry bit. -/
 theorem addCarry_eq_of_overflow (a b : UInt64) (cin : Bool)
     (h : word ≤ a.toNat + b.toNat + cin.toNat) :
     addCarry a b cin = (UInt64.ofNat (a.toNat + b.toNat + cin.toNat), true) := by
   simp [addCarry, h]
+
+/-- If exact add-with-carry overflows, the low word is the wrapped exact sum. -/
+theorem addCarry_fst_eq_of_overflow (a b : UInt64) (cin : Bool)
+    (h : word ≤ a.toNat + b.toNat + cin.toNat) :
+    (addCarry a b cin).1 = UInt64.ofNat (a.toNat + b.toNat + cin.toNat) := by
+  simpa using congrArg Prod.fst (addCarry_eq_of_overflow a b cin h)
 
 /-- Low-word projection of `subBorrow` after one-word wrapping. -/
 @[simp]
@@ -160,6 +172,13 @@ theorem subBorrow_eq_of_no_borrow (a b : UInt64) (bin : Bool)
     subBorrow a b bin = (UInt64.ofNat (a.toNat - (b.toNat + bin.toNat)), false) := by
   simp [subBorrow, h]
 
+/-- If subtraction does not borrow, the low word is the exact difference. -/
+theorem subBorrow_fst_eq_of_no_borrow (a b : UInt64) (bin : Bool)
+    (h : b.toNat + bin.toNat ≤ a.toNat) :
+    (subBorrow a b bin).1 =
+      UInt64.ofNat (a.toNat - (b.toNat + bin.toNat)) := by
+  simpa using congrArg Prod.fst (subBorrow_eq_of_no_borrow a b bin h)
+
 /-- If subtraction borrows, `subBorrow` returns the one-word wrapped difference. -/
 theorem subBorrow_eq_of_borrow (a b : UInt64) (bin : Bool)
     (h : a.toNat < b.toNat + bin.toNat) :
@@ -167,6 +186,13 @@ theorem subBorrow_eq_of_borrow (a b : UInt64) (bin : Bool)
       (UInt64.ofNat (word + a.toNat - (b.toNat + bin.toNat)), true) := by
   have hnot : ¬ b.toNat + bin.toNat ≤ a.toNat := by omega
   simp [subBorrow, hnot]
+
+/-- If subtraction borrows, the low word is the wrapped difference. -/
+theorem subBorrow_fst_eq_of_borrow (a b : UInt64) (bin : Bool)
+    (h : a.toNat < b.toNat + bin.toNat) :
+    (subBorrow a b bin).1 =
+      UInt64.ofNat (word + a.toNat - (b.toNat + bin.toNat)) := by
+  simpa using congrArg Prod.fst (subBorrow_eq_of_borrow a b bin h)
 
 private theorem toNat_ofNat_quot_mul_lt_word (a b : UInt64) :
     (UInt64.ofNat (a.toNat * b.toNat / word)).toNat =
