@@ -632,6 +632,17 @@ of representatives. -/
         product.1 product.2).val := by
   rfl
 
+/-- The packed representative of an inverse is the representative stored by
+the packed `GF2n` inversion path. -/
+@[simp] theorem repr_inv (x : GF2q n) :
+    repr x⁻¹ =
+      (GF2n.inv
+        (n := n) (irr := h.lower)
+        (hn := h.degree_pos) (hn64 := h.degree_lt_word)
+        (hirr := h.packed_irreducible)
+        x).val := by
+  rfl
+
 /-- The packed representative of a quotient is the representative stored by
 the packed `GF2n` division path. -/
 @[simp] theorem repr_div (x y : GF2q n) :
