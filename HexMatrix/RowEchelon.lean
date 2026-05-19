@@ -759,6 +759,57 @@ theorem rowAdd_right_inverse_preserve [Lean.Grind.Ring R]
 def colAdd [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin m) (c : R) : Matrix R n m :=
   Matrix.ofFn fun i j => if j = dst then M[i][j] + c * M[i][src] else M[i][j]
 
+/-- Read an entry of `colAdd M src dst c` by cases on the column index:
+column `dst` returns `M[i][dst] + c * M[i][src]`, any other column is
+unchanged. -/
+theorem colAdd_getElem [Mul R] [Add R]
+    (M : Matrix R n m) (src dst : Fin m) (c : R) (i : Fin n) (j : Fin m) :
+    (colAdd M src dst c)[i][j] =
+      if j = dst then M[i][j] + c * M[i][src] else M[i][j] := by
+  rw [colAdd, getElem_ofFn]
+
+/-- Column `dst` of `colAdd M src dst c` is the pointwise column combination. -/
+@[simp] theorem col_colAdd_dst [Mul R] [Add R]
+    (M : Matrix R n m) (src dst : Fin m) (c : R) :
+    col (colAdd M src dst c) dst =
+      Vector.ofFn (fun i => M[i][dst] + c * M[i][src]) := by
+  apply Vector.ext
+  intro i hi
+  let ii : Fin n := ⟨i, hi⟩
+  show (col (colAdd M src dst c) dst)[ii] =
+    (Vector.ofFn (fun i => M[i][dst] + c * M[i][src]))[ii]
+  rw [col_getElem, colAdd_getElem]
+  simp
+
+/-- Any column other than `dst` is unchanged by `colAdd M src dst c`. -/
+theorem col_colAdd_of_ne [Mul R] [Add R]
+    (M : Matrix R n m) (src : Fin m) {dst j : Fin m} (c : R)
+    (hjdst : j ≠ dst) :
+    col (colAdd M src dst c) j = col M j := by
+  apply Vector.ext
+  intro i hi
+  let ii : Fin n := ⟨i, hi⟩
+  show (col (colAdd M src dst c) j)[ii] = (col M j)[ii]
+  rw [col_getElem, col_getElem, colAdd_getElem]
+  simp [hjdst]
+
+/-- Adding zero times one column to another leaves the matrix unchanged. -/
+@[simp] theorem colAdd_zero [Lean.Grind.Semiring R]
+    (M : Matrix R n m) (src dst : Fin m) :
+    colAdd M src dst 0 = M := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let ii : Fin n := ⟨i, hi⟩
+  let jj : Fin m := ⟨j, hj⟩
+  show (colAdd M src dst 0)[ii][jj] = M[ii][jj]
+  rw [colAdd_getElem]
+  by_cases hjd : jj = dst
+  · rw [if_pos hjd]
+    grind
+  · rw [if_neg hjd]
+
 /-- Pure data produced by an echelon-form algorithm. -/
 structure RowEchelonData (R : Type u) (n m : Nat) where
   rank : Nat

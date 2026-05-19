@@ -2444,7 +2444,24 @@ diagonal slot is supplied in this bridge layer. -/
 theorem scaledCoeffs_diag (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨i, hi⟩ =
       Int.ofNat (gramDet b (i + 1) (Nat.succ_le_of_lt hi)) := by
-  sorry
+  let hk : i + 1 ≤ n := Nat.succ_le_of_lt hi
+  rcases scaledCoeffs_diag_eq_zero_or_eq_leadingPrefix_bareiss b i hi with hzero | hbareiss
+  · have hnat := scaledCoeffs_diag_toNat (b := b) i hi
+    rw [hzero] at hnat
+    simp at hnat
+    rw [hzero, ← hnat]
+    simp
+  · apply scaledCoeffs_diag_of_nonneg
+    rw [hbareiss]
+    have hbareiss_eq :
+        Matrix.bareiss
+            (Matrix.leadingPrefix (Matrix.gramMatrix b) (i + 1) hk) =
+          Matrix.det (GramSchmidt.leadingGramMatrixInt b (i + 1) hk) := by
+      rw [← GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram]
+      exact HexMatrixMathlib.bareiss_eq_det
+        (GramSchmidt.leadingGramMatrixInt b (i + 1) hk)
+    rw [hbareiss_eq]
+    exact leadingGramMatrixInt_det_nonneg b (i + 1) hk
 
 /-- The leading executable Gram determinants of a square upper-triangular
 integer matrix with strictly positive diagonal are positive.
