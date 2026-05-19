@@ -72,6 +72,11 @@ theorem coeff_scale [Mul R] (c : R) (p : DensePoly R) (n : Nat)
   rw [coeff_ofCoeffs_list]
   simpa [coeff] using list_getD_map_mul_zero (R := R) c p.toArray.toList n hzero
 
+@[simp] theorem scale_zero_right [Mul R] (c : R) :
+    scale c (0 : DensePoly R) = 0 := by
+  unfold scale toArray
+  rfl
+
 /-- Semiring-specialized coefficient law for scalar multiplication, registered as a normalizing
 rewrite because the required `c * 0 = 0` law is available from the semiring structure. -/
 @[simp] theorem coeff_scale_semiring {S : Type u} [Lean.Grind.Semiring S] [DecidableEq S]
@@ -101,6 +106,17 @@ coefficients are read from the original polynomial with the index shifted down. 
   · rw [if_neg hp]
     rw [coeff_ofCoeffs_list]
     simpa [coeff] using list_getD_replicate_append_zero (R := R) n k p.toArray.toList
+
+@[simp] theorem shift_zero_right (n : Nat) :
+    shift n (0 : DensePoly R) = 0 := by
+  unfold shift isZero
+  rfl
+
+@[simp] theorem shift_zero_left (p : DensePoly R) :
+    shift 0 p = p := by
+  apply ext_coeff
+  intro k
+  simp
 
 /-- Combined coefficient law for a scaled shift. The zero-law hypothesis is the only algebraic
 fact needed to normalize coefficients that are outside the support. -/
