@@ -980,6 +980,25 @@ theorem coeff_add_eq_bne (p q : GF2Poly) (n : Nat) :
   rw [coeff_add]
   simp [coeffWords, xorWords_get?_getD, coeff, UInt64.bit_xor_bne]
 
+/-- The single-word constructor maps machine-word XOR to polynomial addition. -/
+theorem ofUInt64_xor (a b : UInt64) :
+    ofUInt64 (a ^^^ b) = ofUInt64 a + ofUInt64 b := by
+  apply ext_coeff
+  intro i
+  by_cases hi : i < 64
+  · rw [coeff_ofUInt64_eq_testBit _ hi, coeff_add_eq_bne,
+      coeff_ofUInt64_eq_testBit _ hi, coeff_ofUInt64_eq_testBit _ hi]
+    simp [UInt64.toNat_xor, Nat.testBit_xor]
+  · have hge : 64 ≤ i := Nat.le_of_not_gt hi
+    rw [coeff_ofUInt64_eq_false_of_ge_64 _ hge, coeff_add_eq_bne,
+      coeff_ofUInt64_eq_false_of_ge_64 _ hge, coeff_ofUInt64_eq_false_of_ge_64 _ hge]
+    rfl
+
+/-- Simp-facing packed addition law for single-word constructors. -/
+@[simp] theorem ofUInt64_add (a b : UInt64) :
+    ofUInt64 a + ofUInt64 b = ofUInt64 (a ^^^ b) :=
+  (ofUInt64_xor a b).symm
+
 /-- Simp-facing form of coefficientwise addition over packed `GF(2)` polynomials. -/
 @[simp] theorem coeff_add_bne (p q : GF2Poly) (n : Nat) :
     (p + q).coeff n = (p.coeff n != q.coeff n) :=
