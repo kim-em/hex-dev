@@ -1019,6 +1019,11 @@ theorem xorWords_self (xs : Array UInt64) :
     (0 + p).coeff n = p.coeff n := by
   simp
 
+/-- Adding zero on the right leaves packed `GF(2)` coefficients unchanged. -/
+@[simp] theorem coeff_add_zero_right_bool (p : GF2Poly) (n : Nat) :
+    (p + 0).coeff n = p.coeff n := by
+  simp
+
 /-- Zero is the right identity for `F_2[x]` addition. -/
 @[simp] theorem add_zero (p : GF2Poly) :
     p + 0 = p := by
