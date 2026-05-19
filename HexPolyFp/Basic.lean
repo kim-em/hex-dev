@@ -49,6 +49,58 @@ instance : DecidableEq (ZMod64 p) := by
       apply h
       exact congrArg ZMod64.val hab)
 
+instance : DensePoly.AddZeroLaw (ZMod64 p) where
+  add_zero_zero := by
+    rw [eq_iff_toNat_eq]
+    change (ZMod64.add ZMod64.zero ZMod64.zero).toNat = ZMod64.zero.toNat
+    rw [toNat_add, toNat_zero]
+    exact Nat.zero_mod p
+
+instance : DensePoly.SubZeroLaw (ZMod64 p) where
+  sub_zero_zero := by
+    rw [eq_iff_toNat_eq]
+    change (ZMod64.sub ZMod64.zero ZMod64.zero).toNat = ZMod64.zero.toNat
+    rw [toNat_sub, toNat_zero]
+    simp
+
+instance : DensePoly.ZeroSubNegLaw (ZMod64 p) where
+  zero_sub_eq_neg := by
+    intro a
+    rw [eq_iff_toNat_eq]
+    change (ZMod64.sub ZMod64.zero a).toNat = (ZMod64.neg a).toNat
+    rw [toNat_sub, toNat_neg, toNat_zero]
+    simp [Nat.zero_add]
+
+private theorem coeff_add_semiring_rw_smoke (a b : ZMod64 p) (n : Nat) :
+    (DensePoly.C a + DensePoly.C b : DensePoly (ZMod64 p)).coeff n =
+      (DensePoly.C a).coeff n + (DensePoly.C b).coeff n := by
+  rw [DensePoly.coeff_add_semiring]
+
+private theorem coeff_add_semiring_simp_smoke (a b : ZMod64 p) (n : Nat) :
+    (DensePoly.C a + DensePoly.C b : DensePoly (ZMod64 p)).coeff n =
+      (DensePoly.C a).coeff n + (DensePoly.C b).coeff n := by
+  simp
+
+private theorem coeff_sub_ring_rw_smoke (a b : ZMod64 p) (n : Nat) :
+    (DensePoly.C a - DensePoly.C b : DensePoly (ZMod64 p)).coeff n =
+      (DensePoly.C a).coeff n - (DensePoly.C b).coeff n := by
+  rw [DensePoly.coeff_sub_ring]
+
+private theorem coeff_sub_ring_simp_smoke (a b : ZMod64 p) (n : Nat) :
+    (DensePoly.C a - DensePoly.C b : DensePoly (ZMod64 p)).coeff n =
+      (DensePoly.C a).coeff n - (DensePoly.C b).coeff n := by
+  simp
+
+private theorem coeff_neg_ring_rw_smoke (a : ZMod64 p) (n : Nat) :
+    (-DensePoly.C a : DensePoly (ZMod64 p)).coeff n =
+      -((DensePoly.C a).coeff n) := by
+  rw [DensePoly.coeff_neg_ring]
+
+private theorem coeff_neg_ring_simp_smoke (a : ZMod64 p) (n : Nat) :
+    (-DensePoly.C a : DensePoly (ZMod64 p)).coeff n =
+      -((DensePoly.C a).coeff n) := by
+  simp
+
 private theorem divMod_spec_core [PrimeModulus p] (f g : DensePoly (ZMod64 p)) :
     let qr := DensePoly.divMod f g
     qr.1 * g + qr.2 = f := by
