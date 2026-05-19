@@ -632,6 +632,81 @@ private theorem Multiset.prod_max_one_norm_eq_prod_filter_norm (s : Multiset ℂ
         simp [hz, max_eq_left hz_le, ih]
 
 /--
+The binomial-normalized Schmeisser kernel for the derivative specialization:
+`n * z * (z + 1)^(n - 1)`.
+-/
+def schmeisserDerivativeKernel (n : ℕ) : ℂ[X] :=
+  C (n : ℂ) * X * (X + 1) ^ (n - 1)
+
+@[simp]
+theorem schmeisserDerivativeKernel_zero : schmeisserDerivativeKernel 0 = 0 := by
+  simp [schmeisserDerivativeKernel]
+
+@[simp]
+theorem schmeisserDerivativeKernel_one : schmeisserDerivativeKernel 1 = X := by
+  simp [schmeisserDerivativeKernel]
+
+theorem coeff_X_mul_derivative_eq_schmeisser_coeff
+    (p : ℂ[X]) {n k : ℕ} (hk : k ≤ n) :
+    (X * p.derivative).coeff k =
+      p.coeff k * (schmeisserDerivativeKernel n).coeff k / (Nat.choose n k : ℂ) := by
+  rcases k with _ | k
+  · simp [schmeisserDerivativeKernel]
+  have hchoose_ne : (Nat.choose n (k + 1) : ℂ) ≠ 0 := by
+    exact_mod_cast (Nat.choose_pos hk).ne'
+  have hk_pos : 0 < n := lt_of_lt_of_le (Nat.succ_pos k) hk
+  have hcoeff_kernel :
+      (schmeisserDerivativeKernel n).coeff (k + 1) =
+        (n : ℂ) * ((n - 1).choose k : ℂ) := by
+    rw [schmeisserDerivativeKernel, mul_assoc, coeff_C_mul, coeff_X_mul,
+      coeff_X_add_one_pow]
+  have hchoose_cast :
+      (n : ℂ) * ((n - 1).choose k : ℂ) =
+        (Nat.choose n (k + 1) : ℂ) * (k + 1 : ℂ) := by
+    have hnat :
+        n * Nat.choose (n - 1) k = Nat.choose n (k + 1) * (k + 1) := by
+      simpa [Nat.sub_add_cancel hk_pos] using Nat.add_one_mul_choose_eq (n - 1) k
+    exact_mod_cast hnat
+  calc
+    (X * p.derivative).coeff (k + 1) = p.derivative.coeff k := by
+      rw [coeff_X_mul]
+    _ = p.coeff (k + 1) * (k + 1 : ℂ) := by
+      rw [coeff_derivative]
+    _ = p.coeff (k + 1) *
+        ((schmeisserDerivativeKernel n).coeff (k + 1) /
+          (Nat.choose n (k + 1) : ℂ)) := by
+      rw [hcoeff_kernel, hchoose_cast]
+      field_simp [hchoose_ne]
+    _ = p.coeff (k + 1) * (schmeisserDerivativeKernel n).coeff (k + 1) /
+        (Nat.choose n (k + 1) : ℂ) := by
+      ring
+
+theorem roots_derivative_kernel_norm_le_one (n : ℕ) :
+    ∀ z ∈ (schmeisserDerivativeKernel n).roots, ‖z‖ ≤ 1 := by
+  intro z hz
+  by_cases hn : n = 0
+  · simp [schmeisserDerivativeKernel, hn] at hz
+  by_cases hn_one : n = 1
+  · subst n
+    simp at hz
+    simp [hz]
+  have hn_pos : 0 < n := Nat.pos_of_ne_zero hn
+  have hkernel_assoc :
+      schmeisserDerivativeKernel n = C (n : ℂ) * (X * (X + 1) ^ (n - 1)) := by
+    rw [schmeisserDerivativeKernel, mul_assoc]
+  rw [hkernel_assoc, roots_C_mul _ (by exact_mod_cast hn)] at hz
+  have hprod_ne : (X * (X + 1) ^ (n - 1) : ℂ[X]) ≠ 0 := by
+    exact mul_ne_zero X_ne_zero
+      (pow_ne_zero _ (by simpa using X_add_C_ne_zero (1 : ℂ)))
+  have hroots_X_add_one : (X + 1 : ℂ[X]).roots = ({-1} : Multiset ℂ) := by
+    simpa using roots_X_add_C (1 : ℂ)
+  rw [roots_mul hprod_ne, roots_X, roots_pow, hroots_X_add_one] at hz
+  simp at hz
+  rcases hz with hzero | ⟨_hnsub, hneg⟩
+  · simp [hzero]
+  · simp [hneg]
+
+/--
 The desired derivative root-product comparison follows from the `r = 1`
 instance of Schmeisser's de Bruijn-Springer product inequality.
 -/
