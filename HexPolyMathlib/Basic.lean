@@ -253,6 +253,15 @@ theorem ofPolynomial_sub [Ring R] [DecidableEq R] (p q : Polynomial R) :
   rw [Hex.DensePoly.coeff_sub _ _ _ (by show (0 : R) - 0 = 0; simp)]
   simp [coeff_ofPolynomial, Polynomial.coeff_sub]
 
+/-- `ofPolynomial` commutes with polynomial addition. -/
+@[simp]
+theorem ofPolynomial_add [Semiring R] [DecidableEq R] (p q : Polynomial R) :
+    ofPolynomial (p + q) = ofPolynomial p + ofPolynomial q := by
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  rw [Hex.DensePoly.coeff_add _ _ _ (by show (0 : R) + 0 = 0; simp)]
+  simp [coeff_ofPolynomial, Polynomial.coeff_add]
+
 @[simp]
 theorem toPolynomial_zero [Semiring R] [DecidableEq R] :
     toPolynomial (0 : Hex.DensePoly R) = 0 := by
@@ -354,6 +363,12 @@ theorem equiv_apply [CommRing R] [DecidableEq R] (p : Hex.DensePoly R) :
 theorem equiv_symm_apply [CommRing R] [DecidableEq R] (p : Polynomial R) :
     equiv.symm p = ofPolynomial p := by
   rfl
+
+/-- `ofPolynomial` commutes with polynomial multiplication. -/
+@[simp]
+theorem ofPolynomial_mul [CommRing R] [DecidableEq R] (p q : Polynomial R) :
+    ofPolynomial (p * q) = ofPolynomial p * ofPolynomial q :=
+  map_mul (equiv (R := R)).symm p q
 
 theorem natDegree_toPolynomial [Semiring R] [DecidableEq R] (p : Hex.DensePoly R) :
     (toPolynomial p).natDegree = p.degree?.getD 0 := by
