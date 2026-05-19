@@ -55,6 +55,10 @@ instance : CoeOut (ZMod64 p) Nat where
   cases h
   rfl
 
+/-- Extensionality for residues via their canonical Nat representatives. -/
+theorem ext_toNat {a b : ZMod64 p} (h : a.toNat = b.toNat) : a = b :=
+  ext (UInt64.toNat_inj.mp h)
+
 /-- Reduce a Nat representative modulo `p`. -/
 def normalize (p n : Nat) : Nat :=
   n % p
@@ -62,6 +66,14 @@ def normalize (p n : Nat) : Nat :=
 /-- Normalization always returns a canonical representative below the modulus. -/
 theorem normalize_lt (p n : Nat) [Bounds p] : normalize p n < p :=
   Nat.mod_lt _ (Bounds.pPos (p := p))
+
+/-- Normalizing an already canonical representative leaves it unchanged. -/
+@[simp] theorem normalize_of_lt {q n : Nat} (hn : n < q) : normalize q n = n := by
+  rw [normalize, Nat.mod_eq_of_lt hn]
+
+/-- Normalizing a residue's canonical representative leaves it unchanged. -/
+@[simp] theorem normalize_toNat (a : ZMod64 p) : normalize p a.toNat = a.toNat :=
+  normalize_of_lt a.toNat_lt
 
 /--
 Build a reduced residue by taking the Nat representative mod `p`.
@@ -93,7 +105,25 @@ def ofNat (p n : Nat) [Bounds p] : ZMod64 p := by
 
 /-- Two residues are equal exactly when their canonical representatives agree. -/
 theorem eq_iff_toNat_eq (a b : ZMod64 p) : a = b ↔ a.toNat = b.toNat :=
-  ⟨fun h => h ▸ rfl, fun h => ext (UInt64.toNat_inj.mp h)⟩
+  ⟨fun h => h ▸ rfl, ext_toNat⟩
+
+/-- A reduced representative constructs the same residue as the original representative. -/
+@[simp] theorem ofNat_mod (n : Nat) : ofNat p (n % p) = ofNat p n := by
+  rw [eq_iff_toNat_eq, toNat_ofNat, toNat_ofNat, Nat.mod_mod]
+
+/-- Normalizing before constructing a residue does not change the residue. -/
+@[simp] theorem ofNat_normalize (n : Nat) : ofNat p (normalize p n) = ofNat p n := by
+  simp [normalize]
+
+/-- Characterise when an arbitrary representative builds a given residue. -/
+theorem ofNat_eq_iff_toNat_eq (n : Nat) (a : ZMod64 p) :
+    ofNat p n = a ↔ n % p = a.toNat := by
+  rw [eq_iff_toNat_eq, toNat_ofNat]
+
+/-- Characterise when a residue is built from an arbitrary representative. -/
+theorem eq_ofNat_iff_toNat_eq (a : ZMod64 p) (n : Nat) :
+    a = ofNat p n ↔ a.toNat = n % p := by
+  rw [eq_iff_toNat_eq, toNat_ofNat]
 
 /-- Equality of residues built from arbitrary Nat representatives is equality modulo `p`. -/
 theorem ofNat_eq_ofNat_iff_mod_eq (x y : Nat) :

@@ -231,11 +231,6 @@ theorem toNat_inv (a : ZMod64 p) (hcop : Nat.Coprime a.val.toNat p) :
     (a.inv * a).toNat = 1 % p := by
   simpa [ZMod64.toNat_eq_val] using inv_mul_eq_one (p := p) a hcop
 
-private theorem ext_toNat {a b : ZMod64 p} (h : a.toNat = b.toNat) : a = b := by
-  apply ext
-  apply UInt64.toNat_inj.mp
-  simpa [toNat_eq_val] using h
-
 private theorem nat_add_assoc_mod (x y z m : Nat) :
     (((x % m + y % m) % m + z % m) % m) =
       (x % m + (y % m + z % m) % m) % m := by
