@@ -438,6 +438,28 @@ agree. -/
   apply UInt64.toNat_inj.mp
   simp [GF2Poly.canonicalWordLT, Nat.mod_eq_of_lt hn1]
 
+/-- The packed representative of a sum is the reduced XOR of representatives. -/
+@[simp] theorem repr_add (x y : GF2q n) :
+    repr (x + y) =
+      (GF2n.reduce
+        (n := n) (irr := h.lower)
+        (hn := h.degree_pos) (hn64 := h.degree_lt_word)
+        (hirr := h.packed_irreducible)
+        (repr x ^^^ repr y)).val :=
+  rfl
+
+/-- The packed representative of a product is the reduced carry-less product
+of representatives. -/
+@[simp] theorem repr_mul (x y : GF2q n) :
+    repr (x * y) =
+      (let product := Hex.clmul (repr x) (repr y)
+       GF2n.reduceWide
+        (n := n) (irr := h.lower)
+        (hn := h.degree_pos) (hn64 := h.degree_lt_word)
+        (hirr := h.packed_irreducible)
+        product.1 product.2).val := by
+  rfl
+
 end GF2q
 
 end Hex
