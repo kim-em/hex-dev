@@ -790,7 +790,6 @@ private theorem mul_X_sub_C_eq_ofCoeffs_mulXSubCList
       DensePoly.ofCoeffs (mulXSubCList c a.toArray.toList).toArray := by
   apply DensePoly.ext_coeff
   intro n
-  have hzero_sub : (0 : ZMod64 p) - 0 = 0 := by grind
   have hzero_mul_c : c * (0 : ZMod64 p) = 0 := by grind
   -- LHS computation
   have hLHS : (a * (FpPoly.X - FpPoly.C c)).coeff n =
@@ -802,7 +801,7 @@ private theorem mul_X_sub_C_eq_ofCoeffs_mulXSubCList
     rw [sub_eq_add_neg, right_distrib]
     rw [DensePoly.coeff_add_semiring]
     rw [hneg_mul]
-    rw [DensePoly.coeff_neg _ _ hzero_sub]
+    rw [DensePoly.coeff_neg_ring]
     rw [show FpPoly.X = (DensePoly.monomial 1 (1 : ZMod64 p) : FpPoly p) from rfl]
     rw [coeff_monomial_mul]
     have hCmul : FpPoly.C c * a = DensePoly.scale c a := FpPoly.C_mul_eq_scale c a
