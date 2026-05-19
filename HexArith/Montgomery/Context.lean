@@ -984,4 +984,17 @@ theorem powMod_add_exp_left (a m n p : Nat) (hp : p > 0) :
     powMod a (m + n) p = (powMod a n p * powMod a m p) % p := by
   rw [powMod_add_exp a m n p hp, Nat.mul_comm]
 
+/-- Exponent-multiplication composition for `powMod`: an exponent product is a
+two-stage modular exponentiation. -/
+theorem powMod_mul_exp (a m n p : Nat) (hp : p > 0) :
+    powMod a (m * n) p = powMod (powMod a m p) n p := by
+  rw [powMod_eq a (m * n) p hp, powMod_eq (powMod a m p) n p hp,
+    powMod_eq a m p hp, Nat.pow_mul]
+  exact Nat.pow_mod (a ^ m) n p
+
+/-- Swap-oriented companion of `powMod_mul_exp`. -/
+theorem powMod_mul_exp_swap (a m n p : Nat) (hp : p > 0) :
+    powMod a (m * n) p = powMod (powMod a n p) m p := by
+  rw [Nat.mul_comm m n, powMod_mul_exp a n m p hp]
+
 end HexArith
