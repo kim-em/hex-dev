@@ -684,22 +684,6 @@ nsmul's representative and `repr x`. -/
     repr (nsmul (n + 1) x) = reduceMod f (repr (nsmul n x) + repr x) := by
   rw [nsmul_succ, repr_add]
 
-private theorem zmod64_zero_add (a : ZMod64 p) : (0 : ZMod64 p) + a = a := by
-  change ZMod64.add 0 a = a
-  apply ZMod64.ext
-  apply UInt64.toNat_inj.mp
-  change (ZMod64.add 0 a).toNat = a.toNat
-  have h := ZMod64.toNat_add (0 : ZMod64 p) a
-  have hmod : a.val.toNat % p = a.val.toNat := Nat.mod_eq_of_lt a.isLt
-  have hz : (ZMod64.val (0 : ZMod64 p)).toNat = 0 := by
-    simpa [ZMod64.toNat_eq_val] using (ZMod64.toNat_zero (p := p))
-  rw [h]
-  rw [ZMod64.toNat_eq_val, ZMod64.toNat_eq_val, hz, Nat.zero_add, hmod]
-
-private theorem zmod64_zero_add_zero :
-    (Zero.zero : ZMod64 p) + (Zero.zero : ZMod64 p) = (Zero.zero : ZMod64 p) :=
-  zmod64_zero_add Zero.zero
-
 private theorem fpPoly_C_add (a b : ZMod64 p) :
     FpPoly.C (a + b) = (FpPoly.C a + FpPoly.C b : FpPoly p) := by
   apply DensePoly.ext_coeff
@@ -708,15 +692,16 @@ private theorem fpPoly_C_add (a b : ZMod64 p) :
   · subst i
     change DensePoly.coeff (DensePoly.C (a + b)) 0 =
       DensePoly.coeff (DensePoly.C a + DensePoly.C b) 0
-    rw [DensePoly.coeff_add _ _ _ zmod64_zero_add_zero, DensePoly.coeff_C,
+    rw [DensePoly.coeff_add_semiring, DensePoly.coeff_C,
       DensePoly.coeff_C, DensePoly.coeff_C]
     simp
   · change DensePoly.coeff (DensePoly.C (a + b)) i =
       DensePoly.coeff (DensePoly.C a + DensePoly.C b) i
-    rw [DensePoly.coeff_add _ _ _ zmod64_zero_add_zero, DensePoly.coeff_C,
+    rw [DensePoly.coeff_add_semiring, DensePoly.coeff_C,
       DensePoly.coeff_C, DensePoly.coeff_C]
     simp [hi]
-    exact (zmod64_zero_add (p := p) (0 : ZMod64 p)).symm
+    show (0 : ZMod64 p) = 0 + 0
+    grind
 
 private theorem const_add (f : FpPoly p) (hf : 0 < FpPoly.degree f) (a b : ZMod64 p) :
     const f hf (a + b) = const f hf a + const f hf b := by
