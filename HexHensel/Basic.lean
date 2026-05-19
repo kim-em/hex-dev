@@ -80,6 +80,18 @@ is the `ZMod64` image of the canonical representative of the original coefficien
     change (ZMod64.zero : ZMod64 p) = ZMod64.ofNat p 0
     rfl
 
+/-- Reducing the zero polynomial modulo `p` preserves zero. -/
+@[simp] theorem modP_zero (p : Nat) [ZMod64.Bounds p] :
+    modP p 0 = 0 := by
+  apply DensePoly.ext_coeff
+  intro i
+  rw [coeff_modP]
+  have hcoeff : (0 : ZPoly).coeff i = 0 :=
+    DensePoly.coeff_eq_zero_of_size_le (0 : ZPoly) (by simp)
+  simp [hcoeff, intModNat]
+  change (ZMod64.zero : ZMod64 p) = ZMod64.ofNat p 0
+  rfl
+
 /-- Coefficientwise characterisation of `reduceModPow`: each coefficient is replaced
 by its canonical nonnegative representative in `[0, p^k)`. -/
 @[simp] theorem coeff_reduceModPow (f : ZPoly) (p k i : Nat) :
@@ -92,6 +104,16 @@ by its canonical nonnegative representative in `[0, p^k)`. -/
   · have hcoeff : f.coeff i = 0 := DensePoly.coeff_eq_zero_of_size_le f (Nat.le_of_not_gt hi)
     simp [hi, hcoeff, intModNat]
     rfl
+
+/-- Reducing the zero polynomial modulo `p^k` preserves zero. -/
+@[simp] theorem reduceModPow_zero (p k : Nat) :
+    reduceModPow 0 p k = 0 := by
+  apply DensePoly.ext_coeff
+  intro i
+  rw [coeff_reduceModPow]
+  have hcoeff : (0 : ZPoly).coeff i = 0 :=
+    DensePoly.coeff_eq_zero_of_size_le (0 : ZPoly) (by simp)
+  simp [hcoeff, intModNat]
 
 /-- If a coefficient is already divisible by `p^k`, its `reduceModPow` image vanishes. -/
 theorem coeff_reduceModPow_eq_zero_of_emod
@@ -222,6 +244,19 @@ nonnegative `Nat` representative of the corresponding `ZMod64` element. -/
     change (0 : Int) = Int.ofNat (ZMod64.zero : ZMod64 p).toNat
     rw [ZMod64.toNat_zero]
     rfl
+
+/-- The canonical integer lift of the zero polynomial is zero. -/
+@[simp] theorem liftToZ_zero :
+    liftToZ (0 : FpPoly p) = 0 := by
+  apply DensePoly.ext_coeff
+  intro i
+  rw [coeff_liftToZ]
+  have hcoeff : (0 : FpPoly p).coeff i = 0 :=
+    DensePoly.coeff_eq_zero_of_size_le (0 : FpPoly p) (by simp)
+  rw [hcoeff]
+  change (Int.ofNat (ZMod64.zero : ZMod64 p).toNat) = 0
+  rw [ZMod64.toNat_zero]
+  rfl
 
 /-- Reducing the canonical lift back modulo `p` recovers the original coefficient data. -/
 theorem modP_liftToZ_coeff (f : FpPoly p) (i : Nat) :
