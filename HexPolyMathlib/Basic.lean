@@ -464,6 +464,21 @@ theorem toPolynomial_dvd [CommRing R] [DecidableEq R] {p q : Hex.DensePoly R}
   refine ⟨toPolynomial r, ?_⟩
   rw [← toPolynomial_mul, hr]
 
+theorem ofPolynomial_dvd [CommRing R] [DecidableEq R] {p q : Polynomial R}
+    (hdvd : p ∣ q) :
+    ofPolynomial p ∣ ofPolynomial q := by
+  rcases hdvd with ⟨r, hr⟩
+  refine ⟨ofPolynomial r, ?_⟩
+  rw [← ofPolynomial_mul, hr]
+
+theorem toPolynomial_dvd_iff [CommRing R] [DecidableEq R]
+    {p q : Hex.DensePoly R} :
+    toPolynomial p ∣ toPolynomial q ↔ p ∣ q := by
+  constructor
+  · intro hdvd
+    simpa using ofPolynomial_dvd (R := R) hdvd
+  · exact toPolynomial_dvd
+
 end
 
 end HexPolyMathlib
