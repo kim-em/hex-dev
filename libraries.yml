@@ -348,7 +348,7 @@ libraries:
   HexModArithMathlib:
     deps: [HexModArith]
     mathlib: true
-    done_through: 3
+    done_through: 4
     status: active
   HexGramSchmidtMathlib:
     deps: [HexGramSchmidt, HexMatrixMathlib]
