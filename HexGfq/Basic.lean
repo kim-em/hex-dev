@@ -623,6 +623,17 @@ the packed `GF2n` inversion path. -/
         x).val := by
   rfl
 
+/-- The packed representative of a quotient is the representative stored by
+the packed `GF2n` division path. -/
+@[simp] theorem repr_div (x y : GF2q n) :
+    repr (x / y) =
+      (GF2n.div
+        (n := n) (irr := h.lower)
+        (hn := h.degree_pos) (hn64 := h.degree_lt_word)
+        (hirr := h.packed_irreducible)
+        x y).val :=
+  rfl
+
 /-- The packed representative of a natural power is stored by the packed
 `GF2n` square-and-multiply power. -/
 @[simp] theorem repr_pow (x : GF2q n) (k : Nat) :
