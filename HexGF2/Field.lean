@@ -1294,6 +1294,16 @@ theorem add_val (a b : GF2nPoly f hirr) :
   unfold add
   rw [reducePoly_val_eq_mod]
 
+/-- Negation is the identity on the packed quotient. -/
+theorem neg_val (a : GF2nPoly f hirr) : (-a).val = a.val := rfl
+
+/-- Subtraction coincides with addition on the packed quotient. -/
+theorem sub_val (a b : GF2nPoly f hirr) :
+    (a - b).val = (a.val + b.val) % f := by
+  show (sub a b).val = _
+  unfold sub
+  exact add_val a b
+
 /-- The value of the additive identity is the zero polynomial. -/
 @[simp] theorem zero_val :
     (0 : GF2nPoly f hirr).val = (0 : GF2Poly) := rfl
