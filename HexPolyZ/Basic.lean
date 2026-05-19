@@ -25,6 +25,15 @@ instance : DensePoly.ZeroSubNegLaw Int where
     intro a
     exact Int.zero_sub a
 
+instance : DensePoly.AddZeroLaw Rat where
+  add_zero_zero := by grind
+
+instance : DensePoly.SubZeroLaw Rat where
+  sub_zero_zero := by grind
+
+instance : DensePoly.ZeroSubNegLaw Rat where
+  zero_sub_eq_neg := by intro a; grind
+
 namespace ZPoly
 
 /-- Coefficientwise congruence modulo `m`. -/
@@ -2578,10 +2587,8 @@ private theorem rat_dvd_cofactor_derivative
         DensePoly.derivative d * a := by
     apply DensePoly.ext_coeff
     intro n
-    have hzero_add : (0 : Rat) + 0 = 0 := by grind
-    have hzero_sub : (0 : Rat) - 0 = 0 := by grind
-    rw [DensePoly.coeff_sub _ _ n hzero_sub]
-    rw [DensePoly.coeff_add _ _ n hzero_add]
+    rw [DensePoly.coeff_sub_ring]
+    rw [DensePoly.coeff_add_semiring]
     grind
   rw [heq] at hsub
   rw [DensePoly.mul_comm_poly]
