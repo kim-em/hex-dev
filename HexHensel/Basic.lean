@@ -188,6 +188,15 @@ theorem modP_eq_of_congr (p : Nat) [ZMod64.Bounds p] (f g : ZPoly)
     congr_pow_of_le p 1 (k + 1) (reduceModPow f p (k + 1)) f (by omega) hred
   simpa using hred₁
 
+/-- Reducing modulo any positive power of `p` does not change the reduction modulo `p`. -/
+@[simp] theorem modP_reduceModPow_of_pos
+    (p k : Nat) [ZMod64.Bounds p] (f : ZPoly) (hk : 0 < k) :
+    modP p (reduceModPow f p k) = modP p f := by
+  cases k with
+  | zero => cases hk
+  | succ k =>
+      simp
+
 end ZPoly
 
 namespace FpPoly
