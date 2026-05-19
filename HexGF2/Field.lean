@@ -1273,14 +1273,14 @@ private theorem GF2Poly_one_mul (p : GF2Poly) : (1 : GF2Poly) * p = p := by
 
 /-- The value of a quotient product is the polynomial product reduced modulo
 the defining irreducible. -/
-theorem mul_val (a b : GF2nPoly f hirr) :
+@[simp] theorem mul_val (a b : GF2nPoly f hirr) :
     (a * b).val = (a.val * b.val) % f := by
   show (mul a b).val = _
   unfold mul
   rw [reducePoly_val_eq_mod]
 
 /-- The value of the multiplicative identity is `(1 : GF2Poly) % f`. -/
-theorem one_val :
+@[simp] theorem one_val :
     (1 : GF2nPoly f hirr).val = (1 : GF2Poly) % f := by
   show (one (f := f) (hirr := hirr)).val = _
   unfold one
@@ -1288,14 +1288,14 @@ theorem one_val :
 
 /-- The value of a quotient sum is the polynomial sum reduced modulo the
 defining irreducible. -/
-theorem add_val (a b : GF2nPoly f hirr) :
+@[simp] theorem add_val (a b : GF2nPoly f hirr) :
     (a + b).val = (a.val + b.val) % f := by
   show (add a b).val = _
   unfold add
   rw [reducePoly_val_eq_mod]
 
 /-- Negation is the identity on the packed quotient. -/
-theorem neg_val (a : GF2nPoly f hirr) : (-a).val = a.val := rfl
+@[simp] theorem neg_val (a : GF2nPoly f hirr) : (-a).val = a.val := rfl
 
 /-- Subtraction coincides with addition on the packed quotient. -/
 theorem sub_val (a b : GF2nPoly f hirr) :
