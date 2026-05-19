@@ -1,5 +1,6 @@
 import HexPolyZMathlib.Basic
 import HexPolyZMathlib.Mignotte
+import HexPolyZMathlib.RobinsonForm
 
 /-!
 The `HexPolyZMathlib` library bridges executable integer dense polynomials to
