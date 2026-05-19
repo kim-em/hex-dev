@@ -1,5 +1,6 @@
 import HexBerlekampZassenhausMathlib.Basic
 import HexBerlekampZassenhausMathlib.BadVector
+import HexBerlekampZassenhausMathlib.BadVectorAuxiliary
 import HexBerlekampZassenhausMathlib.BHKSBound
 import HexBerlekampZassenhausMathlib.BHKSIndependent
 import HexBerlekampZassenhausMathlib.ColumnSignature
