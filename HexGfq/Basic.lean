@@ -598,6 +598,17 @@ of representatives. -/
         product.1 product.2).val := by
   rfl
 
+/-- The packed representative of a natural power is stored by the packed
+`GF2n` square-and-multiply power. -/
+@[simp] theorem repr_pow (x : GF2q n) (k : Nat) :
+    repr (x ^ k) =
+      (GF2n.pow
+        (n := n) (irr := h.lower)
+        (hn := h.degree_pos) (hn64 := h.degree_lt_word)
+        (hirr := h.packed_irreducible)
+        x k).val :=
+  rfl
+
 end GF2q
 
 end Hex
