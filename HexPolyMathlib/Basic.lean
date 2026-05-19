@@ -370,6 +370,7 @@ theorem ofPolynomial_mul [CommRing R] [DecidableEq R] (p q : Polynomial R) :
     ofPolynomial (p * q) = ofPolynomial p * ofPolynomial q :=
   map_mul (equiv (R := R)).symm p q
 
+@[simp]
 theorem natDegree_toPolynomial [Semiring R] [DecidableEq R] (p : Hex.DensePoly R) :
     (toPolynomial p).natDegree = p.degree?.getD 0 := by
   by_cases hsize : p.size = 0
@@ -393,6 +394,7 @@ theorem natDegree_toPolynomial [Semiring R] [DecidableEq R] (p : Hex.DensePoly R
       rw [coeff_toPolynomial]
       exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size p hpos
 
+@[simp]
 theorem leadingCoeff_toPolynomial [Semiring R] [DecidableEq R]
     (p : Hex.DensePoly R) :
     (toPolynomial p).leadingCoeff = p.leadingCoeff := by
