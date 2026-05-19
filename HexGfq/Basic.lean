@@ -314,6 +314,20 @@ quotient-ring integer-cast representative. -/
         ((i : GFqRing.PolyQuotient (modulus h) (modulus_nonconstant h))) :=
   rfl
 
+/-- The representative of a natural scalar action lifts the quotient-ring
+action. -/
+@[simp] theorem repr_nsmul {h : Conway.SupportedEntry p n}
+    (k : Nat) (x : GFq p n h) :
+    repr (k • x : GFq p n h) = GFqRing.repr (k • x.toQuotient) :=
+  rfl
+
+/-- The representative of an integer scalar action lifts the quotient-ring
+action. -/
+@[simp] theorem repr_zsmul {h : Conway.SupportedEntry p n}
+    (k : Int) (x : GFq p n h) :
+    repr (k • x : GFq p n h) = GFqRing.repr (k • x.toQuotient) :=
+  rfl
+
 /-- Two `GFq.ofPoly` constructors produce the same field element exactly when
 their inputs have the same reduced representative modulo the selected Conway
 polynomial. -/
