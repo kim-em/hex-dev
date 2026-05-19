@@ -390,6 +390,20 @@ theorem ofPoly_eq_ofPoly_iff_reduceMod_eq
     apply ext
     simpa using hred
 
+@[simp] theorem ofPoly_reduceMod
+    (h : Conway.SupportedEntry p n) (f : FpPoly p) :
+    ofPoly h (GFqRing.reduceMod (modulus h) f) = ofPoly h f := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime h.prime
+  exact
+    (ofPoly_eq_ofPoly_iff_reduceMod_eq h
+      (GFqRing.reduceMod (modulus h) f) f).2
+      (by simp [modulus])
+
+theorem ofPoly_eq_ofPoly_reduceMod
+    (h : Conway.SupportedEntry p n) (f : FpPoly p) :
+    ofPoly h f = ofPoly h (GFqRing.reduceMod (modulus h) f) :=
+  (ofPoly_reduceMod h f).symm
+
 end GFq
 
 /-- Optimized canonical binary field for committed Conway entries that have a
