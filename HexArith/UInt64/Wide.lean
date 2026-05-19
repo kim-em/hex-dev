@@ -69,6 +69,21 @@ theorem addCarry_snd (a b : UInt64) (cin : Bool) :
     (addCarry a b cin).2 = decide (word ≤ a.toNat + b.toNat + cin.toNat) := by
   simp [addCarry]
 
+/-- The outgoing carry bit is true exactly when exact add-with-carry overflows. -/
+theorem addCarry_snd_eq_true (a b : UInt64) (cin : Bool) :
+    (addCarry a b cin).2 = true ↔ word ≤ a.toNat + b.toNat + cin.toNat := by
+  rw [addCarry_snd]
+  simp
+
+/-- The outgoing carry bit is false exactly when exact add-with-carry fits in one word. -/
+theorem addCarry_snd_eq_false (a b : UInt64) (cin : Bool) :
+    (addCarry a b cin).2 = false ↔ a.toNat + b.toNat + cin.toNat < word := by
+  rw [addCarry_snd]
+  by_cases h : word ≤ a.toNat + b.toNat + cin.toNat
+  · simp [h]
+  · have hlt : a.toNat + b.toNat + cin.toNat < word := by omega
+    simp [h, hlt]
+
 /-- If exact add-with-carry does not overflow, `addCarry` returns the exact low word. -/
 theorem addCarry_eq_of_no_overflow (a b : UInt64) (cin : Bool)
     (h : a.toNat + b.toNat + cin.toNat < word) :
@@ -123,6 +138,21 @@ theorem subBorrow_snd (a b : UInt64) (bin : Bool) :
     simp [subBorrow, hle, hnot]
   · have hlt : a.toNat < b.toNat + bin.toNat := by omega
     simp [subBorrow, hle, hlt]
+
+/-- The outgoing borrow bit is true exactly when the subtrahend is larger. -/
+theorem subBorrow_snd_eq_true (a b : UInt64) (bin : Bool) :
+    (subBorrow a b bin).2 = true ↔ a.toNat < b.toNat + bin.toNat := by
+  rw [subBorrow_snd]
+  simp
+
+/-- The outgoing borrow bit is false exactly when subtraction does not borrow. -/
+theorem subBorrow_snd_eq_false (a b : UInt64) (bin : Bool) :
+    (subBorrow a b bin).2 = false ↔ b.toNat + bin.toNat ≤ a.toNat := by
+  rw [subBorrow_snd]
+  by_cases h : a.toNat < b.toNat + bin.toNat
+  · simp [h]
+  · have hle : b.toNat + bin.toNat ≤ a.toNat := by omega
+    simp [h, hle]
 
 /-- If subtraction does not borrow, `subBorrow` returns the exact difference. -/
 theorem subBorrow_eq_of_no_borrow (a b : UInt64) (bin : Bool)
