@@ -1638,6 +1638,19 @@ theorem coeff_monomial_ne {n m : Nat} (h : m ≠ n) :
     highestSetBit?_oneHot hbit]
   omega
 
+/-- The default-`0` degree of the monomial `x^n` is `n`. -/
+@[simp] theorem degree_monomial (n : Nat) : (monomial n).degree = n :=
+  degree_eq_of_degree?_eq_some (degree?_monomial n)
+
+/-- The monomial `x^n` is never the zero polynomial. -/
+@[simp] theorem isZero_monomial_eq_false (n : Nat) :
+    (monomial n).isZero = false :=
+  isZero_false_of_degree?_eq_some (degree?_monomial n)
+
+/-- The monomial `x^n` is distinct from the zero polynomial. -/
+@[simp] theorem monomial_ne_zero (n : Nat) : monomial n ≠ 0 :=
+  ne_zero_of_degree?_eq_some (degree?_monomial n)
+
 /-- Shift-left coefficients reduce to the coefficient lookup on the shifted packed words. -/
 theorem coeff_shiftLeft (p : GF2Poly) (k n : Nat) :
     (p.shiftLeft k).coeff n =
