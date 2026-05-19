@@ -30,6 +30,102 @@ outside the closed unit disk.
 def robinsonForm (p : ℂ[X]) : ℂ[X] :=
   C p.leadingCoeff * (p.roots.map robinsonFactor).prod
 
+/-- The root obtained by Schur-reflecting `α` across the unit circle. -/
+def schurReflectedRoot (α : ℂ) : ℂ :=
+  (conj α)⁻¹
+
+/--
+The straight-line root path from `α` to its Schur reflection.  The Boyd/Mahler
+single-factor argument needs a monotonicity theorem for the Mahler measure of
+the derivative along this family.
+-/
+def schurRootPath (α : ℂ) (t : ℝ) : ℂ :=
+  ((1 - t : ℝ) : ℂ) * α + (t : ℂ) * schurReflectedRoot α
+
+/-- Mahler measure of the derivative after adjoining one moving linear factor. -/
+def derivativeMahlerAlongLinearFactor (f : ℂ[X]) (β : ℂ) : ℝ :=
+  ((f * (X - C β)).derivative).mahlerMeasure
+
+@[simp]
+theorem schurRootPath_zero (α : ℂ) : schurRootPath α 0 = α := by
+  simp [schurRootPath]
+
+@[simp]
+theorem schurRootPath_one (α : ℂ) : schurRootPath α 1 = schurReflectedRoot α := by
+  simp [schurRootPath]
+
+theorem reflectedLinearFactor_eq_C_mul_X_sub_C_schurReflectedRoot {α : ℂ} (hα : α ≠ 0) :
+    (1 - C (conj α) * X : ℂ[X]) =
+      C (-(conj α)) * (X - C (schurReflectedRoot α)) := by
+  have hconj : conj α ≠ 0 := by
+    change star α ≠ 0
+    rw [star_ne_zero]
+    exact hα
+  rw [schurReflectedRoot, mul_sub, ← C_mul]
+  have hmul : -(conj α) * (conj α)⁻¹ = -1 := by
+    rw [neg_mul, mul_inv_cancel₀ hconj]
+  rw [hmul]
+  rw [mul_comm]
+  have hxneg : X * C (-(conj α)) = -(X * C (conj α)) := by
+    rw [← mul_neg, ← C_neg]
+  rw [mul_comm (C (-(conj α))) X]
+  rw [hxneg]
+  norm_num
+  ring
+
+theorem derivativeMahler_reflectedLinearFactor_eq
+    (f : ℂ[X]) {α : ℂ} (hα : α ≠ 0) :
+    ((f * (1 - C (conj α) * X)).derivative).mahlerMeasure =
+      ‖α‖ * derivativeMahlerAlongLinearFactor f (schurReflectedRoot α) := by
+  have hpoly :
+      f * (1 - C (conj α) * X : ℂ[X]) =
+        C (-(conj α)) * (f * (X - C (schurReflectedRoot α))) := by
+    rw [reflectedLinearFactor_eq_C_mul_X_sub_C_schurReflectedRoot hα]
+    ring
+  rw [hpoly, derivative_C_mul, mahlerMeasure_mul, mahlerMeasure_const,
+    derivativeMahlerAlongLinearFactor, norm_neg, Complex.norm_conj]
+
+theorem derivativeMahlerAlongLinearFactor_le_schurReflectedRoot_of_monotoneOn
+    (f : ℂ[X]) (α : ℂ)
+    (hmono : MonotoneOn
+      (fun t : ℝ => derivativeMahlerAlongLinearFactor f (schurRootPath α t))
+      (Set.Icc 0 1)) :
+    derivativeMahlerAlongLinearFactor f α ≤
+      derivativeMahlerAlongLinearFactor f (schurReflectedRoot α) := by
+  have h0 : (0 : ℝ) ∈ Set.Icc (0 : ℝ) 1 := by norm_num
+  have h1 : (1 : ℝ) ∈ Set.Icc (0 : ℝ) 1 := by norm_num
+  have h := hmono h0 h1 (by norm_num : (0 : ℝ) ≤ 1)
+  change derivativeMahlerAlongLinearFactor f (schurRootPath α 0) ≤
+    derivativeMahlerAlongLinearFactor f (schurRootPath α 1) at h
+  rw [schurRootPath_zero, schurRootPath_one] at h
+  exact h
+
+theorem mahlerMeasure_derivative_le_of_schurRootPath_monotone
+    (f : ℂ[X]) {α : ℂ} (hα : 1 < ‖α‖)
+    (hmono : derivativeMahlerAlongLinearFactor f α ≤
+      derivativeMahlerAlongLinearFactor f (schurReflectedRoot α)) :
+    (f * (X - C α)).derivative.mahlerMeasure ≤
+      (f * (1 - C (conj α) * X)).derivative.mahlerMeasure := by
+  have hα_ne : α ≠ 0 := norm_ne_zero_iff.mp (ne_of_gt (zero_lt_one.trans hα))
+  rw [derivativeMahler_reflectedLinearFactor_eq f hα_ne]
+  calc
+    (f * (X - C α)).derivative.mahlerMeasure =
+        derivativeMahlerAlongLinearFactor f α := by
+      rfl
+    _ ≤ derivativeMahlerAlongLinearFactor f (schurReflectedRoot α) := hmono
+    _ ≤ ‖α‖ * derivativeMahlerAlongLinearFactor f (schurReflectedRoot α) := by
+      exact le_mul_of_one_le_left (mahlerMeasure_nonneg _) hα.le
+
+theorem mahlerMeasure_derivative_le_of_schurRootPath_monotoneOn
+    (f : ℂ[X]) {α : ℂ} (hα : 1 < ‖α‖)
+    (hmono : MonotoneOn
+      (fun t : ℝ => derivativeMahlerAlongLinearFactor f (schurRootPath α t))
+      (Set.Icc 0 1)) :
+    (f * (X - C α)).derivative.mahlerMeasure ≤
+      (f * (1 - C (conj α) * X)).derivative.mahlerMeasure :=
+  mahlerMeasure_derivative_le_of_schurRootPath_monotone f hα
+    (derivativeMahlerAlongLinearFactor_le_schurReflectedRoot_of_monotoneOn f α hmono)
+
 @[simp]
 theorem robinsonFactor_of_norm_le {α : ℂ} (hα : ‖α‖ ≤ 1) :
     robinsonFactor α = X - C α := by
