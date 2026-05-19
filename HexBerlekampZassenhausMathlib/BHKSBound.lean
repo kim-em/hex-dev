@@ -98,6 +98,50 @@ theorem bhksThresholdNatBound_le_bhksBound (f : Hex.ZPoly) :
     bhksThresholdNatBound f ≤ Hex.bhksBound f := by
   rw [bhksBound_eq_thresholdNatBound]
 
+/-- The `4^(n*n)` factor is at least one (since `4 ≥ 1`). -/
+theorem one_le_bhksFourPowFactor (f : Hex.ZPoly) :
+    1 ≤ bhksFourPowFactor f := by
+  unfold bhksFourPowFactor
+  exact Nat.one_le_pow _ _ (by decide)
+
+/--
+The `(sumSquared + 1)^n` coefficient-norm factor is at least one (the base
+`sumSquared + 1` is positive).
+-/
+theorem one_le_bhksCoeffNormFactor (f : Hex.ZPoly) :
+    1 ≤ bhksCoeffNormFactor f := by
+  unfold bhksCoeffNormFactor
+  exact Nat.one_le_pow _ _ (Nat.succ_pos _)
+
+/-- The packaged BHKS threshold expression is at least one. -/
+theorem one_le_bhksThresholdNatBound (f : Hex.ZPoly) :
+    1 ≤ bhksThresholdNatBound f := by
+  unfold bhksThresholdNatBound; omega
+
+/-- The executable BHKS precision cap is at least one. -/
+theorem one_le_bhksBound (f : Hex.ZPoly) :
+    1 ≤ Hex.bhksBound f := by
+  rw [bhksBound_eq_thresholdNatBound]
+  exact one_le_bhksThresholdNatBound f
+
+/--
+The executable BHKS cap dominates the product of the four SPEC Group-D
+integer-cap component factors.  The `+ 1` slack in `bhksBound` absorbs the
+product, so this dominance holds without any hypothesis on the polynomial.
+
+This is the bundled Nat-valued component-bound packaging targeted by BHKS
+Group-D step 4: each integer-cap factor (`n`, `4^(n*n)`, `(sumSquared + 1)^n`,
+`(log2 (sumSquared + 1))^n`) appears explicitly on the left-hand side, and the
+executable `Hex.bhksBound` appears on the right.
+-/
+theorem bhksBound_dominates_spec_components (f : Hex.ZPoly) :
+    bhksDegreeFactor f * bhksFourPowFactor f *
+        bhksCoeffNormFactor f * bhksLog2Factor f ≤
+      Hex.bhksBound f := by
+  rw [bhksBound_eq_thresholdNatBound]
+  unfold bhksThresholdNatBound
+  omega
+
 /-- Real-valued dominance form for analytic BHKS threshold comparisons. -/
 theorem bhksThresholdNatBound_real_le_bhksBound (f : Hex.ZPoly) :
     (bhksThresholdNatBound f : ℝ) ≤ (Hex.bhksBound f : ℝ) := by
