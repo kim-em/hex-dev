@@ -291,6 +291,14 @@ representatives. -/
     repr (x - y) = GFqRing.reduceMod (modulus h) (repr x - repr y) :=
   rfl
 
+/-- The canonical representative of a natural literal in `GFq` is the
+reduction modulo the selected Conway polynomial of the constant
+polynomial carrying the literal as a `ZMod64` coefficient. -/
+@[simp] theorem repr_natCast (h : Conway.SupportedEntry p n) (k : Nat) :
+    repr ((k : GFq p n h)) =
+      GFqRing.reduceMod (modulus h) (FpPoly.C (k : ZMod64 p)) :=
+  rfl
+
 /-- The canonical representative of a natural power in `GFq` lifts the
 quotient-ring power of the underlying quotient representative. -/
 @[simp] theorem repr_pow {h : Conway.SupportedEntry p n}
@@ -312,6 +320,14 @@ the inverse of the corresponding quotient-ring positive power. -/
     (x : GFq p n h) (k : Nat) :
     repr (x ^ (Int.negSucc k) : GFq p n h) =
       GFqRing.repr ((GFqField.inv (GFqField.pow x (k + 1))).toQuotient) :=
+  rfl
+
+/-- The canonical representative of an integer literal in `GFq` lifts the
+quotient-ring integer-cast representative. -/
+@[simp] theorem repr_intCast (h : Conway.SupportedEntry p n) (i : Int) :
+    repr ((i : GFq p n h)) =
+      GFqRing.repr
+        ((i : GFqRing.PolyQuotient (modulus h) (modulus_nonconstant h))) :=
   rfl
 
 /-- Two `GFq.ofPoly` constructors produce the same field element exactly when
