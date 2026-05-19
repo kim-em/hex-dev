@@ -75,9 +75,12 @@ def zsmul {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f
     (i : Int) (x : FiniteField f hf hp hirr) : FiniteField f hf hp hirr :=
   ofQuotient (i • x.toQuotient)
 
-/-- Normalize an extended-GCD witness by the gcd's constant-unit factor so the
-left coefficient becomes a genuine inverse candidate modulo `f`. -/
-private def invPoly {f : FpPoly p} {hf : 0 < FpPoly.degree f}
+/-- The inverse polynomial representative for a quotient element.
+
+This normalizes the extended-GCD left coefficient by the gcd's constant-unit
+factor, producing a polynomial whose residue is the multiplicative inverse
+whenever the quotient element is nonzero. -/
+def invPoly {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : GFqRing.PolyQuotient f hf) : FpPoly p :=
   let r := DensePoly.xgcd (GFqRing.repr x) f
   let unitInv : ZMod64 p := (r.gcd.coeff 0)⁻¹

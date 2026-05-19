@@ -314,6 +314,21 @@ quotient-ring integer-cast representative. -/
         ((i : GFqRing.PolyQuotient (modulus h) (modulus_nonconstant h))) :=
   rfl
 
+/-- The canonical representative of a nonzero inverse in `GFq` is the inverse
+polynomial representative reduced through the selected Conway modulus. -/
+@[simp] theorem repr_inv_of_ne_zero {h : Conway.SupportedEntry p n}
+    {x : GFq p n h} (hx : x ≠ 0) :
+    repr (x⁻¹ : GFq p n h) =
+      GFqRing.repr
+        (GFqRing.ofPoly (modulus h) (modulus_nonconstant h)
+          (GFqField.invPoly x.toQuotient)) := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime h.prime
+  simpa using
+    (GFqField.repr_inv_of_ne_zero
+      (f := modulus h) (hf := modulus_nonconstant h)
+      (hp := modulus_prime h) (hirr := modulus_irreducible h)
+      (x := x) hx)
+
 /-- Two `GFq.ofPoly` constructors produce the same field element exactly when
 their inputs have the same reduced representative modulo the selected Conway
 polynomial. -/
