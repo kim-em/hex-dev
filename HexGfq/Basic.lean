@@ -665,6 +665,28 @@ the packed `GF2n` division path. -/
         x k).val :=
   rfl
 
+/-- The packed representative of a nonnegative integer power is stored by the
+packed `GF2n` integer-power operation. -/
+@[simp] theorem repr_zpow_ofNat (x : GF2q n) (k : Nat) :
+    repr (x ^ (Int.ofNat k) : GF2q n) =
+      (GF2n.zpow
+        (n := n) (irr := h.lower)
+        (hn := h.degree_pos) (hn64 := h.degree_lt_word)
+        (hirr := h.packed_irreducible)
+        x (Int.ofNat k)).val :=
+  rfl
+
+/-- The packed representative of a negative integer power is stored by the
+packed `GF2n` integer-power operation. -/
+@[simp] theorem repr_zpow_negSucc (x : GF2q n) (k : Nat) :
+    repr (x ^ (Int.negSucc k) : GF2q n) =
+      (GF2n.zpow
+        (n := n) (irr := h.lower)
+        (hn := h.degree_pos) (hn64 := h.degree_lt_word)
+        (hirr := h.packed_irreducible)
+        x (Int.negSucc k)).val :=
+  rfl
+
 end GF2q
 
 end Hex
