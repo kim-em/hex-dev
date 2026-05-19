@@ -315,6 +315,22 @@ quotient-ring power of the underlying quotient representative. -/
     repr (x ^ k) = GFqRing.repr (x.toQuotient ^ k) :=
   rfl
 
+/-- The canonical representative of a nonnegative integer power in `GFq` lifts
+the quotient-ring power of the underlying quotient representative. -/
+@[simp] theorem repr_zpow_ofNat {h : Conway.SupportedEntry p n}
+    (x : GFq p n h) (k : Nat) :
+    repr (x ^ (Int.ofNat k) : GFq p n h) =
+      GFqRing.repr (x.toQuotient ^ k) :=
+  rfl
+
+/-- The canonical representative of a negative integer power in `GFq` lifts
+the inverse of the corresponding quotient-ring positive power. -/
+@[simp] theorem repr_zpow_negSucc {h : Conway.SupportedEntry p n}
+    (x : GFq p n h) (k : Nat) :
+    repr (x ^ (Int.negSucc k) : GFq p n h) =
+      GFqRing.repr ((GFqField.inv (GFqField.pow x (k + 1))).toQuotient) :=
+  rfl
+
 /-- The canonical representative of an integer literal in `GFq` lifts the
 quotient-ring integer-cast representative. -/
 @[simp] theorem repr_intCast (h : Conway.SupportedEntry p n) (i : Int) :
