@@ -474,16 +474,16 @@ instance : Inv (ZMod64 p) where
   inv := ZMod64.inv
 
 /-- The canonical representative of the zero residue is `0`. -/
-@[simp] theorem toNat_zero : (ZMod64.zero : ZMod64 p).toNat = 0 := by
+@[simp, grind =] theorem toNat_zero : (ZMod64.zero : ZMod64 p).toNat = 0 := by
   rw [ZMod64.zero, toNat_ofNat]
   exact Nat.zero_mod _
 
 /-- The canonical representative of the one residue is `1 % p`. -/
-@[simp] theorem toNat_one : (ZMod64.one : ZMod64 p).toNat = 1 % p := by
+@[simp, grind =] theorem toNat_one : (ZMod64.one : ZMod64 p).toNat = 1 % p := by
   rw [ZMod64.one, toNat_ofNat]
 
 /-- Addition agrees with addition of canonical representatives modulo `p`. -/
-@[simp] theorem toNat_add (a b : ZMod64 p) :
+@[simp, grind =] theorem toNat_add (a b : ZMod64 p) :
     (add a b).toNat = (a.toNat + b.toNat) % p := by
   unfold add
   by_cases hp : p = UInt64.word
@@ -543,7 +543,7 @@ theorem add_op_eq_ofNat (a b : ZMod64 p) :
   simpa using add_eq_ofNat a b
 
 /-- Subtraction agrees with modular subtraction of canonical representatives. -/
-@[simp] theorem toNat_sub (a b : ZMod64 p) :
+@[simp, grind =] theorem toNat_sub (a b : ZMod64 p) :
     (sub a b).toNat = (a.toNat + (p - b.toNat)) % p := by
   unfold sub
   by_cases hp : p = UInt64.word
@@ -593,7 +593,7 @@ theorem sub_op_eq_ofNat (a b : ZMod64 p) :
   simpa using sub_eq_ofNat a b
 
 /-- Multiplication agrees with multiplication of canonical representatives modulo `p`. -/
-@[simp] theorem toNat_mul (a b : ZMod64 p) :
+@[simp, grind =] theorem toNat_mul (a b : ZMod64 p) :
     (mul a b).toNat = (a.toNat * b.toNat) % p := by
   rw [mul, toNat_ofNat]
 
@@ -613,7 +613,7 @@ Definition-level representative equation for the extended-GCD inverse candidate.
 Most callers should prefer `inv_mul_eq_one_of_coprime`; this lemma exposes the
 exact executable residue produced by `inv`.
 -/
-@[simp] theorem toNat_inv_def (a : ZMod64 p) :
+@[simp, grind =] theorem toNat_inv_def (a : ZMod64 p) :
     (inv a).toNat =
       (Int.toNat ((let (_, s, _) := HexArith.Int.extGcd (Int.ofNat a.toNat) (Int.ofNat p); s)
         % Int.ofNat p)) % p := by
@@ -779,7 +779,7 @@ private theorem pow_go_toNat (base acc : ZMod64 p) (k : Nat) :
             exact nat_mod_mul_pow_square_odd acc.toNat base.toNat (m + 1) p heven
 
 /-- Exponentiation agrees with natural-power reduction of the canonical representative. -/
-@[simp] theorem toNat_pow (a : ZMod64 p) (n : Nat) :
+@[simp, grind =] theorem toNat_pow (a : ZMod64 p) (n : Nat) :
     (pow a n).toNat = a.toNat ^ n % p := by
   rw [pow]
   rw [pow_go_toNat]

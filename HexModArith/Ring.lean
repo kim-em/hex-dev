@@ -91,16 +91,20 @@ def zsmul (i : Int) (a : ZMod64 p) : ZMod64 p :=
   | .ofNat n => nsmul n a
   | .negSucc n => neg (nsmul (n + 1) a)
 
+/-- Integer casts of nonnegative representatives agree with natural casts. -/
 @[simp] theorem intCast_ofNat (n : Nat) : intCast p (.ofNat n) = natCast p n :=
   rfl
 
+/-- Integer casts of negative representatives use the complementary natural cast. -/
 @[simp] theorem intCast_negSucc (n : Nat) :
     intCast p (.negSucc n) = neg (natCast p (n + 1)) :=
   rfl
 
+/-- Integer scalar multiplication by a nonnegative integer is natural scalar multiplication. -/
 @[simp] theorem zsmul_ofNat (n : Nat) (a : ZMod64 p) : zsmul (.ofNat n) a = nsmul n a :=
   rfl
 
+/-- Integer scalar multiplication by a negative integer negates the positive natural multiple. -/
 @[simp] theorem zsmul_negSucc (n : Nat) (a : ZMod64 p) :
     zsmul (.negSucc n) a = neg (nsmul (n + 1) a) :=
   rfl
@@ -123,7 +127,8 @@ instance : IntCast (ZMod64 p) where
 instance : SMul Int (ZMod64 p) where
   smul := zsmul
 
-@[simp] theorem toNat_natCast (n : Nat) : (natCast p n).toNat = n % p := by
+/-- Natural casts reduce their representative modulo `p`. -/
+@[simp, grind =] theorem toNat_natCast (n : Nat) : (natCast p n).toNat = n % p := by
   rw [natCast, toNat_ofNat]
 
 /-- Natural casts are residues built from the cast representative. -/
@@ -136,7 +141,8 @@ theorem natCast_op_eq_ofNat (n : Nat) :
     (n : ZMod64 p) = ofNat p n := by
   simpa using natCast_eq_ofNat (p := p) n
 
-@[simp] theorem toNat_neg (a : ZMod64 p) : (neg a).toNat = (p - a.toNat) % p := by
+/-- Negation takes the complementary representative modulo `p`. -/
+@[simp, grind =] theorem toNat_neg (a : ZMod64 p) : (neg a).toNat = (p - a.toNat) % p := by
   unfold neg
   by_cases hp : p = UInt64.word
   · rw [dif_pos hp]
@@ -174,7 +180,8 @@ theorem neg_op_eq_ofNat (a : ZMod64 p) :
     -a = ofNat p (p - a.toNat) := by
   simpa using neg_eq_ofNat a
 
-@[simp] theorem toNat_nsmul (n : Nat) (a : ZMod64 p) :
+/-- Natural scalar multiplication reduces the scaled representative modulo `p`. -/
+@[simp, grind =] theorem toNat_nsmul (n : Nat) (a : ZMod64 p) :
     (nsmul n a).toNat = (n * a.toNat) % p := by
   rw [nsmul, toNat_ofNat]
 
@@ -188,19 +195,23 @@ theorem nsmul_op_eq_ofNat (n : Nat) (a : ZMod64 p) :
     n • a = ofNat p (n * a.toNat) := by
   simpa using nsmul_eq_ofNat n a
 
-@[simp] theorem toNat_intCast_ofNat (n : Nat) :
+/-- Integer casts of nonnegative representatives reduce modulo `p`. -/
+@[simp, grind =] theorem toNat_intCast_ofNat (n : Nat) :
     (intCast p (.ofNat n)).toNat = n % p := by
   rw [intCast_ofNat, toNat_natCast]
 
-@[simp] theorem toNat_intCast_negSucc (n : Nat) :
+/-- Integer casts of negative representatives use the complementary reduced representative. -/
+@[simp, grind =] theorem toNat_intCast_negSucc (n : Nat) :
     (intCast p (.negSucc n)).toNat = (p - (n + 1) % p) % p := by
   rw [intCast_negSucc, toNat_neg, toNat_natCast]
 
-@[simp] theorem toNat_zsmul_ofNat (n : Nat) (a : ZMod64 p) :
+/-- Nonnegative integer scalar multiplication reduces the scaled representative modulo `p`. -/
+@[simp, grind =] theorem toNat_zsmul_ofNat (n : Nat) (a : ZMod64 p) :
     (zsmul (.ofNat n) a).toNat = (n * a.toNat) % p := by
   rw [zsmul_ofNat, toNat_nsmul]
 
-@[simp] theorem toNat_zsmul_negSucc (n : Nat) (a : ZMod64 p) :
+/-- Negative integer scalar multiplication uses the complementary scaled representative. -/
+@[simp, grind =] theorem toNat_zsmul_negSucc (n : Nat) (a : ZMod64 p) :
     (zsmul (.negSucc n) a).toNat = (p - ((n + 1) * a.toNat) % p) % p := by
   rw [zsmul_negSucc, toNat_neg, toNat_nsmul]
 
@@ -223,6 +234,7 @@ theorem natCast_eq_zero_iff_dvd (n : Nat) : ((n : ZMod64 p) = 0) ↔ p ∣ n := 
   · intro h
     exact (natCast_eq_natCast_iff (p := p) n 0).2 (Nat.mod_eq_zero_of_dvd h)
 
+/-- The modulus itself casts to zero in `ZMod64 p`. -/
 @[simp] theorem natCast_self : ((p : Nat) : ZMod64 p) = 0 := by
   exact (natCast_eq_natCast_iff (p := p) p 0).2 (by simp)
 
@@ -390,56 +402,65 @@ instance : Lean.Grind.Semiring (ZMod64 p) := by
     rw [toNat_natCast]
     simp [Nat.mul_mod]
 
-theorem add_zero (a : ZMod64 p) : a + 0 = a := by
+/-- Adding zero on the right leaves a residue unchanged. -/
+@[simp] theorem add_zero (a : ZMod64 p) : a + 0 = a := by
   apply ext_toNat
   rw [show a + 0 = ZMod64.add a ZMod64.zero from rfl]
   change (ZMod64.add a ZMod64.zero).toNat = a.toNat
   rw [toNat_add, toNat_zero, Nat.add_zero]
   exact Nat.mod_eq_of_lt a.isLt
 
-theorem zero_add (a : ZMod64 p) : 0 + a = a := by
+/-- Adding zero on the left leaves a residue unchanged. -/
+@[simp] theorem zero_add (a : ZMod64 p) : 0 + a = a := by
   apply ext_toNat
   rw [show 0 + a = ZMod64.add ZMod64.zero a from rfl]
   change (ZMod64.add ZMod64.zero a).toNat = a.toNat
   rw [toNat_add, toNat_zero]
   simpa using Nat.mod_eq_of_lt a.isLt
 
-theorem mul_zero (a : ZMod64 p) : a * 0 = 0 := by
+/-- Multiplying by zero on the right gives zero. -/
+@[simp] theorem mul_zero (a : ZMod64 p) : a * 0 = 0 := by
   apply ext_toNat
   change (ZMod64.mul a ZMod64.zero).toNat = (ZMod64.zero : ZMod64 p).toNat
   rw [toNat_mul, toNat_zero]
   simp
 
-theorem zero_mul (a : ZMod64 p) : 0 * a = 0 := by
+/-- Multiplying by zero on the left gives zero. -/
+@[simp] theorem zero_mul (a : ZMod64 p) : 0 * a = 0 := by
   apply ext_toNat
   change (ZMod64.mul ZMod64.zero a).toNat = (ZMod64.zero : ZMod64 p).toNat
   rw [toNat_mul, toNat_zero]
   simp
 
-theorem mul_one (a : ZMod64 p) : a * 1 = a := by
+/-- Multiplying by one on the right leaves a residue unchanged. -/
+@[simp] theorem mul_one (a : ZMod64 p) : a * 1 = a := by
   apply ext_toNat
   change (ZMod64.mul a ZMod64.one).toNat = a.toNat
   rw [toNat_mul, toNat_one]
   simp [Nat.mod_eq_of_lt a.isLt]
 
-theorem one_mul (a : ZMod64 p) : 1 * a = a := by
+/-- Multiplying by one on the left leaves a residue unchanged. -/
+@[simp] theorem one_mul (a : ZMod64 p) : 1 * a = a := by
   apply ext_toNat
   change (ZMod64.mul ZMod64.one a).toNat = a.toNat
   rw [toNat_mul, toNat_one]
   simp [Nat.mod_eq_of_lt a.isLt]
 
-theorem pow_zero (a : ZMod64 p) : a ^ 0 = 1 := by
+/-- Every residue to the zeroth power is one. -/
+@[simp] theorem pow_zero (a : ZMod64 p) : a ^ 0 = 1 := by
   apply ext_toNat
   change (ZMod64.pow a 0).toNat = (ZMod64.one : ZMod64 p).toNat
   rw [toNat_pow, toNat_one]
   simp
 
+/-- Every residue to the first power is itself. -/
 @[simp] theorem pow_one (a : ZMod64 p) : a ^ 1 = a := by
   apply ext_toNat
   change (ZMod64.pow a 1).toNat = a.toNat
   rw [toNat_pow]
   simpa using Nat.mod_eq_of_lt a.isLt
 
+/-- Successor powers multiply the previous power by the base. -/
 theorem pow_succ (a : ZMod64 p) (n : Nat) :
     a ^ (n + 1) = a ^ n * a := by
   apply ext_toNat
@@ -448,6 +469,7 @@ theorem pow_succ (a : ZMod64 p) (n : Nat) :
   rw [toNat_pow, toNat_mul, toNat_pow]
   simp [Nat.pow_succ, Nat.mul_mod]
 
+/-- Any positive power of zero is zero. -/
 @[simp] theorem zero_pow {n : Nat} (hn : n ≠ 0) : (0 : ZMod64 p) ^ n = 0 := by
   apply ext_toNat
   change (ZMod64.pow ZMod64.zero n).toNat = (ZMod64.zero : ZMod64 p).toNat
@@ -456,6 +478,7 @@ theorem pow_succ (a : ZMod64 p) (n : Nat) :
   | zero => contradiction
   | succ n => simp
 
+/-- Every power of one is one. -/
 @[simp] theorem one_pow (n : Nat) : (1 : ZMod64 p) ^ n = 1 := by
   apply ext_toNat
   change (ZMod64.pow ZMod64.one n).toNat = (ZMod64.one : ZMod64 p).toNat
