@@ -764,6 +764,27 @@ representatives. -/
     repr (x ^ n) = GFqRing.repr (x.toQuotient ^ n) :=
   rfl
 
+/-- The representative of an integer cast lifts the quotient-ring cast. -/
+@[simp] theorem repr_intCast
+    (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p) (hirr : FpPoly.Irreducible f) (i : Int) :
+    repr (i : FiniteField f hf hp hirr) =
+      GFqRing.repr ((i : GFqRing.PolyQuotient f hf)) :=
+  rfl
+
+/-- The representative of a natural scalar action lifts the quotient-ring action. -/
+@[simp] theorem repr_nsmul
+    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
+    (n : Nat) (x : FiniteField f hf hp hirr) :
+    repr (n • x : FiniteField f hf hp hirr) = GFqRing.repr (n • x.toQuotient) :=
+  rfl
+
+/-- The representative of an integer scalar action lifts the quotient-ring action. -/
+@[simp] theorem repr_zsmul
+    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
+    (i : Int) (x : FiniteField f hf hp hirr) :
+    repr (i • x : FiniteField f hf hp hirr) = GFqRing.repr (i • x.toQuotient) :=
+  rfl
+
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     Lean.Grind.Semiring (FiniteField f hf hp hirr) := by
   refine Lean.Grind.Semiring.mk ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
