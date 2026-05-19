@@ -487,6 +487,34 @@ theorem mem_support_C {c : R} {i : Nat} :
   · simp [support_C, hc]
   · simp [support_C, hc]
 
+private theorem filter_range_succ_eq_singleton (n : Nat) :
+    (List.range (n + 1)).filter (fun i => i = n) = [n] := by
+  rw [show n + 1 = Nat.succ n by omega, List.range_succ, List.filter_append]
+  have hleft : (List.range n).filter (fun i => decide (i = n)) = [] := by
+    rw [List.filter_eq_nil_iff]
+    intro i hi hdec
+    have hlt : i < n := by
+      simpa using (List.mem_range.mp hi)
+    simp at hdec
+    omega
+  simp [hleft]
+
+/-- A monomial has support `{n}` exactly when its coefficient is nonzero. -/
+@[simp] theorem support_monomial (n : Nat) (c : R) :
+    (monomial n c).support = if c = (0 : R) then [] else [n] := by
+  by_cases hc : c = (0 : R)
+  · simp [hc]
+  · have hcz : c ≠ Zero.zero := by simpa using hc
+    simpa [support, size_monomial_of_ne_zero hc, coeff_monomial, hc, hcz]
+      using filter_range_succ_eq_singleton n
+
+/-- Membership in the support of a monomial is exactly its nonzero exponent. -/
+theorem mem_support_monomial {n : Nat} {c : R} {i : Nat} :
+    i ∈ (monomial n c).support ↔ i = n ∧ c ≠ (0 : R) := by
+  by_cases hc : c = (0 : R)
+  · simp [hc]
+  · simp [hc]
+
 /-- Return the underlying normalized coefficient array. -/
 def toArray (p : DensePoly R) : Array R :=
   p.coeffs
