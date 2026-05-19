@@ -46,6 +46,53 @@ def schurRootPath (α : ℂ) (t : ℝ) : ℂ :=
 def derivativeMahlerAlongLinearFactor (f : ℂ[X]) (β : ℂ) : ℝ :=
   ((f * (X - C β)).derivative).mahlerMeasure
 
+/-- The summand obtained by differentiating the linear factor for one root. -/
+def rootDeletionDerivativeSummand (p : ℂ[X]) (α : ℂ) : ℂ[X] :=
+  C p.leadingCoeff * ((p.roots.erase α).map fun β => X - C β).prod
+
+theorem derivative_eq_sum_rootDeletionDerivativeSummand (p : ℂ[X]) :
+    p.derivative =
+      (p.roots.map fun α => rootDeletionDerivativeSummand p α).sum := by
+  classical
+  calc
+    p.derivative =
+        (C p.leadingCoeff * (p.roots.map fun α => X - C α).prod).derivative := by
+      exact congrArg derivative (IsAlgClosed.splits p).eq_prod_roots
+    _ = C p.leadingCoeff *
+        ((p.roots.map fun α => ((p.roots.erase α).map fun β => X - C β).prod).sum) := by
+      rw [derivative_C_mul, derivative_prod]
+      simp
+    _ = (p.roots.map fun α => rootDeletionDerivativeSummand p α).sum := by
+      rw [← AddMonoidHom.coe_mulLeft,
+        (AddMonoidHom.mulLeft (C p.leadingCoeff)).map_multiset_sum,
+        AddMonoidHom.coe_mulLeft]
+      simp [rootDeletionDerivativeSummand]
+
+theorem mahlerMeasure_rootDeletionDerivativeSummand_le (p : ℂ[X]) (α : ℂ) :
+    (rootDeletionDerivativeSummand p α).mahlerMeasure ≤ p.mahlerMeasure := by
+  classical
+  rw [rootDeletionDerivativeSummand, mahlerMeasure_mul, mahlerMeasure_const,
+    prod_mahlerMeasure_eq_mahlerMeasure_prod, mahlerMeasure_eq_leadingCoeff_mul_prod_roots]
+  simp only [Multiset.map_map, Function.comp_apply, mahlerMeasure_X_sub_C]
+  apply mul_le_mul_of_nonneg_left
+  · by_cases hα : α ∈ p.roots
+    · have herase_nonneg :
+          0 ≤ (Multiset.map (fun β : ℂ => max (1 : ℝ) ‖β‖) (p.roots.erase α)).prod := by
+        induction p.roots.erase α using Multiset.induction_on with
+        | empty => simp
+        | cons β s ih =>
+            simpa using mul_nonneg (le_trans zero_le_one (le_max_left (1 : ℝ) ‖β‖)) ih
+      calc
+        (Multiset.map (fun β : ℂ => max (1 : ℝ) ‖β‖) (p.roots.erase α)).prod ≤
+            max (1 : ℝ) ‖α‖ *
+              (Multiset.map (fun β : ℂ => max (1 : ℝ) ‖β‖) (p.roots.erase α)).prod :=
+          le_mul_of_one_le_left herase_nonneg (le_max_left (1 : ℝ) ‖α‖)
+        _ = (Multiset.map (fun β : ℂ => max (1 : ℝ) ‖β‖) p.roots).prod := by
+          rw [← Multiset.cons_erase hα]
+          simp
+    · rw [Multiset.erase_of_notMem hα]
+  · exact norm_nonneg _
+
 @[simp]
 theorem schurRootPath_zero (α : ℂ) : schurRootPath α 0 = α := by
   simp [schurRootPath]
