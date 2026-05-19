@@ -793,6 +793,19 @@ theorem col_colAdd_of_ne [Mul R] [Add R]
   rw [col_getElem, col_getElem, colAdd_getElem]
   simp [hjdst]
 
+/-- Source-column entries are unchanged by `colAdd M src dst c` when `src ≠ dst`. -/
+theorem colAdd_getElem_src_of_ne [Mul R] [Add R]
+    (M : Matrix R n m) {src dst : Fin m} (c : R) (hsrcdst : src ≠ dst) (i : Fin n) :
+    (colAdd M src dst c)[i][src] = M[i][src] := by
+  rw [colAdd_getElem]
+  simp [hsrcdst]
+
+/-- The source column is unchanged by `colAdd M src dst c` when `src ≠ dst`. -/
+@[simp] theorem col_colAdd_src_of_ne [Mul R] [Add R]
+    (M : Matrix R n m) {src dst : Fin m} (c : R) (hsrcdst : src ≠ dst) :
+    col (colAdd M src dst c) src = col M src :=
+  col_colAdd_of_ne M src c hsrcdst
+
 /-- Adding zero times one column to another leaves the matrix unchanged. -/
 @[simp] theorem colAdd_zero [Lean.Grind.Semiring R]
     (M : Matrix R n m) (src dst : Fin m) :
