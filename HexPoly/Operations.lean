@@ -165,13 +165,29 @@ instance [Sub R] : Neg (DensePoly R) where
 class AddZeroLaw (S : Type u) [Zero S] [Add S] : Prop where
   add_zero_zero : (Zero.zero : S) + (Zero.zero : S) = (Zero.zero : S)
 
+/-- Semiring structures provide the zero-addition compatibility law used by coefficient lemmas. -/
+instance addZeroLaw_of_semiring {S : Type u} [Lean.Grind.Semiring S] :
+    AddZeroLaw S where
+  add_zero_zero := by grind
+
 /-- Compatibility law for caller-facing `Zero`/`Sub` instances used by ring wrappers. -/
 class SubZeroLaw (S : Type u) [Zero S] [Sub S] : Prop where
   sub_zero_zero : (Zero.zero : S) - (Zero.zero : S) = (Zero.zero : S)
 
+/-- Ring structures provide the zero-subtraction compatibility law used by coefficient lemmas. -/
+instance subZeroLaw_of_ring {S : Type u} [Lean.Grind.Ring S] :
+    SubZeroLaw S where
+  sub_zero_zero := by grind
+
 /-- Compatibility law for caller-facing `Zero`/`Sub`/`Neg` instances used by negation wrappers. -/
 class ZeroSubNegLaw (S : Type u) [Zero S] [Sub S] [Neg S] : Prop where
   zero_sub_eq_neg : ∀ a : S, (Zero.zero : S) - a = -a
+
+/-- Ring structures provide the zero-subtraction negation law used by coefficient lemmas. -/
+instance zeroSubNegLaw_of_ring {S : Type u} [Lean.Grind.Ring S] : ZeroSubNegLaw S where
+  zero_sub_eq_neg := by
+    intro a
+    grind
 
 /-- Schoolbook dense polynomial multiplication by direct coefficient convolution. -/
 def mul [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
@@ -484,6 +500,45 @@ theorem coeff_neg [Sub R] (p : DensePoly R) (n : Nat)
   have h := coeff_neg p n SubZeroLaw.sub_zero_zero
   rw [h]
   exact ZeroSubNegLaw.zero_sub_eq_neg (p.coeff n)
+
+/-- Semiring-specialized right zero law for dense polynomial addition. -/
+@[simp] theorem add_zero_semiring {S : Type u}
+    [Lean.Grind.Semiring S] [DecidableEq S]
+    (p : DensePoly S) :
+    p + 0 = p := by
+  apply ext_coeff
+  intro n
+  rw [coeff_add_semiring, coeff_zero]
+  grind
+
+/-- Semiring-specialized left zero law for dense polynomial addition. -/
+@[simp] theorem zero_add_semiring {S : Type u}
+    [Lean.Grind.Semiring S] [DecidableEq S]
+    (p : DensePoly S) :
+    0 + p = p := by
+  apply ext_coeff
+  intro n
+  rw [coeff_add_semiring, coeff_zero]
+  grind
+
+/-- Ring-specialized right zero law for dense polynomial subtraction. -/
+@[simp] theorem sub_zero_ring {S : Type u}
+    [Lean.Grind.Ring S] [DecidableEq S]
+    (p : DensePoly S) :
+    p - 0 = p := by
+  apply ext_coeff
+  intro n
+  rw [coeff_sub_ring, coeff_zero]
+  grind
+
+/-- Ring-specialized negation of the zero dense polynomial. -/
+@[simp] theorem neg_zero_ring {S : Type u}
+    [Lean.Grind.Ring S] [DecidableEq S] :
+    -(0 : DensePoly S) = 0 := by
+  apply ext_coeff
+  intro n
+  rw [coeff_neg_ring, coeff_zero]
+  grind
 
 /-- Horner evaluation sends the zero dense polynomial to `0`. -/
 @[simp] theorem eval_zero [Add R] [Mul R] (x : R) :
