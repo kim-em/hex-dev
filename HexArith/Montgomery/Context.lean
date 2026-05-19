@@ -519,6 +519,28 @@ theorem mulMont_eq (ctx : MontCtx p) (a b : UInt64)
       simpa [UInt64.word] using ctx.p_lt_R)
   simp [Nat.mod_eq_of_lt hmod_lt_word]
 
+/-- Multiplying by zero on the left in Montgomery form converts back to zero. -/
+@[simp]
+theorem fromMont_mulMont_toMont_zero_left
+    (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
+    ctx.fromMont (ctx.mulMont (ctx.toMont 0) (ctx.toMont a)) = 0 := by
+  have hzero : (0 : UInt64) < p := by
+    rw [UInt64.lt_iff_toNat_lt]
+    simpa using ctx.p_pos
+  rw [mulMont_eq ctx (0 : UInt64) a hzero ha]
+  simp
+
+/-- Multiplying by zero on the right in Montgomery form converts back to zero. -/
+@[simp]
+theorem fromMont_mulMont_toMont_zero_right
+    (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
+    ctx.fromMont (ctx.mulMont (ctx.toMont a) (ctx.toMont 0)) = 0 := by
+  have hzero : (0 : UInt64) < p := by
+    rw [UInt64.lt_iff_toNat_lt]
+    simpa using ctx.p_pos
+  rw [mulMont_eq ctx a (0 : UInt64) ha hzero]
+  simp
+
 end MontCtx
 
 namespace HexArith
