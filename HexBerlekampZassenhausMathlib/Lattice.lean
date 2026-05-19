@@ -157,6 +157,85 @@ def supportPartitionByMinColumn {r : Nat}
 def classIndicatorArray (r : Nat) (members : List Nat) : Array Int :=
   ((List.range r).map (fun i => if i ∈ members then (1 : Int) else 0)).toArray
 
+@[simp] theorem classIndicatorArray_size (r : Nat) (members : List Nat) :
+    (classIndicatorArray r members).size = r := by
+  unfold classIndicatorArray
+  simp
+
+theorem classIndicatorArray_getD
+    (r : Nat) (members : List Nat) (i : Nat) :
+    (classIndicatorArray r members).getD i 0 =
+      if i < r ∧ i ∈ members then 1 else 0 := by
+  unfold classIndicatorArray
+  by_cases hi : i < r
+  · simp [Array.getD, hi]
+  · have hsize :
+        ((List.range r).map (fun i => if i ∈ members then (1 : Int) else 0)).length = r := by
+      simp
+    simp [Array.getD, hi, hsize]
+
+theorem classIndicatorArray_bits (r : Nat) (members : List Nat) :
+    ∀ i, i < (classIndicatorArray r members).size →
+      (classIndicatorArray r members).getD i 0 = 0 ∨
+        (classIndicatorArray r members).getD i 0 = 1 := by
+  intro i hi
+  rw [classIndicatorArray_size] at hi
+  rw [classIndicatorArray_getD]
+  by_cases hmem : i ∈ members
+  · simp [hi, hmem]
+  · simp [hi, hmem]
+
+theorem classIndicatorArray_has_one_of_mem
+    (r : Nat) (members : List Nat) {i : Nat}
+    (hi : i < r) (hmem : i ∈ members) :
+    (classIndicatorArray r members).getD i 0 = 1 := by
+  rw [classIndicatorArray_getD]
+  simp [hi, hmem]
+
+theorem bhksIndicatorAllOnes_classIndicatorArray_of_forall
+    (r : Nat) (members : List Nat)
+    (hall : ∀ i, i < r → i ∈ members) :
+    Hex.bhksIndicatorAllOnes r (classIndicatorArray r members) = true := by
+  let step : Nat → Nat → Nat :=
+    fun count i =>
+      if (classIndicatorArray r members).getD i 0 = (1 : Int) then
+        count + 1
+      else count
+  have hfold_acc :
+      ∀ (l : List Nat) (acc : Nat),
+        (∀ i, i ∈ l → i < r) →
+          l.foldl step acc = acc + l.length := by
+    intro l
+    induction l with
+    | nil =>
+        intro acc _
+        simp
+    | cons head tail ih =>
+        intro acc hlt
+        have hhead_lt : head < r := hlt head List.mem_cons_self
+        have hhead_mem : head ∈ members := hall head hhead_lt
+        have htail_lt : ∀ i, i ∈ tail → i < r := by
+          intro i hi
+          exact hlt i (List.mem_cons_of_mem head hi)
+        have hhead_one :
+            (classIndicatorArray r members).getD head 0 = (1 : Int) :=
+          classIndicatorArray_has_one_of_mem r members hhead_lt hhead_mem
+        rw [List.foldl_cons]
+        have hstep_head : step acc head = acc + 1 := by
+          dsimp [step]
+          rw [if_pos hhead_one]
+        rw [hstep_head]
+        rw [ih (acc + 1) htail_lt]
+        simp [Nat.add_comm, Nat.add_left_comm]
+  have hfold :
+      (List.range r).foldl step 0 = r := by
+    have h := hfold_acc (List.range r) 0 (fun i hi => List.mem_range.mp hi)
+    simpa [step] using h
+  unfold Hex.bhksIndicatorAllOnes Hex.bhksIndicatorOneCount
+  rw [classIndicatorArray_size]
+  simp only [beq_self_eq_true, Bool.true_and]
+  simpa [step, beq_iff_eq] using hfold
+
 /--
 Canonical support-driven expected B7 indicator array.
 
