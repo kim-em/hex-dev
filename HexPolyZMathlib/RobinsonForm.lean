@@ -46,6 +46,14 @@ def schurRootPath (α : ℂ) (t : ℝ) : ℂ :=
 def derivativeMahlerAlongLinearFactor (f : ℂ[X]) (β : ℂ) : ℝ :=
   ((f * (X - C β)).derivative).mahlerMeasure
 
+/--
+The polynomial obtained from `p` by Schur-reflecting one selected exterior root
+while leaving all other roots in their original linear factors.
+-/
+def schurReflectedAtRootForm (p : ℂ[X]) (α : ℂ) : ℂ[X] :=
+  C p.leadingCoeff * ((p.roots.erase α).map fun β => X - C β).prod *
+    (1 - C (conj α) * X)
+
 /-- The summand obtained by differentiating the linear factor for one root. -/
 def rootDeletionDerivativeSummand (p : ℂ[X]) (α : ℂ) : ℂ[X] :=
   C p.leadingCoeff * ((p.roots.erase α).map fun β => X - C β).prod
@@ -172,6 +180,44 @@ theorem mahlerMeasure_derivative_le_of_schurRootPath_monotoneOn
       (f * (1 - C (conj α) * X)).derivative.mahlerMeasure :=
   mahlerMeasure_derivative_le_of_schurRootPath_monotone f hα
     (derivativeMahlerAlongLinearFactor_le_schurReflectedRoot_of_monotoneOn f α hmono)
+
+/--
+One root-reflection step in the de Bruijn-Springer/Boyd route toward
+`p.derivative.mahlerMeasure ≤ p.natDegree * p.mahlerMeasure`: if the Mahler
+measure of the derivative is monotone along the Schur path for the selected
+linear factor, then reflecting that exterior root cannot decrease the Mahler
+measure of the derivative.
+-/
+theorem mahlerMeasure_derivative_le_schurReflectedAtRootForm_derivative_of_monotoneOn
+    (p : ℂ[X]) {α : ℂ} (hαmem : α ∈ p.roots) (hα : 1 < ‖α‖)
+    (hmono : MonotoneOn
+      (fun t : ℝ =>
+        derivativeMahlerAlongLinearFactor
+          (C p.leadingCoeff * ((p.roots.erase α).map fun β => X - C β).prod)
+          (schurRootPath α t))
+      (Set.Icc 0 1)) :
+    p.derivative.mahlerMeasure ≤ (schurReflectedAtRootForm p α).derivative.mahlerMeasure := by
+  let f : ℂ[X] := C p.leadingCoeff * ((p.roots.erase α).map fun β => X - C β).prod
+  have hp_factor : p = f * (X - C α) := by
+    calc
+      p = C p.leadingCoeff * (p.roots.map fun β => X - C β).prod := by
+        exact (IsAlgClosed.splits p).eq_prod_roots
+      _ = C p.leadingCoeff *
+          (((p.roots.erase α).map fun β => X - C β).prod * (X - C α)) := by
+        rw [← Multiset.cons_erase hαmem]
+        simp [mul_comm]
+      _ = f * (X - C α) := by
+        simp [f, mul_assoc]
+  have hreflect :
+      schurReflectedAtRootForm p α = f * (1 - C (conj α) * X) := by
+    simp [schurReflectedAtRootForm, f, mul_assoc]
+  calc
+    p.derivative.mahlerMeasure = (f * (X - C α)).derivative.mahlerMeasure := by
+      rw [hp_factor]
+    _ ≤ (f * (1 - C (conj α) * X)).derivative.mahlerMeasure :=
+      mahlerMeasure_derivative_le_of_schurRootPath_monotoneOn f hα hmono
+    _ = (schurReflectedAtRootForm p α).derivative.mahlerMeasure := by
+      rw [hreflect]
 
 @[simp]
 theorem robinsonFactor_of_norm_le {α : ℂ} (hα : ‖α‖ ≤ 1) :
