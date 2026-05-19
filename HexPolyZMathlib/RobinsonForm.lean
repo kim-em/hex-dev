@@ -193,6 +193,25 @@ theorem norm_eval_robinsonForm_eq_norm_eval
         rw [(IsAlgClosed.splits p).eval_eq_prod_roots z]
         simp
 
+theorem logMahlerMeasure_eq_of_boundary_norm_eq {p q : ℂ[X]}
+    (hboundary : ∀ {z : ℂ}, ‖z‖ = 1 → ‖q.eval z‖ = ‖p.eval z‖) :
+    q.logMahlerMeasure = p.logMahlerMeasure := by
+  rw [logMahlerMeasure_def, logMahlerMeasure_def]
+  apply Real.circleAverage_congr_sphere
+  intro z hz
+  have hz_norm : ‖z‖ = 1 := by
+    simpa [Metric.mem_sphere, dist_zero_right] using hz
+  simpa using congrArg Real.log (hboundary hz_norm)
+
+theorem mahlerMeasure_eq_of_boundary_norm_eq_of_ne_zero {p q : ℂ[X]}
+    (hboundary : ∀ {z : ℂ}, ‖z‖ = 1 → ‖q.eval z‖ = ‖p.eval z‖)
+    (hp : p ≠ 0) (hq : q ≠ 0) :
+    q.mahlerMeasure = p.mahlerMeasure := by
+  have hlog := logMahlerMeasure_eq_of_boundary_norm_eq hboundary
+  rw [logMahlerMeasure_def, logMahlerMeasure_def] at hlog
+  rw [mahlerMeasure_def_of_ne_zero hq, mahlerMeasure_def_of_ne_zero hp]
+  exact congrArg Real.exp hlog
+
 theorem mahlerMeasure_robinsonFactor (α : ℂ) :
     (robinsonFactor α).mahlerMeasure = max 1 ‖α‖ := by
   by_cases hα : ‖α‖ ≤ 1
