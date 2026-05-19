@@ -1,6 +1,7 @@
 import HexArith.Barrett.Context
 import HexArith.Montgomery.Context
 import HexModArith.Basic
+import HexModArith.Ring
 
 /-!
 Hot-loop optimization wrappers for `hex-mod-arith`.
@@ -196,6 +197,12 @@ theorem mulMod_comm (ctx : BarrettCtx p) (a b : ZMod64 p) :
   change (ZMod64.mul a b).toNat = (ZMod64.mul b a).toNat
   rw [ZMod64.toNat_mul, ZMod64.toNat_mul]
   exact Nat.mul_comm a.toNat b.toNat ▸ rfl
+
+/-- Barrett hot-loop multiplication is associative on standard residues. -/
+theorem mulMod_assoc (ctx : BarrettCtx p) (a b c : ZMod64 p) :
+    ctx.mulMod (ctx.mulMod a b) c = ctx.mulMod a (ctx.mulMod b c) := by
+  rw [mulMod_eq_mul, mulMod_eq_mul, mulMod_eq_mul, mulMod_eq_mul]
+  exact Lean.Grind.Semiring.mul_assoc a b c
 
 end BarrettCtx
 
@@ -422,6 +429,21 @@ theorem fromMont_mulMont_toMont_comm (ctx : MontCtx p) (a b : ZMod64 p) :
   change (ZMod64.mul a b).toNat = (ZMod64.mul b a).toNat
   rw [ZMod64.toNat_mul, ZMod64.toNat_mul]
   exact Nat.mul_comm a.toNat b.toNat ▸ rfl
+
+/--
+The Montgomery round trip for wrapped products is associative on standard
+residue inputs.
+-/
+theorem fromMont_mulMont_toMont_assoc (ctx : MontCtx p) (a b c : ZMod64 p) :
+    ctx.fromMont (ctx.mulMont (ctx.toMont
+        (ctx.fromMont (ctx.mulMont (ctx.toMont a) (ctx.toMont b))))
+      (ctx.toMont c)) =
+    ctx.fromMont (ctx.mulMont (ctx.toMont a)
+      (ctx.toMont
+        (ctx.fromMont (ctx.mulMont (ctx.toMont b) (ctx.toMont c))))) := by
+  rw [fromMont_mulMont_toMont, fromMont_mulMont_toMont,
+    fromMont_mulMont_toMont, fromMont_mulMont_toMont]
+  exact Lean.Grind.Semiring.mul_assoc a b c
 
 end MontCtx
 
