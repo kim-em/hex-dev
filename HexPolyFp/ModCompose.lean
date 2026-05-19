@@ -98,5 +98,25 @@ theorem composeModMonic_eq_modByMonic_compose
   rw [hzero] at hfold
   exact hfold
 
+/--
+Executable modular composition agrees with `DensePoly.compose f g % modulus`,
+the quotient-ring spelling preferred by downstream callers that reason with
+`%` rather than `modByMonic`.
+-/
+theorem composeModMonic_eq_mod
+    [ZMod64.PrimeModulus p]
+    (f g modulus : FpPoly p) (hmonic : DensePoly.Monic modulus) :
+    composeModMonic f g modulus hmonic = DensePoly.compose f g % modulus := by
+  rw [composeModMonic_eq_modByMonic_compose]
+  exact DensePoly.modByMonic_eq_mod (DensePoly.compose f g) modulus hmonic
+
+/-- The result of `composeModMonic` is already reduced modulo the monic modulus. -/
+theorem composeModMonic_mod_eq_self
+    [ZMod64.PrimeModulus p]
+    (f g modulus : FpPoly p) (hmonic : DensePoly.Monic modulus) :
+    composeModMonic f g modulus hmonic % modulus =
+      composeModMonic f g modulus hmonic := by
+  rw [composeModMonic_eq_mod, DensePoly.mod_mod]
+
 end FpPoly
 end Hex

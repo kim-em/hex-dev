@@ -126,6 +126,33 @@ private def coeffs? (p n : Nat) [ZMod64.Bounds p] : Option (List Nat) :=
   some (conwayPoly 3 3 supportedEntry_3_3)
 #guard 0 < FpPoly.degree (conwayPoly 3 3 supportedEntry_3_3)
 
+-- Odd-prime entry: `(3, 4)`, using the exported supported entry.
+#guard coeffNats supportedEntry_3_4.poly = [2, 0, 0, 2, 1]
+#guard supportedEntry_3_4.poly = luebeckConwayPolynomial_3_4
+#guard luebeckConwayPolynomial? 3 4 = some supportedEntry_3_4.poly
+#guard conwayPoly 3 4 supportedEntry_3_4 = luebeckConwayPolynomial_3_4
+#guard luebeckConwayPolynomial? 3 4 =
+  some (conwayPoly 3 4 supportedEntry_3_4)
+#guard 0 < FpPoly.degree (conwayPoly 3 4 supportedEntry_3_4)
+
+-- Odd-prime entry: `(3, 5)`, using the exported supported entry.
+#guard coeffNats supportedEntry_3_5.poly = [1, 2, 0, 0, 0, 1]
+#guard supportedEntry_3_5.poly = luebeckConwayPolynomial_3_5
+#guard luebeckConwayPolynomial? 3 5 = some supportedEntry_3_5.poly
+#guard conwayPoly 3 5 supportedEntry_3_5 = luebeckConwayPolynomial_3_5
+#guard luebeckConwayPolynomial? 3 5 =
+  some (conwayPoly 3 5 supportedEntry_3_5)
+#guard 0 < FpPoly.degree (conwayPoly 3 5 supportedEntry_3_5)
+
+-- Odd-prime entry: `(3, 6)`, using the exported supported entry.
+#guard coeffNats supportedEntry_3_6.poly = [2, 2, 1, 0, 2, 0, 1]
+#guard supportedEntry_3_6.poly = luebeckConwayPolynomial_3_6
+#guard luebeckConwayPolynomial? 3 6 = some supportedEntry_3_6.poly
+#guard conwayPoly 3 6 supportedEntry_3_6 = luebeckConwayPolynomial_3_6
+#guard luebeckConwayPolynomial? 3 6 =
+  some (conwayPoly 3 6 supportedEntry_3_6)
+#guard 0 < FpPoly.degree (conwayPoly 3 6 supportedEntry_3_6)
+
 -- Odd-prime entry: `(5, 1)`, using the exported supported entry.
 #guard coeffNats supportedEntry_5_1.poly = [3, 1]
 #guard supportedEntry_5_1.poly = luebeckConwayPolynomial_5_1

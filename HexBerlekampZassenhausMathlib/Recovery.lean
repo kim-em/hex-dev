@@ -656,6 +656,61 @@ theorem nondegenerateOfTrueSupportIndicators
   simp only [Bool.false_or]
   exact hnot_single_all_ones
 
+/-- The canonical support-driven indicator array is nonempty whenever the
+support partition has at least one class. -/
+theorem expectedIndicatorArrayOfSupports_nonempty {r : Nat}
+    (trueSupports : Set (Set (Fin r)))
+    (hclasses :
+      (supportPartitionByMinColumn trueSupports).length ≠ 0) :
+    (expectedIndicatorArrayOfSupports trueSupports).isEmpty = false := by
+  rw [Bool.eq_false_iff]
+  intro hempty
+  apply hclasses
+  have hsize :
+      (expectedIndicatorArrayOfSupports trueSupports).size = 0 := by
+    rw [Array.size_eq_zero_iff]
+    exact Array.isEmpty_iff.mp hempty
+  simpa [expectedIndicatorArrayOfSupports] using hsize
+
+/-- The canonical support-driven indicator array is not the degenerate
+single all-ones partition whenever the support partition is not a singleton. -/
+theorem expectedIndicatorArrayOfSupports_not_single_all_ones {r : Nat}
+    (trueSupports : Set (Set (Fin r)))
+    (hclasses :
+      (supportPartitionByMinColumn trueSupports).length ≠ 1) :
+    ((expectedIndicatorArrayOfSupports trueSupports).size == 1 &&
+        Hex.bhksIndicatorAllOnes r
+          ((expectedIndicatorArrayOfSupports trueSupports).getD 0 #[])) = false := by
+  have hsize :
+      (expectedIndicatorArrayOfSupports trueSupports).size ≠ 1 := by
+    intro h
+    apply hclasses
+    simpa [expectedIndicatorArrayOfSupports] using h
+  simp [hsize]
+
+/-- Direct non-degeneracy wrapper for the canonical support-driven indicator
+array, independent of the lift-data recovery bundle. -/
+theorem canonicalSupportIndicators_nondegenerate
+    (L : Hex.BhksProjectedRows)
+    (trueSupports : Set (Set (Fin L.factorCount)))
+    (hprojected_nonempty : L.projectedRows.isEmpty = false)
+    (hclasses_two :
+      2 ≤ (supportPartitionByMinColumn trueSupports).length) :
+    Hex.bhksDegenerateIndicatorPartition
+      L (expectedIndicatorArrayOfSupports trueSupports) = false := by
+  have hclasses_nonempty :
+      (supportPartitionByMinColumn trueSupports).length ≠ 0 := by
+    omega
+  have hclasses_not_single :
+      (supportPartitionByMinColumn trueSupports).length ≠ 1 := by
+    omega
+  unfold Hex.bhksDegenerateIndicatorPartition
+  rw [expectedIndicatorArrayOfSupports_nonempty trueSupports hclasses_nonempty,
+    hprojected_nonempty]
+  simp only [Bool.false_or]
+  exact expectedIndicatorArrayOfSupports_not_single_all_ones
+    trueSupports hclasses_not_single
+
 /--
 Build `ForwardRecoveryInputs` when the A2/exact-division obligation is
 available as per-indicator reconstruction witnesses rather than as the folded

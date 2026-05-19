@@ -4368,6 +4368,95 @@ def bhksIndicatorSelectedFactors
     else
       none
 
+/-- The array selected by a `0/1` BHKS indicator row. -/
+def bhksIndicatorSelectedFactorsArray
+    (liftedFactors : Array ZPoly) (indicator : Array Int) : Array ZPoly :=
+  (List.range indicator.size).foldl
+    (fun selected i =>
+      if indicator.getD i 0 == 1 then
+        selected.push (liftedFactors.getD i 0)
+      else
+        selected)
+    #[]
+
+/--
+Successful branch of `bhksIndicatorSelectedFactors` for well-formed `0/1`
+indicator rows, returning the canonical selected-factor array.
+-/
+theorem bhksIndicatorSelectedFactors_eq_some_selectedArray_of_getD
+    (liftedFactors : Array ZPoly) (indicator : Array Int)
+    (hsize : indicator.size = liftedFactors.size)
+    (hbits : ∀ i, i < indicator.size →
+      indicator.getD i 0 = 0 ∨ indicator.getD i 0 = 1)
+    (hnonempty : ∃ i, i < indicator.size ∧ indicator.getD i 0 = 1) :
+    bhksIndicatorSelectedFactors liftedFactors indicator =
+      some (bhksIndicatorSelectedFactorsArray liftedFactors indicator) := by
+  unfold bhksIndicatorSelectedFactors bhksIndicatorSelectedFactorsArray
+  have hsizeBool : (indicator.size != liftedFactors.size) = false := by
+    simp [hsize]
+  rw [hsizeBool]
+  simp only [Bool.false_eq_true, if_false]
+  have hall :
+      (List.range indicator.size).all
+          (fun i => indicator.getD i 0 == 0 || indicator.getD i 0 == 1) = true := by
+    rw [List.all_eq_true]
+    intro i hi
+    have hi_size : i < indicator.size := List.mem_range.mp hi
+    rcases hbits i hi_size with hzero | hone
+    · simp [hzero]
+    · simp [hone]
+  have hany :
+      (List.range indicator.size).any
+          (fun i => indicator.getD i 0 == 1) = true := by
+    rw [List.any_eq_true]
+    rcases hnonempty with ⟨i, hi_size, hone⟩
+    exact ⟨i, List.mem_range.mpr hi_size, by simp [hone]⟩
+  change
+    (if
+        ((List.range indicator.size).all
+            (fun i => indicator.getD i 0 == 0 || indicator.getD i 0 == 1) &&
+          (List.range indicator.size).any
+            (fun i => indicator.getD i 0 == 1)) = true then
+      some
+        ((List.range indicator.size).foldl
+          (fun selected i =>
+            if (indicator.getD i 0 == 1) = true then
+              selected.push (liftedFactors.getD i 0)
+            else
+              selected)
+          #[])
+    else
+      none) =
+      some
+        ((List.range indicator.size).foldl
+          (fun selected i =>
+            if (indicator.getD i 0 == 1) = true then
+              selected.push (liftedFactors.getD i 0)
+            else
+              selected)
+          #[])
+  rw [hall, hany]
+  rfl
+
+/--
+Successful branch of `bhksIndicatorSelectedFactors`, stated with an explicit
+name for the selected-factor array chosen by the caller.
+-/
+theorem bhksIndicatorSelectedFactors_eq_some_of_getD
+    (liftedFactors : Array ZPoly) (indicator : Array Int)
+    (selected : Array ZPoly)
+    (hsize : indicator.size = liftedFactors.size)
+    (hbits : ∀ i, i < indicator.size →
+      indicator.getD i 0 = 0 ∨ indicator.getD i 0 = 1)
+    (hnonempty : ∃ i, i < indicator.size ∧ indicator.getD i 0 = 1)
+    (hselected :
+      selected = bhksIndicatorSelectedFactorsArray liftedFactors indicator) :
+    bhksIndicatorSelectedFactors liftedFactors indicator = some selected := by
+  rw [hselected]
+  exact
+    bhksIndicatorSelectedFactors_eq_some_selectedArray_of_getD
+      liftedFactors indicator hsize hbits hnonempty
+
 /--
 Reconstruct and verify one BHKS equivalence-class indicator.
 
