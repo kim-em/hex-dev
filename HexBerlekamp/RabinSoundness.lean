@@ -262,20 +262,10 @@ private theorem zmod64_one_ne_zero_of_prime [ZMod64.PrimeModulus p] :
 theorem primeFieldLinearFactor_coeff_one (c : ZMod64 p) :
     (primeFieldLinearFactor c).coeff 1 = (1 : ZMod64 p) := by
   unfold primeFieldLinearFactor FpPoly.X FpPoly.C
-  have hzero : (Zero.zero : ZMod64 p) - Zero.zero = Zero.zero := by
-    change ZMod64.sub (Zero.zero : ZMod64 p) Zero.zero = Zero.zero
-    apply ZMod64.ext
-    apply UInt64.toNat_inj.mp
-    change (ZMod64.sub (Zero.zero : ZMod64 p) Zero.zero).toNat =
-      (Zero.zero : ZMod64 p).toNat
-    rw [ZMod64.toNat_sub]
-    have hz : (Zero.zero : ZMod64 p).val.toNat = 0 := by
-      change (Zero.zero : ZMod64 p).toNat = 0
-      exact ZMod64.toNat_zero
-    simp [hz]
-  rw [DensePoly.coeff_sub _ _ _ hzero]
+  rw [DensePoly.coeff_sub_ring]
   rw [DensePoly.coeff_monomial, DensePoly.coeff_C]
   simp
+  show (1 : ZMod64 p) - 0 = 1
   grind
 
 /-- No listed prime-field linear factor is the zero polynomial. -/
@@ -437,8 +427,7 @@ theorem congr_sub_of_congr (f a b c d : FpPoly p)
   have heq : (a - c) - (b - d) = (a - b) - (c - d) := by
     apply DensePoly.ext_coeff
     intro i
-    have hzero_sub : (0 : ZMod64 p) - 0 = 0 := by grind
-    repeat rw [DensePoly.coeff_sub _ _ _ hzero_sub]
+    repeat rw [DensePoly.coeff_sub_ring]
     grind
   rw [DensePoly.Congr, heq]
   exact DensePoly.dvd_sub_poly hab hcd
@@ -740,13 +729,12 @@ theorem dvd_xPowSubX_iff_frobeniusDiffMod_isZero
       unfold xPowSubX frobeniusDiffMod
       apply DensePoly.ext_coeff
       intro n
-      have hzero_sub : ((0 : ZMod64 p) - 0) = 0 := by grind
-      rw [DensePoly.coeff_sub _ _ _ hzero_sub,
-          DensePoly.coeff_sub _ _ _ hzero_sub,
-          DensePoly.coeff_sub _ _ _ hzero_sub,
-          DensePoly.coeff_sub _ _ _ hzero_sub,
-          DensePoly.coeff_sub _ _ _ hzero_sub,
-          DensePoly.coeff_sub _ _ _ hzero_sub]
+      rw [DensePoly.coeff_sub_ring,
+          DensePoly.coeff_sub_ring,
+          DensePoly.coeff_sub_ring,
+          DensePoly.coeff_sub_ring,
+          DensePoly.coeff_sub_ring,
+          DensePoly.coeff_sub_ring]
       grind
     rw [heq]
     exact DensePoly.dvd_sub_poly hp1 hp2
@@ -804,8 +792,7 @@ theorem dvd_xPowSubX_iff_frobeniusDiffMod_isZero
           ∀ i, f.size - 1 ≤ i → (frobeniusDiffMod f hmonic k).coeff i = 0 := by
         intro i hi
         unfold frobeniusDiffMod
-        have hzero_sub : ((0 : ZMod64 p) - 0) = 0 := by grind
-        rw [DensePoly.coeff_sub _ _ _ hzero_sub]
+        rw [DensePoly.coeff_sub_ring]
         rw [DensePoly.coeff_eq_zero_of_size_le _ (by omega : _ ≤ i)]
         rw [DensePoly.coeff_eq_zero_of_size_le _ (by omega : _ ≤ i)]
         grind
@@ -1185,12 +1172,10 @@ theorem irreducible_dvd_xPowSubX_degree
     unfold xPowSubX
     apply DensePoly.ext_coeff
     intro n
-    have hzero_sub : ((0 : ZMod64 p) - 0) = 0 := by grind
-    have hzero_add : ((0 : ZMod64 p) + 0) = 0 := by grind
-    rw [DensePoly.coeff_sub _ _ _ hzero_sub,
-        DensePoly.coeff_add _ _ _ hzero_add,
-        DensePoly.coeff_sub _ _ _ hzero_sub,
-        DensePoly.coeff_sub _ _ _ hzero_sub]
+    rw [DensePoly.coeff_sub_ring,
+        DensePoly.coeff_add_semiring,
+        DensePoly.coeff_sub_ring,
+        DensePoly.coeff_sub_ring]
     grind
   rw [heq]
   exact DensePoly.dvd_add_poly hp1 hcongr
@@ -1223,10 +1208,9 @@ private theorem xPowSubX_factor (k : Nat) :
     exact DensePoly.coeff_C (1 : ZMod64 p) i
   apply DensePoly.ext_coeff
   intro n
-  have hzero_sub : ((0 : ZMod64 p) - 0) = 0 := by grind
-  rw [DensePoly.coeff_sub _ _ _ hzero_sub]
+  rw [DensePoly.coeff_sub_ring]
   rw [FpPoly.coeff_monomial_mul]
-  rw [DensePoly.coeff_sub _ _ _ hzero_sub]
+  rw [DensePoly.coeff_sub_ring]
   rw [DensePoly.coeff_monomial, DensePoly.coeff_monomial, hcoeff_one]
   by_cases hn0 : n = 0
   · subst hn0
@@ -1382,13 +1366,12 @@ theorem dvd_frobeniusDiffMod_of_dvd_dvd
       unfold xPowSubX frobeniusDiffMod
       apply DensePoly.ext_coeff
       intro n
-      have hzero_sub : ((0 : ZMod64 p) - 0) = 0 := by grind
-      rw [DensePoly.coeff_sub _ _ _ hzero_sub,
-          DensePoly.coeff_sub _ _ _ hzero_sub,
-          DensePoly.coeff_sub _ _ _ hzero_sub,
-          DensePoly.coeff_sub _ _ _ hzero_sub,
-          DensePoly.coeff_sub _ _ _ hzero_sub,
-          DensePoly.coeff_sub _ _ _ hzero_sub]
+      rw [DensePoly.coeff_sub_ring,
+          DensePoly.coeff_sub_ring,
+          DensePoly.coeff_sub_ring,
+          DensePoly.coeff_sub_ring,
+          DensePoly.coeff_sub_ring,
+          DensePoly.coeff_sub_ring]
       grind
     rw [heq]
     exact DensePoly.dvd_sub_poly hp1 hp2
@@ -1405,9 +1388,8 @@ theorem dvd_frobeniusDiffMod_of_dvd_dvd
         xPowSubX (p := p) k - (xPowSubX (p := p) k - frobeniusDiffMod f hmonic k) := by
     apply DensePoly.ext_coeff
     intro n
-    have hzero_sub : ((0 : ZMod64 p) - 0) = 0 := by grind
-    rw [DensePoly.coeff_sub _ _ _ hzero_sub,
-        DensePoly.coeff_sub _ _ _ hzero_sub]
+    rw [DensePoly.coeff_sub_ring,
+        DensePoly.coeff_sub_ring]
     grind
   rw [hgoal]
   exact DensePoly.dvd_sub_poly hg_dvd_pow hg_dvd_diff
@@ -1563,20 +1545,6 @@ theorem primeFieldLinearFactor_dvd_xPowSubX_one (c : ZMod64 p) :
     (xPowSubX_one_eval_eq_zero c)
 
 omit [ZMod64.PrimeModulus p] in
-private theorem zmod64_zero_sub_zero :
-    (Zero.zero : ZMod64 p) - Zero.zero = Zero.zero := by
-  change ZMod64.sub (Zero.zero : ZMod64 p) Zero.zero = Zero.zero
-  apply ZMod64.ext
-  apply UInt64.toNat_inj.mp
-  change (ZMod64.sub (Zero.zero : ZMod64 p) Zero.zero).toNat =
-    (Zero.zero : ZMod64 p).toNat
-  rw [ZMod64.toNat_sub]
-  have hz : (Zero.zero : ZMod64 p).val.toNat = 0 := by
-    change (Zero.zero : ZMod64 p).toNat = 0
-    exact ZMod64.toNat_zero
-  simp [hz]
-
-omit [ZMod64.PrimeModulus p] in
 /-- The difference of two prime-field linear factors collapses to a constant. -/
 private theorem primeFieldLinearFactor_sub_eq (c d : ZMod64 p) :
     primeFieldLinearFactor c - primeFieldLinearFactor d
@@ -1584,9 +1552,9 @@ private theorem primeFieldLinearFactor_sub_eq (c d : ZMod64 p) :
   apply DensePoly.ext_coeff
   intro n
   unfold primeFieldLinearFactor FpPoly.X FpPoly.C
-  rw [DensePoly.coeff_sub _ _ _ zmod64_zero_sub_zero]
-  rw [DensePoly.coeff_sub _ _ _ zmod64_zero_sub_zero]
-  rw [DensePoly.coeff_sub _ _ _ zmod64_zero_sub_zero]
+  rw [DensePoly.coeff_sub_ring]
+  rw [DensePoly.coeff_sub_ring]
+  rw [DensePoly.coeff_sub_ring]
   rw [DensePoly.coeff_monomial, DensePoly.coeff_C, DensePoly.coeff_C,
       DensePoly.coeff_C]
   have h0 : (Zero.zero : ZMod64 p) = 0 := rfl
@@ -1717,7 +1685,7 @@ omit [ZMod64.PrimeModulus p] in
 private theorem primeFieldLinearFactor_coeff_high (c : ZMod64 p) {n : Nat}
     (hn : 2 ≤ n) : (primeFieldLinearFactor c).coeff n = 0 := by
   unfold primeFieldLinearFactor FpPoly.X FpPoly.C
-  rw [DensePoly.coeff_sub _ _ _ zmod64_zero_sub_zero]
+  rw [DensePoly.coeff_sub_ring]
   rw [DensePoly.coeff_monomial, DensePoly.coeff_C]
   have hn1 : ¬ n = 1 := by omega
   have hn0 : ¬ n = 0 := by omega
@@ -1890,7 +1858,7 @@ private theorem xPowSubX_one_coeff_p :
     (xPowSubX (p := p) 1).coeff p = (1 : ZMod64 p) := by
   unfold xPowSubX FpPoly.X
   rw [Nat.pow_one]
-  rw [DensePoly.coeff_sub _ _ _ zmod64_zero_sub_zero]
+  rw [DensePoly.coeff_sub_ring]
   rw [DensePoly.coeff_monomial, DensePoly.coeff_monomial]
   have hp_pos : 2 ≤ p :=
     Hex.Nat.Prime.two_le (ZMod64.PrimeModulus.prime (p := p))
@@ -1905,7 +1873,7 @@ private theorem xPowSubX_one_coeff_high {n : Nat} (hn : p < n) :
     (xPowSubX (p := p) 1).coeff n = 0 := by
   unfold xPowSubX FpPoly.X
   rw [Nat.pow_one]
-  rw [DensePoly.coeff_sub _ _ _ zmod64_zero_sub_zero]
+  rw [DensePoly.coeff_sub_ring]
   rw [DensePoly.coeff_monomial, DensePoly.coeff_monomial]
   have hp_pos : 2 ≤ p :=
     Hex.Nat.Prime.two_le (ZMod64.PrimeModulus.prime (p := p))
@@ -2559,9 +2527,9 @@ private theorem witnessLinearFactor_sub_eq
       = (DensePoly.C (d - c) : FpPoly p) := by
   apply DensePoly.ext_coeff
   intro n
-  rw [DensePoly.coeff_sub _ _ _ zmod64_zero_sub_zero]
-  rw [DensePoly.coeff_sub _ _ _ zmod64_zero_sub_zero]
-  rw [DensePoly.coeff_sub _ _ _ zmod64_zero_sub_zero]
+  rw [DensePoly.coeff_sub_ring]
+  rw [DensePoly.coeff_sub_ring]
+  rw [DensePoly.coeff_sub_ring]
   show w.coeff n - (FpPoly.C c).coeff n - (w.coeff n - (FpPoly.C d).coeff n)
     = (DensePoly.C (d - c) : FpPoly p).coeff n
   rw [show (FpPoly.C c).coeff n = (DensePoly.C c : FpPoly p).coeff n from rfl,
@@ -3258,7 +3226,7 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree
         simp [this]; rfl
       have hsub_at_top : (w - FpPoly.C c).coeff (w.size - 1) =
           w.coeff (w.size - 1) - (FpPoly.C c).coeff (w.size - 1) := by
-        rw [DensePoly.coeff_sub _ _ _ zmod64_zero_sub_zero]
+        rw [DensePoly.coeff_sub_ring]
       have hsub_top_ne : (w - FpPoly.C c).coeff (w.size - 1) ≠ 0 := by
         rw [hsub_at_top, hC_coeff_high]
         intro hzero
@@ -3297,7 +3265,7 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree
             (w - FpPoly.C c).coeff ((w - FpPoly.C c).size - 1) =
               w.coeff ((w - FpPoly.C c).size - 1) -
                 (FpPoly.C c).coeff ((w - FpPoly.C c).size - 1) := by
-          rw [DensePoly.coeff_sub _ _ _ zmod64_zero_sub_zero]
+          rw [DensePoly.coeff_sub_ring]
         rw [hsub_top, hw_zero_top, hC_zero_top] at hlast_ne
         apply hlast_ne
         change (0 : ZMod64 p) - (0 : ZMod64 p) = 0
