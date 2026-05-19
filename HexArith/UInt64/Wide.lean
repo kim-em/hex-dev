@@ -59,23 +59,26 @@ def subBorrow (a b : UInt64) (bin : Bool) : UInt64 × Bool :=
     (.ofNat (word + a.toNat - rhs), true)
 
 /-- Low-word projection of `addCarry` as Nat reduction modulo `2^64`. -/
-@[simp]
+@[simp, grind =]
 theorem toNat_addCarry_fst (a b : UInt64) (cin : Bool) :
     (addCarry a b cin).1.toNat = (a.toNat + b.toNat + cin.toNat) % word := by
   simp [addCarry, word]
 
 /-- The outgoing carry bit of `addCarry` is set exactly when the exact sum overflows. -/
+@[grind =]
 theorem addCarry_snd (a b : UInt64) (cin : Bool) :
     (addCarry a b cin).2 = decide (word ≤ a.toNat + b.toNat + cin.toNat) := by
   simp [addCarry]
 
 /-- The outgoing carry bit is true exactly when exact add-with-carry overflows. -/
+@[grind =]
 theorem addCarry_snd_eq_true (a b : UInt64) (cin : Bool) :
     (addCarry a b cin).2 = true ↔ word ≤ a.toNat + b.toNat + cin.toNat := by
   rw [addCarry_snd]
   simp
 
 /-- The outgoing carry bit is false exactly when exact add-with-carry fits in one word. -/
+@[grind =]
 theorem addCarry_snd_eq_false (a b : UInt64) (cin : Bool) :
     (addCarry a b cin).2 = false ↔ a.toNat + b.toNat + cin.toNat < word := by
   rw [addCarry_snd]
@@ -110,7 +113,7 @@ theorem addCarry_fst_eq_of_overflow (a b : UInt64) (cin : Bool)
   simpa using congrArg Prod.fst (addCarry_eq_of_overflow a b cin h)
 
 /-- Low-word projection of `subBorrow` after one-word wrapping. -/
-@[simp]
+@[simp, grind =]
 theorem toNat_subBorrow_fst (a b : UInt64) (bin : Bool) :
     (subBorrow a b bin).1.toNat =
       (word + a.toNat - (b.toNat + bin.toNat)) % word := by
@@ -143,6 +146,7 @@ theorem toNat_subBorrow_fst (a b : UInt64) (bin : Bool) :
     simpa [rhs] using hmod.symm
 
 /-- The outgoing borrow bit of `subBorrow` is set exactly when the subtrahend is larger. -/
+@[grind =]
 theorem subBorrow_snd (a b : UInt64) (bin : Bool) :
     (subBorrow a b bin).2 = decide (a.toNat < b.toNat + bin.toNat) := by
   by_cases hle : b.toNat + bin.toNat ≤ a.toNat
@@ -152,12 +156,14 @@ theorem subBorrow_snd (a b : UInt64) (bin : Bool) :
     simp [subBorrow, hle, hlt]
 
 /-- The outgoing borrow bit is true exactly when the subtrahend is larger. -/
+@[grind =]
 theorem subBorrow_snd_eq_true (a b : UInt64) (bin : Bool) :
     (subBorrow a b bin).2 = true ↔ a.toNat < b.toNat + bin.toNat := by
   rw [subBorrow_snd]
   simp
 
 /-- The outgoing borrow bit is false exactly when subtraction does not borrow. -/
+@[grind =]
 theorem subBorrow_snd_eq_false (a b : UInt64) (bin : Bool) :
     (subBorrow a b bin).2 = false ↔ b.toNat + bin.toNat ≤ a.toNat := by
   rw [subBorrow_snd]
@@ -194,6 +200,10 @@ theorem subBorrow_fst_eq_of_borrow (a b : UInt64) (bin : Bool)
       UInt64.ofNat (word + a.toNat - (b.toNat + bin.toNat)) := by
   simpa using congrArg Prod.fst (subBorrow_eq_of_borrow a b bin h)
 
+/--
+The quotient half of a `UInt64 × UInt64` product still fits in one word, so
+converting it back from `UInt64.ofNat` does not wrap.
+-/
 private theorem toNat_ofNat_quot_mul_lt_word (a b : UInt64) :
     (UInt64.ofNat (a.toNat * b.toNat / word)).toNat =
       a.toNat * b.toNat / word := by
@@ -206,6 +216,7 @@ private theorem toNat_ofNat_quot_mul_lt_word (a b : UInt64) :
   simpa [UInt64.toNat_ofNat, word] using Nat.mod_eq_of_lt hquot
 
 /-- `mulHi` agrees with Nat-level division by `2^64`. -/
+@[grind =]
 theorem toNat_mulHi (a b : UInt64) :
     (mulHi a b).toNat = a.toNat * b.toNat / word := by
   simpa [mulHi] using toNat_ofNat_quot_mul_lt_word a b
