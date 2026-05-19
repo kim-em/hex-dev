@@ -69,6 +69,19 @@ theorem addCarry_snd (a b : UInt64) (cin : Bool) :
     (addCarry a b cin).2 = decide (word ≤ a.toNat + b.toNat + cin.toNat) := by
   simp [addCarry]
 
+/-- If exact add-with-carry does not overflow, `addCarry` returns the exact low word. -/
+theorem addCarry_eq_of_no_overflow (a b : UInt64) (cin : Bool)
+    (h : a.toNat + b.toNat + cin.toNat < word) :
+    addCarry a b cin = (UInt64.ofNat (a.toNat + b.toNat + cin.toNat), false) := by
+  have hnot : ¬ word ≤ a.toNat + b.toNat + cin.toNat := by omega
+  simp [addCarry, hnot]
+
+/-- If exact add-with-carry overflows, `addCarry` returns the wrapped low word and carry bit. -/
+theorem addCarry_eq_of_overflow (a b : UInt64) (cin : Bool)
+    (h : word ≤ a.toNat + b.toNat + cin.toNat) :
+    addCarry a b cin = (UInt64.ofNat (a.toNat + b.toNat + cin.toNat), true) := by
+  simp [addCarry, h]
+
 /-- Low-word projection of `subBorrow` after one-word wrapping. -/
 @[simp]
 theorem toNat_subBorrow_fst (a b : UInt64) (bin : Bool) :
@@ -110,6 +123,20 @@ theorem subBorrow_snd (a b : UInt64) (bin : Bool) :
     simp [subBorrow, hle, hnot]
   · have hlt : a.toNat < b.toNat + bin.toNat := by omega
     simp [subBorrow, hle, hlt]
+
+/-- If subtraction does not borrow, `subBorrow` returns the exact difference. -/
+theorem subBorrow_eq_of_no_borrow (a b : UInt64) (bin : Bool)
+    (h : b.toNat + bin.toNat ≤ a.toNat) :
+    subBorrow a b bin = (UInt64.ofNat (a.toNat - (b.toNat + bin.toNat)), false) := by
+  simp [subBorrow, h]
+
+/-- If subtraction borrows, `subBorrow` returns the one-word wrapped difference. -/
+theorem subBorrow_eq_of_borrow (a b : UInt64) (bin : Bool)
+    (h : a.toNat < b.toNat + bin.toNat) :
+    subBorrow a b bin =
+      (UInt64.ofNat (word + a.toNat - (b.toNat + bin.toNat)), true) := by
+  have hnot : ¬ b.toNat + bin.toNat ≤ a.toNat := by omega
+  simp [subBorrow, hnot]
 
 private theorem toNat_ofNat_quot_mul_lt_word (a b : UInt64) :
     (UInt64.ofNat (a.toNat * b.toNat / word)).toNat =
