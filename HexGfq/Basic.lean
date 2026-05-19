@@ -468,6 +468,52 @@ def repr (x : GF2q n) : UInt64 :=
     repr x = x.val :=
   rfl
 
+/-- Interpret the low `n` bits of a packed binary word as an `FpPoly 2`
+polynomial. -/
+def wordFpPoly (w : UInt64) : FpPoly 2 :=
+  FpPoly.ofCoeffs <|
+    (((List.range n).map fun i =>
+      if (((w >>> i.toUInt64) &&& 1) = 0) then
+        (0 : ZMod64 2)
+      else
+        (1 : ZMod64 2)).toArray)
+
+/-- Interpret the packed representative of an optimized binary-field element
+as a generic `FpPoly 2` polynomial. -/
+def reprFpPoly (x : GF2q n) : FpPoly 2 :=
+  wordFpPoly (n := n) (repr x)
+
+/-- Map an optimized packed canonical binary-field element into the generic
+canonical `GFq 2 n` model for the same committed Conway entry. -/
+def toGFq (x : GF2q n) : GFq 2 n (supportedEntry (n := n)) :=
+  GFq.ofPoly (supportedEntry (n := n)) (reprFpPoly x)
+
+/-- `GF2q.reprFpPoly` is the low-bit `FpPoly 2` view of the packed
+representative. -/
+@[simp] theorem reprFpPoly_eq_wordFpPoly (x : GF2q n) :
+    reprFpPoly x = wordFpPoly (n := n) (repr x) :=
+  rfl
+
+/-- `GF2q.toGFq` injects the packed representative through `GFq.ofPoly`. -/
+@[simp] theorem toGFq_eq_ofPoly (x : GF2q n) :
+    toGFq x = GFq.ofPoly (supportedEntry (n := n)) (reprFpPoly x) :=
+  rfl
+
+/-- Bridging a packed word into `GFq 2 n` injects the reduced packed
+representative as an `FpPoly 2`. -/
+@[simp] theorem toGFq_ofWord (w : UInt64) :
+    toGFq (ofWord (n := n) w) =
+      GFq.ofPoly (supportedEntry (n := n))
+        (wordFpPoly (n := n) (repr (ofWord (n := n) w))) :=
+  rfl
+
+/-- The generic representative of `GF2q.toGFq` is the selected Conway-modulus
+reduction of the packed representative viewed as an `FpPoly 2`. -/
+@[simp] theorem toGFq_repr (x : GF2q n) :
+    GFq.repr (toGFq x) =
+      GFqRing.reduceMod (GFq.modulus (supportedEntry (n := n))) (reprFpPoly x) :=
+  rfl
+
 /-- Two optimized `GF2q` elements are equal when their packed representatives
 agree. -/
 @[ext] theorem ext {x y : GF2q n} (hxy : repr x = repr y) :
