@@ -20,7 +20,8 @@ Covered edge cases:
 - unsupported degree zero, unsupported larger binary degree, and an
   unsupported prime outside the committed slice
 - a binary higher-degree `SupportedEntry` (`(2, 4)`) and an odd-prime
-  `SupportedEntry` slice (`(3, 1)`, `(3, 2)`, `(3, 3)`)
+  `SupportedEntry` slice (`(3, 1)` through `(3, 6)` and `(7, 1)`
+  through `(7, 6)`)
 -/
 
 namespace Hex
@@ -152,6 +153,60 @@ private def coeffs? (p n : Nat) [ZMod64.Bounds p] : Option (List Nat) :=
 #guard luebeckConwayPolynomial? 3 6 =
   some (conwayPoly 3 6 supportedEntry_3_6)
 #guard 0 < FpPoly.degree (conwayPoly 3 6 supportedEntry_3_6)
+
+-- Odd-prime entry: `(7, 1)`, using the exported supported entry.
+#guard coeffNats supportedEntry_7_1.poly = [4, 1]
+#guard supportedEntry_7_1.poly = luebeckConwayPolynomial_7_1
+#guard luebeckConwayPolynomial? 7 1 = some supportedEntry_7_1.poly
+#guard conwayPoly 7 1 supportedEntry_7_1 = luebeckConwayPolynomial_7_1
+#guard luebeckConwayPolynomial? 7 1 =
+  some (conwayPoly 7 1 supportedEntry_7_1)
+#guard 0 < FpPoly.degree (conwayPoly 7 1 supportedEntry_7_1)
+
+-- Odd-prime entry: `(7, 2)`, using the exported supported entry.
+#guard coeffNats supportedEntry_7_2.poly = [3, 6, 1]
+#guard supportedEntry_7_2.poly = luebeckConwayPolynomial_7_2
+#guard luebeckConwayPolynomial? 7 2 = some supportedEntry_7_2.poly
+#guard conwayPoly 7 2 supportedEntry_7_2 = luebeckConwayPolynomial_7_2
+#guard luebeckConwayPolynomial? 7 2 =
+  some (conwayPoly 7 2 supportedEntry_7_2)
+#guard 0 < FpPoly.degree (conwayPoly 7 2 supportedEntry_7_2)
+
+-- Odd-prime entry: `(7, 3)`, using the exported supported entry.
+#guard coeffNats supportedEntry_7_3.poly = [4, 0, 6, 1]
+#guard supportedEntry_7_3.poly = luebeckConwayPolynomial_7_3
+#guard luebeckConwayPolynomial? 7 3 = some supportedEntry_7_3.poly
+#guard conwayPoly 7 3 supportedEntry_7_3 = luebeckConwayPolynomial_7_3
+#guard luebeckConwayPolynomial? 7 3 =
+  some (conwayPoly 7 3 supportedEntry_7_3)
+#guard 0 < FpPoly.degree (conwayPoly 7 3 supportedEntry_7_3)
+
+-- Odd-prime entry: `(7, 4)`, using the exported supported entry.
+#guard coeffNats supportedEntry_7_4.poly = [3, 4, 5, 0, 1]
+#guard supportedEntry_7_4.poly = luebeckConwayPolynomial_7_4
+#guard luebeckConwayPolynomial? 7 4 = some supportedEntry_7_4.poly
+#guard conwayPoly 7 4 supportedEntry_7_4 = luebeckConwayPolynomial_7_4
+#guard luebeckConwayPolynomial? 7 4 =
+  some (conwayPoly 7 4 supportedEntry_7_4)
+#guard 0 < FpPoly.degree (conwayPoly 7 4 supportedEntry_7_4)
+
+-- Odd-prime entry: `(7, 5)`, using the exported supported entry.
+#guard coeffNats supportedEntry_7_5.poly = [4, 1, 0, 0, 0, 1]
+#guard supportedEntry_7_5.poly = luebeckConwayPolynomial_7_5
+#guard luebeckConwayPolynomial? 7 5 = some supportedEntry_7_5.poly
+#guard conwayPoly 7 5 supportedEntry_7_5 = luebeckConwayPolynomial_7_5
+#guard luebeckConwayPolynomial? 7 5 =
+  some (conwayPoly 7 5 supportedEntry_7_5)
+#guard 0 < FpPoly.degree (conwayPoly 7 5 supportedEntry_7_5)
+
+-- Odd-prime entry: `(7, 6)`, using the exported supported entry.
+#guard coeffNats supportedEntry_7_6.poly = [3, 6, 4, 5, 1, 0, 1]
+#guard supportedEntry_7_6.poly = luebeckConwayPolynomial_7_6
+#guard luebeckConwayPolynomial? 7 6 = some supportedEntry_7_6.poly
+#guard conwayPoly 7 6 supportedEntry_7_6 = luebeckConwayPolynomial_7_6
+#guard luebeckConwayPolynomial? 7 6 =
+  some (conwayPoly 7 6 supportedEntry_7_6)
+#guard 0 < FpPoly.degree (conwayPoly 7 6 supportedEntry_7_6)
 
 end ConwayConformance
 end Conway
