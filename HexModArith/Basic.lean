@@ -589,6 +589,26 @@ exact executable residue produced by `inv`.
         % Int.ofNat p)) % p := by
   rw [inv, toNat_ofNat]
 
+/-- Inversion is the residue built from the extended-GCD inverse representative. -/
+theorem inv_eq_ofNat (a : ZMod64 p) :
+    inv a =
+      ofNat p
+        (Int.toNat
+          ((let (_, s, _) :=
+              HexArith.Int.extGcd (Int.ofNat a.toNat) (Int.ofNat p); s)
+            % Int.ofNat p)) := by
+  rw [eq_iff_toNat_eq, toNat_inv_def, toNat_ofNat]
+
+/-- Operator-level form of `inv_eq_ofNat`. -/
+theorem inv_op_eq_ofNat (a : ZMod64 p) :
+    a⁻¹ =
+      ofNat p
+        (Int.toNat
+          ((let (_, s, _) :=
+              HexArith.Int.extGcd (Int.ofNat a.toNat) (Int.ofNat p); s)
+            % Int.ofNat p)) := by
+  simpa using inv_eq_ofNat a
+
 private theorem invBezout_mul_mod_eq_one {a p : Nat} (hp : 0 < p)
     {s t : Int} (hbez : s * Int.ofNat a + t * Int.ofNat p = 1) :
     (Int.toNat (s % Int.ofNat p) * a) % p = 1 % p := by
