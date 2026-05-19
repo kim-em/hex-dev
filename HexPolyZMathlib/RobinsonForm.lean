@@ -46,6 +46,14 @@ def schurRootPath (α : ℂ) (t : ℝ) : ℂ :=
 def derivativeMahlerAlongLinearFactor (f : ℂ[X]) (β : ℂ) : ℝ :=
   ((f * (X - C β)).derivative).mahlerMeasure
 
+/--
+The polynomial obtained from `p` by Schur-reflecting one selected exterior root
+while leaving all other roots in their original linear factors.
+-/
+def schurReflectedAtRootForm (p : ℂ[X]) (α : ℂ) : ℂ[X] :=
+  C p.leadingCoeff * ((p.roots.erase α).map fun β => X - C β).prod *
+    (1 - C (conj α) * X)
+
 /-- The summand obtained by differentiating the linear factor for one root. -/
 def rootDeletionDerivativeSummand (p : ℂ[X]) (α : ℂ) : ℂ[X] :=
   C p.leadingCoeff * ((p.roots.erase α).map fun β => X - C β).prod
@@ -172,6 +180,44 @@ theorem mahlerMeasure_derivative_le_of_schurRootPath_monotoneOn
       (f * (1 - C (conj α) * X)).derivative.mahlerMeasure :=
   mahlerMeasure_derivative_le_of_schurRootPath_monotone f hα
     (derivativeMahlerAlongLinearFactor_le_schurReflectedRoot_of_monotoneOn f α hmono)
+
+/--
+One root-reflection step in the de Bruijn-Springer/Boyd route toward
+`p.derivative.mahlerMeasure ≤ p.natDegree * p.mahlerMeasure`: if the Mahler
+measure of the derivative is monotone along the Schur path for the selected
+linear factor, then reflecting that exterior root cannot decrease the Mahler
+measure of the derivative.
+-/
+theorem mahlerMeasure_derivative_le_schurReflectedAtRootForm_derivative_of_monotoneOn
+    (p : ℂ[X]) {α : ℂ} (hαmem : α ∈ p.roots) (hα : 1 < ‖α‖)
+    (hmono : MonotoneOn
+      (fun t : ℝ =>
+        derivativeMahlerAlongLinearFactor
+          (C p.leadingCoeff * ((p.roots.erase α).map fun β => X - C β).prod)
+          (schurRootPath α t))
+      (Set.Icc 0 1)) :
+    p.derivative.mahlerMeasure ≤ (schurReflectedAtRootForm p α).derivative.mahlerMeasure := by
+  let f : ℂ[X] := C p.leadingCoeff * ((p.roots.erase α).map fun β => X - C β).prod
+  have hp_factor : p = f * (X - C α) := by
+    calc
+      p = C p.leadingCoeff * (p.roots.map fun β => X - C β).prod := by
+        exact (IsAlgClosed.splits p).eq_prod_roots
+      _ = C p.leadingCoeff *
+          (((p.roots.erase α).map fun β => X - C β).prod * (X - C α)) := by
+        rw [← Multiset.cons_erase hαmem]
+        simp [mul_comm]
+      _ = f * (X - C α) := by
+        simp [f, mul_assoc]
+  have hreflect :
+      schurReflectedAtRootForm p α = f * (1 - C (conj α) * X) := by
+    simp [schurReflectedAtRootForm, f, mul_assoc]
+  calc
+    p.derivative.mahlerMeasure = (f * (X - C α)).derivative.mahlerMeasure := by
+      rw [hp_factor]
+    _ ≤ (f * (1 - C (conj α) * X)).derivative.mahlerMeasure :=
+      mahlerMeasure_derivative_le_of_schurRootPath_monotoneOn f hα hmono
+    _ = (schurReflectedAtRootForm p α).derivative.mahlerMeasure := by
+      rw [hreflect]
 
 @[simp]
 theorem robinsonFactor_of_norm_le {α : ℂ} (hα : ‖α‖ ≤ 1) :
@@ -523,6 +569,43 @@ theorem prod_max_one_norm_roots_derivative_le_of_sum_log_le
     obtain ⟨α, _hα, rfl⟩ := hx
     exact lt_of_lt_of_le zero_lt_one (le_max_left (1 : ℝ) ‖α‖)
   · simpa [Multiset.map_map, Function.comp_def] using hlog
+
+theorem prod_max_one_norm_roots_derivative_le_of_mahlerMeasure_derivative_le
+    (p : ℂ[X])
+    (hderiv : p.derivative.mahlerMeasure ≤ p.natDegree * p.mahlerMeasure) :
+    (p.derivative.roots.map fun β => max (1 : ℝ) ‖β‖).prod ≤
+      (p.roots.map fun α => max (1 : ℝ) ‖α‖).prod := by
+  by_cases hnatDeg : p.natDegree = 0
+  · rw [derivative_of_natDegree_zero hnatDeg, roots_zero]
+    exact one_le_prod_max_one_norm_roots p
+  have hnatpos : 0 < p.natDegree := Nat.pos_of_ne_zero hnatDeg
+  have hp_ne : p ≠ 0 := by
+    intro hp
+    exact hnatDeg (by simp [hp])
+  have hsub : p.natDegree - 1 + 1 = p.natDegree :=
+    Nat.sub_add_cancel hnatpos
+  have hdeg_deriv : p.derivative.natDegree = p.natDegree - 1 :=
+    natDegree_eq_of_degree_eq_some (degree_derivative_eq p hnatpos)
+  have hcast : ((p.natDegree - 1 : ℕ) : ℂ) + 1 = (p.natDegree : ℂ) := by
+    rw [Nat.cast_sub hnatpos, Nat.cast_one]
+    ring
+  have hlead_deriv : p.derivative.leadingCoeff =
+      p.leadingCoeff * (p.natDegree : ℂ) := by
+    unfold leadingCoeff
+    rw [hdeg_deriv, coeff_derivative, hsub, hcast]
+  rw [mahlerMeasure_eq_leadingCoeff_mul_prod_roots,
+    mahlerMeasure_eq_leadingCoeff_mul_prod_roots] at hderiv
+  rw [hlead_deriv, norm_mul, Complex.norm_natCast] at hderiv
+  have hscale_pos : 0 < (p.natDegree : ℝ) * ‖p.leadingCoeff‖ := by
+    exact mul_pos (Nat.cast_pos.mpr hnatpos)
+      (norm_pos_iff.mpr (leadingCoeff_ne_zero.mpr hp_ne))
+  have hscaled :
+      ((p.natDegree : ℝ) * ‖p.leadingCoeff‖) *
+          (p.derivative.roots.map fun β => max (1 : ℝ) ‖β‖).prod ≤
+        ((p.natDegree : ℝ) * ‖p.leadingCoeff‖) *
+          (p.roots.map fun α => max (1 : ℝ) ‖α‖).prod := by
+    convert hderiv using 1 <;> ring
+  rwa [mul_le_mul_iff_right₀ hscale_pos] at hscaled
 
 theorem mahlerMeasure_derivative_le_derivative_of_boundary_norm_eq_of_roots_le_one_of_derivative_le
     {p q : ℂ[X]}

@@ -508,6 +508,51 @@ def coeff (p : GF2Poly) (n : Nat) : Bool :=
     (ofWords words).coeff n = coeffWords words n := by
   simp [ofWords, coeff, coeffWords_normalizeWords]
 
+/-- Coefficients of a single-word polynomial are the corresponding machine-word bits. -/
+theorem coeff_ofUInt64_eq_testBit (w : UInt64) {i : Nat} (hi : i < 64) :
+    (ofUInt64 w).coeff i = w.toNat.testBit i := by
+  unfold ofUInt64
+  rw [coeff_ofWords]
+  have hiword : i / 64 = 0 := Nat.div_eq_of_lt hi
+  simp [coeffWords, hiword, UInt64.bne_zero_eq_toNat_bne_zero,
+    UInt64.toNat_shiftRight, UInt64.toNat_and, Nat.mod_eq_of_lt hi,
+    bit_eq_one_eq_testBit]
+
+/-- Coefficients above the low machine word vanish for a single-word polynomial. -/
+theorem coeff_ofUInt64_eq_false_of_ge_64 (w : UInt64) {i : Nat} (hi : 64 ≤ i) :
+    (ofUInt64 w).coeff i = false := by
+  unfold ofUInt64
+  rw [coeff_ofWords]
+  have hiword_pos : 0 < i / 64 := Nat.div_pos (by omega) (by decide : 0 < 64)
+  cases hidx : i / 64 with
+  | zero =>
+      omega
+  | succ _ =>
+      simp [coeffWords, hidx]
+
+/-- The packed single-word constructor preserves the underlying machine word. -/
+theorem ofUInt64_injective : Function.Injective ofUInt64 := by
+  intro a b h
+  apply UInt64.toNat_inj.mp
+  apply Nat.eq_of_testBit_eq
+  intro i
+  by_cases hi : i < 64
+  · have hcoeff := congrArg (fun p : GF2Poly => p.coeff i) h
+    simpa [coeff_ofUInt64_eq_testBit _ hi] using hcoeff
+  · have hge : 64 ≤ i := Nat.le_of_not_gt hi
+    rw [show a.toNat.testBit i = false by
+        apply Nat.testBit_eq_false_of_lt
+        have ha64 : a.toNat < 2 ^ 64 := by
+          simpa [UInt64.size] using a.toNat_lt_size
+        exact Nat.lt_of_lt_of_le ha64
+          (Nat.pow_le_pow_right (by decide : 0 < 2) hge),
+      show b.toNat.testBit i = false by
+        apply Nat.testBit_eq_false_of_lt
+        have hb64 : b.toNat < 2 ^ 64 := by
+          simpa [UInt64.size] using b.toNat_lt_size
+        exact Nat.lt_of_lt_of_le hb64
+          (Nat.pow_le_pow_right (by decide : 0 < 2) hge)]
+
 /-- The degree of a nonzero polynomial, if any. -/
 def degree? (p : GF2Poly) : Option Nat :=
   match p.words.back? with

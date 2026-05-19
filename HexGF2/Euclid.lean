@@ -672,13 +672,6 @@ private theorem canonicalWordLT_eq_self_of_lt {n : Nat} (hn64 : n < 64)
   apply UInt64.toNat_inj.mp
   simp [canonicalWordLT, Nat.mod_eq_of_lt hw]
 
-private theorem bit_eq_one_eq_testBit (x i : Nat) :
-    (x >>> i % 2 == 1) = x.testBit i := by
-  rw [Nat.testBit_eq_decide_div_mod_eq]
-  rw [Nat.shiftRight_eq_div_pow]
-  apply decide_eq_decide.mpr
-  exact Iff.rfl
-
 private theorem nat_testBit_eq_false_of_lt_two_pow {x k i : Nat}
     (hx : x < 2 ^ k) (hki : k ≤ i) :
     x.testBit i = false := by
@@ -688,46 +681,6 @@ private theorem nat_testBit_eq_false_of_lt_two_pow {x k i : Nat}
   have hnot : ¬ i < k := Nat.not_lt_of_ge hki
   simp [hnot] at hbit
   exact hbit
-
-private theorem coeff_ofUInt64_eq_testBit (w : UInt64) {i : Nat} (hi : i < 64) :
-    (ofUInt64 w).coeff i = w.toNat.testBit i := by
-  unfold ofUInt64
-  rw [coeff_ofWords]
-  have hiword : i / 64 = 0 := Nat.div_eq_of_lt hi
-  simp [coeffWords, hiword, UInt64.bne_zero_eq_toNat_bne_zero,
-    UInt64.toNat_shiftRight, UInt64.toNat_and, Nat.mod_eq_of_lt hi,
-    bit_eq_one_eq_testBit]
-
-private theorem coeff_ofUInt64_eq_false_of_ge_64 (w : UInt64) {i : Nat} (hi : 64 ≤ i) :
-    (ofUInt64 w).coeff i = false := by
-  unfold ofUInt64
-  rw [coeff_ofWords]
-  have hiword_pos : 0 < i / 64 := Nat.div_pos (by omega) (by decide : 0 < 64)
-  cases hidx : i / 64 with
-  | zero =>
-      omega
-  | succ k =>
-      simp [coeffWords, hidx]
-
-private theorem ofUInt64_injective : Function.Injective ofUInt64 := by
-  intro a b h
-  apply UInt64.toNat_inj.mp
-  apply Nat.eq_of_testBit_eq
-  intro i
-  by_cases hi : i < 64
-  · have hcoeff := congrArg (fun p : GF2Poly => p.coeff i) h
-    simpa [coeff_ofUInt64_eq_testBit _ hi] using hcoeff
-  · have hge : 64 ≤ i := Nat.le_of_not_gt hi
-    rw [show a.toNat.testBit i = false by
-        have ha64 : a.toNat < 2 ^ 64 := by
-          simpa [UInt64.size] using a.toNat_lt_size
-        exact nat_testBit_eq_false_of_lt_two_pow
-          (k := 64) ha64 hge,
-      show b.toNat.testBit i = false by
-        have hb64 : b.toNat < 2 ^ 64 := by
-          simpa [UInt64.size] using b.toNat_lt_size
-        exact nat_testBit_eq_false_of_lt_two_pow
-          (k := 64) hb64 hge]
 
 private theorem coeff_ofUInt64_and_lowerMask (w : UInt64) {n i : Nat} (hn64 : n < 64) :
     (ofUInt64 (w &&& lowerMask n)).coeff i =

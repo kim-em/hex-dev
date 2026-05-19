@@ -711,6 +711,106 @@ theorem canonicalSupportIndicators_nondegenerate
   exact expectedIndicatorArrayOfSupports_not_single_all_ones
     trueSupports hclasses_not_single
 
+/-- The selected lifted factors attached to an explicit support-class member
+list, using the canonical BHKS selector array. -/
+def selectedFactorsOfMembers
+    (liftedFactors : Array Hex.ZPoly) (members : List Nat) : Array Hex.ZPoly :=
+  Hex.bhksIndicatorSelectedFactorsArray liftedFactors
+    (classIndicatorArray liftedFactors.size members)
+
+/-- A class indicator has one entry for each lifted factor. -/
+theorem classIndicatorArray_size (r : Nat) (members : List Nat) :
+    (classIndicatorArray r members).size = r := by
+  simp [classIndicatorArray]
+
+/-- Class indicators are always `0/1` rows. -/
+theorem classIndicatorArray_bits (r : Nat) (members : List Nat) :
+    ∀ i, i < (classIndicatorArray r members).size →
+      (classIndicatorArray r members).getD i 0 = 0 ∨
+        (classIndicatorArray r members).getD i 0 = 1 := by
+  intro i hi
+  have hi_r : i < r := by
+    simpa [classIndicatorArray] using hi
+  by_cases hmem : i ∈ members
+  · right
+    simp [classIndicatorArray, hi_r, hmem]
+  · left
+    simp [classIndicatorArray, hi_r, hmem]
+
+/-- Members of a class are selected by its canonical indicator row. -/
+theorem classIndicatorArray_getD_eq_one_of_mem
+    {r : Nat} {members : List Nat} {j : Nat}
+    (hj : j < r) (hmem : j ∈ members) :
+    (classIndicatorArray r members).getD j 0 = 1 := by
+  simp [classIndicatorArray, hj, hmem]
+
+/--
+The BHKS selected-factor operation succeeds on a nonempty class indicator whose
+members all lie inside the lifted-factor array.
+-/
+theorem bhksIndicatorSelectedFactors_classIndicatorArray
+    (liftedFactors : Array Hex.ZPoly) (members : List Nat)
+    (hnonempty : ∃ j, j ∈ members)
+    (hbounds : ∀ j, j ∈ members → j < liftedFactors.size) :
+    Hex.bhksIndicatorSelectedFactors liftedFactors
+        (classIndicatorArray liftedFactors.size members) =
+      some (selectedFactorsOfMembers liftedFactors members) := by
+  unfold selectedFactorsOfMembers
+  apply Hex.bhksIndicatorSelectedFactors_eq_some_selectedArray_of_getD
+  · exact classIndicatorArray_size liftedFactors.size members
+  · exact classIndicatorArray_bits liftedFactors.size members
+  · rcases hnonempty with ⟨j, hj_mem⟩
+    exact ⟨j, by simpa [classIndicatorArray_size] using hbounds j hj_mem,
+      classIndicatorArray_getD_eq_one_of_mem (hbounds j hj_mem) hj_mem⟩
+
+/-- Canonical selected-factor arrays corresponding to
+`expectedIndicatorArrayOfSupports`. -/
+noncomputable def selectedFactorArraysOfSupports
+    (liftedFactors : Array Hex.ZPoly)
+    {r : Nat} (trueSupports : Set (Set (Fin r))) : Array (Array Hex.ZPoly) :=
+  ((supportPartitionByMinColumn trueSupports).map
+    (fun members => selectedFactorsOfMembers liftedFactors members)).toArray
+
+/--
+The canonical support-driven indicators select the corresponding canonical
+lifted-factor arrays, one support class at a time.
+-/
+theorem bhksIndicatorSelectedFactors_expectedIndicatorArrayOfSupports
+    (d : Hex.LiftData)
+    (trueSupports : Set (Set (Fin d.liftedFactors.size)))
+    (hclass_nonempty :
+      ∀ members, members ∈ supportPartitionByMinColumn trueSupports →
+        ∃ j, j ∈ members)
+    (hclass_bounds :
+      ∀ members, members ∈ supportPartitionByMinColumn trueSupports →
+        ∀ j, j ∈ members → j < d.liftedFactors.size) :
+    ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+      Hex.bhksIndicatorSelectedFactors d.liftedFactors
+          ((expectedIndicatorArrayOfSupports trueSupports).getD i #[]) =
+        some ((selectedFactorArraysOfSupports d.liftedFactors trueSupports).getD i #[]) := by
+  intro i hi
+  let classes := supportPartitionByMinColumn trueSupports
+  have hi_classes : i < classes.length := by
+    simpa [expectedIndicatorArrayOfSupports, classes] using hi
+  have hmem : classes.getD i [] ∈ classes := by
+    have hgetD : classes.getD i [] = classes[i] := by
+      simp [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hi_classes]
+    rw [hgetD]
+    exact List.getElem_mem hi_classes
+  have hindicator :
+      (expectedIndicatorArrayOfSupports trueSupports).getD i #[] =
+        classIndicatorArray d.liftedFactors.size (classes.getD i []) := by
+    simp [expectedIndicatorArrayOfSupports, classes, hi_classes]
+  have hselected :
+      (selectedFactorArraysOfSupports d.liftedFactors trueSupports).getD i #[] =
+        selectedFactorsOfMembers d.liftedFactors (classes.getD i []) := by
+    simp [selectedFactorArraysOfSupports, classes, hi_classes]
+  rw [hindicator, hselected]
+  exact bhksIndicatorSelectedFactors_classIndicatorArray
+    d.liftedFactors (classes.getD i [])
+    (hclass_nonempty (classes.getD i []) hmem)
+    (hclass_bounds (classes.getD i []) hmem)
+
 /--
 Build `ForwardRecoveryInputs` when the A2/exact-division obligation is
 available as per-indicator reconstruction witnesses rather than as the folded
