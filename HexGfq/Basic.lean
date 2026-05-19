@@ -368,6 +368,13 @@ polynomial representative reduced through the selected Conway modulus. -/
       (hp := modulus_prime h) (hirr := modulus_irreducible h)
       (x := x) hx)
 
+/-- The zero inverse in `GFq` follows the field wrapper's junk-value
+convention and has zero representative. -/
+@[simp] theorem repr_inv_zero (h : Conway.SupportedEntry p n) :
+    repr ((0 : GFq p n h)⁻¹) = GFqRing.reduceMod (modulus h) 0 := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime h.prime
+  simp [repr]
+
 /-- Two `GFq.ofPoly` constructors produce the same field element exactly when
 their inputs have the same reduced representative modulo the selected Conway
 polynomial. -/
