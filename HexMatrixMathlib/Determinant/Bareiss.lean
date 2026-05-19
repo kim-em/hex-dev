@@ -25,7 +25,10 @@ universe u
 
 variable {n : Nat}
 
-private theorem borderedMinor_corner_eq_leadingPrefix {R : Type u}
+/-- The `k`-bordered minor of `M` at the corner row/column `⟨k, hk⟩` is exactly
+the `(k + 1)`-leading prefix of `M`. This identifies the trailing-corner entry
+under the no-pivot Bareiss invariant with a leading-prefix determinant. -/
+theorem borderedMinor_corner_eq_leadingPrefix {R : Type u}
     [Lean.Grind.Ring R]
     (M : Hex.Matrix R n n) (k : Nat) (hk : k < n) :
     Hex.Matrix.borderedMinor M k hk ⟨k, hk⟩ ⟨k, hk⟩ =
@@ -824,6 +827,36 @@ theorem bareissNoPivotData_singularStep_eq_none
   show (Hex.Matrix.noPivotLoop n (Hex.Matrix.noPivotInitialState M)).singularStep
       = none
   exact noPivotLoop_singularStep_eq_none M h
+
+/-- Outcome-driven companion of `noPivotLoop_invariant`: if the no-pivot
+Bareiss loop run from a valid invariant state does NOT record a singular step
+during its `fuel` iterations, the invariant continues to hold afterward. The
+non-singular outcome guarantees every visited pivot was nonzero, which is the
+hypothesis the inductive step needs.
+
+This is the no-pivot analog of `pivotLoop_invariant_of_singularStep_eq_none`. -/
+theorem noPivotLoop_invariant_of_singularStep_eq_none
+    (source : Hex.Matrix Int n n)
+    (fuel : Nat) (state : Hex.Matrix.BareissState n)
+    (hinv : BareissNoPivotInvariant source state)
+    (hregular : (Hex.Matrix.noPivotLoop fuel state).singularStep = none) :
+    BareissNoPivotInvariant source (Hex.Matrix.noPivotLoop fuel state) := by
+  induction fuel generalizing state with
+  | zero =>
+      simpa [Hex.Matrix.noPivotLoop] using hinv
+  | succ fuel ih =>
+      by_cases hDone : state.step + 1 < n
+      · by_cases hp0 :
+            state.matrix[(⟨state.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)][
+              (⟨state.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)] = 0
+        · rw [Hex.Matrix.noPivotLoop_singular_branch fuel state hDone hp0] at hregular
+          simp at hregular
+        · rw [Hex.Matrix.noPivotLoop_regular_branch fuel state hDone hp0]
+          apply ih
+          · exact bareissNoPivotInvariant_step source state hinv hDone hp0
+          · simpa [Hex.Matrix.noPivotLoop_regular_branch fuel state hDone hp0]
+              using hregular
+      · simpa [Hex.Matrix.noPivotLoop_done fuel state hDone] using hinv
 
 /-- The no-pivot Bareiss loop preserves the bound `state.step + 1 ≤ n`. -/
 private theorem noPivotLoop_step_succ_le

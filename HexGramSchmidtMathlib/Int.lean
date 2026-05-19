@@ -3218,6 +3218,287 @@ theorem independent_one {n : Nat} : independent (1 : Matrix Int n n) := by
     decide)
 
 
+/-! ### Singular-prefix zero propagation for the Gram-Bareiss surface
+
+When the no-pivot Bareiss loop on a Gram matrix records a singular step at
+index `s`, the `(s+1)`-leading Gram prefix has zero determinant. By the
+multiplicative succession `gramSchmidtNormProduct_succ`, the same vanishing
+propagates to every larger prefix. This is the singular branch of the
+`gramDetVecEntry_eq_leadingPrefix_bareiss` placeholder. -/
+
+/-- Substitution helper for the diagonal `(i, i)` matrix entry under a Fin
+equality. Folded out of `subst`/`rfl` so callers can rewrite the index without
+dragging the dependent proof component through the motive. -/
+private theorem matrix_diag_at_fin_eq {n : Nat} (M : Matrix Int n n)
+    {i j : Fin n} (h : i = j) :
+    M[i][i] = M[j][j] := by
+  subst h; rfl
+
+/-- If the `s`-fueled no-pivot Bareiss prefix already recorded a singular step,
+that step persists into any longer pass. The longer pass's recorded singular
+index therefore matches the earlier one. -/
+private theorem noPivotLoop_extends_singularStep
+    {n : Nat} (state : Matrix.BareissState n) (a b : Nat) (k : Fin n)
+    (h_sing_a : (Matrix.noPivotLoop a state).singularStep = some k.val)
+    (h_step_a : (Matrix.noPivotLoop a state).step = k.val)
+    (h_zero_a :
+      (Matrix.noPivotLoop a state).matrix[k][k] = 0)
+    (hk : k.val + 1 < n) :
+    Matrix.noPivotLoop (a + b) state = Matrix.noPivotLoop a state := by
+  rw [Matrix.noPivotLoop_add a b state]
+  set S := Matrix.noPivotLoop a state with hS_def
+  have hDone : S.step + 1 < n := by rw [h_step_a]; exact hk
+  have hp_zero :
+      S.matrix[(⟨S.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)][
+        (⟨S.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)] = 0 := by
+    have h_fin :
+        (⟨S.step, Nat.lt_of_succ_lt hDone⟩ : Fin n) = k :=
+      Fin.ext h_step_a
+    exact (matrix_diag_at_fin_eq S.matrix h_fin).trans h_zero_a
+  have h_sing_step : S.singularStep = some S.step := by
+    rw [h_sing_a, h_step_a]
+  exact Matrix.noPivotLoop_id_at_singular_fixedpoint (n := n) b S hDone hp_zero h_sing_step
+
+/-- From a partial no-pivot Bareiss pass on `M` recording a singular step at
+index `s`, derive that the `s`-fueled prefix is non-singular, has reached
+`step = s`, and has zero diagonal at `(s, s)`. This is the structural data
+needed to invoke `BareissNoPivotInvariant` at the moment of singularity.
+
+The matrix-entry equality is transferred from the final state to the prefix
+state via `Matrix.noPivotLoop_diag_of_le_step`: subsequent no-pivot iterations
+do not modify the diagonal at indices `≤ state.step`. -/
+private theorem noPivotLoop_prefix_state_at_singular
+    {n : Nat} (M : Matrix Int n n) (fuel s : Nat) (hs : s + 1 ≤ n)
+    (h_sing : (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState M)).singularStep = some s) :
+    (Matrix.noPivotLoop s (Matrix.noPivotInitialState M)).singularStep = none ∧
+      (Matrix.noPivotLoop s (Matrix.noPivotInitialState M)).step = s ∧
+      (Matrix.noPivotLoop s
+          (Matrix.noPivotInitialState M)).matrix[
+            (⟨s, Nat.lt_of_succ_le hs⟩ : Fin n)][
+            (⟨s, Nat.lt_of_succ_le hs⟩ : Fin n)] = 0 := by
+  set init := Matrix.noPivotInitialState M with hinit_def
+  have h_init_sing : init.singularStep = none := rfl
+  have h_init_step : init.step = 0 := rfl
+  -- First derive `s < fuel` from the singular bound.
+  have hsfuel : s < fuel := by
+    have := noPivotLoop_singularStep_lt (n := n) fuel init h_init_sing s h_sing
+    rw [h_init_step] at this
+    omega
+  -- Case analysis on whether the s-fueled prefix is already singular.
+  rcases noPivotLoop_singular_inv (n := n) s init h_init_sing
+    with h_none | ⟨k', h_sing_s, h_step_s, h_zero_s, h_klt⟩
+  · -- s-fueled prefix is non-singular: derive .step = s and .matrix[s][s] = 0.
+    have hS_step : (Matrix.noPivotLoop s init).step = s := by
+      have h_room : init.step + s + 1 ≤ n := by rw [h_init_step]; omega
+      have h_step := Matrix.noPivotLoop_step_eq_add_of_singularStep_none
+        (n := n) s init h_init_sing h_room h_none
+      rw [h_step, h_init_step]; omega
+    refine ⟨h_none, hS_step, ?_⟩
+    -- Apply singular_inv on the full pass to extract the zero diagonal.
+    rcases noPivotLoop_singular_inv (n := n) fuel init h_init_sing
+      with h_full_none | ⟨k, h_sing_full, h_step_full, h_zero_full, h_klt_full⟩
+    · rw [h_full_none] at h_sing; nomatch h_sing
+    · -- k.val = s from h_sing.
+      have hk_eq : k.val = s := by
+        rw [h_sing_full] at h_sing
+        exact Option.some.inj h_sing
+      -- Transfer the zero diagonal value from the full state back to the prefix state.
+      have hsn : s < n := Nat.lt_of_succ_le hs
+      have h_full_eq : Matrix.noPivotLoop (s + (fuel - s)) init =
+          Matrix.noPivotLoop fuel init := by
+        congr 1; omega
+      have h_split : Matrix.noPivotLoop fuel init =
+          Matrix.noPivotLoop (fuel - s) (Matrix.noPivotLoop s init) := by
+        rw [← h_full_eq, Matrix.noPivotLoop_add s (fuel - s) init]
+      have h_diag_preserved :
+          (Matrix.noPivotLoop (fuel - s) (Matrix.noPivotLoop s init)).matrix[
+              (⟨s, hsn⟩ : Fin n)][(⟨s, hsn⟩ : Fin n)] =
+            (Matrix.noPivotLoop s init).matrix[
+              (⟨s, hsn⟩ : Fin n)][(⟨s, hsn⟩ : Fin n)] :=
+        Matrix.noPivotLoop_diag_of_le_step (fuel - s)
+          (Matrix.noPivotLoop s init) (⟨s, hsn⟩ : Fin n)
+          (by rw [hS_step])
+      have h_full_diag_eq :
+          (Matrix.noPivotLoop fuel init).matrix[(⟨s, hsn⟩ : Fin n)][(⟨s, hsn⟩ : Fin n)] =
+            (Matrix.noPivotLoop s init).matrix[(⟨s, hsn⟩ : Fin n)][(⟨s, hsn⟩ : Fin n)] := by
+        rw [h_split]; exact h_diag_preserved
+      -- The full state's value at ⟨s, hsn⟩ equals 0 via h_zero_full at k = ⟨s, _⟩.
+      have h_fin : k = (⟨s, hsn⟩ : Fin n) := Fin.ext hk_eq
+      have h_full_zero :
+          (Matrix.noPivotLoop fuel init).matrix[(⟨s, hsn⟩ : Fin n)][(⟨s, hsn⟩ : Fin n)] = 0 :=
+        (matrix_diag_at_fin_eq (Matrix.noPivotLoop fuel init).matrix h_fin).symm.trans h_zero_full
+      exact h_full_diag_eq.symm.trans h_full_zero
+  · -- s-fueled prefix is already singular at some k'.val < s. Contradicts h_sing.
+    have h_klt' : k'.val < s := by
+      have := noPivotLoop_singularStep_lt (n := n) s init h_init_sing k'.val h_sing_s
+      rw [h_init_step] at this
+      omega
+    -- The singular state persists.
+    have h_persist :
+        Matrix.noPivotLoop (s + (fuel - s)) init =
+          Matrix.noPivotLoop s init :=
+      noPivotLoop_extends_singularStep init s (fuel - s) k'
+        h_sing_s h_step_s h_zero_s h_klt
+    have h_fuel_eq : s + (fuel - s) = fuel := by omega
+    rw [h_fuel_eq] at h_persist
+    rw [h_persist] at h_sing
+    rw [h_sing_s] at h_sing
+    have hk'_eq : k'.val = s := Option.some.inj h_sing
+    omega
+
+/-- Specialization of `BareissNoPivotInvariant.trailing_eq` to the diagonal
+corner: when the no-pivot Bareiss state has `step = k` for a free variable `k`,
+its `(k, k)` matrix entry equals the determinant of the `(k + 1)`-leading
+prefix of the source matrix. Stated with `k` as a free variable so that
+`subst` can replace the let-bound projection with a fresh name. -/
+private theorem bareissNoPivotInvariant_diag_eq_leadingPrefix_det
+    {n : Nat} (M : Matrix Int n n) (state : Matrix.BareissState n) (k : Nat)
+    (hinv : HexMatrixMathlib.BareissNoPivotInvariant M state)
+    (hsk : k = state.step) (hk : k < n) :
+    state.matrix[(⟨k, hk⟩ : Fin n)][(⟨k, hk⟩ : Fin n)] =
+      Matrix.det (Matrix.leadingPrefix M (k + 1) (Nat.succ_le_of_lt hk)) := by
+  subst hsk
+  have h_trail :
+      state.matrix[(⟨state.step, hk⟩ : Fin n)][(⟨state.step, hk⟩ : Fin n)] =
+        Matrix.det (Matrix.borderedMinor M state.step hk
+          (⟨state.step, hk⟩ : Fin n) (⟨state.step, hk⟩ : Fin n)) :=
+    hinv.trailing_eq hk (⟨state.step, hk⟩ : Fin n) (⟨state.step, hk⟩ : Fin n)
+      (Nat.le_refl _) (Nat.le_refl _)
+  rw [HexMatrixMathlib.borderedMinor_corner_eq_leadingPrefix M state.step hk] at h_trail
+  exact h_trail
+
+/-- Bridge to Mathlib leading-prefix determinant: from a partial no-pivot
+Bareiss pass that records a singular step at index `s`, the `(s+1)`-leading
+prefix of the source matrix has zero determinant (Hex's `Matrix.det`). -/
+private theorem leadingPrefix_det_eq_zero_of_noPivotLoop_singularStep
+    {n : Nat} (M : Matrix Int n n) (fuel s : Nat) (hs : s + 1 ≤ n)
+    (h_sing : (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState M)).singularStep = some s) :
+    Matrix.det (Matrix.leadingPrefix M (s + 1) hs) = 0 := by
+  obtain ⟨h_none, h_step, h_zero⟩ :=
+    noPivotLoop_prefix_state_at_singular M fuel s hs h_sing
+  -- Apply the noPivotLoop_invariant variant: S satisfies BareissNoPivotInvariant.
+  have hinv_init : HexMatrixMathlib.BareissNoPivotInvariant M
+      (Matrix.noPivotInitialState M) :=
+    HexMatrixMathlib.bareissNoPivotInvariant_initial M
+  have hinv_S : HexMatrixMathlib.BareissNoPivotInvariant M
+      (Matrix.noPivotLoop s (Matrix.noPivotInitialState M)) :=
+    HexMatrixMathlib.noPivotLoop_invariant_of_singularStep_eq_none M s
+      (Matrix.noPivotInitialState M) hinv_init h_none
+  -- Use Nat.lt_of_succ_le hs as the bound throughout to match the helper's output type.
+  -- Specialize the diagonal-corner helper: matrix[⟨s, _⟩][⟨s, _⟩] = det(leadingPrefix M (s+1) _).
+  have h_diag_eq_lp :
+      (Matrix.noPivotLoop s (Matrix.noPivotInitialState M)).matrix[(⟨s, Nat.lt_of_succ_le hs⟩ : Fin n)][(⟨s, Nat.lt_of_succ_le hs⟩ : Fin n)] =
+        Matrix.det (Matrix.leadingPrefix M (s + 1) (Nat.succ_le_of_lt (Nat.lt_of_succ_le hs))) :=
+    bareissNoPivotInvariant_diag_eq_leadingPrefix_det
+      M (Matrix.noPivotLoop s (Matrix.noPivotInitialState M)) s hinv_S
+      h_step.symm (Nat.lt_of_succ_le hs)
+  rw [h_zero] at h_diag_eq_lp
+  -- h_diag_eq_lp : 0 = det(leadingPrefix M (s+1) (Nat.succ_le_of_lt ...)). The proof
+  -- argument is definitionally equal to `hs`, so the goal matches up to proof irrelevance.
+  exact h_diag_eq_lp.symm
+
+/-- Multiplicative zero propagation for `gramSchmidtNormProduct`: if the
+norm-product at some index `k₁` vanishes, every larger index's product also
+vanishes. Proof is by induction on the gap via `gramSchmidtNormProduct_succ`. -/
+private theorem gramSchmidtNormProduct_eq_zero_of_le {n m : Nat}
+    (b : Matrix Int n m) (k₁ k₂ : Nat) (hk₂ : k₂ ≤ n) (hkk : k₁ ≤ k₂)
+    (h₁ : gramSchmidtNormProduct b k₁ (Nat.le_trans hkk hk₂) = 0) :
+    gramSchmidtNormProduct b k₂ hk₂ = 0 := by
+  induction k₂ with
+  | zero =>
+      have : k₁ = 0 := Nat.le_zero.mp hkk
+      subst this
+      exact h₁
+  | succ k₂' ih =>
+      by_cases hcase : k₁ = k₂' + 1
+      · subst hcase; exact h₁
+      · have hkk' : k₁ ≤ k₂' := by omega
+        have hk₂' : k₂' ≤ n := Nat.le_of_succ_le hk₂
+        have h_prev : gramSchmidtNormProduct b k₂' hk₂' = 0 := by
+          have h₁' : gramSchmidtNormProduct b k₁ (Nat.le_trans hkk' hk₂') = 0 := h₁
+          exact ih hk₂' hkk' h₁'
+        rw [gramSchmidtNormProduct_succ b k₂' hk₂, h_prev, Rat.zero_mul]
+
+/-- Singular-branch zero propagation: if the partial-pass no-pivot Bareiss loop
+on the full Gram matrix records a singular step at index `s` strictly before
+slot `r + 1`, the public row-pivoted Bareiss determinant of the `(r + 1)`
+leading Gram prefix is zero.
+
+This is the bridge lemma needed by the singular branch of the
+`gramDetVecEntry_eq_leadingPrefix_bareiss` placeholder: both sides vanish in
+this case, and this lemma supplies the right-hand side. The proof composes the
+new Mathlib bridge `HexMatrixMathlib.noPivotLoop_invariant_of_singularStep_eq_none`
+(to identify `det(leadingPrefix _ (s+1)) = 0` at the moment of singularity) with
+the unconditional `gramDet_eq_prod_normSq_uncond` and the multiplicative
+succession `gramSchmidtNormProduct_succ` to propagate zero from `s + 1` to
+`r + 1`. -/
+theorem leadingPrefix_gram_bareiss_eq_zero_of_singularStep_lt
+    (b : Matrix Int n m) (r : Nat) (hr : r < n) (s : Nat)
+    (h_sing : (Matrix.noPivotLoop r
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = some s) :
+    Matrix.bareiss (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+        (Nat.succ_le_of_lt hr)) = 0 := by
+  -- Step A: derive `s < r` from the partial-pass singular bound.
+  have hsr : s < r := by
+    have h := noPivotLoop_singularStep_lt (n := n) r
+      (Matrix.noPivotInitialState (Matrix.gramMatrix b)) rfl s h_sing
+    change s < 0 + r at h
+    omega
+  have hs1 : s + 1 ≤ n := Nat.le_trans (Nat.succ_le_of_lt hsr) (Nat.le_of_lt hr)
+  -- Step B: derive det(leadingPrefix (gramMatrix b) (s+1)) = 0 via the new bridge.
+  have h_det_s1_zero :
+      Matrix.det (Matrix.leadingPrefix (Matrix.gramMatrix b) (s + 1) hs1) = 0 :=
+    leadingPrefix_det_eq_zero_of_noPivotLoop_singularStep
+      (Matrix.gramMatrix b) r s hs1 h_sing
+  -- Step C: convert to gramSchmidtNormProduct b (s+1) = 0.
+  have h_lead_eq_s :
+      GramSchmidt.leadingGramMatrixInt b (s + 1) hs1 =
+        Matrix.leadingPrefix (Matrix.gramMatrix b) (s + 1) hs1 :=
+    GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram b (s + 1) hs1
+  have h_det_lead_s1_zero :
+      Matrix.det (GramSchmidt.leadingGramMatrixInt b (s + 1) hs1) = 0 := by
+    rw [h_lead_eq_s]; exact h_det_s1_zero
+  have h_gd_s1_zero : gramDet b (s + 1) hs1 = 0 := by
+    have hnat := leadingGramMatrixInt_det_eq_gramDet_int b (s + 1) hs1
+    rw [h_det_lead_s1_zero] at hnat
+    have hcast : Int.ofNat (gramDet b (s + 1) hs1) = Int.ofNat 0 := hnat.symm
+    exact Int.ofNat.inj hcast
+  have h_gd_s1_rat_zero : (gramDet b (s + 1) hs1 : Rat) = 0 := by
+    rw [h_gd_s1_zero]; norm_cast
+  have h_gsnp_s1_zero : gramSchmidtNormProduct b (s + 1) hs1 = 0 := by
+    have := gramDet_eq_prod_normSq_uncond b (s + 1) hs1
+    rw [this] at h_gd_s1_rat_zero
+    exact h_gd_s1_rat_zero
+  -- Step D: propagate to gramSchmidtNormProduct b (r+1) = 0.
+  have hr1 : r + 1 ≤ n := Nat.succ_le_of_lt hr
+  have hs1r1 : s + 1 ≤ r + 1 := Nat.succ_le_succ (Nat.le_of_lt hsr)
+  have h_gsnp_r1_zero : gramSchmidtNormProduct b (r + 1) hr1 = 0 :=
+    gramSchmidtNormProduct_eq_zero_of_le b (s + 1) (r + 1) hr1 hs1r1 h_gsnp_s1_zero
+  -- Step E: back to gramDet b (r+1) = 0.
+  have h_gd_r1_rat_zero : (gramDet b (r + 1) hr1 : Rat) = 0 := by
+    rw [gramDet_eq_prod_normSq_uncond b (r + 1) hr1]; exact h_gsnp_r1_zero
+  have h_gd_r1_zero : gramDet b (r + 1) hr1 = 0 := by
+    have : ((gramDet b (r + 1) hr1 : Nat) : Rat) = (0 : Rat) := h_gd_r1_rat_zero
+    exact_mod_cast this
+  -- Step F: convert to det(leadingGramMatrixInt b (r+1)) = 0, then to bareiss.
+  have h_det_lead_r1_zero :
+      Matrix.det (GramSchmidt.leadingGramMatrixInt b (r + 1) hr1) = 0 := by
+    have hnat := leadingGramMatrixInt_det_eq_gramDet_int b (r + 1) hr1
+    rw [h_gd_r1_zero] at hnat
+    simpa using hnat
+  have h_det_prefix_r1_zero :
+      Matrix.det (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1) hr1) = 0 := by
+    have h_lead_eq_r :
+        GramSchmidt.leadingGramMatrixInt b (r + 1) hr1 =
+          Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1) hr1 :=
+      GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram b (r + 1) hr1
+    rw [← h_lead_eq_r]; exact h_det_lead_r1_zero
+  rw [HexMatrixMathlib.bareiss_eq_det]
+  exact h_det_prefix_r1_zero
+
+
 end Int
 end GramSchmidt
 end Hex
