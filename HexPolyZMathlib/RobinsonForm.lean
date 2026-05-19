@@ -495,6 +495,35 @@ theorem mahlerMeasure_derivative_eq_natDegree_mul_of_roots_le_one
     exact mahlerMeasure_eq_norm_leadingCoeff_of_roots_le_one hroots
   rw [hMM_deriv, hlead_deriv, norm_mul, Complex.norm_natCast, ← hMM_p, mul_comm]
 
+theorem Multiset.prod_le_of_sum_log_le {s t : Multiset ℝ}
+    (hs : ∀ x ∈ s, 0 < x) (ht : ∀ x ∈ t, 0 < x)
+    (hlog : (s.map fun x => Real.log x).sum ≤ (t.map fun x => Real.log x).sum) :
+    s.prod ≤ t.prod := by
+  have hsprod : 0 < s.prod := Multiset.prod_pos hs
+  have htprod : 0 < t.prod := Multiset.prod_pos ht
+  rw [← Real.log_le_log_iff hsprod htprod]
+  rw [Real.log_multiset_prod (fun x hx => (hs x hx).ne'),
+    Real.log_multiset_prod (fun x hx => (ht x hx).ne')]
+  exact hlog
+
+theorem prod_max_one_norm_roots_derivative_le_of_sum_log_le
+    (p : ℂ[X])
+    (hlog :
+      (p.derivative.roots.map fun β => Real.log (max (1 : ℝ) ‖β‖)).sum ≤
+        (p.roots.map fun α => Real.log (max (1 : ℝ) ‖α‖)).sum) :
+    (p.derivative.roots.map fun β => max (1 : ℝ) ‖β‖).prod ≤
+      (p.roots.map fun α => max (1 : ℝ) ‖α‖).prod := by
+  apply Multiset.prod_le_of_sum_log_le
+  · intro x hx
+    rw [Multiset.mem_map] at hx
+    obtain ⟨β, _hβ, rfl⟩ := hx
+    exact lt_of_lt_of_le zero_lt_one (le_max_left (1 : ℝ) ‖β‖)
+  · intro x hx
+    rw [Multiset.mem_map] at hx
+    obtain ⟨α, _hα, rfl⟩ := hx
+    exact lt_of_lt_of_le zero_lt_one (le_max_left (1 : ℝ) ‖α‖)
+  · simpa [Multiset.map_map, Function.comp_def] using hlog
+
 theorem mahlerMeasure_derivative_le_derivative_of_boundary_norm_eq_of_roots_le_one_of_derivative_le
     {p q : ℂ[X]}
     (hpderiv : p.derivative.mahlerMeasure ≤ p.natDegree * p.mahlerMeasure)
