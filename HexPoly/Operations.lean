@@ -145,6 +145,18 @@ def neg [Sub R] (p : DensePoly R) : DensePoly R :=
 instance [Sub R] : Neg (DensePoly R) where
   neg := neg
 
+/-- Compatibility law for caller-facing `Zero`/`Add` instances used by semiring wrappers. -/
+class AddZeroLaw (S : Type u) [Zero S] [Add S] : Prop where
+  add_zero_zero : (Zero.zero : S) + (Zero.zero : S) = (Zero.zero : S)
+
+/-- Compatibility law for caller-facing `Zero`/`Sub` instances used by ring wrappers. -/
+class SubZeroLaw (S : Type u) [Zero S] [Sub S] : Prop where
+  sub_zero_zero : (Zero.zero : S) - (Zero.zero : S) = (Zero.zero : S)
+
+/-- Compatibility law for caller-facing `Zero`/`Sub`/`Neg` instances used by negation wrappers. -/
+class ZeroSubNegLaw (S : Type u) [Zero S] [Sub S] [Neg S] : Prop where
+  zero_sub_eq_neg : ∀ a : S, (Zero.zero : S) - a = -a
+
 /-- Schoolbook dense polynomial multiplication by direct coefficient convolution. -/
 def mul [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
   if p.isZero || q.isZero then 0 else
@@ -354,10 +366,10 @@ theorem coeff_add [Add R] (p q : DensePoly R) (n : Nat)
 
 /-- Semiring-specialized coefficient law for addition. -/
 @[simp] theorem coeff_add_semiring {S : Type u}
-    [Lean.Grind.Semiring S] [DecidableEq S]
+    [Zero S] [Add S] [Lean.Grind.Semiring S] [DecidableEq S] [AddZeroLaw S]
     (p q : DensePoly S) (n : Nat) :
     (p + q).coeff n = p.coeff n + q.coeff n :=
-  coeff_add p q n (by grind)
+  coeff_add p q n AddZeroLaw.add_zero_zero
 
 /-- Coefficient law for subtraction. The explicit zero law is needed because the generic
 `Sub`/`Zero` interface does not imply `0 - 0 = 0`. -/
@@ -377,10 +389,10 @@ theorem coeff_sub [Sub R] (p q : DensePoly R) (n : Nat)
 
 /-- Ring-specialized coefficient law for subtraction. -/
 @[simp] theorem coeff_sub_ring {S : Type u}
-    [Lean.Grind.Ring S] [DecidableEq S]
+    [Zero S] [Sub S] [Lean.Grind.Ring S] [DecidableEq S] [SubZeroLaw S]
     (p q : DensePoly S) (n : Nat) :
     (p - q).coeff n = p.coeff n - q.coeff n :=
-  coeff_sub p q n (by grind)
+  coeff_sub p q n SubZeroLaw.sub_zero_zero
 
 /-- The zero polynomial has coefficient `0` at every index. -/
 @[simp] theorem coeff_zero (n : Nat) :
@@ -397,12 +409,13 @@ theorem coeff_neg [Sub R] (p : DensePoly R) (n : Nat)
 
 /-- Ring-specialized coefficient law for negation. -/
 @[simp] theorem coeff_neg_ring {S : Type u}
-    [Lean.Grind.Ring S] [DecidableEq S]
+    [Zero S] [Sub S] [Neg S] [Lean.Grind.Ring S] [DecidableEq S] [SubZeroLaw S]
+    [ZeroSubNegLaw S]
     (p : DensePoly S) (n : Nat) :
     (-p).coeff n = -(p.coeff n) := by
-  have h := coeff_neg p n (by grind : (0 : S) - 0 = 0)
+  have h := coeff_neg p n SubZeroLaw.sub_zero_zero
   rw [h]
-  grind
+  exact ZeroSubNegLaw.zero_sub_eq_neg (p.coeff n)
 
 /-- Horner evaluation sends the zero dense polynomial to `0`. -/
 @[simp] theorem eval_zero [Add R] [Mul R] (x : R) :
