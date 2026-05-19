@@ -352,6 +352,13 @@ theorem coeff_add [Add R] (p q : DensePoly R) (n : Nat)
     have hq : q.size ≤ n := Nat.le_trans (Nat.le_max_right p.size q.size) hmax
     simp [hn, coeff_eq_zero_of_size_le p hp, coeff_eq_zero_of_size_le q hq, hzero]
 
+/-- Semiring-specialized coefficient law for addition. -/
+@[simp] theorem coeff_add_semiring {S : Type u}
+    [Lean.Grind.Semiring S] [DecidableEq S]
+    (p q : DensePoly S) (n : Nat) :
+    (p + q).coeff n = p.coeff n + q.coeff n :=
+  coeff_add p q n (by grind)
+
 /-- Coefficient law for subtraction. The explicit zero law is needed because the generic
 `Sub`/`Zero` interface does not imply `0 - 0 = 0`. -/
 theorem coeff_sub [Sub R] (p q : DensePoly R) (n : Nat)
@@ -368,6 +375,13 @@ theorem coeff_sub [Sub R] (p q : DensePoly R) (n : Nat)
     have hq : q.size ≤ n := Nat.le_trans (Nat.le_max_right p.size q.size) hmax
     simp [hn, coeff_eq_zero_of_size_le p hp, coeff_eq_zero_of_size_le q hq, hzero]
 
+/-- Ring-specialized coefficient law for subtraction. -/
+@[simp] theorem coeff_sub_ring {S : Type u}
+    [Lean.Grind.Ring S] [DecidableEq S]
+    (p q : DensePoly S) (n : Nat) :
+    (p - q).coeff n = p.coeff n - q.coeff n :=
+  coeff_sub p q n (by grind)
+
 /-- The zero polynomial has coefficient `0` at every index. -/
 @[simp] theorem coeff_zero (n : Nat) :
     (0 : DensePoly R).coeff n = (0 : R) := by
@@ -380,6 +394,15 @@ theorem coeff_neg [Sub R] (p : DensePoly R) (n : Nat)
     (-p).coeff n = ((0 : R) - p.coeff n) := by
   change (neg p).coeff n = ((0 : R) - p.coeff n)
   simp [neg, coeff_sub, hzero]
+
+/-- Ring-specialized coefficient law for negation. -/
+@[simp] theorem coeff_neg_ring {S : Type u}
+    [Lean.Grind.Ring S] [DecidableEq S]
+    (p : DensePoly S) (n : Nat) :
+    (-p).coeff n = -(p.coeff n) := by
+  have h := coeff_neg p n (by grind : (0 : S) - 0 = 0)
+  rw [h]
+  grind
 
 /-- Horner evaluation sends the zero dense polynomial to `0`. -/
 @[simp] theorem eval_zero [Add R] [Mul R] (x : R) :
