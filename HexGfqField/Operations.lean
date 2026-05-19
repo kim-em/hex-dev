@@ -651,6 +651,27 @@ theorem natCast_eq_natCast_iff_mod_eq
       x.toQuotient ^ n :=
   rfl
 
+@[simp] theorem toQuotient_div
+    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
+    (x y : FiniteField f hf hp hirr) :
+    (x / y : FiniteField f hf hp hirr).toQuotient =
+      x.toQuotient * (inv y).toQuotient :=
+  rfl
+
+@[simp] theorem toQuotient_zpow_ofNat
+    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
+    (x : FiniteField f hf hp hirr) (n : Nat) :
+    (x ^ (Int.ofNat n) : FiniteField f hf hp hirr).toQuotient =
+      x.toQuotient ^ n :=
+  rfl
+
+@[simp] theorem toQuotient_zpow_negSucc
+    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
+    (x : FiniteField f hf hp hirr) (n : Nat) :
+    (x ^ (Int.negSucc n) : FiniteField f hf hp hirr).toQuotient =
+      (inv (pow x (n + 1))).toQuotient :=
+  rfl
+
 @[simp] theorem inv_zero
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p) (hirr : FpPoly.Irreducible f) :
     ((0 : FiniteField f hf hp hirr) : FiniteField f hf hp hirr)⁻¹ = 0 := by
@@ -679,6 +700,7 @@ theorem mul_inv_cancel
       (1 : GFqRing.PolyQuotient f hf) = GFqRing.one f hf := by
     change GFqRing.natCast f hf 1 = GFqRing.one f hf
     rfl
+  set_option linter.unnecessarySimpa false in
   have hmulReduce :
       GFqRing.reduceMod f
           (GFqRing.repr x.toQuotient * GFqRing.reduceMod f (invPoly x.toQuotient)) =
