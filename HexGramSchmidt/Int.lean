@@ -2149,7 +2149,7 @@ private theorem gramDetVecEntry_bareissNoPivot_eq_at_r
 over the full Gram matrix agrees with the same slot for the no-pivot Bareiss
 pass over its `(r + 1)` leading prefix. This is the `bareissNoPivotData`-level
 wrapper assembled from the `r`-iteration loop sync. -/
-private theorem gramDetVecEntry_bareissNoPivot_full_eq_leadingPrefix
+theorem gramDetVecEntry_bareissNoPivot_full_eq_leadingPrefix
     (b : Matrix Int n m) (r : Nat) (hr : r < n) :
     gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
         ⟨r + 1, Nat.succ_lt_succ hr⟩ =
@@ -2184,7 +2184,7 @@ private theorem gramDetVecEntry_bareissNoPivot_full_eq_leadingPrefix
 /-- Signed diagonal projection for a non-singular target prefix: the final
 no-pivot full-Gram diagonal at `r` is the public Bareiss determinant of the
 `(r + 1)` leading prefix. -/
-private theorem bareissNoPivotData_diag_eq_leadingPrefix_bareiss_of_prefix_nonsingular
+theorem bareissNoPivotData_diag_eq_leadingPrefix_bareiss_of_prefix_nonsingular
     (b : Matrix Int n m) (r : Nat) (hr : r < n)
     (h_nonsing :
       (Matrix.noPivotLoop r
