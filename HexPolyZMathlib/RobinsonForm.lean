@@ -524,6 +524,43 @@ theorem prod_max_one_norm_roots_derivative_le_of_sum_log_le
     exact lt_of_lt_of_le zero_lt_one (le_max_left (1 : ℝ) ‖α‖)
   · simpa [Multiset.map_map, Function.comp_def] using hlog
 
+theorem prod_max_one_norm_roots_derivative_le_of_mahlerMeasure_derivative_le
+    (p : ℂ[X])
+    (hderiv : p.derivative.mahlerMeasure ≤ p.natDegree * p.mahlerMeasure) :
+    (p.derivative.roots.map fun β => max (1 : ℝ) ‖β‖).prod ≤
+      (p.roots.map fun α => max (1 : ℝ) ‖α‖).prod := by
+  by_cases hnatDeg : p.natDegree = 0
+  · rw [derivative_of_natDegree_zero hnatDeg, roots_zero]
+    exact one_le_prod_max_one_norm_roots p
+  have hnatpos : 0 < p.natDegree := Nat.pos_of_ne_zero hnatDeg
+  have hp_ne : p ≠ 0 := by
+    intro hp
+    exact hnatDeg (by simp [hp])
+  have hsub : p.natDegree - 1 + 1 = p.natDegree :=
+    Nat.sub_add_cancel hnatpos
+  have hdeg_deriv : p.derivative.natDegree = p.natDegree - 1 :=
+    natDegree_eq_of_degree_eq_some (degree_derivative_eq p hnatpos)
+  have hcast : ((p.natDegree - 1 : ℕ) : ℂ) + 1 = (p.natDegree : ℂ) := by
+    rw [Nat.cast_sub hnatpos, Nat.cast_one]
+    ring
+  have hlead_deriv : p.derivative.leadingCoeff =
+      p.leadingCoeff * (p.natDegree : ℂ) := by
+    unfold leadingCoeff
+    rw [hdeg_deriv, coeff_derivative, hsub, hcast]
+  rw [mahlerMeasure_eq_leadingCoeff_mul_prod_roots,
+    mahlerMeasure_eq_leadingCoeff_mul_prod_roots] at hderiv
+  rw [hlead_deriv, norm_mul, Complex.norm_natCast] at hderiv
+  have hscale_pos : 0 < (p.natDegree : ℝ) * ‖p.leadingCoeff‖ := by
+    exact mul_pos (Nat.cast_pos.mpr hnatpos)
+      (norm_pos_iff.mpr (leadingCoeff_ne_zero.mpr hp_ne))
+  have hscaled :
+      ((p.natDegree : ℝ) * ‖p.leadingCoeff‖) *
+          (p.derivative.roots.map fun β => max (1 : ℝ) ‖β‖).prod ≤
+        ((p.natDegree : ℝ) * ‖p.leadingCoeff‖) *
+          (p.roots.map fun α => max (1 : ℝ) ‖α‖).prod := by
+    convert hderiv using 1 <;> ring
+  rwa [mul_le_mul_iff_right₀ hscale_pos] at hscaled
+
 theorem mahlerMeasure_derivative_le_derivative_of_boundary_norm_eq_of_roots_le_one_of_derivative_le
     {p q : ℂ[X]}
     (hpderiv : p.derivative.mahlerMeasure ≤ p.natDegree * p.mahlerMeasure)
