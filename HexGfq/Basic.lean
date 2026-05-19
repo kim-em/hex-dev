@@ -291,6 +291,13 @@ representatives. -/
     repr (x - y) = GFqRing.reduceMod (modulus h) (repr x - repr y) :=
   rfl
 
+/-- The canonical representative of a natural power in `GFq` lifts the
+quotient-ring power of the underlying quotient representative. -/
+@[simp] theorem repr_pow {h : Conway.SupportedEntry p n}
+    (x : GFq p n h) (k : Nat) :
+    repr (x ^ k) = GFqRing.repr (x.toQuotient ^ k) :=
+  rfl
+
 /-- Two `GFq.ofPoly` constructors produce the same field element exactly when
 their inputs have the same reduced representative modulo the selected Conway
 polynomial. -/
