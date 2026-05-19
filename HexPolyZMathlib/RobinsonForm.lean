@@ -495,6 +495,32 @@ theorem mahlerMeasure_derivative_eq_natDegree_mul_of_roots_le_one
     exact mahlerMeasure_eq_norm_leadingCoeff_of_roots_le_one hroots
   rw [hMM_deriv, hlead_deriv, norm_mul, Complex.norm_natCast, ← hMM_p, mul_comm]
 
+theorem mahlerMeasure_derivative_le_derivative_of_boundary_norm_eq_of_roots_le_one_of_derivative_le
+    {p q : ℂ[X]}
+    (hpderiv : p.derivative.mahlerMeasure ≤ p.natDegree * p.mahlerMeasure)
+    (hboundary : ∀ {z : ℂ}, ‖z‖ = 1 → ‖q.eval z‖ = ‖p.eval z‖)
+    (hqroots : ∀ {β : ℂ}, β ∈ q.roots → ‖β‖ ≤ 1)
+    (hdeg : q.natDegree = p.natDegree) :
+    p.derivative.mahlerMeasure ≤ q.derivative.mahlerMeasure := by
+  by_cases hq : q = 0
+  · have hp_natDegree : p.natDegree = 0 := by
+      simpa [hq] using hdeg.symm
+    rw [hq, derivative_zero, derivative_of_natDegree_zero hp_natDegree]
+  by_cases hp : p = 0
+  · rw [hp, derivative_zero]
+    exact mahlerMeasure_nonneg _
+  have hmeasure : q.mahlerMeasure = p.mahlerMeasure :=
+    mahlerMeasure_eq_of_boundary_norm_eq_of_ne_zero hboundary hp hq
+  have hqderiv :
+      q.derivative.mahlerMeasure = q.natDegree * q.mahlerMeasure :=
+    mahlerMeasure_derivative_eq_natDegree_mul_of_roots_le_one q (by
+      intro β hβ
+      exact hqroots hβ)
+  calc
+    p.derivative.mahlerMeasure ≤ p.natDegree * p.mahlerMeasure := hpderiv
+    _ = q.natDegree * q.mahlerMeasure := by rw [← hdeg, hmeasure]
+    _ = q.derivative.mahlerMeasure := hqderiv.symm
+
 theorem mahlerMeasure_robinsonForm_derivative (p : ℂ[X]) :
     p.robinsonForm.derivative.mahlerMeasure = p.natDegree * p.mahlerMeasure := by
   rw [mahlerMeasure_derivative_eq_natDegree_mul_of_roots_le_one p.robinsonForm
