@@ -934,6 +934,12 @@ theorem powMod_zero_exp (a p : Nat) (hp : p > 0) :
     powMod a 0 p = 1 % p := by
   simpa using powMod_eq a 0 p hp
 
+/-- Modular exponentiation with exponent one returns the reduced base. -/
+@[simp]
+theorem powMod_one_exp (a p : Nat) (hp : p > 0) :
+    powMod a 1 p = a % p := by
+  simpa using powMod_eq a 1 p hp
+
 /-- Modular exponentiation with base zero returns the residue of `0 ^ n`. -/
 @[simp]
 theorem powMod_zero_base (n p : Nat) (hp : p > 0) :
@@ -959,5 +965,11 @@ theorem powMod_succ (a n p : Nat) (hp : p > 0) :
     powMod a (n + 1) p = (a * powMod a n p) % p := by
   rw [powMod_eq a (n + 1) p hp, powMod_eq a n p hp, Nat.pow_succ]
   rw [Nat.mul_comm (a ^ n) a, Nat.mul_mod_mod]
+
+/-- Reducing the base before modular exponentiation does not change `powMod`. -/
+theorem powMod_mod_base (a n p : Nat) (hp : p > 0) :
+    powMod (a % p) n p = powMod a n p := by
+  rw [powMod_eq (a % p) n p hp, powMod_eq a n p hp]
+  simp [Nat.pow_mod]
 
 end HexArith
