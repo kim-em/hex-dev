@@ -1021,6 +1021,23 @@ theorem mul_colAddRight [Lean.Grind.Ring R]
     grind
   · rw [if_neg hjd]
 
+/-- Adding one column times zero to another leaves the matrix unchanged. -/
+@[simp] theorem colAddRight_zero [Lean.Grind.Semiring R]
+    (M : Matrix R n m) (src dst : Fin m) :
+    colAddRight M src dst 0 = M := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let ii : Fin n := ⟨i, hi⟩
+  let jj : Fin m := ⟨j, hj⟩
+  show (colAddRight M src dst 0)[ii][jj] = M[ii][jj]
+  rw [colAddRight_getElem]
+  by_cases hjd : jj = dst
+  · rw [if_pos hjd]
+    grind
+  · rw [if_neg hjd]
+
 /-- Pure data produced by an echelon-form algorithm. -/
 structure RowEchelonData (R : Type u) (n m : Nat) where
   rank : Nat
