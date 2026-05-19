@@ -223,6 +223,36 @@ theorem ofPolynomial_one [Semiring R] [DecidableEq R] :
   rw [coeff_ofPolynomial, Hex.DensePoly.coeff_C, Polynomial.coeff_one]
   rfl
 
+/-- `ofPolynomial` sends Mathlib's polynomial constant to the executable constant. -/
+@[simp]
+theorem ofPolynomial_C [Semiring R] [DecidableEq R] (c : R) :
+    ofPolynomial (Polynomial.C c) = Hex.DensePoly.C c := by
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  rw [coeff_ofPolynomial, Hex.DensePoly.coeff_C, Polynomial.coeff_C]
+  by_cases hn : n = 0
+  · simp [hn]
+  · simp [hn]
+    rfl
+
+/-- `ofPolynomial` commutes with polynomial negation. -/
+@[simp]
+theorem ofPolynomial_neg [Ring R] [DecidableEq R] (p : Polynomial R) :
+    ofPolynomial (-p) = -ofPolynomial p := by
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  rw [Hex.DensePoly.coeff_neg _ _ (by show (0 : R) - 0 = 0; simp)]
+  simp [coeff_ofPolynomial, Polynomial.coeff_neg]
+
+/-- `ofPolynomial` commutes with polynomial subtraction. -/
+@[simp]
+theorem ofPolynomial_sub [Ring R] [DecidableEq R] (p q : Polynomial R) :
+    ofPolynomial (p - q) = ofPolynomial p - ofPolynomial q := by
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  rw [Hex.DensePoly.coeff_sub _ _ _ (by show (0 : R) - 0 = 0; simp)]
+  simp [coeff_ofPolynomial, Polynomial.coeff_sub]
+
 @[simp]
 theorem toPolynomial_zero [Semiring R] [DecidableEq R] :
     toPolynomial (0 : Hex.DensePoly R) = 0 := by
