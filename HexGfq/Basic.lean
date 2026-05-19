@@ -299,11 +299,36 @@ polynomial carrying the literal as a `ZMod64` coefficient. -/
       GFqRing.reduceMod (modulus h) (FpPoly.C (k : ZMod64 p)) :=
   rfl
 
+/-- The canonical representative of a quotient in `GFq` lifts the
+quotient-ring product of the dividend's representative with the inverse of
+the divisor. -/
+@[simp] theorem repr_div {h : Conway.SupportedEntry p n}
+    (x y : GFq p n h) :
+    repr (x / y) =
+      GFqRing.repr (x.toQuotient * (GFqField.inv y).toQuotient) :=
+  rfl
+
 /-- The canonical representative of a natural power in `GFq` lifts the
 quotient-ring power of the underlying quotient representative. -/
 @[simp] theorem repr_pow {h : Conway.SupportedEntry p n}
     (x : GFq p n h) (k : Nat) :
     repr (x ^ k) = GFqRing.repr (x.toQuotient ^ k) :=
+  rfl
+
+/-- The canonical representative of a nonnegative integer power in `GFq` lifts
+the quotient-ring power of the underlying quotient representative. -/
+@[simp] theorem repr_zpow_ofNat {h : Conway.SupportedEntry p n}
+    (x : GFq p n h) (k : Nat) :
+    repr (x ^ (Int.ofNat k) : GFq p n h) =
+      GFqRing.repr (x.toQuotient ^ k) :=
+  rfl
+
+/-- The canonical representative of a negative integer power in `GFq` lifts
+the inverse of the corresponding quotient-ring positive power. -/
+@[simp] theorem repr_zpow_negSucc {h : Conway.SupportedEntry p n}
+    (x : GFq p n h) (k : Nat) :
+    repr (x ^ (Int.negSucc k) : GFq p n h) =
+      GFqRing.repr ((GFqField.inv (GFqField.pow x (k + 1))).toQuotient) :=
   rfl
 
 /-- The canonical representative of an integer literal in `GFq` lifts the
@@ -327,6 +352,21 @@ action. -/
     (k : Int) (x : GFq p n h) :
     repr (k • x : GFq p n h) = GFqRing.repr (k • x.toQuotient) :=
   rfl
+
+/-- The canonical representative of a nonzero inverse in `GFq` is the inverse
+polynomial representative reduced through the selected Conway modulus. -/
+@[simp] theorem repr_inv_of_ne_zero {h : Conway.SupportedEntry p n}
+    {x : GFq p n h} (hx : x ≠ 0) :
+    repr (x⁻¹ : GFq p n h) =
+      GFqRing.repr
+        (GFqRing.ofPoly (modulus h) (modulus_nonconstant h)
+          (GFqField.invPoly x.toQuotient)) := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime h.prime
+  simpa using
+    (GFqField.repr_inv_of_ne_zero
+      (f := modulus h) (hf := modulus_nonconstant h)
+      (hp := modulus_prime h) (hirr := modulus_irreducible h)
+      (x := x) hx)
 
 /-- Two `GFq.ofPoly` constructors produce the same field element exactly when
 their inputs have the same reduced representative modulo the selected Conway
