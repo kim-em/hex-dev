@@ -646,6 +646,27 @@ theorem prod_max_one_norm_roots_derivative_le_of_schmeisser_radius_one
     Multiset.prod_max_one_norm_eq_prod_filter_norm]
   exact hSchmeisser
 
+/--
+The Schmeisser specialization is naturally applied to `X * p.derivative`.
+The extra root contributed by `X` is `0`, hence it is removed by the
+`1 ≤ ‖β‖` filter.
+-/
+theorem roots_filter_norm_product_derivative_le_of_X_mul_derivative
+    (p : ℂ[X])
+    (h :
+      ((((X : ℂ[X]) * p.derivative).roots.filter fun β => 1 ≤ ‖β‖).map fun β => ‖β‖).prod ≤
+        ((p.roots.filter fun α => 1 ≤ ‖α‖).map fun α => ‖α‖).prod) :
+    ((p.derivative.roots.filter fun β => 1 ≤ ‖β‖).map fun β => ‖β‖).prod ≤
+      ((p.roots.filter fun α => 1 ≤ ‖α‖).map fun α => ‖α‖).prod := by
+  by_cases hpderiv : p.derivative = 0
+  · simpa [hpderiv, roots_zero] using h
+  · have hroots :
+        (((X : ℂ[X]) * p.derivative).roots.filter fun β => 1 ≤ ‖β‖) =
+          (p.derivative.roots.filter fun β => 1 ≤ ‖β‖) := by
+      rw [roots_mul (mul_ne_zero X_ne_zero hpderiv), roots_X, Multiset.filter_add]
+      simp
+    rwa [hroots] at h
+
 theorem prod_max_one_norm_roots_derivative_le_of_mahlerMeasure_derivative_le
     (p : ℂ[X])
     (hderiv : p.derivative.mahlerMeasure ≤ p.natDegree * p.mahlerMeasure) :
