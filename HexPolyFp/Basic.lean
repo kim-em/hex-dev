@@ -3606,7 +3606,7 @@ def linearPow (f : FpPoly p) : Nat → FpPoly p
 @[simp] theorem linearPow_zero (f : FpPoly p) : linearPow f 0 = 1 := rfl
 
 /-- Successor exponents append one right multiplication by the base. -/
-theorem linearPow_succ (f : FpPoly p) (n : Nat) :
+@[simp] theorem linearPow_succ (f : FpPoly p) (n : Nat) :
     linearPow f (n + 1) = linearPow f n * f := rfl
 
 /-- Successor exponents may also be read as one left multiplication by the base. -/
@@ -3624,7 +3624,7 @@ theorem linearPow_succ_left (f : FpPoly p) (n : Nat) :
         _ = f * linearPow f (n + 1) := rfl
 
 /-- The first `linearPow` of a polynomial is the polynomial itself. -/
-theorem linearPow_one (f : FpPoly p) :
+@[simp] theorem linearPow_one (f : FpPoly p) :
     linearPow f 1 = f := by
   rw [linearPow_succ, linearPow_zero, one_mul]
 

@@ -266,6 +266,20 @@ the selected Conway polynomial. -/
     repr (1 : GFq p n h) = GFqRing.reduceMod (modulus h) 1 :=
   rfl
 
+/-- The canonical representative of a sum in `GFq` reduces from the sum of
+representatives modulo the selected Conway polynomial. -/
+@[simp] theorem repr_add {h : Conway.SupportedEntry p n}
+    (x y : GFq p n h) :
+    repr (x + y) = GFqRing.reduceMod (modulus h) (repr x + repr y) :=
+  rfl
+
+/-- The canonical representative of a product in `GFq` reduces from the product
+of representatives modulo the selected Conway polynomial. -/
+@[simp] theorem repr_mul {h : Conway.SupportedEntry p n}
+    (x y : GFq p n h) :
+    repr (x * y) = GFqRing.reduceMod (modulus h) (repr x * repr y) :=
+  rfl
+
 /-- Two `GFq.ofPoly` constructors produce the same field element exactly when
 their inputs have the same reduced representative modulo the selected Conway
 polynomial. -/
