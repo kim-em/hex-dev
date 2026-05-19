@@ -773,4 +773,18 @@ theorem clmul_xor_right (x y z : UInt64) :
     _ = ((clmul x y).1 ^^^ (clmul x z).1, (clmul x y).2 ^^^ (clmul x z).2) := by
       rw [clmul_comm y x, clmul_comm z x]
 
+/-- Pure carry-less word multiplication is commutative. -/
+theorem pureClmul_comm (x y : UInt64) :
+    pureClmul x y = pureClmul y x := by
+  rw [← clmul_eq_pureClmul, ← clmul_eq_pureClmul, clmul_comm]
+
+/-- The pure carry-less multiplier is linear in its right word argument over
+bitwise XOR. -/
+theorem pureClmul_xor_right (x y z : UInt64) :
+    pureClmul x (y ^^^ z) =
+      ((pureClmul x y).1 ^^^ (pureClmul x z).1,
+        (pureClmul x y).2 ^^^ (pureClmul x z).2) := by
+  rw [← clmul_eq_pureClmul, clmul_xor_right]
+  rw [clmul_eq_pureClmul, clmul_eq_pureClmul]
+
 end Hex

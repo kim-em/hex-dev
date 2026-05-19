@@ -2,7 +2,18 @@
 
 ## Target
 
-Parent issue #5525 needs the `r = 1` filtered product inequality
+The downstream theorem needed in `HexPolyZMathlib/RobinsonForm.lean` is:
+
+```lean
+theorem Polynomial.prod_max_one_norm_roots_derivative_le_prod_max_one_norm_roots
+    (p : ℂ[X]) :
+    (p.derivative.roots.map (fun β => max (1 : ℝ) ‖β‖)).prod ≤
+      (p.roots.map (fun α => max (1 : ℝ) ‖α‖)).prod
+```
+
+The existing reducer
+`Polynomial.prod_max_one_norm_roots_derivative_le_of_schmeisser_radius_one`
+shows that it is enough to prove the `r = 1` filtered product inequality:
 
 ```lean
 theorem Polynomial.roots_filter_norm_product_derivative_le_roots
@@ -11,23 +22,65 @@ theorem Polynomial.roots_filter_norm_product_derivative_le_roots
       ((p.roots.filter fun α => 1 ≤ ‖α‖).map fun α => ‖α‖).prod
 ```
 
-This is the exact hypothesis consumed by
-`Polynomial.prod_max_one_norm_roots_derivative_le_of_schmeisser_radius_one`
-in `HexPolyZMathlib/RobinsonForm.lean`.
-
-The source route is Schmeisser's Corollary 3 and Lemma 9 in
-"Majorization of the Critical Points of a Polynomial by Its Zeros".  Lemma 9 is
-the product estimate for the Schur-Szego composition of two degree-`n`
-polynomials; Corollary 3 specializes the composition kernel
+Schmeisser's Corollary 3 and Lemma 9 in "Majorization of the Critical Points
+of a Polynomial by Its Zeros" give the right source route.  Lemma 9 is a
+product estimate for the Schur-Szego composition of two degree-`n`
+polynomials; Corollary 3 specializes the composition kernel to
 `g(z) = n z (z + 1)^(n - 1)`, whose normalized Hadamard product with `f` is
 `z * f.derivative`.  Setting `r = 1` and deleting the extra root at zero gives
 the theorem above.
 
-## Source Decomposition
+## Source Shape
 
-### 1. Schur-Szego Composition
+In Schmeisser's notation, for the binomial-normalized Hadamard composition
 
-Define the binomial-normalized Hadamard product used by Schmeisser:
+```text
+f(z) = sum a_nu z^nu
+g(z) = sum choose n nu * b_nu * z^nu
+h(z) = sum a_nu * b_nu * z^nu
+```
+
+if all zeros of `g` lie in the closed unit disk, then for every `r > 0`:
+
+```text
+prod_{|zeta| >= r} |zeta| / r <= prod_{|z| >= r} |z| / r
+```
+
+where `zeta` ranges over roots of `h` and `z` ranges over roots of `f`, with
+multiplicity.  Schmeisser proves this from de Bruijn-Springer's composition
+polynomial theorem.
+
+For Lean, the useful form should use `Polynomial.roots` multisets directly so
+multiplicities match the downstream reducer.  A coefficient-level statement is
+probably easier than committing to a permanent public composition definition:
+
+```lean
+theorem Polynomial.roots_filter_norm_product_le_of_schmeisserComposition
+    {n : ℕ} {f g h : ℂ[X]} {r : ℝ}
+    (hr : 0 < r)
+    (hfg_degree : f.natDegree ≤ n ∧ g.natDegree ≤ n)
+    (hh_coeff :
+      ∀ k ≤ n,
+        h.coeff k = f.coeff k * (g.coeff k / (Nat.choose n k : ℂ)))
+    (hg_roots : ∀ z ∈ g.roots, ‖z‖ ≤ 1) :
+    ((h.roots.filter fun ζ => r ≤ ‖ζ‖).map fun ζ => ‖ζ‖ / r).prod ≤
+      ((f.roots.filter fun z => r ≤ ‖z‖).map fun z => ‖z‖ / r).prod
+```
+
+Classification: hard analysis/polynomial root theorem.  This is the
+de Bruijn-Springer/Schmeisser core and should be isolated from local derivative
+adapters.
+
+Likely imports: `Mathlib.Analysis.Complex.Polynomial.GaussLucas`,
+`Mathlib.Algebra.Polynomial.Splits`, existing Mahler/root-product imports, plus
+whatever Mathlib develops for composition polynomials.
+
+## Local Algebraic Decomposition
+
+### 1. Optional Schur-Szego Composition Definition
+
+If a reusable definition is helpful, define the binomial-normalized Hadamard
+product used by Schmeisser:
 
 ```lean
 noncomputable def Polynomial.schurSzegoComp (n : ℕ) (f g : ℂ[X]) : ℂ[X] :=
@@ -35,8 +88,7 @@ noncomputable def Polynomial.schurSzegoComp (n : ℕ) (f g : ℂ[X]) : ℂ[X] :=
     C (f.coeff k * g.coeff k / (Nat.choose n k : ℂ)) * X ^ k
 ```
 
-The useful form should be guarded by degree/normalization hypotheses rather
-than by a custom coefficient sequence:
+The basic coefficient API should be:
 
 ```lean
 theorem Polynomial.schurSzegoComp_coeff
@@ -49,27 +101,29 @@ theorem Polynomial.schurSzegoComp_coeff_of_lt
     (Polynomial.schurSzegoComp n f g).coeff k = 0
 ```
 
-Category: algebraic coefficient glue.
-
-Likely imports: `Mathlib.Algebra.BigOperators.Finprod`, existing polynomial
-coefficient imports already available through `HexPolyZMathlib.Basic`.
+Classification: algebraic coefficient glue.
 
 ### 2. Derivative Kernel Algebra
 
-For the special kernel `g_n = (n : ℂ[X]) * X * (X + 1) ^ (n - 1)`, prove its
-normalized coefficients are `k`.
+The special kernel is
 
 ```lean
 def Polynomial.schmeisserDerivativeKernel (n : ℕ) : ℂ[X] :=
-  (C (n : ℂ)) * X * (X + 1) ^ (n - 1)
-
-theorem Polynomial.coeff_schmeisserDerivativeKernel
-    {n k : ℕ} (hk : k ≤ n) :
-    (Polynomial.schmeisserDerivativeKernel n).coeff k =
-      (Nat.choose n k : ℂ) * k
+  C (n : ℂ) * X * (X + 1) ^ (n - 1)
 ```
 
-Then identify the composition output:
+Its coefficients normalize to the derivative coefficients:
+
+```lean
+theorem Polynomial.coeff_X_mul_derivative_eq_schmeisser_coeff
+    (p : ℂ[X]) {n k : ℕ} (hk : k ≤ n) :
+    (X * p.derivative).coeff k =
+      p.coeff k * (Polynomial.schmeisserDerivativeKernel n).coeff k /
+        (Nat.choose n k : ℂ)
+```
+
+If the explicit composition definition is introduced, this coefficient lemma
+can be packaged as:
 
 ```lean
 theorem Polynomial.schurSzegoComp_derivativeKernel_eq_X_mul_derivative
@@ -79,62 +133,33 @@ theorem Polynomial.schurSzegoComp_derivativeKernel_eq_X_mul_derivative
         X * p.derivative
 ```
 
-The proof is coefficientwise using `Polynomial.coeff_derivative`, the two
-`schurSzegoComp` coefficient lemmas, and the fact that
-`p.coeff k = 0` for `p.natDegree < k`.
+Classification: algebraic polynomial API glue.
 
-Category: algebraic coefficient glue.
+Likely imports: `Mathlib.Algebra.Polynomial.Derivative`, already available
+through current imports.
 
-Likely imports: `Mathlib.Algebra.Polynomial.Derivative` via existing imports.
-
-### 3. Kernel Roots Are in the Closed Unit Disk
+### 3. Unit-Disk Roots of the Derivative Kernel
 
 The source theorem only needs the kernel's roots in the closed unit disk:
 
 ```lean
-theorem Polynomial.roots_schmeisserDerivativeKernel_norm_le_one
-    (n : ℕ) :
+theorem Polynomial.roots_derivative_kernel_norm_le_one (n : ℕ) :
     ∀ z ∈ (Polynomial.schmeisserDerivativeKernel n).roots, ‖z‖ ≤ 1
 ```
 
 For `n = 0`, the kernel is zero and `roots_zero` makes the goal trivial.  For
-`n = 1`, the kernel is `X`.  For `2 ≤ n`, use `roots_C_mul`,
-`roots_mul`, `roots_X`, and `roots_pow`/`roots_X_add_C`: the only roots are
-`0` and `-1`.
+`n = 1`, the kernel is `X`.  For `2 ≤ n`, use `roots_C_mul`, `roots_mul`,
+`roots_X`, and `roots_pow`/`roots_X_add_C`: the only roots are `0` and `-1`.
 
-Category: polynomial root API glue.
+Classification: polynomial root API glue.
 
 Likely imports: `Mathlib.Algebra.Polynomial.Splits` and the already imported
 root lemmas in `Mathlib.Algebra.Polynomial.Roots`.
 
-### 4. General Schmeisser Composition API
-
-The hard analytic statement should be formalized once, not hidden inside the
-derivative theorem:
-
-```lean
-theorem Polynomial.schurSzegoComp_roots_filter_norm_product_le
-    (n : ℕ) (f g : ℂ[X])
-    (hg : ∀ z ∈ g.roots, ‖z‖ ≤ 1) :
-    (((Polynomial.schurSzegoComp n f g).roots.filter fun ζ => 1 ≤ ‖ζ‖).map fun ζ => ‖ζ‖).prod ≤
-      ((f.roots.filter fun z => 1 ≤ ‖z‖).map fun z => ‖z‖).prod
-```
-
-This is the Lean-facing form of Schmeisser Lemma 9 with `r = 1`.  The source
-proof cites de Bruijn-Springer, "On the zeros of composition-polynomials",
-Theorem 7.  A direct formalization can avoid sorted roots entirely by working
-with filtered multisets and products.
-
-Category: analytic/source theorem.  This is the substantial missing result.
-
-Likely imports: root API plus whatever analytic infrastructure is needed for
-the de Bruijn-Springer composition theorem.
-
-### 5. Remove the Extra `X` Root
+### 4. Remove the Extra `X` Root
 
 Schmeisser's derivative specialization gives a product comparison for
-`X * p.derivative`.  The local bridge back to `p.derivative` is purely
-multiset-level:
+`X * p.derivative`.  The bridge back to `p.derivative` is purely multiset-level:
 
 ```lean
 theorem Polynomial.roots_filter_norm_product_derivative_le_of_X_mul_derivative
@@ -146,19 +171,19 @@ theorem Polynomial.roots_filter_norm_product_derivative_le_of_X_mul_derivative
       ((p.roots.filter fun α => 1 ≤ ‖α‖).map fun α => ‖α‖).prod
 ```
 
-When `p.derivative = 0`, the left product is empty.  Otherwise,
-`roots_mul` and `roots_X` identify `(X * p.derivative).roots` with
+When `p.derivative = 0`, the left product is empty.  Otherwise, `roots_mul` and
+`roots_X` identify `(X * p.derivative).roots` with
 `{0} + p.derivative.roots`; the filter `1 ≤ ‖β‖` removes the extra zero.
 
-Category: polynomial root API glue.
+Classification: polynomial root API glue.
 
-Likely imports: current `HexPolyZMathlib/RobinsonForm.lean` imports are enough.
-
-### 6. Final Assembly
+## Final Assembly
 
 The report target follows by applying the hard Schur-Szego product theorem to
-`f = p`, `g = schmeisserDerivativeKernel p.natDegree`, rewriting the output as
-`X * p.derivative`, and deleting the extra zero root:
+`f = p`, `g = schmeisserDerivativeKernel p.natDegree`,
+`h = X * p.derivative`, and `r = 1`; discharging the kernel root bound;
+rewriting the composition output with the derivative coefficient theorem; and
+deleting the extra zero root:
 
 ```lean
 theorem Polynomial.roots_filter_norm_product_derivative_le_roots
@@ -187,21 +212,21 @@ root at a time and proving endpoint monotonicity for
 counterexample
 
 ```text
-f = 2 X^3 + 2 X^2 - 3 X - 4,  alpha = -2
+f = 2 X^3 + 2 X^2 - 3 X - 4, alpha = -2
 ```
 
 For this example the direct and scaled one-root endpoint inequalities both
 fail.  The valid source route is the global de Bruijn-Springer/Schmeisser
 composition theorem, not one-root Schur endpoint monotonicity.
 
-## First Follow-Up Work Items
+## Follow-Up Work
 
-1. Prove the `X * p.derivative` root-removal lemma in
-   `HexPolyZMathlib/RobinsonForm.lean`.  This is independent of the hard
-   Schur-Szego theorem.
-2. Prove the derivative-kernel algebra and root-location lemmas in a small
-   local section or helper module.  This is independent of the hard theorem and
-   gives the exact specialization target.
-3. Formalize the `r = 1` Schur-Szego filtered product theorem.  This is the
-   hard source-theorem issue and should depend on the kernel algebra only for
+1. Keep the derivative-kernel coefficient, kernel-root, and extra-`X`
+   adapters as local API around `HexPolyZMathlib/RobinsonForm.lean` unless a
+   reusable Schur-Szego module is introduced.
+2. Formalize the `r = 1` Schur-Szego filtered product theorem.  This is the
+   hard source-theorem issue and should depend on the local algebra only for
    final derivative assembly, not for the theorem itself.
+3. Assemble
+   `Polynomial.roots_filter_norm_product_derivative_le_roots` from the
+   source theorem and feed it to the existing max-one-norm reducer.

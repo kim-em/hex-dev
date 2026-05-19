@@ -1913,7 +1913,7 @@ private theorem noPivotLoop_step_eq_add_of_singularStep_none
 
 /-- The `step` field of a no-pivot Bareiss state never decreases under further
 loop iterations. -/
-private theorem noPivotLoop_step_monotone
+theorem noPivotLoop_step_monotone
     {n : Nat} (fuel : Nat) (state : Matrix.BareissState n) :
     state.step ≤ (Matrix.noPivotLoop fuel state).step := by
   induction fuel generalizing state with
