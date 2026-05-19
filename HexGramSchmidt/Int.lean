@@ -3027,6 +3027,59 @@ private theorem scaledCoeffRows_diag_toNat_eq_gramDet
   rw [scaledCoeffRows_diag_toNat_eq_gramDetVecEntry (b := b) i hi]
   rw [gramDetVecEntry_eq_gramDet (b := b) (i + 1) (Nat.succ_le_of_lt hi)]
 
+/-- Signed diagonal information from the executable scaled-coefficient loop:
+the diagonal slot is either the zero tail recorded after an earlier singular
+no-pivot step, or the signed diagonal entry in the final no-pivot Bareiss
+matrix for the full Gram matrix. -/
+private theorem scaledCoeffRows_diag_eq_zero_or_eq_noPivotData_diag
+    (b : Matrix Int n m) (i : Nat) (hi : i < n) :
+    getArrayEntry (scaledCoeffRows b) i i = 0 ∨
+      getArrayEntry (scaledCoeffRows b) i i =
+        (Matrix.bareissNoPivotData (Matrix.gramMatrix b)).matrix[
+          (⟨i, hi⟩ : Fin n)][(⟨i, hi⟩ : Fin n)] := by
+  let iFin : Fin n := ⟨i, hi⟩
+  have hdiag :=
+    scaledCoeffArrayLoop_diag_matches
+      (state_array :=
+        { step := 0
+          matrix := gramRows b
+          coeffs := zeroRows n
+          prevPivot := 1 })
+      (state_matrix := Matrix.noPivotInitialState (Matrix.gramMatrix b))
+      (by rfl) (rowsToMatrix_gramRows b) (by rfl) (by rfl)
+      (gramRows_size b) (gramRows_row_size b)
+      (zeroRows_size n) (zeroRows_row_size n)
+      (by
+        intro j hjs _hjn
+        simp [Matrix.noPivotInitialState] at hjs)
+      (by
+        intro j _hjs _hjn
+        exact getArrayEntry_zeroRows n j j)
+      n iFin (by
+        left
+        simp [Matrix.noPivotInitialState, iFin, hi])
+  show getArrayEntry
+      (scaledCoeffArrayLoop n n
+        { step := 0
+          matrix := gramRows b
+          coeffs := zeroRows n
+          prevPivot := 1 }).coeffs i i = 0 ∨
+    getArrayEntry
+      (scaledCoeffArrayLoop n n
+        { step := 0
+          matrix := gramRows b
+          coeffs := zeroRows n
+          prevPivot := 1 }).coeffs i i =
+        (Matrix.bareissNoPivotData (Matrix.gramMatrix b)).matrix[iFin][iFin]
+  rcases hdiag with ⟨_h_sing, h_eq⟩ | ⟨s, _h_sing, h_cases⟩
+  · right
+    simpa [Matrix.bareissNoPivotData, Matrix.finish, iFin] using h_eq
+  · rcases h_cases with ⟨_hsi, h_zero⟩ | ⟨_his, h_eq⟩
+    · left
+      simpa [iFin] using h_zero
+    · right
+      simpa [Matrix.bareissNoPivotData, Matrix.finish, iFin] using h_eq
+
 /-- If the diagonal executable entry is known nonnegative, the Nat-level
 diagonal synchronization can be lifted back to the corresponding Int equality.
 That nonnegativity is a bridge-layer obligation for Gram determinants. -/
@@ -3065,6 +3118,19 @@ theorem scaledCoeffs_diag_toNat (b : Matrix Int n m) (i : Nat) (hi : i < n) :
       gramDet b (i + 1) (Nat.succ_le_of_lt hi) := by
   simpa [scaledCoeffs, data, rowsToMatrix, GramSchmidt.entry, Matrix.row, Matrix.ofFn] using
     scaledCoeffRows_diag_toNat_eq_gramDet (b := b) i hi
+
+/-- Signed diagonal information for the public scaled-coefficient matrix.
+The diagonal slot is either the zero tail recorded after an earlier singular
+no-pivot step, or the signed diagonal entry in the final no-pivot Bareiss
+matrix for the full Gram matrix. -/
+theorem scaledCoeffs_diag_eq_zero_or_eq_noPivotData_diag
+    (b : Matrix Int n m) (i : Nat) (hi : i < n) :
+    GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨i, hi⟩ = 0 ∨
+      GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨i, hi⟩ =
+        (Matrix.bareissNoPivotData (Matrix.gramMatrix b)).matrix[
+          (⟨i, hi⟩ : Fin n)][(⟨i, hi⟩ : Fin n)] := by
+  simpa [scaledCoeffs, data, rowsToMatrix, GramSchmidt.entry, Matrix.row, Matrix.ofFn] using
+    scaledCoeffRows_diag_eq_zero_or_eq_noPivotData_diag (b := b) i hi
 
 theorem scaledCoeffs_diag_of_nonneg
     (b : Matrix Int n m) (i : Nat) (hi : i < n)
