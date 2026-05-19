@@ -189,33 +189,27 @@ Small `C` homomorphism laws for `+`, `-`, `*` and `Neg` are needed to
 manipulate the coefficients of products like `f * (X - C c)`.
 -/
 
-private theorem zmod64_add_zero_zero_local :
-    (0 : ZMod64 p) + 0 = 0 := by grind
-
-private theorem zmod64_sub_zero_zero_local :
-    (0 : ZMod64 p) - 0 = 0 := by grind
-
 theorem C_add_eq (a b : ZMod64 p) :
     (DensePoly.C (a + b) : FpPoly p) = DensePoly.C a + DensePoly.C b := by
   apply DensePoly.ext_coeff
   intro n
-  rw [DensePoly.coeff_C, DensePoly.coeff_add _ _ _ zmod64_add_zero_zero_local,
+  rw [DensePoly.coeff_C, DensePoly.coeff_add_semiring,
     DensePoly.coeff_C, DensePoly.coeff_C]
   cases n with
   | zero => grind
   | succ n =>
-      exact zmod64_add_zero_zero_local.symm
+      exact (by grind : (0 : ZMod64 p) + 0 = 0).symm
 
 theorem C_sub_eq (a b : ZMod64 p) :
     (DensePoly.C (a - b) : FpPoly p) = DensePoly.C a - DensePoly.C b := by
   apply DensePoly.ext_coeff
   intro n
-  rw [DensePoly.coeff_C, DensePoly.coeff_sub _ _ _ zmod64_sub_zero_zero_local,
+  rw [DensePoly.coeff_C, DensePoly.coeff_sub_ring,
     DensePoly.coeff_C, DensePoly.coeff_C]
   cases n with
   | zero => grind
   | succ n =>
-      exact zmod64_sub_zero_zero_local.symm
+      exact (by grind : (0 : ZMod64 p) - 0 = 0).symm
 
 theorem C_mul_C_eq (a b : ZMod64 p) :
     (DensePoly.C (a * b) : FpPoly p) = DensePoly.C a * DensePoly.C b := by
@@ -477,12 +471,12 @@ private theorem fp_add_sub_add_sub
     (x - y) + (u - v) = (x + u) - (y + v) := by
   apply DensePoly.ext_coeff
   intro n
-  rw [DensePoly.coeff_add _ _ _ zmod64_add_zero_zero_local]
-  rw [DensePoly.coeff_sub _ _ _ zmod64_sub_zero_zero_local]
-  rw [DensePoly.coeff_sub _ _ _ zmod64_sub_zero_zero_local]
-  rw [DensePoly.coeff_sub _ _ _ zmod64_sub_zero_zero_local]
-  rw [DensePoly.coeff_add _ _ _ zmod64_add_zero_zero_local]
-  rw [DensePoly.coeff_add _ _ _ zmod64_add_zero_zero_local]
+  rw [DensePoly.coeff_add_semiring]
+  rw [DensePoly.coeff_sub_ring]
+  rw [DensePoly.coeff_sub_ring]
+  rw [DensePoly.coeff_sub_ring]
+  rw [DensePoly.coeff_add_semiring]
+  rw [DensePoly.coeff_add_semiring]
   grind
 
 private theorem composeCoeffPowerSumUpTo_sub
@@ -522,12 +516,12 @@ private theorem fp_size_sub_le
     (f - h).size ≤ max f.size h.size := by
   apply fp_size_le_of_coeff_eq_zero_from
   intro i hi
-  rw [DensePoly.coeff_sub _ _ _ zmod64_sub_zero_zero_local]
+  rw [DensePoly.coeff_sub_ring]
   rw [DensePoly.coeff_eq_zero_of_size_le f
       (Nat.le_trans (Nat.le_max_left f.size h.size) hi),
     DensePoly.coeff_eq_zero_of_size_le h
       (Nat.le_trans (Nat.le_max_right f.size h.size) hi)]
-  exact zmod64_sub_zero_zero_local
+  exact (by grind : (0 : ZMod64 p) - 0 = 0)
 
 /-- `compose` distributes over subtraction. -/
 theorem compose_sub [ZMod64.PrimeModulus p] (f h w : FpPoly p) :
@@ -543,7 +537,7 @@ theorem compose_sub [ZMod64.PrimeModulus p] (f h w : FpPoly p) :
       (fun i => (f - h).coeff i) =
         (fun i => f.coeff i - h.coeff i) := by
     funext i
-    rw [DensePoly.coeff_sub _ _ _ zmod64_sub_zero_zero_local]
+    rw [DensePoly.coeff_sub_ring]
   rw [hcoeff]
   exact composeCoeffPowerSumUpTo_sub f h w bound 0
 
@@ -797,7 +791,6 @@ private theorem mul_X_sub_C_eq_ofCoeffs_mulXSubCList
   apply DensePoly.ext_coeff
   intro n
   have hzero_sub : (0 : ZMod64 p) - 0 = 0 := by grind
-  have hzero_add : (0 : ZMod64 p) + 0 = 0 := by grind
   have hzero_mul_c : c * (0 : ZMod64 p) = 0 := by grind
   -- LHS computation
   have hLHS : (a * (FpPoly.X - FpPoly.C c)).coeff n =
@@ -807,7 +800,7 @@ private theorem mul_X_sub_C_eq_ofCoeffs_mulXSubCList
       show (0 - FpPoly.C c) * a = 0 - FpPoly.C c * a
       exact DensePoly.neg_mul_right_poly (FpPoly.C c) a
     rw [sub_eq_add_neg, right_distrib]
-    rw [DensePoly.coeff_add _ _ _ hzero_add]
+    rw [DensePoly.coeff_add_semiring]
     rw [hneg_mul]
     rw [DensePoly.coeff_neg _ _ hzero_sub]
     rw [show FpPoly.X = (DensePoly.monomial 1 (1 : ZMod64 p) : FpPoly p) from rfl]
@@ -936,7 +929,7 @@ private theorem composeCoeffPowerSumUpTo_X_coeff
       rfl
   | n + 1, base, k => by
       simp only [composeCoeffPowerSumUpTo]
-      rw [DensePoly.coeff_add _ _ _ zmod64_add_zero_zero_local]
+      rw [DensePoly.coeff_add_semiring]
       rw [composeCoeffPowerSumUpTo_X_coeff coeff n (base + 1) k]
       rw [show FpPoly.linearPow (FpPoly.X : FpPoly p) base
               = DensePoly.monomial base (1 : ZMod64 p) from
@@ -952,8 +945,8 @@ private theorem composeCoeffPowerSumUpTo_X_coeff
         rw [hzz]; grind
       rw [DensePoly.coeff_scale _ _ _ hmul_zero]
       rw [DensePoly.coeff_monomial]
-      have hzz_add : (Zero.zero : ZMod64 p) + Zero.zero = Zero.zero :=
-        zmod64_add_zero_zero_local
+      have hzz_add : (Zero.zero : ZMod64 p) + Zero.zero = Zero.zero := by
+        grind
       by_cases hk_base : k = base
       · rw [if_pos hk_base]
         have hneg' : ¬ (base + 1 ≤ k ∧ k < base + 1 + n) := by
