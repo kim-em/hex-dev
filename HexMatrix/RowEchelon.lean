@@ -169,6 +169,13 @@ theorem rowAdd_getElem [Mul R] [Add R]
           dst.isLt r.isLt hval)
     simpa [rowAdd] using congrArg (fun row => row[k]) hrow
 
+/-- Source-row entries are unchanged by `rowAdd M src dst c` when `src ≠ dst`. -/
+theorem rowAdd_getElem_src_of_ne [Mul R] [Add R]
+    (M : Matrix R n m) {src dst : Fin n} (c : R) (hsrcdst : src ≠ dst) (k : Fin m) :
+    (rowAdd M src dst c)[src][k] = M[src][k] := by
+  rw [rowAdd_getElem]
+  simp [hsrcdst]
+
 /-- Row `dst` of `rowAdd M src dst c` is the pointwise row combination. -/
 @[simp] theorem row_rowAdd_dst [Mul R] [Add R]
     (M : Matrix R n m) (src dst : Fin n) (c : R) :
@@ -193,6 +200,12 @@ theorem row_rowAdd_of_ne [Mul R] [Add R]
   show (row (rowAdd M src dst c) r)[kk] = (row M r)[kk]
   rw [row_getElem, row_getElem, rowAdd_getElem]
   simp [hrdst]
+
+/-- The source row is unchanged by `rowAdd M src dst c` when `src ≠ dst`. -/
+@[simp] theorem row_rowAdd_src_of_ne [Mul R] [Add R]
+    (M : Matrix R n m) {src dst : Fin n} (c : R) (hsrcdst : src ≠ dst) :
+    row (rowAdd M src dst c) src = row M src := by
+  exact row_rowAdd_of_ne M src c hsrcdst
 
 private theorem foldl_sum_congr_aux {R : Type u} [Add R] {α : Type v}
     (xs : List α) (f g : α → R) (acc : R)
