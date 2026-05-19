@@ -620,6 +620,32 @@ theorem prod_max_one_norm_roots_derivative_le_of_sum_log_le
     exact lt_of_lt_of_le zero_lt_one (le_max_left (1 : ℝ) ‖α‖)
   · simpa [Multiset.map_map, Function.comp_def] using hlog
 
+private theorem Multiset.prod_max_one_norm_eq_prod_filter_norm (s : Multiset ℂ) :
+    (s.map fun z => max (1 : ℝ) ‖z‖).prod =
+      ((s.filter fun z => 1 ≤ ‖z‖).map fun z => ‖z‖).prod := by
+  induction s using Multiset.induction_on with
+  | empty => simp
+  | cons z s ih =>
+      by_cases hz : 1 ≤ ‖z‖
+      · simp [hz, ih]
+      · have hz_le : ‖z‖ ≤ 1 := le_of_not_ge hz
+        simp [hz, max_eq_left hz_le, ih]
+
+/--
+The desired derivative root-product comparison follows from the `r = 1`
+instance of Schmeisser's de Bruijn-Springer product inequality.
+-/
+theorem prod_max_one_norm_roots_derivative_le_of_schmeisser_radius_one
+    (p : ℂ[X])
+    (hSchmeisser :
+      ((p.derivative.roots.filter fun β => 1 ≤ ‖β‖).map fun β => ‖β‖).prod ≤
+        ((p.roots.filter fun α => 1 ≤ ‖α‖).map fun α => ‖α‖).prod) :
+    (p.derivative.roots.map fun β => max (1 : ℝ) ‖β‖).prod ≤
+      (p.roots.map fun α => max (1 : ℝ) ‖α‖).prod := by
+  rw [Multiset.prod_max_one_norm_eq_prod_filter_norm,
+    Multiset.prod_max_one_norm_eq_prod_filter_norm]
+  exact hSchmeisser
+
 theorem prod_max_one_norm_roots_derivative_le_of_mahlerMeasure_derivative_le
     (p : ℂ[X])
     (hderiv : p.derivative.mahlerMeasure ≤ p.natDegree * p.mahlerMeasure) :
