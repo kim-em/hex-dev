@@ -299,6 +299,15 @@ polynomial carrying the literal as a `ZMod64` coefficient. -/
       GFqRing.reduceMod (modulus h) (FpPoly.C (k : ZMod64 p)) :=
   rfl
 
+/-- The canonical representative of a quotient in `GFq` lifts the
+quotient-ring product of the dividend's representative with the inverse of
+the divisor. -/
+@[simp] theorem repr_div {h : Conway.SupportedEntry p n}
+    (x y : GFq p n h) :
+    repr (x / y) =
+      GFqRing.repr (x.toQuotient * (GFqField.inv y).toQuotient) :=
+  rfl
+
 /-- The canonical representative of a natural power in `GFq` lifts the
 quotient-ring power of the underlying quotient representative. -/
 @[simp] theorem repr_pow {h : Conway.SupportedEntry p n}
