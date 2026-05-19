@@ -389,6 +389,60 @@ theorem rowAdd_mul [Lean.Grind.Ring R]
     rw [show row (rowAdd A src dst s) rr = row A rr by
       exact row_rowAdd_of_ne A src s hrd]
 
+/-- Entrywise action of row swap on matrix-vector multiplication. -/
+theorem rowSwap_mulVec_getElem [Mul R] [Add R] [OfNat R 0]
+    (M : Matrix R n m) (v : Vector R m) (i j r : Fin n) :
+    (rowSwap M i j * v)[r] =
+      if r = j then (M * v)[i] else if r = i then (M * v)[j] else (M * v)[r] := by
+  rw [mulVec_getElem (rowSwap M i j) v r]
+  by_cases hrj : r = j
+  · rw [if_pos hrj, mulVec_getElem M v i]
+    rw [show row (rowSwap M i j) r = row M i by
+      rw [hrj]
+      exact row_rowSwap_right M i j]
+  · rw [if_neg hrj]
+    by_cases hri : r = i
+    · rw [if_pos hri, mulVec_getElem M v j]
+      rw [show row (rowSwap M i j) r = row M j by
+        rw [hri]
+        exact row_rowSwap_left M i j]
+    · rw [if_neg hri, mulVec_getElem M v r]
+      rw [show row (rowSwap M i j) r = row M r by
+        exact row_rowSwap_of_ne M hri hrj]
+
+/-- Entrywise action of row scaling on matrix-vector multiplication. -/
+theorem rowScale_mulVec_getElem [Lean.Grind.Ring R]
+    (M : Matrix R n m) (v : Vector R m) (i r : Fin n) (s : R) :
+    (rowScale M i s * v)[r] =
+      if r = i then s * (M * v)[i] else (M * v)[r] := by
+  rw [mulVec_getElem (rowScale M i s) v r]
+  by_cases hri : r = i
+  · subst r
+    rw [if_pos rfl, mulVec_getElem M v i]
+    rw [show row (rowScale M i s) i = Vector.ofFn (fun k => s * M[i][k]) by
+      exact row_rowScale_self M i s]
+    exact dotProduct_smul_ofFn_left s M[i] v
+  · rw [if_neg hri, mulVec_getElem M v r]
+    rw [show row (rowScale M i s) r = row M r by
+      exact row_rowScale_of_ne M s hri]
+
+/-- Entrywise action of row addition on matrix-vector multiplication. -/
+theorem rowAdd_mulVec_getElem [Lean.Grind.Ring R]
+    (M : Matrix R n m) (v : Vector R m) (src dst r : Fin n) (s : R) :
+    (rowAdd M src dst s * v)[r] =
+      if r = dst then (M * v)[dst] + s * (M * v)[src] else (M * v)[r] := by
+  rw [mulVec_getElem (rowAdd M src dst s) v r]
+  by_cases hrd : r = dst
+  · subst r
+    rw [if_pos rfl, mulVec_getElem M v dst, mulVec_getElem M v src]
+    rw [show row (rowAdd M src dst s) dst =
+        Vector.ofFn (fun k => M[dst][k] + s * M[src][k]) by
+      exact row_rowAdd_dst M src dst s]
+    exact dotProduct_add_smul_ofFn_left M[dst] M[src] v s
+  · rw [if_neg hrd, mulVec_getElem M v r]
+    rw [show row (rowAdd M src dst s) r = row M r by
+      exact row_rowAdd_of_ne M src s hrd]
+
 /-- If `T * M = E`, then `rowSwap T i j * M = rowSwap E i j`: row swap on the
 transform side preserves the equation `T * M = E` when applied to both `T` and
 `E`. -/
