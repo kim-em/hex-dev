@@ -339,6 +339,20 @@ quotient-ring integer-cast representative. -/
         ((i : GFqRing.PolyQuotient (modulus h) (modulus_nonconstant h))) :=
   rfl
 
+/-- The representative of a natural scalar action lifts the quotient-ring
+action. -/
+@[simp] theorem repr_nsmul {h : Conway.SupportedEntry p n}
+    (k : Nat) (x : GFq p n h) :
+    repr (k • x : GFq p n h) = GFqRing.repr (k • x.toQuotient) :=
+  rfl
+
+/-- The representative of an integer scalar action lifts the quotient-ring
+action. -/
+@[simp] theorem repr_zsmul {h : Conway.SupportedEntry p n}
+    (k : Int) (x : GFq p n h) :
+    repr (k • x : GFq p n h) = GFqRing.repr (k • x.toQuotient) :=
+  rfl
+
 /-- The canonical representative of a nonzero inverse in `GFq` is the inverse
 polynomial representative reduced through the selected Conway modulus. -/
 @[simp] theorem repr_inv_of_ne_zero {h : Conway.SupportedEntry p n}
