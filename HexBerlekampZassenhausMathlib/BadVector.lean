@@ -369,6 +369,23 @@ theorem projectedVectorFn_projectedVectorArray
   funext i
   simp [projectedVectorFn, projectedVectorArray]
 
+/-- The executable representative of a projected vector has exactly the
+projected factor count as its array size. -/
+theorem projectedVectorArray_size
+    (W : ExecutableBadVectorWitness)
+    (v : Fin W.projectedRows.factorCount → ℤ) :
+    (W.projectedVectorArray v).size = W.projectedRows.factorCount := by
+  simp [projectedVectorArray]
+
+/-- Reading the executable representative at an in-bounds projected-factor
+index recovers the original projected vector entry. -/
+theorem projectedVectorArray_getD
+    (W : ExecutableBadVectorWitness)
+    (v : Fin W.projectedRows.factorCount → ℤ)
+    (i : Fin W.projectedRows.factorCount) :
+    (W.projectedVectorArray v).getD i.val 0 = v i := by
+  simpa [projectedVectorFn] using congrFun (projectedVectorFn_projectedVectorArray W v) i
+
 /--
 Bad-vector evidence for an executable BHKS bad-vector witness.
 
