@@ -294,6 +294,21 @@ theorem degree_getD_lt_of_mem_polysBelowDegree {f : FpPoly p} {d : Nat}
   exact ofCoeffList_degree_getD_lt_of_length_eq hd
     (length_of_mem_coeffLists hcoeffs)
 
+/-- Membership in the bounded-degree enumeration is exactly degree below the
+positive bound. -/
+theorem mem_polysBelowDegree_iff_degree_getD_lt {f : FpPoly p} {d : Nat}
+    (hd : 0 < d) :
+    f ∈ polysBelowDegree p d ↔ f.degree?.getD 0 < d := by
+  constructor
+  · exact degree_getD_lt_of_mem_polysBelowDegree hd
+  · exact mem_polysBelowDegree_of_degree_getD_lt
+
+/-- Successor-bound membership in the bounded-degree enumeration. -/
+@[simp] theorem mem_polysBelowDegree_succ_iff_degree_getD_lt {f : FpPoly p}
+    {d : Nat} :
+    f ∈ polysBelowDegree p (d + 1) ↔ f.degree?.getD 0 < d + 1 := by
+  exact mem_polysBelowDegree_iff_degree_getD_lt (Nat.succ_pos d)
+
 private theorem list_eq_of_length_eq_of_getD_eq
     {α : Type} [Zero α] {xs ys : List α}
     (hlen : xs.length = ys.length)
