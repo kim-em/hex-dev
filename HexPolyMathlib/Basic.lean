@@ -276,6 +276,19 @@ theorem toPolynomial_one [Semiring R] [DecidableEq R] :
   show toPolynomial (Hex.DensePoly.C 1) = 1
   rw [toPolynomial_C, Polynomial.C_1]
 
+/-- `toPolynomial` sends the executable monomial to Mathlib's monomial. -/
+@[simp]
+theorem toPolynomial_monomial [Semiring R] [DecidableEq R]
+    (n : Nat) (c : R) :
+    toPolynomial (Hex.DensePoly.monomial n c) = Polynomial.monomial n c := by
+  ext i
+  rw [coeff_toPolynomial, Hex.DensePoly.coeff_monomial, Polynomial.coeff_monomial]
+  by_cases h : i = n
+  · simp [h]
+  · have h' : n ≠ i := fun heq => h heq.symm
+    simp [h, h']
+    rfl
+
 @[simp]
 theorem toPolynomial_add [Semiring R] [DecidableEq R] (p q : Hex.DensePoly R) :
     toPolynomial (p + q) = toPolynomial p + toPolynomial q := by
