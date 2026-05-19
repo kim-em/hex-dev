@@ -295,6 +295,31 @@ private theorem dotProduct_add_smul_ofFn_left [Lean.Grind.Ring R]
     rw [hofFn]
     grind
 
+/-- Distribute the right argument of a dot product over a sum of the form
+`Vector.ofFn (fun k => v[k] + s * w[k])`. -/
+private theorem dotProduct_add_smul_ofFn_right [Lean.Grind.CommRing R]
+    (u v w : Vector R m) (s : R) :
+    Hex.Vector.dotProduct u (Vector.ofFn fun k => v[k] + s * w[k]) =
+    Hex.Vector.dotProduct u v + s * Hex.Vector.dotProduct u w := by
+  unfold Hex.Vector.dotProduct
+  rw [show (List.finRange m).foldl
+        (fun acc i => acc + u[i] * (Vector.ofFn fun k => v[k] + s * w[k])[i]) 0 =
+      (List.finRange m).foldl
+        (fun acc i => acc + (u[i] * v[i] + s * (u[i] * w[i]))) 0 from ?_]
+  · rw [foldl_sum_add_aux (xs := List.finRange m)
+        (f := fun i => u[i] * v[i])
+        (g := fun i => s * (u[i] * w[i]))
+        (acc := 0) (accF := 0) (accG := s * 0) (h := by grind)]
+    rw [← foldl_sum_mul_left_aux (xs := List.finRange m)
+        (f := fun i => u[i] * w[i]) (c := s) (acc := 0)]
+  · apply foldl_sum_congr_aux
+    intro i _
+    have hofFn : (Vector.ofFn (fun k : Fin m => v[k] + s * w[k]))[i] =
+        v[i] + s * w[i] := by
+      simp
+    rw [hofFn]
+    grind
+
 /-- Multiplication by `B` commutes with row swap on the left factor. -/
 theorem rowSwap_mul [Lean.Grind.Ring R]
     (A : Matrix R n m) (B : Matrix R m k) (i j : Fin n) :
@@ -792,6 +817,36 @@ theorem col_colAdd_of_ne [Mul R] [Add R]
   show (col (colAdd M src dst c) j)[ii] = (col M j)[ii]
   rw [col_getElem, col_getElem, colAdd_getElem]
   simp [hjdst]
+
+/-- Multiplication by `A` commutes with the column-add operation on the right
+factor over commutative rings. -/
+theorem mul_colAdd [Lean.Grind.CommRing R]
+    (A : Matrix R n m) (B : Matrix R m k) (src dst : Fin k) (s : R) :
+    A * colAdd B src dst s = colAdd (A * B) src dst s := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro l hl
+  let rr : Fin n := ⟨r, hr⟩
+  let ll : Fin k := ⟨l, hl⟩
+  show (A * colAdd B src dst s)[rr][ll] = (colAdd (A * B) src dst s)[rr][ll]
+  rw [mul_getElem A (colAdd B src dst s) rr ll]
+  rw [colAdd_getElem (A * B) src dst s rr ll]
+  by_cases hld : ll = dst
+  · rw [if_pos hld]
+    rw [hld]
+    rw [mul_getElem A B rr dst]
+    rw [mul_getElem A B rr src]
+    rw [show col (colAdd B src dst s) dst =
+        Vector.ofFn (fun i => B[i][dst] + s * B[i][src]) by
+      exact col_colAdd_dst B src dst s]
+    simpa [dot, col] using
+      dotProduct_add_smul_ofFn_right (row A rr)
+        (Vector.ofFn fun i => B[i][dst]) (Vector.ofFn fun i => B[i][src]) s
+  · rw [if_neg hld]
+    rw [mul_getElem A B rr ll]
+    rw [show col (colAdd B src dst s) ll = col B ll by
+      exact col_colAdd_of_ne B src s hld]
 
 /-- Source-column entries are unchanged by `colAdd M src dst c` when `src ≠ dst`. -/
 theorem colAdd_getElem_src_of_ne [Mul R] [Add R]
