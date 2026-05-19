@@ -280,6 +280,17 @@ of representatives modulo the selected Conway polynomial. -/
     repr (x * y) = GFqRing.reduceMod (modulus h) (repr x * repr y) :=
   rfl
 
+/-- The representative of a negation reduces from the negated representative. -/
+@[simp] theorem repr_neg {h : Conway.SupportedEntry p n} (x : GFq p n h) :
+    repr (-x) = GFqRing.reduceMod (modulus h) (-(repr x)) :=
+  rfl
+
+/-- The representative of a subtraction reduces from the difference of
+representatives. -/
+@[simp] theorem repr_sub {h : Conway.SupportedEntry p n} (x y : GFq p n h) :
+    repr (x - y) = GFqRing.reduceMod (modulus h) (repr x - repr y) :=
+  rfl
+
 /-- Two `GFq.ofPoly` constructors produce the same field element exactly when
 their inputs have the same reduced representative modulo the selected Conway
 polynomial. -/
