@@ -300,6 +300,13 @@ the divisor. -/
       GFqRing.repr (x.toQuotient * (GFqField.inv y).toQuotient) :=
   rfl
 
+/-- The canonical representative of a natural power in `GFq` lifts the
+quotient-ring power of the underlying quotient representative. -/
+@[simp] theorem repr_pow {h : Conway.SupportedEntry p n}
+    (x : GFq p n h) (k : Nat) :
+    repr (x ^ k) = GFqRing.repr (x.toQuotient ^ k) :=
+  rfl
+
 /-- Two `GFq.ofPoly` constructors produce the same field element exactly when
 their inputs have the same reduced representative modulo the selected Conway
 polynomial. -/
@@ -471,6 +478,22 @@ agree. -/
   -- Finally: `canonicalWordLT n hn64 1 = 1` since `1.toNat < 2 ^ n`.
   apply UInt64.toNat_inj.mp
   simp [GF2Poly.canonicalWordLT, Nat.mod_eq_of_lt hn1]
+
+/-- In characteristic two, negation preserves the packed representative. -/
+@[simp] theorem repr_neg (x : GF2q n) :
+    repr (-x) = repr x :=
+  rfl
+
+/-- The packed representative of a subtraction is the reduced XOR of
+representatives. -/
+@[simp] theorem repr_sub (x y : GF2q n) :
+    repr (x - y) =
+      (GF2n.reduce
+        (n := n) (irr := h.lower)
+        (hn := h.degree_pos) (hn64 := h.degree_lt_word)
+        (hirr := h.packed_irreducible)
+        (repr x ^^^ repr y)).val :=
+  rfl
 
 /-- The packed representative of a sum is the reduced XOR of representatives. -/
 @[simp] theorem repr_add (x y : GF2q n) :
