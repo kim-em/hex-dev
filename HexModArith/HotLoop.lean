@@ -149,6 +149,19 @@ standard residue.
   simpa [ZMod64.toNat_eq_val] using Nat.mod_eq_of_lt a.toNat_lt
 
 /--
+Barrett hot-loop multiplication by zero on the left returns zero.
+-/
+@[simp] theorem mulMod_zero_left (ctx : BarrettCtx p) (a : ZMod64 p) :
+    ctx.mulMod 0 a = 0 := by
+  rw [mulMod_eq_mul]
+  apply (ZMod64.eq_iff_toNat_eq (0 * a) 0).mpr
+  change (ZMod64.mul 0 a).toNat = (ZMod64.zero : ZMod64 p).toNat
+  rw [ZMod64.toNat_mul, ZMod64.toNat_zero]
+  change ((0 : ZMod64 p).toNat * a.toNat) % p = 0
+  have hzero : (0 : ZMod64 p).toNat = 0 := ZMod64.toNat_zero (p := p)
+  rw [hzero, Nat.zero_mul, Nat.zero_mod]
+
+/--
 Barrett hot-loop multiplication by one on the right returns the original
 standard residue.
 -/
@@ -161,6 +174,19 @@ standard residue.
   change (a.toNat * (ZMod64.one : ZMod64 p).toNat) % p = a.toNat
   rw [ZMod64.toNat_one]
   simpa [ZMod64.toNat_eq_val] using Nat.mod_eq_of_lt a.toNat_lt
+
+/--
+Barrett hot-loop multiplication by zero on the right returns zero.
+-/
+@[simp] theorem mulMod_zero_right (ctx : BarrettCtx p) (a : ZMod64 p) :
+    ctx.mulMod a 0 = 0 := by
+  rw [mulMod_eq_mul]
+  apply (ZMod64.eq_iff_toNat_eq (a * 0) 0).mpr
+  change (ZMod64.mul a 0).toNat = (ZMod64.zero : ZMod64 p).toNat
+  rw [ZMod64.toNat_mul, ZMod64.toNat_zero]
+  change (a.toNat * (0 : ZMod64 p).toNat) % p = 0
+  have hzero : (0 : ZMod64 p).toNat = 0 := ZMod64.toNat_zero (p := p)
+  rw [hzero, Nat.mul_zero, Nat.zero_mod]
 
 /-- Barrett hot-loop multiplication is commutative on standard residues. -/
 theorem mulMod_comm (ctx : BarrettCtx p) (a b : ZMod64 p) :
@@ -343,6 +369,20 @@ when the left standard input is one.
   simpa [ZMod64.toNat_eq_val] using Nat.mod_eq_of_lt a.toNat_lt
 
 /--
+The Montgomery round trip for a wrapped product returns zero when the left
+standard input is zero.
+-/
+@[simp] theorem fromMont_mulMont_toMont_zero_left (ctx : MontCtx p) (a : ZMod64 p) :
+    ctx.fromMont (ctx.mulMont (ctx.toMont 0) (ctx.toMont a)) = 0 := by
+  rw [fromMont_mulMont_toMont]
+  apply (ZMod64.eq_iff_toNat_eq (0 * a) 0).mpr
+  change (ZMod64.mul 0 a).toNat = (ZMod64.zero : ZMod64 p).toNat
+  rw [ZMod64.toNat_mul, ZMod64.toNat_zero]
+  change ((0 : ZMod64 p).toNat * a.toNat) % p = 0
+  have hzero : (0 : ZMod64 p).toNat = 0 := ZMod64.toNat_zero (p := p)
+  rw [hzero, Nat.zero_mul, Nat.zero_mod]
+
+/--
 The Montgomery round trip for a wrapped product returns the original residue
 when the right standard input is one.
 -/
@@ -355,6 +395,20 @@ when the right standard input is one.
   change (a.toNat * (ZMod64.one : ZMod64 p).toNat) % p = a.toNat
   rw [ZMod64.toNat_one]
   simpa [ZMod64.toNat_eq_val] using Nat.mod_eq_of_lt a.toNat_lt
+
+/--
+The Montgomery round trip for a wrapped product returns zero when the right
+standard input is zero.
+-/
+@[simp] theorem fromMont_mulMont_toMont_zero_right (ctx : MontCtx p) (a : ZMod64 p) :
+    ctx.fromMont (ctx.mulMont (ctx.toMont a) (ctx.toMont 0)) = 0 := by
+  rw [fromMont_mulMont_toMont]
+  apply (ZMod64.eq_iff_toNat_eq (a * 0) 0).mpr
+  change (ZMod64.mul a 0).toNat = (ZMod64.zero : ZMod64 p).toNat
+  rw [ZMod64.toNat_mul, ZMod64.toNat_zero]
+  change (a.toNat * (0 : ZMod64 p).toNat) % p = 0
+  have hzero : (0 : ZMod64 p).toNat = 0 := ZMod64.toNat_zero (p := p)
+  rw [hzero, Nat.mul_zero, Nat.zero_mod]
 
 /--
 The Montgomery round trip for a wrapped product is commutative on standard
