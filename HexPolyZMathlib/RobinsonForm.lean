@@ -607,6 +607,45 @@ theorem prod_max_one_norm_roots_derivative_le_of_mahlerMeasure_derivative_le
     convert hderiv using 1 <;> ring
   rwa [mul_le_mul_iff_right₀ hscale_pos] at hscaled
 
+/--
+Closed-unit-disk derivative root-product comparison.  The analytic input is
+Gauss-Lucas: derivative roots stay in the convex hull of the original roots,
+which is still contained in the closed unit disk.
+-/
+theorem prod_max_one_norm_roots_derivative_le_of_roots_le_one
+    (p : ℂ[X]) (hroots : ∀ α ∈ p.roots, ‖α‖ ≤ 1) :
+    (p.derivative.roots.map fun β => max (1 : ℝ) ‖β‖).prod ≤
+      (p.roots.map fun α => max (1 : ℝ) ‖α‖).prod := by
+  have hderiv_prod :
+      (p.derivative.roots.map fun β => max (1 : ℝ) ‖β‖).prod = 1 := by
+    apply Multiset.prod_eq_one
+    intro x hx
+    rw [Multiset.mem_map] at hx
+    obtain ⟨β, hβ, rfl⟩ := hx
+    exact max_eq_left (norm_root_derivative_le_of_roots_le_one hroots hβ)
+  rw [hderiv_prod]
+  exact one_le_prod_max_one_norm_roots p
+
+/--
+Robinson endpoint root-product comparison for the derivative.  This is the
+closed-disk endpoint of the de Bruijn-Springer/Boyd reflection route: all roots
+of `p.robinsonForm` lie in the closed unit disk, so Gauss-Lucas puts all roots
+of its derivative there as well.
+-/
+theorem prod_max_one_norm_roots_robinsonForm_derivative_le
+    (p : ℂ[X]) :
+    (p.robinsonForm.derivative.roots.map fun β => max (1 : ℝ) ‖β‖).prod ≤
+      (p.roots.map fun α => max (1 : ℝ) ‖α‖).prod := by
+  have hderiv_prod :
+      (p.robinsonForm.derivative.roots.map fun β => max (1 : ℝ) ‖β‖).prod = 1 := by
+    apply Multiset.prod_eq_one
+    intro x hx
+    rw [Multiset.mem_map] at hx
+    obtain ⟨β, hβ, rfl⟩ := hx
+    exact max_eq_left (norm_root_robinsonForm_derivative_le hβ)
+  rw [hderiv_prod]
+  exact one_le_prod_max_one_norm_roots p
+
 theorem mahlerMeasure_derivative_le_derivative_of_boundary_norm_eq_of_roots_le_one_of_derivative_le
     {p q : ℂ[X]}
     (hpderiv : p.derivative.mahlerMeasure ≤ p.natDegree * p.mahlerMeasure)
