@@ -507,6 +507,11 @@ theorem add_eq_ofNat (a b : ZMod64 p) :
     add a b = ofNat p (a.toNat + b.toNat) := by
   rw [eq_iff_toNat_eq, toNat_add, toNat_ofNat]
 
+/-- Operator-level form of `add_eq_ofNat`. -/
+theorem add_op_eq_ofNat (a b : ZMod64 p) :
+    a + b = ofNat p (a.toNat + b.toNat) := by
+  simpa using add_eq_ofNat a b
+
 /-- Subtraction agrees with modular subtraction of canonical representatives. -/
 @[simp] theorem toNat_sub (a b : ZMod64 p) :
     (sub a b).toNat = (a.toNat + (p - b.toNat)) % p := by
@@ -552,6 +557,11 @@ theorem sub_eq_ofNat (a b : ZMod64 p) :
     sub a b = ofNat p (a.toNat + (p - b.toNat)) := by
   rw [eq_iff_toNat_eq, toNat_sub, toNat_ofNat]
 
+/-- Operator-level form of `sub_eq_ofNat`. -/
+theorem sub_op_eq_ofNat (a b : ZMod64 p) :
+    a - b = ofNat p (a.toNat + (p - b.toNat)) := by
+  simpa using sub_eq_ofNat a b
+
 /-- Multiplication agrees with multiplication of canonical representatives modulo `p`. -/
 @[simp] theorem toNat_mul (a b : ZMod64 p) :
     (mul a b).toNat = (a.toNat * b.toNat) % p := by
@@ -561,6 +571,11 @@ theorem sub_eq_ofNat (a b : ZMod64 p) :
 theorem mul_eq_ofNat (a b : ZMod64 p) :
     mul a b = ofNat p (a.toNat * b.toNat) := by
   rw [eq_iff_toNat_eq, toNat_mul, toNat_ofNat]
+
+/-- Operator-level form of `mul_eq_ofNat`. -/
+theorem mul_op_eq_ofNat (a b : ZMod64 p) :
+    a * b = ofNat p (a.toNat * b.toNat) := by
+  simpa using mul_eq_ofNat a b
 
 /--
 Definition-level representative equation for the extended-GCD inverse candidate.
@@ -726,6 +741,11 @@ private theorem pow_go_toNat (base acc : ZMod64 p) (k : Nat) :
 theorem pow_eq_ofNat (a : ZMod64 p) (n : Nat) :
     pow a n = ofNat p (a.toNat ^ n) := by
   rw [eq_iff_toNat_eq, toNat_pow, toNat_ofNat]
+
+/-- Operator-level form of `pow_eq_ofNat`. -/
+theorem pow_op_eq_ofNat (a : ZMod64 p) (n : Nat) :
+    a ^ n = ofNat p (a.toNat ^ n) := by
+  simpa using pow_eq_ofNat a n
 
 /--
 The extended-GCD inverse candidate is a left inverse whenever the representative
