@@ -395,6 +395,50 @@ instance : Lean.Grind.Semiring (ZMod64 p) := by
     rw [toNat_natCast]
     simp [Nat.mul_mod]
 
+theorem add_zero (a : ZMod64 p) : a + 0 = a := by
+  apply ext_toNat
+  rw [show a + 0 = ZMod64.add a ZMod64.zero from rfl]
+  change (ZMod64.add a ZMod64.zero).toNat = a.toNat
+  rw [toNat_add, toNat_zero, Nat.add_zero]
+  exact Nat.mod_eq_of_lt a.isLt
+
+theorem zero_add (a : ZMod64 p) : 0 + a = a := by
+  apply ext_toNat
+  rw [show 0 + a = ZMod64.add ZMod64.zero a from rfl]
+  change (ZMod64.add ZMod64.zero a).toNat = a.toNat
+  rw [toNat_add, toNat_zero]
+  simpa using Nat.mod_eq_of_lt a.isLt
+
+theorem mul_zero (a : ZMod64 p) : a * 0 = 0 := by
+  apply ext_toNat
+  change (ZMod64.mul a ZMod64.zero).toNat = (ZMod64.zero : ZMod64 p).toNat
+  rw [toNat_mul, toNat_zero]
+  simp
+
+theorem zero_mul (a : ZMod64 p) : 0 * a = 0 := by
+  apply ext_toNat
+  change (ZMod64.mul ZMod64.zero a).toNat = (ZMod64.zero : ZMod64 p).toNat
+  rw [toNat_mul, toNat_zero]
+  simp
+
+theorem mul_one (a : ZMod64 p) : a * 1 = a := by
+  apply ext_toNat
+  change (ZMod64.mul a ZMod64.one).toNat = a.toNat
+  rw [toNat_mul, toNat_one]
+  simp [Nat.mod_eq_of_lt a.isLt]
+
+theorem one_mul (a : ZMod64 p) : 1 * a = a := by
+  apply ext_toNat
+  change (ZMod64.mul ZMod64.one a).toNat = a.toNat
+  rw [toNat_mul, toNat_one]
+  simp [Nat.mod_eq_of_lt a.isLt]
+
+theorem pow_zero (a : ZMod64 p) : a ^ 0 = 1 := by
+  apply ext_toNat
+  change (ZMod64.pow a 0).toNat = (ZMod64.one : ZMod64 p).toNat
+  rw [toNat_pow, toNat_one]
+  simp
+
 instance : Lean.Grind.Ring (ZMod64 p) where
   neg_add_cancel := by
     intro a
