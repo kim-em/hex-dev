@@ -438,6 +438,22 @@ agree. -/
   apply UInt64.toNat_inj.mp
   simp [GF2Poly.canonicalWordLT, Nat.mod_eq_of_lt hn1]
 
+/-- In characteristic two, negation preserves the packed representative. -/
+@[simp] theorem repr_neg (x : GF2q n) :
+    repr (-x) = repr x :=
+  rfl
+
+/-- The packed representative of a subtraction is the reduced XOR of
+representatives. -/
+@[simp] theorem repr_sub (x y : GF2q n) :
+    repr (x - y) =
+      (GF2n.reduce
+        (n := n) (irr := h.lower)
+        (hn := h.degree_pos) (hn64 := h.degree_lt_word)
+        (hirr := h.packed_irreducible)
+        (repr x ^^^ repr y)).val :=
+  rfl
+
 end GF2q
 
 end Hex
