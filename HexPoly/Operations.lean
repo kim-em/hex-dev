@@ -538,5 +538,43 @@ law. -/
     (derivative p).coeff n = ((n + 1 : Nat) : S) * p.coeff (n + 1) := by
   exact coeff_derivative p n (Lean.Grind.Semiring.mul_zero _)
 
+/-- The formal derivative of a constant polynomial is zero over a semiring. -/
+@[simp] theorem derivative_C_semiring {S : Type u}
+    [Lean.Grind.Semiring S] [DecidableEq S] (c : S) :
+    derivative (C c : DensePoly S) = 0 := by
+  apply ext_coeff
+  intro n
+  rw [coeff_derivative_semiring, coeff_zero, coeff_C]
+  simp only [Nat.succ_ne_zero, if_false]
+  change ((n + 1 : Nat) : S) * (0 : S) = 0
+  exact Lean.Grind.Semiring.mul_zero _
+
+/-- The formal derivative of a degree-zero monomial is zero over a semiring. -/
+@[simp] theorem derivative_monomial_zero_semiring {S : Type u}
+    [Lean.Grind.Semiring S] [DecidableEq S] (c : S) :
+    derivative (monomial 0 c : DensePoly S) = 0 := by
+  apply ext_coeff
+  intro n
+  rw [coeff_derivative_semiring, coeff_zero, coeff_monomial]
+  simp only [Nat.succ_ne_zero, if_false]
+  change ((n + 1 : Nat) : S) * (0 : S) = 0
+  exact Lean.Grind.Semiring.mul_zero _
+
+/-- The formal derivative of `c * x^(n + 1)` is `(n + 1) * c * x^n` over a semiring. -/
+theorem derivative_monomial_succ_semiring {S : Type u}
+    [Lean.Grind.Semiring S] [DecidableEq S] (n : Nat) (c : S) :
+    derivative (monomial (n + 1) c : DensePoly S) =
+      monomial n (((n + 1 : Nat) : S) * c) := by
+  apply ext_coeff
+  intro i
+  rw [coeff_derivative_semiring, coeff_monomial, coeff_monomial]
+  by_cases hi : i = n
+  · subst i
+    simp
+  · have hsucc : i + 1 ≠ n + 1 := by omega
+    simp only [hsucc, hi, if_false]
+    change ((i + 1 : Nat) : S) * (0 : S) = 0
+    exact Lean.Grind.Semiring.mul_zero _
+
 end DensePoly
 end Hex
