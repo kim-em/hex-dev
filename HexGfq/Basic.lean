@@ -384,6 +384,60 @@ agree. -/
         (hirr := h.packed_irreducible) w).val :=
   rfl
 
+/-- The packed representative of `0` in `GF2q` is the zero word. -/
+@[simp] theorem repr_zero :
+    repr (0 : GF2q n) = 0 :=
+  rfl
+
+/-- The packed representative of `1` in `GF2q` is the one word. -/
+@[simp] theorem repr_one :
+    repr (1 : GF2q n) = 1 := by
+  show GF2Poly.canonicalWordLT n h.degree_lt_word
+      (GF2Poly.packedReduceWord n h.lower (GF2Poly.ofUInt64 1)) = 1
+  have hn1 : 1 < 2 ^ n :=
+    calc 1 = 2 ^ 0 := by decide
+      _ < 2 ^ n := Nat.pow_lt_pow_right (by decide) h.degree_pos
+  -- `ofUInt64 1 = (1 : GF2Poly)`, and `1 % modulus = 1` since `1.degree < modulus.degree = n`.
+  have hmod : (1 : GF2Poly) % GF2Poly.ofUInt64Monic h.lower n = 1 :=
+    GF2Poly.mod_eq_self_of_reduced 1 _ <| Or.inr <| by
+      rw [GF2Poly.degree_ofUInt64Monic_of_lt_64 h.lower h.degree_lt_word]
+      exact h.degree_pos
+  -- Hence `ofUInt64 (packedReduceWord ... (ofUInt64 1)) = 1` as polynomials.
+  have hpoly :
+      GF2Poly.ofUInt64
+          (GF2Poly.packedReduceWord n h.lower (GF2Poly.ofUInt64 1)) = 1 := by
+    rw [GF2Poly.ofUInt64_packedReduceWord_eq_of_degree_lt
+      h.degree_lt_word (GF2Poly.ofUInt64 1) (Or.inr ?_)]
+    · show (1 : GF2Poly) % GF2Poly.ofUInt64Monic h.lower n = 1
+      exact hmod
+    · show ((1 : GF2Poly) % GF2Poly.ofUInt64Monic h.lower n).degree < n
+      rw [hmod]; exact h.degree_pos
+  -- Compare the single stored words: both `ofUInt64 _` and `ofUInt64 1` equal `ofWords #[1]`.
+  have hword :
+      GF2Poly.packedReduceWord n h.lower (GF2Poly.ofUInt64 1) = 1 := by
+    by_cases hw0 :
+        GF2Poly.packedReduceWord n h.lower (GF2Poly.ofUInt64 1) = 0
+    · exfalso
+      have hbad : GF2Poly.ofUInt64 0 = (1 : GF2Poly) := hw0 ▸ hpoly
+      have : (GF2Poly.ofUInt64 0).words = (1 : GF2Poly).words := congrArg GF2Poly.words hbad
+      revert this; decide
+    · have hwords :
+          (#[GF2Poly.packedReduceWord n h.lower (GF2Poly.ofUInt64 1)] :
+            Array UInt64) = #[1] := by
+        have hwords' := congrArg GF2Poly.words hpoly
+        rw [show GF2Poly.ofUInt64
+            (GF2Poly.packedReduceWord n h.lower (GF2Poly.ofUInt64 1)) =
+              GF2Poly.ofWords #[GF2Poly.packedReduceWord n h.lower
+                (GF2Poly.ofUInt64 1)] from rfl,
+          GF2Poly.words_ofWords_single_nonzero hw0] at hwords'
+        exact hwords'
+      have h0 := congrArg (fun a => a[0]?) hwords
+      simpa using h0
+  rw [hword]
+  -- Finally: `canonicalWordLT n hn64 1 = 1` since `1.toNat < 2 ^ n`.
+  apply UInt64.toNat_inj.mp
+  simp [GF2Poly.canonicalWordLT, Nat.mod_eq_of_lt hn1]
+
 end GF2q
 
 end Hex
