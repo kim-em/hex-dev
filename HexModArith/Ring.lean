@@ -439,6 +439,35 @@ theorem pow_zero (a : ZMod64 p) : a ^ 0 = 1 := by
   rw [toNat_pow, toNat_one]
   simp
 
+@[simp] theorem pow_one (a : ZMod64 p) : a ^ 1 = a := by
+  apply ext_toNat
+  change (ZMod64.pow a 1).toNat = a.toNat
+  rw [toNat_pow]
+  simpa using Nat.mod_eq_of_lt a.isLt
+
+theorem pow_succ (a : ZMod64 p) (n : Nat) :
+    a ^ (n + 1) = a ^ n * a := by
+  apply ext_toNat
+  change (ZMod64.pow a (n + 1)).toNat =
+    (ZMod64.mul (ZMod64.pow a n) a).toNat
+  rw [toNat_pow, toNat_mul, toNat_pow]
+  simp [Nat.pow_succ, Nat.mul_mod]
+
+@[simp] theorem zero_pow {n : Nat} (hn : n ≠ 0) : (0 : ZMod64 p) ^ n = 0 := by
+  apply ext_toNat
+  change (ZMod64.pow ZMod64.zero n).toNat = (ZMod64.zero : ZMod64 p).toNat
+  rw [toNat_pow, toNat_zero]
+  cases n with
+  | zero => contradiction
+  | succ n => simp
+
+@[simp] theorem one_pow (n : Nat) : (1 : ZMod64 p) ^ n = 1 := by
+  apply ext_toNat
+  change (ZMod64.pow ZMod64.one n).toNat = (ZMod64.one : ZMod64 p).toNat
+  rw [toNat_pow, toNat_one]
+  rw [← Nat.pow_mod (1 : Nat) n p]
+  simp
+
 instance : Lean.Grind.Ring (ZMod64 p) where
   neg_add_cancel := by
     intro a
