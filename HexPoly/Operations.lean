@@ -359,6 +359,58 @@ def eval [Add R] [Mul R] (p : DensePoly R) (x : R) : R :=
 def compose [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
   p.toArray.toList.reverse.foldl (fun acc coeff => acc * q + C coeff) (0 : DensePoly R)
 
+/-- Left-composition by the zero polynomial is zero. -/
+@[simp] theorem compose_zero_left [Add R] [Mul R] (q : DensePoly R) :
+    compose (0 : DensePoly R) q = 0 := by
+  rfl
+
+/-- Composition of a constant polynomial. The explicit zero-addition law is needed because
+the generic `Add`/`Mul`/`Zero` interfaces do not provide algebraic simplification rules. -/
+theorem compose_C [Add R] [Mul R] (c : R) (q : DensePoly R)
+    (hzero_add : (Zero.zero : R) + c = c) :
+    compose (C c) q = C c := by
+  by_cases hc : c = (0 : R)
+  · rw [hc]
+    change compose (C (Zero.zero : R)) q = (C (Zero.zero : R))
+    unfold compose toArray
+    rw [show (C (Zero.zero : R)).coeffs = #[] by
+      change (C (0 : R)).coeffs = #[]
+      exact coeffs_C_zero]
+    change (0 : DensePoly R) = C (Zero.zero : R)
+    apply ext_coeff
+    intro n
+    rw [show (0 : DensePoly R).coeff n = (Zero.zero : R) by
+      exact coeff_eq_zero_of_size_le (0 : DensePoly R) (by simp)]
+    rw [coeff_C]
+    by_cases hn : n = 0
+    · simp [hn]
+    · simp [hn]
+  · change c ≠ Zero.zero at hc
+    unfold compose toArray
+    rw [coeffs_C_of_ne_zero hc]
+    change (0 : DensePoly R) * q + C c = C c
+    rw [show (0 : DensePoly R) * q = 0 by rfl]
+    apply ext_coeff
+    intro n
+    change (add (0 : DensePoly R) (C c)).coeff n = (C c).coeff n
+    unfold add
+    rw [coeff_ofCoeffs_list]
+    have hzero_coeff : ∀ i, (0 : DensePoly R).coeff i = (Zero.zero : R) := by
+      intro i
+      exact coeff_eq_zero_of_size_le (0 : DensePoly R) (by simp)
+    cases n with
+    | zero =>
+        simp [size_C_of_ne_zero hc, hzero_coeff, hzero_add]
+    | succ n =>
+        simp [size_C_of_ne_zero hc, hzero_coeff]
+
+/-- Semiring-specialized composition law for constants. This packages the zero-addition
+law needed by the generic `compose_C`. -/
+@[simp] theorem compose_C_semiring {S : Type u} [Lean.Grind.Semiring S] [DecidableEq S]
+    (c : S) (q : DensePoly S) :
+    compose (C c) q = C c :=
+  compose_C c q (by grind)
+
 /-- Formal derivative. The coefficient of `x^i` becomes `(i + 1) * a_(i+1)`. -/
 def derivative [NatCast R] [Mul R] (p : DensePoly R) : DensePoly R :=
   ofCoeffs <|
