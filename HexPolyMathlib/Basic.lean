@@ -253,6 +253,28 @@ theorem ofPolynomial_sub [Ring R] [DecidableEq R] (p q : Polynomial R) :
   rw [Hex.DensePoly.coeff_sub _ _ _ (by show (0 : R) - 0 = 0; simp)]
   simp [coeff_ofPolynomial, Polynomial.coeff_sub]
 
+/-- `ofPolynomial` commutes with polynomial addition. -/
+@[simp]
+theorem ofPolynomial_add [Semiring R] [DecidableEq R] (p q : Polynomial R) :
+    ofPolynomial (p + q) = ofPolynomial p + ofPolynomial q := by
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  rw [Hex.DensePoly.coeff_add _ _ _ (by show (0 : R) + 0 = 0; simp)]
+  simp [coeff_ofPolynomial, Polynomial.coeff_add]
+
+/-- `ofPolynomial` sends Mathlib's monomial to the executable monomial. -/
+@[simp]
+theorem ofPolynomial_monomial [Semiring R] [DecidableEq R] (n : Nat) (c : R) :
+    ofPolynomial (Polynomial.monomial n c) = Hex.DensePoly.monomial n c := by
+  apply Hex.DensePoly.ext_coeff
+  intro i
+  rw [coeff_ofPolynomial, Hex.DensePoly.coeff_monomial,
+      Polynomial.coeff_monomial]
+  by_cases hi : i = n
+  · simp [hi]
+  · simp [hi, Ne.symm hi]
+    rfl
+
 @[simp]
 theorem toPolynomial_zero [Semiring R] [DecidableEq R] :
     toPolynomial (0 : Hex.DensePoly R) = 0 := by
@@ -275,6 +297,19 @@ theorem toPolynomial_one [Semiring R] [DecidableEq R] :
     toPolynomial (1 : Hex.DensePoly R) = 1 := by
   show toPolynomial (Hex.DensePoly.C 1) = 1
   rw [toPolynomial_C, Polynomial.C_1]
+
+/-- `toPolynomial` sends the executable monomial to Mathlib's monomial. -/
+@[simp]
+theorem toPolynomial_monomial [Semiring R] [DecidableEq R]
+    (n : Nat) (c : R) :
+    toPolynomial (Hex.DensePoly.monomial n c) = Polynomial.monomial n c := by
+  ext i
+  rw [coeff_toPolynomial, Hex.DensePoly.coeff_monomial, Polynomial.coeff_monomial]
+  by_cases h : i = n
+  · simp [h]
+  · have h' : n ≠ i := fun heq => h heq.symm
+    simp [h, h']
+    rfl
 
 @[simp]
 theorem toPolynomial_add [Semiring R] [DecidableEq R] (p q : Hex.DensePoly R) :
@@ -355,6 +390,13 @@ theorem equiv_symm_apply [CommRing R] [DecidableEq R] (p : Polynomial R) :
     equiv.symm p = ofPolynomial p := by
   rfl
 
+/-- `ofPolynomial` commutes with polynomial multiplication. -/
+@[simp]
+theorem ofPolynomial_mul [CommRing R] [DecidableEq R] (p q : Polynomial R) :
+    ofPolynomial (p * q) = ofPolynomial p * ofPolynomial q :=
+  map_mul (equiv (R := R)).symm p q
+
+@[simp]
 theorem natDegree_toPolynomial [Semiring R] [DecidableEq R] (p : Hex.DensePoly R) :
     (toPolynomial p).natDegree = p.degree?.getD 0 := by
   by_cases hsize : p.size = 0
@@ -378,6 +420,7 @@ theorem natDegree_toPolynomial [Semiring R] [DecidableEq R] (p : Hex.DensePoly R
       rw [coeff_toPolynomial]
       exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size p hpos
 
+@[simp]
 theorem leadingCoeff_toPolynomial [Semiring R] [DecidableEq R]
     (p : Hex.DensePoly R) :
     (toPolynomial p).leadingCoeff = p.leadingCoeff := by

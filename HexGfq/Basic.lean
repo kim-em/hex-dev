@@ -266,6 +266,31 @@ the selected Conway polynomial. -/
     repr (1 : GFq p n h) = GFqRing.reduceMod (modulus h) 1 :=
   rfl
 
+/-- The canonical representative of a sum in `GFq` reduces from the sum of
+representatives modulo the selected Conway polynomial. -/
+@[simp] theorem repr_add {h : Conway.SupportedEntry p n}
+    (x y : GFq p n h) :
+    repr (x + y) = GFqRing.reduceMod (modulus h) (repr x + repr y) :=
+  rfl
+
+/-- The canonical representative of a product in `GFq` reduces from the product
+of representatives modulo the selected Conway polynomial. -/
+@[simp] theorem repr_mul {h : Conway.SupportedEntry p n}
+    (x y : GFq p n h) :
+    repr (x * y) = GFqRing.reduceMod (modulus h) (repr x * repr y) :=
+  rfl
+
+/-- The representative of a negation reduces from the negated representative. -/
+@[simp] theorem repr_neg {h : Conway.SupportedEntry p n} (x : GFq p n h) :
+    repr (-x) = GFqRing.reduceMod (modulus h) (-(repr x)) :=
+  rfl
+
+/-- The representative of a subtraction reduces from the difference of
+representatives. -/
+@[simp] theorem repr_sub {h : Conway.SupportedEntry p n} (x y : GFq p n h) :
+    repr (x - y) = GFqRing.reduceMod (modulus h) (repr x - repr y) :=
+  rfl
+
 /-- Two `GFq.ofPoly` constructors produce the same field element exactly when
 their inputs have the same reduced representative modulo the selected Conway
 polynomial. -/
@@ -452,6 +477,28 @@ representatives. -/
         (hn := h.degree_pos) (hn64 := h.degree_lt_word)
         (hirr := h.packed_irreducible)
         (repr x ^^^ repr y)).val :=
+  rfl
+
+/-- The packed representative of a sum is the reduced XOR of representatives. -/
+@[simp] theorem repr_add (x y : GF2q n) :
+    repr (x + y) =
+      (GF2n.reduce
+        (n := n) (irr := h.lower)
+        (hn := h.degree_pos) (hn64 := h.degree_lt_word)
+        (hirr := h.packed_irreducible)
+        (repr x ^^^ repr y)).val :=
+  rfl
+
+/-- The packed representative of a product is the reduced carry-less product
+of representatives. -/
+@[simp] theorem repr_mul (x y : GF2q n) :
+    repr (x * y) =
+      (let product := Hex.clmul (repr x) (repr y)
+       GF2n.reduceWide
+        (n := n) (irr := h.lower)
+        (hn := h.degree_pos) (hn64 := h.degree_lt_word)
+        (hirr := h.packed_irreducible)
+        product.1 product.2).val := by
   rfl
 
 end GF2q
