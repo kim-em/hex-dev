@@ -291,6 +291,14 @@ representatives. -/
     repr (x - y) = GFqRing.reduceMod (modulus h) (repr x - repr y) :=
   rfl
 
+/-- The canonical representative of a natural literal in `GFq` is the
+reduction modulo the selected Conway polynomial of the constant
+polynomial carrying the literal as a `ZMod64` coefficient. -/
+@[simp] theorem repr_natCast (h : Conway.SupportedEntry p n) (k : Nat) :
+    repr ((k : GFq p n h)) =
+      GFqRing.reduceMod (modulus h) (FpPoly.C (k : ZMod64 p)) :=
+  rfl
+
 /-- Two `GFq.ofPoly` constructors produce the same field element exactly when
 their inputs have the same reduced representative modulo the selected Conway
 polynomial. -/
