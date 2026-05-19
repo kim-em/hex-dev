@@ -443,6 +443,55 @@ theorem rowSwap_rowSwap (M : Matrix R n m) (i j : Fin n) :
       rw [rowSwap_getElem]
       rw [if_neg hrj, if_neg hri]
 
+/-- Swapping a row with itself leaves the matrix unchanged. -/
+@[simp] theorem rowSwap_self (M : Matrix R n m) (i : Fin n) :
+    rowSwap M i i = M := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro k hk
+  let rr : Fin n := ⟨r, hr⟩
+  let kk : Fin m := ⟨k, hk⟩
+  show (rowSwap M i i)[rr][kk] = M[rr][kk]
+  rw [rowSwap_getElem]
+  by_cases hri : rr = i
+  · simp [hri]
+  · simp [hri]
+
+/-- Scaling a row by one leaves the matrix unchanged. -/
+@[simp] theorem rowScale_one [Lean.Grind.Semiring R]
+    (M : Matrix R n m) (i : Fin n) :
+    rowScale M i 1 = M := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro k hk
+  let rr : Fin n := ⟨r, hr⟩
+  let kk : Fin m := ⟨k, hk⟩
+  show (rowScale M i 1)[rr][kk] = M[rr][kk]
+  rw [rowScale_getElem]
+  by_cases hri : rr = i
+  · rw [if_pos hri]
+    grind
+  · rw [if_neg hri]
+
+/-- Adding zero times one row to another leaves the matrix unchanged. -/
+@[simp] theorem rowAdd_zero [Lean.Grind.Semiring R]
+    (M : Matrix R n m) (src dst : Fin n) :
+    rowAdd M src dst 0 = M := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro k hk
+  let rr : Fin n := ⟨r, hr⟩
+  let kk : Fin m := ⟨k, hk⟩
+  show (rowAdd M src dst 0)[rr][kk] = M[rr][kk]
+  rw [rowAdd_getElem]
+  by_cases hrd : rr = dst
+  · rw [if_pos hrd]
+    grind
+  · rw [if_neg hrd]
+
 /-- Scaling a row by `s` and then by `s⁻¹` restores the original matrix when
 `s` is nonzero. -/
 theorem rowScale_rowScale_inv_left [Lean.Grind.Field R]
