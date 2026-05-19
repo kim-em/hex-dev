@@ -495,6 +495,48 @@ theorem mahlerMeasure_derivative_eq_natDegree_mul_of_roots_le_one
     exact mahlerMeasure_eq_norm_leadingCoeff_of_roots_le_one hroots
   rw [hMM_deriv, hlead_deriv, norm_mul, Complex.norm_natCast, ← hMM_p, mul_comm]
 
+/--
+The root-product form of the derivative bound follows from the corresponding
+Mahler-measure bound after cancelling the derivative leading coefficient.
+-/
+theorem prod_max_one_norm_roots_derivative_le_of_mahlerMeasure_derivative_le
+    (p : ℂ[X])
+    (h : p.derivative.mahlerMeasure ≤ p.natDegree * p.mahlerMeasure) :
+    (p.derivative.roots.map (fun β => max (1 : ℝ) ‖β‖)).prod ≤
+      (p.roots.map (fun α => max (1 : ℝ) ‖α‖)).prod := by
+  by_cases hp : p = 0
+  · simp [hp]
+  by_cases hnatDeg : p.natDegree = 0
+  · have hderiv : p.derivative = 0 := derivative_of_natDegree_zero hnatDeg
+    rw [hderiv, roots_zero, Multiset.map_zero, Multiset.prod_zero]
+    exact one_le_prod_max_one_norm_roots p
+  have hnatpos : 0 < p.natDegree := Nat.pos_of_ne_zero hnatDeg
+  have hsub : p.natDegree - 1 + 1 = p.natDegree :=
+    Nat.sub_add_cancel hnatpos
+  have hdeg_deriv : p.derivative.natDegree = p.natDegree - 1 :=
+    natDegree_eq_of_degree_eq_some (degree_derivative_eq p hnatpos)
+  have hcast : ((p.natDegree - 1 : ℕ) : ℂ) + 1 = (p.natDegree : ℂ) := by
+    rw [Nat.cast_sub hnatpos, Nat.cast_one]
+    ring
+  have hlead_deriv : p.derivative.leadingCoeff =
+      p.leadingCoeff * (p.natDegree : ℂ) := by
+    unfold leadingCoeff
+    rw [hdeg_deriv, coeff_derivative, hsub, hcast]
+  have hlead_pos : 0 < ‖p.leadingCoeff‖ :=
+    norm_pos_iff.mpr (leadingCoeff_ne_zero.mpr hp)
+  have hnatpos_real : 0 < (p.natDegree : ℝ) := by
+    exact_mod_cast hnatpos
+  rw [mahlerMeasure_eq_leadingCoeff_mul_prod_roots,
+    mahlerMeasure_eq_leadingCoeff_mul_prod_roots, hlead_deriv, norm_mul,
+    Complex.norm_natCast] at h
+  set q := (p.derivative.roots.map (fun β => max (1 : ℝ) ‖β‖)).prod
+  set r := (p.roots.map (fun α => max (1 : ℝ) ‖α‖)).prod
+  have hcancel :
+      (p.natDegree : ℝ) * ‖p.leadingCoeff‖ * q ≤
+        (p.natDegree : ℝ) * ‖p.leadingCoeff‖ * r := by
+    nlinarith
+  exact (mul_le_mul_iff_right₀ (mul_pos hnatpos_real hlead_pos)).mp hcancel
+
 theorem mahlerMeasure_robinsonForm_derivative (p : ℂ[X]) :
     p.robinsonForm.derivative.mahlerMeasure = p.natDegree * p.mahlerMeasure := by
   rw [mahlerMeasure_derivative_eq_natDegree_mul_of_roots_le_one p.robinsonForm
