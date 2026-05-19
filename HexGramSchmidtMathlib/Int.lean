@@ -25,27 +25,6 @@ namespace Hex
 namespace GramSchmidt
 namespace Int
 
-/-- Bridge-layer capstone for the Gram determinant vector: the no-pivot
-Bareiss pass over the full Gram matrix records, at slot `r + 1`, the same
-leading-prefix determinant as the public row-pivoted Bareiss surface on that
-prefix.
-
-This theorem lives in `HexGramSchmidtMathlib` because the proof path for the
-underlying `gramDet`/Bareiss identification crosses the matrix determinant
-bridge. Mathlib-free consumers should use the executable `gramDet` API
-instead of depending on this Bareiss-facing statement. -/
-theorem gramDetVecEntry_eq_leadingPrefix_bareiss
-    (b : Matrix Int n m) (r : Nat) (hr : r < n) :
-    gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
-        ⟨r + 1, Nat.succ_lt_succ hr⟩ =
-      (Matrix.bareiss
-        (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
-          (Nat.succ_le_of_lt hr))).toNat := by
-  have hentry :=
-    gramDetVecEntry_eq_gramDet (b := b) (k := r + 1)
-      (hk := Nat.succ_le_of_lt hr)
-  simpa [gramDet, GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram] using hentry
-
 /-- Bareiss agrees with the Leibniz determinant on the Cramer matrix used by
 the scaled-coefficient formula. -/
 private theorem scaledCoeffMatrix_bareiss_eq_det
@@ -3497,6 +3476,111 @@ theorem leadingPrefix_gram_bareiss_eq_zero_of_singularStep_lt
     rw [← h_lead_eq_r]; exact h_det_lead_r1_zero
   rw [HexMatrixMathlib.bareiss_eq_det]
   exact h_det_prefix_r1_zero
+
+/-- Bridge-layer capstone for the Gram determinant vector: the no-pivot
+Bareiss pass over the full Gram matrix records, at slot `r + 1`, the same
+leading-prefix determinant as the public row-pivoted Bareiss surface on that
+prefix.
+
+This theorem lives in `HexGramSchmidtMathlib` because the proof path for the
+singular branch crosses the matrix determinant bridge. Mathlib-free consumers
+should use the executable `gramDet` API instead of depending on this
+Bareiss-facing statement. -/
+theorem gramDetVecEntry_eq_leadingPrefix_bareiss
+    (b : Matrix Int n m) (r : Nat) (hr : r < n) :
+    gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
+        ⟨r + 1, Nat.succ_lt_succ hr⟩ =
+      (Matrix.bareiss
+        (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+          (Nat.succ_le_of_lt hr))).toNat := by
+  let GM := Matrix.gramMatrix b
+  let init := Matrix.noPivotInitialState GM
+  let data := Matrix.bareissNoPivotData GM
+  let i : Fin n := ⟨r, hr⟩
+  by_cases h_prefix :
+      (Matrix.noPivotLoop r init).singularStep = none
+  · have hdiag :=
+      bareissNoPivotData_diag_eq_leadingPrefix_bareiss_of_prefix_nonsingular
+        (b := b) r hr (by simpa [GM, init] using h_prefix)
+    have h_step_r : (Matrix.noPivotLoop r init).step = r := by
+      have h_room : init.step + r + 1 ≤ n := by
+        simp [init, Matrix.noPivotInitialState]
+        omega
+      have h := Matrix.noPivotLoop_step_eq_add_of_singularStep_none
+        r init rfl h_room h_prefix
+      simpa [init, Matrix.noPivotInitialState] using h
+    have h_entry_diag :
+        gramDetVecEntry data ⟨r + 1, Nat.succ_lt_succ hr⟩ =
+          (data.matrix[i][i]).toNat := by
+      have h_split : r + (n - r) = n := by omega
+      have h_full :
+          Matrix.noPivotLoop n init =
+            Matrix.noPivotLoop (n - r) (Matrix.noPivotLoop r init) := by
+        simpa [h_split] using Matrix.noPivotLoop_add r (n - r) init
+      rcases noPivotLoop_singular_inv (n := n) (n - r)
+          (Matrix.noPivotLoop r init) h_prefix with h_none | h_sing
+      · have hdata : data.singularStep = none := by
+          simpa [data, Matrix.bareissNoPivotData, Matrix.finish, GM, init, h_full] using h_none
+        simp [gramDetVecEntry, data, hdata, i]
+        rfl
+      · rcases h_sing with ⟨k, h_sing_full, h_step_full, h_zero_full, _hk_bound⟩
+        have hdata : data.singularStep = some k.val := by
+          simpa [data, Matrix.bareissNoPivotData, Matrix.finish, GM, init, h_full] using h_sing_full
+        have hmono := noPivotLoop_step_monotone (n - r) (Matrix.noPivotLoop r init)
+        have hr_le_k : r ≤ k.val := by
+          rw [h_step_r, h_step_full] at hmono
+          exact hmono
+        by_cases hkr : k.val = r
+        · have hlt : k.val < r + 1 := by omega
+          have hdata_matrix :
+              data.matrix[i][i] =
+                (Matrix.noPivotLoop (n - r) (Matrix.noPivotLoop r init)).matrix[i][i] := by
+            simp [data, Matrix.bareissNoPivotData, Matrix.finish, GM, init, h_full]
+          have hzero_i : data.matrix[i][i] = 0 := by
+            have hi_eq : i = k := Fin.ext hkr.symm
+            rw [hdata_matrix]
+            simpa [hi_eq] using h_zero_full
+          simp [gramDetVecEntry, data, hdata, i, hlt]
+          simpa [data, i] using (congrArg Int.toNat hzero_i).symm
+        · have hlt : ¬ k.val < r + 1 := by omega
+          simp [gramDetVecEntry, data, hdata, i, hlt]
+          rfl
+    calc
+      gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
+          ⟨r + 1, Nat.succ_lt_succ hr⟩ =
+          (data.matrix[i][i]).toNat := by
+            simpa [data, GM, i] using h_entry_diag
+      _ = (Matrix.bareiss
+            (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+              (Nat.succ_le_of_lt hr))).toNat := by
+            exact congrArg Int.toNat (by simpa [data, GM, i] using hdiag)
+  · rcases noPivotLoop_singular_inv (n := n) r init rfl with h_none | h_sing
+    · exact False.elim (h_prefix h_none)
+    · rcases h_sing with ⟨k, h_sing_r, h_step_r, h_zero_r, h_klt⟩
+      have hsr : k.val < r + 1 := by
+        have h := noPivotLoop_singularStep_lt (n := n) r init rfl k.val h_sing_r
+        simp [init, Matrix.noPivotInitialState] at h
+        omega
+      have h_full_eq :
+          Matrix.noPivotLoop n init = Matrix.noPivotLoop r init := by
+        have h_split : n = r + (n - r) := by omega
+        have hext :=
+          noPivotLoop_extends_singularStep init r (n - r) k
+            h_sing_r h_step_r h_zero_r h_klt
+        exact (congrArg (fun fuel => Matrix.noPivotLoop fuel init) h_split).trans hext
+      have hdata : data.singularStep = some k.val := by
+        simpa [data, Matrix.bareissNoPivotData, Matrix.finish, GM, init, h_full_eq] using h_sing_r
+      have hleft :
+          gramDetVecEntry data ⟨r + 1, Nat.succ_lt_succ hr⟩ = 0 := by
+        simp [gramDetVecEntry, data, hdata, hsr]
+      have hright :
+          Matrix.bareiss
+            (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+              (Nat.succ_le_of_lt hr)) = 0 :=
+        leadingPrefix_gram_bareiss_eq_zero_of_singularStep_lt
+          (b := b) r hr k.val (by simpa [GM, init] using h_sing_r)
+      rw [hright]
+      simpa [data, GM] using hleft
 
 
 end Int
