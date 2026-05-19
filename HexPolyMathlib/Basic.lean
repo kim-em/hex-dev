@@ -213,6 +213,16 @@ theorem ofPolynomial_zero [Semiring R] [DecidableEq R] :
   intro n
   simp [coeff_ofPolynomial, Hex.DensePoly.coeff_zero]
 
+/-- `ofPolynomial` sends Mathlib's polynomial `1` to the executable constant `1`. -/
+@[simp]
+theorem ofPolynomial_one [Semiring R] [DecidableEq R] :
+    ofPolynomial (1 : Polynomial R) = 1 := by
+  show ofPolynomial (1 : Polynomial R) = Hex.DensePoly.C 1
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  rw [coeff_ofPolynomial, Hex.DensePoly.coeff_C, Polynomial.coeff_one]
+  rfl
+
 @[simp]
 theorem toPolynomial_zero [Semiring R] [DecidableEq R] :
     toPolynomial (0 : Hex.DensePoly R) = 0 := by
@@ -229,6 +239,13 @@ theorem toPolynomial_C [Semiring R] [DecidableEq R] (c : R) :
   · simp [hn]
     rfl
 
+/-- `toPolynomial` sends the executable constant `1` to Mathlib's polynomial `1`. -/
+@[simp]
+theorem toPolynomial_one [Semiring R] [DecidableEq R] :
+    toPolynomial (1 : Hex.DensePoly R) = 1 := by
+  show toPolynomial (Hex.DensePoly.C 1) = 1
+  rw [toPolynomial_C, Polynomial.C_1]
+
 @[simp]
 theorem toPolynomial_add [Semiring R] [DecidableEq R] (p q : Hex.DensePoly R) :
     toPolynomial (p + q) = toPolynomial p + toPolynomial q := by
@@ -236,6 +253,24 @@ theorem toPolynomial_add [Semiring R] [DecidableEq R] (p q : Hex.DensePoly R) :
   rw [coeff_toPolynomial, Polynomial.coeff_add, coeff_toPolynomial, coeff_toPolynomial]
   exact Hex.DensePoly.coeff_add p q n (by
     show (0 : R) + (0 : R) = 0
+    simp)
+
+/-- `toPolynomial` commutes with executable polynomial negation. -/
+@[simp]
+theorem toPolynomial_neg [Ring R] [DecidableEq R] (p : Hex.DensePoly R) :
+    toPolynomial (-p) = -toPolynomial p := by
+  ext n
+  rw [coeff_toPolynomial, Polynomial.coeff_neg, coeff_toPolynomial,
+      Hex.DensePoly.coeff_neg p n (by show (0 : R) - 0 = 0; simp), zero_sub]
+
+/-- `toPolynomial` commutes with executable polynomial subtraction. -/
+@[simp]
+theorem toPolynomial_sub [Ring R] [DecidableEq R] (p q : Hex.DensePoly R) :
+    toPolynomial (p - q) = toPolynomial p - toPolynomial q := by
+  ext n
+  rw [coeff_toPolynomial, Polynomial.coeff_sub, coeff_toPolynomial, coeff_toPolynomial]
+  exact Hex.DensePoly.coeff_sub p q n (by
+    show (0 : R) - (0 : R) = 0
     simp)
 
 @[simp]
