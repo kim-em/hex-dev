@@ -1125,6 +1125,7 @@ theorem pivotCols_injective (E : IsEchelonForm M D) :
 def freeColsList (_E : IsEchelonForm M D) : List (Fin m) :=
   (List.finRange m).filter fun j => j ∉ D.pivotCols.toList
 
+/-- The number of free columns is the ambient column count minus the rank. -/
 theorem freeColsList_length (E : IsEchelonForm M D) :
     E.freeColsList.length = m - D.rank := by
   let p : Fin m → Bool := fun j => decide (j ∈ D.pivotCols.toList)
@@ -1167,6 +1168,7 @@ private theorem freeColsList_pairwise (E : IsEchelonForm M D) :
   unfold freeColsList
   exact List.Pairwise.filter (fun j => j ∉ D.pivotCols.toList) (List.pairwise_lt_finRange m)
 
+/-- The free-column complement is strictly increasing. -/
 theorem freeCols_sorted (E : IsEchelonForm M D) :
     ∀ i j, i < j → E.freeCols.get i < E.freeCols.get j := by
   intro i j hij
@@ -1222,6 +1224,8 @@ theorem colPartition (E : IsEchelonForm M D) (j : Fin m) :
     refine ⟨⟨k, hk'⟩, ?_⟩
     simpa [E.freeCols_get_eq ⟨k, hk'⟩] using hget
 
+/-- No column can simultaneously occur in the pivot list and the free-column
+complement. -/
 theorem colPartition_exclusive (E : IsEchelonForm M D) (j : Fin m) :
     ¬((∃ i : Fin D.rank, D.pivotCols.get i = j) ∧
       (∃ k : Fin (m - D.rank), E.freeCols.get k = j)) := by
