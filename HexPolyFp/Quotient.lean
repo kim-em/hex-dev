@@ -1790,36 +1790,30 @@ private theorem eval_eq_coeff_power_sum_upTo_bound (f : FpPoly p)
     (fun i hi => DensePoly.coeff_eq_zero_of_size_le f hi) extra
 
 omit [ZMod64.PrimeModulus p] in
-private theorem zmod64_add_zero_zero_local :
-    (0 : ZMod64 p) + 0 = 0 := by grind
-
-omit [ZMod64.PrimeModulus p] in
-private theorem zmod64_sub_zero_zero_local :
-    (0 : ZMod64 p) - 0 = 0 := by grind
-
-omit [ZMod64.PrimeModulus p] in
 private theorem C_add_eq (a b : ZMod64 p) :
     (DensePoly.C (a + b) : FpPoly p) = DensePoly.C a + DensePoly.C b := by
   apply DensePoly.ext_coeff
   intro n
-  rw [DensePoly.coeff_C, DensePoly.coeff_add _ _ _ zmod64_add_zero_zero_local,
+  rw [DensePoly.coeff_C, DensePoly.coeff_add_semiring,
     DensePoly.coeff_C, DensePoly.coeff_C]
   cases n with
   | zero => grind
   | succ n =>
-      exact zmod64_add_zero_zero_local.symm
+      show (0 : ZMod64 p) = 0 + 0
+      grind
 
 omit [ZMod64.PrimeModulus p] in
 private theorem C_sub_eq (a b : ZMod64 p) :
     (DensePoly.C (a - b) : FpPoly p) = DensePoly.C a - DensePoly.C b := by
   apply DensePoly.ext_coeff
   intro n
-  rw [DensePoly.coeff_C, DensePoly.coeff_sub _ _ _ zmod64_sub_zero_zero_local,
+  rw [DensePoly.coeff_C, DensePoly.coeff_sub_ring,
     DensePoly.coeff_C, DensePoly.coeff_C]
   cases n with
   | zero => grind
   | succ n =>
-      exact zmod64_sub_zero_zero_local.symm
+      show (0 : ZMod64 p) = 0 - 0
+      grind
 
 omit [ZMod64.PrimeModulus p] in
 private theorem C_mul_C_eq (a b : ZMod64 p) :
@@ -1983,19 +1977,20 @@ private theorem eval_add_core_by_coeff_power_sum
         (fun i => (f + h).coeff i) =
           (fun i => f.coeff i + h.coeff i) := by
       funext i
-      rw [DensePoly.coeff_add _ _ _ zmod64_add_zero_zero_local]
+      rw [DensePoly.coeff_add_semiring]
     rw [hcoeff]
     exact evalCoeffPowerSumUpTo_add
       (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f h β bound 0
   · change (f + h).size ≤ max f.size h.size
     apply size_le_of_coeff_eq_zero_from_local
     intro i hi
-    rw [DensePoly.coeff_add _ _ _ zmod64_add_zero_zero_local]
+    rw [DensePoly.coeff_add_semiring]
     rw [DensePoly.coeff_eq_zero_of_size_le f
         (Nat.le_trans (Nat.le_max_left f.size h.size) hi),
       DensePoly.coeff_eq_zero_of_size_le h
         (Nat.le_trans (Nat.le_max_right f.size h.size) hi)]
-    exact zmod64_add_zero_zero_local
+    show (0 : ZMod64 p) + 0 = 0
+    grind
 
 private theorem eval_sub_core_by_coeff_power_sum
     (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
@@ -2016,19 +2011,20 @@ private theorem eval_sub_core_by_coeff_power_sum
         (fun i => (f - h).coeff i) =
           (fun i => f.coeff i - h.coeff i) := by
       funext i
-      rw [DensePoly.coeff_sub _ _ _ zmod64_sub_zero_zero_local]
+      rw [DensePoly.coeff_sub_ring]
     rw [hcoeff]
     exact evalCoeffPowerSumUpTo_sub
       (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f h β bound 0
   · change (f - h).size ≤ max f.size h.size
     apply size_le_of_coeff_eq_zero_from_local
     intro i hi
-    rw [DensePoly.coeff_sub _ _ _ zmod64_sub_zero_zero_local]
+    rw [DensePoly.coeff_sub_ring]
     rw [DensePoly.coeff_eq_zero_of_size_le f
         (Nat.le_trans (Nat.le_max_left f.size h.size) hi),
       DensePoly.coeff_eq_zero_of_size_le h
         (Nat.le_trans (Nat.le_max_right f.size h.size) hi)]
-    exact zmod64_sub_zero_zero_local
+    show (0 : ZMod64 p) - 0 = 0
+    grind
 
 private theorem eval_C_mul_core_by_coeff_power_sum
     (c : ZMod64 p) (f : FpPoly p) (β : Quotient g hmonic hg_pos) :
@@ -2818,12 +2814,11 @@ private theorem monomial_pPow_sub_X_ne_zero {r : Nat} (hr_pos : 0 < r) :
   have hp_pow_gt_one : 1 < p ^ r := Nat.pow_lt_pow_right hp_gt_one hr_pos
   have hpow_ne_one : p ^ r ≠ 1 := by omega
   have hcoeff := congrArg (fun f : FpPoly p => f.coeff (p ^ r)) hzero
-  have hzero_sub : (0 : ZMod64 p) - 0 = 0 := by grind
   change
       (DensePoly.monomial (p ^ r) (1 : ZMod64 p) -
           DensePoly.monomial 1 (1 : ZMod64 p) : FpPoly p).coeff (p ^ r) =
         (0 : FpPoly p).coeff (p ^ r) at hcoeff
-  rw [DensePoly.coeff_sub _ _ _ hzero_sub, DensePoly.coeff_monomial,
+  rw [DensePoly.coeff_sub_ring, DensePoly.coeff_monomial,
     DensePoly.coeff_monomial, DensePoly.coeff_zero] at hcoeff
   simp [hpow_ne_one] at hcoeff
   have hone_zero : (1 : ZMod64 p) = 0 := by
@@ -2847,11 +2842,10 @@ private theorem monomial_pPow_sub_X_size_sub_one_le {r : Nat} (hr_pos : 0 < r) :
     intro i hi
     have hi_ne_pow : i ≠ p ^ r := by omega
     have hi_ne_one : i ≠ 1 := by omega
-    have hzero_sub : (0 : ZMod64 p) - 0 = 0 := by grind
     change
         (DensePoly.monomial (p ^ r) (1 : ZMod64 p) -
             DensePoly.monomial 1 (1 : ZMod64 p) : FpPoly p).coeff i = 0
-    rw [DensePoly.coeff_sub _ _ _ hzero_sub, DensePoly.coeff_monomial,
+    rw [DensePoly.coeff_sub_ring, DensePoly.coeff_monomial,
       DensePoly.coeff_monomial]
     simp [hi_ne_pow, hi_ne_one]
     grind
