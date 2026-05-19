@@ -291,6 +291,15 @@ representatives. -/
     repr (x - y) = GFqRing.reduceMod (modulus h) (repr x - repr y) :=
   rfl
 
+/-- The canonical representative of a quotient in `GFq` lifts the
+quotient-ring product of the dividend's representative with the inverse of
+the divisor. -/
+@[simp] theorem repr_div {h : Conway.SupportedEntry p n}
+    (x y : GFq p n h) :
+    repr (x / y) =
+      GFqRing.repr (x.toQuotient * (GFqField.inv y).toQuotient) :=
+  rfl
+
 /-- Two `GFq.ofPoly` constructors produce the same field element exactly when
 their inputs have the same reduced representative modulo the selected Conway
 polynomial. -/
