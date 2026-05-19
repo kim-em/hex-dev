@@ -55,6 +55,39 @@ theorem rowSwap_getElem (M : Matrix R n m) (i j r : Fin n) (k : Fin m) :
       exact (congrArg (fun row => row[k]) hrow₂).trans
         (congrArg (fun row => row[k]) hrow₁)
 
+/-- Row `i` of `rowSwap M i j` is the original row `j`. -/
+@[simp] theorem row_rowSwap_left (M : Matrix R n m) (i j : Fin n) :
+    row (rowSwap M i j) i = row M j := by
+  apply Vector.ext
+  intro k hk
+  let kk : Fin m := ⟨k, hk⟩
+  show (row (rowSwap M i j) i)[kk] = (row M j)[kk]
+  rw [row_getElem, row_getElem, rowSwap_getElem]
+  by_cases hij : i = j
+  · simp [hij]
+  · simp [hij]
+
+/-- Row `j` of `rowSwap M i j` is the original row `i`. -/
+@[simp] theorem row_rowSwap_right (M : Matrix R n m) (i j : Fin n) :
+    row (rowSwap M i j) j = row M i := by
+  apply Vector.ext
+  intro k hk
+  let kk : Fin m := ⟨k, hk⟩
+  show (row (rowSwap M i j) j)[kk] = (row M i)[kk]
+  rw [row_getElem, row_getElem, rowSwap_getElem]
+  simp
+
+/-- Any row other than `i` and `j` is unchanged by `rowSwap M i j`. -/
+theorem row_rowSwap_of_ne (M : Matrix R n m) {i j r : Fin n}
+    (hri : r ≠ i) (hrj : r ≠ j) :
+    row (rowSwap M i j) r = row M r := by
+  apply Vector.ext
+  intro k hk
+  let kk : Fin m := ⟨k, hk⟩
+  show (row (rowSwap M i j) r)[kk] = (row M r)[kk]
+  rw [row_getElem, row_getElem, rowSwap_getElem]
+  simp [hri, hrj]
+
 /-- Diagonal-entry corollary of `rowSwap_getElem` for square matrices: when
 `pivot ≠ k`, the `(k, k)` entry of `rowSwap M k pivot` is the original
 `(pivot, k)` entry. Used by Bareiss row-pivoted invariants to fold a row swap
@@ -90,6 +123,27 @@ theorem rowScale_getElem [Mul R] (M : Matrix R n m) (i r : Fin n) (c : R) (k : F
           i.isLt r.isLt hval)
     simpa [rowScale] using congrArg (fun row => row[k]) hrow
 
+/-- Row `i` of `rowScale M i c` is the pointwise scalar multiple of row `i`. -/
+@[simp] theorem row_rowScale_self [Mul R] (M : Matrix R n m) (i : Fin n) (c : R) :
+    row (rowScale M i c) i = Vector.ofFn (fun k => c * M[i][k]) := by
+  apply Vector.ext
+  intro k hk
+  let kk : Fin m := ⟨k, hk⟩
+  show (row (rowScale M i c) i)[kk] = (Vector.ofFn (fun k => c * M[i][k]))[kk]
+  rw [row_getElem, rowScale_getElem]
+  simp
+
+/-- Any row other than `i` is unchanged by `rowScale M i c`. -/
+theorem row_rowScale_of_ne [Mul R] (M : Matrix R n m) {i r : Fin n} (c : R)
+    (hri : r ≠ i) :
+    row (rowScale M i c) r = row M r := by
+  apply Vector.ext
+  intro k hk
+  let kk : Fin m := ⟨k, hk⟩
+  show (row (rowScale M i c) r)[kk] = (row M r)[kk]
+  rw [row_getElem, row_getElem, rowScale_getElem]
+  simp [hri]
+
 /-- Replace row `dst` by `row dst + c * row src`. -/
 def rowAdd [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin n) (c : R) : Matrix R n m :=
   M.set dst <| Vector.ofFn fun k => M[dst][k] + c * M[src][k]
@@ -114,6 +168,31 @@ theorem rowAdd_getElem [Mul R] [Add R]
           (x := Vector.ofFn fun k => M[dst][k] + c * M[src][k])
           dst.isLt r.isLt hval)
     simpa [rowAdd] using congrArg (fun row => row[k]) hrow
+
+/-- Row `dst` of `rowAdd M src dst c` is the pointwise row combination. -/
+@[simp] theorem row_rowAdd_dst [Mul R] [Add R]
+    (M : Matrix R n m) (src dst : Fin n) (c : R) :
+    row (rowAdd M src dst c) dst =
+      Vector.ofFn (fun k => M[dst][k] + c * M[src][k]) := by
+  apply Vector.ext
+  intro k hk
+  let kk : Fin m := ⟨k, hk⟩
+  show (row (rowAdd M src dst c) dst)[kk] =
+    (Vector.ofFn (fun k => M[dst][k] + c * M[src][k]))[kk]
+  rw [row_getElem, rowAdd_getElem]
+  simp
+
+/-- Any row other than `dst` is unchanged by `rowAdd M src dst c`. -/
+theorem row_rowAdd_of_ne [Mul R] [Add R]
+    (M : Matrix R n m) (src : Fin n) {dst r : Fin n} (c : R)
+    (hrdst : r ≠ dst) :
+    row (rowAdd M src dst c) r = row M r := by
+  apply Vector.ext
+  intro k hk
+  let kk : Fin m := ⟨k, hk⟩
+  show (row (rowAdd M src dst c) r)[kk] = (row M r)[kk]
+  rw [row_getElem, row_getElem, rowAdd_getElem]
+  simp [hrdst]
 
 private theorem foldl_sum_congr_aux {R : Type u} [Add R] {α : Type v}
     (xs : List α) (f g : α → R) (acc : R)
@@ -260,25 +339,14 @@ theorem rowScale_mul [Lean.Grind.Ring R]
   by_cases hri : rr = i
   · rw [if_pos hri]
     rw [mul_getElem A B i ll]
-    -- LHS: dot (rowScale A i s)[rr] (col B ll) with rr = i
-    have hrow : (rowScale A i s)[rr] = Vector.ofFn fun k' => s * A[i][k'] := by
-      apply Vector.ext; intro k' hk
-      let kk : Fin m := ⟨k', hk⟩
-      show (rowScale A i s)[rr][kk] = (Vector.ofFn fun k' => s * A[i][k'])[kk]
-      rw [rowScale_getElem]
-      simp [hri]
     rw [show row (rowScale A i s) rr = Vector.ofFn (fun k' => s * A[i][k']) by
-      simpa [row] using hrow]
+      rw [hri]
+      exact row_rowScale_self A i s]
     exact dotProduct_smul_ofFn_left s A[i] (col B ll)
   · rw [if_neg hri]
     rw [mul_getElem A B rr ll]
-    have hrow : (rowScale A i s)[rr] = A[rr] := by
-      apply Vector.ext; intro k' hk
-      let kk : Fin m := ⟨k', hk⟩
-      show (rowScale A i s)[rr][kk] = A[rr][kk]
-      rw [rowScale_getElem]
-      simp [hri]
-    rw [show row (rowScale A i s) rr = row A rr by simpa [row] using hrow]
+    rw [show row (rowScale A i s) rr = row A rr by
+      exact row_rowScale_of_ne A s hri]
 
 /-- Multiplication by `B` commutes with the row-add operation on the left
 factor. -/
@@ -298,27 +366,15 @@ theorem rowAdd_mul [Lean.Grind.Ring R]
   · rw [if_pos hrd]
     rw [mul_getElem A B dst ll]
     rw [mul_getElem A B src ll]
-    have hrow : (rowAdd A src dst s)[rr] =
-        Vector.ofFn fun k' => A[dst][k'] + s * A[src][k'] := by
-      apply Vector.ext; intro k' hk
-      let kk : Fin m := ⟨k', hk⟩
-      show (rowAdd A src dst s)[rr][kk] =
-        (Vector.ofFn fun k' => A[dst][k'] + s * A[src][k'])[kk]
-      rw [rowAdd_getElem]
-      simp [hrd]
     rw [show row (rowAdd A src dst s) rr =
         Vector.ofFn (fun k' => A[dst][k'] + s * A[src][k']) by
-      simpa [row] using hrow]
+      rw [hrd]
+      exact row_rowAdd_dst A src dst s]
     exact dotProduct_add_smul_ofFn_left A[dst] A[src] (col B ll) s
   · rw [if_neg hrd]
     rw [mul_getElem A B rr ll]
-    have hrow : (rowAdd A src dst s)[rr] = A[rr] := by
-      apply Vector.ext; intro k' hk
-      let kk : Fin m := ⟨k', hk⟩
-      show (rowAdd A src dst s)[rr][kk] = A[rr][kk]
-      rw [rowAdd_getElem]
-      simp [hrd]
-    rw [show row (rowAdd A src dst s) rr = row A rr by simpa [row] using hrow]
+    rw [show row (rowAdd A src dst s) rr = row A rr by
+      exact row_rowAdd_of_ne A src s hrd]
 
 /-- If `T * M = E`, then `rowSwap T i j * M = rowSwap E i j`: row swap on the
 transform side preserves the equation `T * M = E` when applied to both `T` and
