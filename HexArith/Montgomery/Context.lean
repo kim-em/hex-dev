@@ -972,4 +972,16 @@ theorem powMod_mod_base (a n p : Nat) (hp : p > 0) :
   rw [powMod_eq (a % p) n p hp, powMod_eq a n p hp]
   simp [Nat.pow_mod]
 
+/-- Exponent-addition expansion for `powMod`: combine two exponentiation phases
+by multiplying their reduced results. -/
+theorem powMod_add_exp (a m n p : Nat) (hp : p > 0) :
+    powMod a (m + n) p = (powMod a m p * powMod a n p) % p := by
+  rw [powMod_eq a (m + n) p hp, powMod_eq a m p hp, powMod_eq a n p hp,
+    Nat.pow_add, Nat.mul_mod]
+
+/-- Left-oriented companion of `powMod_add_exp`. -/
+theorem powMod_add_exp_left (a m n p : Nat) (hp : p > 0) :
+    powMod a (m + n) p = (powMod a n p * powMod a m p) % p := by
+  rw [powMod_add_exp a m n p hp, Nat.mul_comm]
+
 end HexArith
