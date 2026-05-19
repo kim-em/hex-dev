@@ -542,6 +542,40 @@ representatives. -/
         (repr x ^^^ repr y)).val :=
   rfl
 
+/-- Natural scalar multiplication in optimized binary fields depends only on
+the scalar parity. -/
+@[simp] theorem repr_nsmul (k : Nat) (x : GF2q n) :
+    repr (k • x : GF2q n) =
+      if k % 2 = 0 then 0 else repr x := by
+  change
+    (GF2n.nsmul
+      (n := n) (irr := h.lower)
+      (hn := h.degree_pos) (hn64 := h.degree_lt_word)
+      (hirr := h.packed_irreducible) k x).val =
+        if k % 2 = 0 then 0 else x.val
+  by_cases hk : k % 2 = 0
+  · have hzero : (0 : GF2q n).val = 0 := by
+      simpa [repr] using (repr_zero (n := n))
+    simpa [GF2n.nsmul, hk] using hzero
+  · simp [GF2n.nsmul, hk]
+
+/-- Integer scalar multiplication in optimized binary fields depends only on
+the absolute-value parity. -/
+@[simp] theorem repr_zsmul (k : Int) (x : GF2q n) :
+    repr (k • x : GF2q n) =
+      if k.natAbs % 2 = 0 then 0 else repr x := by
+  change
+    (GF2n.zsmul
+      (n := n) (irr := h.lower)
+      (hn := h.degree_pos) (hn64 := h.degree_lt_word)
+      (hirr := h.packed_irreducible) k x).val =
+        if k.natAbs % 2 = 0 then 0 else x.val
+  by_cases hk : k.natAbs % 2 = 0
+  · have hzero : (0 : GF2q n).val = 0 := by
+      simpa [repr] using (repr_zero (n := n))
+    simpa [GF2n.zsmul, hk] using hzero
+  · simp [GF2n.zsmul, hk]
+
 /-- The packed representative of a sum is the reduced XOR of representatives. -/
 @[simp] theorem repr_add (x y : GF2q n) :
     repr (x + y) =
