@@ -311,6 +311,15 @@ def degree? (p : DensePoly R) : Option Nat :=
 @[simp] theorem size_zero : (0 : DensePoly R).size = 0 := by
   rfl
 
+/-- The zero polynomial has no degree. -/
+@[simp] theorem degree?_zero : (0 : DensePoly R).degree? = none := by
+  unfold degree?
+  simp
+
+/-- Defaulting the degree of the zero polynomial returns the supplied default. -/
+@[simp] theorem degree?_zero_getD (d : Nat) : ((0 : DensePoly R).degree?).getD d = d := by
+  simp
+
 /-- `isZero` is the Boolean test for having no stored coefficients. -/
 theorem isZero_eq_true_iff (p : DensePoly R) :
     p.isZero = true ↔ p.size = 0 := by
