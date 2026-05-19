@@ -446,6 +446,53 @@ zero-multiplication and zero-addition laws needed by the generic `eval_C`. -/
     eval (C c) x = c :=
   eval_C c x (Lean.Grind.Semiring.zero_mul x) (by grind)
 
+private theorem semiring_mul_pow_left {S : Type u} [Lean.Grind.Semiring S]
+    (x : S) (n : Nat) :
+    x * x ^ n = x ^ (n + 1) := by
+  induction n with
+  | zero =>
+      rw [Lean.Grind.Semiring.pow_succ x 0, Lean.Grind.Semiring.pow_zero,
+        Lean.Grind.Semiring.one_mul]
+      exact Lean.Grind.Semiring.mul_one x
+  | succ n ih =>
+      calc
+        x * x ^ (n + 1) = x * (x ^ n * x) := by rw [Lean.Grind.Semiring.pow_succ]
+        _ = (x * x ^ n) * x := by rw [Lean.Grind.Semiring.mul_assoc]
+        _ = x ^ (n + 1) * x := by rw [ih]
+        _ = x ^ (n + 1 + 1) := by
+          exact (Lean.Grind.Semiring.pow_succ x (n + 1)).symm
+
+private theorem eval_replicate_zero_semiring {S : Type u} [Lean.Grind.Semiring S]
+    (n : Nat) (c x : S) :
+    (List.replicate n (0 : S)).foldl (fun acc coeff => acc * x + coeff) c =
+      c * x ^ n := by
+  induction n generalizing c with
+  | zero =>
+      simp [Lean.Grind.Semiring.pow_zero, Lean.Grind.Semiring.mul_one]
+  | succ n ih =>
+      rw [List.replicate_succ, List.foldl_cons, ih]
+      simp [Lean.Grind.Semiring.add_zero, Lean.Grind.Semiring.mul_assoc,
+        semiring_mul_pow_left]
+
+/-- Semiring-specialized evaluation law for monomials. -/
+@[simp] theorem eval_monomial_semiring {S : Type u}
+    [Lean.Grind.Semiring S] [DecidableEq S]
+    (n : Nat) (c x : S) :
+    eval (monomial n c) x = c * x ^ n := by
+  by_cases hc : c = (0 : S)
+  · rw [hc, monomial_zero, eval_zero]
+    simp [Lean.Grind.Semiring.zero_mul]
+  · unfold eval toArray monomial
+    change c ≠ Zero.zero at hc
+    rw [dif_neg hc]
+    simp [Array.toList_push]
+    have hinit : (Zero.zero : S) * x + c = c := by
+      change (0 : S) * x + c = c
+      rw [Lean.Grind.Semiring.zero_mul]
+      grind
+    rw [hinit]
+    exact eval_replicate_zero_semiring n c x
+
 /-- The formal derivative of the zero polynomial is zero. -/
 @[simp] theorem derivative_zero [NatCast R] [Mul R] :
     derivative (0 : DensePoly R) = 0 := by
