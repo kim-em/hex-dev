@@ -743,6 +743,21 @@ theorem inv_mul_cancel
     repr (x * y) = GFqRing.reduceMod f (repr x * repr y) :=
   rfl
 
+/-- The representative of a negation reduces from the negated representative. -/
+@[simp] theorem repr_neg
+    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
+    (x : FiniteField f hf hp hirr) :
+    repr (-x) = GFqRing.reduceMod f (-(repr x)) :=
+  rfl
+
+/-- The representative of a subtraction reduces from the difference of
+representatives. -/
+@[simp] theorem repr_sub
+    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
+    (x y : FiniteField f hf hp hirr) :
+    repr (x - y) = GFqRing.reduceMod f (repr x - repr y) :=
+  rfl
+
 @[simp] theorem repr_pow
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) (n : Nat) :
