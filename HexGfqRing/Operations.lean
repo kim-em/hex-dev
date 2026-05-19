@@ -139,6 +139,11 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} : SMul Int (PolyQuotient f hf
     repr (0 : PolyQuotient f hf) = reduceMod f 0 :=
   rfl
 
+/-- The multiplicative-identity representative is the reduction of `1`. -/
+@[simp] theorem repr_one (f : FpPoly p) (hf : 0 < FpPoly.degree f) :
+    repr (1 : PolyQuotient f hf) = reduceMod f 1 :=
+  rfl
+
 /-- The canonical representative of a constant quotient element is the reduction of `C c`. -/
 @[simp] theorem repr_const (f : FpPoly p) (hf : 0 < FpPoly.degree f) (c : ZMod64 p) :
     repr (const f hf c) = reduceMod f (FpPoly.C c) :=
