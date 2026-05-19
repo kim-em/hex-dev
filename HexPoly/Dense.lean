@@ -185,7 +185,7 @@ zero elsewhere. -/
 
 /-- Characterising lemma for monomials: `monomial n c` has coefficient `c` at degree `n` and zero
 elsewhere, even when `c = 0` (in which case the polynomial is zero and every coefficient is `0`). -/
-theorem coeff_monomial (n : Nat) (c : R) (i : Nat) :
+@[simp] theorem coeff_monomial (n : Nat) (c : R) (i : Nat) :
     (monomial n c).coeff i = if i = n then c else (Zero.zero : R) := by
   unfold monomial
   by_cases hc : c = (Zero.zero : R)
@@ -219,11 +219,22 @@ theorem coeff_monomial (n : Nat) (c : R) (i : Nat) :
         rw [dif_neg hpush_not]
         simp [hi]
 
-/-- List-level companion to `coeff_ofCoeffs`: building a polynomial from a coefficient list and
-reading back at index `n` recovers the original list entry (defaulting to `0` past the end). -/
+/-- Coefficient of `ofList coeffs` agrees with `coeffs.getD _ 0`: normalization does not change
+the value at any index. -/
+@[simp] theorem coeff_ofList (coeffs : List R) (n : Nat) :
+    (ofList coeffs).coeff n = coeffs.getD n (Zero.zero : R) := by
+  simp [ofList, coeff_ofCoeffs]
+
+/-- List-level companion to `coeff_ofCoeffs`, retained as a compatibility alias for callers that
+construct lists explicitly before converting them to arrays. Prefer `coeff_ofList` when the
+caller-facing constructor is `ofList`. -/
 @[simp] theorem coeff_ofCoeffs_list (coeffs : List R) (n : Nat) :
     (ofCoeffs coeffs.toArray).coeff n = coeffs.getD n (Zero.zero : R) := by
-  simp [coeff_ofCoeffs]
+  simp
+
+theorem size_ofList_le (coeffs : List R) :
+    (ofList coeffs).size ≤ coeffs.length := by
+  simpa [ofList] using size_ofCoeffs_le (R := R) coeffs.toArray
 
 /-- Extensionality for normalized dense polynomials when the stored sizes agree. -/
 theorem ext_of_size_eq {p q : DensePoly R}

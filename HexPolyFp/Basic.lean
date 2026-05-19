@@ -1006,13 +1006,13 @@ theorem eval_monomial (n : Nat) (c x : ZMod64 p) :
 @[simp] theorem coeff_X_zero :
     ((FpPoly.X : FpPoly p)).coeff 0 = 0 := by
   unfold FpPoly.X
-  simpa using DensePoly.coeff_monomial 1 (1 : ZMod64 p) 0
+  exact DensePoly.coeff_monomial 1 (1 : ZMod64 p) 0
 
 /-- The degree-one coefficient of the indeterminate wrapper is one. -/
 @[simp] theorem coeff_X_one :
     ((FpPoly.X : FpPoly p)).coeff 1 = 1 := by
   unfold FpPoly.X
-  simpa using DensePoly.coeff_monomial 1 (1 : ZMod64 p) 1
+  exact DensePoly.coeff_monomial 1 (1 : ZMod64 p) 1
 
 /-- Coefficients of the indeterminate wrapper are one at degree one and zero elsewhere. -/
 @[simp] theorem coeff_X (n : Nat) :
