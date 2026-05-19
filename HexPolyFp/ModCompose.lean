@@ -111,12 +111,23 @@ theorem composeModMonic_eq_mod
   exact DensePoly.modByMonic_eq_mod (DensePoly.compose f g) modulus hmonic
 
 /-- The result of `composeModMonic` is already reduced modulo the monic modulus. -/
-theorem composeModMonic_mod_eq_self
+@[simp] theorem composeModMonic_mod_eq_self
     [ZMod64.PrimeModulus p]
     (f g modulus : FpPoly p) (hmonic : DensePoly.Monic modulus) :
     composeModMonic f g modulus hmonic % modulus =
       composeModMonic f g modulus hmonic := by
   rw [composeModMonic_eq_mod, DensePoly.mod_mod]
+
+/--
+The `modByMonic` spelling of `composeModMonic_mod_eq_self`, useful for
+callers that state reduction via `modByMonic` rather than `%`.
+-/
+@[simp] theorem modByMonic_composeModMonic_eq_self
+    [ZMod64.PrimeModulus p]
+    (f g modulus : FpPoly p) (hmonic : DensePoly.Monic modulus) :
+    modByMonic modulus (composeModMonic f g modulus hmonic) hmonic =
+      composeModMonic f g modulus hmonic := by
+  simp [modByMonic, DensePoly.modByMonic_eq_mod, composeModMonic_mod_eq_self]
 
 end FpPoly
 end Hex
