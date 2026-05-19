@@ -617,6 +617,25 @@ theorem badVector_resultant_bounds_of_bhks_bad
     (coprime_input_aux_over_rat_of_bhks_bad W h_bad)
     (resultant_divisible_by_p_pow_of_bhks_bad W h_bad)
 
+/-- BHKS Lemma 3.2, resultant chain form: the modular divisor lower bound and
+the Hadamard upper bound combine to a single real-valued inequality on
+`(p ^ (k · d) : ℝ)` and the BHKS l2-norm product, with the integer resultant
+absent from the conclusion.
+
+Used by the BHKS Theorem 5.2 separation argument; the auxiliary polynomial's
+`l2norm` side is controlled separately by `auxiliaryPolynomial_l2norm_sq_le`. -/
+theorem bhks_bad_vector_resultant_lower_bound
+    (W : ExecutableBadVectorWitness)
+    (h_bad : IsBhksBadVectorSetup W)
+    (hp : 0 < W.liftData.p) :
+    (W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : ℝ) ≤
+      (HexPolyZMathlib.l2norm W.inputPolynomial) ^
+          W.auxiliaryPolynomial.natDegree *
+        (HexPolyZMathlib.l2norm W.auxiliaryPolynomial) ^
+          W.inputPolynomial.natDegree := by
+  exact (W.badVector_resultant_bounds_of_bhks_bad h_bad hp).1.trans
+    (W.badVector_resultant_bounds_of_bhks_bad h_bad hp).2
+
 /--
 Combined BHKS Lemma 3.2 contradiction: an executable bad-vector witness whose
 `H` field is the canonical BHKS auxiliary polynomial of a vector in `L' \ W`
