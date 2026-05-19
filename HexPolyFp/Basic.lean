@@ -165,12 +165,10 @@ private theorem mod_sub_self_eq_mul_neg_div [PrimeModulus p] (f m : DensePoly (Z
       apply DensePoly.ext_coeff
       intro n
       have hcoeff := congrArg (fun x : DensePoly (ZMod64 p) => x.coeff n) hdiv
-      have hzero_sub : (0 : ZMod64 p) - (0 : ZMod64 p) = 0 := by grind
-      have hzero_add : (0 : ZMod64 p) + (0 : ZMod64 p) = 0 := by grind
       change (((f / m) * m + (f % m)).coeff n = f.coeff n) at hcoeff
-      rw [DensePoly.coeff_add ((f / m) * m) (f % m) n hzero_add] at hcoeff
-      rw [DensePoly.coeff_sub (f % m) f n hzero_sub]
-      rw [DensePoly.coeff_sub 0 ((f / m) * m) n hzero_sub]
+      rw [DensePoly.coeff_add_semiring] at hcoeff
+      rw [DensePoly.coeff_sub_ring]
+      rw [DensePoly.coeff_sub_ring]
       rw [DensePoly.coeff_zero]
       grind
     _ = m * (0 - (f / m)) := by
@@ -186,23 +184,19 @@ private theorem eq_add_mul_of_sub_eq_mul {f g m r : DensePoly (ZMod64 p)}
   apply DensePoly.ext_coeff
   intro n
   have hcoeff := congrArg (fun x : DensePoly (ZMod64 p) => x.coeff n) hsub
-  have hzero_sub : (0 : ZMod64 p) - (0 : ZMod64 p) = 0 := by grind
-  have hzero_add : (0 : ZMod64 p) + (0 : ZMod64 p) = 0 := by grind
   change (f - g).coeff n = (m * r).coeff n at hcoeff
-  rw [DensePoly.coeff_sub f g n hzero_sub] at hcoeff
-  rw [DensePoly.coeff_add g (m * r) n hzero_add]
+  rw [DensePoly.coeff_sub_ring] at hcoeff
+  rw [DensePoly.coeff_add_semiring]
   grind
 
 private theorem add_sub_add_right (a b c d : DensePoly (ZMod64 p)) :
     (a + b) - (c + d) = (a - c) + (b - d) := by
   apply DensePoly.ext_coeff
   intro n
-  have hzero_sub : (0 : ZMod64 p) - (0 : ZMod64 p) = 0 := by grind
-  have hzero_add : (0 : ZMod64 p) + (0 : ZMod64 p) = 0 := by grind
-  rw [DensePoly.coeff_sub (a + b) (c + d) n hzero_sub]
-  rw [DensePoly.coeff_add a b n hzero_add, DensePoly.coeff_add c d n hzero_add]
-  rw [DensePoly.coeff_add (a - c) (b - d) n hzero_add]
-  rw [DensePoly.coeff_sub a c n hzero_sub, DensePoly.coeff_sub b d n hzero_sub]
+  rw [DensePoly.coeff_sub_ring]
+  rw [DensePoly.coeff_add_semiring, DensePoly.coeff_add_semiring]
+  rw [DensePoly.coeff_add_semiring]
+  rw [DensePoly.coeff_sub_ring, DensePoly.coeff_sub_ring]
   grind
 
 private theorem divMod_remainder_degree_lt_core
@@ -439,10 +433,9 @@ private theorem canonical_remainder_unique_of_pos_degree
       rw [hs_deg, hm_deg] at hs
       omega
   -- (r - s) has size ≤ m.size - 1.
-  have hzero_sub : (0 : ZMod64 p) - 0 = 0 := by grind
   have hrs_top_zero : ∀ i, max r.size s.size ≤ i → (r - s).coeff i = 0 := by
     intro i hi
-    rw [DensePoly.coeff_sub r s i hzero_sub]
+    rw [DensePoly.coeff_sub_ring]
     have hr_zero := DensePoly.coeff_eq_zero_of_size_le r (by omega : r.size ≤ i)
     have hs_zero := DensePoly.coeff_eq_zero_of_size_le s (by omega : s.size ≤ i)
     rw [hr_zero, hs_zero]
@@ -479,7 +472,7 @@ private theorem canonical_remainder_unique_of_pos_degree
     intro i
     have hcoeff := congrArg (fun x : DensePoly (ZMod64 p) => x.coeff i) hk
     change (r - s).coeff i = (0 : DensePoly (ZMod64 p)).coeff i at hcoeff
-    rw [DensePoly.coeff_sub r s i hzero_sub, DensePoly.coeff_zero] at hcoeff
+    rw [DensePoly.coeff_sub_ring, DensePoly.coeff_zero] at hcoeff
     grind
   · -- k ≠ 0: derive contradiction from sizes.
     have hk_pos : 0 < k.size := Nat.pos_of_ne_zero hk_zero
@@ -568,9 +561,8 @@ private theorem eq_of_sub_eq_zero (f g : DensePoly (ZMod64 p))
   apply DensePoly.ext_coeff
   intro i
   have hcoeff := congrArg (fun x : DensePoly (ZMod64 p) => x.coeff i) hsub
-  have hzero_sub : (0 : ZMod64 p) - (0 : ZMod64 p) = 0 := by grind
   change (f - g).coeff i = (0 : DensePoly (ZMod64 p)).coeff i at hcoeff
-  rw [DensePoly.coeff_sub f g i hzero_sub, DensePoly.coeff_zero] at hcoeff
+  rw [DensePoly.coeff_sub_ring, DensePoly.coeff_zero] at hcoeff
   grind
 
 private theorem mod_eq_mod_of_congr_not_pos_degree
@@ -636,8 +628,7 @@ private theorem sub_zero_poly (f : DensePoly (ZMod64 p)) :
     f - 0 = f := by
   apply DensePoly.ext_coeff
   intro n
-  have hzero_sub : (0 : ZMod64 p) - 0 = 0 := by grind
-  rw [DensePoly.coeff_sub f 0 n hzero_sub, DensePoly.coeff_zero]
+  rw [DensePoly.coeff_sub_ring, DensePoly.coeff_zero]
   grind
 
 private theorem mod_eq_zero_of_dvd_core
@@ -655,10 +646,8 @@ private theorem sub_self_right_add (a b : DensePoly (ZMod64 p)) :
     (a + b) - a = b := by
   apply DensePoly.ext_coeff
   intro n
-  have hzero_sub : (0 : ZMod64 p) - (0 : ZMod64 p) = 0 := by grind
-  have hzero_add : (0 : ZMod64 p) + (0 : ZMod64 p) = 0 := by grind
-  rw [DensePoly.coeff_sub (a + b) a n hzero_sub]
-  rw [DensePoly.coeff_add a b n hzero_add]
+  rw [DensePoly.coeff_sub_ring]
+  rw [DensePoly.coeff_add_semiring]
   grind
 
 private theorem mul_left_remainder_delta (f g m rf rg : DensePoly (ZMod64 p))
@@ -826,21 +815,17 @@ instance instDivModLawsZMod64Fp (p : Nat) [Bounds p] [PrimeModulus p] :
         apply DensePoly.ext_coeff
         intro n
         have hcoeff := congrArg (fun x : DensePoly (ZMod64 p) => x.coeff n) hf
-        have hzero_sub : (0 : ZMod64 p) - (0 : ZMod64 p) = 0 := by grind
-        have hzero_add : (0 : ZMod64 p) + (0 : ZMod64 p) = 0 := by grind
         change (f % m - f).coeff n = (m * rf).coeff n at hcoeff
-        rw [DensePoly.coeff_sub (f % m) f n hzero_sub] at hcoeff
-        rw [DensePoly.coeff_add f (m * rf) n hzero_add]
+        rw [DensePoly.coeff_sub_ring] at hcoeff
+        rw [DensePoly.coeff_add_semiring]
         grind
       have hg' : g % m = g + m * rg := by
         apply DensePoly.ext_coeff
         intro n
         have hcoeff := congrArg (fun x : DensePoly (ZMod64 p) => x.coeff n) hg
-        have hzero_sub : (0 : ZMod64 p) - (0 : ZMod64 p) = 0 := by grind
-        have hzero_add : (0 : ZMod64 p) + (0 : ZMod64 p) = 0 := by grind
         change (g % m - g).coeff n = (m * rg).coeff n at hcoeff
-        rw [DensePoly.coeff_sub (g % m) g n hzero_sub] at hcoeff
-        rw [DensePoly.coeff_add g (m * rg) n hzero_add]
+        rw [DensePoly.coeff_sub_ring] at hcoeff
+        rw [DensePoly.coeff_add_semiring]
         grind
       exact mul_left_remainder_delta f g m rf rg hf' hg'⟩
 
@@ -931,18 +916,6 @@ private theorem zmod_zero_add (a : ZMod64 p) : 0 + a = a := by
 private theorem zmod_add_zero_zero :
     (Zero.zero : ZMod64 p) + (Zero.zero : ZMod64 p) = (Zero.zero : ZMod64 p) :=
   zmod_add_zero Zero.zero
-
-private theorem zmod_sub_zero_zero :
-    (Zero.zero : ZMod64 p) - (Zero.zero : ZMod64 p) = (Zero.zero : ZMod64 p) := by
-  change ZMod64.sub (Zero.zero : ZMod64 p) Zero.zero = Zero.zero
-  apply zmod_eq_of_toNat_eq
-  change (ZMod64.sub (Zero.zero : ZMod64 p) Zero.zero).toNat =
-    (Zero.zero : ZMod64 p).toNat
-  rw [ZMod64.toNat_sub]
-  have hz : (Zero.zero : ZMod64 p).val.toNat = 0 := by
-    change (Zero.zero : ZMod64 p).toNat = 0
-    exact ZMod64.toNat_zero
-  simp [hz]
 
 private theorem zmod_mul_zero (a : ZMod64 p) : a * 0 = 0 := by
   grind
@@ -1250,7 +1223,7 @@ private theorem evalCoeffPowerSumUpTo_add
           evalCoeffPowerSumUpTo (fun i => h.coeff i) n base x
   | 0, _ => by
       simp [evalCoeffPowerSumUpTo]
-      exact zmod_add_zero_zero.symm
+      grind
   | n + 1, base => by
       simp only [evalCoeffPowerSumUpTo]
       rw [evalCoeffPowerSumUpTo_add f h x n (base + 1)]
@@ -1413,13 +1386,13 @@ theorem eval_add (f h : FpPoly p) (x : ZMod64 p) :
         (fun i => (f + h).coeff i) =
           (fun i => f.coeff i + h.coeff i) := by
       funext i
-      rw [DensePoly.coeff_add _ _ _ zmod_add_zero_zero]
+      rw [DensePoly.coeff_add_semiring]
     rw [hcoeff]
     exact evalCoeffPowerSumUpTo_add f h x bound 0
   · change (f + h).size ≤ max f.size h.size
     apply size_le_of_coeff_eq_zero_from
     intro i hi
-    rw [DensePoly.coeff_add _ _ _ zmod_add_zero_zero]
+    rw [DensePoly.coeff_add_semiring]
     rw [DensePoly.coeff_eq_zero_of_size_le f
         (Nat.le_trans (Nat.le_max_left f.size h.size) hi),
       DensePoly.coeff_eq_zero_of_size_le h
@@ -1438,24 +1411,24 @@ theorem eval_sub (f h : FpPoly p) (x : ZMod64 p) :
         (fun i => (f - h).coeff i) =
           (fun i => f.coeff i - h.coeff i) := by
       funext i
-      rw [DensePoly.coeff_sub _ _ _ zmod_sub_zero_zero]
+      rw [DensePoly.coeff_sub_ring]
     rw [hcoeff]
     exact evalCoeffPowerSumUpTo_sub f h x bound 0
   · change (f - h).size ≤ max f.size h.size
     apply size_le_of_coeff_eq_zero_from
     intro i hi
-    rw [DensePoly.coeff_sub _ _ _ zmod_sub_zero_zero]
+    rw [DensePoly.coeff_sub_ring]
     rw [DensePoly.coeff_eq_zero_of_size_le f
         (Nat.le_trans (Nat.le_max_left f.size h.size) hi),
       DensePoly.coeff_eq_zero_of_size_le h
         (Nat.le_trans (Nat.le_max_right f.size h.size) hi)]
-    exact zmod_sub_zero_zero
+    grind
 
 theorem add_zero (f : FpPoly p) :
     f + 0 = f := by
   apply DensePoly.ext_coeff
   intro i
-  rw [DensePoly.coeff_add _ _ _ zmod_add_zero_zero]
+  rw [DensePoly.coeff_add_semiring]
   rw [DensePoly.coeff_zero]
   grind
 
@@ -1463,7 +1436,7 @@ theorem zero_add (f : FpPoly p) :
     0 + f = f := by
   apply DensePoly.ext_coeff
   intro i
-  rw [DensePoly.coeff_add _ _ _ zmod_add_zero_zero]
+  rw [DensePoly.coeff_add_semiring]
   rw [DensePoly.coeff_zero]
   grind
 
@@ -1471,25 +1444,25 @@ theorem add_comm (f g : FpPoly p) :
     f + g = g + f := by
   apply DensePoly.ext_coeff
   intro i
-  rw [DensePoly.coeff_add _ _ _ zmod_add_zero_zero]
-  rw [DensePoly.coeff_add _ _ _ zmod_add_zero_zero]
+  rw [DensePoly.coeff_add_semiring]
+  rw [DensePoly.coeff_add_semiring]
   grind
 
 theorem add_assoc (f g h : FpPoly p) :
     f + g + h = f + (g + h) := by
   apply DensePoly.ext_coeff
   intro i
-  rw [DensePoly.coeff_add (f + g) h i zmod_add_zero_zero]
-  rw [DensePoly.coeff_add f (g + h) i zmod_add_zero_zero]
-  rw [DensePoly.coeff_add f g i zmod_add_zero_zero]
-  rw [DensePoly.coeff_add g h i zmod_add_zero_zero]
+  rw [DensePoly.coeff_add_semiring]
+  rw [DensePoly.coeff_add_semiring]
+  rw [DensePoly.coeff_add_semiring]
+  rw [DensePoly.coeff_add_semiring]
   grind
 
 theorem neg_zero :
     -(0 : FpPoly p) = 0 := by
   apply DensePoly.ext_coeff
   intro i
-  rw [DensePoly.coeff_neg _ _ zmod_sub_zero_zero]
+  rw [DensePoly.coeff_neg_ring]
   rw [DensePoly.coeff_zero]
   grind
 
@@ -1497,8 +1470,8 @@ theorem add_left_neg (f : FpPoly p) :
     -f + f = 0 := by
   apply DensePoly.ext_coeff
   intro i
-  rw [DensePoly.coeff_add _ _ _ zmod_add_zero_zero]
-  rw [DensePoly.coeff_neg _ _ zmod_sub_zero_zero]
+  rw [DensePoly.coeff_add_semiring]
+  rw [DensePoly.coeff_neg_ring]
   rw [DensePoly.coeff_zero]
   grind
 
@@ -1506,8 +1479,8 @@ theorem add_right_neg (f : FpPoly p) :
     f + -f = 0 := by
   apply DensePoly.ext_coeff
   intro i
-  rw [DensePoly.coeff_add _ _ _ zmod_add_zero_zero]
-  rw [DensePoly.coeff_neg _ _ zmod_sub_zero_zero]
+  rw [DensePoly.coeff_add_semiring]
+  rw [DensePoly.coeff_neg_ring]
   rw [DensePoly.coeff_zero]
   grind
 
@@ -1515,7 +1488,7 @@ theorem sub_zero (f : FpPoly p) :
     f - 0 = f := by
   apply DensePoly.ext_coeff
   intro i
-  rw [DensePoly.coeff_sub _ _ _ zmod_sub_zero_zero]
+  rw [DensePoly.coeff_sub_ring]
   rw [DensePoly.coeff_zero]
   grind
 
@@ -1527,7 +1500,7 @@ theorem sub_self (f : FpPoly p) :
     f - f = 0 := by
   apply DensePoly.ext_coeff
   intro i
-  rw [DensePoly.coeff_sub _ _ _ zmod_sub_zero_zero]
+  rw [DensePoly.coeff_sub_ring]
   rw [DensePoly.coeff_zero]
   grind
 
@@ -1535,9 +1508,9 @@ theorem sub_eq_add_neg (f g : FpPoly p) :
     f - g = f + -g := by
   apply DensePoly.ext_coeff
   intro i
-  rw [DensePoly.coeff_add _ _ _ zmod_add_zero_zero]
-  rw [DensePoly.coeff_sub _ _ _ zmod_sub_zero_zero]
-  rw [DensePoly.coeff_neg _ _ zmod_sub_zero_zero]
+  rw [DensePoly.coeff_add_semiring]
+  rw [DensePoly.coeff_sub_ring]
+  rw [DensePoly.coeff_neg_ring]
   grind
 
 @[simp] theorem zero_mul (f : FpPoly p) :
@@ -1559,7 +1532,7 @@ private theorem coeff_mul_one_fold (f : FpPoly p) (n k : Nat) :
   | succ n ih =>
       rw [List.range_succ, List.foldl_append]
       simp only [List.foldl_cons, List.foldl_nil]
-      rw [DensePoly.coeff_add _ _ _ zmod_add_zero_zero, ih]
+      rw [DensePoly.coeff_add_semiring, ih]
       rw [DensePoly.coeff_shift_scale]
       · rw [coeff_one]
         by_cases hk : k < n
@@ -1604,7 +1577,7 @@ private theorem coeff_mul_fold (xs : List Nat) (acc f g : FpPoly p) (n : Nat) :
       rw [ih]
       congr 1
       have hzero : f.coeff i * (0 : ZMod64 p) = 0 := by grind
-      rw [DensePoly.coeff_add _ _ _ zmod_add_zero_zero,
+      rw [DensePoly.coeff_add_semiring,
         DensePoly.coeff_shift_scale i (f.coeff i) g n hzero]
       rfl
 
@@ -1850,7 +1823,7 @@ private theorem mulCoeffTerm_left_distrib (f g h : FpPoly p) (n i : Nat) :
   by_cases hi : n < i
   · simp [hi]
     grind
-  · rw [DensePoly.coeff_add _ _ _ zmod_add_zero_zero]
+  · rw [DensePoly.coeff_add_semiring]
     simp [hi]
     grind
 
@@ -1861,7 +1834,7 @@ private theorem mulCoeffTerm_right_distrib (f g h : FpPoly p) (n i : Nat) :
   by_cases hi : n < i
   · simp [hi]
     grind
-  · rw [DensePoly.coeff_add _ _ _ zmod_add_zero_zero]
+  · rw [DensePoly.coeff_add_semiring]
     simp [hi]
     grind
 
@@ -2440,7 +2413,7 @@ theorem left_distrib (f g h : FpPoly p) :
     f * (g + h) = f * g + f * h := by
   apply DensePoly.ext_coeff
   intro n
-  rw [DensePoly.coeff_add _ _ _ zmod_add_zero_zero]
+  rw [DensePoly.coeff_add_semiring]
   simp [coeff_mul, mulCoeffSum, fold_left_distrib]
 
 theorem right_distrib (f g h : FpPoly p) :
@@ -2448,7 +2421,7 @@ theorem right_distrib (f g h : FpPoly p) :
   apply DensePoly.ext_coeff
   intro n
   let m := max (max (f + g).size f.size) g.size
-  rw [DensePoly.coeff_add _ _ _ zmod_add_zero_zero]
+  rw [DensePoly.coeff_add_semiring]
   rw [coeff_mul_of_size_le (f + g) h n m (by dsimp [m]; omega)]
   rw [coeff_mul_of_size_le f h n m (by dsimp [m]; omega)]
   rw [coeff_mul_of_size_le g h n m (by dsimp [m]; omega)]
@@ -2487,8 +2460,8 @@ theorem scale_add (c : ZMod64 p) (f g : FpPoly p) :
   intro n
   have hzero : c * (0 : ZMod64 p) = 0 := by grind
   rw [DensePoly.coeff_scale _ _ _ hzero]
-  rw [DensePoly.coeff_add _ _ _ zmod_add_zero_zero]
-  rw [DensePoly.coeff_add _ _ _ zmod_add_zero_zero]
+  rw [DensePoly.coeff_add_semiring]
+  rw [DensePoly.coeff_add_semiring]
   rw [DensePoly.coeff_scale _ _ _ hzero]
   rw [DensePoly.coeff_scale _ _ _ hzero]
   grind
@@ -3127,9 +3100,8 @@ theorem mul_right_cancel_of_ne_zero
     apply DensePoly.ext_coeff
     intro n
     have hcoeff := congrArg (fun s : FpPoly p => s.coeff n) hsub
-    have hzero_sub : (0 : ZMod64 p) - 0 = 0 := by grind
     change (a - b).coeff n = (0 : FpPoly p).coeff n at hcoeff
-    rw [DensePoly.coeff_sub a b n hzero_sub, DensePoly.coeff_zero] at hcoeff
+    rw [DensePoly.coeff_sub_ring, DensePoly.coeff_zero] at hcoeff
     grind
   have hmul_ne : (a - b) * c ≠ 0 := mul_ne_zero_of_ne_zero hsub_ne hc
   apply hmul_ne
@@ -3512,16 +3484,14 @@ private theorem scalar_linear_factor_mul_dividedDifference_coeff
       (if n = 0 then 0 else evalScalarCoeffList (cs.drop n) α) -
         α * evalScalarCoeffList (cs.drop (n + 1)) α := by
   intro q
-  have hzero_sub : (0 : ZMod64 p) - 0 = 0 := by grind
-  have hzero_add : (0 : ZMod64 p) + 0 = 0 := by grind
   have hzero_mul : α * (0 : ZMod64 p) = 0 := by grind
   have hneg_mul : (-(FpPoly.C α) : FpPoly p) * q = -(FpPoly.C α * q) := by
     show (0 - FpPoly.C α) * q = 0 - FpPoly.C α * q
     exact DensePoly.neg_mul_right_poly (FpPoly.C α) q
   rw [sub_eq_add_neg, right_distrib]
-  rw [DensePoly.coeff_add _ _ _ hzero_add]
+  rw [DensePoly.coeff_add_semiring]
   rw [hneg_mul]
-  rw [DensePoly.coeff_neg _ _ hzero_sub]
+  rw [DensePoly.coeff_neg_ring]
   have hCmul : FpPoly.C α * q = DensePoly.scale α q := C_mul_eq_scale α q
   rw [hCmul]
   rw [DensePoly.coeff_scale _ _ _ hzero_mul]
@@ -3535,7 +3505,7 @@ private theorem scalar_linear_factor_mul_dividedDifference_coeff
       rw [scalarDividedDifferenceCoeffs_getElem?_getD cs α 0]
       rw [show cs.drop 1 = cs.tail by cases cs <;> rfl]
       rw [zmod_zero_add]
-      rfl
+      grind
   | succ n =>
       simp
       rw [scalarDividedDifferenceCoeffs_getElem?_getD cs α n]
@@ -3550,8 +3520,7 @@ private theorem ofCoeffs_eq_C_eval_add_linear_mul_dividedDifference
           (DensePoly.ofCoeffs (scalarDividedDifferenceCoeffs cs α).toArray : FpPoly p) := by
   apply DensePoly.ext_coeff
   intro n
-  have hzero_add : (0 : ZMod64 p) + 0 = 0 := by grind
-  rw [DensePoly.coeff_add _ _ _ hzero_add]
+  rw [DensePoly.coeff_add_semiring]
   rw [DensePoly.coeff_ofCoeffs_list]
   rw [zmod_Zero_zero_eq_zero]
   rw [show (FpPoly.C (evalScalarCoeffList cs α)).coeff n =
@@ -3779,12 +3748,10 @@ theorem sub_one_dvd_linearPow_sub_one (Y : FpPoly p) (j : Nat) :
       -- A - 1 = A - Y + Y - 1, regroup at coefficient level.
       apply DensePoly.ext_coeff
       intro n
-      have hzero_sub : (Zero.zero : ZMod64 p) - Zero.zero = Zero.zero := zmod_sub_zero_zero
-      have hzero_add : (Zero.zero : ZMod64 p) + Zero.zero = Zero.zero := zmod_add_zero_zero
-      rw [DensePoly.coeff_sub _ _ _ hzero_sub]
-      rw [DensePoly.coeff_add _ _ _ hzero_add]
-      rw [DensePoly.coeff_sub _ _ _ hzero_sub]
-      rw [DensePoly.coeff_sub _ _ _ hzero_sub]
+      rw [DensePoly.coeff_sub_ring]
+      rw [DensePoly.coeff_add_semiring]
+      rw [DensePoly.coeff_sub_ring]
+      rw [DensePoly.coeff_sub_ring]
       grind
 
 /-- Geometric-series divisibility for monomials: when `k ∣ l`,
