@@ -454,6 +454,23 @@ theorem mahlerMeasure_robinsonForm_derivative (p : ℂ[X]) :
     (by intro α; exact norm_root_robinsonForm_le), natDegree_robinsonForm,
     mahlerMeasure_robinsonForm]
 
+/--
+The finite root-deletion derivative sum for the Robinson form has the same
+Mahler bound as the derivative itself.
+-/
+theorem mahlerMeasure_robinsonRootDeletionDerivativeSum_le (p : ℂ[X]) :
+    (C p.leadingCoeff *
+        (p.roots.map fun α =>
+          ((p.roots.erase α).map robinsonFactor).prod * (robinsonFactor α).derivative).sum
+      ).mahlerMeasure ≤ p.natDegree * p.mahlerMeasure := by
+  have hderiv :
+      C p.leadingCoeff *
+          (p.roots.map fun α =>
+            ((p.roots.erase α).map robinsonFactor).prod * (robinsonFactor α).derivative).sum =
+        p.robinsonForm.derivative := by
+    rw [robinsonForm, derivative_C_mul, derivative_prod]
+  rw [hderiv, mahlerMeasure_robinsonForm_derivative]
+
 end
 
 end Polynomial
