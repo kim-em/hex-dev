@@ -273,6 +273,25 @@ theorem mulHi_mulLo (a b : UInt64) :
     Nat.mul_assoc] using h
 
 /--
+Low-word-first product reconstruction for callers that encode a two-word value
+as `lo + hi * word`.
+-/
+theorem mulLo_add_mulHi (a b : UInt64) :
+    (a * b).toNat + (mulHi a b).toNat * word = a.toNat * b.toNat := by
+  rw [Nat.add_comm]
+  exact mulHi_mulLo a b
+
+/--
+The components returned by `mulFull` reconstruct the original Nat-level
+product in low-word-first order.
+-/
+theorem mulFull_snd_add_fst (a b : UInt64) :
+    (mulFull a b).2.toNat + (mulFull a b).1.toNat * word =
+      a.toNat * b.toNat := by
+  rw [mulFull_snd_eq_mul, mulFull_fst_eq_mulHi]
+  exact mulLo_add_mulHi a b
+
+/--
 `addCarry` represents exact Nat addition split into a low word and a carry bit.
 -/
 theorem toNat_addCarry (a b : UInt64) (cin : Bool) :
