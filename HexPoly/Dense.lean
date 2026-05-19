@@ -463,6 +463,21 @@ theorem mem_support {p : DensePoly R} {i : Nat} :
 @[simp] theorem support_zero : (0 : DensePoly R).support = [] := by
   simp [support]
 
+/-- A constant polynomial has support `{0}` exactly when its scalar is nonzero. -/
+@[simp] theorem support_C (c : R) :
+    (C c).support = if c = (0 : R) then [] else [0] := by
+  by_cases hc : c = (0 : R)
+  · simp [hc, support]
+  · have hcz : c ≠ Zero.zero := by simpa using hc
+    simp [support, size_C_of_ne_zero hc, hc, hcz]
+
+/-- Membership in the support of a constant polynomial is exactly nonzero degree zero. -/
+theorem mem_support_C {c : R} {i : Nat} :
+    i ∈ (C c).support ↔ i = 0 ∧ c ≠ (0 : R) := by
+  by_cases hc : c = (0 : R)
+  · simp [support_C, hc]
+  · simp [support_C, hc]
+
 /-- Return the underlying normalized coefficient array. -/
 def toArray (p : DensePoly R) : Array R :=
   p.coeffs
