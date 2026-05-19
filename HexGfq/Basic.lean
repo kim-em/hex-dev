@@ -298,6 +298,14 @@ quotient-ring power of the underlying quotient representative. -/
     repr (x ^ k) = GFqRing.repr (x.toQuotient ^ k) :=
   rfl
 
+/-- The canonical representative of an integer literal in `GFq` lifts the
+quotient-ring integer-cast representative. -/
+@[simp] theorem repr_intCast (h : Conway.SupportedEntry p n) (i : Int) :
+    repr ((i : GFq p n h)) =
+      GFqRing.repr
+        ((i : GFqRing.PolyQuotient (modulus h) (modulus_nonconstant h))) :=
+  rfl
+
 /-- Two `GFq.ofPoly` constructors produce the same field element exactly when
 their inputs have the same reduced representative modulo the selected Conway
 polynomial. -/
