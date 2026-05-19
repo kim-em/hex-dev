@@ -794,6 +794,27 @@ representatives. -/
     repr (x ^ n) = GFqRing.repr (x.toQuotient ^ n) :=
   rfl
 
+@[simp] theorem repr_div
+    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
+    (x y : FiniteField f hf hp hirr) :
+    repr (x / y : FiniteField f hf hp hirr) =
+      GFqRing.repr (x.toQuotient * (inv y).toQuotient) :=
+  rfl
+
+@[simp] theorem repr_zpow_ofNat
+    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
+    (x : FiniteField f hf hp hirr) (n : Nat) :
+    repr (x ^ (Int.ofNat n) : FiniteField f hf hp hirr) =
+      GFqRing.repr (x.toQuotient ^ n) :=
+  rfl
+
+@[simp] theorem repr_zpow_negSucc
+    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
+    (x : FiniteField f hf hp hirr) (n : Nat) :
+    repr (x ^ (Int.negSucc n) : FiniteField f hf hp hirr) =
+      GFqRing.repr ((inv (pow x (n + 1))).toQuotient) :=
+  rfl
+
 /-- The representative of an integer cast lifts the quotient-ring cast. -/
 @[simp] theorem repr_intCast
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p) (hirr : FpPoly.Irreducible f) (i : Int) :
