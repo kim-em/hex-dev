@@ -269,6 +269,11 @@ theorem luebeckConwayPolynomial_2_2_monic :
     DensePoly.Monic luebeckConwayPolynomial_2_2 := by
   rfl
 
+/-- The committed `C(2, 2)` entry has positive degree. -/
+theorem luebeckConwayPolynomial_2_2_degree_pos :
+    0 < FpPoly.degree luebeckConwayPolynomial_2_2 := by
+  decide
+
 @[simp] theorem luebeckConwayPolynomial?_hit_2_2 :
     luebeckConwayPolynomial? 2 2 = some luebeckConwayPolynomial_2_2 := by
   show some (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 1]) = some luebeckConwayPolynomial_2_2
@@ -297,6 +302,11 @@ def luebeckConwayPolynomial_2_3 : FpPoly 2 :=
 theorem luebeckConwayPolynomial_2_3_monic :
     DensePoly.Monic luebeckConwayPolynomial_2_3 := by
   rfl
+
+/-- The committed `C(2, 3)` entry has positive degree. -/
+theorem luebeckConwayPolynomial_2_3_degree_pos :
+    0 < FpPoly.degree luebeckConwayPolynomial_2_3 := by
+  decide
 
 @[simp] theorem luebeckConwayPolynomial?_hit_2_3 :
     luebeckConwayPolynomial? 2 3 = some luebeckConwayPolynomial_2_3 := by
@@ -327,6 +337,11 @@ def luebeckConwayPolynomial_2_4 : FpPoly 2 :=
 theorem luebeckConwayPolynomial_2_4_monic :
     DensePoly.Monic luebeckConwayPolynomial_2_4 := by
   rfl
+
+/-- The committed `C(2, 4)` entry has positive degree. -/
+theorem luebeckConwayPolynomial_2_4_degree_pos :
+    0 < FpPoly.degree luebeckConwayPolynomial_2_4 := by
+  decide
 
 @[simp] theorem luebeckConwayPolynomial?_hit_2_4 :
     luebeckConwayPolynomial? 2 4 = some luebeckConwayPolynomial_2_4 := by
@@ -359,6 +374,11 @@ theorem luebeckConwayPolynomial_2_5_monic :
     DensePoly.Monic luebeckConwayPolynomial_2_5 := by
   rfl
 
+/-- The committed `C(2, 5)` entry has positive degree. -/
+theorem luebeckConwayPolynomial_2_5_degree_pos :
+    0 < FpPoly.degree luebeckConwayPolynomial_2_5 := by
+  decide
+
 @[simp] theorem luebeckConwayPolynomial?_hit_2_5 :
     luebeckConwayPolynomial? 2 5 = some luebeckConwayPolynomial_2_5 := by
   show some (luebeckConwayPolynomialOfCoeffs 2 [1, 0, 1, 0, 0, 1]) = some luebeckConwayPolynomial_2_5
@@ -390,6 +410,11 @@ def luebeckConwayPolynomial_2_6 : FpPoly 2 :=
 theorem luebeckConwayPolynomial_2_6_monic :
     DensePoly.Monic luebeckConwayPolynomial_2_6 := by
   rfl
+
+/-- The committed `C(2, 6)` entry has positive degree. -/
+theorem luebeckConwayPolynomial_2_6_degree_pos :
+    0 < FpPoly.degree luebeckConwayPolynomial_2_6 := by
+  decide
 
 @[simp] theorem luebeckConwayPolynomial?_hit_2_6 :
     luebeckConwayPolynomial? 2 6 = some luebeckConwayPolynomial_2_6 := by
