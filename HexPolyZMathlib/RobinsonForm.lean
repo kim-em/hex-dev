@@ -305,6 +305,56 @@ theorem mahlerMeasure_eq_of_boundary_norm_eq_of_ne_zero {p q : ℂ[X]}
   rw [mahlerMeasure_def_of_ne_zero hq, mahlerMeasure_def_of_ne_zero hp]
   exact congrArg Real.exp hlog
 
+open Filter MeasureTheory Set in
+/--
+Jensen/circle-average upper bound used in the Mahler--Boyd analytic route:
+the exponential Mahler measure is bounded by the unit-circle mean of the
+absolute value.  This is the first Jensen step in the standard Landau/Mahler
+integral proof, exposed here so derivative-bound arguments can cite the
+analytic ingredient directly rather than hiding it inside a coefficient norm
+estimate.
+-/
+theorem mahlerMeasure_le_circleAverage_norm (p : ℂ[X]) :
+    p.mahlerMeasure ≤ Real.circleAverage (fun z => ‖p.eval z‖) 0 1 := by
+  have : IsFiniteMeasure (volume.restrict (uIoc 0 (2 * Real.pi))) := by
+    rw [uIoc_of_le (by positivity)]
+    infer_instance
+  have : NeZero (volume (uIoc 0 (2 * Real.pi))) := ⟨by simp⟩
+  by_cases hp : p = 0
+  · rw [hp, mahlerMeasure_zero]
+    exact Real.circleAverage_nonneg_of_nonneg (fun z _ => norm_nonneg (eval z (0 : ℂ[X])))
+  have hpos_ae : ∀ᵐ (θ : ℝ) ∂volume.restrict (uIoc 0 (2 * Real.pi)),
+      0 < ‖p.eval (circleMap 0 1 θ)‖ := by
+    rw [ae_restrict_iff' measurableSet_uIoc]
+    refine Set.Finite.measure_zero ?_ _
+    simp only [norm_pos_iff, ne_eq, compl_setOf, Classical.not_imp, Decidable.not_not]
+    refine Finite.of_finite_image (f := circleMap 0 1) (p.roots.finite_toSet.subset ?_) ?_
+    · rintro z ⟨θ, ⟨_, heval⟩, rfl⟩
+      exact (mem_roots hp).mpr heval
+    · apply InjOn.mono fun _ h => h.1
+      exact injOn_circleMap_of_abs_sub_le one_ne_zero (by simp [abs_of_pos Real.pi_pos])
+  have hlog_ae : ∀ᵐ (θ : ℝ) ∂volume.restrict (uIoc 0 (2 * Real.pi)),
+      Real.exp (Real.log ‖p.eval (circleMap 0 1 θ)‖) =
+        ‖p.eval (circleMap 0 1 θ)‖ := by
+    filter_upwards [hpos_ae] with θ hθ
+    exact Real.exp_log hθ
+  have hcont : Continuous (fun θ : ℝ => ‖p.eval (circleMap 0 1 θ)‖) := by fun_prop
+  rw [mahlerMeasure_def_of_ne_zero hp]
+  change Real.exp (Real.circleAverage (fun z => Real.log ‖p.eval z‖) 0 1) ≤
+    Real.circleAverage (fun z => ‖p.eval z‖) 0 1
+  calc
+    Real.exp (Real.circleAverage (fun z => Real.log ‖p.eval z‖) 0 1)
+        ≤ Real.circleAverage
+            (fun z => Real.exp (Real.log ‖p.eval z‖)) 0 1 := by
+      rw [Real.circleAverage_eq_intervalAverage, Real.circleAverage_eq_intervalAverage]
+      refine convexOn_exp.map_average_le Real.continuousOn_exp isClosed_univ (by simp) ?_ ?_
+      · rw [Set.uIoc_of_le (by positivity : 0 ≤ 2 * Real.pi)]
+        exact ((analyticOnNhd_id.aeval_polynomial p).meromorphicOn.circleIntegrable_log_norm).1
+      · exact (integrable_congr hlog_ae).mpr hcont.integrableOn_uIoc
+    _ = Real.circleAverage (fun z => ‖p.eval z‖) 0 1 := by
+      rw [Real.circleAverage_eq_intervalAverage, Real.circleAverage_eq_intervalAverage]
+      exact average_congr hlog_ae
+
 theorem mahlerMeasure_robinsonFactor (α : ℂ) :
     (robinsonFactor α).mahlerMeasure = max 1 ‖α‖ := by
   by_cases hα : ‖α‖ ≤ 1
