@@ -932,8 +932,8 @@ private theorem dense_scale_add_int
   apply DensePoly.ext_coeff
   intro n
   rw [DensePoly.coeff_scale _ _ _ (Int.mul_zero c)]
-  rw [DensePoly.coeff_add _ _ _ (by rfl)]
-  rw [DensePoly.coeff_add _ _ _ (by rfl)]
+  rw [DensePoly.coeff_add_semiring]
+  rw [DensePoly.coeff_add_semiring]
   rw [DensePoly.coeff_scale _ _ _ (Int.mul_zero c)]
   rw [DensePoly.coeff_scale _ _ _ (Int.mul_zero c)]
   grind
@@ -943,11 +943,11 @@ private theorem add_cross_congr
     (hcross : ZPoly.congr cross 0 m) :
     ZPoly.congr (base + a + (b + cross)) (base + (a + b)) m := by
   intro i
-  rw [DensePoly.coeff_add _ _ _ (by rfl)]
-  rw [DensePoly.coeff_add _ _ _ (by rfl)]
-  rw [DensePoly.coeff_add _ _ _ (by rfl)]
-  rw [DensePoly.coeff_add _ _ _ (by rfl)]
-  rw [DensePoly.coeff_add _ _ _ (by rfl)]
+  rw [DensePoly.coeff_add_semiring]
+  rw [DensePoly.coeff_add_semiring]
+  rw [DensePoly.coeff_add_semiring]
+  rw [DensePoly.coeff_add_semiring]
+  rw [DensePoly.coeff_add_semiring]
   have hx := hcross i
   rw [DensePoly.coeff_zero] at hx
   have hdiff :
@@ -1018,7 +1018,7 @@ private theorem linearHenselStep_recombine_error_congr
     (p k : Nat) (f g h : ZPoly) :
     ZPoly.congr (g * h + (f - g * h)) f (p ^ (k + 1)) := by
   intro i
-  rw [DensePoly.coeff_add _ _ _ (by rfl), DensePoly.coeff_sub _ _ _ (by rfl)]
+  rw [DensePoly.coeff_add_semiring, DensePoly.coeff_sub_ring]
   have hzero :
       (g * h).coeff i + (f.coeff i - (g * h).coeff i) - f.coeff i = 0 := by
     omega
