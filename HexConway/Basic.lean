@@ -3229,6 +3229,40 @@ def supportedEntry_5_6 : SupportedEntry 5 6 :=
     supportedEntry_5_1.prime,
     luebeckConwayPolynomial?_hit_5_6⟩
 
+/-- The current committed table supports `C(7, 1)`. -/
+def supportedEntry_7_1 : SupportedEntry 7 1 :=
+  ⟨luebeckConwayPolynomial_7_1, prime_seven, luebeckConwayPolynomial?_hit_7_1⟩
+
+/-- The current committed table supports `C(7, 2)`. -/
+def supportedEntry_7_2 : SupportedEntry 7 2 :=
+  ⟨luebeckConwayPolynomial_7_2,
+    supportedEntry_7_1.prime,
+    luebeckConwayPolynomial?_hit_7_2⟩
+
+/-- The current committed table supports `C(7, 3)`. -/
+def supportedEntry_7_3 : SupportedEntry 7 3 :=
+  ⟨luebeckConwayPolynomial_7_3,
+    supportedEntry_7_1.prime,
+    luebeckConwayPolynomial?_hit_7_3⟩
+
+/-- The current committed table supports `C(7, 4)`. -/
+def supportedEntry_7_4 : SupportedEntry 7 4 :=
+  ⟨luebeckConwayPolynomial_7_4,
+    supportedEntry_7_1.prime,
+    luebeckConwayPolynomial?_hit_7_4⟩
+
+/-- The current committed table supports `C(7, 5)`. -/
+def supportedEntry_7_5 : SupportedEntry 7 5 :=
+  ⟨luebeckConwayPolynomial_7_5,
+    supportedEntry_7_1.prime,
+    luebeckConwayPolynomial?_hit_7_5⟩
+
+/-- The current committed table supports `C(7, 6)`. -/
+def supportedEntry_7_6 : SupportedEntry 7 6 :=
+  ⟨luebeckConwayPolynomial_7_6,
+    supportedEntry_7_1.prime,
+    luebeckConwayPolynomial?_hit_7_6⟩
+
 /-- The current committed table supports `C(13, 1)`. -/
 def supportedEntry_13_1 : SupportedEntry 13 1 :=
   ⟨luebeckConwayPolynomial_13_1, prime_thirteen, luebeckConwayPolynomial?_hit_13_1⟩
