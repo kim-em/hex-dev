@@ -37,12 +37,13 @@ private theorem pow_eq_succ_mul_sub_one_add_one_of_one_le
 /--
 The classical geometric-series divisibility identity at the natural-number
 level: `x - 1` divides `x^j - 1` for any `x, j : Nat`. Downstream polynomial
-divisibility proofs use this as a named rewrite-free bridge, without unfolding
+divisibility proofs use this as an automation-facing bridge, without unfolding
 the geometric-series witness.
 
 Edge cases (where the implicit subtraction underflows to `0`) all reduce to
 `0 ∣ 0` and require no special handling.
 -/
+@[simp, grind .]
 theorem sub_one_dvd_pow_sub_one (x j : Nat) :
     x - 1 ∣ x ^ j - 1 := by
   rcases Nat.lt_or_ge x 1 with hx | hx
@@ -61,6 +62,7 @@ Fermat-style exponent identity: if `d ∣ m`, then `p^d - 1 ∣ p^m - 1` over
 `Nat`. This is the public helper used in the project-side
 `xPowSubX_dvd_of_dvd` polynomial divisibility chain.
 -/
+@[simp, grind .]
 theorem pow_sub_one_dvd_pow_sub_one_of_dvd
     (p : Nat) {d m : Nat} (hdvd : d ∣ m) :
     p ^ d - 1 ∣ p ^ m - 1 := by
