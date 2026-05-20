@@ -142,6 +142,25 @@ theorem QuadraticLiftLoopInvariant.of_product_bezout_monic
     QuadraticLiftLoopInvariant m f { g, h, s, t } :=
   ⟨hprod, hbezout, hg_monic⟩
 
+/-- Product-congruence projection of `QuadraticLiftLoopInvariant`. -/
+theorem QuadraticLiftLoopInvariant.prod_congr
+    {m : Nat} {f : ZPoly} {acc : QuadraticLiftResult}
+    (h : QuadraticLiftLoopInvariant m f acc) :
+    ZPoly.congr (acc.g * acc.h) f m := h.1
+
+/-- Bezout-congruence projection of `QuadraticLiftLoopInvariant`. -/
+theorem QuadraticLiftLoopInvariant.bezout_congr
+    {m : Nat} {f : ZPoly} {acc : QuadraticLiftResult}
+    (h : QuadraticLiftLoopInvariant m f acc) :
+    ZPoly.congr (acc.s * acc.g + acc.t * acc.h) 1 m := h.2.1
+
+/-- Monicness projection of `QuadraticLiftLoopInvariant`: the leading factor
+`acc.g` is monic. -/
+theorem QuadraticLiftLoopInvariant.monic
+    {m : Nat} {f : ZPoly} {acc : QuadraticLiftResult}
+    (h : QuadraticLiftLoopInvariant m f acc) :
+    DensePoly.Monic acc.g := h.2.2
+
 /--
 One quadratic step preserves the loop invariant while replacing `m` by `m*m`.
 
@@ -1016,12 +1035,28 @@ private theorem multifactorLiftQuadraticList_toList_length
 /-- The `multifactorLiftQuadratic` output has one entry per input factor.
 Used by the Mathlib-bridge injectivity umbrella to relate output array
 indices to original modular-factor indices. -/
-theorem multifactorLiftQuadratic_size_eq_input
+@[simp] theorem multifactorLiftQuadratic_size_eq_input
     (p k : Nat) [ZMod64.Bounds p] (f : ZPoly) (factors : Array ZPoly) :
     (multifactorLiftQuadratic p k f factors).size = factors.size := by
   unfold multifactorLiftQuadratic
   rw [Array.size_eq_length_toList,
     multifactorLiftQuadraticList_toList_length, ← Array.size_eq_length_toList]
+
+/-- The empty-input boundary of `multifactorLiftQuadratic`: no factors in,
+no factors out. -/
+@[simp] theorem multifactorLiftQuadratic_empty
+    (p k : Nat) [ZMod64.Bounds p] (f : ZPoly) :
+    multifactorLiftQuadratic p k f #[] = #[] := by
+  simp [multifactorLiftQuadratic, multifactorLiftQuadraticList]
+
+/-- The singleton-input boundary of `multifactorLiftQuadratic`: a single
+factor input collapses to the target polynomial reduced modulo `p^k`. The
+input factor is discarded because the only remaining lift target is `f` itself
+under the trivial split `f = f * 1`. -/
+@[simp] theorem multifactorLiftQuadratic_singleton
+    (p k : Nat) [ZMod64.Bounds p] (f g : ZPoly) :
+    multifactorLiftQuadratic p k f #[g] = #[ZPoly.reduceModPow f p k] := by
+  simp [multifactorLiftQuadratic, multifactorLiftQuadraticList]
 
 /-- Helper: list-level per-output mod-`p` preservation, stated via `getD 0` to
 avoid index-proof motive issues. Each entry of
