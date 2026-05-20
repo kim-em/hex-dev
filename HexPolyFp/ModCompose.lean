@@ -99,6 +99,18 @@ theorem composeModMonic_eq_modByMonic_compose
   exact hfold
 
 /--
+The converse rewrite direction for `composeModMonic_eq_modByMonic_compose`.
+This is useful when a proof has already produced the reduced ordinary
+composition and needs to recover the executable modular-composition spelling.
+-/
+theorem modByMonic_compose_eq_composeModMonic
+    [ZMod64.PrimeModulus p]
+    (f g modulus : FpPoly p) (hmonic : DensePoly.Monic modulus) :
+    modByMonic modulus (DensePoly.compose f g) hmonic =
+      composeModMonic f g modulus hmonic :=
+  (composeModMonic_eq_modByMonic_compose f g modulus hmonic).symm
+
+/--
 Executable modular composition agrees with `DensePoly.compose f g % modulus`,
 the quotient-ring spelling preferred by downstream callers that reason with
 `%` rather than `modByMonic`.
