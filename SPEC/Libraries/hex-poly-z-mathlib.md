@@ -1,6 +1,8 @@
 # hex-poly-z-mathlib (depends on hex-poly-z + hex-poly-mathlib + Mathlib)
 
-Proves `DensePoly Int ≃+* Polynomial ℤ` and the Mignotte bound.
+Proves `DensePoly Int ≃+* Polynomial ℤ`, the Mignotte bound, and the
+Mathlib-side analytic polynomial inequalities over `Polynomial ℂ` that
+downstream integer-polynomial factorization needs.
 
 **Mignotte bound — proof strategy.**
 
@@ -82,3 +84,54 @@ The earlier Mahler measure library (by Fabrizio Barroero) provides:
 **Open Mathlib PR:** https://github.com/leanprover-community/mathlib4/pull/33463
 ("Mahler Measure for other rings") extends the Mahler measure definition
 beyond `ℂ[X]`. If this lands, the `ℤ → ℂ` coercion step becomes cleaner.
+
+**Schmeisser / de Bruijn-Springer source theorem surface.**
+
+The Schmeisser/de Bruijn-Springer composition-polynomial theorem belongs in
+`hex-poly-z-mathlib`, not in the Mathlib-free `hex-poly-z` library. It is an
+analytic theorem about roots of complex polynomials, uses Mathlib's complex
+polynomial root and Mahler-measure APIs, and supplies the external analytic
+input for later integer-polynomial coefficient and derivative bounds.
+
+This library owns the following `Polynomial ℂ` API surface:
+
+- The binomial-normalized Schmeisser composition polynomial
+  `Polynomial.schmeisserComposition n f g` and its coefficient, degree, and
+  support lemmas.
+- The derivative specialization kernel
+  `Polynomial.schmeisserDerivativeKernel n`, including the coefficient
+  identity identifying
+  `schmeisserComposition p.natDegree p (schmeisserDerivativeKernel p.natDegree)`
+  with `X * p.derivative`, and the proof that the kernel roots lie in the
+  closed unit disk.
+- The exterior-root product helper
+  `Polynomial.rootsRadiusProduct r s` and the finite multiset conversion
+  from radius-wise root-count domination to exterior-product domination.
+- The hard source theorem, exposed in a derivative-adapter-free form:
+
+  ```lean
+  theorem Polynomial.rootsRadiusProduct_le_of_schmeisserComposition
+      {n : ℕ} {f g : ℂ[X]} {r : ℝ}
+      (hr : 0 < r)
+      (hfg_degree : f.natDegree ≤ n ∧ g.natDegree ≤ n)
+      (hg_roots : ∀ z ∈ g.roots, ‖z‖ ≤ 1) :
+      Polynomial.rootsRadiusProduct r
+          (Polynomial.schmeisserComposition n f g).roots ≤
+        Polynomial.rootsRadiusProduct r f.roots
+  ```
+
+  If the literature proof is easiest to formalize first as radius-wise
+  root-count domination, that theorem may be kept as an internal or
+  intermediate lemma, but the public downstream handoff is the product
+  theorem above.
+- Coefficient-form wrappers that turn an arbitrary polynomial `h` with the
+  Schmeisser composition coefficients into the corresponding
+  `rootsRadiusProduct` and radius-one filtered-product inequalities.
+- Local derivative adapters in `HexPolyZMathlib/RobinsonForm.lean`, including
+  removal of the extra `X` root and the radius-one implication for
+  `p.derivative`.
+
+Downstream libraries may depend on these theorems as Mathlib-side analytic
+inputs. Mathlib-free libraries must not import this surface directly; they
+should consume executable bounds or conditional hypotheses whose proofs are
+discharged here.
