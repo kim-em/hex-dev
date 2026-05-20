@@ -2277,6 +2277,96 @@ private def bareissGramRowInvariant_initial (b : Matrix Int n m) :
     · simpa [c] using (Matrix.IsRREF.rowCombination_single (M := b) i).symm
   · intro i j _hi
     simp [Matrix.noPivotInitialState, Matrix.gramMatrix, Matrix.ofFn, Matrix.dot]
+
+private theorem foldl_sum_bareiss_row_update
+    {α : Type u} (xs : List α) (x y : Int) (u v w : α → Int)
+    (accU accV : Int) :
+    xs.foldl
+        (fun acc a => acc + ((x * u a - y * v a) * w a))
+        (x * accU - y * accV) =
+      x * xs.foldl (fun acc a => acc + u a * w a) accU -
+        y * xs.foldl (fun acc a => acc + v a * w a) accV := by
+  induction xs generalizing accU accV with
+  | nil =>
+      simp
+  | cons a xs ih =>
+      simp only [List.foldl_cons]
+      have hstep :
+          x * accU - y * accV + ((x * u a - y * v a) * w a) =
+            x * (accU + u a * w a) - y * (accV + v a * w a) := by
+        grind
+      rw [hstep]
+      exact ih (accU + u a * w a) (accV + v a * w a)
+
+private theorem dot_bareiss_row_update_left
+    (x y : Int) (u v w : Vector Int m) :
+    Matrix.dot (Vector.ofFn fun a : Fin m => x * u[a] - y * v[a]) w =
+      x * Matrix.dot u w - y * Matrix.dot v w := by
+  unfold Matrix.dot Hex.Vector.dotProduct
+  simpa using
+    foldl_sum_bareiss_row_update
+      (xs := List.finRange m) x y
+      (fun a : Fin m => u[a])
+      (fun a : Fin m => v[a])
+      (fun a : Fin m => w[a])
+      0 0
+
+private theorem foldl_sum_bareiss_row_update_right
+    {α : Type u} (xs : List α) (x y : Int) (u v w : α → Int)
+    (accU accV : Int) :
+    xs.foldl
+        (fun acc a => acc + (w a * (x * u a - y * v a)))
+        (x * accU - y * accV) =
+      x * xs.foldl (fun acc a => acc + w a * u a) accU -
+        y * xs.foldl (fun acc a => acc + w a * v a) accV := by
+  induction xs generalizing accU accV with
+  | nil =>
+      simp
+  | cons a xs ih =>
+      simp only [List.foldl_cons]
+      have hstep :
+          x * accU - y * accV + (w a * (x * u a - y * v a)) =
+            x * (accU + w a * u a) - y * (accV + w a * v a) := by
+        grind
+      rw [hstep]
+      exact ih (accU + w a * u a) (accV + w a * v a)
+
+private theorem dot_bareiss_row_update_right
+    (x y : Int) (w u v : Vector Int m) :
+    Matrix.dot w (Vector.ofFn fun a : Fin m => x * u[a] - y * v[a]) =
+      x * Matrix.dot w u - y * Matrix.dot w v := by
+  unfold Matrix.dot Hex.Vector.dotProduct
+  simpa using
+    foldl_sum_bareiss_row_update_right
+      (xs := List.finRange m) x y
+      (fun a : Fin m => u[a])
+      (fun a : Fin m => v[a])
+      (fun a : Fin m => w[a])
+      0 0
+
+private theorem rowCombination_bareiss_coeff_update
+    (M : Matrix Int n m) (x y : Int) (c d : Vector Int n) :
+    Matrix.rowCombination M (Vector.ofFn fun a : Fin n => x * c[a] - y * d[a]) =
+      Vector.ofFn fun j : Fin m =>
+        x * (Matrix.rowCombination M c)[j] - y * (Matrix.rowCombination M d)[j] := by
+  apply Vector.ext
+  intro j hj
+  let jf : Fin m := ⟨j, hj⟩
+  show
+      (Matrix.rowCombination M (Vector.ofFn fun a : Fin n => x * c[a] - y * d[a]))[jf] =
+        (Vector.ofFn fun j : Fin m =>
+          x * (Matrix.rowCombination M c)[j] - y * (Matrix.rowCombination M d)[j])[jf]
+  unfold Matrix.rowCombination
+  have h_rhs :
+      (Vector.ofFn fun j : Fin m => x * (M.transpose * c)[j] - y * (M.transpose * d)[j])[jf] =
+        x * (M.transpose * c)[jf] - y * (M.transpose * d)[jf] := by
+    change (Vector.ofFn fun j : Fin m =>
+      x * (M.transpose * c)[j] - y * (M.transpose * d)[j]).get jf =
+        x * (M.transpose * c)[jf] - y * (M.transpose * d)[jf]
+    rw [Vector.get_ofFn]
+  rw [h_rhs]
+  repeat rw [Matrix.mulVec_getElem]
+  exact dot_bareiss_row_update_right x y ((Matrix.transpose M).row jf) c d
 /-- If the array loop's `state.step` is past the matrix extent, one outer
 iteration returns the input state unchanged. -/
 private theorem scaledCoeffArrayLoop_done (fuel : Nat)
