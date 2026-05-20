@@ -1,5 +1,6 @@
 import HexPolyZMathlib.Basic
 import HexPolyZMathlib.Mignotte
+import HexPolyZMathlib.SchurSzego
 import HexPolyZMathlib.RobinsonForm
 
 /-!
