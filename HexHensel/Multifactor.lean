@@ -157,6 +157,7 @@ def MultifactorLiftInvariant
 /-- Left identity for `ZPoly` multiplication, used to reason about
 `Array.polyProduct` as a left fold from `1`. Shared by the linear and
 quadratic multifactor proofs. -/
+@[simp]
 theorem one_mul_zpoly (g : ZPoly) :
     (1 : ZPoly) * g = g := by
   rw [DensePoly.mul_comm_poly (S := Int), DensePoly.mul_one_right_poly]
@@ -165,11 +166,12 @@ theorem one_mul_zpoly (g : ZPoly) :
 @[simp]
 theorem polyProduct_singleton (g : ZPoly) :
     Array.polyProduct #[g] = g := by
-  simpa [Array.polyProduct] using one_mul_zpoly g
+  simp [Array.polyProduct]
 
-/-- Folding `(· * ·)` over a `List ZPoly` with seed `g` factors out as
-`g` times the same fold with seed `1`. The key step for splitting
-`Array.polyProduct (#[g] ++ rest)`. -/
+/-- Associativity helper for product invariants: folding `(· * ·)` over a
+`List ZPoly` with seed `g` factors out as `g` times the same fold with seed
+`1`. This is not a simp normal form because both sides contain the same
+left fold. -/
 theorem list_foldl_mul_eq_mul_foldl_one (g : ZPoly) (xs : List ZPoly) :
     xs.foldl (fun acc factor => acc * factor) g =
       g * xs.foldl (fun acc factor => acc * factor) 1 := by
@@ -189,7 +191,9 @@ theorem list_foldl_mul_eq_mul_foldl_one (g : ZPoly) (xs : List ZPoly) :
 
 /-- Splitting `Array.polyProduct` across a singleton prepend: the head
 factors out as a left multiplication. Used to relate the multifactor
-recursion tree to the public ordered-product convention. -/
+recursion tree to the public ordered-product convention. Left untagged as
+`@[simp]` because downstream bridge proofs use large recursive product terms
+where this rewrite is better applied explicitly. -/
 theorem polyProduct_singleton_append (g : ZPoly) (rest : Array ZPoly) :
     Array.polyProduct (#[g] ++ rest) = g * Array.polyProduct rest := by
   cases rest with
@@ -216,7 +220,9 @@ theorem polyProduct_append (xs ys : Array ZPoly) :
 
 /-- `Array.polyProduct` over `(g :: rest).toArray` factors the head out as a
 left multiplication. The `List`-flavoured analogue of
-`polyProduct_singleton_append`. -/
+`polyProduct_singleton_append`. Left untagged as `@[simp]` for the same
+downstream performance reason: callers use it explicitly at product-splitting
+points. -/
 theorem polyProduct_cons_toArray (g : ZPoly) (rest : List ZPoly) :
     Array.polyProduct (g :: rest).toArray =
       g * Array.polyProduct rest.toArray := by
@@ -228,7 +234,7 @@ entries. -/
 @[simp]
 theorem polyProduct_pair (g h : ZPoly) :
     Array.polyProduct #[g, h] = g * h := by
-  simpa [polyProduct_singleton] using polyProduct_cons_toArray g [h]
+  simp [Array.polyProduct]
 
 /-- `Array.polyProduct` over a zero-length replicated list is the
 multiplicative unit. -/
@@ -255,7 +261,8 @@ private theorem multifactorLiftList_spec
       cases rest with
       | nil =>
           have hpow : 0 < p ^ k := Nat.pow_pos (Nat.zero_lt_of_lt hp)
-          simpa [multifactorLiftList, polyProduct_singleton] using
+          simpa [multifactorLiftList, polyProduct_singleton,
+            DensePoly.mul_one_right_poly] using
             ZPoly.congr_reduceModPow f p k hpow
       | cons h tail =>
           let restFactors := (h :: tail).toArray
@@ -291,7 +298,8 @@ private theorem multifactorLiftList_spec
                 (p ^ k) :=
             ZPoly.congr_trans _ _ _ (p ^ k) hprod hsplit
           simpa [multifactorLiftList, restFactors, splitProduct, xgcd, lifted,
-            polyProduct_singleton_append] using hcombined
+            polyProduct_singleton_append, polyProduct_singleton,
+            DensePoly.mul_one_right_poly] using hcombined
 
 /--
 The product of the lifted factors is congruent to `f` modulo `p^k`, provided
