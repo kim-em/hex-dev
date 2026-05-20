@@ -81,7 +81,7 @@ def ofFn (f : Fin n → Fin m → R) : Matrix R n m :=
   Vector.ofFn fun i => Vector.ofFn fun j => f i j
 
 /-- Entry access for a matrix built from an entry function. -/
-@[simp] theorem getElem_ofFn (f : Fin n → Fin m → R) (i : Fin n) (j : Fin m) :
+@[simp, grind =] theorem getElem_ofFn (f : Fin n → Fin m → R) (i : Fin n) (j : Fin m) :
     (ofFn f)[i][j] = f i j := by
   simp [ofFn]
 
@@ -90,7 +90,7 @@ def row (M : Matrix R n m) (i : Fin n) : Vector R m :=
   M[i]
 
 /-- Entry access for a selected matrix row. -/
-@[simp] theorem row_getElem (M : Matrix R n m) (i : Fin n) (j : Fin m) :
+@[simp, grind =] theorem row_getElem (M : Matrix R n m) (i : Fin n) (j : Fin m) :
     (row M i)[j] = M[i][j] := by
   rfl
 
@@ -99,7 +99,7 @@ def col (M : Matrix R n m) (j : Fin m) : Vector R n :=
   Vector.ofFn fun i => M[i][j]
 
 /-- Entry access for a selected matrix column. -/
-@[simp] theorem col_getElem (M : Matrix R n m) (j : Fin m) (i : Fin n) :
+@[simp, grind =] theorem col_getElem (M : Matrix R n m) (j : Fin m) (i : Fin n) :
     (col M j)[i] = M[i][j] := by
   simp [col]
 
@@ -108,7 +108,7 @@ def transpose (M : Matrix R n m) : Matrix R m n :=
   Vector.ofFn fun j => col M j
 
 /-- Entry access for the transpose of a dense matrix. -/
-@[simp] theorem transpose_getElem (M : Matrix R n m) (i : Fin m) (j : Fin n) :
+@[simp, grind =] theorem transpose_getElem (M : Matrix R n m) (i : Fin m) (j : Fin n) :
     (transpose M)[i][j] = M[j][i] := by
   simp [transpose, col]
 
@@ -171,14 +171,14 @@ instance [Mul R] [Add R] [OfNat R 0] : HMul (Matrix R n m) (Matrix R m k) (Matri
   hMul := mul
 
 /-- Entry characterization for matrix-vector multiplication. -/
-@[simp] theorem mulVec_getElem [Mul R] [Add R] [OfNat R 0]
+@[simp, grind =] theorem mulVec_getElem [Mul R] [Add R] [OfNat R 0]
     (M : Matrix R n m) (v : Vector R m) (i : Fin n) :
     (M * v)[i] = dot (row M i) v := by
   show (mulVec M v)[i] = dot (row M i) v
   simp [mulVec]
 
 /-- Entry characterization for matrix multiplication. -/
-@[simp] theorem mul_getElem [Mul R] [Add R] [OfNat R 0]
+@[simp, grind =] theorem mul_getElem [Mul R] [Add R] [OfNat R 0]
     (M : Matrix R n m) (N : Matrix R m k) (i : Fin n) (j : Fin k) :
     (M * N)[i][j] = dot (row M i) (col N j) := by
   show (mul M N)[i][j] = dot (row M i) (col N j)
@@ -418,7 +418,7 @@ theorem transpose_mul_of_mul_comm [Lean.Grind.Ring R]
   rw [hmul_comm]
 
 /-- Left-multiplication by the identity matrix leaves a vector unchanged. -/
-theorem one_mulVec [Lean.Grind.Ring R] (v : Vector R n) :
+@[simp, grind =] theorem one_mulVec [Lean.Grind.Ring R] (v : Vector R n) :
     (1 : Matrix R n n) * v = v := by
   apply Vector.ext
   intro i hi
@@ -441,7 +441,7 @@ theorem one_mulVec [Lean.Grind.Ring R] (v : Vector R n) :
           grind
 
 /-- Left-multiplication by the identity matrix leaves a matrix unchanged. -/
-theorem one_mul [Lean.Grind.Ring R] (M : Matrix R n m) :
+@[simp, grind =] theorem one_mul [Lean.Grind.Ring R] (M : Matrix R n m) :
     (1 : Matrix R n n) * M = M := by
   apply Vector.ext
   intro i hi
@@ -470,7 +470,7 @@ theorem one_mul [Lean.Grind.Ring R] (M : Matrix R n m) :
           grind
 
 /-- Right-multiplication by the identity matrix leaves a matrix unchanged. -/
-theorem mul_one [Lean.Grind.Ring R] (M : Matrix R n m) :
+@[simp, grind =] theorem mul_one [Lean.Grind.Ring R] (M : Matrix R n m) :
     M * (1 : Matrix R m m) = M := by
   apply Vector.ext
   intro i hi
@@ -514,7 +514,7 @@ theorem mul_assoc [Lean.Grind.Ring R]
     congrArg (fun v => v[ii]) (mul_assoc_vec A B (col C jj))
 
 /-- Matrix-vector multiplication sends the zero vector to the zero vector. -/
-theorem mulVec_zero [Lean.Grind.Ring R] (A : Matrix R n m) :
+@[simp, grind =] theorem mulVec_zero [Lean.Grind.Ring R] (A : Matrix R n m) :
     A * (0 : Vector R m) = 0 := by
   apply Vector.ext
   intro i hi
@@ -524,6 +524,19 @@ theorem mulVec_zero [Lean.Grind.Ring R] (A : Matrix R n m) :
   apply foldl_add_eq_acc_ring
   intro j _hj
   grind
+
+/-- The zero matrix sends every vector to the zero vector. -/
+@[simp, grind =] theorem zero_mulVec [Lean.Grind.Ring R] (v : Vector R m) :
+    (0 : Matrix R n m) * v = 0 := by
+  apply Vector.ext
+  intro i hi
+  let ii : Fin n := ⟨i, hi⟩
+  simp [HMul.hMul, mulVec, dot, row, Hex.Vector.dotProduct]
+  change (List.finRange m).foldl (fun acc j => acc + (0 : Matrix R n m)[ii][j] * v[j]) 0 = 0
+  apply foldl_add_eq_acc_ring
+  intro j _hj
+  change (Matrix.zero : Matrix R n m)[ii][j] * v[j] = 0
+  simpa [Matrix.zero, ofFn] using Lean.Grind.Semiring.zero_mul v[j]
 
 /-- Multiplication by `Q - I`, expressed entrywise, is `Q * v - v`. -/
 theorem sub_identity_mulVec [Lean.Grind.Ring R] (Q : Matrix R n n) (v : Vector R n) :
@@ -715,7 +728,7 @@ theorem leadingPrefix_borderedMinor_succ_eq_borderedMinor (M : Matrix R n n)
     simp [leadingPrefix, borderedMinor, ofFn, hr_eq, hc_eq]
 
 /-- The identity matrix entry function: `1[i][j] = 1` if `i = j`, else `0`. -/
-@[simp] theorem getElem_one [OfNat R 0] [OfNat R 1] {n : Nat} (i j : Fin n) :
+@[simp, grind =] theorem getElem_one [OfNat R 0] [OfNat R 1] {n : Nat} (i j : Fin n) :
     (1 : Matrix R n n)[i][j] = if i = j then (1 : R) else 0 := by
   simp [show (1 : Matrix R n n) = Matrix.identity from rfl, Matrix.identity, ofFn]
 
