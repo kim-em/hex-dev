@@ -126,10 +126,21 @@ def rootsRadiusProduct (r : ℝ) (s : Multiset ℂ) : ℝ :=
   ((s.filter fun z => r ≤ ‖z‖).map fun z => ‖z‖ / r).prod
 
 @[simp]
+theorem rootsRadiusProduct_zero (r : ℝ) :
+    rootsRadiusProduct r (0 : Multiset ℂ) = 1 := by
+  simp [rootsRadiusProduct]
+
+@[simp]
 theorem rootsRadiusProduct_one (s : Multiset ℂ) :
     rootsRadiusProduct 1 s =
       ((s.filter fun z => 1 ≤ ‖z‖).map fun z => ‖z‖).prod := by
   simp [rootsRadiusProduct]
+
+@[simp]
+theorem filtered_norm_div_one (s : Multiset ℂ) :
+    ((s.filter fun z => 1 ≤ ‖z‖).map fun z => ‖z‖ / (1 : ℝ)).prod =
+      ((s.filter fun z => 1 ≤ ‖z‖).map fun z => ‖z‖).prod := by
+  simp
 
 theorem rootsRadiusProduct_eq_div_pow_card {r : ℝ} (s : Multiset ℂ) :
     rootsRadiusProduct r s =
@@ -139,6 +150,29 @@ theorem rootsRadiusProduct_eq_div_pow_card {r : ℝ} (s : Multiset ℂ) :
   simp_rw [div_eq_mul_inv]
   rw [Multiset.prod_map_mul]
   simp
+
+theorem rootsRadiusProduct_mul_pow_card {r : ℝ} (hr : r ≠ 0) (s : Multiset ℂ) :
+    rootsRadiusProduct r s * r ^ (s.filter fun z => r ≤ ‖z‖).card =
+      ((s.filter fun z => r ≤ ‖z‖).map fun z => ‖z‖).prod := by
+  rw [rootsRadiusProduct_eq_div_pow_card]
+  field_simp [pow_ne_zero _ hr]
+
+theorem rootsRadiusProduct_nonneg {r : ℝ} (hr : 0 ≤ r) (s : Multiset ℂ) :
+    0 ≤ rootsRadiusProduct r s := by
+  rw [rootsRadiusProduct]
+  apply Multiset.prod_nonneg
+  intro x hx
+  rw [Multiset.mem_map] at hx
+  rcases hx with ⟨z, _hz, rfl⟩
+  exact div_nonneg (norm_nonneg z) hr
+
+theorem rootsRadiusProduct_eq_one_of_forall_lt {r : ℝ} {s : Multiset ℂ}
+    (h : ∀ z ∈ s, ‖z‖ < r) :
+    rootsRadiusProduct r s = 1 := by
+  rw [rootsRadiusProduct, Multiset.filter_eq_nil.2]
+  · simp
+  intro z hz hz_ge
+  exact not_le_of_gt (h z hz) hz_ge
 
 /--
 Coefficient-form packaging for Schmeisser's Lemma 9 / de Bruijn-Springer
