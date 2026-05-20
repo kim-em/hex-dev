@@ -268,6 +268,98 @@ theorem rootsRadiusProduct_eq_one_of_forall_lt {r : ℝ} {s : Multiset ℂ}
   intro z hz hz_ge
   exact not_le_of_gt (h z hz) hz_ge
 
+/--
+The number of roots outside a closed radius threshold, counted with
+multiplicity through the `Polynomial.roots` multiset.  This is the root-count
+form of the zero-control substrate in `SPEC/Libraries/hex-poly-z-mathlib.md`.
+-/
+def rootsOutsideRadiusCount (r : ℝ) (s : Multiset ℂ) : ℕ :=
+  (s.filter fun z => r ≤ ‖z‖).card
+
+@[simp]
+theorem rootsOutsideRadiusCount_zero (r : ℝ) :
+    rootsOutsideRadiusCount r (0 : Multiset ℂ) = 0 := by
+  simp [rootsOutsideRadiusCount]
+
+theorem rootsOutsideRadiusCount_eq_filter_card (r : ℝ) (s : Multiset ℂ) :
+    rootsOutsideRadiusCount r s = (s.filter fun z => r ≤ ‖z‖).card := rfl
+
+/-- All roots of a multiset lie in the closed disk centered at `c` of radius `R`. -/
+def rootsInClosedDisk (c : ℂ) (R : ℝ) (s : Multiset ℂ) : Prop :=
+  ∀ z ∈ s, ‖z - c‖ ≤ R
+
+/-- All roots of `p` lie in the closed unit disk, with multiplicity carried by `roots`. -/
+def rootsInClosedUnitDisk (p : ℂ[X]) : Prop :=
+  rootsInClosedDisk 0 1 p.roots
+
+theorem rootsInClosedUnitDisk_iff (p : ℂ[X]) :
+    rootsInClosedUnitDisk p ↔ ∀ z ∈ p.roots, ‖z‖ ≤ 1 := by
+  simp [rootsInClosedUnitDisk, rootsInClosedDisk]
+
+/--
+Radius-wise exterior-root-count domination from radius `r` onward.  This is
+the finite multiset handoff used to turn Grace-Walsh-Szego/de Bruijn-Springer
+zero control into exterior-product domination.
+-/
+def exteriorRootCountDominatedFrom (r : ℝ) (s t : Multiset ℂ) : Prop :=
+  ∀ ρ : ℝ, r ≤ ρ → rootsOutsideRadiusCount ρ s ≤ rootsOutsideRadiusCount ρ t
+
+/--
+Derivative-free zero-control statement for Schmeisser compositions: every
+positive radius has no more exterior roots in the composition than in `f`,
+counted with multiplicity through `Polynomial.roots`.
+-/
+def schmeisserCompositionZeroControl (n : ℕ) (f g : ℂ[X]) : Prop :=
+  ∀ r : ℝ, 0 < r →
+    rootsOutsideRadiusCount r (schmeisserComposition n f g).roots ≤
+      rootsOutsideRadiusCount r f.roots
+
+/--
+Degree-`n` Grace-Walsh-Szego/de Bruijn-Springer zero-control substrate for the
+Schmeisser composition.  The conclusion is radius-wise root-count domination
+over `Polynomial.roots`, so multiplicities and roots at zero stay visible.
+-/
+def graceWalshSzegoZeroControlAtDegree (n : ℕ) : Prop :=
+  ∀ f g : ℂ[X],
+    f.natDegree ≤ n ∧ g.natDegree ≤ n →
+      rootsInClosedUnitDisk g →
+        schmeisserCompositionZeroControl n f g
+
+theorem exteriorRootCountDominatedFrom_of_schmeisserCompositionZeroControl
+    {n : ℕ} {f g : ℂ[X]} {r : ℝ}
+    (hr : 0 < r)
+    (hzero : schmeisserCompositionZeroControl n f g) :
+    exteriorRootCountDominatedFrom r
+      (schmeisserComposition n f g).roots f.roots := by
+  intro ρ hρ
+  exact hzero ρ (lt_of_lt_of_le hr hρ)
+
+theorem rootsOutsideRadiusCount_le_of_schmeisserCompositionZeroControl
+    {n : ℕ} {f g : ℂ[X]} {r : ℝ}
+    (hr : 0 < r)
+    (hzero : schmeisserCompositionZeroControl n f g) :
+    rootsOutsideRadiusCount r (schmeisserComposition n f g).roots ≤
+      rootsOutsideRadiusCount r f.roots :=
+  hzero r hr
+
+theorem rootsOutsideRadiusCount_le_of_graceWalshSzegoZeroControlAtDegree
+    {n : ℕ} {f g : ℂ[X]} {r : ℝ}
+    (hsource : graceWalshSzegoZeroControlAtDegree n)
+    (hr : 0 < r)
+    (hfg_degree : f.natDegree ≤ n ∧ g.natDegree ≤ n)
+    (hg_roots : rootsInClosedUnitDisk g) :
+    rootsOutsideRadiusCount r (schmeisserComposition n f g).roots ≤
+      rootsOutsideRadiusCount r f.roots :=
+  hsource f g hfg_degree hg_roots r hr
+
+theorem schmeisserCompositionZeroControl_of_graceWalshSzegoZeroControlAtDegree
+    {n : ℕ} {f g : ℂ[X]}
+    (hsource : graceWalshSzegoZeroControlAtDegree n)
+    (hfg_degree : f.natDegree ≤ n ∧ g.natDegree ≤ n)
+    (hg_roots : rootsInClosedUnitDisk g) :
+    schmeisserCompositionZeroControl n f g :=
+  hsource f g hfg_degree hg_roots
+
 private theorem multiset_prod_le_prod_of_forall_count_ge_le
     {s t : Multiset ℝ}
     (hs_one : ∀ x ∈ s, 1 ≤ x)
@@ -405,6 +497,36 @@ theorem rootsRadiusProduct_le_of_forall_count_radius_le
     rw [hs_count, ht_count]
     exact hcount (ρ * r) hthreshold
 
+theorem rootsRadiusProduct_le_of_exteriorRootCountDominatedFrom
+    {r : ℝ} {s t : Multiset ℂ}
+    (hr : 0 < r)
+    (hcount : exteriorRootCountDominatedFrom r s t) :
+    rootsRadiusProduct r s ≤ rootsRadiusProduct r t :=
+  rootsRadiusProduct_le_of_forall_count_radius_le hr (by
+    intro ρ hρ
+    simpa [rootsOutsideRadiusCount] using hcount ρ hρ)
+
+theorem rootsRadiusProduct_le_of_schmeisserCompositionZeroControl
+    {n : ℕ} {f g : ℂ[X]} {r : ℝ}
+    (hr : 0 < r)
+    (hzero : schmeisserCompositionZeroControl n f g) :
+    rootsRadiusProduct r (schmeisserComposition n f g).roots ≤
+      rootsRadiusProduct r f.roots :=
+  rootsRadiusProduct_le_of_exteriorRootCountDominatedFrom hr
+    (exteriorRootCountDominatedFrom_of_schmeisserCompositionZeroControl hr hzero)
+
+theorem rootsRadiusProduct_le_of_graceWalshSzegoZeroControlAtDegree
+    {n : ℕ} {f g : ℂ[X]} {r : ℝ}
+    (hsource : graceWalshSzegoZeroControlAtDegree n)
+    (hr : 0 < r)
+    (hfg_degree : f.natDegree ≤ n ∧ g.natDegree ≤ n)
+    (hg_roots : rootsInClosedUnitDisk g) :
+    rootsRadiusProduct r (schmeisserComposition n f g).roots ≤
+      rootsRadiusProduct r f.roots :=
+  rootsRadiusProduct_le_of_schmeisserCompositionZeroControl hr
+    (schmeisserCompositionZeroControl_of_graceWalshSzegoZeroControlAtDegree
+      hsource hfg_degree hg_roots)
+
 /--
 Coefficient-form packaging for Schmeisser's Lemma 9 / de Bruijn-Springer
 composition-polynomial theorem.
@@ -427,6 +549,33 @@ theorem rootsRadiusProduct_le_of_schmeisserComposition_of_source
     rootsRadiusProduct r h.roots ≤ rootsRadiusProduct r f.roots := by
   rw [eq_schmeisserComposition_of_natDegree_le_of_coeff hh_degree hh_coeff]
   exact hsource
+
+theorem rootsRadiusProduct_le_of_schmeisserCompositionZeroControl_of_coeff
+    {n : ℕ} {f g h : ℂ[X]} {r : ℝ}
+    (hr : 0 < r)
+    (_hfg_degree : f.natDegree ≤ n ∧ g.natDegree ≤ n)
+    (hh_degree : h.natDegree ≤ n)
+    (hh_coeff : ∀ k ≤ n,
+      h.coeff k = f.coeff k * (g.coeff k / (Nat.choose n k : ℂ)))
+    (_hg_roots : rootsInClosedUnitDisk g)
+    (hzero : schmeisserCompositionZeroControl n f g) :
+    rootsRadiusProduct r h.roots ≤ rootsRadiusProduct r f.roots := by
+  rw [eq_schmeisserComposition_of_natDegree_le_of_coeff hh_degree hh_coeff]
+  exact rootsRadiusProduct_le_of_schmeisserCompositionZeroControl hr hzero
+
+theorem rootsRadiusProduct_le_of_graceWalshSzegoZeroControlAtDegree_of_coeff
+    {n : ℕ} {f g h : ℂ[X]} {r : ℝ}
+    (hsource : graceWalshSzegoZeroControlAtDegree n)
+    (hr : 0 < r)
+    (hfg_degree : f.natDegree ≤ n ∧ g.natDegree ≤ n)
+    (hh_degree : h.natDegree ≤ n)
+    (hh_coeff : ∀ k ≤ n,
+      h.coeff k = f.coeff k * (g.coeff k / (Nat.choose n k : ℂ)))
+    (hg_roots : rootsInClosedUnitDisk g) :
+    rootsRadiusProduct r h.roots ≤ rootsRadiusProduct r f.roots := by
+  rw [eq_schmeisserComposition_of_natDegree_le_of_coeff hh_degree hh_coeff]
+  exact rootsRadiusProduct_le_of_graceWalshSzegoZeroControlAtDegree
+    hsource hr hfg_degree hg_roots
 
 /--
 Radius-one compatibility wrapper for Schmeisser's Lemma 9 / de Bruijn-Springer
