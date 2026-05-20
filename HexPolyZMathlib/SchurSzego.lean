@@ -140,6 +140,29 @@ theorem rootsRadiusProduct_eq_div_pow_card {r : ℝ} (s : Multiset ℂ) :
   rw [Multiset.prod_map_mul]
   simp
 
+/--
+Radius-one packaging for Schmeisser's Lemma 9 / de Bruijn-Springer
+composition-polynomial theorem.
+
+The hard analytic source theorem supplies `hsource` from the degree and
+closed-unit-disk hypotheses. This lemma keeps the coefficient-form API used by
+downstream derivative adapters separate from that analytic proof.
+-/
+theorem roots_filter_norm_product_le_of_schmeisserComposition_radius_one_of_source
+    {n : ℕ} {f g h : ℂ[X]}
+    (_hfg_degree : f.natDegree ≤ n ∧ g.natDegree ≤ n)
+    (hh_degree : h.natDegree ≤ n)
+    (hh_coeff : ∀ k ≤ n,
+      h.coeff k = f.coeff k * (g.coeff k / (Nat.choose n k : ℂ)))
+    (_hg_roots : ∀ z ∈ g.roots, ‖z‖ ≤ 1)
+    (hsource :
+      (((schmeisserComposition n f g).roots.filter fun ζ => 1 ≤ ‖ζ‖).map fun ζ => ‖ζ‖).prod ≤
+        ((f.roots.filter fun z => 1 ≤ ‖z‖).map fun z => ‖z‖).prod) :
+    ((h.roots.filter fun ζ => 1 ≤ ‖ζ‖).map fun ζ => ‖ζ‖).prod ≤
+      ((f.roots.filter fun z => 1 ≤ ‖z‖).map fun z => ‖z‖).prod := by
+  rw [eq_schmeisserComposition_of_natDegree_le_of_coeff hh_degree hh_coeff]
+  exact hsource
+
 end
 
 end Polynomial
