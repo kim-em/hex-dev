@@ -104,35 +104,25 @@ private def quadModulus : FpPoly 5 :=
 private theorem quadModulus_monic : DensePoly.Monic quadModulus := by
   rfl
 
--- `#eval` requires all of `DensePoly`'s propositional fields to be
--- non-sorry; `DensePoly.ofCoeffs` currently has a sorry-backed proof field.
-/-- info: [0, 1] -/
-#guard_msgs in
-#eval! coeffNats (powModMonic (polyFive #[1, 1]) quadModulus quadModulus_monic 3)
+#guard coeffNats (powModMonic (polyFive #[1, 1]) quadModulus quadModulus_monic 3) = [0, 1]
 
 #guard coeffNats (powModMonic (polyFive #[4, 2]) constModulus constModulus_monic 5) = []
 #guard coeffNats (powModMonic (polyFive #[0, 0, 1]) quadModulus quadModulus_monic 0) = [1]
 #guard coeffNats (powModMonic (polyFive #[0, 0, 1]) quadModulus quadModulus_monic 4) = [1]
 
-/-- info: [0, 4] -/
-#guard_msgs in
-#eval! coeffNats (frobeniusXMod quadModulus quadModulus_monic)
+#guard coeffNats (frobeniusXMod quadModulus quadModulus_monic) = [0, 4]
 
 #guard coeffNats (frobeniusXMod constModulus constModulus_monic) = []
 #guard coeffNats (frobeniusXMod linearModulus linearModulus_monic) = [2]
 
-/-- info: [0, 1] -/
-#guard_msgs in
-#eval! coeffNats (frobeniusXPowMod quadModulus quadModulus_monic 0)
+#guard coeffNats (frobeniusXPowMod quadModulus quadModulus_monic 0) = [0, 1]
 
 #guard coeffNats (frobeniusXPowMod constModulus constModulus_monic 3) = []
 #guard coeffNats (frobeniusXPowMod linearModulus linearModulus_monic 2) = [2]
 
-/-- info: [4, 4] -/
-#guard_msgs in
-#eval! coeffNats
+#guard coeffNats
     (composeModMonic (polyFive #[3, 2, 1]) (polyFive #[1, 1]) quadModulus
-      quadModulus_monic)
+      quadModulus_monic) = [4, 4]
 
 #guard coeffNats
     (composeModMonic (polyFive #[2, 4]) (polyFive #[3, 1]) constModulus
@@ -143,33 +133,29 @@ private theorem quadModulus_monic : DensePoly.Monic quadModulus := by
 #guard composeModMonic (polyFive #[0, 0, 1]) X quadModulus quadModulus_monic =
   modByMonic quadModulus (polyFive #[0, 0, 1]) quadModulus_monic
 
-/-- info: [1, 1, 1] -/
-#guard_msgs in
-#eval! coeffNats (weightedProduct [sfFactorFive #[4, 4, 4] 1, sfFactorFive #[2] 2])
+#guard coeffNats (weightedProduct [sfFactorFive #[4, 4, 4] 1, sfFactorFive #[2] 2]) =
+  [1, 1, 1]
 
 #guard coeffNats (weightedProduct [sfFactorFive #[1, 1] 2]) = [1, 2, 1]
 #guard coeffNats (weightedProduct [sfFactorFive #[1, 1] 5]) = [1, 0, 0, 0, 0, 1]
 #guard coeffNats (weightedProduct ([] : List (SquareFreeFactor 5))) = [1]
 
-/-- info: (1, [([4, 4, 4], 1), ([2], 2)]) -/
-#guard_msgs in
-#eval! sfSummary (squareFreeDecomposition prime_five (polyFive #[1, 1, 1]))
+#guard sfSummary (squareFreeDecomposition prime_five (polyFive #[1, 1, 1])) =
+  (1, [([4, 4, 4], 1), ([2], 2)])
 
 #guard
   let f := polyFive #[1, 1, 1]
   coeffNats (sfReconstruction (squareFreeDecomposition prime_five f)) = coeffNats f
 
-/-- info: (1, [([4], 1), ([2, 2], 2)]) -/
-#guard_msgs in
-#eval! sfSummary (squareFreeDecomposition prime_five (polyFive #[1, 2, 1]))
+#guard sfSummary (squareFreeDecomposition prime_five (polyFive #[1, 2, 1])) =
+  (1, [([4], 1), ([2, 2], 2)])
 
 #guard
   let f := polyFive #[1, 2, 1]
   coeffNats (sfReconstruction (squareFreeDecomposition prime_five f)) = coeffNats f
 
-/-- info: (1, [([1, 1], 5)]) -/
-#guard_msgs in
-#eval! sfSummary (squareFreeDecomposition prime_five (polyFive #[1, 0, 0, 0, 0, 1]))
+#guard sfSummary (squareFreeDecomposition prime_five (polyFive #[1, 0, 0, 0, 0, 1])) =
+  (1, [([1, 1], 5)])
 
 #guard
   let f := polyFive #[1, 0, 0, 0, 0, 1]
@@ -225,71 +211,53 @@ private def sfBigFactors : List (SquareFreeFactor 5) :=
 
 private def sfBigInput : FpPoly 5 := weightedProduct sfBigFactors
 
-/-- info: [3, 2, 0, 0, 0, 0, 1] -/
-#guard_msgs in
-#eval! coeffNats bigModulus
+#guard coeffNats bigModulus = [3, 2, 0, 0, 0, 0, 1]
 
-/-- info: [3, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1] -/
-#guard_msgs in
-#eval! coeffNats bigInput
+#guard coeffNats bigInput = [3, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1]
 
-/-- info: [0, 1, 0, 0, 3, 0, 0, 0, 0, 0, 2] -/
-#guard_msgs in
-#eval! coeffNats bigSparse
+#guard coeffNats bigSparse = [0, 1, 0, 0, 3, 0, 0, 0, 0, 0, 2]
 
 #guard coeffNats (powModMonic bigInput bigModulus bigModulus_monic 0) = [1]
 #guard coeffNats (powModMonic 0 bigModulus bigModulus_monic 7) = []
 
 -- `bigInput` reduces from degree 10 down into the degree-6 quotient ring.
-/-- info: [3, 0, 0, 0, 2] -/
-#guard_msgs in
-#eval! coeffNats (powModMonic bigInput bigModulus bigModulus_monic 1)
+#guard coeffNats (powModMonic bigInput bigModulus bigModulus_monic 1) = [3, 0, 0, 0, 2]
 
-/-- info: [3, 0, 1, 2, 3, 4] -/
-#guard_msgs in
-#eval! coeffNats (powModMonic bigInput bigModulus bigModulus_monic 5)
+#guard coeffNats (powModMonic bigInput bigModulus bigModulus_monic 5) =
+  [3, 0, 1, 2, 3, 4]
 
-/-- info: [2, 0, 4, 4, 1, 1] -/
-#guard_msgs in
-#eval! coeffNats (powModMonic bigSparse bigModulus bigModulus_monic 3)
+#guard coeffNats (powModMonic bigSparse bigModulus bigModulus_monic 3) =
+  [2, 0, 4, 4, 1, 1]
 
 -- `frobeniusXMod` returns `x^5` (degree 5 < 6) so no modular reduction occurs.
-/-- info: [0, 0, 0, 0, 0, 1] -/
-#guard_msgs in
-#eval! coeffNats (frobeniusXMod bigModulus bigModulus_monic)
+#guard coeffNats (frobeniusXMod bigModulus bigModulus_monic) = [0, 0, 0, 0, 0, 1]
 
 -- `frobeniusXPowMod _ _ 2` returns `x^25 mod (x^6 + 2x + 3)`, exercising the
 -- degree-25 → degree-≤5 reduction loop.
-/-- info: [0, 1, 1, 1, 1, 1] -/
-#guard_msgs in
-#eval! coeffNats (frobeniusXPowMod bigModulus bigModulus_monic 2)
+#guard coeffNats (frobeniusXPowMod bigModulus bigModulus_monic 2) =
+  [0, 1, 1, 1, 1, 1]
 
 #guard coeffNats (frobeniusXPowMod bigModulus bigModulus_monic 0) = [0, 1]
 
 -- `composeModMonic bigInput X` is `bigInput mod bigModulus` since `f ∘ X = f`.
-/-- info: [3, 0, 0, 0, 2] -/
-#guard_msgs in
-#eval! coeffNats (composeModMonic bigInput X bigModulus bigModulus_monic)
+#guard coeffNats (composeModMonic bigInput X bigModulus bigModulus_monic) =
+  [3, 0, 0, 0, 2]
 
 -- `composeModMonic bigInput (x + 1)` is `bigInput(x + 1) mod bigModulus`,
 -- exercising both the substitution and the modular reduction.
-/-- info: [1, 0, 0, 0, 2, 2] -/
-#guard_msgs in
-#eval! coeffNats (composeModMonic bigInput (polyFive #[1, 1]) bigModulus bigModulus_monic)
+#guard coeffNats (composeModMonic bigInput (polyFive #[1, 1]) bigModulus bigModulus_monic) =
+  [1, 0, 0, 0, 2, 2]
 
 #guard composeModMonic 0 bigInput bigModulus bigModulus_monic = 0
 
 -- `sfBigInput = (x+1)^2 (x+2)^3 (x+3)^2 (x+4)^3` is degree 10 over F_5.
-/-- info: [3, 1, 1, 0, 4, 3, 3, 0, 3, 1, 1] -/
-#guard_msgs in
-#eval! coeffNats sfBigInput
+#guard coeffNats sfBigInput = [3, 1, 1, 0, 4, 3, 3, 0, 3, 1, 1]
 
 -- Same-multiplicity factors aggregate: mult-2 part is
 -- `3·((x+1)(x+3)) = 3·(x^2 + 4x + 3)` and mult-3 part is
 -- `4·((x+2)(x+4)) = 4·(x^2 + x + 3)`. Unit `3^2·4^3 = 576 ≡ 1 (mod 5)`.
-/-- info: (1, [([4, 2, 3], 2), ([2, 4, 4], 3)]) -/
-#guard_msgs in
-#eval! sfSummary (squareFreeDecomposition prime_five sfBigInput)
+#guard sfSummary (squareFreeDecomposition prime_five sfBigInput) =
+  (1, [([4, 2, 3], 2), ([2, 4, 4], 3)])
 
 #guard
   coeffNats (sfReconstruction (squareFreeDecomposition prime_five sfBigInput)) =
