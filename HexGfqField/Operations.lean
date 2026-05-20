@@ -532,12 +532,14 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     HPow (FiniteField f hf hp hirr) Int (FiniteField f hf hp hirr) where
   hPow := zpow
 
-@[simp] theorem toQuotient_zero
+/-- Zero projects to the quotient-ring zero. -/
+@[simp, grind =] theorem toQuotient_zero
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p) (hirr : FpPoly.Irreducible f) :
     (0 : FiniteField f hf hp hirr).toQuotient = 0 :=
   rfl
 
-@[simp] theorem toQuotient_one
+/-- One projects to the quotient-ring one. -/
+@[simp, grind =] theorem toQuotient_one
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p) (hirr : FpPoly.Irreducible f) :
     (1 : FiniteField f hf hp hirr).toQuotient = 1 :=
   rfl
@@ -549,7 +551,8 @@ theorem zero_ne_one
   have hq := congrArg FiniteField.toQuotient h
   exact GFqRing.zero_ne_one f hf (by simpa using hq)
 
-@[simp] theorem toQuotient_natCast
+/-- Natural literals project to quotient-ring natural literals. -/
+@[simp, grind =] theorem toQuotient_natCast
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p) (hirr : FpPoly.Irreducible f) (n : Nat) :
     ((n : FiniteField f hf hp hirr).toQuotient) = (n : GFqRing.PolyQuotient f hf) :=
   rfl
@@ -601,14 +604,16 @@ theorem natCast_eq_natCast_iff_mod_eq
   · intro h
     exact natCast_eq_of_mod_eq f hf hp hirr h
 
-@[simp] theorem toQuotient_add
+/-- Addition projects to quotient-ring addition. -/
+@[simp, grind =] theorem toQuotient_add
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x y : FiniteField f hf hp hirr) :
     (x + y : FiniteField f hf hp hirr).toQuotient =
       x.toQuotient + y.toQuotient :=
   rfl
 
-@[simp] theorem toQuotient_mul
+/-- Multiplication projects to quotient-ring multiplication. -/
+@[simp, grind =] theorem toQuotient_mul
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x y : FiniteField f hf hp hirr) :
     (x * y : FiniteField f hf hp hirr).toQuotient =
@@ -616,59 +621,66 @@ theorem natCast_eq_natCast_iff_mod_eq
   rfl
 
 /-- Negation projects to the quotient-ring additive inverse. -/
-@[simp] theorem toQuotient_neg
+@[simp, grind =] theorem toQuotient_neg
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) :
     (-x : FiniteField f hf hp hirr).toQuotient = -x.toQuotient :=
   rfl
 
 /-- Subtraction projects to the quotient-ring difference. -/
-@[simp] theorem toQuotient_sub
+@[simp, grind =] theorem toQuotient_sub
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x y : FiniteField f hf hp hirr) :
     (x - y : FiniteField f hf hp hirr).toQuotient =
       x.toQuotient - y.toQuotient :=
   rfl
 
-@[simp] theorem toQuotient_nsmul
+/-- Natural scalar multiplication projects to the quotient-ring scalar action. -/
+@[simp, grind =] theorem toQuotient_nsmul
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (n : Nat) (x : FiniteField f hf hp hirr) :
     (n • x : FiniteField f hf hp hirr).toQuotient = n • x.toQuotient :=
   rfl
 
-@[simp] theorem toQuotient_intCast
+/-- Integer literals project to quotient-ring integer literals. -/
+@[simp, grind =] theorem toQuotient_intCast
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p) (hirr : FpPoly.Irreducible f) (i : Int) :
     ((i : FiniteField f hf hp hirr).toQuotient) = (i : GFqRing.PolyQuotient f hf) :=
   rfl
 
-@[simp] theorem toQuotient_zsmul
+/-- Integer scalar multiplication projects to the quotient-ring scalar action. -/
+@[simp, grind =] theorem toQuotient_zsmul
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (i : Int) (x : FiniteField f hf hp hirr) :
     (i • x : FiniteField f hf hp hirr).toQuotient = i • x.toQuotient :=
   rfl
 
-@[simp] theorem toQuotient_pow
+/-- Natural powers project to quotient-ring natural powers. -/
+@[simp, grind =] theorem toQuotient_pow
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) (n : Nat) :
     (x ^ n : FiniteField f hf hp hirr).toQuotient =
       x.toQuotient ^ n :=
   rfl
 
-@[simp] theorem toQuotient_div
+/-- Division projects to multiplication by the projected inverse. -/
+@[simp, grind =] theorem toQuotient_div
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x y : FiniteField f hf hp hirr) :
     (x / y : FiniteField f hf hp hirr).toQuotient =
       x.toQuotient * (inv y).toQuotient :=
   rfl
 
-@[simp] theorem toQuotient_zpow_ofNat
+/-- Nonnegative integer powers project to quotient-ring natural powers. -/
+@[simp, grind =] theorem toQuotient_zpow_ofNat
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) (n : Nat) :
     (x ^ (Int.ofNat n) : FiniteField f hf hp hirr).toQuotient =
       x.toQuotient ^ n :=
   rfl
 
-@[simp] theorem toQuotient_zpow_negSucc
+/-- Negative integer powers project through inversion of the positive power. -/
+@[simp, grind =] theorem toQuotient_zpow_negSucc
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) (n : Nat) :
     (x ^ (Int.negSucc n) : FiniteField f hf hp hirr).toQuotient =
@@ -1008,7 +1020,8 @@ theorem frob_eq_pow
     frob x = x ^ p :=
   rfl
 
-@[simp] theorem toQuotient_frob
+/-- Frobenius projects to the quotient-ring `p`-th power. -/
+@[simp, grind =] theorem toQuotient_frob
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) :
     (frob x).toQuotient = x.toQuotient ^ p :=
