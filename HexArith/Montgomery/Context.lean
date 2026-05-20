@@ -924,6 +924,12 @@ theorem powMod_eq (a n p : Nat) (hp : p > 0) :
         exact hfit_lt (by simpa [hpmod] using hmodlt)
       simp [hfit_lt, powModNat_eq a n p hp]
 
+/-- Modular exponentiation modulo zero returns zero. -/
+@[simp]
+theorem powMod_modulus_zero (a n : Nat) :
+    powMod a n 0 = 0 := by
+  rfl
+
 /-- Modular exponentiation with exponent zero returns the residue of `1`. -/
 @[simp]
 theorem powMod_zero_exp (a p : Nat) (hp : p > 0) :
@@ -941,6 +947,14 @@ theorem powMod_one_exp (a p : Nat) (hp : p > 0) :
 theorem powMod_zero_base (n p : Nat) (hp : p > 0) :
     powMod 0 n p = 0 ^ n % p := by
   simpa using powMod_eq 0 n p hp
+
+/-- A positive power of zero is zero modulo any positive modulus. -/
+@[simp]
+theorem powMod_zero_base_of_pos_exp (n p : Nat) (hn : n > 0) (hp : p > 0) :
+    powMod 0 n p = 0 := by
+  cases n with
+  | zero => omega
+  | succ n => simp [powMod_eq 0 (n + 1) p hp]
 
 /-- Modular exponentiation with base one returns the residue of `1`. -/
 @[simp]
@@ -963,10 +977,17 @@ theorem powMod_succ (a n p : Nat) (hp : p > 0) :
   rw [Nat.mul_comm (a ^ n) a, Nat.mul_mod_mod]
 
 /-- Reducing the base before modular exponentiation does not change `powMod`. -/
+@[simp]
 theorem powMod_mod_base (a n p : Nat) (hp : p > 0) :
     powMod (a % p) n p = powMod a n p := by
   rw [powMod_eq (a % p) n p hp, powMod_eq a n p hp]
   simp [Nat.pow_mod]
+
+/-- Modular exponentiation is compatible with multiplying bases. -/
+theorem powMod_mul_base (a b n p : Nat) (hp : p > 0) :
+    powMod (a * b) n p = (powMod a n p * powMod b n p) % p := by
+  rw [powMod_eq (a * b) n p hp, powMod_eq a n p hp, powMod_eq b n p hp,
+    Nat.mul_pow, Nat.mul_mod]
 
 /-- Exponent-addition expansion for `powMod`: combine two exponentiation phases
 by multiplying their reduced results. -/
