@@ -172,3 +172,15 @@ theorem barrettReduceNat_lt (hp : 1 < p) (hpinv : pinv = barrettRadix / p)
     barrettReduceNat p pinv T < p := by
   rw [barrettReduceNat_eq_mod hp hpinv hT]
   exact Nat.mod_lt T (by omega)
+
+/--
+Nat-level Barrett reduction fixes inputs that are already canonical residues
+for a modulus fitting in one radix word.
+-/
+@[simp]
+theorem barrettReduceNat_eq_self_of_lt (hp : 1 < p)
+    (hpinv : pinv = barrettRadix / p) (hpRadix : p ≤ barrettRadix)
+    (hT : T < p) :
+    barrettReduceNat p pinv T = T := by
+  rw [barrettReduceNat_eq_mod hp hpinv (Nat.lt_of_lt_of_le hT hpRadix)]
+  exact Nat.mod_eq_of_lt hT
