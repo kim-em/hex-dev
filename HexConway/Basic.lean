@@ -82,7 +82,10 @@ def luebeckConwayPolynomial_2_1 : FpPoly 2 :=
       right
       simpa using one_ne_zero_two }
 
-/-- Tier 1 imported-table lookup for committed Luebeck Conway entries. -/
+/-- Tier 1 imported-table lookup for committed Luebeck Conway entries.
+
+This is only the imported-table surface: unsupported pairs return `none`
+rather than triggering Tier 2 compatibility checks or Tier 3 search. -/
 def luebeckConwayPolynomial? (p n : Nat) [ZMod64.Bounds p] : Option (FpPoly p) :=
   (luebeckConwayCoeffs? p n).map (luebeckConwayPolynomialOfCoeffs p)
 
@@ -104,6 +107,14 @@ def luebeckConwayPolynomial? (p n : Nat) [ZMod64.Bounds p] : Option (FpPoly p) :
 
 @[simp] theorem luebeckConwayPolynomial?_miss_two_zero :
     luebeckConwayPolynomial? 2 0 = (none : Option (FpPoly 2)) :=
+  rfl
+
+@[simp] theorem luebeckConwayPolynomial?_miss_two_seven :
+    luebeckConwayPolynomial? 2 7 = (none : Option (FpPoly 2)) :=
+  rfl
+
+@[simp] theorem luebeckConwayPolynomial?_miss_three_seven :
+    luebeckConwayPolynomial? 3 7 = (none : Option (FpPoly 3)) :=
   rfl
 
 /-- The committed `C(2, 1)` entry is monic, so it can be fed to the
