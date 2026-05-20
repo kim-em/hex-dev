@@ -69,6 +69,7 @@ theorem trimTrailingZerosList_getD (coeffs : List R) (n : Nat) :
             simp
           · simpa [trimTrailingZerosList, htrim] using ih n
 
+/-- Trimming trailing zeros never increases the coefficient-list length. -/
 theorem trimTrailingZerosList_length_le (coeffs : List R) :
     (trimTrailingZerosList coeffs).length ≤ coeffs.length := by
   induction coeffs with
@@ -152,6 +153,8 @@ degree, except for the zero polynomial where it is `0`. -/
 def size (p : DensePoly R) : Nat :=
   p.coeffs.size
 
+/-- The normalized polynomial built from a raw coefficient array stores no more coefficients
+than the input array. -/
 theorem size_ofCoeffs_le (coeffs : Array R) :
     (ofCoeffs coeffs).size ≤ coeffs.size := by
   unfold ofCoeffs size trimTrailingZeros
@@ -232,6 +235,8 @@ caller-facing constructor is `ofList`. -/
     (ofCoeffs coeffs.toArray).coeff n = coeffs.getD n (Zero.zero : R) := by
   simp
 
+/-- The normalized polynomial built from a raw coefficient list stores no more coefficients
+than the input list. -/
 theorem size_ofList_le (coeffs : List R) :
     (ofList coeffs).size ≤ coeffs.length := by
   simpa [ofList] using size_ofCoeffs_le (R := R) coeffs.toArray
@@ -475,7 +480,7 @@ def support (p : DensePoly R) : List Nat :=
   (List.range p.size).filter fun i => p.coeff i ≠ (Zero.zero : R)
 
 /-- Membership in `support` is coefficient nonzeroness inside the stored range. -/
-theorem mem_support {p : DensePoly R} {i : Nat} :
+@[simp] theorem mem_support {p : DensePoly R} {i : Nat} :
     i ∈ p.support ↔ i < p.size ∧ p.coeff i ≠ (Zero.zero : R) := by
   simp [support]
 
@@ -565,7 +570,7 @@ coefficient function. -/
   rfl
 
 /-- An array consisting only of zeros normalizes to the zero polynomial. -/
-theorem ofCoeffs_replicate_zero (n : Nat) :
+@[simp] theorem ofCoeffs_replicate_zero (n : Nat) :
     (ofCoeffs (Array.replicate n (Zero.zero : R)) : DensePoly R) = 0 := by
   apply ext_coeff
   intro i
