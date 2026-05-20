@@ -3479,6 +3479,130 @@ private theorem foldl_finRange_eq_prefix_of_zero_above
           acc + f ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt k.isLt)⟩) 0 :=
   foldl_finRange_eq_prefix_of_zero_above_from k f 0 hzero
 
+/-! ### Prefix coefficient vector for integer row combinations -/
+
+/-- Cast the first `k.val + 1` entries of an integer coefficient vector into a
+rational prefix coefficient vector. Used to package an integer row combination
+whose later coefficients vanish as a prefix-span witness over the cast input
+rows. -/
+private def prefixCoeffsCast (c : Vector Int n) (k : Fin n) : Vector Rat (k.val + 1) :=
+  Vector.ofFn fun j : Fin (k.val + 1) =>
+    let jn : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt k.isLt)⟩
+    (c[jn] : Rat)
+
+/-- The last entry of `prefixCoeffsCast c k` is the rational cast of `c[k]`. -/
+private theorem prefixCoeffsCast_last (c : Vector Int n) (k : Fin n) :
+    (prefixCoeffsCast c k)[k.val]'(Nat.lt_succ_self k.val) = (c[k] : Rat) := by
+  simp [prefixCoeffsCast]
+
+/-- Integer cast distributes over an inner-product-style integer `foldl`. -/
+private theorem foldl_int_dot_cast {n' : Nat}
+    (xs : List (Fin n')) (g h : Fin n' → Int) (acc : Int) :
+    ((xs.foldl (fun a i => a + g i * h i) acc : Int) : Rat) =
+      xs.foldl
+        (fun a i => a + ((g i : Rat)) * ((h i : Rat)))
+        (acc : Rat) := by
+  induction xs generalizing acc with
+  | nil =>
+      simp
+  | cons i xs ih =>
+      simp only [List.foldl_cons]
+      have hpush : ((acc + g i * h i : Int) : Rat) =
+          (acc : Rat) + (g i : Rat) * (h i : Rat) := by
+        push_cast
+        rfl
+      have := ih (acc := acc + g i * h i)
+      rw [this, hpush]
+
+/-- Entry expansion of an integer row combination at a fixed output column. -/
+private theorem rowCombination_int_getElem
+    (b : Matrix Int n m) (c : Vector Int n) (col : Fin m) :
+    (Matrix.rowCombination b c)[col] =
+      (List.finRange n).foldl
+        (fun (acc : Int) (i : Fin n) => acc + b[i][col] * c[i]) 0 := by
+  show (Matrix.transpose b * c)[col] = _
+  rw [Matrix.mulVec_getElem]
+  show Matrix.dot ((Matrix.transpose b).row col) c = _
+  simp [Matrix.dot, Hex.Vector.dotProduct, Matrix.row, Matrix.transpose, Matrix.col]
+
+/-- The cast of an integer matrix to a rational matrix used by Gram-Schmidt.
+This mirrors `GramSchmidt.castIntMatrix` (which is `private` in `Basic.lean`)
+so we can refer to it directly inside `Int.lean`; the two definitions are
+definitionally equal and unify against the term that appears in the statement
+of `basis_span`. -/
+private def castIntMatrix (b : Matrix Int n m) : Matrix Rat n m :=
+  Vector.map (fun row => Vector.map (fun x : Int => (x : Rat)) row) b
+
+/-- Entry expansion of the cast prefix row combination. The `(j + 1)`-row prefix
+of `castIntMatrix b` combined with `prefixCoeffsCast c k` reads out as a sum of
+the cast integer products through index `k`. -/
+private theorem rowCombination_prefix_castIntMatrix_getElem
+    (b : Matrix Int n m) (c : Vector Int n) (k : Fin n) (col : Fin m) :
+    (Matrix.rowCombination
+        (GramSchmidt.prefixRows (castIntMatrix b) k.val k.isLt)
+        (prefixCoeffsCast c k))[col] =
+      (List.finRange (k.val + 1)).foldl
+        (fun (acc : Rat) (j : Fin (k.val + 1)) =>
+          let jn : Fin n :=
+            ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt k.isLt)⟩
+          acc + (b[jn][col] : Rat) * (c[jn] : Rat)) 0 := by
+  show (Matrix.transpose _ * _)[col] = _
+  rw [Matrix.mulVec_getElem]
+  show Matrix.dot ((Matrix.transpose _).row col) _ = _
+  simp [Matrix.dot, Hex.Vector.dotProduct, GramSchmidt.prefixRows,
+    castIntMatrix, prefixCoeffsCast, Matrix.row, Matrix.transpose, Matrix.col]
+
+/-- Cast row-combination prefix-span truncation. If an integer coefficient
+vector has all entries above index `k` equal to zero, the cast of the integer
+row combination is the row combination of the first `k.val + 1` cast rows with
+the prefix coefficient vector `prefixCoeffsCast c k`. -/
+private theorem cast_rowCombination_eq_prefix_rowCombination
+    (b : Matrix Int n m) (c : Vector Int n) (k : Fin n)
+    (hzero : ∀ j : Fin n, k.val < j.val → c[j] = 0) :
+    Vector.map (fun x : Int => (x : Rat)) (Matrix.rowCombination b c) =
+      Matrix.rowCombination
+        (GramSchmidt.prefixRows (castIntMatrix b) k.val k.isLt)
+        (prefixCoeffsCast c k) := by
+  apply Vector.ext
+  intro col hcol
+  let cf : Fin m := ⟨col, hcol⟩
+  have hLHS :
+      (Vector.map (fun x : Int => (x : Rat)) (Matrix.rowCombination b c))[cf] =
+        ((Matrix.rowCombination b c)[cf] : Rat) :=
+    Vector.getElem_map _ _
+  change (Vector.map (fun x : Int => (x : Rat)) (Matrix.rowCombination b c))[cf]
+      = (Matrix.rowCombination
+          (GramSchmidt.prefixRows (castIntMatrix b) k.val k.isLt)
+          (prefixCoeffsCast c k))[cf]
+  rw [hLHS]
+  rw [rowCombination_int_getElem b c cf]
+  rw [rowCombination_prefix_castIntMatrix_getElem b c k cf]
+  -- LHS: cast of an integer foldl; RHS: a rational foldl over `finRange (k+1)`.
+  -- First, push the cast through the integer foldl, getting a rational foldl
+  -- over `finRange n` whose later terms vanish; then truncate to `k + 1`.
+  rw [foldl_int_dot_cast (List.finRange n)
+    (fun i : Fin n => b[i][cf]) (fun i : Fin n => c[i]) 0]
+  let f : Fin n → Rat := fun i => (b[i][cf] : Rat) * (c[i] : Rat)
+  have hfzero : ∀ j : Fin n, k.val < j.val → f j = 0 := by
+    intro j hj
+    have hcj : (c[j] : Rat) = 0 := by
+      have : c[j] = 0 := hzero j hj
+      simp [this]
+    show (b[j][cf] : Rat) * (c[j] : Rat) = 0
+    rw [hcj]
+    grind
+  have htrunc :=
+    foldl_finRange_eq_prefix_of_zero_above (n := n) k f hfzero
+  show (List.finRange n).foldl (fun acc i => acc + f i) ((0 : Int) : Rat) =
+    (List.finRange (k.val + 1)).foldl
+      (fun (acc : Rat) (j : Fin (k.val + 1)) =>
+        let jn : Fin n :=
+          ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt k.isLt)⟩
+        acc + (b[jn][cf] : Rat) * (c[jn] : Rat)) 0
+  have hcast0 : ((0 : Int) : Rat) = 0 := by norm_cast
+  rw [hcast0]
+  exact htrunc
+
 /-! ### Dot-product symmetry support -/
 
 private theorem foldl_dot_comm_int {n' : Nat} (xs : List (Fin n'))
