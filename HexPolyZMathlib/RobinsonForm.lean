@@ -1,4 +1,4 @@
-import HexPolyZMathlib.Basic
+import HexPolyZMathlib.SchurSzego
 import Mathlib.Analysis.Polynomial.MahlerMeasure
 import Mathlib.Analysis.Complex.Polynomial.GaussLucas
 import Mathlib.Analysis.Normed.Module.Convex
@@ -630,91 +630,6 @@ private theorem Multiset.prod_max_one_norm_eq_prod_filter_norm (s : Multiset ℂ
       · simp [hz, ih]
       · have hz_le : ‖z‖ ≤ 1 := le_of_not_ge hz
         simp [hz, max_eq_left hz_le, ih]
-
-/--
-Schmeisser's binomial-normalized composition polynomial at degree bound `n`.
-Its `k`th coefficient is `f_k * g_k / choose n k` for `k ≤ n`, and zero
-above `n`.
--/
-def schmeisserComposition (n : ℕ) (f g : ℂ[X]) : ℂ[X] :=
-  ∑ k ∈ Finset.range (n + 1),
-    monomial k (f.coeff k * (g.coeff k / (Nat.choose n k : ℂ)))
-
-@[simp]
-theorem coeff_schmeisserComposition_of_le
-    (n : ℕ) (f g : ℂ[X]) {k : ℕ} (hk : k ≤ n) :
-    (schmeisserComposition n f g).coeff k =
-      f.coeff k * (g.coeff k / (Nat.choose n k : ℂ)) := by
-  rw [schmeisserComposition, finset_sum_coeff]
-  rw [Finset.sum_eq_single_of_mem k (Finset.mem_range.mpr (Nat.lt_succ_of_le hk))]
-  · simp
-  · intro j hj hne
-    simp [coeff_monomial, hne]
-
-@[simp]
-theorem coeff_schmeisserComposition_of_lt
-    (n : ℕ) (f g : ℂ[X]) {k : ℕ} (hk : n < k) :
-    (schmeisserComposition n f g).coeff k = 0 := by
-  rw [schmeisserComposition, finset_sum_coeff]
-  apply Finset.sum_eq_zero
-  intro j hj
-  have hj_le : j ≤ n := Nat.le_of_lt_succ (Finset.mem_range.mp hj)
-  have hne : j ≠ k := by omega
-  simp [coeff_monomial, hne]
-
-theorem support_schmeisserComposition_subset
-    (n : ℕ) (f g : ℂ[X]) :
-    (schmeisserComposition n f g).support ⊆ Finset.range (n + 1) := by
-  intro k hk
-  by_contra hmem
-  have hk_gt : n < k := by
-    have hle : n + 1 ≤ k := Nat.le_of_not_gt (by simpa using hmem)
-    omega
-  exact (Polynomial.mem_support_iff.mp hk) (coeff_schmeisserComposition_of_lt n f g hk_gt)
-
-theorem natDegree_schmeisserComposition_le
-    (n : ℕ) (f g : ℂ[X]) :
-    (schmeisserComposition n f g).natDegree ≤ n := by
-  rw [Polynomial.natDegree_le_iff_coeff_eq_zero]
-  intro k hk
-  exact coeff_schmeisserComposition_of_lt n f g hk
-
-@[simp]
-theorem schmeisserComposition_zero_left (n : ℕ) (g : ℂ[X]) :
-    schmeisserComposition n 0 g = 0 := by
-  ext k
-  by_cases hk : k ≤ n
-  · simp [coeff_schmeisserComposition_of_le n 0 g hk]
-  · have hk' : n < k := by omega
-    simp [coeff_schmeisserComposition_of_lt n 0 g hk']
-
-@[simp]
-theorem schmeisserComposition_zero_right (n : ℕ) (f : ℂ[X]) :
-    schmeisserComposition n f 0 = 0 := by
-  ext k
-  by_cases hk : k ≤ n
-  · simp [coeff_schmeisserComposition_of_le n f 0 hk]
-  · have hk' : n < k := by omega
-    simp [coeff_schmeisserComposition_of_lt n f 0 hk']
-
-@[simp]
-theorem schmeisserComposition_zero (f g : ℂ[X]) :
-    schmeisserComposition 0 f g = C (f.coeff 0 * g.coeff 0) := by
-  ext k
-  rcases k with _ | k
-  · simp [coeff_schmeisserComposition_of_le 0 f g (Nat.le_refl 0)]
-  · simp [coeff_schmeisserComposition_of_lt 0 f g (Nat.succ_pos k)]
-
-@[simp]
-theorem schmeisserComposition_C_C (n : ℕ) (a b : ℂ) :
-    schmeisserComposition n (C a) (C b) = C (a * b) := by
-  ext k
-  rcases k with _ | k
-  · simp [coeff_schmeisserComposition_of_le n (C a) (C b) (Nat.zero_le n)]
-  · by_cases hk : k.succ ≤ n
-    · simp [coeff_schmeisserComposition_of_le n (C a) (C b) hk]
-    · have hk' : n < k.succ := by omega
-      simp [coeff_schmeisserComposition_of_lt n (C a) (C b) hk']
 
 /--
 The binomial-normalized Schmeisser kernel for the derivative specialization:
