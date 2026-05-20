@@ -159,6 +159,22 @@ theorem barrettReduce_lt (ctx : BarrettCtx p) (T : UInt64)
   rw [UInt64.lt_iff_toNat_lt, toNat_barrettReduce_eq_mod ctx T hT]
   exact Nat.mod_lt _ (Nat.lt_trans (by decide : 0 < 1) ctx.p_gt)
 
+/-- Barrett reduction fixes inputs that are already canonical residues. -/
+@[simp]
+theorem barrettReduce_eq_self_of_lt (ctx : BarrettCtx p) (T : UInt64)
+    (hT : T < p) :
+    barrettReduce ctx T = T := by
+  apply UInt64.toNat_inj.mp
+  have hTNat : T.toNat < p.toNat := by
+    simpa [UInt64.lt_iff_toNat_lt] using hT
+  have hTprod : T.toNat < p.toNat * p.toNat := by
+    calc
+      T.toNat < p.toNat := hTNat
+      _ = p.toNat * 1 := by omega
+      _ ≤ p.toNat * p.toNat := Nat.mul_le_mul_left p.toNat (by omega : 1 ≤ p.toNat)
+  rw [toNat_barrettReduce_eq_mod ctx T hTprod]
+  exact Nat.mod_eq_of_lt hTNat
+
 /--
 The executable Barrett reducer agrees with reducing the input word and
 re-encoding the canonical residue as a `UInt64`.

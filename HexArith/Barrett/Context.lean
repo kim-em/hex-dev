@@ -86,6 +86,19 @@ theorem mulMod_eq (ctx : BarrettCtx p) (a b : UInt64)
   rw [barrettReduce_eq ctx (a * b) (product_toNat_lt_p2 ctx a b ha hb)]
   rw [product_toNat_eq ctx a b ha hb]
 
+/--
+Barrett modular multiplication fixes products that are already canonical
+residues.
+-/
+@[simp]
+theorem mulMod_eq_mul_of_mul_lt (ctx : BarrettCtx p) (a b : UInt64)
+    (ha : a < p) (hb : b < p) (hmul : a.toNat * b.toNat < p.toNat) :
+    ctx.mulMod a b = a * b := by
+  have hprod_lt : a * b < p := by
+    rw [UInt64.lt_iff_toNat_lt, product_toNat_eq ctx a b ha hb]
+    exact hmul
+  simpa [mulMod] using barrettReduce_eq_self_of_lt ctx (a * b) hprod_lt
+
 /-- Zero is a left absorbing element for Barrett modular multiplication. -/
 @[simp]
 theorem mulMod_zero_left (ctx : BarrettCtx p) (b : UInt64) (hb : b < p) :
