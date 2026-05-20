@@ -1,4 +1,6 @@
 import HexPolyZMathlib.Basic
+import Mathlib.Algebra.Order.BigOperators.Group.Multiset
+import Mathlib.Algebra.Order.BigOperators.GroupWithZero.Multiset
 import Mathlib.Analysis.Polynomial.MahlerMeasure
 
 /-!
@@ -265,6 +267,143 @@ theorem rootsRadiusProduct_eq_one_of_forall_lt {r : ℝ} {s : Multiset ℂ}
   · simp
   intro z hz hz_ge
   exact not_le_of_gt (h z hz) hz_ge
+
+private theorem multiset_prod_le_prod_of_forall_count_ge_le
+    {s t : Multiset ℝ}
+    (hs_one : ∀ x ∈ s, 1 ≤ x)
+    (ht_one : ∀ x ∈ t, 1 ≤ x)
+    (hcount : ∀ ρ : ℝ, 1 ≤ ρ →
+      (s.filter fun x => ρ ≤ x).card ≤ (t.filter fun x => ρ ≤ x).card) :
+    s.prod ≤ t.prod := by
+  classical
+  let P : ℕ → Prop := fun n =>
+    ∀ s t : Multiset ℝ,
+      (∀ x ∈ s, 1 ≤ x) →
+      (∀ x ∈ t, 1 ≤ x) →
+      (∀ ρ : ℝ, 1 ≤ ρ →
+        (s.filter fun x => ρ ≤ x).card ≤ (t.filter fun x => ρ ≤ x).card) →
+      s.card = n →
+      s.prod ≤ t.prod
+  refine (Nat.strongRecOn (motive := P) s.card ?_) s t hs_one ht_one hcount rfl
+  intro n ih s t hs_one ht_one hcount hs_card
+  by_cases hs_zero : s = 0
+  · subst s
+    simpa using Multiset.one_le_prod (s := t) ht_one
+  have hs_card_pos : 0 < s.card := Multiset.card_pos.2 hs_zero
+  let a : ℝ := s.toList.maximum_of_length_pos (by simpa using hs_card_pos)
+  have ha_list : a ∈ s.toList :=
+    List.maximum_of_length_pos_mem (l := s.toList) (by simpa using hs_card_pos)
+  have ha_mem : a ∈ s := by simpa using ha_list
+  have ha_one : 1 ≤ a := hs_one a ha_mem
+  have ha_max : ∀ x ∈ s, x ≤ a := by
+    intro x hx
+    exact List.le_maximum_of_length_pos_of_mem (l := s.toList) (a := x)
+      (by simpa using hx) (by simpa using hs_card_pos)
+  have hs_filter_pos : 0 < (s.filter fun x => a ≤ x).card := by
+    rw [Multiset.card_pos_iff_exists_mem]
+    exact ⟨a, by simp [ha_mem]⟩
+  have ht_filter_pos : 0 < (t.filter fun x => a ≤ x).card :=
+    lt_of_lt_of_le hs_filter_pos (hcount a ha_one)
+  obtain ⟨b, hb_filter⟩ := Multiset.card_pos_iff_exists_mem.1 ht_filter_pos
+  have hb_mem : b ∈ t := (Multiset.mem_filter.1 hb_filter).1
+  have hab : a ≤ b := (Multiset.mem_filter.1 hb_filter).2
+  have hs_erase_one : ∀ x ∈ s.erase a, 1 ≤ x := by
+    intro x hx
+    exact hs_one x (Multiset.mem_of_mem_erase hx)
+  have ht_erase_one : ∀ x ∈ t.erase b, 1 ≤ x := by
+    intro x hx
+    exact ht_one x (Multiset.mem_of_mem_erase hx)
+  have hcount_erase : ∀ ρ : ℝ, 1 ≤ ρ →
+      ((s.erase a).filter fun x => ρ ≤ x).card ≤
+        ((t.erase b).filter fun x => ρ ≤ x).card := by
+    intro ρ hρ_one
+    by_cases hρa : ρ ≤ a
+    · have ha_filter : a ∈ s.filter fun x => ρ ≤ x := by
+        simp [ha_mem, hρa]
+      have hb_filter' : b ∈ t.filter fun x => ρ ≤ x := by
+        simp [hb_mem, hρa.trans hab]
+      have hs_card_filter :
+          ((s.erase a).filter fun x => ρ ≤ x).card =
+            ((s.filter fun x => ρ ≤ x).card).pred := by
+        rw [← Multiset.sub_singleton a s, Multiset.filter_sub, Multiset.filter_singleton,
+          if_pos hρa, Multiset.sub_singleton, Multiset.card_erase_of_mem ha_filter]
+      have ht_card_filter :
+          ((t.erase b).filter fun x => ρ ≤ x).card =
+            ((t.filter fun x => ρ ≤ x).card).pred := by
+        rw [← Multiset.sub_singleton b t, Multiset.filter_sub, Multiset.filter_singleton,
+          if_pos (hρa.trans hab), Multiset.sub_singleton, Multiset.card_erase_of_mem hb_filter']
+      rw [hs_card_filter, ht_card_filter]
+      exact Nat.pred_le_pred (hcount ρ hρ_one)
+    · have hρa_lt : a < ρ := lt_of_not_ge hρa
+      have hs_filter_empty : (s.erase a).filter (fun x => ρ ≤ x) = 0 := by
+        rw [Multiset.filter_eq_nil]
+        intro x hx hxρ
+        exact not_le_of_gt hρa_lt (hxρ.trans (ha_max x (Multiset.mem_of_mem_erase hx)))
+      rw [hs_filter_empty]
+      exact Nat.zero_le _
+  have hs_erase_card_lt : (s.erase a).card < n := by
+    rw [Multiset.card_erase_of_mem ha_mem, hs_card]
+    exact Nat.pred_lt (Nat.ne_of_gt (by rwa [← hs_card]))
+  have hrec :
+      (s.erase a).prod ≤ (t.erase b).prod :=
+    ih (s.erase a).card hs_erase_card_lt (s.erase a) (t.erase b)
+      hs_erase_one ht_erase_one hcount_erase rfl
+  have hs_prod : s.prod = a * (s.erase a).prod := by
+    rw [← Multiset.prod_cons, Multiset.cons_erase ha_mem]
+  have ht_prod : t.prod = b * (t.erase b).prod := by
+    rw [← Multiset.prod_cons, Multiset.cons_erase hb_mem]
+  rw [hs_prod, ht_prod]
+  exact mul_le_mul hab hrec (Multiset.prod_nonneg fun x hx =>
+    le_trans zero_le_one (hs_erase_one x hx)) (le_trans zero_le_one (ha_one.trans hab))
+
+theorem rootsRadiusProduct_le_of_forall_count_radius_le
+    {r : ℝ} {s t : Multiset ℂ}
+    (hr : 0 < r)
+    (hcount : ∀ ρ : ℝ, r ≤ ρ →
+      (s.filter fun z => ρ ≤ ‖z‖).card ≤
+        (t.filter fun z => ρ ≤ ‖z‖).card) :
+    rootsRadiusProduct r s ≤ rootsRadiusProduct r t := by
+  rw [rootsRadiusProduct, rootsRadiusProduct]
+  apply multiset_prod_le_prod_of_forall_count_ge_le
+  · intro x hx
+    rw [Multiset.mem_map] at hx
+    rcases hx with ⟨z, hz, rfl⟩
+    exact (one_le_div₀ hr).2 (Multiset.mem_filter.1 hz).2
+  · intro x hx
+    rw [Multiset.mem_map] at hx
+    rcases hx with ⟨z, hz, rfl⟩
+    exact (one_le_div₀ hr).2 (Multiset.mem_filter.1 hz).2
+  · intro ρ hρ
+    have hρ_nonneg : 0 ≤ ρ := le_trans zero_le_one hρ
+    have hthreshold : r ≤ ρ * r := by
+      rw [← one_mul r]
+      simpa [one_mul, mul_assoc] using mul_le_mul_of_nonneg_right hρ hr.le
+    have hs_count :
+        (((s.filter fun z => r ≤ ‖z‖).map fun z => ‖z‖ / r).filter fun x => ρ ≤ x).card =
+          (s.filter fun z => ρ * r ≤ ‖z‖).card := by
+      rw [Multiset.filter_map, Multiset.card_map, Multiset.filter_filter]
+      apply congrArg Multiset.card
+      apply Multiset.filter_congr
+      intro z _hz
+      constructor
+      · intro hz
+        exact (le_div_iff₀ hr).1 hz.1
+      · intro hz
+        exact ⟨(le_div_iff₀ hr).2 hz, hthreshold.trans hz⟩
+    have ht_count :
+        (((t.filter fun z => r ≤ ‖z‖).map fun z => ‖z‖ / r).filter fun x => ρ ≤ x).card =
+          (t.filter fun z => ρ * r ≤ ‖z‖).card := by
+      rw [Multiset.filter_map, Multiset.card_map, Multiset.filter_filter]
+      apply congrArg Multiset.card
+      apply Multiset.filter_congr
+      intro z _hz
+      constructor
+      · intro hz
+        exact (le_div_iff₀ hr).1 hz.1
+      · intro hz
+        exact ⟨(le_div_iff₀ hr).2 hz, hthreshold.trans hz⟩
+    rw [hs_count, ht_count]
+    exact hcount (ρ * r) hthreshold
 
 /--
 Coefficient-form packaging for Schmeisser's Lemma 9 / de Bruijn-Springer
