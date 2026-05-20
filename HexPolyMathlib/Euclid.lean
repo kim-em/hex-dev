@@ -33,8 +33,7 @@ private theorem dense_dvd_of_toPolynomial_dvd [CommRing R] [DecidableEq R]
   calc
     p = ofPolynomial (toPolynomial p) := (ofPolynomial_toPolynomial p).symm
     _ = ofPolynomial (q * r) := by rw [hr]
-    _ = ofPolynomial q * ofPolynomial r := by
-      simpa [equiv_symm_apply] using (equiv.symm.map_mul q r)
+    _ = ofPolynomial q * ofPolynomial r := by simp
 
 private theorem toPolynomial_dvd_of_dense_ofPolynomial_dvd [CommRing R] [DecidableEq R]
     {p : Hex.DensePoly R} {q : Polynomial R} :
@@ -79,8 +78,12 @@ theorem toPolynomial_xgcd_gcd_associated [Field R] [DecidableEq R] [Hex.DensePol
 /--
 The executable Bezout identity transports across the dense-polynomial bridge.
 The right hand side is the executable raw gcd component, not Mathlib's
-normalized polynomial gcd.
+normalized polynomial gcd. The `@[simp]` direction collapses the transported
+Bezout combination to the named raw gcd; the matching pattern only fires when
+the goal mentions `Hex.DensePoly.xgcd p q` literally with both coefficient
+projections, so the rule is narrow.
 -/
+@[simp]
 theorem toPolynomial_xgcd_bezout_raw [Field R] [DecidableEq R] [Hex.DensePoly.GcdLaws R]
     (p q : Hex.DensePoly R) :
     toPolynomial (Hex.DensePoly.xgcd p q).left * toPolynomial p +
@@ -123,7 +126,7 @@ theorem equiv_xgcd_bezout_raw [Field R] [DecidableEq R] [Hex.DensePoly.GcdLaws R
     equiv (Hex.DensePoly.xgcd p q).left * equiv p +
       equiv (Hex.DensePoly.xgcd p q).right * equiv q =
         equiv (Hex.DensePoly.xgcd p q).gcd := by
-  simpa using toPolynomial_xgcd_bezout_raw (R := R) p q
+  simp
 
 /--
 The ring-equivalence form of the normalization-aware xgcd correspondence:
