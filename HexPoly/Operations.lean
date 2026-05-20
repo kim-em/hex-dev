@@ -84,6 +84,18 @@ rewrite because the required `c * 0 = 0` law is available from the semiring stru
     (scale c p).coeff n = c * p.coeff n :=
   coeff_scale c p n (Lean.Grind.Semiring.mul_zero c)
 
+/-- Semiring-specialized left zero law for scalar multiplication. -/
+@[simp] theorem scale_zero_left_semiring {S : Type u}
+    [Lean.Grind.Semiring S] [DecidableEq S]
+    (p : DensePoly S) :
+    scale (0 : S) p = 0 := by
+  apply ext_coeff
+  intro n
+  rw [coeff_scale_semiring]
+  rw [show (0 : DensePoly S).coeff n = (0 : S) by
+    exact coeff_eq_zero_of_size_le (0 : DensePoly S) (by simp)]
+  exact Lean.Grind.Semiring.zero_mul (p.coeff n)
+
 /-- Coefficient law for shifting by `x^n`: coefficients below `n` are zero and later
 coefficients are read from the original polynomial with the index shifted down. -/
 @[simp] theorem coeff_shift (n : Nat) (p : DensePoly R) (k : Nat) :
@@ -532,6 +544,16 @@ theorem coeff_neg [Sub R] (p : DensePoly R) (n : Nat)
   apply ext_coeff
   intro n
   rw [coeff_sub_ring, coeff_zero]
+  grind
+
+/-- Ring-specialized left zero law for dense polynomial subtraction. -/
+@[simp] theorem zero_sub_ring {S : Type u}
+    [Lean.Grind.Ring S] [DecidableEq S]
+    (p : DensePoly S) :
+    0 - p = -p := by
+  apply ext_coeff
+  intro n
+  rw [coeff_sub_ring, coeff_zero, coeff_neg_ring]
   grind
 
 /-- Ring-specialized negation of the zero dense polynomial. -/
