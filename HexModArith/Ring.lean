@@ -403,7 +403,7 @@ instance : Lean.Grind.Semiring (ZMod64 p) := by
     simp [Nat.mul_mod]
 
 /-- Adding zero on the right leaves a residue unchanged. -/
-@[simp] theorem add_zero (a : ZMod64 p) : a + 0 = a := by
+theorem add_zero (a : ZMod64 p) : a + 0 = a := by
   apply ext_toNat
   rw [show a + 0 = ZMod64.add a ZMod64.zero from rfl]
   change (ZMod64.add a ZMod64.zero).toNat = a.toNat
@@ -411,7 +411,7 @@ instance : Lean.Grind.Semiring (ZMod64 p) := by
   exact Nat.mod_eq_of_lt a.isLt
 
 /-- Adding zero on the left leaves a residue unchanged. -/
-@[simp] theorem zero_add (a : ZMod64 p) : 0 + a = a := by
+theorem zero_add (a : ZMod64 p) : 0 + a = a := by
   apply ext_toNat
   rw [show 0 + a = ZMod64.add ZMod64.zero a from rfl]
   change (ZMod64.add ZMod64.zero a).toNat = a.toNat
@@ -419,35 +419,35 @@ instance : Lean.Grind.Semiring (ZMod64 p) := by
   simpa using Nat.mod_eq_of_lt a.isLt
 
 /-- Multiplying by zero on the right gives zero. -/
-@[simp] theorem mul_zero (a : ZMod64 p) : a * 0 = 0 := by
+theorem mul_zero (a : ZMod64 p) : a * 0 = 0 := by
   apply ext_toNat
   change (ZMod64.mul a ZMod64.zero).toNat = (ZMod64.zero : ZMod64 p).toNat
   rw [toNat_mul, toNat_zero]
   simp
 
 /-- Multiplying by zero on the left gives zero. -/
-@[simp] theorem zero_mul (a : ZMod64 p) : 0 * a = 0 := by
+theorem zero_mul (a : ZMod64 p) : 0 * a = 0 := by
   apply ext_toNat
   change (ZMod64.mul ZMod64.zero a).toNat = (ZMod64.zero : ZMod64 p).toNat
   rw [toNat_mul, toNat_zero]
   simp
 
 /-- Multiplying by one on the right leaves a residue unchanged. -/
-@[simp] theorem mul_one (a : ZMod64 p) : a * 1 = a := by
+theorem mul_one (a : ZMod64 p) : a * 1 = a := by
   apply ext_toNat
   change (ZMod64.mul a ZMod64.one).toNat = a.toNat
   rw [toNat_mul, toNat_one]
   simp [Nat.mod_eq_of_lt a.isLt]
 
 /-- Multiplying by one on the left leaves a residue unchanged. -/
-@[simp] theorem one_mul (a : ZMod64 p) : 1 * a = a := by
+theorem one_mul (a : ZMod64 p) : 1 * a = a := by
   apply ext_toNat
   change (ZMod64.mul ZMod64.one a).toNat = a.toNat
   rw [toNat_mul, toNat_one]
   simp [Nat.mod_eq_of_lt a.isLt]
 
 /-- Every residue to the zeroth power is one. -/
-@[simp] theorem pow_zero (a : ZMod64 p) : a ^ 0 = 1 := by
+theorem pow_zero (a : ZMod64 p) : a ^ 0 = 1 := by
   apply ext_toNat
   change (ZMod64.pow a 0).toNat = (ZMod64.one : ZMod64 p).toNat
   rw [toNat_pow, toNat_one]
