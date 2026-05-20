@@ -344,28 +344,10 @@ remainder. -/
 
 /-- Quotient/remainder reconstruction through the public `/` and `%`
 operations. -/
+@[grind =]
 theorem div_mul_add_mod (p q : GF2Poly) :
     (p / q) * q + p % q = p := by
   simpa using divMod_spec p q
-
-private theorem one_eq_monomial_zero : (1 : GF2Poly) = monomial 0 := by
-  change one = monomial 0
-  simp [one, monomial]
-
-private theorem mulXk_zero (p : GF2Poly) :
-    p.mulXk 0 = p := by
-  apply ext_coeff
-  intro n
-  rw [coeff_mulXk, coeff_shiftLeft]
-  simp [coeff]
-
-private theorem one_mul (p : GF2Poly) :
-    (1 : GF2Poly) * p = p := by
-  rw [one_eq_monomial_zero, monomial_mul, mulXk_zero]
-
-private theorem mul_one (p : GF2Poly) :
-    p * (1 : GF2Poly) = p := by
-  rw [one_eq_monomial_zero, mul_monomial, mulXk_zero]
 
 private theorem dvd_refl (p : GF2Poly) :
     p ∣ p := by
@@ -583,6 +565,8 @@ private theorem nonzero_degree_zero_eq_one {p : GF2Poly}
       rw [coeff_eq_false_of_degree?_lt hd (by omega)]
       rw [coeff_monomial_ne (by omega)]
 
+/-- A nonzero divisor of a nonzero packed polynomial has degree no larger than
+the dividend. -/
 theorem degree_le_of_dvd_nonzero {p q : GF2Poly}
     (hp : p ≠ 0) (hq : q ≠ 0) :
     p ∣ q → p.degree ≤ q.degree := by
