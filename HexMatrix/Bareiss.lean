@@ -181,6 +181,41 @@ theorem findPivot?_eq_zero_of_none (M : Matrix Int n n) (col : Fin n)
   apply findPivotAux_eq_zero_of_none M col start (n - start) hfind i hstart
   omega
 
+/-- If every entry in the bounded suffix searched by `findPivotAux` is zero,
+the search fails. -/
+theorem findPivotAux_eq_none_of_zero (M : Matrix Int n n) (col : Fin n)
+    (start fuel : Nat)
+    (hzero : ∀ i : Fin n, start ≤ i.val → i.val < start + fuel → M[i][col] = 0) :
+    findPivotAux M col start fuel = none := by
+  induction fuel generalizing start with
+  | zero =>
+      simp [findPivotAux]
+  | succ fuel ih =>
+      by_cases hstart : start < n
+      · have hentry : M[(⟨start, hstart⟩ : Fin n)][col] = 0 :=
+          hzero ⟨start, hstart⟩ (Nat.le_refl _)
+            (show (⟨start, hstart⟩ : Fin n).val < start + (fuel + 1) by
+              simp)
+        have hentryNat : M[start][col.val] = 0 := by
+          simpa using hentry
+        simp [findPivotAux, hstart, hentryNat]
+        apply ih
+        intro i hle hlt
+        exact hzero i (by omega) (by omega)
+      · simp [findPivotAux, hstart]
+
+/-- If every entry in the suffix searched by `findPivot?` is zero, pivot
+search fails. This is the converse of `findPivot?_eq_zero_of_none` and lets
+callers turn a column-zero invariant into the executable no-replacement-pivot
+condition used by `pivotLoop`. -/
+theorem findPivot?_eq_none_of_zero (M : Matrix Int n n) (col : Fin n)
+    (start : Nat)
+    (hzero : ∀ i : Fin n, start ≤ i.val → M[i][col] = 0) :
+    findPivot? M col start = none := by
+  apply findPivotAux_eq_none_of_zero M col start (n - start)
+  intro i hle _hlt
+  exact hzero i hle
+
 /-- A pivot returned by `findPivotAux` indexes a nonzero entry in the pivot
 column. -/
 theorem findPivotAux_some_ne_zero (M : Matrix Int n n) (col : Fin n)
