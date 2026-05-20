@@ -3603,6 +3603,28 @@ private theorem cast_rowCombination_eq_prefix_rowCombination
   rw [hcast0]
   exact htrunc
 
+/-- Cast row-combination prefix-span witness over the cast input rows. Under
+the zero-tail hypothesis, the cast of an integer row combination lies in the
+prefix span of the first `k.val + 1` cast input rows, with `prefixCoeffsCast c k`
+as the explicit witness. -/
+private theorem prefixSpan_castIntMatrix_of_rowCombination
+    (b : Matrix Int n m) (c : Vector Int n) (k : Fin n)
+    (hzero : ∀ j : Fin n, k.val < j.val → c[j] = 0) :
+    GramSchmidt.prefixSpan (castIntMatrix b) k.val k.isLt
+      (Vector.map (fun x : Int => (x : Rat)) (Matrix.rowCombination b c)) :=
+  ⟨prefixCoeffsCast c k, (cast_rowCombination_eq_prefix_rowCombination b c k hzero).symm⟩
+
+/-- Transport of `prefixSpan_castIntMatrix_of_rowCombination` through
+`basis_span`: the cast integer row combination also lies in the prefix span of
+the first `k.val + 1` Gram-Schmidt basis rows. -/
+theorem prefixSpan_basis_of_rowCombination
+    (b : Matrix Int n m) (c : Vector Int n) (k : Fin n)
+    (hzero : ∀ j : Fin n, k.val < j.val → c[j] = 0) :
+    GramSchmidt.prefixSpan (basis b) k.val k.isLt
+      (Vector.map (fun x : Int => (x : Rat)) (Matrix.rowCombination b c)) :=
+  (basis_span b k.val k.isLt _).mpr
+    (prefixSpan_castIntMatrix_of_rowCombination b c k hzero)
+
 /-! ### Dot-product symmetry support -/
 
 private theorem foldl_dot_comm_int {n' : Nat} (xs : List (Fin n'))
