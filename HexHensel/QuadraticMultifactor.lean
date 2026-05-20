@@ -569,7 +569,8 @@ private theorem multifactorLiftQuadraticList_spec
       cases rest with
       | nil =>
           have hpow : 0 < p ^ k := Nat.pow_pos (ZMod64.Bounds.pPos (p := p))
-          simpa [multifactorLiftQuadraticList, polyProduct_singleton] using
+          simpa [multifactorLiftQuadraticList, polyProduct_singleton,
+            DensePoly.mul_one_right_poly] using
             ZPoly.congr_reduceModPow f p k hpow
       | cons h tail =>
           let restFactors := (h :: tail).toArray
@@ -609,7 +610,8 @@ private theorem multifactorLiftQuadraticList_spec
                 (p ^ k) :=
             ZPoly.congr_trans _ _ _ (p ^ k) hprod hsplit
           simpa [multifactorLiftQuadraticList, restFactors, splitProduct, xgcd,
-            s, t, lifted, polyProduct_singleton_append] using hcombined
+            s, t, lifted, polyProduct_singleton_append,
+            DensePoly.mul_one_right_poly] using hcombined
 
 /--
 The product of the lifted factors is congruent to `f` modulo `p^k`,
@@ -1094,7 +1096,7 @@ private theorem multifactorLiftQuadraticList_each_congr_mod_base
               simp only [List.getElem?_cons_zero, Option.getD_some]
               have hprod_g : ZPoly.congr g f p := by
                 have hpprod : Array.polyProduct [g].toArray = g := by
-                  simp [polyProduct_singleton]
+                  simp [Array.polyProduct]
                 rw [hpprod] at hproduct
                 exact hproduct
               have hreduce :

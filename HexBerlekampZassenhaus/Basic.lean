@@ -2383,7 +2383,7 @@ private theorem polyProduct_contentFactorArray (content : Int) :
   unfold contentFactorArray
   by_cases hcontent : content = 1
   · simp [hcontent, ZPoly.polyProduct_empty]
-  · simp [hcontent, ZPoly.polyProduct_singleton]
+  · simp [hcontent, Array.polyProduct]
 
 private theorem polyProduct_repeatedPartFactorArray (repeatedPart : ZPoly) :
     Array.polyProduct (repeatedPartFactorArray repeatedPart) =
@@ -2391,7 +2391,7 @@ private theorem polyProduct_repeatedPartFactorArray (repeatedPart : ZPoly) :
   unfold repeatedPartFactorArray
   by_cases hrepeated : repeatedPart = 1
   · simp [hrepeated, ZPoly.polyProduct_empty]
-  · simp [hrepeated, ZPoly.polyProduct_singleton]
+  · simp [hrepeated, Array.polyProduct]
 
 private theorem polyProduct_replicate_X_zero :
     Array.polyProduct ((List.replicate 0 ZPoly.X).toArray) = 1 := by
@@ -2404,7 +2404,7 @@ private theorem polyProduct_replicate_X_succ (power : Nat) :
 
 private theorem polyProduct_xPowerFactorArray_zero :
     Array.polyProduct (xPowerFactorArray 0) = 1 := by
-  simpa [xPowerFactorArray] using polyProduct_replicate_X_zero
+  simp [xPowerFactorArray]
 
 private theorem polyProduct_xPowerFactorArray_succ (power : Nat) :
     Array.polyProduct (xPowerFactorArray (power + 1)) =
@@ -9265,12 +9265,12 @@ theorem exhaustiveCoreFactorsWithBound_product
     Array.polyProduct (exhaustiveCoreFactorsWithBound core B primeData) = core := by
   rw [exhaustiveCoreFactorsWithBound]
   by_cases hB : B = 0
-  · simp [hB, ZPoly.polyProduct_singleton]
+  · simp [hB, Array.polyProduct]
   · simp only [hB, if_false]
     by_cases hempty :
         (recombineScaledExhaustive (DensePoly.leadingCoeff core) core
             (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)).isEmpty
-    · simp [hempty, ZPoly.polyProduct_singleton]
+    · simp [hempty, Array.polyProduct]
     · simp only [hempty]
       cases hsearch : scaledRecombinationSearchMod (DensePoly.leadingCoeff core) core
           (liftModulus
@@ -11154,7 +11154,7 @@ private theorem factorSlowFactorsWithBound_polyProduct
   by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
   · simp only [hdeg, if_true]
     exact reassemblePolynomialFactors_product_eq_input f
-      #[(normalizeForFactor f).squareFreeCore] (by simp [ZPoly.polyProduct_singleton])
+      #[(normalizeForFactor f).squareFreeCore] (by simp [Array.polyProduct])
   · simp only [hdeg, if_false]
     cases hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
     | some coreFactors =>
@@ -11179,7 +11179,7 @@ private theorem factorFastFactorsWithBound_polyProduct_of_some
     have hfactors := Option.some.inj hfast
     rw [← hfactors]
     exact reassemblePolynomialFactors_product_eq_input f
-      #[(normalizeForFactor f).squareFreeCore] (by simp [ZPoly.polyProduct_singleton])
+      #[(normalizeForFactor f).squareFreeCore] (by simp [Array.polyProduct])
   · simp only [hdeg, if_false] at hfast
     by_cases hB0 : B = 0
     · simp [hB0] at hfast
@@ -11196,7 +11196,7 @@ private theorem factorFastFactorsWithBound_polyProduct_of_some
           rw [← hfactors]
           exact reassemblePolynomialFactors_product_eq_input f
             #[(normalizeForFactor f).squareFreeCore]
-            (by simp [ZPoly.polyProduct_singleton])
+            (by simp [Array.polyProduct])
         · simp only [primeData, hpred, if_false] at hfast
           cases hcore :
               factorFastCoreWithBound (normalizeForFactor f).squareFreeCore
@@ -11237,7 +11237,7 @@ private theorem factorFastFactorsWithBound_polyProduct_of_some
               rw [← hfactors]
               exact reassemblePolynomialFactors_product_eq_input f
                 #[(normalizeForFactor f).squareFreeCore]
-                (by simp [ZPoly.polyProduct_singleton])
+                (by simp [Array.polyProduct])
             · simp only [primeData, hpred, if_false] at hfast
               cases hcore :
                   factorFastCoreWithBound (normalizeForFactor f).squareFreeCore
