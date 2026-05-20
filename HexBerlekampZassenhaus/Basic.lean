@@ -6199,6 +6199,150 @@ theorem factorWithBound_eq_factorizationOfFactors (f : ZPoly) (B : Nat) :
       simp only [factorWithBound, factorFastWithBound, factorSlowWithBound, hfast,
         Option.map_none, Option.getD_none]
 
+private theorem content_ne_zero_of_zpoly_ne_zero (f : ZPoly) (hf : f ≠ 0) :
+    ZPoly.content f ≠ 0 := by
+  intro hcontent
+  apply hf
+  have hreconstruct := ZPoly.content_mul_primitivePart f
+  rw [hcontent] at hreconstruct
+  have hzero : DensePoly.scale (0 : Int) (ZPoly.primitivePart f) = 0 := by
+    apply DensePoly.ext_coeff
+    intro n
+    rw [DensePoly.coeff_scale (R := Int) (0 : Int) (ZPoly.primitivePart f) n
+      (Int.zero_mul 0)]
+    rw [DensePoly.coeff_zero]
+    exact Int.zero_mul _
+  rw [hzero] at hreconstruct
+  exact hreconstruct.symm
+
+private theorem signedContentScalarContract_eq_zero_iff (f : ZPoly) :
+    (if f = 0 then
+        0
+      else if DensePoly.leadingCoeff f < 0 then
+        -ZPoly.content f
+      else
+        ZPoly.content f) = 0 ↔ f = 0 := by
+  constructor
+  · intro h
+    by_cases hf : f = 0
+    · exact hf
+    have hcontent_ne := content_ne_zero_of_zpoly_ne_zero f hf
+    rw [if_neg hf] at h
+    by_cases hneg : DensePoly.leadingCoeff f < 0
+    · rw [if_pos hneg] at h
+      exact absurd (Int.neg_eq_zero.mp h) hcontent_ne
+    · rw [if_neg hneg] at h
+      exact absurd h hcontent_ne
+  · intro hf
+    simp [hf]
+
+/-- Scalar contract for a factorization assembled from a raw factor array.
+The public statement exposes the signed-content convention without exposing
+the private helper used to compute it. -/
+theorem factorizationOfFactors_scalar (f : ZPoly) (rawFactors : Array ZPoly) :
+    (factorizationOfFactors f rawFactors).scalar =
+      if f = 0 then
+        0
+      else if DensePoly.leadingCoeff f < 0 then
+        -ZPoly.content f
+      else
+        ZPoly.content f := by
+  rfl
+
+@[simp] theorem factorizationOfFactors_scalar_zero (rawFactors : Array ZPoly) :
+    (factorizationOfFactors 0 rawFactors).scalar = 0 := by
+  simp [factorizationOfFactors_scalar]
+
+theorem factorizationOfFactors_scalar_of_leadingCoeff_neg
+    {f : ZPoly} (rawFactors : Array ZPoly)
+    (hf : f ≠ 0) (hneg : DensePoly.leadingCoeff f < 0) :
+    (factorizationOfFactors f rawFactors).scalar = -ZPoly.content f := by
+  simp [factorizationOfFactors_scalar, hf, hneg]
+
+theorem factorizationOfFactors_scalar_of_leadingCoeff_pos
+    {f : ZPoly} (rawFactors : Array ZPoly)
+    (hf : f ≠ 0) (hpos : 0 < DensePoly.leadingCoeff f) :
+    (factorizationOfFactors f rawFactors).scalar = ZPoly.content f := by
+  have hnot_neg : ¬ DensePoly.leadingCoeff f < 0 := by omega
+  simp [factorizationOfFactors_scalar, hf, hnot_neg]
+
+theorem factorizationOfFactors_scalar_eq_zero_iff
+    (f : ZPoly) (rawFactors : Array ZPoly) :
+    (factorizationOfFactors f rawFactors).scalar = 0 ↔ f = 0 := by
+  rw [factorizationOfFactors_scalar]
+  exact signedContentScalarContract_eq_zero_iff f
+
+/-- Scalar contract for the bounded public factorization entry point. -/
+theorem factorWithBound_scalar (f : ZPoly) (B : Nat) :
+    (factorWithBound f B).scalar =
+      if f = 0 then
+        0
+      else if DensePoly.leadingCoeff f < 0 then
+        -ZPoly.content f
+      else
+        ZPoly.content f := by
+  obtain ⟨rawFactors, _hrawFactors, hfactor⟩ :=
+    factorWithBound_eq_factorizationOfFactors f B
+  rw [hfactor]
+  exact factorizationOfFactors_scalar f rawFactors
+
+@[simp] theorem factorWithBound_scalar_zero (B : Nat) :
+    (factorWithBound 0 B).scalar = 0 := by
+  simp [factorWithBound_scalar]
+
+theorem factorWithBound_scalar_of_leadingCoeff_neg
+    {f : ZPoly} (B : Nat)
+    (hf : f ≠ 0) (hneg : DensePoly.leadingCoeff f < 0) :
+    (factorWithBound f B).scalar = -ZPoly.content f := by
+  simp [factorWithBound_scalar, hf, hneg]
+
+theorem factorWithBound_scalar_of_leadingCoeff_pos
+    {f : ZPoly} (B : Nat)
+    (hf : f ≠ 0) (hpos : 0 < DensePoly.leadingCoeff f) :
+    (factorWithBound f B).scalar = ZPoly.content f := by
+  have hnot_neg : ¬ DensePoly.leadingCoeff f < 0 := by omega
+  simp [factorWithBound_scalar, hf, hnot_neg]
+
+theorem factorWithBound_scalar_eq_zero_iff (f : ZPoly) (B : Nat) :
+    (factorWithBound f B).scalar = 0 ↔ f = 0 := by
+  rw [factorWithBound_scalar]
+  exact signedContentScalarContract_eq_zero_iff f
+
+/-- Scalar contract for the default public factorization entry point. -/
+theorem factor_scalar (f : ZPoly) :
+    (factor f).scalar =
+      if f = 0 then
+        0
+      else if DensePoly.leadingCoeff f < 0 then
+        -ZPoly.content f
+      else
+        ZPoly.content f := by
+  simpa [factor_eq_factorWithBound_default] using
+    factorWithBound_scalar f (ZPoly.defaultFactorCoeffBound f)
+
+@[simp] theorem factor_scalar_zero :
+    (factor 0).scalar = 0 := by
+  simp [factor_eq_factorWithBound_default]
+
+theorem factor_scalar_of_leadingCoeff_neg
+    {f : ZPoly} (hf : f ≠ 0) (hneg : DensePoly.leadingCoeff f < 0) :
+    (factor f).scalar = -ZPoly.content f := by
+  simpa [factor_eq_factorWithBound_default] using
+    factorWithBound_scalar_of_leadingCoeff_neg
+      (f := f) (ZPoly.defaultFactorCoeffBound f) hf hneg
+
+theorem factor_scalar_of_leadingCoeff_pos
+    {f : ZPoly} (hf : f ≠ 0) (hpos : 0 < DensePoly.leadingCoeff f) :
+    (factor f).scalar = ZPoly.content f := by
+  simpa [factor_eq_factorWithBound_default] using
+    factorWithBound_scalar_of_leadingCoeff_pos
+      (f := f) (ZPoly.defaultFactorCoeffBound f) hf hpos
+
+theorem factor_scalar_eq_zero_iff (f : ZPoly) :
+    (factor f).scalar = 0 ↔ f = 0 := by
+  simpa [factor_eq_factorWithBound_default] using
+    factorWithBound_scalar_eq_zero_iff f (ZPoly.defaultFactorCoeffBound f)
+
 /-- Any recorded entry of `factorWithBound` comes from the raw factor array
 chosen by the fast path, or from the slow fallback when the fast path returns
 `none`, after the `collectFactorMultiplicities` sign-normalization step. -/
