@@ -1166,6 +1166,128 @@ structure FactorNormalizationData where
   repeatedPart : ZPoly
 
 /--
+Executable data for the integer monicising transform used before Hensel
+lifting a primitive positive-leading core.
+
+If `core` has degree `n` and leading coefficient `c`, `monicCore` is the
+coefficientwise integer polynomial `c^(n-1) * core (X / c)`: lower coefficient
+`a_i` becomes `a_i * c^(n-1-i)` and the leading coefficient is normalised to
+`1`.
+-/
+structure MonicisedCoreData where
+  core : ZPoly
+  leadingCoeff : Int
+  degree : Nat
+  monicCore : ZPoly
+
+namespace MonicisedCoreData
+
+private def transformedCoeffs (core : ZPoly) (degree : Nat) : Array Int :=
+  ((List.range degree).map fun i =>
+      core.coeff i * (DensePoly.leadingCoeff core) ^ (degree - 1 - i)).toArray.push 1
+
+private def transformedCore (core : ZPoly) (degree : Nat) : ZPoly :=
+  { coeffs := transformedCoeffs core degree
+    normalized := by
+      right
+      change (transformedCoeffs core degree).back? ≠ some (0 : Int)
+      simp [transformedCoeffs] }
+
+/-- Monicise a core by the standard integer scaling transform. -/
+def ofCore (core : ZPoly) : MonicisedCoreData :=
+  let degree := core.degree?.getD 0
+  { core
+    leadingCoeff := DensePoly.leadingCoeff core
+    degree
+    monicCore :=
+      if DensePoly.leadingCoeff core = 1 then
+        core
+      else
+        transformedCore core degree }
+
+@[simp] theorem ofCore_core (core : ZPoly) :
+    (ofCore core).core = core := rfl
+
+@[simp] theorem ofCore_leadingCoeff (core : ZPoly) :
+    (ofCore core).leadingCoeff = DensePoly.leadingCoeff core := rfl
+
+@[simp] theorem ofCore_degree (core : ZPoly) :
+    (ofCore core).degree = core.degree?.getD 0 := rfl
+
+@[simp] theorem transformedCoeffs_size (core : ZPoly) (degree : Nat) :
+    (transformedCoeffs core degree).size = degree + 1 := by
+  simp [transformedCoeffs]
+
+@[simp] theorem transformedCoeffs_getD_top (core : ZPoly) (degree : Nat) :
+    (transformedCoeffs core degree).getD degree 0 = 1 := by
+  simp [transformedCoeffs]
+
+@[simp] theorem transformedCore_size (core : ZPoly) (degree : Nat) :
+    (transformedCore core degree).size = degree + 1 := by
+  simp [transformedCore, DensePoly.size]
+
+theorem transformedCore_coeff_top (core : ZPoly) (degree : Nat) :
+    (transformedCore core degree).coeff degree = 1 := by
+  change (transformedCoeffs core degree).getD degree (0 : Int) = 1
+  exact transformedCoeffs_getD_top core degree
+
+theorem transformedCore_monic (core : ZPoly) (degree : Nat) :
+    DensePoly.Monic (transformedCore core degree) := by
+  unfold DensePoly.Monic DensePoly.leadingCoeff transformedCore
+  simp [transformedCoeffs]
+
+@[simp] theorem transformedCore_degree_getD (core : ZPoly) (degree : Nat) :
+    (transformedCore core degree).degree?.getD 0 = degree := by
+  unfold DensePoly.degree? transformedCore DensePoly.size
+  simp [transformedCoeffs]
+
+/-- The transformed core is monic as soon as the source has positive degree. -/
+theorem monicCore_monic_of_pos_degree
+    (core : ZPoly) (_hpos_lc : 0 < DensePoly.leadingCoeff core)
+    (_hdegree : 0 < (ofCore core).degree) :
+    DensePoly.Monic (ofCore core).monicCore := by
+  unfold ofCore
+  by_cases hmonic : DensePoly.leadingCoeff core = 1
+  · simp [hmonic, DensePoly.Monic]
+  · simp [hmonic, transformedCore_monic]
+
+/-- The monicised core preserves the recorded degree in nonconstant cases. -/
+theorem monicCore_degree_eq_of_pos_degree
+    (core : ZPoly) (_hpos_lc : 0 < DensePoly.leadingCoeff core)
+    (_hdegree : 0 < (ofCore core).degree) :
+    (ofCore core).monicCore.degree?.getD 0 = (ofCore core).degree := by
+  unfold ofCore
+  by_cases hmonic : DensePoly.leadingCoeff core = 1
+  · simp [hmonic]
+  · simp [hmonic]
+
+/-- Monicising an already-monic core is the identity. -/
+theorem monicCore_eq_core_of_leadingCoeff_eq_one
+    (core : ZPoly) (hmonic : DensePoly.leadingCoeff core = 1) :
+    (ofCore core).monicCore = core := by
+  simp [ofCore, hmonic]
+
+private def monicisedCoreGuardMonic : MonicisedCoreData :=
+  ofCore (DensePoly.ofCoeffs #[1, 3, 1])
+
+#guard monicisedCoreGuardMonic.monicCore = monicisedCoreGuardMonic.core
+
+private def monicisedCoreGuardQuadratic : MonicisedCoreData :=
+  ofCore (DensePoly.ofCoeffs #[1, 3, 2])
+
+#guard monicisedCoreGuardQuadratic.degree = 2
+#guard monicisedCoreGuardQuadratic.leadingCoeff = 2
+#guard monicisedCoreGuardQuadratic.monicCore = DensePoly.ofCoeffs #[2, 3, 1]
+
+private def monicisedCoreGuardZero : MonicisedCoreData :=
+  ofCore 0
+
+#guard monicisedCoreGuardZero.degree = 0
+#guard monicisedCoreGuardZero.monicCore = DensePoly.ofCoeffs #[1]
+
+end MonicisedCoreData
+
+/--
 Public integer-polynomial factorization result.
 
 The scalar carries the input's signed content: for nonzero inputs this is
