@@ -6302,6 +6302,34 @@ theorem factor_entry_leadingCoeff_pos
     factorWithBound_entry_leadingCoeff_pos
       f (ZPoly.defaultFactorCoeffBound f) entry hmem
 
+/-- Every recorded entry of the default public factorization passes the
+`shouldRecordPolynomialFactor` filter. -/
+theorem factor_entry_shouldRecord
+    (f : ZPoly) (entry : ZPoly × Nat)
+    (hmem : entry ∈ (factor f).factors.toList) :
+    shouldRecordPolynomialFactor entry.1 = true := by
+  simpa [factor_eq_factorWithBound_default] using
+    factorWithBound_entry_shouldRecord
+      f (ZPoly.defaultFactorCoeffBound f) entry hmem
+
+/-- Any recorded entry of the default public factorization comes from the raw
+factor array selected by the fast path, or from the slow fallback when the fast
+path returns `none`, up to sign normalization. -/
+theorem factor_entry_mem_raw_source
+    (f : ZPoly) (entry : ZPoly × Nat)
+    (hmem : entry ∈ (factor f).factors.toList) :
+    ∃ rawFactors : Array ZPoly,
+      (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
+          some rawFactors ∨
+        (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
+            none ∧
+          rawFactors =
+            factorSlowFactorsWithBound f (ZPoly.defaultFactorCoeffBound f))) ∧
+      ∃ raw ∈ rawFactors.toList, entry.1 = normalizeFactorSign raw := by
+  simpa [factor_eq_factorWithBound_default] using
+    factorWithBound_entry_mem_raw_source
+      f (ZPoly.defaultFactorCoeffBound f) entry hmem
+
 /-- The default public factorization has no duplicate polynomial keys. -/
 theorem factor_pairwise_first
     (f : ZPoly) :
