@@ -2239,6 +2239,44 @@ theorem bareissNoPivotData_diag_eq_leadingPrefix_bareiss_of_prefix_nonsingular
           simpa [GM, LP, fullAtR, init] using h_diag
     _ = Matrix.bareiss LP := by
           simpa [LP, Fin.last] using h_bareiss.symm
+
+/-! ### Gram row-span invariant for no-pivot Bareiss -/
+
+/-- Row-vector interpretation of the trailing block during a no-pivot Bareiss
+pass over a Gram matrix.  Each active trailing row is represented by an
+integer row combination of the original input rows, and each matrix entry in
+that trailing row is its inner product against the corresponding original row.
+-/
+private structure BareissGramRowInvariant (b : Matrix Int n m)
+    (state : Matrix.BareissState n) where
+  rowVec : Fin n → Vector Int m
+  mem_span : ∀ i : Fin n, state.step ≤ i.val →
+    ∃ c : Vector Int n,
+      (∀ k : Fin n, i.val < k.val → c[k] = 0) ∧
+        rowVec i = Matrix.rowCombination b c
+  entry_eq_dot : ∀ i j : Fin n, state.step ≤ i.val →
+    state.matrix[i][j] = Matrix.dot (rowVec i) (b.row j)
+
+/-- The initial no-pivot Gram state satisfies the row-vector invariant with
+each row represented by the matching input row. -/
+private def bareissGramRowInvariant_initial (b : Matrix Int n m) :
+    BareissGramRowInvariant b
+      (Matrix.noPivotInitialState (Matrix.gramMatrix b)) := by
+  refine
+    { rowVec := fun i => b.row i
+      mem_span := ?_
+      entry_eq_dot := ?_ }
+  · intro i _hi
+    let c : Vector Int n := Vector.ofFn fun k : Fin n => if i = k then 1 else 0
+    refine ⟨c, ?_, ?_⟩
+    · intro k hik
+      by_cases h : i = k
+      · subst k
+        omega
+      · simp [c, h]
+    · simpa [c] using (Matrix.IsRREF.rowCombination_single (M := b) i).symm
+  · intro i j _hi
+    simp [Matrix.noPivotInitialState, Matrix.gramMatrix, Matrix.ofFn, Matrix.dot]
 /-- If the array loop's `state.step` is past the matrix extent, one outer
 iteration returns the input state unchanged. -/
 private theorem scaledCoeffArrayLoop_done (fuel : Nat)
