@@ -1663,7 +1663,7 @@ stable executable API.
 structure HenselSubsetCorrespondenceHypotheses
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (d : Hex.LiftData) (admissiblePrime successfulLift : Prop) : Prop where
-  lift_eq : d = Hex.henselLiftData core B primeData
+  lift_eq : d = Hex.monicisedCoreLiftData core B primeData
   admissible_prime : admissiblePrime
   successful_lift : successfulLift
   exists_subset :
@@ -1787,7 +1787,7 @@ structure HenselSubsetLiftHypotheses
     (d : Hex.LiftData)
     (admissiblePrime squareFreeReduction successfulLift coprimeLift : Prop) :
     Prop where
-  lift_eq : d = Hex.henselLiftData core B primeData
+  lift_eq : d = Hex.monicisedCoreLiftData core B primeData
   factor_count_eq : d.liftedFactors.size = primeData.factorsModP.size
   admissible_prime : admissiblePrime
   square_free_reduction : squareFreeReduction
@@ -4598,6 +4598,15 @@ theorem henselLiftData_liftedFactors_size_eq
       = primeData.factorsModP.size
   rw [Hex.ZPoly.multifactorLiftQuadratic_size_eq_input]
   simp
+
+theorem monicisedCoreLiftData_liftedFactors_size_eq
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData) :
+    (Hex.monicisedCoreLiftData core B primeData).liftedFactors.size =
+      primeData.factorsModP.size := by
+  unfold Hex.monicisedCoreLiftData
+  exact henselLiftData_liftedFactors_size_eq
+    (Hex.MonicisedCoreData.ofCore core).monicCore
+    (Hex.precisionForCoeffBound B primeData.p) primeData
 
 /--
 Thin umbrella wrapper exposing per-output monicness of `Hex.henselLiftData` in
@@ -9141,9 +9150,7 @@ theorem exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_some
     (hB : B ≠ 0)
     (hcore_monic : Hex.DensePoly.Monic core)
     (hd :
-      d =
-        Hex.henselLiftData core (Hex.precisionForCoeffBound B primeData.p)
-          primeData)
+      d = Hex.monicisedCoreLiftData core B primeData)
     (hsearch :
       Hex.recombinationSearchMod core (d.p ^ d.k)
         d.liftedFactors.toList = some factors)
@@ -9153,14 +9160,12 @@ theorem exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_some
   have hlc : Hex.DensePoly.leadingCoeff core = 1 := hcore_monic
   have hrecombine :
       Hex.recombineExhaustive core
-          (Hex.henselLiftData core (Hex.precisionForCoeffBound B primeData.p)
-            primeData) =
+          (Hex.monicisedCoreLiftData core B primeData) =
         factors.toArray :=
     Hex.recombineExhaustive_eq_of_recombinationSearchMod_some hsearch
   have hscaled :
       Hex.recombineScaledExhaustive (Hex.DensePoly.leadingCoeff core) core
-          (Hex.henselLiftData core (Hex.precisionForCoeffBound B primeData.p)
-            primeData) =
+          (Hex.monicisedCoreLiftData core B primeData) =
         factors.toArray := by
     rw [hlc, Hex.recombineScaledExhaustive_eq_recombineExhaustive_of_one]
     exact hrecombine
@@ -9185,10 +9190,7 @@ theorem exhaustiveCoreFactorsWithBound_mem_of_scaledRecombinationSearchMod_some
     {core factor : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
     {d : Hex.LiftData} {factors : List Hex.ZPoly}
     (hB : B ≠ 0)
-    (hd :
-      d =
-        Hex.henselLiftData core (Hex.precisionForCoeffBound B primeData.p)
-          primeData)
+    (hd : d = Hex.monicisedCoreLiftData core B primeData)
     (hsearch :
       Hex.scaledRecombinationSearchMod (Hex.DensePoly.leadingCoeff core)
           core (d.p ^ d.k) d.liftedFactors.toList =
@@ -9198,8 +9200,7 @@ theorem exhaustiveCoreFactorsWithBound_mem_of_scaledRecombinationSearchMod_some
   subst d
   have hrecombine :
       Hex.recombineScaledExhaustive (Hex.DensePoly.leadingCoeff core) core
-          (Hex.henselLiftData core (Hex.precisionForCoeffBound B primeData.p)
-            primeData) =
+          (Hex.monicisedCoreLiftData core B primeData) =
         factors.toArray :=
     Hex.recombineScaledExhaustive_eq_of_scaledRecombinationSearchMod_some hsearch
   have hnot_empty : factors.toArray.isEmpty = false := by
@@ -9223,10 +9224,7 @@ theorem exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_first_succe
     {pre suffix : List (List Hex.ZPoly × List Hex.ZPoly)}
     (hB : B ≠ 0)
     (hcore_monic : Hex.DensePoly.Monic core)
-    (hd :
-      d =
-        Hex.henselLiftData core (Hex.precisionForCoeffBound B primeData.p)
-          primeData)
+    (hd : d = Hex.monicisedCoreLiftData core B primeData)
     (hcore_ne_one : core ≠ 1)
     (hsplits :
       Hex.subsetSplitsWithFirst d.liftedFactors.toList =
@@ -15082,9 +15080,8 @@ theorem exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence_of
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
     {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
     (h :
-      HenselSubsetCorrespondenceHypotheses core
-        (Hex.precisionForCoeffBound B primeData.p)
-        primeData d admissiblePrime successfulLift)
+      HenselSubsetCorrespondenceHypotheses core B primeData d
+        admissiblePrime successfulLift)
     (hpartition :
       LiftedFactorSubsetPartition core d Finset.univ core)
     (hcore_ne : core ≠ 0)
@@ -15177,9 +15174,8 @@ theorem exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
     {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
     (h :
-      HenselSubsetCorrespondenceHypotheses core
-        (Hex.precisionForCoeffBound B primeData.p)
-        primeData d admissiblePrime successfulLift)
+      HenselSubsetCorrespondenceHypotheses core B primeData d
+        admissiblePrime successfulLift)
     (hpartition :
       LiftedFactorSubsetPartition core d Finset.univ core)
     (hcore_ne : core ≠ 0)
@@ -15225,9 +15221,8 @@ theorem exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCo
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
     {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
     (h :
-      HenselSubsetCorrespondenceHypotheses core
-        (Hex.precisionForCoeffBound B primeData.p)
-        primeData d admissiblePrime successfulLift)
+      HenselSubsetCorrespondenceHypotheses core B primeData d
+        admissiblePrime successfulLift)
     (hpartition :
       LiftedFactorSubsetPartition core d Finset.univ core)
     (hcore_ne : core ≠ 0)
@@ -15354,9 +15349,8 @@ theorem exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCo
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
     {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
     (h :
-      HenselSubsetCorrespondenceHypotheses core
-        (Hex.precisionForCoeffBound B primeData.p)
-        primeData d admissiblePrime successfulLift)
+      HenselSubsetCorrespondenceHypotheses core B primeData d
+        admissiblePrime successfulLift)
     (hpartition :
       LiftedFactorSubsetPartition core d Finset.univ core)
     (hcore_ne : core ≠ 0)
@@ -15932,7 +15926,7 @@ useful API for the HO-1 assembly. -/
 private theorem henselSubsetCorrespondence_analytic_obligation
     (core : Hex.ZPoly) (B : Nat) :
     let primeData := Hex.choosePrimeData core
-    let d := Hex.henselLiftData core B primeData
+    let d := Hex.monicisedCoreLiftData core B primeData
     ∀ {factor : Hex.ZPoly},
       Irreducible (HexPolyZMathlib.toPolynomial factor) →
       factor ∣ core →
@@ -15950,7 +15944,7 @@ fallback is acceptable here. -/
 theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData
     (core : Hex.ZPoly) (B : Nat) :
     let primeData := Hex.choosePrimeData core
-    let d := Hex.henselLiftData core B primeData
+    let d := Hex.monicisedCoreLiftData core B primeData
     HenselSubsetCorrespondenceHypotheses core B primeData d True True := by
   intro primeData d
   refine
@@ -15980,9 +15974,8 @@ theorem henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData
     (f : Hex.ZPoly) :
     let core := (Hex.normalizeForFactor f).squareFreeCore
     let primeData := Hex.choosePrimeData core
-    let B := Hex.precisionForCoeffBound
-      (Hex.ZPoly.defaultFactorCoeffBound f) primeData.p
-    let d := Hex.henselLiftData core B primeData
+    let B := Hex.ZPoly.defaultFactorCoeffBound f
+    let d := Hex.monicisedCoreLiftData core B primeData
     HenselSubsetCorrespondenceHypotheses core B primeData d True True :=
   henselSubsetCorrespondenceHypotheses_of_choosePrimeData _ _
 
@@ -16027,7 +16020,7 @@ genuinely analytic in the same sense as `cover` and bundled here. -/
 private theorem liftedFactorSubsetPartition_analytic_obligation
     (core : Hex.ZPoly) (B : Nat) :
     let primeData := Hex.choosePrimeData core
-    let d := Hex.henselLiftData core B primeData
+    let d := Hex.monicisedCoreLiftData core B primeData
     (∀ {i : LiftedFactorIndex d},
         i ∈ (Finset.univ : LiftedFactorSubset d) →
           ∃ (f : Hex.ZPoly) (S : LiftedFactorSubset d),
@@ -16104,7 +16097,7 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData
     (core : Hex.ZPoly) (B : Nat)
     (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core)) :
     let primeData := Hex.choosePrimeData core
-    let d := Hex.henselLiftData core B primeData
+    let d := Hex.monicisedCoreLiftData core B primeData
     LiftedFactorSubsetPartition core d Finset.univ core := by
   intro primeData d
   obtain ⟨hcover, hdisj, huniq, hsup, hscaled_sup⟩ :=
@@ -16534,25 +16527,25 @@ theorem henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData
       ModPSubsetPartitionHypotheses core (Hex.choosePrimeData core) True True)
     (hcorr :
       HenselSubsetCorrespondenceHypotheses core B (Hex.choosePrimeData core)
-        (Hex.henselLiftData core B (Hex.choosePrimeData core)) True True)
+        (Hex.monicisedCoreLiftData core B (Hex.choosePrimeData core)) True True)
     (hlifted_of_modP :
       ∀ {factor : Hex.ZPoly} {S : ModPFactorSubset (Hex.choosePrimeData core)},
         Irreducible (HexPolyZMathlib.toPolynomial factor) →
         factor ∣ core →
         RepresentsIntegerFactorModP (Hex.choosePrimeData core) factor S →
         RepresentsIntegerFactorAtLift core
-          (Hex.henselLiftData core B (Hex.choosePrimeData core)) factor
+          (Hex.monicisedCoreLiftData core B (Hex.choosePrimeData core)) factor
           (liftedSubsetOfModPSubset (Hex.choosePrimeData core)
-            (Hex.henselLiftData core B (Hex.choosePrimeData core))
-            (henselLiftData_liftedFactors_size_eq core B (Hex.choosePrimeData core))
+            (Hex.monicisedCoreLiftData core B (Hex.choosePrimeData core))
+            (monicisedCoreLiftData_liftedFactors_size_eq core B (Hex.choosePrimeData core))
             S)) :
     let primeData := Hex.choosePrimeData core
-    let d := Hex.henselLiftData core B primeData
+    let d := Hex.monicisedCoreLiftData core B primeData
     HenselSubsetLiftHypotheses core B primeData d True True True True := by
   intro primeData d
   refine
     { lift_eq := rfl
-      factor_count_eq := henselLiftData_liftedFactors_size_eq core B primeData
+      factor_count_eq := monicisedCoreLiftData_liftedFactors_size_eq core B primeData
       admissible_prime := trivial
       square_free_reduction := trivial
       successful_lift := trivial
@@ -16563,7 +16556,7 @@ theorem henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData
     exact hlifted_of_modP hirr hdvd hrep
   · intro factor T hirr hdvd hT
     exact henselLiftData_represents_modP_of_lifted hmod hcorr
-      (henselLiftData_liftedFactors_size_eq core B primeData)
+      (monicisedCoreLiftData_liftedFactors_size_eq core B primeData)
       hlifted_of_modP hirr hdvd hT
 
 end
