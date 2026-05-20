@@ -3415,6 +3415,70 @@ theorem normSq_latticeVec_ge_min_basis_normSq
       Vector.normSq ((basis b).row i) ≤ ((Vector.normSq v : Int) : Rat) := by
   sorry
 
+private theorem foldl_add_eq_acc_rat_int {α : Type u}
+    (xs : List α) (f : α → Rat) (acc : Rat)
+    (hf : ∀ x ∈ xs, f x = 0) :
+    xs.foldl (fun acc x => acc + f x) acc = acc := by
+  induction xs generalizing acc with
+  | nil =>
+      simp only [List.foldl_nil]
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hx : f x = 0 := hf x (by simp)
+      have hxs : ∀ y ∈ xs, f y = 0 := fun y hy => hf y (List.mem_cons_of_mem _ hy)
+      rw [hx]
+      have hacc : acc + (0 : Rat) = acc := by grind
+      rw [hacc]
+      exact ih acc hxs
+
+private theorem foldl_finRange_eq_prefix_of_zero_above_from
+    {n : Nat} (k : Fin n) (f : Fin n → Rat) (acc : Rat)
+    (hzero : ∀ j : Fin n, k.val < j.val → f j = 0) :
+    (List.finRange n).foldl (fun acc j => acc + f j) acc =
+      (List.finRange (k.val + 1)).foldl
+        (fun acc j =>
+          acc + f ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt k.isLt)⟩) acc := by
+  induction n generalizing acc with
+  | zero =>
+      exact Fin.elim0 k
+  | succ n ih =>
+      cases k using Fin.cases with
+      | zero =>
+          have htail : ∀ j ∈ (List.finRange n).map Fin.succ, f j = 0 := by
+            intro j hj
+            rcases List.mem_map.mp hj with ⟨i, _hi, rfl⟩
+            exact hzero (Fin.succ i) (Nat.succ_pos i.val)
+          have htailFold :
+              ((List.finRange n).map Fin.succ).foldl (fun acc j => acc + f j)
+                  (acc + f 0) = acc + f 0 :=
+            foldl_add_eq_acc_rat_int ((List.finRange n).map Fin.succ) (fun j => f j)
+              (acc + f 0) htail
+          simpa [List.finRange_succ] using htailFold
+      | succ k =>
+          have hzero_tail : ∀ j : Fin n, k.val < j.val → f (Fin.succ j) = 0 := by
+            intro j hj
+            exact hzero (Fin.succ j) (Nat.succ_lt_succ hj)
+          have htail := ih k (fun j => f (Fin.succ j)) (acc + f 0) hzero_tail
+          have htail' :
+              ((List.finRange n).map Fin.succ).foldl (fun acc j => acc + f j)
+                  (acc + f 0) =
+                ((List.finRange (k.val + 1)).map Fin.succ).foldl
+                  (fun acc j =>
+                    acc + f ⟨j.val,
+                      Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt (Fin.succ k).isLt)⟩)
+                  (acc + f 0) := by
+            simpa [List.foldl_map] using htail
+          simpa [List.finRange_succ, Nat.succ_eq_add_one, Nat.add_assoc] using htail'
+
+private theorem foldl_finRange_eq_prefix_of_zero_above
+    {n : Nat} (k : Fin n) (f : Fin n → Rat)
+    (hzero : ∀ j : Fin n, k.val < j.val → f j = 0) :
+    (List.finRange n).foldl (fun acc j => acc + f j) 0 =
+      (List.finRange (k.val + 1)).foldl
+        (fun acc j =>
+          acc + f ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt k.isLt)⟩) 0 :=
+  foldl_finRange_eq_prefix_of_zero_above_from k f 0 hzero
+
 /-! ### Dot-product symmetry support -/
 
 private theorem foldl_dot_comm_int {n' : Nat} (xs : List (Fin n'))
