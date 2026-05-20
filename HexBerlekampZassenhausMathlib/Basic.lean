@@ -4643,6 +4643,35 @@ theorem henselLiftData_liftedFactor_monic
     hB hp hcore_monic hprime_invariant i
 
 /--
+Per-output monicness for the executable monicised-core lift data.
+
+This is the direct `Hex.monicisedCoreLiftData` surface over the existing
+`henselLiftData_liftedFactor_monic` invariant: the Hensel stage runs on
+`(Hex.MonicisedCoreData.ofCore core).monicCore`, while recombination consumers
+still keep representation predicates against the original `core`.
+-/
+theorem monicisedCoreLiftData_liftedFactor_monic
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hmonic_core :
+      Hex.DensePoly.Monic (Hex.MonicisedCoreData.ofCore core).monicCore)
+    (hprime_invariant :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant
+        primeData.p (Hex.precisionForCoeffBound B primeData.p)
+        (Hex.MonicisedCoreData.ofCore core).monicCore
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList)
+    (hp : 1 < primeData.p)
+    (hprecision : 1 ≤ Hex.precisionForCoeffBound B primeData.p) :
+    ∀ i : Fin (Hex.monicisedCoreLiftData core B primeData).liftedFactors.size,
+      Hex.DensePoly.Monic
+        (liftedFactor (Hex.monicisedCoreLiftData core B primeData) i) := by
+  unfold Hex.monicisedCoreLiftData
+  exact henselLiftData_liftedFactor_monic
+    (Hex.MonicisedCoreData.ofCore core).monicCore
+    (Hex.precisionForCoeffBound B primeData.p) primeData
+    hmonic_core hprime_invariant hp hprecision
+
+/--
 Composed convenience wrapper: combines
 `Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData` with
 `henselLiftData_liftedFactor_monic` so that a Mathlib-bridge consumer can
@@ -4849,6 +4878,41 @@ theorem henselLiftData_liftedFactor_injective
   exact Fin.ext hidx_eq
 
 /--
+Injectivity of lifted local factors for the executable monicised-core lift
+data.  This is the `Hex.monicisedCoreLiftData` surface over
+`henselLiftData_liftedFactor_injective`.
+-/
+theorem monicisedCoreLiftData_liftedFactor_injective
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hmonic_core :
+      Hex.DensePoly.Monic (Hex.MonicisedCoreData.ofCore core).monicCore)
+    (hprime_invariant :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant
+        primeData.p (Hex.precisionForCoeffBound B primeData.p)
+        (Hex.MonicisedCoreData.ofCore core).monicCore
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList)
+    (hp : 1 < primeData.p)
+    (hprecision : 1 ≤ Hex.precisionForCoeffBound B primeData.p)
+    (hfactors_monic :
+      letI := primeData.bounds
+      ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g)
+    (hproduct_mod_p :
+      letI := primeData.bounds
+      Hex.ZPoly.congr
+        (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
+        (Hex.MonicisedCoreData.ofCore core).monicCore primeData.p)
+    (hfactorsModP_nodup : primeData.factorsModP.toList.Nodup) :
+    Function.Injective
+      (liftedFactor (Hex.monicisedCoreLiftData core B primeData)) := by
+  unfold Hex.monicisedCoreLiftData
+  exact henselLiftData_liftedFactor_injective
+    (Hex.MonicisedCoreData.ofCore core).monicCore
+    (Hex.precisionForCoeffBound B primeData.p) primeData
+    hmonic_core hprime_invariant hp hprecision hfactors_monic
+    hproduct_mod_p hfactorsModP_nodup
+
+/--
 Each lifted factor produced by `Hex.henselLiftData` reduces modulo the base
 prime to the corresponding modular factor selected by `PrimeChoiceData`.
 
@@ -4962,7 +5026,9 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
       Hex.isGoodPrime f data.p = true) :
     data.factorsModP.toList.Nodup := by
   letI : Hex.ZMod64.Bounds data.p := data.bounds
-  obtain ⟨hprime, hzero, hfield, heq⟩ := hform
+  obtain ⟨hprime, hzero, heq⟩ := hform
+  let hfield := @Hex.zmod64FieldOfPrime data.p data.bounds
+    (Hex.ZMod64.primeModulusOfPrime hprime)
   letI : Hex.ZMod64.PrimeModulus data.p := Hex.ZMod64.primeModulusOfPrime hprime
   -- Square-free precondition on the modular image, extracted from `isGoodPrime`.
   have hsf :
@@ -5200,7 +5266,9 @@ theorem factorsModP_natDegree_pos_of_factorsModPBerlekampForm
     ∀ g ∈ data.factorsModP,
       0 < (HexPolyZMathlib.toPolynomial (Hex.FpPoly.liftToZ g)).natDegree := by
   letI : Hex.ZMod64.Bounds data.p := data.bounds
-  obtain ⟨hprime, hzero, hfield, heq⟩ := hform
+  obtain ⟨hprime, hzero, heq⟩ := hform
+  let hfield := @Hex.zmod64FieldOfPrime data.p data.bounds
+    (Hex.ZMod64.primeModulusOfPrime hprime)
   letI : Hex.ZMod64.PrimeModulus data.p := Hex.ZMod64.primeModulusOfPrime hprime
   -- Step A: 0 < (monicModularImage (modP data.p f)).degree?.getD 0
   have hfsize_ge_two : 2 ≤ f.size := by
@@ -5511,7 +5579,9 @@ theorem factorsModP_polyProduct_congr_of_factorsModPBerlekampForm_of_primitive_p
         (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)))
       primeData.p := by
   letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
-  obtain ⟨hprime, hzero, hfield, heq⟩ := hform
+  obtain ⟨hprime, hzero, heq⟩ := hform
+  let hfield := @Hex.zmod64FieldOfPrime primeData.p primeData.bounds
+    (Hex.ZMod64.primeModulusOfPrime hprime)
   letI : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
   -- `monicModularImage (modP p core)` is monic.
@@ -5587,7 +5657,9 @@ theorem factorsModP_polyProduct_congr_of_factorsModPBerlekampForm
       (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
       core primeData.p := by
   letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
-  obtain ⟨hprime, hzero, hfield, heq⟩ := hform
+  obtain ⟨hprime, hzero, heq⟩ := hform
+  let hfield := @Hex.zmod64FieldOfPrime primeData.p primeData.bounds
+    (Hex.ZMod64.primeModulusOfPrime hprime)
   letI : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
   have hp : 1 < primeData.p := by have := hprime.two_le; omega
@@ -5604,7 +5676,7 @@ theorem factorsModP_polyProduct_congr_of_factorsModPBerlekampForm
       core primeData
       (zpoly_primitive_of_monic hcore_monic)
       (hcore_monic ▸ (by decide : (0 : Int) < 1))
-      ⟨hprime, hzero, hfield, heq⟩ hgood
+      ⟨hprime, hzero, heq⟩ hgood
   rw [hmonicImage_eq] at hcongr_mon
   -- Close to `≡ core (mod p)` via `congr_liftToZ_modP`.
   exact Hex.ZPoly.congr_trans _ _ _ _ hcongr_mon (Hex.FpPoly.congr_liftToZ_modP core)
@@ -5628,7 +5700,9 @@ theorem factorsModP_ne_nil_of_factorsModPBerlekampForm
     (hform : Hex.factorsModPBerlekampForm core primeData) :
     primeData.factorsModP.toList ≠ [] := by
   letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
-  obtain ⟨hprime, hzero, hfield, heq⟩ := hform
+  obtain ⟨hprime, hzero, heq⟩ := hform
+  let hfield := @Hex.zmod64FieldOfPrime primeData.p primeData.bounds
+    (Hex.ZMod64.primeModulusOfPrime hprime)
   have hbl_ne :
       (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
         (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
@@ -5846,7 +5920,9 @@ theorem factorsModP_coprime_of_factorsModPBerlekampForm
     Hex.ZPoly.QuadraticMultifactorCoprimeSplits primeData.p
       primeData.factorsModP.toList := by
   letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
-  obtain ⟨hprime, hzero, hfield, heq⟩ := hform
+  obtain ⟨hprime, hzero, heq⟩ := hform
+  let hfield := @Hex.zmod64FieldOfPrime primeData.p primeData.bounds
+    (Hex.ZMod64.primeModulusOfPrime hprime)
   letI : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
   -- The modular image is square-free under `isGoodPrime`.
@@ -5901,18 +5977,12 @@ theorem factorsModP_coprime_of_factorsModPBerlekampForm
   -- Monic modular image is nonzero (it's a nonzero scalar of a nonzero poly).
   have hmonicImage_ne :
       Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) ≠ 0 := by
-    intro h0
-    have hmon_size :
-        (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)).size =
-          (Hex.ZPoly.modP primeData.p core).size := by
-      unfold Hex.monicModularImage
-      simp only [hzero, Bool.false_eq_true, ↓reduceIte]
-      exact Hex.FpPoly.scale_size_eq_of_ne_zero (p := primeData.p) hinv_ne _
-    have hsize_zero :
-        (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)).size = 0 := by
-      rw [h0]; rfl
-    rw [hmon_size] at hsize_zero
-    omega
+    apply Hex.monicModularImage_ne_zero_of_ne_zero hprime
+    intro hmod_zero
+    rw [hmod_zero] at hzero
+    have hzero_true : (0 : Hex.FpPoly primeData.p).isZero = true := rfl
+    rw [hzero_true] at hzero
+    exact Bool.noConfusion hzero
   -- Each raw Berlekamp factor is nonzero (positive degree typically, singleton
   -- [monicImg] in the degenerate size-≤-1 case).
   have hraw_ne : ∀ g ∈ raw, g ≠ 0 :=
@@ -5971,7 +6041,9 @@ theorem factorsModP_monic_of_factorsModPBerlekampForm
     letI := primeData.bounds
     ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g := by
   letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
-  obtain ⟨hprime, hzero, hfield, heq⟩ := hform
+  obtain ⟨hprime, hzero, heq⟩ := hform
+  let hfield := @Hex.zmod64FieldOfPrime primeData.p primeData.bounds
+    (Hex.ZMod64.primeModulusOfPrime hprime)
   letI : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
   have hmonicImage_monic :
@@ -6128,7 +6200,9 @@ theorem factors_irreducible_of_factorsModPBerlekampForm
         (@HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds
           (modPFactor primeData i)) := by
   letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
-  obtain ⟨hprime, hzero, hfield, heq⟩ := hform
+  obtain ⟨hprime, hzero, heq⟩ := hform
+  let hfield := @Hex.zmod64FieldOfPrime primeData.p primeData.bounds
+    (Hex.ZMod64.primeModulusOfPrime hprime)
   letI : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
   have hprime_root : _root_.Nat.Prime primeData.p := by
@@ -6253,9 +6327,9 @@ theorem factors_irreducible_of_choosePrimeData_of_some
           (modPFactor primeData i)) := by
   letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   have hform : Hex.factorsModPBerlekampForm core primeData := by
-    obtain ⟨hzero, hfield, hfactors_eq⟩ :=
+    obtain ⟨hzero, hfactors_eq⟩ :=
       Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hselected
-    exact ⟨Hex.choosePrimeData?_prime core primeData hselected, hzero, hfield, hfactors_eq⟩
+    exact ⟨Hex.choosePrimeData?_prime core primeData hselected, hzero, hfactors_eq⟩
   have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
     Hex.choosePrimeData?_isGoodPrime core primeData hselected
   exact factors_irreducible_of_factorsModPBerlekampForm core primeData hform hgood
@@ -6491,6 +6565,45 @@ theorem henselLiftData_liftedFactor_natDegree_pos
     hfactors_natDegree_pos modular hmodular_mem
   -- Conclude.
   exact hnatDeg_eq ▸ hpos_modular
+
+/--
+Positive natural degree of every lifted local factor for the executable
+monicised-core lift data.  This is the `Hex.monicisedCoreLiftData` surface over
+`henselLiftData_liftedFactor_natDegree_pos`.
+-/
+theorem monicisedCoreLiftData_liftedFactor_natDegree_pos
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hmonic_core :
+      Hex.DensePoly.Monic (Hex.MonicisedCoreData.ofCore core).monicCore)
+    (hprime_invariant :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant
+        primeData.p (Hex.precisionForCoeffBound B primeData.p)
+        (Hex.MonicisedCoreData.ofCore core).monicCore
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList)
+    (hp : 1 < primeData.p)
+    (hprecision : 1 ≤ Hex.precisionForCoeffBound B primeData.p)
+    (hfactors_monic :
+      letI := primeData.bounds
+      ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g)
+    (hproduct_mod_p :
+      letI := primeData.bounds
+      Hex.ZPoly.congr
+        (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
+        (Hex.MonicisedCoreData.ofCore core).monicCore primeData.p)
+    (hfactors_natDegree_pos :
+      letI := primeData.bounds
+      ∀ g ∈ primeData.factorsModP,
+        0 < (HexPolyZMathlib.toPolynomial (Hex.FpPoly.liftToZ g)).natDegree) :
+    ∀ i : Fin (Hex.monicisedCoreLiftData core B primeData).liftedFactors.size,
+      0 < (HexPolyZMathlib.toPolynomial
+            (liftedFactor (Hex.monicisedCoreLiftData core B primeData) i)).natDegree := by
+  unfold Hex.monicisedCoreLiftData
+  exact henselLiftData_liftedFactor_natDegree_pos
+    (Hex.MonicisedCoreData.ofCore core).monicCore
+    (Hex.precisionForCoeffBound B primeData.p) primeData
+    hmonic_core hprime_invariant hp hprecision hfactors_monic hproduct_mod_p
+    hfactors_natDegree_pos
 
 /-- Composed convenience wrapper: combines
 `Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData` with
@@ -15531,6 +15644,7 @@ theorem factor_entries_irreducible
   exact factor_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible
     (Array.mem_toList_iff.mpr hentry) h_raw
 
+set_option maxHeartbeats 2000000
 /--
 Abstract-bound variant of
 `factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence`:
@@ -15558,11 +15672,8 @@ theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselS
     (h :
       HenselSubsetCorrespondenceHypotheses
         (Hex.normalizeForFactor f).squareFreeCore
-        (Hex.precisionForCoeffBound
-          (Hex.ZPoly.defaultFactorCoeffBound
-            (Hex.normalizeForFactor f).squareFreeCore)
-          (Hex.choosePrimeData
-            (Hex.normalizeForFactor f).squareFreeCore).p)
+        (Hex.ZPoly.defaultFactorCoeffBound
+          (Hex.normalizeForFactor f).squareFreeCore)
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
         d admissiblePrime successfulLift)
     (hpartition :
@@ -15612,6 +15723,8 @@ theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselS
   rw [hentry_eq]
   exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hirr_raw
 
+set_option maxHeartbeats 2000000
+
 /-- **#4006 slow-path bridge (deliverable 2).**
 
 Connects the branch-local irreducibility theorem
@@ -15653,11 +15766,8 @@ theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselS
     (h :
       HenselSubsetCorrespondenceHypotheses
         (Hex.normalizeForFactor f).squareFreeCore
-        (Hex.precisionForCoeffBound
-          (Hex.ZPoly.defaultFactorCoeffBound
-            (Hex.normalizeForFactor f).squareFreeCore)
-          (Hex.choosePrimeData
-            (Hex.normalizeForFactor f).squareFreeCore).p)
+        (Hex.ZPoly.defaultFactorCoeffBound
+          (Hex.normalizeForFactor f).squareFreeCore)
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
         d admissiblePrime successfulLift)
     (hpartition :
@@ -15700,6 +15810,7 @@ theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselS
     hd_liftedFactor_inj (Hex.ZPoly.defaultFactorCoeffBound core)
     hcore_lc_le (defaultFactorCoeffBound_valid core hcore_ne) hprecision hcore_entry
 
+set_option maxHeartbeats 2000000
 /--
 Abstract-bound variant of
 `factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence`:
@@ -15727,10 +15838,7 @@ theorem factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorr
     (h :
       HenselSubsetCorrespondenceHypotheses
         (Hex.normalizeForFactor f).squareFreeCore
-        (Hex.precisionForCoeffBound
-          (Hex.ZPoly.defaultFactorCoeffBound f)
-          (Hex.choosePrimeData
-            (Hex.normalizeForFactor f).squareFreeCore).p)
+        (Hex.ZPoly.defaultFactorCoeffBound f)
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
         d admissiblePrime successfulLift)
     (hpartition :
@@ -15776,6 +15884,8 @@ theorem factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorr
       hd_liftedFactor_inj B' hcore_lc_le hvalid hprecision raw hraw_mem
   rw [hentry_eq]
   exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hirr_raw
+
+set_option maxHeartbeats 2000000
 
 /-- **#4536 outer-bound slow-path bridge.**
 
@@ -15836,10 +15946,7 @@ theorem factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorr
     (h :
       HenselSubsetCorrespondenceHypotheses
         (Hex.normalizeForFactor f).squareFreeCore
-        (Hex.precisionForCoeffBound
-          (Hex.ZPoly.defaultFactorCoeffBound f)
-          (Hex.choosePrimeData
-            (Hex.normalizeForFactor f).squareFreeCore).p)
+        (Hex.ZPoly.defaultFactorCoeffBound f)
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
         d admissiblePrime successfulLift)
     (hpartition :
@@ -16148,8 +16255,10 @@ private lemma toMathlibPolynomial_factorsModP_product_eq_monicModularImage
     Hex.choosePrimeData?_prime core primeData hsome
   letI : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
-  obtain ⟨hzero, hfield, hfactors_eq⟩ :=
+  obtain ⟨hzero, hfactors_eq⟩ :=
     Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hsome
+  let hfield := @Hex.zmod64FieldOfPrime primeData.p primeData.bounds
+    (Hex.ZMod64.primeModulusOfPrime hprime)
   letI := hfield
   set raw :=
       (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
@@ -16268,14 +16377,16 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
     · exact h
     · exact absurd h (Nat.ne_of_lt hmlt)
   haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime_root⟩
-  obtain ⟨hzero, hfield, hfactors_eq⟩ :=
+  obtain ⟨hzero, hfactors_eq⟩ :=
     Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hsome
   have hform : Hex.factorsModPBerlekampForm core primeData :=
-    ⟨hprime, hzero, hfield, hfactors_eq⟩
+    ⟨hprime, hzero, hfactors_eq⟩
   have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
     Hex.choosePrimeData?_isGoodPrime core primeData hsome
   have hnodup : primeData.factorsModP.toList.Nodup :=
     factorsModP_nodup_of_factorsModPBerlekampForm core primeData hform hgood
+  let hfield := @Hex.zmod64FieldOfPrime primeData.p primeData.bounds
+    (Hex.ZMod64.primeModulusOfPrime hprime)
   letI := hfield
   -- Set up abbreviations.
   set f : ModPFactorIndex primeData → Polynomial (ZMod primeData.p) :=
