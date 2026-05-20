@@ -5719,19 +5719,53 @@ private def factorFastCoreGuardPrimeData : PrimeChoiceData :=
     (initialHenselPrecision 4) (ZPoly.quadraticDoublingSteps 4 + 2) =
   some bhksGuardFactors
 
+/--
+Build the fixed-precision Hensel lift data for the monicised copy of an
+integer core.  The exhaustive slow path still recombines against the original
+primitive core, but the lift stage sees the monic substrate required by the
+Hensel pipeline.
+-/
+def monicisedCoreLiftData
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : LiftData :=
+  henselLiftData (MonicisedCoreData.ofCore core).monicCore
+    (precisionForCoeffBound B primeData.p) primeData
+
 def exhaustiveCoreFactorsWithBound
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Array ZPoly :=
   if B = 0 then
     #[core]
   else
-    let liftData :=
-      henselLiftData core (precisionForCoeffBound B primeData.p) primeData
+    let liftData := monicisedCoreLiftData core B primeData
     let factors :=
       recombineScaledExhaustive (DensePoly.leadingCoeff core) core liftData
     if factors.isEmpty then
       #[core]
     else
       factors
+
+private def exhaustiveMonicCoreGuardPrimeData : PrimeChoiceData :=
+  choosePrimeData cldGuardF
+
+#guard exhaustiveCoreFactorsWithBound cldGuardF 4 exhaustiveMonicCoreGuardPrimeData =
+  let liftData :=
+    henselLiftData cldGuardF
+      (precisionForCoeffBound 4 exhaustiveMonicCoreGuardPrimeData.p)
+      exhaustiveMonicCoreGuardPrimeData
+  let factors := recombineScaledExhaustive (DensePoly.leadingCoeff cldGuardF)
+    cldGuardF liftData
+  if factors.isEmpty then #[cldGuardF] else factors
+
+private def exhaustiveNonMonicQuadraticGuard : ZPoly :=
+  DensePoly.ofCoeffs #[1, 0, 2]
+
+#guard (MonicisedCoreData.ofCore exhaustiveNonMonicQuadraticGuard).monicCore =
+  DensePoly.ofCoeffs #[2, 0, 1]
+
+#guard quadraticIntegerRootFactors? exhaustiveNonMonicQuadraticGuard = none
+
+#guard ∀ factor ∈ (exhaustiveCoreFactorsWithBound exhaustiveNonMonicQuadraticGuard 4
+    (choosePrimeData exhaustiveNonMonicQuadraticGuard)).toList,
+  normalizeFactorSign factor = factor
 
 /-- The raw slow-path factor array used by the exhaustive recombination branch. -/
 def exhaustiveSlowRawFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
@@ -5756,6 +5790,9 @@ def factorSlowFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
         let coreFactors :=
           exhaustiveCoreFactorsWithBound normalized.squareFreeCore B primeData
         reassemblePolynomialFactors normalized coreFactors
+
+#guard factorSlowFactorsWithBound exhaustiveNonMonicQuadraticGuard 4 =
+  #[exhaustiveNonMonicQuadraticGuard]
 
 set_option maxHeartbeats 800000
 
@@ -9241,11 +9278,11 @@ theorem exhaustiveCoreFactorsWithBound_normalizeFactorSign
   · simp only [hB, if_false]
     by_cases hempty :
         (recombineScaledExhaustive (DensePoly.leadingCoeff core) core
-            (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)).isEmpty
+            (monicisedCoreLiftData core B primeData)).isEmpty
     · simp [hempty, hcore]
     · simp only [hempty]
       exact recombineScaledExhaustive_normalizeFactorSign (DensePoly.leadingCoeff core) core
-        (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)
+        (monicisedCoreLiftData core B primeData)
 
 theorem exhaustiveCoreFactorsWithBound_shouldRecord
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
@@ -9258,11 +9295,11 @@ theorem exhaustiveCoreFactorsWithBound_shouldRecord
   · simp only [hB, if_false]
     by_cases hempty :
         (recombineScaledExhaustive (DensePoly.leadingCoeff core) core
-            (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)).isEmpty
+            (monicisedCoreLiftData core B primeData)).isEmpty
     · simp [hempty, hcore]
     · simp only [hempty]
       exact recombineScaledExhaustive_shouldRecord (DensePoly.leadingCoeff core) core
-        (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)
+        (monicisedCoreLiftData core B primeData)
 
 /-- Every emitted factor of the exhaustive recombination wrapper is
 primitive when the input core is primitive. The two `#[core]` short-circuit
@@ -9279,11 +9316,11 @@ theorem exhaustiveCoreFactorsWithBound_primitive
   · simp only [hB, if_false]
     by_cases hempty :
         (recombineScaledExhaustive (DensePoly.leadingCoeff core) core
-            (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)).isEmpty
+            (monicisedCoreLiftData core B primeData)).isEmpty
     · simp [hempty, hcore_primitive]
     · simp only [hempty]
       exact recombineScaledExhaustive_primitive (DensePoly.leadingCoeff core) core
-        (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)
+        (monicisedCoreLiftData core B primeData)
 
 private theorem bhksRecoverClassified_success_product
     {f : ZPoly} {d : LiftData} {candidates : Array ZPoly}
@@ -9563,26 +9600,24 @@ theorem exhaustiveCoreFactorsWithBound_product
   · simp only [hB, if_false]
     by_cases hempty :
         (recombineScaledExhaustive (DensePoly.leadingCoeff core) core
-            (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)).isEmpty
+            (monicisedCoreLiftData core B primeData)).isEmpty
     · simp [hempty, Array.polyProduct]
     · simp only [hempty]
       cases hsearch : scaledRecombinationSearchMod (DensePoly.leadingCoeff core) core
           (liftModulus
-            (henselLiftData core (precisionForCoeffBound B primeData.p) primeData))
-          (henselLiftData core (precisionForCoeffBound B primeData.p)
-            primeData).liftedFactors.toList with
+            (monicisedCoreLiftData core B primeData))
+          (monicisedCoreLiftData core B primeData).liftedFactors.toList with
       | none =>
           have hnil :
               recombineScaledExhaustive (DensePoly.leadingCoeff core) core
-                (henselLiftData core (precisionForCoeffBound B primeData.p)
-                  primeData) = #[] := by
+                (monicisedCoreLiftData core B primeData) = #[] := by
             rw [recombineScaledExhaustive]
             simp [hsearch]
           rw [hnil] at hempty
           simp at hempty
       | some xs =>
           exact recombineScaledExhaustive_product (DensePoly.leadingCoeff core) core
-            (henselLiftData core (precisionForCoeffBound B primeData.p) primeData)
+            (monicisedCoreLiftData core B primeData)
             xs hsearch
 
 /-- The leading coefficient of an `Array.polyProduct` over a list of polynomials
