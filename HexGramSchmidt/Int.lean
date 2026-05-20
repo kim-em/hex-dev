@@ -3775,6 +3775,34 @@ theorem prefixSpan_basis_of_rowCombination
   (basis_span b k.val k.isLt _).mpr
     (prefixSpan_castIntMatrix_of_rowCombination b c k hzero)
 
+/-- Package the prefix-span witness together with the recovered top
+Gram-Schmidt coordinate for a lattice row combination whose integer
+coefficients vanish above `k`. -/
+theorem prefixSpan_basis_and_coeffs_apply_eq_of_rowCombination
+    (b : Matrix Int n m) (c : Vector Int n) (k : Fin n)
+    (hzero : ∀ j : Fin n, k.val < j.val → c[j] = 0) :
+    GramSchmidt.prefixSpan (basis b) k.val k.isLt
+        (Vector.map (fun x : Int => (x : Rat)) (Matrix.rowCombination b c)) ∧
+      (Matrix.rowCombination (coeffs b)
+          (Vector.map (fun x : Int => (x : Rat)) c))[k] = (c[k] : Rat) :=
+  ⟨prefixSpan_basis_of_rowCombination b c k hzero,
+    rowCombination_coeffs_apply_eq_of_zero_above b c k hzero⟩
+
+/-- Nonzero specialization of
+`prefixSpan_basis_and_coeffs_apply_eq_of_rowCombination`, for the highest
+nonzero integer coefficient in a lattice row combination. -/
+theorem prefixSpan_basis_and_coeffs_apply_ne_zero_of_rowCombination
+    (b : Matrix Int n m) (c : Vector Int n) (k : Fin n)
+    (hck : c[k] ≠ 0)
+    (hzero : ∀ j : Fin n, k.val < j.val → c[j] = 0) :
+    GramSchmidt.prefixSpan (basis b) k.val k.isLt
+        (Vector.map (fun x : Int => (x : Rat)) (Matrix.rowCombination b c)) ∧
+      (Matrix.rowCombination (coeffs b)
+          (Vector.map (fun x : Int => (x : Rat)) c))[k] ≠ 0 := by
+  refine ⟨prefixSpan_basis_of_rowCombination b c k hzero, ?_⟩
+  rw [rowCombination_coeffs_apply_eq_of_zero_above b c k hzero]
+  exact_mod_cast hck
+
 /-! ### Dot-product symmetry support -/
 
 private theorem foldl_dot_comm_int {n' : Nat} (xs : List (Fin n'))
@@ -4063,7 +4091,7 @@ private theorem rowSwap_row_left_int {n' m' : Nat}
   · subst j
     have hget := Matrix.rowSwap_getElem M i i i ⟨c, hc⟩
     rw [if_pos rfl] at hget
-    simpa [Matrix.row] using hget
+    exact hget
   · have hget := Matrix.rowSwap_getElem M i j i ⟨c, hc⟩
     rw [if_neg hij, if_pos rfl] at hget
     simpa [Matrix.row] using hget
