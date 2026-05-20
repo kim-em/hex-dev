@@ -3479,6 +3479,118 @@ private theorem foldl_finRange_eq_prefix_of_zero_above
           acc + f ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt k.isLt)⟩) 0 :=
   foldl_finRange_eq_prefix_of_zero_above_from k f 0 hzero
 
+/-- A `List.finRange (k + 1)` fold whose addend vanishes on every strict
+predecessor of `k` reduces to the contribution at the last index. -/
+private theorem foldl_finRange_succ_eq_last_of_zero_below
+    (k : Nat) (f : Fin (k + 1) → Rat) (acc : Rat)
+    (hzero : ∀ j : Fin (k + 1), j.val < k → f j = 0) :
+    (List.finRange (k + 1)).foldl (fun acc j => acc + f j) acc =
+      acc + f ⟨k, Nat.lt_succ_self k⟩ := by
+  rw [List.finRange_succ_last, List.foldl_append, List.foldl_map]
+  have hprefix :
+      (List.finRange k).foldl
+          (fun acc i => acc + f (Fin.castSucc i)) acc = acc := by
+    refine foldl_add_eq_acc_rat_int (List.finRange k)
+      (fun i => f (Fin.castSucc i)) acc ?_
+    intro i _hi
+    apply hzero
+    change i.val < k
+    exact i.isLt
+  rw [hprefix]
+  show acc + f (Fin.last k) = acc + f ⟨k, Nat.lt_succ_self k⟩
+  rfl
+
+/-- The `k`-th entry of the row combination of the Gram-Schmidt coefficient
+matrix with a cast integer coefficient vector, when all later integer
+coefficients vanish, equals the cast `k`-th coefficient.
+
+This is the top Gram-Schmidt coordinate specialization consumed by the lattice
+norm lower bound: rows below `k` contribute zero by upper-triangularity,
+row `k` contributes one by the diagonal lemma, and rows above `k` contribute
+zero because the corresponding integer coefficient vanishes. -/
+theorem rowCombination_coeffs_apply_eq_of_zero_above
+    (b : Matrix Int n m) (c : Vector Int n) (k : Fin n)
+    (hzero_above : ∀ j : Fin n, k.val < j.val → c[j] = 0) :
+    (Matrix.rowCombination (coeffs b)
+        (Vector.map (fun x : Int => (x : Rat)) c))[k]
+      = ((c[k] : Int) : Rat) := by
+  let castc : Vector Rat n := Vector.map (fun x : Int => (x : Rat)) c
+  have hcastc_get : ∀ i : Fin n, castc[i] = ((c[i] : Int) : Rat) := by
+    intro i
+    show (Vector.map (fun x : Int => (x : Rat)) c)[i.val]'i.isLt
+        = ((c[i.val]'i.isLt : Int) : Rat)
+    rw [Vector.getElem_map]
+  -- Embed indices from the truncated prefix back into `Fin n`.
+  let liftj : Fin (k.val + 1) → Fin n := fun j =>
+    ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt k.isLt)⟩
+  rw [show
+      (Matrix.rowCombination (coeffs b)
+          (Vector.map (fun x : Int => (x : Rat)) c))[k]
+        = (Matrix.rowCombination (coeffs b) castc)[k] from rfl]
+  -- Step 1: rewrite the row-combination entry as a fold over the `k`-th column.
+  have hcol :
+      (Matrix.rowCombination (coeffs b) castc)[k]
+        = (List.finRange n).foldl
+            (fun acc i => acc + (coeffs b)[i][k] * castc[i]) 0 := by
+    show ((coeffs b).transpose * castc)[k] = _
+    rw [Matrix.mulVec_getElem]
+    show Matrix.dot (((coeffs b).transpose).row k) castc = _
+    show (List.finRange n).foldl
+        (fun acc i =>
+          acc + (((coeffs b).transpose).row k)[i] * castc[i]) 0 = _
+    simp only [Matrix.row_getElem, Matrix.transpose_getElem]
+  rw [hcol]
+  -- Step 2: drop the tail above `k` via the zero-above truncation helper.
+  let f : Fin n → Rat := fun i => (coeffs b)[i][k] * castc[i]
+  have habove : ∀ j : Fin n, k.val < j.val → f j = 0 := by
+    intro j hj
+    show (coeffs b)[j][k] * castc[j] = 0
+    rw [hcastc_get j]
+    have hcj : c[j] = 0 := hzero_above j hj
+    rw [hcj]
+    show (coeffs b)[j][k] * (((0 : Int) : Rat)) = 0
+    grind
+  have htrunc :
+      (List.finRange n).foldl (fun acc j => acc + f j) 0
+        = (List.finRange (k.val + 1)).foldl
+            (fun acc j => acc + f (liftj j)) 0 :=
+    foldl_finRange_eq_prefix_of_zero_above k f habove
+  show (List.finRange n).foldl (fun acc j => acc + f j) 0
+      = ((c[k] : Int) : Rat)
+  rw [htrunc]
+  -- Step 3: isolate the contribution at `j = k`, using `coeffs_upper` for the
+  -- entries strictly below `k`.
+  let g : Fin (k.val + 1) → Rat := fun j => f (liftj j)
+  have hbelow : ∀ j : Fin (k.val + 1), j.val < k.val → g j = 0 := by
+    intro j hj
+    show (coeffs b)[liftj j][k] * castc[liftj j] = 0
+    have hentry :
+        GramSchmidt.entry (coeffs b) (liftj j) k = 0 := by
+      have h := coeffs_upper b j.val k.val
+        (Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt k.isLt)) k.isLt hj
+      have hkeq : (⟨k.val, k.isLt⟩ : Fin n) = k := Fin.ext rfl
+      change GramSchmidt.entry (coeffs b) (liftj j) ⟨k.val, k.isLt⟩ = 0 at h
+      rwa [hkeq] at h
+    have : (coeffs b)[liftj j][k] = 0 := hentry
+    rw [this]
+    grind
+  have hisolate :
+      (List.finRange (k.val + 1)).foldl (fun acc j => acc + g j) 0
+        = 0 + g ⟨k.val, Nat.lt_succ_self k.val⟩ :=
+    foldl_finRange_succ_eq_last_of_zero_below k.val g 0 hbelow
+  rw [hisolate]
+  -- Step 4: evaluate `g` at the last index using `coeffs_diag`.
+  change 0 + (coeffs b)[k][k] * castc[k] = ((c[k] : Int) : Rat)
+  rw [hcastc_get k]
+  have hdiag :
+      GramSchmidt.entry (coeffs b) k k = 1 := by
+    have h := coeffs_diag b k.val k.isLt
+    have hkeq : (⟨k.val, k.isLt⟩ : Fin n) = k := Fin.ext rfl
+    rwa [hkeq] at h
+  have hkk : (coeffs b)[k][k] = 1 := hdiag
+  rw [hkk]
+  grind
+
 /-! ### Prefix coefficient vector for integer row combinations -/
 
 /-- Cast the first `k.val + 1` entries of an integer coefficient vector into a
