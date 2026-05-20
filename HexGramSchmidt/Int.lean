@@ -2239,6 +2239,44 @@ theorem bareissNoPivotData_diag_eq_leadingPrefix_bareiss_of_prefix_nonsingular
           simpa [GM, LP, fullAtR, init] using h_diag
     _ = Matrix.bareiss LP := by
           simpa [LP, Fin.last] using h_bareiss.symm
+
+/-! ### Gram row-span invariant for no-pivot Bareiss -/
+
+/-- Row-vector interpretation of the trailing block during a no-pivot Bareiss
+pass over a Gram matrix.  Each active trailing row is represented by an
+integer row combination of the original input rows, and each matrix entry in
+that trailing row is its inner product against the corresponding original row.
+-/
+private structure BareissGramRowInvariant (b : Matrix Int n m)
+    (state : Matrix.BareissState n) where
+  rowVec : Fin n → Vector Int m
+  mem_span : ∀ i : Fin n, state.step ≤ i.val →
+    ∃ c : Vector Int n,
+      (∀ k : Fin n, i.val < k.val → c[k] = 0) ∧
+        rowVec i = Matrix.rowCombination b c
+  entry_eq_dot : ∀ i j : Fin n, state.step ≤ i.val →
+    state.matrix[i][j] = Matrix.dot (rowVec i) (b.row j)
+
+/-- The initial no-pivot Gram state satisfies the row-vector invariant with
+each row represented by the matching input row. -/
+private def bareissGramRowInvariant_initial (b : Matrix Int n m) :
+    BareissGramRowInvariant b
+      (Matrix.noPivotInitialState (Matrix.gramMatrix b)) := by
+  refine
+    { rowVec := fun i => b.row i
+      mem_span := ?_
+      entry_eq_dot := ?_ }
+  · intro i _hi
+    let c : Vector Int n := Vector.ofFn fun k : Fin n => if i = k then 1 else 0
+    refine ⟨c, ?_, ?_⟩
+    · intro k hik
+      by_cases h : i = k
+      · subst k
+        omega
+      · simp [c, h]
+    · simpa [c] using (Matrix.IsRREF.rowCombination_single (M := b) i).symm
+  · intro i j _hi
+    simp [Matrix.noPivotInitialState, Matrix.gramMatrix, Matrix.ofFn, Matrix.dot]
 /-- If the array loop's `state.step` is past the matrix extent, one outer
 iteration returns the input state unchanged. -/
 private theorem scaledCoeffArrayLoop_done (fuel : Nat)
@@ -3505,9 +3543,9 @@ matrix with a cast integer coefficient vector, when all later integer
 coefficients vanish, equals the cast `k`-th coefficient.
 
 This is the top Gram-Schmidt coordinate specialization consumed by the lattice
-norm lower bound: rows below `k` contribute zero by upper-triangularity, row
-`k` contributes one by the diagonal lemma, and rows above `k` contribute zero
-because the corresponding integer coefficient vanishes. -/
+norm lower bound: rows below `k` contribute zero by upper-triangularity,
+row `k` contributes one by the diagonal lemma, and rows above `k` contribute
+zero because the corresponding integer coefficient vanishes. -/
 theorem rowCombination_coeffs_apply_eq_of_zero_above
     (b : Matrix Int n m) (c : Vector Int n) (k : Fin n)
     (hzero_above : ∀ j : Fin n, k.val < j.val → c[j] = 0) :
@@ -3517,19 +3555,21 @@ theorem rowCombination_coeffs_apply_eq_of_zero_above
   let castc : Vector Rat n := Vector.map (fun x : Int => (x : Rat)) c
   have hcastc_get : ∀ i : Fin n, castc[i] = ((c[i] : Int) : Rat) := by
     intro i
-    show (Vector.map (fun x : Int => (x : Rat)) c)[i.val]'i.isLt =
-      ((c[i.val]'i.isLt : Int) : Rat)
+    show (Vector.map (fun x : Int => (x : Rat)) c)[i.val]'i.isLt
+        = ((c[i.val]'i.isLt : Int) : Rat)
     rw [Vector.getElem_map]
+  -- Embed indices from the truncated prefix back into `Fin n`.
   let liftj : Fin (k.val + 1) → Fin n := fun j =>
     ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt k.isLt)⟩
   rw [show
       (Matrix.rowCombination (coeffs b)
-          (Vector.map (fun x : Int => (x : Rat)) c))[k] =
-        (Matrix.rowCombination (coeffs b) castc)[k] from rfl]
+          (Vector.map (fun x : Int => (x : Rat)) c))[k]
+        = (Matrix.rowCombination (coeffs b) castc)[k] from rfl]
+  -- Step 1: rewrite the row-combination entry as a fold over the `k`-th column.
   have hcol :
-      (Matrix.rowCombination (coeffs b) castc)[k] =
-        (List.finRange n).foldl
-          (fun acc i => acc + (coeffs b)[i][k] * castc[i]) 0 := by
+      (Matrix.rowCombination (coeffs b) castc)[k]
+        = (List.finRange n).foldl
+            (fun acc i => acc + (coeffs b)[i][k] * castc[i]) 0 := by
     show ((coeffs b).transpose * castc)[k] = _
     rw [Matrix.mulVec_getElem]
     show Matrix.dot (((coeffs b).transpose).row k) castc = _
@@ -3538,6 +3578,7 @@ theorem rowCombination_coeffs_apply_eq_of_zero_above
           acc + (((coeffs b).transpose).row k)[i] * castc[i]) 0 = _
     simp only [Matrix.row_getElem, Matrix.transpose_getElem]
   rw [hcol]
+  -- Step 2: drop the tail above `k` via the zero-above truncation helper.
   let f : Fin n → Rat := fun i => (coeffs b)[i][k] * castc[i]
   have habove : ∀ j : Fin n, k.val < j.val → f j = 0 := by
     intro j hj
@@ -3548,13 +3589,15 @@ theorem rowCombination_coeffs_apply_eq_of_zero_above
     show (coeffs b)[j][k] * (((0 : Int) : Rat)) = 0
     grind
   have htrunc :
-      (List.finRange n).foldl (fun acc j => acc + f j) 0 =
-        (List.finRange (k.val + 1)).foldl
-          (fun acc j => acc + f (liftj j)) 0 :=
+      (List.finRange n).foldl (fun acc j => acc + f j) 0
+        = (List.finRange (k.val + 1)).foldl
+            (fun acc j => acc + f (liftj j)) 0 :=
     foldl_finRange_eq_prefix_of_zero_above k f habove
-  show (List.finRange n).foldl (fun acc j => acc + f j) 0 =
-    ((c[k] : Int) : Rat)
+  show (List.finRange n).foldl (fun acc j => acc + f j) 0
+      = ((c[k] : Int) : Rat)
   rw [htrunc]
+  -- Step 3: isolate the contribution at `j = k`, using `coeffs_upper` for the
+  -- entries strictly below `k`.
   let g : Fin (k.val + 1) → Rat := fun j => f (liftj j)
   have hbelow : ∀ j : Fin (k.val + 1), j.val < k.val → g j = 0 := by
     intro j hj
@@ -3570,10 +3613,11 @@ theorem rowCombination_coeffs_apply_eq_of_zero_above
     rw [this]
     grind
   have hisolate :
-      (List.finRange (k.val + 1)).foldl (fun acc j => acc + g j) 0 =
-        0 + g ⟨k.val, Nat.lt_succ_self k.val⟩ :=
+      (List.finRange (k.val + 1)).foldl (fun acc j => acc + g j) 0
+        = 0 + g ⟨k.val, Nat.lt_succ_self k.val⟩ :=
     foldl_finRange_succ_eq_last_of_zero_below k.val g 0 hbelow
   rw [hisolate]
+  -- Step 4: evaluate `g` at the last index using `coeffs_diag`.
   change 0 + (coeffs b)[k][k] * castc[k] = ((c[k] : Int) : Rat)
   rw [hcastc_get k]
   have hdiag :

@@ -352,6 +352,18 @@ theorem rootsOutsideRadiusCount_le_of_graceWalshSzegoZeroControlAtDegree
       rootsOutsideRadiusCount r f.roots :=
   hsource f g hfg_degree hg_roots r hr
 
+theorem roots_count_radius_le_of_schmeisserComposition
+    {n : ℕ} {f g : ℂ[X]} {r : ℝ}
+    (hsource : graceWalshSzegoZeroControlAtDegree n)
+    (hr : 0 < r)
+    (hfg_degree : f.natDegree ≤ n ∧ g.natDegree ≤ n)
+    (hg_roots : ∀ z ∈ g.roots, ‖z‖ ≤ 1) :
+    ((schmeisserComposition n f g).roots.filter fun ζ => r ≤ ‖ζ‖).card ≤
+      ((f.roots.filter fun z => r ≤ ‖z‖).card) := by
+  simpa [rootsOutsideRadiusCount] using
+    rootsOutsideRadiusCount_le_of_graceWalshSzegoZeroControlAtDegree
+      hsource hr hfg_degree ((rootsInClosedUnitDisk_iff g).2 hg_roots)
+
 theorem schmeisserCompositionZeroControl_of_graceWalshSzegoZeroControlAtDegree
     {n : ℕ} {f g : ℂ[X]}
     (hsource : graceWalshSzegoZeroControlAtDegree n)
