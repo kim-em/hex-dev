@@ -75,6 +75,61 @@ Likely imports: `Mathlib.Analysis.Complex.Polynomial.GaussLucas`,
 `Mathlib.Algebra.Polynomial.Splits`, existing Mahler/root-product imports, plus
 whatever Mathlib develops for composition polynomials.
 
+## Dispatchable Source-Theorem Decomposition
+
+The local algebraic and multiset adapters now exist around
+`Polynomial.schmeisserComposition`, `Polynomial.schmeisserDerivativeKernel`, and
+`Polynomial.rootsRadiusProduct`.  The remaining derivative-adapter-free source
+theorem should be split into three proof substrates:
+
+1. A de Bruijn-Springer root-count theorem for Schmeisser compositions.  The
+   useful Lean-facing shape is radius-wise count domination:
+
+   ```lean
+   theorem Polynomial.roots_count_radius_le_of_schmeisserComposition
+       {n : ℕ} {f g : ℂ[X]} {r : ℝ}
+       (hr : 0 < r)
+       (hfg_degree : f.natDegree ≤ n ∧ g.natDegree ≤ n)
+       (hg_roots : ∀ z ∈ g.roots, ‖z‖ ≤ 1) :
+       ((Polynomial.schmeisserComposition n f g).roots.filter fun ζ => r ≤ ‖ζ‖).card ≤
+         ((f.roots.filter fun z => r ≤ ‖z‖).card)
+   ```
+
+   If the literature theorem is easier to state for roots inside disks or for
+   open circular domains, keep that theorem as the internal source and expose a
+   closed-radius wrapper with `Polynomial.roots` multiplicities preserved.
+
+2. A finite multiset conversion from radius-wise count domination to exterior
+   product domination:
+
+   ```lean
+   theorem Polynomial.rootsRadiusProduct_le_of_forall_count_radius_le
+       {r : ℝ} {s t : Multiset ℂ}
+       (hr : 0 < r)
+       (hcount : ∀ ρ : ℝ, r ≤ ρ →
+         (s.filter fun z => ρ ≤ ‖z‖).card ≤
+           (t.filter fun z => ρ ≤ ‖z‖).card) :
+       Polynomial.rootsRadiusProduct r s ≤ Polynomial.rootsRadiusProduct r t
+   ```
+
+   This is independent finite real/multiset bookkeeping and should not depend
+   on the composition theorem or derivative specialization.
+
+3. The public Schmeisser source wrapper:
+
+   ```lean
+   theorem Polynomial.rootsRadiusProduct_le_of_schmeisserComposition
+       {n : ℕ} {f g : ℂ[X]} {r : ℝ}
+       (hr : 0 < r)
+       (hfg_degree : f.natDegree ≤ n ∧ g.natDegree ≤ n)
+       (hg_roots : ∀ z ∈ g.roots, ‖z‖ ≤ 1) :
+       Polynomial.rootsRadiusProduct r (Polynomial.schmeisserComposition n f g).roots ≤
+         Polynomial.rootsRadiusProduct r f.roots
+   ```
+
+   This wrapper is the source hypothesis needed by the existing coefficient-form
+   packaging lemmas and should remain derivative-adapter-free.
+
 ## Local Algebraic Decomposition
 
 ### 1. Optional Schur-Szego Composition Definition
