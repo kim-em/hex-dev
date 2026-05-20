@@ -115,6 +115,31 @@ by its canonical nonnegative representative in `[0, p^k)`. -/
     DensePoly.coeff_eq_zero_of_size_le (0 : ZPoly) (by simp)
   simp [hcoeff, intModNat]
 
+/-- Reducing the integer one polynomial modulo a nontrivial power preserves one. -/
+@[simp] theorem reduceModPow_one_of_nontrivial
+    (p k : Nat) (hpk : 1 < p ^ k) :
+    reduceModPow (1 : ZPoly) p k = 1 := by
+  apply DensePoly.ext_coeff
+  intro i
+  rw [coeff_reduceModPow]
+  change
+    Int.ofNat (intModNat (DensePoly.coeff (DensePoly.C (1 : Int)) i) (p ^ k)) =
+      DensePoly.coeff (DensePoly.C (1 : Int)) i
+  rw [DensePoly.coeff_C]
+  cases i with
+  | zero =>
+      simp only [↓reduceIte]
+      unfold intModNat
+      rw [Int.emod_eq_of_lt]
+      · rfl
+      · decide
+      · exact Int.ofNat_lt.mpr hpk
+  | succ i =>
+      change Int.ofNat (intModNat 0 (p ^ k)) = 0
+      unfold intModNat
+      rw [show (0 : Int) % Int.ofNat (p ^ k) = 0 by simp]
+      rfl
+
 /-- If a coefficient is already divisible by `p^k`, its `reduceModPow` image vanishes. -/
 theorem coeff_reduceModPow_eq_zero_of_emod
     (f : ZPoly) (p k i : Nat)
@@ -178,6 +203,12 @@ theorem reduceModPow_idempotent (f : ZPoly) (p k : Nat) (hpk : 0 < p ^ k) :
     reduceModPow (reduceModPow f p k) p k = reduceModPow f p k :=
   reduceModPow_eq_of_congr (reduceModPow f p k) f p k
     (congr_reduceModPow f p k hpk)
+
+/-- Canonical reduction modulo a positive power is idempotent. -/
+@[simp] theorem reduceModPow_reduceModPow
+    (p k : Nat) [ZMod64.Bounds p] (f : ZPoly) :
+    reduceModPow (reduceModPow f p k) p k = reduceModPow f p k :=
+  reduceModPow_idempotent f p k (Nat.pow_pos (ZMod64.Bounds.pPos (p := p)))
 
 /-- Congruent integer polynomials have the same reduction modulo `p`. -/
 theorem modP_eq_of_congr (p : Nat) [ZMod64.Bounds p] (f g : ZPoly)
@@ -426,5 +457,43 @@ theorem congr_reduceModPow_liftToZ (f : FpPoly p) (k : Nat) :
     ZPoly.congr_reduceModPow (liftToZ f) p k (Nat.pow_pos (ZMod64.Bounds.pPos (p := p)))
 
 end FpPoly
+
+namespace ZPoly
+
+/-- Reducing the integer `1` polynomial modulo `p` yields the `FpPoly p`
+identity. Bottom-of-recursion case for the `modP p` bridge rewrites consumed
+by Hensel lifting modules. -/
+@[simp] theorem modP_one (p : Nat) [ZMod64.Bounds p] :
+    ZPoly.modP p (1 : ZPoly) = (1 : FpPoly p) := by
+  have hcong : ZPoly.congr (FpPoly.liftToZ (1 : FpPoly p)) (1 : ZPoly) p := by
+    intro i
+    rw [FpPoly.coeff_liftToZ]
+    change
+      (Int.ofNat (DensePoly.coeff (DensePoly.C (1 : ZMod64 p)) i).toNat -
+          DensePoly.coeff (DensePoly.C (1 : Int)) i) % (p : Int) = 0
+    rw [DensePoly.coeff_C, DensePoly.coeff_C]
+    cases i with
+    | zero =>
+        cases p with
+        | zero =>
+            cases Nat.not_lt_zero _ (ZMod64.Bounds.pPos (p := 0))
+        | succ p' =>
+            cases p' with
+            | zero =>
+                change (Int.ofNat (1 % 1) - 1) % (1 : Int) = 0
+                simp
+            | succ p'' =>
+                have hlt : 1 < Nat.succ (Nat.succ p'') := by omega
+                change
+                  (Int.ofNat (1 % Nat.succ (Nat.succ p'')) - 1) %
+                    (Nat.succ (Nat.succ p'') : Int) = 0
+                simp [Nat.mod_eq_of_lt hlt]
+    | succ i =>
+        change (Int.ofNat 0 - (0 : Int)) % (p : Int) = 0
+        simp
+  exact Eq.trans (ZPoly.modP_eq_of_congr p _ _ (ZPoly.congr_symm _ _ _ hcong))
+    (FpPoly.modP_liftToZ (p := p) (1 : FpPoly p))
+
+end ZPoly
 
 end Hex

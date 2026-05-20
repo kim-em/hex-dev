@@ -183,40 +183,6 @@ private theorem linearHenselStep_correction_identity
     _ = eMod := by
           rw [FpPoly.one_mul]
 
-/-- Reducing the integer `1` polynomial modulo `p` yields the `FpPoly p`
-identity. Bottom-of-recursion case for the `modP p` algebra rewrites consumed
-by the linear Hensel step's correctness chain. -/
-@[simp] theorem modP_one (p : Nat) [ZMod64.Bounds p] :
-    ZPoly.modP p (1 : ZPoly) = (1 : FpPoly p) := by
-  have hcong : ZPoly.congr (FpPoly.liftToZ (1 : FpPoly p)) (1 : ZPoly) p := by
-    intro i
-    rw [FpPoly.coeff_liftToZ]
-    change
-      (Int.ofNat (DensePoly.coeff (DensePoly.C (1 : ZMod64 p)) i).toNat -
-          DensePoly.coeff (DensePoly.C (1 : Int)) i) % (p : Int) = 0
-    rw [DensePoly.coeff_C, DensePoly.coeff_C]
-    cases i with
-    | zero =>
-        cases p with
-        | zero =>
-            cases Nat.not_lt_zero _ (ZMod64.Bounds.pPos (p := 0))
-        | succ p' =>
-            cases p' with
-            | zero =>
-                change (Int.ofNat (1 % 1) - 1) % (1 : Int) = 0
-                simp
-            | succ p'' =>
-                have hlt : 1 < Nat.succ (Nat.succ p'') := by omega
-                change
-                  (Int.ofNat (1 % Nat.succ (Nat.succ p'')) - 1) %
-                    (Nat.succ (Nat.succ p'') : Int) = 0
-                simp [Nat.mod_eq_of_lt hlt]
-    | succ i =>
-        change (Int.ofNat 0 - (0 : Int)) % (p : Int) = 0
-        simp
-  exact Eq.trans (ZPoly.modP_eq_of_congr p _ _ (ZPoly.congr_symm _ _ _ hcong))
-    (FpPoly.modP_liftToZ (p := p) (1 : FpPoly p))
-
 /-- A `modP p` equality converts to a `ZPoly.congr` against the lift: if
 `modP p z = u` then the lifted-back-to-`ZPoly` representative `FpPoly.liftToZ u`
 agrees with `z` coefficientwise modulo `p`. Used by the correction-proof chain
