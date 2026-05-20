@@ -141,12 +141,12 @@ theorem rootsRadiusProduct_eq_div_pow_card {r : ℝ} (s : Multiset ℂ) :
   simp
 
 /--
-Arbitrary-radius packaging for Schmeisser's Lemma 9 / de Bruijn-Springer
+Coefficient-form packaging for Schmeisser's Lemma 9 / de Bruijn-Springer
 composition-polynomial theorem.
 
-The hard analytic source theorem supplies `hsource` from the degree,
-closed-unit-disk, and positive-radius hypotheses. This lemma keeps the
-coefficient-form API separate from that analytic proof.
+The hard analytic source theorem supplies `hsource` from the degree and
+closed-unit-disk hypotheses. This lemma keeps the coefficient-form API used by
+downstream derivative adapters separate from that analytic proof.
 -/
 theorem rootsRadiusProduct_le_of_schmeisserComposition_of_source
     {n : ℕ} {f g h : ℂ[X]} {r : ℝ}
@@ -164,27 +164,25 @@ theorem rootsRadiusProduct_le_of_schmeisserComposition_of_source
   exact hsource
 
 /--
-Radius-one packaging for Schmeisser's Lemma 9 / de Bruijn-Springer
+Radius-one compatibility wrapper for Schmeisser's Lemma 9 / de Bruijn-Springer
 composition-polynomial theorem.
-
-The hard analytic source theorem supplies `hsource` from the degree and
-closed-unit-disk hypotheses. This lemma keeps the coefficient-form API used by
-downstream derivative adapters separate from that analytic proof.
 -/
 theorem roots_filter_norm_product_le_of_schmeisserComposition_radius_one_of_source
     {n : ℕ} {f g h : ℂ[X]}
-    (_hfg_degree : f.natDegree ≤ n ∧ g.natDegree ≤ n)
+    (hfg_degree : f.natDegree ≤ n ∧ g.natDegree ≤ n)
     (hh_degree : h.natDegree ≤ n)
     (hh_coeff : ∀ k ≤ n,
       h.coeff k = f.coeff k * (g.coeff k / (Nat.choose n k : ℂ)))
-    (_hg_roots : ∀ z ∈ g.roots, ‖z‖ ≤ 1)
+    (hg_roots : ∀ z ∈ g.roots, ‖z‖ ≤ 1)
     (hsource :
       (((schmeisserComposition n f g).roots.filter fun ζ => 1 ≤ ‖ζ‖).map fun ζ => ‖ζ‖).prod ≤
         ((f.roots.filter fun z => 1 ≤ ‖z‖).map fun z => ‖z‖).prod) :
     ((h.roots.filter fun ζ => 1 ≤ ‖ζ‖).map fun ζ => ‖ζ‖).prod ≤
       ((f.roots.filter fun z => 1 ≤ ‖z‖).map fun z => ‖z‖).prod := by
-  rw [eq_schmeisserComposition_of_natDegree_le_of_coeff hh_degree hh_coeff]
-  exact hsource
+  simpa [rootsRadiusProduct] using
+    rootsRadiusProduct_le_of_schmeisserComposition_of_source
+      (r := 1) (by norm_num) hfg_degree hh_degree hh_coeff hg_roots (by
+        simpa [rootsRadiusProduct] using hsource)
 
 end
 
