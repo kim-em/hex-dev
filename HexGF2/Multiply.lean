@@ -6245,11 +6245,13 @@ def mul (p q : GF2Poly) : GF2Poly :=
 instance : Mul GF2Poly where
   mul := mul
 
+/-- Zero is a left annihilator for packed `GF(2)` polynomial multiplication. -/
 @[simp] theorem zero_mul (p : GF2Poly) : (0 : GF2Poly) * p = 0 := by
   apply ext_words
   change (mul 0 p).words = #[]
   simp [mul, mulWords]
 
+/-- Zero is a right annihilator for packed `GF(2)` polynomial multiplication. -/
 @[simp] theorem mul_zero (p : GF2Poly) : p * (0 : GF2Poly) = 0 := by
   apply ext_words
   change (mul p 0).words = #[]
@@ -6283,6 +6285,11 @@ theorem coeff_mul (p q : GF2Poly) (n : Nat) :
   change (ofWords (mulWords p.words q.words)).coeff n =
     coeffWords (mulWords p.words q.words) n
   simp
+
+/-- The unit polynomial is the degree-zero monomial. -/
+theorem one_eq_monomial_zero : (1 : GF2Poly) = monomial 0 := by
+  change one = monomial 0
+  simp [one, monomial]
 
 private theorem replicate_two_set_zero_one (lo hi : UInt64) :
     ((Array.replicate 2 (0 : UInt64)).set 0 lo (by simp)).set 1 hi (by simp) =
@@ -6766,6 +6773,24 @@ theorem monomial_mul (k : Nat) (q : GF2Poly) :
     · have hsource_le : q.words.size ≤ source / 64 := Nat.le_of_not_gt hsource
       rw [coeffWords_monomial_mulWords_source_oob q.words hsource_le]
       exact (coeff_shiftLeft_add_source_oob q hsource_le).symm
+
+/-- Multiplication by `x^0` leaves a packed `GF(2)` polynomial unchanged. -/
+@[simp] theorem mulXk_zero (p : GF2Poly) :
+    p.mulXk 0 = p := by
+  apply ext_coeff
+  intro n
+  rw [coeff_mulXk, coeff_shiftLeft]
+  simp [coeff]
+
+/-- One is a left identity for packed `GF(2)` polynomial multiplication. -/
+@[simp] theorem one_mul (p : GF2Poly) :
+    (1 : GF2Poly) * p = p := by
+  rw [one_eq_monomial_zero, monomial_mul, mulXk_zero]
+
+/-- One is a right identity for packed `GF(2)` polynomial multiplication. -/
+@[simp] theorem mul_one (p : GF2Poly) :
+    p * (1 : GF2Poly) = p := by
+  rw [one_eq_monomial_zero, mul_monomial, mulXk_zero]
 
 /-- Expanding a quotient update by an added monomial gives the product update
 used by long division. -/
