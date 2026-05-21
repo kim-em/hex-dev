@@ -325,6 +325,15 @@ def graceWalshSzegoZeroControlAtDegree (n : ℕ) : Prop :=
       rootsInClosedUnitDisk g →
         schmeisserCompositionZeroControl n f g
 
+theorem graceWalshSzegoZeroControlAtDegree_zero :
+    graceWalshSzegoZeroControlAtDegree 0 := by
+  intro f g _hfg_degree _hg_roots r _hr
+  rw [schmeisserComposition_zero]
+  have hroots : (C (f.coeff 0 * g.coeff 0) : ℂ[X]).roots = 0 :=
+    roots_C (f.coeff 0 * g.coeff 0)
+  rw [hroots]
+  simp [rootsOutsideRadiusCount]
+
 theorem exteriorRootCountDominatedFrom_of_schmeisserCompositionZeroControl
     {n : ℕ} {f g : ℂ[X]} {r : ℝ}
     (hr : 0 < r)
