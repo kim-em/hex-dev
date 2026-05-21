@@ -5730,6 +5730,61 @@ def monicisedCoreLiftData
   henselLiftData (MonicisedCoreData.ofCore core).monicCore
     (precisionForCoeffBound B primeData.p) primeData
 
+/--
+Optional prime-choice data for the actual monic substrate sent to Hensel lifting.
+
+The public factoring pipeline still chooses prime data from the original core.
+This adjacent surface is for proof consumers that need Berlekamp-form modular
+factor data for `(MonicisedCoreData.ofCore core).monicCore`, the polynomial
+that `monicisedCoreLiftData` passes to `henselLiftData`.
+-/
+def monicisedCorePrimeData? (core : ZPoly) : Option PrimeChoiceData :=
+  choosePrimeData? (MonicisedCoreData.ofCore core).monicCore
+
+/--
+Total prime-choice data for the actual monic substrate sent to Hensel lifting.
+This keeps the executable public factoring API unchanged while exposing a
+correctly aligned internal data source for downstream correctness proofs.
+-/
+def monicisedCorePrimeData (core : ZPoly) : PrimeChoiceData :=
+  choosePrimeData (MonicisedCoreData.ofCore core).monicCore
+
+/--
+Lift data for the monicised core using prime-choice data computed from that
+same monicised core.
+-/
+def monicisedCoreLiftDataWithMonicPrime (core : ZPoly) (B : Nat) : LiftData :=
+  monicisedCoreLiftData core B (monicisedCorePrimeData core)
+
+theorem monicisedCorePrimeData?_prime
+    (core : ZPoly) (data : PrimeChoiceData)
+    (hdata : monicisedCorePrimeData? core = some data) :
+    Nat.Prime data.p := by
+  exact choosePrimeData?_prime (MonicisedCoreData.ofCore core).monicCore data hdata
+
+theorem monicisedCorePrimeData?_isGoodPrime
+    (core : ZPoly) (data : PrimeChoiceData)
+    (hdata : monicisedCorePrimeData? core = some data) :
+    @isGoodPrime (MonicisedCoreData.ofCore core).monicCore data.p data.bounds = true := by
+  exact choosePrimeData?_isGoodPrime (MonicisedCoreData.ofCore core).monicCore data hdata
+
+theorem monicisedCorePrimeData?_factorsModP_berlekamp_form
+    (core : ZPoly) (data : PrimeChoiceData)
+    (hdata : monicisedCorePrimeData? core = some data) :
+    factorsModPBerlekampForm (MonicisedCoreData.ofCore core).monicCore data := by
+  obtain ⟨hzero, heq⟩ :=
+    choosePrimeData?_factorsModP_berlekamp_form
+      (MonicisedCoreData.ofCore core).monicCore data hdata
+  exact ⟨monicisedCorePrimeData?_prime core data hdata, hzero, heq⟩
+
+theorem monicisedCoreLiftDataWithMonicPrime_eq
+    (core : ZPoly) (B : Nat) :
+    monicisedCoreLiftDataWithMonicPrime core B =
+      henselLiftData (MonicisedCoreData.ofCore core).monicCore
+        (precisionForCoeffBound B (monicisedCorePrimeData core).p)
+        (monicisedCorePrimeData core) := by
+  rfl
+
 def exhaustiveCoreFactorsWithBound
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Array ZPoly :=
   if B = 0 then
