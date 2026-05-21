@@ -2367,6 +2367,113 @@ private theorem rowCombination_bareiss_coeff_update
   rw [h_rhs]
   repeat rw [Matrix.mulVec_getElem]
   exact dot_bareiss_row_update_right x y ((Matrix.transpose M).row jf) c d
+
+private noncomputable def bareissGramRowInvariantCoeff
+    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    (hinv : BareissGramRowInvariant b state) (i : Fin n)
+    (hi : state.step ≤ i.val) : Vector Int n :=
+  Classical.choose (hinv.mem_span i hi)
+
+private theorem bareissGramRowInvariantCoeff_support
+    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    (hinv : BareissGramRowInvariant b state) (i : Fin n)
+    (hi : state.step ≤ i.val) :
+    ∀ k : Fin n, i.val < k.val →
+      (bareissGramRowInvariantCoeff hinv i hi)[k] = 0 :=
+  (Classical.choose_spec (hinv.mem_span i hi)).1
+
+private theorem bareissGramRowInvariantCoeff_row
+    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    (hinv : BareissGramRowInvariant b state) (i : Fin n)
+    (hi : state.step ≤ i.val) :
+    hinv.rowVec i =
+      Matrix.rowCombination b (bareissGramRowInvariantCoeff hinv i hi) :=
+  (Classical.choose_spec (hinv.mem_span i hi)).2
+
+private noncomputable def bareissGramRowInvariantStepCoeff
+    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    (hinv : BareissGramRowInvariant b state)
+    (hnext : state.step + 1 < n) (i : Fin n) (hi : state.step + 1 ≤ i.val) :
+    Vector Int n :=
+  let k : Fin n := ⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hnext⟩
+  let h_i : state.step ≤ i.val := Nat.le_trans (Nat.le_succ state.step) hi
+  let h_k : state.step ≤ k.val := Nat.le_refl _
+  Vector.ofFn fun a : Fin n =>
+    Matrix.exactDiv
+      (state.matrix[k][k] * (bareissGramRowInvariantCoeff hinv i h_i)[a] -
+        state.matrix[i][k] * (bareissGramRowInvariantCoeff hinv k h_k)[a])
+      state.prevPivot
+
+private theorem bareissGramRowInvariantStepCoeff_support
+    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    (hinv : BareissGramRowInvariant b state)
+    (hnext : state.step + 1 < n) (i : Fin n) (hi : state.step + 1 ≤ i.val) :
+    ∀ a : Fin n, i.val < a.val →
+      (bareissGramRowInvariantStepCoeff hinv hnext i hi)[a] = 0 := by
+  intro a hia
+  dsimp [bareissGramRowInvariantStepCoeff]
+  rw [Vector.getElem_ofFn]
+  let k : Fin n := ⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hnext⟩
+  have hci :
+      (bareissGramRowInvariantCoeff hinv i
+        (Nat.le_trans (Nat.le_succ state.step) hi))[a] = 0 :=
+    bareissGramRowInvariantCoeff_support hinv i
+      (Nat.le_trans (Nat.le_succ state.step) hi) a hia
+  have hk_lt_i : k.val < i.val := by
+    dsimp [k]
+    omega
+  have hka : k.val < a.val := Nat.lt_trans hk_lt_i hia
+  have hck :
+      (bareissGramRowInvariantCoeff hinv k (Nat.le_refl _))[a] = 0 :=
+    bareissGramRowInvariantCoeff_support hinv k (Nat.le_refl _) a hka
+  have hciNat :
+      (bareissGramRowInvariantCoeff hinv i
+        (Nat.le_trans (Nat.le_succ state.step) hi))[a.val] = 0 := by
+    simpa using hci
+  have hckNat :
+      (bareissGramRowInvariantCoeff hinv
+        (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hnext⟩ : Fin n)
+        (Nat.le_refl _))[a.val] = 0 := by
+    simpa [k] using hck
+  simp [hciNat, hckNat, Matrix.exactDiv]
+
+/-- One regular no-pivot Bareiss step preserves the Gram row-span invariant,
+provided the later loop proof supplies the exact-division entry relation for
+the fraction-free updated row combinations. -/
+private noncomputable def bareissGramRowInvariant_regular_step
+    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    (hnext : state.step + 1 < n)
+    (_hp : state.matrix[state.step][state.step] ≠ 0)
+    (hinv : BareissGramRowInvariant b state)
+    (hentry :
+      ∀ i j : Fin n, (hi : state.step + 1 ≤ i.val) →
+        (Matrix.stepMatrix state.matrix state.step
+            state.matrix[state.step][state.step] state.prevPivot)[i][j] =
+          Matrix.dot
+            (Matrix.rowCombination b
+              (bareissGramRowInvariantStepCoeff hinv hnext i hi))
+            (b.row j)) :
+    BareissGramRowInvariant b
+      { step := state.step + 1
+        matrix := Matrix.stepMatrix state.matrix state.step
+          state.matrix[state.step][state.step] state.prevPivot
+        prevPivot := state.matrix[state.step][state.step]
+        rowSwaps := state.rowSwaps
+        singularStep := none } := by
+  refine
+    { rowVec := fun i =>
+        if hi : state.step + 1 ≤ i.val then
+          Matrix.rowCombination b (bareissGramRowInvariantStepCoeff hinv hnext i hi)
+        else
+          hinv.rowVec i
+      mem_span := ?_
+      entry_eq_dot := ?_ }
+  · intro i hi
+    refine ⟨bareissGramRowInvariantStepCoeff hinv hnext i hi, ?_, ?_⟩
+    · exact bareissGramRowInvariantStepCoeff_support hinv hnext i hi
+    · simp [hi]
+  · intro i j hi
+    simpa [hi] using hentry i j hi
 /-- If the array loop's `state.step` is past the matrix extent, one outer
 iteration returns the input state unchanged. -/
 private theorem scaledCoeffArrayLoop_done (fuel : Nat)
