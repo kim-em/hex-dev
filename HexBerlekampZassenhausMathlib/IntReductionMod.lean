@@ -397,6 +397,8 @@ private theorem gcd_monicModularImage_derivative_eq_one
       toMathlibPolynomial_one]
   exact hmath_gcd
 
+set_option maxHeartbeats 4000000
+
 /--
 Small-mod singleton irreducibility composed without the explicit
 `hirr_fModP` hypothesis.
@@ -443,8 +445,10 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
     · exact absurd h (Nat.ne_of_lt hmlt)
   haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
   letI : Hex.ZMod64.PrimeModulus primeData.p := Hex.ZMod64.primeModulusOfPrime hprime_hex
-  obtain ⟨hzero, hfield, hfactors_eq⟩ :=
+  obtain ⟨hzero, hfactors_eq⟩ :=
     Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hselected
+  let hfield := @Hex.zmod64FieldOfPrime primeData.p primeData.bounds
+    (Hex.ZMod64.primeModulusOfPrime hprime_hex)
   letI := hfield
   -- Translate factorsModP.size ≤ 1 into bfact.factors.length ≤ 1.
   have hfactors_len_le :
@@ -543,6 +547,8 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
     (p := primeData.p) (core := core)
     hprim hlc_map_ne hirr_fModP
 
+set_option maxHeartbeats 4000000
+
 /--
 Small-mod singleton irreducibility for a selected good-prime record, deriving
 the Berlekamp square-free precondition for the monic modular image from the
@@ -563,7 +569,7 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squ
     Hex.choosePrimeData?_isGoodPrime core primeData hselected
   have hsquareFree : Hex.squareFreeModP core primeData.p :=
     Hex.isGoodPrime_squareFreeModP core primeData.p hgood
-  obtain ⟨hzero, _hfield, _hfactors_eq⟩ :=
+  obtain ⟨hzero, _hfactors_eq⟩ :=
     Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hselected
   have hprime_hex : Hex.Nat.Prime primeData.p :=
     Hex.choosePrimeData?_prime core primeData hselected
@@ -2369,7 +2375,8 @@ theorem reassemblyExpansionComplete_singleton_of_irreducible_of_pos_lc
     have hq_eq : q = core := by simpa using hq
     exact hq_eq ▸ hdeg
   have hlen' :
-      ([k] : List Nat).length = (#[core] : Array Hex.ZPoly).size := by decide
+      ([k] : List Nat).length = (#[core] : Array Hex.ZPoly).size := by
+    simp
   -- No-tail-divisibility for the singleton split — discharged by the generic
   -- `factorPower_cover_not_dvd_tail_of_irreducible_squarefree` helper (#4807).
   have hnot_dvd_tail :=
@@ -2633,9 +2640,8 @@ theorem liftedFactorSubsetPartition_outerBound_of_choosePrimeData
     (f : Hex.ZPoly) (hf : f ≠ 0) :
     let core := (Hex.normalizeForFactor f).squareFreeCore
     let primeData := Hex.choosePrimeData core
-    let B := Hex.precisionForCoeffBound
-      (Hex.ZPoly.defaultFactorCoeffBound f) primeData.p
-    let d := Hex.henselLiftData core B primeData
+    let B := Hex.ZPoly.defaultFactorCoeffBound f
+    let d := Hex.monicisedCoreLiftData core B primeData
     LiftedFactorSubsetPartition core d Finset.univ core :=
   liftedFactorSubsetPartition_of_choosePrimeData _ _
     (IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree f hf)
@@ -3066,7 +3072,8 @@ theorem factor_slow_quadratic_branch_entry_irreducible_of_choosePrimeData
   rw [hentry_eq]
   exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hraw_irr
 
-set_option maxHeartbeats 4000000 in
+set_option maxHeartbeats 8000000
+
 /-- Abstract-bound variant of
 `factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux`: the
 concrete inner-form Mignotte precision on the squarefree core
@@ -3126,9 +3133,9 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
   have hform : Hex.factorsModPBerlekampForm
       (Hex.normalizeForFactor f).squareFreeCore
       (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore) := by
-    obtain ⟨hzero, hfield, heq⟩ :=
+    obtain ⟨hzero, heq⟩ :=
       Hex.choosePrimeData?_factorsModP_berlekamp_form _ _ hchoose
-    exact ⟨hp_prime, hzero, hfield, heq⟩
+    exact ⟨hp_prime, hzero, heq⟩
   have hgood :
       letI := (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).bounds
       Hex.isGoodPrime (Hex.normalizeForFactor f).squareFreeCore
@@ -3175,25 +3182,69 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
     factorsModP_coprime_of_factorsModPBerlekampForm _ _ hform hgood
   have hnonempty :=
     factorsModP_ne_nil_of_factorsModPBerlekampForm _ _ hform
-  -- Lifted-factor monicness / natDegree positivity / injectivity at the
-  -- outer-bound `d = henselLiftData core B primeData`.
-  have hd_liftedFactor_monic := fun i =>
+  have hmonicised_eq :
+      Hex.monicisedCoreLiftData (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.defaultFactorCoeffBound f)
+          (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore) =
+        Hex.henselLiftData (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.precisionForCoeffBound
+            (Hex.ZPoly.defaultFactorCoeffBound f)
+            (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p)
+          (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore) := by
+    unfold Hex.monicisedCoreLiftData
+    rw [Hex.MonicisedCoreData.monicCore_eq_core_of_leadingCoeff_eq_one _ hcore_monic]
+  -- Lifted-factor monicness / natDegree positivity / injectivity transported
+  -- through the monicised lift. Under the current `hcore_monic` residual,
+  -- the monicising transform is the identity.
+  have hd_liftedFactor_monic_old := fun i =>
     henselLiftData_liftedFactor_monic_of_choosePrimeData
       (Hex.normalizeForFactor f).squareFreeCore _ _
       hcore_monic hp_prime hp hB_pos
       hfactors_monic hproduct_mod_p hcoprime hnonempty i
   have hcore_deg_pos : 0 < (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 :=
     Nat.pos_of_ne_zero hdeg
-  have hd_liftedFactor_natDegree_pos :=
+  have hd_liftedFactor_natDegree_pos_old :=
     henselLiftData_liftedFactor_natDegree_pos_of_factorsModPBerlekampForm
       (Hex.normalizeForFactor f).squareFreeCore _ _
       hcore_monic hp_prime hp hB_pos
       hfactors_monic hproduct_mod_p hcoprime hnonempty hform hgood hcore_deg_pos
-  have hd_liftedFactor_inj :=
+  have hd_liftedFactor_inj_old :=
     henselLiftData_liftedFactor_injective_of_factorsModPBerlekampForm
       (Hex.normalizeForFactor f).squareFreeCore _ _
       hcore_monic hp_prime hp hB_pos
       hfactors_monic hproduct_mod_p hcoprime hnonempty hform hgood
+  have hd_liftedFactor_monic :
+      ∀ i : LiftedFactorIndex
+        (Hex.monicisedCoreLiftData (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.defaultFactorCoeffBound f)
+          (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)),
+        Hex.DensePoly.Monic
+          (liftedFactor
+            (Hex.monicisedCoreLiftData (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.ZPoly.defaultFactorCoeffBound f)
+              (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)) i) := by
+    rw [hmonicised_eq]
+    exact hd_liftedFactor_monic_old
+  have hd_liftedFactor_natDegree_pos :
+      ∀ i : LiftedFactorIndex
+        (Hex.monicisedCoreLiftData (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.defaultFactorCoeffBound f)
+          (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)),
+        0 < (HexPolyZMathlib.toPolynomial
+          (liftedFactor
+            (Hex.monicisedCoreLiftData (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.ZPoly.defaultFactorCoeffBound f)
+              (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)) i)).natDegree := by
+    rw [hmonicised_eq]
+    exact hd_liftedFactor_natDegree_pos_old
+  have hd_liftedFactor_inj :
+      Function.Injective
+        (liftedFactor
+          (Hex.monicisedCoreLiftData (Hex.normalizeForFactor f).squareFreeCore
+            (Hex.ZPoly.defaultFactorCoeffBound f)
+            (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore))) := by
+    rw [hmonicised_eq]
+    exact hd_liftedFactor_inj_old
   -- Discharge `hcore_record` from positive squareFreeCore degree.
   have hcore_record : Hex.shouldRecordPolynomialFactor
       (Hex.normalizeForFactor f).squareFreeCore = true := by
@@ -3385,7 +3436,8 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
       (Hex.normalizeForFactor f).squareFreeCore hcore_ne)
     hprecision
 
-set_option maxHeartbeats 4000000 in
+set_option maxHeartbeats 8000000
+
 /-- Abstract-bound variant of
 `exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData`:
 the concrete `2 * defaultFactorCoeffBound squareFreeCore < d.p ^ d.k`
@@ -3446,9 +3498,9 @@ theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeDat
   have hform : Hex.factorsModPBerlekampForm
       (Hex.normalizeForFactor f).squareFreeCore
       (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore) := by
-    obtain ⟨hzero, hfield, heq⟩ :=
+    obtain ⟨hzero, heq⟩ :=
       Hex.choosePrimeData?_factorsModP_berlekamp_form _ _ hchoose
-    exact ⟨hp_prime, hzero, hfield, heq⟩
+    exact ⟨hp_prime, hzero, heq⟩
   have hgood :
       letI := (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).bounds
       Hex.isGoodPrime (Hex.normalizeForFactor f).squareFreeCore
@@ -3489,23 +3541,66 @@ theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeDat
     factorsModP_coprime_of_factorsModPBerlekampForm _ _ hform hgood
   have hnonempty :=
     factorsModP_ne_nil_of_factorsModPBerlekampForm _ _ hform
-  have hd_liftedFactor_monic := fun i =>
+  have hmonicised_eq :
+      Hex.monicisedCoreLiftData (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.defaultFactorCoeffBound f)
+          (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore) =
+        Hex.henselLiftData (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.precisionForCoeffBound
+            (Hex.ZPoly.defaultFactorCoeffBound f)
+            (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore).p)
+          (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore) := by
+    unfold Hex.monicisedCoreLiftData
+    rw [Hex.MonicisedCoreData.monicCore_eq_core_of_leadingCoeff_eq_one _ hcore_monic]
+  have hd_liftedFactor_monic_old := fun i =>
     henselLiftData_liftedFactor_monic_of_choosePrimeData
       (Hex.normalizeForFactor f).squareFreeCore _ _
       hcore_monic hp_prime hp hB_pos
       hfactors_monic hproduct_mod_p hcoprime hnonempty i
   have hcore_deg_pos : 0 < (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 :=
     Nat.pos_of_ne_zero hdeg
-  have hd_liftedFactor_natDegree_pos :=
+  have hd_liftedFactor_natDegree_pos_old :=
     henselLiftData_liftedFactor_natDegree_pos_of_factorsModPBerlekampForm
       (Hex.normalizeForFactor f).squareFreeCore _ _
       hcore_monic hp_prime hp hB_pos
       hfactors_monic hproduct_mod_p hcoprime hnonempty hform hgood hcore_deg_pos
-  have hd_liftedFactor_inj :=
+  have hd_liftedFactor_inj_old :=
     henselLiftData_liftedFactor_injective_of_factorsModPBerlekampForm
       (Hex.normalizeForFactor f).squareFreeCore _ _
       hcore_monic hp_prime hp hB_pos
       hfactors_monic hproduct_mod_p hcoprime hnonempty hform hgood
+  have hd_liftedFactor_monic :
+      ∀ i : LiftedFactorIndex
+        (Hex.monicisedCoreLiftData (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.defaultFactorCoeffBound f)
+          (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)),
+        Hex.DensePoly.Monic
+          (liftedFactor
+            (Hex.monicisedCoreLiftData (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.ZPoly.defaultFactorCoeffBound f)
+              (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)) i) := by
+    rw [hmonicised_eq]
+    exact hd_liftedFactor_monic_old
+  have hd_liftedFactor_natDegree_pos :
+      ∀ i : LiftedFactorIndex
+        (Hex.monicisedCoreLiftData (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.defaultFactorCoeffBound f)
+          (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)),
+        0 < (HexPolyZMathlib.toPolynomial
+          (liftedFactor
+            (Hex.monicisedCoreLiftData (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.ZPoly.defaultFactorCoeffBound f)
+              (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)) i)).natDegree := by
+    rw [hmonicised_eq]
+    exact hd_liftedFactor_natDegree_pos_old
+  have hd_liftedFactor_inj :
+      Function.Injective
+        (liftedFactor
+          (Hex.monicisedCoreLiftData (Hex.normalizeForFactor f).squareFreeCore
+            (Hex.ZPoly.defaultFactorCoeffBound f)
+            (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore))) := by
+    rw [hmonicised_eq]
+    exact hd_liftedFactor_inj_old
   have hcore_record : Hex.shouldRecordPolynomialFactor
       (Hex.normalizeForFactor f).squareFreeCore = true := by
     have hne_one : (Hex.normalizeForFactor f).squareFreeCore ≠ 1 := by
@@ -3641,6 +3736,104 @@ theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeDat
     hcore_lc_le
     (defaultFactorCoeffBound_valid (Hex.normalizeForFactor f).squareFreeCore hcore_ne)
     hprecision
+
+/--
+Transport package for the monicised-core exhaustive path.
+
+This is the consumer-facing bundle for the Option-B Gap-1 route: the Hensel
+lift is built from `(Hex.MonicisedCoreData.ofCore core).monicCore`, while the
+factor correspondence, scaled recovery theorem, and exhaustive-wrapper
+membership statement remain phrased over the original primitive
+positive-leading `core`.
+-/
+structure MonicisedCoreTransportPackage
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (d : Hex.LiftData) : Prop where
+  lift_eq : d = Hex.monicisedCoreLiftData core B primeData
+  core_ne : core ≠ 0
+  core_primitive : Hex.ZPoly.Primitive core
+  core_lc_pos : 0 < Hex.DensePoly.leadingCoeff core
+  monicCore_monic :
+    Hex.DensePoly.Monic (Hex.MonicisedCoreData.ofCore core).monicCore
+  monicCore_nonzero :
+    (Hex.MonicisedCoreData.ofCore core).monicCore ≠ 0
+  monicCore_degree_eq :
+    (Hex.MonicisedCoreData.ofCore core).monicCore.degree?.getD 0 =
+      core.degree?.getD 0
+  correspondence :
+    HenselSubsetCorrespondenceHypotheses core B primeData d True True
+  partition :
+    LiftedFactorSubsetPartition core d Finset.univ core
+  scaled_recovery_of_bound :
+    ∀ {factor : Hex.ZPoly} {S : LiftedFactorSubset d} {B' : Nat},
+      (∀ i, (factor.coeff i).natAbs ≤ B') →
+      Hex.ZPoly.content factor = 1 →
+      Hex.normalizeFactorSign factor = factor →
+      RepresentsIntegerFactorAtLift core d factor S →
+      2 * B' < d.p ^ d.k →
+      scaledRecombinationCandidate core d S = factor
+  exhaustive_mem_of_scaled_search :
+    ∀ {factor : Hex.ZPoly} {factors : List Hex.ZPoly},
+      B ≠ 0 →
+      Hex.scaledRecombinationSearchMod (Hex.DensePoly.leadingCoeff core)
+          core (d.p ^ d.k) d.liftedFactors.toList = some factors →
+      factor ∈ factors →
+      factor ∈ (Hex.exhaustiveCoreFactorsWithBound core B primeData).toList
+
+/--
+Specialised monicised-core transport package for the normalized square-free
+core used by the exhaustive branch of `factorWithBound`.
+-/
+theorem monicisedCoreTransportPackage_of_normalizeForFactor_squareFreeCore
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
+    (hdegree : 0 < (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0) :
+    let core := (Hex.normalizeForFactor f).squareFreeCore
+    let primeData := Hex.choosePrimeData core
+    let B := Hex.ZPoly.defaultFactorCoeffBound f
+    let d := Hex.monicisedCoreLiftData core B primeData
+    MonicisedCoreTransportPackage core B primeData d := by
+  intro core primeData B d
+  have hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core := by
+    simpa [core] using Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf_ne
+  have hcore_ne : core ≠ 0 := zpoly_ne_zero_of_pos_lc hcore_lc_pos
+  have hcore_primitive : Hex.ZPoly.Primitive core := by
+    simpa [core] using
+      IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf_ne
+  have hmonicCore_monic :
+      Hex.DensePoly.Monic (Hex.MonicisedCoreData.ofCore core).monicCore :=
+    Hex.MonicisedCoreData.monicCore_monic_of_pos_degree core hcore_lc_pos
+      (by simpa [core] using hdegree)
+  have hmonicCore_degree :
+      (Hex.MonicisedCoreData.ofCore core).monicCore.degree?.getD 0 =
+        core.degree?.getD 0 := by
+    simpa [Hex.MonicisedCoreData.ofCore_degree] using
+      Hex.MonicisedCoreData.monicCore_degree_eq_of_pos_degree core hcore_lc_pos
+        (by simpa [core] using hdegree)
+  have hsqfree :
+      Squarefree (HexPolyZMathlib.toPolynomial core) := by
+    simpa [core] using
+      IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree f hf_ne
+  refine
+    { lift_eq := rfl
+      core_ne := hcore_ne
+      core_primitive := hcore_primitive
+      core_lc_pos := hcore_lc_pos
+      monicCore_monic := hmonicCore_monic
+      monicCore_nonzero := zpoly_ne_zero_of_monic hmonicCore_monic
+      monicCore_degree_eq := hmonicCore_degree
+      correspondence := ?_
+      partition := ?_
+      scaled_recovery_of_bound := ?_
+      exhaustive_mem_of_scaled_search := ?_ }
+  · exact henselSubsetCorrespondenceHypotheses_of_choosePrimeData core B
+  · exact liftedFactorSubsetPartition_of_choosePrimeData core B hsqfree
+  · intro factor S B' hvalid hfactor_prim hfactor_norm hrep hprecision
+    exact scaledRecombinationCandidate_eq_factor_of_henselSubsetCorrespondence_of_bound
+      (henselSubsetCorrespondenceHypotheses_of_choosePrimeData core B)
+      B' hvalid hcore_ne hfactor_prim hfactor_norm hrep hprecision
+  · intro factor factors hB_ne hsearch hmem
+    exact exhaustiveCoreFactorsWithBound_mem_of_scaledRecombinationSearchMod_some
+      hB_ne rfl hsearch hmem
 
 /-- Divisibility propagation through `List.foldl (· * ·)` on `Hex.ZPoly`: if
 `x` divides the accumulator at any point, it divides the final foldl. Used by
