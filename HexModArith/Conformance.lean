@@ -68,19 +68,13 @@ private def wideA : ZMod64 LargeMod := ofNat LargeMod (2 ^ 63 + 1)
 private def wideB : ZMod64 LargeMod := ofNat LargeMod (2 ^ 63 - 17)
 
 private def barrettCtx2 : Hex.BarrettCtx 2 :=
-  { modulus := UInt64.ofNat 2
-    modulus_eq := by decide
-    toUInt64Ctx := _root_.BarrettCtx.mk (UInt64.ofNat 2) (by decide) (by decide) }
+  Hex.BarrettCtx.ofModulus (p := 2) (by decide) (by decide)
 
 private def barrettCtx7 : Hex.BarrettCtx 7 :=
-  { modulus := UInt64.ofNat 7
-    modulus_eq := by decide
-    toUInt64Ctx := _root_.BarrettCtx.mk (UInt64.ofNat 7) (by decide) (by decide) }
+  Hex.BarrettCtx.ofModulus (p := 7) (by decide) (by decide)
 
 private def barrettCtxWide : Hex.BarrettCtx BarrettWideMod :=
-  { modulus := UInt64.ofNat BarrettWideMod
-    modulus_eq := by decide
-    toUInt64Ctx := _root_.BarrettCtx.mk (UInt64.ofNat BarrettWideMod) (by decide) (by decide) }
+  Hex.BarrettCtx.ofModulus (p := BarrettWideMod) (by decide) (by decide)
 
 private def montCtx3 : Hex.MontCtx 3 :=
   { modulus := UInt64.ofNat 3
