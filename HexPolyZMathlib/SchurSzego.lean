@@ -284,6 +284,21 @@ theorem rootsOutsideRadiusCount_zero (r : ℝ) :
 theorem rootsOutsideRadiusCount_eq_filter_card (r : ℝ) (s : Multiset ℂ) :
     rootsOutsideRadiusCount r s = (s.filter fun z => r ≤ ‖z‖).card := rfl
 
+/--
+The number of roots strictly outside an open radius threshold, counted with
+multiplicity through the `Polynomial.roots` multiset.
+-/
+def rootsStrictlyOutsideRadiusCount (r : ℝ) (s : Multiset ℂ) : ℕ :=
+  (s.filter fun z => r < ‖z‖).card
+
+@[simp]
+theorem rootsStrictlyOutsideRadiusCount_zero (r : ℝ) :
+    rootsStrictlyOutsideRadiusCount r (0 : Multiset ℂ) = 0 := by
+  simp [rootsStrictlyOutsideRadiusCount]
+
+theorem rootsStrictlyOutsideRadiusCount_eq_filter_card (r : ℝ) (s : Multiset ℂ) :
+    rootsStrictlyOutsideRadiusCount r s = (s.filter fun z => r < ‖z‖).card := rfl
+
 /-- All roots of a multiset lie in the closed disk centered at `c` of radius `R`. -/
 def rootsInClosedDisk (c : ℂ) (R : ℝ) (s : Multiset ℂ) : Prop :=
   ∀ z ∈ s, ‖z - c‖ ≤ R
@@ -305,6 +320,14 @@ def exteriorRootCountDominatedFrom (r : ℝ) (s t : Multiset ℂ) : Prop :=
   ∀ ρ : ℝ, r ≤ ρ → rootsOutsideRadiusCount ρ s ≤ rootsOutsideRadiusCount ρ t
 
 /--
+Open-threshold exterior-root-count domination from radius `r` onward. This is
+the natural multiplicity-preserving surface for the open circular-domain
+de Bruijn-Springer source before any closed-radius limiting wrapper is applied.
+-/
+def openExteriorRootCountDominatedFrom (r : ℝ) (s t : Multiset ℂ) : Prop :=
+  ∀ ρ : ℝ, r ≤ ρ → rootsStrictlyOutsideRadiusCount ρ s ≤ rootsStrictlyOutsideRadiusCount ρ t
+
+/--
 Derivative-free zero-control statement for Schmeisser compositions: every
 positive radius has no more exterior roots in the composition than in `f`,
 counted with multiplicity through `Polynomial.roots`.
@@ -313,6 +336,16 @@ def schmeisserCompositionZeroControl (n : ℕ) (f g : ℂ[X]) : Prop :=
   ∀ r : ℝ, 0 < r →
     rootsOutsideRadiusCount r (schmeisserComposition n f g).roots ≤
       rootsOutsideRadiusCount r f.roots
+
+/--
+Open-domain zero-control statement for Schmeisser compositions: every positive
+open radius has no more strictly exterior roots in the composition than in `f`,
+counted with multiplicity through `Polynomial.roots`.
+-/
+def schmeisserCompositionOpenZeroControl (n : ℕ) (f g : ℂ[X]) : Prop :=
+  ∀ r : ℝ, 0 < r →
+    rootsStrictlyOutsideRadiusCount r (schmeisserComposition n f g).roots ≤
+      rootsStrictlyOutsideRadiusCount r f.roots
 
 /--
 Degree-`n` Grace-Walsh-Szego/de Bruijn-Springer zero-control substrate for the
@@ -325,6 +358,18 @@ def graceWalshSzegoZeroControlAtDegree (n : ℕ) : Prop :=
       rootsInClosedUnitDisk g →
         schmeisserCompositionZeroControl n f g
 
+/--
+Open circular-domain Grace-Walsh-Szego/de Bruijn-Springer source substrate for
+the Schmeisser composition. The conclusion-side radius threshold is open, while
+the input roots still lie in the closed unit disk, as in Schmeisser's source
+hypothesis. Root counts use `Polynomial.roots`, preserving multiplicities.
+-/
+def graceWalshSzegoOpenZeroControlAtDegree (n : ℕ) : Prop :=
+  ∀ f g : ℂ[X],
+    f.natDegree ≤ n ∧ g.natDegree ≤ n →
+      rootsInClosedUnitDisk g →
+        schmeisserCompositionOpenZeroControl n f g
+
 theorem graceWalshSzegoZeroControlAtDegree_zero :
     graceWalshSzegoZeroControlAtDegree 0 := by
   intro f g _hfg_degree _hg_roots r _hr
@@ -334,11 +379,29 @@ theorem graceWalshSzegoZeroControlAtDegree_zero :
   rw [hroots]
   simp [rootsOutsideRadiusCount]
 
+theorem graceWalshSzegoOpenZeroControlAtDegree_zero :
+    graceWalshSzegoOpenZeroControlAtDegree 0 := by
+  intro f g _hfg_degree _hg_roots r _hr
+  rw [schmeisserComposition_zero]
+  have hroots : (C (f.coeff 0 * g.coeff 0) : ℂ[X]).roots = 0 :=
+    roots_C (f.coeff 0 * g.coeff 0)
+  rw [hroots]
+  simp [rootsStrictlyOutsideRadiusCount]
+
 theorem exteriorRootCountDominatedFrom_of_schmeisserCompositionZeroControl
     {n : ℕ} {f g : ℂ[X]} {r : ℝ}
     (hr : 0 < r)
     (hzero : schmeisserCompositionZeroControl n f g) :
     exteriorRootCountDominatedFrom r
+      (schmeisserComposition n f g).roots f.roots := by
+  intro ρ hρ
+  exact hzero ρ (lt_of_lt_of_le hr hρ)
+
+theorem openExteriorRootCountDominatedFrom_of_schmeisserCompositionOpenZeroControl
+    {n : ℕ} {f g : ℂ[X]} {r : ℝ}
+    (hr : 0 < r)
+    (hzero : schmeisserCompositionOpenZeroControl n f g) :
+    openExteriorRootCountDominatedFrom r
       (schmeisserComposition n f g).roots f.roots := by
   intro ρ hρ
   exact hzero ρ (lt_of_lt_of_le hr hρ)
@@ -351,6 +414,14 @@ theorem rootsOutsideRadiusCount_le_of_schmeisserCompositionZeroControl
       rootsOutsideRadiusCount r f.roots :=
   hzero r hr
 
+theorem rootsStrictlyOutsideRadiusCount_le_of_schmeisserCompositionOpenZeroControl
+    {n : ℕ} {f g : ℂ[X]} {r : ℝ}
+    (hr : 0 < r)
+    (hzero : schmeisserCompositionOpenZeroControl n f g) :
+    rootsStrictlyOutsideRadiusCount r (schmeisserComposition n f g).roots ≤
+      rootsStrictlyOutsideRadiusCount r f.roots :=
+  hzero r hr
+
 theorem rootsOutsideRadiusCount_le_of_graceWalshSzegoZeroControlAtDegree
     {n : ℕ} {f g : ℂ[X]} {r : ℝ}
     (hsource : graceWalshSzegoZeroControlAtDegree n)
@@ -359,6 +430,16 @@ theorem rootsOutsideRadiusCount_le_of_graceWalshSzegoZeroControlAtDegree
     (hg_roots : rootsInClosedUnitDisk g) :
     rootsOutsideRadiusCount r (schmeisserComposition n f g).roots ≤
       rootsOutsideRadiusCount r f.roots :=
+  hsource f g hfg_degree hg_roots r hr
+
+theorem rootsStrictlyOutsideRadiusCount_le_of_graceWalshSzegoOpenZeroControlAtDegree
+    {n : ℕ} {f g : ℂ[X]} {r : ℝ}
+    (hsource : graceWalshSzegoOpenZeroControlAtDegree n)
+    (hr : 0 < r)
+    (hfg_degree : f.natDegree ≤ n ∧ g.natDegree ≤ n)
+    (hg_roots : rootsInClosedUnitDisk g) :
+    rootsStrictlyOutsideRadiusCount r (schmeisserComposition n f g).roots ≤
+      rootsStrictlyOutsideRadiusCount r f.roots :=
   hsource f g hfg_degree hg_roots r hr
 
 theorem roots_count_radius_le_of_schmeisserComposition
@@ -373,12 +454,32 @@ theorem roots_count_radius_le_of_schmeisserComposition
     rootsOutsideRadiusCount_le_of_graceWalshSzegoZeroControlAtDegree
       hsource hr hfg_degree ((rootsInClosedUnitDisk_iff g).2 hg_roots)
 
+theorem roots_strictly_count_radius_le_of_schmeisserComposition
+    {n : ℕ} {f g : ℂ[X]} {r : ℝ}
+    (hsource : graceWalshSzegoOpenZeroControlAtDegree n)
+    (hr : 0 < r)
+    (hfg_degree : f.natDegree ≤ n ∧ g.natDegree ≤ n)
+    (hg_roots : ∀ z ∈ g.roots, ‖z‖ ≤ 1) :
+    ((schmeisserComposition n f g).roots.filter fun ζ => r < ‖ζ‖).card ≤
+      ((f.roots.filter fun z => r < ‖z‖).card) := by
+  simpa [rootsStrictlyOutsideRadiusCount] using
+    rootsStrictlyOutsideRadiusCount_le_of_graceWalshSzegoOpenZeroControlAtDegree
+      hsource hr hfg_degree ((rootsInClosedUnitDisk_iff g).2 hg_roots)
+
 theorem schmeisserCompositionZeroControl_of_graceWalshSzegoZeroControlAtDegree
     {n : ℕ} {f g : ℂ[X]}
     (hsource : graceWalshSzegoZeroControlAtDegree n)
     (hfg_degree : f.natDegree ≤ n ∧ g.natDegree ≤ n)
     (hg_roots : rootsInClosedUnitDisk g) :
     schmeisserCompositionZeroControl n f g :=
+  hsource f g hfg_degree hg_roots
+
+theorem schmeisserCompositionOpenZeroControl_of_graceWalshSzegoOpenZeroControlAtDegree
+    {n : ℕ} {f g : ℂ[X]}
+    (hsource : graceWalshSzegoOpenZeroControlAtDegree n)
+    (hfg_degree : f.natDegree ≤ n ∧ g.natDegree ≤ n)
+    (hg_roots : rootsInClosedUnitDisk g) :
+    schmeisserCompositionOpenZeroControl n f g :=
   hsource f g hfg_degree hg_roots
 
 private theorem multiset_prod_le_prod_of_forall_count_ge_le
