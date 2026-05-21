@@ -1810,6 +1810,66 @@ structure HenselSubsetLiftHypotheses
           RepresentsIntegerFactorModP primeData factor S
 
 /--
+Explicit descent-only package for the lifted Hensel side.
+
+This gives the reverse transport obligation a name independent of the full
+`HenselSubsetCorrespondenceHypotheses` API.  Callers still have to prove the
+descent field; the point of the package is that they can combine that proof
+with forward Hensel transport without first constructing the lifted subset
+correspondence.
+-/
+structure HenselLiftDescentHypotheses
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (d : Hex.LiftData) (successfulLift coprimeLift : Prop) : Prop where
+  lift_eq : d = Hex.monicisedCoreLiftData core B primeData
+  factor_count_eq : d.liftedFactors.size = primeData.factorsModP.size
+  successful_lift : successfulLift
+  coprime_lift : coprimeLift
+  represents_modP_of_lifted :
+    ∀ {factor : Hex.ZPoly} {T : LiftedFactorSubset d},
+      Irreducible (HexPolyZMathlib.toPolynomial factor) →
+      factor ∣ core →
+      RepresentsIntegerFactorAtLift core d factor T →
+      ∃ S : ModPFactorSubset primeData,
+        T = liftedSubsetOfModPSubset primeData d factor_count_eq S ∧
+          RepresentsIntegerFactorModP primeData factor S
+
+/--
+Non-circular assembly of `HenselSubsetLiftHypotheses` from explicit forward
+Hensel transport and lifted-side descent.
+-/
+theorem henselSubsetLiftHypotheses_of_forwardTransport_descent
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData}
+    {admissiblePrime squareFreeReduction successfulLift coprimeLift : Prop}
+    (hadmissible : admissiblePrime)
+    (hsquareFree : squareFreeReduction)
+    (hdescent :
+      HenselLiftDescentHypotheses core B primeData d
+        successfulLift coprimeLift)
+    (hlifted_of_modP :
+      ∀ {factor : Hex.ZPoly} {S : ModPFactorSubset primeData},
+        Irreducible (HexPolyZMathlib.toPolynomial factor) →
+        factor ∣ core →
+        RepresentsIntegerFactorModP primeData factor S →
+        RepresentsIntegerFactorAtLift core d factor
+          (liftedSubsetOfModPSubset primeData d hdescent.factor_count_eq S)) :
+    HenselSubsetLiftHypotheses core B primeData d
+      admissiblePrime squareFreeReduction successfulLift coprimeLift where
+  lift_eq := hdescent.lift_eq
+  factor_count_eq := hdescent.factor_count_eq
+  admissible_prime := hadmissible
+  square_free_reduction := hsquareFree
+  successful_lift := hdescent.successful_lift
+  coprime_lift := hdescent.coprime_lift
+  represents_lifted_of_modP := by
+    intro factor S hirr hdvd hrep
+    exact hlifted_of_modP hirr hdvd hrep
+  represents_modP_of_lifted := by
+    intro factor T hirr hdvd hrep
+    exact hdescent.represents_modP_of_lifted hirr hdvd hrep
+
+/--
 The mod-`p` subset selected for an irreducible integer factor has a unique
 lifted representative through the Hensel transport package.
 -/
@@ -16609,6 +16669,40 @@ theorem modPSubsetPartitionHypotheses_of_choosePrimeData
     rcases existsUnique_modPFactorSubset_of_choosePrimeData core hirr hdvd hsome with
       ⟨_, _, huniq⟩
     exact (huniq S hS).trans (huniq T hT).symm
+
+/--
+Non-circular `choosePrimeData`/`monicisedCoreLiftData` constructor for
+`HenselSubsetLiftHypotheses`.
+
+Unlike `henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData`, this
+surface consumes the lifted-side descent package directly instead of
+requiring a full `HenselSubsetCorrespondenceHypotheses` value.
+-/
+theorem henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData_descent
+    (core : Hex.ZPoly) (B : Nat)
+    (hdescent :
+      HenselLiftDescentHypotheses core B (Hex.choosePrimeData core)
+        (Hex.monicisedCoreLiftData core B (Hex.choosePrimeData core)) True True)
+    (hlifted_of_modP :
+      ∀ {factor : Hex.ZPoly} {S : ModPFactorSubset (Hex.choosePrimeData core)},
+        Irreducible (HexPolyZMathlib.toPolynomial factor) →
+        factor ∣ core →
+        RepresentsIntegerFactorModP (Hex.choosePrimeData core) factor S →
+        RepresentsIntegerFactorAtLift core
+          (Hex.monicisedCoreLiftData core B (Hex.choosePrimeData core)) factor
+          (liftedSubsetOfModPSubset (Hex.choosePrimeData core)
+            (Hex.monicisedCoreLiftData core B (Hex.choosePrimeData core))
+            hdescent.factor_count_eq S)) :
+    let primeData := Hex.choosePrimeData core
+    let d := Hex.monicisedCoreLiftData core B primeData
+    HenselSubsetLiftHypotheses core B primeData d True True True True := by
+  intro primeData d
+  exact
+    henselSubsetLiftHypotheses_of_forwardTransport_descent
+      (hadmissible := trivial)
+      (hsquareFree := trivial)
+      hdescent
+      hlifted_of_modP
 
 /-- **#4697 substrate (HO-1).**
 
