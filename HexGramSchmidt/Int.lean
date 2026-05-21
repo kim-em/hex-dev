@@ -2474,6 +2474,119 @@ private noncomputable def bareissGramRowInvariant_regular_step
     · simp [hi]
   · intro i j hi
     simpa [hi] using hentry i j hi
+
+/-- Extract the represented lattice row vector and entry equation carried by
+`BareissGramRowInvariant`. This is the consumer-facing shape needed by
+singular no-pivot arguments: an active row of the current Bareiss matrix is a
+dot product against an explicitly represented integer combination of input
+rows. -/
+private theorem bareissGramRowInvariant_exists_rowVec
+    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    (hinv : BareissGramRowInvariant b state) (i j : Fin n)
+    (hi : state.step ≤ i.val) :
+    ∃ v : Vector Int m,
+      (∃ c : Vector Int n,
+        (∀ k : Fin n, i.val < k.val → c[k] = 0) ∧
+          v = Matrix.rowCombination b c) ∧
+        state.matrix[i][j] = Matrix.dot v (b.row j) := by
+  refine ⟨hinv.rowVec i, ?_, hinv.entry_eq_dot i j hi⟩
+  exact hinv.mem_span i hi
+
+/-- Recursive preservation package for `Matrix.noPivotLoop`.  Every regular
+step delegates the exact row-entry relation to the one-step package; done and
+singular branches preserve the current row interpretation unchanged. -/
+private noncomputable def bareissGramRowInvariant_noPivotLoop
+    {b : Matrix Int n m} (fuel : Nat) {state : Matrix.BareissState n}
+    (hinv : BareissGramRowInvariant b state)
+    (hentry_regular :
+      ∀ {state : Matrix.BareissState n},
+        (hinv_state : BareissGramRowInvariant b state) →
+        (hnext : state.step + 1 < n) →
+        state.matrix[state.step][state.step] ≠ 0 →
+        ∀ i j : Fin n, (hi : state.step + 1 ≤ i.val) →
+          (Matrix.stepMatrix state.matrix state.step
+              state.matrix[state.step][state.step] state.prevPivot)[i][j] =
+            Matrix.dot
+              (Matrix.rowCombination b
+                (bareissGramRowInvariantStepCoeff
+                  hinv_state hnext i hi))
+              (b.row j)) :
+    BareissGramRowInvariant b (Matrix.noPivotLoop fuel state) := by
+  induction fuel generalizing state with
+  | zero =>
+      simpa [Matrix.noPivotLoop_zero_fuel] using hinv
+  | succ fuel ih =>
+      by_cases hDone : state.step + 1 < n
+      · by_cases hp : state.matrix[state.step][state.step] = 0
+        · rw [Matrix.noPivotLoop_singular_branch fuel state hDone hp]
+          refine
+            { rowVec := hinv.rowVec
+              mem_span := ?_
+              entry_eq_dot := ?_ }
+          · simpa using hinv.mem_span
+          · simpa using hinv.entry_eq_dot
+        · rw [Matrix.noPivotLoop_regular_branch fuel state hDone hp]
+          apply ih
+          exact bareissGramRowInvariant_regular_step hDone hp hinv
+            (hentry_regular hinv hDone hp)
+      · rw [Matrix.noPivotLoop_done fuel state hDone]
+        exact hinv
+
+/-- Initial-state specialization of
+`bareissGramRowInvariant_noPivotLoop` for the no-pivot pass over a Gram
+matrix. -/
+private noncomputable def bareissGramRowInvariant_noPivotLoop_initial
+    (b : Matrix Int n m) (fuel : Nat)
+    (hentry_regular :
+      ∀ {state : Matrix.BareissState n},
+        (hinv_state : BareissGramRowInvariant b state) →
+        (hnext : state.step + 1 < n) →
+        state.matrix[state.step][state.step] ≠ 0 →
+        ∀ i j : Fin n, (hi : state.step + 1 ≤ i.val) →
+          (Matrix.stepMatrix state.matrix state.step
+              state.matrix[state.step][state.step] state.prevPivot)[i][j] =
+            Matrix.dot
+              (Matrix.rowCombination b
+                (bareissGramRowInvariantStepCoeff
+                  hinv_state hnext i hi))
+              (b.row j)) :
+    BareissGramRowInvariant b
+      (Matrix.noPivotLoop fuel (Matrix.noPivotInitialState (Matrix.gramMatrix b))) :=
+  bareissGramRowInvariant_noPivotLoop fuel
+    (bareissGramRowInvariant_initial b) hentry_regular
+
+/-- Consumer-facing row-vector package for a no-pivot Gram pass from the
+initial state. Downstream singular-step proofs can apply this at the loop
+result to rewrite active trailing entries as dots against represented lattice
+row vectors. -/
+private theorem noPivotLoop_initial_gram_entry_eq_dot_of_rowInvariant
+    (b : Matrix Int n m) (fuel : Nat)
+    (hentry_regular :
+      ∀ {state : Matrix.BareissState n},
+        (hinv_state : BareissGramRowInvariant b state) →
+        (hnext : state.step + 1 < n) →
+        state.matrix[state.step][state.step] ≠ 0 →
+        ∀ i j : Fin n, (hi : state.step + 1 ≤ i.val) →
+          (Matrix.stepMatrix state.matrix state.step
+              state.matrix[state.step][state.step] state.prevPivot)[i][j] =
+            Matrix.dot
+              (Matrix.rowCombination b
+                (bareissGramRowInvariantStepCoeff
+                  hinv_state hnext i hi))
+              (b.row j))
+    (i j : Fin n)
+    (hi :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step ≤ i.val) :
+    ∃ v : Vector Int m,
+      (∃ c : Vector Int n,
+        (∀ k : Fin n, i.val < k.val → c[k] = 0) ∧
+          v = Matrix.rowCombination b c) ∧
+        (Matrix.noPivotLoop fuel
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[i][j] =
+          Matrix.dot v (b.row j) := by
+  exact bareissGramRowInvariant_exists_rowVec
+    (bareissGramRowInvariant_noPivotLoop_initial b fuel hentry_regular) i j hi
 /-- If the array loop's `state.step` is past the matrix extent, one outer
 iteration returns the input state unchanged. -/
 private theorem scaledCoeffArrayLoop_done (fuel : Nat)
