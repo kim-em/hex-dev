@@ -210,6 +210,34 @@ namespace MontCtx
 
 variable {p : Nat} [ZMod64.Bounds p]
 
+/--
+Build a Montgomery hot-loop context from the indexed modulus and the
+word-level odd-modulus side condition required by the underlying `HexArith`
+context.
+-/
+def ofOddModulus (hp : p < UInt64.word)
+    (hodd : ZMod64.modulusWord p hp % 2 = 1) : MontCtx p :=
+  { modulus := ZMod64.modulusWord p hp
+    modulus_eq := by simp [ZMod64.modulusWord]
+    toUInt64Ctx := _root_.MontCtx.mk (ZMod64.modulusWord p hp) hodd }
+
+/-- The smart constructor stores the canonical machine-word modulus. -/
+@[simp] theorem modulus_ofOddModulus (hp : p < UInt64.word)
+    (hodd : ZMod64.modulusWord p hp % 2 = 1) :
+    (ofOddModulus (p := p) hp hodd).modulus = ZMod64.modulusWord p hp := rfl
+
+/-- The smart constructor's stored word modulus agrees with the indexed modulus. -/
+@[simp] theorem modulus_toNat_ofOddModulus (hp : p < UInt64.word)
+    (hodd : ZMod64.modulusWord p hp % 2 = 1) :
+    (ofOddModulus (p := p) hp hodd).modulus.toNat = p :=
+  (ofOddModulus (p := p) hp hodd).modulus_eq
+
+/-- The smart constructor delegates to the underlying `UInt64` Montgomery context. -/
+@[simp] theorem toUInt64Ctx_ofOddModulus (hp : p < UInt64.word)
+    (hodd : ZMod64.modulusWord p hp % 2 = 1) :
+    (ofOddModulus (p := p) hp hodd).toUInt64Ctx =
+      _root_.MontCtx.mk (ZMod64.modulusWord p hp) hodd := rfl
+
 private theorem zmod64_lt_modulus (ctx : MontCtx p) (a : ZMod64 p) :
     a.toUInt64 < ctx.modulus :=
   UInt64.lt_iff_toNat_lt.mpr <| by

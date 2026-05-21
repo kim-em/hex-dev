@@ -83,19 +83,13 @@ private def barrettCtxWide : Hex.BarrettCtx BarrettWideMod :=
     toUInt64Ctx := _root_.BarrettCtx.mk (UInt64.ofNat BarrettWideMod) (by decide) (by decide) }
 
 private def montCtx3 : Hex.MontCtx 3 :=
-  { modulus := UInt64.ofNat 3
-    modulus_eq := by decide
-    toUInt64Ctx := _root_.MontCtx.mk (UInt64.ofNat 3) (by decide) }
+  Hex.MontCtx.ofOddModulus (by decide) (by decide)
 
 private def montCtx7 : Hex.MontCtx 7 :=
-  { modulus := UInt64.ofNat 7
-    modulus_eq := by decide
-    toUInt64Ctx := _root_.MontCtx.mk (UInt64.ofNat 7) (by decide) }
+  Hex.MontCtx.ofOddModulus (by decide) (by decide)
 
 private def montCtxWide : Hex.MontCtx MontWideMod :=
-  { modulus := UInt64.ofNat MontWideMod
-    modulus_eq := by decide
-    toUInt64Ctx := _root_.MontCtx.mk (UInt64.ofNat MontWideMod) (by decide) }
+  Hex.MontCtx.ofOddModulus (by decide) (by decide)
 
 #guard (ofNat 7 17).toNat = 17 % 7
 #guard (ofNat 1 42).toNat = 42 % 1
