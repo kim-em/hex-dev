@@ -3756,13 +3756,6 @@ theorem scaledCoeffs_upper (b : Matrix Int n m)
       exact getArrayEntry_zeroRows n r c)
     i j hij
 
-theorem normSq_latticeVec_ge_min_basis_normSq
-    (b : Matrix Int n m) (hli : independent b)
-    (v : Vector Int m) (hv : memLattice b v) (hv' : v ≠ 0) :
-    ∃ i : Fin n,
-      Vector.normSq ((basis b).row i) ≤ ((Vector.normSq v : Int) : Rat) := by
-  sorry
-
 private theorem foldl_add_eq_acc_rat_int {α : Type u}
     (xs : List α) (f : α → Rat) (acc : Rat)
     (hf : ∀ x ∈ xs, f x = 0) :
@@ -4259,6 +4252,128 @@ theorem rowCombination_basis_coeffs_reconstruction
         Vector.map (fun x : Int => (x : Rat)) c))[jj]
   rw [Matrix.transpose_mul_of_mul_comm Lean.Grind.CommSemiring.mul_comm]
   rw [Matrix.mul_assoc_vec]
+
+private theorem exists_highest_nonzero_coeff_in_list
+    (c : Vector Int n) (xs : List (Fin n))
+    (hne : ∃ i : Fin n, i ∈ xs ∧ c[i] ≠ 0) :
+    ∃ k : Fin n, k ∈ xs ∧ c[k] ≠ 0 ∧
+      ∀ j : Fin n, j ∈ xs → k.val < j.val → c[j] = 0 := by
+  induction xs with
+  | nil =>
+      rcases hne with ⟨_, hi, _⟩
+      cases hi
+  | cons x xs ih =>
+      by_cases htail : ∃ i : Fin n, i ∈ xs ∧ c[i] ≠ 0
+      · rcases ih htail with ⟨k, hk_mem, hck, hmax⟩
+        by_cases hx : c[x] ≠ 0
+        · by_cases hkx : k.val < x.val
+          · refine ⟨x, by simp, hx, ?_⟩
+            intro j hj hxj
+            simp at hj
+            rcases hj with rfl | hjtail
+            · omega
+            · have hkj : k.val < j.val := by omega
+              exact hmax j hjtail hkj
+          · refine ⟨k, by simp [hk_mem], hck, ?_⟩
+            intro j hj hkj
+            simp at hj
+            rcases hj with rfl | hjtail
+            · exact False.elim (hkx hkj)
+            · exact hmax j hjtail hkj
+        · refine ⟨k, by simp [hk_mem], hck, ?_⟩
+          intro j hj hkj
+          simp at hj
+          rcases hj with rfl | hjtail
+          · by_cases hx0 : c[j] = 0
+            · exact hx0
+            · exact False.elim (hx hx0)
+          · exact hmax j hjtail hkj
+      · have hx : c[x] ≠ 0 := by
+          rcases hne with ⟨i, hi, hci⟩
+          simp at hi
+          rcases hi with rfl | hitail
+          · exact hci
+          · exact False.elim (htail ⟨i, hitail, hci⟩)
+        refine ⟨x, by simp, hx, ?_⟩
+        intro j hj hxj
+        simp at hj
+        rcases hj with rfl | hjtail
+        · omega
+        · by_cases hj0 : c[j] = 0
+          · exact hj0
+          · exact False.elim (htail ⟨j, hjtail, hj0⟩)
+
+private theorem exists_highest_nonzero_coeff
+    (c : Vector Int n) (hne : ∃ i : Fin n, c[i] ≠ 0) :
+    ∃ k : Fin n, c[k] ≠ 0 ∧ ∀ j : Fin n, k.val < j.val → c[j] = 0 := by
+  have hmem : ∃ i : Fin n, i ∈ List.finRange n ∧ c[i] ≠ 0 := by
+    rcases hne with ⟨i, hi⟩
+    exact ⟨i, List.mem_finRange i, hi⟩
+  rcases exists_highest_nonzero_coeff_in_list c (List.finRange n) hmem with
+    ⟨k, _hk_mem, hck, hmax⟩
+  exact ⟨k, hck, fun j hj => hmax j (List.mem_finRange j) hj⟩
+
+private theorem normSq_map_intCast (v : Vector Int m) :
+    Vector.normSq (Vector.map (fun x : Int => (x : Rat)) v) =
+      ((Vector.normSq v : Int) : Rat) := by
+  simpa [Vector.normSq, Hex.Vector.normSq, Matrix.dot, Hex.Vector.dotProduct]
+    using (foldl_int_dot_cast (List.finRange m)
+      (fun i : Fin m => v[i]) (fun i : Fin m => v[i]) 0).symm
+
+theorem normSq_latticeVec_ge_min_basis_normSq
+    (b : Matrix Int n m) (_hli : independent b)
+    (v : Vector Int m) (hv : memLattice b v) (hv' : v ≠ 0) :
+    ∃ i : Fin n,
+      Vector.normSq ((basis b).row i) ≤ ((Vector.normSq v : Int) : Rat) := by
+  rcases hv with ⟨c, hcv⟩
+  have hc_nonzero : ∃ i : Fin n, c[i] ≠ 0 := by
+    by_cases h : ∃ i : Fin n, c[i] ≠ 0
+    · exact h
+    · have hc_zero : c = 0 := by
+        apply Vector.ext
+        intro i hi
+        let ii : Fin n := ⟨i, hi⟩
+        by_cases hci : c[ii] = 0
+        · simpa [ii] using hci
+        · exact False.elim (h ⟨ii, hci⟩)
+      have hv_zero : v = 0 := by
+        rw [← hcv, hc_zero]
+        simp [Matrix.rowCombination]
+      exact False.elim (hv' hv_zero)
+  rcases exists_highest_nonzero_coeff c hc_nonzero with ⟨k, hck, hzero_above⟩
+  let d : Vector Rat n :=
+    Matrix.rowCombination (coeffs b) (Vector.map (fun x : Int => (x : Rat)) c)
+  have hcoeff_sq : (1 : Rat) ≤ d[k] * d[k] := by
+    have htop :
+        d[k] = (c[k] : Rat) := by
+      dsimp [d]
+      exact rowCombination_coeffs_apply_eq_of_zero_above b c k hzero_above
+    rw [htop]
+    exact GramSchmidt.one_le_intCast_mul_self_of_ne_zero c[k] hck
+  refine ⟨k, ?_⟩
+  have horth : ∀ i j : Fin n, i ≠ j →
+      Matrix.dot ((basis b).row i) ((basis b).row j) = 0 := by
+    intro i j hij
+    exact basis_orthogonal b i.val j.val i.isLt j.isLt (by
+      intro hval
+      exact hij (Fin.ext hval))
+  have hle :
+      Vector.normSq ((basis b).row k) ≤
+        Vector.normSq (Matrix.rowCombination (basis b) d) :=
+    GramSchmidt.rowCombination_normSq_ge_of_orthogonal_coeff_sq_ge_one
+      (rows := basis b) (coeffs := d) (k := k) horth hcoeff_sq
+  have hrec :
+      Vector.map (fun x : Int => (x : Rat)) v =
+        Matrix.rowCombination (basis b) d := by
+    rw [← hcv]
+    dsimp [d]
+    exact rowCombination_basis_coeffs_reconstruction b c
+  have hnorm :
+      Vector.normSq (Matrix.rowCombination (basis b) d) =
+        ((Vector.normSq v : Int) : Rat) := by
+    rw [← hrec, normSq_map_intCast]
+  rw [← hnorm]
+  exact hle
 
 /-! ### Dot-product symmetry support -/
 
