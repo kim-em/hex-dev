@@ -4000,6 +4000,153 @@ theorem prefixSpan_basis_and_coeffs_apply_ne_zero_of_rowCombination
   rw [rowCombination_coeffs_apply_eq_of_zero_above b c k hzero]
   exact_mod_cast hck
 
+/-- The coefficient matrix reconstructs the cast integer input rows from the
+Gram-Schmidt basis rows. -/
+theorem coeffs_mul_basis_eq_castIntMatrix (b : Matrix Int n m) :
+    coeffs b * basis b = castIntMatrix b := by
+  apply Vector.ext
+  intro i hi
+  let ii : Fin n := ⟨i, hi⟩
+  apply Vector.ext
+  intro j hj
+  let jj : Fin m := ⟨j, hj⟩
+  have hdec := basis_decomposition b i hi
+  have hentry :
+      ((basis b).row ii)[jj] +
+        (GramSchmidt.prefixCombination (coeffs b) (basis b) i hi)[jj] =
+      ((castIntMatrix b).row ii)[jj] := by
+    have hdecj := congrArg (fun v : Vector Rat m => v[jj]) hdec
+    simpa [castIntMatrix, Matrix.row, Vector.getElem_add] using hdecj.symm
+  show (coeffs b * basis b)[ii][jj] = (castIntMatrix b)[ii][jj]
+  rw [Matrix.mul_getElem]
+  unfold Matrix.dot Hex.Vector.dotProduct
+  let f : Fin n → Rat := fun k => ((coeffs b).row ii)[k] * ((basis b).col jj)[k]
+  have hzero : ∀ k : Fin n, i < k.val → f k = 0 := by
+    intro k hk
+    have hcoeff :
+        GramSchmidt.entry (coeffs b) ii k = 0 :=
+      coeffs_upper b i k.val hi k.isLt hk
+    change ((coeffs b).row ii)[k] * ((basis b).col jj)[k] = 0
+    rw [show ((coeffs b).row ii)[k] = 0 from hcoeff]
+    grind
+  have htrunc := foldl_finRange_eq_prefix_of_zero_above ii f hzero
+  change (List.finRange n).foldl (fun acc k => acc + f k) 0 =
+    (castIntMatrix b)[ii][jj]
+  rw [htrunc]
+  rw [List.finRange_succ_last, List.foldl_append, List.foldl_map]
+  simp only [List.foldl_cons, List.foldl_nil]
+  have hprefix :
+      (List.finRange i).foldl
+        (fun acc (x : Fin i) =>
+          acc + f ⟨(Fin.castSucc x).val,
+            Nat.lt_of_lt_of_le (Fin.castSucc x).isLt (Nat.succ_le_of_lt hi)⟩) 0 =
+      (GramSchmidt.prefixCombination (coeffs b) (basis b) i hi)[jj] := by
+    unfold GramSchmidt.prefixCombination GramSchmidt.entry
+    let lift : Fin i → Fin n := fun x => ⟨x.val, Nat.lt_trans x.isLt hi⟩
+    have hfold :
+        ∀ xs : List (Fin i), ∀ accR : Rat, ∀ accV : Vector Rat m,
+          accR = accV[jj] →
+          xs.foldl
+              (fun acc (x : Fin i) =>
+                acc + f ⟨(Fin.castSucc x).val,
+                  Nat.lt_of_lt_of_le (Fin.castSucc x).isLt (Nat.succ_le_of_lt hi)⟩)
+              accR =
+            (xs.foldl
+              (fun acc (x : Fin i) =>
+                acc + GramSchmidt.entry (coeffs b) ii (lift x) • (basis b).row (lift x))
+              accV)[jj] := by
+      intro xs
+      induction xs with
+      | nil =>
+          intro accR accV hacc
+          simp [hacc]
+      | cons x xs ih =>
+          intro accR accV hacc
+          simp only [List.foldl_cons]
+          apply ih
+          have hstep :
+              (accV + GramSchmidt.entry (coeffs b) ii (lift x) •
+                  (basis b).row (lift x))[jj] =
+                accV[jj] + GramSchmidt.entry (coeffs b) ii (lift x) *
+                  ((basis b).row (lift x))[jj] := by
+            change (accV + GramSchmidt.entry (coeffs b) ii (lift x) •
+                (basis b).row (lift x))[jj.val]'jj.isLt =
+              accV[jj.val]'jj.isLt + GramSchmidt.entry (coeffs b) ii (lift x) *
+                ((basis b).row (lift x))[jj.val]'jj.isLt
+            rw [Vector.getElem_add, Vector.getElem_smul]
+            change accV[jj.val]'jj.isLt +
+                GramSchmidt.entry (coeffs b) ii (lift x) *
+                  ((basis b).row (lift x))[jj.val]'jj.isLt =
+              accV[jj.val]'jj.isLt + GramSchmidt.entry (coeffs b) ii (lift x) *
+                ((basis b).row (lift x))[jj.val]'jj.isLt
+            rfl
+          rw [hstep]
+          simp [f, lift, GramSchmidt.entry, Matrix.row, Matrix.col, hacc]
+    exact hfold (List.finRange i) 0 0 (by simp)
+  rw [hprefix]
+  have hdiag :
+      ((coeffs b).row ii)[ii] = 1 := by
+    exact coeffs_diag b i hi
+  change (GramSchmidt.prefixCombination (coeffs b) (basis b) i hi)[jj] +
+      ((coeffs b).row ii)[ii] * ((basis b).col jj)[ii] =
+    (castIntMatrix b)[ii][jj]
+  rw [hdiag]
+  simp [Matrix.col]
+  have hentry' :
+      (basis b)[ii][jj] + (GramSchmidt.prefixCombination (coeffs b) (basis b) i hi)[jj] =
+        (castIntMatrix b)[ii][jj] := by
+    simpa [Matrix.row] using hentry
+  change (GramSchmidt.prefixCombination (coeffs b) (basis b) i hi)[jj] +
+      (basis b)[ii][jj] = (castIntMatrix b)[ii][jj]
+  rw [← hentry']
+  exact Lean.Grind.Semiring.add_comm _ _
+
+/-- Integer row combinations reconstruct through the Gram-Schmidt basis after
+first combining the Gram-Schmidt coefficient rows. -/
+theorem rowCombination_basis_coeffs_reconstruction
+    (b : Matrix Int n m) (c : Vector Int n) :
+    Vector.map (fun x : Int => (x : Rat)) (Matrix.rowCombination b c) =
+      Matrix.rowCombination (basis b)
+        (Matrix.rowCombination (coeffs b)
+          (Vector.map (fun x : Int => (x : Rat)) c)) := by
+  have hcoeff : coeffs b * basis b = castIntMatrix b :=
+    coeffs_mul_basis_eq_castIntMatrix b
+  apply Vector.ext
+  intro j hj
+  let jj : Fin m := ⟨j, hj⟩
+  change (Vector.map (fun x : Int => (x : Rat)) (Matrix.rowCombination b c))[jj] =
+    (Matrix.rowCombination (basis b)
+      (Matrix.rowCombination (coeffs b)
+        (Vector.map (fun x : Int => (x : Rat)) c)))[jj]
+  have hmap :
+      (Vector.map (fun x : Int => (x : Rat)) (Matrix.rowCombination b c))[jj] =
+        ((Matrix.rowCombination b c)[jj] : Rat) :=
+    Vector.getElem_map _ _
+  rw [hmap, rowCombination_int_getElem b c jj]
+  rw [foldl_int_dot_cast (List.finRange n)
+    (fun i : Fin n => b[i][jj]) (fun i : Fin n => c[i]) 0]
+  have hleft :
+      (List.finRange n).foldl
+        (fun acc i => acc + ((b[i][jj] : Int) : Rat) *
+          ((c[i] : Int) : Rat)) ((0 : Int) : Rat) =
+      (Matrix.rowCombination (castIntMatrix b)
+        (Vector.map (fun x : Int => (x : Rat)) c))[jj] := by
+    rw [show ((0 : Int) : Rat) = 0 by norm_cast]
+    show _ = (Matrix.transpose (castIntMatrix b) *
+        Vector.map (fun x : Int => (x : Rat)) c)[jj]
+    rw [Matrix.mulVec_getElem]
+    simp [Matrix.dot, Hex.Vector.dotProduct, Matrix.row, Matrix.transpose,
+      Matrix.col, castIntMatrix]
+  rw [hleft]
+  rw [← hcoeff]
+  change ((Matrix.transpose (coeffs b * basis b)) *
+      Vector.map (fun x : Int => (x : Rat)) c)[jj] =
+    (Matrix.transpose (basis b) *
+      (Matrix.transpose (coeffs b) *
+        Vector.map (fun x : Int => (x : Rat)) c))[jj]
+  rw [Matrix.transpose_mul_of_mul_comm Lean.Grind.CommSemiring.mul_comm]
+  rw [Matrix.mul_assoc_vec]
+
 /-! ### Dot-product symmetry support -/
 
 private theorem foldl_dot_comm_int {n' : Nat} (xs : List (Fin n'))
