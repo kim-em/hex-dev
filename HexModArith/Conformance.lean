@@ -85,6 +85,15 @@ private def montCtx7 : Hex.MontCtx 7 :=
 private def montCtxWide : Hex.MontCtx MontWideMod :=
   Hex.MontCtx.ofOddModulus (by decide) (by decide)
 
+#guard barrettCtx2.modulus.toNat = 2
+#guard barrettCtx7.modulus.toNat = 7
+#guard barrettCtxWide.modulus.toNat = BarrettWideMod
+#guard barrettCtx7.toUInt64Ctx.pinv = UInt64.ofNat (barrettRadix / 7)
+#guard montCtx3.modulus.toNat = 3
+#guard montCtx7.modulus.toNat = 7
+#guard montCtxWide.modulus.toNat = MontWideMod
+#guard (decide (montCtx7.modulus % 2 = 1))
+
 #guard (ofNat 7 17).toNat = 17 % 7
 #guard (ofNat 1 42).toNat = 42 % 1
 #guard (ofNat LargeMod (LargeMod + 12345)).toNat = (LargeMod + 12345) % LargeMod
