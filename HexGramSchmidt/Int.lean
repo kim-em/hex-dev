@@ -2587,6 +2587,45 @@ private theorem noPivotLoop_initial_gram_entry_eq_dot_of_rowInvariant
           Matrix.dot v (b.row j) := by
   exact bareissGramRowInvariant_exists_rowVec
     (bareissGramRowInvariant_noPivotLoop_initial b fuel hentry_regular) i j hi
+
+/-- If the initial no-pivot Gram pass reaches column `s` without recording a
+singular step, its state step is exactly `s`.  This keeps the later singular
+pivot argument from unfolding the loop just to align the searched column. -/
+private theorem noPivotLoop_initial_gram_step_eq_of_prefix_none
+    (b : Matrix Int n m) (s : Nat) (hs : s + 1 < n)
+    (h_prefix_none :
+      (Matrix.noPivotLoop s
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none) :
+    (Matrix.noPivotLoop s
+      (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step = s := by
+  have h_room :
+      (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step + s + 1 ≤ n := by
+    simp [Matrix.noPivotInitialState]
+    omega
+  have h_step :=
+    Matrix.noPivotLoop_step_eq_add_of_singularStep_none s
+      (Matrix.noPivotInitialState (Matrix.gramMatrix b)) rfl h_room h_prefix_none
+  simpa [Matrix.noPivotInitialState] using h_step
+
+/-- Package a proved zero suffix in the current Gram pivot column into the
+executable row-pivot search failure expected by `Matrix.pivotLoop`. -/
+private theorem noPivotLoop_initial_gram_findPivot?_eq_none_of_column_zero
+    (b : Matrix Int n m) (s : Nat) (hs : s + 1 < n)
+    (h_prefix_none :
+      (Matrix.noPivotLoop s
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none)
+    (h_column_zero :
+      ∀ i : Fin n, s + 1 ≤ i.val →
+        (Matrix.noPivotLoop s
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[i][
+          (⟨s, Nat.lt_of_succ_lt hs⟩ : Fin n)] = 0) :
+    Matrix.findPivot?
+        (Matrix.noPivotLoop s
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix
+        (⟨s, Nat.lt_of_succ_lt hs⟩ : Fin n) (s + 1) = none := by
+  have _h_step :=
+    noPivotLoop_initial_gram_step_eq_of_prefix_none b s hs h_prefix_none
+  exact Matrix.findPivot?_eq_none_of_zero _ _ _ h_column_zero
 /-- If the array loop's `state.step` is past the matrix extent, one outer
 iteration returns the input state unchanged. -/
 private theorem scaledCoeffArrayLoop_done (fuel : Nat)
