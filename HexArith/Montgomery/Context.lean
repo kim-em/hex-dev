@@ -173,6 +173,33 @@ def mk (p : UInt64) (hp : p % 2 = 1) : MontCtx p :=
         omega
       exact toNat_r2OfModulus p hp_pos }
 
+/-- The oddness witness stored by `MontCtx.mk`. -/
+@[simp]
+theorem mk_p_odd (p : UInt64) (hp : p % 2 = 1) :
+    (mk p hp).p_odd = hp := rfl
+
+/-- The Montgomery inverse word stored by `MontCtx.mk`. -/
+@[simp]
+theorem mk_p' (p : UInt64) (hp : p % 2 = 1) :
+    (mk p hp).p' = montInv p := rfl
+
+/-- The inverse-word correctness fact specialized to `MontCtx.mk`. -/
+@[simp]
+theorem mk_p'_eq (p : UInt64) (hp : p % 2 = 1) :
+    ((mk p hp).p'.toNat * p.toNat) % UInt64.word = UInt64.word - 1 :=
+  (mk p hp).p'_eq
+
+/-- The `R^2 mod p` word stored by `MontCtx.mk`. -/
+@[simp]
+theorem mk_r2 (p : UInt64) (hp : p % 2 = 1) :
+    (mk p hp).r2 = r2OfModulus p := rfl
+
+/-- The `R^2 mod p` correctness fact specialized to `MontCtx.mk`. -/
+@[simp]
+theorem mk_r2_eq (p : UInt64) (hp : p % 2 = 1) :
+    (mk p hp).r2.toNat = (UInt64.word * UInt64.word) % p.toNat :=
+  (mk p hp).r2_eq
+
 /-- View the odd-modulus assumption as a Nat-level parity fact. -/
 @[simp]
 theorem p_odd_nat (ctx : MontCtx p) : p.toNat % 2 = 1 := by
@@ -189,6 +216,24 @@ theorem p_pos (ctx : MontCtx p) : 0 < p.toNat := by
 @[simp]
 theorem p_lt_R (_ctx : MontCtx p) : p.toNat < UInt64.word := by
   simpa [UInt64.word, UInt64.size] using UInt64.toNat_lt_size p
+
+/-- The Nat-level oddness fact specialized to `MontCtx.mk`. -/
+@[simp]
+theorem mk_p_odd_nat (p : UInt64) (hp : p % 2 = 1) :
+    p.toNat % 2 = 1 :=
+  (mk p hp).p_odd_nat
+
+/-- Positivity of a modulus equipped with `MontCtx.mk`. -/
+@[simp]
+theorem mk_p_pos (p : UInt64) (hp : p % 2 = 1) :
+    0 < p.toNat :=
+  (mk p hp).p_pos
+
+/-- The radix bound for a modulus equipped with `MontCtx.mk`. -/
+@[simp]
+theorem mk_p_lt_R (p : UInt64) (hp : p % 2 = 1) :
+    p.toNat < UInt64.word :=
+  (mk p hp).p_lt_R
 
 /-- Convert a standard residue into Montgomery form. -/
 def toMont (ctx : MontCtx p) (a : UInt64) : UInt64 :=
