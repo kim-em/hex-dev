@@ -2368,6 +2368,45 @@ private theorem rowCombination_bareiss_coeff_update
   repeat rw [Matrix.mulVec_getElem]
   exact dot_bareiss_row_update_right x y ((Matrix.transpose M).row jf) c d
 
+private theorem exactDiv_eq_of_eq_mul_right
+    {num denom q : Int} (hdenom : denom ≠ 0) (hnum : num = q * denom) :
+  Matrix.exactDiv num denom = q := by
+  have hnum' : num = denom * q := by
+    grind
+  have hdvd : denom ∣ num := by
+    refine ⟨q, ?_⟩
+    exact hnum'
+  rw [Matrix.exactDiv_eq_divExact hdvd, Int.divExact_eq_ediv hdvd]
+  exact Int.ediv_eq_of_eq_mul_left hdenom hnum
+
+private theorem vector_exactDiv_eq_of_eq_mul_right
+    {denom : Int} (hdenom : denom ≠ 0) (num q : Fin n → Int)
+    (hnum : ∀ a : Fin n, num a = q a * denom) :
+    (Vector.ofFn fun a : Fin n => Matrix.exactDiv (num a) denom) =
+      Vector.ofFn q := by
+  apply Vector.ext
+  intro a ha
+  let af : Fin n := ⟨a, ha⟩
+  simp [exactDiv_eq_of_eq_mul_right hdenom (hnum af), af]
+
+private theorem rowCombination_exactDiv_eq_of_eq_mul_right
+    (M : Matrix Int n m) {denom : Int} (hdenom : denom ≠ 0)
+    (num q : Fin n → Int) (hnum : ∀ a : Fin n, num a = q a * denom) :
+    Matrix.rowCombination M (Vector.ofFn fun a : Fin n => Matrix.exactDiv (num a) denom) =
+      Matrix.rowCombination M (Vector.ofFn q) := by
+  rw [vector_exactDiv_eq_of_eq_mul_right hdenom num q hnum]
+
+private theorem dot_rowCombination_exactDiv_eq_of_eq_mul_right
+    (M : Matrix Int n m) {denom : Int} (hdenom : denom ≠ 0)
+    (num q : Fin n → Int) (hnum : ∀ a : Fin n, num a = q a * denom)
+    (w : Vector Int m) :
+    Matrix.dot
+        (Matrix.rowCombination M
+          (Vector.ofFn fun a : Fin n => Matrix.exactDiv (num a) denom))
+        w =
+      Matrix.dot (Matrix.rowCombination M (Vector.ofFn q)) w := by
+  rw [rowCombination_exactDiv_eq_of_eq_mul_right M hdenom num q hnum]
+
 private noncomputable def bareissGramRowInvariantCoeff
     {b : Matrix Int n m} {state : Matrix.BareissState n}
     (hinv : BareissGramRowInvariant b state) (i : Fin n)
