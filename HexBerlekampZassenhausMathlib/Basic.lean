@@ -16764,6 +16764,63 @@ theorem henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData
       (monicisedCoreLiftData_liftedFactors_size_eq core B primeData)
       hlifted_of_modP hirr hdvd hT
 
+/-- **#5689 substrate (HO-1 successful branch).**
+
+Successful-branch constructor for the lifted Hensel subset correspondence at
+the executable `Hex.choosePrimeData` boundary.
+
+The explicit `hsome` hypothesis selects the analyzable
+`Hex.choosePrimeData? core = some (Hex.choosePrimeData core)` branch, supplying
+the mod-`p` subset partition.  The Hensel-lift obligations remain packaged as
+an explicit `HenselSubsetLiftHypotheses` input, so callers do not have to use
+the older analytic fallback constructor. -/
+theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success
+    (core : Hex.ZPoly) (B : Nat)
+    (hsome : Hex.choosePrimeData? core = some (Hex.choosePrimeData core))
+    (hlift :
+      HenselSubsetLiftHypotheses core B (Hex.choosePrimeData core)
+        (Hex.monicisedCoreLiftData core B (Hex.choosePrimeData core))
+        True True True True) :
+    let primeData := Hex.choosePrimeData core
+    let d := Hex.monicisedCoreLiftData core B primeData
+    HenselSubsetCorrespondenceHypotheses core B primeData d True True := by
+  intro primeData d
+  exact
+    henselSubsetCorrespondence_of_modPSubsetPartition
+      (modPSubsetPartitionHypotheses_of_choosePrimeData core hsome)
+      hlift
+
+/-- **#5689 substrate (HO-1 successful branch).**
+
+Consumer-facing wrapper for the common successful-branch shape: compose the
+`choosePrimeData? = some ...` mod-`p` partition with a non-circular lifted-side
+descent package and explicit forward Hensel transport to obtain the standard
+`HenselSubsetCorrespondenceHypotheses` surface. -/
+theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent
+    (core : Hex.ZPoly) (B : Nat)
+    (hsome : Hex.choosePrimeData? core = some (Hex.choosePrimeData core))
+    (hdescent :
+      HenselLiftDescentHypotheses core B (Hex.choosePrimeData core)
+        (Hex.monicisedCoreLiftData core B (Hex.choosePrimeData core)) True True)
+    (hlifted_of_modP :
+      ∀ {factor : Hex.ZPoly} {S : ModPFactorSubset (Hex.choosePrimeData core)},
+        Irreducible (HexPolyZMathlib.toPolynomial factor) →
+        factor ∣ core →
+        RepresentsIntegerFactorModP (Hex.choosePrimeData core) factor S →
+        RepresentsIntegerFactorAtLift core
+          (Hex.monicisedCoreLiftData core B (Hex.choosePrimeData core)) factor
+          (liftedSubsetOfModPSubset (Hex.choosePrimeData core)
+            (Hex.monicisedCoreLiftData core B (Hex.choosePrimeData core))
+            hdescent.factor_count_eq S)) :
+    let primeData := Hex.choosePrimeData core
+    let d := Hex.monicisedCoreLiftData core B primeData
+    HenselSubsetCorrespondenceHypotheses core B primeData d True True := by
+  intro primeData d
+  exact
+    henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success core B hsome
+      (henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData_descent
+        core B hdescent hlifted_of_modP)
+
 end
 
 end HexBerlekampZassenhausMathlib
