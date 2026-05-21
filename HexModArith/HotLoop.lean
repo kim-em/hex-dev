@@ -94,6 +94,37 @@ namespace BarrettCtx
 
 variable {p : Nat} [ZMod64.Bounds p]
 
+/-- Build a Barrett hot-loop context from the indexed small modulus. -/
+def ofModulus (hp : 1 < p) (hlt : p < 2 ^ 32) : BarrettCtx p := by
+  let m := UInt64.ofNat p
+  have hm : m.toNat = p := by
+    have hword : p < UInt64.word := Nat.lt_trans hlt (by decide : 2 ^ 32 < UInt64.word)
+    simpa [m, UInt64.toNat_ofNat, UInt64.size, UInt64.word] using Nat.mod_eq_of_lt hword
+  exact
+    { modulus := m
+      modulus_eq := hm
+      toUInt64Ctx := _root_.BarrettCtx.mk m (by simpa [hm] using hp) (by simpa [hm] using hlt) }
+
+/-- The smart constructor stores the indexed modulus as a machine word. -/
+@[simp] theorem ofModulus_modulus (hp : 1 < p) (hlt : p < 2 ^ 32) :
+    (ofModulus (p := p) hp hlt).modulus = UInt64.ofNat p := rfl
+
+/-- The smart constructor's stored word modulus agrees with the indexed modulus. -/
+@[simp] theorem ofModulus_modulus_eq (hp : 1 < p) (hlt : p < 2 ^ 32) :
+    (ofModulus (p := p) hp hlt).modulus.toNat = p :=
+  (ofModulus (p := p) hp hlt).modulus_eq
+
+/--
+The smart constructor's underlying Barrett context stores the reciprocal for
+the indexed modulus.
+-/
+@[simp] theorem ofModulus_toUInt64Ctx_pinv (hp : 1 < p) (hlt : p < 2 ^ 32) :
+    ((ofModulus (p := p) hp hlt).toUInt64Ctx).pinv =
+      UInt64.ofNat (barrettRadix / p) := by
+  rw [show ((ofModulus (p := p) hp hlt).toUInt64Ctx).pinv =
+      UInt64.ofNat (barrettRadix / (ofModulus (p := p) hp hlt).modulus.toNat) from rfl]
+  rw [ofModulus_modulus_eq]
+
 private theorem residue_lt_modulus (ctx : BarrettCtx p) (a : ZMod64 p) :
     a.toUInt64 < ctx.modulus :=
   UInt64.lt_iff_toNat_lt.mpr <| by
