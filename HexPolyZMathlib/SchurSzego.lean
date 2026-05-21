@@ -388,6 +388,82 @@ theorem graceWalshSzegoOpenZeroControlAtDegree_zero :
   rw [hroots]
   simp [rootsStrictlyOutsideRadiusCount]
 
+private theorem schmeisserComposition_one_eq
+    (f g : ℂ[X]) :
+    schmeisserComposition 1 f g =
+      C (f.coeff 1 * g.coeff 1) * X + C (f.coeff 0 * g.coeff 0) := by
+  rw [eq_X_add_C_of_natDegree_le_one (natDegree_schmeisserComposition_le 1 f g)]
+  simp [coeff_schmeisserComposition_of_le]
+
+theorem graceWalshSzegoOpenZeroControlAtDegree_one :
+    graceWalshSzegoOpenZeroControlAtDegree 1 := by
+  intro f g hfg_degree hg_roots r _hr
+  rw [schmeisserComposition_one_eq]
+  by_cases hf1 : f.coeff 1 = 0
+  · have hcomp_const :
+        C (f.coeff 1 * g.coeff 1) * X + C (f.coeff 0 * g.coeff 0) =
+          C (f.coeff 0 * g.coeff 0) := by
+      simp [hf1]
+    rw [hcomp_const, roots_C]
+    simp [rootsStrictlyOutsideRadiusCount]
+  by_cases hg1 : g.coeff 1 = 0
+  · have hcomp_const :
+        C (f.coeff 1 * g.coeff 1) * X + C (f.coeff 0 * g.coeff 0) =
+          C (f.coeff 0 * g.coeff 0) := by
+      simp [hg1]
+    rw [hcomp_const, roots_C]
+    simp [rootsStrictlyOutsideRadiusCount]
+  have hfg1 : f.coeff 1 * g.coeff 1 ≠ 0 := mul_ne_zero hf1 hg1
+  have hf_roots :
+      f.roots = ({-((f.coeff 1)⁻¹ * f.coeff 0)} : Multiset ℂ) := by
+    have hf_linear : f = C (f.coeff 1) * X + C (f.coeff 0) :=
+      eq_X_add_C_of_natDegree_le_one hfg_degree.1
+    calc
+      f.roots = (C (f.coeff 1) * X + C (f.coeff 0) : ℂ[X]).roots :=
+        congrArg roots hf_linear
+      _ = ({-((f.coeff 1)⁻¹ * f.coeff 0)} : Multiset ℂ) := by
+        exact roots_C_mul_X_add_C (a := f.coeff 1) (b := f.coeff 0) hf1
+  have hg_roots_eq :
+      g.roots = ({-((g.coeff 1)⁻¹ * g.coeff 0)} : Multiset ℂ) := by
+    have hg_linear : g = C (g.coeff 1) * X + C (g.coeff 0) :=
+      eq_X_add_C_of_natDegree_le_one hfg_degree.2
+    calc
+      g.roots = (C (g.coeff 1) * X + C (g.coeff 0) : ℂ[X]).roots :=
+        congrArg roots hg_linear
+      _ = ({-((g.coeff 1)⁻¹ * g.coeff 0)} : Multiset ℂ) := by
+        exact roots_C_mul_X_add_C (a := g.coeff 1) (b := g.coeff 0) hg1
+  have hg_root_norm :
+      ‖-((g.coeff 1)⁻¹ * g.coeff 0)‖ ≤ 1 := by
+    rw [rootsInClosedUnitDisk_iff] at hg_roots
+    exact hg_roots (-((g.coeff 1)⁻¹ * g.coeff 0)) (by simp [hg_roots_eq])
+  have hcomp_roots :
+      (C (f.coeff 1 * g.coeff 1) * X + C (f.coeff 0 * g.coeff 0) : ℂ[X]).roots =
+        ({-((f.coeff 1 * g.coeff 1)⁻¹ * (f.coeff 0 * g.coeff 0))} : Multiset ℂ) := by
+    rw [roots_C_mul_X_add_C (f.coeff 0 * g.coeff 0) hfg1]
+  rw [hcomp_roots, hf_roots]
+  have hnorm :
+      ‖-((f.coeff 1 * g.coeff 1)⁻¹ * (f.coeff 0 * g.coeff 0))‖ ≤
+        ‖-((f.coeff 1)⁻¹ * f.coeff 0)‖ := by
+    have hfactor :
+        (f.coeff 1 * g.coeff 1)⁻¹ * (f.coeff 0 * g.coeff 0) =
+          ((f.coeff 1)⁻¹ * f.coeff 0) * ((g.coeff 1)⁻¹ * g.coeff 0) := by
+      field_simp [hf1, hg1]
+    calc
+      ‖-((f.coeff 1 * g.coeff 1)⁻¹ * (f.coeff 0 * g.coeff 0))‖ =
+          ‖-((f.coeff 1)⁻¹ * f.coeff 0)‖ *
+            ‖-((g.coeff 1)⁻¹ * g.coeff 0)‖ := by
+        rw [norm_neg, hfactor, norm_mul, norm_neg, norm_neg]
+      _ ≤ ‖-((f.coeff 1)⁻¹ * f.coeff 0)‖ * 1 :=
+        mul_le_mul_of_nonneg_left hg_root_norm (norm_nonneg _)
+      _ = ‖-((f.coeff 1)⁻¹ * f.coeff 0)‖ := by simp
+  simp only [rootsStrictlyOutsideRadiusCount, Multiset.filter_singleton]
+  by_cases hlarge : r < ‖-((f.coeff 1 * g.coeff 1)⁻¹ * (f.coeff 0 * g.coeff 0))‖
+  · have : r < ‖-((f.coeff 1)⁻¹ * f.coeff 0)‖ := lt_of_lt_of_le hlarge hnorm
+    rw [if_pos hlarge, if_pos this]
+    simp
+  · rw [if_neg hlarge]
+    exact Nat.zero_le _
+
 theorem exteriorRootCountDominatedFrom_of_schmeisserCompositionZeroControl
     {n : ℕ} {f g : ℂ[X]} {r : ℝ}
     (hr : 0 < r)
