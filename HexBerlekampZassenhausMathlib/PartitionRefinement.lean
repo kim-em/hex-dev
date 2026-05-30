@@ -2,7 +2,7 @@ import HexBerlekampZassenhausMathlib.Recovery
 import HexBerlekampZassenhausMathlib.Basic
 
 /-!
-BHKS B8 partition-refinement bridge.
+BHKS B8 partition-refinement step.
 
 The fast-core success branch certified by
 `factorFastCoreWithBound_some_factor_count_ge_of_irreducible` consumes an
@@ -13,11 +13,11 @@ row per support-equivalence class, and
 `BHKS.ForwardRecoveryInputs.ExpectedTrueFactors` transports that class count
 to the polynomial-side factor list length. Under the B8 partition-refinement
 hypothesis (the class count matches `normalizedFactors.card`), the existing
-UFD partition bridge upgrades the count equality to factor irreducibility.
+UFD partition argument upgrades the count equality to factor irreducibility.
 
 The B8 partition-refinement hypothesis itself is the deeper BHKS Lemma 3.4
 obligation discharged elsewhere; this module supplies the count and
-irreducibility bridge that consumes it.
+irreducibility derivation that consumes it.
 -/
 
 namespace HexBerlekampZassenhausMathlib

@@ -347,7 +347,7 @@ structure CutProjectionHypotheses
   indicator_mem_projected :
     ∀ S : trueSupports, indicatorVector S.1 ∈ projectedRowSpanInt L
 
-/-- Direct consumer-facing form of the cut hypothesis for one true support. -/
+/-- Direct caller-facing form of the cut hypothesis for one true support. -/
 theorem indicatorVector_mem_projectedRowSpan_of_cut
     (L : Hex.BhksProjectedRows) (trueSupports : Set (Set (Fin L.factorCount)))
     (hcut : CutProjectionHypotheses L trueSupports) (S : trueSupports) :

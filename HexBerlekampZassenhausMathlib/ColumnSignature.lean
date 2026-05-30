@@ -1,7 +1,7 @@
 import HexMatrixMathlib.RankSpanNullspace
 
 /-!
-Column-agreement bridge for the BHKS RREF signature step.
+Column-agreement equivalence for the BHKS RREF signature step.
 
 This module isolates the linear-algebra core of BHKS Lemma 3.3: two columns
 of the computed RREF echelon matrix agree exactly when every vector in the

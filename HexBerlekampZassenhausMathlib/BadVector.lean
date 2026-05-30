@@ -516,7 +516,7 @@ def isBhksBadVectorSetup_of_projectedVector
       hcoprime hdiv
 
 /--
-Per-vector algebraic bridge needed to turn a projected vector in `L' \ W` into
+Per-vector algebraic data needed to turn a projected vector in `L' \ W` into
 the exact bad-vector setup callback consumed by cap separation.
 
 The structural `L' \ W` facts are supplied by the callback arguments.  This
@@ -548,8 +548,8 @@ structure ProjectedBadVectorSetupBridge
       Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial
 
 /--
-Convert the packaged projected-vector bridge into the callback shape expected
-by `BHKS.ExecutableCapSeparationHypotheses`.
+Convert the packaged `ProjectedBadVectorSetupBridge` into the callback shape
+expected by `BHKS.ExecutableCapSeparationHypotheses`.
 -/
 def bad_setup_of_projected_not_indicator
     (W : ExecutableBadVectorWitness)
