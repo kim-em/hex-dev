@@ -47,6 +47,35 @@ jobs:
           key: lake-build-${{ github.workflow }}-${{ github.run_id }}
           restore-keys: |
             lake-build-${{ github.workflow }}-
+      - name: Restore Isabelle install + AFP session heap
+        # The verified-Isabelle BZ comparator
+        # (`Hex.BZBench.runIsabelle*Checksum`) needs Isabelle on PATH
+        # plus a precomputed `Berlekamp_Zassenhaus` session heap.
+        # `scripts/oracle/setup_bz_isabelle.sh` downloads the dated AFP
+        # archive, builds the session, extracts a Haskell driver and
+        # compiles it; the cache survives runs while the script + AFP
+        # pin + wrapper-theory files are unchanged. See
+        # `SPEC/Libraries/hex-berlekamp-zassenhaus.md` §"External
+        # comparators" for the comparator's gating role.
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ runner.tool_cache }}/isabelle/Isabelle2025-2
+            ~/.isabelle/Isabelle2025-2/heaps
+            .cache/oracles/bz-isabelle
+          key: isabelle-2025-2-${{ hashFiles('scripts/oracle/setup_bz_isabelle.sh', 'scripts/oracle/bz-isabelle/**') }}
+      - name: Install Isabelle 2025-2 (cold cache only)
+        run: |
+          isabelle_root="${{ runner.tool_cache }}/isabelle/Isabelle2025-2"
+          if [ ! -x "${isabelle_root}/bin/isabelle" ]; then
+            mkdir -p "${{ runner.tool_cache }}/isabelle"
+            curl -L --fail --retry 5 --retry-delay 10 \
+              -o /tmp/isabelle.tar.gz \
+              "https://www.cl.cam.ac.uk/research/hvg/Isabelle/dist/Isabelle2025-2_linux.tar.gz"
+            tar -xzf /tmp/isabelle.tar.gz -C "${{ runner.tool_cache }}/isabelle"
+            rm -f /tmp/isabelle.tar.gz
+          fi
+          echo "${isabelle_root}/bin" >> "$GITHUB_PATH"
       - name: Build hex (Mathlib must NOT rebuild from source)
         # Build the bench-exes here, not in the `Bench verify` step.
         # Otherwise the first `lake exe X_bench list` in that step
@@ -72,6 +101,8 @@ jobs:
         run: |
           HEX_LLL_ISABELLE_SVP="$(scripts/oracle/setup_lll_isabelle.sh)"
           export HEX_LLL_ISABELLE_SVP
+          HEX_BZ_ISABELLE="$(scripts/oracle/setup_bz_isabelle.sh)"
+          export HEX_BZ_ISABELLE
           bash scripts/ci/check_bench_verify_budget.sh \
             hexarith_bench hexmatrix_bench hexpoly_bench hexpolyz_bench \
             hexpolyfp_bench hexmodarith_bench hexgramschmidt_bench \

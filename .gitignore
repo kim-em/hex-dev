@@ -1,6 +1,7 @@
 .lake/
 build/
 __pycache__/
+.cache/
 .claude/.pod-checksums
 conformance-failures/*.json
 .venv-oracles/
