@@ -5842,6 +5842,32 @@ def exhaustiveSlowRawFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
     (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
       (choosePrimeData (normalizeForFactor f).squareFreeCore))
 
+/-- Option-returning slow-path raw factor array. Returns `some` exactly
+when `choosePrimeData?` succeeds on the normalized square-free core,
+mirroring `factorFastFactorsWithBound`'s `none`-on-no-good-prime
+contract. Provides the Option-propagating boundary recommended by #5831
+(HO-5d-1b) for the slow exhaustive raw-factor path; the existing total
+`exhaustiveSlowRawFactorsWithBound` retains the silent
+`fallbackPrimeChoiceData` semantics until #5817 + #5819 land or full
+Option propagation through the public `factor` API is staged in. -/
+def exhaustiveSlowRawFactorsWithBound? (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
+  (choosePrimeData? (normalizeForFactor f).squareFreeCore).map fun primeData =>
+    reassemblePolynomialFactors (normalizeForFactor f)
+      (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B primeData)
+
+/-- When `choosePrimeData?` succeeds, the `?` variant agrees with the
+total `exhaustiveSlowRawFactorsWithBound`. -/
+theorem exhaustiveSlowRawFactorsWithBound?_eq_some_of_isSome
+    (f : ZPoly) (B : Nat)
+    (h : (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome) :
+    exhaustiveSlowRawFactorsWithBound? f B =
+      some (exhaustiveSlowRawFactorsWithBound f B) := by
+  unfold exhaustiveSlowRawFactorsWithBound? exhaustiveSlowRawFactorsWithBound
+    choosePrimeData
+  cases hchoose : choosePrimeData? (normalizeForFactor f).squareFreeCore with
+  | none => rw [hchoose] at h; simp at h
+  | some primeData => simp
+
 /-- Raw factor array produced by the slow exhaustive recombination branch.
 
 Exposed publicly so the Mathlib-side layer can express per-branch
@@ -5862,6 +5888,57 @@ def factorSlowFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
 
 #guard factorSlowFactorsWithBound exhaustiveNonMonicQuadraticGuard 4 =
   #[exhaustiveNonMonicQuadraticGuard]
+
+/-- Option-returning slow-path raw factor array.
+
+Returns `some` precisely on the branches whose executable path does not
+consume `fallbackPrimeChoiceData`: the constant-core early-out, the
+quadratic-integer-root short-circuit, and the prime-data-available
+exhaustive case. Returns `none` precisely when both the
+quadratic-integer-root short-circuit fails and `choosePrimeData?` yields
+`none` on the normalized square-free core — the cascade the silent
+fallback would otherwise mask.
+
+This is the slow-path counterpart of the already-`Option`-returning
+`factorFastFactorsWithBound`. Provides the slow-side
+Option-propagating boundary recommended by #5831 (HO-5d-1b). The
+existing total `factorSlowFactorsWithBound` retains the silent
+`fallbackPrimeChoiceData` semantics until either #5817 + #5819 land or
+full `Option` propagation through the public `factor` API is staged in. -/
+def factorSlowFactorsWithBound? (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
+  let normalized := normalizeForFactor f
+  if normalized.squareFreeCore.degree?.getD 0 = 0 then
+    some (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
+  else
+    match quadraticIntegerRootFactors? normalized.squareFreeCore with
+    | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
+    | none =>
+        (choosePrimeData? normalized.squareFreeCore).map fun primeData =>
+          reassemblePolynomialFactors normalized
+            (exhaustiveCoreFactorsWithBound normalized.squareFreeCore B primeData)
+
+/-- Characterise the `some` branch of `factorSlowFactorsWithBound?`.
+
+The `?` variant returns `some (factorSlowFactorsWithBound f B)` exactly
+on the safe branches and `none` precisely on the cascade the silent
+fallback would otherwise mask. Mirrors `factorWithBound?_eq_some_iff_safe_branch`
+for the slow raw-factor path. -/
+theorem factorSlowFactorsWithBound?_eq_some_iff_safe_branch (f : ZPoly) (B : Nat) :
+    factorSlowFactorsWithBound? f B =
+      (if (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0 ∨
+          (quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore).isSome ∨
+          (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome
+        then some (factorSlowFactorsWithBound f B) else none) := by
+  unfold factorSlowFactorsWithBound? factorSlowFactorsWithBound choosePrimeData
+  by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
+  · simp [hdeg]
+  · simp only [hdeg, if_false]
+    cases hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
+    | some coreFactors => simp
+    | none =>
+        cases hchoose : choosePrimeData? (normalizeForFactor f).squareFreeCore with
+        | none => simp
+        | some primeData => simp
 
 set_option maxHeartbeats 800000
 
