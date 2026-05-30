@@ -3760,6 +3760,17 @@ structure MonicisedCoreTransportPackage
   monicCore_degree_eq :
     (Hex.MonicisedCoreData.ofCore core).monicCore.degree?.getD 0 =
       core.degree?.getD 0
+  liftedFactor_monic_of_monicPrimeData :
+    Hex.monicisedCorePrimeData? core = some primeData →
+      ∀ i : LiftedFactorIndex d,
+        Hex.DensePoly.Monic (liftedFactor d i)
+  liftedFactor_natDegree_pos_of_monicPrimeData :
+    Hex.monicisedCorePrimeData? core = some primeData →
+      ∀ i : LiftedFactorIndex d,
+        0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree
+  liftedFactor_injective_of_monicPrimeData :
+    Hex.monicisedCorePrimeData? core = some primeData →
+      Function.Injective (liftedFactor d)
   correspondence :
     HenselSubsetCorrespondenceHypotheses core B primeData d True True
   partition :
@@ -3813,6 +3824,23 @@ theorem monicisedCoreTransportPackage_of_normalizeForFactor_squareFreeCore
       Squarefree (HexPolyZMathlib.toPolynomial core) := by
     simpa [core] using
       IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree f hf_ne
+  have hbound_pos : 0 < B := by
+    simpa [B] using Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero hf_ne
+  have hprecision_of_monicPrimeData :
+      ∀ hselected : Hex.monicisedCorePrimeData? core = some primeData,
+        1 ≤ Hex.precisionForCoeffBound B primeData.p := by
+    intro hselected
+    have hp_prime : Hex.Nat.Prime primeData.p :=
+      Hex.monicisedCorePrimeData?_prime core primeData hselected
+    have hspec :
+        2 * B < primeData.p ^ Hex.precisionForCoeffBound B primeData.p :=
+      Hex.precisionForCoeffBound_spec hp_prime.two_le B
+    have hmodulus : 2 ≤ primeData.p ^ Hex.precisionForCoeffBound B primeData.p := by
+      omega
+    by_contra hlt
+    have hzero : Hex.precisionForCoeffBound B primeData.p = 0 := by omega
+    rw [hzero, pow_zero] at hmodulus
+    omega
   refine
     { lift_eq := rfl
       core_ne := hcore_ne
@@ -3821,10 +3849,25 @@ theorem monicisedCoreTransportPackage_of_normalizeForFactor_squareFreeCore
       monicCore_monic := hmonicCore_monic
       monicCore_nonzero := zpoly_ne_zero_of_monic hmonicCore_monic
       monicCore_degree_eq := hmonicCore_degree
+      liftedFactor_monic_of_monicPrimeData := ?_
+      liftedFactor_natDegree_pos_of_monicPrimeData := ?_
+      liftedFactor_injective_of_monicPrimeData := ?_
       correspondence := ?_
       partition := ?_
       scaled_recovery_of_bound := ?_
       exhaustive_mem_of_scaled_search := ?_ }
+  · intro hselected
+    exact monicisedCoreLiftData_liftedFactor_monic_of_monicPrimeData
+      core B primeData hcore_lc_pos (by simpa [core] using hdegree)
+      hselected (hprecision_of_monicPrimeData hselected)
+  · intro hselected
+    exact monicisedCoreLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
+      core B primeData hcore_lc_pos (by simpa [core] using hdegree)
+      hselected (hprecision_of_monicPrimeData hselected)
+  · intro hselected
+    exact monicisedCoreLiftData_liftedFactor_injective_of_monicPrimeData
+      core B primeData hcore_lc_pos (by simpa [core] using hdegree)
+      hselected (hprecision_of_monicPrimeData hselected)
   · exact henselSubsetCorrespondenceHypotheses_of_choosePrimeData core B
   · exact liftedFactorSubsetPartition_of_choosePrimeData core B hsqfree
   · intro factor S B' hvalid hfactor_prim hfactor_norm hrep hprecision
@@ -3834,6 +3877,37 @@ theorem monicisedCoreTransportPackage_of_normalizeForFactor_squareFreeCore
   · intro factor factors hB_ne hsearch hmem
     exact exhaustiveCoreFactorsWithBound_mem_of_scaledRecombinationSearchMod_some
       hB_ne rfl hsearch hmem
+
+/--
+Consumer-facing extraction of the monicised-core lifted-factor facts for the
+normalized square-free core.  The hypotheses are the non-monic branch facts:
+positive leading coefficient comes from `f ≠ 0`, positive degree is supplied by
+the caller, and the Hensel modular data is aligned through
+`Hex.monicisedCorePrimeData?`, not by rewriting the core to be monic.
+-/
+theorem monicisedCoreTransportPackage_liftedFactor_facts_of_normalizeForFactor_squareFreeCore
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
+    (hdegree : 0 < (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0)
+    (hselected :
+      Hex.monicisedCorePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
+        some (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)) :
+    let core := (Hex.normalizeForFactor f).squareFreeCore
+    let primeData := Hex.choosePrimeData core
+    let B := Hex.ZPoly.defaultFactorCoeffBound f
+    let d := Hex.monicisedCoreLiftData core B primeData
+    (∀ i : LiftedFactorIndex d,
+      Hex.DensePoly.Monic (liftedFactor d i)) ∧
+    (∀ i : LiftedFactorIndex d,
+      0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree) ∧
+    Function.Injective (liftedFactor d) := by
+  intro core primeData B d
+  have pkg :=
+    monicisedCoreTransportPackage_of_normalizeForFactor_squareFreeCore
+      f hf_ne hdegree
+  exact
+    ⟨pkg.liftedFactor_monic_of_monicPrimeData hselected,
+      pkg.liftedFactor_natDegree_pos_of_monicPrimeData hselected,
+      pkg.liftedFactor_injective_of_monicPrimeData hselected⟩
 
 /-- Divisibility propagation through `List.foldl (· * ·)` on `Hex.ZPoly`: if
 `x` divides the accumulator at any point, it divides the final foldl. Used by
