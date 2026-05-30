@@ -1165,22 +1165,25 @@ structure FactorNormalizationData where
   squareFreeCore : ZPoly
   repeatedPart : ZPoly
 
-/--
-Executable data for the integer monicising transform used before Hensel
-lifting a primitive positive-leading core.
+namespace ZPoly
 
-If `core` has degree `n` and leading coefficient `c`, `monicCore` is the
+/--
+Executable data for the integer scaling transform that sends a primitive
+positive-leading core to a monic integer polynomial with the same roots
+(scaled by the leading coefficient).
+
+If `core` has degree `n` and leading coefficient `c`, `monic` is the
 coefficientwise integer polynomial `c^(n-1) * core (X / c)`: lower coefficient
 `a_i` becomes `a_i * c^(n-1-i)` and the leading coefficient is normalised to
 `1`.
 -/
-structure MonicisedCoreData where
+structure ToMonicData where
   core : ZPoly
   leadingCoeff : Int
   degree : Nat
-  monicCore : ZPoly
+  monic : ZPoly
 
-namespace MonicisedCoreData
+namespace ToMonicData
 
 private def transformedCoeffs (core : ZPoly) (degree : Nat) : Array Int :=
   ((List.range degree).map fun i =>
@@ -1192,27 +1195,6 @@ private def transformedCore (core : ZPoly) (degree : Nat) : ZPoly :=
       right
       change (transformedCoeffs core degree).back? ≠ some (0 : Int)
       simp [transformedCoeffs] }
-
-/-- Monicise a core by the standard integer scaling transform. -/
-def ofCore (core : ZPoly) : MonicisedCoreData :=
-  let degree := core.degree?.getD 0
-  { core
-    leadingCoeff := DensePoly.leadingCoeff core
-    degree
-    monicCore :=
-      if DensePoly.leadingCoeff core = 1 then
-        core
-      else
-        transformedCore core degree }
-
-@[simp] theorem ofCore_core (core : ZPoly) :
-    (ofCore core).core = core := rfl
-
-@[simp] theorem ofCore_leadingCoeff (core : ZPoly) :
-    (ofCore core).leadingCoeff = DensePoly.leadingCoeff core := rfl
-
-@[simp] theorem ofCore_degree (core : ZPoly) :
-    (ofCore core).degree = core.degree?.getD 0 := rfl
 
 @[simp] theorem transformedCoeffs_size (core : ZPoly) (degree : Nat) :
     (transformedCoeffs core degree).size = degree + 1 := by
@@ -1241,51 +1223,76 @@ theorem transformedCore_monic (core : ZPoly) (degree : Nat) :
   unfold DensePoly.degree? transformedCore DensePoly.size
   simp [transformedCoeffs]
 
-/-- The transformed core is monic as soon as the source has positive degree. -/
-theorem monicCore_monic_of_pos_degree
+end ToMonicData
+
+/-- Build the `ToMonicData` packet for a core by the integer scaling transform. -/
+def toMonic (core : ZPoly) : ToMonicData :=
+  let degree := core.degree?.getD 0
+  { core
+    leadingCoeff := DensePoly.leadingCoeff core
+    degree
+    monic :=
+      if DensePoly.leadingCoeff core = 1 then
+        core
+      else
+        ToMonicData.transformedCore core degree }
+
+@[simp] theorem toMonic_core (core : ZPoly) :
+    (toMonic core).core = core := rfl
+
+@[simp] theorem toMonic_leadingCoeff (core : ZPoly) :
+    (toMonic core).leadingCoeff = DensePoly.leadingCoeff core := rfl
+
+@[simp] theorem toMonic_degree (core : ZPoly) :
+    (toMonic core).degree = core.degree?.getD 0 := rfl
+
+/-- The `monic` field of `toMonic core` is monic once the source has positive
+degree. -/
+theorem toMonic_monic_isMonic_of_pos_degree
     (core : ZPoly) (_hpos_lc : 0 < DensePoly.leadingCoeff core)
-    (_hdegree : 0 < (ofCore core).degree) :
-    DensePoly.Monic (ofCore core).monicCore := by
-  unfold ofCore
+    (_hdegree : 0 < (toMonic core).degree) :
+    DensePoly.Monic (toMonic core).monic := by
+  unfold toMonic
   by_cases hmonic : DensePoly.leadingCoeff core = 1
   · simp [hmonic, DensePoly.Monic]
-  · simp [hmonic, transformedCore_monic]
+  · simp [hmonic, ToMonicData.transformedCore_monic]
 
-/-- The monicised core preserves the recorded degree in nonconstant cases. -/
-theorem monicCore_degree_eq_of_pos_degree
+/-- The `monic` field preserves the recorded degree in nonconstant cases. -/
+theorem toMonic_monic_degree_eq_of_pos_degree
     (core : ZPoly) (_hpos_lc : 0 < DensePoly.leadingCoeff core)
-    (_hdegree : 0 < (ofCore core).degree) :
-    (ofCore core).monicCore.degree?.getD 0 = (ofCore core).degree := by
-  unfold ofCore
+    (_hdegree : 0 < (toMonic core).degree) :
+    (toMonic core).monic.degree?.getD 0 = (toMonic core).degree := by
+  unfold toMonic
   by_cases hmonic : DensePoly.leadingCoeff core = 1
   · simp [hmonic]
   · simp [hmonic]
 
-/-- Monicising an already-monic core is the identity. -/
-theorem monicCore_eq_core_of_leadingCoeff_eq_one
+/-- Applying `toMonic` to an already-monic core leaves its `monic` field equal
+to the original. -/
+theorem toMonic_monic_eq_core_of_leadingCoeff_eq_one
     (core : ZPoly) (hmonic : DensePoly.leadingCoeff core = 1) :
-    (ofCore core).monicCore = core := by
-  simp [ofCore, hmonic]
+    (toMonic core).monic = core := by
+  simp [toMonic, hmonic]
 
-private def monicisedCoreGuardMonic : MonicisedCoreData :=
-  ofCore (DensePoly.ofCoeffs #[1, 3, 1])
+private def toMonicGuardMonic : ToMonicData :=
+  toMonic (DensePoly.ofCoeffs #[1, 3, 1])
 
-#guard monicisedCoreGuardMonic.monicCore = monicisedCoreGuardMonic.core
+#guard toMonicGuardMonic.monic = toMonicGuardMonic.core
 
-private def monicisedCoreGuardQuadratic : MonicisedCoreData :=
-  ofCore (DensePoly.ofCoeffs #[1, 3, 2])
+private def toMonicGuardQuadratic : ToMonicData :=
+  toMonic (DensePoly.ofCoeffs #[1, 3, 2])
 
-#guard monicisedCoreGuardQuadratic.degree = 2
-#guard monicisedCoreGuardQuadratic.leadingCoeff = 2
-#guard monicisedCoreGuardQuadratic.monicCore = DensePoly.ofCoeffs #[2, 3, 1]
+#guard toMonicGuardQuadratic.degree = 2
+#guard toMonicGuardQuadratic.leadingCoeff = 2
+#guard toMonicGuardQuadratic.monic = DensePoly.ofCoeffs #[2, 3, 1]
 
-private def monicisedCoreGuardZero : MonicisedCoreData :=
-  ofCore 0
+private def toMonicGuardZero : ToMonicData :=
+  toMonic 0
 
-#guard monicisedCoreGuardZero.degree = 0
-#guard monicisedCoreGuardZero.monicCore = DensePoly.ofCoeffs #[1]
+#guard toMonicGuardZero.degree = 0
+#guard toMonicGuardZero.monic = DensePoly.ofCoeffs #[1]
 
-end MonicisedCoreData
+end ZPoly
 
 /--
 Public integer-polynomial factorization result.
@@ -5719,78 +5726,82 @@ private def factorFastCoreGuardPrimeData : PrimeChoiceData :=
     (initialHenselPrecision 4) (ZPoly.quadraticDoublingSteps 4 + 2) =
   some bhksGuardFactors
 
+namespace ZPoly
+
 /--
-Build the fixed-precision Hensel lift data for the monicised copy of an
+Build the fixed-precision Hensel lift data for the monic transform of an
 integer core.  The exhaustive slow path still recombines against the original
-primitive core, but the lift stage sees the monic substrate required by the
+primitive core, but the lift stage sees the monic polynomial required by the
 Hensel pipeline.
 -/
-def monicisedCoreLiftData
+def toMonicLiftData
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : LiftData :=
-  henselLiftData (MonicisedCoreData.ofCore core).monicCore
+  henselLiftData (toMonic core).monic
     (precisionForCoeffBound B primeData.p) primeData
 
 /--
-Optional prime-choice data for the actual monic substrate sent to Hensel lifting.
+Optional prime-choice data for the monic polynomial sent to Hensel lifting.
 
 The public factoring pipeline still chooses prime data from the original core.
 This adjacent surface is for proof consumers that need Berlekamp-form modular
-factor data for `(MonicisedCoreData.ofCore core).monicCore`, the polynomial
-that `monicisedCoreLiftData` passes to `henselLiftData`.
+factor data for `(toMonic core).monic`, the polynomial that `toMonicLiftData`
+passes to `henselLiftData`.
 -/
-def monicisedCorePrimeData? (core : ZPoly) : Option PrimeChoiceData :=
-  choosePrimeData? (MonicisedCoreData.ofCore core).monicCore
+def toMonicPrimeData? (core : ZPoly) : Option PrimeChoiceData :=
+  choosePrimeData? (toMonic core).monic
 
 /--
-Total prime-choice data for the actual monic substrate sent to Hensel lifting.
+Total prime-choice data for the monic polynomial sent to Hensel lifting.
 This keeps the executable public factoring API unchanged while exposing a
 correctly aligned internal data source for downstream correctness proofs.
 -/
-def monicisedCorePrimeData (core : ZPoly) : PrimeChoiceData :=
-  choosePrimeData (MonicisedCoreData.ofCore core).monicCore
+def toMonicPrimeData (core : ZPoly) : PrimeChoiceData :=
+  choosePrimeData (toMonic core).monic
 
 /--
-Lift data for the monicised core using prime-choice data computed from that
-same monicised core.
+Lift data for the monic transform of `core` using prime-choice data computed
+from that same monic polynomial.
 -/
-def monicisedCoreLiftDataWithMonicPrime (core : ZPoly) (B : Nat) : LiftData :=
-  monicisedCoreLiftData core B (monicisedCorePrimeData core)
+def toMonicLiftDataWithMonicPrime (core : ZPoly) (B : Nat) : LiftData :=
+  toMonicLiftData core B (toMonicPrimeData core)
 
-theorem monicisedCorePrimeData?_prime
+theorem toMonicPrimeData?_prime
     (core : ZPoly) (data : PrimeChoiceData)
-    (hdata : monicisedCorePrimeData? core = some data) :
+    (hdata : toMonicPrimeData? core = some data) :
     Nat.Prime data.p := by
-  exact choosePrimeData?_prime (MonicisedCoreData.ofCore core).monicCore data hdata
+  exact choosePrimeData?_prime (toMonic core).monic data hdata
 
-theorem monicisedCorePrimeData?_isGoodPrime
+theorem toMonicPrimeData?_isGoodPrime
     (core : ZPoly) (data : PrimeChoiceData)
-    (hdata : monicisedCorePrimeData? core = some data) :
-    @isGoodPrime (MonicisedCoreData.ofCore core).monicCore data.p data.bounds = true := by
-  exact choosePrimeData?_isGoodPrime (MonicisedCoreData.ofCore core).monicCore data hdata
+    (hdata : toMonicPrimeData? core = some data) :
+    @isGoodPrime (toMonic core).monic data.p data.bounds = true := by
+  exact choosePrimeData?_isGoodPrime (toMonic core).monic data hdata
 
-theorem monicisedCorePrimeData?_factorsModP_berlekamp_form
+theorem toMonicPrimeData?_factorsModP_berlekamp_form
     (core : ZPoly) (data : PrimeChoiceData)
-    (hdata : monicisedCorePrimeData? core = some data) :
-    factorsModPBerlekampForm (MonicisedCoreData.ofCore core).monicCore data := by
+    (hdata : toMonicPrimeData? core = some data) :
+    factorsModPBerlekampForm (toMonic core).monic data := by
   obtain ⟨hzero, heq⟩ :=
     choosePrimeData?_factorsModP_berlekamp_form
-      (MonicisedCoreData.ofCore core).monicCore data hdata
-  exact ⟨monicisedCorePrimeData?_prime core data hdata, hzero, heq⟩
+      (toMonic core).monic data hdata
+  exact ⟨toMonicPrimeData?_prime core data hdata, hzero, heq⟩
 
-theorem monicisedCoreLiftDataWithMonicPrime_eq
+theorem toMonicLiftDataWithMonicPrime_eq
     (core : ZPoly) (B : Nat) :
-    monicisedCoreLiftDataWithMonicPrime core B =
-      henselLiftData (MonicisedCoreData.ofCore core).monicCore
-        (precisionForCoeffBound B (monicisedCorePrimeData core).p)
-        (monicisedCorePrimeData core) := by
+    toMonicLiftDataWithMonicPrime core B =
+      henselLiftData (toMonic core).monic
+        (precisionForCoeffBound B (toMonicPrimeData core).p)
+        (toMonicPrimeData core) := by
   rfl
+
+end ZPoly
 
 def exhaustiveCoreFactorsWithBound
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Array ZPoly :=
   if B = 0 then
     #[core]
   else
-    let liftData := monicisedCoreLiftData core B primeData
+    let liftData := ZPoly.toMonicLiftData core B primeData
     let factors :=
       recombineScaledExhaustive (DensePoly.leadingCoeff core) core liftData
     if factors.isEmpty then
@@ -5813,7 +5824,7 @@ private def exhaustiveMonicCoreGuardPrimeData : PrimeChoiceData :=
 private def exhaustiveNonMonicQuadraticGuard : ZPoly :=
   DensePoly.ofCoeffs #[1, 0, 2]
 
-#guard (MonicisedCoreData.ofCore exhaustiveNonMonicQuadraticGuard).monicCore =
+#guard (ZPoly.toMonic exhaustiveNonMonicQuadraticGuard).monic =
   DensePoly.ofCoeffs #[2, 0, 1]
 
 #guard quadraticIntegerRootFactors? exhaustiveNonMonicQuadraticGuard = none
@@ -9333,11 +9344,11 @@ theorem exhaustiveCoreFactorsWithBound_normalizeFactorSign
   · simp only [hB, if_false]
     by_cases hempty :
         (recombineScaledExhaustive (DensePoly.leadingCoeff core) core
-            (monicisedCoreLiftData core B primeData)).isEmpty
+            (ZPoly.toMonicLiftData core B primeData)).isEmpty
     · simp [hempty, hcore]
     · simp only [hempty]
       exact recombineScaledExhaustive_normalizeFactorSign (DensePoly.leadingCoeff core) core
-        (monicisedCoreLiftData core B primeData)
+        (ZPoly.toMonicLiftData core B primeData)
 
 theorem exhaustiveCoreFactorsWithBound_shouldRecord
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
@@ -9350,11 +9361,11 @@ theorem exhaustiveCoreFactorsWithBound_shouldRecord
   · simp only [hB, if_false]
     by_cases hempty :
         (recombineScaledExhaustive (DensePoly.leadingCoeff core) core
-            (monicisedCoreLiftData core B primeData)).isEmpty
+            (ZPoly.toMonicLiftData core B primeData)).isEmpty
     · simp [hempty, hcore]
     · simp only [hempty]
       exact recombineScaledExhaustive_shouldRecord (DensePoly.leadingCoeff core) core
-        (monicisedCoreLiftData core B primeData)
+        (ZPoly.toMonicLiftData core B primeData)
 
 /-- Every emitted factor of the exhaustive recombination wrapper is
 primitive when the input core is primitive. The two `#[core]` short-circuit
@@ -9371,11 +9382,11 @@ theorem exhaustiveCoreFactorsWithBound_primitive
   · simp only [hB, if_false]
     by_cases hempty :
         (recombineScaledExhaustive (DensePoly.leadingCoeff core) core
-            (monicisedCoreLiftData core B primeData)).isEmpty
+            (ZPoly.toMonicLiftData core B primeData)).isEmpty
     · simp [hempty, hcore_primitive]
     · simp only [hempty]
       exact recombineScaledExhaustive_primitive (DensePoly.leadingCoeff core) core
-        (monicisedCoreLiftData core B primeData)
+        (ZPoly.toMonicLiftData core B primeData)
 
 private theorem bhksRecoverClassified_success_product
     {f : ZPoly} {d : LiftData} {candidates : Array ZPoly}
@@ -9655,24 +9666,24 @@ theorem exhaustiveCoreFactorsWithBound_product
   · simp only [hB, if_false]
     by_cases hempty :
         (recombineScaledExhaustive (DensePoly.leadingCoeff core) core
-            (monicisedCoreLiftData core B primeData)).isEmpty
+            (ZPoly.toMonicLiftData core B primeData)).isEmpty
     · simp [hempty, Array.polyProduct]
     · simp only [hempty]
       cases hsearch : scaledRecombinationSearchMod (DensePoly.leadingCoeff core) core
           (liftModulus
-            (monicisedCoreLiftData core B primeData))
-          (monicisedCoreLiftData core B primeData).liftedFactors.toList with
+            (ZPoly.toMonicLiftData core B primeData))
+          (ZPoly.toMonicLiftData core B primeData).liftedFactors.toList with
       | none =>
           have hnil :
               recombineScaledExhaustive (DensePoly.leadingCoeff core) core
-                (monicisedCoreLiftData core B primeData) = #[] := by
+                (ZPoly.toMonicLiftData core B primeData) = #[] := by
             rw [recombineScaledExhaustive]
             simp [hsearch]
           rw [hnil] at hempty
           simp at hempty
       | some xs =>
           exact recombineScaledExhaustive_product (DensePoly.leadingCoeff core) core
-            (monicisedCoreLiftData core B primeData)
+            (ZPoly.toMonicLiftData core B primeData)
             xs hsearch
 
 /-- The leading coefficient of an `Array.polyProduct` over a list of polynomials
