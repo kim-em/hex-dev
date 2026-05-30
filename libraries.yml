@@ -321,6 +321,8 @@ libraries:
           description: Unconditional `factorSlow` exhaustive recombination backstop on deterministic split inputs, including the bounded degree/height diagnostic subset.
         - name: degree-height-matrix
           description: Encoded degree/root-height split integer-polynomial matrix for public, fast-path, and slow-path BZ factorization registrations.
+        - name: fallback-probe
+          description: Explicit split-degree cascade-trigger inputs `(X-1)...(X-n)` for public BZ factorization, covering the prime-search fallback and BHKS recombination shape together.
         - name: ho2-adversarial-recombination
           description: HO-2 adversarial recombination shapes `X^4 + 1`, `(X^2 - 2)(X^2 - 3)`, Swinnerton-Dyer SD3, and `Phi_15`, including pinned modular split profiles.
 

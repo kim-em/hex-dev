@@ -26,11 +26,14 @@ per-target comment annotates which one.
 Split-family registrations (`prep := smokeInput`):
 
 * `runFactorChecksum`: public `factor` combinator on split inputs over the
-  scientific degree schedule `splitScientificSchedule = #[2, 3, 4, 5]`.
+  scientific degree schedule
+  `splitScientificSchedule = #[2, 3, 4, 5, 8, 10, 12, 14, 16, 18, 20, 22, 24]`.
 * `runFactorFastChecksum`: CLD fast path on the same scientific schedule,
   preserving `none`.
 * `runFactorSlowChecksum`: exhaustive backstop on the fast schedule
   `smokeSchedule = #[1, 2, 3, 4]`.
+* `runFactorFallbackProbeChecksum`: public `factor` combinator on the explicit
+  cascade-trigger split-degree schedule `fallbackProbeSchedule`.
 
 Shared compare domain (`prep := smokeInput`, `paramSchedule := smokeSchedule`):
 
@@ -110,7 +113,8 @@ def linearZFactor (root : Int) : ZPoly :=
 Deterministic split integer-polynomial family. Consumed both as the fast
 sweep (`smokeSchedule = #[1, 2, 3, 4]`, used by the slow target and the
 `compare` registrations) and as the scientific schedule for the public and
-fast-path targets (`splitScientificSchedule = #[2, 3, 4, 5]`).
+fast-path targets
+(`splitScientificSchedule = #[2, 3, 4, 5, 8, 10, 12, 14, 16, 18, 20, 22, 24]`).
 -/
 def smokeInput (n : Nat) : ZPoly :=
   (Array.range (n + 1)).foldl
@@ -123,7 +127,20 @@ def smokeSchedule : Array Nat :=
 
 /-- Scientific split-family schedule for public and proof-facing fast factoring. -/
 def splitScientificSchedule : Array Nat :=
-  #[2, 3, 4, 5]
+  #[2, 3, 4, 5, 8, 10, 12, 14, 16, 18, 20, 22, 24]
+
+/--
+Explicit fallback-prime probe family. Here the benchmark parameter is the split
+degree itself, so `prepFallbackProbeInput 11` is `(X-1)(X-2)...(X-11)`.
+-/
+def prepFallbackProbeInput (degree : Nat) : ZPoly :=
+  (Array.range degree).foldl
+    (fun acc i => acc * linearZFactor (Int.ofNat (i + 1)))
+    (1 : ZPoly)
+
+/-- Cascade-trigger split-degree schedule from the BZ-vs-Isabelle post-mortem. -/
+def fallbackProbeSchedule : Array Nat :=
+  #[11, 12, 13, 15, 18, 22, 24]
 
 /-- HO-2 adversarial input `X^4 + 1`, irreducible over `Z` but split mod `5`. -/
 def advX4Plus1 : ZPoly :=
@@ -348,6 +365,11 @@ def checksumFastPathSetup (f : ZPoly) (p : Nat) : UInt64 :=
 /-- Benchmark target: public fast-with-slow-fallback factorization. -/
 def runFactorChecksum (f : ZPoly) : UInt64 :=
   checksumFactorization (factor f)
+
+/-- Benchmark target: public factorization on explicit fallback-prime probes. -/
+@[noinline]
+def runFactorFallbackProbeChecksum (f : ZPoly) : UInt64 :=
+  runFactorChecksum f
 
 /-- Benchmark target: public CLD fast path, preserving fast-path misses. -/
 def runFactorFastChecksum (f : ZPoly) : UInt64 :=
@@ -637,16 +659,17 @@ def bzPrecisionLocalComplexity (param : Nat) : Nat :=
 
 /-
 Scientific split-family registration for the public combinator. The declared
-cost model is the classical BHKS polynomial bound over the split degree
-parameter: dense arithmetic/recombination dominates, so this plumbing uses the
-shared `n^9 + n^7 log^2 n` complexity shape while the separate degree/height,
+cost model is the classical BHKS polynomial bound over the deterministic split
+degree. `smokeInput n` has degree `n + 1`, so the asymptotic model is represented
+with the same `n^9 + n^7 log^2 n` shape after dropping the constant offset;
+dense arithmetic/recombination dominates, while the separate degree/height,
 precision/local-factor, and adversarial registrations cover the other HO-3 axes.
 -/
 setup_benchmark runFactorChecksum n => bzClassicalSmokeComplexity n
   with prep := smokeInput
   where {
     paramFloor := 2
-    paramCeiling := 5
+    paramCeiling := 24
     paramSchedule := .custom splitScientificSchedule
     maxSecondsPerCall := 8.0
     targetInnerNanos := 100000000
@@ -654,16 +677,36 @@ setup_benchmark runFactorChecksum n => bzClassicalSmokeComplexity n
   }
 
 /-
+Scientific fallback-prime probe registration for the public combinator. The
+prepared fixture maps parameter `n` directly to the split degree of
+`(X-1)...(X-n)`, selecting the post-mortem cascade-trigger cases where
+prime-choice fallback and BHKS recombination shape interact. The declared model
+remains the classical BHKS polynomial bound over that degree:
+`n^9 + n^7 log^2 n`.
+-/
+setup_benchmark runFactorFallbackProbeChecksum n => bzClassicalSmokeComplexity n
+  with prep := prepFallbackProbeInput
+  where {
+    paramFloor := 11
+    paramCeiling := 24
+    paramSchedule := .custom fallbackProbeSchedule
+    maxSecondsPerCall := 8.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
+/-
 Scientific split-family registration for the CLD fast path on the same inputs
-as `factor`. The declared cost model is the same classical BHKS polynomial
-bound used by the public combinator, since the fast path pays the same dense
-arithmetic and recombination complexity on successful split inputs.
+as `factor`. Since `smokeInput n` again has degree `n + 1`, the declared model
+uses the same offset-insensitive classical BHKS polynomial bound as the public
+combinator. The fast path pays the same dense arithmetic and recombination
+complexity on successful split inputs.
 -/
 setup_benchmark runFactorFastChecksum n => bzClassicalSmokeComplexity n
   with prep := smokeInput
   where {
     paramFloor := 2
-    paramCeiling := 5
+    paramCeiling := 24
     paramSchedule := .custom splitScientificSchedule
     maxSecondsPerCall := 8.0
     targetInnerNanos := 100000000
