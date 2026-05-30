@@ -36,7 +36,7 @@ The gating comparator is `verified Isabelle BZ (AFP
 Berlekamp_Zassenhaus; Haskell extraction of factor_int_poly via
 Factorization_External_Interface.thy)`, declared in
 `SPEC/Libraries/hex-berlekamp-zassenhaus.md`. HO-5a wired the scheduled
-hardware comparator as three fixed targets over the canonical
+hardware comparator initially as three fixed targets over the canonical
 `(x^2 - 2)(x^2 - 3)` input:
 
 - `runFactorIsabelleDomainChecksum`: Lean `factor` on the comparator
@@ -46,51 +46,99 @@ hardware comparator as three fixed targets over the canonical
   trivial polynomial `1`, used as the per-call process/protocol overhead
   baseline.
 
+HO-5b extended this surface with four per-rung verified-Isabelle
+comparator registrations on the deterministic split family
+`smokeInput n` for `n ∈ {2, 3, 4, 5}`
+(`runIsabelleSplitN{2,3,4,5}Checksum`), one per rung of the parametric
+`splitScientificSchedule`. Each pairs with the existing parametric Lean
+`runFactorChecksum n` median at the same rung to give a per-rung
+`hex/isabelle` ratio, replacing the prior single-rung canonical-fixed
+verdict with a scaling-ladder trend.
+
 ### Per-call comparator overhead
 
-The persistent-subprocess baseline median in the run below was **8.606 ms**
-per call. The matching Isabelle comparator median on the canonical
-quadratic-product input was **136.537 ms**, so the overhead share on the
-measured rung is **6.303%**. The adjusted Isabelle time is therefore
-`136.537 ms - 8.606 ms = 127.930 ms`.
+The persistent-subprocess baseline median in the per-rung ladder sweep
+below was **6.430 ms** per call (`runIsabelleFactorBaselineChecksum`,
+trivial input `1`). Per-rung overhead shares are between
+**0.76% and 0.78%** of the corresponding Isabelle median, so the
+adjusted ratio differs from the raw ratio by under one percent at every
+rung.
 
-### Canonical Isabelle BZ rung
+### Split-family scaling ladder
 
-Comparator sweep at commit `4e2c8b362de127e08d8a30d101eba501c1cf145d`
-on `carica` (Apple M2 Ultra, macOS 15.6), recorded
-`2026-05-30T12:13:32Z`. The worktree was dirty because the pod-managed
-`.claude/CLAUDE.md` file carried a pre-existing local modification
-outside this report package.
+Per-rung sweep at commit `2f4ef93d-dirty` on `carica`
+(Apple M2 Ultra, macOS 15.6), recorded `2026-05-30T12:47:03Z`. The
+worktree was dirty because the pod-managed `.claude/CLAUDE.md` file
+carried a pre-existing local modification outside this report package.
 
 Sweep command:
 
 ```sh
 HEX_BZ_ISABELLE="$PWD/.cache/oracles/bz-isabelle/wrapper/bz_isabelle" \
 lake exe hexbz_bench run \
-  Hex.BerlekampZassenhausBench.runFactorChecksum \
-  Hex.BerlekampZassenhausBench.runFactorFastChecksum \
-  Hex.BerlekampZassenhausBench.runFactorSlowChecksum \
-  Hex.BerlekampZassenhausBench.runFactorCompareChecksum \
-  Hex.BerlekampZassenhausBench.runFactorSlowCompareChecksum \
-  Hex.BerlekampZassenhausBench.runFactorFastCompareChecksum \
-  Hex.BerlekampZassenhausBench.runFactorDegreeHeightChecksum \
-  Hex.BerlekampZassenhausBench.runFactorFastDegreeHeightChecksum \
-  Hex.BerlekampZassenhausBench.runFactorSlowDegreeHeightChecksum \
-  Hex.BerlekampZassenhausBench.runFastPathPrecisionLocalChecksum \
-  Hex.BerlekampZassenhausBench.runFactorAdvX4Plus1Checksum \
-  Hex.BerlekampZassenhausBench.runFactorFastSetupAdvX4Plus1Checksum \
-  Hex.BerlekampZassenhausBench.runFactorAdvQuadSqrt2Sqrt3Checksum \
-  Hex.BerlekampZassenhausBench.runFactorFastAdvQuadSqrt2Sqrt3Checksum \
-  Hex.BerlekampZassenhausBench.runFactorAdvPhi15Checksum \
-  Hex.BerlekampZassenhausBench.runFactorFastSetupAdvPhi15Checksum \
-  Hex.BerlekampZassenhausBench.runAdvSwinnertonDyerSD3ModularSplitChecksum \
-  Hex.BerlekampZassenhausBench.runFactorIsabelleDomainChecksum \
-  Hex.BerlekampZassenhausBench.runIsabelleFactorChecksum \
-  Hex.BerlekampZassenhausBench.runIsabelleFactorBaselineChecksum \
-  --export-file reports/bench-results/hex-berlekamp-zassenhaus-4e2c8b3.json
+    Hex.BerlekampZassenhausBench.runFactorChecksum \
+    Hex.BerlekampZassenhausBench.runIsabelleFactorBaselineChecksum \
+    Hex.BerlekampZassenhausBench.runIsabelleSplitN2Checksum \
+    Hex.BerlekampZassenhausBench.runIsabelleSplitN3Checksum \
+    Hex.BerlekampZassenhausBench.runIsabelleSplitN4Checksum \
+    Hex.BerlekampZassenhausBench.runIsabelleSplitN5Checksum \
+    --export-file reports/bench-results/hex-berlekamp-zassenhaus-2f4ef93-split-ladder.json
 ```
 
 Export artefact:
+`reports/bench-results/hex-berlekamp-zassenhaus-2f4ef93-split-ladder.json`,
+SHA-256
+`4db99e8831495d947deff266c0f202fe7b7c543950ad7ed555df8b0c4bd5f929`.
+
+Per-rung Isabelle hashes agree with the corresponding
+`runFactorChecksum n` Lean hash (e.g. `n = 5` produces
+`0x2a6bd8144b402a41` on both sides), confirming factor-multiset
+agreement at every measured rung.
+
+| Rung | Lean median | Isabelle median | overhead % | raw ratio | adjusted ratio | speedup (adj) |
+|---:|---:|---:|---:|---:|---:|---:|
+| `n = 2` (`(x−1)(x−2)(x−3)`) | 37.496 ms | 840.841 ms | 0.765% | 0.0446 | 0.0449 | Lean 22.25× faster |
+| `n = 3` (`(x−1)…(x−4)`) | 91.720 ms | 827.999 ms | 0.777% | 0.1108 | 0.1116 | Lean 8.96× faster |
+| `n = 4` (`(x−1)…(x−5)`) | 198.663 ms | 829.483 ms | 0.775% | 0.2395 | 0.2414 | Lean 4.14× faster |
+| `n = 5` (`(x−1)…(x−6)`) | 388.087 ms | 824.591 ms | 0.780% | 0.4706 | 0.4743 | Lean 2.11× faster |
+
+**Trend.** Across the four eligible split rungs, Isabelle's per-call
+adjusted time is essentially constant in `n` (821–834 ms, dominated by
+fixed subprocess request + AFP-extracted-Haskell algorithm overhead),
+while hex's `factor` per-call median grows monotonically
+`37.5 → 91.7 → 198.7 → 388.1 ms`. The per-rung Lean multipliers
+across this range are `2.45×`, `2.17×`, `1.95×` (geometric mean
+`~2.18×`), well below the worst-case BHKS classical-arithmetic
+prediction because the CLD fast path absorbs most of the recombination
+work on split inputs. The adjusted ratio therefore rises monotonically
+from `0.045` at `n = 2` to `0.474` at `n = 5`, a change of `+0.43`
+absolute over the four rungs.
+
+**Gating-goal verdict (largest eligible rung `n = 5`).** Lean
+`388.087 ms` vs Isabelle adjusted `818.161 ms`; adjusted ratio
+`0.4743` (Lean 2.11× faster). Gating-goal verdict on the
+`splitScientificSchedule`'s largest rung: **met**.
+
+**Extrapolation concern.** Holding Isabelle's constant per-call cost
+and projecting Lean's `~2.18×` per-rung multiplier, the adjusted
+ratio is predicted to reach approximately `1.03×` at `n = 6` —
+i.e. the gating goal is at the edge of the schedule's reach and a
+single additional rung could flip the verdict. The schedule's largest
+currently eligible rung is `n = 5`; per the previous report's
+"Concerns" note an exploratory `n = 6` run hits the per-call cap on
+this `maxSecondsPerCall = 8.0s` budget. Extending the schedule to
+expose larger rungs is HO-5c's concern.
+
+### Canonical Isabelle BZ rung (background)
+
+Before HO-5b added the per-rung registrations, HO-5a's initial
+comparator wiring exposed only one fixed canonical rung. That rung is
+retained here as background, since it is what the earlier report
+recorded.
+
+Comparator sweep at commit `4e2c8b362de127e08d8a30d101eba501c1cf145d`
+on `carica` (Apple M2 Ultra, macOS 15.6), recorded
+`2026-05-30T12:13:32Z`. Export artefact:
 `reports/bench-results/hex-berlekamp-zassenhaus-4e2c8b3.json`, SHA-256
 `29485aba6e0ecae771f215515fa465cad6982a58d5375c82983ff66f5601d234`.
 
@@ -98,25 +146,16 @@ Export artefact:
 |---|---:|---:|---:|---:|---:|---:|:---|
 | `(x^2 - 2)(x^2 - 3)` fixed comparator target | 32 ns | 136.537 ms | 6.303% | 0.000000234 | 0.000000250 | Lean 3,997,824× faster | eligible, compile-fold warning |
 
-**Trend.** The current comparator registration exposes only one canonical
-fixed rung, so no cross-rung trend can be inferred from the fixed
-Lean/Isabelle pair. This is a coverage gap for the
-`SPEC/benchmarking.md` §"Headline reports" trend requirement, not a trend
-claim.
-
-**Gating-goal verdict (canonical fixed rung).** Lean `32 ns` vs Isabelle
-adjusted `127.930 ms`; adjusted ratio `0.000000250` (Lean 3,997,824×
-faster). Gating-goal verdict on this fixed comparator rung: **met**.
-
-The Lean-side fixed target also triggered lean-bench's sub-microsecond
+The Lean-side fixed target triggered lean-bench's sub-microsecond
 warning, so the fixed-target ratio is useful as a same-checksum
 comparator wiring proof but not as a scientific algorithmic timing
 signal. On the closest non-folded registered target for the same
 polynomial, `runFactorAdvQuadSqrt2Sqrt3Checksum`, Lean measured
 `64.957 ms`; against the same Isabelle run this gives raw ratio
-`0.4758` and overhead-adjusted ratio `0.5078` (Lean 1.97× faster). That
-target is still a singleton smoke registration, so it is not a scaling
-ladder verdict.
+`0.4758` and overhead-adjusted ratio `0.5078` (Lean 1.97× faster). The
+per-rung split-family ladder above supersedes this single-rung
+comparator verdict as the headline ratio evidence; the canonical fixed
+rung is now wiring evidence only.
 
 ## Appendix: Internal-Model Verdicts
 
@@ -592,17 +631,27 @@ record on each adversarial polynomial.
 - `runFactorSlowDegreeHeightChecksum` is now explicit and reproducible on
   a completing small subset; it remains diagnostic evidence only, not a
   Phase 4 completion verdict for the full slow path.
-- The verified-Isabelle BZ comparator is wired, but the current
-  registration exposes only a fixed canonical comparator rung. That
-  verifies same-checksum comparator plumbing, and the canonical adjusted
-  ratio is below `1x`, but it does not yet provide the per-family
-  scaling ladders needed for a complete Phase-4 headline verdict across
-  every scientific bench target.
-- `runFactorIsabelleDomainChecksum` measured at `32 ns` and triggered
-  lean-bench's compile-fold warning. The non-folded
+- The verified-Isabelle BZ comparator now has a per-rung scaling ladder
+  on the deterministic split family `splitScientificSchedule = #[2..5]`.
+  The largest eligible rung's adjusted ratio `0.4743` meets the
+  `hex/isabelle ≤ 1×` gating goal, and the ratio's `~2.1×`-per-rung
+  trend is monotonic. Per-family ladders for the other scientific
+  schedules (`degreeHeightSchedule`, `slowDegreeHeightSchedule`,
+  `precisionLocalSchedule`, the HO-2 adversarial singletons) are not
+  yet wired; each would need its own per-rung `setup_fixed_benchmark`
+  Isabelle registrations on the respective prepared inputs.
+- The `n = 5` adjusted ratio `0.4743` is the largest rung
+  `splitScientificSchedule` can currently provide under the
+  `maxSecondsPerCall = 8.0s` budget; extrapolating the `~2.1×` trend
+  predicts the ratio crosses `1.0×` between `n = 6` and `n = 7`.
+  Extending the schedule to expose larger rungs is HO-5c's concern.
+- `runFactorIsabelleDomainChecksum` (the canonical fixed Lean target)
+  still measured at `32 ns` and triggered lean-bench's compile-fold
+  warning. The non-folded
   `runFactorAdvQuadSqrt2Sqrt3Checksum` measurement is the more useful
-  algorithmic context for the same polynomial, but it is still a
-  singleton smoke row rather than a scaling-rung trend.
+  algorithmic context for that polynomial, but the per-rung split-family
+  ladder above is now the headline ratio evidence; the canonical fixed
+  rung is retained as background only.
 - HO-3 ([#2566](https://github.com/kim-em/hex/issues/2566)) remains open
   as a complexity-evidence concern: this report now records §Profile
   coverage for every declared
