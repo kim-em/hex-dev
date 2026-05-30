@@ -34,7 +34,7 @@ variable {p : ℕ}
 /--
 The executable coefficientwise reduction `Hex.ZPoly.modP` agrees with
 Mathlib's coefficient map from `ℤ[X]` to `(ZMod p)[X]` after transporting the
-resulting `FpPoly` through the Berlekamp bridge.
+resulting `FpPoly` through the Berlekamp transport.
 -/
 theorem toMathlibPolynomial_modP_eq_map_intCast_zmod
     [Hex.ZMod64.Bounds p] (f : Hex.ZPoly) :
@@ -48,7 +48,7 @@ theorem toMathlibPolynomial_modP_eq_map_intCast_zmod
 The Mathlib `ZMod p`-cast of the leading coefficient of a `Hex.ZPoly` agrees
 with the executable `ZMod64`-valued `leadingCoeffModP` after transport along
 `ZMod64.toZMod`. This is the integer-side companion to the modular `modP`
-bridge: it lets a downstream consumer chain the executable good-prime
+lemma: it lets a downstream caller chain the executable good-prime
 hypothesis through to the Mathlib `Polynomial.map` natural-degree lemma.
 -/
 theorem intCast_zmod_leadingCoeff_eq_toZMod_leadingCoeffModP
@@ -197,7 +197,7 @@ theorem irreducible_of_isPrimitive_of_irreducible_map_intCast_zmod
 Given a `Hex.ZPoly` core whose Mathlib image is primitive, with a prime `p`
 whose action via `Int.castRingHom (ZMod p)` does not kill the leading
 coefficient, and with the reduction Mathlib-irreducible, the original core is
-`Hex.ZPoly.Irreducible` via the existing bridge equivalence.
+`Hex.ZPoly.Irreducible` via the existing equivalence.
 -/
 theorem Hex_ZPoly_Irreducible_of_irreducible_map_intCast_zmod
     [Fact (Nat.Prime p)]
@@ -407,7 +407,7 @@ Given a `choosePrimeData?` success witness and a singleton-bounded
 modular-factor count, the executable `factorsModP` array packaged by
 `choosePrimeData?_factorsModP_berlekamp_form` is the Berlekamp factor
 output for the monic modular image; the `irreducible_of_berlekampFactor_factors_length_le_one`
-no-split bridge then turns this into Mathlib irreducibility of the monic
+no-split lemma then turns this into Mathlib irreducibility of the monic
 modular image, which transfers along `toMathlibPolynomial_scale` to
 Mathlib irreducibility of `fModP` and finally to integer-level
 irreducibility of `core`.
@@ -465,7 +465,7 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
       rw [hfactors_eq]
       simp [List.length_map]
     omega
-  -- Apply the no-split bridge to obtain Mathlib irreducibility of the monic image.
+  -- Apply the no-split lemma to obtain Mathlib irreducibility of the monic image.
   have hirr_monic :
       Irreducible
         (HexBerlekampMathlib.toMathlibPolynomial
@@ -481,7 +481,7 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
         (Hex.ZPoly.modP primeData.p core) := by
     unfold Hex.monicModularImage
     simp [hzero]
-  -- Push through the Mathlib bridge using toMathlibPolynomial_scale.
+  -- Push through the Mathlib transport using toMathlibPolynomial_scale.
   rw [hmonicImg_eq, toMathlibPolynomial_scale] at hirr_monic
   -- The scaling constant is a unit (nonzero in the field).
   have hfsize : 0 < (Hex.ZPoly.modP primeData.p core).size :=
@@ -592,17 +592,17 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squ
   exact squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
     core primeData hselected hsmall hprim hlc_map_ne hsquareFree_monic
 
-/-! ### Substrate discharges for the small-mod singleton branch
+/-! ### Base discharges for the small-mod singleton branch
 
 The two lemmas below feed `squareFreeCore_irreducible_of_small_mod_singleton`
 its `hprim` and `hlc_map_ne` side-conditions from the executable invariants
 that `normalizeForFactor` and `choosePrimeData?` already maintain. They
-form the substrate for the small-mod singleton arm of the HO-1 capstone
+form the base lemmas for the small-mod singleton arm of the HO-1 capstone
 `factor_irreducible_of_nonUnit` (issue #4170, decomposed in #4544).
 -/
 
 /--
-Bridge from the executable `Hex.ZPoly.Primitive` predicate to Mathlib's
+Identification of the executable `Hex.ZPoly.Primitive` predicate with Mathlib's
 `Polynomial.IsPrimitive` on the transported polynomial.
 
 If the integer-coefficient gcd of `f` is `1`, then any integer `r` whose
@@ -726,7 +726,7 @@ private theorem isPrimitive_pow {p : Polynomial ℤ} (hp : p.IsPrimitive) (N : N
 
 /-! ### Squarefree transport for the square-free core
 
-The lemmas below bridge the executable `Hex.ZPoly.SquareFreeRat` invariant
+The lemmas below identify the executable `Hex.ZPoly.SquareFreeRat` invariant
 (from `Hex.ZPoly.primitiveSquareFreeDecomposition_squareFreeCore`) to
 Mathlib's `Squarefree` over `Polynomial ℤ` via the rational image.  The
 chain is:
@@ -750,7 +750,7 @@ square-free invariant for `normalizeForFactor f`. -/
 
 /--
 The executable formal derivative on `Hex.DensePoly R` agrees with Mathlib's
-`Polynomial.derivative` under the `HexPolyMathlib.toPolynomial` bridge, for
+`Polynomial.derivative` under the `HexPolyMathlib.toPolynomial` transport, for
 any commutative semiring with decidable equality.
 -/
 theorem toPolynomial_derivative
@@ -786,7 +786,7 @@ The executable `Hex.ZPoly.SquareFreeRat` invariant transports to
 derivative.  This is the field-side discharge of the squarefree
 predicate: once the executable rational gcd is shown to be a unit (which
 follows from `(gcd …).size ≤ 1` together with `f ≠ 0`), the
-gcd-associatedness bridge `HexPolyMathlib.toPolynomial_gcd_associated`
+gcd-associatedness lemma `HexPolyMathlib.toPolynomial_gcd_associated`
 forces the Mathlib gcd to be a unit too, which is `IsCoprime`.
 -/
 theorem isCoprime_toPolynomial_map_intCast_derivative_of_squareFreeRat
@@ -920,7 +920,7 @@ executable `Hex.ZPoly.SquareFreeRat` invariant
 `HexPolyZ/Basic.lean:2997`) via `Separable.squarefree` with the
 Gauss-style descent
 `squarefree_of_isPrimitive_of_squarefree_map_intCast`, using the
-existing primitivity bridge
+existing primitivity lemma
 `normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive`.
 
 This discharges the explicit `hcore_sqfree` hypothesis previously threaded
@@ -970,12 +970,12 @@ theorem normalizeForFactor_squareFreeCore_toPolynomial_squarefree
     (normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive f hf) hsf_Q
 
 /--
-Bridge from the executable `isGoodPrime` invariant to the Mathlib
+Identification of the executable `isGoodPrime` invariant with the Mathlib
 `Int.castRingHom (ZMod p)`-cast leading-coefficient nonvanishing
 required by the reduction-mod-`p` machinery.
 
 The good-prime predicate carries `leadingCoeffAdmissible`, i.e. the
-executable `leadingCoeffModP` is nonzero; the iff bridge
+executable `leadingCoeffModP` is nonzero; the iff lemma
 `intCast_zmod_leadingCoeff_ne_zero_iff_leadingCoeffModP_ne_zero`
 translates that into the Mathlib cast form.
 -/
@@ -1007,7 +1007,7 @@ theorem choosePrimeData?_leadingCoeff_castRingHom_ne_zero
       (Hex.choosePrimeData?_isGoodPrime f primeData hselected)
 
 /--
-Reverse bridge from Mathlib's `Polynomial.IsPrimitive` on the transported
+Reverse identification from Mathlib's `Polynomial.IsPrimitive` on the transported
 polynomial to the executable `Hex.ZPoly.Primitive` predicate.
 
 Apply `IsPrimitive` at the constant polynomial `C (content f)` (which divides
@@ -1069,7 +1069,7 @@ private lemma dvd_gcd_mul_gcd_of_dvd_mul {α : Type*} [EuclideanDomain α]
   rwa [mul_comm] at h2
 
 /--
-**#4617 substrate (HO-1, sub-issue of #4610).**
+**#4617 base task (HO-1, sub-issue of #4610).**
 
 For a polynomial `p` over a characteristic-zero field `K`, the executable gcd
 `gcd p p'` is associated to `divRadical p = p / radical p`.
@@ -1230,7 +1230,7 @@ theorem Polynomial.gcd_derivative_associated_divRadical_of_charZero
 
 /-! ### Rational repeatedPart-divides-squareFreeCore-power transport (#4675)
 
-Substrate helpers consumed by the integer Gauss descent of #4618 (via
+Base helpers consumed by the integer Gauss descent of #4618 (via
 the sibling #4676). The abstract Polynomial-ℚ structure factoring out of
 the executable rational decomposition: `divRadical` divides a power of
 `radical` (in any UFD), `toPolynomial` of a coefficient-scaled
@@ -1395,7 +1395,7 @@ theorem normalizeForFactor_repeatedPart_map_intCast_dvd_squareFreeCore_map_intCa
   have hrp_eq : (Hex.normalizeForFactor f).repeatedPart =
       (Hex.ZPoly.primitiveSquareFreeDecomposition core).repeatedPart := rfl
   rw [hsf_eq, hrp_eq]
-  -- Move the goal into the rational view through the integer-to-rational bridge.
+  -- Move the goal into the rational view through the integer-to-rational lift.
   rw [← toPolynomial_toRatPoly_eq_map_intCast,
       ← toPolynomial_toRatPoly_eq_map_intCast]
   -- Name the rational images.
@@ -1416,7 +1416,7 @@ theorem normalizeForFactor_repeatedPart_map_intCast_dvd_squareFreeCore_map_intCa
       rw [← Hex.ZPoly.coeff_toRatPoly, hzero, Hex.DensePoly.coeff_zero]
     rw [Hex.DensePoly.coeff_zero]
     exact_mod_cast hcoeff
-  -- `P ≠ 0`: route through `Polynomial.map_ne_zero_iff` on the integer-side bridge.
+  -- `P ≠ 0`: route through `Polynomial.map_ne_zero_iff` on the integer-side lift.
   have hP_ne : P ≠ 0 := by
     rw [hP_def, toPolynomial_toRatPoly_eq_map_intCast]
     refine (Polynomial.map_ne_zero_iff Int.cast_injective).mpr ?_
@@ -1589,7 +1589,7 @@ This is the normalized-factor support step consumed by the successor
 exponent-list construction for
 `normalizeForFactor_repeatedPart_isPow_polyProduct_of_irreducible_factors_cover`.
 It combines the landed repeated-part power-divisibility theorem with the
-`polyProduct_toPolynomial` bridge for the supplied `coreFactors`.
+`polyProduct_toPolynomial` identification for the supplied `coreFactors`.
 -/
 theorem normalizeForFactor_repeatedPart_normalizedFactor_covered_by_coreFactors
     (f : Hex.ZPoly) (hf : f ≠ 0)
@@ -1632,7 +1632,7 @@ theorem normalizeForFactor_repeatedPart_normalizedFactor_covered_by_coreFactors
     (Hex.ZPoly.Irreducible_iff_polynomialIrreducible q).mp (hirr q hq_mem)
   exact hr_irr.associated_of_dvd hq_irr_poly hr_dvd_qPoly
 
-/-- Local copy of the integer-polynomial bridge for the executable unit. -/
+/-- Local copy of the integer-polynomial identification for the executable unit. -/
 private theorem toPolynomial_one_zpoly :
     HexPolyZMathlib.toPolynomial (1 : Hex.ZPoly) = 1 := by
   show HexPolyZMathlib.toPolynomial (Hex.DensePoly.C (1 : Int)) = 1
@@ -1669,7 +1669,7 @@ private theorem toPolynomial_factorPower_foldl_aux
 The ordered executable product of public `Hex.Factorization.factorPower`
 entries agrees with the ordered `Polynomial ℤ` product of transported powers.
 
-This is the product bridge consumed by repeated-part exponent decompositions
+This is the product lemma consumed by repeated-part exponent decompositions
 before invoking the Mathlib-free expansion helper.
 -/
 theorem toPolynomial_factorPower_foldl
@@ -1682,7 +1682,7 @@ theorem toPolynomial_factorPower_foldl
   rw [toPolynomial_factorPower_foldl_aux, toPolynomial_one_zpoly, one_mul]
 
 /--
-Polynomial-to-executable bridge for the #4611 repeated-part power
+Polynomial-to-executable lemma for the #4611 repeated-part power
 decomposition.
 
 The remaining mathematical side condition is the polynomial-level exact
@@ -1768,12 +1768,12 @@ to an exponent list whose `Hex.Factorization.factorPower`-fold reconstructs
 consumed by the public Mathlib-free expansion wrapper
 `Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition`.
 
-The proof composes three landed substrates:
+The proof composes three landed base lemmas:
 
 * `normalizeForFactor_repeatedPart_normalizedFactor_covered_by_coreFactors`
   (#4749), which guarantees every normalized factor of the repeated part is
   Associated to one of the supplied core factors;
-* the normalize bridges
+* the normalize identifications
   `normalizeForFactor_repeatedPart_toPolynomial_normalize` and
   `HexBerlekampZassenhausMathlib.normalize_toPolynomial_of_normalizeFactorSign_id`
   (#4758), which align the repeated part and each supplied core factor with
@@ -1826,7 +1826,7 @@ theorem normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible
       normalize (HexPolyZMathlib.toPolynomial q) = HexPolyZMathlib.toPolynomial q :=
     fun q hq => normalize_toPolynomial_of_normalizeFactorSign_id
       (hirr q hq).not_zero (hnorm q hq)
-  -- Bridge the executable product `polyProduct` into a `List.prod` in
+  -- Translate the executable product `polyProduct` into a `List.prod` in
   -- `Polynomial ℤ`.
   have hS_eq : (coreFactors.toList.map HexPolyZMathlib.toPolynomial).prod = S := by
     show _ = HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).squareFreeCore
@@ -1901,7 +1901,7 @@ theorem normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible
     (coreFactors.toList.map HexPolyZMathlib.toPolynomial).toFinset
     (by intro r hr; rw [Multiset.mem_toFinset] at hr; exact hsubset r hr)
 
-/-- **HO-1 substrate — no-tail-divisibility for an irreducible cover of the
+/-- **HO-1 base task — no-tail-divisibility for an irreducible cover of the
 square-free core.**
 
 Given an irreducible cover `coreFactors` of `(Hex.normalizeForFactor f).squareFreeCore`
@@ -2041,7 +2041,7 @@ theorem factorPower_cover_not_dvd_tail_of_irreducible_squarefree
   -- Injectivity of `toPolynomial` finishes: `q = qe.1`, contradicting `hq_not_in_suf`.
   exact hq_not_in_suf qe hqe_mem (HexPolyZMathlib.equiv.injective hP_eq)
 
-/-- **#4808 substrate — expansion-complete from an irreducible square-free
+/-- **#4808 base task — expansion-complete from an irreducible square-free
 cover.**
 
 Generic assembler for exhaustive-style core factor arrays.  Given an
@@ -2100,11 +2100,11 @@ theorem reassemblyExpansionComplete_of_irreducible_squarefree_cover
 /-- Non-monic `_of_pos_lc` sibling of
 `reassemblyExpansionComplete_of_irreducible_squarefree_cover`: replaces the
 per-factor `Monic q` premise with `0 < leadingCoeff q`, delegating to the
-non-monic leaf substrate
+non-monic leaf base task
 `Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc`
 (`HexBerlekampZassenhaus/Basic.lean`, landed in #4778). Mid-layer surface for
-consumers wanting to delegate to the assembler under a primitive + pos-lc
-precondition; the existing quadratic-arm consumer
+callers wanting to delegate to the assembler under a primitive + pos-lc
+precondition; the existing quadratic-arm caller
 `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero` (below)
 bypasses the mid-layer by routing through the leaf directly, but the
 umbrella-internal rewiring of
@@ -2149,7 +2149,7 @@ theorem reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_pos_lc
     (Hex.normalizeForFactor f).repeatedPart coreFactors hpos_lc hdegree
     exponents hlen hnot_dvd_tail hdecomp hfuel'
 
-/-- **#4597 HO-1 substrate — small-mod singleton arm `factorPower` shape of
+/-- **#4597 HO-1 base task — small-mod singleton arm `factorPower` shape of
 the repeated part.** Singleton specialisation of
 `normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover`
 (#4759, the final-assembly successor of the decomposed #4746): when the
@@ -2203,8 +2203,8 @@ theorem normalizeForFactor_repeatedPart_isFactorPower_squareFreeCore_of_irreduci
             Hex.ZPoly.one_mul_zpoly] at hdecomp
           exact hdecomp
 
-/-- **#4597 HO-1 substrate — small-mod singleton arm `hcomplete` discharger
-(Mathlib bridge, deliverable 3).** When the normalized square-free core is
+/-- **#4597 HO-1 base task — small-mod singleton arm `hcomplete` discharger
+(Mathlib-side, deliverable 3).** When the normalized square-free core is
 itself irreducible, the singleton-core reassembly is expansion-complete:
 the `repeatedPart` of `normalizeForFactor f` is exactly a
 `Hex.Factorization.factorPower` of the square-free core (deliverable 1),
@@ -2215,7 +2215,7 @@ small-mod singleton arm umbrella
 (#4564 / PR #4581) so callers can drop the explicit `hcomplete` premise
 once the eventual capstone wiring (#4170) lands.
 
-**Substrate gap (Gap 1):** the explicit `hmonic` premise on the
+**Base-task gap (Gap 1):** the explicit `hmonic` premise on the
 square-free core mirrors the same gap labelled "Gap 1" in the exhaustive
 arm umbrella `factor_exhaustive_branch_entry_irreducible_of_choosePrimeData`
 (#4561). The underlying executable extraction
@@ -2224,7 +2224,7 @@ arm umbrella `factor_exhaustive_branch_entry_irreducible_of_choosePrimeData`
 wrapper) currently requires monicness of the core factor; dropping the
 hypothesis would require a non-monic divMod/exactQuotient generalisation
 in `HexPolyZ/Basic.lean`. The premise is documented as an explicit shim
-so downstream consumers thread it consistently until the substrate work
+so downstream callers thread it consistently until the base task
 lands.
 
 Sibling dischargers: constant arm
@@ -2284,8 +2284,8 @@ theorem reassemblyExpansionComplete_singleton_of_irreducible
       core k hmonic hdeg hirr (Hex.normalizeForFactor f).repeatedPart hk hfuel
   rw [hexpand]
 
-/-- **#4956 HO-1 substrate — small-mod singleton arm `hcomplete` discharger,
-non-monic primitive sibling (Mathlib bridge).** Companion to the monic
+/-- **#4956 HO-1 base task — small-mod singleton arm `hcomplete` discharger,
+non-monic primitive sibling (Mathlib-side).** Companion to the monic
 `reassemblyExpansionComplete_singleton_of_irreducible` above. Drops the
 `hmonic` premise on the square-free core in favour of `0 < leadingCoeff core`,
 producing the same `Hex.reassemblyExpansionComplete` conclusion. The proof
@@ -2411,8 +2411,8 @@ theorem reassemblyExpansionComplete_singleton_of_irreducible_of_pos_lc
     (Hex.normalizeForFactor f).repeatedPart #[core] hpos_lc_arr hdegree_arr
     [k] hlen' hnot_dvd_tail hdecomp hfuel'
 
-/-- **#4747 HO-1 substrate — quadratic integer-root arm reassembly-expansion
-discharger (Mathlib bridge).** When the normalized square-free core
+/-- **#4747 HO-1 base task — quadratic integer-root arm reassembly-expansion
+discharger (Mathlib-side).** When the normalized square-free core
 `(normalizeForFactor f).squareFreeCore` factors through the executable
 `quadraticIntegerRootFactors?` short-circuit (returning `some coreFactors`),
 the reassembly of the recorded core factors is expansion-complete: the
@@ -2428,7 +2428,7 @@ premise on the quadratic arms.
 
 Composes:
 
-* `Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero` and the Mathlib bridge
+* `Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero` and the Mathlib-side lemma
   `zpoly_primitive_of_toPolynomial_isPrimitive` ∘
   `normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive` (#4545) —
   the squareFreeCore positive-leading-coefficient and primitivity invariants;
@@ -2617,7 +2617,7 @@ theorem reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero
 
 end IntReductionMod
 
-/-- **#4549 substrate (HO-1), outer-bound specialisation, rewired for #4553.**
+/-- **#4549 base task (HO-1), outer-bound specialisation, rewired for #4553.**
 
 Specialisation of `liftedFactorSubsetPartition_of_choosePrimeData`
 (`HexBerlekampZassenhausMathlib/Basic.lean`) at the precision count
@@ -2628,7 +2628,7 @@ The resulting partition value has the exact `core` / `d` /
 hypothesis of
 `factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence`
 (PR #4537), so the HO-1 slow-path assembly can apply that wrapper
-directly together with the #4543 substrate value at the same outer-bound
+directly together with the #4543 base value at the same outer-bound
 shape.
 
 The explicit `hcore_sqfree` hypothesis previously threaded through this
@@ -2646,7 +2646,7 @@ theorem liftedFactorSubsetPartition_outerBound_of_choosePrimeData
   liftedFactorSubsetPartition_of_choosePrimeData _ _
     (IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree f hf)
 
-/-- **#4562 HO-1 substrate — small-mod singleton arm umbrella.**
+/-- **#4562 HO-1 base task — small-mod singleton arm umbrella.**
 
 Per-branch HO-1 component for the small-mod singleton arm of the capstone
 `factor_irreducible_of_nonUnit` (#4170): every entry recorded by
@@ -2666,7 +2666,7 @@ Composes:
 * `IntReductionMod.squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP`
   — the singleton-core irreducibility theorem from the chosen prime's
   Berlekamp form;
-* the substrate dischargers from #4545
+* the base dischargers from #4545
   (`IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive`
   and `IntReductionMod.choosePrimeData?_leadingCoeff_castRingHom_ne_zero`),
   which produce `hprim` and `hlc_map_ne` from `f ≠ 0` and `hchoose`;
@@ -2714,7 +2714,7 @@ theorem factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData
     Hex.factorWithBound_entry_mem_small_mod_singleton_raw f B entry hB_pos
       hdeg hchoose hsmall hquadratic hentry_mem
   -- Singleton-core irreducibility from the chosen prime's Berlekamp form,
-  -- with `hprim` and `hlc_map_ne` discharged by the #4545 substrate.
+  -- with `hprim` and `hlc_map_ne` discharged by the #4545 base lemmas.
   have hcore_irr :
       Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore :=
     IntReductionMod.squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP
@@ -2752,7 +2752,7 @@ theorem factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData
   rw [hentry_eq]
   exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hraw_irr
 
-/-- **#4605 HO-1 substrate — `hchoose`-free small-mod singleton arm umbrella.**
+/-- **#4605 HO-1 base task — `hchoose`-free small-mod singleton arm umbrella.**
 
 Capstone-facing variant of
 `factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData`
@@ -2808,7 +2808,7 @@ theorem factor_small_mod_singleton_branch_entry_irreducible
     f hf_ne B hB_pos entry hdeg hsmall_chosen.2 hquadratic hentry_mem
     hchoose
 
-/-- **#4565 HO-1 substrate — fast-path constant arm umbrella.**
+/-- **#4565 HO-1 base task — fast-path constant arm umbrella.**
 
 Per-branch HO-1 component for the fast-path **constant square-free core** arm
 of the capstone `factor_irreducible_of_nonUnit` (#4170): every entry recorded
@@ -2896,7 +2896,7 @@ theorem factor_constant_branch_entry_irreducible_of_choosePrimeData
     rw [hentry_one, Hex.shouldRecordPolynomialFactor_one] at hrecord
     exact Bool.false_ne_true hrecord
 
-/-- **#4571 HO-1 substrate — fast-path quadratic arm umbrella.**
+/-- **#4571 HO-1 base task — fast-path quadratic arm umbrella.**
 
 Per-branch HO-1 component for the fast-path quadratic integer-root arm of the
 capstone `factor_irreducible_of_nonUnit` (#4170): every entry recorded by
@@ -2915,7 +2915,7 @@ Composes:
   not, under primitivity;
 * `IntReductionMod.zpoly_primitive_of_toPolynomial_isPrimitive` +
   `IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive`
-  (from #4545) — the primitivity bridge for the squarefree core;
+  (from #4545) — the primitivity lemma for the squarefree core;
 * `Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero` — the positive-leading-
   coefficient invariant for the squarefree core;
 * `Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible`
@@ -2951,7 +2951,7 @@ theorem factor_quadratic_branch_entry_irreducible_of_quadraticRoots
   obtain ⟨raw, hraw_mem, hentry_eq⟩ :=
     Hex.factorWithBound_entry_mem_quadratic_branch_raw f B entry hB_gt_one hdeg
       hquad hentry_mem
-  -- Primitivity of squareFreeCore via the Mathlib bridge.
+  -- Primitivity of squareFreeCore via the Mathlib-side lemma.
   have hcore_primitive :=
     IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf_ne
   have hcore_pos :
@@ -2972,7 +2972,7 @@ theorem factor_quadratic_branch_entry_irreducible_of_quadraticRoots
   rw [hentry_eq]
   exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hraw_irr
 
-/-- **#4575 HO-1 substrate — slow-path quadratic integer-root arm umbrella.**
+/-- **#4575 HO-1 base task — slow-path quadratic integer-root arm umbrella.**
 
 Per-branch HO-1 component for the slow-path **quadratic integer-root** arm of
 the capstone `factor_irreducible_of_nonUnit` (#4170): every entry recorded by
@@ -3005,7 +3005,7 @@ Composes:
   not, under primitivity;
 * `IntReductionMod.zpoly_primitive_of_toPolynomial_isPrimitive` +
   `IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive`
-  (from #4545) — the primitivity bridge for the squarefree core;
+  (from #4545) — the primitivity lemma for the squarefree core;
 * `Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero` — the positive-leading-
   coefficient invariant for the squarefree core;
 * `Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible`
@@ -3051,7 +3051,7 @@ theorem factor_slow_quadratic_branch_entry_irreducible_of_choosePrimeData
   obtain ⟨raw, hraw_mem, hentry_eq⟩ :=
     Hex.factorWithBound_entry_mem_slow_quadratic_branch_raw f B entry hdeg
       hquad hfast_none hentry_mem
-  -- Primitivity of squareFreeCore via the Mathlib bridge.
+  -- Primitivity of squareFreeCore via the Mathlib-side lemma.
   have hcore_primitive :=
     IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf_ne
   have hcore_pos :
@@ -3197,22 +3197,22 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
       ⟨raw, hcore_mem, hentry_eq⟩
 
 set_option maxHeartbeats 4000000 in
-/-- **#4561 HO-1 substrate — slow-path exhaustive arm umbrella.**
+/-- **#4561 HO-1 base task — slow-path exhaustive arm umbrella.**
 
 Per-branch HO-1 component for the slow-path **exhaustive recombination** arm of
 the capstone `factor_irreducible_of_nonUnit` (#4170): every entry recorded by
 `Hex.factorWithBound f (Hex.ZPoly.defaultFactorCoeffBound f)` in this slow
 exhaustive branch is `Hex.ZPoly.Irreducible`, given `f ≠ 0`, the branch marker
 `hbranch`, the `Hex.ZPoly.toMonicPrimeData?` selection witness `hselected`,
-and the substrate-shim premises listed below.
+and the base-shim premises listed below.
 
 Specialises the outer-bound slow-path wrapper #4537
 (`factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence`
 in `HexBerlekampZassenhausMathlib/Basic.lean`) by:
 
-* discharging the wrapper's `h` premise via the #4543 substrate constructor
+* discharging the wrapper's `h` premise via the #4543 base-task constructor
   `henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData`;
-* discharging the wrapper's `hpartition` via the #4554 substrate constructor
+* discharging the wrapper's `hpartition` via the #4554 base-task constructor
   `liftedFactorSubsetPartition_outerBound_of_choosePrimeData`;
 * obtaining the lifted-factor monicness / natDegree-positivity / injectivity
   facts from the `MonicReductionCorrespondence` transport package
@@ -3231,7 +3231,7 @@ in `HexBerlekampZassenhausMathlib/Basic.lean`) by:
   by `xPowerFactorArray_irreducible`) or an exhaustive core factor (closed by
   the wrapper itself).
 
-The remaining substrate-shim premises are:
+The remaining base-shim premises are:
 
 * **`hselected`** — replaces the original `hcore_monic` shim (Gap 1). The
   squarefree core is not generally monic, but the lifted-factor facts can
@@ -3241,7 +3241,7 @@ The remaining substrate-shim premises are:
 * **`hcomplete`** (Gap 2) — discharged in the public surface
   `factor_exhaustive_branch_entry_irreducible_of_choosePrimeData` via
   `reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_core`.
-* **`hprecision`** (Gap 3) — exposed by this wrapper; downstream consumers
+* **`hprecision`** (Gap 3) — exposed by this wrapper; downstream callers
   wanting an outer-shape Mignotte witness route through the `_of_bound`
   sibling.
 
@@ -3249,7 +3249,7 @@ The remaining substrate-shim premises are:
 discharged by #4637 via `defaultFactorCoeffBound_pos_of_ne_zero` and
 `precisionForCoeffBound_spec`.)
 
-Downstream consumers (notably the HO-1 capstone #4170 / #4819)
+Downstream callers (notably the HO-1 capstone #4170 / #4819)
 currently route through the public umbrella's `_of_bound` sibling
 `factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound`
 (which discharges Gap 3 against an abstract bound) and supply
@@ -3272,17 +3272,17 @@ abstract-bound route. The sibling
 `factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound`
 (landed in PR #4982) replaces the core-shape `hprecision` with the
 abstract triple `(B', hcore_lc_le, hvalid, hprecision : 2 * B' < d.p ^ d.k)`.
-Downstream consumers wanting to discharge `hprecision` against an
+Downstream callers wanting to discharge `hprecision` against an
 outer-shape Mignotte witness (notably the HO-1 capstone #4170 / #4819)
 should route through the `_of_bound` sibling rather than the wrapper here.
 
-**#5723 (HO-1 Gap 1 consumer):** the original `hcore_monic` shim (Gap 1)
+**#5723 (HO-1 Gap 1 caller):** the original `hcore_monic` shim (Gap 1)
 is closed by the monicising-by-scaling route. The lifted-factor facts on
 the `toMonic`-image Hensel lift come from the
 `MonicReductionCorrespondence` transport package (introduced under #5718
 and renamed under #5778), which carries a `_of_monicPrimeData` conditional
 for each of monicness, natDegree positivity, and injectivity. The
-consumer-facing surface
+caller-facing surface
 `monicReductionCorrespondence_liftedFactor_facts_of_normalizeForFactor_squareFreeCore`
 (#5733) instantiates the package at the normalized square-free core and
 extracts the three facts under the `hselected` selection witness.
@@ -3457,7 +3457,7 @@ theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeDat
       hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
       hd_liftedFactor_inj B' hcore_lc_le hvalid hprecision
 
-/-- **#4806 HO-1 substrate — exhaustive-arm expansion-precondition packaging
+/-- **#4806 HO-1 base task — exhaustive-arm expansion-precondition packaging
 (precursor to #4627).**
 
 Companion to the slow-path exhaustive-arm umbrella
@@ -3481,7 +3481,7 @@ The three conjuncts are routed as follows:
   — via `exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence`
   at the outer-bound shape (the same wrapper consumed by the sibling umbrella).
 
-**Substrate gaps — narrowed scope per #4806.** The expansion wrapper additionally
+**Base-task gaps — narrowed scope per #4806.** The expansion wrapper additionally
 requires `Hex.DensePoly.Monic q` and `0 < q.degree?.getD 0` on every emitted
 factor. Neither is currently exposed for arbitrary `Hex.recombineExhaustive`
 output: by inspection of `Hex.recombinationSearchModAux`, every emitted factor
@@ -3491,25 +3491,25 @@ is structurally
 over `Hex.subsetSplits d.liftedFactors.toList`. Monicness and positive degree
 both then follow from `recombinationCandidate_monic` (`HexBerlekampZassenhausMathlib/Basic.lean`)
 and `natDegree_toPolynomial_recombinationCandidate_eq_sum`, but only after a
-bridge identifying each emitted `selected` with `liftedSubsetSelectedList d S`
-for some `LiftedFactorSubset d`. That bridge has not yet been built — neither
+lemma identifying each emitted `selected` with `liftedSubsetSelectedList d S`
+for some `LiftedFactorSubset d`. That identification has not yet been built — neither
 `recombineExhaustive_monic` nor `recombineExhaustive_natDegree_pos` (nor any
 generalisation through `recombinationSearchMod`) exists in
 `HexBerlekampZassenhaus/Basic.lean`. Both pieces are deferred to a successor
-substrate sub-issue. Until that lands, downstream consumer #4627 must thread
+base-task sub-issue. Until that lands, downstream caller #4627 must thread
 the missing monicness and positive-degree facts as additional hypotheses,
 mirroring the gap-shim precedent set by the sibling umbrella's `hcomplete`
 and `hprecision` premises (Gap 2 and Gap 3 of the #4561 documentation).
 
-The substrate-shim premises (`hf_ne`, `hbranch`, `hselected`, `hprecision`)
+The base-shim premises (`hf_ne`, `hbranch`, `hselected`, `hprecision`)
 match the sibling umbrella verbatim so the two theorems share their
-substrate-derivation idiom and downstream callers can thread both with the
+base-derivation idiom and downstream callers can thread both with the
 same evidence bundle. The previous `hcore_monic` shim (Gap 1) is discharged
 via the monicising-by-scaling route, threaded through the
-`MonicReductionCorrespondence` transport package; the consumer-facing
+`MonicReductionCorrespondence` transport package; the caller-facing
 `hselected` premise selects the modular factor data aligned with the
 monic transform. Notably absent from this signature: the `hcomplete`
-premise (this packaging is precisely the substrate #4627 will use to
+premise (this packaging is precisely the base lemmas #4627 will use to
 discharge that premise) and the `hentry_mem` premise (this packaging
 yields a universal conclusion over the entire core-factors array).
 
@@ -3700,7 +3700,7 @@ theorem monicReductionCorrespondence_of_normalizeForFactor_squareFreeCore
       hB_ne rfl hsearch hmem
 
 /--
-Consumer-facing extraction of the `toMonic` lifted-factor facts for the
+Caller-facing extraction of the `toMonic` lifted-factor facts for the
 normalized square-free core.  The hypotheses are the non-monic branch facts:
 positive leading coefficient comes from `f ≠ 0`, positive degree is supplied by
 the caller, and the Hensel modular data is aligned through
@@ -3804,7 +3804,7 @@ private theorem factorPower_size_lower_bound
 
 /-- Abstract-bound variant of `reassemblyExpansionComplete_exhaustive_of_ne_zero`
 for the case where the squarefree core is monic. Specialises the per-emitted-
-factor monicness substrate to `Hex.exhaustiveCoreFactorsWithBound_monic`,
+factor monicness base lemma `Hex.exhaustiveCoreFactorsWithBound_monic`,
 which holds when the input core is monic. -/
 theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_bound
     (f : Hex.ZPoly) (hf_ne : f ≠ 0)
@@ -3832,7 +3832,7 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_bound
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.defaultFactorCoeffBound f)
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)) := by
-  -- Substrate setup: discharge `hcore_record` and `hcore_ne` from the branch
+  -- Base setup: discharge `hcore_record` and `hcore_ne` from the branch
   -- hypothesis + monicness.
   have hdeg :
       (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 := hbranch.2.1
@@ -3857,7 +3857,7 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_bound
   obtain ⟨_, hnorm, hirr⟩ :=
     exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData_of_bound
       f hf_ne hbranch hselected B' hcore_lc_le hvalid hprecision
-  -- New substrate: monicness and positive-degree of every emitted factor.
+  -- New base lemma: monicness and positive-degree of every emitted factor.
   have hmonic :=
     Hex.exhaustiveCoreFactorsWithBound_monic
       (Hex.normalizeForFactor f).squareFreeCore
@@ -3938,9 +3938,9 @@ Specialised companion to the slow-path exhaustive-arm umbrella
 `hcomplete` premise of that umbrella is exactly
 `Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
   (Hex.exhaustiveCoreFactorsWithBound ...)`; this discharger constructs that
-witness from the substrate stack the umbrella already exposes:
+witness from the supporting lemmas the umbrella already exposes:
 
-* the generic Mathlib-bridge assembler
+* the generic Mathlib-side assembler
   `IntReductionMod.reassemblyExpansionComplete_of_irreducible_squarefree_cover`
   (#4840), composing the repeated-part `factorPower` decomposition (#4759)
   and the no-tail divisibility lemma (#4807) into the executable
@@ -4029,7 +4029,7 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_co
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.defaultFactorCoeffBound f)
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)) := by
-  -- Substrate setup: discharge `hcore_record` and `hcore_ne` from `hbranch` +
+  -- Base setup: discharge `hcore_record` and `hcore_ne` from `hbranch` +
   -- `hcore_lc_pos`.
   have hdeg :
       (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 := hbranch.2.1
@@ -4054,7 +4054,7 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_co
   obtain ⟨_, hnorm, hirr⟩ :=
     exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData_of_bound
       f hf_ne hbranch hselected B' hcore_lc_le hvalid hprecision
-  -- Weakened-input substrates: positive-degree from #4946 deliv 6, primitivity
+  -- Weakened-input base lemmas: positive-degree from #4946 deliv 6, primitivity
   -- from #4946 deliv 5.
   have hdegree :=
     Hex.exhaustiveCoreFactorsWithBound_degree_pos_of_primitive_pos_lc_core
@@ -4159,7 +4159,7 @@ Three substitutions versus the monic original:
   the quadratic-arm derivation in
   `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`
   above;
-* the per-factor positive-degree substrate is supplied by
+* the per-factor positive-degree base lemma is supplied by
   `exhaustiveCoreFactorsWithBound_degree_pos_of_primitive_pos_lc_core`
   (#4946 deliv 6) instead of the monic-input
   `exhaustiveCoreFactorsWithBound_degree_pos`;
@@ -4263,7 +4263,7 @@ theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound
       B' hcore_lc_le hvalid hprecision)
     B' hcore_lc_le hvalid hprecision
 
-/-- **#4561 / #4848 / #5723 HO-1 substrate — slow exhaustive-arm umbrella,
+/-- **#4561 / #4848 / #5723 HO-1 base task — slow exhaustive-arm umbrella,
 with the `hcomplete` premise dropped via the #4848 discharger and the
 `hcore_monic` shim closed by the #5723 monicising-by-scaling route.**
 
@@ -4271,7 +4271,7 @@ Public surface of the exhaustive-arm HO-1 umbrella. Gap 2 (`hcomplete`) is
 discharged internally via
 `reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_core`
 (#4848). Gap 3 (`hprecision`) is exposed in this wrapper's signature
-against the core-shape Mignotte threshold; downstream consumers wanting
+against the core-shape Mignotte threshold; downstream callers wanting
 the abstract-bound surface (notably the HO-1 capstone #4170 / #4819)
 should route through the `_of_bound` sibling
 `factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound`
@@ -4298,7 +4298,7 @@ theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData
     (hselected : Hex.ZPoly.toMonicPrimeData?
       (Hex.normalizeForFactor f).squareFreeCore = some
         (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore))
-    -- Gap 3 (substrate): explicit on this wrapper; downstream consumers
+    -- Gap 3 (base task): explicit on this wrapper; downstream callers
     -- wanting an outer-shape bound should route through the `_of_bound`
     -- sibling
     -- `factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound`
