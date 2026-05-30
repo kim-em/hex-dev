@@ -2829,6 +2829,26 @@ private theorem int_dot_eq_zero_of_dot_self_zero_left (u v : Vector Int m)
       rw [hadd_zero]
       exact ih
 
+private theorem foldl_dot_comm_int_local {n' : Nat} (xs : List (Fin n'))
+    (u v : Vector Int n') (accU accV : Int) (hacc : accU = accV) :
+    xs.foldl (fun acc i => acc + u[i] * v[i]) accU =
+      xs.foldl (fun acc i => acc + v[i] * u[i]) accV := by
+  induction xs generalizing accU accV with
+  | nil =>
+      simp [hacc]
+  | cons i xs ih =>
+      simp only [List.foldl_cons]
+      apply ih
+      grind
+
+/-- The dot product of integer vectors is commutative. (Local form for use
+inside this file before the existing `dot_comm_int` declaration.) -/
+private theorem int_dot_comm_local {n' : Nat} (u v : Vector Int n') :
+    Matrix.dot u v = Matrix.dot v u := by
+  simpa [Matrix.dot, Hex.Vector.dotProduct] using
+    foldl_dot_comm_int_local (xs := List.finRange n') (u := u) (v := v)
+      (accU := 0) (accV := 0) rfl
+
 /-- Pointwise function equality for foldl-style sums lifts to a foldl equality. -/
 private theorem foldl_add_pointwise_eq_int {α : Type v}
     (xs : List α) (f g : α → Int) (acc : Int)
@@ -2950,6 +2970,175 @@ private theorem dot_rowCombination_right_eq_foldl_int
     intro j _hj
     simp [Matrix.row]
   rw [h_dot_eq]
+
+/-- A foldl-style sum whose every term is zero starting from a zero accumulator
+collapses to zero. -/
+private theorem foldl_add_zero_of_terms_zero_int {α : Type v}
+    (xs : List α) (f : α → Int)
+    (h : ∀ x ∈ xs, f x = 0) :
+    xs.foldl (fun acc x => acc + f x) (0 : Int) = 0 := by
+  have h_aux : ∀ (xs : List α) (acc : Int),
+      (∀ x ∈ xs, f x = 0) →
+        xs.foldl (fun acc x => acc + f x) acc = acc := by
+    intro xs
+    induction xs with
+    | nil => intros acc _h; rfl
+    | cons y rest ih =>
+        intros acc h_terms
+        simp only [List.foldl_cons]
+        have hy : f y = 0 := h_terms y (by simp)
+        have hxs : ∀ x ∈ rest, f x = 0 :=
+          fun x hx => h_terms x (List.mem_cons_of_mem _ hx)
+        rw [hy]
+        have h_add : acc + (0 : Int) = acc := by grind
+        rw [h_add]
+        exact ih (acc) hxs
+  exact h_aux xs 0 h
+
+/-- Gram zero-pivot column suffix: if the no-pivot Bareiss pass over the Gram
+matrix runs `s` steps without recording a singular step but the pivot entry
+`matrix[s][s]` is zero, then every later row's entry in column `s` is zero
+too. This is the `h_column_zero` premise consumed by
+`noPivotLoop_initial_gram_findPivot?_eq_none_of_column_zero` to discharge the
+executable `findPivot? = none` form needed by the row-pivoted Bareiss loop on
+the Gram trajectory.
+
+The argument: by the closed row invariant, the represented pivot row
+`v := rowCombination b (hinv.coeff sFin)` has integer support on indices
+`≤ s` and inner product zero against `b.row k` for every `k.val ≤ s` (those
+matrix entries are either the zero pivot itself or zeros left by earlier
+regular elimination steps). Linearity of dot against `rowCombination` over
+the supported indices then gives `Matrix.dot v v = 0`, and integer positive
+definiteness forces every dot against `v` to be zero. Trailing-block
+symmetry transports `state.matrix[sFin][i] = Matrix.dot v (b.row i) = 0`
+across the diagonal to `state.matrix[i][sFin] = 0`. -/
+private theorem leadingPrefix_gram_zero_pivot_column_zero_of_singular_step
+    {n m : Nat} (b : Matrix Int n m) (s : Nat) (hs : s + 1 < n)
+    (hentry_regular :
+      ∀ {state : Matrix.BareissState n},
+        (hinv_state : BareissGramRowInvariant b state) →
+        (hnext : state.step + 1 < n) →
+        state.matrix[state.step][state.step] ≠ 0 →
+        ∀ i j : Fin n, (hi : state.step + 1 ≤ i.val) →
+          (Matrix.stepMatrix state.matrix state.step
+              state.matrix[state.step][state.step] state.prevPivot)[i][j] =
+            Matrix.dot
+              (Matrix.rowCombination b
+                (bareissGramRowInvariantStepCoeff
+                  hinv_state hnext i hi))
+              (b.row j))
+    (h_prefix_none :
+      (Matrix.noPivotLoop s
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none)
+    (h_zero :
+      (Matrix.noPivotLoop s
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
+          (⟨s, Nat.lt_of_succ_lt hs⟩ : Fin n)][
+          (⟨s, Nat.lt_of_succ_lt hs⟩ : Fin n)] = 0) :
+    ∀ i : Fin n, s + 1 ≤ i.val →
+      (Matrix.noPivotLoop s
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[i][
+          (⟨s, Nat.lt_of_succ_lt hs⟩ : Fin n)] = 0 := by
+  intro i hi
+  let sFin : Fin n := ⟨s, Nat.lt_of_succ_lt hs⟩
+  -- Final state of the loop and its `step = s` alignment.
+  have h_step :
+      (Matrix.noPivotLoop s
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step = s :=
+    noPivotLoop_initial_gram_step_eq_of_prefix_none b s hs h_prefix_none
+  -- Closed row invariant carried by the loop result.
+  have hinv : BareissGramRowInvariant b
+      (Matrix.noPivotLoop s
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))) :=
+    bareissGramRowInvariant_noPivotLoop_initial b s hentry_regular
+  -- The represented pivot row.
+  let v : Vector Int m := Matrix.rowCombination b (hinv.coeff sFin)
+  have hv_def : v = Matrix.rowCombination b (hinv.coeff sFin) := rfl
+  -- The row invariant aligns `matrix[sFin][j]` with `Matrix.dot v (b.row j)`.
+  have h_state_step_le_sFin :
+      (Matrix.noPivotLoop s
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step ≤ sFin.val := by
+    rw [h_step]; show s ≤ s; exact Nat.le_refl _
+  have h_dot_eq_matrix : ∀ j : Fin n,
+      (Matrix.noPivotLoop s
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[sFin][j] =
+        Matrix.dot v (b.row j) := by
+    intro j
+    exact hinv.entry_eq_dot sFin j h_state_step_le_sFin
+  -- The represented row is orthogonal to `b.row k` for every `k.val ≤ s`:
+  -- on `k.val = s`, the hypothesis `h_zero` gives a zero pivot dot, and on
+  -- `k.val < s` the column was cleared by an earlier regular Bareiss step.
+  have h_dot_zero_le : ∀ k : Fin n, k.val ≤ s →
+      Matrix.dot v (b.row k) = 0 := by
+    intro k hks
+    rw [← h_dot_eq_matrix k]
+    by_cases hk_eq : k.val = s
+    · have h_k_eq_sFin : k = sFin := Fin.ext hk_eq
+      rw [h_k_eq_sFin]
+      exact h_zero
+    · -- k.val < s, use column-zero helper at fuel = s, k as kFin, sFin as i.
+      have hk_lt : k.val < s := Nat.lt_of_le_of_ne hks hk_eq
+      have h_init_step_le :
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step ≤ k.val := by
+        show 0 ≤ k.val
+        exact Nat.zero_le _
+      have h_k_lt_result :
+          k.val < (Matrix.noPivotLoop s
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step := by
+        rw [h_step]
+        exact hk_lt
+      have h_k_lt_sFin : k.val < sFin.val := hk_lt
+      exact noPivotLoop_matrix_processed_col_eq_zero s
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b)) h_prefix_none
+        k.val h_init_step_le h_k_lt_result k rfl sFin h_k_lt_sFin
+  -- The represented row's coefficient is supported on `{0, …, s}`.
+  have h_coeff_supp_above : ∀ k : Fin n, sFin.val < k.val →
+      (hinv.coeff sFin)[k] = 0 := by
+    intro k hk
+    exact hinv.coeff_supp sFin k h_state_step_le_sFin hk
+  -- `Matrix.dot v v = 0`: every term in the rowCombination expansion is zero.
+  have h_dot_self_zero : Matrix.dot v v = 0 := by
+    have h_expand_aux :
+        Matrix.dot v (Matrix.rowCombination b (hinv.coeff sFin)) =
+          (List.finRange n).foldl
+            (fun acc k => acc + (hinv.coeff sFin)[k] * Matrix.dot v (b.row k))
+            0 :=
+      dot_rowCombination_right_eq_foldl_int b v (hinv.coeff sFin)
+    rw [← hv_def] at h_expand_aux
+    rw [h_expand_aux]
+    apply foldl_add_zero_of_terms_zero_int
+    intro k _hk
+    by_cases hks : k.val ≤ s
+    · -- second factor is zero
+      rw [h_dot_zero_le k hks]
+      grind
+    · -- first factor is zero
+      have hk_gt : sFin.val < k.val := by show s < k.val; omega
+      rw [h_coeff_supp_above k hk_gt]
+      grind
+  -- Transport across symmetry: `matrix[i][sFin] = matrix[sFin][i]`.
+  have h_init_sym :
+      ∀ a c : Fin n,
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step ≤ a.val →
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step ≤ c.val →
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b)).matrix[a][c] =
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b)).matrix[c][a] := by
+    intros a c _ha _hc
+    show (Matrix.gramMatrix b)[a][c] = (Matrix.gramMatrix b)[c][a]
+    rw [Matrix.gramMatrix_getElem, Matrix.gramMatrix_getElem]
+    exact int_dot_comm_local (Matrix.row b a) (Matrix.row b c)
+  have h_symm :
+      (Matrix.noPivotLoop s
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[i][sFin] =
+      (Matrix.noPivotLoop s
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[sFin][i] := by
+    apply noPivotLoop_matrix_symm_preserve s
+      (Matrix.noPivotInitialState (Matrix.gramMatrix b)) h_init_sym i sFin
+    · rw [h_step]; omega
+    · rw [h_step]; show s ≤ s; exact Nat.le_refl _
+  -- Now matrix[sFin][i] = dot v (b.row i) = 0 via integer positive definiteness.
+  rw [h_symm, h_dot_eq_matrix i]
+  exact int_dot_eq_zero_of_dot_self_zero_left (b.row i) v h_dot_self_zero
 
 /-- If the array loop's `state.step` is past the matrix extent, one outer
 iteration returns the input state unchanged. -/
