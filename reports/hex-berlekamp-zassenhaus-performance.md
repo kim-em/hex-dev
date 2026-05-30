@@ -30,7 +30,100 @@
 - `Hex.BerlekampZassenhausBench.runFactorFastSetupAdvPhi15Checksum`: `n + 1`
 - `Hex.BerlekampZassenhausBench.runAdvSwinnertonDyerSD3ModularSplitChecksum`: `n + 1`
 
-## Verdicts
+## Comparator Ratios
+
+The gating comparator is `verified Isabelle BZ (AFP
+Berlekamp_Zassenhaus; Haskell extraction of factor_int_poly via
+Factorization_External_Interface.thy)`, declared in
+`SPEC/Libraries/hex-berlekamp-zassenhaus.md`. HO-5a wired the scheduled
+hardware comparator as three fixed targets over the canonical
+`(x^2 - 2)(x^2 - 3)` input:
+
+- `runFactorIsabelleDomainChecksum`: Lean `factor` on the comparator
+  domain.
+- `runIsabelleFactorChecksum`: verified-Isabelle BZ on the same domain.
+- `runIsabelleFactorBaselineChecksum`: verified-Isabelle BZ on the
+  trivial polynomial `1`, used as the per-call process/protocol overhead
+  baseline.
+
+### Per-call comparator overhead
+
+The persistent-subprocess baseline median in the run below was **8.606 ms**
+per call. The matching Isabelle comparator median on the canonical
+quadratic-product input was **136.537 ms**, so the overhead share on the
+measured rung is **6.303%**. The adjusted Isabelle time is therefore
+`136.537 ms - 8.606 ms = 127.930 ms`.
+
+### Canonical Isabelle BZ rung
+
+Comparator sweep at commit `4e2c8b362de127e08d8a30d101eba501c1cf145d`
+on `carica` (Apple M2 Ultra, macOS 15.6), recorded
+`2026-05-30T12:13:32Z`. The worktree was dirty because the pod-managed
+`.claude/CLAUDE.md` file carried a pre-existing local modification
+outside this report package.
+
+Sweep command:
+
+```sh
+HEX_BZ_ISABELLE="$PWD/.cache/oracles/bz-isabelle/wrapper/bz_isabelle" \
+lake exe hexbz_bench run \
+  Hex.BerlekampZassenhausBench.runFactorChecksum \
+  Hex.BerlekampZassenhausBench.runFactorFastChecksum \
+  Hex.BerlekampZassenhausBench.runFactorSlowChecksum \
+  Hex.BerlekampZassenhausBench.runFactorCompareChecksum \
+  Hex.BerlekampZassenhausBench.runFactorSlowCompareChecksum \
+  Hex.BerlekampZassenhausBench.runFactorFastCompareChecksum \
+  Hex.BerlekampZassenhausBench.runFactorDegreeHeightChecksum \
+  Hex.BerlekampZassenhausBench.runFactorFastDegreeHeightChecksum \
+  Hex.BerlekampZassenhausBench.runFactorSlowDegreeHeightChecksum \
+  Hex.BerlekampZassenhausBench.runFastPathPrecisionLocalChecksum \
+  Hex.BerlekampZassenhausBench.runFactorAdvX4Plus1Checksum \
+  Hex.BerlekampZassenhausBench.runFactorFastSetupAdvX4Plus1Checksum \
+  Hex.BerlekampZassenhausBench.runFactorAdvQuadSqrt2Sqrt3Checksum \
+  Hex.BerlekampZassenhausBench.runFactorFastAdvQuadSqrt2Sqrt3Checksum \
+  Hex.BerlekampZassenhausBench.runFactorAdvPhi15Checksum \
+  Hex.BerlekampZassenhausBench.runFactorFastSetupAdvPhi15Checksum \
+  Hex.BerlekampZassenhausBench.runAdvSwinnertonDyerSD3ModularSplitChecksum \
+  Hex.BerlekampZassenhausBench.runFactorIsabelleDomainChecksum \
+  Hex.BerlekampZassenhausBench.runIsabelleFactorChecksum \
+  Hex.BerlekampZassenhausBench.runIsabelleFactorBaselineChecksum \
+  --export-file reports/bench-results/hex-berlekamp-zassenhaus-4e2c8b3.json
+```
+
+Export artefact:
+`reports/bench-results/hex-berlekamp-zassenhaus-4e2c8b3.json`, SHA-256
+`29485aba6e0ecae771f215515fa465cad6982a58d5375c82983ff66f5601d234`.
+
+| Rung | Lean median | Isabelle median | overhead % | raw ratio | adjusted ratio | speedup (adj) | status |
+|---|---:|---:|---:|---:|---:|---:|:---|
+| `(x^2 - 2)(x^2 - 3)` fixed comparator target | 32 ns | 136.537 ms | 6.303% | 0.000000234 | 0.000000250 | Lean 3,997,824× faster | eligible, compile-fold warning |
+
+**Trend.** The current comparator registration exposes only one canonical
+fixed rung, so no cross-rung trend can be inferred from the fixed
+Lean/Isabelle pair. This is a coverage gap for the
+`SPEC/benchmarking.md` §"Headline reports" trend requirement, not a trend
+claim.
+
+**Gating-goal verdict (canonical fixed rung).** Lean `32 ns` vs Isabelle
+adjusted `127.930 ms`; adjusted ratio `0.000000250` (Lean 3,997,824×
+faster). Gating-goal verdict on this fixed comparator rung: **met**.
+
+The Lean-side fixed target also triggered lean-bench's sub-microsecond
+warning, so the fixed-target ratio is useful as a same-checksum
+comparator wiring proof but not as a scientific algorithmic timing
+signal. On the closest non-folded registered target for the same
+polynomial, `runFactorAdvQuadSqrt2Sqrt3Checksum`, Lean measured
+`64.957 ms`; against the same Isabelle run this gives raw ratio
+`0.4758` and overhead-adjusted ratio `0.5078` (Lean 1.97× faster). That
+target is still a singleton smoke registration, so it is not a scaling
+ladder verdict.
+
+## Appendix: Internal-Model Verdicts
+
+The entries below are retained as informational complexity-model evidence
+only. They no longer supply the headline Phase-4 verdict, because
+`SPEC/Libraries/hex-berlekamp-zassenhaus.md` now defines the external
+`hex/isabelle <= 1x` gating comparator.
 
 Scientific run at commit `53771741e259` on `carica` (Apple M2 Ultra,
 macOS 14.6.1), command:
@@ -155,15 +248,9 @@ lake exe hexbz_bench verify
 registrations included, the current smoke suite has seventeen registered
 benchmarks and `lake exe hexbz_bench verify` passes all seventeen.
 
-## Comparator Ratios
-
-`SPEC/Libraries/hex-berlekamp-zassenhaus.md` does not currently name an
-external Phase-4 performance comparator in `libraries.yml` metadata, so
-there are no external comparator ratios to record in this first report.
-
-The internal fast/slow/public registrations are not yet a valid
-`compare` group for the full scientific Phase 4 domain, but
-`HexBerlekampZassenhaus/Bench.lean` now declares a narrow shared compare
+The internal fast/slow/public registrations are not a valid external
+comparator group for the full scientific Phase 4 domain, but
+`HexBerlekampZassenhaus/Bench.lean` declares a narrow shared compare
 domain over the deterministic split smoke family `smokeInput n` for
 `n = 1..4`.
 
@@ -505,10 +592,17 @@ record on each adversarial polynomial.
 - `runFactorSlowDegreeHeightChecksum` is now explicit and reproducible on
   a completing small subset; it remains diagnostic evidence only, not a
   Phase 4 completion verdict for the full slow path.
-- `libraries.yml` now records `phase4.input_families` for
-  `HexBerlekampZassenhaus`, but it still has no comparator metadata;
-  final Phase 4 coverage should add or explicitly justify comparator
-  metadata before bumping `done_through`.
+- The verified-Isabelle BZ comparator is wired, but the current
+  registration exposes only a fixed canonical comparator rung. That
+  verifies same-checksum comparator plumbing, and the canonical adjusted
+  ratio is below `1x`, but it does not yet provide the per-family
+  scaling ladders needed for a complete Phase-4 headline verdict across
+  every scientific bench target.
+- `runFactorIsabelleDomainChecksum` measured at `32 ns` and triggered
+  lean-bench's compile-fold warning. The non-folded
+  `runFactorAdvQuadSqrt2Sqrt3Checksum` measurement is the more useful
+  algorithmic context for the same polynomial, but it is still a
+  singleton smoke row rather than a scaling-rung trend.
 - HO-3 ([#2566](https://github.com/kim-em/hex/issues/2566)) remains open
   as a complexity-evidence concern: this report now records §Profile
   coverage for every declared
