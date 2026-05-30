@@ -744,7 +744,7 @@ the candidate's monic modular image, with each factor post-processed through
 `monicModularImage` to normalise it to its monic associate.  The EEA-based
 `DensePoly.gcd` returns each Berlekamp split factor up to a unit scalar, so the
 extraction layer applies the leading-coefficient inverse scaling here, isolating
-the normalisation step to this consumer without touching
+the normalisation step to this call site without touching
 `HexBerlekamp/Factor.lean`.
 -/
 private theorem berlekampFactorsModP_eq_of_isZero_false
@@ -2286,7 +2286,7 @@ congruence modulo `primeData.p`, sequential split coprimality, and a
 nonempty witness -- this produces the recursive quadratic multifactor lift
 invariant on the lifted modular factors that `henselLiftData` consumes.
 
-The Mathlib-free downstream consumer
+The Mathlib-free downstream theorem
 `HexBerlekampZassenhausMathlib.henselLiftData_liftedFactor_monic` already
 feeds this invariant into `Hex.ZPoly.multifactorLiftQuadratic_each_monic`.
 -/
@@ -5380,7 +5380,7 @@ by the integer `coreLc` parameter (intended to be the leading coefficient of
 the integer core polynomial), then centre-lifted, primitivised, and
 sign-normalised.  For `coreLc = 1` the inner `DensePoly.scale 1 _ = _`
 collapse recovers the original unscaled `recombinationSearchModAux` candidate
-shape; for primitive non-monic cores the scaled product is the substrate
+shape; for primitive non-monic cores the scaled product is the integer factor
 identified by `RepresentsIntegerFactorAtLift`, so this variant is the basis of
 the primitive recursive coverage chain. -/
 def scaledRecombinationSearchModAux
@@ -5561,7 +5561,7 @@ The fast-path cap `B` is itself a member of the canonical Hensel precision
 schedule the executable loop walks: `henselPrecisionSchedule B
 (initialHenselPrecision B) (quadraticDoublingSteps B + 2)`.
 
-This is the connective bridge consumed by the Mathlib-facing Group D
+This is the connective schedule lemma used by the Mathlib-facing Group D
 forward-recovery wrapper: callers who supply `ForwardRecoveryInputs` at the
 canonical terminal precision no longer need to re-prove the executable
 doubling-schedule membership obligation.
@@ -5857,7 +5857,7 @@ def exhaustiveSlowRawFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
 
 /-- Raw factor array produced by the slow exhaustive recombination branch.
 
-Exposed publicly so the Mathlib bridge layer can express per-branch
+Exposed publicly so the Mathlib-side layer can express per-branch
 irreducibility hypotheses for the assembled output theorem.  Internal callers
 still go through the `factorSlow` wrapper. -/
 def factorSlowFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
@@ -5932,7 +5932,7 @@ def factorSlow (f : ZPoly) : Factorization :=
 
 /-- Raw factor array produced by the fast BHKS branch, when it succeeds.
 
-Exposed publicly so the Mathlib bridge layer can express per-branch
+Exposed publicly so the Mathlib-side layer can express per-branch
 irreducibility hypotheses for the assembled output theorem.  Internal callers
 still go through the `factorFast` wrapper. -/
 def factorFastFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
@@ -6034,7 +6034,7 @@ level — disjuncts are distinguished by their marker conditions (degree of
 the square-free core, value of `B`, size of `factorsModP`, and outcomes of
 `quadraticIntegerRootFactors?` / `factorFastCoreWithBound`).
 
-Downstream consumers can dispatch each disjunct to the matching per-branch
+Downstream callers can dispatch each disjunct to the matching per-branch
 entry-shape lemma:
 * constant → `factorWithBound_entry_mem_constant_branch_raw` (line 5642);
 * small-mod singleton → `factorWithBound_entry_mem_small_mod_singleton_raw`
@@ -6043,7 +6043,7 @@ entry-shape lemma:
 * fast-core success → `factorWithBound_entry_mem_fast_core_success_raw`
   (line 5695).
 
-Primary intended consumer is the HO-1 capstone `factor_irreducible_of_nonUnit`
+Primary intended caller is the HO-1 capstone `factor_irreducible_of_nonUnit`
 (`HexBerlekampZassenhausMathlib/Basic.lean:237`, #4170). -/
 theorem factorFastFactorsWithBound_branch (f : ZPoly) (B : Nat) :
     -- (a) constant core (earliest dispatch, unconditional on B)
@@ -6305,7 +6305,7 @@ theorem factorFast_ne_none_of_factorFastWithBound_cap_ne_none
     factorFast f ≠ none := h
 
 /--
-Expose the proof-facing fast-path bridge used by the BHKS termination layer.
+Expose the proof-facing fast-path success criterion used by the BHKS termination layer.
 If a precision on `factorFast`'s scheduled search recovers a core
 factorization for the normalized square-free core, then the public fast path
 returns `some _`.
@@ -6826,7 +6826,7 @@ theorem factor_entry_mem_exhaustive_branch_xPower_or_core_of_reassemblyComplete
 `factorWithBound` entry comes from the normalization reassembly whose core array
 is exactly the singleton square-free core. This is the branch-shape lemma needed
 by Mathlib-side irreducibility proofs; it still leaves the mathematical proof
-that the singleton core is irreducible to the bridge layer.
+that the singleton core is irreducible to the Mathlib-side layer.
 
 The `hchoose` premise reflects the dispatcher contract: under the small-mod
 singleton dispatch (issue #4605), the fast path only fires the singleton arm
@@ -6906,7 +6906,7 @@ theorem factorWithBound_entry_mem_constant_branch_raw
 is the `quadraticIntegerRootFactors?` output for the square-free core. This is
 the branch-shape lemma needed by Mathlib-side quadratic-branch irreducibility
 proofs; it leaves the mathematical proof that each core factor is irreducible
-to the bridge layer. The `B > 1` hypothesis is required to enter the quadratic
+to the Mathlib-side layer. The `B > 1` hypothesis is required to enter the quadratic
 dispatch (the `B = 1` arm of `factorFastFactorsWithBound` does not consult
 `quadraticIntegerRootFactors?`). -/
 theorem factorWithBound_entry_mem_quadratic_branch_raw
@@ -6935,7 +6935,7 @@ theorem factorWithBound_entry_mem_quadratic_branch_raw
 is the successful `factorFastCoreWithBound` output for the chosen prime data.
 This is the branch-shape lemma needed by Mathlib-side BHKS irreducibility
 proofs; it leaves the mathematical proof that each core factor is irreducible
-to the bridge layer. -/
+to the Mathlib-side layer. -/
 theorem factorWithBound_entry_mem_fast_core_success_raw
     (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
     (hB_pos : 1 ≤ B)
@@ -6976,7 +6976,7 @@ fires when the fast path returns `none` (e.g. `B = 0`, or `B = 1` with the
 fast-core check missing) and the slow path then sees a non-constant square-free
 core for which `quadraticIntegerRootFactors?` succeeds. The branch-shape lemma
 mirrors `factorWithBound_entry_mem_small_mod_singleton_raw`; it leaves the
-mathematical irreducibility argument for the core factors to the bridge
+mathematical irreducibility argument for the core factors to the Mathlib-side
 layer. -/
 theorem factorWithBound_entry_mem_slow_quadratic_branch_raw
     (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
@@ -7038,7 +7038,7 @@ class Irreducible (f : ZPoly) : Prop where
 
 /-- Mathlib-free associatedness predicate for integer polynomials: `a` and
 `b` are associated when `b = a * u` for some `ZPoly`-unit `u` (i.e. `u = ±1`).
-Used by HO-1 substrate dischargers to bridge "Mathlib-side irreducible factor
+Used by HO-1 irreducibility dischargers to translate "Mathlib-side irreducible factor
 of the square-free core" to the direct non-divisibility hypothesis required
 by the greedy expansion helper. -/
 def Associated (a b : ZPoly) : Prop :=
@@ -9059,7 +9059,7 @@ private theorem scaledRecombinationSearchMod_eq_recombinationSearchMod_of_one
 
 The scaled and unscaled exhaustive recombination wrappers agree when the
 scaling coefficient is `1` (i.e., for monic cores).  Used by the Mathlib-side
-`exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_some` to bridge
+`exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_some` to translate
 an unscaled search witness into the scaled executable call site introduced by
 the swap. -/
 theorem recombineScaledExhaustive_eq_recombineExhaustive_of_one
@@ -9327,7 +9327,7 @@ theorem recombinationSearchMod_eq_some_of_step_of_prefix_none
 
 /-- When `recombinationSearchMod` succeeds on the lifted-factor list, the
 `recombineExhaustive` wrapper returns exactly the array of recovered factors.
-This is the bridge that lets downstream irreducibility proofs replace a
+This is the equality lemma that lets downstream irreducibility proofs replace a
 `recombineExhaustive` term with a concrete factor list once the search is
 known to succeed. -/
 theorem recombineExhaustive_eq_of_recombinationSearchMod_some
@@ -10383,14 +10383,14 @@ private theorem integerRootCandidates_nodup (f : ZPoly) :
     simp at hpred
     omega
 
-/-- **#4747 HO-1 substrate — `normalizeFactorSign` identity on quadratic-arm
+/-- **#4747 HO-1 support lemma — `normalizeFactorSign` identity on quadratic-arm
 core factors.** Every factor emitted by `quadraticIntegerRootFactors? core` is a
 fixed point of `normalizeFactorSign`. For linear factors `linearFactorForRoot r`,
 the leading coefficient is `1`; for the optional residual, positivity of its
 leading coefficient is forced by `0 < DensePoly.leadingCoeff core` combined with
 the splitter invariant
-`splitIntegerRootFactorsAux_polyProduct_leadingCoeff_pos`. Consumed by the
-Mathlib-bridge discharger
+`splitIntegerRootFactorsAux_polyProduct_leadingCoeff_pos`. Used by the
+Mathlib-side discharger
 `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero` to discharge
 the `hnorm` precondition of
 `normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover`
@@ -10832,7 +10832,7 @@ of the primitive core) and the function's degree filter restricts residuals
 to size two, where the `irreducible_of_size_two_primitive` companion of
 `_monic` applies via the constant-factor argument on `core`.
 
-This is the public wrapper consumed by Mathlib-bridge consumers: its
+This is the public wrapper used by Mathlib-side callers: its
 signature avoids referencing the file-`private` `splitIntegerRootFactorsAux`
 and `integerRootCandidates` (the residual is identified internally via
 case analysis). -/
@@ -10884,11 +10884,11 @@ theorem quadraticIntegerRootFactors?_product
           contradiction
   · simp [hdeg] at hquad
 
-/-- **#4747 HO-1 substrate — public surface for the polyProduct invariant of the
+/-- **#4747 HO-1 support lemma — public surface for the polyProduct invariant of the
 quadratic integer-root branch.** Whenever `quadraticIntegerRootFactors? core`
 returns `some coreFactors`, the executable `Array.polyProduct` of the recorded
 factors reconstructs `core` exactly. Public wrapper of the private
-`quadraticIntegerRootFactors?_product`, consumed by the Mathlib-bridge
+`quadraticIntegerRootFactors?_product`, used by the Mathlib-side
 discharger `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`
 (`HexBerlekampZassenhausMathlib/IntReductionMod.lean`) when feeding the
 factorPower repeated-part decomposition (#4759) and the no-tail divisibility
@@ -10902,7 +10902,7 @@ theorem polyProduct_quadraticIntegerRootFactors?_some
     Array.polyProduct coreFactors = core :=
   quadraticIntegerRootFactors?_product hquad
 
-/-- **#4747 HO-1 substrate — every factor emitted by `quadraticIntegerRootFactors?`
+/-- **#4747 HO-1 support lemma — every factor emitted by `quadraticIntegerRootFactors?`
 has dense size two.** The branch is only entered when
 `core.degree?.getD 0 = 2`. Linear factors emitted by the splitter are
 `linearFactorForRoot r = X - r`, which has size `2` by
@@ -10913,7 +10913,7 @@ combined with positivity of `leadingCoeff core` (the same argument used in
 `quadraticIntegerRootFactors?_residual_irreducible` to rule out non-unit
 constant residuals).
 
-Consumed by the Mathlib-bridge discharger
+Used by the Mathlib-side discharger
 `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero` to
 discharge the per-factor `0 < q.degree?.getD 0` and `0 < leadingCoeff q`
 preconditions of the non-monic expansion-complete surface
@@ -11219,7 +11219,7 @@ private theorem linearFactor_dvd_listFoldl_of_mem
           DensePoly.mul_assoc_poly (S := Int) (linearFactorForRoot r)
             (linearFactorForRoot head) k]
 
-/-- **#4785 HO-1 substrate — pairwise non-association of the quadratic
+/-- **#4785 HO-1 support lemma — pairwise non-association of the quadratic
 integer-root branch output.** The factors emitted by
 `quadraticIntegerRootFactors? core` are pairwise non-`ZPoly`-associated
 whenever `core` is primitive, has positive leading coefficient, and is
@@ -11237,7 +11237,7 @@ leading coefficient via the splitter's monic-product invariant), and the
 `u = C 1` branch produces `(linearFactorForRoot r)^2 ∣ core`, refuted by
 `linearFactor_squared_not_dvd_of_squareFreeRat`.
 
-Bridges with `irreducible_not_dvd_of_not_associated` (HO-1 substrate #4603)
+Combines with `irreducible_not_dvd_of_not_associated` (HO-1 support lemma #4603)
 into the `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`
 discharger (#4747 residual). -/
 theorem quadraticIntegerRootFactors?_pairwise_not_associated
@@ -11836,7 +11836,7 @@ private theorem expandRepeatedPartFactorArray_singleton_one (rp : ZPoly) :
       ((#[] : Array ZPoly), rp).2) = (#[], rp)
   simp
 
-/-- **#4603 HO-1 substrate — irreducibility/non-associate bridge.** Two
+/-- **#4603 HO-1 support lemma — irreducibility/non-associate translation.** Two
 irreducible integer polynomials that are not associated do not divide one
 another: if `q₁` divides `q₂` and both are irreducible, the irreducibility
 decomposition `q₂ = q₁ * w` forces either `q₁` or `w` to be a unit, and the
@@ -11884,7 +11884,7 @@ private theorem consumeExactPower_eq_self_zero_of_not_dvd
       unfold consumeExactPower
       rw [exactQuotient?_eq_none_of_not_dvd hnot_dvd]
 
-/-- **#4603 HO-1 substrate — single-factor expansion helper.** For a monic
+/-- **#4603 HO-1 support lemma — single-factor expansion helper.** For a monic
 positive-degree integer polynomial `q` that does not divide a residual `r`,
 the greedy `consumeExactPower` on `q ^ k * r` extracts exactly `k` copies of
 `q` and returns `r` as the residual, provided the fuel covers `k + 1`
@@ -11892,7 +11892,7 @@ iterations. The monic positive-degree hypothesis is what makes
 `exactQuotient?` agree with `ZPoly`-level divisibility (via
 `exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree`); the
 `¬ q ∣ r` hypothesis closes off the last `consumeExactPower` step at
-multiplicity `k`. Consumed by
+multiplicity `k`. Used by
 `expandRepeatedPartFactorArray_residual_eq_one_of_pow_decomposition` to
 recurse one head factor at a time. -/
 private theorem consumeExactPower_pow_mul_of_not_dvd
@@ -11928,18 +11928,18 @@ private theorem consumeExactPower_pow_mul_of_not_dvd
           simp only
           rw [ih fuel' hfuel']
 
-/-- **#4778 HO-1 substrate — non-monic single-factor expansion helper.**
+/-- **#4778 HO-1 support lemma — non-monic single-factor expansion helper.**
 Non-monic analogue of `consumeExactPower_pow_mul_of_not_dvd`: drops the
 `Monic q` hypothesis in favour of `0 < leadingCoeff q`, routing the
 divisibility-extraction step through
 `exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq` (the non-monic
 companion of `exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree`,
-landed via #4773 → #4774). Consumed by
+landed via #4773 → #4774). Used by
 `expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decomposition_of_pos_lc`
 to handle quadratic-arm core factors emitted by
 `quadraticIntegerRootFactors?` that are primitive, positive-leading, but
 non-monic (e.g. the `2X + 3` residual from `(X-1)(2X+3) = 2X^2 + X - 3`).
-Substrate chain: #4773 → #4774 → this. -/
+Dependency chain: #4773 → #4774 → this. -/
 private theorem consumeExactPower_pow_mul_of_not_dvd_of_pos_lc
     (q r : ZPoly) (k : Nat)
     (hq_pos_lc : 0 < DensePoly.leadingCoeff q)
@@ -11973,7 +11973,7 @@ private theorem consumeExactPower_pow_mul_of_not_dvd_of_pos_lc
           simp only
           rw [ih fuel' hfuel']
 
-/-- **#4603 HO-1 substrate — list-level pow-decomposition expansion helper.**
+/-- **#4603 HO-1 support lemma — list-level pow-decomposition expansion helper.**
 Given a list of monic positive-degree polynomials and a matching list of
 exponents, if the running residual `rp` factors as
 `(∏ (qᵢ, eᵢ) ∈ pairs, qᵢ ^ eᵢ)` and each head factor fails to divide its
@@ -12063,13 +12063,13 @@ private theorem expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decompositio
           exact ih es tailProduct fuel hlen' hmonic' hdegree'
             hnot_dvd_tail' htail_def hfuel'
 
-/-- **#4778 HO-1 substrate — non-monic list-level pow-decomposition expansion
+/-- **#4778 HO-1 support lemma — non-monic list-level pow-decomposition expansion
 helper.** Non-monic analogue of
 `expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decomposition`: replaces
 the per-factor `Monic q` hypothesis by `0 < leadingCoeff q`, routing the
 single-factor extraction through `consumeExactPower_pow_mul_of_not_dvd_of_pos_lc`
 (which itself uses `exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq` from
-the #4773 → #4774 substrate chain). Consumed by the public array-level surface
+the #4773 → #4774 dependency chain). Used by the public array-level surface
 `expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc`,
 which is the quadratic-arm discharger
 `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero` (#4747
@@ -12155,7 +12155,7 @@ private theorem expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decompositio
           exact ih es tailProduct fuel hlen' hpos_lc' hdegree'
             hnot_dvd_tail' htail_def hfuel'
 
-/-- **#4603 HO-1 substrate — array-level pow-decomposition expansion helper.**
+/-- **#4603 HO-1 support lemma — array-level pow-decomposition expansion helper.**
 Public surface for `expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decomposition`
 that targets `expandRepeatedPartFactorArray` directly. Given a list of monic
 positive-degree core factors, a matching list of exponents, a head-product
@@ -12163,8 +12163,8 @@ decomposition `rp = ∏ qᵢ ^ eᵢ`, and pairwise tail-non-divisibility for eac
 head factor relative to the suffix product, the greedy expansion completely
 consumes `rp` and reports residual `1`. The downstream discharger
 `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero` (HO-1
-substrate sub-issue C) supplies the structural decomposition (Mathlib-side,
-from sub-issue #4602) and consumes this helper to conclude
+support-lemma sub-issue C) supplies the structural decomposition (Mathlib-side,
+from sub-issue #4602) and uses this helper to conclude
 `reassemblyExpansionComplete` on the quadratic arms. Compare the small-mod
 singleton sibling `expandRepeatedPartFactorArray_pow_singleton` (#4597
 deliverable 2), which specialises this shape to a single irreducible. -/
@@ -12226,18 +12226,18 @@ theorem expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decompositi
     simpa [Factorization.factorPower] using hnot_dvd_tail pre q e suf hsplit
   · simpa [Factorization.factorPower] using hdecomp
 
-/-- **#4778 HO-1 substrate — non-monic array-level pow-decomposition expansion
+/-- **#4778 HO-1 support lemma — non-monic array-level pow-decomposition expansion
 helper.** Non-monic analogue of
 `expandRepeatedPartFactorArray_residual_eq_one_of_pow_decomposition`:
 replaces the per-factor `Monic q` hypothesis by `0 < leadingCoeff q`,
 delegating to the list-level non-monic helper
 `expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decomposition_of_pos_lc`.
 Intermediate between the list-level proof and the public-API factorPower
-wrapper below; consumed by
+wrapper below; used by
 `expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc`
 (the surface used by the quadratic-arm discharger
 `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`,
-#4747 residual). Substrate chain: #4773 → #4774 → here. -/
+#4747 residual). Dependency chain: #4773 → #4774 → here. -/
 theorem expandRepeatedPartFactorArray_residual_eq_one_of_pow_decomposition_of_pos_lc
     (rp : ZPoly) (coreFactors : Array ZPoly)
     (hpos_lc : ∀ q ∈ coreFactors.toList, 0 < DensePoly.leadingCoeff q)
@@ -12263,7 +12263,7 @@ theorem expandRepeatedPartFactorArray_residual_eq_one_of_pow_decomposition_of_po
     coreFactors.toList exponents rp (rp.size + 1)
     hlen' hpos_lc hdegree hnot_dvd_tail hdecomp hfuel
 
-/-- **#4778 HO-1 substrate — non-monic public `factorPower` array-level
+/-- **#4778 HO-1 support lemma — non-monic public `factorPower` array-level
 expansion-complete surface.** Non-monic analogue of
 `expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition`:
 replaces the per-factor `Monic q` hypothesis by `0 < leadingCoeff q`, exposing
@@ -12272,7 +12272,7 @@ referenced by Mathlib-side assemblers). Consumed by the quadratic-arm
 discharger `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`
 (#4747 residual) when the core factor emitted by `quadraticIntegerRootFactors?`
 is primitive and positive-leading but non-monic (e.g. the `2X + 3` residual
-from `(X-1)(2X+3) = 2X^2 + X - 3`). Substrate chain: #4773 → #4774 → here. -/
+from `(X-1)(2X+3) = 2X^2 + X - 3`). Dependency chain: #4773 → #4774 → here. -/
 theorem expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc
     (rp : ZPoly) (coreFactors : Array ZPoly)
     (hpos_lc : ∀ q ∈ coreFactors.toList, 0 < DensePoly.leadingCoeff q)
@@ -12355,13 +12355,13 @@ private theorem irreducible_not_dvd_one {q : ZPoly}
   · left; rw [hq_eq, h]
   · right; rw [hq_eq, h]
 
-/-- **#4597 HO-1 substrate — small-mod singleton arm expansion specialisation.**
+/-- **#4597 HO-1 support lemma — small-mod singleton arm expansion specialisation.**
 Singleton specialisation of
 `expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition`:
 when the repeated part `rp` is the `k`-th `Hex.Factorization.factorPower` of an
 irreducible monic positive-degree `q`, expanding against the singleton core
 `#[q]` consumes the repeated part exactly, emitting `k` copies of `q` and
-reporting residual `1`. Consumed by the small-mod singleton arm umbrella
+reporting residual `1`. Used by the small-mod singleton arm public wrapper
 `factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData`
 (#4564 / PR #4581) via the public discharger
 `Hex.reassemblyExpansionComplete_singleton_of_irreducible` (#4597
@@ -12395,7 +12395,7 @@ theorem expandRepeatedPartFactorArray_pow_singleton
   unfold expandRepeatedPartFactorsAux
   simp
 
-/-- **#4955 substrate — non-monic singleton arm expansion specialisation.**
+/-- **#4955 support lemma — non-monic singleton arm expansion specialisation.**
 Non-monic counterpart of `expandRepeatedPartFactorArray_pow_singleton`:
 replaces the `Monic q` premise by `0 < leadingCoeff q`, with a
 **weakened conclusion** — only the residual projection `.2 = 1`, not the
@@ -12511,7 +12511,7 @@ theorem squareFreeCore_leadingCoeff_pos_of_ne_zero
 
 /-- When the normalized square-free core has degree zero (and `f ≠ 0`), the
 primitive square-free decomposition forces the core to be exactly `1`.  Exposed
-publicly so Mathlib-side per-branch umbrellas (in particular the fast-path
+publicly so Mathlib-side per-branch wrappers (in particular the fast-path
 constant arm) can rule out the singleton-core entry from the recorded factor
 set. -/
 theorem squareFreeCore_eq_one_of_constant_of_ne_zero
@@ -12540,7 +12540,7 @@ private theorem normalizeForFactor_repeatedPart_eq_one_of_constant
         simpa using squareFreeCore_ne_zero_of_ne_zero f hf)
       hdeg
 
-/-- **#4585 HO-1 substrate — fast-path constant arm `reassemblyExpansionComplete`
+/-- **#4585 HO-1 support lemma — fast-path constant arm `reassemblyExpansionComplete`
 discharger.** When the recorded square-free core has degree zero (and `f ≠ 0`),
 the singleton-core reassembly is automatically expansion-complete: the
 square-free core collapses to `1` via
@@ -12550,7 +12550,7 @@ the identity via `expandRepeatedPartFactorArray_singleton_one`, and the residual
 `normalizeForFactor_repeatedPart_eq_one_of_constant` (the constant-branch
 specialisation of
 `ZPoly.primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeCore_degree_zero`).
-Consumed by the fast-path constant arm umbrella
+Used by the fast-path constant arm public wrapper
 `factor_constant_branch_entry_irreducible_of_choosePrimeData` (#4565) so it can
 drop its explicit `hcomplete` hypothesis. The small-mod singleton (#4564),
 slow-quadratic (#4575), and fast-quadratic (#4571) `hcomplete` dischargers are
@@ -12568,8 +12568,8 @@ theorem reassemblyExpansionComplete_constant_of_ne_zero
 
 /-- The normalized square-free core has positive leading coefficient
 (`squareFreeCore_leadingCoeff_pos_of_ne_zero`), so its sign-normalisation
-is the identity. Exposed publicly for HO-1 substrate consumers in the
-Mathlib bridge (notably the small-mod singleton arm specialisation of
+is the identity. Exposed publicly for HO-1 support-lemma callers in the
+Mathlib-side layer (notably the small-mod singleton arm specialisation of
 `normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible_factors_cover`,
 which discharges its `hnorm` precondition with this lemma). -/
 theorem squareFreeCore_normalizeFactorSign_of_ne_zero
