@@ -1,0 +1,2 @@
+session Hex_BZ_Export = Berlekamp_Zassenhaus +
+  theories Hex_BZ_Export
