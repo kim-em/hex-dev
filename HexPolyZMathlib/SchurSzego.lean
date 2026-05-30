@@ -558,6 +558,105 @@ theorem schmeisserCompositionOpenZeroControl_of_graceWalshSzegoOpenZeroControlAt
     schmeisserCompositionOpenZeroControl n f g :=
   hsource f g hfg_degree hg_roots
 
+/--
+For any positive radius `r` and any two finite multisets `s`, `t` of complex
+numbers, there is a strictly smaller positive threshold `ρ < r` at which the
+open-radius filter equals the closed-radius filter simultaneously on both
+multisets.  This is the finite-multiset open-to-closed witness used to derive
+closed-radius count domination from an open-radius source hypothesis.
+-/
+private theorem exists_open_radius_witness_for_closed_count
+    (s t : Multiset ℂ) {r : ℝ} (hr : 0 < r) :
+    ∃ ρ : ℝ, 0 < ρ ∧ ρ < r ∧
+      (s.filter fun z => r ≤ ‖z‖) = (s.filter fun z => ρ < ‖z‖) ∧
+      (t.filter fun z => r ≤ ‖z‖) = (t.filter fun z => ρ < ‖z‖) := by
+  classical
+  let belowList : List ℝ :=
+    0 :: ((((s.map fun z => ‖z‖) + (t.map fun z => ‖z‖)).filter
+            fun x => x < r).toList)
+  have h_len : 0 < belowList.length := by simp [belowList]
+  let M : ℝ := belowList.maximum_of_length_pos h_len
+  have hM_mem : M ∈ belowList :=
+    List.maximum_of_length_pos_mem (l := belowList) h_len
+  have hzero_mem : (0 : ℝ) ∈ belowList := by simp [belowList]
+  have hM_lt_r : M < r := by
+    rcases List.mem_cons.1 hM_mem with hM0 | hM_tail
+    · simpa [hM0] using hr
+    · rw [Multiset.mem_toList] at hM_tail
+      exact (Multiset.mem_filter.1 hM_tail).2
+  have hM_nonneg : 0 ≤ M :=
+    List.le_maximum_of_length_pos_of_mem (l := belowList) (a := 0)
+      hzero_mem h_len
+  refine ⟨(M + r) / 2, by linarith, by linarith, ?_, ?_⟩
+  · refine Multiset.filter_congr ?_
+    intro z hz
+    refine ⟨fun hrz => by linarith, fun hρz => ?_⟩
+    by_contra hnotr
+    have hnotr : ‖z‖ < r := lt_of_not_ge hnotr
+    have hmem : ‖z‖ ∈ belowList := by
+      refine List.mem_cons.2 (Or.inr ?_)
+      rw [Multiset.mem_toList, Multiset.mem_filter]
+      refine ⟨?_, hnotr⟩
+      rw [Multiset.mem_add]
+      exact Or.inl (Multiset.mem_map.2 ⟨z, hz, rfl⟩)
+    have : ‖z‖ ≤ M :=
+      List.le_maximum_of_length_pos_of_mem (l := belowList) (a := ‖z‖) hmem h_len
+    linarith
+  · refine Multiset.filter_congr ?_
+    intro z hz
+    refine ⟨fun hrz => by linarith, fun hρz => ?_⟩
+    by_contra hnotr
+    have hnotr : ‖z‖ < r := lt_of_not_ge hnotr
+    have hmem : ‖z‖ ∈ belowList := by
+      refine List.mem_cons.2 (Or.inr ?_)
+      rw [Multiset.mem_toList, Multiset.mem_filter]
+      refine ⟨?_, hnotr⟩
+      rw [Multiset.mem_add]
+      exact Or.inr (Multiset.mem_map.2 ⟨z, hz, rfl⟩)
+    have : ‖z‖ ≤ M :=
+      List.le_maximum_of_length_pos_of_mem (l := belowList) (a := ‖z‖) hmem h_len
+    linarith
+
+/--
+Closed-radius count-domination wrapper derived from the open-radius
+de Bruijn-Springer / Grace-Walsh-Szego source theorem.  Given the open-form
+source hypothesis at degree `n`, the closed-radius filter cardinality on the
+Schmeisser composition is bounded by the closed-radius filter cardinality on
+`f`, with multiplicities preserved by `Polynomial.roots`.
+-/
+theorem roots_count_radius_le_of_schmeisserComposition_source
+    {n : ℕ} {f g : ℂ[X]} {r : ℝ}
+    (hsource : graceWalshSzegoOpenZeroControlAtDegree n)
+    (hr : 0 < r)
+    (hfg_degree : f.natDegree ≤ n ∧ g.natDegree ≤ n)
+    (hg_roots : ∀ z ∈ g.roots, ‖z‖ ≤ 1) :
+    ((schmeisserComposition n f g).roots.filter fun ζ => r ≤ ‖ζ‖).card ≤
+      ((f.roots.filter fun z => r ≤ ‖z‖).card) := by
+  classical
+  obtain ⟨ρ, hρ_pos, _hρ_lt_r, hs_eq, ht_eq⟩ :=
+    exists_open_radius_witness_for_closed_count
+      (schmeisserComposition n f g).roots f.roots hr
+  rw [hs_eq, ht_eq]
+  have hopen :=
+    hsource f g hfg_degree ((rootsInClosedUnitDisk_iff g).2 hg_roots) ρ hρ_pos
+  simpa [rootsStrictlyOutsideRadiusCount] using hopen
+
+/--
+Predicate-level lift from the open-form Grace-Walsh-Szego / de Bruijn-Springer
+source theorem to the closed-form one.  Combined with
+`graceWalshSzegoZeroControlAtDegree_zero`, this reduces the closed source proof
+obligation at every degree to the open one.
+-/
+theorem graceWalshSzegoZeroControlAtDegree_of_open
+    {n : ℕ}
+    (hopen : graceWalshSzegoOpenZeroControlAtDegree n) :
+    graceWalshSzegoZeroControlAtDegree n := by
+  intro f g hfg_degree hg_roots r hr
+  rw [rootsInClosedUnitDisk_iff] at hg_roots
+  have := roots_count_radius_le_of_schmeisserComposition_source
+    hopen hr hfg_degree hg_roots
+  simpa [rootsOutsideRadiusCount] using this
+
 private theorem multiset_prod_le_prod_of_forall_count_ge_le
     {s t : Multiset ℝ}
     (hs_one : ∀ x ∈ s, 1 ≤ x)
