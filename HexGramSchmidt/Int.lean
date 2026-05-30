@@ -2657,6 +2657,300 @@ private theorem noPivotLoop_initial_gram_findPivot?_eq_none_of_column_zero
   have _h_step :=
     noPivotLoop_initial_gram_step_eq_of_prefix_none b s hs h_prefix_none
   exact Matrix.findPivot?_eq_none_of_zero _ _ _ h_column_zero
+
+/-- After running `noPivotLoop fuel` from a state with `singularStep = none`, if
+the result also has `singularStep = none`, then every column strictly between
+the initial step and the final step is zero below the pivot in the final
+matrix. Each such column was processed by a regular Bareiss step that cleared
+its sub-diagonal entries, and no later iteration touches them. -/
+private theorem noPivotLoop_matrix_processed_col_eq_zero {n : Nat} (fuel : Nat) :
+    ∀ (state : Matrix.BareissState n),
+      (Matrix.noPivotLoop fuel state).singularStep = none →
+      ∀ (k : Nat), state.step ≤ k →
+        k < (Matrix.noPivotLoop fuel state).step →
+        ∀ (kFin : Fin n), kFin.val = k →
+        ∀ (i : Fin n), k < i.val →
+          (Matrix.noPivotLoop fuel state).matrix[i][kFin] = 0 := by
+  induction fuel with
+  | zero =>
+      intros state _h_result k hk_ge hk_lt _kFin _hkFin i _hki
+      simp [Matrix.noPivotLoop_zero_fuel] at hk_lt
+      omega
+  | succ f ih =>
+      intros state h_result_none k hk_ge hk_lt kFin hkFin i hki
+      by_cases hDone : state.step + 1 < n
+      · by_cases hp : state.matrix[state.step][state.step] = 0
+        · -- Singular branch contradicts h_result_none.
+          rw [Matrix.noPivotLoop_singular_branch f state hDone hp] at h_result_none
+          simp at h_result_none
+        · -- Regular branch.
+          let next : Matrix.BareissState n :=
+            { step := state.step + 1
+              matrix := Matrix.stepMatrix state.matrix state.step
+                state.matrix[state.step][state.step] state.prevPivot
+              prevPivot := state.matrix[state.step][state.step]
+              rowSwaps := state.rowSwaps
+              singularStep := none }
+          have h_eq_next : Matrix.noPivotLoop (f + 1) state =
+              Matrix.noPivotLoop f next :=
+            Matrix.noPivotLoop_regular_branch f state hDone hp
+          rw [h_eq_next] at h_result_none hk_lt ⊢
+          by_cases hk_eq : k = state.step
+          · -- k just got processed: column k was zeroed by stepMatrix.
+            have hi_lt : state.step < i.val := hk_eq ▸ hki
+            have hkFin_eq : kFin.val = state.step := hk_eq ▸ hkFin
+            have h_next_zero : next.matrix[i][kFin] = 0 :=
+              Matrix.stepMatrix_pivot_col_below state.matrix state.step
+                state.matrix[state.step][state.step] state.prevPivot i kFin hi_lt hkFin_eq
+            have h_fixed : kFin.val < next.step := by
+              change kFin.val < state.step + 1
+              omega
+            have h_eq :=
+              Matrix.noPivotLoop_matrix_entry_of_row_le_or_col_lt f next i kFin
+                (Or.inr h_fixed)
+            rw [h_eq]
+            exact h_next_zero
+          · -- k was processed at a later step inside `next`.
+            have hk_ge_next : next.step ≤ k := by
+              change state.step + 1 ≤ k
+              omega
+            exact ih next h_result_none k hk_ge_next hk_lt kFin hkFin i hki
+      · -- Done branch: state.step unchanged, so hk_lt collapses.
+        have h_eq_state : Matrix.noPivotLoop (f + 1) state = state :=
+          Matrix.noPivotLoop_done f state hDone
+        rw [h_eq_state] at h_result_none hk_lt ⊢
+        omega
+
+private theorem int_mul_self_nonneg (x : Int) : 0 ≤ x * x := by
+  simpa [Lean.Grind.Semiring.pow_two] using
+    (Lean.Grind.OrderedRing.sq_nonneg (a := x))
+
+private theorem int_mul_self_eq_zero_of_nonpos (x : Int) (h : x * x ≤ 0) : x = 0 := by
+  have hnonneg : 0 ≤ x * x := int_mul_self_nonneg x
+  have hsquare : x * x = 0 := Int.le_antisymm h hnonneg
+  rcases Int.mul_eq_zero.mp hsquare with h0 | h0 <;> exact h0
+
+private theorem foldl_int_dot_self_start_le (xs : List (Fin m)) (v : Vector Int m)
+    (acc : Int) (hacc : 0 ≤ acc) :
+    acc ≤ xs.foldl (fun sum i => sum + v[i] * v[i]) acc := by
+  induction xs generalizing acc with
+  | nil =>
+      simp
+  | cons i xs ih =>
+      simp only [List.foldl_cons]
+      have hsq : 0 ≤ v[i] * v[i] := int_mul_self_nonneg v[i]
+      have hnext : 0 ≤ acc + v[i] * v[i] := by grind
+      exact Int.le_trans (by grind) (ih (acc := acc + v[i] * v[i]) hnext)
+
+private theorem foldl_int_dot_self_eq_zero_of_mem (xs : List (Fin m))
+    (v : Vector Int m) (acc : Int) (hacc : 0 ≤ acc)
+    (hzero : xs.foldl (fun sum i => sum + v[i] * v[i]) acc = 0) :
+    ∀ i ∈ xs, v[i] = 0 := by
+  induction xs generalizing acc with
+  | nil =>
+      simp
+  | cons head rest ih =>
+      intro i hi
+      simp only [List.mem_cons] at hi
+      have hsq : 0 ≤ v[head] * v[head] := int_mul_self_nonneg v[head]
+      have hnext_nonneg : 0 ≤ acc + v[head] * v[head] := by grind
+      have hnext_le_zero : acc + v[head] * v[head] ≤ 0 := by
+        have hle :=
+          foldl_int_dot_self_start_le (xs := rest) (v := v)
+            (acc := acc + v[head] * v[head]) hnext_nonneg
+        have hzero' :
+            rest.foldl (fun sum i => sum + v[i] * v[i])
+              (acc + v[head] * v[head]) = 0 := by
+          simpa using hzero
+        rw [hzero'] at hle
+        exact hle
+      have hnext_zero : acc + v[head] * v[head] = 0 := by grind
+      have hhead_zero : v[head] = 0 := by
+        apply int_mul_self_eq_zero_of_nonpos
+        grind
+      cases hi with
+      | inl h =>
+          subst i
+          exact hhead_zero
+      | inr h =>
+          exact ih (acc := acc + v[head] * v[head]) hnext_nonneg hzero i h
+
+private theorem int_dot_self_eq_zero_get (v : Vector Int m)
+    (hzero : Matrix.dot v v = 0) (i : Fin m) :
+    v[i] = 0 := by
+  have hmem : i ∈ List.finRange m := by simp
+  exact foldl_int_dot_self_eq_zero_of_mem (xs := List.finRange m) (v := v)
+    (acc := 0) (by decide)
+    (by simpa [Matrix.dot, Hex.Vector.dotProduct] using hzero) i hmem
+
+/-- An integer vector whose self-dot product is zero is itself the zero vector.
+A finite-dimensional positive-definiteness fact for `Vector Int m`. -/
+private theorem int_vector_eq_zero_of_dot_self_zero (v : Vector Int m)
+    (hzero : Matrix.dot v v = 0) :
+    v = Vector.ofFn fun _ : Fin m => (0 : Int) := by
+  apply Vector.ext
+  intro i hi
+  rw [Vector.getElem_ofFn]
+  exact int_dot_self_eq_zero_get v hzero ⟨i, hi⟩
+
+/-- If `v : Vector Int m` has zero self-dot product, then its dot product
+against any other integer vector is zero. -/
+private theorem int_dot_eq_zero_of_dot_self_zero (u v : Vector Int m)
+    (hzero : Matrix.dot v v = 0) :
+    Matrix.dot u v = 0 := by
+  unfold Matrix.dot Hex.Vector.dotProduct
+  induction List.finRange m with
+  | nil =>
+      simp
+  | cons i xs ih =>
+      simp only [List.foldl_cons]
+      rw [int_dot_self_eq_zero_get v hzero i]
+      have hzero_mul : u[i] * (0 : Int) = 0 := by grind
+      rw [hzero_mul]
+      have hadd_zero : (0 : Int) + 0 = 0 := by grind
+      rw [hadd_zero]
+      exact ih
+
+/-- If `v : Vector Int m` has zero self-dot product, then any other integer
+vector dots it to zero from the left as well. -/
+private theorem int_dot_eq_zero_of_dot_self_zero_left (u v : Vector Int m)
+    (hzero : Matrix.dot v v = 0) :
+    Matrix.dot v u = 0 := by
+  unfold Matrix.dot Hex.Vector.dotProduct
+  induction List.finRange m with
+  | nil =>
+      simp
+  | cons i xs ih =>
+      simp only [List.foldl_cons]
+      rw [int_dot_self_eq_zero_get v hzero i]
+      have hzero_mul : (0 : Int) * u[i] = 0 := by grind
+      rw [hzero_mul]
+      have hadd_zero : (0 : Int) + 0 = 0 := by grind
+      rw [hadd_zero]
+      exact ih
+
+/-- Pointwise function equality for foldl-style sums lifts to a foldl equality. -/
+private theorem foldl_add_pointwise_eq_int {α : Type v}
+    (xs : List α) (f g : α → Int) (acc : Int)
+    (h : ∀ x ∈ xs, f x = g x) :
+    xs.foldl (fun acc x => acc + f x) acc =
+      xs.foldl (fun acc x => acc + g x) acc := by
+  induction xs generalizing acc with
+  | nil =>
+      rfl
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hx : f x = g x := h x (by simp)
+      have hxs : ∀ y ∈ xs, f y = g y :=
+        fun y hy => h y (List.mem_cons_of_mem _ hy)
+      rw [hx]
+      exact ih (acc + g x) hxs
+
+/-- Entry-level formula for `rowCombination` over integers: the `j`th entry is
+the sum over `k` of `b[k][j] * c[k]`. -/
+private theorem rowCombination_getElem_int
+    {n m : Nat} (b : Matrix Int n m) (c : Vector Int n) (j : Fin m) :
+    (Matrix.rowCombination b c)[j] =
+      (List.finRange n).foldl (fun acc k => acc + b[k][j] * c[k]) 0 := by
+  show (Matrix.transpose b * c)[j] = _
+  rw [Matrix.mulVec_getElem]
+  unfold Matrix.dot Hex.Vector.dotProduct
+  apply foldl_add_pointwise_eq_int
+  intro k _hk
+  simp [Matrix.transpose, Matrix.col, Matrix.row]
+
+/-- Distribute a constant `x : Int` through a foldl-style sum body. -/
+private theorem foldl_mul_distrib_int {α : Type v}
+    (xs : List α) (f : α → Int) (x acc : Int) :
+    x * xs.foldl (fun acc y => acc + f y) acc =
+      xs.foldl (fun acc y => acc + x * f y) (x * acc) := by
+  induction xs generalizing acc with
+  | nil => simp
+  | cons y rest ih =>
+      simp only [List.foldl_cons]
+      rw [ih (acc + f y)]
+      have : x * (acc + f y) = x * acc + x * f y := by grind
+      rw [this]
+
+/-- Expansion of the dot product against `rowCombination` over integers: the
+second argument's row combination distributes outside the sum, giving the
+Σ-over-rows form. Proved via the `Hex.Matrix.foldl_det_sum_swap` Fubini
+identity. -/
+private theorem dot_rowCombination_right_eq_foldl_int
+    {n m : Nat} (b : Matrix Int n m) (u : Vector Int m) (c : Vector Int n) :
+    Matrix.dot u (Matrix.rowCombination b c) =
+      (List.finRange n).foldl
+        (fun acc k => acc + c[k] * Matrix.dot u (b.row k)) 0 := by
+  -- Step 1: rewrite each (rowComb b c)[j] entry using rowCombination_getElem_int.
+  have h_lhs :
+      Matrix.dot u (Matrix.rowCombination b c) =
+        (List.finRange m).foldl
+          (fun accj j => accj + u[j] *
+            (List.finRange n).foldl (fun acck k => acck + b[k][j] * c[k]) 0) 0 := by
+    unfold Matrix.dot Hex.Vector.dotProduct
+    apply foldl_add_pointwise_eq_int
+    intro j _hj
+    rw [rowCombination_getElem_int (b := b) (c := c) j]
+  rw [h_lhs]
+  -- Step 2: distribute u[j] over the inner sum so the body has shape (acc + f j k).
+  have h_distrib :
+      (List.finRange m).foldl
+          (fun accj j => accj + u[j] *
+            (List.finRange n).foldl (fun acck k => acck + b[k][j] * c[k]) 0) 0 =
+        (List.finRange m).foldl
+          (fun accj j => accj +
+            (List.finRange n).foldl
+              (fun acck k => acck + u[j] * (b[k][j] * c[k])) 0) 0 := by
+    apply foldl_add_pointwise_eq_int
+    intro j _hj
+    have h_mul := foldl_mul_distrib_int (List.finRange n)
+      (fun k : Fin n => b[k][j] * c[k]) u[j] 0
+    have h_zero : u[j] * (0 : Int) = 0 := by grind
+    rw [h_zero] at h_mul
+    exact h_mul
+  rw [h_distrib]
+  -- Step 3: apply Fubini sum-swap.
+  have h_swap :=
+    Matrix.foldl_det_sum_swap (R := Int)
+      (xs := List.finRange m) (ys := List.finRange n)
+      (fun (j : Fin m) (k : Fin n) => u[j] * (b[k][j] * c[k]))
+  rw [h_swap]
+  -- Step 4: reshape each inner sum to match c[k] * dot u (b.row k).
+  apply foldl_add_pointwise_eq_int
+  intro k _hk
+  -- We want:
+  --   (List.finRange m).foldl (fun accj j => accj + u[j] * (b[k][j] * c[k])) 0
+  --     = c[k] * Matrix.dot u (b.row k)
+  -- Rearrange body so c[k] is the multiplier: u[j] * (b[k][j] * c[k])
+  --     = c[k] * (u[j] * b[k][j]).
+  have h_body :
+      (List.finRange m).foldl
+          (fun accj j => accj + u[j] * (b[k][j] * c[k])) 0 =
+        (List.finRange m).foldl
+          (fun accj j => accj + c[k] * (u[j] * b[k][j])) 0 := by
+    apply foldl_add_pointwise_eq_int
+    intro j _hj
+    have : u[j] * (b[k][j] * c[k]) = c[k] * (u[j] * b[k][j]) := by grind
+    exact this
+  rw [h_body]
+  -- Pull c[k] out of the foldl using foldl_mul_distrib_int (in reverse).
+  have h_pull := foldl_mul_distrib_int (List.finRange m)
+    (fun j : Fin m => u[j] * b[k][j]) c[k] 0
+  have h_zero : c[k] * (0 : Int) = 0 := by grind
+  rw [h_zero] at h_pull
+  rw [← h_pull]
+  -- Goal: c[k] * (List.finRange m).foldl (fun accj j => accj + u[j] * b[k][j]) 0
+  --      = c[k] * Matrix.dot u (b.row k)
+  -- Rewrite Matrix.dot definitionally to the foldl form using row entry equality.
+  have h_dot_eq :
+      Matrix.dot u (b.row k) =
+        (List.finRange m).foldl (fun accj j => accj + u[j] * b[k][j]) 0 := by
+    unfold Matrix.dot Hex.Vector.dotProduct
+    apply foldl_add_pointwise_eq_int
+    intro j _hj
+    simp [Matrix.row]
+  rw [h_dot_eq]
+
 /-- If the array loop's `state.step` is past the matrix extent, one outer
 iteration returns the input state unchanged. -/
 private theorem scaledCoeffArrayLoop_done (fuel : Nat)

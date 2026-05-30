@@ -5704,7 +5704,7 @@ sum-swap to align the iteration order with `columnTupleVectors`.
 -/
 
 /-- Sum-swap (Fubini) for the standard determinant-style nested folds. -/
-private theorem foldl_det_sum_swap {R : Type u} [Lean.Grind.CommRing R]
+theorem foldl_det_sum_swap {R : Type u} [Lean.Grind.CommRing R]
     {β γ : Type v} (xs : List β) (ys : List γ) (f : β → γ → R) :
     xs.foldl (fun acc x => acc + ys.foldl (fun acc' y => acc' + f x y) 0) 0 =
       ys.foldl (fun acc y => acc + xs.foldl (fun acc' x => acc' + f x y) 0) 0 := by
