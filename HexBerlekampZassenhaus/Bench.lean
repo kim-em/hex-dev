@@ -1,4 +1,6 @@
 import HexBerlekampZassenhaus.Basic
+import Hex.BenchOracle.Flint
+import Lean.Data.Json
 import LeanBench
 
 /-!
@@ -68,10 +70,31 @@ HO-2 adversarial singletons (each pinned at `paramSchedule := #[0]`):
   for SD3 at the conformance prime, keeping the worst-case recombination
   shape visible without running the smoke-intractable full integer
   factorization.
+
+Gating external comparator:
+
+* `runIsabelleFactorChecksum`: verified Isabelle/AFP
+  `Berlekamp_Zassenhaus.factor_int_poly`, exported to Haskell and compiled by
+  `scripts/oracle/setup_bz_isabelle.sh`. The comparator process is persistent:
+  one line-delimited JSON request `{"coeffs":[...]}` is sent per call, with
+  coefficients in ascending degree order, and the reply is
+  `{"ok":true,"result":{"scalar":c,"factors":[{"coeffs":[...],"multiplicity":m},...]}}`.
+  The Lean bench process caches the child and reuses it across requests.
+  Before the first timed request, a Lean-side guard checks `(x-1)(x-2)`,
+  `Phi_5`, and `(x^2-2)(x^2-3)` by comparing canonical factor multisets
+  against `factor`; factor order is deliberately ignored.
+* `runIsabelleFactorBaselineChecksum`: the same persistent protocol on the
+  constant polynomial `1`. Ratio reports subtract this trivial-input baseline
+  from `runIsabelleFactorChecksum` before computing `hex/isabelle`.
+  These fixed comparator targets are tagged `scheduled-hardware`; this bench
+  executable's default `verify` command skips that tag so CI does not build or
+  run the AFP comparator.
 -/
 
 namespace Hex
 namespace BerlekampZassenhausBench
+
+open Lean (Json)
 
 private instance benchBoundsThirtyOne : ZMod64.Bounds 31 := ⟨by decide, by decide⟩
 
@@ -259,6 +282,37 @@ def checksumFactorization (φ : Factorization) : UInt64 :=
   let factors := φ.factors.foldl (fun acc factor => mixHash acc (checksumFactor factor)) 0
   mixHash (hash φ.scalar) factors
 
+def intListLexLe : List Int → List Int → Bool
+  | [], _ => true
+  | _ :: _, [] => false
+  | a :: as, b :: bs =>
+      if a < b then true
+      else if b < a then false
+      else intListLexLe as bs
+
+def canonicalFactorLe (a b : List Int × Nat) : Bool :=
+  if a.1 = b.1 then
+    a.2 ≤ b.2
+  else
+    intListLexLe a.1 b.1
+
+def canonicalFactorArray (φ : Factorization) : Array (List Int × Nat) :=
+  (φ.factors.map fun factor => (factor.1.toArray.toList, factor.2)).qsort canonicalFactorLe
+
+def checksumCanonicalFactorArray (factors : Array (List Int × Nat)) : UInt64 :=
+  factors.foldl
+    (fun acc factor =>
+      let coeffHash := factor.1.foldl (fun h c => mixHash h (hash c)) 0
+      mixHash acc (mixHash coeffHash (hash factor.2)))
+    0
+
+def checksumCanonicalFactorization (scalar : Int) (factors : Array (List Int × Nat)) :
+    UInt64 :=
+  mixHash (hash scalar) (checksumCanonicalFactorArray factors)
+
+def checksumCanonicalLeanFactorization (φ : Factorization) : UInt64 :=
+  checksumCanonicalFactorization φ.scalar (canonicalFactorArray φ)
+
 /-- Stable checksum for modular factor-degree profiles. -/
 def checksumNatArray (xs : Array Nat) : UInt64 :=
   xs.foldl (fun acc x => mixHash acc (hash x)) 0
@@ -400,6 +454,157 @@ def runFastPathPrecisionLocalChecksum (input : PrecisionLocalInput) : UInt64 :=
     mixHash (hash input.localFactorCount) <|
       mixHash (checksumZPolyArray lifted) <|
         mixHash (hash (factorFastPrecisionCap input.poly)) (checksumOptionNatArray splitProfile)
+
+initialize isabelleBZBinaryRef : IO.Ref (Option String) ← IO.mkRef none
+
+initialize isabelleBZChildRef :
+    IO.Ref (Option Hex.BenchOracle.Flint.PersistentComparator) ← IO.mkRef none
+
+initialize isabelleBZCrossCheckRef : IO.Ref Bool ← IO.mkRef false
+
+def checkedProcessOutput (cmd : String) (args : Array String := #[]) : IO String := do
+  let out ← IO.Process.output { cmd := cmd, args := args }
+  if out.exitCode != 0 then
+    throw <| IO.userError
+      s!"process failed ({cmd}):\nstdout:\n{out.stdout}\nstderr:\n{out.stderr}"
+  return out.stdout.trimAscii.toString
+
+def resolveIsabelleBZBinary : IO String := do
+  if let some cached ← isabelleBZBinaryRef.get then
+    return cached
+  let path ←
+    match (← IO.getEnv "HEX_BZ_ISABELLE") with
+    | some p => pure p
+    | none => checkedProcessOutput "scripts/oracle/setup_bz_isabelle.sh"
+  isabelleBZBinaryRef.set (some path)
+  return path
+
+def resolveIsabelleBZChild : IO Hex.BenchOracle.Flint.PersistentComparator := do
+  if let some ch ← isabelleBZChildRef.get then
+    return ch
+  let binary ← resolveIsabelleBZBinary
+  let ch ← Hex.BenchOracle.Flint.PersistentComparator.spawn binary
+  isabelleBZChildRef.set (some ch)
+  return ch
+
+def requestIsabelleBZLineWithRetry (request : String) : Nat → IO String
+  | 0 => do
+    let reply ← (← resolveIsabelleBZChild).requestLine request
+    if reply.isEmpty then
+      throw <| IO.userError "bz_isabelle closed stdout before replying"
+    return reply
+  | Nat.succ remaining => do
+    try
+      let reply ← (← resolveIsabelleBZChild).requestLine request
+      if reply.isEmpty then
+        throw <| IO.userError "bz_isabelle closed stdout before replying"
+      return reply
+    catch _ =>
+      isabelleBZChildRef.set none
+      requestIsabelleBZLineWithRetry request remaining
+
+def zpolyToIsabelleRequest (f : ZPoly) : Json :=
+  Json.mkObj [("coeffs", Hex.BenchOracle.Flint.intsToJson f.toArray.toList)]
+
+def parseIsabelleBZFactors (j : Json) : IO (Array (List Int × Nat)) := do
+  let arr ←
+    match j.getArr? with
+    | Except.ok a => pure a
+    | Except.error msg =>
+        throw <| IO.userError s!"bz_isabelle factors field was not an array: {msg}"
+  let mut out : Array (List Int × Nat) := Array.mkEmpty arr.size
+  for entry in arr do
+    let coeffsJson ←
+      match entry.getObjVal? "coeffs" with
+      | Except.ok c => pure c
+      | Except.error msg =>
+          throw <| IO.userError s!"bz_isabelle factor missing coeffs: {msg}"
+    let coeffs ← Hex.BenchOracle.Flint.jsonToInts coeffsJson
+    let multiplicityJson ←
+      match entry.getObjVal? "multiplicity" with
+      | Except.ok m => pure m
+      | Except.error msg =>
+          throw <| IO.userError s!"bz_isabelle factor missing multiplicity: {msg}"
+    let multiplicity ←
+      match multiplicityJson.getNat? with
+      | Except.ok m => pure m
+      | Except.error msg =>
+          throw <| IO.userError s!"bz_isabelle factor multiplicity invalid: {msg}"
+    out := out.push (coeffs, multiplicity)
+  return out.qsort canonicalFactorLe
+
+def requestIsabelleBZFactorizationRaw (f : ZPoly) : IO (Int × Array (List Int × Nat)) := do
+  let reply ← requestIsabelleBZLineWithRetry (zpolyToIsabelleRequest f).compress 1
+  let json ←
+    match Json.parse reply with
+    | Except.ok j => pure j
+    | Except.error msg =>
+        throw <| IO.userError s!"bz_isabelle reply was not valid JSON: {msg}; reply: {reply}"
+  match json.getObjValAs? Bool "ok" with
+  | Except.ok true =>
+      let result ←
+        match json.getObjVal? "result" with
+        | Except.ok r => pure r
+        | Except.error msg =>
+            throw <| IO.userError s!"bz_isabelle success missing result: {msg}"
+      let scalar ←
+        match result.getObjVal? "scalar" with
+        | Except.ok scalarJson =>
+          match scalarJson.getInt? with
+          | Except.ok n => pure n
+          | Except.error msg =>
+              throw <| IO.userError s!"bz_isabelle scalar invalid: {msg}"
+        | Except.error msg =>
+            throw <| IO.userError s!"bz_isabelle result missing scalar: {msg}"
+      let factorsJson ←
+        match result.getObjVal? "factors" with
+        | Except.ok fs => pure fs
+        | Except.error msg =>
+            throw <| IO.userError s!"bz_isabelle result missing factors: {msg}"
+      let factors ← parseIsabelleBZFactors factorsJson
+      return (scalar, factors)
+  | Except.ok false =>
+      let err := (json.getObjValAs? String "error").toOption.getD "(no error message)"
+      throw <| IO.userError s!"bz_isabelle: {err}"
+  | Except.error msg =>
+      throw <| IO.userError s!"bz_isabelle reply missing/non-bool ok: {msg}; reply: {reply}"
+
+def isabelleFixtureInputs : List ZPoly :=
+  [smokeInput 1, DensePoly.ofCoeffs #[1, 1, 1, 1, 1], advQuadSqrt2Sqrt3]
+
+def ensureIsabelleBZCrossCheck : IO Unit := do
+  if (← isabelleBZCrossCheckRef.get) then
+    return ()
+  for f in isabelleFixtureInputs do
+    let leanChecksum := checksumCanonicalLeanFactorization (factor f)
+    let (scalar, factors) ← requestIsabelleBZFactorizationRaw f
+    let isabelleChecksum := checksumCanonicalFactorization scalar factors
+    if leanChecksum != isabelleChecksum then
+      throw <| IO.userError (
+        s!"bz_isabelle cross-check failed for coeffs={f.toArray.toList}: " ++
+        s!"lean={leanChecksum}, isabelle={isabelleChecksum}")
+  isabelleBZCrossCheckRef.set true
+
+def requestIsabelleBZFactorization (f : ZPoly) : IO (Int × Array (List Int × Nat)) := do
+  ensureIsabelleBZCrossCheck
+  requestIsabelleBZFactorizationRaw f
+
+/-- Fixed Lean-side target matching the Isabelle comparator's canonical input. -/
+def runFactorIsabelleDomainChecksum : Unit → IO UInt64 := fun _ => do
+  return checksumCanonicalLeanFactorization (factor advQuadSqrt2Sqrt3)
+
+/-- Fixed verified-Isabelle BZ comparator target on the same canonical input. -/
+def runIsabelleFactorChecksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization advQuadSqrt2Sqrt3
+  return checksumCanonicalFactorization scalar factors
+
+/-- Fixed verified-Isabelle trivial-input baseline for process/protocol overhead. -/
+def runIsabelleFactorBaselineChecksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorizationRaw (1 : ZPoly)
+  return checksumCanonicalFactorization scalar factors
+
+def scheduledHardwareTag : String :=
+  "scheduled-hardware"
 
 /-- HO-3's classical-arithmetic BHKS model over the smoke degree parameter. -/
 def bzClassicalSmokeComplexity (n : Nat) : Nat :=
@@ -715,8 +920,51 @@ setup_benchmark runAdvSwinnertonDyerSD3ModularSplitChecksum n => n + 1
     signalFloorMultiplier := 1.0
   }
 
+/- Fixed bottom-rung verified-Isabelle comparator pair. Both targets return the
+same canonical factor-multiset checksum for `(x^2 - 2)(x^2 - 3)`; scheduled runs use
+`compare runFactorIsabelleDomainChecksum runIsabelleFactorChecksum` to record
+the verified-to-verified ratio. -/
+setup_fixed_benchmark runFactorIsabelleDomainChecksum where {
+    repeats := 3
+    maxSecondsPerCall := 20.0
+    expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization (factor advQuadSqrt2Sqrt3)))
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleFactorChecksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization (factor advQuadSqrt2Sqrt3)))
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleFactorBaselineChecksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (Hashable.hash (checksumCanonicalFactorization 1 #[]))
+    tags := #[scheduledHardwareTag]
+  }
+
 end BerlekampZassenhausBench
 end Hex
 
+namespace Hex.BerlekampZassenhausBench
+
+def verifySmokeTargetsOnly : IO UInt32 := do
+  let parametric ← LeanBench.allRuntimeEntries
+  let fixed ← LeanBench.allFixedRuntimeEntries
+  let names :=
+    (parametric.filter (fun e => !e.spec.config.tags.contains scheduledHardwareTag)
+      |>.map (·.spec.name) |>.toList) ++
+    (fixed.filter (fun e => !e.spec.config.tags.contains scheduledHardwareTag)
+      |>.map (·.spec.name) |>.toList)
+  let reports ← LeanBench.verify names
+  IO.println (LeanBench.Format.fmtCombinedVerify reports)
+  return if reports.passed then 0 else 1
+
+end Hex.BerlekampZassenhausBench
+
 def main (args : List String) : IO UInt32 :=
-  LeanBench.Cli.dispatch args
+  match args with
+  | ["verify"] => Hex.BerlekampZassenhausBench.verifySmokeTargetsOnly
+  | _ => LeanBench.Cli.dispatch args
