@@ -58,6 +58,37 @@ scaffolded `def` is fully implemented; only its proofs may be
 "scaffold for the eventual <X> bridge", "honest placeholder", and
 "for now ..." are forbidden in committed code.
 
+### Fallback discipline for total forms of partial helpers
+
+A close relative of the placeholder rule, applying when a partial
+helper (`f : T → Option U`) is wrapped into a total form
+(`f' : T → U`) via a fallback in the `none` branch. Allowed only
+when the per-library SPEC classifies the fallback under exactly
+one of two modes: `unreachable-by-pipeline-invariant` (the bridge
+proves a `_isSome` theorem and the SPEC text cites it by name) or
+`audited-emergency-value` (rare; the SPEC text documents the
+rationale and the call sites that accept the fallback). No third
+mode. *"Refactor later"* is not admissible. The full rule lives
+at [design-principles.md §8](../SPEC/design-principles.md). The
+rollback path that applies to a benchmark-discovered scaffolding
+`def` applies here too.
+
+### Headline correctness theorem (per-library, `done_through ≥ 4`)
+
+Every library that bumps `done_through` past Phase 4 must carry, in
+its Mathlib bridge, a single headline correctness theorem stating
+the end-to-end post-condition of its public API. The per-library
+SPEC names the theorem (typically in a `## Headline correctness
+theorem` section) and the semantic clauses it must establish.
+Intermediate lemmas are admissible when they are either
+(a) load-bearing for some proof of the headline theorem, or
+(b) independently justified as public API, executable checker, or
+regression guard with stated rationale; collections of intermediate
+lemmas that don't compose into the headline theorem are dead
+weight and block the `done_through` bump. The orchestrator
+dispatches the headline theorem as the critical-path artefact, not
+arbitrary bags of per-function obligations that contribute to it.
+
 ### Read the SPEC, not just the issue body
 
 When you pick up an issue, re-read every SPEC file linked in its

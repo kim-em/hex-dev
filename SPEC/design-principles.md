@@ -72,6 +72,55 @@
    applies to a benchmark-discovered scaffolding `def` applies to a
    proof a refactor would silently axiomatise.
 
+8. **Fallback discipline for total forms of partial helpers.** A
+   close relative of principle 7. Pipelines sometimes contain a
+   helper of shape
+
+   ```lean
+   def helper (f : T) : U :=
+     match helperOpt f with
+     | some x => x
+     | none => fallback f
+   ```
+
+   where the `Option`-returning `helperOpt` is the natural
+   mathematical object and `helper`'s total form exists for
+   downstream type-signature convenience. The `none` branch is a
+   **fallback**.
+
+   A total form of a partial helper is admissible **only** when
+   the SPEC text classifies the fallback under exactly one of the
+   following:
+
+   - **`unreachable-by-pipeline-invariant`** — the bridge file
+     proves a theorem `helperOpt?_isSome_of_<precondition>`
+     showing the `none` branch is unreachable on inputs that the
+     public API passes downstream. The SPEC text cites the theorem
+     by name and states the pipeline invariant it relies on. The
+     `none` branch may then return an arbitrary value;
+     semantically it is dead code.
+   - **`audited-emergency-value`** — the fallback's behaviour is
+     mathematically safer than crashing (e.g. a verifiable
+     identity element, an explicit failure record that downstream
+     consumers inspect), every call site explicitly audits this,
+     and the SPEC text states the rationale and lists the call
+     sites that accept the fallback. This mode is rare.
+
+   A total form of a partial helper without one of these two
+   classifications is a SPEC violation. The remedy is to either
+   prove the unreachability theorem, document the audit (and pass
+   each call site's audit), or **remove the total form** by
+   propagating the `Option` upward through the pipeline until the
+   public API takes explicit responsibility for the `none` case.
+   *"Refactor later"* is not an admissible classification; it is
+   principle 7 restated.
+
+   This rule applies retroactively: existing total forms of
+   partial helpers must be either proved unreachable, documented
+   and audited, or removed before any `done_through` bump past
+   the phase in which the helper lives. The same rollback path
+   that applies under principle 7 applies here.
+
 ## Lakefile
 
 Use `precompileModules := true` only on libraries that export

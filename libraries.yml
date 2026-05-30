@@ -308,6 +308,10 @@ libraries:
     done_through: 0
     status: active
     phase4:
+      comparators:
+        - tool: "verified Isabelle BZ (AFP Berlekamp_Zassenhaus; Haskell extraction of factor_int_poly via Factorization_External_Interface)"
+          class: gating
+          goal: "Lean BZ is at least as fast as the verified Isabelle BZ on shared canonical inputs at the largest eligible scaling rung of every registered scientific bench target. Algorithm-class caveat per SPEC/Libraries/hex-berlekamp-zassenhaus.md §External comparators: the 1× gate presumes the comparator implements an algorithm of the same class or weaker than hex's; Isabelle's classical exhaustive recombination is weaker than hex's BHKS van Hoeij CLD."
       input_families:
         - name: public-factor-combinator
           description: Public `factor` combinator on deterministic split integer-polynomial smoke inputs, covering the fast-with-slow-fallback API surface.

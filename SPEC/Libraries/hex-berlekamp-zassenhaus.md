@@ -454,9 +454,44 @@ D1. **`factorFast` always succeeds: `factorFast f ≠ none`.** The theorem is ab
 
     *Reading list:* BHKS §3.2 (Lemma 3.2 / "bad vector"), §5 (Theorem 5.2 termination + eq. 5.3 explicit bound, lines around `c · n · (2C)^(n²) · ‖f‖₂^(2n−1) · (log ‖f‖₂)^n`); §4.4 (why the algorithm exits early in practice via the L'=W certificate); Hadamard's inequality in `Mathlib.LinearAlgebra.Matrix.Determinant`; resultant infrastructure in Mathlib4 (port from Mathlib3 if absent).
 
+## Headline correctness theorem
+
+`HexBerlekampZassenhausMathlib` must carry, and the `done_through ≥ 4` bump is blocked on, an end-to-end theorem with the following **semantic shape**:
+
+> For every nonzero `f : Hex.ZPoly`, the public-API output `φ := Hex.factor f : Hex.Factorization` satisfies all five clauses:
+>
+> 1. **Product preservation.** `Hex.Factorization.product φ = f`.
+> 2. **Primitive irreducibility.** Every `entry ∈ φ.factors` is primitive and `Polynomial.Irreducible (HexPolyZMathlib.toPolynomial entry.1)` holds in the Mathlib sense.
+> 3. **Positive multiplicities.** Every `entry ∈ φ.factors` has `entry.2 > 0`.
+> 4. **No factor associates.** For any two distinct positions in `φ.factors`, the underlying polynomials are not associates of each other.
+> 5. **Scalar carries sign and content.** `φ.scalar` equals the signed integer content of `f` (sign × content per `ZPoly.content` and `ZPoly.leadingCoeff` conventions).
+
+The final Lean name (e.g. `factor_correct`, `factor_irreducible_factorisation`) may differ from this prose, and intermediate predicates such as `IsIrreducibleFactorization` may abbreviate the conjunction, but the five-clause shape is binding.
+
+This is the post-condition of the public API and the contract the combinator advertises in its docstring. **The headline theorem is the critical-path artefact for `done_through ≥ 4`.** Intermediate lemmas are admissible when they are either
+
+- (a) load-bearing for some proof of the headline theorem, or
+- (b) independently justified as public API, executable checker, or regression guard with stated rationale.
+
+Lemmas that satisfy neither are dead weight and should be removed or refactored until they earn their place.
+
+A bridge file that proves an arbitrary collection of intermediate lemmas but does not prove the headline correctness theorem is incomplete by SPEC: the orchestrator must not bump `done_through` to 4 in that state. The local realisation of this clause for the open BZ architectural directive is rewritten in the dispatched rollback issue.
+
 ## Conformance fixtures
 
 Core-tier conformance must include at least one input where true integer factors require a non-trivial subset product of lifted mod-p factors, and at least one input that splits heavily (≥ 4 distinct mod-p factors) over a small admissible prime. Concrete fixture instances live in [HexBerlekampZassenhaus/Conformance.lean](../../HexBerlekampZassenhaus/Conformance.lean) and the JSONL fixture file, not in this spec.
+
+## External comparators
+
+Phase 4 for `hex-berlekamp-zassenhaus` declares one **gating** external comparator:
+
+- **`verified Isabelle BZ (AFP Berlekamp_Zassenhaus; Haskell extraction of factor_int_poly via Factorization_External_Interface.thy)`**. Build via a sibling of [scripts/oracle/setup_lll_isabelle.sh](../../scripts/oracle/setup_lll_isabelle.sh) that targets the AFP `Berlekamp_Zassenhaus` session instead of the Zenodo LLL deposit. Set-up: `isabelle build -b Berlekamp_Zassenhaus` using the AFP release matching the pinned Isabelle, then `isabelle export -d <wrapper-session> -x '*:code/**'` on a wrapper theory that re-exports `factor_int_poly` to Haskell. The generated module is compiled with `ghc -O2` against a persistent stdin/stdout driver per [SPEC/benchmarking.md §External comparators — Process call](../benchmarking.md#external-comparators).
+
+  **Gating goal: `hex/isabelle ≤ 1×` at the largest eligible scaling rung of every registered scientific bench target.** Justification: both implementations are pure-functional verified code extracted to a strict runtime with native integer arithmetic. The `hex-lll` row in [reports/hex-lll-performance.md](../../reports/hex-lll-performance.md) already demonstrates parity is achievable across the dimension ladder against the analogous AFP-extracted LLL binary (hex within ±10%, faster at small `n`). There is no architectural reason hex should require concessional headroom against the BZ comparator.
+
+  *Algorithm-class caveat.* The 1× gate presumes the comparator implements an algorithm of the same class or weaker than hex's. Isabelle's `Berlekamp_Zassenhaus.berlekamp_zassenhaus_factorization` uses classical exhaustive lifted-factor recombination; hex's spec mandates the BHKS van Hoeij CLD construction (see §"Fast path: van Hoeij CLD lattice"), which is strictly more sophisticated and asymptotically better on adversarial inputs, so parity holds without algorithmic-class concession. If a future comparator implements a fundamentally stronger algorithm, this clause must be explicitly amended to loosen the goal or reclassify the comparator.
+
+The fpLLL/python-flint comparators that adjacent libraries declare for their LLL or polynomial-arithmetic surfaces are *informational only* at the BZ level; the verified-Isabelle path is the only same-class (verified-to-verified) comparator and so is the only one classified as gating here.
 
 ## References
 
