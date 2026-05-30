@@ -84,53 +84,74 @@ no alternative Tier 1 implementation to register as a `compare` group.
 
 ## Profile
 
-The `tier1-committed-table` profile was recorded at commit
-`e7bf7c23bbb5` on `carica` (Apple M2 Ultra, macOS 14.6.1) with a 1 kHz
-sampling rate. `samply record --save-only --unstable-presymbolicate`
-successfully ran the benchmark child but produced zero sampled frames on
-this macOS host, so attribution below uses `/usr/bin/sample` against the
-same long-running LeanBench child process. The raw text profile is
+The `tier1-committed-table` profile was regenerated at commit
+`3bc24c50fbe57487776c433106894ee544a6d656` on `carica` (Apple M2 Ultra,
+macOS 14.6.1, arm64) with `samply 0.13.1` at a 999 Hz sampling rate,
+using the lean-bench-samply timed-region filter at commit
+`602da96df3537341b50de9add2f137b0a75a68df`. The harness reported
+`git_dirty=true` because this worktree carried an unrelated pre-existing
+`.claude/CLAUDE.md` modification. The filtered raw profile is
 developer-local at
-`/tmp/hex-profiles/hex-conway-lookup-sample-e7bf7c23bbb5.txt` and is not
-committed.
+`/tmp/hex-profile-runLuebeckConwayPolynomialLookupChecksum-36.json.gz`
+and is not committed.
 
 ### `tier1-committed-table`
 
 Command:
 
 ```sh
-.lake/build/bin/hexconway_bench _child \
-    --bench Hex.ConwayBench.runLuebeckConwayPolynomialLookupChecksum \
-    --param 36 --target-nanos 10000000000 --cache-mode warm
-```
-
-Sample command:
-
-```sh
-sample $pid 3 -file \
-    /tmp/hex-profiles/hex-conway-lookup-sample-e7bf7c23bbb5.txt
+scripts/profile/run_profile.sh \
+    ./.lake/build/bin/hexconway_bench \
+    Hex.ConwayBench.runLuebeckConwayPolynomialLookupChecksum \
+    36 1000000000
 ```
 
 Representative case: committed Luebeck table ordinal `36`, corresponding
-to `C(13, 6)`, no seed. Child row: `inner_repeats=8388608`,
-`per_call_nanos=877.881785`, `result_hash=0x837443a59caa5094`.
-The profiler sampled `2044` worker-thread stacks during the timed child.
+to `C(13, 6)`, no seed. Child row: `inner_repeats=1048576`,
+`per_call_nanos=876.204252`, `result_hash=0x837443a59caa5094`.
 
-Leaf cost is overwhelmingly Lean runtime dispatch, refcounting, and
-allocation/free inside a tiny table materialisation path; no GMP frames were
-present. The inclusive own-code ranking is
-`Hex.ConwayBench.runLuebeckConwayPolynomialLookupChecksum` (`1153/2044`
-samples, 56.4%) →
-`Hex.Conway.luebeckConwayPolynomial?` (`643/2044`, 31.5%) →
-`Hex.Conway.luebeckConwayPolynomialOfCoeffs` and its coefficient-mapping
-closure under `Array.mapMUnsafe.map` (visible below the lookup frame).
-The remaining visible hot frames are Lean closure application
-(`lean_apply_1`, `lean_apply_2`, `lean_apply_4`), refcount cold paths
-(`lean_dec_ref_cold`), and the bundled allocator (`mi_malloc*`,
-`mi_free*`). The dominant cost maps directly to the registered
-`runLuebeckConwayPolynomialLookupChecksum` target and reflects rebuilding
-the small `FpPoly` row from committed coefficient data on each lookup,
-which is the expected Tier 1 table path.
+Diagnostics block:
+
+```text
+=== lean-bench-samply filter diagnostics ===
+bench thread:       name='Thread <4419428>' tid=4419428
+regions:            14, total timed = 925.9 ms
+expected samples:   ~925 on bench thread
+retained samples:   924 on bench thread (10 rejected outside windows)
+other-thread noise: 1 samples on non-bench threads within timed windows (informational)
+filtered profile:   /tmp/hex-profile-runLuebeckConwayPolynomialLookupChecksum-36.json.gz
+```
+
+The diagnostics JSON records the calibration anchors
+`spawn_anchor_wall_ns=1780141890664575000`,
+`spawn_anchor_mono_ns=329924577328833`,
+`sidecar_mono_anchor_ns=329925512083500`, and
+`samply_meta_start_time_ms=1780141890671.813`.
+
+Across the 924 retained bench-thread samples, flat leaf cost is:
+
+- Lean runtime / standard-library dispatch and compiler-outlined helper
+  frames: `612/924` samples (`66.2%`);
+- allocation / free, mostly `mi_malloc*`, `mi_free*`, and array allocation
+  paths: `243/924` (`26.3%`);
+- Hex own code: `69/924` (`7.5%`);
+- GMP big-integer arithmetic: `0/924`.
+
+The inclusive own-code ranking is
+`Hex.ConwayBench.runLuebeckConwayPolynomialLookupChecksum` (`535/924`,
+57.9%) →
+`Hex.Conway.luebeckConwayPolynomial?` (`530/924`, 57.4%) →
+`Hex.ConwayBench.checksumLookup` (`360/924`, 39.0%) →
+`Hex.DensePoly.trimTrailingZeros` (`92/924`, 10.0%). Lower entries include
+`Hex.ConwayBench.checksumPoly` (`51/924`, 5.5%) and
+`Hex.Conway.luebeckConwayPolynomialOfCoeffs` (`45/924`, 4.9%).
+
+The dominant cost remains attributable to the registered
+`Hex.ConwayBench.runLuebeckConwayPolynomialLookupChecksum` target. The
+profile is the expected tiny Tier 1 committed-table path: select the stored
+coefficient row for `C(13, 6)`, rebuild the small `FpPoly`, trim the dense
+polynomial representation, and checksum the result. No newly dominant cost
+falls outside the registered bench target, so no Attribution-rule follow-up
+is required.
 
 ## Concerns
-
