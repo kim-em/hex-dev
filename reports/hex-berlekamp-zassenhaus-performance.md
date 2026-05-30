@@ -52,16 +52,19 @@ HO-5b extended this surface with four per-rung verified-Isabelle
 comparator registrations on the deterministic split family
 `smokeInput n` for `n ∈ {2, 3, 4, 5}`
 (`runIsabelleSplitN{2,3,4,5}Checksum`), one per rung of the parametric
-`splitScientificSchedule`. Each per-rung Isabelle median pairs with
-the corresponding Lean medians from the public combinator
-(`runFactorChecksum`, scientific schedule `splitScientificSchedule =
-#[2..5]` at the verdict-eligible head), the CLD fast path
-(`runFactorFastChecksum`, same schedule), and the exhaustive backstop
-(`runFactorSlowChecksum`, smaller `smokeSchedule = #[1..4]` to keep
-the exponential search inside its `4.0 s` per-call cap) — three
-parallel `hex/isabelle` ladders against the same comparator output,
-replacing the prior single-rung canonical-fixed verdict with the
-scaling-ladder trends below.
+`splitScientificSchedule`, and eight per-rung registrations on the
+deterministic degree/height matrix
+(`runIsabelleDegreeHeight{D}x{H}Checksum` for the five rungs of
+`degreeHeightSchedule` and the three smaller-degree rungs of
+`slowDegreeHeightSchedule`). Each per-rung Isabelle median pairs with
+the corresponding Lean medians from one of the parametric Lean
+targets (`runFactorChecksum`, `runFactorFastChecksum`,
+`runFactorSlowChecksum` on the split family;
+`runFactorDegreeHeightChecksum`, `runFactorFastDegreeHeightChecksum`,
+`runFactorSlowDegreeHeightChecksum` on the degree/height matrix) —
+six parallel `hex/isabelle` ladders against the AFP-extracted
+comparator, replacing the prior single-rung canonical-fixed verdict
+with the scaling-ladder trends below.
 
 ### Per-call comparator overhead
 
@@ -208,6 +211,128 @@ eligible rung is `0.00133`.
 **Gating-goal verdict (largest eligible rung `n = 4`).** Lean
 `1.095 ms` vs Isabelle adjusted `823.053 ms`; adjusted ratio
 `0.00133` (Lean 751.65× faster). Gating-goal verdict: **met**.
+
+### Degree/height scaling ladder
+
+Per-rung 3-trial sweep at commit `0368ffe9-dirty` on `carica`
+(Apple M2 Ultra, macOS 15.6), recorded `2026-05-30T14:48:32Z`,
+1/5/15-minute load averages `4.28/5.29/4.89` at sweep start. The
+worktree was dirty because the pod-managed `.claude/CLAUDE.md` file
+carried a pre-existing local modification outside this report
+package. The Isabelle medians below are fresh measurements from
+this run (recorded between `14:49:46Z` and `14:51:06Z`), not borrowed
+from the prior `2f4ef93-split-ladder.json` export.
+
+Sweep command:
+
+```sh
+HEX_BZ_ISABELLE="$PWD/.cache/oracles/bz-isabelle/wrapper/bz_isabelle" \
+lake exe hexbz_bench run \
+    Hex.BerlekampZassenhausBench.runFactorDegreeHeightChecksum \
+    Hex.BerlekampZassenhausBench.runFactorFastDegreeHeightChecksum \
+    Hex.BerlekampZassenhausBench.runFactorSlowDegreeHeightChecksum \
+    Hex.BerlekampZassenhausBench.runIsabelleDegreeHeight3x2Checksum \
+    Hex.BerlekampZassenhausBench.runIsabelleDegreeHeight4x2Checksum \
+    Hex.BerlekampZassenhausBench.runIsabelleDegreeHeight4x8Checksum \
+    Hex.BerlekampZassenhausBench.runIsabelleDegreeHeight5x8Checksum \
+    Hex.BerlekampZassenhausBench.runIsabelleDegreeHeight6x32Checksum \
+    Hex.BerlekampZassenhausBench.runIsabelleDegreeHeight1x2Checksum \
+    Hex.BerlekampZassenhausBench.runIsabelleDegreeHeight2x2Checksum \
+    Hex.BerlekampZassenhausBench.runIsabelleDegreeHeight3x8Checksum \
+    --outer-trials 3 \
+    --export-file reports/bench-results/hex-berlekamp-zassenhaus-0368ffe9-degree-height.json
+```
+
+Export artefact:
+`reports/bench-results/hex-berlekamp-zassenhaus-0368ffe9-degree-height.json`,
+SHA-256
+`5815f944cbade82ebadeadf13e53cb59c6269edc2c4c996433ba72341d637241`.
+
+Each Isabelle per-rung registration carries an
+`expectedHash := checksumCanonicalLeanFactorization (factor input)`
+elaboration-time check; the bench harness reports
+`expected hash: matches` at every rung, confirming the
+factor-multiset agreement between hex and the AFP-extracted
+comparator on every degree/height fixture. The Lean parametric
+targets use the order-sensitive `checksumFactorization` rather than
+the canonical hash, so the per-rung result hashes recorded in the
+parametric JSON do not directly equal the Isabelle observed hashes;
+multiset agreement is established by the canonical `expectedHash`
+check, not by hash-string equality with the parametric target.
+
+| (degree, height) | Lean median (`factor`) | Isabelle median | overhead % | raw ratio | adjusted ratio | speedup (adj) |
+|---:|---:|---:|---:|---:|---:|---:|
+| `3 × 2` | 37.822 ms | 853.864 ms | 0.753% | 0.044296 | 0.044632 | Lean 22.41× faster |
+| `4 × 2` | 94.301 ms | 852.485 ms | 0.754% | 0.110619 | 0.111460 | Lean 8.97× faster |
+| `4 × 8` | 95.287 ms | 854.514 ms | 0.752% | 0.111510 | 0.112355 | Lean 8.90× faster |
+| `5 × 8` | 203.513 ms | 852.191 ms | 0.755% | 0.238812 | 0.240628 | Lean 4.16× faster |
+| `6 × 32` | 364.869 ms | 850.388 ms | 0.756% | 0.429062 | 0.432331 | Lean 2.31× faster |
+
+**Trend.** The Isabelle per-call adjusted time is essentially
+constant across the matrix (843–848 ms, a `≤ 1%` envelope reflecting
+that the AFP-extracted `factor_int_poly` cost on these small-degree
+small-height inputs is dominated by persistent-subprocess JSON
+marshalling and Haskell allocator overhead). The hex per-call cost
+climbs monotonically with degree — `37.8 → 94.3 → 95.3 → 203.5 →
+364.9 ms` — and the adjusted ratio climbs with it from `0.045` at
+`3 × 2` to `0.432` at `6 × 32`. The `4 × 2` and `4 × 8` rungs at
+the same degree but different heights agree within `~1%`, indicating
+that height (encoded coefficient size) is a much weaker cost axis
+than degree on this matrix's range.
+
+**Gating-goal verdict (largest eligible rung `6 × 32`).** Lean
+`364.869 ms` vs Isabelle adjusted `843.958 ms`; adjusted ratio
+`0.4323` (Lean 2.31× faster). Gating-goal verdict: **met**.
+
+### Degree/height scaling ladder: fast path
+
+Same sweep, paired with the same per-rung Isabelle medians. The CLD
+fast path closes on every degree/height fixture in this matrix; the
+per-call medians track the public combinator within `≤ 3%` at every
+rung.
+
+| (degree, height) | Lean median (`factorFast`) | Isabelle median | overhead % | raw ratio | adjusted ratio | speedup (adj) |
+|---:|---:|---:|---:|---:|---:|---:|
+| `3 × 2` | 37.230 ms | 853.864 ms | 0.753% | 0.043602 | 0.043933 | Lean 22.76× faster |
+| `4 × 2` | 93.606 ms | 852.485 ms | 0.754% | 0.109804 | 0.110639 | Lean 9.04× faster |
+| `4 × 8` | 94.463 ms | 854.514 ms | 0.752% | 0.110546 | 0.111384 | Lean 8.98× faster |
+| `5 × 8` | 201.965 ms | 852.191 ms | 0.755% | 0.236996 | 0.238797 | Lean 4.19× faster |
+| `6 × 32` | 355.292 ms | 850.388 ms | 0.756% | 0.417800 | 0.420983 | Lean 2.38× faster |
+
+**Trend.** Fast-path per-call median tracks the public combinator
+within `≤ 3%` at every rung, because `factor` dispatches through
+`factorFast` on these inputs and the trailing `factorSlow` fallback
+is not invoked.
+
+**Gating-goal verdict (largest eligible rung `6 × 32`).** Lean
+`355.292 ms` vs Isabelle adjusted `843.958 ms`; adjusted ratio
+`0.4210` (Lean 2.38× faster). Gating-goal verdict: **met**.
+
+### Degree/height scaling ladder: slow backstop
+
+Same sweep. The exhaustive backstop runs on the strictly smaller
+`slowDegreeHeightSchedule = #[1002, 2002, 3008]` (degree 1–3) because
+its `2^n` subset enumeration crosses the `maxSecondsPerCall = 4.0 s`
+budget once degree exceeds 3 on the height-scaled inputs. Each
+schedule rung is paired with its own per-rung Isabelle registration.
+
+| (degree, height) | Lean median (`factorSlow`) | Isabelle median | overhead % | raw ratio | adjusted ratio | speedup (adj) |
+|---:|---:|---:|---:|---:|---:|---:|
+| `1 × 2` | 850.965 µs | 837.870 ms | 0.767% | 0.001016 | 0.001023 | Lean 977.06× faster |
+| `2 × 2` | 21.829 µs | 830.256 ms | 0.774% | 0.000026 | 0.000026 | Lean 37740.43× faster |
+| `3 × 8` | 19.402 ms | 838.618 ms | 0.767% | 0.023136 | 0.023315 | Lean 42.89× faster |
+
+**Trend.** The `1 × 2` and `2 × 2` rungs reduce to a tiny
+square-free / single-factor short-circuit on the slow path (per-call
+medians of `~851 µs` and `~22 µs` respectively), so the ratios there
+are recombination-trivial. The meaningful slow-path rung is
+`3 × 8`, where the recombination loop runs full `2^k` enumeration
+on a degree-3 split input at height 8 and lands at `19.4 ms` — still
+`42.89×` faster than Isabelle's adjusted per-call time.
+
+**Gating-goal verdict (largest eligible rung `3 × 8`).** Lean
+`19.402 ms` vs Isabelle adjusted `832.188 ms`; adjusted ratio
+`0.0233` (Lean 42.89× faster). Gating-goal verdict: **met**.
 
 ### Comparison to prior outer-trials=1 ladder
 
@@ -729,22 +854,30 @@ record on each adversarial polynomial.
 - `runFactorSlowDegreeHeightChecksum` is now explicit and reproducible on
   a completing small subset; it remains diagnostic evidence only, not a
   Phase 4 completion verdict for the full slow path.
-- The verified-Isabelle BZ comparator covers three Lean targets on the
-  deterministic split family `smokeInput n` at `n ∈ {2, 3, 4, 5}`:
-  the public combinator (`runFactorChecksum`), the CLD fast path
-  (`runFactorFastChecksum`), and the exhaustive backstop
-  (`runFactorSlowChecksum`, schedule `#[1..4]`). At the largest
-  currently-eligible rung of each schedule the adjusted ratio is
-  `0.0417` (public, `n = 5`), `0.0421` (fast, `n = 5`), and `0.00133`
-  (slow, `n = 4`) — two to three orders of magnitude below the
-  `hex/isabelle ≤ 1×` gating goal. Per-family ladders for the other
-  scientific schedules (`degreeHeightSchedule`,
-  `slowDegreeHeightSchedule`, `precisionLocalSchedule`, the HO-2
-  adversarial singletons, and `fallbackProbeSchedule`) are not yet
-  wired; each would need its own per-rung `setup_fixed_benchmark`
-  Isabelle registrations on the respective prepared inputs, and a
-  bench run on hardware where `scripts/oracle/setup_bz_isabelle.sh`
-  has produced a `bz_isabelle` binary.
+- The verified-Isabelle BZ comparator covers six parametric Lean
+  targets over two scientific schedules. On the deterministic split
+  family `smokeInput n` at `n ∈ {2, 3, 4, 5}`, the public combinator
+  (`runFactorChecksum`), the CLD fast path (`runFactorFastChecksum`),
+  and the exhaustive backstop (`runFactorSlowChecksum`, schedule
+  `#[1..4]`) all meet the gating goal at their largest eligible
+  rungs (adjusted ratios `0.0417`, `0.0421`, `0.00133`). On the
+  degree/height matrix at `(degree, height) ∈ {(3,2), (4,2), (4,8),
+  (5,8), (6,32)}`, the public combinator
+  (`runFactorDegreeHeightChecksum`) and the CLD fast path
+  (`runFactorFastDegreeHeightChecksum`) meet the gating goal at the
+  largest eligible rung `6 × 32` (adjusted ratios `0.4323` and
+  `0.4210`); the slow backstop (`runFactorSlowDegreeHeightChecksum`,
+  schedule `#[1002, 2002, 3008]`) meets it at `3 × 8` (adjusted
+  ratio `0.0233`). The adjusted ratio on the degree/height matrix is
+  the closest the public/fast combinators currently come to the
+  `1×` ceiling — within `2.3×` at `6 × 32`. Per-family ladders for
+  the remaining scientific schedules (`precisionLocalSchedule`, the
+  HO-2 adversarial singletons, and `fallbackProbeSchedule`) are not
+  yet wired; each would need its own per-rung
+  `setup_fixed_benchmark` Isabelle registrations on the respective
+  prepared inputs, and a bench run on hardware where
+  `scripts/oracle/setup_bz_isabelle.sh` has produced a `bz_isabelle`
+  binary.
 - The split-family `splitScientificSchedule` continues to be capped
   at `n = 5` by the `maxSecondsPerCall = 8.0s` budget. With the
   warm-iterated per-call medians recorded above (`n = 5` at
