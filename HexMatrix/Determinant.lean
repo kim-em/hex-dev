@@ -10195,6 +10195,53 @@ theorem deleteRowCol_mMatrix_at_q_minus_one_eq_nMatrix_of_lt
   -- Use simp to handle index-rewriting with proof-irrelevance.
   simp only [hrow, hcol]
 
+/-- Basis-vector evaluation of `mDet` when `q > p`: the basis vector
+`e_q` becomes the standard basis vector `e_{q.val - 1}` in the last
+column of `mMatrix B (basisVec q) p`, so Laplace along that column
+recovers a signed `n × n` minor of `B`. -/
+theorem mDet_basisVec_eq_signed_nDet_of_lt
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n) (p q : Fin (n + 2)) (hpq : p.val < q.val) :
+    mDet B (basisVec (R := R) q) p =
+      cofactorSign (R := R)
+        (⟨q.val - 1, by have := q.isLt; omega⟩ : Fin (n + 1)) (Fin.last n) *
+      nDet B p q hpq := by
+  unfold mDet
+  -- Last column of `mMatrix B (basisVec q) p` is e_{r_q} where r_q = q.val - 1.
+  let r_q : Fin (n + 1) := ⟨q.val - 1, by have := q.isLt; omega⟩
+  show (mMatrix B (basisVec (R := R) q) p).det =
+      cofactorSign (R := R) r_q (Fin.last n) * nDet B p q hpq
+  have hcol : ∀ r : Fin (n + 1),
+      (mMatrix B (basisVec (R := R) q) p)[r][Fin.last n] =
+        if r = r_q then (1 : R) else (0 : R) := by
+    intro r
+    rw [mMatrix_entry_last]
+    rw [basisVec_getElem]
+    by_cases hreq : r = r_q
+    · subst hreq
+      rw [if_pos rfl]
+      have : skipIndex p r_q = q :=
+        skipIndex_at_q_minus_one_eq_q_of_lt p q hpq
+      rw [this]
+      exact if_pos rfl
+    · rw [if_neg hreq]
+      -- Need: (if skipIndex p r = q then 1 else 0) = 0, i.e., skipIndex p r ≠ q.
+      have hne : skipIndex p r ≠ q := by
+        intro heq
+        -- skipIndex p is injective, and skipIndex p r_q = q.
+        have hq_eq : skipIndex p r_q = q :=
+          skipIndex_at_q_minus_one_eq_q_of_lt p q hpq
+        have : skipIndex p r = skipIndex p r_q := heq.trans hq_eq.symm
+        exact hreq (skipIndex_injective p this)
+      exact if_neg hne
+  rw [det_eq_signed_minor_of_col_basis (mMatrix B (basisVec (R := R) q) p) r_q
+        (Fin.last n) hcol]
+  congr 1
+  unfold nDet
+  exact congrArg det
+    (deleteRowCol_mMatrix_at_q_minus_one_eq_nMatrix_of_lt B
+      (basisVec (R := R) q) p q hpq)
+
 /-- `mDet B (basisVec p) p = 0`: the basis vector `e_p` becomes the zero
 column inside `mMatrix B (basisVec p) p` after row `p` is deleted, so
 the determinant vanishes. -/
