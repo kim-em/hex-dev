@@ -514,7 +514,7 @@ private theorem entry_ofFn (f : Fin n → Fin m → R) (i : Fin n) (j : Fin m) :
     entry (Matrix.ofFn f) i j = f i j := by
   simp [entry, Matrix.row, Matrix.ofFn, Vector.getElem_ofFn]
 
-/-- Index bridge: the value at position `basisRev.length + k` of
+/-- Index equation: the value at position `basisRev.length + k` of
 `basisRowsAux basisRev pending` is the reduction of `pending[k]` against the
 basis rows accumulated so far, which equals the reverse of the first
 `basisRev.length + k` elements of the output. -/
@@ -2392,7 +2392,7 @@ private theorem residual_eq_of_same_prefixSpan
   grind
 
 /-- Residual uniqueness across two prefix bases with the same span. The
-second residual only needs to reconstruct modulo `B`; the span bridge and
+second residual only needs to reconstruct modulo `B`; the span equality and
 orthogonality transport move it to `A`, where `residual_eq_of_same_prefixSpan`
 applies. -/
 private theorem residual_eq_of_equiv_prefixSpan

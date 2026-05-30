@@ -2,7 +2,7 @@ import HexGramSchmidt.Basic
 import Mathlib.Analysis.InnerProductSpace.GramSchmidtOrtho
 
 /-!
-Mathlib bridge lemmas for `hex-gram-schmidt`.
+Mathlib-side correspondence lemmas for `hex-gram-schmidt`.
 
 This module converts dense `Hex.Matrix` rows into the finite-dimensional real
 vector space used by Mathlib's `gramSchmidt`, then states the rowwise
@@ -47,7 +47,7 @@ theorem rowToEuclidean_smul (c : Rat) (row : Vector Rat m) :
   ext j
   simp [rowToEuclidean]
 
-/-- Cast a rational dense matrix into the real matrix space used by the bridge. -/
+/-- Cast a rational dense matrix into the real matrix space used by the correspondence. -/
 def castRatMatrix (b : Matrix Rat n m) : Matrix ℝ n m :=
   Vector.map (fun row => Vector.map (fun x : Rat => (x : ℝ)) row) b
 

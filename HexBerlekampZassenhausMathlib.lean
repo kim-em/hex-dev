@@ -15,6 +15,6 @@ import HexBerlekampZassenhausMathlib.TerminationBound
 import HexBerlekampZassenhausMathlib.UFDPartition
 
 /-!
-Root module for the Mathlib bridge of the integer Berlekamp-Zassenhaus
-factorization pipeline.
+Root module for the Mathlib-side correspondence of the integer
+Berlekamp-Zassenhaus factorization pipeline.
 -/

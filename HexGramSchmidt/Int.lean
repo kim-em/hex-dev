@@ -25,7 +25,7 @@ def leadingGramMatrixInt (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) : Matrix 
     Matrix.dot (b.row (liftFinLE i hk)) (b.row (liftFinLE j hk))
 
 /-- The Gram-Schmidt leading Gram matrix is the leading prefix of the full
-Gram matrix. This is the shape bridge between the public `gramDet` API and
+Gram matrix. This is the shape equation between the public `gramDet` API and
 the one-pass `gramDetVec` implementation. -/
 theorem leadingGramMatrixInt_eq_leadingPrefix_gram
     (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
@@ -1079,7 +1079,7 @@ store `d_{j+1}`, and entries above the diagonal are zero. -/
 def scaledCoeffs (b : Matrix Int n m) : Matrix Int n n :=
   (data b).ν
 
-/-- Entry-level packaging bridge from the public scaled-coefficient matrix
+/-- Entry-level packaging equation from the public scaled-coefficient matrix
 back to the shared array pass that computes it. -/
 theorem scaledCoeffs_entry_eq_getArrayEntry
     (b : Matrix Int n m) (i j : Fin n) :
@@ -1663,7 +1663,7 @@ private theorem noPivotLoop_sync_leadingPrefix_aux
         --          state_pref.matrix[k_pref][k_pref]
         -- k_full.val = state_full.step = state_pref.step = k_pref.val (by h_step),
         -- so as Fin n elements they coincide. Use congrArg on the diagonal
-        -- entry as a function of Fin n to bridge the gap.
+        -- entry as a function of Fin n to close the gap.
         have h_idx :
             k_full = (⟨k_pref.val, Nat.lt_of_lt_of_le k_pref.isLt hK⟩ : Fin n) :=
           Fin.ext h_step
@@ -2515,7 +2515,7 @@ private noncomputable def bareissGramRowInvariant_regular_step
     simpa [hi] using hentry i j hi
 
 /-- Extract the represented lattice row vector and entry equation carried by
-`BareissGramRowInvariant`. This is the consumer-facing shape needed by
+`BareissGramRowInvariant`. This is the caller-facing shape needed by
 singular no-pivot arguments: an active row of the current Bareiss matrix is a
 dot product against an explicitly represented integer combination of input
 rows. -/
@@ -2720,7 +2720,7 @@ private theorem scaledCoeffArrayLoop_regular_branch (fuel : Nat)
   simp [scaledCoeffArrayLoop, hStep, hNext, hp]
 
 /-- The matrix-side view of a row-storage entry: `getArrayEntry` on the array
-matches the matrix-level `[i][j]` lookup under the `rowsToMatrix` bridge. -/
+matches the matrix-level `[i][j]` lookup under `rowsToMatrix`. -/
 private theorem getArrayEntry_eq_rowsToMatrix
     (rows : Array (Array Int)) (i j : Fin n) :
     getArrayEntry rows i.val j.val = (rowsToMatrix rows n)[i][j] := by
@@ -3747,7 +3747,7 @@ private theorem scaledCoeffRows_diag_eq_zero_or_eq_leadingPrefix_bareiss
 
 /-- If the diagonal executable entry is known nonnegative, the Nat-level
 diagonal synchronization can be lifted back to the corresponding Int equality.
-That nonnegativity is a bridge-layer obligation for Gram determinants. -/
+That nonnegativity is a Mathlib-side obligation for Gram determinants. -/
 private theorem scaledCoeffRows_diag_eq_gramDet_of_nonneg
     (b : Matrix Int n m) (i : Nat) (hi : i < n)
     (hnonneg : 0 ≤ getArrayEntry (scaledCoeffRows b) i i) :
@@ -3777,7 +3777,7 @@ theorem gramDetVec_eq_gramDet (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
 /-- Nat-level diagonal synchronization for the public scaled-coefficient
 matrix. This is the Mathlib-free diagonal fact exposed by the shared array
 pass; the stronger Int-valued diagonal statement additionally needs a
-nonnegativity bridge for the Bareiss/Gram determinant slot. -/
+nonnegativity proof for the Bareiss/Gram determinant slot. -/
 theorem scaledCoeffs_diag_toNat (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     (GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨i, hi⟩).toNat =
       gramDet b (i + 1) (Nat.succ_le_of_lt hi) := by
@@ -4475,7 +4475,7 @@ private theorem dot_comm_int {n' : Nat} (u v : Vector Int n') :
       (accU := 0) (accV := 0) rfl
 
 /-- The integer Gram matrix is symmetric: each entry equals the entry at the
-swapped index. Consumed by the no-pivot Bareiss symmetry/transpose bridge for
+swapped index. Consumed by the no-pivot Bareiss symmetry/transpose argument for
 bordered minors of `gramMatrix b`. -/
 private theorem gramMatrix_symm (b : Matrix Int n m) (a c : Fin n) :
     (Matrix.gramMatrix b)[a][c] = (Matrix.gramMatrix b)[c][a] := by
@@ -4489,7 +4489,7 @@ private theorem gramMatrix_symm (b : Matrix Int n m) (a c : Fin n) :
 /-- The Cramer determinant matrix for the scaled Gram-Schmidt coefficient
 `(i, j)` (with `j < i`) is the bordered minor of `gramMatrix b` at level `j`
 with the border row index taken to be `j` and the border column index taken
-to be `i`. This is the definitional bridge between
+to be `i`. This is the definitional equation between
 `GramSchmidt.scaledCoeffMatrix` and the bordered-minor machinery in
 `HexMatrix.Bareiss`. -/
 theorem scaledCoeffMatrix_eq_borderedMinor
@@ -4595,7 +4595,7 @@ theorem scaledCoeffMatrix_eq_borderedMinor
 
 /-- The no-pivot Bareiss-style trailing value on `scaledCoeffMatrix b i j hji`
 agrees with the value on the bordered minor of `gramMatrix b` whose border
-row/column are swapped. The bridge composes the symmetry of `gramMatrix` (via
+row/column are swapped. The proof composes the symmetry of `gramMatrix` (via
 `noPivotLoop_borderedMinor_swap_at_trailing`) with the definitional identity
 `scaledCoeffMatrix_eq_borderedMinor`. -/
 private theorem noPivotLoop_scaledCoeffMatrix_eq_borderedMinor_at_trailing
@@ -4623,7 +4623,7 @@ matches the trailing entry of the no-pivot Bareiss-style loop on the
 corresponding Cramer determinant matrix `scaledCoeffMatrix b i j hji`. This
 composes `scaledCoeffArrayLoop_lower_matches_target_column` (from #4103),
 `noPivotLoop_full_eq_borderedMinor_at_trailing` (from #4028), and the
-symmetry/transpose bridge `noPivotLoop_scaledCoeffMatrix_eq_borderedMinor_at_trailing`. -/
+symmetry/transpose equation `noPivotLoop_scaledCoeffMatrix_eq_borderedMinor_at_trailing`. -/
 theorem scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix
     (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val)
     (h_nonsing :
@@ -4669,7 +4669,7 @@ theorem scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix
     (noPivotLoop_full_eq_borderedMinor_at_trailing (Matrix.gramMatrix b) j.val
       (Nat.lt_trans hji i.isLt) i j (Nat.le_of_lt hji) (Nat.le_refl _)).1
   rw [h_bm]
-  -- Step 3: symmetry/transpose bridge to `scaledCoeffMatrix`.
+  -- Step 3: symmetry/transpose equation to `scaledCoeffMatrix`.
   exact
     (noPivotLoop_scaledCoeffMatrix_eq_borderedMinor_at_trailing b i j hji).symm
 
