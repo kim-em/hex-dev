@@ -67,65 +67,134 @@ for `HexPolyZ`, so there are no comparator ratios to record in this snapshot.
 
 ## Profile
 
-Profiles were captured with `samply record --save-only` through the
-`lean-bench profile` subcommand at the same commit on `carica` (Apple M2 Ultra,
-macOS 14.6.1). Sampling rate was samply's default 1000 Hz. The raw Firefox
-Profiler JSON artefacts are developer-local and are not committed.
+Profiles were regenerated at commit
+`3bc24c50fbe57487776c433106894ee544a6d656` on `carica` (Apple M2 Ultra,
+macOS 14.6.1, `arm64`) with `samply 0.13.1` at `999 Hz` through
+`scripts/profile/run_profile.sh`. The binary reports `git_dirty: true` because
+this worktree has an unrelated pre-existing `.claude/CLAUDE.md` modification.
+The benchmark harness was `lean-bench 0.1.0` under
+`leanprover/lean4:4.30.0-rc2`. The raw filtered Firefox Profiler JSON
+artefacts are developer-local under `/tmp` and are not committed.
 
 ### `congruence-witnesses`
 
 Command:
 
 ```sh
-lake exe hexpolyz_bench profile Hex.PolyZBench.runCoprimeModPWitness --param 512 --profiler "samply record --save-only --output /tmp/hex-profiles/hex-poly-z-congruence-witnesses-33b7f720dcce.json.gz" --target-inner-nanos 5000000000
+scripts/profile/run_profile.sh ./.lake/build/bin/hexpolyz_bench Hex.PolyZBench.runCoprimeModPWitness 512 5000000000
 ```
 
 Representative case: deterministic dense Bezout witness check modulo `101`,
-parameter `512`, no seed. The child row reported `1024` inner repeats,
-`4.136 s` total, `4.039 ms` per call, and result hash `0xb`. Leaf cost was
-dominated by Lean/Hex polynomial arithmetic and allocation from the dense
-products in `runCoprimeModPWitness`; GMP and modular integer operations were
-secondary. Inclusive cost was led by `Hex.PolyZBench.runCoprimeModPWitness`,
-the dense polynomial multiplication in `DensePoly.mul`, and the final
-finite-prefix congruence fold. The dominant work maps to the registered
-congruence and Bezout-witness targets.
+parameter `512`, no seed. The child row reported `512` inner repeats,
+`2.979 s` total, `5.818 ms` per call, and result hash `0xb`. Leaf cost was
+Lean own code `40.8%`, allocation/free `34.5%`, Lean runtime/refcount and
+dispatch `24.7%`, and GMP `0.0%`. Inclusive cost was led by
+`Hex.PolyZBench.runCoprimeModPWitness` (`100.0%`), the bench registration
+wrapper (`100.0%`), dense multiplication in `DensePoly.mul` (`97.6%`), the
+nested multiplication fold (`96.7%`), and the coefficient lookup used by the
+finite-prefix congruence scan (`10.5%`). The dominant work is exactly the
+registered Bezout-witness target: forming the dense product `s * f`, adding the
+constructed witness term, and checking the finite coefficient prefix.
+
+Diagnostics:
+
+```json
+{
+  "bench_thread_name": "Thread <4410450>",
+  "bench_thread_tid": "4410450",
+  "regions_total": 3,
+  "total_timed_ms": 2997.582124,
+  "expected_samples_bench_thread": 2994.6,
+  "retained_samples_bench_thread": 2917,
+  "rejected_samples_bench_thread": 18,
+  "off_bench_thread_samples_in_window": 0,
+  "samply_interval_ms": 1.001001,
+  "spawn_anchor_wall_ns": 1780141801708101000,
+  "spawn_anchor_mono_ns": 329835612668000,
+  "sidecar_mono_anchor_ns": 329836474315000,
+  "samply_meta_start_time_ms": 1780141801733.4312
+}
+```
 
 ### `content-normalization`
 
 Command:
 
 ```sh
-lake exe hexpolyz_bench profile Hex.PolyZBench.runPrimitivePartChecksum --param 131072 --profiler "samply record --save-only --output /tmp/hex-profiles/hex-poly-z-content-normalization-33b7f720dcce.json.gz" --target-inner-nanos 5000000000
+scripts/profile/run_profile.sh ./.lake/build/bin/hexpolyz_bench Hex.PolyZBench.runPrimitivePartChecksum 131072 5000000000
 ```
 
 Representative case: deterministic dense integer polynomials with nontrivial
 content, parameter `131072`, no seed. The child row reported `128` inner
-repeats, `3.157 s` total, `24.665 ms` per call, and result hash
-`0x3bbdf5a725595d9`. Leaf cost was concentrated in GMP integer gcd/division
-work, allocation/free from rebuilding the primitive part, Lean runtime
-overhead from array folds, and HexPolyZ/HexPoly normalization code. Inclusive
-cost was led by `Hex.PolyZBench.runPrimitivePartChecksum`,
-`ZPoly.primitivePart`, `ZPoly.content`, and the underlying coefficient fold.
-The profile shape is attributable to the registered content and
-primitive-part targets.
+repeats, `3.392 s` total, `26.500 ms` per call, and result hash
+`0x3bbdf5a725595d9`. Leaf cost was allocation/free `54.9%`, GMP
+big-integer arithmetic `20.6%`, Lean runtime/refcount and boxing `13.0%`, and
+Lean own code `11.4%`. Inclusive cost was led by the bench wrapper (`93.7%`),
+`DensePoly.primitivePart` (`89.3%`), the content fold
+`DensePoly.contentNat` (`70.5%`), and trailing-zero trimming while rebuilding
+the primitive part (`6.6%`). The allocator share comes from constructing the
+normalised polynomial, while the GMP share is the expected integer gcd/addition
+work in the content computation. Both dominant paths are attributable to the
+registered content and primitive-part targets.
+
+Diagnostics:
+
+```json
+{
+  "bench_thread_name": "Thread <4412372>",
+  "bench_thread_tid": "4412372",
+  "regions_total": 2,
+  "total_timed_ms": 3417.557917,
+  "expected_samples_bench_thread": 3414.1,
+  "retained_samples_bench_thread": 3373,
+  "rejected_samples_bench_thread": 19,
+  "off_bench_thread_samples_in_window": 0,
+  "samply_interval_ms": 1.001001,
+  "spawn_anchor_wall_ns": 1780141815970789000,
+  "spawn_anchor_mono_ns": 329849878683916,
+  "sidecar_mono_anchor_ns": 329851109103666,
+  "samply_meta_start_time_ms": 1780141815980.728
+}
+```
 
 ### `mignotte-helpers`
 
 Command:
 
 ```sh
-lake exe hexpolyz_bench profile Hex.PolyZBench.runBinom --param 131072 --profiler "samply record --save-only --output /tmp/hex-profiles/hex-poly-z-mignotte-helpers-33b7f720dcce.json.gz" --target-inner-nanos 5000000000
+scripts/profile/run_profile.sh ./.lake/build/bin/hexpolyz_bench Hex.PolyZBench.runBinom 131072 5000000000
 ```
 
 Representative case: central binomial coefficient `ZPoly.binom (2*n) n`,
 parameter `131072`, no seed. The child row reported `2` inner repeats,
-`3.669 s` total, `1.834 s` per call, and result hash
-`0x19491e050eb44246`. Leaf cost was dominated by GMP big-integer
-multiplication/division and allocation for the growing accumulator; Lean
-runtime and own HexPolyZ loop overhead were smaller. Inclusive cost was led by
-`Hex.PolyZBench.runBinom` and `ZPoly.binom`. This is the expected hot path for
-the central-binomial stress case used to guard the Mignotte helper
-implementation.
+`3.731 s` total, `1.865 s` per call, and result hash
+`0x19491e050eb44246`. Leaf cost was GMP big-integer arithmetic `96.9%`,
+allocation/free `2.9%`, Lean runtime `0.2%`, and Lean own code `0.0%` at leaf
+self time. Inclusive cost was led by `ZPoly.binom` (`100.0%`) and its fold
+over multiplicative terms (`99.9%`). The dominant leaf frames were
+`__gmpn_divrem_1` (`67.2%`), `__gmpn_copyi` (`20.8%`), and `__gmpn_mul_1`
+(`8.5%`), which is the expected limb arithmetic for the central-binomial
+Mignotte-helper stress case registered as `runBinom`.
+
+Diagnostics:
+
+```json
+{
+  "bench_thread_name": "Thread <4417677>",
+  "bench_thread_tid": "4417677",
+  "regions_total": 2,
+  "total_timed_ms": 5718.860584,
+  "expected_samples_bench_thread": 5713.1,
+  "retained_samples_bench_thread": 5697,
+  "rejected_samples_bench_thread": 10,
+  "off_bench_thread_samples_in_window": 2,
+  "samply_interval_ms": 1.001001,
+  "spawn_anchor_wall_ns": 1780141880155764000,
+  "spawn_anchor_mono_ns": 329914068371041,
+  "sidecar_mono_anchor_ns": 329914532429916,
+  "samply_meta_start_time_ms": 1780141880183.105
+}
+```
 
 ## Concerns
 
