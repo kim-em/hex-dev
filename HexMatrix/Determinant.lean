@@ -10195,6 +10195,143 @@ theorem deleteRowCol_mMatrix_at_q_minus_one_eq_nMatrix_of_lt
   -- Use simp to handle index-rewriting with proof-irrelevance.
   simp only [hrow, hcol]
 
+/-- For `q < p`, the unique row of `Fin (n + 1)` that maps to `q` under
+`skipIndex p` is `⟨q.val, _⟩`. -/
+theorem skipIndex_at_q_eq_q_of_gt {n : Nat}
+    (p q : Fin (n + 2)) (hqp : q.val < p.val) :
+    skipIndex p (⟨q.val, by have := p.isLt; omega⟩ : Fin (n + 1)) = q := by
+  apply Fin.ext
+  show (skipIndex p (⟨q.val, _⟩ : Fin (n + 1))).val = q.val
+  have h : (⟨q.val, by have := p.isLt; omega⟩ : Fin (n + 1)).val < p.val := hqp
+  rw [skipIndex_val_of_lt p _ h]
+
+/-- For `q < p`, the chained skip `skipIndex p ∘ skipIndex r_q`
+(where `r_q = ⟨q.val, _⟩`) equals `skipIndex2 q p hqp`. -/
+theorem skipIndex_skipIndex_eq_skipIndex2_of_gt {n : Nat}
+    (p q : Fin (n + 2)) (hqp : q.val < p.val) (i : Fin n) :
+    skipIndex p
+        (skipIndex (⟨q.val, by have := p.isLt; omega⟩ : Fin (n + 1)) i) =
+      skipIndex2 q p hqp i := by
+  apply Fin.ext
+  by_cases h1 : i.val < q.val
+  · rw [skipIndex2_val_of_lt_p q p hqp i h1]
+    have hskip1 : skipIndex (⟨q.val, by have := p.isLt; omega⟩ : Fin (n + 1)) i =
+        ⟨i.val, by have := i.isLt; omega⟩ := by
+      apply Fin.ext
+      show (skipIndex _ i).val = i.val
+      have : i.val < (⟨q.val, by have := p.isLt; omega⟩ : Fin (n + 1)).val := h1
+      rw [skipIndex_val_of_lt _ _ this]
+    rw [hskip1]
+    show (skipIndex p (⟨i.val, _⟩ : Fin (n + 1))).val = i.val
+    have hp : (⟨i.val, by have := i.isLt; omega⟩ : Fin (n + 1)).val < p.val := by
+      show i.val < p.val
+      omega
+    rw [skipIndex_val_of_lt p _ hp]
+  · by_cases h2 : i.val + 1 < p.val
+    · rw [skipIndex2_val_of_between q p hqp i h1 h2]
+      have hskip1 : skipIndex (⟨q.val, by have := p.isLt; omega⟩ : Fin (n + 1)) i =
+          ⟨i.val + 1, by have := i.isLt; omega⟩ := by
+        apply Fin.ext
+        show (skipIndex _ i).val = i.val + 1
+        have hne : ¬ i.val < (⟨q.val, by have := p.isLt; omega⟩ : Fin (n + 1)).val := h1
+        rw [skipIndex_val_of_not_lt _ _ hne]
+      rw [hskip1]
+      show (skipIndex p (⟨i.val + 1, _⟩ : Fin (n + 1))).val = i.val + 1
+      have hp : (⟨i.val + 1, by have := i.isLt; omega⟩ : Fin (n + 1)).val < p.val := h2
+      rw [skipIndex_val_of_lt p _ hp]
+    · rw [skipIndex2_val_of_ge_q q p hqp i h1 h2]
+      have hskip1 : skipIndex (⟨q.val, by have := p.isLt; omega⟩ : Fin (n + 1)) i =
+          ⟨i.val + 1, by have := i.isLt; omega⟩ := by
+        apply Fin.ext
+        show (skipIndex _ i).val = i.val + 1
+        have hne : ¬ i.val < (⟨q.val, by have := p.isLt; omega⟩ : Fin (n + 1)).val := h1
+        rw [skipIndex_val_of_not_lt _ _ hne]
+      rw [hskip1]
+      show (skipIndex p (⟨i.val + 1, _⟩ : Fin (n + 1))).val = i.val + 2
+      have hp : ¬ (⟨i.val + 1, by have := i.isLt; omega⟩ : Fin (n + 1)).val < p.val := h2
+      rw [skipIndex_val_of_not_lt p _ hp]
+
+/-- For `q < p`, deleting row `r_q = q.val` and the last column of
+`mMatrix B v p` recovers `nMatrix B q p hqp`, independent of `v`. -/
+theorem deleteRowCol_mMatrix_at_q_eq_nMatrix_of_gt
+    {R : Type u} {n : Nat} (B : Matrix R (n + 2) n) (v : Vector R (n + 2))
+    (p q : Fin (n + 2)) (hqp : q.val < p.val) :
+    deleteRowCol (mMatrix B v p)
+        (⟨q.val, by have := p.isLt; omega⟩ : Fin (n + 1)) (Fin.last n) =
+      nMatrix B q p hqp := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let ii : Fin n := ⟨i, hi⟩
+  let jj : Fin n := ⟨j, hj⟩
+  change (deleteRowCol (mMatrix B v p)
+        (⟨q.val, by have := p.isLt; omega⟩ : Fin (n + 1)) (Fin.last n))[ii][jj] =
+    (nMatrix B q p hqp)[ii][jj]
+  rw [deleteRowCol_entry]
+  rw [nMatrix_entry]
+  have hjj_castSucc : (skipIndex (Fin.last n) jj).val = jj.val := by
+    show (skipIndex (Fin.last n) jj).val = jj.val
+    rw [skipIndex_last]
+    simp
+  have hjjlt : (skipIndex (Fin.last n) jj).val < n := by
+    rw [hjj_castSucc]; exact jj.isLt
+  rw [mMatrix_entry_lt B v p (skipIndex (⟨q.val, _⟩ : Fin (n + 1)) ii)
+        (skipIndex (Fin.last n) jj) hjjlt]
+  have hrow : skipIndex p
+        (skipIndex (⟨q.val, by have := p.isLt; omega⟩ : Fin (n + 1)) ii) =
+      skipIndex2 q p hqp ii :=
+    skipIndex_skipIndex_eq_skipIndex2_of_gt p q hqp ii
+  have hcol : (⟨(skipIndex (Fin.last n) jj).val, hjjlt⟩ : Fin n) = jj := by
+    apply Fin.ext
+    show (skipIndex (Fin.last n) jj).val = jj.val
+    exact hjj_castSucc
+  simp only [hrow, hcol]
+
+/-- Basis-vector evaluation of `mDet` when `q < p`: the basis vector
+`e_q` becomes the standard basis vector `e_{q.val}` in the last
+column of `mMatrix B (basisVec q) p`, so Laplace along that column
+recovers a signed `n × n` minor of `B`. -/
+theorem mDet_basisVec_eq_signed_nDet_of_gt
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n) (p q : Fin (n + 2)) (hqp : q.val < p.val) :
+    mDet B (basisVec (R := R) q) p =
+      cofactorSign (R := R)
+        (⟨q.val, by have := p.isLt; omega⟩ : Fin (n + 1)) (Fin.last n) *
+      nDet B q p hqp := by
+  unfold mDet
+  let r_q : Fin (n + 1) := ⟨q.val, by have := p.isLt; omega⟩
+  show (mMatrix B (basisVec (R := R) q) p).det =
+      cofactorSign (R := R) r_q (Fin.last n) * nDet B q p hqp
+  have hcol : ∀ r : Fin (n + 1),
+      (mMatrix B (basisVec (R := R) q) p)[r][Fin.last n] =
+        if r = r_q then (1 : R) else (0 : R) := by
+    intro r
+    rw [mMatrix_entry_last]
+    rw [basisVec_getElem]
+    by_cases hreq : r = r_q
+    · subst hreq
+      rw [if_pos rfl]
+      have : skipIndex p r_q = q :=
+        skipIndex_at_q_eq_q_of_gt p q hqp
+      rw [this]
+      exact if_pos rfl
+    · rw [if_neg hreq]
+      have hne : skipIndex p r ≠ q := by
+        intro heq
+        have hq_eq : skipIndex p r_q = q :=
+          skipIndex_at_q_eq_q_of_gt p q hqp
+        have : skipIndex p r = skipIndex p r_q := heq.trans hq_eq.symm
+        exact hreq (skipIndex_injective p this)
+      exact if_neg hne
+  rw [det_eq_signed_minor_of_col_basis (mMatrix B (basisVec (R := R) q) p) r_q
+        (Fin.last n) hcol]
+  congr 1
+  unfold nDet
+  exact congrArg det
+    (deleteRowCol_mMatrix_at_q_eq_nMatrix_of_gt B
+      (basisVec (R := R) q) p q hqp)
+
 /-- Basis-vector evaluation of `mDet` when `q > p`: the basis vector
 `e_q` becomes the standard basis vector `e_{q.val - 1}` in the last
 column of `mMatrix B (basisVec q) p`, so Laplace along that column
