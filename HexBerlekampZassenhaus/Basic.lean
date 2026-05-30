@@ -6419,6 +6419,75 @@ def factor (f : ZPoly) : Factorization :=
 @[simp] theorem factor_eq_factorWithBound_default (f : ZPoly) :
     factor f = factorWithBound f (ZPoly.defaultFactorCoeffBound f) := rfl
 
+/--
+Option-returning bounded factoring entry point that propagates explicit failure
+on no-admissible-prime. Returns `some (factorWithBound f B)` exactly in the
+branches whose executable path does not consume `fallbackPrimeChoiceData`:
+the constant-core early-out, the quadratic-integer-root short-circuit, and the
+prime-data-available case. Returns `none` precisely when both
+`(quadraticIntegerRootFactors? sf)` and `(choosePrimeData? sf)` are `none` on
+the normalized square-free core `sf` — the cascade the silent fallback would
+otherwise mask with a `p = 3` reduction.
+
+This is the additive Option-propagating boundary recommended by #5816 (and the
+SPEC `design-principles.md` §8 fallback-discipline clause that #5775 raises).
+The total `factorWithBound` retains the silent-fallback behaviour until either
+the `choosePrimeData?_isSome` unreachability theorem lands on top of the
+extended prime search (#5819), or full `Option` propagation through the
+public API is staged in.
+-/
+def factorWithBound? (f : ZPoly) (B : Nat) : Option Factorization :=
+  let normalized := normalizeForFactor f
+  if normalized.squareFreeCore.degree?.getD 0 = 0 then
+    some (factorWithBound f B)
+  else if (quadraticIntegerRootFactors? normalized.squareFreeCore).isSome then
+    some (factorWithBound f B)
+  else if (choosePrimeData? normalized.squareFreeCore).isSome then
+    some (factorWithBound f B)
+  else
+    none
+
+/--
+Option-returning factoring entry point at the default Mignotte bound; mirrors
+`factor` but propagates explicit failure on no-admissible-prime per #5816.
+-/
+def factor? (f : ZPoly) : Option Factorization :=
+  factorWithBound? f (ZPoly.defaultFactorCoeffBound f)
+
+@[simp] theorem factor?_eq_factorWithBound?_default (f : ZPoly) :
+    factor? f = factorWithBound? f (ZPoly.defaultFactorCoeffBound f) := rfl
+
+/-- When `factorWithBound?` succeeds, it agrees with the total `factorWithBound`.
+The total form's fallback only engages on the `none` branch this function
+exposes. -/
+theorem factorWithBound?_eq_some_iff_safe_branch (f : ZPoly) (B : Nat) :
+    factorWithBound? f B =
+      (if (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0 ∨
+          (quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore).isSome ∨
+          (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome
+        then some (factorWithBound f B) else none) := by
+  unfold factorWithBound?
+  by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
+  · simp [hdeg]
+  · by_cases hquad :
+      (quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore).isSome
+    · simp [hdeg, hquad]
+    · by_cases hprime :
+        (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome
+      · simp [hdeg, hquad, hprime]
+      · simp [hdeg, hquad, hprime]
+
+/-- `factor?` and `factor` agree on the `some` branch (immediate from
+`factorWithBound?_eq_some_iff_safe_branch`). -/
+theorem factor?_eq_some_iff_safe_branch (f : ZPoly) :
+    factor? f =
+      (if (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0 ∨
+          (quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore).isSome ∨
+          (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome
+        then some (factor f) else none) := by
+  unfold factor? factor
+  exact factorWithBound?_eq_some_iff_safe_branch f _
+
 set_option maxHeartbeats 800000
 
 /-- The bounded public factorization is built from either the raw factor array
