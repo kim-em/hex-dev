@@ -502,7 +502,8 @@ private def factorizationCaseMatches (c : FactorizationCase) : Bool :=
 #guard !PrimeFactorData.hasSubsetDegree primeDataValidQuad 1
 #guard PrimeFactorData.hasSubsetDegree primeDataValidQuad 2
 #guard PrimeFactorData.checkFactorCerts primeDataValidQuad
-#guard !PrimeFactorData.checkForPolynomial (zpoly #[2, 0, 1]) primeDataValidQuad
+#guard PrimeFactorData.checkForPolynomial (zpoly #[2, 0, 1]) primeDataValidQuad
+#guard !PrimeFactorData.checkForPolynomial (zpoly #[1, 0, 1]) primeDataValidQuad
 #guard checkIrreducibleCert 1 constantCert
 
 #guard !PrimeFactorData.checkFactorCerts primeDataWrongPrimeCert
