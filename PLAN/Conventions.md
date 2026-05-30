@@ -148,6 +148,14 @@ acronyms. Do not silently introduce a mixed-case spelling.
 > identifiers in isolation. New libraries should follow the acronym
 > rule from the start.
 
+### Process vocabulary stops at the issue boundary
+
+Issue and PR titles may use scheduling shorthand ("HO-1 Gap 1
+consumer"); the Lean identifiers a worker creates name the
+**mathematics**, never the issue's process words — `ZPoly.toMonic`,
+not `monicisedCoreTransportPackage`. See
+[design-principles.md §Naming and documentation](../SPEC/design-principles.md).
+
 ### FFI
 
 Libraries that use `@[extern]` (e.g. `hex-arith` for GMP wrappers,

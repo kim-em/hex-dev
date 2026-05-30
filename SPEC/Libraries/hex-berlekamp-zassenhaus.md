@@ -16,7 +16,11 @@ its Mathlib bridge; every theorem has a real proof.
 
 The public API accepts arbitrary input polynomials and normalizes
 internally: extract content, remove powers of `X`, and reduce to the
-primitive square-free case before running the recombination pipeline.
+primitive square-free case — then make that square-free core monic via
+the integral-normalisation transform `ZPoly.toMonic`
+(`c^(deg−1)·core(X/c)`, `c = leadingCoeff`), so Hensel lifting and
+recombination see a monic polynomial and factors are scaled back
+afterward — before running the recombination pipeline.
 The output is a **`Factorization` record** explicitly separating the
 signed scalar (sign · content) from the polynomial-factor multiset
 with explicit multiplicities. Factor order in the polynomial-factor

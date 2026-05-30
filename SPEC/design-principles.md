@@ -125,3 +125,13 @@ specification — also carry one. Routine private plumbing (unfolding
 lemmas, `_aux` helpers, trivial getters) is exempt. Every theorem
 another file could reasonably import carries a docstring stating what
 it proves and why the caller cares.
+
+**Coined words.** Don't invent vocabulary. Name things with a standard
+mathematical term, a standard programming term, or a plain description
+of what they do — check Mathlib and the literature first. Two failure
+modes: invented `-ise`/`-ify` verbs for operations that already have a
+name (the transform making a polynomial monic is `ZPoly.toMonic`, not
+`monicise`), and issue/PR process words as identifiers ("umbrella",
+"transport package", "consumer", "Gap N", "HO-N") — these record how a
+proof was scheduled, not what it is. A name a reader can't decode
+without finding its originating issue is a defect.
