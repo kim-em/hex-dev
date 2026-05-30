@@ -2011,14 +2011,17 @@ private def extendedSmallPrimeCandidatesAux :
 Extended small-prime candidate list, used when the fixed
 `smallPrimeCandidates` list has no admissible prime for the input.
 Starts at the next odd integer past the largest fixed candidate (`71`)
-and walks `512` odd integers, gathering those that pass
+and walks `128` odd integers, gathering those that pass
 `isPrimeTrial` and fit in a machine word. The walk length covers every
-prime up to about `1024 + 72`, which is comfortably above the threshold
-at which `(x-1)(x-2)…(x-n)` cascade fixtures need a prime exceeding the
-fixed list.
+prime up to `73 + 256 = 329`, which is comfortably above the threshold
+at which a `(x-1)(x-2)…(x-n)` cascade with `n ≤ 200` needs a prime
+exceeding the fixed list. Extending the walk further is mechanical but
+costs kernel-reduction time at every `#guard` site that exercises
+`choosePrimeData?`; raise it only when a new fixture demonstrates a
+need.
 -/
 private def extendedSmallPrimeCandidates : List SmallPrimeCandidate :=
-  extendedSmallPrimeCandidatesAux 73 512
+  extendedSmallPrimeCandidatesAux 73 128
 
 /--
 Optional small-prime selection: returns `some` with the chosen `PrimeChoiceData`
