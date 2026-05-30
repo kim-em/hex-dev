@@ -9822,5 +9822,132 @@ theorem borderedMinor_at_interior_eq_leadingPrefix
   rw [borderedMinor_entry_lt_lt source (k + 1) hnext i j _ _ hri hci]
   rw [leadingPrefix_entry source k (Nat.le_of_lt hk) r c]
 
+/-! ### Plücker minor helpers
+
+Encoding for the universal 3-term Plücker identity for the determinant
+of `[B | v]` (an `(n + 2) × (n + 1)` matrix realised as `B : Matrix R
+(n + 2) n` augmented with a column vector `v : Vector R (n + 2)`).
+
+* `skipIndex2 p q hpq` injects `Fin n` into `Fin (n + 2)` skipping the
+  two distinct indices `p, q` (with `p.val < q.val`), in increasing order.
+* `mMatrix B v p` is the `(n+1) × (n+1)` matrix obtained from `[B | v]`
+  by deleting row `p`: B's `n` columns occupy positions `0..n-1` and
+  `v` (restricted to rows other than `p`) occupies the last column.
+* `nMatrix B p q hpq` is the `n × n` matrix obtained from `B` by
+  deleting rows `p` and `q`.
+* `mDet B v p` and `nDet B p q hpq` are the corresponding determinants.
+
+These definitions are the substrate for the universal 3-term Plücker
+identity (companion assembly issue). The linearity-of-`mDet`-in-`v`
+lemmas (`mDet_add_v`, `mDet_smul_v`) below let the assembly proof
+expand `v` as a finite linear combination of basis vectors via
+`det_colReplace_sum_finRange`; the basis-vector evaluation theorem
+`mDet_basis_eq_signed_nDet` reduces each summand to a signed `n`-minor
+of `B`. -/
+
+/-- Inject `Fin n` into `Fin (n + 2)` skipping two distinct positions
+`p, q` with `p.val < q.val`, in increasing order. -/
+def skipIndex2 {n : Nat} (p q : Fin (n + 2)) (_hpq : p.val < q.val)
+    (i : Fin n) : Fin (n + 2) :=
+  if hi1 : i.val < p.val then
+    ⟨i.val, by have hp := p.isLt; omega⟩
+  else if hi2 : i.val + 1 < q.val then
+    ⟨i.val + 1, by have hq := q.isLt; omega⟩
+  else
+    ⟨i.val + 2, by have hi := i.isLt; omega⟩
+
+@[simp] theorem skipIndex2_val_of_lt_p {n : Nat} (p q : Fin (n + 2))
+    (hpq : p.val < q.val) (i : Fin n) (h : i.val < p.val) :
+    (skipIndex2 p q hpq i).val = i.val := by
+  simp [skipIndex2, h]
+
+@[simp] theorem skipIndex2_val_of_between {n : Nat} (p q : Fin (n + 2))
+    (hpq : p.val < q.val) (i : Fin n) (h1 : ¬ i.val < p.val)
+    (h2 : i.val + 1 < q.val) :
+    (skipIndex2 p q hpq i).val = i.val + 1 := by
+  simp [skipIndex2, h1, h2]
+
+@[simp] theorem skipIndex2_val_of_ge_q {n : Nat} (p q : Fin (n + 2))
+    (hpq : p.val < q.val) (i : Fin n) (h1 : ¬ i.val < p.val)
+    (h2 : ¬ i.val + 1 < q.val) :
+    (skipIndex2 p q hpq i).val = i.val + 2 := by
+  simp [skipIndex2, h1, h2]
+
+theorem skipIndex2_ne_p {n : Nat} (p q : Fin (n + 2)) (hpq : p.val < q.val)
+    (i : Fin n) : skipIndex2 p q hpq i ≠ p := by
+  intro hsame
+  have hval : (skipIndex2 p q hpq i).val = p.val := congrArg Fin.val hsame
+  by_cases h1 : i.val < p.val
+  · rw [skipIndex2_val_of_lt_p p q hpq i h1] at hval; omega
+  · by_cases h2 : i.val + 1 < q.val
+    · rw [skipIndex2_val_of_between p q hpq i h1 h2] at hval; omega
+    · rw [skipIndex2_val_of_ge_q p q hpq i h1 h2] at hval; omega
+
+theorem skipIndex2_ne_q {n : Nat} (p q : Fin (n + 2)) (hpq : p.val < q.val)
+    (i : Fin n) : skipIndex2 p q hpq i ≠ q := by
+  intro hsame
+  have hval : (skipIndex2 p q hpq i).val = q.val := congrArg Fin.val hsame
+  by_cases h1 : i.val < p.val
+  · rw [skipIndex2_val_of_lt_p p q hpq i h1] at hval; omega
+  · by_cases h2 : i.val + 1 < q.val
+    · rw [skipIndex2_val_of_between p q hpq i h1 h2] at hval; omega
+    · rw [skipIndex2_val_of_ge_q p q hpq i h1 h2] at hval; omega
+
+/-- The `(n + 1) × (n + 1)` matrix obtained from `[B | v]` by deleting
+row `p`. Columns `0..n-1` carry the corresponding columns of `B`
+(restricted to rows other than `p`); the last column carries `v`
+(restricted to rows other than `p`). -/
+def mMatrix {R : Type u} {n : Nat}
+    (B : Matrix R (n + 2) n) (v : Vector R (n + 2)) (p : Fin (n + 2)) :
+    Matrix R (n + 1) (n + 1) :=
+  ofFn fun i j =>
+    if hj : j.val < n then
+      B[skipIndex p i][(⟨j.val, hj⟩ : Fin n)]
+    else
+      v[skipIndex p i]
+
+theorem mMatrix_entry_lt {R : Type u} {n : Nat}
+    (B : Matrix R (n + 2) n) (v : Vector R (n + 2)) (p : Fin (n + 2))
+    (i : Fin (n + 1)) (j : Fin (n + 1)) (h : j.val < n) :
+    (mMatrix B v p)[i][j] = B[skipIndex p i][(⟨j.val, h⟩ : Fin n)] := by
+  unfold mMatrix
+  rw [getElem_ofFn]
+  exact dif_pos h
+
+theorem mMatrix_entry_last {R : Type u} {n : Nat}
+    (B : Matrix R (n + 2) n) (v : Vector R (n + 2)) (p : Fin (n + 2))
+    (i : Fin (n + 1)) :
+    (mMatrix B v p)[i][Fin.last n] = v[skipIndex p i] := by
+  have h : ¬ (Fin.last n : Fin (n + 1)).val < n := by
+    simp [Fin.last]
+  unfold mMatrix
+  rw [getElem_ofFn]
+  exact dif_neg h
+
+/-- The determinant of `mMatrix B v p`: the `(n + 1)`-maximal minor of
+`[B | v]` with row `p` deleted. -/
+def mDet {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n) (v : Vector R (n + 2)) (p : Fin (n + 2)) : R :=
+  det (mMatrix B v p)
+
+/-- The `n × n` matrix obtained from `B` by deleting rows `p` and `q`
+(in increasing-row order, with `p.val < q.val`). -/
+def nMatrix {R : Type u} {n : Nat}
+    (B : Matrix R (n + 2) n) (p q : Fin (n + 2)) (hpq : p.val < q.val) :
+    Matrix R n n :=
+  ofFn fun i j => B[skipIndex2 p q hpq i][j]
+
+@[simp] theorem nMatrix_entry {R : Type u} {n : Nat}
+    (B : Matrix R (n + 2) n) (p q : Fin (n + 2)) (hpq : p.val < q.val)
+    (i : Fin n) (j : Fin n) :
+    (nMatrix B p q hpq)[i][j] = B[skipIndex2 p q hpq i][j] := by
+  simp [nMatrix, ofFn]
+
+/-- The determinant of `nMatrix B p q hpq`: the `n × n` minor of `B`
+with rows `p, q` deleted. -/
+def nDet {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n) (p q : Fin (n + 2)) (hpq : p.val < q.val) : R :=
+  det (nMatrix B p q hpq)
+
 end Matrix
 end Hex
