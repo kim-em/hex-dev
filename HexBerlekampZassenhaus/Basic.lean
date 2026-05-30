@@ -5766,21 +5766,6 @@ passes to `henselLiftData`.
 def toMonicPrimeData? (core : ZPoly) : Option PrimeChoiceData :=
   choosePrimeData? (toMonic core).monic
 
-/--
-Total prime-choice data for the monic polynomial sent to Hensel lifting.
-This keeps the executable public factoring API unchanged while exposing a
-correctly aligned internal data source for downstream correctness proofs.
--/
-def toMonicPrimeData (core : ZPoly) : PrimeChoiceData :=
-  choosePrimeData (toMonic core).monic
-
-/--
-Lift data for the monic transform of `core` using prime-choice data computed
-from that same monic polynomial.
--/
-def toMonicLiftDataWithMonicPrime (core : ZPoly) (B : Nat) : LiftData :=
-  toMonicLiftData core B (toMonicPrimeData core)
-
 theorem toMonicPrimeData?_prime
     (core : ZPoly) (data : PrimeChoiceData)
     (hdata : toMonicPrimeData? core = some data) :
@@ -5802,14 +5787,6 @@ theorem toMonicPrimeData?_factorsModP_berlekamp_form
       (toMonic core).monic data hdata
   exact ⟨toMonicPrimeData?_prime core data hdata, hzero, heq⟩
 
-theorem toMonicLiftDataWithMonicPrime_eq
-    (core : ZPoly) (B : Nat) :
-    toMonicLiftDataWithMonicPrime core B =
-      henselLiftData (toMonic core).monic
-        (precisionForCoeffBound B (toMonicPrimeData core).p)
-        (toMonicPrimeData core) := by
-  rfl
-
 end ZPoly
 
 def exhaustiveCoreFactorsWithBound
@@ -5825,17 +5802,24 @@ def exhaustiveCoreFactorsWithBound
     else
       factors
 
-private def exhaustiveMonicCoreGuardPrimeData : PrimeChoiceData :=
-  choosePrimeData cldGuardF
+/-- Option-returning prime-data witness for the `cldGuardF` executable
+guard. `cldGuardF` is selected so `choosePrimeData?` succeeds; the
+`#guard` below asserts the success and ties the guard expectation to the
+unwrapped value, exercising the `Option`-propagating boundary per #5831
+(HO-5d-1b) instead of routing through total `choosePrimeData`. -/
+private def exhaustiveMonicCoreGuardPrimeData? : Option PrimeChoiceData :=
+  choosePrimeData? cldGuardF
 
-#guard exhaustiveCoreFactorsWithBound cldGuardF 4 exhaustiveMonicCoreGuardPrimeData =
-  let liftData :=
-    henselLiftData cldGuardF
-      (precisionForCoeffBound 4 exhaustiveMonicCoreGuardPrimeData.p)
-      exhaustiveMonicCoreGuardPrimeData
-  let factors := recombineScaledExhaustive (DensePoly.leadingCoeff cldGuardF)
-    cldGuardF liftData
-  if factors.isEmpty then #[cldGuardF] else factors
+#guard
+  match exhaustiveMonicCoreGuardPrimeData? with
+  | none => false
+  | some primeData =>
+      exhaustiveCoreFactorsWithBound cldGuardF 4 primeData =
+        let liftData :=
+          henselLiftData cldGuardF (precisionForCoeffBound 4 primeData.p) primeData
+        let factors := recombineScaledExhaustive (DensePoly.leadingCoeff cldGuardF)
+          cldGuardF liftData
+        if factors.isEmpty then #[cldGuardF] else factors
 
 private def exhaustiveNonMonicQuadraticGuard : ZPoly :=
   DensePoly.ofCoeffs #[1, 0, 2]
@@ -5845,15 +5829,44 @@ private def exhaustiveNonMonicQuadraticGuard : ZPoly :=
 
 #guard quadraticIntegerRootFactors? exhaustiveNonMonicQuadraticGuard = none
 
-#guard ∀ factor ∈ (exhaustiveCoreFactorsWithBound exhaustiveNonMonicQuadraticGuard 4
-    (choosePrimeData exhaustiveNonMonicQuadraticGuard)).toList,
-  normalizeFactorSign factor = factor
+#guard
+  match choosePrimeData? exhaustiveNonMonicQuadraticGuard with
+  | none => false
+  | some primeData =>
+      (exhaustiveCoreFactorsWithBound exhaustiveNonMonicQuadraticGuard 4
+            primeData).toList.all fun factor => normalizeFactorSign factor == factor
 
 /-- The raw slow-path factor array used by the exhaustive recombination branch. -/
 def exhaustiveSlowRawFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
   reassemblePolynomialFactors (normalizeForFactor f)
     (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
       (choosePrimeData (normalizeForFactor f).squareFreeCore))
+
+/-- Option-returning slow-path raw factor array. Returns `some` exactly
+when `choosePrimeData?` succeeds on the normalized square-free core,
+mirroring `factorFastFactorsWithBound`'s `none`-on-no-good-prime
+contract. Provides the Option-propagating boundary recommended by #5831
+(HO-5d-1b) for the slow exhaustive raw-factor path; the existing total
+`exhaustiveSlowRawFactorsWithBound` retains the silent
+`fallbackPrimeChoiceData` semantics until #5817 + #5819 land or full
+Option propagation through the public `factor` API is staged in. -/
+def exhaustiveSlowRawFactorsWithBound? (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
+  (choosePrimeData? (normalizeForFactor f).squareFreeCore).map fun primeData =>
+    reassemblePolynomialFactors (normalizeForFactor f)
+      (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B primeData)
+
+/-- When `choosePrimeData?` succeeds, the `?` variant agrees with the
+total `exhaustiveSlowRawFactorsWithBound`. -/
+theorem exhaustiveSlowRawFactorsWithBound?_eq_some_of_isSome
+    (f : ZPoly) (B : Nat)
+    (h : (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome) :
+    exhaustiveSlowRawFactorsWithBound? f B =
+      some (exhaustiveSlowRawFactorsWithBound f B) := by
+  unfold exhaustiveSlowRawFactorsWithBound? exhaustiveSlowRawFactorsWithBound
+    choosePrimeData
+  cases hchoose : choosePrimeData? (normalizeForFactor f).squareFreeCore with
+  | none => rw [hchoose] at h; simp at h
+  | some primeData => simp
 
 /-- Raw factor array produced by the slow exhaustive recombination branch.
 
@@ -5875,6 +5888,57 @@ def factorSlowFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
 
 #guard factorSlowFactorsWithBound exhaustiveNonMonicQuadraticGuard 4 =
   #[exhaustiveNonMonicQuadraticGuard]
+
+/-- Option-returning slow-path raw factor array.
+
+Returns `some` precisely on the branches whose executable path does not
+consume `fallbackPrimeChoiceData`: the constant-core early-out, the
+quadratic-integer-root short-circuit, and the prime-data-available
+exhaustive case. Returns `none` precisely when both the
+quadratic-integer-root short-circuit fails and `choosePrimeData?` yields
+`none` on the normalized square-free core — the cascade the silent
+fallback would otherwise mask.
+
+This is the slow-path counterpart of the already-`Option`-returning
+`factorFastFactorsWithBound`. Provides the slow-side
+Option-propagating boundary recommended by #5831 (HO-5d-1b). The
+existing total `factorSlowFactorsWithBound` retains the silent
+`fallbackPrimeChoiceData` semantics until either #5817 + #5819 land or
+full `Option` propagation through the public `factor` API is staged in. -/
+def factorSlowFactorsWithBound? (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
+  let normalized := normalizeForFactor f
+  if normalized.squareFreeCore.degree?.getD 0 = 0 then
+    some (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
+  else
+    match quadraticIntegerRootFactors? normalized.squareFreeCore with
+    | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
+    | none =>
+        (choosePrimeData? normalized.squareFreeCore).map fun primeData =>
+          reassemblePolynomialFactors normalized
+            (exhaustiveCoreFactorsWithBound normalized.squareFreeCore B primeData)
+
+/-- Characterise the `some` branch of `factorSlowFactorsWithBound?`.
+
+The `?` variant returns `some (factorSlowFactorsWithBound f B)` exactly
+on the safe branches and `none` precisely on the cascade the silent
+fallback would otherwise mask. Mirrors `factorWithBound?_eq_some_iff_safe_branch`
+for the slow raw-factor path. -/
+theorem factorSlowFactorsWithBound?_eq_some_iff_safe_branch (f : ZPoly) (B : Nat) :
+    factorSlowFactorsWithBound? f B =
+      (if (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0 ∨
+          (quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore).isSome ∨
+          (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome
+        then some (factorSlowFactorsWithBound f B) else none) := by
+  unfold factorSlowFactorsWithBound? factorSlowFactorsWithBound choosePrimeData
+  by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
+  · simp [hdeg]
+  · simp only [hdeg, if_false]
+    cases hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
+    | some coreFactors => simp
+    | none =>
+        cases hchoose : choosePrimeData? (normalizeForFactor f).squareFreeCore with
+        | none => simp
+        | some primeData => simp
 
 set_option maxHeartbeats 800000
 
