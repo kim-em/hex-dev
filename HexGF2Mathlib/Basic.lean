@@ -2,13 +2,13 @@ import HexGF2
 import HexPolyFp
 
 /-!
-Bridge definitions between packed `Hex.GF2Poly` values and the generic
+Correspondence definitions between packed `Hex.GF2Poly` values and the generic
 `Hex.FpPoly 2` representation.
 
 This module exposes the concrete unpack/repack conversions between the
 bit-packed `GF(2)` polynomial execution path and the generic dense polynomial
 over `Hex.ZMod64 2`, together with the ring equivalence and immediate simp
-lemmas needed by later `GF(2^n)` bridge modules.
+lemmas needed by later `GF(2^n)` correspondence modules.
 -/
 
 namespace HexGF2Mathlib
@@ -17,8 +17,8 @@ open Hex
 
 universe u v w
 
-/-! A minimal project-local equivalence structure for bridge support that does
-not need Mathlib's heavier equivalence hierarchy. -/
+/-! A minimal project-local equivalence structure used by the correspondence
+modules without depending on Mathlib's heavier equivalence hierarchy. -/
 structure TypeEquiv (α : Type u) (β : Type v) where
   toFun : α → β
   invFun : β → α
@@ -172,8 +172,9 @@ theorem equiv_symm_apply (p : Hex.FpPoly 2) :
   rfl
 
 /-- Interpret a packed polynomial as the natural number with the same binary
-coefficient bits. This gives bridge modules a finite index for bounded-degree
-representatives without changing the executable `HexGF2` representation. -/
+coefficient bits. This gives correspondence modules a finite index for
+bounded-degree representatives without changing the executable `HexGF2`
+representation. -/
 private def wordsToNatAux : List UInt64 → Nat → Nat
   | [], _ => 0
   | w :: ws, i => w.toNat * 2 ^ (64 * i) + wordsToNatAux ws (i + 1)

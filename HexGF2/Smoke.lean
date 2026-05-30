@@ -2,7 +2,7 @@ import HexGF2.CommonIrreducibility
 import HexGF2.Field
 
 /-!
-Executable smoke tests for the single-word `GF2n` wrapper path.
+Executable `#guard` checks for the single-word `GF2n` wrapper path.
 
 These checks use the AES modulus `x^8 + x^4 + x^3 + x + 1`; the
 irreducibility witness comes from `HexGF2.CommonIrreducibility` so the

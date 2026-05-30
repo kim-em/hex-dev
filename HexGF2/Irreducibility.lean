@@ -10,7 +10,7 @@ precomputed Frobenius pow chain `X^(2^k) mod f` for `k = 0..n` together with
 Bezout witnesses for each maximal proper divisor of `n = deg f`, and the
 checker validates the chain by per-step squaring and the legs by Bezout
 identities. The soundness target here is the parallel `rabinTest` Bool
-predicate; the further bridge `rabinTest = true → GF2Poly.Irreducible f`
+predicate; the further implication `rabinTest = true → GF2Poly.Irreducible f`
 (Rabin's theorem for char-2 polynomials) is its own follow-up issue.
 -/
 namespace Hex
@@ -222,8 +222,8 @@ theorem rabinDividesTest_spec (f : GF2Poly) :
 
 The proofs mirror `HexBerlekamp.checkIrreducibilityCertificate_rabinTest`.
 The terminal target here is the Bool predicate `rabinTest`; the further
-bridge `rabinTest = true → GF2Poly.Irreducible f` (Rabin's theorem) is its
-own follow-up issue. -/
+implication `rabinTest = true → GF2Poly.Irreducible f` (Rabin's theorem) is
+its own follow-up issue. -/
 
 private theorem one_ne_zero_gf2poly : (1 : GF2Poly) ≠ 0 := by
   intro h
@@ -395,7 +395,7 @@ private theorem checkRabinBezoutWitnesses_rabinWitnesses_all
 /-- The executable certificate checker is sound against the parallel
 `rabinTest` Bool predicate.
 
-The further bridge `rabinTest = true → GF2Poly.Irreducible f` (Rabin's
+The further implication `rabinTest = true → GF2Poly.Irreducible f` (Rabin's
 theorem for polynomials over GF(2)) is the subject of a follow-up issue. -/
 theorem checkIrreducibilityCertificate_rabinTest
     (f : GF2Poly) (cert : IrreducibilityCertificate) :

@@ -6154,7 +6154,7 @@ private theorem coeffWords_mulWords_right_assoc_sourceTriples
 
 /-- The source-triple XOR expansions of the two raw associated products
 contribute the same coefficient.  Proving this requires the fixed source-word
-triple bridge: summing over the intermediate word slot in `(xs[i] * ys[j]) *
+triple identity: summing over the intermediate word slot in `(xs[i] * ys[j]) *
 zs[k]` matches summing over the intermediate word slot in `xs[i] * (ys[j] *
 zs[k])`. -/
 private theorem xorBoolList_assoc_sourceTripleContribs
@@ -6179,7 +6179,7 @@ private theorem clmulCoeffAt_comm (i j : Nat) (x y : UInt64) (n : Nat) :
   rw [Nat.add_comm i j, clmul_comm x y]
 
 /-- Coefficients of the raw packed product are symmetric in the two input word
-arrays. This is the local bridge from word-level `clmul_comm` to polynomial
+arrays. This is the local step from word-level `clmul_comm` to polynomial
 multiplication commutativity. -/
 private theorem coeffWords_mulWords_comm (xs ys : Array UInt64) (n : Nat) :
     coeffWords (mulWords xs ys) n = coeffWords (mulWords ys xs) n := by
