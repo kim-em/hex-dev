@@ -5802,17 +5802,24 @@ def exhaustiveCoreFactorsWithBound
     else
       factors
 
-private def exhaustiveMonicCoreGuardPrimeData : PrimeChoiceData :=
-  choosePrimeData cldGuardF
+/-- Option-returning prime-data witness for the `cldGuardF` executable
+guard. `cldGuardF` is selected so `choosePrimeData?` succeeds; the
+`#guard` below asserts the success and ties the guard expectation to the
+unwrapped value, exercising the `Option`-propagating boundary per #5831
+(HO-5d-1b) instead of routing through total `choosePrimeData`. -/
+private def exhaustiveMonicCoreGuardPrimeData? : Option PrimeChoiceData :=
+  choosePrimeData? cldGuardF
 
-#guard exhaustiveCoreFactorsWithBound cldGuardF 4 exhaustiveMonicCoreGuardPrimeData =
-  let liftData :=
-    henselLiftData cldGuardF
-      (precisionForCoeffBound 4 exhaustiveMonicCoreGuardPrimeData.p)
-      exhaustiveMonicCoreGuardPrimeData
-  let factors := recombineScaledExhaustive (DensePoly.leadingCoeff cldGuardF)
-    cldGuardF liftData
-  if factors.isEmpty then #[cldGuardF] else factors
+#guard
+  match exhaustiveMonicCoreGuardPrimeData? with
+  | none => false
+  | some primeData =>
+      exhaustiveCoreFactorsWithBound cldGuardF 4 primeData =
+        let liftData :=
+          henselLiftData cldGuardF (precisionForCoeffBound 4 primeData.p) primeData
+        let factors := recombineScaledExhaustive (DensePoly.leadingCoeff cldGuardF)
+          cldGuardF liftData
+        if factors.isEmpty then #[cldGuardF] else factors
 
 private def exhaustiveNonMonicQuadraticGuard : ZPoly :=
   DensePoly.ofCoeffs #[1, 0, 2]
@@ -5822,9 +5829,12 @@ private def exhaustiveNonMonicQuadraticGuard : ZPoly :=
 
 #guard quadraticIntegerRootFactors? exhaustiveNonMonicQuadraticGuard = none
 
-#guard ∀ factor ∈ (exhaustiveCoreFactorsWithBound exhaustiveNonMonicQuadraticGuard 4
-    (choosePrimeData exhaustiveNonMonicQuadraticGuard)).toList,
-  normalizeFactorSign factor = factor
+#guard
+  match choosePrimeData? exhaustiveNonMonicQuadraticGuard with
+  | none => false
+  | some primeData =>
+      (exhaustiveCoreFactorsWithBound exhaustiveNonMonicQuadraticGuard 4
+            primeData).toList.all fun factor => normalizeFactorSign factor == factor
 
 /-- The raw slow-path factor array used by the exhaustive recombination branch. -/
 def exhaustiveSlowRawFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
