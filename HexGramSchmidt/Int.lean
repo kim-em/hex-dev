@@ -3140,6 +3140,412 @@ private theorem leadingPrefix_gram_zero_pivot_column_zero_of_singular_step
   rw [h_symm, h_dot_eq_matrix i]
   exact int_dot_eq_zero_of_dot_self_zero_left (b.row i) v h_dot_self_zero
 
+/-- Substitution helper for the diagonal `(i, i)` matrix entry under a Fin
+equality. -/
+private theorem matrix_diag_at_fin_eq {n : Nat} (M : Matrix Int n n)
+    {i j : Fin n} (h : i = j) :
+    M[i][i] = M[j][j] := by
+  subst h; rfl
+
+/-- If the `a`-fueled no-pivot Bareiss prefix already recorded a singular step,
+that step persists into any longer pass. -/
+private theorem noPivotLoop_extends_singularStep
+    {n : Nat} (state : Matrix.BareissState n) (a b : Nat) (k : Fin n)
+    (h_sing_a : (Matrix.noPivotLoop a state).singularStep = some k.val)
+    (h_step_a : (Matrix.noPivotLoop a state).step = k.val)
+    (h_zero_a : (Matrix.noPivotLoop a state).matrix[k][k] = 0)
+    (hk : k.val + 1 < n) :
+    Matrix.noPivotLoop (a + b) state = Matrix.noPivotLoop a state := by
+  rw [Matrix.noPivotLoop_add a b state]
+  have hDone : (Matrix.noPivotLoop a state).step + 1 < n := by
+    rw [h_step_a]; exact hk
+  have hp_zero :
+      (Matrix.noPivotLoop a state).matrix[
+        (⟨(Matrix.noPivotLoop a state).step, Nat.lt_of_succ_lt hDone⟩ : Fin n)][
+        (⟨(Matrix.noPivotLoop a state).step, Nat.lt_of_succ_lt hDone⟩ : Fin n)] = 0 := by
+    have h_fin :
+        (⟨(Matrix.noPivotLoop a state).step, Nat.lt_of_succ_lt hDone⟩ : Fin n) = k :=
+      Fin.ext h_step_a
+    exact (matrix_diag_at_fin_eq (Matrix.noPivotLoop a state).matrix h_fin).trans h_zero_a
+  have h_sing_step : (Matrix.noPivotLoop a state).singularStep =
+      some (Matrix.noPivotLoop a state).step := by
+    rw [h_sing_a, h_step_a]
+  exact Matrix.noPivotLoop_id_at_singular_fixedpoint (n := n) b
+    (Matrix.noPivotLoop a state) hDone hp_zero h_sing_step
+
+/-- From a partial no-pivot Bareiss pass on `M` recording a singular step at
+index `s`, derive that the `s`-fueled prefix is non-singular, has reached
+`step = s`, and has zero diagonal at `(s, s)`. -/
+private theorem noPivotLoop_prefix_state_at_singular
+    {n : Nat} (M : Matrix Int n n) (fuel s : Nat) (hs : s + 1 ≤ n)
+    (h_sing : (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState M)).singularStep = some s) :
+    (Matrix.noPivotLoop s (Matrix.noPivotInitialState M)).singularStep = none ∧
+      (Matrix.noPivotLoop s (Matrix.noPivotInitialState M)).step = s ∧
+      (Matrix.noPivotLoop s
+          (Matrix.noPivotInitialState M)).matrix[
+            (⟨s, Nat.lt_of_succ_le hs⟩ : Fin n)][
+            (⟨s, Nat.lt_of_succ_le hs⟩ : Fin n)] = 0 := by
+  have h_init_sing : (Matrix.noPivotInitialState M).singularStep = none := rfl
+  have h_init_step : (Matrix.noPivotInitialState M).step = 0 := rfl
+  have hsfuel : s < fuel := by
+    have := noPivotLoop_singularStep_lt (n := n) fuel
+      (Matrix.noPivotInitialState M) h_init_sing s h_sing
+    rw [h_init_step] at this
+    omega
+  rcases noPivotLoop_singular_inv (n := n) s
+      (Matrix.noPivotInitialState M) h_init_sing
+    with h_none | ⟨k', h_sing_s, h_step_s, h_zero_s, h_klt⟩
+  · have hS_step : (Matrix.noPivotLoop s (Matrix.noPivotInitialState M)).step = s := by
+      have h_room :
+          (Matrix.noPivotInitialState M).step + s + 1 ≤ n := by
+        rw [h_init_step]; omega
+      have h_step := Matrix.noPivotLoop_step_eq_add_of_singularStep_none
+        (n := n) s (Matrix.noPivotInitialState M) h_init_sing h_room h_none
+      rw [h_step, h_init_step]; omega
+    refine ⟨h_none, hS_step, ?_⟩
+    rcases noPivotLoop_singular_inv (n := n) fuel
+        (Matrix.noPivotInitialState M) h_init_sing
+      with h_full_none | ⟨k, h_sing_full, h_step_full, h_zero_full, h_klt_full⟩
+    · rw [h_full_none] at h_sing; nomatch h_sing
+    · have hk_eq : k.val = s := by
+        rw [h_sing_full] at h_sing
+        exact Option.some.inj h_sing
+      have hsn : s < n := Nat.lt_of_succ_le hs
+      have h_full_eq :
+          Matrix.noPivotLoop (s + (fuel - s)) (Matrix.noPivotInitialState M) =
+            Matrix.noPivotLoop fuel (Matrix.noPivotInitialState M) := by
+        congr 1; omega
+      have h_split :
+          Matrix.noPivotLoop fuel (Matrix.noPivotInitialState M) =
+            Matrix.noPivotLoop (fuel - s)
+              (Matrix.noPivotLoop s (Matrix.noPivotInitialState M)) := by
+        rw [← h_full_eq,
+          Matrix.noPivotLoop_add s (fuel - s) (Matrix.noPivotInitialState M)]
+      have h_diag_preserved :
+          (Matrix.noPivotLoop (fuel - s)
+              (Matrix.noPivotLoop s (Matrix.noPivotInitialState M))).matrix[
+              (⟨s, hsn⟩ : Fin n)][(⟨s, hsn⟩ : Fin n)] =
+            (Matrix.noPivotLoop s (Matrix.noPivotInitialState M)).matrix[
+              (⟨s, hsn⟩ : Fin n)][(⟨s, hsn⟩ : Fin n)] :=
+        Matrix.noPivotLoop_diag_of_le_step (fuel - s)
+          (Matrix.noPivotLoop s (Matrix.noPivotInitialState M))
+          (⟨s, hsn⟩ : Fin n)
+          (by rw [hS_step]; exact Nat.le_refl _)
+      have h_full_diag_eq :
+          (Matrix.noPivotLoop fuel (Matrix.noPivotInitialState M)).matrix[
+              (⟨s, hsn⟩ : Fin n)][(⟨s, hsn⟩ : Fin n)] =
+            (Matrix.noPivotLoop s (Matrix.noPivotInitialState M)).matrix[
+              (⟨s, hsn⟩ : Fin n)][(⟨s, hsn⟩ : Fin n)] := by
+        rw [h_split]; exact h_diag_preserved
+      have h_fin : k = (⟨s, hsn⟩ : Fin n) := Fin.ext hk_eq
+      have h_full_zero :
+          (Matrix.noPivotLoop fuel (Matrix.noPivotInitialState M)).matrix[
+            (⟨s, hsn⟩ : Fin n)][(⟨s, hsn⟩ : Fin n)] = 0 :=
+        (matrix_diag_at_fin_eq
+            (Matrix.noPivotLoop fuel (Matrix.noPivotInitialState M)).matrix h_fin).symm.trans
+          h_zero_full
+      exact h_full_diag_eq.symm.trans h_full_zero
+  · have h_klt' : k'.val < s := by
+      have := noPivotLoop_singularStep_lt (n := n) s
+        (Matrix.noPivotInitialState M) h_init_sing k'.val h_sing_s
+      rw [h_init_step] at this
+      omega
+    have h_persist :
+        Matrix.noPivotLoop (s + (fuel - s)) (Matrix.noPivotInitialState M) =
+          Matrix.noPivotLoop s (Matrix.noPivotInitialState M) :=
+      noPivotLoop_extends_singularStep (Matrix.noPivotInitialState M) s (fuel - s) k'
+        h_sing_s h_step_s h_zero_s h_klt
+    have h_fuel_eq : s + (fuel - s) = fuel := by omega
+    rw [h_fuel_eq] at h_persist
+    rw [h_persist] at h_sing
+    rw [h_sing_s] at h_sing
+    have hk'_eq : k'.val = s := Option.some.inj h_sing
+    omega
+
+/-- If the row-pivoted Bareiss loop is in a state where, after `a` regular
+no-pivot iterations, the next pivot is zero and the column has no replacement,
+the loop records the resulting step as singular regardless of any remaining
+fuel beyond the triggering iteration. The partial-pass result is passed
+explicitly as `result` to keep Fin-index proof terms uniform across the
+induction. -/
+private theorem pivotLoop_singularStep_some_of_partial_no_replacement
+    {n : Nat} :
+    ∀ (a : Nat) (fuel : Nat) (state : Matrix.BareissState n)
+      (result : Matrix.BareissState n)
+      (h_partial : Matrix.noPivotLoop a state = result),
+      state.singularStep = none →
+      a + 1 ≤ fuel →
+      result.singularStep = none →
+      (h_step_lt : result.step + 1 < n) →
+      result.matrix[(⟨result.step, Nat.lt_of_succ_lt h_step_lt⟩ : Fin n)][
+        (⟨result.step, Nat.lt_of_succ_lt h_step_lt⟩ : Fin n)] = 0 →
+      Matrix.findPivot? result.matrix
+        (⟨result.step, Nat.lt_of_succ_lt h_step_lt⟩ : Fin n) (result.step + 1) = none →
+      (Matrix.pivotLoop fuel state).singularStep = some result.step := by
+  intro a
+  induction a with
+  | zero =>
+      intro fuel state result h_partial _h_init_sing hfuel _h_part_none hStepLt hp_zero
+          h_find_none
+      -- noPivotLoop 0 state = state.
+      have h_state_eq : state = result := by
+        rw [show state = Matrix.noPivotLoop 0 state from rfl, h_partial]
+      subst h_state_eq
+      rcases fuel with _ | fuel'
+      · omega
+      exact (Matrix.pivotLoop_singular_branch_no_pivot fuel' state hStepLt hp_zero h_find_none
+        ▸ rfl)
+  | succ a' ih =>
+      intro fuel state result h_partial h_init_sing hfuel h_part_none hStepLt hp_zero
+          h_find_none
+      have hDone_state : state.step + 1 < n := by
+        have hmono := noPivotLoop_step_monotone (a' + 1) state
+        rw [h_partial] at hmono
+        omega
+      by_cases hp0_state : state.matrix[state.step][state.step] = 0
+      · -- Singular first iteration contradicts result.singularStep = none.
+        exfalso
+        have h_sing_branch :
+            Matrix.noPivotLoop (a' + 1) state =
+              { state with singularStep := some state.step } :=
+          Matrix.noPivotLoop_singular_branch a' state hDone_state hp0_state
+        rw [h_sing_branch] at h_partial
+        rw [← h_partial] at h_part_none
+        simp at h_part_none
+      · -- Regular first iteration: recurse on the updated state.
+        have h_unfold_noPiv : Matrix.noPivotLoop (a' + 1) state =
+            Matrix.noPivotLoop a'
+              { step := state.step + 1
+                matrix := Matrix.stepMatrix state.matrix state.step
+                  state.matrix[state.step][state.step] state.prevPivot
+                prevPivot := state.matrix[state.step][state.step]
+                rowSwaps := state.rowSwaps
+                singularStep := none } :=
+          Matrix.noPivotLoop_regular_branch a' state hDone_state hp0_state
+        rcases fuel with _ | fuel'
+        · omega
+        have h_fuel' : a' + 1 ≤ fuel' := by omega
+        have h_unfold_piv : Matrix.pivotLoop (fuel' + 1) state =
+            Matrix.pivotLoop fuel'
+              { step := state.step + 1
+                matrix := Matrix.stepMatrix state.matrix state.step
+                  state.matrix[state.step][state.step] state.prevPivot
+                prevPivot := state.matrix[state.step][state.step]
+                rowSwaps := state.rowSwaps
+                singularStep := none } :=
+          Matrix.pivotLoop_regular_branch_no_swap fuel' state hDone_state hp0_state
+        rw [h_unfold_piv]
+        have h_next_partial :
+            Matrix.noPivotLoop a'
+              ({ step := state.step + 1
+                 matrix := Matrix.stepMatrix state.matrix state.step
+                   state.matrix[state.step][state.step] state.prevPivot
+                 prevPivot := state.matrix[state.step][state.step]
+                 rowSwaps := state.rowSwaps
+                 singularStep := none } : Matrix.BareissState n) = result := by
+          rw [← h_unfold_noPiv]; exact h_partial
+        exact ih fuel'
+          { step := state.step + 1
+            matrix := Matrix.stepMatrix state.matrix state.step
+              state.matrix[state.step][state.step] state.prevPivot
+            prevPivot := state.matrix[state.step][state.step]
+            rowSwaps := state.rowSwaps
+            singularStep := none }
+          result h_next_partial rfl h_fuel' h_part_none hStepLt hp_zero h_find_none
+
+/-- Singular branch of the Gram leading-prefix Bareiss identification: if the
+no-pivot Bareiss pass over the full Gram matrix records a singular step at index
+`s` strictly before slot `r + 1`, the public row-pivoted Bareiss determinant of
+the `(r + 1)` leading Gram prefix is `Nat.zero`. The proof translates the
+column-zero suffix from the closed row invariant on the full trajectory to the
+leading prefix via the no-pivot sync lemma, then derives `findPivot? = none` on
+the prefix, so the row-pivoted Bareiss loop records the same singular step. -/
+private theorem leadingPrefix_gram_bareiss_toNat_eq_zero_of_noPivot_singular
+    {n m : Nat} (b : Matrix Int n m) (r : Nat) (hr : r < n)
+    (hentry_regular :
+      ∀ {state : Matrix.BareissState n},
+        (hinv_state : BareissGramRowInvariant b state) →
+        (hnext : state.step + 1 < n) →
+        state.matrix[state.step][state.step] ≠ 0 →
+        ∀ i j : Fin n, (hi : state.step + 1 ≤ i.val) →
+          (Matrix.stepMatrix state.matrix state.step
+              state.matrix[state.step][state.step] state.prevPivot)[i][j] =
+            Matrix.dot
+              (Matrix.rowCombination b
+                (bareissGramRowInvariantStepCoeff
+                  hinv_state hnext i hi))
+              (b.row j))
+    (s : Nat)
+    (h_sing : (Matrix.noPivotLoop r
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = some s) :
+    (Matrix.bareiss
+      (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+        (Nat.succ_le_of_lt hr))).toNat = 0 := by
+  let GM := Matrix.gramMatrix b
+  let initGM := Matrix.noPivotInitialState GM
+  let hK : r + 1 ≤ n := Nat.succ_le_of_lt hr
+  let LP := Matrix.leadingPrefix GM (r + 1) hK
+  let initLP := Matrix.noPivotInitialState LP
+  -- Step 1: s < r via noPivotLoop_singularStep_lt.
+  have hsr : s < r := by
+    have h := noPivotLoop_singularStep_lt (n := n) r initGM rfl s h_sing
+    change s < initGM.step + r at h
+    have : initGM.step = 0 := rfl
+    omega
+  have hs1n : s + 1 < n := Nat.lt_of_lt_of_le (Nat.succ_lt_succ hsr) hr
+  have hsn : s < n := Nat.lt_of_succ_lt hs1n
+  -- Step 2: extract partial state at s iterations.
+  have hsucc_n : s + 1 ≤ n := Nat.le_of_lt hs1n
+  obtain ⟨h_full_none, h_full_step, h_full_zero⟩ :=
+    noPivotLoop_prefix_state_at_singular GM r s hsucc_n h_sing
+  -- Step 3: column-zero on FULL via leadingPrefix_gram_zero_pivot_column_zero_of_singular_step.
+  have h_full_col_zero :
+      ∀ i : Fin n, s + 1 ≤ i.val →
+        (Matrix.noPivotLoop s initGM).matrix[i][(⟨s, hsn⟩ : Fin n)] = 0 :=
+    leadingPrefix_gram_zero_pivot_column_zero_of_singular_step
+      (b := b) s hs1n hentry_regular h_full_none h_full_zero
+  -- Step 4: sync — leadingPrefix (noPivotLoop s initGM).matrix (r+1) = (noPivotLoop s initLP).matrix.
+  have h_sync :=
+    noPivotLoop_sync_leadingPrefix_aux (n := n) (K := r + 1) hK s
+      initGM initLP rfl rfl rfl rfl
+      (by
+        show Matrix.leadingPrefix initGM.matrix (r + 1) hK = initLP.matrix
+        rfl)
+      (show s + initGM.step < r + 1 by
+        change s + 0 < r + 1; omega)
+  obtain ⟨h_step_sync, _h_prev_sync, _h_rows_sync, h_sing_sync, h_mat_sync⟩ := h_sync
+  -- Useful Fin bound.
+  have hs_lt_r1 : s < r + 1 := Nat.lt_succ_of_lt hsr
+  -- Step 5: translate column-zero to LP.
+  have h_LP_col_zero :
+      ∀ i' : Fin (r + 1), s + 1 ≤ i'.val →
+        (Matrix.noPivotLoop s initLP).matrix[i'][
+          (⟨s, hs_lt_r1⟩ : Fin (r + 1))] = 0 := by
+    intro i' hi'
+    let iN : Fin n := ⟨i'.val, Nat.lt_of_lt_of_le i'.isLt hK⟩
+    have h_LP_entry :
+        (Matrix.noPivotLoop s initLP).matrix[i'][
+          (⟨s, hs_lt_r1⟩ : Fin (r + 1))] =
+        (Matrix.leadingPrefix (Matrix.noPivotLoop s initGM).matrix (r + 1) hK)[i'][
+          (⟨s, hs_lt_r1⟩ : Fin (r + 1))] := by
+      rw [← h_mat_sync]
+    rw [h_LP_entry]
+    rw [Matrix.leadingPrefix_entry (Matrix.noPivotLoop s initGM).matrix (r + 1) hK i'
+      (⟨s, hs_lt_r1⟩ : Fin (r + 1))]
+    have hi_iN : s + 1 ≤ iN.val := hi'
+    have h_col_zero_iN := h_full_col_zero iN hi_iN
+    have h_entry_eq :
+        (Matrix.noPivotLoop s initGM).matrix[iN][
+          (⟨s, Nat.lt_of_lt_of_le hs_lt_r1 hK⟩ : Fin n)] =
+        (Matrix.noPivotLoop s initGM).matrix[iN][(⟨s, hsn⟩ : Fin n)] :=
+      congrArg (fun (j : Fin n) => (Matrix.noPivotLoop s initGM).matrix[iN][j])
+        (Fin.ext (rfl : (⟨s, Nat.lt_of_lt_of_le hs_lt_r1 hK⟩ : Fin n).val =
+                        (⟨s, hsn⟩ : Fin n).val))
+    exact h_entry_eq.trans h_col_zero_iN
+  -- Step 6: findPivot? = none on LP.
+  have h_LP_step : (Matrix.noPivotLoop s initLP).step = s := by
+    rw [← h_step_sync]; exact h_full_step
+  have h_LP_sing : (Matrix.noPivotLoop s initLP).singularStep = none := by
+    rw [← h_sing_sync]; exact h_full_none
+  have h_LP_zero_diag :
+      (Matrix.noPivotLoop s initLP).matrix[(⟨s, hs_lt_r1⟩ : Fin (r + 1))][
+        (⟨s, hs_lt_r1⟩ : Fin (r + 1))] = 0 := by
+    have h_LP_entry :
+        (Matrix.noPivotLoop s initLP).matrix[(⟨s, hs_lt_r1⟩ : Fin (r + 1))][
+          (⟨s, hs_lt_r1⟩ : Fin (r + 1))] =
+        (Matrix.leadingPrefix (Matrix.noPivotLoop s initGM).matrix (r + 1) hK)[
+          (⟨s, hs_lt_r1⟩ : Fin (r + 1))][
+          (⟨s, hs_lt_r1⟩ : Fin (r + 1))] := by
+      rw [← h_mat_sync]
+    rw [h_LP_entry]
+    rw [Matrix.leadingPrefix_entry (Matrix.noPivotLoop s initGM).matrix (r + 1) hK
+      (⟨s, hs_lt_r1⟩ : Fin (r + 1)) (⟨s, hs_lt_r1⟩ : Fin (r + 1))]
+    have h_idx_eq :
+        (⟨s, Nat.lt_of_lt_of_le hs_lt_r1 hK⟩ : Fin n) =
+          (⟨s, hsn⟩ : Fin n) := Fin.ext rfl
+    have h_entry_eq :
+        (Matrix.noPivotLoop s initGM).matrix[
+          (⟨s, Nat.lt_of_lt_of_le hs_lt_r1 hK⟩ : Fin n)][
+          (⟨s, Nat.lt_of_lt_of_le hs_lt_r1 hK⟩ : Fin n)] =
+        (Matrix.noPivotLoop s initGM).matrix[(⟨s, hsn⟩ : Fin n)][(⟨s, hsn⟩ : Fin n)] :=
+      matrix_diag_at_fin_eq _ h_idx_eq
+    exact h_entry_eq.trans h_full_zero
+  have h_LP_find_none :
+      Matrix.findPivot? (Matrix.noPivotLoop s initLP).matrix
+        (⟨s, hs_lt_r1⟩ : Fin (r + 1)) (s + 1) = none :=
+    Matrix.findPivot?_eq_none_of_zero _ _ _ h_LP_col_zero
+  -- Step 7: pivotLoop on LP records singular at s.
+  have h_LP_step_lt : (Matrix.noPivotLoop s initLP).step + 1 < r + 1 := by
+    rw [h_LP_step]; omega
+  have h_idx_at_LP_step :
+      (⟨(Matrix.noPivotLoop s initLP).step,
+        Nat.lt_of_succ_lt h_LP_step_lt⟩ : Fin (r + 1)) =
+        (⟨s, hs_lt_r1⟩ : Fin (r + 1)) :=
+    Fin.ext h_LP_step
+  have h_LP_zero_at_result :
+      (Matrix.noPivotLoop s initLP).matrix[
+        (⟨(Matrix.noPivotLoop s initLP).step,
+          Nat.lt_of_succ_lt h_LP_step_lt⟩ : Fin (r + 1))][
+        (⟨(Matrix.noPivotLoop s initLP).step,
+          Nat.lt_of_succ_lt h_LP_step_lt⟩ : Fin (r + 1))] = 0 :=
+    (matrix_diag_at_fin_eq (n := r + 1)
+      (Matrix.noPivotLoop s initLP).matrix h_idx_at_LP_step).trans h_LP_zero_diag
+  have h_LP_find_at_result :
+      Matrix.findPivot? (Matrix.noPivotLoop s initLP).matrix
+        (⟨(Matrix.noPivotLoop s initLP).step,
+          Nat.lt_of_succ_lt h_LP_step_lt⟩ : Fin (r + 1))
+        ((Matrix.noPivotLoop s initLP).step + 1) = none := by
+    have h_step_plus_eq : (Matrix.noPivotLoop s initLP).step + 1 = s + 1 := by
+      rw [h_LP_step]
+    have h_step1 :
+        Matrix.findPivot? (Matrix.noPivotLoop s initLP).matrix
+            (⟨(Matrix.noPivotLoop s initLP).step,
+              Nat.lt_of_succ_lt h_LP_step_lt⟩ : Fin (r + 1))
+            ((Matrix.noPivotLoop s initLP).step + 1) =
+          Matrix.findPivot? (Matrix.noPivotLoop s initLP).matrix
+            (⟨s, hs_lt_r1⟩ : Fin (r + 1))
+            ((Matrix.noPivotLoop s initLP).step + 1) :=
+      congrArg
+        (fun (i : Fin (r + 1)) =>
+          Matrix.findPivot? (Matrix.noPivotLoop s initLP).matrix i
+            ((Matrix.noPivotLoop s initLP).step + 1))
+        h_idx_at_LP_step
+    have h_step2 :
+        Matrix.findPivot? (Matrix.noPivotLoop s initLP).matrix
+            (⟨s, hs_lt_r1⟩ : Fin (r + 1))
+            ((Matrix.noPivotLoop s initLP).step + 1) =
+          Matrix.findPivot? (Matrix.noPivotLoop s initLP).matrix
+            (⟨s, hs_lt_r1⟩ : Fin (r + 1))
+            (s + 1) :=
+      congrArg
+        (fun (st : Nat) =>
+          Matrix.findPivot? (Matrix.noPivotLoop s initLP).matrix
+            (⟨s, hs_lt_r1⟩ : Fin (r + 1)) st)
+        h_step_plus_eq
+    exact (h_step1.trans h_step2).trans h_LP_find_none
+  have h_pivot_sing : (Matrix.pivotLoop (r + 1) initLP).singularStep =
+      some (Matrix.noPivotLoop s initLP).step :=
+    pivotLoop_singularStep_some_of_partial_no_replacement
+      s (r + 1) initLP (Matrix.noPivotLoop s initLP)
+      rfl rfl (by omega) h_LP_sing h_LP_step_lt
+      h_LP_zero_at_result h_LP_find_at_result
+  -- Step 8: bareiss LP = 0 via singular branch of BareissData.det.
+  have h_bareissData_sing :
+      (Matrix.bareissData LP).singularStep =
+        some (Matrix.noPivotLoop s initLP).step := by
+    rw [Matrix.bareissData_eq_finish_pivotLoop]
+    show (Matrix.pivotLoop (r + 1) initLP).singularStep =
+      some (Matrix.noPivotLoop s initLP).step
+    exact h_pivot_sing
+  have h_bareiss_zero : Matrix.bareiss LP = 0 := by
+    rw [Matrix.bareiss_eq_bareissData_det]
+    unfold Matrix.BareissData.det
+    rw [h_bareissData_sing]
+  show (Matrix.bareiss LP).toNat = 0
+  rw [h_bareiss_zero]
+  rfl
+
 /-- If the array loop's `state.step` is past the matrix extent, one outer
 iteration returns the input state unchanged. -/
 private theorem scaledCoeffArrayLoop_done (fuel : Nat)
@@ -3961,7 +4367,14 @@ private theorem scaledCoeffArrayLoop_diag_matches
             rw [← h_step_eq]; exact Nat.lt_of_lt_of_le i.isLt hArrayStep'
           exact h_coeffs_processed i.val h_ilt i.isLt
 /-- The no-pivot Bareiss pass over the full Gram matrix records the same
-leading-prefix determinant as the public `gramDet` API at every vector slot. -/
+leading-prefix determinant as the public `gramDet` API at every vector slot.
+
+This sorry is the consumer side of the singular helper
+`leadingPrefix_gram_bareiss_toNat_eq_zero_of_noPivot_singular`. Discharging it
+requires propagating the `hentry_regular` premise through this private theorem
+and its public consumers (`gramDetVecEntry_eq_gramDet`, `scaledCoeffs_diag_toNat`,
+`gramDetVec_eq_gramDet`, and downstream callers in
+`HexGramSchmidtMathlib` and `HexLLL`). That API surgery is tracked by #5655. -/
 private theorem gramDetVecEntry_eq_leadingPrefix_bareiss
     (b : Matrix Int n m) (r : Nat) (hr : r < n) :
     gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
