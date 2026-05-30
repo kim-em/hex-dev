@@ -52,19 +52,26 @@ HO-5b extended this surface with four per-rung verified-Isabelle
 comparator registrations on the deterministic split family
 `smokeInput n` for `n ∈ {2, 3, 4, 5}`
 (`runIsabelleSplitN{2,3,4,5}Checksum`), one per rung of the parametric
-`splitScientificSchedule`, and eight per-rung registrations on the
+`splitScientificSchedule`; eight per-rung registrations on the
 deterministic degree/height matrix
 (`runIsabelleDegreeHeight{D}x{H}Checksum` for the five rungs of
 `degreeHeightSchedule` and the three smaller-degree rungs of
-`slowDegreeHeightSchedule`). Each per-rung Isabelle median pairs with
-the corresponding Lean medians from one of the parametric Lean
-targets (`runFactorChecksum`, `runFactorFastChecksum`,
-`runFactorSlowChecksum` on the split family;
+`slowDegreeHeightSchedule`); three per-input registrations on the
+HO-2 adversarial singletons not already covered by
+`runIsabelleFactorChecksum`
+(`runIsabelleAdv{X4Plus1,Phi15,SwinnertonDyerSD3}Checksum`); and seven
+per-rung registrations on the cascade-trigger fallback-probe family
+(`runIsabelleFallbackProbeN{11,12,13,15,18,22,24}Checksum`). Each
+per-rung Isabelle median pairs with the corresponding Lean medians from
+one of the parametric Lean targets (`runFactorChecksum`,
+`runFactorFastChecksum`, `runFactorSlowChecksum` on the split family;
 `runFactorDegreeHeightChecksum`, `runFactorFastDegreeHeightChecksum`,
-`runFactorSlowDegreeHeightChecksum` on the degree/height matrix) —
-six parallel `hex/isabelle` ladders against the AFP-extracted
-comparator, replacing the prior single-rung canonical-fixed verdict
-with the scaling-ladder trends below.
+`runFactorSlowDegreeHeightChecksum` on the degree/height matrix;
+`runFactorAdv*Checksum` on the HO-2 singletons;
+`runFactorFallbackProbeChecksum` on the fallback-probe family) — eight
+parallel `hex/isabelle` ladders against the AFP-extracted comparator,
+replacing the prior single-rung canonical-fixed verdict with the
+scaling-ladder trends below.
 
 ### Per-call comparator overhead
 
@@ -333,6 +340,216 @@ on a degree-3 split input at height 8 and lands at `19.4 ms` — still
 **Gating-goal verdict (largest eligible rung `3 × 8`).** Lean
 `19.402 ms` vs Isabelle adjusted `832.188 ms`; adjusted ratio
 `0.0233` (Lean 42.89× faster). Gating-goal verdict: **met**.
+
+### HO-2 adversarial singletons
+
+Per-input 3-trial sweep at commit `e9b6ea1c-dirty` on `carica`
+(Apple M2 Ultra, macOS 15.6), recorded `2026-05-30T15:28:58Z`,
+1/5/15-minute load averages `5.96/6.21/7.83` at sweep start. The
+worktree was dirty because the pod-managed `.claude/CLAUDE.md` file
+carried a pre-existing local modification outside this report
+package.
+
+The HO-2 family's parametric schedule is `#[0]` (a pinned single
+row), so its `hex/isabelle` ratio is a fixed-rung verdict per
+input rather than a scaling ladder. Each adversarial polynomial
+pairs the Lean singleton's median against its dedicated Isabelle
+registration. `runFactorAdvQuadSqrt2Sqrt3Checksum` reuses the
+existing canonical `runIsabelleFactorChecksum` rather than a fresh
+`runIsabelleAdvQuadSqrt2Sqrt3Checksum`; the other three inputs
+each get a new Isabelle registration. The persistent-subprocess
+baseline used here is the refreshed median `7.004 ms`
+(`runIsabelleFactorBaselineChecksum`, same sweep export).
+
+Sweep command:
+
+```sh
+HEX_BZ_ISABELLE="$PWD/.cache/oracles/bz-isabelle/wrapper/bz_isabelle" \
+lake exe hexbz_bench run \
+    Hex.BerlekampZassenhausBench.runFactorAdvX4Plus1Checksum \
+    Hex.BerlekampZassenhausBench.runFactorFastSetupAdvX4Plus1Checksum \
+    Hex.BerlekampZassenhausBench.runFactorAdvQuadSqrt2Sqrt3Checksum \
+    Hex.BerlekampZassenhausBench.runFactorFastAdvQuadSqrt2Sqrt3Checksum \
+    Hex.BerlekampZassenhausBench.runFactorAdvPhi15Checksum \
+    Hex.BerlekampZassenhausBench.runFactorFastSetupAdvPhi15Checksum \
+    Hex.BerlekampZassenhausBench.runAdvSwinnertonDyerSD3ModularSplitChecksum \
+    Hex.BerlekampZassenhausBench.runIsabelleAdvX4Plus1Checksum \
+    Hex.BerlekampZassenhausBench.runIsabelleAdvPhi15Checksum \
+    Hex.BerlekampZassenhausBench.runIsabelleAdvSwinnertonDyerSD3Checksum \
+    --outer-trials 3 \
+    --export-file reports/bench-results/hex-berlekamp-zassenhaus-e9b6ea1c-ho2-singletons.json
+```
+
+Export artefact:
+`reports/bench-results/hex-berlekamp-zassenhaus-e9b6ea1c-ho2-singletons.json`,
+SHA-256
+`c40f3176420d2ad77c809b64fd4cae55586678d49ddd907b337f22db08128f52`.
+
+A refresh of the canonical comparator pair at the same commit
+records `runIsabelleFactorChecksum` at `840.969 ms` and
+`runIsabelleFactorBaselineChecksum` at `7.004 ms`; export
+artefact:
+`reports/bench-results/hex-berlekamp-zassenhaus-e9b6ea1c-canonical-refresh.json`,
+SHA-256
+`7250de7eb915652680e813e2dc1427ad9d429b847af366866f7f35a1facf4db7`,
+recorded by
+
+```sh
+HEX_BZ_ISABELLE="$PWD/.cache/oracles/bz-isabelle/wrapper/bz_isabelle" \
+lake exe hexbz_bench run \
+    Hex.BerlekampZassenhausBench.runIsabelleFactorChecksum \
+    Hex.BerlekampZassenhausBench.runIsabelleFactorBaselineChecksum \
+    --outer-trials 3 \
+    --export-file reports/bench-results/hex-berlekamp-zassenhaus-e9b6ea1c-canonical-refresh.json
+```
+
+Each Isabelle singleton registration on `advX4Plus1` and `advPhi15`
+carries an `expectedHash := checksumCanonicalLeanFactorization (factor
+input)` elaboration-time check; the bench harness reports
+`expected hash: matches` at both, confirming factor-multiset
+agreement between hex and the AFP-extracted comparator on those
+fixtures. `runIsabelleAdvSwinnertonDyerSD3Checksum` uses
+`expectedHash := none` because the full integer `factor
+advSwinnertonDyerSD3` exceeds the verifier's per-call budget (see
+`runAdvSwinnertonDyerSD3ModularSplitChecksum`); the observed
+Isabelle hash `0xfd5a821e013bc945` is recorded post-hoc for
+reproducibility.
+
+#### Public combinator on adversarial inputs
+
+| Input | Lean median (`factor`) | Isabelle median | overhead share | raw ratio | adjusted ratio | speedup (adj) |
+|---|---:|---:|---:|---:|---:|---:|
+| `advX4Plus1` (`X⁴ + 1`) | 62.000 ns | 850.548 ms | 0.823% | 0.0000000729 | 0.0000000735 | Lean 13,605,560× faster |
+| `advQuadSqrt2Sqrt3` (`(X²−2)(X²−3)`) | 63.446 ms | 840.969 ms | 0.833% | 0.075444 | 0.076077 | Lean 13.14× faster |
+| `advPhi15` (`Φ₁₅`) | 428.964 ms | 832.429 ms | 0.841% | 0.515325 | 0.519688 | Lean 1.92× faster |
+
+**Trend.** On these adversarial inputs the per-call Lean cost varies
+by seven orders of magnitude: `X⁴ + 1` is split-mod-`5` and reduces
+to a pure modular-cost path that costs `62 ns` for the full integer
+factorisation; the deg-4 quadratic product takes `63.4 ms`;
+`Φ₁₅` (degree 8) takes `429 ms`. Isabelle's per-call wall is
+essentially constant across the three (`832–851 ms`), so the
+adjusted ratios span seven orders of magnitude too. The
+`Φ₁₅` rung is the tightest of the three at `0.520`
+(Lean `1.92×` faster), well below the gating threshold.
+
+**Gating-goal verdict (per-input fixed rungs).** All three rungs
+meet the `hex/isabelle ≤ 1×` gating goal. The `Φ₁₅` rung at
+adjusted ratio `0.520` is the closest of the three to the
+threshold. Gating-goal verdict: **met** on all three.
+
+#### Fast path on adversarial inputs (where comparable)
+
+The CLD fast path is comparable to the public combinator on
+`advQuadSqrt2Sqrt3` (where the registered Lean target is the full
+`factorFast`); the other adversarial cases register *setup-only*
+fast-path probes (`runFactorFastSetupAdv*`) or modular-split-profile
+probes (`runAdvSwinnertonDyerSD3ModularSplitChecksum`), so a direct
+Lean-fast-path versus Isabelle-full-factor ratio is a semantic
+mismatch on those inputs.
+
+| Input | Lean median | Isabelle median | overhead share | raw ratio | adjusted ratio | speedup (adj) | semantic comparability |
+|---|---:|---:|---:|---:|---:|---:|:---|
+| `advQuadSqrt2Sqrt3` (`factorFast`) | 62.988 ms | 840.969 ms | 0.833% | 0.074899 | 0.075527 | Lean 13.24× faster | full-factor vs full-factor |
+| `advX4Plus1` (fast-path setup) | 22.000 ns | 850.548 ms | 0.823% | 0.0000000259 | 0.0000000261 | n/a | setup-only vs full-factor (mismatch) |
+| `advPhi15` (fast-path setup) | 20.000 ns | 832.429 ms | 0.841% | 0.0000000240 | 0.0000000242 | n/a | setup-only vs full-factor (mismatch) |
+| `advSwinnertonDyerSD3` (modular split profile) | 20.000 ns | 844.466 ms | 0.829% | 0.0000000237 | 0.0000000239 | n/a | split-profile vs full-factor (mismatch) |
+
+**Gating-goal verdict (fast path).** The single comparable rung
+(`advQuadSqrt2Sqrt3`) meets the gating goal at adjusted ratio
+`0.0755` (Lean `13.24×` faster). The three setup/split-only rungs
+have ratios that are not directly comparable to the full-factor
+comparator; their nanosecond timing scales reflect that the Lean
+target measures a subset of the BHKS pipeline (precision cap,
+local-factor profile, or modular split) rather than full
+factorisation.
+
+### Fallback-probe scaling ladder (cascade-trigger family)
+
+Per-rung 3-trial sweep at commit `e9b6ea1c-dirty` on `carica`
+(Apple M2 Ultra, macOS 15.6), recorded `2026-05-30T15:31:01Z`,
+1/5/15-minute load averages `5.96/6.21/7.83` at sweep start. The
+worktree was dirty because the pod-managed `.claude/CLAUDE.md` file
+carried a pre-existing local modification outside this report
+package.
+
+Sweep command:
+
+```sh
+HEX_BZ_ISABELLE="$PWD/.cache/oracles/bz-isabelle/wrapper/bz_isabelle" \
+lake exe hexbz_bench run \
+    Hex.BerlekampZassenhausBench.runFactorFallbackProbeChecksum \
+    Hex.BerlekampZassenhausBench.runIsabelleFallbackProbeN11Checksum \
+    Hex.BerlekampZassenhausBench.runIsabelleFallbackProbeN12Checksum \
+    Hex.BerlekampZassenhausBench.runIsabelleFallbackProbeN13Checksum \
+    Hex.BerlekampZassenhausBench.runIsabelleFallbackProbeN15Checksum \
+    Hex.BerlekampZassenhausBench.runIsabelleFallbackProbeN18Checksum \
+    Hex.BerlekampZassenhausBench.runIsabelleFallbackProbeN22Checksum \
+    Hex.BerlekampZassenhausBench.runIsabelleFallbackProbeN24Checksum \
+    --outer-trials 3 \
+    --export-file reports/bench-results/hex-berlekamp-zassenhaus-e9b6ea1c-fallback-probe.json
+```
+
+Export artefact:
+`reports/bench-results/hex-berlekamp-zassenhaus-e9b6ea1c-fallback-probe.json`,
+SHA-256
+`0db10787cdf780d9a2ffc012784a76323d1a66b0575db0460d5ed2bcd3524439`.
+
+The fallback-probe schedule
+`fallbackProbeSchedule = #[11, 12, 13, 15, 18, 22, 24]` factors the
+deterministic split family `prepFallbackProbeInput n = (X-1)(X-2)…(X-n)`
+at the post-mortem-identified cascade-trigger rungs (see
+`reports/bz-vs-isabelle-investigation.md` §3). The Isabelle reference
+factorisation is the list of `n` distinct monic linears at every
+rung; bench-time multiset agreement is recorded as Isabelle
+observed hashes (e.g. `n = 11`: `0xcc7e59ce22254bcf`) for
+post-hoc verification against the known split.
+
+| n | Lean median (`factor`) | Isabelle median | overhead share | raw ratio | adjusted ratio | hex/isabelle | status |
+|---:|---:|---:|---:|---:|---:|---:|:---|
+| 11 | 3.345 s | 835.430 ms | 0.838% | 4.0040 | 4.0379 | Lean 4.04× slower | eligible |
+| 12 | 4.361 s | 839.966 ms | 0.834% | 5.1919 | 5.2356 | Lean 5.24× slower | eligible |
+| 13 | 5.938 s | 846.854 ms | 0.827% | 7.0118 | 7.0703 | Lean 7.07× slower | eligible |
+| 15 | — | 850.360 ms | 0.823% | — | — | — | cap-hit (Lean exceeded `maxSecondsPerCall = 8.0 s`) |
+| 18 | — | 842.363 ms | 0.831% | — | — | — | cap-hit (ladder stopped at 15) |
+| 22 | — | 841.902 ms | 0.832% | — | — | — | cap-hit (ladder stopped at 15) |
+| 24 | — | 871.115 ms | 0.804% | — | — | — | cap-hit (ladder stopped at 15) |
+
+**Trend.** Isabelle's per-call wall is essentially constant across the
+schedule (`835–871 ms`); the AFP-extracted `factor_int_poly` cost on
+these small-integer-coefficient deterministic splits is dominated by
+the persistent-subprocess JSON marshalling and Haskell allocator
+overhead. The hex per-call cost is sharply monotone in `n`:
+`3.345 → 4.361 → 5.938 s` at `n ∈ {11, 12, 13}`, then exceeds the
+8 s cap at `n = 15`. lean-bench's ladder-termination logic skips the
+subsequent rungs once a cap is hit, so `n ∈ {18, 22, 24}` have only
+Isabelle medians on the export, not Lean medians; the cap behaviour
+itself is a Lean-side failure of the gating goal at every skipped
+rung (any rung in the cap-hit regime has adjusted ratio
+`> 8.0 / 0.84 ≈ 9.5`). The adjusted ratio at the largest eligible
+rung `n = 13` is `7.07`, an order of magnitude above the gating
+threshold.
+
+**Gating-goal verdict (largest eligible rung `n = 13`).** Lean
+`5.938 s` vs Isabelle adjusted `839.850 ms`; adjusted ratio
+`7.07` (Lean `7.07×` slower). Gating-goal verdict: **not met**.
+
+This is the first **not met** gating verdict on any registered
+scientific BZ bench target. It is the bench-surface manifestation of
+the cascade documented in
+[reports/bz-vs-isabelle-investigation.md](bz-vs-isabelle-investigation.md)
+§3 / §8.4: the chain
+`DensePoly.gcd-not-monic → isGoodPrime-rejects-square-free →
+fallbackPrimeChoiceData → wrong reduction → BHKS recombination on
+non-square-free reduction` makes the public `factor` combinator
+either return reducible factors or exceed the per-call budget on the
+fallback-probe rungs. Discharging this verdict is the joint scope of
+HO-1 ([#2564](https://github.com/kim-em/hex/issues/2564); architectural
+rewrite to van Hoeij CLD) and HO-5d
+([#5817](https://github.com/kim-em/hex/issues/5817) /
+[#5819](https://github.com/kim-em/hex/issues/5819) /
+[#5831](https://github.com/kim-em/hex/issues/5831); tactical
+discharge of the `fallbackPrimeChoiceData` silent-fallback path).
 
 ### Comparison to prior outer-trials=1 ladder
 
@@ -842,42 +1059,67 @@ record on each adversarial polynomial.
   the same eight-second cap reached `n = 5` and hit the cap at `n = 6`,
   so larger split inputs require either algorithmic improvement or a
   dedicated longer scheduled run.
-- The singleton HO-2 adversarial registrations are valuable fixed-shape
-  coverage, but their `#[0]` schedules cannot produce verdict-eligible
-  scaling rows. The recombination-shape attribution for the
-  `ho2-adversarial-recombination` family is recorded against the
-  public-factor-combinator profile per §Profile above, since the HO-2
-  inputs flow through the same `factor`/`factorFast` entry points.
+- The singleton HO-2 adversarial registrations now have per-input
+  fixed-rung `hex/isabelle` verdicts via the
+  `runIsabelleAdv{X4Plus1,Phi15,SwinnertonDyerSD3}Checksum`
+  pairings (plus the pre-existing `runIsabelleFactorChecksum` pair on
+  `advQuadSqrt2Sqrt3`); the `#[0]` schedules still cannot produce a
+  scaling ladder, but the per-input ratios are recorded against the
+  full-factor Isabelle medians where the Lean target is the full
+  `factor`. The fast-path setup-only Lean targets
+  (`runFactorFastSetupAdv*`,
+  `runAdvSwinnertonDyerSD3ModularSplitChecksum`) are paired with
+  the same Isabelle medians for completeness but their nanosecond
+  Lean walls reflect a different operation (precision-cap probe or
+  modular-split profile) than the full-factor comparator. The
+  recombination-shape attribution for the
+  `ho2-adversarial-recombination` family remains anchored on the
+  public-factor-combinator profile per §Profile above.
 - The new public/slow/fast compare surface is intentionally smoke-sized;
   it does not replace a full scientific-domain LLL-assisted versus
   exhaustive recombination comparison.
 - `runFactorSlowDegreeHeightChecksum` is now explicit and reproducible on
   a completing small subset; it remains diagnostic evidence only, not a
   Phase 4 completion verdict for the full slow path.
-- The verified-Isabelle BZ comparator covers six parametric Lean
-  targets over two scientific schedules. On the deterministic split
-  family `smokeInput n` at `n ∈ {2, 3, 4, 5}`, the public combinator
-  (`runFactorChecksum`), the CLD fast path (`runFactorFastChecksum`),
-  and the exhaustive backstop (`runFactorSlowChecksum`, schedule
-  `#[1..4]`) all meet the gating goal at their largest eligible
-  rungs (adjusted ratios `0.0417`, `0.0421`, `0.00133`). On the
-  degree/height matrix at `(degree, height) ∈ {(3,2), (4,2), (4,8),
-  (5,8), (6,32)}`, the public combinator
-  (`runFactorDegreeHeightChecksum`) and the CLD fast path
-  (`runFactorFastDegreeHeightChecksum`) meet the gating goal at the
-  largest eligible rung `6 × 32` (adjusted ratios `0.4323` and
-  `0.4210`); the slow backstop (`runFactorSlowDegreeHeightChecksum`,
-  schedule `#[1002, 2002, 3008]`) meets it at `3 × 8` (adjusted
-  ratio `0.0233`). The adjusted ratio on the degree/height matrix is
-  the closest the public/fast combinators currently come to the
-  `1×` ceiling — within `2.3×` at `6 × 32`. Per-family ladders for
-  the remaining scientific schedules (`precisionLocalSchedule`, the
-  HO-2 adversarial singletons, and `fallbackProbeSchedule`) are not
-  yet wired; each would need its own per-rung
-  `setup_fixed_benchmark` Isabelle registrations on the respective
-  prepared inputs, and a bench run on hardware where
-  `scripts/oracle/setup_bz_isabelle.sh` has produced a `bz_isabelle`
-  binary.
+- The verified-Isabelle BZ comparator now covers eight parametric or
+  per-input Lean target groups. The split family
+  (`runFactorChecksum`, `runFactorFastChecksum`,
+  `runFactorSlowChecksum` at `n ∈ {2, 3, 4, 5}`), the degree/height
+  matrix (`runFactorDegreeHeightChecksum`,
+  `runFactorFastDegreeHeightChecksum`,
+  `runFactorSlowDegreeHeightChecksum`), and the HO-2 adversarial
+  singletons (`runFactorAdv{X4Plus1,QuadSqrt2Sqrt3,Phi15}Checksum`)
+  all meet the gating goal at their largest eligible rungs. The
+  closest of these to the `1×` ceiling is the HO-2 `Φ₁₅`
+  fixed rung at adjusted ratio `0.520` (Lean `1.92×` faster); the
+  next closest is the degree/height `6 × 32` rung at adjusted
+  ratio `0.4323` (Lean `2.31×` faster). The
+  cascade-trigger fallback-probe family
+  (`runFactorFallbackProbeChecksum`) does **not** meet the gating
+  goal: at the largest eligible rung `n = 13` the adjusted ratio is
+  `7.07` (Lean `7.07×` slower), and rungs `n ∈ {15, 18, 22, 24}` hit
+  the `maxSecondsPerCall = 8.0 s` cap. This is the first
+  not-met scientific-bench verdict on the registered surface and is
+  the bench manifestation of the cascade documented in
+  `reports/bz-vs-isabelle-investigation.md` §3 / §8.4. Discharging
+  the verdict is joint scope between HO-1
+  ([#2564](https://github.com/kim-em/hex/issues/2564)) and HO-5d
+  ([#5817](https://github.com/kim-em/hex/issues/5817) /
+  [#5819](https://github.com/kim-em/hex/issues/5819) /
+  [#5831](https://github.com/kim-em/hex/issues/5831)).
+- `runFastPathPrecisionLocalChecksum` remains the only registered
+  scientific bench target without an Isabelle ratio verdict.
+  The Lean target measures *fast-path setup* cost
+  (`multifactorLiftQuadratic`, local-factor mixing,
+  `factorFastPrecisionCap`, modular split profile) rather than full
+  factorisation — see the `runFastPathPrecisionLocalChecksum` doc
+  comment in `HexBerlekampZassenhaus/Bench.lean` ("the timed target
+  avoids full `factorFast` on adversarial cases"). Pairing a
+  full-factor Isabelle median against a setup-only Lean median would
+  be a semantic mismatch (different operations on the same input),
+  so no `runIsabellePrecisionLocal*` registrations are wired. The
+  precision/local-factor surface remains covered as an
+  internal-model verdict in the §Appendix.
 - The split-family `splitScientificSchedule` continues to be capped
   at `n = 5` by the `maxSecondsPerCall = 8.0s` budget. With the
   warm-iterated per-call medians recorded above (`n = 5` at
