@@ -74,7 +74,7 @@ theorem coeff_toMathlibPolynomial_equiv (f : Hex.FpPoly p) (n : Nat) :
     (toMathlibPolynomial f).coeff n = HexModArithMathlib.ZMod64.equiv (f.coeff n) := by
   sorry
 
-/-- Coefficient view supplied by the general dense-polynomial bridge. -/
+/-- Coefficient view supplied by `HexPolyMathlib.toPolynomial`. -/
 theorem hexPolyMathlib_coeff_bridge
     {R : Type u} [Semiring R] [DecidableEq R] (f : Hex.DensePoly R) (n : Nat) :
     (HexPolyMathlib.toPolynomial f).coeff n = f.coeff n := by
@@ -83,7 +83,7 @@ theorem hexPolyMathlib_coeff_bridge
 /--
 The direct finite-field transport is the coefficientwise lift along
 `ZMod64.equiv`, matching the coefficient view supplied by the generic
-dense-polynomial bridge.
+`HexPolyMathlib.toPolynomial`.
 -/
 theorem toMathlibPolynomial_coeff_bridge (f : Hex.FpPoly p) (n : Nat) :
     (toMathlibPolynomial f).coeff n = HexModArithMathlib.ZMod64.equiv (f.coeff n) :=
@@ -290,14 +290,14 @@ theorem irreducible_of_mem_berlekampFactor
   sorry
 
 /--
-Bridge-surface re-export of the Mathlib-free Nodup property of the executable
+Mathlib-side re-export of the Mathlib-free Nodup property of the executable
 Berlekamp factor list of a monic square-free input.  Discharged from the
 polymorphic abstract loop invariant
 `Hex.Berlekamp.berlekampFactor_factors_nodup_of_no_squared` plus the
 squareness-implies-unit chain `isUnitPolynomial_of_squareFree_of_squared_dvd`,
 matching the proof of the section-level `Hex.Berlekamp.berlekampFactor_factors_nodup`
 in `HexBerlekamp/RabinSoundness.lean`.  Stated polymorphic over the field
-instance so that downstream Mathlib-bridge consumers (e.g.
+instance so that downstream Mathlib-side callers (e.g.
 `factorsModP_nodup_of_factorsModPBerlekampForm`) can apply it to the
 existentially-bound field witness carried by `factorsModPBerlekampForm`.
 -/
@@ -408,7 +408,7 @@ theorem rabinTest_true_irreducible
   obtain ⟨m, hm_mem, hg_natDegree_dvd_m⟩ :=
     Hex.Berlekamp.exists_maximalProperDivisor_dvd
       hg_irr.natDegree_pos hg_natDegree_dvd_n hg_natDegree_lt
-  -- The Rabin coprimality leg at `m` and the new substrate combine to force
+  -- The Rabin coprimality leg at `m` and the new lemma combine to force
   -- `g` to be a unit, contradicting irreducibility.
   exact hg_irr.not_isUnit ((hcoprime m hm_mem).isUnit_of_dvd' hg_dvd_fM
     (Rabin.irreducible_dvd_frobeniusPolynomial_of_natDegree_dvd
