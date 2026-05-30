@@ -579,9 +579,9 @@ theorem factor_unique_of_product
     (by rw [hproduct]; exact hf_ne)
     (by rw [hproduct, factor_product f])
 
-/-! ### Mathlib bridge for executable certificate factor-product equalities
+/-! ### Mathlib-side correspondence for executable certificate factor-product equalities
 
-These bridges identify the executable `Hex.PrimeFactorData.factorProduct` with
+These lemmas identify the executable `Hex.PrimeFactorData.factorProduct` with
 the Mathlib `Polynomial.map (Int.castRingHom (ZMod p))` image of the underlying
 integer polynomial and with the explicit product of recorded factor transports.
 Both shapes are consumed by the integer irreducibility certificate soundness
@@ -589,7 +589,7 @@ composition.
 -/
 
 /-- Executable `FpPoly p` multiplication transports to Mathlib multiplication
-through the polynomial bridge. -/
+through `HexBerlekampMathlib.fpPolyEquiv`. -/
 theorem toMathlibPolynomial_mul {p : Nat} [Hex.ZMod64.Bounds p]
     (a b : Hex.FpPoly p) :
     HexBerlekampMathlib.toMathlibPolynomial (a * b) =
@@ -625,8 +625,9 @@ theorem toMathlibPolynomial_C {p : Nat} [Hex.ZMod64.Bounds p]
   · simp only [hn, ↓reduceIte]
     exact HexModArithMathlib.ZMod64.toZMod_zero
 
-/-- Coefficientwise scaling on `FpPoly p` transports across the Mathlib bridge
-to multiplication by the corresponding `Polynomial.C` of the `ZMod p` cast. -/
+/-- Coefficientwise scaling on `FpPoly p` transports across
+`HexBerlekampMathlib.toMathlibPolynomial` to multiplication by the
+corresponding `Polynomial.C` of the `ZMod p` cast. -/
 theorem toMathlibPolynomial_scale {p : Nat} [Hex.ZMod64.Bounds p]
     (c : Hex.ZMod64 p) (f : Hex.FpPoly p) :
     HexBerlekampMathlib.toMathlibPolynomial (Hex.DensePoly.scale c f) =
@@ -642,8 +643,9 @@ theorem toMathlibPolynomial_scale {p : Nat} [Hex.ZMod64.Bounds p]
   exact HexModArithMathlib.ZMod64.toZMod_mul c (f.coeff n)
 
 /--
-List `foldl (· * ·)` of executable `FpPoly p` factors transports across the
-Mathlib bridge to the explicit Mathlib `List.prod` of the per-factor transports.
+List `foldl (· * ·)` of executable `FpPoly p` factors transports across
+`HexBerlekampMathlib.toMathlibPolynomial` to the explicit Mathlib `List.prod`
+of the per-factor transports.
 -/
 theorem toMathlibPolynomial_listFoldlMul_one {p : Nat} [Hex.ZMod64.Bounds p]
     (xs : List (Hex.FpPoly p)) :
@@ -4734,7 +4736,7 @@ theorem monicisedCoreLiftData_liftedFactor_monic
 /--
 Composed convenience wrapper: combines
 `Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData` with
-`henselLiftData_liftedFactor_monic` so that a Mathlib-bridge consumer can
+`henselLiftData_liftedFactor_monic` so that a Mathlib-side caller can
 discharge per-output monicness of `Hex.henselLiftData` from the
 `choosePrimeData` boundary facts directly, without having to construct the
 internal `QuadraticMultifactorLiftInvariant` themselves.
@@ -5074,7 +5076,7 @@ divisor through `monicModularImage modP_f ∣ modP_f` (via
 `Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd` to the
 modular squarefreeness obtained from `Hex.isGoodPrime_squareFreeModP`.
 
-This is the wrapper that lets a Mathlib-bridge consumer of
+This is the wrapper that lets a Mathlib-side caller of
 `henselLiftData_liftedFactor_injective_of_choosePrimeData` (below) discharge
 the `hfactorsModP_nodup` parameter from the `choosePrimeData?` facts alone,
 without constructing the Berlekamp `Nodup` argument by hand. -/
@@ -5311,7 +5313,7 @@ side is `HexPolyMathlib.natDegree_toPolynomial` plus the (inline) observation
 that `liftToZ` preserves size on any nonzero `FpPoly p`.
 
 This is the sibling of `factorsModP_nodup_of_factorsModPBerlekampForm`: it lets a
-Mathlib-bridge consumer of `henselLiftData_liftedFactor_natDegree_pos_of_choosePrimeData`
+Mathlib-side caller of `henselLiftData_liftedFactor_natDegree_pos_of_choosePrimeData`
 discharge the `hfactors_natDegree_pos` premise from the `choosePrimeData?` facts
 alone, without constructing the per-modular-factor natural-degree witnesses by
 hand. -/
@@ -6396,7 +6398,7 @@ theorem factors_irreducible_of_choosePrimeData_of_some
 
 /-- Composed convenience wrapper: combines
 `Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData` with
-`henselLiftData_liftedFactor_injective` so that a Mathlib-bridge consumer can
+`henselLiftData_liftedFactor_injective` so that a Mathlib-side caller can
 discharge `Function.Injective (liftedFactor (henselLiftData core B primeData))`
 from the `choosePrimeData` boundary facts plus `factorsModP.toList.Nodup`,
 without having to construct the internal `QuadraticMultifactorLiftInvariant`
@@ -6667,7 +6669,7 @@ theorem monicisedCoreLiftData_liftedFactor_natDegree_pos
 
 /-- Composed convenience wrapper: combines
 `Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData` with
-`henselLiftData_liftedFactor_natDegree_pos` so that a Mathlib-bridge consumer
+`henselLiftData_liftedFactor_natDegree_pos` so that a Mathlib-side caller
 can discharge positive natural degree of every lifted factor from the
 `choosePrimeData` boundary facts plus per-modular-factor natural-degree
 positivity.
@@ -13094,7 +13096,7 @@ private theorem not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc
     hprecision
 
 /--
-Main candidate divisibility theorem for the Mathlib bridge of the
+Main candidate divisibility theorem for the Mathlib-side correspondence of the
 Berlekamp-Zassenhaus recombination search (#4430 capstone).
 
 Given a `LiftedFactorSubsetPartition core d J target` and a subset `T ⊆ J`,
