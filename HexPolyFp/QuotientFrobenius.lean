@@ -376,7 +376,7 @@ private theorem quotMonoSum_pow_pPow_eq_self
 /-- **Capstone:** if the Frobenius iterate `β ↦ β ^ (p ^ n)` fixes
 `Quotient.X`, it fixes every quotient element.
 
-The irreducibility hypothesis is recorded for downstream consumers but is
+The irreducibility hypothesis is recorded for downstream callers but is
 not used in the proof: the X-generation argument is purely an algebra fact
 about `F_p[X]/(g)` for any monic positive-degree `g`. -/
 theorem pow_pPowN_eq_self_of_pow_pPowN_X_eq_X

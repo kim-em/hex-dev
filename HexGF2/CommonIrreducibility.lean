@@ -4,7 +4,7 @@ import HexGF2.RabinSoundness
 Project-side irreducibility witnesses for committed packed `GF(2)` moduli.
 
 The witnesses are produced by the Rabin certificate checker introduced in
-`HexGF2/Irreducibility.lean` and bridged to `GF2Poly.Irreducible` through
+`HexGF2/Irreducibility.lean` and lifted to `GF2Poly.Irreducible` through
 `checkIrreducibilityCertificate_imp_irreducible`. Small witnesses can be
 checked directly by `decide`; the larger GHASH witness stores quotient
 certificates for each squaring step so kernel checking avoids repeated

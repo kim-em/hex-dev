@@ -2,7 +2,7 @@ import HexPolyMathlib.Basic
 import HexPolyMathlib.Euclid
 
 /-!
-The `HexPolyMathlib` library bridges the executable `HexPoly` core to
+The `HexPolyMathlib` library identifies the executable `HexPoly` core with
 Mathlib's `Polynomial` API.
 
 This library exposes the concrete conversion functions between

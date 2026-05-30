@@ -679,7 +679,7 @@ theorem frobeniusDiffMod_mod_self_of_degree_zero
 `f` divides `X^(p^k) - X` (in the absolute sense) exactly when the
 Berlekamp Frobenius remainder `frobeniusDiffMod f hmonic k` vanishes.
 
-Bridges the absolute polynomial `xPowSubX k` to the modular Frobenius
+Identifies the absolute polynomial `xPowSubX k` with the modular Frobenius
 remainder used by the executable `rabinTest`. The proof goes through
 `frobeniusDiffMod = (xPowSubX k) % f`, which itself relies on
 `frobeniusXPowMod_eq_powMod` for the absolute Frobenius identity.
@@ -2066,7 +2066,7 @@ theorem isUnitPolynomial_of_dvd_gcd_isUnit
   isUnitPolynomial_of_dvd_isUnitPolynomial
     (DensePoly.dvd_gcd g f q hgf hgq) hgcd
 
-/-! ### Bridge theorem -/
+/-! ### Soundness theorem -/
 
 /--
 Soundness of the executable Rabin test against the project-side

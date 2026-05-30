@@ -1972,7 +1972,7 @@ private theorem detProduct_insertAt_general {R : Type u} [Lean.Grind.CommRing R]
     exact insertAt_get_self _ _ _
   · apply foldl_det_product_congr
     intro r' _hmem
-    -- Bridge the column index of each side to `(v[r']).castSucc`.
+    -- Identify the column index of each side with `(v[r']).castSucc`.
     have hLHS_col :
         (insertAt (Fin.last n) (v.map Fin.castSucc) i)[skipIndex i r'] =
           (v[r']).castSucc := by

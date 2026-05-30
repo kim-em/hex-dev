@@ -8,8 +8,8 @@ import Mathlib.Algebra.Polynomial.Monomial
 import HexPoly
 
 /-!
-Bridge definitions between the executable `Hex.DensePoly` representation and
-Mathlib's `Polynomial`.
+Identification definitions between the executable `Hex.DensePoly`
+representation and Mathlib's `Polynomial`.
 
 This module provides the concrete conversion functions and ring equivalence
 used by downstream proof-transfer libraries.

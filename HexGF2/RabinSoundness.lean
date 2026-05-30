@@ -810,7 +810,7 @@ theorem exists_irreducible_factor_of_factor
         0 < g.degree ∧ g.degree ≤ a.degree :=
   exists_irreducible_factor_of_pos_degree_aux a.degree a rfl ha_pos
 
-/-! ## Bridge theorem -/
+/-! ## Soundness theorem -/
 
 /--
 Soundness of the executable Rabin test against `GF2Poly.Irreducible`.

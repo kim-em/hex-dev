@@ -466,7 +466,7 @@ irreducible elements.
 This isolates the UFD half of the BHKS Group B / B8 certification theorem:
 the algorithm-specific work (establishing the cardinality equality from BHKS
 lattice success state) is handled separately and supplies the `hcount`
-hypothesis to this lemma. Fast and exhaustive branch bridges should use this
+hypothesis to this lemma. Fast and exhaustive branch lemmas should use this
 once they have product preservation, non-unit entries, and the final count
 equality.
 -/
