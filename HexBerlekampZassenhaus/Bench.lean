@@ -572,7 +572,8 @@ def requestIsabelleBZFactorizationRaw (f : ZPoly) : IO (Int × Array (List Int �
       throw <| IO.userError s!"bz_isabelle reply missing/non-bool ok: {msg}; reply: {reply}"
 
 def isabelleFixtureInputs : List ZPoly :=
-  [smokeInput 1, DensePoly.ofCoeffs #[1, 1, 1, 1, 1], advQuadSqrt2Sqrt3]
+  [smokeInput 1, DensePoly.ofCoeffs #[1, 1, 1, 1, 1], advQuadSqrt2Sqrt3,
+    smokeInput 2, smokeInput 3, smokeInput 4, smokeInput 5]
 
 def ensureIsabelleBZCrossCheck : IO Unit := do
   if (← isabelleBZCrossCheckRef.get) then
@@ -603,6 +604,30 @@ def runIsabelleFactorChecksum : Unit → IO UInt64 := fun _ => do
 /-- Fixed verified-Isabelle trivial-input baseline for process/protocol overhead. -/
 def runIsabelleFactorBaselineChecksum : Unit → IO UInt64 := fun _ => do
   let (scalar, factors) ← requestIsabelleBZFactorizationRaw (1 : ZPoly)
+  return checksumCanonicalFactorization scalar factors
+
+/--
+Per-rung verified-Isabelle BZ comparator targets on the deterministic split
+family `smokeInput n` for `n = 2, 3, 4, 5`. Each pairs with the corresponding
+rung of the parametric Lean `runFactorChecksum` registration to yield a
+`hex/isabelle` ratio at that rung; together they form the scaling ladder
+required by `SPEC/Libraries/hex-berlekamp-zassenhaus.md §"External
+comparators"` headline-trend reporting.
+-/
+def runIsabelleSplitN2Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization (smokeInput 2)
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleSplitN3Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization (smokeInput 3)
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleSplitN4Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization (smokeInput 4)
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleSplitN5Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization (smokeInput 5)
   return checksumCanonicalFactorization scalar factors
 
 def scheduledHardwareTag : String :=
@@ -944,6 +969,44 @@ setup_fixed_benchmark runIsabelleFactorBaselineChecksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash := some (Hashable.hash (checksumCanonicalFactorization 1 #[]))
+    tags := #[scheduledHardwareTag]
+  }
+
+/- Per-rung verified-Isabelle comparator registrations on `smokeInput n` for
+`n = 2, 3, 4, 5`. The matched Lean timings come from the parametric
+`runFactorChecksum` registration at the corresponding rung of
+`splitScientificSchedule`; together they form the per-rung `hex/isabelle`
+ratio ladder. Tagged `scheduled-hardware` so CI's `verify` does not invoke
+the AFP-extracted comparator. -/
+setup_fixed_benchmark runIsabelleSplitN2Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash :=
+      some (Hashable.hash (checksumCanonicalLeanFactorization (factor (smokeInput 2))))
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleSplitN3Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash :=
+      some (Hashable.hash (checksumCanonicalLeanFactorization (factor (smokeInput 3))))
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleSplitN4Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash :=
+      some (Hashable.hash (checksumCanonicalLeanFactorization (factor (smokeInput 4))))
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleSplitN5Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash :=
+      some (Hashable.hash (checksumCanonicalLeanFactorization (factor (smokeInput 5))))
     tags := #[scheduledHardwareTag]
   }
 
