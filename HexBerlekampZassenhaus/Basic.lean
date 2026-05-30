@@ -5766,21 +5766,6 @@ passes to `henselLiftData`.
 def toMonicPrimeData? (core : ZPoly) : Option PrimeChoiceData :=
   choosePrimeData? (toMonic core).monic
 
-/--
-Total prime-choice data for the monic polynomial sent to Hensel lifting.
-This keeps the executable public factoring API unchanged while exposing a
-correctly aligned internal data source for downstream correctness proofs.
--/
-def toMonicPrimeData (core : ZPoly) : PrimeChoiceData :=
-  choosePrimeData (toMonic core).monic
-
-/--
-Lift data for the monic transform of `core` using prime-choice data computed
-from that same monic polynomial.
--/
-def toMonicLiftDataWithMonicPrime (core : ZPoly) (B : Nat) : LiftData :=
-  toMonicLiftData core B (toMonicPrimeData core)
-
 theorem toMonicPrimeData?_prime
     (core : ZPoly) (data : PrimeChoiceData)
     (hdata : toMonicPrimeData? core = some data) :
@@ -5801,14 +5786,6 @@ theorem toMonicPrimeData?_factorsModP_berlekamp_form
     choosePrimeData?_factorsModP_berlekamp_form
       (toMonic core).monic data hdata
   exact ⟨toMonicPrimeData?_prime core data hdata, hzero, heq⟩
-
-theorem toMonicLiftDataWithMonicPrime_eq
-    (core : ZPoly) (B : Nat) :
-    toMonicLiftDataWithMonicPrime core B =
-      henselLiftData (toMonic core).monic
-        (precisionForCoeffBound B (toMonicPrimeData core).p)
-        (toMonicPrimeData core) := by
-  rfl
 
 end ZPoly
 
