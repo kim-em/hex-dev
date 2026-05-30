@@ -298,50 +298,47 @@ Hex strategies.
 
 ## Profile
 
-The bridge, quadratic, and multifactor profiles below were recorded with
-`samply record --save-only --unstable-presymbolicate` at commit
-`60dbf8026826` on `carica` (Apple M2 Ultra, macOS 14.6.1) at the
-default 1 kHz sampling rate. The `linear-hensel` profile was
-re-recorded at `24a4fca` (the corrected-fixture commit) on the same
-host. The raw Firefox Profiler JSON artefacts and their `.syms.json`
-symbol sidecars are developer-local and are not committed; symbol
-attribution was done by mapping each frame's RVA against the bench
-binary's samply-emitted symbol table. Each profile sums samples from
-the `hexhensel_bench` worker child (the LeanBench-spawned `_child`
-process running the registered function), not the orchestrator,
-whose wallclock is dominated by `__read_nocancel` waits for the
-child stdout. All percentages below are leaf counts and inclusive
-counts as a fraction of those child-only samples.
+The profiles below were recorded with
+`scripts/profile/run_profile.sh ./.lake/build/bin/hexhensel_bench
+<target> <param> 5000000000` at commit `3bc24c50fbe5` on `carica`
+(Apple M2 Ultra, macOS 14.6.1) at samply `0.13.1`'s 999 Hz sampling
+rate. The bench binary reports `git_dirty=true` because this
+worktree carries the pre-existing `.claude/CLAUDE.md` modification;
+the report change does not touch benchmark code. The bench harness
+reported `lean_bench_version=0.1.0`, toolchain
+`leanprover/lean4:4.30.0-rc2`, target
+`arm64-apple-darwin24.6.0`. All cases use deterministic fixtures and
+no random seed.
+
+The raw Firefox Profiler JSON artefacts are developer-local and are
+not committed. Leaf and inclusive attribution below is computed from
+the filtered samply JSON after retaining only the bench thread's
+samples that fall inside LeanBench timed regions. Percentages are
+sample-count shares of that filtered bench thread; the extra
+`other Lean/library` bucket covers generated Lean/stdlib frames that
+are neither Hex library code nor C-level `lean_*` runtime frames.
 
 ### `bridge-operations`
 
 Command:
 
 ```sh
-lake exe hexhensel_bench profile Hex.HenselBench.runReduceModPowChecksum \
-    --param 131072 --target-inner-nanos 5000000000 \
-    --profiler "samply record --save-only --unstable-presymbolicate \
-        -o /tmp/hex-profiles/hex-hensel-reduce-mod-pow-60dbf80.json --"
+scripts/profile/run_profile.sh ./.lake/build/bin/hexhensel_bench \
+    Hex.HenselBench.runReduceModPowChecksum 131072 5000000000
 ```
 
 Representative case: deterministic dense degree-`131071` integer
 polynomial with bounded `[-997, 997]`-magnitude coefficients reduced
 through `Hex.ZPoly.reduceModPow _ 5 3`, parameter `n = 131072`, no
 seed. Child row: `inner_repeats=256`,
-`per_call_nanos=15343224.445312`, `result_hash=0x2bb1d2338fde61ab`.
-Total `3989` non-empty samples. Leaf samples were allocation/free
-46.5%, GMP 14.5%, Lean runtime 11.8%, own
-HexHensel/HexPolyZ/HexDensePoly code 12.8%, other 14.0%, kernel
-0.5%. The allocation and GMP weight reflects the per-coefficient
-`Int.tmod` reduction modulo `5^3 = 125` boxing each result back
-through `lean_int_mod` → `__gmpz_mod` → fresh small-`mpz`
-allocation. Inclusive own-code cost was led by
-`Hex.ZPoly.reduceModPow` (77.1%) →
-`Hex.List.mapTR.loop.at...reduceModPow.spec` (64.2%) per the
-`mapTR` per-coefficient reduction loop, with
-`Hex.DensePoly.trimTrailingZerosList → trimTrailingZeros →
-ofCoeffs` accounting for the post-reduction normalisation
-(10.5%). The dominant work maps to the registered
+`per_call_nanos=16757638.183594`, `result_hash=0x2bb1d2338fde61ab`.
+Leaf samples were own Hex code 54.1%, GMP 14.3%, Lean runtime 11.0%,
+other Lean/library code 7.0%, allocation/free 6.1%, and other 7.5%.
+Inclusive own-code cost was led by `Hex.ZPoly.reduceModPow` (68.1%)
+and `Hex.List.mapTR.loop.at...reduceModPow.spec` (62.2%), with
+`Hex.DensePoly.trimTrailingZerosList → trimTrailingZeros → ofCoeffs`
+accounting for the post-reduction normalisation (9.2%). The dominant
+work maps to the registered
 `runReduceModPowChecksum` target via
 `ZPoly.reduceModPow → List.mapTR.loop → Int reduction mod 5^k`,
 matching the `O(n)` cost model with one bounded reduction per
@@ -350,15 +347,31 @@ registrations (`runModPChecksum` and `runLiftToZChecksum`); their
 verdicts come back consistent at the same parameter ladder, so a
 single `bridge-operations` profile case suffices for the family.
 
+Diagnostics:
+
+```json
+{
+  "regions_total": 2,
+  "total_timed_ms": 4307.56,
+  "expected_samples_bench_thread": 4303.3,
+  "retained_samples_bench_thread": 4206,
+  "rejected_samples_bench_thread": 25,
+  "off_bench_thread_samples_in_window": 0,
+  "samply_interval_ms": 1.001001,
+  "spawn_anchor_wall_ns": 1780142563061725000,
+  "spawn_anchor_mono_ns": 330596981881541,
+  "sidecar_mono_anchor_ns": 330598299522708,
+  "samply_meta_start_time_ms": 1780142563070.2751
+}
+```
+
 ### `linear-hensel`
 
 Command:
 
 ```sh
-lake exe hexhensel_bench profile Hex.HenselBench.runLinearHenselStepChecksum \
-    --param 512 --target-inner-nanos 5000000000 \
-    --profiler "samply record --save-only --unstable-presymbolicate \
-        -o /tmp/hex-profiles/hex-hensel-linear-step-24a4fca.json --"
+scripts/profile/run_profile.sh ./.lake/build/bin/hexhensel_bench \
+    Hex.HenselBench.runLinearHenselStepChecksum 512 5000000000
 ```
 
 Representative case: one linear Hensel correction over the
@@ -369,25 +382,18 @@ degree-`512` integer polynomial from `denseZPoly 513 62`,
 perturbation from `denseZPoly 513 67`; Bezout pair `(s, t)` computed
 fresh as `normalizedXGCD 5 g h` so that
 `s * gMod + t * hMod ≡ 1 (mod 5)`) at parameter `n = 512`, no seed.
-Child row: `inner_repeats=64`, `per_call_nanos=83763250.656250`,
-`result_hash=0x660394e9aae087cc`. The dominant inclusive cost is
-`Hex.ZPoly.linearHenselStep` → `Hex.DensePoly.mul`: the corrected
-fixture computes both `s * eMod` and `q * hMod` as full F_5
-polynomial multiplications (under the previous degenerate `s = 0`
-seed only `q * hMod` carried weight, which is why the per-call
-wallclock approximately doubled from the predecessor commit's
-`41.97 ms` to the present `83.76 ms` at the same `n = 512` rung;
-total work scales the same way, so the `n²` cost-model verdict is
-unchanged at `β=−0.031`). Per-coefficient leaf work is dominated by
-`Hex.ZMod64.mul` and `Hex.ZMod64.add` inside the dense-polynomial
-multiplication kernel; the `Hex.DensePoly.divModArray` divmod call
-inside the correction step contributes a small fraction (it divides
-a degree-`n` F_5 polynomial by the fixed degree-1 monic `gMod`,
-costing `O(n)` synthetic-division steps). Allocation/free and Lean
-runtime overheads are comparable to the predecessor profile because
-the polynomial sizes and coefficient widths are unchanged. The
-dominant work maps to the registered `runLinearHenselStepChecksum`
-target via `linearHenselStep → DensePoly.mul (correction product) →
+Child row: `inner_repeats=32`, `per_call_nanos=88824901.062500`,
+`result_hash=0x660394e9aae087cc`. Leaf samples were own Hex code
+49.1%, Lean runtime 23.4%, GMP 10.4%, allocation/free 6.5%, other
+Lean/library code 1.6%, and other 9.0%. Inclusive own-code cost was
+led by `Hex.DensePoly.mul` (98.5%), its inner multiplication loop
+(88.1% / 71.2% stack entries), `Hex.ZMod64.mul` (66.5%), and
+`Hex.ZPoly.linearHenselStep` (49.3%). The corrected fixture computes
+both `s * eMod` and `q * hMod` as full F_5 polynomial
+multiplications; the fixed degree-1 divmod by `gMod` remains a
+smaller linear component. The dominant work maps to the registered
+`runLinearHenselStepChecksum` target via
+`linearHenselStep → DensePoly.mul (correction product) →
 ZMod64.mul`, exactly as the `n²` cost model predicts for the two
 dense F_5 correction products per step. The iterative wrapper
 `runHenselLiftChecksum` shares this fixture and code path; with the
@@ -395,15 +401,31 @@ corrected Bezout pair its verdict comes back consistent over the
 full encoded `(n, k)` ladder, so a single `linear-hensel` profile
 case suffices for the family.
 
+Diagnostics:
+
+```json
+{
+  "regions_total": 2,
+  "total_timed_ms": 2928.929916,
+  "expected_samples_bench_thread": 2926.0,
+  "retained_samples_bench_thread": 2923,
+  "rejected_samples_bench_thread": 10,
+  "off_bench_thread_samples_in_window": 0,
+  "samply_interval_ms": 1.001001,
+  "spawn_anchor_wall_ns": 1780142573530552000,
+  "spawn_anchor_mono_ns": 330607450822833,
+  "sidecar_mono_anchor_ns": 330607940118000,
+  "samply_meta_start_time_ms": 1780142573538.2532
+}
+```
+
 ### `quadratic-hensel`
 
 Command:
 
 ```sh
-lake exe hexhensel_bench profile Hex.HenselBench.runQuadraticHenselStepChecksum \
-    --param 512 --target-inner-nanos 5000000000 \
-    --profiler "samply record --save-only --unstable-presymbolicate \
-        -o /tmp/hex-profiles/hex-hensel-quadratic-step-60dbf80.json --"
+scripts/profile/run_profile.sh ./.lake/build/bin/hexhensel_bench \
+    Hex.HenselBench.runQuadraticHenselStepChecksum 512 5000000000
 ```
 
 Representative case: one quadratic Hensel correction (factor and
@@ -412,19 +434,20 @@ the deterministic two-factor fixture (`g` a fixed degree-1 monic
 factor, `h` a deterministic dense degree-`513` integer polynomial,
 `f = g*h + 5*e`, Bezout pair seeded as `(s, t) = (0, 1)`) at
 parameter `n = 512`, no seed. Child row: `inner_repeats=8`,
-`per_call_nanos=361804302.000000`,
-`result_hash=0x13f3af080ce8ac5e`. Total `3306` non-empty samples.
-Leaf samples were allocation/free 40.5%, Lean runtime 17.9%, own
-code 14.7%, other 16.6%, GMP 9.7%, kernel 0.5%. Inclusive own-code
-cost was led by `Hex.ZPoly.quadraticHenselStep` (98.7%) →
-`Hex.ZPoly.divModMonicModSquareAux` (92.8%) for the divmod by the
-monic factor `g*` modulo `m²`, with `Hex.ZPoly.reduceModPow`
-(53.8%) → `Hex.List.mapTR.loop.at...reduceModPow.spec` (45.9%) for
-the trailing coefficient reduction, `Hex.ZPoly.subModSquare`
-(21.6%) for the `mod m²` differences, and the Bezout-update
-`Hex.DensePoly.mul.at...bezoutCongrOn.spec` (12.2%) for the
-post-Bezout corrections `(s*g* + t*h*) - 1`. The dominant work
-maps to the registered `runQuadraticHenselStepChecksum` target via
+`per_call_nanos=383813703.125000`,
+`result_hash=0x13f3af080ce8ac5e`. Leaf samples were own Hex code
+48.5%, Lean runtime 18.1%, GMP 10.0%, allocation/free 8.0%, other
+Lean/library code 6.9%, and other 8.5%. Inclusive own-code cost was
+led by `Hex.ZPoly.quadraticHenselStep` (76.3%),
+`Hex.ZPoly.reduceModPow` (46.6%) →
+`Hex.List.mapTR.loop.at...reduceModPow.spec` (43.2%), and
+`Hex.ZPoly.divModMonicModSquareAux` (35.1% / 22.2% stack entries)
+for the divmod by the monic factor `g*` modulo `m²`.
+`Hex.ZPoly.subModSquare` (16.1%) covers the `mod m²` differences,
+and the Bezout-update `Hex.DensePoly.mul.at...bezoutCongrOn.spec`
+(10.5%) covers the post-Bezout corrections `(s*g* + t*h*) - 1`.
+The dominant work maps to the registered
+`runQuadraticHenselStepChecksum` target via
 `quadraticHenselStep → divModMonicModSquareAux → reduceModPow`,
 matching the `n²` cost model for a single doubling step. The
 single-step wallclock on this fixture is bounded regardless of the
@@ -432,15 +455,31 @@ seed Bezout pair, so the `(s, t) = (0, 1)` seed used here exercises
 the same dense-arithmetic kernels as a full `xgcd`-derived seed
 would.
 
+Diagnostics:
+
+```json
+{
+  "regions_total": 2,
+  "total_timed_ms": 3459.363,
+  "expected_samples_bench_thread": 3455.9,
+  "retained_samples_bench_thread": 3451,
+  "rejected_samples_bench_thread": 9,
+  "off_bench_thread_samples_in_window": 2,
+  "samply_interval_ms": 1.001001,
+  "spawn_anchor_wall_ns": 1780142582089161000,
+  "spawn_anchor_mono_ns": 330616009526541,
+  "sidecar_mono_anchor_ns": 330616244060833,
+  "samply_meta_start_time_ms": 1780142582098.1719
+}
+```
+
 ### `multifactor-lifting`
 
 Command:
 
 ```sh
-lake exe hexhensel_bench profile Hex.HenselBench.runMultifactorLiftQuadraticChecksum \
-    --param 192064 --target-inner-nanos 5000000000 \
-    --profiler "samply record --save-only --unstable-presymbolicate \
-        -o /tmp/hex-profiles/hex-hensel-multifactor-quadratic-60dbf80.json --"
+scripts/profile/run_profile.sh ./.lake/build/bin/hexhensel_bench \
+    Hex.HenselBench.runMultifactorLiftQuadraticChecksum 192064 5000000000
 ```
 
 Representative case: production quadratic ordered multifactor lift
@@ -449,21 +488,20 @@ deterministic dense degree-`193` integer polynomial,
 `f = polyProduct [g, h] + 5*e`) lifted from `mod 5` to `mod 5^64` via
 `⌈log₂ 64⌉ = 6` quadratic doublings, parameter
 `encodeLiftParam 192 64 = 192_064`, no seed. Child row:
-`inner_repeats=16`, `per_call_nanos=323961395.812500`,
-`result_hash=0xe09bda79cfa1f787`. Total `5539` non-empty samples.
-Leaf samples were allocation/free 52.6%, GMP 15.9%, Lean runtime
-11.9%, own code 7.2%, other 12.1%, kernel 0.3%. Inclusive own-code
-cost was led by
-`Hex.HenselBench.runMultifactorLiftQuadraticChecksum` (99.3%) →
-`Hex.ZPoly.multifactorLiftQuadraticList` (99.3%) →
-`Hex.ZPoly.henselLiftQuadratic` (99.2%) →
-`Hex.ZPoly.iterateQuadraticHensel` (99.1%) →
-`Hex.ZPoly.quadraticHenselStep` (99.1%); per-step work splits
-between `Hex.ZPoly.divModMonicModSquareAux` (63.8%) for the
-divmod-by-`g*` step, `Hex.ZPoly.reduceModPow` (39.0%) for the
-trailing coefficient reduction, and the Bezout-update
-`Hex.DensePoly.mul.at...bezoutCongrOn.spec` (37.5%) for
-`(s*g* + t*h*) - 1`. The dominant work maps to the registered
+`inner_repeats=16`, `per_call_nanos=331393648.437500`,
+`result_hash=0xe09bda79cfa1f787`. Leaf samples were own Hex code
+55.6%, GMP 15.7%, Lean runtime 10.2%, allocation/free 5.7%, other
+Lean/library code 4.3%, and other 8.4%. Inclusive own-code cost was
+led by
+`Hex.HenselBench.runMultifactorLiftQuadraticChecksum` (100.0%) →
+`Hex.ZPoly.multifactorLiftQuadraticList` (99.8%) →
+`Hex.ZPoly.henselLiftQuadratic` (99.8%) →
+`Hex.ZPoly.iterateQuadraticHensel` (99.7%) →
+`Hex.ZPoly.quadraticHenselStep`. Per-step work splits between the
+Bezout-update `Hex.DensePoly.mul.at...bezoutCongrOn.spec` (36.5%),
+`Hex.ZPoly.reduceModPow` (35.8%), and
+`Hex.ZPoly.divModMonicModSquareAux` (20.6% / 18.1% stack entries)
+for the divmod-by-`g*` step. The dominant work maps to the registered
 `runMultifactorLiftQuadraticChecksum` target via
 `multifactorLiftQuadraticList → henselLiftQuadratic →
 iterateQuadraticHensel → quadraticHenselStep`, matching the
@@ -473,6 +511,24 @@ doublings. The two sibling registrations
 fixture and quadratic-corner code path; their scientific verdicts
 both come back consistent at the same encoded `(n, k)` ladder, so a
 single `multifactor-lifting` profile case suffices for the family.
+
+Diagnostics:
+
+```json
+{
+  "regions_total": 2,
+  "total_timed_ms": 5632.061958,
+  "expected_samples_bench_thread": 5626.4,
+  "retained_samples_bench_thread": 5623,
+  "rejected_samples_bench_thread": 11,
+  "off_bench_thread_samples_in_window": 0,
+  "samply_interval_ms": 1.001001,
+  "spawn_anchor_wall_ns": 1780142589803135000,
+  "spawn_anchor_mono_ns": 330623723584708,
+  "sidecar_mono_anchor_ns": 330624011570833,
+  "samply_meta_start_time_ms": 1780142589811.85
+}
+```
 
 The dominant inclusive costs in all four profiles map to registered
 `HexHensel/Bench.lean` targets. No unattributed dominant cost was
