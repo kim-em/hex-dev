@@ -9949,5 +9949,72 @@ def nDet {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (B : Matrix R (n + 2) n) (p q : Fin (n + 2)) (hpq : p.val < q.val) : R :=
   det (nMatrix B p q hpq)
 
+/-- `mMatrix B v p` exposed as a `colReplace` on its last column: the
+other columns come from `B` and are independent of `v`, while the last
+column carries `fun i => v[skipIndex p i]`. -/
+theorem mMatrix_eq_colReplace_last {R : Type u} {n : Nat}
+    (B : Matrix R (n + 2) n) (v w : Vector R (n + 2)) (p : Fin (n + 2)) :
+    mMatrix B v p =
+      colReplace (mMatrix B w p) (Fin.last n)
+        (fun i : Fin (n + 1) => v[skipIndex p i]) := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  change (mMatrix B v p)[(⟨i, hi⟩ : Fin (n + 1))][(⟨j, hj⟩ : Fin (n + 1))] =
+    (colReplace (mMatrix B w p) (Fin.last n)
+        (fun i : Fin (n + 1) => v[skipIndex p i]))[(⟨i, hi⟩ : Fin (n + 1))][(⟨j, hj⟩ : Fin (n + 1))]
+  rw [colReplace_get]
+  by_cases hjlt : j < n
+  · have hjne : (⟨j, hj⟩ : Fin (n + 1)) ≠ Fin.last n := by
+      intro h
+      have hval := congrArg Fin.val h
+      simp [Fin.last] at hval
+      omega
+    rw [if_neg hjne]
+    rw [mMatrix_entry_lt B v p (⟨i, hi⟩ : Fin (n + 1)) (⟨j, hj⟩ : Fin (n + 1)) hjlt]
+    rw [mMatrix_entry_lt B w p (⟨i, hi⟩ : Fin (n + 1)) (⟨j, hj⟩ : Fin (n + 1)) hjlt]
+  · have hjeq : j = n := by omega
+    have hjlast : (⟨j, hj⟩ : Fin (n + 1)) = Fin.last n := by
+      apply Fin.ext
+      simp [Fin.last, hjeq]
+    rw [if_pos hjlast]
+    show (mMatrix B v p)[(⟨i, hi⟩ : Fin (n + 1))][(⟨j, hj⟩ : Fin (n + 1))] = v[skipIndex p (⟨i, hi⟩ : Fin (n + 1))]
+    unfold mMatrix
+    rw [getElem_ofFn]
+    have hjnlt : ¬ (⟨j, hj⟩ : Fin (n + 1)).val < n := by
+      show ¬ j < n; exact hjlt
+    exact dif_neg hjnlt
+
+/-- The standard basis vector `e_q : Vector R (n + 2)` with value `1`
+at position `q` and `0` elsewhere. -/
+def basisVec {R : Type u} [Zero R] [One R] {n : Nat} (q : Fin (n + 2)) :
+    Vector R (n + 2) :=
+  Vector.ofFn fun i => if i = q then (1 : R) else (0 : R)
+
+@[simp] theorem basisVec_getElem {R : Type u} [Zero R] [One R] {n : Nat}
+    (q : Fin (n + 2)) (i : Fin (n + 2)) :
+    (basisVec (R := R) q)[i] = if i = q then (1 : R) else (0 : R) := by
+  simp [basisVec]
+
+/-- `mDet B (basisVec p) p = 0`: the basis vector `e_p` becomes the zero
+column inside `mMatrix B (basisVec p) p` after row `p` is deleted, so
+the determinant vanishes. -/
+theorem mDet_basisVec_eq_zero_of_eq {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (B : Matrix R (n + 2) n) (p : Fin (n + 2)) :
+    mDet B (basisVec (R := R) p) p = 0 := by
+  unfold mDet
+  -- The last column of `mMatrix B (basisVec p) p` is identically zero.
+  have hcol : (fun r : Fin (n + 1) =>
+      (basisVec (R := R) p)[skipIndex p r]) = (fun _ => (0 : R)) := by
+    funext r
+    rw [basisVec_getElem]
+    exact if_neg (skipIndex_ne p r)
+  -- Express mMatrix as colReplace with that zero function on the last column.
+  rw [mMatrix_eq_colReplace_last B (basisVec (R := R) p)
+        (basisVec (R := R) p) p]
+  rw [hcol]
+  exact det_colReplace_zero _ _
+
 end Matrix
 end Hex
