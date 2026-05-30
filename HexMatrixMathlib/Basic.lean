@@ -4,12 +4,12 @@ import Mathlib.LinearAlgebra.Matrix.Transvection
 import HexMatrix.RowEchelon
 
 /-!
-Bridge lemmas between `Hex.Matrix` and Mathlib's `Matrix`.
+Identification lemmas between `Hex.Matrix` and Mathlib's `Matrix`.
 
 This module exposes a concrete equivalence between the dense executable
 `Vector`-based matrix representation used by `HexMatrix` and Mathlib's
 function-based `Matrix`, together with the first row-operation correspondence
-lemmas needed by downstream determinant and rank bridges.
+lemmas needed by downstream determinant and rank lemmas.
 -/
 
 open Matrix

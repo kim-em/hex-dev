@@ -151,7 +151,7 @@ theorem coeff_reduceModPow_eq_zero_of_emod
   rfl
 
 /-- For positive modulus `p^k`, the reduced coefficient equals the integer remainder
-`f.coeff i % p^k`. Bridges the `Nat`-valued executable representative with `Int.emod`. -/
+`f.coeff i % p^k`. Identifies the `Nat`-valued executable representative with `Int.emod`. -/
 theorem coeff_reduceModPow_eq_emod_of_pos
     (f : ZPoly) (p k i : Nat) (hpk : 0 < p ^ k) :
     (reduceModPow f p k).coeff i = f.coeff i % Int.ofNat (p ^ k) := by

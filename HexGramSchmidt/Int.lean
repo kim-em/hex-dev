@@ -692,8 +692,8 @@ private theorem stepScaledRows_size
 update and the matrix-storage `Matrix.stepMatrix` update. Trailing-block
 entries match under exact divisibility, the pivot column clears to zero,
 and entries outside the update region are preserved on both sides. The
-divisibility hypothesis bridges Lean's `Int` `/` (used inside
-`stepScaledRows`) and `Matrix.exactDiv` (used inside `Matrix.stepMatrix`). -/
+divisibility hypothesis connects Lean's `Int` `/` (used inside
+`stepScaledRows`) with `Matrix.exactDiv` (used inside `Matrix.stepMatrix`). -/
 private theorem getArrayEntry_stepScaledRows_matches_stepMatrix
     {n : Nat} (rows : Array (Array Int)) (M : Matrix Int n n) (k : Nat)
     (pivot prevPivot : Int)
@@ -1263,7 +1263,7 @@ private theorem borderedMinor_stepMatrix_eq
       constructor
       · intro h; omega
       · intro h; exact absurd h (Nat.ne_of_gt (Nat.lt_of_lt_of_le hkstep hcol))
-  -- Bridge: borderedMinor entry at (i_bm, j_bm) equals M entry at (iN, jN).
+  -- Identify: borderedMinor entry at (i_bm, j_bm) equals M entry at (iN, jN).
   have h_entry : ∀ (M' : Matrix Int n n) (r : Fin (k + 1)) (c : Fin (k + 1)),
       (Matrix.borderedMinor M' k hk row col)[r][c] =
         M'[liftBorderedIdx hk row r][liftBorderedIdx hk col c] :=
@@ -1569,8 +1569,8 @@ private theorem noPivotLoop_matrix_symm_preserve
         change state.step ≤ b.val at hb
         exact h_sym a b ha hb
 
-/-- Bridge between Bareiss-style trailing values on two bordered minors of a
-symmetric matrix obtained by swapping the border row and column. Composed from
+/-- Identification of Bareiss-style trailing values across two bordered minors
+of a symmetric matrix obtained by swapping the border row and column. Composed from
 `noPivotLoop_full_eq_borderedMinor_at_trailing` (applied at both swapped
 positions) and `noPivotLoop_matrix_symm_preserve` (which transports the
 trailing-block symmetry of the input through the loop). -/
@@ -2586,7 +2586,7 @@ private def bareissGramRowInvariant_noPivotLoop_initial
   bareissGramRowInvariant_noPivotLoop fuel
     (bareissGramRowInvariant_initial b) hentry_regular
 
-/-- Consumer-facing row-vector package for a no-pivot Gram pass from the
+/-- Caller-facing row-vector package for a no-pivot Gram pass from the
 initial state. Downstream singular-step proofs can apply this at the loop
 result to rewrite active trailing entries as dots against represented lattice
 row vectors. -/
@@ -3289,7 +3289,7 @@ private theorem scaledCoeffArrayLoop_diag_matches
         have hArrayNext : state_array.step + 1 < n := h_step_eq ▸ hDone
         -- Build the pivot Fin index once.
         let kFin : Fin n := ⟨state_matrix.step, h_step_lt_n⟩
-        -- Bridge pivot equality between array and matrix views.
+        -- Identify pivot equality between array and matrix views.
         have h_pivot_array_eq_matrix :
             getArrayEntry state_array.matrix state_array.step state_array.step =
               state_matrix.matrix[kFin][kFin] := by
@@ -4929,7 +4929,7 @@ namespace GramSchmidt.Rat
 /-- The `k`-th Gram determinant for a rational input matrix.
 
 This remains Mathlib-free API: it is the direct Hex determinant definition used
-by rational Gram-Schmidt consumers, not a theorem identifying an executable Hex
+by rational Gram-Schmidt callers, not a theorem identifying an executable Hex
 output with a Leibniz determinant. -/
 def gramDet (b : Matrix Rat n m) (k : Nat) (hk : k ≤ n) : Rat :=
   Matrix.det (GramSchmidt.leadingGramMatrixRat b k hk)

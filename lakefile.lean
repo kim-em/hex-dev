@@ -184,8 +184,8 @@ lean_exe hexgf2_bench where
   root := `HexGF2Bench
 
 -- No bench exes for `Hex*Mathlib` libraries — see
--- SPEC/benchmarking.md §Mathlib-free benches. The bridges are
--- proof-only; there is no computational kernel to benchmark.
+-- SPEC/benchmarking.md §Mathlib-free benches. The Mathlib-side libraries
+-- are proof-only; there is no computational kernel to benchmark.
 
 lean_exe hexpolyfp_bench where
   root := `HexPolyFp.Bench

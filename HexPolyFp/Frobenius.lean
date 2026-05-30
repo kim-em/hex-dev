@@ -6,7 +6,7 @@ Frobenius-style power maps in `F_p[x]`.
 The executable API here computes `X^p mod f` and `X^(p^k) mod f` by
 repeated squaring with reduction modulo a monic polynomial, matching the
 specialized polynomial layer expected by Berlekamp- and Hensel-style
-consumers. Modular composition lives separately in `HexPolyFp.ModCompose`.
+callers. Modular composition lives separately in `HexPolyFp.ModCompose`.
 -/
 namespace Hex
 

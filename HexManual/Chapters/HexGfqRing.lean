@@ -250,7 +250,7 @@ and a downstream finite-field caller:
   {name}`Hex.GFqRing.PolyQuotient` value plus the irreducibility
   hypothesis, so every operation in `HexGfqField` reduces through the
   same `reduceMod` and the same canonical-representative invariant
-  documented in this chapter. Downstream consumers such as `HexConway`
+  documented in this chapter. Downstream callers such as `HexConway`
   reach `HexGfqRing` transitively through `HexGfqField`.
 
 ## No Mathlib correspondence library

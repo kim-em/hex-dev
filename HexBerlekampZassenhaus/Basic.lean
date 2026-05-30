@@ -1403,7 +1403,7 @@ def normalizeFactorSign (f : ZPoly) : ZPoly :=
 
 /-- A polynomial factor is recorded by the factorization routines only
 when it is not zero and not a unit (`±1`).  Exposed publicly so that
-Mathlib bridges can transport the predicate into `¬ IsUnit` over
+Mathlib-side lemmas can transport the predicate into `¬ IsUnit` over
 `Polynomial ℤ`. -/
 def shouldRecordPolynomialFactor (f : ZPoly) : Bool :=
   f ≠ 0 && f ≠ 1 && f ≠ DensePoly.C (-1)
@@ -5446,8 +5446,8 @@ def nextHenselPrecision (k B : Nat) : Nat :=
   else
     B
 
-/-- BHKS fast-core recombination loop, exposed publicly so that Mathlib
-bridges can quantify over its success state.  Internally driven by the
+/-- BHKS fast-core recombination loop, exposed publicly so that Mathlib-side
+lemmas can quantify over its success state.  Internally driven by the
 classified BHKS recovery `bhksRecoverClassified`; `none` indicates the
 loop exhausted its precision bound without producing a verified factor
 list. -/
@@ -5759,7 +5759,7 @@ def toMonicLiftData
 Optional prime-choice data for the monic polynomial sent to Hensel lifting.
 
 The public factoring pipeline still chooses prime data from the original core.
-This adjacent surface is for proof consumers that need Berlekamp-form modular
+This adjacent surface is for proof callers that need Berlekamp-form modular
 factor data for `(toMonic core).monic`, the polynomial that `toMonicLiftData`
 passes to `henselLiftData`.
 -/
@@ -9126,7 +9126,7 @@ theorem recombinationSearchModAux_isSome_of_step
 /-- Companion to `recombinationSearchModAux_isSome_of_step` at the
 `recombinationSearchMod` surface.  Hides the fuel parameter, requiring the
 caller to supply the recursive isSome witness already specialised to fuel
-`localFactors.length`.  Useful for downstream consumers that want to chain
+`localFactors.length`.  Useful for downstream callers that want to chain
 step lemmas with a fixed shared fuel budget. -/
 theorem recombinationSearchMod_isSome_of_step
     {target candidate quotient : ZPoly} {modulus : Nat}
@@ -10605,7 +10605,7 @@ residual's own primitivity inherited from the product `split.2 *
 polyProduct split.1 = core`.
 
 This helper exists for `_factor_irreducible_of_primitive` (the public
-combined wrapper); consumers outside this file should prefer the wrapper
+combined wrapper); callers outside this file should prefer the wrapper
 because its signature avoids referencing the file-`private`
 `splitIntegerRootFactorsAux` and `integerRootCandidates`. -/
 private theorem quadraticIntegerRootFactors?_residual_irreducible
@@ -11319,7 +11319,7 @@ theorem quadraticIntegerRootFactors?_pairwise_not_associated
                 exact Int.mul_neg_of_neg_of_pos hlt hpoly_lc_pos
               omega
             · exact hgt
-          -- Bridge `Array.polyProduct split.1` to the list left-fold form.
+          -- Translate `Array.polyProduct split.1` to the list left-fold form.
           have hpolyProd_eq :
               Array.polyProduct split.1 =
                 (rs.map linearFactorForRoot).foldl (· * ·) (1 : ZPoly) := by
@@ -13100,7 +13100,7 @@ theorem factorWithBound_product (f : ZPoly) (B : Nat) :
 A successful integer certificate exposes the per-prime polynomial check fact:
 every recorded `PrimeFactorData` block satisfies `checkForPolynomial f` —
 admissible prime, positive recorded factor degrees, modular degree-sum and
-factor-product alignment, and aligned nested Rabin certificates. Consumers
+factor-product alignment, and aligned nested Rabin certificates. Callers
 extract individual conjuncts via the dedicated helpers below.
 -/
 theorem checkIrreducibleCert_prime_data

@@ -279,7 +279,7 @@ private theorem toPolynomial_foldl_mul (lst : List Hex.ZPoly) (init : Hex.ZPoly)
       rw [ih (init * head), HexPolyZMathlib.toPolynomial_mul]
 
 /-- The executable `Array.polyProduct` agrees with Mathlib's `List.prod`
-after pushing each factor through the `toPolynomial` bridge.  This is the
+after pushing each factor through the `toPolynomial` map.  This is the
 algorithm-to-Mathlib translation needed to feed `Hex.ZPoly` factor lists
 into UFD arguments over `Polynomial ℤ`. -/
 private theorem toPolynomial_one_zpoly :
@@ -362,7 +362,7 @@ theorem factorizationProduct_toPolynomial (φ : Hex.Factorization) :
 A nonzero executable integer polynomial fixed by `Hex.normalizeFactorSign`
 transports to a `normalize`-fixed polynomial over `ℤ`.
 
-This is the reusable sign-normalization bridge for Mathlib-side factorization
+This is the reusable sign-normalization lemma for Mathlib-side factorization
 arguments over `Hex.ZPoly` factors.
 -/
 theorem normalize_toPolynomial_of_normalizeFactorSign_id
@@ -804,7 +804,7 @@ private theorem checkCertAtFactor_of_checkFactorCerts
 The Mathlib transport of an executable monic factor recorded in a
 `PrimeFactorData` block has natural degree equal to the recorded factor
 degree. Uses the executable `degree?` slot, the recorded monicity, and the
-Mathlib basisSize bridge.
+Mathlib basisSize identification.
 -/
 private theorem natDegree_toMathlibPolynomial_factorPolys_eq
     (primeData : Hex.PrimeFactorData)
@@ -948,7 +948,7 @@ theorem checkIrreducibleCert_sound
         have := Hex.isGoodPrime_leadingCoeffAdmissible f primeData.p hgood
         unfold Hex.leadingCoeffAdmissible at this
         exact this
-      -- Bridge `(Int.castRingHom (ZMod p)) F.leadingCoeff = toZMod (leadingCoeffModP f p)`
+      -- Identify `(Int.castRingHom (ZMod p)) F.leadingCoeff = toZMod (leadingCoeffModP f p)`
       have hF_lc_eq :
           (Int.castRingHom (ZMod primeData.p)) F.leadingCoeff =
             HexModArithMathlib.ZMod64.toZMod (Hex.ZPoly.leadingCoeffModP f primeData.p) := by
@@ -1160,7 +1160,7 @@ def modPFactorProduct
   S.toList.foldl (fun acc i => acc * modPFactor primeData i) 1
 
 /--
-Bridge the executable modular subset product to a Mathlib `Finset.prod`.
+Identify the executable modular subset product with a Mathlib `Finset.prod`.
 
 The executable surface stores subset products as a left fold over
 `Finset.toList`; after transporting each `FpPoly` to Mathlib, commutativity
@@ -1472,7 +1472,7 @@ Proof-facing package for the mod-`p` irreducible-factor subset partition over
 the executable `PrimeChoiceData` surface.
 
 The proposition parameters are hooks for the eventual admissible-prime and
-square-free-reduction hypotheses. Downstream consumers should depend on the
+square-free-reduction hypotheses. Downstream callers should depend on the
 existence and uniqueness projections below rather than on a particular analytic
 proof of this package.
 -/
@@ -1501,7 +1501,7 @@ structure ModPSubsetPartitionHypotheses
       S = T
 
 /--
-Consumer-facing mod-`p` subset partition: an irreducible integer factor of the
+Caller-facing mod-`p` subset partition: an irreducible integer factor of the
 core has a unique representing subset of the selected modular factors.
 -/
 theorem existsUnique_modPFactorSubset_of_modPSubsetPartition
@@ -1632,7 +1632,7 @@ def RepresentsIntegerFactorAtLift
 /--
 Proof-side form of the executable recombination candidate, using the selected
 lifted-factor product directly.  The executable-list version is introduced
-later, after the list-selection bridge has been developed, and is proved equal
+later, after the list-selection identification has been developed, and is proved equal
 to this definition.
 -/
 def liftedFactorProductCandidate (d : Hex.LiftData) (S : LiftedFactorSubset d) :
@@ -1658,7 +1658,7 @@ executable `PrimeChoiceData`/`LiftData` surface.
 
 The two proposition parameters are hooks for the precise admissible-prime and
 successful-lift hypotheses supplied by the later analytic Hensel proof.  The
-consumer theorems below depend only on the resulting existence and uniqueness
+caller theorems below depend only on the resulting existence and uniqueness
 fields, so downstream exhaustive-recombination proofs can be written against a
 stable executable API.
 -/
@@ -1682,7 +1682,7 @@ structure HenselSubsetCorrespondenceHypotheses
       S = T
 
 /--
-Consumer-facing square-free Hensel subset correspondence: an irreducible
+Caller-facing square-free Hensel subset correspondence: an irreducible
 integer factor of the core has a unique representing subset of the executable
 lifted local factors.
 -/
@@ -1780,7 +1780,7 @@ successful Hensel lift.
 The fields isolate the analytic Hensel obligations: the lift preserves the
 factor count, every mod-`p` selected subset represents the same integer factor
 after lifting, and every lifted representation descends to a mod-`p` selected
-subset.  The consumer theorems below combine these fields with
+subset.  The caller theorems below combine these fields with
 `ModPSubsetPartitionHypotheses` to recover the existing lifted-subset
 correspondence API.
 -/
@@ -1899,7 +1899,7 @@ theorem existsUnique_modPSubset_lifting_to_henselRepresentation
 
 /--
 Composing the mod-`p` subset partition with Hensel-lift transport gives the
-consumer-facing lifted-factor subset correspondence.
+caller-facing lifted-factor subset correspondence.
 -/
 theorem existsUnique_liftedFactorSubset_of_modPSubsetPartition_henselLift
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
@@ -1928,7 +1928,7 @@ theorem existsUnique_liftedFactorSubset_of_modPSubsetPartition_henselLift
 
 /--
 The mod-`p` partition plus Hensel transport produces the existing
-`HenselSubsetCorrespondenceHypotheses` package, so downstream consumers can
+`HenselSubsetCorrespondenceHypotheses` package, so downstream callers can
 use the stable lifted-factor API without depending on the intermediate
 mod-`p` vocabulary.
 -/
@@ -1996,7 +1996,7 @@ This is a thin wrapper over the abstract-bound variant
 `centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision_of_bound`
 that instantiates `B' := defaultFactorCoeffBound core` and discharges
 `hvalid` via `defaultFactorCoeffBound_valid core hcore_ne factor hdvd`.
-HO-1 consumers should prefer the `_of_bound` variant directly with
+HO-1 callers should prefer the `_of_bound` variant directly with
 `B' := defaultFactorCoeffBound f`, bypassing the squareFreeCore-bound
 monotonicity obligation called out by
 `factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence`.
@@ -2148,7 +2148,7 @@ structure HenselSubsetCorrespondenceRest
       S = T
 
 /--
-Initial-state bridge: a Hensel subset correspondence implies the induced
+Initial-state lemma: a Hensel subset correspondence implies the induced
 predicate at the full universe of lifted-factor indices with `target = core`.
 This is the entry point for downstream recursive-search coverage proofs.
 -/
@@ -2168,7 +2168,7 @@ theorem henselSubsetCorrespondenceRest_initial
     exact h.unique_subset hirr hdvd hS hT
 
 /--
-Existence-uniqueness consumer view of the induced predicate, mirroring
+Existence-uniqueness caller view of the induced predicate, mirroring
 `existsUnique_liftedFactorSubset_of_henselSubsetCorrespondence` at the
 recursive-state surface.
 -/
@@ -2514,7 +2514,7 @@ theorem liftedFactorSubsetPartition_transport
     intro i hiU
     exact hUT hiU
 
-/-! ### LiftedFactorSubset → executable recombination split bridge
+/-! ### LiftedFactorSubset → executable recombination split
 
 The executable recombination search at the lifted-factor surface enumerates
 order-preserving partitions of `d.liftedFactors.toList` via
@@ -2523,7 +2523,7 @@ order-preserving partitions of `d.liftedFactors.toList` via
 rest)` partition that lies in the executable enumeration, with the
 selected/rejected lists ordered by their original `d.liftedFactors` index.
 
-The bridge product equality matches the executable
+The product equality matches the executable
 `Array.polyProduct selected.toArray` against the proof-side
 `liftedFactorProduct d S` after transport to `Polynomial ℤ`, where
 multiplication is commutative and the order difference between the
@@ -2766,7 +2766,7 @@ recursive recombination search: at every level the executable's running
 `localFactors` is exactly the list of lifted factors at the remaining
 unconsumed indices.
 
-Used by the recursive coverage proof to bridge the proof-side
+Used by the recursive coverage proof to connect the proof-side
 `HenselSubsetCorrespondenceRest core d J target` to the executable list
 threaded through `Hex.recombinationSearchModAux`. -/
 def LiftedFactorListMatches (d : Hex.LiftData) (J : LiftedFactorSubset d)
@@ -2801,7 +2801,7 @@ theorem LiftedFactorListMatches.univ (d : Hex.LiftData) :
   congr 1
   exact (List.filter_eq_self.mpr (by intro a _; simp)).symm
 
-/-- Cardinality bridge: a matched list has length equal to `J.card`.  This is
+/-- Cardinality lemma: a matched list has length equal to `J.card`.  This is
 the natural induction measure for the recursive coverage proof. -/
 theorem LiftedFactorListMatches.length_eq_card
     {d : Hex.LiftData} {J : LiftedFactorSubset d} {localFactors : List Hex.ZPoly}
@@ -2819,7 +2819,7 @@ Discharges the `hlocal_nodup` hypothesis of
 Hensel-coprimality fact about the local factors of `d`: distinct lifted
 factors are pairwise coprime, so when monic they are not equal as
 polynomials.  Producing the injectivity witness from partition data (or
-directly from `henselLiftData` invariants) is the consumer's responsibility
+directly from `henselLiftData` invariants) is the caller's responsibility
 in #4301; this shim covers only the pure list-level step. -/
 theorem LiftedFactorListMatches.nodup_of_injOn
     {d : Hex.LiftData} {J : LiftedFactorSubset d}
@@ -2885,7 +2885,7 @@ private theorem finRange_filter_head?_eq_min'
 
 /-- Head identification for a non-empty matching state: the head of
 `localFactors` is the lifted factor at `J.min'`.  Used by the recursive
-coverage proof to bridge the proof-side "first remaining index of `J`" to the
+coverage proof to connect the proof-side "first remaining index of `J`" to the
 executable-side head of `localFactors`. -/
 theorem LiftedFactorListMatches.head?_eq_liftedFactor_min'
     {d : Hex.LiftData} {J : LiftedFactorSubset d} {localFactors : List Hex.ZPoly}
@@ -3018,7 +3018,7 @@ theorem liftedSubsetSplit_mem_subsetSplitsWithFirst_of_matches
         simp only [List.head?_cons, Option.some.injEq] at hhead_xs
         exact ⟨ys, by rw [hhead_xs]⟩
   obtain ⟨ys, hxs_cons_eq⟩ := hxs_cons
-  -- Step 8: bridge to `subsetSplitsWithFirst_zip_filterMap_partition`.
+  -- Step 8: invoke `subsetSplitsWithFirst_zip_filterMap_partition`.
   rw [hloc_eq', hxs_cons_eq, List.map_cons]
   have hbs_cons : bs = true :: ys.map (fun i => decide (i ∈ S)) := by
     show xs.map (fun i => decide (i ∈ S)) =
@@ -3183,7 +3183,7 @@ private theorem List.nodup_filter_not_mem_toFinset_zip_filterMap_rest
               congr 1
               exact ih bs hxs_nodup hlen
 
-/-- Mask-to-subset bridge: given a Boolean mask of matching length over the
+/-- Mask-to-subset lemma: given a Boolean mask of matching length over the
 tail of a matched `localFactors` list, there is a `LiftedFactorSubset d`
 (containing `J.min'` and contained in `J`) whose `(selected, rest)` list
 partition equals the matched-list mask partition.  The natural converse of
@@ -3640,14 +3640,14 @@ a proof-side lifted-factor subset `T ⊆ J` containing `J.min'` whose
 order-preserving `(selected, rest)` partition equals `split`.
 
 Combines the executable-enumeration mask converse
-`subsetSplitsWithFirst_mem_exists_tail_mask` with the mask-to-subset bridge
+`subsetSplitsWithFirst_mem_exists_tail_mask` with the mask-to-subset lemma
 `liftedSubsetSelectedList_eq_mask_partition_of_matches`. Used by the
 prefix-none discharge in the recursive coverage proof.
 
 The conclusion is independent of the `S`-side shape constraints (`S ⊆ J` and
-`J.min' hne ∈ S`) that the consumer typically has in scope: the prefix
+`J.min' hne ∈ S`) that the caller typically has in scope: the prefix
 characterization is a structural property of the executable enumeration. The
-consumer call site keeps those hypotheses for the suffix `(S, J \ S)` entry
+caller call site keeps those hypotheses for the suffix `(S, J \ S)` entry
 itself, but does not need to thread them through this lemma. -/
 theorem liftedSubsetSplit_prefix_mem_of_matches
     {d : Hex.LiftData} {J S : LiftedFactorSubset d}
@@ -3798,7 +3798,7 @@ matched `localFactors` is `Nodup` and the boundary split is the canonical
 The `Nodup` hypothesis is required to lift the executable mask-level bit
 difference (provided by `subsetSplits_prefix_exists_bit_diff_aux`) back to a
 proof-side `LiftedFactorIndex d` difference, since `liftedFactor d` is
-otherwise allowed to collide on distinct indices. Consumers thread this
+otherwise allowed to collide on distinct indices. Callers thread this
 hypothesis from a Hensel-coprimality fact at the recombination call site
 (`liftedFactor d` injective on the J-filter index list).
 
@@ -4488,7 +4488,7 @@ The inner equality is supplied directly by
 `primitivePart_eq_self_of_primitive` and the supplied `normalizeFactorSign`
 fixed-point discharge the outer normalisation pipeline.
 
-Downstream consumers (#4644, #4646, #4647, #4648) call this in place of the
+Downstream callers (#4644, #4646, #4647, #4648) call this in place of the
 monic-core recovery when the core hypotheses are
 `core ≠ 0 ∧ Primitive core ∧ 0 < leadingCoeff core`; the primitive/sign
 hypotheses on `factor` are supplied by their primitive-factor packaging step.
@@ -4679,7 +4679,7 @@ the Mathlib-facing surface.
 `Hex.ZPoly.multifactorLiftQuadratic_each_monic` already supplies monicness of
 every output index given monicness of the input core and the quadratic
 multifactor lift invariant. This wrapper simply re-exposes that conclusion at
-the `henselLiftData` umbrella for downstream consumers
+the `henselLiftData` umbrella for downstream callers
 (notably `monic_primitive_sign_normalized_of_monic` above, which discharges
 the primitivity and sign-normalisation hypotheses required by
 `recombinationCandidate_eq_factor_of_recovery` once monicness is in hand).
@@ -4709,7 +4709,7 @@ Per-output monicness for the executable `Hex.ZPoly.toMonicLiftData`.
 
 This is the direct `Hex.ZPoly.toMonicLiftData` surface over the existing
 `henselLiftData_liftedFactor_monic` invariant: the Hensel stage runs on
-`(Hex.ZPoly.toMonic core).monic`, while recombination consumers
+`(Hex.ZPoly.toMonic core).monic`, while recombination callers
 still keep representation predicates against the original `core`.
 -/
 theorem Hex.ZPoly.toMonicLiftData_liftedFactor_monic
@@ -5059,7 +5059,7 @@ theorem henselLiftData_liftedFactor_modP_eq_modPFactor
     Hex.ZPoly.modP_eq_of_congr primeData.p _ _ hcongr_i
   simpa [modPFactor, Hex.FpPoly.modP_liftToZ] using hmodP
 
-/-- `choosePrimeData`-shaped consumer wrapper for the Berlekamp factor `Nodup`
+/-- `choosePrimeData`-shaped caller wrapper for the Berlekamp factor `Nodup`
 property: given the `factorsModPBerlekampForm` invariant (which records that
 `primeData.factorsModP` is the Berlekamp factor array of the monic modular
 image of the input) together with a successful `isGoodPrime` check (which
@@ -5307,7 +5307,7 @@ Proof: extract the existential witnesses from `factorsModPBerlekampForm` to view
 then apply the polymorphic abstract `Hex.Berlekamp.berlekampFactor_factors_pos_degree`.
 The required positivity of the monic modular image follows from `isGoodPrime`'s
 leading-coefficient admissibility (which preserves degree through `modP`) together
-with the input's positive degree.  The bridge from `0 < g.degree?.getD 0` on each
+with the input's positive degree.  The route from `0 < g.degree?.getD 0` on each
 `FpPoly p` factor to `0 < (toPolynomial (liftToZ g)).natDegree` on the integer
 side is `HexPolyMathlib.natDegree_toPolynomial` plus the (inline) observation
 that `liftToZ` preserves size on any nonzero `FpPoly p`.
@@ -5431,7 +5431,7 @@ theorem factorsModP_natDegree_pos_of_factorsModPBerlekampForm
     by_cases hgz : g.size = 0
     · simp [hgz] at hg_pos
     · exact Nat.pos_of_ne_zero hgz
-  -- Bridge: (liftToZ g).size = g.size, hence (liftToZ g).degree? = g.degree?.
+  -- Step: (liftToZ g).size = g.size, hence (liftToZ g).degree? = g.degree?.
   have hg_lead_ne : g.coeff (g.size - 1) ≠ (0 : Hex.ZMod64 data.p) :=
     Hex.DensePoly.coeff_last_ne_zero_of_pos_size g hg_size_pos
   have hg_lead_toNat_ne : (g.coeff (g.size - 1)).toNat ≠ 0 := by
@@ -5558,7 +5558,7 @@ integer-side product carried by `Array.polyProduct` with the
 `FpPoly p`-side product `Hex.Berlekamp.factorProduct`, threading the
 multiplicative-homomorphism property of `modP` through each lifted factor.
 
-Substrate identification for both
+Shared base lemma for both
 `factorsModP_polyProduct_congr_of_factorsModPBerlekampForm` (via the
 `polyProduct_map_liftToZ_congr_factorProduct` corollary just below) and
 `factorsModP_coprime_of_factorsModPBerlekampForm` (which rewrites
@@ -5585,10 +5585,10 @@ private theorem modP_polyProduct_liftToZ_eq_factorProduct
       rw [hcons, Hex.ZPoly.modP_lift_mul_left p x _, ih,
         Hex.Berlekamp.factorProduct_cons]
 
-/-- Bridge from the FpPoly factor product to the integer-side ordered product
-through `liftToZ`: lifting a foldl product is congruent mod `p` to the foldl
-product of the lifts. Stated as a list-level helper so we can apply it after
-unfolding `factorsModP.toList`.
+/-- Identification of the FpPoly factor product with the integer-side ordered
+product through `liftToZ`: lifting a foldl product is congruent mod `p` to the
+foldl product of the lifts. Stated as a list-level helper so we can apply it
+after unfolding `factorsModP.toList`.
 
 Corollary of `modP_polyProduct_liftToZ_eq_factorProduct`: that lemma reduces
 the `polyProduct` of lifted factors back to `factorProduct`, and
@@ -5685,7 +5685,7 @@ theorem factorsModP_polyProduct_congr_of_factorsModPBerlekampForm_of_primitive_p
         Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) := by
     rw [Hex.factorProduct_map_monicModularImage_eq_monicModularImage_factorProduct
         hprime raw hraw_ne, hprod_eq_raw, hmonicImage_idem]
-  -- Apply the bridge lemma at the *mapped* Berlekamp factor list.
+  -- Apply the lift-congruence lemma at the *mapped* Berlekamp factor list.
   have hbridge :=
     polyProduct_map_liftToZ_congr_factorProduct (p := primeData.p)
       (raw.map Hex.monicModularImage)
@@ -5702,9 +5702,9 @@ so that the leading coefficient of `modP p core` is `1`, hence
 `monicModularImage (modP p core) = modP p core`; under that identification
 the `_of_primitive_pos_lc_core` sibling above (which lands at
 `liftToZ (monicModularImage (modP p core))`) collapses to `liftToZ (modP p core)`,
-and the bridge to the integer side is closed by `congr_liftToZ_modP`.
+and the lift to the integer side is closed by `congr_liftToZ_modP`.
 
-The added `hcore_monic` premise costs downstream consumers nothing: the
+The added `hcore_monic` premise costs downstream callers nothing: the
 umbrellas they feed already require it.  No additional `1 < p` premise is
 needed; it is derived from `hprime`'s `two_le`. -/
 theorem factorsModP_polyProduct_congr_of_factorsModPBerlekampForm
@@ -5956,7 +5956,7 @@ Proof: extract the Berlekamp witnesses from `hform`; transport modular
 squarefreeness from `isGoodPrime` through `monicModularImage`; apply the
 generalized `quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared`
 helper with `X := monicModularImage (modP p core)` to walk the list.  The
-no-squared invariant on the modular image is the local Mathlib-bridge form
+no-squared invariant on the modular image is the local Mathlib-side form
 of `gcd_monicModularImage_derivative_eq_one`, instantiated through
 `Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd`.
 
@@ -5970,7 +5970,7 @@ mapping the abstract `factorsModPBerlekampForm` invariant plus an
 
 The Option-3 wrap of `berlekampFactorsModP` (apply `monicModularImage` per
 factor) lifts the helper application from the raw Berlekamp factor list to
-the mapped list via the multiplicativity bridge
+the mapped list via the multiplicativity lemma
 `factorProduct_map_monicModularImage_eq_monicModularImage_factorProduct`. -/
 theorem factorsModP_coprime_of_factorsModPBerlekampForm
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
@@ -6131,7 +6131,7 @@ version lives at `HexBerlekampZassenhausMathlib/IntReductionMod.lean:307`).
 Duplicated here because `IntReductionMod` imports `Basic`; the proof routes
 through `IsCoprime` in `Polynomial (ZMod p)` using
 `toMathlibPolynomial_squareFree_coprime` and the `toMathlibPolynomial_scale`
-bridge for the unit scalar `(leadingCoeff f)⁻¹`. -/
+identification for the unit scalar `(leadingCoeff f)⁻¹`. -/
 private theorem gcd_monicModularImage_derivative_eq_one_local
     {p : Nat} [Hex.ZMod64.Bounds p] [Fact (Nat.Prime p)]
     (f : Hex.FpPoly p) (hzero : f.isZero = false)
@@ -6225,7 +6225,7 @@ private theorem gcd_monicModularImage_derivative_eq_one_local
   exact hmath_gcd
 
 /-- `factorsModPBerlekampForm`-shaped discharge for per-modular-factor
-irreducibility after the Mathlib-bridge transport.
+irreducibility after the Mathlib-side transport.
 
 Given the `factorsModPBerlekampForm` invariant (recording that
 `primeData.factorsModP` is the post-`monicModularImage` Berlekamp factor
@@ -6462,7 +6462,7 @@ positive natural degree.
 The proof routes through `Hex.ZPoly.multifactorLiftQuadratic_each_congr_mod_base`
 to identify each lifted factor's mod-`p` reduction with the corresponding
 modular factor (after `FpPoly.liftToZ`), then transports through the
-`toMathlibPolynomial`/`Polynomial.map` bridge.  Both the lifted factor and
+`toMathlibPolynomial`/`Polynomial.map` map.  Both the lifted factor and
 its modular pre-image are monic, so reduction modulo `p` preserves natural
 degree (their `Polynomial.map (Int.castRingHom (ZMod p))` images have the
 same natural degree as the unmapped polynomials), and the modular images
@@ -6564,7 +6564,7 @@ theorem henselLiftData_liftedFactor_natDegree_pos
       (Hex.henselLiftData core B primeData).liftedFactors[i.val]'i.isLt
     rfl
   rw [hlifted_eq] at hcongr_i
-  -- 4. Use the bridge between executable mod-`p` reduction and Mathlib's
+  -- 4. Use the identification between executable mod-`p` reduction and Mathlib's
   --    `Polynomial.map (Int.castRingHom (ZMod p))` to identify natural degrees.
   set lifted := (Hex.henselLiftData core B primeData).liftedFactors[i] with hlifted_def
   set modular := primeData.factorsModP[i.val]'hi_modP with hmodular_def
@@ -6600,7 +6600,7 @@ theorem henselLiftData_liftedFactor_natDegree_pos
           (HexPolyZMathlib.toPolynomial
             (Hex.FpPoly.liftToZ modular)).leadingCoeff ≠ 0 := by
     rw [hliftZ_lead]; simp [hone_ne_zero]
-  -- Bridge: natural degree of the transported lifted factor equals the natural
+  -- Identify natural degree of the transported lifted factor with the natural
   -- degree of its mod-`p` image's Mathlib transport.
   have hnatDeg_lifted :
       (HexPolyZMathlib.toPolynomial lifted).natDegree =
@@ -6741,7 +6741,7 @@ The discharge requires three facts on `core` and `primeData`:
   which has positive degree on every non-unit input).
 
 The signature otherwise mirrors `_of_choosePrimeData` exactly, so downstream
-consumers that already construct `hfactors_natDegree_pos` by hand are
+callers that already construct `hfactors_natDegree_pos` by hand are
 unaffected; they continue to use the explicit-premise umbrella. -/
 theorem henselLiftData_liftedFactor_natDegree_pos_of_factorsModPBerlekampForm
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
@@ -6788,7 +6788,7 @@ instead of an explicit `factorsModP.toList.Nodup` premise.
 This is the injective sibling of
 `henselLiftData_liftedFactor_natDegree_pos_of_factorsModPBerlekampForm` (the
 natural-degree analog just above) and the natural follow-up to the `Nodup`
-bridge chain landed in `factorsModP_nodup_of_factorsModPBerlekampForm` (line
+chain landed in `factorsModP_nodup_of_factorsModPBerlekampForm` (line
 4010): it drops `hfactorsModP_nodup` from
 `henselLiftData_liftedFactor_injective_of_choosePrimeData` (line 4260) by
 discharging that premise through
@@ -6805,7 +6805,7 @@ The discharge requires two facts on `core` and `primeData`:
   `Hex.choosePrimeData?_isGoodPrime`.
 
 The signature otherwise mirrors `_of_choosePrimeData` exactly, so downstream
-consumers that already construct `hfactorsModP_nodup` by hand are unaffected;
+callers that already construct `hfactorsModP_nodup` by hand are unaffected;
 they continue to use the explicit-premise umbrella. -/
 theorem henselLiftData_liftedFactor_injective_of_factorsModPBerlekampForm
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
@@ -7087,12 +7087,12 @@ private theorem zpoly_monic_mul {a b : Hex.ZPoly}
   decide
 
 /--
-Bridge `liftedFactorProduct d S` to a `Finset.prod` over `S` after transport to
+Identify `liftedFactorProduct d S` to a `Finset.prod` over `S` after transport to
 `Polynomial ℤ`. The executable foldl form unfolds through `toPolynomial_foldl_mul`
 and the resulting `List.prod` is then identified with the Mathlib `Finset.prod`
 via `Finset.prod_map_toList`.
 
-This is the algebra-to-`Finset.prod` bridge needed by the disjoint-union splitting
+This is the algebra-to-`Finset.prod` lemma needed by the disjoint-union splitting
 lemma `liftedFactorProduct_eq_mul_sdiff_of_subset`.
 -/
 theorem toPolynomial_liftedFactorProduct
@@ -7193,7 +7193,7 @@ The next group of theorems supplies the `IsCoprime` input over
 applied to the subset/complement pair of Hensel-lifted factor products.
 
 The subset-product and complement-product reductions modulo `p` are
-bridged through `henselLiftData_liftedSubset_product_congr_mod_base` and
+connected through `henselLiftData_liftedSubset_product_congr_mod_base` and
 the canonical `liftToZ` identification, landing in
 `HexBerlekampMathlib.toMathlibPolynomial` over the `modPFactorProduct`
 view. Pairwise non-association of the monic `modPFactor` entries
@@ -7427,7 +7427,7 @@ theorem henselLiftData_liftedSubset_complement_isCoprime_mod_p
   letI := primeData.bounds
   intro d hsize
   haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
-  -- Rewrite both lifted products via the modP bridge to `toMathlibPolynomial`
+  -- Rewrite both lifted products via the modP identification with `toMathlibPolynomial`
   -- of `modPFactorProduct`. The complement requires the
   -- `liftedSubsetOfModPSubset_compl_eq` rewrite first.
   rw [← liftedSubsetOfModPSubset_compl_eq primeData d hsize S]
@@ -7438,7 +7438,7 @@ theorem henselLiftData_liftedSubset_complement_isCoprime_mod_p
       core B primeData hcore_monic hprime_invariant hp hB
       hfactors_monic hproduct_mod_p (Finset.univ \ S)]
   -- Expand both `modPFactorProduct`s into `Finset.prod` of
-  -- `toMathlibPolynomial (modPFactor _)` via the bridge.
+  -- `toMathlibPolynomial (modPFactor _)` via the identification lemma.
   rw [toMathlibPolynomial_modPFactorProduct,
     toMathlibPolynomial_modPFactorProduct]
   -- Apply `IsCoprime.prod_left_iff` and `IsCoprime.prod_right_iff` to
@@ -7507,12 +7507,12 @@ The full lifted-factor product over `Finset.univ` collapses to the executable
 `Array.polyProduct` of the raw lifted-factor array.
 
 The proof routes through `HexPolyZMathlib.equiv.injective`: under the
-`toPolynomial` bridge, both sides expand to the same finite product over
+`toPolynomial` map, both sides expand to the same finite product over
 `Fin d.liftedFactors.size`, using `toPolynomial_liftedFactorProduct`,
 `polyProduct_toPolynomial`, and `Finset.prod_univ_fun_getElem` modulo the
 `Array.length_toList` size identification.
 
-This is the structural bridge needed to feed the multifactor-lift product
+This is the structural identification needed to feed the multifactor-lift product
 spec into subset-based recombination reasoning.
 -/
 theorem liftedFactorProduct_univ_eq_polyProduct_liftedFactors
@@ -7572,7 +7572,7 @@ its complement (within `Finset.univ`) is congruent to `core` modulo
 `primeData.p ^ B`, under the recursive quadratic multifactor lift invariant.
 
 This packages the mod-`p^k` factorization input required by Hensel
-uniqueness consumers (`HexHenselMathlib.hensel_unique`): the subset product
+uniqueness callers (`HexHenselMathlib.hensel_unique`): the subset product
 plays the role of `g` and the complement product plays the role of `h` in
 `g * h ≡ core (mod p^k)`. The proof combines the full-product congruence
 (`henselLiftData_liftedFactorProduct_univ_congr_core`) with the multiplicative
@@ -7917,7 +7917,7 @@ theorem henselLiftData_represents_lifted_of_modP
           (h'.map (Int.castRingHom (ZMod (primeData.p ^ B)))) =
         f.map (Int.castRingHom (ZMod (primeData.p ^ B))) := by
     rw [hf_eq, Polynomial.map_mul]
-  -- Bridge `RepresentsIntegerFactorModP` to the Mathlib mod-`p` map equality.
+  -- Identify `RepresentsIntegerFactorModP` with the Mathlib mod-`p` map equality.
   have hg1 :
       g.map (Int.castRingHom (ZMod primeData.p)) =
         g'.map (Int.castRingHom (ZMod primeData.p)) := by
@@ -8345,7 +8345,7 @@ Hensel lift by the subset `S`, plus monicness of the core and of every lifted
 local factor, and the Mignotte precision bound, the represented factor is
 itself monic.
 
-This is the consumer-side packaging that discharges the `Monic factor`
+This is the caller-side packaging that discharges the `Monic factor`
 hypothesis needed by `recombinationCandidate_eq_factor_of_recovery` (via
 `monic_primitive_sign_normalized_of_monic`). The proof chains
 `liftedFactorProduct_monic` with the centred-lift recovery
@@ -8380,7 +8380,7 @@ theorem representsIntegerFactorAtLift_monic
     hfactor_dvd_target htarget_dvd_core hrep hprecision
 
 /--
-Bridge from the executable `Hex.ZPoly.Primitive` predicate to Mathlib's
+Identification of the executable `Hex.ZPoly.Primitive` predicate with Mathlib's
 `Polynomial.IsPrimitive` on the transported polynomial.
 -/
 private theorem toPolynomial_isPrimitive_of_zpoly_primitive_basic
@@ -8401,7 +8401,7 @@ private theorem toPolynomial_isPrimitive_of_zpoly_primitive_basic
   exact Int.isUnit_iff_natAbs_eq.mpr (Nat.eq_one_of_dvd_one hone)
 
 /--
-Reverse bridge from Mathlib's `Polynomial.IsPrimitive` on the transported
+Reverse identification from Mathlib's `Polynomial.IsPrimitive` on the transported
 polynomial to the executable `Hex.ZPoly.Primitive` predicate.
 -/
 private theorem zpoly_primitive_of_toPolynomial_isPrimitive_basic
@@ -8787,7 +8787,7 @@ private theorem size_primitivePart_eq_of_ne_zero {f : Hex.ZPoly} (hf : f ≠ 0) 
 `hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
 `defaultFactorCoeffBound core` precision constraint.
 
-The single precision consumer in the proof body is
+The single precision caller in the proof body is
 `size_centeredLiftPoly_eq_of_pos_leadingCoeff_bound`, which requires a
 leading-coefficient bound on `scaledLiftedFactorProduct core d T`. That
 leading coefficient is `lc core`, so the hypothesis-supplied
@@ -9314,7 +9314,7 @@ Exact-output matched-rest variant of
 
 When the split selected from a matched remaining-index set is the first
 successful executable split, the returned factor list has the represented
-factor at its head. This is the local first-success bridge needed by the
+factor at its head. This is the local first-success lemma needed by the
 recursive coverage proof before it reasons about earlier successful splits.
 -/
 theorem recombinationSearchModAux_first_success_witness_of_liftedSubset_candidate_eq_factor_of_matches
@@ -9521,7 +9521,7 @@ theorem recombinationSearchMod_first_success_witness_of_step_of_prefix_none
   · exact ⟨quotient, hquot, hsearch_rest⟩
 
 /--
-Membership bridge from a successful fixed-lift recombination search into the
+Membership lemma carrying a successful fixed-lift recombination search into the
 public exhaustive-core wrapper.  The non-empty branch is discharged by the
 factor membership witness, so downstream coverage proofs can use an exact
 `recombinationSearchMod` success without unfolding `exhaustiveCoreFactorsWithBound`.
@@ -9572,7 +9572,7 @@ Scaled-candidate counterpart of
 `Hex.exhaustiveCoreFactorsWithBound` calls the scaled recombination
 `recombineScaledExhaustive` at `coreLc = Hex.DensePoly.leadingCoeff core`, so
 coverage proofs that reach a successful scaled search return a membership
-statement in the public wrapper directly through this bridge — no
+statement in the public wrapper directly through this lemma — no
 `Monic core` hypothesis and no unfolding of `exhaustiveCoreFactorsWithBound`
 needed at the call site.
 -/
@@ -9600,7 +9600,7 @@ theorem exhaustiveCoreFactorsWithBound_mem_of_scaledRecombinationSearchMod_some
   simp [Hex.exhaustiveCoreFactorsWithBound, hB, hrecombine, hnot_empty, hmem]
 
 /--
-Public-wrapper membership bridge for a first successful fixed-lift split.
+Public-wrapper membership lemma for a first successful fixed-lift split.
 
 This composes the proof-facing first-success witness with
 `exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_some`, so later
@@ -9695,7 +9695,7 @@ theorem toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord
     · exact hne_neg_one' hneg_one
 
 /--
-Forward bridge from a successful executable recombination candidate quotient
+Forward lemma carrying a successful executable recombination candidate quotient
 to a proof-side irreducible divisor of `target` together with its representing
 subset under a `LiftedFactorSubsetPartition`.
 
@@ -9751,7 +9751,7 @@ theorem exists_representingSubset_dvd_recombinationCandidate_of_exactQuotient
   -- `Polynomial ℤ`.
   obtain ⟨gPoly, hg_irr, hg_dvd_cand_poly⟩ :=
     WfDvdMonoid.exists_irreducible_factor hcand_poly_nonunit hcand_poly_ne_zero
-  -- Bridge the irreducible factor back to a `Hex.ZPoly` divisor of the
+  -- Carry the irreducible factor back to a `Hex.ZPoly` divisor of the
   -- candidate.
   let g : Hex.ZPoly := HexPolyZMathlib.ofPolynomial gPoly
   have hg_toPolynomial : HexPolyZMathlib.toPolynomial g = gPoly :=
@@ -9818,7 +9818,7 @@ theorem recombinationCandidate_monic
   exact hcl_monic
 
 /-- The `Polynomial ℤ` image of a monic-conditions recombination candidate is
-monic. Consumer-side packaging of `recombinationCandidate_monic` through
+monic. Caller-side packaging of `recombinationCandidate_monic` through
 `HexPolyMathlib.leadingCoeff_toPolynomial`. -/
 theorem toPolynomial_recombinationCandidate_monic
     {d : Hex.LiftData}
@@ -10636,7 +10636,7 @@ candidate, with `S_g ⊆ J`.
 
 The proof packages the UFD normalized factorisation of
 `HexPolyZMathlib.toPolynomial (recombinationCandidate d T)` through the
-per-factor bridge `exists_representingSubset_of_mem_normalizedFactors_recombinationCandidate`
+per-factor lemma `exists_representingSubset_of_mem_normalizedFactors_recombinationCandidate`
 (#4467), then closes the degree-counting obligation of
 `exists_mem_representedSubset_of_degree_cover` (#4468) using monicness and
 squarefreeness of the candidate together with
@@ -10728,7 +10728,7 @@ theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_bound
         HexPolyZMathlib.toPolynomial (recombinationCandidate d T) := by
     rw [UniqueFactorizationMonoid.prod_normalizedFactors_eq hcand_ne,
       hcand_monic.normalize_eq_self]
-  -- Per-normalized-factor bridge data, indexed by hex factor `g = ofPolynomial gPoly`.
+  -- Per-normalized-factor data, indexed by hex factor `g = ofPolynomial gPoly`.
   have bridge_for : ∀ g : Hex.ZPoly,
       HexPolyZMathlib.toPolynomial g ∈ normFactors →
       ∃ S_g : LiftedFactorSubset d,
@@ -10756,7 +10756,7 @@ theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_bound
     · rw [← hg_eq]; exact h_rep
     · rw [← hg_eq]; exact h_cont
     · rw [← hg_eq]; exact h_norm
-  -- Choose `S_of g` via the bridge for `g`'s normalized-factor membership.
+  -- Choose `S_of g` via the lemma for `g`'s normalized-factor membership.
   let S_of : Hex.ZPoly → LiftedFactorSubset d := fun g =>
     if h : HexPolyZMathlib.toPolynomial g ∈ normFactors then
       Classical.choose (bridge_for g h)
@@ -10849,7 +10849,7 @@ theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_bound
       hd_liftedFactor_natDegree_pos hprecision hpartition htarget_dvd_core hTJ
       gs S_of h_each (fun g hg => hvalid g (mem_gs.mp hg))
       h_pairwise h_degree_total hi
-  -- Extract the bridge witness for `g`.
+  -- Extract the witness for `g`.
   have hg_norm := mem_gs.mp hg_in_gs
   obtain ⟨h_irr, _, h_dvd_c, h_rep, h_SJ, _, _, _⟩ := h_each g hg_in_gs
   exact ⟨g, S_of g, h_irr, h_dvd_c, h_rep, h_SJ, hi_in_Sg⟩
@@ -12236,7 +12236,7 @@ candidate's normalised factors, the leading-coefficient bound
 `hcore_lc_le`, and `hprecision : 2 * B' < d.p ^ d.k` in place of the
 core-shape `defaultFactorCoeffBound core` precision constraint. The
 proof body mirrors the original (now-wrapper) with two call-site
-substitutions: the per-normalised-factor bridge
+substitutions: the per-normalised-factor lemma
 (`exists_representingSubset_of_mem_normalizedFactors_scaledRecombinationCandidate_of_primitive_pos_lc_core_of_bound`)
 and the final degree-cover application
 (`exists_mem_representedSubset_of_degree_cover_of_scaledRecombinationCandidate_of_primitive_pos_lc_core_of_bound`)
@@ -13393,7 +13393,7 @@ theorem liftedFactorSubsetPartition_prefix_none_of_bound
 /--
 Prefix-none discharge under a `LiftedFactorSubsetPartition` (#4367 capstone).
 
-Consumer for the recursive coverage proof of
+Caller for the recursive coverage proof of
 `Hex.recombinationSearchModAux` (#4301).  Every executable split in `pre`
 — i.e. enumerated **before** the canonical boundary split
 `(liftedSubsetSelectedList d S, liftedSubsetSelectedList d (J \ S))` —
@@ -13424,7 +13424,7 @@ Proof outline.
 The `hlocal_nodup` precondition is required by the wrapper for the
 mask-level bit-diff argument (without `Nodup`, the executable
 `subsetSplits` enumeration can produce collisions on shared masked lists).
-The consumer in #4301 threads `Nodup` from a Hensel-coprimality fact
+The caller in #4301 threads `Nodup` from a Hensel-coprimality fact
 against the partition; a self-contained `liftedFactor d`-injectivity
 helper at the partition level is left as a separable sub-task.
 
@@ -14147,7 +14147,7 @@ theorem exhaustiveCoreFactorsWithBound_factor_count_eq_of_irreducible
 `exhaustiveCoreFactorsWithBound_factor_count_eq_of_irreducible`, every emitted
 factor is irreducible.  Routes through the cardinality equality and
 `exhaustiveCoreFactorsWithBound_factor_irreducible_of_count` so that slow
-exhaustive branch consumers can ask directly for irreducibility under the
+exhaustive branch callers can ask directly for irreducibility under the
 A1/A2/default-precision hypotheses once those are wired to the irreducibility
 hypothesis by #4149's coverage theorem. -/
 theorem exhaustiveCoreFactorsWithBound_factor_irreducible_of_irreducible
@@ -14228,7 +14228,7 @@ theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_count
 /-- Algorithm-side packaging for the BHKS fast-core success branch in
 the form needed by UFD arguments over `Polynomial ℤ`.  Combines the
 existing product, divisibility, and `shouldRecord` invariants exposed
-in `HexBerlekampZassenhaus/Basic.lean` with the `toPolynomial` bridge.
+in `HexBerlekampZassenhaus/Basic.lean` with the `toPolynomial` map.
 The remaining count-equality hypothesis is the open obligation of
 #4022 — once supplied, this lemma feeds directly into
 `HexBerlekampZassenhausMathlib.UFDPartition.irreducible_of_partition_card_eq_normalizedFactors_card`. -/
@@ -14404,7 +14404,7 @@ theorem factorFastCoreWithBound_some_factor_count_eq_of_irreducible
 `Hex.ZPoly.Irreducible` predicate. This is the `Hex.ZPoly` transport of
 `factorFastCoreWithBound_some_factor_irreducible_of_count`, obtained by
 composing that scaffold with the existing
-`Hex.ZPoly.Irreducible_iff_polynomialIrreducible` bridge equivalence.
+`Hex.ZPoly.Irreducible_iff_polynomialIrreducible` equivalence.
 
 The remaining count-equality hypothesis is the residual #4030 obligation; once
 supplied, this lemma yields fast-core branch irreducibility directly in the
@@ -14443,8 +14443,8 @@ the cover-at-min recovery,
 positivity, and `liftedFactorSubsetPartition_prefix_none_of_bound` for
 the prefix-none discharge), the per-factor `hvalid` is specialised to
 the local divisor (`g` in the empty-`J` step, `f_cov` for the other
-three per-factor consumers) by `hvalid g hg_dvd_core` /
-`hvalid f_cov hf_cov_dvd_core`, while the prefix-none consumer receives
+three per-factor callers) by `hvalid g hg_dvd_core` /
+`hvalid f_cov hf_cov_dvd_core`, while the prefix-none caller receives
 the universal `hvalid` and `B'` unchanged. In the recursive IH call,
 the outer abstract-bound hypotheses are captured by closure.
 -/
@@ -14827,8 +14827,8 @@ for the natDegree positivity, and
 `liftedFactorSubsetPartition_prefix_none_of_primitive_pos_lc_core_scaled_of_bound`
 for the prefix-none discharge), the per-factor `hvalid` is specialised
 to the local divisor (`g` in the empty-`J` step, `f_cov` for the other
-three per-factor consumers) by `hvalid g hg_dvd_core` /
-`hvalid f_cov hf_cov_dvd_core`, while the prefix-none consumer receives
+three per-factor callers) by `hvalid g hg_dvd_core` /
+`hvalid f_cov hf_cov_dvd_core`, while the prefix-none caller receives
 the universal `hvalid`, `hcore_lc_le`, `B'`, and `hprecision`
 unchanged. In the recursive IH call, the outer abstract-bound
 hypotheses are captured by closure.
@@ -15544,8 +15544,8 @@ the raw coefficient bound, distinct from the precision exponent
 `HenselSubsetCorrespondenceHypotheses` and matches the wrapper's inner Hensel
 lift call.  The Mignotte invariant
 `2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k` is supplied as
-`hprecision`; consumers wiring `B = Hex.ZPoly.defaultFactorCoeffBound core`
-discharge it from the `precisionForCoeffBound` definition directly.  Consumers
+`hprecision`; callers wiring `B = Hex.ZPoly.defaultFactorCoeffBound core`
+discharge it from the `precisionForCoeffBound` definition directly.  Callers
 wiring a larger `B` (e.g. the public outer
 `Hex.ZPoly.defaultFactorCoeffBound f` used by `Hex.factor f`) should call the
 abstract-bound sibling
@@ -15811,7 +15811,7 @@ theorem zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible
 Every recorded entry of `Hex.factorWithBound f B` is `Hex.ZPoly.Irreducible`
 once each branch's chosen raw factor array is irreducible.  The single
 hypothesis `h_raw` is dispatched by the public fast/slow case-split exposed
-through `Hex.factorWithBound_entry_mem_raw_source`: it asks the consumer to
+through `Hex.factorWithBound_entry_mem_raw_source`: it asks the caller to
 prove that every raw factor produced by the chosen branch (the fast BHKS
 output when `factorFastFactorsWithBound = some _`, or the slow exhaustive
 output when `factorFastFactorsWithBound = none`) is `Hex.ZPoly.Irreducible`.
@@ -15821,7 +15821,7 @@ discharges the sign-normalisation step.
 
 Combined with the Mathlib-free reassembly lift
 `Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible`,
-the typical downstream consumer (e.g. `factorWithBound_entries_irreducible` of
+the typical downstream caller (e.g. `factorWithBound_entries_irreducible` of
 #3987, or the capstone `factor_irreducible_of_nonUnit` of #4170) feeds in
 core-factor irreducibility for each sub-branch (singleton, fast-core, slow
 exhaustive, quadratic, constant) plus `reassemblyExpansionComplete`, and the
@@ -15830,7 +15830,7 @@ extracted-`X` half is handled automatically by `xPowerFactorArray_irreducible`.
 The hypothesis is stated in the symmetric "raw factors are irreducible" form
 rather than enumerating each sub-branch because the same raw-to-entry lift
 applies uniformly across all branches; case-by-case dispatch lives in the
-consumer where the supporting per-branch theorems naturally compose. -/
+caller where the supporting per-branch theorems naturally compose. -/
 theorem factorWithBound_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible
     {f : Hex.ZPoly} {B : Nat} {entry : Hex.ZPoly × Nat}
     (hmem : entry ∈ (Hex.factorWithBound f B).factors.toList)
@@ -15880,7 +15880,7 @@ membership on `.factors`).
 
 The single hypothesis `h_raw` is dispatched by the public fast/slow case-split
 exposed through `Hex.factorWithBound_entry_mem_raw_source`.  The typical
-downstream consumer composes it from the per-branch core-factor irreducibility
+downstream caller composes it from the per-branch core-factor irreducibility
 theorems (slow-path exhaustive #4006, small-mod singleton #4200, fast BHKS
 #4202, residual-fallback exclusion #4199) via the Mathlib-free reassembly lift
 `Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible`,
@@ -16002,23 +16002,23 @@ theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselS
 
 set_option maxHeartbeats 2000000
 
-/-- **#4006 slow-path bridge (deliverable 2).**
+/-- **#4006 slow-path lemma (deliverable 2).**
 
 Connects the branch-local irreducibility theorem
 `exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence`
 to the slow-path exhaustive-branch shape `factorWithBound_entry_mem_exhaustive_branch_raw`
-(#4041), so downstream slow-path consumers can move directly from "this
+(#4041), so downstream slow-path callers can move directly from "this
 recorded `factorWithBound` entry was emitted by the exhaustive branch and
 identifies with a `Hex.normalizeFactorSign`-image of an exhaustive
 square-free-core factor" to "the entry is irreducible as a `Hex.ZPoly`".
 
-The bridge specialises the hypothesis set of deliverable 1 to
+This lemma specialises the hypothesis set of deliverable 1 to
 `primeData = Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore`
 (the slow path's actual prime-data source) and the outer coefficient bound
 `B = Hex.ZPoly.defaultFactorCoeffBound (Hex.normalizeForFactor f).squareFreeCore`
 (the bound at which deliverable 1's coverage hypothesis is well-formed).
 The `hbranch` and `hentry_mem` arguments are not used by the proof, but
-they document the consumer-side entry point: a typical caller threads them
+they document the caller-side entry point: a typical caller threads them
 through `factorWithBound_entry_mem_exhaustive_branch_raw` and
 `exhaustiveSlowRawFactorsWithBound_mem_normalization_or_core` to obtain the
 `hcore_entry` witness.
@@ -16164,9 +16164,9 @@ theorem factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorr
 
 set_option maxHeartbeats 2000000
 
-/-- **#4536 outer-bound slow-path bridge.**
+/-- **#4536 outer-bound slow-path lemma.**
 
-The consumer-facing variant of
+The caller-facing variant of
 `factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence`
 at the *outer* coefficient bound `B = Hex.ZPoly.defaultFactorCoeffBound f`
 actually used by the public entry point `Hex.factor f`.  Recall that
@@ -16190,7 +16190,7 @@ d.p^d.k` operates on `core = (normalizeForFactor f).squareFreeCore` (the
 square-free core, not the public input `f`) and is supplied externally;
 this matches the #4006 sibling's invariant shape exactly.
 
-For HO-1 consumers wiring `B' := Hex.ZPoly.defaultFactorCoeffBound f`, the
+For HO-1 callers wiring `B' := Hex.ZPoly.defaultFactorCoeffBound f`, the
 canonical surface is the abstract-bound sibling
 `factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound`
 above: it accepts the universal divisor-coefficient bound
@@ -16207,7 +16207,7 @@ discharges the abstract bound hypotheses via `defaultFactorCoeffBound_valid`
 paired with `leadingCoeff_eq_coeff_last`.
 
 The `hbranch` and `hentry_mem` arguments are not used by the proof, but
-they document the consumer-side entry point: a typical caller threads them
+they document the caller-side entry point: a typical caller threads them
 through `factorWithBound_entry_mem_exhaustive_branch_raw` and
 `exhaustiveSlowRawFactorsWithBound_mem_normalization_or_core` to obtain the
 `hcore_entry` witness. -/
@@ -16287,7 +16287,7 @@ See `henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData`
 below for the specialisation.
 
 The `admissiblePrime` and `successfulLift` proposition hooks are
-instantiated with `True`; the downstream consumers depend on the
+instantiated with `True`; the downstream callers depend on the
 `exists_subset`/`unique_subset` projections rather than on the hook
 propositions themselves (the hooks are markers reserved for a future
 analytic Hensel proof that needs to surface those predicates).
@@ -16459,7 +16459,7 @@ explicit hypothesis `hcore_sqfree`: the outer-bound specialisation
 below threads it in at
 `core = (Hex.normalizeForFactor f).squareFreeCore` (where it is
 expected to hold by construction), and downstream HO-1 assemblies
-supply it from the consumer's own square-free-core invariants.  This
+supply it from the caller's own square-free-core invariants.  This
 matches the issue's option (a) for handling
 `target_squarefree`.
 
@@ -16509,12 +16509,12 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData
 
 /-! ### `ModPSubsetPartitionHypotheses` existence/uniqueness assembly
 
-These theorems compose the `monicModPImage` divisibility bridge,
+These theorems compose the `monicModPImage` divisibility lemma,
 `factors_irreducible_of_choosePrimeData_of_some`, and the UFD subset
 existence/uniqueness lemma from `UFDPartition.lean` to discharge the
 `exists_subset` / `unique_subset` fields of `ModPSubsetPartitionHypotheses`
 in the `choosePrimeData? core = some primeData` branch. The wrapper
-exposes the consumer-facing shape under the same `hsome` hypothesis. -/
+exposes the caller-facing shape under the same `hsome` hypothesis. -/
 
 /-- `factorsModP.toList` mapped to Mathlib polynomials has product equal to the
 Mathlib transport of `monicModularImage (modP p core)`. -/
@@ -16744,7 +16744,7 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
         (@monicModPImage primeData.p primeData.bounds
           (@Hex.ZPoly.modP primeData.p primeData.bounds factor)) := by
     apply monicModPImage_monic_of_ne_zero hprime
-    -- factor must not vanish mod p; derived from the bridge facts.
+    -- factor must not vanish mod p; derived from the divisibility facts.
     have hfactor_dvd_core_modP :
         @Hex.ZPoly.modP primeData.p primeData.bounds factor ∣
           @Hex.ZPoly.modP primeData.p primeData.bounds core :=
@@ -16813,10 +16813,10 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
       hT_uniq _ ⟨hS'_map_le, hS'_map_prod⟩
     rw [hS'_T, ← hStwit_map]
 
-/-- Consumer-facing wrapper, exposing the `let primeData := choosePrimeData core`
+/-- Caller-facing wrapper, exposing the `let primeData := choosePrimeData core`
 shape required by the `ModPSubsetPartitionHypotheses` constructor. The
 strengthening hypothesis `hsome` excludes the fallback `p = 3` branch where the
-mod-`p` factorisation invariant does not hold; downstream consumers discharge it
+mod-`p` factorisation invariant does not hold; downstream callers discharge it
 from the same `choosePrimeData?` chain that supplies the other partition
 fields. -/
 theorem existsUnique_modPFactorSubset_of_choosePrimeData
@@ -16862,7 +16862,7 @@ Composes:
   existence and uniqueness components.
 
 The `hsome` hypothesis excludes the fallback `p = 3` branch where the
-mod-`p` factorisation invariant does not hold; downstream consumers
+mod-`p` factorisation invariant does not hold; downstream callers
 discharge it from the same `choosePrimeData?` chain that supplies the
 other partition fields. -/
 theorem modPSubsetPartitionHypotheses_of_choosePrimeData
@@ -16940,7 +16940,7 @@ The constructor composes:
 The four proposition hooks `admissible_prime`, `square_free_reduction`,
 `successful_lift`, `coprime_lift` are instantiated with `True`.
 
-Downstream consumer: `henselSubsetCorrespondence_of_modPSubsetPartition`
+Downstream caller: `henselSubsetCorrespondence_of_modPSubsetPartition`
 (line above), which composes this value with `hmod` to recover the
 `HenselSubsetCorrespondenceHypotheses` package on the lifted surface. -/
 theorem henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData
@@ -17009,7 +17009,7 @@ theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success
 
 /-- **#5689 supporting lemma (HO-1 successful branch).**
 
-Consumer-facing wrapper for the common successful-branch shape: compose the
+Caller-facing wrapper for the common successful-branch shape: compose the
 `choosePrimeData? = some ...` mod-`p` partition with a non-circular lifted-side
 descent package and explicit forward Hensel transport to obtain the standard
 `HenselSubsetCorrespondenceHypotheses` surface. -/

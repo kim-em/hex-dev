@@ -23,7 +23,7 @@ structure DegreeBucket (p : Nat) [ZMod64.Bounds p] where
 
 /--
 Public result of executable distinct-degree factorization.  `residual` is kept
-explicit so downstream consumers can inspect any part not separated by the
+explicit so downstream callers can inspect any part not separated by the
 bounded executable pass.
 -/
 structure DistinctDegreeFactorization (p : Nat) [ZMod64.Bounds p] where

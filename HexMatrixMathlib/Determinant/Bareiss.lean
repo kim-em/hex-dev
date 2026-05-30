@@ -1018,7 +1018,7 @@ theorem bareissNoPivot_eq_det
         trailing_corner_entry_eq_det k M
           (Hex.Matrix.noPivotLoop (k + 1) (Hex.Matrix.noPivotInitialState M))
           hinv hstep_eq
-      -- Bridge: BareissData.det = sign * (k, k) entry = 1 * det M = det M.
+      -- Combine: BareissData.det = sign * (k, k) entry = 1 * det M = det M.
       show (Hex.Matrix.bareissNoPivotData M).det = Matrix.det (matrixEquiv M)
       rw [Hex.Matrix.BareissData.det_succ_eq _ hdata_sing, hdata_sign, one_mul,
         show (Hex.Matrix.bareissNoPivotData M).matrix[(⟨k, hk⟩ : Fin (k + 1))][

@@ -81,7 +81,7 @@ greater than the cap, any prime modulus `p ≥ 2` gives
 
 The strict cap hypothesis is necessary: at the boundary `cap = k = 1` with
 `p = 2` the inequality fails (`f` a unit-coefficient constant has
-`defaultFactorCoeffBound f = 1`, so `2 * 1 = 2 = 2 ^ 1`).  Consumers needing
+`defaultFactorCoeffBound f = 1`, so `2 * 1 = 2 = 2 ^ 1`).  Callers needing
 the conclusion at the cap itself should bump the precision by one, e.g.
 work with `cap + 1` rather than `cap`.
 -/

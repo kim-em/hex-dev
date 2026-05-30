@@ -410,9 +410,10 @@ theorem gramDet_adjacentSwap_of_ne (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.
   congr 1
   by_cases hkt : k.val < t
   · rw [leadingGramMatrixInt_rowSwap_inside (b := b) (km1 := km1) (k := k) hkm1k t ht hkt]
-    -- Bridge `bareiss = det` via Mathlib's `Matrix.det ∘ matrixEquiv`, composing
-    -- `bareiss_eq_mathlib_det` with `det_eq.symm` to keep the executable
-    -- determinant surface visible to `det_rowSwap_transpose_rowSwap_transpose`.
+    -- Identify `bareiss = det` via Mathlib's `Matrix.det ∘ matrixEquiv`,
+    -- composing `bareiss_eq_mathlib_det` with `det_eq.symm` to keep the
+    -- executable determinant surface visible to
+    -- `det_rowSwap_transpose_rowSwap_transpose`.
     have hbareiss_det : ∀ (M : Hex.Matrix Int t t),
         Hex.Matrix.bareiss M = Hex.Matrix.det M := fun M =>
       (HexMatrixMathlib.bareiss_eq_mathlib_det M).trans
@@ -590,7 +591,7 @@ the executable Bareiss determinant of the scaled-coefficient Cramer minor
 
 where `B = nu[k][km1]`. The proof linearises `nu'[i][km1]` (as a `Rat`) through
 the basis identity `basis (rowSwap b km1 k) [km1] = basis b [k] + μ * basis b [km1]`
-(via `basis_rowSwap_adjacent_prev`), bridges `bareiss → nu'` via
+(via `basis_rowSwap_adjacent_prev`), identifies `bareiss = nu'` via
 `scaledCoeffs_eq_scaledCoeffMatrix_bareiss`, and discharges with `ring`. -/
 theorem bareiss_scaledCoeffMatrix_rowSwap_above_prev
     (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.val)
@@ -604,7 +605,7 @@ theorem bareiss_scaledCoeffMatrix_rowSwap_above_prev
       ((gramDet b k.val (Nat.le_of_lt k.isLt) : Nat) : Int) =
       adjacentSwapScaledCoeffAbovePrevNumerator b k hk i := by
   intro km1 hkm1i
-  -- Bridge bareiss → scaledCoeffs via the Mathlib-side identification.
+  -- Identify bareiss with scaledCoeffs via the Mathlib-side lemma.
   rw [← scaledCoeffs_eq_scaledCoeffMatrix_bareiss
       (Matrix.rowSwap b km1 k) i km1 hkm1i]
   -- The remaining Int goal: `scaledCoeffs b' i km1 * d_k = numerator`.
@@ -807,8 +808,8 @@ determinant of the scaled-coefficient Cramer minor
 
   `d_{k+1} * nu[i][km1] - B * nu[i][k]`
 
-where `B = nu[k][km1]`. The proof bridges `bareiss → scaledCoeffs` via
-`scaledCoeffs_eq_scaledCoeffMatrix_bareiss` and reduces the resulting Int
+where `B = nu[k][km1]`. The proof identifies `bareiss` with `scaledCoeffs`
+via `scaledCoeffs_eq_scaledCoeffMatrix_bareiss` and reduces the resulting Int
 equation to a rational identity. The rational identity uses the two new
 helpers `dot_basis_rowSwap_curr_castRow_eq` (the Cramer-style dot product
 expansion) and `dot_basis_rowSwap_curr_prev_eq_normSq` (`D = Nk'`), combined
@@ -823,7 +824,7 @@ theorem bareiss_scaledCoeffMatrix_rowSwap_above_curr
         (Matrix.rowSwap b (GramSchmidt.prevRow k hk) k) i k hki) *
       ((gramDet b k.val (Nat.le_of_lt k.isLt) : Nat) : Int) =
       adjacentSwapScaledCoeffAboveCurrNumerator b k hk i := by
-  -- Bridge bareiss → scaledCoeffs.
+  -- Identify bareiss with scaledCoeffs.
   rw [← scaledCoeffs_eq_scaledCoeffMatrix_bareiss
       (Matrix.rowSwap b (GramSchmidt.prevRow k hk) k) i k hki]
   apply intCast_rat_injective_local

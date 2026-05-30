@@ -3,8 +3,8 @@ import HexGfqField
 import Mathlib.Data.Fintype.Card
 
 /-!
-Bridge definitions between the packed `HexGF2` extension-field wrappers and the
-generic quotient-ring finite-field construction.
+Identification definitions between the packed `HexGF2` extension-field
+wrappers and the generic quotient-ring finite-field construction.
 
 This module reuses the packed-polynomial conversion layer from
 `HexGF2Mathlib.Basic` to package both the single-word `GF2n` surface and the

@@ -2962,7 +2962,7 @@ private theorem xorBoolList_wordTriples_assoc
   exact xorBoolList_wordPairs_swap n o (fun j k => term i j k)
 
 /-- Array-specialized triple reindexing theorem for raw multiplication
-associativity proof terms.  Later coefficient bridges instantiate `term` with
+associativity proof terms.  Later coefficient lemmas instantiate `term` with
 the source-word contribution predicate built from `xs[i]!`, `ys[j]!`, and
 `zs[k]!`. -/
 private theorem xorBoolList_sourceTriples_assoc
@@ -3428,7 +3428,7 @@ private def rightAssocFixedTripleContribs
     (fun slot => clmulCoeffAt (i + slot) x (clmulWordAt (j + k) y z slot) n)
 
 /-- The selected bit of one machine word, using the same projection shape as
-the existing coefficient bridges. -/
+the existing coefficient lemmas. -/
 private def wordBitAt (word : UInt64) (bit : Nat) : Bool :=
   (((word >>> bit.toUInt64) &&& 1) != 0)
 

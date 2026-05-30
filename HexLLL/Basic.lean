@@ -495,7 +495,7 @@ def lll.firstShortVectorUnchecked (b : Matrix Int n m) (δ : Rat)
   (lllUnchecked b δ hδ hδ' hn)[0]
 
 /-- The first row of the reduced basis (shortest vector under the LLL
-guarantee). Canonical short-vector entry point for downstream consumers
+guarantee). Canonical short-vector entry point for downstream callers
 such as `hex-berlekamp-zassenhaus` recombination. -/
 def lll.firstShortVector (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (_hind : b.independent) :

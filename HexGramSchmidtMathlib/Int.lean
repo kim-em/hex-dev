@@ -2734,7 +2734,7 @@ theorem scaledCoeffMatrix_rowAdd_pivot_det
 
 /-- When the modified row index `k` lies outside the leading `t`-prefix
 (`t ≤ k.val`), the leading Gram matrix of `Matrix.rowAdd b j k c` agrees with
-that of `b`. Bridge-internal support for the row-add determinant theorem in
+that of `b`. Internal support lemma for the row-add determinant theorem in
 `HexGramSchmidtMathlib.Int`. -/
 theorem leadingGramMatrixInt_rowAdd_outside
     (b : Matrix Int n m) (j k : Fin n) (c : Int) (t : Nat) (ht : t ≤ n)
@@ -2900,7 +2900,7 @@ private theorem leadingGramMatrixInt_rowAdd_entry_inside
 /-- When the modified row index `k` lies inside the leading `t`-prefix
 (`k.val < t`), the leading Gram matrix of `Matrix.rowAdd b j k c` agrees with
 the row-and-column-add of the original leading Gram matrix at the lifted
-`Fin t` indices `jt`, `kt`. Bridge-internal support for the row-add
+`Fin t` indices `jt`, `kt`. Internal support lemma for the row-add
 determinant theorem in `HexGramSchmidtMathlib.Int`. -/
 theorem leadingGramMatrixInt_rowAdd_inside
     (b : Matrix Int n m) (j k : Fin n) (c : Int) (t : Nat) (ht : t ≤ n)
@@ -2920,7 +2920,7 @@ theorem leadingGramMatrixInt_rowAdd_inside
 
 /-- The executable scaled-coefficient pivot entry changes predictably under
 an earlier-row addition. This packages the Cramer/Bareiss pivot identity at
-the public `scaledCoeffs` level so update consumers need not unfold the
+the public `scaledCoeffs` level so update callers need not unfold the
 underlying determinant identity directly. -/
 theorem scaledCoeffs_rowAdd_pivot (b : Matrix Int n m) (j k : Fin n)
     (hjk : j.val < k.val) (c : Int) :
@@ -2960,9 +2960,9 @@ theorem gramDet_rowAdd_earlier
   by_cases hkt : k.val < t
   · -- Inside case: bareiss = det, then det_rowAdd / det_colAdd preserve.
     rw [leadingGramMatrixInt_rowAdd_inside b j k c t ht hjk hkt]
-    -- Bridge `bareiss = det` via Mathlib's `Matrix.det ∘ matrixEquiv`, composing
-    -- `bareiss_eq_mathlib_det` with `det_eq.symm` to keep the executable
-    -- determinant surface visible to `det_colAdd` / `det_rowAdd`.
+    -- Identify `bareiss = det` via Mathlib's `Matrix.det ∘ matrixEquiv`,
+    -- composing `bareiss_eq_mathlib_det` with `det_eq.symm` to keep the
+    -- executable determinant surface visible to `det_colAdd` / `det_rowAdd`.
     have hbareiss_det : ∀ (M : Hex.Matrix Int t t),
         Hex.Matrix.bareiss M = Hex.Matrix.det M := fun M =>
       (HexMatrixMathlib.bareiss_eq_mathlib_det M).trans
@@ -3347,9 +3347,10 @@ private theorem bareissNoPivotInvariant_diag_eq_leadingPrefix_det
   rw [HexMatrixMathlib.borderedMinor_corner_eq_leadingPrefix M state.step hk] at h_trail
   exact h_trail
 
-/-- Bridge to Mathlib leading-prefix determinant: from a partial no-pivot
-Bareiss pass that records a singular step at index `s`, the `(s+1)`-leading
-prefix of the source matrix has zero determinant (Hex's `Matrix.det`). -/
+/-- Identification with the Mathlib leading-prefix determinant: from a partial
+no-pivot Bareiss pass that records a singular step at index `s`, the
+`(s+1)`-leading prefix of the source matrix has zero determinant (Hex's
+`Matrix.det`). -/
 private theorem leadingPrefix_det_eq_zero_of_noPivotLoop_singularStep
     {n : Nat} (M : Matrix Int n n) (fuel s : Nat) (hs : s + 1 ≤ n)
     (h_sing : (Matrix.noPivotLoop fuel
