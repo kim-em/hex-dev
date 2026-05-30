@@ -180,39 +180,100 @@ wall time, enough to read the trend cleanly.
 
 ## Profile
 
-Profiles were captured with `samply record --save-only` through the
-`hexmatrix_bench profile` subcommand on an Apple M2 Ultra running macOS 14.6.1.
-Sampling rate was samply's default 1000 Hz. Raw profiler JSON artefacts are
-developer-local and are not committed.
+Profiles were captured at commit
+`3bc24c50fbe57487776c433106894ee544a6d656` on `carica` (Apple M2 Ultra,
+macOS 14.6.1, arm64) through the bench-timed-region filtering wrapper:
+`scripts/profile/run_profile.sh ./.lake/build/bin/hexmatrix_bench <target>
+<param> 5000000000`. `samply 0.13.1` recorded at 999 Hz
+(`--rate 999 --unstable-presymbolicate`), the bench binary reported
+`lean-bench` version `0.1.0` on Lean `4.30.0-rc2`, and raw
+`*.json.gz` artefacts remain developer-local under `/tmp`. The bench
+child reported `git_dirty=true` because this pod worktree carried a
+pod-managed `.claude/CLAUDE.md` change during capture.
 
 - `dense-square-multiplication`
-  - Command: `lake exe hexmatrix_bench profile Hex.MatrixBench.runSquareMulChecksum --param 160 --profiler "samply record --save-only --output /tmp/hexmatrix-squaremul-160-long.json.gz" --target-inner-nanos 5000000000`
-  - Child row: `inner_repeats=8`, `per_call_nanos=466293921.875000`,
+  - Command: `scripts/profile/run_profile.sh ./.lake/build/bin/hexmatrix_bench Hex.MatrixBench.runSquareMulChecksum 160 5000000000`
+  - Child row: `inner_repeats=8`, `per_call_nanos=469770166.750000`,
     `result_hash=0x1f393709728b7e`.
-  - Leaf cost: almost entirely Lean own code in the compiled benchmark/matrix
-    multiplication loop; isolated Lean runtime and allocator samples were below
-    one percent. No GMP symbols appeared.
-  - Inclusive ranking: the benchmark wrapper and the matrix multiplication
-    hot loop dominated. This is attributable to the registered
-    `runSquareMulChecksum` target.
+  - Leaf cost: allocation/free 55.3%, Lean runtime and harness 24.7%,
+    GMP big-integer arithmetic 15.1%, Lean own code 3.1%, other system
+    samples 1.8%. The largest leaves were allocator/refcount paths
+    (`libsystem_malloc`, `mi_malloc_small`, `mi_free`, `lean_dec_ref_cold`)
+    plus GMP integer construction/comparison/copying in the `Int` dot-product
+    loop.
+  - Inclusive ranking: `Hex.MatrixBench.runSquareMulChecksum` and its
+    benchmark wrapper covered 100.0% of retained samples,
+    `Hex.Matrix.mul` specialised for the target covered 99.1%,
+    `Hex.Vector.dotProduct` covered 93.8%, and the inner dot-product fold
+    covered 82.0%. The high allocator/GMP leaf cost is therefore attributable
+    to the registered `runSquareMulChecksum` target's boxed `Int` matrix
+    multiplication surface.
+  - Diagnostics:
+    ```text
+    bench thread:       name='Thread <4893104>' tid=4893104
+    regions:            2, total timed = 4227.0 ms
+    expected samples:   ~4223 on bench thread
+    retained samples:   4219 on bench thread (15 rejected outside windows)
+    other-thread noise: 2 samples on non-bench threads within timed windows (informational)
+    spawn anchor:       wall_ns=1780142601187822000, mono_ns=330635108396541
+    sidecar anchor:     mono_ns=330636312950125
+    filtered profile:   /tmp/hex-profile-runSquareMulChecksum-160.json.gz
+    ```
 - `structured-bareiss-determinant`
-  - Command: `lake exe hexmatrix_bench profile Hex.MatrixBench.runBareissDet --param 16 --profiler "samply record --save-only --output /tmp/hexmatrix-bareiss-16-long.json.gz" --target-inner-nanos 5000000000`
-  - Child row: `inner_repeats=65536`, `per_call_nanos=76139.127090`,
+  - Command: `scripts/profile/run_profile.sh ./.lake/build/bin/hexmatrix_bench Hex.MatrixBench.runBareissDet 16 5000000000`
+  - Child row: `inner_repeats=32768`, `per_call_nanos=81462.912231`,
     `result_hash=0x15e450ea`.
-  - Leaf cost: almost entirely Lean own code in the compiled determinant loop;
-    isolated Lean runtime and allocator samples were below one percent. No GMP
-    symbols appeared on the small-entry structured family.
-  - Inclusive ranking: the benchmark wrapper and Bareiss determinant path
-    dominated. This is attributable to the registered `runBareissDet` target.
+  - Leaf cost: Lean runtime and harness 57.8%, Lean own code 22.6%,
+    allocation/free 13.5%, GMP big-integer arithmetic 5.5%, other system
+    samples 0.6%. The largest leaves were closure dispatch
+    (`lean_apply_2`, `lean_apply_1`), `Hex.Matrix.stepMatrix` closures,
+    `Array.ofFn` construction, `lean_array_push`, and exact-division support
+    (`Int.decidableDvd`, `Hex.Matrix.exactDiv`).
+  - Inclusive ranking: `Hex.Matrix.bareiss` covered 95.8% of retained samples,
+    `bareissArrayState` covered 95.6%, `pivotLoop` covered 92.5%,
+    `stepMatrix` covered 42.9% boxed / 36.5% unboxed, and
+    `exactDiv` covered 8.1%. These dominant entries are the row-pivoted
+    Bareiss determinant path measured by the registered `runBareissDet`
+    target.
+  - Diagnostics:
+    ```text
+    bench thread:       name='Thread <4894239>' tid=4894239
+    regions:            9, total timed = 2693.9 ms
+    expected samples:   ~2691 on bench thread
+    retained samples:   2691 on bench thread (10 rejected outside windows)
+    other-thread noise: 2 samples on non-bench threads within timed windows (informational)
+    spawn anchor:       wall_ns=1780142613300175000, mono_ns=330647220881708
+    sidecar anchor:     mono_ns=330647459112916
+    filtered profile:   /tmp/hex-profile-runBareissDet-16.json.gz
+    ```
 - `leibniz-small-determinant`
-  - Command: `lake exe hexmatrix_bench profile Hex.MatrixBench.runLeibnizDet --param 8 --profiler "samply record --save-only --output /tmp/hexmatrix-leibniz-8-long.json.gz" --target-inner-nanos 5000000000`
-  - Child row: `inner_repeats=128`, `per_call_nanos=24850669.273438`,
+  - Command: `scripts/profile/run_profile.sh ./.lake/build/bin/hexmatrix_bench Hex.MatrixBench.runLeibnizDet 8 5000000000`
+  - Child row: `inner_repeats=128`, `per_call_nanos=24285055.343750`,
     `result_hash=0x6554`.
-  - Leaf cost: almost entirely Lean own code in the compiled Leibniz
-    permutation/fold loop; isolated Lean runtime and allocator samples were
-    below one percent. No GMP symbols appeared.
-  - Inclusive ranking: the benchmark wrapper and Leibniz determinant fold
-    dominated. This is attributable to the registered `runLeibnizDet` target.
+  - Leaf cost: Lean runtime and harness 57.5%, Lean own code 20.9%,
+    allocation/free 17.4%, other system samples 4.2%, with no visible GMP
+    leaf share on this small structured determinant. The largest leaves were
+    refcount cold paths, `Hex.Matrix.inversionCount` folds, `mi_free`,
+    `mi_malloc_small`, closure dispatch, list-to-array conversion, and
+    permutation-list construction.
+  - Inclusive ranking: `Hex.MatrixBench.runLeibnizDet` and its wrapper covered
+    100.0% of retained samples, the Leibniz determinant fold covered 55.7%,
+    `detTerm` covered 54.5%, `permutationVectors` construction covered 43.0%
+    / 38.9% in the flat-map and map loops, `detSign` covered 29.9%, and
+    `inversionCount` covered 15.3%. These costs are the expected factorial
+    permutation/enumeration path measured by the registered
+    `runLeibnizDet` target.
+  - Diagnostics:
+    ```text
+    bench thread:       name='Thread <4895591>' tid=4895591
+    regions:            2, total timed = 3132.9 ms
+    expected samples:   ~3130 on bench thread
+    retained samples:   3129 on bench thread (9 rejected outside windows)
+    other-thread noise: 0 samples on non-bench threads within timed windows (informational)
+    spawn anchor:       wall_ns=1780142627735394000, mono_ns=330661656259250
+    sidecar anchor:     mono_ns=330661879149416
+    filtered profile:   /tmp/hex-profile-runLeibnizDet-8.json.gz
+    ```
 
 The dominant inclusive costs all map to registered `HexMatrix.Bench` targets.
 No unattributed dominant cost was observed.

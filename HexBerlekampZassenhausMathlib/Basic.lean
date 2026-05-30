@@ -1643,7 +1643,7 @@ def liftedFactorProductCandidate (d : Hex.LiftData) (S : LiftedFactorSubset d) :
 
 /-- Scaled variant of the recombination candidate: centred lift of the
 leading-coefficient-scaled selected lifted-factor product, primitivised and
-sign-normalised.  This is the primitive non-monic substrate used by the scaled
+sign-normalised.  This is the primitive non-monic supporting lemma used by the scaled
 recombination search. -/
 def scaledRecombinationCandidate
     (core : Hex.ZPoly) (d : Hex.LiftData) (S : LiftedFactorSubset d) :
@@ -4474,7 +4474,7 @@ theorem scaledRecombinationCandidate_eq_factor_of_recovery_of_bound
   exact hfactor_norm
 
 /--
-Primitive non-monic recovery substrate: the scaled recombination candidate
+Primitive non-monic recovery supporting lemma: the scaled recombination candidate
 equals the represented integer `factor` under primitive/sign-normalised
 hypotheses on `factor` plus the standard Mignotte-precision and representation
 hypotheses. This is the corrected first recovery step for the primitive
@@ -6679,7 +6679,7 @@ The per-modular-factor natural-degree positivity premise mirrors the
 exposed as an explicit hypothesis here because discharging it from
 `choosePrimeData` invariants requires composing with `factorsModPBerlekampForm`
 and the underlying Berlekamp factor-degree positivity, which lives in a
-separate substrate task. -/
+separate supporting lemma task. -/
 theorem henselLiftData_liftedFactor_natDegree_pos_of_choosePrimeData
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hcore_monic : Hex.DensePoly.Monic core)
@@ -11413,7 +11413,7 @@ theorem coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd
 
 Routes through the abstract-bound
 `mem_T_iff_exists_irreducibleFactor_representingSubset_of_primitive_pos_lc_core_of_bound`
-substrate; the remaining divisor repackaging is precision-agnostic. -/
+supporting lemma; the remaining divisor repackaging is precision-agnostic. -/
 theorem exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd_of_primitive_pos_lc_core_of_bound
     {core target quotient : Hex.ZPoly} {d : Hex.LiftData}
     {J T : LiftedFactorSubset d}
@@ -14434,7 +14434,7 @@ precision is replaced by `2 * B' < d.p ^ d.k` against an abstract bound
 `B'`, paired with the universal divisor coefficient bound
 `∀ g ∣ core, ∀ i, (g.coeff i).natAbs ≤ B'`. The proof body otherwise
 mirrors the (now-wrapper) original verbatim: at each of the five
-`_of_bound` substrate call sites
+`_of_bound` supporting lemma call sites
 (`not_represents_empty_of_irreducible_dvd_core_of_bound` in the empty-`J`
 step, `representsIntegerFactorAtLift_monic_of_bound` and
 `recombinationCandidate_eq_factor_of_recovery_of_monic_core_of_bound` at
@@ -14818,7 +14818,7 @@ precision is replaced by `2 * B' < d.p ^ d.k` against an abstract bound
 `B'`, paired with the leading-coefficient bound on `core` and the
 universal divisor coefficient bound `∀ g ∣ core, ∀ i, (g.coeff i).natAbs
 ≤ B'`. The proof body otherwise mirrors the (now-wrapper) original
-verbatim: at each of the five `_of_bound` substrate call sites
+verbatim: at each of the five `_of_bound` supporting lemma call sites
 (`not_represents_empty_..._of_primitive_pos_lc_core_of_bound` in the
 empty-`J` step, `representsIntegerFactorAtLift_primitive_of_bound` and
 `scaledRecombinationCandidate_eq_factor_of_recovery_of_bound` at the
@@ -16266,7 +16266,7 @@ theorem factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorr
     hcore_lc_le (defaultFactorCoeffBound_valid core hcore_ne) hprecision
     hcore_entry
 
-/-- **#4543 substrate (HO-1).**
+/-- **#4543 supporting lemma (HO-1).**
 
 Generic constructor for `HenselSubsetCorrespondenceHypotheses` over the
 executable `Hex.choosePrimeData`/`Hex.henselLiftData` surface, parametric
@@ -16318,7 +16318,7 @@ private theorem henselSubsetCorrespondence_analytic_obligation
   intro primeData d factor _ _
   sorry
 
-/-- **#4543 substrate (HO-1).**
+/-- **#4543 supporting lemma (HO-1).**
 
 `HenselSubsetCorrespondenceHypotheses` value at the executable
 `Hex.choosePrimeData` / `Hex.henselLiftData` surface, parametric in the
@@ -16344,7 +16344,7 @@ theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData
       ⟨_, _, huniq⟩
     exact (huniq S hS).trans (huniq T hT).symm
 
-/-- **#4543 substrate (HO-1), outer-bound specialisation.**
+/-- **#4543 supporting lemma (HO-1), outer-bound specialisation.**
 
 Specialisation of `henselSubsetCorrespondenceHypotheses_of_choosePrimeData`
 at the precision count actually consumed by the slow exhaustive branch
@@ -16363,7 +16363,7 @@ theorem henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData
     HenselSubsetCorrespondenceHypotheses core B primeData d True True :=
   henselSubsetCorrespondenceHypotheses_of_choosePrimeData _ _
 
-/-- **#4549 substrate (HO-1), analytic obligation.**
+/-- **#4549 supporting lemma (HO-1), analytic obligation.**
 
 The genuinely analytic content of the
 `LiftedFactorSubsetPartition core d Finset.univ core` constructor over
@@ -16447,7 +16447,7 @@ private theorem liftedFactorSubsetPartition_analytic_obligation
   intro primeData d
   sorry
 
-/-- **#4549 substrate (HO-1).**
+/-- **#4549 supporting lemma (HO-1).**
 
 Parametric constructor for `LiftedFactorSubsetPartition core d
 Finset.univ core` over the executable `Hex.choosePrimeData` /
@@ -16847,7 +16847,7 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData
   exact existsUnique_modPFactorSubset_of_choosePrimeData_of_some core
     hirr hdvd hcore_ne hsome
 
-/-- **HO-1 substrate (#4688).**
+/-- **HO-1 supporting lemma (#4688).**
 
 `ModPSubsetPartitionHypotheses` constructor at the executable
 `Hex.choosePrimeData` boundary.
@@ -16921,7 +16921,7 @@ theorem henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData_descent
       hdescent
       hlifted_of_modP
 
-/-- **#4697 substrate (HO-1).**
+/-- **#4697 supporting lemma (HO-1).**
 
 Assembly constructor for `HenselSubsetLiftHypotheses` at the executable
 `Hex.choosePrimeData` / `Hex.henselLiftData` surface.
@@ -16981,7 +16981,7 @@ theorem henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData
       (Hex.ZPoly.toMonicLiftData_liftedFactors_size_eq core B primeData)
       hlifted_of_modP hirr hdvd hT
 
-/-- **#5689 substrate (HO-1 successful branch).**
+/-- **#5689 supporting lemma (HO-1 successful branch).**
 
 Successful-branch constructor for the lifted Hensel subset correspondence at
 the executable `Hex.choosePrimeData` boundary.
@@ -17007,7 +17007,7 @@ theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success
       (modPSubsetPartitionHypotheses_of_choosePrimeData core hsome)
       hlift
 
-/-- **#5689 substrate (HO-1 successful branch).**
+/-- **#5689 supporting lemma (HO-1 successful branch).**
 
 Consumer-facing wrapper for the common successful-branch shape: compose the
 `choosePrimeData? = some ...` mod-`p` partition with a non-circular lifted-side

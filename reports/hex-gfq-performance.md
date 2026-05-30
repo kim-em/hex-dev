@@ -5,6 +5,7 @@
 - `Hex.GfqBench.runGenericModulusChecksum`: fixed benchmark for the selected generic Conway modulus helper.
 - `Hex.GfqBench.runPackedModulusChecksum`: fixed benchmark for the selected packed Conway modulus helper.
 - `Hex.GfqBench.runGF2qOfWordReprChecksum`: fixed benchmark for packed `GF2q.ofWord` plus `GF2q.repr` on the committed `GF2q 1` entry.
+- `Hex.GfqBench.runGF2qOfWordReprProfileChecksum`: parametric profiling companion for packed `GF2q.ofWord` plus `GF2q.repr` on the committed `GF2q 1` entry.
 - `Hex.GfqBench.runGFqOfPolyReprChecksum`: `n`, generic `GFq.ofPoly` plus `GFq.repr` on deterministic degree-`n` binary representatives for the committed `GFq 2 1` entry.
 - `Hex.GfqBench.runPackedGenericSharedChecksum`: `n`, shared packed/generic constructor-projection checksum on the same deterministic binary representative family.
 
@@ -57,66 +58,107 @@ ratios to record.
 
 ## Profile
 
-Profiles were recorded with `samply record --save-only
---unstable-presymbolicate` at the same commit on `carica` (Apple M2 Ultra,
-macOS 14.6.1), at the default 1 kHz sampling rate. Commands invoked the built
-benchmark executable directly to avoid profiling the Lake wrapper. The raw
-Firefox Profiler JSON and `*.syms.json` artefacts are developer-local and are
-not committed.
+Profiles were recorded with `scripts/profile/run_profile.sh`, which wraps
+`samply record --save-only --no-open --rate 999 --unstable-presymbolicate` and
+filters the Firefox Profiler JSON to the bench thread's `warm-loop` timed
+regions. The runs used commit `3bc24c50fbe57487776c433106894ee544a6d656` on
+`carica` (Apple M2 Ultra, arm64, macOS 14.6.1), Lean
+`leanprover/lean4:4.30.0-rc2`, lean-bench
+`91412dba8350c29ddf52c9ace56f8a3d2240b6c7`, samply `0.13.1`, and deterministic
+benchmark inputs from `HexGfq/Bench.lean`; random seeds are not involved. The
+harness recorded `git_dirty: true` because the profile-compatible packed target
+and the report were being edited in this worktree. The raw filtered
+`*.json.gz` artefacts are developer-local under `/tmp` and are not committed.
 
 ### `generic-constructor-projection`
 
 Command:
 
 ```sh
-samply record --save-only --unstable-presymbolicate -o reports/bench-results/profiles/hex-gfq-generic-constructor-33b7f720dcce.json -- .lake/build/bin/hexgfq_bench run Hex.GfqBench.runGFqOfPolyReprChecksum
+scripts/profile/run_profile.sh ./.lake/build/bin/hexgfq_bench Hex.GfqBench.runGFqOfPolyReprChecksum 256 5000000000
 ```
 
-Representative case: deterministic binary polynomial representatives,
-parameters `4..256`, no seed. The sampled run is dominated by harness/process
-I/O and idle waits because this committed wrapper surface is very small; after
-excluding blocking wait leaves, leaf cost was other system/read path 74.1%,
-Lean runtime 13.9%, allocation/free 6.5%, own Hex/bench code 3.8%, and GMP
-1.6%. Inclusive Hex cost was led by
-`Hex.GfqBench.runGFqOfPolyReprChecksum` and its generated benchmark loop
-(23.3%), then `GFqRing.reduceMod` (23.2%), `DensePoly.divModArray` (22.8%),
-and `DensePoly.divModArrayAux` (20.4%). The dominant algorithmic work maps to
-the registered generic constructor/projection target.
+Representative case: deterministic binary polynomial representative, parameter
+`n=256`, no seed. Leaf cost in the filtered profile was Lean runtime/Std 51.0%,
+Hex Lean code 38.7%, other compiler/system leaves 4.0%, allocation/free 3.6%,
+and GMP 2.7%. Inclusive Hex cost was led by
+`Hex.GfqBench.runGFqOfPolyReprChecksum` (99.9%), `GFqRing.reduceMod` (98.9%),
+`DensePoly.divModArray` (86.0%), `DensePoly.divModArrayAux` (39.3%), and
+`DensePoly.arrayDegreeAux` (27.2%). The dominant work is the generic
+constructor's reduction modulo the committed Conway polynomial and maps to the
+registered generic constructor/projection target.
+
+Diagnostics:
+
+```text
+bench thread:       name='Thread <4847760>' tid=4847760
+regions:            9, total timed = 2907.6 ms
+expected samples:   ~2905 on bench thread
+retained samples:   2904 on bench thread (9 rejected outside windows)
+other-thread noise: 2 samples on non-bench threads within timed windows (informational)
+filtered profile:   /tmp/hex-profile-runGFqOfPolyReprChecksum-256.json.gz
+```
 
 ### `packed-constructor-projection`
 
 Command:
 
 ```sh
-samply record --save-only --unstable-presymbolicate -o reports/bench-results/profiles/hex-gfq-packed-constructor-33b7f720dcce.json -- .lake/build/bin/hexgfq_bench run Hex.GfqBench.runGF2qOfWordReprChecksum
+scripts/profile/run_profile.sh ./.lake/build/bin/hexgfq_bench Hex.GfqBench.runGF2qOfWordReprProfileChecksum 63 5000000000
 ```
 
-Representative case: fixed packed `GF2q 1` word representative, no seed. The
-target is sub-microsecond and the profile is therefore mostly harness shape:
-after excluding blocking wait leaves, leaf cost was other system/read path
-81.0%, Lean runtime 12.9%, allocation/free 5.2%, GMP 0.5%, and own Hex/bench
-code 0.3%. Inclusive Hex cost was led by initialization for `HexGfq.Basic` and
-`HexGfq.Bench` (4.5% each) and `HexGF2`/`HexGF2.Clmul` initialization (3.3%
-each), with the actual packed operation too small to dominate. This matches the
-fixed benchmark warning that the committed packed Conway surface is genuinely
-tiny.
+Representative case: deterministic single-word packed representative,
+parameter `n=63`, no seed. This uses the parametric
+`runGF2qOfWordReprProfileChecksum` companion because lean-bench's fixed-child
+path does not emit timed-region sidecars; the measured operation is the same
+`GF2q.ofWord` plus `GF2q.repr` surface as the fixed
+`runGF2qOfWordReprChecksum` verdict target. Leaf cost was Lean runtime/Std
+39.5%, Hex Lean code 34.7%, allocation/free 15.0%, other compiler/system leaves
+10.8%, and GMP 0.1%. Inclusive Hex cost was led by `GF2n.reduce` (98.9%),
+`GF2Poly.packedReduceWord` (97.8%), `GF2Poly.mod` (97.6%), `GF2Poly.add`
+(27.6%), `GF2Poly.degree?` (22.1%), and `GF2Poly.divModAux` entries up to
+20.3%. The dominant packed reduction work is attributable to the registered
+packed constructor/projection family; no new audit-found issue is needed.
+
+Diagnostics:
+
+```text
+bench thread:       name='Thread <4847067>' tid=4847067
+regions:            12, total timed = 4264.9 ms
+expected samples:   ~4261 on bench thread
+retained samples:   4260 on bench thread (9 rejected outside windows)
+other-thread noise: 0 samples on non-bench threads within timed windows (informational)
+filtered profile:   /tmp/hex-profile-runGF2qOfWordReprProfileChecksum-63.json.gz
+```
 
 ### `packed-generic-shared-bridge`
 
 Command:
 
 ```sh
-samply record --save-only --unstable-presymbolicate -o reports/bench-results/profiles/hex-gfq-shared-bridge-33b7f720dcce.json -- .lake/build/bin/hexgfq_bench run Hex.GfqBench.runPackedGenericSharedChecksum
+scripts/profile/run_profile.sh ./.lake/build/bin/hexgfq_bench Hex.GfqBench.runPackedGenericSharedChecksum 256 5000000000
 ```
 
-Representative case: shared deterministic binary representative family,
-parameters `4..256`, no seed. After excluding blocking wait leaves, leaf cost
-was other system/read path 74.8%, Lean runtime 13.5%, allocation/free 5.2%,
-own Hex/bench code 4.6%, and GMP 1.9%. Inclusive Hex cost was led by
-`Hex.GfqBench.runPackedGenericSharedChecksum` and its generated benchmark loop
-(22.3%), `GFqRing.reduceMod` (13.7%), `DensePoly.divModArray` (13.6%),
-`DensePoly.divModArrayAux` (12.5%), `GF2n.reduce` (8.4%), and
-`GF2Poly.packedReduceWord` (8.3%). The dominant generic and packed costs map
-to the registered shared bridge target.
+Representative case: shared deterministic binary representative, parameter
+`n=256`, no seed. Leaf cost was Lean runtime/Std 46.7%, Hex Lean code 40.4%,
+GMP 5.8%, allocation/free 3.6%, and other compiler/system leaves 3.6%.
+Inclusive Hex cost was led by `Hex.GfqBench.runPackedGenericSharedChecksum`
+(92.6%), `GFqRing.reduceMod` (92.2%), `DensePoly.divModArray` (87.9%),
+`DensePoly.divModArrayAux` (35.7%), `DensePoly.arrayDegreeAux` (24.1%), and the
+packed side through `GF2n.reduce` / `GF2Poly.packedReduceWord` at 6.8% / 6.7%.
+The profile shape matches the benchmark declaration: the generic degree-`n`
+representative scan dominates, while the fixed packed projection remains a
+small component of the shared bridge.
+
+Diagnostics:
+
+```text
+bench thread:       name='Thread <4848957>' tid=4848957
+regions:            8, total timed = 3876.2 ms
+expected samples:   ~3872 on bench thread
+retained samples:   3872 on bench thread (9 rejected outside windows)
+other-thread noise: 2 samples on non-bench threads within timed windows (informational)
+filtered profile:   /tmp/hex-profile-runPackedGenericSharedChecksum-256.json.gz
+```
 
 ## Concerns

@@ -15,6 +15,9 @@ fed to the public constructor/projection pairs:
 * `runGF2qOfWordReprChecksum`: packed `GF2q.ofWord` plus `GF2q.repr` on the
   committed single-word `GF2q 1` entry, fixed because no higher packed Conway
   entries are currently public.
+* `runGF2qOfWordReprProfileChecksum`: the same packed constructor/projection
+  surface registered parametrically so timed-region-filtered profiling can
+  exercise it at a representative word input.
 * `runPackedGenericSharedChecksum`: packed and generic constructor/projection
   checksums on the same binary representative family, `O(n)` on the generic
   degree-`n` representative.
@@ -85,6 +88,10 @@ structure SharedInput where
 def prepGFqInput (n : Nat) : FpPoly 2 :=
   binaryPoly n 11
 
+/-- Prepared packed constructor/projection input. -/
+def prepGF2qWordInput (n : Nat) : UInt64 :=
+  binaryWord n 37
+
 /-- Prepared shared-domain packed-vs-generic input. -/
 def prepSharedInput (n : Nat) : SharedInput :=
   { poly := binaryPoly n 59, word := binaryWord n 59 }
@@ -104,6 +111,10 @@ def runGFqOfPolyReprChecksum (g : FpPoly 2) : UInt64 :=
 /-- Benchmark target: packed constructor plus representative projection. -/
 def runGF2qOfWordReprChecksum (_ : Unit) : UInt64 :=
   GF2q.repr (GF2q.ofWord (n := 1) (binaryWord 63 37) : Packed21)
+
+/-- Parametric profiling target for the packed constructor/projection surface. -/
+def runGF2qOfWordReprProfileChecksum (word : UInt64) : UInt64 :=
+  GF2q.repr (GF2q.ofWord (n := 1) word : Packed21)
 
 /-- Benchmark target: packed and generic checksums on shared binary inputs. -/
 def runPackedGenericSharedChecksum (input : SharedInput) : UInt64 :=
@@ -128,6 +139,26 @@ setup_fixed_benchmark runGF2qOfWordReprChecksum where {
   maxSecondsPerCall := 2.0
   expectedHash := some (Hashable.hash (runGF2qOfWordReprChecksum ()))
 }
+
+/-
+The fixed packed target above is the benchmark verdict surface. This
+parametric companion exposes the same committed `GF2q 1` operation through the
+profiling wrapper so timed-region sidecars can sample it across word inputs.
+The underlying `GF2q.ofWord`/`GF2q.repr` pair operates on a single packed word,
+so the declared cost model is `O(1)` in the parameter: the schedule only varies
+which word reaches `ofWord`/`repr` and does not scale the per-call work, which
+remains constant.
+-/
+setup_benchmark runGF2qOfWordReprProfileChecksum _n => 1
+  with prep := prepGF2qWordInput
+  where {
+    paramFloor := 1
+    paramCeiling := 63
+    paramSchedule := .custom #[1, 2, 4, 8, 16, 32, 63]
+    maxSecondsPerCall := 2.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
 
 /-
 For the committed `GFq 2 1` entry the selected modulus is linear, so reduction

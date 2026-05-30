@@ -2,8 +2,8 @@ import HexGramSchmidt.Int
 import HexMatrixMathlib.Determinant
 
 /-!
-Mathlib bridge lemma for the executable Cramer-style scaled coefficient
-matrix and the public Bareiss surface.
+Mathlib-side identification of the executable Cramer-style scaled coefficient
+matrix entry with the public Bareiss determinant.
 
 The Mathlib-free file `HexGramSchmidt/Int.lean` packages the executable
 scaled-coefficient array entry as the no-pivot Bareiss trailing value on
@@ -15,7 +15,7 @@ Bareiss/Leibniz determinant identity: the geometric vanishing in the
 singular branch is visible only through the Leibniz determinant.
 
 Per `SPEC/Libraries/hex-gram-schmidt.md` ("Proof path governs placement,
-not just statement"), this bridge therefore lives in
+not just statement"), the identification therefore lives in
 `HexGramSchmidtMathlib`. The proof reaches the executable determinant
 surface by composing `HexMatrixMathlib.bareiss_eq_mathlib_det` with
 `HexMatrixMathlib.det_eq.symm`, both owned by `hex-matrix-mathlib`.
@@ -74,7 +74,7 @@ private theorem gramDet_pos_core (b : Matrix Int n m)
 
 The remaining theorems below build the rational column-operation reduction
 from the leading Gram matrix to the diagonal Gram-Schmidt norm-squared
-matrix, plus the integer→rational cast bridge for `det`. -/
+matrix, plus the integer→rational cast law for `det`. -/
 
 /-- Casting Int → Rat distributes over a `List.foldl` sum. -/
 private theorem foldl_intCast_add_aux {α : Type v}
@@ -876,7 +876,7 @@ private theorem dot_castIntRow_eq_cast_dot
 solve the leading Gram linear system whose right-hand side is obtained by
 dotting prefix rows with that projection. This is the matrix/vector form of
 `originalProjectionCoords_dot_eq_gram_combination`; the downstream Cramer
-bridge rewrites the right-hand side to the replacement Gram column. -/
+identification rewrites the right-hand side to the replacement Gram column. -/
 private theorem scaledCoeffMatrix_replacementColumn_solve
     (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < i)
     (p : Fin (j + 1)) :
@@ -1007,7 +1007,7 @@ private theorem gramDet_rat_eq_progressMatrix_zero_det (b : Matrix Int n m)
   rw [hcast_chain]
   rw [hstep1, hstep2, hstep3]
 
-/-- Core proof of the Gram-determinant / squared-norm product bridge.
+/-- Core proof of the Gram-determinant / squared-norm product identity.
 
 Chain: `(gramDet b k hk : Rat) = det (progressMatrix b k hk 0) =
 det (progressMatrix b k hk k) = det (auxMatrix b k hk) = gramSchmidtNormProduct`.
@@ -1372,7 +1372,7 @@ theorem gramDet_succ_rat
   rw [hgd_eq_gsnp]
   exact gramSchmidtNormProduct_succ b j hjsuc
 
-/-- Cramer's-rule bridge for the scaled Gram-Schmidt coefficient determinant:
+/-- Cramer's-rule identity for the scaled Gram-Schmidt coefficient determinant:
 the Leibniz determinant of `scaledCoeffMatrix` equals
 `gramDet b (j + 1) * coeffs[i,j]` after casting to `Rat`. -/
 private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
@@ -1559,7 +1559,7 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
     rw [Matrix.det_colReplace_existing_col_eq_zero _ _ _ hq_ne]
     grind
 
-/-- Cramer's rule bridge under singularity. When the no-pivot Bareiss pass over
+/-- Cramer's rule identity under singularity. When the no-pivot Bareiss pass over
 the Gram matrix records an early singular step before reaching column `j`, the
 Leibniz determinant of the Cramer minor `scaledCoeffMatrix b i j hji` is zero.
 Internally lifts the partial-pass singularity to the full `bareissNoPivotData`
@@ -1674,7 +1674,7 @@ theorem scaledCoeffMatrix_det_eq_zero_of_singularStep_lt
   simp at h_cramer
   exact_mod_cast h_cramer
 
-/-- Non-singular branch of the Cramer/Bareiss bridge: when the no-pivot
+/-- Non-singular branch of the Cramer/Bareiss identity: when the no-pivot
 Bareiss pass over the Gram matrix reaches column `j` without recording a
 singular step, the executable scaled coefficient agrees with the public
 row-pivoted Bareiss determinant of the Cramer minor. -/
@@ -1711,7 +1711,7 @@ theorem scaledCoeffs_eq_scaledCoeffMatrix_bareiss_of_no_singular
     exact h_rows
   exact h_entry.trans h_bareiss.symm
 
-/-- Cramer/Bareiss bridge: below the diagonal, the integral scaled
+/-- Cramer/Bareiss identity: below the diagonal, the integral scaled
 Gram-Schmidt coefficient is exactly the public Bareiss determinant of the
 Cramer minor `scaledCoeffMatrix`. The proof splits on whether the no-pivot
 Bareiss pass over `gramMatrix b` reaches column `j` without recording a
@@ -1771,7 +1771,7 @@ private theorem scaledCoeffRows_lower_eq_coeffs
 /-- Below the diagonal, the rational image of the integer scaled
 Gram-Schmidt coefficient factors as `gramDet b (j+1) * coeffs[i,j]`. The
 proof routes through the sorry-free `scaledCoeffs_eq_scaledCoeffMatrix_bareiss`
-case-split bridge (via `scaledCoeffRows_lower_eq_coeffs`) instead of the older
+case-split identity (via `scaledCoeffRows_lower_eq_coeffs`) instead of the older
 chain proof that depended on `scaledCoeffs_eq_scaledCoeffMatrix_det`. -/
 theorem scaledCoeffs_eq (b : Matrix Int n m)
     (i j : Nat) (hi : i < n) (hj : j < i) :
@@ -2395,8 +2395,8 @@ theorem scaledCoeffs_eq_scaledCoeffMatrix_det
       (HexMatrixMathlib.det_eq (GramSchmidt.scaledCoeffMatrix b i j hji)).symm
 
 
-/-- Conditional form of the leading Gram determinant bridge. The remaining
-unconditional bridge is exactly the nonnegativity of leading Gram determinants:
+/-- Conditional form of the leading Gram determinant identity. The remaining
+unconditional fact is exactly the nonnegativity of leading Gram determinants:
 once `0 ≤ det` is available, the public `Nat`-valued `gramDet` casts back to
 the signed determinant. -/
 theorem leadingGramMatrixInt_det_eq_gramDet_int_of_nonneg
@@ -2416,10 +2416,10 @@ theorem leadingGramMatrixInt_det_eq_gramDet_int
   leadingGramMatrixInt_det_eq_gramDet_int_of_nonneg b t ht
     (leadingGramMatrixInt_det_nonneg b t ht)
 
-/-- Bridge-layer unconditional diagonal synchronization for the public
+/-- Mathlib-side unconditional diagonal synchronization for the public
 scaled-coefficient matrix. The Mathlib-free core exposes the Nat-level version
 and the conditional Int lift; the required nonnegativity of the Gram/Bareiss
-diagonal slot is supplied in this bridge layer. -/
+diagonal slot is supplied here. -/
 theorem scaledCoeffs_diag (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨i, hi⟩ =
       Int.ofNat (gramDet b (i + 1) (Nat.succ_le_of_lt hi)) := by
@@ -2445,9 +2445,9 @@ theorem scaledCoeffs_diag (b : Matrix Int n m) (i : Nat) (hi : i < n) :
 /-- The leading executable Gram determinants of a square upper-triangular
 integer matrix with strictly positive diagonal are positive.
 
-This theorem is bridge-only: its proof identifies the executable `gramDet`
-with the Leibniz determinant of the leading Gram matrix via the composition
-of `HexMatrixMathlib.bareiss_eq_mathlib_det` and
+This theorem lives in `HexGramSchmidtMathlib`: its proof identifies the
+executable `gramDet` with the Leibniz determinant of the leading Gram matrix
+via the composition of `HexMatrixMathlib.bareiss_eq_mathlib_det` and
 `HexMatrixMathlib.det_eq.symm`. -/
 theorem gramDet_pos_of_upperTriangular_pos_diag
     {n : Nat} (M : Matrix Int n n)
@@ -2505,7 +2505,7 @@ theorem gramDet_pos_of_upperTriangular_pos_diag
       exact Int.ofNat_lt.mp hnat_int
 
 
-/-! ### Row-add determinant bridge helpers -/
+/-! ### Row-add determinant helper lemmas -/
 
 /-- Entry-level expansion of `Matrix.rowAdd` for a rectangular matrix. -/
 private theorem rowAdd_get_rect {R : Type u} [Mul R] [Add R] {n' m' : Nat}
@@ -2599,7 +2599,7 @@ private theorem dot_rowAdd_row_at_right {n' m' : Nat}
       Matrix.dot w M[dst] + c * Matrix.dot w M[src] := by
   rw [dot_comm_int w, dot_rowAdd_row_at_left, dot_comm_int w M[dst], dot_comm_int w M[src]]
 
-/-- Determinant-level pivot bridge for scaled Gram-Schmidt coefficients under
+/-- Determinant-level pivot identity for scaled Gram-Schmidt coefficients under
 an elementary row addition. In the Cramer matrix computing `nu[k,j]`, replacing
 row `k` by `row k + c * row j` changes the replaced last column linearly: the
 new determinant is the old Cramer determinant plus `c` times the leading Gram
@@ -2921,7 +2921,7 @@ theorem leadingGramMatrixInt_rowAdd_inside
 /-- The executable scaled-coefficient pivot entry changes predictably under
 an earlier-row addition. This packages the Cramer/Bareiss pivot identity at
 the public `scaledCoeffs` level so update consumers need not unfold the
-determinant bridge directly. -/
+underlying determinant identity directly. -/
 theorem scaledCoeffs_rowAdd_pivot (b : Matrix Int n m) (j k : Fin n)
     (hjk : j.val < k.val) (c : Int) :
     GramSchmidt.entry (scaledCoeffs (Matrix.rowAdd b j k c)) k j =
@@ -2990,7 +2990,7 @@ position (left of the pivot, the row that is unchanged when not the
 destination, and strictly between the source and the pivot column). They
 mirror the pattern of `scaledCoeffs_rowAdd_pivot` and let the
 `LLLState.sizeReduceColumn` proof-field discharges in `HexLLL/Basic.lean`
-work against `rowAdd` directly, without reaching for the bridge-bound
+work against `rowAdd` directly, without reaching for the Mathlib-side
 `scaledCoeffs_sizeReduce_*` wrappers in `HexGramSchmidt/Update.lean`. -/
 
 private theorem intCast_rat_injective_for_rowAdd {a b : Int}
@@ -3143,11 +3143,11 @@ theorem scaledCoeffs_rowAdd_above_pivot (b : Matrix Int n m) (j k : Fin n)
 
 /-! ### Determinant-backed independence
 
-These determinant-positivity bridges for `gramDet` live in the bridge layer
-because their proofs identify `gramDet` with the Leibniz determinant of the
-leading Gram matrix via the composition of
+These determinant-positivity lemmas for `gramDet` live in
+`HexGramSchmidtMathlib` because their proofs identify `gramDet` with the
+Leibniz determinant of the leading Gram matrix via the composition of
 `HexMatrixMathlib.bareiss_eq_mathlib_det` and `HexMatrixMathlib.det_eq.symm`
-(packaged here as `leadingGramMatrixInt_det_eq_gramDet_int`). Consumers that
+(packaged here as `leadingGramMatrixInt_det_eq_gramDet_int`). Callers that
 already have a determinant lemma for a special matrix family can produce the
 public `independent` predicate stated over Mathlib-free computed data. -/
 
@@ -3405,10 +3405,10 @@ on the full Gram matrix records a singular step at index `s` strictly before
 slot `r + 1`, the public row-pivoted Bareiss determinant of the `(r + 1)`
 leading Gram prefix is zero.
 
-This is the bridge lemma needed by the singular branch of the
+This is the supporting lemma needed by the singular branch of the
 `gramDetVecEntry_eq_leadingPrefix_bareiss` placeholder: both sides vanish in
 this case, and this lemma supplies the right-hand side. The proof composes the
-new Mathlib bridge `HexMatrixMathlib.noPivotLoop_invariant_of_singularStep_eq_none`
+new lemma `HexMatrixMathlib.noPivotLoop_invariant_of_singularStep_eq_none`
 (to identify `det(leadingPrefix _ (s+1)) = 0` at the moment of singularity) with
 the unconditional `gramDet_eq_prod_normSq_uncond` and the multiplicative
 succession `gramSchmidtNormProduct_succ` to propagate zero from `s + 1` to
@@ -3426,7 +3426,7 @@ theorem leadingPrefix_gram_bareiss_eq_zero_of_singularStep_lt
     change s < 0 + r at h
     omega
   have hs1 : s + 1 ≤ n := Nat.le_trans (Nat.succ_le_of_lt hsr) (Nat.le_of_lt hr)
-  -- Step B: derive det(leadingPrefix (gramMatrix b) (s+1)) = 0 via the new bridge.
+  -- Step B: derive det(leadingPrefix (gramMatrix b) (s+1)) = 0 via the new lemma.
   have h_det_s1_zero :
       Matrix.det (Matrix.leadingPrefix (Matrix.gramMatrix b) (s + 1) hs1) = 0 :=
     leadingPrefix_det_eq_zero_of_noPivotLoop_singularStep
@@ -3477,15 +3477,15 @@ theorem leadingPrefix_gram_bareiss_eq_zero_of_singularStep_lt
   rw [HexMatrixMathlib.bareiss_eq_det]
   exact h_det_prefix_r1_zero
 
-/-- Bridge-layer capstone for the Gram determinant vector: the no-pivot
+/-- Capstone for the Gram determinant vector: the no-pivot
 Bareiss pass over the full Gram matrix records, at slot `r + 1`, the same
 leading-prefix determinant as the public row-pivoted Bareiss surface on that
 prefix.
 
 This theorem lives in `HexGramSchmidtMathlib` because the proof path for the
-singular branch crosses the matrix determinant bridge. Mathlib-free consumers
-should use the executable `gramDet` API instead of depending on this
-Bareiss-facing statement. -/
+singular branch identifies the executable determinant with Mathlib's Leibniz
+determinant. Mathlib-free callers should use the executable `gramDet` API
+instead of depending on this Bareiss-facing statement. -/
 theorem gramDetVecEntry_eq_leadingPrefix_bareiss
     (b : Matrix Int n m) (r : Nat) (hr : r < n) :
     gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))

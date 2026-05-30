@@ -19,21 +19,21 @@ refer to these case names when checking that the benchmark harness still covers
 the public BZ API surface. Each `setup_benchmark` has an adjacent cost-model
 derivation comment.
 
-Each family below is either a *scientific* ladder (verdict-eligible scaling)
-or a *smoke* ladder (small fixed sweep for `list` / `verify`); the per-target
-comment annotates which one.
+Each family below is either a *scientific* schedule (verdict-eligible scaling)
+or a *fast* schedule (small fixed sweep used by `list` / `verify`); the
+per-target comment annotates which one.
 
 Split-family registrations (`prep := smokeInput`):
 
 * `runFactorChecksum`: public `factor` combinator on split inputs over the
-  scientific degree ladder
+  scientific degree schedule
   `splitScientificSchedule = #[2, 3, 4, 5, 8, 10, 12, 14, 16, 18, 20, 22, 24]`.
-* `runFactorFastChecksum`: CLD fast path on the same scientific ladder,
+* `runFactorFastChecksum`: CLD fast path on the same scientific schedule,
   preserving `none`.
-* `runFactorSlowChecksum`: exhaustive backstop on the smoke ladder
+* `runFactorSlowChecksum`: exhaustive backstop on the fast schedule
   `smokeSchedule = #[1, 2, 3, 4]`.
 * `runFactorFallbackProbeChecksum`: public `factor` combinator on the explicit
-  cascade-trigger split-degree ladder `fallbackProbeSchedule`.
+  cascade-trigger split-degree schedule `fallbackProbeSchedule`.
 
 Shared compare domain (`prep := smokeInput`, `paramSchedule := smokeSchedule`):
 
@@ -55,8 +55,9 @@ Degree/height registrations (`prep := prepDegreeHeightInput`):
 
 Precision/local-factor registration (`prep := prepPrecisionLocalInput`):
 
-* `runFastPathPrecisionLocalChecksum`: smoke-safe fast-path setup over encoded
-  degree, root-height, Hensel-precision, and local-factor-count regimes.
+* `runFastPathPrecisionLocalChecksum`: `verify`-budget-safe fast-path setup
+  over encoded degree, root-height, Hensel-precision, and local-factor-count
+  regimes.
 
 HO-2 adversarial singletons (each pinned at `paramSchedule := #[0]`):
 
@@ -71,8 +72,8 @@ HO-2 adversarial singletons (each pinned at `paramSchedule := #[0]`):
   product (cheap enough to run in `verify`), preserving `none`.
 * `runAdvSwinnertonDyerSD3ModularSplitChecksum`: pinned modular split profile
   for SD3 at the conformance prime, keeping the worst-case recombination
-  shape visible without running the smoke-intractable full integer
-  factorization.
+  shape visible without running the full integer factorization (which exceeds
+  the `verify` budget).
 
 Gating external comparator:
 
@@ -109,9 +110,9 @@ def linearZFactor (root : Int) : ZPoly :=
   DensePoly.ofCoeffs #[-root, 1]
 
 /--
-Deterministic split integer-polynomial family. Consumed both as the smoke
+Deterministic split integer-polynomial family. Consumed both as the fast
 sweep (`smokeSchedule = #[1, 2, 3, 4]`, used by the slow target and the
-`compare` registrations) and as the scientific ladder for the public and
+`compare` registrations) and as the scientific schedule for the public and
 fast-path targets
 (`splitScientificSchedule = #[2, 3, 4, 5, 8, 10, 12, 14, 16, 18, 20, 22, 24]`).
 -/
@@ -120,11 +121,11 @@ def smokeInput (n : Nat) : ZPoly :=
     (fun acc i => acc * linearZFactor (Int.ofNat (i + 1)))
     (1 : ZPoly)
 
-/-- Smoke ladder used by the slow target and the shared-domain `compare` family. -/
+/-- Fast schedule used by the slow target and the shared-domain `compare` family. -/
 def smokeSchedule : Array Nat :=
   #[1, 2, 3, 4]
 
-/-- Scientific split-family ladder for public and proof-facing fast factoring. -/
+/-- Scientific split-family schedule for public and proof-facing fast factoring. -/
 def splitScientificSchedule : Array Nat :=
   #[2, 3, 4, 5, 8, 10, 12, 14, 16, 18, 20, 22, 24]
 
@@ -137,7 +138,7 @@ def prepFallbackProbeInput (degree : Nat) : ZPoly :=
     (fun acc i => acc * linearZFactor (Int.ofNat (i + 1)))
     (1 : ZPoly)
 
-/-- Cascade-trigger split-degree ladder from the BZ-vs-Isabelle post-mortem. -/
+/-- Cascade-trigger split-degree schedule from the BZ-vs-Isabelle post-mortem. -/
 def fallbackProbeSchedule : Array Nat :=
   #[11, 12, 13, 15, 18, 22, 24]
 
@@ -349,13 +350,14 @@ def checksumOptionNatArray : Option (Array Nat) → UInt64
   | some xs => mixHash 1 (checksumNatArray xs)
 
 /--
-Stable checksum for smoke-safe fast-path setup on an adversarial singleton.
+Stable checksum for `verify`-budget-safe fast-path setup on an adversarial
+singleton.
 
 This deliberately does not call the public fallback combinator: the checksum
 records the precision cap that `factorFast` would use and the pinned local split
 shape feeding recombination. It keeps the hard fast-path cases visible to
 `list` / `verify` while the full `factorFast` calls remain too expensive for
-smoke verification.
+the `verify` budget.
 -/
 def checksumFastPathSetup (f : ZPoly) (p : Nat) : UInt64 :=
   mixHash (hash (factorFastPrecisionCap f)) (checksumOptionNatArray (modularFactorDegreesAt? f p))
@@ -465,8 +467,8 @@ def runFactorSlowDegreeHeightChecksum (input : DegreeHeightInput) : UInt64 :=
   checksumFactorization (factorSlow input.poly)
 
 /--
-Benchmark target: smoke-safe fast-path setup over encoded degree, height,
-Hensel precision, and local-factor-count axes.
+Benchmark target: `verify`-budget-safe fast-path setup over encoded degree,
+height, Hensel precision, and local-factor-count axes.
 -/
 def runFastPathPrecisionLocalChecksum (input : PrecisionLocalInput) : UInt64 :=
   let lifted :=
@@ -628,7 +630,7 @@ def runIsabelleFactorBaselineChecksum : Unit → IO UInt64 := fun _ => do
 def scheduledHardwareTag : String :=
   "scheduled-hardware"
 
-/-- HO-3's classical-arithmetic BHKS model over the smoke degree parameter. -/
+/-- HO-3's classical-arithmetic BHKS model over the fast-schedule degree parameter. -/
 def bzClassicalSmokeComplexity (n : Nat) : Nat :=
   n ^ 9 + n ^ 7 * (Nat.log2 (n + 2)) ^ 2
 
@@ -730,8 +732,8 @@ setup_benchmark runFactorSlowChecksum n => 2 ^ n * bzClassicalSmokeComplexity n
 
 /-
 Shared-domain compare registration for the public combinator. The domain is the
-same deterministic split family and `n = 1..4` schedule used by the smoke timing
-targets. The declared cost model is the classical BHKS smoke bound
+same deterministic split family and `n = 1..4` schedule used by the fast-path
+timing targets. The declared cost model is the classical BHKS bound
 `bzClassicalSmokeComplexity n`, because this target runs the same public
 fast-with-slow-fallback factorization as `runFactorChecksum` over the same
 prepared inputs while making `compare` an intentional public-vs-exhaustive
@@ -786,7 +788,7 @@ setup_benchmark runFactorFastCompareChecksum n => bzClassicalSmokeComplexity n
   }
 
 /- Singleton HO-2 adversarial target: `X^4 + 1`. The declared cost model is
-`n + 1` because the schedule pins `n = 0`; this constant smoke bound records a
+`n + 1` because the schedule pins `n = 0`; this constant bound records a
 canonical recombination shape where the integer polynomial is irreducible but
 splits modulo `5` without widening this PR into the full Phase-4 matrix. -/
 setup_benchmark runFactorAdvX4Plus1Checksum n => n + 1
@@ -818,7 +820,7 @@ setup_benchmark runFactorDegreeHeightChecksum param => bzClassicalDegreeHeightCo
   }
 
 /- Singleton HO-2 adversarial fast-path setup target for `X^4 + 1`. Full
-`factorFast` exceeds the smoke verifier's one-call budget; the declared cost
+`factorFast` exceeds the `verify` mode's one-call budget; the declared cost
 model is the constant `n + 1` singleton bound for the pinned `n = 0` schedule.
 This registration narrows the measured operation to the public fast-path
 precision cap plus the pinned `p = 5` modular split profile. The public fallback
@@ -929,9 +931,9 @@ setup_benchmark runFactorAdvPhi15Checksum n => n + 1
 
 /- Singleton HO-2 adversarial fast-path setup target for `Phi_15`. The declared
 cost model is the constant `n + 1` singleton bound for the pinned `n = 0`
-schedule. This smoke registration keeps the fast-path precision cap and pinned
-`p = 31` eight-linear split visible without routing through the public fallback
-combinator. -/
+schedule. This setup-only registration keeps the fast-path precision cap and
+pinned `p = 31` eight-linear split visible without routing through the public
+fallback combinator. -/
 setup_benchmark runFactorFastSetupAdvPhi15Checksum n => n + 1
   with prep := prepAdvPhi15
   where {
@@ -946,7 +948,7 @@ setup_benchmark runFactorFastSetupAdvPhi15Checksum n => n + 1
 /-
 Singleton HO-2 adversarial shape: Swinnerton-Dyer `SD_3`. Full `factor` and
 `factorFast` on this degree-eight worst-case recombination input currently
-exceed the smoke `verify` budget, so this reduced registration pins the same
+exceed the `verify`-mode budget, so this reduced registration pins the same
 canonical polynomial at the same conformance prime and records its eight-linear
 modular split profile. The constant model is intentional: the schedule fixes
 one canonical shape while keeping SD3 visible to `list` and `verify` until a

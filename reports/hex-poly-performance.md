@@ -264,77 +264,173 @@ roughly twice the wall time Hex does once startup is subtracted.
 
 ## Profile
 
-Profiles were recorded with `samply record --save-only` at the same commit on
-`carica` (Apple M2 Ultra, macOS 14.6.1), at the default 1 kHz sampling rate.
-The raw Firefox Profiler JSON artefacts are developer-local and are not
-committed.
+Profiles were recorded on `carica` (Apple M2 Ultra, macOS 14.6.1,
+arm64) from commit `3bc24c50fbe57487776c433106894ee544a6d656`.
+The bench binary reported `git_dirty: true` because this worktree had
+an unrelated local `.claude/CLAUDE.md` change; the HexPoly sources and
+bench executable were built from the commit above. The bench toolchain
+was Lean `4.30.0-rc2`, lean-bench `0.1.0`, samply `0.13.1`, and
+lean-bench-samply `602da96df3537341b50de9add2f137b0a75a68df`.
+
+Each run used `scripts/profile/run_profile.sh`, which records with
+`samply record --save-only --no-open --rate 999
+--unstable-presymbolicate` and filters the Firefox Profiler JSON down
+to samples on the bench thread inside lean-bench timed regions. The
+filtered raw profile artefacts are developer-local under `/tmp` and are
+not committed.
 
 ### `dense-int-arithmetic`
 
 Command:
 
 ```sh
-samply record --save-only -o reports/bench-results/profiles/hex-poly-dense-int-arithmetic-f5bfa6409349.json -- lake exe hexpoly_bench run Hex.PolyBench.runComposeChecksum
+scripts/profile/run_profile.sh ./.lake/build/bin/hexpoly_bench Hex.PolyBench.runComposeChecksum 64 5000000000
 ```
 
 Representative case: deterministic same-size dense integer composition,
-parameters `16..64`, no seed. Leaf cost was allocation/free 55.0%, other
-system 20.4%, GMP 15.5%, Lean runtime/harness 6.5%, own HexPoly code 2.7%.
-Inclusive HexPoly cost was led by
-`Hex.PolyBench.runComposeChecksum` (86.1%), `DensePoly.compose`'s fold
-(84.3%), `DensePoly.mul` (83.9%), and the nested multiplication fold (79.4%).
-The dominant allocation and GMP leaves occur under the registered dense
-composition/multiplication target.
+parameter `n = 64`, no seed. Leaf cost after timed-region filtering was
+own HexPoly code 64.4%, GMP 17.5%, Lean runtime/harness 7.1%, other
+system 5.8%, and allocation/free 5.2%. Inclusive HexPoly cost was led by
+`Hex.PolyBench.runComposeChecksum` (99.9%), `DensePoly.compose`'s fold
+(98.5%), `DensePoly.mul` (98.1%), and the nested multiplication fold
+(93.1%). The dominant work is attributable to the registered dense
+composition and multiplication targets.
+
+Diagnostics:
+
+```json
+{
+  "filtered_profile": "/tmp/hex-profile-runComposeChecksum-64.json.gz",
+  "bench_thread": "Thread <4891516>",
+  "regions_total": 2,
+  "total_timed_ms": 5290.534042,
+  "expected_samples_bench_thread": 5285.2,
+  "retained_samples_bench_thread": 5283,
+  "rejected_samples_bench_thread": 9,
+  "off_bench_thread_samples_in_window": 2,
+  "samply_interval_ms": 1.001001,
+  "spawn_anchor_wall_ns": 1780142588879978000,
+  "spawn_anchor_mono_ns": 330622800418208,
+  "sidecar_mono_anchor_ns": 330623036488208,
+  "samply_meta_start_time_ms": 1780142588887.817
+}
+```
 
 ### `field-euclidean`
 
 Command:
 
 ```sh
-samply record --save-only -o reports/bench-results/profiles/hex-poly-field-euclidean-f5bfa6409349.json -- lake exe hexpoly_bench run Hex.PolyBench.runDivModChecksum
+scripts/profile/run_profile.sh ./.lake/build/bin/hexpoly_bench Hex.PolyBench.runDivModChecksum 512 5000000000
 ```
 
 Representative case: deterministic fixed-size `F7` division inputs,
-parameters `64..512`, no seed. Leaf cost was own HexPoly code 27.9%, Lean
-runtime/harness 23.6%, allocation/free 13.4%, and other system 35.1%.
-Inclusive HexPoly cost was led by `DensePoly.divMod` and
-`Hex.PolyBench.runDivModChecksum` (both 71.5%), followed by
-`DensePoly.divModArray` (69.7%) and `DensePoly.divModArrayAux` entries
-(27.6%, 22.3%, 14.2%). The dominant work maps to the registered division and
-remainder targets.
+parameter `n = 512`, no seed. Leaf cost after timed-region filtering was
+own HexPoly code 43.7%, Lean runtime/harness 38.2%, allocation/free
+16.3%, and other system 1.7%. Inclusive HexPoly cost was led by
+`DensePoly.divMod` and `Hex.PolyBench.runDivModChecksum` (both 100.0%),
+`DensePoly.divModArray` (99.2%), and `DensePoly.divModArrayAux` entries
+(37.4%, 32.2%, 22.3%). The dominant work maps to the registered division
+and remainder targets.
+
+Diagnostics:
+
+```json
+{
+  "filtered_profile": "/tmp/hex-profile-runDivModChecksum-512.json.gz",
+  "bench_thread": "Thread <4892732>",
+  "regions_total": 4,
+  "total_timed_ms": 3569.440041,
+  "expected_samples_bench_thread": 3565.9,
+  "retained_samples_bench_thread": 3566,
+  "rejected_samples_bench_thread": 8,
+  "off_bench_thread_samples_in_window": 2,
+  "samply_interval_ms": 1.001001,
+  "spawn_anchor_wall_ns": 1780142599690365000,
+  "spawn_anchor_mono_ns": 330633610922375,
+  "sidecar_mono_anchor_ns": 330633825883625,
+  "samply_meta_start_time_ms": 1780142599696.5671
+}
+```
 
 ### `integer-content`
 
 Command:
 
 ```sh
-samply record --save-only -o reports/bench-results/profiles/hex-poly-integer-content-f5bfa6409349.json -- lake exe hexpoly_bench run Hex.PolyBench.runPrimitivePartChecksum
+scripts/profile/run_profile.sh ./.lake/build/bin/hexpoly_bench Hex.PolyBench.runPrimitivePartChecksum 131072 5000000000
 ```
 
 Representative case: deterministic dense integer polynomials with nontrivial
-content, parameters `8192..131072`, no seed. Leaf cost was allocation/free
-44.8%, other system 23.2%, GMP 13.1%, Lean runtime/harness 12.8%, and own
-HexPoly code 6.0%. Inclusive HexPoly cost was led by
-`DensePoly.primitivePart` (54.7%) and the `contentNat` fold (52.6%). The GMP
-and allocation leaves are expected for integer gcd/content normalization and
-are attributable to the registered content and primitive-part targets.
+content, parameter `n = 131072`, no seed. Leaf cost after timed-region
+filtering was own HexPoly code 52.8%, GMP 19.3%, Lean runtime/harness
+15.6%, allocation/free 7.0%, and other system 5.2%. Inclusive HexPoly
+cost was led by `DensePoly.primitivePart` (70.4%) and the `contentNat`
+fold (67.9%). The GMP leaves are expected for integer gcd/content
+normalization and are attributable to the registered content and
+primitive-part targets.
+
+Diagnostics:
+
+```json
+{
+  "filtered_profile": "/tmp/hex-profile-runPrimitivePartChecksum-131072.json.gz",
+  "bench_thread": "Thread <4893655>",
+  "regions_total": 2,
+  "total_timed_ms": 3208.018334,
+  "expected_samples_bench_thread": 3204.8,
+  "retained_samples_bench_thread": 3184,
+  "rejected_samples_bench_thread": 16,
+  "off_bench_thread_samples_in_window": 1,
+  "samply_interval_ms": 1.001001,
+  "spawn_anchor_wall_ns": 1780142607741348000,
+  "spawn_anchor_mono_ns": 330641661994541,
+  "sidecar_mono_anchor_ns": 330641892029416,
+  "samply_meta_start_time_ms": 1780142607747.37
+}
+```
 
 ### `polynomial-crt`
 
 Command:
 
 ```sh
-samply record --save-only -o reports/bench-results/profiles/hex-poly-polynomial-crt-f5bfa6409349.json -- lake exe hexpoly_bench run Hex.PolyBench.runPolyCRTChecksum
+scripts/profile/run_profile.sh ./.lake/build/bin/hexpoly_bench Hex.PolyBench.runPolyCRTChecksum 512 5000000000
 ```
 
 Representative case: deterministic coprime monic rational-polynomial moduli,
-parameters `128..512`, no seed. Leaf cost was allocation/free 51.3%, other
-system 22.8%, GMP 17.1%, Lean runtime/harness 7.4%, and own HexPoly code
-1.4%. Inclusive HexPoly cost was led by `Hex.PolyBench.runPolyCRTChecksum`
-(75.3%), `DensePoly.mul` under `DensePoly.polyCRT` (75.2%), the nested
-multiplication fold (72.9%), and `DensePoly.polyCRT` (37.4%). The dominant
-allocation and GMP leaves are attributable to the registered CRT witness
-construction target.
+parameter `n = 512`, no seed. Leaf cost after timed-region filtering was
+own HexPoly code 62.1%, GMP 21.9%, Lean runtime/harness 6.8%, other
+system 6.3%, and allocation/free 2.9%. Inclusive HexPoly cost was led by
+`Hex.PolyBench.runPolyCRTChecksum` (100.0%), `DensePoly.mul` under
+`DensePoly.polyCRT` (99.8%), the nested multiplication fold (97.3%),
+and `DensePoly.polyCRT` (50.1%, 49.5% call-site entries). The dominant
+GMP and multiplication leaves are attributable to the registered CRT
+witness construction target.
+
+Diagnostics:
+
+```json
+{
+  "filtered_profile": "/tmp/hex-profile-runPolyCRTChecksum-512.json.gz",
+  "bench_thread": "Thread <4894641>",
+  "regions_total": 2,
+  "total_timed_ms": 3524.854084,
+  "expected_samples_bench_thread": 3521.3,
+  "retained_samples_bench_thread": 3518,
+  "rejected_samples_bench_thread": 10,
+  "off_bench_thread_samples_in_window": 0,
+  "samply_interval_ms": 1.001001,
+  "spawn_anchor_wall_ns": 1780142615977912000,
+  "spawn_anchor_mono_ns": 330649898648500,
+  "sidecar_mono_anchor_ns": 330650119680708,
+  "samply_meta_start_time_ms": 1780142615985.5298
+}
+```
+
+No newly dominant inclusive cost in these filtered profiles is
+unattributable to a registered bench target, so no audit-found follow-up
+was filed from this rerun.
 
 ## Concerns
 
