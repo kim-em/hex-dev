@@ -80,7 +80,7 @@ private theorem product_toNat_lt_p2 (ctx : BarrettCtx p) (a b : UInt64)
 The `Nat` value of Barrett modular multiplication is the ordinary modular
 product.
 -/
-@[simp]
+@[simp, grind =]
 theorem toNat_mulMod (ctx : BarrettCtx p) (a b : UInt64)
     (ha : a < p) (hb : b < p) :
     (ctx.mulMod a b).toNat = (a.toNat * b.toNat) % p.toNat := by
@@ -89,6 +89,7 @@ theorem toNat_mulMod (ctx : BarrettCtx p) (a b : UInt64)
   rw [product_toNat_eq ctx a b ha hb]
 
 /-- Barrett modular multiplication returns a residue strictly below the modulus. -/
+@[grind =>]
 theorem mulMod_lt (ctx : BarrettCtx p) (a b : UInt64)
     (ha : a < p) (hb : b < p) :
     ctx.mulMod a b < p := by
@@ -100,6 +101,7 @@ theorem mulMod_lt (ctx : BarrettCtx p) (a b : UInt64)
 Barrett modular multiplication agrees with reducing the Nat-level product and
 re-encoding it as a `UInt64`.
 -/
+@[grind =]
 theorem mulMod_eq (ctx : BarrettCtx p) (a b : UInt64)
     (ha : a < p) (hb : b < p) :
     ctx.mulMod a b = .ofNat ((a.toNat * b.toNat) % p.toNat) := by

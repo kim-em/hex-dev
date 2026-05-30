@@ -303,6 +303,7 @@ private theorem cancel_word_mod_of_lt (ctx : MontCtx p) {x y : Nat}
   · exact (hle_case hy hx h.symm (Nat.le_of_not_ge hxy)).symm
 
 /-- Converting a reduced Montgomery residue back to standard form is canonical. -/
+@[grind =>]
 theorem fromMont_lt (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
     ctx.fromMont a < p := by
   rw [UInt64.lt_iff_toNat_lt]
@@ -344,7 +345,7 @@ theorem fromMont_repr (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
   simpa [Nat.mod_eq_of_lt haNat] using hredc
 
 /-- The `Nat` value of `toMont` is multiplication by the Montgomery radix. -/
-@[simp]
+@[simp, grind =]
 theorem toNat_toMont (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
     (ctx.toMont a).toNat = (a.toNat * UInt64.word) % p.toNat := by
   have haNat : a.toNat < p.toNat := by
@@ -421,6 +422,7 @@ private theorem mulMont_repr_word (ctx : MontCtx p) (a b : UInt64)
           rw [UInt64.mulLo_add_mulHi a b]
 
 /-- Montgomery conversion returns a canonical residue. -/
+@[grind =>]
 theorem toMont_lt (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
     ctx.toMont a < p := by
   rw [UInt64.lt_iff_toNat_lt]
@@ -437,6 +439,7 @@ theorem toMont_lt (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
   exact redcNat_lt ctx.p_pos ctx.p_lt_R hpp' hT
 
 /-- Montgomery multiplication returns a canonical residue. -/
+@[grind =>]
 theorem mulMont_lt (ctx : MontCtx p) (a b : UInt64) (ha : a < p) (hb : b < p) :
     ctx.mulMont a b < p := by
   rw [UInt64.lt_iff_toNat_lt]
@@ -452,6 +455,7 @@ theorem mulMont_lt (ctx : MontCtx p) (a b : UInt64) (ha : a < p) (hb : b < p) :
   exact redcNat_lt ctx.p_pos ctx.p_lt_R hpp' hT
 
 /-- Montgomery multiplication preserves the represented residue product. -/
+@[grind =]
 theorem mulMont_repr (ctx : MontCtx p) (a b : UInt64)
     (ha : a < p) (hb : b < p) :
     (ctx.fromMont (ctx.mulMont a b)).toNat =
@@ -516,7 +520,7 @@ theorem mulMont_repr (ctx : MontCtx p) (a b : UInt64)
     _ = y * UInt64.word % p.toNat := hyR_eq_mul.symm
 
 /-- Converting into Montgomery form and back is the identity on reduced inputs. -/
-@[simp]
+@[simp, grind =]
 theorem fromMont_toMont (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
     ctx.fromMont (ctx.toMont a) = a := by
   apply UInt64.toNat_inj.mp
@@ -533,7 +537,7 @@ theorem fromMont_toMont (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
     _ = a.toNat * UInt64.word % p.toNat := toNat_toMont ctx a ha
 
 /-- Montgomery multiplication computes modular multiplication after conversion. -/
-@[simp]
+@[simp, grind =]
 theorem toNat_mulMont (ctx : MontCtx p) (a b : UInt64)
     (ha : a < p) (hb : b < p) :
     (ctx.fromMont (ctx.mulMont (ctx.toMont a) (ctx.toMont b))).toNat =
@@ -549,6 +553,7 @@ theorem toNat_mulMont (ctx : MontCtx p) (a b : UInt64)
           rw [fromMont_toMont ctx a ha, fromMont_toMont ctx b hb]
 
 /-- User-facing equality form of Montgomery multiplication. -/
+@[grind =]
 theorem mulMont_eq (ctx : MontCtx p) (a b : UInt64)
     (ha : a < p) (hb : b < p) :
     ctx.fromMont (ctx.mulMont (ctx.toMont a) (ctx.toMont b)) =
