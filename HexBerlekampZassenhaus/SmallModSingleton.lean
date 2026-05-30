@@ -110,9 +110,18 @@ theorem common_dvd_one_of_isGoodPrime_monicModularImage
   have hg_r : g ∣ r := dvd_trans_FpPoly hg_mmi hscale_dvd_r
   have hg_dr : g ∣ DensePoly.derivative r :=
     dvd_trans_FpPoly hg_dmmi hscale_dvd_dr
-  have hsf : DensePoly.gcd r (DensePoly.derivative r) = 1 :=
-    isGoodPrime_squareFreeModP core p hgood
-  exact Hex.Berlekamp.squareFree_common_of_gcd_eq_one hsf g hg_r hg_dr
+  have hgcd_unit :
+      Hex.Berlekamp.isUnitPolynomial (DensePoly.gcd r (DensePoly.derivative r)) = true := by
+    have hsq : squareFreeModP core p := isGoodPrime_squareFreeModP core p hgood
+    unfold squareFreeModP at hsq
+    change gcdIsUnit (DensePoly.gcd r (DensePoly.derivative r)) = true at hsq
+    unfold gcdIsUnit at hsq
+    have hsize : (DensePoly.gcd r (DensePoly.derivative r)).size = 1 := by
+      simpa using (beq_iff_eq.mp hsq)
+    unfold Hex.Berlekamp.isUnitPolynomial
+    have hpos : 0 < (DensePoly.gcd r (DensePoly.derivative r)).size := by omega
+    rw [DensePoly.degree?_eq_some_of_pos_size _ hpos, hsize]
+  exact Hex.Berlekamp.isUnitPolynomial_of_dvd_gcd_isUnit hg_r hg_dr hgcd_unit
 
 /--
 For a `choosePrimeData?` selection whose Berlekamp factor count is at

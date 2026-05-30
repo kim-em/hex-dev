@@ -29,6 +29,8 @@ namespace Hex
 namespace BZCrossCheck
 
 private instance boundsTwentyThree : ZMod64.Bounds 23 := ⟨by decide, by decide⟩
+private instance boundsThirteen : ZMod64.Bounds 13 := ⟨by decide, by decide⟩
+private instance boundsThirtyOne : ZMod64.Bounds 31 := ⟨by decide, by decide⟩
 
 /-- The integer linear polynomial `x - r`. -/
 private def linear (r : Int) : ZPoly :=
@@ -43,6 +45,12 @@ private def polyTwentyThree (coeffs : Array Nat) : FpPoly 23 :=
 /-- The integer polynomial whose distinct integer roots are `roots`. -/
 private def fromRoots (roots : List Int) : ZPoly :=
   Array.polyProduct (roots.map linear).toArray
+
+private def positiveRoots (n : Nat) : List Int :=
+  (List.range n).map fun i => Int.ofNat (i + 1)
+
+private def positiveRootNats (n : Nat) : List Nat :=
+  (List.range n).map fun i => i + 1
 
 /-- Sort the factor array by negated constant term, which equals the
 unique integer root for each linear factor and so determines the factor
@@ -185,6 +193,20 @@ private def fixturesN5 : List (List Int) :=
 
 #guard sqrtTwoThreeLiftData.liftedFactors.size = 4
 #guard crossCheckBuckets sqrtTwoThreeProduct sqrtTwoThreeLiftData sqrtTwoThreeExpectedFactors
+
+/-! ## Good-prime regression fixtures -/
+
+private def splitProduct11 : ZPoly := fromRoots (positiveRoots 11)
+private def splitProduct24 : ZPoly := fromRoots (positiveRoots 24)
+
+private def hasRootCollisionModulo (p : Nat) (roots : List Nat) : Bool :=
+  let residues := roots.map (fun r => r % p)
+  residues.length != residues.eraseDups.length
+
+#guard isGoodPrime splitProduct11 13
+#guard isGoodPrime splitProduct24 31
+#guard [3, 5, 7, 11, 13, 17, 19, 23, 31, 71].all
+  (fun p => hasRootCollisionModulo p (positiveRootNats 72))
 
 end BZCrossCheck
 end Hex

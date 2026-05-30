@@ -53,10 +53,21 @@ end ZPoly
 def leadingCoeffAdmissible (f : ZPoly) (p : Nat) [ZMod64.Bounds p] : Prop :=
   ZPoly.leadingCoeffModP f p ≠ 0
 
-/-- The modular image is square-free according to the executable gcd criterion. -/
+/--
+Executable test that a field-polynomial gcd is a unit.
+
+`DensePoly.gcd` is the raw Euclidean representative, so over a field it may be
+any nonzero constant associate of `1`.  In normalized dense representation,
+nonzero constants are exactly the polynomials with one stored coefficient.
+-/
+def gcdIsUnit {R : Type u} [Zero R] [DecidableEq R]
+    (g : DensePoly R) : Bool :=
+  g.size == 1
+
+/-- The modular image is square-free according to the executable gcd-unit criterion. -/
 def squareFreeModP (f : ZPoly) (p : Nat) [ZMod64.Bounds p] : Prop :=
   let fModP := ZPoly.modP p f
-  DensePoly.gcd fModP (DensePoly.derivative fModP) = 1
+  gcdIsUnit (DensePoly.gcd fModP (DensePoly.derivative fModP)) = true
 
 /--
 Executable good-prime predicate for the Berlekamp-Zassenhaus pipeline.
@@ -68,7 +79,7 @@ def isGoodPrime (f : ZPoly) (p : Nat) [ZMod64.Bounds p] : Bool :=
   let fModP := ZPoly.modP p f
   3 <= p &&
     ZPoly.leadingCoeffModP f p != 0 &&
-    DensePoly.gcd fModP (DensePoly.derivative fModP) == 1
+    gcdIsUnit (DensePoly.gcd fModP (DensePoly.derivative fModP))
 
 private theorem bounds_two : ZMod64.Bounds 2 := by
   constructor <;> decide
@@ -969,7 +980,7 @@ theorem isGoodPrime_squareFreeModP
   unfold isGoodPrime at hgood
   unfold squareFreeModP
   simp only [Bool.and_eq_true] at hgood
-  simpa [beq_iff_eq] using hgood.2
+  exact hgood.2
 
 /--
 A successful good-prime check rules out a vanishing modular image: the leading
@@ -5716,7 +5727,12 @@ private theorem factorFastCoreWithBound_ne_none_of_recovery_on_schedule
   simp at hsome
 
 private def factorFastCoreGuardPrimeData : PrimeChoiceData :=
-  choosePrimeData cldGuardF
+  letI := bounds_five
+  let c : SmallPrimeCandidate :=
+    { p := 5, bounds := bounds_five, prime := prime_five }
+  { p := 5
+    fModP := ZPoly.modP 5 cldGuardF
+    factorsModP := berlekampFactorsModP cldGuardF c }
 
 #guard factorFastCoreWithBound cldGuardF 1 factorFastCoreGuardPrimeData
     (initialHenselPrecision 1) (ZPoly.quadraticDoublingSteps 1 + 2) =

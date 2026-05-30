@@ -132,6 +132,18 @@ private def mkExpected (id : String) (coeffs : Array Int)
     (scalar : Int) (factors : List (List Int × Nat)) : ExpectedCase :=
   { id, coeffs, scalar, factors }
 
+private def linear (r : Int) : ZPoly :=
+  DensePoly.ofCoeffs #[-r, 1]
+
+private def positiveRoots (n : Nat) : List Int :=
+  (List.range n).map fun i => Int.ofNat (i + 1)
+
+private def splitProductCoeffs (n : Nat) : Array Int :=
+  liftCoeffs (Array.polyProduct ((positiveRoots n).map linear).toArray) |>.toArray
+
+private def splitProductExpectedFactors (n : Nat) : List (List Int × Nat) :=
+  (positiveRoots n).map fun r => ([-r, 1], 1)
+
 /-- One fixture whose modular split metadata is checked by the FLINT oracle. -/
 private structure PinnedCase where
   id      : String
@@ -280,6 +292,20 @@ private def cases_content : List ExpectedCase :=
   , mkExpected "content3/cyclo7" #[3, 3, 3, 3, 3, 3, 3]
       3 [([1, 1, 1, 1, 1, 1, 1], 1)] ]
 
+/-! ## Good-prime regression cases
+
+These split products exercise the path where the raw executable gcd can return
+a non-monic unit for square-free modular images.  Results are pinned rather
+than emitted through `factor` so the oracle catches any reducible Hex output. -/
+
+private def cases_good_prime_regression : List ExpectedCase :=
+  [ mkExpected "regression/split_roots_1_11" (splitProductCoeffs 11)
+      1 (splitProductExpectedFactors 11)
+  , mkExpected "regression/split_roots_1_24" (splitProductCoeffs 24)
+      1 (splitProductExpectedFactors 24)
+  , mkExpected "regression/split_roots_1_72" (splitProductCoeffs 72)
+      1 (splitProductExpectedFactors 72) ]
+
 private def emitCase (c : Case) : IO Unit :=
   emitFactorCase c.id (DensePoly.ofCoeffs c.coeffs)
 
@@ -307,3 +333,4 @@ def main : IO Unit := do
   for c in Hex.BZEmit.cases_pinned_factor do Hex.BZEmit.emitPinnedCase c
   for c in Hex.BZEmit.cases_pinned_expected do Hex.BZEmit.emitPinnedExpectedCase c
   for c in Hex.BZEmit.cases_content do Hex.BZEmit.emitExpectedCase c
+  for c in Hex.BZEmit.cases_good_prime_regression do Hex.BZEmit.emitExpectedCase c
