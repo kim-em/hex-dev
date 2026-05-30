@@ -55,6 +55,15 @@ headline report ([benchmarking.md §Headline reports](benchmarking.md#headline-r
 records only an analytical summary; raw `*.json.gz` artefacts are
 not committed.
 
+Sample data presented to the report's author is automatically
+filtered by `lake exe foo_bench profile` to retain only samples
+from the bench thread during the bench library's timed regions —
+the same monotonic-clock boundaries that define the bench
+verdict's timing. Prep, autotune overhead between probes, result
+hashing, and process exit are excluded by construction. The
+filtering postprocessor emits a diagnostics block per run; see
+[§Required output](#required-output).
+
 ## Coverage requirement
 
 Profile **at least one representative case per
@@ -108,6 +117,16 @@ records:
   [benchmarking.md §Attribution rule](benchmarking.md#the-attribution-rule)
   and the §Concerns subsection links it.
 
+- **Diagnostics block** quoted from the filtering postprocessor:
+  calibration residual, total timed duration, retained sample
+  count, and sensitivity-check verdict. A profile the
+  postprocessor flags as low-confidence (residual above the
+  configured threshold, retained samples below the configured
+  minimum, or the sensitivity check disagreeing on the top
+  frames) does not satisfy the Phase-4 deliverable; the case must
+  be re-run with a larger per-probe duration or the profile
+  replaced with one that does pass.
+
 ## Reproducibility
 
 The headline report's §Profile subsection records, for each
@@ -118,7 +137,10 @@ profiled case:
 - sampling rate (Hz);
 - input family name and parameter (e.g. `random-bounded`, `n=160`);
 - seed, where the input is randomised;
-- exact command line invoked.
+- exact command line invoked;
+- lean-bench version (the postprocessor's filtering logic is
+  version-specific);
+- samply version (sample timestamp format depends on it).
 
 The raw `*.json.gz` artefact's developer-local path may be
 recorded for reference but is not committed.
