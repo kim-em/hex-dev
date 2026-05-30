@@ -93,6 +93,19 @@ Gating external comparator:
   These fixed comparator targets are tagged `scheduled-hardware`; this bench
   executable's default `verify` command skips that tag so CI does not build or
   run the AFP comparator.
+* `runIsabelleSplitN{2,3,4,5}Checksum`,
+  `runIsabelleDegreeHeight{D}x{H}Checksum`: per-rung verified-Isabelle pairs
+  for the parametric split-family and degree/height Lean targets, used to
+  build the `hex/isabelle` scaling ladders in
+  `reports/hex-berlekamp-zassenhaus-performance.md`.
+* `runIsabelleAdv{X4Plus1,Phi15,SwinnertonDyerSD3}Checksum`: per-input
+  verified-Isabelle pairs for the HO-2 adversarial singletons (one new
+  registration per distinct singleton input not already covered by
+  `runIsabelleFactorChecksum`).
+* `runIsabelleFallbackProbeN{11,12,13,15,18,22,24}Checksum`: per-rung
+  verified-Isabelle pairs for the cascade-trigger fallback-probe schedule. The
+  `expectedHash` field is `none` on these registrations to keep elaboration off
+  the cascade-affected Lean `factor` call path; see the per-`def` doc comment.
 -/
 
 namespace Hex
@@ -701,6 +714,72 @@ def runIsabelleDegreeHeight3x8Checksum : Unit → IO UInt64 := fun _ => do
     (prepDegreeHeightInput (encodeDegreeHeightParam 3 8)).poly
   return checksumCanonicalFactorization scalar factors
 
+/--
+Per-input verified-Isabelle BZ comparator targets on the pinned HO-2 adversarial
+fixtures. Each pairs with the corresponding `runFactorAdv*Checksum` Lean
+singleton at its pinned `n = 0` row to yield a single-rung `hex/isabelle`
+ratio. The advQuadSqrt2Sqrt3 case is already covered by
+`runIsabelleFactorChecksum`, so only the other three adversarial inputs add new
+registrations here.
+-/
+def runIsabelleAdvX4Plus1Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization advX4Plus1
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleAdvPhi15Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization advPhi15
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleAdvSwinnertonDyerSD3Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization advSwinnertonDyerSD3
+  return checksumCanonicalFactorization scalar factors
+
+/--
+Per-rung verified-Isabelle BZ comparator targets on the cascade-trigger
+`prepFallbackProbeInput n = (X-1)(X-2)...(X-n)` family for each rung of
+`fallbackProbeSchedule = #[11, 12, 13, 15, 18, 22, 24]`. Each pairs with the
+corresponding rung of the parametric Lean `runFactorFallbackProbeChecksum`
+registration. The Isabelle reference factorisation on `(X-1)...(X-n)` is the
+list of `n` distinct monic linears; this is the canonical-truth comparator the
+`bz-vs-isabelle-investigation.md` post-mortem documents Lean as failing to
+match on these rungs.
+
+`expectedHash` is left as `none` rather than computing
+`checksumCanonicalLeanFactorization (factor (prepFallbackProbeInput n))` at
+elaboration time, because that compile-time call would invoke the same cascade
+the post-mortem documents (200×–2,400× slower than Isabelle plus reducible
+factor entries on these inputs), inflating compile time. Bench-time multiset
+agreement is recorded by comparing the observed Isabelle hash against the
+known split factorisation post-hoc.
+-/
+def runIsabelleFallbackProbeN11Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization (prepFallbackProbeInput 11)
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleFallbackProbeN12Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization (prepFallbackProbeInput 12)
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleFallbackProbeN13Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization (prepFallbackProbeInput 13)
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleFallbackProbeN15Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization (prepFallbackProbeInput 15)
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleFallbackProbeN18Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization (prepFallbackProbeInput 18)
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleFallbackProbeN22Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization (prepFallbackProbeInput 22)
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleFallbackProbeN24Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization (prepFallbackProbeInput 24)
+  return checksumCanonicalFactorization scalar factors
+
 def scheduledHardwareTag : String :=
   "scheduled-hardware"
 
@@ -1169,6 +1248,86 @@ setup_fixed_benchmark runIsabelleDegreeHeight3x8Checksum where {
     maxSecondsPerCall := 60.0
     expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
       (factor (prepDegreeHeightInput (encodeDegreeHeightParam 3 8)).poly)))
+    tags := #[scheduledHardwareTag]
+  }
+
+/- Per-input verified-Isabelle comparator registrations on the HO-2 adversarial
+fixtures (one per distinct singleton input). Each pairs with the matching
+`runFactorAdv*Checksum` Lean singleton's pinned `n = 0` row. `advX4Plus1` and
+`advPhi15` are small enough that the `factor`-driven `expectedHash` elaborates
+quickly; `advSwinnertonDyerSD3` factor exceeds the verifier's per-call budget
+(see `runAdvSwinnertonDyerSD3ModularSplitChecksum` doc) so its
+`expectedHash` is left `none` and multiset agreement is established at bench
+time by `ensureIsabelleBZCrossCheck` if the input is added to that fixture
+list, or post-hoc against the known SD3 reference factorisation. -/
+setup_fixed_benchmark runIsabelleAdvX4Plus1Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash :=
+      some (Hashable.hash (checksumCanonicalLeanFactorization (factor advX4Plus1)))
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleAdvPhi15Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash :=
+      some (Hashable.hash (checksumCanonicalLeanFactorization (factor advPhi15)))
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleAdvSwinnertonDyerSD3Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    tags := #[scheduledHardwareTag]
+  }
+
+/- Per-rung verified-Isabelle comparator registrations on
+`prepFallbackProbeInput n` for each rung of `fallbackProbeSchedule`. Pairs with
+`runFactorFallbackProbeChecksum` at the same rung. `expectedHash` is `none` on
+every registration to avoid elaborating the cascade-affected Lean `factor` call
+at compile time (see the per-`def` doc comment for the rationale). Tagged
+`scheduled-hardware` so CI's `verify` does not invoke the AFP-extracted
+comparator. -/
+setup_fixed_benchmark runIsabelleFallbackProbeN11Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleFallbackProbeN12Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleFallbackProbeN13Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleFallbackProbeN15Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleFallbackProbeN18Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleFallbackProbeN22Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleFallbackProbeN24Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
     tags := #[scheduledHardwareTag]
   }
 
