@@ -10068,6 +10068,93 @@ theorem skipIndex_skipIndex_eq_skipIndex2_of_lt {n : Nat}
         omega
       rw [skipIndex_val_of_not_lt p _ hp]
 
+/-- Foldl over a list whose body is identically zero leaves the seed
+unchanged. -/
+private theorem foldl_add_zero_body {α : Type u} [Lean.Grind.CommRing α]
+    {β : Type v} (xs : List β) (z : α) (f : β → α)
+    (hall : ∀ y ∈ xs, f y = 0) :
+    xs.foldl (fun acc y => acc + f y) z = z := by
+  induction xs generalizing z with
+  | nil => rfl
+  | cons y ys ih =>
+      simp only [List.foldl_cons]
+      have hy : f y = 0 := hall y List.mem_cons_self
+      rw [hy]
+      have hzero : z + (0 : α) = z := by grind
+      rw [hzero]
+      exact ih z (fun w hw => hall w (List.mem_cons_of_mem _ hw))
+
+/-- Foldl over a `Nodup` list where the additive contribution is
+nonzero at exactly one matching element. -/
+private theorem foldl_add_with_unique_match {α : Type u}
+    [Lean.Grind.CommRing α] {β : Type v} [DecidableEq β]
+    (xs : List β) (z : α) (q : β) (f : β → α)
+    (hmem : q ∈ xs) (hnodup : xs.Nodup) :
+    xs.foldl (fun acc x => acc + (if x = q then f x else (0 : α))) z = z + f q := by
+  induction xs generalizing z with
+  | nil => simp at hmem
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      by_cases hxq : x = q
+      · -- x = q. By nodup, q ∉ xs, so the remaining foldl preserves z + f x.
+        subst hxq
+        rw [if_pos rfl]
+        have hxs_nomem : x ∉ xs := (List.nodup_cons.mp hnodup).1
+        apply foldl_add_zero_body xs (z + f x)
+            (fun y => if y = x then f y else (0 : α))
+        intro y hy
+        have hyne : y ≠ x := fun heq => hxs_nomem (heq ▸ hy)
+        exact if_neg hyne
+      · -- x ≠ q. q still in xs; apply IH.
+        rw [if_neg hxq]
+        have hzero_step : z + (0 : α) = z := by grind
+        rw [hzero_step]
+        have hmem' : q ∈ xs := by
+          cases List.mem_cons.mp hmem with
+          | inl h => exact absurd h.symm hxq
+          | inr h => exact h
+        have hnodup' : xs.Nodup := (List.nodup_cons.mp hnodup).2
+        exact ih z hmem' hnodup'
+
+/-- Laplace expansion specialized to a column equal to a standard basis
+vector: if column `c` of `M` holds `1` at row `q` and `0` elsewhere, then
+`det M` equals the signed minor `cofactorSign q c * det (deleteRowCol M q c)`. -/
+theorem det_eq_signed_minor_of_col_basis
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (q c : Fin (n + 1))
+    (hcol : ∀ r : Fin (n + 1), M[r][c] = if r = q then (1 : R) else (0 : R)) :
+    det M = cofactorSign q c * det (deleteRowCol M q c) := by
+  rw [det_eq_foldl_laplace_col M c]
+  -- Rewrite the body using hcol; only the q-th term survives.
+  have hbody : ∀ acc row,
+      acc + M[row][c] * cofactor M row c =
+        acc + (if row = q then cofactor M q c else (0 : R)) := by
+    intro acc row
+    rw [hcol row]
+    by_cases h : row = q
+    · subst h
+      rw [if_pos rfl, if_pos rfl]
+      grind
+    · rw [if_neg h, if_neg h]
+      grind
+  have hfold :
+      (List.finRange (n + 1)).foldl
+          (fun acc row => acc + M[row][c] * cofactor M row c) 0 =
+        (List.finRange (n + 1)).foldl
+          (fun acc row =>
+            acc + (if row = q then cofactor M q c else (0 : R))) 0 := by
+    apply foldl_acc_congr
+    intro acc row _hmem
+    exact hbody acc row
+  rw [hfold]
+  have hmem : q ∈ List.finRange (n + 1) := List.mem_finRange q
+  have hnodup : (List.finRange (n + 1)).Nodup := List.nodup_finRange (n + 1)
+  rw [foldl_add_with_unique_match (List.finRange (n + 1)) (0 : R) q
+        (fun _ => cofactor M q c) hmem hnodup]
+  -- Now goal: 0 + cofactor M q c = cofactorSign q c * det (deleteRowCol M q c).
+  rw [show (0 : R) + cofactor M q c = cofactor M q c by grind]
+  rfl
+
 /-- For `p < q`, deleting row `r_q = q.val - 1` and the last column of
 `mMatrix B v p` recovers `nMatrix B p q hpq`, independent of `v`. -/
 theorem deleteRowCol_mMatrix_at_q_minus_one_eq_nMatrix_of_lt
