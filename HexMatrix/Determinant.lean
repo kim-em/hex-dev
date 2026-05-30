@@ -9997,6 +9997,117 @@ def basisVec {R : Type u} [Zero R] [One R] {n : Nat} (q : Fin (n + 2)) :
     (basisVec (R := R) q)[i] = if i = q then (1 : R) else (0 : R) := by
   simp [basisVec]
 
+/-- For `p < q`, the unique row of `Fin (n + 1)` that maps to `q` under
+`skipIndex p` is `⟨q.val - 1, _⟩`. -/
+theorem skipIndex_at_q_minus_one_eq_q_of_lt {n : Nat}
+    (p q : Fin (n + 2)) (hpq : p.val < q.val) :
+    skipIndex p (⟨q.val - 1, by have := q.isLt; omega⟩ : Fin (n + 1)) = q := by
+  apply Fin.ext
+  show (skipIndex p (⟨q.val - 1, by have := q.isLt; omega⟩ : Fin (n + 1))).val = q.val
+  have hnot : ¬ ((⟨q.val - 1, by have := q.isLt; omega⟩ : Fin (n + 1)).val < p.val) := by
+    show ¬ q.val - 1 < p.val
+    omega
+  rw [skipIndex_val_of_not_lt p _ hnot]
+  show q.val - 1 + 1 = q.val
+  omega
+
+/-- For `p < q`, the chained skip `skipIndex p ∘ skipIndex r_q`
+(where `r_q = q.val - 1`) equals `skipIndex2 p q hpq`. This is the
+row-reindexing identity used to recover the `n × n` minor of `B` from
+the deleted-row-and-last-column minor of `mMatrix B (basisVec q) p`. -/
+theorem skipIndex_skipIndex_eq_skipIndex2_of_lt {n : Nat}
+    (p q : Fin (n + 2)) (hpq : p.val < q.val) (i : Fin n) :
+    skipIndex p
+        (skipIndex (⟨q.val - 1, by have := q.isLt; omega⟩ : Fin (n + 1)) i) =
+      skipIndex2 p q hpq i := by
+  apply Fin.ext
+  by_cases h1 : i.val < p.val
+  · have hrq : i.val < q.val - 1 := by omega
+    rw [skipIndex2_val_of_lt_p p q hpq i h1]
+    have hskip1 : skipIndex (⟨q.val - 1, by have := q.isLt; omega⟩ : Fin (n + 1)) i =
+        ⟨i.val, by have := i.isLt; omega⟩ := by
+      apply Fin.ext
+      show (skipIndex _ i).val = i.val
+      have : i.val < (⟨q.val - 1, by have := q.isLt; omega⟩ : Fin (n + 1)).val := by
+        show i.val < q.val - 1
+        omega
+      rw [skipIndex_val_of_lt _ _ this]
+    rw [hskip1]
+    show (skipIndex p (⟨i.val, _⟩ : Fin (n + 1))).val = i.val
+    have hp : (⟨i.val, by have := i.isLt; omega⟩ : Fin (n + 1)).val < p.val := h1
+    rw [skipIndex_val_of_lt p _ hp]
+  · by_cases h2 : i.val + 1 < q.val
+    · rw [skipIndex2_val_of_between p q hpq i h1 h2]
+      have hrq_lt : i.val < q.val - 1 := by omega
+      have hskip1 : skipIndex (⟨q.val - 1, by have := q.isLt; omega⟩ : Fin (n + 1)) i =
+          ⟨i.val, by have := i.isLt; omega⟩ := by
+        apply Fin.ext
+        show (skipIndex _ i).val = i.val
+        have : i.val < (⟨q.val - 1, by have := q.isLt; omega⟩ : Fin (n + 1)).val := by
+          show i.val < q.val - 1
+          omega
+        rw [skipIndex_val_of_lt _ _ this]
+      rw [hskip1]
+      show (skipIndex p (⟨i.val, _⟩ : Fin (n + 1))).val = i.val + 1
+      have hp : ¬ (⟨i.val, by have := i.isLt; omega⟩ : Fin (n + 1)).val < p.val := h1
+      rw [skipIndex_val_of_not_lt p _ hp]
+    · rw [skipIndex2_val_of_ge_q p q hpq i h1 h2]
+      have hrq_ge : ¬ i.val < q.val - 1 := by omega
+      have hskip1 : skipIndex (⟨q.val - 1, by have := q.isLt; omega⟩ : Fin (n + 1)) i =
+          ⟨i.val + 1, by have := i.isLt; omega⟩ := by
+        apply Fin.ext
+        show (skipIndex _ i).val = i.val + 1
+        have : ¬ i.val < (⟨q.val - 1, by have := q.isLt; omega⟩ : Fin (n + 1)).val := by
+          show ¬ i.val < q.val - 1
+          exact hrq_ge
+        rw [skipIndex_val_of_not_lt _ _ this]
+      rw [hskip1]
+      show (skipIndex p (⟨i.val + 1, _⟩ : Fin (n + 1))).val = i.val + 2
+      have hp : ¬ (⟨i.val + 1, by have := i.isLt; omega⟩ : Fin (n + 1)).val < p.val := by
+        show ¬ i.val + 1 < p.val
+        omega
+      rw [skipIndex_val_of_not_lt p _ hp]
+
+/-- For `p < q`, deleting row `r_q = q.val - 1` and the last column of
+`mMatrix B v p` recovers `nMatrix B p q hpq`, independent of `v`. -/
+theorem deleteRowCol_mMatrix_at_q_minus_one_eq_nMatrix_of_lt
+    {R : Type u} {n : Nat} (B : Matrix R (n + 2) n) (v : Vector R (n + 2))
+    (p q : Fin (n + 2)) (hpq : p.val < q.val) :
+    deleteRowCol (mMatrix B v p)
+        (⟨q.val - 1, by have := q.isLt; omega⟩ : Fin (n + 1)) (Fin.last n) =
+      nMatrix B p q hpq := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let ii : Fin n := ⟨i, hi⟩
+  let jj : Fin n := ⟨j, hj⟩
+  change (deleteRowCol (mMatrix B v p)
+        (⟨q.val - 1, by have := q.isLt; omega⟩ : Fin (n + 1)) (Fin.last n))[ii][jj] =
+    (nMatrix B p q hpq)[ii][jj]
+  rw [deleteRowCol_entry]
+  rw [nMatrix_entry]
+  -- The column index: skipIndex (Fin.last n) jj = jj.castSucc; its val = jj.val < n.
+  have hjj_castSucc : (skipIndex (Fin.last n) jj).val = jj.val := by
+    show (skipIndex (Fin.last n) jj).val = jj.val
+    rw [skipIndex_last]
+    simp
+  have hjjlt : (skipIndex (Fin.last n) jj).val < n := by
+    rw [hjj_castSucc]; exact jj.isLt
+  rw [mMatrix_entry_lt B v p (skipIndex (⟨q.val - 1, _⟩ : Fin (n + 1)) ii)
+        (skipIndex (Fin.last n) jj) hjjlt]
+  -- Both row and column indices match the nMatrix indexing.
+  have hrow : skipIndex p
+        (skipIndex (⟨q.val - 1, by have := q.isLt; omega⟩ : Fin (n + 1)) ii) =
+      skipIndex2 p q hpq ii :=
+    skipIndex_skipIndex_eq_skipIndex2_of_lt p q hpq ii
+  have hcol : (⟨(skipIndex (Fin.last n) jj).val, hjjlt⟩ : Fin n) = jj := by
+    apply Fin.ext
+    show (skipIndex (Fin.last n) jj).val = jj.val
+    exact hjj_castSucc
+  -- Use simp to handle index-rewriting with proof-irrelevance.
+  simp only [hrow, hcol]
+
 /-- `mDet B (basisVec p) p = 0`: the basis vector `e_p` becomes the zero
 column inside `mMatrix B (basisVec p) p` after row `p` is deleted, so
 the determinant vanishes. -/
