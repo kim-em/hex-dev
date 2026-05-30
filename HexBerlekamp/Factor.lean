@@ -495,7 +495,7 @@ most one factor (starting from the singleton `[f]`), the very first
 unfolding means every fixed-space kernel witness yields
 `kernelWitnessSplit? = none`. This isolates the executable / loop side of
 Berlekamp completeness; the algebraic implication "no kernel-witness split
-implies irreducibility" lives in a separate finite-field bridge. -/
+implies irreducibility" lives in a separate finite-field module. -/
 
 private theorem splitFirstFactor?_length_succ_of_some
     (witnesses : List (FpPoly p)) :
@@ -609,7 +609,7 @@ length at most one, then every fixed-space kernel witness yields
 `kernelWitnessSplit? = none`. This is the loop-tracing half of the parent
 Berlekamp completeness theorem; the algebraic half (no kernel-witness split
 forces irreducibility for square-free monic inputs) belongs to a separate
-Mathlib-free finite-field bridge.
+Mathlib-free finite-field module.
 -/
 theorem kernelWitnessSplit?_none_of_berlekampFactor_factors_length_le_one
     (f : FpPoly p) (hmonic : DensePoly.Monic f)

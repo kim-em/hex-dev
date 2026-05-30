@@ -6,16 +6,16 @@ import HexPolyFp.QuotientFrobenius
 import HexArith.Nat.Pow
 
 /-!
-Project-side soundness bridge from `Berlekamp.rabinTest` to
+Project-side soundness of `Berlekamp.rabinTest` against
 `FpPoly.Irreducible`.
 
 The executable irreducibility surface in `HexBerlekamp/Irreducibility.lean`
 gives a `Bool` predicate `rabinTest f hmonic` capturing the three legs of
-Rabin's criterion phrased through `frobeniusXPowMod`. This module bridges
+Rabin's criterion phrased through `frobeniusXPowMod`. This module reduces
 `rabinTest = true` to the project-side `FpPoly.Irreducible` predicate from
 `HexPolyFp/Basic.lean`, without going through Mathlib.
 
-The bridge proof reduces to a small set of foundational lemmas tracked as
+The proof reduces to a small set of foundational lemmas tracked as
 their own follow-up issues; `rabinTest_imp_irreducible` only orchestrates
 them in a single contrapositive argument.
 -/
@@ -1143,7 +1143,7 @@ theorem irreducible_dvd_xPowSubX_degree
           (p ^ g.degree?.getD 0) =
         FpPoly.Quotient.X (g := g) (hmonic := hg_monic) (hg_pos := hg_pos) :=
     FpPoly.Quotient.pow_card_eq_self_of_irreducible hg_irr _
-  -- Step 2: bridge the LHS to the executable representative.
+  -- Step 2: rewrite the LHS to the executable representative.
   rw [quotient_X_pow_eq_reduce_frobeniusXPowMod hg_monic hg_pos
       (g.degree?.getD 0)] at hfix
   -- `Quotient.X = reduce X` is definitional.
@@ -2077,7 +2077,7 @@ shape (decomposing `rabinTest`, picking a monic irreducible factor of
 size strictly between `0` and `n`, routing through a maximal proper
 divisor, and contradicting the gcd leg) lives here. The heavy
 mathematical content (Rabin's degree theorem in both directions,
-finite-field factor existence, the absolute–modular Frobenius bridge,
+finite-field factor existence, the absolute–modular Frobenius identity,
 and the `xPowSubX` divisibility chain) is delegated to the foundational
 sorries above.
 -/
@@ -2177,7 +2177,7 @@ theorem rabinTest_imp_irreducible
 Accepted executable irreducibility certificates imply project-side
 `FpPoly.Irreducible`, composing
 `checkIrreducibilityCertificate_rabinTest` with the Rabin soundness
-bridge above.
+theorem above.
 -/
 theorem checkIrreducibilityCertificate_imp_irreducible
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
@@ -2428,9 +2428,9 @@ theorem common_dvd_one_of_squareFree_mul
 /--
 Square-free product specialization of
 `exists_reduced_crtZeroOne_kernelWitness_of_coprime_split`.  The extra monicity
-hypothesis on the executable gcd is the local bridge from the common-divisor
-form supplied by square-freeness to the `gcd a b = 1` surface used by the
-XGCD-backed CRT candidate.
+hypothesis on the executable gcd connects the common-divisor form supplied by
+square-freeness to the `gcd a b = 1` surface used by the XGCD-backed CRT
+candidate.
 -/
 theorem exists_reduced_crtZeroOne_kernelWitness_of_squareFree_split
     (a b : FpPoly p)
@@ -2513,7 +2513,7 @@ factors `gcd f (w - C c)`. Combined with a non-constancy hypothesis on
 the witness (no single `(w - C c)` is divisible by `f`), this yields a
 nontrivial Berlekamp split candidate.
 
-The witness-level divisibility hypothesis is the consumer-facing
+The witness-level divisibility hypothesis is the caller-facing
 interface; deriving it from `f ∣ FpPoly.linearPow w p - w` via the
 prime-field product identity is tracked separately (see #4160). -/
 
@@ -2767,7 +2767,7 @@ theorem exists_kernelWitnessSplit?_some_of_witnessProduct_dvd_of_pos_degree
     (by simpa [splitFactorAt] using hdegree)
     (by simpa [splitFactorAt] using hsize_lt)
 
-/-! ### Bezout-coefficient bridge for square-free monic splits
+/-! ### Bezout-coefficient route for square-free monic splits
 
 From any nontrivial product factorization of a square-free monic `f`, the
 common-divisor form `gcd a b ∣ 1` supplied by `common_dvd_one_of_squareFree_mul`
@@ -2862,7 +2862,7 @@ private theorem exists_reduced_crtZeroOne_kernelWitness_of_bezout
 /-- Reduced zero-one CRT witness for a monic split of a square-free product.
 Avoids the `Monic (DensePoly.gcd a b)` hypothesis of
 `exists_reduced_crtZeroOne_kernelWitness_of_squareFree_split` by routing
-through `common_dvd_one_of_squareFree_mul` and the Bezout-coefficient bridge.
+through `common_dvd_one_of_squareFree_mul` and the Bezout-coefficient route.
 -/
 private theorem exists_reduced_crtZeroOne_kernelWitness_of_squareFree_monic_split
     (a b : FpPoly p)
@@ -2907,7 +2907,7 @@ private theorem exists_reduced_crtZeroOne_kernelWitness_of_squareFree_monic_spli
 
 /-! ### Berlekamp completeness composition
 
-Combining the CRT-produced kernel polynomial with the matrix-bridge iff
+Combining the CRT-produced kernel polynomial with the matrix-kernel iff
 yields the algebraic half of Berlekamp completeness: if no fixed-space
 kernel witness admits a Berlekamp split, the square-free monic input is
 irreducible. -/

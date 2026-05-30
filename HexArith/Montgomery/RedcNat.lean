@@ -5,8 +5,8 @@ import HexArith.UInt64.Wide
 Nat-level Montgomery reduction for `HexArith`.
 
 This file states the REDC computation purely over `Nat`, using the `UInt64`
-word radix `R = 2^64`. The executable `UInt64` bridge in later modules is
-proved against these definitions.
+word radix `R = 2^64`. The executable `UInt64` implementation in later modules
+is proved against these definitions.
 -/
 
 /-- Nat-level Montgomery reduction with radix `R = 2^64`. -/

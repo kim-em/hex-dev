@@ -556,7 +556,7 @@ fixed Frobenius difference `diff`.  After the first iteration the bucket
 factor is no longer literally `gcd residual diff`, so divisibility by `diff`
 needs more than `DensePoly.gcd_dvd_right`: it follows from a step-preserved
 invariant on `(residual, acc)` whose construction (the square-free /
-multiplicity content) is delegated to the consumer.
+multiplicity content) is delegated to the caller.
 
 `finishDegreePower_bucket_dvd_diff` covers all three exit cases of
 `finishDegreePower` — including the scalar-unit residual case where the

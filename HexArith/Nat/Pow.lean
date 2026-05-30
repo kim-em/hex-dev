@@ -37,7 +37,7 @@ private theorem pow_eq_succ_mul_sub_one_add_one_of_one_le
 /--
 The classical geometric-series divisibility identity at the natural-number
 level: `x - 1` divides `x^j - 1` for any `x, j : Nat`. Downstream polynomial
-divisibility proofs use this as an automation-facing bridge, without unfolding
+divisibility proofs use this as an automation-facing rewrite, without unfolding
 the geometric-series witness.
 
 Edge cases (where the implicit subtraction underflows to `0`) all reduce to

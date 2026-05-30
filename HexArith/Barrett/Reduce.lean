@@ -4,7 +4,7 @@ import HexArith.Barrett.ReduceNat
 Executable `UInt64` Barrett reduction for `HexArith`.
 
 This layer packages the modulus and its reciprocal in `BarrettCtx`, defines the
-single-word executable reduction step, and states the bridge theorem relating
+single-word executable reduction step, and states the equality relating
 the `UInt64` code to `barrettReduceNat`.
 -/
 
