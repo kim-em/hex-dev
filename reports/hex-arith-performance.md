@@ -57,48 +57,99 @@ gcd/Bezout-shape hashes.
 
 ## Profile
 
-Profiles were captured with `samply record --save-only` through the
-`hexarith_bench profile` subcommand on `carica` (Apple M2 Ultra, macOS 14.6.1).
-Sampling rate was samply's default 1000 Hz. The profiled binary was built from
-commit `f5bfa6409349b42d02ece03f5cb5193c89118bb4`; the benchmark row reported
+Profiles were captured with `scripts/profile/run_profile.sh`, which runs
+`samply record --save-only --no-open --rate 999 --unstable-presymbolicate` and
+filters the Firefox Profiler JSON to the bench thread during lean-bench timed
+regions only. The host was `carica` (Apple M2 Ultra, macOS 14.6.1, arm64).
+The profiled binary was built from commit
+`eec3a76fab8cfe59ba2b62cb71f3a21b92aae51c`; the child rows report
 `git_dirty=true` because of a pre-existing local `.claude/CLAUDE.md` edit.
+The run used lean-bench `91412dba8350` and lean-bench-samply `602da96df353`.
 Random seeds are not involved in the deterministic HexArith benchmark inputs.
 Raw profiler JSON artefacts are developer-local and are not committed.
 
 - `modular-multiplication-chain`
-  - Command: `lake exe hexarith_bench profile Hex.ArithBench.runMontgomeryMulChain --param 131072 --profiler "samply record --save-only --output /tmp/hexarith-montgomery-chain-131072.json.gz" --target-inner-nanos 5000000000`
-  - Child row: `inner_repeats=128`, `per_call_nanos=38372592.773438`,
-    `result_hash=0x1`, artefact `/tmp/hexarith-montgomery-chain-131072.json.gz`.
-  - Leaf cost: Lean runtime 81.2%, allocation 7.6%, HexArith own code and
-    FFI helpers 7.3%, other 3.9%, GMP 0%.
-  - Inclusive ranking: `Hex.ArithBench.runMontgomeryMulChain` accounted for
-    the profiled work, with `Hex.redc` at 98.8% inclusive, `lean_hex_uint64_add_carry`
-    at 49.0%, `lean_hex_uint64_mul_full` at 34.3%, and Lean constructor/boxing
-    paths below that. This is attributable to the registered
-    `runMontgomeryMulChain` target.
+  - Command: `scripts/profile/run_profile.sh ./.lake/build/bin/hexarith_bench Hex.ArithBench.runMontgomeryMulChain 131072 5000000000`
+  - Child row: `inner_repeats=128`, `per_call_nanos=38730926.757812`,
+    `result_hash=0x1`, filtered artefact
+    `/tmp/hex-profile-runMontgomeryMulChain-131072.json.gz`.
+  - Leaf cost after filtering: Lean runtime 80.5%, allocation/free 7.7%,
+    HexArith own code and FFI helpers 2.2%, other 9.6%, GMP 0%.
+  - Inclusive ranking: all retained samples run under the registered
+    `Hex.ArithBench.runMontgomeryMulChain` target. The dominant library
+    path is the Montgomery loop through `Hex.redc` (99.6% inclusive), with
+    `lean_hex_uint64_add_carry` at 48.7% and `lean_hex_uint64_mul_full` at
+    35.2%. The dominant self-time remains Lean constructor/tag/box/refcount
+    runtime around the word-level reduction. This is attributable to the
+    registered `runMontgomeryMulChain` target.
+  - Diagnostics:
+
+    ```text
+    regions:            2, total timed = 4997.5 ms
+    expected samples:   ~4993 on bench thread
+    retained samples:   4992 on bench thread (54 rejected outside windows)
+    other-thread noise: 2 samples on non-bench threads within timed windows (informational)
+    spawn_anchor_wall_ns=1780141015992269000
+    spawn_anchor_mono_ns=329049889965500
+    sidecar_mono_anchor_ns=329050253617250
+    samply_meta_start_time_ms=1780141015999.488
+    ```
+
 - `word-powmod`
-  - Command: `lake exe hexarith_bench profile Hex.ArithBench.runPowMod --param 16384 --profiler "samply record --save-only --output /tmp/hexarith-powmod-16384.json.gz" --target-inner-nanos 5000000000`
-  - Child row: `inner_repeats=256`, `per_call_nanos=14041132.484375`,
-    `result_hash=0xf00`, artefact `/tmp/hexarith-powmod-16384.json.gz`.
-  - Leaf cost: Lean runtime 60.7%, HexArith own code and FFI helpers 15.8%,
-    GMP 11.1%, allocation 4.7%, other 7.8%.
-  - Inclusive ranking: the exponentiation path ran through
-    `HexArith.powModWordOdd`, `HexArith.powMontBitsGo`, and `Hex.redc`;
-    `Hex.redc` was 68.2% inclusive, with `lean_hex_uint64_add_carry` at 32.3%,
-    `lean_hex_uint64_mul_full` at 25.1%, and `lean_nat_big_shiftr` at 18.3%.
-    This is attributable to the registered `runPowMod` target.
+  - Command: `scripts/profile/run_profile.sh ./.lake/build/bin/hexarith_bench Hex.ArithBench.runPowMod 16384 5000000000`
+  - Child row: `inner_repeats=256`, `per_call_nanos=14258392.250000`,
+    `result_hash=0xf00`, filtered artefact
+    `/tmp/hex-profile-runPowMod-16384.json.gz`.
+  - Leaf cost after filtering: Lean runtime 55.7%, allocation/free 22.2%,
+    GMP big-integer arithmetic 11.7%, HexArith own code and FFI helpers 1.4%,
+    other 9.0%.
+  - Inclusive ranking: all retained samples run under the registered
+    `Hex.ArithBench.runPowMod` target. The dominant library path is
+    `HexArith.powModWordOdd` / `HexArith.powMontBitsGo`, with `Hex.redc`
+    at 68.3% inclusive, `lean_hex_uint64_add_carry` at 32.5%, and
+    `lean_hex_uint64_mul_full` at 24.4%. The GMP self-time comes from Nat
+    bit/exponent manipulation inside the public `powMod` path, not from an
+    unregistered prep phase. This is attributable to the registered
+    `runPowMod` target.
+  - Diagnostics:
+
+    ```text
+    regions:            2, total timed = 3664.6 ms
+    expected samples:   ~3661 on bench thread
+    retained samples:   3661 on bench thread (7 rejected outside windows)
+    other-thread noise: 2 samples on non-bench threads within timed windows (informational)
+    spawn_anchor_wall_ns=1780141028014847000
+    spawn_anchor_mono_ns=329061912648208
+    sidecar_mono_anchor_ns=329062170920958
+    samply_meta_start_time_ms=1780141028020.8098
+    ```
+
 - `bounded-word-extgcd`
-  - Command: `lake exe hexarith_bench profile Hex.ArithBench.runIntExtGcdShapes --param 24576 --profiler "samply record --save-only --output /tmp/hexarith-int-extgcd-24576.json.gz" --target-inner-nanos 5000000000`
-  - Child row: `inner_repeats=1`, `per_call_nanos=3314702833.000000`,
-    `result_hash=0xbc822323529dd715`, artefact
-    `/tmp/hexarith-int-extgcd-24576.json.gz`.
-  - Leaf cost: Lean runtime 77.0%, HexArith own code and FFI helpers 7.2%,
-    GMP 6.6%, allocation 0.8%, other 8.4%.
-  - Inclusive ranking: `Hex.ArithBench.runIntExtGcdShapes` accounted for the
-    profiled work, with `lean_hex_mpz_gcdext` and its fallback wrapper both at
-    82.8% inclusive. The dominant self-time was Lean scalar/int conversion and
-    boxing around the GMP call. This is attributable to the registered
-    `runIntExtGcdShapes` target.
+  - Command: `scripts/profile/run_profile.sh ./.lake/build/bin/hexarith_bench Hex.ArithBench.runIntExtGcdShapes 24576 5000000000`
+  - Child row: `inner_repeats=1`, `per_call_nanos=3347414250.000000`,
+    `result_hash=0xbc822323529dd715`, filtered artefact
+    `/tmp/hex-profile-runIntExtGcdShapes-24576.json.gz`.
+  - Leaf cost after filtering: Lean runtime 72.8%, allocation/free 15.9%,
+    GMP big-integer arithmetic 6.5%, HexArith own code and FFI helpers 1.6%,
+    other 3.3%.
+  - Inclusive ranking: all retained samples run under the registered
+    `Hex.ArithBench.runIntExtGcdShapes` target. The dominant library path is
+    the benchmark's `intExtGcdShapes` fold, with `lean_hex_mpz_gcdext` and
+    `lean_int_extgcd_fallback` both at 82.6% inclusive. The largest leaf
+    entries are Lean scalar/Int conversion and boxing around the GMP call.
+    This is attributable to the registered `runIntExtGcdShapes` target.
+  - Diagnostics:
+
+    ```text
+    regions:            1, total timed = 3347.4 ms
+    expected samples:   ~3344 on bench thread
+    retained samples:   3344 on bench thread (8 rejected outside windows)
+    other-thread noise: 2 samples on non-bench threads within timed windows (informational)
+    spawn_anchor_wall_ns=1780141036126763000
+    spawn_anchor_mono_ns=329070024635333
+    sidecar_mono_anchor_ns=329070251752625
+    samply_meta_start_time_ms=1780141036132.917
+    ```
 
 The dominant inclusive costs all map to registered `HexArith/Bench.lean`
 targets. No unattributed or suspicious dominant cost was observed.
