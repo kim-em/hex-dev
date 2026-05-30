@@ -59,19 +59,23 @@ deterministic degree/height matrix
 `slowDegreeHeightSchedule`); three per-input registrations on the
 HO-2 adversarial singletons not already covered by
 `runIsabelleFactorChecksum`
-(`runIsabelleAdv{X4Plus1,Phi15,SwinnertonDyerSD3}Checksum`); and seven
+(`runIsabelleAdv{X4Plus1,Phi15,SwinnertonDyerSD3}Checksum`); seven
 per-rung registrations on the cascade-trigger fallback-probe family
-(`runIsabelleFallbackProbeN{11,12,13,15,18,22,24}Checksum`). Each
-per-rung Isabelle median pairs with the corresponding Lean medians from
-one of the parametric Lean targets (`runFactorChecksum`,
+(`runIsabelleFallbackProbeN{11,12,13,15,18,22,24}Checksum`); and six
+per-rung registrations on the precision/local-factor schedule
+(`runIsabellePrecisionLocalRung{1..6}Checksum`) — see §"Precision-local
+asymmetric ratio ladder" for the methodology caveat. Each per-rung
+Isabelle median pairs with the corresponding Lean medians from one of
+the parametric Lean targets (`runFactorChecksum`,
 `runFactorFastChecksum`, `runFactorSlowChecksum` on the split family;
 `runFactorDegreeHeightChecksum`, `runFactorFastDegreeHeightChecksum`,
 `runFactorSlowDegreeHeightChecksum` on the degree/height matrix;
 `runFactorAdv*Checksum` on the HO-2 singletons;
-`runFactorFallbackProbeChecksum` on the fallback-probe family) — eight
-parallel `hex/isabelle` ladders against the AFP-extracted comparator,
-replacing the prior single-rung canonical-fixed verdict with the
-scaling-ladder trends below.
+`runFactorFallbackProbeChecksum` on the fallback-probe family;
+`runFastPathPrecisionLocalChecksum` on the precision/local-factor
+family) — nine parallel `hex/isabelle` ladders against the
+AFP-extracted comparator, replacing the prior single-rung
+canonical-fixed verdict with the scaling-ladder trends below.
 
 ### Per-call comparator overhead
 
@@ -550,6 +554,80 @@ rewrite to van Hoeij CLD) and HO-5d
 [#5819](https://github.com/kim-em/hex/issues/5819) /
 [#5831](https://github.com/kim-em/hex/issues/5831); tactical
 discharge of the `fallbackPrimeChoiceData` silent-fallback path).
+
+### Precision-local asymmetric ratio ladder
+
+The six per-rung `runIsabellePrecisionLocalRung{1..6}Checksum` targets
+pair with the corresponding rungs of
+`runFastPathPrecisionLocalChecksum` on the precision/local-factor
+schedule
+`precisionLocalSchedule = #[encodePrecisionLocalParam (d, h, k, r) for
+(d, h, k, r) ∈ {(2,2,4,2), (2,2,16,2), (4,4,16,4), (4,16,64,4),
+(6,16,64,6), (8,32,128,8)}]`. The Isabelle target on each rung runs
+the verified-Isabelle full-factor extraction on
+`prepPrecisionLocalInput`'s polynomial — concretely
+`(X - (h+1)·1)(X - (h+1)·2)…(X - (h+1)·r)`, a deterministic
+linear-split polynomial of degree `r`.
+
+**Asymmetric operation caveat.** The Lean target measures *fast-path
+setup* on the polynomial:
+`multifactorLiftQuadratic 31 k poly localFactors`, plus
+`modularFactorDegreesAt? poly 31`, plus the precision cap
+`factorFastPrecisionCap poly`. It does *not* call
+`factorFast`/`factor` end-to-end. The Lean target's documented
+purpose (in `HexBerlekampZassenhaus/Bench.lean §"Stable checksum for
+verify-budget-safe fast-path setup …"`) is to keep the
+`k`-and-`r`-axes visible to the bench harness while sidestepping the
+`verify` budget that a full `factorFast` call would blow through on
+the larger rungs.
+
+Pairing a setup-only Lean median against a full-factor Isabelle
+median therefore yields an asymmetric ratio
+`Lean_setup / Isabelle_full` on the same input. This ratio is *a
+strict lower bound on the equivalent
+`Lean_factorFast` / `Isabelle_full` ratio* on that input, since
+`factorFast` runs the same setup work as a subroutine and then does
+additional recombination work on top. The asymmetric ratio's value
+is as a tripwire:
+
+- `Lean_setup / Isabelle_full ≤ 1×` is *no conclusion* about gating
+  (Lean's full factor could still be much slower than Isabelle's
+  full factor — only the setup-only subroutine is bounded).
+- `Lean_setup / Isabelle_full > 1×` is a *hard fail* on the gating
+  goal: Lean's setup work alone exceeds Isabelle's full-factor wall
+  on the same input, so any path through `factorFast`/`factor` is
+  necessarily worse.
+
+Because of the asymmetry, the §"Concerns" gating-goal headline does
+not cite the precision-local rungs as headline evidence; they are
+informational tripwires that pass through the same
+`scheduled-hardware` tagging as the other Isabelle pairings.
+
+**Comparator run status.** The six per-rung Isabelle registrations
+are wired in
+[HexBerlekampZassenhaus/Bench.lean](../HexBerlekampZassenhaus/Bench.lean)
+but no comparator sweep has yet exported a `bz_isabelle`-paired
+JSON for these rungs. The first available sweep slot on quiet
+`carica` hardware (load average below the SPEC-recommended
+benchmarking threshold) will fill in the ladder table here. Until
+then, the §Concerns bullet records the precision-local ratio as
+"pending" rather than "excluded".
+
+| Rung `(d, h, k, r)` | Lean median (`runFastPathPrecisionLocalChecksum`) | Isabelle median | overhead share | raw ratio | adjusted ratio | tripwire status |
+|:---|---:|---:|---:|---:|---:|:---|
+| `(d=2, h=2, k=4, r=2)` | pending | pending | pending | pending | pending | not yet measured |
+| `(d=2, h=2, k=16, r=2)` | pending | pending | pending | pending | pending | not yet measured |
+| `(d=4, h=4, k=16, r=4)` | pending | pending | pending | pending | pending | not yet measured |
+| `(d=4, h=16, k=64, r=4)` | pending | pending | pending | pending | pending | not yet measured |
+| `(d=6, h=16, k=64, r=6)` | pending | pending | pending | pending | pending | not yet measured |
+| `(d=8, h=32, k=128, r=8)` | pending | pending | pending | pending | pending | not yet measured |
+
+The Lean per-rung medians at commit `454066c-dirty` from the prior
+`hex-berlekamp-zassenhaus-issue3527-precision-local.json` export
+remain available as internal-complexity-model evidence in the
+§Appendix; once the comparator sweep is run, the headline table here
+will record both raw and adjusted ratios against fresh Lean medians
+collected in the same sweep.
 
 ### Comparison to prior outer-trials=1 ladder
 
@@ -1081,7 +1159,7 @@ record on each adversarial polynomial.
 - `runFactorSlowDegreeHeightChecksum` is now explicit and reproducible on
   a completing small subset; it remains diagnostic evidence only, not a
   Phase 4 completion verdict for the full slow path.
-- The verified-Isabelle BZ comparator now covers eight parametric or
+- The verified-Isabelle BZ comparator now covers nine parametric or
   per-input Lean target groups. The split family
   (`runFactorChecksum`, `runFactorFastChecksum`,
   `runFactorSlowChecksum` at `n ∈ {2, 3, 4, 5}`), the degree/height
@@ -1106,20 +1184,30 @@ record on each adversarial polynomial.
   ([#2564](https://github.com/kim-em/hex/issues/2564)) and HO-5d
   ([#5817](https://github.com/kim-em/hex/issues/5817) /
   [#5819](https://github.com/kim-em/hex/issues/5819) /
-  [#5831](https://github.com/kim-em/hex/issues/5831)).
-- `runFastPathPrecisionLocalChecksum` remains the only registered
-  scientific bench target without an Isabelle ratio verdict.
-  The Lean target measures *fast-path setup* cost
+  [#5831](https://github.com/kim-em/hex/issues/5831)). The ninth
+  surface, the precision/local-factor family
+  (`runFastPathPrecisionLocalChecksum` paired with
+  `runIsabellePrecisionLocalRung{1..6}Checksum`), is wired but not
+  yet measured — see the next bullet.
+- `runFastPathPrecisionLocalChecksum`'s Isabelle pairing is *wired
+  but not yet measured*. Six per-rung
+  `runIsabellePrecisionLocalRung{1..6}Checksum` registrations are
+  present in
+  [HexBerlekampZassenhaus/Bench.lean](../HexBerlekampZassenhaus/Bench.lean)
+  on the inputs `prepPrecisionLocalInput`'s polynomial constructs at
+  each rung of `precisionLocalSchedule`. The pairing is asymmetric:
+  Lean measures *fast-path setup* cost
   (`multifactorLiftQuadratic`, local-factor mixing,
-  `factorFastPrecisionCap`, modular split profile) rather than full
-  factorisation — see the `runFastPathPrecisionLocalChecksum` doc
-  comment in `HexBerlekampZassenhaus/Bench.lean` ("the timed target
-  avoids full `factorFast` on adversarial cases"). Pairing a
-  full-factor Isabelle median against a setup-only Lean median would
-  be a semantic mismatch (different operations on the same input),
-  so no `runIsabellePrecisionLocal*` registrations are wired. The
-  precision/local-factor surface remains covered as an
-  internal-model verdict in the §Appendix.
+  `factorFastPrecisionCap`, modular split profile) on the polynomial
+  while Isabelle measures *full factorisation* of the same
+  polynomial. The recorded ratio is therefore a strict lower bound
+  on the implied `Lean_factorFast / Isabelle_full` ratio — useful as
+  a "setup alone exceeds Isabelle full factor" tripwire rather than
+  a gating verdict (see §"Precision-local asymmetric ratio ladder"
+  for the methodology). No comparator sweep has exported the paired
+  medians yet; the table in that section is `pending` on every rung.
+  Until the sweep runs, the precision/local-factor surface remains
+  covered as an internal-model verdict in the §Appendix.
 - The split-family `splitScientificSchedule` continues to be capped
   at `n = 5` by the `maxSecondsPerCall = 8.0s` budget. With the
   warm-iterated per-call medians recorded above (`n = 5` at
