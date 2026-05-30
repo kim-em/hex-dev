@@ -2,7 +2,7 @@ import HexPolyFp
 import HexPolyZ
 
 /-!
-Core bridge operations for executable Hensel lifting.
+Core conversion operations for executable Hensel lifting.
 
 This module connects the integer polynomial surface from `HexPolyZ` with the
 prime-field polynomial surface from `HexPolyFp`, exposing the coefficientwise
@@ -12,7 +12,7 @@ namespace Hex
 
 /-- Indexed lookup into `(List.range size).map f`: returns `f n` for `n < size` and the
 zero default otherwise. Shared coefficient-lookup plumbing used by the `modP`, `reduceModPow`,
-and `liftToZ` bridges in this file. -/
+and `liftToZ` conversions in this file. -/
 private theorem list_getD_map_range {α : Type} [Zero α] (size n : Nat) (f : Nat → α) :
     ((List.range size).map f).getD n (Zero.zero : α) =
       if n < size then f n else (Zero.zero : α) := by
@@ -34,7 +34,7 @@ def intModNat (z : Int) (m : Nat) : Nat :=
   Int.toNat (z % Int.ofNat m)
 
 /-- `intModNat` is the canonical nonnegative representative: re-coercing to `Int`
-recovers the ordinary integer remainder. Used to bridge the `Nat`-valued executable
+recovers the ordinary integer remainder. Used to connect the `Nat`-valued executable
 reduction with `Int`-level congruence reasoning. -/
 private theorem intModNat_eq_emod (z : Int) {m : Nat} (hm : 0 < m) :
     Int.ofNat (intModNat z m) = z % (m : Int) := by
@@ -461,7 +461,7 @@ end FpPoly
 namespace ZPoly
 
 /-- Reducing the integer `1` polynomial modulo `p` yields the `FpPoly p`
-identity. Bottom-of-recursion case for the `modP p` bridge rewrites consumed
+identity. Bottom-of-recursion case for the `modP p` rewrites used
 by Hensel lifting modules. -/
 @[simp] theorem modP_one (p : Nat) [ZMod64.Bounds p] :
     ZPoly.modP p (1 : ZPoly) = (1 : FpPoly p) := by

@@ -47,7 +47,7 @@ Informational external comparator:
   Gram-Schmidt implementation (Nguyen-Stehle; fpylll 0.6 or newer
   supported by the existing oracle driver) bypasses the
   exact-integer operand-size drift paid by this verified
-  implementation. Ratios are recorded for orientation but do not gate
+  implementation. Ratios are recorded for orientation but do not block
   Phase 4. The conformance-mode entry point remains
   `scripts/oracle/lll_fpylll.py --check`.
 

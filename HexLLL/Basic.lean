@@ -62,7 +62,7 @@ namespace LLLState
 
 /-- Correctness predicate for the proof-facing interpretation of an executable
 `LLLState`. Keeping this separate lets core state updates remain purely
-computational; bridge modules can prove preservation when they need the
+computational; Mathlib-side modules can prove preservation when they need the
 Gram-Schmidt interpretation. -/
 structure Valid (s : LLLState n m) : Prop where
   ν_eq : ∀ i j, (hi : i < n) → (hj : j < n) → j < i →

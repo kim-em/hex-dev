@@ -2,13 +2,13 @@ import HexLLL.Basic
 import HexGramSchmidtMathlib.Int
 
 /-!
-Bridge-facing independence theorems for `HexLLL`.
+Mathlib-side independence theorems for `HexLLL`.
 
 This module hosts the determinant-backed independence helpers whose proofs
 factor through `GramSchmidt.Int.independent_of_det_positive` and therefore
-ultimately depend on the Bareiss/`Matrix.det` bridge. They are kept out of
-the Mathlib-free `HexLLL/Basic.lean` so that the executable LLL core does
-not expose a proof-only surface tied to the bridge layer.
+ultimately depend on the Bareiss/`Matrix.det` correspondence. They are kept
+out of the Mathlib-free `HexLLL/Basic.lean` so that the executable LLL core
+does not expose a proof-only surface tied to the Mathlib-side layer.
 -/
 
 namespace Hex
@@ -68,7 +68,7 @@ end Matrix
 namespace LLLState
 
 /-- Size reduction preserves the executable Gram-determinant independence
-predicate.  This public theorem lives in the Mathlib bridge library so the
+predicate.  This public theorem lives in the Mathlib-side library so the
 Mathlib-free LLL core does not expose determinant-bound preservation surfaces. -/
 theorem sizeReduce_independent (s : LLLState n m) (k : Nat)
     (hind : s.b.independent) (hvalid : s.Valid) (hvalid' : (s.sizeReduce k).Valid) :

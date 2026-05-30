@@ -7,7 +7,7 @@ import HexHensel.Conformance
 import HexHensel.CrossCheck
 
 /-!
-The `HexHensel` library provides the executable bridge and lifting layers
+The `HexHensel` library provides the executable conversion and lifting layers
 shared by later Hensel algorithms, starting with conversions between `ZPoly`
 and `FpPoly p`, coefficientwise reduction modulo powers of `p`, the iterative
 `henselLift` wrapper for lifting from modulus `p` to `p^k`, and the linear and
