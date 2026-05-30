@@ -1,3 +1,4 @@
+import HexArith.Nat.Prime
 import HexBerlekamp.Factor
 import HexBerlekamp.Irreducibility
 import HexHensel.Multifactor
@@ -1973,13 +1974,76 @@ private theorem choosePrimeDataScore_fold_isGoodPrime
         hscore
 
 /--
+Build a `SmallPrimeCandidate` from an arbitrary natural number `p` if
+`p` passes the executable trial-division primality test and fits in one
+machine word. Used by `extendedSmallPrimeCandidates` to produce candidates
+beyond the fixed `smallPrimeCandidates` list with explicit primality and
+`ZMod64.Bounds` evidence.
+-/
+private def mkExtendedSmallPrimeCandidate? (p : Nat) :
+    Option SmallPrimeCandidate :=
+  if hprime : Hex.Nat.isPrimeTrial p = true then
+    if hbound : p ≤ UInt64.word then
+      let prime := Hex.Nat.isPrimeTrial_isPrime hprime
+      let bounds : ZMod64.Bounds p := { pPos := prime.pos, pLeR := hbound }
+      some { p, bounds, prime }
+    else
+      none
+  else
+    none
+
+/--
+Materialize odd-numbered candidate primes starting from `start` and
+filter through `mkExtendedSmallPrimeCandidate?`, consuming `fuel` steps.
+This produces a `List SmallPrimeCandidate` of admissible primes that can
+be folded with `choosePrimeDataScoreStep` exactly like the fixed
+`smallPrimeCandidates` list, so existing fold lemmas apply unchanged.
+-/
+private def extendedSmallPrimeCandidatesAux :
+    Nat → Nat → List SmallPrimeCandidate
+  | _, 0 => []
+  | start, fuel + 1 =>
+      match mkExtendedSmallPrimeCandidate? start with
+      | some c => c :: extendedSmallPrimeCandidatesAux (start + 2) fuel
+      | none => extendedSmallPrimeCandidatesAux (start + 2) fuel
+
+/--
+Extended small-prime candidate list, used when the fixed
+`smallPrimeCandidates` list has no admissible prime for the input.
+Starts at the next odd integer past the largest fixed candidate (`71`)
+and walks `128` odd integers, gathering those that pass
+`isPrimeTrial` and fit in a machine word. The walk length covers every
+prime up to `73 + 256 = 329`, which is comfortably above the threshold
+at which a `(x-1)(x-2)…(x-n)` cascade with `n ≤ 200` needs a prime
+exceeding the fixed list. Extending the walk further is mechanical but
+costs kernel-reduction time at every `#guard` site that exercises
+`choosePrimeData?`; raise it only when a new fixture demonstrates a
+need.
+-/
+private def extendedSmallPrimeCandidates : List SmallPrimeCandidate :=
+  extendedSmallPrimeCandidatesAux 73 128
+
+/--
 Optional small-prime selection: returns `some` with the chosen `PrimeChoiceData`
-when at least one candidate in `smallPrimeCandidates` is good for `f`, and
-`none` otherwise (so callers can detect the fallback case).
+when at least one candidate is good for `f`, and `none` otherwise (so callers
+can detect the fallback case).
+
+The search first folds `choosePrimeDataScoreStep` over the deterministic
+prefix `smallPrimeCandidates`. If that prefix selects an admissible prime,
+the original tie-breaking is preserved (so existing conformance expectations
+do not change). If the prefix exhausts without selecting any prime, the
+search falls through to `extendedSmallPrimeCandidates`, which materializes
+candidates beyond the fixed list via trial-division primality testing.
+This is the Mathlib-free analogue of Isabelle's `find_prime` continuation
+beyond a fixed candidate cap, used to dissolve the silent fallback path
+when the fixed prefix is too short for high-degree square-free inputs.
 -/
 def choosePrimeData? (f : ZPoly) : Option PrimeChoiceData :=
-  smallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none
-  |>.map (fun score => score.data)
+  match smallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none with
+  | some score => some score.data
+  | none =>
+      extendedSmallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none
+      |>.map (fun score => score.data)
 
 private def fallbackPrimeChoiceData (f : ZPoly) : PrimeChoiceData :=
   letI := bounds_three
@@ -2009,14 +2073,23 @@ theorem choosePrimeData?_prime
   unfold choosePrimeData? at hdata
   cases hscore :
       smallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none with
-  | none =>
-      simp [hscore] at hdata
   | some score =>
       simp [hscore] at hdata
       cases hdata
       exact choosePrimeDataScore_fold_prime f smallPrimeCandidates none score
         (by intro old hnone; cases hnone)
         hscore
+  | none =>
+      simp [hscore] at hdata
+      cases hext :
+          extendedSmallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none with
+      | none =>
+          simp [hext] at hdata
+      | some escore =>
+          simp [hext] at hdata
+          cases hdata
+          exact choosePrimeDataScore_fold_prime f extendedSmallPrimeCandidates none
+            escore (by intro old hnone; cases hnone) hext
 
 theorem choosePrimeData?_fModP_eq
     (f : ZPoly) (data : PrimeChoiceData)
@@ -2025,14 +2098,23 @@ theorem choosePrimeData?_fModP_eq
   unfold choosePrimeData? at hdata
   cases hscore :
       smallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none with
-  | none =>
-      simp [hscore] at hdata
   | some score =>
       simp [hscore] at hdata
       cases hdata
       exact choosePrimeDataScore_fold_fModP_eq f smallPrimeCandidates none score
         (by intro old hnone; cases hnone)
         hscore
+  | none =>
+      simp [hscore] at hdata
+      cases hext :
+          extendedSmallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none with
+      | none =>
+          simp [hext] at hdata
+      | some escore =>
+          simp [hext] at hdata
+          cases hdata
+          exact choosePrimeDataScore_fold_fModP_eq f extendedSmallPrimeCandidates
+            none escore (by intro old hnone; cases hnone) hext
 
 /--
 When `choosePrimeData? f` succeeds, the selected prime is a good prime for `f`
@@ -2046,14 +2128,23 @@ theorem choosePrimeData?_isGoodPrime
   unfold choosePrimeData? at hdata
   cases hscore :
       smallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none with
-  | none =>
-      simp [hscore] at hdata
   | some score =>
       simp [hscore] at hdata
       cases hdata
       exact choosePrimeDataScore_fold_isGoodPrime f smallPrimeCandidates none score
         (by intro old hnone; cases hnone)
         hscore
+  | none =>
+      simp [hscore] at hdata
+      cases hext :
+          extendedSmallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none with
+      | none =>
+          simp [hext] at hdata
+      | some escore =>
+          simp [hext] at hdata
+          cases hdata
+          exact choosePrimeDataScore_fold_isGoodPrime f extendedSmallPrimeCandidates
+            none escore (by intro old hnone; cases hnone) hext
 
 /--
 Invariant capturing that `data.factorsModP` is exactly the Berlekamp factor
@@ -2179,8 +2270,6 @@ theorem choosePrimeData?_factorsModP_berlekamp_form
   unfold choosePrimeData? at hdata
   cases hscore :
       smallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none with
-  | none =>
-      simp [hscore] at hdata
   | some score =>
       simp [hscore] at hdata
       cases hdata
@@ -2189,6 +2278,21 @@ theorem choosePrimeData?_factorsModP_berlekamp_form
           score (by intro old hnone; cases hnone) hscore
       obtain ⟨_, hzero, heq⟩ := hform
       exact ⟨hzero, heq⟩
+  | none =>
+      simp [hscore] at hdata
+      cases hext :
+          extendedSmallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none with
+      | none =>
+          simp [hext] at hdata
+      | some escore =>
+          simp [hext] at hdata
+          cases hdata
+          have hform :=
+            choosePrimeDataScore_fold_factorsModPBerlekampForm f
+              extendedSmallPrimeCandidates none escore
+              (by intro old hnone; cases hnone) hext
+          obtain ⟨_, hzero, heq⟩ := hform
+          exact ⟨hzero, heq⟩
 
 /--
 Small-mod singleton executable branch fact for the selected monic modular

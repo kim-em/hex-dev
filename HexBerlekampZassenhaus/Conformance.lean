@@ -375,6 +375,45 @@ private def factorizationCaseMatches (c : FactorizationCase) : Bool :=
   let data := choosePrimeData leadingCoeffDivisibleByFive
   3 <= data.p
 
+/-! ### Extended-search cascade (HO-5d-3, #5819)
+
+The `(x-1)(x-2)…(x-n)` cascade exhausts the fixed
+`smallPrimeCandidates` list once `n ≥ 72`, because then every prime
+`p ≤ 71` has a colliding residue pair somewhere in `{1, …, n}` and the
+modular image fails the square-free predicate. Materializing the
+degree-72 input via `fromRoots` in kernel reduction time is
+prohibitively slow (~10 minutes of `#guard` cost), so the fixture
+instead uses the engineered degree-2 cascade
+`(x − 1)(x − (1 + D))` with `D = ∏ p` over the fixed-list primes
+`p ∈ {3, 5, 7, 11, 13, 17, 19, 23, 31, 71}`. Mod every fixed-list
+prime, the two roots collapse to a single residue (so the modular
+image is the square `(x − 1)²` and `isGoodPrime` rejects). Mod the
+next admissible prime (`73`), the difference `D mod 73 = 67` is
+nonzero, so the modular image is square-free.
+
+Before the extended-search fall-through, `choosePrimeData` silently
+used the `fallbackPrimeChoiceData` `p = 3` branch on this kind of
+input; after, `choosePrimeData?` returns `some` with a selected prime
+taken from `extendedSmallPrimeCandidates`.
+-/
+
+/-- Product of the fixed-list primes, used to engineer the extended-
+search cascade fixture. -/
+private def fixedPrimeProduct : Int :=
+  3 * 5 * 7 * 11 * 13 * 17 * 19 * 23 * 31 * 71
+
+private def extendedCascade2 : ZPoly :=
+  fromRoots [1, 1 + fixedPrimeProduct]
+
+#guard
+  match choosePrimeData? extendedCascade2 with
+  | none => false
+  | some data => 71 < data.p
+
+#guard
+  let data := choosePrimeData extendedCascade2
+  73 ≤ data.p
+
 #guard bhksBound (0 : ZPoly) = 1
 #guard bhksBound ZPoly.X = 9
 #guard bhksBound (DensePoly.ofCoeffs #[1, 0, 1]) = 4609

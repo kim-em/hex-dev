@@ -319,6 +319,74 @@ theorem pow_prime_mod {p : Nat} (hp : Prime p) (a : Nat) :
     a ^ p % p = a % p := by
   exact pow_prime_mod_from_add_pow hp a (fun a b => add_pow_prime_mod hp a b)
 
+/--
+Executable trial-division primality test. Returns `true` only when `2 ≤ n`
+and no integer in `[2, n)` divides `n`. Used by downstream prime-search
+extensions to produce primality witnesses for candidates beyond any fixed
+list, without depending on `Mathlib` or `native_decide`.
+-/
+def isPrimeTrial (n : Nat) : Bool :=
+  decide (2 ≤ n) &&
+    (List.range n).all (fun k => decide (k < 2) || decide (n % k ≠ 0))
+
+private theorem range_all_eq_true_of_isPrimeTrial {n : Nat}
+    (h : isPrimeTrial n = true) :
+    ∀ k, k < n → 2 ≤ k → n % k ≠ 0 := by
+  unfold isPrimeTrial at h
+  rw [Bool.and_eq_true] at h
+  obtain ⟨_, hall⟩ := h
+  rw [List.all_eq_true] at hall
+  intro k hk hk2
+  have hmem : k ∈ List.range n := List.mem_range.mpr hk
+  have := hall k hmem
+  rw [Bool.or_eq_true] at this
+  rcases this with hlt | hmod
+  · have : k < 2 := of_decide_eq_true hlt
+    omega
+  · exact of_decide_eq_true hmod
+
+private theorem two_le_of_isPrimeTrial {n : Nat} (h : isPrimeTrial n = true) :
+    2 ≤ n := by
+  unfold isPrimeTrial at h
+  rw [Bool.and_eq_true] at h
+  exact of_decide_eq_true h.1
+
+/--
+Soundness of the trial-division primality test against the project-local
+`Hex.Nat.Prime` predicate. Used by the BZ extended prime search to lift a
+runtime candidate into a `SmallPrimeCandidate` with explicit primality
+evidence, without falling back to a hardcoded list.
+-/
+theorem isPrimeTrial_isPrime {n : Nat} (h : isPrimeTrial n = true) :
+    Prime n := by
+  refine ⟨two_le_of_isPrimeTrial h, ?_⟩
+  intro m hm
+  have h2n : 2 ≤ n := two_le_of_isPrimeTrial h
+  have hno : ∀ k, k < n → 2 ≤ k → n % k ≠ 0 :=
+    range_all_eq_true_of_isPrimeTrial h
+  have hn_pos : 0 < n := by omega
+  have hm_le_n : m ≤ n := Nat.le_of_dvd hn_pos hm
+  by_cases hm0 : m = 0
+  · subst hm0
+    have : n = 0 := Nat.eq_zero_of_zero_dvd hm
+    omega
+  by_cases hm1 : m = 1
+  · exact Or.inl hm1
+  by_cases hmn : m = n
+  · exact Or.inr hmn
+  exfalso
+  have hm2 : 2 ≤ m := by
+    rcases m with _ | _ | m
+    · exact absurd rfl hm0
+    · exact absurd rfl hm1
+    · omega
+  have hmlt : m < n := Nat.lt_of_le_of_ne hm_le_n hmn
+  have hmod : n % m = 0 := by
+    rcases hm with ⟨k, hk⟩
+    rw [hk]
+    exact Nat.mul_mod_right m k
+  exact hno m hmlt hm2 hmod
+
 end Nat
 
 end Hex
