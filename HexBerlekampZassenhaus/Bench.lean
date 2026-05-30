@@ -652,6 +652,55 @@ def runIsabelleSplitN5Checksum : Unit → IO UInt64 := fun _ => do
   let (scalar, factors) ← requestIsabelleBZFactorization (smokeInput 5)
   return checksumCanonicalFactorization scalar factors
 
+/--
+Per-parameter verified-Isabelle BZ comparator targets on the encoded
+degree/height inputs `prepDegreeHeightInput param` for the rungs of
+`degreeHeightSchedule` (degree 3–6, height 2–32) and the additional
+smaller-degree rungs of `slowDegreeHeightSchedule` (degree 1–3). Each pairs
+with the corresponding rung of one of the parametric Lean
+`runFactorDegreeHeightChecksum` / `runFactorFastDegreeHeightChecksum` /
+`runFactorSlowDegreeHeightChecksum` registrations.
+-/
+def runIsabelleDegreeHeight3x2Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization
+    (prepDegreeHeightInput (encodeDegreeHeightParam 3 2)).poly
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleDegreeHeight4x2Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization
+    (prepDegreeHeightInput (encodeDegreeHeightParam 4 2)).poly
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleDegreeHeight4x8Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization
+    (prepDegreeHeightInput (encodeDegreeHeightParam 4 8)).poly
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleDegreeHeight5x8Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization
+    (prepDegreeHeightInput (encodeDegreeHeightParam 5 8)).poly
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleDegreeHeight6x32Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization
+    (prepDegreeHeightInput (encodeDegreeHeightParam 6 32)).poly
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleDegreeHeight1x2Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization
+    (prepDegreeHeightInput (encodeDegreeHeightParam 1 2)).poly
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleDegreeHeight2x2Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization
+    (prepDegreeHeightInput (encodeDegreeHeightParam 2 2)).poly
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleDegreeHeight3x8Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization
+    (prepDegreeHeightInput (encodeDegreeHeightParam 3 8)).poly
+  return checksumCanonicalFactorization scalar factors
+
 def scheduledHardwareTag : String :=
   "scheduled-hardware"
 
@@ -1050,6 +1099,76 @@ setup_fixed_benchmark runIsabelleSplitN5Checksum where {
     maxSecondsPerCall := 60.0
     expectedHash :=
       some (Hashable.hash (checksumCanonicalLeanFactorization (factor (smokeInput 5))))
+    tags := #[scheduledHardwareTag]
+  }
+
+/- Per-rung verified-Isabelle comparator registrations on the encoded
+degree/height inputs at each schedule rung. The first five cover
+`degreeHeightSchedule = #[3002, 4002, 4008, 5008, 6032]` (paired with
+`runFactorDegreeHeightChecksum` and `runFactorFastDegreeHeightChecksum`); the
+last three cover the smaller-degree `slowDegreeHeightSchedule = #[1002, 2002,
+3008]` (paired with `runFactorSlowDegreeHeightChecksum`). -/
+setup_fixed_benchmark runIsabelleDegreeHeight3x2Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
+      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 3 2)).poly)))
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleDegreeHeight4x2Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
+      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 4 2)).poly)))
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleDegreeHeight4x8Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
+      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 4 8)).poly)))
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleDegreeHeight5x8Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
+      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 5 8)).poly)))
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleDegreeHeight6x32Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
+      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 6 32)).poly)))
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleDegreeHeight1x2Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
+      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 1 2)).poly)))
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleDegreeHeight2x2Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
+      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 2 2)).poly)))
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleDegreeHeight3x8Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
+      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 3 8)).poly)))
     tags := #[scheduledHardwareTag]
   }
 
