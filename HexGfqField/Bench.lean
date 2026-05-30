@@ -6,7 +6,7 @@ import LeanBench
 /-!
 Benchmark registrations for `hex-gfq-field`.
 
-This Phase 4 smoke surface measures the executable finite-field wrapper over
+This Phase 4 benchmark surface measures the executable finite-field wrapper over
 `F_7[x] / (f)`. Inputs use a small schedule of Conway-style irreducible
 moduli with certificate-checked Rabin witnesses; construction is hoisted
 through `prep`, and timed targets return compact polynomial checksums.

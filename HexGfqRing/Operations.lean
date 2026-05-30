@@ -596,8 +596,8 @@ private theorem linearNSmul_double_add_one {f : FpPoly p} {hf : 0 < FpPoly.degre
   rw [linearNSmul_succ, linearNSmul_double]
   exact ext (repr_add_comm (linearNSmul (x + x) n) x)
 
-/-- Strong-recursion bridge between the binary-decomposition loop `nsmul.go` and
-the textbook recurrence `linearNSmul`: any accumulator-base-counter triple
+/-- Strong-recursion equation between the binary-decomposition loop `nsmul.go`
+and the textbook recurrence `linearNSmul`: any accumulator-base-counter triple
 factors as `acc + linearNSmul base k`. Consumed by `nsmul_eq_linearNSmul`. -/
 private theorem nsmul_go_eq_acc_add_linearNSmul
     {f : FpPoly p} {hf : 0 < FpPoly.degree f}
@@ -645,9 +645,9 @@ private theorem nsmul_go_eq_acc_add_linearNSmul
               _ = add acc (linearNSmul base k) := by
                     rw [← hk_eq]
 
-/-- Public bridge between the binary-decomposition implementation `nsmul` and the
-textbook recurrence `linearNSmul`. Consumed by `nsmul_zero` / `nsmul_succ` to
-expose the recurrence shape that `Lean.Grind.Semiring` axiom fields require. -/
+/-- Public equation between the binary-decomposition implementation `nsmul` and
+the textbook recurrence `linearNSmul`. Consumed by `nsmul_zero` / `nsmul_succ`
+to expose the recurrence shape that `Lean.Grind.Semiring` axiom fields require. -/
 private theorem nsmul_eq_linearNSmul
     {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) (n : Nat) :

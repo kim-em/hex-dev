@@ -22,9 +22,9 @@ shortTitle := "hex"
 
 `hex` is a Mathlib-free executable computational algebra stack
 covering finite fields, polynomial factorization, and lattice
-reduction, together with a separately maintained Mathlib bridge
-layer that re-exports the executable theory as theorems about the
-corresponding Mathlib structures. This manual collects per-library
+reduction, together with a separately maintained Mathlib-side
+correspondence layer that re-exports the executable theory as theorems
+about the corresponding Mathlib structures. This manual collects per-library
 reference chapters for the libraries that have reached the
 documentation phase of the development plan.
 

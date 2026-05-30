@@ -2,11 +2,12 @@ import Mathlib.Data.ZMod.Basic
 import HexModArith
 
 /-!
-Bridge definitions between `Hex.ZMod64` and Mathlib's `ZMod`.
+Correspondence definitions between `Hex.ZMod64` and Mathlib's `ZMod`.
 
 This module exposes the concrete conversions between executable machine-word
 residues and Mathlib's canonical quotient ring, together with the ring
-equivalence and the immediate simp lemmas used by downstream bridge libraries.
+equivalence and the immediate simp lemmas used by downstream Mathlib-side
+libraries.
 -/
 
 namespace HexModArithMathlib

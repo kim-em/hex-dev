@@ -31,7 +31,7 @@ persistent-subprocess python-flint driver, per
 
 FLINT's determinant uses multimodular reduction + CRT, structurally
 different from Hex's fraction-free Bareiss elimination; the ratio is
-recorded for orientation but is not a Phase-4 gate. Other Phase-4
+recorded for orientation but does not block Phase 4. Other Phase-4
 matrix surfaces (`runSquareMulChecksum`, row operations) have no
 named external comparator (declared absence with the
 `structural-layer` reason per

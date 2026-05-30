@@ -7,10 +7,10 @@ Oracle: none (Tier-G fast-vs-fast)
 Mode: always
 
 The committed Conway lookup currently exposes only `(2, 1)` as a
-`SupportedEntry`, so `HexGfq/Conformance.lean` exercises the bridge
+`SupportedEntry`, so `HexGfq/Conformance.lean` exercises the correspondence
 between `GFq 2 1` (generic `FpPoly`-quotient) and `GF2q 1` (packed
 `GF2n`) at the trivial extension degree.  This module exercises the
-same bridge at extension degrees where the implementations actually
+same correspondence at extension degrees where the implementations actually
 diverge by constructing ad-hoc moduli at degrees 4, 8, 16, and 32 and
 running pseudorandom shared inputs through both representations.
 
@@ -25,7 +25,7 @@ Operations covered: addition, multiplication, inversion, Frobenius
 
 `HexGfq` does not commit packed representations for odd characteristic,
 so the cross-check is binary-only.  See the per-library SPEC for the
-representation-bridge scope.
+representation-correspondence scope.
 -/
 namespace Hex
 namespace GfqCrossCheck
@@ -59,8 +59,8 @@ private def streamPairs (seed : UInt64) (count : Nat) : Array (UInt64 × UInt64)
 /-! ## Bit-level word ↔ `FpPoly 2` conversions
 
 Each bit of a `UInt64` corresponds to one binary coefficient of the
-generic `FpPoly 2` representative, which makes the bridge between the
-packed `GF2n` and generic `GFqField.FiniteField (FpPoly 2)` views
+generic `FpPoly 2` representative, which makes the correspondence between
+the packed `GF2n` and generic `GFqField.FiniteField (FpPoly 2)` views
 explicit and decidable.
 -/
 

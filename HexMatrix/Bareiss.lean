@@ -342,7 +342,7 @@ theorem stepMatrix_borderedMinor_update
   rw [hpivot, hentry, hleft, htop]
   exact hexact
 
-/-- Exact-division bridge for one Bareiss bordered-minor update.
+/-- Exact-division equation for one Bareiss bordered-minor update.
 
 Once a determinant identity supplies the numerator as `nextMinor * prevPivot`,
 this lemma packages it as the `exactDiv` premise expected by
@@ -775,8 +775,8 @@ private theorem getEntry_rangeMap₂ (f : Nat → Nat → Int) (i j : Fin n) :
       i.val j.val = f i.val j.val := by
   simp [getEntry]
 
-/-- Pointwise bridge: if the array storage `rows` matches a matrix `M` at
-every entry, then `stepArray` on `rows` matches `stepMatrix` on `M` at
+/-- Pointwise correspondence: if the array storage `rows` matches a matrix `M`
+at every entry, then `stepArray` on `rows` matches `stepMatrix` on `M` at
 every entry. -/
 theorem getEntry_stepArray_matches
     (rows : Array (Array Int)) (M : Matrix Int n n)
@@ -813,7 +813,7 @@ theorem stepArray_size (rows : Array (Array Int)) (n k : Nat)
     (stepArray rows n k pivot prevPivot).size = n := by
   simp [stepArray]
 
-/-- Matrix-level bridge: applying `stepArray` to a row-storage representation
+/-- Matrix-level correspondence: applying `stepArray` to a row-storage representation
 and reading it back as a matrix agrees with applying `stepMatrix` to the
 matrix view of the same row storage. The one-step companion to
 `getEntry_stepArray_matches` packaged at the `rowsToMatrix` level. -/
@@ -1317,7 +1317,7 @@ def bareissData (M : Matrix Int n n) : BareissData n :=
     singularStep := state.singularStep }
 
 /-- The packaged row-pivoted Bareiss data is exactly the structured pivot loop
-state finished into public determinant data. This is the bridge consumed by the
+state finished into public determinant data. This is the equality consumed by the
 Mathlib determinant proof; array storage is erased by `rowsToMatrix`. -/
 theorem bareissData_eq_finish_pivotLoop (M : Matrix Int n n) :
     bareissData M = finish (pivotLoop n (noPivotInitialState M)) := by

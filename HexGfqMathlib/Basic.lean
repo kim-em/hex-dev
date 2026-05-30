@@ -8,7 +8,7 @@ Generic Mathlib-side definitions for the executable `GFq` model.
 
 This module exposes the concrete reduced-representative enumeration used to
 transport `Fintype` support onto generic `Hex.GFqField.FiniteField` values, and
-states the canonical-cardinality bridge to Mathlib's `GaloisField`.
+states the canonical-cardinality equivalence to Mathlib's `GaloisField`.
 -/
 
 namespace HexGfqMathlib

@@ -176,8 +176,8 @@ private theorem reduceMod_repr_mul_invPoly_eq_scaled_gcd
           (DensePoly.xgcd (GFqRing.repr x) f).gcd) := by
           rw [scaled_xgcd_repr_bezout x]
 
-/-- Nonzero field elements have nonzero quotient representatives. This is the
-bridge from field-level hypotheses to the quotient-level helper lemmas. -/
+/-- Nonzero field elements have nonzero quotient representatives. This connects
+field-level hypotheses to the quotient-level helper lemmas. -/
 private theorem toQuotient_ne_zero
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     {x : FiniteField f hf hp hirr} (hx : x ≠ zero f hf hp hirr) :
