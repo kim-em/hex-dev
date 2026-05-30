@@ -7,9 +7,9 @@ import Mathlib.Data.ZMod.Basic
 import HexPolyZ
 
 /-!
-Bridge definitions between `Hex.ZPoly` and Mathlib's `Polynomial ℤ`.
+Correspondence definitions between `Hex.ZPoly` and Mathlib's `Polynomial ℤ`.
 
-This module specializes the generic dense-polynomial bridge to integer
+This module specializes the generic dense-polynomial correspondence to integer
 coefficients so downstream libraries can work directly with the `ZPoly`
 abbreviation and the corresponding `Polynomial ℤ` equivalence.
 -/
@@ -103,7 +103,7 @@ theorem isUnit_iff_toPolynomial_isUnit (f : Hex.ZPoly) :
 /--
 The executable coefficientwise reduction `Hex.ZPoly.modP` agrees with
 Mathlib's coefficient map from `ℤ[X]` to `(ZMod p)[X]`, after transporting
-the executable `ZMod64 p` coefficients through the `ZMod64`/`ZMod` bridge.
+the executable `ZMod64 p` coefficients through the `ZMod64`/`ZMod` equivalence.
 -/
 theorem coeff_toZMod_modP_eq_coeff_map_intCast
     (p : Nat) [Hex.ZMod64.Bounds p] (f : Hex.ZPoly) (n : Nat) :
@@ -132,10 +132,10 @@ theorem coeff_toZMod_modP_eq_coeff_map_intCast
   rw [Int.emod_emod]
 
 /--
-Extensional bridge for any Mathlib polynomial over `ZMod p` whose
+Extensional equality for any Mathlib polynomial over `ZMod p` whose
 coefficients are supplied by the executable `Hex.ZPoly.modP` image.
 Downstream finite-field polynomial transports can instantiate the coefficient
-hypothesis with their own `FpPoly` bridge lemma.
+hypothesis with their own `FpPoly` coefficient lemma.
 -/
 theorem eq_map_intCast_of_coeff_eq_toZMod_modP
     (p : Nat) [Hex.ZMod64.Bounds p] (f : Hex.ZPoly)
@@ -182,7 +182,7 @@ theorem dvd_modP_of_dvd
   map_intCast_zmod_dvd_of_zpoly_dvd p hgf
 
 /--
-Core integer-to-`ZMod p` identity underlying the `modP` bridge: pushing an
+Core integer-to-`ZMod p` identity underlying `modP`: pushing an
 integer through `intModNat`/`ZMod64.ofNat` and then to Mathlib's `ZMod p` via
 `toZMod` agrees with the direct integer cast.
 -/

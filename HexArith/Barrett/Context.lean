@@ -64,7 +64,7 @@ private theorem product_toNat_eq (ctx : BarrettCtx p) (a b : UInt64)
 
 /--
 The product of two residues is below `p^2`, which is the bound required by
-the Barrett reducer bridge.
+the Barrett reducer.
 -/
 private theorem product_toNat_lt_p2 (ctx : BarrettCtx p) (a b : UInt64)
     (ha : a < p) (hb : b < p) :

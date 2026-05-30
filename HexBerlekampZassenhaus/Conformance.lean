@@ -158,7 +158,7 @@ private def negativeRepeatedRootWithContent : ZPoly :=
 private def leadingCoeffDivisibleByFive : ZPoly :=
   zpoly #[1, 1, 5]
 
-/-! ## Adversarial modular split smoke cases (HO-2, #2565)
+/-! ## Adversarial modular split cases (HO-2, #2565)
 
 These named polynomials exercise the SPEC-required shapes from
 `SPEC/Libraries/hex-berlekamp-zassenhaus.md` §"Conformance fixtures":

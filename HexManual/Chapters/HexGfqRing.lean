@@ -227,7 +227,7 @@ addition and multiplication to the quotient.
 The full ring axioms over canonical representatives are bundled into
 the `Lean.Grind.CommRing` instance on
 {name}`Hex.GFqRing.PolyQuotient`, which is the entry point for
-downstream proof automation. Its existence is the gate that promotes
+downstream proof automation. Its existence is the prerequisite that promotes
 `HexGfqRing` to a Phase 6 grind-clean state.
 
 # Cross-references
@@ -236,7 +236,7 @@ tag := "hex-gfq-ring-cross-references"
 %%%
 
 `HexGfqRing` sits between an upstream polynomial-arithmetic dependency
-and a downstream finite-field consumer:
+and a downstream finite-field caller:
 
 * `HexPolyFp` provides the `Hex.FpPoly` representation that
   {name}`Hex.GFqRing.reduceMod` operates on, together with the
@@ -253,21 +253,21 @@ and a downstream finite-field consumer:
   documented in this chapter. Downstream consumers such as `HexConway`
   reach `HexGfqRing` transitively through `HexGfqField`.
 
-## No Mathlib bridge library
+## No Mathlib correspondence library
 %%%
-tag := "hex-gfq-ring-no-mathlib-bridge"
+tag := "hex-gfq-ring-no-mathlib-correspondence"
 %%%
 
 Some `hex-*` libraries pair the computational layer with a `*Mathlib`
-bridge library that re-exports the executable API as theorems about
-the corresponding Mathlib structures. `HexGfqRing` has *no* such
-bridge library: there is no `HexGfqRingMathlib`, and the chapter
-therefore does not contain the "computational vs. Mathlib bridge"
-cross-reference that future chapters will include for libraries that
-have one.
+correspondence library that re-exports the executable API as theorems
+about the corresponding Mathlib structures. `HexGfqRing` has *no* such
+correspondence library: there is no `HexGfqRingMathlib`, and the
+chapter therefore does not contain the "computational vs. Mathlib
+correspondence" cross-reference that future chapters will include for
+libraries that have one.
 
 For `HexGfqRing` the canonical mathematical home of the quotient is
 Mathlib's `AdjoinRoot` or `Polynomial.quotient` construction; a
-bridge between {name}`Hex.GFqRing.PolyQuotient` and those constructions
-is deferred to a downstream library if and when a Mathlib-valued
-consumer needs it.
+correspondence between {name}`Hex.GFqRing.PolyQuotient` and those
+constructions is deferred to a downstream library if and when a
+Mathlib-valued caller needs it.

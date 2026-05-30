@@ -9,8 +9,9 @@ import Mathlib.RingTheory.Polynomial.UniqueFactorization
 Abstract UFD partition-cardinality bound used by the BHKS Group B
 certification chain.
 
-The bridge layer needs to convert "the algorithm returned a list of non-unit
-divisors that multiply back to `f`" into "each divisor is irreducible." The
+The Mathlib-side layer needs to convert "the algorithm returned a list of
+non-unit divisors that multiply back to `f`" into "each divisor is
+irreducible." The
 UFD half of that argument is independent of the BHKS lattice machinery: in any
 unique factorization monoid, if `gs.length = (normalizedFactors f).card` then
 each `g ∈ gs` accounts for exactly one irreducible factor of `f`, hence is
@@ -295,7 +296,7 @@ polynomial factors.
 If two nonzero integer scalars multiply products of monic irreducible factors
 to the same polynomial, the scalars agree and the flattened products have the
 same normalized-factor multiset. This is the Mathlib/UFD core needed by the
-factorization uniqueness bridge after executable factor entries have been
+factorization uniqueness theorem after executable factor entries have been
 expanded by multiplicity. The theorem stays public as the clean monic
 specialization; current BZ factorization uniqueness uses the normalize-fixed
 variant below because executable factors are not necessarily monic.
@@ -333,7 +334,7 @@ theorem scalar_eq_and_normalizedFactors_eq_of_monic_irreducible_product_eq
 /--
 Variant of `scalar_eq_and_normalizedFactors_eq_of_monic_irreducible_product_eq`
 for nonconstant `normalize`-fixed irreducible integer polynomial factors, which
-is what the BZ uniqueness bridge actually has (the executable
+is what the BZ uniqueness theorem actually has (the executable
 `normalizeFactorSign` only enforces a nonnegative leading coefficient, not a
 unit leading coefficient).
 
@@ -555,7 +556,7 @@ of `g` is a sub-multiset of `qs` up to normalization.
 This is the UFD half of the BZ certificate degree-obstruction argument:
 once an integer factor reduces to a divisor of the recorded modular factor
 product, its modular factorization is drawn from the recorded irreducibles.
-The polynomial degree lemma below is the usual public consumer-facing package;
+The polynomial degree lemma below is the usual public caller-facing package;
 this theorem remains available for callers that need the raw sub-multiset
 relation.
 -/
@@ -593,7 +594,7 @@ product equals `d`. The witness is `normalizedFactors d`; uniqueness uses
 
 This is the abstract Mathlib half of the
 `existsUnique_modPFactorSubset_of_choosePrimeData` assembly: the final
-consumer instantiates `α := Polynomial (ZMod p)` and transports the
+caller instantiates `α := Polynomial (ZMod p)` and transports the
 resulting sub-multiset through an executable factor-list indexing.
 -/
 theorem existsUnique_subset_product_eq_of_dvd_of_squarefree_prod
@@ -659,7 +660,7 @@ some sub-multiset of `qs.map natDegree`.
 
 This is the degree-subset-sum packaging of
 `normalizedFactors_le_map_normalize_of_dvd_prod_irreducibles` that the BZ
-certificate degree-obstruction consumer needs: the recorded modular factor
+certificate degree-obstruction caller needs: the recorded modular factor
 degrees are the `qs.map natDegree` values, and the contradiction with a
 "no subset sums to `g.natDegree`" obstruction comes from this lemma.
 -/

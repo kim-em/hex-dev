@@ -1,7 +1,7 @@
 import HexModArith.Basic
 
 /-!
-Executable smoke tests for the default `ZMod64` multiplication path.
+Executable `#guard` / `#eval` checks for the default `ZMod64` multiplication path.
 
 Because `Hex.ZMod64.mul` is extern-backed, these checks live in a separate
 module so `#eval` runs against the compiled native implementation from

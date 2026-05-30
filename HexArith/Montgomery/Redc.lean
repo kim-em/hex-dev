@@ -4,7 +4,7 @@ import HexArith.Montgomery.InvNat
 Executable `UInt64` Montgomery reduction for `HexArith`.
 
 This file packages the machine-word Montgomery parameters together with the
-REDC bridge that consumes a two-word product `(Thi, Tlo)` and returns one
+REDC routine that consumes a two-word product `(Thi, Tlo)` and returns one
 reduced residue.
 -/
 
@@ -277,7 +277,7 @@ theorem redc_sub_spec (ctx : MontCtx p) (Thi Tlo : UInt64)
             rw [Nat.add_comm addHi.toNat (2 ^ 64)]
             exact (Nat.sub_add_comm (Nat.le_of_lt hp_lt_lit)).symm
 
-/-- The executable REDC bridge agrees with the Nat-level specification. -/
+/-- The executable REDC routine agrees with the Nat-level specification. -/
 theorem toNat_redc (ctx : MontCtx p) (Thi Tlo : UInt64)
     (hT : Tlo.toNat + Thi.toNat * UInt64.word < p.toNat * UInt64.word) :
     (redc ctx Thi Tlo).toNat =
@@ -296,7 +296,7 @@ theorem redc_lt (ctx : MontCtx p) (Thi Tlo : UInt64)
 /--
 Executable REDC represents division by the Montgomery radix modulo `p`.
 
-This is the direct bridge form of `redcNat_eq_mod`, avoiding an explicit
+This is the direct executable form of `redcNat_eq_mod`, avoiding an explicit
 unfolding through the Nat-level REDC definition for downstream callers.
 -/
 theorem redc_mul_word_mod (ctx : MontCtx p) (Thi Tlo : UInt64)

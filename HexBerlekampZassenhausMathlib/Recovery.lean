@@ -4,7 +4,7 @@ import HexBerlekampZassenhausMathlib.SignatureClasses
 import HexBerlekampZassenhausMathlib.TerminationBound
 
 /-!
-Forward-verification bridge for BHKS recovery at fixed precision.
+Forward-verification of BHKS recovery at fixed precision.
 
 This module connects the abstract `L' = W` separation theorem from
 `Lattice.lean`/`TerminationBound.lean` (BHKS Lemma 3.4 / Group D obligation
@@ -334,7 +334,7 @@ structure EquivalenceClassRecoveryHypotheses
   indicators_match :
     equivalenceClassIndicatorsOfLiftData f d rows_pos = expectedIndicators
 
-/-- Lift-data form of the B7 bridge: when the executable projected row span is
+/-- Lift-data form of the B7 implication: when the executable projected row span is
 the true-factor indicator lattice, the executable equivalence-class indicators
 are the canonical support-driven indicator array. -/
 theorem equivalenceClassIndicatorsOfLiftData_eq_expectedIndicatorArrayOfSupports
@@ -375,8 +375,8 @@ end EquivalenceClassRecoveryHypotheses
 
 /-- Under the equivalence-class recovery hypotheses, the executable
 `bhksEquivalenceClassIndicators` output is exactly the expected indicator
-list. This is the BHKS Lemma 3.3 / B7 bridge from `L' = W` to the executable
-indicator surface. -/
+list. This is the BHKS Lemma 3.3 / B7 implication from `L' = W` to the
+executable indicator surface. -/
 theorem bhksEquivalenceClassIndicators_eq_of_recovery
     (f : Hex.ZPoly) (d : Hex.LiftData)
     (h : EquivalenceClassRecoveryHypotheses f d) :
@@ -401,7 +401,7 @@ successful per-indicator integer reconstruction, and exact product check.
 By the SPEC Group D forward-verification argument, these guards hold
 simultaneously when the precision dominates Mignotte and `L' = W` holds.
 The discharge of each individual field from the abstract precision /
-separation hypotheses is left to later bridge work; this record packages
+separation hypotheses is left to later follow-up work; this record packages
 exactly what the executable function needs to return `some`.
 -/
 structure RecoveryHypotheses (f : Hex.ZPoly) (d : Hex.LiftData) where
@@ -471,7 +471,7 @@ theorem bhksRecover_isSome_of_recovery
 Assemble the forward-recovery candidate equality from per-indicator A2
 reconstruction facts.
 
-This is the Mathlib-side bridge to the Mathlib-free fold helper
+This is the Mathlib-side wrapper around the Mathlib-free fold helper
 `Hex.bhksIndicatorCandidates?_eq_some_of_getD`: callers prove each expected
 indicator reconstructs and exactly divides `f`, then this theorem supplies the
 raw `ForwardRecoveryInputs.candidates_eq` equality.
@@ -536,7 +536,7 @@ The Mignotte precision side condition is the SPEC's
 this whenever `Hex.factorFastPrecisionCap f ≤ k`, since the cap dominates
 the Mignotte coefficient bound.  The two abstract obligations
 (`indicators_match`, `candidates_eq`) wrap the per-step BHKS Lemma 3.3 / A2
-content and are the natural follow-up tasks for later bridge work.
+content and are the natural follow-up tasks for later work.
 -/
 structure ForwardRecoveryInputs (f : Hex.ZPoly) (d : Hex.LiftData) where
   /-- Positive lattice dimension so the projected rows / recovery branch make
@@ -856,7 +856,7 @@ def ofIndicatorCandidateFacts
 
 /--
 Fold the single-indicator Mignotte reconstruction theorem over an expected
-indicator array. This is the A2 candidate-equality bridge for
+indicator array. This is the A2 candidate-equality assembly for
 `ForwardRecoveryInputs`: callers supply the selected lifted-factor products,
 true-factor facts, and modular product equalities for each indicator, and the
 executable candidate fold returns the expected factor array.
@@ -1424,7 +1424,7 @@ call: under `L' = W` (deliverable 1) and Mignotte-precision plus the
 residual abstract obligations B7 / A2, the executable
 `Hex.bhksRecover? f d` returns `some <expected factors>`.
 
-This is the headline theorem the issue asks for: the bridge from the
+This is the headline theorem the issue asks for: the implication from the
 cap-specialised `L' = W` of #3034 (`mignotte_precision` is automatic at any
 precision meeting `Hex.factorFastPrecisionCap f`) to the success branch of
 the executable BHKS recovery pipeline.
@@ -1485,7 +1485,7 @@ theorem bhksRecover_eq_some_of_capSeparation
 
 /--
 Compose the Mathlib-side forward-recovery inputs with the executable scheduled
-fast-path bridge: if a scheduled lift for the normalized square-free core
+fast-path lemma: if a scheduled lift for the normalized square-free core
 satisfies the forward-verification inputs, then the public `Hex.factorFast`
 entry point succeeds.
 -/
@@ -1577,7 +1577,7 @@ executable cap separation: the two-step
 `ForwardRecoveryInputs` construction and the `factorFast`-success forward
 inference fold into a single application.  See
 `ofCapSeparationCanonicalIndicatorsAtPrecisionForCoeffBound` for the producer
-side and `factorFast_ne_none_of_forwardInputs_at_cap` for the consumer side.
+side and `factorFast_ne_none_of_forwardInputs_at_cap` for the caller side.
 The Mignotte-side parallel entry point is
 `factorFast_ne_none_of_mignottePrecisionCanonicalIndicatorsExpectedFactorsAtPrecisionForCoeffBound`.
 -/
@@ -1660,7 +1660,7 @@ the two-step `ForwardRecoveryInputs` construction and the `factorFast`-success
 forward inference fold into a single application.  See
 `ofMignottePrecisionCanonicalIndicatorsExpectedFactorsAtPrecisionForCoeffBound`
 for the producer side and `factorFast_ne_none_of_forwardInputs_at_cap` for the
-consumer side.
+caller side.
 -/
 theorem factorFast_ne_none_of_mignottePrecisionCanonicalIndicatorsExpectedFactorsAtPrecisionForCoeffBound
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)

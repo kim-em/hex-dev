@@ -5339,7 +5339,7 @@ private theorem yunFactorsResidualDerivativeZero_of_derivative_split
 Scaled-loop residual derivative-zero invariant for the derivative-active
 branch. Composes the unscaled witness
 `yunFactorsContributionResidualDerivativeZero_of_derivative_split` with the
-bridge `yunFactorsContributionWithLevel_residual_derivative_zero_of_unscaled`:
+equality `yunFactorsContributionWithLevel_residual_derivative_zero_of_unscaled`:
 the residual `.2` of `yunFactorsContributionWithLevel` agrees with that of
 `yunFactorsContribution`, so derivative-zero transports directly.
 -/

@@ -232,7 +232,7 @@ private theorem zmod_add_zero_zero (p : Nat) [ZMod64.Bounds p] :
 
 /-- `FpPoly.liftToZ` is additive modulo `p`: the integer lift of a sum is
 coefficientwise congruent to the sum of the integer lifts. Together with
-`liftToZ_mul_congr` this is the bridge used by `modP_add` /
+`liftToZ_mul_congr` this is the congruence used by `modP_add` /
 `modP_lift_mul_left` / `modP_lift_mul_right` to push `modP p` through the
 `+`/`·` structure of the linear Hensel correction. -/
 theorem liftToZ_add_congr
@@ -352,7 +352,7 @@ private theorem fold_mulCoeff_outer_eq_diagonal_int
 
 /-- Reifies the executable nested-fold `DensePoly.mulCoeffSum p q n` into the
 flat diagonal-sum `Σ_{i < p.size} intDiagonalMulCoeffTerm p q n i` over `Int`.
-This bridge identity is what lets `liftToZ_mul_congr` reason about the lifted
+This reification is what lets `liftToZ_mul_congr` reason about the lifted
 product coefficient as an additive `Int` sum, where the per-term congruence
 from `liftToZ_mulCoeffTerm_diagonal_congr` propagates cleanly. -/
 private theorem mulCoeffSum_eq_diagonal_int (p q : ZPoly) (n : Nat) :
@@ -497,7 +497,7 @@ private theorem fold_liftToZ_mulCoeffTerm_congr
 
 /-- `FpPoly.liftToZ` is multiplicative modulo `p`: the integer lift of a
 product is coefficientwise congruent to the product of the integer lifts.
-Multiplicative companion of `liftToZ_add_congr`; together they bridge the
+Multiplicative companion of `liftToZ_add_congr`; together they translate the
 `FpPoly`-side ring operations into `ZPoly.congr` form, which the `modP` push
 lemmas (`modP_add`, `modP_lift_mul_left`, `modP_lift_mul_right`) consume to
 expose the linear Hensel correction's mod-`p` structure. -/

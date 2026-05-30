@@ -192,7 +192,7 @@ theorem list_foldl_mul_eq_mul_foldl_one (g : ZPoly) (xs : List ZPoly) :
 /-- Splitting `Array.polyProduct` across a singleton prepend: the head
 factors out as a left multiplication. Used to relate the multifactor
 recursion tree to the public ordered-product convention. Left untagged as
-`@[simp]` because downstream bridge proofs use large recursive product terms
+`@[simp]` because downstream Mathlib-side proofs use large recursive product terms
 where this rewrite is better applied explicitly. -/
 theorem polyProduct_singleton_append (g : ZPoly) (rest : Array ZPoly) :
     Array.polyProduct (#[g] ++ rest) = g * Array.polyProduct rest := by

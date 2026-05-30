@@ -3,7 +3,7 @@ import HexGfq.CrossCheck
 import HexGfq.Basic
 
 /-!
-JSONL emit driver for the `hex-gfq` packed/generic bridge oracle.
+JSONL emit driver for the `hex-gfq` packed/generic correspondence oracle.
 
 `lake exe hexgfq_emit_fixtures` writes one `gfq_bridge` fixture record
 plus eight `result` records per case to `stdout` (or to
@@ -18,13 +18,13 @@ because both `packed_*` and `generic_*` would mismatch.
 
 The `HexConway` Tier-1 table currently exposes a `Conway.SupportedEntry`
 plus `Conway.PackedGF2Entry` only at extension degree `(2, 1)`, which
-makes the committed bridge trivial.  Following the
-`HexGfq/CrossCheck.lean` pattern, this driver exercises the bridge at
-larger binary degrees by constructing ad-hoc moduli with local
+makes the committed correspondence trivial.  Following the
+`HexGfq/CrossCheck.lean` pattern, this driver exercises the correspondence
+at larger binary degrees by constructing ad-hoc moduli with local
 irreducibility witnesses; the operations themselves still execute and
 their outputs feed the python-flint cross-check.
 
-The bridge is binary-only by design — `HexGF2.GF2n` packs `F_2`
+The correspondence is binary-only by design — `HexGF2.GF2n` packs `F_2`
 extensions into a single `UInt64` and there is no packed counterpart
 for odd characteristic.  Odd-characteristic finite-field cross-checks
 live in `HexGfqField`'s separate oracle.

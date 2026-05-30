@@ -1035,7 +1035,7 @@ private theorem multifactorLiftQuadraticList_toList_length
           simp [ih lifted.h]
 
 /-- The `multifactorLiftQuadratic` output has one entry per input factor.
-Used by the Mathlib-bridge injectivity umbrella to relate output array
+Used by the Mathlib-side injectivity wrapper to relate output array
 indices to original modular-factor indices. -/
 @[simp] theorem multifactorLiftQuadratic_size_eq_input
     (p k : Nat) [ZMod64.Bounds p] (f : ZPoly) (factors : Array ZPoly) :
@@ -1163,12 +1163,12 @@ corresponding input factor, given the monic / lift-invariant / mod-`p` product
 hypotheses of `quadraticMultifactorLiftInvariant_of_factorsModP`.
 
 This is the per-output mod-`p` preservation surface consumed by the Mathlib
-bridge `henselLiftData_liftedFactor_injective` (#4525): pairing it with
+theorem `henselLiftData_liftedFactor_injective` (#4525): pairing it with
 `Nodup` of the original modular factor list shows distinct lifted factors
 remain distinct as integer polynomials.
 
 The size equality `multifactorLiftQuadratic_size_eq_input` is the companion
-fact bridging output array indices to input array indices. -/
+fact relating output array indices to input array indices. -/
 theorem multifactorLiftQuadratic_each_congr_mod_base
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) (factors : Array ZPoly)
@@ -1256,7 +1256,7 @@ polynomial `f` is monic and the quadratic multifactor lift invariant package
 holds.
 
 Driven by `henselLiftQuadratic_g_monic` and `henselLiftQuadratic_h_monic`
-applied at each sequential split node. Consumed by the Mathlib-facing umbrella
+applied at each sequential split node. Consumed by the Mathlib-facing wrapper
 `HexBerlekampZassenhausMathlib.henselLiftData_liftedFactor_monic`. -/
 theorem multifactorLiftQuadratic_each_monic
     (p k : Nat) [ZMod64.Bounds p]

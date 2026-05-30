@@ -2,7 +2,7 @@ import HexHensel.Multifactor
 import HexHensel.QuadraticMultifactor
 
 /-!
-Core conformance checks for the `HexHensel` bridge and ordered-product surface.
+Core conformance checks for the `HexHensel` conversion and ordered-product surface.
 
 Oracle: Sage or FLINT for external Hensel-lifting profiles; core uses Lean-only
 property checks.

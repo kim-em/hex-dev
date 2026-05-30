@@ -117,7 +117,7 @@ theorem mignotte_precision_of_liftData_factorFastPrecisionCap_lt
 Unconditional cap-successor form: at precision `factorFastPrecisionCap f + 1`,
 the Mignotte precision side condition holds for any modulus `p ≥ 2`.
 
-This is the canonical consumer-facing way to obtain `2 * B < p ^ k`: pick
+This is the canonical caller-facing way to obtain `2 * B < p ^ k`: pick
 `k = factorFastPrecisionCap f + 1` and apply this lemma directly.  Larger
 `k` reduce via
 `mignotte_precision_of_factorFastPrecisionCap_lt`.
@@ -306,7 +306,7 @@ namespace BHKS
 /--
 Proof-facing hypotheses for the executable-cap BHKS separation step.
 
-The `bad_setup_of_projected_not_indicator` field is the remaining bridge from
+The `bad_setup_of_projected_not_indicator` field is the remaining step from
 a projected lattice vector outside the true-factor indicator lattice to the
 bad-vector setup consumed by the resultant contradiction.  This structure lets
 the cap/resultant layer expose the final `L' = W` theorem without depending on
@@ -332,9 +332,9 @@ structure ExecutableCapSeparationHypotheses
 namespace ExecutableCapSeparationHypotheses
 
 /--
-Instantiate the cap-separation hypotheses from the packaged projected-vector
-bad-vector bridge supplied by `BadVector.lean`, plus the existing cut and
-resultant-bound side conditions.
+Instantiate the cap-separation hypotheses from the packaged
+`ProjectedBadVectorSetupBridge` supplied by `BadVector.lean`, plus the
+existing cut and resultant-bound side conditions.
 -/
 def ofProjectedBadVectorSetupBridge
     (W : ExecutableBadVectorWitness)
@@ -398,7 +398,7 @@ theorem no_projected_not_indicator_at_factorFastPrecisionCap
 /--
 Executable-cap BHKS separation: at any precision meeting
 `factorFastPrecisionCap`, the projected row span equals the true-factor
-indicator lattice, assuming the remaining failed-recovery-to-bad-vector bridge.
+indicator lattice, assuming the remaining failed-recovery-to-bad-vector step.
 -/
 theorem projectedRowSpan_eq_trueFactorIndicatorLattice_of_cap
     (W : ExecutableBadVectorWitness)
@@ -418,7 +418,7 @@ theorem projectedRowSpan_eq_trueFactorIndicatorLattice_of_cap
 /--
 Exact-cap BHKS separation: at the executable fast-path cap itself, the
 projected row span equals the true-factor indicator lattice, assuming the
-remaining failed-recovery-to-bad-vector bridge.
+remaining failed-recovery-to-bad-vector step.
 -/
 theorem projectedRowSpan_eq_trueFactorIndicatorLattice_at_factorFastPrecisionCap
     (W : ExecutableBadVectorWitness)
@@ -432,7 +432,7 @@ theorem projectedRowSpan_eq_trueFactorIndicatorLattice_at_factorFastPrecisionCap
 
 /--
 Wrapper form of `projectedRowSpan_eq_trueFactorIndicatorLattice_of_cap` that
-accepts the packaged projected-vector bad-vector bridge directly.
+accepts the packaged `ProjectedBadVectorSetupBridge` directly.
 -/
 theorem projectedRowSpan_eq_trueFactorIndicatorLattice_of_cap_bridge
     (W : ExecutableBadVectorWitness)

@@ -4,7 +4,7 @@ import Mathlib.Analysis.InnerProductSpace.Orientation
 import Mathlib.RingTheory.Polynomial.Resultant.Basic
 
 /-!
-Resultant bridge lemmas for the Berlekamp-Zassenhaus Mathlib layer.
+Resultant correspondence lemmas for the Berlekamp-Zassenhaus Mathlib layer.
 
 This module packages the upstream resultant API in the integer-polynomial
 forms needed by the BHKS bad-vector proof route.

@@ -6,9 +6,9 @@ BHKS lattice-basis independence theorems.
 
 The Berlekamp-Zassenhaus BHKS lattice basis is upper-triangular with positive
 diagonal entries.  Discharging linear independence therefore goes through
-`Matrix.independent_of_upperTriangular_pos_diag`, which is a bridge-layer
-theorem (its proof factors through the determinant/Bareiss bridge).  These
-wrappers therefore live in the Mathlib bridge library, not in the
+`Matrix.independent_of_upperTriangular_pos_diag`, which is a Mathlib-side
+theorem (its proof factors through the determinant/Bareiss correspondence).
+These wrappers therefore live in the Mathlib-side library, not in the
 Mathlib-free `HexBerlekampZassenhaus/Basic.lean` core.
 -/
 

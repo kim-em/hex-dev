@@ -148,7 +148,7 @@ private def splitProductExpectedFactors (n : Nat) : List (List Int × Nat) :=
 private structure PinnedCase where
   id      : String
   coeffs  : Array Int
-  /-- Prime used only for the pinned modular-factor smoke check. -/
+  /-- Prime used only for the pinned modular-factor sanity check. -/
   p       : Int
   /-- Sorted degrees of the irreducible factors of the input reduced mod `p`. -/
   degrees : List Int
@@ -251,7 +251,7 @@ for the case-by-case role.  Each case is emitted with
 `modFactorPrime` / `modFactorDegrees`, which the python-flint oracle
 cross-checks via `nmod_poly.factor`.  Conformance buckets for the same
 polynomials live in `HexBerlekampZassenhaus/Conformance.lean` under
-"Adversarial modular split smoke cases"; case-id stems
+"Adversarial modular split cases"; case-id stems
 (`quad_sqrt2_sqrt3`, `x4_plus_1`, `swinnerton_dyer_sd3`, `phi15`) match
 the local Lean polynomial names there. -/
 

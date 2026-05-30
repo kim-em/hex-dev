@@ -13,7 +13,7 @@ filter-based partition: the classes are the equivalence classes of
 `j ~ k iff sig j = sig k`, emitted in order of first occurrence by
 ascending column index, with each class's member list ascending.
 
-The B7 indicator bridge consumes this fact to match the executable
+The B7 indicator correspondence consumes this fact to match the executable
 indicator output against the noncomputable, support-driven canonical
 indicator array.
 -/

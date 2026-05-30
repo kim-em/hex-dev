@@ -229,7 +229,7 @@ pivot (`scaledCoeffs_adjacentSwap_above_prev`, `_above_curr`, and the two
 `_dvd` companions) live in `HexGramSchmidtMathlib/Update.lean`. Their proof
 path goes through `bareiss_scaledCoeffMatrix_rowSwap_above_prev` /
 `_above_curr` (the bordered-minor identities), which cross the Bareiss / det
-bridge and so cannot be proved in the Mathlib-free core per
+correspondence and so cannot be proved in the Mathlib-free core per
 [SPEC/Libraries/hex-gram-schmidt.md "Proof path governs placement, not just
 statement"]. -/
 

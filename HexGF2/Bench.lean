@@ -56,7 +56,7 @@ Informational external comparator:
   `SPEC/Libraries/hex-gf2.md §"External comparators"`: NTL ships
   hand-tuned word-level inner loops while Hex's `GF2Poly` is the
   verified algorithmic surface, so the constant-factor gap is
-  structural; ratios are recorded for orientation but do not gate
+  structural; ratios are recorded for orientation but do not block
   Phase 4.
 
 ## NTL comparator-call protocol (persistent subprocess)

@@ -7,7 +7,7 @@ import LeanBench
 /-!
 Benchmark registrations for `hex-hensel`.
 
-This Phase 4 infrastructure slice measures the executable bridge operations,
+This Phase 4 infrastructure slice measures the executable conversion operations,
 linear and quadratic Hensel lift steps, and the ordered multifactor helpers.
 Inputs are deterministic and use the fixed small prime `5`; timed targets
 return compact checksums of the computed polynomial data.
@@ -51,7 +51,7 @@ shared persistent-subprocess python-flint driver, per
   share the encoded `(n, k)` fixture and reach the same lifted factorisation
   mod `p^k`).
 
-Pairings span the Hensel-lift bench targets only — the bridge operations
+Pairings span the Hensel-lift bench targets only — the conversion operations
 (`runModPChecksum`, `runLiftToZChecksum`, `runReduceModPowChecksum`) and the
 ordered linear product (`runPolyProductChecksum`) are not Hensel-lift work and
 have no comparable FLINT entry point.
@@ -77,7 +77,7 @@ instance {p : Nat} [ZMod64.Bounds p] : Hashable (ZMod64 p) where
 instance {p : Nat} [ZMod64.Bounds p] : Hashable (FpPoly p) where
   hash f := hash f.toArray
 
-/-- Prepared input for bridge benchmarks. -/
+/-- Prepared input for the conversion-operation benchmarks. -/
 structure BridgeInput where
   zpoly : ZPoly
   fpoly : FpPoly 5
@@ -176,7 +176,7 @@ def checksumFpPoly {p : Nat} [ZMod64.Bounds p] (f : FpPoly p) : UInt64 :=
 def checksumZPolyArray (polys : Array ZPoly) : UInt64 :=
   polys.foldl (fun acc f => mixHash acc (checksumZPoly f)) 0
 
-/-- Per-parameter fixture for bridge operations. -/
+/-- Per-parameter fixture for conversion operations. -/
 def prepBridgeInput (n : Nat) : BridgeInput :=
   { zpoly := denseZPoly n 17
     fpoly := denseFpPoly n 23 }
@@ -531,7 +531,7 @@ def runFlintMultiLiftQ_n256_k8 : Unit → IO UInt64 := runFlintMultifactorLiftQu
 
 /-
 Coefficient reduction maps each of the `n` dense integer coefficients once and
-then normalizes the result, so the bridge operation has linear cost.
+then normalizes the result, so the conversion operation has linear cost.
 -/
 setup_benchmark runModPChecksum n => n
   with prep := prepBridgeInput

@@ -3,8 +3,8 @@ import HexGF2Mathlib.Field
 import Mathlib.Algebra.Ring.Equiv
 
 /-!
-Mathlib-side bridge between the optimized binary Conway field and the generic
-canonical Conway field.
+Mathlib-side correspondence between the optimized binary Conway field and the
+generic canonical Conway field.
 -/
 
 namespace Hex
@@ -40,17 +40,17 @@ theorem modulusFpPoly_eq_conway :
       GFq.modulus h.entry := by
   sorry
 
-/-- The generic finite-field target of the packed bridge is definitionally the
-same field type as `GFq 2 n` after identifying the transported packed modulus
-with the Conway modulus. -/
+/-- The generic finite-field target of the packed correspondence is
+definitionally the same field type as `GFq 2 n` after identifying the
+transported packed modulus with the Conway modulus. -/
 private theorem genericField_eq_conway :
     HexGF2Mathlib.GF2n.GenericFiniteField
       (n := n) (irr := h.lower) =
       GFq 2 n h.entry := by
   sorry
 
-/-- Reindex the generic finite-field target of the packed `GF2n` bridge to the
-canonical Conway-field target used by `GFq 2 n`. -/
+/-- Reindex the generic finite-field target of the packed `GF2n` correspondence
+to the canonical Conway-field target used by `GFq 2 n`. -/
 private def genericEquivGFq :
     RingEquiv
       (HexGF2Mathlib.GF2n.GenericFiniteField

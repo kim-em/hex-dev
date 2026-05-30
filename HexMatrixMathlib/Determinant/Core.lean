@@ -5,7 +5,7 @@ import HexMatrix.Determinant
 import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
 
 /-!
-Determinant bridge theorems for `hex-matrix-mathlib`.
+Determinant correspondence theorems for `hex-matrix-mathlib`.
 
 This module relates the executable Leibniz-formula determinant on `Hex.Matrix`
 to Mathlib's determinant on function-based matrices. The supporting lemmas keep
@@ -405,7 +405,7 @@ theorem desnanot_jacobi_borderedMinor_reindex [CommRing R]
   intro M
   exact desnanot_jacobi M
 
-/-- Exact-division bridge for one Bareiss bordered-minor update.
+/-- Exact-division equation for one Bareiss bordered-minor update.
 
 The remaining Mathlib-side recurrence proof can supply `hdesnanot` from the
 Desnanot-Jacobi identity; this lemma packages the resulting product identity

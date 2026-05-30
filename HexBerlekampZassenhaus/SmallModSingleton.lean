@@ -290,7 +290,7 @@ Side conditions discharged internally:
 * `leadingCoeffAdmissible core primeData.p` from
   `choosePrimeData?_isGoodPrime` and `isGoodPrime_leadingCoeffAdmissible`.
 * `1 < core.size` from `hdeg` (non-constancy marker also used by the capstone
-  consumer to dispatch into this branch).
+  caller to dispatch into this branch).
 
 This is the Mathlib-free analog of
 `IntReductionMod.squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP`

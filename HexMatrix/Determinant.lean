@@ -1956,7 +1956,7 @@ private theorem foldl_finRange_succ_factor_skipIndex {R : Type u} [Lean.Grind.Co
   rw [foldl_det_product_mul_left ((List.finRange n).map (skipIndex i)) (f i) f 1]
   rw [List.foldl_map]
 
-/-- Permutation-product bridge generalizing `detProduct_insertAt_last` to any
+/-- Permutation-product equation generalizing `detProduct_insertAt_last` to any
 insertion position: factor the Leibniz product into the `(i, last)` entry times
 the product over the `deleteRowCol` minor. -/
 private theorem detProduct_insertAt_general {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
@@ -1982,7 +1982,7 @@ private theorem detProduct_insertAt_general {R : Type u} [Lean.Grind.CommRing R]
         skipIndex (Fin.last n) v[r'] = (v[r']).castSucc := skipIndex_last v[r']
     simp only [deleteRowCol_entry, hLHS_col, hRHS_col]
 
-/-- Leibniz-term bridge for an arbitrary insertion position. -/
+/-- Leibniz-term equation for an arbitrary insertion position. -/
 private theorem detTerm_insertAt_general {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (v : Vector (Fin n) n) (i : Fin (n + 1)) :
     detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i) =

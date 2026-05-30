@@ -1,7 +1,7 @@
 import HexGF2.Field
 
 /-!
-Project-side soundness bridge from `GF2Poly.rabinTest` to
+Project-side soundness of `GF2Poly.rabinTest` against
 `GF2Poly.Irreducible`.
 
 The executable certificate checker in `HexGF2/Irreducibility.lean` already
@@ -71,7 +71,7 @@ private theorem mul_dvd_mul_left' (c : GF2Poly) {a b : GF2Poly} (h : a ∣ b) :
   rcases h with ⟨r, hr⟩
   exact ⟨r, by rw [hr, mul_assoc]⟩
 
-/-! ## Frobenius bridge helpers -/
+/-! ## Frobenius helpers -/
 
 /-- Char-2 freshman's dream: `(a + b) * (a + b) = a * a + b * b`. -/
 private theorem freshman_dream (a b : GF2Poly) :
@@ -231,7 +231,7 @@ private theorem xpow2kMod_reduced (f : GF2Poly) (hf : f ≠ 0) :
 The executable Frobenius remainder vanishes exactly when `f` divides the
 absolute Rabin polynomial `X^(2^k) - X`.
 
-This is the GF2 counterpart of the absolute-to-modular bridge used by the
+This is the GF2 counterpart of the absolute-to-modular identity used by the
 generic Berlekamp Rabin soundness proof.
 -/
 theorem dvd_xPowSubX_iff_frobeniusDiffMod_isZero
@@ -546,7 +546,7 @@ theorem ne_zero_of_pos_degree {f : GF2Poly} (hpos : 0 < f.degree) : f ≠ 0 := b
 Rabin divisibility is equivalent to the quotient class of `X` being fixed by
 `k` iterated Frobenius squarings in `GF2nPoly g hg_irr`.
 
-This is the packed quotient bridge used by the finite-field part of Rabin
+This is the packed quotient identity used by the finite-field part of Rabin
 soundness: absolute divisibility by `X^(2^k) - X` is the same as
 `X^(2^k) = X` in the quotient by `g`.
 -/

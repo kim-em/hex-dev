@@ -2,17 +2,18 @@ import HexGramSchmidtMathlib.Int
 import HexGramSchmidt.Update
 
 /-!
-Bridge-bound row-operation update theorems for `hex-gram-schmidt`.
+Mathlib-side row-operation update theorems for `hex-gram-schmidt`.
 
 The theorems in this module relate `gramDet` / `scaledCoeffs` under the
 size-reduce (earlier-row-add) and adjacent-swap row operations. Their
 statements are Hex-local, but their proofs cross the Mathlib boundary by
 composing `HexMatrixMathlib.bareiss_eq_mathlib_det` with
 `HexMatrixMathlib.det_eq.symm` through `gramDet_rowAdd_earlier` and the
-matrix-side `gramDet_adjacentSwap_of_ne` bridge respectively, so they live
-in the bridge layer per [SPEC/Libraries/hex-gram-schmidt.md "Proof path
-governs placement, not just statement"]. The size-reduce theorems are thin
-wrappers around `scaledCoeffs_rowAdd_pivot/lower/other_row/above_pivot` and
+matrix-side `gramDet_adjacentSwap_of_ne` equation respectively, so they
+live in the Mathlib-side layer per [SPEC/Libraries/hex-gram-schmidt.md
+"Proof path governs placement, not just statement"]. The size-reduce
+theorems are thin wrappers around
+`scaledCoeffs_rowAdd_pivot/lower/other_row/above_pivot` and
 `gramDet_rowAdd_earlier`, which live in `HexGramSchmidtMathlib/Int.lean`.
 -/
 
@@ -25,7 +26,7 @@ namespace GramSchmidt.Int
 `GramSchmidt.Int.sizeReduce b j k r` is `Matrix.rowAdd b j k (-r)` (definitional),
 so the theorems below specialise the earlier-row-add updates in
 `HexGramSchmidt/Int.lean` to the LLL size-reduce row operation. They are kept
-in this bridge module because their proof path composes
+in this Mathlib-side module because their proof path composes
 `HexMatrixMathlib.bareiss_eq_mathlib_det` with
 `HexMatrixMathlib.det_eq.symm`. -/
 
@@ -1013,7 +1014,7 @@ coefficients at the `km1` and `k` columns are integer quotients of the
 corresponding `adjacentSwapScaledCoeff*Numerator` definitions by the
 pre-swap pivot `adjacentSwapDenom b k = gramDet b k.val`. Both pairs follow
 from the bordered-minor identities `bareiss_scaledCoeffMatrix_rowSwap_above_prev`
-and `_above_curr` once we bridge `bareiss → scaledCoeffs` via
+and `_above_curr` once we rewrite `bareiss → scaledCoeffs` via
 `scaledCoeffs_eq_scaledCoeffMatrix_bareiss`. -/
 
 theorem adjacentSwap_scaledCoeffAbovePrevNumerator_dvd (b : Matrix Int n m)

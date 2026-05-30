@@ -5,10 +5,10 @@ import Mathlib.LinearAlgebra.Dimension.Constructions
 import Mathlib.LinearAlgebra.Matrix.Rank
 
 /-!
-Rank, row-span, and nullspace bridge theorems for `hex-matrix-mathlib`.
+Rank, row-span, and nullspace correspondence theorems for `hex-matrix-mathlib`.
 
 This module converts the executable `Hex.Matrix` row-reduction data into
-Mathlib's function-based matrix model, then states bridge theorems relating
+Mathlib's function-based matrix model, then states theorems relating
 computed rank, span membership, and nullspace bases to Mathlib's
 noncomputable linear-algebra definitions.
 -/

@@ -4,7 +4,7 @@ import HexBerlekampZassenhausMathlib.Basic
 Stable unpacking lemmas for the executable BHKS precision cap.
 
 The executable `Hex.bhksBound` is intentionally pure `Nat` arithmetic.  This
-file gives the Mathlib bridge layer named components for the SPEC Group-D
+file gives the Mathlib-side layer named components for the SPEC Group-D
 integer expression so later BHKS termination work can refer to those
 components without repeatedly unfolding the executable definition.
 -/
@@ -321,7 +321,7 @@ theorem l2norm_toPolynomial_sq_le_coeffNormSq (f : Hex.ZPoly) :
     _ = (Hex.ZPoly.coeffNormSq f : ℝ) := hnorm_sum.symm
 
 /--
-The same squared-norm bridge with the `+ 1` slack used by the executable BHKS
+The same squared-norm bound with the `+ 1` slack used by the executable BHKS
 coefficient factor.
 -/
 theorem l2norm_toPolynomial_sq_le_coeffNormSq_add_one (f : Hex.ZPoly) :
@@ -478,7 +478,7 @@ theorem bhksPaperThresholdReal_le_bhksBound
 
 /--
 The packaged BHKS cap remains available alongside the executable Mignotte
-coefficient bound through a single max expression.  This lightweight bridge is
+coefficient bound through a single max expression.  This lightweight lemma is
 useful for later proofs that need one precision dominating both reconstruction
 and BHKS separation requirements.
 -/

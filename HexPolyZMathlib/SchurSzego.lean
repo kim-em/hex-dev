@@ -271,7 +271,7 @@ theorem rootsRadiusProduct_eq_one_of_forall_lt {r : ℝ} {s : Multiset ℂ}
 /--
 The number of roots outside a closed radius threshold, counted with
 multiplicity through the `Polynomial.roots` multiset.  This is the root-count
-form of the zero-control substrate in `SPEC/Libraries/hex-poly-z-mathlib.md`.
+form of the zero-control predicate in `SPEC/Libraries/hex-poly-z-mathlib.md`.
 -/
 def rootsOutsideRadiusCount (r : ℝ) (s : Multiset ℂ) : ℕ :=
   (s.filter fun z => r ≤ ‖z‖).card
@@ -348,7 +348,7 @@ def schmeisserCompositionOpenZeroControl (n : ℕ) (f g : ℂ[X]) : Prop :=
       rootsStrictlyOutsideRadiusCount r f.roots
 
 /--
-Degree-`n` Grace-Walsh-Szego/de Bruijn-Springer zero-control substrate for the
+Degree-`n` Grace-Walsh-Szego/de Bruijn-Springer zero-control predicate for the
 Schmeisser composition.  The conclusion is radius-wise root-count domination
 over `Polynomial.roots`, so multiplicities and roots at zero stay visible.
 -/
@@ -359,7 +359,7 @@ def graceWalshSzegoZeroControlAtDegree (n : ℕ) : Prop :=
         schmeisserCompositionZeroControl n f g
 
 /--
-Open circular-domain Grace-Walsh-Szego/de Bruijn-Springer source substrate for
+Open circular-domain Grace-Walsh-Szego/de Bruijn-Springer source predicate for
 the Schmeisser composition. The conclusion-side radius threshold is open, while
 the input roots still lie in the closed unit disk, as in Schmeisser's source
 hypothesis. Root counts use `Polynomial.roots`, preserving multiplicities.

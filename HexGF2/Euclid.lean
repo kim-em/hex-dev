@@ -122,7 +122,7 @@ private theorem ofUInt64_lowWord_eq_of_degree_lt_64 (p : GF2Poly)
 
 /-- Specialized low-word representation for a reduced residue modulo a
 single-word monic modulus. This is the non-mask part of the
-`packedReduceWord` bridge. -/
+`packedReduceWord` correctness proof. -/
 private theorem ofUInt64_mod_lowWord_eq_of_degree_lt {n : Nat} {irr : UInt64}
     (hn64 : n < 64) (p : GF2Poly)
     (hred :
@@ -893,7 +893,7 @@ theorem gcd_eq_one_of_irreducible_of_nonzero_reduced {a f : GF2Poly}
     (gcd_dvd_left a f) (gcd_dvd_right a f)
 
 /-- Adding a right multiple of the modulus does not change the computed
-remainder. This is the quotient-congruence bridge used with Bezout witnesses. -/
+remainder. This is the quotient-congruence form used with Bezout witnesses. -/
 theorem mod_add_mul_right_eq_mod (a c f : GF2Poly) :
     (a + c * f) % f = a % f := by
   exact mod_eq_of_add_right_multiple a c f
@@ -1026,7 +1026,7 @@ theorem mul_mod_xgcd_left_mod_eq_one_of_irreducible_of_nonzero_reduced {a f : GF
       exact (one_mod_eq_one_of_degree_pos hfdegree).symm
 
 /-- The packed single-word CLMUL/reduction path agrees with the polynomial
-xgcd inverse bridge for nonzero canonical representatives. -/
+xgcd inverse for nonzero canonical representatives. -/
 theorem packedReduceWord_clmul_packedInvWord_eq_one {n : Nat} {irr w : UInt64}
     (hn64 : n < 64) (hf : Irreducible (ofUInt64Monic irr n)) (hw : w ≠ 0)
     (hwlt : w.toNat < 2 ^ n) :
