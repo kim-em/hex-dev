@@ -603,31 +603,89 @@ not cite the precision-local rungs as headline evidence; they are
 informational tripwires that pass through the same
 `scheduled-hardware` tagging as the other Isabelle pairings.
 
-**Comparator run status.** The six per-rung Isabelle registrations
-are wired in
-[HexBerlekampZassenhaus/Bench.lean](../HexBerlekampZassenhaus/Bench.lean)
-but no comparator sweep has yet exported a `bz_isabelle`-paired
-JSON for these rungs. The first available sweep slot on quiet
-`carica` hardware (load average below the SPEC-recommended
-benchmarking threshold) will fill in the ladder table here. Until
-then, the §Concerns bullet records the precision-local ratio as
-"pending" rather than "excluded".
+Per-rung 3-trial sweep at commit `ea9b1d0b-dirty` on `carica`
+(Apple M2 Ultra, macOS 15.6), recorded `2026-05-30T17:18:49Z`,
+1/5/15-minute load averages `5.29/5.31/5.09` at sweep start. The
+worktree was dirty because the pod-managed `.claude/CLAUDE.md` file
+carried a pre-existing local modification outside this report
+package.
+
+Sweep command:
+
+```sh
+HEX_BZ_ISABELLE="$PWD/.cache/oracles/bz-isabelle/wrapper/bz_isabelle" \
+lake exe hexbz_bench run \
+    Hex.BerlekampZassenhausBench.runFastPathPrecisionLocalChecksum \
+    Hex.BerlekampZassenhausBench.runIsabellePrecisionLocalRung1Checksum \
+    Hex.BerlekampZassenhausBench.runIsabellePrecisionLocalRung2Checksum \
+    Hex.BerlekampZassenhausBench.runIsabellePrecisionLocalRung3Checksum \
+    Hex.BerlekampZassenhausBench.runIsabellePrecisionLocalRung4Checksum \
+    Hex.BerlekampZassenhausBench.runIsabellePrecisionLocalRung5Checksum \
+    Hex.BerlekampZassenhausBench.runIsabellePrecisionLocalRung6Checksum \
+    --outer-trials 3 \
+    --export-file reports/bench-results/hex-berlekamp-zassenhaus-ea9b1d0b-precision-local.json
+```
+
+Export artefact:
+`reports/bench-results/hex-berlekamp-zassenhaus-ea9b1d0b-precision-local.json`,
+SHA-256
+`f57f53b6f822d7098d175eb91a6b86de8b03996bbba4f6e0c53d90e7fa544ff3`.
+
+A same-window baseline refresh at the same commit recorded
+`runIsabelleFactorBaselineChecksum` at `7.500 ms`; export artefact:
+`reports/bench-results/hex-berlekamp-zassenhaus-ea9b1d0b-precision-local-baseline.json`,
+SHA-256
+`9b3169306ad0bd4e9cda8456e9e26e0b483bda00779d9051678989b41780bee3`,
+recorded by
+
+```sh
+HEX_BZ_ISABELLE="$PWD/.cache/oracles/bz-isabelle/wrapper/bz_isabelle" \
+lake exe hexbz_bench run \
+    Hex.BerlekampZassenhausBench.runIsabelleFactorBaselineChecksum \
+    --outer-trials 3 \
+    --export-file reports/bench-results/hex-berlekamp-zassenhaus-ea9b1d0b-precision-local-baseline.json
+```
+
+Each `runIsabellePrecisionLocalRung{1..6}Checksum` registration carries
+`expectedHash := none` because the Lean precision-local checksum mixes
+intermediate fast-path setup state (lifted factors, precision cap,
+modular split profile) rather than a canonical factorisation. The
+Isabelle full-factor side records its own observed hash on each rung
+(e.g. rung 1 input `(X−3)(X−6)` produces `0x734098fc3ef88387`); the
+two are not directly comparable hash strings because they measure
+different operations on the same polynomial.
 
 | Rung `(d, h, k, r)` | Lean median (`runFastPathPrecisionLocalChecksum`) | Isabelle median | overhead share | raw ratio | adjusted ratio | tripwire status |
 |:---|---:|---:|---:|---:|---:|:---|
-| `(d=2, h=2, k=4, r=2)` | pending | pending | pending | pending | pending | not yet measured |
-| `(d=2, h=2, k=16, r=2)` | pending | pending | pending | pending | pending | not yet measured |
-| `(d=4, h=4, k=16, r=4)` | pending | pending | pending | pending | pending | not yet measured |
-| `(d=4, h=16, k=64, r=4)` | pending | pending | pending | pending | pending | not yet measured |
-| `(d=6, h=16, k=64, r=6)` | pending | pending | pending | pending | pending | not yet measured |
-| `(d=8, h=32, k=128, r=8)` | pending | pending | pending | pending | pending | not yet measured |
+| `(d=2, h=2, k=4, r=2)` | 28.849 µs | 854.532 ms | 0.878% | 0.0000338 | 0.0000341 | passing (≪ 1×) |
+| `(d=2, h=2, k=16, r=2)` | 77.381 µs | 849.738 ms | 0.883% | 0.0000911 | 0.0000919 | passing (≪ 1×) |
+| `(d=4, h=4, k=16, r=4)` | 424.006 µs | 845.348 ms | 0.887% | 0.000502 | 0.000506 | passing (≪ 1×) |
+| `(d=4, h=16, k=64, r=4)` | 704.570 µs | 837.867 ms | 0.895% | 0.000841 | 0.000848 | passing (≪ 1×) |
+| `(d=6, h=16, k=64, r=6)` | 2.044 ms | 851.287 ms | 0.881% | 0.002401 | 0.002422 | passing (≪ 1×) |
+| `(d=8, h=32, k=128, r=8)` | 5.278 ms | 837.338 ms | 0.896% | 0.006303 | 0.006361 | passing (≪ 1×) |
 
-The Lean per-rung medians at commit `454066c-dirty` from the prior
-`hex-berlekamp-zassenhaus-issue3527-precision-local.json` export
-remain available as internal-complexity-model evidence in the
-§Appendix; once the comparator sweep is run, the headline table here
-will record both raw and adjusted ratios against fresh Lean medians
-collected in the same sweep.
+**Trend.** Isabelle's per-call adjusted time is essentially constant
+across the schedule (`830–847 ms`, a `≤ 2 %` envelope reflecting that
+the AFP-extracted `factor_int_poly` cost on these small-degree
+deterministic-linear-split inputs is dominated by persistent-subprocess
+JSON marshalling and Haskell allocator overhead). The Lean fast-path
+setup cost climbs monotonically across the schedule, from `28.8 µs` at
+`(2,2,4,2)` to `5.278 ms` at `(8,32,128,8)`, three orders of magnitude
+over six rungs — the climb is driven jointly by polynomial degree `r`
+and Hensel-lift precision parameter `k`. Even the largest rung's setup
+cost is `≪ 1 %` of Isabelle's full-factor wall on the same input, so
+the tripwire passes at every rung. The internal-complexity-model
+evidence in the §Appendix records the same Lean medians; the
+post-sweep ladder here records them paired against the
+verified-Isabelle full-factor reference.
+
+**Tripwire verdict.** All six rungs satisfy the tripwire (adjusted
+ratio `< 1×`). The largest measured adjusted ratio is `0.006361` at
+the largest rung `(8,32,128,8)` — Lean's fast-path setup work is
+two orders of magnitude below Isabelle's full-factor wall on this
+input. No hard-fail signal on the gating goal is implied by these
+measurements; per the methodology declaration, a passing tripwire
+does *not* upgrade to a `≤ 1×` gating-goal verdict on this surface.
 
 ### Comparison to prior outer-trials=1 ladder
 
@@ -1187,27 +1245,32 @@ record on each adversarial polynomial.
   [#5831](https://github.com/kim-em/hex/issues/5831)). The ninth
   surface, the precision/local-factor family
   (`runFastPathPrecisionLocalChecksum` paired with
-  `runIsabellePrecisionLocalRung{1..6}Checksum`), is wired but not
-  yet measured — see the next bullet.
-- `runFastPathPrecisionLocalChecksum`'s Isabelle pairing is *wired
-  but not yet measured*. Six per-rung
+  `runIsabellePrecisionLocalRung{1..6}Checksum`), records an
+  asymmetric tripwire rather than a gating verdict and satisfies
+  the tripwire at every rung — see the next bullet.
+- `runFastPathPrecisionLocalChecksum`'s Isabelle pairing is now
+  *measured*. Six per-rung
   `runIsabellePrecisionLocalRung{1..6}Checksum` registrations are
   present in
   [HexBerlekampZassenhaus/Bench.lean](../HexBerlekampZassenhaus/Bench.lean)
   on the inputs `prepPrecisionLocalInput`'s polynomial constructs at
-  each rung of `precisionLocalSchedule`. The pairing is asymmetric:
-  Lean measures *fast-path setup* cost
+  each rung of `precisionLocalSchedule`, and the
+  `ea9b1d0b-precision-local` sweep recorded the paired medians at
+  every rung (see §"Precision-local asymmetric ratio ladder"). The
+  pairing is asymmetric — Lean measures *fast-path setup* cost
   (`multifactorLiftQuadratic`, local-factor mixing,
-  `factorFastPrecisionCap`, modular split profile) on the polynomial
-  while Isabelle measures *full factorisation* of the same
-  polynomial. The recorded ratio is therefore a strict lower bound
-  on the implied `Lean_factorFast / Isabelle_full` ratio — useful as
-  a "setup alone exceeds Isabelle full factor" tripwire rather than
-  a gating verdict (see §"Precision-local asymmetric ratio ladder"
-  for the methodology). No comparator sweep has exported the paired
-  medians yet; the table in that section is `pending` on every rung.
-  Until the sweep runs, the precision/local-factor surface remains
-  covered as an internal-model verdict in the §Appendix.
+  `factorFastPrecisionCap`, modular split profile) while Isabelle
+  measures *full factorisation* of the same polynomial — so the
+  recorded ratio is a strict lower bound on the implied
+  `Lean_factorFast / Isabelle_full` ratio, useful only as a "setup
+  alone exceeds Isabelle full factor" tripwire and not as a gating
+  verdict. All six rungs satisfy the tripwire: adjusted ratios range
+  from `0.0000341` at `(d=2, h=2, k=4, r=2)` to `0.006361` at
+  `(d=8, h=32, k=128, r=8)`, with the largest rung's Lean setup work
+  still `≪ 1 %` of Isabelle's full-factor wall. The
+  internal-complexity-model evidence in the §Appendix records the
+  same Lean per-call medians; the post-sweep ladder here records
+  them paired against the verified-Isabelle full-factor reference.
 - The split-family `splitScientificSchedule` continues to be capped
   at `n = 5` by the `maxSecondsPerCall = 8.0s` budget. With the
   warm-iterated per-call medians recorded above (`n = 5` at
