@@ -98,63 +98,127 @@ sub-millisecond at these parameters under the child-process harness floor.
 
 ## Profile
 
-Profiles were captured at 1 kHz with `samply 0.13.1` on `carica` (Apple M2
-Ultra, macOS 14.6.1). Each profile used the compiled bench child mode so the
-profiled process was the measured benchmark body, not the parent harness:
+Profiles were captured with timed-region filtering through
+`scripts/profile/run_profile.sh` at `--rate 999` with `samply 0.13.1` on
+`carica` (Apple M2 Ultra, arm64, macOS 14.6.1). The filtered profiles retain
+only bench-thread samples that fall inside the bench library's timed regions.
+Each run used the compiled bench executable built from commit
+`3bc24c50fbe57487776c433106894ee544a6d656`; the child environment reported
+`git_dirty=true` because of the pre-existing `.claude/CLAUDE.md` worktree
+change outside this report's scope. The harness was `lean-bench` `0.1.0`
+(manifest rev `91412dba8350c29ddf52c9ace56f8a3d2240b6c7`) and the filtering
+orchestrator checkout was `lean-bench-samply`
+`602da96df3537341b50de9add2f137b0a75a68df`.
 
 ```sh
-samply record --save-only --unstable-presymbolicate --include-args=6 --rate 1000 -o /tmp/hexmodarith-profiles/word-residue-core-child-runMulChecksum-n524288.json.gz -- .lake/build/bin/hexmodarith_bench _child --bench Hex.ModArithBench.runMulChecksum --param 524288 --target-nanos 800000000
-samply record --save-only --unstable-presymbolicate --include-args=6 --rate 1000 -o /tmp/hexmodarith-profiles/barrett-hot-loop-child-runBarrettMulModChain-n1048576.json.gz -- .lake/build/bin/hexmodarith_bench _child --bench Hex.ModArithBench.runBarrettMulModChain --param 1048576 --target-nanos 800000000
-samply record --save-only --unstable-presymbolicate --include-args=6 --rate 1000 -o /tmp/hexmodarith-profiles/montgomery-hot-loop-child-runMontMulChain-n131072.json.gz -- .lake/build/bin/hexmodarith_bench _child --bench Hex.ModArithBench.runMontMulChain --param 131072 --target-nanos 800000000
+scripts/profile/run_profile.sh ./.lake/build/bin/hexmodarith_bench Hex.ModArithBench.runMulChecksum 524288 2000000000
+scripts/profile/run_profile.sh ./.lake/build/bin/hexmodarith_bench Hex.ModArithBench.runBarrettMulModChain 1048576 2000000000
+scripts/profile/run_profile.sh ./.lake/build/bin/hexmodarith_bench Hex.ModArithBench.runMontMulChain 131072 2000000000
 ```
 
-The raw profile artefacts are local-only per `SPEC/profiling.md`; the paths
-above record their developer-local locations. The commit recorded by each child
-profile was `f5bfa6409349b42d02ece03f5cb5193c89118bb4` with
-`git_dirty=true` from the unrelated `.claude/CLAUDE.md` worktree change.
+The raw profile artefacts are local-only per `SPEC/profiling.md`; the filtered
+developer-local paths were `/tmp/hex-profile-runMulChecksum-524288.json.gz`,
+`/tmp/hex-profile-runBarrettMulModChain-1048576.json.gz`, and
+`/tmp/hex-profile-runMontMulChain-131072.json.gz`. The inputs are deterministic
+benchmark fixtures, so no random seed is involved.
 
 ### `word-residue-core`
 
 - Representative case: `Hex.ModArithBench.runMulChecksum`, `n=524288`,
   deterministic `prepBinaryInput` samples over modulus `65537`.
-- Non-wait leaf categorisation: allocation/free 54.3%, GMP 15.1%, Lean runtime
-  13.9%, own code 5.1%, other 11.6%. The largest leaves were allocator paths
-  (`_nanov2_free`, `nanov2_malloc`, `_free`, `_malloc_zone_malloc`) under the
-  extern-backed multiplication loop.
-- Inclusive ranking: `Hex.ModArithBench.runMulChecksum_go` 95.4%,
-  the generated loop wrapper 95.4%, and `lean_hex_zmod64_mul` 95.2%.
+- Leaf categorisation: allocation/free 62.5%, GMP 15.7%, Lean runtime 12.9%,
+  own code 1.0%, other 7.9%. The largest leaves were allocator paths in
+  `libsystem_malloc.dylib` (57.8%), `__gmpz_init_set_ui` (3.1%),
+  `__gmpz_add` (2.5%), `lean_is_scalar` (2.4%), `__gmpz_realloc` (2.0%),
+  `lean_dec_ref` (1.9%), `lean_dec_ref_cold` (1.8%), and
+  `lean_uint64_to_nat` (1.7%).
+- Inclusive ranking: `Hex.ModArithBench.runMulChecksum.go` 100.0%, the
+  generated `Std.Legacy.Range.forIn'` loop wrapper 100.0%, and
+  `lean_hex_zmod64_mul` 99.8%.
 - Dominant-cost narrative: the profile lands in the registered
   `runMulChecksum` target. The inclusive path is the public `ZMod64.mul`
   extern hot loop; the leaf budget is mostly allocation/GMP support below that
   call boundary, so no unregistered dominant library function was found.
+- Diagnostics:
+
+  ```text
+  bench thread:       name='Thread <4892425>' tid=4892425
+  regions:            1, total timed = 1812.8 ms
+  expected samples:   ~1811 on bench thread
+  retained samples:   1811 on bench thread (28 rejected outside windows)
+  other-thread noise: 0 samples on non-bench threads within timed windows (informational)
+  filtered profile:   /tmp/hex-profile-runMulChecksum-524288.json.gz
+  spawn_anchor_wall_ns: 1780142596912771000
+  spawn_anchor_mono_ns: 330630833298250
+  sidecar_mono_anchor_ns: 330631771189708
+  samply_meta_start_time_ms: 1780142596919.383
+  ```
 
 ### `barrett-hot-loop`
 
 - Representative case: `Hex.ModArithBench.runBarrettMulModChain`, `n=1048576`,
   deterministic `prepUnaryInput` residues over modulus `65537`.
-- Non-wait leaf categorisation: own code 97.4%, Lean runtime 0.9%,
-  allocation/free 0.3%, other 1.4%, GMP 0%.
-- Inclusive ranking: `Hex.ModArithBench.runBarrettMulModChain_go` 97.0%,
-  `Hex.BarrettCtx_mulMod` 91.9%, `Hex.ZMod64_ofNat` 45.3%,
-  `Hex.barrettReduce` 24.7%, and `lean_hex_uint64_mul_hi` 11.1%.
+- Leaf categorisation: own code 100.0%, GMP 0%, allocation/free 0%, Lean
+  runtime 0%, other 0%. The largest leaves were `Hex.ZMod64.ofNat` (44.6%),
+  `Hex.BarrettCtx.mulMod` (22.8%), `Hex.barrettReduce` (14.6%),
+  `lean_hex_uint64_mul_hi` (12.2%), and
+  `Hex.ModArithBench.runBarrettMulModChain.go` (5.8%).
+- Inclusive ranking: `Hex.ModArithBench.runBarrettMulModChain.go` 100.0%,
+  the generated `Std.Legacy.Range.forIn'` loop wrapper 100.0%,
+  `Hex.BarrettCtx.mulMod` 94.2%, `Hex.ZMod64.ofNat` 44.6%,
+  `Hex.barrettReduce` 26.7%, and `lean_hex_uint64_mul_hi` 12.2%.
 - Dominant-cost narrative: the cost is attributable to the registered Barrett
   chain target. The main inclusive entries are the benchmark loop,
   `BarrettCtx.mulMod`, reduction, and the UInt64 high-multiply extern used by
   Barrett reduction.
+- Diagnostics:
+
+  ```text
+  bench thread:       name='Thread <4893373>' tid=4893373
+  regions:            1, total timed = 3012.0 ms
+  expected samples:   ~3009 on bench thread
+  retained samples:   3006 on bench thread (37 rejected outside windows)
+  other-thread noise: 0 samples on non-bench threads within timed windows (informational)
+  filtered profile:   /tmp/hex-profile-runBarrettMulModChain-1048576.json.gz
+  spawn_anchor_wall_ns: 1780142604035082000
+  spawn_anchor_mono_ns: 330637955687500
+  sidecar_mono_anchor_ns: 330638208476750
+  samply_meta_start_time_ms: 1780142604042.073
+  ```
 
 ### `montgomery-hot-loop`
 
 - Representative case: `Hex.ModArithBench.runMontMulChain`, `n=131072`,
   deterministic `prepMontInput` residues over modulus `65537`.
-- Non-wait leaf categorisation: Lean runtime 75.6%, allocation/free 8.8%,
-  own code 5.6%, other 9.9%, GMP 0%.
-- Inclusive ranking: `Hex.redc` 93.2%,
-  `Hex.ModArithBench.runMontMulChain` 87.8%,
-  `lean_hex_uint64_add_carry` 44.0%, and `lean_hex_uint64_mul_full` 32.2%.
+- Leaf categorisation: Lean runtime 80.7%, allocation/free 8.5%, own code
+  5.9%, other 4.9%, GMP 0%. The largest leaves were `lean_is_ctor` (10.8%),
+  `lean_ptr_tag` (10.0%), `lean_alloc_ctor` (9.6%), `lean_align` (8.6%),
+  `lean_usize_add_checked` (5.0%), `lean_dec_ref_cold` (5.0%),
+  `mi_malloc_small` (5.0%), `lean_usize_mul_checked` (4.8%),
+  `lean_ctor_num_objs` (4.6%), `lean_set_st_header` (3.8%), and
+  `Hex.redc` (3.8%).
+- Inclusive ranking: `Hex.ModArithBench.runMontMulChain` 99.9%,
+  the generated `Std.Legacy.Range.forIn'` loop wrapper 99.9%, `Hex.redc`
+  99.5%, `lean_hex_uint64_add_carry` 47.7%, and
+  `lean_hex_uint64_mul_full` 37.9%.
 - Dominant-cost narrative: the cost is attributable to the registered
   Montgomery multiplication-chain target. The dominant inclusive function is
   the REDC reduction used by `MontCtx.mulMont`; the leaf runtime/allocation
   samples are below that registered hot path.
+- Diagnostics:
+
+  ```text
+  bench thread:       name='Thread <4894088>' tid=4894088
+  regions:            2, total timed = 1538.2 ms
+  expected samples:   ~1537 on bench thread
+  retained samples:   1534 on bench thread (65 rejected outside windows)
+  other-thread noise: 2 samples on non-bench threads within timed windows (informational)
+  filtered profile:   /tmp/hex-profile-runMontMulChain-131072.json.gz
+  spawn_anchor_wall_ns: 1780142611311776000
+  spawn_anchor_mono_ns: 330645232462041
+  sidecar_mono_anchor_ns: 330646821148125
+  samply_meta_start_time_ms: 1780142611320.4019
+  ```
 
 The dominant inclusive costs all map to registered `HexModArith.Bench`
 targets. No unattributed dominant cost was observed.
