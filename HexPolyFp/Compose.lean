@@ -872,7 +872,7 @@ The substitution identity `compose w (linearPow X p) = linearPow w p` over
 `w = ∑_i a_i X^i`, the right-hand side equals `∑_i a_i X^(p·i)` (using
 Fermat for the constants), which is exactly the left-hand side after
 unfolding the compose power-sum form. This is the foundational identity
-that the Berlekamp matrix bridge uses to read each column of
+that the Berlekamp matrix correspondence uses to read each column of
 `berlekampMatrix` as `coeffVector f (linearPow X (p·j) mod f)`. -/
 
 private theorem linearPow_linearPow_mul (a : FpPoly p) (m : Nat) :

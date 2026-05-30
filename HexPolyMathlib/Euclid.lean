@@ -5,7 +5,7 @@ import Mathlib.Algebra.Polynomial.FieldDivision
 Euclidean-algorithm correspondence for `HexPolyMathlib`.
 
 This module transfers the executable `Hex.DensePoly` gcd and extended-gcd
-surface across the `HexPolyMathlib.equiv` bridge to Mathlib's
+surface across the `HexPolyMathlib.equiv` ring equivalence to Mathlib's
 `Polynomial` Euclidean-domain API.
 -/
 
@@ -47,7 +47,7 @@ private theorem toPolynomial_dvd_of_dense_ofPolynomial_dvd [CommRing R] [Decidab
 
 /--
 The raw executable dense-polynomial gcd is associated to Mathlib's normalized
-polynomial gcd under the bridge. It is not generally equal before normalization:
+polynomial gcd under `toPolynomial`. It is not generally equal before normalization:
 `Hex.DensePoly.gcd` returns the last Euclidean remainder, while
 `EuclideanDomain.gcd` for polynomials over a field is normalized.
 -/
@@ -76,7 +76,7 @@ theorem toPolynomial_xgcd_gcd_associated [Field R] [DecidableEq R] [Hex.DensePol
   simpa [Hex.DensePoly.gcd] using toPolynomial_gcd_associated (R := R) p q
 
 /--
-The executable Bezout identity transports across the dense-polynomial bridge.
+The executable Bezout identity transports across `toPolynomial`.
 The right hand side is the executable raw gcd component, not Mathlib's
 normalized polynomial gcd. The `@[simp]` direction collapses the transported
 Bezout combination to the named raw gcd; the matching pattern only fires when
@@ -112,7 +112,7 @@ theorem toPolynomial_xgcd_bezout_associated [Field R] [DecidableEq R] [Hex.Dense
 
 /--
 The ring equivalence sends the executable raw gcd to a polynomial associated to
-Mathlib's normalized gcd. Use this theorem when the consumer only needs the
+Mathlib's normalized gcd. Use this theorem when the caller only needs the
 gcd universal property; do not assume raw executable gcd outputs are normalized.
 -/
 theorem equiv_gcd_associated [Field R] [DecidableEq R] [Hex.DensePoly.GcdLaws R]

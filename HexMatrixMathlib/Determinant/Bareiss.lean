@@ -12,10 +12,10 @@ leading prefix of size `k`. As an immediate corollary, when all leading-prefix
 determinants are nonzero (`NonzeroBareissPivots`), the loop never takes the
 singular branch.
 
-The invariant proof composes the bordered-minor `stepMatrix` update bridge
+The invariant proof composes the bordered-minor `stepMatrix` update lemma
 (`Hex.Matrix.stepMatrix_borderedMinor_update`) with the bordered-minor
 specialization of Desnanot-Jacobi (`desnanot_jacobi_borderedMinor` in the
-parent module) and the exact-division bridge
+parent module) and the exact-division equation
 (`bareissExactDiv_borderedMinor_of_mul_eq`).
 -/
 
@@ -1334,7 +1334,7 @@ If the leading-prefix determinant of `source` at size `k` is nonzero but every
 `k`-bordered minor with trailing column `⟨k, _⟩` and trailing row at or below
 `k` vanishes, then `Hex.Matrix.det source = 0`.
 
-This is the bridge theorem consumed by the row-pivoted singular Bareiss
+This is the Mathlib-side theorem consumed by the row-pivoted singular Bareiss
 packaging: failed pivot search at level `k` produces a zero pivot column,
 which the bordered-minor invariant transports to the determinant column
 hypothesis here. The proof obtains a nonzero kernel vector for
@@ -1635,7 +1635,7 @@ theorem bareissData_eq_mathlib_det (M : Hex.Matrix Int n n) :
     exact det_eq M
 
 /-- Row-pivoted Bareiss determinant soundness, exposed against Mathlib's
-determinant for downstream bridge users. -/
+determinant for downstream Mathlib-side callers. -/
 theorem bareiss_eq_mathlib_det (M : Hex.Matrix Int n n) :
     Hex.Matrix.bareiss M = Matrix.det (matrixEquiv M) := by
   rw [Hex.Matrix.bareiss_eq_bareissData_det M]

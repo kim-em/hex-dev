@@ -427,7 +427,7 @@ theorem coeffL2NormBound_pos_of_ne_zero {f : ZPoly} (hf : f ≠ 0) :
 A nonzero integer polynomial has positive uniform default factor coefficient
 bound.
 
-This is the Mignotte-side substrate fact downstream consumers need to derive
+This is the Mignotte-side fact downstream callers need to derive
 `B ≠ 0` and the precision-modulus invariant `2 ≤ p ^ precisionForCoeffBound B p`
 from `f ≠ 0` alone (combined with the standard `p ≥ 2` provenance from
 `choosePrimeData?_prime` and `precisionForCoeffBound_spec`).

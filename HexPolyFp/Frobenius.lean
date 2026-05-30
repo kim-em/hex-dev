@@ -83,7 +83,7 @@ def frobeniusXPowModLinear (f : FpPoly p) (hmonic : DensePoly.Monic f) (k : Nat)
 
 /-! ### Successor step lemma for `frobeniusXPowMod`
 
-The bucket-invariant proof in `HexBerlekamp.DistinctDegree` needs the bridge
+The bucket-invariant proof in `HexBerlekamp.DistinctDegree` needs the identity
 
     `frobeniusXPowMod f hmonic (k + 1) =`
     `  powModMonic (frobeniusXPowMod f hmonic k) f hmonic p`
@@ -512,11 +512,11 @@ theorem frobeniusXPowMod_succ
   rw [show (p : Nat) * p ^ k = p ^ (k + 1) from by
         rw [Nat.pow_succ]; exact Nat.mul_comm _ _]
 
-/-! ### Bridge to the absolute monomial
+/-! ### Reduction to the absolute monomial
 
 Connect `frobeniusXPowMod` to the absolute polynomial `X^(p^k)` via
 `monomial (p^k) 1`, modulo `f`. This is consumed by the project-side
-Rabin soundness bridge in `HexBerlekamp.RabinSoundness`. -/
+Rabin soundness proof in `HexBerlekamp.RabinSoundness`. -/
 
 private theorem powLinear_X_eq_monomial (n : Nat) :
     powLinear (FpPoly.X (p := p)) n = DensePoly.monomial n (1 : ZMod64 p) := by
@@ -538,8 +538,8 @@ private theorem powLinear_X_eq_monomial (n : Nat) :
 
 /--
 `frobeniusXPowMod f hmonic k` reduces modulo `f` to the absolute monomial
-`X^(p^k)` reduced modulo `f`. This is the key bridge between the executable
-Frobenius computation and the absolute polynomial identity it represents.
+`X^(p^k)` reduced modulo `f`. This is the key identity relating the executable
+Frobenius computation to the absolute polynomial it represents.
 -/
 theorem frobeniusXPowMod_mod_eq_monomial_mod
     [ZMod64.PrimeModulus p]
