@@ -79,46 +79,62 @@ declared across the seven registrations.
 
 ## Profile
 
-Profiles were recorded with `samply record --save-only
---unstable-presymbolicate` at commit `58fc57b3775d` on `carica` (Apple M2
-Ultra, macOS 14.6.1) at the default 1 kHz sampling rate. The raw Firefox
-Profiler JSON artefacts and their `.syms.json` symbol sidecars are
-developer-local and are not committed; symbol attribution was done by mapping
-each frame's RVA against the bench binary's samply-emitted symbol table. Each
-profile sums samples from the main worker thread in the `hexgfqring_bench`
-child (the LeanBench-spawned `_child` process running the registered
-function), not the orchestrator or its lock-wait support threads. All
-percentages below are leaf counts and inclusive counts as a fraction of those
-worker-thread samples.
+Profiles were recorded with `scripts/profile/run_profile.sh` at commit
+`eec3a76fab8c` on `carica` (Apple M2 Ultra, macOS 14.6.1), sampling at
+`samply 0.13.1`'s 999 Hz interval. The bench binary used lean-bench
+`91412dba8350` (`LeanBench.TimedRegions`; the JSON row reports library version
+`0.1.0`). The raw Firefox Profiler JSON artefacts, sidecars, and retained raw
+inputs are developer-local and are not committed. Each profile below is filtered
+to samples from the bench thread inside LeanBench timed regions only; input
+preparation, autotuning between probes, result hashing, process startup, and
+process exit are excluded by the sidecar windows. All percentages are leaf
+counts or inclusive counts as a fraction of the retained bench-thread samples.
 
 ### `dense-reduction`
 
 Command:
 
 ```sh
-lake exe hexgfqring_bench profile Hex.GFqRingBench.runReduceModChecksum \
-    --param 256 --target-inner-nanos 5000000000 \
-    --profiler "samply record --save-only --unstable-presymbolicate \
-        -o /tmp/hex-profiles/hex-gfq-ring-reduce-mod-58fc57b3775d.json --"
+scripts/profile/run_profile.sh \
+    ./.lake/build/bin/hexgfqring_bench \
+    Hex.GFqRingBench.runReduceModChecksum 256 5000000000
 ```
 
 Representative case: deterministic dense `F_65537`-coefficient polynomial of
 size `2 * (n + 1) + 1 = 515` reduced through `Hex.GFqRing.reduceMod` against
 the deterministic dense modulus of degree `n + 1 = 257`, parameter `n = 256`,
 no seed. Child row: `inner_repeats=256`,
-`per_call_nanos=16999750.816406`, `result_hash=0xf371d3c6f9329331`. The
-worker thread recorded `4395` total sample weight; sidecar:
-`/tmp/hex-profiles/hex-gfq-ring-reduce-mod-58fc57b3775d.syms.json`.
+`per_call_nanos=17236222.656250`, `result_hash=0xf371d3c6f9329331`. Filtered
+profile: `/tmp/hex-profile-runReduceModChecksum-256.json.gz`.
 
-Leaf samples were other system frames 57.5%, GMP big-integer arithmetic
-17.2%, Lean runtime 15.6%, own HexGfqRing/HexPolyFp code 5.3%, and
-allocation/free 4.3%. Inclusive own-code cost was led by
-`Hex.GFqRingBench.runReduceModChecksum` (99.4%) ->
-`Hex.GFqRing.reduceMod` (99.4%) -> `Hex.DensePoly.divModArray` (99.3%) ->
-`Hex.DensePoly.divModArrayAux` (99.2%) ->
-`Hex.DensePoly.subtractScaledShiftStep` (90.8%). Per-coefficient work appears
-as `Hex.ZMod64.mul` (43.3%), `Hex.ZMod64.sub` (42.1%), and
-`Hex.ZMod64.complementWord` (37.2%). The dominant work maps to the registered
+Diagnostics quoted from the filtering postprocessor:
+
+```text
+bench_thread_tid=4351417
+regions_total=2
+total_timed_ms=4429.627667
+expected_samples_bench_thread=4425.2
+retained_samples_bench_thread=4422
+rejected_samples_bench_thread=10
+off_bench_thread_samples_in_window=0
+samply_interval_ms=1.001001
+spawn_anchor_wall_ns=1780141144435093000
+spawn_anchor_mono_ns=329178333913041
+sidecar_mono_anchor_ns=329178930047750
+```
+
+Leaf samples were allocation/free 51.9%, GMP big-integer arithmetic 16.4%,
+Lean runtime 15.1%, other system/Lean/library frames 11.0%, and own
+HexGfqRing/HexPolyFp code 5.6%. The large allocation/free share is inside the
+timed remainder loop: `mi_free`, `mi_malloc_small`, and macOS
+`libsystem_malloc` leaves are reached through the same coefficient update stack
+as the arithmetic leaves, not through input construction. Inclusive own-code
+cost was led by `Hex.GFqRingBench.runReduceModChecksum` (100.0%) ->
+`Hex.GFqRing.reduceMod` (100.0%) -> `Hex.DensePoly.divModArray` (100.0%) ->
+`Hex.DensePoly.divModArrayAux` (99.8%) ->
+`Hex.DensePoly.subtractScaledShiftStep` (91.5%). Per-coefficient work appears
+as `Hex.ZMod64.mul` (43.3%), `Hex.ZMod64.sub` (42.8%), and
+`Hex.ZMod64.complementWord` (38.1%). The dominant work maps to the registered
 `runReduceModChecksum` target via the
 `reduceMod -> divModArray -> subtractScaledShiftStep` remainder-by-shift chain,
 exactly as the `n^2` cost model predicts.
@@ -128,29 +144,43 @@ exactly as the `n^2` cost model predicts.
 Command:
 
 ```sh
-lake exe hexgfqring_bench profile Hex.GFqRingBench.runMulChecksum \
-    --param 256 --target-inner-nanos 5000000000 \
-    --profiler "samply record --save-only --unstable-presymbolicate \
-        -o /tmp/hex-profiles/hex-gfq-ring-mul-58fc57b3775d.json --"
+scripts/profile/run_profile.sh \
+    ./.lake/build/bin/hexgfqring_bench \
+    Hex.GFqRingBench.runMulChecksum 256 5000000000
 ```
 
 Representative case: deterministic dense `F_65537` canonical-rep quotient
 pairs of size `n + 1 = 257` multiplied modulo the deterministic dense modulus,
 parameter `n = 256`, no seed. Child row: `inner_repeats=128`,
-`per_call_nanos=27692107.421875`, `result_hash=0xeb5bd94c74ddcdcd`. The
-worker thread recorded `3603` total sample weight; sidecar:
-`/tmp/hex-profiles/hex-gfq-ring-mul-58fc57b3775d.syms.json`.
+`per_call_nanos=29683093.421875`, `result_hash=0xeb5bd94c74ddcdcd`. Filtered
+profile: `/tmp/hex-profile-runMulChecksum-256.json.gz`.
 
-Leaf samples were other system frames 55.5%, Lean runtime 17.1%, GMP
-big-integer arithmetic 15.5%, own HexGfqRing/HexPolyFp code 6.6%, and
-allocation/free 5.4%. Inclusive own-code cost split between
-`Hex.GFqRing.mul -> Hex.DensePoly.mul` (37.4%) for the schoolbook product and
-`Hex.GFqRing.reduceMod -> Hex.DensePoly.divModArray ->
-Hex.DensePoly.divModArrayAux` (61.7% / 61.7% / 61.6%) for the post-product
+Diagnostics quoted from the filtering postprocessor:
+
+```text
+bench_thread_tid=4352045
+regions_total=2
+total_timed_ms=3826.603125
+expected_samples_bench_thread=3822.8
+retained_samples_bench_thread=3809
+rejected_samples_bench_thread=9
+off_bench_thread_samples_in_window=2
+samply_interval_ms=1.001001
+spawn_anchor_wall_ns=1780141154646502000
+spawn_anchor_mono_ns=329188545410625
+sidecar_mono_anchor_ns=329188881497041
+```
+
+Leaf samples were allocation/free 50.6%, Lean runtime 16.6%, GMP big-integer
+arithmetic 13.8%, other system/Lean/library frames 12.5%, and own
+HexGfqRing/HexPolyFp code 6.5%. Inclusive own-code cost split between
+`Hex.GFqRing.mul -> Hex.DensePoly.mul` (37.3% / 37.3%) for the schoolbook
+product and `Hex.GFqRing.reduceMod -> Hex.DensePoly.divModArray ->
+Hex.DensePoly.divModArrayAux` (62.7% / 62.7% / 62.7%) for the post-product
 remainder; the heavier share is the reduction half because the dividend has
 degree `2(n + 1)` after multiplication. Per-coefficient work appears as
-`Hex.ZMod64.mul` (53.9%), `Hex.ZMod64.sub` (26.4%), and
-`Hex.ZMod64.complementWord` (23.8%) inside `subtractScaledShiftStep` (56.6%).
+`Hex.ZMod64.mul` (52.7%), `Hex.ZMod64.sub` (28.9%), and
+`Hex.ZMod64.complementWord` (25.7%) inside `subtractScaledShiftStep` (58.2%).
 The dominant work maps to the registered `runMulChecksum` target via
 `GFqRing.mul` (the schoolbook `DensePoly.mul`) followed by the same
 `GFqRing.reduceMod` remainder chain measured in `dense-reduction`, matching
@@ -158,6 +188,9 @@ the `n^2` cost model: the multiplication and the reduction are both `O(n^2)`
 in the modulus degree, so combined throughput is also `O(n^2)`.
 
 The dominant inclusive costs in both profiles all map to registered
-`HexGfqRing/Bench.lean` targets. No unattributed dominant cost was observed.
+`HexGfqRing/Bench.lean` targets. The newly visible dominant allocation leaves
+are attributable to the registered dense-reduction and quotient-multiplication
+timed regions rather than to unmeasured preparation or hashing. No unattributed
+dominant cost was observed.
 
 ## Concerns
