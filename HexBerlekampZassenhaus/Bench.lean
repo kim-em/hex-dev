@@ -106,6 +106,14 @@ Gating external comparator:
   verified-Isabelle pairs for the cascade-trigger fallback-probe schedule. The
   `expectedHash` field is `none` on these registrations to keep elaboration off
   the cascade-affected Lean `factor` call path; see the per-`def` doc comment.
+* `runIsabellePrecisionLocalRung{1..6}Checksum`: per-rung verified-Isabelle
+  pairs for the precision/local-factor schedule. The Lean target measures
+  fast-path setup (multifactor lifting + modular split profile) rather than
+  full factorisation, so the resulting `Lean_setup / Isabelle_full` ratio is
+  asymmetric and reported as a lower bound on the implied full-factor ratio;
+  see the per-`def` doc comment and
+  `reports/hex-berlekamp-zassenhaus-performance.md` §"Precision-local
+  asymmetric ratio ladder".
 -/
 
 namespace Hex
@@ -780,6 +788,59 @@ def runIsabelleFallbackProbeN24Checksum : Unit → IO UInt64 := fun _ => do
   let (scalar, factors) ← requestIsabelleBZFactorization (prepFallbackProbeInput 24)
   return checksumCanonicalFactorization scalar factors
 
+/--
+Per-rung verified-Isabelle BZ comparator targets on the
+`prepPrecisionLocalInput param` polynomial at each rung of
+`precisionLocalSchedule`. Each pairs with the corresponding rung of the
+parametric Lean `runFastPathPrecisionLocalChecksum` registration.
+
+The Lean target measures *fast-path setup* (multifactor lifting at the
+precision axis plus the modular split profile), not full factorisation, so
+the ratio `Lean_setup / Isabelle_full` is asymmetric: the operations
+differ on the same input. The recorded number is therefore a strict
+lower bound on the equivalent `factorFast`/`factor`-vs-Isabelle full-factor
+ratio on that input — useful as a "setup alone exceeds Isabelle full
+factor" tripwire rather than a full gating verdict. See
+`reports/hex-berlekamp-zassenhaus-performance.md` §"Precision-local
+asymmetric ratio ladder" for the methodology and interpretation.
+
+`expectedHash` is `none` because the Lean precision-local checksum
+records a mix of intermediate-state hashes (lifted factors, precision
+cap, modular split profile), not a canonical factorisation, so the
+two checksums are not directly comparable. Multiset agreement against
+the constructed split factorisation `splitPrecisionLocalFactors` is
+established post-hoc.
+-/
+def runIsabellePrecisionLocalRung1Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization
+    (prepPrecisionLocalInput (encodePrecisionLocalParam 2 2 4 2)).poly
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabellePrecisionLocalRung2Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization
+    (prepPrecisionLocalInput (encodePrecisionLocalParam 2 2 16 2)).poly
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabellePrecisionLocalRung3Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization
+    (prepPrecisionLocalInput (encodePrecisionLocalParam 4 4 16 4)).poly
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabellePrecisionLocalRung4Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization
+    (prepPrecisionLocalInput (encodePrecisionLocalParam 4 16 64 4)).poly
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabellePrecisionLocalRung5Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization
+    (prepPrecisionLocalInput (encodePrecisionLocalParam 6 16 64 6)).poly
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabellePrecisionLocalRung6Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization
+    (prepPrecisionLocalInput (encodePrecisionLocalParam 8 32 128 8)).poly
+  return checksumCanonicalFactorization scalar factors
+
 def scheduledHardwareTag : String :=
   "scheduled-hardware"
 
@@ -1326,6 +1387,53 @@ setup_fixed_benchmark runIsabelleFallbackProbeN22Checksum where {
   }
 
 setup_fixed_benchmark runIsabelleFallbackProbeN24Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    tags := #[scheduledHardwareTag]
+  }
+
+/- Per-rung verified-Isabelle comparator registrations on
+`prepPrecisionLocalInput param` for each rung of `precisionLocalSchedule`.
+Pairs with `runFastPathPrecisionLocalChecksum` at the same rung. The
+ratio is asymmetric (Lean measures setup only, Isabelle measures full
+factor on the same input) and is reported as a lower bound on the
+implied full-factor ratio — see the per-`def` doc comment for the
+methodology and tripwire interpretation. `expectedHash` is `none` because
+the Lean checksum mixes intermediate-state hashes, not a canonical
+factorisation; multiset agreement against the constructed split
+factorisation is established post-hoc. Tagged `scheduled-hardware` so
+CI's `verify` does not invoke the AFP-extracted comparator. -/
+setup_fixed_benchmark runIsabellePrecisionLocalRung1Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabellePrecisionLocalRung2Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabellePrecisionLocalRung3Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabellePrecisionLocalRung4Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabellePrecisionLocalRung5Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabellePrecisionLocalRung6Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     tags := #[scheduledHardwareTag]
