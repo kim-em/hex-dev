@@ -455,6 +455,13 @@ Worker-created follow-up issues are encouraged when they improve
 queue quality. Do not require a separate planning round-trip just
 to split an issue that is clearly too large.
 
+### Skipping a previously-skipped issue is forbidden
+
+A worker that finds its claimed issue already carries one or more
+`Skipped by session ...` comments must escalate — close with a
+specific reason, `coordination add-dep` on a concrete open
+blocker, or decompose — and may not `coordination skip` again.
+
 ### Directives never enter the replan queue
 
 `directive`-labelled issues encode SPEC/PLAN-mandated outcomes whose
