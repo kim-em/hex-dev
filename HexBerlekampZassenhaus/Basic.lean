@@ -2364,20 +2364,6 @@ theorem choosePrimeData_prime (f : ZPoly) :
       simp [fallbackPrimeChoiceData, prime_three]
 
 /--
-The modular image stored in selected prime-choice data is exactly the
-coefficientwise reduction of the input at the selected prime.
--/
-theorem choosePrimeData_fModP_eq_modP (f : ZPoly) :
-    (choosePrimeData f).fModP =
-      @ZPoly.modP (choosePrimeData f).p (choosePrimeData f).bounds f := by
-  unfold choosePrimeData
-  cases hdata : choosePrimeData? f with
-  | some data =>
-      exact choosePrimeData?_fModP_eq f data hdata
-  | none =>
-      simp [fallbackPrimeChoiceData]
-
-/--
 Lift the chosen modular factors to the requested precision for integer
 recombination.
 -/
@@ -6092,11 +6078,11 @@ theorem factorSlowFactorsWithBound_branch
         reassemblePolynomialFactors (normalizeForFactor f)
           (exhaustiveCoreFactorsWithBound
             (normalizeForFactor f).squareFreeCore B
-            (choosePrimeData (normalizeForFactor f).squareFreeCore)) ∧
+            (choosePrimeDataWithFallback
+              (normalizeForFactor f).squareFreeCore)) ∧
       (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
       quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none) := by
   unfold factorSlowFactorsWithBound
-  simp only [← choosePrimeData_eq_choosePrimeDataWithFallback]
   by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
   · left
     constructor
@@ -6107,12 +6093,45 @@ theorem factorSlowFactorsWithBound_branch
     | some coreFactors =>
         left
         refine ⟨coreFactors, ?_, hdeg, rfl⟩
-        simp only [hdeg, if_false]
+        simp only [hdeg, hquad, if_false]
     | none =>
         right
         constructor
-        · simp only [hdeg, if_false]
+        · simp only [hdeg, hquad, if_false]
         · exact ⟨hdeg, rfl⟩
+
+/-- Witness-form variant of `factorSlowFactorsWithBound_branch`: the
+exhaustive branch's core array is computed against an explicit
+`primeData` paired with `hchoose : choosePrimeData? sf = some primeData`,
+removing the silent fallback dispatch from the disjunct's statement. -/
+theorem factorSlowFactorsWithBound_branch_of_choosePrimeData?_some
+    (f : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    (hchoose :
+      choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData) :
+    (factorSlowFactorsWithBound f B =
+        reassemblePolynomialFactors (normalizeForFactor f)
+          #[(normalizeForFactor f).squareFreeCore] ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0) ∨
+    (∃ coreFactors : Array ZPoly,
+      factorSlowFactorsWithBound f B =
+        reassemblePolynomialFactors (normalizeForFactor f) coreFactors ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
+      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore =
+        some coreFactors) ∨
+    (factorSlowFactorsWithBound f B =
+        reassemblePolynomialFactors (normalizeForFactor f)
+          (exhaustiveCoreFactorsWithBound
+            (normalizeForFactor f).squareFreeCore B primeData) ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
+      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none) := by
+  have hwf :
+      choosePrimeDataWithFallback (normalizeForFactor f).squareFreeCore = primeData := by
+    unfold choosePrimeDataWithFallback
+    rw [hchoose]
+    rfl
+  have hbranch := factorSlowFactorsWithBound_branch f B
+  rw [hwf] at hbranch
+  exact hbranch
 
 private def factorSlowWithBound (f : ZPoly) (B : Nat) : Factorization :=
   factorizationOfFactors f (factorSlowFactorsWithBound f B)
@@ -6187,8 +6206,7 @@ private theorem factorFastFactorsWithBound_eq_some_of_core_success
     (f : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
     (coreFactors : Array ZPoly)
     (hB_pos : 1 ≤ B)
-    (hnormalized : primeData = choosePrimeData
-      (normalizeForFactor f).squareFreeCore)
+    (hchoose : choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData)
     (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
     (hnotsingleton :
       ¬ ((choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome ∧
@@ -6203,11 +6221,15 @@ private theorem factorFastFactorsWithBound_eq_some_of_core_success
     factorFastFactorsWithBound f B =
       some (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) := by
   unfold factorFastFactorsWithBound
-  rw [choosePrimeData_eq_choosePrimeDataWithFallback] at hnormalized
+  have hwf :
+      choosePrimeDataWithFallback (normalizeForFactor f).squareFreeCore = primeData := by
+    unfold choosePrimeDataWithFallback
+    rw [hchoose]
+    rfl
   rw [if_neg hdeg, if_neg (by omega : B ≠ 0)]
   by_cases hB1 : B = 1
   · rw [if_pos hB1]
-    rw [← hnormalized]
+    rw [hwf]
     rw [if_neg hnotsingleton]
     rw [hcore]
   · rw [if_neg hB1]
@@ -6216,7 +6238,7 @@ private theorem factorFastFactorsWithBound_eq_some_of_core_success
       | inl heq => exact absurd heq hB1
       | inr hnone => exact hnone
     rw [hq]
-    rw [← hnormalized]
+    rw [hwf]
     rw [if_neg hnotsingleton]
     rw [hcore]
 
@@ -6430,6 +6452,155 @@ theorem factorFastFactorsWithBound_branch (f : ZPoly) (B : Nat) :
               unfold factorFastFactorsWithBound
               rw [if_neg hdeg, if_neg hB0, if_neg hB1, hquad, if_neg hpred, hcore]
 
+/-- Witness-form variant of `factorFastFactorsWithBound_branch`: the
+small-mod and BHKS disjuncts reference `primeData` directly rather than
+`choosePrimeDataWithFallback`, given an explicit
+`hchoose : choosePrimeData? sf = some primeData`. Since `hchoose`
+implies `primeData = choosePrimeDataWithFallback sf`, the (e), (i)
+fast-core-none disjuncts that depend on the prime-data shape collapse
+to a single fast-core-none disjunct (without the `isSome` clause, which
+is automatic from `hchoose`).
+
+Disjuncts whose statements never mention `choosePrimeData(WithFallback)`
+((a), (b), (f)) are reproduced verbatim. -/
+theorem factorFastFactorsWithBound_branch_of_choosePrimeData?_some
+    (f : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    (hchoose :
+      choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData) :
+    -- (a) constant core
+    (factorFastFactorsWithBound f B =
+        some (reassemblePolynomialFactors (normalizeForFactor f)
+          #[(normalizeForFactor f).squareFreeCore]) ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0) ∨
+    -- (b) B = 0
+    (factorFastFactorsWithBound f B = none ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
+      B = 0) ∨
+    -- (c) B = 1, small-mod singleton
+    (factorFastFactorsWithBound f B =
+        some (reassemblePolynomialFactors (normalizeForFactor f)
+          #[(normalizeForFactor f).squareFreeCore]) ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
+      B = 1 ∧
+      primeData.factorsModP.size ≤ 1) ∨
+    -- (d) B = 1, fast-core success
+    (∃ coreFactors, factorFastFactorsWithBound f B =
+        some (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
+      B = 1 ∧
+      ¬ primeData.factorsModP.size ≤ 1 ∧
+      (let a := precisionForCoeffBound B primeData.p
+       factorFastCoreWithBound (normalizeForFactor f).squareFreeCore a
+         primeData (initialHenselPrecision a)
+         (ZPoly.quadraticDoublingSteps a + 2) = some coreFactors)) ∨
+    -- (e) B = 1, fast-core none
+    (factorFastFactorsWithBound f B = none ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
+      B = 1 ∧
+      ¬ primeData.factorsModP.size ≤ 1 ∧
+      (let a := precisionForCoeffBound B primeData.p
+       factorFastCoreWithBound (normalizeForFactor f).squareFreeCore a
+         primeData (initialHenselPrecision a)
+         (ZPoly.quadraticDoublingSteps a + 2) = none)) ∨
+    -- (f) B > 1, quadratic
+    (∃ coreFactors, factorFastFactorsWithBound f B =
+        some (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
+      1 < B ∧
+      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore =
+        some coreFactors) ∨
+    -- (g) B > 1, small-mod singleton
+    (factorFastFactorsWithBound f B =
+        some (reassemblePolynomialFactors (normalizeForFactor f)
+          #[(normalizeForFactor f).squareFreeCore]) ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
+      1 < B ∧
+      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none ∧
+      primeData.factorsModP.size ≤ 1) ∨
+    -- (h) B > 1, fast-core success
+    (∃ coreFactors, factorFastFactorsWithBound f B =
+        some (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
+      1 < B ∧
+      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none ∧
+      ¬ primeData.factorsModP.size ≤ 1 ∧
+      (let a := precisionForCoeffBound B primeData.p
+       factorFastCoreWithBound (normalizeForFactor f).squareFreeCore a
+         primeData (initialHenselPrecision a)
+         (ZPoly.quadraticDoublingSteps a + 2) = some coreFactors)) ∨
+    -- (i) B > 1, fast-core none
+    (factorFastFactorsWithBound f B = none ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
+      1 < B ∧
+      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none ∧
+      ¬ primeData.factorsModP.size ≤ 1 ∧
+      (let a := precisionForCoeffBound B primeData.p
+       factorFastCoreWithBound (normalizeForFactor f).squareFreeCore a
+         primeData (initialHenselPrecision a)
+         (ZPoly.quadraticDoublingSteps a + 2) = none)) := by
+  have hwf :
+      choosePrimeDataWithFallback (normalizeForFactor f).squareFreeCore = primeData := by
+    unfold choosePrimeDataWithFallback
+    rw [hchoose]
+    rfl
+  have hisSome :
+      (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome = true := by
+    rw [hchoose]; rfl
+  rcases factorFastFactorsWithBound_branch f B with
+    ha | hb | hc | hd | he | hf | hg | hh | hi
+  · exact Or.inl ha
+  · exact Or.inr (Or.inl hb)
+  · -- (c)
+    rcases hc with ⟨hfast, hdeg, hB1, _, hsmall⟩
+    rw [hwf] at hsmall
+    exact Or.inr (Or.inr (Or.inl ⟨hfast, hdeg, hB1, hsmall⟩))
+  · -- (d)
+    rcases hd with ⟨coreFactors, hfast, hdeg, hB1, hpred, hcore⟩
+    have hsmall : ¬ primeData.factorsModP.size ≤ 1 := by
+      intro h
+      apply hpred
+      refine ⟨hisSome, ?_⟩
+      rw [hwf]; exact h
+    rw [hwf] at hcore
+    exact Or.inr (Or.inr (Or.inr (Or.inl
+      ⟨coreFactors, hfast, hdeg, hB1, hsmall, hcore⟩)))
+  · -- (e)
+    rcases he with ⟨hfast, hdeg, hB1, hpred, hcore⟩
+    have hsmall : ¬ primeData.factorsModP.size ≤ 1 := by
+      intro h
+      apply hpred
+      refine ⟨hisSome, ?_⟩
+      rw [hwf]; exact h
+    rw [hwf] at hcore
+    exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inl
+      ⟨hfast, hdeg, hB1, hsmall, hcore⟩))))
+  · exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inl hf)))))
+  · -- (g)
+    rcases hg with ⟨hfast, hdeg, hBgt, hquad, _, hsmall⟩
+    rw [hwf] at hsmall
+    exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inl
+      ⟨hfast, hdeg, hBgt, hquad, hsmall⟩))))))
+  · -- (h)
+    rcases hh with ⟨coreFactors, hfast, hdeg, hBgt, hquad, hpred, hcore⟩
+    have hsmall : ¬ primeData.factorsModP.size ≤ 1 := by
+      intro h
+      apply hpred
+      refine ⟨hisSome, ?_⟩
+      rw [hwf]; exact h
+    rw [hwf] at hcore
+    exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inl
+      ⟨coreFactors, hfast, hdeg, hBgt, hquad, hsmall, hcore⟩)))))))
+  · -- (i)
+    rcases hi with ⟨hfast, hdeg, hBgt, hquad, hpred, hcore⟩
+    have hsmall : ¬ primeData.factorsModP.size ≤ 1 := by
+      intro h
+      apply hpred
+      refine ⟨hisSome, ?_⟩
+      rw [hwf]; exact h
+    rw [hwf] at hcore
+    exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr
+      ⟨hfast, hdeg, hBgt, hquad, hsmall, hcore⟩)))))))
+
 /--
 Precision cap used by the public fast path.
 
@@ -6515,8 +6686,8 @@ theorem factorFast_ne_none_of_core_recovery_on_schedule
     (f : ZPoly) (primeData : PrimeChoiceData)
     {target : Nat} {coreFactors : Array ZPoly}
     (hB_pos : 1 ≤ factorFastPrecisionCap f)
-    (hnormalized :
-      primeData = choosePrimeData (normalizeForFactor f).squareFreeCore)
+    (hchoose :
+      choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData)
     (hmem :
       let a := precisionForCoeffBound (factorFastPrecisionCap f) primeData.p
       target ∈
@@ -6532,6 +6703,11 @@ theorem factorFast_ne_none_of_core_recovery_on_schedule
   let a := precisionForCoeffBound B primeData.p
   have hB_pos' : 1 ≤ B := by
     simpa [B] using hB_pos
+  have hwf :
+      choosePrimeDataWithFallback (normalizeForFactor f).squareFreeCore = primeData := by
+    unfold choosePrimeDataWithFallback
+    rw [hchoose]
+    rfl
   have hcore_ne :
       factorFastCoreWithBound (normalizeForFactor f).squareFreeCore a primeData
           (initialHenselPrecision a) (ZPoly.quadraticDoublingSteps a + 2) ≠ none := by
@@ -6542,7 +6718,6 @@ theorem factorFast_ne_none_of_core_recovery_on_schedule
   have hfactors_ne :
       factorFastFactorsWithBound f B ≠ none := by
     unfold factorFastFactorsWithBound
-    rw [choosePrimeData_eq_choosePrimeDataWithFallback] at hnormalized
     by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
     · rw [if_pos hdeg]
       exact Option.some_ne_none _
@@ -6550,7 +6725,7 @@ theorem factorFast_ne_none_of_core_recovery_on_schedule
       rw [if_neg (by omega : B ≠ 0)]
       by_cases hB1 : B = 1
       · rw [if_pos hB1]
-        rw [← hnormalized]
+        rw [hwf]
         by_cases hpred :
             (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome ∧
               primeData.factorsModP.size ≤ 1
@@ -6571,7 +6746,7 @@ theorem factorFast_ne_none_of_core_recovery_on_schedule
         | some factors =>
             simp
         | none =>
-            rw [← hnormalized]
+            rw [hwf]
             by_cases hpred :
                 (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome ∧
                   primeData.factorsModP.size ≤ 1
@@ -7045,28 +7220,36 @@ for callers that can prove the expansion-complete side condition.
 -/
 theorem factorWithBound_entry_mem_exhaustive_branch_xPower_or_core_of_reassemblyComplete
     (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
+    (primeData : PrimeChoiceData)
+    (hchoose :
+      choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData)
     (hbranch : factorWithBoundUsesExhaustiveBranch f B)
     (hcomplete :
       reassemblyExpansionComplete (normalizeForFactor f)
         (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-          (choosePrimeData (normalizeForFactor f).squareFreeCore)))
+          primeData))
     (hmem : entry ∈ (factorWithBound f B).factors.toList) :
     ∃ raw,
       (raw ∈ (xPowerFactorArray (normalizeForFactor f).xPower).toList ∨
         raw ∈
           (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-            (choosePrimeData (normalizeForFactor f).squareFreeCore)).toList) ∧
+            primeData).toList) ∧
         entry.1 = normalizeFactorSign raw := by
+  have hwf :
+      choosePrimeDataWithFallback (normalizeForFactor f).squareFreeCore = primeData := by
+    unfold choosePrimeDataWithFallback
+    rw [hchoose]
+    rfl
   rcases factorWithBound_entry_mem_exhaustive_branch_raw f B entry hbranch hmem with
     ⟨raw, hraw_mem, hraw_norm⟩
   refine ⟨raw, ?_, hraw_norm⟩
   rw [exhaustiveSlowRawFactorsWithBound] at hraw_mem
-  rw [← choosePrimeData_eq_choosePrimeDataWithFallback] at hraw_mem
+  rw [hwf] at hraw_mem
   exact
     reassemblePolynomialFactors_mem_xPower_or_core_of_expansionComplete
       (normalizeForFactor f)
       (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-        (choosePrimeData (normalizeForFactor f).squareFreeCore))
+        primeData)
       raw hcomplete hraw_mem
 
 /--
@@ -7076,24 +7259,28 @@ for the public `factor` entry point.
 -/
 theorem factor_entry_mem_exhaustive_branch_xPower_or_core_of_reassemblyComplete
     (f : ZPoly) (entry : ZPoly × Nat)
+    (primeData : PrimeChoiceData)
+    (hchoose :
+      choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData)
     (hbranch :
       factorWithBoundUsesExhaustiveBranch f (ZPoly.defaultFactorCoeffBound f))
     (hcomplete :
       reassemblyExpansionComplete (normalizeForFactor f)
         (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore
           (ZPoly.defaultFactorCoeffBound f)
-          (choosePrimeData (normalizeForFactor f).squareFreeCore)))
+          primeData))
     (hmem : entry ∈ (factor f).factors.toList) :
     ∃ raw,
       (raw ∈ (xPowerFactorArray (normalizeForFactor f).xPower).toList ∨
         raw ∈
           (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore
             (ZPoly.defaultFactorCoeffBound f)
-            (choosePrimeData (normalizeForFactor f).squareFreeCore)).toList) ∧
+            primeData).toList) ∧
         entry.1 = normalizeFactorSign raw := by
   simpa [factor_eq_factorWithBound_default] using
     factorWithBound_entry_mem_exhaustive_branch_xPower_or_core_of_reassemblyComplete
-      f (ZPoly.defaultFactorCoeffBound f) entry hbranch hcomplete hmem
+      f (ZPoly.defaultFactorCoeffBound f) entry primeData hchoose
+      hbranch hcomplete hmem
 
 /-- In the fast-path small-mod singleton branch, every recorded
 `factorWithBound` entry comes from the normalization reassembly whose core array
@@ -7109,13 +7296,12 @@ falls through to the exhaustive slow path, so the singleton branch-shape
 conclusion does not apply. -/
 theorem factorWithBound_entry_mem_small_mod_singleton_raw
     (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
+    (primeData : PrimeChoiceData)
     (hB_pos : 1 ≤ B)
     (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
     (hchoose :
-      choosePrimeData? (normalizeForFactor f).squareFreeCore =
-        some (choosePrimeData (normalizeForFactor f).squareFreeCore))
-    (hsmall :
-      (choosePrimeData (normalizeForFactor f).squareFreeCore).factorsModP.size ≤ 1)
+      choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData)
+    (hsmall : primeData.factorsModP.size ≤ 1)
     (hquadratic : B = 1 ∨
       quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none)
     (hmem : entry ∈ (factorWithBound f B).factors.toList) :
@@ -7123,16 +7309,21 @@ theorem factorWithBound_entry_mem_small_mod_singleton_raw
         (reassemblePolynomialFactors (normalizeForFactor f)
           #[(normalizeForFactor f).squareFreeCore]).toList,
       entry.1 = normalizeFactorSign raw := by
+  have hwf :
+      choosePrimeDataWithFallback (normalizeForFactor f).squareFreeCore = primeData := by
+    unfold choosePrimeDataWithFallback
+    rw [hchoose]
+    rfl
   have hpred :
       (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome ∧
-        (choosePrimeData (normalizeForFactor f).squareFreeCore).factorsModP.size ≤ 1 :=
-    ⟨by rw [hchoose]; rfl, hsmall⟩
+        (choosePrimeDataWithFallback
+          (normalizeForFactor f).squareFreeCore).factorsModP.size ≤ 1 :=
+    ⟨by rw [hchoose]; rfl, by rw [hwf]; exact hsmall⟩
   have hfast :
       factorFastFactorsWithBound f B =
         some (reassemblePolynomialFactors (normalizeForFactor f)
           #[(normalizeForFactor f).squareFreeCore]) := by
     unfold factorFastFactorsWithBound
-    rw [choosePrimeData_eq_choosePrimeDataWithFallback] at hpred
     rw [if_neg hdeg, if_neg (by omega : B ≠ 0)]
     by_cases hB1 : B = 1
     · rw [if_pos hB1]
@@ -7209,18 +7400,24 @@ theorem factorWithBound_entry_mem_quadratic_branch_raw
 is the successful `factorFastCoreWithBound` output for the chosen prime data.
 This is the branch-shape lemma needed by Mathlib-side BHKS irreducibility
 proofs; it leaves the mathematical proof that each core factor is irreducible
-to the Mathlib-side layer. -/
+to the Mathlib-side layer.
+
+The `primeData` parameter is paired with an explicit
+`hchoose : choosePrimeData? sf = some primeData` witness; downstream callers
+that already have a `choosePrimeData?` success witness in scope thread it
+through directly, without depending on the silent fallback dispatch. -/
 theorem factorWithBound_entry_mem_fast_core_success_raw
     (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
+    (primeData : PrimeChoiceData)
     (hB_pos : 1 ≤ B)
     (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
-    (hmulti :
-      1 < (choosePrimeData (normalizeForFactor f).squareFreeCore).factorsModP.size)
+    (hchoose :
+      choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData)
+    (hmulti : 1 < primeData.factorsModP.size)
     (hquadratic : B = 1 ∨
       quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none)
     {coreFactors : Array ZPoly}
     (hcore :
-      let primeData := choosePrimeData (normalizeForFactor f).squareFreeCore
       let a := precisionForCoeffBound B primeData.p
       factorFastCoreWithBound (normalizeForFactor f).squareFreeCore a
         primeData (initialHenselPrecision a)
@@ -7230,15 +7427,14 @@ theorem factorWithBound_entry_mem_fast_core_success_raw
       entry.1 = normalizeFactorSign raw := by
   have hnotsingleton :
       ¬ ((choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome ∧
-          (choosePrimeData
-            (normalizeForFactor f).squareFreeCore).factorsModP.size ≤ 1) :=
+          primeData.factorsModP.size ≤ 1) :=
     fun h => absurd h.2 (by omega)
   have hfast :
       factorFastFactorsWithBound f B =
         some (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) :=
     factorFastFactorsWithBound_eq_some_of_core_success f B
-      (choosePrimeData (normalizeForFactor f).squareFreeCore) coreFactors
-      hB_pos rfl hdeg hnotsingleton hquadratic hcore
+      primeData coreFactors
+      hB_pos hchoose hdeg hnotsingleton hquadratic hcore
   apply factorizationOfFactors_entry_mem_normalized_raw
   simpa only [factorWithBound, factorFastWithBound, hfast, Option.map_some,
     Option.getD_some] using hmem
@@ -13098,28 +13294,32 @@ private theorem factorFastWithBound_product_of_squareFreeCore_emit
 
 private theorem factorFastWithBound_product_of_small_mod_branch
     (f : ZPoly) (B : Nat) {φ : Factorization}
+    (primeData : PrimeChoiceData)
     (hf : f ≠ 0)
     (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
     (hB_pos : 1 ≤ B)
     (hchoose :
-      choosePrimeData? (normalizeForFactor f).squareFreeCore =
-        some (choosePrimeData (normalizeForFactor f).squareFreeCore))
-    (hsmall :
-      (choosePrimeData (normalizeForFactor f).squareFreeCore).factorsModP.size ≤ 1)
+      choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData)
+    (hsmall : primeData.factorsModP.size ≤ 1)
     (hquadratic : B = 1 ∨
       quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none)
     (h : factorFastWithBound f B = some φ) :
     Factorization.product φ = f := by
+  have hwf :
+      choosePrimeDataWithFallback (normalizeForFactor f).squareFreeCore = primeData := by
+    unfold choosePrimeDataWithFallback
+    rw [hchoose]
+    rfl
   have hpred :
       (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome ∧
-        (choosePrimeData (normalizeForFactor f).squareFreeCore).factorsModP.size ≤ 1 :=
-    ⟨by rw [hchoose]; rfl, hsmall⟩
+        (choosePrimeDataWithFallback
+          (normalizeForFactor f).squareFreeCore).factorsModP.size ≤ 1 :=
+    ⟨by rw [hchoose]; rfl, by rw [hwf]; exact hsmall⟩
   have hfast :
       factorFastFactorsWithBound f B =
         some (reassemblePolynomialFactors (normalizeForFactor f)
           #[(normalizeForFactor f).squareFreeCore]) := by
     unfold factorFastFactorsWithBound
-    rw [choosePrimeData_eq_choosePrimeDataWithFallback] at hpred
     rw [if_neg hdeg, if_neg (by omega : B ≠ 0)]
     by_cases hB1 : B = 1
     · rw [if_pos hB1]
@@ -13177,19 +13377,22 @@ private theorem factorFastWithBound_product_of_quadratic_branch
     exact quadraticIntegerRootFactors?_shouldRecord
       (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad c hc
 
-private theorem factorFastWithBound_product_of_core_success_branch
+/-- Inner kernel for `_product_of_core_success_branch` and its fallback
+companion `_product_of_fallback_core_success_branch`. Takes the
+`factorFastFactorsWithBound` success witness `hfast` directly; the two
+public callers establish `hfast` differently (one from a
+`choosePrimeData?` success, one from `choosePrimeData? = none` plus the
+fallback dispatch). The per-factor normalisation / recording facts go
+through `factorFastCoreWithBound_some_*`, which work for any
+`primeData`. -/
+private theorem factorFastWithBound_product_of_factorFastFactorsWithBound_some_core
     (f : ZPoly) (B : Nat) {φ : Factorization}
-    (hf : f ≠ 0)
-    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
-    (hB_pos : 1 ≤ B)
     (primeData : PrimeChoiceData)
-    (hprime : primeData = choosePrimeData (normalizeForFactor f).squareFreeCore)
-    (hnotsingleton :
-      ¬ ((choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome ∧
-          primeData.factorsModP.size ≤ 1))
-    (hquadratic : B = 1 ∨
-      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none)
+    (hf : f ≠ 0)
     (coreFactors : Array ZPoly)
+    (hfast :
+      factorFastFactorsWithBound f B =
+        some (reassemblePolynomialFactors (normalizeForFactor f) coreFactors))
     (hcore :
       let a := precisionForCoeffBound B primeData.p
       factorFastCoreWithBound (normalizeForFactor f).squareFreeCore a
@@ -13197,11 +13400,6 @@ private theorem factorFastWithBound_product_of_core_success_branch
         (ZPoly.quadraticDoublingSteps a + 2) = some coreFactors)
     (h : factorFastWithBound f B = some φ) :
     Factorization.product φ = f := by
-  have hfast :
-      factorFastFactorsWithBound f B =
-        some (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) :=
-    factorFastFactorsWithBound_eq_some_of_core_success
-      f B primeData coreFactors hB_pos hprime hdeg hnotsingleton hquadratic hcore
   have hphi :
       factorizationOfFactors f
           (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) = φ := by
@@ -13238,6 +13436,99 @@ private theorem factorFastWithBound_product_of_core_success_branch
         (coreFactors := coreFactors)
         hcore c hc
 
+private theorem factorFastWithBound_product_of_core_success_branch
+    (f : ZPoly) (B : Nat) {φ : Factorization}
+    (hf : f ≠ 0)
+    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (hB_pos : 1 ≤ B)
+    (primeData : PrimeChoiceData)
+    (hchoose :
+      choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData)
+    (hnotsingleton :
+      ¬ ((choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome ∧
+          primeData.factorsModP.size ≤ 1))
+    (hquadratic : B = 1 ∨
+      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none)
+    (coreFactors : Array ZPoly)
+    (hcore :
+      let a := precisionForCoeffBound B primeData.p
+      factorFastCoreWithBound (normalizeForFactor f).squareFreeCore a
+        primeData (initialHenselPrecision a)
+        (ZPoly.quadraticDoublingSteps a + 2) = some coreFactors)
+    (h : factorFastWithBound f B = some φ) :
+    Factorization.product φ = f := by
+  have hfast :
+      factorFastFactorsWithBound f B =
+        some (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) :=
+    factorFastFactorsWithBound_eq_some_of_core_success
+      f B primeData coreFactors hB_pos hchoose hdeg hnotsingleton hquadratic hcore
+  exact factorFastWithBound_product_of_factorFastFactorsWithBound_some_core
+    f B primeData hf coreFactors hfast hcore h
+
+/-- Fallback companion to `_product_of_core_success_branch`: when
+`choosePrimeData? sf = none`, the fast path runs against
+`fallbackPrimeChoiceData sf`. If that recombination still succeeds, the
+product equation still holds. Used inside
+`factorFastWithBound_product_of_some` to handle the `choosePrimeData?`
+miss without referring to total `choosePrimeData`. -/
+private theorem factorFastWithBound_product_of_fallback_core_success_branch
+    (f : ZPoly) (B : Nat) {φ : Factorization}
+    (hf : f ≠ 0)
+    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (hB_pos : 1 ≤ B)
+    (hnone : choosePrimeData? (normalizeForFactor f).squareFreeCore = none)
+    (hquadratic : B = 1 ∨
+      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none)
+    (coreFactors : Array ZPoly)
+    (hcore :
+      let a := precisionForCoeffBound B
+        (fallbackPrimeChoiceData (normalizeForFactor f).squareFreeCore).p
+      factorFastCoreWithBound (normalizeForFactor f).squareFreeCore a
+        (fallbackPrimeChoiceData (normalizeForFactor f).squareFreeCore)
+        (initialHenselPrecision a)
+        (ZPoly.quadraticDoublingSteps a + 2) = some coreFactors)
+    (h : factorFastWithBound f B = some φ) :
+    Factorization.product φ = f := by
+  have hwf :
+      choosePrimeDataWithFallback (normalizeForFactor f).squareFreeCore =
+        fallbackPrimeChoiceData (normalizeForFactor f).squareFreeCore := by
+    unfold choosePrimeDataWithFallback
+    rw [hnone]
+    rfl
+  have hpred_isSome :
+      (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome = false := by
+    rw [hnone]; rfl
+  have hpred :
+      ¬ ((choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome ∧
+        (choosePrimeDataWithFallback
+          (normalizeForFactor f).squareFreeCore).factorsModP.size ≤ 1) := by
+    intro ⟨h1, _⟩
+    rw [hpred_isSome] at h1
+    cases h1
+  have hfast :
+      factorFastFactorsWithBound f B =
+        some (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) := by
+    unfold factorFastFactorsWithBound
+    rw [if_neg hdeg, if_neg (by omega : B ≠ 0)]
+    by_cases hB1 : B = 1
+    · rw [if_pos hB1]
+      rw [if_neg hpred]
+      rw [hwf]
+      rw [hcore]
+    · rw [if_neg hB1]
+      have hq : quadraticIntegerRootFactors?
+          (normalizeForFactor f).squareFreeCore = none := by
+        cases hquadratic with
+        | inl heq => exact absurd heq hB1
+        | inr hnone => exact hnone
+      rw [hq]
+      rw [if_neg hpred]
+      rw [hwf]
+      rw [hcore]
+  exact factorFastWithBound_product_of_factorFastFactorsWithBound_some_core
+    f B (fallbackPrimeChoiceData (normalizeForFactor f).squareFreeCore)
+    hf coreFactors hfast hcore h
+
 private theorem factorFastWithBound_product_of_some
     {f : ZPoly} {B : Nat} {φ : Factorization}
     (h : factorFastWithBound f B = some φ) :
@@ -13263,105 +13554,208 @@ private theorem factorFastWithBound_product_of_some
         simp at h
       · have hB_pos : 1 ≤ B := Nat.one_le_iff_ne_zero.mpr hB0
         by_cases hB1 : B = 1
-        · subst B
-          by_cases hpred :
-              (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome ∧
-                (choosePrimeData
-                  (normalizeForFactor f).squareFreeCore).factorsModP.size ≤ 1
-          · have hchoose :
-                choosePrimeData? (normalizeForFactor f).squareFreeCore =
-                  some (choosePrimeData (normalizeForFactor f).squareFreeCore) := by
-              cases hc : choosePrimeData? (normalizeForFactor f).squareFreeCore with
-              | none =>
-                  rw [hc] at hpred
-                  exact absurd hpred.1 (by simp)
-              | some pd =>
-                  have hpd : choosePrimeData (normalizeForFactor f).squareFreeCore = pd := by
-                    unfold choosePrimeData; rw [hc]
-                  rw [hpd]
-            exact factorFastWithBound_product_of_small_mod_branch
-              f 1 hf hdeg hB_pos hchoose hpred.2 (Or.inl rfl) h
-          · cases hcore :
-                factorFastCoreWithBound (normalizeForFactor f).squareFreeCore
-                  (precisionForCoeffBound 1
-                    (choosePrimeData (normalizeForFactor f).squareFreeCore).p)
-                  (choosePrimeData (normalizeForFactor f).squareFreeCore)
-                  (initialHenselPrecision
-                    (precisionForCoeffBound 1
-                      (choosePrimeData (normalizeForFactor f).squareFreeCore).p))
-                  (ZPoly.quadraticDoublingSteps
-                    (precisionForCoeffBound 1
-                      (choosePrimeData (normalizeForFactor f).squareFreeCore).p) + 2) with
-            | none =>
-                exfalso
-                have hfast_none : factorFastFactorsWithBound f 1 = none := by
-                  unfold factorFastFactorsWithBound
-                  rw [choosePrimeData_eq_choosePrimeDataWithFallback] at hpred hcore
-                  rw [if_neg hdeg, if_neg (show (1 : Nat) ≠ 0 by omega),
-                      if_pos rfl, if_neg hpred]
-                  rw [hcore]
-                unfold factorFastWithBound at h
-                rw [hfast_none] at h
-                simp at h
-            | some coreFactors =>
-                exact factorFastWithBound_product_of_core_success_branch
-                  f 1 hf hdeg hB_pos
-                  (choosePrimeData (normalizeForFactor f).squareFreeCore) rfl
-                  hpred (Or.inl rfl) coreFactors hcore h
-        · have hB_ge_two : 2 ≤ B := by omega
-          cases hquad :
-              quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
-          | some coreFactors =>
-              exact factorFastWithBound_product_of_quadratic_branch
-                f B hf hdeg hB_ge_two coreFactors hquad h
-          | none =>
-              by_cases hpred :
-                  (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome ∧
-                    (choosePrimeData
-                      (normalizeForFactor f).squareFreeCore).factorsModP.size ≤ 1
-              · have hchoose :
-                    choosePrimeData? (normalizeForFactor f).squareFreeCore =
-                      some (choosePrimeData
-                        (normalizeForFactor f).squareFreeCore) := by
-                  cases hc :
-                      choosePrimeData? (normalizeForFactor f).squareFreeCore with
-                  | none =>
-                      rw [hc] at hpred
-                      exact absurd hpred.1 (by simp)
-                  | some pd =>
-                      have hpd :
-                          choosePrimeData (normalizeForFactor f).squareFreeCore = pd := by
-                        unfold choosePrimeData; rw [hc]
-                      rw [hpd]
-                exact factorFastWithBound_product_of_small_mod_branch
-                  f B hf hdeg hB_pos hchoose hpred.2 (Or.inr hquad) h
-              · cases hcore :
+        · -- B = 1: dispatch on choosePrimeData? and small-mod predicate
+          subst B
+          cases hc : choosePrimeData? (normalizeForFactor f).squareFreeCore with
+          | some primeData =>
+              by_cases hsmall : primeData.factorsModP.size ≤ 1
+              · exact factorFastWithBound_product_of_small_mod_branch
+                  f 1 primeData hf hdeg hB_pos hc hsmall (Or.inl rfl) h
+              · have hwf :
+                    choosePrimeDataWithFallback
+                      (normalizeForFactor f).squareFreeCore = primeData := by
+                  unfold choosePrimeDataWithFallback; rw [hc]; rfl
+                cases hcore :
                     factorFastCoreWithBound (normalizeForFactor f).squareFreeCore
-                      (precisionForCoeffBound B
-                        (choosePrimeData (normalizeForFactor f).squareFreeCore).p)
-                      (choosePrimeData (normalizeForFactor f).squareFreeCore)
+                      (precisionForCoeffBound 1 primeData.p)
+                      primeData
                       (initialHenselPrecision
-                        (precisionForCoeffBound B
-                          (choosePrimeData (normalizeForFactor f).squareFreeCore).p))
+                        (precisionForCoeffBound 1 primeData.p))
                       (ZPoly.quadraticDoublingSteps
-                        (precisionForCoeffBound B
-                          (choosePrimeData (normalizeForFactor f).squareFreeCore).p) + 2) with
+                        (precisionForCoeffBound 1 primeData.p) + 2) with
                 | none =>
                     exfalso
-                    have hfast_none : factorFastFactorsWithBound f B = none := by
+                    have hpred :
+                        ¬ ((choosePrimeData?
+                            (normalizeForFactor f).squareFreeCore).isSome ∧
+                          (choosePrimeDataWithFallback
+                            (normalizeForFactor f).squareFreeCore).factorsModP.size
+                              ≤ 1) := by
+                      intro ⟨_, h2⟩
+                      rw [hwf] at h2
+                      exact hsmall h2
+                    have hfast_none : factorFastFactorsWithBound f 1 = none := by
                       unfold factorFastFactorsWithBound
-                      rw [choosePrimeData_eq_choosePrimeDataWithFallback] at hpred hcore
-                      rw [if_neg hdeg, if_neg hB0, if_neg hB1, hquad,
-                          if_neg hpred]
+                      rw [if_neg hdeg, if_neg (show (1 : Nat) ≠ 0 by omega),
+                          if_pos rfl, if_neg hpred]
+                      rw [hwf]
                       rw [hcore]
                     unfold factorFastWithBound at h
                     rw [hfast_none] at h
                     simp at h
                 | some coreFactors =>
+                    have hnotsingleton :
+                        ¬ ((choosePrimeData?
+                            (normalizeForFactor f).squareFreeCore).isSome ∧
+                          primeData.factorsModP.size ≤ 1) := by
+                      intro ⟨_, h2⟩
+                      exact hsmall h2
                     exact factorFastWithBound_product_of_core_success_branch
-                      f B hf hdeg hB_pos
-                      (choosePrimeData (normalizeForFactor f).squareFreeCore) rfl
-                      hpred (Or.inr hquad) coreFactors hcore h
+                      f 1 hf hdeg hB_pos primeData hc
+                      hnotsingleton (Or.inl rfl) coreFactors hcore h
+          | none =>
+              cases hcore :
+                  factorFastCoreWithBound (normalizeForFactor f).squareFreeCore
+                    (precisionForCoeffBound 1
+                      (fallbackPrimeChoiceData
+                        (normalizeForFactor f).squareFreeCore).p)
+                    (fallbackPrimeChoiceData
+                      (normalizeForFactor f).squareFreeCore)
+                    (initialHenselPrecision
+                      (precisionForCoeffBound 1
+                        (fallbackPrimeChoiceData
+                          (normalizeForFactor f).squareFreeCore).p))
+                    (ZPoly.quadraticDoublingSteps
+                      (precisionForCoeffBound 1
+                        (fallbackPrimeChoiceData
+                          (normalizeForFactor f).squareFreeCore).p) + 2) with
+              | none =>
+                  exfalso
+                  have hwf :
+                      choosePrimeDataWithFallback
+                        (normalizeForFactor f).squareFreeCore =
+                          fallbackPrimeChoiceData
+                            (normalizeForFactor f).squareFreeCore := by
+                    unfold choosePrimeDataWithFallback; rw [hc]; rfl
+                  have hpred_isSome :
+                      (choosePrimeData?
+                        (normalizeForFactor f).squareFreeCore).isSome = false := by
+                    rw [hc]; rfl
+                  have hpred :
+                      ¬ ((choosePrimeData?
+                          (normalizeForFactor f).squareFreeCore).isSome ∧
+                        (choosePrimeDataWithFallback
+                          (normalizeForFactor f).squareFreeCore).factorsModP.size
+                            ≤ 1) := by
+                    intro ⟨h1, _⟩
+                    rw [hpred_isSome] at h1; cases h1
+                  have hfast_none : factorFastFactorsWithBound f 1 = none := by
+                    unfold factorFastFactorsWithBound
+                    rw [if_neg hdeg, if_neg (show (1 : Nat) ≠ 0 by omega),
+                        if_pos rfl, if_neg hpred]
+                    rw [hwf]
+                    rw [hcore]
+                  unfold factorFastWithBound at h
+                  rw [hfast_none] at h
+                  simp at h
+              | some coreFactors =>
+                  exact factorFastWithBound_product_of_fallback_core_success_branch
+                    f 1 hf hdeg hB_pos hc (Or.inl rfl) coreFactors hcore h
+        · -- B > 1
+          have hB_ge_two : 2 ≤ B := by omega
+          cases hquadNone :
+              quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
+          | some coreFactors =>
+              exact factorFastWithBound_product_of_quadratic_branch
+                f B hf hdeg hB_ge_two coreFactors hquadNone h
+          | none =>
+          cases hc : choosePrimeData? (normalizeForFactor f).squareFreeCore with
+          | some primeData =>
+              by_cases hsmall : primeData.factorsModP.size ≤ 1
+              · exact factorFastWithBound_product_of_small_mod_branch
+                  f B primeData hf hdeg hB_pos hc hsmall (Or.inr hquadNone) h
+              · have hwf :
+                    choosePrimeDataWithFallback
+                      (normalizeForFactor f).squareFreeCore = primeData := by
+                  unfold choosePrimeDataWithFallback; rw [hc]; rfl
+                cases hcore :
+                    factorFastCoreWithBound (normalizeForFactor f).squareFreeCore
+                      (precisionForCoeffBound B primeData.p)
+                      primeData
+                      (initialHenselPrecision
+                        (precisionForCoeffBound B primeData.p))
+                      (ZPoly.quadraticDoublingSteps
+                        (precisionForCoeffBound B primeData.p) + 2) with
+                | none =>
+                    exfalso
+                    have hpred :
+                        ¬ ((choosePrimeData?
+                            (normalizeForFactor f).squareFreeCore).isSome ∧
+                          (choosePrimeDataWithFallback
+                            (normalizeForFactor f).squareFreeCore).factorsModP.size
+                              ≤ 1) := by
+                      intro ⟨_, h2⟩
+                      rw [hwf] at h2
+                      exact hsmall h2
+                    have hfast_none : factorFastFactorsWithBound f B = none := by
+                      unfold factorFastFactorsWithBound
+                      have hB1 : B ≠ 1 := by omega
+                      rw [if_neg hdeg, if_neg hB0, if_neg hB1, hquadNone,
+                          if_neg hpred]
+                      rw [hwf]
+                      rw [hcore]
+                    unfold factorFastWithBound at h
+                    rw [hfast_none] at h
+                    simp at h
+                | some coreFactors =>
+                    have hnotsingleton :
+                        ¬ ((choosePrimeData?
+                            (normalizeForFactor f).squareFreeCore).isSome ∧
+                          primeData.factorsModP.size ≤ 1) := by
+                      intro ⟨_, h2⟩
+                      exact hsmall h2
+                    exact factorFastWithBound_product_of_core_success_branch
+                      f B hf hdeg hB_pos primeData hc
+                      hnotsingleton (Or.inr hquadNone) coreFactors hcore h
+          | none =>
+              cases hcore :
+                  factorFastCoreWithBound (normalizeForFactor f).squareFreeCore
+                    (precisionForCoeffBound B
+                      (fallbackPrimeChoiceData
+                        (normalizeForFactor f).squareFreeCore).p)
+                    (fallbackPrimeChoiceData
+                      (normalizeForFactor f).squareFreeCore)
+                    (initialHenselPrecision
+                      (precisionForCoeffBound B
+                        (fallbackPrimeChoiceData
+                          (normalizeForFactor f).squareFreeCore).p))
+                    (ZPoly.quadraticDoublingSteps
+                      (precisionForCoeffBound B
+                        (fallbackPrimeChoiceData
+                          (normalizeForFactor f).squareFreeCore).p) + 2) with
+              | none =>
+                  exfalso
+                  have hwf :
+                      choosePrimeDataWithFallback
+                        (normalizeForFactor f).squareFreeCore =
+                          fallbackPrimeChoiceData
+                            (normalizeForFactor f).squareFreeCore := by
+                    unfold choosePrimeDataWithFallback; rw [hc]; rfl
+                  have hpred_isSome :
+                      (choosePrimeData?
+                        (normalizeForFactor f).squareFreeCore).isSome = false := by
+                    rw [hc]; rfl
+                  have hpred :
+                      ¬ ((choosePrimeData?
+                          (normalizeForFactor f).squareFreeCore).isSome ∧
+                        (choosePrimeDataWithFallback
+                          (normalizeForFactor f).squareFreeCore).factorsModP.size
+                            ≤ 1) := by
+                    intro ⟨h1, _⟩
+                    rw [hpred_isSome] at h1; cases h1
+                  have hfast_none : factorFastFactorsWithBound f B = none := by
+                    unfold factorFastFactorsWithBound
+                    have hB1 : B ≠ 1 := by omega
+                    rw [if_neg hdeg, if_neg hB0, if_neg hB1, hquadNone,
+                        if_neg hpred]
+                    rw [hwf]
+                    rw [hcore]
+                  unfold factorFastWithBound at h
+                  rw [hfast_none] at h
+                  simp at h
+              | some coreFactors =>
+                  exact factorFastWithBound_product_of_fallback_core_success_branch
+                    f B hf hdeg hB_pos hc (Or.inr hquadNone) coreFactors hcore h
 
 /--
 Product contract for the bounded factorization entry point.

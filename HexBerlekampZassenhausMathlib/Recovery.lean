@@ -1493,8 +1493,8 @@ theorem factorFast_ne_none_of_forwardInputs_on_schedule
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
     {target : Nat}
     (hB_pos : 1 ≤ Hex.factorFastPrecisionCap f)
-    (hnormalized :
-      primeData = Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hinputs :
       ForwardRecoveryInputs
         (Hex.normalizeForFactor f).squareFreeCore
@@ -1519,7 +1519,7 @@ theorem factorFast_ne_none_of_forwardInputs_on_schedule
       hinputs
   exact
     Hex.factorFast_ne_none_of_core_recovery_on_schedule
-      f primeData hB_pos hnormalized hmem hrecover
+      f primeData hB_pos hchoose hmem hrecover
 
 /--
 Canonical scheduled-precision specialisation of
@@ -1535,8 +1535,8 @@ semantic hypotheses.
 theorem factorFast_ne_none_of_forwardInputs_at_cap
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
     (hB_pos : 1 ≤ Hex.factorFastPrecisionCap f)
-    (hnormalized :
-      primeData = Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hinputs :
       ForwardRecoveryInputs
         (Hex.normalizeForFactor f).squareFreeCore
@@ -1547,7 +1547,7 @@ theorem factorFast_ne_none_of_forwardInputs_at_cap
           primeData)) :
     Hex.factorFast f ≠ none :=
   factorFast_ne_none_of_forwardInputs_on_schedule
-    f primeData hB_pos hnormalized hinputs
+    f primeData hB_pos hchoose hinputs
     (Hex.cap_mem_henselPrecisionSchedule _)
 
 /-- The Hensel-lift data produced by the public `factorFast` pipeline for
@@ -1605,8 +1605,8 @@ theorem factorFast_ne_none_of_capSeparationCanonicalIndicatorsAtPrecisionForCoef
           rows_pos localFactorIndex localFactorDegree H)
         trueSupports)
     (hB_pos : 1 ≤ Hex.factorFastPrecisionCap f)
-    (hnormalized :
-      primeData = Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hp : 2 ≤ (factorFastCapLiftData f primeData).p)
     (hk :
       (factorFastCapLiftData f primeData).k =
@@ -1636,7 +1636,7 @@ theorem factorFast_ne_none_of_capSeparationCanonicalIndicatorsAtPrecisionForCoef
       Array.polyProduct expectedFactors =
         (Hex.normalizeForFactor f).squareFreeCore) :
     Hex.factorFast f ≠ none :=
-  factorFast_ne_none_of_forwardInputs_at_cap f primeData hB_pos hnormalized
+  factorFast_ne_none_of_forwardInputs_at_cap f primeData hB_pos hchoose
     (ForwardRecoveryInputs.ofCapSeparationCanonicalIndicatorsAtPrecisionForCoeffBound
       rows_pos trueSupports localFactorIndex localFactorDegree H
       hcap_le C hC_nonneg hC hcap hp hk nondegenerate
@@ -1681,8 +1681,8 @@ theorem factorFast_ne_none_of_mignottePrecisionCanonicalIndicatorsExpectedFactor
             rows_pos) =
         BHKS.trueFactorIndicatorLattice trueSupports)
     (hB_pos : 1 ≤ Hex.factorFastPrecisionCap f)
-    (hnormalized :
-      primeData = Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hp : 2 ≤ (factorFastCapLiftData f primeData).p)
     (hk :
       (factorFastCapLiftData f primeData).k =
@@ -1723,7 +1723,7 @@ theorem factorFast_ne_none_of_mignottePrecisionCanonicalIndicatorsExpectedFactor
             (factorFastCapLiftData f primeData).p
             (factorFastCapLiftData f primeData).k) :
     Hex.factorFast f ≠ none :=
-  factorFast_ne_none_of_forwardInputs_at_cap f primeData hB_pos hnormalized
+  factorFast_ne_none_of_forwardInputs_at_cap f primeData hB_pos hchoose
     (ForwardRecoveryInputs.ofMignottePrecisionCanonicalIndicatorsExpectedFactorsAtPrecisionForCoeffBound
       rows_pos trueSupports lattice_eq_indicators hp hk nondegenerate
       selectedFactors expectedFactors hf_ne_zero htrue hselected hproduct)
@@ -1758,8 +1758,8 @@ theorem factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsA
             rows_pos) =
         BHKS.trueFactorIndicatorLattice trueSupports)
     (hB_pos : 1 ≤ Hex.factorFastPrecisionCap f)
-    (hnormalized :
-      primeData = Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hp : 2 ≤ (factorFastCapLiftData f primeData).p)
     (hk :
       (factorFastCapLiftData f primeData).k =
@@ -1804,7 +1804,7 @@ theorem factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsA
             (factorFastCapLiftData f primeData).k) :
     Hex.factorFast f ≠ none :=
   factorFast_ne_none_of_mignottePrecisionCanonicalIndicatorsExpectedFactorsAtPrecisionForCoeffBound
-    f primeData rows_pos trueSupports lattice_eq_indicators hB_pos hnormalized
+    f primeData rows_pos trueSupports lattice_eq_indicators hB_pos hchoose
     hp hk
     (ForwardRecoveryInputs.canonicalSupportIndicators_nondegenerate
       (projectedRowsOfLiftData
