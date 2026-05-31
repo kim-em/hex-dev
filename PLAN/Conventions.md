@@ -18,24 +18,12 @@ mathematically impossible, with rationale in the PR description.
 
 Files under `reports/` are research outputs, not policy. When a
 report identifies a contradiction between existing code and SPEC,
-its only valid follow-up issues are:
-
-(a) a SPEC-clarification issue tagged for human adjudication, or
-(b) a rollback issue removing the contradicting code.
-
-A worker or replan triage may not file an implementation issue that
-closes the gap by working *against* SPEC wording — regardless of
-how "smaller a path" it appears to be, regardless of how many
-consumers the offending surface has accumulated, and regardless of
-how authoritative the report sounds. The contradiction itself is
-evidence that someone wrote code outside the SPEC; the intervention
-is to either align the SPEC with intent (option a) or align the
-code with the SPEC (option b).
-
-Symptom this rule exists to catch: a report flagging "existing
-consumers depend on a Mathlib-free surface the SPEC assigns to the
-bridge layer; the smaller path is to prove it Mathlib-free anyway."
-That is the failure mode, not a planning strategy.
+the agent acts directly: roll back the contradicting code. The
+contradiction is evidence that someone wrote code outside the
+SPEC; aligning the code is the default. Editing SPEC is reserved
+for the narrow §SPEC immutability case (internal contradiction or
+mathematical impossibility) and is not the path to reach for when
+a report finds existing code that the SPEC does not sanction.
 
 ### Placeholders are for proofs only
 
@@ -313,8 +301,8 @@ Answer all four. One line each is enough.
 
 1. **Which SPEC § governs this file?** Quote the sentence that pins
    the deliverable to a library or file. If no SPEC § names this
-   placement, the issue is not ready: file a SPEC-clarification
-   issue first.
+   placement, find the right § and update the issue body to cite
+   it, or close the issue as malformed.
 2. **Does the natural strategy use Mathlib?** If yes, the file lives
    in a `*-mathlib` bridge library. Mathlib-free libraries cannot
    host a proof whose shortest path goes through `Matrix.adjugate`,
@@ -346,24 +334,12 @@ question is the failure shape.
 ### Replan loops are a SPEC-violation signal
 
 If three or more `depends-on:` generations in a chain share a
-single recurring deliverable shape — e.g. "Mathlib-free
-Desnanot–Jacobi", "Mathlib-free `bareiss_eq_det`", "Mathlib-free
-adjugate identity" — and at least one worker has filed a
-"needs replan" skip on that shape, the chain is paused. Triage
-must file a SPEC-clarification issue tagged for human adjudication
-before any further decomposition.
-
-Replan-loop diagnostic shape: the same phrase ("Mathlib-free X")
-appears in successive skip comments across child issues. Each
-child looks reasonable in isolation; the chain as a whole is the
-SPEC telling you "the result you are decomposing toward does not
-exist at this layer." Cutting it thinner does not change that.
-
-This is a hard procedural stop, not a soft preference. Continuing
-to decompose past it is the failure mode this rule catches; see
-[Reports do not override SPEC](#reports-do-not-override-spec) for
-the analogous rule covering the report-driven entry into the same
-trap.
+single recurring deliverable shape, and at least one worker has
+filed a "needs replan" skip on that shape, the chain is at a
+SPEC wall: the result being decomposed toward does not exist at
+this layer. Triage closes the chain (parent and all sub-issues),
+citing the SPEC § that pins the layer. Cutting the decomposition
+thinner is the failure mode.
 
 ### Bench-found, conformance-found, and audit-found issues
 
