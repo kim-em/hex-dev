@@ -6078,11 +6078,11 @@ theorem factorSlowFactorsWithBound_branch
         reassemblePolynomialFactors (normalizeForFactor f)
           (exhaustiveCoreFactorsWithBound
             (normalizeForFactor f).squareFreeCore B
-            (choosePrimeData (normalizeForFactor f).squareFreeCore)) ∧
+            (choosePrimeDataWithFallback
+              (normalizeForFactor f).squareFreeCore)) ∧
       (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
       quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none) := by
   unfold factorSlowFactorsWithBound
-  simp only [← choosePrimeData_eq_choosePrimeDataWithFallback]
   by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
   · left
     constructor
@@ -6093,12 +6093,45 @@ theorem factorSlowFactorsWithBound_branch
     | some coreFactors =>
         left
         refine ⟨coreFactors, ?_, hdeg, rfl⟩
-        simp only [hdeg, if_false]
+        simp only [hdeg, hquad, if_false]
     | none =>
         right
         constructor
-        · simp only [hdeg, if_false]
+        · simp only [hdeg, hquad, if_false]
         · exact ⟨hdeg, rfl⟩
+
+/-- Witness-form variant of `factorSlowFactorsWithBound_branch`: the
+exhaustive branch's core array is computed against an explicit
+`primeData` paired with `hchoose : choosePrimeData? sf = some primeData`,
+removing the silent fallback dispatch from the disjunct's statement. -/
+theorem factorSlowFactorsWithBound_branch_of_choosePrimeData?_some
+    (f : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    (hchoose :
+      choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData) :
+    (factorSlowFactorsWithBound f B =
+        reassemblePolynomialFactors (normalizeForFactor f)
+          #[(normalizeForFactor f).squareFreeCore] ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0) ∨
+    (∃ coreFactors : Array ZPoly,
+      factorSlowFactorsWithBound f B =
+        reassemblePolynomialFactors (normalizeForFactor f) coreFactors ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
+      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore =
+        some coreFactors) ∨
+    (factorSlowFactorsWithBound f B =
+        reassemblePolynomialFactors (normalizeForFactor f)
+          (exhaustiveCoreFactorsWithBound
+            (normalizeForFactor f).squareFreeCore B primeData) ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
+      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none) := by
+  have hwf :
+      choosePrimeDataWithFallback (normalizeForFactor f).squareFreeCore = primeData := by
+    unfold choosePrimeDataWithFallback
+    rw [hchoose]
+    rfl
+  have hbranch := factorSlowFactorsWithBound_branch f B
+  rw [hwf] at hbranch
+  exact hbranch
 
 private def factorSlowWithBound (f : ZPoly) (B : Nat) : Factorization :=
   factorizationOfFactors f (factorSlowFactorsWithBound f B)
@@ -6418,6 +6451,155 @@ theorem factorFastFactorsWithBound_branch (f : ZPoly) (B : Nat) :
               refine ⟨?_, hdeg, hB_gt_one, rfl, hpred, hcore⟩
               unfold factorFastFactorsWithBound
               rw [if_neg hdeg, if_neg hB0, if_neg hB1, hquad, if_neg hpred, hcore]
+
+/-- Witness-form variant of `factorFastFactorsWithBound_branch`: the
+small-mod and BHKS disjuncts reference `primeData` directly rather than
+`choosePrimeDataWithFallback`, given an explicit
+`hchoose : choosePrimeData? sf = some primeData`. Since `hchoose`
+implies `primeData = choosePrimeDataWithFallback sf`, the (e), (i)
+fast-core-none disjuncts that depend on the prime-data shape collapse
+to a single fast-core-none disjunct (without the `isSome` clause, which
+is automatic from `hchoose`).
+
+Disjuncts whose statements never mention `choosePrimeData(WithFallback)`
+((a), (b), (f)) are reproduced verbatim. -/
+theorem factorFastFactorsWithBound_branch_of_choosePrimeData?_some
+    (f : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    (hchoose :
+      choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData) :
+    -- (a) constant core
+    (factorFastFactorsWithBound f B =
+        some (reassemblePolynomialFactors (normalizeForFactor f)
+          #[(normalizeForFactor f).squareFreeCore]) ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0) ∨
+    -- (b) B = 0
+    (factorFastFactorsWithBound f B = none ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
+      B = 0) ∨
+    -- (c) B = 1, small-mod singleton
+    (factorFastFactorsWithBound f B =
+        some (reassemblePolynomialFactors (normalizeForFactor f)
+          #[(normalizeForFactor f).squareFreeCore]) ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
+      B = 1 ∧
+      primeData.factorsModP.size ≤ 1) ∨
+    -- (d) B = 1, fast-core success
+    (∃ coreFactors, factorFastFactorsWithBound f B =
+        some (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
+      B = 1 ∧
+      ¬ primeData.factorsModP.size ≤ 1 ∧
+      (let a := precisionForCoeffBound B primeData.p
+       factorFastCoreWithBound (normalizeForFactor f).squareFreeCore a
+         primeData (initialHenselPrecision a)
+         (ZPoly.quadraticDoublingSteps a + 2) = some coreFactors)) ∨
+    -- (e) B = 1, fast-core none
+    (factorFastFactorsWithBound f B = none ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
+      B = 1 ∧
+      ¬ primeData.factorsModP.size ≤ 1 ∧
+      (let a := precisionForCoeffBound B primeData.p
+       factorFastCoreWithBound (normalizeForFactor f).squareFreeCore a
+         primeData (initialHenselPrecision a)
+         (ZPoly.quadraticDoublingSteps a + 2) = none)) ∨
+    -- (f) B > 1, quadratic
+    (∃ coreFactors, factorFastFactorsWithBound f B =
+        some (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
+      1 < B ∧
+      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore =
+        some coreFactors) ∨
+    -- (g) B > 1, small-mod singleton
+    (factorFastFactorsWithBound f B =
+        some (reassemblePolynomialFactors (normalizeForFactor f)
+          #[(normalizeForFactor f).squareFreeCore]) ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
+      1 < B ∧
+      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none ∧
+      primeData.factorsModP.size ≤ 1) ∨
+    -- (h) B > 1, fast-core success
+    (∃ coreFactors, factorFastFactorsWithBound f B =
+        some (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
+      1 < B ∧
+      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none ∧
+      ¬ primeData.factorsModP.size ≤ 1 ∧
+      (let a := precisionForCoeffBound B primeData.p
+       factorFastCoreWithBound (normalizeForFactor f).squareFreeCore a
+         primeData (initialHenselPrecision a)
+         (ZPoly.quadraticDoublingSteps a + 2) = some coreFactors)) ∨
+    -- (i) B > 1, fast-core none
+    (factorFastFactorsWithBound f B = none ∧
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
+      1 < B ∧
+      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none ∧
+      ¬ primeData.factorsModP.size ≤ 1 ∧
+      (let a := precisionForCoeffBound B primeData.p
+       factorFastCoreWithBound (normalizeForFactor f).squareFreeCore a
+         primeData (initialHenselPrecision a)
+         (ZPoly.quadraticDoublingSteps a + 2) = none)) := by
+  have hwf :
+      choosePrimeDataWithFallback (normalizeForFactor f).squareFreeCore = primeData := by
+    unfold choosePrimeDataWithFallback
+    rw [hchoose]
+    rfl
+  have hisSome :
+      (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome = true := by
+    rw [hchoose]; rfl
+  rcases factorFastFactorsWithBound_branch f B with
+    ha | hb | hc | hd | he | hf | hg | hh | hi
+  · exact Or.inl ha
+  · exact Or.inr (Or.inl hb)
+  · -- (c)
+    rcases hc with ⟨hfast, hdeg, hB1, _, hsmall⟩
+    rw [hwf] at hsmall
+    exact Or.inr (Or.inr (Or.inl ⟨hfast, hdeg, hB1, hsmall⟩))
+  · -- (d)
+    rcases hd with ⟨coreFactors, hfast, hdeg, hB1, hpred, hcore⟩
+    have hsmall : ¬ primeData.factorsModP.size ≤ 1 := by
+      intro h
+      apply hpred
+      refine ⟨hisSome, ?_⟩
+      rw [hwf]; exact h
+    rw [hwf] at hcore
+    exact Or.inr (Or.inr (Or.inr (Or.inl
+      ⟨coreFactors, hfast, hdeg, hB1, hsmall, hcore⟩)))
+  · -- (e)
+    rcases he with ⟨hfast, hdeg, hB1, hpred, hcore⟩
+    have hsmall : ¬ primeData.factorsModP.size ≤ 1 := by
+      intro h
+      apply hpred
+      refine ⟨hisSome, ?_⟩
+      rw [hwf]; exact h
+    rw [hwf] at hcore
+    exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inl
+      ⟨hfast, hdeg, hB1, hsmall, hcore⟩))))
+  · exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inl hf)))))
+  · -- (g)
+    rcases hg with ⟨hfast, hdeg, hBgt, hquad, _, hsmall⟩
+    rw [hwf] at hsmall
+    exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inl
+      ⟨hfast, hdeg, hBgt, hquad, hsmall⟩))))))
+  · -- (h)
+    rcases hh with ⟨coreFactors, hfast, hdeg, hBgt, hquad, hpred, hcore⟩
+    have hsmall : ¬ primeData.factorsModP.size ≤ 1 := by
+      intro h
+      apply hpred
+      refine ⟨hisSome, ?_⟩
+      rw [hwf]; exact h
+    rw [hwf] at hcore
+    exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inl
+      ⟨coreFactors, hfast, hdeg, hBgt, hquad, hsmall, hcore⟩)))))))
+  · -- (i)
+    rcases hi with ⟨hfast, hdeg, hBgt, hquad, hpred, hcore⟩
+    have hsmall : ¬ primeData.factorsModP.size ≤ 1 := by
+      intro h
+      apply hpred
+      refine ⟨hisSome, ?_⟩
+      rw [hwf]; exact h
+    rw [hwf] at hcore
+    exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr
+      ⟨hfast, hdeg, hBgt, hquad, hsmall, hcore⟩)))))))
 
 /--
 Precision cap used by the public fast path.
