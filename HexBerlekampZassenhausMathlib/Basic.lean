@@ -14193,16 +14193,19 @@ factors.  The remaining Group A completeness obligation is isolated as the
 cardinality equality hypothesis. -/
 theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_count
     {f : Hex.ZPoly} {B : Nat} {entry : Hex.ZPoly × Nat}
+    (primeData : Hex.PrimeChoiceData)
     (_hbranch : Hex.factorWithBoundUsesExhaustiveBranch f B)
     (_hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList)
     (hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0)
     (hcore_record :
       Hex.shouldRecordPolynomialFactor
         (Hex.normalizeForFactor f).squareFreeCore = true)
+    (_hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
+        some primeData)
     (hcount :
       ((Hex.exhaustiveCoreFactorsWithBound
-          (Hex.normalizeForFactor f).squareFreeCore B
-          (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)).toList.map
+          (Hex.normalizeForFactor f).squareFreeCore B primeData).toList.map
           HexPolyZMathlib.toPolynomial).length =
         (UniqueFactorizationMonoid.normalizedFactors
           (HexPolyZMathlib.toPolynomial
@@ -14210,17 +14213,13 @@ theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_count
     (hcore_entry :
       ∃ raw ∈
         (Hex.exhaustiveCoreFactorsWithBound
-          (Hex.normalizeForFactor f).squareFreeCore B
-          (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)).toList,
+          (Hex.normalizeForFactor f).squareFreeCore B primeData).toList,
         entry.1 = raw) :
     Hex.ZPoly.Irreducible entry.1 := by
   rcases hcore_entry with ⟨raw, hraw_mem, hentry_eq⟩
   have hirr_raw :
       Hex.ZPoly.Irreducible raw :=
     exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_count
-      (core := (Hex.normalizeForFactor f).squareFreeCore)
-      (B := B)
-      (primeData := Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
       hcore_ne hcore_record hcount raw hraw_mem
   rw [hentry_eq]
   exact hirr_raw
@@ -15938,6 +15937,7 @@ becomes its `_of_bound` sibling, threading `B'`, `hcore_lc_le`, `hvalid`,
 theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
     {f : Hex.ZPoly} {entry : Hex.ZPoly × Nat}
     {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
+    (primeData : Hex.PrimeChoiceData)
     (_hbranch :
       Hex.factorWithBoundUsesExhaustiveBranch f
         (Hex.ZPoly.defaultFactorCoeffBound
@@ -15946,12 +15946,15 @@ theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselS
       entry ∈ (Hex.factorWithBound f
         (Hex.ZPoly.defaultFactorCoeffBound
           (Hex.normalizeForFactor f).squareFreeCore)).factors.toList)
+    (_hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
+        some primeData)
     (h :
       HenselSubsetCorrespondenceHypotheses
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.defaultFactorCoeffBound
           (Hex.normalizeForFactor f).squareFreeCore)
-        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+        primeData
         d admissiblePrime successfulLift)
     (hpartition :
       LiftedFactorSubsetPartition
@@ -15985,8 +15988,7 @@ theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselS
           (Hex.normalizeForFactor f).squareFreeCore
           (Hex.ZPoly.defaultFactorCoeffBound
             (Hex.normalizeForFactor f).squareFreeCore)
-          (Hex.choosePrimeData
-            (Hex.normalizeForFactor f).squareFreeCore)).toList,
+          primeData).toList,
         entry.1 = Hex.normalizeFactorSign raw) :
     Hex.ZPoly.Irreducible entry.1 := by
   obtain ⟨raw, hraw_mem, hentry_eq⟩ := hcore_entry
@@ -16032,6 +16034,7 @@ hypotheses via `defaultFactorCoeffBound_valid` paired with
 theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence
     {f : Hex.ZPoly} {entry : Hex.ZPoly × Nat}
     {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
+    (primeData : Hex.PrimeChoiceData)
     (_hbranch :
       Hex.factorWithBoundUsesExhaustiveBranch f
         (Hex.ZPoly.defaultFactorCoeffBound
@@ -16040,12 +16043,15 @@ theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselS
       entry ∈ (Hex.factorWithBound f
         (Hex.ZPoly.defaultFactorCoeffBound
           (Hex.normalizeForFactor f).squareFreeCore)).factors.toList)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
+        some primeData)
     (h :
       HenselSubsetCorrespondenceHypotheses
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.defaultFactorCoeffBound
           (Hex.normalizeForFactor f).squareFreeCore)
-        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+        primeData
         d admissiblePrime successfulLift)
     (hpartition :
       LiftedFactorSubsetPartition
@@ -16074,15 +16080,15 @@ theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselS
           (Hex.normalizeForFactor f).squareFreeCore
           (Hex.ZPoly.defaultFactorCoeffBound
             (Hex.normalizeForFactor f).squareFreeCore)
-          (Hex.choosePrimeData
-            (Hex.normalizeForFactor f).squareFreeCore)).toList,
+          primeData).toList,
         entry.1 = Hex.normalizeFactorSign raw) :
     Hex.ZPoly.Irreducible entry.1 := by
   set core := (Hex.normalizeForFactor f).squareFreeCore with hcore_def
   have hcore_lc_pos := zpoly_lc_pos_of_monic hcore_monic
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
-    _hbranch _hentry_mem h hpartition hcore_ne hcore_monic hcore_record hB_ne_zero
+    primeData _hbranch _hentry_mem hchoose h hpartition hcore_ne hcore_monic
+    hcore_record hB_ne_zero
     hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
     hd_liftedFactor_inj (Hex.ZPoly.defaultFactorCoeffBound core)
     hcore_lc_le (defaultFactorCoeffBound_valid core hcore_ne) hprecision hcore_entry
@@ -16106,17 +16112,21 @@ becomes its `_of_bound` sibling, threading `B'`, `hcore_lc_le`, `hvalid`,
 theorem factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
     {f : Hex.ZPoly} {entry : Hex.ZPoly × Nat}
     {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
+    (primeData : Hex.PrimeChoiceData)
     (_hbranch :
       Hex.factorWithBoundUsesExhaustiveBranch f
         (Hex.ZPoly.defaultFactorCoeffBound f))
     (_hentry_mem :
       entry ∈ (Hex.factorWithBound f
         (Hex.ZPoly.defaultFactorCoeffBound f)).factors.toList)
+    (_hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
+        some primeData)
     (h :
       HenselSubsetCorrespondenceHypotheses
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.defaultFactorCoeffBound f)
-        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+        primeData
         d admissiblePrime successfulLift)
     (hpartition :
       LiftedFactorSubsetPartition
@@ -16149,8 +16159,7 @@ theorem factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorr
       ∃ raw ∈ (Hex.exhaustiveCoreFactorsWithBound
           (Hex.normalizeForFactor f).squareFreeCore
           (Hex.ZPoly.defaultFactorCoeffBound f)
-          (Hex.choosePrimeData
-            (Hex.normalizeForFactor f).squareFreeCore)).toList,
+          primeData).toList,
         entry.1 = Hex.normalizeFactorSign raw) :
     Hex.ZPoly.Irreducible entry.1 := by
   obtain ⟨raw, hraw_mem, hentry_eq⟩ := hcore_entry
@@ -16214,17 +16223,21 @@ through `factorWithBound_entry_mem_exhaustive_branch_raw` and
 theorem factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence
     {f : Hex.ZPoly} {entry : Hex.ZPoly × Nat}
     {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
+    (primeData : Hex.PrimeChoiceData)
     (_hbranch :
       Hex.factorWithBoundUsesExhaustiveBranch f
         (Hex.ZPoly.defaultFactorCoeffBound f))
     (_hentry_mem :
       entry ∈ (Hex.factorWithBound f
         (Hex.ZPoly.defaultFactorCoeffBound f)).factors.toList)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
+        some primeData)
     (h :
       HenselSubsetCorrespondenceHypotheses
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.defaultFactorCoeffBound f)
-        (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+        primeData
         d admissiblePrime successfulLift)
     (hpartition :
       LiftedFactorSubsetPartition
@@ -16252,15 +16265,14 @@ theorem factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorr
       ∃ raw ∈ (Hex.exhaustiveCoreFactorsWithBound
           (Hex.normalizeForFactor f).squareFreeCore
           (Hex.ZPoly.defaultFactorCoeffBound f)
-          (Hex.choosePrimeData
-            (Hex.normalizeForFactor f).squareFreeCore)).toList,
+          primeData).toList,
         entry.1 = Hex.normalizeFactorSign raw) :
     Hex.ZPoly.Irreducible entry.1 := by
   set core := (Hex.normalizeForFactor f).squareFreeCore with hcore_def
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
-    _hbranch _hentry_mem h hpartition hcore_ne hcore_primitive hcore_lc_pos
-    hcore_record hB_ne_zero hd_modulus hd_liftedFactor_monic
+    primeData _hbranch _hentry_mem hchoose h hpartition hcore_ne hcore_primitive
+    hcore_lc_pos hcore_record hB_ne_zero hd_modulus hd_liftedFactor_monic
     hd_liftedFactor_natDegree_pos hd_liftedFactor_inj
     (Hex.ZPoly.defaultFactorCoeffBound core)
     hcore_lc_le (defaultFactorCoeffBound_valid core hcore_ne) hprecision
@@ -16821,19 +16833,18 @@ from the same `choosePrimeData?` chain that supplies the other partition
 fields. -/
 theorem existsUnique_modPFactorSubset_of_choosePrimeData
     (core : Hex.ZPoly) {factor : Hex.ZPoly}
+    (primeData : Hex.PrimeChoiceData)
     (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
     (hdvd : factor ∣ core)
-    (hsome : Hex.choosePrimeData? core = some (Hex.choosePrimeData core)) :
-    let primeData := Hex.choosePrimeData core
+    (hchoose : Hex.choosePrimeData? core = some primeData) :
     ∃! S : ModPFactorSubset primeData,
       RepresentsIntegerFactorModP primeData factor S := by
-  intro primeData
   letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   -- `core ≠ 0` from `isGoodPrime` (which forces `(modP p core).isZero = false`).
   have hcore_ne : core ≠ 0 := by
     intro hcore_zero
     have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
-      Hex.choosePrimeData?_isGoodPrime core primeData hsome
+      Hex.choosePrimeData?_isGoodPrime core primeData hchoose
     have hcore_modP_iszero :
         (@Hex.ZPoly.modP primeData.p primeData.bounds core).isZero = false :=
       Hex.isGoodPrime_modP_isZero_false core primeData.p hgood
@@ -16845,7 +16856,7 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData
     rw [hcore_zero, hzero_modP] at hcore_modP_iszero
     exact Bool.noConfusion hcore_modP_iszero
   exact existsUnique_modPFactorSubset_of_choosePrimeData_of_some core
-    hirr hdvd hcore_ne hsome
+    hirr hdvd hcore_ne hchoose
 
 /-- **HO-1 supporting lemma (#4688).**
 
@@ -16867,10 +16878,9 @@ discharge it from the same `choosePrimeData?` chain that supplies the
 other partition fields. -/
 theorem modPSubsetPartitionHypotheses_of_choosePrimeData
     (core : Hex.ZPoly)
-    (hsome : Hex.choosePrimeData? core = some (Hex.choosePrimeData core)) :
-    let primeData := Hex.choosePrimeData core
+    (primeData : Hex.PrimeChoiceData)
+    (hchoose : Hex.choosePrimeData? core = some primeData) :
     ModPSubsetPartitionHypotheses core primeData True True := by
-  intro primeData
   refine
     { fModP_eq := ?_
       admissible_prime := trivial
@@ -16878,12 +16888,12 @@ theorem modPSubsetPartitionHypotheses_of_choosePrimeData
       factors_irreducible := ?_
       exists_subset := ?_
       unique_subset := ?_ }
-  · exact Hex.choosePrimeData?_fModP_eq core primeData hsome
-  · exact factors_irreducible_of_choosePrimeData_of_some core primeData hsome
+  · exact Hex.choosePrimeData?_fModP_eq core primeData hchoose
+  · exact factors_irreducible_of_choosePrimeData_of_some core primeData hchoose
   · intro factor hirr hdvd
-    exact (existsUnique_modPFactorSubset_of_choosePrimeData core hirr hdvd hsome).exists
+    exact (existsUnique_modPFactorSubset_of_choosePrimeData core primeData hirr hdvd hchoose).exists
   · intro factor S T hirr hdvd hS hT
-    rcases existsUnique_modPFactorSubset_of_choosePrimeData core hirr hdvd hsome with
+    rcases existsUnique_modPFactorSubset_of_choosePrimeData core primeData hirr hdvd hchoose with
       ⟨_, _, huniq⟩
     exact (huniq S hS).trans (huniq T hT).symm
 
@@ -16897,23 +16907,24 @@ requiring a full `HenselSubsetCorrespondenceHypotheses` value.
 -/
 theorem henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData_descent
     (core : Hex.ZPoly) (B : Nat)
+    (primeData : Hex.PrimeChoiceData)
+    (_hchoose : Hex.choosePrimeData? core = some primeData)
     (hdescent :
-      HenselLiftDescentHypotheses core B (Hex.choosePrimeData core)
-        (Hex.ZPoly.toMonicLiftData core B (Hex.choosePrimeData core)) True True)
+      HenselLiftDescentHypotheses core B primeData
+        (Hex.ZPoly.toMonicLiftData core B primeData) True True)
     (hlifted_of_modP :
-      ∀ {factor : Hex.ZPoly} {S : ModPFactorSubset (Hex.choosePrimeData core)},
+      ∀ {factor : Hex.ZPoly} {S : ModPFactorSubset primeData},
         Irreducible (HexPolyZMathlib.toPolynomial factor) →
         factor ∣ core →
-        RepresentsIntegerFactorModP (Hex.choosePrimeData core) factor S →
+        RepresentsIntegerFactorModP primeData factor S →
         RepresentsIntegerFactorAtLift core
-          (Hex.ZPoly.toMonicLiftData core B (Hex.choosePrimeData core)) factor
-          (liftedSubsetOfModPSubset (Hex.choosePrimeData core)
-            (Hex.ZPoly.toMonicLiftData core B (Hex.choosePrimeData core))
+          (Hex.ZPoly.toMonicLiftData core B primeData) factor
+          (liftedSubsetOfModPSubset primeData
+            (Hex.ZPoly.toMonicLiftData core B primeData)
             hdescent.factor_count_eq S)) :
-    let primeData := Hex.choosePrimeData core
     let d := Hex.ZPoly.toMonicLiftData core B primeData
     HenselSubsetLiftHypotheses core B primeData d True True True True := by
-  intro primeData d
+  intro d
   exact
     henselSubsetLiftHypotheses_of_forwardTransport_descent
       (hadmissible := trivial)
@@ -16945,26 +16956,27 @@ Downstream caller: `henselSubsetCorrespondence_of_modPSubsetPartition`
 `HenselSubsetCorrespondenceHypotheses` package on the lifted surface. -/
 theorem henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData
     (core : Hex.ZPoly) (B : Nat)
+    (primeData : Hex.PrimeChoiceData)
+    (_hchoose : Hex.choosePrimeData? core = some primeData)
     (hmod :
-      ModPSubsetPartitionHypotheses core (Hex.choosePrimeData core) True True)
+      ModPSubsetPartitionHypotheses core primeData True True)
     (hcorr :
-      HenselSubsetCorrespondenceHypotheses core B (Hex.choosePrimeData core)
-        (Hex.ZPoly.toMonicLiftData core B (Hex.choosePrimeData core)) True True)
+      HenselSubsetCorrespondenceHypotheses core B primeData
+        (Hex.ZPoly.toMonicLiftData core B primeData) True True)
     (hlifted_of_modP :
-      ∀ {factor : Hex.ZPoly} {S : ModPFactorSubset (Hex.choosePrimeData core)},
+      ∀ {factor : Hex.ZPoly} {S : ModPFactorSubset primeData},
         Irreducible (HexPolyZMathlib.toPolynomial factor) →
         factor ∣ core →
-        RepresentsIntegerFactorModP (Hex.choosePrimeData core) factor S →
+        RepresentsIntegerFactorModP primeData factor S →
         RepresentsIntegerFactorAtLift core
-          (Hex.ZPoly.toMonicLiftData core B (Hex.choosePrimeData core)) factor
-          (liftedSubsetOfModPSubset (Hex.choosePrimeData core)
-            (Hex.ZPoly.toMonicLiftData core B (Hex.choosePrimeData core))
-            (Hex.ZPoly.toMonicLiftData_liftedFactors_size_eq core B (Hex.choosePrimeData core))
+          (Hex.ZPoly.toMonicLiftData core B primeData) factor
+          (liftedSubsetOfModPSubset primeData
+            (Hex.ZPoly.toMonicLiftData core B primeData)
+            (Hex.ZPoly.toMonicLiftData_liftedFactors_size_eq core B primeData)
             S)) :
-    let primeData := Hex.choosePrimeData core
     let d := Hex.ZPoly.toMonicLiftData core B primeData
     HenselSubsetLiftHypotheses core B primeData d True True True True := by
-  intro primeData d
+  intro d
   refine
     { lift_eq := rfl
       factor_count_eq := Hex.ZPoly.toMonicLiftData_liftedFactors_size_eq core B primeData
@@ -16993,18 +17005,18 @@ an explicit `HenselSubsetLiftHypotheses` input, so callers do not have to use
 the older analytic fallback constructor. -/
 theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success
     (core : Hex.ZPoly) (B : Nat)
-    (hsome : Hex.choosePrimeData? core = some (Hex.choosePrimeData core))
+    (primeData : Hex.PrimeChoiceData)
+    (hchoose : Hex.choosePrimeData? core = some primeData)
     (hlift :
-      HenselSubsetLiftHypotheses core B (Hex.choosePrimeData core)
-        (Hex.ZPoly.toMonicLiftData core B (Hex.choosePrimeData core))
+      HenselSubsetLiftHypotheses core B primeData
+        (Hex.ZPoly.toMonicLiftData core B primeData)
         True True True True) :
-    let primeData := Hex.choosePrimeData core
     let d := Hex.ZPoly.toMonicLiftData core B primeData
     HenselSubsetCorrespondenceHypotheses core B primeData d True True := by
-  intro primeData d
+  intro d
   exact
     henselSubsetCorrespondence_of_modPSubsetPartition
-      (modPSubsetPartitionHypotheses_of_choosePrimeData core hsome)
+      (modPSubsetPartitionHypotheses_of_choosePrimeData core primeData hchoose)
       hlift
 
 /-- **#5689 supporting lemma (HO-1 successful branch).**
@@ -17015,28 +17027,28 @@ descent package and explicit forward Hensel transport to obtain the standard
 `HenselSubsetCorrespondenceHypotheses` surface. -/
 theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent
     (core : Hex.ZPoly) (B : Nat)
-    (hsome : Hex.choosePrimeData? core = some (Hex.choosePrimeData core))
+    (primeData : Hex.PrimeChoiceData)
+    (hchoose : Hex.choosePrimeData? core = some primeData)
     (hdescent :
-      HenselLiftDescentHypotheses core B (Hex.choosePrimeData core)
-        (Hex.ZPoly.toMonicLiftData core B (Hex.choosePrimeData core)) True True)
+      HenselLiftDescentHypotheses core B primeData
+        (Hex.ZPoly.toMonicLiftData core B primeData) True True)
     (hlifted_of_modP :
-      ∀ {factor : Hex.ZPoly} {S : ModPFactorSubset (Hex.choosePrimeData core)},
+      ∀ {factor : Hex.ZPoly} {S : ModPFactorSubset primeData},
         Irreducible (HexPolyZMathlib.toPolynomial factor) →
         factor ∣ core →
-        RepresentsIntegerFactorModP (Hex.choosePrimeData core) factor S →
+        RepresentsIntegerFactorModP primeData factor S →
         RepresentsIntegerFactorAtLift core
-          (Hex.ZPoly.toMonicLiftData core B (Hex.choosePrimeData core)) factor
-          (liftedSubsetOfModPSubset (Hex.choosePrimeData core)
-            (Hex.ZPoly.toMonicLiftData core B (Hex.choosePrimeData core))
+          (Hex.ZPoly.toMonicLiftData core B primeData) factor
+          (liftedSubsetOfModPSubset primeData
+            (Hex.ZPoly.toMonicLiftData core B primeData)
             hdescent.factor_count_eq S)) :
-    let primeData := Hex.choosePrimeData core
     let d := Hex.ZPoly.toMonicLiftData core B primeData
     HenselSubsetCorrespondenceHypotheses core B primeData d True True := by
-  intro primeData d
+  intro d
   exact
-    henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success core B hsome
+    henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success core B primeData hchoose
       (henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData_descent
-        core B hdescent hlifted_of_modP)
+        core B primeData hchoose hdescent hlifted_of_modP)
 
 end
 
