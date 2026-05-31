@@ -7038,28 +7038,36 @@ for callers that can prove the expansion-complete side condition.
 -/
 theorem factorWithBound_entry_mem_exhaustive_branch_xPower_or_core_of_reassemblyComplete
     (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
+    (primeData : PrimeChoiceData)
+    (hchoose :
+      choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData)
     (hbranch : factorWithBoundUsesExhaustiveBranch f B)
     (hcomplete :
       reassemblyExpansionComplete (normalizeForFactor f)
         (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-          (choosePrimeData (normalizeForFactor f).squareFreeCore)))
+          primeData))
     (hmem : entry ∈ (factorWithBound f B).factors.toList) :
     ∃ raw,
       (raw ∈ (xPowerFactorArray (normalizeForFactor f).xPower).toList ∨
         raw ∈
           (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-            (choosePrimeData (normalizeForFactor f).squareFreeCore)).toList) ∧
+            primeData).toList) ∧
         entry.1 = normalizeFactorSign raw := by
+  have hwf :
+      choosePrimeDataWithFallback (normalizeForFactor f).squareFreeCore = primeData := by
+    unfold choosePrimeDataWithFallback
+    rw [hchoose]
+    rfl
   rcases factorWithBound_entry_mem_exhaustive_branch_raw f B entry hbranch hmem with
     ⟨raw, hraw_mem, hraw_norm⟩
   refine ⟨raw, ?_, hraw_norm⟩
   rw [exhaustiveSlowRawFactorsWithBound] at hraw_mem
-  rw [← choosePrimeData_eq_choosePrimeDataWithFallback] at hraw_mem
+  rw [hwf] at hraw_mem
   exact
     reassemblePolynomialFactors_mem_xPower_or_core_of_expansionComplete
       (normalizeForFactor f)
       (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-        (choosePrimeData (normalizeForFactor f).squareFreeCore))
+        primeData)
       raw hcomplete hraw_mem
 
 /--
@@ -7069,24 +7077,28 @@ for the public `factor` entry point.
 -/
 theorem factor_entry_mem_exhaustive_branch_xPower_or_core_of_reassemblyComplete
     (f : ZPoly) (entry : ZPoly × Nat)
+    (primeData : PrimeChoiceData)
+    (hchoose :
+      choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData)
     (hbranch :
       factorWithBoundUsesExhaustiveBranch f (ZPoly.defaultFactorCoeffBound f))
     (hcomplete :
       reassemblyExpansionComplete (normalizeForFactor f)
         (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore
           (ZPoly.defaultFactorCoeffBound f)
-          (choosePrimeData (normalizeForFactor f).squareFreeCore)))
+          primeData))
     (hmem : entry ∈ (factor f).factors.toList) :
     ∃ raw,
       (raw ∈ (xPowerFactorArray (normalizeForFactor f).xPower).toList ∨
         raw ∈
           (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore
             (ZPoly.defaultFactorCoeffBound f)
-            (choosePrimeData (normalizeForFactor f).squareFreeCore)).toList) ∧
+            primeData).toList) ∧
         entry.1 = normalizeFactorSign raw := by
   simpa [factor_eq_factorWithBound_default] using
     factorWithBound_entry_mem_exhaustive_branch_xPower_or_core_of_reassemblyComplete
-      f (ZPoly.defaultFactorCoeffBound f) entry hbranch hcomplete hmem
+      f (ZPoly.defaultFactorCoeffBound f) entry primeData hchoose
+      hbranch hcomplete hmem
 
 /-- In the fast-path small-mod singleton branch, every recorded
 `factorWithBound` entry comes from the normalization reassembly whose core array
