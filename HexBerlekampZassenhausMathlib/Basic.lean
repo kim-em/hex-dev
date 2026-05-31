@@ -5059,6 +5059,34 @@ theorem henselLiftData_liftedFactor_modP_eq_modPFactor
     Hex.ZPoly.modP_eq_of_congr primeData.p _ _ hcongr_i
   simpa [modPFactor, Hex.FpPoly.modP_liftToZ] using hmodP
 
+private theorem squareFree_common_of_squareFreeModP
+    {p : Nat} [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
+    (f : Hex.ZPoly)
+    (hsf : Hex.squareFreeModP f p) :
+    ∀ d : Hex.FpPoly p,
+      d ∣ Hex.ZPoly.modP p f →
+      d ∣ Hex.DensePoly.derivative (Hex.ZPoly.modP p f) →
+      Hex.Berlekamp.isUnitPolynomial d = true := by
+  intro d hdf hdd
+  apply Hex.Berlekamp.isUnitPolynomial_of_dvd_gcd_isUnit hdf hdd
+  unfold Hex.squareFreeModP at hsf
+  change
+    Hex.gcdIsUnit
+      (Hex.DensePoly.gcd (Hex.ZPoly.modP p f)
+        (Hex.DensePoly.derivative (Hex.ZPoly.modP p f))) = true at hsf
+  unfold Hex.gcdIsUnit at hsf
+  have hsize :
+      (Hex.DensePoly.gcd (Hex.ZPoly.modP p f)
+        (Hex.DensePoly.derivative (Hex.ZPoly.modP p f))).size = 1 := by
+    simpa using (beq_iff_eq.mp hsf)
+  unfold Hex.Berlekamp.isUnitPolynomial
+  have hpos :
+      0 <
+        (Hex.DensePoly.gcd (Hex.ZPoly.modP p f)
+          (Hex.DensePoly.derivative (Hex.ZPoly.modP p f))).size := by
+    omega
+  rw [Hex.DensePoly.degree?_eq_some_of_pos_size _ hpos, hsize]
+
 /-- `choosePrimeData`-shaped caller wrapper for the Berlekamp factor `Nodup`
 property: given the `factorsModPBerlekampForm` invariant (which records that
 `primeData.factorsModP` is the Berlekamp factor array of the monic modular
@@ -5093,10 +5121,13 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
     (Hex.ZMod64.primeModulusOfPrime hprime)
   letI : Hex.ZMod64.PrimeModulus data.p := Hex.ZMod64.primeModulusOfPrime hprime
   -- Square-free precondition on the modular image, extracted from `isGoodPrime`.
-  have hsf :
-      Hex.DensePoly.gcd (Hex.ZPoly.modP data.p f)
-          (Hex.DensePoly.derivative (Hex.ZPoly.modP data.p f)) = 1 :=
-    Hex.isGoodPrime_squareFreeModP f data.p hgood
+  have hsf_common :
+      ∀ d : Hex.FpPoly data.p,
+        d ∣ Hex.ZPoly.modP data.p f →
+        d ∣ Hex.DensePoly.derivative (Hex.ZPoly.modP data.p f) →
+        Hex.Berlekamp.isUnitPolynomial d = true :=
+    squareFree_common_of_squareFreeModP f
+      (Hex.isGoodPrime_squareFreeModP f data.p hgood)
   -- `monicModularImage modP_f ∣ modP_f`: dividing by the leading coefficient
   -- scales by a nonzero element, and a unit-scaled polynomial divides the
   -- original via `dvd_scale_self_of_ne_zero`.
@@ -5115,8 +5146,8 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
     have hg_dvd_mod : g * g ∣ Hex.ZPoly.modP data.p f :=
       fpPoly_dvd_trans hgg hmonicImage_dvd
     have hunit : Hex.Berlekamp.isUnitPolynomial g = true :=
-      Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd
-        (Hex.Berlekamp.squareFree_common_of_gcd_eq_one hsf) hg_dvd_mod
+      Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd hsf_common
+        hg_dvd_mod
     have hdeg : Hex.DensePoly.degree? g = some 0 := by
       unfold Hex.Berlekamp.isUnitPolynomial at hunit
       cases hd : Hex.DensePoly.degree? g with
@@ -5256,8 +5287,8 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
         exact fpPoly_dvd_trans hg₂sq_dvd hg₁g₂_dvd_modP
       -- Square-freeness implies g₂ is a unit polynomial (degree 0).
       have hunit : Hex.Berlekamp.isUnitPolynomial g₂ = true :=
-        Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd
-          (Hex.Berlekamp.squareFree_common_of_gcd_eq_one hsf) hg₂sq_dvd_modP
+        Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd hsf_common
+          hg₂sq_dvd_modP
       have hdeg_zero : Hex.DensePoly.degree? g₂ = some 0 := by
         unfold Hex.Berlekamp.isUnitPolynomial at hunit
         cases hd : Hex.DensePoly.degree? g₂ with
@@ -5988,10 +6019,13 @@ theorem factorsModP_coprime_of_factorsModPBerlekampForm
   letI : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
   -- The modular image is square-free under `isGoodPrime`.
-  have hsf :
-      Hex.DensePoly.gcd (Hex.ZPoly.modP primeData.p core)
-          (Hex.DensePoly.derivative (Hex.ZPoly.modP primeData.p core)) = 1 :=
-    Hex.isGoodPrime_squareFreeModP core primeData.p hgood
+  have hsf_common :
+      ∀ d : Hex.FpPoly primeData.p,
+        d ∣ Hex.ZPoly.modP primeData.p core →
+        d ∣ Hex.DensePoly.derivative (Hex.ZPoly.modP primeData.p core) →
+        Hex.Berlekamp.isUnitPolynomial d = true :=
+    squareFree_common_of_squareFreeModP core
+      (Hex.isGoodPrime_squareFreeModP core primeData.p hgood)
   -- `monicModularImage` divides `modP p core`, so the no-squared invariant
   -- transports through the unit scaling.
   have hmonicImage_dvd :
@@ -6007,8 +6041,8 @@ theorem factorsModP_coprime_of_factorsModPBerlekampForm
     have hd_dvd_mod : d * d ∣ Hex.ZPoly.modP primeData.p core :=
       fpPoly_dvd_trans hdd hmonicImage_dvd
     have hunit : Hex.Berlekamp.isUnitPolynomial d = true :=
-      Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd
-        (Hex.Berlekamp.squareFree_common_of_gcd_eq_one hsf) hd_dvd_mod
+      Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd hsf_common
+        hd_dvd_mod
     have hdeg : Hex.DensePoly.degree? d = some 0 := by
       unfold Hex.Berlekamp.isUnitPolynomial at hunit
       cases hd : Hex.DensePoly.degree? d with
@@ -16333,17 +16367,22 @@ private theorem henselSubsetCorrespondence_analytic_obligation
 
 /-- **#4543 supporting lemma (HO-1).**
 
-`HenselSubsetCorrespondenceHypotheses` value at the executable
-`Hex.choosePrimeData` / `Hex.henselLiftData` surface, parametric in the
-precision count `B`.  See `henselSubsetCorrespondence_analytic_obligation`
-for the single localised analytic `sorry` and the discussion of why the
-fallback is acceptable here. -/
+`HenselSubsetCorrespondenceHypotheses` value in the successful
+`Hex.choosePrimeData? core = some primeData` branch, parametric in the
+precision count `B`.  The proof transports through
+`Hex.choosePrimeData_eq_of_choosePrimeData?_some` to reuse
+`henselSubsetCorrespondence_analytic_obligation`; see that helper for the
+single localised analytic `sorry`. -/
 theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData
-    (core : Hex.ZPoly) (B : Nat) :
-    let primeData := Hex.choosePrimeData core
+    (core : Hex.ZPoly) (B : Nat)
+    (primeData : Hex.PrimeChoiceData)
+    (hchoose : Hex.choosePrimeData? core = some primeData) :
     let d := Hex.ZPoly.toMonicLiftData core B primeData
     HenselSubsetCorrespondenceHypotheses core B primeData d True True := by
-  intro primeData d
+  have hprimeData : Hex.choosePrimeData core = primeData :=
+    Hex.choosePrimeData_eq_of_choosePrimeData?_some hchoose
+  subst primeData
+  intro d
   refine
     { lift_eq := rfl
       admissible_prime := trivial
@@ -16368,13 +16407,15 @@ has the exact `core`/`B`/`primeData`/`d` shape expected by
 (PR #4537), so the HO-1 slow-path assembly can apply that wrapper
 directly. -/
 theorem henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData
-    (f : Hex.ZPoly) :
+    (f : Hex.ZPoly)
+    (primeData : Hex.PrimeChoiceData)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData) :
     let core := (Hex.normalizeForFactor f).squareFreeCore
-    let primeData := Hex.choosePrimeData core
     let B := Hex.ZPoly.defaultFactorCoeffBound f
     let d := Hex.ZPoly.toMonicLiftData core B primeData
     HenselSubsetCorrespondenceHypotheses core B primeData d True True :=
-  henselSubsetCorrespondenceHypotheses_of_choosePrimeData _ _
+  henselSubsetCorrespondenceHypotheses_of_choosePrimeData _ _ primeData hchoose
 
 /-- **#4549 supporting lemma (HO-1), analytic obligation.**
 
@@ -16463,9 +16504,9 @@ private theorem liftedFactorSubsetPartition_analytic_obligation
 /-- **#4549 supporting lemma (HO-1).**
 
 Parametric constructor for `LiftedFactorSubsetPartition core d
-Finset.univ core` over the executable `Hex.choosePrimeData` /
-`Hex.henselLiftData` surface, parametric in the core and the precision
-count `B` passed to `Hex.henselLiftData`.
+Finset.univ core` over the successful
+`Hex.choosePrimeData? core = some primeData` surface, parametric in the core
+and the precision count `B` passed to `Hex.ZPoly.toMonicLiftData`.
 
 Square-freeness of `HexPolyZMathlib.toPolynomial core` is taken as an
 explicit hypothesis `hcore_sqfree`: the outer-bound specialisation
@@ -16478,9 +16519,9 @@ matches the issue's option (a) for handling
 
 Composes:
 
-* `henselSubsetCorrespondenceRest_initial` (line 1686) applied to
-  `henselSubsetCorrespondenceHypotheses_of_choosePrimeData` (#4543,
-  line 7704) for `toHenselSubsetCorrespondenceRest`;
+* `henselSubsetCorrespondenceRest_initial` applied to the witness-form
+  `henselSubsetCorrespondenceHypotheses_of_choosePrimeData` for
+  `toHenselSubsetCorrespondenceRest`;
 * `hcore_sqfree` for `target_squarefree`;
 * the analytic obligation helper above for the five genuinely analytic
   fields (`cover`, `pairwise_disjoint`, `unique_up_to_associated`,
@@ -16492,17 +16533,22 @@ introduced by #4549 is inside
 `liftedFactorSubsetPartition_analytic_obligation` above. -/
 theorem liftedFactorSubsetPartition_of_choosePrimeData
     (core : Hex.ZPoly) (B : Nat)
+    (primeData : Hex.PrimeChoiceData)
+    (hchoose : Hex.choosePrimeData? core = some primeData)
     (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core)) :
-    let primeData := Hex.choosePrimeData core
     let d := Hex.ZPoly.toMonicLiftData core B primeData
     LiftedFactorSubsetPartition core d Finset.univ core := by
-  intro primeData d
+  have hprimeData : Hex.choosePrimeData core = primeData :=
+    Hex.choosePrimeData_eq_of_choosePrimeData?_some hchoose
+  subst primeData
+  intro d
   obtain ⟨hcover, hdisj, huniq, hsup, hscaled_sup⟩ :=
     liftedFactorSubsetPartition_analytic_obligation core B
   refine
     { toHenselSubsetCorrespondenceRest :=
         henselSubsetCorrespondenceRest_initial
-          (henselSubsetCorrespondenceHypotheses_of_choosePrimeData core B)
+          (henselSubsetCorrespondenceHypotheses_of_choosePrimeData core B
+            (Hex.choosePrimeData core) hchoose)
       target_squarefree := hcore_sqfree
       cover := ?_
       pairwise_disjoint := ?_
@@ -16650,7 +16696,7 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
     (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
     (hdvd : factor ∣ core)
     (hcore_ne : core ≠ 0)
-    {primeData : Hex.PrimeChoiceData}
+    (primeData : Hex.PrimeChoiceData)
     (hsome : Hex.choosePrimeData? core = some primeData) :
     ∃! S : ModPFactorSubset primeData,
       RepresentsIntegerFactorModP primeData factor S := by
@@ -16826,12 +16872,11 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
       hT_uniq _ ⟨hS'_map_le, hS'_map_prod⟩
     rw [hS'_T, ← hStwit_map]
 
-/-- Caller-facing wrapper, exposing the `let primeData := choosePrimeData core`
-shape required by the `ModPSubsetPartitionHypotheses` constructor. The
-strengthening hypothesis `hchoose` is an explicit `choosePrimeData? = some`
-witness, so the `none` branch (where the mod-`p` factorisation invariant is
-unavailable) is excluded; downstream callers discharge it from the same
-`choosePrimeData?` chain that supplies the other partition fields. -/
+/-- Caller-facing wrapper for the witness-form
+`Hex.choosePrimeData? core = some primeData` branch required by the
+`ModPSubsetPartitionHypotheses` constructor. The explicit `hchoose` witness
+excludes the `none` branch where the mod-`p` factorisation invariant is
+unavailable. -/
 theorem existsUnique_modPFactorSubset_of_choosePrimeData
     (core : Hex.ZPoly) {factor : Hex.ZPoly}
     (primeData : Hex.PrimeChoiceData)
@@ -16857,7 +16902,7 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData
     rw [hcore_zero, hzero_modP] at hcore_modP_iszero
     exact Bool.noConfusion hcore_modP_iszero
   exact existsUnique_modPFactorSubset_of_choosePrimeData_of_some core
-    hirr hdvd hcore_ne hchoose
+    hirr hdvd hcore_ne primeData hchoose
 
 /-- **HO-1 supporting lemma (#4688).**
 
@@ -16909,7 +16954,7 @@ requiring a full `HenselSubsetCorrespondenceHypotheses` value.
 theorem henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData_descent
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
-    (_hchoose : Hex.choosePrimeData? core = some primeData)
+    (hchoose : Hex.choosePrimeData? core = some primeData)
     (hdescent :
       HenselLiftDescentHypotheses core B primeData
         (Hex.ZPoly.toMonicLiftData core B primeData) True True)
@@ -16926,6 +16971,7 @@ theorem henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData_descent
     let d := Hex.ZPoly.toMonicLiftData core B primeData
     HenselSubsetLiftHypotheses core B primeData d True True True True := by
   intro d
+  have _ := hchoose
   exact
     henselSubsetLiftHypotheses_of_forwardTransport_descent
       (hadmissible := trivial)
@@ -16958,7 +17004,7 @@ Downstream caller: `henselSubsetCorrespondence_of_modPSubsetPartition`
 theorem henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
-    (_hchoose : Hex.choosePrimeData? core = some primeData)
+    (hchoose : Hex.choosePrimeData? core = some primeData)
     (hmod :
       ModPSubsetPartitionHypotheses core primeData True True)
     (hcorr :
@@ -16978,6 +17024,7 @@ theorem henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData
     let d := Hex.ZPoly.toMonicLiftData core B primeData
     HenselSubsetLiftHypotheses core B primeData d True True True True := by
   intro d
+  have _ := hchoose
   refine
     { lift_eq := rfl
       factor_count_eq := Hex.ZPoly.toMonicLiftData_liftedFactors_size_eq core B primeData
@@ -16997,11 +17044,11 @@ theorem henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData
 /-- **#5689 supporting lemma (HO-1 successful branch).**
 
 Successful-branch constructor for the lifted Hensel subset correspondence at
-the executable `Hex.choosePrimeData` boundary.
+the witness-form `Hex.choosePrimeData?` boundary.
 
-The explicit `hsome` hypothesis selects the analyzable
-`Hex.choosePrimeData? core = some (Hex.choosePrimeData core)` branch, supplying
-the mod-`p` subset partition.  The Hensel-lift obligations remain packaged as
+The explicit `hchoose` hypothesis selects the analyzable
+`Hex.choosePrimeData? core = some primeData` branch, supplying the mod-`p`
+subset partition.  The Hensel-lift obligations remain packaged as
 an explicit `HenselSubsetLiftHypotheses` input, so callers do not have to use
 the older analytic fallback constructor. -/
 theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success
