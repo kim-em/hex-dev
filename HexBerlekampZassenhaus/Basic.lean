@@ -6504,8 +6504,8 @@ theorem factorFast_ne_none_of_core_recovery_on_schedule
     (f : ZPoly) (primeData : PrimeChoiceData)
     {target : Nat} {coreFactors : Array ZPoly}
     (hB_pos : 1 ≤ factorFastPrecisionCap f)
-    (hnormalized :
-      primeData = choosePrimeData (normalizeForFactor f).squareFreeCore)
+    (hchoose :
+      choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData)
     (hmem :
       let a := precisionForCoeffBound (factorFastPrecisionCap f) primeData.p
       target ∈
@@ -6521,6 +6521,11 @@ theorem factorFast_ne_none_of_core_recovery_on_schedule
   let a := precisionForCoeffBound B primeData.p
   have hB_pos' : 1 ≤ B := by
     simpa [B] using hB_pos
+  have hwf :
+      choosePrimeDataWithFallback (normalizeForFactor f).squareFreeCore = primeData := by
+    unfold choosePrimeDataWithFallback
+    rw [hchoose]
+    rfl
   have hcore_ne :
       factorFastCoreWithBound (normalizeForFactor f).squareFreeCore a primeData
           (initialHenselPrecision a) (ZPoly.quadraticDoublingSteps a + 2) ≠ none := by
@@ -6531,7 +6536,6 @@ theorem factorFast_ne_none_of_core_recovery_on_schedule
   have hfactors_ne :
       factorFastFactorsWithBound f B ≠ none := by
     unfold factorFastFactorsWithBound
-    rw [choosePrimeData_eq_choosePrimeDataWithFallback] at hnormalized
     by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
     · rw [if_pos hdeg]
       exact Option.some_ne_none _
@@ -6539,7 +6543,7 @@ theorem factorFast_ne_none_of_core_recovery_on_schedule
       rw [if_neg (by omega : B ≠ 0)]
       by_cases hB1 : B = 1
       · rw [if_pos hB1]
-        rw [← hnormalized]
+        rw [hwf]
         by_cases hpred :
             (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome ∧
               primeData.factorsModP.size ≤ 1
@@ -6560,7 +6564,7 @@ theorem factorFast_ne_none_of_core_recovery_on_schedule
         | some factors =>
             simp
         | none =>
-            rw [← hnormalized]
+            rw [hwf]
             by_cases hpred :
                 (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome ∧
                   primeData.factorsModP.size ≤ 1
@@ -7098,13 +7102,12 @@ falls through to the exhaustive slow path, so the singleton branch-shape
 conclusion does not apply. -/
 theorem factorWithBound_entry_mem_small_mod_singleton_raw
     (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
+    (primeData : PrimeChoiceData)
     (hB_pos : 1 ≤ B)
     (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
     (hchoose :
-      choosePrimeData? (normalizeForFactor f).squareFreeCore =
-        some (choosePrimeData (normalizeForFactor f).squareFreeCore))
-    (hsmall :
-      (choosePrimeData (normalizeForFactor f).squareFreeCore).factorsModP.size ≤ 1)
+      choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData)
+    (hsmall : primeData.factorsModP.size ≤ 1)
     (hquadratic : B = 1 ∨
       quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none)
     (hmem : entry ∈ (factorWithBound f B).factors.toList) :
@@ -7112,16 +7115,21 @@ theorem factorWithBound_entry_mem_small_mod_singleton_raw
         (reassemblePolynomialFactors (normalizeForFactor f)
           #[(normalizeForFactor f).squareFreeCore]).toList,
       entry.1 = normalizeFactorSign raw := by
+  have hwf :
+      choosePrimeDataWithFallback (normalizeForFactor f).squareFreeCore = primeData := by
+    unfold choosePrimeDataWithFallback
+    rw [hchoose]
+    rfl
   have hpred :
       (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome ∧
-        (choosePrimeData (normalizeForFactor f).squareFreeCore).factorsModP.size ≤ 1 :=
-    ⟨by rw [hchoose]; rfl, hsmall⟩
+        (choosePrimeDataWithFallback
+          (normalizeForFactor f).squareFreeCore).factorsModP.size ≤ 1 :=
+    ⟨by rw [hchoose]; rfl, by rw [hwf]; exact hsmall⟩
   have hfast :
       factorFastFactorsWithBound f B =
         some (reassemblePolynomialFactors (normalizeForFactor f)
           #[(normalizeForFactor f).squareFreeCore]) := by
     unfold factorFastFactorsWithBound
-    rw [choosePrimeData_eq_choosePrimeDataWithFallback] at hpred
     rw [if_neg hdeg, if_neg (by omega : B ≠ 0)]
     by_cases hB1 : B = 1
     · rw [if_pos hB1]

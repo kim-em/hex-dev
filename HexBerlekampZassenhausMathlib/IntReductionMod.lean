@@ -2711,8 +2711,9 @@ theorem factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData
   -- Branch-shape lemma: entry is the sign-normalisation of a raw factor in
   -- the singleton-core reassembly.
   obtain ⟨raw, hraw_mem, hentry_eq⟩ :=
-    Hex.factorWithBound_entry_mem_small_mod_singleton_raw f B entry hB_pos
-      hdeg hchoose hsmall hquadratic hentry_mem
+    Hex.factorWithBound_entry_mem_small_mod_singleton_raw f B entry
+      (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+      hB_pos hdeg hchoose hsmall hquadratic hentry_mem
   -- Singleton-core irreducibility from the chosen prime's Berlekamp form,
   -- with `hprim` and `hlc_map_ne` discharged by the #4545 base lemmas.
   have hcore_irr :
