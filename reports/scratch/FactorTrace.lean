@@ -22,8 +22,12 @@ private def fingerprint (φ : Factorization) : UInt64 :=
 
 private def report (label : String) (f : ZPoly) : IO Unit := do
   let prime := Hex.choosePrime f
-  let dataPrime := (Hex.choosePrimeData f).p
-  let primeOk := (Hex.choosePrimeData? f).isSome
+  let data? := Hex.choosePrimeData? f
+  let dataPrime :=
+    match data? with
+    | some data => toString data.p
+    | none => "none"
+  let primeOk := data?.isSome
   let coeffBound := ZPoly.defaultFactorCoeffBound f
   IO.println s!"--- {label} (deg {f.degree?.getD 0}, choosePrime={prime}, dataPrime={dataPrime}, dataOk={primeOk}, B={coeffBound})"
 

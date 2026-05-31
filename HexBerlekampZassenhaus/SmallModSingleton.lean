@@ -297,13 +297,11 @@ This is the Mathlib-free analog of
 in `HexBerlekampZassenhausMathlib/IntReductionMod.lean`. -/
 theorem squareFreeCore_irreducible_of_small_mod_singleton
     (f : Hex.ZPoly) (hf_ne : f ≠ 0)
+    (primeData : Hex.PrimeChoiceData)
     (hchoose :
       Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
-        some
-          (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore))
-    (hsmall :
-      (Hex.choosePrimeData
-          (Hex.normalizeForFactor f).squareFreeCore).factorsModP.size ≤ 1)
+        some primeData)
+    (hsmall : primeData.factorsModP.size ≤ 1)
     (hdeg :
       (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0) :
     Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore := by
@@ -337,7 +335,7 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton
       rfl
     rw [hcore_eq]
     exact ZPoly_Primitive_left_of_mul _ _ hprod
-  exact zpoly_irreducible_of_choosePrimeData?_small_of_primitive _ _ hchoose hsmall
+  exact zpoly_irreducible_of_choosePrimeData?_small_of_primitive _ primeData hchoose hsmall
     hprim_core hcore_size_gt_one
 
 end SmallModSingleton
