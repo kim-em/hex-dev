@@ -339,9 +339,7 @@ filed a "needs replan" skip on that shape, the chain is at a
 SPEC wall: the result being decomposed toward does not exist at
 this layer. Triage closes the chain (parent and all sub-issues),
 citing the SPEC § that pins the layer. Cutting the decomposition
-thinner is the failure mode; see
-[Reports do not override SPEC](#reports-do-not-override-spec)
-for the analogous trap entered from a report.
+thinner is the failure mode.
 
 ### Bench-found, conformance-found, and audit-found issues
 
