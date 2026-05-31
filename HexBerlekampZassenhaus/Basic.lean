@@ -2364,20 +2364,6 @@ theorem choosePrimeData_prime (f : ZPoly) :
       simp [fallbackPrimeChoiceData, prime_three]
 
 /--
-The modular image stored in selected prime-choice data is exactly the
-coefficientwise reduction of the input at the selected prime.
--/
-theorem choosePrimeData_fModP_eq_modP (f : ZPoly) :
-    (choosePrimeData f).fModP =
-      @ZPoly.modP (choosePrimeData f).p (choosePrimeData f).bounds f := by
-  unfold choosePrimeData
-  cases hdata : choosePrimeData? f with
-  | some data =>
-      exact choosePrimeData?_fModP_eq f data hdata
-  | none =>
-      simp [fallbackPrimeChoiceData]
-
-/--
 Lift the chosen modular factors to the requested precision for integer
 recombination.
 -/

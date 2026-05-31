@@ -16854,7 +16854,7 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData
 
 Composes:
 
-* `Hex.choosePrimeData_fModP_eq_modP` for `fModP_eq`;
+* `Hex.choosePrimeData?_fModP_eq` for `fModP_eq`;
 * `trivial` for the `True` `admissible_prime` / `square_free_reduction` hooks;
 * `factors_irreducible_of_choosePrimeData_of_some` (#4686) for the per-factor
   irreducibility component;
@@ -16878,7 +16878,7 @@ theorem modPSubsetPartitionHypotheses_of_choosePrimeData
       factors_irreducible := ?_
       exists_subset := ?_
       unique_subset := ?_ }
-  · exact Hex.choosePrimeData_fModP_eq_modP core
+  · exact Hex.choosePrimeData?_fModP_eq core primeData hsome
   · exact factors_irreducible_of_choosePrimeData_of_some core primeData hsome
   · intro factor hirr hdvd
     exact (existsUnique_modPFactorSubset_of_choosePrimeData core hirr hdvd hsome).exists
