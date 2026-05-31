@@ -2083,6 +2083,13 @@ theorem choosePrimeData_eq_choosePrimeDataWithFallback (f : ZPoly) :
   unfold choosePrimeData choosePrimeDataWithFallback
   cases choosePrimeData? f <;> rfl
 
+theorem choosePrimeData_eq_of_choosePrimeData?_some
+    {f : ZPoly} {data : PrimeChoiceData}
+    (hdata : choosePrimeData? f = some data) :
+    choosePrimeData f = data := by
+  unfold choosePrimeData
+  rw [hdata]
+
 theorem choosePrimeData?_prime
     (f : ZPoly) (data : PrimeChoiceData)
     (hdata : choosePrimeData? f = some data) :
