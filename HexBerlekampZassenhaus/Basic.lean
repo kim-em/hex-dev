@@ -2072,9 +2072,9 @@ Same value as `choosePrimeData f` (`rfl`-equal via
 silent fallback dispatch visible at every call site. Used by the
 production callers `exhaustiveSlowRawFactorsWithBound`,
 `factorSlowFactorsWithBound`, and `factorFastFactorsWithBound` so that
-the `choosePrimeData?` success witness can be substituted directly once
-#5817 / #5819 land, without an intermediate `unfold choosePrimeData`
-step. See `SPEC/design-principles.md` §8 (fallback discipline). -/
+a `choosePrimeData?` success witness can be substituted directly,
+without an intermediate `unfold choosePrimeData` step. See
+`SPEC/design-principles.md` §8 (fallback discipline). -/
 def choosePrimeDataWithFallback (f : ZPoly) : PrimeChoiceData :=
   (choosePrimeData? f).getD (fallbackPrimeChoiceData f)
 
@@ -5964,8 +5964,7 @@ mirroring `factorFastFactorsWithBound`'s `none`-on-no-good-prime
 contract. Provides the Option-propagating boundary recommended by #5831
 (HO-5d-1b) for the slow exhaustive raw-factor path; the existing total
 `exhaustiveSlowRawFactorsWithBound` retains the silent
-`fallbackPrimeChoiceData` semantics until #5817 + #5819 land or full
-Option propagation through the public `factor` API is staged in. -/
+`fallbackPrimeChoiceData` semantics for executable / benchmark surfaces. -/
 def exhaustiveSlowRawFactorsWithBound? (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
   (choosePrimeData? (normalizeForFactor f).squareFreeCore).map fun primeData =>
     reassemblePolynomialFactors (normalizeForFactor f)
@@ -6019,8 +6018,7 @@ This is the slow-path counterpart of the already-`Option`-returning
 `factorFastFactorsWithBound`. Provides the slow-side
 Option-propagating boundary recommended by #5831 (HO-5d-1b). The
 existing total `factorSlowFactorsWithBound` retains the silent
-`fallbackPrimeChoiceData` semantics until either #5817 + #5819 land or
-full `Option` propagation through the public `factor` API is staged in. -/
+`fallbackPrimeChoiceData` semantics for executable / benchmark surfaces. -/
 def factorSlowFactorsWithBound? (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
   let normalized := normalizeForFactor f
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
@@ -6808,10 +6806,8 @@ otherwise mask with a `p = 3` reduction.
 
 This is the additive Option-propagating boundary recommended by #5816 (and the
 SPEC `design-principles.md` §8 fallback-discipline clause that #5775 raises).
-The total `factorWithBound` retains the silent-fallback behaviour until either
-the `choosePrimeData?_isSome` unreachability theorem lands on top of the
-extended prime search (#5819), or full `Option` propagation through the
-public API is staged in.
+The total `factorWithBound` retains the silent-fallback behaviour for
+executable / benchmark surfaces.
 -/
 def factorWithBound? (f : ZPoly) (B : Nat) : Option Factorization :=
   let normalized := normalizeForFactor f
@@ -7290,10 +7286,9 @@ that the singleton core is irreducible to the Mathlib-side layer.
 
 The `hchoose` premise reflects the dispatcher contract: under the small-mod
 singleton dispatch (issue #4605), the fast path only fires the singleton arm
-when `choosePrimeData?` selects a good prime. In the fallback case
-(`choosePrimeData? sf = none`) the fast path returns `none` and `factorWithBound`
-falls through to the exhaustive slow path, so the singleton branch-shape
-conclusion does not apply. -/
+when `choosePrimeData?` selects a good prime. When `choosePrimeData? sf = none`
+the fast path returns `none` and `factorWithBound` falls through to the
+exhaustive slow path, so the singleton branch-shape conclusion does not apply. -/
 theorem factorWithBound_entry_mem_small_mod_singleton_raw
     (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
     (primeData : PrimeChoiceData)

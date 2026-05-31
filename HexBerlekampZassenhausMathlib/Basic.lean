@@ -6376,9 +6376,10 @@ theorem factors_irreducible_of_factorsModPBerlekampForm
 In this branch, the `factorsModPBerlekampForm` invariant and the `isGoodPrime`
 hypothesis are both supplied automatically by
 `Hex.choosePrimeData?_factorsModP_berlekamp_form` and
-`Hex.choosePrimeData?_isGoodPrime` respectively; the `none` (fallback `p = 3`)
-branch is excluded.  The constructor wrapper #4688 will compose this with the
-sibling `existsUnique_modPFactorSubset_of_choosePrimeData` (#4687) and the
+`Hex.choosePrimeData?_isGoodPrime` respectively; the `none` branch is
+excluded by the explicit-witness premise `hselected`.  The constructor
+wrapper #4688 will compose this with the sibling
+`existsUnique_modPFactorSubset_of_choosePrimeData` (#4687) and the
 trivial `fModP_eq` / `admissible_prime` / `square_free_reduction` fields. -/
 theorem factors_irreducible_of_choosePrimeData_of_some
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
@@ -16827,10 +16828,10 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
 
 /-- Caller-facing wrapper, exposing the `let primeData := choosePrimeData core`
 shape required by the `ModPSubsetPartitionHypotheses` constructor. The
-strengthening hypothesis `hsome` excludes the fallback `p = 3` branch where the
-mod-`p` factorisation invariant does not hold; downstream callers discharge it
-from the same `choosePrimeData?` chain that supplies the other partition
-fields. -/
+strengthening hypothesis `hchoose` is an explicit `choosePrimeData? = some`
+witness, so the `none` branch (where the mod-`p` factorisation invariant is
+unavailable) is excluded; downstream callers discharge it from the same
+`choosePrimeData?` chain that supplies the other partition fields. -/
 theorem existsUnique_modPFactorSubset_of_choosePrimeData
     (core : Hex.ZPoly) {factor : Hex.ZPoly}
     (primeData : Hex.PrimeChoiceData)
@@ -16872,10 +16873,10 @@ Composes:
 * `existsUnique_modPFactorSubset_of_choosePrimeData` (#4693) for both the
   existence and uniqueness components.
 
-The `hsome` hypothesis excludes the fallback `p = 3` branch where the
-mod-`p` factorisation invariant does not hold; downstream callers
-discharge it from the same `choosePrimeData?` chain that supplies the
-other partition fields. -/
+The `hchoose` hypothesis is an explicit `choosePrimeData? = some` witness,
+so the `none` branch (where the mod-`p` factorisation invariant is
+unavailable) is excluded; downstream callers discharge it from the same
+`choosePrimeData?` chain that supplies the other partition fields. -/
 theorem modPSubsetPartitionHypotheses_of_choosePrimeData
     (core : Hex.ZPoly)
     (primeData : Hex.PrimeChoiceData)
