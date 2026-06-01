@@ -546,6 +546,53 @@ theorem schur_structured_two_pair_ne_zero {r : ℝ} {z a b c d : ℂ}
       _ = ‖num‖ := one_mul _
   exact not_lt_of_ge hden_norm_le_num hnum_lt_den
 
+theorem schur_two_interior_roots_norm_le {r : ℝ} {a b c d ζ₁ ζ₂ : ℂ}
+    (hr : 0 < r)
+    (ha : ‖a‖ ≤ r) (hb : ‖b‖ ≤ r)
+    (hc : ‖c‖ ≤ 1) (hd : ‖d‖ ≤ 1)
+    (hsum : ζ₁ + ζ₂ = -((a + b) * (c + d) / 2))
+    (hprod : ζ₁ * ζ₂ = a * b * c * d) :
+    ‖ζ₁‖ ≤ r ∧ ‖ζ₂‖ ≤ r := by
+  have hzero₁ :
+      (ζ₁ + a * c) * (ζ₁ + b * d) + (ζ₁ + a * d) * (ζ₁ + b * c) = 0 := by
+    have hquad :
+        ζ₁ * ζ₁ + ((a + b) * (c + d) / 2) * ζ₁ + a * b * c * d = 0 := by
+      calc
+        ζ₁ * ζ₁ + ((a + b) * (c + d) / 2) * ζ₁ + a * b * c * d
+            = ζ₁ * (ζ₁ + ζ₂ + (a + b) * (c + d) / 2) := by
+                rw [← hprod]
+                ring
+        _ = 0 := by
+          rw [hsum]
+          ring
+    calc
+      (ζ₁ + a * c) * (ζ₁ + b * d) + (ζ₁ + a * d) * (ζ₁ + b * c)
+          = 2 * (ζ₁ * ζ₁ + ((a + b) * (c + d) / 2) * ζ₁ + a * b * c * d) := by
+              ring
+      _ = 0 := by rw [hquad]; ring
+  have hzero₂ :
+      (ζ₂ + a * c) * (ζ₂ + b * d) + (ζ₂ + a * d) * (ζ₂ + b * c) = 0 := by
+    have hquad :
+        ζ₂ * ζ₂ + ((a + b) * (c + d) / 2) * ζ₂ + a * b * c * d = 0 := by
+      calc
+        ζ₂ * ζ₂ + ((a + b) * (c + d) / 2) * ζ₂ + a * b * c * d
+            = ζ₂ * (ζ₁ + ζ₂ + (a + b) * (c + d) / 2) := by
+                rw [← hprod]
+                ring
+        _ = 0 := by
+          rw [hsum]
+          ring
+    calc
+      (ζ₂ + a * c) * (ζ₂ + b * d) + (ζ₂ + a * d) * (ζ₂ + b * c)
+          = 2 * (ζ₂ * ζ₂ + ((a + b) * (c + d) / 2) * ζ₂ + a * b * c * d) := by
+              ring
+      _ = 0 := by rw [hquad]; ring
+  refine ⟨?_, ?_⟩
+  · by_contra hnot
+    exact schur_structured_two_pair_ne_zero hr (lt_of_not_ge hnot) ha hb hc hd hzero₁
+  · by_contra hnot
+    exact schur_structured_two_pair_ne_zero hr (lt_of_not_ge hnot) ha hb hc hd hzero₂
+
 /-- Roots outside the radius, weighted by `‖z‖ / r` with multiplicity. -/
 def rootsRadiusProduct (r : ℝ) (s : Multiset ℂ) : ℝ :=
   ((s.filter fun z => r ≤ ‖z‖).map fun z => ‖z‖ / r).prod
