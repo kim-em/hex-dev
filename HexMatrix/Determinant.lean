@@ -651,6 +651,24 @@ private theorem foldl_det_sum_zero {R : Type u} [Lean.Grind.CommRing R]
       have hzero : z + (0 : R) = z := by grind
       simpa [hzero] using ih z
 
+private theorem foldl_det_sum_sub_add_zero_of_body_zero
+    {R : Type u} [Lean.Grind.CommRing R] {β : Type v}
+    (xs : List β) (f g h : β → R) (a b c : R)
+    (hacc : a - b + c = 0)
+    (hall : ∀ x, x ∈ xs → f x - g x + h x = 0) :
+    xs.foldl (fun acc x => acc + f x) a -
+      xs.foldl (fun acc x => acc + g x) b +
+      xs.foldl (fun acc x => acc + h x) c = 0 := by
+  induction xs generalizing a b c with
+  | nil => exact hacc
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      apply ih
+      · have hx : f x - g x + h x = 0 := hall x List.mem_cons_self
+        grind
+      · intro y hy
+        exact hall y (List.mem_cons_of_mem x hy)
+
 private theorem foldl_det_product_mul_left {R : Type u} [Lean.Grind.CommRing R]
     {β : Type v} (xs : List β) (c : R) (f : β → R) (z : R) :
     xs.foldl (fun acc x => acc * f x) (c * z) =
@@ -10480,6 +10498,110 @@ theorem mDet_basisVec_eq_zero_of_eq {R : Type u} [Lean.Grind.CommRing R]
         (basisVec (R := R) p) p]
   rw [hcol]
   exact det_colReplace_zero _ _
+
+private theorem cofactorSign_consecutive_last_neg
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (a : Nat) (ha : a + 1 < n + 1) :
+    cofactorSign (R := R) (⟨a + 1, ha⟩ : Fin (n + 1)) (Fin.last n) =
+      -cofactorSign (R := R) (⟨a, by omega⟩ : Fin (n + 1)) (Fin.last n) := by
+  unfold cofactorSign
+  simp only [Fin.val_mk, Fin.last]
+  by_cases h : (a + n) % 2 = 0
+  · have hnext : (a + 1 + n) % 2 ≠ 0 := by omega
+    rw [if_pos h, if_neg hnext]
+  · have hnext : (a + 1 + n) % 2 = 0 := by omega
+    rw [if_neg h, if_pos hnext]
+    grind
+
+private theorem det_plucker_three_term_basisVec_of_eq_p1
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n)
+    (p1 p2 p3 : Fin (n + 2))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val) :
+    mDet B (basisVec (R := R) p1) p1 * nDet B p2 p3 h23 -
+      mDet B (basisVec (R := R) p1) p2 *
+        nDet B p1 p3 (Nat.lt_trans h12 h23) +
+      mDet B (basisVec (R := R) p1) p3 * nDet B p1 p2 h12 = 0 := by
+  rw [mDet_basisVec_eq_zero_of_eq B p1]
+  rw [mDet_basisVec_eq_signed_nDet_of_gt B p2 p1 h12]
+  rw [mDet_basisVec_eq_signed_nDet_of_gt B p3 p1 (Nat.lt_trans h12 h23)]
+  grind
+
+private theorem det_plucker_three_term_basisVec_of_eq_p2
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n)
+    (p1 p2 p3 : Fin (n + 2))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val) :
+    mDet B (basisVec (R := R) p2) p1 * nDet B p2 p3 h23 -
+      mDet B (basisVec (R := R) p2) p2 *
+        nDet B p1 p3 (Nat.lt_trans h12 h23) +
+      mDet B (basisVec (R := R) p2) p3 * nDet B p1 p2 h12 = 0 := by
+  rw [mDet_basisVec_eq_signed_nDet_of_lt B p1 p2 h12]
+  rw [mDet_basisVec_eq_zero_of_eq B p2]
+  rw [mDet_basisVec_eq_signed_nDet_of_gt B p3 p2 h23]
+  have hp2pos : 0 < p2.val := by omega
+  have hrow :
+      (⟨p2.val, by have := p3.isLt; omega⟩ : Fin (n + 1)) =
+        (⟨p2.val - 1 + 1, by have := p3.isLt; omega⟩ : Fin (n + 1)) := by
+    apply Fin.ext
+    simp
+    omega
+  rw [hrow]
+  rw [cofactorSign_consecutive_last_neg (R := R) (p2.val - 1)
+      (by have := p3.isLt; omega)]
+  grind
+
+private theorem det_plucker_three_term_basisVec_of_eq_p3
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n)
+    (p1 p2 p3 : Fin (n + 2))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val) :
+    mDet B (basisVec (R := R) p3) p1 * nDet B p2 p3 h23 -
+      mDet B (basisVec (R := R) p3) p2 *
+        nDet B p1 p3 (Nat.lt_trans h12 h23) +
+      mDet B (basisVec (R := R) p3) p3 * nDet B p1 p2 h12 = 0 := by
+  rw [mDet_basisVec_eq_signed_nDet_of_lt B p1 p3 (Nat.lt_trans h12 h23)]
+  rw [mDet_basisVec_eq_signed_nDet_of_lt B p2 p3 h23]
+  rw [mDet_basisVec_eq_zero_of_eq B p3]
+  grind
+
+private theorem det_plucker_three_term_of_basisVec
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n) (v : Vector R (n + 2))
+    (p1 p2 p3 : Fin (n + 2))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
+    (hbasis : ∀ q : Fin (n + 2),
+      mDet B (basisVec (R := R) q) p1 * nDet B p2 p3 h23 -
+        mDet B (basisVec (R := R) q) p2 *
+          nDet B p1 p3 (Nat.lt_trans h12 h23) +
+        mDet B (basisVec (R := R) q) p3 * nDet B p1 p2 h12 = 0) :
+    mDet B v p1 * nDet B p2 p3 h23 -
+      mDet B v p2 * nDet B p1 p3 (Nat.lt_trans h12 h23) +
+      mDet B v p3 * nDet B p1 p2 h12 = 0 := by
+  rw [mDet_eq_sum_basisVec B v p1]
+  rw [mDet_eq_sum_basisVec B v p2]
+  rw [mDet_eq_sum_basisVec B v p3]
+  rw [← foldl_det_sum_mul_right_zero (List.finRange (n + 2))
+      (fun q => v[q] * mDet B (basisVec (R := R) q) p1)
+      (nDet B p2 p3 h23)]
+  rw [← foldl_det_sum_mul_right_zero (List.finRange (n + 2))
+      (fun q => v[q] * mDet B (basisVec (R := R) q) p2)
+      (nDet B p1 p3 (Nat.lt_trans h12 h23))]
+  rw [← foldl_det_sum_mul_right_zero (List.finRange (n + 2))
+      (fun q => v[q] * mDet B (basisVec (R := R) q) p3)
+      (nDet B p1 p2 h12)]
+  apply foldl_det_sum_sub_add_zero_of_body_zero
+      (List.finRange (n + 2))
+      (fun q => v[q] * mDet B (basisVec (R := R) q) p1 *
+        nDet B p2 p3 h23)
+      (fun q => v[q] * mDet B (basisVec (R := R) q) p2 *
+        nDet B p1 p3 (Nat.lt_trans h12 h23))
+      (fun q => v[q] * mDet B (basisVec (R := R) q) p3 *
+        nDet B p1 p2 h12)
+  · grind
+  · intro q _hq
+    have hq := hbasis q
+    grind
 
 end Matrix
 end Hex
