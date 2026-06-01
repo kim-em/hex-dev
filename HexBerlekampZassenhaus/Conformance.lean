@@ -8,7 +8,7 @@ Oracle: python-flint for the external JSONL factorization profile; core uses
 Lean-only property and committed-fixture checks.
 Mode: if_available
 Covered operations:
-- `isGoodPrime`, `choosePrime`, and `choosePrimeData`
+- `isGoodPrime`, `choosePrime`, and `choosePrimeData?`
 - `normalizeForFactor`, `normalizationPrefixFactors`, and
   `reassembleNormalizedFactors`
 - `henselLiftData`
@@ -347,33 +347,40 @@ private def factorizationCaseMatches (c : FactorizationCase) : Bool :=
 #guard choosePrime leadingCoeffDivisibleByFive = 3
 
 #guard
-  let data := choosePrimeData squareFreeTypical
-  letI := data.bounds
-  data.p = choosePrime squareFreeTypical &&
-    data.fModP == ZPoly.modP data.p squareFreeTypical &&
-    !data.factorsModP.isEmpty
+  match choosePrimeData? squareFreeTypical with
+  | none => false
+  | some data =>
+    letI := data.bounds
+    data.p = choosePrime squareFreeTypical &&
+      data.fModP == ZPoly.modP data.p squareFreeTypical &&
+      !data.factorsModP.isEmpty
+
+-- `repeatedRootPoly = (x - 1)²` has no admissible prime: its modular image
+-- stays a perfect square mod every candidate, so `isGoodPrime` rejects each
+-- one. Confirm the partial API surfaces this as `none`.
+#guard
+  match choosePrimeData? repeatedRootPoly with
+  | none => true
+  | some _ => false
 
 #guard
-  let data := choosePrimeData repeatedRootPoly
-  letI := data.bounds
-  data.p = choosePrime repeatedRootPoly &&
-    data.fModP == ZPoly.modP data.p repeatedRootPoly &&
-    data.p = 3 &&
-    data.factorsModP.size = 1
+  match choosePrimeData? leadingCoeffDivisibleByFive with
+  | none => false
+  | some data =>
+    data.p = choosePrime leadingCoeffDivisibleByFive &&
+      data.p = 3
 
 #guard
-  let data := choosePrimeData leadingCoeffDivisibleByFive
-  data.p = choosePrime leadingCoeffDivisibleByFive &&
-    data.p = 3
+  match choosePrimeData? leadingCoeffDivisibleByFive with
+  | none => false
+  | some data =>
+    letI := data.bounds
+    data.fModP == ZPoly.modP data.p leadingCoeffDivisibleByFive
 
 #guard
-  let data := choosePrimeData leadingCoeffDivisibleByFive
-  letI := data.bounds
-  data.fModP == ZPoly.modP data.p leadingCoeffDivisibleByFive
-
-#guard
-  let data := choosePrimeData leadingCoeffDivisibleByFive
-  3 <= data.p
+  match choosePrimeData? leadingCoeffDivisibleByFive with
+  | none => false
+  | some data => 3 <= data.p
 
 /-! ### Extended-search cascade (HO-5d-3, #5819)
 
@@ -389,12 +396,9 @@ instead uses the engineered degree-2 cascade
 prime, the two roots collapse to a single residue (so the modular
 image is the square `(x − 1)²` and `isGoodPrime` rejects). Mod the
 next admissible prime (`73`), the difference `D mod 73 = 67` is
-nonzero, so the modular image is square-free.
-
-Before the extended-search fall-through, `choosePrimeData` silently
-used the `fallbackPrimeChoiceData` `p = 3` branch on this kind of
-input; after, `choosePrimeData?` returns `some` with a selected prime
-taken from `extendedSmallPrimeCandidates`.
+nonzero, so the modular image is square-free. `choosePrimeData?`
+returns `some` with a selected prime taken from
+`extendedSmallPrimeCandidates`.
 -/
 
 /-- Product of the fixed-list primes, used to engineer the extended-
@@ -411,8 +415,9 @@ private def extendedCascade2 : ZPoly :=
   | some data => 71 < data.p
 
 #guard
-  let data := choosePrimeData extendedCascade2
-  73 ≤ data.p
+  match choosePrimeData? extendedCascade2 with
+  | none => false
+  | some data => 73 ≤ data.p
 
 #guard bhksBound (0 : ZPoly) = 1
 #guard bhksBound ZPoly.X = 9
@@ -444,25 +449,22 @@ private def extendedCascade2 : ZPoly :=
       squareFreeTypical
 
 #guard
-  let primeData := choosePrimeData squareFreeTypical
-  let liftData := henselLiftData squareFreeTypical 4 primeData
-  liftData.p = primeData.p &&
-    liftData.k = 4 &&
-    liftData.liftedFactors.size = primeData.factorsModP.size
+  match choosePrimeData? squareFreeTypical with
+  | none => false
+  | some primeData =>
+    let liftData := henselLiftData squareFreeTypical 4 primeData
+    liftData.p = primeData.p &&
+      liftData.k = 4 &&
+      liftData.liftedFactors.size = primeData.factorsModP.size
 
 #guard
-  let primeData := choosePrimeData repeatedRootPoly
-  let liftData := henselLiftData repeatedRootPoly 1 primeData
-  liftData.p = primeData.p &&
-    liftData.k = 1 &&
-    liftData.liftedFactors.size = primeData.factorsModP.size
-
-#guard
-  let primeData := choosePrimeData leadingCoeffDivisibleByFive
-  let liftData := henselLiftData leadingCoeffDivisibleByFive 8 primeData
-  liftData.p = primeData.p &&
-    liftData.k = 8 &&
-    liftData.liftedFactors.size = primeData.factorsModP.size
+  match choosePrimeData? leadingCoeffDivisibleByFive with
+  | none => false
+  | some primeData =>
+    let liftData := henselLiftData leadingCoeffDivisibleByFive 8 primeData
+    liftData.p = primeData.p &&
+      liftData.k = 8 &&
+      liftData.liftedFactors.size = primeData.factorsModP.size
 
 #guard recombinationSearch liftedTarget3 liftedFactors3.toList |>.isSome
 #guard
