@@ -466,7 +466,11 @@ integer arithmetic.
   to `1.4691`, but does not clear the comparator Concern. The diagnosis in
   `reports/hex-lll-harsh-cubic-crossover-diagnosis.md` rules out a
   benchmark-registration fix and points at exact-integer operand growth in
-  `Hex.GramSchmidt.Int.data` / `scaledCoeffRows`; follow-up
-  [#6016](https://github.com/kim-em/hex/issues/6016) tracks the remaining
-  optimization work. While this Concern is open, `HexLLL.done_through` remains
-  `3`.
+  `Hex.GramSchmidt.Int.data` / `scaledCoeffRows`. The array-construction
+  cleanup in `HexGramSchmidt.Int` has focused local evidence in
+  `reports/bench-results/hex-lll-3b001b9e-harsh-cubic-array-cleanup.json`:
+  Lean harsh-cubic medians moved from `205.469 ms`, `384.772 ms`,
+  `672.593 ms` to `204.684 ms`, `381.692 ms`, `666.008 ms` at
+  `n = 45, 50, 55` respectively, with unchanged hashes. This is a narrow
+  improvement but does not clear the comparator Concern. While this Concern is
+  open, `HexLLL.done_through` remains `3`.
