@@ -2231,13 +2231,15 @@ def nullspaceMatrix [Lean.Grind.Ring R] (E : IsRREF M D) :
           -D.echelon[(IsEchelonForm.pivotRow E.toIsEchelonForm i)][freeCols.get k]
       | none => 0
 
-private theorem nullspaceMatrix_free [Lean.Grind.Ring R] (E : IsRREF M D)
+/-- In the `k`th nullspace-matrix column, the row for its own free column is `1`. -/
+@[simp] theorem nullspaceMatrix_free [Lean.Grind.Ring R] (E : IsRREF M D)
     (k : Fin (m - D.rank)) :
     E.nullspaceMatrix[E.toIsEchelonForm.freeCols.get k][k] = 1 := by
   unfold nullspaceMatrix Matrix.ofFn
   simp
 
-private theorem nullspaceMatrix_free_ne [Lean.Grind.Ring R] (E : IsRREF M D)
+/-- In the `k`th nullspace-matrix column, every other free-column row is `0`. -/
+@[simp] theorem nullspaceMatrix_free_ne [Lean.Grind.Ring R] (E : IsRREF M D)
     {k l : Fin (m - D.rank)} (hkl : k ≠ l) :
     E.nullspaceMatrix[E.toIsEchelonForm.freeCols.get l][k] = 0 := by
   unfold nullspaceMatrix Matrix.ofFn
@@ -2246,7 +2248,9 @@ private theorem nullspaceMatrix_free_ne [Lean.Grind.Ring R] (E : IsRREF M D)
     exact hkl ((E.toIsEchelonForm.freeCols_injective h).symm)
   simp [hne, pivotIndex?_free_none E.toIsEchelonForm l]
 
-private theorem nullspaceMatrix_pivot [Lean.Grind.Ring R] (E : IsRREF M D)
+/-- In a pivot-column row, a nullspace-matrix entry is the negative RREF entry in
+the matching pivot row and free column. -/
+@[simp] theorem nullspaceMatrix_pivot [Lean.Grind.Ring R] (E : IsRREF M D)
     (i : Fin D.rank) (k : Fin (m - D.rank)) :
     E.nullspaceMatrix[D.pivotCols.get i][k] =
       -(D.echelon[(IsEchelonForm.pivotRow E.toIsEchelonForm i)][E.toIsEchelonForm.freeCols.get k]) := by
