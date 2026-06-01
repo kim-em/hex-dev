@@ -13207,14 +13207,11 @@ private theorem factorFastWithBound_product_of_quadratic_branch
     exact quadraticIntegerRootFactors?_shouldRecord
       (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad c hc
 
-/-- Inner kernel for `_product_of_core_success_branch` and its fallback
-companion `_product_of_fallback_core_success_branch`. Takes the
-`factorFastFactorsWithBound` success witness `hfast` directly; the two
-public callers establish `hfast` differently (one from a
-`choosePrimeData?` success, one from `choosePrimeData? = none` plus the
-fallback dispatch). The per-factor normalisation / recording facts go
-through `factorFastCoreWithBound_some_*`, which work for any
-`primeData`. -/
+/-- Inner kernel for `_product_of_core_success_branch`. Takes the
+`factorFastFactorsWithBound` success witness `hfast` directly after the
+caller has threaded the explicit `choosePrimeData? = some primeData`
+witness through the fast-path dispatcher. The per-factor normalisation /
+recording facts go through `factorFastCoreWithBound_some_*`. -/
 private theorem factorFastWithBound_product_of_factorFastFactorsWithBound_some_core
     (f : ZPoly) (B : Nat) {φ : Factorization}
     (primeData : PrimeChoiceData)
@@ -13326,11 +13323,7 @@ private theorem factorFastWithBound_product_of_some
               by_cases hsmall : primeData.factorsModP.size ≤ 1
               · exact factorFastWithBound_product_of_small_mod_branch
                   f 1 primeData hf hdeg hB_pos hc hsmall (Or.inl rfl) h
-              · have hwf :
-                    choosePrimeData
-                      (normalizeForFactor f).squareFreeCore = primeData :=
-                  choosePrimeData_eq_of_choosePrimeData?_some hc
-                cases hcore :
+              · cases hcore :
                     factorFastCoreWithBound (normalizeForFactor f).squareFreeCore
                       (precisionForCoeffBound 1 primeData.p)
                       primeData
@@ -13377,11 +13370,7 @@ private theorem factorFastWithBound_product_of_some
               by_cases hsmall : primeData.factorsModP.size ≤ 1
               · exact factorFastWithBound_product_of_small_mod_branch
                   f B primeData hf hdeg hB_pos hc hsmall (Or.inr hquadNone) h
-              · have hwf :
-                    choosePrimeData
-                      (normalizeForFactor f).squareFreeCore = primeData :=
-                  choosePrimeData_eq_of_choosePrimeData?_some hc
-                cases hcore :
+              · cases hcore :
                     factorFastCoreWithBound (normalizeForFactor f).squareFreeCore
                       (precisionForCoeffBound B primeData.p)
                       primeData
