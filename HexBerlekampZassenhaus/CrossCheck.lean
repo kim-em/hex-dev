@@ -205,6 +205,8 @@ private def hasRootCollisionModulo (p : Nat) (roots : List Nat) : Bool :=
 
 #guard isGoodPrime splitProduct11 13
 #guard isGoodPrime splitProduct24 31
+#guard (choosePrimeData? splitProduct11).isSome
+#guard (choosePrimeData? splitProduct24).isSome
 #guard [3, 5, 7, 11, 13, 17, 19, 23, 31, 71].all
   (fun p => hasRootCollisionModulo p (positiveRootNats 72))
 
