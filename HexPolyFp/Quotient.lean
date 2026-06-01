@@ -98,6 +98,8 @@ theorem reduce_eq_reduce_iff_congr (f h : FpPoly p) :
       Congr (g := g) f h :=
   ⟨congr_of_reduce_eq_reduce, reduce_eq_reduce_of_congr⟩
 
+namespace Internal
+
 private theorem nodup_map_of_injective
     {α β : Type} {xs : List α} {f : α → β}
     (hxs : xs.Nodup)
@@ -239,6 +241,8 @@ theorem elements_card :
       p ^ g.degree?.getD 0 :=
   elements_length (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
 
+end Internal
+
 omit [ZMod64.PrimeModulus p] in
 /-- Equality of quotient elements is equality of canonical remainders. -/
 theorem eq_iff_val_eq {a b : Quotient g hmonic hg_pos} :
@@ -251,6 +255,8 @@ def zero : Quotient g hmonic hg_pos :=
 
 instance : Zero (Quotient g hmonic hg_pos) where
   zero := zero
+
+namespace Internal
 
 /-- The nonzero quotient elements, as a concrete duplicate-free sublist of
 `elements`. -/
@@ -279,6 +285,8 @@ theorem nonzeroElements_card :
     (mem_elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos) 0)
     (elements_nodup (g := g) (hmonic := hmonic) (hg_pos := hg_pos))]
   rw [elements_card]
+
+end Internal
 
 /-- One in the quotient. -/
 def one : Quotient g hmonic hg_pos :=
@@ -1117,6 +1125,8 @@ theorem sub_add_sub_cancel (a b c : Quotient g hmonic hg_pos) :
     _ = a + -c := by rw [zero_add]
 
 /-! ## Quotient-coefficient polynomial evaluation -/
+
+namespace Internal
 
 /--
 Evaluate a low-to-high quotient-coefficient list at a quotient point.
@@ -2910,6 +2920,10 @@ theorem deg_dvd_of_pow_pPowN_eq_self_universal
       omega
     have hpow_lt : p ^ r < p ^ d := Nat.pow_lt_pow_right hp_gt_one hr_lt_d
     exact False.elim (Nat.not_lt_of_ge hcard_le hpow_lt)
+
+end Internal
+
+export Internal (eval eval_zero eval_C eval_X eval_add eval_sub eval_C_mul eval_monomial)
 
 end Quotient
 end FpPoly
