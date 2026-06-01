@@ -49,6 +49,8 @@ theorem eq_of_reducedCoeffVector_eq {bound : Nat} {p q : GF2Poly}
     rw [coeff_eq_false_of_reduced_bound_le hp hbound,
       coeff_eq_false_of_reduced_bound_le hq hbound]
 
+namespace Internal
+
 /-- The two coefficients of `GF(2)`, in a stable enumeration order. -/
 def boolCoeffValues : List Bool :=
   [false, true]
@@ -338,6 +340,8 @@ theorem ofBoolList_isZero_or_degree_lt (bs : List Bool) :
           coeff_eq_true_of_degree?_eq_some hd
         rw [hcoeff_true] at hcoeff_false
         exact Bool.noConfusion hcoeff_false
+
+end Internal
 
 end GF2Poly
 
@@ -881,20 +885,20 @@ Evaluate a Boolean coefficient list as a quotient expression in the class of
 `X`. The list is low-coefficient first: `bs[i]` is the coefficient of `X^i`.
 -/
 def boolListExpression (bs : List Bool) : GF2nPoly f hirr :=
-  reducePoly (f := f) (hirr := hirr) (GF2Poly.ofBoolList bs)
+  reducePoly (f := f) (hirr := hirr) (GF2Poly.Internal.ofBoolList bs)
 
 /-- The value of a Boolean quotient expression is the reduced packed
 polynomial built from the same coefficient list. -/
 theorem boolListExpression_val_eq_mod (bs : List Bool) :
     (boolListExpression (f := f) (hirr := hirr) bs).val =
-      GF2Poly.ofBoolList bs % f := by
+      GF2Poly.Internal.ofBoolList bs % f := by
   unfold boolListExpression
   rw [reducePoly_val_eq_mod]
 
 /-- All packed quotient-field elements, enumerated by reducing every length-`f.degree`
 Boolean coefficient list. -/
 def elements : List (GF2nPoly f hirr) :=
-  (GF2Poly.coeffBoolLists f.degree).map
+  (GF2Poly.Internal.coeffBoolLists f.degree).map
     (boolListExpression (f := f) (hirr := hirr))
 
 @[simp] theorem elements_length :
@@ -907,22 +911,22 @@ theorem mem_elements (a : GF2nPoly f hirr) :
   unfold elements
   apply List.mem_map.mpr
   refine ⟨List.ofFn (coeffVector a), ?_, ?_⟩
-  · apply GF2Poly.mem_coeffBoolLists_of_length_eq
+  · apply GF2Poly.Internal.mem_coeffBoolLists_of_length_eq
     simp
   · apply eq_of_val_eq
     rw [boolListExpression_val_eq_mod]
     have hofBL_red :
-        (GF2Poly.ofBoolList (List.ofFn (coeffVector a))).IsZero ∨
-          (GF2Poly.ofBoolList (List.ofFn (coeffVector a))).degree < f.degree := by
-      have h := GF2Poly.ofBoolList_isZero_or_degree_lt (List.ofFn (coeffVector a))
+        (GF2Poly.Internal.ofBoolList (List.ofFn (coeffVector a))).IsZero ∨
+          (GF2Poly.Internal.ofBoolList (List.ofFn (coeffVector a))).degree < f.degree := by
+      have h := GF2Poly.Internal.ofBoolList_isZero_or_degree_lt (List.ofFn (coeffVector a))
       simp at h
       exact h
     have hofBL_eq :
-        GF2Poly.ofBoolList (List.ofFn (coeffVector a)) = a.val := by
+        GF2Poly.Internal.ofBoolList (List.ofFn (coeffVector a)) = a.val := by
       apply GF2Poly.eq_of_reducedCoeffVector_eq hofBL_red a.val_reduced
       funext i
       unfold GF2Poly.reducedCoeffVector
-      rw [GF2Poly.coeff_ofBoolList]
+      rw [GF2Poly.Internal.coeff_ofBoolList]
       have hi_lt : i.val < (List.ofFn (coeffVector a)).length := by
         rw [List.length_ofFn]; exact i.is_lt
       rw [List.getElem?_eq_getElem hi_lt]
@@ -937,17 +941,17 @@ theorem boolListExpression_coeffVector (a : GF2nPoly f hirr) :
   apply eq_of_val_eq
   rw [boolListExpression_val_eq_mod]
   have hofBL_red :
-      (GF2Poly.ofBoolList (List.ofFn (coeffVector a))).IsZero ∨
-        (GF2Poly.ofBoolList (List.ofFn (coeffVector a))).degree < f.degree := by
-    have h := GF2Poly.ofBoolList_isZero_or_degree_lt (List.ofFn (coeffVector a))
+      (GF2Poly.Internal.ofBoolList (List.ofFn (coeffVector a))).IsZero ∨
+        (GF2Poly.Internal.ofBoolList (List.ofFn (coeffVector a))).degree < f.degree := by
+    have h := GF2Poly.Internal.ofBoolList_isZero_or_degree_lt (List.ofFn (coeffVector a))
     simp at h
     exact h
   have hofBL_eq :
-      GF2Poly.ofBoolList (List.ofFn (coeffVector a)) = a.val := by
+      GF2Poly.Internal.ofBoolList (List.ofFn (coeffVector a)) = a.val := by
     apply GF2Poly.eq_of_reducedCoeffVector_eq hofBL_red a.val_reduced
     funext i
     unfold GF2Poly.reducedCoeffVector
-    rw [GF2Poly.coeff_ofBoolList]
+    rw [GF2Poly.Internal.coeff_ofBoolList]
     have hi_lt : i.val < (List.ofFn (coeffVector a)).length := by
       rw [List.length_ofFn]; exact i.is_lt
     rw [List.getElem?_eq_getElem hi_lt]
@@ -970,33 +974,34 @@ theorem elements_nodup :
     (elements (f := f) (hirr := hirr)).Nodup := by
   unfold elements
   apply nodup_map_of_injective
-  · exact GF2Poly.coeffBoolLists_nodup f.degree
+  · exact GF2Poly.Internal.coeffBoolLists_nodup f.degree
   · intro bs hbs bs' hbs' hred
-    have hbs_len := GF2Poly.length_of_mem_coeffBoolLists hbs
-    have hbs'_len := GF2Poly.length_of_mem_coeffBoolLists hbs'
+    have hbs_len := GF2Poly.Internal.length_of_mem_coeffBoolLists hbs
+    have hbs'_len := GF2Poly.Internal.length_of_mem_coeffBoolLists hbs'
     have hbs_red :
-        (GF2Poly.ofBoolList bs).IsZero ∨
-          (GF2Poly.ofBoolList bs).degree < f.degree := by
-      have h := GF2Poly.ofBoolList_isZero_or_degree_lt bs
+        (GF2Poly.Internal.ofBoolList bs).IsZero ∨
+          (GF2Poly.Internal.ofBoolList bs).degree < f.degree := by
+      have h := GF2Poly.Internal.ofBoolList_isZero_or_degree_lt bs
       rw [hbs_len] at h
       exact h
     have hbs'_red :
-        (GF2Poly.ofBoolList bs').IsZero ∨
-          (GF2Poly.ofBoolList bs').degree < f.degree := by
-      have h := GF2Poly.ofBoolList_isZero_or_degree_lt bs'
+        (GF2Poly.Internal.ofBoolList bs').IsZero ∨
+          (GF2Poly.Internal.ofBoolList bs').degree < f.degree := by
+      have h := GF2Poly.Internal.ofBoolList_isZero_or_degree_lt bs'
       rw [hbs'_len] at h
       exact h
-    have hofBL_eq : GF2Poly.ofBoolList bs = GF2Poly.ofBoolList bs' := by
+    have hofBL_eq : GF2Poly.Internal.ofBoolList bs = GF2Poly.Internal.ofBoolList bs' := by
       have hred_val := congrArg GF2nPoly.val hred
       rw [boolListExpression_val_eq_mod, boolListExpression_val_eq_mod] at hred_val
-      rw [GF2Poly.mod_eq_self_of_reduced (GF2Poly.ofBoolList bs) f hbs_red,
-        GF2Poly.mod_eq_self_of_reduced (GF2Poly.ofBoolList bs') f hbs'_red] at hred_val
+      rw [GF2Poly.mod_eq_self_of_reduced (GF2Poly.Internal.ofBoolList bs) f hbs_red,
+        GF2Poly.mod_eq_self_of_reduced (GF2Poly.Internal.ofBoolList bs') f hbs'_red] at hred_val
       exact hred_val
     apply List.ext_getElem (by rw [hbs_len, hbs'_len])
     intro i hi hi'
-    have hcoeff : (GF2Poly.ofBoolList bs).coeff i = (GF2Poly.ofBoolList bs').coeff i :=
+    have hcoeff : (GF2Poly.Internal.ofBoolList bs).coeff i =
+        (GF2Poly.Internal.ofBoolList bs').coeff i :=
       congrArg (fun p : GF2Poly => p.coeff i) hofBL_eq
-    rw [GF2Poly.coeff_ofBoolList, GF2Poly.coeff_ofBoolList,
+    rw [GF2Poly.Internal.coeff_ofBoolList, GF2Poly.Internal.coeff_ofBoolList,
       List.getElem?_eq_getElem hi, List.getElem?_eq_getElem hi'] at hcoeff
     simpa using hcoeff
 
@@ -1456,6 +1461,8 @@ def evalCoeffList : List (GF2nPoly f hirr) → GF2nPoly f hirr → GF2nPoly f hi
     evalCoeffList (c :: cs) β = c + β * evalCoeffList cs β :=
   rfl
 
+namespace Internal
+
 /--
 Synthetic quotient coefficients for the divided difference of `cs` at the
 base point `α`.
@@ -1579,6 +1586,8 @@ theorem evalCoeffList_add_evalCoeffList_eq_add_mul_dividedDifference
             _ = (β + α) * (Eα + β * D) := by
                   rw [left_distrib]
             _ = (β + α) * dividedDifference (c :: d :: ds) α β := rfl
+
+end Internal
 
 /-- Iterated Frobenius preserves multiplication in the packed quotient. -/
 theorem frobeniusIter_mul (a b : GF2nPoly f hirr) (k : Nat) :
@@ -1707,11 +1716,11 @@ theorem frobeniusIter_reducePoly_ofBoolListFrom_eq_self_of_X_fixed {k : Nat}
     ∀ (start : Nat) (bs : List Bool),
       frobeniusIter
           (reducePoly (f := f) (hirr := hirr)
-            (GF2Poly.ofBoolListFrom start bs)) k =
+            (GF2Poly.Internal.ofBoolListFrom start bs)) k =
         reducePoly (f := f) (hirr := hirr)
-          (GF2Poly.ofBoolListFrom start bs)
+          (GF2Poly.Internal.ofBoolListFrom start bs)
   | start, [] => by
-      simp [GF2Poly.ofBoolListFrom]
+      simp [GF2Poly.Internal.ofBoolListFrom]
   | start, b :: bs => by
       have htail :=
         frobeniusIter_reducePoly_ofBoolListFrom_eq_self_of_X_fixed hX (start + 1) bs
@@ -1728,21 +1737,21 @@ theorem frobeniusIter_reducePoly_ofBoolListFrom_eq_self_of_X_fixed {k : Nat}
       have hsum :
           reducePoly (f := f) (hirr := hirr)
               ((if b then GF2Poly.monomial start else 0) +
-                GF2Poly.ofBoolListFrom (start + 1) bs) =
+                GF2Poly.Internal.ofBoolListFrom (start + 1) bs) =
             reducePoly (f := f) (hirr := hirr)
                 (if b then GF2Poly.monomial start else 0) +
               reducePoly (f := f) (hirr := hirr)
-                (GF2Poly.ofBoolListFrom (start + 1) bs) := by
+                (GF2Poly.Internal.ofBoolListFrom (start + 1) bs) := by
         rw [reducePoly_add_eq]
         rfl
       change
         frobeniusIter
             (reducePoly (f := f) (hirr := hirr)
               ((if b then GF2Poly.monomial start else 0) +
-                GF2Poly.ofBoolListFrom (start + 1) bs)) k =
+                GF2Poly.Internal.ofBoolListFrom (start + 1) bs)) k =
           reducePoly (f := f) (hirr := hirr)
             ((if b then GF2Poly.monomial start else 0) +
-              GF2Poly.ofBoolListFrom (start + 1) bs)
+              GF2Poly.Internal.ofBoolListFrom (start + 1) bs)
       rw [hsum]
       exact frobeniusIter_fixed_add hterm htail
 
@@ -1753,7 +1762,7 @@ theorem frobeniusIter_boolListExpression_eq_self_of_X_fixed {k : Nat}
       X (f := f) (hirr := hirr)) (bs : List Bool) :
     frobeniusIter (boolListExpression (f := f) (hirr := hirr) bs) k =
       boolListExpression (f := f) (hirr := hirr) bs := by
-  unfold boolListExpression GF2Poly.ofBoolList
+  unfold boolListExpression GF2Poly.Internal.ofBoolList
   exact frobeniusIter_reducePoly_ofBoolListFrom_eq_self_of_X_fixed
     (f := f) (hirr := hirr) hX 0 bs
 
@@ -1839,6 +1848,8 @@ private theorem perm_of_nodup_mem_iff
           · exact h
       have ih_perm := perm_of_nodup_mem_iff hxs' h_concat_nodup hmem'
       exact (ih_perm.cons x).trans hys_perm.symm
+
+namespace Internal
 
 /--
 The highest coefficient in a low-to-high quotient coefficient list is nonzero.
@@ -2095,6 +2106,8 @@ theorem evalCoeffList_rootsIn_elements_length_le_degree
       (fun β => decide (evalCoeffList cs β = 0))).length ≤ cs.length - 1 :=
   rootsOfCoeffList_length_le_degree (f := f) (hirr := hirr) cs htop
 
+end Internal
+
 /-- Multiplication by a nonzero packed quotient element permutes the nonzero
 enumeration. The list of nonzero elements multiplied on the left by `a` is a
 permutation of the original nonzero list. -/
@@ -2136,6 +2149,8 @@ theorem nonzeroElements_map_mul_left_perm
           _ = 0 := mul_zero _
       · rw [← mul_assoc, mul_inv_cancel a ha, one_mul]
   exact perm_of_nodup_mem_iff hmap_nodup hL_nodup hmem_iff
+
+namespace Internal
 
 /-- Linear natural powers in the packed quotient field. This proof-facing
 variant has simple recursion equations; executable exponentiation remains the
@@ -2204,6 +2219,8 @@ theorem frobeniusIter_eq_linearPow_two_pow (a : GF2nPoly f hirr) (k : Nat) :
               rw [Nat.pow_succ]
               rw [show 2 ^ k + 2 ^ k = 2 ^ k * 2 by omega]
 
+end Internal
+
 /-- The quotient identity is not zero under a positive-degree modulus. -/
 theorem one_ne_zero (hf_pos : 0 < f.degree) :
     (1 : GF2nPoly f hirr) ≠ 0 := by
@@ -2237,13 +2254,13 @@ def frobeniusFixedCoeffList (k : Nat) : List (GF2nPoly f hirr) :=
 private theorem evalCoeffList_replicate_zero_append_one
     (β : GF2nPoly f hirr) (n : Nat) :
     evalCoeffList (List.replicate n (0 : GF2nPoly f hirr) ++ [1]) β =
-      linearPow β n := by
+      Internal.linearPow β n := by
   induction n with
   | zero =>
-      simp [evalCoeffList, linearPow_zero]
+      simp [evalCoeffList, Internal.linearPow_zero]
   | succ n ih =>
       simp only [List.replicate_succ, List.cons_append, evalCoeffList_cons]
-      rw [ih, zero_add, linearPow_succ, mul_comm]
+      rw [ih, zero_add, Internal.linearPow_succ, mul_comm]
 
 private theorem evalCoeffList_frobeniusFixedCoeffList_of_pos
     (β : GF2nPoly f hirr) {k : Nat} (hk : 0 < k) :
@@ -2260,25 +2277,25 @@ private theorem evalCoeffList_frobeniusFixedCoeffList_of_pos
   rw [frobeniusFixedCoeffList, if_neg hk_ne]
   simp only [evalCoeffList_cons]
   rw [zero_add, evalCoeffList_replicate_zero_append_one,
-    frobeniusIter_eq_linearPow_two_pow]
-  have hpow_two : linearPow β 2 = β * β := by
-    rw [show (2 : Nat) = 1 + 1 from rfl, linearPow_succ,
-      linearPow_succ, linearPow_zero, one_mul]
+    Internal.frobeniusIter_eq_linearPow_two_pow]
+  have hpow_two : Internal.linearPow β 2 = β * β := by
+    rw [show (2 : Nat) = 1 + 1 from rfl, Internal.linearPow_succ,
+      Internal.linearPow_succ, Internal.linearPow_zero, one_mul]
   calc
-    β * (1 + β * linearPow β (2 ^ k - 2))
-        = β * 1 + β * (β * linearPow β (2 ^ k - 2)) := by
+    β * (1 + β * Internal.linearPow β (2 ^ k - 2))
+        = β * 1 + β * (β * Internal.linearPow β (2 ^ k - 2)) := by
             rw [left_distrib]
-    _ = β + β * (β * linearPow β (2 ^ k - 2)) := by rw [mul_one]
-    _ = β + (β * β) * linearPow β (2 ^ k - 2) := by rw [mul_assoc]
-    _ = β + linearPow β 2 * linearPow β (2 ^ k - 2) := by rw [hpow_two]
-    _ = β + linearPow β (2 + (2 ^ k - 2)) := by
+    _ = β + β * (β * Internal.linearPow β (2 ^ k - 2)) := by rw [mul_one]
+    _ = β + (β * β) * Internal.linearPow β (2 ^ k - 2) := by rw [mul_assoc]
+    _ = β + Internal.linearPow β 2 * Internal.linearPow β (2 ^ k - 2) := by rw [hpow_two]
+    _ = β + Internal.linearPow β (2 + (2 ^ k - 2)) := by
             have hadd :=
-              (linearPow_add (f := f) (hirr := hirr) β 2 (2 ^ k - 2)).symm
+              (Internal.linearPow_add (f := f) (hirr := hirr) β 2 (2 ^ k - 2)).symm
             rw [hadd]
-    _ = β + linearPow β (2 ^ k) := by
+    _ = β + Internal.linearPow β (2 ^ k) := by
             have hidx : 2 + (2 ^ k - 2) = 2 ^ k := by omega
             rw [hidx]
-    _ = linearPow β (2 ^ k) + β := by rw [add_comm]
+    _ = Internal.linearPow β (2 ^ k) + β := by rw [add_comm]
 
 private theorem getLast?_append_singleton {α : Type} (xs : List α) (x : α) :
     (xs ++ [x]).getLast? = some x := by
@@ -2293,7 +2310,7 @@ private theorem getLast?_append_singleton {α : Type} (xs : List α) (x : α) :
 
 private theorem coeffListTopNonzero_frobeniusFixedCoeffList_of_pos
     (hf_pos : 0 < f.degree) {k : Nat} (hk : 0 < k) :
-    coeffListTopNonzero
+    Internal.coeffListTopNonzero
       (f := f) (hirr := hirr)
       (frobeniusFixedCoeffList (f := f) (hirr := hirr) k) := by
   have hk_ne : k ≠ 0 := Nat.ne_of_gt hk
@@ -2333,11 +2350,11 @@ theorem frobeniusIter_fixed_elements_length_le_two_pow
       (fun β => decide (frobeniusIter β k = β))).length ≤ 2 ^ k := by
   let cs := frobeniusFixedCoeffList (f := f) (hirr := hirr) k
   have htop :
-      coeffListTopNonzero (f := f) (hirr := hirr) cs :=
+      Internal.coeffListTopNonzero (f := f) (hirr := hirr) cs :=
     coeffListTopNonzero_frobeniusFixedCoeffList_of_pos
       (f := f) (hirr := hirr) hf_pos hk
   have hroot :=
-    evalCoeffList_rootsIn_elements_length_le_degree
+    Internal.evalCoeffList_rootsIn_elements_length_le_degree
       (f := f) (hirr := hirr) cs htop
   have hlen : cs.length - 1 = 2 ^ k := by
     have hk_ne : k ≠ 0 := Nat.ne_of_gt hk
@@ -2459,6 +2476,8 @@ theorem frobeniusIter_X_ne_self_of_pos_lt_degree
     (f := f) (hirr := hirr) hf_pos hr_pos hr_lt
     (frobeniusIter_eq_self_of_X_fixed (f := f) (hirr := hirr) hX)
 
+namespace Internal
+
 /-- Product of a list of packed quotient elements (right fold). -/
 def listProd (xs : List (GF2nPoly f hirr)) : GF2nPoly f hirr :=
   xs.foldr (· * ·) 1
@@ -2554,18 +2573,20 @@ theorem linearPow_pred_card_eq_one_of_ne_zero
   rw [hL_card] at hcancel
   exact hcancel
 
+end Internal
+
 /-- Every packed quotient element is fixed by the degree-cardinality
 Frobenius iterate. -/
 theorem frobeniusIter_degree_eq_self
     (hf_pos : 0 < f.degree) (a : GF2nPoly f hirr) :
     frobeniusIter a f.degree = a := by
-  rw [frobeniusIter_eq_linearPow_two_pow]
+  rw [Internal.frobeniusIter_eq_linearPow_two_pow]
   have hpos : 0 < 2 ^ f.degree := Nat.pow_pos (by decide : 0 < 2)
   have hsplit : 2 ^ f.degree = (2 ^ f.degree - 1) + 1 := by omega
   by_cases ha : a = 0
-  · rw [ha, hsplit, linearPow_succ, mul_zero]
-  · rw [hsplit, linearPow_succ,
-      linearPow_pred_card_eq_one_of_ne_zero (f := f) (hirr := hirr) hf_pos ha,
+  · rw [ha, hsplit, Internal.linearPow_succ, mul_zero]
+  · rw [hsplit, Internal.linearPow_succ,
+      Internal.linearPow_pred_card_eq_one_of_ne_zero (f := f) (hirr := hirr) hf_pos ha,
       one_mul]
 
 /-- Adding any multiple of the modulus degree to a Frobenius iterate does not
