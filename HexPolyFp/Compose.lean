@@ -293,6 +293,25 @@ def composeCoeffPowerSumUpTo
       DensePoly.C (coeff base) * linearPow w base +
         composeCoeffPowerSumUpTo coeff n (base + 1) w
 
+private theorem composePower_eq_linearPow (w : FpPoly p) :
+    ∀ k, DensePoly.composePower w k = linearPow w k
+  | 0 => rfl
+  | k + 1 => by
+      simp only [DensePoly.composePower]
+      rw [composePower_eq_linearPow w k]
+      rw [linearPow_succ_left]
+
+theorem composeCoeffPowerSumUpTo_eq_core
+    (coeff : Nat → ZMod64 p) :
+    ∀ n base w,
+      composeCoeffPowerSumUpTo coeff n base w =
+        DensePoly.composeCoeffPowerSumUpTo coeff n base w
+  | 0, _, _ => rfl
+  | n + 1, base, w => by
+      simp only [composeCoeffPowerSumUpTo, DensePoly.composeCoeffPowerSumUpTo]
+      rw [composePower_eq_linearPow]
+      rw [composeCoeffPowerSumUpTo_eq_core coeff n (base + 1) w]
+
 private theorem composeCoeffPowerSumFrom_range_eq_upTo
     (coeff : Nat → ZMod64 p) (w : FpPoly p) :
     ∀ n base,
