@@ -4267,8 +4267,13 @@ private theorem scaledCoeffArrayLoop_diag_matches
             intro r hr
             show (Matrix.stepArray state_array.matrix n state_array.step _ _)[r]!.size = n
             unfold Matrix.stepArray
-            simp only [Array.getElem!_eq_getD, Array.getD, Array.size_map, Array.size_range]
-            simp [hr, Array.size_map, Array.size_range]
+            rw [Array.getElem!_eq_getD]
+            unfold Array.getD
+            simp only [Array.size_map, Array.size_range]
+            rw [dif_pos hr]
+            by_cases hsr : state_array.step < r
+            · simp [hsr, Array.size_map, Array.size_range]
+            · simp [hsr, h_array_rows_size r hr]
           have h_coeffs_size_new : new_array.coeffs.size = n := by
             show (writeScaledColumn _ _ _ _).size = n
             rw [writeScaledColumn_size]; exact h_coeffs_size
