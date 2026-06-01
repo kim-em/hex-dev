@@ -2717,6 +2717,64 @@ theorem liftedFactorSubsetPartition_outerBound_of_choosePrimeData
     primeData hchoose
     (IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree f hf)
 
+/--
+Branch-local substrate for the small-mod singleton arm, specialised to the
+square-free core produced by `Hex.normalizeForFactor`.
+
+This is the capstone-facing package of side conditions required by
+`IntReductionMod.squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP`:
+the primitive Mathlib image of the normalised square-free core, the selected
+prime's leading-coefficient nonvanishing after reduction, and the executable
+`choosePrimeData?`/singleton-factor-count witnesses in the exact shape used by
+the fast singleton branch.
+-/
+theorem smallModSingletonBranchPreconditions_of_choosePrimeData
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
+    (primeData : Hex.PrimeChoiceData)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
+        some primeData)
+    (hsmall : primeData.factorsModP.size ≤ 1) :
+    (HexPolyZMathlib.toPolynomial
+        (Hex.normalizeForFactor f).squareFreeCore).IsPrimitive ∧
+      (Int.castRingHom (ZMod primeData.p))
+          (HexPolyZMathlib.toPolynomial
+            (Hex.normalizeForFactor f).squareFreeCore).leadingCoeff ≠ 0 ∧
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
+        some primeData ∧
+      primeData.factorsModP.size ≤ 1 := by
+  exact ⟨
+    IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive
+      f hf_ne,
+    IntReductionMod.choosePrimeData?_leadingCoeff_castRingHom_ne_zero
+      (Hex.normalizeForFactor f).squareFreeCore primeData hchoose,
+    hchoose,
+    hsmall⟩
+
+/--
+Small-mod singleton irreducibility for the normalised square-free core, with
+all primitive, leading-coefficient, selected-prime, and singleton-count
+preconditions discharged from the executable branch state.
+
+This is the reusable bridge package consumed by the recorded-entry singleton
+umbrella below and by the `factor_irreducible_of_nonUnit` capstone path.
+-/
+theorem squareFreeCore_irreducible_of_smallModSingletonBranch
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
+    (primeData : Hex.PrimeChoiceData)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
+        some primeData)
+    (hsmall : primeData.factorsModP.size ≤ 1) :
+    Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore := by
+  rcases smallModSingletonBranchPreconditions_of_choosePrimeData
+      f hf_ne primeData hchoose hsmall with
+    ⟨hprim, hlc_map_ne, hchoose', hsmall'⟩
+  exact
+    IntReductionMod.squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP
+      (Hex.normalizeForFactor f).squareFreeCore primeData hchoose' hsmall'
+      hprim hlc_map_ne
+
 /-- **#4562 HO-1 base task — small-mod singleton arm umbrella.**
 
 Per-branch HO-1 component for the small-mod singleton arm of the capstone
@@ -2785,12 +2843,8 @@ theorem factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData
   -- with `hprim` and `hlc_map_ne` discharged by the #4545 base lemmas.
   have hcore_irr :
       Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore :=
-    IntReductionMod.squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP
-      (Hex.normalizeForFactor f).squareFreeCore _ hchoose hsmall
-      (IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive
-        f hf_ne)
-      (IntReductionMod.choosePrimeData?_leadingCoeff_castRingHom_ne_zero
-        _ _ hchoose)
+    squareFreeCore_irreducible_of_smallModSingletonBranch
+      f hf_ne primeData hchoose hsmall
   -- Discharge the reassembly expansion-complete side condition internally
   -- using the non-monic primitive singleton-arm discharger
   -- (#4956 / PR #4961).
