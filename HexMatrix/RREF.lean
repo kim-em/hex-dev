@@ -2936,6 +2936,13 @@ def spanCoeffs [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m) (v : Vect
   let E := (rref_isRREF M).toIsEchelonForm
   E.spanCoeffs v
 
+/-- Wrapper-layer soundness contract for `Matrix.spanCoeffs`. -/
+theorem spanCoeffs_sound [Lean.Grind.Field R] [DecidableEq R]
+    (M : Matrix R n m) (v : Vector R m) (c : Vector R n) :
+    spanCoeffs M v = some c → rowCombination M c = v := by
+  intro h
+  exact (rref_isRREF M).toIsEchelonForm.spanCoeffs_sound v c h
+
 /-- Convenience wrapper: decide row-span membership using `rref` internally. -/
 def spanContains [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m) (v : Vector R m) :
     Bool :=
