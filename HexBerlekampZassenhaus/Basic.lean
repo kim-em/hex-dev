@@ -13887,6 +13887,164 @@ theorem factor?_product_of_some
     Factorization.product φ = f := by
   exact factorWithBound?_product_of_some h
 
+/-- A successful `factorWithBound?` result is exactly the total bounded
+factorization. The `none` branch is the explicit no-admissible-prime surface;
+on `some`, all total-API contracts can be transported to the returned record. -/
+theorem factorWithBound?_eq_some_eq_factorWithBound
+    {f : ZPoly} {B : Nat} {φ : Factorization}
+    (h : factorWithBound? f B = some φ) :
+    φ = factorWithBound f B := by
+  rw [factorWithBound?_eq_some_iff_safe_branch] at h
+  by_cases hsafe :
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0 ∨
+        (quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore).isSome ∨
+        (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome
+  · rw [if_pos hsafe] at h
+    exact (Option.some.inj h).symm
+  · rw [if_neg hsafe] at h
+    cases h
+
+/-- A successful `factor?` result is exactly the total default factorization. -/
+theorem factor?_eq_some_eq_factor
+    {f : ZPoly} {φ : Factorization}
+    (h : factor? f = some φ) :
+    φ = factor f := by
+  unfold factor? at h
+  simpa [factor_eq_factorWithBound_default] using
+    factorWithBound?_eq_some_eq_factorWithBound h
+
+/-- Scalar contract for the Option-returning bounded API on its successful
+branch. -/
+theorem factorWithBound?_scalar_of_some
+    {f : ZPoly} {B : Nat} {φ : Factorization}
+    (h : factorWithBound? f B = some φ) :
+    φ.scalar =
+      if f = 0 then
+        0
+      else if DensePoly.leadingCoeff f < 0 then
+        -ZPoly.content f
+      else
+        ZPoly.content f := by
+  rw [factorWithBound?_eq_some_eq_factorWithBound h]
+  exact factorWithBound_scalar f B
+
+/-- Scalar contract for the Option-returning default API on its successful
+branch. -/
+theorem factor?_scalar_of_some
+    {f : ZPoly} {φ : Factorization}
+    (h : factor? f = some φ) :
+    φ.scalar =
+      if f = 0 then
+        0
+      else if DensePoly.leadingCoeff f < 0 then
+        -ZPoly.content f
+      else
+        ZPoly.content f := by
+  rw [factor?_eq_some_eq_factor h]
+  exact factor_scalar f
+
+/-- Every entry emitted by a successful `factorWithBound?` call has positive
+multiplicity. -/
+theorem factorWithBound?_entry_multiplicity_pos_of_some
+    {f : ZPoly} {B : Nat} {φ : Factorization}
+    (h : factorWithBound? f B = some φ)
+    (entry : ZPoly × Nat)
+    (hmem : entry ∈ φ.factors.toList) :
+    0 < entry.2 := by
+  rw [factorWithBound?_eq_some_eq_factorWithBound h] at hmem
+  exact factorWithBound_entry_multiplicity_pos f B entry hmem
+
+/-- Every entry emitted by a successful `factor?` call has positive
+multiplicity. -/
+theorem factor?_entry_multiplicity_pos_of_some
+    {f : ZPoly} {φ : Factorization}
+    (h : factor? f = some φ)
+    (entry : ZPoly × Nat)
+    (hmem : entry ∈ φ.factors.toList) :
+    0 < entry.2 := by
+  rw [factor?_eq_some_eq_factor h] at hmem
+  exact factor_entry_multiplicity_pos f entry hmem
+
+/-- Entries emitted by a successful `factorWithBound?` call are sign-normalized. -/
+theorem factorWithBound?_entry_normalizeFactorSign_id_of_some
+    {f : ZPoly} {B : Nat} {φ : Factorization}
+    (h : factorWithBound? f B = some φ)
+    (entry : ZPoly × Nat)
+    (hmem : entry ∈ φ.factors.toList) :
+    normalizeFactorSign entry.1 = entry.1 := by
+  rw [factorWithBound?_eq_some_eq_factorWithBound h] at hmem
+  exact factorWithBound_entry_normalizeFactorSign_id f B entry hmem
+
+/-- Entries emitted by a successful `factor?` call are sign-normalized. -/
+theorem factor?_entry_normalizeFactorSign_id_of_some
+    {f : ZPoly} {φ : Factorization}
+    (h : factor? f = some φ)
+    (entry : ZPoly × Nat)
+    (hmem : entry ∈ φ.factors.toList) :
+    normalizeFactorSign entry.1 = entry.1 := by
+  rw [factor?_eq_some_eq_factor h] at hmem
+  exact factor_entry_normalizeFactorSign_id f entry hmem
+
+/-- Entries emitted by a successful `factorWithBound?` call have positive
+leading coefficient. -/
+theorem factorWithBound?_entry_leadingCoeff_pos_of_some
+    {f : ZPoly} {B : Nat} {φ : Factorization}
+    (h : factorWithBound? f B = some φ)
+    (entry : ZPoly × Nat)
+    (hmem : entry ∈ φ.factors.toList) :
+    0 < DensePoly.leadingCoeff entry.1 := by
+  rw [factorWithBound?_eq_some_eq_factorWithBound h] at hmem
+  exact factorWithBound_entry_leadingCoeff_pos f B entry hmem
+
+/-- Entries emitted by a successful `factor?` call have positive leading
+coefficient. -/
+theorem factor?_entry_leadingCoeff_pos_of_some
+    {f : ZPoly} {φ : Factorization}
+    (h : factor? f = some φ)
+    (entry : ZPoly × Nat)
+    (hmem : entry ∈ φ.factors.toList) :
+    0 < DensePoly.leadingCoeff entry.1 := by
+  rw [factor?_eq_some_eq_factor h] at hmem
+  exact factor_entry_leadingCoeff_pos f entry hmem
+
+/-- Entries emitted by a successful `factorWithBound?` call pass the executable
+recording filter. -/
+theorem factorWithBound?_entry_shouldRecord_of_some
+    {f : ZPoly} {B : Nat} {φ : Factorization}
+    (h : factorWithBound? f B = some φ)
+    (entry : ZPoly × Nat)
+    (hmem : entry ∈ φ.factors.toList) :
+    shouldRecordPolynomialFactor entry.1 = true := by
+  rw [factorWithBound?_eq_some_eq_factorWithBound h] at hmem
+  exact factorWithBound_entry_shouldRecord f B entry hmem
+
+/-- Entries emitted by a successful `factor?` call pass the executable
+recording filter. -/
+theorem factor?_entry_shouldRecord_of_some
+    {f : ZPoly} {φ : Factorization}
+    (h : factor? f = some φ)
+    (entry : ZPoly × Nat)
+    (hmem : entry ∈ φ.factors.toList) :
+    shouldRecordPolynomialFactor entry.1 = true := by
+  rw [factor?_eq_some_eq_factor h] at hmem
+  exact factor_entry_shouldRecord f entry hmem
+
+/-- A successful `factorWithBound?` result has no duplicate polynomial keys. -/
+theorem factorWithBound?_pairwise_first_of_some
+    {f : ZPoly} {B : Nat} {φ : Factorization}
+    (h : factorWithBound? f B = some φ) :
+    List.Pairwise (fun a b : ZPoly × Nat => a.1 ≠ b.1) φ.factors.toList := by
+  rw [factorWithBound?_eq_some_eq_factorWithBound h]
+  exact factorWithBound_pairwise_first f B
+
+/-- A successful `factor?` result has no duplicate polynomial keys. -/
+theorem factor?_pairwise_first_of_some
+    {f : ZPoly} {φ : Factorization}
+    (h : factor? f = some φ) :
+    List.Pairwise (fun a b : ZPoly × Nat => a.1 ≠ b.1) φ.factors.toList := by
+  rw [factor?_eq_some_eq_factor h]
+  exact factor_pairwise_first f
+
 /--
 A successful integer certificate exposes the per-prime polynomial check fact:
 every recorded `PrimeFactorData` block satisfies `checkForPolynomial f` —
