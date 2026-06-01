@@ -287,7 +287,6 @@ private theorem foldl_mulCoeffStep_select
   induction m generalizing acc with
   | zero =>
       simp
-      grind
   | succ m ih =>
       rw [List.range_succ, List.foldl_append]
       simp only [List.foldl_cons, List.foldl_nil]
@@ -303,7 +302,6 @@ private theorem foldl_mulCoeffStep_select
         · by_cases heq : i + m = n
           · have hsub : n - i = m := by omega
             simp [hlt, heq, hsub]
-            grind
           · have hm' : ¬ n - i < m + 1 := by omega
             simp [hlt, hm, hm', heq]
 
@@ -340,7 +338,6 @@ private theorem foldl_select_index
       · have hne : m ≠ k := by omega
         have hk' : k < m + 1 := by omega
         simp [hk, hne, hk']
-        grind
       · by_cases hkm : m = k
         · subst k
           have hkk : ¬ m < m := by omega
@@ -348,7 +345,6 @@ private theorem foldl_select_index
           simp [hkk, hmm]
         · have hk' : ¬ k < m + 1 := by omega
           simp [hk, hk', hkm]
-          grind
 
 /-- The top coefficient of a product of nonzero `ZMod64`-valued polynomials is the
 product of the leading coefficients. -/
@@ -388,7 +384,7 @@ theorem coeff_mul_at_top
         · have hjlt : j < f.size - 1 := by omega
           have hnotbound : ¬ f.size - 1 + (g.size - 1) - j < g.size := by omega
           simp [hnj, hnotbound, heq]
-          exact ih (acc + 0) (fun k hk => hxs k (by simp [hk]))
+          exact ih acc (fun k hk => hxs k (by simp [hk]))
   rw [hfold_eq (List.range f.size) (Zero.zero : ZMod64 p)
     (by intro i hi; exact List.mem_range.mp hi)]
   rw [foldl_select_index]
@@ -1223,7 +1219,6 @@ private theorem evalCoeffPowerSumUpTo_add
           evalCoeffPowerSumUpTo (fun i => h.coeff i) n base x
   | 0, _ => by
       simp [evalCoeffPowerSumUpTo]
-      grind
   | n + 1, base => by
       simp only [evalCoeffPowerSumUpTo]
       rw [evalCoeffPowerSumUpTo_add f h x n (base + 1)]
@@ -1250,7 +1245,6 @@ private theorem evalCoeffPowerSumUpTo_const_mul
         c * evalCoeffPowerSumUpTo coeff n base x
   | 0, _ => by
       simp [evalCoeffPowerSumUpTo]
-      grind
   | n + 1, base => by
       simp only [evalCoeffPowerSumUpTo]
       rw [evalCoeffPowerSumUpTo_const_mul c coeff x n (base + 1)]
@@ -1264,7 +1258,6 @@ private theorem evalCoeffPowerSumUpTo_rebase_mul
         evalCoeffPowerSumUpTo coeff n (shift + base) x
   | 0, base => by
       simp [evalCoeffPowerSumUpTo]
-      grind
   | n + 1, base => by
       simp only [evalCoeffPowerSumUpTo]
       rw [Lean.Grind.Semiring.left_distrib]
@@ -1541,12 +1534,10 @@ private theorem coeff_mul_one_fold (f : FpPoly p) (n k : Nat) :
           exact zmod_add_zero (f.coeff k)
         · by_cases hkn : k = n
           · subst k
-            simp [zmod_mul_one]
-            exact zmod_zero_add (f.coeff n)
+            simp
           · have hks : ¬ k < n + 1 := by omega
             have hsub : k - n ≠ 0 := by omega
-            simp [hk, hks, hsub, zmod_mul_zero]
-            exact zmod_zero_add (0 : ZMod64 p)
+            simp [hk, hks, hsub]
       · exact zmod_mul_zero (f.coeff n)
 
 @[simp] theorem one_mul (f : FpPoly p) :
@@ -1589,7 +1580,6 @@ private theorem foldl_mulCoeffStep_select_fp
   induction m generalizing acc with
   | zero =>
       simp
-      grind
   | succ m ih =>
       rw [List.range_succ, List.foldl_append]
       simp only [List.foldl_cons, List.foldl_nil]
@@ -1605,7 +1595,6 @@ private theorem foldl_mulCoeffStep_select_fp
         · by_cases heq : i + m = n
           · have hsub : n - i = m := by omega
             simp [hlt, heq, hsub]
-            grind
           · have hm' : ¬ n - i < m + 1 := by omega
             simp [hlt, hm, hm', heq]
 
@@ -1650,7 +1639,6 @@ private theorem foldl_mulCoeffStep_outer_eq_mulCoeffTerm
         · have hcoeff : g.coeff (n - i) = 0 :=
             DensePoly.coeff_eq_zero_of_size_le g (Nat.le_of_not_gt hbound)
           simp [hlt, hbound, hcoeff]
-          grind
 
 theorem coeff_mul (f g : FpPoly p) (n : Nat) :
     (f * g).coeff n = mulCoeffSum f g n := by
@@ -1666,7 +1654,6 @@ private theorem mulCoeffTerm_eq_zero_of_size_le
   · simp [hn]
   · have hcoeff : f.coeff i = 0 := DensePoly.coeff_eq_zero_of_size_le f hi
     simp [hn, hcoeff]
-    grind
 
 private theorem fold_mulCoeff_extend (f g : FpPoly p) (n d : Nat) :
     (List.range (f.size + d)).foldl (fun acc i => acc + mulCoeffTerm f g n i) 0 =
@@ -1681,7 +1668,6 @@ private theorem fold_mulCoeff_extend (f g : FpPoly p) (n d : Nat) :
       have hterm : mulCoeffTerm f g n (f.size + d) = 0 :=
         mulCoeffTerm_eq_zero_of_size_le f g n (f.size + d) (by omega)
       simp [hterm]
-      grind
 
 private theorem mulCoeffSum_eq_bound
     (f g : FpPoly p) (n m : Nat) (hm : f.size ≤ m) :
@@ -1716,7 +1702,6 @@ private theorem fold_mulCoeff_truncate_degree
       have hterm : mulCoeffTerm f g n (n + 1 + d) = 0 :=
         mulCoeffTerm_eq_zero_of_degree_lt f g n (n + 1 + d) (by omega)
       simp [hterm]
-      grind
 
 private theorem mulCoeffSum_eq_degree_bound
     (f g : FpPoly p) (n : Nat) :
@@ -1822,7 +1807,6 @@ private theorem mulCoeffTerm_left_distrib (f g h : FpPoly p) (n i : Nat) :
   unfold mulCoeffTerm
   by_cases hi : n < i
   · simp [hi]
-    grind
   · rw [DensePoly.coeff_add_semiring]
     simp [hi]
     grind
@@ -1833,7 +1817,6 @@ private theorem mulCoeffTerm_right_distrib (f g h : FpPoly p) (n i : Nat) :
   unfold mulCoeffTerm
   by_cases hi : n < i
   · simp [hi]
-    grind
   · rw [DensePoly.coeff_add_semiring]
     simp [hi]
     grind
@@ -2167,7 +2150,6 @@ private theorem fold_add_single_range
   | zero =>
       have ht0 : t = 0 := by omega
       simp [ht0]
-      exact zmod_zero_add a
   | succ n ih =>
       rw [List.range_succ, List.foldl_append]
       simp only [List.foldl_cons, List.foldl_nil]
@@ -2245,13 +2227,11 @@ theorem coeff_mul_shift_scale_one
                     rw [Nat.sub_sub_self hin]
                     simp
                   simp [hsub]
-                  grind
                 · rw [if_neg hji]
                   simp [hlt]
                   rw [coeff_one]
                   have hsub : n - j - i ≠ 0 := by omega
                   simp [hsub]
-                  exact zmod_mul_zero (f.coeff j)
       _ = f.coeff (n - i) * c := by
             exact fold_add_single_range n (n - i) (f.coeff (n - i) * c) (by omega)
       _ = if i ≤ n then f.coeff (n - i) * c else 0 := by
@@ -2482,7 +2462,6 @@ theorem scale_mul_left (c : ZMod64 p) (f g : FpPoly p) :
   unfold mulCoeffTerm
   by_cases hn : n < i
   · simp [hn]
-    exact hzero
   · simp [hn]
     rw [DensePoly.coeff_scale _ _ _ hzero]
     grind
@@ -2909,7 +2888,6 @@ private theorem mulCoeffTerm_eq_zero_above_top
   have hg_zero : g.coeff (n - i) = 0 :=
     DensePoly.coeff_eq_zero_of_size_le g h_gi
   simp [hni, hg_zero]
-  grind
 
 private theorem coeff_mul_eq_zero_above_top
     (f g : FpPoly p) {n : Nat}
@@ -3335,7 +3313,6 @@ private theorem mulCoeffTerm_monomial_eq_zero_of_ne
       simp [hi]
       rfl
     simp [hni, hcoeff]
-    grind
 
 private theorem mulCoeffTerm_monomial_self_le
     (k : Nat) (c : ZMod64 p) (g : FpPoly p) (n : Nat) (hk : ¬ n < k) :
@@ -3361,7 +3338,7 @@ private theorem fold_mulCoeffTerm_monomial_eq
   induction m with
   | zero =>
       intro acc
-      simp [zmod_add_zero]
+      simp
   | succ m ih =>
       intro acc
       rw [List.range_succ, List.foldl_append, List.foldl_cons, List.foldl_nil]
@@ -3382,10 +3359,8 @@ private theorem fold_mulCoeffTerm_monomial_eq
           by_cases hkn : ¬ n < k
           · rw [mulCoeffTerm_monomial_self_le k c g n hkn]
             simp [hkn]
-            grind
           · rw [mulCoeffTerm_monomial_self_lt k c g n (by omega)]
             simp [hkn]
-            grind
         · -- ¬ k < m and k ≠ m. So k > m, in particular k ≥ m + 1.
           have hkm' : ¬ k < m + 1 := by omega
           have hm_ne : m ≠ k := fun h => hkm_eq h.symm
@@ -3446,8 +3421,6 @@ private theorem evalScalarCoeffList_drop_eq_getD_add
   induction cs generalizing n with
   | nil =>
       simp [evalScalarCoeffList]
-      have hz : α * (0 : ZMod64 p) = 0 := by grind
-      rw [hz, zmod_add_zero]
   | cons c cs ih =>
       cases n with
       | zero =>
@@ -3504,7 +3477,6 @@ private theorem scalar_linear_factor_mul_dividedDifference_coeff
       simp
       rw [scalarDividedDifferenceCoeffs_getElem?_getD cs α 0]
       rw [show cs.drop 1 = cs.tail by cases cs <;> rfl]
-      rw [zmod_zero_add]
       grind
   | succ n =>
       simp
@@ -3579,11 +3551,9 @@ theorem monomial_mul_monomial (m n : Nat) :
     by_cases hi : i = m + n
     · have hi' : i - m = n := by omega
       simp [hi]
-      grind
     · simp [hi]
       have hi' : i - m ≠ n := by omega
       simp [hi']
-      grind
 
 /-- The constant `1` polynomial agrees with the zero-degree monic monomial. -/
 theorem monomial_zero_one_eq_one :
