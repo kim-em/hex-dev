@@ -159,14 +159,6 @@ lower-case; `fp` is "F_p" with `p` variable, lower-case.)
 Extend this table when adding libraries whose names involve further
 acronyms. Do not silently introduce a mixed-case spelling.
 
-> **Current state note (2026-04-23).** The existing modules
-> `HexGF2` / `HexGF2Mathlib` / `HexLLL` / `HexLLLMathlib` in the
-> repository predate this rule and still use the un-exceptioned
-> transliteration. A global rename PR will align them with this
-> convention; until that lands, agents must not rename these
-> identifiers in isolation. New libraries should follow the acronym
-> rule from the start.
-
 ### Process vocabulary stops at the issue boundary
 
 Issue and PR titles may use scheduling shorthand ("HO-1 Gap 1
