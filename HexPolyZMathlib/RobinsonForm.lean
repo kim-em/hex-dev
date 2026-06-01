@@ -743,6 +743,12 @@ theorem prod_max_one_norm_roots_robinsonForm_derivative_le
   rw [hderiv_prod]
   exact one_le_prod_max_one_norm_roots p
 
+/--
+Corrected Boyd boundary-comparison source theorem. Boundary equality and the
+closed-disk root hypothesis for `q` identify the right side as
+`q.natDegree * q.mahlerMeasure`; the additional hypothesis `hpderiv` is the
+necessary replacement for the invalid unconditional derivative Mahler bound.
+-/
 theorem mahlerMeasure_derivative_le_derivative_of_boundary_norm_eq_of_roots_le_one_of_derivative_le
     {p q : ℂ[X]}
     (hpderiv : p.derivative.mahlerMeasure ≤ p.natDegree * p.mahlerMeasure)
