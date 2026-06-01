@@ -13842,6 +13842,24 @@ theorem factorWithBound_product (f : ZPoly) (B : Nat) :
   | none =>
       exact factorSlowWithBound_product f B
 
+/-- Product contract for the public slow-path backstop. -/
+theorem factorSlow_product (f : ZPoly) :
+    Factorization.product (factorSlow f) = f := by
+  exact factorSlowWithBound_product f (ZPoly.defaultFactorCoeffBound f)
+
+/-- Product contract for the public fast path whenever it returns a
+certificate. -/
+theorem factorFast_product_of_some
+    {f : ZPoly} {φ : Factorization}
+    (h : factorFast f = some φ) :
+    Factorization.product φ = f := by
+  exact factorFastWithBound_product_of_some h
+
+/-- Product contract for the public total factorization entry point. -/
+theorem factor_product (f : ZPoly) :
+    Factorization.product (factor f) = f := by
+  exact factorWithBound_product f (ZPoly.defaultFactorCoeffBound f)
+
 /-- Product preservation for the Option-returning bounded API on its successful
 branch. The `none` branch is the explicit no-admissible-prime surface; when a
 certificate is returned, it is exactly the total bounded factorization. -/
