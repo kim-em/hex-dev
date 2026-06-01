@@ -157,6 +157,31 @@ verdicts were measurement/model-registration findings. The current run resolves
 the parametric-verdict blocker, but the densified Lean/Isabelle comparator
 Concern below still prevents a Phase 4 promotion.
 
+Current-head rerun for the same five formerly inconclusive parametric
+registrations at commit `14537a67ebf1bd51b2275c8840562bb33ce813c1` on
+`carica` (Apple M2 Ultra, macOS), command:
+
+```sh
+lake exe hexlll_bench run Hex.LLLBench.runSizeReduceChecksum Hex.LLLBench.runGramSchmidtCoeffChecksum Hex.LLLBench.runFirstShortVectorHarshCubicChecksum Hex.LLLBench.runOfBasisHarshCubicChecksum Hex.LLLBench.runFirstShortVectorRandomBoundedChecksum --export-file reports/bench-results/hex-lll-14537a67ebf1-parametric-rerun.json
+```
+
+The harness recorded `14537a6-dirty` because this worktree carried a
+pre-existing local `.claude/CLAUDE.md` modification outside this evidence
+package. Export artefact:
+`reports/bench-results/hex-lll-14537a67ebf1-parametric-rerun.json`, SHA-256
+`694775b6112456dab8e9f099e05a18997fdfd9e01a439e707ebf819c712472bc`.
+
+- `Hex.LLLBench.runSizeReduceChecksum`: consistent with declared complexity
+  (parameters `128..160`, final per-call `220.814 us`).
+- `Hex.LLLBench.runGramSchmidtCoeffChecksum`: consistent with declared
+  complexity (parameters `32..128`, final per-call `7.256 us`).
+- `Hex.LLLBench.runFirstShortVectorHarshCubicChecksum`: consistent with
+  declared complexity (parameters `15..55`, final per-call `663.375 ms`).
+- `Hex.LLLBench.runOfBasisHarshCubicChecksum`: consistent with declared
+  complexity (parameters `12..36`, final per-call `86.898 ms`).
+- `Hex.LLLBench.runFirstShortVectorRandomBoundedChecksum`: consistent with
+  declared complexity (parameters `30..180`, final per-call `6.073 s`).
+
 The current fixed comparator registrations use the post-HO-18 densified
 headline ladders:
 
@@ -395,7 +420,12 @@ integer arithmetic.
 ## Concerns
 
 - [#4334](https://github.com/kim-em/hex/issues/4334) (HO-18 §"Comparator
-  Ratios" subsidiary): the densified `random-bounded` and `harsh-cubic`
+  Ratios" subsidiary): the formerly inconclusive HexLLL parametric verdicts
+  have current-head evidence in
+  `reports/bench-results/hex-lll-14537a67ebf1-parametric-rerun.json` and are
+  all consistent with declared complexity. The remaining blocker is the
+  densified Lean/Isabelle comparator evidence. The densified `random-bounded`
+  and `harsh-cubic`
   sweeps committed in `reports/bench-results/hex-lll-densified-fa57a699.json`
   were collected on a heavily contended `carica` and reproduce two
   adverse-trend findings that the post-#3657 SPEC flags as Concerns: the
