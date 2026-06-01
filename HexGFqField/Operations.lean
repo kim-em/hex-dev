@@ -480,62 +480,77 @@ def frob {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) : FiniteField f hf hp hirr :=
   pow x p
 
+/-- Field-wrapper zero is backed by the quotient-ring zero. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     Zero (FiniteField f hf hp hirr) where
   zero := zero f hf hp hirr
 
+/-- Field-wrapper one is backed by the quotient-ring one. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     One (FiniteField f hf hp hirr) where
   one := one f hf hp hirr
 
+/-- Field-wrapper addition delegates to quotient-ring addition. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     Add (FiniteField f hf hp hirr) where
   add := add
 
+/-- Field-wrapper multiplication delegates to quotient-ring multiplication. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     Mul (FiniteField f hf hp hirr) where
   mul := mul
 
+/-- Field-wrapper negation delegates to quotient-ring negation. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     Neg (FiniteField f hf hp hirr) where
   neg := neg
 
+/-- Field-wrapper subtraction delegates to quotient-ring subtraction. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     Sub (FiniteField f hf hp hirr) where
   sub := sub
 
+/-- Natural powers use the quotient-ring square-and-multiply path. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     Pow (FiniteField f hf hp hirr) Nat where
   pow := pow
 
+/-- Natural literals are quotient-ring natural literals rewrapped as field elements. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     NatCast (FiniteField f hf hp hirr) where
   natCast := natCast f hf hp hirr
 
+/-- OfNat literals use the field wrapper's natural-literal implementation. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (n : Nat) : OfNat (FiniteField f hf hp hirr) n where
   ofNat := natCast f hf hp hirr n
 
+/-- Natural scalar multiplication delegates to quotient-ring scalar multiplication. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     SMul Nat (FiniteField f hf hp hirr) where
   smul := nsmul
 
+/-- Integer literals are quotient-ring integer literals rewrapped as field elements. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     IntCast (FiniteField f hf hp hirr) where
   intCast := intCast f hf hp hirr
 
+/-- Integer scalar multiplication delegates to quotient-ring scalar multiplication. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     SMul Int (FiniteField f hf hp hirr) where
   smul := zsmul
 
+/-- Field inversion uses the wrapper's extended-GCD inverse. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     Inv (FiniteField f hf hp hirr) where
   inv := inv
 
+/-- Field division is the wrapper's multiplication-by-inverse operation. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     Div (FiniteField f hf hp hirr) where
   div := div
 
+/-- Integer powers use natural powers for nonnegative exponents and inversion for negative ones. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     HPow (FiniteField f hf hp hirr) Int (FiniteField f hf hp hirr) where
   hPow := zpow
@@ -552,6 +567,7 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (1 : FiniteField f hf hp hirr).toQuotient = 1 :=
   rfl
 
+/-- The quotient-field wrapper is nontrivial. -/
 theorem zero_ne_one
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p) (hirr : FpPoly.Irreducible f) :
     (0 : FiniteField f hf hp hirr) ≠ 1 := by
@@ -566,12 +582,14 @@ theorem zero_ne_one
     ((n : FiniteField f hf hp hirr).toQuotient) = (n : GFqRing.PolyQuotient f hf) :=
   rfl
 
+/-- The representative of a natural literal is the reduced constant polynomial. -/
 @[simp] theorem repr_natCast
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p) (hirr : FpPoly.Irreducible f) (n : Nat) :
     repr (n : FiniteField f hf hp hirr) =
       GFqRing.reduceMod f (FpPoly.C (n : ZMod64 p)) :=
   rfl
 
+/-- Equal `ZMod64` residues give equal natural literals in the field wrapper. -/
 theorem natCast_eq_of_zmod64_natCast_eq
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p) (hirr : FpPoly.Irreducible f)
     {m n : Nat} (h : (m : ZMod64 p) = (n : ZMod64 p)) :
@@ -580,6 +598,7 @@ theorem natCast_eq_of_zmod64_natCast_eq
   apply GFqField.ext
   exact GFqRing.natCast_eq_of_zmod64_natCast_eq f hf h
 
+/-- Equal residues modulo `p` give equal natural literals in the field wrapper. -/
 theorem natCast_eq_of_mod_eq
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p) (hirr : FpPoly.Irreducible f)
     {m n : Nat} (h : m % p = n % p) :
@@ -588,6 +607,7 @@ theorem natCast_eq_of_mod_eq
   apply GFqField.ext
   exact GFqRing.natCast_eq_of_mod_eq f hf h
 
+/-- Equality of natural literals is equivalent to equality of their reduced constants. -/
 theorem natCast_eq_natCast_iff_reduceMod_const_eq
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p) (hirr : FpPoly.Irreducible f)
     (m n : Nat) :
@@ -603,6 +623,7 @@ theorem natCast_eq_natCast_iff_reduceMod_const_eq
     apply GFqRing.ext
     simpa [repr_natCast] using h
 
+/-- Equality of natural literals is equivalent to congruence modulo `p`. -/
 theorem natCast_eq_natCast_iff_mod_eq
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p) (hirr : FpPoly.Irreducible f)
     (m n : Nat) :
@@ -788,12 +809,14 @@ theorem inv_mul_cancel
     repr (1 : FiniteField f hf hp hirr) = GFqRing.reduceMod f 1 :=
   rfl
 
+/-- The representative of a sum is the reduced sum of representatives. -/
 @[simp] theorem repr_add
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x y : FiniteField f hf hp hirr) :
     repr (x + y) = GFqRing.reduceMod f (repr x + repr y) :=
   rfl
 
+/-- The representative of a product is the reduced product of representatives. -/
 @[simp] theorem repr_mul
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x y : FiniteField f hf hp hirr) :
@@ -815,12 +838,14 @@ representatives. -/
     repr (x - y) = GFqRing.reduceMod f (repr x - repr y) :=
   rfl
 
+/-- The representative of a natural power is the quotient-ring power representative. -/
 @[simp] theorem repr_pow
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) (n : Nat) :
     repr (x ^ n) = GFqRing.repr (x.toQuotient ^ n) :=
   rfl
 
+/-- The representative of a quotient is the quotient-ring product with the projected inverse. -/
 @[simp] theorem repr_div
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x y : FiniteField f hf hp hirr) :
@@ -828,6 +853,7 @@ representatives. -/
       GFqRing.repr (x.toQuotient * (inv y).toQuotient) :=
   rfl
 
+/-- Nonnegative integer powers share the natural-power representative. -/
 @[simp] theorem repr_zpow_ofNat
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) (n : Nat) :
@@ -835,6 +861,7 @@ representatives. -/
       GFqRing.repr (x.toQuotient ^ n) :=
   rfl
 
+/-- Negative integer powers represent the inverse of the corresponding positive power. -/
 @[simp] theorem repr_zpow_negSucc
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) (n : Nat) :
@@ -863,6 +890,7 @@ representatives. -/
     repr (i • x : FiniteField f hf hp hirr) = GFqRing.repr (i • x.toQuotient) :=
   rfl
 
+/-- Semiring laws for finite-field elements, transported from the quotient ring. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     Lean.Grind.Semiring (FiniteField f hf hp hirr) := by
   letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
@@ -914,6 +942,7 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     simpa using
       Lean.Grind.Semiring.nsmul_eq_natCast_mul (α := GFqRing.PolyQuotient f hf) n a.toQuotient
 
+/-- Ring laws for finite-field elements, transported from the quotient ring. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     Lean.Grind.Ring (FiniteField f hf hp hirr) := by
   letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
@@ -937,6 +966,7 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     apply GFqField.ext
     simpa using Lean.Grind.Ring.intCast_neg (α := GFqRing.PolyQuotient f hf) i
 
+/-- Commutative multiplication for finite-field elements, inherited from the quotient ring. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     Lean.Grind.CommRing (FiniteField f hf hp hirr) := by
   letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
@@ -996,6 +1026,7 @@ private theorem pow_zero_eq_one
   apply GFqField.ext
   simpa using Lean.Grind.Semiring.pow_zero x.toQuotient
 
+/-- Field laws for finite-field elements, using the field-level inverse lemmas. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     Lean.Grind.Field (FiniteField f hf hp hirr) := by
   letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
@@ -1028,10 +1059,12 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
         rw [zpow, zpow]
         exact (inv_inv_def (pow a (m + 1))).symm
 
+/-- Characteristic-`p` automation for natural literals in the finite field. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     Lean.Grind.IsCharP (FiniteField f hf hp hirr) p where
   ofNat_ext_iff {x y} := natCast_eq_natCast_iff_mod_eq f hf hp hirr x y
 
+/-- Frobenius is definitionally the `p`-th power map. -/
 theorem frob_eq_pow
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) :
@@ -1045,6 +1078,7 @@ theorem frob_eq_pow
     (frob x).toQuotient = x.toQuotient ^ p :=
   rfl
 
+/-- The representative of Frobenius is the quotient-ring `p`-th power representative. -/
 @[simp] theorem repr_frob
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) :
