@@ -2648,11 +2648,10 @@ theorem liftedFactorSubsetPartition_outerBound_of_choosePrimeData
     LiftedFactorSubsetPartition core d Finset.univ core := by
   -- The underlying `_of_choosePrimeData` lemma returns the partition with
   -- `Hex.choosePrimeData core` baked in; substitute `primeData` for it via
-  -- `hchoose` and apply.
+  -- the explicit `choosePrimeData?` witness and apply.
   have hpd :
-      Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore = primeData := by
-    unfold Hex.choosePrimeData
-    rw [hchoose]
+      Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore = primeData :=
+    Hex.choosePrimeData_eq_of_choosePrimeData?_some hchoose
   subst hpd
   exact liftedFactorSubsetPartition_of_choosePrimeData
     (Hex.normalizeForFactor f).squareFreeCore
@@ -3121,9 +3120,8 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
   -- Convert the explicit-witness `primeData` back to the total `choosePrimeData`
   -- form so the existing proof body applies unchanged.
   have hpd :
-      Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore = primeData := by
-    unfold Hex.choosePrimeData
-    rw [hchoose]
+      Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore = primeData :=
+    Hex.choosePrimeData_eq_of_choosePrimeData?_some hchoose
   subst hpd
   -- Branch-shape positivity of the squareFreeCore degree.
   have hdeg : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 :=
@@ -3403,9 +3401,8 @@ theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeDat
   -- Convert the explicit-witness `primeData` back to the total `choosePrimeData`
   -- form so the existing proof body applies unchanged.
   have hpd :
-      Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore = primeData := by
-    unfold Hex.choosePrimeData
-    rw [hchoose]
+      Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore = primeData :=
+    Hex.choosePrimeData_eq_of_choosePrimeData?_some hchoose
   subst hpd
   -- Branch-shape positivity of the squareFreeCore degree.
   have hdeg : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 :=
@@ -3756,9 +3753,8 @@ theorem monicReductionCorrespondence_liftedFactor_facts_of_normalizeForFactor_sq
   -- form so the underlying `MonicReductionCorrespondence` package (built over
   -- the total `Hex.choosePrimeData core` shape) can be applied.
   have hpd :
-      Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore = primeData := by
-    unfold Hex.choosePrimeData
-    rw [hchoose]
+      Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore = primeData :=
+    Hex.choosePrimeData_eq_of_choosePrimeData?_some hchoose
   subst hpd
   intro core B d
   have pkg :=
@@ -3877,9 +3873,8 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_bound
   -- Convert the explicit-witness `primeData` back to the total `choosePrimeData`
   -- form so the existing proof body applies unchanged.
   have hpd :
-      Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore = primeData := by
-    unfold Hex.choosePrimeData
-    rw [hchoose]
+      Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore = primeData :=
+    Hex.choosePrimeData_eq_of_choosePrimeData?_some hchoose
   subst hpd
   -- Base setup: discharge `hcore_record` and `hcore_ne` from the branch
   -- hypothesis + monicness.
@@ -4089,9 +4084,8 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_co
   -- Convert the explicit-witness `primeData` back to the total `choosePrimeData`
   -- form so the existing proof body applies unchanged.
   have hpd :
-      Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore = primeData := by
-    unfold Hex.choosePrimeData
-    rw [hchoose]
+      Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore = primeData :=
+    Hex.choosePrimeData_eq_of_choosePrimeData?_some hchoose
   subst hpd
   -- Base setup: discharge `hcore_record` and `hcore_ne` from `hbranch` +
   -- `hcore_lc_pos`.
