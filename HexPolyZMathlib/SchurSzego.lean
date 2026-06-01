@@ -497,6 +497,55 @@ theorem schur_closed_disk_norm_lt {A B c : ℂ}
   have : ‖f 0‖ = 1 := by rw [h0eq, heq]
   linarith
 
+theorem schur_structured_two_pair_ne_zero {r : ℝ} {z a b c d : ℂ}
+    (hr : 0 < r) (hz : r < ‖z‖)
+    (ha : ‖a‖ ≤ r) (hb : ‖b‖ ≤ r)
+    (hc : ‖c‖ ≤ 1) (hd : ‖d‖ ≤ 1) :
+    (z + a * c) * (z + b * d) + (z + a * d) * (z + b * c) ≠ 0 := by
+  intro hzero
+  let A : ℂ := a / z
+  let B : ℂ := b / z
+  have hz_ne : z ≠ 0 := by
+    intro hz_zero
+    rw [hz_zero, norm_zero] at hz
+    linarith
+  have hz_norm_pos : 0 < ‖z‖ := norm_pos_iff.mpr hz_ne
+  have hA : ‖A‖ < 1 := by
+    simp only [A, norm_div]
+    exact (div_lt_one hz_norm_pos).2 (lt_of_le_of_lt ha hz)
+  have hB : ‖B‖ < 1 := by
+    simp only [B, norm_div]
+    exact (div_lt_one hz_norm_pos).2 (lt_of_le_of_lt hb hz)
+  let num : ℂ := A + B + 2 * A * B * c
+  let den : ℂ := 2 + (A + B) * c
+  have hden_ne : den ≠ 0 :=
+    schur_closed_disk_denominator_ne_zero (A := A) (B := B) (c := c) hA hB hc
+  have hfrac_lt : ‖num / den‖ < 1 := by
+    simpa [num, den] using schur_closed_disk_norm_lt (A := A) (B := B) (c := c) hA hB hc
+  have hnum_lt_den : ‖num‖ < ‖den‖ := by
+    rw [norm_div] at hfrac_lt
+    exact (div_lt_one (norm_pos_iff.mpr hden_ne)).1 hfrac_lt
+  have hscaled : den + d * num = 0 := by
+    have hrewrite :
+        den + d * num =
+          ((z + a * c) * (z + b * d) + (z + a * d) * (z + b * c)) / (z * z) := by
+      dsimp [A, B, num, den]
+      field_simp [hz_ne]
+      ring_nf
+    rw [hrewrite, hzero]
+    simp
+  have hden_norm_le_num : ‖den‖ ≤ ‖num‖ := by
+    have hden_eq : den = -(d * num) := by
+      calc
+        den = den + d * num - d * num := by ring
+        _ = -(d * num) := by rw [hscaled]; ring
+    calc
+      ‖den‖ = ‖d * num‖ := by rw [hden_eq, norm_neg]
+      _ = ‖d‖ * ‖num‖ := norm_mul d num
+      _ ≤ 1 * ‖num‖ := mul_le_mul_of_nonneg_right hd (norm_nonneg num)
+      _ = ‖num‖ := one_mul _
+  exact not_lt_of_ge hden_norm_le_num hnum_lt_den
+
 /-- Roots outside the radius, weighted by `‖z‖ / r` with multiplicity. -/
 def rootsRadiusProduct (r : ℝ) (s : Multiset ℂ) : ℝ :=
   ((s.filter fun z => r ≤ ‖z‖).map fun z => ‖z‖ / r).prod
