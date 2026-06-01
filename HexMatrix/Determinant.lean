@@ -8059,6 +8059,35 @@ theorem cofactor_setRow_self {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
   unfold cofactor
   rw [deleteRowCol_setRow_self M dst col v]
 
+/-- Pair a row vector with a cofactor row of `M`. This is the scalar that
+appears in Laplace expansion after replacing the expanded row. -/
+def cofactorRowPairing {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (row : Fin (n + 1)) (v : Vector R (n + 1)) :
+    R :=
+  (List.finRange (n + 1)).foldl
+    (fun acc col => acc + v[col] * cofactor M row col) 0
+
+/-- Replacing row `row` by `v` makes the determinant the pairing of `v`
+against the original cofactor row. -/
+theorem det_setRow_eq_cofactorRowPairing
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (row : Fin (n + 1)) (v : Vector R (n + 1)) :
+    det (setRow M row v) = cofactorRowPairing M row v := by
+  rw [det_eq_foldl_laplace_row (setRow M row v) row]
+  unfold cofactorRowPairing
+  apply foldl_acc_congr
+  intro acc col _hmem
+  rw [show (setRow M row v)[row][col] = v[col] by
+    rw [setRow_get_self]]
+  rw [cofactor_setRow_self M row col v]
+
+/-- Pairing the original row against its own cofactor row recovers `det M`. -/
+theorem cofactorRowPairing_self
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (row : Fin (n + 1)) :
+    cofactorRowPairing M row M[row] = det M := by
+  exact (det_eq_foldl_laplace_row M row).symm
+
 /-- The "alien cofactor" identity: expanding row `i` of `M` against the
 cofactors of a different row `j` produces zero. This is the
 characteristic vanishing identity that makes the adjugate work. -/
@@ -8086,6 +8115,13 @@ theorem foldl_alien_cofactor_eq_zero
     rw [hentry, hcofk]
   rw [hcof] at hLaplace
   exact hLaplace.symm.trans hdetN
+
+/-- Pairing an unreplaced row of `M` against a different cofactor row is zero. -/
+theorem cofactorRowPairing_alien_eq_zero
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (i j : Fin (n + 1)) (hij : i ≠ j) :
+    cofactorRowPairing M j M[i] = 0 := by
+  exact foldl_alien_cofactor_eq_zero M i j hij
 
 /-- The local adjugate matrix: entry `(i, j)` is the cofactor at row `j`,
 column `i` of `M`. This is the transpose of the cofactor matrix. -/
