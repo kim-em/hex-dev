@@ -11268,5 +11268,20 @@ theorem cofactorRowPairing_setRow_plucker
   rw [hpre]
   grind
 
+/-- Two-row replacement determinant Plucker identity. -/
+theorem det_setRow_setRow_mul_det
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (a b : Fin (n + 1)) (hab : a ≠ b)
+    (u v : Vector R (n + 1)) :
+    det M * det (setRow (setRow M a u) b v) =
+      det (setRow M a u) * det (setRow M b v) -
+        det (setRow M a v) * det (setRow M b u) := by
+  rw [det_setRow_eq_cofactorRowPairing (setRow M a u) b v,
+    det_setRow_eq_cofactorRowPairing M a u,
+    det_setRow_eq_cofactorRowPairing M b v,
+    det_setRow_eq_cofactorRowPairing M a v,
+    det_setRow_eq_cofactorRowPairing M b u]
+  exact cofactorRowPairing_setRow_plucker M a b hab u v
+
 end Matrix
 end Hex
