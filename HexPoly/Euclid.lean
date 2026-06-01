@@ -805,8 +805,11 @@ instance [Add R] [Mul R] : Dvd (DensePoly R) where
 
 /-- Result package for polynomial extended gcd. -/
 structure XGCDResult (R : Type u) [Zero R] [DecidableEq R] where
+  /-- Greatest common divisor returned by the extended Euclidean algorithm. -/
   gcd : DensePoly R
+  /-- Bezout coefficient multiplying the left input. -/
   left : DensePoly R
+  /-- Bezout coefficient multiplying the right input. -/
   right : DensePoly R
 
 /-- Tail-recursive extended Euclidean algorithm. -/
@@ -2774,6 +2777,8 @@ private theorem xgcdAux_bezout {S : Type _}
                 · exact hzero_add
               · exact hzero_sub
 
+/-- Bezout identity for `xgcd`, proved from `DivModLaws` for use when building
+the corresponding `GcdLaws` instance. -/
 theorem xgcd_bezout_of_divModLaws {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (p q : DensePoly S) :
@@ -2876,6 +2881,9 @@ private theorem xgcdAux_gcd_dvd_inputs {S : Type _}
           · rw [hg_eq]
             exact dvd_refl_poly r₁
 
+/-- The gcd returned by `xgcd` divides the left input, assuming `DivModLaws`
+and the one-off `hsmall` fact for nonzero divisors of degree zero. This is
+intended for `GcdLaws` instance construction. -/
 theorem gcd_dvd_left_of_divModLaws {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (hsmall :
@@ -2889,6 +2897,9 @@ theorem gcd_dvd_left_of_divModLaws {S : Type _}
       have hq := degree_getD_lt_size_add_one q
       omega)).1
 
+/-- The gcd returned by `xgcd` divides the right input, assuming `DivModLaws`
+and the one-off `hsmall` fact for nonzero divisors of degree zero. This is
+intended for `GcdLaws` instance construction. -/
 theorem gcd_dvd_right_of_divModLaws {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (hsmall :
@@ -2902,6 +2913,8 @@ theorem gcd_dvd_right_of_divModLaws {S : Type _}
       have hq := degree_getD_lt_size_add_one q
       omega)).2
 
+/-- Any common divisor divides the gcd returned by `xgcd`; this packages the
+`DivModLaws` proof needed by `GcdLaws` instance construction. -/
 theorem dvd_gcd_of_divModLaws {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (d p q : DensePoly S) :
@@ -4307,6 +4320,8 @@ private theorem exists_linear_combination_coeffs_eq_one_of_content_eq_one
   rw [hsum]
   exact hp
 
+/-- If a natural number divides every integer coefficient, its integer cast
+divides the polynomial content. -/
 theorem dvd_content_of_nat_dvd_coeff (p : DensePoly Int) (d : Nat)
     (h : ∀ n, (d : Int) ∣ p.coeff n) :
     (d : Int) ∣ content p := by
@@ -4320,6 +4335,8 @@ theorem natCast_dvd_content_of_dvd_coeff (p : DensePoly Int) (d : Nat)
     (d : Int) ∣ content p := by
   exact dvd_content_of_nat_dvd_coeff p d h
 
+/-- A natural number that divides every coefficient of a primitive integer
+polynomial must be `1`. -/
 theorem nat_eq_one_of_content_eq_one_of_nat_dvd_coeff (p : DensePoly Int) (d : Nat)
     (hp : content p = 1) (h : ∀ n, (d : Int) ∣ p.coeff n) :
     d = 1 := by
@@ -4462,6 +4479,8 @@ private theorem list_getD_map_ediv_zero (c : Int) (coeffs : List Int) (n : Nat) 
       | succ n =>
           simpa using ih n
 
+/-- Scaling the primitive part by the content reconstructs the original
+integer polynomial. -/
 theorem content_mul_primitivePart (p : DensePoly Int) :
     scale (content p) (primitivePart p) = p := by
   apply ext_coeff
@@ -4493,6 +4512,7 @@ theorem content_mul_primitivePart (p : DensePoly Int) :
           exact Int.mul_ediv_cancel' (contentNat_dvd_coeff p n)
         rw [hpart, hmul]
 
+/-- Multiplying an integer polynomial by `-1` preserves its content. -/
 theorem content_scale_neg_one (p : DensePoly Int) :
     content (scale (-1 : Int) p) = content p := by
   unfold content
@@ -4599,6 +4619,7 @@ theorem content_scale_int (c : Int) (p : DensePoly Int) :
   rw [Nat.mul_zero] at h
   exact h
 
+/-- Scaling the zero integer polynomial by `-1` is still zero. -/
 theorem scale_neg_one_zero :
     scale (-1 : Int) (0 : DensePoly Int) = 0 := by
   apply ext_coeff
@@ -4606,10 +4627,13 @@ theorem scale_neg_one_zero :
   rw [coeff_scale (-1 : Int) (0 : DensePoly Int) n (Int.mul_zero (-1 : Int))]
   simp
 
+/-- The zero integer polynomial has content zero. -/
 theorem content_zero :
     content (0 : DensePoly Int) = 0 := by
   rfl
 
+/-- The content of a constant integer polynomial is the absolute value of the
+constant. -/
 theorem content_C (c : Int) :
     content (C c) = Int.ofNat c.natAbs := by
   unfold content contentNat toArray
@@ -4618,6 +4642,7 @@ theorem content_C (c : Int) :
   · rw [coeffs_C_of_ne_zero hc]
     simp
 
+/-- If an integer polynomial has zero content, its primitive part is zero. -/
 theorem primitivePart_eq_zero_of_content_eq_zero (p : DensePoly Int) (h : content p = 0) :
     primitivePart p = 0 := by
   have hc : contentNat p = 0 := by
