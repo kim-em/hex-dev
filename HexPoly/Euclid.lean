@@ -21,9 +21,26 @@ variable {R : Type u} [Zero R] [DecidableEq R]
 def leadingCoeff (p : DensePoly R) : R :=
   p.coeffs.back?.getD 0
 
+@[simp] theorem leadingCoeff_zero : (0 : DensePoly R).leadingCoeff = 0 := by
+  rfl
+
 /-- The constant polynomial `1`. -/
 instance [One R] : One (DensePoly R) where
   one := C 1
+
+@[simp] theorem leadingCoeff_C (c : R) : (C c).leadingCoeff = c := by
+  by_cases hc : c = (0 : R)
+  · rw [hc]
+    unfold leadingCoeff
+    rw [coeffs_C_zero]
+    rfl
+  · unfold leadingCoeff
+    rw [coeffs_C_of_ne_zero hc]
+    rfl
+
+@[simp] theorem leadingCoeff_one [One R] : (1 : DensePoly R).leadingCoeff = 1 := by
+  change (C (1 : R)).leadingCoeff = 1
+  rw [leadingCoeff_C]
 
 /-- A polynomial is monic when its leading coefficient is `1`. -/
 def Monic [One R] (p : DensePoly R) : Prop :=
@@ -3224,6 +3241,42 @@ private theorem size_le_of_coeff_zero_above {S : Type _}
     have hne : p.coeff (p.size - 1) ≠ (Zero.zero : S) :=
       coeff_last_ne_zero_of_pos_size p hpos
     exact hne hzero
+
+/-- Leading coefficient of a product, in the cancellation-free form needed over
+commutative rings. The explicit nonzero top-coefficient product hypothesis is
+the no-cancellation fact that callers over domains can derive from nonzero
+factors. -/
+theorem leadingCoeff_mul {S : Type _}
+    [Lean.Grind.CommRing S] [DecidableEq S]
+    (p q : DensePoly S)
+    (hp : 0 < p.size) (hq : 0 < q.size)
+    (hprod : p.leadingCoeff * q.leadingCoeff ≠ (Zero.zero : S)) :
+    (p * q).leadingCoeff = p.leadingCoeff * q.leadingCoeff := by
+  let top := p.size - 1 + (q.size - 1)
+  have hp_top : p.coeff (p.size - 1) = p.leadingCoeff := by
+    rw [leadingCoeff_eq_coeff_last p hp]
+  have hq_top : q.coeff (q.size - 1) = q.leadingCoeff := by
+    rw [leadingCoeff_eq_coeff_last q hq]
+  have htop_coeff :
+      (p * q).coeff top = p.leadingCoeff * q.leadingCoeff := by
+    unfold top
+    rw [coeff_mul_top_general p q hp hq, hp_top, hq_top]
+  have htop_ne : (p * q).coeff top ≠ (Zero.zero : S) := by
+    rw [htop_coeff]
+    exact hprod
+  have hsize_lower : top < (p * q).size := by
+    rcases Nat.lt_or_ge top (p * q).size with h | hle
+    · exact h
+    · exact False.elim (htop_ne (coeff_eq_zero_of_size_le _ hle))
+  have hsize_upper : (p * q).size ≤ top + 1 := by
+    apply size_le_of_coeff_zero_above
+    intro i hi
+    exact coeff_mul_above_top_general p q hp hq (by omega)
+  have hsize : (p * q).size = top + 1 := by
+    omega
+  rw [leadingCoeff_eq_coeff_last (p * q) (by omega)]
+  have hidx : (p * q).size - 1 = top := by omega
+  rw [hidx, htop_coeff]
 
 /-- Array-level "polynomial-multiple" reconstruction-and-termination identity
 for `divModArrayAux`. When the running remainder coincides at the polynomial

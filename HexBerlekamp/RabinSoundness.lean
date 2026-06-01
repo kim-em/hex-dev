@@ -619,9 +619,7 @@ theorem frobeniusDiffMod_mod_self_of_degree_zero
       exact DensePoly.coeff_eq_zero_of_size_le f (by omega)
     rw [hfzero] at hmonic
     have h0lead : (0 : FpPoly p).leadingCoeff = 0 := by
-      change (0 : FpPoly p).coeffs.back?.getD 0 = 0
-      have hcoeffs : (0 : FpPoly p).coeffs = #[] := rfl
-      rw [hcoeffs]; rfl
+      exact DensePoly.leadingCoeff_zero (R := ZMod64 p)
     unfold DensePoly.Monic at hmonic
     rw [h0lead] at hmonic
     -- hmonic : (0 : ZMod64 p) = 1, contradiction in a prime field.
@@ -1726,32 +1724,23 @@ theorem primeFieldLinearFactor_monic (c : ZMod64 p) :
   rw [primeFieldLinearFactor_size]
   exact primeFieldLinearFactor_coeff_one c
 
-/-- Leading coefficient of a product equals the product of leading coefficients
-(no-zero-divisors form). -/
-private theorem leadingCoeff_mul_fpoly (a b : FpPoly p)
-    (ha : a ≠ 0) (hb : b ≠ 0) :
-    DensePoly.leadingCoeff (a * b)
-      = DensePoly.leadingCoeff a * DensePoly.leadingCoeff b := by
-  have ha_pos : 0 < a.size := FpPoly.size_pos_of_ne_zero ha
-  have hb_pos : 0 < b.size := FpPoly.size_pos_of_ne_zero hb
-  have hab_ne : a * b ≠ 0 := FpPoly.mul_ne_zero_of_ne_zero ha hb
-  have hab_pos : 0 < (a * b).size := FpPoly.size_pos_of_ne_zero hab_ne
-  have hsize := FpPoly.size_mul_eq_add_sub_one a b ha hb
-  have hindex : (a * b).size - 1 = a.size - 1 + (b.size - 1) := by omega
-  rw [DensePoly.leadingCoeff_eq_coeff_last (a * b) hab_pos]
-  rw [hindex]
-  rw [DensePoly.leadingCoeff_eq_coeff_last a ha_pos]
-  rw [DensePoly.leadingCoeff_eq_coeff_last b hb_pos]
-  exact ZMod64.coeff_mul_at_top a b ha_pos hb_pos
-
 /-- Multiplying two monic prime-field polynomials yields a monic polynomial. -/
 private theorem monic_mul_monic (a b : FpPoly p)
     (ha_ne : a ≠ 0) (hb_ne : b ≠ 0)
     (ha : DensePoly.Monic a) (hb : DensePoly.Monic b) :
     DensePoly.Monic (a * b) := by
   unfold DensePoly.Monic
-  rw [leadingCoeff_mul_fpoly a b ha_ne hb_ne]
   unfold DensePoly.Monic at ha hb
+  have hprod : DensePoly.leadingCoeff a * DensePoly.leadingCoeff b ≠ (0 : ZMod64 p) := by
+    rw [ha, hb]
+    grind
+  have hlead := DensePoly.leadingCoeff_mul a b
+    (FpPoly.size_pos_of_ne_zero ha_ne)
+    (FpPoly.size_pos_of_ne_zero hb_ne)
+    hprod
+  change DensePoly.leadingCoeff (a * b) =
+    DensePoly.leadingCoeff a * DensePoly.leadingCoeff b at hlead
+  rw [hlead]
   rw [ha, hb]
   grind
 
@@ -1820,10 +1809,7 @@ private theorem fpPoly_one_size : (1 : FpPoly p).size = 1 := by
 /-- The constant polynomial `1` over a prime modulus is monic. -/
 private theorem fpPoly_one_monic : DensePoly.Monic (1 : FpPoly p) := by
   unfold DensePoly.Monic
-  rw [DensePoly.leadingCoeff_eq_coeff_last _ (by rw [fpPoly_one_size]; omega)]
-  rw [fpPoly_one_size]
-  change (DensePoly.C (1 : ZMod64 p)).coeff 0 = 1
-  rw [DensePoly.coeff_C]
+  have _hone_ne : (1 : FpPoly p) ≠ 0 := fpPoly_one_ne_zero
   simp
 
 /-- The canonical prime-field product has size `p + 1`. -/
@@ -1951,7 +1937,7 @@ private theorem eq_of_dvd_of_size_eq_of_monic
   have hlead_eq : DensePoly.leadingCoeff b
       = DensePoly.leadingCoeff a * DensePoly.leadingCoeff q := by
     rw [hq]
-    exact leadingCoeff_mul_fpoly a q ha_ne hq_ne
+    exact FpPoly.leadingCoeff_mul a q ha_ne hq_ne
   have hq_lead : DensePoly.leadingCoeff q = q.coeff 0 := by
     rw [DensePoly.leadingCoeff_eq_coeff_last _ hq_pos, hq_size_one]
   have hq_coeff0 : q.coeff 0 = 1 := by
@@ -3040,7 +3026,7 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree
     have hlead : DensePoly.leadingCoeff f =
         DensePoly.leadingCoeff g * DensePoly.leadingCoeff b' := by
       rw [← hf_eq]
-      exact leadingCoeff_mul_fpoly g b' hg_ne_zero hb'_ne_zero
+      exact FpPoly.leadingCoeff_mul g b' hg_ne_zero hb'_ne_zero
     have hf_one : DensePoly.leadingCoeff f = 1 := hmonic
     have hg_one : DensePoly.leadingCoeff g = 1 := hg_monic
     unfold DensePoly.Monic
