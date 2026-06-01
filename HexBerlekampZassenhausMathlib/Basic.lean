@@ -484,6 +484,99 @@ theorem normalize_toPolynomial_of_normalizeFactorSign_id
   rw [normalize_apply, Polynomial.coe_normUnit, Int.normUnit_eq, if_pos hlc_poly,
     Units.val_one, Polynomial.C_1, mul_one]
 
+/--
+Primitive executable integer polynomials with positive leading coefficient are
+the canonical representatives of their Mathlib `Associated` class after
+transport to `Polynomial ℤ`.
+-/
+theorem zpoly_eq_of_toPolynomial_associated_of_primitive_pos_leading
+    {p q : Hex.ZPoly}
+    (hp_primitive : Hex.ZPoly.Primitive p)
+    (hq_primitive : Hex.ZPoly.Primitive q)
+    (hp_lc : 0 < Hex.DensePoly.leadingCoeff p)
+    (hq_lc : 0 < Hex.DensePoly.leadingCoeff q)
+    (hassoc :
+      Associated (HexPolyZMathlib.toPolynomial p)
+        (HexPolyZMathlib.toPolynomial q)) :
+    p = q := by
+  have hp_ne : p ≠ 0 := Hex.ZPoly.ne_zero_of_primitive p hp_primitive
+  have hq_ne : q ≠ 0 := Hex.ZPoly.ne_zero_of_primitive q hq_primitive
+  have hp_norm_sign : Hex.normalizeFactorSign p = p := by
+    unfold Hex.normalizeFactorSign
+    rw [if_neg]
+    omega
+  have hq_norm_sign : Hex.normalizeFactorSign q = q := by
+    unfold Hex.normalizeFactorSign
+    rw [if_neg]
+    omega
+  have hp_norm :
+      normalize (HexPolyZMathlib.toPolynomial p) =
+        HexPolyZMathlib.toPolynomial p :=
+    normalize_toPolynomial_of_normalizeFactorSign_id hp_ne hp_norm_sign
+  have hq_norm :
+      normalize (HexPolyZMathlib.toPolynomial q) =
+        HexPolyZMathlib.toPolynomial q :=
+    normalize_toPolynomial_of_normalizeFactorSign_id hq_ne hq_norm_sign
+  have hpoly :
+      HexPolyZMathlib.toPolynomial p = HexPolyZMathlib.toPolynomial q :=
+    hassoc.eq_of_normalized hp_norm hq_norm
+  exact HexPolyZMathlib.equiv.injective hpoly
+
+/--
+Distinct primitive executable integer polynomials with positive leading
+coefficient are not associated after transport to `Polynomial ℤ`.
+-/
+theorem zpoly_not_associated_of_ne_of_primitive_pos_leading
+    {p q : Hex.ZPoly}
+    (hp_primitive : Hex.ZPoly.Primitive p)
+    (hq_primitive : Hex.ZPoly.Primitive q)
+    (hp_lc : 0 < Hex.DensePoly.leadingCoeff p)
+    (hq_lc : 0 < Hex.DensePoly.leadingCoeff q)
+    (hpq : p ≠ q) :
+    ¬ Associated
+      (HexPolyZMathlib.toPolynomial p)
+      (HexPolyZMathlib.toPolynomial q) := by
+  intro hassoc
+  have hpeq : p = q :=
+    zpoly_eq_of_toPolynomial_associated_of_primitive_pos_leading
+      hp_primitive hq_primitive hp_lc hq_lc hassoc
+  exact hpq hpeq
+
+set_option maxHeartbeats 3000000
+
+/--
+Recorded entries of the default executable factorization are pairwise
+non-associated after transport to `Polynomial ℤ`, assuming the selected raw
+factor branch is primitive entrywise.
+-/
+theorem factor_entries_not_associated
+    (f : Hex.ZPoly)
+    (h_raw :
+      ∀ rawFactors : Array Hex.ZPoly,
+        (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
+            some rawFactors ∨
+          (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
+              none ∧
+            rawFactors =
+              Hex.factorSlowFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f))) →
+        ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Primitive raw) :
+    List.Pairwise
+      (fun a b : Hex.ZPoly × Nat =>
+        ¬ Associated (HexPolyZMathlib.toPolynomial a.1)
+          (HexPolyZMathlib.toPolynomial b.1))
+      (Hex.factor f).factors.toList := by
+  exact List.Pairwise.imp_of_mem
+    (fun {a b} ha hb hab =>
+      zpoly_not_associated_of_ne_of_primitive_pos_leading
+        (Hex.factor_entries_primitive f h_raw a (Array.mem_toList_iff.mp ha))
+        (Hex.factor_entries_primitive f h_raw b (Array.mem_toList_iff.mp hb))
+        (Hex.factor_entry_leadingCoeff_pos f a ha)
+        (Hex.factor_entry_leadingCoeff_pos f b hb)
+        hab)
+    (Hex.factor_pairwise_first f)
+
+set_option maxHeartbeats 200000
+
 private theorem mem_factorizationFlattenedFactors_iff
     {φ : Hex.Factorization} {f : Hex.ZPoly} :
     f ∈ factorizationFlattenedFactors φ ↔
