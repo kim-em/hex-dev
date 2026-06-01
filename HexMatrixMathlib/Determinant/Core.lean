@@ -607,6 +607,46 @@ theorem det_mul_cofactor_setRow_eq_cofactorRowPairing_mul_sub
   rw [Hex.Matrix.det_setRow_eq_cofactorRowPairing] at h
   exact h
 
+private theorem foldl_pairing_mul_sub
+    [CommRing R] {β : Type v} (xs : List β)
+    (det a b accF accG accH : R) (row f g h : β → R)
+    (hacc : det * accF = a * accG - b * accH)
+    (hpoint : ∀ x, det * f x = a * g x - b * h x) :
+    det * xs.foldl (fun acc x => acc + row x * f x) accF =
+      a * xs.foldl (fun acc x => acc + row x * g x) accG -
+        b * xs.foldl (fun acc x => acc + row x * h x) accH := by
+  induction xs generalizing accF accG accH with
+  | nil =>
+      simpa using hacc
+  | cons x xs ih =>
+      apply ih
+      have hx := hpoint x
+      dsimp
+      calc
+        det * (accF + row x * f x) =
+            det * accF + row x * (det * f x) := by ring
+        _ = a * (accG + row x * g x) - b * (accH + row x * h x) := by
+            rw [hacc, hx]
+            ring
+
+/-- Two-row replacement determinant identity in the Hex matrix API.
+
+Replacing distinct rows `r` and `s` by `u` and `v` satisfies the adjugate
+two-row determinant relation, stated entirely in terms of Hex determinants
+and cofactor-row pairings. -/
+theorem det_mul_det_setRow_setRow_eq_cofactorRowPairing_mul_sub
+    [CommRing R] (M : Hex.Matrix R (n + 1) (n + 1))
+    (r s : Fin (n + 1)) (u v : Vector R (n + 1)) (hrs : s ≠ r) :
+    Hex.Matrix.det M * Hex.Matrix.det (Hex.Matrix.setRow (Hex.Matrix.setRow M r u) s v) =
+      Hex.Matrix.cofactorRowPairing M r u * Hex.Matrix.cofactorRowPairing M s v -
+        Hex.Matrix.cofactorRowPairing M s u * Hex.Matrix.cofactorRowPairing M r v := by
+  rw [Hex.Matrix.det_setRow_eq_cofactorRowPairing]
+  unfold Hex.Matrix.cofactorRowPairing
+  apply foldl_pairing_mul_sub
+  · ring
+  · intro col
+    exact det_mul_cofactor_setRow_eq_cofactorRowPairing_mul_sub M r s col u hrs
+
 /-- Reindex the `(k+2) × (k+2)` bordered minor so Desnanot-Jacobi deletes the
 Bareiss pivot row/column first and the trailing row/column last.
 
