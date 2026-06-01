@@ -72,20 +72,21 @@ theorem coeff_scale [Mul R] (c : R) (p : DensePoly R) (n : Nat)
   rw [coeff_ofCoeffs_list]
   simpa [coeff] using list_getD_map_mul_zero (R := R) c p.toArray.toList n hzero
 
-@[simp] theorem scale_zero_right [Mul R] (c : R) :
+@[simp, grind =] theorem scale_zero_right [Mul R] (c : R) :
     scale c (0 : DensePoly R) = 0 := by
   unfold scale toArray
   rfl
 
 /-- Semiring-specialized coefficient law for scalar multiplication, registered as a normalizing
 rewrite because the required `c * 0 = 0` law is available from the semiring structure. -/
-@[simp] theorem coeff_scale_semiring {S : Type u} [Lean.Grind.Semiring S] [DecidableEq S]
+@[simp, grind =] theorem coeff_scale_semiring {S : Type u}
+    [Lean.Grind.Semiring S] [DecidableEq S]
     (c : S) (p : DensePoly S) (n : Nat) :
     (scale c p).coeff n = c * p.coeff n :=
   coeff_scale c p n (Lean.Grind.Semiring.mul_zero c)
 
 /-- Semiring-specialized left zero law for scalar multiplication. -/
-@[simp] theorem scale_zero_left_semiring {S : Type u}
+@[simp, grind =] theorem scale_zero_left_semiring {S : Type u}
     [Lean.Grind.Semiring S] [DecidableEq S]
     (p : DensePoly S) :
     scale (0 : S) p = 0 := by
@@ -98,7 +99,7 @@ rewrite because the required `c * 0 = 0` law is available from the semiring stru
 
 /-- Coefficient law for shifting by `x^n`: coefficients below `n` are zero and later
 coefficients are read from the original polynomial with the index shifted down. -/
-@[simp] theorem coeff_shift (n : Nat) (p : DensePoly R) (k : Nat) :
+@[simp, grind =] theorem coeff_shift (n : Nat) (p : DensePoly R) (k : Nat) :
     (shift n p).coeff k =
       if k < n then (Zero.zero : R) else p.coeff (k - n) := by
   unfold shift
@@ -119,12 +120,12 @@ coefficients are read from the original polynomial with the index shifted down. 
     rw [coeff_ofCoeffs_list]
     simpa [coeff] using list_getD_replicate_append_zero (R := R) n k p.toArray.toList
 
-@[simp] theorem shift_zero_right (n : Nat) :
+@[simp, grind =] theorem shift_zero_right (n : Nat) :
     shift n (0 : DensePoly R) = 0 := by
   unfold shift isZero
   rfl
 
-@[simp] theorem shift_zero_left (p : DensePoly R) :
+@[simp, grind =] theorem shift_zero_left (p : DensePoly R) :
     shift 0 p = p := by
   apply ext_coeff
   intro k
@@ -143,7 +144,7 @@ theorem coeff_shift_scale [Mul R] (i : Nat) (c : R) (p : DensePoly R) (k : Nat)
 
 /-- Semiring-specialized coefficient law for a scaled shift, registered as a normalizing rewrite
 for the common algebraic setting. -/
-@[simp] theorem coeff_shift_scale_semiring
+@[simp, grind =] theorem coeff_shift_scale_semiring
     {S : Type u} [Lean.Grind.Semiring S] [DecidableEq S]
     (i : Nat) (c : S) (p : DensePoly S) (k : Nat) :
     (shift i (scale c p)).coeff k =
@@ -375,46 +376,8 @@ def eval [Add R] [Mul R] (p : DensePoly R) (x : R) : R :=
 def compose [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
   p.toArray.toList.reverse.foldl (fun acc coeff => acc * q + C coeff) (0 : DensePoly R)
 
-/-- Polynomial-valued Horner fold over an explicit low-to-high coefficient list. -/
-def composeScalarCoeffList [Add R] [Mul R] :
-    List R → DensePoly R → DensePoly R
-  | [], _ => 0
-  | c :: cs, q => composeScalarCoeffList cs q * q + C c
-
-/-- Recursive coefficient-indexed power-sum skeleton for composition.
-
-The `pow` argument supplies the powers of the substitution polynomial. This
-keeps the core API Mathlib-free and lets downstream specializations reuse the
-same recursion with their local power operation and algebraic laws. -/
-def composeCoeffPowerSumUpTo [Add R] [Mul R]
-    (coeff : Nat → R) (pow : Nat → DensePoly R) :
-    Nat → Nat → DensePoly R
-  | 0, _ => 0
-  | n + 1, base =>
-      C (coeff base) * pow base +
-        composeCoeffPowerSumUpTo coeff pow n (base + 1)
-
-private theorem foldl_compose_reverse_eq_composeScalarCoeffList [Add R] [Mul R]
-    (q : DensePoly R) :
-    ∀ cs,
-      cs.reverse.foldl (fun acc c => acc * q + C c) (0 : DensePoly R) =
-        composeScalarCoeffList cs q
-  | [] => rfl
-  | c :: cs => by
-      rw [List.reverse_cons, List.foldl_append]
-      simp only [List.foldl_cons, List.foldl_nil]
-      rw [foldl_compose_reverse_eq_composeScalarCoeffList q cs]
-      rfl
-
-/-- `DensePoly.compose` agrees with the explicit Horner fold over the stored
-coefficient list. -/
-theorem compose_eq_composeScalarCoeffList [Add R] [Mul R] (f q : DensePoly R) :
-    compose f q = composeScalarCoeffList f.toArray.toList q := by
-  unfold compose
-  exact foldl_compose_reverse_eq_composeScalarCoeffList q f.toArray.toList
-
 /-- Left-composition by the zero polynomial is zero. -/
-@[simp] theorem compose_zero_left [Add R] [Mul R] (q : DensePoly R) :
+@[simp, grind =] theorem compose_zero_left [Add R] [Mul R] (q : DensePoly R) :
     compose (0 : DensePoly R) q = 0 := by
   rfl
 
@@ -460,10 +423,116 @@ theorem compose_C [Add R] [Mul R] (c : R) (q : DensePoly R)
 
 /-- Semiring-specialized composition law for constants. This packages the zero-addition
 law needed by the generic `compose_C`. -/
-@[simp] theorem compose_C_semiring {S : Type u} [Lean.Grind.Semiring S] [DecidableEq S]
+@[simp, grind =] theorem compose_C_semiring {S : Type u}
+    [Lean.Grind.Semiring S] [DecidableEq S]
     (c : S) (q : DensePoly S) :
     compose (C c) q = C c :=
   compose_C c q (by grind)
+
+/-- List-level Horner form for composition, reading coefficients from low to high degree. -/
+def composeScalarCoeffList [Add R] [Mul R] :
+    List R → DensePoly R → DensePoly R
+  | [], _ => 0
+  | c :: cs, q => C c + q * composeScalarCoeffList cs q
+
+/-- `DensePoly.compose` agrees with the list-level Horner form over the stored coefficients
+when the caller supplies the algebraic step that commutes a Horner tail past `q`. -/
+theorem compose_eq_composeScalarCoeffList_of_step [Add R] [Mul R] (p q : DensePoly R)
+    (hstep : ∀ acc c, acc * q + C c = C c + q * acc) :
+    compose p q = composeScalarCoeffList p.toArray.toList q := by
+  unfold compose
+  induction p.toArray.toList with
+  | nil => rfl
+  | cons c cs ih =>
+      rw [List.reverse_cons, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [ih]
+      exact hstep (composeScalarCoeffList cs q) c
+
+/-- Iterated polynomial power used by the compose power-sum characterisation. -/
+def composePower [One R] [Add R] [Mul R] (q : DensePoly R) : Nat → DensePoly R
+  | 0 => C (1 : R)
+  | n + 1 => q * composePower q n
+
+/-- List-backed power-sum form for composition, starting at a coefficient base index. -/
+def composeCoeffPowerSumFrom [One R] [Add R] [Mul R] :
+    List R → Nat → DensePoly R → DensePoly R
+  | [], _, _ => 0
+  | c :: cs, base, q =>
+      C c * composePower q base + composeCoeffPowerSumFrom cs (base + 1) q
+
+/-- Coefficient-indexed bounded power-sum form for composition. -/
+def composeCoeffPowerSumUpTo [One R] [Add R] [Mul R]
+    (coeff : Nat → R) :
+    Nat → Nat → DensePoly R → DensePoly R
+  | 0, _, _ => 0
+  | n + 1, base, q =>
+      C (coeff base) * composePower q base +
+        composeCoeffPowerSumUpTo coeff n (base + 1) q
+
+/-- `composeCoeffPowerSumFrom` over a consecutive range is the bounded coefficient-indexed
+power sum. -/
+theorem composeCoeffPowerSumFrom_range_eq_upTo [One R] [Add R] [Mul R]
+    (coeff : Nat → R) (q : DensePoly R) :
+    ∀ n base,
+      composeCoeffPowerSumFrom ((List.range n).map (fun i => coeff (base + i))) base q =
+        composeCoeffPowerSumUpTo coeff n base q
+  | 0, base => by
+      simp [composeCoeffPowerSumFrom, composeCoeffPowerSumUpTo]
+  | n + 1, base => by
+      rw [List.range_succ_eq_map]
+      simp only [List.map_cons, List.map_map]
+      simp only [composeCoeffPowerSumFrom, composeCoeffPowerSumUpTo]
+      congr 1
+      simpa [Function.comp_def, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm]
+        using composeCoeffPowerSumFrom_range_eq_upTo coeff q n (base + 1)
+
+/-- Reading a stored coefficient list with default zero agrees with `DensePoly.coeff`. -/
+theorem toArray_toList_getD_eq_coeff (p : DensePoly R) (n : Nat) :
+    p.toArray.toList.getD n (Zero.zero : R) = p.coeff n := by
+  unfold toArray coeff
+  rw [Array.getD_eq_getD_getElem?]
+  change p.coeffs.toList[n]?.getD (Zero.zero : R) =
+    p.coeffs[n]?.getD (Zero.zero : R)
+  rw [Array.getElem?_toList]
+
+omit [DecidableEq R] in
+private theorem list_eq_of_length_eq_of_getD_eq
+    {xs ys : List R}
+    (hlen : xs.length = ys.length)
+    (hget : ∀ i, i < xs.length → xs.getD i (Zero.zero : R) = ys.getD i (Zero.zero : R)) :
+    xs = ys := by
+  induction xs generalizing ys with
+  | nil =>
+      cases ys with
+      | nil => rfl
+      | cons _ _ => simp at hlen
+  | cons x xs ih =>
+      cases ys with
+      | nil => simp at hlen
+      | cons y ys =>
+          have hhead : x = y := by
+            have h := hget 0 (by simp)
+            simpa using h
+          have hlen_tail : xs.length = ys.length := Nat.succ.inj hlen
+          have htail : xs = ys := by
+            apply ih hlen_tail
+            intro i hi
+            have h := hget (i + 1) (by simp [hi])
+            simpa using h
+          rw [hhead, htail]
+
+/-- The stored coefficient list is the range of coefficient reads over `p.size`. -/
+theorem toArray_toList_eq_coeff_range (p : DensePoly R) :
+    p.toArray.toList = (List.range p.size).map (fun i => p.coeff i) := by
+  apply list_eq_of_length_eq_of_getD_eq
+  · simp [toArray, size]
+  · intro i hi
+    have hi_size : i < p.size := by
+      simpa [toArray, size] using hi
+    rw [toArray_toList_getD_eq_coeff]
+    rw [list_getD_map_range]
+    simp [hi_size]
 
 /-- Formal derivative. The coefficient of `x^i` becomes `(i + 1) * a_(i+1)`. -/
 def derivative [NatCast R] [Mul R] (p : DensePoly R) : DensePoly R :=
@@ -487,7 +556,7 @@ theorem coeff_add [Add R] (p q : DensePoly R) (n : Nat)
     simp [hn, coeff_eq_zero_of_size_le p hp, coeff_eq_zero_of_size_le q hq, hzero]
 
 /-- Semiring-specialized coefficient law for addition. -/
-@[simp] theorem coeff_add_semiring {S : Type u}
+@[simp, grind =] theorem coeff_add_semiring {S : Type u}
     [Zero S] [Add S] [Lean.Grind.Semiring S] [DecidableEq S]
     (p q : DensePoly S) (n : Nat)
     (hzero : AddZeroLaw S := by infer_instance) :
@@ -511,7 +580,7 @@ theorem coeff_sub [Sub R] (p q : DensePoly R) (n : Nat)
     simp [hn, coeff_eq_zero_of_size_le p hp, coeff_eq_zero_of_size_le q hq, hzero]
 
 /-- Ring-specialized coefficient law for subtraction. -/
-@[simp] theorem coeff_sub_ring {S : Type u}
+@[simp, grind =] theorem coeff_sub_ring {S : Type u}
     [Zero S] [Sub S] [Lean.Grind.Ring S] [DecidableEq S]
     (p q : DensePoly S) (n : Nat)
     (hzero : SubZeroLaw S := by infer_instance) :
@@ -519,7 +588,7 @@ theorem coeff_sub [Sub R] (p q : DensePoly R) (n : Nat)
   coeff_sub p q n hzero.sub_zero_zero
 
 /-- The zero polynomial has coefficient `0` at every index. -/
-@[simp] theorem coeff_zero (n : Nat) :
+@[simp, grind =] theorem coeff_zero (n : Nat) :
     (0 : DensePoly R).coeff n = (0 : R) := by
   exact coeff_eq_zero_of_size_le (0 : DensePoly R) (by simp)
 
@@ -532,7 +601,7 @@ theorem coeff_neg [Sub R] (p : DensePoly R) (n : Nat)
   simp [neg, coeff_sub, hzero]
 
 /-- Ring-specialized coefficient law for negation. -/
-@[simp] theorem coeff_neg_ring {S : Type u}
+@[simp, grind =] theorem coeff_neg_ring {S : Type u}
     [Zero S] [Sub S] [Neg S] [Lean.Grind.Ring S] [DecidableEq S]
     (p : DensePoly S) (n : Nat)
     (hsub : SubZeroLaw S := by infer_instance)
@@ -543,7 +612,7 @@ theorem coeff_neg [Sub R] (p : DensePoly R) (n : Nat)
   exact hneg.zero_sub_eq_neg (p.coeff n)
 
 /-- Semiring-specialized right zero law for dense polynomial addition. -/
-@[simp] theorem add_zero_semiring {S : Type u}
+@[simp, grind =] theorem add_zero_semiring {S : Type u}
     [Lean.Grind.Semiring S] [DecidableEq S]
     (p : DensePoly S) :
     p + 0 = p := by
@@ -553,7 +622,7 @@ theorem coeff_neg [Sub R] (p : DensePoly R) (n : Nat)
   grind
 
 /-- Semiring-specialized left zero law for dense polynomial addition. -/
-@[simp] theorem zero_add_semiring {S : Type u}
+@[simp, grind =] theorem zero_add_semiring {S : Type u}
     [Lean.Grind.Semiring S] [DecidableEq S]
     (p : DensePoly S) :
     0 + p = p := by
@@ -563,7 +632,7 @@ theorem coeff_neg [Sub R] (p : DensePoly R) (n : Nat)
   grind
 
 /-- Ring-specialized right zero law for dense polynomial subtraction. -/
-@[simp] theorem sub_zero_ring {S : Type u}
+@[simp, grind =] theorem sub_zero_ring {S : Type u}
     [Lean.Grind.Ring S] [DecidableEq S]
     (p : DensePoly S) :
     p - 0 = p := by
@@ -573,7 +642,7 @@ theorem coeff_neg [Sub R] (p : DensePoly R) (n : Nat)
   grind
 
 /-- Ring-specialized left zero law for dense polynomial subtraction. -/
-@[simp] theorem zero_sub_ring {S : Type u}
+@[simp, grind =] theorem zero_sub_ring {S : Type u}
     [Lean.Grind.Ring S] [DecidableEq S]
     (p : DensePoly S) :
     0 - p = -p := by
@@ -583,7 +652,7 @@ theorem coeff_neg [Sub R] (p : DensePoly R) (n : Nat)
   grind
 
 /-- Ring-specialized negation of the zero dense polynomial. -/
-@[simp] theorem neg_zero_ring {S : Type u}
+@[simp, grind =] theorem neg_zero_ring {S : Type u}
     [Lean.Grind.Ring S] [DecidableEq S] :
     -(0 : DensePoly S) = 0 := by
   apply ext_coeff
@@ -592,7 +661,7 @@ theorem coeff_neg [Sub R] (p : DensePoly R) (n : Nat)
   grind
 
 /-- Horner evaluation sends the zero dense polynomial to `0`. -/
-@[simp] theorem eval_zero [Add R] [Mul R] (x : R) :
+@[simp, grind =] theorem eval_zero [Add R] [Mul R] (x : R) :
     eval (0 : DensePoly R) x = 0 := by
   rfl
 
@@ -615,7 +684,8 @@ theorem eval_C [Add R] [Mul R] (c x : R)
 
 /-- Semiring-specialized evaluation law for constants. This packages the
 zero-multiplication and zero-addition laws needed by the generic `eval_C`. -/
-@[simp] theorem eval_C_semiring {S : Type u} [Lean.Grind.Semiring S] [DecidableEq S]
+@[simp, grind =] theorem eval_C_semiring {S : Type u}
+    [Lean.Grind.Semiring S] [DecidableEq S]
     (c x : S) :
     eval (C c) x = c :=
   eval_C c x (Lean.Grind.Semiring.zero_mul x) (by grind)
@@ -649,7 +719,7 @@ private theorem eval_replicate_zero_semiring {S : Type u} [Lean.Grind.Semiring S
         semiring_mul_pow_left]
 
 /-- Semiring-specialized evaluation law for monomials. -/
-@[simp] theorem eval_monomial_semiring {S : Type u}
+@[simp, grind =] theorem eval_monomial_semiring {S : Type u}
     [Lean.Grind.Semiring S] [DecidableEq S]
     (n : Nat) (c x : S) :
     eval (monomial n c) x = c * x ^ n := by
@@ -668,7 +738,7 @@ private theorem eval_replicate_zero_semiring {S : Type u} [Lean.Grind.Semiring S
     exact eval_replicate_zero_semiring n c x
 
 /-- The formal derivative of the zero polynomial is zero. -/
-@[simp] theorem derivative_zero [NatCast R] [Mul R] :
+@[simp, grind =] theorem derivative_zero [NatCast R] [Mul R] :
     derivative (0 : DensePoly R) = 0 := by
   rfl
 
@@ -691,13 +761,13 @@ attribute [local instance 1100] Lean.Grind.Semiring.natCast
 /-- Semiring-specialized coefficient law for the formal derivative, registered
 as a normalizing rewrite because semirings provide the required `a * 0 = 0`
 law. -/
-@[simp] theorem coeff_derivative_semiring {S : Type u}
+@[simp, grind =] theorem coeff_derivative_semiring {S : Type u}
     [Lean.Grind.Semiring S] [DecidableEq S] (p : DensePoly S) (n : Nat) :
     (derivative p).coeff n = ((n + 1 : Nat) : S) * p.coeff (n + 1) := by
   exact coeff_derivative p n (Lean.Grind.Semiring.mul_zero _)
 
 /-- The formal derivative of a constant polynomial is zero over a semiring. -/
-@[simp] theorem derivative_C_semiring {S : Type u}
+@[simp, grind =] theorem derivative_C_semiring {S : Type u}
     [Lean.Grind.Semiring S] [DecidableEq S] (c : S) :
     derivative (C c : DensePoly S) = 0 := by
   apply ext_coeff
@@ -708,7 +778,7 @@ law. -/
   exact Lean.Grind.Semiring.mul_zero _
 
 /-- The formal derivative of a degree-zero monomial is zero over a semiring. -/
-@[simp] theorem derivative_monomial_zero_semiring {S : Type u}
+@[simp, grind =] theorem derivative_monomial_zero_semiring {S : Type u}
     [Lean.Grind.Semiring S] [DecidableEq S] (c : S) :
     derivative (monomial 0 c : DensePoly S) = 0 := by
   apply ext_coeff
