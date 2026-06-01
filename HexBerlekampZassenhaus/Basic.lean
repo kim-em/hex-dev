@@ -7050,6 +7050,39 @@ theorem factorWithBound_entry_mem_raw_source
   apply factorizationOfFactors_entry_mem_normalized_raw
   simpa only [hfactor] using hmem
 
+/-- Every recorded entry of `factorWithBound f B` is primitive once every raw
+factor in the selected fast branch, or in the slow fallback when the fast path
+returns `none`, is primitive. -/
+theorem factorWithBound_entry_primitive_of_chosen_raw_primitive
+    {f : ZPoly} {B : Nat} {entry : ZPoly × Nat}
+    (hmem : entry ∈ (factorWithBound f B).factors.toList)
+    (h_raw :
+      ∀ rawFactors : Array ZPoly,
+        (factorFastFactorsWithBound f B = some rawFactors ∨
+          (factorFastFactorsWithBound f B = none ∧
+            rawFactors = factorSlowFactorsWithBound f B)) →
+        ∀ raw ∈ rawFactors.toList, ZPoly.Primitive raw) :
+    ZPoly.Primitive entry.1 := by
+  obtain ⟨rawFactors, hsource, raw, hraw_mem, hentry_eq⟩ :=
+    factorWithBound_entry_mem_raw_source f B entry hmem
+  rw [hentry_eq]
+  exact normalizeFactorSign_primitive _ (h_raw rawFactors hsource raw hraw_mem)
+
+/-- Every recorded entry of `factorWithBound f B` is primitive, assuming the
+chosen raw factor array is primitive entrywise. -/
+theorem factorWithBound_entries_primitive
+    (f : ZPoly) (B : Nat)
+    (h_raw :
+      ∀ rawFactors : Array ZPoly,
+        (factorFastFactorsWithBound f B = some rawFactors ∨
+          (factorFastFactorsWithBound f B = none ∧
+            rawFactors = factorSlowFactorsWithBound f B)) →
+        ∀ raw ∈ rawFactors.toList, ZPoly.Primitive raw) :
+    ∀ entry ∈ (factorWithBound f B).factors, ZPoly.Primitive entry.1 := by
+  intro entry hentry
+  exact factorWithBound_entry_primitive_of_chosen_raw_primitive
+    (Array.mem_toList_iff.mpr hentry) h_raw
+
 /-- Every recorded entry of the bounded public factorization has positive
 multiplicity. -/
 theorem factorWithBound_entry_multiplicity_pos
@@ -7163,6 +7196,44 @@ theorem factor_entry_mem_raw_source
   simpa [factor_eq_factorWithBound_default] using
     factorWithBound_entry_mem_raw_source
       f (ZPoly.defaultFactorCoeffBound f) entry hmem
+
+/-- Every recorded entry of the default public factorization is primitive once
+every raw factor in the selected default-precision branch is primitive. -/
+theorem factor_entry_primitive_of_chosen_raw_primitive
+    {f : ZPoly} {entry : ZPoly × Nat}
+    (hmem : entry ∈ (factor f).factors.toList)
+    (h_raw :
+      ∀ rawFactors : Array ZPoly,
+        (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
+            some rawFactors ∨
+          (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
+              none ∧
+            rawFactors =
+              factorSlowFactorsWithBound f (ZPoly.defaultFactorCoeffBound f))) →
+        ∀ raw ∈ rawFactors.toList, ZPoly.Primitive raw) :
+    ZPoly.Primitive entry.1 :=
+  factorWithBound_entry_primitive_of_chosen_raw_primitive
+    (B := ZPoly.defaultFactorCoeffBound f)
+    (by simpa [factor_eq_factorWithBound_default] using hmem)
+    h_raw
+
+/-- Default-precision specialisation of `factorWithBound_entries_primitive`
+for the public `factor` entry point. -/
+theorem factor_entries_primitive
+    (f : ZPoly)
+    (h_raw :
+      ∀ rawFactors : Array ZPoly,
+        (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
+            some rawFactors ∨
+          (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
+              none ∧
+            rawFactors =
+              factorSlowFactorsWithBound f (ZPoly.defaultFactorCoeffBound f))) →
+        ∀ raw ∈ rawFactors.toList, ZPoly.Primitive raw) :
+    ∀ entry ∈ (factor f).factors, ZPoly.Primitive entry.1 := by
+  intro entry hentry
+  exact factor_entry_primitive_of_chosen_raw_primitive
+    (Array.mem_toList_iff.mpr hentry) h_raw
 
 /-- The default public factorization has no duplicate polynomial keys. -/
 theorem factor_pairwise_first
