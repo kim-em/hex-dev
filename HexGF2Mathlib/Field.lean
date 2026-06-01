@@ -1,5 +1,5 @@
 import HexGF2Mathlib.Basic
-import HexGfqField
+import HexGFqField
 import Mathlib.Data.Fintype.Card
 
 /-!

@@ -2,8 +2,8 @@
 
 This checkpoint records the merge wave on `main` after summarize issue
 `#1162`. It covers the dense-polynomial Phase 5 proof stream, benchmark
-policy tightening, the `HexGfq` Phase 1 through Phase 3 transition,
-`HexGfqRing` and `HexGfqField` Phase 4 benchmark work, and the current
+policy tightening, the `HexGFq` Phase 1 through Phase 3 transition,
+`HexGFqRing` and `HexGFqField` Phase 4 benchmark work, and the current
 Phase 5 proof frontier through PR `#1324`.
 
 ## Newly merged on `main` since checkpoint 15
@@ -37,9 +37,9 @@ Phase 5 proof frontier through PR `#1324`.
 
 ### Gfq, Conway, and factoring surface
 
-- PR `#1221` completed the `HexGfq` Phase 1 scaffold, PR `#1230` reviewed the
+- PR `#1221` completed the `HexGFq` Phase 1 scaffold, PR `#1230` reviewed the
   Phase 2 scaffold, PR `#1242` added the GF2q-to-GFq bridge, PR `#1298` added
-  the core conformance module, and PR `#1300` completed `HexGfq` Phase 3.
+  the core conformance module, and PR `#1300` completed `HexGFq` Phase 3.
 - PR `#1239` added Tier 1 `HexConway` conformance checks.
 - PR `#1222` completed the `HexBerlekampZassenhaus` conformance core.
 - PR `#1253` completed the `HexGF2Mathlib` Phase 1 scaffold audit.
@@ -60,13 +60,13 @@ Phase 5 proof frontier through PR `#1324`.
 ### GfqRing and GfqField benchmark and inverse frontier
 
 - PRs `#1302`, `#1306`, and `#1305` added, stabilized, and reviewed the
-  `HexGfqRing` Phase 4 quotient-ring benchmark surface, promoting
-  `HexGfqRing` to Phase 5 readiness.
-- PRs `#1308`, `#1311`, and `#1312` added the `HexGfqField` Phase 4 benchmark
+  `HexGFqRing` Phase 4 quotient-ring benchmark surface, promoting
+  `HexGFqRing` to Phase 5 readiness.
+- PRs `#1308`, `#1311`, and `#1312` added the `HexGFqField` Phase 4 benchmark
   surface, recorded the first verdict pass, and resolved the inverse benchmark
-  window, promoting `HexGfqField` to Phase 5 readiness.
+  window, promoting `HexGFqField` to Phase 5 readiness.
 - PR `#1324` added the scalar-scale and quotient-reduction lemmas needed by
-  the `HexGfqField` inverse proof cluster, proving the scaled Bezout bridge
+  the `HexGFqField` inverse proof cluster, proving the scaled Bezout bridge
   and leaving the final irreducible-gcd normalization issue for replanning.
 
 ## Current queue frontier
@@ -74,7 +74,7 @@ Phase 5 proof frontier through PR `#1324`.
 - Unclaimed: `#1321` covers the `HexMatrix` determinant row-operation proof
   cluster.
 - Claimed: `#1297` is this checkpoint.
-- Replan: `#1313` is the original oversized `HexGfqField` inverse xgcd parent,
+- Replan: `#1313` is the original oversized `HexGFqField` inverse xgcd parent,
   and `#1323` needs replanning because the requested generic normalization
   theorem requires a prime-field or unit hypothesis beyond the current
   `ZMod64.Bounds p` API.
@@ -86,24 +86,24 @@ Phase 5 proof frontier through PR `#1324`.
 `python3 scripts/status.py` currently reports these ready dispatch targets:
 
 - Phase 5: HexArith, HexPoly, HexMatrix, HexModArith, HexGramSchmidt, HexGF2,
-  HexLLL, HexPolyFp, HexGfqRing, HexGfqField.
+  HexLLL, HexPolyFp, HexGFqRing, HexGFqField.
 - Phase 4: HexPolyZ, HexBerlekamp, HexMatrixMathlib.
 - Phase 3: HexPolyMathlib, HexModArithMathlib, HexGramSchmidtMathlib,
   HexLLLMathlib.
 - Phase 2 reviews: HexBerlekampMathlib, HexHenselMathlib, HexGF2Mathlib.
-- Phase 1 scaffolding: HexGfqMathlib, HexBerlekampZassenhausMathlib.
+- Phase 1 scaffolding: HexGFqMathlib, HexBerlekampZassenhausMathlib.
 
 The blocked status graph is now:
 
 - HexHensel Phase 4 waits on HexPolyZ Phase 4.
-- HexConway Phase 4 and HexGfq Phase 4 wait on HexBerlekamp Phase 4.
+- HexConway Phase 4 and HexGFq Phase 4 wait on HexBerlekamp Phase 4.
 - HexBerlekampZassenhaus Phase 4 waits on HexBerlekamp Phase 4 and HexHensel
   Phase 4.
 - HexPolyZMathlib Phase 3 waits on HexPolyMathlib Phase 3.
 
 ## Follow-up focus
 
-- Replan the `HexGfqField` inverse normalization theorem around the missing
+- Replan the `HexGFqField` inverse normalization theorem around the missing
   prime-field or coefficient-unit hypothesis before attempting to close
   `reduceMod_repr_mul_invPoly_eq_one`.
 - Decompose or strengthen the `HexMatrix` determinant row-operation proof

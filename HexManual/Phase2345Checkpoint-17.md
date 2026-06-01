@@ -94,18 +94,18 @@ remaining `HexHensel` multifactor proof is already represented by `#1487`.
 `python3 scripts/status.py` currently reports these ready dispatch targets:
 
 - Phase 5: HexArith, HexPoly, HexMatrix, HexModArith, HexGramSchmidt, HexGF2,
-  HexPolyZ, HexLLL, HexPolyFp, HexGfqRing, HexGfqField, and HexHensel.
+  HexPolyZ, HexLLL, HexPolyFp, HexGFqRing, HexGFqField, and HexHensel.
 - Phase 4: HexBerlekamp and HexMatrixMathlib.
 - Phase 3: HexPolyMathlib, HexModArithMathlib, HexGramSchmidtMathlib, and
   HexLLLMathlib.
 - Phase 2 reviews: HexBerlekampMathlib, HexHenselMathlib, HexGF2Mathlib, and
-  HexGfqMathlib.
+  HexGFqMathlib.
 - Phase 1 scaffolding: HexBerlekampZassenhausMathlib.
 
 The blocked status graph is now:
 
 - HexConway Phase 4 waits on HexBerlekamp Phase 4.
-- HexGfq Phase 4 waits on HexConway Phase 4.
+- HexGFq Phase 4 waits on HexConway Phase 4.
 - HexBerlekampZassenhaus Phase 4 waits on HexBerlekamp Phase 4.
 - HexPolyZMathlib Phase 3 waits on HexPolyMathlib Phase 3.
 

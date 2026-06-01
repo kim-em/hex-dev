@@ -12,14 +12,14 @@ merged through PR `#810`.
 - PRs `#648`, `#657`, `#671`, `#675`, `#683`, `#685`, `#702`, `#705`,
   `#709`, `#714`, `#717`, `#718`, `#770`, and `#780` moved a broad set of
   libraries through review bookkeeping: `HexModArithMathlib`,
-  `HexGfqRing`, `HexPoly`, `HexPolyZ`, `HexPolyZMathlib`, `HexModArith`,
-  `HexGfqField`, `HexGramSchmidtMathlib`, `HexArith`, `HexPolyFp`,
+  `HexGFqRing`, `HexPoly`, `HexPolyZ`, `HexPolyZMathlib`, `HexModArith`,
+  `HexGFqField`, `HexGramSchmidtMathlib`, `HexArith`, `HexPolyFp`,
   `HexMatrixMathlib`, and `HexPolyMathlib`.
 - Those review completions are now reflected in `libraries.yml`: the root
   arithmetic/poly stack and several Mathlib bridge layers are at or beyond
   Phase 2, while `HexMatrix` has advanced to Phase 3 and is ready for the
   Phase 4 benchmark stream.
-- `HexGfqRing`, `HexGfqField`, `HexBerlekamp`, `HexHensel`, and
+- `HexGFqRing`, `HexGFqField`, `HexBerlekamp`, `HexHensel`, and
   `HexConway` are no longer merely blocked future libraries. They now have
   Phase 1 surfaces in place and sit on the active Phase 2 review frontier.
 
@@ -27,16 +27,16 @@ merged through PR `#810`.
 
 - PRs `#664`, `#678`, `#701`, `#760`, `#764`, `#773`, `#783`, and `#785`
   expanded the finite-field stack: `HexGF2` gained field-operation wrappers,
-  `HexGF2Mathlib` gained field bridges, `HexGfqField` gained quotient-backed
-  ring-law transport and inverse helper surface, `HexGfqRing` gained
+  `HexGF2Mathlib` gained field bridges, `HexGFqField` gained quotient-backed
+  ring-law transport and inverse helper surface, `HexGFqRing` gained
   reduction idempotence, and `HexConway` gained committed-entry wrappers.
 - PRs `#784`, `#808`, and `#810` added proof-support pieces below the GF2
   and quotient-ring follow-up streams: normalization bounds, the generic
   dense-polynomial remainder-degree surface, and GF2 polynomial zero helpers.
 - The finite-field pipeline is now much more concrete but still not fully
   certified. The current blockers are proof-level follow-ups around
-  `HexGF2` Euclidean semantics, `HexGfqRing` quotient ring instances, and
-  `HexGfqField` field-shell axioms.
+  `HexGF2` Euclidean semantics, `HexGFqRing` quotient ring instances, and
+  `HexGFqField` field-shell axioms.
 
 ### Factoring, Hensel, LLL, and conformance surface
 
@@ -74,14 +74,14 @@ merged through PR `#810`.
   and Phase 3 frontiers rather than a simple Phase 1 scaffolding queue.
   `HexArith` and `HexPoly` are ready for Phase 3 conformance; `HexMatrix`
   is ready for Phase 4 benchmarking; `HexGramSchmidt`, `HexGF2`, `HexLLL`,
-  `HexGfqRing`, `HexGfqField`, `HexBerlekamp`, `HexHensel`, and `HexConway`
+  `HexGFqRing`, `HexGFqField`, `HexBerlekamp`, `HexHensel`, and `HexConway`
   are ready for Phase 2 review.
 - The Mathlib bridge side has also moved forward. `HexMatrixMathlib` is ready
   for Phase 3, while `HexLLLMathlib` is ready for Phase 2 review and still
   has a feature follow-up for the Mathlib-norm restatement of the short-vector
   guarantee.
 - The finite-field quotient pipeline is the main coordination frontier.
-  `HexGfq` and `HexBerlekampZassenhaus` remain Phase 1-ready-but-unstarted
+  `HexGFq` and `HexBerlekampZassenhaus` remain Phase 1-ready-but-unstarted
   only after their executable prerequisites clear, and their Mathlib mirrors
   stay blocked behind those executable libraries.
 
@@ -95,12 +95,12 @@ merged through PR `#810`.
 - `HexGramSchmidt -> Phase 2`
 - `HexGF2 -> Phase 2`
 - `HexLLL -> Phase 2`
-- `HexGfqRing -> Phase 2`
-- `HexGfqField -> Phase 2`
+- `HexGFqRing -> Phase 2`
+- `HexGFqField -> Phase 2`
 - `HexBerlekamp -> Phase 2`
 - `HexHensel -> Phase 2`
 - `HexConway -> Phase 2`
-- `HexGfq -> Phase 1`
+- `HexGFq -> Phase 1`
 - `HexBerlekampZassenhaus -> Phase 1`
 - `HexMatrixMathlib -> Phase 3`
 - `HexLLLMathlib -> Phase 2`
@@ -120,7 +120,7 @@ The remaining libraries are blocked:
   `HexGramSchmidt.done_through >= 3`.
 - `HexPolyZMathlib -> Phase 3`, waiting on `HexPolyZ.done_through >= 3` and
   `HexPolyMathlib.done_through >= 3`.
-- `HexGfqMathlib -> Phase 1`, waiting on `HexGfq.done_through >= 1`.
+- `HexGFqMathlib -> Phase 1`, waiting on `HexGFq.done_through >= 1`.
 - `HexBerlekampZassenhausMathlib -> Phase 1`, waiting on
   `HexBerlekampZassenhaus.done_through >= 1`.
 
@@ -129,21 +129,21 @@ No library is fully done yet.
 ## Open work map
 
 - Unclaimed review work is still present for `HexGF2` (`#672`) and
-  `HexGfqRing` (`#673`), but both are review-certification issues whose
+  `HexGFqRing` (`#673`), but both are review-certification issues whose
   bodies explicitly wait for repair streams to land.
 - Unclaimed feature work is concentrated around proof and smoke-test support:
   `HexLLLMathlib` short-vector norm restatement (`#720`), the
-  `HexGfqRing` representative degree wrapper (`#787`), single-word and
+  `HexGFqRing` representative degree wrapper (`#787`), single-word and
   packed-quotient `HexGF2` smoke coverage (`#789`, `#790`),
   quotient-constant helper lemmas for characteristic transport (`#792`), and
   finite packed-representative support for `HexGF2Mathlib` (`#797`).
-- Claimed issue work is currently focused on the `HexPoly`/`HexGfqRing`
-  reduction-congruence helper (`#798`), the `HexGfqField` inverse follow-up
+- Claimed issue work is currently focused on the `HexPoly`/`HexGFqRing`
+  reduction-congruence helper (`#798`), the `HexGFqField` inverse follow-up
   (`#795`), and this checkpoint issue (`#643`).
 - Blocked issue work is clustered around dependent proof streams:
   `HexGF2` Euclid division and gcd/xgcd (`#806`, `#807`), the
-  `HexGfqField` zero/zpow and characteristic-p follow-ups (`#794`, `#791`),
-  the `HexGfqRing` ring-instance follow-up (`#776`), and the dependent
+  `HexGFqField` zero/zpow and characteristic-p follow-ups (`#794`, `#791`),
+  the `HexGFqRing` ring-instance follow-up (`#776`), and the dependent
   `HexGF2` field-wrapper repair (`#772`).
 - There are currently no open PRs and no PRs needing repair according to
   `coordination orient`.

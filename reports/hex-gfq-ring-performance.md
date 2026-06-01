@@ -1,4 +1,4 @@
-# HexGfqRing Performance Report
+# HexGFqRing Performance Report
 
 ## Bench Targets
 
@@ -28,7 +28,7 @@ lake exe hexgfqring_bench run \
 ```
 
 The run used the deterministic dense `F_65537` benchmark inputs constructed in
-`HexGfqRing/Bench.lean`; no random seeds are involved. The harness recorded
+`HexGFqRing/Bench.lean`; no random seeds are involved. The harness recorded
 `58fc57b-dirty` because this worktree carried an unrelated pre-existing
 `.claude/CLAUDE.md` modification. Export artefact:
 `reports/bench-results/hex-gfq-ring-58fc57b3775d.json`, SHA-256
@@ -68,13 +68,13 @@ lake exe hexgfqring_bench verify
 ## Comparator Ratios
 
 `SPEC/Libraries/hex-gfq-ring.md` declares that no external Phase-4 performance
-comparator is required for `HexGfqRing`. The reason is `structural-layer`:
-`HexGfqRing` implements the general quotient ring `F_p[x]/(f)` for any
+comparator is required for `HexGFqRing`. The reason is `structural-layer`:
+`HexGFqRing` implements the general quotient ring `F_p[x]/(f)` for any
 nonconstant modulus, including reducible moduli, while FLINT `fq_default`
 constructs finite fields and rejects reducible moduli. The finite-field subset
-is covered by `HexGfqField`'s `fq_default` comparator, where irreducibility is
+is covered by `HexGFqField`'s `fq_default` comparator, where irreducibility is
 part of the library contract. Consequently there are no `phase4.comparators`
-ratios to record for `HexGfqRing`, and there is no internal `compare` group
+ratios to record for `HexGFqRing`, and there is no internal `compare` group
 declared across the seven registrations.
 
 ## Profile
@@ -125,7 +125,7 @@ sidecar_mono_anchor_ns=329178930047750
 
 Leaf samples were allocation/free 51.9%, GMP big-integer arithmetic 16.4%,
 Lean runtime 15.1%, other system/Lean/library frames 11.0%, and own
-HexGfqRing/HexPolyFp code 5.6%. The large allocation/free share is inside the
+HexGFqRing/HexPolyFp code 5.6%. The large allocation/free share is inside the
 timed remainder loop: `mi_free`, `mi_malloc_small`, and macOS
 `libsystem_malloc` leaves are reached through the same coefficient update stack
 as the arithmetic leaves, not through input construction. Inclusive own-code
@@ -173,7 +173,7 @@ sidecar_mono_anchor_ns=329188881497041
 
 Leaf samples were allocation/free 50.6%, Lean runtime 16.6%, GMP big-integer
 arithmetic 13.8%, other system/Lean/library frames 12.5%, and own
-HexGfqRing/HexPolyFp code 6.5%. Inclusive own-code cost split between
+HexGFqRing/HexPolyFp code 6.5%. Inclusive own-code cost split between
 `Hex.GFqRing.mul -> Hex.DensePoly.mul` (37.3% / 37.3%) for the schoolbook
 product and `Hex.GFqRing.reduceMod -> Hex.DensePoly.divModArray ->
 Hex.DensePoly.divModArrayAux` (62.7% / 62.7% / 62.7%) for the post-product
@@ -188,7 +188,7 @@ the `n^2` cost model: the multiplication and the reduction are both `O(n^2)`
 in the modulus degree, so combined throughput is also `O(n^2)`.
 
 The dominant inclusive costs in both profiles all map to registered
-`HexGfqRing/Bench.lean` targets. The newly visible dominant allocation leaves
+`HexGFqRing/Bench.lean` targets. The newly visible dominant allocation leaves
 are attributable to the registered dense-reduction and quotient-multiplication
 timed regions rather than to unmeasured preparation or hashing. No unattributed
 dominant cost was observed.

@@ -1,4 +1,4 @@
-import HexGfqField.Operations
+import HexGFqField.Operations
 import HexBerlekamp.RabinSoundness
 import Hex.BenchOracle.Flint
 import LeanBench

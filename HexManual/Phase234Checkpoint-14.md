@@ -30,9 +30,9 @@ surface expansion merged through PR `#1077`.
 ### Conformance and downstream readiness
 
 - PR `#1009` completed the HexPolyFp square-free conformance slice, and
-  PR `#1028` added HexGfqRing Phase 3 conformance. PR `#1049` then added
-  HexGfqField Phase 3 core conformance, moving HexGfqField to the Phase 4
-  dependency frontier behind HexGfqRing Phase 4.
+  PR `#1028` added HexGFqRing Phase 3 conformance. PR `#1049` then added
+  HexGFqField Phase 3 core conformance, moving HexGFqField to the Phase 4
+  dependency frontier behind HexGFqRing Phase 4.
 - PRs `#1057` and `#1060` proved the Nat-level Barrett quotient bounds and
   reduction correctness lemmas in HexArith. HexArith was already through
   Phase 4 and remains ready for Phase 5 proof work.
@@ -86,14 +86,14 @@ surface expansion merged through PR `#1077`.
 - Phase 3: HexPolyMathlib, HexModArithMathlib, HexGramSchmidtMathlib.
 - Phase 2 reviews/scaffolding: HexGF2, HexBerlekamp, HexHensel, HexConway,
   HexLLLMathlib.
-- Phase 1 scaffolding: HexGfq, HexBerlekampZassenhaus,
+- Phase 1 scaffolding: HexGFq, HexBerlekampZassenhaus,
   HexBerlekampMathlib, HexHenselMathlib, HexGF2Mathlib.
 
 The blocked status graph is now mostly phase-promotion dependencies:
-HexLLL Phase 4 waits on HexGramSchmidt Phase 4; HexGfqRing Phase 4 waits on
-HexPolyFp Phase 4; HexGfqField Phase 4 waits on HexGfqRing Phase 4;
-HexPolyZMathlib Phase 3 waits on HexPolyMathlib Phase 3; HexGfqMathlib
-waits on HexGfq Phase 1; and HexBerlekampZassenhausMathlib waits on
+HexLLL Phase 4 waits on HexGramSchmidt Phase 4; HexGFqRing Phase 4 waits on
+HexPolyFp Phase 4; HexGFqField Phase 4 waits on HexGFqRing Phase 4;
+HexPolyZMathlib Phase 3 waits on HexPolyMathlib Phase 3; HexGFqMathlib
+waits on HexGFq Phase 1; and HexBerlekampZassenhausMathlib waits on
 HexBerlekampZassenhaus Phase 1.
 
 ## Follow-up focus

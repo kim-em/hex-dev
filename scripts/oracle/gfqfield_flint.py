@@ -3,7 +3,7 @@
 
 Reads a JSONL stream produced by `lake exe hexgfqfield_emit_fixtures`
 (or the committed sample at
-`conformance-fixtures/HexGfqField/gfqfield.jsonl`) and re-runs each
+`conformance-fixtures/HexGFqField/gfqfield.jsonl`) and re-runs each
 finite-field operation through python-flint's `fq_default_ctx`
 configured with the same explicit modulus.  On mismatch, writes a
 JSON failure record under `conformance-failures/` and exits non-zero
@@ -43,7 +43,7 @@ Usage::
     python3 scripts/oracle/gfqfield_flint.py path/to/file.jsonl
 
 ``--check`` is exactly equivalent to passing
-``conformance-fixtures/HexGfqField/gfqfield.jsonl``.
+``conformance-fixtures/HexGFqField/gfqfield.jsonl``.
 """
 from __future__ import annotations
 
@@ -55,7 +55,7 @@ from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-DEFAULT_FIXTURE = REPO_ROOT / "conformance-fixtures" / "HexGfqField" / "gfqfield.jsonl"
+DEFAULT_FIXTURE = REPO_ROOT / "conformance-fixtures" / "HexGFqField" / "gfqfield.jsonl"
 DEFAULT_FAILURE_DIR = REPO_ROOT / "conformance-failures"
 
 sys.path.insert(0, str(REPO_ROOT))

@@ -3,7 +3,7 @@
 This checkpoint records the merge wave on `main` after summarize issue
 `#1535`. It covers the concentrated `HexGF2` multiplication associativity
 stream, the `HexArith` Montgomery and primality proof closure, continued
-`HexPolyFp` Yun decomposition work, the `HexGfqField` inverse frontier, the
+`HexPolyFp` Yun decomposition work, the `HexGFqField` inverse frontier, the
 new `HexGramSchmidt` decomposition surface, and the current dispatch queue
 through PR `#1772`.
 
@@ -61,12 +61,12 @@ through PR `#1772`.
   derivative-active loop invariant using the step combiner, terminal case, and
   gcd/division reconstruction lemmas already in the file.
 
-### HexGfqField inverse frontier
+### HexGFqField inverse frontier
 
 - PR `#1755` added the xgcd gcd helper surface for the inverse proof.
 - PR `#1756` proved the xgcd gcd degree helper.
 - PR `#1757` closed the normalized xgcd inverse proof.
-- Current `HexGfqField` status: `scripts/status.py HexGfqField` still reports
+- Current `HexGFqField` status: `scripts/status.py HexGFqField` still reports
   Phase 5 ready, but the normalized inverse proof chain represented by the
   recent issues is closed.
 
@@ -105,7 +105,7 @@ already-created `HexGramSchmidt` split. The live gaps are represented by
 `python3 scripts/status.py` currently reports these ready dispatch targets:
 
 - Phase 5: HexArith, HexPoly, HexMatrix, HexModArith, HexGramSchmidt, HexGF2,
-  HexPolyZ, HexLLL, HexPolyFp, HexGfqRing, HexGfqField, and HexHensel.
+  HexPolyZ, HexLLL, HexPolyFp, HexGFqRing, HexGFqField, and HexHensel.
 - Phase 4: HexBerlekamp, HexPolyMathlib, HexMatrixMathlib,
   HexModArithMathlib, HexGramSchmidtMathlib, and HexGF2Mathlib.
 - Phase 3: HexPolyZMathlib, HexLLLMathlib, HexBerlekampMathlib, and
@@ -115,9 +115,9 @@ already-created `HexGramSchmidt` split. The live gaps are represented by
 The blocked status graph is now:
 
 - HexConway Phase 4 waits on HexBerlekamp Phase 4.
-- HexGfq Phase 4 waits on HexConway Phase 4.
+- HexGFq Phase 4 waits on HexConway Phase 4.
 - HexBerlekampZassenhaus Phase 4 waits on HexBerlekamp Phase 4.
-- HexGfqMathlib Phase 4 waits on HexGfq Phase 4 and HexGF2Mathlib Phase 4.
+- HexGFqMathlib Phase 4 waits on HexGFq Phase 4 and HexGF2Mathlib Phase 4.
 
 ## Follow-up focus
 

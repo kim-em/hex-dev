@@ -1,6 +1,6 @@
 import Init.Grind.Ring.Basic
 import HexModArith.Ring
-import HexGfqRing.Basic
+import HexGFqRing.Basic
 
 /-!
 Executable quotient-ring operations for canonical representatives in `F_p[x] / (f)`.

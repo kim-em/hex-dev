@@ -1,12 +1,12 @@
 import HexConway
 import HexGF2
-import HexGfqField
+import HexGFqField
 
 /-!
 User-facing canonical finite-field constructors.
 
 This module packages committed Conway-table entries as generic quotient-field
-types.  The generic `GFq` constructor always uses the `HexGfqField` quotient
+types.  The generic `GFq` constructor always uses the `HexGFqField` quotient
 representation; optimized packed characteristic-two constructors are kept to
 separate declarations so the representation choice remains explicit.
 -/

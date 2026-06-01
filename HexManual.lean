@@ -1,6 +1,6 @@
 import VersoManual
 
-import HexManual.Chapters.HexGfqRing
+import HexManual.Chapters.HexGFqRing
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -28,4 +28,4 @@ about the corresponding Mathlib structures. This manual collects per-library
 reference chapters for the libraries that have reached the
 documentation phase of the development plan.
 
-{include 0 HexManual.Chapters.HexGfqRing}
+{include 0 HexManual.Chapters.HexGFqRing}

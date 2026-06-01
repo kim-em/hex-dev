@@ -1,8 +1,8 @@
-import HexGfq.Basic
+import HexGFq.Basic
 
 /-!
 Core conformance checks for the canonical finite-field constructors in
-`HexGfq`.
+`HexGFq`.
 
 Oracle: none
 Mode: always

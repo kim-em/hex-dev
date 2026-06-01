@@ -1,8 +1,8 @@
-import HexGfqRing.Operations
+import HexGFqRing.Operations
 
 /-!
 Core conformance checks for the canonical quotient-ring surface in
-`HexGfqRing`.
+`HexGFqRing`.
 
 Oracle: none
 Mode: always
@@ -55,7 +55,7 @@ private def coeffNats (f : FpPoly 5) : List Nat :=
 /-- Modulus `x^4 + 2`, a monic degree-4 polynomial over `F_5`. The
 quotient ring `F_5[x] / (x^4 + 2)` has reduction rule
 `x^4 ≡ -2 ≡ 3 (mod 5)`. Irreducibility is not needed for the ring-level
-conformance checks; the same modulus is used by `HexGfqField` where
+conformance checks; the same modulus is used by `HexGFqField` where
 irreducibility is verified separately. -/
 private def modulus : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 0, 0, 0, 1]

@@ -125,7 +125,7 @@ scientific benchmark reruns.
 `scripts/status.py` still reports ready work across many libraries:
 
 - Phase 6: `HexArith`, `HexPoly`, `HexMatrix`, `HexModArith`, `HexGF2`,
-  `HexPolyFp`, `HexGfqField`, `HexHensel`, `HexConway`, `HexGfq`,
+  `HexPolyFp`, `HexGFqField`, `HexHensel`, `HexConway`, `HexGFq`,
   `HexPolyMathlib`.
 - Phase 5: `HexGramSchmidt`, `HexPolyZ`, `HexMatrixMathlib`,
   `HexModArithMathlib`.
@@ -133,7 +133,7 @@ scientific benchmark reruns.
   `HexPolyZMathlib`, `HexHenselMathlib`, `HexGF2Mathlib`.
 - Phase 1: `HexBerlekampZassenhaus`.
 
-`HexGfqRing` remains fully done. The planned-but-deferred libraries remain
+`HexGFqRing` remains fully done. The planned-but-deferred libraries remain
 `HexRoots`, `HexRootsMathlib`, `HexResultant`, `HexResultantMathlib`,
 `HexNumberField`, and `HexNumberFieldMathlib`.
 

@@ -117,18 +117,18 @@ through PR `#1212`.
 - Phase 3: HexConway, HexBerlekampZassenhaus, HexPolyMathlib,
   HexModArithMathlib, HexGramSchmidtMathlib.
 - Phase 2 reviews: HexLLLMathlib, HexBerlekampMathlib, HexHenselMathlib.
-- Phase 1 scaffolding: HexGfq, HexGF2Mathlib,
+- Phase 1 scaffolding: HexGFq, HexGF2Mathlib,
   HexBerlekampZassenhausMathlib.
 
 The blocked status graph is now:
 
 - HexLLL Phase 4 waits on HexGramSchmidt Phase 4.
-- HexGfqRing Phase 4 waits on HexPolyFp Phase 4.
-- HexGfqField Phase 4 waits on HexGfqRing Phase 4.
-- HexBerlekamp Phase 4 waits on HexPolyFp Phase 4 and HexGfqRing Phase 4.
+- HexGFqRing Phase 4 waits on HexPolyFp Phase 4.
+- HexGFqField Phase 4 waits on HexGFqRing Phase 4.
+- HexBerlekamp Phase 4 waits on HexPolyFp Phase 4 and HexGFqRing Phase 4.
 - HexHensel Phase 4 waits on HexPolyFp Phase 4 and HexPolyZ Phase 4.
 - HexPolyZMathlib Phase 3 waits on HexPolyMathlib Phase 3.
-- HexGfqMathlib Phase 1 waits on HexGfq Phase 1.
+- HexGFqMathlib Phase 1 waits on HexGFq Phase 1.
 
 ## Follow-up focus
 

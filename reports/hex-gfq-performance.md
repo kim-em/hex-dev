@@ -1,4 +1,4 @@
-# HexGfq Performance Report
+# HexGFq Performance Report
 
 ## Bench Targets
 
@@ -18,7 +18,7 @@ Scientific run at commit `33b7f720dcce514b455e26d27c402b415c192cd8` on
 lake exe hexgfq_bench run Hex.GfqBench.runPackedGenericSharedChecksum Hex.GfqBench.runGFqOfPolyReprChecksum Hex.GfqBench.runGF2qOfWordReprChecksum Hex.GfqBench.runGenericModulusChecksum Hex.GfqBench.runPackedModulusChecksum --export-file reports/bench-results/hex-gfq-33b7f720dcce.json
 ```
 
-The run used deterministic benchmark inputs from `HexGfq/Bench.lean`; random
+The run used deterministic benchmark inputs from `HexGFq/Bench.lean`; random
 seeds are not involved. The harness recorded `33b7f72-dirty` because this
 worktree had an unrelated pre-existing `.claude/CLAUDE.md` modification.
 Export artefact: `reports/bench-results/hex-gfq-33b7f720dcce.json`.
@@ -50,7 +50,7 @@ lake exe hexgfq_bench verify
 ## Comparator Ratios
 
 `SPEC/Libraries/hex-gfq.md` does not name an external Phase-4 performance
-comparator for `HexGfq`. The meaningful internal common-domain comparison is
+comparator for `HexGFq`. The meaningful internal common-domain comparison is
 covered by `Hex.GfqBench.runPackedGenericSharedChecksum`, which exercises the
 packed and generic p = 2 constructor/projection surfaces in one registered
 target and hashes their combined result. There are no external comparator
@@ -65,7 +65,7 @@ regions. The runs used commit `3bc24c50fbe57487776c433106894ee544a6d656` on
 `carica` (Apple M2 Ultra, arm64, macOS 14.6.1), Lean
 `leanprover/lean4:4.30.0-rc2`, lean-bench
 `91412dba8350c29ddf52c9ace56f8a3d2240b6c7`, samply `0.13.1`, and deterministic
-benchmark inputs from `HexGfq/Bench.lean`; random seeds are not involved. The
+benchmark inputs from `HexGFq/Bench.lean`; random seeds are not involved. The
 harness recorded `git_dirty: true` because the profile-compatible packed target
 and the report were being edited in this worktree. The raw filtered
 `*.json.gz` artefacts are developer-local under `/tmp` and are not committed.

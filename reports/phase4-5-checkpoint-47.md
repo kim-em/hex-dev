@@ -23,7 +23,7 @@ changing algorithms.
 - `HexModArith`: representative API polish, operator-level aliases, inverse
   and arithmetic wrappers, Barrett and Montgomery hot-loop facts, pow theorem
   surface cleanup, and hot-loop review work now tracked by #5713.
-- `HexGF2`, `HexGfq`, and `HexGfqField`: representative and packed-operation
+- `HexGF2`, `HexGFq`, and `HexGFqField`: representative and packed-operation
   wrappers for arithmetic, casts, powers, division/inversion, quotient
   operations, and finite-field wrapper review.
 - `HexPolyFp` and `HexPolyMathlib`: quotient/Frobenius/compose reviews,

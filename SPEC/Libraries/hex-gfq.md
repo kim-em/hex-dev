@@ -48,16 +48,16 @@ hex-gfq-field or `GF2n`/`GF2nPoly` directly from hex-gf2.
 No external comparator is required.
 
 **Justification:** `structural-layer` per
-`SPEC/benchmarking.md §"Comparator naming"`. HexGfq is a
+`SPEC/benchmarking.md §"Comparator naming"`. HexGFq is a
 convenience wrapper that selects the Conway polynomial from
 HexConway and constructs `FiniteField p (conwayPoly p n) ...`
-using HexGfqField's generic quotient-field machinery (or
+using HexGFqField's generic quotient-field machinery (or
 `GF2q` via HexGF2's packed representation for `p = 2`). The
 runtime cost is dominated by the underlying quotient-field
-arithmetic, which is covered by HexGfqField's external comparator
+arithmetic, which is covered by HexGFqField's external comparator
 declaration (FLINT `fq_default`, informational); the `GF2q` path
 is covered by HexGF2's external comparator declaration
-(NTL `GF2X`, informational). HexGfq itself contributes only the
+(NTL `GF2X`, informational). HexGFq itself contributes only the
 modulus-selection step, which is a Conway-table lookup and a
 constructor call — not an algorithmic surface that benefits from
 an independent external reference.

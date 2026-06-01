@@ -95,7 +95,7 @@ frontier to settle before adding broad new Phase 5 work.
 `python3 scripts/status.py` currently reports these ready dispatch targets:
 
 - Phase 5: HexArith, HexPoly, HexMatrix, HexModArith, HexGramSchmidt, HexGF2,
-  HexPolyZ, HexPolyFp, HexGfqRing, and HexGfqField.
+  HexPolyZ, HexPolyFp, HexGFqRing, and HexGFqField.
 - Phase 4: HexBerlekamp, HexPolyMathlib, HexMatrixMathlib,
   HexModArithMathlib, HexGramSchmidtMathlib, and HexGF2Mathlib.
 - Phase 3: HexPolyZMathlib and HexBerlekampMathlib.
@@ -104,12 +104,12 @@ frontier to settle before adding broad new Phase 5 work.
 The blocked status graph is now:
 
 - HexConway Phase 4 waits on HexBerlekamp Phase 4.
-- HexGfq Phase 4 waits on HexConway Phase 4.
+- HexGFq Phase 4 waits on HexConway Phase 4.
 - HexBerlekampZassenhaus Phase 1 waits on HexHensel Phase 1 and HexLLL
   Phase 1.
 - HexLLLMathlib Phase 1 waits on HexLLL Phase 1.
 - HexHenselMathlib Phase 1 waits on HexHensel Phase 1.
-- HexGfqMathlib Phase 4 waits on HexGfq Phase 4 and HexGF2Mathlib Phase 4.
+- HexGFqMathlib Phase 4 waits on HexGFq Phase 4 and HexGF2Mathlib Phase 4.
 - HexBerlekampZassenhausMathlib Phase 1 waits on HexBerlekampZassenhaus
   Phase 1.
 

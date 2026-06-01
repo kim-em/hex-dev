@@ -149,7 +149,7 @@ namespace Hex.ZPoly
 
     This contradicts the project's usual "irreducibility is a
     term-level fact, not a class" convention (cf.
-    `HexGfqField.FiniteField`'s explicit `_hirr` constructor
+    `HexGFqField.FiniteField`'s explicit `_hirr` constructor
     argument), but the convention applies when irreducibility is
     *part of a type's identity*. For `NumberField.Inv`'s case,
     irreducibility is an *ambient assumption used by an operation*

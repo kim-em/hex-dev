@@ -1,6 +1,6 @@
 import Hex.Conformance.Emit
-import HexGfq.CrossCheck
-import HexGfq.Basic
+import HexGFq.CrossCheck
+import HexGFq.Basic
 
 /-!
 JSONL emit driver for the `hex-gfq` packed/generic correspondence oracle.
@@ -12,14 +12,14 @@ plus eight `result` records per case to `stdout` (or to
 operation through python-flint's `fq_default_ctx` (binary extension
 field with the explicit modulus); each op's python-flint result is
 compared against both the packed (`HexGF2.GF2n`) and the generic
-(`HexGfqField.FiniteField`) Lean answers.  If the two Lean paths
+(`HexGFqField.FiniteField`) Lean answers.  If the two Lean paths
 agree on a wrong polynomial, the python-flint comparison still trips
 because both `packed_*` and `generic_*` would mismatch.
 
 The `HexConway` Tier-1 table currently exposes a `Conway.SupportedEntry`
 plus `Conway.PackedGF2Entry` only at extension degree `(2, 1)`, which
 makes the committed correspondence trivial.  Following the
-`HexGfq/CrossCheck.lean` pattern, this driver exercises the correspondence
+`HexGFq/CrossCheck.lean` pattern, this driver exercises the correspondence
 at larger binary degrees by constructing ad-hoc moduli with local
 irreducibility witnesses; the operations themselves still execute and
 their outputs feed the python-flint cross-check.
@@ -27,7 +27,7 @@ their outputs feed the python-flint cross-check.
 The correspondence is binary-only by design — `HexGF2.GF2n` packs `F_2`
 extensions into a single `UInt64` and there is no packed counterpart
 for odd characteristic.  Odd-characteristic finite-field cross-checks
-live in `HexGfqField`'s separate oracle.
+live in `HexGFqField`'s separate oracle.
 
 Cases cover `(p, n)` ∈ `{(2, 4), (2, 8), (2, 16)}` with hand-picked
 known irreducibles (`x^4+x+1`, the AES `x^8+x^4+x^3+x+1`, and the
@@ -49,7 +49,7 @@ open Hex.Conformance.Emit
 open Hex
 open Hex.GFqField
 
-private def lib : String := "HexGfq"
+private def lib : String := "HexGFq"
 
 private instance bounds2 : ZMod64.Bounds 2 := ⟨by decide, by decide⟩
 
@@ -207,7 +207,7 @@ private def fp2Coeffs (f : FpPoly 2) : List Int :=
 Each namespace fixes a known irreducible packed modulus, packages the
 matching generic `FpPoly 2` modulus via `Conway.packedGF2FpPoly`, and
 provides irreducibility plus positive-degree witnesses for both
-representations.  This mirrors `HexGfq/CrossCheck.lean`.
+representations.  This mirrors `HexGFq/CrossCheck.lean`.
 -/
 
 namespace N4

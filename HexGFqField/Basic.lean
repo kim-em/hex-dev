@@ -1,10 +1,10 @@
 import HexModArith.Prime
-import HexGfqRing.Operations
+import HexGFqRing.Operations
 
 /-!
 Core finite-field wrapper definitions for executable `F_p[x] / (f)`.
 
-This module packages the quotient-ring representation from `HexGfqRing`
+This module packages the quotient-ring representation from `HexGFqRing`
 into the spec-named `FiniteField` type, keeping the same reduced
 representatives and exposing explicit conversions back to the quotient and
 polynomial views.
