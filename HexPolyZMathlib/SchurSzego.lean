@@ -417,6 +417,29 @@ def graceWalshSzegoOpenZeroControlAtDegree (n : ℕ) : Prop :=
       rootsInClosedUnitDisk g →
         schmeisserCompositionOpenZeroControl n f g
 
+/--
+Exact-degree open circular-domain source predicate for the Schmeisser
+composition.  This is the corrected degree-two source surface: the broader
+`natDegree ≤ n` predicate is not valid at `n = 2`, because lower-degree inputs
+are still composed with the binomial normalization for degree bound `2`.
+-/
+def graceWalshSzegoOpenZeroControlAtExactDegree (n : ℕ) : Prop :=
+  ∀ f g : ℂ[X],
+    f.natDegree = n ∧ g.natDegree = n →
+      rootsInClosedUnitDisk g →
+        schmeisserCompositionOpenZeroControl n f g
+
+/--
+Closed-radius counterpart of `graceWalshSzegoOpenZeroControlAtExactDegree`,
+kept separate so exact-degree source proofs can use the same open-to-closed
+finite-multiset bridge as the existing degree-bound source surface.
+-/
+def graceWalshSzegoZeroControlAtExactDegree (n : ℕ) : Prop :=
+  ∀ f g : ℂ[X],
+    f.natDegree = n ∧ g.natDegree = n →
+      rootsInClosedUnitDisk g →
+        schmeisserCompositionZeroControl n f g
+
 theorem graceWalshSzegoZeroControlAtDegree_zero :
     graceWalshSzegoZeroControlAtDegree 0 := by
   intro f g _hfg_degree _hg_roots r _hr
@@ -589,6 +612,28 @@ theorem roots_strictly_count_radius_le_of_schmeisserComposition
     rootsStrictlyOutsideRadiusCount_le_of_graceWalshSzegoOpenZeroControlAtDegree
       hsource hr hfg_degree ((rootsInClosedUnitDisk_iff g).2 hg_roots)
 
+theorem rootsStrictlyOutsideRadiusCount_le_of_graceWalshSzegoOpenZeroControlAtExactDegree
+    {n : ℕ} {f g : ℂ[X]} {r : ℝ}
+    (hsource : graceWalshSzegoOpenZeroControlAtExactDegree n)
+    (hr : 0 < r)
+    (hfg_degree : f.natDegree = n ∧ g.natDegree = n)
+    (hg_roots : rootsInClosedUnitDisk g) :
+    rootsStrictlyOutsideRadiusCount r (schmeisserComposition n f g).roots ≤
+      rootsStrictlyOutsideRadiusCount r f.roots :=
+  hsource f g hfg_degree hg_roots r hr
+
+theorem roots_strictly_count_radius_le_of_schmeisserComposition_exact_source
+    {n : ℕ} {f g : ℂ[X]} {r : ℝ}
+    (hsource : graceWalshSzegoOpenZeroControlAtExactDegree n)
+    (hr : 0 < r)
+    (hfg_degree : f.natDegree = n ∧ g.natDegree = n)
+    (hg_roots : ∀ z ∈ g.roots, ‖z‖ ≤ 1) :
+    ((schmeisserComposition n f g).roots.filter fun ζ => r < ‖ζ‖).card ≤
+      ((f.roots.filter fun z => r < ‖z‖).card) := by
+  simpa [rootsStrictlyOutsideRadiusCount] using
+    rootsStrictlyOutsideRadiusCount_le_of_graceWalshSzegoOpenZeroControlAtExactDegree
+      hsource hr hfg_degree ((rootsInClosedUnitDisk_iff g).2 hg_roots)
+
 theorem schmeisserCompositionZeroControl_of_graceWalshSzegoZeroControlAtDegree
     {n : ℕ} {f g : ℂ[X]}
     (hsource : graceWalshSzegoZeroControlAtDegree n)
@@ -603,6 +648,22 @@ theorem schmeisserCompositionOpenZeroControl_of_graceWalshSzegoOpenZeroControlAt
     (hfg_degree : f.natDegree ≤ n ∧ g.natDegree ≤ n)
     (hg_roots : rootsInClosedUnitDisk g) :
     schmeisserCompositionOpenZeroControl n f g :=
+  hsource f g hfg_degree hg_roots
+
+theorem schmeisserCompositionOpenZeroControl_of_graceWalshSzegoOpenZeroControlAtExactDegree
+    {n : ℕ} {f g : ℂ[X]}
+    (hsource : graceWalshSzegoOpenZeroControlAtExactDegree n)
+    (hfg_degree : f.natDegree = n ∧ g.natDegree = n)
+    (hg_roots : rootsInClosedUnitDisk g) :
+    schmeisserCompositionOpenZeroControl n f g :=
+  hsource f g hfg_degree hg_roots
+
+theorem schmeisserCompositionZeroControl_of_graceWalshSzegoZeroControlAtExactDegree
+    {n : ℕ} {f g : ℂ[X]}
+    (hsource : graceWalshSzegoZeroControlAtExactDegree n)
+    (hfg_degree : f.natDegree = n ∧ g.natDegree = n)
+    (hg_roots : rootsInClosedUnitDisk g) :
+    schmeisserCompositionZeroControl n f g :=
   hsource f g hfg_degree hg_roots
 
 /--
@@ -688,6 +749,23 @@ theorem roots_count_radius_le_of_schmeisserComposition_source
     hsource f g hfg_degree ((rootsInClosedUnitDisk_iff g).2 hg_roots) ρ hρ_pos
   simpa [rootsStrictlyOutsideRadiusCount] using hopen
 
+theorem roots_count_radius_le_of_schmeisserComposition_exact_source
+    {n : ℕ} {f g : ℂ[X]} {r : ℝ}
+    (hsource : graceWalshSzegoOpenZeroControlAtExactDegree n)
+    (hr : 0 < r)
+    (hfg_degree : f.natDegree = n ∧ g.natDegree = n)
+    (hg_roots : ∀ z ∈ g.roots, ‖z‖ ≤ 1) :
+    ((schmeisserComposition n f g).roots.filter fun ζ => r ≤ ‖ζ‖).card ≤
+      ((f.roots.filter fun z => r ≤ ‖z‖).card) := by
+  classical
+  obtain ⟨ρ, hρ_pos, _hρ_lt_r, hs_eq, ht_eq⟩ :=
+    exists_open_radius_witness_for_closed_count
+      (schmeisserComposition n f g).roots f.roots hr
+  rw [hs_eq, ht_eq]
+  have hopen :=
+    hsource f g hfg_degree ((rootsInClosedUnitDisk_iff g).2 hg_roots) ρ hρ_pos
+  simpa [rootsStrictlyOutsideRadiusCount] using hopen
+
 /--
 Predicate-level lift from the open-form Grace-Walsh-Szego / de Bruijn-Springer
 source theorem to the closed-form one.  Combined with
@@ -701,6 +779,16 @@ theorem graceWalshSzegoZeroControlAtDegree_of_open
   intro f g hfg_degree hg_roots r hr
   rw [rootsInClosedUnitDisk_iff] at hg_roots
   have := roots_count_radius_le_of_schmeisserComposition_source
+    hopen hr hfg_degree hg_roots
+  simpa [rootsOutsideRadiusCount] using this
+
+theorem graceWalshSzegoZeroControlAtExactDegree_of_open
+    {n : ℕ}
+    (hopen : graceWalshSzegoOpenZeroControlAtExactDegree n) :
+    graceWalshSzegoZeroControlAtExactDegree n := by
+  intro f g hfg_degree hg_roots r hr
+  rw [rootsInClosedUnitDisk_iff] at hg_roots
+  have := roots_count_radius_le_of_schmeisserComposition_exact_source
     hopen hr hfg_degree hg_roots
   simpa [rootsOutsideRadiusCount] using this
 
