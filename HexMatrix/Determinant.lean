@@ -10096,6 +10096,182 @@ def nDet {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (B : Matrix R (n + 2) n) (p q : Fin (n + 2)) (hpq : p.val < q.val) : R :=
   det (nMatrix B p q hpq)
 
+/-! ### Row-move infrastructure for ordered four-row transports
+
+These helpers transport the determinant of a matrix whose rows are an
+ordered `nMatrix` row sequence with one row displaced downward. Each
+"row-move" is realised as a chain of adjacent `rowSwap`s; the determinant
+picks up `(-1) ^ k` for a `k`-step move. The four row-content lemmas
+identify the rows of the moved matrix so consumers can pair them with
+`nMatrix_entry` / `skipIndex2` value lemmas. -/
+
+/-- Move the row at position `src + k` of `M` to position `src` by `k`
+adjacent row swaps. The rows previously at positions `src, …, src + k - 1`
+shift right by one to positions `src + 1, …, src + k`. Rows outside the
+interval `[src, src + k]` are unchanged. -/
+private def rowMoveUp {R : Type u} {n m : Nat} (M : Matrix R n m) (src : Nat) :
+    (k : Nat) → src + k < n → Matrix R n m
+  | 0, _ => M
+  | k + 1, h =>
+    rowMoveUp
+      (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩) src k (by omega)
+
+@[simp] private theorem rowMoveUp_zero {R : Type u} {n m : Nat}
+    (M : Matrix R n m) (src : Nat) (h : src + 0 < n) :
+    rowMoveUp M src 0 h = M := rfl
+
+private theorem rowMoveUp_succ {R : Type u} {n m : Nat}
+    (M : Matrix R n m) (src k : Nat) (h : src + (k + 1) < n) :
+    rowMoveUp M src (k + 1) h =
+      rowMoveUp (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩) src k
+        (by omega) := rfl
+
+/-- Determinant contribution of `rowMoveUp`: each of the `k` adjacent
+swaps negates the determinant. -/
+private theorem det_rowMoveUp {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (src k : Nat) (h : src + k < n) :
+    det (rowMoveUp M src k h) = (-1 : R) ^ k * det M := by
+  induction k generalizing M with
+  | zero => simp; grind
+  | succ k ih =>
+      rw [rowMoveUp_succ]
+      have hne : (⟨src + k, by omega⟩ : Fin n) ≠ ⟨src + k + 1, h⟩ := by
+        intro heq
+        have hv : (⟨src + k, by omega⟩ : Fin n).val =
+            (⟨src + k + 1, h⟩ : Fin n).val := congrArg Fin.val heq
+        simp at hv
+      rw [ih]
+      rw [det_rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩ hne]
+      rw [Lean.Grind.Semiring.pow_succ]
+      grind
+
+/-- Rows of `M` strictly below the move interval are unchanged by
+`rowMoveUp`. -/
+private theorem rowMoveUp_row_of_lt {R : Type u} {n m : Nat}
+    (M : Matrix R n m) (src k : Nat) (h : src + k < n) (i : Fin n)
+    (hi : i.val < src) :
+    (rowMoveUp M src k h)[i] = M[i] := by
+  induction k generalizing M with
+  | zero => rfl
+  | succ k ih =>
+      rw [rowMoveUp_succ]
+      rw [ih (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩) (by omega)]
+      apply Vector.ext
+      intro j hj
+      let jj : Fin m := ⟨j, hj⟩
+      show (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩)[i][jj] = M[i][jj]
+      rw [rowSwap_get]
+      have h_ne_j : i ≠ ⟨src + k + 1, h⟩ := by
+        intro heq; have := congrArg Fin.val heq; simp at this; omega
+      have h_ne_i : i ≠ ⟨src + k, by omega⟩ := by
+        intro heq; have := congrArg Fin.val heq; simp at this; omega
+      rw [if_neg h_ne_j, if_neg h_ne_i]
+
+/-- Rows of `M` strictly above the move interval are unchanged by
+`rowMoveUp`. -/
+private theorem rowMoveUp_row_of_gt {R : Type u} {n m : Nat}
+    (M : Matrix R n m) (src k : Nat) (h : src + k < n) (i : Fin n)
+    (hi : src + k < i.val) :
+    (rowMoveUp M src k h)[i] = M[i] := by
+  induction k generalizing M with
+  | zero => rfl
+  | succ k ih =>
+      rw [rowMoveUp_succ]
+      rw [ih (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩) (by omega)
+        (by omega)]
+      apply Vector.ext
+      intro j hj
+      let jj : Fin m := ⟨j, hj⟩
+      show (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩)[i][jj] = M[i][jj]
+      rw [rowSwap_get]
+      have h_ne_j : i ≠ ⟨src + k + 1, h⟩ := by
+        intro heq; have := congrArg Fin.val heq; simp at this; omega
+      have h_ne_i : i ≠ ⟨src + k, by omega⟩ := by
+        intro heq; have := congrArg Fin.val heq; simp at this; omega
+      rw [if_neg h_ne_j, if_neg h_ne_i]
+
+/-- The bottom of the move interval (`i.val = src`) receives the row
+originally at the top of the interval (`src + k`). -/
+private theorem rowMoveUp_row_eq_src {R : Type u} {n m : Nat}
+    (M : Matrix R n m) (src k : Nat) (h : src + k < n) (i : Fin n)
+    (hi : i.val = src) :
+    (rowMoveUp M src k h)[i] = M[(⟨src + k, h⟩ : Fin n)] := by
+  induction k generalizing M with
+  | zero =>
+      have hii : i = (⟨src + 0, h⟩ : Fin n) := Fin.ext (by simp [hi])
+      rw [hii]; rfl
+  | succ k ih =>
+      rw [rowMoveUp_succ]
+      rw [ih (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩) (by omega)]
+      apply Vector.ext
+      intro j hj
+      let jj : Fin m := ⟨j, hj⟩
+      show (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩)[
+          (⟨src + k, by omega⟩ : Fin n)][jj]
+          = M[(⟨src + (k + 1), h⟩ : Fin n)][jj]
+      rw [rowSwap_get]
+      have h_ne_j : (⟨src + k, by omega⟩ : Fin n) ≠ ⟨src + k + 1, h⟩ := by
+        intro heq; have := congrArg Fin.val heq; simp at this
+      rw [if_neg h_ne_j, if_pos rfl]
+      have hii : (⟨src + k + 1, h⟩ : Fin n) = ⟨src + (k + 1), h⟩ := by
+        apply Fin.ext; simp; omega
+      rw [hii]
+
+/-- Strictly inside the move interval (`src < i.val ≤ src + k`), the row
+at position `i` of `rowMoveUp` is the row originally at position
+`i.val - 1`: each row shifted right by one to make room for the inserted
+row at `src`. -/
+private theorem rowMoveUp_row_between {R : Type u} {n m : Nat}
+    (M : Matrix R n m) (src k : Nat) (h : src + k < n) (i : Fin n)
+    (hi_lt : src < i.val) (hi_le : i.val ≤ src + k) :
+    (rowMoveUp M src k h)[i] =
+      M[(⟨i.val - 1, by have := i.isLt; omega⟩ : Fin n)] := by
+  induction k generalizing M with
+  | zero =>
+      -- src < i.val ≤ src + 0 = src is empty
+      omega
+  | succ k ih =>
+      rw [rowMoveUp_succ]
+      by_cases h_lt : i.val ≤ src + k
+      · -- Inductive case: still in the move interval after one swap
+        rw [ih (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩) (by omega)
+          h_lt]
+        apply Vector.ext
+        intro j hj
+        let jj : Fin m := ⟨j, hj⟩
+        show (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩)[
+            (⟨i.val - 1, by have := i.isLt; omega⟩ : Fin n)][jj] =
+          M[(⟨i.val - 1, by have := i.isLt; omega⟩ : Fin n)][jj]
+        rw [rowSwap_get]
+        have h_ne_j :
+            (⟨i.val - 1, by have := i.isLt; omega⟩ : Fin n)
+              ≠ ⟨src + k + 1, h⟩ := by
+          intro heq; have := congrArg Fin.val heq; simp at this; omega
+        have h_ne_i :
+            (⟨i.val - 1, by have := i.isLt; omega⟩ : Fin n)
+              ≠ ⟨src + k, by omega⟩ := by
+          intro heq; have := congrArg Fin.val heq; simp at this; omega
+        rw [if_neg h_ne_j, if_neg h_ne_i]
+      · -- Boundary case: i.val = src + k + 1
+        have hi_eq : i.val = src + k + 1 := by omega
+        have h_gt : src + k < i.val := by omega
+        rw [rowMoveUp_row_of_gt
+          (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩) src k
+          (by omega) i h_gt]
+        apply Vector.ext
+        intro j hj
+        let jj : Fin m := ⟨j, hj⟩
+        show (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩)[i][jj] =
+          M[(⟨i.val - 1, by have := i.isLt; omega⟩ : Fin n)][jj]
+        rw [rowSwap_get]
+        have h_eq_j : i = (⟨src + k + 1, h⟩ : Fin n) := by
+          apply Fin.ext; simp [hi_eq]
+        rw [if_pos h_eq_j]
+        have hii : (⟨src + k, by omega⟩ : Fin n) =
+            ⟨i.val - 1, by have := i.isLt; omega⟩ := by
+          apply Fin.ext; simp; omega
+        rw [hii]
+
 /-- The square matrix `[B | u | v]` formed by appending two vector columns to
 `B : Matrix R (n + 2) n`. The original `B` columns occupy positions
 `0..n-1`; `u` occupies column `n`; `v` occupies the last column. -/
