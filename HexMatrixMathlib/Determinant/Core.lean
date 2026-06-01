@@ -1208,6 +1208,205 @@ theorem ordered_four_cofactorRowPairing_p3_p1_eq_pow_mul_nDet
     (Hex.Matrix.det_setRow_eq_cofactorRowPairing M r3 B[p1]).symm]
   exact det_setRow_p1_eq_pow_mul_nDet B p1 p3 q (Nat.lt_trans h12 h23) h3qq
 
+private theorem matrixEquiv_nMatrix_p1_pt_eq_submatrix_setRow_q
+    {R : Type u} [CommRing R] {n : Nat}
+    (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p_t q : Fin (n + 3))
+    (h1t : p1.val < p_t.val) (htq : p_t.val < q.val) :
+    let h1q : p1.val < q.val := Nat.lt_trans h1t htq
+    let M := Hex.Matrix.nMatrix B p1 q h1q
+    let r : Fin (n + 1) := ⟨p_t.val - 1, by have := q.isLt; omega⟩
+    let m : Nat := q.val - p_t.val - 1
+    let a : Nat := p_t.val - 1
+    let hm_bound : a + m < n + 1 := by have := q.isLt; omega
+    let σ : Equiv.Perm (Fin (n + 1)) :=
+      OrderedFourShift.cycleAhead (n := n) a m hm_bound
+    matrixEquiv (Hex.Matrix.nMatrix B p1 p_t h1t) =
+      (matrixEquiv (Hex.Matrix.setRow M r B[q])).submatrix σ id := by
+  intro h1q M r m a hm_bound σ
+  ext i j
+  show (Hex.Matrix.nMatrix B p1 p_t h1t)[i][j] =
+    (Hex.Matrix.setRow M r B[q])[σ i][j]
+  have hr_val : r.val = p_t.val - 1 := rfl
+  have ha_val : a = p_t.val - 1 := rfl
+  have hm_val : m = q.val - p_t.val - 1 := rfl
+  have htop_val : a + m = q.val - 2 := by omega
+  have B_entry_congr :
+      ∀ (k1 k2 : Fin (n + 3)), k1 = k2 → B[k1][j] = B[k2][j] := fun k1 k2 h => by
+    exact congrArg (fun (x : Fin (n + 3)) => B[x][j]) h
+  by_cases h_below : i.val < a
+  · have hσ_val : (σ i).val = i.val :=
+      OrderedFourShift.cycleAhead_val_below a m hm_bound i h_below
+    have hσ_ne_r : σ i ≠ r := by
+      intro he
+      have hv : (σ i).val = r.val := congrArg Fin.val he
+      rw [hr_val, hσ_val] at hv
+      omega
+    rw [Hex.Matrix.setRow_row_ne M r (σ i) B[q] hσ_ne_r]
+    rw [Hex.Matrix.nMatrix_entry, Hex.Matrix.nMatrix_entry]
+    apply B_entry_congr
+    apply Fin.ext
+    by_cases hi1 : i.val < p1.val
+    · have hσ1 : (σ i).val < p1.val := by omega
+      rw [Hex.Matrix.skipIndex2_val_of_lt_p p1 p_t h1t i hi1,
+          Hex.Matrix.skipIndex2_val_of_lt_p p1 q h1q (σ i) hσ1]
+      exact hσ_val.symm
+    · have hi_between : i.val + 1 < p_t.val := by omega
+      have hσ_not_lt_p1 : ¬ (σ i).val < p1.val := by omega
+      have hσ_between : (σ i).val + 1 < q.val := by omega
+      rw [Hex.Matrix.skipIndex2_val_of_between p1 p_t h1t i hi1 hi_between,
+          Hex.Matrix.skipIndex2_val_of_between p1 q h1q (σ i) hσ_not_lt_p1 hσ_between]
+      omega
+  · by_cases h_above : a + m < i.val
+    · have hσ_val : (σ i).val = i.val :=
+        OrderedFourShift.cycleAhead_val_above a m hm_bound i h_above
+      have hσ_ne_r : σ i ≠ r := by
+        intro he
+        have hv : (σ i).val = r.val := congrArg Fin.val he
+        rw [hr_val, hσ_val] at hv
+        omega
+      rw [Hex.Matrix.setRow_row_ne M r (σ i) B[q] hσ_ne_r]
+      rw [Hex.Matrix.nMatrix_entry, Hex.Matrix.nMatrix_entry]
+      apply B_entry_congr
+      apply Fin.ext
+      have hi_not_lt_p1 : ¬ i.val < p1.val := by omega
+      have hi_not_between_pt : ¬ i.val + 1 < p_t.val := by omega
+      have hσ_not_lt_p1 : ¬ (σ i).val < p1.val := by omega
+      have hσ_not_between_q : ¬ (σ i).val + 1 < q.val := by omega
+      rw [Hex.Matrix.skipIndex2_val_of_ge_q p1 p_t h1t i hi_not_lt_p1 hi_not_between_pt,
+          Hex.Matrix.skipIndex2_val_of_ge_q p1 q h1q (σ i) hσ_not_lt_p1 hσ_not_between_q]
+      omega
+    · have h_ge_a : a ≤ i.val := by omega
+      have h_le_top : i.val ≤ a + m := by omega
+      by_cases h_at_top : i.val = a + m
+      · have hσ_val : (σ i).val = a :=
+          OrderedFourShift.cycleAhead_val_top a m hm_bound i h_at_top
+        have hσ_eq_r : σ i = r := by
+          apply Fin.ext
+          rw [hσ_val, hr_val, ha_val]
+        have hrow : (Hex.Matrix.setRow M r B[q])[σ i] = B[q] := by
+          simpa [hσ_eq_r] using Hex.Matrix.setRow_get_self M r B[q]
+        rw [hrow]
+        rw [Hex.Matrix.nMatrix_entry]
+        apply B_entry_congr
+        apply Fin.ext
+        have hi_not_lt_p1 : ¬ i.val < p1.val := by omega
+        have hi_not_between : ¬ i.val + 1 < p_t.val := by omega
+        rw [Hex.Matrix.skipIndex2_val_of_ge_q p1 p_t h1t i hi_not_lt_p1 hi_not_between]
+        omega
+      · have h_lt_top : i.val < a + m := by omega
+        have hσ_val : (σ i).val = i.val + 1 :=
+          OrderedFourShift.cycleAhead_val_in a m hm_bound i h_ge_a h_lt_top
+        have hσ_ne_r : σ i ≠ r := by
+          intro he
+          have hv : (σ i).val = r.val := congrArg Fin.val he
+          rw [hr_val, hσ_val] at hv
+          omega
+        rw [Hex.Matrix.setRow_row_ne M r (σ i) B[q] hσ_ne_r]
+        rw [Hex.Matrix.nMatrix_entry, Hex.Matrix.nMatrix_entry]
+        apply B_entry_congr
+        apply Fin.ext
+        have hi_not_lt_p1 : ¬ i.val < p1.val := by omega
+        have hi_not_between_pt : ¬ i.val + 1 < p_t.val := by omega
+        have hσ_not_lt_p1 : ¬ (σ i).val < p1.val := by omega
+        have hσ_between_q : (σ i).val + 1 < q.val := by omega
+        rw [Hex.Matrix.skipIndex2_val_of_ge_q p1 p_t h1t i hi_not_lt_p1 hi_not_between_pt,
+            Hex.Matrix.skipIndex2_val_of_between p1 q h1q (σ i) hσ_not_lt_p1 hσ_between_q]
+        omega
+
+private theorem det_setRow_q_eq_pow_mul_nDet
+    {R : Type u} [CommRing R] {n : Nat}
+    (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p_t q : Fin (n + 3))
+    (h1t : p1.val < p_t.val) (htq : p_t.val < q.val) :
+    let h1q : p1.val < q.val := Nat.lt_trans h1t htq
+    let M := Hex.Matrix.nMatrix B p1 q h1q
+    let r : Fin (n + 1) := ⟨p_t.val - 1, by have := q.isLt; omega⟩
+    Hex.Matrix.det (Hex.Matrix.setRow M r B[q]) =
+      (-1 : R) ^ (q.val - p_t.val - 1) * Hex.Matrix.nDet B p1 p_t h1t := by
+  intro h1q M r
+  let m : Nat := q.val - p_t.val - 1
+  let a : Nat := p_t.val - 1
+  have hm_bound : a + m < n + 1 := by
+    dsimp [a, m]
+    have := q.isLt
+    omega
+  let σ : Equiv.Perm (Fin (n + 1)) := OrderedFourShift.cycleAhead (n := n) a m hm_bound
+  have h_sub := matrixEquiv_nMatrix_p1_pt_eq_submatrix_setRow_q B p1 p_t q h1t htq
+  have hdet :
+      Hex.Matrix.nDet B p1 p_t h1t =
+        (-1 : R) ^ m * Hex.Matrix.det (Hex.Matrix.setRow M r B[q]) := by
+    change Hex.Matrix.det (Hex.Matrix.nMatrix B p1 p_t h1t) =
+      (-1 : R) ^ m * Hex.Matrix.det (Hex.Matrix.setRow M r B[q])
+    rw [det_eq, h_sub, Matrix.det_permute,
+        OrderedFourShift.sign_cycleAhead a m hm_bound, ← det_eq]
+    show ((((-1 : ℤˣ) ^ m : ℤˣ) : ℤ) : R) *
+        Hex.Matrix.det (Hex.Matrix.setRow M r B[q]) =
+      (-1 : R) ^ m * Hex.Matrix.det (Hex.Matrix.setRow M r B[q])
+    have h_cast :
+        ((((-1 : ℤˣ) ^ m : ℤˣ) : ℤ) : R) = (-1 : R) ^ m := by
+      induction m with
+      | zero => simp
+      | succ k ih =>
+          have h_lhs : ((-1 : ℤˣ)) ^ (k + 1) = ((-1 : ℤˣ))^k * (-1 : ℤˣ) :=
+            pow_succ _ _
+          rw [h_lhs, Units.val_mul, Int.cast_mul, ih, pow_succ]
+          simp
+    rw [h_cast]
+  have hsign_sq : (-1 : R) ^ m * ((-1 : R) ^ m * Hex.Matrix.det (Hex.Matrix.setRow M r B[q])) =
+      Hex.Matrix.det (Hex.Matrix.setRow M r B[q]) := by
+    rw [← mul_assoc]
+    rw [← pow_add]
+    have h_even : m + m = 2 * m := by omega
+    rw [h_even, pow_mul]
+    simp
+  calc
+    Hex.Matrix.det (Hex.Matrix.setRow M r B[q])
+        = (-1 : R) ^ m * Hex.Matrix.nDet B p1 p_t h1t := by
+          rw [hdet, hsign_sq]
+    _ = (-1 : R) ^ (q.val - p_t.val - 1) * Hex.Matrix.nDet B p1 p_t h1t := rfl
+
+/-- Bridge-layer transport for the ordered four-row Plucker setup.
+
+For `p1 < p2 < p3 < q`, the cofactor-row pairing
+`cofactorRowPairing M r2 B[q]` of the ordered base matrix
+`M = nMatrix B p1 q` against `B[q]` at row `r2 := p2.val - 1` equals the
+signed `nDet B p1 p2` minor with sign `(-1)^(q.val - p2.val - 1)`. -/
+theorem ordered_four_cofactorRowPairing_p2_q_eq_pow_mul_nDet
+    {R : Type u} [CommRing R] {n : Nat}
+    (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p2 p3 q : Fin (n + 3))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
+    (h3q : p3.val < q.val) :
+    let M := Hex.Matrix.nMatrix B p1 q (Nat.lt_trans h12 (Nat.lt_trans h23 h3q))
+    let r2 : Fin (n + 1) := ⟨p2.val - 1, by have := q.isLt; omega⟩
+    Hex.Matrix.cofactorRowPairing M r2 B[q] =
+      (-1 : R) ^ (q.val - p2.val - 1) * Hex.Matrix.nDet B p1 p2 h12 := by
+  intro M r2
+  rw [show Hex.Matrix.cofactorRowPairing M r2 B[q] =
+      Hex.Matrix.det (Hex.Matrix.setRow M r2 B[q]) from
+    (Hex.Matrix.det_setRow_eq_cofactorRowPairing M r2 B[q]).symm]
+  exact det_setRow_q_eq_pow_mul_nDet B p1 p2 q h12 (Nat.lt_trans h23 h3q)
+
+/-- Bridge-layer transport for the ordered four-row Plucker setup.
+
+For `p1 < p2 < p3 < q`, the cofactor-row pairing
+`cofactorRowPairing M r3 B[q]` of the ordered base matrix
+`M = nMatrix B p1 q` against `B[q]` at row `r3 := p3.val - 1` equals the
+signed `nDet B p1 p3` minor with sign `(-1)^(q.val - p3.val - 1)`. -/
+theorem ordered_four_cofactorRowPairing_p3_q_eq_pow_mul_nDet
+    {R : Type u} [CommRing R] {n : Nat}
+    (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p2 p3 q : Fin (n + 3))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
+    (h3q : p3.val < q.val) :
+    let M := Hex.Matrix.nMatrix B p1 q (Nat.lt_trans h12 (Nat.lt_trans h23 h3q))
+    let r3 : Fin (n + 1) := ⟨p3.val - 1, by have := q.isLt; omega⟩
+    Hex.Matrix.cofactorRowPairing M r3 B[q] =
+      (-1 : R) ^ (q.val - p3.val - 1) *
+        Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) := by
+  intro M r3
+  rw [show Hex.Matrix.cofactorRowPairing M r3 B[q] =
+      Hex.Matrix.det (Hex.Matrix.setRow M r3 B[q]) from
+    (Hex.Matrix.det_setRow_eq_cofactorRowPairing M r3 B[q]).symm]
+  exact det_setRow_q_eq_pow_mul_nDet B p1 p3 q (Nat.lt_trans h12 h23) h3q
+
 theorem ordered_four_det_mul_det_setRow_setRow_eq_cofactorRowPairing_mul_sub
     {R : Type u} [CommRing R] {n : Nat}
     (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p2 p3 q : Fin (n + 3))
