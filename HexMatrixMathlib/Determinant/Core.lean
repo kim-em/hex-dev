@@ -2,6 +2,7 @@ import HexMatrixMathlib.Basic
 import HexMatrixMathlib.Determinant.DesnanotJacobi
 import HexMatrix.Bareiss
 import HexMatrix.Determinant
+import Mathlib.LinearAlgebra.Matrix.Adjugate
 import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
 
 /-!
@@ -15,7 +16,7 @@ rewrite through `matrixEquiv` directly.
 
 namespace HexMatrixMathlib
 
-universe u
+universe u v
 
 variable {R : Type u} {n : Nat}
 
@@ -442,6 +443,169 @@ theorem desnanot_jacobi_matrixEquiv_reindex [CommRing R]
         (A.submatrix (Fin.last (n + 1)).succAbove (Fin.succAbove 0)).det := by
   intro A
   exact desnanot_jacobi A
+
+private theorem matrixEquiv_setRow
+    (M : Hex.Matrix R (n + 1) (n + 1)) (row : Fin (n + 1))
+    (v : Vector R (n + 1)) :
+    matrixEquiv (Hex.Matrix.setRow M row v) =
+      (matrixEquiv M).updateRow row (fun col => v[col]) := by
+  ext i j
+  by_cases hi : i = row
+  · subst i
+    rw [Matrix.updateRow_self]
+    exact congrArg (fun rowv => rowv[j])
+      (Hex.Matrix.setRow_get_self M row v)
+  · rw [Matrix.updateRow_ne hi]
+    exact congrArg (fun rowv => rowv[j])
+      (Hex.Matrix.setRow_row_ne M row i v hi)
+
+private theorem cofactorSign_eq_neg_one_pow
+    [CommRing R] {n : Nat} (row col : Fin (n + 1)) :
+    Hex.Matrix.cofactorSign (R := R) row col =
+      (-1 : R) ^ (row.val + col.val) := by
+  unfold Hex.Matrix.cofactorSign
+  by_cases h : (row.val + col.val) % 2 = 0
+  · rw [if_pos h]
+    exact (Even.neg_one_pow (Nat.even_iff.mpr h)).symm
+  · rw [if_neg h]
+    have hmod : (row.val + col.val) % 2 = 1 := by omega
+    have hodd : Odd (row.val + col.val) := Nat.odd_iff.mpr hmod
+    exact (Odd.neg_one_pow hodd).symm
+
+private theorem matrixEquiv_adjugate_apply_eq_cofactor
+    [CommRing R] (M : Hex.Matrix R (n + 1) (n + 1))
+    (row col : Fin (n + 1)) :
+    (Matrix.adjugate (matrixEquiv M)) col row = Hex.Matrix.cofactor M row col := by
+  rw [Matrix.adjugate_fin_succ_eq_det_submatrix]
+  unfold Hex.Matrix.cofactor
+  rw [cofactorSign_eq_neg_one_pow (R := R) row col]
+  rw [show Hex.Matrix.det (Hex.Matrix.deleteRowCol M row col) =
+      Matrix.det (matrixEquiv (Hex.Matrix.deleteRowCol M row col)) by
+        exact det_eq (Hex.Matrix.deleteRowCol M row col)]
+  rw [matrixEquiv_deleteRowCol M row col]
+  congr 2
+
+private theorem mathlib_det_mul_adjugate_updateRow_of_ne
+    [CommRing R] {ι : Type v} [Fintype ι] [DecidableEq ι]
+    (A : Matrix ι ι R) (r s c : ι) (rowv : ι → R) (hrs : s ≠ r) :
+    A.det * Matrix.adjugate (A.updateRow r rowv) c s =
+      (A.updateRow r rowv).det * Matrix.adjugate A c s -
+        (A.updateRow s rowv).det * Matrix.adjugate A c r := by
+  let N : Matrix ι ι R := A.updateRow r rowv
+  let adjA : Matrix ι ι R := Matrix.adjugate A
+  let adjN : Matrix ι ι R := Matrix.adjugate N
+  have hAdj_r : adjN c r = adjA c r := by
+    simp [adjN, adjA, N, Matrix.adjugate_apply]
+  have hNr :
+      (N * adjA) r s = (A.updateRow s rowv).det := by
+    rw [Matrix.mul_apply]
+    rw [Matrix.det_eq_sum_mul_adjugate_row (A.updateRow s rowv) s]
+    apply Finset.sum_congr rfl
+    intro k _hk
+    simp [N, adjA, Matrix.adjugate_apply]
+  have hNs : (N * adjA) s s = A.det := by
+    calc
+      (N * adjA) s s = (A * adjA) s s := by
+        rw [Matrix.mul_apply, Matrix.mul_apply]
+        apply Finset.sum_congr rfl
+        intro k _hk
+        simp [N, adjA, Matrix.updateRow_ne hrs]
+      _ = A.det := by
+        have h := congrFun (congrFun (Matrix.mul_adjugate A) s) s
+        simpa [adjA] using h
+  have hNzero : ∀ i : ι, i ≠ r → i ≠ s → (N * adjA) i s = 0 := by
+    intro i hir his
+    calc
+      (N * adjA) i s = (A * adjA) i s := by
+        rw [Matrix.mul_apply, Matrix.mul_apply]
+        apply Finset.sum_congr rfl
+        intro k _hk
+        simp [N, adjA, Matrix.updateRow_ne hir]
+      _ = 0 := by
+        have h := congrFun (congrFun (Matrix.mul_adjugate A) i) s
+        simpa [adjA, his] using h
+  let f : ι → R := fun i => adjN c i * (N * adjA) i s
+  have hsum_tail :
+      (∑ i ∈ (Finset.univ.erase r).erase s, f i) = 0 := by
+    apply Finset.sum_eq_zero
+    intro i hi
+    have hir : i ≠ r := by
+      intro h
+      subst h
+      simp at hi
+    have his : i ≠ s := by
+      intro h
+      subst h
+      simp at hi
+    simp [f, hNzero i hir his]
+  have hs_mem : s ∈ Finset.univ.erase r := by
+    simp [hrs]
+  have hsum :
+      (∑ i, f i) = f r + f s := by
+    calc
+      (∑ i, f i) = f r + ∑ i ∈ Finset.univ.erase r, f i := by
+        exact (Finset.univ.add_sum_erase f (Finset.mem_univ r)).symm
+      _ = f r + (f s + ∑ i ∈ (Finset.univ.erase r).erase s, f i) := by
+        rw [(Finset.univ.erase r).add_sum_erase f hs_mem]
+      _ = f r + f s := by
+        rw [hsum_tail]
+        ring
+  have hmain :
+      (∑ i, f i) = (A.updateRow r rowv).det * adjA c s := by
+    have hmat :
+        adjN * (N * adjA) = (N.det • (1 : Matrix ι ι R)) * adjA := by
+      rw [← Matrix.mul_assoc, Matrix.adjugate_mul]
+    have hentry := congrFun (congrFun hmat c) s
+    rw [Matrix.mul_apply] at hentry
+    change (∑ x, f x) =
+      ((N.det • (1 : Matrix ι ι R)) * adjA) c s at hentry
+    rw [Matrix.mul_apply] at hentry
+    have hright :
+        (∑ x, (A.updateRow r rowv).det * (1 : Matrix ι ι R) c x * adjA x s) =
+          (A.updateRow r rowv).det * adjA c s := by
+      rw [Finset.sum_eq_single c]
+      · simp
+      · intro b _hb hbc
+        have hcb : c ≠ b := hbc.symm
+        simp [hcb]
+      · intro hc
+        exact False.elim (hc (Finset.mem_univ c))
+    exact hentry.trans (by simpa [N] using hright)
+  rw [hsum] at hmain
+  simp [f, hNr, hNs, hAdj_r] at hmain
+  have hgoal : A.det * adjN c s =
+      -((A.updateRow s rowv).det * adjA c r) + (A.updateRow r rowv).det * adjA c s := by
+    rw [← hmain]
+    ring
+  simpa [N, adjN, adjA, sub_eq_add_neg, add_comm] using hgoal
+
+/-- One-row replacement cofactor identity in the Hex matrix API.
+
+Replacing row `r` by `u` and then taking a cofactor along a distinct row `s`
+is controlled by the two cofactor-row pairings of `u` against the original
+matrix. This bridge-layer theorem is the row-replacement form of the
+Desnanot-Jacobi/adjugate relation needed by the two-row replacement Plucker
+transport. -/
+theorem det_mul_cofactor_setRow_eq_cofactorRowPairing_mul_sub
+    [CommRing R] (M : Hex.Matrix R (n + 1) (n + 1))
+    (r s c : Fin (n + 1)) (rowVec : Vector R (n + 1)) (hrs : s ≠ r) :
+    Hex.Matrix.det M * Hex.Matrix.cofactor (Hex.Matrix.setRow M r rowVec) s c =
+      Hex.Matrix.cofactorRowPairing M r rowVec * Hex.Matrix.cofactor M s c -
+        Hex.Matrix.cofactorRowPairing M s rowVec * Hex.Matrix.cofactor M r c := by
+  have h := mathlib_det_mul_adjugate_updateRow_of_ne
+    (A := matrixEquiv M) (r := r) (s := s) (c := c)
+    (rowv := fun col : Fin (n + 1) => rowVec[col]) hrs
+  rw [← det_eq M] at h
+  rw [← matrixEquiv_setRow M r rowVec] at h
+  rw [← matrixEquiv_setRow M s rowVec] at h
+  rw [← det_eq (Hex.Matrix.setRow M r rowVec)] at h
+  rw [← det_eq (Hex.Matrix.setRow M s rowVec)] at h
+  rw [matrixEquiv_adjugate_apply_eq_cofactor] at h
+  rw [matrixEquiv_adjugate_apply_eq_cofactor] at h
+  rw [matrixEquiv_adjugate_apply_eq_cofactor] at h
+  rw [Hex.Matrix.det_setRow_eq_cofactorRowPairing] at h
+  rw [Hex.Matrix.det_setRow_eq_cofactorRowPairing] at h
+  exact h
 
 /-- Reindex the `(k+2) × (k+2)` bordered minor so Desnanot-Jacobi deletes the
 Bareiss pivot row/column first and the trailing row/column last.
