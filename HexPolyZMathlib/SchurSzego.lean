@@ -170,6 +170,41 @@ theorem quadratic_roots_prod_eq_of_roots_eq_pair {a b c x₁ x₂ : ℂ}
     x₁ * x₂ = c / a :=
   ((roots_quadratic_eq_pair_iff_complex ha).1 hroots).2
 
+theorem coeff_two_ne_zero_of_natDegree_eq_two {p : ℂ[X]} (hp : p.natDegree = 2) :
+    p.coeff 2 ≠ 0 := by
+  have hp_ne : p ≠ 0 := by
+    intro hp_zero
+    rw [hp_zero, natDegree_zero] at hp
+    omega
+  simpa [leadingCoeff, hp] using (leadingCoeff_ne_zero.mpr hp_ne)
+
+/--
+Exact complex quadratics have a two-root multiset, and the two roots satisfy
+the coefficient-normalized Vieta relations used by the degree-two Schmeisser
+source proof.
+-/
+theorem exists_roots_eq_pair_and_vieta_of_natDegree_eq_two {p : ℂ[X]}
+    (hp : p.natDegree = 2) :
+    ∃ x₁ x₂ : ℂ,
+      p.roots = ({x₁, x₂} : Multiset ℂ) ∧
+        x₁ + x₂ = -p.coeff 1 / p.coeff 2 ∧
+          x₁ * x₂ = p.coeff 0 / p.coeff 2 := by
+  have hcard : p.roots.card = 2 := by
+    rw [IsAlgClosed.card_roots_eq_natDegree (p := p), hp]
+  obtain ⟨x₁, x₂, hroots⟩ := Multiset.card_eq_two.mp hcard
+  have hp_eq : p = C (p.coeff 2) * X ^ 2 + C (p.coeff 1) * X + C (p.coeff 0) :=
+    eq_quadratic_of_natDegree_le_two (by omega)
+  have hquad_roots :
+      (C (p.coeff 2) * X ^ 2 + C (p.coeff 1) * X + C (p.coeff 0) : ℂ[X]).roots =
+        ({x₁, x₂} : Multiset ℂ) := by
+    rw [← hp_eq]
+    exact hroots
+  have hsum := quadratic_roots_sum_eq_of_roots_eq_pair
+      (coeff_two_ne_zero_of_natDegree_eq_two hp) hquad_roots
+  have hprod := quadratic_roots_prod_eq_of_roots_eq_pair
+      (coeff_two_ne_zero_of_natDegree_eq_two hp) hquad_roots
+  exact ⟨x₁, x₂, hroots, hsum, hprod⟩
+
 /--
 The binomial-normalized Schmeisser kernel for the derivative specialization:
 `n * z * (z + 1)^(n - 1)`.
