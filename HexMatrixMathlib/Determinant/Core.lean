@@ -711,6 +711,64 @@ theorem nMatrix_ordered_four_row_p3 {R : Type u} {n : Nat}
   have hrow := skipIndex2_ordered_four_row_p3 p1 p2 p3 q h12 h23 h3q
   simp [hrow]
 
+theorem skipIndex2_ordered_four_p1_p2_row_q {n : Nat}
+    (p1 p2 p3 q : Fin (n + 3))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
+    (h3q : p3.val < q.val) :
+    Hex.Matrix.skipIndex2 p1 p2 h12
+        (⟨q.val - 2, by have := q.isLt; omega⟩ : Fin (n + 1)) = q := by
+  apply Fin.ext
+  have hnot_lt : ¬ q.val - 2 < p1.val := by omega
+  have hnot_between : ¬ (q.val - 2) + 1 < p2.val := by omega
+  rw [Hex.Matrix.skipIndex2_val_of_ge_q p1 p2 h12
+    (⟨q.val - 2, by have := q.isLt; omega⟩ : Fin (n + 1)) hnot_lt hnot_between]
+  simp
+  omega
+
+theorem skipIndex2_ordered_four_p1_p3_row_q {n : Nat}
+    (p1 p2 p3 q : Fin (n + 3))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
+    (h3q : p3.val < q.val) :
+    Hex.Matrix.skipIndex2 p1 p3 (Nat.lt_trans h12 h23)
+        (⟨q.val - 2, by have := q.isLt; omega⟩ : Fin (n + 1)) = q := by
+  apply Fin.ext
+  have hnot_lt : ¬ q.val - 2 < p1.val := by omega
+  have hnot_between : ¬ (q.val - 2) + 1 < p3.val := by omega
+  rw [Hex.Matrix.skipIndex2_val_of_ge_q p1 p3 (Nat.lt_trans h12 h23)
+    (⟨q.val - 2, by have := q.isLt; omega⟩ : Fin (n + 1)) hnot_lt hnot_between]
+  simp
+  omega
+
+theorem nMatrix_ordered_four_p1_p2_row_q {R : Type u} {n : Nat}
+    (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p2 p3 q : Fin (n + 3))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
+    (h3q : p3.val < q.val) :
+    (Hex.Matrix.nMatrix B p1 p2 h12)[
+        (⟨q.val - 2, by have := q.isLt; omega⟩ : Fin (n + 1))] = B[q] := by
+  apply Vector.ext
+  intro j hj
+  let jj : Fin (n + 1) := ⟨j, hj⟩
+  change (Hex.Matrix.nMatrix B p1 p2 h12)[
+        (⟨q.val - 2, by have := q.isLt; omega⟩ : Fin (n + 1))][jj] = B[q][jj]
+  rw [Hex.Matrix.nMatrix_entry]
+  have hrow := skipIndex2_ordered_four_p1_p2_row_q p1 p2 p3 q h12 h23 h3q
+  simp [hrow]
+
+theorem nMatrix_ordered_four_p1_p3_row_q {R : Type u} {n : Nat}
+    (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p2 p3 q : Fin (n + 3))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
+    (h3q : p3.val < q.val) :
+    (Hex.Matrix.nMatrix B p1 p3 (Nat.lt_trans h12 h23))[
+        (⟨q.val - 2, by have := q.isLt; omega⟩ : Fin (n + 1))] = B[q] := by
+  apply Vector.ext
+  intro j hj
+  let jj : Fin (n + 1) := ⟨j, hj⟩
+  change (Hex.Matrix.nMatrix B p1 p3 (Nat.lt_trans h12 h23))[
+        (⟨q.val - 2, by have := q.isLt; omega⟩ : Fin (n + 1))][jj] = B[q][jj]
+  rw [Hex.Matrix.nMatrix_entry]
+  have hrow := skipIndex2_ordered_four_p1_p3_row_q p1 p2 p3 q h12 h23 h3q
+  simp [hrow]
+
 theorem ordered_four_row_p2_ne_p3 {n : Nat}
     (p1 p2 p3 q : Fin (n + 2)) (h12 : p1.val < p2.val)
     (h23 : p2.val < p3.val) (h3q : p3.val < q.val) :
