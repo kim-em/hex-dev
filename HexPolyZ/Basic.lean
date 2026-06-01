@@ -3389,8 +3389,6 @@ theorem leadingCoeff_squareFreeCore_nonneg (f : ZPoly) :
   unfold primitiveSquareFreeDecomposition
   by_cases hzero : (primitivePart f).isZero
   · simp [hzero]
-    show 0 ≤ DensePoly.leadingCoeff (0 : ZPoly)
-    decide
   · simp [hzero]
     by_cases hderiv :
         (DensePoly.derivative (toRatPoly (primitivePart f))).isZero
@@ -3404,14 +3402,10 @@ theorem leadingCoeff_repeatedPart_nonneg (f : ZPoly) :
   unfold primitiveSquareFreeDecomposition
   by_cases hzero : (primitivePart f).isZero
   · simp [hzero]
-    show 0 ≤ DensePoly.leadingCoeff (0 : ZPoly)
-    decide
   · simp [hzero]
     by_cases hderiv :
         (DensePoly.derivative (toRatPoly (primitivePart f))).isZero
     · simp [hderiv]
-      show 0 ≤ DensePoly.leadingCoeff (1 : ZPoly)
-      decide
     · simp [hderiv]
       exact leadingCoeff_ratPolyPrimitivePart_nonneg _
 
