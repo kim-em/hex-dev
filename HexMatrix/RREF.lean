@@ -2985,6 +2985,15 @@ def nullspace [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m) :
   let E := rref_isRREF M
   E.nullspace
 
+/-- Public column bridge between the matrix and vector nullspace wrappers:
+the `k`-th column of `nullspaceBasisMatrix M` is the `k`-th vector in
+`nullspace M`. -/
+theorem nullspaceBasisMatrix_col [Lean.Grind.Field R] [DecidableEq R]
+    (M : Matrix R n m) (k : Fin (m - rref_rank M)) :
+    Matrix.col (nullspaceBasisMatrix M) k = (nullspace M).get k := by
+  unfold nullspaceBasisMatrix nullspace
+  exact ((rref_isRREF M).nullspace_get k).symm
+
 /-- Every vector returned by the public `nullspace` wrapper is annihilated by `M`. -/
 theorem nullspace_sound [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m)
     (k : Fin (m - rref_rank M)) :
