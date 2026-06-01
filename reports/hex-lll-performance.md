@@ -182,6 +182,32 @@ package. Export artefact:
 - `Hex.LLLBench.runFirstShortVectorRandomBoundedChecksum`: consistent with
   declared complexity (parameters `30..180`, final per-call `6.073 s`).
 
+Row-mutating `scaledCoeffRows` fixed harsh-cubic comparator check at commit
+`af2d0a7dd05342c4a0f965cad83c54e86bb8afa5` on `carica` (Apple M2 Ultra,
+macOS), command:
+
+```sh
+lake exe hexlll_bench run Hex.LLLBench.runFirstShortVectorHarshCubicNormSq45 Hex.LLLBench.runFirstShortVectorHarshCubicNormSq50 Hex.LLLBench.runFirstShortVectorHarshCubicNormSq55 Hex.LLLBench.runIsabelleHarshCubicNormSq45 Hex.LLLBench.runIsabelleHarshCubicNormSq50 Hex.LLLBench.runIsabelleHarshCubicNormSq55 --export-file reports/bench-results/hex-lll-c4d43eee-step-scaled-rows-harsh-cubic.json
+```
+
+The harness recorded `af2d0a7-dirty` because this worktree carried local
+changes while measuring this patch. Export artefact:
+`reports/bench-results/hex-lll-c4d43eee-step-scaled-rows-harsh-cubic.json`,
+SHA-256 `55e347a67a2e16a86e522eb35a744ecafcaf0e9efe87908bc5229b0c1bacfae8`.
+
+- `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq45`: median
+  `201.127 ms`, observed hash `0x6a96`, expected hash matches.
+- `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq50`: median
+  `366.172 ms`, observed hash `0x72c6`, expected hash matches.
+- `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq55`: median
+  `664.246 ms`, observed hash `0x7776`, expected hash matches.
+- `Hex.LLLBench.runIsabelleHarshCubicNormSq45`: median `170.060 ms`,
+  observed hash `0x6a96`, expected hash matches.
+- `Hex.LLLBench.runIsabelleHarshCubicNormSq50`: median `285.118 ms`,
+  observed hash `0x72c6`, expected hash matches.
+- `Hex.LLLBench.runIsabelleHarshCubicNormSq55`: median `419.417 ms`,
+  observed hash `0x7776`, expected hash matches.
+
 The current fixed comparator registrations use the post-HO-18 densified
 headline ladders:
 
