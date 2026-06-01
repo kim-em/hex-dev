@@ -1,5 +1,5 @@
 import HexModArith.Prime
-import HexGFqRing.Operations
+import HexGFqRing.Basic
 
 /-!
 Core finite-field wrapper definitions for executable `F_p[x] / (f)`.

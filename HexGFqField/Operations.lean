@@ -1,5 +1,6 @@
 import Init.Grind.Ring.Field
 import HexGFqField.Basic
+import HexGFqRing.Operations
 
 /-!
 Executable finite-field operations for `F_p[x] / (f)`.
