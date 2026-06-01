@@ -10565,6 +10565,27 @@ private theorem det_plucker_three_term_basisVec_of_eq_p3
   rw [mDet_basisVec_eq_zero_of_eq B p3]
   grind
 
+private theorem det_plucker_three_term_basisVec_of_gt_p3_of_nDet
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n)
+    (p1 p2 p3 q : Fin (n + 2))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
+    (h3q : p3.val < q.val)
+    (hraw :
+      nDet B p2 p3 h23 * nDet B p1 q (Nat.lt_trans h12 (Nat.lt_trans h23 h3q)) -
+        nDet B p1 p3 (Nat.lt_trans h12 h23) *
+          nDet B p2 q (Nat.lt_trans h23 h3q) +
+        nDet B p1 p2 h12 * nDet B p3 q h3q = 0) :
+    mDet B (basisVec (R := R) q) p1 * nDet B p2 p3 h23 -
+      mDet B (basisVec (R := R) q) p2 *
+        nDet B p1 p3 (Nat.lt_trans h12 h23) +
+      mDet B (basisVec (R := R) q) p3 * nDet B p1 p2 h12 = 0 := by
+  rw [mDet_basisVec_eq_signed_nDet_of_lt B p1 q
+    (Nat.lt_trans h12 (Nat.lt_trans h23 h3q))]
+  rw [mDet_basisVec_eq_signed_nDet_of_lt B p2 q (Nat.lt_trans h23 h3q)]
+  rw [mDet_basisVec_eq_signed_nDet_of_lt B p3 q h3q]
+  grind
+
 private theorem det_plucker_three_term_of_basisVec
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (B : Matrix R (n + 2) n) (v : Vector R (n + 2))
