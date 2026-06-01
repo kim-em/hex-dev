@@ -1002,6 +1002,64 @@ private theorem cycleAhead_val_in (a m : Nat) (hm : a + m < n + 1)
         rw [Equiv.swap_apply_of_ne_of_ne h_inner_ne_a h_inner_ne_a1]
         exact h_inner_val
 
+/-- The inverse cycle of `cycleAhead`: sends `a` to `a + m`, `a + k` to `a + k - 1`
+for `1 ≤ k ≤ m`, and fixes positions outside `[a, a + m]`. Defined as
+`(cycleAhead a m hm).symm` so the sign is `(-1) ^ m`. -/
+private def cycleBehind (a m : Nat) (hm : a + m < n + 1) :
+    Equiv.Perm (Fin (n + 1)) :=
+  (cycleAhead (n := n) a m hm).symm
+
+private theorem sign_cycleBehind (a m : Nat) (hm : a + m < n + 1) :
+    Equiv.Perm.sign (cycleBehind (n := n) a m hm) = (-1) ^ m := by
+  show Equiv.Perm.sign (cycleAhead a m hm).symm = (-1) ^ m
+  rw [Equiv.Perm.sign_symm]
+  exact sign_cycleAhead a m hm
+
+/-- Below the cycle range: `cycleBehind a m` fixes `i` when `i.val < a`. -/
+private theorem cycleBehind_val_below (a m : Nat) (hm : a + m < n + 1)
+    (i : Fin (n + 1)) (h : i.val < a) :
+    (cycleBehind (n := n) a m hm i).val = i.val := by
+  show ((cycleAhead a m hm).symm i).val = i.val
+  have h_fwd : cycleAhead (n := n) a m hm i = i :=
+    Fin.ext (cycleAhead_val_below a m hm i h)
+  conv_lhs => rw [← h_fwd, Equiv.symm_apply_apply]
+
+/-- Above the cycle range: `cycleBehind a m` fixes `i` when `a + m < i.val`. -/
+private theorem cycleBehind_val_above (a m : Nat) (hm : a + m < n + 1)
+    (i : Fin (n + 1)) (h : a + m < i.val) :
+    (cycleBehind (n := n) a m hm i).val = i.val := by
+  show ((cycleAhead a m hm).symm i).val = i.val
+  have h_fwd : cycleAhead (n := n) a m hm i = i :=
+    Fin.ext (cycleAhead_val_above a m hm i h)
+  conv_lhs => rw [← h_fwd, Equiv.symm_apply_apply]
+
+/-- At the base of the cycle: `cycleBehind a m` sends `i.val = a` to `a + m`. -/
+private theorem cycleBehind_val_base (a m : Nat) (hm : a + m < n + 1)
+    (i : Fin (n + 1)) (h : i.val = a) :
+    (cycleBehind (n := n) a m hm i).val = a + m := by
+  show ((cycleAhead a m hm).symm i).val = a + m
+  have h_fwd : cycleAhead (n := n) a m hm ⟨a + m, by omega⟩ = i := by
+    apply Fin.ext
+    rw [cycleAhead_val_top a m hm ⟨a + m, by omega⟩ rfl]
+    exact h.symm
+  conv_lhs => rw [← h_fwd, Equiv.symm_apply_apply]
+
+/-- Strictly inside the cycle range: `cycleBehind a m` sends `i.val` to `i.val - 1`
+when `a < i.val ≤ a + m`. -/
+private theorem cycleBehind_val_in (a m : Nat) (hm : a + m < n + 1)
+    (i : Fin (n + 1)) (h1 : a < i.val) (h2 : i.val ≤ a + m) :
+    (cycleBehind (n := n) a m hm i).val = i.val - 1 := by
+  show ((cycleAhead a m hm).symm i).val = i.val - 1
+  have hi_lt : i.val - 1 < n + 1 := by have := i.isLt; omega
+  have h_le_am : i.val - 1 < a + m := by omega
+  have h_ge_a : a ≤ i.val - 1 := by omega
+  have h_fwd : cycleAhead (n := n) a m hm ⟨i.val - 1, hi_lt⟩ = i := by
+    apply Fin.ext
+    rw [cycleAhead_val_in a m hm ⟨i.val - 1, hi_lt⟩ h_ge_a h_le_am]
+    show i.val - 1 + 1 = i.val
+    omega
+  conv_lhs => rw [← h_fwd, Equiv.symm_apply_apply]
+
 end OrderedFourShift
 
 private theorem matrixEquiv_setRow_p1_eq_submatrix_nMatrix
