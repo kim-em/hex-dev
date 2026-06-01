@@ -243,7 +243,7 @@ Both figures are three orders of magnitude below the 5 % overhead-to-measured-ti
 
 ### Densified Lean + Isabelle sweep
 
-Combined Lean + Isabelle sweep at commit `3f7424ac778477ec58b1a2e496930533279c5671` on `carica` (Apple M2 Ultra, macOS 14.6.1), recorded `2026-05-17T20:59:42Z`. The host carried concurrent benchmarking load during the run (1/5/15-minute load averages `8.97/10.67/11.53` at sweep start). Absolute Lean and Isabelle wall times in the rung tables below are inflated by an estimated 2-3× relative to a quiet-host baseline; the **ratio** between Lean and Isabelle on each rung is much less affected because both sides share the contention. The gating-goal verdict below should therefore be read as a "passes under load" result, not a release-quality quiet-hardware verdict; [#4334](https://github.com/kim-em/hex/issues/4334) documents the quiet-hardware retry that is required for a Phase 4 promotion.
+Combined Lean + Isabelle sweep at commit `6fcd1185cee03cec228194857b3bab0816060158` on `carica` (Apple M2 Ultra, macOS), recorded from `2026-06-01T12:15:13Z` through `2026-06-01T12:51:25Z`. The harness recorded `6fcd118-dirty` because this worktree carried a pre-existing local `.claude/CLAUDE.md` modification outside this evidence package.
 
 Sweep command:
 
@@ -285,10 +285,10 @@ lake exe hexlll_bench run \
   Hex.LLLBench.runIsabelleHarshCubicNormSq55 \
   Hex.LLLBench.runFirstShortVectorBZRecombinationNormSq \
   Hex.LLLBench.runIsabelleBZRecombinationNormSq \
-  --export-file reports/bench-results/hex-lll-densified-fa57a699.json
+  --export-file reports/bench-results/hex-lll-densified-6fcd1185cee0.json
 ```
 
-Export artefact: `reports/bench-results/hex-lll-densified-fa57a699.json`, SHA-256 `64b596ea0feb27835d2f844082b43a059c47f3fba8673741ea15baf468054490`.
+Export artefact: `reports/bench-results/hex-lll-densified-6fcd1185cee0.json`, SHA-256 `8917e96a952d7d2e40bdcea21d5399808dcd32fcec37114a06dd884e292effd9`.
 
 Comparator source: `scripts/oracle/setup_lll_isabelle.sh` downloads and verifies Zenodo record `2636367`, archive SHA-256 `5c975aeb2033540b8f9a05d2ffac87dca0f258e887a5807edefbe60178a547e0`, then runs `svp_verified`.
 
@@ -296,40 +296,40 @@ Comparator source: `scripts/oracle/setup_lll_isabelle.sh` downloads and verifies
 
 | `n` | Lean median | Isabelle median | overhead % | raw ratio | adjusted ratio | speedup (adj) | status |
 |---:|---:|---:|---:|---:|---:|---:|:---|
-| 30 | 18.403 ms | 91.382 ms | 0.010% | 0.2014 | 0.2014 | Lean 4.97× faster | eligible |
-| 45 | 69.406 ms | 157.874 ms | 0.006% | 0.4396 | 0.4397 | Lean 2.27× faster | eligible |
-| 60 | 179.295 ms | 262.130 ms | 0.003% | 0.6840 | 0.6840 | Lean 1.46× faster | eligible |
-| 75 | 371.360 ms | 484.874 ms | 0.002% | 0.7659 | 0.7659 | Lean 1.31× faster | eligible |
-| 90 | 650.187 ms | 814.541 ms | 0.001% | 0.7982 | 0.7982 | Lean 1.25× faster | eligible |
-| 120 | 1.839 s | 2.177 s | 0.000% | 0.8449 | 0.8449 | Lean 1.18× faster | eligible |
-| 150 | 3.778 s | 4.363 s | 0.000% | 0.8660 | 0.8660 | Lean 1.15× faster | eligible |
-| 180 | 6.939 s | 8.258 s | 0.000% | 0.8403 | 0.8403 | Lean 1.19× faster | eligible |
+| 30 | 17.996 ms | 74.148 ms | 0.012% | 0.2427 | 0.2427 | Lean 4.12× faster | eligible |
+| 45 | 67.425 ms | 119.220 ms | 0.008% | 0.5656 | 0.5656 | Lean 1.77× faster | eligible |
+| 60 | 172.089 ms | 228.691 ms | 0.004% | 0.7525 | 0.7525 | Lean 1.33× faster | eligible |
+| 75 | 360.452 ms | 450.770 ms | 0.002% | 0.7996 | 0.7997 | Lean 1.25× faster | eligible |
+| 90 | 609.279 ms | 743.806 ms | 0.001% | 0.8191 | 0.8191 | Lean 1.22× faster | eligible |
+| 120 | 1.688 s | 2.088 s | 0.000% | 0.8084 | 0.8084 | Lean 1.24× faster | eligible |
+| 150 | 3.643 s | 4.357 s | 0.000% | 0.8361 | 0.8361 | Lean 1.20× faster | eligible |
+| 180 | 6.488 s | 8.028 s | 0.000% | 0.8082 | 0.8082 | Lean 1.24× faster | eligible |
 
-**Trend.** Across the eligible range `n = 30..180`, the adjusted Lean/Isabelle ratio moves from `0.2014` to `0.8403` (+317.2%): climbing (Lean's relative cost grows toward Isabelle's).
+**Trend.** Across the eligible range `n = 30..180`, the adjusted Lean/Isabelle ratio moves from `0.2427` to `0.8082` (+233.0%): climbing (Lean's relative cost grows toward Isabelle's).
 
-**Gating-goal verdict (largest eligible rung `n = 180`).** Lean `6.939 s` vs Isabelle adjusted `8.258 s`; adjusted ratio `0.8403` (Lean 1.19× faster). Gating-goal verdict: **met**.
+**Gating-goal verdict (largest eligible rung `n = 180`).** Lean `6.488 s` vs Isabelle adjusted `8.028 s`; adjusted ratio `0.8082` (Lean 1.24× faster). Gating-goal verdict: **met**.
 
 ### harsh-cubic ladder
 
 | `n` | Lean median | Isabelle median | overhead % | raw ratio | adjusted ratio | speedup (adj) | status |
 |---:|---:|---:|---:|---:|---:|---:|:---|
-| 15 | 938.687 us | 69.272 ms | 0.013% | 0.0136 | 0.0136 | Lean 73.79× faster | eligible |
-| 20 | 3.205 ms | 121.872 ms | 0.007% | 0.0263 | 0.0263 | Lean 38.02× faster | eligible |
-| 25 | 8.851 ms | 96.276 ms | 0.009% | 0.0919 | 0.0919 | Lean 10.88× faster | eligible |
-| 30 | 22.043 ms | 100.099 ms | 0.009% | 0.2202 | 0.2202 | Lean 4.54× faster | eligible |
-| 35 | 49.550 ms | 90.136 ms | 0.010% | 0.5497 | 0.5498 | Lean 1.82× faster | eligible |
-| 40 | 104.809 ms | 139.664 ms | 0.006% | 0.7504 | 0.7505 | Lean 1.33× faster | eligible |
-| 45 | 203.650 ms | 188.458 ms | 0.005% | 1.0806 | 1.0807 | Lean 1.08× slower | eligible |
-| 50 | 377.610 ms | 268.652 ms | 0.003% | 1.4056 | 1.4056 | Lean 1.41× slower | eligible |
-| 55 | 670.973 ms | 449.885 ms | 0.002% | 1.4914 | 1.4915 | Lean 1.49× slower | eligible |
+| 15 | 898.791 us | 61.209 ms | 0.015% | 0.0147 | 0.0147 | Lean 68.09× faster | eligible |
+| 20 | 3.191 ms | 59.887 ms | 0.015% | 0.0533 | 0.0533 | Lean 18.77× faster | eligible |
+| 25 | 8.331 ms | 82.104 ms | 0.011% | 0.1015 | 0.1015 | Lean 9.85× faster | eligible |
+| 30 | 22.022 ms | 75.135 ms | 0.012% | 0.2931 | 0.2931 | Lean 3.41× faster | eligible |
+| 35 | 49.134 ms | 81.714 ms | 0.011% | 0.6013 | 0.6014 | Lean 1.66× faster | eligible |
+| 40 | 105.251 ms | 124.643 ms | 0.007% | 0.8444 | 0.8445 | Lean 1.18× faster | eligible |
+| 45 | 202.061 ms | 173.940 ms | 0.005% | 1.1617 | 1.1617 | Lean 1.16× slower | eligible |
+| 50 | 377.282 ms | 260.486 ms | 0.003% | 1.4484 | 1.4484 | Lean 1.45× slower | eligible |
+| 55 | 640.050 ms | 404.575 ms | 0.002% | 1.5820 | 1.5821 | Lean 1.58× slower | eligible |
 
-**Trend.** Across the eligible range `n = 15..55`, the adjusted Lean/Isabelle ratio moves from `0.0136` to `1.4915` (+10905.1%): climbing (Lean's relative cost grows toward Isabelle's).
+**Trend.** Across the eligible range `n = 15..55`, the adjusted Lean/Isabelle ratio moves from `0.0147` to `1.5821` (+10672.5%): climbing (Lean's relative cost grows toward Isabelle's).
 
-**Gating-goal verdict (largest eligible rung `n = 55`).** Lean `670.973 ms` vs Isabelle adjusted `449.876 ms`; adjusted ratio `1.4915` (Lean 1.49× slower). Gating-goal verdict: **not met**.
+**Gating-goal verdict (largest eligible rung `n = 55`).** Lean `640.050 ms` vs Isabelle adjusted `404.566 ms`; adjusted ratio `1.5821` (Lean 1.58× slower). Gating-goal verdict: **not met**.
 
 ### bz-recombination (context only)
 
-- Lean `runFirstShortVectorBZRecombinationNormSq` median: `3.498 us`; Isabelle `runIsabelleBZRecombinationNormSq` median: `94.964 ms`; raw ratio `3.68e-05`; adjusted ratio `3.68e-05` (Lean 27145.61× faster).
+- Lean `runFirstShortVectorBZRecombinationNormSq` median: `3.438 us`; Isabelle `runIsabelleBZRecombinationNormSq` median: `57.702 ms`; raw ratio `5.96e-05`; adjusted ratio `5.96e-05` (Lean 16781.08× faster).
 
 Per the HO-18 issue body, the BZ family is reported for context only: its tiny matrix means per-call wall time on either side is dominated by process and input-marshalling overhead in the Isabelle executable, so the gating-goal verdict relies on `random-bounded` and `harsh-cubic`, not on this rung.
 
@@ -419,22 +419,18 @@ integer arithmetic.
 
 ## Concerns
 
-- [#4334](https://github.com/kim-em/hex/issues/4334) (HO-18 §"Comparator
+- [#4334](https://github.com/kim-em/hex/issues/4334) / follow-up
+  [#5966](https://github.com/kim-em/hex/issues/5966) (HO-18 §"Comparator
   Ratios" subsidiary): the formerly inconclusive HexLLL parametric verdicts
   have current-head evidence in
   `reports/bench-results/hex-lll-14537a67ebf1-parametric-rerun.json` and are
-  all consistent with declared complexity. The remaining blocker is the
-  densified Lean/Isabelle comparator evidence. The densified `random-bounded`
-  and `harsh-cubic`
-  sweeps committed in `reports/bench-results/hex-lll-densified-fa57a699.json`
-  were collected on a heavily contended `carica` and reproduce two
-  adverse-trend findings that the post-#3657 SPEC flags as Concerns: the
-  `random-bounded` adjusted Lean/Isabelle ratio climbs from `0.20` at
-  `n = 30` to `0.84` at `n = 180` (the verdict is still met but the trend
-  is climbing), and the `harsh-cubic` adjusted ratio crosses 1 at `n = 45`
-  and reaches `1.49` at `n = 55` (Lean is `~1.5×` slower than Isabelle at
-  the largest eligible rung, so the gating-goal verdict is **not met** for
-  this family under load). The quiet-hardware retry already required by
-  #4334 is the path to confirm or refute these findings; family-specific
-  follow-on HOs are deferred until that retry produces clean data. While
-  this Concern is open, `HexLLL.done_through` remains `3`.
+  all consistent with declared complexity. Current densified Lean/Isabelle
+  evidence in `reports/bench-results/hex-lll-densified-6fcd1185cee0.json`
+  keeps one comparator Concern open: the `random-bounded` adjusted
+  Lean/Isabelle ratio climbs from `0.2427` at `n = 30` to `0.8082` at
+  `n = 180` (the verdict is still met but the trend is climbing), and the
+  `harsh-cubic` adjusted ratio crosses 1 at `n = 45` and reaches `1.5821`
+  at `n = 55` (Lean is `~1.6×` slower than Isabelle at the largest eligible
+  rung, so the gating-goal verdict is **not met** for this family). Follow-up
+  #5966 tracks the required implementation-performance diagnosis. While this
+  Concern is open, `HexLLL.done_through` remains `3`.
