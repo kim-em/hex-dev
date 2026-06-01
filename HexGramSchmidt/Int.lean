@@ -138,20 +138,12 @@ private structure ScaledCoeffArrayState where
   rows[row]![col]!
 
 private def zeroRows (n : Nat) : Array (Array Int) :=
-  (Array.range n).map fun _ => (Array.range n).map fun _ => 0
+  Array.replicate n (Array.replicate n 0)
 
 private def gramRows (b : Matrix Int n m) : Array (Array Int) :=
-  (Array.range n).map fun row =>
-    (Array.range n).map fun col =>
-      if hrow : row < n then
-        if hcol : col < n then
-          let i : Fin n := ⟨row, hrow⟩
-          let j : Fin n := ⟨col, hcol⟩
-          Matrix.dot (b.row i) (b.row j)
-        else
-          0
-      else
-        0
+  Array.ofFn fun i : Fin n =>
+    Array.ofFn fun j : Fin n =>
+      Matrix.dot (b.row i) (b.row j)
 
 private theorem getArrayEntry_gramRows (b : Matrix Int n m) (i j : Fin n) :
     getArrayEntry (gramRows b) i.val j.val = (Matrix.gramMatrix b)[i][j] := by
@@ -843,41 +835,21 @@ private theorem getArrayEntry_zeroRows (n i j : Nat) :
 
 /-- Outer-array length of the initial Gram row buffer. -/
 private theorem gramRows_size (b : Matrix Int n m) : (gramRows b).size = n := by
-  simp [gramRows, Array.size_map, Array.size_range]
+  simp [gramRows]
 
 /-- Inner-row length of each row of the initial Gram row buffer. -/
 private theorem gramRows_row_size (b : Matrix Int n m) (r : Nat) (hr : r < n) :
     (gramRows b)[r]!.size = n := by
-  show ((Array.range n).map fun row =>
-      (Array.range n).map fun col =>
-        if hrow : row < n then
-          if hcol : col < n then
-            let i : Fin n := ⟨row, hrow⟩
-            let j : Fin n := ⟨col, hcol⟩
-            Matrix.dot (b.row i) (b.row j)
-          else
-            0
-        else
-          0)[r]!.size = n
-  rw [Array.getElem!_eq_getD]
-  unfold Array.getD
-  simp only [Array.size_map, Array.size_range]
-  rw [dif_pos hr]
-  simp [Array.size_map, Array.size_range]
+  simp [gramRows, hr]
 
 /-- Outer-array length of the initial coefficient buffer. -/
 private theorem zeroRows_size (n : Nat) : (zeroRows n).size = n := by
-  simp [zeroRows, Array.size_map, Array.size_range]
+  simp [zeroRows]
 
 /-- Inner-row length of each row of the initial coefficient buffer. -/
 private theorem zeroRows_row_size (n : Nat) (r : Nat) (hr : r < n) :
     (zeroRows n)[r]!.size = n := by
-  show ((Array.range n).map fun _ => (Array.range n).map fun _ : Nat => (0 : Int))[r]!.size = n
-  rw [Array.getElem!_eq_getD]
-  unfold Array.getD
-  simp only [Array.size_map, Array.size_range]
-  rw [dif_pos hr]
-  simp [Array.size_map, Array.size_range]
+  simp [zeroRows, hr]
 
 private theorem getArrayEntry_scaledCoeffArrayLoop_above
     (n fuel : Nat) (state : ScaledCoeffArrayState)
