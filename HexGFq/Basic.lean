@@ -410,6 +410,22 @@ theorem ofPoly_eq_ofPoly_iff_reduceMod_eq
   rw [ofPoly_eq_ofPoly_iff_reduceMod_eq]
   exact GFqRing.reduceMod_idem (modulus h) f
 
+/-- The Frobenius endomorphism on the canonical Conway-backed field, computed
+as the `p`-th power on the underlying quotient representation. -/
+def frob {h : Conway.SupportedEntry p n} (x : GFq p n h) : GFq p n h :=
+  GFqField.frob x
+
+/-- `GFq.frob` is the `p`-th power map. -/
+theorem frob_eq_pow {h : Conway.SupportedEntry p n} (x : GFq p n h) :
+    frob x = x ^ p :=
+  rfl
+
+/-- The representative of `GFq.frob` is the quotient-ring `p`-th power
+representative. -/
+@[simp] theorem repr_frob {h : Conway.SupportedEntry p n} (x : GFq p n h) :
+    repr (frob x) = GFqRing.repr (x.toQuotient ^ p) :=
+  rfl
+
 end GFq
 
 /-- Optimized canonical binary field for committed Conway entries that have a
