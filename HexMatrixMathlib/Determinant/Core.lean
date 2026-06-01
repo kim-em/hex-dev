@@ -2126,6 +2126,193 @@ theorem det_plucker_three_term_basisVec_of_ne
           omega
         exact det_plucker_three_term_basisVec_of_gt_p3 B p1 p2 p3 q h12 h23 h3q
 
+private theorem det_plucker_three_term_basisVec_of_eq_p1
+    {R : Type u} [CommRing R] {n : Nat}
+    (B : Hex.Matrix R (n + 3) (n + 1))
+    (p1 p2 p3 : Fin (n + 3))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val) :
+    Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) p1) p1 *
+        Hex.Matrix.nDet B p2 p3 h23 -
+      Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) p1) p2 *
+        Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
+      Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) p1) p3 *
+        Hex.Matrix.nDet B p1 p2 h12 = 0 := by
+  rw [Hex.Matrix.mDet_basisVec_eq_zero_of_eq B p1]
+  rw [Hex.Matrix.mDet_basisVec_eq_signed_nDet_of_gt B p2 p1 h12]
+  rw [Hex.Matrix.mDet_basisVec_eq_signed_nDet_of_gt B p3 p1 (Nat.lt_trans h12 h23)]
+  ring
+
+private theorem det_plucker_three_term_basisVec_of_eq_p2
+    {R : Type u} [CommRing R] {n : Nat}
+    (B : Hex.Matrix R (n + 3) (n + 1))
+    (p1 p2 p3 : Fin (n + 3))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val) :
+    Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) p2) p1 *
+        Hex.Matrix.nDet B p2 p3 h23 -
+      Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) p2) p2 *
+        Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
+      Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) p2) p3 *
+        Hex.Matrix.nDet B p1 p2 h12 = 0 := by
+  rw [Hex.Matrix.mDet_basisVec_eq_signed_nDet_of_lt B p1 p2 h12]
+  rw [Hex.Matrix.mDet_basisVec_eq_zero_of_eq B p2]
+  rw [Hex.Matrix.mDet_basisVec_eq_signed_nDet_of_gt B p3 p2 h23]
+  have hrow :
+      (⟨p2.val, by have := p3.isLt; omega⟩ : Fin (n + 2)) =
+        (⟨p2.val - 1 + 1, by have := p3.isLt; omega⟩ : Fin (n + 2)) := by
+    apply Fin.ext
+    simp
+    omega
+  rw [hrow]
+  rw [cofactorSign_consecutive_last_neg (R := R) (n := n + 1) (p2.val - 1)
+      (by have := p3.isLt; omega)]
+  ring
+
+private theorem det_plucker_three_term_basisVec_of_eq_p3
+    {R : Type u} [CommRing R] {n : Nat}
+    (B : Hex.Matrix R (n + 3) (n + 1))
+    (p1 p2 p3 : Fin (n + 3))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val) :
+    Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) p3) p1 *
+        Hex.Matrix.nDet B p2 p3 h23 -
+      Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) p3) p2 *
+        Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
+      Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) p3) p3 *
+        Hex.Matrix.nDet B p1 p2 h12 = 0 := by
+  rw [Hex.Matrix.mDet_basisVec_eq_signed_nDet_of_lt B p1 p3 (Nat.lt_trans h12 h23)]
+  rw [Hex.Matrix.mDet_basisVec_eq_signed_nDet_of_lt B p2 p3 h23]
+  rw [Hex.Matrix.mDet_basisVec_eq_zero_of_eq B p3]
+  ring
+
+private theorem foldl_det_sum_congr {R : Type u} [Add R] {β : Type v}
+    (xs : List β) (f g : β → R) (z : R)
+    (h : ∀ x, x ∈ xs → f x = g x) :
+    xs.foldl (fun acc x => acc + f x) z =
+      xs.foldl (fun acc x => acc + g x) z := by
+  induction xs generalizing z with
+  | nil => rfl
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [h x (by simp)]
+      apply ih
+      intro y hy
+      exact h y (List.mem_cons_of_mem x hy)
+
+private theorem foldl_det_sum_mul_left {R : Type u} [CommRing R] {β : Type v}
+    (xs : List β) (c : R) (f : β → R) (z : R) :
+    xs.foldl (fun acc x => acc + c * f x) (c * z) =
+      c * xs.foldl (fun acc x => acc + f x) z := by
+  induction xs generalizing z with
+  | nil => rfl
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [← show c * (z + f x) = c * z + c * f x by ring]
+      exact ih (z + f x)
+
+private theorem foldl_det_sum_mul_left_zero {R : Type u} [CommRing R]
+    {β : Type v} (xs : List β) (c : R) (f : β → R) :
+    xs.foldl (fun acc x => acc + c * f x) 0 =
+      c * xs.foldl (fun acc x => acc + f x) 0 := by
+  have hzero : c * 0 = 0 := by ring
+  simpa [hzero] using (foldl_det_sum_mul_left (R := R) xs c f 0)
+
+private theorem foldl_det_sum_mul_right_zero {R : Type u} [CommRing R]
+    {β : Type v} (xs : List β) (f : β → R) (c : R) :
+    xs.foldl (fun acc x => acc + f x * c) 0 =
+      xs.foldl (fun acc x => acc + f x) 0 * c := by
+  calc
+    xs.foldl (fun acc x => acc + f x * c) 0 =
+        xs.foldl (fun acc x => acc + c * f x) 0 := by
+          apply foldl_det_sum_congr
+          intro x _hmem
+          ring
+    _ = c * xs.foldl (fun acc x => acc + f x) 0 := by
+          exact foldl_det_sum_mul_left_zero xs c f
+    _ = xs.foldl (fun acc x => acc + f x) 0 * c := by
+          ring
+
+private theorem foldl_det_sum_sub_add_zero_of_body_zero
+    {R : Type u} [CommRing R] {β : Type v}
+    (xs : List β) (f g h : β → R) (a b c : R)
+    (hacc : a - b + c = 0)
+    (hall : ∀ x, x ∈ xs → f x - g x + h x = 0) :
+    xs.foldl (fun acc x => acc + f x) a -
+      xs.foldl (fun acc x => acc + g x) b +
+      xs.foldl (fun acc x => acc + h x) c = 0 := by
+  induction xs generalizing a b c with
+  | nil => exact hacc
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      apply ih
+      · have hx : f x - g x + h x = 0 := hall x List.mem_cons_self
+        linear_combination hacc + hx
+      · intro y hy
+        exact hall y (List.mem_cons_of_mem x hy)
+
+private theorem det_plucker_three_term_of_basisVec
+    {R : Type u} [CommRing R] {n : Nat}
+    (B : Hex.Matrix R (n + 3) (n + 1)) (v : Vector R (n + 3))
+    (p1 p2 p3 : Fin (n + 3))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
+    (hbasis : ∀ q : Fin (n + 3),
+      Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p1 *
+          Hex.Matrix.nDet B p2 p3 h23 -
+        Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p2 *
+          Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
+        Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p3 *
+          Hex.Matrix.nDet B p1 p2 h12 = 0) :
+    Hex.Matrix.mDet B v p1 * Hex.Matrix.nDet B p2 p3 h23 -
+      Hex.Matrix.mDet B v p2 * Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
+      Hex.Matrix.mDet B v p3 * Hex.Matrix.nDet B p1 p2 h12 = 0 := by
+  rw [Hex.Matrix.mDet_eq_sum_basisVec B v p1]
+  rw [Hex.Matrix.mDet_eq_sum_basisVec B v p2]
+  rw [Hex.Matrix.mDet_eq_sum_basisVec B v p3]
+  rw [← foldl_det_sum_mul_right_zero (List.finRange (n + 3))
+      (fun q => v[q] * Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p1)
+      (Hex.Matrix.nDet B p2 p3 h23)]
+  rw [← foldl_det_sum_mul_right_zero (List.finRange (n + 3))
+      (fun q => v[q] * Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p2)
+      (Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23))]
+  rw [← foldl_det_sum_mul_right_zero (List.finRange (n + 3))
+      (fun q => v[q] * Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p3)
+      (Hex.Matrix.nDet B p1 p2 h12)]
+  apply foldl_det_sum_sub_add_zero_of_body_zero
+      (List.finRange (n + 3))
+      (fun q => v[q] * Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p1 *
+        Hex.Matrix.nDet B p2 p3 h23)
+      (fun q => v[q] * Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p2 *
+        Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23))
+      (fun q => v[q] * Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p3 *
+        Hex.Matrix.nDet B p1 p2 h12)
+      0 0 0
+  · ring
+  · intro q _hqmem
+    have hq := hbasis q
+    linear_combination v[q] * hq
+
+/-- Universal three-term Plucker identity for one arbitrary row and three
+ordered basis rows, assembled from the ordered four-row `nDet` kernel and the
+three equal-row basis-vector cases. -/
+theorem det_plucker_three_term
+    {R : Type u} [CommRing R] {n : Nat}
+    (B : Hex.Matrix R (n + 3) (n + 1)) (v : Vector R (n + 3))
+    (p1 p2 p3 : Fin (n + 3))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val) :
+    Hex.Matrix.mDet B v p1 * Hex.Matrix.nDet B p2 p3 h23 -
+      Hex.Matrix.mDet B v p2 * Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
+      Hex.Matrix.mDet B v p3 * Hex.Matrix.nDet B p1 p2 h12 = 0 := by
+  apply det_plucker_three_term_of_basisVec B v p1 p2 p3 h12 h23
+  intro q
+  by_cases hq1 : q = p1
+  · subst q
+    exact det_plucker_three_term_basisVec_of_eq_p1 B p1 p2 p3 h12 h23
+  by_cases hq2 : q = p2
+  · subst q
+    exact det_plucker_three_term_basisVec_of_eq_p2 B p1 p2 p3 h12 h23
+  by_cases hq3 : q = p3
+  · subst q
+    exact det_plucker_three_term_basisVec_of_eq_p3 B p1 p2 p3 h12 h23
+  exact det_plucker_three_term_basisVec_of_ne B p1 p2 p3 q h12 h23 hq1 hq2 hq3
+
 /-- Reindex the `(k+2) × (k+2)` bordered minor so Desnanot-Jacobi deletes the
 Bareiss pivot row/column first and the trailing row/column last.
 
