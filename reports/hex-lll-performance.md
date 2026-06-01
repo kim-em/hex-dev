@@ -123,28 +123,39 @@ lake exe hexlll_bench list
 lake exe hexlll_bench verify
 ```
 
-At current `main` commit `1c4a58fd4051872be9dc4f1cd676573d62583852`,
-the smoke verifier succeeds for all 52 registered HexLLL benchmarks,
-including the densified Isabelle ladder added after the scientific run below.
+At current worktree commit `924910079376c876da2e2fe9d94915505dd477e4`,
+the smoke verifier succeeds for all 52 registered HexLLL benchmarks, including
+the densified Isabelle ladder added after the scientific run below.
 
-The latest committed scientific artifact after the densified-ladder work is
-`reports/bench-results/hex-lll-e211854d1435.json`, SHA-256
-`2b12e967b4cfa017681558ea15928e7bbd14c2ec552888f17648ae8911ac83cd`,
-recorded at commit `e211854d1435fbd3db4739cd6dec5be66da2f857`. It keeps five
-parametric registrations below the Phase 4 exit bar:
+Current scientific rerun for the five formerly inconclusive parametric
+registrations at commit `924910079376c876da2e2fe9d94915505dd477e4` on
+`carica` (Apple M2 Ultra, macOS), command:
 
-- `Hex.LLLBench.runSizeReduceChecksum`: `inconclusive`, verdict rows
-  `n = 80, 96, 128, 144`, final row `422.723 us`.
-- `Hex.LLLBench.runGramSchmidtCoeffChecksum`: `inconclusive`.
-- `Hex.LLLBench.runFirstShortVectorHarshCubicChecksum`: `inconclusive`,
-  verdict rows `n = 15, 30, 45`, final row `177.755 ms`.
-- `Hex.LLLBench.runOfBasisHarshCubicChecksum`: `inconclusive`, verdict row
-  `n = 18`, `3.965 ms`.
-- `Hex.LLLBench.runFirstShortVectorRandomBoundedChecksum`: `inconclusive`,
-  verdict rows `n = 30, 60, 120, 240`, final row `6.028 s`.
+```sh
+lake exe hexlll_bench run Hex.LLLBench.runSizeReduceChecksum Hex.LLLBench.runGramSchmidtCoeffChecksum Hex.LLLBench.runFirstShortVectorHarshCubicChecksum Hex.LLLBench.runOfBasisHarshCubicChecksum Hex.LLLBench.runFirstShortVectorRandomBoundedChecksum --export-file reports/bench-results/hex-lll-924910079376c-clean.json
+```
 
-Because `PLAN/Phase4.md` treats an inconclusive scientific verdict as a
-Phase 4 blocker, this report does not promote `HexLLL.done_through`.
+The harness recorded `9249100-dirty` because this worktree carried a
+pre-existing local `.claude/CLAUDE.md` modification outside this evidence
+package. Export artefact:
+`reports/bench-results/hex-lll-924910079376c-clean.json`, SHA-256
+`9e57bc8c2653e8ce7c8311b7592197068338c7dcdf8e235a6f0f3e1189768e7d`.
+
+- `Hex.LLLBench.runSizeReduceChecksum`: consistent with declared complexity
+  (parameters `128..160`, final per-call `220.548 us`).
+- `Hex.LLLBench.runGramSchmidtCoeffChecksum`: consistent with declared
+  complexity (parameters `32..128`, final per-call `7.363 us`).
+- `Hex.LLLBench.runFirstShortVectorHarshCubicChecksum`: consistent with
+  declared complexity (parameters `15..55`, final per-call `662.056 ms`).
+- `Hex.LLLBench.runOfBasisHarshCubicChecksum`: consistent with declared
+  complexity (parameters `12..36`, final per-call `86.523 ms`).
+- `Hex.LLLBench.runFirstShortVectorRandomBoundedChecksum`: consistent with
+  declared complexity (parameters `30..180`, final per-call `6.178 s`).
+
+The earlier `reports/bench-results/hex-lll-e211854d1435.json` inconclusive
+verdicts were measurement/model-registration findings. The current run resolves
+the parametric-verdict blocker, but the densified Lean/Isabelle comparator
+Concern below still prevents a Phase 4 promotion.
 
 The current fixed comparator registrations use the post-HO-18 densified
 headline ladders:
@@ -383,10 +394,6 @@ integer arithmetic.
 
 ## Concerns
 
-- [#4334](https://github.com/kim-em/hex/issues/4334): the latest committed
-  HexLLL scientific artifact records inconclusive verdicts for five
-  parametric registrations. `HexLLL.done_through` remains `3` until this is
-  resolved and the Concerns section can be emptied.
 - [#4334](https://github.com/kim-em/hex/issues/4334) (HO-18 §"Comparator
   Ratios" subsidiary): the densified `random-bounded` and `harsh-cubic`
   sweeps committed in `reports/bench-results/hex-lll-densified-fa57a699.json`
