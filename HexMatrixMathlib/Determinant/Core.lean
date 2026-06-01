@@ -647,6 +647,104 @@ theorem det_mul_det_setRow_setRow_eq_cofactorRowPairing_mul_sub
   · intro col
     exact det_mul_cofactor_setRow_eq_cofactorRowPairing_mul_sub M r s col u hrs
 
+/-! ### Ordered `nMatrix` row transport helpers -/
+
+theorem skipIndex2_ordered_four_row_p2 {n : Nat}
+    (p1 p2 p3 q : Fin (n + 2))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
+    (h3q : p3.val < q.val) :
+    Hex.Matrix.skipIndex2 p1 q (Nat.lt_trans h12 (Nat.lt_trans h23 h3q))
+        (⟨p2.val - 1, by have := q.isLt; omega⟩ : Fin n) = p2 := by
+  apply Fin.ext
+  have hnot_lt : ¬ (p2.val - 1) < p1.val := by omega
+  have hbetween : (p2.val - 1) + 1 < q.val := by omega
+  rw [Hex.Matrix.skipIndex2_val_of_between p1 q
+    (Nat.lt_trans h12 (Nat.lt_trans h23 h3q))
+    (⟨p2.val - 1, by have := q.isLt; omega⟩ : Fin n) hnot_lt hbetween]
+  simp
+  omega
+
+theorem skipIndex2_ordered_four_row_p3 {n : Nat}
+    (p1 p2 p3 q : Fin (n + 2))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
+    (h3q : p3.val < q.val) :
+    Hex.Matrix.skipIndex2 p1 q (Nat.lt_trans h12 (Nat.lt_trans h23 h3q))
+        (⟨p3.val - 1, by have := q.isLt; omega⟩ : Fin n) = p3 := by
+  apply Fin.ext
+  have hnot_lt : ¬ (p3.val - 1) < p1.val := by omega
+  have hbetween : (p3.val - 1) + 1 < q.val := by omega
+  rw [Hex.Matrix.skipIndex2_val_of_between p1 q
+    (Nat.lt_trans h12 (Nat.lt_trans h23 h3q))
+    (⟨p3.val - 1, by have := q.isLt; omega⟩ : Fin n) hnot_lt hbetween]
+  simp
+  omega
+
+theorem nMatrix_ordered_four_row_p2 {R : Type u} {n : Nat}
+    (B : Hex.Matrix R (n + 2) n) (p1 p2 p3 q : Fin (n + 2))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
+    (h3q : p3.val < q.val) :
+    (Hex.Matrix.nMatrix B p1 q (Nat.lt_trans h12 (Nat.lt_trans h23 h3q)))[
+        (⟨p2.val - 1, by have := q.isLt; omega⟩ : Fin n)] = B[p2] := by
+  apply Vector.ext
+  intro j hj
+  let jj : Fin n := ⟨j, hj⟩
+  change (Hex.Matrix.nMatrix B p1 q
+      (Nat.lt_trans h12 (Nat.lt_trans h23 h3q)))[
+        (⟨p2.val - 1, by have := q.isLt; omega⟩ : Fin n)][jj] = B[p2][jj]
+  rw [Hex.Matrix.nMatrix_entry]
+  have hrow := skipIndex2_ordered_four_row_p2 p1 p2 p3 q h12 h23 h3q
+  simp [hrow]
+
+theorem nMatrix_ordered_four_row_p3 {R : Type u} {n : Nat}
+    (B : Hex.Matrix R (n + 2) n) (p1 p2 p3 q : Fin (n + 2))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
+    (h3q : p3.val < q.val) :
+    (Hex.Matrix.nMatrix B p1 q (Nat.lt_trans h12 (Nat.lt_trans h23 h3q)))[
+        (⟨p3.val - 1, by have := q.isLt; omega⟩ : Fin n)] = B[p3] := by
+  apply Vector.ext
+  intro j hj
+  let jj : Fin n := ⟨j, hj⟩
+  change (Hex.Matrix.nMatrix B p1 q
+      (Nat.lt_trans h12 (Nat.lt_trans h23 h3q)))[
+        (⟨p3.val - 1, by have := q.isLt; omega⟩ : Fin n)][jj] = B[p3][jj]
+  rw [Hex.Matrix.nMatrix_entry]
+  have hrow := skipIndex2_ordered_four_row_p3 p1 p2 p3 q h12 h23 h3q
+  simp [hrow]
+
+theorem ordered_four_row_p2_ne_p3 {n : Nat}
+    (p1 p2 p3 q : Fin (n + 2)) (h12 : p1.val < p2.val)
+    (h23 : p2.val < p3.val) (h3q : p3.val < q.val) :
+    (⟨p3.val - 1, by have := q.isLt; omega⟩ : Fin n) ≠
+      (⟨p2.val - 1, by have := q.isLt; omega⟩ : Fin n) := by
+  intro h
+  have hval := congrArg Fin.val h
+  simp at hval
+  omega
+
+theorem nMatrix_ordered_four_setRow_p2_row_p3 {R : Type u} {n : Nat}
+    (B : Hex.Matrix R (n + 2) n) (p1 p2 p3 q : Fin (n + 2))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
+    (h3q : p3.val < q.val) (u : Vector R n) :
+    (Hex.Matrix.setRow
+        (Hex.Matrix.nMatrix B p1 q (Nat.lt_trans h12 (Nat.lt_trans h23 h3q)))
+        (⟨p2.val - 1, by have := q.isLt; omega⟩ : Fin n) u)[
+        (⟨p3.val - 1, by have := q.isLt; omega⟩ : Fin n)] = B[p3] := by
+  rw [Hex.Matrix.setRow_row_ne]
+  · exact nMatrix_ordered_four_row_p3 B p1 p2 p3 q h12 h23 h3q
+  · exact ordered_four_row_p2_ne_p3 p1 p2 p3 q h12 h23 h3q
+
+theorem nMatrix_ordered_four_setRow_p3_row_p2 {R : Type u} {n : Nat}
+    (B : Hex.Matrix R (n + 2) n) (p1 p2 p3 q : Fin (n + 2))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
+    (h3q : p3.val < q.val) (v : Vector R n) :
+    (Hex.Matrix.setRow
+        (Hex.Matrix.nMatrix B p1 q (Nat.lt_trans h12 (Nat.lt_trans h23 h3q)))
+        (⟨p3.val - 1, by have := q.isLt; omega⟩ : Fin n) v)[
+        (⟨p2.val - 1, by have := q.isLt; omega⟩ : Fin n)] = B[p2] := by
+  rw [Hex.Matrix.setRow_row_ne]
+  · exact nMatrix_ordered_four_row_p2 B p1 p2 p3 q h12 h23 h3q
+  · exact (ordered_four_row_p2_ne_p3 p1 p2 p3 q h12 h23 h3q).symm
+
 /-- Reindex the `(k+2) × (k+2)` bordered minor so Desnanot-Jacobi deletes the
 Bareiss pivot row/column first and the trailing row/column last.
 
