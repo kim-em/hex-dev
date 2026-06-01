@@ -8166,6 +8166,64 @@ theorem mul_adjugate_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
   · rw [hentry, if_neg hij]
     exact foldl_alien_cofactor_eq_zero M i j hij
 
+/-- Entrywise version of `adjugate M * M = det M • 1`.
+
+This is the transpose-side companion to `mul_adjugate_apply`; it is useful
+when cofactor identities are consumed columnwise rather than rowwise. -/
+theorem adjugate_mul_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (i j : Fin (n + 1)) :
+    (adjugate M * M)[i][j] =
+      if i = j then det M else 0 := by
+  have hentry :
+      (adjugate M * M)[i][j] =
+        (M.transpose * adjugate M.transpose)[j][i] := by
+    have hleft :
+        (adjugate M * M)[i][j] =
+          (List.finRange (n + 1)).foldl
+            (fun acc k => acc + cofactor M k i * M[k][j]) 0 := by
+      change (Matrix.mul (adjugate M) M)[i][j] = _
+      unfold Matrix.mul
+      rw [getElem_ofFn]
+      unfold Matrix.dot Hex.Vector.dotProduct
+      apply foldl_acc_congr
+      intro acc k _hmem
+      have hrow : (row (adjugate M) i)[k] = (adjugate M)[i][k] := rfl
+      have hcol : (col M j)[k] = M[k][j] := by
+        simp [col]
+      rw [hrow, hcol, adjugate_get]
+    have hright :
+        (M.transpose * adjugate M.transpose)[j][i] =
+          (List.finRange (n + 1)).foldl
+            (fun acc k => acc + M[k][j] * cofactor M k i) 0 := by
+      change (Matrix.mul M.transpose (adjugate M.transpose))[j][i] = _
+      unfold Matrix.mul
+      rw [getElem_ofFn]
+      unfold Matrix.dot Hex.Vector.dotProduct
+      apply foldl_acc_congr
+      intro acc k _hmem
+      have hrow : (row M.transpose j)[k] = M[k][j] := by
+        simp [row, transpose, col]
+      have hcol : (col (adjugate M.transpose) i)[k] =
+          cofactor M k i := by
+        have hcol' : (col (adjugate M.transpose) i)[k] =
+            (adjugate M.transpose)[k][i] := by
+          simp [col]
+        rw [hcol', adjugate_get, cofactor_transpose]
+      rw [hrow, hcol]
+    rw [hleft, hright]
+    apply foldl_acc_congr
+    intro acc k _hmem
+    rw [Lean.Grind.CommSemiring.mul_comm]
+  rw [hentry]
+  rw [mul_adjugate_apply M.transpose j i]
+  rw [det_transpose M]
+  by_cases hij : i = j
+  · subst hij
+    rfl
+  · rw [if_neg hij]
+    have hji : j ≠ i := fun h => hij h.symm
+    rw [if_neg hji]
+
 /-- Column-`0` view of `M * adjugate M`. -/
 theorem mul_adjugate_apply_zero {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (i : Fin (n + 1)) :
