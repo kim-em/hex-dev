@@ -1313,6 +1313,10 @@ theorem sub_val (a b : GF2nPoly f hirr) :
 @[simp] theorem zero_val :
     (0 : GF2nPoly f hirr).val = (0 : GF2Poly) := rfl
 
+example (a b : GF2nPoly f hirr) :
+    ((a * b) + 1).val = ((a.val * b.val) % f + (1 : GF2Poly) % f) % f := by
+  simp
+
 /-- A reduced quotient value is its own remainder modulo `f`. -/
 private theorem val_mod_eq (a : GF2nPoly f hirr) : a.val % f = a.val :=
   GF2Poly.mod_eq_self_of_reduced a.val f a.val_reduced
