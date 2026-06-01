@@ -611,9 +611,11 @@ theorem mul_op_eq_ofNat (a b : ZMod64 p) :
 Definition-level representative equation for the extended-GCD inverse candidate.
 
 Most callers should prefer `inv_mul_eq_one_of_coprime`; this lemma exposes the
-exact executable residue produced by `inv`.
+exact executable residue produced by `inv`. It is intentionally not tagged as a
+default simplification rule, since unfolding `inv` exposes the extended-GCD
+implementation body.
 -/
-@[simp, grind =] theorem toNat_inv_def (a : ZMod64 p) :
+theorem toNat_inv_def (a : ZMod64 p) :
     (inv a).toNat =
       (Int.toNat ((let (_, s, _) := HexArith.Int.extGcd (Int.ofNat a.toNat) (Int.ofNat p); s)
         % Int.ofNat p)) % p := by
@@ -801,6 +803,7 @@ theorem pow_op_eq_ofNat (a : ZMod64 p) (n : Nat) :
 The extended-GCD inverse candidate is a left inverse whenever the representative
 is coprime to the modulus.
 -/
+@[grind =]
 theorem inv_mul_eq_one (a : ZMod64 p) (hcop : Nat.Coprime a.toNat p) :
     (mul (inv a) a).toNat = 1 % p := by
   rw [toNat_mul, toNat_inv_def]
@@ -824,9 +827,16 @@ theorem inv_mul_eq_one (a : ZMod64 p) (hcop : Nat.Coprime a.toNat p) :
       (s := s) (t := t) hbez
 
 /-- Coprime residues multiply by their computed inverse to the unit residue. -/
+@[grind =]
 theorem inv_mul_eq_one_of_coprime (a : ZMod64 p) (hcop : Nat.Coprime a.toNat p) :
     mul (inv a) a = ZMod64.one := by
   rw [eq_iff_toNat_eq, inv_mul_eq_one a hcop, toNat_one]
+
+/-- Operator-level form of `inv_mul_eq_one_of_coprime`. -/
+@[grind =]
+theorem inv_op_mul_eq_one_of_coprime (a : ZMod64 p) (hcop : Nat.Coprime a.toNat p) :
+    a⁻¹ * a = 1 := by
+  simpa using inv_mul_eq_one_of_coprime a hcop
 
 /-- Addition produces a canonical representative below the modulus. -/
 theorem add_lt_modulus (a b : ZMod64 p) : (add a b).toNat < p := by

@@ -56,6 +56,7 @@ theorem eq_zero_or_eq_zero_of_mul_eq_zero_of_prime_modulus [PrimeModulus p]
   eq_zero_or_eq_zero_of_mul_eq_zero (PrimeModulus.prime (p := p)) h
 
 /-- Nonzero residues modulo a prime have multiplicative inverses. -/
+@[grind =]
 theorem inv_mul_eq_one_of_prime (hp : Hex.Nat.Prime p) {a : ZMod64 p}
     (ha : a ≠ 0) : ZMod64.inv a * a = 1 := by
   apply ext
@@ -81,17 +82,20 @@ theorem inv_mul_eq_one_of_prime (hp : Hex.Nat.Prime p) {a : ZMod64 p}
 /--
 Nonzero residues modulo an ambient prime modulus have multiplicative inverses.
 -/
+@[grind =]
 theorem inv_mul_eq_one_of_ne_zero [PrimeModulus p] {a : ZMod64 p}
     (ha : a ≠ 0) : ZMod64.inv a * a = 1 :=
   inv_mul_eq_one_of_prime (PrimeModulus.prime (p := p)) ha
 
 /-- Symmetric form of `inv_mul_eq_one_of_prime`: `a * a⁻¹ = 1`. -/
+@[grind =]
 theorem mul_inv_eq_one_of_prime (hp : Hex.Nat.Prime p) {a : ZMod64 p}
     (ha : a ≠ 0) : a * ZMod64.inv a = 1 := by
   have h := inv_mul_eq_one_of_prime hp ha
   grind
 
 /-- Symmetric form of `inv_mul_eq_one_of_ne_zero`: `a * a⁻¹ = 1`. -/
+@[grind =]
 theorem mul_inv_eq_one_of_ne_zero [PrimeModulus p] {a : ZMod64 p}
     (ha : a ≠ 0) : a * ZMod64.inv a = 1 :=
   mul_inv_eq_one_of_prime (PrimeModulus.prime (p := p)) ha
