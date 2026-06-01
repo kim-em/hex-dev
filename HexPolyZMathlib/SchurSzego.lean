@@ -297,6 +297,103 @@ theorem roots_derivative_kernel_norm_le_one (n : ℕ) :
   · simp [hzero]
   · simp [hneg]
 
+private theorem schur_boundary_core_normSq_sub_eq (A B : ℂ) :
+    Complex.normSq (2 + A + B) - Complex.normSq (A + B + 2 * A * B) =
+      4 * (1 - Complex.normSq (A * B) +
+        (1 - Complex.normSq B) * A.re + (1 - Complex.normSq A) * B.re) := by
+  simp [Complex.normSq_apply]
+  ring
+
+theorem schur_boundary_core_normSq_lt {A B : ℂ}
+    (hA : ‖A‖ < 1) (hB : ‖B‖ < 1) :
+    Complex.normSq (A + B + 2 * A * B) < Complex.normSq (2 + A + B) := by
+  have hA0 : 0 ≤ ‖A‖ := norm_nonneg A
+  have hB0 : 0 ≤ ‖B‖ := norm_nonneg B
+  have hA_sq_lt : ‖A‖ ^ 2 < 1 := by
+    have := (sq_lt_sq₀ hA0 (by norm_num : (0 : ℝ) ≤ 1)).mpr hA
+    simpa using this
+  have hB_sq_lt : ‖B‖ ^ 2 < 1 := by
+    have := (sq_lt_sq₀ hB0 (by norm_num : (0 : ℝ) ≤ 1)).mpr hB
+    simpa using this
+  have hcoefA_nonneg : 0 ≤ 1 - Complex.normSq A := by
+    rw [Complex.normSq_eq_norm_sq]
+    nlinarith
+  have hcoefB_nonneg : 0 ≤ 1 - Complex.normSq B := by
+    rw [Complex.normSq_eq_norm_sq]
+    nlinarith
+  have hreA : -‖A‖ ≤ A.re := neg_le_of_abs_le (Complex.abs_re_le_norm A)
+  have hreB : -‖B‖ ≤ B.re := neg_le_of_abs_le (Complex.abs_re_le_norm B)
+  have htermA : (1 - Complex.normSq B) * (-‖A‖) ≤ (1 - Complex.normSq B) * A.re :=
+    mul_le_mul_of_nonneg_left hreA hcoefB_nonneg
+  have htermB : (1 - Complex.normSq A) * (-‖B‖) ≤ (1 - Complex.normSq A) * B.re :=
+    mul_le_mul_of_nonneg_left hreB hcoefA_nonneg
+  have hcore_lower :
+      1 - Complex.normSq (A * B) + (1 - Complex.normSq B) * (-‖A‖) +
+          (1 - Complex.normSq A) * (-‖B‖) ≤
+        1 - Complex.normSq (A * B) + (1 - Complex.normSq B) * A.re +
+          (1 - Complex.normSq A) * B.re := by
+    nlinarith
+  have hcore_pos_lower :
+      0 < 1 - Complex.normSq (A * B) + (1 - Complex.normSq B) * (-‖A‖) +
+          (1 - Complex.normSq A) * (-‖B‖) := by
+    rw [Complex.normSq_mul, Complex.normSq_eq_norm_sq A, Complex.normSq_eq_norm_sq B]
+    have hAB : ‖A‖ * ‖B‖ < 1 := by
+      nlinarith [mul_lt_mul_of_nonneg hA hB hA0 hB0]
+    have hpos := mul_pos (sub_pos.mpr hA) (mul_pos (sub_pos.mpr hB) (sub_pos.mpr hAB))
+    nlinarith
+  have hcore_pos :
+      0 < 1 - Complex.normSq (A * B) +
+        (1 - Complex.normSq B) * A.re + (1 - Complex.normSq A) * B.re :=
+    lt_of_lt_of_le hcore_pos_lower hcore_lower
+  have hsub_pos : 0 < Complex.normSq (2 + A + B) -
+      Complex.normSq (A + B + 2 * A * B) := by
+    rw [schur_boundary_core_normSq_sub_eq]
+    positivity
+  linarith
+
+theorem schur_boundary_normSq_lt {A B c : ℂ}
+    (hA : ‖A‖ < 1) (hB : ‖B‖ < 1) (hc : ‖c‖ = 1) :
+    Complex.normSq (A + B + 2 * A * B * c) <
+      Complex.normSq (2 + (A + B) * c) := by
+  have hcnormSq : Complex.normSq c = 1 := by
+    rw [Complex.normSq_eq_norm_sq, hc]
+    norm_num
+  have hAc : ‖A * c‖ < 1 := by
+    rw [norm_mul, hc, mul_one]
+    exact hA
+  have hBc : ‖B * c‖ < 1 := by
+    rw [norm_mul, hc, mul_one]
+    exact hB
+  have hcore := schur_boundary_core_normSq_lt (A := A * c) (B := B * c) hAc hBc
+  have hnum_eq :
+      A + B + 2 * A * B * c =
+        (A * c + B * c + 2 * (A * c) * (B * c)) * (starRingEnd ℂ) c := by
+    have hc_mul : c * (starRingEnd ℂ) c = 1 := by
+      simpa [hcnormSq] using Complex.mul_conj c
+    calc
+      A + B + 2 * A * B * c = (A + B + 2 * A * B * c) * 1 := by ring
+      _ = (A + B + 2 * A * B * c) * (c * (starRingEnd ℂ) c) := by rw [hc_mul]
+      _ = (A * c + B * c + 2 * (A * c) * (B * c)) * (starRingEnd ℂ) c := by ring
+  have hnum_norm :
+      Complex.normSq (A + B + 2 * A * B * c) =
+        Complex.normSq (A * c + B * c + 2 * (A * c) * (B * c)) := by
+    rw [hnum_eq, Complex.normSq_mul, Complex.normSq_conj, hcnormSq, mul_one]
+  have hden_norm :
+      Complex.normSq (2 + (A + B) * c) =
+        Complex.normSq (2 + A * c + B * c) := by
+    congr 1
+    ring
+  rw [hnum_norm, hden_norm]
+  exact hcore
+
+theorem schur_boundary_denominator_ne_zero {A B c : ℂ}
+    (hA : ‖A‖ < 1) (hB : ‖B‖ < 1) (hc : ‖c‖ = 1) :
+    2 + (A + B) * c ≠ 0 := by
+  have hlt := schur_boundary_normSq_lt (A := A) (B := B) (c := c) hA hB hc
+  intro hzero
+  rw [hzero, Complex.normSq_zero] at hlt
+  exact not_lt_of_ge (Complex.normSq_nonneg _) hlt
+
 /-- Roots outside the radius, weighted by `‖z‖ / r` with multiplicity. -/
 def rootsRadiusProduct (r : ℝ) (s : Multiset ℂ) : ℝ :=
   ((s.filter fun z => r ≤ ‖z‖).map fun z => ‖z‖ / r).prod
