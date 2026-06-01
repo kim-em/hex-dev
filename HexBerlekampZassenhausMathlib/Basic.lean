@@ -269,6 +269,25 @@ theorem factor_polynomialIrreducible_of_nonUnit (f : Hex.ZPoly) :
       (factor_irreducible_of_nonUnit f entry hentry)
 
 /--
+Every polynomial factor emitted by the default executable factorization is
+primitive once the selected raw fast branch, or the slow fallback branch when
+the fast path returns `none`, is primitive entrywise.
+-/
+theorem factor_entries_primitive_of_chosen_raw_primitive
+    (f : Hex.ZPoly)
+    (h_raw :
+      ∀ rawFactors : Array Hex.ZPoly,
+        (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
+            some rawFactors ∨
+          (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
+              none ∧
+            rawFactors =
+              Hex.factorSlowFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f))) →
+        ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Primitive raw) :
+    ∀ entry ∈ (Hex.factor f).factors, Hex.ZPoly.Primitive entry.1 :=
+  Hex.factor_entries_primitive f h_raw
+
+/--
 Bundled public contract currently available for the default executable
 factorization surface.
 
@@ -296,6 +315,46 @@ theorem factor_headline_contract_core (f : Hex.ZPoly) :
   refine ⟨factor_product f, ?_, ?_, Hex.factor_pairwise_first f, Hex.factor_scalar f⟩
   · intro entry hentry
     exact factor_polynomialIrreducible_of_nonUnit f entry hentry
+  · intro entry hentry
+    exact Hex.factor_entry_multiplicity_pos f entry (Array.mem_toList_iff.mpr hentry)
+
+/--
+Primitive-strengthened sibling of `factor_headline_contract_core`.
+
+This is the same default public factorization contract, but packages the
+headline primitive-irreducibility clause as a single per-entry conjunction under
+the raw-branch primitive hypothesis supplied by the executable layer.
+-/
+theorem factor_headline_contract_core_with_primitive
+    (f : Hex.ZPoly)
+    (h_raw :
+      ∀ rawFactors : Array Hex.ZPoly,
+        (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
+            some rawFactors ∨
+          (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
+              none ∧
+            rawFactors =
+              Hex.factorSlowFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f))) →
+        ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Primitive raw) :
+    Hex.Factorization.product (Hex.factor f) = f ∧
+      (∀ entry ∈ (Hex.factor f).factors,
+        Hex.ZPoly.Primitive entry.1 ∧
+          Irreducible (HexPolyZMathlib.toPolynomial entry.1)) ∧
+      (∀ entry ∈ (Hex.factor f).factors, 0 < entry.2) ∧
+      List.Pairwise (fun a b : Hex.ZPoly × Nat => a.1 ≠ b.1)
+        (Hex.factor f).factors.toList ∧
+      (Hex.factor f).scalar =
+        if f = 0 then
+          0
+        else if Hex.DensePoly.leadingCoeff f < 0 then
+          -Hex.ZPoly.content f
+        else
+          Hex.ZPoly.content f := by
+  refine ⟨factor_product f, ?_, ?_, Hex.factor_pairwise_first f, Hex.factor_scalar f⟩
+  · intro entry hentry
+    exact
+      ⟨factor_entries_primitive_of_chosen_raw_primitive f h_raw entry hentry,
+        factor_polynomialIrreducible_of_nonUnit f entry hentry⟩
   · intro entry hentry
     exact Hex.factor_entry_multiplicity_pos f entry (Array.mem_toList_iff.mpr hentry)
 
