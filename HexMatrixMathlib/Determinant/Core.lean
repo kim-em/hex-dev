@@ -1862,6 +1862,110 @@ theorem ordered_four_signed_Plucker_p1_side
       h_double, h_p2_p1, h_p3_p1] at h_plucker
   exact h_plucker
 
+/-- Raw ordered four-row `nDet` Plucker kernel. For `p1 < p2 < p3 < q`, the
+canonical three-term Grassmann-Plucker identity holds among the six
+ordered `nDet` minors of `B`. The proof substitutes the q-side cofactor-row
+pairings in `ordered_four_signed_Plucker_p1_side` to obtain a
+fully-signed nDet identity, then cancels the common
+`(-1) ^ (p2.val - p1.val - 1 + (q.val - p3.val - 1))` factor by squaring it. -/
+theorem det_plucker_three_term_nDet_of_ordered_four
+    {R : Type u} [CommRing R] {n : Nat}
+    (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p2 p3 q : Fin (n + 3))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val) (h3q : p3.val < q.val) :
+    Hex.Matrix.nDet B p2 p3 h23 *
+        Hex.Matrix.nDet B p1 q (Nat.lt_trans h12 (Nat.lt_trans h23 h3q)) -
+      Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) *
+          Hex.Matrix.nDet B p2 q (Nat.lt_trans h23 h3q) +
+      Hex.Matrix.nDet B p1 p2 h12 *
+        Hex.Matrix.nDet B p3 q h3q = 0 := by
+  have hp1 := ordered_four_signed_Plucker_p1_side B p1 p2 p3 q h12 h23 h3q
+  dsimp only at hp1
+  have hp2q :=
+    ordered_four_cofactorRowPairing_p2_q_eq_pow_mul_nDet B p1 p2 p3 q h12 h23 h3q
+  have hp3q :=
+    ordered_four_cofactorRowPairing_p3_q_eq_pow_mul_nDet B p1 p2 p3 q h12 h23 h3q
+  dsimp only at hp2q hp3q
+  rw [hp2q, hp3q] at hp1
+  -- After the rewrites, hp1 is
+  --   nDet p1 q * (e * nDet p2 p3) =
+  --     ((-1)^s12 * nDet p2 q) * ((-1)^s3q * nDet p1 p3) -
+  --     ((-1)^s13 * nDet p3 q) * ((-1)^s2q * nDet p1 p2)
+  -- with e := (-1)^(s12 + s3q) and s_ij := p_j.val - p_i.val - 1.
+  set s12 : Nat := p2.val - p1.val - 1 with hs12_def
+  set s13 : Nat := p3.val - p1.val - 1 with hs13_def
+  set s2q : Nat := q.val - p2.val - 1 with hs2q_def
+  set s3q : Nat := q.val - p3.val - 1 with hs3q_def
+  set e : R := (-1 : R) ^ (s12 + s3q) with he_def
+  -- Parity equivalence: (s13 + s2q) and (s12 + s3q) differ by 2 * (p3 - p2).
+  have hparity_diff : s13 + s2q = (s12 + s3q) + 2 * (p3.val - p2.val) := by
+    show (p3.val - p1.val - 1) + (q.val - p2.val - 1) =
+        ((p2.val - p1.val - 1) + (q.val - p3.val - 1)) + 2 * (p3.val - p2.val)
+    omega
+  have hparity_eq : (-1 : R) ^ (s13 + s2q) = e := by
+    rw [hparity_diff, pow_add, pow_mul, neg_one_sq, one_pow, mul_one]
+  -- (-1)^k * (-1)^k = 1.
+  have h_sq : e * e = 1 := by
+    show (-1 : R) ^ (s12 + s3q) * (-1 : R) ^ (s12 + s3q) = 1
+    rw [← pow_add, show (s12 + s3q) + (s12 + s3q) = 2 * (s12 + s3q) from
+        (Nat.two_mul (s12 + s3q)).symm, pow_mul, neg_one_sq, one_pow]
+  -- Repackage hp1 to expose `e` as a common factor on both sides.
+  -- LHS: nDet p1 q * (e * nDet p2 p3) = e * (nDet p1 q * nDet p2 p3)
+  -- RHS term 1: ((-1)^s12 * nDet p2 q) * ((-1)^s3q * nDet p1 p3)
+  --           = e * (nDet p2 q * nDet p1 p3)
+  -- RHS term 2: ((-1)^s13 * nDet p3 q) * ((-1)^s2q * nDet p1 p2)
+  --           = (-1)^(s13+s2q) * (nDet p3 q * nDet p1 p2)
+  --           = e * (nDet p3 q * nDet p1 p2)   (by hparity_eq)
+  have hp1' :
+      e *
+        (Hex.Matrix.nDet B p1 q (Nat.lt_trans h12 (Nat.lt_trans h23 h3q)) *
+          Hex.Matrix.nDet B p2 p3 h23) =
+      e *
+        (Hex.Matrix.nDet B p2 q (Nat.lt_trans h23 h3q) *
+            Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) -
+          Hex.Matrix.nDet B p3 q h3q * Hex.Matrix.nDet B p1 p2 h12) := by
+    have h_rhs_term1 :
+        ((-1 : R) ^ s12 * Hex.Matrix.nDet B p2 q (Nat.lt_trans h23 h3q)) *
+            ((-1 : R) ^ s3q *
+              Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23)) =
+          e *
+            (Hex.Matrix.nDet B p2 q (Nat.lt_trans h23 h3q) *
+              Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23)) := by
+      rw [he_def, pow_add]; ring
+    have h_rhs_term2 :
+        ((-1 : R) ^ s13 * Hex.Matrix.nDet B p3 q h3q) *
+            ((-1 : R) ^ s2q * Hex.Matrix.nDet B p1 p2 h12) =
+          e * (Hex.Matrix.nDet B p3 q h3q * Hex.Matrix.nDet B p1 p2 h12) := by
+      have : (-1 : R) ^ s13 * (-1 : R) ^ s2q = e := by
+        rw [← pow_add]; exact hparity_eq
+      calc
+        ((-1 : R) ^ s13 * Hex.Matrix.nDet B p3 q h3q) *
+            ((-1 : R) ^ s2q * Hex.Matrix.nDet B p1 p2 h12) =
+            ((-1 : R) ^ s13 * (-1 : R) ^ s2q) *
+              (Hex.Matrix.nDet B p3 q h3q * Hex.Matrix.nDet B p1 p2 h12) := by ring
+        _ = e * (Hex.Matrix.nDet B p3 q h3q * Hex.Matrix.nDet B p1 p2 h12) := by
+              rw [this]
+    have hp1_lhs :
+        Hex.Matrix.nDet B p1 q (Nat.lt_trans h12 (Nat.lt_trans h23 h3q)) *
+            (e * Hex.Matrix.nDet B p2 p3 h23) =
+          e *
+            (Hex.Matrix.nDet B p1 q (Nat.lt_trans h12 (Nat.lt_trans h23 h3q)) *
+              Hex.Matrix.nDet B p2 p3 h23) := by ring
+    rw [hp1_lhs, h_rhs_term1, h_rhs_term2, ← mul_sub] at hp1
+    exact hp1
+  -- Multiply both sides by e and use e * e = 1 to cancel.
+  have hp1_cancelled :
+      Hex.Matrix.nDet B p1 q (Nat.lt_trans h12 (Nat.lt_trans h23 h3q)) *
+          Hex.Matrix.nDet B p2 p3 h23 =
+        Hex.Matrix.nDet B p2 q (Nat.lt_trans h23 h3q) *
+            Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) -
+          Hex.Matrix.nDet B p3 q h3q * Hex.Matrix.nDet B p1 p2 h12 := by
+    have hmul := congrArg (e * ·) hp1'
+    simp only at hmul
+    rw [← mul_assoc e e, ← mul_assoc e e, h_sq, one_mul, one_mul] at hmul
+    exact hmul
+  -- Rearrange to match the target via commutativity.
+  linear_combination hp1_cancelled
+
 /-- Reindex the `(k+2) × (k+2)` bordered minor so Desnanot-Jacobi deletes the
 Bareiss pivot row/column first and the trailing row/column last.
 
