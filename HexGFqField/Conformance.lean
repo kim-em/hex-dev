@@ -1,8 +1,8 @@
-import HexGfqField.Operations
+import HexGFqField.Operations
 import HexBerlekamp.RabinSoundness
 
 /-!
-Core conformance checks for the finite-field wrapper in `HexGfqField`.
+Core conformance checks for the finite-field wrapper in `HexGFqField`.
 
 Oracle: none
 Mode: always

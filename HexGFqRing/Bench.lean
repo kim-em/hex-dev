@@ -1,4 +1,4 @@
-import HexGfqRing.Operations
+import HexGFqRing.Operations
 import LeanBench
 
 /-!

@@ -1,4 +1,4 @@
-import HexGfq.Basic
+import HexGFq.Basic
 import LeanBench
 
 /-!

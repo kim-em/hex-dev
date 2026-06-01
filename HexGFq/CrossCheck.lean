@@ -1,13 +1,13 @@
-import HexGfq.Basic
+import HexGFq.Basic
 
 /-!
-Packed-vs-generic representation cross-check for `HexGfq`.
+Packed-vs-generic representation cross-check for `HexGFq`.
 
 Oracle: none (Tier-G fast-vs-fast)
 Mode: always
 
 The committed Conway lookup currently exposes only `(2, 1)` as a
-`SupportedEntry`, so `HexGfq/Conformance.lean` exercises the correspondence
+`SupportedEntry`, so `HexGFq/Conformance.lean` exercises the correspondence
 between `GFq 2 1` (generic `FpPoly`-quotient) and `GF2q 1` (packed
 `GF2n`) at the trivial extension degree.  This module exercises the
 same correspondence at extension degrees where the implementations actually
@@ -23,7 +23,7 @@ compares results.
 Operations covered: addition, multiplication, inversion, Frobenius
 (`a ↦ a^p`).
 
-`HexGfq` does not commit packed representations for odd characteristic,
+`HexGFq` does not commit packed representations for odd characteristic,
 so the cross-check is binary-only.  See the per-library SPEC for the
 representation-correspondence scope.
 -/

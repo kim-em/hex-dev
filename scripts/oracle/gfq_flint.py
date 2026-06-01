@@ -2,11 +2,11 @@
 """python-flint oracle driver for `hex-gfq` packed/generic bridge.
 
 Reads a JSONL stream produced by `lake exe hexgfq_emit_fixtures`
-(or the committed sample at `conformance-fixtures/HexGfq/gfq.jsonl`)
+(or the committed sample at `conformance-fixtures/HexGFq/gfq.jsonl`)
 and re-runs each operation through python-flint's `nmod_poly(p)`
 arithmetic plus explicit reduction by the modulus `m(x)` over `F_p`.
 Each python-flint result is compared independently against both the
-packed (`HexGF2.GF2n`) and the generic (`HexGfqField.FiniteField`)
+packed (`HexGF2.GF2n`) and the generic (`HexGFqField.FiniteField`)
 Lean answers.  On mismatch, writes a JSON failure record under
 `conformance-failures/` and exits non-zero so CI fails the job.
 
@@ -51,7 +51,7 @@ Usage::
     python3 scripts/oracle/gfq_flint.py path/to/file.jsonl
 
 `--check` is exactly equivalent to passing
-``conformance-fixtures/HexGfq/gfq.jsonl``.
+``conformance-fixtures/HexGFq/gfq.jsonl``.
 """
 from __future__ import annotations
 
@@ -63,7 +63,7 @@ from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-DEFAULT_FIXTURE = REPO_ROOT / "conformance-fixtures" / "HexGfq" / "gfq.jsonl"
+DEFAULT_FIXTURE = REPO_ROOT / "conformance-fixtures" / "HexGFq" / "gfq.jsonl"
 DEFAULT_FAILURE_DIR = REPO_ROOT / "conformance-failures"
 
 sys.path.insert(0, str(REPO_ROOT))

@@ -8,8 +8,8 @@ example that exercises the advertised user story end-to-end.
 
 ### Release 1: Finite-field constructor
 
-- **Libraries:** `HexModArith`, `HexPoly`, `HexPolyFp`, `HexGfqRing`,
-  `HexGfqField`, `HexGF2`
+- **Libraries:** `HexModArith`, `HexPoly`, `HexPolyFp`, `HexGFqRing`,
+  `HexGFqField`, `HexGF2`
 - **User story:** Users can construct quotient rings `F_p[x]/f` for any
   `f`, and finite fields `GF(p^n)` from a user-supplied irreducibility
   proof.
@@ -23,7 +23,7 @@ example that exercises the advertised user story end-to-end.
 ### Release 2: Irreducibility engine
 
 - **Libraries:** Release 1 + `HexBerlekamp`, `HexBerlekampMathlib`,
-  `HexConway`, `HexGfq`
+  `HexConway`, `HexGFq`
 - **User story:** Users can check irreducibility over `F_p` and use it
   to instantiate `FiniteField p f hf hirr`.
 - **Integration example:** `Examples/Release2.lean` — end-to-end

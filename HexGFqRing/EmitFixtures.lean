@@ -1,5 +1,5 @@
 import Hex.Conformance.Emit
-import HexGfqRing.Operations
+import HexGFqRing.Operations
 
 /-!
 JSONL emit driver for the `hex-gfq-ring` oracle.
@@ -32,7 +32,7 @@ open Hex.Conformance.Emit
 open Hex
 open Hex.GFqRing
 
-private def lib : String := "HexGfqRing"
+private def lib : String := "HexGFqRing"
 
 private instance bounds5 : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
 private instance bounds7 : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
@@ -75,7 +75,7 @@ private def cases5 : List Case :=
       b       := [4, 1]
       c       := [1, 2, 3, 1]
       n       := 7 }
-    -- d=4: modulus x^4 + 2 over F_5 (matches HexGfqRing.Conformance).
+    -- d=4: modulus x^4 + 2 over F_5 (matches HexGFqRing.Conformance).
     -- Reduction rule: x^4 ≡ -2 ≡ 3 (mod 5).
   , { id      := "p5/d4/typical"
       p       := 5

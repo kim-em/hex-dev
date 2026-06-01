@@ -70,7 +70,7 @@ cross-checked against repository state after PR `#619` merged on
   decomposition, turning it into the main bottleneck for several blocked
   factorization libraries.
 - PR `#588` opened the `HexHensel` bridge layer, while PRs `#606` and `#619`
-  opened the current `HexGfqRing` quotient-core and quotient-operations
+  opened the current `HexGFqRing` quotient-core and quotient-operations
   implementation.
 
 ### Project-wide cleanup and coordination churn
@@ -120,10 +120,10 @@ follows:
 
 - Waiting on `HexModArith.done_through >= 1`: `HexPolyFp`,
   `HexModArithMathlib`.
-- Waiting on `HexPolyFp.done_through >= 1`: `HexGfqRing`, `HexHensel`,
+- Waiting on `HexPolyFp.done_through >= 1`: `HexGFqRing`, `HexHensel`,
   `HexGF2Mathlib`, and part of `HexBerlekamp`.
-- Waiting on the finite-field chain after `HexGfqRing`: `HexGfqField`,
-  `HexConway`, `HexGfq`, and `HexGfqMathlib`.
+- Waiting on the finite-field chain after `HexGFqRing`: `HexGFqField`,
+  `HexConway`, `HexGFq`, and `HexGFqMathlib`.
 - Waiting on `HexBerlekamp` and `HexHensel`: `HexBerlekampZassenhaus`,
   `HexBerlekampMathlib`, `HexHenselMathlib`,
   `HexBerlekampZassenhausMathlib`.

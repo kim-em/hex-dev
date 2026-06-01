@@ -1,5 +1,5 @@
 import HexBerlekamp.RabinSoundness
-import HexGfqRing.Basic
+import HexGFqRing.Basic
 
 /-!
 Tier 1 Conway-polynomial lookup support for `hex-conway`.

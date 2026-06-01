@@ -1,4 +1,4 @@
-# HexGfqField Performance Report
+# HexGFqField Performance Report
 
 ## Bench Targets
 
@@ -59,8 +59,8 @@ parametric Hex targets plus the paired fixed Hex / FLINT
 The remaining inconclusive verdicts are a calibration issue on the
 small certificate-backed ladder, not a blocker for the informational
 FLINT comparator. The Phase 4 comparator is now declared in
-`libraries.yml`, wired in `HexGfqField/Bench.lean`, and covered by the
-headline report; `HexGfqField.done_through` is therefore advanced to
+`libraries.yml`, wired in `HexGFqField/Bench.lean`, and covered by the
+headline report; `HexGFqField.done_through` is therefore advanced to
 `4`.
 
 Smoke wiring was checked with:

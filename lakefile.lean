@@ -81,9 +81,9 @@ lean_lib HexLLL where
 
 lean_lib HexPolyFp where
 
-lean_lib HexGfqRing where
+lean_lib HexGFqRing where
 
-lean_lib HexGfqField where
+lean_lib HexGFqField where
 
 lean_lib HexBerlekamp where
 
@@ -91,7 +91,7 @@ lean_lib HexHensel where
 
 lean_lib HexConway where
 
-lean_lib HexGfq where
+lean_lib HexGFq where
 
 lean_lib HexBerlekampZassenhaus where
 
@@ -113,7 +113,7 @@ lean_lib HexHenselMathlib where
 
 lean_lib HexGF2Mathlib where
 
-lean_lib HexGfqMathlib where
+lean_lib HexGFqMathlib where
 
 lean_lib HexBerlekampZassenhausMathlib where
 
@@ -145,7 +145,7 @@ lean_exe hexbz_bench where
   root := `HexBerlekampZassenhaus.Bench
 
 lean_exe hexgfq_emit_fixtures where
-  root := `HexGfq.EmitFixtures
+  root := `HexGFq.EmitFixtures
 
 lean_exe hexgf2_emit_fixtures where
   root := `HexGF2.EmitFixtures
@@ -163,10 +163,10 @@ lean_exe hexlll_emit_fixtures where
   root := `HexLLL.EmitFixtures
 
 lean_exe hexgfqring_emit_fixtures where
-  root := `HexGfqRing.EmitFixtures
+  root := `HexGFqRing.EmitFixtures
 
 lean_exe hexgfqfield_emit_fixtures where
-  root := `HexGfqField.EmitFixtures
+  root := `HexGFqField.EmitFixtures
 
 lean_exe hexpolyz_bench where
   root := `HexPolyZ.Bench
@@ -191,13 +191,13 @@ lean_exe hexpolyfp_bench where
   root := `HexPolyFp.Bench
 
 lean_exe hexgfqring_bench where
-  root := `HexGfqRing.Bench
+  root := `HexGFqRing.Bench
 
 lean_exe hexgfqfield_bench where
-  root := `HexGfqField.Bench
+  root := `HexGFqField.Bench
 
 lean_exe hexgfq_bench where
-  root := `HexGfq.Bench
+  root := `HexGFq.Bench
 
 lean_exe hexlll_bench where
   root := `HexLLL.Bench

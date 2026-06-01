@@ -1,13 +1,13 @@
 import VersoManual
 
-import HexGfqRing
+import HexGFqRing
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
 set_option pp.rawOnError true
 
-#doc (Manual) "HexGfqRing: executable Fₚ quotient ring" =>
+#doc (Manual) "HexGFqRing: executable Fₚ quotient ring" =>
 %%%
 tag := "hex-gfq-ring"
 %%%
@@ -17,7 +17,7 @@ tag := "hex-gfq-ring"
 tag := "hex-gfq-ring-intro"
 %%%
 
-`HexGfqRing` is the canonical executable quotient-ring layer for
+`HexGFqRing` is the canonical executable quotient-ring layer for
 `Fₚ[x] / (f)` over a fixed nonconstant polynomial modulus `f` of type
 {name}`Hex.FpPoly`. Elements are reduced polynomial representatives —
 {name}`Hex.FpPoly` values of degree strictly below
@@ -28,7 +28,7 @@ coincides with equality of canonical representatives.
 The modulus `f` is not required to be irreducible: when `f` is reducible
 the quotient is still a ring, used downstream wherever a fixed-modulus
 polynomial ring is needed. When `f` is irreducible, the same underlying
-representation supports a field structure, supplied by the `HexGfqField`
+representation supports a field structure, supplied by the `HexGFqField`
 layer; see {ref "hex-gfq-ring-cross-references"}[Cross-references] below.
 
 # Core types
@@ -115,7 +115,7 @@ to match what the executable implementation produces.
 ```lean
 open Hex Hex.GFqRing
 
-namespace HexGfqRingChapterExample
+namespace HexGFqRingChapterExample
 
 private instance : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
 
@@ -190,7 +190,7 @@ private def x : PolyQuotient modulus modulus_pos_degree :=
 #guard reprNats (x ^ 4) = [3]
 #guard reprNats (x ^ 5) = [0, 3]
 
-end HexGfqRingChapterExample
+end HexGFqRingChapterExample
 ```
 
 # Key correctness theorems
@@ -228,14 +228,14 @@ The full ring axioms over canonical representatives are bundled into
 the `Lean.Grind.CommRing` instance on
 {name}`Hex.GFqRing.PolyQuotient`, which is the entry point for
 downstream proof automation. Its existence is the prerequisite that promotes
-`HexGfqRing` to a Phase 6 grind-clean state.
+`HexGFqRing` to a Phase 6 grind-clean state.
 
 # Cross-references
 %%%
 tag := "hex-gfq-ring-cross-references"
 %%%
 
-`HexGfqRing` sits between an upstream polynomial-arithmetic dependency
+`HexGFqRing` sits between an upstream polynomial-arithmetic dependency
 and a downstream finite-field caller:
 
 * `HexPolyFp` provides the `Hex.FpPoly` representation that
@@ -244,14 +244,14 @@ and a downstream finite-field caller:
   `reduceMod` is built. The univariate polynomial division laws
   packaged there are what make the canonical-representative invariant
   meaningful.
-* `HexGfqField` specializes the same quotient to an irreducible
+* `HexGFqField` specializes the same quotient to an irreducible
   modulus and adds the field structure. The `FiniteField` type in
-  `HexGfqField` is a thin wrapper carrying a
+  `HexGFqField` is a thin wrapper carrying a
   {name}`Hex.GFqRing.PolyQuotient` value plus the irreducibility
-  hypothesis, so every operation in `HexGfqField` reduces through the
+  hypothesis, so every operation in `HexGFqField` reduces through the
   same `reduceMod` and the same canonical-representative invariant
   documented in this chapter. Downstream callers such as `HexConway`
-  reach `HexGfqRing` transitively through `HexGfqField`.
+  reach `HexGFqRing` transitively through `HexGFqField`.
 
 ## No Mathlib correspondence library
 %%%
@@ -260,13 +260,13 @@ tag := "hex-gfq-ring-no-mathlib-correspondence"
 
 Some `hex-*` libraries pair the computational layer with a `*Mathlib`
 correspondence library that re-exports the executable API as theorems
-about the corresponding Mathlib structures. `HexGfqRing` has *no* such
-correspondence library: there is no `HexGfqRingMathlib`, and the
+about the corresponding Mathlib structures. `HexGFqRing` has *no* such
+correspondence library: there is no `HexGFqRingMathlib`, and the
 chapter therefore does not contain the "computational vs. Mathlib
 correspondence" cross-reference that future chapters will include for
 libraries that have one.
 
-For `HexGfqRing` the canonical mathematical home of the quotient is
+For `HexGFqRing` the canonical mathematical home of the quotient is
 Mathlib's `AdjoinRoot` or `Polynomial.quotient` construction; a
 correspondence between {name}`Hex.GFqRing.PolyQuotient` and those
 constructions is deferred to a downstream library if and when a

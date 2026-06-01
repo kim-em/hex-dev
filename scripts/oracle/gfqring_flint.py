@@ -3,7 +3,7 @@
 
 Reads a JSONL stream produced by `lake exe hexgfqring_emit_fixtures`
 (or the committed sample at
-`conformance-fixtures/HexGfqRing/gfqring.jsonl`) and re-runs each
+`conformance-fixtures/HexGFqRing/gfqring.jsonl`) and re-runs each
 quotient-ring operation through python-flint's `nmod_poly(p)` plus
 explicit polynomial reduction by the modulus `m(x)`.  On mismatch,
 writes a JSON failure record under `conformance-failures/` and exits
@@ -41,7 +41,7 @@ Usage::
     python3 scripts/oracle/gfqring_flint.py path/to/file.jsonl
 
 `--check` is exactly equivalent to passing
-``conformance-fixtures/HexGfqRing/gfqring.jsonl``.
+``conformance-fixtures/HexGFqRing/gfqring.jsonl``.
 """
 from __future__ import annotations
 
@@ -53,7 +53,7 @@ from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-DEFAULT_FIXTURE = REPO_ROOT / "conformance-fixtures" / "HexGfqRing" / "gfqring.jsonl"
+DEFAULT_FIXTURE = REPO_ROOT / "conformance-fixtures" / "HexGFqRing" / "gfqring.jsonl"
 DEFAULT_FAILURE_DIR = REPO_ROOT / "conformance-failures"
 
 sys.path.insert(0, str(REPO_ROOT))

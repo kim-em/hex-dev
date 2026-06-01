@@ -1,5 +1,5 @@
 import Hex.Conformance.Emit
-import HexGfqField.Operations
+import HexGFqField.Operations
 import HexBerlekamp.RabinSoundness
 
 /-!
@@ -38,7 +38,7 @@ open Hex.Conformance.Emit
 open Hex
 open Hex.GFqField
 
-private def lib : String := "HexGfqField"
+private def lib : String := "HexGFqField"
 
 private theorem prime_two : Hex.Nat.Prime 2 := by
   refine ⟨by decide, ?_⟩
@@ -629,7 +629,7 @@ private theorem m_p5_n3_irr : FpPoly.Irreducible m_p5_n3 :=
       m_p5_n3 m_p5_n3_monic m_p5_n3_certificate
       m_p5_n3_certificate_check)
 
-/-- `x^4 + 2` — irreducible over `F_5` (matches `HexGfqField.Conformance`). -/
+/-- `x^4 + 2` — irreducible over `F_5` (matches `HexGFqField.Conformance`). -/
 private def m_p5_n4 : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 0, 0, 0, 1]
     normalized := Or.inr (by simpa using one_ne_zero_five) }

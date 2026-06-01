@@ -46,25 +46,25 @@ supports a field structure; that extension belongs to hex-gfq-field.
 No external comparator is required.
 
 **Justification:** `structural-layer` per
-`SPEC/benchmarking.md §"Comparator naming"`. HexGfqRing's semantic
+`SPEC/benchmarking.md §"Comparator naming"`. HexGFqRing's semantic
 domain is `F_p[x]/(f)` for *any* nonconstant `f`, including reducible
 moduli (see the contents section: "This does NOT require `f` to be
 irreducible — the quotient is always a ring"). The natural FLINT
 primitive `fq_default` rejects reducible moduli at `ctx` construction
 time (FLINT internally selects between `fq_nmod` and `fq_zech`
 representations, both of which assume a field), so it cannot serve as
-a reference implementation for HexGfqRing's actual scope.
+a reference implementation for HexGFqRing's actual scope.
 
 Other FLINT primitives (`nmod_poly` with explicit `nmod_poly_divrem`
 per multiplication) cover the general quotient case but do not measure
-the comparison HexGfqRing's design point is targeting — they pay
+the comparison HexGFqRing's design point is targeting — they pay
 reduction overhead on every operation and do not exploit the
 fixed-modulus structure, so the ratio carries no information about
 quotient-ring constant-factor parity.
 
-Coverage at the finite-field subset of HexGfqRing's domain is provided
-upstream by HexGfqField's external comparator declaration (FLINT
-`fq_default`, informational), which exercises HexGfqRing's quotient
+Coverage at the finite-field subset of HexGFqRing's domain is provided
+upstream by HexGFqField's external comparator declaration (FLINT
+`fq_default`, informational), which exercises HexGFqRing's quotient
 arithmetic transitively through `FiniteField p f hf hirr`'s thin
 wrapper over `PolyQuotient p f hf`. The irreducibility precondition
 that breaks the declaration at this layer is naturally satisfied at

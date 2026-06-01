@@ -30,7 +30,7 @@ This module owns:
 ## Per-library wiring
 
 Each consuming library (HexPoly, HexPolyZ, HexHensel, HexMatrix,
-HexBerlekamp, HexGfqRing) calls `Hex.BenchOracle.Flint.runOp` from
+HexBerlekamp, HexGFqRing) calls `Hex.BenchOracle.Flint.runOp` from
 its `Bench.lean` and parses the returned `Json` per its family's
 result schema. Example (sketch — actual wiring lands in the
 per-library HOs, HO-21..HO-26)::

@@ -67,7 +67,7 @@ current Phase 5 frontier through PR `#1638`.
   conformance and added bridge benchmarks.
 - PR `#1573` advanced `HexModArithMathlib` through Phase 3 conformance.
 - PR `#1616` advanced `HexGramSchmidtMathlib` through Phase 3 conformance.
-- PR `#1630` added `HexGfqMathlib` Phase 3 conformance checks, while
+- PR `#1630` added `HexGFqMathlib` Phase 3 conformance checks, while
   PRs `#1609`, `#1602`, `#1591`, `#1558`, `#1560`, and `#1565` handled
   review and transport-surface movement for the GFq/GF2/Hensel/Berlekamp
   mathlib bridge libraries.
@@ -75,10 +75,10 @@ current Phase 5 frontier through PR `#1638`.
 
 ### Gfq bridge surface
 
-- PR `#1611` added the `HexGfqMathlib` GFq-to-`GaloisField` equivalence
+- PR `#1611` added the `HexGFqMathlib` GFq-to-`GaloisField` equivalence
   surface. This gives later proof and conformance workers a named bridge
-  target, while the `HexGfqMathlib` Phase 4 status remains blocked on
-  `HexGfq` and `HexGF2Mathlib` readiness.
+  target, while the `HexGFqMathlib` Phase 4 status remains blocked on
+  `HexGFq` and `HexGF2Mathlib` readiness.
 
 ## Current queue frontier
 
@@ -101,7 +101,7 @@ next planner should narrow those rather than duplicate them.
 `python3 scripts/status.py` currently reports these ready dispatch targets:
 
 - Phase 5: HexArith, HexPoly, HexMatrix, HexModArith, HexGramSchmidt, HexGF2,
-  HexPolyZ, HexLLL, HexPolyFp, HexGfqRing, HexGfqField, and HexHensel.
+  HexPolyZ, HexLLL, HexPolyFp, HexGFqRing, HexGFqField, and HexHensel.
 - Phase 4: HexBerlekamp, HexPolyMathlib, HexMatrixMathlib,
   HexModArithMathlib, HexGramSchmidtMathlib, and HexGF2Mathlib.
 - Phase 3: HexPolyZMathlib, HexLLLMathlib, HexBerlekampMathlib, and
@@ -111,9 +111,9 @@ next planner should narrow those rather than duplicate them.
 The blocked status graph is now:
 
 - HexConway Phase 4 waits on HexBerlekamp Phase 4.
-- HexGfq Phase 4 waits on HexConway Phase 4.
+- HexGFq Phase 4 waits on HexConway Phase 4.
 - HexBerlekampZassenhaus Phase 4 waits on HexBerlekamp Phase 4.
-- HexGfqMathlib Phase 4 waits on HexGfq Phase 4 and HexGF2Mathlib Phase 4.
+- HexGFqMathlib Phase 4 waits on HexGFq Phase 4 and HexGF2Mathlib Phase 4.
 
 ## Follow-up focus
 

@@ -1,8 +1,8 @@
-HexGfqMathlib Phase 2 review complete.
+HexGFqMathlib Phase 2 review complete.
 
 Reviewed:
-- HexGfqMathlib/Basic.lean
-- HexGfqMathlib.lean
+- HexGFqMathlib/Basic.lean
+- HexGFqMathlib.lean
 
 Follow-up:
 - #1608 tracks the missing GFq-to-GaloisField equivalence surface promised by the SPEC.
