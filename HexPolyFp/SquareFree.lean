@@ -1332,6 +1332,31 @@ private theorem normalizeMonic_nonzero_monic
   exact ZMod64.inv_mul_eq_one_of_prime
     (ZMod64.PrimeModulus.prime (p := p)) hlead_ne
 
+private theorem normalizeMonic_nonzero_isZero_false
+    [ZMod64.PrimeModulus p] (f : FpPoly p) (hzero : f.isZero = false) :
+    (normalizeMonic f).2.isZero = false := by
+  rw [normalizeMonic_nonzero f hzero]
+  have hlead_ne := fpPoly_leadingCoeff_ne_zero_of_isZero_false f hzero
+  have hinv_ne : (DensePoly.leadingCoeff f)⁻¹ ≠ (0 : ZMod64 p) := by
+    intro hinv
+    change ZMod64.inv (DensePoly.leadingCoeff f) = (0 : ZMod64 p) at hinv
+    have hone := ZMod64.inv_mul_eq_one_of_prime
+      (ZMod64.PrimeModulus.prime (p := p)) hlead_ne
+    rw [hinv] at hone
+    have hzero_mul : (0 : ZMod64 p) * DensePoly.leadingCoeff f = 0 := by grind
+    rw [hzero_mul] at hone
+    exact zmod64_one_ne_zero_of_prime
+      (ZMod64.PrimeModulus.prime (p := p)) hone.symm
+  have hsize :
+      (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f).size = f.size :=
+    scale_size_eq_of_ne_zero (p := p) hinv_ne f
+  have hpos : 0 < (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f).size := by
+    rw [hsize]
+    simpa [DensePoly.isZero, DensePoly.size, Array.isEmpty_iff_size_eq_zero,
+      Nat.pos_iff_ne_zero] using hzero
+  simpa [DensePoly.isZero, DensePoly.size, Array.isEmpty_iff_size_eq_zero,
+    Nat.pos_iff_ne_zero] using hpos
+
 /--
 Yun's inner loop: peel off the factors with multiplicities `i`, `i + 1`, ...
 from the coprime/repeated split `(c, w)`, consing each discovered factor onto
@@ -7235,6 +7260,30 @@ private theorem normalizeMonic_squareFreeContributionReachable
         exact (DensePoly.coeff_C (1 : ZMod64 p) (n + 1)).symm
   · rw [normalizeMonic_zero f hzero] at hsize
     simp at hsize
+
+private theorem normalizeMonic_squareFreeContributionPayload
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (hzero : f.isZero = false) :
+    squareFreeContributionReachable (normalizeMonic f).2 ∧
+      (normalizeMonic f).2.isZero = false := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  exact
+    ⟨normalizeMonic_squareFreeContributionReachable hp f,
+      normalizeMonic_nonzero_isZero_false f hzero⟩
+
+private theorem yunFactorsDerivativeActiveReachable_normalized_stateProvider
+    (hp : Hex.Nat.Prime p) :
+    ∀ f' c w : FpPoly p, ∀ fuel : Nat,
+      yunFactorsDerivativeActiveReachable hp f' c w fuel →
+        squareFreeContributionReachable (normalizeMonic c).2 ∧
+          (normalizeMonic c).2.isZero = false ∧
+            squareFreeContributionReachable (normalizeMonic w).2 ∧
+              (normalizeMonic w).2.isZero = false := by
+  intro f' c w fuel hreachable
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  have hnonzero := yunFactorsDerivativeActiveReachable_nonzero hp f' c w fuel hreachable
+  have hc := normalizeMonic_squareFreeContributionPayload hp c hnonzero.1
+  have hw := normalizeMonic_squareFreeContributionPayload hp w hnonzero.2
+  exact ⟨hc.1, hc.2, hw.1, hw.2⟩
 
 private theorem normalizeMonic_zero_squareFree_weightedProduct
     (hp : Hex.Nat.Prime p) (f : FpPoly p)
