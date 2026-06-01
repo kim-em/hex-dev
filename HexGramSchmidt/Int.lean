@@ -688,6 +688,44 @@ private theorem stepScaledRows_size
     -Array.set!_eq_setIfInBounds]
   exact size_foldl_set! _ _ _
 
+/-- If the input row storage has the expected square shape, one
+`stepScaledRows` sweep preserves every in-bounds row length. -/
+private theorem stepScaledRows_rows_size
+    (rows : Array (Array Int)) (n k : Nat) (pivot prevPivot : Int)
+    (hsize : rows.size = n)
+    (hrowsize : ∀ r, r < n → rows[r]!.size = n) :
+    ∀ r, r < n → (stepScaledRows rows n k pivot prevPivot)[r]!.size = n := by
+  intro r hr
+  unfold stepScaledRows
+  simp [Std.Legacy.Range.forIn_eq_forIn_range', Std.Legacy.Range.size,
+    -Array.set!_eq_setIfInBounds]
+  let xs := List.range' (k + 1) (n - (k + 1))
+  let f : Nat → Array Int := fun i =>
+    (List.range' (k + 1) (n - (k + 1))).foldl
+      (fun nextRow j =>
+        nextRow.set! j
+          ((pivot * rows[i]![j]! - rows[i]![k]! * getArrayEntry rows k j) / prevPivot))
+      (rows[i]!.set! k 0)
+  by_cases hmem : r ∈ xs
+  · have hnodup : xs.Nodup := by
+      dsimp [xs]
+      exact List.nodup_range'
+    have hbound : r < rows.size := by
+      rw [hsize]
+      exact hr
+    rw [getElem!_foldl_set!_of_mem_nodup xs rows f r hmem hnodup hbound]
+    dsimp [f]
+    have hinner_size :=
+      size_foldl_set!
+        (List.range' (k + 1) (n - (k + 1)))
+        (rows[r]!.set! k 0)
+        (fun j =>
+          (pivot * rows[r]![j]! - rows[r]![k]! * getArrayEntry rows k j) / prevPivot)
+    simpa [Array.set!_eq_setIfInBounds, Array.size_setIfInBounds,
+      hrowsize r hr] using hinner_size
+  · rw [getElem!_foldl_set!_of_notMem xs rows f r hmem]
+    exact hrowsize r hr
+
 /-- Per-entry correspondence between the array-storage `stepScaledRows`
 update and the matrix-storage `Matrix.stepMatrix` update. Trailing-block
 entries match under exact divisibility, the pivot column clears to zero,
@@ -3662,6 +3700,8 @@ private theorem scaledCoeffArrayLoop_lower_matches_target_column
     (h_step_eq : state_array.step = state_matrix.step)
     (h_matrix_eq : rowsToMatrix state_array.matrix n = state_matrix.matrix)
     (h_prev_eq : state_array.prevPivot = state_matrix.prevPivot)
+    (h_array_size : state_array.matrix.size = n)
+    (h_array_rows_size : ∀ r, r < n → state_array.matrix[r]!.size = n)
     (h_coeffs_size : state_array.coeffs.size = n)
     (h_coeffs_rows_size : ∀ r, r < n → state_array.coeffs[r]!.size = n)
     (fuel : Nat) (i j : Fin n)
@@ -3737,6 +3777,18 @@ private theorem scaledCoeffArrayLoop_lower_matches_target_column
             rw [rowsToMatrix_stepArray_eq_stepMatrix, h_matrix_eq, h_pivot_array_eq_matrix,
               h_step_eq, h_prev_eq]
           have h_prev_new : new_array.prevPivot = new_matrix.prevPivot := h_pivot_array_eq_matrix
+          have h_array_size_new : new_array.matrix.size = n := Matrix.stepArray_size _ _ _ _ _
+          have h_array_rows_size_new : ∀ r, r < n → new_array.matrix[r]!.size = n := by
+            intro r hr
+            show (Matrix.stepArray state_array.matrix n state_array.step _ _)[r]!.size = n
+            unfold Matrix.stepArray
+            rw [Array.getElem!_eq_getD]
+            unfold Array.getD
+            simp only [Array.size_map, Array.size_range]
+            rw [dif_pos hr]
+            by_cases hsr : state_array.step < r
+            · simp [hsr, Array.size_map, Array.size_range]
+            · simp [hsr, h_array_rows_size r hr]
           have h_coeffs_size_new : new_array.coeffs.size = n := by
             show (writeScaledColumn _ _ _ _).size = n
             rw [writeScaledColumn_size]
@@ -3759,8 +3811,9 @@ private theorem scaledCoeffArrayLoop_lower_matches_target_column
               omega
             rw [hdist, Matrix.noPivotLoop_regular_branch _ state_matrix hDone hp] at h_target_nonsing
             simpa [new_matrix] using h_target_nonsing
-          have h_capture := ih h_step_new h_matrix_new h_prev_new h_coeffs_size_new
-            h_coeffs_rows_size_new h_step_le_j_new h_fuel_new h_target_nonsing_new
+          have h_capture := ih h_step_new h_matrix_new h_prev_new h_array_size_new
+            h_array_rows_size_new h_coeffs_size_new h_coeffs_rows_size_new
+            h_step_le_j_new h_fuel_new h_target_nonsing_new
           have hdist :
               j.val - state_matrix.step = (j.val - (state_matrix.step + 1)) + 1 := by
             omega
@@ -3954,6 +4007,8 @@ private theorem scaledCoeffArrayLoop_lower_matches
     (h_step_eq : state_array.step = state_matrix.step)
     (h_matrix_eq : rowsToMatrix state_array.matrix n = state_matrix.matrix)
     (h_prev_eq : state_array.prevPivot = state_matrix.prevPivot)
+    (h_array_size : state_array.matrix.size = n)
+    (h_array_rows_size : ∀ r, r < n → state_array.matrix[r]!.size = n)
     (h_coeffs_size : state_array.coeffs.size = n)
     (h_coeffs_rows_size : ∀ r, r < n → state_array.coeffs[r]!.size = n)
     (h_coeffs_processed : ∀ r c : Fin n,
@@ -3995,8 +4050,9 @@ private theorem scaledCoeffArrayLoop_lower_matches
   · intro _hp h_target_nonsing
     exact scaledCoeffArrayLoop_lower_matches_target_column
       (n := n) (state_array := state_array) (state_matrix := state_matrix)
-      h_step_eq h_matrix_eq h_prev_eq h_coeffs_size h_coeffs_rows_size
-      (fuel + 1) i j h_step_le_j hji h_fuel h_target_nonsing
+      h_step_eq h_matrix_eq h_prev_eq h_array_size h_array_rows_size
+      h_coeffs_size h_coeffs_rows_size (fuel + 1) i j h_step_le_j hji
+      h_fuel h_target_nonsing
 
 /-- Singular dual of `scaledCoeffArrayLoop_lower_matches_target_column`.
 When the matrix-side `noPivotLoop` records a singular step strictly before
@@ -4007,6 +4063,8 @@ private theorem scaledCoeffArrayLoop_lower_zero_of_singular_before_target
     (h_step_eq : state_array.step = state_matrix.step)
     (h_matrix_eq : rowsToMatrix state_array.matrix n = state_matrix.matrix)
     (h_prev_eq : state_array.prevPivot = state_matrix.prevPivot)
+    (h_array_size : state_array.matrix.size = n)
+    (h_array_rows_size : ∀ r, r < n → state_array.matrix[r]!.size = n)
     (h_coeffs_size : state_array.coeffs.size = n)
     (h_coeffs_rows_size : ∀ r, r < n → state_array.coeffs[r]!.size = n)
     (h_coeffs_unwritten : ∀ r c : Fin n,
@@ -4083,6 +4141,19 @@ private theorem scaledCoeffArrayLoop_lower_zero_of_singular_before_target
               h_step_eq, h_prev_eq]
           have h_prev_new : new_array.prevPivot = new_matrix.prevPivot :=
             h_pivot_array_eq_matrix
+          have h_array_size_new : new_array.matrix.size = n := Matrix.stepArray_size _ _ _ _ _
+          have h_array_rows_size_new : ∀ r, r < n → new_array.matrix[r]!.size = n := by
+            intro r hr
+            show (Matrix.stepArray state_array.matrix n state_array.step _
+              state_array.prevPivot)[r]!.size = n
+            unfold Matrix.stepArray
+            rw [Array.getElem!_eq_getD]
+            unfold Array.getD
+            simp only [Array.size_map, Array.size_range]
+            rw [dif_pos hr]
+            by_cases hsr : state_array.step < r
+            · simp [hsr, Array.size_map, Array.size_range]
+            · simp [hsr, h_array_rows_size r hr]
           have h_coeffs_size_new : new_array.coeffs.size = n := by
             show (writeScaledColumn _ _ _ _).size = n
             rw [writeScaledColumn_size]
@@ -4119,9 +4190,10 @@ private theorem scaledCoeffArrayLoop_lower_zero_of_singular_before_target
               omega
             rw [hdist, Matrix.noPivotLoop_regular_branch _ state_matrix hDone hp] at h_sing
             simpa [new_matrix] using h_sing
-          exact ih h_step_new h_matrix_new h_prev_new h_coeffs_size_new
-            h_coeffs_rows_size_new h_coeffs_unwritten_new h_no_sing_new
-            h_step_le_j_new h_fuel_new h_sing_new
+          exact ih h_step_new h_matrix_new h_prev_new h_array_size_new
+            h_array_rows_size_new h_coeffs_size_new h_coeffs_rows_size_new
+            h_coeffs_unwritten_new h_no_sing_new h_step_le_j_new h_fuel_new
+            h_sing_new
 
 /-- State-level diagonal correspondence between the scaled-coefficient array
 loop and the matrix-level `Matrix.noPivotLoop` on the same Gram-like data.
@@ -5541,6 +5613,7 @@ theorem scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix
           prevPivot := 1 })
       (state_matrix := Matrix.noPivotInitialState (Matrix.gramMatrix b))
       (by rfl) (rowsToMatrix_gramRows b) (by rfl)
+      (gramRows_size b) (gramRows_row_size b)
       (zeroRows_size n) (zeroRows_row_size n)
       n i j (Nat.zero_le _) hji
       (by have := i.isLt; omega) h_target_nonsing
@@ -5607,6 +5680,7 @@ theorem scaledCoeffs_eq_zero_of_singularStep_lt
         prevPivot := 1 })
     (state_matrix := Matrix.noPivotInitialState (Matrix.gramMatrix b))
     rfl (rowsToMatrix_gramRows b) rfl
+    (gramRows_size b) (gramRows_row_size b)
     (zeroRows_size n) (zeroRows_row_size n) h_unwritten rfl n i j
     (Nat.zero_le _) hji (by have := i.isLt; omega) s ?_
   rw [h_sub]
