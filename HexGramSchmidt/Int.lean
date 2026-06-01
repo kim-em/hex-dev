@@ -541,7 +541,8 @@ private def stepScaledRows (rows : Array (Array Int)) (n k : Nat)
       let mut nextRow := sourceRow.set! k 0
       for j in [k + 1:n] do
         let value :=
-          (pivot * sourceRow[j]! - entryIK * getArrayEntry rows k j) / prevPivot
+          Matrix.exactDiv
+            (pivot * sourceRow[j]! - entryIK * getArrayEntry rows k j) prevPivot
         nextRow := nextRow.set! j value
       next := next.set! i nextRow
     return next
@@ -600,7 +601,9 @@ private theorem stepScaledRows_row_at_trailing
       (List.range' (k + 1) (n - (k + 1))).foldl
         (fun nextRow j =>
           nextRow.set! j
-            ((pivot * rows[r]![j]! - rows[r]![k]! * getArrayEntry rows k j) / prevPivot))
+            (Matrix.exactDiv
+              (pivot * rows[r]![j]! - rows[r]![k]! * getArrayEntry rows k j)
+              prevPivot))
         (rows[r]!.set! k 0) := by
   unfold stepScaledRows
   simp [Std.Legacy.Range.forIn_eq_forIn_range', Std.Legacy.Range.size,
@@ -634,10 +637,14 @@ private theorem getArrayEntry_stepScaledRows_trailing
     (r c : Nat) (hkr : k < r) (hr : r < n) (hkc : k < c) (hc : c < n)
     (hrows : r < rows.size) (hcols : c < rows[r]!.size) :
     getArrayEntry (stepScaledRows rows n k pivot prevPivot) r c =
-      (pivot * rows[r]![c]! - rows[r]![k]! * getArrayEntry rows k c) / prevPivot := by
+      Matrix.exactDiv
+        (pivot * rows[r]![c]! - rows[r]![k]! * getArrayEntry rows k c)
+        prevPivot := by
   show
       (stepScaledRows rows n k pivot prevPivot)[r]![c]! =
-        (pivot * rows[r]![c]! - rows[r]![k]! * getArrayEntry rows k c) / prevPivot
+        Matrix.exactDiv
+          (pivot * rows[r]![c]! - rows[r]![k]! * getArrayEntry rows k c)
+          prevPivot
   rw [stepScaledRows_row_at_trailing rows n k pivot prevPivot r hkr hr hrows]
   have hmem : c ∈ List.range' (k + 1) (n - (k + 1)) := by
     rw [List.mem_range']
@@ -696,7 +703,9 @@ private theorem stepScaledRows_rows_size
     (List.range' (k + 1) (n - (k + 1))).foldl
       (fun nextRow j =>
         nextRow.set! j
-          ((pivot * rows[i]![j]! - rows[i]![k]! * getArrayEntry rows k j) / prevPivot))
+          (Matrix.exactDiv
+            (pivot * rows[i]![j]! - rows[i]![k]! * getArrayEntry rows k j)
+            prevPivot))
       (rows[i]!.set! k 0)
   by_cases hmem : r ∈ xs
   · have hnodup : xs.Nodup := by
@@ -712,29 +721,26 @@ private theorem stepScaledRows_rows_size
         (List.range' (k + 1) (n - (k + 1)))
         (rows[r]!.set! k 0)
         (fun j =>
-          (pivot * rows[r]![j]! - rows[r]![k]! * getArrayEntry rows k j) / prevPivot)
+          Matrix.exactDiv
+            (pivot * rows[r]![j]! - rows[r]![k]! * getArrayEntry rows k j)
+            prevPivot)
     simpa [Array.set!_eq_setIfInBounds, Array.size_setIfInBounds,
       hrowsize r hr] using hinner_size
   · rw [getElem!_foldl_set!_of_notMem xs rows f r hmem]
     exact hrowsize r hr
 
-/-- Per-entry correspondence between the array-storage `stepScaledRows`
-update and the matrix-storage `Matrix.stepMatrix` update. Trailing-block
-entries match under exact divisibility, the pivot column clears to zero,
-and entries outside the update region are preserved on both sides. The
-divisibility hypothesis connects Lean's `Int` `/` (used inside
-`stepScaledRows`) with `Matrix.exactDiv` (used inside `Matrix.stepMatrix`). -/
+/-- Per-entry correspondence between the row-mutating array-storage
+`stepScaledRows` update and the matrix-storage `Matrix.stepMatrix` update.
+Trailing-block entries use the same `Matrix.exactDiv` expression, the pivot
+column clears to zero, and entries outside the update region are preserved on
+both sides. -/
 private theorem getArrayEntry_stepScaledRows_matches_stepMatrix
     {n : Nat} (rows : Array (Array Int)) (M : Matrix Int n n) (k : Nat)
     (pivot prevPivot : Int)
     (hentry : ∀ a b : Fin n, getArrayEntry rows a.val b.val = M[a][b])
     (hsize : rows.size = n)
     (hrowsize : ∀ (a : Nat), a < n → rows[a]!.size = n)
-    (i j : Fin n)
-    (hdvd : k < i.val → k < j.val →
-      prevPivot ∣
-        (pivot * getArrayEntry rows i.val j.val -
-          getArrayEntry rows i.val k * getArrayEntry rows k j.val)) :
+    (i j : Fin n) :
     getArrayEntry (stepScaledRows rows n k pivot prevPivot) i.val j.val =
       (Matrix.stepMatrix M k pivot prevPivot)[i][j] := by
   rcases Nat.lt_or_ge k i.val with hki | hki
@@ -752,20 +758,16 @@ private theorem getArrayEntry_stepScaledRows_matches_stepMatrix
           getArrayEntry rows k j.val =
             M[(⟨k, Nat.lt_trans hkj j.isLt⟩ : Fin n)][j] := by
         simpa using hentry ⟨k, Nat.lt_trans hkj j.isLt⟩ j
-      have hdvd' := hdvd hki hkj
-      have hdvd_M : prevPivot ∣
-          (pivot * M[i][j] -
-            M[i][(⟨k, Nat.lt_trans hki i.isLt⟩ : Fin n)] *
-              M[(⟨k, Nat.lt_trans hkj j.isLt⟩ : Fin n)][j]) := by
-        rw [← hij_eq, ← hcol_eq, ← hrow_eq]; exact hdvd'
       rw [getArrayEntry_stepScaledRows_trailing rows n k pivot prevPivot
             i.val j.val hki i.isLt hkj j.isLt hrows hcols]
       rw [Matrix.stepMatrix_update_eq M k pivot prevPivot i j hki hkj]
-      simp only
-      rw [Matrix.exactDiv_eq_divExact hdvd_M]
-      rw [Int.divExact_eq_ediv hdvd_M]
-      show (pivot * getArrayEntry rows i.val j.val -
-              getArrayEntry rows i.val k * getArrayEntry rows k j.val) / prevPivot = _
+      change Matrix.exactDiv
+          (pivot * getArrayEntry rows i.val j.val -
+            getArrayEntry rows i.val k * getArrayEntry rows k j.val) prevPivot =
+        Matrix.exactDiv
+          (pivot * M[i][j] -
+            M[i][(⟨k, Nat.lt_trans hki i.isLt⟩ : Fin n)] *
+              M[(⟨k, Nat.lt_trans hkj j.isLt⟩ : Fin n)][j]) prevPivot
       rw [hij_eq, hcol_eq, hrow_eq]
     · -- Pivot column or strictly-left column at a trailing row.
       rcases Nat.lt_or_eq_of_le hkj with hkj_lt | hkj_eq
@@ -801,19 +803,13 @@ private theorem getArrayEntry_stepScaledRows_matches_stepMatrix
           (fun h => Nat.not_lt_of_ge hki h.1)]
     exact hentry i j
 
-/-- Matrix-level correspondence: one `stepScaledRows` array update, viewed
-as a matrix via `rowsToMatrix`, equals the corresponding `Matrix.stepMatrix`
-update on the matrix view of the same row storage. The hypothesis encodes
-the Bareiss exact-divisibility condition that must hold for the array-side
-integer division to agree with `Matrix.exactDiv`. -/
-private theorem rowsToMatrix_stepScaledRows_eq_stepMatrix_of_dvd
+/-- Matrix-level correspondence: one row-mutating `stepScaledRows` array
+update, viewed as a matrix via `rowsToMatrix`, equals the corresponding
+`Matrix.stepMatrix` update on the matrix view of the same row storage. -/
+private theorem rowsToMatrix_stepScaledRows_eq_stepMatrix
     {n : Nat} (rows : Array (Array Int)) (k : Nat) (pivot prevPivot : Int)
     (hsize : rows.size = n)
-    (hrowsize : ∀ (a : Nat), a < n → rows[a]!.size = n)
-    (hdvd : ∀ (i j : Fin n), k < i.val → k < j.val →
-      prevPivot ∣
-        (pivot * getArrayEntry rows i.val j.val -
-          getArrayEntry rows i.val k * getArrayEntry rows k j.val)) :
+    (hrowsize : ∀ (a : Nat), a < n → rows[a]!.size = n) :
     rowsToMatrix (stepScaledRows rows n k pivot prevPivot) n =
       Matrix.stepMatrix (rowsToMatrix rows n) k pivot prevPivot := by
   apply Vector.ext
@@ -827,7 +823,6 @@ private theorem rowsToMatrix_stepScaledRows_eq_stepMatrix_of_dvd
   simpa [rowsToMatrix, Matrix.ofFn] using
     getArrayEntry_stepScaledRows_matches_stepMatrix rows (rowsToMatrix rows n)
       k pivot prevPivot hentry hsize hrowsize ⟨i, hi⟩ ⟨j, hj⟩
-      (fun hki hkj => hdvd ⟨i, hi⟩ ⟨j, hj⟩ hki hkj)
 
 /-- Local view of the canonical Bareiss array step: after reading the private
 Gram-Schmidt row storage as a matrix, `Matrix.stepArray` is exactly
@@ -856,7 +851,7 @@ private def scaledCoeffArrayLoop (n fuel : Nat) (state : ScaledCoeffArrayState) 
           else
             let next : ScaledCoeffArrayState :=
               { step := state.step + 1
-                matrix := Matrix.stepArray state.matrix n k pivot state.prevPivot
+                matrix := stepScaledRows state.matrix n k pivot state.prevPivot
                 coeffs := coeffs
                 prevPivot := pivot }
             scaledCoeffArrayLoop n fuel next
@@ -910,7 +905,7 @@ private theorem getArrayEntry_scaledCoeffArrayLoop_above
           · simp only [hpivot, ↓reduceIte]
             exact ih
               { step := state.step + 1
-                matrix := Matrix.stepArray state.matrix n state.step
+                matrix := stepScaledRows state.matrix n state.step
                   (getArrayEntry state.matrix state.step state.step) state.prevPivot
                 coeffs := writeScaledColumn state.coeffs state.matrix n state.step
                 prevPivot := getArrayEntry state.matrix state.step state.step }
@@ -3595,7 +3590,7 @@ private theorem scaledCoeffArrayLoop_last_step (fuel : Nat)
   simp [scaledCoeffArrayLoop, hStep, hNext]
 
 /-- Regular branch of one array-loop iteration: a nonzero pivot strictly before
-the last column applies one canonical Bareiss `stepArray` update, advances
+the last column applies one row-mutating Bareiss update, advances
 `step`, records the new `prevPivot`, and recurses on the remaining fuel. -/
 private theorem scaledCoeffArrayLoop_regular_branch (fuel : Nat)
     (state : ScaledCoeffArrayState)
@@ -3604,7 +3599,7 @@ private theorem scaledCoeffArrayLoop_regular_branch (fuel : Nat)
     scaledCoeffArrayLoop n (fuel + 1) state =
       scaledCoeffArrayLoop n fuel
         { step := state.step + 1
-          matrix := Matrix.stepArray state.matrix n state.step
+          matrix := stepScaledRows state.matrix n state.step
             (getArrayEntry state.matrix state.step state.step) state.prevPivot
           coeffs := writeScaledColumn state.coeffs state.matrix n state.step
           prevPivot := getArrayEntry state.matrix state.step state.step } := by
@@ -3644,7 +3639,7 @@ private theorem getArrayEntry_scaledCoeffArrayLoop_current_col_written
     · rw [scaledCoeffArrayLoop_regular_branch fuel state hArrayStep hNext hp]
       let next : ScaledCoeffArrayState :=
         { step := state.step + 1
-          matrix := Matrix.stepArray state.matrix n state.step
+          matrix := stepScaledRows state.matrix n state.step
             (getArrayEntry state.matrix state.step state.step) state.prevPivot
           coeffs := writeScaledColumn state.coeffs state.matrix n state.step
           prevPivot := getArrayEntry state.matrix state.step state.step }
@@ -3724,7 +3719,7 @@ private theorem scaledCoeffArrayLoop_lower_matches_target_column
           rw [scaledCoeffArrayLoop_regular_branch fuel' state_array hArrayStep hArrayNext hp_array]
           let new_array : ScaledCoeffArrayState :=
             { step := state_array.step + 1
-              matrix := Matrix.stepArray state_array.matrix n state_array.step
+              matrix := stepScaledRows state_array.matrix n state_array.step
                 (getArrayEntry state_array.matrix state_array.step state_array.step)
                 state_array.prevPivot
               coeffs := writeScaledColumn state_array.coeffs state_array.matrix n state_array.step
@@ -3744,23 +3739,19 @@ private theorem scaledCoeffArrayLoop_lower_matches_target_column
             rw [h_step_eq]
           have h_matrix_new : rowsToMatrix new_array.matrix n = new_matrix.matrix := by
             show rowsToMatrix
-                (Matrix.stepArray state_array.matrix n state_array.step _ state_array.prevPivot) n =
+                (stepScaledRows state_array.matrix n state_array.step _ state_array.prevPivot) n =
               Matrix.stepMatrix state_matrix.matrix state_matrix.step _ state_matrix.prevPivot
-            rw [rowsToMatrix_stepArray_eq_stepMatrix, h_matrix_eq, h_pivot_array_eq_matrix,
-              h_step_eq, h_prev_eq]
+            rw [rowsToMatrix_stepScaledRows_eq_stepMatrix _ _ _ _ h_array_size
+              h_array_rows_size, h_matrix_eq, h_pivot_array_eq_matrix, h_step_eq, h_prev_eq]
           have h_prev_new : new_array.prevPivot = new_matrix.prevPivot := h_pivot_array_eq_matrix
-          have h_array_size_new : new_array.matrix.size = n := Matrix.stepArray_size _ _ _ _ _
+          have h_array_size_new : new_array.matrix.size = n := by
+            show (stepScaledRows state_array.matrix n state_array.step _ _).size = n
+            rw [stepScaledRows_size, h_array_size]
           have h_array_rows_size_new : ∀ r, r < n → new_array.matrix[r]!.size = n := by
             intro r hr
-            show (Matrix.stepArray state_array.matrix n state_array.step _ _)[r]!.size = n
-            unfold Matrix.stepArray
-            rw [Array.getElem!_eq_getD]
-            unfold Array.getD
-            simp only [Array.size_map, Array.size_range]
-            rw [dif_pos hr]
-            by_cases hsr : state_array.step < r
-            · simp [hsr, Array.size_map, Array.size_range]
-            · simp [hsr, h_array_rows_size r hr]
+            show (stepScaledRows state_array.matrix n state_array.step _ _)[r]!.size = n
+            exact stepScaledRows_rows_size state_array.matrix n state_array.step _ _
+              h_array_size h_array_rows_size r hr
           have h_coeffs_size_new : new_array.coeffs.size = n := by
             show (writeScaledColumn _ _ _ _).size = n
             rw [writeScaledColumn_size]
@@ -4086,7 +4077,7 @@ private theorem scaledCoeffArrayLoop_lower_zero_of_singular_before_target
             hArrayNext hp_array]
           let new_array : ScaledCoeffArrayState :=
             { step := state_array.step + 1
-              matrix := Matrix.stepArray state_array.matrix n state_array.step
+              matrix := stepScaledRows state_array.matrix n state_array.step
                 (getArrayEntry state_array.matrix state_array.step state_array.step)
                 state_array.prevPivot
               coeffs := writeScaledColumn state_array.coeffs state_array.matrix n
@@ -4106,26 +4097,22 @@ private theorem scaledCoeffArrayLoop_lower_zero_of_singular_before_target
             rw [h_step_eq]
           have h_matrix_new : rowsToMatrix new_array.matrix n = new_matrix.matrix := by
             show rowsToMatrix
-                (Matrix.stepArray state_array.matrix n state_array.step _
+                (stepScaledRows state_array.matrix n state_array.step _
                   state_array.prevPivot) n =
               Matrix.stepMatrix state_matrix.matrix state_matrix.step _ state_matrix.prevPivot
-            rw [rowsToMatrix_stepArray_eq_stepMatrix, h_matrix_eq, h_pivot_array_eq_matrix,
-              h_step_eq, h_prev_eq]
+            rw [rowsToMatrix_stepScaledRows_eq_stepMatrix _ _ _ _ h_array_size
+              h_array_rows_size, h_matrix_eq, h_pivot_array_eq_matrix, h_step_eq, h_prev_eq]
           have h_prev_new : new_array.prevPivot = new_matrix.prevPivot :=
             h_pivot_array_eq_matrix
-          have h_array_size_new : new_array.matrix.size = n := Matrix.stepArray_size _ _ _ _ _
+          have h_array_size_new : new_array.matrix.size = n := by
+            show (stepScaledRows state_array.matrix n state_array.step _ _).size = n
+            rw [stepScaledRows_size, h_array_size]
           have h_array_rows_size_new : ∀ r, r < n → new_array.matrix[r]!.size = n := by
             intro r hr
-            show (Matrix.stepArray state_array.matrix n state_array.step _
+            show (stepScaledRows state_array.matrix n state_array.step _
               state_array.prevPivot)[r]!.size = n
-            unfold Matrix.stepArray
-            rw [Array.getElem!_eq_getD]
-            unfold Array.getD
-            simp only [Array.size_map, Array.size_range]
-            rw [dif_pos hr]
-            by_cases hsr : state_array.step < r
-            · simp [hsr, Array.size_map, Array.size_range]
-            · simp [hsr, h_array_rows_size r hr]
+            exact stepScaledRows_rows_size state_array.matrix n state_array.step _ _
+              h_array_size h_array_rows_size r hr
           have h_coeffs_size_new : new_array.coeffs.size = n := by
             show (writeScaledColumn _ _ _ _).size = n
             rw [writeScaledColumn_size]
@@ -4282,7 +4269,7 @@ private theorem scaledCoeffArrayLoop_diag_matches
           -- Build new compatible states.
           let new_array : ScaledCoeffArrayState :=
             { step := state_array.step + 1
-              matrix := Matrix.stepArray state_array.matrix n state_array.step
+              matrix := stepScaledRows state_array.matrix n state_array.step
                 (getArrayEntry state_array.matrix state_array.step state_array.step)
                 state_array.prevPivot
               coeffs := writeScaledColumn state_array.coeffs state_array.matrix n state_array.step
@@ -4300,24 +4287,20 @@ private theorem scaledCoeffArrayLoop_diag_matches
             rw [h_step_eq]
           have h_matrix_new : rowsToMatrix new_array.matrix n = new_matrix.matrix := by
             show rowsToMatrix
-                (Matrix.stepArray state_array.matrix n state_array.step _ state_array.prevPivot) n =
+                (stepScaledRows state_array.matrix n state_array.step _ state_array.prevPivot) n =
               Matrix.stepMatrix state_matrix.matrix state_matrix.step _ state_matrix.prevPivot
-            rw [rowsToMatrix_stepArray_eq_stepMatrix, h_matrix_eq, h_pivot_array_eq_matrix,
-              h_step_eq, h_prev_eq]
+            rw [rowsToMatrix_stepScaledRows_eq_stepMatrix _ _ _ _ h_array_size
+              h_array_rows_size, h_matrix_eq, h_pivot_array_eq_matrix, h_step_eq, h_prev_eq]
           have h_prev_new : new_array.prevPivot = new_matrix.prevPivot := h_pivot_array_eq_matrix
           have h_no_sing_new : new_matrix.singularStep = none := rfl
-          have h_array_size_new : new_array.matrix.size = n := Matrix.stepArray_size _ _ _ _ _
+          have h_array_size_new : new_array.matrix.size = n := by
+            show (stepScaledRows state_array.matrix n state_array.step _ _).size = n
+            rw [stepScaledRows_size, h_array_size]
           have h_array_rows_size_new : ∀ r, r < n → new_array.matrix[r]!.size = n := by
             intro r hr
-            show (Matrix.stepArray state_array.matrix n state_array.step _ _)[r]!.size = n
-            unfold Matrix.stepArray
-            rw [Array.getElem!_eq_getD]
-            unfold Array.getD
-            simp only [Array.size_map, Array.size_range]
-            rw [dif_pos hr]
-            by_cases hsr : state_array.step < r
-            · simp [hsr, Array.size_map, Array.size_range]
-            · simp [hsr, h_array_rows_size r hr]
+            show (stepScaledRows state_array.matrix n state_array.step _ _)[r]!.size = n
+            exact stepScaledRows_rows_size state_array.matrix n state_array.step _ _
+              h_array_size h_array_rows_size r hr
           have h_coeffs_size_new : new_array.coeffs.size = n := by
             show (writeScaledColumn _ _ _ _).size = n
             rw [writeScaledColumn_size]; exact h_coeffs_size
