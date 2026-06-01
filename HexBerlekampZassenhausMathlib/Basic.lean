@@ -268,6 +268,37 @@ theorem factor_polynomialIrreducible_of_nonUnit (f : Hex.ZPoly) :
     (Hex.ZPoly.Irreducible_iff_polynomialIrreducible entry.1).mp
       (factor_irreducible_of_nonUnit f entry hentry)
 
+/--
+Bundled public contract currently available for the default executable
+factorization surface.
+
+This packages the clauses that are already exposed by the Mathlib-free and
+Mathlib bridge layers: product preservation, Mathlib irreducibility of each
+recorded polynomial factor, positive multiplicities, syntactic absence of
+duplicate polynomial keys, and the signed-content scalar convention. The
+remaining HO-1 headline strengthening is to replace the syntactic distinct-key
+clause with non-association and to add the primitive-factor clause.
+-/
+theorem factor_headline_contract_core (f : Hex.ZPoly) :
+    Hex.Factorization.product (Hex.factor f) = f ∧
+      (∀ entry ∈ (Hex.factor f).factors,
+        Irreducible (HexPolyZMathlib.toPolynomial entry.1)) ∧
+      (∀ entry ∈ (Hex.factor f).factors, 0 < entry.2) ∧
+      List.Pairwise (fun a b : Hex.ZPoly × Nat => a.1 ≠ b.1)
+        (Hex.factor f).factors.toList ∧
+      (Hex.factor f).scalar =
+        if f = 0 then
+          0
+        else if Hex.DensePoly.leadingCoeff f < 0 then
+          -Hex.ZPoly.content f
+        else
+          Hex.ZPoly.content f := by
+  refine ⟨factor_product f, ?_, ?_, Hex.factor_pairwise_first f, Hex.factor_scalar f⟩
+  · intro entry hentry
+    exact factor_polynomialIrreducible_of_nonUnit f entry hentry
+  · intro entry hentry
+    exact Hex.factor_entry_multiplicity_pos f entry (Array.mem_toList_iff.mpr hentry)
+
 private theorem toPolynomial_foldl_mul (lst : List Hex.ZPoly) (init : Hex.ZPoly) :
     HexPolyZMathlib.toPolynomial (lst.foldl (· * ·) init) =
       (lst.map HexPolyZMathlib.toPolynomial).foldl (· * ·)
