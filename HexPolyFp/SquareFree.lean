@@ -7204,6 +7204,78 @@ private theorem normalizeMonic_zero_squareFree_weightedProduct
   rw [← hreconstruct]
   rfl
 
+private theorem yunFactorsWithLevel_multiplicity_pos_raw
+    (c w : FpPoly p) (base level fuel : Nat) (accRev : List (SquareFreeFactor p))
+    (hbase : 0 < base) (hlevel : 0 < level)
+    (hacc : ∀ sf ∈ accRev, 0 < sf.multiplicity) :
+    ∀ sf ∈ (yunFactorsWithLevel c w base level fuel accRev).1,
+      0 < sf.multiplicity := by
+  induction fuel generalizing c w level accRev with
+  | zero =>
+      simpa [yunFactorsWithLevel] using hacc
+  | succ fuel ih =>
+      simp only [yunFactorsWithLevel]
+      by_cases hc : isOne c
+      · simpa [hc] using hacc
+      · simp [hc]
+        let y := DensePoly.gcd c w
+        let z := c / y
+        by_cases hz : isOne z
+        · simpa [y, z, hz] using
+            ih y (w / y) (level + 1) accRev (Nat.succ_pos level) hacc
+        · have hacc' :
+              ∀ sf ∈ ({ factor := z, multiplicity := base * level } :: accRev),
+                0 < sf.multiplicity := by
+            intro sf hsf
+            rcases List.mem_cons.mp hsf with hsf | hsf
+            · subst sf
+              exact Nat.mul_pos hbase hlevel
+            · exact hacc sf hsf
+          simpa [y, z, hz] using
+            ih y (w / y) (level + 1)
+              ({ factor := z, multiplicity := base * level } :: accRev)
+              (Nat.succ_pos level) hacc'
+
+private theorem squareFreeAuxRev_multiplicity_pos_raw
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
+    (accRev : List (SquareFreeFactor p))
+    (hmultiplicity : 0 < multiplicity)
+    (hacc : ∀ sf ∈ accRev, 0 < sf.multiplicity) :
+    ∀ sf ∈ squareFreeAuxRev f multiplicity fuel accRev,
+      0 < sf.multiplicity := by
+  induction fuel generalizing f multiplicity accRev with
+  | zero =>
+      simpa [squareFreeAuxRev] using hacc
+  | succ fuel ih =>
+      simp only [squareFreeAuxRev]
+      by_cases hzero : f.isZero
+      · simpa [hzero] using hacc
+      · simp [hzero]
+        by_cases hdf : (DensePoly.derivative f).isZero
+        · have hp_pos : 0 < p := by
+            have htwo : 2 ≤ p := Hex.Nat.Prime.two_le hp
+            omega
+          simpa [hdf] using
+            ih (pthRoot f) (multiplicity * p) accRev
+              (Nat.mul_pos hmultiplicity hp_pos) hacc
+        · simp [hdf]
+          let g := DensePoly.gcd f (DensePoly.derivative f)
+          let c := f / g
+          let loop := yunFactorsWithLevel c g multiplicity 1 fuel accRev
+          have hloop :
+              ∀ sf ∈ loop.1, 0 < sf.multiplicity := by
+            simpa [loop, c, g] using
+              yunFactorsWithLevel_multiplicity_pos_raw
+                c g multiplicity 1 fuel accRev hmultiplicity (by omega) hacc
+          by_cases hrepeated : isOne loop.2
+          · simpa [loop, c, g, hrepeated] using hloop
+          · have hp_pos : 0 < p := by
+              have htwo : 2 ≤ p := Hex.Nat.Prime.two_le hp
+              omega
+            simpa [loop, c, g, hrepeated] using
+              ih (pthRoot loop.2) (multiplicity * p) loop.1
+                (Nat.mul_pos hmultiplicity hp_pos) hloop
+
 theorem squareFree_pairwise_coprime (hp : Hex.Nat.Prime p)
     (stateProvider :
       ∀ f' c w : FpPoly p, ∀ fuel : Nat,
@@ -7288,6 +7360,26 @@ theorem squareFree_factors_squareFree (hp : Hex.Nat.Prime p) (f : FpPoly p) :
   apply squareFreeAuxRev_factors_squareFree hp
   intro sf hsf
   simp at hsf
+
+theorem squareFreeDecomposition_factors_squareFree (hp : Hex.Nat.Prime p) (f : FpPoly p) :
+    let d := squareFreeDecomposition hp f
+    ∀ sf ∈ d.factors,
+      (normalizeMonic (DensePoly.gcd sf.factor (DensePoly.derivative sf.factor))).2 = 1 :=
+  squareFree_factors_squareFree hp f
+
+theorem squareFreeDecomposition_multiplicity_pos (hp : Hex.Nat.Prime p) (f : FpPoly p) :
+    let d := squareFreeDecomposition hp f
+    ∀ sf ∈ d.factors, 0 < sf.multiplicity := by
+  dsimp [squareFreeDecomposition, squareFreeAux]
+  intro sf hsf
+  have hraw :
+      ∀ sf ∈ squareFreeAuxRev (normalizeMonic f).2 1 ((normalizeMonic f).2.size + 1) [],
+        0 < sf.multiplicity := by
+    apply squareFreeAuxRev_multiplicity_pos_raw hp
+    · omega
+    · intro sf hsf
+      simp at hsf
+  exact hraw sf (by simpa using hsf)
 
 private instance squareFreeGuardBoundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
 
