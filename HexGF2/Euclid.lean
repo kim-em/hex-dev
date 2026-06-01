@@ -511,6 +511,16 @@ theorem xgcd_bezout (p q : GF2Poly) :
   · rw [one_mul, zero_mul, add_zero]
   · rw [zero_mul, one_mul, zero_add]
 
+/-- Let-free Bezout form for automation over the computed extended-gcd record. -/
+@[grind =]
+theorem xgcd_left_mul_add_right_mul (p q : GF2Poly) :
+    (xgcd p q).left * p + (xgcd p q).right * q = (xgcd p q).gcd := by
+  simpa using xgcd_bezout p q
+
+example (p q : GF2Poly) :
+    (xgcd p q).left * p + (xgcd p q).right * q = (xgcd p q).gcd := by
+  grind
+
 /-- The gcd divides the left input. -/
 theorem gcd_dvd_left (p q : GF2Poly) :
     gcd p q ∣ p := by
@@ -894,11 +904,16 @@ theorem gcd_eq_one_of_irreducible_of_nonzero_reduced {a f : GF2Poly}
 
 /-- Adding a right multiple of the modulus does not change the computed
 remainder. This is the quotient-congruence form used with Bezout witnesses. -/
+@[simp]
 theorem mod_add_mul_right_eq_mod (a c f : GF2Poly) :
     (a + c * f) % f = a % f := by
   exact mod_eq_of_add_right_multiple a c f
 
+example (a c f : GF2Poly) : (a + c * f) % f = a % f := by
+  simp
+
 /-- A reduced packed polynomial is its own remainder modulo `f`. -/
+@[simp]
 theorem mod_eq_self_of_reduced (p f : GF2Poly)
     (hred : p.isZero = true ∨ p.degree < f.degree) :
     p % f = p := by

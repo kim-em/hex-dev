@@ -1754,6 +1754,7 @@ theorem coeff_monomial_ne {n m : Nat} (h : m ≠ n) :
   ne_zero_of_degree?_eq_some (degree?_monomial n)
 
 /-- Shift-left coefficients reduce to the coefficient lookup on the shifted packed words. -/
+@[simp]
 theorem coeff_shiftLeft (p : GF2Poly) (k n : Nat) :
     (p.shiftLeft k).coeff n =
       coeffWords
@@ -1777,9 +1778,21 @@ theorem coeff_shiftLeft_add_of_word_lt (p : GF2Poly) {k n : Nat}
       coeffWords_replicate_append_shiftLeftBitsList_add p.words hbitShift hword]
 
 /-- `mulXk` is coefficientwise the same as `shiftLeft`. -/
+@[simp]
 theorem coeff_mulXk (p : GF2Poly) (k n : Nat) :
     (p.mulXk k).coeff n = (p.shiftLeft k).coeff n := by
   rfl
+
+example (p : GF2Poly) (k n : Nat) :
+    (p.mulXk k).coeff n =
+      coeffWords
+        ((Array.replicate (k / 64) (0 : UInt64)) ++
+          if k % 64 = 0 then
+            p.words
+          else
+            (shiftLeftBitsList (k % 64) 0 p.words.toList).toArray)
+        n := by
+  simp
 
 /-- Multiplication by `x^k` shifts the degree of a nonzero packed polynomial. -/
 theorem degree?_mulXk_of_degree?_eq_some {p : GF2Poly} {d k : Nat}

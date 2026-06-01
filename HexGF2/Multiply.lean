@@ -6280,10 +6280,15 @@ theorem wordCount_mul_monomial_le (p : GF2Poly) (k : Nat) :
     (Nat.add_le_add_left (wordCount_monomial_le k) p.wordCount)
 
 /-- Multiplication coefficients reduce to the raw carry-less word product. -/
+@[simp]
 theorem coeff_mul (p q : GF2Poly) (n : Nat) :
     (p * q).coeff n = coeffWords (mulWords p.words q.words) n := by
   change (ofWords (mulWords p.words q.words)).coeff n =
     coeffWords (mulWords p.words q.words) n
+  simp
+
+example (p q : GF2Poly) (n : Nat) :
+    (p * q).coeff n = coeffWords (mulWords p.words q.words) n := by
   simp
 
 /-- The unit polynomial is the degree-zero monomial. -/
@@ -6642,6 +6647,7 @@ theorem coeff_mul_eq_false_of_degree_add_lt {p q : GF2Poly} {dp dq n : Nat}
 
 /-- The packed `GF(2)` product of two nonzero polynomials has degree exactly the
 sum of the two factor degrees. -/
+@[grind →]
 theorem degree?_mul_of_degree?_eq_some {p q : GF2Poly} {dp dq : Nat}
     (hp : p.degree? = some dp) (hq : q.degree? = some dq) :
     (p * q).degree? = some (dp + dq) := by
@@ -6732,6 +6738,7 @@ private theorem coeff_shiftLeft_add_source_oob
 
 /-- Right multiplication by the monomial `x^k` shifts packed GF(2)
 polynomials left by `k` coefficients. -/
+@[simp]
 theorem mul_monomial (q : GF2Poly) (k : Nat) :
     q * monomial k = q.mulXk k := by
   apply ext_coeff
@@ -6754,6 +6761,7 @@ theorem mul_monomial (q : GF2Poly) (k : Nat) :
 
 /-- Left multiplication by the monomial `x^k` shifts packed GF(2)
 polynomials left by `k` coefficients. -/
+@[simp]
 theorem monomial_mul (k : Nat) (q : GF2Poly) :
     monomial k * q = q.mulXk k := by
   apply ext_coeff
@@ -6773,6 +6781,10 @@ theorem monomial_mul (k : Nat) (q : GF2Poly) :
     · have hsource_le : q.words.size ≤ source / 64 := Nat.le_of_not_gt hsource
       rw [coeffWords_monomial_mulWords_source_oob q.words hsource_le]
       exact (coeff_shiftLeft_add_source_oob q hsource_le).symm
+
+example (q : GF2Poly) (k : Nat) :
+    (monomial k * q).degree? = (q.mulXk k).degree? := by
+  simp
 
 /-- Multiplication by `x^0` leaves a packed `GF(2)` polynomial unchanged. -/
 @[simp] theorem mulXk_zero (p : GF2Poly) :
