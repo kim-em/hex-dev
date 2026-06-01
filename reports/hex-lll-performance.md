@@ -431,6 +431,9 @@ integer arithmetic.
   `n = 180` (the verdict is still met but the trend is climbing), and the
   `harsh-cubic` adjusted ratio crosses 1 at `n = 45` and reaches `1.5821`
   at `n = 55` (Lean is `~1.6×` slower than Isabelle at the largest eligible
-  rung, so the gating-goal verdict is **not met** for this family). Follow-up
-  #5966 tracks the required implementation-performance diagnosis. While this
-  Concern is open, `HexLLL.done_through` remains `3`.
+  rung, so the gating-goal verdict is **not met** for this family). The
+  diagnosis in `reports/hex-lll-harsh-cubic-crossover-diagnosis.md` rules out a
+  benchmark-registration fix and points at exact-integer operand growth in
+  `Hex.GramSchmidt.Int.data` / `scaledCoeffRows`; follow-up
+  [#5994](https://github.com/kim-em/hex/issues/5994) tracks the implementation
+  work. While this Concern is open, `HexLLL.done_through` remains `3`.
