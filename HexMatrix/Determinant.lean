@@ -9986,6 +9986,35 @@ theorem mMatrix_eq_colReplace_last {R : Type u} {n : Nat}
       show ¬ j < n; exact hjlt
     exact dif_neg hjnlt
 
+/-- `mDet` is additive in the augmented vector column. -/
+theorem mDet_add_v {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n) (v w : Vector R (n + 2)) (p : Fin (n + 2)) :
+    mDet B (v + w) p = mDet B v p + mDet B w p := by
+  unfold mDet
+  rw [mMatrix_eq_colReplace_last B (v + w) v p]
+  rw [show (fun i : Fin (n + 1) => (v + w)[skipIndex p i]) =
+      fun i : Fin (n + 1) => v[skipIndex p i] + w[skipIndex p i] by
+        funext i
+        simp [Vector.getElem_add]]
+  rw [det_colReplace_add]
+  rw [← mMatrix_eq_colReplace_last B v v p]
+  rw [← mMatrix_eq_colReplace_last B w v p]
+
+/-- `mDet` is homogeneous in the augmented vector column. -/
+theorem mDet_smul_v {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n) (c : R) (v : Vector R (n + 2)) (p : Fin (n + 2)) :
+    mDet B (c • v) p = c * mDet B v p := by
+  unfold mDet
+  rw [mMatrix_eq_colReplace_last B (c • v) v p]
+  rw [show (fun i : Fin (n + 1) => (c • v)[skipIndex p i]) =
+      fun i : Fin (n + 1) => c * v[skipIndex p i] by
+        funext i
+        simp [Vector.getElem_smul]
+        change c * v[skipIndex p i] = c * v[skipIndex p i]
+        rfl]
+  rw [det_colReplace_smul]
+  rw [← mMatrix_eq_colReplace_last B v v p]
+
 /-- The standard basis vector `e_q : Vector R (n + 2)` with value `1`
 at position `q` and `0` elsewhere. -/
 def basisVec {R : Type u} [Zero R] [One R] {n : Nat} (q : Fin (n + 2)) :
@@ -10115,6 +10144,60 @@ private theorem foldl_add_with_unique_match {α : Type u}
           | inr h => exact h
         have hnodup' : xs.Nodup := (List.nodup_cons.mp hnodup).2
         exact ih z hmem' hnodup'
+
+/-- Expands the augmented vector column of `mDet` in the standard basis. -/
+theorem mDet_eq_sum_basisVec
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n) (v : Vector R (n + 2)) (p : Fin (n + 2)) :
+    mDet B v p =
+      (List.finRange (n + 2)).foldl
+        (fun acc q => acc + v[q] * mDet B (basisVec (R := R) q) p) 0 := by
+  unfold mDet
+  rw [mMatrix_eq_colReplace_last B v v p]
+  have hcol :
+      (fun i : Fin (n + 1) => v[skipIndex p i]) =
+        fun i : Fin (n + 1) =>
+          (List.finRange (n + 2)).foldl
+            (fun acc q => acc + v[q] * (basisVec (R := R) q)[skipIndex p i]) 0 := by
+    funext i
+    have hfold :=
+      foldl_add_with_unique_match (α := R) (List.finRange (n + 2)) (0 : R)
+        (skipIndex p i)
+        (fun q => v[q] * (basisVec (R := R) q)[skipIndex p i])
+        (List.mem_finRange (skipIndex p i)) (List.nodup_finRange (n + 2))
+    have hcongr :
+        (List.finRange (n + 2)).foldl
+            (fun acc q => acc + v[q] * (basisVec (R := R) q)[skipIndex p i]) 0 =
+          (List.finRange (n + 2)).foldl
+            (fun acc q =>
+              acc + if q = skipIndex p i then
+                v[q] * (basisVec (R := R) q)[skipIndex p i] else 0) 0 := by
+      apply foldl_acc_congr
+      intro acc q _hmem
+      by_cases hq : q = skipIndex p i
+      · rw [if_pos hq]
+      · rw [if_neg hq]
+        rw [basisVec_getElem]
+        rw [if_neg (fun h => hq h.symm)]
+        grind
+    symm
+    calc
+      (List.finRange (n + 2)).foldl
+          (fun acc q => acc + v[q] * (basisVec (R := R) q)[skipIndex p i]) 0 =
+        (List.finRange (n + 2)).foldl
+          (fun acc q =>
+            acc + if q = skipIndex p i then
+              v[q] * (basisVec (R := R) q)[skipIndex p i] else 0) 0 := hcongr
+      _ = 0 + v[skipIndex p i] * (basisVec (R := R) (skipIndex p i))[skipIndex p i] := hfold
+      _ = v[skipIndex p i] := by
+        rw [basisVec_getElem]
+        rw [if_pos rfl]
+        grind
+  rw [hcol]
+  rw [det_colReplace_sum_finRange]
+  apply foldl_acc_congr
+  intro acc q _hmem
+  rw [← mMatrix_eq_colReplace_last B (basisVec (R := R) q) v p]
 
 /-- Laplace expansion specialized to a column equal to a standard basis
 vector: if column `c` of `M` holds `1` at row `q` and `0` elsewhere, then
