@@ -10272,6 +10272,425 @@ private theorem rowMoveUp_row_between {R : Type u} {n m : Nat}
           apply Fin.ext; simp; omega
         rw [hii]
 
+/-! ### One-row `setRow` transports to ordered `nDet` minors
+
+For `a < b < t` in `Fin (n + 2)`, the private helpers
+`rowMoveUp_setRow_nMatrix_replace_first_eq_nMatrix` and
+`_replace_second_eq_nMatrix` identify the result of replacing the
+`(t.val - 2)`-th row of `nMatrix B a b hab` with `B[a]` (respectively
+`B[b]`) as a `rowMoveUp` of the ordered minor `nMatrix B b t` (resp.
+`nMatrix B a t`). The four ordered four-row transports
+`det_setRow_nMatrix_r{2,3}_r{0,1}_eq_pow_mul_nDet_*` combine these row
+equalities with `det_rowMoveUp` to give the signed `nDet` lemmas
+required by the ordered four-row Plucker assembly. -/
+
+/-- For `a < b < t`, replacing row `s` (with `s.val = t.val - 2`) of
+`nMatrix B a b hab` by `B[a]` and then sliding that row up to position
+`a.val` by `t.val - a.val - 2` adjacent swaps reproduces
+`nMatrix B b t hbt`. -/
+private theorem rowMoveUp_setRow_nMatrix_replace_first_eq_nMatrix
+    {R : Type u} {n : Nat} (B : Matrix R (n + 2) n)
+    (a b t : Fin (n + 2)) (hab : a.val < b.val) (hbt : b.val < t.val)
+    (s : Fin n) (hs : s.val = t.val - 2)
+    (hsk : a.val + (t.val - a.val - 2) < n) :
+    rowMoveUp (setRow (nMatrix B a b hab) s B[a]) a.val
+        (t.val - a.val - 2) hsk =
+      nMatrix B b t hbt := by
+  apply Vector.ext
+  intro i hi
+  let ii : Fin n := ⟨i, hi⟩
+  show (rowMoveUp (setRow (nMatrix B a b hab) s B[a]) a.val
+        (t.val - a.val - 2) hsk)[ii] = (nMatrix B b t hbt)[ii]
+  by_cases h_below : ii.val < a.val
+  · -- Below the move interval: both rowMoveUp and setRow leave the row alone.
+    have hii_ne_s : ii ≠ s := by
+      intro he
+      have hv : ii.val = s.val := congrArg Fin.val he
+      rw [hs] at hv
+      have : a.val < t.val := Nat.lt_trans hab hbt
+      omega
+    rw [rowMoveUp_row_of_lt (setRow (nMatrix B a b hab) s B[a]) a.val
+          (t.val - a.val - 2) hsk ii h_below,
+        setRow_row_ne (nMatrix B a b hab) s ii B[a] hii_ne_s]
+    apply Vector.ext
+    intro j hj
+    let jj : Fin n := ⟨j, hj⟩
+    show (nMatrix B a b hab)[ii][jj] = (nMatrix B b t hbt)[ii][jj]
+    rw [nMatrix_entry, nMatrix_entry]
+    have hii_lt_b : ii.val < b.val := Nat.lt_trans h_below hab
+    have hidx : skipIndex2 a b hab ii = skipIndex2 b t hbt ii := by
+      apply Fin.ext
+      rw [skipIndex2_val_of_lt_p a b hab ii h_below,
+          skipIndex2_val_of_lt_p b t hbt ii hii_lt_b]
+    exact congrArg (fun (x : Fin (n + 2)) => B[x][jj]) hidx
+  · by_cases h_eq : ii.val = a.val
+    · -- At the source of the move: the inserted row B[a] surfaces here.
+      have h_row_eq :
+          (rowMoveUp (setRow (nMatrix B a b hab) s B[a]) a.val
+              (t.val - a.val - 2) hsk)[ii] = B[a] := by
+        rw [rowMoveUp_row_eq_src (setRow (nMatrix B a b hab) s B[a]) a.val
+              (t.val - a.val - 2) hsk ii h_eq]
+        have hidx_eq :
+            (⟨a.val + (t.val - a.val - 2), hsk⟩ : Fin n) = s := by
+          apply Fin.ext
+          show a.val + (t.val - a.val - 2) = s.val
+          rw [hs]; omega
+        calc (setRow (nMatrix B a b hab) s B[a])[
+              (⟨a.val + (t.val - a.val - 2), hsk⟩ : Fin n)]
+            = (setRow (nMatrix B a b hab) s B[a])[s] :=
+              congrArg
+                (fun (i : Fin n) =>
+                  (setRow (nMatrix B a b hab) s B[a])[i]) hidx_eq
+          _ = B[a] := setRow_get_self _ _ _
+      rw [h_row_eq]
+      apply Vector.ext
+      intro j hj
+      let jj : Fin n := ⟨j, hj⟩
+      show B[a][jj] = (nMatrix B b t hbt)[ii][jj]
+      rw [nMatrix_entry]
+      have hii_lt_b : ii.val < b.val := by rw [h_eq]; exact hab
+      have hidx : skipIndex2 b t hbt ii = a := by
+        apply Fin.ext
+        rw [skipIndex2_val_of_lt_p b t hbt ii hii_lt_b]
+        exact h_eq
+      exact (congrArg (fun (x : Fin (n + 2)) => B[x][jj]) hidx).symm
+    · by_cases h_above : t.val - 2 < ii.val
+      · -- Above the move interval: both rowMoveUp and setRow leave the row alone.
+        have h_above' : a.val + (t.val - a.val - 2) < ii.val := by
+          have : a.val + (t.val - a.val - 2) = t.val - 2 := by omega
+          rw [this]; exact h_above
+        rw [rowMoveUp_row_of_gt (setRow (nMatrix B a b hab) s B[a]) a.val
+              (t.val - a.val - 2) hsk ii h_above']
+        have hii_ne_s : ii ≠ s := by
+          intro he
+          have hv : ii.val = s.val := congrArg Fin.val he
+          rw [hs] at hv; omega
+        rw [setRow_row_ne (nMatrix B a b hab) s ii B[a] hii_ne_s]
+        apply Vector.ext
+        intro j hj
+        let jj : Fin n := ⟨j, hj⟩
+        show (nMatrix B a b hab)[ii][jj] = (nMatrix B b t hbt)[ii][jj]
+        rw [nMatrix_entry, nMatrix_entry]
+        have h_not_lt_a : ¬ ii.val < a.val := h_below
+        have h_not_between_lhs : ¬ ii.val + 1 < b.val := by omega
+        have h_not_lt_b_rhs : ¬ ii.val < b.val := by omega
+        have h_not_between_rhs : ¬ ii.val + 1 < t.val := by omega
+        have hidx : skipIndex2 a b hab ii = skipIndex2 b t hbt ii := by
+          apply Fin.ext
+          rw [skipIndex2_val_of_ge_q a b hab ii h_not_lt_a h_not_between_lhs,
+              skipIndex2_val_of_ge_q b t hbt ii h_not_lt_b_rhs h_not_between_rhs]
+        exact congrArg (fun (x : Fin (n + 2)) => B[x][jj]) hidx
+      · -- Inside the move interval (strictly): rows shift right by one.
+        have h_lt_src : a.val < ii.val := by
+          have h1 : ¬ ii.val < a.val := h_below
+          have h2 : ii.val ≠ a.val := h_eq
+          omega
+        have h_le_top : ii.val ≤ a.val + (t.val - a.val - 2) := by
+          have : a.val + (t.val - a.val - 2) = t.val - 2 := by omega
+          rw [this]; omega
+        rw [rowMoveUp_row_between (setRow (nMatrix B a b hab) s B[a]) a.val
+              (t.val - a.val - 2) hsk ii h_lt_src h_le_top]
+        let j_minus : Fin n := ⟨ii.val - 1, by have := ii.isLt; omega⟩
+        have hj_ne_s : j_minus ≠ s := by
+          intro he
+          have hv : j_minus.val = s.val := congrArg Fin.val he
+          rw [hs] at hv
+          have : ii.val - 1 = t.val - 2 := hv
+          omega
+        rw [setRow_row_ne (nMatrix B a b hab) s j_minus B[a] hj_ne_s]
+        apply Vector.ext
+        intro j hj
+        let jj : Fin n := ⟨j, hj⟩
+        show (nMatrix B a b hab)[j_minus][jj] = (nMatrix B b t hbt)[ii][jj]
+        rw [nMatrix_entry, nMatrix_entry]
+        have h_not_lt_a : ¬ j_minus.val < a.val := by
+          show ¬ ii.val - 1 < a.val; omega
+        by_cases h_below_b : ii.val < b.val
+        · have h_between_lhs : j_minus.val + 1 < b.val := by
+            show ii.val - 1 + 1 < b.val; omega
+          have h_lt_b_rhs : ii.val < b.val := h_below_b
+          have hidx : skipIndex2 a b hab j_minus = skipIndex2 b t hbt ii := by
+            apply Fin.ext
+            rw [skipIndex2_val_of_between a b hab j_minus h_not_lt_a
+                  h_between_lhs,
+                skipIndex2_val_of_lt_p b t hbt ii h_lt_b_rhs]
+            show ii.val - 1 + 1 = ii.val
+            omega
+          exact congrArg (fun (x : Fin (n + 2)) => B[x][jj]) hidx
+        · have h_not_between_lhs : ¬ j_minus.val + 1 < b.val := by
+            show ¬ ii.val - 1 + 1 < b.val; omega
+          have h_not_lt_b_rhs : ¬ ii.val < b.val := h_below_b
+          have h_between_rhs : ii.val + 1 < t.val := by omega
+          have hidx : skipIndex2 a b hab j_minus = skipIndex2 b t hbt ii := by
+            apply Fin.ext
+            rw [skipIndex2_val_of_ge_q a b hab j_minus h_not_lt_a
+                  h_not_between_lhs,
+                skipIndex2_val_of_between b t hbt ii h_not_lt_b_rhs
+                  h_between_rhs]
+            show ii.val - 1 + 2 = ii.val + 1
+            omega
+          exact congrArg (fun (x : Fin (n + 2)) => B[x][jj]) hidx
+
+/-- For `a < b < t`, replacing row `s` (with `s.val = t.val - 2`) of
+`nMatrix B a b hab` by `B[b]` and then sliding that row up to position
+`b.val - 1` by `t.val - b.val - 1` adjacent swaps reproduces
+`nMatrix B a t (Nat.lt_trans hab hbt)`. -/
+private theorem rowMoveUp_setRow_nMatrix_replace_second_eq_nMatrix
+    {R : Type u} {n : Nat} (B : Matrix R (n + 2) n)
+    (a b t : Fin (n + 2)) (hab : a.val < b.val) (hbt : b.val < t.val)
+    (s : Fin n) (hs : s.val = t.val - 2)
+    (hsk : b.val - 1 + (t.val - b.val - 1) < n) :
+    rowMoveUp (setRow (nMatrix B a b hab) s B[b]) (b.val - 1)
+        (t.val - b.val - 1) hsk =
+      nMatrix B a t (Nat.lt_trans hab hbt) := by
+  apply Vector.ext
+  intro i hi
+  let ii : Fin n := ⟨i, hi⟩
+  have hat : a.val < t.val := Nat.lt_trans hab hbt
+  show (rowMoveUp (setRow (nMatrix B a b hab) s B[b]) (b.val - 1)
+        (t.val - b.val - 1) hsk)[ii] = (nMatrix B a t hat)[ii]
+  by_cases h_below : ii.val < b.val - 1
+  · -- Below the move interval.
+    have hii_ne_s : ii ≠ s := by
+      intro he
+      have hv : ii.val = s.val := congrArg Fin.val he
+      rw [hs] at hv; omega
+    rw [rowMoveUp_row_of_lt (setRow (nMatrix B a b hab) s B[b]) (b.val - 1)
+          (t.val - b.val - 1) hsk ii h_below,
+        setRow_row_ne (nMatrix B a b hab) s ii B[b] hii_ne_s]
+    apply Vector.ext
+    intro j hj
+    let jj : Fin n := ⟨j, hj⟩
+    show (nMatrix B a b hab)[ii][jj] = (nMatrix B a t hat)[ii][jj]
+    rw [nMatrix_entry, nMatrix_entry]
+    by_cases h_lt_a : ii.val < a.val
+    · have hidx : skipIndex2 a b hab ii = skipIndex2 a t hat ii := by
+        apply Fin.ext
+        rw [skipIndex2_val_of_lt_p a b hab ii h_lt_a,
+            skipIndex2_val_of_lt_p a t hat ii h_lt_a]
+      exact congrArg (fun (x : Fin (n + 2)) => B[x][jj]) hidx
+    · have h_between_lhs : ii.val + 1 < b.val := by omega
+      have h_between_rhs : ii.val + 1 < t.val := by omega
+      have hidx : skipIndex2 a b hab ii = skipIndex2 a t hat ii := by
+        apply Fin.ext
+        rw [skipIndex2_val_of_between a b hab ii h_lt_a h_between_lhs,
+            skipIndex2_val_of_between a t hat ii h_lt_a h_between_rhs]
+      exact congrArg (fun (x : Fin (n + 2)) => B[x][jj]) hidx
+  · by_cases h_eq : ii.val = b.val - 1
+    · -- At the source of the move: the inserted row B[b] surfaces here.
+      have h_row_eq :
+          (rowMoveUp (setRow (nMatrix B a b hab) s B[b]) (b.val - 1)
+              (t.val - b.val - 1) hsk)[ii] = B[b] := by
+        rw [rowMoveUp_row_eq_src (setRow (nMatrix B a b hab) s B[b])
+              (b.val - 1) (t.val - b.val - 1) hsk ii h_eq]
+        have hidx_eq :
+            (⟨b.val - 1 + (t.val - b.val - 1), hsk⟩ : Fin n) = s := by
+          apply Fin.ext
+          show b.val - 1 + (t.val - b.val - 1) = s.val
+          rw [hs]; omega
+        calc (setRow (nMatrix B a b hab) s B[b])[
+              (⟨b.val - 1 + (t.val - b.val - 1), hsk⟩ : Fin n)]
+            = (setRow (nMatrix B a b hab) s B[b])[s] :=
+              congrArg
+                (fun (i : Fin n) =>
+                  (setRow (nMatrix B a b hab) s B[b])[i]) hidx_eq
+          _ = B[b] := setRow_get_self _ _ _
+      rw [h_row_eq]
+      apply Vector.ext
+      intro j hj
+      let jj : Fin n := ⟨j, hj⟩
+      show B[b][jj] = (nMatrix B a t hat)[ii][jj]
+      rw [nMatrix_entry]
+      have h_not_lt_a : ¬ ii.val < a.val := by
+        have : a.val ≤ b.val - 1 := by omega
+        rw [h_eq]; omega
+      have h_between : ii.val + 1 < t.val := by rw [h_eq]; omega
+      have hidx : skipIndex2 a t hat ii = b := by
+        apply Fin.ext
+        rw [skipIndex2_val_of_between a t hat ii h_not_lt_a h_between]
+        show ii.val + 1 = b.val
+        rw [h_eq]; omega
+      exact (congrArg (fun (x : Fin (n + 2)) => B[x][jj]) hidx).symm
+    · by_cases h_above : t.val - 2 < ii.val
+      · -- Above the move interval.
+        have h_above' : b.val - 1 + (t.val - b.val - 1) < ii.val := by
+          have : b.val - 1 + (t.val - b.val - 1) = t.val - 2 := by omega
+          rw [this]; exact h_above
+        rw [rowMoveUp_row_of_gt (setRow (nMatrix B a b hab) s B[b])
+              (b.val - 1) (t.val - b.val - 1) hsk ii h_above']
+        have hii_ne_s : ii ≠ s := by
+          intro he
+          have hv : ii.val = s.val := congrArg Fin.val he
+          rw [hs] at hv; omega
+        rw [setRow_row_ne (nMatrix B a b hab) s ii B[b] hii_ne_s]
+        apply Vector.ext
+        intro j hj
+        let jj : Fin n := ⟨j, hj⟩
+        show (nMatrix B a b hab)[ii][jj] = (nMatrix B a t hat)[ii][jj]
+        rw [nMatrix_entry, nMatrix_entry]
+        have h_not_lt_a : ¬ ii.val < a.val := by omega
+        have h_not_between_lhs : ¬ ii.val + 1 < b.val := by omega
+        have h_not_between_rhs : ¬ ii.val + 1 < t.val := by omega
+        have hidx : skipIndex2 a b hab ii = skipIndex2 a t hat ii := by
+          apply Fin.ext
+          rw [skipIndex2_val_of_ge_q a b hab ii h_not_lt_a h_not_between_lhs,
+              skipIndex2_val_of_ge_q a t hat ii h_not_lt_a h_not_between_rhs]
+        exact congrArg (fun (x : Fin (n + 2)) => B[x][jj]) hidx
+      · -- Inside the move interval (strictly).
+        have h_lt_src : b.val - 1 < ii.val := by
+          have h1 : ¬ ii.val < b.val - 1 := h_below
+          have h2 : ii.val ≠ b.val - 1 := h_eq
+          omega
+        have h_le_top : ii.val ≤ b.val - 1 + (t.val - b.val - 1) := by
+          have : b.val - 1 + (t.val - b.val - 1) = t.val - 2 := by omega
+          rw [this]; omega
+        rw [rowMoveUp_row_between (setRow (nMatrix B a b hab) s B[b])
+              (b.val - 1) (t.val - b.val - 1) hsk ii h_lt_src h_le_top]
+        let j_minus : Fin n := ⟨ii.val - 1, by have := ii.isLt; omega⟩
+        have hj_ne_s : j_minus ≠ s := by
+          intro he
+          have hv : j_minus.val = s.val := congrArg Fin.val he
+          rw [hs] at hv
+          have : ii.val - 1 = t.val - 2 := hv
+          omega
+        rw [setRow_row_ne (nMatrix B a b hab) s j_minus B[b] hj_ne_s]
+        apply Vector.ext
+        intro j hj
+        let jj : Fin n := ⟨j, hj⟩
+        show (nMatrix B a b hab)[j_minus][jj] = (nMatrix B a t hat)[ii][jj]
+        rw [nMatrix_entry, nMatrix_entry]
+        have h_not_lt_a_lhs : ¬ j_minus.val < a.val := by
+          show ¬ ii.val - 1 < a.val
+          have : a.val ≤ b.val - 1 := by omega
+          omega
+        have h_not_between_lhs : ¬ j_minus.val + 1 < b.val := by
+          show ¬ ii.val - 1 + 1 < b.val
+          omega
+        have h_not_lt_a_rhs : ¬ ii.val < a.val := by omega
+        have h_between_rhs : ii.val + 1 < t.val := by omega
+        have hidx : skipIndex2 a b hab j_minus = skipIndex2 a t hat ii := by
+          apply Fin.ext
+          rw [skipIndex2_val_of_ge_q a b hab j_minus h_not_lt_a_lhs
+                h_not_between_lhs,
+              skipIndex2_val_of_between a t hat ii h_not_lt_a_rhs
+                h_between_rhs]
+          show ii.val - 1 + 2 = ii.val + 1
+          omega
+        exact congrArg (fun (x : Fin (n + 2)) => B[x][jj]) hidx
+
+/-- For ordered rows `r0 < r1 < r2 < r3` of `B : Matrix R (n + 2) n`,
+replacing the `s2 = ⟨r2.val - 2, _⟩` row of `nMatrix B r0 r1 h01` by
+`B[r0]` produces the signed `nDet B r1 r2 h12` minor with sign
+`(-1) ^ (r2.val - r0.val - 2)`. -/
+private theorem det_setRow_nMatrix_r2_r0_eq_pow_mul_nDet_r1_r2
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n)
+    (r0 r1 r2 r3 : Fin (n + 2))
+    (h01 : r0.val < r1.val) (h12 : r1.val < r2.val) (h23 : r2.val < r3.val) :
+    let M := nMatrix B r0 r1 h01
+    let s2 : Fin n := ⟨r2.val - 2, by have := r3.isLt; omega⟩
+    det (setRow M s2 B[r0]) =
+      (-1 : R) ^ (r2.val - r0.val - 2) * nDet B r1 r2 h12 := by
+  intro M s2
+  have hsk : r0.val + (r2.val - r0.val - 2) < n := by
+    have _h13 : r1.val < r3.val := Nat.lt_trans h12 h23
+    have := r3.isLt; omega
+  have hrow := rowMoveUp_setRow_nMatrix_replace_first_eq_nMatrix
+      B r0 r1 r2 h01 h12 s2 rfl hsk
+  have hdet_rm :=
+    det_rowMoveUp (setRow M s2 B[r0]) r0.val (r2.val - r0.val - 2) hsk
+  rw [hrow] at hdet_rm
+  show det (setRow M s2 B[r0]) =
+    (-1 : R) ^ (r2.val - r0.val - 2) * nDet B r1 r2 h12
+  have h_nDet : nDet B r1 r2 h12 = det (nMatrix B r1 r2 h12) := rfl
+  rw [h_nDet, hdet_rm, ← Lean.Grind.Semiring.mul_assoc,
+      neg_one_pow_mul_self, Lean.Grind.Semiring.one_mul]
+
+/-- For ordered rows `r0 < r1 < r2 < r3`, replacing the
+`s3 = ⟨r3.val - 2, _⟩` row of `nMatrix B r0 r1 h01` by `B[r0]` produces
+the signed `nDet B r1 r3 _` minor with sign `(-1) ^ (r3.val - r0.val - 2)`. -/
+private theorem det_setRow_nMatrix_r3_r0_eq_pow_mul_nDet_r1_r3
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n)
+    (r0 r1 r2 r3 : Fin (n + 2))
+    (h01 : r0.val < r1.val) (h12 : r1.val < r2.val) (h23 : r2.val < r3.val) :
+    let M := nMatrix B r0 r1 h01
+    let s3 : Fin n := ⟨r3.val - 2, by have := r3.isLt; omega⟩
+    det (setRow M s3 B[r0]) =
+      (-1 : R) ^ (r3.val - r0.val - 2) *
+        nDet B r1 r3 (Nat.lt_trans h12 h23) := by
+  intro M s3
+  have h13 : r1.val < r3.val := Nat.lt_trans h12 h23
+  have hsk : r0.val + (r3.val - r0.val - 2) < n := by
+    have := r3.isLt; omega
+  have hrow := rowMoveUp_setRow_nMatrix_replace_first_eq_nMatrix
+      B r0 r1 r3 h01 h13 s3 rfl hsk
+  have hdet_rm :=
+    det_rowMoveUp (setRow M s3 B[r0]) r0.val (r3.val - r0.val - 2) hsk
+  rw [hrow] at hdet_rm
+  show det (setRow M s3 B[r0]) =
+    (-1 : R) ^ (r3.val - r0.val - 2) * nDet B r1 r3 h13
+  have h_nDet : nDet B r1 r3 h13 = det (nMatrix B r1 r3 h13) := rfl
+  rw [h_nDet, hdet_rm, ← Lean.Grind.Semiring.mul_assoc,
+      neg_one_pow_mul_self, Lean.Grind.Semiring.one_mul]
+
+/-- For ordered rows `r0 < r1 < r2 < r3`, replacing the
+`s2 = ⟨r2.val - 2, _⟩` row of `nMatrix B r0 r1 h01` by `B[r1]` produces
+the signed `nDet B r0 r2 _` minor with sign `(-1) ^ (r2.val - r1.val - 1)`. -/
+private theorem det_setRow_nMatrix_r2_r1_eq_pow_mul_nDet_r0_r2
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n)
+    (r0 r1 r2 r3 : Fin (n + 2))
+    (h01 : r0.val < r1.val) (h12 : r1.val < r2.val) (h23 : r2.val < r3.val) :
+    let M := nMatrix B r0 r1 h01
+    let s2 : Fin n := ⟨r2.val - 2, by have := r3.isLt; omega⟩
+    det (setRow M s2 B[r1]) =
+      (-1 : R) ^ (r2.val - r1.val - 1) *
+        nDet B r0 r2 (Nat.lt_trans h01 h12) := by
+  intro M s2
+  have h02 : r0.val < r2.val := Nat.lt_trans h01 h12
+  have hsk : r1.val - 1 + (r2.val - r1.val - 1) < n := by
+    have := r3.isLt; omega
+  have hrow := rowMoveUp_setRow_nMatrix_replace_second_eq_nMatrix
+      B r0 r1 r2 h01 h12 s2 rfl hsk
+  have hdet_rm :=
+    det_rowMoveUp (setRow M s2 B[r1]) (r1.val - 1) (r2.val - r1.val - 1) hsk
+  rw [hrow] at hdet_rm
+  show det (setRow M s2 B[r1]) =
+    (-1 : R) ^ (r2.val - r1.val - 1) * nDet B r0 r2 h02
+  have h_nDet : nDet B r0 r2 h02 = det (nMatrix B r0 r2 h02) := rfl
+  rw [h_nDet, hdet_rm, ← Lean.Grind.Semiring.mul_assoc,
+      neg_one_pow_mul_self, Lean.Grind.Semiring.one_mul]
+
+/-- For ordered rows `r0 < r1 < r2 < r3`, replacing the
+`s3 = ⟨r3.val - 2, _⟩` row of `nMatrix B r0 r1 h01` by `B[r1]` produces
+the signed `nDet B r0 r3 _` minor with sign `(-1) ^ (r3.val - r1.val - 1)`. -/
+private theorem det_setRow_nMatrix_r3_r1_eq_pow_mul_nDet_r0_r3
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n)
+    (r0 r1 r2 r3 : Fin (n + 2))
+    (h01 : r0.val < r1.val) (h12 : r1.val < r2.val) (h23 : r2.val < r3.val) :
+    let M := nMatrix B r0 r1 h01
+    let s3 : Fin n := ⟨r3.val - 2, by have := r3.isLt; omega⟩
+    det (setRow M s3 B[r1]) =
+      (-1 : R) ^ (r3.val - r1.val - 1) *
+        nDet B r0 r3 (Nat.lt_trans h01 (Nat.lt_trans h12 h23)) := by
+  intro M s3
+  have h13 : r1.val < r3.val := Nat.lt_trans h12 h23
+  have h03 : r0.val < r3.val := Nat.lt_trans h01 h13
+  have hsk : r1.val - 1 + (r3.val - r1.val - 1) < n := by
+    have := r3.isLt; omega
+  have hrow := rowMoveUp_setRow_nMatrix_replace_second_eq_nMatrix
+      B r0 r1 r3 h01 h13 s3 rfl hsk
+  have hdet_rm :=
+    det_rowMoveUp (setRow M s3 B[r1]) (r1.val - 1) (r3.val - r1.val - 1) hsk
+  rw [hrow] at hdet_rm
+  show det (setRow M s3 B[r1]) =
+    (-1 : R) ^ (r3.val - r1.val - 1) * nDet B r0 r3 h03
+  have h_nDet : nDet B r0 r3 h03 = det (nMatrix B r0 r3 h03) := rfl
+  rw [h_nDet, hdet_rm, ← Lean.Grind.Semiring.mul_assoc,
+      neg_one_pow_mul_self, Lean.Grind.Semiring.one_mul]
+
 /-- The square matrix `[B | u | v]` formed by appending two vector columns to
 `B : Matrix R (n + 2) n`. The original `B` columns occupy positions
 `0..n-1`; `u` occupies column `n`; `v` occupies the last column. -/
