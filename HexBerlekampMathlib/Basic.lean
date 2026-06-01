@@ -279,15 +279,30 @@ theorem toMathlibPolynomial_squareFree_coprime
 
 /--
 Every factor emitted by executable Berlekamp factorization is irreducible after
-transport to Mathlib's polynomial model.
+transport to Mathlib's polynomial model, assuming the square-free input in the
+common-divisor form used by the executable soundness chain.
 -/
 theorem irreducible_of_mem_berlekampFactor
     (f : Hex.FpPoly p) (hmonic : Hex.DensePoly.Monic f)
     [Lean.Grind.Field (Hex.ZMod64 p)]
-    (_hsquareFree : Hex.DensePoly.gcd f (Hex.DensePoly.derivative f) = 1) :
+    (_hsquareFree : ∀ d, d ∣ f → d ∣ Hex.DensePoly.derivative f →
+      Hex.Berlekamp.isUnitPolynomial d = true) :
     ∀ g ∈ (Hex.Berlekamp.berlekampFactor f hmonic).factors,
       Irreducible (toMathlibPolynomial g) := by
   sorry
+
+/--
+Every factor emitted by executable Berlekamp factorization is irreducible after
+transport to Mathlib's polynomial model.
+-/
+theorem irreducible_of_mem_berlekampFactor_of_gcd_eq_one
+    (f : Hex.FpPoly p) (hmonic : Hex.DensePoly.Monic f)
+    [Lean.Grind.Field (Hex.ZMod64 p)] [Hex.ZMod64.PrimeModulus p]
+    (hsquareFree : Hex.DensePoly.gcd f (Hex.DensePoly.derivative f) = 1) :
+    ∀ g ∈ (Hex.Berlekamp.berlekampFactor f hmonic).factors,
+      Irreducible (toMathlibPolynomial g) :=
+  irreducible_of_mem_berlekampFactor f hmonic
+    (Hex.Berlekamp.squareFree_common_of_gcd_eq_one hsquareFree)
 
 /--
 Mathlib-side re-export of the Mathlib-free Nodup property of the executable
@@ -350,7 +365,8 @@ theorem irreducible_of_berlekampFactor_factors_length_le_one
             exact hprod
           have hirr_g :
               Irreducible (toMathlibPolynomial g) :=
-            irreducible_of_mem_berlekampFactor f hmonic hsquareFree g (by simp [hfactors])
+            irreducible_of_mem_berlekampFactor_of_gcd_eq_one
+              f hmonic hsquareFree g (by simp [hfactors])
           simpa [hg_eq] using hirr_g
       | cons h rest =>
           simp [hfactors] at hsmall

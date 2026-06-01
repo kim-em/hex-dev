@@ -6258,6 +6258,36 @@ private theorem gcd_monicModularImage_derivative_eq_one_local
       toMathlibPolynomial_one]
   exact hmath_gcd
 
+private theorem derivative_scale_local
+    {p : Nat} [Hex.ZMod64.Bounds p]
+    (c : Hex.ZMod64 p) (f : Hex.FpPoly p) :
+    Hex.DensePoly.derivative (Hex.DensePoly.scale c f) =
+      Hex.DensePoly.scale c (Hex.DensePoly.derivative f) := by
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  have hzero_d : ((n + 1 : Nat) : Hex.ZMod64 p) *
+      (Zero.zero : Hex.ZMod64 p) = (Zero.zero : Hex.ZMod64 p) :=
+    Lean.Grind.Semiring.mul_zero _
+  have hzero_s : c * (Zero.zero : Hex.ZMod64 p) =
+      (Zero.zero : Hex.ZMod64 p) :=
+    Lean.Grind.Semiring.mul_zero _
+  rw [Hex.DensePoly.coeff_derivative _ _ hzero_d,
+      Hex.DensePoly.coeff_scale c (Hex.DensePoly.derivative f) n hzero_s,
+      Hex.DensePoly.coeff_derivative _ _ hzero_d,
+      Hex.DensePoly.coeff_scale c f (n + 1) hzero_s]
+  grind
+
+private theorem dvd_trans_FpPoly_local
+    {p : Nat} [Hex.ZMod64.Bounds p] {a b c : Hex.FpPoly p}
+    (hab : a ∣ b) (hbc : b ∣ c) : a ∣ c := by
+  rcases hab with ⟨x, hx⟩
+  rcases hbc with ⟨y, hy⟩
+  refine ⟨x * y, ?_⟩
+  calc c
+      = b * y := hy
+    _ = (a * x) * y := by rw [hx]
+    _ = a * (x * y) := Hex.DensePoly.mul_assoc_poly a x y
+
 /-- `factorsModPBerlekampForm`-shaped discharge for per-modular-factor
 irreducibility after the Mathlib-side transport.
 
@@ -6308,17 +6338,48 @@ theorem factors_irreducible_of_factorsModPBerlekampForm
     · exact h
     · exact absurd h (Nat.ne_of_lt hmlt)
   haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime_root⟩
-  have hsf_modP :
-      Hex.DensePoly.gcd (Hex.ZPoly.modP primeData.p core)
-          (Hex.DensePoly.derivative (Hex.ZPoly.modP primeData.p core)) = 1 :=
-    Hex.isGoodPrime_squareFreeModP core primeData.p hgood
-  have hsf_monic :
-      Hex.DensePoly.gcd
-          (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
-          (Hex.DensePoly.derivative
-            (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))) = 1 :=
-    gcd_monicModularImage_derivative_eq_one_local
-      (Hex.ZPoly.modP primeData.p core) hzero hsf_modP
+  have hsf_common :
+      ∀ d : Hex.FpPoly primeData.p,
+        d ∣ Hex.ZPoly.modP primeData.p core →
+        d ∣ Hex.DensePoly.derivative (Hex.ZPoly.modP primeData.p core) →
+        Hex.Berlekamp.isUnitPolynomial d = true :=
+    squareFree_common_of_squareFreeModP core
+      (Hex.isGoodPrime_squareFreeModP core primeData.p hgood)
+  have hsf_common_monic :
+      ∀ d : Hex.FpPoly primeData.p,
+        d ∣ Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) →
+        d ∣ Hex.DensePoly.derivative
+            (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)) →
+        Hex.Berlekamp.isUnitPolynomial d = true := by
+    intro d hd_monic hd_deriv_monic
+    let u : Hex.ZMod64 primeData.p :=
+      (Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP primeData.p core))⁻¹
+    have hmmi_eq :
+        Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) =
+          Hex.DensePoly.scale u (Hex.ZPoly.modP primeData.p core) := by
+      simpa [u] using
+        monicModularImage_eq_scale_inv_leadingCoeff_of_isZero_false hzero
+    have hlead_ne : Hex.DensePoly.leadingCoeff
+        (Hex.ZPoly.modP primeData.p core) ≠ 0 :=
+      fpPoly_leadingCoeff_ne_zero_of_size_pos (Hex.ZPoly.modP primeData.p core)
+        ((Hex.DensePoly.isZero_eq_false_iff _).mp hzero)
+    have hu_ne : u ≠ 0 := by
+      simpa [u] using Hex.ZMod64.inv_ne_zero_of_prime hprime hlead_ne
+    rw [hmmi_eq] at hd_monic
+    rw [hmmi_eq, derivative_scale_local] at hd_deriv_monic
+    have hscale_dvd_mod :
+        Hex.DensePoly.scale u (Hex.ZPoly.modP primeData.p core) ∣
+          Hex.ZPoly.modP primeData.p core :=
+      Hex.FpPoly.dvd_scale_self_of_ne_zero hu_ne (Hex.ZPoly.modP primeData.p core)
+    have hscale_dvd_deriv :
+        Hex.DensePoly.scale u
+            (Hex.DensePoly.derivative (Hex.ZPoly.modP primeData.p core)) ∣
+          Hex.DensePoly.derivative (Hex.ZPoly.modP primeData.p core) :=
+      Hex.FpPoly.dvd_scale_self_of_ne_zero hu_ne
+        (Hex.DensePoly.derivative (Hex.ZPoly.modP primeData.p core))
+    exact hsf_common d
+      (dvd_trans_FpPoly_local hd_monic hscale_dvd_mod)
+      (dvd_trans_FpPoly_local hd_deriv_monic hscale_dvd_deriv)
   have hmonicImage_monic :
       Hex.DensePoly.Monic
         (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)) :=
@@ -6331,7 +6392,7 @@ theorem factors_irreducible_of_factorsModPBerlekampForm
         Irreducible (HexBerlekampMathlib.toMathlibPolynomial g) :=
     HexBerlekampMathlib.irreducible_of_mem_berlekampFactor
       (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
-      hmonicImage_monic hsf_monic
+      hmonicImage_monic hsf_common_monic
   have hraw_ne :
       ∀ g ∈ (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
           (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
