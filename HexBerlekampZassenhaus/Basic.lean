@@ -13771,6 +13771,33 @@ theorem factorWithBound_product (f : ZPoly) (B : Nat) :
   | none =>
       exact factorSlowWithBound_product f B
 
+/-- Product preservation for the Option-returning bounded API on its successful
+branch. The `none` branch is the explicit no-admissible-prime surface; when a
+certificate is returned, it is exactly the total bounded factorization. -/
+theorem factorWithBound?_product_of_some
+    {f : ZPoly} {B : Nat} {φ : Factorization}
+    (h : factorWithBound? f B = some φ) :
+    Factorization.product φ = f := by
+  rw [factorWithBound?_eq_some_iff_safe_branch] at h
+  by_cases hsafe :
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0 ∨
+        (quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore).isSome ∨
+        (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome
+  · rw [if_pos hsafe] at h
+    cases h
+    exact factorWithBound_product f B
+  · rw [if_neg hsafe] at h
+    cases h
+
+/-- Product preservation for the Option-returning default API on its successful
+branch. This is the proof-facing contract for callers that choose to propagate
+no-admissible-prime failure instead of consuming the total fallback. -/
+theorem factor?_product_of_some
+    {f : ZPoly} {φ : Factorization}
+    (h : factor? f = some φ) :
+    Factorization.product φ = f := by
+  exact factorWithBound?_product_of_some h
+
 /--
 A successful integer certificate exposes the per-prime polynomial check fact:
 every recorded `PrimeFactorData` block satisfies `checkForPolynomial f` —
