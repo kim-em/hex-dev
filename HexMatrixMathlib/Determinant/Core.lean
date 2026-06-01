@@ -319,6 +319,130 @@ theorem det_borderedMinor_eq_submatrix_det [CommRing R]
             if hc : c.val < k then ⟨c.val, Nat.lt_trans hc hk⟩ else j)) := by
   rw [det_eq, matrixEquiv_borderedMinor]
 
+/-- Deleting a row and column in the Hex matrix representation is the same as
+submatrixing the Mathlib representation by the corresponding skip maps. -/
+theorem matrixEquiv_deleteRowCol
+    (M : Hex.Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1)) :
+    matrixEquiv (Hex.Matrix.deleteRowCol M row col) =
+      (matrixEquiv M).submatrix (Hex.Matrix.skipIndex row) (Hex.Matrix.skipIndex col) := by
+  ext i j
+  change (Hex.Matrix.deleteRowCol M row col)[i][j] =
+    M[Hex.Matrix.skipIndex row i][Hex.Matrix.skipIndex col j]
+  rw [Hex.Matrix.deleteRowCol_entry]
+
+private theorem matrixEquiv_deleteRowCol_zero_zero
+    (M : Hex.Matrix R (n + 2) (n + 2)) :
+    matrixEquiv (Hex.Matrix.deleteRowCol M 0 0) =
+      (matrixEquiv M).submatrix (Fin.succAbove 0) (Fin.succAbove 0) := by
+  rw [matrixEquiv_deleteRowCol]
+  ext i j
+  rfl
+
+private theorem matrixEquiv_deleteRowCol_last_last
+    (M : Hex.Matrix R (n + 2) (n + 2)) :
+    matrixEquiv (Hex.Matrix.deleteRowCol M (Fin.last (n + 1)) (Fin.last (n + 1))) =
+      (matrixEquiv M).submatrix
+        (Fin.last (n + 1)).succAbove (Fin.last (n + 1)).succAbove := by
+  rw [matrixEquiv_deleteRowCol]
+  ext i j
+  rfl
+
+private theorem matrixEquiv_deleteRowCol_zero_last
+    (M : Hex.Matrix R (n + 2) (n + 2)) :
+    matrixEquiv (Hex.Matrix.deleteRowCol M 0 (Fin.last (n + 1))) =
+      (matrixEquiv M).submatrix (Fin.succAbove 0) (Fin.last (n + 1)).succAbove := by
+  rw [matrixEquiv_deleteRowCol]
+  ext i j
+  rfl
+
+private theorem matrixEquiv_deleteRowCol_last_zero
+    (M : Hex.Matrix R (n + 2) (n + 2)) :
+    matrixEquiv (Hex.Matrix.deleteRowCol M (Fin.last (n + 1)) 0) =
+      (matrixEquiv M).submatrix (Fin.last (n + 1)).succAbove (Fin.succAbove 0) := by
+  rw [matrixEquiv_deleteRowCol]
+  ext i j
+  rfl
+
+private theorem matrixEquiv_deleteRowCol_zero_zero_last_last
+    (M : Hex.Matrix R (n + 2) (n + 2)) :
+    matrixEquiv
+        (Hex.Matrix.deleteRowCol (Hex.Matrix.deleteRowCol M 0 0)
+          (Fin.last n) (Fin.last n)) =
+      (matrixEquiv M).submatrix
+        (Fin.succAbove 0 ∘ (Fin.last n).succAbove)
+        (Fin.succAbove 0 ∘ (Fin.last n).succAbove) := by
+  rw [matrixEquiv_deleteRowCol]
+  rw [matrixEquiv_deleteRowCol_zero_zero]
+  ext i j
+  rfl
+
+/-- Endpoint Hex-minor form of Desnanot-Jacobi. Reindex rows and columns first
+to use it for an arbitrary two-row/two-column choice. -/
+theorem desnanot_jacobi_deleteRowCol_endpoints [CommRing R]
+    (M : Hex.Matrix R (n + 2) (n + 2)) :
+    Hex.Matrix.det M *
+        Hex.Matrix.det
+          (Hex.Matrix.deleteRowCol (Hex.Matrix.deleteRowCol M 0 0)
+            (Fin.last n) (Fin.last n)) =
+      Hex.Matrix.det (Hex.Matrix.deleteRowCol M 0 0) *
+        Hex.Matrix.det
+          (Hex.Matrix.deleteRowCol M (Fin.last (n + 1)) (Fin.last (n + 1))) -
+      Hex.Matrix.det (Hex.Matrix.deleteRowCol M 0 (Fin.last (n + 1))) *
+        Hex.Matrix.det (Hex.Matrix.deleteRowCol M (Fin.last (n + 1)) 0) := by
+  have hdj := desnanot_jacobi (matrixEquiv M)
+  rw [← det_eq M] at hdj
+  have hInterior :
+      ((matrixEquiv M).submatrix
+          (Fin.succAbove 0 ∘ (Fin.last n).succAbove)
+          (Fin.succAbove 0 ∘ (Fin.last n).succAbove)).det =
+        Hex.Matrix.det
+          (Hex.Matrix.deleteRowCol (Hex.Matrix.deleteRowCol M 0 0)
+            (Fin.last n) (Fin.last n)) := by
+    rw [← matrixEquiv_deleteRowCol_zero_zero_last_last M, ← det_eq]
+  have h00 :
+      ((matrixEquiv M).submatrix (Fin.succAbove 0) (Fin.succAbove 0)).det =
+        Hex.Matrix.det (Hex.Matrix.deleteRowCol M 0 0) := by
+    rw [← matrixEquiv_deleteRowCol_zero_zero M, ← det_eq]
+  have hLL :
+      ((matrixEquiv M).submatrix
+          (Fin.last (n + 1)).succAbove (Fin.last (n + 1)).succAbove).det =
+        Hex.Matrix.det
+          (Hex.Matrix.deleteRowCol M (Fin.last (n + 1)) (Fin.last (n + 1))) := by
+    rw [← matrixEquiv_deleteRowCol_last_last M, ← det_eq]
+  have h0L :
+      ((matrixEquiv M).submatrix (Fin.succAbove 0) (Fin.last (n + 1)).succAbove).det =
+        Hex.Matrix.det (Hex.Matrix.deleteRowCol M 0 (Fin.last (n + 1))) := by
+    rw [← matrixEquiv_deleteRowCol_zero_last M, ← det_eq]
+  have hL0 :
+      ((matrixEquiv M).submatrix (Fin.last (n + 1)).succAbove (Fin.succAbove 0)).det =
+        Hex.Matrix.det (Hex.Matrix.deleteRowCol M (Fin.last (n + 1)) 0) := by
+    rw [← matrixEquiv_deleteRowCol_last_zero M, ← det_eq]
+  rw [hInterior, h00, hLL, h0L, hL0] at hdj
+  exact hdj
+
+/-- Desnanot-Jacobi for an arbitrary pair of rows and columns, expressed as a
+row/column reindexing of a Hex matrix and proved in the Mathlib bridge layer.
+
+Consumers choose `row` and `col` so that their two distinguished rows and
+columns are sent to `0` and `Fin.last`; the four one-row minors and the
+two-row/two-column interior minor are then the displayed submatrices of the
+reindexed matrix. -/
+theorem desnanot_jacobi_matrixEquiv_reindex [CommRing R]
+    (M : Hex.Matrix R (n + 2) (n + 2))
+    (row col : Fin (n + 2) ≃ Fin (n + 2)) :
+    let A : Matrix (Fin (n + 2)) (Fin (n + 2)) R :=
+      (matrixEquiv M).submatrix row col
+    A.det *
+        (A.submatrix (Fin.succAbove 0 ∘ (Fin.last n).succAbove)
+          (Fin.succAbove 0 ∘ (Fin.last n).succAbove)).det =
+      (A.submatrix (Fin.succAbove 0) (Fin.succAbove 0)).det *
+        (A.submatrix (Fin.last (n + 1)).succAbove
+          (Fin.last (n + 1)).succAbove).det -
+      (A.submatrix (Fin.succAbove 0) (Fin.last (n + 1)).succAbove).det *
+        (A.submatrix (Fin.last (n + 1)).succAbove (Fin.succAbove 0)).det := by
+  intro A
+  exact desnanot_jacobi A
+
 /-- Reindex the `(k+2) × (k+2)` bordered minor so Desnanot-Jacobi deletes the
 Bareiss pivot row/column first and the trailing row/column last.
 
