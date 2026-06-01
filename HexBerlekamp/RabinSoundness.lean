@@ -1119,7 +1119,7 @@ theorem degree_dvd_of_irreducible_dvd_xPowSubX
   have huniversal :
       ∀ β : FpPoly.Quotient g hg_monic hg_pos, β ^ (p ^ n) = β :=
     FpPoly.Quotient.pow_pPowN_eq_self_of_pow_pPowN_X_eq_X hg_irr hX
-  exact FpPoly.Quotient.deg_dvd_of_pow_pPowN_eq_self_universal
+  exact FpPoly.Quotient.Internal.deg_dvd_of_pow_pPowN_eq_self_universal
     (g := g) (hmonic := hg_monic) (hg_pos := hg_pos) hg_irr huniversal
 
 /--
@@ -1142,7 +1142,7 @@ theorem irreducible_dvd_xPowSubX_degree
       (FpPoly.Quotient.X (g := g) (hmonic := hg_monic) (hg_pos := hg_pos)) ^
           (p ^ g.degree?.getD 0) =
         FpPoly.Quotient.X (g := g) (hmonic := hg_monic) (hg_pos := hg_pos) :=
-    FpPoly.Quotient.pow_card_eq_self_of_irreducible hg_irr _
+    FpPoly.Quotient.Internal.pow_card_eq_self_of_irreducible hg_irr _
   -- Step 2: rewrite the LHS to the executable representative.
   rw [quotient_X_pow_eq_reduce_frobeniusXPowMod hg_monic hg_pos
       (g.degree?.getD 0)] at hfix
