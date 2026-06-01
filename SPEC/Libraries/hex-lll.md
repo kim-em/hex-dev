@@ -381,6 +381,13 @@ audit-found issue per
 [PLAN/Conventions.md §Bench-found, conformance-found, and audit-found
 issues](../../PLAN/Conventions.md#bench-found-conformance-found-and-audit-found-issues).
 
+HexLLL's parametric scientific registrations use
+`signalFloorMultiplier := 1.0` per
+[SPEC/benchmarking.md §Spawn-floor filter](../benchmarking.md#spawn-floor-filter).
+The registered targets run warm child-side inner-repeat batches; a
+slow scheduled host startup should be visible in the export metadata
+but must not by itself erase the fixed Phase-4 ladder.
+
 The swap bound `potential_initial ≤ (maxNormSq b)^{n*(n-1)/2}` follows
 from Hadamard's inequality: `gramDet b k ≤ prod_{i<k} ||b[i]||^2 ≤
 (maxNormSq b)^k`.

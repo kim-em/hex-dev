@@ -136,6 +136,14 @@ cwd, which is the repo root under `lake exe`).
 `HEX_LLL_FPYLLL_BENCH_PYTHON` overrides the interpreter command
 (default `python3`). The Isabelle binary path is controlled by
 `HEX_LLL_ISABELLE_SVP` as before.
+
+**Signal-floor setting.** HexLLL scientific parametric registrations set
+`signalFloorMultiplier := 1.0`. The timed rows come from child-side
+inner-repeat batches, not parent-side process spawn wall time, and recent
+scheduled hosts have shown multi-second executable startup while the
+algorithmic batches remain well within their per-call caps. Disabling the
+spawn-floor filter here keeps those child-side measurements usable; the JSON
+export still records `spawn_floor_nanos` for auditability.
 -/
 
 namespace Hex.LLLBench
@@ -1019,6 +1027,7 @@ setup_benchmark runOfBasisBzRecombinationChecksum n =>
     paramCeiling := 72
     paramSchedule := .custom #[24, 36, 48, 60, 72]
     maxSecondsPerCall := 8.0
+    signalFloorMultiplier := 1.0
   }
 
 /- Complexity derivation: the random-bounded family uses a square
@@ -1036,6 +1045,7 @@ setup_benchmark runOfBasisRandomBoundedChecksum n =>
     paramCeiling := 144
     paramSchedule := .custom #[48, 72, 96, 120, 144]
     maxSecondsPerCall := 12.0
+    signalFloorMultiplier := 1.0
   }
 
 /- Complexity derivation: the harsh-cubic family uses the same square
@@ -1053,6 +1063,7 @@ setup_benchmark runOfBasisHarshCubicChecksum n =>
     paramSchedule := .custom #[12, 18, 24, 30, 36]
     maxSecondsPerCall := 8.0
     targetInnerNanos := 1_000_000_000
+    signalFloorMultiplier := 1.0
   }
 
 /- Complexity derivation: `prepStateInput n` gives `rows = n + 3` and
@@ -1065,6 +1076,7 @@ setup_benchmark runSizeReduceColumnChecksum n => sizeReduceColumnComplexity n
     paramCeiling := 160
     paramSchedule := .custom #[96, 128, 160]
     maxSecondsPerCall := 3.0
+    signalFloorMultiplier := 1.0
   }
 
 /- Complexity derivation: full size reduction of the final prepared row
@@ -1078,6 +1090,7 @@ setup_benchmark runSizeReduceChecksum n => sizeReduceComplexity n
     paramCeiling := 160
     paramSchedule := .custom #[128, 144, 160]
     maxSecondsPerCall := 5.0
+    signalFloorMultiplier := 1.0
   }
 
 /- Complexity derivation: an adjacent swap exchanges two basis rows over
@@ -1091,6 +1104,7 @@ setup_benchmark runSwapStepChecksum n => swapStepComplexity n
     paramCeiling := 160
     paramSchedule := .custom #[96, 128, 160]
     maxSecondsPerCall := 3.0
+    signalFloorMultiplier := 1.0
   }
 
 /- Complexity derivation: `gramSchmidtCoeff` reads one stored `ν[k][j]` entry
@@ -1103,6 +1117,7 @@ setup_benchmark runGramSchmidtCoeffChecksum n => gramSchmidtCoeffComplexity n
     paramSchedule := .custom #[32, 64, 96, 128]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 2_000_000_000
+    signalFloorMultiplier := 1.0
   }
 
 /- Complexity derivation: `potential` folds once over the prepared state's
@@ -1118,6 +1133,7 @@ setup_benchmark runPotential n => potentialComplexity n
     paramSchedule := .custom #[192, 208, 216]
     maxSecondsPerCall := 8.0
     targetInnerNanos := 1_000_000_000
+    signalFloorMultiplier := 1.0
   }
 
 /- Fixed Phase-4 family: BZ-shaped triangular basis with three lifted local
@@ -1185,6 +1201,7 @@ setup_benchmark runFirstShortVectorRandomBoundedChecksum n =>
     paramSchedule := .custom #[30, 45, 60, 75, 90, 120, 150, 180]
     maxSecondsPerCall := 20.0
     targetInnerNanos := 1_000_000_000
+    signalFloorMultiplier := 1.0
   }
 
 /- Complexity derivation: harsh-cubic inputs have square dimension `n` and
@@ -1203,6 +1220,7 @@ setup_benchmark runFirstShortVectorHarshCubicChecksum n =>
     paramSchedule := .custom #[15, 20, 25, 30, 35, 40, 45, 50, 55]
     maxSecondsPerCall := 20.0
     targetInnerNanos := 1_000_000_000
+    signalFloorMultiplier := 1.0
   }
 
 /- Fixed external-comparator registrations. The paired Lean and Isabelle
