@@ -757,6 +757,18 @@ The report contains five subsections:
      eligible rung of each input family. The bottom rung is
      reported for context; it is never the rung that meets or
      fails the goal.
+
+   - **Comparator-runtime plot (≥ 2 comparators).** A library
+     whose `phase4.comparators` block declares two or more
+     comparators commits a comparator-runtime plot at
+     `reports/figures/<lib>-comparator.svg`, with one curve per
+     comparator alongside the Lean curve across the eligible
+     range, log-y wall-time per call. The generator script lives
+     at `scripts/plots/<lib>-comparator.py` and reads the same
+     committed bench-results JSONL the ratio numbers in this
+     subsection cite. The plot is regenerated with the report; a
+     plot whose curves disagree with the §"Comparator ratios"
+     values is an audit-found issue.
 4. **Profile.** Per [profiling.md §Coverage requirement](profiling.md),
    one representative case per `phase4.input_families`. Dominant
    inclusive costs are named and explained, with leaf cost
