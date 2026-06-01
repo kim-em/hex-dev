@@ -5076,6 +5076,54 @@ private theorem yunFactorsPairwiseReachable_of_derivative_active_reachable
   | step c w fuel _ ih =>
       exact yunFactorsPairwiseReachable_step c w fuel ih
 
+private theorem yunFactorsDerivativeActiveReachable_nonzero
+    (hp : Hex.Nat.Prime p) (f c w : FpPoly p) (fuel : Nat)
+    (hreachable : yunFactorsDerivativeActiveReachable hp f c w fuel) :
+    c.isZero = false ∧ w.isZero = false := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  induction hreachable with
+  | derivativeSplit fuel hdf =>
+      let g := DensePoly.gcd f (DensePoly.derivative f)
+      let c := f / g
+      have hdf_false : (DensePoly.derivative f).isZero = false := by
+        cases h : (DensePoly.derivative f).isZero
+        · rfl
+        · exact False.elim (hdf h)
+      have hf_ne : f ≠ 0 := by
+        intro hf
+        apply hdf
+        rw [hf, DensePoly.derivative_zero]
+        rfl
+      have hg_nonzero : g.isZero = false := by
+        simpa [g] using
+          gcd_isZero_false_of_right_isZero_false f (DensePoly.derivative f) hdf_false
+      have hc_nonzero : c.isZero = false := by
+        cases hc : c.isZero
+        · rfl
+        · have hc_zero : c = 0 := eq_zero_of_isZero_true c hc
+          have hprod : c * g = f := by
+            simpa [c, g] using div_gcd_mul_reconstruct f (DensePoly.derivative f)
+          apply False.elim
+          apply hf_ne
+          rw [← hprod, hc_zero, zero_mul]
+      simpa [c, g] using And.intro hc_nonzero hg_nonzero
+  | step c w fuel _ ih =>
+      let y := DensePoly.gcd c w
+      let z := w / y
+      have hy_nonzero : y.isZero = false := by
+        simpa [y] using gcd_isZero_false_of_right_isZero_false c w ih.2
+      have hz_nonzero : z.isZero = false := by
+        cases hz : z.isZero
+        · rfl
+        · have hz_zero : z = 0 := eq_zero_of_isZero_true z hz
+          have hprod : z * y = w := by
+            simpa [z, y] using div_gcd_right_mul_reconstruct c w
+          have hw_zero : w = 0 := by
+            rw [← hprod, hz_zero, zero_mul]
+          rw [hw_zero] at ih
+          cases ih.2
+      simpa [y, z] using And.intro hy_nonzero hz_nonzero
+
 private theorem yunFactorsLevelCompletes_of_size_bound_derivative_active
     [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p) (f c w : FpPoly p)
     (base level fuel : Nat)
