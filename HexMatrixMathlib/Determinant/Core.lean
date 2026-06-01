@@ -472,6 +472,20 @@ private theorem cofactorSign_eq_neg_one_pow
     have hodd : Odd (row.val + col.val) := Nat.odd_iff.mpr hmod
     exact (Odd.neg_one_pow hodd).symm
 
+private theorem cofactorSign_consecutive_last_neg
+    [CommRing R] {n : Nat} (a : Nat) (ha : a + 1 < n + 1) :
+    Hex.Matrix.cofactorSign (R := R)
+        (⟨a + 1, ha⟩ : Fin (n + 1)) (Fin.last n) =
+      -Hex.Matrix.cofactorSign (R := R)
+        (⟨a, by omega⟩ : Fin (n + 1)) (Fin.last n) := by
+  rw [cofactorSign_eq_neg_one_pow (R := R)
+      (⟨a + 1, ha⟩ : Fin (n + 1)) (Fin.last n)]
+  rw [cofactorSign_eq_neg_one_pow (R := R)
+      (⟨a, by omega⟩ : Fin (n + 1)) (Fin.last n)]
+  show (-1 : R) ^ (a + 1 + n) = -((-1 : R) ^ (a + n))
+  rw [show a + 1 + n = (a + n) + 1 by omega, pow_succ]
+  ring
+
 private theorem matrixEquiv_adjugate_apply_eq_cofactor
     [CommRing R] (M : Hex.Matrix R (n + 1) (n + 1))
     (row col : Fin (n + 1)) :
@@ -1965,6 +1979,152 @@ theorem det_plucker_three_term_nDet_of_ordered_four
     exact hmul
   -- Rearrange to match the target via commutativity.
   linear_combination hp1_cancelled
+
+private theorem det_plucker_three_term_basisVec_of_lt_p1
+    {R : Type u} [CommRing R] {n : Nat}
+    (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p2 p3 q : Fin (n + 3))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val) (hq1 : q.val < p1.val) :
+    Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p1 *
+        Hex.Matrix.nDet B p2 p3 h23 -
+      Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p2 *
+        Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
+      Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p3 *
+        Hex.Matrix.nDet B p1 p2 h12 = 0 := by
+  have hq2 : q.val < p2.val := Nat.lt_trans hq1 h12
+  have hq3 : q.val < p3.val := Nat.lt_trans hq2 h23
+  have hraw :=
+    det_plucker_three_term_nDet_of_ordered_four B q p1 p2 p3 hq1 h12 h23
+  rw [Hex.Matrix.mDet_basisVec_eq_signed_nDet_of_gt B p1 q hq1,
+      Hex.Matrix.mDet_basisVec_eq_signed_nDet_of_gt B p2 q hq2,
+      Hex.Matrix.mDet_basisVec_eq_signed_nDet_of_gt B p3 q hq3]
+  linear_combination
+    (Hex.Matrix.cofactorSign (R := R)
+      (⟨q.val, by have := p1.isLt; omega⟩ : Fin (n + 2)) (Fin.last (n + 1))) *
+      hraw
+
+private theorem det_plucker_three_term_basisVec_of_between_p1_p2
+    {R : Type u} [CommRing R] {n : Nat}
+    (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p2 p3 q : Fin (n + 3))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
+    (h1q : p1.val < q.val) (hq2 : q.val < p2.val) :
+    Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p1 *
+        Hex.Matrix.nDet B p2 p3 h23 -
+      Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p2 *
+        Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
+      Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p3 *
+        Hex.Matrix.nDet B p1 p2 h12 = 0 := by
+  have hq3 : q.val < p3.val := Nat.lt_trans hq2 h23
+  have hraw :=
+    det_plucker_three_term_nDet_of_ordered_four B p1 q p2 p3 h1q hq2 h23
+  rw [Hex.Matrix.mDet_basisVec_eq_signed_nDet_of_lt B p1 q h1q,
+      Hex.Matrix.mDet_basisVec_eq_signed_nDet_of_gt B p2 q hq2,
+      Hex.Matrix.mDet_basisVec_eq_signed_nDet_of_gt B p3 q hq3]
+  have hrow :
+      (⟨q.val, by have := p2.isLt; omega⟩ : Fin (n + 2)) =
+        (⟨q.val - 1 + 1, by have := p2.isLt; omega⟩ : Fin (n + 2)) := by
+    apply Fin.ext
+    simp
+    omega
+  rw [hrow]
+  rw [cofactorSign_consecutive_last_neg (R := R) (n := n + 1) (q.val - 1)
+      (by have := p2.isLt; omega)]
+  linear_combination
+    (Hex.Matrix.cofactorSign (R := R)
+      (⟨q.val - 1, by have := q.isLt; omega⟩ : Fin (n + 2)) (Fin.last (n + 1))) *
+      hraw
+
+private theorem det_plucker_three_term_basisVec_of_between_p2_p3
+    {R : Type u} [CommRing R] {n : Nat}
+    (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p2 p3 q : Fin (n + 3))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
+    (h2q : p2.val < q.val) (hq3 : q.val < p3.val) :
+    Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p1 *
+        Hex.Matrix.nDet B p2 p3 h23 -
+      Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p2 *
+        Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
+      Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p3 *
+        Hex.Matrix.nDet B p1 p2 h12 = 0 := by
+  have h1q : p1.val < q.val := Nat.lt_trans h12 h2q
+  have hraw :=
+    det_plucker_three_term_nDet_of_ordered_four B p1 p2 q p3 h12 h2q hq3
+  rw [Hex.Matrix.mDet_basisVec_eq_signed_nDet_of_lt B p1 q h1q,
+      Hex.Matrix.mDet_basisVec_eq_signed_nDet_of_lt B p2 q h2q,
+      Hex.Matrix.mDet_basisVec_eq_signed_nDet_of_gt B p3 q hq3]
+  have hrow :
+      (⟨q.val, by have := p3.isLt; omega⟩ : Fin (n + 2)) =
+        (⟨q.val - 1 + 1, by have := p3.isLt; omega⟩ : Fin (n + 2)) := by
+    apply Fin.ext
+    simp
+    omega
+  rw [hrow]
+  rw [cofactorSign_consecutive_last_neg (R := R) (n := n + 1) (q.val - 1)
+      (by have := p3.isLt; omega)]
+  linear_combination
+    -(Hex.Matrix.cofactorSign (R := R)
+      (⟨q.val - 1, by have := q.isLt; omega⟩ : Fin (n + 2)) (Fin.last (n + 1))) *
+      hraw
+
+private theorem det_plucker_three_term_basisVec_of_gt_p3
+    {R : Type u} [CommRing R] {n : Nat}
+    (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p2 p3 q : Fin (n + 3))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val) (h3q : p3.val < q.val) :
+    Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p1 *
+        Hex.Matrix.nDet B p2 p3 h23 -
+      Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p2 *
+        Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
+      Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p3 *
+        Hex.Matrix.nDet B p1 p2 h12 = 0 := by
+  have h1q : p1.val < q.val := Nat.lt_trans h12 (Nat.lt_trans h23 h3q)
+  have h2q : p2.val < q.val := Nat.lt_trans h23 h3q
+  have hraw :=
+    det_plucker_three_term_nDet_of_ordered_four B p1 p2 p3 q h12 h23 h3q
+  rw [Hex.Matrix.mDet_basisVec_eq_signed_nDet_of_lt B p1 q h1q,
+      Hex.Matrix.mDet_basisVec_eq_signed_nDet_of_lt B p2 q h2q,
+      Hex.Matrix.mDet_basisVec_eq_signed_nDet_of_lt B p3 q h3q]
+  linear_combination
+    (Hex.Matrix.cofactorSign (R := R)
+      (⟨q.val - 1, by have := q.isLt; omega⟩ : Fin (n + 2)) (Fin.last (n + 1))) *
+      hraw
+
+/-- Arbitrary-row basis-vector Plucker coefficient identity for three ordered
+rows `p1 < p2 < p3` and a fourth row `q` distinct from them. The proof
+transports each order case to the ordered four-row `nDet` kernel and rewrites
+the three `mDet` coefficients by basis-vector evaluation. -/
+theorem det_plucker_three_term_basisVec_of_ne
+    {R : Type u} [CommRing R] {n : Nat}
+    (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p2 p3 q : Fin (n + 3))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
+    (hq1 : q ≠ p1) (hq2 : q ≠ p2) (hq3 : q ≠ p3) :
+    Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p1 *
+        Hex.Matrix.nDet B p2 p3 h23 -
+      Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p2 *
+        Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
+      Hex.Matrix.mDet B (Hex.Matrix.basisVec (R := R) q) p3 *
+        Hex.Matrix.nDet B p1 p2 h12 = 0 := by
+  by_cases hlt1 : q.val < p1.val
+  · exact det_plucker_three_term_basisVec_of_lt_p1 B p1 p2 p3 q h12 h23 hlt1
+  · have h1q : p1.val < q.val := by
+      have hne : q.val ≠ p1.val := by
+        intro h
+        exact hq1 (Fin.ext h)
+      omega
+    by_cases hlt2 : q.val < p2.val
+    · exact det_plucker_three_term_basisVec_of_between_p1_p2
+        B p1 p2 p3 q h12 h23 h1q hlt2
+    · have h2q : p2.val < q.val := by
+        have hne : q.val ≠ p2.val := by
+          intro h
+          exact hq2 (Fin.ext h)
+        omega
+      by_cases hlt3 : q.val < p3.val
+      · exact det_plucker_three_term_basisVec_of_between_p2_p3
+          B p1 p2 p3 q h12 h23 h2q hlt3
+      · have h3q : p3.val < q.val := by
+          have hne : q.val ≠ p3.val := by
+            intro h
+            exact hq3 (Fin.ext h)
+          omega
+        exact det_plucker_three_term_basisVec_of_gt_p3 B p1 p2 p3 q h12 h23 h3q
 
 /-- Reindex the `(k+2) × (k+2)` bordered minor so Desnanot-Jacobi deletes the
 Bareiss pivot row/column first and the trailing row/column last.
