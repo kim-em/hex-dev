@@ -112,9 +112,6 @@ instance zmod64FieldOfPrime {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p] 
             show ZMod64.intPow a (-Int.ofNat 0) = (ZMod64.intPow a (Int.ofNat 0))⁻¹
             rw [show (-Int.ofNat 0) = Int.ofNat 0 by rfl]
             simp [ZMod64.intPow]
-            have hpow0 : a ^ 0 = (1 : ZMod64 p) :=
-              Lean.Grind.Semiring.pow_zero a
-            rw [hpow0]
             have h1ne : (1 : ZMod64 p) ≠ 0 :=
               fun h => ZMod64.one_ne_zero_of_prime
                 (ZMod64.PrimeModulus.prime (p := p)) h

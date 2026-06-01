@@ -771,7 +771,6 @@ private theorem coeffTerm_coeff (g : FpPoly p) (i n : Nat) :
     rw [DensePoly.coeff_C]
     by_cases hni : n = i
     · simp [hni]
-      grind
     · have hsub : n - i ≠ 0 := by omega
       simp [hni, hsub]
       exact hzero
@@ -811,10 +810,10 @@ private theorem powLinear_coeffTerm_coeff (g : FpPoly p) (i k n : Nat) :
   | zero =>
       simp [powLinear]
       change (DensePoly.C (1 : ZMod64 p)).coeff n =
-        if n = 0 then (g.coeff i) ^ 0 else 0
+        if n = 0 then 1 else 0
       rw [DensePoly.coeff_C]
       by_cases hn : n = 0
-      · simp [hn, Lean.Grind.Semiring.pow_zero (g.coeff i)]
+      · simp [hn]
       · simp [hn]
         change (0 : ZMod64 p) = (0 : ZMod64 p)
         rfl
@@ -965,7 +964,6 @@ private theorem powLinear_coeffFold_coeff_expansion (g : FpPoly p) (m k n : Nat)
             rw [ih, coeffFold_coeff]
             by_cases hni : n < i
             · simp [hni]
-              grind
             · simp [hni]
           rw [hterm]
           exact ihxs _
@@ -3734,7 +3732,6 @@ private theorem coeff_derivative (f : FpPoly p) (n : Nat) :
     have hcoeff : f.coeff (n + 1) = 0 :=
       DensePoly.coeff_eq_zero_of_size_le f hf
     simp [hn, List.getD, hcoeff]
-    exact (Lean.Grind.Semiring.mul_zero ((n + 1 : Nat) : ZMod64 p)).symm
 
 private theorem derivative_isZero_true_of_pthRoot_frobenius
     (hp : Hex.Nat.Prime p) (f : FpPoly p)
