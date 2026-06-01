@@ -29,6 +29,11 @@ instance [One R] : One (DensePoly R) where
 def Monic [One R] (p : DensePoly R) : Prop :=
   p.leadingCoeff = 1
 
+/-- A monic polynomial has leading coefficient `1`. Forwarding lemma so callers
+do not need to unfold `Monic`. -/
+theorem leadingCoeff_eq_one_of_monic [One R] {p : DensePoly R} (hp : p.Monic) :
+    p.leadingCoeff = 1 := hp
+
 /-- For a nonzero normalized dense polynomial, `leadingCoeff` is the coefficient
 at the last stored index. -/
 theorem leadingCoeff_eq_coeff_last (p : DensePoly R) (hpos : 0 < p.size) :
