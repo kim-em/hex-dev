@@ -1299,8 +1299,8 @@ private theorem monic_size_pos (f : ZPoly) (hmonic : DensePoly.Monic f) :
       | mk coeffs normalized =>
           simp [DensePoly.leadingCoeff, DensePoly.size] at hsize ⊢
           simp [hsize]
-    have hlead_one : f.leadingCoeff = 1 := by
-      simpa [DensePoly.Monic] using hmonic
+    have hlead_one : f.leadingCoeff = 1 :=
+      DensePoly.leadingCoeff_eq_one_of_monic hmonic
     rw [hlead] at hlead_one
     exact False.elim (Int.zero_ne_one hlead_one)
 
@@ -1365,7 +1365,7 @@ private theorem coeff_last_eq_one_of_monic
     (f : ZPoly) (hmonic : DensePoly.Monic f) :
     f.coeff (f.size - 1) = 1 := by
   rw [coeff_last_eq_leadingCoeff f (monic_size_pos f hmonic)]
-  simpa [DensePoly.Monic] using hmonic
+  exact DensePoly.leadingCoeff_eq_one_of_monic hmonic
 
 private theorem size_le_of_degree?_getD_lt
     (f : ZPoly) {n : Nat}

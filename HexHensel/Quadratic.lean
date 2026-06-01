@@ -664,8 +664,8 @@ private theorem monic_size_pos (q : ZPoly) (hmonic : DensePoly.Monic q) :
       | mk coeffs normalized =>
           simp [DensePoly.leadingCoeff, DensePoly.size] at hsize ⊢
           simp [hsize]
-    have hlead_one : q.leadingCoeff = 1 := by
-      simpa [DensePoly.Monic] using hmonic
+    have hlead_one : q.leadingCoeff = 1 :=
+      DensePoly.leadingCoeff_eq_one_of_monic hmonic
     rw [hlead] at hlead_one
     exact False.elim (Int.zero_ne_one hlead_one)
 
@@ -2090,8 +2090,8 @@ private theorem addModSquare_monic_of_high_remainder_zero
         | mk coeffs normalized =>
             simp [DensePoly.leadingCoeff, DensePoly.size] at hsize ⊢
             simp [hsize]
-      have hmonicLead : g.leadingCoeff = 1 := by
-        simpa [DensePoly.Monic] using hmonic
+      have hmonicLead : g.leadingCoeff = 1 :=
+        DensePoly.leadingCoeff_eq_one_of_monic hmonic
       rw [hlead] at hmonicLead
       exact False.elim (Int.zero_ne_one hmonicLead)
   apply monic_of_coeff_eq_one_and_high_coeff_zero
