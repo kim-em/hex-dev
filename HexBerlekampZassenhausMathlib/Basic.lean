@@ -17342,6 +17342,134 @@ theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent
       (henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData_descent
         core B primeData hchoose hdescent hlifted_of_modP)
 
+/-- **#5214 supporting bundle (HO-1 slow-path substrate).**
+
+Bundled substrate package for the slow-path arm of the HO-1 capstone
+`factor_irreducible_of_nonUnit` (#4170).  The seven fields are exactly the
+hypothesis set on the lifted-Hensel side consumed by the bound-specialised
+slow-path exhaustive-branch theorems
+`factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound`
+and
+`factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound`,
+packaged so the capstone can obtain all of them from a single
+`Hex.choosePrimeData? core = some primeData` witness together with monic /
+positive-degree / square-free hypotheses on the core, without rediscovering
+each fact independently.
+
+* `corr` — `HenselSubsetCorrespondenceHypotheses` value (sourced from
+  `henselSubsetCorrespondenceHypotheses_of_choosePrimeData`).
+* `partition` — `LiftedFactorSubsetPartition core d Finset.univ core`
+  covering / disjointness / recombination support (sourced from
+  `liftedFactorSubsetPartition_of_choosePrimeData`).
+* `liftedFactor_monic`, `liftedFactor_natDegree_pos`, `liftedFactor_inj` —
+  per-lifted-factor monicness, positive transported natural degree,
+  and `Function.Injective (liftedFactor d)`.
+* `modulus`, `precision` — the Mignotte modulus and precision bounds
+  `2 ≤ d.p ^ d.k` and `2 * B < d.p ^ d.k`.
+
+The constructor below threads the witnesses through the existing
+non-circular primitives in this file; no new analytic obligation is
+introduced.  Any genuinely analytic content remains confined to
+`henselSubsetCorrespondence_analytic_obligation` and
+`liftedFactorSubsetPartition_analytic_obligation`. -/
+structure SlowPathHenselSubstrate
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData) : Prop where
+  corr :
+    HenselSubsetCorrespondenceHypotheses core B primeData
+      (Hex.ZPoly.toMonicLiftData core B primeData) True True
+  partition :
+    LiftedFactorSubsetPartition core
+      (Hex.ZPoly.toMonicLiftData core B primeData) Finset.univ core
+  liftedFactor_monic :
+    ∀ i, Hex.DensePoly.Monic
+      (liftedFactor (Hex.ZPoly.toMonicLiftData core B primeData) i)
+  liftedFactor_natDegree_pos :
+    ∀ i,
+      0 < (HexPolyZMathlib.toPolynomial
+        (liftedFactor (Hex.ZPoly.toMonicLiftData core B primeData) i)).natDegree
+  liftedFactor_inj :
+    Function.Injective
+      (liftedFactor (Hex.ZPoly.toMonicLiftData core B primeData))
+  modulus :
+    2 ≤ (Hex.ZPoly.toMonicLiftData core B primeData).p ^
+      (Hex.ZPoly.toMonicLiftData core B primeData).k
+  precision :
+    2 * B < (Hex.ZPoly.toMonicLiftData core B primeData).p ^
+      (Hex.ZPoly.toMonicLiftData core B primeData).k
+
+/-- **#5214 supporting lemma (HO-1 slow-path substrate constructor).**
+
+Constructor for `SlowPathHenselSubstrate` from a `Hex.choosePrimeData?
+core = some primeData` witness together with monic, positive-degree, and
+square-free hypotheses on the core, plus `B ≠ 0`.
+
+Composes (no new analytic obligation):
+
+* `henselSubsetCorrespondenceHypotheses_of_choosePrimeData` for `corr`;
+* `liftedFactorSubsetPartition_of_choosePrimeData` for `partition`;
+* the `_of_monicPrimeData` umbrellas
+  (`Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData`,
+  `..._natDegree_pos_of_monicPrimeData`,
+  `..._injective_of_monicPrimeData`) for the lifted-factor monicness /
+  natDegree positivity / injectivity facts.  The `Hex.choosePrimeData?
+  core = some primeData` witness transports to `Hex.ZPoly.toMonicPrimeData?
+  core = some primeData` via `(Hex.ZPoly.toMonic core).monic = core`
+  on monic input (`Hex.ZPoly.toMonic_monic_eq_core_of_leadingCoeff_eq_one`);
+* `Hex.precisionForCoeffBound_spec` for `precision`, refined to `modulus`
+  via `B ≠ 0`. -/
+theorem slowPathHenselSubstrate_of_choosePrimeData
+    (core : Hex.ZPoly) (B : Nat)
+    (primeData : Hex.PrimeChoiceData)
+    (hchoose : Hex.choosePrimeData? core = some primeData)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
+    (hB_ne_zero : B ≠ 0) :
+    SlowPathHenselSubstrate core B primeData := by
+  have hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core :=
+    zpoly_lc_pos_of_monic hcore_monic
+  have htoMonic_eq : (Hex.ZPoly.toMonic core).monic = core :=
+    Hex.ZPoly.toMonic_monic_eq_core_of_leadingCoeff_eq_one core hcore_monic
+  have hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData := by
+    show Hex.choosePrimeData? (Hex.ZPoly.toMonic core).monic = some primeData
+    rw [htoMonic_eq]
+    exact hchoose
+  have hp_prime : Hex.Nat.Prime primeData.p :=
+    Hex.choosePrimeData?_prime core primeData hchoose
+  have hp2 : 2 ≤ primeData.p := hp_prime.two_le
+  have hprec_spec :
+      2 * B < primeData.p ^ Hex.precisionForCoeffBound B primeData.p :=
+    Hex.precisionForCoeffBound_spec hp2 B
+  have hB1 : 1 ≤ B := Nat.one_le_iff_ne_zero.mpr hB_ne_zero
+  have hmodulus :
+      2 ≤ primeData.p ^ Hex.precisionForCoeffBound B primeData.p := by
+    omega
+  have hprec_pos : 1 ≤ Hex.precisionForCoeffBound B primeData.p := by
+    by_contra hlt
+    have hzero : Hex.precisionForCoeffBound B primeData.p = 0 := by omega
+    rw [hzero, pow_zero] at hmodulus
+    omega
+  refine
+    { corr := ?_
+      partition := ?_
+      liftedFactor_monic := ?_
+      liftedFactor_natDegree_pos := ?_
+      liftedFactor_inj := ?_
+      modulus := ?_
+      precision := ?_ }
+  · exact henselSubsetCorrespondenceHypotheses_of_choosePrimeData
+      core B primeData hchoose
+  · exact liftedFactorSubsetPartition_of_choosePrimeData
+      core B primeData hchoose hcore_sqfree
+  · exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
+      core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
+  · exact Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
+      core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
+  · exact Hex.ZPoly.toMonicLiftData_liftedFactor_injective_of_monicPrimeData
+      core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
+  · exact hmodulus
+  · exact hprec_spec
+
 end
 
 end HexBerlekampZassenhausMathlib
