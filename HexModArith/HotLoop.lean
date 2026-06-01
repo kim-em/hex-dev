@@ -88,6 +88,14 @@ instance : CoeOut (MontResidue p) Nat where
   cases h
   rfl
 
+/-- Extensionality for Montgomery residues via their canonical Nat representatives. -/
+theorem ext_toNat {a b : MontResidue p} (h : a.toNat = b.toNat) : a = b :=
+  ext (UInt64.toNat_inj.mp h)
+
+/-- Two Montgomery residues are equal exactly when their canonical representatives agree. -/
+theorem eq_iff_toNat_eq (a b : MontResidue p) : a = b ↔ a.toNat = b.toNat :=
+  ⟨fun h => h ▸ rfl, ext_toNat⟩
+
 end MontResidue
 
 namespace BarrettCtx
