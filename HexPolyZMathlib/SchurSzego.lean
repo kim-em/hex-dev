@@ -1,6 +1,7 @@
 import HexPolyZMathlib.Basic
 import Mathlib.Algebra.Order.BigOperators.Group.Multiset
 import Mathlib.Algebra.Order.BigOperators.GroupWithZero.Multiset
+import Mathlib.Analysis.Complex.AbsMax
 import Mathlib.Analysis.Polynomial.MahlerMeasure
 import Mathlib.RingTheory.Polynomial.SmallDegreeVieta
 
@@ -393,6 +394,108 @@ theorem schur_boundary_denominator_ne_zero {A B c : ℂ}
   intro hzero
   rw [hzero, Complex.normSq_zero] at hlt
   exact not_lt_of_ge (Complex.normSq_nonneg _) hlt
+
+theorem schur_closed_disk_denominator_ne_zero {A B c : ℂ}
+    (hA : ‖A‖ < 1) (hB : ‖B‖ < 1) (hc : ‖c‖ ≤ 1) :
+    2 + (A + B) * c ≠ 0 := by
+  intro hzero
+  have h_eq : (2 : ℂ) = -((A + B) * c) := by
+    calc
+      (2 : ℂ) = (2 + (A + B) * c) - (A + B) * c := by ring
+      _ = -((A + B) * c) := by rw [hzero]; ring
+  have hlt : ‖(A + B) * c‖ < 2 := by
+    calc
+      ‖(A + B) * c‖ = ‖A + B‖ * ‖c‖ := norm_mul _ _
+      _ ≤ (‖A‖ + ‖B‖) * ‖c‖ :=
+        mul_le_mul_of_nonneg_right (norm_add_le A B) (norm_nonneg c)
+      _ ≤ (‖A‖ + ‖B‖) * 1 :=
+        mul_le_mul_of_nonneg_left hc (add_nonneg (norm_nonneg A) (norm_nonneg B))
+      _ < 2 := by nlinarith
+  have hnorm : (2 : ℝ) = ‖(A + B) * c‖ := by
+    calc
+      (2 : ℝ) = ‖(2 : ℂ)‖ := by norm_num
+      _ = ‖-((A + B) * c)‖ := by rw [h_eq]
+      _ = ‖(A + B) * c‖ := norm_neg _
+  linarith
+
+private theorem schur_norm_div_lt_one_of_normSq_lt {z w : ℂ}
+    (h : Complex.normSq z < Complex.normSq w) :
+    ‖z / w‖ < 1 := by
+  have hwpos : 0 < Complex.normSq w :=
+    lt_of_le_of_lt (Complex.normSq_nonneg z) h
+  have hsq : ‖z / w‖ ^ 2 < 1 := by
+    rw [← Complex.normSq_eq_norm_sq, Complex.normSq_div]
+    exact (div_lt_one hwpos).2 h
+  exact (sq_lt_one_iff₀ (norm_nonneg _)).1 hsq
+
+theorem schur_closed_disk_norm_lt {A B c : ℂ}
+    (hA : ‖A‖ < 1) (hB : ‖B‖ < 1) (hc : ‖c‖ ≤ 1) :
+    ‖(A + B + 2 * A * B * c) / (2 + (A + B) * c)‖ < 1 := by
+  let f : ℂ → ℂ := fun z => (A + B + 2 * A * B * z) / (2 + (A + B) * z)
+  have hden_ne_closure :
+      ∀ z ∈ closure (Metric.ball (0 : ℂ) (1 : ℝ)), 2 + (A + B) * z ≠ 0 := by
+    intro z hz
+    have hz_closed : z ∈ Metric.closedBall (0 : ℂ) (1 : ℝ) := by
+      rwa [closure_ball (0 : ℂ) (by norm_num : (1 : ℝ) ≠ 0)] at hz
+    have hz_norm : ‖z‖ ≤ 1 := by
+      simpa [Metric.mem_closedBall, dist_eq_norm] using hz_closed
+    exact schur_closed_disk_denominator_ne_zero (A := A) (B := B) (c := z) hA hB hz_norm
+  have hdiffcont : DiffContOnCl ℂ f (Metric.ball (0 : ℂ) (1 : ℝ)) := by
+    have hnum : DiffContOnCl ℂ (fun z : ℂ => A + B + 2 * A * B * z)
+        (Metric.ball (0 : ℂ) (1 : ℝ)) :=
+      (by fun_prop : Differentiable ℂ (fun z : ℂ => A + B + 2 * A * B * z)).diffContOnCl
+    have hden : DiffContOnCl ℂ (fun z : ℂ => 2 + (A + B) * z)
+        (Metric.ball (0 : ℂ) (1 : ℝ)) :=
+      (by fun_prop : Differentiable ℂ (fun z : ℂ => 2 + (A + B) * z)).diffContOnCl
+    have hquot := hnum.smul (hden.inv hden_ne_closure)
+    simpa [f, div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using hquot
+  have hboundary :
+      ∀ z ∈ frontier (Metric.ball (0 : ℂ) (1 : ℝ)), ‖f z‖ ≤ 1 := by
+    intro z hz
+    have hz_sphere : z ∈ Metric.sphere (0 : ℂ) (1 : ℝ) :=
+      Metric.frontier_ball_subset_sphere hz
+    have hz_norm : ‖z‖ = 1 := by
+      simpa [Metric.mem_sphere, dist_eq_norm] using hz_sphere
+    exact le_of_lt
+      (by
+        simpa [f] using schur_norm_div_lt_one_of_normSq_lt
+          (schur_boundary_normSq_lt (A := A) (B := B) (c := z) hA hB hz_norm))
+  have hnorm_le_on_closure :
+      ∀ z ∈ closure (Metric.ball (0 : ℂ) (1 : ℝ)), ‖f z‖ ≤ 1 := by
+    intro z hz
+    exact Complex.norm_le_of_forall_mem_frontier_norm_le Metric.isBounded_ball hdiffcont hboundary hz
+  have hc_closure : c ∈ closure (Metric.ball (0 : ℂ) (1 : ℝ)) := by
+    rw [closure_ball (0 : ℂ) (by norm_num : (1 : ℝ) ≠ 0)]
+    simpa [Metric.mem_closedBall, dist_eq_norm] using hc
+  have hle : ‖f c‖ ≤ 1 := hnorm_le_on_closure c hc_closure
+  by_cases hc_boundary : ‖c‖ = 1
+  · simpa [f] using schur_norm_div_lt_one_of_normSq_lt
+      (schur_boundary_normSq_lt (A := A) (B := B) (c := c) hA hB hc_boundary)
+  have hc_ball : c ∈ Metric.ball (0 : ℂ) (1 : ℝ) := by
+    simpa [Metric.mem_ball, dist_eq_norm] using lt_of_le_of_ne hc hc_boundary
+  by_contra hnot
+  have heq : ‖f c‖ = 1 := le_antisymm hle (le_of_not_gt hnot)
+  have hmax : IsMaxOn (norm ∘ f) (Metric.ball (0 : ℂ) (1 : ℝ)) c := by
+    intro z hz
+    have hz_closure : z ∈ closure (Metric.ball (0 : ℂ) (1 : ℝ)) := subset_closure hz
+    simpa [Function.comp_apply, heq] using hnorm_le_on_closure z hz_closure
+  have hconst :=
+    Complex.eq_const_of_exists_max (f := f) (b := (1 : ℝ)) hdiffcont.1 hc_ball hmax
+  have hzero_mem : (0 : ℂ) ∈ Metric.ball (0 : ℂ) (1 : ℝ) := by
+    simp
+  have h0eq : f 0 = f c := by
+    simpa using hconst hzero_mem
+  have h0lt : ‖f 0‖ < 1 := by
+    have hsum_lt : ‖A + B‖ < 2 := lt_of_le_of_lt (norm_add_le A B) (by nlinarith)
+    have htwo_ne : (2 : ℂ) ≠ 0 := by norm_num
+    have hnorm_div : ‖(A + B) / (2 : ℂ)‖ < 1 := by
+      rw [norm_div]
+      have hnorm_two : ‖(2 : ℂ)‖ = 2 := by norm_num
+      rw [hnorm_two]
+      nlinarith
+    simpa [f, htwo_ne] using hnorm_div
+  have : ‖f 0‖ = 1 := by rw [h0eq, heq]
+  linarith
 
 /-- Roots outside the radius, weighted by `‖z‖ / r` with multiplicity. -/
 def rootsRadiusProduct (r : ℝ) (s : Multiset ℂ) : ℝ :=
