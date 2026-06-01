@@ -811,6 +811,47 @@ theorem ordered_four_det_mul_det_setRow_setRow_eq_cofactorRowPairing_mul_sub
   exact det_mul_det_setRow_setRow_eq_cofactorRowPairing_mul_sub M r2 r3 B[p1] B[q]
     (ordered_four_row_p2_ne_p3 p1 p2 p3 q h12 h23 h3q)
 
+/-- The ordered base minor in the four-row Plucker setup is exactly the
+corresponding `nDet`. This theorem gives downstream rewrites a named surface
+instead of unfolding `Hex.Matrix.nDet` locally. -/
+theorem ordered_four_det_nMatrix_eq_nDet
+    {R : Type u} [CommRing R] {n : Nat}
+    (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p2 p3 q : Fin (n + 3))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
+    (h3q : p3.val < q.val) :
+    let hp1q : p1.val < q.val := Nat.lt_trans h12 (Nat.lt_trans h23 h3q)
+    Hex.Matrix.det (Hex.Matrix.nMatrix B p1 q hp1q) =
+      Hex.Matrix.nDet B p1 q hp1q := by
+  intro hp1q
+  rfl
+
+/-- Ordered two-row replacement identity after rewriting each cofactor-row
+pairing as the determinant of the corresponding row replacement.
+
+This is the determinant-only form needed before the remaining signed
+row-permutation transports to `nDet` minors. -/
+theorem ordered_four_det_mul_det_setRow_setRow_eq_det_setRow_mul_sub
+    {R : Type u} [CommRing R] {n : Nat}
+    (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p2 p3 q : Fin (n + 3))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
+    (h3q : p3.val < q.val) :
+    let M := Hex.Matrix.nMatrix B p1 q (Nat.lt_trans h12 (Nat.lt_trans h23 h3q))
+    let r2 : Fin (n + 1) := ⟨p2.val - 1, by have := q.isLt; omega⟩
+    let r3 : Fin (n + 1) := ⟨p3.val - 1, by have := q.isLt; omega⟩
+    Hex.Matrix.det M *
+        Hex.Matrix.det (Hex.Matrix.setRow (Hex.Matrix.setRow M r2 B[p1]) r3 B[q]) =
+      Hex.Matrix.det (Hex.Matrix.setRow M r2 B[p1]) *
+          Hex.Matrix.det (Hex.Matrix.setRow M r3 B[q]) -
+        Hex.Matrix.det (Hex.Matrix.setRow M r3 B[p1]) *
+          Hex.Matrix.det (Hex.Matrix.setRow M r2 B[q]) := by
+  intro M r2 r3
+  rw [← ordered_four_cofactorRowPairing_p2_p1_eq_det_setRow B p1 p2 p3 q h12 h23 h3q]
+  rw [← ordered_four_cofactorRowPairing_p3_q_eq_det_setRow B p1 p2 p3 q h12 h23 h3q]
+  rw [← ordered_four_cofactorRowPairing_p3_p1_eq_det_setRow B p1 p2 p3 q h12 h23 h3q]
+  rw [← ordered_four_cofactorRowPairing_p2_q_eq_det_setRow B p1 p2 p3 q h12 h23 h3q]
+  exact ordered_four_det_mul_det_setRow_setRow_eq_cofactorRowPairing_mul_sub
+    B p1 p2 p3 q h12 h23 h3q
+
 /-- Reindex the `(k+2) × (k+2)` bordered minor so Desnanot-Jacobi deletes the
 Bareiss pivot row/column first and the trailing row/column last.
 
