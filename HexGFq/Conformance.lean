@@ -99,6 +99,12 @@ example : 1 < 64 :=
 #guard GFq.repr (generic #[1, 1]) =
   GFqRing.reduceMod (GFq.modulus Entry21) (polyTwo #[1, 1])
 
+-- The Frobenius wrapper matches the inherited `p`-th power on the
+-- committed `GFq 2 1` entry and produces the expected representative.
+#guard genericReprNats (GFq.frob (generic #[1])) = [1]
+#guard genericReprNats (GFq.frob (generic #[0, 1])) = [1]
+#guard GFq.frob (generic #[0, 1]) = (generic #[0, 1]) ^ (2 : Nat)
+
 #guard coeffNats (GF2q.supportedEntry (n := 1)).poly = [1, 1]
 #guard Conway.luebeckConwayPolynomial? 2 1 =
   some (GF2q.supportedEntry (n := 1)).poly
