@@ -80,7 +80,7 @@ def zsmul {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f
 This normalizes the extended-GCD left coefficient by the gcd's constant-unit
 factor, producing a polynomial whose residue is the multiplicative inverse
 whenever the quotient element is nonzero. -/
-def invPoly {f : FpPoly p} {hf : 0 < FpPoly.degree f}
+private def invPoly {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : GFqRing.PolyQuotient f hf) : FpPoly p :=
   let r := DensePoly.xgcd (GFqRing.repr x) f
   let unitInv : ZMod64 p := (r.gcd.coeff 0)⁻¹
@@ -448,7 +448,7 @@ def inv {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
   else
     ofPoly f hf hp hirr (invPoly x.toQuotient)
 
-@[simp] theorem toQuotient_inv_of_ne_zero
+private theorem toQuotient_inv_of_ne_zero
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     {x : FiniteField f hf hp hirr} (hx : x ≠ zero f hf hp hirr) :
     (inv x).toQuotient = GFqRing.ofPoly f hf (invPoly x.toQuotient) := by
@@ -687,6 +687,7 @@ theorem natCast_eq_natCast_iff_mod_eq
       (inv (pow x (n + 1))).toQuotient :=
   rfl
 
+/-- The field inverse uses the standard junk value at zero. -/
 @[simp] theorem inv_zero
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p) (hirr : FpPoly.Irreducible f) :
     ((0 : FiniteField f hf hp hirr) : FiniteField f hf hp hirr)⁻¹ = 0 := by
@@ -694,12 +695,14 @@ theorem natCast_eq_natCast_iff_mod_eq
     ofPoly f hf hp hirr (invPoly ((0 : FiniteField f hf hp hirr).toQuotient))) = 0
   simp
 
+/-- Division is field multiplication by inverse. -/
 theorem div_eq_mul_inv
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x y : FiniteField f hf hp hirr) :
     x / y = x * y⁻¹ := by
   rfl
 
+/-- A nonzero field element cancels against its inverse on the right. -/
 theorem mul_inv_cancel
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     {x : FiniteField f hf hp hirr} (hx : x ≠ 0) :
@@ -743,6 +746,7 @@ theorem mul_inv_cancel
         rw [honeQuotient]
         rfl
 
+/-- A nonzero field element cancels against its inverse on the left. -/
 theorem inv_mul_cancel
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     {x : FiniteField f hf hp hirr} (hx : x ≠ 0) :
@@ -794,14 +798,6 @@ representatives. -/
     (x y : FiniteField f hf hp hirr) :
     repr (x - y) = GFqRing.reduceMod f (repr x - repr y) :=
   rfl
-
-/-- The representative of a nonzero inverse is the inverse polynomial representative. -/
-@[simp] theorem repr_inv_of_ne_zero
-    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
-    {x : FiniteField f hf hp hirr} (hx : x ≠ zero f hf hp hirr) :
-    repr (x⁻¹ : FiniteField f hf hp hirr) =
-      GFqRing.repr (GFqRing.ofPoly f hf (invPoly x.toQuotient)) := by
-  simpa [repr] using congrArg GFqRing.repr (toQuotient_inv_of_ne_zero hx)
 
 @[simp] theorem repr_pow
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}

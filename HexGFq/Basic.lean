@@ -353,27 +353,40 @@ action. -/
     repr (k • x : GFq p n h) = GFqRing.repr (k • x.toQuotient) :=
   rfl
 
-/-- The canonical representative of a nonzero inverse in `GFq` is the inverse
-polynomial representative reduced through the selected Conway modulus. -/
-@[simp] theorem repr_inv_of_ne_zero {h : Conway.SupportedEntry p n}
-    {x : GFq p n h} (hx : x ≠ 0) :
-    repr (x⁻¹ : GFq p n h) =
-      GFqRing.repr
-        (GFqRing.ofPoly (modulus h) (modulus_nonconstant h)
-          (GFqField.invPoly x.toQuotient)) := by
-  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime h.prime
-  simpa using
-    (GFqField.repr_inv_of_ne_zero
-      (f := modulus h) (hf := modulus_nonconstant h)
-      (hp := modulus_prime h) (hirr := modulus_irreducible h)
-      (x := x) hx)
-
 /-- The zero inverse in `GFq` follows the field wrapper's junk-value
 convention and has zero representative. -/
 @[simp] theorem repr_inv_zero (h : Conway.SupportedEntry p n) :
     repr ((0 : GFq p n h)⁻¹) = GFqRing.reduceMod (modulus h) 0 := by
   letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime h.prime
   simp [repr]
+
+/-- The zero inverse in `GFq` follows the field wrapper's junk-value convention. -/
+@[simp] theorem inv_zero (h : Conway.SupportedEntry p n) :
+    ((0 : GFq p n h)⁻¹ : GFq p n h) = 0 := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime h.prime
+  exact GFqField.inv_zero (modulus h) (modulus_nonconstant h)
+    (modulus_prime h) (modulus_irreducible h)
+
+/-- Division in `GFq` is multiplication by inverse. -/
+theorem div_eq_mul_inv {h : Conway.SupportedEntry p n}
+    (x y : GFq p n h) :
+    x / y = x * y⁻¹ := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime h.prime
+  exact GFqField.div_eq_mul_inv x y
+
+/-- A nonzero `GFq` element cancels against its inverse on the right. -/
+theorem mul_inv_cancel {h : Conway.SupportedEntry p n}
+    {x : GFq p n h} (hx : x ≠ 0) :
+    x * x⁻¹ = 1 := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime h.prime
+  exact GFqField.mul_inv_cancel (x := x) hx
+
+/-- A nonzero `GFq` element cancels against its inverse on the left. -/
+theorem inv_mul_cancel {h : Conway.SupportedEntry p n}
+    {x : GFq p n h} (hx : x ≠ 0) :
+    x⁻¹ * x = 1 := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime h.prime
+  exact GFqField.inv_mul_cancel (x := x) hx
 
 /-- Two `GFq.ofPoly` constructors produce the same field element exactly when
 their inputs have the same reduced representative modulo the selected Conway
