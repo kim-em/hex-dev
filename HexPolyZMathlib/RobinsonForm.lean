@@ -591,6 +591,21 @@ theorem mahlerMeasure_derivative_eq_natDegree_mul_of_roots_le_one
     exact mahlerMeasure_eq_norm_leadingCoeff_of_roots_le_one hroots
   rw [hMM_deriv, hlead_deriv, norm_mul, Complex.norm_natCast, ← hMM_p, mul_comm]
 
+theorem mahlerMeasure_derivative_map_intCast_le_of_roots_le_one
+    (f : Polynomial ℤ)
+    (hroots : ∀ α ∈ (f.map (Int.castRingHom ℂ)).roots, ‖α‖ ≤ 1) :
+    (f.derivative.map (Int.castRingHom ℂ)).mahlerMeasure ≤
+      f.natDegree * (f.map (Int.castRingHom ℂ)).mahlerMeasure := by
+  have hcomplex :=
+    mahlerMeasure_derivative_eq_natDegree_mul_of_roots_le_one
+      (f.map (Int.castRingHom ℂ)) hroots
+  rw [derivative_map] at hcomplex
+  rw [hcomplex]
+  exact mul_le_mul_of_nonneg_right
+    (Nat.cast_le.mpr
+      (natDegree_map_le (p := f) (f := Int.castRingHom ℂ)))
+    (mahlerMeasure_nonneg _)
+
 theorem Multiset.prod_le_of_sum_log_le {s t : Multiset ℝ}
     (hs : ∀ x ∈ s, 0 < x) (ht : ∀ x ∈ t, 0 < x)
     (hlog : (s.map fun x => Real.log x).sum ≤ (t.map fun x => Real.log x).sum) :
