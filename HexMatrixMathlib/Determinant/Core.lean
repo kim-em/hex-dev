@@ -1325,6 +1325,344 @@ theorem ordered_four_det_mul_det_setRow_setRow_eq_det_setRow_mul_sub
   exact ordered_four_det_mul_det_setRow_setRow_eq_cofactorRowPairing_mul_sub
     B p1 p2 p3 q h12 h23 h3q
 
+/-! ### Double-row replacement transport to `nDet B p2 p3`
+
+The double `setRow` matrix `setRow (setRow M r2 B[p1]) r3 B[q]` (with
+`M = nMatrix B p1 q`, `r2 = ⟨p2.val - 1, _⟩`, `r3 = ⟨p3.val - 1, _⟩`)
+shares the same row content as `nMatrix B p2 p3`, just permuted: `B[p1]` is
+moved up from position `p1.val` to position `p2.val - 1`, and `B[q]` is
+moved down from position `q.val - 2` to position `p3.val - 1`. The
+resulting permutation is the product of two disjoint cycles
+`cycleAhead p1.val (p2.val - p1.val - 1)` and
+`cycleBehind (p3.val - 1) (q.val - p3.val - 1)`, with combined sign
+`(-1) ^ (p2.val - p1.val - 1 + (q.val - p3.val - 1))`.
+-/
+
+private theorem matrixEquiv_double_setRow_eq_submatrix_nMatrix
+    {R : Type u} [CommRing R] {n : Nat}
+    (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p2 p3 q : Fin (n + 3))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val) (h3q : p3.val < q.val) :
+    let h1q : p1.val < q.val := Nat.lt_trans h12 (Nat.lt_trans h23 h3q)
+    let M := Hex.Matrix.nMatrix B p1 q h1q
+    let r2 : Fin (n + 1) := ⟨p2.val - 1, by have := q.isLt; omega⟩
+    let r3 : Fin (n + 1) := ⟨p3.val - 1, by have := q.isLt; omega⟩
+    let m1 : Nat := p2.val - p1.val - 1
+    let m2 : Nat := q.val - p3.val - 1
+    let hm1 : p1.val + m1 < n + 1 := by have := q.isLt; omega
+    let hm2 : (p3.val - 1) + m2 < n + 1 := by have := q.isLt; omega
+    let σ : Equiv.Perm (Fin (n + 1)) :=
+      OrderedFourShift.cycleAhead (n := n) p1.val m1 hm1 *
+        OrderedFourShift.cycleBehind (n := n) (p3.val - 1) m2 hm2
+    matrixEquiv (Hex.Matrix.setRow (Hex.Matrix.setRow M r2 B[p1]) r3 B[q]) =
+      (matrixEquiv (Hex.Matrix.nMatrix B p2 p3 h23)).submatrix σ id := by
+  intro h1q M r2 r3 m1 m2 hm1 hm2 σ
+  ext i j
+  show (Hex.Matrix.setRow (Hex.Matrix.setRow M r2 B[p1]) r3 B[q])[i][j] =
+    (Hex.Matrix.nMatrix B p2 p3 h23)[σ i][j]
+  -- Constants from the four indices.
+  have hr2_val : r2.val = p2.val - 1 := rfl
+  have hr3_val : r3.val = p3.val - 1 := rfl
+  have hm1_val : m1 = p2.val - p1.val - 1 := rfl
+  have hm2_val : m2 = q.val - p3.val - 1 := rfl
+  have hr2_ne_r3 : r2 ≠ r3 := by
+    intro he
+    have hv : r2.val = r3.val := congrArg Fin.val he
+    rw [hr2_val, hr3_val] at hv
+    omega
+  -- σ x is cycleAhead applied to (cycleBehind x) under Mathlib's perm-mul.
+  have hσ_apply : ∀ x : Fin (n + 1), σ x =
+      OrderedFourShift.cycleAhead (n := n) p1.val m1 hm1
+        (OrderedFourShift.cycleBehind (n := n) (p3.val - 1) m2 hm2 x) := fun _ => rfl
+  -- Helper: B-row congruence under matching Fin (n+3) indices.
+  have B_entry_congr :
+      ∀ (k1 k2 : Fin (n + 3)), k1 = k2 → B[k1][j] = B[k2][j] := fun k1 k2 h =>
+    congrArg (fun (x : Fin (n + 3)) => B[x][j]) h
+  by_cases h_below_p1 : i.val < p1.val
+  · -- Case A: i.val < p1. σ fixes i; both matrices select B[i.val].
+    have h_cb_val : (OrderedFourShift.cycleBehind (n := n) (p3.val - 1) m2 hm2 i).val =
+        i.val :=
+      OrderedFourShift.cycleBehind_val_below (p3.val - 1) m2 hm2 i (by omega)
+    have h_cb_eq :
+        OrderedFourShift.cycleBehind (n := n) (p3.val - 1) m2 hm2 i = i :=
+      Fin.ext h_cb_val
+    have hσ_val : (σ i).val = i.val := by
+      rw [hσ_apply _, h_cb_eq]
+      exact OrderedFourShift.cycleAhead_val_below p1.val m1 hm1 i h_below_p1
+    have hir2 : i ≠ r2 := by
+      intro he
+      have hv : i.val = r2.val := congrArg Fin.val he
+      rw [hr2_val] at hv; omega
+    have hir3 : i ≠ r3 := by
+      intro he
+      have hv : i.val = r3.val := congrArg Fin.val he
+      rw [hr3_val] at hv; omega
+    rw [Hex.Matrix.setRow_row_ne _ r3 i B[q] hir3,
+        Hex.Matrix.setRow_row_ne _ r2 i B[p1] hir2]
+    show (Hex.Matrix.nMatrix B p1 q h1q)[i][j] =
+      (Hex.Matrix.nMatrix B p2 p3 h23)[σ i][j]
+    rw [Hex.Matrix.nMatrix_entry, Hex.Matrix.nMatrix_entry]
+    apply B_entry_congr; apply Fin.ext
+    rw [Hex.Matrix.skipIndex2_val_of_lt_p p1 q h1q i h_below_p1,
+        Hex.Matrix.skipIndex2_val_of_lt_p p2 p3 h23 (σ i)
+          (by show (σ i).val < p2.val; omega)]
+    exact hσ_val.symm
+  · by_cases h_at_r2 : i.val = p2.val - 1
+    · -- Case B: i = r2. D[i] = B[p1]; σ(r2) has val p1.
+      have hir2 : i = r2 := Fin.ext (by rw [hr2_val, h_at_r2])
+      have hir3 : i ≠ r3 := by rw [hir2]; exact hr2_ne_r3
+      rw [Hex.Matrix.setRow_row_ne _ r3 i B[q] hir3, hir2,
+          Hex.Matrix.setRow_get_self M r2 B[p1]]
+      -- cycleBehind fixes r2 (r2.val = p2-1 < p3-1)
+      have h_cb_val :
+          (OrderedFourShift.cycleBehind (n := n) (p3.val - 1) m2 hm2 r2).val = r2.val :=
+        OrderedFourShift.cycleBehind_val_below (p3.val - 1) m2 hm2 r2
+          (by rw [hr2_val]; omega)
+      have h_cb_eq :
+          OrderedFourShift.cycleBehind (n := n) (p3.val - 1) m2 hm2 r2 = r2 :=
+        Fin.ext h_cb_val
+      -- cycleAhead at r2 = ⟨p1 + m1, _⟩ sends to ⟨p1, _⟩ (top case).
+      have h_r2_top : r2.val = p1.val + m1 := by
+        rw [hr2_val, hm1_val]; omega
+      have hσ_val : (σ r2).val = p1.val := by
+        rw [hσ_apply _, h_cb_eq]
+        exact OrderedFourShift.cycleAhead_val_top p1.val m1 hm1 r2 h_r2_top
+      show B[p1][j] = (Hex.Matrix.nMatrix B p2 p3 h23)[σ r2][j]
+      rw [Hex.Matrix.nMatrix_entry]
+      apply B_entry_congr; apply Fin.ext
+      show p1.val = (Hex.Matrix.skipIndex2 p2 p3 h23 (σ r2)).val
+      have h_σ_lt : (σ r2).val < p2.val := by rw [hσ_val]; exact h12
+      rw [Hex.Matrix.skipIndex2_val_of_lt_p p2 p3 h23 (σ r2) h_σ_lt]
+      exact hσ_val.symm
+    · by_cases h_at_r3 : i.val = p3.val - 1
+      · -- Case C: i = r3. D[i] = B[q]; σ(r3) has val q-2.
+        have hir3 : i = r3 := Fin.ext (by rw [hr3_val, h_at_r3])
+        rw [hir3, Hex.Matrix.setRow_get_self _ r3 B[q]]
+        -- cycleBehind at r3 = ⟨p3-1, _⟩ = base sends to ⟨p3-1 + m2, _⟩ = ⟨q-2, _⟩.
+        have h_cb_val :
+            (OrderedFourShift.cycleBehind (n := n) (p3.val - 1) m2 hm2 r3).val =
+              p3.val - 1 + m2 :=
+          OrderedFourShift.cycleBehind_val_base (p3.val - 1) m2 hm2 r3 hr3_val
+        have h_cb_q2 :
+            (OrderedFourShift.cycleBehind (n := n) (p3.val - 1) m2 hm2 r3).val =
+              q.val - 2 := by
+          rw [h_cb_val, hm2_val]; omega
+        -- cycleAhead fixes value q-2 (above p2-1 = p1 + m1).
+        have h_above :
+            p1.val + m1 < (OrderedFourShift.cycleBehind (n := n) (p3.val - 1) m2 hm2 r3).val := by
+          rw [h_cb_q2, hm1_val]; omega
+        have hσ_val : (σ r3).val = q.val - 2 := by
+          rw [hσ_apply _, OrderedFourShift.cycleAhead_val_above p1.val m1 hm1 _ h_above]
+          exact h_cb_q2
+        show B[q][j] = (Hex.Matrix.nMatrix B p2 p3 h23)[σ r3][j]
+        rw [Hex.Matrix.nMatrix_entry]
+        apply B_entry_congr; apply Fin.ext
+        show q.val = (Hex.Matrix.skipIndex2 p2 p3 h23 (σ r3)).val
+        have h_not_lt : ¬ (σ r3).val < p2.val := by rw [hσ_val]; omega
+        have h_not_between : ¬ (σ r3).val + 1 < p3.val := by rw [hσ_val]; omega
+        rw [Hex.Matrix.skipIndex2_val_of_ge_q p2 p3 h23 (σ r3) h_not_lt h_not_between]
+        rw [hσ_val]; omega
+      · -- Remaining sub-cases: i is interior, not r2, not r3.
+        have hir2 : i ≠ r2 := by
+          intro he
+          have hv : i.val = r2.val := congrArg Fin.val he
+          rw [hr2_val] at hv; exact h_at_r2 hv
+        have hir3 : i ≠ r3 := by
+          intro he
+          have hv : i.val = r3.val := congrArg Fin.val he
+          rw [hr3_val] at hv; exact h_at_r3 hv
+        rw [Hex.Matrix.setRow_row_ne _ r3 i B[q] hir3,
+            Hex.Matrix.setRow_row_ne _ r2 i B[p1] hir2]
+        show (Hex.Matrix.nMatrix B p1 q h1q)[i][j] =
+          (Hex.Matrix.nMatrix B p2 p3 h23)[σ i][j]
+        rw [Hex.Matrix.nMatrix_entry, Hex.Matrix.nMatrix_entry]
+        -- Split on where i.val sits relative to the cycle ranges.
+        by_cases h_below_p2 : i.val < p2.val
+        · -- Case D: p1 ≤ i.val < p2 - 1. cycleA "in", cycleB fixes. σ(i).val = i.val + 1.
+          have h_ge_p1 : p1.val ≤ i.val := by omega
+          have h_lt_p2m1 : i.val < p2.val - 1 := by omega
+          -- cycleBehind fixes (i.val < p2 ≤ p3 - 1, since p2 < p3 means p2 ≤ p3 - 1).
+          have h_cb_val :
+              (OrderedFourShift.cycleBehind (n := n) (p3.val - 1) m2 hm2 i).val = i.val :=
+            OrderedFourShift.cycleBehind_val_below (p3.val - 1) m2 hm2 i
+              (by omega)
+          have h_cb_eq :
+              OrderedFourShift.cycleBehind (n := n) (p3.val - 1) m2 hm2 i = i :=
+            Fin.ext h_cb_val
+          have h_in_ub : i.val < p1.val + m1 := by rw [hm1_val]; omega
+          have hσ_val : (σ i).val = i.val + 1 := by
+            rw [hσ_apply _, h_cb_eq]
+            exact OrderedFourShift.cycleAhead_val_in p1.val m1 hm1 i h_ge_p1 h_in_ub
+          apply B_entry_congr; apply Fin.ext
+          have h_not_lt_p1 : ¬ i.val < p1.val := by omega
+          have h_between_q : i.val + 1 < q.val := by
+            have : p2.val < q.val := Nat.lt_trans h23 h3q
+            omega
+          rw [Hex.Matrix.skipIndex2_val_of_between p1 q h1q i h_not_lt_p1 h_between_q]
+          have h_σi_lt_p2 : (σ i).val < p2.val := by rw [hσ_val]; omega
+          rw [Hex.Matrix.skipIndex2_val_of_lt_p p2 p3 h23 (σ i) h_σi_lt_p2]
+          exact hσ_val.symm
+        · by_cases h_below_p3 : i.val < p3.val
+          · -- Case E: p2 ≤ i.val ≤ p3 - 2. Both cycles fix. σ(i) = i.
+            have h_ge_p2 : p2.val ≤ i.val := by omega
+            have h_lt_p3m1 : i.val < p3.val - 1 := by omega
+            have h_cb_val :
+                (OrderedFourShift.cycleBehind (n := n) (p3.val - 1) m2 hm2 i).val = i.val :=
+              OrderedFourShift.cycleBehind_val_below (p3.val - 1) m2 hm2 i
+                (by omega)
+            have h_cb_eq :
+                OrderedFourShift.cycleBehind (n := n) (p3.val - 1) m2 hm2 i = i :=
+              Fin.ext h_cb_val
+            have h_above_a1 : p1.val + m1 < i.val := by rw [hm1_val]; omega
+            have hσ_val : (σ i).val = i.val := by
+              rw [hσ_apply _, h_cb_eq]
+              exact OrderedFourShift.cycleAhead_val_above p1.val m1 hm1 i h_above_a1
+            apply B_entry_congr; apply Fin.ext
+            have h_not_lt_p1 : ¬ i.val < p1.val := by omega
+            have h_between_q : i.val + 1 < q.val := by
+              have h3lt : p3.val < q.val := h3q
+              omega
+            rw [Hex.Matrix.skipIndex2_val_of_between p1 q h1q i h_not_lt_p1 h_between_q]
+            have h_σi_ge_p2 : ¬ (σ i).val < p2.val := by rw [hσ_val]; omega
+            have h_σi_lt_p3 : (σ i).val + 1 < p3.val := by rw [hσ_val]; omega
+            rw [Hex.Matrix.skipIndex2_val_of_between p2 p3 h23 (σ i)
+                  h_σi_ge_p2 h_σi_lt_p3]
+            rw [hσ_val]
+          · by_cases h_below_qm1 : i.val < q.val - 1
+            · -- Case F: p3 ≤ i.val ≤ q - 2. cycleA fixes; cycleB "in". σ(i).val = i.val - 1.
+              have h_ge_p3 : p3.val ≤ i.val := by omega
+              have h_lt_qm1 : i.val ≤ q.val - 2 := by omega
+              have h_cb_lb : p3.val - 1 < i.val := by omega
+              have h_cb_ub : i.val ≤ p3.val - 1 + m2 := by rw [hm2_val]; omega
+              have h_cb_val :
+                  (OrderedFourShift.cycleBehind (n := n) (p3.val - 1) m2 hm2 i).val =
+                    i.val - 1 :=
+                OrderedFourShift.cycleBehind_val_in (p3.val - 1) m2 hm2 i h_cb_lb h_cb_ub
+              have h_above_a1 :
+                  p1.val + m1 <
+                    (OrderedFourShift.cycleBehind (n := n) (p3.val - 1) m2 hm2 i).val := by
+                rw [h_cb_val, hm1_val]; omega
+              have hσ_val : (σ i).val = i.val - 1 := by
+                rw [hσ_apply _]
+                rw [OrderedFourShift.cycleAhead_val_above p1.val m1 hm1 _ h_above_a1]
+                exact h_cb_val
+              apply B_entry_congr; apply Fin.ext
+              have h_not_lt_p1 : ¬ i.val < p1.val := by omega
+              have h_between_q : i.val + 1 < q.val := by omega
+              rw [Hex.Matrix.skipIndex2_val_of_between p1 q h1q i h_not_lt_p1 h_between_q]
+              have h_σi_ge_p2 : ¬ (σ i).val < p2.val := by rw [hσ_val]; omega
+              have h_σi_ge_p3 : ¬ (σ i).val + 1 < p3.val := by rw [hσ_val]; omega
+              rw [Hex.Matrix.skipIndex2_val_of_ge_q p2 p3 h23 (σ i)
+                    h_σi_ge_p2 h_σi_ge_p3]
+              rw [hσ_val]; omega
+            · -- Case G: i.val ≥ q - 1. Both cycles fix. σ(i) = i.
+              have h_ge_qm1 : q.val - 1 ≤ i.val := by omega
+              have h_cb_val :
+                  (OrderedFourShift.cycleBehind (n := n) (p3.val - 1) m2 hm2 i).val = i.val :=
+                OrderedFourShift.cycleBehind_val_above (p3.val - 1) m2 hm2 i
+                  (by rw [hm2_val]; omega)
+              have h_cb_eq :
+                  OrderedFourShift.cycleBehind (n := n) (p3.val - 1) m2 hm2 i = i :=
+                Fin.ext h_cb_val
+              have h_above_a1 : p1.val + m1 < i.val := by rw [hm1_val]; omega
+              have hσ_val : (σ i).val = i.val := by
+                rw [hσ_apply _, h_cb_eq]
+                exact OrderedFourShift.cycleAhead_val_above p1.val m1 hm1 i h_above_a1
+              apply B_entry_congr; apply Fin.ext
+              have h_not_lt_p1 : ¬ i.val < p1.val := by omega
+              have h_not_between_q : ¬ i.val + 1 < q.val := by omega
+              rw [Hex.Matrix.skipIndex2_val_of_ge_q p1 q h1q i h_not_lt_p1 h_not_between_q]
+              have h_σi_ge_p2 : ¬ (σ i).val < p2.val := by rw [hσ_val]; omega
+              have h_σi_ge_p3 : ¬ (σ i).val + 1 < p3.val := by rw [hσ_val]; omega
+              rw [Hex.Matrix.skipIndex2_val_of_ge_q p2 p3 h23 (σ i)
+                    h_σi_ge_p2 h_σi_ge_p3]
+              rw [hσ_val]
+
+/-- Determinant-level transport for the ordered four-row double `setRow`:
+for `p1 < p2 < p3 < q`, replacing rows `r2 := ⟨p2.val - 1, _⟩` and
+`r3 := ⟨p3.val - 1, _⟩` of `nMatrix B p1 q` by `B[p1]` and `B[q]` respectively
+produces the signed `nDet B p2 p3` minor with combined sign
+`(-1) ^ (p2.val - p1.val - 1 + (q.val - p3.val - 1))`. -/
+theorem det_double_setRow_eq_pow_mul_nDet
+    {R : Type u} [CommRing R] {n : Nat}
+    (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p2 p3 q : Fin (n + 3))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val) (h3q : p3.val < q.val) :
+    let h1q : p1.val < q.val := Nat.lt_trans h12 (Nat.lt_trans h23 h3q)
+    let M := Hex.Matrix.nMatrix B p1 q h1q
+    let r2 : Fin (n + 1) := ⟨p2.val - 1, by have := q.isLt; omega⟩
+    let r3 : Fin (n + 1) := ⟨p3.val - 1, by have := q.isLt; omega⟩
+    Hex.Matrix.det (Hex.Matrix.setRow (Hex.Matrix.setRow M r2 B[p1]) r3 B[q]) =
+      (-1 : R) ^ (p2.val - p1.val - 1 + (q.val - p3.val - 1)) *
+        Hex.Matrix.nDet B p2 p3 h23 := by
+  intro h1q M r2 r3
+  have h_sub := matrixEquiv_double_setRow_eq_submatrix_nMatrix B p1 p2 p3 q h12 h23 h3q
+  set m1 : Nat := p2.val - p1.val - 1
+  set m2 : Nat := q.val - p3.val - 1
+  rw [det_eq, h_sub, Matrix.det_permute, Equiv.Perm.sign_mul,
+      OrderedFourShift.sign_cycleAhead, OrderedFourShift.sign_cycleBehind,
+      ← det_eq]
+  show ((((-1 : ℤˣ) ^ m1 * (-1 : ℤˣ) ^ m2 : ℤˣ) : ℤ) : R) *
+      Hex.Matrix.det (Hex.Matrix.nMatrix B p2 p3 h23) =
+    (-1 : R) ^ (m1 + m2) * Hex.Matrix.nDet B p2 p3 h23
+  have h_pow_cast : ∀ k : Nat,
+      ((((-1 : ℤˣ)) ^ k : ℤˣ) : R) = (-1 : R) ^ k := by
+    intro k
+    induction k with
+    | zero => simp
+    | succ k ih =>
+        have h_lhs : ((-1 : ℤˣ)) ^ (k + 1) = ((-1 : ℤˣ))^k * (-1 : ℤˣ) := pow_succ _ _
+        rw [h_lhs, Units.val_mul, Int.cast_mul, ih, pow_succ]
+        simp
+  have h_cast :
+      ((((-1 : ℤˣ) ^ m1 * (-1 : ℤˣ) ^ m2 : ℤˣ) : ℤ) : R) =
+        (-1 : R) ^ (m1 + m2) := by
+    rw [Units.val_mul, Int.cast_mul,
+        show (((((-1 : ℤˣ)) ^ m1 : ℤˣ) : ℤ) : R) = (-1 : R) ^ m1 from h_pow_cast m1,
+        show (((((-1 : ℤˣ)) ^ m2 : ℤˣ) : ℤ) : R) = (-1 : R) ^ m2 from h_pow_cast m2,
+        ← pow_add]
+  rw [h_cast]
+  rfl
+
+/-- Rewrite-ready signed Plucker form: the LHS double-row `setRow` determinant
+is identified with the signed `nDet B p2 p3` minor, and the two p1-side
+cofactor-row pairings on the RHS are identified with their signed `nDet B p_t q`
+minors. The remaining q-side cofactor-row pairings are left in
+`cofactorRowPairing` form so the assembly in #6012 can finish them after
+the q-row signed transports land. -/
+theorem ordered_four_signed_Plucker_p1_side
+    {R : Type u} [CommRing R] {n : Nat}
+    (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p2 p3 q : Fin (n + 3))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val) (h3q : p3.val < q.val) :
+    let h1q : p1.val < q.val := Nat.lt_trans h12 (Nat.lt_trans h23 h3q)
+    let h2q : p2.val < q.val := Nat.lt_trans h23 h3q
+    let M := Hex.Matrix.nMatrix B p1 q h1q
+    let r2 : Fin (n + 1) := ⟨p2.val - 1, by have := q.isLt; omega⟩
+    let r3 : Fin (n + 1) := ⟨p3.val - 1, by have := q.isLt; omega⟩
+    Hex.Matrix.nDet B p1 q h1q *
+        ((-1 : R) ^ (p2.val - p1.val - 1 + (q.val - p3.val - 1)) *
+          Hex.Matrix.nDet B p2 p3 h23) =
+      ((-1 : R) ^ (p2.val - p1.val - 1) * Hex.Matrix.nDet B p2 q h2q) *
+          Hex.Matrix.cofactorRowPairing M r3 B[q] -
+        ((-1 : R) ^ (p3.val - p1.val - 1) * Hex.Matrix.nDet B p3 q h3q) *
+          Hex.Matrix.cofactorRowPairing M r2 B[q] := by
+  intro h1q h2q M r2 r3
+  have h_plucker :=
+    ordered_four_det_mul_det_setRow_setRow_eq_cofactorRowPairing_mul_sub
+      B p1 p2 p3 q h12 h23 h3q
+  dsimp only at h_plucker
+  have h_double := det_double_setRow_eq_pow_mul_nDet B p1 p2 p3 q h12 h23 h3q
+  dsimp only at h_double
+  have h_p2_p1 :=
+    ordered_four_cofactorRowPairing_p2_p1_eq_pow_mul_nDet B p1 p2 p3 q h12 h23 h3q
+  dsimp only at h_p2_p1
+  have h_p3_p1 :=
+    ordered_four_cofactorRowPairing_p3_p1_eq_pow_mul_nDet B p1 p2 p3 q h12 h23 h3q
+  dsimp only at h_p3_p1
+  -- LHS: det M = nDet B p1 q (definitional), and det of the double setRow
+  -- is the signed nDet B p2 p3.
+  rw [show (Hex.Matrix.det M : R) = Hex.Matrix.nDet B p1 q h1q from rfl,
+      h_double, h_p2_p1, h_p3_p1] at h_plucker
+  exact h_plucker
+
 /-- Reindex the `(k+2) × (k+2)` bordered minor so Desnanot-Jacobi deletes the
 Bareiss pivot row/column first and the trailing row/column last.
 
