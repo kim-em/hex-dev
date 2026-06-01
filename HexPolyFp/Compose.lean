@@ -110,12 +110,6 @@ infrastructure used by scalar evaluation, but with `ZMod64` replaced by
 `FpPoly` and `(* x)` replaced by `(* q)`.
 -/
 
-/-- Polynomial-valued counterpart to `evalScalarCoeffList`. -/
-private def composeScalarCoeffList :
-    List (ZMod64 p) → FpPoly p → FpPoly p
-  | [], _ => 0
-  | c :: cs, q => DensePoly.C c + q * composeScalarCoeffList cs q
-
 /-- Polynomial-valued counterpart to `evalCoeffPowerSumFrom`. -/
 private def composeCoeffPowerSumFrom :
     List (ZMod64 p) → Nat → FpPoly p → FpPoly p
@@ -144,11 +138,11 @@ private theorem mul_composeCoeffPowerSumFrom_eq_succ (q : FpPoly p) :
 
 private theorem composeScalarCoeffList_eq_powerSumFrom_zero (q : FpPoly p) :
     ∀ cs,
-      composeScalarCoeffList cs q = composeCoeffPowerSumFrom cs 0 q
+      DensePoly.composeScalarCoeffList cs q = composeCoeffPowerSumFrom cs 0 q
   | [] => by
-      simp [composeScalarCoeffList, composeCoeffPowerSumFrom]
+      simp [DensePoly.composeScalarCoeffList, composeCoeffPowerSumFrom]
   | c :: cs => by
-      simp only [composeScalarCoeffList, composeCoeffPowerSumFrom]
+      simp only [DensePoly.composeScalarCoeffList, composeCoeffPowerSumFrom]
       rw [composeScalarCoeffList_eq_powerSumFrom_zero q cs]
       rw [mul_composeCoeffPowerSumFrom_eq_succ q cs 0]
       congr 1
@@ -156,32 +150,20 @@ private theorem composeScalarCoeffList_eq_powerSumFrom_zero (q : FpPoly p) :
       change DensePoly.C c = DensePoly.C c * 1
       rw [FpPoly.mul_one]
 
-private theorem foldl_compose_reverse_eq_composeScalarCoeffList (q : FpPoly p) :
-    ∀ cs,
-      cs.reverse.foldl (fun acc c => acc * q + DensePoly.C c) (0 : FpPoly p) =
-        composeScalarCoeffList cs q
-  | [] => rfl
-  | c :: cs => by
-      rw [List.reverse_cons, List.foldl_append]
-      simp only [List.foldl_cons, List.foldl_nil]
-      rw [foldl_compose_reverse_eq_composeScalarCoeffList q cs]
-      simp only [composeScalarCoeffList]
-      -- composeScalarCoeffList cs q * q + C c = C c + q * composeScalarCoeffList cs q
-      rw [FpPoly.add_comm]
-      rw [FpPoly.mul_comm q]
-
 /-- `DensePoly.compose` agrees with the iterative power-sum form. -/
 private theorem compose_eq_powerSum (f q : FpPoly p) :
     DensePoly.compose f q = composeCoeffPowerSumFrom f.toArray.toList 0 q := by
-  unfold DensePoly.compose
-  rw [foldl_compose_reverse_eq_composeScalarCoeffList q f.toArray.toList]
-  exact composeScalarCoeffList_eq_powerSumFrom_zero q f.toArray.toList
+  rw [DensePoly.compose_eq_composeScalarCoeffList_of_step f q]
+  · exact composeScalarCoeffList_eq_powerSumFrom_zero q f.toArray.toList
+  · intro acc c
+    rw [FpPoly.add_comm, FpPoly.mul_comm q acc]
 
 /-- `DensePoly.compose f q` agrees with the iterative Horner form. -/
 theorem compose_eq_composeScalarCoeffList (f q : FpPoly p) :
-    DensePoly.compose f q = composeScalarCoeffList f.toArray.toList q := by
-  unfold DensePoly.compose
-  exact foldl_compose_reverse_eq_composeScalarCoeffList q f.toArray.toList
+    DensePoly.compose f q = DensePoly.composeScalarCoeffList f.toArray.toList q := by
+  apply DensePoly.compose_eq_composeScalarCoeffList_of_step
+  intro acc c
+  rw [FpPoly.add_comm, FpPoly.mul_comm q acc]
 
 /-! ### Constant-polynomial homomorphism laws
 
@@ -297,59 +279,6 @@ A coefficient-indexed analogue of `composeCoeffPowerSumFrom`, mirroring
 shared coefficient bound, which is the key ingredient for
 `compose_sub` distributivity. -/
 
-private theorem compose_list_getD_map_range
-    (bound n : Nat) (coeff : Nat → ZMod64 p) :
-    ((List.range bound).map coeff).getD n (0 : ZMod64 p) =
-      if n < bound then coeff n else 0 := by
-  by_cases hn : n < bound
-  · simp [hn, List.getD]
-  · simp [hn, List.getD]
-
-private theorem compose_toArray_toList_getD_eq_coeff (f : FpPoly p) (n : Nat) :
-    f.toArray.toList.getD n (0 : ZMod64 p) = f.coeff n := by
-  unfold DensePoly.toArray DensePoly.coeff
-  rw [Array.getD_eq_getD_getElem?]
-  change f.coeffs.toList[n]?.getD (0 : ZMod64 p) =
-    f.coeffs[n]?.getD (Zero.zero : ZMod64 p)
-  rw [Array.getElem?_toList]
-  rfl
-
-private theorem compose_list_eq_of_length_eq_of_getD_eq
-    {xs ys : List (ZMod64 p)}
-    (hlen : xs.length = ys.length)
-    (hget : ∀ i, i < xs.length → xs.getD i 0 = ys.getD i 0) :
-    xs = ys := by
-  induction xs generalizing ys with
-  | nil =>
-      cases ys with
-      | nil => rfl
-      | cons _ _ => simp at hlen
-  | cons x xs ih =>
-      cases ys with
-      | nil => simp at hlen
-      | cons y ys =>
-          have hhead : x = y := by
-            have h := hget 0 (by simp)
-            simpa using h
-          have hlen_tail : xs.length = ys.length := Nat.succ.inj hlen
-          have htail : xs = ys := by
-            apply ih hlen_tail
-            intro i hi
-            have h := hget (i + 1) (by simp [hi])
-            simpa using h
-          rw [hhead, htail]
-
-private theorem compose_toArray_toList_eq_coeff_range (f : FpPoly p) :
-    f.toArray.toList = (List.range f.size).map (fun i => f.coeff i) := by
-  apply compose_list_eq_of_length_eq_of_getD_eq
-  · simp [DensePoly.toArray, DensePoly.size]
-  · intro i hi
-    have hi_size : i < f.size := by
-      simpa [DensePoly.toArray, DensePoly.size] using hi
-    rw [compose_toArray_toList_getD_eq_coeff]
-    rw [compose_list_getD_map_range]
-    simp [hi_size]
-
 /-- Recursive sum form of compose. The compose-power-sum
 `Σ_{k=base}^{base+n-1} C(coeff k) · linearPow w k` recursively builds up
 the polynomial substitution: each step adds a single
@@ -383,7 +312,7 @@ private theorem compose_eq_coeff_power_sum_upTo_size (f w : FpPoly p) :
     DensePoly.compose f w =
       composeCoeffPowerSumUpTo (fun i => f.coeff i) f.size 0 w := by
   rw [compose_eq_powerSum]
-  rw [compose_toArray_toList_eq_coeff_range]
+  rw [DensePoly.toArray_toList_eq_coeff_range]
   simpa using composeCoeffPowerSumFrom_range_eq_upTo (fun i => f.coeff i) w f.size 0
 
 private theorem composeCoeffPowerSumUpTo_succ_of_next_zero
@@ -562,7 +491,7 @@ theorem compose_linearPow_X_sub_X
 Substituting `w` into `a * (X - FpPoly.C c)` yields
 `compose a w * (w - FpPoly.C c)`. The proof goes through a list-level
 coefficient model: `mulXSubCList c cs` is the coefficient list of
-`(ofCoeffs cs.toArray) * (X - C c)`, and `composeScalarCoeffList`
+`(ofCoeffs cs.toArray) * (X - C c)`, and `DensePoly.composeScalarCoeffList`
 distributes over that list operation in the obvious way.
 -/
 
@@ -580,12 +509,12 @@ private def mulXSubCList (c : ZMod64 p) (cs : List (ZMod64 p)) : List (ZMod64 p)
 private theorem fp_C_zero :
     (FpPoly.C (0 : ZMod64 p) : FpPoly p) = 0 := C_zero_eq_zero
 
-/-- `composeScalarCoeffList` ignores trailing zeros. -/
+/-- `DensePoly.composeScalarCoeffList` ignores trailing zeros. -/
 private theorem composeScalarCoeffList_trim
     [ZMod64.PrimeModulus p] (q : FpPoly p) :
     ∀ cs : List (ZMod64 p),
-      composeScalarCoeffList (DensePoly.trimTrailingZerosList cs) q =
-        composeScalarCoeffList cs q
+      DensePoly.composeScalarCoeffList (DensePoly.trimTrailingZerosList cs) q =
+        DensePoly.composeScalarCoeffList cs q
   | [] => by
       simp [DensePoly.trimTrailingZerosList]
   | c :: cs => by
@@ -597,33 +526,33 @@ private theorem composeScalarCoeffList_trim
         have hc : c = (Zero.zero : ZMod64 p) := htrim.2
         have hih := composeScalarCoeffList_trim q cs
         rw [htail] at hih
-        -- hih : composeScalarCoeffList [] q = composeScalarCoeffList cs q
-        -- Goal: composeScalarCoeffList [] q = composeScalarCoeffList (c :: cs) q
-        --     = DensePoly.C c + q * composeScalarCoeffList cs q
-        --     = DensePoly.C 0 + q * composeScalarCoeffList cs q  (using hc)
+        -- hih : DensePoly.composeScalarCoeffList [] q = DensePoly.composeScalarCoeffList cs q
+        -- Goal: DensePoly.composeScalarCoeffList [] q = DensePoly.composeScalarCoeffList (c :: cs) q
+        --     = DensePoly.C c + q * DensePoly.composeScalarCoeffList cs q
+        --     = DensePoly.C 0 + q * DensePoly.composeScalarCoeffList cs q  (using hc)
         --     = 0 + q * 0  (via hih)
         --     = 0
-        -- And LHS = composeScalarCoeffList [] q = 0.
+        -- And LHS = DensePoly.composeScalarCoeffList [] q = 0.
         rw [hc]
-        simp only [composeScalarCoeffList]
+        simp only [DensePoly.composeScalarCoeffList]
         rw [← hih]
-        change composeScalarCoeffList [] q =
+        change DensePoly.composeScalarCoeffList [] q =
           (DensePoly.C (Zero.zero : ZMod64 p) : FpPoly p) +
-            q * composeScalarCoeffList [] q
-        simp only [composeScalarCoeffList]
+            q * DensePoly.composeScalarCoeffList [] q
+        simp only [DensePoly.composeScalarCoeffList]
         rw [show (DensePoly.C (Zero.zero : ZMod64 p) : FpPoly p) = 0 from
           fp_C_zero]
         rw [FpPoly.mul_zero, FpPoly.zero_add]
       · rw [if_neg htrim]
-        simp only [composeScalarCoeffList]
+        simp only [DensePoly.composeScalarCoeffList]
         rw [composeScalarCoeffList_trim q cs]
 
 /-- `compose` on a polynomial built from a raw coefficient list agrees with
-`composeScalarCoeffList` on that list, even if the list has trailing zeros. -/
+`DensePoly.composeScalarCoeffList` on that list, even if the list has trailing zeros. -/
 private theorem compose_ofCoeffs_eq_composeScalarCoeffList
     [ZMod64.PrimeModulus p] (cs : List (ZMod64 p)) (q : FpPoly p) :
     DensePoly.compose (DensePoly.ofCoeffs cs.toArray : FpPoly p) q =
-      composeScalarCoeffList cs q := by
+      DensePoly.composeScalarCoeffList cs q := by
   rw [compose_eq_composeScalarCoeffList]
   have htoArray :
       (DensePoly.ofCoeffs cs.toArray : FpPoly p).toArray.toList =
@@ -687,36 +616,36 @@ private theorem alg_compose_step
   exact fp_add_acm_rearrange cprev (-(ccx * cx))
     (w * s * (w - ccx)) (w * cx)
 
-/-- The list-level recurrence: `composeScalarCoeffList (mulXSubCListAux c prev cs) w`
-collapses to `composeScalarCoeffList cs w * (w - C c) + C prev`. -/
+/-- The list-level recurrence: `DensePoly.composeScalarCoeffList (mulXSubCListAux c prev cs) w`
+collapses to `DensePoly.composeScalarCoeffList cs w * (w - C c) + C prev`. -/
 private theorem composeScalarCoeffList_mulXSubCListAux
     [ZMod64.PrimeModulus p] (c : ZMod64 p) (w : FpPoly p) :
     ∀ (prev : ZMod64 p) (cs : List (ZMod64 p)),
-      composeScalarCoeffList (mulXSubCListAux c prev cs) w =
-        composeScalarCoeffList cs w * (w - FpPoly.C c) + FpPoly.C prev
+      DensePoly.composeScalarCoeffList (mulXSubCListAux c prev cs) w =
+        DensePoly.composeScalarCoeffList cs w * (w - FpPoly.C c) + FpPoly.C prev
   | prev, [] => by
-      simp only [mulXSubCListAux, composeScalarCoeffList]
+      simp only [mulXSubCListAux, DensePoly.composeScalarCoeffList]
       -- Goal: DensePoly.C prev + w * 0 = 0 * (w - C c) + C prev
       rw [FpPoly.mul_zero, FpPoly.zero_mul]
       rw [FpPoly.add_zero, FpPoly.zero_add]
       rfl
   | prev, x :: xs => by
-      simp only [mulXSubCListAux, composeScalarCoeffList]
+      simp only [mulXSubCListAux, DensePoly.composeScalarCoeffList]
       rw [composeScalarCoeffList_mulXSubCListAux c w x xs]
       rw [C_sub_eq, C_mul_C_eq]
       -- Goal:
       --   DensePoly.C prev - DensePoly.C c * DensePoly.C x +
       --     w * (S * (w - C c) + C x) =
       --   (C x + w * S) * (w - C c) + C prev
-      -- where S := composeScalarCoeffList xs w.
+      -- where S := DensePoly.composeScalarCoeffList xs w.
       exact alg_compose_step (FpPoly.C prev) (FpPoly.C c) (FpPoly.C x) w
-        (composeScalarCoeffList xs w)
+        (DensePoly.composeScalarCoeffList xs w)
 
 /-- The specialised list-level recurrence with `prev = 0`. -/
 private theorem composeScalarCoeffList_mulXSubCList
     [ZMod64.PrimeModulus p] (c : ZMod64 p) (w : FpPoly p) (cs : List (ZMod64 p)) :
-    composeScalarCoeffList (mulXSubCList c cs) w =
-      composeScalarCoeffList cs w * (w - FpPoly.C c) := by
+    DensePoly.composeScalarCoeffList (mulXSubCList c cs) w =
+      DensePoly.composeScalarCoeffList cs w * (w - FpPoly.C c) := by
   unfold mulXSubCList
   rw [composeScalarCoeffList_mulXSubCListAux c w 0 cs]
   rw [fp_C_zero, FpPoly.add_zero]
