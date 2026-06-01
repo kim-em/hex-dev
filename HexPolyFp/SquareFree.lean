@@ -4455,6 +4455,116 @@ private theorem pthRoot_valid_of_derivative_zero_nontrivial
     pthRoot_nonzero_of_derivative_zero_nonconstant hp f hzero hdf hsize,
     pthRoot_fuel_decrease_of_derivative_zero_nonconstant hp f hfuel hsize⟩
 
+private theorem normalizeMonic_nonzero_size_eq
+    (hp : Hex.Nat.Prime p) (f : FpPoly p)
+    (hzero : f.isZero = false) :
+    (normalizeMonic f).2.size = f.size := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  rw [normalizeMonic_nonzero f hzero]
+  have hlead_ne := fpPoly_leadingCoeff_ne_zero_of_isZero_false f hzero
+  have hinv_ne := zmod64_inv_ne_zero_of_prime_ne_zero hp hlead_ne
+  exact scale_size_eq_of_ne_zero (p := p) hinv_ne f
+
+private theorem normalizeMonic_derivative_zero_of_derivative_zero
+    (f : FpPoly p)
+    (hzero : f.isZero = false)
+    (hdf : (DensePoly.derivative f).isZero = true) :
+    (DensePoly.derivative (normalizeMonic f).2).isZero = true := by
+  rw [normalizeMonic_nonzero f hzero]
+  have hderiv_zero : DensePoly.derivative f = 0 :=
+    eq_zero_of_isZero_true (DensePoly.derivative f) hdf
+  have hzero_poly :
+      DensePoly.derivative
+          (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f) = 0 := by
+    apply DensePoly.ext_coeff
+    intro n
+    have hcoeff_deriv :
+        ((n + 1 : Nat) : ZMod64 p) * f.coeff (n + 1) = 0 := by
+      have h := congrArg (fun g : FpPoly p => g.coeff n) hderiv_zero
+      change (DensePoly.derivative f).coeff n = (0 : FpPoly p).coeff n at h
+      rw [coeff_derivative, DensePoly.coeff_zero] at h
+      simpa using h
+    change
+      (DensePoly.derivative
+          (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f)).coeff n =
+        (0 : FpPoly p).coeff n
+    rw [coeff_derivative, DensePoly.coeff_zero]
+    have hscale_coeff :
+        (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f).coeff (n + 1) =
+          (DensePoly.leadingCoeff f)⁻¹ * f.coeff (n + 1) := by
+      exact DensePoly.coeff_scale_semiring (DensePoly.leadingCoeff f)⁻¹ f (n + 1)
+    rw [hscale_coeff]
+    calc
+      ((n + 1 : Nat) : ZMod64 p) *
+          ((DensePoly.leadingCoeff f)⁻¹ * f.coeff (n + 1)) =
+          (DensePoly.leadingCoeff f)⁻¹ *
+            (((n + 1 : Nat) : ZMod64 p) * f.coeff (n + 1)) := by
+            grind
+      _ = 0 := by
+            rw [hcoeff_deriv]
+            grind
+  rw [hzero_poly]
+  rfl
+
+private theorem pthRoot_normalizeMonic_frobenius_of_derivative_zero
+    (hp : Hex.Nat.Prime p) (f : FpPoly p)
+    (hzero : f.isZero = false)
+    (hdf : (DensePoly.derivative f).isZero = true) :
+    pow (pthRoot (normalizeMonic f).2) p = (normalizeMonic f).2 := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  have hnorm_zero :=
+    normalizeMonic_nonzero_isZero_false (p := p) f hzero
+  have hnorm_deriv :=
+    normalizeMonic_derivative_zero_of_derivative_zero f hzero hdf
+  exact pthRoot_frobenius_of_derivative_zero
+    hp (normalizeMonic f).2 hnorm_zero hnorm_deriv
+
+private theorem pthRoot_normalizeMonic_reconstruct_of_derivative_zero
+    (hp : Hex.Nat.Prime p) (f : FpPoly p)
+    (hzero : f.isZero = false)
+    (hdf : (DensePoly.derivative f).isZero = true) :
+    DensePoly.C (normalizeMonic f).1 *
+        pow (pthRoot (normalizeMonic f).2) p = f := by
+  rw [pthRoot_normalizeMonic_frobenius_of_derivative_zero hp f hzero hdf]
+  exact normalizeMonic_reconstruct hp f
+
+private theorem pthRoot_normalized_valid_of_derivative_zero_nontrivial
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) {fuel : Nat}
+    (hfuel : f.size < fuel + 1)
+    (hzero : f.isZero = false)
+    (hone : isOne f = false)
+    (hdf : (DensePoly.derivative f).isZero = true)
+    (hreachable : squareFreeContributionReachable f) :
+    squareFreeContributionReachable (pthRoot (normalizeMonic f).2) ∧
+      (pthRoot (normalizeMonic f).2).isZero = false ∧
+        (pthRoot (normalizeMonic f).2).size < fuel := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  have hsize : 1 < f.size :=
+    one_lt_size_of_isOne_false_of_reachable f hzero hone hreachable
+  have hnorm_size : (normalizeMonic f).2.size = f.size :=
+    normalizeMonic_nonzero_size_eq hp f hzero
+  have hnorm_nonzero : (normalizeMonic f).2.isZero = false :=
+    normalizeMonic_nonzero_isZero_false f hzero
+  have hnorm_deriv :
+      (DensePoly.derivative (normalizeMonic f).2).isZero = true :=
+    normalizeMonic_derivative_zero_of_derivative_zero f hzero hdf
+  have hnorm_monic : DensePoly.Monic (normalizeMonic f).2 :=
+    normalizeMonic_nonzero_monic f hzero
+  have hnorm_reachable :
+      squareFreeContributionReachable (normalizeMonic f).2 :=
+    squareFreeContributionReachable_of_monic (normalizeMonic f).2 hnorm_monic
+  have hnorm_fuel : (normalizeMonic f).2.size < fuel + 1 := by
+    omega
+  have hnorm_size_gt : 1 < (normalizeMonic f).2.size := by
+    omega
+  exact ⟨
+    pthRoot_reachable_of_derivative_zero
+      hp (normalizeMonic f).2 hnorm_nonzero hnorm_deriv hnorm_reachable,
+    pthRoot_nonzero_of_derivative_zero_nonconstant
+      hp (normalizeMonic f).2 hnorm_nonzero hnorm_deriv hnorm_size_gt,
+    pthRoot_fuel_decrease_of_derivative_zero_nonconstant
+      hp (normalizeMonic f).2 hnorm_fuel hnorm_size_gt⟩
+
 private theorem pthRoot_fuel_bound_or_one_of_derivative_zero
     (hp : Hex.Nat.Prime p) (f : FpPoly p) {fuel : Nat}
     (hfuel : f.size < fuel + 1)
