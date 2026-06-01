@@ -2,6 +2,7 @@ import HexPolyZMathlib.Basic
 import Mathlib.Algebra.Order.BigOperators.Group.Multiset
 import Mathlib.Algebra.Order.BigOperators.GroupWithZero.Multiset
 import Mathlib.Analysis.Polynomial.MahlerMeasure
+import Mathlib.RingTheory.Polynomial.SmallDegreeVieta
 
 /-!
 Schur-Szego composition plumbing for Schmeisser's root-product theorem.
@@ -122,6 +123,52 @@ theorem schmeisserComposition_C_C (n : ℕ) (a b : ℂ) :
     · simp [coeff_schmeisserComposition_of_le n (C a) (C b) hk]
     · have hk' : n < k.succ := by omega
       simp [coeff_schmeisserComposition_of_lt n (C a) (C b) hk']
+
+/--
+Degree-two coefficient normal form, exposed next to the Schmeisser source
+surface so degree-two arguments do not depend directly on Mathlib's theorem
+name.
+-/
+theorem eq_quadratic_of_natDegree_le_two {p : ℂ[X]} (hp : p.natDegree ≤ 2) :
+    p = C (p.coeff 2) * X ^ 2 + C (p.coeff 1) * X + C (p.coeff 0) :=
+  eq_quadratic_of_degree_le_two (degree_le_of_natDegree_le hp)
+
+/-- Coefficient normal form for the degree-two Schmeisser composition. -/
+theorem schmeisserComposition_two_eq (f g : ℂ[X]) :
+    schmeisserComposition 2 f g =
+      C (f.coeff 2 * g.coeff 2) * X ^ 2 +
+        C (f.coeff 1 * (g.coeff 1 / (2 : ℂ))) * X +
+          C (f.coeff 0 * g.coeff 0) := by
+  rw [eq_quadratic_of_natDegree_le_two (natDegree_schmeisserComposition_le 2 f g)]
+  simp [coeff_schmeisserComposition_of_le]
+
+/-- Quadratic roots are a two-element multiset exactly when Vieta's relations hold. -/
+theorem roots_quadratic_eq_pair_iff_complex {a b c x₁ x₂ : ℂ} (ha : a ≠ 0) :
+    (C a * X ^ 2 + C b * X + C c).roots = ({x₁, x₂} : Multiset ℂ) ↔
+      x₁ + x₂ = -b / a ∧ x₁ * x₂ = c / a :=
+  roots_quadratic_eq_pair_iff_of_ne_zero' ha
+
+/-- Build the quadratic root multiset from Vieta data. -/
+theorem roots_quadratic_eq_pair_of_vieta_complex {a b c x₁ x₂ : ℂ}
+    (ha : a ≠ 0)
+    (hsum : x₁ + x₂ = -b / a)
+    (hprod : x₁ * x₂ = c / a) :
+    (C a * X ^ 2 + C b * X + C c).roots = ({x₁, x₂} : Multiset ℂ) :=
+  (roots_quadratic_eq_pair_iff_complex ha).2 ⟨hsum, hprod⟩
+
+/-- Sum relation extracted from a two-root quadratic multiset. -/
+theorem quadratic_roots_sum_eq_of_roots_eq_pair {a b c x₁ x₂ : ℂ}
+    (ha : a ≠ 0)
+    (hroots : (C a * X ^ 2 + C b * X + C c).roots = ({x₁, x₂} : Multiset ℂ)) :
+    x₁ + x₂ = -b / a :=
+  ((roots_quadratic_eq_pair_iff_complex ha).1 hroots).1
+
+/-- Product relation extracted from a two-root quadratic multiset. -/
+theorem quadratic_roots_prod_eq_of_roots_eq_pair {a b c x₁ x₂ : ℂ}
+    (ha : a ≠ 0)
+    (hroots : (C a * X ^ 2 + C b * X + C c).roots = ({x₁, x₂} : Multiset ℂ)) :
+    x₁ * x₂ = c / a :=
+  ((roots_quadratic_eq_pair_iff_complex ha).1 hroots).2
 
 /--
 The binomial-normalized Schmeisser kernel for the derivative specialization:
