@@ -430,6 +430,14 @@ A worker that finds its claimed issue already carries one or more
 reason, `coordination add-dep` on a concrete open blocker, or
 decompose. A second `coordination skip` is not permitted.
 
+### Visual artefacts require visual verification
+
+When the deliverable is a rendered artefact for a human reader
+(plot, diagram, screenshot, typeset document), open the artefact
+and inspect it. Data-level verification (the script runs, the
+numbers match, the output is byte-stable) does not catch failures
+visible only at the rendered layer.
+
 ### Directives never enter the replan queue
 
 `directive`-labelled issues encode SPEC/PLAN-mandated outcomes whose
