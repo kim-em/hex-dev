@@ -2951,14 +2951,9 @@ private theorem nullspaceBasisMatrix_entry_eq_basis_coeff
     rw [Vector.get_ofFn, coeffVector_vectorToPoly]
   rw [hker_coeff, hker_eq]
   -- Goal: M'[i][k.val] = ((fixedSpaceKernelVectors f hmonic).get k)[i]
-  -- Express both sides through the shared `rref_isRREF` instance.
-  let E := Matrix.rref_isRREF (fixedSpaceMatrix f hmonic)
-  show (E.nullspaceMatrix[i]'hi)[k.val]'k.isLt = (E.nullspace.get k)[i]'hi
-  unfold Matrix.IsRREF.nullspace
-  rw [Vector.get_ofFn]
-  unfold Matrix.col
-  rw [Vector.getElem_ofFn]
-  rfl
+  unfold fixedSpaceKernelVectors
+  rw [← Matrix.nullspaceBasisMatrix_col]
+  simp [Matrix.col]
 
 /--
 **Algebraic half of Berlekamp completeness for square-free inputs.**
