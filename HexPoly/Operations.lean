@@ -427,6 +427,111 @@ law needed by the generic `compose_C`. -/
     compose (C c) q = C c :=
   compose_C c q (by grind)
 
+/-- List-level Horner form for composition, reading coefficients from low to high degree. -/
+def composeScalarCoeffList [Add R] [Mul R] :
+    List R → DensePoly R → DensePoly R
+  | [], _ => 0
+  | c :: cs, q => C c + q * composeScalarCoeffList cs q
+
+/-- `DensePoly.compose` agrees with the list-level Horner form over the stored coefficients
+when the caller supplies the algebraic step that commutes a Horner tail past `q`. -/
+theorem compose_eq_composeScalarCoeffList_of_step [Add R] [Mul R] (p q : DensePoly R)
+    (hstep : ∀ acc c, acc * q + C c = C c + q * acc) :
+    compose p q = composeScalarCoeffList p.toArray.toList q := by
+  unfold compose
+  induction p.toArray.toList with
+  | nil => rfl
+  | cons c cs ih =>
+      rw [List.reverse_cons, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [ih]
+      exact hstep (composeScalarCoeffList cs q) c
+
+/-- Iterated polynomial power used by the compose power-sum characterisation. -/
+def composePower [One R] [Add R] [Mul R] (q : DensePoly R) : Nat → DensePoly R
+  | 0 => C (1 : R)
+  | n + 1 => q * composePower q n
+
+/-- List-backed power-sum form for composition, starting at a coefficient base index. -/
+def composeCoeffPowerSumFrom [One R] [Add R] [Mul R] :
+    List R → Nat → DensePoly R → DensePoly R
+  | [], _, _ => 0
+  | c :: cs, base, q =>
+      C c * composePower q base + composeCoeffPowerSumFrom cs (base + 1) q
+
+/-- Coefficient-indexed bounded power-sum form for composition. -/
+def composeCoeffPowerSumUpTo [One R] [Add R] [Mul R]
+    (coeff : Nat → R) :
+    Nat → Nat → DensePoly R → DensePoly R
+  | 0, _, _ => 0
+  | n + 1, base, q =>
+      C (coeff base) * composePower q base +
+        composeCoeffPowerSumUpTo coeff n (base + 1) q
+
+/-- `composeCoeffPowerSumFrom` over a consecutive range is the bounded coefficient-indexed
+power sum. -/
+theorem composeCoeffPowerSumFrom_range_eq_upTo [One R] [Add R] [Mul R]
+    (coeff : Nat → R) (q : DensePoly R) :
+    ∀ n base,
+      composeCoeffPowerSumFrom ((List.range n).map (fun i => coeff (base + i))) base q =
+        composeCoeffPowerSumUpTo coeff n base q
+  | 0, base => by
+      simp [composeCoeffPowerSumFrom, composeCoeffPowerSumUpTo]
+  | n + 1, base => by
+      rw [List.range_succ_eq_map]
+      simp only [List.map_cons, List.map_map]
+      simp only [composeCoeffPowerSumFrom, composeCoeffPowerSumUpTo]
+      congr 1
+      simpa [Function.comp_def, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm]
+        using composeCoeffPowerSumFrom_range_eq_upTo coeff q n (base + 1)
+
+/-- Reading a stored coefficient list with default zero agrees with `DensePoly.coeff`. -/
+theorem toArray_toList_getD_eq_coeff (p : DensePoly R) (n : Nat) :
+    p.toArray.toList.getD n (Zero.zero : R) = p.coeff n := by
+  unfold toArray coeff
+  rw [Array.getD_eq_getD_getElem?]
+  change p.coeffs.toList[n]?.getD (Zero.zero : R) =
+    p.coeffs[n]?.getD (Zero.zero : R)
+  rw [Array.getElem?_toList]
+
+omit [DecidableEq R] in
+private theorem list_eq_of_length_eq_of_getD_eq
+    {xs ys : List R}
+    (hlen : xs.length = ys.length)
+    (hget : ∀ i, i < xs.length → xs.getD i (Zero.zero : R) = ys.getD i (Zero.zero : R)) :
+    xs = ys := by
+  induction xs generalizing ys with
+  | nil =>
+      cases ys with
+      | nil => rfl
+      | cons _ _ => simp at hlen
+  | cons x xs ih =>
+      cases ys with
+      | nil => simp at hlen
+      | cons y ys =>
+          have hhead : x = y := by
+            have h := hget 0 (by simp)
+            simpa using h
+          have hlen_tail : xs.length = ys.length := Nat.succ.inj hlen
+          have htail : xs = ys := by
+            apply ih hlen_tail
+            intro i hi
+            have h := hget (i + 1) (by simp [hi])
+            simpa using h
+          rw [hhead, htail]
+
+/-- The stored coefficient list is the range of coefficient reads over `p.size`. -/
+theorem toArray_toList_eq_coeff_range (p : DensePoly R) :
+    p.toArray.toList = (List.range p.size).map (fun i => p.coeff i) := by
+  apply list_eq_of_length_eq_of_getD_eq
+  · simp [toArray, size]
+  · intro i hi
+    have hi_size : i < p.size := by
+      simpa [toArray, size] using hi
+    rw [toArray_toList_getD_eq_coeff]
+    rw [list_getD_map_range]
+    simp [hi_size]
+
 /-- Formal derivative. The coefficient of `x^i` becomes `(i + 1) * a_(i+1)`. -/
 def derivative [NatCast R] [Mul R] (p : DensePoly R) : DensePoly R :=
   ofCoeffs <|
