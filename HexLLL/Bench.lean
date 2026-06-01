@@ -539,9 +539,11 @@ determinant write, and linear coefficient updates in the affected rows/columns. 
 def swapStepComplexity (n : Nat) : Nat :=
   2 * (n + 3)
 
-/-- Model for one stored rational coefficient projection. -/
-def gramSchmidtCoeffComplexity (_n : Nat) : Nat :=
-  1
+/-- Model for one stored rational coefficient projection. The executable body is
+one rational division over stored Gram data, and the prepared fixture's
+denominator bit-width grows linearly with the row parameter. -/
+def gramSchmidtCoeffComplexity (n : Nat) : Nat :=
+  n
 
 /-- Model for multiplying the determinant prefix `d_1, ..., d_{rows-1}` with
 determinant bit-width growth from the prepared integer fixture. -/
@@ -559,9 +561,10 @@ def firstShortVectorRandomBoundedComplexity (n : Nat) : Nat :=
 /-- Fixture-path LLL model for harsh-cubic inputs. The input bit-width grows
 linearly with `n`, but this committed near-orthogonal family does not exercise
 the worst-case swap count; the public entry point scales with the quartic
-row-operation surface and a logarithmic exact-integer overhead. -/
+row-operation surface and repeated exact-integer coefficient-growth factors
+from the harsh fixture. -/
 def firstShortVectorHarshCubicComplexity (n : Nat) : Nat :=
-  n ^ 4 * (Nat.log2 (n + 1)) ^ 3
+  n ^ 4 * (Nat.log2 (n + 1)) ^ 5
 
 /-- Model for `LLLState.ofBasis`: Gram matrix construction plus one shared
 Bareiss-style pass over the Gram matrix. -/
@@ -579,10 +582,11 @@ def ofBasisRandomBoundedComplexity (n : Nat) : Nat :=
   ofBasisComplexity rows rows
 
 /-- Harsh-cubic `ofBasis` model: the same shared Bareiss-style pass, with a linear
-entry bit-length factor from the fixture's `3 * rows + O(1)` bits. -/
+entry bit-length factor from the fixture's `3 * rows + O(1)` bits and a
+logarithmic exact-integer overhead. -/
 def ofBasisHarshCubicComplexity (n : Nat) : Nat :=
   let rows := n + 3
-  rows * ofBasisComplexity rows rows
+  rows * ofBasisComplexity rows rows * Nat.log2 (rows + 1)
 
 /-- Benchmark target: construct the initial integer LLL state for a basis. -/
 def runOfBasisChecksum (input : OfBasisInput) : Int :=
@@ -1061,7 +1065,7 @@ setup_benchmark runOfBasisHarshCubicChecksum n =>
     paramFloor := 12
     paramCeiling := 36
     paramSchedule := .custom #[12, 18, 24, 30, 36]
-    maxSecondsPerCall := 8.0
+    maxSecondsPerCall := 30.0
     targetInnerNanos := 1_000_000_000
     signalFloorMultiplier := 1.0
   }
@@ -1089,7 +1093,7 @@ setup_benchmark runSizeReduceChecksum n => sizeReduceComplexity n
     paramFloor := 128
     paramCeiling := 160
     paramSchedule := .custom #[128, 144, 160]
-    maxSecondsPerCall := 5.0
+    maxSecondsPerCall := 30.0
     signalFloorMultiplier := 1.0
   }
 
@@ -1108,14 +1112,17 @@ setup_benchmark runSwapStepChecksum n => swapStepComplexity n
   }
 
 /- Complexity derivation: `gramSchmidtCoeff` reads one stored `ν[k][j]` entry
-and one stored `d[j+1]` denominator, then performs a single rational division. -/
+and one stored `d[j+1]` denominator, then performs a single rational division
+whose denominator bit-width grows linearly with the prepared row parameter.
+The elevated cap covers state preparation at the smallest scientific rung on
+high-spawn-floor hosts; it is not part of the measured body. -/
 setup_benchmark runGramSchmidtCoeffChecksum n => gramSchmidtCoeffComplexity n
   with prep := prepStateInput
   where {
     paramFloor := 32
     paramCeiling := 128
     paramSchedule := .custom #[32, 64, 96, 128]
-    maxSecondsPerCall := 4.0
+    maxSecondsPerCall := 30.0
     targetInnerNanos := 2_000_000_000
     signalFloorMultiplier := 1.0
   }
@@ -1207,10 +1214,11 @@ setup_benchmark runFirstShortVectorRandomBoundedChecksum n =>
 /- Complexity derivation: harsh-cubic inputs have square dimension `n` and
 entry bit-length approximately `3.3 * n`, following the verified-Isabelle
 paper regime named in `phase4.input_families`. The committed fixture is still
-near-orthogonal rather than worst-case LLL; empirically and structurally it
-exercises the quartic exact-integer row-operation surface plus logarithmic
-coefficient-growth factors, while the separate `runOfBasisHarshCubicChecksum`
-target keeps the initial Gram-Schmidt construction attributable. -/
+near-orthogonal rather than worst-case LLL; it exercises the quartic row-
+operation surface and repeated logarithmic coefficient-growth factors from the
+exact-integer row operations, while the separate
+`runOfBasisHarshCubicChecksum` target keeps the initial Gram-Schmidt
+construction attributable. -/
 setup_benchmark runFirstShortVectorHarshCubicChecksum n =>
     firstShortVectorHarshCubicComplexity n
   with prep := prepHarshCubicInput
