@@ -1824,8 +1824,7 @@ def spanContains [Lean.Grind.Field R] [DecidableEq R] (E : IsEchelonForm M D)
 
 /-- `spanCoeffs` returns coefficients whose row combination equals `v`. -/
 theorem spanCoeffs_sound [Lean.Grind.Field R] [DecidableEq R]
-    (E : IsEchelonForm M D) (_hpiv : E.HasNonzeroPivots) (v : Vector R m)
-    (c : Vector R n) :
+    (E : IsEchelonForm M D) (v : Vector R m) (c : Vector R n) :
     E.spanCoeffs v = some c → rowCombination M c = v := by
   intro h
   unfold spanCoeffs at h
@@ -1839,7 +1838,7 @@ theorem spanCoeffs_sound [Lean.Grind.Field R] [DecidableEq R]
 
 /-- If `spanContains` succeeds, the vector is in the row span. -/
 theorem spanContains_sound [Lean.Grind.Field R] [DecidableEq R]
-    (E : IsEchelonForm M D) (hpiv : E.HasNonzeroPivots) (v : Vector R m) :
+    (E : IsEchelonForm M D) (v : Vector R m) :
     E.spanContains v = true → ∃ c : Vector R n, rowCombination M c = v := by
   intro h
   unfold spanContains at h
@@ -1847,7 +1846,7 @@ theorem spanContains_sound [Lean.Grind.Field R] [DecidableEq R]
   | none =>
       simp [hCoeffs] at h
   | some c =>
-      exact ⟨c, E.spanCoeffs_sound hpiv v c hCoeffs⟩
+      exact ⟨c, E.spanCoeffs_sound v c hCoeffs⟩
 
 end IsEchelonForm
 
@@ -2128,7 +2127,7 @@ theorem spanContains_iff [Lean.Grind.Field R] [DecidableEq R]
     E.toIsEchelonForm.spanContains v = true ↔
       ∃ c : Vector R n, rowCombination M c = v := by
   constructor
-  · exact E.toIsEchelonForm.spanContains_sound E.hasNonzeroPivots v
+  · exact E.toIsEchelonForm.spanContains_sound v
   · intro h
     unfold IsEchelonForm.spanContains
     simpa using E.spanCoeffs_complete v h
