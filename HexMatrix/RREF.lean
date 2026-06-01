@@ -1587,17 +1587,20 @@ def rref (M : Matrix R n m) : RowEchelonData R n m :=
     transform := final.transform
     pivotCols := ⟨final.pivots.toArray, by simp⟩ }
 
-private theorem rref_rank_le_n (M : Matrix R n m) : (rref M).rank ≤ n := by
+/-- Wrapper-level projection of the rank row bound from `rref_isRREF M`. -/
+theorem rref_rank_le_n (M : Matrix R n m) : (rref M).rank ≤ n := by
   unfold rref
   change (rrefLoop 0 m { row := 0, echelon := M, transform := 1, pivots := [] }).pivots.length ≤ n
   rw [← (rref_final_shape M).row_eq_length]
   exact (rref_final_shape M).row_le_n
 
-private theorem rref_rank_le_m (M : Matrix R n m) : (rref M).rank ≤ m := by
+/-- Wrapper-level projection of the rank column bound from `rref_isRREF M`. -/
+theorem rref_rank_le_m (M : Matrix R n m) : (rref M).rank ≤ m := by
   unfold rref
   exact (rref_final_shape M).length_le_col
 
-private theorem rref_pivotCols_sorted (M : Matrix R n m) :
+/-- Wrapper-level projection of pivot-column sortedness from `rref_isRREF M`. -/
+theorem rref_pivotCols_sorted (M : Matrix R n m) :
     ∀ i j, i < j → (rref M).pivotCols.get i < (rref M).pivotCols.get j := by
   intro i j hij
   unfold rref
@@ -1629,9 +1632,8 @@ private theorem rref_transform_right_inverse (M : Matrix R n m) :
     { row := 0, echelon := M, transform := 1, pivots := [] }
     ⟨1, by rw [one_mul]⟩
 
-/-- The transform stored by `rref` maps the input matrix to the computed
-echelon matrix. -/
-private theorem rref_transform_mul (M : Matrix R n m) :
+/-- Wrapper-level projection of the transform equation from `rref_isRREF M`. -/
+theorem rref_transform_mul (M : Matrix R n m) :
     (rref M).transform * M = (rref M).echelon := by
   unfold rref
   exact rrefLoop_transform_preserve M 0 m
