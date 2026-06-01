@@ -10096,6 +10096,59 @@ def nDet {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (B : Matrix R (n + 2) n) (p q : Fin (n + 2)) (hpq : p.val < q.val) : R :=
   det (nMatrix B p q hpq)
 
+/-- The square matrix `[B | u | v]` formed by appending two vector columns to
+`B : Matrix R (n + 2) n`. The original `B` columns occupy positions
+`0..n-1`; `u` occupies column `n`; `v` occupies the last column. -/
+def twoColMatrix {R : Type u} {n : Nat}
+    (B : Matrix R (n + 2) n) (u v : Vector R (n + 2)) :
+    Matrix R (n + 2) (n + 2) :=
+  ofFn fun i j =>
+    if hj : j.val < n then
+      B[i][(⟨j.val, hj⟩ : Fin n)]
+    else if hju : j.val = n then
+      u[i]
+    else
+      v[i]
+
+theorem twoColMatrix_entry_lt {R : Type u} {n : Nat}
+    (B : Matrix R (n + 2) n) (u v : Vector R (n + 2))
+    (i j : Fin (n + 2)) (h : j.val < n) :
+    (twoColMatrix B u v)[i][j] = B[i][(⟨j.val, h⟩ : Fin n)] := by
+  unfold twoColMatrix
+  rw [getElem_ofFn]
+  exact dif_pos h
+
+theorem twoColMatrix_entry_penultimate {R : Type u} {n : Nat}
+    (B : Matrix R (n + 2) n) (u v : Vector R (n + 2))
+    (i : Fin (n + 2)) :
+    (twoColMatrix B u v)[i][(⟨n, by omega⟩ : Fin (n + 2))] = u[i] := by
+  unfold twoColMatrix
+  rw [getElem_ofFn]
+  have hnlt : ¬ (⟨n, by omega⟩ : Fin (n + 2)).val < n := by
+    simp
+  have hneq : (⟨n, by omega⟩ : Fin (n + 2)).val = n := by
+    simp
+  rw [dif_neg hnlt]
+  rw [dif_pos hneq]
+
+theorem twoColMatrix_entry_last {R : Type u} {n : Nat}
+    (B : Matrix R (n + 2) n) (u v : Vector R (n + 2))
+    (i : Fin (n + 2)) :
+    (twoColMatrix B u v)[i][Fin.last (n + 1)] = v[i] := by
+  unfold twoColMatrix
+  rw [getElem_ofFn]
+  have hlast_lt : ¬ (Fin.last (n + 1) : Fin (n + 2)).val < n := by
+    simp [Fin.last]
+  have hlast_ne : ¬ (Fin.last (n + 1) : Fin (n + 2)).val = n := by
+    simp [Fin.last]
+  rw [dif_neg hlast_lt]
+  rw [dif_neg hlast_ne]
+
+/-- The determinant of `[B | u | v]`. -/
+def twoColDet {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n) (u v : Vector R (n + 2)) : R :=
+  det (twoColMatrix B u v)
+
 /-- `mMatrix B v p` exposed as a `colReplace` on its last column: the
 other columns come from `B` and are independent of `v`, while the last
 column carries `fun i => v[skipIndex p i]`. -/
