@@ -10149,6 +10149,76 @@ def twoColDet {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (B : Matrix R (n + 2) n) (u v : Vector R (n + 2)) : R :=
   det (twoColMatrix B u v)
 
+/-- Deleting row `p` and the final `v` column from `[B | u | v]`
+recovers the one-column augmented matrix `mMatrix B u p`. -/
+theorem deleteRowCol_twoColMatrix_last_eq_mMatrix {R : Type u} {n : Nat}
+    (B : Matrix R (n + 2) n) (u v : Vector R (n + 2)) (p : Fin (n + 2)) :
+    deleteRowCol (twoColMatrix B u v) p (Fin.last (n + 1)) =
+      mMatrix B u p := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  let ii : Fin (n + 1) := ⟨i, hi⟩
+  let jj : Fin (n + 1) := ⟨j, hj⟩
+  change (deleteRowCol (twoColMatrix B u v) p (Fin.last (n + 1)))[ii][jj] =
+    (mMatrix B u p)[ii][jj]
+  rw [deleteRowCol_entry]
+  have hcol :
+      (skipIndex (Fin.last (n + 1)) jj).val = jj.val := by
+    rw [skipIndex_last]
+    simp
+  by_cases hjlt : jj.val < n
+  · have hskiplt : (skipIndex (Fin.last (n + 1)) jj).val < n := by
+      rw [hcol]
+      exact hjlt
+    rw [twoColMatrix_entry_lt B u v (skipIndex p ii)
+        (skipIndex (Fin.last (n + 1)) jj) hskiplt]
+    rw [mMatrix_entry_lt B u p ii jj hjlt]
+    have hcol_eq : (⟨(skipIndex (Fin.last (n + 1)) jj).val, hskiplt⟩ : Fin n) =
+        (⟨jj.val, hjlt⟩ : Fin n) := by
+      apply Fin.ext
+      exact hcol
+    simp only [hcol_eq]
+  · have hjn : jj.val = n := by omega
+    have hskip_eq :
+        skipIndex (Fin.last (n + 1)) jj =
+          (⟨n, by omega⟩ : Fin (n + 2)) := by
+      apply Fin.ext
+      rw [hcol]
+      exact hjn
+    have hjj_last : jj = Fin.last n := by
+      apply Fin.ext
+      simp [Fin.last, hjn]
+    calc
+      (twoColMatrix B u v)[skipIndex p ii][skipIndex (Fin.last (n + 1)) jj] =
+          (twoColMatrix B u v)[skipIndex p ii][(⟨n, by omega⟩ : Fin (n + 2))] := by
+            exact congrArg (fun c => (twoColMatrix B u v)[skipIndex p ii][c]) hskip_eq
+      _ = u[skipIndex p ii] := by
+            exact twoColMatrix_entry_penultimate B u v (skipIndex p ii)
+      _ = (mMatrix B u p)[ii][jj] := by
+            calc
+              u[skipIndex p ii] = (mMatrix B u p)[ii][Fin.last n] := by
+                exact (mMatrix_entry_last B u p ii).symm
+              _ = (mMatrix B u p)[ii][jj] := by
+                exact (congrArg (fun c => (mMatrix B u p)[ii][c]) hjj_last).symm
+
+/-- Laplace expansion of the two-column determinant along the final column,
+with the remaining minor identified as `mDet B u p`. -/
+theorem twoColDet_eq_sum_mDet {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n) (u v : Vector R (n + 2)) :
+    twoColDet B u v =
+      (List.finRange (n + 2)).foldl
+        (fun acc p =>
+          acc + v[p] * (cofactorSign (R := R) p (Fin.last (n + 1)) * mDet B u p)) 0 := by
+  unfold twoColDet
+  rw [det_eq_foldl_laplace_last (twoColMatrix B u v)]
+  apply foldl_acc_congr
+  intro acc p _hmem
+  rw [twoColMatrix_entry_last]
+  unfold cofactor mDet
+  rw [deleteRowCol_twoColMatrix_last_eq_mMatrix B u v p]
+
 /-- `mMatrix B v p` exposed as a `colReplace` on its last column: the
 other columns come from `B` and are independent of `v`, while the last
 column carries `fun i => v[skipIndex p i]`. -/
@@ -10344,6 +10414,42 @@ private theorem foldl_add_with_unique_match {α : Type u}
           | inr h => exact h
         have hnodup' : xs.Nodup := (List.nodup_cons.mp hnodup).2
         exact ih z hmem' hnodup'
+
+private theorem foldl_basisVec_weighted_single
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (q : Fin (n + 2)) (f : Fin (n + 2) → R) :
+    (List.finRange (n + 2)).foldl
+        (fun acc p => acc + (basisVec (R := R) q)[p] * f p) 0 =
+      f q := by
+  have hfold :=
+    foldl_add_with_unique_match (α := R) (List.finRange (n + 2)) (0 : R) q
+      (fun p => (basisVec (R := R) q)[p] * f p)
+      (List.mem_finRange q) (List.nodup_finRange (n + 2))
+  have hcongr :
+      (List.finRange (n + 2)).foldl
+          (fun acc p => acc + (basisVec (R := R) q)[p] * f p) 0 =
+        (List.finRange (n + 2)).foldl
+          (fun acc p =>
+            acc + if p = q then (basisVec (R := R) q)[p] * f p else 0) 0 := by
+    apply foldl_acc_congr
+    intro acc p _hmem
+    by_cases hp : p = q
+    · rw [if_pos hp]
+    · rw [if_neg hp]
+      rw [basisVec_getElem]
+      rw [if_neg hp]
+      grind
+  calc
+    (List.finRange (n + 2)).foldl
+        (fun acc p => acc + (basisVec (R := R) q)[p] * f p) 0 =
+      (List.finRange (n + 2)).foldl
+        (fun acc p =>
+          acc + if p = q then (basisVec (R := R) q)[p] * f p else 0) 0 := hcongr
+    _ = 0 + (basisVec (R := R) q)[q] * f q := hfold
+    _ = f q := by
+      rw [basisVec_getElem]
+      rw [if_pos rfl]
+      grind
 
 /-- Expands the augmented vector column of `mDet` in the standard basis. -/
 theorem mDet_eq_sum_basisVec
@@ -10680,6 +10786,104 @@ theorem mDet_basisVec_eq_zero_of_eq {R : Type u} [Lean.Grind.CommRing R]
         (basisVec (R := R) p) p]
   rw [hcol]
   exact det_colReplace_zero _ _
+
+/-- Ordered basis-pair evaluation for `twoColDet`: if `a < b`, the only
+surviving ordered pair is the deleted-row pair `(a, b)`. -/
+theorem twoColDet_basisVec_basisVec_of_lt
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n) (a b : Fin (n + 2)) (hab : a.val < b.val) :
+    twoColDet B (basisVec (R := R) a) (basisVec (R := R) b) =
+      cofactorSign (R := R) b (Fin.last (n + 1)) *
+        (cofactorSign (R := R)
+          (⟨a.val, by have := b.isLt; omega⟩ : Fin (n + 1)) (Fin.last n) *
+          nDet B a b hab) := by
+  rw [twoColDet_eq_sum_mDet]
+  rw [foldl_basisVec_weighted_single (R := R) b
+      (fun p => cofactorSign (R := R) p (Fin.last (n + 1)) *
+        mDet B (basisVec (R := R) a) p)]
+  rw [mDet_basisVec_eq_signed_nDet_of_gt B b a hab]
+
+/-- Reverse ordered basis-pair evaluation for `twoColDet`: if `b < a`,
+the determinant recovers the same deleted-row pair with the reversed
+coefficient order. -/
+theorem twoColDet_basisVec_basisVec_of_gt
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n) (a b : Fin (n + 2)) (hba : b.val < a.val) :
+    twoColDet B (basisVec (R := R) a) (basisVec (R := R) b) =
+      cofactorSign (R := R) b (Fin.last (n + 1)) *
+        (cofactorSign (R := R)
+          (⟨a.val - 1, by have := a.isLt; omega⟩ : Fin (n + 1)) (Fin.last n) *
+          nDet B b a hba) := by
+  rw [twoColDet_eq_sum_mDet]
+  rw [foldl_basisVec_weighted_single (R := R) b
+      (fun p => cofactorSign (R := R) p (Fin.last (n + 1)) *
+        mDet B (basisVec (R := R) a) p)]
+  rw [mDet_basisVec_eq_signed_nDet_of_lt B b a hba]
+
+/-- A repeated basis vector in the two appended columns makes
+`twoColDet` vanish. -/
+theorem twoColDet_basisVec_basisVec_of_eq
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n) (a : Fin (n + 2)) :
+    twoColDet B (basisVec (R := R) a) (basisVec (R := R) a) = 0 := by
+  rw [twoColDet_eq_sum_mDet]
+  rw [foldl_basisVec_weighted_single (R := R) a
+      (fun p => cofactorSign (R := R) p (Fin.last (n + 1)) *
+        mDet B (basisVec (R := R) a) p)]
+  rw [mDet_basisVec_eq_zero_of_eq B a]
+  grind
+
+/-- Evaluation of `twoColDet` when the final appended column is a basis
+vector. This is the one-column Laplace expansion with the remaining
+`mDet` minor exposed directly. -/
+theorem twoColDet_basisVec_right
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n) (u : Vector R (n + 2)) (b : Fin (n + 2)) :
+    twoColDet B u (basisVec (R := R) b) =
+      cofactorSign (R := R) b (Fin.last (n + 1)) * mDet B u b := by
+  rw [twoColDet_eq_sum_mDet]
+  rw [foldl_basisVec_weighted_single (R := R) b
+      (fun p => cofactorSign (R := R) p (Fin.last (n + 1)) * mDet B u p)]
+
+/-- Bilinear basis expansion of `twoColDet` over the two appended columns.
+The basis-pair terms are reduced by
+`twoColDet_basisVec_basisVec_of_lt`,
+`twoColDet_basisVec_basisVec_of_gt`, and
+`twoColDet_basisVec_basisVec_of_eq`. -/
+theorem twoColDet_eq_sum_basisVec_pairs
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n) (u v : Vector R (n + 2)) :
+    twoColDet B u v =
+      (List.finRange (n + 2)).foldl
+        (fun acc b =>
+          acc + v[b] *
+            (List.finRange (n + 2)).foldl
+              (fun acc a =>
+                acc + u[a] * twoColDet B (basisVec (R := R) a)
+                  (basisVec (R := R) b)) 0) 0 := by
+  rw [twoColDet_eq_sum_mDet]
+  apply foldl_acc_congr
+  intro acc b _hmem
+  rw [mDet_eq_sum_basisVec B u b]
+  congr 2
+  calc
+    cofactorSign (R := R) b (Fin.last (n + 1)) *
+        (List.finRange (n + 2)).foldl
+          (fun acc a => acc + u[a] * mDet B (basisVec (R := R) a) b) 0 =
+      (List.finRange (n + 2)).foldl
+        (fun acc a =>
+          acc + cofactorSign (R := R) b (Fin.last (n + 1)) *
+            (u[a] * mDet B (basisVec (R := R) a) b)) 0 := by
+        rw [foldl_det_sum_mul_left_zero]
+    _ =
+      (List.finRange (n + 2)).foldl
+        (fun acc a =>
+          acc + u[a] * twoColDet B (basisVec (R := R) a)
+            (basisVec (R := R) b)) 0 := by
+        apply foldl_det_sum_congr
+        intro a _ha
+        rw [twoColDet_basisVec_right B (basisVec (R := R) a) b]
+        grind
 
 private theorem cofactorSign_consecutive_last_neg
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
