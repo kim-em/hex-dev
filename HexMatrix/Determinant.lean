@@ -9218,6 +9218,41 @@ private theorem eq_columnSumMatrix_one_transpose
   rw [← mul_eq_columnSumMatrix_transpose (1 : Matrix R n n) N]
   exact (one_mul N).symm
 
+/-- Determinant of a product of square matrices.
+
+This is the Mathlib-free Cauchy-Binet specialization already used by the
+Desnanot-Jacobi auxiliary proof. -/
+theorem det_mul
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M N : Matrix R n n) :
+    det (M * N) = det M * det N := by
+  rw [mul_eq_columnSumMatrix_transpose M N]
+  rw [det_columnSumMatrix_eq_sum_columnTuples M N.transpose]
+  have hbody_eq :
+      (columnTupleVectors n n).foldl
+          (fun acc cols => acc +
+            columnTupleCoeff N.transpose cols *
+              det (columnTupleMatrix M (columnTupleVectorFn cols))) 0 =
+        (columnTupleVectors n n).foldl
+          (fun acc cols => acc + det M *
+            (columnTupleCoeff N.transpose cols *
+              det (columnTupleMatrix (1 : Matrix R n n)
+                (columnTupleVectorFn cols)))) 0 := by
+    apply foldl_det_sum_congr
+    intro cols _
+    rw [det_columnTupleMatrix_eq_det_mul_det_one M (columnTupleVectorFn cols)]
+    exact Lean.Grind.CommSemiring.mul_left_comm _ _ _
+  rw [hbody_eq]
+  rw [foldl_det_sum_mul_left_zero
+        (columnTupleVectors n n)
+        (det M)
+        (fun cols => columnTupleCoeff N.transpose cols *
+            det (columnTupleMatrix (1 : Matrix R n n)
+              (columnTupleVectorFn cols)))]
+  rw [← det_columnSumMatrix_eq_sum_columnTuples
+        (1 : Matrix R n n) N.transpose]
+  rw [← eq_columnSumMatrix_one_transpose N]
+
 /-- Determinant of `M * auxAdjugateM M` splits as `det M * det (auxAdjugateM M)`.
 This is the narrow determinant-multiplication identity used by the scaled
 Desnanot-Jacobi step; the proof goes through the `columnSumMatrix` expansion
