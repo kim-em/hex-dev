@@ -375,6 +375,44 @@ def eval [Add R] [Mul R] (p : DensePoly R) (x : R) : R :=
 def compose [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
   p.toArray.toList.reverse.foldl (fun acc coeff => acc * q + C coeff) (0 : DensePoly R)
 
+/-- Polynomial-valued Horner fold over an explicit low-to-high coefficient list. -/
+def composeScalarCoeffList [Add R] [Mul R] :
+    List R → DensePoly R → DensePoly R
+  | [], _ => 0
+  | c :: cs, q => composeScalarCoeffList cs q * q + C c
+
+/-- Recursive coefficient-indexed power-sum skeleton for composition.
+
+The `pow` argument supplies the powers of the substitution polynomial. This
+keeps the core API Mathlib-free and lets downstream specializations reuse the
+same recursion with their local power operation and algebraic laws. -/
+def composeCoeffPowerSumUpTo [Add R] [Mul R]
+    (coeff : Nat → R) (pow : Nat → DensePoly R) :
+    Nat → Nat → DensePoly R
+  | 0, _ => 0
+  | n + 1, base =>
+      C (coeff base) * pow base +
+        composeCoeffPowerSumUpTo coeff pow n (base + 1)
+
+private theorem foldl_compose_reverse_eq_composeScalarCoeffList [Add R] [Mul R]
+    (q : DensePoly R) :
+    ∀ cs,
+      cs.reverse.foldl (fun acc c => acc * q + C c) (0 : DensePoly R) =
+        composeScalarCoeffList cs q
+  | [] => rfl
+  | c :: cs => by
+      rw [List.reverse_cons, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [foldl_compose_reverse_eq_composeScalarCoeffList q cs]
+      rfl
+
+/-- `DensePoly.compose` agrees with the explicit Horner fold over the stored
+coefficient list. -/
+theorem compose_eq_composeScalarCoeffList [Add R] [Mul R] (f q : DensePoly R) :
+    compose f q = composeScalarCoeffList f.toArray.toList q := by
+  unfold compose
+  exact foldl_compose_reverse_eq_composeScalarCoeffList q f.toArray.toList
+
 /-- Left-composition by the zero polynomial is zero. -/
 @[simp] theorem compose_zero_left [Add R] [Mul R] (q : DensePoly R) :
     compose (0 : DensePoly R) q = 0 := by

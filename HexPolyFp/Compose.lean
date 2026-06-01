@@ -178,7 +178,7 @@ private theorem compose_eq_powerSum (f q : FpPoly p) :
   exact composeScalarCoeffList_eq_powerSumFrom_zero q f.toArray.toList
 
 /-- `DensePoly.compose f q` agrees with the iterative Horner form. -/
-theorem compose_eq_composeScalarCoeffList (f q : FpPoly p) :
+private theorem compose_eq_composeScalarCoeffList (f q : FpPoly p) :
     DensePoly.compose f q = composeScalarCoeffList f.toArray.toList q := by
   unfold DensePoly.compose
   exact foldl_compose_reverse_eq_composeScalarCoeffList q f.toArray.toList
@@ -363,6 +363,16 @@ def composeCoeffPowerSumUpTo
   | n + 1, base, w =>
       DensePoly.C (coeff base) * linearPow w base +
         composeCoeffPowerSumUpTo coeff n (base + 1) w
+
+theorem composeCoeffPowerSumUpTo_eq_core
+    (coeff : Nat → ZMod64 p) :
+    ∀ n base w,
+      composeCoeffPowerSumUpTo coeff n base w =
+        DensePoly.composeCoeffPowerSumUpTo coeff (fun k => linearPow w k) n base
+  | 0, _, _ => rfl
+  | n + 1, base, w => by
+      simp only [composeCoeffPowerSumUpTo, DensePoly.composeCoeffPowerSumUpTo]
+      rw [composeCoeffPowerSumUpTo_eq_core coeff n (base + 1) w]
 
 private theorem composeCoeffPowerSumFrom_range_eq_upTo
     (coeff : Nat → ZMod64 p) (w : FpPoly p) :
