@@ -327,6 +327,36 @@ Comparator source: `scripts/oracle/setup_lll_isabelle.sh` downloads and verifies
 
 **Gating-goal verdict (largest eligible rung `n = 55`).** Lean `640.050 ms` vs Isabelle adjusted `404.566 ms`; adjusted ratio `1.5821` (Lean 1.58× slower). Gating-goal verdict: **not met**.
 
+Targeted prefix-preserving Bareiss rerun at commit
+`4bd0f7482835f8e066f9dcd3f70f8d50345c730d` on `carica` (Apple M2 Ultra,
+macOS), command:
+
+```sh
+lake exe hexlll_bench run \
+  Hex.LLLBench.runFirstShortVectorHarshCubicNormSq45 \
+  Hex.LLLBench.runIsabelleHarshCubicNormSq45 \
+  Hex.LLLBench.runFirstShortVectorHarshCubicNormSq50 \
+  Hex.LLLBench.runIsabelleHarshCubicNormSq50 \
+  Hex.LLLBench.runFirstShortVectorHarshCubicNormSq55 \
+  Hex.LLLBench.runIsabelleHarshCubicNormSq55 \
+  --export-file reports/bench-results/hex-lll-b712abf1-harsh-cubic-rerun.json
+```
+
+The harness recorded `4bd0f74-dirty` because this worktree carried a
+pre-existing local `.claude/CLAUDE.md` modification outside this evidence
+package. Export artefact:
+`reports/bench-results/hex-lll-b712abf1-harsh-cubic-rerun.json`, SHA-256
+`f8cd183fee929950325303076f92a8b4c39b041e93121adf83f801315de82942`.
+
+| n | Lean median | Isabelle median | raw Lean/Isabelle ratio | verdict |
+|---:|---:|---:|---:|---|
+| 45 | 205.469 ms | 199.329 ms | 1.0308 | Lean 1.03× slower |
+| 50 | 384.772 ms | 284.171 ms | 1.3540 | Lean 1.35× slower |
+| 55 | 672.593 ms | 457.830 ms | 1.4691 | Lean 1.47× slower |
+
+This narrows the largest-rung harsh-cubic gap relative to the prior `1.5821`
+adjusted ratio, but the gating-goal verdict remains **not met**.
+
 ### bz-recombination (context only)
 
 - Lean `runFirstShortVectorBZRecombinationNormSq` median: `3.438 us`; Isabelle `runIsabelleBZRecombinationNormSq` median: `57.702 ms`; raw ratio `5.96e-05`; adjusted ratio `5.96e-05` (Lean 16781.08× faster).
@@ -431,9 +461,12 @@ integer arithmetic.
   `n = 180` (the verdict is still met but the trend is climbing), and the
   `harsh-cubic` adjusted ratio crosses 1 at `n = 45` and reaches `1.5821`
   at `n = 55` (Lean is `~1.6×` slower than Isabelle at the largest eligible
-  rung, so the gating-goal verdict is **not met** for this family). The
-  diagnosis in `reports/hex-lll-harsh-cubic-crossover-diagnosis.md` rules out a
+  rung, so the gating-goal verdict is **not met** for this family). A
+  prefix-preserving Bareiss array update narrows the local `n = 55` rerun ratio
+  to `1.4691`, but does not clear the comparator Concern. The diagnosis in
+  `reports/hex-lll-harsh-cubic-crossover-diagnosis.md` rules out a
   benchmark-registration fix and points at exact-integer operand growth in
   `Hex.GramSchmidt.Int.data` / `scaledCoeffRows`; follow-up
-  [#5994](https://github.com/kim-em/hex/issues/5994) tracks the implementation
-  work. While this Concern is open, `HexLLL.done_through` remains `3`.
+  [#6016](https://github.com/kim-em/hex/issues/6016) tracks the remaining
+  optimization work. While this Concern is open, `HexLLL.done_through` remains
+  `3`.

@@ -761,14 +761,17 @@ all other entries unchanged. -/
 def stepArray (rows : Array (Array Int)) (n k : Nat) (pivot prevPivot : Int) :
     Array (Array Int) :=
   (Array.range n).map fun i =>
-    (Array.range n).map fun j =>
-      if k < i ∧ k < j then
-        exactDiv (pivot * getEntry rows i j - getEntry rows i k * getEntry rows k j)
-          prevPivot
-      else if k < i ∧ j = k then
-        0
-      else
-        getEntry rows i j
+    if k < i then
+      (Array.range n).map fun j =>
+        if k < j then
+          exactDiv (pivot * getEntry rows i j - getEntry rows i k * getEntry rows k j)
+            prevPivot
+        else if j = k then
+          0
+        else
+          getEntry rows i j
+    else
+      rows[i]!
 
 private theorem getEntry_rangeMap₂ (f : Nat → Nat → Int) (i j : Fin n) :
     getEntry ((Array.range n).map fun row => (Array.range n).map fun col => f row col)
@@ -785,27 +788,43 @@ theorem getEntry_stepArray_matches
     getEntry (stepArray rows n k pivot prevPivot) i.val j.val =
       (stepMatrix M k pivot prevPivot)[i][j] := by
   unfold stepArray
-  rw [getEntry_rangeMap₂]
-  by_cases htrail : k < i.val ∧ k < j.val
-  · have hcol₁ :
-        getEntry rows i.val k =
-          M[i][(⟨k, Nat.lt_trans htrail.1 i.isLt⟩ : Fin n)] := by
-      simpa using hentry i (⟨k, Nat.lt_trans htrail.1 i.isLt⟩ : Fin n)
-    have hrow₁ :
-        getEntry rows k j.val =
-          M[(⟨k, Nat.lt_trans htrail.2 j.isLt⟩ : Fin n)][j] := by
-      simpa using hentry (⟨k, Nat.lt_trans htrail.2 j.isLt⟩ : Fin n) j
+  by_cases hi : k < i.val
+  · by_cases hj : k < j.val
+    · have hcol₁ :
+          getEntry rows i.val k =
+            M[i][(⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)] := by
+        simpa using hentry i (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)
+      have hrow₁ :
+          getEntry rows k j.val =
+            M[(⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n)][j] := by
+        simpa using hentry (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n) j
+      have hij := hentry i j
+      simp [getEntry, hi, hj]
+      change exactDiv (pivot * getEntry rows i.val j.val - getEntry rows i.val k *
+          getEntry rows k j.val) prevPivot = (stepMatrix M k pivot prevPivot)[i][j]
+      rw [stepMatrix_update_eq M k pivot prevPivot i j hi hj]
+      rw [hij, hcol₁, hrow₁]
+    · by_cases hjeq : j.val = k
+      · have hjFin : j = (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n) := Fin.ext hjeq
+        subst j
+        have hkn : k < n := Nat.lt_trans hi i.isLt
+        simp [getEntry, hi, hkn]
+        exact (stepMatrix_pivot_col_below M k pivot prevPivot i
+          (⟨k, hkn⟩ : Fin n) hi rfl).symm
+      · have htrail : ¬ (k < i.val ∧ k < j.val) := fun h => hj h.2
+        have hcol : ¬ (k < i.val ∧ j.val = k) := fun h => hjeq h.2
+        have hij := hentry i j
+        simp [getEntry, hi, hj, hjeq]
+        change getEntry rows i.val j.val = (stepMatrix M k pivot prevPivot)[i][j]
+        rw [stepMatrix_eq_of_not_update M k pivot prevPivot i j htrail hcol]
+        exact hij
+  · have htrail : ¬ (k < i.val ∧ k < j.val) := fun h => hi h.1
+    have hcol : ¬ (k < i.val ∧ j.val = k) := fun h => hi h.1
     have hij := hentry i j
-    rw [if_pos htrail]
-    rw [stepMatrix_update_eq M k pivot prevPivot i j htrail.1 htrail.2]
-    rw [hij, hcol₁, hrow₁]
-  · by_cases hcol : k < i.val ∧ j.val = k
-    · rw [if_neg htrail, if_pos hcol]
-      exact (stepMatrix_pivot_col_below M k pivot prevPivot i j hcol.1 hcol.2).symm
-    · have hij := hentry i j
-      rw [if_neg htrail, if_neg hcol]
-      rw [stepMatrix_eq_of_not_update M k pivot prevPivot i j htrail hcol]
-      exact hij
+    simp [getEntry, hi]
+    change getEntry rows i.val j.val = (stepMatrix M k pivot prevPivot)[i][j]
+    rw [stepMatrix_eq_of_not_update M k pivot prevPivot i j htrail hcol]
+    exact hij
 
 /-- `stepArray` rebuilds the storage as an `n`-sized array of rows. -/
 theorem stepArray_size (rows : Array (Array Int)) (n k : Nat)
