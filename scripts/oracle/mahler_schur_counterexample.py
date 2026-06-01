@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Check the Schur-reflection derivative-Mahler counterexample.
+"""Check narrow Schur-route counterexamples.
 
-This is a narrow regression artifact for the failed route toward the
+This is a narrow regression artifact for failed routes toward the
 Mahler/Boyd derivative bound.  It verifies that both the scaled endpoint
 comparison and the direct Schur-reflection derivative-Mahler comparison from
-issue #5303 are false without additional hypotheses.
+issue #5303 are false without additional hypotheses, and that the degree-two
+Schur-Szego one-exterior root-count exclusion is false.
 
 Counterexample in ``C[X]`` with real coefficients:
 
@@ -89,6 +90,52 @@ class Counterexample:
         return (1, -self.alpha)
 
 
+@dataclass(frozen=True)
+class DegreeTwoSchurCounterexample:
+    r: int = 1
+    a: int = 1
+    b: int = 4
+    c: int = 1
+    d: int = -1
+    zeta1: int = 2
+    zeta2: int = -2
+
+
+def strict_exterior_count_real(values: tuple[int, ...], r: int) -> int:
+    return sum(1 for value in values if r < abs(value))
+
+
+def check_degree_two_schur_one_exterior_counterexample() -> None:
+    case = DegreeTwoSchurCounterexample()
+
+    if abs(case.c) > 1 or abs(case.d) > 1:
+        raise AssertionError("Schur factor roots must lie in the closed unit disk")
+
+    source_exterior = strict_exterior_count_real((case.a, case.b), case.r)
+    schur_exterior = strict_exterior_count_real((case.zeta1, case.zeta2), case.r)
+    if source_exterior != 1:
+        raise AssertionError(f"source exterior count mismatch: {source_exterior}")
+    if schur_exterior != 2:
+        raise AssertionError(f"Schur exterior count mismatch: {schur_exterior}")
+
+    # For f = (X - a) (X - b) and g = (X - c) (X - d), the degree-two
+    # Schmeisser composition has coefficients
+    #   X^2 + ((a + b) * (c + d) / 2) X + a * b * c * d.
+    # Hence the exact Vieta orientation used by
+    # Polynomial.schmeisserComposition_two_eq is:
+    #   zeta1 + zeta2 = -((a + b) * (c + d) / 2)
+    #   zeta1 * zeta2 = a * b * c * d.
+    expected_sum = -Fraction((case.a + case.b) * (case.c + case.d), 2)
+    expected_product = case.a * case.b * case.c * case.d
+    if Fraction(case.zeta1 + case.zeta2) != expected_sum:
+        raise AssertionError("degree-two Schur Vieta sum orientation mismatch")
+    if case.zeta1 * case.zeta2 != expected_product:
+        raise AssertionError("degree-two Schur Vieta product mismatch")
+
+    if not (source_exterior < schur_exterior):
+        raise AssertionError("expected strict exterior-card comparison to fail")
+
+
 def main() -> int:
     getcontext().prec = 50
     case = Counterexample()
@@ -138,6 +185,17 @@ def main() -> int:
         "failure: scaled endpoint inequality would require "
         f"{left_measure_formula} <= {right_measure}"
     )
+
+    check_degree_two_schur_one_exterior_counterexample()
+    degree_two_case = DegreeTwoSchurCounterexample()
+    print(
+        "counterexample: degree-two Schur one-exterior count with "
+        f"r = {degree_two_case.r}, "
+        f"(a, b) = ({degree_two_case.a}, {degree_two_case.b}), "
+        f"(c, d) = ({degree_two_case.c}, {degree_two_case.d}), "
+        f"(zeta1, zeta2) = ({degree_two_case.zeta1}, {degree_two_case.zeta2})"
+    )
+    print("failure: source exterior count is 1 while Schur exterior count is 2")
     return 0
 
 
