@@ -197,6 +197,31 @@ gets a narrow linear ladder bracketing the productive band before
 the wallclock cap kicks in. The user just declares the model
 correctly; the harness handles ladder shape.
 
+### Spawn-floor filter
+
+Parametric reports record the harness's per-spawn floor and, by
+default, exclude rows whose child-side timed batch is shorter than
+`10 × spawn_floor`. This protects ordinary microbenchmarks from
+mistaking process-startup noise for algorithmic signal.
+
+Scientific registrations may set `signalFloorMultiplier := 1.0`
+when all of the following hold:
+
+- The benchmark target uses warm child-side inner repeats, so
+  `total_nanos` measures work inside the child rather than parent-side
+  spawn wall time.
+- The registered rungs are fixed by the library SPEC or headline
+  report and already clear the algorithmic signal needed for the
+  declared complexity or comparator-ratio question.
+- The scheduled host has a high executable startup floor that would
+  otherwise make the fixed ladder unusable without changing the
+  measured algorithm.
+
+This setting disables only the spawn-floor filter. It does not raise
+wallclock caps, weaken the declared complexity model, shrink the
+scientific ladder, or hide the host condition: JSON exports still
+record `spawn_floor_nanos` and `signal_floor_multiplier`.
+
 ### What we don't measure
 
 `lean-bench` measures compiled-code execution. The following are
