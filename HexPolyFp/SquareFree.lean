@@ -429,14 +429,6 @@ private theorem powLinearBinomSum_succ_row
   induction m with
   | zero =>
       simp [powLinearBinomSum, powLinearBinomTerm_succ_zero]
-      calc
-        0 + f * powLinearBinomTerm f g n 0 =
-            f * powLinearBinomTerm f g n 0 := DensePoly.zero_add _
-        _ = f * (0 + powLinearBinomTerm f g n 0) + 0 := by
-              have hz : (0 : FpPoly p) + powLinearBinomTerm f g n 0 =
-                  powLinearBinomTerm f g n 0 := DensePoly.zero_add _
-              rw [hz]
-              exact (DensePoly.add_zero_poly _).symm
   | succ m ih =>
       rw [powLinearBinomSum, ih (by omega)]
       rw [powLinearBinomSum]
@@ -491,11 +483,7 @@ private theorem powLinear_add_binom_sum
   induction n with
   | zero =>
       simp [powLinear, powLinearBinomSum, powLinearBinomTerm, Hex.Nat.choose]
-      calc
-        (1 : FpPoly p) = DensePoly.scale (1 : ZMod64 p) (1 : FpPoly p) := by
-          exact (powLinearBinom_scalar_one (1 : FpPoly p)).symm
-        _ = 0 + DensePoly.scale (1 : ZMod64 p) (1 : FpPoly p) := by
-          exact (DensePoly.zero_add _).symm
+      exact (powLinearBinom_scalar_one (1 : FpPoly p)).symm
   | succ n ih =>
       rw [powLinear_succ_left, ih]
       rw [powLinearBinomSum_succ_row f g n (n + 1) (by omega)]

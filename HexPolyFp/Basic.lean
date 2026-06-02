@@ -1417,7 +1417,7 @@ theorem eval_sub (f h : FpPoly p) (x : ZMod64 p) :
         (Nat.le_trans (Nat.le_max_right f.size h.size) hi)]
     grind
 
-theorem add_zero (f : FpPoly p) :
+@[simp] theorem add_zero (f : FpPoly p) :
     f + 0 = f := by
   apply DensePoly.ext_coeff
   intro i
@@ -1425,7 +1425,7 @@ theorem add_zero (f : FpPoly p) :
   rw [DensePoly.coeff_zero]
   grind
 
-theorem zero_add (f : FpPoly p) :
+@[simp] theorem zero_add (f : FpPoly p) :
     0 + f = f := by
   apply DensePoly.ext_coeff
   intro i
@@ -1451,7 +1451,7 @@ theorem add_assoc (f g h : FpPoly p) :
   rw [DensePoly.coeff_add_semiring]
   grind
 
-theorem neg_zero :
+@[simp] theorem neg_zero :
     -(0 : FpPoly p) = 0 := by
   apply DensePoly.ext_coeff
   intro i
@@ -1459,7 +1459,7 @@ theorem neg_zero :
   rw [DensePoly.coeff_zero]
   grind
 
-theorem add_left_neg (f : FpPoly p) :
+@[simp] theorem add_left_neg (f : FpPoly p) :
     -f + f = 0 := by
   apply DensePoly.ext_coeff
   intro i
@@ -1468,7 +1468,7 @@ theorem add_left_neg (f : FpPoly p) :
   rw [DensePoly.coeff_zero]
   grind
 
-theorem add_right_neg (f : FpPoly p) :
+@[simp] theorem add_right_neg (f : FpPoly p) :
     f + -f = 0 := by
   apply DensePoly.ext_coeff
   intro i
@@ -1477,7 +1477,7 @@ theorem add_right_neg (f : FpPoly p) :
   rw [DensePoly.coeff_zero]
   grind
 
-theorem sub_zero (f : FpPoly p) :
+@[simp] theorem sub_zero (f : FpPoly p) :
     f - 0 = f := by
   apply DensePoly.ext_coeff
   intro i
@@ -1485,11 +1485,11 @@ theorem sub_zero (f : FpPoly p) :
   rw [DensePoly.coeff_zero]
   grind
 
-theorem zero_sub (f : FpPoly p) :
+@[simp] theorem zero_sub (f : FpPoly p) :
     0 - f = -f := by
   rfl
 
-theorem sub_self (f : FpPoly p) :
+@[simp] theorem sub_self (f : FpPoly p) :
     f - f = 0 := by
   apply DensePoly.ext_coeff
   intro i
@@ -1505,6 +1505,10 @@ theorem sub_eq_add_neg (f g : FpPoly p) :
   rw [DensePoly.coeff_sub_ring]
   rw [DensePoly.coeff_neg_ring]
   grind
+
+example (f : FpPoly p) :
+    (f + 0) - f = 0 := by
+  simp
 
 @[simp] theorem zero_mul (f : FpPoly p) :
     0 * f = 0 := by

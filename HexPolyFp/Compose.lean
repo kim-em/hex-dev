@@ -435,7 +435,6 @@ private theorem composeCoeffPowerSumUpTo_sub
           composeCoeffPowerSumUpTo (fun i => h.coeff i) n base w
   | 0, _ => by
       simp [composeCoeffPowerSumUpTo]
-      exact (FpPoly.sub_self 0).symm
   | n + 1, base => by
       simp only [composeCoeffPowerSumUpTo]
       rw [composeCoeffPowerSumUpTo_sub f h w n (base + 1)]
