@@ -1954,6 +1954,40 @@ private theorem ne_zero_of_monic_fpoly
   rw [hlead_zero] at hlead_one
   exact zmod64_one_ne_zero_of_prime hp hlead_one.symm
 
+/-- A monic prime-field polynomial has unit scalar `1` under `normalizeMonic`:
+the recorded leading coefficient is `1`, matching the leading coefficient of
+the input. Companion to `normalizeMonic_eq_self_of_monic`. -/
+private theorem normalizeMonic_fst_eq_one_of_monic
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (hmonic : DensePoly.Monic f) :
+    (normalizeMonic f).1 = 1 := by
+  have hzero : f.isZero = false := by
+    cases hz : f.isZero with
+    | false => rfl
+    | true =>
+        exfalso
+        have hf_zero : f = 0 := eq_zero_of_isZero_true f hz
+        have hlead : DensePoly.leadingCoeff f = (1 : ZMod64 p) := hmonic
+        rw [hf_zero, DensePoly.leadingCoeff_zero] at hlead
+        exact zmod64_one_ne_zero_of_prime hp hlead.symm
+  rw [normalizeMonic_nonzero f hzero]
+  exact hmonic
+
+/-- `normalizeMonic` is transparent on an already-monic polynomial: the
+polynomial component of the split is the input unchanged. This lets downstream
+code collapse a normalized provider back to the raw polynomial whenever it has
+an explicit `DensePoly.Monic` hypothesis for that exact polynomial. -/
+private theorem normalizeMonic_eq_self_of_monic
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (hmonic : DensePoly.Monic f) :
+    (normalizeMonic f).2 = f := by
+  have hfst : (normalizeMonic f).1 = 1 :=
+    normalizeMonic_fst_eq_one_of_monic hp f hmonic
+  have hrec : DensePoly.C (normalizeMonic f).1 * (normalizeMonic f).2 = f :=
+    normalizeMonic_reconstruct hp f
+  rw [hfst] at hrec
+  have hC_one : DensePoly.C (1 : ZMod64 p) = (1 : FpPoly p) := rfl
+  rw [hC_one, one_mul] at hrec
+  exact hrec
+
 /-- Exact-quotient monicity: given a multiplicative factorization `q * b = a`
 with `a` and `b` both monic in `FpPoly p`, the quotient `q` is also monic.
 
