@@ -972,7 +972,7 @@ theorem mod_eq_divMod [One R] [Add R] [Sub R] [Mul R] [Div R]
   rfl
 
 /-- Zero has zero remainder for the executable division algorithm. -/
-theorem zero_mod_eq_zero_core {S : Type _}
+@[simp] theorem zero_mod_eq_zero_core {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S]
     (m : DensePoly S) :
     (0 : DensePoly S) % m = 0 := by
@@ -1140,7 +1140,7 @@ theorem div_mul_add_mod [One R] [Add R] [Sub R] [Mul R] [Div R] [DivModLaws R]
   simpa [DensePoly.div, DensePoly.mod] using divMod_spec p q
 
 /-- If `q ∣ p`, then `p % q = 0`. -/
-theorem mod_eq_zero_of_dvd [One R] [Add R] [Sub R] [Mul R] [Div R] [DivModLaws R]
+@[simp] theorem mod_eq_zero_of_dvd [One R] [Add R] [Sub R] [Mul R] [Div R] [DivModLaws R]
     (p q : DensePoly R) :
     q ∣ p → p % q = 0 := by
   exact DivModLaws.mod_eq_zero_of_dvd p q
@@ -1507,7 +1507,7 @@ theorem add_assoc_poly {S : Type _}
   rw [coeff_add q r n hzero_add]
   grind
 
-theorem add_zero_poly {S : Type _}
+@[grind =] theorem add_zero_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p : DensePoly S) :
     p + 0 = p := by
@@ -2302,7 +2302,7 @@ theorem mul_add_left_poly {S : Type _}
   rw [mul_comm_poly (p + q) r, mul_add_right_poly r p q,
     mul_comm_poly r p, mul_comm_poly r q]
 
-theorem mul_one_right_poly {S : Type _}
+@[grind =] theorem mul_one_right_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p : DensePoly S) :
     p * 1 = p := by
@@ -2491,7 +2491,7 @@ theorem monomial_one_mul_poly_eq_shift {S : Type _}
     rw [hzero_fold]
     rfl
 
-theorem neg_mul_right_poly {S : Type _}
+@[grind =] theorem neg_mul_right_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) :
     (0 - p) * q = 0 - p * q := by
@@ -2644,7 +2644,7 @@ private theorem ofCoeffs_subtractScaledShift_eq_sub_monomial_mul {S : Type _}
     rw [if_neg hand]
     grind
 
-theorem zero_mul {S : Type _}
+@[grind =] theorem zero_mul {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p : DensePoly S) :
     (0 : DensePoly S) * p = 0 := by
@@ -2654,7 +2654,7 @@ theorem zero_mul {S : Type _}
   simp [mulCoeffSum]
   rfl
 
-theorem zero_add {S : Type _}
+@[grind =] theorem zero_add {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p : DensePoly S) :
     (0 : DensePoly S) + p = p := by
