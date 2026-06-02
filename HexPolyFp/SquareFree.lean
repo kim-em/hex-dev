@@ -4606,6 +4606,61 @@ private theorem pthRoot_normalizeMonic_reconstruct_of_derivative_zero
   rw [pthRoot_normalizeMonic_frobenius_of_derivative_zero hp f hzero hdf]
   exact normalizeMonic_reconstruct hp f
 
+private theorem pow_normalized_pthRoot_reconstruct_of_derivative_zero
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity : Nat)
+    (hzero : f.isZero = false)
+    (hdf : (DensePoly.derivative f).isZero = true) :
+    pow (DensePoly.C (normalizeMonic f).1) multiplicity *
+        pow (pthRoot (normalizeMonic f).2) (multiplicity * p) =
+      pow f multiplicity := by
+  have hreconstruct :=
+    pthRoot_normalizeMonic_reconstruct_of_derivative_zero hp f hzero hdf
+  calc
+    pow (DensePoly.C (normalizeMonic f).1) multiplicity *
+        pow (pthRoot (normalizeMonic f).2) (multiplicity * p) =
+        pow (DensePoly.C (normalizeMonic f).1) multiplicity *
+          pow (pow (pthRoot (normalizeMonic f).2) p) multiplicity := by
+          rw [pow_pow_mul']
+    _ = pow (DensePoly.C (normalizeMonic f).1 *
+          pow (pthRoot (normalizeMonic f).2) p) multiplicity := by
+          exact (pow_mul_base
+            (DensePoly.C (normalizeMonic f).1)
+            (pow (pthRoot (normalizeMonic f).2) p)
+            multiplicity).symm
+    _ = pow f multiplicity := by
+          rw [hreconstruct]
+
+private theorem derivative_active_normalized_tail_weighted_product_bridge
+    (hp : Hex.Nat.Prime p) (f tail contribution : FpPoly p)
+    (multiplicity fuel : Nat)
+    (hzero : tail.isZero = false)
+    (hdf : (DensePoly.derivative tail).isZero = true)
+    (htail :
+      squareFreeAuxRevContribution (pthRoot (normalizeMonic tail).2)
+          (multiplicity * p) fuel =
+        pow (pthRoot (normalizeMonic tail).2) (multiplicity * p))
+    (hproduct : contribution * pow tail multiplicity = pow f multiplicity) :
+    contribution *
+        (pow (DensePoly.C (normalizeMonic tail).1) multiplicity *
+          squareFreeAuxRevContribution (pthRoot (normalizeMonic tail).2)
+            (multiplicity * p) fuel) =
+      pow f multiplicity := by
+  have htail_pow :=
+    pow_normalized_pthRoot_reconstruct_of_derivative_zero
+      hp tail multiplicity hzero hdf
+  calc
+    contribution *
+        (pow (DensePoly.C (normalizeMonic tail).1) multiplicity *
+          squareFreeAuxRevContribution (pthRoot (normalizeMonic tail).2)
+            (multiplicity * p) fuel) =
+        contribution *
+          (pow (DensePoly.C (normalizeMonic tail).1) multiplicity *
+            pow (pthRoot (normalizeMonic tail).2) (multiplicity * p)) := by
+          rw [htail]
+    _ = contribution * pow tail multiplicity := by
+          rw [htail_pow]
+    _ = pow f multiplicity := hproduct
+
 private theorem pthRoot_size_of_derivative_zero
     (hp : Hex.Nat.Prime p) (f : FpPoly p)
     (hzero : f.isZero = false)
