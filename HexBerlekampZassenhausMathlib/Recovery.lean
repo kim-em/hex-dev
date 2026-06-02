@@ -841,6 +841,88 @@ noncomputable def selectedFactorArraysOfSupports
     (fun members => selectedFactorsOfMembers liftedFactors members)).toArray
 
 /--
+Convert a proof-side lifted-subset representation into the exact modular
+product equality consumed by the Mignotte recovery wrapper, once the executable
+selected-factor array has been identified with that lifted subset's product.
+-/
+theorem productCongruence_of_representsIntegerFactorAtLift
+    {core : Hex.ZPoly} {d : Hex.LiftData} {selected : Array Hex.ZPoly}
+    {expectedFactor : Hex.ZPoly} {S : LiftedFactorSubset d}
+    (hselected_product :
+      Array.polyProduct selected = liftedFactorProduct d S)
+    (hrep : RepresentsIntegerFactorAtLift core d expectedFactor S) :
+    Hex.ZPoly.reduceModPow
+        (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core)
+          (Array.polyProduct selected)) d.p d.k =
+      Hex.ZPoly.reduceModPow expectedFactor d.p d.k := by
+  unfold RepresentsIntegerFactorAtLift scaledLiftedFactorProduct at hrep
+  rw [hselected_product]
+  exact hrep
+
+/--
+Indexed form of `productCongruence_of_representsIntegerFactorAtLift`.
+Callers provide, for each expected indicator, the proof-side lifted subset
+selected by the canonical class plus its `RepresentsIntegerFactorAtLift`
+certificate; this theorem returns the `hproduct` family expected by
+`ofMignottePrecision...`.
+-/
+theorem productCongruencesOfSelectedRepresentations
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (expectedIndicators : Array (Array Int))
+    (selectedFactors : Array (Array Hex.ZPoly))
+    (expectedFactors : Array Hex.ZPoly)
+    (supportSubsets : Array (LiftedFactorSubset d))
+    (hselected_product :
+      ∀ i, i < expectedIndicators.size →
+        Array.polyProduct (selectedFactors.getD i #[]) =
+          liftedFactorProduct d (supportSubsets.getD i ∅))
+    (hrep :
+      ∀ i, i < expectedIndicators.size →
+        RepresentsIntegerFactorAtLift core d (expectedFactors.getD i 0)
+          (supportSubsets.getD i ∅)) :
+    ∀ i, i < expectedIndicators.size →
+      Hex.ZPoly.reduceModPow
+          (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core)
+            (Array.polyProduct (selectedFactors.getD i #[])))
+          d.p d.k =
+        Hex.ZPoly.reduceModPow (expectedFactors.getD i 0) d.p d.k := by
+  intro i hi
+  exact productCongruence_of_representsIntegerFactorAtLift
+    (hselected_product i hi) (hrep i hi)
+
+/--
+Canonical-support specialisation of the per-class Mignotte product bridge.
+It targets `selectedFactorArraysOfSupports` directly, matching the hypothesis
+surface of
+`factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound`.
+-/
+theorem productCongruencesOfCanonicalSupportRepresentations
+    {core : Hex.ZPoly} {d : Hex.LiftData} {r : Nat}
+    (trueSupports : Set (Set (Fin r)))
+    (expectedFactors : Array Hex.ZPoly)
+    (supportSubsets : Array (LiftedFactorSubset d))
+    (hselected_product :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        Array.polyProduct
+            ((selectedFactorArraysOfSupports d.liftedFactors trueSupports).getD i #[]) =
+          liftedFactorProduct d (supportSubsets.getD i ∅))
+    (hrep :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        RepresentsIntegerFactorAtLift core d (expectedFactors.getD i 0)
+          (supportSubsets.getD i ∅)) :
+    ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+      Hex.ZPoly.reduceModPow
+          (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core)
+            (Array.polyProduct
+              ((selectedFactorArraysOfSupports d.liftedFactors trueSupports).getD i #[])))
+          d.p d.k =
+        Hex.ZPoly.reduceModPow (expectedFactors.getD i 0) d.p d.k :=
+  productCongruencesOfSelectedRepresentations
+    (expectedIndicatorArrayOfSupports trueSupports)
+    (selectedFactorArraysOfSupports d.liftedFactors trueSupports)
+    expectedFactors supportSubsets hselected_product hrep
+
+/--
 The canonical support-driven indicators select the corresponding canonical
 lifted-factor arrays, one support class at a time.
 -/
@@ -1801,6 +1883,38 @@ theorem FactorFastCapLiftAnalyticComparison.ofBridgeData
       trueSupports hcut bridge hp hlt)
 
 /--
+Actual-cap bad-vector contradiction from the named cap-lift analytic
+comparison package.
+
+This is the `factorFastCapLiftData`-specialized form of the generic
+`ExecutableBadVectorWitness.no_bhks_bad_setup_at_factorFastPrecisionCap`
+wrapper from `TerminationBound.lean`: callers that have already produced
+`FactorFastCapLiftAnalyticComparison` no longer need to project the raw
+Hadamard/l2norm inequality before eliminating an executable bad-vector setup.
+-/
+theorem no_bhks_bad_setup_of_factorFastCapLiftAnalyticComparison
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (h_bad :
+      ExecutableBadVectorWitness.IsBhksBadVectorSetup
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H))
+    (hp : 0 < (factorFastCapLiftData f primeData).p)
+    (hcomparison :
+      FactorFastCapLiftAnalyticComparison
+        f primeData rows_pos localFactorIndex localFactorDegree H) :
+    False :=
+  ExecutableBadVectorWitness.no_bhks_bad_setup_at_factorFastPrecisionCap
+    (badVectorWitnessOfFactorFastCapLiftData
+      f primeData rows_pos localFactorIndex localFactorDegree H)
+    C hC_nonneg hC h_bad hp hcomparison.hadamard_l2norm_lt_divisor
+
+/--
 Cap-separation hypotheses for the actual `factorFast` cap lift, assembled from
 the landed bridge package and the named cap-lift analytic comparison package.
 -/
@@ -2074,6 +2188,84 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecis
       trueSupports hcut bridge (by omega) hlt)
     hB_pos hchoose hp hk nondegenerate expectedFactors hsize hcandidate
     product_eq
+
+/--
+Variant of
+`factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecisionForCoeffBound`
+that internalizes the `1 ≤ Hex.factorFastPrecisionCap f` side condition via
+`HexBerlekampZassenhausMathlib.one_le_factorFastPrecisionCap`.  All other
+hypotheses are passed through unchanged.
+-/
+theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecisionForCoeffBound_internalCapPositive
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (hcap_le :
+      Hex.factorFastPrecisionCap (Hex.normalizeForFactor f).squareFreeCore ≤
+        (factorFastCapLiftData f primeData).k)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (hcut :
+      CutProjectionHypotheses
+        (projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          rows_pos)
+        trueSupports)
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    (hcomparison :
+      FactorFastCapLiftAnalyticComparison
+        f primeData rows_pos localFactorIndex localFactorDegree H)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
+    (hp : 2 ≤ (factorFastCapLiftData f primeData).p)
+    (hk :
+      (factorFastCapLiftData f primeData).k =
+        Hex.precisionForCoeffBound
+          (Hex.factorFastPrecisionCap
+            (Hex.normalizeForFactor f).squareFreeCore)
+          (factorFastCapLiftData f primeData).p)
+    (nondegenerate :
+      Hex.bhksDegenerateIndicatorPartition
+          (projectedRowsOfLiftData
+            (Hex.normalizeForFactor f).squareFreeCore
+            (factorFastCapLiftData f primeData)
+            rows_pos)
+          (expectedIndicatorArrayOfSupports trueSupports) = false)
+    (expectedFactors : Array Hex.ZPoly)
+    (hsize : expectedFactors.size =
+      (expectedIndicatorArrayOfSupports trueSupports).size)
+    (hcandidate :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        ∃ quotient,
+          Hex.bhksIndicatorCandidate?
+              (Hex.normalizeForFactor f).squareFreeCore
+              (factorFastCapLiftData f primeData)
+              ((expectedIndicatorArrayOfSupports trueSupports).getD i #[]) =
+            some (expectedFactors.getD i 0, quotient))
+    (product_eq :
+      Array.polyProduct expectedFactors =
+        (Hex.normalizeForFactor f).squareFreeCore) :
+    Hex.factorFast f ≠ none :=
+  factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecisionForCoeffBound
+    f primeData rows_pos trueSupports localFactorIndex localFactorDegree H
+    hcap_le C hC_nonneg hC hcut bridge
+    hcomparison.hadamard_l2norm_lt_divisor
+    (one_le_factorFastPrecisionCap f)
+    hchoose hp hk nondegenerate expectedFactors hsize hcandidate product_eq
 
 /--
 Variant of
@@ -2422,8 +2614,7 @@ theorem factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsA
       hclass_nonempty hclass_bounds)
     hproduct
 
-/--
-Canonical-support recovery inputs at the `factorFast` cap lift.
+/-- Canonical-support recovery inputs at the `factorFast` cap lift.
 
 Bundles every hypothesis consumed by the canonical-support recovery wrapper
 `factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound`
@@ -2597,6 +2788,83 @@ theorem factorFast_ne_none_of_canonicalRecoveryInputs
     hB_pos hchoose hp hk inputs.projected_nonempty inputs.classes_two
     inputs.class_nonempty inputs.class_bounds inputs.expectedFactors
     inputs.hf_ne_zero inputs.expected_true_factors inputs.product_congr
+
+/--
+Variant of
+`factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound`
+that internalizes the `1 ≤ Hex.factorFastPrecisionCap f` side condition via
+`HexBerlekampZassenhausMathlib.one_le_factorFastPrecisionCap`, which holds
+unconditionally for every `f`. Removing this argument trims the final
+assembly surface for the public `factorFast_terminates` theorem.
+-/
+theorem factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound_internalCapPositive
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (lattice_eq_indicators :
+      BHKS.projectedRowSpanInt
+          (projectedRowsOfLiftData
+            (Hex.normalizeForFactor f).squareFreeCore
+            (factorFastCapLiftData f primeData)
+            rows_pos) =
+        BHKS.trueFactorIndicatorLattice trueSupports)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
+    (hp : 2 ≤ (factorFastCapLiftData f primeData).p)
+    (hk :
+      (factorFastCapLiftData f primeData).k =
+        Hex.precisionForCoeffBound
+          (Hex.factorFastPrecisionCap
+            (Hex.normalizeForFactor f).squareFreeCore)
+          (factorFastCapLiftData f primeData).p)
+    (hprojected_nonempty :
+      (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).projectedRows.isEmpty = false)
+    (hclasses_two :
+      2 ≤ (supportPartitionByMinColumn trueSupports).length)
+    (hclass_nonempty :
+      ∀ members, members ∈ supportPartitionByMinColumn trueSupports →
+        ∃ j, j ∈ members)
+    (hclass_bounds :
+      ∀ members, members ∈ supportPartitionByMinColumn trueSupports →
+        ∀ j, j ∈ members →
+          j < (factorFastCapLiftData f primeData).liftedFactors.size)
+    (expectedFactors : Array Hex.ZPoly)
+    (hf_ne_zero : (Hex.normalizeForFactor f).squareFreeCore ≠ 0)
+    (htrue :
+      ForwardRecoveryInputs.ExpectedTrueFactors
+        (Hex.normalizeForFactor f).squareFreeCore
+        (expectedIndicatorArrayOfSupports trueSupports) expectedFactors)
+    (hproduct :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        Hex.ZPoly.reduceModPow
+            (Hex.DensePoly.scale
+              (Hex.DensePoly.leadingCoeff
+                (Hex.normalizeForFactor f).squareFreeCore)
+              (Array.polyProduct
+                ((ForwardRecoveryInputs.selectedFactorArraysOfSupports
+                  (factorFastCapLiftData f primeData).liftedFactors
+                  trueSupports).getD i #[])))
+            (factorFastCapLiftData f primeData).p
+            (factorFastCapLiftData f primeData).k =
+          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0)
+            (factorFastCapLiftData f primeData).p
+            (factorFastCapLiftData f primeData).k) :
+    Hex.factorFast f ≠ none :=
+  factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound
+    f primeData rows_pos trueSupports lattice_eq_indicators
+    (one_le_factorFastPrecisionCap f)
+    hchoose hp hk hprojected_nonempty hclasses_two
+    hclass_nonempty hclass_bounds expectedFactors hf_ne_zero htrue hproduct
 
 /--
 Bridge-data form of
