@@ -2851,6 +2851,33 @@ theorem factorFast_ne_none_of_canonicalRecoveryInputs
     inputs.hf_ne_zero inputs.expected_true_factors inputs.product_congr
 
 /--
+Variant of `factorFast_ne_none_of_canonicalRecoveryInputs` that internalizes
+the two easy executable side conditions: cap positivity and the selected
+prime lower bound.  This is the narrowest packaged canonical-recovery surface
+for the eventual public `factorFast_terminates` assembly: callers provide the
+prime-choice equation, the executable precision equation, and the mathematical
+`CanonicalRecoveryInputs` package.
+-/
+theorem factorFast_ne_none_of_canonicalRecoveryInputs_internalCapPositiveAndPrimeLowerBound
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
+    (hk :
+      (factorFastCapLiftData f primeData).k =
+        Hex.precisionForCoeffBound
+          (Hex.factorFastPrecisionCap
+            (Hex.normalizeForFactor f).squareFreeCore)
+          (factorFastCapLiftData f primeData).p)
+    (inputs : CanonicalRecoveryInputs f primeData) :
+    Hex.factorFast f ≠ none :=
+  factorFast_ne_none_of_canonicalRecoveryInputs
+    f primeData
+    (one_le_factorFastPrecisionCap f)
+    hchoose
+    (Hex.choosePrimeData?_prime _ _ hchoose).two_le
+    hk inputs
+
+/--
 Variant of
 `factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound`
 that internalizes the `1 ≤ Hex.factorFastPrecisionCap f` side condition via
