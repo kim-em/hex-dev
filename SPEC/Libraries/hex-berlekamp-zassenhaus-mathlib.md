@@ -57,6 +57,30 @@ Mathlib's) are propositionally identical when phrased over the
 respective unit predicates; the bridge unfolds both sides and
 rewrites `IsUnit` and `(· * ·)` through `toPolynomial`.
 
+**Correctness of the executable checker.** The biconditional linking
+the Mathlib-free `isIrreducible` *checker* to the `Irreducible`
+*class* lives here, not in `hex-berlekamp-zassenhaus`, because it is
+equivalent to the full forward correctness of `factor` (Group C; see
+that library's §`Mathlib-free Hex.ZPoly.Irreducible class` for why a
+Mathlib-free file cannot state it):
+
+```lean
+theorem Hex.ZPoly.isIrreducible_iff (f : ZPoly) :
+    Hex.ZPoly.isIrreducible f = true ↔ Hex.ZPoly.Irreducible f
+
+instance (f : ZPoly) : Decidable (Hex.ZPoly.Irreducible f) :=
+  decidable_of_iff _ (Hex.ZPoly.isIrreducible_iff f)
+```
+
+The forward direction follows from C1 (`factor f` is the irreducible
+factorisation): a single primitive unit-scalar factor of multiplicity
+one is `f` itself up to a unit, and completeness of `factor` rules out
+any finer decomposition. The backward direction is the converse. The
+constant case reduces to `Nat.Prime` decidability. This is the only
+route to `decide`-ing `Hex.ZPoly.Irreducible` for concrete inputs;
+Mathlib-free consumers (e.g. `HexNumberField`) must instead thread
+`[Hex.ZPoly.Irreducible p]` as an instance argument.
+
 Also connects to Mathlib's `Polynomial ℤ` and provides
 `Decidable (Irreducible f)` for `f : Polynomial ℤ`.
 

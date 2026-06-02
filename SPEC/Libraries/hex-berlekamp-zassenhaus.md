@@ -176,14 +176,33 @@ def isIrreducible (f : ZPoly) : Bool :=
     φ.factors.size == 1 &&
     decide ((φ.factors.get! 0).snd = 1)
 
-theorem isIrreducible_iff (f : ZPoly) :
-    isIrreducible f = true ↔ Irreducible f
-
-instance (f : ZPoly) : Decidable (Irreducible f) :=
-  decidable_of_iff _ (isIrreducible_iff f)
-
 end Hex.ZPoly
 ```
+
+This library provides the `Irreducible` *class* and the executable
+`isIrreducible` *checker* only. It deliberately does **not** state
+`isIrreducible f = true ↔ Irreducible f`, nor derive
+`Decidable (Irreducible f)` from it.
+
+The reason is a library-layering fact, not an oversight: that
+biconditional is logically equivalent to the full forward
+correctness of `factor` (its forward direction asserts the checker's
+single-factor verdict implies genuine irreducibility — i.e. `factor`
+found *every* factor; its backward direction asserts an irreducible
+input yields exactly one factor). That correctness is the Group A/B/C
+capstone, and the SPEC assigns those proofs to the Mathlib bridge
+(they cite `Polynomial.UniqueFactorizationMonoid`, `hensels_lemma`,
+and `Polynomial.Gauss`; see `Slow-path correctness sketch (in-bridge
+proof)` and the Group C obligations below). A Mathlib-free file
+cannot import the bridge, so the biconditional cannot be proved here.
+
+Therefore `Hex.ZPoly.isIrreducible_iff` and the
+`Decidable (Hex.ZPoly.Irreducible f)` instance it backs live in
+`hex-berlekamp-zassenhaus-mathlib`. This library exposes the class
+(so downstream Mathlib-free APIs such as `NumberField.Inv` can take
+`[Hex.ZPoly.Irreducible p]` as an instance argument) and the
+executable checker (pure computation, no proof obligation); it does
+not claim the checker is *correct*.
 
 `Irreducible 0 = False` is explicit by the `not_zero` clause; the
 boolean checker returns `false` on zero input. The constant-case
@@ -423,7 +442,7 @@ B9. **Conditional correctness of `factorFast`.** `factorFast f = some gs ⟹ gs 
 C1. **`factor` unconditional correctness.** `factor f = irreducibleFactorisationOf f`.
     *Sketch:* `factor f` unfolds to `factorWithBound f (defaultFactorCoeffBound f) = (factorFastWithBound f B₀).getD (factorSlowWithBound f B₀)` for `B₀ := defaultFactorCoeffBound f`. Case analysis on the fast attempt at bound `B₀`: when it returns `some gs`, B9 (specialised to the bounded variant) gives the irreducible factorisation; when it returns `none`, A5 (via A4 squarefree-core) gives `factorSlowWithBound f B₀ = irreducibleFactorisationOf f`. The unboundedly-correct entry point `factorFast f := factorFastWithBound f (factorFastPrecisionCap f)` is not on `factor`'s correctness path; its conditional-correctness theorem is a separate Group B obligation (B9 above).
 
-C2. **Public-API contracts** (`factor_product_of_bound`, `checkIrreducibleCert_sound`, `Decidable (Irreducible f)`) follow from C1.
+C2. **Public-API contracts** (`factor_product_of_bound`, `checkIrreducibleCert_sound`, `Hex.ZPoly.isIrreducible_iff`, and the `Decidable (Hex.ZPoly.Irreducible f)` instance it backs) follow from C1. Like C1 itself, these are bridge-side and are stated in `hex-berlekamp-zassenhaus-mathlib` (the Mathlib-free library provides only the `Irreducible` class and the `isIrreducible` checker — see the §`Mathlib-free Hex.ZPoly.Irreducible class`).
 
 The conditional correctness contract `factor_product_of_bound`:
 ```lean

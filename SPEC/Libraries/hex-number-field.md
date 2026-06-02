@@ -112,9 +112,16 @@ instance [Hex.ZPoly.Irreducible p] : Field (NumberField p x) := ...
 ```
 
 Users with a specific irreducibility proof `h : Hex.ZPoly.Irreducible
-myPoly` register it once via `haveI := h` (or `decide` for concrete
-polynomials), and `x⁻¹` notation works on subsequent `NumberField myPoly y`
-values.
+myPoly` register it once via `haveI := h`, and `x⁻¹` notation works on
+subsequent `NumberField myPoly y` values. Discharging the instance by
+`decide` requires the `Decidable (Hex.ZPoly.Irreducible f)` instance,
+which is Mathlib-grade (it is backed by `Hex.ZPoly.isIrreducible_iff`,
+equivalent to full `factor` correctness) and so lives in
+`hex-berlekamp-zassenhaus-mathlib`. The `decide` shortcut is therefore
+available only when that bridge is imported — i.e. in
+`HexNumberFieldMathlib`, not in this Mathlib-free library. Here the
+instance must be supplied as a threaded `[Hex.ZPoly.Irreducible p]`
+argument.
 
 Numerical evaluation uses the threading pattern from `hex-roots.md`:
 
