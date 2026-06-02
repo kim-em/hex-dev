@@ -6152,6 +6152,35 @@ private theorem yunFactorsContributionWithLevel_residual_derivative_zero_of_deri
     yunFactorsContributionResidualDerivativeZero_of_derivative_split
       hp f level fuel hfuel hzero hdf hstate
 
+private theorem squareFreeAuxRevResidualSatisfied_of_invariant
+    (residualInvariant :
+      ∀ f : FpPoly p, ∀ multiplicity fuel : Nat,
+        (DensePoly.derivative f).isZero = false →
+          squareFreeAuxRevResidualSatisfied f multiplicity fuel)
+    (f : FpPoly p) (multiplicity fuel : Nat) :
+    squareFreeAuxRevResidualSatisfied f multiplicity fuel := by
+  induction fuel generalizing f multiplicity with
+  | zero =>
+      simp only [squareFreeAuxRevResidualSatisfied]
+  | succ fuel ih =>
+      by_cases hzero : f.isZero = true
+      · simp only [squareFreeAuxRevResidualSatisfied]
+        rw [if_pos hzero]
+        exact trivial
+      · have hzero_false : f.isZero = false := by
+          cases h : f.isZero
+          · rfl
+          · exact False.elim (hzero h)
+        by_cases hdf : (DensePoly.derivative f).isZero = true
+        · simp only [squareFreeAuxRevResidualSatisfied]
+          rw [if_neg (by simp [hzero_false]), if_pos hdf]
+          exact ih (pthRoot f) (multiplicity * p)
+        · have hdf_false : (DensePoly.derivative f).isZero = false := by
+            cases h : (DensePoly.derivative f).isZero
+            · rfl
+            · exact False.elim (hdf h)
+          exact residualInvariant f multiplicity (fuel + 1) hdf_false
+
 /--
 Remaining assembly obligation for the derivative-active branch: the level-form
 Yun invariant identifies the local contribution and residual product, while
@@ -6164,6 +6193,10 @@ private theorem squareFreeAuxRevContribution_derivative_active_pow_obligation
     (hdf : (DensePoly.derivative f).isZero = false)
     (_hreachable : squareFreeContributionReachable f)
     (_hresidual : squareFreeAuxRevResidualSatisfied f multiplicity (fuel + 1))
+    (residualInvariant :
+      ∀ f : FpPoly p, ∀ multiplicity fuel : Nat,
+        (DensePoly.derivative f).isZero = false →
+          squareFreeAuxRevResidualSatisfied f multiplicity fuel)
     (_hstate :
       ∀ f' c w : FpPoly p, ∀ fuel : Nat,
         yunFactorsDerivativeActiveReachable hp f' c w fuel →
@@ -6316,33 +6349,33 @@ private theorem squareFreeAuxRevContribution_derivative_active_pow_obligation
           pow (pthRoot contribution.2) (multiplicity * p) :=
       ih (pthRoot contribution.2) (multiplicity * p)
         hmultiplicity_tail htail_valid.2.2 htail_valid.2.1 htail_valid.1 htail_residual
-    have htail_pow :
-        pow (pthRoot contribution.2) (multiplicity * p) =
-          pow contribution.2 multiplicity :=
-      pthRoot_pow_mul_prime_of_derivative_zero
-        hp contribution.2 multiplicity hmultiplicity htail_nonzero htail_derivative
-    calc
-      contribution.1 *
-          squareFreeAuxRevContribution (pthRoot contribution.2) (multiplicity * p) fuel =
-          contribution.1 * pow (pthRoot contribution.2) (multiplicity * p) := by
-            rw [htail_correct]
-      _ = contribution.1 * pow contribution.2 multiplicity := by
-            rw [htail_pow]
-      _ = contribution.1 *
-          (pow (DensePoly.C (normalizeMonic contribution.2).1) multiplicity *
-            pow (pthRoot (normalizeMonic contribution.2).2) (multiplicity * p)) := by
-            rw [pow_normalized_pthRoot_reconstruct_of_derivative_zero
-              hp contribution.2 multiplicity htail_nonzero htail_derivative]
-      _ = pow f multiplicity := by
-            rw [pow_normalized_pthRoot_reconstruct_of_derivative_zero
-              hp contribution.2 multiplicity htail_nonzero htail_derivative]
-            exact hpow_contribution
+    have htail_normalized_residual :
+        squareFreeAuxRevResidualSatisfied
+          (pthRoot (normalizeMonic contribution.2).2) (multiplicity * p) fuel :=
+      squareFreeAuxRevResidualSatisfied_of_invariant residualInvariant
+        (pthRoot (normalizeMonic contribution.2).2) (multiplicity * p) fuel
+    have htail_normalized_correct :
+        squareFreeAuxRevContribution (pthRoot (normalizeMonic contribution.2).2)
+            (multiplicity * p) fuel =
+          pow (pthRoot (normalizeMonic contribution.2).2) (multiplicity * p) :=
+      ih (pthRoot (normalizeMonic contribution.2).2) (multiplicity * p)
+        hmultiplicity_tail htail_normalized_valid.2.2 htail_normalized_valid.2.1
+        htail_normalized_valid.1 htail_normalized_residual
+    exact
+      derivative_active_raw_tail_weighted_product_bridge_via_normalized
+        hp f contribution.2 contribution.1 multiplicity fuel hmultiplicity
+        htail_nonzero htail_derivative htail_correct htail_normalized_correct
+        hpow_contribution
 
 private theorem squareFreeAuxRevContribution_correct_pow_of_nonzero
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
     (hmultiplicity : 0 < multiplicity) (hfuel : f.size < fuel)
     (hzero : f.isZero = false)
     (hreachable : squareFreeContributionReachable f)
+    (residualInvariant :
+      ∀ f : FpPoly p, ∀ multiplicity fuel : Nat,
+        (DensePoly.derivative f).isZero = false →
+          squareFreeAuxRevResidualSatisfied f multiplicity fuel)
     (hresidual : squareFreeAuxRevResidualSatisfied f multiplicity fuel)
     (hstate :
       ∀ f' c w : FpPoly p, ∀ fuel : Nat,
@@ -6396,7 +6429,8 @@ private theorem squareFreeAuxRevContribution_correct_pow_of_nonzero
           cases h : (DensePoly.derivative f).isZero <;> simp [h] at hdf ⊢
         simpa [squareFreeAuxRevContribution, hzero, hdf_false] using
           squareFreeAuxRevContribution_derivative_active_pow_obligation
-            hp f multiplicity fuel hmultiplicity hfuel hzero hdf_false hreachable hresidual hstate ih
+            hp f multiplicity fuel hmultiplicity hfuel hzero hdf_false hreachable hresidual
+            residualInvariant hstate ih
 
 private theorem yunFactorsWithLevel_factor_mem_acc_or_dvd_current
     [ZMod64.PrimeModulus p]
@@ -7871,6 +7905,10 @@ private theorem squareFreeAuxRev_factors_squareFree
 private theorem squareFreeAuxRevContribution_correct
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (hzero : f.isZero = false)
     (hreachable : squareFreeContributionReachable f)
+    (residualInvariant :
+      ∀ f : FpPoly p, ∀ multiplicity fuel : Nat,
+        (DensePoly.derivative f).isZero = false →
+          squareFreeAuxRevResidualSatisfied f multiplicity fuel)
     (hresidual : squareFreeAuxRevResidualSatisfied f 1 (f.size + 1))
     (hstate :
       ∀ f' c w : FpPoly p, ∀ fuel : Nat,
@@ -7881,7 +7919,7 @@ private theorem squareFreeAuxRevContribution_correct
                 w.isZero = false) :
     squareFreeAuxRevContribution f 1 (f.size + 1) = f := by
   rw [squareFreeAuxRevContribution_correct_pow_of_nonzero hp f 1 (f.size + 1)
-    (by omega) (by omega) hzero hreachable hresidual hstate]
+    (by omega) (by omega) hzero hreachable residualInvariant hresidual hstate]
   exact pow_one f
 
 private theorem squareFreeAux_zero_weightedProduct
@@ -7905,6 +7943,10 @@ def squareFreeDecomposition (hp : Hex.Nat.Prime p) (f : FpPoly p) : SquareFreeDe
 private theorem squareFreeAux_weightedProduct_nonzero
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (hzero : f.isZero = false)
     (hreachable : squareFreeContributionReachable f)
+    (residualInvariant :
+      ∀ f : FpPoly p, ∀ multiplicity fuel : Nat,
+        (DensePoly.derivative f).isZero = false →
+          squareFreeAuxRevResidualSatisfied f multiplicity fuel)
     (hresidual : squareFreeAuxRevResidualSatisfied f 1 (f.size + 1))
     (hstate :
       ∀ f' c w : FpPoly p, ∀ fuel : Nat,
@@ -7918,7 +7960,7 @@ private theorem squareFreeAux_weightedProduct_nonzero
   have hinvariant := squareFreeAuxRev_reconstruction_invariant f 1 (f.size + 1) []
   rw [hinvariant]
   simp [weightedProduct_nil]
-  exact squareFreeAuxRevContribution_correct hp f hzero hreachable hresidual hstate
+  exact squareFreeAuxRevContribution_correct hp f hzero hreachable residualInvariant hresidual hstate
 
 /--
 Normalized gcd monicity for the Yun derivative-active transition. Whenever the
@@ -8071,35 +8113,6 @@ theorem squareFree_pairwise_coprime (hp : Hex.Nat.Prime p)
     (Nat.lt_succ_self _)
     (normalizeMonic_squareFreeContributionReachable hp f)
 
-private theorem squareFreeAuxRevResidualSatisfied_of_invariant
-    (residualInvariant :
-      ∀ f : FpPoly p, ∀ multiplicity fuel : Nat,
-        (DensePoly.derivative f).isZero = false →
-          squareFreeAuxRevResidualSatisfied f multiplicity fuel)
-    (f : FpPoly p) (multiplicity fuel : Nat) :
-    squareFreeAuxRevResidualSatisfied f multiplicity fuel := by
-  induction fuel generalizing f multiplicity with
-  | zero =>
-      simp only [squareFreeAuxRevResidualSatisfied]
-  | succ fuel ih =>
-      by_cases hzero : f.isZero = true
-      · simp only [squareFreeAuxRevResidualSatisfied]
-        rw [if_pos hzero]
-        exact trivial
-      · have hzero_false : f.isZero = false := by
-          cases h : f.isZero
-          · rfl
-          · exact False.elim (hzero h)
-        by_cases hdf : (DensePoly.derivative f).isZero = true
-        · simp only [squareFreeAuxRevResidualSatisfied]
-          rw [if_neg (by simp [hzero_false]), if_pos hdf]
-          exact ih (pthRoot f) (multiplicity * p)
-        · have hdf_false : (DensePoly.derivative f).isZero = false := by
-            cases h : (DensePoly.derivative f).isZero
-            · rfl
-            · exact False.elim (hdf h)
-          exact residualInvariant f multiplicity (fuel + 1) hdf_false
-
 theorem squareFree_weightedProduct (hp : Hex.Nat.Prime p) (f : FpPoly p)
     (residualInvariant :
       ∀ f : FpPoly p, ∀ multiplicity fuel : Nat,
@@ -8125,7 +8138,7 @@ theorem squareFree_weightedProduct (hp : Hex.Nat.Prime p) (f : FpPoly p)
       squareFreeAuxRevResidualSatisfied_of_invariant residualInvariant
         (normalizeMonic f).2 1 ((normalizeMonic f).2.size + 1)
     rw [squareFreeAux_weightedProduct_nonzero hp (normalizeMonic f).2 hnonzero
-      (normalizeMonic_squareFreeContributionReachable hp f) hresidual hstate]
+      (normalizeMonic_squareFreeContributionReachable hp f) residualInvariant hresidual hstate]
     exact normalizeMonic_reconstruct hp f
 
 theorem squareFree_factors_squareFree (hp : Hex.Nat.Prime p) (f : FpPoly p) :
