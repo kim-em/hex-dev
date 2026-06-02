@@ -2090,6 +2090,93 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecis
     hchoose hp hk nondegenerate expectedFactors hsize hcandidate product_eq
 
 /--
+Variant of
+`factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecisionForCoeffBound`
+that internalises the `2 ≤ (factorFastCapLiftData f primeData).p` side
+condition.
+
+The lower bound is derived from `hchoose` via `Hex.choosePrimeData?_prime`
+and `Nat.Prime.two_le`, exploiting that `(factorFastCapLiftData f primeData).p`
+unfolds definitionally to `primeData.p`.  All other hypotheses are passed
+through unchanged.
+
+This is the canonical-indicators analogue of
+`factorFast_ne_none_of_capSeparationBridgeDataCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound_internalPrimeLowerBound`:
+the two internalisations target the indicator-side and support-side
+canonical capstones respectively and compose with the in-flight
+cap-positivity internalisation (PR #6364) on the final assembly path.
+-/
+theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecisionForCoeffBound_internalPrimeLowerBound
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (hcap_le :
+      Hex.factorFastPrecisionCap (Hex.normalizeForFactor f).squareFreeCore ≤
+        (factorFastCapLiftData f primeData).k)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (hcut :
+      CutProjectionHypotheses
+        (projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          rows_pos)
+        trueSupports)
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    (hcomparison :
+      FactorFastCapLiftAnalyticComparison
+        f primeData rows_pos localFactorIndex localFactorDegree H)
+    (hB_pos : 1 ≤ Hex.factorFastPrecisionCap f)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
+    (hk :
+      (factorFastCapLiftData f primeData).k =
+        Hex.precisionForCoeffBound
+          (Hex.factorFastPrecisionCap
+            (Hex.normalizeForFactor f).squareFreeCore)
+          (factorFastCapLiftData f primeData).p)
+    (nondegenerate :
+      Hex.bhksDegenerateIndicatorPartition
+          (projectedRowsOfLiftData
+            (Hex.normalizeForFactor f).squareFreeCore
+            (factorFastCapLiftData f primeData)
+            rows_pos)
+          (expectedIndicatorArrayOfSupports trueSupports) = false)
+    (expectedFactors : Array Hex.ZPoly)
+    (hsize : expectedFactors.size =
+      (expectedIndicatorArrayOfSupports trueSupports).size)
+    (hcandidate :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        ∃ quotient,
+          Hex.bhksIndicatorCandidate?
+              (Hex.normalizeForFactor f).squareFreeCore
+              (factorFastCapLiftData f primeData)
+              ((expectedIndicatorArrayOfSupports trueSupports).getD i #[]) =
+            some (expectedFactors.getD i 0, quotient))
+    (product_eq :
+      Array.polyProduct expectedFactors =
+        (Hex.normalizeForFactor f).squareFreeCore) :
+    Hex.factorFast f ≠ none :=
+  factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecisionForCoeffBound
+    f primeData rows_pos trueSupports localFactorIndex localFactorDegree H
+    hcap_le C hC_nonneg hC hcut bridge hcomparison hB_pos hchoose
+    (Hex.choosePrimeData?_prime _ _ hchoose).two_le
+    hk nondegenerate expectedFactors hsize hcandidate product_eq
+
+/--
 HO-4 leaf capstone: compose
 `ForwardRecoveryInputs.ofMignottePrecisionCanonicalIndicatorsExpectedFactorsAtPrecisionForCoeffBound`
 with `factorFast_ne_none_of_forwardInputs_at_cap`.
