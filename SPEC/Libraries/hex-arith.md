@@ -439,8 +439,8 @@ on `a`: base `0^p = 0`, step uses `add_pow_prime_mod` with `b = 1`.
 
 **Euclid's lemma:**
 ```lean
-theorem Nat.Prime.dvd_mul (hp : Nat.Prime p) (h : p ∣ a * b) :
-    p ∣ a ∨ p ∣ b
+theorem Nat.Prime.dvd_mul (hp : Nat.Prime p) :
+    p ∣ a * b ↔ p ∣ a ∨ p ∣ b
 ```
 Proof via extended GCD: if `p ∤ a` then `gcd(a, p) = 1`, Bezout gives
 `s * a + t * p = 1`, multiply by `b`, since `p ∣ a * b` conclude `p ∣ b`.

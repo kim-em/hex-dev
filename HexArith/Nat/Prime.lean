@@ -104,14 +104,20 @@ private theorem coprime_of_not_dvd {p a : Nat} (hp : Hex.Nat.Prime p)
     exact Nat.gcd_dvd_right p a
 
 /--
-Euclid's lemma for the local prime predicate: if a prime divides a product, it
-divides one of the factors.
+Euclid's lemma for the local prime predicate, in iff form: a prime divides a
+product iff it divides one of the factors.
 -/
-theorem dvd_mul {p a b : Nat} (hp : Hex.Nat.Prime p) (h : p ∣ a * b) :
-    p ∣ a ∨ p ∣ b := by
-  by_cases hb : p ∣ b
-  · exact Or.inr hb
-  · exact Or.inl ((coprime_of_not_dvd hp hb).dvd_of_dvd_mul_right h)
+theorem dvd_mul {p a b : Nat} (hp : Hex.Nat.Prime p) :
+    p ∣ a * b ↔ p ∣ a ∨ p ∣ b := by
+  constructor
+  · intro h
+    by_cases hb : p ∣ b
+    · exact Or.inr hb
+    · exact Or.inl ((coprime_of_not_dvd hp hb).dvd_of_dvd_mul_right h)
+  · intro h
+    cases h with
+    | inl ha => exact Nat.dvd_trans ha (Nat.dvd_mul_right a b)
+    | inr hb => exact Nat.dvd_trans hb (Nat.dvd_mul_left b a)
 
 end Prime
 
@@ -160,7 +166,7 @@ private theorem choose_prime_dvd_from_mul_identity {p k : Nat} (hp : Prime p)
           have hmul : p + 1 ∣ (k + 1) * choose (p + 1) (k + 1) := by
             rw [choose_succ_mul_eq]
             exact Nat.dvd_mul_right (p + 1) (choose p k)
-          rcases Prime.dvd_mul hp hmul with hdiv | hdiv
+          rcases (Prime.dvd_mul hp).mp hmul with hdiv | hdiv
           · exact False.elim (not_dvd_of_pos_lt hk hk' hdiv)
           · exact hdiv
 
