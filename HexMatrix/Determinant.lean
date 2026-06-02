@@ -12139,6 +12139,55 @@ private theorem det_plucker_three_term_nDet_of_lt_p1
         nDet B q p3 (Nat.lt_trans hq1 (Nat.lt_trans h12 h23)) = 0 :=
   nDet_plucker_four_row_canonical B q p1 p2 p3 hq1 h12 h23
 
+/-- Basis-vector case `q < p1` of the three-term Plucker identity:
+expanding `mDet B (basisVec q) p_i` via `mDet_basisVec_eq_signed_nDet_of_gt`
+(each `q < p_i`) reduces the goal to the raw q-before `nDet` kernel. -/
+private theorem det_plucker_three_term_basisVec_of_lt_p1_of_nDet
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n)
+    (q p1 p2 p3 : Fin (n + 2))
+    (hq1 : q.val < p1.val) (h12 : p1.val < p2.val) (h23 : p2.val < p3.val) :
+    mDet B (basisVec (R := R) q) p1 * nDet B p2 p3 h23 -
+      mDet B (basisVec (R := R) q) p2 *
+        nDet B p1 p3 (Nat.lt_trans h12 h23) +
+      mDet B (basisVec (R := R) q) p3 * nDet B p1 p2 h12 = 0 := by
+  have hraw := det_plucker_three_term_nDet_of_lt_p1 B q p1 p2 p3 hq1 h12 h23
+  rw [mDet_basisVec_eq_signed_nDet_of_gt B p1 q hq1]
+  rw [mDet_basisVec_eq_signed_nDet_of_gt B p2 q (Nat.lt_trans hq1 h12)]
+  rw [mDet_basisVec_eq_signed_nDet_of_gt B p3 q
+      (Nat.lt_trans hq1 (Nat.lt_trans h12 h23))]
+  grind
+
+/-- Basis-vector case `p1 < q < p2` of the three-term Plucker identity.
+The first expansion uses `mDet_basisVec_eq_signed_nDet_of_lt`; the latter two
+use `mDet_basisVec_eq_signed_nDet_of_gt`. The consecutive cofactor signs differ
+by a minus sign, leaving the raw q-between `nDet` kernel. -/
+private theorem det_plucker_three_term_basisVec_of_between_p1_p2_of_nDet
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n)
+    (p1 q p2 p3 : Fin (n + 2))
+    (h1q : p1.val < q.val) (hq2 : q.val < p2.val) (h23 : p2.val < p3.val) :
+    mDet B (basisVec (R := R) q) p1 * nDet B p2 p3 h23 -
+      mDet B (basisVec (R := R) q) p2 *
+        nDet B p1 p3 (Nat.lt_trans (Nat.lt_trans h1q hq2) h23) +
+      mDet B (basisVec (R := R) q) p3 *
+        nDet B p1 p2 (Nat.lt_trans h1q hq2) = 0 := by
+  have hraw :=
+    det_plucker_three_term_nDet_of_between_p1_p2 B p1 q p2 p3 h1q hq2 h23
+  rw [mDet_basisVec_eq_signed_nDet_of_lt B p1 q h1q]
+  rw [mDet_basisVec_eq_signed_nDet_of_gt B p2 q hq2]
+  rw [mDet_basisVec_eq_signed_nDet_of_gt B p3 q (Nat.lt_trans hq2 h23)]
+  have hrow :
+      (⟨q.val, by have := p3.isLt; omega⟩ : Fin (n + 1)) =
+        (⟨q.val - 1 + 1, by have := p3.isLt; omega⟩ : Fin (n + 1)) := by
+    apply Fin.ext
+    simp
+    omega
+  rw [hrow]
+  rw [cofactorSign_consecutive_last_neg (R := R) (q.val - 1)
+      (by have := p3.isLt; omega)]
+  grind
+
 /-- Basis-vector case `q > p3` of the universal three-term Plucker identity:
 expanding `mDet B (basisVec q) p_i` via `mDet_basisVec_eq_signed_nDet_of_lt`
 (each `q > p_i`) reduces the goal to a sign-aligned restatement of the
