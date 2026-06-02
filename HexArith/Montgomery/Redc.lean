@@ -150,14 +150,20 @@ theorem redc_m_spec (ctx : MontCtx p) (_Thi Tlo : UInt64) :
     m.toNat = (Tlo.toNat * ctx.p'.toNat) % UInt64.word := by
   simp [UInt64.toNat_mul, UInt64.word]
 
-/-- The carry pair `(c2, addHi)` represents the exact quotient `u`. -/
+/--
+The carry pair `(c2, addHi)` represents the exact quotient `u`, stated over the
+`(mhi, mlo)` pair returned by `UInt64.mulFull m p` rather than the split
+`(UInt64.mulHi m p, m * p)` view.
+-/
 theorem redc_u_spec (ctx : MontCtx p) (Thi Tlo : UInt64) :
     let m := Tlo * ctx.p'
-    let (_, c1) := UInt64.addCarry Tlo (m * p) false
-    let (addHi, c2) := UInt64.addCarry Thi (UInt64.mulHi m p) c1
+    let (mhi, mlo) := UInt64.mulFull m p
+    let (_, c1) := UInt64.addCarry Tlo mlo false
+    let (addHi, c2) := UInt64.addCarry Thi mhi c1
     addHi.toNat + c2.toNat * UInt64.word =
       (Tlo.toNat + Thi.toNat * UInt64.word + m.toNat * p.toNat) / UInt64.word := by
   intro m
+  rw [UInt64.mulFull_eq_mulHi_mul]
   cases hlow_pair : UInt64.addCarry Tlo (m * p) false with
   | mk lo c1 =>
       have hlow : lo.toNat = 0 ∧
@@ -199,8 +205,6 @@ theorem redc_sub_spec (ctx : MontCtx p) (Thi Tlo : UInt64)
     (redc ctx Thi Tlo).toNat =
       redcNat p.toNat ctx.p'.toNat (Tlo.toNat + Thi.toNat * UInt64.word) := by
   let m := Tlo * ctx.p'
-  have hfull : UInt64.mulFull m p = (UInt64.mulHi m p, m * p) :=
-    UInt64.mulFull_eq_mulHi_mul m p
   have hTmod :
       (Tlo.toNat + Thi.toNat * UInt64.word) % UInt64.word = Tlo.toNat := by
     have hTlo : Tlo.toNat < UInt64.word := by
@@ -223,59 +227,60 @@ theorem redc_sub_spec (ctx : MontCtx p) (Thi Tlo : UInt64)
           | (addHi, c2) =>
             if c2 then addHi - p else if addHi ≥ p then addHi - p else addHi).toNat =
       redcNat p.toNat ctx.p'.toNat (Tlo.toNat + Thi.toNat * UInt64.word)
-  rw [hfull]
-  cases hlow_pair : UInt64.addCarry Tlo (m * p) false with
-  | mk lo c1 =>
-      cases hhi_pair : UInt64.addCarry Thi (UInt64.mulHi m p) c1 with
-      | mk addHi c2 =>
-          have hu := redc_u_spec ctx Thi Tlo
-          simp [m, hlow_pair, hhi_pair] at hu
-          have hp_pos := ctx.p_pos
-          have hp_lt := ctx.p_lt_word
-          have hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1 := by
-            simpa [Nat.mul_comm] using ctx.p'_eq
-          have hu_lt :
-              addHi.toNat + c2.toNat * UInt64.word < 2 * p.toNat := by
-            rw [hu]
-            simpa [hTmod] using redcNat_u_lt_two_p hp_pos hp_lt hpp' hT
-          simp [redcNat, hTmod]
-          simp only [UInt64.word] at hu ⊢
-          rw [← hu]
-          cases c2
-          · simp only [Bool.toNat_false, Nat.zero_mul, Nat.add_zero]
-            by_cases hge : p ≤ addHi
-            · have hgeNat : p.toNat ≤ addHi.toNat := by
-                simpa [UInt64.le_iff_toNat_le] using hge
-              have hnotlt : ¬ addHi.toNat < p.toNat := by
-                omega
-              have hsub : (addHi - p).toNat = addHi.toNat - p.toNat :=
-                UInt64.toNat_sub_of_le addHi p hge
-              simp [hlow_pair, hhi_pair, hge, hnotlt, hsub]
-            · have hltNat : addHi.toNat < p.toNat := by
-                have hn : ¬ p.toNat ≤ addHi.toNat := by
-                  intro hle
-                  apply hge
-                  rw [UInt64.le_iff_toNat_le]
-                  exact hle
-                omega
-              simp [hlow_pair, hhi_pair, hge, hltNat]
-          · simp only [hlow_pair, hhi_pair, if_true, Bool.toNat_true]
-            have hp_lt_lit : p.toNat < 2 ^ 64 := by
-              simpa [UInt64.word] using hp_lt
-            have hu_lt_lit : addHi.toNat + 2 ^ 64 < 2 * p.toNat := by
-              simpa [UInt64.word] using hu_lt
-            have hnotlt : ¬ addHi.toNat + 2 ^ 64 < p.toNat := by
-              omega
-            have hsub_lt : 2 ^ 64 - p.toNat + addHi.toNat < 2 ^ 64 := by
-              omega
-            have hsub_mod :
-                (2 ^ 64 - p.toNat + addHi.toNat) % 2 ^ 64 =
-                  2 ^ 64 - p.toNat + addHi.toNat :=
-              Nat.mod_eq_of_lt hsub_lt
-            simp only [UInt64.toNat_sub, hsub_mod]
-            simp only [hnotlt, if_false, Nat.one_mul]
-            rw [Nat.add_comm addHi.toNat (2 ^ 64)]
-            exact (Nat.sub_add_comm (Nat.le_of_lt hp_lt_lit)).symm
+  cases hfull_pair : UInt64.mulFull m p with
+  | mk mhi mlo =>
+      cases hlow_pair : UInt64.addCarry Tlo mlo false with
+      | mk lo c1 =>
+          cases hhi_pair : UInt64.addCarry Thi mhi c1 with
+          | mk addHi c2 =>
+              have hu := redc_u_spec ctx Thi Tlo
+              simp [m, hfull_pair, hlow_pair, hhi_pair] at hu
+              have hp_pos := ctx.p_pos
+              have hp_lt := ctx.p_lt_word
+              have hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1 := by
+                simpa [Nat.mul_comm] using ctx.p'_eq
+              have hu_lt :
+                  addHi.toNat + c2.toNat * UInt64.word < 2 * p.toNat := by
+                rw [hu]
+                simpa [hTmod] using redcNat_u_lt_two_p hp_pos hp_lt hpp' hT
+              simp [redcNat, hTmod]
+              simp only [UInt64.word] at hu ⊢
+              rw [← hu]
+              cases c2
+              · simp only [Bool.toNat_false, Nat.zero_mul, Nat.add_zero]
+                by_cases hge : p ≤ addHi
+                · have hgeNat : p.toNat ≤ addHi.toNat := by
+                    simpa [UInt64.le_iff_toNat_le] using hge
+                  have hnotlt : ¬ addHi.toNat < p.toNat := by
+                    omega
+                  have hsub : (addHi - p).toNat = addHi.toNat - p.toNat :=
+                    UInt64.toNat_sub_of_le addHi p hge
+                  simp [hlow_pair, hhi_pair, hge, hnotlt, hsub]
+                · have hltNat : addHi.toNat < p.toNat := by
+                    have hn : ¬ p.toNat ≤ addHi.toNat := by
+                      intro hle
+                      apply hge
+                      rw [UInt64.le_iff_toNat_le]
+                      exact hle
+                    omega
+                  simp [hlow_pair, hhi_pair, hge, hltNat]
+              · simp only [hlow_pair, hhi_pair, if_true, Bool.toNat_true]
+                have hp_lt_lit : p.toNat < 2 ^ 64 := by
+                  simpa [UInt64.word] using hp_lt
+                have hu_lt_lit : addHi.toNat + 2 ^ 64 < 2 * p.toNat := by
+                  simpa [UInt64.word] using hu_lt
+                have hnotlt : ¬ addHi.toNat + 2 ^ 64 < p.toNat := by
+                  omega
+                have hsub_lt : 2 ^ 64 - p.toNat + addHi.toNat < 2 ^ 64 := by
+                  omega
+                have hsub_mod :
+                    (2 ^ 64 - p.toNat + addHi.toNat) % 2 ^ 64 =
+                      2 ^ 64 - p.toNat + addHi.toNat :=
+                  Nat.mod_eq_of_lt hsub_lt
+                simp only [UInt64.toNat_sub, hsub_mod]
+                simp only [hnotlt, if_false, Nat.one_mul]
+                rw [Nat.add_comm addHi.toNat (2 ^ 64)]
+                exact (Nat.sub_add_comm (Nat.le_of_lt hp_lt_lit)).symm
 
 /-- The executable REDC routine agrees with the Nat-level specification. -/
 theorem toNat_redc (ctx : MontCtx p) (Thi Tlo : UInt64)
