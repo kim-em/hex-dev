@@ -201,19 +201,25 @@ abbrev modulus (h : Conway.SupportedEntry p n) : FpPoly p :=
   rfl
 
 /-- The selected Conway modulus has positive degree. -/
+@[simp]
 theorem modulus_nonconstant (h : Conway.SupportedEntry p n) :
     0 < FpPoly.degree (modulus h) :=
   Conway.conwayPoly_nonconstant p n h
 
 /-- The selected Conway modulus is irreducible. -/
+@[grind =>]
 theorem modulus_irreducible (h : Conway.SupportedEntry p n) :
     FpPoly.Irreducible (modulus h) :=
   Conway.conwayPoly_irreducible p n h
+
+grind_pattern modulus_irreducible => Conway.conwayPoly p n h
 
 /-- The selected Conway modulus lives over a prime base field. -/
 theorem modulus_prime (h : Conway.SupportedEntry p n) :
     Hex.Nat.Prime p :=
   h.prime
+
+grind_pattern modulus_prime => h.prime
 
 /-- Reduce a polynomial into the canonical field selected by a committed Conway
 entry. -/
@@ -479,14 +485,17 @@ theorem gfq_modulus_eq_packedFpPoly :
   simpa [GFq.modulus, lower] using h.conway_eq_packed
 
 /-- The selected packed modulus has positive extension degree. -/
+@[simp]
 theorem degree_pos : 0 < n :=
   h.degree_pos
 
 /-- The selected packed modulus fits in the single-word `GF2n` representation. -/
+@[simp]
 theorem degree_lt_word : n < 64 :=
   h.degree_lt_word
 
 /-- The selected packed modulus is irreducible. -/
+@[grind =>]
 theorem modulus_irreducible : GF2Poly.Irreducible (modulus (n := n)) :=
   h.packed_irreducible
 

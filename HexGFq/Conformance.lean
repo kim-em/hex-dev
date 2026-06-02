@@ -84,6 +84,22 @@ example : 1 < 64 :=
 #guard coeffNats (GFq.modulus Entry21) = [1, 1]
 #guard GFq.modulus Entry21 = Conway.conwayPoly 2 1 Conway.supportedEntry_2_1
 #guard 0 < FpPoly.degree (GFq.modulus Entry21)
+example : 0 < FpPoly.degree (GFq.modulus Entry21) := by
+  simp
+
+example : 0 < (1 : Nat) ∧ 1 < 64 := by
+  simp
+
+example : FpPoly.Irreducible (GFq.modulus Entry21) := by
+  grind
+
+example (h : Conway.SupportedEntry 2 1) : Hex.Nat.Prime 2 := by
+  have := GFq.modulus_prime h
+  grind
+
+example : GF2Poly.Irreducible (GF2q.modulus (n := 1)) := by
+  grind
+
 #guard Conway.luebeckConwayPolynomial? 2 0 = (none : Option (FpPoly 2))
 -- `(2, 2)` and `(3, 1)` were previously unsupported boundaries; PR #2365
 -- extended the committed Lübeck table to cover them, so their positive
@@ -98,6 +114,13 @@ example : 1 < 64 :=
   GFqRing.reduceMod (GFq.modulus Entry21) (polyTwo #[0, 1])
 #guard GFq.repr (generic #[1, 1]) =
   GFqRing.reduceMod (GFq.modulus Entry21) (polyTwo #[1, 1])
+
+example (x y z : Generic21) :
+    GFq.repr ((x + y) * z) =
+      GFqRing.reduceMod (GFq.modulus Entry21)
+        (GFqRing.reduceMod (GFq.modulus Entry21) (GFq.repr x + GFq.repr y) *
+          GFq.repr z) := by
+  simp
 
 -- The Frobenius wrapper matches the inherited `p`-th power on the
 -- committed `GFq 2 1` entry and produces the expected representative.
