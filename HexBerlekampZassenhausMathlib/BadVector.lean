@@ -719,6 +719,33 @@ theorem auxiliaryPolynomial_l2norm_sq_le
     _ = (∑ i : Fin r, ((vec.getD i.val 0 : ℝ) ^ 2)) *
         ((r : ℝ) * (BHKS.cldColumnNormBound input liftData.p : ℝ)) := by rw [hcldcol]
 
+/--
+The transported correction-aware BHKS auxiliary polynomial has no support above
+`input.degree?.getD 0`.
+
+This isolates the support-range step needed when summing the
+coefficientwise correction bound into an l2-norm estimate.
+-/
+theorem auxiliaryPolynomialWithCorrections_support_subset_range
+    (input : Hex.ZPoly) (liftData : Hex.LiftData)
+    (vec corrections : Array Int) :
+    (HexPolyZMathlib.toPolynomial
+      (BHKS.auxiliaryPolynomialWithCorrections
+        input liftData vec corrections)).support ⊆
+      Finset.range (input.degree?.getD 0) := by
+  intro j hj
+  by_contra hjn
+  have hge : input.degree?.getD 0 ≤ j := by
+    simpa [Finset.mem_range] using hjn
+  have hcoeff_zero :
+      (HexPolyZMathlib.toPolynomial
+        (BHKS.auxiliaryPolynomialWithCorrections
+          input liftData vec corrections)).coeff j = 0 := by
+    rw [HexPolyZMathlib.coeff_toPolynomial,
+      auxiliaryPolynomialWithCorrections_coeff_eq]
+    rw [if_neg (by omega)]
+  exact (Polynomial.mem_support_iff.mp hj) hcoeff_zero
+
 end BHKS
 
 namespace ExecutableBadVectorWitness
