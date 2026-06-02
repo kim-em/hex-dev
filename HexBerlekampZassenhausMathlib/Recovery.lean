@@ -787,6 +787,18 @@ def selectedFactorsOfMembers
   Hex.bhksIndicatorSelectedFactorsArray liftedFactors
     (classIndicatorArray liftedFactors.size members)
 
+/-- Proof-side lifted-factor subset selected by a support-class member list. -/
+def liftedFactorSubsetOfMembers
+    (d : Hex.LiftData) (members : List Nat) : LiftedFactorSubset d :=
+  Finset.univ.filter fun i : LiftedFactorIndex d => i.val ∈ members
+
+/-- Membership in `liftedFactorSubsetOfMembers` is exactly membership of the
+underlying array index in the support-class member list. -/
+theorem mem_liftedFactorSubsetOfMembers
+    (d : Hex.LiftData) (members : List Nat) (i : LiftedFactorIndex d) :
+    i ∈ liftedFactorSubsetOfMembers d members ↔ i.val ∈ members := by
+  simp [liftedFactorSubsetOfMembers]
+
 /-- A class indicator has one entry for each lifted factor. -/
 theorem classIndicatorArray_size (r : Nat) (members : List Nat) :
     (classIndicatorArray r members).size = r := by
@@ -839,6 +851,26 @@ noncomputable def selectedFactorArraysOfSupports
     {r : Nat} (trueSupports : Set (Set (Fin r))) : Array (Array Hex.ZPoly) :=
   ((supportPartitionByMinColumn trueSupports).map
     (fun members => selectedFactorsOfMembers liftedFactors members)).toArray
+
+/-- Canonical proof-side lifted-factor subsets corresponding to
+`supportPartitionByMinColumn`. -/
+noncomputable def liftedFactorSubsetsOfSupports
+    (d : Hex.LiftData)
+    {r : Nat} (trueSupports : Set (Set (Fin r))) :
+    Array (LiftedFactorSubset d) :=
+  ((supportPartitionByMinColumn trueSupports).map
+    (fun members => liftedFactorSubsetOfMembers d members)).toArray
+
+/-- Indexed form of `liftedFactorSubsetsOfSupports`. -/
+theorem liftedFactorSubsetsOfSupports_getD
+    (d : Hex.LiftData)
+    {r : Nat} (trueSupports : Set (Set (Fin r)))
+    {i : Nat}
+    (hi : i < (supportPartitionByMinColumn trueSupports).length) :
+    (liftedFactorSubsetsOfSupports d trueSupports).getD i ∅ =
+      liftedFactorSubsetOfMembers d
+        ((supportPartitionByMinColumn trueSupports).getD i []) := by
+  simp [liftedFactorSubsetsOfSupports, hi]
 
 /--
 Convert a proof-side lifted-subset representation into the exact modular
@@ -921,6 +953,35 @@ theorem productCongruencesOfCanonicalSupportRepresentations
     (expectedIndicatorArrayOfSupports trueSupports)
     (selectedFactorArraysOfSupports d.liftedFactors trueSupports)
     expectedFactors supportSubsets hselected_product hrep
+
+/--
+Canonical-support bridge using the subset array induced directly by
+`supportPartitionByMinColumn`.
+-/
+theorem productCongruencesOfCanonicalSupportMemberRepresentations
+    {core : Hex.ZPoly} {d : Hex.LiftData} {r : Nat}
+    (trueSupports : Set (Set (Fin r)))
+    (expectedFactors : Array Hex.ZPoly)
+    (hselected_product :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        Array.polyProduct
+            ((selectedFactorArraysOfSupports d.liftedFactors trueSupports).getD i #[]) =
+          liftedFactorProduct d
+            ((liftedFactorSubsetsOfSupports d trueSupports).getD i ∅))
+    (hrep :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        RepresentsIntegerFactorAtLift core d (expectedFactors.getD i 0)
+          ((liftedFactorSubsetsOfSupports d trueSupports).getD i ∅)) :
+    ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+      Hex.ZPoly.reduceModPow
+          (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core)
+            (Array.polyProduct
+              ((selectedFactorArraysOfSupports d.liftedFactors trueSupports).getD i #[])))
+          d.p d.k =
+        Hex.ZPoly.reduceModPow (expectedFactors.getD i 0) d.p d.k :=
+  productCongruencesOfCanonicalSupportRepresentations
+    trueSupports expectedFactors
+    (liftedFactorSubsetsOfSupports d trueSupports) hselected_product hrep
 
 /--
 The canonical support-driven indicators select the corresponding canonical
