@@ -1551,11 +1551,31 @@ private theorem coeff_mul_one_fold (f : FpPoly p) (n k : Nat) :
 @[simp] theorem mul_one (f : FpPoly p) :
     f * 1 = f := by
   exact DensePoly.mul_one_right_poly f
-/-- The `i`th schoolbook contribution to coefficient `n` of `f * g`. -/
+
+/-! ### Schoolbook coefficient helpers (proof-facing Hensel scaffolding)
+
+`mulCoeffTerm` and `mulCoeffSum` are kept public only because
+`HexHensel/Linear.lean` reasons about the per-coefficient diagonal
+contribution of `FpPoly` multiplication when establishing the linear
+Hensel lift congruence. They are not part of the ordinary `FpPoly`
+multiplication API — callers who only need a characterisation of
+`(f * g).coeff n` should use the public `coeff_mul` lemma below, which
+gives the same value without committing to the schoolbook fold shape.
+
+The private cluster of lemmas that follows these two definitions
+(`coeff_mul_fold`, `foldl_mulCoeffStep_*`, `mulCoeffTerm_*`,
+`fold_mulCoeff_*`, `mulCoeffSum_eq_bound`, etc.) is proof plumbing for
+the multiplication characterisations and is intentionally not exported. -/
+
+/-- The `i`th schoolbook contribution to coefficient `n` of `f * g`.
+Proof-facing Hensel scaffolding: ordinary `FpPoly` multiplication callers
+should use `coeff_mul`, not this definition. -/
 def mulCoeffTerm (f g : FpPoly p) (n i : Nat) : ZMod64 p :=
   if n < i then 0 else f.coeff i * g.coeff (n - i)
 
-/-- The executable schoolbook coefficient sum matching `FpPoly` multiplication. -/
+/-- The executable schoolbook coefficient sum matching `FpPoly`
+multiplication. Proof-facing Hensel scaffolding: ordinary `FpPoly`
+multiplication callers should use `coeff_mul`, not this definition. -/
 def mulCoeffSum (f g : FpPoly p) (n : Nat) : ZMod64 p :=
   (List.range f.size).foldl (fun acc i => acc + mulCoeffTerm f g n i) 0
 
