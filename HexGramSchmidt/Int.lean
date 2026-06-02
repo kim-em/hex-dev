@@ -2448,6 +2448,89 @@ private def bareissGramRowInvariantStepCoeff
         state.matrix[i][k] * (hinv.coeff k)[a])
       state.prevPivot
 
+/-- Coefficient-level exact-division provenance for one regular Gram-row
+Bareiss step.  The quotient vector is kept separate from
+`bareissGramRowInvariantStepCoeff` so later row-entry proofs can consume the
+integer divisibility witness before projecting back to the existing exact-div
+coefficient API. -/
+private structure BareissGramRegularStepQuotient
+    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    (hinv : BareissGramRowInvariant b state)
+    (hnext : state.step + 1 < n) (i : Fin n) (_hi : state.step + 1 ≤ i.val) where
+  q : Fin n → Int
+  coeff_num_eq_mul :
+    let k : Fin n := ⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hnext⟩
+    ∀ a : Fin n,
+      state.matrix[k][k] * (hinv.coeff i)[a] -
+        state.matrix[i][k] * (hinv.coeff k)[a] =
+          q a * state.prevPivot
+
+/-- Initial no-pivot Gram trajectory specialization of the regular-step
+coefficient quotient package. -/
+private abbrev BareissGramInitialRegularStepQuotient
+    (b : Matrix Int n m) (fuel : Nat)
+    (hinv : BareissGramRowInvariant b
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))))
+    (hnext :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 < n)
+    (i : Fin n)
+    (hi :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 ≤ i.val) :
+    Type :=
+  BareissGramRegularStepQuotient hinv hnext i hi
+
+private theorem bareissGramRegularStepQuotient_stepCoeff_get
+    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    {hinv : BareissGramRowInvariant b state}
+    {hnext : state.step + 1 < n} {i : Fin n} {hi : state.step + 1 ≤ i.val}
+    (hprev : state.prevPivot ≠ 0)
+    (hq : BareissGramRegularStepQuotient hinv hnext i hi) (a : Fin n) :
+    (bareissGramRowInvariantStepCoeff hinv hnext i hi)[a] = hq.q a := by
+  dsimp [bareissGramRowInvariantStepCoeff]
+  rw [Vector.getElem_ofFn]
+  exact exactDiv_eq_of_eq_mul_right hprev (hq.coeff_num_eq_mul a)
+
+private theorem bareissGramRegularStepQuotient_stepCoeff_eq
+    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    {hinv : BareissGramRowInvariant b state}
+    {hnext : state.step + 1 < n} {i : Fin n} {hi : state.step + 1 ≤ i.val}
+    (hprev : state.prevPivot ≠ 0)
+    (hq : BareissGramRegularStepQuotient hinv hnext i hi) :
+    bareissGramRowInvariantStepCoeff hinv hnext i hi = Vector.ofFn hq.q := by
+  apply Vector.ext
+  intro a ha
+  let af : Fin n := ⟨a, ha⟩
+  simpa [af] using
+    bareissGramRegularStepQuotient_stepCoeff_get
+      (hinv := hinv) (hnext := hnext) (i := i) (hi := hi) hprev hq af
+
+private theorem rowCombination_bareissGramRegularStepQuotient
+    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    {hinv : BareissGramRowInvariant b state}
+    {hnext : state.step + 1 < n} {i : Fin n} {hi : state.step + 1 ≤ i.val}
+    (hprev : state.prevPivot ≠ 0)
+    (hq : BareissGramRegularStepQuotient hinv hnext i hi) :
+    Matrix.rowCombination b (bareissGramRowInvariantStepCoeff hinv hnext i hi) =
+      Matrix.rowCombination b (Vector.ofFn hq.q) := by
+  rw [bareissGramRegularStepQuotient_stepCoeff_eq hprev hq]
+
+private theorem dot_rowCombination_bareissGramRegularStepQuotient
+    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    {hinv : BareissGramRowInvariant b state}
+    {hnext : state.step + 1 < n} {i : Fin n} {hi : state.step + 1 ≤ i.val}
+    (hprev : state.prevPivot ≠ 0)
+    (hq : BareissGramRegularStepQuotient hinv hnext i hi)
+    (w : Vector Int m) :
+    Matrix.dot
+        (Matrix.rowCombination b
+          (bareissGramRowInvariantStepCoeff hinv hnext i hi))
+        w =
+      Matrix.dot (Matrix.rowCombination b (Vector.ofFn hq.q)) w := by
+  rw [rowCombination_bareissGramRegularStepQuotient hprev hq]
+
 private theorem bareissGramRowInvariantStepCoeff_support
     {b : Matrix Int n m} {state : Matrix.BareissState n}
     (hinv : BareissGramRowInvariant b state)
