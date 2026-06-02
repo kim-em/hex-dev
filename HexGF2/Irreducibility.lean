@@ -181,7 +181,10 @@ def checkRabinBezoutWitnesses (f : GF2Poly)
 
 It validates the self-described `n`, recomputes every pow-chain entry,
 checks the divisibility leg `X^(2^n) ≡ X mod f`, and verifies each Bezout
-identity for the maximal proper divisors of `n`. -/
+identity for the maximal proper divisors of `n`.
+
+Consumer-facing soundness target: `checkIrreducibilityCertificate_imp_irreducible`
+in `HexGF2/RabinSoundness.lean` lifts a `true` outcome to `GF2Poly.Irreducible f`. -/
 def checkIrreducibilityCertificate (f : GF2Poly)
     (cert : IrreducibilityCertificate) : Bool :=
   decide (0 < cert.n) &&
@@ -207,7 +210,10 @@ def checkPowChainLinear (f : GF2Poly) (cert : IrreducibilityCertificate) : Bool 
       | _, _ => false
 
 /-- Linear-time variant of `checkIrreducibilityCertificate`. The only
-difference is that it uses `checkPowChainLinear` for the pow-chain leg. -/
+difference is that it uses `checkPowChainLinear` for the pow-chain leg.
+
+Consumer-facing soundness target: `checkIrreducibilityCertificateLinear_imp_irreducible`
+in `HexGF2/RabinSoundness.lean` lifts a `true` outcome to `GF2Poly.Irreducible f`. -/
 def checkIrreducibilityCertificateLinear (f : GF2Poly)
     (cert : IrreducibilityCertificate) : Bool :=
   decide (0 < cert.n) &&
