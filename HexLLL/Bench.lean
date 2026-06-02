@@ -120,15 +120,12 @@ and well below the 5 % overhead-to-measured-time floor
 **Interaction with `setup_fixed_benchmark`.** `lean-bench` spawns
 one fresh `hexlll_bench` child process per measured repeat of a
 fixed benchmark, so each repeat starts with cold `isabelleChildRef`
-and `fpylllChildRef`. The persistent harness still avoids per-call
-`IO.Process.output` and per-call `IO.FS.writeFile` round-trips
-inside one child, but the one-time GHC start (Isabelle) /
-CPython + fpylll import (fpylll) cost is incurred per repeat at
-this benchmark shape. Wall-time-per-call for fixed `runIsabelle*`
-and `runFpylll*` targets remains dominated by interpreter startup;
-the protocol-overhead figures above determine whether comparator
-ratios qualify for the eligible range in HO-18's regenerated
-report.
+and `fpylllChildRef`. The process-call comparator registrations set
+`minTotalSeconds := 1.0`, forcing the fixed child to run enough
+inner iterations to amortize the one-time GHC start (Isabelle) /
+CPython + fpylll import (fpylll) inside the child. The exported
+per-call time is therefore `total_nanos / inner_repeats`, not the
+cold interpreter startup floor.
 
 **Driver path overrides.** `HEX_LLL_FPYLLL_BENCH_DRIVER` overrides
 the default driver script path (relative to the bench process's
@@ -1235,6 +1232,7 @@ release bench runs use
 to record its ratio. -/
 setup_fixed_benchmark runFpylllFirstShortVectorBZRecombinationChecksum where {
     repeats := 5
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
     expectedHash := some 0x20001
   }
@@ -1249,42 +1247,50 @@ setup_fixed_benchmark runFirstShortVectorRandomBounded30Checksum where {
 
 setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded30Checksum where {
     repeats := 5
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
     expectedHash := some 0x4
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded45Checksum where {
     repeats := 5
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded60Checksum where {
     repeats := 5
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 30.0
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded75Checksum where {
     repeats := 5
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 30.0
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded90Checksum where {
     repeats := 5
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 40.0
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded120Checksum where {
     repeats := 5
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 60.0
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded150Checksum where {
     repeats := 5
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded180Checksum where {
     repeats := 5
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 120.0
   }
 
@@ -1299,47 +1305,56 @@ setup_fixed_benchmark runFirstShortVectorHarshCubic15Checksum where {
 
 setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic15Checksum where {
     repeats := 5
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
     expectedHash := some 0x6ccfd453f897ff98
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic20Checksum where {
     repeats := 5
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic25Checksum where {
     repeats := 5
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic30Checksum where {
     repeats := 5
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic35Checksum where {
     repeats := 5
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic40Checksum where {
     repeats := 5
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic45Checksum where {
     repeats := 5
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic50Checksum where {
     repeats := 5
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic55Checksum where {
     repeats := 5
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
   }
 
@@ -1393,6 +1408,7 @@ setup_fixed_benchmark runFirstShortVectorBZRecombinationNormSq where {
 
 setup_fixed_benchmark runIsabelleBZRecombinationNormSq where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 60.0
     expectedHash := some (Hashable.hash (runFirstShortVectorNormSq bzRecombinationInput))
   }
@@ -1405,6 +1421,7 @@ setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq30 where {
 
 setup_fixed_benchmark runIsabelleRandomBoundedNormSq30 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
     expectedHash := some (firstShortVectorRandomBoundedNormSqHash 30)
   }
@@ -1417,6 +1434,7 @@ setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq45 where {
 
 setup_fixed_benchmark runIsabelleRandomBoundedNormSq45 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
     expectedHash := some (firstShortVectorRandomBoundedNormSqHash 45)
   }
@@ -1429,6 +1447,7 @@ setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq60 where {
 
 setup_fixed_benchmark runIsabelleRandomBoundedNormSq60 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 30.0
     expectedHash := some (firstShortVectorRandomBoundedNormSqHash 60)
   }
@@ -1441,6 +1460,7 @@ setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq75 where {
 
 setup_fixed_benchmark runIsabelleRandomBoundedNormSq75 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 30.0
     expectedHash := some (firstShortVectorRandomBoundedNormSqHash 75)
   }
@@ -1453,6 +1473,7 @@ setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq90 where {
 
 setup_fixed_benchmark runIsabelleRandomBoundedNormSq90 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 40.0
     expectedHash := some (firstShortVectorRandomBoundedNormSqHash 90)
   }
@@ -1465,6 +1486,7 @@ setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq120 where {
 
 setup_fixed_benchmark runIsabelleRandomBoundedNormSq120 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 60.0
     expectedHash := some (firstShortVectorRandomBoundedNormSqHash 120)
   }
@@ -1477,6 +1499,7 @@ setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq150 where {
 
 setup_fixed_benchmark runIsabelleRandomBoundedNormSq150 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
     expectedHash := some (firstShortVectorRandomBoundedNormSqHash 150)
   }
@@ -1489,6 +1512,7 @@ setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq180 where {
 
 setup_fixed_benchmark runIsabelleRandomBoundedNormSq180 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 120.0
     expectedHash := some (firstShortVectorRandomBoundedNormSqHash 180)
   }
@@ -1501,6 +1525,7 @@ setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq15 where {
 
 setup_fixed_benchmark runIsabelleHarshCubicNormSq15 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
     expectedHash := some (firstShortVectorHarshCubicNormSqHash 15)
   }
@@ -1513,6 +1538,7 @@ setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq20 where {
 
 setup_fixed_benchmark runIsabelleHarshCubicNormSq20 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
     expectedHash := some (firstShortVectorHarshCubicNormSqHash 20)
   }
@@ -1525,6 +1551,7 @@ setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq25 where {
 
 setup_fixed_benchmark runIsabelleHarshCubicNormSq25 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
     expectedHash := some (firstShortVectorHarshCubicNormSqHash 25)
   }
@@ -1537,6 +1564,7 @@ setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq30 where {
 
 setup_fixed_benchmark runIsabelleHarshCubicNormSq30 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 40.0
     expectedHash := some (firstShortVectorHarshCubicNormSqHash 30)
   }
@@ -1549,6 +1577,7 @@ setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq35 where {
 
 setup_fixed_benchmark runIsabelleHarshCubicNormSq35 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 60.0
     expectedHash := some (firstShortVectorHarshCubicNormSqHash 35)
   }
@@ -1561,6 +1590,7 @@ setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq40 where {
 
 setup_fixed_benchmark runIsabelleHarshCubicNormSq40 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 60.0
     expectedHash := some (firstShortVectorHarshCubicNormSqHash 40)
   }
@@ -1573,6 +1603,7 @@ setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq45 where {
 
 setup_fixed_benchmark runIsabelleHarshCubicNormSq45 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 60.0
     expectedHash := some (firstShortVectorHarshCubicNormSqHash 45)
   }
@@ -1585,6 +1616,7 @@ setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq50 where {
 
 setup_fixed_benchmark runIsabelleHarshCubicNormSq50 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 60.0
     expectedHash := some (firstShortVectorHarshCubicNormSqHash 50)
   }
@@ -1597,6 +1629,7 @@ setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq55 where {
 
 setup_fixed_benchmark runIsabelleHarshCubicNormSq55 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 60.0
     expectedHash := some (firstShortVectorHarshCubicNormSqHash 55)
   }
