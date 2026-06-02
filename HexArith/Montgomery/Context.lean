@@ -237,7 +237,8 @@ theorem mk_p_lt_R (p : UInt64) (hp : p % 2 = 1) :
 
 /-- Convert a standard residue into Montgomery form. -/
 def toMont (ctx : MontCtx p) (a : UInt64) : UInt64 :=
-  redc ctx (UInt64.mulHi a ctx.r2) (a * ctx.r2)
+  let (hi, lo) := UInt64.mulFull a ctx.r2
+  redc ctx hi lo
 
 /-- Convert a Montgomery residue back to the standard representation. -/
 def fromMont (ctx : MontCtx p) (a : UInt64) : UInt64 :=
@@ -245,22 +246,51 @@ def fromMont (ctx : MontCtx p) (a : UInt64) : UInt64 :=
 
 /-- Multiply two Montgomery residues, staying inside the Montgomery domain. -/
 def mulMont (ctx : MontCtx p) (a b : UInt64) : UInt64 :=
-  redc ctx (UInt64.mulHi a b) (a * b)
+  let (hi, lo) := UInt64.mulFull a b
+  redc ctx hi lo
 
 private theorem twoWordProduct_lt_p_word (ctx : MontCtx p) (a b : UInt64)
     (ha : a.toNat < p.toNat) (hb : b.toNat < p.toNat) :
-    (a * b).toNat + (UInt64.mulHi a b).toNat * UInt64.word <
+    (UInt64.mulFull a b).2.toNat + (UInt64.mulFull a b).1.toNat * UInt64.word <
       p.toNat * UInt64.word := by
   have hprod_lt_p2 : a.toNat * b.toNat < p.toNat * p.toNat :=
     Nat.mul_lt_mul'' ha hb
   have hp2_lt_pword : p.toNat * p.toNat < p.toNat * UInt64.word :=
     Nat.mul_lt_mul_of_pos_left ctx.p_lt_R ctx.p_pos
   calc
-    (a * b).toNat + (UInt64.mulHi a b).toNat * UInt64.word
+    (UInt64.mulFull a b).2.toNat + (UInt64.mulFull a b).1.toNat * UInt64.word
         = a.toNat * b.toNat := by
-          exact UInt64.mulLo_add_mulHi a b
+          exact UInt64.mulFull_snd_add_fst a b
     _ < p.toNat * p.toNat := hprod_lt_p2
     _ < p.toNat * UInt64.word := hp2_lt_pword
+
+private theorem redc_mulFull_repr_word (ctx : MontCtx p) (a b : UInt64)
+    (hT :
+      (UInt64.mulFull a b).2.toNat + (UInt64.mulFull a b).1.toNat * UInt64.word <
+        p.toNat * UInt64.word)
+    (hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1) :
+    (redc ctx (UInt64.mulFull a b).1 (UInt64.mulFull a b).2).toNat *
+        UInt64.word % p.toNat =
+      (a.toNat * b.toNat) % p.toNat := by
+  rw [toNat_redc ctx (UInt64.mulFull a b).1 (UInt64.mulFull a b).2 hT]
+  have hredc := redcNat_eq_mod ctx.p_pos ctx.p_lt_R hpp' hT
+  calc
+    redcNat p.toNat ctx.p'.toNat
+          ((UInt64.mulFull a b).2.toNat + (UInt64.mulFull a b).1.toNat * UInt64.word) *
+        UInt64.word % p.toNat
+        = ((UInt64.mulFull a b).2.toNat + (UInt64.mulFull a b).1.toNat *
+            UInt64.word) % p.toNat := hredc
+    _ = (a.toNat * b.toNat) % p.toNat := by
+          rw [UInt64.mulFull_snd_add_fst a b]
+
+private theorem redc_mulFull_lt (ctx : MontCtx p) (a b : UInt64)
+    (hT :
+      (UInt64.mulFull a b).2.toNat + (UInt64.mulFull a b).1.toNat * UInt64.word <
+        p.toNat * UInt64.word)
+    (hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1) :
+    (redc ctx (UInt64.mulFull a b).1 (UInt64.mulFull a b).2).toNat < p.toNat := by
+  rw [toNat_redc ctx (UInt64.mulFull a b).1 (UInt64.mulFull a b).2 hT]
+  exact redcNat_lt ctx.p_pos ctx.p_lt_R hpp' hT
 
 private theorem cancel_word_mod_of_lt (ctx : MontCtx p) {x y : Nat}
     (hx : x < p.toNat) (hy : y < p.toNat)
@@ -359,21 +389,9 @@ theorem toNat_toMont (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
   have hraw :
       (ctx.toMont a).toNat * UInt64.word % p.toNat =
         (a.toNat * ctx.r2.toNat) % p.toNat := by
-    unfold toMont
-    rw [toNat_redc ctx (UInt64.mulHi a ctx.r2) (a * ctx.r2) hT]
-    have hredc := redcNat_eq_mod ctx.p_pos ctx.p_lt_R hpp' hT
-    calc
-      redcNat p.toNat ctx.p'.toNat
-            ((a * ctx.r2).toNat + (UInt64.mulHi a ctx.r2).toNat * UInt64.word) *
-          UInt64.word % p.toNat
-          = ((a * ctx.r2).toNat + (UInt64.mulHi a ctx.r2).toNat * UInt64.word) %
-              p.toNat := hredc
-      _ = (a.toNat * ctx.r2.toNat) % p.toNat := by
-            rw [UInt64.mulLo_add_mulHi a ctx.r2]
+    simpa [toMont] using redc_mulFull_repr_word ctx a ctx.r2 hT hpp'
   have hto_lt_nat : (ctx.toMont a).toNat < p.toNat := by
-    unfold toMont
-    rw [toNat_redc ctx (UInt64.mulHi a ctx.r2) (a * ctx.r2) hT]
-    exact redcNat_lt ctx.p_pos ctx.p_lt_R hpp' hT
+    simpa [toMont] using redc_mulFull_lt ctx a ctx.r2 hT hpp'
   apply cancel_word_mod_of_lt ctx
   · exact hto_lt_nat
   · exact Nat.mod_lt _ ctx.p_pos
@@ -409,17 +427,7 @@ private theorem mulMont_repr_word (ctx : MontCtx p) (a b : UInt64)
   have hT := twoWordProduct_lt_p_word ctx a b haNat hbNat
   have hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1 := by
     simpa [Nat.mul_comm] using ctx.p'_eq
-  unfold mulMont
-  rw [toNat_redc ctx (UInt64.mulHi a b) (a * b) hT]
-  have hredc := redcNat_eq_mod ctx.p_pos ctx.p_lt_R hpp' hT
-  calc
-    redcNat p.toNat ctx.p'.toNat
-          ((a * b).toNat + (UInt64.mulHi a b).toNat * UInt64.word) *
-        UInt64.word % p.toNat
-        = ((a * b).toNat + (UInt64.mulHi a b).toNat * UInt64.word) % p.toNat :=
-          hredc
-    _ = (a.toNat * b.toNat) % p.toNat := by
-          rw [UInt64.mulLo_add_mulHi a b]
+  simpa [mulMont] using redc_mulFull_repr_word ctx a b hT hpp'
 
 /-- Montgomery conversion returns a canonical residue. -/
 @[grind =>]
@@ -434,9 +442,7 @@ theorem toMont_lt (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
   have hT := twoWordProduct_lt_p_word ctx a ctx.r2 haNat hr2Nat
   have hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1 := by
     simpa [Nat.mul_comm] using ctx.p'_eq
-  unfold toMont
-  rw [toNat_redc ctx (UInt64.mulHi a ctx.r2) (a * ctx.r2) hT]
-  exact redcNat_lt ctx.p_pos ctx.p_lt_R hpp' hT
+  simpa [toMont] using redc_mulFull_lt ctx a ctx.r2 hT hpp'
 
 /-- Montgomery multiplication returns a canonical residue. -/
 @[grind =>]
@@ -450,9 +456,7 @@ theorem mulMont_lt (ctx : MontCtx p) (a b : UInt64) (ha : a < p) (hb : b < p) :
   have hT := twoWordProduct_lt_p_word ctx a b haNat hbNat
   have hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1 := by
     simpa [Nat.mul_comm] using ctx.p'_eq
-  unfold mulMont
-  rw [toNat_redc ctx (UInt64.mulHi a b) (a * b) hT]
-  exact redcNat_lt ctx.p_pos ctx.p_lt_R hpp' hT
+  simpa [mulMont] using redc_mulFull_lt ctx a b hT hpp'
 
 /-- Montgomery multiplication preserves the represented residue product. -/
 @[grind =]
