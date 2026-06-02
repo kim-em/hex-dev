@@ -799,6 +799,19 @@ theorem mem_liftedFactorSubsetOfMembers
     i ∈ liftedFactorSubsetOfMembers d members ↔ i.val ∈ members := by
   simp [liftedFactorSubsetOfMembers]
 
+/-- General `filterMap`/`filter`-`map` equivalence used to align executable
+indicator selection with proof-side lifted-factor subsets. -/
+private theorem List.filterMap_if_eq_map_filter
+    {α β : Type _} (l : List α) (p : α → Bool) (f : α → β) :
+    l.filterMap (fun x => if p x then some (f x) else none) =
+      (l.filter p).map f := by
+  induction l with
+  | nil => simp
+  | cons x xs ih =>
+      cases hp : p x with
+      | true => simp [hp, ih]
+      | false => simp [hp, ih]
+
 /-- A class indicator has one entry for each lifted factor. -/
 theorem classIndicatorArray_size (r : Nat) (members : List Nat) :
     (classIndicatorArray r members).size = r := by
@@ -824,6 +837,147 @@ theorem classIndicatorArray_getD_eq_one_of_mem
     (hj : j < r) (hmem : j ∈ members) :
     (classIndicatorArray r members).getD j 0 = 1 := by
   simp [classIndicatorArray, hj, hmem]
+
+/-- The executable BHKS selector for a member list is the order-preserving
+filter of the lifted-factor array by those members. -/
+private theorem selectedFactorsOfMembers_toList
+    (liftedFactors : Array Hex.ZPoly) (members : List Nat) :
+    (selectedFactorsOfMembers liftedFactors members).toList =
+      ((List.range liftedFactors.size).filter fun i => i ∈ members).map
+        (fun i => liftedFactors.getD i 0) := by
+  unfold selectedFactorsOfMembers Hex.bhksIndicatorSelectedFactorsArray
+  let indicator := classIndicatorArray liftedFactors.size members
+  let step := fun (selected : Array Hex.ZPoly) (i : Nat) =>
+    if indicator.getD i 0 == 1 then
+      selected.push (liftedFactors.getD i 0)
+    else
+      selected
+  have hfold :
+      ∀ (indices : List Nat) (selected : Array Hex.ZPoly),
+        (indices.foldl step selected).toList =
+          selected.toList ++
+            (indices.filter fun i => indicator.getD i 0 == 1).map
+              (fun i => liftedFactors.getD i 0) := by
+    intro indices
+    induction indices with
+    | nil =>
+        intro selected
+        simp
+    | cons i rest ih =>
+        intro selected
+        by_cases hone : indicator.getD i 0 == 1
+        · rw [List.foldl_cons]
+          simp only [step, hone, if_true]
+          rw [ih (selected.push (liftedFactors.getD i 0))]
+          have hfilter :
+              (List.filter (fun i => indicator.getD i 0 == 1) (i :: rest)) =
+                i :: List.filter (fun i => indicator.getD i 0 == 1) rest := by
+            simp only [List.filter]
+            rw [hone]
+          rw [hfilter]
+          simp [List.append_assoc]
+        · rw [List.foldl_cons]
+          have hfalse : (indicator.getD i 0 == 1) = false := by
+            cases h : indicator.getD i 0 == 1 <;> simp_all
+          simp only [step, hfalse]
+          simp only [Bool.false_eq_true, if_false]
+          rw [ih selected]
+          have hfilter :
+              (List.filter (fun i => indicator.getD i 0 == 1) (i :: rest)) =
+                List.filter (fun i => indicator.getD i 0 == 1) rest := by
+            simp only [List.filter]
+            rw [hfalse]
+          rw [hfilter]
+  change ((List.range indicator.size).foldl step #[]).toList =
+    ((List.range liftedFactors.size).filter fun i => i ∈ members).map
+      (fun i => liftedFactors.getD i 0)
+  rw [hfold]
+  simp only [List.nil_append]
+  have hfilter :
+      (List.range (classIndicatorArray liftedFactors.size members).size).filter
+          (fun i => indicator.getD i 0 == 1) =
+        (List.range liftedFactors.size).filter fun i => i ∈ members := by
+    rw [classIndicatorArray_size]
+    apply List.filter_congr
+    intro i hi
+    have hi_size : i < liftedFactors.size := List.mem_range.mp hi
+    have hget :
+        indicator.getD i 0 = if i ∈ members then 1 else 0 := by
+      simp [indicator, classIndicatorArray, hi_size]
+    by_cases hmem : i ∈ members
+    · simp [hget, hmem]
+    · simp [hget, hmem]
+  rw [hfilter]
+
+/-- The proof-side selected lifted-factor list for member-induced subsets is
+the same order-preserving filter of the lifted-factor array, indexed by
+`Fin`. -/
+private theorem liftedSubsetSelectedList_liftedFactorSubsetOfMembers
+    (d : Hex.LiftData) (members : List Nat) :
+    liftedSubsetSelectedList d (liftedFactorSubsetOfMembers d members) =
+      ((List.finRange d.liftedFactors.size).filter
+          fun i : Fin d.liftedFactors.size => i.val ∈ members).map
+        (liftedFactor d) := by
+  unfold liftedSubsetSelectedList liftedSubsetMask
+  have hxs : d.liftedFactors.toList =
+      (List.finRange d.liftedFactors.size).map (fun i => d.liftedFactors[i]) := by
+    apply List.ext_getElem
+    · simp
+    · intro n h₁ h₂
+      simp [List.getElem_finRange]
+  rw [hxs, List.zip_map', List.filterMap_map]
+  simp only [Function.comp_def]
+  rw [List.filterMap_if_eq_map_filter]
+  simp [liftedFactor, liftedFactorSubsetOfMembers]
+
+/-- The executable selector product for a class-member list equals the
+proof-side lifted-factor subset product induced by that same member list. -/
+theorem selectedFactorsOfMembers_polyProduct
+    (d : Hex.LiftData) (members : List Nat) :
+    Array.polyProduct (selectedFactorsOfMembers d.liftedFactors members) =
+      liftedFactorProduct d (liftedFactorSubsetOfMembers d members) := by
+  rw [← polyProduct_liftedSubsetSelectedList_eq_liftedFactorProduct]
+  apply HexPolyZMathlib.equiv.injective
+  show HexPolyZMathlib.toPolynomial _ = HexPolyZMathlib.toPolynomial _
+  rw [polyProduct_toPolynomial, polyProduct_toPolynomial]
+  rw [selectedFactorsOfMembers_toList,
+    liftedSubsetSelectedList_liftedFactorSubsetOfMembers]
+  have hmap :
+      ((List.finRange d.liftedFactors.size).filter
+          fun i : Fin d.liftedFactors.size => i.val ∈ members).map
+        (fun i => i.val) =
+        (List.range d.liftedFactors.size).filter fun i => i ∈ members := by
+    have hcoe_inj :
+        Function.Injective (fun i : Fin d.liftedFactors.size => i.val) := by
+      intro a b h
+      exact Fin.ext h
+    rw [List.map_filter
+        (f := fun i : Fin d.liftedFactors.size => i.val)
+        (p := fun i : Fin d.liftedFactors.size => i.val ∈ members)
+        hcoe_inj
+        (List.finRange d.liftedFactors.size)]
+    rw [List.map_coe_finRange_eq_range]
+    apply List.filter_congr
+    intro i hi
+    have hi_size : i < d.liftedFactors.size := List.mem_range.mp hi
+    by_cases hmem : i ∈ members
+    · rw [show decide (i ∈ members) = true from decide_eq_true hmem]
+      apply decide_eq_true
+      exact ⟨⟨i, hi_size⟩, by simp [hmem], rfl⟩
+    · rw [show decide (i ∈ members) = false from decide_eq_false hmem]
+      apply decide_eq_false
+      intro hx
+      rcases hx with ⟨x, hxmem, hxi⟩
+      exact hmem (by
+        have hxmem' : x.val ∈ members := of_decide_eq_true hxmem
+        simpa [hxi] using hxmem')
+  rw [← hmap]
+  apply congrArg List.prod
+  rw [List.toList_toArray]
+  rw [List.map_map, List.map_map, List.map_map]
+  apply List.map_congr_left
+  intro i _
+  simp [Function.comp_def, liftedFactor, Array.getD]
 
 /--
 The BHKS selected-factor operation succeeds on a nonempty class indicator whose
@@ -871,6 +1025,30 @@ theorem liftedFactorSubsetsOfSupports_getD
       liftedFactorSubsetOfMembers d
         ((supportPartitionByMinColumn trueSupports).getD i []) := by
   simp [liftedFactorSubsetsOfSupports, hi]
+
+/-- Indexed canonical selector-product equality for the support partition. -/
+theorem selectedFactorArraysOfSupports_polyProduct
+    (d : Hex.LiftData)
+    {r : Nat} (trueSupports : Set (Set (Fin r))) :
+    ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+      Array.polyProduct
+          ((selectedFactorArraysOfSupports d.liftedFactors trueSupports).getD i #[]) =
+        liftedFactorProduct d
+          ((liftedFactorSubsetsOfSupports d trueSupports).getD i ∅) := by
+  intro i hi
+  let classes := supportPartitionByMinColumn trueSupports
+  have hi_classes : i < classes.length := by
+    simpa [expectedIndicatorArrayOfSupports, classes] using hi
+  have hselected :
+      (selectedFactorArraysOfSupports d.liftedFactors trueSupports).getD i #[] =
+        selectedFactorsOfMembers d.liftedFactors (classes.getD i []) := by
+    simp [selectedFactorArraysOfSupports, classes, hi_classes]
+  have hsubset :
+      (liftedFactorSubsetsOfSupports d trueSupports).getD i ∅ =
+        liftedFactorSubsetOfMembers d (classes.getD i []) := by
+    simp [liftedFactorSubsetsOfSupports, classes, hi_classes]
+  rw [hselected, hsubset]
+  exact selectedFactorsOfMembers_polyProduct d (classes.getD i [])
 
 /--
 Convert a proof-side lifted-subset representation into the exact modular
