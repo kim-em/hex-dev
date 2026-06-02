@@ -531,21 +531,15 @@ theorem bhksBound_le_factorFastPrecisionCap (f : Hex.ZPoly) :
   rw [factorFastPrecisionCap_eq_max_bhksBound_defaultFactorCoeffBound]
   exact bhksBound_le_max_bhksBound_defaultFactorCoeffBound f
 
+/-- The combined executable `factorFast` precision cap is at least one. -/
+theorem one_le_factorFastPrecisionCap (f : Hex.ZPoly) :
+    1 ≤ Hex.factorFastPrecisionCap f :=
+  le_trans (one_le_bhksBound f) (bhksBound_le_factorFastPrecisionCap f)
+
 theorem defaultFactorCoeffBound_le_factorFastPrecisionCap (f : Hex.ZPoly) :
     Hex.ZPoly.defaultFactorCoeffBound f ≤ Hex.factorFastPrecisionCap f := by
   rw [factorFastPrecisionCap_eq_max_bhksBound_defaultFactorCoeffBound]
   exact defaultFactorCoeffBound_le_max_bhksBound_defaultFactorCoeffBound f
-
-/--
-The executable `factorFast` precision cap is always at least one.
-
-`Hex.factorFastPrecisionCap f = max (Hex.bhksBound f) (Hex.ZPoly.defaultFactorCoeffBound f)`
-and `Hex.bhksBound f ≥ 1` (via `one_le_bhksBound`), so the cap dominates `1`
-unconditionally on `f`.
--/
-theorem one_le_factorFastPrecisionCap (f : Hex.ZPoly) :
-    1 ≤ Hex.factorFastPrecisionCap f :=
-  le_trans (one_le_bhksBound f) (bhksBound_le_factorFastPrecisionCap f)
 
 theorem bhksBound_real_le_factorFastPrecisionCap (f : Hex.ZPoly) :
     (Hex.bhksBound f : ℝ) ≤ (Hex.factorFastPrecisionCap f : ℝ) := by

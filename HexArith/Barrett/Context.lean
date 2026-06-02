@@ -167,6 +167,7 @@ theorem mulMod_one_right (ctx : BarrettCtx p) (a : UInt64) (ha : a < p) :
   simp [Nat.mod_eq_of_lt ha']
 
 /-- Barrett modular multiplication is commutative on reduced residues. -/
+@[grind =]
 theorem mulMod_comm (ctx : BarrettCtx p) (a b : UInt64)
     (ha : a < p) (hb : b < p) :
     ctx.mulMod a b = ctx.mulMod b a := by
