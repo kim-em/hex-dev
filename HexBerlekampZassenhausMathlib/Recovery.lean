@@ -1714,6 +1714,68 @@ structure FactorFastCapLiftAnalyticComparison
       ((factorFastCapLiftData f primeData).k * localFactorDegree) : ℝ)
 
 /--
+Extract the actual-cap analytic comparison from an already assembled
+cap-separation hypothesis package.
+
+This is the non-raw call shape for later `factorFast` cap-lift code that has
+already built `ExecutableCapSeparationHypotheses`: callers can pass this named
+comparison to the actual-cap projected-row-span bridge without restating the
+Hadamard/l2norm inequality field.
+-/
+def FactorFastCapLiftAnalyticComparison.ofCapSeparationHypotheses
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (hcap :
+      ExecutableCapSeparationHypotheses
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H)
+        trueSupports) :
+    FactorFastCapLiftAnalyticComparison
+      f primeData rows_pos localFactorIndex localFactorDegree H where
+  hadamard_l2norm_lt_divisor := hcap.l2norm_upper_lt_divisor
+
+/--
+Actual-cap bad-vector contradiction from the named cap-lift analytic
+comparison package.
+
+This is the `factorFastCapLiftData`-specialized form of the generic
+`ExecutableBadVectorWitness.no_bhks_bad_setup_at_factorFastPrecisionCap`
+wrapper from `TerminationBound.lean`: callers that have already produced
+`FactorFastCapLiftAnalyticComparison` no longer need to project the raw
+Hadamard/l2norm inequality before eliminating an executable bad-vector setup.
+-/
+theorem no_bhks_bad_setup_of_factorFastCapLiftAnalyticComparison
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (h_bad :
+      ExecutableBadVectorWitness.IsBhksBadVectorSetup
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H))
+    (hp : 0 < (factorFastCapLiftData f primeData).p)
+    (hcomparison :
+      FactorFastCapLiftAnalyticComparison
+        f primeData rows_pos localFactorIndex localFactorDegree H) :
+    False :=
+  ExecutableBadVectorWitness.no_bhks_bad_setup_at_factorFastPrecisionCap
+    (badVectorWitnessOfFactorFastCapLiftData
+      f primeData rows_pos localFactorIndex localFactorDegree H)
+    C hC_nonneg hC h_bad hp hcomparison.hadamard_l2norm_lt_divisor
+
+/--
 Cap-separation hypotheses for the actual `factorFast` cap lift, assembled from
 the landed bridge package and the named cap-lift analytic comparison package.
 -/
