@@ -183,7 +183,7 @@ theorem xgcd_bezout_of_gcd_eq_one
     (DensePoly.xgcd a b).left * a + (DensePoly.xgcd a b).right * b = 1 := by
   haveI : DensePoly.GcdLaws (ZMod64 p) := inferInstance
   have hgcd' : (DensePoly.xgcd a b).gcd = 1 := by
-    simpa [DensePoly.gcd] using hgcd
+    simpa [DensePoly.xgcd_gcd_eq_gcd] using hgcd
   simpa [hgcd'] using DensePoly.xgcd_bezout a b
 
 /-- The xgcd-backed zero-one CRT representative is congruent to `0` on the left. -/

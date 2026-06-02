@@ -838,6 +838,11 @@ def gcd [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) : DensePoly R :=
   (xgcd p q).gcd
 
+/-- The gcd component returned by `xgcd` is the executable gcd. -/
+theorem xgcd_gcd_eq_gcd [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (p q : DensePoly R) :
+    (xgcd p q).gcd = gcd p q := rfl
+
 /-- The executable gcd of two zero dense polynomials is zero. -/
 @[simp] theorem gcd_zero_zero [One R] [Add R] [Sub R] [Mul R] [Div R] :
     gcd (0 : DensePoly R) (0 : DensePoly R) = 0 := by

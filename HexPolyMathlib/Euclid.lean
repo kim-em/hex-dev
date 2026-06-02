@@ -73,7 +73,7 @@ theorem toPolynomial_xgcd_gcd_associated [Field R] [DecidableEq R] [Hex.DensePol
     (p q : Hex.DensePoly R) :
     Associated (toPolynomial (Hex.DensePoly.xgcd p q).gcd)
       (EuclideanDomain.gcd (toPolynomial p) (toPolynomial q)) := by
-  simpa [Hex.DensePoly.gcd] using toPolynomial_gcd_associated (R := R) p q
+  simpa [Hex.DensePoly.xgcd_gcd_eq_gcd] using toPolynomial_gcd_associated (R := R) p q
 
 /--
 The executable Bezout identity transports across `toPolynomial`.
