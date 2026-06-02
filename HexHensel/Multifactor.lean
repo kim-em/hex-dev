@@ -127,6 +127,31 @@ recursive precondition for the lifted complement:
 
 The base cases impose the trivial obligations: `congr 1 f (p ^ k)` for the
 empty list and no preconditions for a singleton.
+
+This invariant is **proof-internal**: it is the correctness substrate consumed
+by `multifactorLift_spec` and by the Mathlib-side lift-uniqueness statement
+`HexHenselMathlib.multifactorLift_eq_multifactorLiftQuadratic`, and is not
+intended to be constructed directly by external callers. Unlike the quadratic
+path, no `multifactorLiftInvariant_of_factorsModP` smart constructor is
+provided: the four-conjunct shape mentions per-iteration `LinearLiftLoopInvariant`
+and `LinearLiftStepDegreeInvariant` quantifications that would require
+substrate lemmas (an `of_product_bezout_monic` constructor for
+`LinearLiftLoopInvariant`, plus `henselLift_h_congr_mod_base` and
+`henselLift_h_monic` analogues of the quadratic recursive bridge) that
+`HexHensel/Linear.lean` does not currently expose.
+
+Callers wanting a consumer-facing Hensel-lift correctness surface should use
+the quadratic flavour `QuadraticMultifactorLiftInvariant`, constructed from
+natural mod-`p` factorisation facts by
+`quadraticMultifactorLiftInvariant_of_factorsModP` (with the
+`QuadraticMultifactorLiftInvariant_of_choosePrimeData` wrapper at the
+Berlekamp-Zassenhaus boundary). The executable Berlekamp-Zassenhaus pipeline
+already uses the quadratic invariant exclusively
+(`HexBerlekampZassenhaus/Basic.lean`). A Mathlib-side downstream caller that
+needs the linear-path lifted factors modulo `p^k` should obtain them via
+`HexHenselMathlib.multifactorLift_eq_multifactorLiftQuadratic`, which equates
+the two paths under the Mathlib `Polynomial.map (Int.castRingHom (ZMod (p^k)))`
+canonicalisation.
 -/
 def MultifactorLiftInvariant
     (p k : Nat) [ZMod64.Bounds p]
