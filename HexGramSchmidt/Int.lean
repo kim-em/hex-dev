@@ -3274,6 +3274,33 @@ private theorem noPivotLoop_initial_gram_entry_eq_dot_of_rowInvariant
   exact bareissGramRowInvariant_exists_rowVec
     (bareissGramRowInvariant_noPivotLoop_initial b fuel hquot) i j hi
 
+/-- Row-vector consumer for an initial no-pivot Gram pass.  A single supported
+integer row combination represents the active row `i` against every original
+input row, so downstream singular-column arguments do not need to inspect
+`BareissGramRowInvariant` or supply the generic regular-branch row-entry
+equation. -/
+private theorem noPivotLoop_initial_gram_exists_rowVec
+    (b : Matrix Int n m) (fuel : Nat)
+    (hquot : BareissGramInitialRegularStepQuotientProvider b)
+    (i : Fin n)
+    (hi :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step ≤ i.val) :
+    ∃ v : Vector Int m,
+      (∃ c : Vector Int n,
+        (∀ k : Fin n, i.val < k.val → c[k] = 0) ∧
+          v = Matrix.rowCombination b c) ∧
+        ∀ j : Fin n,
+          (Matrix.noPivotLoop fuel
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[i][j] =
+            Matrix.dot v (b.row j) := by
+  let hinv :=
+    bareissGramRowInvariant_noPivotLoop_initial b fuel hquot
+  refine ⟨Matrix.rowCombination b (hinv.coeff i), ?_, ?_⟩
+  · exact ⟨hinv.coeff i, fun k hik => hinv.coeff_supp i k hi hik, rfl⟩
+  · intro j
+    exact hinv.entry_eq_dot i j hi
+
 private theorem int_mul_self_nonneg (x : Int) : 0 ≤ x * x := by
   simpa [Lean.Grind.Semiring.pow_two] using
     (Lean.Grind.OrderedRing.sq_nonneg (a := x))
@@ -3556,15 +3583,15 @@ too. This is the `h_column_zero` premise consumed by
 executable `findPivot? = none` form needed by the row-pivoted Bareiss loop on
 the Gram trajectory.
 
-The argument: by the closed row invariant, the represented pivot row
-`v := rowCombination b (hinv.coeff sFin)` has integer support on indices
-`≤ s` and inner product zero against `b.row k` for every `k.val ≤ s` (those
-matrix entries are either the zero pivot itself or zeros left by earlier
-regular elimination steps). Linearity of dot against `rowCombination` over
-the supported indices then gives `Matrix.dot v v = 0`, and integer positive
-definiteness forces every dot against `v` to be zero. Trailing-block
-symmetry transports `state.matrix[sFin][i] = Matrix.dot v (b.row i) = 0`
-across the diagonal to `state.matrix[i][sFin] = 0`. -/
+The argument: by the closed row-vector consumer, the represented pivot row has
+integer support on indices `≤ s` and inner product zero against `b.row k` for
+every `k.val ≤ s` (those matrix entries are either the zero pivot itself or
+zeros left by earlier regular elimination steps). Linearity of dot against
+`rowCombination` over the supported indices then gives `Matrix.dot v v = 0`,
+and integer positive definiteness forces every dot against `v` to be zero.
+Trailing-block symmetry transports
+`state.matrix[sFin][i] = Matrix.dot v (b.row i) = 0` across the diagonal to
+`state.matrix[i][sFin] = 0`. -/
 private theorem leadingPrefix_gram_zero_pivot_column_zero_of_singular_step
     {n m : Nat} (b : Matrix Int n m) (s : Nat) (hs : s + 1 < n)
     (hquot : BareissGramInitialRegularStepQuotientProvider b)
@@ -3587,25 +3614,14 @@ private theorem leadingPrefix_gram_zero_pivot_column_zero_of_singular_step
       (Matrix.noPivotLoop s
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step = s :=
     noPivotLoop_initial_gram_step_eq_of_prefix_none b s hs h_prefix_none
-  -- Closed row invariant carried by the loop result.
-  have hinv : BareissGramRowInvariant b
-      (Matrix.noPivotLoop s
-        (Matrix.noPivotInitialState (Matrix.gramMatrix b))) :=
-    bareissGramRowInvariant_noPivotLoop_initial b s hquot
-  -- The represented pivot row.
-  let v : Vector Int m := Matrix.rowCombination b (hinv.coeff sFin)
-  have hv_def : v = Matrix.rowCombination b (hinv.coeff sFin) := rfl
-  -- The row invariant aligns `matrix[sFin][j]` with `Matrix.dot v (b.row j)`.
   have h_state_step_le_sFin :
       (Matrix.noPivotLoop s
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step ≤ sFin.val := by
     rw [h_step]; show s ≤ s; exact Nat.le_refl _
-  have h_dot_eq_matrix : ∀ j : Fin n,
-      (Matrix.noPivotLoop s
-        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[sFin][j] =
-        Matrix.dot v (b.row j) := by
-    intro j
-    exact hinv.entry_eq_dot sFin j h_state_step_le_sFin
+  -- The row-vector consumer aligns `matrix[sFin][j]` with
+  -- `Matrix.dot v (b.row j)` for all columns `j`.
+  obtain ⟨v, ⟨c, h_coeff_supp_above, hv_def⟩, h_dot_eq_matrix⟩ :=
+    noPivotLoop_initial_gram_exists_rowVec b s hquot sFin h_state_step_le_sFin
   -- The represented row is orthogonal to `b.row k` for every `k.val ≤ s`:
   -- on `k.val = s`, the hypothesis `h_zero` gives a zero pivot dot, and on
   -- `k.val < s` the column was cleared by an earlier regular Bareiss step.
@@ -3632,19 +3648,14 @@ private theorem leadingPrefix_gram_zero_pivot_column_zero_of_singular_step
       exact noPivotLoop_matrix_processed_col_eq_zero s
         (Matrix.noPivotInitialState (Matrix.gramMatrix b)) h_prefix_none
         k.val h_init_step_le h_k_lt_result k rfl sFin h_k_lt_sFin
-  -- The represented row's coefficient is supported on `{0, …, s}`.
-  have h_coeff_supp_above : ∀ k : Fin n, sFin.val < k.val →
-      (hinv.coeff sFin)[k] = 0 := by
-    intro k hk
-    exact hinv.coeff_supp sFin k h_state_step_le_sFin hk
   -- `Matrix.dot v v = 0`: every term in the rowCombination expansion is zero.
   have h_dot_self_zero : Matrix.dot v v = 0 := by
     have h_expand_aux :
-        Matrix.dot v (Matrix.rowCombination b (hinv.coeff sFin)) =
+        Matrix.dot v (Matrix.rowCombination b c) =
           (List.finRange n).foldl
-            (fun acc k => acc + (hinv.coeff sFin)[k] * Matrix.dot v (b.row k))
+            (fun acc k => acc + c[k] * Matrix.dot v (b.row k))
             0 :=
-      dot_rowCombination_right_eq_foldl_int b v (hinv.coeff sFin)
+      dot_rowCombination_right_eq_foldl_int b v c
     rw [← hv_def] at h_expand_aux
     rw [h_expand_aux]
     apply foldl_add_zero_of_terms_zero_int

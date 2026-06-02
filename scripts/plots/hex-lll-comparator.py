@@ -18,20 +18,14 @@ from matplotlib.ticker import FuncFormatter
 
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_DENSIFIED = ROOT / "reports/bench-results/hex-lll-setentry-modify-densified.json"
-# Post-warmupFirstIter exports; supersede the pre-fix files whose
-# subprocess-driver startup dominated small-n medians.
-DEFAULT_FPYLLL_RANDOM = (
-    ROOT / "reports/bench-results/hex-lll-fpylll-random-bounded-warmupfix.json"
+# Post-warmupFirstIter, post-perf-fix exports. Each family file has all
+# three comparators (Lean, Isabelle, fpylll) measured in one run so the
+# ratios are internally consistent.
+DEFAULT_RANDOM_CONSOLIDATED = (
+    ROOT / "reports/bench-results/hex-lll-random-bounded-postperf.json"
 )
-DEFAULT_FPYLLL_HARSH = (
-    ROOT / "reports/bench-results/hex-lll-harsh-cubic-extended-warmupfix.json"
-)
-DEFAULT_HARSH_LEAN_ISABELLE = (
-    ROOT / "reports/bench-results/hex-lll-setentry-modify-harsh-cubic.json"
-)
-DEFAULT_ISABELLE = (
-    ROOT / "reports/bench-results/hex-lll-isabelle-warmupfix.json"
+DEFAULT_HARSH_CONSOLIDATED = (
+    ROOT / "reports/bench-results/hex-lll-harsh-cubic-extended-postperf.json"
 )
 DEFAULT_ISABELLE_BOTTOM = (
     ROOT / "reports/bench-results/hex-lll-isabelle-bottom-e211854d1435.json"
@@ -74,21 +68,22 @@ FAMILIES = {
         lean_pattern=LEAN_RANDOM,
         isabelle_pattern=ISABELLE_RANDOM,
         fpylll_pattern=FPYLLL_RANDOM,
-        fpylll_path=DEFAULT_FPYLLL_RANDOM,
+        fpylll_path=DEFAULT_RANDOM_CONSOLIDATED,
         output=DEFAULT_RANDOM_OUTPUT,
         title="HexLLL random-bounded comparator runtime",
         xlabel="random-bounded dimension n",
+        consolidated_path=DEFAULT_RANDOM_CONSOLIDATED,
         bottom_consistency=True,
     ),
     "harsh-cubic": FamilyConfig(
         lean_pattern=LEAN_HARSH,
         isabelle_pattern=ISABELLE_HARSH,
         fpylll_pattern=FPYLLL_HARSH,
-        fpylll_path=DEFAULT_FPYLLL_HARSH,
+        fpylll_path=DEFAULT_HARSH_CONSOLIDATED,
         output=DEFAULT_HARSH_OUTPUT,
         title="HexLLL harsh-cubic comparator runtime",
         xlabel="harsh-cubic dimension n",
-        consolidated_path=DEFAULT_HARSH_LEAN_ISABELLE,
+        consolidated_path=DEFAULT_HARSH_CONSOLIDATED,
     ),
 }
 
@@ -174,18 +169,11 @@ def main() -> None:
         required=True,
         help="Input family to plot.",
     )
-    parser.add_argument("--densified", type=Path, default=DEFAULT_DENSIFIED)
     parser.add_argument(
-        "--fpylll",
+        "--consolidated",
         type=Path,
         default=None,
-        help="Override the family-specific fpylll export.",
-    )
-    parser.add_argument(
-        "--isabelle",
-        type=Path,
-        default=DEFAULT_ISABELLE,
-        help="Isabelle export to use; defaults to the post-warmupFirstIter run.",
+        help="Override the family-specific consolidated bench export.",
     )
     parser.add_argument(
         "--isabelle-bottom", type=Path, default=DEFAULT_ISABELLE_BOTTOM
@@ -193,21 +181,14 @@ def main() -> None:
     parser.add_argument("--output", type=Path, default=None)
     args = parser.parse_args()
     config = FAMILIES[args.family]
-    fpylll_path = args.fpylll or config.fpylll_path
+    cons_path = args.consolidated or config.consolidated_path
     output = args.output or config.output
 
-    fpylll_results = load_results(fpylll_path)
-    if config.consolidated_path is not None:
-        cons = load_results(config.consolidated_path)
-        lean = collect_series(cons, config.lean_pattern, "Lean")
-        isabelle = collect_series(cons, config.isabelle_pattern,
-                                  "verified Isabelle LLL")
-    else:
-        densified_results = load_results(args.densified)
-        isabelle_results = load_results(args.isabelle)
-        lean = collect_series(densified_results, config.lean_pattern, "Lean")
-        isabelle = collect_series(isabelle_results, config.isabelle_pattern,
-                                  "verified Isabelle LLL")
+    cons = load_results(cons_path)
+    lean = collect_series(cons, config.lean_pattern, "Lean")
+    isabelle = collect_series(cons, config.isabelle_pattern,
+                              "verified Isabelle LLL")
+    fpylll_results = cons
     fpylll = collect_series(
         fpylll_results, config.fpylll_pattern, "fpLLL via fpylll"
     )
