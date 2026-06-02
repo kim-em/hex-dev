@@ -4780,20 +4780,28 @@ private theorem det_rowAdd_leibniz {R : Type u} [Lean.Grind.CommRing R] {n : Nat
       (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0 := by
   exact permutationVectors_rowAdd_sum M src dst c h
 
+/-- The determinant of the identity matrix is one. -/
+@[grind =]
 theorem det_one {R : Type u} [Lean.Grind.CommRing R] {n : Nat} :
     det (1 : Matrix R n n) = 1 := by
   simpa [det] using (det_identity_leibniz (R := R) (n := n))
 
+/-- Swapping two distinct rows negates the determinant. -/
+@[grind =]
 theorem det_rowSwap {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (i j : Fin n) (h : i ≠ j) :
     det (rowSwap M i j) = -det M := by
   simpa [det] using det_rowSwap_leibniz M i j h
 
+/-- Scaling a row by `c` scales the determinant by `c`. -/
+@[grind =]
 theorem det_rowScale {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (i : Fin n) (c : R) :
     det (rowScale M i c) = c * det M := by
   simpa [det] using det_rowScale_leibniz M i c
 
+/-- Adding a multiple of one row to a distinct row preserves the determinant. -/
+@[grind =]
 theorem det_rowAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) (c : R) (h : src ≠ dst) :
     det (rowAdd M src dst c) = det M := by
