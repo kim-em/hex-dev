@@ -255,6 +255,33 @@ shape `Matrix.bareiss M = Matrix.det M`. -/
 #guard dependentRat * dependentNullspace.get ⟨0, by decide⟩ = 0
 #guard dependentRat * dependentNullspace.get ⟨1, by decide⟩ = 0
 
+/- RREF, span, and nullspace proof-mode automation examples. -/
+
+section RREFWrapperAutomation
+
+example (M : Matrix Rat n m) (v : Vector Rat m) (c : Vector Rat n) :
+    Matrix.spanCoeffs M v = some c → Matrix.rowCombination M c = v := by
+  exact Matrix.spanCoeffs_sound M v c
+
+example (M : Matrix Rat n m) (v : Vector Rat m) :
+    Matrix.spanContains M v = (Matrix.spanCoeffs M v).isSome := by
+  simp
+
+example (M : Matrix Rat n m) (v : Vector Rat m) :
+    Matrix.spanContains M v = true →
+      ∃ c : Vector Rat n, Matrix.rowCombination M c = v := by
+  exact (Matrix.spanContains_iff M v).mp
+
+example (M : Matrix Rat n m) (k : Fin (m - Matrix.rref_rank M)) :
+    M * (Matrix.nullspace M).get k = 0 := by
+  grind
+
+example (M : Matrix Rat n m) (k : Fin (m - Matrix.rref_rank M)) :
+    Matrix.col (Matrix.nullspaceBasisMatrix M) k = (Matrix.nullspace M).get k := by
+  grind
+
+end RREFWrapperAutomation
+
 /-!
 6×6 fixtures matching the SPEC `core` matrix-dimension band, with the
 same typical / edge / adversarial structure as the 2×2 cases above:
