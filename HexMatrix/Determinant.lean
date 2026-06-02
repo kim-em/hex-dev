@@ -10691,6 +10691,166 @@ private theorem det_setRow_nMatrix_r3_r1_eq_pow_mul_nDet_r0_r3
   rw [h_nDet, hdet_rm, ← Lean.Grind.Semiring.mul_assoc,
       neg_one_pow_mul_self, Lean.Grind.Semiring.one_mul]
 
+/-! ### Double-row `setRow` transport to ordered `nDet` minors
+
+For ordered rows `r0 < r1 < r2 < r3`, the double replacement
+`setRow (setRow (nMatrix B r0 r1 h01) s2 B[r0]) s3 B[r1]` (with
+`s2 = ⟨r2.val - 2, _⟩` and `s3 = ⟨r3.val - 2, _⟩`) realises the row
+content of `nMatrix B r2 r3 h23` with the inserted rows `B[r0]` and
+`B[r1]` displaced downward. Two `rowMoveUp` operations (first sliding
+`B[r0]` up to position `r0.val`, then `B[r1]` up to position `r1.val - 1`
+of the intermediate matrix) reorder the rows back, contributing the
+combined sign `(-1)^((r2 - r0 - 2) + (r3 - r1 - 2))`. The intermediate
+identification uses `rowMoveUp_setRow_of_gt` to slide the outer
+`setRow s3 B[r1]` past the inner `rowMoveUp`, since `s3.val > r2.val - 2`
+places it strictly above the inner move interval. -/
+
+/-- `rowMoveUp` commutes with `setRow` when the `setRow` target index
+sits strictly above the move interval. The destination row is untouched
+by `rowMoveUp` on both sides, so the operations can be exchanged. -/
+private theorem rowMoveUp_setRow_of_gt {R : Type u} {n m : Nat}
+    (M : Matrix R n m) (src k : Nat) (h : src + k < n) (j : Fin n)
+    (v : Vector R m) (hj : src + k < j.val) :
+    rowMoveUp (setRow M j v) src k h = setRow (rowMoveUp M src k h) j v := by
+  apply Vector.ext
+  intro i hi
+  let ii : Fin n := ⟨i, hi⟩
+  show (rowMoveUp (setRow M j v) src k h)[ii] =
+    (setRow (rowMoveUp M src k h) j v)[ii]
+  by_cases h_eq_j : ii = j
+  · -- ii = j: both sides evaluate to v
+    have hii_gt : src + k < ii.val := by
+      have := congrArg Fin.val h_eq_j; omega
+    have hLHS_move :
+        (rowMoveUp (setRow M j v) src k h)[ii] = (setRow M j v)[ii] :=
+      rowMoveUp_row_of_gt (setRow M j v) src k h ii hii_gt
+    have hLHS_idx :
+        (setRow M j v)[ii] = (setRow M j v)[j] :=
+      congrArg (fun (i : Fin n) => (setRow M j v)[i]) h_eq_j
+    have hRHS_idx :
+        (setRow (rowMoveUp M src k h) j v)[ii] =
+          (setRow (rowMoveUp M src k h) j v)[j] :=
+      congrArg (fun (i : Fin n) =>
+        (setRow (rowMoveUp M src k h) j v)[i]) h_eq_j
+    rw [hLHS_move, hLHS_idx, hRHS_idx, setRow_get_self, setRow_get_self]
+  · -- ii ≠ j: the outer setRow on the RHS is a no-op at ii
+    rw [setRow_row_ne (rowMoveUp M src k h) j ii v h_eq_j]
+    by_cases h_below : ii.val < src
+    · -- Below the move interval: both rowMoveUp ops are no-ops at ii
+      rw [rowMoveUp_row_of_lt (setRow M j v) src k h ii h_below,
+          rowMoveUp_row_of_lt M src k h ii h_below,
+          setRow_row_ne M j ii v h_eq_j]
+    · by_cases h_eq_src : ii.val = src
+      · -- ii.val = src: rowMoveUp produces the row originally at src + k
+        rw [rowMoveUp_row_eq_src (setRow M j v) src k h ii h_eq_src,
+            rowMoveUp_row_eq_src M src k h ii h_eq_src]
+        have hsk_ne_j : (⟨src + k, h⟩ : Fin n) ≠ j := by
+          intro he
+          have : src + k = j.val := congrArg Fin.val he
+          omega
+        rw [setRow_row_ne M j ⟨src + k, h⟩ v hsk_ne_j]
+      · by_cases h_above : src + k < ii.val
+        · -- Above the move interval: both rowMoveUp ops are no-ops at ii
+          rw [rowMoveUp_row_of_gt (setRow M j v) src k h ii h_above,
+              rowMoveUp_row_of_gt M src k h ii h_above,
+              setRow_row_ne M j ii v h_eq_j]
+        · -- Strictly inside: src < ii.val ≤ src + k; both rowMoveUp ops
+          -- produce the row originally at ii.val - 1
+          have h_lt_src : src < ii.val := by
+            have h1 : ¬ ii.val < src := h_below
+            have h2 : ii.val ≠ src := h_eq_src
+            omega
+          have h_le_top : ii.val ≤ src + k := by omega
+          rw [rowMoveUp_row_between (setRow M j v) src k h ii h_lt_src h_le_top,
+              rowMoveUp_row_between M src k h ii h_lt_src h_le_top]
+          have h_iminus_ne_j :
+              (⟨ii.val - 1, by have := ii.isLt; omega⟩ : Fin n) ≠ j := by
+            intro he
+            have : ii.val - 1 = j.val := congrArg Fin.val he
+            omega
+          rw [setRow_row_ne M j ⟨ii.val - 1, by have := ii.isLt; omega⟩
+                v h_iminus_ne_j]
+
+/-- For ordered rows `r0 < r1 < r2 < r3`, the doubly-replaced matrix
+`setRow (setRow (nMatrix B r0 r1 h01) s2 B[r0]) s3 B[r1]` (with
+`s2 = ⟨r2.val - 2, _⟩` and `s3 = ⟨r3.val - 2, _⟩`) has determinant
+`(-1)^((r2 - r0 - 2) + (r3 - r1 - 2)) * nDet B r2 r3 h23`. -/
+private theorem det_setRow_setRow_nMatrix_r2_r0_r3_r1_eq_pow_mul_nDet_r2_r3
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n)
+    (r0 r1 r2 r3 : Fin (n + 2))
+    (h01 : r0.val < r1.val) (h12 : r1.val < r2.val)
+    (h23 : r2.val < r3.val) :
+    let M := nMatrix B r0 r1 h01
+    let s2 : Fin n := ⟨r2.val - 2, by have := r3.isLt; omega⟩
+    let s3 : Fin n := ⟨r3.val - 2, by have := r3.isLt; omega⟩
+    det (setRow (setRow M s2 B[r0]) s3 B[r1]) =
+      (-1 : R) ^ ((r2.val - r0.val - 2) + (r3.val - r1.val - 2)) *
+        nDet B r2 r3 h23 := by
+  intro M s2 s3
+  have hsk1 : r0.val + (r2.val - r0.val - 2) < n := by
+    have := r3.isLt; omega
+  have hsk2 : r1.val + (r3.val - r1.val - 2) < n := by
+    have := r3.isLt; omega
+  have hs3_gt : r0.val + (r2.val - r0.val - 2) < s3.val := by
+    show r0.val + (r2.val - r0.val - 2) < r3.val - 2
+    omega
+  -- Step 1: slide the outer `setRow s3 B[r1]` past the first `rowMoveUp`.
+  have hcommute :
+      rowMoveUp (setRow (setRow M s2 B[r0]) s3 B[r1]) r0.val
+          (r2.val - r0.val - 2) hsk1 =
+        setRow
+          (rowMoveUp (setRow M s2 B[r0]) r0.val (r2.val - r0.val - 2) hsk1)
+          s3 B[r1] :=
+    rowMoveUp_setRow_of_gt (setRow M s2 B[r0]) r0.val (r2.val - r0.val - 2)
+      hsk1 s3 B[r1] hs3_gt
+  -- Step 2: identify the inner `rowMoveUp` with `nMatrix B r1 r2 h12`.
+  have hrow1 :
+      rowMoveUp (setRow M s2 B[r0]) r0.val (r2.val - r0.val - 2) hsk1 =
+        nMatrix B r1 r2 h12 :=
+    rowMoveUp_setRow_nMatrix_replace_first_eq_nMatrix
+      B r0 r1 r2 h01 h12 s2 rfl hsk1
+  rw [hrow1] at hcommute
+  -- Step 3: outer `det_rowMoveUp` peels off the first sign factor.
+  have hdet_outer :=
+    det_rowMoveUp (setRow (setRow M s2 B[r0]) s3 B[r1]) r0.val
+      (r2.val - r0.val - 2) hsk1
+  rw [hcommute] at hdet_outer
+  -- hdet_outer : det (setRow (nMatrix B r1 r2 h12) s3 B[r1]) =
+  --              (-1)^(r2 - r0 - 2) * det (setRow (setRow M s2 B[r0]) s3 B[r1])
+  -- Step 4: identify the next `rowMoveUp` with `nMatrix B r2 r3 h23`.
+  have hrow2 :
+      rowMoveUp (setRow (nMatrix B r1 r2 h12) s3 B[r1]) r1.val
+          (r3.val - r1.val - 2) hsk2 =
+        nMatrix B r2 r3 h23 :=
+    rowMoveUp_setRow_nMatrix_replace_first_eq_nMatrix
+      B r1 r2 r3 h12 h23 s3 rfl hsk2
+  -- Step 5: inner `det_rowMoveUp` peels off the second sign factor.
+  have hdet_inner :=
+    det_rowMoveUp (setRow (nMatrix B r1 r2 h12) s3 B[r1]) r1.val
+      (r3.val - r1.val - 2) hsk2
+  rw [hrow2] at hdet_inner
+  -- hdet_inner : det (nMatrix B r2 r3 h23) =
+  --              (-1)^(r3 - r1 - 2) * det (setRow (nMatrix B r1 r2 h12) s3 B[r1])
+  -- Combine. Let a = r2 - r0 - 2, b = r3 - r1 - 2. After substitution we
+  -- need D = (-1)^(a+b) * ((-1)^b * ((-1)^a * D)), which collapses by
+  -- `pow_add` and `neg_one_pow_mul_self`.
+  show det (setRow (setRow M s2 B[r0]) s3 B[r1]) =
+    (-1 : R) ^ ((r2.val - r0.val - 2) + (r3.val - r1.val - 2)) *
+      nDet B r2 r3 h23
+  have h_nDet : nDet B r2 r3 h23 = det (nMatrix B r2 r3 h23) := rfl
+  rw [h_nDet, hdet_inner, hdet_outer]
+  have h_pow_add :
+      (-1 : R) ^ ((r2.val - r0.val - 2) + (r3.val - r1.val - 2)) =
+        (-1 : R) ^ (r2.val - r0.val - 2) *
+          (-1 : R) ^ (r3.val - r1.val - 2) :=
+    Lean.Grind.Semiring.pow_add (-1 : R) (r2.val - r0.val - 2)
+      (r3.val - r1.val - 2)
+  have h_self_a := neg_one_pow_mul_self (R := R) (r2.val - r0.val - 2)
+  have h_self_b := neg_one_pow_mul_self (R := R) (r3.val - r1.val - 2)
+  rw [h_pow_add]
+  grind
+
 /-- The square matrix `[B | u | v]` formed by appending two vector columns to
 `B : Matrix R (n + 2) n`. The original `B` columns occupy positions
 `0..n-1`; `u` occupies column `n`; `v` occupies the last column. -/
