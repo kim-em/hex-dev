@@ -2996,6 +2996,66 @@ private theorem noPivotLoop_matrix_processed_col_eq_zero {n : Nat} (fuel : Nat) 
         rw [h_eq_state] at h_result_none hk_lt ⊢
         omega
 
+/-- Initial no-pivot Gram trajectory specialization of the regular row-entry
+algebra.  The quotient package supplies the coefficient-side divisibility
+provenance; the initial trajectory supplies nonzero `prevPivot` and the
+already-processed column zeros needed by the one-step algebra. -/
+private theorem bareissGramInitialRegularStep_entry_eq_dot
+    (b : Matrix Int n m) (fuel : Nat)
+    (hinv : BareissGramRowInvariant b
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))))
+    (h_prefix_none :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none)
+    (hnext :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 < n)
+    (hp :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
+          (Matrix.noPivotLoop fuel
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step][
+          (Matrix.noPivotLoop fuel
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step] ≠ 0)
+    (i j : Fin n)
+    (hi :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 ≤ i.val)
+    (hq : BareissGramInitialRegularStepQuotient b fuel hinv hnext i hi) :
+    (Matrix.stepMatrix
+        (Matrix.noPivotLoop fuel
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix
+        (Matrix.noPivotLoop fuel
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step
+        (Matrix.noPivotLoop fuel
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
+            (Matrix.noPivotLoop fuel
+              (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step][
+            (Matrix.noPivotLoop fuel
+              (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step]
+        (Matrix.noPivotLoop fuel
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).prevPivot)[i][j] =
+      Matrix.dot
+        (Matrix.rowCombination b
+          (bareissGramRowInvariantStepCoeff hinv hnext i hi))
+        (b.row j) := by
+  let state :=
+    Matrix.noPivotLoop fuel
+      (Matrix.noPivotInitialState (Matrix.gramMatrix b))
+  have hprev : state.prevPivot ≠ 0 :=
+    noPivotLoop_initial_gram_prevPivot_ne_zero_of_regular_prefix
+      b fuel h_prefix_none hnext hp
+  have h_processed :
+      ∀ i' : Fin n, state.step ≤ i'.val →
+        ∀ j' : Fin n, j'.val < state.step → state.matrix[i'][j'] = 0 := by
+    intro i' hi' j' hj'
+    exact noPivotLoop_matrix_processed_col_eq_zero fuel
+      (Matrix.noPivotInitialState (Matrix.gramMatrix b)) h_prefix_none
+      j'.val (by simp [Matrix.noPivotInitialState]) hj' j' rfl i'
+      (Nat.lt_of_lt_of_le hj' hi')
+  exact bareissGramRegularStep_entry_eq_dot hprev hq h_processed j
+
 private theorem int_mul_self_nonneg (x : Int) : 0 ≤ x * x := by
   simpa [Lean.Grind.Semiring.pow_two] using
     (Lean.Grind.OrderedRing.sq_nonneg (a := x))
