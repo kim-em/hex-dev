@@ -2586,6 +2586,140 @@ private theorem bareissGramRowInvariantStepCoeff_support
     simpa [k] using hck
   simp [hciNat, hckNat, Matrix.exactDiv]
 
+/-- Right-scalar linearity of the dot product against a `rowCombination` whose
+coefficient vector is multiplied pointwise by a constant on the right.  Used
+to factor the Bareiss exact-division denominator out of a quotient-backed row
+combination. -/
+private theorem dot_rowCombination_mul_right_int
+    (b : Matrix Int n m) (f : Fin n → Int) (s : Int) (w : Vector Int m) :
+    Matrix.dot
+        (Matrix.rowCombination b (Vector.ofFn fun a : Fin n => f a * s)) w =
+      Matrix.dot (Matrix.rowCombination b (Vector.ofFn f)) w * s := by
+  have h_eq_input :
+      (Vector.ofFn fun a : Fin n => f a * s) =
+        Vector.ofFn fun a : Fin n =>
+          s * (Vector.ofFn f)[a] - 0 * (Vector.ofFn f)[a] := by
+    apply Vector.ext
+    intro a ha
+    simp only [Vector.getElem_ofFn]
+    grind
+  rw [h_eq_input]
+  rw [rowCombination_bareiss_coeff_update b s 0 (Vector.ofFn f) (Vector.ofFn f)]
+  rw [dot_bareiss_row_update_left s 0
+    (Matrix.rowCombination b (Vector.ofFn f))
+    (Matrix.rowCombination b (Vector.ofFn f)) w]
+  grind
+
+/-- Row-entry algebra for one regular Gram-row Bareiss step.  Consuming the
+quotient-coefficient package `BareissGramRegularStepQuotient` together with a
+nonzero `prevPivot` and the already-processed-column zero entries gives the
+exact row-entry relation for `Matrix.stepMatrix` at row `i` and any column
+`j`.  Covers the three column regimes: `j.val < state.step` (already-cleared
+column, both sides zero), `j.val = state.step` (pivot column below the pivot,
+both sides zero), and `state.step < j.val` (trailing block, `exactDiv` of the
+Bareiss numerator). -/
+private theorem bareissGramRegularStep_entry_eq_dot
+    {b : Matrix Int n m} {state : Matrix.BareissState n}
+    {hinv : BareissGramRowInvariant b state}
+    {hnext : state.step + 1 < n} {i : Fin n} {hi : state.step + 1 ≤ i.val}
+    (hprev : state.prevPivot ≠ 0)
+    (hq : BareissGramRegularStepQuotient hinv hnext i hi)
+    (h_processed : ∀ i' : Fin n, state.step ≤ i'.val →
+      ∀ j' : Fin n, j'.val < state.step → state.matrix[i'][j'] = 0)
+    (j : Fin n) :
+    (Matrix.stepMatrix state.matrix state.step
+        state.matrix[state.step][state.step] state.prevPivot)[i][j] =
+      Matrix.dot
+        (Matrix.rowCombination b
+          (bareissGramRowInvariantStepCoeff hinv hnext i hi))
+        (b.row j) := by
+  let k : Fin n := ⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hnext⟩
+  have hk_val : k.val = state.step := rfl
+  have h_step_le_i : state.step ≤ i.val := Nat.le_trans (Nat.le_succ _) hi
+  have h_step_lt_i : state.step < i.val := hi
+  have h_step_le_k : state.step ≤ k.val := Nat.le_refl _
+  let lhsNum : Int :=
+    state.matrix[k][k] * state.matrix[i][j] - state.matrix[i][k] * state.matrix[k][j]
+  have hLHS_num : lhsNum =
+      state.matrix[k][k] * state.matrix[i][j] -
+        state.matrix[i][k] * state.matrix[k][j] := rfl
+  -- Claim A: the dot product of the "numerator-side" row combination is lhsNum.
+  have h_dot_num :
+      Matrix.dot
+          (Matrix.rowCombination b
+            (Vector.ofFn fun a : Fin n =>
+              state.matrix[k][k] * (hinv.coeff i)[a] -
+                state.matrix[i][k] * (hinv.coeff k)[a]))
+          (b.row j) = lhsNum := by
+    rw [rowCombination_bareiss_coeff_update b
+      state.matrix[k][k] state.matrix[i][k] (hinv.coeff i) (hinv.coeff k)]
+    rw [dot_bareiss_row_update_left
+      state.matrix[k][k] state.matrix[i][k]
+      (Matrix.rowCombination b (hinv.coeff i))
+      (Matrix.rowCombination b (hinv.coeff k))
+      (b.row j)]
+    rw [← hinv.entry_eq_dot i j h_step_le_i,
+        ← hinv.entry_eq_dot k j h_step_le_k]
+  -- Claim B: the dot product of the step coefficient row combination equals
+  -- `exactDiv lhsNum prevPivot`.
+  have h_dot_step :
+      Matrix.dot
+          (Matrix.rowCombination b
+            (bareissGramRowInvariantStepCoeff hinv hnext i hi))
+          (b.row j) = Matrix.exactDiv lhsNum state.prevPivot := by
+    rw [rowCombination_bareissGramRegularStepQuotient hprev hq]
+    refine (exactDiv_eq_of_eq_mul_right hprev ?_).symm
+    have h_dot_mul :=
+      dot_rowCombination_mul_right_int b hq.q state.prevPivot (b.row j)
+    rw [← h_dot_mul]
+    have h_q_eq_num :
+        (Vector.ofFn fun a : Fin n => hq.q a * state.prevPivot) =
+          (Vector.ofFn fun a : Fin n =>
+            state.matrix[k][k] * (hinv.coeff i)[a] -
+              state.matrix[i][k] * (hinv.coeff k)[a]) := by
+      apply Vector.ext
+      intro a ha
+      rw [Vector.getElem_ofFn, Vector.getElem_ofFn]
+      exact (hq.coeff_num_eq_mul ⟨a, ha⟩).symm
+    rw [h_q_eq_num]
+    exact h_dot_num.symm
+  -- Case split on `j.val` against `state.step`.
+  by_cases hjk : state.step < j.val
+  · -- Trailing block: stepMatrix is the Bareiss exactDiv update.
+    rw [Matrix.stepMatrix_update_eq state.matrix state.step
+      state.matrix[state.step][state.step] state.prevPivot i j h_step_lt_i hjk]
+    rw [h_dot_step]
+    rfl
+  · by_cases hjeq : j.val = state.step
+    · -- Pivot column, below the pivot: stepMatrix entry is 0, and `lhsNum = 0`.
+      rw [Matrix.stepMatrix_pivot_col_below state.matrix state.step
+        state.matrix[state.step][state.step] state.prevPivot i j h_step_lt_i hjeq]
+      rw [h_dot_step]
+      have h_j_eq_k : j = k := Fin.ext (by rw [hjeq, hk_val])
+      have h_lhs_num_zero : lhsNum = 0 := by
+        rw [hLHS_num, h_j_eq_k]; grind
+      rw [h_lhs_num_zero]
+      symm
+      exact exactDiv_eq_of_eq_mul_right hprev
+        (by grind : (0 : Int) = 0 * state.prevPivot)
+    · -- Already-processed column: stepMatrix carries over, both sides zero.
+      have hj_lt : j.val < state.step :=
+        Nat.lt_of_le_of_ne (Nat.le_of_not_lt hjk) hjeq
+      have h_not_trail : ¬ (state.step < i.val ∧ state.step < j.val) := by
+        intro ⟨_, h2⟩; exact absurd h2 (Nat.not_lt_of_le (Nat.le_of_lt hj_lt))
+      have h_not_col : ¬ (state.step < i.val ∧ j.val = state.step) := by
+        intro ⟨_, h2⟩; exact hjeq h2
+      rw [Matrix.stepMatrix_eq_of_not_update state.matrix state.step
+        state.matrix[state.step][state.step] state.prevPivot i j h_not_trail h_not_col]
+      have h_i_j_zero : state.matrix[i][j] = 0 := h_processed i h_step_le_i j hj_lt
+      have h_k_j_zero : state.matrix[k][j] = 0 := h_processed k h_step_le_k j hj_lt
+      have h_lhs_num_zero : lhsNum = 0 := by
+        rw [hLHS_num, h_i_j_zero, h_k_j_zero]; grind
+      rw [h_dot_step, h_lhs_num_zero, h_i_j_zero]
+      symm
+      exact exactDiv_eq_of_eq_mul_right hprev
+        (by grind : (0 : Int) = 0 * state.prevPivot)
+
 /-- One regular no-pivot Bareiss step preserves the Gram row-coefficient
 invariant, provided the later loop proof supplies the exact-division entry
 relation for the fraction-free updated row combinations. -/
