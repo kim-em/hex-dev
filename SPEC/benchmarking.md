@@ -785,21 +785,17 @@ The report contains five subsections:
 
    - **Comparator-runtime plot (≥ 2 comparators).** A library
      whose `phase4.comparators` block declares two or more
-     comparators commits one comparator-runtime plot per
-     `phase4.input_families` entry at
-     `reports/figures/<lib>-comparator-<family>.svg`. Each plot
-     draws one curve per comparator with at least two committed
-     data points on that family, alongside the Lean curve across
-     the family's eligible range, log-y wall-time per call.
-     Comparators with fewer than two data points on the family
-     are omitted from that family's plot and listed in the
-     library's §Concerns subsection. The generator script lives
-     at `scripts/plots/<lib>-comparator.py`, takes a `--family`
-     argument selecting which family to plot, and reads the same
-     committed bench-results JSONL the ratio numbers in this
-     subsection cite. Each plot is regenerated with the report;
-     a plot whose curves disagree with the §"Comparator ratios"
-     values for that family is an audit-found issue.
+     comparators commits one plot per `phase4.input_families`
+     entry at `reports/figures/<lib>-comparator-<family>.svg`,
+     log-y wall-time per call across the family's eligible
+     range. Each plot draws the Lean curve alongside one curve
+     per comparator with at least two committed data points on
+     that family; comparators below that threshold are listed
+     in §Concerns instead. The generator at
+     `scripts/plots/<lib>-comparator.py` takes a `--family`
+     argument and reads the same JSONL the ratio numbers cite.
+     Plots disagreeing with the §"Comparator ratios" values are
+     an audit-found issue.
 4. **Profile.** Per [profiling.md §Coverage requirement](profiling.md),
    one representative case per `phase4.input_families`. Dominant
    inclusive costs are named and explained, with leaf cost
