@@ -336,6 +336,16 @@ theorem toNat_addCarry (a b : UInt64) (cin : Bool) :
     omega
 
 /--
+Projection-form reconstruction for `addCarry`, suitable for equation-style
+automation.
+-/
+@[grind =]
+theorem toNat_addCarry_proj (a b : UInt64) (cin : Bool) :
+    (addCarry a b cin).1.toNat + (addCarry a b cin).2.toNat * word =
+      a.toNat + b.toNat + cin.toNat := by
+  simpa using toNat_addCarry a b cin
+
+/--
 `subBorrow` represents exact subtraction with borrow after one-word wrapping.
 -/
 theorem toNat_subBorrow (a b : UInt64) (bin : Bool) :
@@ -370,5 +380,15 @@ theorem toNat_subBorrow (a b : UInt64) (bin : Bool) :
     simp [hle]
     rw [Nat.mod_eq_of_lt hwrap_lt']
     exact hwrap_eq
+
+/--
+Projection-form reconstruction for `subBorrow`, suitable for equation-style
+automation.
+-/
+@[grind =]
+theorem toNat_subBorrow_proj (a b : UInt64) (bin : Bool) :
+    (subBorrow a b bin).1.toNat + (b.toNat + bin.toNat) =
+      a.toNat + (subBorrow a b bin).2.toNat * word := by
+  simpa using toNat_subBorrow a b bin
 
 end UInt64

@@ -126,6 +126,12 @@ private def maxWord : UInt64 := UInt64.ofNat (wordBase - 1)
   let (hi, lo) := UInt64.mulFull a b
   hi.toNat * wordBase + lo.toNat = a.toNat * b.toNat
 
+example (a b : UInt64) :
+    (UInt64.mulFull a b).2.toNat + (UInt64.mulFull a b).1.toNat * UInt64.word =
+      a.toNat * b.toNat := by
+  have h := UInt64.mulFull_snd_add_fst a b
+  grind only
+
 /-- info: (0, true) -/
 #guard_msgs in #eval UInt64.addCarry maxWord 1 false
 
@@ -140,6 +146,13 @@ private def maxWord : UInt64 := UInt64.ofNat (wordBase - 1)
   let (s, cout) := UInt64.addCarry a b false
   s.toNat + cout.toNat * wordBase = a.toNat + b.toNat
 
+example (a b : UInt64) (cin : Bool) :
+    (UInt64.addCarry a b cin).1.toNat +
+        (UInt64.addCarry a b cin).2.toNat * UInt64.word =
+      a.toNat + b.toNat + cin.toNat := by
+  have h := UInt64.toNat_addCarry_proj a b cin
+  grind only
+
 /-- info: (2, false) -/
 #guard_msgs in #eval UInt64.subBorrow 5 3 false
 
@@ -153,6 +166,12 @@ private def maxWord : UInt64 := UInt64.ofNat (wordBase - 1)
   let b := UInt64.ofNat (2 ^ 63 - 1)
   let (d, bout) := UInt64.subBorrow a b true
   d.toNat + (b.toNat + 1) = a.toNat + bout.toNat * wordBase
+
+example (a b : UInt64) (bin : Bool) :
+    (UInt64.subBorrow a b bin).1.toNat + (b.toNat + bin.toNat) =
+      a.toNat + (UInt64.subBorrow a b bin).2.toNat * UInt64.word := by
+  have h := UInt64.toNat_subBorrow_proj a b bin
+  grind only
 
 /-- info: 4 -/
 #guard_msgs in #eval let p := UInt64.ofNat 17
