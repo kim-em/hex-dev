@@ -277,6 +277,7 @@ theorem toNat_mulFull_snd (a b : UInt64) :
 Splitting the product into high and low words reconstructs the original
 Nat-level product.
 -/
+@[grind =]
 theorem mulHi_mulLo (a b : UInt64) :
     (mulHi a b).toNat * word + (a * b).toNat = a.toNat * b.toNat := by
   have h := Nat.div_add_mod (a.toNat * b.toNat) word
@@ -287,6 +288,7 @@ theorem mulHi_mulLo (a b : UInt64) :
 Low-word-first product reconstruction for callers that encode a two-word value
 as `lo + hi * word`.
 -/
+@[grind =]
 theorem mulLo_add_mulHi (a b : UInt64) :
     (a * b).toNat + (mulHi a b).toNat * word = a.toNat * b.toNat := by
   rw [Nat.add_comm]
@@ -296,6 +298,7 @@ theorem mulLo_add_mulHi (a b : UInt64) :
 The components returned by `mulFull` reconstruct the original Nat-level
 product in low-word-first order.
 -/
+@[grind =]
 theorem mulFull_snd_add_fst (a b : UInt64) :
     (mulFull a b).2.toNat + (mulFull a b).1.toNat * word =
       a.toNat * b.toNat := by

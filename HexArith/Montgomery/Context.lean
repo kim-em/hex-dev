@@ -259,8 +259,7 @@ private theorem twoWordProduct_lt_p_word (ctx : MontCtx p) (a b : UInt64)
     Nat.mul_lt_mul_of_pos_left ctx.p_lt_R ctx.p_pos
   calc
     (UInt64.mulFull a b).2.toNat + (UInt64.mulFull a b).1.toNat * UInt64.word
-        = a.toNat * b.toNat := by
-          exact UInt64.mulFull_snd_add_fst a b
+        = a.toNat * b.toNat := by grind
     _ < p.toNat * p.toNat := hprod_lt_p2
     _ < p.toNat * UInt64.word := hp2_lt_pword
 
@@ -280,8 +279,7 @@ private theorem redc_mulFull_repr_word (ctx : MontCtx p) (a b : UInt64)
         UInt64.word % p.toNat
         = ((UInt64.mulFull a b).2.toNat + (UInt64.mulFull a b).1.toNat *
             UInt64.word) % p.toNat := hredc
-    _ = (a.toNat * b.toNat) % p.toNat := by
-          rw [UInt64.mulFull_snd_add_fst a b]
+    _ = (a.toNat * b.toNat) % p.toNat := by grind
 
 private theorem redc_mulFull_lt (ctx : MontCtx p) (a b : UInt64)
     (hT :
