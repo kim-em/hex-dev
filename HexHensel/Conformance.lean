@@ -218,5 +218,65 @@ than `multifactorLift`. Performance is enforced separately in
 between the two paths.
 -/
 
+/-
+Proof-mode conformance for the quadratic Hensel doubling step. Each
+`example` witnesses that the `@[grind =>]` annotation on the matching
+public theorem closes the natural downstream consumer shape: given the
+base-modulus factorisation, Bezout pair, and monicity hypotheses, the
+quadratic step delivers a `mod m^2` factorisation, preserves monicity,
+and preserves the input factorisation at the base modulus.
+-/
+
+example (m : Nat) (f g h s t : ZPoly)
+    (hm : 0 < m)
+    (hprod : ZPoly.congr (g * h) f m)
+    (hbez : ZPoly.congr (s * g + t * h) 1 m)
+    (hmonic : DensePoly.Monic g) :
+    ZPoly.congr ((ZPoly.quadraticHenselStep m f g h s t).g *
+                 (ZPoly.quadraticHenselStep m f g h s t).h) f (m * m) := by
+  have := ZPoly.quadraticHenselStep_factor_spec m f g h s t hm hprod hbez hmonic
+  grind only
+
+example (m : Nat) (f g h s t : ZPoly)
+    (hm : 1 < m)
+    (hprod : ZPoly.congr (g * h) f m)
+    (hbez : ZPoly.congr (s * g + t * h) 1 m)
+    (hmonic : DensePoly.Monic g) :
+    ZPoly.congr ((ZPoly.quadraticHenselStep m f g h s t).s *
+                   (ZPoly.quadraticHenselStep m f g h s t).g +
+                 (ZPoly.quadraticHenselStep m f g h s t).t *
+                   (ZPoly.quadraticHenselStep m f g h s t).h) 1 (m * m) := by
+  have := ZPoly.quadraticHenselStep_bezout_spec m f g h s t hm hprod hbez hmonic
+  grind only
+
+example (m : Nat) (f g h s t : ZPoly)
+    (hm : 1 < m)
+    (hprod : ZPoly.congr (g * h) f m)
+    (hbez : ZPoly.congr (s * g + t * h) 1 m)
+    (hmonic : DensePoly.Monic g) :
+    ZPoly.congr ((ZPoly.quadraticHenselStep m f g h s t).g *
+                 (ZPoly.quadraticHenselStep m f g h s t).h) f (m * m) ∧
+      ZPoly.congr ((ZPoly.quadraticHenselStep m f g h s t).s *
+                     (ZPoly.quadraticHenselStep m f g h s t).g +
+                   (ZPoly.quadraticHenselStep m f g h s t).t *
+                     (ZPoly.quadraticHenselStep m f g h s t).h) 1 (m * m) := by
+  have := ZPoly.quadraticHenselStep_spec m f g h s t hm hprod hbez hmonic
+  grind only
+
+example (m : Nat) (f g h s t : ZPoly)
+    (hm : 1 < m)
+    (hmonic : DensePoly.Monic g) :
+    DensePoly.Monic (ZPoly.quadraticHenselStep m f g h s t).g := by
+  have := ZPoly.quadraticHenselStep_monic m f g h s t hm hmonic
+  grind only
+
+example (m : Nat) (f g h s t : ZPoly)
+    (hm : 1 < m)
+    (hprod : ZPoly.congr (g * h) f m) :
+    ZPoly.congr (ZPoly.quadraticHenselStep m f g h s t).g g m ∧
+      ZPoly.congr (ZPoly.quadraticHenselStep m f g h s t).h h m := by
+  have := ZPoly.quadraticHenselStep_factor_congr_mod_base m f g h s t hm hprod
+  grind only
+
 end HenselConformance
 end Hex

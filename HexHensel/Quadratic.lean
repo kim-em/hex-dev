@@ -2157,6 +2157,7 @@ private theorem quadraticHenselStep_g_update_monic
   simpa [factorQR, rFactor] using hmono
 
 /-- The updated factors multiply to `f` modulo `m^2`. -/
+@[grind =>]
 theorem quadraticHenselStep_factor_spec
     (m : Nat)
     (f g h s t : ZPoly)
@@ -2170,6 +2171,7 @@ theorem quadraticHenselStep_factor_spec
   exact quadraticHenselStep_raw_factor_congr m f g h s t hm hprod hbez hmonic
 
 /-- The updated Bezout witnesses certify coprimality modulo `m^2`. -/
+@[grind =>]
 theorem quadraticHenselStep_bezout_spec
     (m : Nat)
     (f g h s t : ZPoly)
@@ -2183,6 +2185,7 @@ theorem quadraticHenselStep_bezout_spec
   exact quadraticHenselStep_raw_bezout_congr m f g h s t hm hprod hbez hmonic
 
 /-- The quadratic step lifts both factor and Bezout congruences to modulus `m^2`. -/
+@[grind =>]
 theorem quadraticHenselStep_spec
     (m : Nat)
     (f g h s t : ZPoly)
@@ -2199,6 +2202,7 @@ theorem quadraticHenselStep_spec
       quadraticHenselStep_bezout_spec m f g h s t hm hprod hbez hmonic⟩
 
 /-- The monic factor remains monic after the quadratic correction. -/
+@[grind =>]
 theorem quadraticHenselStep_monic
     (m : Nat)
     (f g h s t : ZPoly)
@@ -2215,6 +2219,7 @@ factors modulo `m`. The quadratic correction only touches the data modulo
 `m^2` beyond what is already determined modulo `m`, so the input
 factorisation is preserved at the base modulus.
 -/
+@[grind =>]
 theorem quadraticHenselStep_factor_congr_mod_base
     (m : Nat) (f g h s t : ZPoly)
     (hm : 1 < m)
