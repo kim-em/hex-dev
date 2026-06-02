@@ -202,5 +202,86 @@ private def aes (word : UInt64) : AESField :=
 #guard ((aes 0x53) ^ 0).val = 1
 #guard ((aes 0x53) ^ 1).val = 0x53
 
+example : ((0 : AESField)⁻¹ = 0) := by
+  simp
+
+example (a b : AESField) : a / b = a * b⁻¹ := by
+  grind
+
+example (a : AESField) (ha : a ≠ 0) : a * a⁻¹ = 1 := by
+  grind
+
 end GF2n
+
+namespace GF2nPoly
+
+private abbrev AESPolyField : Type :=
+  GF2nPoly (GF2Poly.ofUInt64Monic 0x1B 8) aesIrreducible
+
+private def aesPoly (word : UInt64) : AESPolyField :=
+  reducePoly (GF2Poly.ofUInt64 word)
+
+#guard (aesPoly 0).val = 0
+#guard (aesPoly 1).val = 1
+#guard ((aesPoly 0x53) * (aesPoly 0xCA)).val = 1
+
+example (p : GF2Poly) :
+    (reducePoly (f := GF2Poly.ofUInt64Monic 0x1B 8) (hirr := aesIrreducible) p).val =
+      p % GF2Poly.ofUInt64Monic 0x1B 8 := by
+  simp
+
+example (a b : AESPolyField) :
+    (a + b).val = (a.val + b.val) % GF2Poly.ofUInt64Monic 0x1B 8 := by
+  simp
+
+example (a b : AESPolyField) :
+    (a * b).val = (a.val * b.val) % GF2Poly.ofUInt64Monic 0x1B 8 := by
+  simp
+
+example :
+    (0 : AESPolyField).val = (0 : GF2Poly) := by
+  simp
+
+example :
+    (1 : AESPolyField).val = (1 : GF2Poly) % GF2Poly.ofUInt64Monic 0x1B 8 := by
+  simp
+
+example :
+    ((0 : AESPolyField)⁻¹ = 0) := by
+  simp
+
+example (a : AESPolyField) : a + a = 0 := by
+  simp
+
+example (a : AESPolyField) : a * 0 = 0 := by
+  simp
+
+example (a : AESPolyField) : 0 * a = 0 := by
+  simp
+
+example (a b : AESPolyField) : a / b = a * b⁻¹ := by
+  grind
+
+example (a : AESPolyField) (ha : a ≠ 0) : a * a⁻¹ = 1 := by
+  grind
+
+example (a b : AESPolyField) (k : Nat) :
+    frobeniusIter (a + b) k = frobeniusIter a k + frobeniusIter b k := by
+  grind
+
+example (a b : AESPolyField) (k : Nat) :
+    frobeniusIter (a * b) k = frobeniusIter a k * frobeniusIter b k := by
+  grind
+
+example {a b : AESPolyField} {k : Nat}
+    (ha : frobeniusIter a k = a) (hb : frobeniusIter b k = b) :
+    frobeniusIter (a + b) k = a + b := by
+  grind
+
+example {a b : AESPolyField} {k : Nat}
+    (ha : frobeniusIter a k = a) (hb : frobeniusIter b k = b) :
+    frobeniusIter (a * b) k = a * b := by
+  grind
+
+end GF2nPoly
 end Hex

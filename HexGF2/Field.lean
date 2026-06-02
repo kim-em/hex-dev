@@ -564,7 +564,7 @@ def zpow (a : GF2n n irr hn hn64 hirr) : Int → GF2n n irr hn hn64 hirr
 instance : HPow (GF2n n irr hn hn64 hirr) Int (GF2n n irr hn hn64 hirr) where
   hPow := zpow
 
-theorem div_eq_mul_inv (a b : GF2n n irr hn hn64 hirr) :
+@[grind =] theorem div_eq_mul_inv (a b : GF2n n irr hn hn64 hirr) :
     a / b = a * b⁻¹ :=
   rfl
 
@@ -574,7 +574,7 @@ theorem div_eq_mul_inv (a b : GF2n n irr hn hn64 hirr) :
   apply eq_of_val_eq
   simp [Inv.inv, inv, hzeroVal]
 
-theorem mul_inv_cancel (a : GF2n n irr hn hn64 hirr) (ha : a ≠ 0) :
+@[grind =] theorem mul_inv_cancel (a : GF2n n irr hn hn64 hirr) (ha : a ≠ 0) :
     a * a⁻¹ = 1 := by
   have hval_ne : a.val ≠ 0 := by
     intro hval
@@ -658,7 +658,7 @@ def reducePoly (p : GF2Poly) : GF2nPoly f hirr :=
   else
     ⟨0, zero_reduced (f := f)⟩
 
-theorem reducePoly_val_eq_mod (p : GF2Poly) :
+@[simp] theorem reducePoly_val_eq_mod (p : GF2Poly) :
     (reducePoly (f := f) (hirr := hirr) p).val = p % f := by
   unfold reducePoly modulus
   by_cases hzero : (p % f).isZero = true
@@ -670,7 +670,7 @@ theorem reducePoly_val_eq_mod (p : GF2Poly) :
       | inl hrem_zero => exact False.elim (hzero hrem_zero)
       | inr hrem_degree => exact False.elim (hdegree hrem_degree)
 
-theorem reducePoly_eq_iff_mod_eq {p q : GF2Poly} :
+@[grind =] theorem reducePoly_eq_iff_mod_eq {p q : GF2Poly} :
     reducePoly (f := f) (hirr := hirr) p =
       reducePoly (f := f) (hirr := hirr) q ↔
     p % f = q % f := by
@@ -1239,7 +1239,7 @@ def zpow (a : GF2nPoly f hirr) : Int → GF2nPoly f hirr
 instance : HPow (GF2nPoly f hirr) Int (GF2nPoly f hirr) where
   hPow := zpow
 
-theorem div_eq_mul_inv (a b : GF2nPoly f hirr) :
+@[grind =] theorem div_eq_mul_inv (a b : GF2nPoly f hirr) :
     a / b = a * b⁻¹ :=
   rfl
 
@@ -1249,7 +1249,7 @@ theorem div_eq_mul_inv (a b : GF2nPoly f hirr) :
   apply eq_of_val_eq
   simp [Inv.inv, inv, hzeroVal]
 
-theorem mul_inv_cancel (a : GF2nPoly f hirr) (ha : a ≠ 0) :
+@[grind =] theorem mul_inv_cancel (a : GF2nPoly f hirr) (ha : a ≠ 0) :
     a * a⁻¹ = 1 := by
   have hval_ne : a.val ≠ 0 := by
     intro hval
@@ -1264,14 +1264,9 @@ theorem mul_inv_cancel (a : GF2nPoly f hirr) (ha : a ≠ 0) :
       exact hval_ne (GF2Poly.eq_zero_of_isZero hzero)
   apply eq_of_val_eq
   simp [HMul.hMul, Mul.mul, mul, Inv.inv, inv, hval_nonzero, invPoly]
-  change (reducePoly (f := f) (hirr := hirr)
-      (a.val * (reducePoly (f := f) (hirr := hirr) (GF2Poly.xgcd a.val f).left).val)).val =
+  change (a.val * ((GF2Poly.xgcd a.val f).left % f)) % f =
     (reducePoly (f := f) (hirr := hirr) 1).val
-  rw [reducePoly_val_eq_mod
-      (f := f) (hirr := hirr)
-      (p := a.val * (reducePoly (f := f) (hirr := hirr) (GF2Poly.xgcd a.val f).left).val),
-    reducePoly_val_eq_mod (f := f) (hirr := hirr) (p := (GF2Poly.xgcd a.val f).left),
-    reducePoly_val_eq_mod (f := f) (hirr := hirr) (p := 1)]
+  rw [reducePoly_val_eq_mod]
   exact GF2Poly.mul_mod_xgcd_left_mod_eq_one_of_irreducible_of_nonzero_reduced
     hirr hval_ne a.val_reduced
 
@@ -1312,7 +1307,7 @@ defining irreducible. -/
 @[simp] theorem neg_val (a : GF2nPoly f hirr) : (-a).val = a.val := rfl
 
 /-- Subtraction coincides with addition on the packed quotient. -/
-theorem sub_val (a b : GF2nPoly f hirr) :
+@[simp] theorem sub_val (a b : GF2nPoly f hirr) :
     (a - b).val = (a.val + b.val) % f := by
   show (sub a b).val = _
   unfold sub
@@ -1602,7 +1597,7 @@ theorem evalCoeffList_add_evalCoeffList_eq_add_mul_dividedDifference
 end Internal
 
 /-- Iterated Frobenius preserves multiplication in the packed quotient. -/
-theorem frobeniusIter_mul (a b : GF2nPoly f hirr) (k : Nat) :
+@[grind =>] theorem frobeniusIter_mul (a b : GF2nPoly f hirr) (k : Nat) :
     frobeniusIter (a * b) k = frobeniusIter a k * frobeniusIter b k := by
   induction k with
   | zero =>
@@ -1620,7 +1615,7 @@ theorem frobeniusIter_mul (a b : GF2nPoly f hirr) (k : Nat) :
         _ = (x * x) * (y * y) := by rw [← mul_assoc]
 
 /-- Iterated Frobenius preserves addition in the packed quotient. -/
-theorem frobeniusIter_add_eq (a b : GF2nPoly f hirr) (k : Nat) :
+@[grind =>] theorem frobeniusIter_add_eq (a b : GF2nPoly f hirr) (k : Nat) :
     frobeniusIter (a + b) k = frobeniusIter a k + frobeniusIter b k := by
   induction k with
   | zero =>
@@ -1639,20 +1634,20 @@ theorem frobeniusIter_add_eq (a b : GF2nPoly f hirr) (k : Nat) :
 
 /-- Fixed packed quotient elements are closed under addition for a shared
 Frobenius iterate. -/
-theorem frobeniusIter_fixed_add {a b : GF2nPoly f hirr} {k : Nat}
+@[grind =>] theorem frobeniusIter_fixed_add {a b : GF2nPoly f hirr} {k : Nat}
     (ha : frobeniusIter a k = a) (hb : frobeniusIter b k = b) :
     frobeniusIter (a + b) k = a + b := by
   rw [frobeniusIter_add_eq, ha, hb]
 
 /-- Fixed packed quotient elements are closed under multiplication for a shared
 Frobenius iterate. -/
-theorem frobeniusIter_fixed_mul {a b : GF2nPoly f hirr} {k : Nat}
+@[grind =>] theorem frobeniusIter_fixed_mul {a b : GF2nPoly f hirr} {k : Nat}
     (ha : frobeniusIter a k = a) (hb : frobeniusIter b k = b) :
     frobeniusIter (a * b) k = a * b := by
   rw [frobeniusIter_mul, ha, hb]
 
 /-- The multiplicative identity is a left identity. -/
-theorem one_mul (a : GF2nPoly f hirr) :
+@[simp] theorem one_mul (a : GF2nPoly f hirr) :
     (1 : GF2nPoly f hirr) * a = a := by
   apply eq_of_val_eq
   rw [mul_val, one_val]
@@ -1663,7 +1658,7 @@ theorem one_mul (a : GF2nPoly f hirr) :
   rw [h, GF2Poly_one_mul, val_mod_eq]
 
 /-- The multiplicative identity is a right identity. -/
-theorem mul_one (a : GF2nPoly f hirr) :
+@[simp] theorem mul_one (a : GF2nPoly f hirr) :
     a * (1 : GF2nPoly f hirr) = a := by
   rw [mul_comm, one_mul]
 
