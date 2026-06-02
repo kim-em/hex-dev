@@ -12104,6 +12104,24 @@ private theorem nDet_plucker_four_row_canonical
         rw [heq, Lean.Grind.Semiring.pow_succ]
       grind
 
+/-- Raw `nDet` three-term Plucker identity for the q-between case
+`p1 < q < p2 < p3`: a direct specialization of the canonical four-row
+identity at `(r0, r1, r2, r3) = (p1, q, p2, p3)`. The product order of the
+two off-diagonal pairs is swapped relative to the canonical statement;
+multiplication in a `CommRing` discharges the swap. -/
+private theorem det_plucker_three_term_nDet_of_between_p1_p2
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n)
+    (p1 q p2 p3 : Fin (n + 2))
+    (h1q : p1.val < q.val) (hq2 : q.val < p2.val) (h23 : p2.val < p3.val) :
+    nDet B p2 p3 h23 * nDet B p1 q h1q -
+      nDet B p1 p2 (Nat.lt_trans h1q hq2) *
+        nDet B q p3 (Nat.lt_trans hq2 h23) +
+      nDet B p1 p3 (Nat.lt_trans h1q (Nat.lt_trans hq2 h23)) *
+        nDet B q p2 hq2 = 0 := by
+  have hraw := nDet_plucker_four_row_canonical B p1 q p2 p3 h1q hq2 h23
+  grind
+
 /-- Raw `nDet` three-term Grassmann-Plucker identity for the q-before case
 `q < p1 < p2 < p3`: the canonical ordered four-row identity
 `nDet_plucker_four_row_canonical` instantiated at `(r0, r1, r2, r3) := (q, p1, p2, p3)`.
