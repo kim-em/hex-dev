@@ -106,19 +106,20 @@ structure BareissState (n : Nat) where
   encoding; `none` means no singular step has been recorded. -/
   singularStep : Option Nat
 
-/-- Exact division used by the Bareiss recurrence. The `else` branch is
-defensive; for matrices produced by the Bareiss update, divisibility should
-always hold. -/
-def exactDiv (num denom : Int) : Int :=
-  if h : denom ∣ num then
-    Int.divExact num denom h
-  else
-    0
+/-- Exact division used by the Bareiss recurrence.
+
+Divisibility holds at every call site by the algorithmic invariant, so
+this function performs no runtime divisibility check: the `@[extern]`
+binding compiles the call directly to `lean_int_div_exact`, matching
+`Int.divExact`. The Lean-level reduction is the same `num / denom` that
+`Int.divExact` uses as its logical model. -/
+@[extern "lean_int_div_exact"]
+def exactDiv (num denom : @& Int) : Int := num / denom
 
 /-- When divisibility is known, `exactDiv` is the GMP-backed exact quotient. -/
 theorem exactDiv_eq_divExact {num denom : Int} (h : denom ∣ num) :
     exactDiv num denom = Int.divExact num denom h := by
-  simp [exactDiv, h]
+  simp [exactDiv, Int.divExact_eq_ediv]
 
 /-- Search column `col` for a nonzero pivot at or below `start`. -/
 def findPivotAux (M : Matrix Int n n) (col : Fin n) (start fuel : Nat) :

@@ -128,6 +128,48 @@ example (a b : UInt64) :
         s * Int.ofNat a.toNat + t * Int.ofNat b.toNat = Int.ofNat g.toNat) := by
   grind [HexArith.UInt64.extGcd_spec]
 
+example (a n : Nat) :
+    HexArith.powMod a n 0 = 0 := by
+  simp
+
+example (a p : Nat) (hp : p > 0) :
+    HexArith.powMod a 0 p = 1 % p := by
+  simp [hp]
+
+example (a p : Nat) (hp : p > 0) :
+    HexArith.powMod a 1 p = a % p := by
+  simp [hp]
+
+example (a n p : Nat) (hp : p > 0) :
+    HexArith.powMod (a % p) n p = HexArith.powMod a n p := by
+  simp [hp]
+
+example (a n : Nat) :
+    HexArith.powMod a n 1 = 0 := by
+  simp
+
+example (a n p : Nat) (hp : p > 0) :
+    HexArith.powMod a n p = a ^ n % p := by
+  grind
+
+example (a n p : Nat) (hp : p > 0) :
+    HexArith.powMod a (n + 1) p = (a * HexArith.powMod a n p) % p := by
+  grind
+
+example (a b n p : Nat) (hp : p > 0) :
+    HexArith.powMod (a * b) n p =
+      (HexArith.powMod a n p * HexArith.powMod b n p) % p := by
+  grind
+
+example (a m n p : Nat) (hp : p > 0) :
+    HexArith.powMod a (m + n) p =
+      (HexArith.powMod a m p * HexArith.powMod a n p) % p := by
+  grind
+
+example (a m n p : Nat) (hp : p > 0) :
+    HexArith.powMod a (m * n) p = HexArith.powMod (HexArith.powMod a m p) n p := by
+  grind
+
 end ProofMode
 
 /-- info: 2 -/

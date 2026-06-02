@@ -271,12 +271,14 @@ def swapStep (s : LLLState n m) (k : Nat) : LLLState n m :=
       let d' : Vector Nat (n + 1) :=
         s.d.set k dk' (h := Nat.lt_succ_of_lt hk)
       let νRowsSwapped :=
-        (List.finRange km1.val).foldl
-          (fun ν j =>
-            let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt km1.isLt⟩
-            let ν := setEntry ν km1 jFin ((s.ν.get kFin).get jFin)
-            setEntry ν kFin jFin ((s.ν.get km1).get jFin))
-          s.ν
+        let setPrefixFrom (source : Vector Int n) (row : Vector Int n) : Vector Int n :=
+          (List.finRange km1.val).foldl
+            (fun row j =>
+              let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt km1.isLt⟩
+              row.set jFin (source.get jFin))
+            row
+        s.ν.modify km1 (setPrefixFrom (s.ν.get kFin))
+          |>.modify kFin (setPrefixFrom (s.ν.get km1))
       let νPivot := setEntry νRowsSwapped kFin km1 B
       let ν' : Matrix Int n n :=
         (List.finRange n).foldl
@@ -288,8 +290,9 @@ def swapStep (s : LLLState n m) (k : Nat) : LLLState n m :=
               let curr :=
                 (Int.ofNat dkNext * (s.ν.get i).get km1 - B * (s.ν.get i).get kFin) /
                   Int.ofNat dk
-              let ν := setEntry ν i km1 prev
-              setEntry ν i kFin curr
+              ν.modify i fun row =>
+                row.set km1 prev
+                  |>.set kFin curr
             else
               ν)
           νPivot

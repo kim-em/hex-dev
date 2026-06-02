@@ -62,6 +62,7 @@ lean_lib HexArith where
 lean_lib HexPoly where
 
 lean_lib HexMatrix where
+  precompileModules := true
 
 lean_lib HexModArith where
   precompileModules := true
