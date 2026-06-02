@@ -12,6 +12,7 @@ from libgraph import (
     library_owner_for_path,
     load_lakefile_libs,
     load_libraries,
+    may_import,
     reachable_dependencies,
     topological_order,
 )
@@ -182,10 +183,11 @@ def main() -> int:
                         errors.append(f"{rel_path}:{line_no} imports Verso outside HexManual")
                     continue
                 if imported_root in libraries:
-                    allowed = reachable[owner] if owner in libraries else set(libraries)
-                    if owner == "HexManual":
-                        allowed = set(libraries)
-                    if imported_root not in allowed:
+                    if (
+                        owner in libraries
+                        and owner != "HexManual"
+                        and not may_import(owner, imported_root, libraries, reachable)
+                    ):
                         errors.append(
                             f"{rel_path}:{line_no} imports {imported_root} without a dependency path from {owner}"
                         )

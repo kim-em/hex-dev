@@ -489,6 +489,35 @@ def reachable_dependencies(libraries: OrderedDict[str, LibraryInfo]) -> dict[str
     return closure
 
 
+def may_import(
+    l_a: str,
+    l_b: str,
+    libraries: OrderedDict[str, LibraryInfo],
+    closure: dict[str, set[str]] | None = None,
+) -> bool:
+    """True iff a file in library ``l_a`` may import a module from ``l_b``.
+
+    This holds when ``l_b == l_a`` or ``l_b`` is in ``l_a``'s transitive
+    ``libraries.yml`` dependency closure. It mirrors Lake's actual
+    symbol-visibility semantics and is the predicate the import-boundary
+    check in ``check_dag.py`` and the issue-graph guard both consult
+    (see PLAN/Conventions.md §"Inverted dependencies are rejected").
+
+    Pass a precomputed ``closure`` (from ``reachable_dependencies``) when
+    making many calls to avoid recomputing the topological closure each
+    time; otherwise it is built on demand.
+    """
+    if l_a not in libraries:
+        raise ValueError(f"unknown library {l_a!r}")
+    if l_b not in libraries:
+        raise ValueError(f"unknown library {l_b!r}")
+    if l_b == l_a:
+        return True
+    if closure is None:
+        closure = reachable_dependencies(libraries)
+    return l_b in closure[l_a]
+
+
 def pascal_to_spec_path(name: str) -> str:
     if name == "HexManual":
         raise ValueError("HexManual does not have a SPEC/Libraries entry")
