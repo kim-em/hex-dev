@@ -12125,5 +12125,58 @@ private theorem det_plucker_three_term_basisVec_of_gt_p3_of_nDet
   rw [mDet_basisVec_eq_signed_nDet_of_lt B p3 q h3q]
   grind
 
+/-- Sign-shift relation between the outer `(Fin.last (n+1))` cofactor sign
+used by `twoColDet_basisVec_basisVec_of_lt` for the *second* basis column and
+the inner `(Fin.last n)` cofactor sign used for the *first* basis column:
+incrementing the last-column index by one negates the sign. -/
+private theorem cofactorSign_succ_last_eq_neg
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (x : Fin (n + 2)) (hx : x.val < n + 1) :
+    cofactorSign (R := R) x (Fin.last (n + 1)) =
+      -cofactorSign (R := R) (⟨x.val, hx⟩ : Fin (n + 1)) (Fin.last n) := by
+  unfold cofactorSign
+  simp only [Fin.val_mk, Fin.last]
+  by_cases h : (x.val + n) % 2 = 0
+  · have hnext : (x.val + (n + 1)) % 2 ≠ 0 := by omega
+    rw [if_pos h, if_neg hnext]
+  · have hnext : (x.val + (n + 1)) % 2 = 0 := by omega
+    rw [if_neg h, if_pos hnext]
+    grind
+
+/-- Basis-vector case `q < p1` of the four-basis-column `twoColDet` Plucker
+identity. Expanding each of the six `twoColDet B (basisVec _) (basisVec _)`
+factors via `twoColDet_basisVec_basisVec_of_lt` reduces the goal to a
+sign-aligned restatement of the canonical four-row `nDet` identity at
+`(q, p1, p2, p3)`. After the six expansions, `cofactorSign_succ_last_eq_neg`
+at `p1` and `p2` flips the two `(Fin.last (n+1))` signs that block uniform
+factorisation, leaving a common coefficient
+`-cofactorSign p3 (Fin.last (n+1)) * cofactorSign ⟨q.val,_⟩ (Fin.last n) *
+cofactorSign ⟨p1.val,_⟩ (Fin.last n) * cofactorSign ⟨p2.val,_⟩ (Fin.last n)`
+on all three Plucker terms. -/
+private theorem twoColDet_plucker_basisVec_of_lt_p1
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n)
+    (q p1 p2 p3 : Fin (n + 2))
+    (hq1 : q.val < p1.val) (h12 : p1.val < p2.val) (h23 : p2.val < p3.val) :
+    twoColDet B (basisVec (R := R) p2) (basisVec (R := R) p3) *
+        twoColDet B (basisVec (R := R) q) (basisVec (R := R) p1) -
+      twoColDet B (basisVec (R := R) p1) (basisVec (R := R) p3) *
+        twoColDet B (basisVec (R := R) q) (basisVec (R := R) p2) +
+      twoColDet B (basisVec (R := R) p1) (basisVec (R := R) p2) *
+        twoColDet B (basisVec (R := R) q) (basisVec (R := R) p3) = 0 := by
+  have hraw := nDet_plucker_four_row_canonical B q p1 p2 p3 hq1 h12 h23
+  rw [twoColDet_basisVec_basisVec_of_lt B p2 p3 h23]
+  rw [twoColDet_basisVec_basisVec_of_lt B q p1 hq1]
+  rw [twoColDet_basisVec_basisVec_of_lt B p1 p3 (Nat.lt_trans h12 h23)]
+  rw [twoColDet_basisVec_basisVec_of_lt B q p2 (Nat.lt_trans hq1 h12)]
+  rw [twoColDet_basisVec_basisVec_of_lt B p1 p2 h12]
+  rw [twoColDet_basisVec_basisVec_of_lt B q p3
+      (Nat.lt_trans hq1 (Nat.lt_trans h12 h23))]
+  have hp1 : p1.val < n + 1 := by have := p3.isLt; omega
+  have hp2 : p2.val < n + 1 := by have := p3.isLt; omega
+  rw [cofactorSign_succ_last_eq_neg (R := R) p1 hp1]
+  rw [cofactorSign_succ_last_eq_neg (R := R) p2 hp2]
+  grind
+
 end Matrix
 end Hex
