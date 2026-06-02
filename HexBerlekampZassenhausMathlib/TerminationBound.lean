@@ -233,6 +233,21 @@ theorem bhksPaperThresholdReal_le_factorFastPrecisionCap
 namespace ExecutableBadVectorWitness
 
 /--
+The executable coefficient L2 bound of the source polynomial controls the
+Mathlib-facing input polynomial carried by any bad-vector witness.
+
+This is the concrete input-side bound used by
+`l2norm_product_lt_divisor_of_l2norm_bounds`; the auxiliary side and strict
+cap arithmetic can be supplied independently.
+-/
+theorem inputPolynomial_l2norm_le_coeffL2NormBound
+    (W : ExecutableBadVectorWitness) :
+    HexPolyZMathlib.l2norm W.inputPolynomial ≤
+      (Hex.ZPoly.coeffL2NormBound W.input : ℝ) := by
+  simpa [ExecutableBadVectorWitness.inputPolynomial] using
+    l2norm_toPolynomial_le_coeffL2NormBound W.input
+
+/--
 Turn separate l2-norm bounds for the input and auxiliary polynomials into the
 strict Hadamard/l2norm comparison consumed by the resultant contradiction.
 

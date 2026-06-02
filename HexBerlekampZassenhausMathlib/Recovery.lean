@@ -2005,6 +2005,30 @@ def badVectorWitnessOfFactorFastCapLiftData
     rows_pos localFactorIndex localFactorDegree H
 
 /--
+Concrete input-polynomial l2norm bound for the actual `factorFast` cap-lift
+bad-vector witness.
+
+This is the input-side fact needed by
+`ExecutableBadVectorWitness.l2norm_product_lt_divisor_of_l2norm_bounds`,
+specialized to `badVectorWitnessOfFactorFastCapLiftData`.
+-/
+theorem factorFastCapLift_inputPolynomial_l2norm_le_coeffL2NormBound
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly) :
+    HexPolyZMathlib.l2norm
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H).inputPolynomial ≤
+      (Hex.ZPoly.coeffL2NormBound
+        (Hex.normalizeForFactor f).squareFreeCore : ℝ) :=
+  ExecutableBadVectorWitness.inputPolynomial_l2norm_le_coeffL2NormBound
+    (badVectorWitnessOfFactorFastCapLiftData
+      f primeData rows_pos localFactorIndex localFactorDegree H)
+
+/--
 Actual-cap corrected auxiliary-polynomial identity supplied by
 `BadVectorBridgeData`.
 
