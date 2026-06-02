@@ -404,6 +404,147 @@ private theorem size_foldl_set!
       rw [ih]
       simp [Array.set!_eq_setIfInBounds, Array.size_setIfInBounds]
 
+/-- A `foldl` whose write value reads the same column being written still
+leaves non-member indices unchanged. -/
+private theorem getElem!_foldl_setSelf_of_notMem
+    {α : Type} [Inhabited α]
+    (xs : List Nat) (arr : Array α) (f : Nat → α → α) (r : Nat)
+    (hr : r ∉ xs) :
+    (xs.foldl (fun next x => next.set! x (f x next[x]!)) arr)[r]! = arr[r]! := by
+  induction xs generalizing arr with
+  | nil => simp
+  | cons x xs ih =>
+      have hx : r ≠ x := fun h => hr (h ▸ List.mem_cons_self)
+      have hxs : r ∉ xs := fun h => hr (List.mem_cons_of_mem _ h)
+      simp only [List.foldl_cons]
+      rw [ih _ hxs]
+      grind
+
+/-- A `foldl` whose write value reads the same column being written writes the
+function of the original value at every member index of a `Nodup` list. -/
+private theorem getElem!_foldl_setSelf_of_mem_nodup
+    {α : Type} [Inhabited α]
+    (xs : List Nat) (arr : Array α) (f : Nat → α → α) (r : Nat)
+    (hr : r ∈ xs) (hnodup : xs.Nodup) (hbound : r < arr.size) :
+    (xs.foldl (fun next x => next.set! x (f x next[x]!)) arr)[r]! = f r arr[r]! := by
+  induction xs generalizing arr with
+  | nil => exact absurd hr (by simp)
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hnodup' : xs.Nodup := hnodup.tail
+      have hxnotmem : x ∉ xs := by
+        simp [List.nodup_cons] at hnodup
+        exact hnodup.1
+      rcases List.mem_cons.mp hr with hr_eq | hr_in
+      · subst hr_eq
+        rw [getElem!_foldl_setSelf_of_notMem _ _ _ _ hxnotmem]
+        grind
+      · have hr_ne_x : r ≠ x := by
+          intro h
+          exact hxnotmem (h ▸ hr_in)
+        have hbound' : r < (arr.set! x (f x arr[x]!)).size := by
+          simp [Array.set!_eq_setIfInBounds, Array.size_setIfInBounds, hbound]
+        rw [ih _ hr_in hnodup' hbound']
+        grind
+
+/-- A `foldl` that sets indices via values read from the row itself preserves
+the array size. -/
+private theorem size_foldl_setSelf
+    {α : Type} [Inhabited α]
+    (xs : List Nat) (arr : Array α) (f : Nat → α → α) :
+    (xs.foldl (fun next x => next.set! x (f x next[x]!)) arr).size = arr.size := by
+  induction xs generalizing arr with
+  | nil => simp
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [ih]
+      simp [Array.set!_eq_setIfInBounds, Array.size_setIfInBounds]
+
+private theorem modify_eq_set!
+    {α : Type} [Inhabited α] (arr : Array α) (i : Nat) (f : α → α) :
+    arr.modify i f = arr.set! i (f arr[i]!) := by
+  by_cases h : i < arr.size
+  · simp [Array.modify, Array.modifyM, Array.set!, Array.setIfInBounds, h]
+  · simp [Array.modify, Array.modifyM, Array.set!, Array.setIfInBounds, h]
+
+private theorem getElem!_modify_ne
+    {α : Type} [Inhabited α] (arr : Array α) (i r : Nat) (f : α → α)
+    (hr : r ≠ i) :
+    (arr.modify i f)[r]! = arr[r]! := by
+  rw [modify_eq_set!]
+  grind
+
+private theorem getElem!_modify_self
+    {α : Type} [Inhabited α] (arr : Array α) (i : Nat) (f : α → α)
+    (hi : i < arr.size) :
+    (arr.modify i f)[i]! = f arr[i]! := by
+  rw [modify_eq_set!]
+  grind
+
+private theorem modify_size
+    {α : Type} [Inhabited α] (arr : Array α) (i : Nat) (f : α → α) :
+    (arr.modify i f).size = arr.size := by
+  rw [modify_eq_set!]
+  simp [Array.set!_eq_setIfInBounds, Array.size_setIfInBounds]
+
+/-- A `foldl` that modifies indices appearing in `xs` leaves untouched
+indices unchanged. -/
+private theorem getElem!_foldl_modify_of_notMem
+    {α : Type} [Inhabited α]
+    (xs : List Nat) (arr : Array α) (f : Nat → α → α) (r : Nat)
+    (hr : r ∉ xs) :
+    (xs.foldl (fun next x => next.modify x (f x)) arr)[r]! = arr[r]! := by
+  induction xs generalizing arr with
+  | nil => simp
+  | cons x xs ih =>
+      have hx : r ≠ x := fun h => hr (h ▸ List.mem_cons_self)
+      have hxs : r ∉ xs := fun h => hr (List.mem_cons_of_mem _ h)
+      simp only [List.foldl_cons]
+      rw [ih _ hxs]
+      exact getElem!_modify_ne arr x r (f x) hx
+
+/-- A `foldl` that modifies indices appearing in a `Nodup` list `xs` writes
+the modified original value at every member index `r` that is in-bounds for the
+input array. -/
+private theorem getElem!_foldl_modify_of_mem_nodup
+    {α : Type} [Inhabited α]
+    (xs : List Nat) (arr : Array α) (f : Nat → α → α) (r : Nat)
+    (hr : r ∈ xs) (hnodup : xs.Nodup) (hbound : r < arr.size) :
+    (xs.foldl (fun next x => next.modify x (f x)) arr)[r]! = f r arr[r]! := by
+  induction xs generalizing arr with
+  | nil => exact absurd hr (by simp)
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      have hnodup' : xs.Nodup := hnodup.tail
+      have hxnotmem : x ∉ xs := by
+        simp [List.nodup_cons] at hnodup
+        exact hnodup.1
+      rcases List.mem_cons.mp hr with hr_eq | hr_in
+      · subst hr_eq
+        rw [getElem!_foldl_modify_of_notMem _ _ _ _ hxnotmem]
+        exact getElem!_modify_self arr r (f r) hbound
+      · have hr_ne_x : r ≠ x := by
+          intro h
+          exact hxnotmem (h ▸ hr_in)
+        have hbound' : r < (arr.modify x (f x)).size := by
+          rw [modify_size]
+          exact hbound
+        rw [ih _ hr_in hnodup' hbound']
+        rw [getElem!_modify_ne arr x r (f x) hr_ne_x]
+
+/-- A `foldl` that modifies indices via `Array.modify` preserves the outer
+array size. -/
+private theorem size_foldl_modify
+    {α : Type} [Inhabited α]
+    (xs : List Nat) (arr : Array α) (f : Nat → α → α) :
+    (xs.foldl (fun next x => next.modify x (f x)) arr).size = arr.size := by
+  induction xs generalizing arr with
+  | nil => simp
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [ih]
+      exact modify_size arr x (f x)
+
 private def writeScaledColumn (coeffs rows : Array (Array Int)) (n k : Nat) :
     Array (Array Int) :=
   Id.run do
@@ -535,16 +676,18 @@ private def stepScaledRows (rows : Array (Array Int)) (n k : Nat)
     (pivot prevPivot : Int) : Array (Array Int) :=
   Id.run do
     let mut next := rows
+    let pivotRow := rows[k]!
     for i in [k + 1:n] do
-      let sourceRow := rows[i]!
-      let entryIK := sourceRow[k]!
-      let mut nextRow := sourceRow.set! k 0
-      for j in [k + 1:n] do
-        let value :=
-          Matrix.exactDiv
-            (pivot * sourceRow[j]! - entryIK * getArrayEntry rows k j) prevPivot
-        nextRow := nextRow.set! j value
-      next := next.set! i nextRow
+      next := next.modify i fun sourceRow =>
+        let entryIK := sourceRow[k]!
+        Id.run do
+          let mut nextRow := sourceRow.set! k 0
+          for j in [k + 1:n] do
+            let value :=
+              Matrix.exactDiv
+                (pivot * nextRow[j]! - entryIK * pivotRow[j]!) prevPivot
+            nextRow := nextRow.set! j value
+          return nextRow
     return next
 
 section StepScaledRowsBookkeeping
@@ -567,7 +710,7 @@ private theorem getArrayEntry_stepScaledRows_of_row_le
     rw [List.mem_range'] at hmem
     obtain ⟨i, hi, hri⟩ := hmem
     omega
-  rw [getElem!_foldl_set!_of_notMem _ _ _ _ hnot]
+  rw [getElem!_foldl_modify_of_notMem _ _ _ _ hnot]
 
 /-- After one `stepScaledRows` sweep, rows whose index is past the matrix
 extent are untouched by the outer fold (`Array.set!` is a no-op out of
@@ -588,7 +731,7 @@ private theorem getArrayEntry_stepScaledRows_of_row_ge
     rw [List.mem_range'] at hmem
     obtain ⟨i, hi, hri⟩ := hmem
     omega
-  rw [getElem!_foldl_set!_of_notMem _ _ _ _ hnot]
+  rw [getElem!_foldl_modify_of_notMem _ _ _ _ hnot]
 
 /-- The new row written at trailing index `r` (with `k < r` and `r < n`) by
 `stepScaledRows`, expressed in fold form. This is an intermediate
@@ -602,7 +745,7 @@ private theorem stepScaledRows_row_at_trailing
         (fun nextRow j =>
           nextRow.set! j
             (Matrix.exactDiv
-              (pivot * rows[r]![j]! - rows[r]![k]! * getArrayEntry rows k j)
+              (pivot * nextRow[j]! - rows[r]![k]! * getArrayEntry rows k j)
               prevPivot))
         (rows[r]!.set! k 0) := by
   unfold stepScaledRows
@@ -612,7 +755,8 @@ private theorem stepScaledRows_row_at_trailing
     rw [List.mem_range']
     exact ⟨r - (k + 1), by omega, by omega⟩
   have hnodup : (List.range' (k + 1) (n - (k + 1))).Nodup := List.nodup_range'
-  rw [getElem!_foldl_set!_of_mem_nodup _ _ _ _ hmem hnodup hrows]
+  rw [getElem!_foldl_modify_of_mem_nodup _ _ _ _ hmem hnodup hrows]
+  simp [getArrayEntry]
 
 /-- The pivot column of `stepScaledRows` is cleared at every trailing row. -/
 private theorem getArrayEntry_stepScaledRows_pivot_col
@@ -627,7 +771,10 @@ private theorem getArrayEntry_stepScaledRows_pivot_col
     rw [List.mem_range'] at hmem
     obtain ⟨i, hi, hki⟩ := hmem
     omega
-  rw [getElem!_foldl_set!_of_notMem _ _ _ _ hnot]
+  rw [getElem!_foldl_setSelf_of_notMem
+    (f := fun j entry =>
+      Matrix.exactDiv (pivot * entry - rows[r]![k]! * getArrayEntry rows k j) prevPivot)
+    _ _ _ hnot]
   grind
 
 /-- Trailing-column entries of `stepScaledRows` are the fraction-free
@@ -652,7 +799,12 @@ private theorem getArrayEntry_stepScaledRows_trailing
   have hnodup : (List.range' (k + 1) (n - (k + 1))).Nodup := List.nodup_range'
   have hbound : c < (rows[r]!.set! k 0).size := by
     simp [Array.set!_eq_setIfInBounds, Array.size_setIfInBounds, hcols]
-  rw [getElem!_foldl_set!_of_mem_nodup _ _ _ _ hmem hnodup hbound]
+  rw [getElem!_foldl_setSelf_of_mem_nodup
+    (f := fun j entry =>
+      Matrix.exactDiv (pivot * entry - rows[r]![k]! * getArrayEntry rows k j) prevPivot)
+    _ _ _ hmem hnodup hbound]
+  have hck : c ≠ k := by omega
+  grind
 
 /-- Entries strictly left of the pivot column of `stepScaledRows` are
 preserved at every trailing row: the inner sweep only writes the trailing
@@ -672,7 +824,10 @@ private theorem getArrayEntry_stepScaledRows_of_col_lt
     rw [List.mem_range'] at hmem
     obtain ⟨i, hi, hci⟩ := hmem
     omega
-  rw [getElem!_foldl_set!_of_notMem _ _ _ _ hnot]
+  rw [getElem!_foldl_setSelf_of_notMem
+    (f := fun j entry =>
+      Matrix.exactDiv (pivot * entry - rows[r]![k]! * getArrayEntry rows k j) prevPivot)
+    _ _ _ hnot]
   have hck : c ≠ k := by omega
   grind
 
@@ -685,7 +840,7 @@ private theorem stepScaledRows_size
   unfold stepScaledRows
   simp [Std.Legacy.Range.forIn_eq_forIn_range', Std.Legacy.Range.size,
     -Array.set!_eq_setIfInBounds]
-  exact size_foldl_set! _ _ _
+  exact size_foldl_modify _ _ _
 
 /-- If the input row storage has the expected square shape, one
 `stepScaledRows` sweep preserves every in-bounds row length. -/
@@ -699,14 +854,14 @@ private theorem stepScaledRows_rows_size
   simp [Std.Legacy.Range.forIn_eq_forIn_range', Std.Legacy.Range.size,
     -Array.set!_eq_setIfInBounds]
   let xs := List.range' (k + 1) (n - (k + 1))
-  let f : Nat → Array Int := fun i =>
+  let f : Nat → Array Int → Array Int := fun i sourceRow =>
     (List.range' (k + 1) (n - (k + 1))).foldl
       (fun nextRow j =>
         nextRow.set! j
           (Matrix.exactDiv
-            (pivot * rows[i]![j]! - rows[i]![k]! * getArrayEntry rows k j)
+            (pivot * nextRow[j]! - sourceRow[k]! * rows[k]![j]!)
             prevPivot))
-      (rows[i]!.set! k 0)
+      (sourceRow.set! k 0)
   by_cases hmem : r ∈ xs
   · have hnodup : xs.Nodup := by
       dsimp [xs]
@@ -714,19 +869,19 @@ private theorem stepScaledRows_rows_size
     have hbound : r < rows.size := by
       rw [hsize]
       exact hr
-    rw [getElem!_foldl_set!_of_mem_nodup xs rows f r hmem hnodup hbound]
+    rw [getElem!_foldl_modify_of_mem_nodup xs rows f r hmem hnodup hbound]
     dsimp [f]
     have hinner_size :=
-      size_foldl_set!
+      size_foldl_setSelf
         (List.range' (k + 1) (n - (k + 1)))
         (rows[r]!.set! k 0)
-        (fun j =>
+        (fun j nextEntry =>
           Matrix.exactDiv
-            (pivot * rows[r]![j]! - rows[r]![k]! * getArrayEntry rows k j)
+            (pivot * nextEntry - rows[r]![k]! * getArrayEntry rows k j)
             prevPivot)
     simpa [Array.set!_eq_setIfInBounds, Array.size_setIfInBounds,
       hrowsize r hr] using hinner_size
-  · rw [getElem!_foldl_set!_of_notMem xs rows f r hmem]
+  · rw [getElem!_foldl_modify_of_notMem xs rows f r hmem]
     exact hrowsize r hr
 
 /-- Per-entry correspondence between the row-mutating array-storage
