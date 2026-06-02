@@ -942,7 +942,7 @@ theorem mod_eq_divMod [One R] [Add R] [Sub R] [Mul R] [Div R]
   rfl
 
 /-- Zero has zero remainder for the executable division algorithm. -/
-theorem zero_mod_eq_zero_core {S : Type _}
+@[simp] theorem zero_mod_eq_zero_core {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S]
     (m : DensePoly S) :
     (0 : DensePoly S) % m = 0 := by
@@ -1110,7 +1110,7 @@ theorem div_mul_add_mod [One R] [Add R] [Sub R] [Mul R] [Div R] [DivModLaws R]
   simpa [DensePoly.div, DensePoly.mod] using divMod_spec p q
 
 /-- If `q ∣ p`, then `p % q = 0`. -/
-theorem mod_eq_zero_of_dvd [One R] [Add R] [Sub R] [Mul R] [Div R] [DivModLaws R]
+@[simp] theorem mod_eq_zero_of_dvd [One R] [Add R] [Sub R] [Mul R] [Div R] [DivModLaws R]
     (p q : DensePoly R) :
     q ∣ p → p % q = 0 := by
   exact DivModLaws.mod_eq_zero_of_dvd p q
