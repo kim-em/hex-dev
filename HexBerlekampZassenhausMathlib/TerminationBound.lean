@@ -304,6 +304,34 @@ theorem l2norm_product_lt_divisor_of_l2norm_bounds
     hstrict
 
 /--
+Specialisation of `l2norm_product_lt_divisor_of_l2norm_bounds` that
+discharges the input bound automatically from
+`inputPolynomial_l2norm_le_coeffL2NormBound`.
+
+Callers needing the strict Hadamard/l2norm comparison only have to supply the
+auxiliary-polynomial l2 bound and the cap arithmetic against
+`coeffL2NormBound W.input`; the input-side l2 bound is supplied by the
+witness-level Cauchy–Schwarz fact carried by every executable bad-vector
+witness.
+-/
+theorem l2norm_product_lt_divisor_of_auxiliary_bound
+    (W : ExecutableBadVectorWitness) {auxiliaryBound : ℝ}
+    (hauxiliary : HexPolyZMathlib.l2norm W.auxiliaryPolynomial ≤ auxiliaryBound)
+    (hstrict :
+      (Hex.ZPoly.coeffL2NormBound W.input : ℝ) ^
+            W.auxiliaryPolynomial.natDegree *
+          auxiliaryBound ^ W.inputPolynomial.natDegree <
+        (W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : ℝ)) :
+    (HexPolyZMathlib.l2norm W.inputPolynomial) ^
+        W.auxiliaryPolynomial.natDegree *
+      (HexPolyZMathlib.l2norm W.auxiliaryPolynomial) ^
+        W.inputPolynomial.natDegree <
+    (W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : ℝ) :=
+  l2norm_product_lt_divisor_of_l2norm_bounds W
+    (inputPolynomial_l2norm_le_coeffL2NormBound W)
+    hauxiliary hstrict
+
+/--
 Packaged BHKS bad-vector contradiction at a precision bounded below by
 `factorFastPrecisionCap`.
 
