@@ -4655,6 +4655,113 @@ private theorem pthRoot_normalized_valid_of_derivative_zero_nontrivial
     pthRoot_fuel_decrease_of_derivative_zero_nonconstant
       hp (normalizeMonic f).2 hnorm_fuel hnorm_size_gt⟩
 
+private theorem normalizeMonic_squareFreeContributionReachable
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) :
+    squareFreeContributionReachable (normalizeMonic f).2 := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  intro hsize
+  by_cases hzero : f.isZero = false
+  · rw [normalizeMonic_nonzero f hzero] at hsize ⊢
+    apply DensePoly.ext_coeff
+    intro n
+    cases n with
+    | zero =>
+        have hscale_size :
+            (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f).size = f.size := by
+          have hlead_ne := fpPoly_leadingCoeff_ne_zero_of_isZero_false f hzero
+          have hinv_ne := zmod64_inv_ne_zero_of_prime_ne_zero hp hlead_ne
+          exact scale_size_eq_of_ne_zero (p := p) hinv_ne f
+        have hf_size : f.size = 1 := by
+          rw [← hscale_size]
+          exact hsize
+        have hunit_inv :
+            (DensePoly.leadingCoeff f)⁻¹ * f.coeff 0 = 1 := by
+          have hlead_ne := fpPoly_leadingCoeff_ne_zero_of_isZero_false f hzero
+          have hlead : DensePoly.leadingCoeff f = f.coeff 0 := by
+            have hlead_last :
+                DensePoly.leadingCoeff f = f.coeff (f.size - 1) := by
+              unfold DensePoly.leadingCoeff DensePoly.coeff
+              rw [Array.back?_eq_getElem?]
+              have hpos : 0 < f.size := size_pos_of_isZero_false f hzero
+              have hidx : f.coeffs.size - 1 < f.coeffs.size := by
+                simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hpos
+              simp [Array.getD, DensePoly.size, hidx]
+            simpa [hf_size] using hlead_last
+          rw [← hlead]
+          have h := zmod64_mul_inv_eq_one_of_prime_ne_zero hp hlead_ne
+          have hcomm :
+              (DensePoly.leadingCoeff f)⁻¹ * DensePoly.leadingCoeff f =
+                DensePoly.leadingCoeff f * (DensePoly.leadingCoeff f)⁻¹ := by
+            grind
+          rw [hcomm]
+          exact h
+        change
+          (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f).coeff 0 =
+            (DensePoly.C (1 : ZMod64 p)).coeff 0
+        have hcoeff :
+            (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f).coeff 0 =
+              (DensePoly.leadingCoeff f)⁻¹ * f.coeff 0 := by
+          exact DensePoly.coeff_scale (DensePoly.leadingCoeff f)⁻¹ f 0
+            (zmod64_mul_zero _)
+        rw [hcoeff, hunit_inv]
+        exact (DensePoly.coeff_C (1 : ZMod64 p) 0).symm
+    | succ n =>
+        have hcoeff_zero :
+            (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f).coeff (n + 1) = 0 :=
+          DensePoly.coeff_eq_zero_of_size_le
+            (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f) (by
+              have hs :
+                  (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f).size = 1 := hsize
+              omega)
+        change
+          (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f).coeff (n + 1) =
+            (DensePoly.C (1 : ZMod64 p)).coeff (n + 1)
+        rw [hcoeff_zero]
+        exact (DensePoly.coeff_C (1 : ZMod64 p) (n + 1)).symm
+  · have hzero_true : f.isZero = true := by
+      cases h : f.isZero
+      · exact False.elim (hzero h)
+      · rfl
+    rw [normalizeMonic_zero f hzero_true] at hsize
+    simp at hsize
+
+private theorem normalizeMonic_squareFreeContributionPayload
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (hzero : f.isZero = false) :
+    squareFreeContributionReachable (normalizeMonic f).2 ∧
+      (normalizeMonic f).2.isZero = false := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  exact
+    ⟨normalizeMonic_squareFreeContributionReachable hp f,
+      normalizeMonic_nonzero_isZero_false f hzero⟩
+
+private abbrev YunDerivativeActiveNormalizedStateProvider
+    (hp : Hex.Nat.Prime p) : Prop :=
+  ∀ f' c w : FpPoly p, ∀ fuel : Nat,
+    yunFactorsDerivativeActiveReachable hp f' c w fuel →
+      squareFreeContributionReachable (normalizeMonic c).2 ∧
+        (normalizeMonic c).2.isZero = false ∧
+          squareFreeContributionReachable (normalizeMonic w).2 ∧
+            (normalizeMonic w).2.isZero = false
+
+private theorem pthRoot_normalized_valid_of_derivative_zero_nontrivial_of_monic
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) {fuel : Nat}
+    (hfuel : f.size < fuel + 1)
+    (hzero : f.isZero = false)
+    (hone : isOne f = false)
+    (hdf : (DensePoly.derivative f).isZero = true)
+    (hmonic : DensePoly.Monic f) :
+    squareFreeContributionReachable (pthRoot f) ∧
+      (pthRoot f).isZero = false ∧
+        (pthRoot f).size < fuel := by
+  have hreachable : squareFreeContributionReachable f :=
+    squareFreeContributionReachable_of_monic f hmonic
+  have hvalid :=
+    pthRoot_normalized_valid_of_derivative_zero_nontrivial
+      hp f hfuel hzero hone hdf hreachable
+  have hnorm : (normalizeMonic f).2 = f :=
+    normalizeMonic_eq_self_of_monic hp f hmonic
+  simpa [hnorm] using hvalid
+
 private theorem pthRoot_fuel_bound_or_one_of_derivative_zero
     (hp : Hex.Nat.Prime p) (f : FpPoly p) {fuel : Nat}
     (hfuel : f.size < fuel + 1)
@@ -5348,6 +5455,16 @@ private theorem yunFactorsDerivativeActiveReachable_nonzero
           rw [hw_zero] at ih
           cases ih.2
       simpa [y, z] using And.intro hy_nonzero hz_nonzero
+
+private theorem yunFactorsDerivativeActiveReachable_normalized_stateProvider
+    (hp : Hex.Nat.Prime p) :
+    YunDerivativeActiveNormalizedStateProvider hp := by
+  intro f' c w fuel hreachable
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  have hnonzero := yunFactorsDerivativeActiveReachable_nonzero hp f' c w fuel hreachable
+  have hc := normalizeMonic_squareFreeContributionPayload hp c hnonzero.1
+  have hw := normalizeMonic_squareFreeContributionPayload hp w hnonzero.2
+  exact ⟨hc.1, hc.2, hw.1, hw.2⟩
 
 private theorem yunFactorsLevelCompletes_of_size_bound_derivative_active
     [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p) (f c w : FpPoly p)
@@ -7387,103 +7504,6 @@ private theorem squareFreeAux_weightedProduct_nonzero
   rw [hinvariant]
   simp [weightedProduct_nil]
   exact squareFreeAuxRevContribution_correct hp f hzero hreachable hresidual hstate
-
-private theorem normalizeMonic_squareFreeContributionReachable
-    (hp : Hex.Nat.Prime p) (f : FpPoly p) :
-    squareFreeContributionReachable (normalizeMonic f).2 := by
-  intro hsize
-  cases hzero : f.isZero
-  · rw [normalizeMonic_nonzero f hzero] at hsize ⊢
-    change DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f = 1
-    change (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f).size = 1 at hsize
-    let unit := DensePoly.leadingCoeff f
-    have hunit_ne : unit ≠ 0 := fpPoly_leadingCoeff_ne_zero_of_isZero_false f hzero
-    have hinv_ne : unit⁻¹ ≠ 0 :=
-      zmod64_inv_ne_zero_of_prime_ne_zero hp hunit_ne
-    have hunit_inv : unit⁻¹ * unit = 1 := by
-      have h := zmod64_mul_inv_eq_one_of_prime_ne_zero hp hunit_ne
-      have hcomm : unit⁻¹ * unit = unit * unit⁻¹ := by grind
-      rw [hcomm]
-      exact h
-    have hscale_size : f.size = 1 := by
-      have hpos : 0 < f.size := by
-        simpa [DensePoly.isZero, DensePoly.size, Array.isEmpty_iff_size_eq_zero,
-          Nat.pos_iff_ne_zero] using hzero
-      by_cases hle : f.size ≤ 1
-      · omega
-      · exfalso
-        have hgt : 1 < f.size := by omega
-        let i := f.size - 1
-        have hi_ge : 1 ≤ i := by omega
-        have hscaled_zero :
-            (DensePoly.scale unit⁻¹ f).coeff i = 0 :=
-          DensePoly.coeff_eq_zero_of_size_le (DensePoly.scale unit⁻¹ f) (by
-            have hs : (DensePoly.scale unit⁻¹ f).size = 1 := by
-              simpa [unit] using hsize
-            omega)
-        have hscaled_coeff :
-            (DensePoly.scale unit⁻¹ f).coeff i = unit⁻¹ * f.coeff i := by
-          exact DensePoly.coeff_scale unit⁻¹ f i (zmod64_mul_zero unit⁻¹)
-        have hlast : f.coeff i ≠ 0 := by
-          simpa [i] using DensePoly.coeff_last_ne_zero_of_pos_size f hpos
-        have hmul : unit⁻¹ * f.coeff i = 0 := by
-          rw [← hscaled_coeff]
-          exact hscaled_zero
-        rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hmul with hinv_zero | hcoeff_zero
-        · exact hinv_ne hinv_zero
-        · exact hlast hcoeff_zero
-    apply DensePoly.ext_coeff
-    intro n
-    cases n with
-    | zero =>
-        have hcoeff :
-            (DensePoly.scale unit⁻¹ f).coeff 0 = unit⁻¹ * f.coeff 0 := by
-          exact DensePoly.coeff_scale unit⁻¹ f 0 (zmod64_mul_zero unit⁻¹)
-        have hlead : unit = f.coeff 0 := by
-          have hlead_last : DensePoly.leadingCoeff f = f.coeff (f.size - 1) := by
-            unfold DensePoly.leadingCoeff DensePoly.coeff
-            rw [Array.back?_eq_getElem?]
-            have hidx : f.coeffs.size - 1 < f.coeffs.size := by
-              simpa [DensePoly.size] using Nat.sub_one_lt_of_lt (by omega : 0 < f.size)
-            simp [Array.getD, DensePoly.size, hidx]
-          simpa [unit, hscale_size] using hlead_last
-        rw [hcoeff, ← hlead, hunit_inv]
-        exact (DensePoly.coeff_C (1 : ZMod64 p) 0).symm
-    | succ n =>
-        have hcoeff_zero :
-            (DensePoly.scale unit⁻¹ f).coeff (n + 1) = 0 :=
-          DensePoly.coeff_eq_zero_of_size_le (DensePoly.scale unit⁻¹ f) (by
-            have hs : (DensePoly.scale unit⁻¹ f).size = 1 := by
-              simpa [unit] using hsize
-            omega)
-        rw [hcoeff_zero]
-        exact (DensePoly.coeff_C (1 : ZMod64 p) (n + 1)).symm
-  · rw [normalizeMonic_zero f hzero] at hsize
-    simp at hsize
-
-private theorem normalizeMonic_squareFreeContributionPayload
-    (hp : Hex.Nat.Prime p) (f : FpPoly p) (hzero : f.isZero = false) :
-    squareFreeContributionReachable (normalizeMonic f).2 ∧
-      (normalizeMonic f).2.isZero = false := by
-  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
-  exact
-    ⟨normalizeMonic_squareFreeContributionReachable hp f,
-      normalizeMonic_nonzero_isZero_false f hzero⟩
-
-private theorem yunFactorsDerivativeActiveReachable_normalized_stateProvider
-    (hp : Hex.Nat.Prime p) :
-    ∀ f' c w : FpPoly p, ∀ fuel : Nat,
-      yunFactorsDerivativeActiveReachable hp f' c w fuel →
-        squareFreeContributionReachable (normalizeMonic c).2 ∧
-          (normalizeMonic c).2.isZero = false ∧
-            squareFreeContributionReachable (normalizeMonic w).2 ∧
-              (normalizeMonic w).2.isZero = false := by
-  intro f' c w fuel hreachable
-  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
-  have hnonzero := yunFactorsDerivativeActiveReachable_nonzero hp f' c w fuel hreachable
-  have hc := normalizeMonic_squareFreeContributionPayload hp c hnonzero.1
-  have hw := normalizeMonic_squareFreeContributionPayload hp w hnonzero.2
-  exact ⟨hc.1, hc.2, hw.1, hw.2⟩
 
 /--
 Normalized gcd monicity for the Yun derivative-active transition. Whenever the
