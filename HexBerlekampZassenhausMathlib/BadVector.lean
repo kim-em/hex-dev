@@ -288,24 +288,43 @@ namespace BHKS
 
 /--
 The BHKS auxiliary polynomial `H_v` associated to an integer vector `v` over
-the lifted local factors.
+the lifted local factors, with explicit diagonal-row correction coordinates.
 
-The construction follows the BHKS Lemma 3.2 recipe: each lifted factor `g_i`
-contributes its centred-cut CLD coefficient array, scaled by `v_i`; the
-results are summed coordinate-wise to produce a `Hex.ZPoly` of degree at most
-`deg(input) - 1`.
+The all-coefficients BHKS lattice basis has block form
+`[I_r | A ; 0 | diag(p^(a - ell_j))]`.  A projected vector records only the
+first `r` coordinates, so the polynomial attached to a full lattice vector must
+subtract the diagonal-row correction coordinates from the CLD block.  The
+`corrections` array stores those diagonal-row coefficients, one per
+coefficient index `j`.
 -/
-def auxiliaryPolynomial
-    (input : Hex.ZPoly) (liftData : Hex.LiftData) (vec : Array Int) : Hex.ZPoly :=
+def auxiliaryPolynomialWithCorrections
+    (input : Hex.ZPoly) (liftData : Hex.LiftData)
+    (vec corrections : Array Int) : Hex.ZPoly :=
   let n := input.degree?.getD 0
   let r := liftData.liftedFactors.size
   let coeffs : List Int := (List.range n).map fun j =>
-    (List.range r).foldl (fun acc i =>
-      acc +
-        vec.getD i 0 *
-          (Hex.cldCoeffs input liftData.p liftData.k
-              (liftData.liftedFactors.getD i 0)).getD j 0) 0
+    let cldSum :=
+      (List.range r).foldl (fun acc i =>
+        acc +
+          vec.getD i 0 *
+            (Hex.cldCoeffs input liftData.p liftData.k
+                (liftData.liftedFactors.getD i 0)).getD j 0) 0
+    cldSum -
+      corrections.getD j 0 *
+        Int.ofNat (liftData.p ^ (liftData.k - Hex.bhksCoeffCutThreshold liftData.p input j))
   Hex.DensePoly.ofCoeffs coeffs.toArray
+
+/--
+Compatibility wrapper for callers that have no diagonal-row correction data.
+
+Downstream BHKS bad-vector construction should prefer
+`auxiliaryPolynomialWithCorrections` once it has recovered the full lattice-row
+coordinates; this wrapper is the zero-correction specialization used by the
+existing resultant-bound surface.
+-/
+def auxiliaryPolynomial
+    (input : Hex.ZPoly) (liftData : Hex.LiftData) (vec : Array Int) : Hex.ZPoly :=
+  auxiliaryPolynomialWithCorrections input liftData vec #[]
 
 end BHKS
 
@@ -390,8 +409,9 @@ theorem projectedVectorArray_getD
 Bad-vector evidence for an executable BHKS bad-vector witness.
 
 The witness's auxiliary polynomial `H` is the canonical BHKS auxiliary
-polynomial of `bhksVector`, and the same vector lies in the projected integer
-row span `L'` but not in the true-factor indicator lattice `W`.
+polynomial of `bhksVector` after subtracting the diagonal correction rows, and
+the same vector lies in the projected integer row span `L'` but not in the
+true-factor indicator lattice `W`.
 
 This is the proof-facing package of the local BHKS Lemma 3.2 hypotheses used
 by the resultant comparison.  Later construction work must prove these fields
@@ -399,9 +419,12 @@ from the executable CLD/Hensel data attached to an actual failed recovery run.
 -/
 structure IsBhksBadVectorSetup (W : ExecutableBadVectorWitness) where
   bhksVector : Array Int
+  bhksCorrections : Array Int
   trueSupports : Set (Set (Fin W.projectedRows.factorCount))
   H_eq :
-    W.H = BHKS.auxiliaryPolynomial W.input W.liftData bhksVector
+    W.H =
+      BHKS.auxiliaryPolynomialWithCorrections
+        W.input W.liftData bhksVector bhksCorrections
   in_projected :
     W.projectedVectorFn bhksVector ∈ BHKS.projectedRowSpanInt W.projectedRows
   not_in_indicators :
@@ -426,10 +449,11 @@ def isBhksBadVectorSetup_of_projected_not_indicator
     (W : ExecutableBadVectorWitness)
     (trueSupports : Set (Set (Fin W.projectedRows.factorCount)))
     (v : Fin W.projectedRows.factorCount → ℤ)
+    (corrections : Array Int)
     (hH :
       W.H =
-        BHKS.auxiliaryPolynomial W.input W.liftData
-          (W.projectedVectorArray v))
+        BHKS.auxiliaryPolynomialWithCorrections W.input W.liftData
+          (W.projectedVectorArray v) corrections)
     (hin : v ∈ BHKS.projectedRowSpanInt W.projectedRows)
     (hnot : v ∉ BHKS.trueFactorIndicatorLattice trueSupports)
     (hd : 0 < W.localFactorDegree)
@@ -443,6 +467,7 @@ def isBhksBadVectorSetup_of_projected_not_indicator
     IsBhksBadVectorSetup W := by
   refine
     { bhksVector := W.projectedVectorArray v
+      bhksCorrections := corrections
       trueSupports := trueSupports
       H_eq := hH
       in_projected := ?_
@@ -507,9 +532,9 @@ def isBhksBadVectorSetup_of_projectedVector
   let W := ofProjectedVector input liftData hrows localFactorIndex v
   exact
     isBhksBadVectorSetup_of_projected_not_indicator
-      W trueSupports v
+      W trueSupports v #[]
       (by
-        simp [W, ofProjectedVector, projectedVectorArray])
+        simp [W, ofProjectedVector, projectedVectorArray, BHKS.auxiliaryPolynomial])
       hin hnot
       (by
         simpa [W, ofProjectedVector] using hdegree)
@@ -524,20 +549,26 @@ record packages the remaining BHKS Lemma 3.2 data: the canonical auxiliary
 polynomial attached to the projected vector, positivity of the selected local
 factor degree, rational coprimality, and the `p^(k*d)` resultant divisibility.
 
-Only `auxiliary_eq` depends on the projected vector; the other three fields
-are properties of the fixed witness data (`W.H`, `W.input`, `W.liftData`) and
-are not quantified over `v`.
+Only `auxiliary_eq` and `auxiliaryCorrections` depend on the projected vector;
+the other three fields are properties of the fixed witness data (`W.H`,
+`W.input`, `W.liftData`) and are not quantified over `v`.
 -/
 structure ProjectedBadVectorSetupBridge
     (W : ExecutableBadVectorWitness)
     (trueSupports : Set (Set (Fin W.projectedRows.factorCount))) where
-  auxiliary_eq :
+  auxiliaryCorrections :
     ∀ v : Fin W.projectedRows.factorCount → ℤ,
       v ∈ BHKS.projectedRowSpanInt W.projectedRows →
         v ∉ BHKS.trueFactorIndicatorLattice trueSupports →
+          Array Int
+  auxiliary_eq :
+    ∀ (v : Fin W.projectedRows.factorCount → ℤ)
+      (hin : v ∈ BHKS.projectedRowSpanInt W.projectedRows)
+      (hnot : v ∉ BHKS.trueFactorIndicatorLattice trueSupports),
           W.H =
-            BHKS.auxiliaryPolynomial W.input W.liftData
+            BHKS.auxiliaryPolynomialWithCorrections W.input W.liftData
               (W.projectedVectorArray v)
+              (auxiliaryCorrections v hin hnot)
   localFactorDegree_pos : 0 < W.localFactorDegree
   coprime_input_aux_over_rat :
     IsCoprime
@@ -563,6 +594,7 @@ def bad_setup_of_projected_not_indicator
   exact
     isBhksBadVectorSetup_of_projected_not_indicator
       W trueSupports v
+      (hbridge.auxiliaryCorrections v hin hnot)
       (hbridge.auxiliary_eq v hin hnot)
       hin hnot
       hbridge.localFactorDegree_pos
