@@ -4163,19 +4163,35 @@ def centeredResiduePow (p b : Nat) (x : Int) : Int :=
   centeredModNat x (p ^ b)
 
 /--
-BHKS two-sided cut `Psi^a_b(x) = (x - (x mod^± p^b)) / p^b`.
+BHKS two-sided cut `Psi^a_b(x) = (x_amb - (x_amb mod^± p^b)) / p^b`, where
+`x_amb := x mod^± p^a` is the centered ambient representative.
 
-The precision parameter `a` records the ambient modulus `p^a`; the executable
-cut only needs the lower threshold `b`.
+Centering at the ambient modulus `p^a` before taking the lower-precision cut
+is required to match the SPEC semantics: a CLD coefficient passed in as a
+nonnegative `p^a`-residue `(p^a - c)` of a negative exact value `-c` must be
+recentered to `-c` before applying the `p^b` cut. Without this step the cut
+produces an oversized output for negative exact coefficients — see #6217 for
+the `f = x^2 - 5*x + 6`, `g = x - 2`, `p = 5`, `a = 6` counterexample to the
+old uncentered formulation.
 -/
-def psiCut (p _a b : Nat) (x : Int) : Int :=
+def psiCut (p a b : Nat) (x : Int) : Int :=
   let modulus := p ^ b
   if modulus = 0 then
     0
   else
-    (x - centeredResiduePow p b x) / Int.ofNat modulus
+    let xCentered := centeredResiduePow p a x
+    (xCentered - centeredResiduePow p b xCentered) / Int.ofNat modulus
 
-private def cldQuotientMod (f g : ZPoly) (p a : Nat) : ZPoly :=
+/--
+Mod-`p^a` representative of `f * g.derivative / g`, the polynomial whose
+`x^j` coefficient is the integer CLD coefficient `[x^j] Phi(g)` reduced
+modulo `p^a`.
+
+Exposed (rather than private) so the BHKS bridge layer can state the
+congruence linking the executable quotient to the exact integer CLD
+coefficient.
+-/
+def cldQuotientMod (f g : ZPoly) (p a : Nat) : ZPoly :=
   let numerator := ZPoly.reduceModPow (f * DensePoly.derivative g) p a
   let quotient := (DensePoly.divMod numerator g).1
   ZPoly.reduceModPow quotient p a
@@ -4193,6 +4209,103 @@ def cldCoeffs (f : ZPoly) (p a : Nat) (g : ZPoly) : Array Int :=
   (List.range n).map
     (fun j => psiCut p a (bhksCoeffCutThreshold p f j) (quotient.coeff j))
     |>.toArray
+
+/-- `centeredModNat` depends only on its argument modulo `m`. -/
+theorem centeredModNat_emod_self (z : Int) (m : Nat) :
+    centeredModNat (z % (m : Int)) m = centeredModNat z m := by
+  by_cases hm : m = 0
+  · subst hm
+    show centeredModNat (z % ((0 : Nat) : Int)) 0 = centeredModNat z 0
+    simp [Int.emod_zero]
+  · have hmod : (z % (m : Int)) % Int.ofNat m = z % Int.ofNat m := by
+      show z % Int.ofNat m % Int.ofNat m = z % Int.ofNat m
+      exact Int.emod_emod _ _
+    unfold centeredModNat
+    rw [if_neg hm, if_neg hm, hmod]
+
+/--
+If `y` is an exact integer with `|y| ≤ B`, `y ≡ z (mod p^a)`, and the ambient
+modulus `p^a` is large enough to separate the centered residue (`2*B < p^a`),
+then `centeredResiduePow p a z = y`.
+-/
+theorem centeredResiduePow_eq_of_natAbs_le
+    (p a : Nat) (y z : Int) (B : Nat)
+    (hbound : y.natAbs ≤ B)
+    (hsep : 2 * B < p ^ a)
+    (hcongr : y % ((p ^ a : Nat) : Int) = z % ((p ^ a : Nat) : Int)) :
+    centeredResiduePow p a z = y := by
+  unfold centeredResiduePow
+  rw [← centeredModNat_emod_self z, ← hcongr]
+  exact centeredModNat_emod_eq_of_natAbs_le y (p ^ a) B hbound hsep
+
+/--
+If an exact integer `y` with `|y| ≤ B` is congruent to `z` modulo `p^a`, and
+both the ambient modulus `p^a` and the lower cut modulus `p^b` separate `B`
+(`2*B < p^a` and `2*B < p^b`), then the BHKS two-sided cut `psiCut p a b z`
+vanishes.
+-/
+theorem psiCut_eq_zero_of_natAbs_le
+    (p a b : Nat) (y z : Int) (B : Nat)
+    (hbound : y.natAbs ≤ B)
+    (hsep_a : 2 * B < p ^ a)
+    (hsep_b : 2 * B < p ^ b)
+    (hcongr : y % ((p ^ a : Nat) : Int) = z % ((p ^ a : Nat) : Int)) :
+    psiCut p a b z = 0 := by
+  unfold psiCut
+  have hbpos : 0 < p ^ b := by omega
+  have hbne : (p ^ b : Nat) ≠ 0 := Nat.ne_of_gt hbpos
+  have hcentered_amb : centeredResiduePow p a z = y :=
+    centeredResiduePow_eq_of_natAbs_le p a y z B hbound hsep_a hcongr
+  rw [if_neg hbne]
+  show (centeredResiduePow p a z - centeredResiduePow p b (centeredResiduePow p a z))
+      / Int.ofNat (p ^ b) = 0
+  rw [hcentered_amb]
+  have hcentered_b : centeredResiduePow p b y = y := by
+    unfold centeredResiduePow
+    rw [← centeredModNat_emod_self y]
+    exact centeredModNat_emod_eq_of_natAbs_le y (p ^ b) B hbound hsep_b
+  rw [hcentered_b, Int.sub_self, Int.zero_ediv]
+
+/--
+Absolute-value form of `psiCut_eq_zero_of_natAbs_le`: under the same
+hypotheses, `|psiCut p a b z| ≤ B`. Useful when callers carry the BHKS
+column bound `B = bhksCoeffBound f j` and just need an upper bound on the
+executable cut output.
+-/
+theorem abs_psiCut_le_of_natAbs_le
+    (p a b : Nat) (y z : Int) (B : Nat)
+    (hbound : y.natAbs ≤ B)
+    (hsep_a : 2 * B < p ^ a)
+    (hsep_b : 2 * B < p ^ b)
+    (hcongr : y % ((p ^ a : Nat) : Int) = z % ((p ^ a : Nat) : Int)) :
+    (psiCut p a b z).natAbs ≤ B := by
+  rw [psiCut_eq_zero_of_natAbs_le p a b y z B hbound hsep_a hsep_b hcongr]
+  exact Nat.zero_le _
+
+/--
+In-range coordinate of `cldCoeffs`: for `j < deg(f)`, the executable
+`cldCoeffs` array entry is exactly `psiCut` applied to the corresponding
+quotient coefficient.
+-/
+theorem cldCoeffs_getD_of_lt
+    (f : ZPoly) (p a : Nat) (g : ZPoly) (j : Nat)
+    (h : j < f.degree?.getD 0) :
+    (cldCoeffs f p a g).getD j 0 =
+      psiCut p a (bhksCoeffCutThreshold p f j) ((cldQuotientMod f g p a).coeff j) := by
+  unfold cldCoeffs
+  rw [Array.getD_eq_getD_getElem?]
+  have hlen :
+      ((List.range (f.degree?.getD 0)).map (fun j =>
+        psiCut p a (bhksCoeffCutThreshold p f j)
+          ((cldQuotientMod f g p a).coeff j))).length = f.degree?.getD 0 := by
+    simp
+  have hsize :
+      ((List.range (f.degree?.getD 0)).map (fun j =>
+        psiCut p a (bhksCoeffCutThreshold p f j)
+          ((cldQuotientMod f g p a).coeff j))).toArray.size = f.degree?.getD 0 := by
+    simp [hlen]
+  rw [Array.getElem?_eq_getElem (by simpa [hsize] using h)]
+  simp [List.getElem_toArray, List.getElem_map, List.getElem_range]
 
 /-- Per-coordinate BHKS cut thresholds for the all-coefficients CLD lattice. -/
 def bhksCutThresholds (f : ZPoly) (p : Nat) : Array Nat :=
@@ -4421,6 +4534,65 @@ private def cldGuardG : ZPoly :=
 
 #guard cldQuotientMod cldGuardF cldGuardG 5 2 = DensePoly.ofCoeffs #[22, 1]
 #guard (cldCoeffs cldGuardF 5 2 cldGuardG).size = cldGuardF.degree?.getD 0
+
+/-
+Regression guard for #6217. The exact integer CLD coefficient of
+`cldGuardF = x^2 - 5x + 6` against the true factor `g = x - 2` at index 0 is
+`-3`, so under the centered cut the executable `cldCoeffs` at this index is
+`0`. Without ambient centering the result was `125`, which exceeded
+`bhksCoeffBound cldGuardF 0 = 16`.
+-/
+#guard (cldCoeffs cldGuardF 5 6 cldGuardG).getD 0 0 = 0
+#guard (cldCoeffs cldGuardF 5 6 cldGuardG).getD 1 0 = 0
+
+namespace BHKS
+
+/--
+BHKS Lemma 5.1 column bound for the executable `cldCoeffs`.
+
+If there exists an exact integer `y` (morally `[x^j] (f * g'.derivative / g')`
+for a true integer factor `g'` of `f` that Hensel-lifts to `g`) congruent to
+`(cldQuotientMod f g p a).coeff j` modulo `p^a` and satisfying
+`|y| ≤ bhksCoeffBound f j`, then under the Hensel precision hypothesis
+`2 * bhksCoeffBound f j < p^a` and `p ≥ 2`, the executable `cldCoeffs` entry
+at index `j` is bounded by `bhksCoeffBound f j`.
+
+This replaces the original unconditional `#5224` target — the
+counterexample of `#6217` showed the executable cut had to be re-centered at
+the ambient modulus before this column bound could hold. The recentering
+landed in `Hex.psiCut`; the bound is then a direct consequence of
+`abs_psiCut_le_of_natAbs_le` plus `precisionForCoeffBound_spec` for the
+lower cut threshold.
+-/
+theorem abs_cldCoeffs_le_bhksCoeffBound
+    (f g : ZPoly) (p a j : Nat) (y : Int)
+    (hp : 2 ≤ p)
+    (hbound : y.natAbs ≤ bhksCoeffBound f j)
+    (hsep_a : 2 * bhksCoeffBound f j < p ^ a)
+    (hcongr : y % ((p ^ a : Nat) : Int) =
+              (cldQuotientMod f g p a).coeff j % ((p ^ a : Nat) : Int)) :
+    ((cldCoeffs f p a g).getD j 0).natAbs ≤ bhksCoeffBound f j := by
+  have hsep_b : 2 * bhksCoeffBound f j < p ^ bhksCoeffCutThreshold p f j := by
+    unfold bhksCoeffCutThreshold
+    have := le_pow_ceilLogP hp (2 * bhksCoeffBound f j + 1)
+    omega
+  by_cases hlt : j < f.degree?.getD 0
+  · rw [cldCoeffs_getD_of_lt f p a g j hlt]
+    exact abs_psiCut_le_of_natAbs_le p a (bhksCoeffCutThreshold p f j)
+      y ((cldQuotientMod f g p a).coeff j) (bhksCoeffBound f j)
+      hbound hsep_a hsep_b hcongr
+  · -- Out-of-range index: `cldCoeffs` returns 0 by `Array.getD` default.
+    have hsize :
+        (cldCoeffs f p a g).size = f.degree?.getD 0 := by
+      unfold cldCoeffs
+      simp
+    have hge : (cldCoeffs f p a g).size ≤ j := by
+      simpa [hsize] using Nat.le_of_not_lt hlt
+    rw [Array.getD_eq_getD_getElem?,
+      Array.getElem?_eq_none hge]
+    simp
+
+end BHKS
 
 private def bhksGuardFactors : Array ZPoly :=
   #[DensePoly.ofCoeffs #[-2, 1], DensePoly.ofCoeffs #[-3, 1]]
