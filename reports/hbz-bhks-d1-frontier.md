@@ -136,7 +136,8 @@ Dependencies:
 
 ### Gap 2: Executable CLD Column Bound
 
-Status: covered by open issue `#5224`.
+Status: replanned by #6217 into #6220 after a counterexample showed the
+original #5224 statement false for the current executable cut semantics.
 
 Target surface:
 
@@ -144,9 +145,10 @@ Target surface:
 
 Purpose:
 
-- Connect the executable `Hex.cldCoeffs input p k g` column to the exact
-  quotient coefficient bound from `#5223`, under true-factor and precision
-  hypotheses.
+- First correct the executable cut path so `Hex.cldCoeffs input p k g`
+  centers the ambient `p^k` representative before applying the lower
+  `Psi` cut, then connect the executable column to the exact quotient
+  coefficient bound from `#5223`, under true-factor and precision hypotheses.
 
 Relevant executable definitions:
 
@@ -179,8 +181,10 @@ Existing consumer:
 
 Dependency:
 
-- `#5224`, because the bridge must use the landed executable CLD coefficient
+- `#6220`, because the bridge must use the corrected executable CLD coefficient
   and precision surface rather than inventing a parallel true-factor predicate.
+- `#6221`, because the projected bad-vector polynomial must account for the
+  diagonal lattice-row correction coordinates.
 
 ### Gap 4: Auxiliary-Polynomial l2-Norm Bound
 
@@ -200,7 +204,8 @@ Purpose:
 
 Dependencies:
 
-- `#5224`
+- `#6220`
+- `#6221`
 
 ### Gap 5: Bad-Vector Norm Versus Cut Radius
 

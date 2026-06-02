@@ -29,7 +29,7 @@ proof-facing notions.
 | Per-coordinate coefficient bound `B_j = C(n-1, j) · n · ‖f‖₂` | `bhksCoeffBound f j` | `Nat` | `HexBerlekampZassenhaus/Basic.lean:2219` |
 | Two-sided centred cut `Ψ^a_b(x)` | `psiCut p a b x` (executable) | `Int` | `HexBerlekampZassenhaus/Basic.lean` |
 | CLD invariant `Φ(g) = f · g'/g (mod p^a)` (raw) | `cldQuotientMod f g p a` (private) | `Hex.ZPoly` | `HexBerlekampZassenhaus/Basic.lean:3934` |
-| Centred high-bit CLD coefficients `Ψ^a_{ℓ_j}([x^j] Φ(g_i))` | `cldCoeffs f p a g` (per-factor), `lattice.cldRows` (all factors stacked) | `Array Int`, `Array (Array Int)` | `HexBerlekampZassenhaus/Basic.lean:3946`, `:3972` |
+| Centred high-bit CLD coefficients `Psi^a_{ell_j}([x^j] Phi(g_i))` | `cldCoeffs f p a g` (per-factor), `lattice.cldRows` (all factors stacked) | `Array Int`, `Array (Array Int)` | `HexBerlekampZassenhaus/Basic.lean:3946`, `:3972`; #6220 repairs the ambient centering before this is proof-ready |
 | Lattice basis `[ I_r ∣ Ã ; 0 ∣ diag(p^{a−ℓ_j}) ]` (BHKS eq. 5.1) | `bhksLatticeBasis f p a liftedFactors` returning `BhksLatticeBasis` with `basis : Matrix Int (r+n) (r+n)` | `BhksLatticeBasis` | `HexBerlekampZassenhaus/Basic.lean:4012` |
 | Projected lattice `L' ⊆ ℤ^r` (BHKS Step 7) | Integer rows: `projectedRows.projectedRows : Array (Array Int)`; as a Mathlib submodule: `BHKS.projectedRowSpanInt projectedRows : Submodule ℤ (Fin r → ℤ)` | `BhksProjectedRows` / `Submodule ℤ (Fin r → ℤ)` | `HexBerlekampZassenhaus/Basic.lean:3981`, `HexBerlekampZassenhausMathlib/Lattice.lean:33` |
 | Rational row space of `L'` (RREF stage input) | `BHKS.projectedRowSpaceRat projectedRows : Submodule ℚ (Fin r → ℚ)` | same | `HexBerlekampZassenhausMathlib/Lattice.lean:42` |
@@ -214,7 +214,9 @@ existing `BadVector.lean` / `TerminationBound.lean` API.
    `BadVector.lean`. **Unblocked.** Suitable for a small review issue.
 
 2. **`auxiliaryPolynomial_l2norm_sq_le` (lemma).** Bound `‖H_v‖₂²` by
-   `‖v‖₂² · Σ_j (bhksCoeffBound input j)²`. Pathway: rewrite
+   `‖v‖₂² · Σ_j (bhksCoeffBound input j)²`. This depends on #6220 for the
+   executable CLD column bound and #6221 for the corrected bad-vector
+   auxiliary-polynomial shape. Pathway: rewrite
    `BHKS.auxiliaryPolynomial input liftData vec` as a coordinate-wise sum,
    apply Cauchy–Schwarz coordinate-wise, sum across `j ∈ {0, …, n−1}`
    using the existing `bhksCoeffBound` columnwise bound. The squared form
