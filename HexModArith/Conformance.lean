@@ -86,6 +86,28 @@ example {a b : ZMod64 7} (h : a * b = 0) : a = 0 ∨ b = 0 := by
 
 end PrimeModulusAutomation
 
+section BasicConstructorAutomation
+
+example (n : Nat) : (ZMod64.ofNat 7 n).toNat = n % 7 := by
+  simp
+
+example (a : ZMod64 7) : ZMod64.ofNat 7 a.toNat = a := by
+  simp only [ZMod64.ofNat_toNat]
+
+example {a b : ZMod64 7} (h : a.toNat = b.toNat) : a = b := by
+  grind
+
+example (a b : ZMod64 7) : a = b ↔ a.toNat = b.toNat := by
+  grind
+
+example (x y : Nat) : ZMod64.ofNat 7 x = ZMod64.ofNat 7 y ↔ x % 7 = y % 7 := by
+  grind
+
+example (a : ZMod64 7) : a ∈ ZMod64.values 7 := by
+  simp
+
+end BasicConstructorAutomation
+
 private def oneOnly : ZMod64 1 := ofNat 1 37
 private def a2 : ZMod64 2 := ofNat 2 1
 private def b2 : ZMod64 2 := ofNat 2 1
