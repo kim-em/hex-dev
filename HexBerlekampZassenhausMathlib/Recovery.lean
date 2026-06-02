@@ -841,6 +841,88 @@ noncomputable def selectedFactorArraysOfSupports
     (fun members => selectedFactorsOfMembers liftedFactors members)).toArray
 
 /--
+Convert a proof-side lifted-subset representation into the exact modular
+product equality consumed by the Mignotte recovery wrapper, once the executable
+selected-factor array has been identified with that lifted subset's product.
+-/
+theorem productCongruence_of_representsIntegerFactorAtLift
+    {core : Hex.ZPoly} {d : Hex.LiftData} {selected : Array Hex.ZPoly}
+    {expectedFactor : Hex.ZPoly} {S : LiftedFactorSubset d}
+    (hselected_product :
+      Array.polyProduct selected = liftedFactorProduct d S)
+    (hrep : RepresentsIntegerFactorAtLift core d expectedFactor S) :
+    Hex.ZPoly.reduceModPow
+        (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core)
+          (Array.polyProduct selected)) d.p d.k =
+      Hex.ZPoly.reduceModPow expectedFactor d.p d.k := by
+  unfold RepresentsIntegerFactorAtLift scaledLiftedFactorProduct at hrep
+  rw [hselected_product]
+  exact hrep
+
+/--
+Indexed form of `productCongruence_of_representsIntegerFactorAtLift`.
+Callers provide, for each expected indicator, the proof-side lifted subset
+selected by the canonical class plus its `RepresentsIntegerFactorAtLift`
+certificate; this theorem returns the `hproduct` family expected by
+`ofMignottePrecision...`.
+-/
+theorem productCongruencesOfSelectedRepresentations
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (expectedIndicators : Array (Array Int))
+    (selectedFactors : Array (Array Hex.ZPoly))
+    (expectedFactors : Array Hex.ZPoly)
+    (supportSubsets : Array (LiftedFactorSubset d))
+    (hselected_product :
+      ∀ i, i < expectedIndicators.size →
+        Array.polyProduct (selectedFactors.getD i #[]) =
+          liftedFactorProduct d (supportSubsets.getD i ∅))
+    (hrep :
+      ∀ i, i < expectedIndicators.size →
+        RepresentsIntegerFactorAtLift core d (expectedFactors.getD i 0)
+          (supportSubsets.getD i ∅)) :
+    ∀ i, i < expectedIndicators.size →
+      Hex.ZPoly.reduceModPow
+          (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core)
+            (Array.polyProduct (selectedFactors.getD i #[])))
+          d.p d.k =
+        Hex.ZPoly.reduceModPow (expectedFactors.getD i 0) d.p d.k := by
+  intro i hi
+  exact productCongruence_of_representsIntegerFactorAtLift
+    (hselected_product i hi) (hrep i hi)
+
+/--
+Canonical-support specialisation of the per-class Mignotte product bridge.
+It targets `selectedFactorArraysOfSupports` directly, matching the hypothesis
+surface of
+`factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound`.
+-/
+theorem productCongruencesOfCanonicalSupportRepresentations
+    {core : Hex.ZPoly} {d : Hex.LiftData} {r : Nat}
+    (trueSupports : Set (Set (Fin r)))
+    (expectedFactors : Array Hex.ZPoly)
+    (supportSubsets : Array (LiftedFactorSubset d))
+    (hselected_product :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        Array.polyProduct
+            ((selectedFactorArraysOfSupports d.liftedFactors trueSupports).getD i #[]) =
+          liftedFactorProduct d (supportSubsets.getD i ∅))
+    (hrep :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        RepresentsIntegerFactorAtLift core d (expectedFactors.getD i 0)
+          (supportSubsets.getD i ∅)) :
+    ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+      Hex.ZPoly.reduceModPow
+          (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core)
+            (Array.polyProduct
+              ((selectedFactorArraysOfSupports d.liftedFactors trueSupports).getD i #[])))
+          d.p d.k =
+        Hex.ZPoly.reduceModPow (expectedFactors.getD i 0) d.p d.k :=
+  productCongruencesOfSelectedRepresentations
+    (expectedIndicatorArrayOfSupports trueSupports)
+    (selectedFactorArraysOfSupports d.liftedFactors trueSupports)
+    expectedFactors supportSubsets hselected_product hrep
+
+/--
 The canonical support-driven indicators select the corresponding canonical
 lifted-factor arrays, one support class at a time.
 -/
