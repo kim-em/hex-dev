@@ -199,6 +199,22 @@ private def emptyNullspace : Vector (Vector Rat 2) 0 :=
 #guard Matrix.det (Matrix.rowSwap pivotInt ⟨0, by decide⟩ ⟨1, by decide⟩) = -Matrix.det pivotInt
 #guard Matrix.det (Matrix.rowScale pivotInt ⟨1, by decide⟩ (-2)) = (-2) * Matrix.det pivotInt
 #guard Matrix.det (Matrix.rowAdd pivotInt ⟨0, by decide⟩ ⟨2, by decide⟩ 3) = Matrix.det pivotInt
+
+example : Matrix.det (1 : Matrix Int 2 2) = 1 := by
+  grind
+
+example (M : Matrix Int 3 3) (i j : Fin 3) (h : i ≠ j) :
+    Matrix.det (Matrix.rowSwap M i j) = -Matrix.det M := by
+  grind
+
+example (M : Matrix Int 3 3) (i : Fin 3) (c : Int) :
+    Matrix.det (Matrix.rowScale M i c) = c * Matrix.det M := by
+  grind
+
+example (M : Matrix Int 3 3) (src dst : Fin 3) (c : Int) (h : src ≠ dst) :
+    Matrix.det (Matrix.rowAdd M src dst c) = Matrix.det M := by
+  grind
+
 #guard Matrix.bareiss baseInt = Matrix.det baseInt
 #guard Matrix.bareiss singularInt = 0
 #guard Matrix.bareiss pivotInt = Matrix.det pivotInt
