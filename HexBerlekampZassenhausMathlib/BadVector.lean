@@ -940,6 +940,22 @@ def BadVectorBridgeData.toProjectedBadVectorSetupBridge
   resultant_divisible_by_p_pow := D.resultant_divisible_by_p_pow
 
 /--
+BHKS Lemma 3.2 bridge-data accessor for the rational coprimality clause.
+
+`BadVectorBridgeData` is the executable-witness hypothesis package that carries
+the local algebraic content needed by cap separation.  This theorem gives the
+named projection used by the bridge assembly layer.
+-/
+theorem coprime_input_aux_over_rat_of_bridge_data
+    {W : ExecutableBadVectorWitness}
+    {trueSupports : Set (Set (Fin W.projectedRows.factorCount))}
+    (D : BadVectorBridgeData W trueSupports) :
+    IsCoprime
+      (W.inputPolynomial.map (Int.castRingHom ℚ))
+      (W.auxiliaryPolynomial.map (Int.castRingHom ℚ)) := by
+  exact D.coprime_input_aux_over_rat
+
+/--
 Convert the packaged `ProjectedBadVectorSetupBridge` into the callback shape
 expected by `BHKS.ExecutableCapSeparationHypotheses`.
 -/
