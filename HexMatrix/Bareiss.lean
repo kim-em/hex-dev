@@ -6,8 +6,10 @@ Executable Bareiss determinant algorithm for `hex-matrix`.
 This module implements fraction-free Bareiss elimination over `Int` in two
 layers: a no-pivot recurrence that follows the standard exact-division update,
 and a public row-pivoting wrapper that swaps in a nonzero pivot when needed and
-tracks the resulting determinant sign. The root library also exposes the
-theorem surface relating this executable path to the generic determinant.
+tracks the resulting determinant sign. The Mathlib-free layer exposes the
+executable data and state needed by later bridge proofs; it does not expose a
+theorem identifying the executable Bareiss determinant with the generic
+Leibniz determinant.
 -/
 
 namespace Hex
@@ -20,8 +22,17 @@ variable {n : Nat}
 
 /-- Output of an executable Bareiss elimination pass. -/
 structure BareissData (n : Nat) where
+  /-- Terminal matrix produced by the Bareiss pass. When `singularStep = none`,
+  `BareissData.det` reads the last diagonal entry of this matrix, with the
+  row-swap sign applied; for `n = 0`, the empty diagonal contributes `1`. -/
   matrix : Matrix Int n n
+  /-- Number of row swaps performed by pivoting. Even parity contributes sign
+  `1`; odd parity contributes sign `-1`. -/
   rowSwaps : Nat
+  /-- The first elimination step that found a zero pivot and no replacement
+  row. A value `some k` records that singular step and makes
+  `BareissData.det` return `0`; `none` means the run reached the terminal
+  diagonal encoding. -/
   singularStep : Option Nat
 
 namespace BareissData
@@ -45,6 +56,13 @@ def det (data : BareissData n) : Int :=
       match lastDiag? data.matrix with
       | some d => data.sign * d
       | none => data.sign
+
+/-- A recorded singular step encodes determinant zero. -/
+theorem det_eq_zero_of_singularStep {data : BareissData n} {k : Nat}
+    (h : data.singularStep = some k) :
+    data.det = 0 := by
+  unfold det
+  rw [h]
 
 /-- For a non-singular Bareiss elimination of a positive-size matrix, the
 encoded determinant is `sign * (last diagonal entry)`. -/
@@ -71,10 +89,21 @@ end BareissData
 /-- Internal state of the no-pivot Bareiss recurrence, exposed read-only for
 the Mathlib-side determinant proof. -/
 structure BareissState (n : Nat) where
+  /-- Current elimination step. The next update, if any, uses this row and
+  column as the pivot position. -/
   step : Nat
+  /-- Current matrix carried by the Bareiss recurrence. Its terminal value is
+  copied into `BareissData.matrix` by `finish`. -/
   matrix : Matrix Int n n
+  /-- Previous nonzero pivot used as the exact-division denominator; initially
+  `1`. -/
   prevPivot : Int
+  /-- Number of row swaps already performed by the pivoting wrapper. Even
+  parity contributes determinant sign `1`; odd parity contributes sign `-1`. -/
   rowSwaps : Nat
+  /-- First step at which the recurrence found a zero pivot and could not
+  continue. A value `some k` is terminal evidence for the determinant-zero
+  encoding; `none` means no singular step has been recorded. -/
   singularStep : Option Nat
 
 /-- Exact division used by the Bareiss recurrence. The `else` branch is
