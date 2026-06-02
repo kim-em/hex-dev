@@ -2071,9 +2071,91 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecis
     Hex.factorFast f ≠ none :=
   factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecisionForCoeffBound
     f primeData rows_pos trueSupports localFactorIndex localFactorDegree H
-    hcap_le C hC_nonneg hC hcut bridge hcomparison hB_pos hchoose
+    hcap_le C hC_nonneg hC hcut bridge
+    hcomparison.hadamard_l2norm_lt_divisor hB_pos hchoose
     (Hex.choosePrimeData?_prime _ _ hchoose).two_le
     hk nondegenerate expectedFactors hsize hcandidate product_eq
+
+/--
+Variant of
+`factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecisionForCoeffBound`
+that internalises both easy executable-cap side conditions:
+`1 ≤ factorFastPrecisionCap f` and
+`2 ≤ (factorFastCapLiftData f primeData).p`.
+
+The cap positivity follows from the packaged BHKS threshold slack via
+`one_le_factorFastPrecisionCap`; the prime lower bound follows from `hchoose`.
+This leaves callers with only the genuine cap-separation and candidate-product
+facts needed by the canonical-indicators recovery path.
+-/
+theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecisionForCoeffBound_internalCapPositiveAndPrimeLowerBound
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (hcap_le :
+      Hex.factorFastPrecisionCap (Hex.normalizeForFactor f).squareFreeCore ≤
+        (factorFastCapLiftData f primeData).k)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (hcut :
+      CutProjectionHypotheses
+        (projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          rows_pos)
+        trueSupports)
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    (hcomparison :
+      FactorFastCapLiftAnalyticComparison
+        f primeData rows_pos localFactorIndex localFactorDegree H)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
+    (hk :
+      (factorFastCapLiftData f primeData).k =
+        Hex.precisionForCoeffBound
+          (Hex.factorFastPrecisionCap
+            (Hex.normalizeForFactor f).squareFreeCore)
+          (factorFastCapLiftData f primeData).p)
+    (nondegenerate :
+      Hex.bhksDegenerateIndicatorPartition
+          (projectedRowsOfLiftData
+            (Hex.normalizeForFactor f).squareFreeCore
+            (factorFastCapLiftData f primeData)
+            rows_pos)
+          (expectedIndicatorArrayOfSupports trueSupports) = false)
+    (expectedFactors : Array Hex.ZPoly)
+    (hsize : expectedFactors.size =
+      (expectedIndicatorArrayOfSupports trueSupports).size)
+    (hcandidate :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        ∃ quotient,
+          Hex.bhksIndicatorCandidate?
+              (Hex.normalizeForFactor f).squareFreeCore
+              (factorFastCapLiftData f primeData)
+              ((expectedIndicatorArrayOfSupports trueSupports).getD i #[]) =
+            some (expectedFactors.getD i 0, quotient))
+    (product_eq :
+      Array.polyProduct expectedFactors =
+        (Hex.normalizeForFactor f).squareFreeCore) :
+    Hex.factorFast f ≠ none :=
+  factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecisionForCoeffBound_internalPrimeLowerBound
+    f primeData rows_pos trueSupports localFactorIndex localFactorDegree H
+    hcap_le C hC_nonneg hC hcut bridge hcomparison
+    (one_le_factorFastPrecisionCap f) hchoose hk nondegenerate expectedFactors
+    hsize hcandidate product_eq
 
 /--
 HO-4 leaf capstone: compose
@@ -2632,6 +2714,100 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalSupportsExpectedFa
     (Hex.choosePrimeData?_prime _ _ hchoose).two_le
     hk hprojected_nonempty hclasses_two hclass_nonempty hclass_bounds
     expectedFactors hf_ne_zero htrue hproduct
+
+/--
+Variant of
+`factorFast_ne_none_of_capSeparationBridgeDataCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound`
+that internalises both easy executable-cap side conditions:
+`1 ≤ factorFastPrecisionCap f` and
+`2 ≤ (factorFastCapLiftData f primeData).p`.
+
+This is the canonical-support counterpart to the indicator-side
+`_internalCapPositiveAndPrimeLowerBound` wrapper above.  It keeps the final
+assembly surface focused on the support partition facts, expected true-factor
+package, and per-class Mignotte product congruences.
+-/
+theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound_internalCapPositiveAndPrimeLowerBound
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (hcap_le :
+      Hex.factorFastPrecisionCap (Hex.normalizeForFactor f).squareFreeCore ≤
+        (factorFastCapLiftData f primeData).k)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (hcut :
+      CutProjectionHypotheses
+        (projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          rows_pos)
+        trueSupports)
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    (hcomparison :
+      FactorFastCapLiftAnalyticComparison
+        f primeData rows_pos localFactorIndex localFactorDegree H)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
+    (hk :
+      (factorFastCapLiftData f primeData).k =
+        Hex.precisionForCoeffBound
+          (Hex.factorFastPrecisionCap
+            (Hex.normalizeForFactor f).squareFreeCore)
+          (factorFastCapLiftData f primeData).p)
+    (hprojected_nonempty :
+      (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).projectedRows.isEmpty = false)
+    (hclasses_two :
+      2 ≤ (supportPartitionByMinColumn trueSupports).length)
+    (hclass_nonempty :
+      ∀ members, members ∈ supportPartitionByMinColumn trueSupports →
+        ∃ j, j ∈ members)
+    (hclass_bounds :
+      ∀ members, members ∈ supportPartitionByMinColumn trueSupports →
+        ∀ j, j ∈ members →
+          j < (factorFastCapLiftData f primeData).liftedFactors.size)
+    (expectedFactors : Array Hex.ZPoly)
+    (hf_ne_zero : (Hex.normalizeForFactor f).squareFreeCore ≠ 0)
+    (htrue :
+      ForwardRecoveryInputs.ExpectedTrueFactors
+        (Hex.normalizeForFactor f).squareFreeCore
+        (expectedIndicatorArrayOfSupports trueSupports) expectedFactors)
+    (hproduct :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        Hex.ZPoly.reduceModPow
+            (Hex.DensePoly.scale
+              (Hex.DensePoly.leadingCoeff
+                (Hex.normalizeForFactor f).squareFreeCore)
+              (Array.polyProduct
+                ((ForwardRecoveryInputs.selectedFactorArraysOfSupports
+                  (factorFastCapLiftData f primeData).liftedFactors
+                  trueSupports).getD i #[])))
+            (factorFastCapLiftData f primeData).p
+            (factorFastCapLiftData f primeData).k =
+          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0)
+            (factorFastCapLiftData f primeData).p
+            (factorFastCapLiftData f primeData).k) :
+    Hex.factorFast f ≠ none :=
+  factorFast_ne_none_of_capSeparationBridgeDataCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound_internalPrimeLowerBound
+    f primeData rows_pos trueSupports localFactorIndex localFactorDegree H
+    hcap_le C hC_nonneg hC hcut bridge hcomparison
+    (one_le_factorFastPrecisionCap f) hchoose hk hprojected_nonempty
+    hclasses_two hclass_nonempty hclass_bounds expectedFactors hf_ne_zero
+    htrue hproduct
 
 end BHKS
 
