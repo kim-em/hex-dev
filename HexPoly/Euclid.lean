@@ -4544,6 +4544,7 @@ private theorem list_getD_map_ediv_zero (c : Int) (coeffs : List Int) (n : Nat) 
 
 /-- Scaling the primitive part by the content reconstructs the original
 integer polynomial. -/
+@[simp]
 theorem content_mul_primitivePart (p : DensePoly Int) :
     scale (content p) (primitivePart p) = p := by
   apply ext_coeff
@@ -4576,6 +4577,7 @@ theorem content_mul_primitivePart (p : DensePoly Int) :
         rw [hpart, hmul]
 
 /-- Multiplying an integer polynomial by `-1` preserves its content. -/
+@[simp]
 theorem content_scale_neg_one (p : DensePoly Int) :
     content (scale (-1 : Int) p) = content p := by
   unfold content
@@ -4661,6 +4663,7 @@ private theorem foldl_gcd_natAbs_trim_eq (xs : List Int) (acc : Nat) :
         exact ih (Nat.gcd acc x.natAbs)
 
 /-- Content scales by the absolute value of the scaling integer. -/
+@[simp]
 theorem content_scale_int (c : Int) (p : DensePoly Int) :
     content (scale c p) = Int.ofNat c.natAbs * content p := by
   show Int.ofNat (contentNat (scale c p)) =
@@ -4691,12 +4694,14 @@ theorem scale_neg_one_zero :
   simp
 
 /-- The zero integer polynomial has content zero. -/
+@[simp]
 theorem content_zero :
     content (0 : DensePoly Int) = 0 := by
   rfl
 
 /-- The content of a constant integer polynomial is the absolute value of the
 constant. -/
+@[simp]
 theorem content_C (c : Int) :
     content (C c) = Int.ofNat c.natAbs := by
   unfold content contentNat toArray
@@ -4706,6 +4711,7 @@ theorem content_C (c : Int) :
     simp
 
 /-- If an integer polynomial has zero content, its primitive part is zero. -/
+@[simp]
 theorem primitivePart_eq_zero_of_content_eq_zero (p : DensePoly Int) (h : content p = 0) :
     primitivePart p = 0 := by
   have hc : contentNat p = 0 := by
@@ -4714,6 +4720,7 @@ theorem primitivePart_eq_zero_of_content_eq_zero (p : DensePoly Int) (h : conten
   simp [primitivePart, hc]
 
 /-- A polynomial whose content is `1` equals its primitive part. -/
+@[simp]
 theorem primitivePart_eq_self_of_content_eq_one
     (p : DensePoly Int) (h : content p = 1) :
     primitivePart p = p := by
@@ -4740,7 +4747,7 @@ theorem primitivePart_primitive (p : DensePoly Int) (h : content p ≠ 0) :
     apply h
     simpa [content, c] using congrArg Int.ofNat hc0
   have hscale : scale (content p) q = p := by
-    simpa [q] using content_mul_primitivePart p
+    simp [q]
   have hmul_dvd_coeff : ∀ n, ((c * cp : Nat) : Int) ∣ p.coeff n := by
     intro n
     have hcoeff := congrArg (fun r : DensePoly Int => r.coeff n) hscale
