@@ -215,6 +215,30 @@ theorem Hex.ZPoly.polynomialIrreducible_iff_irreducible (f : Hex.ZPoly) :
   (Hex.ZPoly.Irreducible_iff_polynomialIrreducible f).symm
 
 /--
+The Mathlib-free executable irreducibility checker `Hex.ZPoly.isIrreducible`
+agrees with the `Hex.ZPoly.Irreducible` class.
+
+The biconditional is equivalent to full forward correctness of `factor`
+(Group C in `hex-berlekamp-zassenhaus.md`), which is bridge-side: it cites
+`Polynomial.UniqueFactorizationMonoid`, `hensels_lemma`, and
+`Polynomial.Gauss`, and therefore cannot be stated in a Mathlib-free file.
+This is the sole route to `decide`-ing `Hex.ZPoly.Irreducible` for concrete
+inputs; Mathlib-free consumers must thread `[Hex.ZPoly.Irreducible p]` as an
+instance argument instead.
+
+Pending the C1 obligation (`factor f` is the irreducible factorisation; see
+the existing bridge correctness chain tracked by #4170/#4819), this is a
+single localised `sorry`.
+-/
+theorem Hex.ZPoly.isIrreducible_iff (f : Hex.ZPoly) :
+    Hex.ZPoly.isIrreducible f = true ↔ Hex.ZPoly.Irreducible f := by
+  sorry
+
+instance Hex.ZPoly.instDecidableIrreducible (f : Hex.ZPoly) :
+    Decidable (Hex.ZPoly.Irreducible f) :=
+  decidable_of_iff _ (Hex.ZPoly.isIrreducible_iff f)
+
+/--
 The executable factorization predicate agrees with Mathlib irreducibility over
 `Polynomial ℤ`.
 -/

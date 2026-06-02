@@ -7376,13 +7376,6 @@ def isIrreducible (f : ZPoly) : Bool :=
       | [entry] => decide (entry.2 = 1)
       | _ => false
 
-theorem isIrreducible_iff (f : ZPoly) :
-    isIrreducible f = true ↔ Irreducible f := by
-  sorry
-
-instance instDecidableIrreducible (f : ZPoly) : Decidable (Irreducible f) :=
-  decidable_of_iff _ (isIrreducible_iff f)
-
 /-- A polynomial of dense size `1` is the constant polynomial of its zeroth
 coefficient. The trimming invariant on `DensePoly` forces the single stored
 coefficient to be nonzero, so `coeff 0` already names the unique stored entry. -/
