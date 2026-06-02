@@ -326,6 +326,249 @@ def auxiliaryPolynomial
     (input : Hex.ZPoly) (liftData : Hex.LiftData) (vec : Array Int) : Hex.ZPoly :=
   auxiliaryPolynomialWithCorrections input liftData vec #[]
 
+/--
+Column-sum-squared packaging used by the BHKS Lemma 3.2 l2-norm bound on the
+auxiliary polynomial.  Sums `(bhksCoeffBound input j)^2` over the coefficient
+indices `j < n` of the input, where `n := input.degree?.getD 0`.
+
+The prime `p` is carried for API symmetry with the surrounding BHKS column
+infrastructure; the body does not depend on it.
+-/
+def cldColumnNormBound (input : Hex.ZPoly) (_p : Nat) : Nat :=
+  let n := input.degree?.getD 0
+  (List.range n).foldl (fun acc j => acc + (Hex.bhksCoeffBound input j) ^ 2) 0
+
+private theorem range_foldl_add_int_eq_sum (m : Nat) (g : Nat → Int) :
+    (List.range m).foldl (fun acc i => acc + g i) 0 = ∑ i ∈ Finset.range m, g i := by
+  induction m with
+  | zero => simp
+  | succ m ih =>
+      rw [List.range_succ, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [ih, Finset.sum_range_succ]
+
+private theorem range_foldl_add_nat_pow_eq_sum (m : Nat) (g : Nat → Nat) :
+    (List.range m).foldl (fun acc i => acc + (g i) ^ 2) 0 =
+      ∑ i ∈ Finset.range m, (g i) ^ 2 := by
+  induction m with
+  | zero => simp
+  | succ m ih =>
+      rw [List.range_succ, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [ih, Finset.sum_range_succ]
+
+private theorem auxiliaryPolynomial_coeff_eq
+    (input : Hex.ZPoly) (liftData : Hex.LiftData) (vec : Array Int) (j : Nat) :
+    (BHKS.auxiliaryPolynomial input liftData vec).coeff j =
+      if j < input.degree?.getD 0 then
+        ∑ i ∈ Finset.range liftData.liftedFactors.size,
+          vec.getD i 0 *
+            (Hex.cldCoeffs input liftData.p liftData.k
+              (liftData.liftedFactors.getD i 0)).getD j 0
+      else 0 := by
+  unfold BHKS.auxiliaryPolynomial BHKS.auxiliaryPolynomialWithCorrections
+  rw [Hex.DensePoly.coeff_ofCoeffs_list]
+  have hempty : (#[] : Array Int).getD j 0 = 0 := by
+    simp [Array.getD]
+  by_cases hjn : j < input.degree?.getD 0
+  · rw [if_pos hjn]
+    rw [List.getD_eq_getElem?_getD, List.getElem?_map]
+    rw [show (List.range _)[j]? = some j from List.getElem?_range hjn]
+    simp only [Option.map_some, Option.getD_some]
+    rw [hempty]
+    simp only [zero_mul, sub_zero]
+    exact range_foldl_add_int_eq_sum _ _
+  · rw [if_neg hjn]
+    rw [List.getD_eq_getElem?_getD, List.getElem?_map]
+    have hnone : (List.range (input.degree?.getD 0))[j]? = none := by
+      rw [List.getElem?_eq_none_iff]
+      simpa using Nat.le_of_not_lt hjn
+    rw [hnone]
+    rfl
+
+/--
+Per-coefficient Cauchy–Schwarz bound for the BHKS auxiliary polynomial.
+
+The hypothesis `h` packages the BHKS Lemma 5.1 column bound on every
+executable `cldCoeffs` entry uniformly over the lifted factor index `i` and
+the coefficient index `j`.  Under that hypothesis, the squared j-th
+coefficient of `auxiliaryPolynomial input liftData vec` is bounded by
+`‖v‖₂² · r · (bhksCoeffBound input j)²`, where `r` is the number of lifted
+factors.
+
+The leading `r` factor comes from `Σ_{i<r} c_{i,j}² ≤ r · max_i c_{i,j}²`
+combined with `(Σ_{i<r} v_i c_{i,j})² ≤ (Σ v_i²)(Σ c_{i,j}²)` by
+Cauchy–Schwarz.
+-/
+theorem auxiliaryPolynomial_coeff_sq_le
+    (input : Hex.ZPoly) (liftData : Hex.LiftData) (vec : Array Int)
+    (h : ∀ (i : Nat), i < liftData.liftedFactors.size → ∀ (j : Nat),
+        ((Hex.cldCoeffs input liftData.p liftData.k
+            (liftData.liftedFactors.getD i 0)).getD j 0).natAbs ≤
+          Hex.bhksCoeffBound input j)
+    (j : Nat) :
+    (((BHKS.auxiliaryPolynomial input liftData vec).coeff j : ℝ)) ^ 2 ≤
+      (∑ i : Fin liftData.liftedFactors.size,
+          ((vec.getD i.val 0 : ℝ) ^ 2)) *
+        ((liftData.liftedFactors.size : ℝ) *
+          ((Hex.bhksCoeffBound input j : ℝ) ^ 2)) := by
+  set r := liftData.liftedFactors.size with hr_def
+  set B : ℝ := (Hex.bhksCoeffBound input j : ℝ) with hB_def
+  rw [auxiliaryPolynomial_coeff_eq]
+  have hsum_v_range_eq : (∑ i : Fin r, ((vec.getD i.val 0 : ℝ) ^ 2)) =
+      ∑ i ∈ Finset.range r, (vec.getD i 0 : ℝ) ^ 2 :=
+    Fin.sum_univ_eq_sum_range (fun i => ((vec.getD i 0 : ℝ) ^ 2)) r
+  by_cases hjn : j < input.degree?.getD 0
+  · rw [if_pos hjn]
+    set v : Nat → ℝ := fun i => (vec.getD i 0 : ℝ) with hv_def
+    set c : Nat → ℝ := fun i => ((Hex.cldCoeffs input liftData.p liftData.k
+        (liftData.liftedFactors.getD i 0)).getD j 0 : ℝ) with hc_def
+    have hsum_eq :
+        (((∑ i ∈ Finset.range r, vec.getD i 0 *
+              (Hex.cldCoeffs input liftData.p liftData.k
+                (liftData.liftedFactors.getD i 0)).getD j 0 : ℤ)) : ℝ) =
+          ∑ i ∈ Finset.range r, v i * c i := by
+      push_cast
+      rfl
+    rw [hsum_eq, hsum_v_range_eq]
+    have hCS : (∑ i ∈ Finset.range r, v i * c i) ^ 2 ≤
+        (∑ i ∈ Finset.range r, v i ^ 2) * ∑ i ∈ Finset.range r, c i ^ 2 :=
+      Finset.sum_mul_sq_le_sq_mul_sq _ v c
+    have hc_each : ∀ i ∈ Finset.range r, c i ^ 2 ≤ B ^ 2 := by
+      intro i hi
+      have hi' : i < r := Finset.mem_range.mp hi
+      have habs := h i hi' j
+      have hnat_real :
+          (((Hex.cldCoeffs input liftData.p liftData.k
+              (liftData.liftedFactors.getD i 0)).getD j 0).natAbs : ℝ) ≤ B := by
+        show (((Hex.cldCoeffs input liftData.p liftData.k
+              (liftData.liftedFactors.getD i 0)).getD j 0).natAbs : ℝ) ≤
+          ((Hex.bhksCoeffBound input j : Nat) : ℝ)
+        exact_mod_cast habs
+      have hnatAbs_real_nonneg :
+          (0 : ℝ) ≤ (((Hex.cldCoeffs input liftData.p liftData.k
+              (liftData.liftedFactors.getD i 0)).getD j 0).natAbs : ℝ) := by
+        exact_mod_cast Nat.zero_le _
+      have h_sq_eq : c i ^ 2 =
+          (((Hex.cldCoeffs input liftData.p liftData.k
+              (liftData.liftedFactors.getD i 0)).getD j 0).natAbs : ℝ) ^ 2 := by
+        show (((Hex.cldCoeffs input liftData.p liftData.k
+              (liftData.liftedFactors.getD i 0)).getD j 0 : ℤ) : ℝ) ^ 2 = _
+        have hnat_eq_abs :
+            (((Hex.cldCoeffs input liftData.p liftData.k
+              (liftData.liftedFactors.getD i 0)).getD j 0).natAbs : ℝ) =
+              |(((Hex.cldCoeffs input liftData.p liftData.k
+                (liftData.liftedFactors.getD i 0)).getD j 0 : ℤ) : ℝ)| := by
+          rw [Nat.cast_natAbs, Int.cast_abs]
+        rw [hnat_eq_abs]
+        exact (sq_abs _).symm
+      rw [h_sq_eq]
+      exact pow_le_pow_left₀ hnatAbs_real_nonneg hnat_real 2
+    have hsum_c_le : ∑ i ∈ Finset.range r, c i ^ 2 ≤ (r : ℝ) * B ^ 2 := by
+      calc ∑ i ∈ Finset.range r, c i ^ 2
+          ≤ ∑ i ∈ Finset.range r, B ^ 2 := Finset.sum_le_sum hc_each
+        _ = (r : ℝ) * B ^ 2 := by
+            rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+    have hv_nonneg : 0 ≤ ∑ i ∈ Finset.range r, v i ^ 2 :=
+      Finset.sum_nonneg (fun i _ => sq_nonneg _)
+    calc (∑ i ∈ Finset.range r, v i * c i) ^ 2
+        ≤ (∑ i ∈ Finset.range r, v i ^ 2) * ∑ i ∈ Finset.range r, c i ^ 2 := hCS
+      _ ≤ (∑ i ∈ Finset.range r, v i ^ 2) * ((r : ℝ) * B ^ 2) :=
+          mul_le_mul_of_nonneg_left hsum_c_le hv_nonneg
+  · rw [if_neg hjn, Int.cast_zero, zero_pow (by norm_num : (2 : Nat) ≠ 0)]
+    apply mul_nonneg
+    · exact Finset.sum_nonneg (fun i _ => sq_nonneg _)
+    · apply mul_nonneg
+      · exact_mod_cast Nat.zero_le _
+      · exact sq_nonneg _
+
+/--
+BHKS Lemma 3.2 squared-l2-norm bound for the auxiliary polynomial.
+
+The transported Mathlib polynomial's squared `l2norm` is bounded by
+`‖v‖₂² · r · cldColumnNormBound input`, where `r` is the number of lifted
+factors and `cldColumnNormBound input p = Σ_{j<n} (bhksCoeffBound input j)²`
+is the column-sum-squared packaging defined above.
+
+This consumes the per-coefficient bound `auxiliaryPolynomial_coeff_sq_le` and
+the BHKS Lemma 5.1 column hypothesis `h`; the leading `r` factor is
+inherited from the per-coefficient Cauchy–Schwarz step.
+-/
+theorem auxiliaryPolynomial_l2norm_sq_le
+    (input : Hex.ZPoly) (liftData : Hex.LiftData) (vec : Array Int)
+    (h : ∀ (i : Nat), i < liftData.liftedFactors.size → ∀ (j : Nat),
+        ((Hex.cldCoeffs input liftData.p liftData.k
+            (liftData.liftedFactors.getD i 0)).getD j 0).natAbs ≤
+          Hex.bhksCoeffBound input j) :
+    (HexPolyZMathlib.l2norm
+        (HexPolyZMathlib.toPolynomial
+          (BHKS.auxiliaryPolynomial input liftData vec))) ^ 2 ≤
+      (∑ i : Fin liftData.liftedFactors.size,
+          ((vec.getD i.val 0 : ℝ) ^ 2)) *
+        ((liftData.liftedFactors.size : ℝ) *
+          (BHKS.cldColumnNormBound input liftData.p : ℝ)) := by
+  set p := HexPolyZMathlib.toPolynomial (BHKS.auxiliaryPolynomial input liftData vec)
+  set n := input.degree?.getD 0 with hn_def
+  set r := liftData.liftedFactors.size with hr_def
+  have hcoeff_eq : ∀ j, p.coeff j =
+      (BHKS.auxiliaryPolynomial input liftData vec).coeff j := by
+    intro j
+    show (HexPolyZMathlib.toPolynomial _).coeff j = _
+    exact HexPolyZMathlib.coeff_toPolynomial _ _
+  have hcoeff_zero_above : ∀ j, n ≤ j → p.coeff j = 0 := by
+    intro j hj
+    rw [hcoeff_eq, auxiliaryPolynomial_coeff_eq]
+    rw [if_neg (by omega)]
+  have hsupport : p.support ⊆ Finset.range n := by
+    intro j hj
+    by_contra hjn
+    have hge : n ≤ j := by simpa [Finset.mem_range] using hjn
+    exact (Polynomial.mem_support_iff.mp hj) (hcoeff_zero_above j hge)
+  have hl2norm_sq : (HexPolyZMathlib.l2norm p) ^ 2 =
+      ∑ j ∈ p.support, (p.coeff j : ℝ) ^ 2 := by
+    unfold HexPolyZMathlib.l2norm
+    rw [Real.sq_sqrt (Finset.sum_nonneg (fun j _ => sq_nonneg _))]
+  have hsum_le : ∑ j ∈ p.support, (p.coeff j : ℝ) ^ 2 ≤
+      ∑ j ∈ Finset.range n, (p.coeff j : ℝ) ^ 2 :=
+    Finset.sum_le_sum_of_subset_of_nonneg hsupport
+      (fun j _ _ => sq_nonneg _)
+  have hcoeff_each : ∀ j ∈ Finset.range n,
+      (p.coeff j : ℝ) ^ 2 ≤
+        (∑ i : Fin r, ((vec.getD i.val 0 : ℝ) ^ 2)) *
+          ((r : ℝ) * ((Hex.bhksCoeffBound input j : ℝ) ^ 2)) := by
+    intro j _
+    rw [hcoeff_eq]
+    exact auxiliaryPolynomial_coeff_sq_le input liftData vec h j
+  have hsum_bd : ∑ j ∈ Finset.range n, (p.coeff j : ℝ) ^ 2 ≤
+      ∑ j ∈ Finset.range n,
+        ((∑ i : Fin r, ((vec.getD i.val 0 : ℝ) ^ 2)) *
+          ((r : ℝ) * ((Hex.bhksCoeffBound input j : ℝ) ^ 2))) :=
+    Finset.sum_le_sum hcoeff_each
+  have hsum_factor : ∑ j ∈ Finset.range n,
+        ((∑ i : Fin r, ((vec.getD i.val 0 : ℝ) ^ 2)) *
+          ((r : ℝ) * ((Hex.bhksCoeffBound input j : ℝ) ^ 2))) =
+      (∑ i : Fin r, ((vec.getD i.val 0 : ℝ) ^ 2)) *
+        ((r : ℝ) * ∑ j ∈ Finset.range n,
+          ((Hex.bhksCoeffBound input j : ℝ) ^ 2)) := by
+    rw [← Finset.mul_sum, ← Finset.mul_sum]
+  have hcldcol : (∑ j ∈ Finset.range n, ((Hex.bhksCoeffBound input j : ℝ) ^ 2)) =
+      (BHKS.cldColumnNormBound input liftData.p : ℝ) := by
+    unfold BHKS.cldColumnNormBound
+    rw [range_foldl_add_nat_pow_eq_sum]
+    push_cast
+    rfl
+  calc (HexPolyZMathlib.l2norm p) ^ 2
+      = ∑ j ∈ p.support, (p.coeff j : ℝ) ^ 2 := hl2norm_sq
+    _ ≤ ∑ j ∈ Finset.range n, (p.coeff j : ℝ) ^ 2 := hsum_le
+    _ ≤ ∑ j ∈ Finset.range n,
+        ((∑ i : Fin r, ((vec.getD i.val 0 : ℝ) ^ 2)) *
+          ((r : ℝ) * ((Hex.bhksCoeffBound input j : ℝ) ^ 2))) := hsum_bd
+    _ = (∑ i : Fin r, ((vec.getD i.val 0 : ℝ) ^ 2)) *
+        ((r : ℝ) * ∑ j ∈ Finset.range n,
+          ((Hex.bhksCoeffBound input j : ℝ) ^ 2)) := hsum_factor
+    _ = (∑ i : Fin r, ((vec.getD i.val 0 : ℝ) ^ 2)) *
+        ((r : ℝ) * (BHKS.cldColumnNormBound input liftData.p : ℝ)) := by rw [hcldcol]
+
 end BHKS
 
 namespace ExecutableBadVectorWitness
