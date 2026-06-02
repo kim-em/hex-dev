@@ -916,6 +916,7 @@ class GcdLaws (R : Type u) [Zero R] [DecidableEq R] [One R] [Add R] [Sub R] [Mul
       r.left * p + r.right * q = r.gcd
 
 /-- Euclidean division spec: the field-style quotient and remainder reconstruct the dividend. -/
+@[grind =>]
 theorem divMod_spec [One R] [Add R] [Sub R] [Mul R] [Div R] [DivModLaws R]
     (p q : DensePoly R) :
     let qr := divMod p q
@@ -923,18 +924,21 @@ theorem divMod_spec [One R] [Add R] [Sub R] [Mul R] [Div R] [DivModLaws R]
   exact DivModLaws.divMod_spec p q
 
 /-- The polynomial gcd divides the left argument. -/
+@[grind =>]
 theorem gcd_dvd_left [One R] [Add R] [Sub R] [Mul R] [Div R] [GcdLaws R]
     (p q : DensePoly R) :
     gcd p q ∣ p := by
   exact GcdLaws.gcd_dvd_left p q
 
 /-- The polynomial gcd divides the right argument. -/
+@[grind =>]
 theorem gcd_dvd_right [One R] [Add R] [Sub R] [Mul R] [Div R] [GcdLaws R]
     (p q : DensePoly R) :
     gcd p q ∣ q := by
   exact GcdLaws.gcd_dvd_right p q
 
 /-- Every common divisor of `p` and `q` divides `gcd p q`. -/
+@[grind =>]
 theorem dvd_gcd [One R] [Add R] [Sub R] [Mul R] [Div R] [GcdLaws R]
     (d p q : DensePoly R) :
     d ∣ p → d ∣ q → d ∣ gcd p q := by
@@ -942,6 +946,7 @@ theorem dvd_gcd [One R] [Add R] [Sub R] [Mul R] [Div R] [GcdLaws R]
 
 /-- Bezout identity: the extended-gcd coefficients reconstruct the gcd as
 `left * p + right * q`. -/
+@[grind =>]
 theorem xgcd_bezout [One R] [Add R] [Sub R] [Mul R] [Div R] [GcdLaws R]
     (p q : DensePoly R) :
     let r := xgcd p q
@@ -1097,6 +1102,7 @@ theorem divModMonic_eq_divMod_of_monic_core [One R] [Add R] [Sub R] [Mul R] [Div
 
 /-- Core division invariant: for positive-degree divisors, `divMod` returns a remainder whose
 degree is strictly smaller than the divisor degree. -/
+@[grind =>]
 theorem divMod_remainder_degree_lt_of_pos_degree [One R] [Add R] [Sub R] [Mul R] [Div R]
     [DivModLaws R]
     (p q : DensePoly R) :
@@ -1105,6 +1111,7 @@ theorem divMod_remainder_degree_lt_of_pos_degree [One R] [Add R] [Sub R] [Mul R]
 
 /-- Monic division agrees with field-style division when the divisor is monic. This is the
 implementation invariant relating the specialized `divModMonic` path to `divMod`. -/
+@[grind =>]
 theorem divModMonic_eq_divMod_of_monic [One R] [Add R] [Sub R] [Mul R] [Div R]
     [DivModLaws R]
     (p q : DensePoly R) (hq : Monic q) :
@@ -1120,6 +1127,7 @@ theorem mod_eq_self_of_degree_lt [One R] [Add R] [Sub R] [Mul R] [Div R]
   simpa [DensePoly.mod] using congrArg Prod.snd hdiv
 
 /-- Constant-degree divisors are an idempotent edge case for `%`. -/
+@[grind =>]
 theorem mod_mod_of_not_pos_degree [One R] [Add R] [Sub R] [Mul R] [Div R]
     [DivModLaws R]
     (p q : DensePoly R) :
@@ -1127,6 +1135,7 @@ theorem mod_mod_of_not_pos_degree [One R] [Add R] [Sub R] [Mul R] [Div R]
   exact DivModLaws.mod_mod_of_not_pos_degree p q
 
 /-- The computed remainder has degree below a positive-degree divisor. -/
+@[grind =>]
 theorem mod_degree_lt_of_pos_degree [One R] [Add R] [Sub R] [Mul R] [Div R]
     [DivModLaws R]
     (p q : DensePoly R) :
@@ -1134,6 +1143,7 @@ theorem mod_degree_lt_of_pos_degree [One R] [Add R] [Sub R] [Mul R] [Div R]
   simpa [DensePoly.mod] using divMod_remainder_degree_lt_of_pos_degree p q
 
 /-- Euclidean division identity: `(p / q) * q + (p % q) = p`. -/
+@[grind =>]
 theorem div_mul_add_mod [One R] [Add R] [Sub R] [Mul R] [Div R] [DivModLaws R]
     (p q : DensePoly R) :
     (p / q) * q + (p % q) = p := by
@@ -1146,6 +1156,7 @@ theorem div_mul_add_mod [One R] [Add R] [Sub R] [Mul R] [Div R] [DivModLaws R]
   exact DivModLaws.mod_eq_zero_of_dvd p q
 
 /-- Monic division and the generic `%` notation agree when the divisor is monic. -/
+@[grind =>]
 theorem modByMonic_eq_mod [One R] [Add R] [Sub R] [Mul R] [Div R]
     [DivModLaws R]
     (p q : DensePoly R) (hq : Monic q) :

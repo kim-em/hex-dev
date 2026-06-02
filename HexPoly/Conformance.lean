@@ -338,6 +338,27 @@ example (p : DensePoly Int) (hp : content p = 1) :
     primitivePart p = p := by
   simp [hp]
 
+example {R : Type _} [Zero R] [DecidableEq R] [One R] [Add R] [Sub R] [Mul R]
+    [Div R] [DivModLaws R] (p q : DensePoly R) :
+    (p / q) * q + (p % q) = p := by
+  grind
+
+example {R : Type _} [Zero R] [DecidableEq R] [One R] [Add R] [Sub R] [Mul R]
+    [Div R] [GcdLaws R] (p q : DensePoly R) :
+    gcd p q ∣ p ∧ gcd p q ∣ q := by
+  grind
+
+example {R : Type _} [Zero R] [DecidableEq R] [One R] [Add R] [Sub R] [Mul R]
+    [Div R] [GcdLaws R] (p q : DensePoly R) :
+    let r := xgcd p q
+    r.left * p + r.right * q = r.gcd := by
+  grind
+
+example {R : Type _} [Zero R] [DecidableEq R] [One R] [Add R] [Sub R] [Mul R]
+    [Div R] [DivModLaws R] (p q : DensePoly R) :
+    (p % q) % q = p % q := by
+  simp
+
 end ProofMode
 
 #guard crtBezoutS * crtModA + crtBezoutT * crtModB = 1
