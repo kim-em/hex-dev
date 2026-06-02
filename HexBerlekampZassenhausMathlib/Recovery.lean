@@ -1714,6 +1714,63 @@ def FactorFastCapLiftAnalyticComparison.ofCapSeparationHypotheses
   hadamard_l2norm_lt_divisor := hcap.l2norm_upper_lt_divisor
 
 /--
+Supply the actual-cap analytic comparison directly from the bridge-data
+cap-separation inputs.
+
+This is the small producer surface for callers that have the projected
+bad-vector bridge, cut hypotheses, prime positivity, and the BHKS
+Hadamard/l2norm strict inequality, but do not want to build a full
+`ExecutableCapSeparationHypotheses` package just to extract its analytic
+field.  Internally it composes through `capSeparationOfBridgeData`, so the
+bridge-to-bad-vector setup remains shared with the projected-row-span
+cap-separation theorem.
+-/
+theorem FactorFastCapLiftAnalyticComparison.ofBridgeData
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (hcut :
+      CutProjectionHypotheses
+        (projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          rows_pos)
+        trueSupports)
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    (hp : 0 < (factorFastCapLiftData f primeData).p)
+    (hlt :
+      (HexPolyZMathlib.l2norm
+            (badVectorWitnessOfFactorFastCapLiftData
+              f primeData rows_pos localFactorIndex localFactorDegree H).inputPolynomial) ^
+          (badVectorWitnessOfFactorFastCapLiftData
+              f primeData rows_pos localFactorIndex localFactorDegree H).auxiliaryPolynomial.natDegree *
+        (HexPolyZMathlib.l2norm
+            (badVectorWitnessOfFactorFastCapLiftData
+              f primeData rows_pos localFactorIndex localFactorDegree H).auxiliaryPolynomial) ^
+          (badVectorWitnessOfFactorFastCapLiftData
+              f primeData rows_pos localFactorIndex localFactorDegree H).inputPolynomial.natDegree <
+      ((factorFastCapLiftData f primeData).p ^
+        ((factorFastCapLiftData f primeData).k * localFactorDegree) : ℝ)) :
+    FactorFastCapLiftAnalyticComparison
+      f primeData rows_pos localFactorIndex localFactorDegree H :=
+  FactorFastCapLiftAnalyticComparison.ofCapSeparationHypotheses
+    f primeData rows_pos localFactorIndex localFactorDegree H trueSupports
+    (capSeparationOfBridgeData rows_pos localFactorIndex localFactorDegree H
+      trueSupports hcut bridge hp hlt)
+
+/--
 Cap-separation hypotheses for the actual `factorFast` cap lift, assembled from
 the landed bridge package and the named cap-lift analytic comparison package.
 -/
