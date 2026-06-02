@@ -955,6 +955,7 @@ def powMod (a n p : Nat) : Nat :=
       powModNat a n p
 
 /-- `powMod` agrees with ordinary modular exponentiation. -/
+@[grind =]
 theorem powMod_eq (a n p : Nat) (hp : p > 0) :
     powMod a n p = a ^ n % p := by
   unfold powMod
@@ -1023,6 +1024,7 @@ theorem powMod_modulus_one (a n : Nat) :
 
 /-- Successor-exponent expansion for `powMod`: multiply by the base on the left
 and reduce. -/
+@[grind =>]
 theorem powMod_succ (a n p : Nat) (hp : p > 0) :
     powMod a (n + 1) p = (a * powMod a n p) % p := by
   rw [powMod_eq a (n + 1) p hp, powMod_eq a n p hp, Nat.pow_succ]
@@ -1036,6 +1038,7 @@ theorem powMod_mod_base (a n p : Nat) (hp : p > 0) :
   simp [Nat.pow_mod]
 
 /-- Modular exponentiation is compatible with multiplying bases. -/
+@[grind =>]
 theorem powMod_mul_base (a b n p : Nat) (hp : p > 0) :
     powMod (a * b) n p = (powMod a n p * powMod b n p) % p := by
   rw [powMod_eq (a * b) n p hp, powMod_eq a n p hp, powMod_eq b n p hp,
@@ -1043,18 +1046,21 @@ theorem powMod_mul_base (a b n p : Nat) (hp : p > 0) :
 
 /-- Exponent-addition expansion for `powMod`: combine two exponentiation phases
 by multiplying their reduced results. -/
+@[grind =>]
 theorem powMod_add_exp (a m n p : Nat) (hp : p > 0) :
     powMod a (m + n) p = (powMod a m p * powMod a n p) % p := by
   rw [powMod_eq a (m + n) p hp, powMod_eq a m p hp, powMod_eq a n p hp,
     Nat.pow_add, Nat.mul_mod]
 
 /-- Left-oriented companion of `powMod_add_exp`. -/
+@[grind =>]
 theorem powMod_add_exp_left (a m n p : Nat) (hp : p > 0) :
     powMod a (m + n) p = (powMod a n p * powMod a m p) % p := by
   rw [powMod_add_exp a m n p hp, Nat.mul_comm]
 
 /-- Exponent-multiplication composition for `powMod`: an exponent product is a
 two-stage modular exponentiation. -/
+@[grind =>]
 theorem powMod_mul_exp (a m n p : Nat) (hp : p > 0) :
     powMod a (m * n) p = powMod (powMod a m p) n p := by
   rw [powMod_eq a (m * n) p hp, powMod_eq (powMod a m p) n p hp,
@@ -1062,6 +1068,7 @@ theorem powMod_mul_exp (a m n p : Nat) (hp : p > 0) :
   exact Nat.pow_mod (a ^ m) n p
 
 /-- Swap-oriented companion of `powMod_mul_exp`. -/
+@[grind =>]
 theorem powMod_mul_exp_swap (a m n p : Nat) (hp : p > 0) :
     powMod a (m * n) p = powMod (powMod a n p) m p := by
   rw [Nat.mul_comm m n, powMod_mul_exp a n m p hp]
