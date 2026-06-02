@@ -369,6 +369,29 @@ private def coeffs? (p n : Nat) [ZMod64.Bounds p] : Option (List Nat) :=
   some (conwayPoly 11 6 supportedEntry_11_6)
 #guard 0 < FpPoly.degree (conwayPoly 11 6 supportedEntry_11_6)
 
+example {q : FpPoly 2} :
+    luebeckConwayPolynomial? 2 1 = some q → DensePoly.Monic q := by
+  intro h
+  simpa using luebeckConwayPolynomial?_monic h
+
+example {q : FpPoly 3} :
+    luebeckConwayPolynomial? 3 2 = some q → 0 < FpPoly.degree q := by
+  intro h
+  simpa using luebeckConwayPolynomial?_degree_pos h
+
+example {q : FpPoly 5} :
+    luebeckConwayPolynomial? 5 3 = some q →
+      DensePoly.Monic q ∧ 0 < FpPoly.degree q := by
+  intro h
+  constructor
+  · simpa using luebeckConwayPolynomial?_monic h
+  · simpa using luebeckConwayPolynomial?_degree_pos h
+
+example :
+    DensePoly.Monic luebeckConwayPolynomial_3_2 ∧
+      0 < FpPoly.degree luebeckConwayPolynomial_2_1 := by
+  simp
+
 end ConwayConformance
 end Conway
 end Hex

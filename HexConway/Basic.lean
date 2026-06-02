@@ -119,12 +119,12 @@ def luebeckConwayPolynomial? (p n : Nat) [ZMod64.Bounds p] : Option (FpPoly p) :
 
 /-- The committed `C(2, 1)` entry is monic, so it can be fed to the
 executable Rabin checker. -/
-theorem luebeckConwayPolynomial_2_1_monic :
+@[simp] theorem luebeckConwayPolynomial_2_1_monic :
     DensePoly.Monic luebeckConwayPolynomial_2_1 := by
   rfl
 
 /-- The committed `C(2, 1)` entry has positive degree. -/
-theorem luebeckConwayPolynomial_2_1_degree_pos :
+@[simp] theorem luebeckConwayPolynomial_2_1_degree_pos :
     0 < FpPoly.degree luebeckConwayPolynomial_2_1 := by
   decide
 
@@ -276,12 +276,12 @@ def luebeckConwayPolynomial_2_2 : FpPoly 2 :=
       decide }
 
 /-- The committed `C(2, 2)` entry is monic. -/
-theorem luebeckConwayPolynomial_2_2_monic :
+@[simp] theorem luebeckConwayPolynomial_2_2_monic :
     DensePoly.Monic luebeckConwayPolynomial_2_2 := by
   rfl
 
 /-- The committed `C(2, 2)` entry has positive degree. -/
-theorem luebeckConwayPolynomial_2_2_degree_pos :
+@[simp] theorem luebeckConwayPolynomial_2_2_degree_pos :
     0 < FpPoly.degree luebeckConwayPolynomial_2_2 := by
   decide
 
@@ -310,12 +310,12 @@ def luebeckConwayPolynomial_2_3 : FpPoly 2 :=
       decide }
 
 /-- The committed `C(2, 3)` entry is monic. -/
-theorem luebeckConwayPolynomial_2_3_monic :
+@[simp] theorem luebeckConwayPolynomial_2_3_monic :
     DensePoly.Monic luebeckConwayPolynomial_2_3 := by
   rfl
 
 /-- The committed `C(2, 3)` entry has positive degree. -/
-theorem luebeckConwayPolynomial_2_3_degree_pos :
+@[simp] theorem luebeckConwayPolynomial_2_3_degree_pos :
     0 < FpPoly.degree luebeckConwayPolynomial_2_3 := by
   decide
 
@@ -345,12 +345,12 @@ def luebeckConwayPolynomial_2_4 : FpPoly 2 :=
       decide }
 
 /-- The committed `C(2, 4)` entry is monic. -/
-theorem luebeckConwayPolynomial_2_4_monic :
+@[simp] theorem luebeckConwayPolynomial_2_4_monic :
     DensePoly.Monic luebeckConwayPolynomial_2_4 := by
   rfl
 
 /-- The committed `C(2, 4)` entry has positive degree. -/
-theorem luebeckConwayPolynomial_2_4_degree_pos :
+@[simp] theorem luebeckConwayPolynomial_2_4_degree_pos :
     0 < FpPoly.degree luebeckConwayPolynomial_2_4 := by
   decide
 
@@ -381,12 +381,12 @@ def luebeckConwayPolynomial_2_5 : FpPoly 2 :=
       decide }
 
 /-- The committed `C(2, 5)` entry is monic. -/
-theorem luebeckConwayPolynomial_2_5_monic :
+@[simp] theorem luebeckConwayPolynomial_2_5_monic :
     DensePoly.Monic luebeckConwayPolynomial_2_5 := by
   rfl
 
 /-- The committed `C(2, 5)` entry has positive degree. -/
-theorem luebeckConwayPolynomial_2_5_degree_pos :
+@[simp] theorem luebeckConwayPolynomial_2_5_degree_pos :
     0 < FpPoly.degree luebeckConwayPolynomial_2_5 := by
   decide
 
@@ -418,12 +418,12 @@ def luebeckConwayPolynomial_2_6 : FpPoly 2 :=
       decide }
 
 /-- The committed `C(2, 6)` entry is monic. -/
-theorem luebeckConwayPolynomial_2_6_monic :
+@[simp] theorem luebeckConwayPolynomial_2_6_monic :
     DensePoly.Monic luebeckConwayPolynomial_2_6 := by
   rfl
 
 /-- The committed `C(2, 6)` entry has positive degree. -/
-theorem luebeckConwayPolynomial_2_6_degree_pos :
+@[simp] theorem luebeckConwayPolynomial_2_6_degree_pos :
     0 < FpPoly.degree luebeckConwayPolynomial_2_6 := by
   decide
 
@@ -456,7 +456,7 @@ def luebeckConwayPolynomial_3_1 : FpPoly 3 :=
       decide }
 
 /-- The committed `C(3, 1)` entry is monic. -/
-theorem luebeckConwayPolynomial_3_1_monic :
+@[simp] theorem luebeckConwayPolynomial_3_1_monic :
     DensePoly.Monic luebeckConwayPolynomial_3_1 := by
   rfl
 
@@ -484,7 +484,7 @@ def luebeckConwayPolynomial_3_2 : FpPoly 3 :=
       decide }
 
 /-- The committed `C(3, 2)` entry is monic. -/
-theorem luebeckConwayPolynomial_3_2_monic :
+@[simp] theorem luebeckConwayPolynomial_3_2_monic :
     DensePoly.Monic luebeckConwayPolynomial_3_2 := by
   rfl
 
@@ -513,7 +513,7 @@ def luebeckConwayPolynomial_3_3 : FpPoly 3 :=
       decide }
 
 /-- The committed `C(3, 3)` entry is monic. -/
-theorem luebeckConwayPolynomial_3_3_monic :
+@[simp] theorem luebeckConwayPolynomial_3_3_monic :
     DensePoly.Monic luebeckConwayPolynomial_3_3 := by
   rfl
 
@@ -543,7 +543,7 @@ def luebeckConwayPolynomial_3_4 : FpPoly 3 :=
       decide }
 
 /-- The committed `C(3, 4)` entry is monic. -/
-theorem luebeckConwayPolynomial_3_4_monic :
+@[simp] theorem luebeckConwayPolynomial_3_4_monic :
     DensePoly.Monic luebeckConwayPolynomial_3_4 := by
   rfl
 
@@ -574,7 +574,7 @@ def luebeckConwayPolynomial_3_5 : FpPoly 3 :=
       decide }
 
 /-- The committed `C(3, 5)` entry is monic. -/
-theorem luebeckConwayPolynomial_3_5_monic :
+@[simp] theorem luebeckConwayPolynomial_3_5_monic :
     DensePoly.Monic luebeckConwayPolynomial_3_5 := by
   rfl
 
@@ -606,7 +606,7 @@ def luebeckConwayPolynomial_3_6 : FpPoly 3 :=
       decide }
 
 /-- The committed `C(3, 6)` entry is monic. -/
-theorem luebeckConwayPolynomial_3_6_monic :
+@[simp] theorem luebeckConwayPolynomial_3_6_monic :
     DensePoly.Monic luebeckConwayPolynomial_3_6 := by
   rfl
 
@@ -639,7 +639,7 @@ def luebeckConwayPolynomial_5_1 : FpPoly 5 :=
       decide }
 
 /-- The committed `C(5, 1)` entry is monic. -/
-theorem luebeckConwayPolynomial_5_1_monic :
+@[simp] theorem luebeckConwayPolynomial_5_1_monic :
     DensePoly.Monic luebeckConwayPolynomial_5_1 := by
   rfl
 
@@ -667,7 +667,7 @@ def luebeckConwayPolynomial_5_2 : FpPoly 5 :=
       decide }
 
 /-- The committed `C(5, 2)` entry is monic. -/
-theorem luebeckConwayPolynomial_5_2_monic :
+@[simp] theorem luebeckConwayPolynomial_5_2_monic :
     DensePoly.Monic luebeckConwayPolynomial_5_2 := by
   rfl
 
@@ -696,7 +696,7 @@ def luebeckConwayPolynomial_5_3 : FpPoly 5 :=
       decide }
 
 /-- The committed `C(5, 3)` entry is monic. -/
-theorem luebeckConwayPolynomial_5_3_monic :
+@[simp] theorem luebeckConwayPolynomial_5_3_monic :
     DensePoly.Monic luebeckConwayPolynomial_5_3 := by
   rfl
 
@@ -726,7 +726,7 @@ def luebeckConwayPolynomial_5_4 : FpPoly 5 :=
       decide }
 
 /-- The committed `C(5, 4)` entry is monic. -/
-theorem luebeckConwayPolynomial_5_4_monic :
+@[simp] theorem luebeckConwayPolynomial_5_4_monic :
     DensePoly.Monic luebeckConwayPolynomial_5_4 := by
   rfl
 
@@ -757,7 +757,7 @@ def luebeckConwayPolynomial_5_5 : FpPoly 5 :=
       decide }
 
 /-- The committed `C(5, 5)` entry is monic. -/
-theorem luebeckConwayPolynomial_5_5_monic :
+@[simp] theorem luebeckConwayPolynomial_5_5_monic :
     DensePoly.Monic luebeckConwayPolynomial_5_5 := by
   rfl
 
@@ -789,7 +789,7 @@ def luebeckConwayPolynomial_5_6 : FpPoly 5 :=
       decide }
 
 /-- The committed `C(5, 6)` entry is monic. -/
-theorem luebeckConwayPolynomial_5_6_monic :
+@[simp] theorem luebeckConwayPolynomial_5_6_monic :
     DensePoly.Monic luebeckConwayPolynomial_5_6 := by
   rfl
 
@@ -822,7 +822,7 @@ def luebeckConwayPolynomial_7_1 : FpPoly 7 :=
       decide }
 
 /-- The committed `C(7, 1)` entry is monic. -/
-theorem luebeckConwayPolynomial_7_1_monic :
+@[simp] theorem luebeckConwayPolynomial_7_1_monic :
     DensePoly.Monic luebeckConwayPolynomial_7_1 := by
   rfl
 
@@ -850,7 +850,7 @@ def luebeckConwayPolynomial_7_2 : FpPoly 7 :=
       decide }
 
 /-- The committed `C(7, 2)` entry is monic. -/
-theorem luebeckConwayPolynomial_7_2_monic :
+@[simp] theorem luebeckConwayPolynomial_7_2_monic :
     DensePoly.Monic luebeckConwayPolynomial_7_2 := by
   rfl
 
@@ -879,7 +879,7 @@ def luebeckConwayPolynomial_7_3 : FpPoly 7 :=
       decide }
 
 /-- The committed `C(7, 3)` entry is monic. -/
-theorem luebeckConwayPolynomial_7_3_monic :
+@[simp] theorem luebeckConwayPolynomial_7_3_monic :
     DensePoly.Monic luebeckConwayPolynomial_7_3 := by
   rfl
 
@@ -909,7 +909,7 @@ def luebeckConwayPolynomial_7_4 : FpPoly 7 :=
       decide }
 
 /-- The committed `C(7, 4)` entry is monic. -/
-theorem luebeckConwayPolynomial_7_4_monic :
+@[simp] theorem luebeckConwayPolynomial_7_4_monic :
     DensePoly.Monic luebeckConwayPolynomial_7_4 := by
   rfl
 
@@ -940,7 +940,7 @@ def luebeckConwayPolynomial_7_5 : FpPoly 7 :=
       decide }
 
 /-- The committed `C(7, 5)` entry is monic. -/
-theorem luebeckConwayPolynomial_7_5_monic :
+@[simp] theorem luebeckConwayPolynomial_7_5_monic :
     DensePoly.Monic luebeckConwayPolynomial_7_5 := by
   rfl
 
@@ -972,7 +972,7 @@ def luebeckConwayPolynomial_7_6 : FpPoly 7 :=
       decide }
 
 /-- The committed `C(7, 6)` entry is monic. -/
-theorem luebeckConwayPolynomial_7_6_monic :
+@[simp] theorem luebeckConwayPolynomial_7_6_monic :
     DensePoly.Monic luebeckConwayPolynomial_7_6 := by
   rfl
 
@@ -1005,7 +1005,7 @@ def luebeckConwayPolynomial_11_1 : FpPoly 11 :=
       decide }
 
 /-- The committed `C(11, 1)` entry is monic. -/
-theorem luebeckConwayPolynomial_11_1_monic :
+@[simp] theorem luebeckConwayPolynomial_11_1_monic :
     DensePoly.Monic luebeckConwayPolynomial_11_1 := by
   rfl
 
@@ -1033,7 +1033,7 @@ def luebeckConwayPolynomial_11_2 : FpPoly 11 :=
       decide }
 
 /-- The committed `C(11, 2)` entry is monic. -/
-theorem luebeckConwayPolynomial_11_2_monic :
+@[simp] theorem luebeckConwayPolynomial_11_2_monic :
     DensePoly.Monic luebeckConwayPolynomial_11_2 := by
   rfl
 
@@ -1062,7 +1062,7 @@ def luebeckConwayPolynomial_11_3 : FpPoly 11 :=
       decide }
 
 /-- The committed `C(11, 3)` entry is monic. -/
-theorem luebeckConwayPolynomial_11_3_monic :
+@[simp] theorem luebeckConwayPolynomial_11_3_monic :
     DensePoly.Monic luebeckConwayPolynomial_11_3 := by
   rfl
 
@@ -1092,7 +1092,7 @@ def luebeckConwayPolynomial_11_4 : FpPoly 11 :=
       decide }
 
 /-- The committed `C(11, 4)` entry is monic. -/
-theorem luebeckConwayPolynomial_11_4_monic :
+@[simp] theorem luebeckConwayPolynomial_11_4_monic :
     DensePoly.Monic luebeckConwayPolynomial_11_4 := by
   rfl
 
@@ -1123,7 +1123,7 @@ def luebeckConwayPolynomial_11_5 : FpPoly 11 :=
       decide }
 
 /-- The committed `C(11, 5)` entry is monic. -/
-theorem luebeckConwayPolynomial_11_5_monic :
+@[simp] theorem luebeckConwayPolynomial_11_5_monic :
     DensePoly.Monic luebeckConwayPolynomial_11_5 := by
   rfl
 
@@ -1155,7 +1155,7 @@ def luebeckConwayPolynomial_11_6 : FpPoly 11 :=
       decide }
 
 /-- The committed `C(11, 6)` entry is monic. -/
-theorem luebeckConwayPolynomial_11_6_monic :
+@[simp] theorem luebeckConwayPolynomial_11_6_monic :
     DensePoly.Monic luebeckConwayPolynomial_11_6 := by
   rfl
 
@@ -1188,7 +1188,7 @@ def luebeckConwayPolynomial_13_1 : FpPoly 13 :=
       decide }
 
 /-- The committed `C(13, 1)` entry is monic. -/
-theorem luebeckConwayPolynomial_13_1_monic :
+@[simp] theorem luebeckConwayPolynomial_13_1_monic :
     DensePoly.Monic luebeckConwayPolynomial_13_1 := by
   rfl
 
@@ -1216,7 +1216,7 @@ def luebeckConwayPolynomial_13_2 : FpPoly 13 :=
       decide }
 
 /-- The committed `C(13, 2)` entry is monic. -/
-theorem luebeckConwayPolynomial_13_2_monic :
+@[simp] theorem luebeckConwayPolynomial_13_2_monic :
     DensePoly.Monic luebeckConwayPolynomial_13_2 := by
   rfl
 
@@ -1245,7 +1245,7 @@ def luebeckConwayPolynomial_13_3 : FpPoly 13 :=
       decide }
 
 /-- The committed `C(13, 3)` entry is monic. -/
-theorem luebeckConwayPolynomial_13_3_monic :
+@[simp] theorem luebeckConwayPolynomial_13_3_monic :
     DensePoly.Monic luebeckConwayPolynomial_13_3 := by
   rfl
 
@@ -1275,7 +1275,7 @@ def luebeckConwayPolynomial_13_4 : FpPoly 13 :=
       decide }
 
 /-- The committed `C(13, 4)` entry is monic. -/
-theorem luebeckConwayPolynomial_13_4_monic :
+@[simp] theorem luebeckConwayPolynomial_13_4_monic :
     DensePoly.Monic luebeckConwayPolynomial_13_4 := by
   rfl
 
@@ -1306,7 +1306,7 @@ def luebeckConwayPolynomial_13_5 : FpPoly 13 :=
       decide }
 
 /-- The committed `C(13, 5)` entry is monic. -/
-theorem luebeckConwayPolynomial_13_5_monic :
+@[simp] theorem luebeckConwayPolynomial_13_5_monic :
     DensePoly.Monic luebeckConwayPolynomial_13_5 := by
   rfl
 
@@ -1338,7 +1338,7 @@ def luebeckConwayPolynomial_13_6 : FpPoly 13 :=
       decide }
 
 /-- The committed `C(13, 6)` entry is monic. -/
-theorem luebeckConwayPolynomial_13_6_monic :
+@[simp] theorem luebeckConwayPolynomial_13_6_monic :
     DensePoly.Monic luebeckConwayPolynomial_13_6 := by
   rfl
 
@@ -3047,7 +3047,7 @@ theorem luebeckConwayPolynomial?_irreducible
   · cases hcoeffs
 
 /-- Every committed Tier 1 Conway entry in the current table is monic. -/
-theorem luebeckConwayPolynomial?_monic
+@[simp] theorem luebeckConwayPolynomial?_monic
     {p n : Nat} [ZMod64.Bounds p] {f : FpPoly p}
     (h : luebeckConwayPolynomial? p n = some f) :
     DensePoly.Monic f := by
@@ -3380,7 +3380,7 @@ private theorem ofCoeffs_degree_pos_of_back_ne_zero
   omega
 
 /-- Every committed Tier 1 Conway entry in the current table is nonconstant. -/
-theorem luebeckConwayPolynomial?_degree_pos
+@[simp] theorem luebeckConwayPolynomial?_degree_pos
     {p n : Nat} [ZMod64.Bounds p] {f : FpPoly p}
     (h : luebeckConwayPolynomial? p n = some f) :
     0 < FpPoly.degree f := by
@@ -3400,7 +3400,7 @@ theorem luebeckConwayPolynomial?_degree_pos
           exact absurd hzero (zmod64_one_ne_zero_of_one_lt (by decide))))
 
 /-- Supported Conway entries produce nonconstant moduli. -/
-theorem conwayPoly_nonconstant
+@[simp] theorem conwayPoly_nonconstant
     (p n : Nat) [ZMod64.Bounds p] (h : SupportedEntry p n) :
     0 < FpPoly.degree (conwayPoly p n h) := by
   exact luebeckConwayPolynomial?_degree_pos
@@ -3414,7 +3414,7 @@ theorem conwayPoly_irreducible
     (f := conwayPoly p n h) (luebeckConwayPolynomial?_conwayPoly h)
 
 /-- Supported Conway entries carry the imported monicity witness. -/
-theorem conwayPoly_monic
+@[simp] theorem conwayPoly_monic
     (p n : Nat) [ZMod64.Bounds p] (h : SupportedEntry p n) :
     DensePoly.Monic (conwayPoly p n h) := by
   exact luebeckConwayPolynomial?_monic
