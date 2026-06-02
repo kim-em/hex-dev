@@ -2005,6 +2005,30 @@ def badVectorWitnessOfFactorFastCapLiftData
     rows_pos localFactorIndex localFactorDegree H
 
 /--
+The input-polynomial l2-norm squared for the actual `factorFast` cap-lift
+witness is bounded by the executable squared coefficient norm of the normalized
+square-free core, with the `+ 1` slack used by the BHKS cap.
+-/
+theorem factorFastCapLift_input_l2norm_sq_le_coeffNormSq_add_one
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly) :
+    (HexPolyZMathlib.l2norm
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H).inputPolynomial) ^ 2 ≤
+      ((Hex.normalizeForFactor f).squareFreeCore.coeffNormSq + 1 : ℝ) := by
+  change
+    (HexPolyZMathlib.l2norm
+        (HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).squareFreeCore)) ^ 2 ≤
+      ((Hex.normalizeForFactor f).squareFreeCore.coeffNormSq + 1 : ℝ)
+  exact
+    l2norm_toPolynomial_sq_le_coeffNormSq_add_one
+      (Hex.normalizeForFactor f).squareFreeCore
+
+/--
 Actual-cap corrected auxiliary-polynomial identity supplied by
 `BadVectorBridgeData`.
 
@@ -2262,6 +2286,51 @@ theorem FactorFastCapLiftAnalyticComparison.ofBridgeData
     f primeData rows_pos localFactorIndex localFactorDegree H trueSupports
     (capSeparationOfBridgeData rows_pos localFactorIndex localFactorDegree H
       trueSupports hcut bridge hp hlt)
+
+/--
+Actual-cap analytic comparison from separate l2-norm bounds and the remaining
+strict cap-arithmetic inequality.
+
+This instantiates
+`ExecutableBadVectorWitness.l2norm_product_lt_divisor_of_l2norm_bounds` at the
+`factorFastCapLiftData` witness, so downstream actual-cap constructors can
+feed concrete input/auxiliary norm bounds and a cap-arithmetic estimate without
+restating the Hadamard monotonicity step.
+-/
+theorem FactorFastCapLiftAnalyticComparison.ofL2normBounds
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    {inputBound auxiliaryBound : ℝ}
+    (hinput :
+      HexPolyZMathlib.l2norm
+          (badVectorWitnessOfFactorFastCapLiftData
+            f primeData rows_pos localFactorIndex localFactorDegree H).inputPolynomial ≤
+        inputBound)
+    (hauxiliary :
+      HexPolyZMathlib.l2norm
+          (badVectorWitnessOfFactorFastCapLiftData
+            f primeData rows_pos localFactorIndex localFactorDegree H).auxiliaryPolynomial ≤
+        auxiliaryBound)
+    (hstrict :
+      inputBound ^
+          (badVectorWitnessOfFactorFastCapLiftData
+            f primeData rows_pos localFactorIndex localFactorDegree H).auxiliaryPolynomial.natDegree *
+        auxiliaryBound ^
+          (badVectorWitnessOfFactorFastCapLiftData
+            f primeData rows_pos localFactorIndex localFactorDegree H).inputPolynomial.natDegree <
+      ((factorFastCapLiftData f primeData).p ^
+        ((factorFastCapLiftData f primeData).k * localFactorDegree) : ℝ)) :
+    FactorFastCapLiftAnalyticComparison
+      f primeData rows_pos localFactorIndex localFactorDegree H where
+  hadamard_l2norm_lt_divisor :=
+    ExecutableBadVectorWitness.l2norm_product_lt_divisor_of_l2norm_bounds
+      (badVectorWitnessOfFactorFastCapLiftData
+        f primeData rows_pos localFactorIndex localFactorDegree H)
+      hinput hauxiliary hstrict
 
 /--
 Actual-cap bad-vector contradiction from the named cap-lift analytic
