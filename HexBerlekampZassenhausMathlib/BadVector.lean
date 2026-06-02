@@ -940,6 +940,18 @@ def BadVectorBridgeData.toProjectedBadVectorSetupBridge
   resultant_divisible_by_p_pow := D.resultant_divisible_by_p_pow
 
 /--
+BHKS Lemma 3.2 (modular divisibility clause), exposed from the project-level
+bridge package.
+-/
+theorem resultant_divisible_by_p_pow_of_bridge_data
+    {W : ExecutableBadVectorWitness}
+    {trueSupports : Set (Set (Fin W.projectedRows.factorCount))}
+    (D : BadVectorBridgeData W trueSupports) :
+    ((W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : Nat) : ℤ) ∣
+      Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial := by
+  exact D.resultant_divisible_by_p_pow
+
+/--
 Convert the packaged `ProjectedBadVectorSetupBridge` into the callback shape
 expected by `BHKS.ExecutableCapSeparationHypotheses`.
 -/
