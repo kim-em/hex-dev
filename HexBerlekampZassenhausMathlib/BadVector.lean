@@ -796,6 +796,109 @@ Only `auxiliary_eq` and `auxiliaryCorrections` depend on the projected vector;
 the other three fields are properties of the fixed witness data (`W.H`,
 `W.input`, `W.liftData`) and are not quantified over `v`.
 -/
+structure BadVectorBridgeData
+    (W : ExecutableBadVectorWitness)
+    (trueSupports : Set (Set (Fin W.projectedRows.factorCount))) where
+  /-- Integer true factors indexed compatibly with the lifted local factors. -/
+  trueFactor : Nat → Hex.ZPoly
+  /--
+  Coefficientwise Hensel-lift congruence between each true factor and the
+  corresponding lifted local factor modulo `p^k`.
+  -/
+  trueFactor_liftedFactor_coeff_dvd :
+    ∀ i, i < W.liftData.liftedFactors.size → ∀ j,
+      ((W.liftData.p ^ W.liftData.k : Nat) : ℤ) ∣
+        (Hex.DensePoly.coeff (trueFactor i) j -
+          Hex.DensePoly.coeff (W.liftData.liftedFactors.getD i 0) j)
+  /--
+  The selected local factor has a true-factor representative satisfying the
+  same lift congruence.  This duplicates the selected-index instance in a
+  directly reusable form for later local-factor proofs.
+  -/
+  selected_trueFactor_liftedFactor_coeff_dvd :
+    ∀ j,
+      ((W.liftData.p ^ W.liftData.k : Nat) : ℤ) ∣
+        (Hex.DensePoly.coeff (trueFactor W.localFactorIndex) j -
+          Hex.DensePoly.coeff W.selectedLiftedFactor j)
+  /--
+  Per-coefficient precision separation used by the corrected auxiliary
+  polynomial construction.
+  -/
+  precision_separation :
+    ∀ j, j < W.input.degree?.getD 0 →
+      2 * Hex.bhksCoeffBound W.input j < W.liftData.p ^ W.liftData.k
+  /--
+  Diagonal-row correction coordinates for each projected vector in `L' \ W`.
+  -/
+  projectedCorrections :
+    ∀ v : Fin W.projectedRows.factorCount → ℤ,
+      v ∈ BHKS.projectedRowSpanInt W.projectedRows →
+        v ∉ BHKS.trueFactorIndicatorLattice trueSupports →
+          Array Int
+  /--
+  The witness auxiliary polynomial is the corrected BHKS auxiliary polynomial
+  for every projected vector in `L' \ W`.
+
+  `badVectorWitnessOfLiftData` keeps `H` as a parameter in `Recovery.lean`, so
+  callers instantiate this field with the structural hypothesis identifying
+  that parameter with the canonical corrected construction.
+  -/
+  auxiliary_eq :
+    ∀ (v : Fin W.projectedRows.factorCount → ℤ)
+      (hin : v ∈ BHKS.projectedRowSpanInt W.projectedRows)
+      (hnot : v ∉ BHKS.trueFactorIndicatorLattice trueSupports),
+        W.H =
+          BHKS.auxiliaryPolynomialWithCorrections W.input W.liftData
+            (W.projectedVectorArray v)
+            (projectedCorrections v hin hnot)
+  localFactorDegree_pos : 0 < W.localFactorDegree
+  coprime_input_aux_over_rat :
+    IsCoprime
+      (W.inputPolynomial.map (Int.castRingHom ℚ))
+      (W.auxiliaryPolynomial.map (Int.castRingHom ℚ))
+  resultant_divisible_by_p_pow :
+    ((W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : Nat) : ℤ) ∣
+      Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial
+
+namespace BadVectorBridgeData
+
+/-- Correction coordinates supplied by `BadVectorBridgeData`. -/
+def auxiliaryCorrections
+    {W : ExecutableBadVectorWitness}
+    {trueSupports : Set (Set (Fin W.projectedRows.factorCount))}
+    (D : BadVectorBridgeData W trueSupports)
+    (v : Fin W.projectedRows.factorCount → ℤ)
+    (hin : v ∈ BHKS.projectedRowSpanInt W.projectedRows)
+    (hnot : v ∉ BHKS.trueFactorIndicatorLattice trueSupports) :
+    Array Int :=
+  D.projectedCorrections v hin hnot
+
+/--
+The corrected auxiliary polynomial identity supplied by
+`BadVectorBridgeData`, stated using the public correction accessor.
+-/
+theorem auxiliary_eq'
+    {W : ExecutableBadVectorWitness}
+    {trueSupports : Set (Set (Fin W.projectedRows.factorCount))}
+    (D : BadVectorBridgeData W trueSupports)
+    (v : Fin W.projectedRows.factorCount → ℤ)
+    (hin : v ∈ BHKS.projectedRowSpanInt W.projectedRows)
+    (hnot : v ∉ BHKS.trueFactorIndicatorLattice trueSupports) :
+    W.H =
+      BHKS.auxiliaryPolynomialWithCorrections W.input W.liftData
+        (W.projectedVectorArray v)
+        (D.auxiliaryCorrections v hin hnot) := by
+  exact D.auxiliary_eq v hin hnot
+
+end BadVectorBridgeData
+
+/--
+Compact callback package consumed by cap separation.
+
+`BadVectorBridgeData` is the stronger project-level hypothesis record; its
+`toProjectedBadVectorSetupBridge` method forgets the true-factor and precision
+fields to this smaller surface.
+-/
 structure ProjectedBadVectorSetupBridge
     (W : ExecutableBadVectorWitness)
     (trueSupports : Set (Set (Fin W.projectedRows.factorCount))) where
@@ -820,6 +923,21 @@ structure ProjectedBadVectorSetupBridge
   resultant_divisible_by_p_pow :
     ((W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : Nat) : ℤ) ∣
       Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial
+
+/--
+Forget the project-level bridge data to the compact callback package consumed
+by cap separation.
+-/
+def BadVectorBridgeData.toProjectedBadVectorSetupBridge
+    {W : ExecutableBadVectorWitness}
+    {trueSupports : Set (Set (Fin W.projectedRows.factorCount))}
+    (D : BadVectorBridgeData W trueSupports) :
+    ProjectedBadVectorSetupBridge W trueSupports where
+  auxiliaryCorrections := D.auxiliaryCorrections
+  auxiliary_eq := D.auxiliary_eq'
+  localFactorDegree_pos := D.localFactorDegree_pos
+  coprime_input_aux_over_rat := D.coprime_input_aux_over_rat
+  resultant_divisible_by_p_pow := D.resultant_divisible_by_p_pow
 
 /--
 Convert the packaged `ProjectedBadVectorSetupBridge` into the callback shape
