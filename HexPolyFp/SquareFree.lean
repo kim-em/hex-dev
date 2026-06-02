@@ -1963,6 +1963,86 @@ private theorem gcd_mul_div_right_reconstruct [ZMod64.PrimeModulus p] (c w : FpP
   rw [mul_comm]
   exact div_gcd_right_mul_reconstruct c w
 
+/-- A monic prime-field polynomial is nonzero: its leading coefficient `1` is
+nonzero by `zmod64_one_ne_zero_of_prime`, while a zero polynomial has leading
+coefficient `0`. -/
+private theorem ne_zero_of_monic_fpoly
+    (hp : Hex.Nat.Prime p) {f : FpPoly p} (hmonic : DensePoly.Monic f) :
+    f ≠ 0 := by
+  intro hzero
+  have hlead_one : DensePoly.leadingCoeff f = 1 := hmonic
+  rw [hzero] at hlead_one
+  have hlead_zero : DensePoly.leadingCoeff (0 : FpPoly p) = (0 : ZMod64 p) := by
+    unfold DensePoly.leadingCoeff
+    rfl
+  rw [hlead_zero] at hlead_one
+  exact zmod64_one_ne_zero_of_prime hp hlead_one.symm
+
+/-- Exact-quotient monicity: given a multiplicative factorization `q * b = a`
+with `a` and `b` both monic in `FpPoly p`, the quotient `q` is also monic.
+
+Used as substrate for the Yun derivative-active monic-residual invariant
+(#6155): each Yun-loop transition produces an exact-quotient residual
+`w / gcd c w` whose monicity is dispatched by combining this lemma with the
+reconstruction identity `(w / gcd c w) * gcd c w = w`. The lemma also handles
+the initial split residual `f / gcd f f'` symmetrically. -/
+private theorem monic_of_mul_eq_monic_of_monic
+    [ZMod64.PrimeModulus p]
+    (hp : Hex.Nat.Prime p)
+    {a b q : FpPoly p}
+    (ha_monic : DensePoly.Monic a)
+    (hb_monic : DensePoly.Monic b)
+    (hrec : q * b = a) :
+    DensePoly.Monic q := by
+  have ha_ne : a ≠ 0 := ne_zero_of_monic_fpoly hp ha_monic
+  have hb_ne : b ≠ 0 := ne_zero_of_monic_fpoly hp hb_monic
+  have hq_ne : q ≠ 0 := by
+    intro hq
+    apply ha_ne
+    rw [← hrec, hq, zero_mul]
+  have hlead_a : DensePoly.leadingCoeff a = 1 := ha_monic
+  have hlead_b : DensePoly.leadingCoeff b = 1 := hb_monic
+  have hlead_mul :
+      DensePoly.leadingCoeff (q * b) =
+        DensePoly.leadingCoeff q * DensePoly.leadingCoeff b :=
+    FpPoly.leadingCoeff_mul q b hq_ne hb_ne
+  have hlead_q_b :
+      DensePoly.leadingCoeff q * DensePoly.leadingCoeff b = 1 := by
+    rw [← hlead_mul, hrec, hlead_a]
+  have hlead_q : DensePoly.leadingCoeff q = 1 := by
+    rw [hlead_b] at hlead_q_b
+    simpa using hlead_q_b
+  exact hlead_q
+
+/-- Exact-quotient monicity for the left Yun residual: from monic `c` and a
+monic gcd-output divisor, the left exact quotient `c / DensePoly.gcd c w` is
+monic. This is a direct corollary of `monic_of_mul_eq_monic_of_monic` paired
+with the reconstruction identity `(c / gcd c w) * gcd c w = c`. -/
+private theorem monic_div_gcd_left_of_monic
+    [ZMod64.PrimeModulus p]
+    (hp : Hex.Nat.Prime p)
+    (c w : FpPoly p)
+    (hc_monic : DensePoly.Monic c)
+    (hgcd_monic : DensePoly.Monic (DensePoly.gcd c w)) :
+    DensePoly.Monic (c / DensePoly.gcd c w) :=
+  monic_of_mul_eq_monic_of_monic hp hc_monic hgcd_monic
+    (div_gcd_mul_reconstruct c w)
+
+/-- Exact-quotient monicity for the right Yun residual: from monic `w` and a
+monic gcd-output divisor, the right exact quotient `w / DensePoly.gcd c w` is
+monic. This is the quotient threaded into the next Yun derivative-active state
+`(gcd c w, w / gcd c w)`, so this lemma supplies the residual-monicity step
+needed by the #6155 invariant induction. -/
+private theorem monic_div_gcd_right_of_monic
+    [ZMod64.PrimeModulus p]
+    (hp : Hex.Nat.Prime p)
+    (c w : FpPoly p)
+    (hw_monic : DensePoly.Monic w)
+    (hgcd_monic : DensePoly.Monic (DensePoly.gcd c w)) :
+    DensePoly.Monic (w / DensePoly.gcd c w) :=
+  monic_of_mul_eq_monic_of_monic hp hw_monic hgcd_monic
+    (div_gcd_right_mul_reconstruct c w)
+
 /--
 Algebraic step identity used to thread the scaled Yun product invariant through
 a single non-terminating iteration. With `y = gcd c w`, `z = c / y`, and
