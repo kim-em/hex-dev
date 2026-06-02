@@ -270,15 +270,21 @@ shape:
 - **Out of scope** — nearby work that should not be folded into this
   issue.
 
-For hard blockers, include explicit dependency lines in the body:
+Name the issue's target library on a machine-readable line, and for
+hard blockers include explicit dependency lines:
 
 ```text
+library: HexBerlekampZassenhaus
 depends-on: #123
 depends-on: #124
 ```
 
 Keep these lines literal and easy to grep. They are the only
 dependency syntax the orchestration layer should rely on by default.
+The `library:` line is the PascalCase `libraries.yml` key for the file
+named in **Library placement**; it lets `depends-on:` edges be checked
+against the import DAG (see
+[Inverted dependencies are rejected](#inverted-dependencies-are-rejected)).
 
 ### Library placement is a hard precondition
 
@@ -332,6 +338,26 @@ SPEC wall: the result being decomposed toward does not exist at
 this layer. Triage closes the chain (parent and all sub-issues),
 citing the SPEC § that pins the layer. Cutting the decomposition
 thinner is the failure mode.
+
+### Inverted dependencies are rejected
+
+A `depends-on:` edge must point *down* the import DAG: an issue scoped
+to library `L_A` (its `library:` line) may depend on one scoped to
+`L_B` only when `L_A` can import `L_B` (`L_B == L_A`, or `L_B` is in
+`L_A`'s `libraries.yml` dependency closure). An edge whose `L_B`
+*strictly imports* `L_A` (a downstream library, such as a `*-mathlib`
+bridge depended on by a Mathlib-free issue) is **inverted**: an
+upstream proof cannot consume a downstream artefact, so it is never a
+real blocker, only a mis-scoped issue or a "needed downstream too"
+note mis-filed as one.
+
+The guard keeps inverted edges out of issue bodies, so the plain
+"blocked iff an open `depends-on:` remains" logic needs no special
+case. Before writing a `depends-on:`, an agent checks `may_import`
+(`scripts/libgraph.py`) and refuses an inverted one. The maintenance
+sweep scrubs any that predate the guard or slip through: it drops the
+line (with a comment), clears the stale `blocked`, and routes the
+issue to [replan](#replan-loops-are-a-spec-violation-signal).
 
 ### Bench-found, conformance-found, and audit-found issues
 
