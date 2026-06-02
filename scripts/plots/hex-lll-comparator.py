@@ -18,7 +18,7 @@ from matplotlib.ticker import FuncFormatter
 
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_DENSIFIED = ROOT / "reports/bench-results/hex-lll-densified-6fcd1185cee0.json"
+DEFAULT_DENSIFIED = ROOT / "reports/bench-results/hex-lll-setentry-modify-densified.json"
 # Post-warmupFirstIter exports; supersede the pre-fix files whose
 # subprocess-driver startup dominated small-n medians.
 DEFAULT_FPYLLL_RANDOM = (
@@ -28,7 +28,7 @@ DEFAULT_FPYLLL_HARSH = (
     ROOT / "reports/bench-results/hex-lll-harsh-cubic-extended-warmupfix.json"
 )
 DEFAULT_HARSH_LEAN_ISABELLE = (
-    ROOT / "reports/bench-results/hex-lll-harsh-cubic-extended-warmupfix.json"
+    ROOT / "reports/bench-results/hex-lll-setentry-modify-harsh-cubic.json"
 )
 DEFAULT_ISABELLE = (
     ROOT / "reports/bench-results/hex-lll-isabelle-warmupfix.json"
