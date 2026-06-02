@@ -322,6 +322,24 @@ private def crtWitness : DensePoly Rat :=
 #guard scale (content intContentNontrivial) (primitivePart intContentNontrivial) =
   intContentNontrivial
 
+section ProofMode
+
+example : content (0 : DensePoly Int) = 0 := by
+  simp
+
+example (c : Int) : content (C c) = Int.ofNat c.natAbs := by
+  simp
+
+example (c : Int) (p : DensePoly Int) :
+    content (scale c p) = Int.ofNat c.natAbs * content p := by
+  simp
+
+example (p : DensePoly Int) (hp : content p = 1) :
+    primitivePart p = p := by
+  simp [hp]
+
+end ProofMode
+
 #guard crtBezoutS * crtModA + crtBezoutT * crtModB = 1
 #guard crtWitness = ofCoeffs #[6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
 #guard crtWitness % crtModA = crtResidueA % crtModA
