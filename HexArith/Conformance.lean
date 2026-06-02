@@ -105,6 +105,31 @@ private def maxWord : UInt64 := UInt64.ofNat (wordBase - 1)
   let (g, s, t) := HexArith.UInt64.extGcd a b
   s * Int.ofNat a.toNat + t * Int.ofNat b.toNat = Int.ofNat g.toNat
 
+namespace ProofMode
+
+example (a b : Nat) :
+    (let (g, s, t) := HexArith.extGcd a b;
+      g = Nat.gcd a b ∧ s * a + t * b = g) := by
+  simp
+
+example :
+    (let (g, s, t) := HexArith.Int.extGcd (-144) 89;
+      g = Int.gcd (-144) 89 ∧ s * (-144) + t * 89 = g) := by
+  simp
+
+example (a b : Nat) :
+    (let (g, s, t) := HexArith.Int.extGcd (Int.ofNat a) (Int.ofNat b);
+      g = Nat.gcd a b ∧ s * Int.ofNat a + t * Int.ofNat b = g) := by
+  simp
+
+example (a b : UInt64) :
+    (let (g, s, t) := HexArith.UInt64.extGcd a b;
+      g.toNat = Nat.gcd a.toNat b.toNat ∧
+        s * Int.ofNat a.toNat + t * Int.ofNat b.toNat = Int.ofNat g.toNat) := by
+  grind [HexArith.UInt64.extGcd_spec]
+
+end ProofMode
+
 /-- info: 2 -/
 #guard_msgs in #eval UInt64.mulHi (UInt64.ofNat (2 ^ 63)) 4
 
