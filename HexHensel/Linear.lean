@@ -1206,6 +1206,7 @@ def LinearLiftLoopInvariant
 namespace LinearLiftLoopInvariant
 
 /-- The product-congruence component of a linear-lift loop invariant. -/
+@[simp, grind =>]
 theorem product_congr
     {p current : Nat} [ZMod64.Bounds p]
     {f : ZPoly} {s t : FpPoly p} {acc : LinearLiftResult}
@@ -1214,6 +1215,7 @@ theorem product_congr
   hinv.1
 
 /-- The Bezout-congruence component of a linear-lift loop invariant. -/
+@[simp, grind =>]
 theorem bezout_congr
     {p current : Nat} [ZMod64.Bounds p]
     {f : ZPoly} {s t : FpPoly p} {acc : LinearLiftResult}
@@ -1224,6 +1226,7 @@ theorem bezout_congr
   hinv.2.1
 
 /-- The monicity component of a linear-lift loop invariant. -/
+@[simp, grind =>]
 theorem monic_g
     {p current : Nat} [ZMod64.Bounds p]
     {f : ZPoly} {s t : FpPoly p} {acc : LinearLiftResult}
