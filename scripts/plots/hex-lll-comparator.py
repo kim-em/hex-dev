@@ -19,7 +19,7 @@ from matplotlib.ticker import FuncFormatter
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DENSIFIED = ROOT / "reports/bench-results/hex-lll-densified-fa57a699.json"
-DEFAULT_FPYLLL = ROOT / "reports/bench-results/hex-lll-fpylll-ed9da7537e96.json"
+DEFAULT_FPYLLL = ROOT / "reports/bench-results/hex-lll-fpylll-0c2d9a9e2d0a.json"
 DEFAULT_ISABELLE_BOTTOM = (
     ROOT / "reports/bench-results/hex-lll-isabelle-bottom-e211854d1435.json"
 )
@@ -84,7 +84,7 @@ def plot(series: list[Series], output: Path) -> None:
     styles = [
         {"marker": "o", "linewidth": 2.0},
         {"marker": "s", "linewidth": 2.0},
-        {"marker": "^", "linewidth": 0.0, "markersize": 7.0},
+        {"marker": "^", "linewidth": 2.0, "markersize": 7.0},
     ]
     for item, style in zip(series, styles, strict=True):
         ax.plot(item.xs, [y / 1000.0 for y in item.ys], label=item.label, **style)
