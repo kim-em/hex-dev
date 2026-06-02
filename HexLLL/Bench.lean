@@ -854,6 +854,41 @@ def runFpylllFirstShortVectorRandomBounded30Checksum : Unit → IO Int := fun _ 
   runFpylllFirstShortVectorChecksum
     (← getCachedInput randomBoundedInput30Ref (fun _ => prepRandomBoundedInput 30))
 
+/-- fpylll comparator for the random-bounded rung `n = 45`. -/
+def runFpylllFirstShortVectorRandomBounded45Checksum : Unit → IO Int := fun _ => do
+  runFpylllFirstShortVectorChecksum
+    (← getCachedInput randomBoundedInput45Ref (fun _ => prepRandomBoundedInput 45))
+
+/-- fpylll comparator for the random-bounded rung `n = 60`. -/
+def runFpylllFirstShortVectorRandomBounded60Checksum : Unit → IO Int := fun _ => do
+  runFpylllFirstShortVectorChecksum
+    (← getCachedInput randomBoundedInput60Ref (fun _ => prepRandomBoundedInput 60))
+
+/-- fpylll comparator for the random-bounded rung `n = 75`. -/
+def runFpylllFirstShortVectorRandomBounded75Checksum : Unit → IO Int := fun _ => do
+  runFpylllFirstShortVectorChecksum
+    (← getCachedInput randomBoundedInput75Ref (fun _ => prepRandomBoundedInput 75))
+
+/-- fpylll comparator for the random-bounded rung `n = 90`. -/
+def runFpylllFirstShortVectorRandomBounded90Checksum : Unit → IO Int := fun _ => do
+  runFpylllFirstShortVectorChecksum
+    (← getCachedInput randomBoundedInput90Ref (fun _ => prepRandomBoundedInput 90))
+
+/-- fpylll comparator for the random-bounded rung `n = 120`. -/
+def runFpylllFirstShortVectorRandomBounded120Checksum : Unit → IO Int := fun _ => do
+  runFpylllFirstShortVectorChecksum
+    (← getCachedInput randomBoundedInput120Ref (fun _ => prepRandomBoundedInput 120))
+
+/-- fpylll comparator for the random-bounded rung `n = 150`. -/
+def runFpylllFirstShortVectorRandomBounded150Checksum : Unit → IO Int := fun _ => do
+  runFpylllFirstShortVectorChecksum
+    (← getCachedInput randomBoundedInput150Ref (fun _ => prepRandomBoundedInput 150))
+
+/-- fpylll comparator for the random-bounded rung `n = 180`. -/
+def runFpylllFirstShortVectorRandomBounded180Checksum : Unit → IO Int := fun _ => do
+  runFpylllFirstShortVectorChecksum
+    (← getCachedInput randomBoundedInput180Ref (fun _ => prepRandomBoundedInput 180))
+
 /-- fpylll comparator for the harsh-cubic bottom rung (`n = 15`). -/
 def runFpylllFirstShortVectorHarshCubic15Checksum : Unit → IO Int := fun _ => do
   runFpylllFirstShortVectorChecksum
@@ -1164,8 +1199,8 @@ setup_fixed_benchmark runFpylllFirstShortVectorBZRecombinationChecksum where {
     expectedHash := some 0x20001
   }
 
-/- Fixed bottom-rung Lean/fpylll comparison for the random-bounded family at
-`n = 30`, the first rung of the scientific parametric ladder. -/
+/- Fixed Lean/fpylll comparison for the random-bounded family across the
+post-HO-18 densified ladder. -/
 setup_fixed_benchmark runFirstShortVectorRandomBounded30Checksum where {
     repeats := 5
     maxSecondsPerCall := 20.0
@@ -1176,6 +1211,41 @@ setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded30Checksum where {
     repeats := 5
     maxSecondsPerCall := 20.0
     expectedHash := some 0x4
+  }
+
+setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded45Checksum where {
+    repeats := 5
+    maxSecondsPerCall := 20.0
+  }
+
+setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded60Checksum where {
+    repeats := 5
+    maxSecondsPerCall := 30.0
+  }
+
+setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded75Checksum where {
+    repeats := 5
+    maxSecondsPerCall := 30.0
+  }
+
+setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded90Checksum where {
+    repeats := 5
+    maxSecondsPerCall := 40.0
+  }
+
+setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded120Checksum where {
+    repeats := 5
+    maxSecondsPerCall := 60.0
+  }
+
+setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded150Checksum where {
+    repeats := 5
+    maxSecondsPerCall := 90.0
+  }
+
+setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded180Checksum where {
+    repeats := 5
+    maxSecondsPerCall := 120.0
   }
 
 /- Fixed bottom-rung Lean/fpylll comparison for the harsh-cubic family at

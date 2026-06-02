@@ -42,6 +42,13 @@
 - `Hex.LLLBench.runIsabelleRandomBoundedNormSq150`: fixed, repeats `3`
 - `Hex.LLLBench.runIsabelleRandomBoundedNormSq180`: fixed, repeats `3`
 - `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded30Checksum`: fixed, repeats `5`
+- `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded45Checksum`: fixed, repeats `5`
+- `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded60Checksum`: fixed, repeats `5`
+- `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded75Checksum`: fixed, repeats `5`
+- `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded90Checksum`: fixed, repeats `5`
+- `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded120Checksum`: fixed, repeats `5`
+- `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded150Checksum`: fixed, repeats `5`
+- `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded180Checksum`: fixed, repeats `5`
 - `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq15`: fixed, repeats `3`
 - `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq35`: fixed, repeats `3`
 - `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq40`: fixed, repeats `3`
@@ -221,36 +228,50 @@ comparator sweep for those ladders. Until that artifact exists, the largest
 eligible-rung gating verdict required by HO-18 cannot be recomputed from this
 report, and `HexLLL.done_through` remains at `3`.
 
-Informational `fpLLL via fpylll` comparator run at commit
-`ed9da7537e96cee75f395e46962d41775f615a53` on `carica` (Apple M2 Ultra,
+Informational `fpLLL via fpylll` random-bounded ladder run at commit
+`0c2d9a9e2d0ac24924b96b92f51707511fc27180` on `carica` (Apple M2 Ultra,
 macOS), command:
 
 ```sh
 PATH="$PWD/.venv-oracles/bin:$PATH" lake exe hexlll_bench run \
-  Hex.LLLBench.runFpylllFirstShortVectorBZRecombinationChecksum \
   Hex.LLLBench.runFpylllFirstShortVectorRandomBounded30Checksum \
-  Hex.LLLBench.runFpylllFirstShortVectorHarshCubic15Checksum \
-  --export-file reports/bench-results/hex-lll-fpylll-ed9da7537e96.json
+  Hex.LLLBench.runFpylllFirstShortVectorRandomBounded45Checksum \
+  Hex.LLLBench.runFpylllFirstShortVectorRandomBounded60Checksum \
+  Hex.LLLBench.runFpylllFirstShortVectorRandomBounded75Checksum \
+  Hex.LLLBench.runFpylllFirstShortVectorRandomBounded90Checksum \
+  Hex.LLLBench.runFpylllFirstShortVectorRandomBounded120Checksum \
+  Hex.LLLBench.runFpylllFirstShortVectorRandomBounded150Checksum \
+  Hex.LLLBench.runFpylllFirstShortVectorRandomBounded180Checksum \
+  --export-file reports/bench-results/hex-lll-fpylll-0c2d9a9e2d0a.json
 ```
 
 The run used `fpylll 0.6.4`, `python-flint 0.8.0`, and deterministic benchmark
 inputs from `HexLLL/Bench.lean`; no random seeds are involved. The harness
-recorded `ed9da75-dirty` because this worktree carried a pre-existing local
+recorded `0c2d9a9-dirty` because this worktree carried a pre-existing local
 `.claude/CLAUDE.md` modification outside this evidence package. Export
-artefact: `reports/bench-results/hex-lll-fpylll-ed9da7537e96.json`, SHA-256
-`9a2d74112dd5581db820854019a4ff9941dfd7b806678b4aae310cadf3e666e9`.
+artefact: `reports/bench-results/hex-lll-fpylll-0c2d9a9e2d0a.json`, SHA-256
+`e761a271dea1e1c96c32ce9c9f335b1d9f17da41c903f3199a1584cc14d68d4f`.
 
-- `Hex.LLLBench.runFpylllFirstShortVectorBZRecombinationChecksum`: median
-  `84.919 ms`, min `84.325 ms`, max `94.951 ms`, observed hash
-  `0x3c0064007a0036`.
 - `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded30Checksum`: median
-  `85.203 ms`, min `84.539 ms`, max `98.094 ms`, observed hash
-  `0xf977db3a0120001a`.
-- `Hex.LLLBench.runFpylllFirstShortVectorHarshCubic15Checksum`: median
-  `85.075 ms`, min `83.981 ms`, max `94.704 ms`, observed hash
-  `0x949fde47fa1fffb4`.
+  `138.498 ms`, min `116.482 ms`, max `168.072 ms`, observed checksum `0x4`.
+- `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded45Checksum`: median
+  `149.779 ms`, min `124.942 ms`, max `202.896 ms`, observed checksum `0x4`.
+- `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded60Checksum`: median
+  `185.756 ms`, min `162.360 ms`, max `228.790 ms`, observed checksum `0x4`.
+- `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded75Checksum`: median
+  `163.607 ms`, min `150.468 ms`, max `197.225 ms`, observed checksum `0x4`.
+- `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded90Checksum`: median
+  `223.589 ms`, min `182.717 ms`, max `1.113 s`, observed checksum `0x4`.
+- `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded120Checksum`: median
+  `350.572 ms`, min `323.002 ms`, max `374.397 ms`, observed checksum `0x4`.
+- `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded150Checksum`: median
+  `568.849 ms`, min `563.197 ms`, max `624.400 ms`, observed checksum `0x4`.
+- `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded180Checksum`: median
+  `1.013 s`, min `993.350 ms`, max `1.062 s`, observed checksum `0x4`.
 
-All three fixed fpLLL registrations matched their expected hashes.
+All eight fixed fpLLL random-bounded registrations had repeat-stable
+checksums; the `n = 30` registration also matched its configured expected
+checksum.
 
 ## Comparator Ratios
 
@@ -391,23 +412,33 @@ Per the HO-18 issue body, the BZ family is reported for context only: its tiny m
 
 ### fpLLL via fpylll (informational)
 
-`SPEC/Libraries/hex-lll.md` classifies the fpLLL comparator as informational. The most recent informational fpLLL sweep is from commit `ed9da7537e96cee75f395e46962d41775f615a53` on `carica` (Apple M2 Ultra, macOS), command:
+`SPEC/Libraries/hex-lll.md` classifies the fpLLL comparator as informational. The most recent informational fpLLL sweep is from commit `0c2d9a9e2d0ac24924b96b92f51707511fc27180` on `carica` (Apple M2 Ultra, macOS), command:
 
 ```sh
 PATH="$PWD/.venv-oracles/bin:$PATH" lake exe hexlll_bench run \
-  Hex.LLLBench.runFpylllFirstShortVectorBZRecombinationChecksum \
   Hex.LLLBench.runFpylllFirstShortVectorRandomBounded30Checksum \
-  Hex.LLLBench.runFpylllFirstShortVectorHarshCubic15Checksum \
-  --export-file reports/bench-results/hex-lll-fpylll-ed9da7537e96.json
+  Hex.LLLBench.runFpylllFirstShortVectorRandomBounded45Checksum \
+  Hex.LLLBench.runFpylllFirstShortVectorRandomBounded60Checksum \
+  Hex.LLLBench.runFpylllFirstShortVectorRandomBounded75Checksum \
+  Hex.LLLBench.runFpylllFirstShortVectorRandomBounded90Checksum \
+  Hex.LLLBench.runFpylllFirstShortVectorRandomBounded120Checksum \
+  Hex.LLLBench.runFpylllFirstShortVectorRandomBounded150Checksum \
+  Hex.LLLBench.runFpylllFirstShortVectorRandomBounded180Checksum \
+  --export-file reports/bench-results/hex-lll-fpylll-0c2d9a9e2d0a.json
 ```
 
-Export artefact: `reports/bench-results/hex-lll-fpylll-ed9da7537e96.json`, SHA-256 `9a2d74112dd5581db820854019a4ff9941dfd7b806678b4aae310cadf3e666e9`.
+Export artefact: `reports/bench-results/hex-lll-fpylll-0c2d9a9e2d0a.json`, SHA-256 `e761a271dea1e1c96c32ce9c9f335b1d9f17da41c903f3199a1584cc14d68d4f`.
 
-- `bz-recombination`: Lean median `8.833 us`, fpLLL median `83.531 ms`, fpLLL relative median `9456.748×` (raw); adjusted for ~34 µs protocol overhead, `9452.9×`.
-- `random-bounded` `n = 30`: Lean median `5.752 ms`, fpLLL median `86.261 ms`, fpLLL relative median `14.996×` (raw); adjusted `14.991×`.
-- `harsh-cubic` `n = 15`: Lean median `1.247 ms`, fpLLL median `84.130 ms`, fpLLL relative median `67.475×` (raw); adjusted `67.448×`.
+- `random-bounded` `n = 30`: Lean median `18.403 ms`, fpLLL median `138.498 ms`, fpLLL relative median `7.526×` (raw); adjusted for ~34 µs protocol overhead, `7.524×`.
+- `random-bounded` `n = 45`: Lean median `69.406 ms`, fpLLL median `149.779 ms`, fpLLL relative median `2.158×` (raw); adjusted `2.158×`.
+- `random-bounded` `n = 60`: Lean median `179.295 ms`, fpLLL median `185.756 ms`, fpLLL relative median `1.036×` (raw); adjusted `1.036×`.
+- `random-bounded` `n = 75`: Lean median `371.360 ms`, fpLLL median `163.607 ms`, fpLLL relative median `0.441×` (raw); adjusted `0.440×`.
+- `random-bounded` `n = 90`: Lean median `650.187 ms`, fpLLL median `223.589 ms`, fpLLL relative median `0.344×` (raw); adjusted `0.344×`.
+- `random-bounded` `n = 120`: Lean median `1.839 s`, fpLLL median `350.572 ms`, fpLLL relative median `0.191×` (raw); adjusted `0.191×`.
+- `random-bounded` `n = 150`: Lean median `3.778 s`, fpLLL median `568.849 ms`, fpLLL relative median `0.151×` (raw); adjusted `0.151×`.
+- `random-bounded` `n = 180`: Lean median `6.939 s`, fpLLL median `1.013 s`, fpLLL relative median `0.146×` (raw); adjusted `0.146×`.
 
-The fpLLL fixed-mode targets still incur one CPython + `import fpylll` startup per measured child (per the process-call comparator registration), so these figures are useful as traceable external-comparator checks but are not a gating performance signal for HexLLL. A densified fpLLL ladder remains out of scope for HO-18 because fpylll is informational, not gating.
+The fpLLL fixed-mode targets still incur one CPython + `import fpylll` startup per measured child (per the process-call comparator registration), so the bottom rungs are startup-sensitive. Across the full random-bounded ladder fpLLL is slower than Lean at `n = 30` and `45`, roughly tied at `n = 60`, and faster from `n = 75` through `180`; because fpylll is informational, this trend remains context rather than a gating performance signal for HexLLL.
 
 ## Profile
 
