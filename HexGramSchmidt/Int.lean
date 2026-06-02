@@ -1916,6 +1916,36 @@ private theorem noPivotLoop_step_eq_add_of_singularStep_none
         show state.step + 1 + f = state.step + (f + 1)
         omega
 
+/-- A no-pivot Bareiss pass that never records a singular step preserves the
+nonzero status of the previous pivot. Regular branches replace `prevPivot` by
+the current nonzero pivot; singular branches contradict the final
+`singularStep = none` hypothesis. -/
+private theorem noPivotLoop_prevPivot_ne_zero_of_singularStep_none
+    {n : Nat} (fuel : Nat) (state : Matrix.BareissState n)
+    (hprev : state.prevPivot ≠ 0)
+    (h_no_sing : (Matrix.noPivotLoop fuel state).singularStep = none) :
+    (Matrix.noPivotLoop fuel state).prevPivot ≠ 0 := by
+  induction fuel generalizing state with
+  | zero =>
+      simpa [Matrix.noPivotLoop_zero_fuel] using hprev
+  | succ f ih =>
+      by_cases hDone : state.step + 1 < n
+      · by_cases hp : state.matrix[state.step][state.step] = 0
+        · rw [Matrix.noPivotLoop_singular_branch f state hDone hp] at h_no_sing
+          simp at h_no_sing
+        · rw [Matrix.noPivotLoop_regular_branch f state hDone hp] at h_no_sing
+          rw [Matrix.noPivotLoop_regular_branch f state hDone hp]
+          exact ih
+            { step := state.step + 1
+              matrix := Matrix.stepMatrix state.matrix state.step
+                state.matrix[state.step][state.step] state.prevPivot
+              prevPivot := state.matrix[state.step][state.step]
+              rowSwaps := state.rowSwaps
+              singularStep := none }
+            hp h_no_sing
+      · rw [Matrix.noPivotLoop_done f state hDone] at h_no_sing ⊢
+        exact hprev
+
 /-- The `step` field of a no-pivot Bareiss state never decreases under further
 loop iterations. -/
 theorem noPivotLoop_step_monotone
@@ -2725,6 +2755,29 @@ private theorem noPivotLoop_initial_gram_step_eq_of_prefix_none
     Matrix.noPivotLoop_step_eq_add_of_singularStep_none s
       (Matrix.noPivotInitialState (Matrix.gramMatrix b)) rfl h_room h_prefix_none
   simpa [Matrix.noPivotInitialState] using h_step
+
+/-- On a nonsingular initial no-pivot Gram trajectory, any current state that is
+ready for a regular next step has a nonzero previous pivot. -/
+private theorem noPivotLoop_initial_gram_prevPivot_ne_zero_of_regular_prefix
+    (b : Matrix Int n m) (fuel : Nat)
+    (h_prefix_none :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none)
+    (_hnext :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 < n)
+    (_hp :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
+          (Matrix.noPivotLoop fuel
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step][
+          (Matrix.noPivotLoop fuel
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step] ≠ 0) :
+    (Matrix.noPivotLoop fuel
+      (Matrix.noPivotInitialState (Matrix.gramMatrix b))).prevPivot ≠ 0 := by
+  apply noPivotLoop_prevPivot_ne_zero_of_singularStep_none
+  · simp [Matrix.noPivotInitialState]
+  · exact h_prefix_none
 
 /-- Package a proved zero suffix in the current Gram pivot column into the
 executable row-pivot search failure expected by `Matrix.pivotLoop`. -/
