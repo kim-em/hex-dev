@@ -35,6 +35,7 @@ private theorem eq_zero_of_dvd_modulus {a : ZMod64 p} (h : p ∣ a.toNat) : a = 
 Prime-modulus residues have no zero divisors: if `a * b = 0`, then one of the
 factors is already zero.
 -/
+@[grind .]
 theorem eq_zero_or_eq_zero_of_mul_eq_zero (hp : Hex.Nat.Prime p) {a b : ZMod64 p}
     (h : a * b = 0) : a = 0 ∨ b = 0 := by
   have hmod : (a.toNat * b.toNat) % p = 0 := by
@@ -51,6 +52,7 @@ theorem eq_zero_or_eq_zero_of_mul_eq_zero (hp : Hex.Nat.Prime p) {a b : ZMod64 p
 Prime-modulus residues have no zero divisors, using the ambient
 `PrimeModulus` typeclass witness.
 -/
+@[grind .]
 theorem eq_zero_or_eq_zero_of_mul_eq_zero_of_prime_modulus [PrimeModulus p]
     {a b : ZMod64 p} (h : a * b = 0) : a = 0 ∨ b = 0 :=
   eq_zero_or_eq_zero_of_mul_eq_zero (PrimeModulus.prime (p := p)) h
