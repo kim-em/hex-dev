@@ -85,6 +85,21 @@ private abbrev Q := GFqRing.PolyQuotient modulus modulus_pos_degree
 private abbrev F (hirr : FpPoly.Irreducible modulus) :=
   FiniteField modulus modulus_pos_degree prime_five hirr
 
+section InverseDivisionAutomation
+
+example : ((0 : F modulus_irreducible)⁻¹ = 0) := by
+  simp
+
+example {hirr : FpPoly.Irreducible modulus} (x y : F hirr) :
+    x / y = x * y⁻¹ := by
+  simp
+
+example {hirr : FpPoly.Irreducible modulus} (x : F hirr) :
+    x ≠ 0 → x * x⁻¹ = 1 := by
+  grind
+
+end InverseDivisionAutomation
+
 private theorem maxProperDiv_4 : Berlekamp.maximalProperDivisors 4 = [2] := by decide
 
 /-- Rabin certificate for `x^4 + 2` over `F_5`.
