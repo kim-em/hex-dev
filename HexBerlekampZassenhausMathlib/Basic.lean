@@ -16634,12 +16634,17 @@ private theorem henselSubsetCorrespondence_analytic_obligation
 
 /-- **#4543 supporting lemma (HO-1).**
 
-`HenselSubsetCorrespondenceHypotheses` value in the successful
+Fallback `HenselSubsetCorrespondenceHypotheses` value in the successful
 `Hex.choosePrimeData? core = some primeData` branch, parametric in the
 precision count `B`.  The proof transports through
 `Hex.choosePrimeData_eq_of_choosePrimeData?_some` to reuse
 `henselSubsetCorrespondence_analytic_obligation`; see that helper for the
-single localised analytic `sorry`. -/
+single localised analytic fallback.
+
+Successful-branch callers that have explicit lifted-side descent and forward
+Hensel transport should prefer
+`henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent`,
+which composes through the mod-`p` partition and avoids this fallback. -/
 theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
@@ -17426,6 +17431,58 @@ theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent
       (henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData_descent
         core B primeData hchoose hdescent hlifted_of_modP)
 
+/-- **#6354 supporting lemma (HO-1 successful branch).**
+
+Successful-branch sibling of `liftedFactorSubsetPartition_of_choosePrimeData`.
+The partition-cover fields still come from the localized partition analytic
+obligation, but the embedded Hensel subset correspondence is sourced from the
+non-circular descent/forward-transport path rather than from
+`henselSubsetCorrespondence_analytic_obligation`. -/
+theorem liftedFactorSubsetPartition_of_choosePrimeData_success_descent
+    (core : Hex.ZPoly) (B : Nat)
+    (primeData : Hex.PrimeChoiceData)
+    (hchoose : Hex.choosePrimeData? core = some primeData)
+    (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
+    (hdescent :
+      HenselLiftDescentHypotheses core B primeData
+        (Hex.ZPoly.toMonicLiftData core B primeData) True True)
+    (hlifted_of_modP :
+      ∀ {factor : Hex.ZPoly} {S : ModPFactorSubset primeData},
+        Irreducible (HexPolyZMathlib.toPolynomial factor) →
+        factor ∣ core →
+        RepresentsIntegerFactorModP primeData factor S →
+        RepresentsIntegerFactorAtLift core
+          (Hex.ZPoly.toMonicLiftData core B primeData) factor
+          (liftedSubsetOfModPSubset primeData
+            (Hex.ZPoly.toMonicLiftData core B primeData)
+            hdescent.factor_count_eq S)) :
+    let d := Hex.ZPoly.toMonicLiftData core B primeData
+    LiftedFactorSubsetPartition core d Finset.univ core := by
+  intro d
+  obtain ⟨hcover, hdisj, huniq, hsup, hscaled_sup⟩ :=
+    liftedFactorSubsetPartition_analytic_obligation core B primeData
+  refine
+    { toHenselSubsetCorrespondenceRest :=
+        henselSubsetCorrespondenceRest_initial
+          (henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent
+            core B primeData hchoose hdescent hlifted_of_modP)
+      target_squarefree := hcore_sqfree
+      cover := ?_
+      pairwise_disjoint := ?_
+      unique_up_to_associated := ?_
+      support_subset_of_dvd_recombinationCandidate := ?_
+      support_subset_of_dvd_scaledRecombinationCandidate := ?_ }
+  · intro i hi
+    exact hcover hi
+  · intro f g S T hirr_f hdvd_f _ hSrep hirr_g hdvd_g _ hTrep hnoassoc
+    exact hdisj hirr_f hdvd_f hSrep hirr_g hdvd_g hTrep hnoassoc
+  · intro f g S T hirr_f hdvd_f _ hSrep hirr_g hdvd_g _ hTrep hassoc
+    exact huniq hirr_f hdvd_f hSrep hirr_g hdvd_g hTrep hassoc
+  · intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
+    exact hsup hirr hdvd_target hdvd_cand hSrep
+  · intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
+    exact hscaled_sup hirr hdvd_target hdvd_cand hSrep
+
 /-- **#5214 supporting bundle (HO-1 slow-path substrate).**
 
 Bundled substrate package for the slow-path arm of the HO-1 capstone
@@ -17545,6 +17602,83 @@ theorem slowPathHenselSubstrate_of_choosePrimeData
       core B primeData hchoose
   · exact liftedFactorSubsetPartition_of_choosePrimeData
       core B primeData hchoose hcore_sqfree
+  · exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
+      core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
+  · exact Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
+      core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
+  · exact Hex.ZPoly.toMonicLiftData_liftedFactor_injective_of_monicPrimeData
+      core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
+  · exact hmodulus
+  · exact hprec_spec
+
+/-- **#6354 supporting lemma (HO-1 slow-path substrate constructor).**
+
+Successful-branch variant of `slowPathHenselSubstrate_of_choosePrimeData`.
+When callers supply primitive lifted-side descent plus forward Hensel transport,
+the `corr` field and the partition's embedded correspondence are built through
+`henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent`
+instead of the fallback `henselSubsetCorrespondence_analytic_obligation`.
+
+This is intentionally successful-branch only: the parametric fallback
+constructor remains available for callers that cannot yet provide the explicit
+descent/forward-transport package. -/
+theorem slowPathHenselSubstrate_of_choosePrimeData_success_descent
+    (core : Hex.ZPoly) (B : Nat)
+    (primeData : Hex.PrimeChoiceData)
+    (hchoose : Hex.choosePrimeData? core = some primeData)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
+    (hB_ne_zero : B ≠ 0)
+    (hdescent :
+      HenselLiftDescentHypotheses core B primeData
+        (Hex.ZPoly.toMonicLiftData core B primeData) True True)
+    (hlifted_of_modP :
+      ∀ {factor : Hex.ZPoly} {S : ModPFactorSubset primeData},
+        Irreducible (HexPolyZMathlib.toPolynomial factor) →
+        factor ∣ core →
+        RepresentsIntegerFactorModP primeData factor S →
+        RepresentsIntegerFactorAtLift core
+          (Hex.ZPoly.toMonicLiftData core B primeData) factor
+          (liftedSubsetOfModPSubset primeData
+            (Hex.ZPoly.toMonicLiftData core B primeData)
+            hdescent.factor_count_eq S)) :
+    SlowPathHenselSubstrate core B primeData := by
+  have hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core :=
+    zpoly_lc_pos_of_monic hcore_monic
+  have htoMonic_eq : (Hex.ZPoly.toMonic core).monic = core :=
+    Hex.ZPoly.toMonic_monic_eq_core_of_leadingCoeff_eq_one core hcore_monic
+  have hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData := by
+    show Hex.choosePrimeData? (Hex.ZPoly.toMonic core).monic = some primeData
+    rw [htoMonic_eq]
+    exact hchoose
+  have hp_prime : Hex.Nat.Prime primeData.p :=
+    Hex.choosePrimeData?_prime core primeData hchoose
+  have hp2 : 2 ≤ primeData.p := hp_prime.two_le
+  have hprec_spec :
+      2 * B < primeData.p ^ Hex.precisionForCoeffBound B primeData.p :=
+    Hex.precisionForCoeffBound_spec hp2 B
+  have hB1 : 1 ≤ B := Nat.one_le_iff_ne_zero.mpr hB_ne_zero
+  have hmodulus :
+      2 ≤ primeData.p ^ Hex.precisionForCoeffBound B primeData.p := by
+    omega
+  have hprec_pos : 1 ≤ Hex.precisionForCoeffBound B primeData.p := by
+    by_contra hlt
+    have hzero : Hex.precisionForCoeffBound B primeData.p = 0 := by omega
+    rw [hzero, pow_zero] at hmodulus
+    omega
+  refine
+    { corr := ?_
+      partition := ?_
+      liftedFactor_monic := ?_
+      liftedFactor_natDegree_pos := ?_
+      liftedFactor_inj := ?_
+      modulus := ?_
+      precision := ?_ }
+  · exact henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent
+      core B primeData hchoose hdescent hlifted_of_modP
+  · exact liftedFactorSubsetPartition_of_choosePrimeData_success_descent
+      core B primeData hchoose hcore_sqfree hdescent hlifted_of_modP
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
       core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData

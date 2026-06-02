@@ -355,68 +355,63 @@ Comparator source: `scripts/oracle/setup_lll_isabelle.sh` downloads and verifies
 
 ### random-bounded ladder
 
-| `n` | Lean median | Isabelle median | overhead % | raw ratio | adjusted ratio | speedup (adj) | status |
-|---:|---:|---:|---:|---:|---:|---:|:---|
-| 30 | 17.996 ms | 74.148 ms | 0.012% | 0.2427 | 0.2427 | Lean 4.12× faster | eligible |
-| 45 | 67.425 ms | 119.220 ms | 0.008% | 0.5656 | 0.5656 | Lean 1.77× faster | eligible |
-| 60 | 172.089 ms | 228.691 ms | 0.004% | 0.7525 | 0.7525 | Lean 1.33× faster | eligible |
-| 75 | 360.452 ms | 450.770 ms | 0.002% | 0.7996 | 0.7997 | Lean 1.25× faster | eligible |
-| 90 | 609.279 ms | 743.806 ms | 0.001% | 0.8191 | 0.8191 | Lean 1.22× faster | eligible |
-| 120 | 1.688 s | 2.088 s | 0.000% | 0.8084 | 0.8084 | Lean 1.24× faster | eligible |
-| 150 | 3.643 s | 4.357 s | 0.000% | 0.8361 | 0.8361 | Lean 1.20× faster | eligible |
-| 180 | 6.488 s | 8.028 s | 0.000% | 0.8082 | 0.8082 | Lean 1.24× faster | eligible |
+Lean medians from
+`reports/bench-results/hex-lll-densified-6fcd1185cee0.json`; Isabelle
+medians from
+`reports/bench-results/hex-lll-isabelle-warmupfix.json` (post-#6330
+`warmupFirstIter` methodology); fpylll medians from
+`reports/bench-results/hex-lll-fpylll-random-bounded-warmupfix.json`
+(same).
 
-**Trend.** Across the eligible range `n = 30..180`, the adjusted Lean/Isabelle ratio moves from `0.2427` to `0.8082` (+233.0%): climbing (Lean's relative cost grows toward Isabelle's).
+| `n` | Lean median | Isabelle median | fpylll median | Lean/Isabelle | speedup vs Isabelle | status |
+|---:|---:|---:|---:|---:|---:|:---|
+| 30 | 17.996 ms | 92.208 ms | 2.014 ms | 0.1952 | Lean 5.12× faster | eligible |
+| 45 | 67.425 ms | 127.360 ms | 5.017 ms | 0.5294 | Lean 1.89× faster | eligible |
+| 60 | 172.089 ms | 253.539 ms | 10.231 ms | 0.6787 | Lean 1.47× faster | eligible |
+| 75 | 360.452 ms | 505.613 ms | 19.677 ms | 0.7129 | Lean 1.40× faster | eligible |
+| 90 | 609.279 ms | 793.655 ms | 32.581 ms | 0.7677 | Lean 1.30× faster | eligible |
+| 120 | 1.688 s | 2.099 s | 78.501 ms | 0.8043 | Lean 1.24× faster | eligible |
+| 150 | 3.643 s | 4.294 s | 155.219 ms | 0.8483 | Lean 1.18× faster | eligible |
+| 180 | 6.488 s | 8.302 s | 269.661 ms | 0.7816 | Lean 1.28× faster | eligible |
 
-**Gating-goal verdict (largest eligible rung `n = 180`).** Lean `6.488 s` vs Isabelle adjusted `8.028 s`; adjusted ratio `0.8082` (Lean 1.24× faster). Gating-goal verdict: **met**.
+**Trend.** Across the eligible range `n = 30..180`, the Lean/Isabelle ratio moves from `0.1952` to `0.7816`: climbing (Lean's relative cost grows toward Isabelle's).
+
+**Gating-goal verdict (largest eligible rung `n = 180`).** Lean `6.488 s` vs Isabelle `8.302 s`; ratio `0.7816` (Lean 1.28× faster). Gating-goal verdict: **met**.
 
 ### harsh-cubic ladder
 
-| `n` | Lean median | Isabelle median | overhead % | raw ratio | adjusted ratio | speedup (adj) | status |
-|---:|---:|---:|---:|---:|---:|---:|:---|
-| 15 | 898.791 us | 61.209 ms | 0.015% | 0.0147 | 0.0147 | Lean 68.09× faster | eligible |
-| 20 | 3.191 ms | 59.887 ms | 0.015% | 0.0533 | 0.0533 | Lean 18.77× faster | eligible |
-| 25 | 8.331 ms | 82.104 ms | 0.011% | 0.1015 | 0.1015 | Lean 9.85× faster | eligible |
-| 30 | 22.022 ms | 75.135 ms | 0.012% | 0.2931 | 0.2931 | Lean 3.41× faster | eligible |
-| 35 | 49.134 ms | 81.714 ms | 0.011% | 0.6013 | 0.6014 | Lean 1.66× faster | eligible |
-| 40 | 105.251 ms | 124.643 ms | 0.007% | 0.8444 | 0.8445 | Lean 1.18× faster | eligible |
-| 45 | 202.061 ms | 173.940 ms | 0.005% | 1.1617 | 1.1617 | Lean 1.16× slower | eligible |
-| 50 | 377.282 ms | 260.486 ms | 0.003% | 1.4484 | 1.4484 | Lean 1.45× slower | eligible |
-| 55 | 640.050 ms | 404.575 ms | 0.002% | 1.5820 | 1.5821 | Lean 1.58× slower | eligible |
+All three medians come from
+`reports/bench-results/hex-lll-harsh-cubic-extended-warmupfix.json`,
+a single Lean+Isabelle+fpylll sweep with `warmupFirstIter := true`
+(post-#6330). The ladder is extended to `n = 60, 65` from the
+prior reach of `n = 55`.
 
-**Trend.** Across the eligible range `n = 15..55`, the adjusted Lean/Isabelle ratio moves from `0.0147` to `1.5821` (+10672.5%): climbing (Lean's relative cost grows toward Isabelle's).
+| `n` | Lean median | Isabelle median | fpylll median | Lean/Isabelle | speedup vs Isabelle | status |
+|---:|---:|---:|---:|---:|---:|:---|
+| 15 | 900 µs | 873 µs | 447 µs | 1.0311 | Lean 1.03× slower | eligible |
+| 20 | 3.10 ms | 2.29 ms | 809 µs | 1.3557 | Lean 1.36× slower | eligible |
+| 25 | 8.41 ms | 5.40 ms | 1.36 ms | 1.5590 | Lean 1.56× slower | eligible |
+| 30 | 21.46 ms | 12.78 ms | 2.02 ms | 1.6792 | Lean 1.68× slower | eligible |
+| 35 | 48.85 ms | 27.72 ms | 2.71 ms | 1.7622 | Lean 1.76× slower | eligible |
+| 40 | 104.10 ms | 57.91 ms | 3.48 ms | 1.7977 | Lean 1.80× slower | eligible |
+| 45 | 218.69 ms | 110.04 ms | 4.71 ms | 1.9873 | Lean 1.99× slower | eligible |
+| 50 | 381.04 ms | 205.40 ms | 6.12 ms | 1.8551 | Lean 1.86× slower | eligible |
+| 55 | 669.68 ms | 359.45 ms | 7.35 ms | 1.8631 | Lean 1.86× slower | eligible |
+| 60 | 1.12 s | 601.43 ms | 8.72 ms | 1.8659 | Lean 1.87× slower | eligible |
+| 65 | 1.82 s | 953.89 ms | 10.46 ms | 1.9036 | Lean 1.90× slower | eligible |
 
-**Gating-goal verdict (largest eligible rung `n = 55`).** Lean `640.050 ms` vs Isabelle adjusted `404.566 ms`; adjusted ratio `1.5821` (Lean 1.58× slower). Gating-goal verdict: **not met**.
+**Trend.** Across the eligible range `n = 15..65`, the Lean/Isabelle ratio moves from `1.0311` to `1.9036`: climbing. Lean is at parity at `n = 15` and roughly `1.9×` slower at every rung from `n = 45` upward — a stable constant-factor gap, not pathological growth.
 
-Targeted prefix-preserving Bareiss rerun at commit
-`4bd0f7482835f8e066f9dcd3f70f8d50345c730d` on `carica` (Apple M2 Ultra,
-macOS), command:
+**Gating-goal verdict (largest eligible rung `n = 65`).** Lean `1.82 s` vs Isabelle `953.89 ms`; ratio `1.9036` (Lean 1.90× slower). Gating-goal verdict: **not met**.
 
-```sh
-lake exe hexlll_bench run \
-  Hex.LLLBench.runFirstShortVectorHarshCubicNormSq45 \
-  Hex.LLLBench.runIsabelleHarshCubicNormSq45 \
-  Hex.LLLBench.runFirstShortVectorHarshCubicNormSq50 \
-  Hex.LLLBench.runIsabelleHarshCubicNormSq50 \
-  Hex.LLLBench.runFirstShortVectorHarshCubicNormSq55 \
-  Hex.LLLBench.runIsabelleHarshCubicNormSq55 \
-  --export-file reports/bench-results/hex-lll-b712abf1-harsh-cubic-rerun.json
-```
-
-The harness recorded `4bd0f74-dirty` because this worktree carried a
-pre-existing local `.claude/CLAUDE.md` modification outside this evidence
-package. Export artefact:
-`reports/bench-results/hex-lll-b712abf1-harsh-cubic-rerun.json`, SHA-256
-`f8cd183fee929950325303076f92a8b4c39b041e93121adf83f801315de82942`.
-
-| n | Lean median | Isabelle median | raw Lean/Isabelle ratio | verdict |
-|---:|---:|---:|---:|---|
-| 45 | 205.469 ms | 199.329 ms | 1.0308 | Lean 1.03× slower |
-| 50 | 384.772 ms | 284.171 ms | 1.3540 | Lean 1.35× slower |
-| 55 | 672.593 ms | 457.830 ms | 1.4691 | Lean 1.47× slower |
-
-This narrows the largest-rung harsh-cubic gap relative to the prior `1.5821`
-adjusted ratio, but the gating-goal verdict remains **not met**.
+The shape of this gap revises the pre-#6330 picture substantially.
+The previously-reported "Lean 68× faster than Isabelle at `n = 15`"
+was a methodology artefact: per-repeat subprocess driver startup
+dominated Isabelle measurements at small `n`. Under honest
+measurement Lean and Isabelle are essentially equal at `n = 15`,
+and the Lean/Isabelle ratio at `n = 55` is `1.86×` rather than the
+previously-reported `1.58×`. The Concern in §Concerns is updated
+accordingly.
 
 ### bz-recombination (context only)
 
@@ -562,28 +557,43 @@ integer arithmetic.
 
 ## Concerns
 
-- [#4334](https://github.com/kim-em/hex/issues/4334) / follow-up
-  [#5966](https://github.com/kim-em/hex/issues/5966) (HO-18 §"Comparator
-  Ratios" subsidiary): the formerly inconclusive HexLLL parametric verdicts
-  have current-head evidence in
-  `reports/bench-results/hex-lll-14537a67ebf1-parametric-rerun.json` and are
-  all consistent with declared complexity. Current densified Lean/Isabelle
-  evidence in `reports/bench-results/hex-lll-densified-6fcd1185cee0.json`
-  keeps one comparator Concern open: the `random-bounded` adjusted
-  Lean/Isabelle ratio climbs from `0.2427` at `n = 30` to `0.8082` at
-  `n = 180` (the verdict is still met but the trend is climbing), and the
-  `harsh-cubic` adjusted ratio crosses 1 at `n = 45` and reaches `1.5821`
-  at `n = 55` (Lean is `~1.6×` slower than Isabelle at the largest eligible
-  rung, so the gating-goal verdict is **not met** for this family). A
-  prefix-preserving Bareiss array update narrows the local `n = 55` rerun ratio
-  to `1.4691`, but does not clear the comparator Concern. The diagnosis in
-  `reports/hex-lll-harsh-cubic-crossover-diagnosis.md` rules out a
-  benchmark-registration fix and points at exact-integer operand growth in
-  `Hex.GramSchmidt.Int.data` / `scaledCoeffRows`. The array-construction
-  cleanup in `HexGramSchmidt.Int` has focused local evidence in
-  `reports/bench-results/hex-lll-3b001b9e-harsh-cubic-array-cleanup.json`:
-  Lean harsh-cubic medians moved from `205.469 ms`, `384.772 ms`,
-  `672.593 ms` to `204.684 ms`, `381.692 ms`, `666.008 ms` at
-  `n = 45, 50, 55` respectively, with unchanged hashes. This is a narrow
-  improvement but does not clear the comparator Concern. While this Concern is
-  open, `HexLLL.done_through` remains `3`.
+- **HexLLL Lean is approximately `1.9×` slower than the verified
+  Isabelle comparator across the upper harsh-cubic ladder, with a
+  stable constant-factor gap.** Under the post-#6330
+  `warmupFirstIter` methodology, the Lean/Isabelle ratio is `1.03`
+  at `n = 15`, climbs through `n = 25..40`, then plateaus around
+  `1.86–1.90` from `n = 45` to `n = 65`. The gating-goal verdict
+  at the largest eligible rung (`n = 65`) is therefore **not
+  met**, and `HexLLL.done_through` remains `3`. The shape of the
+  gap rules out a single asymptotic-class regression and points at
+  a constant-factor cost difference. The previous Concern thread
+  (#4334, follow-up #5966) cited pre-`warmupFirstIter` numbers
+  that overstated Lean's lead at small `n`; the current ratios
+  supersede those.
+
+  Profile evidence under the post-#5781 timed-region filtering
+  identifies four concrete contributors in the hot path. Each is
+  being filed as its own audit-found issue, all of which must be
+  resolved before this Concern clears:
+
+  - `Hex.Matrix.exactDiv` performs a redundant divisibility check
+    before `Int.divExact` (full big-int `mpz_mod` plus the
+    `mpz_divexact` it ostensibly replaces); 38 % inclusive cost
+    on harsh-cubic `n = 55`.
+  - `Hex.LLLState.setEntry` forces a row-copy on every call via
+    a `lean_inc` on the borrowed inner row; 8.2 % leaf time on
+    random-bounded `n = 120`.
+  - `Hex.LLLState.swapStep`'s second fold makes two `setEntry`
+    calls on the same row index per iteration (i.e. two row
+    copies), and is `38.9 %` inclusive on random-bounded
+    `n = 120`.
+  - `Hex.GramSchmidt.Int.stepScaledRows` aliases `rows` while
+    mutating `next` and pays the same row-COW penalty per outer
+    iteration; the Bareiss workhorse at `98.4 %` inclusive on
+    harsh-cubic `n = 55` and `20.7 %` on random-bounded `n = 120`.
+
+  Older context: the array-construction cleanup in
+  `HexGramSchmidt.Int` (evidence:
+  `reports/bench-results/hex-lll-3b001b9e-harsh-cubic-array-cleanup.json`)
+  produced a marginal improvement under the pre-fix methodology
+  and is preserved.
