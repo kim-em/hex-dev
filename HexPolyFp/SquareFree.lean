@@ -7475,6 +7475,50 @@ private theorem yunFactorsDerivativeActiveReachable_normalized_stateProvider
   have hw := normalizeMonic_squareFreeContributionPayload hp w hnonzero.2
   exact ⟨hc.1, hc.2, hw.1, hw.2⟩
 
+/--
+Normalized gcd monicity for the Yun derivative-active transition. Whenever the
+right gcd operand is nonzero, the normalized gcd value
+`(normalizeMonic (DensePoly.gcd c w)).2` is monic.
+
+The raw executable `DensePoly.gcd c w` is not in general monic even when
+`c, w` are monic: over `F_5`, `gcd (x^2 + 1) (x + 1)` follows an Euclidean
+remainder path and returns the constant `2`, not a monic value. So the gcd
+side of the Yun derivative-active monic invariant tracked in #6155 must route
+through the normalized gcd value rather than the raw output.
+-/
+private theorem normalizeMonic_gcd_monic_of_right_nonzero
+    [ZMod64.PrimeModulus p] (c w : FpPoly p)
+    (hw : w.isZero = false) :
+    DensePoly.Monic (normalizeMonic (DensePoly.gcd c w)).2 :=
+  normalizeMonic_nonzero_monic (DensePoly.gcd c w)
+    (gcd_isZero_false_of_right_isZero_false c w hw)
+
+/--
+Normalized monicity at every Yun derivative-active reachable state. From the
+reachability hypothesis, `(normalizeMonic c).2`, `(normalizeMonic w).2`, and
+the next-step normalized gcd `(normalizeMonic (DensePoly.gcd c w)).2` are all
+monic.
+
+This is the gcd-side substrate for the residual monic invariant tracked in
+#6155. Combined with the exact-quotient lemmas from #6164
+(`monic_div_gcd_left_of_monic`, `monic_div_gcd_right_of_monic`), the
+derivative-active induction step can dispatch monicity at the normalized state
+without asserting raw executable gcd monicity.
+-/
+private theorem yunFactorsDerivativeActiveReachable_normalizeMonic_monic
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
+    (f c w : FpPoly p) (fuel : Nat)
+    (hreachable : yunFactorsDerivativeActiveReachable hp f c w fuel) :
+    DensePoly.Monic (normalizeMonic c).2 ∧
+      DensePoly.Monic (normalizeMonic w).2 ∧
+        DensePoly.Monic (normalizeMonic (DensePoly.gcd c w)).2 := by
+  have hnonzero :=
+    yunFactorsDerivativeActiveReachable_nonzero hp f c w fuel hreachable
+  exact
+    ⟨normalizeMonic_nonzero_monic c hnonzero.1,
+      normalizeMonic_nonzero_monic w hnonzero.2,
+      normalizeMonic_gcd_monic_of_right_nonzero c w hnonzero.2⟩
+
 private theorem normalizeMonic_zero_squareFree_weightedProduct
     (hp : Hex.Nat.Prime p) (f : FpPoly p)
     (hzero : (normalizeMonic f).2.isZero = true) :
