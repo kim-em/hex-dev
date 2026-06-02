@@ -259,30 +259,6 @@ private theorem scale_mul_right (c : ZMod64 p) (f g : FpPoly p) :
     _ = f * DensePoly.scale c g := by
       exact DensePoly.mul_comm_poly (DensePoly.scale c g) f
 
-private theorem choose_eq_zero_of_lt {n k : Nat} (h : n < k) :
-    Hex.Nat.choose n k = 0 := by
-  induction n generalizing k with
-  | zero =>
-      cases k with
-      | zero => omega
-      | succ k => rfl
-  | succ n ih =>
-      cases k with
-      | zero => omega
-      | succ k =>
-          simp [Hex.Nat.choose]
-          by_cases hk : n < k
-          · simp [ih hk]
-            exact ih (by omega)
-          · exfalso
-            omega
-
-private theorem choose_self (n : Nat) : Hex.Nat.choose n n = 1 := by
-  induction n with
-  | zero => rfl
-  | succ n ih =>
-      simp [Hex.Nat.choose, choose_eq_zero_of_lt (by omega : n < n + 1)]
-
 private theorem powLinear_succ_left (f : FpPoly p) (n : Nat) :
     powLinear f (n + 1) = f * powLinear f n := by
   rw [powLinear]
@@ -404,9 +380,9 @@ private theorem powLinearBinomTerm_succ_succ_top
   unfold powLinearBinomTerm
   rw [Hex.Nat.choose_succ_succ]
   have hzero_choose : Hex.Nat.choose n (n + 1) = 0 :=
-    choose_eq_zero_of_lt (by omega)
+    Hex.Nat.choose_eq_zero_of_lt (by omega)
   rw [hzero_choose]
-  rw [choose_self]
+  rw [Hex.Nat.choose_self]
   have hcast : (((1 + 0 : Nat) : ZMod64 p)) = (1 : ZMod64 p) := by grind
   rw [hcast]
   have hsub_left : n + 1 - (n + 1) = 0 := by omega
@@ -498,7 +474,7 @@ private theorem powLinearBinomTerm_above
     (f g : FpPoly p) {n k : Nat} (hk : n < k) :
     powLinearBinomTerm f g n k = 0 := by
   unfold powLinearBinomTerm
-  rw [choose_eq_zero_of_lt hk]
+  rw [Hex.Nat.choose_eq_zero_of_lt hk]
   exact powLinearBinom_scalar_zero _
 
 private theorem powLinearBinomSum_top_succ
@@ -538,7 +514,7 @@ private theorem powLinearBinomTerm_prime_zero (f g : FpPoly p) :
 private theorem powLinearBinomTerm_prime_top (f g : FpPoly p) :
     powLinearBinomTerm f g p p = powLinear g p := by
   unfold powLinearBinomTerm
-  rw [choose_self]
+  rw [Hex.Nat.choose_self]
   have hsub : p - p = 0 := by omega
   rw [hsub]
   change DensePoly.scale (1 : ZMod64 p) (powLinear f 0 * powLinear g p) =
