@@ -1902,28 +1902,8 @@ private theorem rat_sub_zero_right (p : DensePoly Rat) :
   grind
 
 private theorem rat_zero_mod_eq_zero (m : DensePoly Rat) :
-    (0 : DensePoly Rat) % m = 0 := by
-  by_cases hm_zero : m.size = 0
-  · exact rat_mod_zero_right_of_size_zero 0 m hm_zero
-  · by_cases hdegree : 0 < m.degree?.getD 0
-    · have hzero_degree : (0 : DensePoly Rat).degree?.getD 0 = 0 := by
-        rfl
-      have hlt : (0 : DensePoly Rat).degree?.getD 0 < m.degree?.getD 0 := by
-        rw [hzero_degree]
-        exact hdegree
-      have hdiv := DensePoly.divMod_eq_zero_self_of_degree_lt (0 : DensePoly Rat) m hlt
-      simpa [DensePoly.mod] using congrArg Prod.snd hdiv
-    · have hm_size : m.size = 1 := by
-        have hm_pos : 0 < m.size := Nat.pos_of_ne_zero hm_zero
-        have hdeg : m.degree?.getD 0 = m.size - 1 := by
-          simp [DensePoly.degree?, hm_zero]
-        rw [hdeg] at hdegree
-        omega
-      have hlead_ne : m.leadingCoeff ≠ (Zero.zero : Rat) := by
-        exact rat_leadingCoeff_ne_zero_of_pos_size m (by omega)
-      simpa [DensePoly.mod] using
-        DensePoly.divMod_remainder_eq_zero_of_degree_zero_core (0 : DensePoly Rat) m
-          hm_size (fun a => rat_div_mul_cancel_of_ne a m.leadingCoeff hlead_ne)
+    (0 : DensePoly Rat) % m = 0 :=
+  DensePoly.zero_mod_eq_zero_core m
 
 private theorem rat_sub_self_right_add (a b : DensePoly Rat) :
     (a + b) - a = b := by
