@@ -106,6 +106,17 @@ into Phase 1 until the Phase 0 PR lands on `main`.
      requires it).
    - Exit non-zero on any violation, printing all violations to stderr.
 
+   **Reusable DAG predicate (for the issue-graph guard):** factor the
+   reachability check into `scripts/libgraph.py` as a pure
+   `may_import(l_a, l_b, libraries) -> bool` (true iff `l_b == l_a` or
+   `l_b` is in `l_a`'s transitive dependency closure). `check_dag.py`
+   uses it for the import-boundary check above; the issue-graph guard
+   uses it to reject and scrub inverted edges
+   ([Inverted dependencies are rejected](Conventions.md#inverted-dependencies-are-rejected)).
+   The predicate makes no GitHub calls: its caller passes in the
+   `library:` and `depends-on:` values it has already read. So the
+   issue-graph guard adds no CI job and no per-push GitHub API calls.
+
 5. Write `scripts/status.py` — a Python script that queries
    `libraries.yml` and the phase-dependency table in
    [Conventions.md](Conventions.md). Its audience is the **planner

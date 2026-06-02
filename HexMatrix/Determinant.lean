@@ -12122,6 +12122,23 @@ private theorem det_plucker_three_term_nDet_of_between_p1_p2
   have hraw := nDet_plucker_four_row_canonical B p1 q p2 p3 h1q hq2 h23
   grind
 
+/-- Raw `nDet` three-term Grassmann-Plucker identity for the q-before case
+`q < p1 < p2 < p3`: the canonical ordered four-row identity
+`nDet_plucker_four_row_canonical` instantiated at `(r0, r1, r2, r3) := (q, p1, p2, p3)`.
+This is the q-before kernel consumed by the downstream consecutive-top Gram
+pattern. -/
+private theorem det_plucker_three_term_nDet_of_lt_p1
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n)
+    (q p1 p2 p3 : Fin (n + 2))
+    (hq1 : q.val < p1.val) (h12 : p1.val < p2.val) (h23 : p2.val < p3.val) :
+    nDet B p2 p3 h23 * nDet B q p1 hq1 -
+      nDet B p1 p3 (Nat.lt_trans h12 h23) *
+        nDet B q p2 (Nat.lt_trans hq1 h12) +
+      nDet B p1 p2 h12 *
+        nDet B q p3 (Nat.lt_trans hq1 (Nat.lt_trans h12 h23)) = 0 :=
+  nDet_plucker_four_row_canonical B q p1 p2 p3 hq1 h12 h23
+
 /-- Basis-vector case `q > p3` of the universal three-term Plucker identity:
 expanding `mDet B (basisVec q) p_i` via `mDet_basisVec_eq_signed_nDet_of_lt`
 (each `q > p_i`) reduces the goal to a sign-aligned restatement of the
