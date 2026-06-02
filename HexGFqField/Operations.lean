@@ -731,6 +731,7 @@ theorem natCast_eq_natCast_iff_mod_eq
   simp
 
 /-- Division is field multiplication by inverse. -/
+@[simp]
 theorem div_eq_mul_inv
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x y : FiniteField f hf hp hirr) :
@@ -1032,7 +1033,7 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
   letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
   refine Lean.Grind.Field.mk ?_ ?_ ?_ ?_ ?_ ?_ ?_
   · intro a b
-    simpa using div_eq_mul_inv a b
+    simp
   · intro h
     exact zero_ne_one f hf hp hirr h
   · exact inv_zero f hf hp hirr
