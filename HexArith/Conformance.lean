@@ -170,6 +170,26 @@ example (a m n p : Nat) (hp : p > 0) :
     HexArith.powMod a (m * n) p = HexArith.powMod (HexArith.powMod a m p) n p := by
   grind
 
+example {p : UInt64} (ctx : BarrettCtx p) (a b : UInt64)
+    (ha : a < p) (hb : b < p) :
+    (ctx.mulMod a b).toNat = (a.toNat * b.toNat) % p.toNat := by
+  simp [ha, hb]
+
+example {p : UInt64} (ctx : BarrettCtx p) (a b : UInt64)
+    (ha : a < p) (hb : b < p) :
+    ctx.mulMod a b < p := by
+  grind
+
+example {p : UInt64} (ctx : BarrettCtx p) (a : UInt64) (ha : a < p) :
+    ctx.mulMod 0 a = 0 ∧ ctx.mulMod a 0 = 0 ∧
+      ctx.mulMod 1 a = a ∧ ctx.mulMod a 1 = a := by
+  simp [ha]
+
+example {p : UInt64} (ctx : BarrettCtx p) (a b : UInt64)
+    (ha : a < p) (hb : b < p) :
+    ctx.mulMod a b = ctx.mulMod b a := by
+  grind
+
 end ProofMode
 
 /-- info: 2 -/
