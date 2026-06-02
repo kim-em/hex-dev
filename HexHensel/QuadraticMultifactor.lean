@@ -134,6 +134,7 @@ def QuadraticLiftLoopInvariant
 
 /-- Constructor for the initial quadratic split invariant from the three
 proof obligations supplied by factor-product, Bezout, and monicness facts. -/
+@[grind =>]
 theorem QuadraticLiftLoopInvariant.of_product_bezout_monic
     {m : Nat} {f g h s t : ZPoly}
     (hprod : ZPoly.congr (g * h) f m)
@@ -143,12 +144,14 @@ theorem QuadraticLiftLoopInvariant.of_product_bezout_monic
   ⟨hprod, hbezout, hg_monic⟩
 
 /-- Product-congruence projection of `QuadraticLiftLoopInvariant`. -/
+@[simp, grind =>]
 theorem QuadraticLiftLoopInvariant.prod_congr
     {m : Nat} {f : ZPoly} {acc : QuadraticLiftResult}
     (h : QuadraticLiftLoopInvariant m f acc) :
     ZPoly.congr (acc.g * acc.h) f m := h.1
 
 /-- Bezout-congruence projection of `QuadraticLiftLoopInvariant`. -/
+@[simp, grind =>]
 theorem QuadraticLiftLoopInvariant.bezout_congr
     {m : Nat} {f : ZPoly} {acc : QuadraticLiftResult}
     (h : QuadraticLiftLoopInvariant m f acc) :
@@ -156,6 +159,7 @@ theorem QuadraticLiftLoopInvariant.bezout_congr
 
 /-- Monicness projection of `QuadraticLiftLoopInvariant`: the leading factor
 `acc.g` is monic. -/
+@[simp, grind =>]
 theorem QuadraticLiftLoopInvariant.monic
     {m : Nat} {f : ZPoly} {acc : QuadraticLiftResult}
     (h : QuadraticLiftLoopInvariant m f acc) :
