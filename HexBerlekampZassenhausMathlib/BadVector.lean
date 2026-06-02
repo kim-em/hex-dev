@@ -482,6 +482,156 @@ theorem auxiliaryPolynomial_coeff_sq_le
       · exact_mod_cast Nat.zero_le _
       · exact sq_nonneg _
 
+private theorem auxiliaryPolynomialWithCorrections_coeff_eq
+    (input : Hex.ZPoly) (liftData : Hex.LiftData)
+    (vec corrections : Array Int) (j : Nat) :
+    (BHKS.auxiliaryPolynomialWithCorrections input liftData vec corrections).coeff j =
+      if j < input.degree?.getD 0 then
+        (∑ i ∈ Finset.range liftData.liftedFactors.size,
+          vec.getD i 0 *
+            (Hex.cldCoeffs input liftData.p liftData.k
+              (liftData.liftedFactors.getD i 0)).getD j 0) -
+          corrections.getD j 0 *
+            Int.ofNat (liftData.p ^
+              (liftData.k - Hex.bhksCoeffCutThreshold liftData.p input j))
+      else 0 := by
+  unfold BHKS.auxiliaryPolynomialWithCorrections
+  rw [Hex.DensePoly.coeff_ofCoeffs_list]
+  by_cases hjn : j < input.degree?.getD 0
+  · rw [if_pos hjn]
+    rw [List.getD_eq_getElem?_getD, List.getElem?_map]
+    rw [show (List.range _)[j]? = some j from List.getElem?_range hjn]
+    simp only [Option.map_some, Option.getD_some]
+    congr 1
+    exact range_foldl_add_int_eq_sum _ _
+  · rw [if_neg hjn]
+    rw [List.getD_eq_getElem?_getD, List.getElem?_map]
+    have hnone : (List.range (input.degree?.getD 0))[j]? = none := by
+      rw [List.getElem?_eq_none_iff]
+      simpa using Nat.le_of_not_lt hjn
+    rw [hnone]
+    rfl
+
+/--
+Per-coefficient bound for the BHKS auxiliary polynomial with diagonal-row
+corrections.
+
+The hypothesis `h` is the same BHKS Lemma 5.1 column bound consumed by
+`auxiliaryPolynomial_coeff_sq_le`.  Under it, the squared `j`-th coefficient of
+`auxiliaryPolynomialWithCorrections input liftData vec corrections` is bounded
+by twice the uncorrected per-coefficient bound plus twice the squared
+diagonal-row correction at index `j`.
+
+The `2` factor is the slack from `(a - b)² ≤ 2 · (a² + b²)`, which lets the
+correction term separate cleanly from the existing Cauchy–Schwarz bound on
+the uncorrected coefficient.
+-/
+theorem auxiliaryPolynomialWithCorrections_coeff_sq_le
+    (input : Hex.ZPoly) (liftData : Hex.LiftData)
+    (vec corrections : Array Int)
+    (h : ∀ (i : Nat), i < liftData.liftedFactors.size → ∀ (j : Nat),
+        ((Hex.cldCoeffs input liftData.p liftData.k
+            (liftData.liftedFactors.getD i 0)).getD j 0).natAbs ≤
+          Hex.bhksCoeffBound input j)
+    (j : Nat) :
+    (((BHKS.auxiliaryPolynomialWithCorrections input liftData vec corrections).coeff j : ℝ)) ^ 2 ≤
+      2 *
+          ((∑ i : Fin liftData.liftedFactors.size,
+              ((vec.getD i.val 0 : ℝ) ^ 2)) *
+            ((liftData.liftedFactors.size : ℝ) *
+              ((Hex.bhksCoeffBound input j : ℝ) ^ 2))) +
+        2 *
+          ((corrections.getD j 0 : ℝ) ^ 2 *
+            ((liftData.p : ℝ) ^
+              (2 *
+                (liftData.k -
+                  Hex.bhksCoeffCutThreshold liftData.p input j)))) := by
+  set r := liftData.liftedFactors.size
+  set B : ℝ := (Hex.bhksCoeffBound input j : ℝ)
+  set d : Nat :=
+    liftData.k - Hex.bhksCoeffCutThreshold liftData.p input j with hd_def
+  set vsum : ℝ :=
+    ∑ i : Fin r, ((vec.getD i.val 0 : ℝ) ^ 2) with hvsum_def
+  set cval : ℝ := (corrections.getD j 0 : ℝ) with hcval_def
+  rw [auxiliaryPolynomialWithCorrections_coeff_eq]
+  have hsub_sq_le : ∀ (a b : ℝ), (a - b) ^ 2 ≤ 2 * a ^ 2 + 2 * b ^ 2 := by
+    intro a b
+    nlinarith [sq_nonneg (a + b)]
+  have hvsum_mul_nonneg : 0 ≤ vsum * ((r : ℝ) * B ^ 2) := by
+    apply mul_nonneg
+    · exact Finset.sum_nonneg (fun i _ => sq_nonneg _)
+    · apply mul_nonneg
+      · exact_mod_cast Nat.zero_le _
+      · exact sq_nonneg _
+  have hcorrect_term_sq_nonneg :
+      0 ≤ cval ^ 2 * (liftData.p : ℝ) ^ (2 * d) := by
+    apply mul_nonneg
+    · exact sq_nonneg _
+    · exact pow_nonneg (by exact_mod_cast Nat.zero_le _) _
+  by_cases hjn : j < input.degree?.getD 0
+  · rw [if_pos hjn]
+    have huncorr_eq :
+        (((BHKS.auxiliaryPolynomial input liftData vec).coeff j : ℤ) : ℝ) =
+          ((∑ i ∈ Finset.range r,
+            vec.getD i 0 *
+              (Hex.cldCoeffs input liftData.p liftData.k
+                (liftData.liftedFactors.getD i 0)).getD j 0 : ℤ) : ℝ) := by
+      rw [auxiliaryPolynomial_coeff_eq, if_pos hjn]
+    have hofNat_cast :
+        ((Int.ofNat (liftData.p ^
+            (liftData.k -
+              Hex.bhksCoeffCutThreshold liftData.p input j)) : ℤ) : ℝ) =
+          (liftData.p : ℝ) ^ d := by
+      rw [hd_def]
+      show (((liftData.p ^
+            (liftData.k -
+              Hex.bhksCoeffCutThreshold liftData.p input j) : ℕ) : ℤ) : ℝ) =
+          (liftData.p : ℝ) ^
+            (liftData.k - Hex.bhksCoeffCutThreshold liftData.p input j)
+      push_cast
+      rfl
+    have hcast :
+        (((∑ i ∈ Finset.range r,
+            vec.getD i 0 *
+              (Hex.cldCoeffs input liftData.p liftData.k
+                (liftData.liftedFactors.getD i 0)).getD j 0) -
+            corrections.getD j 0 *
+              Int.ofNat (liftData.p ^
+                (liftData.k -
+                  Hex.bhksCoeffCutThreshold liftData.p input j)) : ℤ) : ℝ) =
+          (((BHKS.auxiliaryPolynomial input liftData vec).coeff j : ℤ) : ℝ) -
+            cval * (liftData.p : ℝ) ^ d := by
+      rw [huncorr_eq, hcval_def]
+      push_cast
+      rw [hofNat_cast]
+    rw [hcast]
+    have huncorr_sq_le :
+        (((BHKS.auxiliaryPolynomial input liftData vec).coeff j : ℤ) : ℝ) ^ 2 ≤
+          vsum * ((r : ℝ) * B ^ 2) :=
+      auxiliaryPolynomial_coeff_sq_le input liftData vec h j
+    have hcorrect_sq_eq :
+        (cval * (liftData.p : ℝ) ^ d) ^ 2 =
+          cval ^ 2 * (liftData.p : ℝ) ^ (2 * d) := by
+      rw [mul_pow, ← pow_mul]
+      ring_nf
+    calc ((((BHKS.auxiliaryPolynomial input liftData vec).coeff j : ℤ) : ℝ) -
+            cval * (liftData.p : ℝ) ^ d) ^ 2
+          ≤ 2 *
+              (((BHKS.auxiliaryPolynomial input liftData vec).coeff j : ℤ) : ℝ) ^ 2 +
+            2 * (cval * (liftData.p : ℝ) ^ d) ^ 2 :=
+        hsub_sq_le _ _
+      _ ≤ 2 * (vsum * ((r : ℝ) * B ^ 2)) +
+            2 * (cval * (liftData.p : ℝ) ^ d) ^ 2 := by
+        have := mul_le_mul_of_nonneg_left huncorr_sq_le (by norm_num : (0 : ℝ) ≤ 2)
+        linarith
+      _ = 2 * (vsum * ((r : ℝ) * B ^ 2)) +
+            2 * (cval ^ 2 * (liftData.p : ℝ) ^ (2 * d)) := by
+        rw [hcorrect_sq_eq]
+  · rw [if_neg hjn]
+    push_cast
+    rw [show (0 : ℝ) ^ 2 = 0 by ring]
+    linarith
+
 /--
 BHKS Lemma 3.2 squared-l2-norm bound for the auxiliary polynomial.
 
