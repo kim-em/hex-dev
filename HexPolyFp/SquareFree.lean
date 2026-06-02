@@ -4618,6 +4618,147 @@ private theorem pthRoot_normalizeMonic_reconstruct_of_derivative_zero
   rw [pthRoot_normalizeMonic_frobenius_of_derivative_zero hp f hzero hdf]
   exact normalizeMonic_reconstruct hp f
 
+private theorem pthRoot_size_of_derivative_zero
+    (hp : Hex.Nat.Prime p) (f : FpPoly p)
+    (hzero : f.isZero = false)
+    (hdf : (DensePoly.derivative f).isZero = true) :
+    (pthRoot f).size = (f.size - 1) / p + 1 := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  have hmod := derivative_zero_top_degree_mod_eq_zero hp f hzero hdf
+  have hpos : 0 < f.size := size_pos_of_isZero_false f hzero
+  have hp_pos : 0 < p := by
+    have htwo : 2 ≤ p := Hex.Nat.Prime.two_le hp
+    omega
+  have hjp : (f.size - 1) / p * p = f.size - 1 := by
+    have h := Nat.mod_add_div (f.size - 1) p
+    rw [hmod, Nat.zero_add] at h
+    rw [Nat.mul_comm]
+    exact h
+  have hlead_ne : DensePoly.leadingCoeff f ≠ 0 :=
+    fpPoly_leadingCoeff_ne_zero_of_isZero_false f hzero
+  have hcoeff_jp : f.coeff ((f.size - 1) / p * p) = DensePoly.leadingCoeff f := by
+    rw [DensePoly.leadingCoeff_eq_coeff_last f hpos, hjp]
+  have hroot_coeff_j :
+      (pthRoot f).coeff ((f.size - 1) / p) = DensePoly.leadingCoeff f := by
+    rw [pthRoot_coeff]
+    exact hcoeff_jp
+  have hcoeff_above :
+      ∀ i, (f.size - 1) / p < i → (pthRoot f).coeff i = 0 := by
+    intro i hi
+    rw [pthRoot_coeff]
+    apply DensePoly.coeff_eq_zero_of_size_le
+    have hmul : ((f.size - 1) / p + 1) * p ≤ i * p := Nat.mul_le_mul_right p hi
+    have hexp : ((f.size - 1) / p + 1) * p = (f.size - 1) / p * p + p := by
+      rw [Nat.add_mul, Nat.one_mul]
+    rw [hexp, hjp] at hmul
+    omega
+  have hsize_le : (pthRoot f).size ≤ (f.size - 1) / p + 1 := by
+    by_cases hgt : (pthRoot f).size ≤ (f.size - 1) / p + 1
+    · exact hgt
+    · exfalso
+      have hbig : (f.size - 1) / p + 2 ≤ (pthRoot f).size :=
+        Nat.lt_of_not_ge hgt
+      have hpos' : 0 < (pthRoot f).size :=
+        Nat.lt_of_lt_of_le (Nat.succ_pos _) hbig
+      have hidx_succ : (f.size - 1) / p + 1 ≤ (pthRoot f).size - 1 := by
+        have h1 : (pthRoot f).size - 1 + 1 = (pthRoot f).size :=
+          Nat.sub_add_cancel hpos'
+        have h2 : (f.size - 1) / p + 2 ≤ (pthRoot f).size - 1 + 1 := h1 ▸ hbig
+        omega
+      have hidx : (f.size - 1) / p < (pthRoot f).size - 1 :=
+        Nat.lt_of_succ_le hidx_succ
+      have hzero_top : (pthRoot f).coeff ((pthRoot f).size - 1) = 0 :=
+        hcoeff_above _ hidx
+      have hne : (pthRoot f).coeff ((pthRoot f).size - 1) ≠ 0 :=
+        DensePoly.coeff_last_ne_zero_of_pos_size (pthRoot f) hpos'
+      exact hne hzero_top
+  have hsize_ge : (f.size - 1) / p + 1 ≤ (pthRoot f).size := by
+    by_cases hge : (f.size - 1) / p + 1 ≤ (pthRoot f).size
+    · exact hge
+    · exfalso
+      have hzero_at_j : (pthRoot f).coeff ((f.size - 1) / p) = 0 := by
+        apply DensePoly.coeff_eq_zero_of_size_le
+        omega
+      rw [hzero_at_j] at hroot_coeff_j
+      exact hlead_ne hroot_coeff_j.symm
+  omega
+
+private theorem leadingCoeff_pthRoot_of_derivative_zero
+    (hp : Hex.Nat.Prime p) (f : FpPoly p)
+    (hzero : f.isZero = false)
+    (hdf : (DensePoly.derivative f).isZero = true) :
+    DensePoly.leadingCoeff (pthRoot f) = DensePoly.leadingCoeff f := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  have hpos : 0 < f.size := size_pos_of_isZero_false f hzero
+  have hmod := derivative_zero_top_degree_mod_eq_zero hp f hzero hdf
+  have hp_pos : 0 < p := by
+    have htwo : 2 ≤ p := Hex.Nat.Prime.two_le hp
+    omega
+  have hroot_size := pthRoot_size_of_derivative_zero hp f hzero hdf
+  have hroot_pos : 0 < (pthRoot f).size := by rw [hroot_size]; exact Nat.succ_pos _
+  rw [DensePoly.leadingCoeff_eq_coeff_last (pthRoot f) hroot_pos,
+      DensePoly.leadingCoeff_eq_coeff_last f hpos]
+  rw [hroot_size, pthRoot_coeff]
+  congr 1
+  have hdivmul : (f.size - 1) / p * p = f.size - 1 := by
+    have h := Nat.mod_add_div (f.size - 1) p
+    rw [hmod, Nat.zero_add] at h
+    rw [Nat.mul_comm]
+    exact h
+  have hsub : (f.size - 1) / p + 1 - 1 = (f.size - 1) / p := by omega
+  rw [hsub]
+  exact hdivmul
+
+/--
+For a nonzero polynomial `f` with derivative zero, normalising commutes with
+the formal `p`-th root: `(normalizeMonic (pthRoot f)).2 = pthRoot (normalizeMonic f).2`.
+
+The identity is the coefficient-level fact that scaling by an inverse
+commutes with `pthRoot` (since `pthRoot` is linear on stored coefficients),
+combined with `leadingCoeff (pthRoot f) = leadingCoeff f` for derivative-zero
+inputs. It is the computation-level bridge needed by the normalized-provider
+weighted-product chain refactor; it is *not* a normalized-to-raw reachability
+bridge (which is the route ruled out by the counterexample on #6125).
+-/
+private theorem normalizeMonic_pthRoot_of_derivative_zero
+    (hp : Hex.Nat.Prime p) (f : FpPoly p)
+    (hzero : f.isZero = false)
+    (hdf : (DensePoly.derivative f).isZero = true) :
+    (normalizeMonic (pthRoot f)).2 = pthRoot (normalizeMonic f).2 := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  have hroot_size := pthRoot_size_of_derivative_zero hp f hzero hdf
+  have hp_pos : 0 < p := by
+    have htwo : 2 ≤ p := Hex.Nat.Prime.two_le hp
+    omega
+  have hroot_nonzero : (pthRoot f).isZero = false := by
+    have hpos : 0 < (pthRoot f).size := by rw [hroot_size]; exact Nat.succ_pos _
+    simpa [DensePoly.isZero, DensePoly.size, Array.isEmpty_iff_size_eq_zero,
+      Nat.pos_iff_ne_zero] using hpos
+  have hlead_ne : DensePoly.leadingCoeff f ≠ 0 :=
+    fpPoly_leadingCoeff_ne_zero_of_isZero_false f hzero
+  have hlead_root_eq := leadingCoeff_pthRoot_of_derivative_zero hp f hzero hdf
+  apply DensePoly.ext_coeff
+  intro n
+  rw [normalizeMonic_nonzero (pthRoot f) hroot_nonzero,
+      normalizeMonic_nonzero f hzero]
+  show (DensePoly.scale (DensePoly.leadingCoeff (pthRoot f))⁻¹ (pthRoot f)).coeff n =
+    (pthRoot (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f)).coeff n
+  have hscale_pthRoot :
+      (DensePoly.scale (DensePoly.leadingCoeff (pthRoot f))⁻¹ (pthRoot f)).coeff n =
+        (DensePoly.leadingCoeff (pthRoot f))⁻¹ * (pthRoot f).coeff n :=
+    DensePoly.coeff_scale_semiring _ (pthRoot f) n
+  have hpthRoot_lhs :
+      (pthRoot f).coeff n = f.coeff (n * p) := pthRoot_coeff f n
+  have hpthRoot_rhs :
+      (pthRoot (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f)).coeff n =
+        (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f).coeff (n * p) :=
+    pthRoot_coeff (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f) n
+  have hscale_f :
+      (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f).coeff (n * p) =
+        (DensePoly.leadingCoeff f)⁻¹ * f.coeff (n * p) :=
+    DensePoly.coeff_scale_semiring _ f (n * p)
+  rw [hscale_pthRoot, hpthRoot_lhs, hpthRoot_rhs, hscale_f, hlead_root_eq]
+
 private theorem pthRoot_normalized_valid_of_derivative_zero_nontrivial
     (hp : Hex.Nat.Prime p) (f : FpPoly p) {fuel : Nat}
     (hfuel : f.size < fuel + 1)
