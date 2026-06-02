@@ -1827,6 +1827,148 @@ def badVectorWitnessOfFactorFastCapLiftData
     rows_pos localFactorIndex localFactorDegree H
 
 /--
+Actual-cap corrected auxiliary-polynomial identity supplied by
+`BadVectorBridgeData`.
+
+This is the `factorFast` cap-lift specialization of
+`ExecutableBadVectorWitness.BadVectorBridgeData.auxiliary_eq'`, with the
+canonical correction accessor exposed in the conclusion so later constructor
+code can consume the field without rebuilding the cap-lift witness expression.
+-/
+theorem factorFastCapLift_auxiliary_eq_of_bridge_data
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    (v :
+      Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount → ℤ)
+    (hin :
+      v ∈
+        BHKS.projectedRowSpanInt
+          (projectedRowsOfLiftData
+            (Hex.normalizeForFactor f).squareFreeCore
+            (factorFastCapLiftData f primeData)
+            rows_pos))
+    (hnot :
+      v ∉ BHKS.trueFactorIndicatorLattice trueSupports) :
+    (badVectorWitnessOfFactorFastCapLiftData
+      f primeData rows_pos localFactorIndex localFactorDegree H).H =
+      BHKS.auxiliaryPolynomialWithCorrections
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H).input
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H).liftData
+        ((badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H).projectedVectorArray v)
+        (bridge.auxiliaryCorrections v hin hnot) :=
+  bridge.auxiliary_eq' v hin hnot
+
+/--
+Actual-cap selected local-factor degree positivity supplied by
+`BadVectorBridgeData`.
+-/
+theorem factorFastCapLift_localFactorDegree_pos_of_bridge_data
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H)
+        trueSupports) :
+    0 <
+      (badVectorWitnessOfFactorFastCapLiftData
+        f primeData rows_pos localFactorIndex localFactorDegree H).localFactorDegree :=
+  ExecutableBadVectorWitness.localFactorDegree_pos_of_bridge_data bridge
+
+/--
+Actual-cap rational coprimality clause supplied by `BadVectorBridgeData`.
+-/
+theorem factorFastCapLift_coprime_input_aux_over_rat_of_bridge_data
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H)
+        trueSupports) :
+    IsCoprime
+      ((badVectorWitnessOfFactorFastCapLiftData
+        f primeData rows_pos localFactorIndex localFactorDegree H).inputPolynomial.map
+          (Int.castRingHom ℚ))
+      ((badVectorWitnessOfFactorFastCapLiftData
+        f primeData rows_pos localFactorIndex localFactorDegree H).auxiliaryPolynomial.map
+          (Int.castRingHom ℚ)) :=
+  ExecutableBadVectorWitness.coprime_input_aux_over_rat_of_bridge_data bridge
+
+/--
+Actual-cap `p^(k*d)` resultant divisibility clause supplied by
+`BadVectorBridgeData`.
+-/
+theorem factorFastCapLift_resultant_divisible_by_p_pow_of_bridge_data
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H)
+        trueSupports) :
+    (((badVectorWitnessOfFactorFastCapLiftData
+        f primeData rows_pos localFactorIndex localFactorDegree H).liftData.p ^
+      ((badVectorWitnessOfFactorFastCapLiftData
+        f primeData rows_pos localFactorIndex localFactorDegree H).liftData.k *
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H).localFactorDegree) :
+      Nat) : ℤ) ∣
+      Polynomial.resultant
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H).inputPolynomial
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H).auxiliaryPolynomial :=
+  ExecutableBadVectorWitness.resultant_divisible_by_p_pow_of_bridge_data bridge
+
+/--
 The remaining analytic comparison needed by cap separation at the actual
 `factorFast` cap lift.
 
