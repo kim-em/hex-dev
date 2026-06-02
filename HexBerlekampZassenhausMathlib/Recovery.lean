@@ -1632,6 +1632,152 @@ private abbrev factorFastCapLiftData
     primeData
 
 /--
+The bad-vector witness attached to the actual Hensel lift used by
+`Hex.factorFast`: the normalized square-free core lifted to
+`precisionForCoeffBound (factorFastPrecisionCap f) primeData.p`.
+
+This is a named cap-lift specialization of `badVectorWitnessOfLiftData`, so
+callers no longer have to rebuild the nested executable lift expression before
+feeding the witness to the cap-separation layer.
+-/
+def badVectorWitnessOfFactorFastCapLiftData
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly) :
+    ExecutableBadVectorWitness :=
+  badVectorWitnessOfLiftData
+    (Hex.normalizeForFactor f).squareFreeCore
+    (factorFastCapLiftData f primeData)
+    rows_pos localFactorIndex localFactorDegree H
+
+/--
+The remaining analytic comparison needed by cap separation at the actual
+`factorFast` cap lift.
+
+The field is the #5216-style Hadamard/l2norm upper-bound comparison, but the
+package is indexed by the cap-lift witness.  Downstream actual-cap callers can
+carry this named object instead of passing the raw
+`ExecutableCapSeparationHypotheses.l2norm_upper_lt_divisor` field directly.
+-/
+structure FactorFastCapLiftAnalyticComparison
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly) where
+  hadamard_l2norm_lt_divisor :
+    (HexPolyZMathlib.l2norm
+          (badVectorWitnessOfFactorFastCapLiftData
+            f primeData rows_pos localFactorIndex localFactorDegree H).inputPolynomial) ^
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H).auxiliaryPolynomial.natDegree *
+      (HexPolyZMathlib.l2norm
+          (badVectorWitnessOfFactorFastCapLiftData
+            f primeData rows_pos localFactorIndex localFactorDegree H).auxiliaryPolynomial) ^
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H).inputPolynomial.natDegree <
+    ((factorFastCapLiftData f primeData).p ^
+      ((factorFastCapLiftData f primeData).k * localFactorDegree) : ℝ)
+
+/--
+Cap-separation hypotheses for the actual `factorFast` cap lift, assembled from
+the landed bridge package and the named cap-lift analytic comparison package.
+-/
+def capSeparationOfBridgeDataAtFactorFastCapLift
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (hcut :
+      CutProjectionHypotheses
+        (projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          rows_pos)
+        trueSupports)
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    (hp : 0 < (factorFastCapLiftData f primeData).p)
+    (hcomparison :
+      FactorFastCapLiftAnalyticComparison
+        f primeData rows_pos localFactorIndex localFactorDegree H) :
+    ExecutableCapSeparationHypotheses
+      (badVectorWitnessOfFactorFastCapLiftData
+        f primeData rows_pos localFactorIndex localFactorDegree H)
+      trueSupports :=
+  capSeparationOfBridgeData rows_pos localFactorIndex localFactorDegree H
+    trueSupports hcut bridge hp hcomparison.hadamard_l2norm_lt_divisor
+
+/--
+Actual-cap BHKS separation for the projected rows built by the public
+`factorFast` lift.
+
+This composes the cap-lift witness, bad-vector bridge package, cut hypotheses,
+and named analytic comparison into the projected row-span equality consumed by
+the recovery layer.
+-/
+theorem projectedRowSpan_eq_trueFactorIndicatorLattice_of_factorFastCapLift_bridge
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (hcap_le :
+      Hex.factorFastPrecisionCap (Hex.normalizeForFactor f).squareFreeCore ≤
+        (factorFastCapLiftData f primeData).k)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (hcut :
+      CutProjectionHypotheses
+        (projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          rows_pos)
+        trueSupports)
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    (hp : 0 < (factorFastCapLiftData f primeData).p)
+    (hcomparison :
+      FactorFastCapLiftAnalyticComparison
+        f primeData rows_pos localFactorIndex localFactorDegree H) :
+    projectedRowSpanInt
+        (projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          rows_pos) =
+      trueFactorIndicatorLattice trueSupports :=
+  projectedRowsOfLiftData_eq_trueFactorIndicatorLattice_of_cap
+    (Hex.normalizeForFactor f).squareFreeCore
+    (factorFastCapLiftData f primeData)
+    rows_pos localFactorIndex localFactorDegree H trueSupports
+    hcap_le C hC_nonneg hC
+    (capSeparationOfBridgeDataAtFactorFastCapLift
+      f primeData rows_pos localFactorIndex localFactorDegree H
+      trueSupports hcut bridge hp hcomparison)
+
+/--
 HO-4 leaf capstone: compose
 `ForwardRecoveryInputs.ofCapSeparationCanonicalIndicatorsAtPrecisionForCoeffBound`
 with `factorFast_ne_none_of_forwardInputs_at_cap`.
