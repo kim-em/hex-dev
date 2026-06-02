@@ -233,6 +233,62 @@ theorem bhksPaperThresholdReal_le_factorFastPrecisionCap
 namespace ExecutableBadVectorWitness
 
 /--
+Turn separate l2-norm bounds for the input and auxiliary polynomials into the
+strict Hadamard/l2norm comparison consumed by the resultant contradiction.
+
+This is the generic witness-level arithmetic step used by the actual-cap
+`factorFast` witness: auxiliary-polynomial norm estimates discharge
+`hauxiliary`, input norm estimates discharge `hinput`, and the cap arithmetic
+discharges `hstrict`.
+-/
+theorem l2norm_product_lt_divisor_of_l2norm_bounds
+    (W : ExecutableBadVectorWitness) {inputBound auxiliaryBound : ℝ}
+    (hinput : HexPolyZMathlib.l2norm W.inputPolynomial ≤ inputBound)
+    (hauxiliary : HexPolyZMathlib.l2norm W.auxiliaryPolynomial ≤ auxiliaryBound)
+    (hstrict :
+      inputBound ^ W.auxiliaryPolynomial.natDegree *
+          auxiliaryBound ^ W.inputPolynomial.natDegree <
+        (W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : ℝ)) :
+    (HexPolyZMathlib.l2norm W.inputPolynomial) ^
+        W.auxiliaryPolynomial.natDegree *
+      (HexPolyZMathlib.l2norm W.auxiliaryPolynomial) ^
+        W.inputPolynomial.natDegree <
+    (W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : ℝ) := by
+  have hinput_pow :
+      (HexPolyZMathlib.l2norm W.inputPolynomial) ^
+          W.auxiliaryPolynomial.natDegree ≤
+        inputBound ^ W.auxiliaryPolynomial.natDegree := by
+    have hnonneg : 0 ≤ HexPolyZMathlib.l2norm W.inputPolynomial := by
+      unfold HexPolyZMathlib.l2norm
+      exact Real.sqrt_nonneg _
+    exact pow_le_pow_left₀ hnonneg hinput _
+  have hauxiliary_pow :
+      (HexPolyZMathlib.l2norm W.auxiliaryPolynomial) ^
+          W.inputPolynomial.natDegree ≤
+        auxiliaryBound ^ W.inputPolynomial.natDegree := by
+    have hnonneg : 0 ≤ HexPolyZMathlib.l2norm W.auxiliaryPolynomial := by
+      unfold HexPolyZMathlib.l2norm
+      exact Real.sqrt_nonneg _
+    exact pow_le_pow_left₀ hnonneg hauxiliary _
+  have hauxiliary_pow_nonneg :
+      0 ≤ (HexPolyZMathlib.l2norm W.auxiliaryPolynomial) ^
+          W.inputPolynomial.natDegree := by
+    have hnonneg : 0 ≤ HexPolyZMathlib.l2norm W.auxiliaryPolynomial := by
+      unfold HexPolyZMathlib.l2norm
+      exact Real.sqrt_nonneg _
+    exact pow_nonneg hnonneg _
+  have hinput_bound_nonneg : 0 ≤ inputBound := by
+    have hnonneg : 0 ≤ HexPolyZMathlib.l2norm W.inputPolynomial := by
+      unfold HexPolyZMathlib.l2norm
+      exact Real.sqrt_nonneg _
+    exact hnonneg.trans hinput
+  exact lt_of_le_of_lt
+    (mul_le_mul hinput_pow hauxiliary_pow
+      hauxiliary_pow_nonneg
+      (pow_nonneg hinput_bound_nonneg _))
+    hstrict
+
+/--
 Packaged BHKS bad-vector contradiction at a precision bounded below by
 `factorFastPrecisionCap`.
 
