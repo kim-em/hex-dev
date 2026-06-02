@@ -19,9 +19,19 @@ from matplotlib.ticker import FuncFormatter
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DENSIFIED = ROOT / "reports/bench-results/hex-lll-densified-6fcd1185cee0.json"
-DEFAULT_FPYLLL_RANDOM = ROOT / "reports/bench-results/hex-lll-fpylll-0c2d9a9e2d0a.json"
+# Post-warmupFirstIter exports; supersede the pre-fix files whose
+# subprocess-driver startup dominated small-n medians.
+DEFAULT_FPYLLL_RANDOM = (
+    ROOT / "reports/bench-results/hex-lll-fpylll-random-bounded-warmupfix.json"
+)
 DEFAULT_FPYLLL_HARSH = (
-    ROOT / "reports/bench-results/hex-lll-fpylll-harsh-cubic-4a69408a680d.json"
+    ROOT / "reports/bench-results/hex-lll-harsh-cubic-extended-warmupfix.json"
+)
+DEFAULT_HARSH_LEAN_ISABELLE = (
+    ROOT / "reports/bench-results/hex-lll-harsh-cubic-extended-warmupfix.json"
+)
+DEFAULT_ISABELLE = (
+    ROOT / "reports/bench-results/hex-lll-isabelle-warmupfix.json"
 )
 DEFAULT_ISABELLE_BOTTOM = (
     ROOT / "reports/bench-results/hex-lll-isabelle-bottom-e211854d1435.json"
@@ -53,6 +63,9 @@ class FamilyConfig:
     output: Path
     title: str
     xlabel: str
+    # If set, read Lean and Isabelle from this single file instead of
+    # the densified file + the standalone Isabelle export.
+    consolidated_path: Path | None = None
     bottom_consistency: bool = False
 
 
@@ -75,6 +88,7 @@ FAMILIES = {
         output=DEFAULT_HARSH_OUTPUT,
         title="HexLLL harsh-cubic comparator runtime",
         xlabel="harsh-cubic dimension n",
+        consolidated_path=DEFAULT_HARSH_LEAN_ISABELLE,
     ),
 }
 
@@ -168,6 +182,12 @@ def main() -> None:
         help="Override the family-specific fpylll export.",
     )
     parser.add_argument(
+        "--isabelle",
+        type=Path,
+        default=DEFAULT_ISABELLE,
+        help="Isabelle export to use; defaults to the post-warmupFirstIter run.",
+    )
+    parser.add_argument(
         "--isabelle-bottom", type=Path, default=DEFAULT_ISABELLE_BOTTOM
     )
     parser.add_argument("--output", type=Path, default=None)
@@ -176,13 +196,18 @@ def main() -> None:
     fpylll_path = args.fpylll or config.fpylll_path
     output = args.output or config.output
 
-    densified_results = load_results(args.densified)
     fpylll_results = load_results(fpylll_path)
-
-    lean = collect_series(densified_results, config.lean_pattern, "Lean")
-    isabelle = collect_series(
-        densified_results, config.isabelle_pattern, "verified Isabelle LLL"
-    )
+    if config.consolidated_path is not None:
+        cons = load_results(config.consolidated_path)
+        lean = collect_series(cons, config.lean_pattern, "Lean")
+        isabelle = collect_series(cons, config.isabelle_pattern,
+                                  "verified Isabelle LLL")
+    else:
+        densified_results = load_results(args.densified)
+        isabelle_results = load_results(args.isabelle)
+        lean = collect_series(densified_results, config.lean_pattern, "Lean")
+        isabelle = collect_series(isabelle_results, config.isabelle_pattern,
+                                  "verified Isabelle LLL")
     fpylll = collect_series(
         fpylll_results, config.fpylll_pattern, "fpLLL via fpylll"
     )

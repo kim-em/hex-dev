@@ -15,7 +15,7 @@
    "type": "git",
    "subDir": null,
    "scope": "",
-   "rev": "91412dba8350c29ddf52c9ace56f8a3d2240b6c7",
+   "rev": "09645b5beba21307266f4e0bf375c3c363550ae9",
    "name": "«lean-bench»",
    "manifestFile": "lake-manifest.json",
    "inputRev": "master",

@@ -425,6 +425,12 @@ initialize harshCubicInput50Ref : IO.Ref (Option FirstShortVectorInput) ←
 initialize harshCubicInput55Ref : IO.Ref (Option FirstShortVectorInput) ←
   IO.mkRef none
 
+initialize harshCubicInput60Ref : IO.Ref (Option FirstShortVectorInput) ←
+  IO.mkRef none
+
+initialize harshCubicInput65Ref : IO.Ref (Option FirstShortVectorInput) ←
+  IO.mkRef none
+
 /-! ## Phase-4 `LLLState.ofBasis` input families. -/
 
 /-- Entry generator for bounded random-looking square bases. -/
@@ -931,6 +937,16 @@ def runFpylllFirstShortVectorHarshCubic55Checksum : Unit → IO Int := fun _ => 
   runFpylllFirstShortVectorChecksum
     (← getCachedInput harshCubicInput55Ref (fun _ => prepHarshCubicInput 55))
 
+/-- fpylll comparator for the harsh-cubic rung `n = 60`. -/
+def runFpylllFirstShortVectorHarshCubic60Checksum : Unit → IO Int := fun _ => do
+  runFpylllFirstShortVectorChecksum
+    (← getCachedInput harshCubicInput60Ref (fun _ => prepHarshCubicInput 60))
+
+/-- fpylll comparator for the harsh-cubic rung `n = 65`. -/
+def runFpylllFirstShortVectorHarshCubic65Checksum : Unit → IO Int := fun _ => do
+  runFpylllFirstShortVectorChecksum
+    (← getCachedInput harshCubicInput65Ref (fun _ => prepHarshCubicInput 65))
+
 def runFirstShortVectorBZRecombinationNormSq : Unit → IO Int := fun _ => do
   return runFirstShortVectorNormSq (← bzRecombinationInputRef.get)
 
@@ -1072,6 +1088,22 @@ def runFirstShortVectorHarshCubicNormSq55 : Unit → IO Int := fun _ => do
 def runIsabelleHarshCubicNormSq55 : Unit → IO Int := fun _ => do
   runIsabelleShortVectorNormSq "harsh-cubic-55"
     (← getCachedInput harshCubicInput55Ref (fun _ => prepHarshCubicInput 55))
+
+def runFirstShortVectorHarshCubicNormSq60 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq
+    (← getCachedInput harshCubicInput60Ref (fun _ => prepHarshCubicInput 60))
+
+def runIsabelleHarshCubicNormSq60 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "harsh-cubic-60"
+    (← getCachedInput harshCubicInput60Ref (fun _ => prepHarshCubicInput 60))
+
+def runFirstShortVectorHarshCubicNormSq65 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq
+    (← getCachedInput harshCubicInput65Ref (fun _ => prepHarshCubicInput 65))
+
+def runIsabelleHarshCubicNormSq65 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "harsh-cubic-65"
+    (← getCachedInput harshCubicInput65Ref (fun _ => prepHarshCubicInput 65))
 
 /-- Parametric benchmark target: LCG random-bounded bases. -/
 def runFirstShortVectorRandomBoundedChecksum (input : FirstShortVectorInput) : Int :=
@@ -1235,6 +1267,7 @@ setup_fixed_benchmark runFpylllFirstShortVectorBZRecombinationChecksum where {
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
     expectedHash := some 0x20001
+    warmupFirstIter := true
   }
 
 /- Fixed Lean/fpylll comparison for the random-bounded family across the
@@ -1250,48 +1283,56 @@ setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded30Checksum where {
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
     expectedHash := some 0x4
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded45Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded60Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 30.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded75Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 30.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded90Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 40.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded120Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 60.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded150Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded180Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 120.0
+    warmupFirstIter := true
   }
 
 /- Fixed bottom-rung Lean/fpylll comparison for the harsh-cubic family at
@@ -1308,54 +1349,75 @@ setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic15Checksum where {
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
     expectedHash := some 0x6ccfd453f897ff98
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic20Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic25Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic30Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic35Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic40Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic45Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic50Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic55Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic60Checksum where {
+    repeats := 5
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic65Checksum where {
+    repeats := 5
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
   }
 
 /- Complexity derivation: random-bounded inputs have square dimension `n` and
@@ -1411,6 +1473,7 @@ setup_fixed_benchmark runIsabelleBZRecombinationNormSq where {
     minTotalSeconds := 1.0
     maxSecondsPerCall := 60.0
     expectedHash := some (Hashable.hash (runFirstShortVectorNormSq bzRecombinationInput))
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq30 where {
@@ -1424,6 +1487,7 @@ setup_fixed_benchmark runIsabelleRandomBoundedNormSq30 where {
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
     expectedHash := some (firstShortVectorRandomBoundedNormSqHash 30)
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq45 where {
@@ -1437,6 +1501,7 @@ setup_fixed_benchmark runIsabelleRandomBoundedNormSq45 where {
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
     expectedHash := some (firstShortVectorRandomBoundedNormSqHash 45)
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq60 where {
@@ -1450,6 +1515,7 @@ setup_fixed_benchmark runIsabelleRandomBoundedNormSq60 where {
     minTotalSeconds := 1.0
     maxSecondsPerCall := 30.0
     expectedHash := some (firstShortVectorRandomBoundedNormSqHash 60)
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq75 where {
@@ -1463,6 +1529,7 @@ setup_fixed_benchmark runIsabelleRandomBoundedNormSq75 where {
     minTotalSeconds := 1.0
     maxSecondsPerCall := 30.0
     expectedHash := some (firstShortVectorRandomBoundedNormSqHash 75)
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq90 where {
@@ -1476,6 +1543,7 @@ setup_fixed_benchmark runIsabelleRandomBoundedNormSq90 where {
     minTotalSeconds := 1.0
     maxSecondsPerCall := 40.0
     expectedHash := some (firstShortVectorRandomBoundedNormSqHash 90)
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq120 where {
@@ -1489,6 +1557,7 @@ setup_fixed_benchmark runIsabelleRandomBoundedNormSq120 where {
     minTotalSeconds := 1.0
     maxSecondsPerCall := 60.0
     expectedHash := some (firstShortVectorRandomBoundedNormSqHash 120)
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq150 where {
@@ -1502,6 +1571,7 @@ setup_fixed_benchmark runIsabelleRandomBoundedNormSq150 where {
     minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
     expectedHash := some (firstShortVectorRandomBoundedNormSqHash 150)
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFirstShortVectorRandomBoundedNormSq180 where {
@@ -1515,6 +1585,7 @@ setup_fixed_benchmark runIsabelleRandomBoundedNormSq180 where {
     minTotalSeconds := 1.0
     maxSecondsPerCall := 120.0
     expectedHash := some (firstShortVectorRandomBoundedNormSqHash 180)
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq15 where {
@@ -1528,6 +1599,7 @@ setup_fixed_benchmark runIsabelleHarshCubicNormSq15 where {
     minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
     expectedHash := some (firstShortVectorHarshCubicNormSqHash 15)
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq20 where {
@@ -1541,6 +1613,7 @@ setup_fixed_benchmark runIsabelleHarshCubicNormSq20 where {
     minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
     expectedHash := some (firstShortVectorHarshCubicNormSqHash 20)
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq25 where {
@@ -1554,6 +1627,7 @@ setup_fixed_benchmark runIsabelleHarshCubicNormSq25 where {
     minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
     expectedHash := some (firstShortVectorHarshCubicNormSqHash 25)
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq30 where {
@@ -1567,6 +1641,7 @@ setup_fixed_benchmark runIsabelleHarshCubicNormSq30 where {
     minTotalSeconds := 1.0
     maxSecondsPerCall := 40.0
     expectedHash := some (firstShortVectorHarshCubicNormSqHash 30)
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq35 where {
@@ -1580,6 +1655,7 @@ setup_fixed_benchmark runIsabelleHarshCubicNormSq35 where {
     minTotalSeconds := 1.0
     maxSecondsPerCall := 60.0
     expectedHash := some (firstShortVectorHarshCubicNormSqHash 35)
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq40 where {
@@ -1593,6 +1669,7 @@ setup_fixed_benchmark runIsabelleHarshCubicNormSq40 where {
     minTotalSeconds := 1.0
     maxSecondsPerCall := 60.0
     expectedHash := some (firstShortVectorHarshCubicNormSqHash 40)
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq45 where {
@@ -1606,6 +1683,7 @@ setup_fixed_benchmark runIsabelleHarshCubicNormSq45 where {
     minTotalSeconds := 1.0
     maxSecondsPerCall := 60.0
     expectedHash := some (firstShortVectorHarshCubicNormSqHash 45)
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq50 where {
@@ -1619,6 +1697,7 @@ setup_fixed_benchmark runIsabelleHarshCubicNormSq50 where {
     minTotalSeconds := 1.0
     maxSecondsPerCall := 60.0
     expectedHash := some (firstShortVectorHarshCubicNormSqHash 50)
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq55 where {
@@ -1632,6 +1711,33 @@ setup_fixed_benchmark runIsabelleHarshCubicNormSq55 where {
     minTotalSeconds := 1.0
     maxSecondsPerCall := 60.0
     expectedHash := some (firstShortVectorHarshCubicNormSqHash 55)
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq60 where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 60)
+  }
+
+setup_fixed_benchmark runIsabelleHarshCubicNormSq60 where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 60)
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq65 where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 65)
+  }
+
+setup_fixed_benchmark runIsabelleHarshCubicNormSq65 where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 65)
+    warmupFirstIter := true
   }
 
 end Hex.LLLBench
