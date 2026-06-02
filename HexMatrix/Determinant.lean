@@ -12209,6 +12209,65 @@ private theorem det_plucker_three_term_basisVec_of_gt_p3_of_nDet
   rw [mDet_basisVec_eq_signed_nDet_of_lt B p3 q h3q]
   grind
 
+/-- Consecutive-top vector-column Plücker identity.
+
+This is the Mathlib-free specialization used by the Gram/Bareiss trajectory:
+the three distinguished rows are `alpha`, `k`, and `k+1` inside
+`Fin (k + 2)`, so the top row is the last possible row and there is no
+`q > p3` basis-vector case. -/
+theorem det_plucker_three_term_consecutive_top
+    {R : Type u} [Lean.Grind.CommRing R] {k : Nat}
+    (B : Matrix R (k + 2) k) (v : Vector R (k + 2))
+    (alpha : Fin (k + 2)) (halpha : alpha.val < k) :
+    let pk : Fin (k + 2) := ⟨k, by omega⟩
+    let plast : Fin (k + 2) := Fin.last (k + 1)
+    mDet B v alpha * nDet B pk plast (by dsimp [pk, plast]; omega) -
+      mDet B v pk * nDet B alpha plast (by dsimp [plast]; omega) +
+      mDet B v plast * nDet B alpha pk (by dsimp [pk]; exact halpha) = 0 := by
+  let pk : Fin (k + 2) := ⟨k, by omega⟩
+  let plast : Fin (k + 2) := Fin.last (k + 1)
+  have h12 : alpha.val < pk.val := by
+    dsimp [pk]
+    exact halpha
+  have h23 : pk.val < plast.val := by
+    dsimp [pk, plast]
+    omega
+  dsimp only
+  refine det_plucker_three_term_of_basisVec B v alpha pk plast h12 h23 ?_
+  intro q
+  by_cases hq_alpha : q = alpha
+  · subst q
+    exact det_plucker_three_term_basisVec_of_eq_p1 B alpha pk plast h12 h23
+  by_cases hq_pk : q = pk
+  · subst hq_pk
+    exact det_plucker_three_term_basisVec_of_eq_p2 B alpha pk plast h12 h23
+  by_cases hq_plast : q = plast
+  · subst hq_plast
+    exact det_plucker_three_term_basisVec_of_eq_p3 B alpha pk plast h12 h23
+  by_cases hq_lt_alpha : q.val < alpha.val
+  · exact det_plucker_three_term_basisVec_of_lt_p1_of_nDet
+      B q alpha pk plast hq_lt_alpha h12 h23
+  have halpha_lt_q : alpha.val < q.val := by
+    omega
+  have hq_lt_pk : q.val < pk.val := by
+    have hq_ne_pk_val : q.val ≠ k := by
+      intro hv
+      apply hq_pk
+      apply Fin.ext
+      dsimp [pk]
+      exact hv
+    have hq_ne_plast_val : q.val ≠ k + 1 := by
+      intro hv
+      apply hq_plast
+      apply Fin.ext
+      dsimp [plast]
+      exact hv
+    have hq_bound : q.val < k + 2 := q.isLt
+    dsimp [pk]
+    omega
+  exact det_plucker_three_term_basisVec_of_between_p1_p2_of_nDet
+    B alpha q pk plast halpha_lt_q hq_lt_pk h23
+
 /-- Sign-shift relation between the outer `(Fin.last (n+1))` cofactor sign
 used by `twoColDet_basisVec_basisVec_of_lt` for the *second* basis column and
 the inner `(Fin.last n)` cofactor sign used for the *first* basis column:
