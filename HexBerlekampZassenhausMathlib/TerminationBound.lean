@@ -281,6 +281,48 @@ theorem no_bhks_bad_setup_of_factorFastPrecisionCap_le
     W ha C hC_nonneg hC h_bad hp hlt).2
 
 /--
+BHKS bad-vector norm lower bound against the executable cut radius.
+
+This is the cut-radius-facing form of the existing resultant contradiction:
+once the cap arithmetic has reduced every projected vector with squared norm
+at most `cutRadiusSq4` to an l2norm upper bound below the modular divisor, a
+bad vector must have squared projected norm strictly above `cutRadiusSq4`.
+
+The hypothesis `hnorm_to_l2norm_upper_lt_divisor` is the remaining
+paper-threshold arithmetic comparison.  Keeping it explicit lets later work
+plug in the `auxiliaryPolynomial_l2norm_sq_le` and `BHKSBound.lean` estimates
+without restating the resultant contradiction or the cap-dominance wrapper.
+-/
+theorem bhks_bad_vector_norm_sq_gt_cutRadiusSq4_of_paperThreshold_le
+    (W : ExecutableBadVectorWitness) {a : Nat}
+    (ha : Hex.factorFastPrecisionCap W.input ≤ a)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (h_bad : IsBhksBadVectorSetup W)
+    (hp : 0 < W.liftData.p)
+    (hnorm_to_l2norm_upper_lt_divisor :
+      (∑ i : Fin W.projectedRows.factorCount,
+          ((W.projectedVectorFn h_bad.bhksVector i : ℝ) ^ 2)) ≤
+          (W.projectedRows.cutRadiusSq4 : ℝ) →
+        (HexPolyZMathlib.l2norm W.inputPolynomial) ^
+            W.auxiliaryPolynomial.natDegree *
+          (HexPolyZMathlib.l2norm W.auxiliaryPolynomial) ^
+            W.inputPolynomial.natDegree <
+        (W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : ℝ)) :
+    (W.projectedRows.cutRadiusSq4 : ℝ) <
+      ∑ i : Fin W.projectedRows.factorCount,
+        ((W.projectedVectorFn h_bad.bhksVector i : ℝ) ^ 2) := by
+  by_contra hnot
+  have hnorm_le :
+      (∑ i : Fin W.projectedRows.factorCount,
+          ((W.projectedVectorFn h_bad.bhksVector i : ℝ) ^ 2)) ≤
+          (W.projectedRows.cutRadiusSq4 : ℝ) := by
+    exact le_of_not_gt hnot
+  exact
+    no_bhks_bad_setup_of_factorFastPrecisionCap_le
+      W ha C hC_nonneg hC h_bad hp
+      (hnorm_to_l2norm_upper_lt_divisor hnorm_le)
+
+/--
 Exact-cap bad-vector contradiction wrapper for callers working at
 `factorFastPrecisionCap W.input`.
 -/
