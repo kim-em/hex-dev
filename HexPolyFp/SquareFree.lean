@@ -4918,6 +4918,29 @@ private theorem normalizeMonic_squareFreeContributionPayload
     ⟨normalizeMonic_squareFreeContributionReachable hp f,
       normalizeMonic_nonzero_isZero_false f hzero⟩
 
+private theorem normalizeMonic_isOne_false_of_isOne_false
+    (hp : Hex.Nat.Prime p) (f : FpPoly p)
+    (hzero : f.isZero = false)
+    (hreachable : squareFreeContributionReachable f)
+    (hone : isOne f = false) :
+    isOne (normalizeMonic f).2 = false := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  by_cases hnorm_one : isOne (normalizeMonic f).2 = true
+  · have hnorm_eq_one : (normalizeMonic f).2 = 1 :=
+      eq_one_of_isOne_true (normalizeMonic f).2 hnorm_one
+    have hnorm_size : (normalizeMonic f).2.size = 1 := by
+      rw [hnorm_eq_one]
+      exact DensePoly.size_C_of_ne_zero (zmod64_one_ne_zero_of_prime hp)
+    have hf_size : f.size = 1 := by
+      have hsize_eq := normalizeMonic_nonzero_size_eq hp f hzero
+      omega
+    have hf_eq_one : f = 1 := hreachable hf_size
+    rw [hf_eq_one, isOne_one] at hone
+    cases hone
+  · cases h : isOne (normalizeMonic f).2
+    · rfl
+    · exact False.elim (hnorm_one h)
+
 private abbrev YunDerivativeActiveNormalizedStateProvider
     (hp : Hex.Nat.Prime p) : Prop :=
   ∀ f' c w : FpPoly p, ∀ fuel : Nat,
@@ -6206,9 +6229,20 @@ private theorem squareFreeAuxRevContribution_derivative_active_pow_obligation
       yunFactorsContributionWithLevel_pthRoot_tail_valid
         hp f c g multiplicity 1 fuel hstate_current hinitial_reachable
         htail_fuel hone_false htail_derivative
+    have htail_raw_valid :=
+      yunFactorsContributionWithLevel_tail_valid_of_derivative_active_reachable
+        hp f c g multiplicity 1 fuel hstate_current hinitial_reachable
     have htail_nonzero : contribution.2.isZero = false :=
-      (yunFactorsContributionWithLevel_tail_valid_of_derivative_active_reachable
-        hp f c g multiplicity 1 fuel hstate_current hinitial_reachable).2
+      htail_raw_valid.2
+    have htail_normalized_nontrivial :
+        isOne (normalizeMonic contribution.2).2 = false :=
+      normalizeMonic_isOne_false_of_isOne_false
+        hp contribution.2 htail_nonzero htail_raw_valid.1 hone_false
+    have htail_normalized_valid :=
+      yunFactorsContributionWithLevel_normalized_pthRoot_tail_valid
+        hp f c g multiplicity 1 fuel
+        (yunFactorsDerivativeActiveReachable_normalized_stateProvider hp)
+        hinitial_reachable htail_fuel htail_normalized_nontrivial htail_derivative
     have hmultiplicity_tail : 0 < multiplicity * p := by
       have hp_pos : 0 < p := by
         have htwo : 2 ≤ p := Hex.Nat.Prime.two_le hp
@@ -6231,7 +6265,15 @@ private theorem squareFreeAuxRevContribution_derivative_active_pow_obligation
             rw [htail_correct]
       _ = contribution.1 * pow contribution.2 multiplicity := by
             rw [htail_pow]
-      _ = pow f multiplicity := hpow_contribution
+      _ = contribution.1 *
+          (pow (DensePoly.C (normalizeMonic contribution.2).1) multiplicity *
+            pow (pthRoot (normalizeMonic contribution.2).2) (multiplicity * p)) := by
+            rw [pow_normalized_pthRoot_reconstruct_of_derivative_zero
+              hp contribution.2 multiplicity htail_nonzero htail_derivative]
+      _ = pow f multiplicity := by
+            rw [pow_normalized_pthRoot_reconstruct_of_derivative_zero
+              hp contribution.2 multiplicity htail_nonzero htail_derivative]
+            exact hpow_contribution
 
 private theorem squareFreeAuxRevContribution_correct_pow_of_nonzero
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
