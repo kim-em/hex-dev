@@ -92,7 +92,8 @@ theorem ne_zero {p : Nat} (hp : Hex.Nat.Prime p) : p ≠ 0 := Nat.ne_of_gt hp.po
 /-- Every prime is distinct from `1`. -/
 theorem ne_one {p : Nat} (hp : Hex.Nat.Prime p) : p ≠ 1 := Nat.ne_of_gt hp.one_lt
 
-private theorem coprime_of_not_dvd {p a : Nat} (hp : Hex.Nat.Prime p)
+/-- Build coprimality between a prime and a number it does not divide. -/
+theorem coprime_of_not_dvd {p a : Nat} (hp : Hex.Nat.Prime p)
     (ha : ¬ p ∣ a) : Nat.Coprime p a := by
   rw [Nat.Coprime]
   have hgcd_dvd_p : Nat.gcd p a ∣ p := Nat.gcd_dvd_left p a
