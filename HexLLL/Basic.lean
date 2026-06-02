@@ -10,14 +10,6 @@ the Gram-Schmidt norm identities stated over those predicates, and the
 all-integer `LLLState` record consumed by later algorithmic phases.
 -/
 
-namespace Vector
-
-/-- Update one vector entry using its current value. -/
-def modify (v : Vector α n) (i : Fin n) (f : α → α) : Vector α n :=
-  v.set i (f (v.get i))
-
-end Vector
-
 namespace Hex
 
 namespace Matrix
@@ -83,9 +75,14 @@ structure Valid (s : LLLState n m) : Prop where
 private def nearestQuotient (νjk : Int) (dj1 : Nat) : Int :=
   Int.fdiv (2 * νjk + Int.ofNat dj1) (2 * Int.ofNat dj1)
 
-/-- Targeted matrix entry update for LLL's integer coefficient state. -/
+/-- Targeted matrix entry update for LLL's integer coefficient state.
+
+Uses `Vector.modify` rather than `M.set i ((M.get i).set j x)` so the
+underlying `Array.modify` swap-with-placeholder runs the inner row update
+in place when `M` is uniquely owned, avoiding the forced row copy that
+`set i (… set j …)` triggers via a `lean_inc` on the borrowed row. -/
 private def setEntry (M : Matrix Int n n) (i j : Fin n) (x : Int) : Matrix Int n n :=
-  M.set i ((M.get i).set j x)
+  M.modify i (·.set j x)
 
 private theorem foldl_set_outerSubMul_get_eq
     {n : Nat} (xs : List (Fin n))
