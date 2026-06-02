@@ -17,7 +17,9 @@ Covered properties:
 - transpose is involutive on committed fixtures
 - identity matrices act as left and right multiplicative identities
 - row operations satisfy the determinant laws promised by the SPEC
-- `bareiss` agrees with `det` on committed nonsingular and singular inputs
+- committed Bareiss fixtures match their expected executable determinant values;
+  the `bareiss = det` guards below are value-level fixture checks only, not a
+  general theorem in the Mathlib-free `hex-matrix` layer
 - `rref` returns data whose transform matrix multiplies the input to the reported echelon form
 - `spanCoeffs` witnesses row-span membership on a committed dependent-row example
 - the committed nullspace basis vectors are annihilated by the source matrix
@@ -200,6 +202,8 @@ private def emptyNullspace : Vector (Vector Rat 2) 0 :=
 #guard Matrix.det (Matrix.rowScale pivotInt ⟨1, by decide⟩ (-2)) = (-2) * Matrix.det pivotInt
 #guard Matrix.det (Matrix.rowAdd pivotInt ⟨0, by decide⟩ ⟨2, by decide⟩ 3) = Matrix.det pivotInt
 
+/- Determinant row-operation proof-mode automation examples. -/
+
 example : Matrix.det (1 : Matrix Int 2 2) = 1 := by
   grind
 
@@ -215,11 +219,20 @@ example (M : Matrix Int 3 3) (src dst : Fin 3) (c : Int) (h : src ≠ dst) :
     Matrix.det (Matrix.rowAdd M src dst c) = Matrix.det M := by
   grind
 
+/- Bareiss fixture equality guards.
+
+These evaluate committed examples against `Matrix.det` to catch runtime
+regressions on representative nonsingular, singular, and pivoting inputs. They
+do not expose or imply a general Mathlib-free bridge theorem of the forbidden
+shape `Matrix.bareiss M = Matrix.det M`. -/
+
 #guard Matrix.bareiss baseInt = Matrix.det baseInt
 #guard Matrix.bareiss singularInt = 0
 #guard Matrix.bareiss pivotInt = Matrix.det pivotInt
 #guard (Matrix.bareissData singularInt).det = 0
 #guard (Matrix.bareissData pivotInt).rowSwaps = 1
+
+/- RREF, span, and nullspace executable conformance guards. -/
 
 #guard let D := Matrix.rref dependentRat; D.rank = 1
 #guard let D := Matrix.rref dependentRat; D.echelon = dependentRref
@@ -275,6 +288,11 @@ private def bigPivotInt : Matrix Int 6 6 :=
 
 #guard Matrix.transpose (Matrix.transpose bigInt) = bigInt
 #guard (1 : Matrix Int 6 6) * bigInt = bigInt
+
+/- Bareiss executable-value guards for 6×6 fixtures.
+
+These compare against known fixture values rather than stating any general
+relationship between the Bareiss algorithm and Leibniz determinant. -/
 
 #guard Matrix.bareiss bigInt = 1
 #guard Matrix.bareiss bigZeroInt = 0
