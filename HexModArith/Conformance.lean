@@ -1,4 +1,5 @@
 import HexModArith.HotLoop
+import HexModArith.Prime
 import HexModArith.Ring
 
 /-!
@@ -50,6 +51,40 @@ private instance conformanceBoundsSixteen : Bounds 16 := ⟨by decide, by decide
 private instance conformanceBoundsBarrettWide : Bounds BarrettWideMod := ⟨by decide, by decide⟩
 private instance conformanceBoundsMontWide : Bounds MontWideMod := ⟨by decide, by decide⟩
 private instance conformanceBoundsLarge : Bounds LargeMod := ⟨by decide, by decide⟩
+
+section PrimeModulusAutomation
+
+private theorem conformancePrimeSeven : Hex.Nat.Prime 7 := by
+  constructor
+  · decide
+  · intro m hm
+    have hmle : m ≤ 7 := Nat.le_of_dvd (by decide : 0 < 7) hm
+    have hcases :
+        m = 0 ∨ m = 1 ∨ m = 2 ∨ m = 3 ∨ m = 4 ∨ m = 5 ∨ m = 6 ∨ m = 7 := by
+      omega
+    rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
+    · simp at hm
+    · exact Or.inl rfl
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · simp at hm
+    · exact Or.inr rfl
+
+private instance conformancePrimeModulusSeven : PrimeModulus 7 :=
+  primeModulusOfPrime conformancePrimeSeven
+
+example {a : ZMod64 7} (ha : a ≠ 0) : ZMod64.inv a * a = 1 := by
+  grind
+
+example (a : ZMod64 7) : a ^ 7 = a := by
+  simp only [pow_prime_of_prime_modulus]
+
+example {a b : ZMod64 7} (h : a * b = 0) : a = 0 ∨ b = 0 := by
+  grind
+
+end PrimeModulusAutomation
 
 private def oneOnly : ZMod64 1 := ofNat 1 37
 private def a2 : ZMod64 2 := ofNat 2 1
