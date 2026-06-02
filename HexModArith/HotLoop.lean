@@ -169,7 +169,7 @@ def mulMod (ctx : BarrettCtx p) (a b : ZMod64 p) : ZMod64 p :=
 The `ZMod64` Barrett wrapper computes the ordinary modular product on reduced
 representatives.
 -/
-@[simp] theorem toNat_mulMod (ctx : BarrettCtx p) (a b : ZMod64 p) :
+@[simp, grind =] theorem toNat_mulMod (ctx : BarrettCtx p) (a b : ZMod64 p) :
     (ctx.mulMod a b).toNat = (a.toNat * b.toNat) % p := by
   have ha := residue_lt_modulus ctx a
   have hb := residue_lt_modulus ctx b
@@ -187,7 +187,7 @@ representatives.
 Barrett hot-loop multiplication agrees with the ordinary `ZMod64`
 multiplication surface.
 -/
-@[simp] theorem mulMod_eq_mul (ctx : BarrettCtx p) (a b : ZMod64 p) :
+@[simp, grind =] theorem mulMod_eq_mul (ctx : BarrettCtx p) (a b : ZMod64 p) :
     ctx.mulMod a b = a * b := by
   exact
     (ZMod64.eq_iff_toNat_eq (ctx.mulMod a b) (a * b)).mpr (by
@@ -359,7 +359,7 @@ theorem toNat_fromMont (ctx : MontCtx p) (a : MontResidue p) :
   rw [fromMont, ZMod64.toNat_ofNat, Nat.mod_eq_of_lt hlt]
 
 /-- The Nat value of `toMont` is multiplication by the Montgomery radix. -/
-@[simp] theorem toNat_toMont (ctx : MontCtx p) (a : ZMod64 p) :
+@[simp, grind =] theorem toNat_toMont (ctx : MontCtx p) (a : ZMod64 p) :
     (ctx.toMont a).toNat = (a.toNat * UInt64.word) % p := by
   have ha := zmod64_lt_modulus ctx a
   simpa [ctx.modulus_eq, toMont, ZMod64.toUInt64_eq_val, ZMod64.toNat_eq_val,
@@ -378,7 +378,7 @@ theorem fromMont_repr (ctx : MontCtx p) (a : MontResidue p) :
     (_root_.MontCtx.fromMont_repr ctx.toUInt64Ctx a.toUInt64 ha)
 
 /-- Converting a standard residue into Montgomery form and back is the identity. -/
-@[simp] theorem fromMont_toMont (ctx : MontCtx p) (a : ZMod64 p) :
+@[simp, grind =] theorem fromMont_toMont (ctx : MontCtx p) (a : ZMod64 p) :
     ctx.fromMont (ctx.toMont a) = a := by
   have hnat : (ctx.fromMont (ctx.toMont a)).toNat = a.toNat := by
     have ha := zmod64_lt_modulus ctx a
@@ -402,7 +402,7 @@ theorem fromMont_repr (ctx : MontCtx p) (a : MontResidue p) :
 Multiplying two standard residues by entering Montgomery form, multiplying, and
 leaving Montgomery form computes the ordinary modular product.
 -/
-@[simp] theorem toNat_mulMont (ctx : MontCtx p) (a b : ZMod64 p) :
+@[simp, grind =] theorem toNat_mulMont (ctx : MontCtx p) (a b : ZMod64 p) :
     (ctx.fromMont (ctx.mulMont (ctx.toMont a) (ctx.toMont b))).toNat =
       (a.toNat * b.toNat) % p := by
   have ha := zmod64_lt_modulus ctx a
@@ -426,7 +426,7 @@ leaving Montgomery form computes the ordinary modular product.
 Montgomery multiplication preserves the represented standard-residue product
 when converted back out of Montgomery form.
 -/
-@[simp] theorem mulMont_repr (ctx : MontCtx p) (a b : MontResidue p) :
+@[simp, grind =] theorem mulMont_repr (ctx : MontCtx p) (a b : MontResidue p) :
     (ctx.fromMont (ctx.mulMont a b)).toNat =
       ((ctx.fromMont a).toNat * (ctx.fromMont b).toNat) % p := by
   have ha := montResidue_lt_modulus ctx a
@@ -444,7 +444,7 @@ when converted back out of Montgomery form.
 Multiplying two standard residues by entering Montgomery form, multiplying, and
 leaving Montgomery form agrees with ordinary `ZMod64` multiplication.
 -/
-@[simp] theorem fromMont_mulMont_toMont (ctx : MontCtx p) (a b : ZMod64 p) :
+@[simp, grind =] theorem fromMont_mulMont_toMont (ctx : MontCtx p) (a b : ZMod64 p) :
     ctx.fromMont (ctx.mulMont (ctx.toMont a) (ctx.toMont b)) = a * b := by
   exact
     (ZMod64.eq_iff_toNat_eq
