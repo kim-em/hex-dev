@@ -493,6 +493,70 @@ theorem henselLiftQuadratic_spec
       hred
       hprod_loop_k
 
+/-- Public Bezout-pair contract for the binary quadratic wrapper: starting
+from a `QuadraticLiftLoopInvariant p f { g, h, s, t }` (product
+congruence + Bezout + `Monic g`, all mod `p`), the lifted Bezout pair
+satisfies `lifted.s * lifted.g + lifted.t * lifted.h ≡ 1 (mod p^k)`. The
+proof routes the invariant through the doubling loop to obtain the
+Bezout congruence at the loop modulus `p ^ (2 ^ quadraticDoublingSteps k)`,
+then descends to `p^k` using `k ≤ 2 ^ quadraticDoublingSteps k` and
+passes through the final `reduceModPow` cleanup on `s, g, t, h` via two
+applications of `congr_mul_reduceModPow_pair` combined with
+`ZPoly.congr_add`. Companion to `henselLiftQuadratic_spec`. -/
+theorem henselLiftQuadratic_bezout_spec
+    (p k : Nat) [ZMod64.Bounds p]
+    (f g h s t : ZPoly)
+    (_hk : 1 ≤ k)
+    (hp : 1 < p)
+    (hinv : QuadraticLiftLoopInvariant p f { g, h, s, t }) :
+    let lifted := henselLiftQuadratic p k f g h s t
+    ZPoly.congr (lifted.s * lifted.g + lifted.t * lifted.h) 1 (p ^ k) := by
+  let init : QuadraticLiftResult := { g, h, s, t }
+  let fuel := quadraticDoublingSteps k
+  let looped := iterateQuadraticHensel p f 1 fuel init
+  have hstart : QuadraticLiftLoopInvariant (p ^ 1) f init := by
+    simpa [init] using hinv
+  have hloop :
+      QuadraticLiftLoopInvariant (p ^ (1 * 2 ^ fuel)) f looped := by
+    simpa [looped] using
+      iterateQuadraticHensel_invariant p f 1 fuel init hp (by omega) hstart
+  have hbez_loop_k :
+      ZPoly.congr (looped.s * looped.g + looped.t * looped.h) 1 (p ^ k) := by
+    have hbez_loop :
+        ZPoly.congr (looped.s * looped.g + looped.t * looped.h) 1
+          (p ^ (2 ^ fuel)) := by
+      simpa using hloop.bezout_congr
+    exact congr_of_pow_le p k (2 ^ fuel) _ _
+      (le_two_pow_quadraticDoublingSteps k) hbez_loop
+  have hred_sg :
+      ZPoly.congr
+        (ZPoly.reduceModPow looped.s p k * ZPoly.reduceModPow looped.g p k)
+        (looped.s * looped.g)
+        (p ^ k) :=
+    congr_mul_reduceModPow_pair p k looped.s looped.g
+  have hred_th :
+      ZPoly.congr
+        (ZPoly.reduceModPow looped.t p k * ZPoly.reduceModPow looped.h p k)
+        (looped.t * looped.h)
+        (p ^ k) :=
+    congr_mul_reduceModPow_pair p k looped.t looped.h
+  have hred_sum :
+      ZPoly.congr
+        (ZPoly.reduceModPow looped.s p k * ZPoly.reduceModPow looped.g p k +
+          ZPoly.reduceModPow looped.t p k * ZPoly.reduceModPow looped.h p k)
+        (looped.s * looped.g + looped.t * looped.h)
+        (p ^ k) :=
+    ZPoly.congr_add _ _ _ _ _ hred_sg hred_th
+  exact
+    ZPoly.congr_trans
+      (ZPoly.reduceModPow looped.s p k * ZPoly.reduceModPow looped.g p k +
+        ZPoly.reduceModPow looped.t p k * ZPoly.reduceModPow looped.h p k)
+      (looped.s * looped.g + looped.t * looped.h)
+      1
+      (p ^ k)
+      hred_sum
+      hbez_loop_k
+
 /--
 Recursive preconditions required by the sequential quadratic multifactor lift.
 
