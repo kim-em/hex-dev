@@ -43,7 +43,7 @@ theorem eq_zero_or_eq_zero_of_mul_eq_zero (hp : Hex.Nat.Prime p) {a b : ZMod64 p
     have hdecomp := Nat.mod_add_div (a.toNat * b.toNat) p
     rw [hmod, Nat.zero_add] at hdecomp
     exact ⟨(a.toNat * b.toNat) / p, hdecomp.symm⟩
-  rcases Hex.Nat.Prime.dvd_mul hp hdvd with hA | hB
+  rcases (Hex.Nat.Prime.dvd_mul hp).mp hdvd with hA | hB
   · exact Or.inl (eq_zero_of_dvd_modulus hA)
   · exact Or.inr (eq_zero_of_dvd_modulus hB)
 
