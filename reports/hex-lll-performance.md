@@ -49,6 +49,14 @@
 - `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded120Checksum`: fixed, repeats `5`
 - `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded150Checksum`: fixed, repeats `5`
 - `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded180Checksum`: fixed, repeats `5`
+- `Hex.LLLBench.runFpylllFirstShortVectorHarshCubic20Checksum`: fixed, repeats `5`
+- `Hex.LLLBench.runFpylllFirstShortVectorHarshCubic25Checksum`: fixed, repeats `5`
+- `Hex.LLLBench.runFpylllFirstShortVectorHarshCubic30Checksum`: fixed, repeats `5`
+- `Hex.LLLBench.runFpylllFirstShortVectorHarshCubic35Checksum`: fixed, repeats `5`
+- `Hex.LLLBench.runFpylllFirstShortVectorHarshCubic40Checksum`: fixed, repeats `5`
+- `Hex.LLLBench.runFpylllFirstShortVectorHarshCubic45Checksum`: fixed, repeats `5`
+- `Hex.LLLBench.runFpylllFirstShortVectorHarshCubic50Checksum`: fixed, repeats `5`
+- `Hex.LLLBench.runFpylllFirstShortVectorHarshCubic55Checksum`: fixed, repeats `5`
 - `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq15`: fixed, repeats `3`
 - `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq35`: fixed, repeats `3`
 - `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq40`: fixed, repeats `3`
@@ -223,10 +231,9 @@ headline ladders:
 - `bz-recombination`: one tiny fixed row, retained only as contextual
   comparator evidence because process overhead dominates this family.
 
-No committed artifact currently contains the full densified Lean/Isabelle
-comparator sweep for those ladders. Until that artifact exists, the largest
-eligible-rung gating verdict required by HO-18 cannot be recomputed from this
-report, and `HexLLL.done_through` remains at `3`.
+The committed densified Lean/Isabelle comparator sweep below covers the full
+`random-bounded` and `harsh-cubic` ladders. The harsh-cubic largest-rung
+verdict remains adverse, so `HexLLL.done_through` remains at `3`.
 
 Informational `fpLLL via fpylll` random-bounded ladder run at commit
 `0c2d9a9e2d0ac24924b96b92f51707511fc27180` on `carica` (Apple M2 Ultra,
@@ -277,7 +284,9 @@ checksum.
 
 The gating comparator is `verified Isabelle LLL (AFP LLL_Basis_Reduction; Haskell extraction from Zenodo 2636367)`, declared in `SPEC/Libraries/hex-lll.md`. The persistent-subprocess harness for it was wired in HO-16 (#3676); the matching fpylll persistent driver was wired in HO-17 (#4186). The densified `random-bounded` and `harsh-cubic` ladders are the post-HO-18 fixed-benchmark schedules — `random-bounded` `n ∈ {30, 45, 60, 75, 90, 120, 150, 180}`, `harsh-cubic` `n ∈ {15, 20, 25, 30, 35, 40, 45, 50, 55}` — per the post-#3657 §"Headline reports" densification rule.
 
-![Comparator runtime plot](figures/hex-lll-comparator.svg)
+![Random-bounded comparator runtime plot](figures/hex-lll-comparator-random-bounded.svg)
+
+![Harsh-cubic comparator runtime plot](figures/hex-lll-comparator-harsh-cubic.svg)
 
 ### Per-call comparator overhead
 
@@ -438,7 +447,39 @@ Export artefact: `reports/bench-results/hex-lll-fpylll-0c2d9a9e2d0a.json`, SHA-2
 - `random-bounded` `n = 150`: Lean median `3.778 s`, fpLLL median `568.849 ms`, fpLLL relative median `0.151×` (raw); adjusted `0.151×`.
 - `random-bounded` `n = 180`: Lean median `6.939 s`, fpLLL median `1.013 s`, fpLLL relative median `0.146×` (raw); adjusted `0.146×`.
 
-The fpLLL fixed-mode targets still incur one CPython + `import fpylll` startup per measured child (per the process-call comparator registration), so the bottom rungs are startup-sensitive. Across the full random-bounded ladder fpLLL is slower than Lean at `n = 30` and `45`, roughly tied at `n = 60`, and faster from `n = 75` through `180`; because fpylll is informational, this trend remains context rather than a gating performance signal for HexLLL.
+Harsh-cubic fpLLL sweep at commit `4a69408a680df18b4d496dd2fac6503ebef62807`
+on `carica` (Apple M2 Ultra, macOS), command:
+
+```sh
+PATH="$PWD/.venv-oracles/bin:$PATH" lake exe hexlll_bench run \
+  Hex.LLLBench.runFpylllFirstShortVectorHarshCubic15Checksum \
+  Hex.LLLBench.runFpylllFirstShortVectorHarshCubic20Checksum \
+  Hex.LLLBench.runFpylllFirstShortVectorHarshCubic25Checksum \
+  Hex.LLLBench.runFpylllFirstShortVectorHarshCubic30Checksum \
+  Hex.LLLBench.runFpylllFirstShortVectorHarshCubic35Checksum \
+  Hex.LLLBench.runFpylllFirstShortVectorHarshCubic40Checksum \
+  Hex.LLLBench.runFpylllFirstShortVectorHarshCubic45Checksum \
+  Hex.LLLBench.runFpylllFirstShortVectorHarshCubic50Checksum \
+  Hex.LLLBench.runFpylllFirstShortVectorHarshCubic55Checksum \
+  --export-file reports/bench-results/hex-lll-fpylll-harsh-cubic-4a69408a680d.json
+```
+
+The harness recorded `4a69408-dirty` because this worktree carried local
+changes while measuring the new registrations. Export artefact:
+`reports/bench-results/hex-lll-fpylll-harsh-cubic-4a69408a680d.json`,
+SHA-256 `d726d21de7dbea2c8c251b8d5b36df062205b696d84f3dba95b46169c366ba3b`.
+
+- `harsh-cubic` `n = 15`: Lean median `898.791 us`, fpLLL median `134.826 ms`, fpLLL relative median `150.009×` (raw); adjusted `149.971×`.
+- `harsh-cubic` `n = 20`: Lean median `3.191 ms`, fpLLL median `106.879 ms`, fpLLL relative median `33.494×` (raw); adjusted `33.483×`.
+- `harsh-cubic` `n = 25`: Lean median `8.331 ms`, fpLLL median `156.157 ms`, fpLLL relative median `18.744×` (raw); adjusted `18.740×`.
+- `harsh-cubic` `n = 30`: Lean median `22.022 ms`, fpLLL median `150.284 ms`, fpLLL relative median `6.824×` (raw); adjusted `6.823×`.
+- `harsh-cubic` `n = 35`: Lean median `49.134 ms`, fpLLL median `110.174 ms`, fpLLL relative median `2.242×` (raw); adjusted `2.241×`.
+- `harsh-cubic` `n = 40`: Lean median `105.251 ms`, fpLLL median `145.115 ms`, fpLLL relative median `1.379×` (raw); adjusted `1.378×`.
+- `harsh-cubic` `n = 45`: Lean median `202.061 ms`, fpLLL median `151.332 ms`, fpLLL relative median `0.749×` (raw); adjusted `0.749×`.
+- `harsh-cubic` `n = 50`: Lean median `377.282 ms`, fpLLL median `210.316 ms`, fpLLL relative median `0.557×` (raw); adjusted `0.557×`.
+- `harsh-cubic` `n = 55`: Lean median `640.050 ms`, fpLLL median `205.693 ms`, fpLLL relative median `0.321×` (raw); adjusted `0.321×`.
+
+The fpLLL fixed-mode targets still incur one CPython + `import fpylll` startup per measured child (per the process-call comparator registration), so the bottom rungs are startup-sensitive. Across the full random-bounded ladder fpLLL is slower than Lean at `n = 30` and `45`, roughly tied at `n = 60`, and faster from `n = 75` through `180`. Across the harsh-cubic ladder fpLLL is slower through `n = 40`, then faster from `n = 45` through `55`. Because fpylll is informational, these trends remain context rather than a gating performance signal for HexLLL.
 
 ## Profile
 

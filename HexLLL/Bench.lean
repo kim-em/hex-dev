@@ -894,6 +894,46 @@ def runFpylllFirstShortVectorHarshCubic15Checksum : Unit → IO Int := fun _ => 
   runFpylllFirstShortVectorChecksum
     (← getCachedInput harshCubicInput15Ref (fun _ => prepHarshCubicInput 15))
 
+/-- fpylll comparator for the harsh-cubic rung `n = 20`. -/
+def runFpylllFirstShortVectorHarshCubic20Checksum : Unit → IO Int := fun _ => do
+  runFpylllFirstShortVectorChecksum
+    (← getCachedInput harshCubicInput20Ref (fun _ => prepHarshCubicInput 20))
+
+/-- fpylll comparator for the harsh-cubic rung `n = 25`. -/
+def runFpylllFirstShortVectorHarshCubic25Checksum : Unit → IO Int := fun _ => do
+  runFpylllFirstShortVectorChecksum
+    (← getCachedInput harshCubicInput25Ref (fun _ => prepHarshCubicInput 25))
+
+/-- fpylll comparator for the harsh-cubic rung `n = 30`. -/
+def runFpylllFirstShortVectorHarshCubic30Checksum : Unit → IO Int := fun _ => do
+  runFpylllFirstShortVectorChecksum
+    (← getCachedInput harshCubicInput30Ref (fun _ => prepHarshCubicInput 30))
+
+/-- fpylll comparator for the harsh-cubic rung `n = 35`. -/
+def runFpylllFirstShortVectorHarshCubic35Checksum : Unit → IO Int := fun _ => do
+  runFpylllFirstShortVectorChecksum
+    (← getCachedInput harshCubicInput35Ref (fun _ => prepHarshCubicInput 35))
+
+/-- fpylll comparator for the harsh-cubic rung `n = 40`. -/
+def runFpylllFirstShortVectorHarshCubic40Checksum : Unit → IO Int := fun _ => do
+  runFpylllFirstShortVectorChecksum
+    (← getCachedInput harshCubicInput40Ref (fun _ => prepHarshCubicInput 40))
+
+/-- fpylll comparator for the harsh-cubic rung `n = 45`. -/
+def runFpylllFirstShortVectorHarshCubic45Checksum : Unit → IO Int := fun _ => do
+  runFpylllFirstShortVectorChecksum
+    (← getCachedInput harshCubicInput45Ref (fun _ => prepHarshCubicInput 45))
+
+/-- fpylll comparator for the harsh-cubic rung `n = 50`. -/
+def runFpylllFirstShortVectorHarshCubic50Checksum : Unit → IO Int := fun _ => do
+  runFpylllFirstShortVectorChecksum
+    (← getCachedInput harshCubicInput50Ref (fun _ => prepHarshCubicInput 50))
+
+/-- fpylll comparator for the harsh-cubic rung `n = 55`. -/
+def runFpylllFirstShortVectorHarshCubic55Checksum : Unit → IO Int := fun _ => do
+  runFpylllFirstShortVectorChecksum
+    (← getCachedInput harshCubicInput55Ref (fun _ => prepHarshCubicInput 55))
+
 def runFirstShortVectorBZRecombinationNormSq : Unit → IO Int := fun _ => do
   return runFirstShortVectorNormSq (← bzRecombinationInputRef.get)
 
@@ -1249,7 +1289,8 @@ setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded180Checksum where {
   }
 
 /- Fixed bottom-rung Lean/fpylll comparison for the harsh-cubic family at
-`n = 15`, the first rung of the scientific parametric ladder. -/
+`n = 15`, the first rung of the scientific parametric ladder. The fpylll
+comparison also follows the full harsh-cubic comparator ladder. -/
 setup_fixed_benchmark runFirstShortVectorHarshCubic15Checksum where {
     repeats := 5
     maxSecondsPerCall := 20.0
@@ -1260,6 +1301,46 @@ setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic15Checksum where {
     repeats := 5
     maxSecondsPerCall := 20.0
     expectedHash := some 0x6ccfd453f897ff98
+  }
+
+setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic20Checksum where {
+    repeats := 5
+    maxSecondsPerCall := 20.0
+  }
+
+setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic25Checksum where {
+    repeats := 5
+    maxSecondsPerCall := 20.0
+  }
+
+setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic30Checksum where {
+    repeats := 5
+    maxSecondsPerCall := 20.0
+  }
+
+setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic35Checksum where {
+    repeats := 5
+    maxSecondsPerCall := 20.0
+  }
+
+setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic40Checksum where {
+    repeats := 5
+    maxSecondsPerCall := 20.0
+  }
+
+setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic45Checksum where {
+    repeats := 5
+    maxSecondsPerCall := 20.0
+  }
+
+setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic50Checksum where {
+    repeats := 5
+    maxSecondsPerCall := 20.0
+  }
+
+setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic55Checksum where {
+    repeats := 5
+    maxSecondsPerCall := 20.0
   }
 
 /- Complexity derivation: random-bounded inputs have square dimension `n` and
