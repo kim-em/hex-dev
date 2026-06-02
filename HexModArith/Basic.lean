@@ -56,6 +56,7 @@ instance : CoeOut (ZMod64 p) Nat where
   rfl
 
 /-- Extensionality for residues via their canonical Nat representatives. -/
+@[grind .]
 theorem ext_toNat {a b : ZMod64 p} (h : a.toNat = b.toNat) : a = b :=
   ext (UInt64.toNat_inj.mp h)
 
@@ -104,6 +105,7 @@ def ofNat (p n : Nat) [Bounds p] : ZMod64 p := by
   exact Nat.mod_eq_of_lt a.toNat_lt
 
 /-- Two residues are equal exactly when their canonical representatives agree. -/
+@[grind ←]
 theorem eq_iff_toNat_eq (a b : ZMod64 p) : a = b ↔ a.toNat = b.toNat :=
   ⟨fun h => h ▸ rfl, ext_toNat⟩
 
@@ -116,16 +118,19 @@ theorem eq_iff_toNat_eq (a b : ZMod64 p) : a = b ↔ a.toNat = b.toNat :=
   simp [normalize]
 
 /-- Characterise when an arbitrary representative builds a given residue. -/
+@[grind ←]
 theorem ofNat_eq_iff_toNat_eq (n : Nat) (a : ZMod64 p) :
     ofNat p n = a ↔ n % p = a.toNat := by
   rw [eq_iff_toNat_eq, toNat_ofNat]
 
 /-- Characterise when a residue is built from an arbitrary representative. -/
+@[grind ←]
 theorem eq_ofNat_iff_toNat_eq (a : ZMod64 p) (n : Nat) :
     a = ofNat p n ↔ a.toNat = n % p := by
   rw [eq_iff_toNat_eq, toNat_ofNat]
 
 /-- Equality of residues built from arbitrary Nat representatives is equality modulo `p`. -/
+@[grind ←]
 theorem ofNat_eq_ofNat_iff_mod_eq (x y : Nat) :
     ofNat p x = ofNat p y ↔ x % p = y % p := by
   rw [eq_iff_toNat_eq, toNat_ofNat, toNat_ofNat]
@@ -185,6 +190,7 @@ private theorem nodup_map_of_injective_on
         exact hinj a (by simp [ha]) b (by simp [hb]) hab
 
 /-- The canonical residue list has no duplicate entries. -/
+@[grind .]
 theorem values_nodup : (values p).Nodup := by
   unfold values
   apply nodup_map_of_injective_on (List.nodup_range : (List.range p).Nodup)
