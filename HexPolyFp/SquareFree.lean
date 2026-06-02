@@ -5585,6 +5585,132 @@ private theorem yunFactorsDerivativeActiveReachable_nonzero
           cases ih.2
       simpa [y, z] using And.intro hy_nonzero hz_nonzero
 
+private theorem yunFactorsContributionWithLevel_tail_nonzero_of_derivative_active_reachable
+    (hp : Hex.Nat.Prime p) (f c w : FpPoly p) (base level fuel : Nat)
+    (hreachable : yunFactorsDerivativeActiveReachable hp f c w fuel) :
+    (yunFactorsContributionWithLevel c w base level fuel).2.isZero = false := by
+  induction fuel generalizing c w level with
+  | zero =>
+      have hcurrent :=
+        yunFactorsDerivativeActiveReachable_nonzero hp f c w 0 hreachable
+      simpa [yunFactorsContributionWithLevel] using hcurrent.2
+  | succ fuel ih =>
+      by_cases hc : isOne c = true
+      · have hcurrent :=
+          yunFactorsDerivativeActiveReachable_nonzero hp f c w (fuel + 1) hreachable
+        simpa [yunFactorsContributionWithLevel, hc] using hcurrent.2
+      · have hc_false : isOne c = false := by
+          cases h : isOne c
+          · rfl
+          · exact False.elim (hc h)
+        have htail_reachable :
+            yunFactorsDerivativeActiveReachable hp f
+              (DensePoly.gcd c w)
+              (w / DensePoly.gcd c w)
+              fuel :=
+          yunFactorsDerivativeActiveReachable_step hp f c w fuel hreachable
+        simpa [yunFactorsContributionWithLevel, hc_false] using
+          ih (DensePoly.gcd c w) (w / DensePoly.gcd c w) (level + 1)
+            htail_reachable
+
+private theorem yunFactorsContributionWithLevel_normalized_tail_valid_of_derivative_active_reachable
+    (hp : Hex.Nat.Prime p) (f c w : FpPoly p) (base level fuel : Nat)
+    (hstate : YunDerivativeActiveNormalizedStateProvider hp)
+    (hreachable : yunFactorsDerivativeActiveReachable hp f c w fuel) :
+    let contribution := yunFactorsContributionWithLevel c w base level fuel
+    squareFreeContributionReachable (normalizeMonic contribution.2).2 ∧
+      (normalizeMonic contribution.2).2.isZero = false := by
+  induction fuel generalizing c w level with
+  | zero =>
+      have hcurrent := hstate f c w 0 hreachable
+      simpa [yunFactorsContributionWithLevel] using
+        And.intro hcurrent.2.2.1 hcurrent.2.2.2
+  | succ fuel ih =>
+      by_cases hc : isOne c = true
+      · have hcurrent := hstate f c w (fuel + 1) hreachable
+        simpa [yunFactorsContributionWithLevel, hc] using
+          And.intro hcurrent.2.2.1 hcurrent.2.2.2
+      · have hc_false : isOne c = false := by
+          cases h : isOne c
+          · rfl
+          · exact False.elim (hc h)
+        have htail_reachable :
+            yunFactorsDerivativeActiveReachable hp f
+              (DensePoly.gcd c w)
+              (w / DensePoly.gcd c w)
+              fuel :=
+          yunFactorsDerivativeActiveReachable_step hp f c w fuel hreachable
+        simpa [yunFactorsContributionWithLevel, hc_false] using
+          ih (DensePoly.gcd c w) (w / DensePoly.gcd c w) (level + 1)
+            htail_reachable
+
+private theorem yunFactorsContributionWithLevel_normalized_pthRoot_tail_valid
+    (hp : Hex.Nat.Prime p) (f c w : FpPoly p) (base level fuel : Nat)
+    (hstate : YunDerivativeActiveNormalizedStateProvider hp)
+    (hreachable : yunFactorsDerivativeActiveReachable hp f c w fuel)
+    (htail_fuel :
+      (yunFactorsContributionWithLevel c w base level fuel).2.size < fuel + 1)
+    (htail_nontrivial :
+      isOne (normalizeMonic
+        (yunFactorsContributionWithLevel c w base level fuel).2).2 = false)
+    (htail_derivative_zero :
+      (DensePoly.derivative
+        (yunFactorsContributionWithLevel c w base level fuel).2).isZero = true) :
+    squareFreeContributionReachable
+        (pthRoot (normalizeMonic
+          (yunFactorsContributionWithLevel c w base level fuel).2).2) ∧
+      (pthRoot (normalizeMonic
+        (yunFactorsContributionWithLevel c w base level fuel).2).2).isZero = false ∧
+        (pthRoot (normalizeMonic
+          (yunFactorsContributionWithLevel c w base level fuel).2).2).size < fuel := by
+  let contribution := yunFactorsContributionWithLevel c w base level fuel
+  have htail_valid :=
+    yunFactorsContributionWithLevel_normalized_tail_valid_of_derivative_active_reachable
+      hp f c w base level fuel hstate hreachable
+  have htail_raw_nonzero : contribution.2.isZero = false := by
+    simpa [contribution] using
+      yunFactorsContributionWithLevel_tail_nonzero_of_derivative_active_reachable
+        hp f c w base level fuel hreachable
+  have hnorm_derivative_zero :
+      (DensePoly.derivative (normalizeMonic contribution.2).2).isZero = true :=
+    normalizeMonic_derivative_zero_of_derivative_zero
+      contribution.2 htail_raw_nonzero (by
+        simpa [contribution] using htail_derivative_zero)
+  have hnorm_fuel : (normalizeMonic contribution.2).2.size < fuel + 1 := by
+    have hsize :=
+      normalizeMonic_nonzero_size_eq hp contribution.2 htail_raw_nonzero
+    rw [hsize]
+    simpa [contribution] using htail_fuel
+  exact
+    pthRoot_valid_of_derivative_zero_nontrivial hp
+      (normalizeMonic contribution.2).2 hnorm_fuel htail_valid.2
+      (by simpa [contribution] using htail_nontrivial)
+      hnorm_derivative_zero htail_valid.1
+
+private theorem yunFactorsWithLevel_normalized_pthRoot_tail_fuel_bound
+    (hp : Hex.Nat.Prime p) (f c w : FpPoly p) (base level fuel : Nat)
+    (hstate : YunDerivativeActiveNormalizedStateProvider hp)
+    (hreachable : yunFactorsDerivativeActiveReachable hp f c w fuel)
+    (htail_fuel : (yunFactorsWithLevel c w base level fuel []).2.size < fuel + 1)
+    (htail_nontrivial :
+      isOne (normalizeMonic (yunFactorsWithLevel c w base level fuel []).2).2 = false)
+    (htail_derivative_zero :
+      (DensePoly.derivative (yunFactorsWithLevel c w base level fuel []).2).isZero = true) :
+    (pthRoot (normalizeMonic (yunFactorsWithLevel c w base level fuel []).2).2).size <
+      fuel := by
+  let contribution := yunFactorsContributionWithLevel c w base level fuel
+  let loop := yunFactorsWithLevel c w base level fuel []
+  have hloop_eq : loop.2 = contribution.2 := by
+    have hrec := yunFactorsWithLevel_reconstruction_invariant c w base level fuel []
+    simpa [loop, contribution] using hrec.1
+  have hvalid :=
+    yunFactorsContributionWithLevel_normalized_pthRoot_tail_valid
+      hp f c w base level fuel hstate hreachable
+      (by simpa [loop, contribution, hloop_eq] using htail_fuel)
+      (by simpa [loop, contribution, hloop_eq] using htail_nontrivial)
+      (by simpa [loop, contribution, hloop_eq] using htail_derivative_zero)
+  simpa [loop, contribution, hloop_eq] using hvalid.2.2
+
 private theorem yunFactorsDerivativeActiveReachable_normalized_stateProvider
     (hp : Hex.Nat.Prime p) :
     YunDerivativeActiveNormalizedStateProvider hp := by
