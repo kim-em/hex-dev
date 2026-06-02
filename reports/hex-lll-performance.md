@@ -235,9 +235,9 @@ The committed densified Lean/Isabelle comparator sweep below covers the full
 `random-bounded` and `harsh-cubic` ladders. The harsh-cubic largest-rung
 verdict remains adverse, so `HexLLL.done_through` remains at `3`.
 
-Informational `fpLLL via fpylll` random-bounded ladder run at commit
-`0c2d9a9e2d0ac24924b96b92f51707511fc27180` on `carica` (Apple M2 Ultra,
-macOS), command:
+Informational `fpLLL via fpylll` random-bounded ladder run at worktree
+commit `594364a5d86cc9daaf26c53a8b6a137998b38a6e` on `carica`
+(Apple M2 Ultra, macOS), command:
 
 ```sh
 PATH="$PWD/.venv-oracles/bin:$PATH" lake exe hexlll_bench run \
@@ -254,27 +254,28 @@ PATH="$PWD/.venv-oracles/bin:$PATH" lake exe hexlll_bench run \
 
 The run used `fpylll 0.6.4`, `python-flint 0.8.0`, and deterministic benchmark
 inputs from `HexLLL/Bench.lean`; no random seeds are involved. The harness
-recorded `0c2d9a9-dirty` because this worktree carried a pre-existing local
-`.claude/CLAUDE.md` modification outside this evidence package. Export
-artefact: `reports/bench-results/hex-lll-fpylll-0c2d9a9e2d0a.json`, SHA-256
-`e761a271dea1e1c96c32ce9c9f335b1d9f17da41c903f3199a1584cc14d68d4f`.
+recorded `594364a-dirty` because this worktree carried the benchmark
+registration/report edits plus a pre-existing local `.claude/CLAUDE.md`
+modification outside this evidence package. Export artefact:
+`reports/bench-results/hex-lll-fpylll-0c2d9a9e2d0a.json`, SHA-256
+`21fcd94e1dbf8e745ace1f14fbc31cb93be139c2c4119350f51e8ace332affd3`.
 
 - `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded30Checksum`: median
-  `138.498 ms`, min `116.482 ms`, max `168.072 ms`, observed checksum `0x4`.
+  `1.837 ms`, min `1.803 ms`, max `1.888 ms`, observed checksum `0x4`.
 - `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded45Checksum`: median
-  `149.779 ms`, min `124.942 ms`, max `202.896 ms`, observed checksum `0x4`.
+  `4.784 ms`, min `4.611 ms`, max `4.869 ms`, observed checksum `0x4`.
 - `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded60Checksum`: median
-  `185.756 ms`, min `162.360 ms`, max `228.790 ms`, observed checksum `0x4`.
+  `9.756 ms`, min `9.586 ms`, max `10.359 ms`, observed checksum `0x4`.
 - `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded75Checksum`: median
-  `163.607 ms`, min `150.468 ms`, max `197.225 ms`, observed checksum `0x4`.
+  `19.446 ms`, min `19.324 ms`, max `19.942 ms`, observed checksum `0x4`.
 - `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded90Checksum`: median
-  `223.589 ms`, min `182.717 ms`, max `1.113 s`, observed checksum `0x4`.
+  `32.003 ms`, min `31.852 ms`, max `32.490 ms`, observed checksum `0x4`.
 - `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded120Checksum`: median
-  `350.572 ms`, min `323.002 ms`, max `374.397 ms`, observed checksum `0x4`.
+  `76.952 ms`, min `75.794 ms`, max `79.394 ms`, observed checksum `0x4`.
 - `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded150Checksum`: median
-  `568.849 ms`, min `563.197 ms`, max `624.400 ms`, observed checksum `0x4`.
+  `153.998 ms`, min `152.679 ms`, max `157.519 ms`, observed checksum `0x4`.
 - `Hex.LLLBench.runFpylllFirstShortVectorRandomBounded180Checksum`: median
-  `1.013 s`, min `993.350 ms`, max `1.062 s`, observed checksum `0x4`.
+  `271.702 ms`, min `269.054 ms`, max `1.008 s`, observed checksum `0x4`.
 
 All eight fixed fpLLL random-bounded registrations had repeat-stable
 checksums; the `n = 30` registration also matched its configured expected
@@ -295,7 +296,11 @@ Both gating and informational comparators are wired through the persistent-subpr
 - `Isabelle` (gating): **~9 µs** per steady-state request after the one-time GHC startup.
 - `fpLLL via fpylll` (informational): **~34 µs** per steady-state request after the one-time CPython + `import fpylll` startup.
 
-Both figures are three orders of magnitude below the 5 % overhead-to-measured-time floor that `SPEC/benchmarking.md` requires for honest ratios on any rung where wall time exceeds a few hundred microseconds. Within `setup_fixed_benchmark` shape the GHC / CPython interpreter startup is incurred per measured repeat (the harness spawns one fresh child per repeat); the overhead figures above are protocol-only — they do **not** include interpreter startup, which is itself part of the per-call wall recorded for fixed `runIsabelle*` and `runFpylll*` targets.
+Both figures are below the 5 % overhead-to-measured-time floor that
+`SPEC/benchmarking.md` requires for honest ratios on the regenerated fixed
+comparator rungs. The process-call registrations set `minTotalSeconds := 1.0`,
+so each fixed child runs enough inner iterations to amortize its one-time
+GHC / CPython startup before reporting `total_nanos / inner_repeats`.
 
 ### Densified Lean + Isabelle sweep
 
@@ -421,7 +426,10 @@ Per the HO-18 issue body, the BZ family is reported for context only: its tiny m
 
 ### fpLLL via fpylll (informational)
 
-`SPEC/Libraries/hex-lll.md` classifies the fpLLL comparator as informational. The most recent informational fpLLL sweep is from commit `0c2d9a9e2d0ac24924b96b92f51707511fc27180` on `carica` (Apple M2 Ultra, macOS), command:
+`SPEC/Libraries/hex-lll.md` classifies the fpLLL comparator as informational.
+The most recent informational fpLLL sweep is from worktree commit
+`594364a5d86cc9daaf26c53a8b6a137998b38a6e` on `carica` (Apple M2 Ultra,
+macOS), command:
 
 ```sh
 PATH="$PWD/.venv-oracles/bin:$PATH" lake exe hexlll_bench run \
@@ -436,19 +444,21 @@ PATH="$PWD/.venv-oracles/bin:$PATH" lake exe hexlll_bench run \
   --export-file reports/bench-results/hex-lll-fpylll-0c2d9a9e2d0a.json
 ```
 
-Export artefact: `reports/bench-results/hex-lll-fpylll-0c2d9a9e2d0a.json`, SHA-256 `e761a271dea1e1c96c32ce9c9f335b1d9f17da41c903f3199a1584cc14d68d4f`.
+Export artefact: `reports/bench-results/hex-lll-fpylll-0c2d9a9e2d0a.json`,
+SHA-256 `21fcd94e1dbf8e745ace1f14fbc31cb93be139c2c4119350f51e8ace332affd3`.
 
-- `random-bounded` `n = 30`: Lean median `18.403 ms`, fpLLL median `138.498 ms`, fpLLL relative median `7.526×` (raw); adjusted for ~34 µs protocol overhead, `7.524×`.
-- `random-bounded` `n = 45`: Lean median `69.406 ms`, fpLLL median `149.779 ms`, fpLLL relative median `2.158×` (raw); adjusted `2.158×`.
-- `random-bounded` `n = 60`: Lean median `179.295 ms`, fpLLL median `185.756 ms`, fpLLL relative median `1.036×` (raw); adjusted `1.036×`.
-- `random-bounded` `n = 75`: Lean median `371.360 ms`, fpLLL median `163.607 ms`, fpLLL relative median `0.441×` (raw); adjusted `0.440×`.
-- `random-bounded` `n = 90`: Lean median `650.187 ms`, fpLLL median `223.589 ms`, fpLLL relative median `0.344×` (raw); adjusted `0.344×`.
-- `random-bounded` `n = 120`: Lean median `1.839 s`, fpLLL median `350.572 ms`, fpLLL relative median `0.191×` (raw); adjusted `0.191×`.
-- `random-bounded` `n = 150`: Lean median `3.778 s`, fpLLL median `568.849 ms`, fpLLL relative median `0.151×` (raw); adjusted `0.151×`.
-- `random-bounded` `n = 180`: Lean median `6.939 s`, fpLLL median `1.013 s`, fpLLL relative median `0.146×` (raw); adjusted `0.146×`.
+- `random-bounded` `n = 30`: Lean median `18.403 ms`, fpLLL median `1.837 ms`, fpLLL relative median `0.100×` (raw); adjusted for ~34 µs protocol overhead, `0.098×`.
+- `random-bounded` `n = 45`: Lean median `69.406 ms`, fpLLL median `4.784 ms`, fpLLL relative median `0.069×` (raw); adjusted `0.068×`.
+- `random-bounded` `n = 60`: Lean median `179.295 ms`, fpLLL median `9.756 ms`, fpLLL relative median `0.054×` (raw); adjusted `0.054×`.
+- `random-bounded` `n = 75`: Lean median `371.360 ms`, fpLLL median `19.446 ms`, fpLLL relative median `0.052×` (raw); adjusted `0.052×`.
+- `random-bounded` `n = 90`: Lean median `650.187 ms`, fpLLL median `32.003 ms`, fpLLL relative median `0.049×` (raw); adjusted `0.049×`.
+- `random-bounded` `n = 120`: Lean median `1.839 s`, fpLLL median `76.952 ms`, fpLLL relative median `0.042×` (raw); adjusted `0.042×`.
+- `random-bounded` `n = 150`: Lean median `3.778 s`, fpLLL median `153.998 ms`, fpLLL relative median `0.041×` (raw); adjusted `0.041×`.
+- `random-bounded` `n = 180`: Lean median `6.939 s`, fpLLL median `271.702 ms`, fpLLL relative median `0.039×` (raw); adjusted `0.039×`.
 
-Harsh-cubic fpLLL sweep at commit `4a69408a680df18b4d496dd2fac6503ebef62807`
-on `carica` (Apple M2 Ultra, macOS), command:
+Harsh-cubic fpLLL sweep at worktree commit
+`594364a5d86cc9daaf26c53a8b6a137998b38a6e` on `carica`
+(Apple M2 Ultra, macOS), command:
 
 ```sh
 PATH="$PWD/.venv-oracles/bin:$PATH" lake exe hexlll_bench run \
@@ -464,22 +474,27 @@ PATH="$PWD/.venv-oracles/bin:$PATH" lake exe hexlll_bench run \
   --export-file reports/bench-results/hex-lll-fpylll-harsh-cubic-4a69408a680d.json
 ```
 
-The harness recorded `4a69408-dirty` because this worktree carried local
-changes while measuring the new registrations. Export artefact:
+The harness recorded `594364a-dirty` because this worktree carried the
+benchmark registration/report edits plus a pre-existing local `.claude/CLAUDE.md`
+modification outside this evidence package. Export artefact:
 `reports/bench-results/hex-lll-fpylll-harsh-cubic-4a69408a680d.json`,
-SHA-256 `d726d21de7dbea2c8c251b8d5b36df062205b696d84f3dba95b46169c366ba3b`.
+SHA-256 `572afe6866d80e4fd0f54519c3fbdf5bd6946cddcb919d8591e6642a1154aa0f`.
 
-- `harsh-cubic` `n = 15`: Lean median `898.791 us`, fpLLL median `134.826 ms`, fpLLL relative median `150.009×` (raw); adjusted `149.971×`.
-- `harsh-cubic` `n = 20`: Lean median `3.191 ms`, fpLLL median `106.879 ms`, fpLLL relative median `33.494×` (raw); adjusted `33.483×`.
-- `harsh-cubic` `n = 25`: Lean median `8.331 ms`, fpLLL median `156.157 ms`, fpLLL relative median `18.744×` (raw); adjusted `18.740×`.
-- `harsh-cubic` `n = 30`: Lean median `22.022 ms`, fpLLL median `150.284 ms`, fpLLL relative median `6.824×` (raw); adjusted `6.823×`.
-- `harsh-cubic` `n = 35`: Lean median `49.134 ms`, fpLLL median `110.174 ms`, fpLLL relative median `2.242×` (raw); adjusted `2.241×`.
-- `harsh-cubic` `n = 40`: Lean median `105.251 ms`, fpLLL median `145.115 ms`, fpLLL relative median `1.379×` (raw); adjusted `1.378×`.
-- `harsh-cubic` `n = 45`: Lean median `202.061 ms`, fpLLL median `151.332 ms`, fpLLL relative median `0.749×` (raw); adjusted `0.749×`.
-- `harsh-cubic` `n = 50`: Lean median `377.282 ms`, fpLLL median `210.316 ms`, fpLLL relative median `0.557×` (raw); adjusted `0.557×`.
-- `harsh-cubic` `n = 55`: Lean median `640.050 ms`, fpLLL median `205.693 ms`, fpLLL relative median `0.321×` (raw); adjusted `0.321×`.
+- `harsh-cubic` `n = 15`: Lean median `898.791 us`, fpLLL median `423.473 us`, fpLLL relative median `0.471×` (raw); adjusted `0.433×`.
+- `harsh-cubic` `n = 20`: Lean median `3.191 ms`, fpLLL median `823.053 us`, fpLLL relative median `0.258×` (raw); adjusted `0.247×`.
+- `harsh-cubic` `n = 25`: Lean median `8.331 ms`, fpLLL median `1.291 ms`, fpLLL relative median `0.155×` (raw); adjusted `0.151×`.
+- `harsh-cubic` `n = 30`: Lean median `22.022 ms`, fpLLL median `1.961 ms`, fpLLL relative median `0.089×` (raw); adjusted `0.087×`.
+- `harsh-cubic` `n = 35`: Lean median `49.134 ms`, fpLLL median `2.598 ms`, fpLLL relative median `0.053×` (raw); adjusted `0.052×`.
+- `harsh-cubic` `n = 40`: Lean median `105.251 ms`, fpLLL median `3.530 ms`, fpLLL relative median `0.034×` (raw); adjusted `0.033×`.
+- `harsh-cubic` `n = 45`: Lean median `202.061 ms`, fpLLL median `4.678 ms`, fpLLL relative median `0.023×` (raw); adjusted `0.023×`.
+- `harsh-cubic` `n = 50`: Lean median `377.282 ms`, fpLLL median `5.913 ms`, fpLLL relative median `0.016×` (raw); adjusted `0.016×`.
+- `harsh-cubic` `n = 55`: Lean median `640.050 ms`, fpLLL median `7.356 ms`, fpLLL relative median `0.011×` (raw); adjusted `0.011×`.
 
-The fpLLL fixed-mode targets still incur one CPython + `import fpylll` startup per measured child (per the process-call comparator registration), so the bottom rungs are startup-sensitive. Across the full random-bounded ladder fpLLL is slower than Lean at `n = 30` and `45`, roughly tied at `n = 60`, and faster from `n = 75` through `180`. Across the harsh-cubic ladder fpLLL is slower through `n = 40`, then faster from `n = 45` through `55`. Because fpylll is informational, these trends remain context rather than a gating performance signal for HexLLL.
+The regenerated fpLLL fixed-mode targets amortize CPython + `import fpylll`
+startup inside each measured child. Across both `random-bounded` and
+`harsh-cubic`, fpLLL is faster than Lean at every reported rung. Because
+fpylll is informational, these trends remain context rather than a gating
+performance signal for HexLLL.
 
 ## Profile
 
