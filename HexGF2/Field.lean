@@ -6,6 +6,12 @@ Single-word extension-field wrappers for `hex-gf2`.
 This module packages both the `n < 64` single-word case and the arbitrary-degree
 packed-quotient case of `GF(2^n)` as reduced representatives with XOR addition
 and modular multiplication modulo a fixed irreducible polynomial.
+
+The public quotient-field surface is the `GF2n`/`GF2nPoly` operation API and
+its characterising lemmas. Finite coefficient enumeration, divided-difference
+root counting, and linear product/power helpers are proof-facing scaffolding;
+they live under `GF2Poly.Internal` or `GF2nPoly.Internal` unless they are
+explicitly exposed as quotient enumeration data, such as `GF2nPoly.elements`.
 -/
 namespace Hex
 namespace GF2Poly
@@ -51,7 +57,8 @@ theorem eq_of_reducedCoeffVector_eq {bound : Nat} {p q : GF2Poly}
 
 namespace Internal
 
-/-- The two coefficients of `GF(2)`, in a stable enumeration order. -/
+/-- Internal Boolean coefficient values used to build finite coefficient-list
+enumerations for packed quotient proofs. -/
 def boolCoeffValues : List Bool :=
   [false, true]
 
@@ -110,8 +117,8 @@ private theorem nodup_flatMap_of_disjoint
           intro hxy
           exact hxs.1 (hxy ▸ hy)) a ha (hab ▸ hby)
 
-/-- All Boolean coefficient lists of length `d`, ordered lexicographically by
-the head coefficient. -/
+/-- Internal enumeration of all Boolean coefficient lists of length `d`,
+ordered lexicographically by the head coefficient. -/
 def coeffBoolLists : Nat → List (List Bool)
   | 0 => [[]]
   | d + 1 =>
@@ -220,15 +227,15 @@ theorem coeffBoolLists_nodup (d : Nat) :
         have hhead : b = c := (List.cons.inj hxtail' |>.1).symm
         exact hne hhead
 
-/-- Build a packed `GF2Poly` from a Boolean coefficient list, treating
-`bs[i]` as the coefficient of `x^(start + i)`. -/
+/-- Internal builder for the finite-enumeration proof: interpret `bs[i]` as
+the coefficient of `x^(start + i)` in a packed `GF2Poly`. -/
 def ofBoolListFrom (start : Nat) : List Bool → GF2Poly
   | [] => 0
   | b :: bs =>
       (if b then monomial start else 0) + ofBoolListFrom (start + 1) bs
 
-/-- Build a packed `GF2Poly` from a Boolean coefficient list, treating `bs[i]`
-as the coefficient of `x^i`. -/
+/-- Internal builder for the finite-enumeration proof: interpret `bs[i]` as
+the coefficient of `x^i` in a packed `GF2Poly`. -/
 def ofBoolList (bs : List Bool) : GF2Poly :=
   ofBoolListFrom 0 bs
 
@@ -895,8 +902,10 @@ theorem boolListExpression_val_eq_mod (bs : List Bool) :
   unfold boolListExpression
   rw [reducePoly_val_eq_mod]
 
-/-- All packed quotient-field elements, enumerated by reducing every length-`f.degree`
-Boolean coefficient list. -/
+/-- Public quotient-field enumeration: all packed representatives in
+`GF2[X]/(f)`, obtained by reducing every length-`f.degree` Boolean coefficient
+list. This is exposed for finite-field cardinality, root-count, and Rabin
+soundness consumers. -/
 def elements : List (GF2nPoly f hirr) :=
   (GF2Poly.Internal.coeffBoolLists f.degree).map
     (boolListExpression (f := f) (hirr := hirr))
@@ -1468,8 +1477,8 @@ def evalCoeffList : List (GF2nPoly f hirr) → GF2nPoly f hirr → GF2nPoly f hi
 namespace Internal
 
 /--
-Synthetic quotient coefficients for the divided difference of `cs` at the
-base point `α`.
+Internal root-count helper: synthetic quotient coefficients for the divided
+difference of `cs` at the base point `α`.
 
 If `P` is represented by `cs`, this list represents the quotient
 `(P(T) + P(α)) / (T + α)` in characteristic two. Its length is one less
@@ -1512,10 +1521,9 @@ def dividedDifferenceCoeffs :
       | cons d ds =>
           simp [dividedDifferenceCoeffs, ih]
 
-/--
-Evaluate the divided difference of a quotient-coefficient polynomial between
-the base point `α` and target point `β`.
--/
+/-- Internal root-count helper: evaluate the divided difference of a
+quotient-coefficient polynomial between the base point `α` and target point
+`β`. -/
 def dividedDifference
     (cs : List (GF2nPoly f hirr)) (α β : GF2nPoly f hirr) : GF2nPoly f hirr :=
   evalCoeffList (dividedDifferenceCoeffs cs α) β
@@ -1896,8 +1904,8 @@ private theorem coeffListTopNonzero_dividedDifferenceCoeffs
   rw [dividedDifferenceCoeffs_getLast?]
   exact hlast
 
-/-- Roots of a quotient-coefficient polynomial inside the canonical quotient
-enumeration. -/
+/-- Internal root-count helper: roots of a quotient-coefficient polynomial
+inside the canonical quotient enumeration. -/
 def rootsOfCoeffList (cs : List (GF2nPoly f hirr)) : List (GF2nPoly f hirr) :=
   (elements (f := f) (hirr := hirr)).filter
     (fun β => decide (evalCoeffList cs β = 0))
@@ -2156,9 +2164,9 @@ theorem nonzeroElements_map_mul_left_perm
 
 namespace Internal
 
-/-- Linear natural powers in the packed quotient field. This proof-facing
-variant has simple recursion equations; executable exponentiation remains the
-`Pow` instance above. -/
+/-- Internal proof-facing linear natural powers in the packed quotient field.
+This variant has simple recursion equations; executable exponentiation remains
+the `Pow` instance above. -/
 def linearPow (a : GF2nPoly f hirr) : Nat → GF2nPoly f hirr
   | 0 => 1
   | n + 1 => linearPow a n * a
@@ -2482,7 +2490,8 @@ theorem frobeniusIter_X_ne_self_of_pos_lt_degree
 
 namespace Internal
 
-/-- Product of a list of packed quotient elements (right fold). -/
+/-- Internal proof-facing product of a list of packed quotient elements
+(right fold), used with the canonical nonzero quotient enumeration. -/
 def listProd (xs : List (GF2nPoly f hirr)) : GF2nPoly f hirr :=
   xs.foldr (· * ·) 1
 
