@@ -18,16 +18,23 @@ from matplotlib.ticker import FuncFormatter
 
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_DENSIFIED = ROOT / "reports/bench-results/hex-lll-densified-fa57a699.json"
-DEFAULT_FPYLLL = ROOT / "reports/bench-results/hex-lll-fpylll-0c2d9a9e2d0a.json"
+DEFAULT_DENSIFIED = ROOT / "reports/bench-results/hex-lll-densified-6fcd1185cee0.json"
+DEFAULT_FPYLLL_RANDOM = ROOT / "reports/bench-results/hex-lll-fpylll-0c2d9a9e2d0a.json"
+DEFAULT_FPYLLL_HARSH = (
+    ROOT / "reports/bench-results/hex-lll-fpylll-harsh-cubic-4a69408a680d.json"
+)
 DEFAULT_ISABELLE_BOTTOM = (
     ROOT / "reports/bench-results/hex-lll-isabelle-bottom-e211854d1435.json"
 )
-DEFAULT_OUTPUT = ROOT / "reports/figures/hex-lll-comparator.svg"
+DEFAULT_RANDOM_OUTPUT = ROOT / "reports/figures/hex-lll-comparator-random-bounded.svg"
+DEFAULT_HARSH_OUTPUT = ROOT / "reports/figures/hex-lll-comparator-harsh-cubic.svg"
 
 LEAN_RANDOM = re.compile(r"runFirstShortVectorRandomBoundedNormSq([0-9]+)$")
 ISABELLE_RANDOM = re.compile(r"runIsabelleRandomBoundedNormSq([0-9]+)$")
 FPYLLL_RANDOM = re.compile(r"runFpylllFirstShortVectorRandomBounded([0-9]+)Checksum$")
+LEAN_HARSH = re.compile(r"runFirstShortVectorHarshCubicNormSq([0-9]+)$")
+ISABELLE_HARSH = re.compile(r"runIsabelleHarshCubicNormSq([0-9]+)$")
+FPYLLL_HARSH = re.compile(r"runFpylllFirstShortVectorHarshCubic([0-9]+)Checksum$")
 
 
 @dataclass(frozen=True)
@@ -35,6 +42,41 @@ class Series:
     label: str
     xs: list[int]
     ys: list[float]
+
+
+@dataclass(frozen=True)
+class FamilyConfig:
+    lean_pattern: re.Pattern[str]
+    isabelle_pattern: re.Pattern[str]
+    fpylll_pattern: re.Pattern[str]
+    fpylll_path: Path
+    output: Path
+    title: str
+    xlabel: str
+    bottom_consistency: bool = False
+
+
+FAMILIES = {
+    "random-bounded": FamilyConfig(
+        lean_pattern=LEAN_RANDOM,
+        isabelle_pattern=ISABELLE_RANDOM,
+        fpylll_pattern=FPYLLL_RANDOM,
+        fpylll_path=DEFAULT_FPYLLL_RANDOM,
+        output=DEFAULT_RANDOM_OUTPUT,
+        title="HexLLL random-bounded comparator runtime",
+        xlabel="random-bounded dimension n",
+        bottom_consistency=True,
+    ),
+    "harsh-cubic": FamilyConfig(
+        lean_pattern=LEAN_HARSH,
+        isabelle_pattern=ISABELLE_HARSH,
+        fpylll_pattern=FPYLLL_HARSH,
+        fpylll_path=DEFAULT_FPYLLL_HARSH,
+        output=DEFAULT_HARSH_OUTPUT,
+        title="HexLLL harsh-cubic comparator runtime",
+        xlabel="harsh-cubic dimension n",
+    ),
+}
 
 
 def load_results(path: Path) -> list[dict]:
@@ -54,7 +96,7 @@ def collect_series(results: list[dict], pattern: re.Pattern[str], label: str) ->
         if match:
             values[int(match.group(1))] = median_ms(result)
     if not values:
-        raise ValueError(f"no random-bounded results found for {label}")
+        raise ValueError(f"no results found for {label}")
     xs = sorted(values)
     return Series(label=label, xs=xs, ys=[values[x] for x in xs])
 
@@ -79,7 +121,7 @@ def seconds_formatter(value: float, _position: int) -> str:
     return f"{value:g} s"
 
 
-def plot(series: list[Series], output: Path) -> None:
+def plot(series: list[Series], output: Path, title: str, xlabel: str) -> None:
     fig, ax = plt.subplots(figsize=(7.2, 4.8))
     styles = [
         {"marker": "o", "linewidth": 2.0},
@@ -89,8 +131,8 @@ def plot(series: list[Series], output: Path) -> None:
     for item, style in zip(series, styles, strict=True):
         ax.plot(item.xs, [y / 1000.0 for y in item.ys], label=item.label, **style)
 
-    ax.set_title("HexLLL random-bounded comparator runtime")
-    ax.set_xlabel("random-bounded dimension n")
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
     ax.set_ylabel("median wall time per call")
     ax.set_yscale("log")
     ax.yaxis.set_major_formatter(FuncFormatter(seconds_formatter))
@@ -110,28 +152,45 @@ def plot(series: list[Series], output: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Generate reports/figures/hex-lll-comparator.svg."
+        description="Generate a HexLLL comparator-runtime plot."
+    )
+    parser.add_argument(
+        "--family",
+        choices=sorted(FAMILIES),
+        required=True,
+        help="Input family to plot.",
     )
     parser.add_argument("--densified", type=Path, default=DEFAULT_DENSIFIED)
-    parser.add_argument("--fpylll", type=Path, default=DEFAULT_FPYLLL)
+    parser.add_argument(
+        "--fpylll",
+        type=Path,
+        default=None,
+        help="Override the family-specific fpylll export.",
+    )
     parser.add_argument(
         "--isabelle-bottom", type=Path, default=DEFAULT_ISABELLE_BOTTOM
     )
-    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--output", type=Path, default=None)
     args = parser.parse_args()
+    config = FAMILIES[args.family]
+    fpylll_path = args.fpylll or config.fpylll_path
+    output = args.output or config.output
 
     densified_results = load_results(args.densified)
-    fpylll_results = load_results(args.fpylll)
-    isabelle_bottom_results = load_results(args.isabelle_bottom)
+    fpylll_results = load_results(fpylll_path)
 
-    lean = collect_series(densified_results, LEAN_RANDOM, "Lean")
+    lean = collect_series(densified_results, config.lean_pattern, "Lean")
     isabelle = collect_series(
-        densified_results, ISABELLE_RANDOM, "verified Isabelle LLL"
+        densified_results, config.isabelle_pattern, "verified Isabelle LLL"
     )
-    fpylll = collect_series(fpylll_results, FPYLLL_RANDOM, "fpLLL via fpylll")
-    assert_bottom_consistent(isabelle_bottom_results, isabelle)
+    fpylll = collect_series(
+        fpylll_results, config.fpylll_pattern, "fpLLL via fpylll"
+    )
+    if config.bottom_consistency:
+        isabelle_bottom_results = load_results(args.isabelle_bottom)
+        assert_bottom_consistent(isabelle_bottom_results, isabelle)
 
-    plot([lean, isabelle, fpylll], args.output)
+    plot([lean, isabelle, fpylll], output, config.title, config.xlabel)
 
 
 if __name__ == "__main__":
