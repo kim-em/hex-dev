@@ -537,6 +537,7 @@ theorem clmul_oneHot (a : UInt64) {bit : Nat} (hbit : bit < 64) :
 
 /-- Runtime `clmul`, under its trusted reference contract, is linear in its
 left word argument over bitwise XOR. -/
+@[grind =]
 theorem clmul_xor_left (x y z : UInt64) :
     clmul (x ^^^ y) z =
       ((clmul x z).1 ^^^ (clmul y z).1, (clmul x z).2 ^^^ (clmul y z).2) := by
@@ -763,6 +764,7 @@ theorem clmul_comm (x y : UInt64) :
 
 /-- Runtime `clmul`, under its trusted reference contract, is linear in its
 right word argument over bitwise XOR. -/
+@[grind =]
 theorem clmul_xor_right (x y z : UInt64) :
     clmul x (y ^^^ z) =
       ((clmul x y).1 ^^^ (clmul x z).1, (clmul x y).2 ^^^ (clmul x z).2) := by
