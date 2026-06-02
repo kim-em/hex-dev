@@ -233,6 +233,21 @@ theorem bhksPaperThresholdReal_le_factorFastPrecisionCap
 namespace ExecutableBadVectorWitness
 
 /--
+The executable coefficient L2 bound of the source polynomial controls the
+Mathlib-facing input polynomial carried by any bad-vector witness.
+
+This is the concrete input-side bound used by
+`l2norm_product_lt_divisor_of_l2norm_bounds`; the auxiliary side and strict
+cap arithmetic can be supplied independently.
+-/
+theorem inputPolynomial_l2norm_le_coeffL2NormBound
+    (W : ExecutableBadVectorWitness) :
+    HexPolyZMathlib.l2norm W.inputPolynomial ≤
+      (Hex.ZPoly.coeffL2NormBound W.input : ℝ) := by
+  simpa [ExecutableBadVectorWitness.inputPolynomial] using
+    l2norm_toPolynomial_le_coeffL2NormBound W.input
+
+/--
 Turn separate l2-norm bounds for the input and auxiliary polynomials into the
 strict Hadamard/l2norm comparison consumed by the resultant contradiction.
 
@@ -287,6 +302,34 @@ theorem l2norm_product_lt_divisor_of_l2norm_bounds
       hauxiliary_pow_nonneg
       (pow_nonneg hinput_bound_nonneg _))
     hstrict
+
+/--
+Specialisation of `l2norm_product_lt_divisor_of_l2norm_bounds` that
+discharges the input bound automatically from
+`inputPolynomial_l2norm_le_coeffL2NormBound`.
+
+Callers needing the strict Hadamard/l2norm comparison only have to supply the
+auxiliary-polynomial l2 bound and the cap arithmetic against
+`coeffL2NormBound W.input`; the input-side l2 bound is supplied by the
+witness-level Cauchy–Schwarz fact carried by every executable bad-vector
+witness.
+-/
+theorem l2norm_product_lt_divisor_of_auxiliary_bound
+    (W : ExecutableBadVectorWitness) {auxiliaryBound : ℝ}
+    (hauxiliary : HexPolyZMathlib.l2norm W.auxiliaryPolynomial ≤ auxiliaryBound)
+    (hstrict :
+      (Hex.ZPoly.coeffL2NormBound W.input : ℝ) ^
+            W.auxiliaryPolynomial.natDegree *
+          auxiliaryBound ^ W.inputPolynomial.natDegree <
+        (W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : ℝ)) :
+    (HexPolyZMathlib.l2norm W.inputPolynomial) ^
+        W.auxiliaryPolynomial.natDegree *
+      (HexPolyZMathlib.l2norm W.auxiliaryPolynomial) ^
+        W.inputPolynomial.natDegree <
+    (W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : ℝ) :=
+  l2norm_product_lt_divisor_of_l2norm_bounds W
+    (inputPolynomial_l2norm_le_coeffL2NormBound W)
+    hauxiliary hstrict
 
 /--
 Packaged BHKS bad-vector contradiction at a precision bounded below by

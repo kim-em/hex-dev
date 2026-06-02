@@ -2029,6 +2029,82 @@ theorem factorFastCapLift_input_l2norm_sq_le_coeffNormSq_add_one
       (Hex.normalizeForFactor f).squareFreeCore
 
 /--
+Concrete input-polynomial l2norm bound for the actual `factorFast` cap-lift
+bad-vector witness.
+
+This is the input-side fact needed by
+`ExecutableBadVectorWitness.l2norm_product_lt_divisor_of_l2norm_bounds`,
+specialized to `badVectorWitnessOfFactorFastCapLiftData`.
+-/
+theorem factorFastCapLift_inputPolynomial_l2norm_le_coeffL2NormBound
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly) :
+    HexPolyZMathlib.l2norm
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H).inputPolynomial ≤
+      (Hex.ZPoly.coeffL2NormBound
+        (Hex.normalizeForFactor f).squareFreeCore : ℝ) :=
+  ExecutableBadVectorWitness.inputPolynomial_l2norm_le_coeffL2NormBound
+    (badVectorWitnessOfFactorFastCapLiftData
+      f primeData rows_pos localFactorIndex localFactorDegree H)
+
+/--
+Strict Hadamard/l2norm comparison for the actual `factorFast` cap-lift
+bad-vector witness, with the input bound discharged automatically by
+`factorFastCapLift_inputPolynomial_l2norm_le_coeffL2NormBound`.
+
+This is the cap-lift specialisation of
+`ExecutableBadVectorWitness.l2norm_product_lt_divisor_of_auxiliary_bound`:
+callers only have to supply the auxiliary-polynomial l2 bound and the cap
+arithmetic against `coeffL2NormBound (normalizeForFactor f).squareFreeCore`,
+and the resulting Hadamard/l2norm comparison is exactly the field consumed by
+`FactorFastCapLiftAnalyticComparison`.
+-/
+theorem factorFastCapLift_l2norm_product_lt_divisor_of_auxiliary_bound
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    {auxiliaryBound : ℝ}
+    (hauxiliary :
+      HexPolyZMathlib.l2norm
+          (badVectorWitnessOfFactorFastCapLiftData
+            f primeData rows_pos localFactorIndex localFactorDegree H).auxiliaryPolynomial ≤
+        auxiliaryBound)
+    (hstrict :
+      (Hex.ZPoly.coeffL2NormBound
+            (Hex.normalizeForFactor f).squareFreeCore : ℝ) ^
+            (badVectorWitnessOfFactorFastCapLiftData
+              f primeData rows_pos localFactorIndex localFactorDegree H).auxiliaryPolynomial.natDegree *
+          auxiliaryBound ^
+            (badVectorWitnessOfFactorFastCapLiftData
+              f primeData rows_pos localFactorIndex localFactorDegree H).inputPolynomial.natDegree <
+        ((factorFastCapLiftData f primeData).p ^
+            ((factorFastCapLiftData f primeData).k * localFactorDegree) : ℝ)) :
+    (HexPolyZMathlib.l2norm
+          (badVectorWitnessOfFactorFastCapLiftData
+            f primeData rows_pos localFactorIndex localFactorDegree H).inputPolynomial) ^
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H).auxiliaryPolynomial.natDegree *
+      (HexPolyZMathlib.l2norm
+          (badVectorWitnessOfFactorFastCapLiftData
+            f primeData rows_pos localFactorIndex localFactorDegree H).auxiliaryPolynomial) ^
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H).inputPolynomial.natDegree <
+    ((factorFastCapLiftData f primeData).p ^
+      ((factorFastCapLiftData f primeData).k * localFactorDegree) : ℝ) :=
+  ExecutableBadVectorWitness.l2norm_product_lt_divisor_of_auxiliary_bound
+    (badVectorWitnessOfFactorFastCapLiftData
+      f primeData rows_pos localFactorIndex localFactorDegree H)
+    hauxiliary hstrict
+
+/--
 Actual-cap corrected auxiliary-polynomial identity supplied by
 `BadVectorBridgeData`.
 
@@ -2079,6 +2155,120 @@ theorem factorFastCapLift_auxiliary_eq_of_bridge_data
           f primeData rows_pos localFactorIndex localFactorDegree H).projectedVectorArray v)
         (bridge.auxiliaryCorrections v hin hnot) :=
   bridge.auxiliary_eq' v hin hnot
+
+/--
+Actual-cap coefficientwise Hensel-lift congruence between a packaged true
+factor and its corresponding lifted local factor.
+-/
+theorem factorFastCapLift_trueFactor_liftedFactor_coeff_dvd_of_bridge_data
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    (i : Nat)
+    (hi :
+      i <
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H).liftData.liftedFactors.size)
+    (j : Nat) :
+    ((((badVectorWitnessOfFactorFastCapLiftData
+        f primeData rows_pos localFactorIndex localFactorDegree H).liftData.p) ^
+      (badVectorWitnessOfFactorFastCapLiftData
+        f primeData rows_pos localFactorIndex localFactorDegree H).liftData.k : Nat) : ℤ) ∣
+      (Hex.DensePoly.coeff (bridge.trueFactor i) j -
+        Hex.DensePoly.coeff
+          ((badVectorWitnessOfFactorFastCapLiftData
+            f primeData rows_pos localFactorIndex localFactorDegree H).liftData.liftedFactors.getD i 0)
+          j) :=
+  ExecutableBadVectorWitness.BadVectorBridgeData.trueFactor_liftedFactor_coeff_dvd_of_bridge_data
+    bridge i hi j
+
+/--
+Actual-cap selected-index Hensel-lift congruence supplied by
+`BadVectorBridgeData`.
+-/
+theorem factorFastCapLift_selected_trueFactor_liftedFactor_coeff_dvd_of_bridge_data
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    (j : Nat) :
+    ((((badVectorWitnessOfFactorFastCapLiftData
+        f primeData rows_pos localFactorIndex localFactorDegree H).liftData.p) ^
+      (badVectorWitnessOfFactorFastCapLiftData
+        f primeData rows_pos localFactorIndex localFactorDegree H).liftData.k : Nat) : ℤ) ∣
+      (Hex.DensePoly.coeff
+          (bridge.trueFactor
+            (badVectorWitnessOfFactorFastCapLiftData
+              f primeData rows_pos localFactorIndex localFactorDegree H).localFactorIndex)
+          j -
+        Hex.DensePoly.coeff
+          (badVectorWitnessOfFactorFastCapLiftData
+            f primeData rows_pos localFactorIndex localFactorDegree H).selectedLiftedFactor
+          j) :=
+  ExecutableBadVectorWitness.BadVectorBridgeData.selected_trueFactor_liftedFactor_coeff_dvd_of_bridge_data
+    bridge j
+
+/--
+Actual-cap per-coefficient precision separation supplied by
+`BadVectorBridgeData`.
+-/
+theorem factorFastCapLift_precision_separation_of_bridge_data
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    (j : Nat)
+    (hj :
+      j <
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H).input.degree?.getD 0) :
+    2 *
+        Hex.bhksCoeffBound
+          (badVectorWitnessOfFactorFastCapLiftData
+            f primeData rows_pos localFactorIndex localFactorDegree H).input j <
+      (badVectorWitnessOfFactorFastCapLiftData
+        f primeData rows_pos localFactorIndex localFactorDegree H).liftData.p ^
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H).liftData.k :=
+  ExecutableBadVectorWitness.BadVectorBridgeData.precision_separation_of_bridge_data
+    bridge j hj
 
 /--
 Actual-cap selected local-factor degree positivity supplied by
@@ -3291,6 +3481,186 @@ def ofExpectedFactors
 
 end CanonicalRecoveryInputs
 
+/--
+Canonical-support recovery inputs after cap separation has supplied the
+`L' = W` lattice identification.
+
+This is the tail package for the actual-cap `BadVectorBridgeData` assembly:
+callers still provide the support-partition shape facts, expected true-factor
+package, and per-indicator Mignotte product congruences, while the
+cap-separation wrapper below derives `lattice_eq_indicators` from bridge data.
+-/
+structure CanonicalRecoveryTailInputs
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos : HasPositiveDimension
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData))
+    (trueSupports : Set (Set (Fin (projectedRowsOfLiftData
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)
+      rows_pos).factorCount))) where
+  /-- Projected rows are nonempty. -/
+  projected_nonempty :
+    (projectedRowsOfLiftData
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)
+      rows_pos).projectedRows.isEmpty = false
+  /-- The support-equivalence partition has at least two classes. -/
+  classes_two :
+    2 ≤ (supportPartitionByMinColumn trueSupports).length
+  /-- Every support class is nonempty. -/
+  class_nonempty :
+    ∀ members, members ∈ supportPartitionByMinColumn trueSupports →
+      ∃ j, j ∈ members
+  /-- Members of each support class lie inside the lifted-factor array. -/
+  class_bounds :
+    ∀ members, members ∈ supportPartitionByMinColumn trueSupports →
+      ∀ j, j ∈ members →
+        j < (factorFastCapLiftData f primeData).liftedFactors.size
+  /-- Nonzero square-free core. -/
+  hf_ne_zero : (Hex.normalizeForFactor f).squareFreeCore ≠ 0
+  /-- The expected true-factor integer array. -/
+  expectedFactors : Array Hex.ZPoly
+  /-- The expected true-factor package backing the canonical indicator array. -/
+  expected_true_factors :
+    ForwardRecoveryInputs.ExpectedTrueFactors
+      (Hex.normalizeForFactor f).squareFreeCore
+      (expectedIndicatorArrayOfSupports trueSupports) expectedFactors
+  /-- Per-indicator Mignotte product congruence. -/
+  product_congr :
+    ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+      Hex.ZPoly.reduceModPow
+          (Hex.DensePoly.scale
+            (Hex.DensePoly.leadingCoeff
+              (Hex.normalizeForFactor f).squareFreeCore)
+            (Array.polyProduct
+              ((ForwardRecoveryInputs.selectedFactorArraysOfSupports
+                (factorFastCapLiftData f primeData).liftedFactors
+                trueSupports).getD i #[])))
+          (factorFastCapLiftData f primeData).p
+          (factorFastCapLiftData f primeData).k =
+        Hex.ZPoly.reduceModPow (expectedFactors.getD i 0)
+          (factorFastCapLiftData f primeData).p
+          (factorFastCapLiftData f primeData).k
+
+namespace CanonicalRecoveryTailInputs
+
+/-- Constructor for `CanonicalRecoveryTailInputs` that discharges the two
+unconditional support-partition shape facts internally. -/
+def ofExpectedFactors
+    {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {rows_pos : HasPositiveDimension
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)}
+    {trueSupports : Set (Set (Fin (projectedRowsOfLiftData
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)
+      rows_pos).factorCount))}
+    (projected_nonempty :
+      (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).projectedRows.isEmpty = false)
+    (classes_two :
+      2 ≤ (supportPartitionByMinColumn trueSupports).length)
+    (hf_ne_zero : (Hex.normalizeForFactor f).squareFreeCore ≠ 0)
+    (expectedFactors : Array Hex.ZPoly)
+    (expected_true_factors :
+      ForwardRecoveryInputs.ExpectedTrueFactors
+        (Hex.normalizeForFactor f).squareFreeCore
+        (expectedIndicatorArrayOfSupports trueSupports) expectedFactors)
+    (product_congr :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        Hex.ZPoly.reduceModPow
+            (Hex.DensePoly.scale
+              (Hex.DensePoly.leadingCoeff
+                (Hex.normalizeForFactor f).squareFreeCore)
+              (Array.polyProduct
+                ((ForwardRecoveryInputs.selectedFactorArraysOfSupports
+                  (factorFastCapLiftData f primeData).liftedFactors
+                  trueSupports).getD i #[])))
+            (factorFastCapLiftData f primeData).p
+            (factorFastCapLiftData f primeData).k =
+          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0)
+            (factorFastCapLiftData f primeData).p
+            (factorFastCapLiftData f primeData).k) :
+    CanonicalRecoveryTailInputs f primeData rows_pos trueSupports where
+  projected_nonempty := projected_nonempty
+  classes_two := classes_two
+  class_nonempty :=
+    ForwardRecoveryInputs.supportPartitionByMinColumn_class_nonempty trueSupports
+  class_bounds :=
+    ForwardRecoveryInputs.supportPartitionByMinColumn_class_lt trueSupports
+  hf_ne_zero := hf_ne_zero
+  expectedFactors := expectedFactors
+  expected_true_factors := expected_true_factors
+  product_congr := product_congr
+
+end CanonicalRecoveryTailInputs
+
+/--
+Cap-separation side inputs for the actual `factorFast` cap lift.
+
+This bundles the bridge/cut/comparison facts and the two remaining
+precision/prime-choice equations used by the final HO-4 assembly.  The
+recovery-side facts live separately in `CanonicalRecoveryTailInputs`, so the
+eventual public theorem can consume one cap-separation package and one
+recovery package rather than a long mixed argument list.
+-/
+structure FactorFastCapSeparationInputs
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos : HasPositiveDimension
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData))
+    (trueSupports : Set (Set (Fin (projectedRowsOfLiftData
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)
+      rows_pos).factorCount))) where
+  /-- Selected local factor index for the bad-vector witness. -/
+  localFactorIndex : Nat
+  /-- Selected local factor degree for the bad-vector witness. -/
+  localFactorDegree : Nat
+  /-- Auxiliary polynomial used by the bad-vector witness. -/
+  H : Hex.ZPoly
+  /-- The executable lift precision dominates the normalized-core cap. -/
+  cap_le :
+    Hex.factorFastPrecisionCap (Hex.normalizeForFactor f).squareFreeCore ≤
+      (factorFastCapLiftData f primeData).k
+  /-- BHKS cut constant. -/
+  C : ℝ
+  /-- The BHKS cut constant is nonnegative. -/
+  C_nonneg : 0 ≤ C
+  /-- The BHKS cut constant is bounded by the project LLL constant. -/
+  C_le_two : C ≤ 2
+  /-- Cut-projection hypotheses for the actual cap lift. -/
+  cut :
+    CutProjectionHypotheses
+      (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos)
+      trueSupports
+  /-- Executable bad-vector bridge data for the actual cap-lift witness. -/
+  bridge :
+    ExecutableBadVectorWitness.BadVectorBridgeData
+      (badVectorWitnessOfFactorFastCapLiftData
+        f primeData rows_pos localFactorIndex localFactorDegree H)
+      trueSupports
+  /-- Analytic comparison for the actual cap-lift witness. -/
+  comparison :
+    FactorFastCapLiftAnalyticComparison
+      f primeData rows_pos localFactorIndex localFactorDegree H
+  /-- Prime-choice equation from the public fast path. -/
+  choose_eq :
+    Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData
+  /-- Stored cap-lift precision equation for the normalized core. -/
+  precision_eq :
+    (factorFastCapLiftData f primeData).k =
+      Hex.precisionForCoeffBound
+        (Hex.factorFastPrecisionCap
+          (Hex.normalizeForFactor f).squareFreeCore)
+        (factorFastCapLiftData f primeData).p
+
 /-- Final canonical-supports recovery wrapper at the `factorFast` cap lift.
 
 Composes
@@ -3718,6 +4088,97 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalSupportsExpectedFa
     (one_le_factorFastPrecisionCap f) hchoose hk hprojected_nonempty
     hclasses_two hclass_nonempty hclass_bounds expectedFactors hf_ne_zero
     htrue hproduct
+
+/--
+Packaged canonical-support tail-input wrapper for the actual-cap
+`BadVectorBridgeData` assembly.
+
+This theorem is the support-side analogue of the earlier packaged
+`CanonicalRecoveryInputs` wrapper, but leaves the lattice identification to
+cap separation: `BadVectorBridgeData` plus the cut and analytic comparison
+derive `L' = W`, while `CanonicalRecoveryTailInputs` carries exactly the
+remaining recovery facts.
+-/
+theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalRecoveryTailInputs_internalCapPositiveAndPrimeLowerBound
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (hcap_le :
+      Hex.factorFastPrecisionCap (Hex.normalizeForFactor f).squareFreeCore ≤
+        (factorFastCapLiftData f primeData).k)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (hcut :
+      CutProjectionHypotheses
+        (projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          rows_pos)
+        trueSupports)
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    (hcomparison :
+      FactorFastCapLiftAnalyticComparison
+        f primeData rows_pos localFactorIndex localFactorDegree H)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
+    (hk :
+      (factorFastCapLiftData f primeData).k =
+        Hex.precisionForCoeffBound
+          (Hex.factorFastPrecisionCap
+            (Hex.normalizeForFactor f).squareFreeCore)
+          (factorFastCapLiftData f primeData).p)
+    (inputs :
+      CanonicalRecoveryTailInputs f primeData rows_pos trueSupports) :
+    Hex.factorFast f ≠ none :=
+  factorFast_ne_none_of_capSeparationBridgeDataCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound_internalCapPositiveAndPrimeLowerBound
+    f primeData rows_pos trueSupports localFactorIndex localFactorDegree H
+    hcap_le C hC_nonneg hC hcut bridge hcomparison hchoose hk
+    inputs.projected_nonempty inputs.classes_two inputs.class_nonempty
+    inputs.class_bounds inputs.expectedFactors inputs.hf_ne_zero
+    inputs.expected_true_factors inputs.product_congr
+
+/--
+Fully packaged actual-cap wrapper for the current HO-4 assembly surface.
+
+`FactorFastCapSeparationInputs` carries the cap-separation producer side, and
+`CanonicalRecoveryTailInputs` carries the canonical-support recovery tail.  The
+wrapper is intentionally additive: it does not prove the remaining
+mathematical providers, but fixes their final call shape for the public
+`factorFast_terminates` theorem.
+-/
+theorem factorFast_ne_none_of_factorFastCapSeparationInputsCanonicalRecoveryTailInputs
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (capInputs :
+      FactorFastCapSeparationInputs f primeData rows_pos trueSupports)
+    (recoveryInputs :
+      CanonicalRecoveryTailInputs f primeData rows_pos trueSupports) :
+    Hex.factorFast f ≠ none :=
+  factorFast_ne_none_of_capSeparationBridgeDataCanonicalRecoveryTailInputs_internalCapPositiveAndPrimeLowerBound
+    f primeData rows_pos trueSupports capInputs.localFactorIndex
+    capInputs.localFactorDegree capInputs.H capInputs.cap_le capInputs.C
+    capInputs.C_nonneg capInputs.C_le_two capInputs.cut capInputs.bridge
+    capInputs.comparison capInputs.choose_eq capInputs.precision_eq
+    recoveryInputs
 
 end BHKS
 
