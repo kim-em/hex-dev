@@ -3477,6 +3477,69 @@ def ofExpectedFactors
 
 end CanonicalRecoveryTailInputs
 
+/--
+Cap-separation side inputs for the actual `factorFast` cap lift.
+
+This bundles the bridge/cut/comparison facts and the two remaining
+precision/prime-choice equations used by the final HO-4 assembly.  The
+recovery-side facts live separately in `CanonicalRecoveryTailInputs`, so the
+eventual public theorem can consume one cap-separation package and one
+recovery package rather than a long mixed argument list.
+-/
+structure FactorFastCapSeparationInputs
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos : HasPositiveDimension
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData))
+    (trueSupports : Set (Set (Fin (projectedRowsOfLiftData
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)
+      rows_pos).factorCount))) where
+  /-- Selected local factor index for the bad-vector witness. -/
+  localFactorIndex : Nat
+  /-- Selected local factor degree for the bad-vector witness. -/
+  localFactorDegree : Nat
+  /-- Auxiliary polynomial used by the bad-vector witness. -/
+  H : Hex.ZPoly
+  /-- The executable lift precision dominates the normalized-core cap. -/
+  cap_le :
+    Hex.factorFastPrecisionCap (Hex.normalizeForFactor f).squareFreeCore ≤
+      (factorFastCapLiftData f primeData).k
+  /-- BHKS cut constant. -/
+  C : ℝ
+  /-- The BHKS cut constant is nonnegative. -/
+  C_nonneg : 0 ≤ C
+  /-- The BHKS cut constant is bounded by the project LLL constant. -/
+  C_le_two : C ≤ 2
+  /-- Cut-projection hypotheses for the actual cap lift. -/
+  cut :
+    CutProjectionHypotheses
+      (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos)
+      trueSupports
+  /-- Executable bad-vector bridge data for the actual cap-lift witness. -/
+  bridge :
+    ExecutableBadVectorWitness.BadVectorBridgeData
+      (badVectorWitnessOfFactorFastCapLiftData
+        f primeData rows_pos localFactorIndex localFactorDegree H)
+      trueSupports
+  /-- Analytic comparison for the actual cap-lift witness. -/
+  comparison :
+    FactorFastCapLiftAnalyticComparison
+      f primeData rows_pos localFactorIndex localFactorDegree H
+  /-- Prime-choice equation from the public fast path. -/
+  choose_eq :
+    Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData
+  /-- Stored cap-lift precision equation for the normalized core. -/
+  precision_eq :
+    (factorFastCapLiftData f primeData).k =
+      Hex.precisionForCoeffBound
+        (Hex.factorFastPrecisionCap
+          (Hex.normalizeForFactor f).squareFreeCore)
+        (factorFastCapLiftData f primeData).p
+
 /-- Final canonical-supports recovery wrapper at the `factorFast` cap lift.
 
 Composes
@@ -3963,6 +4026,38 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalRecoveryTailInputs
     inputs.projected_nonempty inputs.classes_two inputs.class_nonempty
     inputs.class_bounds inputs.expectedFactors inputs.hf_ne_zero
     inputs.expected_true_factors inputs.product_congr
+
+/--
+Fully packaged actual-cap wrapper for the current HO-4 assembly surface.
+
+`FactorFastCapSeparationInputs` carries the cap-separation producer side, and
+`CanonicalRecoveryTailInputs` carries the canonical-support recovery tail.  The
+wrapper is intentionally additive: it does not prove the remaining
+mathematical providers, but fixes their final call shape for the public
+`factorFast_terminates` theorem.
+-/
+theorem factorFast_ne_none_of_factorFastCapSeparationInputsCanonicalRecoveryTailInputs
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (capInputs :
+      FactorFastCapSeparationInputs f primeData rows_pos trueSupports)
+    (recoveryInputs :
+      CanonicalRecoveryTailInputs f primeData rows_pos trueSupports) :
+    Hex.factorFast f ≠ none :=
+  factorFast_ne_none_of_capSeparationBridgeDataCanonicalRecoveryTailInputs_internalCapPositiveAndPrimeLowerBound
+    f primeData rows_pos trueSupports capInputs.localFactorIndex
+    capInputs.localFactorDegree capInputs.H capInputs.cap_le capInputs.C
+    capInputs.C_nonneg capInputs.C_le_two capInputs.cut capInputs.bridge
+    capInputs.comparison capInputs.choose_eq capInputs.precision_eq
+    recoveryInputs
 
 end BHKS
 
