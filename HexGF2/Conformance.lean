@@ -140,6 +140,12 @@ private def pDividend : GF2Poly :=
 #guard w ((xgcd 0 pB).left * 0 + (xgcd 0 pB).right * pB) =
   w ((xgcd 0 pB).gcd)
 
+example (p : GF2Poly) : p + p = 0 := by simp
+
+example (p q : GF2Poly) : p + (p + q) = q := by simp
+
+example (p q : GF2Poly) : (p + q) + q = p := by simp
+
 end GF2Poly
 
 #guard pureClmul 0 0 = (0, 0)
@@ -150,6 +156,20 @@ end GF2Poly
 #guard clmul 0 0 = pureClmul 0 0
 #guard clmul 0x53 0xCA = pureClmul 0x53 0xCA
 #guard clmul ((1 : UInt64) <<< 63) 2 = pureClmul ((1 : UInt64) <<< 63) 2
+
+example (x : UInt64) : clmul 0 x = (0, 0) := by simp
+
+example (x : UInt64) : clmul x 0 = (0, 0) := by simp
+
+example (x y z : UInt64) :
+    clmul (x ^^^ y) z =
+      ((clmul x z).1 ^^^ (clmul y z).1, (clmul x z).2 ^^^ (clmul y z).2) := by
+  grind
+
+example (x y z : UInt64) :
+    clmul x (y ^^^ z) =
+      ((clmul x y).1 ^^^ (clmul x z).1, (clmul x y).2 ^^^ (clmul x z).2) := by
+  grind
 
 private theorem aesIrreducible :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x1B 8) :=
