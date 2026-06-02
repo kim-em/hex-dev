@@ -11706,27 +11706,6 @@ private theorem det_plucker_three_term_basisVec_of_eq_p3
   rw [mDet_basisVec_eq_zero_of_eq B p3]
   grind
 
-private theorem det_plucker_three_term_basisVec_of_gt_p3_of_nDet
-    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
-    (B : Matrix R (n + 2) n)
-    (p1 p2 p3 q : Fin (n + 2))
-    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
-    (h3q : p3.val < q.val)
-    (hraw :
-      nDet B p2 p3 h23 * nDet B p1 q (Nat.lt_trans h12 (Nat.lt_trans h23 h3q)) -
-        nDet B p1 p3 (Nat.lt_trans h12 h23) *
-          nDet B p2 q (Nat.lt_trans h23 h3q) +
-        nDet B p1 p2 h12 * nDet B p3 q h3q = 0) :
-    mDet B (basisVec (R := R) q) p1 * nDet B p2 p3 h23 -
-      mDet B (basisVec (R := R) q) p2 *
-        nDet B p1 p3 (Nat.lt_trans h12 h23) +
-      mDet B (basisVec (R := R) q) p3 * nDet B p1 p2 h12 = 0 := by
-  rw [mDet_basisVec_eq_signed_nDet_of_lt B p1 q
-    (Nat.lt_trans h12 (Nat.lt_trans h23 h3q))]
-  rw [mDet_basisVec_eq_signed_nDet_of_lt B p2 q (Nat.lt_trans h23 h3q)]
-  rw [mDet_basisVec_eq_signed_nDet_of_lt B p3 q h3q]
-  grind
-
 private theorem det_plucker_three_term_of_basisVec
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (B : Matrix R (n + 2) n) (v : Vector R (n + 2))
@@ -12037,6 +12016,114 @@ theorem det_setRow_setRow_mul_det
     det_setRow_eq_cofactorRowPairing M a v,
     det_setRow_eq_cofactorRowPairing M b u]
   exact cofactorRowPairing_setRow_plucker M a b hab u v
+
+/-- Canonical ordered four-row Grassmann-Plucker identity for the raw `nDet`
+minors of an `(n + 2) × n` matrix: for any four strictly increasing rows
+`r0 < r1 < r2 < r3`, the three pairings of `nDet` two-row minors sum to zero
+with the canonical Plucker signs.
+
+The proof applies the square two-row replacement Plucker kernel
+`det_setRow_setRow_mul_det` to `nMatrix B r0 r1 h01` at the two replacement
+positions `s2 = ⟨r2.val - 2, _⟩` and `s3 = ⟨r3.val - 2, _⟩`, then transports
+each of the five resulting determinants to a signed `nDet` minor via the
+single-row and double-row `setRow ∘ setRow` row-replacement transports. The
+sign exponents collapse against the common factor
+`(-1) ^ ((r2 - r0 - 2) + (r3 - r1 - 2))`. -/
+private theorem nDet_plucker_four_row_canonical
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n)
+    (r0 r1 r2 r3 : Fin (n + 2))
+    (h01 : r0.val < r1.val) (h12 : r1.val < r2.val)
+    (h23 : r2.val < r3.val) :
+    nDet B r2 r3 h23 * nDet B r0 r1 h01 -
+      nDet B r1 r3 (Nat.lt_trans h12 h23) *
+        nDet B r0 r2 (Nat.lt_trans h01 h12) +
+      nDet B r1 r2 h12 *
+        nDet B r0 r3 (Nat.lt_trans h01 (Nat.lt_trans h12 h23)) = 0 := by
+  -- A strictly increasing four-tuple in `Fin (n + 2)` forces `n ≥ 2`. Reduce
+  -- to `n = n' + 1` so the `(n+1) × (n+1)` square Plucker kernel applies to
+  -- `nMatrix B r0 r1 h01`.
+  cases n with
+  | zero =>
+      have := r3.isLt
+      omega
+  | succ n' =>
+      have hsk2 : r2.val - 2 < n' + 1 := by have := r3.isLt; omega
+      have hsk3 : r3.val - 2 < n' + 1 := by have := r3.isLt; omega
+      have hs2s3 :
+          (⟨r2.val - 2, hsk2⟩ : Fin (n' + 1)) ≠ ⟨r3.val - 2, hsk3⟩ := by
+        intro heq
+        have : r2.val - 2 = r3.val - 2 := congrArg Fin.val heq
+        omega
+      have hsq :=
+        det_setRow_setRow_mul_det (nMatrix B r0 r1 h01)
+          (⟨r2.val - 2, hsk2⟩ : Fin (n' + 1))
+          (⟨r3.val - 2, hsk3⟩ : Fin (n' + 1)) hs2s3 B[r0] B[r1]
+      have ho :=
+        det_setRow_setRow_nMatrix_r2_r0_r3_r1_eq_pow_mul_nDet_r2_r3
+          B r0 r1 r2 r3 h01 h12 h23
+      have ha :=
+        det_setRow_nMatrix_r2_r0_eq_pow_mul_nDet_r1_r2
+          B r0 r1 r2 r3 h01 h12 h23
+      have hb :=
+        det_setRow_nMatrix_r3_r1_eq_pow_mul_nDet_r0_r3
+          B r0 r1 r2 r3 h01 h12 h23
+      have hc :=
+        det_setRow_nMatrix_r2_r1_eq_pow_mul_nDet_r0_r2
+          B r0 r1 r2 r3 h01 h12 h23
+      have hd :=
+        det_setRow_nMatrix_r3_r0_eq_pow_mul_nDet_r1_r3
+          B r0 r1 r2 r3 h01 h12 h23
+      simp only at ho ha hb hc hd
+      rw [ho, ha, hb, hc, hd] at hsq
+      change nDet B r0 r1 h01 * _ = _ at hsq
+      -- Sign-cancellation facts: square cancellation of the common factor,
+      -- the `pow_add` split of the outer exponent, the `pow_succ` shift for
+      -- `r3 - r1 - 1`, and the parity identity
+      -- `(r2 - r1 - 1) + (r3 - r0 - 2) = ((r2 - r0 - 2) + (r3 - r1 - 2)) + 1`
+      -- that aligns the two off-diagonal sign products.
+      have hself :=
+        neg_one_pow_mul_self (R := R)
+          ((r2.val - r0.val - 2) + (r3.val - r1.val - 2))
+      have hpow_ab :=
+        Lean.Grind.Semiring.pow_add (-1 : R)
+          (r2.val - r0.val - 2) (r3.val - r1.val - 2)
+      have hpow_b1 :
+          (-1 : R) ^ (r3.val - r1.val - 1) =
+            (-1 : R) ^ (r3.val - r1.val - 2) * (-1 : R) := by
+        have heq : r3.val - r1.val - 1 = (r3.val - r1.val - 2) + 1 := by omega
+        rw [heq, Lean.Grind.Semiring.pow_succ]
+      have hpow_de :
+          (-1 : R) ^ (r2.val - r1.val - 1) * (-1 : R) ^ (r3.val - r0.val - 2) =
+            (-1 : R) ^ ((r2.val - r0.val - 2) + (r3.val - r1.val - 2)) *
+              (-1 : R) := by
+        rw [← Lean.Grind.Semiring.pow_add]
+        have heq :
+            (r2.val - r1.val - 1) + (r3.val - r0.val - 2) =
+              ((r2.val - r0.val - 2) + (r3.val - r1.val - 2)) + 1 := by omega
+        rw [heq, Lean.Grind.Semiring.pow_succ]
+      grind
+
+/-- Basis-vector case `q > p3` of the universal three-term Plucker identity:
+expanding `mDet B (basisVec q) p_i` via `mDet_basisVec_eq_signed_nDet_of_lt`
+(each `q > p_i`) reduces the goal to a sign-aligned restatement of the
+canonical four-row `nDet` identity at `(p1, p2, p3, q)`. -/
+private theorem det_plucker_three_term_basisVec_of_gt_p3_of_nDet
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (B : Matrix R (n + 2) n)
+    (p1 p2 p3 q : Fin (n + 2))
+    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
+    (h3q : p3.val < q.val) :
+    mDet B (basisVec (R := R) q) p1 * nDet B p2 p3 h23 -
+      mDet B (basisVec (R := R) q) p2 *
+        nDet B p1 p3 (Nat.lt_trans h12 h23) +
+      mDet B (basisVec (R := R) q) p3 * nDet B p1 p2 h12 = 0 := by
+  have hraw := nDet_plucker_four_row_canonical B p1 p2 p3 q h12 h23 h3q
+  rw [mDet_basisVec_eq_signed_nDet_of_lt B p1 q
+    (Nat.lt_trans h12 (Nat.lt_trans h23 h3q))]
+  rw [mDet_basisVec_eq_signed_nDet_of_lt B p2 q (Nat.lt_trans h23 h3q)]
+  rw [mDet_basisVec_eq_signed_nDet_of_lt B p3 q h3q]
+  grind
 
 end Matrix
 end Hex
