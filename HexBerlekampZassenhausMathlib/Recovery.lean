@@ -277,6 +277,75 @@ def badVectorWitnessOfLiftData
   projected_factor_count := rfl
 
 /--
+Specialise the `ProjectedBadVectorSetupBridge` constructor to the
+`badVectorWitnessOfLiftData` witness shape.  Forgetting the heavyweight
+`BadVectorBridgeData` package to the compact cap-separation surface combines
+the four field projections — `auxiliary_eq`/`auxiliaryCorrections`,
+`localFactorDegree_pos_of_bridge_data`,
+`coprime_input_aux_over_rat_of_bridge_data`, and
+`resultant_divisible_by_p_pow_of_bridge_data` — into one assembled bridge for
+use by `capSeparationOfBridgeData`.
+-/
+def bridgeOfLiftData
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    (hrows : HasPositiveDimension f d)
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData f d hrows).factorCount)))
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfLiftData f d hrows localFactorIndex localFactorDegree H)
+        trueSupports) :
+    ExecutableBadVectorWitness.ProjectedBadVectorSetupBridge
+        (badVectorWitnessOfLiftData f d hrows localFactorIndex localFactorDegree H)
+        trueSupports :=
+  bridge.toProjectedBadVectorSetupBridge
+
+/--
+Cap-separation hypotheses for the `badVectorWitnessOfLiftData` witness,
+assembled from the project-level `BadVectorBridgeData` package plus the cut
+and resultant-bound side conditions that remain #5204 / #5216 territory.
+
+This is the single consumer wrapper that ties the BHKS D1 bridge surface
+together: the `BadVectorBridgeData` carries the four bridge fields, and the
+`hcut`/`hp`/`hlt` arguments supply the cap structure and the analytic
+strict inequality.
+-/
+def capSeparationOfBridgeData
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    (hrows : HasPositiveDimension f d)
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData f d hrows).factorCount)))
+    (hcut :
+      CutProjectionHypotheses (projectedRowsOfLiftData f d hrows) trueSupports)
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfLiftData f d hrows localFactorIndex localFactorDegree H)
+        trueSupports)
+    (hp : 0 < d.p)
+    (hlt :
+      (HexPolyZMathlib.l2norm
+            (badVectorWitnessOfLiftData
+              f d hrows localFactorIndex localFactorDegree H).inputPolynomial) ^
+          (badVectorWitnessOfLiftData
+              f d hrows localFactorIndex localFactorDegree H).auxiliaryPolynomial.natDegree *
+        (HexPolyZMathlib.l2norm
+            (badVectorWitnessOfLiftData
+              f d hrows localFactorIndex localFactorDegree H).auxiliaryPolynomial) ^
+          (badVectorWitnessOfLiftData
+              f d hrows localFactorIndex localFactorDegree H).inputPolynomial.natDegree <
+      (d.p ^ (d.k * localFactorDegree) : ℝ)) :
+    ExecutableCapSeparationHypotheses
+      (badVectorWitnessOfLiftData f d hrows localFactorIndex localFactorDegree H)
+      trueSupports :=
+  ExecutableCapSeparationHypotheses.ofProjectedBadVectorSetupBridge
+    (badVectorWitnessOfLiftData f d hrows localFactorIndex localFactorDegree H)
+    trueSupports hcut
+    (bridgeOfLiftData hrows localFactorIndex localFactorDegree H trueSupports bridge)
+    hp hlt
+
+/--
 Specialize the executable-cap BHKS separation theorem to the projected-row
 shape used by `ForwardRecoveryInputs`.
 

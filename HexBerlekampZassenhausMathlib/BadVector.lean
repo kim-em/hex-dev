@@ -940,6 +940,20 @@ def BadVectorBridgeData.toProjectedBadVectorSetupBridge
   resultant_divisible_by_p_pow := D.resultant_divisible_by_p_pow
 
 /--
+BHKS Lemma 3.2 (selected local-factor degree positivity), exposed from the
+project-level bridge package.  Companion accessor to
+`coprime_input_aux_over_rat_of_bridge_data` and
+`resultant_divisible_by_p_pow_of_bridge_data` used by the bridge assembly
+layer.
+-/
+theorem localFactorDegree_pos_of_bridge_data
+    {W : ExecutableBadVectorWitness}
+    {trueSupports : Set (Set (Fin W.projectedRows.factorCount))}
+    (D : BadVectorBridgeData W trueSupports) :
+    0 < W.localFactorDegree := by
+  exact D.localFactorDegree_pos
+
+/--
 BHKS Lemma 3.2 bridge-data accessor for the rational coprimality clause.
 
 `BadVectorBridgeData` is the executable-witness hypothesis package that carries
