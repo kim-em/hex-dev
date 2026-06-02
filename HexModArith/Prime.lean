@@ -66,15 +66,7 @@ theorem inv_mul_eq_one_of_prime (hp : Hex.Nat.Prime p) {a : ZMod64 p}
   have hnotdvd : ¬ p ∣ aval := by
     intro hdiv
     exact ha (eq_zero_of_dvd_modulus (by simpa [haval] using hdiv))
-  have hcop : Nat.Coprime aval p := by
-    rw [Nat.Coprime]
-    have hgcd_dvd_p : Nat.gcd aval p ∣ p := Nat.gcd_dvd_right aval p
-    rcases hp.2 (Nat.gcd aval p) hgcd_dvd_p with hgcd | hgcd
-    · exact hgcd
-    · exfalso
-      apply hnotdvd
-      rw [← hgcd]
-      exact Nat.gcd_dvd_left aval p
+  have hcop : Nat.Coprime aval p := (Hex.Nat.Prime.coprime_of_not_dvd hp hnotdvd).symm
   change (ZMod64.mul (ZMod64.inv a) a).toNat = (1 : ZMod64 p).toNat
   rw [ZMod64.inv_mul_eq_one a (by simpa [haval] using hcop)]
   exact ZMod64.toNat_one.symm
