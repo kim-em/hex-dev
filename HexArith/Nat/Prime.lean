@@ -143,6 +143,7 @@ private theorem choose_one_right (n : Nat) : choose n 1 = n := by
       rw [ih]
       omega
 
+/-- Multiplicative Pascal identity used to move from row recurrence to prime divisibility. -/
 private theorem choose_succ_mul_eq (n k : Nat) :
     (k + 1) * choose (n + 1) (k + 1) = (n + 1) * choose n k := by
   induction n generalizing k with
@@ -156,6 +157,7 @@ private theorem choose_succ_mul_eq (n k : Nat) :
       | succ k =>
           grind [choose]
 
+/-- Euclid-step bridge turning the multiplicative Pascal identity into `p ∣ choose p k`. -/
 private theorem choose_prime_dvd_from_mul_identity {p k : Nat} (hp : Prime p)
     (hk : 0 < k) (hk' : k < p) : p ∣ choose p k := by
   cases k with
@@ -171,9 +173,11 @@ private theorem choose_prime_dvd_from_mul_identity {p k : Nat} (hp : Prime p)
           · exact False.elim (not_dvd_of_pos_lt hk hk' hdiv)
           · exact hdiv
 
+/-- The `k`th binomial term `choose n k * a^(n-k) * b^k` in `(a + b)^n`. -/
 private def chooseTerm (n a b k : Nat) : Nat :=
   choose n k * a ^ (n - k) * b ^ k
 
+/-- Partial sum of the first binomial terms used to prove `(a + b)^n`. -/
 private def chooseSum (n a b : Nat) : Nat -> Nat
   | 0 => 0
   | k + 1 => chooseSum n a b k + chooseTerm n a b k
@@ -181,6 +185,7 @@ private def chooseSum (n a b : Nat) : Nat -> Nat
 private theorem chooseSum_zero (a b : Nat) : chooseSum 0 a b 1 = 1 := by
   simp [chooseSum, chooseTerm]
 
+/-- Row recurrence for binomial partial sums across adjacent Pascal rows. -/
 private theorem chooseSum_succ_row (n a b m : Nat) (hm : m ≤ n + 1) :
     chooseSum (n + 1) a b (m + 1) =
       a * chooseSum n a b (m + 1) + b * chooseSum n a b m := by
@@ -205,6 +210,7 @@ private theorem chooseSum_succ_row (n a b m : Nat) (hm : m ≤ n + 1) :
           Nat.mul_add, Nat.add_assoc]
         ac_rfl
 
+/-- Binomial expansion packaged as equality with the full `chooseSum` row. -/
 private theorem add_pow_chooseSum (n a b : Nat) :
     (a + b) ^ n = chooseSum n a b (n + 1) := by
   induction n with
@@ -225,6 +231,7 @@ private theorem add_pow_chooseSum (n a b : Nat) :
         _ = chooseSum (n + 1) a b (n + 1 + 1) :=
             (chooseSum_succ_row n a b (n + 1) (by omega)).symm
 
+/-- Middle binomial terms are divisible by `p` once their coefficients are. -/
 private theorem chooseTerm_dvd_of_middle {p a b k : Nat}
     (hchoose : ∀ k, 0 < k → k < p → p ∣ choose p k)
     (hk0 : 0 < k) (hkp : k < p) : p ∣ chooseTerm p a b k := by
@@ -232,11 +239,13 @@ private theorem chooseTerm_dvd_of_middle {p a b k : Nat}
   simpa [Nat.mul_assoc] using
     Nat.dvd_mul_right_of_dvd (hchoose k hk0 hkp) (a ^ (p - k) * b ^ k)
 
+/-- Middle binomial terms vanish modulo `p` under the prime-row divisibility hypothesis. -/
 private theorem chooseTerm_mod_eq_zero_of_middle {p a b k : Nat}
     (hchoose : ∀ k, 0 < k → k < p → p ∣ choose p k)
     (hk0 : 0 < k) (hkp : k < p) : chooseTerm p a b k % p = 0 := by
   exact Nat.mod_eq_zero_of_dvd (chooseTerm_dvd_of_middle hchoose hk0 hkp)
 
+/-- Prefix sums modulo `p` reduce to the leading term after erasing middle terms. -/
 private theorem chooseSum_prefix_mod {p a b m : Nat}
     (hchoose : ∀ k, 0 < k → k < p → p ∣ choose p k)
     (hm0 : 0 < m) (hmp : m ≤ p) : chooseSum p a b m % p = a ^ p % p := by
@@ -261,6 +270,7 @@ private theorem chooseSum_prefix_mod {p a b m : Nat}
             _ = a ^ p % p := by
                   rw [hprev, hterm, Nat.add_zero, Nat.mod_mod]
 
+/-- Freshman's-dream step modulo `p`, abstracted over binomial divisibility. -/
 private theorem add_pow_prime_mod_of_choose_dvd {p : Nat} (hp : Prime p) (a b : Nat)
     (hchoose : ∀ k, 0 < k → k < p → p ∣ choose p k) :
     (a + b) ^ p % p = (a ^ p + b ^ p) % p := by
@@ -282,6 +292,7 @@ private theorem add_pow_prime_mod_of_choose_dvd {p : Nat} (hp : Prime p) (a b : 
     _ = (a ^ p + b ^ p) % p := by
       rw [← Nat.add_mod]
 
+/-- Derives Fermat's little theorem by induction from the Freshman's-dream step. -/
 private theorem pow_prime_mod_from_add_pow {p : Nat} (hp : Prime p) (a : Nat)
     (hadd : ∀ a b, (a + b) ^ p % p = (a ^ p + b ^ p) % p) :
     a ^ p % p = a % p := by
