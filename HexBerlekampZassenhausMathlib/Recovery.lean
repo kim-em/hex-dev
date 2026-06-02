@@ -2057,6 +2057,120 @@ theorem factorFastCapLift_auxiliary_eq_of_bridge_data
   bridge.auxiliary_eq' v hin hnot
 
 /--
+Actual-cap coefficientwise Hensel-lift congruence between a packaged true
+factor and its corresponding lifted local factor.
+-/
+theorem factorFastCapLift_trueFactor_liftedFactor_coeff_dvd_of_bridge_data
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    (i : Nat)
+    (hi :
+      i <
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H).liftData.liftedFactors.size)
+    (j : Nat) :
+    ((((badVectorWitnessOfFactorFastCapLiftData
+        f primeData rows_pos localFactorIndex localFactorDegree H).liftData.p) ^
+      (badVectorWitnessOfFactorFastCapLiftData
+        f primeData rows_pos localFactorIndex localFactorDegree H).liftData.k : Nat) : ℤ) ∣
+      (Hex.DensePoly.coeff (bridge.trueFactor i) j -
+        Hex.DensePoly.coeff
+          ((badVectorWitnessOfFactorFastCapLiftData
+            f primeData rows_pos localFactorIndex localFactorDegree H).liftData.liftedFactors.getD i 0)
+          j) :=
+  ExecutableBadVectorWitness.BadVectorBridgeData.trueFactor_liftedFactor_coeff_dvd_of_bridge_data
+    bridge i hi j
+
+/--
+Actual-cap selected-index Hensel-lift congruence supplied by
+`BadVectorBridgeData`.
+-/
+theorem factorFastCapLift_selected_trueFactor_liftedFactor_coeff_dvd_of_bridge_data
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    (j : Nat) :
+    ((((badVectorWitnessOfFactorFastCapLiftData
+        f primeData rows_pos localFactorIndex localFactorDegree H).liftData.p) ^
+      (badVectorWitnessOfFactorFastCapLiftData
+        f primeData rows_pos localFactorIndex localFactorDegree H).liftData.k : Nat) : ℤ) ∣
+      (Hex.DensePoly.coeff
+          (bridge.trueFactor
+            (badVectorWitnessOfFactorFastCapLiftData
+              f primeData rows_pos localFactorIndex localFactorDegree H).localFactorIndex)
+          j -
+        Hex.DensePoly.coeff
+          (badVectorWitnessOfFactorFastCapLiftData
+            f primeData rows_pos localFactorIndex localFactorDegree H).selectedLiftedFactor
+          j) :=
+  ExecutableBadVectorWitness.BadVectorBridgeData.selected_trueFactor_liftedFactor_coeff_dvd_of_bridge_data
+    bridge j
+
+/--
+Actual-cap per-coefficient precision separation supplied by
+`BadVectorBridgeData`.
+-/
+theorem factorFastCapLift_precision_separation_of_bridge_data
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    (j : Nat)
+    (hj :
+      j <
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H).input.degree?.getD 0) :
+    2 *
+        Hex.bhksCoeffBound
+          (badVectorWitnessOfFactorFastCapLiftData
+            f primeData rows_pos localFactorIndex localFactorDegree H).input j <
+      (badVectorWitnessOfFactorFastCapLiftData
+        f primeData rows_pos localFactorIndex localFactorDegree H).liftData.p ^
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H).liftData.k :=
+  ExecutableBadVectorWitness.BadVectorBridgeData.precision_separation_of_bridge_data
+    bridge j hj
+
+/--
 Actual-cap selected local-factor degree positivity supplied by
 `BadVectorBridgeData`.
 -/

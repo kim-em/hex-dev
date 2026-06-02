@@ -890,6 +890,43 @@ theorem auxiliary_eq'
         (D.auxiliaryCorrections v hin hnot) := by
   exact D.auxiliary_eq v hin hnot
 
+/--
+Coefficientwise Hensel-lift congruence between every packaged true factor and
+the corresponding lifted local factor.
+-/
+theorem trueFactor_liftedFactor_coeff_dvd_of_bridge_data
+    {W : ExecutableBadVectorWitness}
+    {trueSupports : Set (Set (Fin W.projectedRows.factorCount))}
+    (D : BadVectorBridgeData W trueSupports)
+    (i : Nat) (hi : i < W.liftData.liftedFactors.size) (j : Nat) :
+    ((W.liftData.p ^ W.liftData.k : Nat) : ℤ) ∣
+      (Hex.DensePoly.coeff (D.trueFactor i) j -
+        Hex.DensePoly.coeff (W.liftData.liftedFactors.getD i 0) j) := by
+  exact D.trueFactor_liftedFactor_coeff_dvd i hi j
+
+/--
+Selected-index Hensel-lift congruence supplied by `BadVectorBridgeData`.
+-/
+theorem selected_trueFactor_liftedFactor_coeff_dvd_of_bridge_data
+    {W : ExecutableBadVectorWitness}
+    {trueSupports : Set (Set (Fin W.projectedRows.factorCount))}
+    (D : BadVectorBridgeData W trueSupports) (j : Nat) :
+    ((W.liftData.p ^ W.liftData.k : Nat) : ℤ) ∣
+      (Hex.DensePoly.coeff (D.trueFactor W.localFactorIndex) j -
+        Hex.DensePoly.coeff W.selectedLiftedFactor j) := by
+  exact D.selected_trueFactor_liftedFactor_coeff_dvd j
+
+/--
+Per-coefficient precision separation supplied by `BadVectorBridgeData`.
+-/
+theorem precision_separation_of_bridge_data
+    {W : ExecutableBadVectorWitness}
+    {trueSupports : Set (Set (Fin W.projectedRows.factorCount))}
+    (D : BadVectorBridgeData W trueSupports)
+    (j : Nat) (hj : j < W.input.degree?.getD 0) :
+    2 * Hex.bhksCoeffBound W.input j < W.liftData.p ^ W.liftData.k := by
+  exact D.precision_separation j hj
+
 end BadVectorBridgeData
 
 /--
