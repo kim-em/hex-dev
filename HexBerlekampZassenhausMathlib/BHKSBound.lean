@@ -477,6 +477,49 @@ theorem bhksPaperThresholdReal_le_bhksBound
     (bhksThresholdNatBound_real_le_bhksBound f)
 
 /--
+Factored discharge of the paper-threshold inequality
+`coeffPow * auxPow ≤ bhksPaperThresholdReal f C`.
+
+Given separate bounds on the two LHS factors against complementary RHS partial
+products — `coeffPow` bounded by `bhksPaperCoeffNormFactorReal f` and `auxPow`
+bounded by the product of the remaining three paper factors
+(`bhksPaperDegreeFactorReal f * bhksPaperConstantFactorReal f C *
+bhksPaperLogFactorReal f`) — `mul_le_mul` combines them into the full
+paper-threshold inequality.
+
+This is the structural piece a caller needs to decompose the BHKS Theorem 5.2
+`coeffL2NormBound^aux.natDegree * auxiliaryBound^input.natDegree ≤
+bhksPaperThresholdReal core C` obligation into two tractable sub-bounds:
+the coefficient-power piece against `‖f‖₂^(2n-1)`, and the
+auxiliary-power piece against `n · (2C)^(n²) · (log ‖f‖₂)^n`.
+-/
+theorem bhksPaperThresholdReal_ge_of_factored_bounds
+    (f : Hex.ZPoly) (C : ℝ)
+    {coeffPow auxPow : ℝ}
+    (h_aux_nn : 0 ≤ auxPow)
+    (h_coeff : coeffPow ≤ bhksPaperCoeffNormFactorReal f)
+    (h_aux :
+      auxPow ≤
+        bhksPaperDegreeFactorReal f * bhksPaperConstantFactorReal f C *
+          bhksPaperLogFactorReal f) :
+    coeffPow * auxPow ≤ bhksPaperThresholdReal f C := by
+  have h_paperCoeff_nn : 0 ≤ bhksPaperCoeffNormFactorReal f := by
+    unfold bhksPaperCoeffNormFactorReal
+    exact pow_nonneg (by unfold HexPolyZMathlib.l2norm; exact Real.sqrt_nonneg _) _
+  have hmul :
+      coeffPow * auxPow ≤
+        bhksPaperCoeffNormFactorReal f *
+          (bhksPaperDegreeFactorReal f * bhksPaperConstantFactorReal f C *
+            bhksPaperLogFactorReal f) :=
+    mul_le_mul h_coeff h_aux h_aux_nn h_paperCoeff_nn
+  calc coeffPow * auxPow
+      ≤ bhksPaperCoeffNormFactorReal f *
+          (bhksPaperDegreeFactorReal f * bhksPaperConstantFactorReal f C *
+            bhksPaperLogFactorReal f) := hmul
+    _ = bhksPaperThresholdReal f C := by
+        unfold bhksPaperThresholdReal; ring
+
+/--
 The packaged BHKS cap remains available alongside the executable Mignotte
 coefficient bound through a single max expression.  This lightweight lemma is
 useful for later proofs that need one precision dominating both reconstruction
