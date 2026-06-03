@@ -227,26 +227,30 @@ private theorem nonneg_pow_two_sub_one_le_pow_of_sq_le
         _ ≤ A * A ^ k := hmain
         _ = A ^ (k + 1) := by rw [pow_succ]; ring
 
-private theorem l2norm_log_nonneg (f : Hex.ZPoly) :
-    0 ≤ Real.log (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)) := by
+/--
+The Euclidean norm of a nonzero integer polynomial is at least one: the
+support contains at least one integer coefficient of absolute value `≥ 1`,
+contributing `≥ 1` to the squared sum, so `‖P‖₂ ≥ 1`.
+
+Used by `l2norm_log_nonneg` and monotonicity arguments comparing `‖core‖₂^k`
+across exponents (where `‖core‖₂ ≥ 1` lets `pow_le_pow_right_of_le_one` apply
+in the increasing direction).
+-/
+theorem one_le_l2norm_toPolynomial_of_ne_zero
+    {f : Hex.ZPoly} (hf : HexPolyZMathlib.toPolynomial f ≠ 0) :
+    1 ≤ HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f) := by
   let x := HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)
+  let P := HexPolyZMathlib.toPolynomial f
   have hx_nonneg : 0 ≤ x := by
     unfold x HexPolyZMathlib.l2norm
     exact Real.sqrt_nonneg _
-  by_cases hx_zero : x = 0
-  · simp [x, hx_zero]
-  let P := HexPolyZMathlib.toPolynomial f
   have hx_sq :
       x ^ 2 = ∑ i ∈ P.support, ((P.coeff i : ℝ) ^ 2) := by
     have hsum_nonneg : 0 ≤ ∑ i ∈ P.support, ((P.coeff i : ℝ) ^ 2) :=
       Finset.sum_nonneg fun i hi => sq_nonneg _
     unfold x HexPolyZMathlib.l2norm P
     exact Real.sq_sqrt hsum_nonneg
-  have hP_ne : P ≠ 0 := by
-    intro hP
-    apply hx_zero
-    unfold x HexPolyZMathlib.l2norm P at *
-    simp [hP]
+  have hP_ne : P ≠ 0 := hf
   rcases (Polynomial.support_nonempty).mpr hP_ne with ⟨i, hi⟩
   have hcoeff_ne : P.coeff i ≠ 0 := (Polynomial.mem_support_iff).mp hi
   have hcoeff_sq_one : (1 : ℝ) ≤ (P.coeff i : ℝ) ^ 2 := by
@@ -263,10 +267,23 @@ private theorem l2norm_log_nonneg (f : Hex.ZPoly) :
   have hx_sq_ge_one : (1 : ℝ) ≤ x ^ 2 := by
     rw [hx_sq]
     exact hcoeff_sq_one.trans hsingle
-  have hx_ge_one : 1 ≤ x := by
-    have h_abs : |(1 : ℝ)| ≤ |x| := (sq_le_sq).mp (by simpa using hx_sq_ge_one)
-    simpa [abs_of_nonneg hx_nonneg] using h_abs
-  exact Real.log_nonneg hx_ge_one
+  have h_abs : |(1 : ℝ)| ≤ |x| := (sq_le_sq).mp (by simpa using hx_sq_ge_one)
+  simpa [abs_of_nonneg hx_nonneg] using h_abs
+
+private theorem l2norm_log_nonneg (f : Hex.ZPoly) :
+    0 ≤ Real.log (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)) := by
+  let x := HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)
+  have hx_nonneg : 0 ≤ x := by
+    unfold x HexPolyZMathlib.l2norm
+    exact Real.sqrt_nonneg _
+  by_cases hx_zero : x = 0
+  · simp [x, hx_zero]
+  have hP_ne : HexPolyZMathlib.toPolynomial f ≠ 0 := by
+    intro hP
+    apply hx_zero
+    unfold x HexPolyZMathlib.l2norm
+    simp [hP]
+  exact Real.log_nonneg (one_le_l2norm_toPolynomial_of_ne_zero hP_ne)
 
 /-- The paper degree factor `n` is non-negative as a real. -/
 theorem bhksPaperDegreeFactorReal_nonneg (f : Hex.ZPoly) :
@@ -443,6 +460,26 @@ theorem bhksPaperCoeffNormFactorReal_le_coeffNormFactor (f : Hex.ZPoly) :
       (x := HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f))
       (A := (bhksSumSquared f + 1 : ℝ))
       (n := bhksDegree f) hx_nonneg hA1 hsq
+
+/--
+Real-l2-norm monotonicity feeding the BHKS coefficient-norm factor: for a
+nonzero polynomial whose Euclidean norm is at least one, raising to any
+exponent at most `2n − 1` (with `n = bhksDegree f`) lands inside
+`bhksPaperCoeffNormFactorReal f = ‖f‖₂^(2n−1)`.
+
+Concretely combines `one_le_l2norm_toPolynomial_of_ne_zero` with
+`pow_le_pow_right₀` and the definition of `bhksPaperCoeffNormFactorReal`.
+The intended caller has already bounded an auxiliary polynomial's `natDegree`
+by `2n − 1` via the BadVectorAuxiliary degree bounds and now wants to convert
+`‖f‖₂^aux.natDegree` to the paper-threshold factor on the RHS.
+-/
+theorem l2norm_pow_le_bhksPaperCoeffNormFactorReal
+    {f : Hex.ZPoly} (hf : HexPolyZMathlib.toPolynomial f ≠ 0)
+    {k : Nat} (hk : k ≤ 2 * bhksDegree f - 1) :
+    (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)) ^ k ≤
+      bhksPaperCoeffNormFactorReal f := by
+  unfold bhksPaperCoeffNormFactorReal
+  exact pow_le_pow_right₀ (one_le_l2norm_toPolynomial_of_ne_zero hf) hk
 
 /--
 Named analytic target for bounding the BHKS logarithmic factor by the packaged

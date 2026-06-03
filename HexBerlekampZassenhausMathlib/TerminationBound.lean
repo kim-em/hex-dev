@@ -1,4 +1,5 @@
 import HexBerlekampZassenhausMathlib.BadVector
+import HexBerlekampZassenhausMathlib.BadVectorAuxiliary
 import HexBerlekampZassenhausMathlib.BHKSBound
 
 /-!
@@ -598,5 +599,56 @@ theorem projectedRowSpan_eq_trueFactorIndicatorLattice_of_cap_bridge
       W trueSupports hcut hbridge hp hlt)
 
 end BHKS
+
+/--
+Coefficient-power composite bound: combine the BHKS auxiliary polynomial's
+`natDegree ≤ 2 * bhksDegree input − 1` bound with the real-l2-norm
+monotonicity step `‖input‖₂ ≥ 1` to land `‖input‖₂ ^ aux.natDegree` inside
+`bhksPaperCoeffNormFactorReal input = ‖input‖₂^(2 * bhksDegree input − 1)`.
+
+This is the real-l2-norm form of the BHKS Theorem 5.2 coefficient-power
+sub-bound: `‖input‖₂ ^ deg(aux) ≤ ‖input‖₂^(2n − 1)`. Composing the natDegree
+bound from `BadVectorAuxiliary` with the monotonicity step from `BHKSBound`,
+both already proved, discharges the inequality outright once the caller
+supplies the `toPolynomial input ≠ 0` hypothesis.
+
+A caller targeting the factored cap-separation chain still has to bridge from
+the real `‖input‖₂` here to the integer `coeffL2NormBound input` used in the
+chain's `h_coeff` hypothesis; that integer-vs-real conversion is the genuine
+open piece tracked by the SPEC Group-D pathway and is not discharged here.
+-/
+theorem l2norm_pow_auxiliaryPolynomialWithCorrections_natDegree_le_bhksPaperCoeffNormFactorReal
+    (input : Hex.ZPoly) (liftData : Hex.LiftData)
+    (vec corrections : Array Int)
+    (hinput : HexPolyZMathlib.toPolynomial input ≠ 0) :
+    (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial input)) ^
+        (HexPolyZMathlib.toPolynomial
+          (BHKS.auxiliaryPolynomialWithCorrections input liftData vec corrections)).natDegree ≤
+      bhksPaperCoeffNormFactorReal input := by
+  have hdeg :
+      (HexPolyZMathlib.toPolynomial
+          (BHKS.auxiliaryPolynomialWithCorrections input liftData vec corrections)).natDegree ≤
+        2 * bhksDegree input - 1 := by
+    have := BHKS.natDegree_toPolynomial_auxiliaryPolynomialWithCorrections_le_two_mul_sub_one
+      input liftData vec corrections
+    simpa [bhksDegree] using this
+  exact l2norm_pow_le_bhksPaperCoeffNormFactorReal hinput hdeg
+
+/--
+Zero-correction specialisation of
+`l2norm_pow_auxiliaryPolynomialWithCorrections_natDegree_le_bhksPaperCoeffNormFactorReal`
+for the wrapper `BHKS.auxiliaryPolynomial`.
+-/
+theorem l2norm_pow_auxiliaryPolynomial_natDegree_le_bhksPaperCoeffNormFactorReal
+    (input : Hex.ZPoly) (liftData : Hex.LiftData) (vec : Array Int)
+    (hinput : HexPolyZMathlib.toPolynomial input ≠ 0) :
+    (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial input)) ^
+        (HexPolyZMathlib.toPolynomial
+          (BHKS.auxiliaryPolynomial input liftData vec)).natDegree ≤
+      bhksPaperCoeffNormFactorReal input := by
+  unfold BHKS.auxiliaryPolynomial
+  exact
+    l2norm_pow_auxiliaryPolynomialWithCorrections_natDegree_le_bhksPaperCoeffNormFactorReal
+      input liftData vec #[] hinput
 
 end HexBerlekampZassenhausMathlib

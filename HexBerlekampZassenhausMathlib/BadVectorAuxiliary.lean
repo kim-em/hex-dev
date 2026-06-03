@@ -197,6 +197,77 @@ theorem projectedVectorSquareSum_le_factorCount_mul
     _ = (r : ℝ) * bound := by
       simp [mul_comm]
 
+/--
+The BHKS auxiliary polynomial (with diagonal-row corrections) lives in the
+degree-`n − 1` polynomial space, where `n := input.degree?.getD 0`: its
+coefficients vanish for every index at or beyond `n`, so the Mathlib-side
+`natDegree` is bounded by `n − 1`.
+
+The bound is vacuous when `n = 0` (Nat subtraction pins both sides at zero);
+when `n ≥ 1` it is the natural degree count for the auxiliary polynomial built
+from `n` coefficients.
+
+Direct consequence of `coeff_auxiliaryPolynomialWithCorrections` via
+`Polynomial.natDegree_le_iff_coeff_eq_zero`.
+-/
+theorem natDegree_toPolynomial_auxiliaryPolynomialWithCorrections_le
+    (input : Hex.ZPoly) (liftData : Hex.LiftData)
+    (vec corrections : Array Int) :
+    (HexPolyZMathlib.toPolynomial
+        (BHKS.auxiliaryPolynomialWithCorrections input liftData vec corrections)).natDegree ≤
+      input.degree?.getD 0 - 1 := by
+  rw [Polynomial.natDegree_le_iff_coeff_eq_zero]
+  intro N hN
+  rw [HexPolyZMathlib.coeff_toPolynomial,
+    coeff_auxiliaryPolynomialWithCorrections]
+  have hN' : ¬ N < input.degree?.getD 0 := by omega
+  simp [hN']
+
+/--
+Zero-correction specialisation of
+`natDegree_toPolynomial_auxiliaryPolynomialWithCorrections_le`: the BHKS
+auxiliary polynomial associated to a projected vector satisfies
+`natDegree ≤ input.degree?.getD 0 − 1`.
+-/
+theorem natDegree_toPolynomial_auxiliaryPolynomial_le
+    (input : Hex.ZPoly) (liftData : Hex.LiftData) (vec : Array Int) :
+    (HexPolyZMathlib.toPolynomial
+        (BHKS.auxiliaryPolynomial input liftData vec)).natDegree ≤
+      input.degree?.getD 0 - 1 := by
+  unfold BHKS.auxiliaryPolynomial
+  exact natDegree_toPolynomial_auxiliaryPolynomialWithCorrections_le
+    input liftData vec #[]
+
+/--
+BHKS paper-threshold-compatible looser form of
+`natDegree_toPolynomial_auxiliaryPolynomialWithCorrections_le`: the auxiliary
+polynomial's `natDegree` is bounded by `2n − 1`, the exponent appearing in
+`bhksPaperCoeffNormFactorReal core = ‖core‖₂^(2n−1)`.
+
+Follows from the sharper `n − 1` bound by the Nat inequality
+`n − 1 ≤ 2n − 1`.
+-/
+theorem natDegree_toPolynomial_auxiliaryPolynomialWithCorrections_le_two_mul_sub_one
+    (input : Hex.ZPoly) (liftData : Hex.LiftData)
+    (vec corrections : Array Int) :
+    (HexPolyZMathlib.toPolynomial
+        (BHKS.auxiliaryPolynomialWithCorrections input liftData vec corrections)).natDegree ≤
+      2 * input.degree?.getD 0 - 1 :=
+  (natDegree_toPolynomial_auxiliaryPolynomialWithCorrections_le
+    input liftData vec corrections).trans (by omega)
+
+/--
+Zero-correction specialisation of
+`natDegree_toPolynomial_auxiliaryPolynomialWithCorrections_le_two_mul_sub_one`.
+-/
+theorem natDegree_toPolynomial_auxiliaryPolynomial_le_two_mul_sub_one
+    (input : Hex.ZPoly) (liftData : Hex.LiftData) (vec : Array Int) :
+    (HexPolyZMathlib.toPolynomial
+        (BHKS.auxiliaryPolynomial input liftData vec)).natDegree ≤
+      2 * input.degree?.getD 0 - 1 :=
+  (natDegree_toPolynomial_auxiliaryPolynomial_le
+    input liftData vec).trans (by omega)
+
 end BHKS
 
 end HexBerlekampZassenhausMathlib
