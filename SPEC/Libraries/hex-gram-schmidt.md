@@ -92,6 +92,45 @@ def gramDetVec (b : Matrix Int n m) : Vector Nat (n + 1)
     `Matrix.noPivotLoop` / `Matrix.borderedMinor` and the
     `noPivotLoop_full_eq_borderedMinor_at_trailing` bridge.
 
+    **Mathlib-bridge proof layer.** `Matrix.exactDiv` is
+    executable and takes no Lean divisibility argument at
+    runtime; what needs proof is the *proof-side quotient
+    provenance* — any theorem that identifies a `Matrix.exactDiv`
+    invocation with the intended quotient or determinant value.
+    For the σ-chain on Gram matrices, this provenance is
+    Bareiss-Desnanot integrality, which per
+    [hex-matrix.md §Mathlib-free vs. Mathlib-bridge proof
+    surface](hex-matrix.md) lives exclusively in the
+    `*-mathlib` bridge layer.
+
+    Concretely:
+
+    - Any Schur-side characterization that pins
+      `getArrayEntry (scaledCoeffRowsSchur b) i j` to a
+      bordered-minor determinant, **or to the corresponding
+      `Matrix.noPivotLoop` trailing update** (the operational
+      shape that avoids spelling `det` but carries the same
+      quotient identity), is bridge-layer work. Both formulations
+      are equivalently affected — operationally re-deriving the
+      Schur ≡ Bareiss step is the same SPEC violation as
+      explicitly rederiving Desnanot-Jacobi.
+    - Such characterizations take a public quotient-provider API
+      as a hypothesis. The current private abbrev
+      `BareissGramInitialRegularStepQuotientProvider` (in
+      `HexGramSchmidt/Int.lean`) is the right shape but must be
+      made non-private (or wrapped by a public surface) before
+      `hex-gram-schmidt-mathlib` can construct an instance.
+    - The provider's name signals scope: only the *non-singular
+      regular-step branch* requires bridge-layer provenance.
+      Singular / zero branches of the Schur kernel are handled by
+      Mathlib-free frame and cell-stability lemmas (since both
+      sides of any equivalence return `0` via array initialisation,
+      no quotient identity is in play).
+    - Executable kernels (`schurSigma`, `schurScaledCoeffEntry`,
+      `scaledCoeffRowsSchur`) and pure cell-stability / row-frame
+      lemmas that don't establish a determinant-or-noPivotLoop
+      equivalence remain Mathlib-free.
+
     Two body shapes are forbidden:
     (a) computing each below-diagonal entry independently as a
         `(j+1) × (j+1)` Bareiss determinant — `O(n^5)`;
