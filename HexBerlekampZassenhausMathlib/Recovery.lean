@@ -3776,6 +3776,60 @@ def ofExpectedFactors
   expected_true_factors := expected_true_factors
   product_congr := product_congr
 
+/--
+Closed `CanonicalRecoveryTailInputs` constructor at the actual `factorFast`
+cap lift from per-canonical-class `RepresentsIntegerFactorAtLift` certificates.
+
+Composes
+`ForwardRecoveryInputs.productCongruencesOfCanonicalSupportMemberRepresentations`
+with the unconditional canonical selector-product equality
+`ForwardRecoveryInputs.selectedFactorArraysOfSupports_polyProduct` so the
+caller only supplies the support-partition shape facts (`projected_nonempty`,
+`classes_two`), the nonzero core fact, the expected true-factor package, and
+one `RepresentsIntegerFactorAtLift` certificate per canonical support class.
+The per-class Mignotte product congruence is derived from those certificates,
+and the unconditional `class_nonempty` / `class_bounds` shape facts are
+discharged via `ofExpectedFactors`.
+-/
+def ofCanonicalSupportRepresentations
+    {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {rows_pos : HasPositiveDimension
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)}
+    {trueSupports : Set (Set (Fin (projectedRowsOfLiftData
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)
+      rows_pos).factorCount))}
+    (projected_nonempty :
+      (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).projectedRows.isEmpty = false)
+    (classes_two :
+      2 ≤ (supportPartitionByMinColumn trueSupports).length)
+    (hf_ne_zero : (Hex.normalizeForFactor f).squareFreeCore ≠ 0)
+    (expectedFactors : Array Hex.ZPoly)
+    (expected_true_factors :
+      ForwardRecoveryInputs.ExpectedTrueFactors
+        (Hex.normalizeForFactor f).squareFreeCore
+        (expectedIndicatorArrayOfSupports trueSupports) expectedFactors)
+    (hrep :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        RepresentsIntegerFactorAtLift
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          (expectedFactors.getD i 0)
+          ((ForwardRecoveryInputs.liftedFactorSubsetsOfSupports
+            (factorFastCapLiftData f primeData) trueSupports).getD i ∅)) :
+    CanonicalRecoveryTailInputs f primeData rows_pos trueSupports :=
+  ofExpectedFactors projected_nonempty classes_two hf_ne_zero
+    expectedFactors expected_true_factors
+    (ForwardRecoveryInputs.productCongruencesOfCanonicalSupportMemberRepresentations
+      trueSupports expectedFactors
+      (ForwardRecoveryInputs.selectedFactorArraysOfSupports_polyProduct
+        (factorFastCapLiftData f primeData) trueSupports)
+      hrep)
+
 end CanonicalRecoveryTailInputs
 
 /--
