@@ -1236,6 +1236,64 @@ def scaledCoeffRowsSchur (b : Matrix Int n m) : Array (Array Int) :=
         rows := setArrayEntry rows i j (schurScaledCoeffEntry rows gram i j)
     return rows
 
+private theorem getArrayEntry_schurColumnLoop_upper
+    (cols : List Nat) (rows gram : Array (Array Int)) (row i j : Nat)
+    (hij : i < j) (hcols : ∀ c ∈ cols, c ≤ row) :
+    getArrayEntry
+        (cols.foldl
+          (fun next col =>
+            setArrayEntry next row col (schurScaledCoeffEntry next gram row col)) rows)
+        i j =
+      getArrayEntry rows i j := by
+  induction cols generalizing rows with
+  | nil =>
+      simp
+  | cons col cols ih =>
+      simp only [List.foldl_cons]
+      have hcols_tail : ∀ c ∈ cols, c ≤ row := by
+        intro c hc
+        exact hcols c (List.mem_cons_of_mem col hc)
+      rw [ih _ hcols_tail]
+      by_cases hrow : i = row
+      · subst row
+        have hcol_le : col ≤ i := hcols col (by simp)
+        rw [getArrayEntry_setArrayEntry_of_col_ne]
+        omega
+      · rw [getArrayEntry_setArrayEntry_of_row_ne]
+        exact hrow
+
+private theorem getArrayEntry_schurRowLoop_upper
+    (rowList : List Nat) (rows gram : Array (Array Int)) (i j : Nat)
+    (hij : i < j) :
+    getArrayEntry
+        (rowList.foldl
+          (fun next row =>
+            (List.range' 0 (row + 1)).foldl
+              (fun next col =>
+                setArrayEntry next row col (schurScaledCoeffEntry next gram row col))
+              next) rows)
+        i j =
+      getArrayEntry rows i j := by
+  induction rowList generalizing rows with
+  | nil =>
+      simp
+  | cons row rowList ih =>
+      simp only [List.foldl_cons]
+      rw [ih _]
+      rw [getArrayEntry_schurColumnLoop_upper]
+      · exact hij
+      · intro c hc
+        rw [List.mem_range'] at hc
+        omega
+
+private theorem getArrayEntry_scaledCoeffRowsSchur_upper
+    (b : Matrix Int n m) (i j : Nat) (hij : i < j) :
+    getArrayEntry (scaledCoeffRowsSchur b) i j = 0 := by
+  simp [scaledCoeffRowsSchur]
+  rw [getArrayEntry_schurRowLoop_upper]
+  · exact getArrayEntry_zeroRows n i j
+  · exact hij
+
 /-- Integral scaled Gram-Schmidt coefficients. For `j < i`, the entry is the
 determinant formula corresponding to `d_{j+1} * μ_{i,j}`; on the diagonal we
 store `d_{j+1}`, and entries above the diagonal are zero. -/
@@ -5261,7 +5319,13 @@ nonnegativity proof for the Bareiss/Gram determinant slot. -/
 theorem scaledCoeffs_diag_toNat (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     (GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨i, hi⟩).toNat =
       gramDet b (i + 1) (Nat.succ_le_of_lt hi) := by
-  sorry
+  rw [scaledCoeffs_entry_eq_getArrayEntry]
+  have hpack :
+      (gramDetVec b).get ⟨i + 1, Nat.succ_lt_succ hi⟩ =
+        (getArrayEntry (scaledCoeffRowsSchur b) i i).toNat := by
+    simp [gramDetVec, data, gramDetVecFromScaledCoeffRows]
+  rw [← hpack]
+  exact gramDetVec_eq_gramDet (b := b) (i + 1) (Nat.succ_le_of_lt hi)
 
 /-- Signed diagonal information for the public scaled-coefficient matrix.
 The diagonal slot is either the zero tail recorded after an earlier singular
@@ -5300,7 +5364,8 @@ theorem scaledCoeffs_diag_of_nonneg
 theorem scaledCoeffs_upper (b : Matrix Int n m)
     (i j : Nat) (hi : i < n) (hj : j < n) (hij : i < j) :
     GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨j, hj⟩ = 0 := by
-  sorry
+  rw [scaledCoeffs_entry_eq_getArrayEntry]
+  exact getArrayEntry_scaledCoeffRowsSchur_upper b i j hij
 
 private theorem foldl_add_eq_acc_rat_int {α : Type u}
     (xs : List α) (f : α → Rat) (acc : Rat)
