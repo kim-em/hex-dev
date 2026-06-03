@@ -610,6 +610,21 @@ noncomputable def bhksPaperAuxiliaryFactorReal (f : Hex.ZPoly) (C : ℝ) : ℝ :
   bhksPaperDegreeFactorReal f * bhksPaperConstantFactorReal f C *
     bhksPaperLogFactorReal f
 
+/--
+Named-target unfold for `bhksPaperAuxiliaryFactorReal`.
+
+Lets callers using the unfolded three-way product `bhksPaperDegreeFactorReal f *
+bhksPaperConstantFactorReal f C * bhksPaperLogFactorReal f` rewrite to the named
+target (or vice versa) without unfolding the definition manually.  Useful for
+adapting hypotheses to whichever sibling of
+`bhksPaperThresholdReal_chain_lt_p_pow_kLocalFactorDegree_factored` /
+`_factored'` is in scope at the call site.
+-/
+theorem bhksPaperAuxiliaryFactorReal_eq_product (f : Hex.ZPoly) (C : ℝ) :
+    bhksPaperAuxiliaryFactorReal f C =
+      bhksPaperDegreeFactorReal f * bhksPaperConstantFactorReal f C *
+        bhksPaperLogFactorReal f := rfl
+
 /-- The full paper threshold splits into coefficient and auxiliary factors. -/
 theorem bhksPaperThresholdReal_eq_coeffNorm_mul_auxiliary
     (f : Hex.ZPoly) (C : ℝ) :
