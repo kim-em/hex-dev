@@ -5020,6 +5020,216 @@ private theorem bhksIndicatorCandidate?_dvd
       · rw [if_neg hrecord] at h
         simp at h
 
+/-- If `normalizeCandidateFactor g` is nonzero, it is primitive: the inner
+`primitivePart g` must then be nonzero, hence `content g ≠ 0`, hence
+`content (primitivePart g) = 1` (and `scale (-1)` preserves content). -/
+private theorem normalizeCandidateFactor_primitive
+    {g : ZPoly} (hne : normalizeCandidateFactor g ≠ 0) :
+    ZPoly.Primitive (normalizeCandidateFactor g) := by
+  unfold normalizeCandidateFactor at hne ⊢
+  by_cases hlead :
+      DensePoly.leadingCoeff (ZPoly.primitivePart g) < 0
+  · rw [if_pos hlead] at hne ⊢
+    have hprim_ne :
+        (ZPoly.primitivePart g : ZPoly) ≠ 0 := by
+      intro hzero
+      apply hne
+      show DensePoly.scale (-1 : Int) (ZPoly.primitivePart g) = 0
+      rw [hzero]
+      exact DensePoly.scale_neg_one_zero
+    have hcontent_ne : ZPoly.content g ≠ 0 := by
+      intro hzero
+      apply hprim_ne
+      show DensePoly.primitivePart g = 0
+      exact
+        DensePoly.primitivePart_eq_zero_of_content_eq_zero g
+          (by simpa [ZPoly.content] using hzero)
+    have hprim_primitive : ZPoly.Primitive (ZPoly.primitivePart g) :=
+      ZPoly.primitivePart_primitive g hcontent_ne
+    show ZPoly.content
+        (DensePoly.scale (-1 : Int) (ZPoly.primitivePart g)) = 1
+    rw [show ZPoly.content
+            (DensePoly.scale (-1 : Int) (ZPoly.primitivePart g))
+          = DensePoly.content
+              (DensePoly.scale (-1 : Int) (ZPoly.primitivePart g)) from rfl,
+        DensePoly.content_scale_neg_one (ZPoly.primitivePart g)]
+    exact hprim_primitive
+  · rw [if_neg hlead] at hne ⊢
+    have hcontent_ne : ZPoly.content g ≠ 0 := by
+      intro hzero
+      apply hne
+      show DensePoly.primitivePart g = 0
+      exact
+        DensePoly.primitivePart_eq_zero_of_content_eq_zero g
+          (by simpa [ZPoly.content] using hzero)
+    exact ZPoly.primitivePart_primitive g hcontent_ne
+
+/-- A successful BHKS indicator candidate has nonnegative leading coefficient:
+the final `normalizeFactorSign` layer is a fixed point on the candidate, so
+the candidate inherits the `≥ 0` leading-coefficient guarantee of
+`normalizeFactorSign`. -/
+private theorem bhksIndicatorCandidate?_leadingCoeff_nonneg
+    {f : ZPoly} {d : LiftData} {indicator : Array Int}
+    {candidate quotient : ZPoly}
+    (h : bhksIndicatorCandidate? f d indicator = some (candidate, quotient)) :
+    0 ≤ DensePoly.leadingCoeff candidate := by
+  have hnorm := bhksIndicatorCandidate?_normalizeFactorSign h
+  have hsign := normalizeFactorSign_leadingCoeff_nonneg candidate
+  rwa [hnorm] at hsign
+
+/-- A successful BHKS indicator candidate is primitive: the candidate equals
+`normalizeFactorSign (normalizeCandidateFactor _)`, and `shouldRecord = true`
+forces the inner factor to be nonzero, hence primitive. -/
+private theorem bhksIndicatorCandidate?_primitive
+    {f : ZPoly} {d : LiftData} {indicator : Array Int}
+    {candidate quotient : ZPoly}
+    (h : bhksIndicatorCandidate? f d indicator = some (candidate, quotient)) :
+    ZPoly.Primitive candidate := by
+  unfold bhksIndicatorCandidate? at h
+  cases hselected : bhksIndicatorSelectedFactors d.liftedFactors indicator with
+  | none =>
+      simp [hselected] at h
+  | some selected =>
+      simp only [hselected] at h
+      let modulus := liftModulus d
+      let raw :=
+        DensePoly.scale (DensePoly.leadingCoeff f) (Array.polyProduct selected)
+      let candidate0 :=
+        normalizeCandidateFactor
+          (centeredLiftPoly (ZPoly.reduceModPow raw d.p d.k) modulus)
+      let candidate' := normalizeFactorSign candidate0
+      change
+        (if shouldRecordPolynomialFactor candidate' then
+          match exactQuotient? f candidate' with
+          | some quotient => some (candidate', quotient)
+          | none => none
+        else
+          none) = some (candidate, quotient) at h
+      by_cases hrecord : shouldRecordPolynomialFactor candidate'
+      · rw [if_pos hrecord] at h
+        cases hquot : exactQuotient? f candidate' with
+        | none =>
+            simp [hquot] at h
+        | some quotient' =>
+            simp [hquot] at h
+            rcases h with ⟨hcandidate, _hquotient⟩
+            subst candidate
+            have hcand'_ne : candidate' ≠ 0 := by
+              intro hzero
+              rw [hzero] at hrecord
+              unfold shouldRecordPolynomialFactor at hrecord
+              simp at hrecord
+            have hcand0_ne : candidate0 ≠ 0 := by
+              intro hzero
+              apply hcand'_ne
+              show normalizeFactorSign candidate0 = 0
+              rw [hzero]
+              unfold normalizeFactorSign
+              have hlc :
+                  ¬ DensePoly.leadingCoeff (0 : ZPoly) < 0 := by
+                simp
+              rw [if_neg hlc]
+            have hprim_cand0 : ZPoly.Primitive candidate0 :=
+              normalizeCandidateFactor_primitive hcand0_ne
+            exact normalizeFactorSign_primitive _ hprim_cand0
+      · rw [if_neg hrecord] at h
+        simp at h
+
+/-- A successful BHKS indicator candidate has positive degree: it is primitive
+with nonnegative leading coefficient and is not a unit, so it cannot be a
+constant polynomial. -/
+private theorem bhksIndicatorCandidate?_positive_degree
+    {f : ZPoly} {d : LiftData} {indicator : Array Int}
+    {candidate quotient : ZPoly}
+    (h : bhksIndicatorCandidate? f d indicator = some (candidate, quotient)) :
+    0 < candidate.degree?.getD 0 := by
+  have hrecord := bhksIndicatorCandidate?_shouldRecord h
+  have hprim := bhksIndicatorCandidate?_primitive h
+  have hsign := bhksIndicatorCandidate?_leadingCoeff_nonneg h
+  have hne : candidate ≠ 0 := by
+    intro hzero
+    rw [hzero] at hrecord
+    unfold shouldRecordPolynomialFactor at hrecord
+    simp at hrecord
+  have hne_one : candidate ≠ 1 := by
+    intro hone
+    rw [hone] at hrecord
+    unfold shouldRecordPolynomialFactor at hrecord
+    simp at hrecord
+  have hne_neg : candidate ≠ DensePoly.C (-1 : Int) := by
+    intro hneg
+    rw [hneg] at hrecord
+    unfold shouldRecordPolynomialFactor at hrecord
+    simp at hrecord
+  -- Show `candidate.size ≥ 2`.  Otherwise `candidate` collapses to a
+  -- constant polynomial, and `Primitive` + `0 ≤ leadingCoeff` + `≠ 0` + `≠ 1`
+  -- + `≠ DensePoly.C (-1)` gives a contradiction.
+  have hsize_pos : 0 < candidate.size := by
+    rcases Nat.lt_or_ge 0 candidate.size with hpos | _hle
+    · exact hpos
+    · have hsz : candidate.size = 0 := by omega
+      have hcand_zero : candidate = 0 := by
+        apply DensePoly.ext_coeff
+        intro n
+        rw [DensePoly.coeff_zero]
+        exact DensePoly.coeff_eq_zero_of_size_le candidate (by omega)
+      exact False.elim (hne hcand_zero)
+  have hsize_ge_two : 2 ≤ candidate.size := by
+    rcases Nat.lt_or_ge 1 candidate.size with hge | _hle
+    · omega
+    · have hsize_one : candidate.size = 1 := by omega
+      have hcandidate_eq : candidate = DensePoly.C (candidate.coeff 0) := by
+        apply DensePoly.ext_coeff
+        intro n
+        cases n with
+        | zero =>
+            rw [DensePoly.coeff_C]
+            simp
+        | succ n =>
+            rw [DensePoly.coeff_C, if_neg (Nat.succ_ne_zero n)]
+            exact DensePoly.coeff_eq_zero_of_size_le candidate (by omega)
+      have hprim_C :
+          DensePoly.content (DensePoly.C (candidate.coeff 0)) = 1 := by
+        have hcontent_eq : DensePoly.content candidate
+            = DensePoly.content (DensePoly.C (candidate.coeff 0)) :=
+          congrArg DensePoly.content hcandidate_eq
+        exact hcontent_eq.symm.trans hprim
+      have hcontent_C_eq :
+          DensePoly.content (DensePoly.C (candidate.coeff 0))
+            = Int.ofNat (candidate.coeff 0).natAbs :=
+        DensePoly.content_C (candidate.coeff 0)
+      have hnat_int :
+          Int.ofNat (candidate.coeff 0).natAbs = 1 := by
+        rw [← hcontent_C_eq]
+        exact hprim_C
+      have hnat : (candidate.coeff 0).natAbs = 1 := by
+        exact Int.ofNat.inj hnat_int
+      have hc_cases :
+          candidate.coeff 0 = ↑(1 : Nat) ∨ candidate.coeff 0 = -↑(1 : Nat) :=
+        Int.natAbs_eq_iff.mp hnat
+      exfalso
+      rcases hc_cases with hpos | hneg
+      · apply hne_one
+        rw [hcandidate_eq]
+        show DensePoly.C (candidate.coeff 0) = DensePoly.C 1
+        rw [hpos]
+        rfl
+      · apply hne_neg
+        rw [hcandidate_eq]
+        show DensePoly.C (candidate.coeff 0) = DensePoly.C (-1)
+        rw [hneg]
+        rfl
+  -- Now `candidate.size ≥ 2`, so degree = size - 1 ≥ 1 > 0.
+  have hne_size : candidate.size ≠ 0 := by omega
+  have hdeg_eq :
+      (DensePoly.degree? candidate).getD 0 = candidate.size - 1 := by
+    unfold DensePoly.degree?
+    rw [dif_neg hne_size]
+    rfl
+  show 0 < (DensePoly.degree? candidate).getD 0
+  rw [hdeg_eq]
+  omega
+
 /--
 A2 reconstruction surface for a single BHKS indicator, stated at the
 Mathlib-free executable layer. If the indicator selects `selected`, the
@@ -5242,7 +5452,7 @@ private theorem bhksIndicatorCandidates?_shouldRecord
 /-- Every candidate emitted by `bhksIndicatorCandidates?` divides the
 input polynomial; this is the per-candidate version of the verified
 exact-division check performed inside `bhksIndicatorCandidate?`. -/
-private theorem bhksIndicatorCandidates?_dvd
+theorem bhksIndicatorCandidates?_dvd
     {f : ZPoly} {d : LiftData} {indicators : Array (Array Int)}
     {candidates : Array ZPoly}
     (h : bhksIndicatorCandidates? f d indicators = some candidates) :
@@ -5250,6 +5460,41 @@ private theorem bhksIndicatorCandidates?_dvd
   bhksIndicatorCandidates?_all_of_candidate
     (fun factor => factor ∣ f)
     f d (fun hcandidate => bhksIndicatorCandidate?_dvd hcandidate) h
+
+/-- Every candidate emitted by `bhksIndicatorCandidates?` is primitive.  This
+is the array-level form of the per-candidate primitivity guarantee from
+`normalizeCandidateFactor` plus sign normalisation. -/
+theorem bhksIndicatorCandidates?_primitive
+    {f : ZPoly} {d : LiftData} {indicators : Array (Array Int)}
+    {candidates : Array ZPoly}
+    (h : bhksIndicatorCandidates? f d indicators = some candidates) :
+    ∀ factor ∈ candidates.toList, ZPoly.Primitive factor :=
+  bhksIndicatorCandidates?_all_of_candidate
+    (fun factor => ZPoly.Primitive factor)
+    f d (fun hcandidate => bhksIndicatorCandidate?_primitive hcandidate) h
+
+/-- Every candidate emitted by `bhksIndicatorCandidates?` has nonnegative
+leading coefficient; this is the array-level form of the per-candidate sign
+normalisation guarantee. -/
+theorem bhksIndicatorCandidates?_leadingCoeff_nonneg
+    {f : ZPoly} {d : LiftData} {indicators : Array (Array Int)}
+    {candidates : Array ZPoly}
+    (h : bhksIndicatorCandidates? f d indicators = some candidates) :
+    ∀ factor ∈ candidates.toList, 0 ≤ DensePoly.leadingCoeff factor :=
+  bhksIndicatorCandidates?_all_of_candidate
+    (fun factor => 0 ≤ DensePoly.leadingCoeff factor)
+    f d (fun hcandidate => bhksIndicatorCandidate?_leadingCoeff_nonneg hcandidate) h
+
+/-- Every candidate emitted by `bhksIndicatorCandidates?` has positive degree;
+this is the array-level form of the per-candidate nonconstant guarantee. -/
+theorem bhksIndicatorCandidates?_positive_degree
+    {f : ZPoly} {d : LiftData} {indicators : Array (Array Int)}
+    {candidates : Array ZPoly}
+    (h : bhksIndicatorCandidates? f d indicators = some candidates) :
+    ∀ factor ∈ candidates.toList, 0 < factor.degree?.getD 0 :=
+  bhksIndicatorCandidates?_all_of_candidate
+    (fun factor => 0 < factor.degree?.getD 0)
+    f d (fun hcandidate => bhksIndicatorCandidate?_positive_degree hcandidate) h
 
 private theorem array_toList_getD {α : Type}
     (xs : Array α) (i : Nat) (fallback : α) :
@@ -5440,6 +5685,52 @@ theorem bhksIndicatorCandidates?_eq_some_of_getD
   apply congrArg some
   rw [← Array.toList_inj]
   simp
+
+private theorem bhksIndicatorCandidatesStep_fold_size_eq
+    (f : ZPoly) (d : LiftData) :
+    ∀ (indicators : List (Array Int)) (acc candidates : Array ZPoly),
+      List.foldl (bhksIndicatorCandidatesStep f d) (some acc) indicators =
+          some candidates →
+        candidates.size = acc.size + indicators.length
+  | [], acc, candidates, hfold => by
+      simp at hfold
+      cases hfold
+      simp
+  | indicator :: indicators, acc, candidates, hfold => by
+      rw [List.foldl_cons] at hfold
+      cases hhead : bhksIndicatorCandidate? f d indicator with
+      | none =>
+          have hnone :=
+            bhksIndicatorCandidatesStep_fold_none f d indicators
+          simp [bhksIndicatorCandidatesStep, hhead, hnone] at hfold
+      | some pair =>
+          rcases pair with ⟨candidate, quotient⟩
+          have hnext :
+              List.foldl (bhksIndicatorCandidatesStep f d)
+                  (some (acc.push candidate)) indicators = some candidates := by
+            simpa [bhksIndicatorCandidatesStep, hhead] using hfold
+          have ih :=
+            bhksIndicatorCandidatesStep_fold_size_eq f d indicators
+              (acc.push candidate) candidates hnext
+          rw [ih, Array.size_push, List.length_cons]
+          omega
+
+/--
+A successful BHKS indicator-candidate fold produces a candidate array of the
+same size as the input indicator array.  This is the size identity used by
+`ExpectedTrueFactors`-shaped consumers that need to align the per-index
+indicator and factor views.
+-/
+theorem bhksIndicatorCandidates?_size_eq
+    {f : ZPoly} {d : LiftData} {indicators : Array (Array Int)}
+    {candidates : Array ZPoly}
+    (h : bhksIndicatorCandidates? f d indicators = some candidates) :
+    candidates.size = indicators.size := by
+  unfold bhksIndicatorCandidates? at h
+  rw [← Array.foldl_toList] at h
+  have hfold :=
+    bhksIndicatorCandidatesStep_fold_size_eq f d indicators.toList #[] candidates h
+  simpa [Array.length_toList] using hfold
 
 private inductive BhksRecoveryResult where
   | success (candidates : Array ZPoly)
