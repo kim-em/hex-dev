@@ -72,6 +72,26 @@ def gramDetVec (b : Matrix Int n m) : Vector Nat (n + 1)
     the project requires this shape because the comparator runs
     against that implementation.
 
+    **Implementer / prover hint.** The σ-chain is the fraction-free
+    Desnanot-Jacobi (Bareiss) update for the bordered Gram minor
+    that defines `ν[i][j]`. In the code's index convention (which
+    the implementation uses, but the formula above uses the
+    shifted Isabelle convention), the equivalent statement is: for
+    code slot `(i, j)` with `0 < j ≤ i`,
+
+        σ₀     = ν[i][0] · ν[j][0]
+        σ_p    = (d_{p+1} · σ_{p-1} + ν[i][p] · ν[j][p]) / d_p
+        ν[i][j] = d_j · ⟨b_i, b_j⟩ − σ_{j-1}
+
+    where `d_p` is stored at slot `(p-1, p-1)` in the result array;
+    do not translate this to external Bareiss indexing without
+    care. The proof obligation is essentially the standard
+    fraction-free Schur-complement determinant identity
+    `nextMinor · prevPivot = pivot · currentMinor − leftMinor · topMinor`,
+    which HexMatrix already exposes via
+    `Matrix.noPivotLoop` / `Matrix.borderedMinor` and the
+    `noPivotLoop_full_eq_borderedMinor_at_trailing` bridge.
+
     Two body shapes are forbidden:
     (a) computing each below-diagonal entry independently as a
         `(j+1) × (j+1)` Bareiss determinant — `O(n^5)`;
