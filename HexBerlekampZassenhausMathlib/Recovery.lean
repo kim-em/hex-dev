@@ -692,6 +692,148 @@ theorem productOfExpectedFactors
     Array.polyProduct expectedFactors = f :=
   h.product_eq
 
+/-- Auxiliary: a `getD` lookup at an in-range index is a member of `toList`. -/
+private theorem getD_mem_toList_of_lt_size
+    {α : Type} (xs : Array α) (default : α) (i : Nat) (hi : i < xs.size) :
+    xs.getD i default ∈ xs.toList := by
+  have hi_list : i < xs.toList.length := by simpa using hi
+  have hgetD_eq : xs.getD i default = xs.toList[i]'hi_list := by
+    simp [Array.getD, Array.getElem_toList, hi]
+  rw [hgetD_eq]
+  exact List.getElem_mem hi_list
+
+/-- Per-index variant of `bhksIndicatorCandidates?_dvd`: any indexed factor in
+the candidate array divides the recovery target. -/
+theorem bhksIndicatorCandidates?_getD_dvd
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    {expectedIndicators : Array (Array Int)}
+    {expectedFactors : Array Hex.ZPoly}
+    (h : Hex.bhksIndicatorCandidates? f d expectedIndicators = some expectedFactors)
+    (i : Nat) (hi : i < expectedIndicators.size) :
+    expectedFactors.getD i 0 ∣ f := by
+  have hsize := Hex.bhksIndicatorCandidates?_size_eq h
+  have hi_cand : i < expectedFactors.size := by rw [hsize]; exact hi
+  have hmem :=
+    getD_mem_toList_of_lt_size expectedFactors (0 : Hex.ZPoly) i hi_cand
+  exact Hex.bhksIndicatorCandidates?_dvd h _ hmem
+
+/-- Per-index variant of `bhksIndicatorCandidates?_primitive`. -/
+theorem bhksIndicatorCandidates?_getD_primitive
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    {expectedIndicators : Array (Array Int)}
+    {expectedFactors : Array Hex.ZPoly}
+    (h : Hex.bhksIndicatorCandidates? f d expectedIndicators = some expectedFactors)
+    (i : Nat) (hi : i < expectedIndicators.size) :
+    Hex.ZPoly.Primitive (expectedFactors.getD i 0) := by
+  have hsize := Hex.bhksIndicatorCandidates?_size_eq h
+  have hi_cand : i < expectedFactors.size := by rw [hsize]; exact hi
+  have hmem :=
+    getD_mem_toList_of_lt_size expectedFactors (0 : Hex.ZPoly) i hi_cand
+  exact Hex.bhksIndicatorCandidates?_primitive h _ hmem
+
+/-- Per-index variant of `bhksIndicatorCandidates?_leadingCoeff_nonneg`. -/
+theorem bhksIndicatorCandidates?_getD_leadingCoeff_nonneg
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    {expectedIndicators : Array (Array Int)}
+    {expectedFactors : Array Hex.ZPoly}
+    (h : Hex.bhksIndicatorCandidates? f d expectedIndicators = some expectedFactors)
+    (i : Nat) (hi : i < expectedIndicators.size) :
+    0 ≤ Hex.DensePoly.leadingCoeff (expectedFactors.getD i 0) := by
+  have hsize := Hex.bhksIndicatorCandidates?_size_eq h
+  have hi_cand : i < expectedFactors.size := by rw [hsize]; exact hi
+  have hmem :=
+    getD_mem_toList_of_lt_size expectedFactors (0 : Hex.ZPoly) i hi_cand
+  exact Hex.bhksIndicatorCandidates?_leadingCoeff_nonneg h _ hmem
+
+/-- Per-index variant of `bhksIndicatorCandidates?_positive_degree`. -/
+theorem bhksIndicatorCandidates?_getD_positive_degree
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    {expectedIndicators : Array (Array Int)}
+    {expectedFactors : Array Hex.ZPoly}
+    (h : Hex.bhksIndicatorCandidates? f d expectedIndicators = some expectedFactors)
+    (i : Nat) (hi : i < expectedIndicators.size) :
+    0 < (expectedFactors.getD i 0).degree?.getD 0 := by
+  have hsize := Hex.bhksIndicatorCandidates?_size_eq h
+  have hi_cand : i < expectedFactors.size := by rw [hsize]; exact hi
+  have hmem :=
+    getD_mem_toList_of_lt_size expectedFactors (0 : Hex.ZPoly) i hi_cand
+  exact Hex.bhksIndicatorCandidates?_positive_degree h _ hmem
+
+/-- Monic transfer: a primitive divisor of a monic integer polynomial with
+nonnegative leading coefficient is itself monic.  Over `ℤ`, the leading
+coefficients of a `g ∣ f` factorisation multiply to `1`, so `0 ≤
+leadingCoeff g` forces `leadingCoeff g = 1`. -/
+private theorem monic_of_dvd_monic_of_leadingCoeff_nonneg
+    {f g : Hex.ZPoly}
+    (hf_monic : Hex.DensePoly.Monic f)
+    (hg_dvd : g ∣ f)
+    (hg_sign : 0 ≤ Hex.DensePoly.leadingCoeff g) :
+    Hex.DensePoly.Monic g := by
+  have hf_lead_one : Hex.DensePoly.leadingCoeff f = 1 := hf_monic
+  have hf_ne : f ≠ 0 := by
+    intro hzero
+    rw [hzero] at hf_lead_one
+    simp at hf_lead_one
+  rcases hg_dvd with ⟨q, hf_eq⟩
+  have hg_ne : g ≠ 0 := by
+    intro hzero
+    apply hf_ne
+    rw [hf_eq, hzero, Hex.DensePoly.zero_mul]
+  have hq_ne : q ≠ 0 := by
+    intro hzero
+    apply hf_ne
+    rw [hf_eq, hzero, Hex.DensePoly.mul_comm_poly]
+    exact Hex.DensePoly.zero_mul g
+  have hlead_mul :
+      Hex.DensePoly.leadingCoeff (g * q) =
+        Hex.DensePoly.leadingCoeff g * Hex.DensePoly.leadingCoeff q :=
+    Hex.ZPoly.leadingCoeff_mul_of_nonzero g q hg_ne hq_ne
+  have hlead_one :
+      Hex.DensePoly.leadingCoeff g * Hex.DensePoly.leadingCoeff q = 1 := by
+    rw [← hlead_mul, ← hf_eq, hf_lead_one]
+  exact Int.eq_one_of_mul_eq_one_right hg_sign hlead_one
+
+/-- Per-index monic transfer for `bhksIndicatorCandidates?`: when the
+recovery target is monic, every candidate factor is monic. -/
+theorem bhksIndicatorCandidates?_getD_monic_of_monic
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    {expectedIndicators : Array (Array Int)}
+    {expectedFactors : Array Hex.ZPoly}
+    (hmonic : Hex.DensePoly.Monic f)
+    (h : Hex.bhksIndicatorCandidates? f d expectedIndicators = some expectedFactors)
+    (i : Nat) (hi : i < expectedIndicators.size) :
+    Hex.DensePoly.Monic (expectedFactors.getD i 0) :=
+  monic_of_dvd_monic_of_leadingCoeff_nonneg
+    hmonic
+    (bhksIndicatorCandidates?_getD_dvd h i hi)
+    (bhksIndicatorCandidates?_getD_leadingCoeff_nonneg h i hi)
+
+/-- The `ExpectedTrueFactors` constructor for the BHKS recovery-tail path.
+From a `ForwardRecoveryInputs` package (which carries the executable
+`bhksIndicatorCandidates? = some expectedFactors` witness and the product
+identity) and a monic recovery target, package the per-factor structural
+facts that downstream consumers (e.g. the recovery-tail
+`CanonicalRecoveryTailInputs.ofCanonicalSupportRepresentations` constructor)
+require. -/
+theorem expectedTrueFactors_of_monic
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    (hmonic : Hex.DensePoly.Monic f)
+    (h : ForwardRecoveryInputs f d) :
+    ExpectedTrueFactors f h.expectedIndicators h.expectedFactors where
+  size_eq :=
+    Hex.bhksIndicatorCandidates?_size_eq h.candidates_eq
+  divides i hi :=
+    bhksIndicatorCandidates?_getD_dvd h.candidates_eq i hi
+  primitive i hi :=
+    bhksIndicatorCandidates?_getD_primitive h.candidates_eq i hi
+  leadingCoeff_nonneg i hi :=
+    bhksIndicatorCandidates?_getD_leadingCoeff_nonneg h.candidates_eq i hi
+  monic i hi :=
+    bhksIndicatorCandidates?_getD_monic_of_monic hmonic h.candidates_eq i hi
+  positive_degree i hi :=
+    bhksIndicatorCandidates?_getD_positive_degree h.candidates_eq i hi
+  product_eq := h.product_eq
+
 /-- Extract the B7 equivalence-class recovery package from the full
 forward-recovery input bundle. -/
 def toEquivalenceClassRecoveryHypotheses {f : Hex.ZPoly} {d : Hex.LiftData}
