@@ -356,59 +356,62 @@ Comparator source: `scripts/oracle/setup_lll_isabelle.sh` downloads and verifies
 ### random-bounded ladder
 
 All three medians come from
-`reports/bench-results/hex-lll-random-bounded-postperf.json`, a single
+`reports/bench-results/hex-lll-random-bounded-schur.json`, a single
 Lean+Isabelle+fpylll sweep on `carica` (Apple M2 Ultra, macOS) with
-`warmupFirstIter := true` and all four post-#6330 perf fixes in
-(#6338, #6339, #6348, #6350).
+`warmupFirstIter := true`, all four post-#6330 perf fixes in
+(#6338, #6339, #6348, #6350), and the per-row Schur scaled-coefficient
+kernel.
 
 | `n` | Lean median | Isabelle median | fpylll median | Lean/Isabelle | speedup vs Isabelle | status |
 |---:|---:|---:|---:|---:|---:|:---|
-| 30 | 16.27 ms | 16.75 ms | 1.96 ms | 0.9712 | Lean 1.03× faster | eligible |
-| 45 | 59.95 ms | 67.61 ms | 4.91 ms | 0.8867 | Lean 1.13× faster | eligible |
-| 60 | 153.95 ms | 177.61 ms | 9.79 ms | 0.8668 | Lean 1.15× faster | eligible |
-| 75 | 320.06 ms | 382.96 ms | 19.31 ms | 0.8357 | Lean 1.20× faster | eligible |
-| 90 | 552.04 ms | 690.01 ms | 31.94 ms | 0.8001 | Lean 1.25× faster | eligible |
-| 120 | 1.51 s | 1.96 s | 76.66 ms | 0.7725 | Lean 1.29× faster | eligible |
-| 150 | 3.02 s | 4.03 s | 152.57 ms | 0.7507 | Lean 1.33× faster | eligible |
-| 180 | 5.50 s | 7.45 s | 267.54 ms | 0.7383 | Lean 1.35× faster | eligible |
+| 30 | 15.14 ms | 16.81 ms | 1.84 ms | 0.9007 | Lean 1.11× faster | eligible |
+| 45 | 55.53 ms | 64.85 ms | 4.83 ms | 0.8563 | Lean 1.17× faster | eligible |
+| 60 | 142.01 ms | 176.93 ms | 9.64 ms | 0.8026 | Lean 1.25× faster | eligible |
+| 75 | 296.58 ms | 383.34 ms | 19.41 ms | 0.7737 | Lean 1.29× faster | eligible |
+| 90 | 495.68 ms | 691.52 ms | 31.62 ms | 0.7168 | Lean 1.40× faster | eligible |
+| 120 | 1.39 s | 1.93 s | 76.61 ms | 0.7213 | Lean 1.39× faster | eligible |
+| 150 | 2.65 s | 3.98 s | 151.93 ms | 0.6639 | Lean 1.51× faster | eligible |
+| 180 | 4.76 s | 7.55 s | 268.23 ms | 0.6304 | Lean 1.59× faster | eligible |
 
-**Trend.** Across the eligible range `n = 30..180`, the Lean/Isabelle ratio moves from `0.9712` to `0.7383`: Lean's lead grows with `n`.
+**Trend.** Across the eligible range `n = 30..180`, the Lean/Isabelle ratio moves from `0.9007` to `0.6304`: Lean's lead grows with `n`.
 
-**Gating-goal verdict (largest eligible rung `n = 180`).** Lean `5.50 s` vs Isabelle `7.45 s`; ratio `0.7383` (Lean 1.35× faster). Gating-goal verdict: **met**.
+**Gating-goal verdict (largest eligible rung `n = 180`).** Lean `4.76 s` vs Isabelle `7.55 s`; ratio `0.6304` (Lean 1.59× faster). Gating-goal verdict: **met**.
 
 ### harsh-cubic ladder
 
-All three medians come from
-`reports/bench-results/hex-lll-harsh-cubic-extended-postperf.json`,
-a single Lean+Isabelle+fpylll sweep on `carica` (Apple M2 Ultra,
-macOS) with `warmupFirstIter := true` and all four post-#6330 perf
-fixes in (#6338, #6339, #6348, #6350).
+Lean and Isabelle medians come from
+`reports/bench-results/hex-lll-harsh-cubic-extended-schur-lean-isabelle.json`,
+a single sweep on `carica` (Apple M2 Ultra, macOS) with
+`warmupFirstIter := true`, all four post-#6330 perf fixes in
+(#6338, #6339, #6348, #6350), and the per-row Schur scaled-coefficient
+kernel. The fpylll comparator medians in the consolidated
+`reports/bench-results/hex-lll-harsh-cubic-extended-schur.json` are the
+unchanged fpylll series from the post-perf export.
 
 | `n` | Lean median | Isabelle median | fpylll median | Lean/Isabelle | speedup vs Isabelle | status |
 |---:|---:|---:|---:|---:|---:|:---|
-| 15 | 728 µs | 760 µs | 429 µs | 0.9581 | Lean 1.04× faster | eligible |
-| 20 | 2.46 ms | 2.14 ms | 829 µs | 1.1505 | Lean 1.15× slower | eligible |
-| 25 | 6.41 ms | 5.15 ms | 1.33 ms | 1.2431 | Lean 1.24× slower | eligible |
-| 30 | 15.19 ms | 12.68 ms | 1.99 ms | 1.1979 | Lean 1.20× slower | eligible |
-| 35 | 32.80 ms | 27.19 ms | 2.60 ms | 1.2062 | Lean 1.21× slower | eligible |
-| 40 | 67.63 ms | 57.35 ms | 3.59 ms | 1.1794 | Lean 1.18× slower | eligible |
-| 45 | 130.92 ms | 110.61 ms | 4.71 ms | 1.1837 | Lean 1.18× slower | eligible |
-| 50 | 237.26 ms | 205.55 ms | 5.75 ms | 1.1543 | Lean 1.15× slower | eligible |
-| 55 | 409.50 ms | 360.38 ms | 7.36 ms | 1.1363 | Lean 1.14× slower | eligible |
-| 60 | 696.49 ms | 610.17 ms | 9.21 ms | 1.1415 | Lean 1.14× slower | eligible |
-| 65 | 1.12 s | 975.59 ms | 10.78 ms | 1.1442 | Lean 1.14× slower | eligible |
+| 15 | 515 µs | 763 µs | 429 µs | 0.6743 | Lean 1.48× faster | eligible |
+| 20 | 1.67 ms | 2.17 ms | 829 µs | 0.7693 | Lean 1.30× faster | eligible |
+| 25 | 4.15 ms | 5.23 ms | 1.33 ms | 0.7931 | Lean 1.26× faster | eligible |
+| 30 | 9.53 ms | 12.40 ms | 1.99 ms | 0.7689 | Lean 1.30× faster | eligible |
+| 35 | 19.65 ms | 27.17 ms | 2.60 ms | 0.7230 | Lean 1.38× faster | eligible |
+| 40 | 39.44 ms | 56.52 ms | 3.59 ms | 0.6978 | Lean 1.43× faster | eligible |
+| 45 | 75.83 ms | 109.94 ms | 4.71 ms | 0.6897 | Lean 1.45× faster | eligible |
+| 50 | 135.80 ms | 199.09 ms | 5.75 ms | 0.6821 | Lean 1.47× faster | eligible |
+| 55 | 234.28 ms | 356.01 ms | 7.36 ms | 0.6581 | Lean 1.52× faster | eligible |
+| 60 | 381.56 ms | 597.68 ms | 9.21 ms | 0.6384 | Lean 1.57× faster | eligible |
+| 65 | 621.32 ms | 950.08 ms | 10.78 ms | 0.6540 | Lean 1.53× faster | eligible |
 
-**Trend.** Across the eligible range `n = 15..65`, the Lean/Isabelle ratio moves from `0.9581` to `1.1442`. Lean is slightly faster at `n = 15`, climbs into a stable `~1.14–1.24×` plateau from `n = 20` onward, with the gap actually narrowing at the largest rungs.
+**Trend.** Across the eligible range `n = 15..65`, the Lean/Isabelle ratio stays below `1.0` and moves from `0.6743` to `0.6540`; Lean is faster than Isabelle on every harsh-cubic rung.
 
-**Gating-goal verdict (largest eligible rung `n = 65`).** Lean `1.12 s` vs Isabelle `975.59 ms`; ratio `1.1442` (Lean 1.14× slower). Gating-goal verdict: **not met**.
+**Gating-goal verdict (largest eligible rung `n = 65`).** Lean `621.32 ms` vs Isabelle `950.08 ms`; ratio `0.6540` (Lean 1.53× faster). Gating-goal verdict: **met**.
 
 The four post-#6330 perf fixes (`swapStep` #6338, `stepScaledRows`
 #6339, `exactDiv` #6348, `setEntry` #6350) closed most of the
-previously-reported gap: the Lean/Isabelle ratio at `n = 65`
-dropped from `1.90×` (post-warmupFirstIter, pre-perf-fix) to
-`1.14×`. The remaining `~14%` gap is a real constant-factor
-deficit, not a methodology artefact; see §Concerns for the
-follow-up audit.
+previously-reported gap, and the Schur recurrence closes the remaining
+structural gap: the Lean/Isabelle ratio at `n = 65` moved from `1.90×`
+(post-warmupFirstIter, pre-perf-fix) to `1.14×` after the four point
+fixes, and now to `0.6540`.
 
 ### bz-recombination (context only)
 
@@ -590,16 +593,13 @@ integer arithmetic.
   on modern allocators, rounded down by the dominant
   multiplication time. #6422 was reverted.
 
-  The structural difference between Lean and Isabelle is in the
-  Gram-Schmidt setup itself. `HexGramSchmidt.Int.stepScaledRows`
-  performs column-major Bareiss elimination over the full lower
-  sub-matrix; for an `n × n` input it touches `≈ n³` cells per
-  `ofBasis`. The verified Isabelle LLL's `dmu_array_row`
-  computes each `dmu[i][j]` directly via a per-row
-  Schur-complement recurrence (`sigma_array` does one divide per
-  recursion level); it touches `≈ n³/3` cells. The per-op cost
-  differs too, but the multiplication-count factor is roughly
-  consistent with the observed `~14%` wall-time gap. Closing
-  this Concern requires re-implementing `stepScaledRows` to the
-  per-row recurrence shape, which is a substantial refactor
-  rather than a point fix.
+  The structural difference was in the Gram-Schmidt setup itself.
+  The old `HexGramSchmidt.Int.stepScaledRows` path performed
+  column-major Bareiss elimination over the full lower sub-matrix;
+  for an `n × n` input it touched `≈ n³` cells per `ofBasis`. The
+  verified Isabelle LLL's `dmu_array_row` computes each `dmu[i][j]`
+  directly via a per-row Schur-complement recurrence (`sigma_array`
+  does one divide per recursion level); it touches `≈ n³/3` cells.
+  The Lean Schur recurrence now matches that shape, and the
+  benchmark gap is closed: harsh-cubic `n = 65` is Lean `621.32 ms`
+  vs Isabelle `950.08 ms`, ratio `0.6540`.

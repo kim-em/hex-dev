@@ -22,10 +22,10 @@ ROOT = Path(__file__).resolve().parents[2]
 # three comparators (Lean, Isabelle, fpylll) measured in one run so the
 # ratios are internally consistent.
 DEFAULT_RANDOM_CONSOLIDATED = (
-    ROOT / "reports/bench-results/hex-lll-random-bounded-postperf.json"
+    ROOT / "reports/bench-results/hex-lll-random-bounded-schur.json"
 )
 DEFAULT_HARSH_CONSOLIDATED = (
-    ROOT / "reports/bench-results/hex-lll-harsh-cubic-extended-postperf.json"
+    ROOT / "reports/bench-results/hex-lll-harsh-cubic-extended-schur.json"
 )
 DEFAULT_ISABELLE_BOTTOM = (
     ROOT / "reports/bench-results/hex-lll-isabelle-bottom-e211854d1435.json"
