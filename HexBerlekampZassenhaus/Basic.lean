@@ -5021,6 +5021,51 @@ private theorem bhksIndicatorCandidate?_dvd
         simp at h
 
 /--
+The candidate returned by a successful `bhksIndicatorCandidate?` call is
+exactly the canonical normalization of the centred lift of the modular product.
+This is a Mathlib-free surface lemma that downstream Mathlib-side proofs use to
+identify the candidate against the centred lift, avoiding the need to reference
+the private `liftModulus` definition from outside this file.
+-/
+theorem bhksIndicatorCandidate?_eq_normalized_centeredLift
+    {f : ZPoly} {d : LiftData} {indicator : Array Int}
+    {candidate quotient : ZPoly} {selected : Array ZPoly}
+    (h : bhksIndicatorCandidate? f d indicator = some (candidate, quotient))
+    (hselected : bhksIndicatorSelectedFactors d.liftedFactors indicator = some selected) :
+    candidate = normalizeFactorSign (normalizeCandidateFactor
+      (centeredLiftPoly
+        (ZPoly.reduceModPow
+          (DensePoly.scale (DensePoly.leadingCoeff f) (Array.polyProduct selected))
+          d.p d.k)
+        (d.p ^ d.k))) := by
+  unfold bhksIndicatorCandidate? at h
+  rw [hselected] at h
+  let modulus := liftModulus d
+  let raw := DensePoly.scale (DensePoly.leadingCoeff f) (Array.polyProduct selected)
+  let candidate0 :=
+    normalizeCandidateFactor
+      (centeredLiftPoly (ZPoly.reduceModPow raw d.p d.k) modulus)
+  let candidate' := normalizeFactorSign candidate0
+  change
+    (if shouldRecordPolynomialFactor candidate' then
+      match exactQuotient? f candidate' with
+      | some quotient => some (candidate', quotient)
+      | none => none
+    else
+      none) = some (candidate, quotient) at h
+  by_cases hrecord : shouldRecordPolynomialFactor candidate'
+  · rw [if_pos hrecord] at h
+    cases hquot : exactQuotient? f candidate' with
+    | none => simp [hquot] at h
+    | some quotient' =>
+        simp [hquot] at h
+        rcases h with ⟨hcandidate, _hquotient⟩
+        subst candidate
+        rfl
+  · rw [if_neg hrecord] at h
+    simp at h
+
+/--
 A2 reconstruction surface for a single BHKS indicator, stated at the
 Mathlib-free executable layer. If the indicator selects `selected`, the
 scaled selected product is congruent to the expected factor modulo the Hensel
