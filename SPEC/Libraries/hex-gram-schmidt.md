@@ -46,11 +46,45 @@ def gramDetVec (b : Matrix Int n m) : Vector Nat (n + 1)
 
 /-- Scaled GS coefficients (the ν-values): entry (i,j) = d_{j+1} * μ_{i,j}
     for j < i. Always integers (integrality lemma).
-    Computed in a single Bareiss-style integer pass shared across all
-    entries, reusing the same elimination scaffolding as `gramDetVec`:
-    O(n^3 + n^2 m) total. Computing each below-diagonal entry
-    independently as a (j+1) × (j+1) Bareiss determinant is forbidden —
-    that body is `O(n^5)`. -/
+
+    Computed via a per-row Schur-complement recurrence. For each
+    `(i, j)` with `j < i`, define a σ-chain of length `j + 1` with
+    one exact integer divide per step:
+
+        σ₀     := ν[i][0] * ν[j+1][0]
+        σ_l    := (d_{l+1} * σ_{l-1} + ν[i][l] * ν[j+1][l]) / d_l
+                        for 1 ≤ l ≤ j
+        ν[i][j] := d_{j+1} * ⟨b_i, b_{j+1}⟩ - σ_j
+
+    where `d_k` is the `k`-th leading-principal-minor determinant
+    of the Gram matrix (`d_0 := 1`), stored as
+    `scaledCoeffs[k-1][k-1]`. Diagonal entries
+    `scaledCoeffs[k][k] = d_{k+1}` are produced by the same
+    shape with `i = j + 1 = k`.
+
+    Total: `≈ n^3 / 3` big-int multiplications (the σ-chain
+    contributes one `+ 1` multiply per level, summed over
+    `(i, j)` to `≈ n^3 / 6`, doubled by the `*` inside the chain)
+    plus `n^2 * m` dot-product multiplications for the
+    `⟨b_i, b_{j+1}⟩` inner products. This recurrence shape is the
+    one used by the verified Isabelle LLL's `dmu_array_row` /
+    `sigma_array` (AFP `LLL_Basis_Reduction`, Bottesch et al.);
+    the project requires this shape because the comparator runs
+    against that implementation.
+
+    Two body shapes are forbidden:
+    (a) computing each below-diagonal entry independently as a
+        `(j+1) × (j+1)` Bareiss determinant — `O(n^5)`;
+    (b) column-major Bareiss elimination over the lower
+        sub-matrix that, at each pivot step k, updates every
+        `(n − k) × (n − k)` cell with a two-product fraction-free
+        Schur step (`pivot * A[i][j] − A[i][k] * A[k][j]) / prevPivot`) —
+        `≈ 2n^3 / 3` big-int multiplications per `ofBasis`,
+        roughly `2×` the per-row recurrence. The constant-factor
+        overhead is observable as a `~14%` wall-time gap against
+        the verified Isabelle comparator on HexLLL's harsh-cubic
+        ladder (per-op cost differs too: full Bareiss tends to
+        carry larger intermediate operands). -/
 def scaledCoeffs (b : Matrix Int n m) : Matrix Int n n
 
 end Hex.GramSchmidt.Int
@@ -209,11 +243,14 @@ No external comparator is required.
 **Justification:** `structural-layer` per
 `SPEC/benchmarking.md §"Comparator naming"`. HexGramSchmidt is a
 structural layer over `HexMatrix`: the integer Gram-Schmidt
-construction is implemented via Bareiss-style fraction-free
-elimination on the Gram matrix (`Matrix.bareissNoPivotData`),
-which is HexMatrix's own architecturally-named surface and is
-covered by HexMatrix's external comparator declaration
-(`FLINT fmpz_mat_det`, scoped to the determinant surface).
+construction is implemented via the per-row Schur-complement
+recurrence specified for `scaledCoeffs` above, with the diagonal
+emitted as `d_{k+1} = scaledCoeffs[k][k]` for `gramDetVec`. The
+underlying integer arithmetic and inner-product primitives come
+from HexMatrix; HexMatrix's external comparator declaration
+(`FLINT fmpz_mat_det`, scoped to the determinant surface) covers
+the determinant computation that the recurrence's diagonal
+produces.
 
 End-to-end coverage of the integer Gram-Schmidt construction as
 it appears in downstream consumers is via HexLLL's `gating`
