@@ -3108,7 +3108,7 @@ coefficient vector `coeff i` such that the represented row is
 `Matrix.rowCombination b (coeff i)`, supported at coordinates `≤ i.val`, and
 each matrix entry in that trailing row is its inner product against the
 corresponding original row. -/
-private structure BareissGramRowInvariant (b : Matrix Int n m)
+structure BareissGramRowInvariant (b : Matrix Int n m)
     (state : Matrix.BareissState n) where
   coeff : Fin n → Vector Int n
   coeff_supp : ∀ i k : Fin n, state.step ≤ i.val → i.val < k.val →
@@ -3308,7 +3308,7 @@ Bareiss step.  The quotient vector is kept separate from
 `bareissGramRowInvariantStepCoeff` so later row-entry proofs can consume the
 integer divisibility witness before projecting back to the existing exact-div
 coefficient API. -/
-private structure BareissGramRegularStepQuotient
+structure BareissGramRegularStepQuotient
     {b : Matrix Int n m} {state : Matrix.BareissState n}
     (hinv : BareissGramRowInvariant b state)
     (hnext : state.step + 1 < n) (i : Fin n) (_hi : state.step + 1 ≤ i.val) where
@@ -3321,8 +3321,12 @@ private structure BareissGramRegularStepQuotient
           q a * state.prevPivot
 
 /-- Initial no-pivot Gram trajectory specialization of the regular-step
-coefficient quotient package. -/
-private abbrev BareissGramInitialRegularStepQuotient
+coefficient quotient package.
+
+Concrete quotient witnesses are constructed in `HexGramSchmidtMathlib`, where
+the Bareiss-Desnanot proof infrastructure required by the post-#6490 SPEC
+clause is available. -/
+abbrev BareissGramInitialRegularStepQuotient
     (b : Matrix Int n m) (fuel : Nat)
     (hinv : BareissGramRowInvariant b
       (Matrix.noPivotLoop fuel
@@ -3826,8 +3830,12 @@ private theorem bareissGramInitialRegularStep_entry_eq_dot
   exact bareissGramRegularStep_entry_eq_dot hprev hq h_processed j
 
 /-- Quotient provenance required to run the initial no-pivot Gram row invariant
-through each reachable regular branch. -/
-private abbrev BareissGramInitialRegularStepQuotientProvider
+through each reachable regular branch.
+
+Concrete providers are constructed in `HexGramSchmidtMathlib`, where the
+Bareiss-Desnanot proof infrastructure required by the post-#6490 SPEC clause is
+available; the Mathlib-free layer only consumes this abstraction. -/
+abbrev BareissGramInitialRegularStepQuotientProvider
     (b : Matrix Int n m) : Type :=
   ∀ (fuel : Nat)
     (hinv : BareissGramRowInvariant b
