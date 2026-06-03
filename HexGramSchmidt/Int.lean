@@ -5326,8 +5326,23 @@ differ only in evaluation order. This equivalence is the bridge from the
 Schur implementation to the existing invariant infrastructure proven about
 `scaledCoeffRows`.
 
-The upper-triangle case is dispatched here; the diagonal and strict-lower
-cases are still open. See #6458. -/
+The upper-triangle case (`i < j`) is dispatched here. The residual obligation
+is the `j ≤ i` case, which splits into two algebraically distinct sub-cases:
+
+* Diagonal (`i = j`). Both kernels store the leading Gram determinant
+  `d_{j+1}` (as a nonnegative integer) at slot `(i, i)`. The Bareiss side is
+  characterized by `scaledCoeffRows_diag_toNat_eq_gramDet`; the Schur side
+  needs an analogous characterization built directly from the
+  `schurScaledCoeffEntry`/`schurSigma` recurrence.
+* Strict lower (`j < i`). Both kernels store `d_{j+1} · μ_{i, j}` when the
+  Bareiss-step before column `j` is non-singular and `0` when it is singular.
+  The Bareiss side is characterized by
+  `scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix` and
+  `scaledCoeffRows_eq_zero_of_singularStep_lt`; the Schur side needs a
+  row-by-row matching argument that the `schurSigma` chain reproduces the
+  same bordered-minor determinant.
+
+See #6458. -/
 private theorem getArrayEntry_scaledCoeffRowsSchur_eq
     (b : Matrix Int n m) (i j : Nat) :
     getArrayEntry (scaledCoeffRowsSchur b) i j =
