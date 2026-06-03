@@ -746,6 +746,154 @@ theorem auxiliaryPolynomialWithCorrections_support_subset_range
     rw [if_neg (by omega)]
   exact (Polynomial.mem_support_iff.mp hj) hcoeff_zero
 
+/--
+BHKS Lemma 3.2 squared-l2-norm bound for the corrected auxiliary polynomial.
+
+This is the l2-norm lift of
+`auxiliaryPolynomialWithCorrections_coeff_sq_le`: the uncorrected CLD-column
+contribution is summed into `cldColumnNormBound`, and the diagonal-row
+correction contribution is kept as an explicit finite sum over
+`j < input.degree?.getD 0`.
+-/
+theorem auxiliaryPolynomialWithCorrections_l2norm_sq_le
+    (input : Hex.ZPoly) (liftData : Hex.LiftData)
+    (vec corrections : Array Int)
+    (h : ∀ (i : Nat), i < liftData.liftedFactors.size → ∀ (j : Nat),
+        ((Hex.cldCoeffs input liftData.p liftData.k
+            (liftData.liftedFactors.getD i 0)).getD j 0).natAbs ≤
+          Hex.bhksCoeffBound input j) :
+    (HexPolyZMathlib.l2norm
+        (HexPolyZMathlib.toPolynomial
+          (BHKS.auxiliaryPolynomialWithCorrections input liftData vec corrections))) ^ 2 ≤
+      2 *
+          ((∑ i : Fin liftData.liftedFactors.size,
+              ((vec.getD i.val 0 : ℝ) ^ 2)) *
+            ((liftData.liftedFactors.size : ℝ) *
+              (BHKS.cldColumnNormBound input liftData.p : ℝ))) +
+        2 *
+          (∑ j ∈ Finset.range (input.degree?.getD 0),
+            ((corrections.getD j 0 : ℝ) ^ 2 *
+              ((liftData.p : ℝ) ^
+                (2 *
+                  (liftData.k -
+                    Hex.bhksCoeffCutThreshold liftData.p input j))))) := by
+  set poly :=
+    HexPolyZMathlib.toPolynomial
+      (BHKS.auxiliaryPolynomialWithCorrections input liftData vec corrections)
+  set n := input.degree?.getD 0 with hn_def
+  set r := liftData.liftedFactors.size with hr_def
+  set vsum : ℝ :=
+    ∑ i : Fin r, ((vec.getD i.val 0 : ℝ) ^ 2) with hvsum_def
+  have hcoeff_eq : ∀ j, poly.coeff j =
+      (BHKS.auxiliaryPolynomialWithCorrections input liftData vec corrections).coeff j := by
+    intro j
+    show (HexPolyZMathlib.toPolynomial _).coeff j = _
+    exact HexPolyZMathlib.coeff_toPolynomial _ _
+  have hcoeff_zero_above : ∀ j, n ≤ j → poly.coeff j = 0 := by
+    intro j hj
+    rw [hcoeff_eq, auxiliaryPolynomialWithCorrections_coeff_eq]
+    rw [if_neg (by omega)]
+  have hsupport : poly.support ⊆ Finset.range n := by
+    intro j hj
+    by_contra hjn
+    have hge : n ≤ j := by simpa [Finset.mem_range] using hjn
+    exact (Polynomial.mem_support_iff.mp hj) (hcoeff_zero_above j hge)
+  have hl2norm_sq : (HexPolyZMathlib.l2norm poly) ^ 2 =
+      ∑ j ∈ poly.support, (poly.coeff j : ℝ) ^ 2 := by
+    unfold HexPolyZMathlib.l2norm
+    rw [Real.sq_sqrt (Finset.sum_nonneg (fun j _ => sq_nonneg _))]
+  have hsum_le : ∑ j ∈ poly.support, (poly.coeff j : ℝ) ^ 2 ≤
+      ∑ j ∈ Finset.range n, (poly.coeff j : ℝ) ^ 2 :=
+    Finset.sum_le_sum_of_subset_of_nonneg hsupport
+      (fun j _ _ => sq_nonneg _)
+  have hcoeff_each : ∀ j ∈ Finset.range n,
+      (poly.coeff j : ℝ) ^ 2 ≤
+        2 *
+            (vsum * ((r : ℝ) * ((Hex.bhksCoeffBound input j : ℝ) ^ 2))) +
+          2 *
+            ((corrections.getD j 0 : ℝ) ^ 2 *
+              ((liftData.p : ℝ) ^
+                (2 *
+                  (liftData.k -
+                    Hex.bhksCoeffCutThreshold liftData.p input j)))) := by
+    intro j _
+    rw [hcoeff_eq]
+    exact auxiliaryPolynomialWithCorrections_coeff_sq_le input liftData vec corrections h j
+  have hsum_bd : ∑ j ∈ Finset.range n, (poly.coeff j : ℝ) ^ 2 ≤
+      ∑ j ∈ Finset.range n,
+        (2 *
+            (vsum * ((r : ℝ) * ((Hex.bhksCoeffBound input j : ℝ) ^ 2))) +
+          2 *
+            ((corrections.getD j 0 : ℝ) ^ 2 *
+              ((liftData.p : ℝ) ^
+                (2 *
+                  (liftData.k -
+                    Hex.bhksCoeffCutThreshold liftData.p input j))))) :=
+    Finset.sum_le_sum hcoeff_each
+  have hsum_factor : ∑ j ∈ Finset.range n,
+        (2 *
+            (vsum * ((r : ℝ) * ((Hex.bhksCoeffBound input j : ℝ) ^ 2))) +
+          2 *
+            ((corrections.getD j 0 : ℝ) ^ 2 *
+              ((liftData.p : ℝ) ^
+                (2 *
+                  (liftData.k -
+                    Hex.bhksCoeffCutThreshold liftData.p input j))))) =
+      2 *
+          (vsum *
+            ((r : ℝ) * ∑ j ∈ Finset.range n,
+              ((Hex.bhksCoeffBound input j : ℝ) ^ 2))) +
+        2 *
+          (∑ j ∈ Finset.range n,
+            ((corrections.getD j 0 : ℝ) ^ 2 *
+              ((liftData.p : ℝ) ^
+                (2 *
+                  (liftData.k -
+                    Hex.bhksCoeffCutThreshold liftData.p input j))))) := by
+    simp only [Finset.sum_add_distrib, Finset.mul_sum]
+  have hcldcol : (∑ j ∈ Finset.range n, ((Hex.bhksCoeffBound input j : ℝ) ^ 2)) =
+      (BHKS.cldColumnNormBound input liftData.p : ℝ) := by
+    unfold BHKS.cldColumnNormBound
+    rw [range_foldl_add_nat_pow_eq_sum]
+    push_cast
+    rfl
+  calc (HexPolyZMathlib.l2norm poly) ^ 2
+      = ∑ j ∈ poly.support, (poly.coeff j : ℝ) ^ 2 := hl2norm_sq
+    _ ≤ ∑ j ∈ Finset.range n, (poly.coeff j : ℝ) ^ 2 := hsum_le
+    _ ≤ ∑ j ∈ Finset.range n,
+        (2 *
+            (vsum * ((r : ℝ) * ((Hex.bhksCoeffBound input j : ℝ) ^ 2))) +
+          2 *
+            ((corrections.getD j 0 : ℝ) ^ 2 *
+              ((liftData.p : ℝ) ^
+                (2 *
+                  (liftData.k -
+                    Hex.bhksCoeffCutThreshold liftData.p input j))))) := hsum_bd
+    _ =
+      2 *
+          (vsum *
+            ((r : ℝ) * ∑ j ∈ Finset.range n,
+              ((Hex.bhksCoeffBound input j : ℝ) ^ 2))) +
+        2 *
+          (∑ j ∈ Finset.range n,
+            ((corrections.getD j 0 : ℝ) ^ 2 *
+              ((liftData.p : ℝ) ^
+                (2 *
+                  (liftData.k -
+                    Hex.bhksCoeffCutThreshold liftData.p input j))))) := hsum_factor
+    _ =
+      2 *
+          (vsum *
+            ((r : ℝ) * (BHKS.cldColumnNormBound input liftData.p : ℝ))) +
+        2 *
+          (∑ j ∈ Finset.range n,
+            ((corrections.getD j 0 : ℝ) ^ 2 *
+              ((liftData.p : ℝ) ^
+                (2 *
+                  (liftData.k -
+                    Hex.bhksCoeffCutThreshold liftData.p input j))))) := by
+      rw [hcldcol]
+
 end BHKS
 
 namespace ExecutableBadVectorWitness
@@ -1103,6 +1251,46 @@ theorem precision_separation_of_bridge_data
     (j : Nat) (hj : j < W.input.degree?.getD 0) :
     2 * Hex.bhksCoeffBound W.input j < W.liftData.p ^ W.liftData.k := by
   exact D.precision_separation j hj
+
+/--
+Corrected auxiliary-polynomial squared-l2 bound supplied by
+`BadVectorBridgeData`.
+
+This instantiates `BHKS.auxiliaryPolynomialWithCorrections_l2norm_sq_le` with
+the bridge package's canonical projected-vector array and correction accessor,
+then rewrites the witness auxiliary polynomial through `auxiliary_eq'`.
+-/
+theorem auxiliaryPolynomial_l2norm_sq_le_of_bridge_data
+    {W : ExecutableBadVectorWitness}
+    {trueSupports : Set (Set (Fin W.projectedRows.factorCount))}
+    (D : BadVectorBridgeData W trueSupports)
+    (v : Fin W.projectedRows.factorCount → ℤ)
+    (hin : v ∈ BHKS.projectedRowSpanInt W.projectedRows)
+    (hnot : v ∉ BHKS.trueFactorIndicatorLattice trueSupports)
+    (h :
+      ∀ (i : Nat), i < W.liftData.liftedFactors.size → ∀ (j : Nat),
+        ((Hex.cldCoeffs W.input W.liftData.p W.liftData.k
+            (W.liftData.liftedFactors.getD i 0)).getD j 0).natAbs ≤
+          Hex.bhksCoeffBound W.input j) :
+    (HexPolyZMathlib.l2norm W.auxiliaryPolynomial) ^ 2 ≤
+      2 *
+          ((∑ i : Fin W.liftData.liftedFactors.size,
+              (((W.projectedVectorArray v).getD i.val 0 : ℝ) ^ 2)) *
+            ((W.liftData.liftedFactors.size : ℝ) *
+              (BHKS.cldColumnNormBound W.input W.liftData.p : ℝ))) +
+        2 *
+          (∑ j ∈ Finset.range (W.input.degree?.getD 0),
+            (((D.auxiliaryCorrections v hin hnot).getD j 0 : ℝ) ^ 2 *
+              ((W.liftData.p : ℝ) ^
+                (2 *
+                  (W.liftData.k -
+                    Hex.bhksCoeffCutThreshold W.liftData.p W.input j))))) := by
+  unfold ExecutableBadVectorWitness.auxiliaryPolynomial
+  rw [D.auxiliary_eq' v hin hnot]
+  exact
+    BHKS.auxiliaryPolynomialWithCorrections_l2norm_sq_le
+      W.input W.liftData (W.projectedVectorArray v)
+      (D.auxiliaryCorrections v hin hnot) h
 
 end BadVectorBridgeData
 
