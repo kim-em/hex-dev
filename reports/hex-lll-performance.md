@@ -355,63 +355,60 @@ Comparator source: `scripts/oracle/setup_lll_isabelle.sh` downloads and verifies
 
 ### random-bounded ladder
 
-Lean medians from
-`reports/bench-results/hex-lll-densified-6fcd1185cee0.json`; Isabelle
-medians from
-`reports/bench-results/hex-lll-isabelle-warmupfix.json` (post-#6330
-`warmupFirstIter` methodology); fpylll medians from
-`reports/bench-results/hex-lll-fpylll-random-bounded-warmupfix.json`
-(same).
+All three medians come from
+`reports/bench-results/hex-lll-random-bounded-postperf.json`, a single
+Lean+Isabelle+fpylll sweep on `carica` (Apple M2 Ultra, macOS) with
+`warmupFirstIter := true` and all four post-#6330 perf fixes in
+(#6338, #6339, #6348, #6350).
 
 | `n` | Lean median | Isabelle median | fpylll median | Lean/Isabelle | speedup vs Isabelle | status |
 |---:|---:|---:|---:|---:|---:|:---|
-| 30 | 17.996 ms | 92.208 ms | 2.014 ms | 0.1952 | Lean 5.12× faster | eligible |
-| 45 | 67.425 ms | 127.360 ms | 5.017 ms | 0.5294 | Lean 1.89× faster | eligible |
-| 60 | 172.089 ms | 253.539 ms | 10.231 ms | 0.6787 | Lean 1.47× faster | eligible |
-| 75 | 360.452 ms | 505.613 ms | 19.677 ms | 0.7129 | Lean 1.40× faster | eligible |
-| 90 | 609.279 ms | 793.655 ms | 32.581 ms | 0.7677 | Lean 1.30× faster | eligible |
-| 120 | 1.688 s | 2.099 s | 78.501 ms | 0.8043 | Lean 1.24× faster | eligible |
-| 150 | 3.643 s | 4.294 s | 155.219 ms | 0.8483 | Lean 1.18× faster | eligible |
-| 180 | 6.488 s | 8.302 s | 269.661 ms | 0.7816 | Lean 1.28× faster | eligible |
+| 30 | 16.27 ms | 16.75 ms | 1.96 ms | 0.9712 | Lean 1.03× faster | eligible |
+| 45 | 59.95 ms | 67.61 ms | 4.91 ms | 0.8867 | Lean 1.13× faster | eligible |
+| 60 | 153.95 ms | 177.61 ms | 9.79 ms | 0.8668 | Lean 1.15× faster | eligible |
+| 75 | 320.06 ms | 382.96 ms | 19.31 ms | 0.8357 | Lean 1.20× faster | eligible |
+| 90 | 552.04 ms | 690.01 ms | 31.94 ms | 0.8001 | Lean 1.25× faster | eligible |
+| 120 | 1.51 s | 1.96 s | 76.66 ms | 0.7725 | Lean 1.29× faster | eligible |
+| 150 | 3.02 s | 4.03 s | 152.57 ms | 0.7507 | Lean 1.33× faster | eligible |
+| 180 | 5.50 s | 7.45 s | 267.54 ms | 0.7383 | Lean 1.35× faster | eligible |
 
-**Trend.** Across the eligible range `n = 30..180`, the Lean/Isabelle ratio moves from `0.1952` to `0.7816`: climbing (Lean's relative cost grows toward Isabelle's).
+**Trend.** Across the eligible range `n = 30..180`, the Lean/Isabelle ratio moves from `0.9712` to `0.7383`: Lean's lead grows with `n`.
 
-**Gating-goal verdict (largest eligible rung `n = 180`).** Lean `6.488 s` vs Isabelle `8.302 s`; ratio `0.7816` (Lean 1.28× faster). Gating-goal verdict: **met**.
+**Gating-goal verdict (largest eligible rung `n = 180`).** Lean `5.50 s` vs Isabelle `7.45 s`; ratio `0.7383` (Lean 1.35× faster). Gating-goal verdict: **met**.
 
 ### harsh-cubic ladder
 
 All three medians come from
-`reports/bench-results/hex-lll-harsh-cubic-extended-warmupfix.json`,
-a single Lean+Isabelle+fpylll sweep with `warmupFirstIter := true`
-(post-#6330). The ladder is extended to `n = 60, 65` from the
-prior reach of `n = 55`.
+`reports/bench-results/hex-lll-harsh-cubic-extended-postperf.json`,
+a single Lean+Isabelle+fpylll sweep on `carica` (Apple M2 Ultra,
+macOS) with `warmupFirstIter := true` and all four post-#6330 perf
+fixes in (#6338, #6339, #6348, #6350).
 
 | `n` | Lean median | Isabelle median | fpylll median | Lean/Isabelle | speedup vs Isabelle | status |
 |---:|---:|---:|---:|---:|---:|:---|
-| 15 | 900 µs | 873 µs | 447 µs | 1.0311 | Lean 1.03× slower | eligible |
-| 20 | 3.10 ms | 2.29 ms | 809 µs | 1.3557 | Lean 1.36× slower | eligible |
-| 25 | 8.41 ms | 5.40 ms | 1.36 ms | 1.5590 | Lean 1.56× slower | eligible |
-| 30 | 21.46 ms | 12.78 ms | 2.02 ms | 1.6792 | Lean 1.68× slower | eligible |
-| 35 | 48.85 ms | 27.72 ms | 2.71 ms | 1.7622 | Lean 1.76× slower | eligible |
-| 40 | 104.10 ms | 57.91 ms | 3.48 ms | 1.7977 | Lean 1.80× slower | eligible |
-| 45 | 218.69 ms | 110.04 ms | 4.71 ms | 1.9873 | Lean 1.99× slower | eligible |
-| 50 | 381.04 ms | 205.40 ms | 6.12 ms | 1.8551 | Lean 1.86× slower | eligible |
-| 55 | 669.68 ms | 359.45 ms | 7.35 ms | 1.8631 | Lean 1.86× slower | eligible |
-| 60 | 1.12 s | 601.43 ms | 8.72 ms | 1.8659 | Lean 1.87× slower | eligible |
-| 65 | 1.82 s | 953.89 ms | 10.46 ms | 1.9036 | Lean 1.90× slower | eligible |
+| 15 | 728 µs | 760 µs | 429 µs | 0.9581 | Lean 1.04× faster | eligible |
+| 20 | 2.46 ms | 2.14 ms | 829 µs | 1.1505 | Lean 1.15× slower | eligible |
+| 25 | 6.41 ms | 5.15 ms | 1.33 ms | 1.2431 | Lean 1.24× slower | eligible |
+| 30 | 15.19 ms | 12.68 ms | 1.99 ms | 1.1979 | Lean 1.20× slower | eligible |
+| 35 | 32.80 ms | 27.19 ms | 2.60 ms | 1.2062 | Lean 1.21× slower | eligible |
+| 40 | 67.63 ms | 57.35 ms | 3.59 ms | 1.1794 | Lean 1.18× slower | eligible |
+| 45 | 130.92 ms | 110.61 ms | 4.71 ms | 1.1837 | Lean 1.18× slower | eligible |
+| 50 | 237.26 ms | 205.55 ms | 5.75 ms | 1.1543 | Lean 1.15× slower | eligible |
+| 55 | 409.50 ms | 360.38 ms | 7.36 ms | 1.1363 | Lean 1.14× slower | eligible |
+| 60 | 696.49 ms | 610.17 ms | 9.21 ms | 1.1415 | Lean 1.14× slower | eligible |
+| 65 | 1.12 s | 975.59 ms | 10.78 ms | 1.1442 | Lean 1.14× slower | eligible |
 
-**Trend.** Across the eligible range `n = 15..65`, the Lean/Isabelle ratio moves from `1.0311` to `1.9036`: climbing. Lean is at parity at `n = 15` and roughly `1.9×` slower at every rung from `n = 45` upward — a stable constant-factor gap, not pathological growth.
+**Trend.** Across the eligible range `n = 15..65`, the Lean/Isabelle ratio moves from `0.9581` to `1.1442`. Lean is slightly faster at `n = 15`, climbs into a stable `~1.14–1.24×` plateau from `n = 20` onward, with the gap actually narrowing at the largest rungs.
 
-**Gating-goal verdict (largest eligible rung `n = 65`).** Lean `1.82 s` vs Isabelle `953.89 ms`; ratio `1.9036` (Lean 1.90× slower). Gating-goal verdict: **not met**.
+**Gating-goal verdict (largest eligible rung `n = 65`).** Lean `1.12 s` vs Isabelle `975.59 ms`; ratio `1.1442` (Lean 1.14× slower). Gating-goal verdict: **not met**.
 
-The shape of this gap revises the pre-#6330 picture substantially.
-The previously-reported "Lean 68× faster than Isabelle at `n = 15`"
-was a methodology artefact: per-repeat subprocess driver startup
-dominated Isabelle measurements at small `n`. Under honest
-measurement Lean and Isabelle are essentially equal at `n = 15`,
-and the Lean/Isabelle ratio at `n = 55` is `1.86×` rather than the
-previously-reported `1.58×`. The Concern in §Concerns is updated
-accordingly.
+The four post-#6330 perf fixes (`swapStep` #6338, `stepScaledRows`
+#6339, `exactDiv` #6348, `setEntry` #6350) closed most of the
+previously-reported gap: the Lean/Isabelle ratio at `n = 65`
+dropped from `1.90×` (post-warmupFirstIter, pre-perf-fix) to
+`1.14×`. The remaining `~14%` gap is a real constant-factor
+deficit, not a methodology artefact; see §Concerns for the
+follow-up audit.
 
 ### bz-recombination (context only)
 
@@ -559,38 +556,36 @@ integer arithmetic.
 
 - **HexLLL Lean is approximately `1.9×` slower than the verified
   Isabelle comparator across the upper harsh-cubic ladder, with a
-  stable constant-factor gap.** Under the post-#6330
-  `warmupFirstIter` methodology, the Lean/Isabelle ratio is `1.03`
-  at `n = 15`, climbs through `n = 25..40`, then plateaus around
-  `1.86–1.90` from `n = 45` to `n = 65`. The gating-goal verdict
-  at the largest eligible rung (`n = 65`) is therefore **not
-  met**, and `HexLLL.done_through` remains `3`. The shape of the
-  gap rules out a single asymptotic-class regression and points at
-  a constant-factor cost difference. The previous Concern thread
-  (#4334, follow-up #5966) cited pre-`warmupFirstIter` numbers
-  that overstated Lean's lead at small `n`; the current ratios
-  supersede those.
+  residual constant-factor gap.** Under honest methodology
+  (post-#6330) with all four follow-up perf fixes in (`swapStep`
+  #6338, `stepScaledRows` #6339, `exactDiv` #6348, `setEntry`
+  #6350), the Lean/Isabelle ratio is `0.96` at `n = 15`, climbs
+  to a plateau around `1.14–1.24` from `n = 20` onward, and lands
+  at `1.14` at the largest eligible rung `n = 65`. The
+  gating-goal verdict ("Lean at least as fast as Isabelle on
+  shared canonical inputs at the bottom of each
+  `phase4.input_families` parameter ladder") is therefore **not
+  met** for harsh-cubic, and `HexLLL.done_through` remains `3`.
 
-  Profile evidence under the post-#5781 timed-region filtering
-  identifies four concrete contributors in the hot path. Each is
-  being filed as its own audit-found issue, all of which must be
-  resolved before this Concern clears:
+  The four merged perf fixes between them dropped the Lean/Isabelle
+  harsh-cubic ratio at `n = 65` from `1.90×` to `1.14×` — a
+  substantial closing of the gap but not enough to clear the
+  Concern. The remaining `~14%` is a real residual constant-factor
+  deficit (the previous wording "stable constant-factor gap" of
+  `~1.9×` was based on pre-perf-fix data).
 
-  - `Hex.Matrix.exactDiv` performs a redundant divisibility check
-    before `Int.divExact` (full big-int `mpz_mod` plus the
-    `mpz_divexact` it ostensibly replaces); 38 % inclusive cost
-    on harsh-cubic `n = 55`.
-  - `Hex.LLLState.setEntry` forces a row-copy on every call via
-    a `lean_inc` on the borrowed inner row; 8.2 % leaf time on
-    random-bounded `n = 120`.
-  - `Hex.LLLState.swapStep`'s second fold makes two `setEntry`
-    calls on the same row index per iteration (i.e. two row
-    copies), and is `38.9 %` inclusive on random-bounded
-    `n = 120`.
-  - `Hex.GramSchmidt.Int.stepScaledRows` aliases `rows` while
-    mutating `next` and pays the same row-COW penalty per outer
-    iteration; the Bareiss workhorse at `98.4 %` inclusive on
-    harsh-cubic `n = 55` and `20.7 %` on random-bounded `n = 120`.
+  The previous Concern thread (#4334, follow-up #5966) cited
+  pre-`warmupFirstIter` numbers that overstated Lean's lead at
+  small `n`; the current ratios supersede those.
+
+  A follow-up audit-found issue tracks the residual gap and the
+  next-most-promising hot-path target: the per-inner-cell
+  intermediate-mpz allocations in `Hex.GramSchmidt.Int.stepScaledRows`
+  (each cell allocates four big-ints — `pivot * sourceRow[j]`,
+  `entryIK * rows[k][j]`, their difference, the `exactDiv` result —
+  three of which are freed within microseconds). A fused
+  `mpz_fma_div` C helper that does `(a*b - c*d) / e` in one mpz
+  output would eliminate three of the four per-cell allocations.
 
   Older context: the array-construction cleanup in
   `HexGramSchmidt.Int` (evidence:
