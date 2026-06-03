@@ -1358,6 +1358,30 @@ private theorem getArrayEntry_schurColumnLoop_col_zero_preserve
       rw [ih _ h_tail]
       exact getArrayEntry_setArrayEntry_of_col_ne rows row col 0 _ h_col_ne.symm
 
+/-- Column-loop stability for a cell `(row, col_target)` when the loop never
+visits `col_target`. Subsequent column writes at different columns keep
+the cell unchanged. -/
+private theorem getArrayEntry_schurColumnLoop_col_not_mem
+    (cols : List Nat) (rows gram : Array (Array Int)) (row col_target : Nat)
+    (h_not_mem : col_target ∉ cols) :
+    getArrayEntry
+        (cols.foldl
+          (fun next col =>
+            setArrayEntry next row col (schurScaledCoeffEntry next gram row col)) rows)
+        row col_target =
+      getArrayEntry rows row col_target := by
+  induction cols generalizing rows with
+  | nil => simp
+  | cons col cols ih =>
+      simp only [List.foldl_cons]
+      have h_col_ne : col ≠ col_target :=
+        fun h => h_not_mem (h ▸ List.mem_cons_self)
+      have h_tail : col_target ∉ cols :=
+        fun h => h_not_mem (List.mem_cons_of_mem col h)
+      rw [ih _ h_tail]
+      exact getArrayEntry_setArrayEntry_of_col_ne rows row col col_target _
+        (fun h => h_col_ne h.symm)
+
 /-- Single-row column-loop dispatch for column `0`. When `0` appears in
 `cols`, the column loop ultimately writes `getArrayEntry gram row 0` into the
 `(row, 0)` slot. Because the `j = 0` branch of `schurScaledCoeffEntry`
@@ -1420,6 +1444,40 @@ private theorem schurColumnLoop_rows_size
       simp only [List.foldl_cons]
       rw [ih]
       exact setArrayEntry_rows_size _ _ _ _ _
+
+/-- Size preservation: the Schur row loop keeps the outer-array length. -/
+private theorem schurRowLoop_size
+    (rowList : List Nat) (rows gram : Array (Array Int)) :
+    (rowList.foldl
+      (fun next row =>
+        (List.range' 0 (row + 1)).foldl
+          (fun next col =>
+            setArrayEntry next row col (schurScaledCoeffEntry next gram row col))
+          next) rows).size =
+      rows.size := by
+  induction rowList generalizing rows with
+  | nil => rfl
+  | cons row rowList ih =>
+      simp only [List.foldl_cons]
+      rw [ih]
+      exact schurColumnLoop_size _ _ _ _
+
+/-- Size preservation: the Schur row loop keeps each inner row's length. -/
+private theorem schurRowLoop_rows_size
+    (rowList : List Nat) (rows gram : Array (Array Int)) (r : Nat) :
+    (rowList.foldl
+      (fun next row =>
+        (List.range' 0 (row + 1)).foldl
+          (fun next col =>
+            setArrayEntry next row col (schurScaledCoeffEntry next gram row col))
+          next) rows)[r]!.size =
+      rows[r]!.size := by
+  induction rowList generalizing rows with
+  | nil => rfl
+  | cons row rowList ih =>
+      simp only [List.foldl_cons]
+      rw [ih]
+      exact schurColumnLoop_rows_size _ _ _ _ _
 
 /-- Row-loop dispatch for the `(i, 0)` boundary. If `i ∈ rowList` and the
 initial row buffer is large enough at row `i`, the Schur row loop writes the
@@ -1606,6 +1664,214 @@ private theorem getArrayEntry_scaledCoeffRowsSchur_col_zero
     rw [getArrayEntry_schurRowLoop_row_not_mem (List.range' 0 n) (zeroRows n)
       (gramRows b) i 0 h_not_mem]
     exact getArrayEntry_zeroRows n i 0
+
+private theorem getArrayEntry_scaledCoeffRowsSchur_eq_schurScaledCoeffEntry
+    {n m : Nat} (b : Matrix Int n m) (a c : Nat)
+    (h_c_le_a : c ≤ a) (han : a < n) :
+    getArrayEntry (scaledCoeffRowsSchur b) a c =
+      schurScaledCoeffEntry (scaledCoeffRowsSchur b) (gramRows b) a c := by
+  let gram := gramRows b
+  let rowPrefix := List.range' 0 a
+  let rowSuffix := List.range' (a + 1) (n - (a + 1))
+  let rowsBeforeA :=
+    rowPrefix.foldl
+      (fun next row =>
+        (List.range' 0 (row + 1)).foldl
+          (fun next col =>
+            setArrayEntry next row col (schurScaledCoeffEntry next gram row col))
+          next) (zeroRows n)
+  let colPrefix := List.range' 0 c
+  let colSuffix := List.range' (c + 1) (a - c)
+  let rowsBeforeC :=
+    colPrefix.foldl
+      (fun next col =>
+        setArrayEntry next a col (schurScaledCoeffEntry next gram a col)) rowsBeforeA
+  let rowsAfterC :=
+    setArrayEntry rowsBeforeC a c (schurScaledCoeffEntry rowsBeforeC gram a c)
+  have h_rows_split :
+      List.range' 0 n = rowPrefix ++ a :: rowSuffix := by
+    dsimp [rowPrefix, rowSuffix]
+    have hn_split : n = a + (n - a) := by omega
+    have hn_tail : n - a = (n - (a + 1)) + 1 := by omega
+    calc
+      List.range' 0 n = List.range' 0 (a + (n - a)) := by
+        exact congrArg (List.range' 0) hn_split
+      _ = List.range' 0 a ++ List.range' a (n - a) := by
+        simpa using (List.range'_append_1 (s := 0) (m := a) (n := n - a)).symm
+      _ = List.range' 0 a ++ List.range' a ((n - (a + 1)) + 1) := by
+        rw [hn_tail]
+      _ = List.range' 0 a ++ a :: List.range' (a + 1) (n - (a + 1)) := by
+        rw [List.range'_succ]
+  have h_cols_split :
+      List.range' 0 (a + 1) = colPrefix ++ c :: colSuffix := by
+    dsimp [colPrefix, colSuffix]
+    have hc_split : a + 1 = c + ((a + 1) - c) := by omega
+    have hc_tail : (a + 1) - c = (a - c) + 1 := by omega
+    calc
+      List.range' 0 (a + 1) = List.range' 0 (c + ((a + 1) - c)) := by
+        exact congrArg (List.range' 0) hc_split
+      _ = List.range' 0 c ++ List.range' c ((a + 1) - c) := by
+        simpa using (List.range'_append_1 (s := 0) (m := c) (n := (a + 1) - c)).symm
+      _ = List.range' 0 c ++ List.range' c ((a - c) + 1) := by
+        rw [hc_tail]
+      _ = List.range' 0 c ++ c :: List.range' (c + 1) (a - c) := by
+        rw [List.range'_succ]
+  have h_a_not_suffix : a ∉ rowSuffix := by
+    dsimp [rowSuffix]
+    intro hmem
+    rw [List.mem_range'] at hmem
+    omega
+  have h_c_not_colSuffix : c ∉ colSuffix := by
+    dsimp [colSuffix]
+    intro hmem
+    rw [List.mem_range'] at hmem
+    omega
+  have hrow_beforeC : a < rowsBeforeC.size := by
+    dsimp [rowsBeforeC, rowsBeforeA]
+    rw [schurColumnLoop_size, schurRowLoop_size, zeroRows_size]
+    exact han
+  have hcol_beforeC : c < rowsBeforeC[a]!.size := by
+    dsimp [rowsBeforeC, rowsBeforeA]
+    rw [schurColumnLoop_rows_size, schurRowLoop_rows_size, zeroRows_row_size n a han]
+    exact Nat.lt_of_le_of_lt h_c_le_a han
+  have h_write :
+      getArrayEntry (scaledCoeffRowsSchur b) a c =
+        schurScaledCoeffEntry rowsBeforeC gram a c := by
+    simp [scaledCoeffRowsSchur, gram, h_rows_split, h_cols_split, rowsBeforeA,
+      rowsBeforeC]
+    rw [getArrayEntry_schurRowLoop_row_not_mem _ _ _ _ _ h_a_not_suffix]
+    rw [getArrayEntry_schurColumnLoop_col_not_mem _ _ _ _ _ h_c_not_colSuffix]
+    exact getArrayEntry_setArrayEntry_self rowsBeforeC a c
+      (schurScaledCoeffEntry rowsBeforeC gram a c) hrow_beforeC hcol_beforeC
+  rw [h_write]
+  by_cases hc0 : c = 0
+  · simp [schurScaledCoeffEntry, hc0, gram]
+  · have hcp : 0 < c := Nat.pos_of_ne_zero hc0
+    have h_entry_congr :
+        schurScaledCoeffEntry rowsBeforeC gram a c =
+          schurScaledCoeffEntry (scaledCoeffRowsSchur b) gram a c := by
+      simp [schurScaledCoeffEntry, hc0]
+      have h_diag_cells :
+          ∀ k, k < c →
+            getArrayEntry rowsBeforeC k k =
+              getArrayEntry (scaledCoeffRowsSchur b) k k := by
+        intro k hk
+        have hka : k < a := by omega
+        have hk_not_a : k ≠ a := by omega
+        have hk_not_suffix : k ∉ rowSuffix := by
+          dsimp [rowSuffix]
+          intro hmem
+          rw [List.mem_range'] at hmem
+          omega
+        calc
+          getArrayEntry rowsBeforeC k k =
+              getArrayEntry rowsBeforeA k k := by
+            dsimp [rowsBeforeC]
+            exact getArrayEntry_schurColumnLoop_row_ne _ _ _ _ _ _ hk_not_a
+          _ = getArrayEntry
+              ((List.range' 0 n).foldl
+                (fun next row =>
+                  (List.range' 0 (row + 1)).foldl
+                    (fun next col =>
+                      setArrayEntry next row col
+                        (schurScaledCoeffEntry next (gramRows b) row col))
+                    next) (zeroRows n)) k k := by
+            rw [h_rows_split]
+            simp [rowsBeforeA, gram]
+            rw [getArrayEntry_schurRowLoop_row_not_mem _ _ _ _ _ hk_not_suffix]
+            rw [getArrayEntry_schurColumnLoop_row_ne _ _ _ _ _ _ hk_not_a]
+          _ = getArrayEntry (scaledCoeffRowsSchur b) k k := by
+            simp [scaledCoeffRowsSchur]
+      have h_row_a_cells :
+          ∀ p, p < c →
+            getArrayEntry rowsBeforeC a p =
+              getArrayEntry (scaledCoeffRowsSchur b) a p := by
+        intro p hp
+        have hp_not_c : p ∉ colSuffix := by
+          dsimp [colSuffix]
+          intro hmem
+          rw [List.mem_range'] at hmem
+          omega
+        calc
+          getArrayEntry rowsBeforeC a p =
+              getArrayEntry rowsAfterC a p := by
+            dsimp [rowsAfterC]
+            rw [getArrayEntry_setArrayEntry_of_col_ne]
+            omega
+          _ = getArrayEntry
+              ((colPrefix ++ c :: colSuffix).foldl
+                (fun next col =>
+                  setArrayEntry next a col (schurScaledCoeffEntry next gram a col))
+                rowsBeforeA) a p := by
+            simp [colPrefix, rowsBeforeC, rowsAfterC]
+            rw [getArrayEntry_schurColumnLoop_col_not_mem _ _ _ _ _ hp_not_c]
+          _ = getArrayEntry (scaledCoeffRowsSchur b) a p := by
+            simp [scaledCoeffRowsSchur, gram, h_rows_split, h_cols_split, rowsBeforeA]
+            rw [getArrayEntry_schurRowLoop_row_not_mem _ _ _ _ _ h_a_not_suffix]
+      have h_row_c_cells :
+          ∀ p, p < c →
+            getArrayEntry rowsBeforeC c p =
+              getArrayEntry (scaledCoeffRowsSchur b) c p := by
+        intro p hp
+        by_cases hca : c = a
+        · subst a
+          have hp_not_c : p ∉ colSuffix := by
+            dsimp [colSuffix]
+            intro hmem
+            rw [List.mem_range'] at hmem
+            omega
+          calc
+            getArrayEntry rowsBeforeC c p =
+                getArrayEntry rowsAfterC c p := by
+              dsimp [rowsAfterC]
+              rw [getArrayEntry_setArrayEntry_of_col_ne]
+              omega
+            _ = getArrayEntry
+                ((colPrefix ++ c :: colSuffix).foldl
+                  (fun next col =>
+                    setArrayEntry next c col (schurScaledCoeffEntry next gram c col))
+                  rowsBeforeA) c p := by
+              simp [colPrefix, rowsBeforeC, rowsAfterC]
+              rw [getArrayEntry_schurColumnLoop_col_not_mem _ _ _ _ _ hp_not_c]
+            _ = getArrayEntry (scaledCoeffRowsSchur b) c p := by
+              simp [scaledCoeffRowsSchur, gram, h_rows_split, h_cols_split, rowsBeforeA]
+              rw [getArrayEntry_schurRowLoop_row_not_mem _ _ _ _ _ h_a_not_suffix]
+        · have hca_lt : c < a := by omega
+          have hca_ne : c ≠ a := by omega
+          have hc_not_suffix : c ∉ rowSuffix := by
+            dsimp [rowSuffix]
+            intro hmem
+            rw [List.mem_range'] at hmem
+            omega
+          calc
+            getArrayEntry rowsBeforeC c p =
+                getArrayEntry rowsBeforeA c p := by
+              dsimp [rowsBeforeC]
+              exact getArrayEntry_schurColumnLoop_row_ne _ _ _ _ _ _ hca_ne
+            _ = getArrayEntry
+                ((List.range' 0 n).foldl
+                  (fun next row =>
+                    (List.range' 0 (row + 1)).foldl
+                      (fun next col =>
+                        setArrayEntry next row col
+                          (schurScaledCoeffEntry next (gramRows b) row col))
+                      next) (zeroRows n)) c p := by
+              rw [h_rows_split]
+              simp [rowsBeforeA, gram]
+              rw [getArrayEntry_schurRowLoop_row_not_mem _ _ _ _ _ hc_not_suffix]
+              rw [getArrayEntry_schurColumnLoop_row_ne _ _ _ _ _ _ hca_ne]
+            _ = getArrayEntry (scaledCoeffRowsSchur b) c p := by
+              simp [scaledCoeffRowsSchur]
+      have h_diag_prev :
+          getArrayEntry rowsBeforeC (c - 1) (c - 1) =
+            getArrayEntry (scaledCoeffRowsSchur b) (c - 1) (c - 1) := by
+        exact h_diag_cells (c - 1) (by omega)
+      have h_sigma :
+          schurSigma rowsBeforeC a c =
+            schurSigma (scaledCoeffRowsSchur b) a c :=
+        schurSigma_congr_of_cell_eq hcp h_diag_cells h_row_a_cells h_row_c_cells
+      rw [h_diag_prev, h_sigma]
+    exact h_entry_congr
 
 /-- Integral scaled Gram-Schmidt coefficients. For `j < i`, the entry is the
 determinant formula corresponding to `d_{j+1} * μ_{i,j}`; on the diagonal we
@@ -6719,30 +6985,6 @@ private theorem scaledCoeffRows_eq_zero_of_singularStep_lt
           coeffs := zeroRows n
           prevPivot := 1 }).coeffs i.val j.val = 0
   exact h_zero
-
-/-- Column-loop stability for a cell `(row, col_target)` when the loop never
-visits `col_target`. Subsequent column writes at different columns keep
-the cell unchanged. -/
-private theorem getArrayEntry_schurColumnLoop_col_not_mem
-    (cols : List Nat) (rows gram : Array (Array Int)) (row col_target : Nat)
-    (h_not_mem : col_target ∉ cols) :
-    getArrayEntry
-        (cols.foldl
-          (fun next col =>
-            setArrayEntry next row col (schurScaledCoeffEntry next gram row col)) rows)
-        row col_target =
-      getArrayEntry rows row col_target := by
-  induction cols generalizing rows with
-  | nil => simp
-  | cons col cols ih =>
-      simp only [List.foldl_cons]
-      have h_col_ne : col ≠ col_target :=
-        fun h => h_not_mem (h ▸ List.mem_cons_self)
-      have h_tail : col_target ∉ cols :=
-        fun h => h_not_mem (List.mem_cons_of_mem col h)
-      rw [ih _ h_tail]
-      exact getArrayEntry_setArrayEntry_of_col_ne rows row col col_target _
-        (fun h => h_col_ne h.symm)
 
 /-- On a non-singular initial Gram trajectory, the diagonal pivot at step `q`
 is nonzero whenever `q + 1` iterations stay non-singular. The (`q + 1`)-th
