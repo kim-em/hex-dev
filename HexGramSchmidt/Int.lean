@@ -684,8 +684,7 @@ private def stepScaledRows (rows : Array (Array Int)) (n k : Nat)
           let mut nextRow := sourceRow.set! k 0
           for j in [k + 1:n] do
             let value :=
-              Matrix.exactDiv
-                (pivot * nextRow[j]! - entryIK * pivotRow[j]!) prevPivot
+              Matrix.fmaDivExact pivot nextRow[j]! entryIK pivotRow[j]! prevPivot
             nextRow := nextRow.set! j value
           return nextRow
     return next
@@ -750,6 +749,7 @@ private theorem stepScaledRows_row_at_trailing
         (rows[r]!.set! k 0) := by
   unfold stepScaledRows
   simp [Std.Legacy.Range.forIn_eq_forIn_range', Std.Legacy.Range.size,
+    Matrix.fmaDivExact,
     -Array.set!_eq_setIfInBounds]
   have hmem : r ∈ List.range' (k + 1) (n - (k + 1)) := by
     rw [List.mem_range']
@@ -858,8 +858,7 @@ private theorem stepScaledRows_rows_size
     (List.range' (k + 1) (n - (k + 1))).foldl
       (fun nextRow j =>
         nextRow.set! j
-          (Matrix.exactDiv
-            (pivot * nextRow[j]! - sourceRow[k]! * rows[k]![j]!)
+          (Matrix.fmaDivExact pivot nextRow[j]! sourceRow[k]! rows[k]![j]!
             prevPivot))
       (sourceRow.set! k 0)
   by_cases hmem : r ∈ xs
@@ -876,9 +875,8 @@ private theorem stepScaledRows_rows_size
         (List.range' (k + 1) (n - (k + 1)))
         (rows[r]!.set! k 0)
         (fun j nextEntry =>
-          Matrix.exactDiv
-            (pivot * nextEntry - rows[r]![k]! * getArrayEntry rows k j)
-            prevPivot)
+          Matrix.fmaDivExact pivot nextEntry rows[r]![k]!
+            (getArrayEntry rows k j) prevPivot)
     simpa [Array.set!_eq_setIfInBounds, Array.size_setIfInBounds,
       hrowsize r hr] using hinner_size
   · rw [getElem!_foldl_modify_of_notMem xs rows f r hmem]
