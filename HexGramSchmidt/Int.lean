@@ -6720,6 +6720,97 @@ private theorem scaledCoeffRows_eq_zero_of_singularStep_lt
           prevPivot := 1 }).coeffs i.val j.val = 0
   exact h_zero
 
+/-- Column-loop stability for a cell `(row, col_target)` when the loop never
+visits `col_target`. Subsequent column writes at different columns keep
+the cell unchanged. -/
+private theorem getArrayEntry_schurColumnLoop_col_not_mem
+    (cols : List Nat) (rows gram : Array (Array Int)) (row col_target : Nat)
+    (h_not_mem : col_target ∉ cols) :
+    getArrayEntry
+        (cols.foldl
+          (fun next col =>
+            setArrayEntry next row col (schurScaledCoeffEntry next gram row col)) rows)
+        row col_target =
+      getArrayEntry rows row col_target := by
+  induction cols generalizing rows with
+  | nil => simp
+  | cons col cols ih =>
+      simp only [List.foldl_cons]
+      have h_col_ne : col ≠ col_target :=
+        fun h => h_not_mem (h ▸ List.mem_cons_self)
+      have h_tail : col_target ∉ cols :=
+        fun h => h_not_mem (List.mem_cons_of_mem col h)
+      rw [ih _ h_tail]
+      exact getArrayEntry_setArrayEntry_of_col_ne rows row col col_target _
+        (fun h => h_col_ne h.symm)
+
+/-- On a non-singular initial Gram trajectory, the diagonal pivot at step `q`
+is nonzero whenever `q + 1` iterations stay non-singular. The (`q + 1`)-th
+iteration would otherwise record a singular step at `q`. -/
+private theorem noPivotLoop_initial_gram_diag_ne_zero_of_lt
+    (b : Matrix Int n m) (p q : Nat) (hq : q < p) (hpn : p < n)
+    (h_nonsing :
+      (Matrix.noPivotLoop p
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none) :
+    (Matrix.noPivotLoop q
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
+      (⟨q, Nat.lt_trans hq hpn⟩ : Fin n)][
+      (⟨q, Nat.lt_trans hq hpn⟩ : Fin n)] ≠ 0 := by
+  intro h_zero
+  -- The (q+1)-prefix is also non-singular: split p = (q+1) + (p - q - 1).
+  let state₀ : Matrix.BareissState n := Matrix.noPivotInitialState (Matrix.gramMatrix b)
+  have h_split : p = (q + 1) + (p - q - 1) := by omega
+  have h_prefix_succ_none :
+      (Matrix.noPivotLoop (q + 1) state₀).singularStep = none := by
+    apply noPivotLoop_prefix_none_of_final_none (q + 1) (p - q - 1) state₀
+      (by simp [state₀, Matrix.noPivotInitialState])
+    rw [← h_split]; exact h_nonsing
+  -- At step q (where step = q under non-singularity of q-prefix), the q-th
+  -- diagonal is the pivot for the (q+1)-th iteration.
+  have h_prefix_none :
+      (Matrix.noPivotLoop q state₀).singularStep = none :=
+    noPivotLoop_prefix_none_of_final_none q 1 state₀
+      (by simp [state₀, Matrix.noPivotInitialState])
+      (by rw [show q + 1 = q + 1 from rfl]; exact h_prefix_succ_none)
+  have hqn : q < n := Nat.lt_trans hq hpn
+  have h_step_q :
+      (Matrix.noPivotLoop q state₀).step = q :=
+    noPivotLoop_initial_gram_step_eq_of_prefix_none b q (by omega) h_prefix_none
+  -- The (q+1)-th iteration: starting from state with step = q, matrix[q][q] = 0,
+  -- it records singularStep := some q.
+  have hDone : (Matrix.noPivotLoop q state₀).step + 1 < n := by
+    rw [h_step_q]; omega
+  have hp_at_step :
+      (Matrix.noPivotLoop q state₀).matrix[
+        (Matrix.noPivotLoop q state₀).step][
+        (Matrix.noPivotLoop q state₀).step] = 0 := by
+    have h_idx_eq :
+        (⟨(Matrix.noPivotLoop q state₀).step, Nat.lt_of_succ_lt hDone⟩ : Fin n)
+          = ⟨q, hqn⟩ := Fin.ext h_step_q
+    have h_lift := congrArg
+      (fun (idx : Fin n) =>
+        (Matrix.noPivotLoop q state₀).matrix[idx][idx])
+      h_idx_eq
+    -- h_lift : M[⟨step, _⟩][⟨step, _⟩] = M[⟨q, _⟩][⟨q, _⟩]
+    change
+      (Matrix.noPivotLoop q state₀).matrix[
+        (⟨(Matrix.noPivotLoop q state₀).step, Nat.lt_of_succ_lt hDone⟩ : Fin n)][
+        (⟨(Matrix.noPivotLoop q state₀).step, Nat.lt_of_succ_lt hDone⟩ : Fin n)] = 0
+    exact h_lift.trans h_zero
+  -- Now noPivotLoop applied for 1 more fuel from the q-prefix records a singular
+  -- step at q. But that contradicts the (q+1)-prefix non-singularity.
+  have h_one_more :
+      Matrix.noPivotLoop 1 (Matrix.noPivotLoop q state₀) =
+        { (Matrix.noPivotLoop q state₀) with
+          singularStep := some (Matrix.noPivotLoop q state₀).step } :=
+    Matrix.noPivotLoop_singular_branch 0 _ hDone hp_at_step
+  have h_q_plus_one :
+      Matrix.noPivotLoop (q + 1) state₀ =
+        Matrix.noPivotLoop 1 (Matrix.noPivotLoop q state₀) :=
+    Matrix.noPivotLoop_add q 1 state₀
+  rw [h_q_plus_one, h_one_more] at h_prefix_succ_none
+  simp at h_prefix_succ_none
+
 /-- Singular dual of `scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix`.
 When the no-pivot Bareiss pass over the full Gram matrix records an early
 singular step before reaching column `j`, the integral scaled Gram-Schmidt
