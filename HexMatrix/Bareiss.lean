@@ -121,23 +121,6 @@ theorem exactDiv_eq_divExact {num denom : Int} (h : denom ∣ num) :
     exactDiv num denom = Int.divExact num denom h := by
   simp [exactDiv, Int.divExact_eq_ediv]
 
-/-- Fused `(a*b - c*d) / e` used by the Bareiss recurrence's inner cell
-update. The Lean-level body is exactly `exactDiv (a*b - c*d) e`; the
-`@[extern]` binding compiles the call to a single GMP routine that emits
-one mpz result instead of four (the two products, the subtraction, and the
-quotient each materialise a fresh `Int` box in the unfused expression). -/
-@[extern "lean_hex_int_fma_div_exact"]
-def fmaDivExact (a b c d e : @& Int) : Int := exactDiv (a * b - c * d) e
-
-theorem fmaDivExact_eq_exactDiv (a b c d e : Int) :
-    fmaDivExact a b c d e = exactDiv (a * b - c * d) e := rfl
-
-/-- When divisibility holds, `fmaDivExact` agrees with the certified
-exact quotient of the fused numerator. -/
-theorem fmaDivExact_eq_divExact {a b c d e : Int} (h : e ∣ (a * b - c * d)) :
-    fmaDivExact a b c d e = Int.divExact (a * b - c * d) e h := by
-  simp [fmaDivExact, exactDiv_eq_divExact h]
-
 /-- Search column `col` for a nonzero pivot at or below `start`. -/
 def findPivotAux (M : Matrix Int n n) (col : Fin n) (start fuel : Nat) :
     Option (Fin n) :=
