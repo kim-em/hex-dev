@@ -29,10 +29,11 @@ Two layers are exposed:
   proof-facing record, then show the executable `bhksRecover?` returns
   `some <expected factors>` under these hypotheses.
 
-The theorem statements are intentionally scoped to a single
-precision/recovery call as required by issue #3035: the outer
-precision-doubling loop and the public `factorFast_terminates` theorem are
-out of scope for this module.
+The theorem statements are intentionally scoped to forward recovery and the
+prime-search-safe fast branch.  Because the executable prime search is finite,
+the final public success theorem for the current `factorFast` API must carry a
+`choosePrimeData? = some primeData` witness; the hypothesis-free termination
+target belongs to a different API with an unbounded prime chooser.
 -/
 
 namespace HexBerlekampZassenhausMathlib
@@ -3781,10 +3782,10 @@ end CanonicalRecoveryTailInputs
 Cap-separation side inputs for the actual `factorFast` cap lift.
 
 This bundles the bridge/cut/comparison facts and the two remaining
-precision/prime-choice equations used by the final HO-4 assembly.  The
+precision/prime-choice equations used by the conditional HO-4 assembly.  The
 recovery-side facts live separately in `CanonicalRecoveryTailInputs`, so the
-eventual public theorem can consume one cap-separation package and one
-recovery package rather than a long mixed argument list.
+current executable theorem can consume one cap-separation package and one
+recovery package while keeping the prime-search success witness explicit.
 -/
 structure FactorFastCapSeparationInputs
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
@@ -4204,8 +4205,8 @@ theorem factorFast_ne_none_of_canonicalRecoveryInputs
 Variant of `factorFast_ne_none_of_canonicalRecoveryInputs` that internalizes
 the two easy executable side conditions: cap positivity and the selected
 prime lower bound.  This is the narrowest packaged canonical-recovery surface
-for the eventual public `factorFast_terminates` assembly: callers provide the
-prime-choice equation, the executable precision equation, and the mathematical
+for the current executable final assembly: callers provide the prime-choice
+equation, the executable precision equation, and the mathematical
 `CanonicalRecoveryInputs` package.
 -/
 theorem factorFast_ne_none_of_canonicalRecoveryInputs_internalCapPositiveAndPrimeLowerBound
@@ -4232,8 +4233,8 @@ Variant of
 `factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound`
 that internalizes the `1 ≤ Hex.factorFastPrecisionCap f` side condition via
 `HexBerlekampZassenhausMathlib.one_le_factorFastPrecisionCap`, which holds
-unconditionally for every `f`. Removing this argument trims the final
-assembly surface for the public `factorFast_terminates` theorem.
+unconditionally for every `f`. Removing this argument trims the conditional
+final assembly surface.
 -/
 theorem factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound_internalCapPositive
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
@@ -4422,7 +4423,7 @@ through unchanged.
 
 This narrows the caller obligations on the cap-separation side of the HO-4
 final assembly: once #6344/#6345 land the genuine mathematical recovery
-inputs, the eventual `factorFast_terminates` composition needs one fewer
+inputs, the conditional `factorFast` success composition needs one fewer
 trivially-derivable prime-lower-bound discharge step.
 -/
 theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound_internalPrimeLowerBound
@@ -4667,8 +4668,8 @@ Fully packaged actual-cap wrapper for the current HO-4 assembly surface.
 `FactorFastCapSeparationInputs` carries the cap-separation producer side, and
 `CanonicalRecoveryTailInputs` carries the canonical-support recovery tail.  The
 wrapper is intentionally additive: it does not prove the remaining
-mathematical providers, but fixes their final call shape for the public
-`factorFast_terminates` theorem.
+mathematical providers, but fixes their final call shape for the conditional
+public success theorem under the packaged `choosePrimeData?` witness.
 -/
 theorem factorFast_ne_none_of_factorFastCapSeparationInputsCanonicalRecoveryTailInputs
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
@@ -4730,6 +4731,36 @@ theorem factorFast_ne_none_of_factorFastCapSeparationInputsAndCanonicalRecoveryI
     f primeData capInputs.choose_eq capInputs.precision_eq
     (CanonicalRecoveryInputs.ofFactorFastCapSeparationInputsAndCanonicalRecoveryTailInputs
       capInputs recoveryInputs)
+
+/--
+Conditional final HO-4 target for the current executable `factorFast` API.
+
+This is the prime-search-safe replacement for the false hypothesis-free
+`factorFast_terminates` target.  The required
+`Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData`
+witness is stored in `capInputs.choose_eq`; together with the cap-separation
+and canonical-recovery tail packages, it proves the public
+`Hex.factorFast f ≠ none` conclusion without changing executable prime
+selection.
+-/
+theorem factorFast_terminates_of_factorFastCapSeparationInputsAndCanonicalRecoveryTailInputs
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (capInputs :
+      FactorFastCapSeparationInputs f primeData rows_pos trueSupports)
+    (recoveryInputs :
+      CanonicalRecoveryTailInputs f primeData rows_pos trueSupports) :
+    Hex.factorFast f ≠ none :=
+  factorFast_ne_none_of_factorFastCapSeparationInputsAndCanonicalRecoveryInputs_internalCapPositiveAndPrimeLowerBound
+    f primeData rows_pos trueSupports capInputs recoveryInputs
 
 end BHKS
 
