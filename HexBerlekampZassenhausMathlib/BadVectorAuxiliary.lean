@@ -106,6 +106,66 @@ theorem auxiliaryPolynomialWithCorrections_eq_zero_of_coeff_correction
     simpa using sub_eq_zero.mpr (hcoeff j hj)
   · simp [hj]
 
+/--
+Bound the explicit diagonal-correction contribution in the corrected
+auxiliary-polynomial squared-l2 estimate by a pointwise bound.
+-/
+theorem correctionWeightedSum_le_sum
+    (input : Hex.ZPoly) (liftData : Hex.LiftData)
+    (corrections : Array Int) (bound : Nat → ℝ)
+    (hbound :
+      ∀ j, j < input.degree?.getD 0 →
+        ((corrections.getD j 0 : ℝ) ^ 2 *
+          ((liftData.p : ℝ) ^
+            (2 *
+              (liftData.k -
+                Hex.bhksCoeffCutThreshold liftData.p input j)))) ≤
+          bound j) :
+    (∑ j ∈ Finset.range (input.degree?.getD 0),
+        ((corrections.getD j 0 : ℝ) ^ 2 *
+          ((liftData.p : ℝ) ^
+            (2 *
+              (liftData.k -
+                Hex.bhksCoeffCutThreshold liftData.p input j))))) ≤
+      ∑ j ∈ Finset.range (input.degree?.getD 0), bound j := by
+  exact Finset.sum_le_sum (fun j hj => hbound j (by simpa using hj))
+
+/--
+Uniform form of `correctionWeightedSum_le_sum`: if every weighted correction
+coordinate is bounded by the same real number, the correction sum is bounded
+by `degree * bound`.
+-/
+theorem correctionWeightedSum_le_degree_mul
+    (input : Hex.ZPoly) (liftData : Hex.LiftData)
+    (corrections : Array Int) (bound : ℝ)
+    (hbound :
+      ∀ j, j < input.degree?.getD 0 →
+        ((corrections.getD j 0 : ℝ) ^ 2 *
+          ((liftData.p : ℝ) ^
+            (2 *
+              (liftData.k -
+                Hex.bhksCoeffCutThreshold liftData.p input j)))) ≤
+          bound) :
+    (∑ j ∈ Finset.range (input.degree?.getD 0),
+        ((corrections.getD j 0 : ℝ) ^ 2 *
+          ((liftData.p : ℝ) ^
+            (2 *
+              (liftData.k -
+                Hex.bhksCoeffCutThreshold liftData.p input j))))) ≤
+      (input.degree?.getD 0 : ℝ) * bound := by
+  calc
+    (∑ j ∈ Finset.range (input.degree?.getD 0),
+        ((corrections.getD j 0 : ℝ) ^ 2 *
+          ((liftData.p : ℝ) ^
+            (2 *
+              (liftData.k -
+                Hex.bhksCoeffCutThreshold liftData.p input j)))))
+        ≤ ∑ _j ∈ Finset.range (input.degree?.getD 0), bound :=
+          correctionWeightedSum_le_sum input liftData corrections
+            (fun _ => bound) hbound
+    _ = (input.degree?.getD 0 : ℝ) * bound := by
+      simp [mul_comm]
+
 end BHKS
 
 end HexBerlekampZassenhausMathlib
