@@ -1292,6 +1292,49 @@ theorem auxiliaryPolynomial_l2norm_sq_le_of_bridge_data
       W.input W.liftData (W.projectedVectorArray v)
       (D.auxiliaryCorrections v hin hnot) h
 
+/--
+Unsquared form of `auxiliaryPolynomial_l2norm_sq_le_of_bridge_data`.
+
+Taking square roots of both sides of the squared-l2 bound gives a direct
+`‖aux‖ ≤ Real.sqrt [canonical RHS]` estimate, in the shape consumed by
+`FactorFastCapSeparationInputs.ofBridgeDataAuxiliaryL2norm` and its
+paper-threshold sibling, so callers can derive the auxiliary-l2 bound from
+the structured corrected RHS sum without supplying an a priori `auxiliaryBound`.
+-/
+theorem auxiliaryPolynomial_l2norm_le_sqrt_of_bridge_data
+    {W : ExecutableBadVectorWitness}
+    {trueSupports : Set (Set (Fin W.projectedRows.factorCount))}
+    (D : BadVectorBridgeData W trueSupports)
+    (v : Fin W.projectedRows.factorCount → ℤ)
+    (hin : v ∈ BHKS.projectedRowSpanInt W.projectedRows)
+    (hnot : v ∉ BHKS.trueFactorIndicatorLattice trueSupports)
+    (h :
+      ∀ (i : Nat), i < W.liftData.liftedFactors.size → ∀ (j : Nat),
+        ((Hex.cldCoeffs W.input W.liftData.p W.liftData.k
+            (W.liftData.liftedFactors.getD i 0)).getD j 0).natAbs ≤
+          Hex.bhksCoeffBound W.input j) :
+    HexPolyZMathlib.l2norm W.auxiliaryPolynomial ≤
+      Real.sqrt
+        (2 *
+            ((∑ i : Fin W.liftData.liftedFactors.size,
+                (((W.projectedVectorArray v).getD i.val 0 : ℝ) ^ 2)) *
+              ((W.liftData.liftedFactors.size : ℝ) *
+                (BHKS.cldColumnNormBound W.input W.liftData.p : ℝ))) +
+          2 *
+            (∑ j ∈ Finset.range (W.input.degree?.getD 0),
+              (((D.auxiliaryCorrections v hin hnot).getD j 0 : ℝ) ^ 2 *
+                ((W.liftData.p : ℝ) ^
+                  (2 *
+                    (W.liftData.k -
+                      Hex.bhksCoeffCutThreshold W.liftData.p W.input j)))))) := by
+  have h_sq := D.auxiliaryPolynomial_l2norm_sq_le_of_bridge_data v hin hnot h
+  have h_nonneg : 0 ≤ HexPolyZMathlib.l2norm W.auxiliaryPolynomial := by
+    unfold HexPolyZMathlib.l2norm; exact Real.sqrt_nonneg _
+  calc HexPolyZMathlib.l2norm W.auxiliaryPolynomial
+      = Real.sqrt ((HexPolyZMathlib.l2norm W.auxiliaryPolynomial) ^ 2) :=
+        (Real.sqrt_sq h_nonneg).symm
+    _ ≤ Real.sqrt _ := Real.sqrt_le_sqrt h_sq
+
 end BadVectorBridgeData
 
 /--
