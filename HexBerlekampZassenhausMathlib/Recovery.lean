@@ -3842,6 +3842,133 @@ structure FactorFastCapSeparationInputs
 namespace FactorFastCapSeparationInputs
 
 /--
+Actual-cap package constructor from the named cap-lift components.
+
+This is the closed record producer for callers that already have the
+`BadVectorBridgeData`, cut hypotheses, analytic comparison, cap dominance,
+prime-choice equation, and stored normalized-core precision equation at
+`factorFastCapLiftData f primeData`.
+-/
+def ofBridgeDataWithComparison
+    {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {rows_pos : HasPositiveDimension
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)}
+    {trueSupports : Set (Set (Fin (projectedRowsOfLiftData
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)
+      rows_pos).factorCount))}
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (cap_le :
+      Hex.factorFastPrecisionCap (Hex.normalizeForFactor f).squareFreeCore ≤
+        (factorFastCapLiftData f primeData).k)
+    (C : ℝ) (C_nonneg : 0 ≤ C) (C_le_two : C ≤ 2)
+    (cut :
+      CutProjectionHypotheses
+        (projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          rows_pos)
+        trueSupports)
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    (comparison :
+      FactorFastCapLiftAnalyticComparison
+        f primeData rows_pos localFactorIndex localFactorDegree H)
+    (choose_eq :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
+    (precision_eq :
+      (factorFastCapLiftData f primeData).k =
+        Hex.precisionForCoeffBound
+          (Hex.factorFastPrecisionCap
+            (Hex.normalizeForFactor f).squareFreeCore)
+          (factorFastCapLiftData f primeData).p) :
+    FactorFastCapSeparationInputs f primeData rows_pos trueSupports where
+  localFactorIndex := localFactorIndex
+  localFactorDegree := localFactorDegree
+  H := H
+  cap_le := cap_le
+  C := C
+  C_nonneg := C_nonneg
+  C_le_two := C_le_two
+  cut := cut
+  bridge := bridge
+  comparison := comparison
+  choose_eq := choose_eq
+  precision_eq := precision_eq
+
+/--
+Actual-cap package constructor from raw bridge data and the strict analytic
+Hadamard/l2norm comparison.
+
+The prime-choice equation supplies the prime positivity needed by
+`FactorFastCapLiftAnalyticComparison.ofBridgeData`; the stored precision
+equation is threaded into `ofBridgeDataWithComparison`.
+-/
+def ofBridgeData
+    {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {rows_pos : HasPositiveDimension
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)}
+    {trueSupports : Set (Set (Fin (projectedRowsOfLiftData
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)
+      rows_pos).factorCount))}
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (cap_le :
+      Hex.factorFastPrecisionCap (Hex.normalizeForFactor f).squareFreeCore ≤
+        (factorFastCapLiftData f primeData).k)
+    (C : ℝ) (C_nonneg : 0 ≤ C) (C_le_two : C ≤ 2)
+    (cut :
+      CutProjectionHypotheses
+        (projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          rows_pos)
+        trueSupports)
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    (choose_eq :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
+    (precision_eq :
+      (factorFastCapLiftData f primeData).k =
+        Hex.precisionForCoeffBound
+          (Hex.factorFastPrecisionCap
+            (Hex.normalizeForFactor f).squareFreeCore)
+          (factorFastCapLiftData f primeData).p)
+    (hlt :
+      (HexPolyZMathlib.l2norm
+            (badVectorWitnessOfFactorFastCapLiftData
+              f primeData rows_pos localFactorIndex localFactorDegree H).inputPolynomial) ^
+          (badVectorWitnessOfFactorFastCapLiftData
+              f primeData rows_pos localFactorIndex localFactorDegree H).auxiliaryPolynomial.natDegree *
+        (HexPolyZMathlib.l2norm
+            (badVectorWitnessOfFactorFastCapLiftData
+              f primeData rows_pos localFactorIndex localFactorDegree H).auxiliaryPolynomial) ^
+          (badVectorWitnessOfFactorFastCapLiftData
+              f primeData rows_pos localFactorIndex localFactorDegree H).inputPolynomial.natDegree <
+      ((factorFastCapLiftData f primeData).p ^
+        ((factorFastCapLiftData f primeData).k * localFactorDegree) : ℝ)) :
+    FactorFastCapSeparationInputs f primeData rows_pos trueSupports :=
+  ofBridgeDataWithComparison localFactorIndex localFactorDegree H cap_le
+    C C_nonneg C_le_two cut bridge
+    (FactorFastCapLiftAnalyticComparison.ofBridgeData
+      f primeData rows_pos localFactorIndex localFactorDegree H trueSupports
+      cut bridge
+      (by
+        have h2 : 2 ≤ (factorFastCapLiftData f primeData).p :=
+          (Hex.choosePrimeData?_prime _ _ choose_eq).two_le
+        omega)
+      hlt)
+    choose_eq precision_eq
+
+/--
 Closed actual-cap `L' = W` identification at `factorFastCapLiftData f primeData`.
 
 This is the lattice-identification accessor produced by the
