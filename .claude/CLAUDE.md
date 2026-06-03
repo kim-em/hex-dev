@@ -35,6 +35,62 @@ Never introduce an `axiom`. This includes converting an existing
 proof — fix the proof or fix the API. For unfinished proofs use
 `sorry`, which is grep-able and produces a warning; `axiom` is silent.
 
+## Directives are hypotheses, not specs
+
+When you claim a directive issue, the body is the author's *current
+best understanding* of what the work looks like. It is not gospel.
+Before opening a PR, sanity-check the premise:
+
+- Does the type signature the directive asks for actually admit a
+  proof, or is it unsoundly typed (allows non-canonical witnesses,
+  missing hypotheses, vacuous quantifiers)?
+- Does the existing infrastructure the directive points at actually
+  support the claimed composition, or is a key bridge missing?
+- Is the decomposition the directive proposes the right one, or
+  would a different split close the obligation in fewer pieces?
+
+If the premise is sound: execute. If the premise is wrong: **stop,
+comment on the issue explaining what's wrong with concrete
+evidence (counterexample, missing-lemma shape, infrastructure
+gap), and leave the directive claimable for an updated version.**
+Do *not* file a sub-decomposition issue as a workaround; that
+escalates the problem rather than fixing it. Do *not* invent
+sorries or axioms to bash through. Do *not* silently weaken the
+theorem to make a proof go through; that hides the premise problem
+from the next reviewer.
+
+A worker who correctly diagnoses an unsound directive saves more
+project time than one who lands a partial PR against it.
+
+The author of a directive (often me or another agent) cannot see
+every interaction with existing types and lemmas at directive-
+authoring time. Reading the source, finding the contradiction, and
+posting it back is the highest-leverage thing you can do when the
+directive doesn't match reality.
+
+## Naming: short verb-noun forms
+
+Type / def / theorem names with more than ~3 qualifiers are a
+smell. If you find yourself writing five or more qualifying words,
+stop and rethink:
+
+- Often the qualifiers belong in a namespace, not the name.
+- Often the name is restating *use-site context* ("Initial",
+  "Regular", "Step") rather than naming the *thing*. Find the
+  noun.
+- The Mathlib aesthetic to imitate: short verb-noun forms,
+  qualifiers in namespaces. `Matrix.det`, not
+  `MatrixLeibnizExpandedFiniteDeterminantValue`.
+
+When you encounter an existing AI-slop name with 5+ qualifiers
+(the pattern from a model adding defensive disambiguation), rename
+it. Long names are tech debt; the next agent has to keep them
+exactly as long. Renaming is cheap; preserving slop is expensive.
+
+Concrete heuristic: if a name's qualifier list reads like a
+sentence describing what it's used for, that sentence belongs in
+the docstring, and the name should be the noun.
+
 ## CI: extend, don't fan out
 
 Before touching anything under `.github/workflows/`, read
