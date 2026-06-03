@@ -166,6 +166,37 @@ theorem correctionWeightedSum_le_degree_mul
     _ = (input.degree?.getD 0 : ℝ) * bound := by
       simp [mul_comm]
 
+/--
+Pointwise bound for the projected-vector squared sum: if each squared
+coordinate is bounded by a real `bound i`, the squared sum is bounded by the
+pointwise sum.
+-/
+theorem projectedVectorSquareSum_le_sum
+    {r : Nat} (vec : Array Int) (bound : Fin r → ℝ)
+    (hbound :
+      ∀ i : Fin r, ((vec.getD i.val 0 : ℝ) ^ 2) ≤ bound i) :
+    (∑ i : Fin r, ((vec.getD i.val 0 : ℝ) ^ 2)) ≤
+      ∑ i : Fin r, bound i := by
+  exact Finset.sum_le_sum (fun i _ => hbound i)
+
+/--
+Uniform form of `projectedVectorSquareSum_le_sum`: if every squared coordinate
+is bounded by the same real number, the squared sum is bounded by
+`factorCount * bound`.
+-/
+theorem projectedVectorSquareSum_le_factorCount_mul
+    {r : Nat} (vec : Array Int) (bound : ℝ)
+    (hbound :
+      ∀ i : Fin r, ((vec.getD i.val 0 : ℝ) ^ 2) ≤ bound) :
+    (∑ i : Fin r, ((vec.getD i.val 0 : ℝ) ^ 2)) ≤
+      (r : ℝ) * bound := by
+  calc
+    (∑ i : Fin r, ((vec.getD i.val 0 : ℝ) ^ 2))
+        ≤ ∑ _i : Fin r, bound :=
+          projectedVectorSquareSum_le_sum vec (fun _ => bound) hbound
+    _ = (r : ℝ) * bound := by
+      simp [mul_comm]
+
 end BHKS
 
 end HexBerlekampZassenhausMathlib
