@@ -3839,6 +3839,93 @@ structure FactorFastCapSeparationInputs
           (Hex.normalizeForFactor f).squareFreeCore)
         (factorFastCapLiftData f primeData).p
 
+namespace FactorFastCapSeparationInputs
+
+/--
+Closed actual-cap `L' = W` identification at `factorFastCapLiftData f primeData`.
+
+This is the lattice-identification accessor produced by the
+`FactorFastCapSeparationInputs` package: the packaged `BadVectorBridgeData`,
+cut hypotheses, analytic comparison, and cap-precision dominance are composed
+with `projectedRowSpan_eq_trueFactorIndicatorLattice_of_factorFastCapLift_bridge`
+to expose the BHKS `L' = W` conclusion for the canonical true-factor supports
+without asking the caller to re-thread the bridge fields. The prime-lower bound
+`0 < (factorFastCapLiftData f primeData).p` required by the bridge derivation is
+discharged internally from `choose_eq` via `Hex.choosePrimeData?_prime`.
+-/
+theorem latticeIdentification
+    {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {rows_pos : HasPositiveDimension
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)}
+    {trueSupports : Set (Set (Fin (projectedRowsOfLiftData
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)
+      rows_pos).factorCount))}
+    (capInputs : FactorFastCapSeparationInputs f primeData rows_pos trueSupports) :
+    BHKS.projectedRowSpanInt
+        (projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          rows_pos) =
+      BHKS.trueFactorIndicatorLattice trueSupports :=
+  projectedRowSpan_eq_trueFactorIndicatorLattice_of_factorFastCapLift_bridge
+    f primeData rows_pos capInputs.localFactorIndex capInputs.localFactorDegree
+    capInputs.H trueSupports capInputs.cap_le capInputs.C capInputs.C_nonneg
+    capInputs.C_le_two capInputs.cut capInputs.bridge
+    (by
+      have h2 : 2 ≤ (factorFastCapLiftData f primeData).p :=
+        (Hex.choosePrimeData?_prime _ _ capInputs.choose_eq).two_le
+      omega)
+    capInputs.comparison
+
+end FactorFastCapSeparationInputs
+
+namespace CanonicalRecoveryInputs
+
+/--
+Closed `CanonicalRecoveryInputs` constructor from the actual `factorFast` cap
+branch.
+
+Combines `FactorFastCapSeparationInputs` (which supplies the cap-side
+`BadVectorBridgeData`, cut/comparison data, and the prime-choice/precision
+equations) with `CanonicalRecoveryTailInputs` (which supplies the recovery-side
+canonical-support shape facts, the expected true-factor package, and the
+per-class Mignotte product congruences). The `lattice_eq_indicators` field is
+derived internally via `FactorFastCapSeparationInputs.latticeIdentification`,
+so the caller does not have to re-thread the bridge-data composition.
+
+The resulting record feeds directly into
+`factorFast_ne_none_of_canonicalRecoveryInputs_internalCapPositiveAndPrimeLowerBound`,
+matching the canonical final-theorem consumer shape.
+-/
+def ofFactorFastCapSeparationInputsAndCanonicalRecoveryTailInputs
+    {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {rows_pos : HasPositiveDimension
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)}
+    {trueSupports : Set (Set (Fin (projectedRowsOfLiftData
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)
+      rows_pos).factorCount))}
+    (capInputs : FactorFastCapSeparationInputs f primeData rows_pos trueSupports)
+    (recoveryInputs :
+      CanonicalRecoveryTailInputs f primeData rows_pos trueSupports) :
+    CanonicalRecoveryInputs f primeData where
+  rows_pos := rows_pos
+  trueSupports := trueSupports
+  lattice_eq_indicators := capInputs.latticeIdentification
+  projected_nonempty := recoveryInputs.projected_nonempty
+  classes_two := recoveryInputs.classes_two
+  class_nonempty := recoveryInputs.class_nonempty
+  class_bounds := recoveryInputs.class_bounds
+  hf_ne_zero := recoveryInputs.hf_ne_zero
+  expectedFactors := recoveryInputs.expectedFactors
+  expected_true_factors := recoveryInputs.expected_true_factors
+  product_congr := recoveryInputs.product_congr
+
+end CanonicalRecoveryInputs
+
 /-- Final canonical-supports recovery wrapper at the `factorFast` cap lift.
 
 Composes
@@ -4357,6 +4444,44 @@ theorem factorFast_ne_none_of_factorFastCapSeparationInputsCanonicalRecoveryTail
     capInputs.C_nonneg capInputs.C_le_two capInputs.cut capInputs.bridge
     capInputs.comparison capInputs.choose_eq capInputs.precision_eq
     recoveryInputs
+
+/--
+Final fast-branch wrapper threading the closed `CanonicalRecoveryInputs`
+constructor.
+
+`CanonicalRecoveryInputs.ofFactorFastCapSeparationInputsAndCanonicalRecoveryTailInputs`
+assembles the canonical-support recovery inputs from `FactorFastCapSeparationInputs`
+plus `CanonicalRecoveryTailInputs`; this wrapper feeds that record directly into
+`factorFast_ne_none_of_canonicalRecoveryInputs_internalCapPositiveAndPrimeLowerBound`,
+which exposes the `factorFast f ≠ none` conclusion via the
+`CanonicalRecoveryInputs` consumer shape.
+
+This is the canonical-input-package counterpart of
+`factorFast_ne_none_of_factorFastCapSeparationInputsCanonicalRecoveryTailInputs`,
+which routes through the disparate cap-separation / recovery-tail arguments
+without ever materialising a `CanonicalRecoveryInputs` value. Both wrappers
+have the same conclusion and consume the same two packaged input records.
+-/
+theorem factorFast_ne_none_of_factorFastCapSeparationInputsAndCanonicalRecoveryInputs_internalCapPositiveAndPrimeLowerBound
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (capInputs :
+      FactorFastCapSeparationInputs f primeData rows_pos trueSupports)
+    (recoveryInputs :
+      CanonicalRecoveryTailInputs f primeData rows_pos trueSupports) :
+    Hex.factorFast f ≠ none :=
+  factorFast_ne_none_of_canonicalRecoveryInputs_internalCapPositiveAndPrimeLowerBound
+    f primeData capInputs.choose_eq capInputs.precision_eq
+    (CanonicalRecoveryInputs.ofFactorFastCapSeparationInputsAndCanonicalRecoveryTailInputs
+      capInputs recoveryInputs)
 
 end BHKS
 
