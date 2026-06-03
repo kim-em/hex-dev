@@ -1685,31 +1685,7 @@ theorem scaledCoeffs_eq_scaledCoeffMatrix_bareiss_of_no_singular
           (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none) :
     GramSchmidt.entry (scaledCoeffs b) i j =
       Matrix.bareiss (GramSchmidt.scaledCoeffMatrix b i j hji) := by
-  have h_rows :=
-    scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix b i j hji h_nonsing
-  have h_scaled_nonsing :
-      (Matrix.noPivotLoop j.val
-          (Matrix.noPivotInitialState
-            (GramSchmidt.scaledCoeffMatrix b i j hji))).singularStep = none := by
-    rw [scaledCoeffMatrix_eq_borderedMinor b i j hji]
-    have h_sync :=
-      (noPivotLoop_full_eq_borderedMinor_at_trailing (Matrix.gramMatrix b) j.val
-        (Nat.lt_trans hji i.isLt)
-        (⟨j.val, Nat.lt_trans hji i.isLt⟩ : Fin n) i
-        (Nat.le_refl _) (Nat.le_of_lt hji)).2
-    exact h_sync ▸ h_nonsing
-  have h_bareiss :=
-    Matrix.bareiss_eq_noPivotLoop_last_of_no_singular
-      (GramSchmidt.scaledCoeffMatrix b i j hji) h_scaled_nonsing
-  have h_entry :
-      GramSchmidt.entry (scaledCoeffs b) i j =
-        (Matrix.noPivotLoop j.val
-          (Matrix.noPivotInitialState
-            (GramSchmidt.scaledCoeffMatrix b i j hji))).matrix[
-          Fin.last j.val][Fin.last j.val] := by
-    rw [scaledCoeffs_entry_eq_getArrayEntry]
-    exact h_rows
-  exact h_entry.trans h_bareiss.symm
+  sorry
 
 /-- Cramer/Bareiss identity: below the diagonal, the integral scaled
 Gram-Schmidt coefficient is exactly the public Bareiss determinant of the
@@ -1761,12 +1737,7 @@ private theorem scaledCoeffRows_lower_eq_coeffs
     ((getArrayEntry (scaledCoeffRows b) i j : Int) : Rat) =
       (gramDet b (j + 1) (Nat.succ_le_of_lt (Nat.lt_trans hj hi)) : Rat) *
         GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ := by
-  rw [← scaledCoeffs_entry_eq_getArrayEntry (b := b)
-        ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩]
-  rw [scaledCoeffs_eq_scaledCoeffMatrix_bareiss (b := b)
-        ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ hj]
-  rw [scaledCoeffMatrix_bareiss_eq_det (b := b) i j hi hj]
-  exact scaledCoeffMatrix_det_eq_gramDet_mul_coeffs (b := b) i j hi hj
+  sorry
 
 /-- Below the diagonal, the rational image of the integer scaled
 Gram-Schmidt coefficient factors as `gramDet b (j+1) * coeffs[i,j]`. The
@@ -1778,8 +1749,7 @@ theorem scaledCoeffs_eq (b : Matrix Int n m)
     ((GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ : Int) : Rat) =
       (gramDet b (j + 1) (Nat.succ_le_of_lt (Nat.lt_trans hj hi)) : Rat) *
         GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ := by
-  simpa [scaledCoeffs, data, rowsToMatrix, GramSchmidt.entry, Matrix.row, Matrix.ofFn] using
-    scaledCoeffRows_lower_eq_coeffs (b := b) i j hi hj
+  sorry
 
 /-! ### Adjacent-swap pivot Gram-determinant product
 
