@@ -6383,7 +6383,305 @@ theorem scaledCoeffMatrix_rowSwap_adjacent_pivot_transpose
       · dsimp [GramSchmidt.liftFinLE]
         omega
 
+/-! ### Coefficient bordered minor and multilinearity entry equation
 
+The `coeffBM` matrix shares its first `k` columns with `borderedMinor G k hk i j`
+(those columns do not depend on `j`) and replaces the last column with the
+indicator vector picking out row index `a`. The multilinearity entry equation
+expands `Matrix.det (borderedMinor G k hk i j)` as a sum over `a` of
+`Matrix.det (coeffBM G k hk i a) * G[a][j]`, applying `det_colReplace_sum_finRange`
+to the indicator expansion of the last column. -/
+
+/-- Foldl congruence for `Int` accumulator: replace the body if every
+on-list invocation agrees. -/
+private theorem foldl_acc_congr_int {α : Type u}
+    (xs : List α) (f g : Int → α → Int) (z : Int)
+    (h : ∀ acc x, x ∈ xs → f acc x = g acc x) :
+    xs.foldl f z = xs.foldl g z := by
+  induction xs generalizing z with
+  | nil => rfl
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [h z x List.mem_cons_self]
+      exact ih (g z x) (fun acc y hy => h acc y (List.mem_cons_of_mem x hy))
+
+/-- Indicator expansion: a function value `g q : Int` equals the foldl over
+`List.finRange n` whose body weights `g a` by the `Fin`-index indicator
+`if q.val = a.val then 1 else 0`. -/
+private theorem foldl_finRange_indicator_eval_int {n : Nat}
+    (q : Fin n) (g : Fin n → Int) :
+    (List.finRange n).foldl
+        (fun acc a => acc + g a * (if q.val = a.val then (1 : Int) else (0 : Int))) 0 =
+      g q := by
+  -- Generalize over an arbitrary list with `q ∈ xs` and `xs.Nodup`.
+  have aux : ∀ (xs : List (Fin n)) (z : Int),
+      q ∈ xs → xs.Nodup →
+      xs.foldl
+          (fun acc a => acc + g a * (if q.val = a.val then (1 : Int) else (0 : Int))) z =
+        z + g q := by
+    intro xs
+    induction xs with
+    | nil => intro z hmem _; simp at hmem
+    | cons x xs ih =>
+        intro z hmem hnodup
+        simp only [List.foldl_cons]
+        by_cases hxq : q.val = x.val
+        · -- x is the matching element. By nodup, x = q ∉ xs.
+          have hxq_eq : x = q := Fin.ext hxq.symm
+          rw [if_pos hxq]
+          rw [show g x = g q from congrArg g hxq_eq]
+          have hzgq : z + g q * (1 : Int) = z + g q := by grind
+          rw [hzgq]
+          have hxs_nomem : x ∉ xs := (List.nodup_cons.mp hnodup).1
+          have hq_nomem : q ∉ xs := hxq_eq ▸ hxs_nomem
+          -- For every y ∈ xs we have q.val ≠ y.val, so the foldl over xs is
+          -- the constant z + g q.
+          have hbody : ∀ acc, ∀ y ∈ xs,
+              acc + g y * (if q.val = y.val then (1 : Int) else (0 : Int)) = acc := by
+            intro acc y hy
+            have hy_ne : q ≠ y := fun heq => hq_nomem (heq ▸ hy)
+            have hval_ne : q.val ≠ y.val := fun heq => hy_ne (Fin.ext heq)
+            rw [if_neg hval_ne]
+            grind
+          clear ih hmem hnodup hxs_nomem hq_nomem hxq hxq_eq
+          induction xs with
+          | nil => rfl
+          | cons y ys ih' =>
+              simp only [List.foldl_cons]
+              have hy_in : y ∈ y :: ys := List.mem_cons_self
+              rw [hbody (z + g q) y hy_in]
+              exact ih' (fun acc y' hy'_in_ys =>
+                hbody acc y' (List.mem_cons_of_mem _ hy'_in_ys))
+        · rw [if_neg hxq]
+          have hmul_zero : g x * (0 : Int) = 0 := by grind
+          rw [hmul_zero]
+          have hz_zero : z + (0 : Int) = z := by grind
+          rw [hz_zero]
+          have hmem' : q ∈ xs := by
+            cases List.mem_cons.mp hmem with
+            | inl h =>
+                have hval : q.val = x.val := congrArg Fin.val h
+                exact absurd hval hxq
+            | inr h => exact h
+          have hnodup' : xs.Nodup := (List.nodup_cons.mp hnodup).2
+          exact ih z hmem' hnodup'
+  have h := aux (List.finRange n) 0 (List.mem_finRange q) (List.nodup_finRange n)
+  rw [h]
+  grind
+
+/-- The coefficient bordered minor. Its first `k` columns match
+`Matrix.borderedMinor G k hk i j` for any `j` (those columns are independent of
+`j`), and its last column is the indicator vector for row index `a`. -/
+private def coeffBM {n : Nat} (G : Matrix Int n n) (k : Nat) (hk : k < n)
+    (i a : Fin n) : Matrix Int (k + 1) (k + 1) :=
+  Matrix.ofFn fun r c =>
+    let rr : Fin n :=
+      if hr : r.val < k then ⟨r.val, Nat.lt_trans hr hk⟩
+      else i
+    if hc : c.val < k then
+      let cc : Fin n := ⟨c.val, Nat.lt_trans hc hk⟩
+      G[rr][cc]
+    else (if rr.val = a.val then (1 : Int) else (0 : Int))
+
+/-- For `c.val < k`, `coeffBM` and `borderedMinor` agree at `(r, c)` (the
+first `k` columns are independent of `j` and `a`). -/
+private theorem coeffBM_entry_lt {n : Nat} (G : Matrix Int n n) (k : Nat) (hk : k < n)
+    (i a j : Fin n) (r c : Fin (k + 1)) (hc : c.val < k) :
+    (coeffBM G k hk i a)[r][c] = (Matrix.borderedMinor G k hk i j)[r][c] := by
+  unfold coeffBM
+  simp only [Matrix.getElem_ofFn, dif_pos hc]
+  by_cases hr : r.val < k
+  · simp only [dif_pos hr]
+    rw [Matrix.borderedMinor_entry_lt_lt G k hk i j r c hr hc]
+  · simp only [dif_neg hr]
+    have hr_eq : r.val = k := by have := r.isLt; omega
+    have hrFin : r = Fin.last k := Fin.ext (by simp [hr_eq])
+    have h_rhs : (Matrix.borderedMinor G k hk i j)[r][c] =
+        (Matrix.borderedMinor G k hk i j)[Fin.last k][c] :=
+      congrArg (fun (r' : Fin (k + 1)) =>
+        (Matrix.borderedMinor G k hk i j)[r'][c]) hrFin
+    rw [h_rhs]
+    rw [Matrix.borderedMinor_entry_last_lt G k hk i j c hc]
+
+/-- For `c = Fin.last k`, the last column of `coeffBM G k hk i a` is the
+indicator `if (liftBorderedIdx hk i r).val = a.val then 1 else 0`. -/
+private theorem coeffBM_entry_last {n : Nat} (G : Matrix Int n n) (k : Nat) (hk : k < n)
+    (i a : Fin n) (r : Fin (k + 1)) :
+    (coeffBM G k hk i a)[r][Fin.last k] =
+      (if (liftBorderedIdx hk i r).val = a.val then (1 : Int) else (0 : Int)) := by
+  unfold coeffBM
+  have hlast : ¬ (Fin.last k).val < k := Nat.lt_irrefl k
+  simp only [Matrix.getElem_ofFn, dif_neg hlast]
+  -- The `let rr` body is definitionally `liftBorderedIdx hk i r`, so the goal
+  -- now matches the RHS up to that identification.
+  rfl
+
+/-- The last column of `borderedMinor G k hk i j` at row `r` equals
+`G[liftBorderedIdx hk i r][j]`. -/
+private theorem borderedMinor_last_col_eq {n : Nat} (G : Matrix Int n n) (k : Nat)
+    (hk : k < n) (i j : Fin n) (r : Fin (k + 1)) :
+    (Matrix.borderedMinor G k hk i j)[r][Fin.last k] =
+      G[liftBorderedIdx hk i r][j] := by
+  rw [borderedMinor_entry_eq_lift G k hk i j r (Fin.last k)]
+  congr 1
+  rw [liftBorderedIdx_val_eq_k hk j (Fin.last k) (by simp)]
+
+/-- Replacing the last column of `borderedMinor G k hk i j` with the indicator
+vector for row index `a` yields `coeffBM G k hk i a`. -/
+private theorem colReplace_borderedMinor_indicator_eq_coeffBM
+    {n : Nat} (G : Matrix Int n n) (k : Nat) (hk : k < n) (i j a : Fin n) :
+    Matrix.colReplace (Matrix.borderedMinor G k hk i j) (Fin.last k)
+        (fun r => if (liftBorderedIdx hk i r).val = a.val then (1 : Int) else (0 : Int)) =
+      coeffBM G k hk i a := by
+  apply Vector.ext
+  intro r hr
+  apply Vector.ext
+  intro c hc
+  change (Matrix.colReplace (Matrix.borderedMinor G k hk i j) (Fin.last k)
+      (fun r => if (liftBorderedIdx hk i r).val = a.val then (1 : Int) else (0 : Int)))[
+        (⟨r, hr⟩ : Fin (k + 1))][(⟨c, hc⟩ : Fin (k + 1))] =
+    (coeffBM G k hk i a)[(⟨r, hr⟩ : Fin (k + 1))][(⟨c, hc⟩ : Fin (k + 1))]
+  rw [Matrix.colReplace_get]
+  by_cases hc_eq : (⟨c, hc⟩ : Fin (k + 1)) = Fin.last k
+  · rw [if_pos hc_eq]
+    -- Replace `⟨c, hc⟩` with `Fin.last k` on the RHS via congrArg, then use
+    -- `coeffBM_entry_last`.
+    have hRHS :
+        (coeffBM G k hk i a)[(⟨r, hr⟩ : Fin (k + 1))][(⟨c, hc⟩ : Fin (k + 1))] =
+          (coeffBM G k hk i a)[(⟨r, hr⟩ : Fin (k + 1))][Fin.last k] :=
+      congrArg (fun (c' : Fin (k + 1)) =>
+        (coeffBM G k hk i a)[(⟨r, hr⟩ : Fin (k + 1))][c']) hc_eq
+    rw [hRHS]
+    rw [coeffBM_entry_last G k hk i a (⟨r, hr⟩ : Fin (k + 1))]
+  · rw [if_neg hc_eq]
+    have hc_lt : c < k := by
+      have hc_ne : c ≠ k := fun heq => hc_eq (Fin.ext (by simp [heq]))
+      omega
+    rw [(coeffBM_entry_lt G k hk i a j (⟨r, hr⟩ : Fin (k + 1))
+        (⟨c, hc⟩ : Fin (k + 1)) hc_lt).symm]
+
+/-- **Multilinearity entry equation**: the determinant of the bordered minor at
+`(i, j)` expands as a sum over `a : Fin n` of `det (coeffBM G k hk i a) * G[a][j]`.
+The first `k` columns of `borderedMinor G k hk i j` are independent of `j`; only
+the last column carries `j`, and expanding it in the standard basis via
+`det_colReplace_sum_finRange` produces the indicator-weighted sum identified by
+`colReplace_borderedMinor_indicator_eq_coeffBM`. -/
+private theorem det_borderedMinor_eq_sum_coeffBM
+    {n : Nat} (G : Matrix Int n n) (k : Nat) (hk : k < n) (i j : Fin n) :
+    Matrix.det (Matrix.borderedMinor G k hk i j) =
+      (List.finRange n).foldl
+        (fun acc a =>
+          acc + Matrix.det (coeffBM G k hk i a) * G[a][j]) 0 := by
+  -- Identify the last column of `borderedMinor` with the linear combination of
+  -- indicator vectors weighted by `G[a][j]`.
+  have hcol_eq : (fun r : Fin (k + 1) =>
+        (Matrix.borderedMinor G k hk i j)[r][Fin.last k]) =
+      (fun r : Fin (k + 1) => (List.finRange n).foldl
+        (fun acc a =>
+          acc + G[a][j] * (if (liftBorderedIdx hk i r).val = a.val then
+            (1 : Int) else (0 : Int))) 0) := by
+    funext r
+    rw [borderedMinor_last_col_eq G k hk i j r]
+    have hindicator := foldl_finRange_indicator_eval_int (n := n)
+        (liftBorderedIdx hk i r) (fun a => G[a][j])
+    rw [hindicator]
+  -- `borderedMinor` equals `colReplace borderedMinor (Fin.last k)` of its own
+  -- last column.
+  have hself : Matrix.borderedMinor G k hk i j =
+      Matrix.colReplace (Matrix.borderedMinor G k hk i j) (Fin.last k)
+        (fun r => (Matrix.borderedMinor G k hk i j)[r][Fin.last k]) :=
+    (Matrix.colReplace_self (Matrix.borderedMinor G k hk i j) (Fin.last k)).symm
+  -- Apply `det_colReplace_sum_finRange`.
+  have hsum := Matrix.det_colReplace_sum_finRange (R := Int) (m := n)
+      (Matrix.borderedMinor G k hk i j) (Fin.last k)
+      (fun a => G[a][j])
+      (fun a r => if (liftBorderedIdx hk i r).val = a.val then
+        (1 : Int) else (0 : Int))
+  -- Rewrite `det borderedMinor` to the colReplace-self form, then to the foldl form.
+  calc Matrix.det (Matrix.borderedMinor G k hk i j)
+      = Matrix.det (Matrix.colReplace (Matrix.borderedMinor G k hk i j) (Fin.last k)
+          (fun r => (Matrix.borderedMinor G k hk i j)[r][Fin.last k])) := by
+        rw [← hself]
+    _ = Matrix.det (Matrix.colReplace (Matrix.borderedMinor G k hk i j) (Fin.last k)
+          (fun r => (List.finRange n).foldl
+            (fun acc a =>
+              acc + G[a][j] * (if (liftBorderedIdx hk i r).val = a.val then
+                (1 : Int) else (0 : Int))) 0)) := by
+        rw [hcol_eq]
+    _ = (List.finRange n).foldl
+          (fun acc a =>
+            acc + G[a][j] * Matrix.det (Matrix.colReplace
+              (Matrix.borderedMinor G k hk i j) (Fin.last k)
+              (fun r => if (liftBorderedIdx hk i r).val = a.val then
+                (1 : Int) else (0 : Int)))) 0 := hsum
+    _ = (List.finRange n).foldl
+          (fun acc a =>
+            acc + G[a][j] * Matrix.det (coeffBM G k hk i a)) 0 := by
+        apply foldl_acc_congr_int
+        intro acc a _ha
+        rw [colReplace_borderedMinor_indicator_eq_coeffBM G k hk i j a]
+    _ = (List.finRange n).foldl
+          (fun acc a => acc + Matrix.det (coeffBM G k hk i a) * G[a][j]) 0 := by
+        apply foldl_acc_congr_int
+        intro acc a _ha
+        rw [Int.mul_comm]
+
+/-- **Support lemma**: when `a.val ≥ k` and `a ≠ i`, every entry of the last
+column of `coeffBM G k hk i a` is zero, so its determinant vanishes. -/
+private theorem det_coeffBM_eq_zero_of_ge_and_ne
+    {n : Nat} (G : Matrix Int n n) (k : Nat) (hk : k < n) (i a : Fin n)
+    (hak : k ≤ a.val) (hai : a ≠ i) :
+    Matrix.det (coeffBM G k hk i a) = 0 := by
+  -- The last column of `coeffBM G k hk i a` is all-zero under the hypotheses.
+  have hzero_col : ∀ r : Fin (k + 1),
+      (coeffBM G k hk i a)[r][Fin.last k] = 0 := by
+    intro r
+    rw [coeffBM_entry_last G k hk i a r]
+    by_cases hr : r.val < k
+    · have : (liftBorderedIdx hk i r).val = r.val := by
+        simp [liftBorderedIdx, hr]
+      rw [this]
+      have hne : r.val ≠ a.val := by omega
+      rw [if_neg hne]
+    · have hr_eq : r.val = k := by have := r.isLt; omega
+      have hrFin : r = Fin.last k := Fin.ext (by simp [hr_eq])
+      have : (liftBorderedIdx hk i r).val = i.val := by
+        rw [hrFin]
+        rw [liftBorderedIdx_val_eq_k hk i (Fin.last k) (by simp)]
+      rw [this]
+      have hai_val : i.val ≠ a.val := fun heq => hai (Fin.ext heq).symm
+      rw [if_neg hai_val]
+  -- Rewrite `coeffBM` as `colReplace` of itself with the all-zero column.
+  have hrep : coeffBM G k hk i a =
+      Matrix.colReplace (coeffBM G k hk i a) (Fin.last k) (fun _ => (0 : Int)) := by
+    apply Vector.ext
+    intro r hr
+    apply Vector.ext
+    intro c hc
+    change (coeffBM G k hk i a)[(⟨r, hr⟩ : Fin (k + 1))][(⟨c, hc⟩ : Fin (k + 1))] =
+      (Matrix.colReplace (coeffBM G k hk i a) (Fin.last k) (fun _ => (0 : Int)))[
+        (⟨r, hr⟩ : Fin (k + 1))][(⟨c, hc⟩ : Fin (k + 1))]
+    rw [Matrix.colReplace_get]
+    by_cases hc_eq : (⟨c, hc⟩ : Fin (k + 1)) = Fin.last k
+    · rw [if_pos hc_eq]
+      have hLHS :
+          (coeffBM G k hk i a)[(⟨r, hr⟩ : Fin (k + 1))][(⟨c, hc⟩ : Fin (k + 1))] =
+            (coeffBM G k hk i a)[(⟨r, hr⟩ : Fin (k + 1))][Fin.last k] :=
+        congrArg (fun (c' : Fin (k + 1)) =>
+          (coeffBM G k hk i a)[(⟨r, hr⟩ : Fin (k + 1))][c']) hc_eq
+      rw [hLHS]
+      exact hzero_col (⟨r, hr⟩ : Fin (k + 1))
+    · rw [if_neg hc_eq]
+  rw [hrep]
+  -- `det (colReplace M dst (fun _ => 0)) = 0` via `det_colReplace_smul` at scalar `0`.
+  have hsmul := Matrix.det_colReplace_smul (R := Int) (coeffBM G k hk i a)
+      (Fin.last k) (0 : Int) (fun _ => (1 : Int))
+  have hcol_eq : (fun _ : Fin (k + 1) => (0 : Int) * (1 : Int)) =
+      (fun _ : Fin (k + 1) => (0 : Int)) := by
+    funext _; grind
+  rw [hcol_eq] at hsmul
+  rw [hsmul]
+  grind
 
 end GramSchmidt.Int
 
