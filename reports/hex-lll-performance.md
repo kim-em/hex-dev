@@ -578,17 +578,28 @@ integer arithmetic.
   pre-`warmupFirstIter` numbers that overstated Lean's lead at
   small `n`; the current ratios supersede those.
 
-  A follow-up audit-found issue tracks the residual gap and the
-  next-most-promising hot-path target: the per-inner-cell
-  intermediate-mpz allocations in `Hex.GramSchmidt.Int.stepScaledRows`
-  (each cell allocates four big-ints — `pivot * sourceRow[j]`,
-  `entryIK * rows[k][j]`, their difference, the `exactDiv` result —
-  three of which are freed within microseconds). A fused
-  `mpz_fma_div` C helper that does `(a*b - c*d) / e` in one mpz
-  output would eliminate three of the four per-cell allocations.
+  The residual gap is **algorithmic-structural**, not a
+  micro-optimisation target. A profile of the post-perf-fix state
+  shows 88% of harsh-cubic n=55 wall time is GMP arithmetic
+  (49.8% `__gmpn_addmul_1` alone); allocator and Lean-side
+  overhead are < 10% combined. A fused `mpz_fma_div_exact` C
+  helper was implemented (#6422) on the hypothesis that
+  per-inner-cell intermediate-mpz allocations were costly, but a
+  bench-host re-run showed **zero measurable Lean speedup** — the
+  intermediate `mpz_init`/`mpz_clear` are sub-microsecond per cell
+  on modern allocators, rounded down by the dominant
+  multiplication time. #6422 was reverted.
 
-  Older context: the array-construction cleanup in
-  `HexGramSchmidt.Int` (evidence:
-  `reports/bench-results/hex-lll-3b001b9e-harsh-cubic-array-cleanup.json`)
-  produced a marginal improvement under the pre-fix methodology
-  and is preserved.
+  The structural difference between Lean and Isabelle is in the
+  Gram-Schmidt setup itself. `HexGramSchmidt.Int.stepScaledRows`
+  performs column-major Bareiss elimination over the full lower
+  sub-matrix; for an `n × n` input it touches `≈ n³` cells per
+  `ofBasis`. The verified Isabelle LLL's `dmu_array_row`
+  computes each `dmu[i][j]` directly via a per-row
+  Schur-complement recurrence (`sigma_array` does one divide per
+  recursion level); it touches `≈ n³/3` cells. The per-op cost
+  differs too, but the multiplication-count factor is roughly
+  consistent with the observed `~14%` wall-time gap. Closing
+  this Concern requires re-implementing `stepScaledRows` to the
+  per-row recurrence shape, which is a substantial refactor
+  rather than a point fix.
