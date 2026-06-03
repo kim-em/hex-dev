@@ -1294,6 +1294,319 @@ private theorem getArrayEntry_scaledCoeffRowsSchur_upper
   · exact getArrayEntry_zeroRows n i j
   · exact hij
 
+/-- The Schur column loop fixes the active row `row`: cells in any other row
+are untouched, irrespective of which columns the loop visits. -/
+private theorem getArrayEntry_schurColumnLoop_row_ne
+    (cols : List Nat) (rows gram : Array (Array Int)) (row r c : Nat)
+    (hr : r ≠ row) :
+    getArrayEntry
+        (cols.foldl
+          (fun next col =>
+            setArrayEntry next row col (schurScaledCoeffEntry next gram row col)) rows)
+        r c =
+      getArrayEntry rows r c := by
+  induction cols generalizing rows with
+  | nil => simp
+  | cons col cols ih =>
+      simp only [List.foldl_cons]
+      rw [ih]
+      exact getArrayEntry_setArrayEntry_of_row_ne rows row col r c _ hr
+
+/-- Row-completion frame lemma. The outer Schur row loop only writes to rows
+listed in `rowList`; cells in rows not in `rowList` retain their initial
+values. In particular, once row `i` has been processed by the row loop, the
+remaining row iterations preserve every cell `(i, ·)`. -/
+private theorem getArrayEntry_schurRowLoop_row_not_mem
+    (rowList : List Nat) (rows gram : Array (Array Int)) (i j : Nat)
+    (hi : i ∉ rowList) :
+    getArrayEntry
+        (rowList.foldl
+          (fun next row =>
+            (List.range' 0 (row + 1)).foldl
+              (fun next col =>
+                setArrayEntry next row col (schurScaledCoeffEntry next gram row col))
+              next) rows)
+        i j =
+      getArrayEntry rows i j := by
+  induction rowList generalizing rows with
+  | nil => simp
+  | cons row rowList ih =>
+      simp only [List.foldl_cons]
+      have hi_ne : i ≠ row := fun h => hi (h ▸ List.mem_cons_self)
+      have hi_tail : i ∉ rowList := fun h => hi (List.mem_cons_of_mem row h)
+      rw [ih _ hi_tail]
+      exact getArrayEntry_schurColumnLoop_row_ne _ rows gram row i j hi_ne
+
+/-- Column-loop stability for the `(row, 0)` cell when the loop never visits
+column `0`. Subsequent column writes at a different column keep the cell
+unchanged. -/
+private theorem getArrayEntry_schurColumnLoop_col_zero_preserve
+    (cols : List Nat) (rows gram : Array (Array Int)) (row : Nat)
+    (hzero : 0 ∉ cols) :
+    getArrayEntry
+        (cols.foldl
+          (fun next col =>
+            setArrayEntry next row col (schurScaledCoeffEntry next gram row col)) rows)
+        row 0 =
+      getArrayEntry rows row 0 := by
+  induction cols generalizing rows with
+  | nil => simp
+  | cons col cols ih =>
+      simp only [List.foldl_cons]
+      have h_col_ne : col ≠ 0 := fun h => hzero (h ▸ List.mem_cons_self)
+      have h_tail : 0 ∉ cols := fun h => hzero (List.mem_cons_of_mem col h)
+      rw [ih _ h_tail]
+      exact getArrayEntry_setArrayEntry_of_col_ne rows row col 0 _ h_col_ne.symm
+
+/-- Single-row column-loop dispatch for column `0`. When `0` appears in
+`cols`, the column loop ultimately writes `getArrayEntry gram row 0` into the
+`(row, 0)` slot. Because the `j = 0` branch of `schurScaledCoeffEntry`
+returns the gram entry directly, this value is independent of which other
+columns are written before or after. -/
+private theorem getArrayEntry_schurColumnLoop_col_zero
+    (cols : List Nat) (rows gram : Array (Array Int)) (row : Nat)
+    (hzero : 0 ∈ cols)
+    (hrow : row < rows.size) (hcol : 0 < rows[row]!.size) :
+    getArrayEntry
+        (cols.foldl
+          (fun next col =>
+            setArrayEntry next row col (schurScaledCoeffEntry next gram row col)) rows)
+        row 0 =
+      getArrayEntry gram row 0 := by
+  induction cols generalizing rows with
+  | nil => exact absurd hzero (List.not_mem_nil)
+  | cons col cols ih =>
+      simp only [List.foldl_cons]
+      by_cases h_zero_in_tail : 0 ∈ cols
+      · have hrow' :
+            row < (setArrayEntry rows row col
+                (schurScaledCoeffEntry rows gram row col)).size := by
+          rw [setArrayEntry_size]; exact hrow
+        have hcol' :
+            0 < (setArrayEntry rows row col
+                (schurScaledCoeffEntry rows gram row col))[row]!.size := by
+          rw [setArrayEntry_rows_size]; exact hcol
+        exact ih _ h_zero_in_tail hrow' hcol'
+      · have h_col_eq : col = 0 := by
+          rcases List.mem_cons.mp hzero with h | h
+          · exact h.symm
+          · exact (h_zero_in_tail h).elim
+        subst h_col_eq
+        rw [getArrayEntry_schurColumnLoop_col_zero_preserve _ _ _ _ h_zero_in_tail]
+        rw [getArrayEntry_setArrayEntry_self _ _ _ _ hrow hcol]
+        simp [schurScaledCoeffEntry]
+
+/-- Size preservation: the Schur column loop keeps the outer-array length. -/
+private theorem schurColumnLoop_size
+    (cols : List Nat) (rows gram : Array (Array Int)) (row : Nat) :
+    (cols.foldl
+        (fun next col =>
+          setArrayEntry next row col (schurScaledCoeffEntry next gram row col)) rows).size =
+      rows.size := by
+  induction cols generalizing rows with
+  | nil => rfl
+  | cons col cols ih => simp only [List.foldl_cons]; rw [ih]; exact setArrayEntry_size _ _ _ _
+
+/-- Size preservation: the Schur column loop keeps each inner row's length. -/
+private theorem schurColumnLoop_rows_size
+    (cols : List Nat) (rows gram : Array (Array Int)) (row r : Nat) :
+    (cols.foldl
+        (fun next col =>
+          setArrayEntry next row col (schurScaledCoeffEntry next gram row col)) rows)[r]!.size =
+      rows[r]!.size := by
+  induction cols generalizing rows with
+  | nil => rfl
+  | cons col cols ih =>
+      simp only [List.foldl_cons]
+      rw [ih]
+      exact setArrayEntry_rows_size _ _ _ _ _
+
+/-- Row-loop dispatch for the `(i, 0)` boundary. If `i ∈ rowList` and the
+initial row buffer is large enough at row `i`, the Schur row loop writes the
+`(i, 0)` cell to `getArrayEntry gram i 0` (via the inner column loop) and
+leaves it untouched in subsequent row iterations. -/
+private theorem getArrayEntry_schurRowLoop_col_zero
+    (rowList : List Nat) (rows gram : Array (Array Int)) (i : Nat)
+    (hi : i ∈ rowList) (hrow : i < rows.size) (hcol : 0 < rows[i]!.size) :
+    getArrayEntry
+        (rowList.foldl
+          (fun next row =>
+            (List.range' 0 (row + 1)).foldl
+              (fun next col =>
+                setArrayEntry next row col (schurScaledCoeffEntry next gram row col))
+              next) rows)
+        i 0 =
+      getArrayEntry gram i 0 := by
+  induction rowList generalizing rows with
+  | nil => exact absurd hi List.not_mem_nil
+  | cons row rowList ih =>
+      simp only [List.foldl_cons]
+      by_cases h_i_in_tail : i ∈ rowList
+      · -- Recurse into the tail, deriving size hypotheses via the column-loop
+        -- size-preservation lemmas.
+        have h_size :
+            i < ((List.range' 0 (row + 1)).foldl
+              (fun next col =>
+                setArrayEntry next row col (schurScaledCoeffEntry next gram row col))
+              rows).size := by
+          rw [schurColumnLoop_size]; exact hrow
+        have h_row_size :
+            0 < ((List.range' 0 (row + 1)).foldl
+              (fun next col =>
+                setArrayEntry next row col (schurScaledCoeffEntry next gram row col))
+              rows)[i]!.size := by
+          rw [schurColumnLoop_rows_size]; exact hcol
+        exact ih _ h_i_in_tail h_size h_row_size
+      · -- i is exactly the current `row`. The column loop visits `0`
+        -- (`List.range' 0 (row + 1)` contains `0`), writes the gram entry
+        -- there, and tail row iterations preserve `(i, 0)`.
+        have h_i_eq : i = row := by
+          rcases List.mem_cons.mp hi with h | h
+          · exact h
+          · exact (h_i_in_tail h).elim
+        subst h_i_eq
+        rw [getArrayEntry_schurRowLoop_row_not_mem _ _ _ _ _ h_i_in_tail]
+        apply getArrayEntry_schurColumnLoop_col_zero _ _ _ _ _ hrow hcol
+        rw [List.mem_range']
+        exact ⟨0, Nat.succ_pos _, by simp⟩
+
+/-- σ-chain dependency frame lemma. The value of `schurSigma rows i j`
+depends only on the diagonal cells `rows[k][k]` for `k < j`, the
+row-`i` cells `rows[i][p]` for `p < j`, and the row-`j` cells `rows[j][p]`
+for `p < j`. The hypothesis `0 < j` makes both initial reads `rows[i][0]`
+and `rows[j][0]` fall under `h_i` and `h_j` at `p = 0`. -/
+private theorem schurSigma_congr_of_cell_eq
+    {rows rows' : Array (Array Int)} {i j : Nat} (hj : 0 < j)
+    (h_diag : ∀ k, k < j → getArrayEntry rows k k = getArrayEntry rows' k k)
+    (h_i : ∀ p, p < j → getArrayEntry rows i p = getArrayEntry rows' i p)
+    (h_j : ∀ p, p < j → getArrayEntry rows j p = getArrayEntry rows' j p) :
+    schurSigma rows i j = schurSigma rows' i j := by
+  -- Generic foldl congruence under pointwise body equality.
+  have foldl_congr :
+      ∀ (L : List Nat) (init init' : Int),
+        init = init' →
+        (∀ p ∈ L, ∀ s : Int,
+          Matrix.exactDiv
+            (getArrayEntry rows p p * s +
+              getArrayEntry rows i p * getArrayEntry rows j p)
+            (getArrayEntry rows (p - 1) (p - 1)) =
+          Matrix.exactDiv
+            (getArrayEntry rows' p p * s +
+              getArrayEntry rows' i p * getArrayEntry rows' j p)
+            (getArrayEntry rows' (p - 1) (p - 1))) →
+        L.foldl
+            (fun sigma p =>
+              Matrix.exactDiv
+                (getArrayEntry rows p p * sigma +
+                  getArrayEntry rows i p * getArrayEntry rows j p)
+                (getArrayEntry rows (p - 1) (p - 1)))
+            init =
+          L.foldl
+            (fun sigma p =>
+              Matrix.exactDiv
+                (getArrayEntry rows' p p * sigma +
+                  getArrayEntry rows' i p * getArrayEntry rows' j p)
+                (getArrayEntry rows' (p - 1) (p - 1)))
+            init' := by
+    intro L
+    induction L with
+    | nil => intro init init' hinit _; simpa using hinit
+    | cons p L ih =>
+        intro init init' hinit hstep
+        simp only [List.foldl_cons]
+        apply ih
+        · rw [hinit, hstep p (List.mem_cons_self) init']
+        · intro q hq s
+          exact hstep q (List.mem_cons_of_mem _ hq) s
+  -- Initial accumulator equality at `p = 0`.
+  have h_init : getArrayEntry rows i 0 * getArrayEntry rows j 0 =
+      getArrayEntry rows' i 0 * getArrayEntry rows' j 0 := by
+    rw [h_i 0 hj, h_j 0 hj]
+  -- Per-step equality, using `p < j` for every `p` in `[1, j)`.
+  have h_step :
+      ∀ p ∈ List.range' 1 (j - 1), ∀ s : Int,
+        Matrix.exactDiv
+          (getArrayEntry rows p p * s +
+            getArrayEntry rows i p * getArrayEntry rows j p)
+          (getArrayEntry rows (p - 1) (p - 1)) =
+        Matrix.exactDiv
+          (getArrayEntry rows' p p * s +
+            getArrayEntry rows' i p * getArrayEntry rows' j p)
+          (getArrayEntry rows' (p - 1) (p - 1)) := by
+    intro p hp s
+    rw [List.mem_range'] at hp
+    have hp_lt : p < j := by omega
+    have hp_pred_lt : p - 1 < j := by omega
+    rw [h_diag p hp_lt, h_i p hp_lt, h_j p hp_lt, h_diag (p - 1) hp_pred_lt]
+  -- Reduce `schurSigma` to a foldl on each side.
+  show
+    (Id.run do
+      let mut sigma := getArrayEntry rows i 0 * getArrayEntry rows j 0
+      for p in [1:j] do
+        sigma :=
+          Matrix.exactDiv
+            (getArrayEntry rows p p * sigma +
+              getArrayEntry rows i p * getArrayEntry rows j p)
+            (getArrayEntry rows (p - 1) (p - 1))
+      return sigma) =
+    (Id.run do
+      let mut sigma := getArrayEntry rows' i 0 * getArrayEntry rows' j 0
+      for p in [1:j] do
+        sigma :=
+          Matrix.exactDiv
+            (getArrayEntry rows' p p * sigma +
+              getArrayEntry rows' i p * getArrayEntry rows' j p)
+            (getArrayEntry rows' (p - 1) (p - 1))
+      return sigma)
+  simp [Std.Legacy.Range.forIn_eq_forIn_range', Std.Legacy.Range.size]
+  exact foldl_congr _ _ _ h_init h_step
+
+/-- `j = 0` boundary frame lemma. After the full Schur kernel runs, the
+`(i, 0)` cell holds the gram entry `gram[i][0]`. This is used by the σ-chain
+recurrence (`σ₀ = rows[i][0] · rows[j][0]`) when filling in cells at column
+`j > 0`. -/
+private theorem getArrayEntry_scaledCoeffRowsSchur_col_zero
+    (b : Matrix Int n m) (i : Nat) :
+    getArrayEntry (scaledCoeffRowsSchur b) i 0 =
+      getArrayEntry (gramRows b) i 0 := by
+  by_cases hin : i < n
+  · -- In bounds. The outer row loop hits row `i`, the inner column loop
+    -- writes `gram[i][0]` at `(i, 0)`, and later row iterations leave it
+    -- alone.
+    have h_mem : i ∈ List.range' 0 n := by
+      rw [List.mem_range']
+      exact ⟨i, by simpa using hin, by simp⟩
+    have h_row : i < (zeroRows n).size := by
+      rw [zeroRows_size]; exact hin
+    have h_col : 0 < (zeroRows n)[i]!.size := by
+      rw [zeroRows_row_size n i hin]
+      exact Nat.lt_of_le_of_lt (Nat.zero_le _) hin
+    simp [scaledCoeffRowsSchur]
+    exact getArrayEntry_schurRowLoop_col_zero (List.range' 0 n) (zeroRows n)
+      (gramRows b) i h_mem h_row h_col
+  · -- Out of bounds. The row loop never visits row `i`, so `(i, 0)` stays at
+    -- its zero initial value, which matches `gramRows b` out of bounds.
+    have hin' : n ≤ i := Nat.le_of_not_lt hin
+    have h_not_mem : i ∉ List.range' 0 n := by
+      rw [List.mem_range']
+      rintro ⟨k, hk, hki⟩
+      simp at hki
+      omega
+    have h_gram_zero : getArrayEntry (gramRows b) i 0 = 0 := by
+      have h_gram_size : (gramRows b).size = n := gramRows_size b
+      have h_size_le : (gramRows b).size ≤ i := h_gram_size.symm ▸ hin'
+      have h_entry_default : (gramRows b)[i]! = (default : Array Int) := by
+        rw [Array.getElem!_eq_getD, Array.getD_eq_getD_getElem?,
+          Array.getElem?_eq_none h_size_le, Option.getD_none]
+      unfold getArrayEntry
+      rw [h_entry_default]
+      exact getArrayEntry_default_row 0
+    rw [h_gram_zero]
+    simp [scaledCoeffRowsSchur]
+    rw [getArrayEntry_schurRowLoop_row_not_mem (List.range' 0 n) (zeroRows n)
+      (gramRows b) i 0 h_not_mem]
+    exact getArrayEntry_zeroRows n i 0
+
 /-- Integral scaled Gram-Schmidt coefficients. For `j < i`, the entry is the
 determinant formula corresponding to `d_{j+1} * μ_{i,j}`; on the diagonal we
 store `d_{j+1}`, and entries above the diagonal are zero. -/
@@ -4284,6 +4597,101 @@ private theorem getArrayEntry_scaledCoeffArrayLoop_current_col_written
     exact getArrayEntry_writeScaledColumn_below state.coeffs state.matrix n j i
       hji hin hrow hcol
 
+/-- Size preservation: the inner `coeffs` array of the scaled-coefficient
+array loop keeps its outer-array length. -/
+private theorem scaledCoeffArrayLoop_coeffs_size
+    (fuel : Nat) (state : ScaledCoeffArrayState) :
+    (scaledCoeffArrayLoop n fuel state).coeffs.size = state.coeffs.size := by
+  induction fuel generalizing state with
+  | zero => rfl
+  | succ fuel ih =>
+      unfold scaledCoeffArrayLoop
+      by_cases h_step : state.step < n
+      · simp only [h_step, ↓reduceIte]
+        by_cases h_next : state.step + 1 < n
+        · simp only [h_next, ↓reduceIte]
+          by_cases h_pivot : getArrayEntry state.matrix state.step state.step = 0
+          · simp only [h_pivot, ↓reduceIte]
+            exact writeScaledColumn_size _ _ _ _
+          · simp only [h_pivot, ↓reduceIte]
+            rw [ih]
+            exact writeScaledColumn_size _ _ _ _
+        · simp only [h_next, ↓reduceIte]
+          exact writeScaledColumn_size _ _ _ _
+      · simp only [h_step, ↓reduceIte]
+
+/-- Bareiss-side counterpart of the Schur `j = 0` boundary: at column `0`,
+the scaled-coefficient array records the gram entry `gram[i][0]` at every
+row `i`. The first `writeScaledColumn` call captures the initial gram column;
+subsequent loop iterations advance past column `0` and preserve it. -/
+private theorem getArrayEntry_scaledCoeffRows_col_zero
+    (b : Matrix Int n m) (i : Nat) :
+    getArrayEntry (scaledCoeffRows b) i 0 =
+      getArrayEntry (gramRows b) i 0 := by
+  by_cases hin : i < n
+  · -- In bounds. n ≥ 1 (since `i < n`), so the array loop unfolds at least
+    -- one step. The first iteration writes column 0 from `gramRows b`, and
+    -- later iterations have `step ≥ 1` so they preserve column 0.
+    have hn : 0 < n := Nat.lt_of_le_of_lt (Nat.zero_le _) hin
+    obtain ⟨fuel, rfl⟩ : ∃ k, n = k + 1 := ⟨n - 1, by omega⟩
+    have h_coeffs_size : (zeroRows (fuel + 1)).size = fuel + 1 := zeroRows_size _
+    have h_coeffs_row_size :
+        ∀ r, r < fuel + 1 → (zeroRows (fuel + 1))[r]!.size = fuel + 1 :=
+      fun r hr => zeroRows_row_size _ r hr
+    let initState : ScaledCoeffArrayState :=
+      { step := 0, matrix := gramRows b, coeffs := zeroRows (fuel + 1),
+        prevPivot := 1 }
+    by_cases hi : i = 0
+    · -- Diagonal case: (0, 0). Unfold one step and use writeScaledColumn_diag.
+      subst hi
+      have hrow : (0 : Nat) < (zeroRows (fuel + 1)).size := by
+        rw [h_coeffs_size]; exact hn
+      have hcol : (0 : Nat) < (zeroRows (fuel + 1))[0]!.size := by
+        rw [zeroRows_row_size _ 0 hn]; exact hn
+      show getArrayEntry (scaledCoeffArrayLoop (fuel + 1) (fuel + 1) initState).coeffs 0 0
+          = getArrayEntry (gramRows b) 0 0
+      by_cases hNext : (0 : Nat) + 1 < fuel + 1
+      · by_cases hp : getArrayEntry (gramRows b) 0 0 = 0
+        · rw [scaledCoeffArrayLoop_singular_branch (n := fuel + 1) fuel initState hn hNext hp]
+          exact getArrayEntry_writeScaledColumn_diag _ _ _ _ hrow hcol
+        · rw [scaledCoeffArrayLoop_regular_branch (n := fuel + 1) fuel initState hn hNext hp]
+          rw [getArrayEntry_scaledCoeffArrayLoop_preserve_col_before_step
+                (n := fuel + 1) fuel _ 0 0 (show (0 : Nat) < 0 + 1 by omega)]
+          exact getArrayEntry_writeScaledColumn_diag _ _ _ _ hrow hcol
+      · rw [scaledCoeffArrayLoop_last_step (n := fuel + 1) fuel initState hn hNext]
+        exact getArrayEntry_writeScaledColumn_diag _ _ _ _ hrow hcol
+    · -- Strict lower (0 < i < n). Reuse the existing current-col capture lemma.
+      have hji : 0 < i := Nat.pos_of_ne_zero hi
+      show getArrayEntry (scaledCoeffArrayLoop (fuel + 1) (fuel + 1) initState).coeffs i 0
+          = getArrayEntry (gramRows b) i 0
+      exact getArrayEntry_scaledCoeffArrayLoop_current_col_written
+        (n := fuel + 1) fuel initState i 0 (by rfl) hji hin h_coeffs_size h_coeffs_row_size
+  · -- Out of bounds. The array loop never grows `coeffs.size`, so `(i, 0)`
+    -- stays at the initial zero (and so does `(gramRows b)[i][0]`).
+    have hin' : n ≤ i := Nat.le_of_not_lt hin
+    have h_final_size : (scaledCoeffRows b).size = n := by
+      unfold scaledCoeffRows
+      rw [scaledCoeffArrayLoop_coeffs_size]
+      exact zeroRows_size n
+    have h_gram_size : (gramRows b).size = n := gramRows_size b
+    have h_lhs : getArrayEntry (scaledCoeffRows b) i 0 = 0 := by
+      have h_size_le : (scaledCoeffRows b).size ≤ i := h_final_size.symm ▸ hin'
+      have h_entry_default : (scaledCoeffRows b)[i]! = (default : Array Int) := by
+        rw [Array.getElem!_eq_getD, Array.getD_eq_getD_getElem?,
+          Array.getElem?_eq_none h_size_le, Option.getD_none]
+      unfold getArrayEntry
+      rw [h_entry_default]
+      exact getArrayEntry_default_row 0
+    have h_rhs : getArrayEntry (gramRows b) i 0 = 0 := by
+      have h_size_le : (gramRows b).size ≤ i := h_gram_size.symm ▸ hin'
+      have h_entry_default : (gramRows b)[i]! = (default : Array Int) := by
+        rw [Array.getElem!_eq_getD, Array.getD_eq_getD_getElem?,
+          Array.getElem?_eq_none h_size_le, Option.getD_none]
+      unfold getArrayEntry
+      rw [h_entry_default]
+      exact getArrayEntry_default_row 0
+    rw [h_lhs, h_rhs]
+
 /-- Non-singular target-column lower-triangle capture. If the matrix-side
 `noPivotLoop` reaches the target column `j` without recording a singular step,
 then the scaled-coefficient array loop records at `(i,j)` the matrix entry from
@@ -5350,7 +5758,11 @@ private theorem getArrayEntry_scaledCoeffRowsSchur_eq
   by_cases hij : i < j
   · rw [getArrayEntry_scaledCoeffRowsSchur_upper b i j hij,
       getArrayEntry_scaledCoeffRows_above b i j hij]
-  · sorry
+  · by_cases hj : j = 0
+    · subst hj
+      rw [getArrayEntry_scaledCoeffRowsSchur_col_zero b i,
+        getArrayEntry_scaledCoeffRows_col_zero b i]
+    · sorry
 
 theorem gramDetVec_eq_gramDet (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
     (gramDetVec b).get ⟨k, Nat.lt_succ_of_le hk⟩ = gramDet b k hk := by
