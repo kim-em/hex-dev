@@ -1685,7 +1685,27 @@ theorem scaledCoeffs_eq_scaledCoeffMatrix_bareiss_of_no_singular
           (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none) :
     GramSchmidt.entry (scaledCoeffs b) i j =
       Matrix.bareiss (GramSchmidt.scaledCoeffMatrix b i j hji) := by
-  sorry
+  have hjn : j.val < n := Nat.lt_trans hji i.isLt
+  -- Convert the LHS to the trailing entry of the no-pivot loop on `scaledCoeffMatrix`.
+  rw [scaledCoeffs_lower_eq_noPivotLoop_scaledCoeffMatrix b i j hji h_nonsing]
+  -- Propagate non-singularity from `gramMatrix b` to `scaledCoeffMatrix b i j hji`
+  -- via the bordered-minor identification.
+  have h_sync :=
+    noPivotLoop_full_eq_borderedMinor_at_trailing (Matrix.gramMatrix b) j.val hjn
+      ⟨j.val, hjn⟩ i (Nat.le_refl j.val) (Nat.le_of_lt hji)
+  have h_bm_nonsing :
+      (Matrix.noPivotLoop j.val
+        (Matrix.noPivotInitialState
+          (Matrix.borderedMinor (Matrix.gramMatrix b) j.val hjn
+            ⟨j.val, hjn⟩ i))).singularStep = none := by
+    rw [← h_sync.2]; exact h_nonsing
+  have h_sc_nonsing :
+      (Matrix.noPivotLoop j.val
+        (Matrix.noPivotInitialState
+          (GramSchmidt.scaledCoeffMatrix b i j hji))).singularStep = none := by
+    rw [scaledCoeffMatrix_eq_borderedMinor]; exact h_bm_nonsing
+  exact (Matrix.bareiss_eq_noPivotLoop_last_of_no_singular
+    (GramSchmidt.scaledCoeffMatrix b i j hji) h_sc_nonsing).symm
 
 /-- Cramer/Bareiss identity: below the diagonal, the integral scaled
 Gram-Schmidt coefficient is exactly the public Bareiss determinant of the
@@ -1704,8 +1724,8 @@ singular step:
   helper internally lifts partial-pass singularity to the full
   `bareissNoPivotData` pass and applies the Cramer determinant identity.
 
-This case-split is sorry-free; the private `scaledCoeffRows_lower_eq_coeffs`
-helper below reroutes through it instead of the older chain proof. -/
+The private `scaledCoeffRows_lower_eq_coeffs` helper below reroutes through
+this case-split identity instead of the older chain proof. -/
 theorem scaledCoeffs_eq_scaledCoeffMatrix_bareiss
     (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val) :
     GramSchmidt.entry (scaledCoeffs b) i j =
@@ -1737,19 +1757,32 @@ private theorem scaledCoeffRows_lower_eq_coeffs
     ((getArrayEntry (scaledCoeffRows b) i j : Int) : Rat) =
       (gramDet b (j + 1) (Nat.succ_le_of_lt (Nat.lt_trans hj hi)) : Rat) *
         GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ := by
-  sorry
+  have hjlt : j < n := Nat.lt_trans hj hi
+  have h_array :
+      getArrayEntry (scaledCoeffRows b) i j =
+        GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨j, hjlt⟩ := by
+    rw [scaledCoeffs_entry_eq_getArrayEntry, getArrayEntry_scaledCoeffRowsSchur_eq]
+  rw [h_array,
+    scaledCoeffs_eq_scaledCoeffMatrix_bareiss b ⟨i, hi⟩ ⟨j, hjlt⟩ hj,
+    scaledCoeffMatrix_bareiss_eq_det b i j hi hj]
+  exact scaledCoeffMatrix_det_eq_gramDet_mul_coeffs b i j hi hj
 
 /-- Below the diagonal, the rational image of the integer scaled
 Gram-Schmidt coefficient factors as `gramDet b (j+1) * coeffs[i,j]`. The
-proof routes through the sorry-free `scaledCoeffs_eq_scaledCoeffMatrix_bareiss`
-case-split identity (via `scaledCoeffRows_lower_eq_coeffs`) instead of the older
-chain proof that depended on `scaledCoeffs_eq_scaledCoeffMatrix_det`. -/
+proof routes through `scaledCoeffs_eq_scaledCoeffMatrix_bareiss` (via
+`scaledCoeffRows_lower_eq_coeffs`) instead of the older chain proof that
+depended on `scaledCoeffs_eq_scaledCoeffMatrix_det`. -/
 theorem scaledCoeffs_eq (b : Matrix Int n m)
     (i j : Nat) (hi : i < n) (hj : j < i) :
     ((GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ : Int) : Rat) =
       (gramDet b (j + 1) (Nat.succ_le_of_lt (Nat.lt_trans hj hi)) : Rat) *
         GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ := by
-  sorry
+  have h_array :
+      GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ =
+        getArrayEntry (scaledCoeffRows b) i j := by
+    rw [scaledCoeffs_entry_eq_getArrayEntry, getArrayEntry_scaledCoeffRowsSchur_eq]
+  rw [h_array]
+  exact scaledCoeffRows_lower_eq_coeffs b i j hi hj
 
 /-! ### Adjacent-swap pivot Gram-determinant product
 

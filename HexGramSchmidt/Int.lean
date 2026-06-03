@@ -6025,7 +6025,7 @@ is the `j ≤ i` case, which splits into two algebraically distinct sub-cases:
   same bordered-minor determinant.
 
 See #6458. -/
-private theorem getArrayEntry_scaledCoeffRowsSchur_eq
+theorem getArrayEntry_scaledCoeffRowsSchur_eq
     (b : Matrix Int n m) (i j : Nat) :
     getArrayEntry (scaledCoeffRowsSchur b) i j =
       getArrayEntry (scaledCoeffRows b) i j := by
@@ -7190,6 +7190,24 @@ theorem scaledCoeffs_eq_zero_of_singularStep_lt
     GramSchmidt.entry (scaledCoeffs b) i j = 0 := by
   rw [scaledCoeffs_entry_eq_getArrayEntry, getArrayEntry_scaledCoeffRowsSchur_eq]
   exact scaledCoeffRows_eq_zero_of_singularStep_lt (b := b) i j hji s h_sing
+
+/-- Non-singular companion of `scaledCoeffs_eq_zero_of_singularStep_lt`: when the
+no-pivot Bareiss pass over the full Gram matrix reaches column `j` without
+recording a singular step, the integral scaled Gram-Schmidt coefficient below
+the diagonal at `(i, j)` matches the trailing entry of the no-pivot Bareiss-style
+loop on the corresponding Cramer minor `scaledCoeffMatrix b i j hji`. -/
+theorem scaledCoeffs_lower_eq_noPivotLoop_scaledCoeffMatrix
+    (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val)
+    (h_nonsing :
+      (Matrix.noPivotLoop j.val
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none) :
+    GramSchmidt.entry (scaledCoeffs b) i j =
+      (Matrix.noPivotLoop j.val
+        (Matrix.noPivotInitialState
+          (GramSchmidt.scaledCoeffMatrix b i j hji))).matrix[
+        Fin.last j.val][Fin.last j.val] := by
+  rw [scaledCoeffs_entry_eq_getArrayEntry, getArrayEntry_scaledCoeffRowsSchur_eq]
+  exact scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix b i j hji h_nonsing
 
 
 private theorem rowSwap_row_eq_of_ne_int {n' m' : Nat}
