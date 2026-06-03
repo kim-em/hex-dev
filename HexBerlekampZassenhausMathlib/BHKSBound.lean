@@ -562,6 +562,101 @@ theorem bhksPaperThresholdReal_ge_of_factored_bounds
         unfold bhksPaperThresholdReal; ring
 
 /--
+Named auxiliary-side product of the BHKS Theorem 5.2 paper threshold:
+`n · (2C)^(n²) · (log ‖f‖₂)^n`.
+
+This packages the three paper factors that the auxiliary-power sub-bound
+(`auxiliaryBound^input.natDegree ≤ ...`) must dominate, leaving the
+coefficient-norm factor `‖f‖₂^(2n-1)` as the separate sub-bound target.
+-/
+noncomputable def bhksPaperAuxiliaryFactorReal (f : Hex.ZPoly) (C : ℝ) : ℝ :=
+  bhksPaperDegreeFactorReal f * bhksPaperConstantFactorReal f C *
+    bhksPaperLogFactorReal f
+
+/-- The full paper threshold splits into coefficient and auxiliary factors. -/
+theorem bhksPaperThresholdReal_eq_coeffNorm_mul_auxiliary
+    (f : Hex.ZPoly) (C : ℝ) :
+    bhksPaperThresholdReal f C =
+      bhksPaperCoeffNormFactorReal f * bhksPaperAuxiliaryFactorReal f C := by
+  unfold bhksPaperThresholdReal bhksPaperAuxiliaryFactorReal
+  ring
+
+/--
+The auxiliary-side product is non-negative under the project `0 ≤ C`
+convention.
+-/
+theorem bhksPaperAuxiliaryFactorReal_nonneg
+    (f : Hex.ZPoly) {C : ℝ} (hC_nonneg : 0 ≤ C) :
+    0 ≤ bhksPaperAuxiliaryFactorReal f C := by
+  unfold bhksPaperAuxiliaryFactorReal
+  exact mul_nonneg
+    (mul_nonneg
+      (bhksPaperDegreeFactorReal_nonneg f)
+      (bhksPaperConstantFactorReal_nonneg f hC_nonneg))
+    (bhksPaperLogFactorReal_nonneg f)
+
+/--
+The auxiliary-side paper product is bounded by the packaged integer
+auxiliary-side product (`n · 4^(n²) · (log2 (sumSquared + 1))^n`) under the
+project `0 ≤ C ≤ 2` convention.
+-/
+theorem bhksPaperAuxiliaryFactorReal_le_natCast
+    (f : Hex.ZPoly) (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2) :
+    bhksPaperAuxiliaryFactorReal f C ≤
+      ((bhksDegreeFactor f * bhksFourPowFactor f * bhksLog2Factor f : Nat) : ℝ) := by
+  unfold bhksPaperAuxiliaryFactorReal
+  have hdegree :
+      bhksPaperDegreeFactorReal f ≤ (bhksDegreeFactor f : ℝ) := by
+    rw [bhksPaperDegreeFactorReal_eq_natCast]
+  have hconstant :=
+    bhksPaperConstantFactorReal_le_fourPowFactor f C hC_nonneg hC
+  have hlog := bhksPaperLogFactorReal_le_log2Factor f
+  have hconstant_nonneg : 0 ≤ bhksPaperConstantFactorReal f C :=
+    bhksPaperConstantFactorReal_nonneg f hC_nonneg
+  have hlog_nonneg : 0 ≤ bhksPaperLogFactorReal f :=
+    bhksPaperLogFactorReal_nonneg f
+  have hdegree_bound_nonneg : 0 ≤ (bhksDegreeFactor f : ℝ) := by
+    exact_mod_cast Nat.zero_le (bhksDegreeFactor f)
+  have hdegree_constant_bound_nonneg :
+      0 ≤ (bhksDegreeFactor f : ℝ) * (bhksFourPowFactor f : ℝ) :=
+    mul_nonneg hdegree_bound_nonneg
+      (by exact_mod_cast Nat.zero_le (bhksFourPowFactor f))
+  have hdegree_constant :
+      bhksPaperDegreeFactorReal f * bhksPaperConstantFactorReal f C ≤
+        (bhksDegreeFactor f : ℝ) * (bhksFourPowFactor f : ℝ) :=
+    mul_le_mul hdegree hconstant hconstant_nonneg hdegree_bound_nonneg
+  have hproduct :
+      bhksPaperDegreeFactorReal f * bhksPaperConstantFactorReal f C *
+          bhksPaperLogFactorReal f ≤
+        (bhksDegreeFactor f : ℝ) * (bhksFourPowFactor f : ℝ) *
+          (bhksLog2Factor f : ℝ) :=
+    mul_le_mul hdegree_constant hlog hlog_nonneg
+      hdegree_constant_bound_nonneg
+  calc
+    bhksPaperDegreeFactorReal f * bhksPaperConstantFactorReal f C *
+        bhksPaperLogFactorReal f
+      ≤ (bhksDegreeFactor f : ℝ) * (bhksFourPowFactor f : ℝ) *
+          (bhksLog2Factor f : ℝ) := hproduct
+    _ = ((bhksDegreeFactor f * bhksFourPowFactor f * bhksLog2Factor f : Nat) : ℝ) := by
+        push_cast; ring
+
+/--
+Restatement of `bhksPaperThresholdReal_ge_of_factored_bounds` against the
+named `bhksPaperAuxiliaryFactorReal` target.  Callers proving the BHKS
+Theorem 5.2 sub-bounds can hit this RHS directly instead of unfolding the
+three-way product.
+-/
+theorem bhksPaperThresholdReal_ge_of_factored_bounds'
+    (f : Hex.ZPoly) (C : ℝ)
+    {coeffPow auxPow : ℝ}
+    (h_aux_nn : 0 ≤ auxPow)
+    (h_coeff : coeffPow ≤ bhksPaperCoeffNormFactorReal f)
+    (h_aux : auxPow ≤ bhksPaperAuxiliaryFactorReal f C) :
+    coeffPow * auxPow ≤ bhksPaperThresholdReal f C :=
+  bhksPaperThresholdReal_ge_of_factored_bounds f C h_aux_nn h_coeff
+    (by simpa [bhksPaperAuxiliaryFactorReal] using h_aux)
+
+/--
 The packaged BHKS cap remains available alongside the executable Mignotte
 coefficient bound through a single max expression.  This lightweight lemma is
 useful for later proofs that need one precision dominating both reconstruction
