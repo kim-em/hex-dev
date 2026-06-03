@@ -358,18 +358,20 @@ classification below is mirrored as structured metadata in
 ### `LLLState.ofBasis` is its own bench target
 
 The integer Gram–Schmidt construction in `LLLState.ofBasis` —
-implemented as a Bareiss-style fraction-free elimination over the
-Gram matrix — is asymptotically significant in its own right:
-classical analysis gives ~ n³ integer arithmetic operations with
-operand bit-width growing in `n` per Hadamard's bound. This shape
-is distinct from the LLL outer loop's ~ n² iterations × O(n) work
-on near-orthogonal random input. Per the
+implemented as a per-row Schur-complement recurrence over the
+Gram matrix (per
+[SPEC/Libraries/hex-gram-schmidt.md](hex-gram-schmidt.md)) — is
+asymptotically significant in its own right: classical analysis
+gives ~ n³ integer arithmetic operations with operand bit-width
+growing in `n` per Hadamard's bound. This shape is distinct from
+the LLL outer loop's ~ n² iterations × O(n) work on
+near-orthogonal random input. Per the
 [SPEC/benchmarking.md §Attribution rule](../benchmarking.md#the-attribution-rule),
 each must be verified by its own `setup_benchmark` so a future
 profiling finding is attributable to one phase or the other:
 
 - a `setup_benchmark` for `LLLState.ofBasis n => …` declaring the
-  Bareiss-prep complexity over the bench's input family;
+  GS-prep complexity over the bench's input family;
 - a `setup_benchmark` for `lll`/`lll.firstShortVector` (or a fixed
   benchmark on a family-specific canonical input) declaring the
   outer-loop complexity over that input family.
