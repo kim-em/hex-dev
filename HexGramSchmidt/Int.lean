@@ -7130,6 +7130,44 @@ private theorem schurSigma_foldl_eq_noPivotCorrection_zero
     h_rows_a0, h_rows_p0]
   grind
 
+/-- Algebraic exact-division step used by the σ-chain correction successor:
+if the Bareiss update numerator is divisible by the previous pivot, the σ-body
+quotient subtracts the corresponding Bareiss quotient from `pivot * gram`. -/
+private theorem exactDiv_bareissCorrection_succ_algebra
+    (denom pivot gram entry row col : Int) (hdenom : denom ≠ 0)
+    (hdiv : denom ∣ pivot * entry - row * col) :
+    Matrix.exactDiv (pivot * (denom * gram - entry) + row * col) denom =
+      pivot * gram - Matrix.exactDiv (pivot * entry - row * col) denom := by
+  rcases hdiv with ⟨quot, hnum⟩
+  have hquot :
+      Matrix.exactDiv (pivot * entry - row * col) denom = quot := by
+    refine exactDiv_eq_of_eq_mul_right hdenom ?_
+    rw [hnum]
+    grind
+  rw [hquot]
+  refine exactDiv_eq_of_eq_mul_right hdenom ?_
+  have hrow : row * col = pivot * entry - denom * quot := by
+    grind
+  rw [hrow]
+  grind
+
+/-- Successor step for the σ-chain/Bareiss correction invariant.  Once the
+row reads in the σ-chain body have already been rewritten to a Bareiss
+trajectory, one body application advances the closed correction term from the
+current step to the next one.  The caller supplies the one-step Bareiss quotient
+for the next matrix entry. -/
+private theorem schurSigma_noPivotCorrection_succ
+    (denom pivot gram entry row col nextEntry : Int)
+    (hdenom : denom ≠ 0)
+    (h_step_dvd : denom ∣ pivot * entry - row * col)
+    (h_next :
+      nextEntry = Matrix.exactDiv (pivot * entry - row * col) denom) :
+    Matrix.exactDiv (pivot * (denom * gram - entry) + row * col) denom =
+      pivot * gram - nextEntry := by
+  rw [h_next]
+  exact exactDiv_bareissCorrection_succ_algebra
+    denom pivot gram entry row col hdenom h_step_dvd
+
 /-- Singular dual of `scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix`.
 When the no-pivot Bareiss pass over the full Gram matrix records an early
 singular step before reaching column `j`, the integral scaled Gram-Schmidt
