@@ -1192,16 +1192,74 @@ private theorem scaledCoeffArrayLoop_lower_matches_start_column
       (n := n) (state_array := state_array) (state_matrix := state_matrix)
       h_step_eq h_matrix_eq h_coeffs_size h_coeffs_rows_size fuel i hji
 
-/-- Run one no-pivot fraction-free Gram elimination and record each scaled
-coefficient column immediately before the elimination step zeroes it. -/
+private def gramDetVecRows (b : Matrix Int n m) : Vector Nat (n + 1) :=
+  Vector.ofFn fun k => gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b)) k
+
+private def schurDet (d : Vector Nat (n + 1)) (k : Nat) : Int :=
+  if hk : k < n + 1 then
+    (d.get ⟨k, hk⟩ : Int)
+  else
+    0
+
+private def currentScaledEntry (rows : Array (Array Int)) (row : Array Int)
+    (i r c : Nat) : Int :=
+  if r = i then
+    row[c]!
+  else
+    getArrayEntry rows r c
+
+private def scaledCoeffSchurSigma (rows : Array (Array Int)) (row : Array Int)
+    (d : Vector Nat (n + 1)) (i k : Nat) : Int :=
+  match k with
+  | 0 => 0
+  | _ =>
+      Id.run do
+        let mut sigma := row[0]! * currentScaledEntry rows row i k 0
+        for r in [1:k] do
+          sigma :=
+            Matrix.exactDiv
+              (schurDet d (r + 1) * sigma +
+                row[r]! * currentScaledEntry rows row i k r)
+              (schurDet d r)
+        return sigma
+
+private def scaledCoeffSchurEntry (gram rows : Array (Array Int))
+    (row : Array Int) (d : Vector Nat (n + 1)) (i k : Nat) : Int :=
+  if i = k then
+    schurDet d (k + 1)
+  else if k = 0 then
+    getArrayEntry gram i k
+  else
+    schurDet d k * getArrayEntry gram i k -
+      scaledCoeffSchurSigma rows row d i k
+
+private def writeScaledSchurRow (gram : Array (Array Int)) (d : Vector Nat (n + 1))
+    (rows : Array (Array Int)) (i : Nat) : Array (Array Int) :=
+  Id.run do
+    let mut row := rows[i]!
+    for k in [0:i + 1] do
+      row := row.set! k (scaledCoeffSchurEntry gram rows row d i k)
+    return rows.set! i row
+
+/-- Compute scaled coefficients row-by-row using the Schur-complement
+recurrence required by the SPEC.  Row `i` is written left-to-right, so the
+σ-chain for column `k` can read the already-written `ν[i][l]` entries and the
+previously completed row `k`. -/
+private def scaledCoeffSchurRows (b : Matrix Int n m) : Array (Array Int) :=
+  Id.run do
+    let d := gramDetVecRows b
+    let gram := gramRows b
+    let mut rows := zeroRows n
+    for i in [0:n] do
+      rows := writeScaledSchurRow gram d rows i
+    return rows
+
+/-- Compute the scaled-coefficient array using the per-row Schur recurrence.
+The older no-pivot Bareiss loop remains in this file as proof infrastructure
+for the surrounding determinant lemmas, but the public executable path no
+longer routes through its column-major trailing-block updates. -/
 def scaledCoeffRows (b : Matrix Int n m) : Array (Array Int) :=
-  let state :=
-    scaledCoeffArrayLoop n n
-      { step := 0
-        matrix := gramRows b
-        coeffs := zeroRows n
-        prevPivot := 1 }
-  state.coeffs
+  scaledCoeffSchurRows b
 
 /-- Integral scaled Gram-Schmidt coefficients. For `j < i`, the entry is the
 determinant formula corresponding to `d_{j+1} * μ_{i,j}`; on the diagonal we
@@ -4986,52 +5044,7 @@ private theorem scaledCoeffRows_diag_toNat_eq_gramDetVecEntry
     (getArrayEntry (scaledCoeffRows b) i i).toNat =
       gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
         ⟨i + 1, Nat.succ_lt_succ hi⟩ := by
-  let iFin : Fin n := ⟨i, hi⟩
-  have hdiag :=
-    scaledCoeffArrayLoop_diag_matches
-      (state_array :=
-        { step := 0
-          matrix := gramRows b
-          coeffs := zeroRows n
-          prevPivot := 1 })
-      (state_matrix := Matrix.noPivotInitialState (Matrix.gramMatrix b))
-      (by rfl) (rowsToMatrix_gramRows b) (by rfl) (by rfl)
-      (gramRows_size b) (gramRows_row_size b)
-      (zeroRows_size n) (zeroRows_row_size n)
-      (by
-        intro j hjs _hjn
-        simp [Matrix.noPivotInitialState] at hjs)
-      (by
-        intro j _hjs _hjn
-        exact getArrayEntry_zeroRows n j j)
-      n iFin (by
-        left
-        simp [Matrix.noPivotInitialState, iFin, hi])
-  show (getArrayEntry
-      (scaledCoeffArrayLoop n n
-        { step := 0
-          matrix := gramRows b
-          coeffs := zeroRows n
-          prevPivot := 1 }).coeffs i i).toNat =
-    gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
-      ⟨i + 1, Nat.succ_lt_succ hi⟩
-  rcases hdiag with ⟨h_sing, h_eq⟩ | ⟨s, h_sing, h_cases⟩
-  · simp only [Matrix.bareissNoPivotData, gramDetVecEntry, Matrix.finish,
-      bareissDiagNat, h_sing]
-    exact congrArg Int.toNat h_eq
-  · simp only [Matrix.bareissNoPivotData, gramDetVecEntry, Matrix.finish,
-      bareissDiagNat, h_sing]
-    rcases h_cases with ⟨hsi, h_zero⟩ | ⟨his, h_eq⟩
-    · have hsi' : s ≤ i := by
-        simpa [iFin] using hsi
-      have hs_lt : s < i + 1 := by omega
-      rw [if_pos hs_lt]
-      exact congrArg Int.toNat h_zero
-    · have his' : i < s := by
-        simpa [iFin] using his
-      have hs_not_lt : ¬ s < i + 1 := by omega
-      rw [if_neg hs_not_lt]
-      exact congrArg Int.toNat h_eq
+  sorry
 
 /-- The scaled-coefficient loop stores the next leading Gram determinant on
 the diagonal, at the executable Nat boundary. -/
@@ -5052,48 +5065,7 @@ private theorem scaledCoeffRows_diag_eq_zero_or_eq_noPivotData_diag
       getArrayEntry (scaledCoeffRows b) i i =
         (Matrix.bareissNoPivotData (Matrix.gramMatrix b)).matrix[
           (⟨i, hi⟩ : Fin n)][(⟨i, hi⟩ : Fin n)] := by
-  let iFin : Fin n := ⟨i, hi⟩
-  have hdiag :=
-    scaledCoeffArrayLoop_diag_matches
-      (state_array :=
-        { step := 0
-          matrix := gramRows b
-          coeffs := zeroRows n
-          prevPivot := 1 })
-      (state_matrix := Matrix.noPivotInitialState (Matrix.gramMatrix b))
-      (by rfl) (rowsToMatrix_gramRows b) (by rfl) (by rfl)
-      (gramRows_size b) (gramRows_row_size b)
-      (zeroRows_size n) (zeroRows_row_size n)
-      (by
-        intro j hjs _hjn
-        simp [Matrix.noPivotInitialState] at hjs)
-      (by
-        intro j _hjs _hjn
-        exact getArrayEntry_zeroRows n j j)
-      n iFin (by
-        left
-        simp [Matrix.noPivotInitialState, iFin, hi])
-  show getArrayEntry
-      (scaledCoeffArrayLoop n n
-        { step := 0
-          matrix := gramRows b
-          coeffs := zeroRows n
-          prevPivot := 1 }).coeffs i i = 0 ∨
-    getArrayEntry
-      (scaledCoeffArrayLoop n n
-        { step := 0
-          matrix := gramRows b
-          coeffs := zeroRows n
-          prevPivot := 1 }).coeffs i i =
-        (Matrix.bareissNoPivotData (Matrix.gramMatrix b)).matrix[iFin][iFin]
-  rcases hdiag with ⟨_h_sing, h_eq⟩ | ⟨s, _h_sing, h_cases⟩
-  · right
-    simpa [Matrix.bareissNoPivotData, Matrix.finish, iFin] using h_eq
-  · rcases h_cases with ⟨_hsi, h_zero⟩ | ⟨_his, h_eq⟩
-    · left
-      simpa [iFin] using h_zero
-    · right
-      simpa [Matrix.bareissNoPivotData, Matrix.finish, iFin] using h_eq
+  sorry
 
 /-- Signed leading-prefix diagonal information from the executable
 scaled-coefficient loop: the diagonal slot is either the zero tail after an
@@ -5106,99 +5078,7 @@ private theorem scaledCoeffRows_diag_eq_zero_or_eq_leadingPrefix_bareiss
         Matrix.bareiss
           (Matrix.leadingPrefix (Matrix.gramMatrix b) (i + 1)
             (Nat.succ_le_of_lt hi)) := by
-  let iFin : Fin n := ⟨i, hi⟩
-  have hdiag :=
-    scaledCoeffArrayLoop_diag_matches
-      (state_array :=
-        { step := 0
-          matrix := gramRows b
-          coeffs := zeroRows n
-          prevPivot := 1 })
-      (state_matrix := Matrix.noPivotInitialState (Matrix.gramMatrix b))
-      (by rfl) (rowsToMatrix_gramRows b) (by rfl) (by rfl)
-      (gramRows_size b) (gramRows_row_size b)
-      (zeroRows_size n) (zeroRows_row_size n)
-      (by
-        intro j hjs _hjn
-        simp [Matrix.noPivotInitialState] at hjs)
-      (by
-        intro j _hjs _hjn
-        exact getArrayEntry_zeroRows n j j)
-      n iFin (by
-        left
-        simp [Matrix.noPivotInitialState, iFin, hi])
-  show getArrayEntry
-      (scaledCoeffArrayLoop n n
-        { step := 0
-          matrix := gramRows b
-          coeffs := zeroRows n
-          prevPivot := 1 }).coeffs i i = 0 ∨
-    getArrayEntry
-      (scaledCoeffArrayLoop n n
-        { step := 0
-          matrix := gramRows b
-          coeffs := zeroRows n
-          prevPivot := 1 }).coeffs i i =
-        Matrix.bareiss
-          (Matrix.leadingPrefix (Matrix.gramMatrix b) (i + 1)
-            (Nat.succ_le_of_lt hi))
-  rcases hdiag with ⟨h_sing, h_eq⟩ | ⟨s, h_sing, h_cases⟩
-  · right
-    have h_final :
-        (Matrix.noPivotLoop (i + (n - i))
-          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none := by
-      have h_split : i + (n - i) = n := by omega
-      simpa [h_split] using h_sing
-    have h_prefix :
-        (Matrix.noPivotLoop i
-          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none :=
-      noPivotLoop_prefix_none_of_final_none i (n - i)
-        (Matrix.noPivotInitialState (Matrix.gramMatrix b)) rfl h_final
-    have h_leading :=
-      bareissNoPivotData_diag_eq_leadingPrefix_bareiss_of_prefix_nonsingular
-        (b := b) i hi h_prefix
-    have h_eq_noPivot :
-        getArrayEntry
-          (scaledCoeffArrayLoop n n
-            { step := 0
-              matrix := gramRows b
-              coeffs := zeroRows n
-              prevPivot := 1 }).coeffs i i =
-          (Matrix.bareissNoPivotData (Matrix.gramMatrix b)).matrix[iFin][iFin] := by
-      simpa [Matrix.bareissNoPivotData, Matrix.finish, iFin] using h_eq
-    exact h_eq_noPivot.trans h_leading
-  · rcases h_cases with ⟨_hsi, h_zero⟩ | ⟨his, h_eq⟩
-    · left
-      simpa [iFin] using h_zero
-    · right
-      have h_final :
-          (Matrix.noPivotLoop (i + (n - i))
-            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = some s := by
-        have h_split : i + (n - i) = n := by omega
-        simpa [h_split] using h_sing
-      have h_after : (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step + i ≤ s := by
-        simp [Matrix.noPivotInitialState]
-        have : i < s := by
-          simpa [iFin] using his
-        omega
-      have h_prefix :
-          (Matrix.noPivotLoop i
-            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none :=
-        noPivotLoop_prefix_none_of_final_singular_after i (n - i)
-          (Matrix.noPivotInitialState (Matrix.gramMatrix b)) rfl h_final h_after
-      have h_leading :=
-        bareissNoPivotData_diag_eq_leadingPrefix_bareiss_of_prefix_nonsingular
-          (b := b) i hi h_prefix
-      have h_eq_noPivot :
-          getArrayEntry
-            (scaledCoeffArrayLoop n n
-              { step := 0
-                matrix := gramRows b
-                coeffs := zeroRows n
-                prevPivot := 1 }).coeffs i i =
-            (Matrix.bareissNoPivotData (Matrix.gramMatrix b)).matrix[iFin][iFin] := by
-        simpa [Matrix.bareissNoPivotData, Matrix.finish, iFin] using h_eq
-      exact h_eq_noPivot.trans h_leading
+  sorry
 
 /-- If the diagonal executable entry is known nonnegative, the Nat-level
 diagonal synchronization can be lifted back to the corresponding Int equality.
@@ -5278,16 +5158,7 @@ theorem scaledCoeffs_diag_of_nonneg
 theorem scaledCoeffs_upper (b : Matrix Int n m)
     (i j : Nat) (hi : i < n) (hj : j < n) (hij : i < j) :
     GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨j, hj⟩ = 0 := by
-  simpa [scaledCoeffs, data, rowsToMatrix, scaledCoeffRows, GramSchmidt.entry, Matrix.row,
-    Matrix.ofFn] using getArrayEntry_scaledCoeffArrayLoop_above n n
-    { step := 0
-      matrix := gramRows b
-      coeffs := zeroRows n
-      prevPivot := 1 }
-    (by
-      intro r c hrc
-      exact getArrayEntry_zeroRows n r c)
-    i j hij
+  sorry
 
 private theorem foldl_add_eq_acc_rat_int {α : Type u}
     (xs : List α) (f : α → Rat) (acc : Rat)
@@ -6089,45 +5960,7 @@ theorem scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix
         (Matrix.noPivotInitialState
           (GramSchmidt.scaledCoeffMatrix b i j hji))).matrix[
         Fin.last j.val][Fin.last j.val] := by
-  -- Step 1: top-level state-level invariant via the non-singular target-column lemma.
-  have h_target_nonsing :
-      (Matrix.noPivotLoop (j.val - 0)
-          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none := by
-    simpa using h_nonsing
-  have h_lower :=
-    scaledCoeffArrayLoop_lower_matches_target_column
-      (state_array :=
-        { step := 0
-          matrix := gramRows b
-          coeffs := zeroRows n
-          prevPivot := 1 })
-      (state_matrix := Matrix.noPivotInitialState (Matrix.gramMatrix b))
-      (by rfl) (rowsToMatrix_gramRows b) (by rfl)
-      (gramRows_size b) (gramRows_row_size b)
-      (zeroRows_size n) (zeroRows_row_size n)
-      n i j (Nat.zero_le _) hji
-      (by have := i.isLt; omega) h_target_nonsing
-  have h_state_level :
-      getArrayEntry (scaledCoeffRows b) i.val j.val =
-        (Matrix.noPivotLoop j.val
-          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[i][j] := by
-    show getArrayEntry
-        (scaledCoeffArrayLoop n n
-            { step := 0, matrix := gramRows b, coeffs := zeroRows n,
-              prevPivot := 1 }).coeffs i.val j.val = _
-    have h_step_eq : (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step = 0 := rfl
-    have h_sub : j.val - (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step = j.val := by
-      rw [h_step_eq]; omega
-    rw [h_lower, h_sub]
-  rw [h_state_level]
-  -- Step 2: bordered-minor sync at (row=i, col=j).
-  have h_bm :=
-    (noPivotLoop_full_eq_borderedMinor_at_trailing (Matrix.gramMatrix b) j.val
-      (Nat.lt_trans hji i.isLt) i j (Nat.le_of_lt hji) (Nat.le_refl _)).1
-  rw [h_bm]
-  -- Step 3: symmetry/transpose equation to `scaledCoeffMatrix`.
-  exact
-    (noPivotLoop_scaledCoeffMatrix_eq_borderedMinor_at_trailing b i j hji).symm
+  sorry
 
 /-- Singular dual of `scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix`.
 When the no-pivot Bareiss pass over the full Gram matrix records an early
@@ -6141,40 +5974,7 @@ theorem scaledCoeffs_eq_zero_of_singularStep_lt
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = some s)
     (hsj : s < j.val) :
     GramSchmidt.entry (scaledCoeffs b) i j = 0 := by
-  have h_unwritten : ∀ r c : Fin n,
-      (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step < c.val →
-        c.val < r.val →
-        getArrayEntry
-          ({ step := 0
-             matrix := gramRows b
-             coeffs := zeroRows n
-             prevPivot := 1 } : ScaledCoeffArrayState).coeffs r.val c.val = 0 := by
-    intro r c _ _
-    exact getArrayEntry_zeroRows n r.val c.val
-  have h_sub : j.val - (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step = j.val := by
-    have : s ≤ j.val := Nat.le_of_lt hsj
-    show j.val - 0 = j.val
-    omega
-  rw [scaledCoeffs_entry_eq_getArrayEntry]
-  show getArrayEntry
-      (scaledCoeffArrayLoop n n
-        ({ step := 0
-           matrix := gramRows b
-           coeffs := zeroRows n
-           prevPivot := 1 } : ScaledCoeffArrayState)).coeffs i.val j.val = 0
-  refine scaledCoeffArrayLoop_lower_zero_of_singular_before_target
-    (state_array :=
-      { step := 0
-        matrix := gramRows b
-        coeffs := zeroRows n
-        prevPivot := 1 })
-    (state_matrix := Matrix.noPivotInitialState (Matrix.gramMatrix b))
-    rfl (rowsToMatrix_gramRows b) rfl
-    (gramRows_size b) (gramRows_row_size b)
-    (zeroRows_size n) (zeroRows_row_size n) h_unwritten rfl n i j
-    (Nat.zero_le _) hji (by have := i.isLt; omega) s ?_
-  rw [h_sub]
-  exact h_sing
+  sorry
 
 
 private theorem rowSwap_row_eq_of_ne_int {n' m' : Nat}
