@@ -8411,6 +8411,148 @@ private theorem size_centeredLiftPoly_eq_of_monic
   exact le_antisymm hg'_size_le hg'_size_ge
 
 /--
+`Array.polyProduct` of an array all of whose entries are monic is monic.
+
+The base case is `Monic 1` (`zpoly_monic_one`); the inductive step chains
+`zpoly_monic_mul` through each entry along the `foldl` accumulator.
+-/
+private theorem polyProduct_monic_of_all_monic
+    {factors : Array Hex.ZPoly}
+    (hmonic : ∀ p ∈ factors.toList, Hex.DensePoly.Monic p) :
+    Hex.DensePoly.Monic (Array.polyProduct factors) := by
+  unfold Array.polyProduct
+  rw [← Array.foldl_toList]
+  suffices h : ∀ (l : List Hex.ZPoly) (acc : Hex.ZPoly),
+      Hex.DensePoly.Monic acc →
+      (∀ p ∈ l, Hex.DensePoly.Monic p) →
+      Hex.DensePoly.Monic (l.foldl (· * ·) acc) by
+    exact h factors.toList 1 zpoly_monic_one hmonic
+  intro l
+  induction l with
+  | nil =>
+    intro acc hacc _
+    simpa using hacc
+  | cons x rest ih =>
+    intro acc hacc hl
+    simp only [List.foldl_cons]
+    apply ih
+    · exact zpoly_monic_mul hacc (hl x List.mem_cons_self)
+    · intro p hp; exact hl p (List.mem_cons_of_mem _ hp)
+
+/--
+A successful `bhksIndicatorCandidate?` call yields, under monic-core and
+monic-selected-factor hypotheses, the canonical modular product equality
+`reduceModPow raw p k = reduceModPow candidate p k`.
+
+This is the per-candidate modular-product fact needed to derive the
+`RepresentsIntegerFactorAtLift` certificate from a successful candidate path
+(see issue #6455 / #6450). The proof routes through:
+
+- the centred-lift round-trip identity `centeredLiftPoly_reduceModPow_eq`,
+- `monic_centeredLiftPoly_of_monic` to push monicness through the centred lift,
+- `zpoly_primitive_of_monic` + `primitivePart_eq_self_of_primitive` to
+  collapse `normalizeCandidateFactor` to identity on monic input,
+- `zpoly_normalize_factor_sign_of_monic` to collapse `normalizeFactorSign` to
+  identity on monic input.
+-/
+theorem bhksIndicatorCandidate?_reduceModPow_eq_of_monic
+    {core : Hex.ZPoly} {d : Hex.LiftData} {indicator : Array Int}
+    {candidate quotient : Hex.ZPoly} {selected : Array Hex.ZPoly}
+    (h : Hex.bhksIndicatorCandidate? core d indicator = some (candidate, quotient))
+    (hselected :
+       Hex.bhksIndicatorSelectedFactors d.liftedFactors indicator = some selected)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hselected_monic :
+       ∀ p ∈ selected.toList, Hex.DensePoly.Monic p)
+    (hp_two_lt : 2 ≤ d.p ^ d.k) :
+    Hex.ZPoly.reduceModPow
+        (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core)
+          (Array.polyProduct selected)) d.p d.k =
+      Hex.ZPoly.reduceModPow candidate d.p d.k := by
+  -- Step 1: lc(core) = 1 since core is monic.
+  have hlc : Hex.DensePoly.leadingCoeff core = (1 : Int) := hcore_monic
+  -- Step 2: polyProduct selected is monic.
+  have hprod_monic : Hex.DensePoly.Monic (Array.polyProduct selected) :=
+    polyProduct_monic_of_all_monic hselected_monic
+  -- Step 3: raw = scale 1 (polyProduct selected) = polyProduct selected, so raw is monic.
+  set raw := Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core)
+    (Array.polyProduct selected) with hraw_def
+  have hraw_eq : raw = Array.polyProduct selected := by
+    rw [hraw_def, hlc]
+    -- scale 1 g = g (coefficient-wise): both sides equal Array.polyProduct selected.
+    apply Hex.DensePoly.ext_coeff
+    intro n
+    rw [Hex.DensePoly.coeff_scale _ _ _ (by ring : (1 : Int) * 0 = 0)]
+    ring
+  have hraw_monic : Hex.DensePoly.Monic raw := by rw [hraw_eq]; exact hprod_monic
+  -- Step 4: centeredLiftPoly raw (p^k) is monic.
+  have hcl_raw_monic : Hex.DensePoly.Monic
+      (Hex.centeredLiftPoly raw (d.p ^ d.k)) :=
+    monic_centeredLiftPoly_of_monic hraw_monic hp_two_lt
+  -- Step 5: centeredLiftPoly (reduceModPow raw p k) (p^k) = centeredLiftPoly raw (p^k).
+  have hcl_eq : Hex.centeredLiftPoly (Hex.ZPoly.reduceModPow raw d.p d.k) (d.p ^ d.k) =
+      Hex.centeredLiftPoly raw (d.p ^ d.k) :=
+    centeredLiftPoly_reduceModPow_eq raw d.p d.k d.p_pos
+  -- Step 6: The centred lift is monic, and normalize-stuff are identities on monic input.
+  set cl := Hex.centeredLiftPoly (Hex.ZPoly.reduceModPow raw d.p d.k) (d.p ^ d.k)
+    with hcl_def
+  have hcl_monic : Hex.DensePoly.Monic cl := by rw [hcl_eq]; exact hcl_raw_monic
+  have hcl_prim : Hex.ZPoly.Primitive cl := zpoly_primitive_of_monic hcl_monic
+  have hpprim : Hex.ZPoly.primitivePart cl = cl :=
+    Hex.ZPoly.primitivePart_eq_self_of_primitive cl hcl_prim
+  have hnorm_cand : Hex.normalizeCandidateFactor cl = cl := by
+    unfold Hex.normalizeCandidateFactor
+    rw [hpprim]
+    have : ¬ Hex.DensePoly.leadingCoeff cl < 0 := by
+      have : Hex.DensePoly.leadingCoeff cl = (1 : Int) := hcl_monic
+      rw [this]; decide
+    simp [this]
+  have hnorm_sign : Hex.normalizeFactorSign cl = cl :=
+    zpoly_normalize_factor_sign_of_monic hcl_monic
+  -- Step 7: candidate = cl, using the executable-layer characterization.
+  have hcand_eq : candidate = cl := by
+    have hext := Hex.bhksIndicatorCandidate?_eq_normalized_centeredLift h hselected
+    rw [hext, hcl_def, hnorm_cand, hnorm_sign]
+  -- Step 8: reduceModPow raw p k = reduceModPow cl p k via the centered lift.
+  rw [hcand_eq]
+  -- Goal: reduceModPow raw p k = reduceModPow cl p k.
+  -- cl = centeredLiftPoly (reduceModPow raw p k) (p^k).
+  -- Reducing the centred lift back recovers the canonical residue.
+  -- Key helper: centeredModNat x m ≡ x (mod m).
+  have hcenteredModNat_emod_eq :
+      ∀ (z : Int) (m : Nat), m ≠ 0 →
+        (Hex.centeredModNat z m) % (Int.ofNat m) = z % (Int.ofNat m) := by
+    intro z m hm
+    unfold Hex.centeredModNat
+    rw [if_neg hm]
+    set r := z % (Int.ofNat m) with hr_def
+    have hrmod : r % (Int.ofNat m) = r := by
+      rw [hr_def, Int.emod_emod_of_dvd _ (dvd_refl _)]
+    by_cases hc1 : 2 * r.natAbs ≤ m
+    · rw [if_pos hc1]; exact hrmod
+    · rw [if_neg hc1]
+      by_cases hc2 : r < 0
+      · rw [if_pos hc2]
+        have hrwadd : (r + Int.ofNat m) % Int.ofNat m = r % Int.ofNat m := by
+          rw [show r + Int.ofNat m = r + 1 * Int.ofNat m by ring,
+            Int.add_mul_emod_self_right]
+        rw [hrwadd, hrmod]
+      · rw [if_neg hc2]
+        have hrwsub : (r - Int.ofNat m) % Int.ofNat m = r % Int.ofNat m := by
+          rw [show r - Int.ofNat m = r + (-1) * Int.ofNat m by ring,
+            Int.add_mul_emod_self_right]
+        rw [hrwsub, hrmod]
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  rw [hcl_def, Hex.ZPoly.coeff_reduceModPow_eq_emod_of_pos _ _ _ _ (Nat.pow_pos d.p_pos),
+    Hex.ZPoly.coeff_reduceModPow_eq_emod_of_pos _ _ _ _ (Nat.pow_pos d.p_pos),
+    Hex.coeff_centeredLiftPoly,
+    Hex.ZPoly.coeff_reduceModPow_eq_emod_of_pos _ _ _ _ (Nat.pow_pos d.p_pos)]
+  -- Goal: raw.coeff n % m = centeredModNat (raw.coeff n % m) m % m.
+  rw [hcenteredModNat_emod_eq _ _ (Nat.ne_of_gt (Nat.pow_pos d.p_pos))]
+  exact (Int.emod_emod_of_dvd _ (dvd_refl _)).symm
+
+/--
 The Mathlib-transported `natDegree` of the executable recombination candidate
 over a lifted-factor subset equals the sum of the Mathlib-transported
 `natDegree`s of the selected lifted factors.
