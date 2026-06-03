@@ -6611,6 +6611,31 @@ def factorFast (f : ZPoly) : Option Factorization :=
 #guard factorFastWithBound (DensePoly.ofCoeffs #[1, 0, 0, 0, 1]) 4 = none
 #guard factorFastWithBound cldGuardF 1 = none
 
+/--
+Product of every odd prime searched by `choosePrimeData?`: the fixed
+`smallPrimeCandidates` plus every prime materialized by
+`extendedSmallPrimeCandidatesAux 73 128`, namely
+`3, 5, 7, 11, 13, 17, 19, 23, 31, 71, 73, 79, 83, 89, 97, 101, 103, 107,
+109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191,
+193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271,
+277, 281, 283, 293, 307, 311, 313, 317`.
+-/
+private def finitePrimeSearchProduct : Int :=
+  8519695066439135286155430686880858459745606608870837864424372151015956571725147275621002356920661035228663328981905
+
+/--
+Executable witness that the current finite prime search can fail on the
+normalized square-free fast path.  It is `P * X^2 + X + 1`, where `P` is the
+product of every searched odd prime.  For each searched modulus the leading
+coefficient vanishes, while over `ℤ` the quadratic has negative discriminant
+and hence no integer root.  Therefore, after normalization leaves this
+primitive square-free quadratic as the square-free core, the `1 < B` branch of
+`factorFastFactorsWithBound` reaches `quadraticIntegerRootFactors? = none` and
+then `choosePrimeData? = none`.
+-/
+private def finitePrimeSearchNoneQuadratic : ZPoly :=
+  DensePoly.ofCoeffs #[1, 1, finitePrimeSearchProduct]
+
 /-- Lift a `factorFastFactorsWithBound` success through the `.map` layer that
 defines `factorFastWithBound`. -/
 private theorem factorFastWithBound_eq_some_of_factors_some
