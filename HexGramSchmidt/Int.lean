@@ -5307,9 +5307,38 @@ theorem gramDet_zero (b : Matrix Int n m) :
     gramDet b 0 (Nat.zero_le n) = 1 := by
   rfl
 
+/-- The per-row Schur scaled-coefficient kernel and the column-major Bareiss
+array path produce identical integer values at every cell. Both arrays
+contain the leading Gram determinant `d_{j+1}` on the diagonal and
+`d_{j+1} · μ_{i,j}` below the diagonal, with zeros above; the recurrences
+differ only in evaluation order. This equivalence is the bridge from the
+Schur implementation to the existing invariant infrastructure proven about
+`scaledCoeffRows`.
+
+The proof obligation is still open; see #6458. -/
+private theorem getArrayEntry_scaledCoeffRowsSchur_eq
+    (b : Matrix Int n m) (i j : Nat) :
+    getArrayEntry (scaledCoeffRowsSchur b) i j =
+      getArrayEntry (scaledCoeffRows b) i j := by
+  sorry
+
 theorem gramDetVec_eq_gramDet (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
     (gramDetVec b).get ⟨k, Nat.lt_succ_of_le hk⟩ = gramDet b k hk := by
-  sorry
+  rcases k with _ | r
+  · show (gramDetVec b).get ⟨0, _⟩ = gramDet b 0 hk
+    have h_one : (gramDetVec b).get ⟨0, Nat.zero_lt_succ n⟩ = 1 := by
+      simp [gramDetVec, data, gramDetVecFromScaledCoeffRows]
+    rw [show (gramDetVec b).get ⟨0, Nat.lt_succ_of_le hk⟩
+          = (gramDetVec b).get ⟨0, Nat.zero_lt_succ n⟩ from rfl, h_one]
+    exact (gramDet_zero b).symm
+  · have hr : r < n := Nat.lt_of_succ_le hk
+    show (gramDetVec b).get ⟨r + 1, _⟩ = gramDet b (r + 1) hk
+    have hget :
+        (gramDetVec b).get ⟨r + 1, Nat.succ_lt_succ hr⟩ =
+          (getArrayEntry (scaledCoeffRowsSchur b) r r).toNat := by
+      simp [gramDetVec, data, gramDetVecFromScaledCoeffRows]
+    rw [hget, getArrayEntry_scaledCoeffRowsSchur_eq]
+    exact scaledCoeffRows_diag_toNat_eq_gramDet (b := b) r hr
 
 
 /-- Nat-level diagonal synchronization for the public scaled-coefficient
@@ -5337,7 +5366,8 @@ theorem scaledCoeffs_diag_eq_zero_or_eq_noPivotData_diag
       GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨i, hi⟩ =
         (Matrix.bareissNoPivotData (Matrix.gramMatrix b)).matrix[
           (⟨i, hi⟩ : Fin n)][(⟨i, hi⟩ : Fin n)] := by
-  sorry
+  rw [scaledCoeffs_entry_eq_getArrayEntry, getArrayEntry_scaledCoeffRowsSchur_eq]
+  exact scaledCoeffRows_diag_eq_zero_or_eq_noPivotData_diag (b := b) i hi
 
 /-- Signed diagonal information for the public scaled-coefficient matrix.
 The diagonal slot is either the zero tail recorded after an earlier singular
@@ -5350,7 +5380,8 @@ theorem scaledCoeffs_diag_eq_zero_or_eq_leadingPrefix_bareiss
         Matrix.bareiss
           (Matrix.leadingPrefix (Matrix.gramMatrix b) (i + 1)
             (Nat.succ_le_of_lt hi)) := by
-  sorry
+  rw [scaledCoeffs_entry_eq_getArrayEntry, getArrayEntry_scaledCoeffRowsSchur_eq]
+  exact scaledCoeffRows_diag_eq_zero_or_eq_leadingPrefix_bareiss (b := b) i hi
 
 theorem scaledCoeffs_diag_of_nonneg
     (b : Matrix Int n m) (i : Nat) (hi : i < n)
@@ -6207,6 +6238,46 @@ theorem scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix
   exact
     (noPivotLoop_scaledCoeffMatrix_eq_borderedMinor_at_trailing b i j hji).symm
 
+/-- Singular dual of `scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix`,
+phrased on the Bareiss-array path. When the no-pivot Bareiss pass over the
+full Gram matrix records an early singular step before reaching column `j`,
+the column-major array loop never writes the target column and the entry at
+`(i, j)` below the diagonal is left at its initial zero. -/
+private theorem scaledCoeffRows_eq_zero_of_singularStep_lt
+    (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val)
+    (s : Nat)
+    (h_sing : (Matrix.noPivotLoop j.val
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = some s) :
+    getArrayEntry (scaledCoeffRows b) i.val j.val = 0 := by
+  have h_target_sing :
+      (Matrix.noPivotLoop (j.val - 0)
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = some s := by
+    simpa using h_sing
+  have h_zero :=
+    scaledCoeffArrayLoop_lower_zero_of_singular_before_target
+      (state_array :=
+        { step := 0
+          matrix := gramRows b
+          coeffs := zeroRows n
+          prevPivot := 1 })
+      (state_matrix := Matrix.noPivotInitialState (Matrix.gramMatrix b))
+      (by rfl) (rowsToMatrix_gramRows b) (by rfl)
+      (gramRows_size b) (gramRows_row_size b)
+      (zeroRows_size n) (zeroRows_row_size n)
+      (by
+        intro r c _hsc _hcr
+        exact getArrayEntry_zeroRows n r.val c.val)
+      rfl
+      n i j (Nat.zero_le _) hji
+      (by have := i.isLt; omega) s h_target_sing
+  show getArrayEntry
+      (scaledCoeffArrayLoop n n
+        { step := 0
+          matrix := gramRows b
+          coeffs := zeroRows n
+          prevPivot := 1 }).coeffs i.val j.val = 0
+  exact h_zero
+
 /-- Singular dual of `scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix`.
 When the no-pivot Bareiss pass over the full Gram matrix records an early
 singular step before reaching column `j`, the integral scaled Gram-Schmidt
@@ -6217,9 +6288,10 @@ theorem scaledCoeffs_eq_zero_of_singularStep_lt
     (s : Nat)
     (h_sing : (Matrix.noPivotLoop j.val
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = some s)
-    (hsj : s < j.val) :
+    (_hsj : s < j.val) :
     GramSchmidt.entry (scaledCoeffs b) i j = 0 := by
-  sorry
+  rw [scaledCoeffs_entry_eq_getArrayEntry, getArrayEntry_scaledCoeffRowsSchur_eq]
+  exact scaledCoeffRows_eq_zero_of_singularStep_lt (b := b) i j hji s h_sing
 
 
 private theorem rowSwap_row_eq_of_ne_int {n' m' : Nat}
