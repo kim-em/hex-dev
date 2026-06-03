@@ -6811,6 +6811,83 @@ private theorem noPivotLoop_initial_gram_diag_ne_zero_of_lt
   rw [h_q_plus_one, h_one_more] at h_prefix_succ_none
   simp at h_prefix_succ_none
 
+/-- Base case for the σ-chain/Bareiss correction invariant.  At `q = 0` the
+fold is empty, and one Bareiss update from the initial Gram matrix reduces the
+closed form to the product of the two column-zero Schur coefficients. -/
+private theorem schurSigma_foldl_eq_noPivotCorrection_zero
+    {n m : Nat} (b : Matrix Int n m) (a p_out : Nat)
+    (hp_out_pos : 0 < p_out) (hp_out_n : p_out < n)
+    (han : a < n) (hpa : p_out ≤ a)
+    (h_nonsing :
+      (Matrix.noPivotLoop p_out
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none)
+    (outer_ih : ∀ l (hlp : l < p_out),
+        getArrayEntry (scaledCoeffRowsSchur b) l l =
+          (Matrix.noPivotLoop l
+              (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
+            (⟨l, Nat.lt_trans hlp hp_out_n⟩ : Fin n)][
+            (⟨l, Nat.lt_trans hlp hp_out_n⟩ : Fin n)] ∧
+        ∀ c (_hlc : l < c) (hcn : c < n),
+          getArrayEntry (scaledCoeffRowsSchur b) c l =
+            (Matrix.noPivotLoop l
+                (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
+              (⟨c, hcn⟩ : Fin n)][
+              (⟨l, Nat.lt_trans hlp hp_out_n⟩ : Fin n)]) :
+      (List.range' 1 0).foldl
+          (fun σ p_iter =>
+            Matrix.exactDiv
+              (getArrayEntry (scaledCoeffRowsSchur b) p_iter p_iter * σ +
+                getArrayEntry (scaledCoeffRowsSchur b) a p_iter *
+                getArrayEntry (scaledCoeffRowsSchur b) p_out p_iter)
+              (getArrayEntry (scaledCoeffRowsSchur b) (p_iter - 1) (p_iter - 1)))
+          (getArrayEntry (scaledCoeffRowsSchur b) a 0 *
+            getArrayEntry (scaledCoeffRowsSchur b) p_out 0) =
+        (Matrix.noPivotLoop 0
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
+          (⟨0, Nat.lt_trans hp_out_pos hp_out_n⟩ : Fin n)][
+          (⟨0, Nat.lt_trans hp_out_pos hp_out_n⟩ : Fin n)] *
+          (Matrix.gramMatrix b)[(⟨a, han⟩ : Fin n)][(⟨p_out, hp_out_n⟩ : Fin n)] -
+        (Matrix.noPivotLoop (0 + 1)
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
+          (⟨a, han⟩ : Fin n)][(⟨p_out, hp_out_n⟩ : Fin n)] := by
+  have h0p : 0 < p_out := hp_out_pos
+  have h0a : 0 < a := Nat.lt_of_lt_of_le hp_out_pos hpa
+  have h_rows_a0 :
+      getArrayEntry (scaledCoeffRowsSchur b) a 0 =
+        (Matrix.gramMatrix b)[(⟨a, han⟩ : Fin n)][
+          (⟨0, Nat.lt_trans h0p hp_out_n⟩ : Fin n)] := by
+    simpa [Matrix.noPivotLoop_zero_fuel, Matrix.noPivotInitialState] using
+      (outer_ih 0 h0p).2 a h0a han
+  have h_rows_p0 :
+      getArrayEntry (scaledCoeffRowsSchur b) p_out 0 =
+        (Matrix.gramMatrix b)[(⟨p_out, hp_out_n⟩ : Fin n)][
+          (⟨0, Nat.lt_trans h0p hp_out_n⟩ : Fin n)] := by
+    simpa [Matrix.noPivotLoop_zero_fuel, Matrix.noPivotInitialState] using
+      (outer_ih 0 h0p).2 p_out h0p hp_out_n
+  have h_sym_p0 :
+      (Matrix.gramMatrix b)[(⟨p_out, hp_out_n⟩ : Fin n)][
+          (⟨0, Nat.lt_trans h0p hp_out_n⟩ : Fin n)] =
+        (Matrix.gramMatrix b)[(⟨0, Nat.lt_trans h0p hp_out_n⟩ : Fin n)][
+          (⟨p_out, hp_out_n⟩ : Fin n)] :=
+    gramMatrix_symm (b := b) _ _
+  have hDone :
+      (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step + 1 < n := by
+    simp [Matrix.noPivotInitialState]
+    omega
+  have hpivot :
+      (Matrix.noPivotInitialState (Matrix.gramMatrix b)).matrix[
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step][
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step] ≠ 0 := by
+    simpa [Matrix.noPivotInitialState] using
+      noPivotLoop_initial_gram_diag_ne_zero_of_lt
+        (b := b) p_out 0 hp_out_pos hp_out_n h_nonsing
+  rw [Matrix.noPivotLoop_regular_branch 0
+      (Matrix.noPivotInitialState (Matrix.gramMatrix b)) hDone hpivot]
+  simp [Matrix.noPivotLoop_zero_fuel, Matrix.noPivotInitialState]
+  simp [Matrix.stepMatrix, Matrix.exactDiv, Matrix.ofFn, h0a, h0p,
+    h_rows_a0, h_rows_p0]
+  grind
+
 /-- Singular dual of `scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix`.
 When the no-pivot Bareiss pass over the full Gram matrix records an early
 singular step before reaching column `j`, the integral scaled Gram-Schmidt
