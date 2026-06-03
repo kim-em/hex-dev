@@ -45,6 +45,19 @@ extern_lib hexarithffi (pkg) := do
   let oTargets ← #[ "wide_arith.c", "mpz_gcdext.c" ].mapM (hexArithOTarget pkg)
   buildStaticLib (pkg.staticLibDir / name) oTargets
 
+private def hexMatrixOTarget (pkg : Package) (src : String) : FetchM (Job FilePath) := do
+  let stem := (src.dropEnd 2).toString
+  let oFile := pkg.dir / defaultBuildDir / "HexMatrix" / "ffi" / s!"{stem}.o"
+  let srcTarget ← inputTextFile <| pkg.dir / "HexMatrix" / "ffi" / src
+  buildFileAfterDep oFile srcTarget fun srcFile => do
+    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC"]
+    compileO oFile srcFile flags
+
+extern_lib hexmatrixffi (pkg) := do
+  let name := nameToStaticLib "hexmatrixffi"
+  let oTargets ← #[ "fma_div_exact.c" ].mapM (hexMatrixOTarget pkg)
+  buildStaticLib (pkg.staticLibDir / name) oTargets
+
 extern_lib hexmodarithffi (pkg) := do
   let name := nameToStaticLib "hexmodarithffi"
   let oTarget ← zmod64MulOTarget pkg
@@ -63,6 +76,10 @@ lean_lib HexPoly where
 
 lean_lib HexMatrix where
   precompileModules := true
+  moreLinkArgs := #[
+    s!"{(defaultBuildDir / "lib" / nameToStaticLib "hexmatrixffi").toString}",
+    "-lgmp"
+  ]
 
 lean_lib HexModArith where
   precompileModules := true
