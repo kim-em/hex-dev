@@ -4913,6 +4913,63 @@ theorem bhksPaperThresholdReal_chain_lt_p_pow_kLocalFactorDegree_l2norm_factored
       hlocalFactorDegree_pos C hC_nonneg hC hpaper hchoose hprecision
 
 /--
+Named-auxiliary sibling of
+`bhksPaperThresholdReal_chain_lt_p_pow_kLocalFactorDegree_factored`: the
+auxiliary-power sub-bound is stated against the named
+`bhksPaperAuxiliaryFactorReal core C` target instead of the unfolded three-way
+product `bhksPaperDegreeFactorReal core * bhksPaperConstantFactorReal core C *
+bhksPaperLogFactorReal core`.
+
+Implementation is a one-step shim that unfolds the named target and dispatches
+to the unprimed `_factored` variant.  Callers proving the BHKS Theorem 5.2
+auxiliary-power sub-bound directly against the packaged
+`bhksPaperAuxiliaryFactorReal` definition can hit this RHS without unfolding.
+-/
+theorem bhksPaperThresholdReal_chain_lt_p_pow_kLocalFactorDegree_factored'
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (hlocalFactorDegree_pos : 0 < localFactorDegree)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    {auxiliaryBound : ℝ}
+    (hauxiliaryBound_nonneg : 0 ≤ auxiliaryBound)
+    (h_coeff :
+      (Hex.ZPoly.coeffL2NormBound
+            (Hex.normalizeForFactor f).squareFreeCore : ℝ) ^
+          (badVectorWitnessOfFactorFastCapLiftData
+            f primeData rows_pos localFactorIndex localFactorDegree H).auxiliaryPolynomial.natDegree ≤
+        bhksPaperCoeffNormFactorReal (Hex.normalizeForFactor f).squareFreeCore)
+    (h_aux :
+      auxiliaryBound ^
+          (badVectorWitnessOfFactorFastCapLiftData
+            f primeData rows_pos localFactorIndex localFactorDegree H).inputPolynomial.natDegree ≤
+        bhksPaperAuxiliaryFactorReal (Hex.normalizeForFactor f).squareFreeCore C)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
+    (hprecision :
+      (factorFastCapLiftData f primeData).k =
+        Hex.precisionForCoeffBound
+          (Hex.factorFastPrecisionCap
+            (Hex.normalizeForFactor f).squareFreeCore)
+          (factorFastCapLiftData f primeData).p) :
+    (Hex.ZPoly.coeffL2NormBound
+          (Hex.normalizeForFactor f).squareFreeCore : ℝ) ^
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H).auxiliaryPolynomial.natDegree *
+      auxiliaryBound ^
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H).inputPolynomial.natDegree <
+    ((factorFastCapLiftData f primeData).p ^
+      ((factorFastCapLiftData f primeData).k * localFactorDegree) : ℝ) :=
+  bhksPaperThresholdReal_chain_lt_p_pow_kLocalFactorDegree_factored
+    f primeData rows_pos localFactorIndex localFactorDegree H
+    hlocalFactorDegree_pos C hC_nonneg hC hauxiliaryBound_nonneg h_coeff
+    (by simpa [bhksPaperAuxiliaryFactorReal] using h_aux) hchoose hprecision
+
+/--
 Build the cap-separation input package from a paper-threshold-shape bound on
 the `coeffL2NormBound ^ aux.natDegree * auxiliaryBound ^ input.natDegree`
 product.
