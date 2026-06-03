@@ -4630,6 +4630,63 @@ private theorem pow_normalized_pthRoot_reconstruct_of_derivative_zero
     _ = pow f multiplicity := by
           rw [hreconstruct]
 
+/--
+The raw repeated tail emitted by the scaled Yun contribution loop is recovered
+from its normalized tail together with the explicit leading scalar. This is the
+local synchronization fact used by the derivative-active proof path; it keeps
+the scalar ambiguity of executable `DensePoly.gcd` visible rather than treating
+raw gcd output as monic.
+-/
+private theorem yunFactorsContributionWithLevel_normalized_tail_reconstruct
+    (hp : Hex.Nat.Prime p) (c w : FpPoly p) (base level fuel : Nat) :
+    let contribution := yunFactorsContributionWithLevel c w base level fuel
+    DensePoly.C (normalizeMonic contribution.2).1 *
+        (normalizeMonic contribution.2).2 =
+      contribution.2 := by
+  exact normalizeMonic_reconstruct hp
+    (yunFactorsContributionWithLevel c w base level fuel).2
+
+/--
+Product-state synchronization for the raw scaled Yun split and its normalized
+tail. If the raw contribution and residual reconstruct `pow f multiplicity`,
+then replacing the residual power by the normalized residual power and the
+explicit scalar power preserves the same product.
+
+This lemma deliberately does not assume `DensePoly.gcd` is monic: all scalar
+ambiguity is isolated in `DensePoly.C (normalizeMonic contribution.2).1`.
+-/
+private theorem yunFactorsContributionWithLevel_normalized_tail_product_bridge
+    (hp : Hex.Nat.Prime p) (f c w : FpPoly p)
+    (base level fuel multiplicity : Nat)
+    (hproduct :
+      let contribution := yunFactorsContributionWithLevel c w base level fuel
+      contribution.1 * pow contribution.2 multiplicity = pow f multiplicity) :
+    let contribution := yunFactorsContributionWithLevel c w base level fuel
+    contribution.1 *
+        (pow (DensePoly.C (normalizeMonic contribution.2).1) multiplicity *
+          pow (normalizeMonic contribution.2).2 multiplicity) =
+      pow f multiplicity := by
+  let contribution := yunFactorsContributionWithLevel c w base level fuel
+  have htail_reconstruct :
+      DensePoly.C (normalizeMonic contribution.2).1 *
+          (normalizeMonic contribution.2).2 =
+        contribution.2 := by
+    simpa [contribution] using
+      yunFactorsContributionWithLevel_normalized_tail_reconstruct
+        hp c w base level fuel
+  calc
+    contribution.1 *
+        (pow (DensePoly.C (normalizeMonic contribution.2).1) multiplicity *
+          pow (normalizeMonic contribution.2).2 multiplicity) =
+        contribution.1 *
+          pow (DensePoly.C (normalizeMonic contribution.2).1 *
+            (normalizeMonic contribution.2).2) multiplicity := by
+          rw [pow_mul_base]
+    _ = contribution.1 * pow contribution.2 multiplicity := by
+          rw [htail_reconstruct]
+    _ = pow f multiplicity := by
+          simpa [contribution] using hproduct
+
 private theorem squareFreeAuxRevContribution_pthRoot_normalized_tail_bridge
     (hp : Hex.Nat.Prime p) (tail : FpPoly p) (multiplicity fuel : Nat)
     (hmultiplicity : 0 < multiplicity)
