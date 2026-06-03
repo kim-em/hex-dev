@@ -4787,17 +4787,36 @@ theorem factorFast_ne_none_of_factorFastCapSeparationInputsAndCanonicalRecoveryI
       capInputs recoveryInputs)
 
 /--
-Conditional final HO-4 target for the current executable `factorFast` API.
+Final BHKS D1 assembly target: the public fast path returns `some _` whenever
+the prime-search-safe preconditions packaged as `FactorFastCapSeparationInputs`
+(cap-separation producer side) and `CanonicalRecoveryTailInputs`
+(canonical-support recovery tail) are available.
 
-This is the prime-search-safe replacement for the false hypothesis-free
-`factorFast_terminates` target.  The required
+This is the prime-search-safe replacement for the hypothesis-free
+`∀ f, Hex.factorFast f ≠ none` target named in
+`SPEC/Libraries/hex-berlekamp-zassenhaus.md` Group D / D1: that
+unconditional statement is false against the current executable finite prime
+search, witnessed by `Hex.finitePrimeSearchNoneQuadratic` (see
+`HexBerlekampZassenhaus/Basic.lean`).  The required
 `Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData`
 witness is stored in `capInputs.choose_eq`; together with the cap-separation
 and canonical-recovery tail packages, it proves the public
 `Hex.factorFast f ≠ none` conclusion without changing executable prime
 selection.
+
+The proof composes the existing assembly chain: routing through
+`factorFast_ne_none_of_factorFastCapSeparationInputsAndCanonicalRecoveryInputs_internalCapPositiveAndPrimeLowerBound`
+discharges the BHKS branch by deriving the closed `CanonicalRecoveryInputs`
+package and then handing off to
+`factorFast_ne_none_of_canonicalRecoveryInputs_internalCapPositiveAndPrimeLowerBound`,
+which threads through `factorFast_ne_none_of_core_recovery_on_schedule`.
+That inner case-split on `factorFastFactorsWithBound` at
+`Hex.factorFastPrecisionCap f` discharges the constant, small-mod-singleton,
+and quadratic short-circuit branches by their unconditional `some _`
+returns, and the nontrivial BHKS branch by the recovery-on-schedule witness
+extracted from the closed packages.
 -/
-theorem factorFast_terminates_of_factorFastCapSeparationInputsAndCanonicalRecoveryTailInputs
+theorem factorFast_terminates
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
     (rows_pos :
       HasPositiveDimension
