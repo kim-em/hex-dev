@@ -5307,6 +5307,17 @@ theorem gramDet_zero (b : Matrix Int n m) :
     gramDet b 0 (Nat.zero_le n) = 1 := by
   rfl
 
+/-- Both `scaledCoeffRows` and `scaledCoeffRowsSchur` start from `zeroRows n`
+and only write strict-lower / diagonal entries; the upper-triangle slot at
+`(i, j)` with `i < j` therefore retains its initial zero value, regardless of
+whether `i` and `j` lie inside the array bounds. -/
+private theorem getArrayEntry_scaledCoeffRows_above
+    (b : Matrix Int n m) (i j : Nat) (hij : i < j) :
+    getArrayEntry (scaledCoeffRows b) i j = 0 := by
+  unfold scaledCoeffRows
+  exact getArrayEntry_scaledCoeffArrayLoop_above n n _
+    (fun i' j' hij' => getArrayEntry_zeroRows n i' j') i j hij
+
 /-- The per-row Schur scaled-coefficient kernel and the column-major Bareiss
 array path produce identical integer values at every cell. Both arrays
 contain the leading Gram determinant `d_{j+1}` on the diagonal and
@@ -5315,12 +5326,16 @@ differ only in evaluation order. This equivalence is the bridge from the
 Schur implementation to the existing invariant infrastructure proven about
 `scaledCoeffRows`.
 
-The proof obligation is still open; see #6458. -/
+The upper-triangle case is dispatched here; the diagonal and strict-lower
+cases are still open. See #6458. -/
 private theorem getArrayEntry_scaledCoeffRowsSchur_eq
     (b : Matrix Int n m) (i j : Nat) :
     getArrayEntry (scaledCoeffRowsSchur b) i j =
       getArrayEntry (scaledCoeffRows b) i j := by
-  sorry
+  by_cases hij : i < j
+  · rw [getArrayEntry_scaledCoeffRowsSchur_upper b i j hij,
+      getArrayEntry_scaledCoeffRows_above b i j hij]
+  · sorry
 
 theorem gramDetVec_eq_gramDet (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
     (gramDetVec b).get ⟨k, Nat.lt_succ_of_le hk⟩ = gramDet b k hk := by
