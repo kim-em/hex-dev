@@ -268,6 +268,50 @@ private theorem l2norm_log_nonneg (f : Hex.ZPoly) :
     simpa [abs_of_nonneg hx_nonneg] using h_abs
   exact Real.log_nonneg hx_ge_one
 
+/-- The paper degree factor `n` is non-negative as a real. -/
+theorem bhksPaperDegreeFactorReal_nonneg (f : Hex.ZPoly) :
+    0 ≤ bhksPaperDegreeFactorReal f := by
+  unfold bhksPaperDegreeFactorReal
+  exact_mod_cast Nat.zero_le (bhksDegree f)
+
+/--
+The paper `(2C)^(n^2)` factor is non-negative whenever the project constant
+`C` is non-negative.
+-/
+theorem bhksPaperConstantFactorReal_nonneg
+    (f : Hex.ZPoly) {C : ℝ} (hC_nonneg : 0 ≤ C) :
+    0 ≤ bhksPaperConstantFactorReal f C := by
+  unfold bhksPaperConstantFactorReal
+  exact pow_nonneg (by nlinarith) _
+
+/-- The paper `‖f‖₂^(2n-1)` factor is non-negative. -/
+theorem bhksPaperCoeffNormFactorReal_nonneg (f : Hex.ZPoly) :
+    0 ≤ bhksPaperCoeffNormFactorReal f := by
+  unfold bhksPaperCoeffNormFactorReal HexPolyZMathlib.l2norm
+  exact pow_nonneg (Real.sqrt_nonneg _) _
+
+/-- The paper `(log ‖f‖₂)^n` factor is non-negative. -/
+theorem bhksPaperLogFactorReal_nonneg (f : Hex.ZPoly) :
+    0 ≤ bhksPaperLogFactorReal f := by
+  unfold bhksPaperLogFactorReal
+  exact pow_nonneg (l2norm_log_nonneg f) _
+
+/--
+The product-shaped BHKS paper threshold is non-negative under the project
+`0 ≤ C` convention.
+-/
+theorem bhksPaperThresholdReal_nonneg
+    (f : Hex.ZPoly) {C : ℝ} (hC_nonneg : 0 ≤ C) :
+    0 ≤ bhksPaperThresholdReal f C := by
+  unfold bhksPaperThresholdReal
+  exact mul_nonneg
+    (mul_nonneg
+      (mul_nonneg
+        (bhksPaperDegreeFactorReal_nonneg f)
+        (bhksPaperConstantFactorReal_nonneg f hC_nonneg))
+      (bhksPaperCoeffNormFactorReal_nonneg f))
+    (bhksPaperLogFactorReal_nonneg f)
+
 /--
 The Mathlib coefficient-vector norm squared is bounded by the executable
 squared coefficient norm.
@@ -425,14 +469,12 @@ theorem bhksPaperThresholdReal_le_thresholdNatBound
     bhksPaperConstantFactorReal_le_fourPowFactor f C hC_nonneg hC
   have hcoeff := bhksPaperCoeffNormFactorReal_le_coeffNormFactor f
   have hlog := bhksPaperLogFactorReal_le_log2Factor f
-  have hconstant_nonneg : 0 ≤ bhksPaperConstantFactorReal f C := by
-    exact pow_nonneg (mul_nonneg (by norm_num) hC_nonneg) _
-  have hcoeff_nonneg : 0 ≤ bhksPaperCoeffNormFactorReal f := by
-    exact pow_nonneg (by
-      unfold HexPolyZMathlib.l2norm
-      exact Real.sqrt_nonneg _) _
-  have hlog_nonneg : 0 ≤ bhksPaperLogFactorReal f := by
-    exact pow_nonneg (l2norm_log_nonneg f) _
+  have hconstant_nonneg : 0 ≤ bhksPaperConstantFactorReal f C :=
+    bhksPaperConstantFactorReal_nonneg f hC_nonneg
+  have hcoeff_nonneg : 0 ≤ bhksPaperCoeffNormFactorReal f :=
+    bhksPaperCoeffNormFactorReal_nonneg f
+  have hlog_nonneg : 0 ≤ bhksPaperLogFactorReal f :=
+    bhksPaperLogFactorReal_nonneg f
   have hdegree_bound_nonneg : 0 ≤ (bhksDegreeFactor f : ℝ) := by
     exact_mod_cast Nat.zero_le (bhksDegreeFactor f)
   have hdegree_constant_bound_nonneg :
