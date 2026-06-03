@@ -1225,6 +1225,46 @@ theorem precision_separation_of_bridge_data
     2 * Hex.bhksCoeffBound W.input j < W.liftData.p ^ W.liftData.k := by
   exact D.precision_separation j hj
 
+/--
+Corrected auxiliary-polynomial squared-l2 bound supplied by
+`BadVectorBridgeData`.
+
+This instantiates `BHKS.auxiliaryPolynomialWithCorrections_l2norm_sq_le` with
+the bridge package's canonical projected-vector array and correction accessor,
+then rewrites the witness auxiliary polynomial through `auxiliary_eq'`.
+-/
+theorem auxiliaryPolynomial_l2norm_sq_le_of_bridge_data
+    {W : ExecutableBadVectorWitness}
+    {trueSupports : Set (Set (Fin W.projectedRows.factorCount))}
+    (D : BadVectorBridgeData W trueSupports)
+    (v : Fin W.projectedRows.factorCount → ℤ)
+    (hin : v ∈ BHKS.projectedRowSpanInt W.projectedRows)
+    (hnot : v ∉ BHKS.trueFactorIndicatorLattice trueSupports)
+    (h :
+      ∀ (i : Nat), i < W.liftData.liftedFactors.size → ∀ (j : Nat),
+        ((Hex.cldCoeffs W.input W.liftData.p W.liftData.k
+            (W.liftData.liftedFactors.getD i 0)).getD j 0).natAbs ≤
+          Hex.bhksCoeffBound W.input j) :
+    (HexPolyZMathlib.l2norm W.auxiliaryPolynomial) ^ 2 ≤
+      2 *
+          ((∑ i : Fin W.liftData.liftedFactors.size,
+              (((W.projectedVectorArray v).getD i.val 0 : ℝ) ^ 2)) *
+            ((W.liftData.liftedFactors.size : ℝ) *
+              (BHKS.cldColumnNormBound W.input W.liftData.p : ℝ))) +
+        2 *
+          (∑ j ∈ Finset.range (W.input.degree?.getD 0),
+            (((D.auxiliaryCorrections v hin hnot).getD j 0 : ℝ) ^ 2 *
+              ((W.liftData.p : ℝ) ^
+                (2 *
+                  (W.liftData.k -
+                    Hex.bhksCoeffCutThreshold W.liftData.p W.input j))))) := by
+  unfold ExecutableBadVectorWitness.auxiliaryPolynomial
+  rw [D.auxiliary_eq' v hin hnot]
+  exact
+    BHKS.auxiliaryPolynomialWithCorrections_l2norm_sq_le
+      W.input W.liftData (W.projectedVectorArray v)
+      (D.auxiliaryCorrections v hin hnot) h
+
 end BadVectorBridgeData
 
 /--
