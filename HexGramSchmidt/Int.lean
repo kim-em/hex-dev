@@ -4296,6 +4296,65 @@ private theorem bareissGramRowInvariant_noPivotLoop_initial_canonical
     (b := b) 0 fuel (bareissGramRowInvariant_initial b)
     (isCanonicalAt_initial b) rfl hquot).2 i
 
+/-- Matrix-level Bareiss-step divisibility on the initial no-pivot Gram
+trajectory: the numerator of one fraction-free row update is divisible by the
+previous pivot. The witness comes from the canonical-`StepWitness` quotient
+package applied at the reachable regular step, with the matrix-level numerator
+recovered by taking the dot product of the coefficient-level identity against
+the input row `b.row j`. -/
+private theorem noPivotLoop_initial_gram_bareiss_step_dvd
+    (b : Matrix Int n m) (hquot : StepWitness b)
+    (fuel : Nat)
+    (h_prefix_none :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none)
+    (hnext :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 < n)
+    (hp :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
+          (Matrix.noPivotLoop fuel
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step][
+          (Matrix.noPivotLoop fuel
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step] ≠ 0)
+    (i j : Fin n)
+    (hi :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 ≤ i.val) :
+    let state := Matrix.noPivotLoop fuel
+      (Matrix.noPivotInitialState (Matrix.gramMatrix b))
+    let k : Fin n := ⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hnext⟩
+    state.prevPivot ∣
+      state.matrix[k][k] * state.matrix[i][j] -
+        state.matrix[i][k] * state.matrix[k][j] := by
+  intro state k
+  let hinv := bareissGramRowInvariant_noPivotLoop_initial b fuel hquot
+  let h_canon := bareissGramRowInvariant_noPivotLoop_initial_canonical b fuel hquot
+  have hq := hquot fuel hinv h_canon h_prefix_none hnext hp i hi
+  have h_step_le_i : state.step ≤ i.val := Nat.le_trans (Nat.le_succ _) hi
+  have h_step_le_k : state.step ≤ k.val := Nat.le_refl _
+  refine ⟨Matrix.dot (Matrix.rowCombination b (Vector.ofFn hq.q)) (b.row j), ?_⟩
+  rw [hinv.entry_eq_dot i j h_step_le_i, hinv.entry_eq_dot k j h_step_le_k]
+  rw [← dot_bareiss_row_update_left state.matrix[k][k] state.matrix[i][k]
+        (Matrix.rowCombination b (hinv.coeff i))
+        (Matrix.rowCombination b (hinv.coeff k))
+        (b.row j)]
+  rw [← rowCombination_bareiss_coeff_update b
+        state.matrix[k][k] state.matrix[i][k] (hinv.coeff i) (hinv.coeff k)]
+  have h_q_eq_num :
+      (Vector.ofFn fun a : Fin n =>
+        state.matrix[k][k] * (hinv.coeff i)[a] -
+          state.matrix[i][k] * (hinv.coeff k)[a]) =
+        Vector.ofFn fun a : Fin n => hq.q a * state.prevPivot := by
+    apply Vector.ext
+    intro a ha
+    rw [Vector.getElem_ofFn, Vector.getElem_ofFn]
+    exact hq.coeff_num_eq_mul ⟨a, ha⟩
+  rw [h_q_eq_num]
+  rw [dot_rowCombination_mul_right_int b hq.q state.prevPivot (b.row j)]
+  exact Int.mul_comm _ _
+
 /-- Caller-facing row-vector package for a no-pivot Gram pass from the
 initial state. Downstream singular-step proofs can apply this at the loop
 result to rewrite active trailing entries as dots against represented lattice
