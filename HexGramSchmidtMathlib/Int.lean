@@ -3621,6 +3621,562 @@ theorem gramDetVecEntry_eq_leadingPrefix_bareiss
       rw [hright]
       simpa [data, GM] using hleft
 
+/-! ### Augmented Gram matrix for determinantal identification of
+`bareissGramCanonicalCoeff`
+
+The canonical row-coefficient vector of the initial no-pivot Bareiss trajectory
+on `gramMatrix b` is identified with a trailing-column entry of the no-pivot
+Bareiss pass on an `(n + 1) × (n + 1)` augmented matrix.  The upper `n × n`
+block of the augmented matrix is `gramMatrix b`; the trailing column at upper
+rows carries the standard basis vector `δ_a` at the chosen coefficient slot
+`a`; the trailing row is structurally zero.
+
+Because the trailing row is zero and the no-pivot Bareiss update at slot
+`(i, j)` with `i, j < n` only consults the upper block, the upper-block
+trajectory on the augmented matrix exactly mirrors the trajectory on
+`gramMatrix b`.  Because the trailing-column update at row `i < n` and step
+`k < i.val` mirrors the canonical-coefficient Bareiss step, the trailing
+column at upper rows tracks `bareissGramCanonicalCoeff b fuel i` at slot `a`.
+-/
+
+/-- Augmented `(n + 1) × (n + 1)` matrix used to identify
+`bareissGramCanonicalCoeff b fuel i [a]` with a trailing-column entry of the
+no-pivot Bareiss pass.  Upper block is `gramMatrix b`; trailing column at
+upper rows is the standard basis vector `δ_a`; trailing row is zero. -/
+def augmentedGram (b : Matrix Int n m) (a : Fin n) :
+    Hex.Matrix Int (n + 1) (n + 1) :=
+  Matrix.ofFn fun i j : Fin (n + 1) =>
+    if hi : i.val < n then
+      if hj : j.val < n then
+        (Matrix.gramMatrix b)[(⟨i.val, hi⟩ : Fin n)][(⟨j.val, hj⟩ : Fin n)]
+      else
+        if i.val = a.val then (1 : Int) else 0
+    else
+      0
+
+/-- Upper-block entry of `augmentedGram b a` agrees with `gramMatrix b`. -/
+theorem augmentedGram_upper_block
+    (b : Matrix Int n m) (a : Fin n) (i j : Fin n) :
+    (augmentedGram b a)[(⟨i.val, Nat.lt_succ_of_lt i.isLt⟩ : Fin (n + 1))][
+        (⟨j.val, Nat.lt_succ_of_lt j.isLt⟩ : Fin (n + 1))] =
+      (Matrix.gramMatrix b)[i][j] := by
+  unfold augmentedGram
+  rw [Matrix.getElem_ofFn]
+  simp [i.isLt, j.isLt]
+
+/-- Trailing-column entry of `augmentedGram b a` at an upper row `i : Fin n`
+is `1` when `i = a` and `0` otherwise. -/
+theorem augmentedGram_trailing_col
+    (b : Matrix Int n m) (a : Fin n) (i : Fin n) :
+    (augmentedGram b a)[(⟨i.val, Nat.lt_succ_of_lt i.isLt⟩ : Fin (n + 1))][
+        Fin.last n] =
+      (if i = a then (1 : Int) else 0) := by
+  unfold augmentedGram
+  rw [Matrix.getElem_ofFn]
+  have h_iff : (i.val = a.val) ↔ (i = a) := ⟨Fin.ext, fun h => by rw [h]⟩
+  simp [i.isLt, h_iff]
+
+/-- Trailing-row entries of `augmentedGram b a` are all zero. -/
+theorem augmentedGram_trailing_row
+    (b : Matrix Int n m) (a : Fin n) (j : Fin (n + 1)) :
+    (augmentedGram b a)[Fin.last n][j] = 0 := by
+  unfold augmentedGram
+  rw [Matrix.getElem_ofFn]
+  have hn : ¬ (Fin.last n).val < n := by show ¬ n < n; omega
+  rw [dif_neg hn]
+
+/-- Substitution helper: matrix entries agree when Fin indices are equal.
+Used to reindex matrix-entry equalities across propositionally-equal Fin
+indices without provoking motive issues from `rw`. -/
+private theorem matrix_entry_eq_of_eq {n m : Nat} (M : Hex.Matrix Int n m)
+    {i i' : Fin n} {j j' : Fin m} (hi : i = i') (hj : j = j') :
+    M[i][j] = M[i'][j'] := by
+  subst hi; subst hj; rfl
+
+/-- Local copy of `HexMatrixMathlib.trailing_eq_at_step` (private there):
+re-state `BareissNoPivotInvariant.trailing_eq` with the step value supplied
+externally so the dependent bordered-minor type matches the desired
+`s = state.step` substitution cleanly. -/
+private theorem trailing_eq_at_step_local
+    {n' : Nat} {M : Hex.Matrix Int n' n'} {state : Matrix.BareissState n'}
+    (hinv : HexMatrixMathlib.BareissNoPivotInvariant M state)
+    (s : Nat) (hs : s < n') (hstep : s = state.step)
+    (a c : Fin n') (hsa : s ≤ a.val) (hsc : s ≤ c.val) :
+    state.matrix[a][c] =
+      Hex.Matrix.det (Hex.Matrix.borderedMinor M s hs a c) := by
+  subst hstep
+  exact hinv.trailing_eq hs a c hsa hsc
+
+/-- Auxiliary monotonicity: if a no-pivot Bareiss state reaches
+`fuel + 1` iterations from `noPivotInitialState M` without recording a singular
+step, then the prefix at `fuel` iterations is also non-singular.  Singular
+states are fixed points of further iteration, so a non-singular outcome at
+`fuel + 1` forces a non-singular prefix. -/
+private theorem noPivotLoop_singularStep_none_of_succ
+    {n : Nat} (M : Matrix Int n n) (fuel : Nat)
+    (h_no_sing :
+      (Matrix.noPivotLoop (fuel + 1)
+          (Matrix.noPivotInitialState M)).singularStep = none) :
+    (Matrix.noPivotLoop fuel (Matrix.noPivotInitialState M)).singularStep = none := by
+  set init := Matrix.noPivotInitialState M with hinit
+  have h_init : init.singularStep = none := rfl
+  rcases noPivotLoop_singular_inv (n := n) fuel init h_init with hnone | ⟨k, hsing, hstep, hzero, hklt⟩
+  · exact hnone
+  · -- Singular at fuel persists to fuel + 1, contradicting h_no_sing.
+    exfalso
+    have hpersist : Matrix.noPivotLoop (fuel + 1) init = Matrix.noPivotLoop fuel init :=
+      noPivotLoop_extends_singularStep init fuel 1 k hsing hstep hzero hklt
+    rw [hpersist, hsing] at h_no_sing
+    nomatch h_no_sing
+
+/-- Combined invariant relating the no-pivot Bareiss trajectory on the
+augmented matrix to the trajectory on `gramMatrix b`.  Under `fuel + 1 ≤ n`
+and a non-singular prefix on the Gram side, the augmented loop tracks the
+Gram loop on (i) `step`, (ii) `prevPivot`, (iii) the upper `n × n` block,
+and (iv) carries the canonical row coefficient in its trailing column. -/
+private theorem noPivotLoop_augmentedGram_invariant
+    (b : Matrix Int n m) (a : Fin n) (fuel : Nat) :
+    fuel + 1 ≤ n →
+      (Matrix.noPivotLoop fuel
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none →
+      (Matrix.noPivotLoop fuel
+          (Matrix.noPivotInitialState (augmentedGram b a))).step =
+        (Matrix.noPivotLoop fuel
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step ∧
+      (Matrix.noPivotLoop fuel
+          (Matrix.noPivotInitialState (augmentedGram b a))).prevPivot =
+        (Matrix.noPivotLoop fuel
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).prevPivot ∧
+      (Matrix.noPivotLoop fuel
+          (Matrix.noPivotInitialState (augmentedGram b a))).singularStep = none ∧
+      (∀ i j : Fin n,
+        (Matrix.noPivotLoop fuel
+            (Matrix.noPivotInitialState (augmentedGram b a))).matrix[
+          (⟨i.val, Nat.lt_succ_of_lt i.isLt⟩ : Fin (n + 1))][
+          (⟨j.val, Nat.lt_succ_of_lt j.isLt⟩ : Fin (n + 1))] =
+          (Matrix.noPivotLoop fuel
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[i][j]) ∧
+      (∀ i : Fin n,
+        (Matrix.noPivotLoop fuel
+            (Matrix.noPivotInitialState (augmentedGram b a))).matrix[
+          (⟨i.val, Nat.lt_succ_of_lt i.isLt⟩ : Fin (n + 1))][Fin.last n] =
+          (bareissGramCanonicalCoeff b fuel i)[a]) := by
+  induction fuel with
+  | zero =>
+      intro _ _
+      refine ⟨rfl, rfl, rfl, ?_, ?_⟩
+      · intro i j
+        change (augmentedGram b a)[(⟨i.val, Nat.lt_succ_of_lt i.isLt⟩ : Fin (n + 1))][
+            (⟨j.val, Nat.lt_succ_of_lt j.isLt⟩ : Fin (n + 1))] =
+          (Matrix.gramMatrix b)[i][j]
+        exact augmentedGram_upper_block b a i j
+      · intro i
+        change (augmentedGram b a)[(⟨i.val, Nat.lt_succ_of_lt i.isLt⟩ : Fin (n + 1))][
+            Fin.last n] =
+          (Vector.ofFn fun k : Fin n => if i = k then (1 : Int) else 0)[a]
+        rw [augmentedGram_trailing_col]
+        simp
+  | succ fuel ih =>
+      intro hfuel h_no_sing
+      -- Pull the previous-fuel invariant out of the inductive hypothesis.
+      have hfuel_prev : fuel + 1 ≤ n := by omega
+      have h_no_sing_prev :
+          (Matrix.noPivotLoop fuel
+              (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none :=
+        noPivotLoop_singularStep_none_of_succ (Matrix.gramMatrix b) fuel h_no_sing
+      obtain ⟨h_step_prev, h_prev_prev, h_sing_aug_prev, h_block_prev, h_trail_prev⟩ :=
+        ih hfuel_prev h_no_sing_prev
+      -- Set up shorthand for the previous-fuel states.
+      set stateG := Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b)) with hstateG
+      set stateA := Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (augmentedGram b a)) with hstateA
+      -- Gram side has not finished and pivot is nonzero (else singular at fuel + 1).
+      have h_step_G_fuel : stateG.step = fuel := by
+        have h := Matrix.noPivotLoop_step_eq_add_of_singularStep_none fuel
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b)) rfl (by
+            show 0 + fuel + 1 ≤ n; omega) h_no_sing_prev
+        simpa [Matrix.noPivotInitialState] using h
+      have hDone_G : stateG.step + 1 < n := by rw [h_step_G_fuel]; omega
+      have hk_G_lt : stateG.step < n := Nat.lt_of_succ_lt hDone_G
+      -- Pivot non-zero on the Gram side.
+      have h_pivot_G_ne :
+          stateG.matrix[(⟨stateG.step, hk_G_lt⟩ : Fin n)][
+              (⟨stateG.step, hk_G_lt⟩ : Fin n)] ≠ 0 := by
+        intro hzero
+        -- Singular branch at fuel + 1 would record a singular step,
+        -- contradicting `h_no_sing`.
+        have h_sing_branch : Matrix.noPivotLoop 1 stateG
+            = { stateG with singularStep := some stateG.step } :=
+          Matrix.noPivotLoop_singular_branch 0 stateG hDone_G hzero
+        have h_succ_eq :
+            Matrix.noPivotLoop (fuel + 1)
+              (Matrix.noPivotInitialState (Matrix.gramMatrix b)) =
+            Matrix.noPivotLoop 1 stateG := by
+          rw [Matrix.noPivotLoop_add fuel 1]
+        rw [h_succ_eq, h_sing_branch] at h_no_sing
+        simp at h_no_sing
+      -- Augmented side: step matches, so it has not finished either.
+      have h_step_A_fuel : stateA.step = fuel := h_step_prev.trans h_step_G_fuel
+      have hDone_A : stateA.step + 1 < n + 1 := by rw [h_step_A_fuel]; omega
+      have hk_A_lt : stateA.step < n + 1 := Nat.lt_of_succ_lt hDone_A
+      -- Pivot at the lifted index on the augmented side equals the Gram pivot.
+      have h_pivot_A_eq :
+          stateA.matrix[(⟨stateA.step, hk_A_lt⟩ : Fin (n + 1))][
+              (⟨stateA.step, hk_A_lt⟩ : Fin (n + 1))] =
+            stateG.matrix[(⟨stateG.step, hk_G_lt⟩ : Fin n)][
+              (⟨stateG.step, hk_G_lt⟩ : Fin n)] := by
+        have h_idx :
+            (⟨stateA.step, hk_A_lt⟩ : Fin (n + 1)) =
+              (⟨(⟨stateG.step, hk_G_lt⟩ : Fin n).val,
+                Nat.lt_succ_of_lt (⟨stateG.step, hk_G_lt⟩ : Fin n).isLt⟩ :
+                  Fin (n + 1)) := Fin.ext h_step_prev
+        calc stateA.matrix[(⟨stateA.step, hk_A_lt⟩ : Fin (n + 1))][
+              (⟨stateA.step, hk_A_lt⟩ : Fin (n + 1))]
+            = stateA.matrix[(⟨(⟨stateG.step, hk_G_lt⟩ : Fin n).val,
+                Nat.lt_succ_of_lt (⟨stateG.step, hk_G_lt⟩ : Fin n).isLt⟩ :
+                  Fin (n + 1))][(⟨(⟨stateG.step, hk_G_lt⟩ : Fin n).val,
+                Nat.lt_succ_of_lt (⟨stateG.step, hk_G_lt⟩ : Fin n).isLt⟩ :
+                  Fin (n + 1))] := matrix_entry_eq_of_eq _ h_idx h_idx
+          _ = stateG.matrix[(⟨stateG.step, hk_G_lt⟩ : Fin n)][
+                (⟨stateG.step, hk_G_lt⟩ : Fin n)] :=
+              h_block_prev ⟨stateG.step, hk_G_lt⟩ ⟨stateG.step, hk_G_lt⟩
+      have h_pivot_A_ne :
+          stateA.matrix[(⟨stateA.step, hk_A_lt⟩ : Fin (n + 1))][
+              (⟨stateA.step, hk_A_lt⟩ : Fin (n + 1))] ≠ 0 := by
+        rw [h_pivot_A_eq]; exact h_pivot_G_ne
+      -- Peel off the last iteration on both sides.
+      have h_G_succ :
+          Matrix.noPivotLoop (fuel + 1)
+              (Matrix.noPivotInitialState (Matrix.gramMatrix b)) =
+            Matrix.noPivotLoop 0
+              { step := stateG.step + 1
+                matrix := Matrix.stepMatrix stateG.matrix stateG.step
+                  stateG.matrix[(⟨stateG.step, hk_G_lt⟩ : Fin n)][
+                    (⟨stateG.step, hk_G_lt⟩ : Fin n)] stateG.prevPivot
+                prevPivot := stateG.matrix[(⟨stateG.step, hk_G_lt⟩ : Fin n)][
+                  (⟨stateG.step, hk_G_lt⟩ : Fin n)]
+                rowSwaps := stateG.rowSwaps
+                singularStep := none } := by
+        rw [Matrix.noPivotLoop_add fuel 1]
+        exact Matrix.noPivotLoop_regular_branch 0 stateG hDone_G h_pivot_G_ne
+      have h_A_succ :
+          Matrix.noPivotLoop (fuel + 1)
+              (Matrix.noPivotInitialState (augmentedGram b a)) =
+            Matrix.noPivotLoop 0
+              { step := stateA.step + 1
+                matrix := Matrix.stepMatrix stateA.matrix stateA.step
+                  stateA.matrix[(⟨stateA.step, hk_A_lt⟩ : Fin (n + 1))][
+                    (⟨stateA.step, hk_A_lt⟩ : Fin (n + 1))] stateA.prevPivot
+                prevPivot := stateA.matrix[(⟨stateA.step, hk_A_lt⟩ : Fin (n + 1))][
+                  (⟨stateA.step, hk_A_lt⟩ : Fin (n + 1))]
+                rowSwaps := stateA.rowSwaps
+                singularStep := none } := by
+        rw [Matrix.noPivotLoop_add fuel 1]
+        exact Matrix.noPivotLoop_regular_branch 0 stateA hDone_A h_pivot_A_ne
+      -- Both peeled states are zero-fuel, so the loop returns them unchanged.
+      rw [h_G_succ, h_A_succ, Matrix.noPivotLoop_zero_fuel, Matrix.noPivotLoop_zero_fuel]
+      -- Now project each component of the invariant.
+      refine ⟨?_, ?_, ?_, ?_, ?_⟩
+      · -- Step equality.
+        show stateA.step + 1 = stateG.step + 1
+        exact congrArg (· + 1) h_step_prev
+      · -- prevPivot equality.
+        show stateA.matrix[(⟨stateA.step, hk_A_lt⟩ : Fin (n + 1))][
+              (⟨stateA.step, hk_A_lt⟩ : Fin (n + 1))] =
+            stateG.matrix[(⟨stateG.step, hk_G_lt⟩ : Fin n)][
+              (⟨stateG.step, hk_G_lt⟩ : Fin n)]
+        exact h_pivot_A_eq
+      · -- singularStep = none.
+        rfl
+      · -- Upper-block invariant.
+        intro i j
+        -- Set up the lifted indices and `k` index used in `stepMatrix`.
+        set iA : Fin (n + 1) := ⟨i.val, Nat.lt_succ_of_lt i.isLt⟩ with hiA
+        set jA : Fin (n + 1) := ⟨j.val, Nat.lt_succ_of_lt j.isLt⟩ with hjA
+        -- Case-split on whether step `fuel = stateG.step` updates this entry.
+        by_cases hi_lt : stateG.step < i.val
+        · by_cases hj_lt : stateG.step < j.val
+          · -- Trailing block: Bareiss update fires on both sides.
+            have hi_lt_A : stateA.step < iA.val := by
+              show stateA.step < i.val
+              rw [h_step_prev]; exact hi_lt
+            have hj_lt_A : stateA.step < jA.val := by
+              show stateA.step < j.val
+              rw [h_step_prev]; exact hj_lt
+            rw [Matrix.stepMatrix_update_eq stateA.matrix stateA.step _ _ iA jA
+              hi_lt_A hj_lt_A]
+            rw [Matrix.stepMatrix_update_eq stateG.matrix stateG.step _ _ i j
+              hi_lt hj_lt]
+            dsimp only []
+            -- Rewrite the four matrix entries on the LHS using the block IH.
+            have h_ij_A : stateA.matrix[iA][jA] = stateG.matrix[i][j] :=
+              h_block_prev i j
+            -- (colK : Fin (n+1)) for aug, (colK_G : Fin n) for gram.
+            -- These have step.val = stateG.step (by h_step_prev) and we use
+            -- the IH at row=i, col=⟨stateG.step, hk_G_lt⟩, and so on.
+            have h_step_lift_eq :
+                (⟨stateA.step, Nat.lt_trans hi_lt_A iA.isLt⟩ : Fin (n + 1)) =
+                  (⟨(⟨stateG.step, hk_G_lt⟩ : Fin n).val,
+                    Nat.lt_succ_of_lt (⟨stateG.step, hk_G_lt⟩ : Fin n).isLt⟩ :
+                      Fin (n + 1)) := by
+              apply Fin.ext
+              show stateA.step = stateG.step
+              exact h_step_prev
+            have h_iL_A :
+                stateA.matrix[iA][(⟨stateA.step, Nat.lt_trans hi_lt_A iA.isLt⟩ :
+                    Fin (n + 1))] =
+                  stateG.matrix[i][(⟨stateG.step, hk_G_lt⟩ : Fin n)] := by
+              calc stateA.matrix[iA][(⟨stateA.step, Nat.lt_trans hi_lt_A iA.isLt⟩ :
+                      Fin (n + 1))]
+                  = stateA.matrix[(⟨i.val, Nat.lt_succ_of_lt i.isLt⟩ : Fin (n + 1))][
+                      (⟨(⟨stateG.step, hk_G_lt⟩ : Fin n).val,
+                        Nat.lt_succ_of_lt (⟨stateG.step, hk_G_lt⟩ : Fin n).isLt⟩ :
+                          Fin (n + 1))] := matrix_entry_eq_of_eq _ rfl h_step_lift_eq
+                _ = stateG.matrix[i][(⟨stateG.step, hk_G_lt⟩ : Fin n)] :=
+                    h_block_prev i ⟨stateG.step, hk_G_lt⟩
+            have h_kJ_A :
+                stateA.matrix[(⟨stateA.step, Nat.lt_trans hj_lt_A jA.isLt⟩ :
+                    Fin (n + 1))][jA] =
+                  stateG.matrix[(⟨stateG.step, hk_G_lt⟩ : Fin n)][j] := by
+              calc stateA.matrix[(⟨stateA.step, Nat.lt_trans hj_lt_A jA.isLt⟩ :
+                      Fin (n + 1))][jA]
+                  = stateA.matrix[(⟨(⟨stateG.step, hk_G_lt⟩ : Fin n).val,
+                      Nat.lt_succ_of_lt (⟨stateG.step, hk_G_lt⟩ : Fin n).isLt⟩ :
+                        Fin (n + 1))][(⟨j.val, Nat.lt_succ_of_lt j.isLt⟩ : Fin (n + 1))] :=
+                    matrix_entry_eq_of_eq _ h_step_lift_eq rfl
+                _ = stateG.matrix[(⟨stateG.step, hk_G_lt⟩ : Fin n)][j] :=
+                    h_block_prev ⟨stateG.step, hk_G_lt⟩ j
+            rw [h_ij_A, h_iL_A, h_kJ_A, h_pivot_A_eq, h_prev_prev]
+          · -- Trailing row, but column ≤ step. Then both sides preserve the entry.
+            -- On aug, the `stepMatrix` update condition `k < i ∧ k < j` fails because `j ≤ k`.
+            -- Could be `j.val < k` (no update) or `j.val = k` (clear pivot col below;
+            -- value 0, which matches Gram side since both are 0 below pivot).
+            by_cases hj_eq : j.val = stateG.step
+            · -- Clear pivot column below: both sides set to 0.
+              have hj_eq_A : jA.val = stateA.step := by
+                show j.val = stateA.step
+                rw [h_step_prev]; exact hj_eq
+              have hi_lt_A : stateA.step < iA.val := by
+                show stateA.step < i.val
+                rw [h_step_prev]; exact hi_lt
+              rw [Matrix.stepMatrix_pivot_col_below stateA.matrix stateA.step _ _ iA jA
+                hi_lt_A hj_eq_A]
+              rw [Matrix.stepMatrix_pivot_col_below stateG.matrix stateG.step _ _ i j
+                hi_lt hj_eq]
+            · -- Column strictly below pivot: both sides preserve their value.
+              have hj_lt_step : j.val < stateG.step := by omega
+              have hj_lt_step_A : jA.val < stateA.step := by
+                show j.val < stateA.step
+                rw [h_step_prev]; exact hj_lt_step
+              have h_not_update_A : ¬ (stateA.step < iA.val ∧ stateA.step < jA.val) := by
+                intro ⟨_, h⟩; omega
+              have h_not_col_A : ¬ (stateA.step < iA.val ∧ jA.val = stateA.step) := by
+                intro ⟨_, h⟩; omega
+              have h_not_update_G : ¬ (stateG.step < i.val ∧ stateG.step < j.val) := by
+                intro ⟨_, h⟩; omega
+              have h_not_col_G : ¬ (stateG.step < i.val ∧ j.val = stateG.step) := by
+                intro ⟨_, h⟩; omega
+              rw [Matrix.stepMatrix_eq_of_not_update stateA.matrix stateA.step _ _ iA jA
+                h_not_update_A h_not_col_A]
+              rw [Matrix.stepMatrix_eq_of_not_update stateG.matrix stateG.step _ _ i j
+                h_not_update_G h_not_col_G]
+              exact h_block_prev i j
+        · -- Row ≤ step: no update on either side.
+          have hi_le_step : i.val ≤ stateG.step := Nat.le_of_not_lt hi_lt
+          have hi_le_step_A : iA.val ≤ stateA.step := by
+            show i.val ≤ stateA.step
+            rw [h_step_prev]; exact hi_le_step
+          have h_not_update_A : ¬ (stateA.step < iA.val ∧ stateA.step < jA.val) := by
+            intro ⟨h, _⟩; exact Nat.not_lt_of_ge hi_le_step_A h
+          have h_not_col_A : ¬ (stateA.step < iA.val ∧ jA.val = stateA.step) := by
+            intro ⟨h, _⟩; exact Nat.not_lt_of_ge hi_le_step_A h
+          have h_not_update_G : ¬ (stateG.step < i.val ∧ stateG.step < j.val) := by
+            intro ⟨h, _⟩; exact Nat.not_lt_of_ge hi_le_step h
+          have h_not_col_G : ¬ (stateG.step < i.val ∧ j.val = stateG.step) := by
+            intro ⟨h, _⟩; exact Nat.not_lt_of_ge hi_le_step h
+          rw [Matrix.stepMatrix_eq_of_not_update stateA.matrix stateA.step _ _ iA jA
+            h_not_update_A h_not_col_A]
+          rw [Matrix.stepMatrix_eq_of_not_update stateG.matrix stateG.step _ _ i j
+            h_not_update_G h_not_col_G]
+          exact h_block_prev i j
+      · -- Trailing-column invariant.
+        intro i
+        set iA : Fin (n + 1) := ⟨i.val, Nat.lt_succ_of_lt i.isLt⟩ with hiA
+        set L : Fin (n + 1) := Fin.last n with hL
+        have hL_lt : stateA.step < L.val := by
+          show stateA.step < n
+          rw [h_step_prev]; exact hk_G_lt
+        by_cases hi_lt : stateG.step < i.val
+        · -- Active row: both sides apply the Bareiss update.
+          have hi_lt_A : stateA.step < iA.val := by
+            show stateA.step < i.val
+            rw [h_step_prev]; exact hi_lt
+          rw [Matrix.stepMatrix_update_eq stateA.matrix stateA.step _ _ iA L
+            hi_lt_A hL_lt]
+          dsimp only []
+          -- Match the four entries on the LHS via the IH:
+          -- - the trailing-column entry at row i: by trailing IH.
+          -- - the entry (i, step↑): by block IH after reindexing.
+          -- - the entry (step↑, last n): by trailing IH at row k.
+          -- The pivot at (step↑, step↑) is `h_pivot_A_eq`.
+          have h_iL_A : stateA.matrix[iA][L] = (bareissGramCanonicalCoeff b fuel i)[a] :=
+            h_trail_prev i
+          have h_step_lift_eq :
+              (⟨stateA.step, Nat.lt_trans hi_lt_A iA.isLt⟩ : Fin (n + 1)) =
+                (⟨(⟨stateG.step, hk_G_lt⟩ : Fin n).val,
+                  Nat.lt_succ_of_lt (⟨stateG.step, hk_G_lt⟩ : Fin n).isLt⟩ :
+                    Fin (n + 1)) := by
+            apply Fin.ext
+            show stateA.step = stateG.step
+            exact h_step_prev
+          have h_iK_A :
+              stateA.matrix[iA][(⟨stateA.step, Nat.lt_trans hi_lt_A iA.isLt⟩ :
+                  Fin (n + 1))] =
+                stateG.matrix[i][(⟨stateG.step, hk_G_lt⟩ : Fin n)] := by
+            calc stateA.matrix[iA][(⟨stateA.step, Nat.lt_trans hi_lt_A iA.isLt⟩ :
+                    Fin (n + 1))]
+                = stateA.matrix[(⟨i.val, Nat.lt_succ_of_lt i.isLt⟩ : Fin (n + 1))][
+                    (⟨(⟨stateG.step, hk_G_lt⟩ : Fin n).val,
+                      Nat.lt_succ_of_lt (⟨stateG.step, hk_G_lt⟩ : Fin n).isLt⟩ :
+                        Fin (n + 1))] := matrix_entry_eq_of_eq _ rfl h_step_lift_eq
+              _ = stateG.matrix[i][(⟨stateG.step, hk_G_lt⟩ : Fin n)] :=
+                  h_block_prev i ⟨stateG.step, hk_G_lt⟩
+          have h_kL_A :
+              stateA.matrix[(⟨stateA.step, Nat.lt_trans hL_lt L.isLt⟩ : Fin (n + 1))][L] =
+                (bareissGramCanonicalCoeff b fuel ⟨stateG.step, hk_G_lt⟩)[a] := by
+            calc stateA.matrix[(⟨stateA.step, Nat.lt_trans hL_lt L.isLt⟩ :
+                    Fin (n + 1))][L]
+                = stateA.matrix[(⟨(⟨stateG.step, hk_G_lt⟩ : Fin n).val,
+                    Nat.lt_succ_of_lt (⟨stateG.step, hk_G_lt⟩ : Fin n).isLt⟩ :
+                      Fin (n + 1))][Fin.last n] :=
+                  matrix_entry_eq_of_eq _ h_step_lift_eq rfl
+              _ = (bareissGramCanonicalCoeff b fuel
+                    (⟨stateG.step, hk_G_lt⟩ : Fin n))[a] :=
+                  h_trail_prev ⟨stateG.step, hk_G_lt⟩
+          rw [h_iL_A, h_iK_A, h_kL_A, h_pivot_A_eq, h_prev_prev]
+          -- The RHS is the canonical-coefficient recursion at active row.
+          have hp_canon :
+              (Matrix.noPivotLoop fuel
+                  (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
+                (Matrix.noPivotLoop fuel
+                  (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step][
+                (Matrix.noPivotLoop fuel
+                  (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step] ≠ 0 := by
+            show stateG.matrix[stateG.step][stateG.step] ≠ 0
+            -- Lower the Fin index proof.
+            intro hzero
+            apply h_pivot_G_ne
+            exact hzero
+          have hnext_canon :
+              (Matrix.noPivotLoop fuel
+                  (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 < n := by
+            show stateG.step + 1 < n; exact hDone_G
+          have hi_lt_canon :
+              (Matrix.noPivotLoop fuel
+                  (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 ≤ i.val := by
+            show stateG.step + 1 ≤ i.val; exact hi_lt
+          rw [bareissGramCanonicalCoeff_succ_regular b fuel i hnext_canon hp_canon hi_lt_canon]
+          conv_rhs => rw [show ∀ f : Fin n → Int, (Vector.ofFn f)[a] = f a from
+            fun f => by simp]
+        · -- Processed row (i.val ≤ step): both sides preserve the value.
+          have hi_le_step : i.val ≤ stateG.step := Nat.le_of_not_lt hi_lt
+          have hi_le_step_A : iA.val ≤ stateA.step := by
+            show i.val ≤ stateA.step
+            rw [h_step_prev]; exact hi_le_step
+          have h_not_update_A : ¬ (stateA.step < iA.val ∧ stateA.step < L.val) := by
+            intro ⟨h, _⟩; exact Nat.not_lt_of_ge hi_le_step_A h
+          have h_not_col_A : ¬ (stateA.step < iA.val ∧ L.val = stateA.step) := by
+            intro ⟨h, _⟩; exact Nat.not_lt_of_ge hi_le_step_A h
+          rw [Matrix.stepMatrix_eq_of_not_update stateA.matrix stateA.step _ _ iA L
+            h_not_update_A h_not_col_A]
+          -- Canon in processed-row case: stays at fuel-value.
+          have hnext_canon :
+              (Matrix.noPivotLoop fuel
+                  (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 < n := by
+            show stateG.step + 1 < n; exact hDone_G
+          have hp_canon :
+              (Matrix.noPivotLoop fuel
+                  (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
+                (Matrix.noPivotLoop fuel
+                  (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step][
+                (Matrix.noPivotLoop fuel
+                  (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step] ≠ 0 := by
+            show stateG.matrix[stateG.step][stateG.step] ≠ 0
+            intro hzero
+            apply h_pivot_G_ne; exact hzero
+          have h_not_active :
+              ¬ (Matrix.noPivotLoop fuel
+                  (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 ≤ i.val := by
+            show ¬ stateG.step + 1 ≤ i.val; omega
+          rw [bareissGramCanonicalCoeff_succ_processed b fuel i hnext_canon hp_canon
+            h_not_active]
+          exact h_trail_prev i
+
+/-- Determinantal identification of the canonical row-coefficient vector
+`bareissGramCanonicalCoeff b fuel i` at slot `a` as the trailing-column entry
+of the no-pivot Bareiss pass on the augmented `(n + 1) × (n + 1)` matrix
+`augmentedGram b a`.  The hypothesis `fuel ≤ i.val` ensures the comparison
+covers both the active-row and processed-row branches of the canonical
+recursion. -/
+theorem bareissGramCanonicalCoeff_eq_augmentedGram_entry
+    (b : Matrix Int n m) (fuel : Nat) (i : Fin n) (a : Fin n)
+    (hfuel : fuel ≤ i.val)
+    (h_no_sing :
+      (Matrix.noPivotLoop fuel
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none) :
+    (bareissGramCanonicalCoeff b fuel i)[a] =
+      (Matrix.noPivotLoop fuel
+          (Matrix.noPivotInitialState (augmentedGram b a))).matrix[
+        (⟨i.val, Nat.lt_succ_of_lt i.isLt⟩ : Fin (n + 1))][Fin.last n] := by
+  have hfuel_n : fuel + 1 ≤ n := by
+    have : i.val < n := i.isLt
+    omega
+  obtain ⟨_, _, _, _, h_trail⟩ :=
+    noPivotLoop_augmentedGram_invariant b a fuel hfuel_n h_no_sing
+  exact (h_trail i).symm
+
+/-- Direct bordered-minor form: the canonical row-coefficient vector at slot
+`a` equals the determinant of the `(fuel + 1) × (fuel + 1)` bordered minor of
+the augmented Gram matrix.  Composes
+`bareissGramCanonicalCoeff_eq_augmentedGram_entry` with the Bareiss
+no-pivot invariant `trailing_eq`. -/
+theorem bareissGramCanonicalCoeff_eq_borderedMinor_aug
+    (b : Matrix Int n m) (fuel : Nat) (i : Fin n) (a : Fin n)
+    (hfuel : fuel ≤ i.val)
+    (h_no_sing :
+      (Matrix.noPivotLoop fuel
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none) :
+    (bareissGramCanonicalCoeff b fuel i)[a] =
+      Matrix.det (Matrix.borderedMinor (augmentedGram b a) fuel
+        (by have : i.val < n := i.isLt; omega : fuel < n + 1)
+        (⟨i.val, Nat.lt_succ_of_lt i.isLt⟩ : Fin (n + 1)) (Fin.last n)) := by
+  rw [bareissGramCanonicalCoeff_eq_augmentedGram_entry b fuel i a hfuel h_no_sing]
+  -- Set up the Bareiss invariant on the augmented loop.
+  have hfuel_n : fuel + 1 ≤ n := by
+    have : i.val < n := i.isLt; omega
+  obtain ⟨_, _, h_sing_aug, _, _⟩ :=
+    noPivotLoop_augmentedGram_invariant b a fuel hfuel_n h_no_sing
+  have h_step_aug_eq_fuel :
+      (Matrix.noPivotLoop fuel
+          (Matrix.noPivotInitialState (augmentedGram b a))).step = fuel := by
+    have h := Matrix.noPivotLoop_step_eq_add_of_singularStep_none fuel
+      (Matrix.noPivotInitialState (augmentedGram b a)) rfl (by
+        show 0 + fuel + 1 ≤ n + 1; omega) h_sing_aug
+    simpa [Matrix.noPivotInitialState] using h
+  have h_inv : HexMatrixMathlib.BareissNoPivotInvariant (augmentedGram b a)
+      (Matrix.noPivotLoop fuel (Matrix.noPivotInitialState (augmentedGram b a))) :=
+    HexMatrixMathlib.noPivotLoop_invariant_of_singularStep_eq_none
+      (augmentedGram b a) fuel
+      (Matrix.noPivotInitialState (augmentedGram b a))
+      (HexMatrixMathlib.bareissNoPivotInvariant_initial (augmentedGram b a)) h_sing_aug
+  -- Apply trailing_eq_at_step with `s := fuel` and `hstep := h_step_aug_eq_fuel.symm`.
+  have h_step_lt : fuel < n + 1 := by omega
+  have h_step_le_i : fuel ≤ (⟨i.val, Nat.lt_succ_of_lt i.isLt⟩ : Fin (n + 1)).val := hfuel
+  have h_step_le_last : fuel ≤ (Fin.last n).val := by show fuel ≤ n; omega
+  exact trailing_eq_at_step_local h_inv fuel h_step_lt h_step_aug_eq_fuel.symm
+    (⟨i.val, Nat.lt_succ_of_lt i.isLt⟩ : Fin (n + 1)) (Fin.last n)
+    h_step_le_i h_step_le_last
 
 end Int
 end GramSchmidt
