@@ -7600,6 +7600,392 @@ private theorem schurSigma_noPivotCorrection_succ
   exact exactDiv_bareissCorrection_succ_algebra
     denom pivot gram entry row col hdenom h_step_dvd
 
+/-- The σ-chain Bareiss correction invariant.  At step `q < p_out` of the
+σ-update fold for position `(a, p_out)`, the cumulative fold value equals
+the algebraic closed form `matrix_q[q][q] * gram - matrix_(q+1)[a][p_out]`.
+Proved by induction on `q`. -/
+private theorem schurSigma_foldl_eq_noPivotCorrection
+    {n m : Nat} (b : Matrix Int n m) (hquot : StepWitness b)
+    (a p_out q : Nat) (hp_out_n : p_out < n) (han : a < n) (hpa : p_out ≤ a)
+    (hq_lt_pout : q < p_out)
+    (h_nonsing :
+      (Matrix.noPivotLoop p_out
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none)
+    (correspondence :
+      ∀ l (hl : l ≤ q),
+        getArrayEntry (scaledCoeffRowsSchur b) l l =
+          (Matrix.noPivotLoop l
+              (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
+            (⟨l, Nat.lt_of_le_of_lt (Nat.le_trans hl (Nat.le_of_lt hq_lt_pout)) hp_out_n⟩
+              : Fin n)][
+            (⟨l, Nat.lt_of_le_of_lt (Nat.le_trans hl (Nat.le_of_lt hq_lt_pout)) hp_out_n⟩
+              : Fin n)] ∧
+        ∀ c (_hlc : l < c) (hcn : c < n),
+          getArrayEntry (scaledCoeffRowsSchur b) c l =
+            (Matrix.noPivotLoop l
+                (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
+              (⟨c, hcn⟩ : Fin n)][
+              (⟨l, Nat.lt_of_le_of_lt (Nat.le_trans hl (Nat.le_of_lt hq_lt_pout)) hp_out_n⟩
+                : Fin n)]) :
+    (List.range' 1 q).foldl
+        (fun σ p_iter =>
+          Matrix.exactDiv
+            (getArrayEntry (scaledCoeffRowsSchur b) p_iter p_iter * σ +
+              getArrayEntry (scaledCoeffRowsSchur b) a p_iter *
+              getArrayEntry (scaledCoeffRowsSchur b) p_out p_iter)
+            (getArrayEntry (scaledCoeffRowsSchur b) (p_iter - 1) (p_iter - 1)))
+        (getArrayEntry (scaledCoeffRowsSchur b) a 0 *
+          getArrayEntry (scaledCoeffRowsSchur b) p_out 0) =
+      (Matrix.noPivotLoop q
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
+        (⟨q, Nat.lt_trans hq_lt_pout hp_out_n⟩ : Fin n)][
+        (⟨q, Nat.lt_trans hq_lt_pout hp_out_n⟩ : Fin n)] *
+        (Matrix.gramMatrix b)[(⟨a, han⟩ : Fin n)][(⟨p_out, hp_out_n⟩ : Fin n)] -
+      (Matrix.noPivotLoop (q + 1)
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
+        (⟨a, han⟩ : Fin n)][(⟨p_out, hp_out_n⟩ : Fin n)] := by
+  induction q with
+  | zero =>
+    -- Empty fold; reduce to the q = 0 algebraic identity via the gramMatrix
+    -- entries supplied by `correspondence` at `l = 0`.
+    have hp_out_pos : 0 < p_out := hq_lt_pout
+    have h0a : 0 < a := Nat.lt_of_lt_of_le hp_out_pos hpa
+    have ih0 := correspondence 0 (Nat.le_refl 0)
+    have h_rows_a0 :
+        getArrayEntry (scaledCoeffRowsSchur b) a 0 =
+          (Matrix.gramMatrix b)[(⟨a, han⟩ : Fin n)][
+            (⟨0, Nat.lt_trans hp_out_pos hp_out_n⟩ : Fin n)] := by
+      simpa [Matrix.noPivotLoop_zero_fuel, Matrix.noPivotInitialState] using
+        ih0.2 a h0a han
+    have h_rows_p0 :
+        getArrayEntry (scaledCoeffRowsSchur b) p_out 0 =
+          (Matrix.gramMatrix b)[(⟨p_out, hp_out_n⟩ : Fin n)][
+            (⟨0, Nat.lt_trans hp_out_pos hp_out_n⟩ : Fin n)] := by
+      simpa [Matrix.noPivotLoop_zero_fuel, Matrix.noPivotInitialState] using
+        ih0.2 p_out hp_out_pos hp_out_n
+    have h_sym_p0 :
+        (Matrix.gramMatrix b)[(⟨p_out, hp_out_n⟩ : Fin n)][
+            (⟨0, Nat.lt_trans hp_out_pos hp_out_n⟩ : Fin n)] =
+          (Matrix.gramMatrix b)[(⟨0, Nat.lt_trans hp_out_pos hp_out_n⟩ : Fin n)][
+            (⟨p_out, hp_out_n⟩ : Fin n)] :=
+      gramMatrix_symm (b := b) _ _
+    have hDone :
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step + 1 < n := by
+      simp [Matrix.noPivotInitialState]; omega
+    have hpivot :
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b)).matrix[
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step][
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step] ≠ 0 := by
+      simpa [Matrix.noPivotInitialState] using
+        noPivotLoop_initial_gram_diag_ne_zero_of_lt
+          (b := b) p_out 0 hp_out_pos hp_out_n h_nonsing
+    rw [Matrix.noPivotLoop_regular_branch 0
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b)) hDone hpivot]
+    simp [Matrix.noPivotLoop_zero_fuel, Matrix.noPivotInitialState]
+    simp [Matrix.stepMatrix, Matrix.exactDiv, Matrix.ofFn, h0a, hp_out_pos,
+      h_rows_a0, h_rows_p0]
+    grind
+  | succ q' ih =>
+    -- Extend the fold by one iteration; rewrite the body via correspondence,
+    -- apply the IH, then close via `schurSigma_noPivotCorrection_succ`.
+    let state₀ : Matrix.BareissState n :=
+      Matrix.noPivotInitialState (Matrix.gramMatrix b)
+    have h_init_none : state₀.singularStep = none := by
+      simp [state₀, Matrix.noPivotInitialState]
+    have hq'_lt : q' < p_out := Nat.lt_of_succ_lt hq_lt_pout
+    have hq'_succ_lt : q' + 1 < p_out := hq_lt_pout
+    have hq'_n : q' < n := Nat.lt_trans hq'_lt hp_out_n
+    have hq'_succ_n : q' + 1 < n := Nat.lt_trans hq'_succ_lt hp_out_n
+    have hp_a_lt : q' + 1 < a := Nat.lt_of_lt_of_le hq'_succ_lt hpa
+    -- (loop (q'+1)) and (loop q') are both non-singular prefixes of (loop p_out).
+    have h_prefix_q'_succ_none :
+        (Matrix.noPivotLoop (q' + 1) state₀).singularStep = none := by
+      apply noPivotLoop_prefix_none_of_final_none (q' + 1) (p_out - (q' + 1)) state₀
+        h_init_none
+      have h_eq : (q' + 1) + (p_out - (q' + 1)) = p_out := by omega
+      rw [h_eq]; exact h_nonsing
+    have h_prefix_q'_none :
+        (Matrix.noPivotLoop q' state₀).singularStep = none := by
+      apply noPivotLoop_prefix_none_of_final_none q' (p_out - q') state₀ h_init_none
+      have h_eq : q' + (p_out - q') = p_out := by omega
+      rw [h_eq]; exact h_nonsing
+    -- step matches fuel under non-singular prefix.
+    have h_step_q' : (Matrix.noPivotLoop q' state₀).step = q' :=
+      noPivotLoop_initial_gram_step_eq_of_prefix_none b q' (by omega) h_prefix_q'_none
+    have h_step_q'_succ : (Matrix.noPivotLoop (q' + 1) state₀).step = q' + 1 :=
+      noPivotLoop_initial_gram_step_eq_of_prefix_none b (q' + 1) (by omega)
+        h_prefix_q'_succ_none
+    -- Apply the inductive hypothesis at q'.
+    have ih_eq :=
+      ih hq'_lt (fun l hl => correspondence l (Nat.le_succ_of_le hl))
+    -- Extract correspondence values needed for the new body at p_iter = q' + 1.
+    have corr_q' := correspondence q' (Nat.le_succ q')
+    have corr_q'_succ := correspondence (q' + 1) (Nat.le_refl (q' + 1))
+    -- diagonal at q' (the denominator)
+    have h_rows_q'_diag :
+        getArrayEntry (scaledCoeffRowsSchur b) q' q' =
+          (Matrix.noPivotLoop q' state₀).matrix[
+            (⟨q', hq'_n⟩ : Fin n)][(⟨q', hq'_n⟩ : Fin n)] := corr_q'.1
+    -- diagonal at q'+1 (the pivot)
+    have h_rows_q'_succ_diag :
+        getArrayEntry (scaledCoeffRowsSchur b) (q' + 1) (q' + 1) =
+          (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+            (⟨q' + 1, hq'_succ_n⟩ : Fin n)][
+            (⟨q' + 1, hq'_succ_n⟩ : Fin n)] := corr_q'_succ.1
+    -- entries at row a and row p_out, column q' + 1
+    have h_rows_a_q'_succ :
+        getArrayEntry (scaledCoeffRowsSchur b) a (q' + 1) =
+          (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+            (⟨a, han⟩ : Fin n)][
+            (⟨q' + 1, hq'_succ_n⟩ : Fin n)] :=
+      corr_q'_succ.2 a hp_a_lt han
+    have h_rows_p_q'_succ :
+        getArrayEntry (scaledCoeffRowsSchur b) p_out (q' + 1) =
+          (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+            (⟨p_out, hp_out_n⟩ : Fin n)][
+            (⟨q' + 1, hq'_succ_n⟩ : Fin n)] :=
+      corr_q'_succ.2 p_out hq'_succ_lt hp_out_n
+    -- prevPivot at fuel q'+1: this is matrix_q'[q'][q'].
+    have h_prevPivot_q'_succ :
+        (Matrix.noPivotLoop (q' + 1) state₀).prevPivot =
+          (Matrix.noPivotLoop q' state₀).matrix[
+            (⟨q', hq'_n⟩ : Fin n)][(⟨q', hq'_n⟩ : Fin n)] := by
+      have h_add : Matrix.noPivotLoop (q' + 1) state₀ =
+          Matrix.noPivotLoop 1 (Matrix.noPivotLoop q' state₀) :=
+        Matrix.noPivotLoop_add q' 1 state₀
+      have hDone :
+          (Matrix.noPivotLoop q' state₀).step + 1 < n := by
+        rw [h_step_q']; exact hq'_succ_n
+      have h_idx_eq :
+          (⟨(Matrix.noPivotLoop q' state₀).step,
+              Nat.lt_of_succ_lt hDone⟩ : Fin n) = (⟨q', hq'_n⟩ : Fin n) :=
+        Fin.ext h_step_q'
+      have h_diag_at_q' :=
+        noPivotLoop_initial_gram_diag_ne_zero_of_lt b (q' + 1) q'
+          (Nat.lt_succ_self q') hq'_succ_n h_prefix_q'_succ_none
+      have h_eq_diag :
+          (Matrix.noPivotLoop q' state₀).matrix[
+              (⟨(Matrix.noPivotLoop q' state₀).step,
+                  Nat.lt_of_succ_lt hDone⟩ : Fin n)][
+              (⟨(Matrix.noPivotLoop q' state₀).step,
+                  Nat.lt_of_succ_lt hDone⟩ : Fin n)] =
+            (Matrix.noPivotLoop q' state₀).matrix[
+              (⟨q', hq'_n⟩ : Fin n)][(⟨q', hq'_n⟩ : Fin n)] :=
+        congrArg
+          (fun (i : Fin n) => (Matrix.noPivotLoop q' state₀).matrix[i][i]) h_idx_eq
+      have h_diag_at_step :
+          (Matrix.noPivotLoop q' state₀).matrix[
+              (⟨(Matrix.noPivotLoop q' state₀).step,
+                  Nat.lt_of_succ_lt hDone⟩ : Fin n)][
+              (⟨(Matrix.noPivotLoop q' state₀).step,
+                  Nat.lt_of_succ_lt hDone⟩ : Fin n)] ≠ 0 :=
+        h_eq_diag ▸ h_diag_at_q'
+      rw [h_add, Matrix.noPivotLoop_regular_branch 0 _ hDone h_diag_at_step,
+        Matrix.noPivotLoop_zero_fuel]
+      -- The `noPivotLoop_regular_branch` rewrite makes the goal:
+      --   matrix[⟨step, ⋯⟩][⟨step, ⋯⟩] = matrix[⟨q', hq'_n⟩][⟨q', hq'_n⟩]
+      -- which we close by the index equality.
+      exact congrArg
+        (fun (i : Fin n) =>
+          (Matrix.noPivotLoop q' state₀).matrix[i][i]) h_idx_eq
+    -- Bareiss step at fuel q'+1: matrix_(q'+2)[a][p_out] = exactDiv of the
+    -- standard Bareiss numerator by prevPivot.
+    have h_step_a_p :
+        (Matrix.noPivotLoop (q' + 1 + 1) state₀).matrix[
+            (⟨a, han⟩ : Fin n)][(⟨p_out, hp_out_n⟩ : Fin n)] =
+          Matrix.exactDiv
+            ((Matrix.noPivotLoop (q' + 1) state₀).matrix[
+                (⟨q' + 1, hq'_succ_n⟩ : Fin n)][
+                (⟨q' + 1, hq'_succ_n⟩ : Fin n)] *
+              (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+                (⟨a, han⟩ : Fin n)][(⟨p_out, hp_out_n⟩ : Fin n)] -
+              (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+                (⟨a, han⟩ : Fin n)][(⟨q' + 1, hq'_succ_n⟩ : Fin n)] *
+              (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+                (⟨q' + 1, hq'_succ_n⟩ : Fin n)][(⟨p_out, hp_out_n⟩ : Fin n)])
+            ((Matrix.noPivotLoop (q' + 1) state₀).prevPivot) := by
+      have h_add : Matrix.noPivotLoop (q' + 1 + 1) state₀ =
+          Matrix.noPivotLoop 1 (Matrix.noPivotLoop (q' + 1) state₀) :=
+        Matrix.noPivotLoop_add (q' + 1) 1 state₀
+      rw [h_add]
+      have hDone : (Matrix.noPivotLoop (q' + 1) state₀).step + 1 < n := by
+        rw [h_step_q'_succ]; omega
+      have hp :
+          (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+              (⟨(Matrix.noPivotLoop (q' + 1) state₀).step,
+                Nat.lt_of_succ_lt hDone⟩ : Fin n)][
+              (⟨(Matrix.noPivotLoop (q' + 1) state₀).step,
+                Nat.lt_of_succ_lt hDone⟩ : Fin n)] ≠ 0 := by
+        have h_diag := noPivotLoop_initial_gram_diag_ne_zero_of_lt b p_out (q' + 1)
+          hq'_succ_lt hp_out_n h_nonsing
+        have h_idx :
+            (⟨(Matrix.noPivotLoop (q' + 1) state₀).step,
+              Nat.lt_of_succ_lt hDone⟩ : Fin n)
+              = (⟨q' + 1, hq'_succ_n⟩ : Fin n) := Fin.ext h_step_q'_succ
+        have h_eq :
+            (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+                (⟨(Matrix.noPivotLoop (q' + 1) state₀).step,
+                    Nat.lt_of_succ_lt hDone⟩ : Fin n)][
+                (⟨(Matrix.noPivotLoop (q' + 1) state₀).step,
+                    Nat.lt_of_succ_lt hDone⟩ : Fin n)] =
+              (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+                (⟨q' + 1, hq'_succ_n⟩ : Fin n)][
+                (⟨q' + 1, hq'_succ_n⟩ : Fin n)] :=
+          congrArg
+            (fun (i : Fin n) =>
+              (Matrix.noPivotLoop (q' + 1) state₀).matrix[i][i]) h_idx
+        exact h_eq ▸ h_diag
+      rw [Matrix.noPivotLoop_regular_branch 0 _ hDone hp,
+        Matrix.noPivotLoop_zero_fuel]
+      have ha : (Matrix.noPivotLoop (q' + 1) state₀).step < a := by
+        rw [h_step_q'_succ]; exact hp_a_lt
+      have hpo : (Matrix.noPivotLoop (q' + 1) state₀).step < p_out := by
+        rw [h_step_q'_succ]; exact hq'_succ_lt
+      rw [Matrix.stepMatrix_update_eq (Matrix.noPivotLoop (q' + 1) state₀).matrix
+        (Matrix.noPivotLoop (q' + 1) state₀).step _
+        (Matrix.noPivotLoop (q' + 1) state₀).prevPivot
+        (⟨a, han⟩ : Fin n) (⟨p_out, hp_out_n⟩ : Fin n) ha hpo]
+      -- The remaining goal is to identify the unfolded `colK = ⟨step, _⟩`
+      -- (and similarly `rowK`) with `⟨q'+1, hq'_succ_n⟩`. Substitute via the
+      -- step-equality, then close by reflexivity (Fin proofs are irrelevant).
+      simp only [h_step_q'_succ]
+      rfl
+    -- Symmetry of matrix_(q'+1) at (q'+1, p_out).
+    have h_sym_pivot_row :
+        (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+          (⟨q' + 1, hq'_succ_n⟩ : Fin n)][(⟨p_out, hp_out_n⟩ : Fin n)] =
+          (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+            (⟨p_out, hp_out_n⟩ : Fin n)][(⟨q' + 1, hq'_succ_n⟩ : Fin n)] := by
+      apply noPivotLoop_matrix_symm_preserve (q' + 1) state₀
+      · intro x y _ _
+        simp [state₀, Matrix.noPivotInitialState]
+        exact gramMatrix_symm (b := b) x y
+      · rw [h_step_q'_succ]; exact Nat.le_refl _
+      · rw [h_step_q'_succ]; exact Nat.le_of_lt hq'_succ_lt
+    -- Matrix-level Bareiss divisibility at fuel q'+1: prevPivot ∣ numerator.
+    have hpivot_q'_succ :
+        (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+          (Matrix.noPivotLoop (q' + 1) state₀).step][
+          (Matrix.noPivotLoop (q' + 1) state₀).step] ≠ 0 := by
+      have h_diag_ne :=
+        noPivotLoop_initial_gram_diag_ne_zero_of_lt b p_out (q' + 1)
+          hq'_succ_lt hp_out_n h_nonsing
+      have h_step_lt_n :
+          (Matrix.noPivotLoop (q' + 1) state₀).step < n := by
+        rw [h_step_q'_succ]; exact hq'_succ_n
+      have h_idx :
+          (⟨(Matrix.noPivotLoop (q' + 1) state₀).step, h_step_lt_n⟩ : Fin n)
+            = (⟨q' + 1, hq'_succ_n⟩ : Fin n) := Fin.ext h_step_q'_succ
+      have h_eq :
+          (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+              (⟨(Matrix.noPivotLoop (q' + 1) state₀).step,
+                  h_step_lt_n⟩ : Fin n)][
+              (⟨(Matrix.noPivotLoop (q' + 1) state₀).step,
+                  h_step_lt_n⟩ : Fin n)] =
+            (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+              (⟨q' + 1, hq'_succ_n⟩ : Fin n)][
+              (⟨q' + 1, hq'_succ_n⟩ : Fin n)] :=
+        congrArg
+          (fun (i : Fin n) =>
+            (Matrix.noPivotLoop (q' + 1) state₀).matrix[i][i]) h_idx
+      exact h_eq ▸ h_diag_ne
+    have h_step_dvd_raw :=
+      noPivotLoop_initial_gram_bareiss_step_dvd b hquot (q' + 1)
+        h_prefix_q'_succ_none
+        (by rw [h_step_q'_succ]; omega)
+        hpivot_q'_succ
+        (⟨a, han⟩ : Fin n) (⟨p_out, hp_out_n⟩ : Fin n)
+        (by rw [h_step_q'_succ]; exact hp_a_lt)
+    -- Identify the `k` index in `h_step_dvd_raw` with `q'+1`.
+    have h_step_dvd :
+        (Matrix.noPivotLoop q' state₀).matrix[
+            (⟨q', hq'_n⟩ : Fin n)][(⟨q', hq'_n⟩ : Fin n)] ∣
+          (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+              (⟨q' + 1, hq'_succ_n⟩ : Fin n)][(⟨q' + 1, hq'_succ_n⟩ : Fin n)] *
+            (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+              (⟨a, han⟩ : Fin n)][(⟨p_out, hp_out_n⟩ : Fin n)] -
+          (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+              (⟨a, han⟩ : Fin n)][(⟨q' + 1, hq'_succ_n⟩ : Fin n)] *
+            (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+              (⟨p_out, hp_out_n⟩ : Fin n)][(⟨q' + 1, hq'_succ_n⟩ : Fin n)] := by
+      rw [← h_prevPivot_q'_succ, ← h_sym_pivot_row]
+      -- Unfold the `let state, let k` in h_step_dvd_raw to get a normalized form.
+      simp only at h_step_dvd_raw
+      -- Now apply congrArg to identify the matrix entries with `⟨step, _⟩` =
+      -- `⟨q' + 1, hq'_succ_n⟩` indices.
+      have h_kk :
+          ∀ (h_lt : (Matrix.noPivotLoop (q' + 1) state₀).step < n),
+            (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+              (⟨(Matrix.noPivotLoop (q' + 1) state₀).step, h_lt⟩ : Fin n)][
+              (⟨(Matrix.noPivotLoop (q' + 1) state₀).step, h_lt⟩ : Fin n)] =
+            (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+              (⟨q' + 1, hq'_succ_n⟩ : Fin n)][
+              (⟨q' + 1, hq'_succ_n⟩ : Fin n)] := fun _ =>
+        congrArg
+          (fun (i : Fin n) =>
+            (Matrix.noPivotLoop (q' + 1) state₀).matrix[i][i])
+          (Fin.ext h_step_q'_succ)
+      have h_ak :
+          ∀ (h_lt : (Matrix.noPivotLoop (q' + 1) state₀).step < n),
+            (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+              (⟨a, han⟩ : Fin n)][
+              (⟨(Matrix.noPivotLoop (q' + 1) state₀).step, h_lt⟩ : Fin n)] =
+            (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+              (⟨a, han⟩ : Fin n)][
+              (⟨q' + 1, hq'_succ_n⟩ : Fin n)] := fun _ =>
+        congrArg
+          (fun (i : Fin n) =>
+            (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+              (⟨a, han⟩ : Fin n)][i])
+          (Fin.ext h_step_q'_succ)
+      have h_kp :
+          ∀ (h_lt : (Matrix.noPivotLoop (q' + 1) state₀).step < n),
+            (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+              (⟨(Matrix.noPivotLoop (q' + 1) state₀).step, h_lt⟩ : Fin n)][
+              (⟨p_out, hp_out_n⟩ : Fin n)] =
+            (Matrix.noPivotLoop (q' + 1) state₀).matrix[
+              (⟨q' + 1, hq'_succ_n⟩ : Fin n)][
+              (⟨p_out, hp_out_n⟩ : Fin n)] := fun _ =>
+        congrArg
+          (fun (i : Fin n) =>
+            (Matrix.noPivotLoop (q' + 1) state₀).matrix[i][
+              (⟨p_out, hp_out_n⟩ : Fin n)])
+          (Fin.ext h_step_q'_succ)
+      rw [h_kk _, h_ak _, h_kp _] at h_step_dvd_raw
+      exact h_step_dvd_raw
+    -- nonzero denom
+    have hdenom_ne :
+        (Matrix.noPivotLoop q' state₀).matrix[
+          (⟨q', hq'_n⟩ : Fin n)][(⟨q', hq'_n⟩ : Fin n)] ≠ 0 :=
+      noPivotLoop_initial_gram_diag_ne_zero_of_lt b (q' + 1) q'
+        (Nat.lt_succ_self q') hq'_succ_n h_prefix_q'_succ_none
+    -- Now expand the fold: range' 1 (q' + 1) = range' 1 q' ++ [q' + 1].
+    have h_concat :
+        List.range' 1 (q' + 1) = List.range' 1 q' ++ [q' + 1] := by
+      have := List.range'_concat (s := 1) (n := q') (step := 1)
+      simpa [Nat.add_comm 1 q'] using this
+    rw [h_concat, List.foldl_append]
+    simp only [List.foldl_cons, List.foldl_nil, Nat.add_sub_cancel]
+    rw [ih_eq, h_rows_q'_diag, h_rows_q'_succ_diag, h_rows_a_q'_succ,
+      h_rows_p_q'_succ]
+    -- Close via the succ algebraic helper.
+    exact schurSigma_noPivotCorrection_succ
+      ((Matrix.noPivotLoop q' state₀).matrix[
+          (⟨q', hq'_n⟩ : Fin n)][(⟨q', hq'_n⟩ : Fin n)])
+      ((Matrix.noPivotLoop (q' + 1) state₀).matrix[
+          (⟨q' + 1, hq'_succ_n⟩ : Fin n)][(⟨q' + 1, hq'_succ_n⟩ : Fin n)])
+      ((Matrix.gramMatrix b)[(⟨a, han⟩ : Fin n)][(⟨p_out, hp_out_n⟩ : Fin n)])
+      ((Matrix.noPivotLoop (q' + 1) state₀).matrix[
+          (⟨a, han⟩ : Fin n)][(⟨p_out, hp_out_n⟩ : Fin n)])
+      ((Matrix.noPivotLoop (q' + 1) state₀).matrix[
+          (⟨a, han⟩ : Fin n)][(⟨q' + 1, hq'_succ_n⟩ : Fin n)])
+      ((Matrix.noPivotLoop (q' + 1) state₀).matrix[
+          (⟨p_out, hp_out_n⟩ : Fin n)][(⟨q' + 1, hq'_succ_n⟩ : Fin n)])
+      ((Matrix.noPivotLoop (q' + 1 + 1) state₀).matrix[
+          (⟨a, han⟩ : Fin n)][(⟨p_out, hp_out_n⟩ : Fin n)])
+      hdenom_ne h_step_dvd
+      (by rw [h_step_a_p, h_prevPivot_q'_succ, h_sym_pivot_row])
+
 /-- Singular dual of `scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix`.
 When the no-pivot Bareiss pass over the full Gram matrix records an early
 singular step before reaching column `j`, the integral scaled Gram-Schmidt
