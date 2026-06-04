@@ -120,12 +120,33 @@ def gramDetVec (b : Matrix Int n m) : Vector Nat (n + 1)
       `HexGramSchmidt/Int.lean`) is the right shape but must be
       made non-private (or wrapped by a public surface) before
       `hex-gram-schmidt-mathlib` can construct an instance.
-    - The provider's name signals scope: only the *non-singular
-      regular-step branch* requires bridge-layer provenance.
-      Singular / zero branches of the Schur kernel are handled by
-      Mathlib-free frame and cell-stability lemmas (since both
-      sides of any equivalence return `0` via array initialisation,
-      no quotient identity is in play).
+    - The provider's name signals scope: the *non-singular
+      regular-step branch* and the *singular boundary case*
+      (`j = s + 1` where the no-pivot Bareiss pass over
+      `gramMatrix b` records a singular step at column `s` with
+      the prefix up to `s` non-singular) both require bridge-layer
+      provenance. The non-singular branch needs the quotient
+      identity; the boundary case needs the PSD column-zero fact
+      (zero Bareiss pivot ⟹ rest-of-column above is zero), which
+      kills the σ-chain's final-iteration numerator
+      `rows[i][s] · rows[s+1][s]`. That product does not reduce to
+      zero from the recurrence alone (counterexample: symmetric
+      non-Gram `[[1,1,0],[1,1,1],[0,1,1]]` has singular step at
+      `s = 1` and the σ-chain returns `-1` at slot `(2, 2)` while
+      the Bareiss-side returns `0`). Only zero cases that don't go
+      through a quotient (pre-loop initialisation, upper-triangle,
+      and columns strictly beyond the recorded singular step) are
+      Mathlib-free.
+    - The provider type must quantify only over **canonical
+      (loop-constructed)** `BareissGramRowInvariant` instances,
+      not arbitrary ones. Universal quantification over arbitrary
+      `hinv` admits non-canonical coefficient witnesses for which
+      the quotient identity fails (counterexample: rows `(1,1),
+      (1,0), (-1,-1)` give two valid `hinv` at row 2 step 1
+      differing by the kernel vector, yielding numerators
+      differing by `1`, not divisible by `prevPivot = 2`). A
+      bridge-layer instance constructor derives the canonical
+      witness from Bareiss-Desnanot on the PSD Gram minors.
     - Executable kernels (`schurSigma`, `schurScaledCoeffEntry`,
       `scaledCoeffRowsSchur`) and pure cell-stability / row-frame
       lemmas that don't establish a determinant-or-noPivotLoop
