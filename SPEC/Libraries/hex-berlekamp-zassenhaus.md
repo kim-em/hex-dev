@@ -257,26 +257,51 @@ def bhksBound (f : ZPoly) : Nat
 loop; it is the integer-arithmetic upper bound on BHKS Theorem 5.2's
 threshold (see *Precision schedule* below).
 
-`choosePrimeData?` is `Option`-valued for proof convenience (the
-implementation walks a stream of prime candidates and threads the
-search via `Option` rather than carrying termination evidence
-inline). The Mathlib-side leaf theorem (Group D obligation D2 below)
-discharges the `none` branch as unreachable on primitive
-square-free inputs — i.e. the executable always exits via `some`
-on the inputs `factorFast` calls it with. This is the
-`unreachable-by-pipeline-invariant` mode of
-[SPEC/design-principles.md §8](../design-principles.md). The
-runtime prime search is therefore unbounded as a function of `f`:
-the implementation walks `Nat`-indexed prime candidates until a
-good prime is found; termination at runtime is by an explicit
-Mignotte-style bound (smallest good prime is `O(log
-|disc(f)·lc(f)|)` for primitive square-free `f`), which the leaf
-theorem also captures. A fixed finite candidate list as a stand-in
-is a SPEC violation — it produces a runtime-reachable `none` branch
-in `choosePrimeData?`, which then makes Group D obligation D1
-literally false against the implementation (see commit history of
-`HexBerlekampZassenhaus/Basic.lean` around `finitePrimeSearchNoneQuadratic`
-for the historical witness).
+`choosePrimeData?` is `Option`-valued. The executable searches a
+**bounded hot-path candidate set** `HotPathCandidates`, fixed in
+SPEC as
+
+> `HotPathCandidates := { p : Nat | 3 ≤ p ∧ p ≤ UInt64.word ∧ Nat.Prime p }`
+
+i.e. every prime in the closed range `[3, UInt64.word]` (the
+`ZMod64`-backed modular kernel's domain; `p = 2` is excluded by
+`isGoodPrime`). `choosePrimeData? f = none` when no element of
+`HotPathCandidates` satisfies `isGoodPrime f p`. This is by design;
+implementing an unbounded `BigInt`-modular fallback inside
+`choosePrimeData?` would cascade through every consumer of
+`PrimeChoiceData` (the `ZMod64.Bounds`-indexed fields prevent
+holding a non-ZMod64-backed `PrimeChoiceData`).
+
+**Architectural invariant: `factorSlow` MUST NOT depend on
+`choosePrimeData?`.** This is the load-bearing clause that makes
+the `factor := factorFast.getD factorSlow` combinator
+unconditionally correct. `factorSlow` is the safety net for inputs
+where `choosePrimeData? f = none`, so it must be implementable
+without taking a `PrimeChoiceData` argument. The correct
+specification of `factorSlow` is *exhaustive integer trial
+division over the Mignotte-bounded divisor enumeration*: no
+modular reduction, no Hensel lift, no recombination. Runtime on
+pathological inputs is astronomical, but it terminates and is
+correct. Any implementation that routes `factorSlow` through
+`choosePrimeData` (total wrapper) — including the historical
+`choosePrimeDataFallback` route — is a SPEC violation: pathological
+inputs hit the `factorsModP = #[]` branch of
+`exhaustiveCoreFactorsWithBound`, which returns the input core
+as a single factor, silently violating the headline correctness
+theorem's irreducibility clause on inputs like
+`X² − L²` with `L := ∏ HotPathCandidates`.
+
+The pathological-input characterisation (Group D obligation D2
+below) gives a tight, provable lower bound on inputs that reach
+the slow path: if `factorFast f = none` then `lc(f) · disc(f)` is
+divisible by every prime in `HotPathCandidates`, hence
+`|lc(f)·disc(f)| ≥ ∏ HotPathCandidates`, an astronomically large
+number that no realistic polynomial reaches. The conformance
+benchmark harness MUST track `factorFast`-vs-`factorSlow` usage on
+the **named conformance suite** (the fixtures committed under
+`conformance-fixtures/HexBerlekampZassenhaus/`); a regression that
+pushes any committed fixture to the slow path is a SPEC violation
+and must be repaired (no silent suite-shrinking).
 
 ## Recombination: conditional fast / unconditional slow / fallback combinator
 
@@ -479,7 +504,7 @@ per the new output-convention section above.)
 
 Required deliverable; structurally a leaf — no other proof obligation, public-API contract, `Decidable` instance, or theorem statement in the bridge depends on D1 or D2.
 
-D1. **`factorFast` always succeeds: `factorFast f ≠ none`.** The theorem is about the implementation as written, with cap = `bhksBound f`. BHKS Theorem 5.2 supplies the precision/recombination half; **D2 below supplies the prime-search half** (the implementation's `choosePrimeData?` is `Option`-valued, and the unconditional `factorFast f ≠ none` is false without D2 — see the `finitePrimeSearchNoneQuadratic` witness in `HexBerlekampZassenhaus/Basic.lean`). No cap extension is needed (HO-1 already chose the cap correctly), but `choosePrimeData?` must do an unbounded prime walk per the algorithmic-architecture clause above; D2 is what proves that walk terminates.
+D1. **`factorFast` succeeds when the prime search succeeds: `choosePrimeData? f ≠ none → factorFast f ≠ none`.** The theorem is about the implementation as written, with cap = `bhksBound f`. BHKS Theorem 5.2 supplies the precision/recombination half, conditional on a good prime being available. The unconditional `factorFast f ≠ none` is **false** against the implementation — `HexBerlekampZassenhaus/Basic.lean` ships `finitePrimeSearchNoneQuadratic` and the `1 + L·X` family as witnesses where `choosePrimeData?` exhausts its bounded hot-path candidate set. This is by design; the unconditional safety net is at the `factor` combinator (`factor := factorFast.getD factorSlow`), not inside `factorFast`. D2 below pins down exactly which inputs hit this `none` case.
 
     **Pathway:**
 
@@ -487,33 +512,36 @@ D1. **`factorFast` always succeeds: `factorFast f ≠ none`.** The theorem is ab
     2. **BHKS Lemma 3.2 (bad-vector size bound).** Any vector `v ∈ L' \ W` has its associated polynomial `H_v` (built from `v`'s Φ-block) satisfying: `H_v` is divisible by some `f_i mod p^a` but not by the corresponding integer factor over ℤ, so `Res(f, H_v)` is a nonzero integer divisible by `p^(a·d)` for some `d ≥ 1`, while Hadamard bounds `|Res(f, H_v)| ≤ ‖f‖₂^(deg H_v) · ‖H_v‖₂^n`. Combining: `‖v‖₂` grows with `a`.
     3. **BHKS Theorem 5.2 (eq. 5.3 termination).** At precision satisfying `v^ℓ > c · n · (2C)^(n²) · ‖f‖₂^(2n−1) · (log ‖f‖₂)^n`, the bad-vector lower bound from step 2 exceeds the LLL-cut radius `B'` from B4, so `L' \ W = ∅`. Combined with B6 (`W ⊆ L'`): `L' = W`. Read BHKS §5 (lines around eq. 5.3 and the proof following).
     4. **`bhksBound f` is a sound upper bound for the BHKS threshold.** Show that the integer-arithmetic `bhksBound f` (from the precision schedule) is `≥ ⌈log_v of the BHKS threshold⌉`. Step-by-step bounding of each factor: `n` direct; `(2C)^(n²) ≤ 4^(n²)` for `C ≥ 2` (which `hex-lll` uses); `‖f‖₂^(2n−1) ≤ (sumSquared f + 1)^n`; `(log ‖f‖₂)^n ≤ (log2 (sumSquared f + 1))^n`.
-    5. **Forward verification at precision ≥ Mignotte.** The BHKS bound dominates Mignotte for every `n ≥ 2` (a one-line inequality), so any precision sufficient for separation is also sufficient for reconstruction. With `L' = W` from step 3 and precision ≥ Mignotte: B7 produces exactly the irreducible-factor indicators (Lemma 3.3), A2 gives exact integer-coefficient lifts of each `g_{w_C}`, and exact division of `f` succeeds for every candidate. So the algorithm exits via `some _`, not `none`, **conditional on `choosePrimeData? f ≠ none`**.
-    6. **Discharge the prime-search precondition via D2.** Combine step 5 with D2's `choosePrimeData?_isSome_of_primitive_squareFree` to remove the conditional.
-    7. **Final theorem.** `theorem factorFast_terminates : ∀ f : ZPoly, factorFast f ≠ none`. Internal proof structure is the chain above.
+    5. **Forward verification at precision ≥ Mignotte.** The BHKS bound dominates Mignotte for every `n ≥ 2` (a one-line inequality), so any precision sufficient for separation is also sufficient for reconstruction. With `L' = W` from step 3 and precision ≥ Mignotte: B7 produces exactly the irreducible-factor indicators (Lemma 3.3), A2 gives exact integer-coefficient lifts of each `g_{w_C}`, and exact division of `f` succeeds for every candidate. So the algorithm exits via `some _`, not `none`, given a good prime is available.
+    6. **Final theorem.** `theorem factorFast_terminates_of_choosePrimeData : ∀ f : ZPoly, choosePrimeData? f ≠ none → factorFast f ≠ none`. Internal proof structure is the chain above.
 
-    The bridge file gets one new theorem (`factorFast_terminates`) and a small handful of supporting lemmas (resultant Hadamard bound, BHKS Lemma 3.2, BHKS Theorem 5.2 instantiated at `bhksBound f`, BHKS-bound-dominates-Mignotte, plus D2's prime-search-totality lemma). Existing theorem statements (A1–A5, B1–B9, C1–C2) are unchanged.
+    The bridge file gets one new theorem (`factorFast_terminates_of_choosePrimeData`) and a small handful of supporting lemmas (resultant Hadamard bound, BHKS Lemma 3.2, BHKS Theorem 5.2 instantiated at `bhksBound f`, BHKS-bound-dominates-Mignotte). Existing theorem statements (A1–A5, B1–B9, C1–C2) are unchanged.
 
     *Reading list:* BHKS §3.2 (Lemma 3.2 / "bad vector"), §5 (Theorem 5.2 termination + eq. 5.3 explicit bound, lines around `c · n · (2C)^(n²) · ‖f‖₂^(2n−1) · (log ‖f‖₂)^n`); §4.4 (why the algorithm exits early in practice via the L'=W certificate); Hadamard's inequality in `Mathlib.LinearAlgebra.Matrix.Determinant`; resultant infrastructure in Mathlib4 (port from Mathlib3 if absent).
 
-D2. **`choosePrimeData?` always returns `some` on primitive square-free inputs.** Statement shape:
+D2. **Tight characterisation of slow-path inputs.** Statement shape:
 
     ```lean
-    theorem choosePrimeData?_isSome_of_primitive_squareFree
-        (f : ZPoly) (hp : f.IsPrimitive) (hs : f.IsSquareFree) :
-        Hex.choosePrimeData? f ≠ none
+    theorem factorFast_none_implies_huge
+        (f : ZPoly) (hp : f.Primitive) (hs : f.IsSquareFree)
+        (hf : Hex.factorFast f = none)
+        (p : Nat) (hp_range : 3 ≤ p ∧ p ≤ UInt64.word) (hp_prime : Nat.Prime p) :
+        (p : ℤ) ∣ (f.leadingCoeff * f.discriminant)
     ```
 
-    This is the leaf theorem that lets D1 discharge the `Option`-valued prime search into the `unreachable-by-pipeline-invariant` mode of [SPEC/design-principles.md §8](../design-principles.md). The executable `choosePrimeData?` is `Option`-typed for proof convenience; D2 proves the `none` branch is unreachable on the inputs the pipeline actually feeds it.
+    Equivalently, `|lc(f) · disc(f)| ≥ ∏ HotPathCandidates`, an astronomically large lower bound that no realistic polynomial reaches. (`HotPathCandidates` is the SPEC-fixed set defined in the algorithmic-architecture clause above.)
+
+    This is the tight delineation of inputs that fall back to `factorSlow`. Any `f` whose `lc(f) · disc(f)` is smaller than `∏ HotPathCandidates` is provably handled by the hot path, runs at `ZMod64` speed, and never touches `factorSlow`.
 
     **Pathway:**
 
-    1. **Discriminant nonvanishing.** For primitive square-free `f`, `disc(f) ≠ 0` (Mathlib: `Polynomial.discriminant`, square-free ↔ discriminant nonzero over a field, lifted to ℤ via primitive part).
-    2. **Good-prime existence.** Any prime `p` not dividing `lc(f) · disc(f)` is a good prime for `f` (no leading-coefficient drop, no repeated factor mod `p`). The product `lc(f) · disc(f)` is a nonzero integer; primes not dividing it are infinite (Mathlib: `Nat.infinite_setOf_prime` plus a finite-divisor argument). In particular at least one exists below an explicit `f`-dependent bound (Mignotte/Hadamard gives `O(log |lc(f)·disc(f)|)`).
-    3. **Unbounded prime walk terminates.** The executable `choosePrimeData?` walks `Nat`-indexed prime candidates and stops at the first good prime; by step 2 it finds one within the bound from step 1, so `choosePrimeData?` returns `some`.
+    1. **`isGoodPrime f p` for `p ∈ HotPathCandidates` unfolds to `p ∤ lc(f) · disc(f)`.** Mathematical content: `p ≥ 3` plus `p ∤ lc(f)` keep the leading coefficient mod `p`, and `gcd(f mod p, f' mod p)` is a unit iff `f mod p` is square-free iff `p ∤ disc(f)` (over a field of characteristic `p`, square-free ↔ discriminant nonzero; the `p ≥ 3` constraint avoids characteristic-2 separability subtleties).
+    2. **Reverse-engineer `factorFast f = none`.** Unfold to `choosePrimeData? f = none`, which means every candidate `p` in `HotPathCandidates` failed `isGoodPrime f p`, which by step 1 means every such `p` divides `lc(f) · disc(f)`.
+    3. **Primorial lower bound.** If every prime in a set `S` divides `M ∈ ℤ`, then `|M| ≥ ∏ S` (standard).
 
-    The bridge file gets one new theorem (`choosePrimeData?_isSome_of_primitive_squareFree`) and any supporting good-prime-existence lemmas.
+    The bridge file gets one new theorem (`factorFast_none_implies_huge`) and a small helper unfolding `isGoodPrime`. No new mathematical content; the bound is a clean divisibility argument.
 
-    **Algorithmic precondition.** D2 presumes the unbounded prime walk (per the algorithmic-architecture clause near `choosePrimeData?` above). If the implementation ships a fixed candidate list instead, D2 is false. Any worker noticing the implementation still uses a fixed list should file the unbounded-walk fix as a prerequisite issue, not weaken D2's statement.
+    **Executable precondition.** D2 presumes the executable `choosePrimeData?` walks the entire `HotPathCandidates` set before returning `none`. If a fuel cap or other implementation shortcut stops the walk short, D2 is false. The implementation MUST visit every `p ∈ HotPathCandidates` before falling back; PR #6521's input-dependent fuel scheme satisfies this only when the fuel suffices to reach `UInt64.word`. Any worker noticing the walk can short-circuit before exhausting `HotPathCandidates` should file the fix as a prerequisite issue, not weaken D2's statement.
 
 ## Headline correctness theorem
 
