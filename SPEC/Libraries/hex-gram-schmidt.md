@@ -111,32 +111,44 @@ def gramDetVec (b : Matrix Int n m) : Vector Nat (n + 1)
       `Matrix.noPivotLoop` trailing update** (the operational
       shape that avoids spelling `det` but carries the same
       quotient identity), is bridge-layer work. Both formulations
-      are equivalently affected — operationally re-deriving the
-      Schur ≡ Bareiss step is the same SPEC violation as
+      are equivalently affected: operationally re-deriving the
+      Schur ≡ Bareiss step has the same bridge-layer status as
       explicitly rederiving Desnanot-Jacobi.
-    - Such characterizations take a public quotient-provider API
-      as a hypothesis. The current private abbrev
-      `BareissGramInitialRegularStepQuotientProvider` (in
-      `HexGramSchmidt/Int.lean`) is the right shape but must be
-      made non-private (or wrapped by a public surface) before
-      `hex-gram-schmidt-mathlib` can construct an instance.
-    - The provider's name signals scope: the *non-singular
-      regular-step branch* and the *singular boundary case*
-      (`j = s + 1` where the no-pivot Bareiss pass over
-      `gramMatrix b` records a singular step at column `s` with
-      the prefix up to `s` non-singular) both require bridge-layer
-      provenance. The non-singular branch needs the quotient
-      identity; the boundary case needs the PSD column-zero fact
-      (zero Bareiss pivot ⟹ rest-of-column above is zero), which
-      kills the σ-chain's final-iteration numerator
-      `rows[i][s] · rows[s+1][s]`. That product does not reduce to
-      zero from the recurrence alone (counterexample: symmetric
-      non-Gram `[[1,1,0],[1,1,1],[0,1,1]]` has singular step at
-      `s = 1` and the σ-chain returns `-1` at slot `(2, 2)` while
-      the Bareiss-side returns `0`). Only zero cases that don't go
-      through a quotient (pre-loop initialisation, upper-triangle,
-      and columns strictly beyond the recorded singular step) are
-      Mathlib-free.
+    - These characterizations take a public quotient-provider API
+      as a hypothesis. The API exposes the non-singular
+      regular-step quotient data needed by the Schur proofs; the
+      bridge layer constructs its instances.
+    - The non-singular regular-step branch and Schur-side
+      characterizations in the singular column range are
+      bridge-layer work. The non-singular branch needs Bareiss
+      exact-division divisibility
+      (`denom ∣ pivot · entry − row · col`) on Gram-pass
+      denominators, supplied by the quotient-provider API. For a
+      singular step at column `s`, the Schur-side range is every
+      in-bounds cell with `s < j ≤ i`: proving those computed
+      Schur values are zero needs the PSD column-zero fact (zero
+      Bareiss pivot ⟹ rest-of-column above is zero). The
+      recurrence alone does not imply this: symmetric non-Gram
+      `[[1,1,0],[1,1,1],[0,1,1]]` has singular step at `s = 1`,
+      and the σ-chain already returns `-1` at slot `(2, 2)` while
+      the column-major Bareiss kernel returns `0`.
+    - The kernels are asymmetric after a singular step. The
+      column-major Bareiss kernel writes the singular column,
+      then stops; cells in columns `j > s` are reads from the
+      initial zero buffer, so their zero characterization is
+      Mathlib-free on the column-major side. The Schur kernel has
+      no singular stop and writes every cell with `j ≤ i`; a
+      post-singular Schur zero for `0 < j ≤ i` must show the
+      σ-chain write value is zero. Therefore any theorem equating
+      the two kernels' outputs in the singular range is
+      bridge-layer work whenever it uses the Schur-side zero,
+      even if the column-major zero is proved separately and
+      Mathlib-free. The Schur-side facts that remain Mathlib-free
+      are structural cell facts: upper-triangle cells are never
+      written and remain `0`; column-zero writes equal the Gram
+      entry and use no σ-fold; array initialisation,
+      out-of-bounds, and frame lemmas do not use PSD or
+      Bareiss-divisibility input.
     - The provider type must quantify only over **canonical
       (loop-constructed)** `BareissGramRowInvariant` instances,
       not arbitrary ones. Universal quantification over arbitrary
