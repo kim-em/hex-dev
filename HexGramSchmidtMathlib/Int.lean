@@ -4178,6 +4178,160 @@ theorem bareissGramCanonicalCoeff_eq_borderedMinor_aug
     (⟨i.val, Nat.lt_succ_of_lt i.isLt⟩ : Fin (n + 1)) (Fin.last n)
     h_step_le_i h_step_le_last
 
+/-- Under a non-singular no-pivot Bareiss prefix that has not yet reached the
+terminal step, the loop on the initial state of `M` consumed exactly `fuel`
+regular iterations: the resulting step equals `fuel`, and `fuel + 1 ≤ n'`. -/
+private theorem noPivotLoop_initial_step_eq_and_fuel_succ_le_of_no_sing
+    {n' : Nat} (M : Hex.Matrix Int n' n') (fuel : Nat)
+    (h_no_sing :
+      (Matrix.noPivotLoop fuel (Matrix.noPivotInitialState M)).singularStep = none)
+    (hnext :
+      (Matrix.noPivotLoop fuel (Matrix.noPivotInitialState M)).step + 1 < n') :
+    (Matrix.noPivotLoop fuel (Matrix.noPivotInitialState M)).step = fuel ∧
+      fuel + 1 ≤ n' := by
+  induction fuel with
+  | zero =>
+    have h_init_step : (Matrix.noPivotInitialState M).step = 0 := rfl
+    refine ⟨rfl, ?_⟩
+    have h0 := hnext
+    rw [Matrix.noPivotLoop_zero_fuel, h_init_step] at h0
+    omega
+  | succ fuel ih =>
+    have h_no_sing_prev := noPivotLoop_singularStep_none_of_succ M fuel h_no_sing
+    set state' := Matrix.noPivotLoop fuel (Matrix.noPivotInitialState M) with hstate'
+    by_cases hDone : state'.step + 1 < n'
+    · by_cases hp : state'.matrix[state'.step][state'.step] = 0
+      · exfalso
+        rw [Matrix.noPivotLoop_add fuel 1, ← hstate',
+            Matrix.noPivotLoop_singular_branch 0 state' hDone hp] at h_no_sing
+        simp at h_no_sing
+      · -- Regular branch: peel the last iteration.
+        obtain ⟨h_step_prev, h_fuel_prev⟩ := ih h_no_sing_prev hDone
+        refine ⟨?_, by omega⟩
+        rw [Matrix.noPivotLoop_add fuel 1, ← hstate',
+            Matrix.noPivotLoop_regular_branch 0 state' hDone hp,
+            Matrix.noPivotLoop_zero_fuel]
+        show state'.step + 1 = fuel + 1
+        rw [h_step_prev]
+    · exfalso
+      rw [Matrix.noPivotLoop_add fuel 1, ← hstate',
+          Matrix.noPivotLoop_done 0 state' hDone] at hnext
+      exact hDone hnext
+
+/-- Companion to `trailing_eq_at_step_local`: rewrite
+`BareissNoPivotInvariant.prevPivot_eq` with the step value supplied externally
+so the dependent `leadingPrefix` type matches the desired `s = state.step`
+substitution cleanly. -/
+private theorem prevPivot_eq_at_step_local
+    {n' : Nat} {M : Hex.Matrix Int n' n'} {state : Matrix.BareissState n'}
+    (hinv : HexMatrixMathlib.BareissNoPivotInvariant M state)
+    (s : Nat) (hs : s ≤ n') (hstep : s = state.step) :
+    state.prevPivot = Hex.Matrix.det (Hex.Matrix.leadingPrefix M s hs) := by
+  subst hstep
+  exact hinv.prevPivot_eq
+
+/-- Concrete bridge-side instance of `StepWitness` for any integer basis.
+
+The witness quotient at slot `a` is the next iteration's canonical row
+coefficient `(bareissGramCanonicalCoeff b (fuel + 1) i)[a]`.  Integrality of
+this quotient comes from the Bareiss-Desnanot identity applied to the
+augmented `(n + 1) × (n + 1)` matrix `augmentedGram b a`: the canonical
+coefficients identify with trailing-column entries of the augmented no-pivot
+Bareiss pass (`bareissGramCanonicalCoeff_eq_borderedMinor_aug`), and the
+Bareiss step recurrence on the augmented matrix supplies the exact-division
+multiplicative identity. -/
+def StepWitness.ofGram (b : Matrix Int n m) :
+    Hex.GramSchmidt.Int.StepWitness b := by
+  intro fuel hinv h_canon h_prefix_none hnext hp i hi
+  -- Prepare bound facts and the step equality before refining.
+  set state := Matrix.noPivotLoop fuel
+    (Matrix.noPivotInitialState (Matrix.gramMatrix b)) with hstate
+  obtain ⟨h_step_eq_fuel, hfuel_n_le⟩ :=
+    noPivotLoop_initial_step_eq_and_fuel_succ_le_of_no_sing (Matrix.gramMatrix b)
+      fuel h_prefix_none hnext
+  have hfuel_lt_n : fuel < n := by omega
+  have hfuel_lt_naug : fuel < n + 1 := by omega
+  have hfuel_succ_lt_naug : fuel + 1 < n + 1 := by omega
+  have hfuel_le_naug : fuel ≤ n + 1 := by omega
+  -- The prefix at `fuel + 1` is also non-singular (one more regular step).
+  have h_prefix_none_succ :
+      (Matrix.noPivotLoop (fuel + 1)
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none := by
+    rw [Matrix.noPivotLoop_add fuel 1, ← hstate,
+        Matrix.noPivotLoop_regular_branch 0 state hnext hp,
+        Matrix.noPivotLoop_zero_fuel]
+  have h_fuel_succ_le_i : fuel + 1 ≤ i.val := by rw [← h_step_eq_fuel]; exact hi
+  refine ⟨fun a => (Hex.GramSchmidt.Int.bareissGramCanonicalCoeff b (fuel + 1) i)[a], ?_⟩
+  -- The structure field has an outer `let k := ⟨state.step, _⟩` binder before
+  -- the `∀ a`, so two intros are needed.
+  intro k_let a
+  -- Augmented invariants at fuel and fuel + 1, both at slot `a`.
+  obtain ⟨h_step_A, h_prev_A, h_sing_A, h_block_A, h_trail_A⟩ :=
+    noPivotLoop_augmentedGram_invariant b a fuel hfuel_n_le h_prefix_none
+  set stateA := Matrix.noPivotLoop fuel
+    (Matrix.noPivotInitialState (augmentedGram b a)) with hstateA
+  -- The lifted Fin (n + 1) indices used throughout.
+  set iA : Fin (n + 1) := ⟨i.val, Nat.lt_succ_of_lt i.isLt⟩ with hiA_def
+  set kA : Fin (n + 1) := ⟨k_let.val, Nat.lt_succ_of_lt k_let.isLt⟩ with hkA_def
+  set L : Fin (n + 1) := Fin.last n with hL_def
+  -- `k_let.val = state.step = fuel`, so `kA.val = fuel`.
+  have h_kA_val : kA.val = fuel := h_step_eq_fuel
+  have h_fuel_le_kA : fuel ≤ kA.val := Nat.le_of_eq h_kA_val.symm
+  have h_fuel_lt_iA : fuel < iA.val := by show fuel < i.val; omega
+  have h_fuel_lt_L : fuel < L.val := by show fuel < n; omega
+  have h_fuel_le_iA : fuel ≤ iA.val := Nat.le_of_lt h_fuel_lt_iA
+  have h_fuel_le_L : fuel ≤ L.val := Nat.le_of_lt h_fuel_lt_L
+  -- Substitute the row-invariant's coefficients by canonical via h_canon.
+  rw [h_canon i, h_canon k_let]
+  -- Bridge state.matrix entries to stateA entries via the upper-block bridge.
+  rw [show state.matrix[k_let][k_let] = stateA.matrix[kA][kA] from
+      (h_block_A k_let k_let).symm]
+  rw [show state.matrix[i][k_let] = stateA.matrix[iA][kA] from
+      (h_block_A i k_let).symm]
+  -- Bridge canonical coefficients to stateA trailing-column entries.
+  rw [show (bareissGramCanonicalCoeff b fuel i)[a] = stateA.matrix[iA][L] from
+      (h_trail_A i).symm]
+  rw [show (bareissGramCanonicalCoeff b fuel k_let)[a] = stateA.matrix[kA][L] from
+      (h_trail_A k_let).symm]
+  -- Bridge state.prevPivot to stateA.prevPivot (h_prev_A goes the other way).
+  rw [← h_prev_A]
+  -- Bareiss invariant on the augmented loop at fuel.
+  have h_inv : HexMatrixMathlib.BareissNoPivotInvariant (augmentedGram b a) stateA :=
+    HexMatrixMathlib.noPivotLoop_invariant_of_singularStep_eq_none
+      (augmentedGram b a) fuel _
+      (HexMatrixMathlib.bareissNoPivotInvariant_initial (augmentedGram b a))
+      h_sing_A
+  have h_stateA_step : stateA.step = fuel := h_step_A.trans h_step_eq_fuel
+  -- Rewrite each stateA entry and the prevPivot as bordered-minor determinants.
+  rw [trailing_eq_at_step_local h_inv fuel hfuel_lt_naug h_stateA_step.symm kA kA
+        h_fuel_le_kA h_fuel_le_kA]
+  rw [trailing_eq_at_step_local h_inv fuel hfuel_lt_naug h_stateA_step.symm iA L
+        h_fuel_le_iA h_fuel_le_L]
+  rw [trailing_eq_at_step_local h_inv fuel hfuel_lt_naug h_stateA_step.symm iA kA
+        h_fuel_le_iA h_fuel_le_kA]
+  rw [trailing_eq_at_step_local h_inv fuel hfuel_lt_naug h_stateA_step.symm kA L
+        h_fuel_le_kA h_fuel_le_L]
+  rw [prevPivot_eq_at_step_local h_inv fuel hfuel_le_naug h_stateA_step.symm]
+  -- Beta-reduce the explicit `q a` on the RHS so the next rewrite matches.
+  show ((augmentedGram b a).borderedMinor fuel hfuel_lt_naug kA kA).det *
+        ((augmentedGram b a).borderedMinor fuel hfuel_lt_naug iA L).det -
+      ((augmentedGram b a).borderedMinor fuel hfuel_lt_naug iA kA).det *
+        ((augmentedGram b a).borderedMinor fuel hfuel_lt_naug kA L).det =
+    (bareissGramCanonicalCoeff b (fuel + 1) i)[a] *
+      ((augmentedGram b a).leadingPrefix fuel hfuel_le_naug).det
+  rw [bareissGramCanonicalCoeff_eq_borderedMinor_aug b (fuel + 1) i a
+        h_fuel_succ_le_i h_prefix_none_succ]
+  -- Desnanot-Jacobi on the augmented matrix at level `fuel`.
+  have hdj :=
+    HexMatrixMathlib.desnanot_jacobi_borderedMinor (augmentedGram b a) fuel
+      hfuel_lt_naug hfuel_succ_lt_naug iA L h_fuel_lt_iA h_fuel_lt_L
+  -- The K positions in hdj are `⟨fuel, _⟩ : Fin (n + 1)`; via Fin.ext they
+  -- equal `kA` (whose value is `state.step = fuel`).
+  have hK : ∀ (h : fuel < n + 1), (⟨fuel, h⟩ : Fin (n + 1)) = kA := fun _ =>
+    Fin.ext h_kA_val.symm
+  simp_rw [hK] at hdj
+  exact hdj.symm
+
 end Int
 end GramSchmidt
 end Hex
