@@ -4348,6 +4348,35 @@ theorem scaledCoeffs_lower_eq_zero_of_singularStep_lt
   exact getArrayEntry_scaledCoeffRowsSchur_eq_zero_of_singularStep_lt
     b (StepWitness.ofGram b) i.val j.val i.isLt (Nat.le_of_lt hji) s hs h_sing
 
+/-- Unconditional rational closed form for the strictly lower entries of
+`scaledCoeffs`: the executable integer scaled coefficient agrees with the
+Leibniz determinant of the Cramer minor `scaledCoeffMatrix b i j hji`
+regardless of whether the no-pivot Bareiss pass over `gramMatrix b`
+reaches column `j` without a singular step. The non-singular branch
+delegates to `scaledCoeffs_lower_eq_det_scaledCoeffMatrix_of_no_singular`;
+the singular branch composes
+`scaledCoeffs_lower_eq_zero_of_singularStep_lt` (LHS = 0) with
+`scaledCoeffMatrix_det_eq_zero_of_singularStep_lt` (RHS = 0). -/
+theorem scaledCoeffs_lower_eq_det_scaledCoeffMatrix
+    {n m : Nat} (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val) :
+    ((GramSchmidt.entry (scaledCoeffs b) i j : Int) : Rat) =
+      ((Matrix.det (GramSchmidt.scaledCoeffMatrix b i j hji) : Int) : Rat) := by
+  cases h_sing : (Matrix.noPivotLoop j.val
+      (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep with
+  | none =>
+      exact scaledCoeffs_lower_eq_det_scaledCoeffMatrix_of_no_singular b i j hji h_sing
+  | some s =>
+      have hsj : s < j.val := by
+        have h := Hex.GramSchmidt.Int.noPivotLoop_singularStep_lt j.val
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b)) rfl s h_sing
+        change s < 0 + j.val at h
+        omega
+      have h_lhs : GramSchmidt.entry (scaledCoeffs b) i j = 0 :=
+        scaledCoeffs_lower_eq_zero_of_singularStep_lt b i j hji s hsj h_sing
+      have h_det : Matrix.det (GramSchmidt.scaledCoeffMatrix b i j hji) = 0 :=
+        scaledCoeffMatrix_det_eq_zero_of_singularStep_lt b i j hji s h_sing
+      rw [h_lhs, h_det]
+
 end Int
 end GramSchmidt
 end Hex
