@@ -4175,6 +4175,79 @@ def quadraticIntegerRootFactors? (core : ZPoly) : Option (Array ZPoly) :=
   else
     none
 
+/-- Integer values in `[-B, B]`, listed in increasing order. -/
+private def boundedIntegerList (B : Nat) : List Int :=
+  (List.range (2 * B + 1)).map fun i => (Int.ofNat i) - (Int.ofNat B)
+
+/-- All length-`len` integer coefficient lists with each entry in `[-B, B]`. -/
+private def boundedCoefficientVectors (B : Nat) : Nat → List (List Int)
+  | 0 => [[]]
+  | len + 1 =>
+      (boundedCoefficientVectors B len).flatMap fun rest =>
+        (boundedIntegerList B).map fun c => c :: rest
+
+/-- Bounded-coefficient candidate divisors of degree exactly `d`. Each
+emitted polynomial has positive leading coefficient (so
+`normalizeFactorSign` is the identity on it) and passes
+`shouldRecordPolynomialFactor`. -/
+private def trialDivisionCandidatesOfDegree (B d : Nat) : List ZPoly :=
+  (boundedCoefficientVectors B (d + 1)).filterMap fun coeffs =>
+    let p := DensePoly.ofCoeffs coeffs.toArray
+    if p.degree?.getD 0 = d ∧ 0 < DensePoly.leadingCoeff p ∧
+        shouldRecordPolynomialFactor p = true then
+      some p
+    else
+      none
+
+/-- Bounded-coefficient candidate divisors of degrees `1..maxDeg`, in order
+of increasing degree. -/
+private def trialDivisionCandidatesUpTo (B maxDeg : Nat) : List ZPoly :=
+  (List.range maxDeg).flatMap fun d => trialDivisionCandidatesOfDegree B (d + 1)
+
+/-- Peel candidate divisors off the running target via `exactQuotient?`. Each
+candidate in the input list is tried at most once. Returns
+`(emittedFactors, residual)` with the invariant
+`residual * polyProduct emittedFactors = target`. -/
+private def trialDivisionPeelAux :
+    ZPoly → List ZPoly → Array ZPoly × ZPoly
+  | target, [] => (#[], target)
+  | target, candidate :: candidates =>
+      match exactQuotient? target candidate with
+      | some quotient =>
+          let rest := trialDivisionPeelAux quotient candidates
+          (#[candidate] ++ rest.1, rest.2)
+      | none => trialDivisionPeelAux target candidates
+
+/--
+Standalone integer trial-division core for the slow factorization path.
+
+First peels monic linear integer-root factors `(x - r)` off `core` via
+`splitIntegerRootFactorsAux`, then enumerates non-unit polynomial candidates
+of degrees `1..deg(afterLinear)/2` with coefficients in `[-B, B]`, dividing
+each in turn into the running residual. The returned array consists of the
+linear factors, the bounded-coefficient factors that exactly divided the
+residual, and the final residual (omitted when it collapses to `1`).
+
+The companion theorems `exhaustiveIntegerTrialCoreFactorsWithBound_polyProduct`,
+`exhaustiveIntegerTrialCoreFactorsWithBound_normalizeFactorSign`, and
+`exhaustiveIntegerTrialCoreFactorsWithBound_shouldRecord` record the
+local executable invariants needed by the eventual `factorSlow`
+reassembly callers.
+-/
+def exhaustiveIntegerTrialCoreFactorsWithBound
+    (core : ZPoly) (B : Nat) : Array ZPoly :=
+  let roots := integerRootCandidates core
+  let split := splitIntegerRootFactorsAux core roots roots.length
+  let linearFactors := split.1
+  let afterLinear := split.2
+  let maxDeg := afterLinear.degree?.getD 0 / 2
+  let candidates := trialDivisionCandidatesUpTo B maxDeg
+  let peel := trialDivisionPeelAux afterLinear candidates
+  if peel.2 = 1 then
+    linearFactors ++ peel.1
+  else
+    (linearFactors ++ peel.1).push peel.2
+
 def centeredModNat (z : Int) (m : Nat) : Int :=
   if m = 0 then
     z
