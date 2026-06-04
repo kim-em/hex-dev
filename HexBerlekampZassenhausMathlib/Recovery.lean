@@ -6929,17 +6929,15 @@ the prime-search-safe preconditions packaged as `FactorFastCapSeparationInputs`
 (cap-separation producer side) and `CanonicalRecoveryTailInputs`
 (canonical-support recovery tail) are available.
 
-This is the prime-search-safe replacement for the hypothesis-free
+This is the prime-search-safe bridge toward the hypothesis-free
 `∀ f, Hex.factorFast f ≠ none` target named in
-`SPEC/Libraries/hex-berlekamp-zassenhaus.md` Group D / D1: that
-unconditional statement is false against the current executable finite prime
-search, witnessed by `Hex.finitePrimeSearchNoneQuadratic` (see
-`HexBerlekampZassenhaus/Basic.lean`).  The required
+`SPEC/Libraries/hex-berlekamp-zassenhaus.md` Group D / D1. The required
 `Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData`
 witness is stored in `capInputs.choose_eq`; together with the cap-separation
 and canonical-recovery tail packages, it proves the public
-`Hex.factorFast f ≠ none` conclusion without changing executable prime
-selection.
+`Hex.factorFast f ≠ none` conclusion for that selected prime. The remaining D2
+leaf theorem removes this explicit prime-search witness on primitive
+square-free inputs.
 
 The proof composes the existing assembly chain: routing through
 `factorFast_ne_none_of_factorFastCapSeparationInputsAndCanonicalRecoveryInputs_internalCapPositiveAndPrimeLowerBound`

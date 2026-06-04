@@ -386,19 +386,18 @@ private def factorizationCaseMatches (c : FactorizationCase) : Bool :=
 
 The `(x-1)(x-2)…(x-n)` cascade exhausts the fixed
 `smallPrimeCandidates` list once `n ≥ 72`, because then every prime
-`p ≤ 71` has a colliding residue pair somewhere in `{1, …, n}` and the
+`p ≤ 71` has a colliding residue pair somewhere in `{1, ..., n}` and the
 modular image fails the square-free predicate. Materializing the
 degree-72 input via `fromRoots` in kernel reduction time is
 prohibitively slow (~10 minutes of `#guard` cost), so the fixture
 instead uses the engineered degree-2 cascade
-`(x − 1)(x − (1 + D))` with `D = ∏ p` over the fixed-list primes
+`(x - 1)(x - (1 + D))` with `D = product p` over the fixed-list primes
 `p ∈ {3, 5, 7, 11, 13, 17, 19, 23, 31, 71}`. Mod every fixed-list
 prime, the two roots collapse to a single residue (so the modular
-image is the square `(x − 1)²` and `isGoodPrime` rejects). Mod the
+image is the square `(x - 1)^2` and `isGoodPrime` rejects). Mod the
 next admissible prime (`73`), the difference `D mod 73 = 67` is
 nonzero, so the modular image is square-free. `choosePrimeData?`
-returns `some` with a selected prime taken from
-`extendedSmallPrimeCandidates`.
+returns `some` with a selected prime from the post-prefix walk.
 -/
 
 /-- Product of the fixed-list primes, used to engineer the extended-
