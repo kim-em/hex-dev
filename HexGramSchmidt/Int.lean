@@ -3320,27 +3320,6 @@ structure BareissGramRegularStepQuotient
         state.matrix[i][k] * (hinv.coeff k)[a] =
           q a * state.prevPivot
 
-/-- Initial no-pivot Gram trajectory specialization of the regular-step
-coefficient quotient package.
-
-Concrete quotient witnesses are constructed in `HexGramSchmidtMathlib`, where
-the Bareiss-Desnanot proof infrastructure required by the post-#6490 SPEC
-clause is available. -/
-abbrev BareissGramInitialRegularStepQuotient
-    (b : Matrix Int n m) (fuel : Nat)
-    (hinv : BareissGramRowInvariant b
-      (Matrix.noPivotLoop fuel
-        (Matrix.noPivotInitialState (Matrix.gramMatrix b))))
-    (hnext :
-      (Matrix.noPivotLoop fuel
-        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 < n)
-    (i : Fin n)
-    (hi :
-      (Matrix.noPivotLoop fuel
-        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 ≤ i.val) :
-    Type :=
-  BareissGramRegularStepQuotient hinv hnext i hi
-
 private theorem bareissGramRegularStepQuotient_stepCoeff_get
     {b : Matrix Int n m} {state : Matrix.BareissState n}
     {hinv : BareissGramRowInvariant b state}
@@ -3414,6 +3393,157 @@ private theorem bareissGramRowInvariantStepCoeff_support
         (⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hnext⟩ : Fin n))[a.val] = 0 := by
     simpa [k] using hck
   simp [hciNat, hckNat, Matrix.exactDiv]
+
+/-! ### Canonical coefficient vector and canonicity predicate -/
+
+/-- Canonical row-coefficient vector for the initial no-pivot Gram trajectory.
+
+Base case: each row carries the standard basis vector `e_i`. Inductive step
+(regular branch, active row): apply the fraction-free Bareiss row update via
+`exactDiv`. Processed rows, singular branches, and done branches preserve the
+previous vector unchanged — mirroring the row-invariant evolution in
+`bareissGramRowInvariant_noPivotLoop_initialAux`.
+
+Defined as a pure function of `b` and `fuel` (no `BareissGramRowInvariant`
+argument), so the canonical coefficient is fixed by the matrix and step
+count alone. Non-canonical row-coefficient witnesses are ruled out by the
+`IsCanonicalAt` predicate consumed by `StepWitness`. -/
+def bareissGramCanonicalCoeff (b : Matrix Int n m) :
+    Nat → Fin n → Vector Int n
+  | 0, i => Vector.ofFn fun k : Fin n => if i = k then 1 else 0
+  | fuel + 1, i =>
+    let state := Matrix.noPivotLoop fuel
+      (Matrix.noPivotInitialState (Matrix.gramMatrix b))
+    if hnext : state.step + 1 < n then
+      if state.matrix[state.step][state.step] = 0 then
+        bareissGramCanonicalCoeff b fuel i
+      else if state.step + 1 ≤ i.val then
+        let k : Fin n :=
+          ⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hnext⟩
+        Vector.ofFn fun a : Fin n =>
+          Matrix.exactDiv
+            (state.matrix[k][k] * (bareissGramCanonicalCoeff b fuel i)[a] -
+              state.matrix[i][k] * (bareissGramCanonicalCoeff b fuel k)[a])
+            state.prevPivot
+      else
+        bareissGramCanonicalCoeff b fuel i
+    else
+      bareissGramCanonicalCoeff b fuel i
+
+/-- The canonical coefficient at `fuel = 0` is the standard basis vector. -/
+@[simp] theorem bareissGramCanonicalCoeff_zero
+    (b : Matrix Int n m) (i : Fin n) :
+    bareissGramCanonicalCoeff b 0 i =
+      Vector.ofFn fun k : Fin n => if i = k then (1 : Int) else 0 := rfl
+
+/-- Recursion equation: regular-branch active-row case. -/
+theorem bareissGramCanonicalCoeff_succ_regular
+    (b : Matrix Int n m) (fuel : Nat) (i : Fin n)
+    (hnext :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 < n)
+    (hp :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
+          (Matrix.noPivotLoop fuel
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step][
+          (Matrix.noPivotLoop fuel
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step] ≠ 0)
+    (hi :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 ≤ i.val) :
+    bareissGramCanonicalCoeff b (fuel + 1) i =
+      (let state := Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))
+       let k : Fin n :=
+         ⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hnext⟩
+       Vector.ofFn fun a : Fin n =>
+         Matrix.exactDiv
+           (state.matrix[k][k] * (bareissGramCanonicalCoeff b fuel i)[a] -
+             state.matrix[i][k] * (bareissGramCanonicalCoeff b fuel k)[a])
+           state.prevPivot) := by
+  simp only [bareissGramCanonicalCoeff, dif_pos hnext, if_neg hp, if_pos hi]
+
+/-- Recursion equation: regular-branch processed-row case. -/
+theorem bareissGramCanonicalCoeff_succ_processed
+    (b : Matrix Int n m) (fuel : Nat) (i : Fin n)
+    (hnext :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 < n)
+    (hp :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
+          (Matrix.noPivotLoop fuel
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step][
+          (Matrix.noPivotLoop fuel
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step] ≠ 0)
+    (hi : ¬ (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 ≤ i.val) :
+    bareissGramCanonicalCoeff b (fuel + 1) i =
+      bareissGramCanonicalCoeff b fuel i := by
+  simp only [bareissGramCanonicalCoeff, dif_pos hnext, if_neg hp, if_neg hi]
+
+/-- Recursion equation: singular branch (zero diagonal). -/
+theorem bareissGramCanonicalCoeff_succ_singular
+    (b : Matrix Int n m) (fuel : Nat) (i : Fin n)
+    (hnext :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 < n)
+    (hp :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
+          (Matrix.noPivotLoop fuel
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step][
+          (Matrix.noPivotLoop fuel
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step] = 0) :
+    bareissGramCanonicalCoeff b (fuel + 1) i =
+      bareissGramCanonicalCoeff b fuel i := by
+  simp only [bareissGramCanonicalCoeff, dif_pos hnext, if_pos hp]
+
+/-- Recursion equation: done branch (no further work possible). -/
+theorem bareissGramCanonicalCoeff_succ_done
+    (b : Matrix Int n m) (fuel : Nat) (i : Fin n)
+    (hDone : ¬ (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 < n) :
+    bareissGramCanonicalCoeff b (fuel + 1) i =
+      bareissGramCanonicalCoeff b fuel i := by
+  simp only [bareissGramCanonicalCoeff, dif_neg hDone]
+
+/-- A `BareissGramRowInvariant` on `noPivotLoop fuel (noPivotInitialState …)`
+is *canonical at `fuel`* when every row's coefficient vector matches
+`bareissGramCanonicalCoeff`. This is the soundness gate consumed by
+`StepWitness`: non-canonical witnesses (which can shift coefficients by a
+kernel vector while keeping `entry_eq_dot` satisfied) cannot invoke the
+witness's quotient identity.
+
+The SPEC counterexample at rows `(1,1), (1,0), (-1,-1)` (#6505) produces two
+distinct `BareissGramRowInvariant` instances at the same loop state whose
+coefficient vectors differ by the kernel vector. Both satisfy `entry_eq_dot`,
+but only one (the canonical one) yields an integer Bareiss-step quotient. -/
+def IsCanonicalAt (b : Matrix Int n m) (fuel : Nat)
+    (hinv : BareissGramRowInvariant b
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b)))) : Prop :=
+  ∀ i : Fin n, hinv.coeff i = bareissGramCanonicalCoeff b fuel i
+
+/-- The base-case row invariant at `fuel = 0` carries the standard basis vectors
+and is therefore canonical. -/
+theorem isCanonicalAt_initial (b : Matrix Int n m) :
+    IsCanonicalAt b 0 (bareissGramRowInvariant_initial b) := by
+  intro i
+  rfl
+
+/-- Transport along an equation of `BareissState`s preserves the `coeff` field
+of a `BareissGramRowInvariant`. The field's type `Fin n → Vector Int n` does
+not depend on the state index, so transport is the identity at that
+projection. Used to discharge canonicity proofs after transporting an explicit
+intermediate state back to the `noPivotLoop fuel initial` form. -/
+theorem bareissGramRowInvariant_coeff_transport
+    {b : Matrix Int n m} {st1 st2 : Matrix.BareissState n}
+    (h : st1 = st2) (x : BareissGramRowInvariant b st2) (i : Fin n) :
+    (h ▸ x).coeff i = x.coeff i := by
+  cases h
+  rfl
 
 /-- Right-scalar linearity of the dot product against a `rowCombination` whose
 coefficient vector is multiplied pointwise by a constant on the right.  Used
@@ -3586,6 +3716,76 @@ private def bareissGramRowInvariant_regular_step
   · intro i j hi
     have hi' : state.step + 1 ≤ i.val := hi
     simpa [hi'] using hentry i j hi'
+
+/-- The coefficient vectors produced by `bareissGramRowInvariant_regular_step`
+from a canonical input invariant match `bareissGramCanonicalCoeff` at the
+next-step fuel index. Used to propagate canonicity through one regular Bareiss
+step inside `bareissGramRowInvariant_noPivotLoop_initialAux`. -/
+theorem bareissGramRowInvariant_regular_step_coeff_canonical
+    (b : Matrix Int n m) (elapsed : Nat)
+    (hinv : BareissGramRowInvariant b
+      (Matrix.noPivotLoop elapsed
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))))
+    (h_canon : IsCanonicalAt b elapsed hinv)
+    (hnext :
+      (Matrix.noPivotLoop elapsed
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 < n)
+    (hp :
+      (Matrix.noPivotLoop elapsed
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
+          (Matrix.noPivotLoop elapsed
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step][
+          (Matrix.noPivotLoop elapsed
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step] ≠ 0)
+    (hentry :
+      ∀ i j : Fin n,
+        (hi : (Matrix.noPivotLoop elapsed
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 ≤ i.val) →
+        (Matrix.stepMatrix
+          (Matrix.noPivotLoop elapsed
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix
+          (Matrix.noPivotLoop elapsed
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step
+          (Matrix.noPivotLoop elapsed
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
+              (Matrix.noPivotLoop elapsed
+                (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step][
+              (Matrix.noPivotLoop elapsed
+                (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step]
+          (Matrix.noPivotLoop elapsed
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).prevPivot)[i][j] =
+          Matrix.dot
+            (Matrix.rowCombination b
+              (bareissGramRowInvariantStepCoeff hinv hnext i hi))
+            (b.row j))
+    (i : Fin n) :
+    (bareissGramRowInvariant_regular_step hnext hp hinv hentry).coeff i =
+      bareissGramCanonicalCoeff b (elapsed + 1) i := by
+  -- The regular_step constructor produces `if step+1 ≤ i.val then stepCoeff else hinv.coeff i`.
+  by_cases hi : (Matrix.noPivotLoop elapsed
+      (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 ≤ i.val
+  · have hLHS :
+        (bareissGramRowInvariant_regular_step hnext hp hinv hentry).coeff i =
+          bareissGramRowInvariantStepCoeff hinv hnext i hi := by
+      show (if hi : _ then _ else _) = _
+      rw [dif_pos hi]
+    rw [hLHS]
+    rw [bareissGramCanonicalCoeff_succ_regular b elapsed i hnext hp hi]
+    show Vector.ofFn (fun a : Fin n =>
+        Matrix.exactDiv
+          (_ * (hinv.coeff i)[a] - _ * (hinv.coeff _)[a])
+          _) = _
+    rw [h_canon i,
+        h_canon ⟨(Matrix.noPivotLoop elapsed
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step,
+          Nat.lt_trans (Nat.lt_succ_self _) hnext⟩]
+  · have hLHS :
+        (bareissGramRowInvariant_regular_step hnext hp hinv hentry).coeff i =
+          hinv.coeff i := by
+      show (if hi : _ then _ else _) = _
+      rw [dif_neg hi]
+    rw [hLHS, bareissGramCanonicalCoeff_succ_processed b elapsed i hnext hp hi]
+    exact h_canon i
 
 /-- Extract the represented lattice row vector and entry equation carried by
 `BareissGramRowInvariant`. This is the caller-facing shape needed by
@@ -3795,7 +3995,7 @@ private theorem bareissGramInitialRegularStep_entry_eq_dot
     (hi :
       (Matrix.noPivotLoop fuel
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 ≤ i.val)
-    (hq : BareissGramInitialRegularStepQuotient b fuel hinv hnext i hi) :
+    (hq : BareissGramRegularStepQuotient hinv hnext i hi) :
     (Matrix.stepMatrix
         (Matrix.noPivotLoop fuel
           (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix
@@ -3829,18 +4029,47 @@ private theorem bareissGramInitialRegularStep_entry_eq_dot
       (Nat.lt_of_lt_of_le hj' hi')
   exact bareissGramRegularStep_entry_eq_dot hprev hq h_processed j
 
-/-- Quotient provenance required to run the initial no-pivot Gram row invariant
-through each reachable regular branch.
+/-- Per-step quotient package for the initial no-pivot Gram trajectory,
+restricted to *canonical* row-coefficient witnesses via `IsCanonicalAt`.
+
+`StepWitness.Cell` is an alias for `BareissGramRegularStepQuotient` whose
+canonicity gate (`h_canon`) prevents non-canonical `BareissGramRowInvariant`
+witnesses — which can shift coefficients by a kernel vector while still
+satisfying `entry_eq_dot` — from supplying integer quotients. The kernel-shift
+counterexample (SPEC #6505: rows `(1,1), (1,0), (-1,-1)` at row 2 step 1)
+shows the restriction is necessary: distinct non-canonical witnesses produce
+numerators differing by `1`, which is not divisible by `prevPivot = 2`. -/
+abbrev StepWitness.Cell
+    (b : Matrix Int n m) (fuel : Nat)
+    (hinv : BareissGramRowInvariant b
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))))
+    (_h_canon : IsCanonicalAt b fuel hinv)
+    (hnext :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 < n)
+    (i : Fin n)
+    (hi :
+      (Matrix.noPivotLoop fuel
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 ≤ i.val) :
+    Type :=
+  BareissGramRegularStepQuotient hinv hnext i hi
+
+/-- Quotient provenance for the initial no-pivot Gram trajectory, restricted
+to canonical `BareissGramRowInvariant` witnesses via `IsCanonicalAt`. The
+provider supplies, at every reachable regular Bareiss step, an integer
+quotient `q : Fin n → Int` realising the Bareiss-row-update divisibility on
+the canonical coefficient vectors.
 
 Concrete providers are constructed in `HexGramSchmidtMathlib`, where the
-Bareiss-Desnanot proof infrastructure required by the post-#6490 SPEC clause is
-available; the Mathlib-free layer only consumes this abstraction. -/
-abbrev BareissGramInitialRegularStepQuotientProvider
-    (b : Matrix Int n m) : Type :=
+Bareiss-Desnanot proof infrastructure on PSD Gram minors is available; the
+Mathlib-free layer only consumes this abstraction. -/
+abbrev StepWitness (b : Matrix Int n m) : Type :=
   ∀ (fuel : Nat)
     (hinv : BareissGramRowInvariant b
       (Matrix.noPivotLoop fuel
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))))
+    (h_canon : IsCanonicalAt b fuel hinv)
     (h_prefix_none :
       (Matrix.noPivotLoop fuel
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none)
@@ -3858,21 +4087,25 @@ abbrev BareissGramInitialRegularStepQuotientProvider
     (hi :
       (Matrix.noPivotLoop fuel
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 ≤ i.val),
-      BareissGramInitialRegularStepQuotient b fuel hinv hnext i hi
+      StepWitness.Cell b fuel hinv h_canon hnext i hi
 
 /-- Initial no-pivot Gram specialization indexed by elapsed fuel.  The regular
 branch no longer asks callers for a row-entry equation; it obtains the
 reachable row-entry relation from `bareissGramInitialRegularStep_entry_eq_dot`
-using the supplied quotient provenance. -/
+using the supplied quotient provenance.
+
+Threads `IsCanonicalAt` through the recursion so that the canonicity gate of
+`StepWitness` can be discharged at every regular step. -/
 private def bareissGramRowInvariant_noPivotLoop_initialAux
     (b : Matrix Int n m) (elapsed fuel : Nat)
     (hinv : BareissGramRowInvariant b
       (Matrix.noPivotLoop elapsed
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))))
+    (h_canon : IsCanonicalAt b elapsed hinv)
     (h_prefix_none :
       (Matrix.noPivotLoop elapsed
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none)
-    (hquot : BareissGramInitialRegularStepQuotientProvider b) :
+    (hquot : StepWitness b) :
     BareissGramRowInvariant b
       (Matrix.noPivotLoop fuel
         (Matrix.noPivotLoop elapsed
@@ -3907,14 +4140,22 @@ private def bareissGramRowInvariant_noPivotLoop_initialAux
               (Matrix.noPivotInitialState (Matrix.gramMatrix b))]
             rw [Matrix.noPivotLoop_regular_branch 0 state hDone hp]
             simp [Matrix.noPivotLoop_zero_fuel]
+          have hentry := fun i j hi =>
+            bareissGramInitialRegularStep_entry_eq_dot
+              (b := b) elapsed hinv h_prefix_none hDone hp i j hi
+              (hquot elapsed hinv h_canon h_prefix_none hDone hp i hi)
+          let hinv_next := bareissGramRowInvariant_regular_step hDone hp hinv hentry
+          have h_canon_next_pre :
+              ∀ i : Fin n,
+                hinv_next.coeff i = bareissGramCanonicalCoeff b (elapsed + 1) i := fun i =>
+            bareissGramRowInvariant_regular_step_coeff_canonical
+              b elapsed hinv h_canon hDone hp hentry i
           rw [← hstep]
-          apply ih (elapsed := elapsed + 1)
-          · rw [hstep]
-            exact bareissGramRowInvariant_regular_step hDone hp hinv
-              (fun i j hi =>
-                bareissGramInitialRegularStep_entry_eq_dot
-                  (b := b) elapsed hinv h_prefix_none hDone hp i j hi
-                  (hquot elapsed hinv h_prefix_none hDone hp i hi))
+          refine ih (elapsed := elapsed + 1) (hstep ▸ hinv_next) ?_ ?_
+          · intro i
+            show (hstep ▸ hinv_next).coeff i = bareissGramCanonicalCoeff b (elapsed + 1) i
+            rw [bareissGramRowInvariant_coeff_transport hstep hinv_next i]
+            exact h_canon_next_pre i
           · rw [hstep]
       · rw [Matrix.noPivotLoop_done fuel state hDone]
         exact hinv
@@ -3924,12 +4165,13 @@ over a Gram matrix.  Callers supply only quotient provenance for reachable
 regular branches; the row-entry equation is derived internally. -/
 private def bareissGramRowInvariant_noPivotLoop_initial
     (b : Matrix Int n m) (fuel : Nat)
-    (hquot : BareissGramInitialRegularStepQuotientProvider b) :
+    (hquot : StepWitness b) :
     BareissGramRowInvariant b
       (Matrix.noPivotLoop fuel (Matrix.noPivotInitialState (Matrix.gramMatrix b))) := by
   simpa using
     bareissGramRowInvariant_noPivotLoop_initialAux
-      (b := b) 0 fuel (bareissGramRowInvariant_initial b) rfl hquot
+      (b := b) 0 fuel (bareissGramRowInvariant_initial b)
+      (isCanonicalAt_initial b) rfl hquot
 
 /-- Caller-facing row-vector package for a no-pivot Gram pass from the
 initial state. Downstream singular-step proofs can apply this at the loop
@@ -3937,7 +4179,7 @@ result to rewrite active trailing entries as dots against represented lattice
 row vectors. -/
 private theorem noPivotLoop_initial_gram_entry_eq_dot_of_rowInvariant
     (b : Matrix Int n m) (fuel : Nat)
-    (hquot : BareissGramInitialRegularStepQuotientProvider b)
+    (hquot : StepWitness b)
     (i j : Fin n)
     (hi :
       (Matrix.noPivotLoop fuel
@@ -3959,7 +4201,7 @@ input row, so downstream singular-column arguments do not need to inspect
 equation. -/
 private theorem noPivotLoop_initial_gram_exists_rowVec
     (b : Matrix Int n m) (fuel : Nat)
-    (hquot : BareissGramInitialRegularStepQuotientProvider b)
+    (hquot : StepWitness b)
     (i : Fin n)
     (hi :
       (Matrix.noPivotLoop fuel
@@ -4272,7 +4514,7 @@ Trailing-block symmetry transports
 `state.matrix[i][sFin] = 0`. -/
 private theorem leadingPrefix_gram_zero_pivot_column_zero_of_singular_step
     {n m : Nat} (b : Matrix Int n m) (s : Nat) (hs : s + 1 < n)
-    (hquot : BareissGramInitialRegularStepQuotientProvider b)
+    (hquot : StepWitness b)
     (h_prefix_none :
       (Matrix.noPivotLoop s
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none)
@@ -4593,7 +4835,7 @@ leading prefix via the no-pivot sync lemma, then derives `findPivot? = none` on
 the prefix, so the row-pivoted Bareiss loop records the same singular step. -/
 private theorem leadingPrefix_gram_bareiss_toNat_eq_zero_of_noPivot_singular
     {n m : Nat} (b : Matrix Int n m) (r : Nat) (hr : r < n)
-    (hquot : BareissGramInitialRegularStepQuotientProvider b)
+    (hquot : StepWitness b)
     (s : Nat)
     (h_sing : (Matrix.noPivotLoop r
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = some s) :
