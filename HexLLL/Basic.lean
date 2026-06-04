@@ -428,17 +428,6 @@ matrix and the `d` field is the leading Gram-determinant vector. -/
 def ofBasis (b : Matrix Int n m) (_hind : b.independent) : LLLState n m :=
   ofBasisUnchecked b
 
-/-- The canonical constructor packages the executable Gram-Schmidt data. -/
-theorem ofBasis_valid (b : Matrix Int n m) (hind : b.independent) :
-    (ofBasis b hind).Valid := by
-  let gs := GramSchmidt.Int.data b
-  constructor
-  · intro i j hi hj hji
-    simp [ofBasis, ofBasisUnchecked, GramSchmidt.Int.scaledCoeffs]
-  · intro i hi
-    simpa [ofBasis, ofBasisUnchecked, GramSchmidt.Int.gramDetVec, gs] using
-      GramSchmidt.Int.gramDetVec_eq_gramDet b i (Nat.le_of_lt_succ hi)
-
 end LLLState
 
 /-- Outer LLL loop, dispatched by `lll`.

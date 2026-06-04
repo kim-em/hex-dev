@@ -15,6 +15,23 @@ LLL short-vector guarantee for an already reduced basis.
 
 namespace HexLLLMathlib
 
+/-- The canonical `LLLState` constructor packages the executable Gram-Schmidt
+data. Lives on the Mathlib side because the diagonal Gram-determinant
+identification (`gramDetVec_eq_gramDet`) consumes a `StepWitness b`, which is
+supplied by `StepWitness.ofGram`. -/
+theorem LLLState.ofBasis_valid (b : Hex.Matrix Int n m) (hind : b.independent) :
+    (Hex.LLLState.ofBasis b hind).Valid := by
+  let gs := Hex.GramSchmidt.Int.data b
+  constructor
+  · intro i j hi hj hji
+    simp [Hex.LLLState.ofBasis, Hex.LLLState.ofBasisUnchecked,
+      Hex.GramSchmidt.Int.scaledCoeffs]
+  · intro i hi
+    simpa [Hex.LLLState.ofBasis, Hex.LLLState.ofBasisUnchecked,
+      Hex.GramSchmidt.Int.gramDetVec, gs] using
+      Hex.GramSchmidt.Int.gramDetVec_eq_gramDet b
+        (Hex.GramSchmidt.Int.StepWitness.ofGram b) i (Nat.le_of_lt_succ hi)
+
 /-- Mathlib-side correspondence from the executable LLL state scaled-coefficient
 certificate to the rational Gram-Schmidt coefficient relation. -/
 theorem lllState_ν_eq_coeffs
