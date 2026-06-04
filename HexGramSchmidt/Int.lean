@@ -7418,6 +7418,221 @@ private theorem scaledCoeffRows_eq_zero_of_singularStep_lt
           prevPivot := 1 }).coeffs i.val j.val = 0
   exact h_zero
 
+/-- Strict-lower non-singular Bareiss-side bridge: state-level form of
+`scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix` extracted at the
+`gramMatrix` matrix-level, before the bordered-minor/transpose closure. When
+the no-pivot Bareiss pass over the full Gram matrix has not recorded a
+singular step before reaching column `j`, the executable scaled-coefficient
+array entry below the diagonal at `(i, j)` matches the matrix-level diagonal
+of `noPivotLoop` at fuel `j` on `gramMatrix b`. -/
+private theorem scaledCoeffRows_lower_eq_noPivotLoop_gramMatrix_of_no_singular
+    (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val)
+    (h_nonsing :
+      (Matrix.noPivotLoop j.val
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none) :
+    getArrayEntry (scaledCoeffRows b) i.val j.val =
+      (Matrix.noPivotLoop j.val
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[i][j] := by
+  have h_target_nonsing :
+      (Matrix.noPivotLoop (j.val - 0)
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none := by
+    simpa using h_nonsing
+  have h_lower :=
+    scaledCoeffArrayLoop_lower_matches_target_column
+      (state_array :=
+        { step := 0
+          matrix := gramRows b
+          coeffs := zeroRows n
+          prevPivot := 1 })
+      (state_matrix := Matrix.noPivotInitialState (Matrix.gramMatrix b))
+      (by rfl) (rowsToMatrix_gramRows b) (by rfl)
+      (gramRows_size b) (gramRows_row_size b)
+      (zeroRows_size n) (zeroRows_row_size n)
+      n i j (Nat.zero_le _) hji
+      (by have := i.isLt; omega) h_target_nonsing
+  show getArrayEntry
+      (scaledCoeffArrayLoop n n
+          { step := 0, matrix := gramRows b, coeffs := zeroRows n,
+            prevPivot := 1 }).coeffs i.val j.val = _
+  have h_step_eq : (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step = 0 := rfl
+  have h_sub :
+      j.val - (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step = j.val := by
+    rw [h_step_eq]; omega
+  rw [h_lower, h_sub]
+
+/-- Diagonal non-singular Bareiss-side bridge. When the no-pivot Bareiss pass
+over the full Gram matrix has not recorded a singular step before reaching
+column `j`, the executable scaled-coefficient array entry on the diagonal at
+`(j, j)` matches the matrix-level diagonal of `noPivotLoop` at fuel `j` on
+`gramMatrix b`. The proof composes `scaledCoeffArrayLoop_diag_matches` at
+fuel `n` with `Matrix.noPivotLoop_diag_of_le_step` plus
+`noPivotLoop_step_eq_add_of_singularStep_none` to bridge between the
+full-trajectory diagonal at `j` and the truncated-trajectory diagonal at the
+same row. -/
+private theorem scaledCoeffRows_diag_eq_noPivotLoop_gramMatrix_of_no_singular
+    (b : Matrix Int n m) (j : Fin n)
+    (h_nonsing :
+      (Matrix.noPivotLoop j.val
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none) :
+    getArrayEntry (scaledCoeffRows b) j.val j.val =
+      (Matrix.noPivotLoop j.val
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[j][j] := by
+  let init : Matrix.BareissState n :=
+    Matrix.noPivotInitialState (Matrix.gramMatrix b)
+  let prefAtJ : Matrix.BareissState n := Matrix.noPivotLoop j.val init
+  have h_step_j : prefAtJ.step = j.val := by
+    have h_room : init.step + j.val + 1 ≤ n := by
+      have := j.isLt
+      simp [init, Matrix.noPivotInitialState]
+      omega
+    have h := noPivotLoop_step_eq_add_of_singularStep_none j.val init rfl h_room h_nonsing
+    simpa [prefAtJ, init, Matrix.noPivotInitialState] using h
+  have h_factor :
+      Matrix.noPivotLoop n init = Matrix.noPivotLoop (n - j.val) prefAtJ := by
+    have h_add := Matrix.noPivotLoop_add j.val (n - j.val) init
+    have h_split : j.val + (n - j.val) = n := by have := j.isLt; omega
+    simpa [prefAtJ, h_split] using h_add
+  have h_diag_bridge :
+      (Matrix.noPivotLoop n init).matrix[j][j] = prefAtJ.matrix[j][j] := by
+    rw [h_factor]
+    have h_le : j.val ≤ prefAtJ.step := by rw [h_step_j]; exact Nat.le_refl _
+    exact Matrix.noPivotLoop_diag_of_le_step (n - j.val) prefAtJ j h_le
+  have hdiag :=
+    scaledCoeffArrayLoop_diag_matches
+      (state_array :=
+        { step := 0
+          matrix := gramRows b
+          coeffs := zeroRows n
+          prevPivot := 1 })
+      (state_matrix := init)
+      (by rfl) (rowsToMatrix_gramRows b) (by rfl) (by rfl)
+      (gramRows_size b) (gramRows_row_size b)
+      (zeroRows_size n) (zeroRows_row_size n)
+      (by
+        intro k hks _hkn
+        simp [init, Matrix.noPivotInitialState] at hks)
+      (by
+        intro k _hks _hkn
+        exact getArrayEntry_zeroRows n k k)
+      n j (by
+        left
+        show j.val < (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step + n
+        simp [Matrix.noPivotInitialState, j.isLt])
+  show getArrayEntry
+      (scaledCoeffArrayLoop n n
+        { step := 0
+          matrix := gramRows b
+          coeffs := zeroRows n
+          prevPivot := 1 }).coeffs j.val j.val =
+    prefAtJ.matrix[j][j]
+  rcases hdiag with ⟨_h_sing_n, h_eq⟩ | ⟨s, h_sing_n, h_cases⟩
+  · -- Non-singular full trajectory: bridge directly.
+    rw [h_eq]; exact h_diag_bridge
+  · rcases h_cases with ⟨hsj, h_zero⟩ | ⟨hjs, h_eq⟩
+    · -- Sub-case `s ≤ j.val`: by monotonicity `j.val ≤ s`, so `s = j.val`; then
+      -- the singular_inv invariant gives `(noPivotLoop n init).matrix[j][j] = 0`,
+      -- which combined with `h_diag_bridge` shows `prefAtJ.matrix[j][j] = 0`.
+      have h_mono :
+          prefAtJ.step ≤ (Matrix.noPivotLoop (n - j.val) prefAtJ).step :=
+        noPivotLoop_step_monotone _ _
+      have h_step_n_eq :
+          (Matrix.noPivotLoop n init).step =
+            (Matrix.noPivotLoop (n - j.val) prefAtJ).step :=
+        congrArg Matrix.BareissState.step h_factor
+      rcases noPivotLoop_singular_inv (n := n) n init rfl with h_none | ⟨k, h_k_sing, h_k_step, h_k_zero, _⟩
+      · rw [h_sing_n] at h_none; nomatch h_none
+      · have h_s_eq_k : s = k.val := by
+          rw [h_k_sing] at h_sing_n
+          injection h_sing_n with heq
+          exact heq.symm
+        have h_step_n_eq_s :
+            (Matrix.noPivotLoop n init).step = s := by
+          rw [h_k_step, h_s_eq_k]
+        have h_j_le_s : j.val ≤ s := by
+          have h_chain : prefAtJ.step ≤ (Matrix.noPivotLoop n init).step := by
+            rw [h_step_n_eq]; exact h_mono
+          rw [h_step_j, h_step_n_eq_s] at h_chain
+          exact h_chain
+        have h_s_eq_j : s = j.val := Nat.le_antisymm hsj h_j_le_s
+        have h_idx_eq : k = j := by
+          apply Fin.ext
+          rw [← h_s_eq_k]; exact h_s_eq_j
+        have h_matrix_n_jj :
+            (Matrix.noPivotLoop n init).matrix[j][j] = 0 := by
+          have h_lift := congrArg
+            (fun (idx : Fin n) => (Matrix.noPivotLoop n init).matrix[idx][idx])
+            h_idx_eq
+          exact h_lift.symm.trans h_k_zero
+        have h_prefAtJ_jj : prefAtJ.matrix[j][j] = 0 := by
+          rw [← h_diag_bridge]; exact h_matrix_n_jj
+        rw [h_zero, h_prefAtJ_jj]
+    · -- Sub-case `j.val < s`: same bridge as the non-singular case.
+      rw [h_eq]; exact h_diag_bridge
+
+/-- Diagonal singular Bareiss-side bridge. When the no-pivot Bareiss pass
+over the full Gram matrix records a singular step strictly before column `j`,
+the executable scaled-coefficient array entry on the diagonal at `(j, j)` is
+zero. The proof composes `scaledCoeffArrayLoop_diag_matches` at fuel `n` with
+the persistence lemma `noPivotLoop_singularStep_of_prefix_singular`. -/
+private theorem scaledCoeffRows_diag_eq_zero_of_singularStep_lt
+    (b : Matrix Int n m) (j : Fin n)
+    (s : Nat) (hsj : s < j.val)
+    (h_sing :
+      (Matrix.noPivotLoop j.val
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = some s) :
+    getArrayEntry (scaledCoeffRows b) j.val j.val = 0 := by
+  let init : Matrix.BareissState n :=
+    Matrix.noPivotInitialState (Matrix.gramMatrix b)
+  -- Lift singularity from prefix `j` to full `n` via `prefix_singular`.
+  have h_persist_split :
+      Matrix.noPivotLoop (j.val + (n - j.val)) init =
+        Matrix.noPivotLoop n init := by
+    have h_split : j.val + (n - j.val) = n := by have := j.isLt; omega
+    rw [h_split]
+  have h_sing_full' :
+      (Matrix.noPivotLoop (j.val + (n - j.val)) init).singularStep = some s :=
+    noPivotLoop_singularStep_of_prefix_singular j.val (n - j.val) init rfl h_sing
+  have h_sing_full : (Matrix.noPivotLoop n init).singularStep = some s := by
+    rw [← h_persist_split]; exact h_sing_full'
+  have hdiag :=
+    scaledCoeffArrayLoop_diag_matches
+      (state_array :=
+        { step := 0
+          matrix := gramRows b
+          coeffs := zeroRows n
+          prevPivot := 1 })
+      (state_matrix := init)
+      (by rfl) (rowsToMatrix_gramRows b) (by rfl) (by rfl)
+      (gramRows_size b) (gramRows_row_size b)
+      (zeroRows_size n) (zeroRows_row_size n)
+      (by
+        intro k hks _hkn
+        simp [init, Matrix.noPivotInitialState] at hks)
+      (by
+        intro k _hks _hkn
+        exact getArrayEntry_zeroRows n k k)
+      n j (by
+        left
+        show j.val < (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step + n
+        simp [Matrix.noPivotInitialState, j.isLt])
+  show getArrayEntry
+      (scaledCoeffArrayLoop n n
+        { step := 0
+          matrix := gramRows b
+          coeffs := zeroRows n
+          prevPivot := 1 }).coeffs j.val j.val = 0
+  rcases hdiag with ⟨h_none, _⟩ | ⟨s', h_sing_n, h_cases⟩
+  · rw [h_sing_full] at h_none; nomatch h_none
+  · have h_s_eq : s' = s := by
+      rw [h_sing_full] at h_sing_n
+      injection h_sing_n with heq
+      exact heq.symm
+    have h_s'_le_j : s' ≤ j.val := by rw [h_s_eq]; omega
+    rcases h_cases with ⟨_hsj', h_zero⟩ | ⟨hjs', _h_eq⟩
+    · exact h_zero
+    · -- j.val < s' contradicts s' ≤ j.val
+      omega
+
 /-- On a non-singular initial Gram trajectory, the diagonal pivot at step `q`
 is nonzero whenever `q + 1` iterations stay non-singular. The (`q + 1`)-th
 iteration would otherwise record a singular step at `q`. -/
