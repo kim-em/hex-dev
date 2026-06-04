@@ -1641,4 +1641,57 @@ theorem bareiss_eq_mathlib_det (M : Hex.Matrix Int n n) :
   rw [Hex.Matrix.bareiss_eq_bareissData_det M]
   exact bareissData_eq_mathlib_det M
 
+/-- Restatement of `BareissNoPivotInvariant.trailing_eq` packaged so the step
+field is given by an external equation rather than appearing inside dependent
+proof terms. Lets callers consume `trailing_eq` at an arbitrary numeric step
+value `s` known to equal `state.step` without manually transporting the
+inequality proofs. -/
+private theorem trailing_eq_at_step
+    {M : Hex.Matrix Int n n} {state : Hex.Matrix.BareissState n}
+    (hinv : BareissNoPivotInvariant M state)
+    (s : Nat) (hs : s < n) (hstep : s = state.step)
+    (a c : Fin n) (hsa : s ≤ a.val) (hsc : s ≤ c.val) :
+    state.matrix[a][c] =
+      Hex.Matrix.det (Hex.Matrix.borderedMinor M s hs a c) := by
+  subst hstep
+  exact hinv.trailing_eq hs a c hsa hsc
+
+/-- Off-step generalisation of the no-pivot Bareiss bordered-minor
+identification. After `k + 1` no-pivot Bareiss iterations on `M`, every entry
+at `(a, c)` with `k + 1 ≤ a.val, c.val` equals the determinant of the
+`(k + 2) × (k + 2)` bordered minor of `M` with trailing row `a` and column
+`c`, provided the partial loop records no singular step.
+
+Composes `noPivotLoop_invariant_of_singularStep_eq_none` (the invariant
+propagates through a non-singular partial pass), `BareissNoPivotInvariant`
+(the trailing-block entries equal bordered-minor determinants), and
+`noPivotLoop_step_eq_add_of_singularStep_none` (the partial pass advances
+`step` by exactly the fuel consumed). -/
+theorem noPivotLoop_full_eq_borderedMinor_det
+    (M : Hex.Matrix Int n n) (k : Nat) (hk : k + 1 < n)
+    (a c : Fin n) (hak : k + 1 ≤ a.val) (hck : k + 1 ≤ c.val)
+    (h_no_sing :
+      (Hex.Matrix.noPivotLoop (k + 1)
+          (Hex.Matrix.noPivotInitialState M)).singularStep = none) :
+    (Hex.Matrix.noPivotLoop (k + 1)
+        (Hex.Matrix.noPivotInitialState M)).matrix[a][c] =
+      Hex.Matrix.det (Hex.Matrix.borderedMinor M (k + 1) hk a c) := by
+  have hinv : BareissNoPivotInvariant M
+      (Hex.Matrix.noPivotLoop (k + 1) (Hex.Matrix.noPivotInitialState M)) :=
+    noPivotLoop_invariant_of_singularStep_eq_none M (k + 1)
+      (Hex.Matrix.noPivotInitialState M) (bareissNoPivotInvariant_initial M)
+      h_no_sing
+  have hstep_eq :
+      k + 1 =
+        (Hex.Matrix.noPivotLoop (k + 1) (Hex.Matrix.noPivotInitialState M)).step := by
+    have h_room : (Hex.Matrix.noPivotInitialState M).step + (k + 1) + 1 ≤ n := by
+      change 0 + (k + 1) + 1 ≤ n
+      omega
+    have h := Hex.Matrix.noPivotLoop_step_eq_add_of_singularStep_none (k + 1)
+      (Hex.Matrix.noPivotInitialState M) rfl h_room h_no_sing
+    rw [h]
+    show k + 1 = 0 + (k + 1)
+    omega
+  exact trailing_eq_at_step hinv (k + 1) hk hstep_eq a c hak hck
+
 end HexMatrixMathlib
