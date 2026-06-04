@@ -158,14 +158,14 @@ obligations**, not statement surface. A Hex-local statement with a
 bridge-only proof is the same SPEC violation as a bridge-typed
 statement, dressed up.
 
-Symptom this addendum exists to catch: an issue titled
-"Mathlib-free `bareiss`-invariance for row-add" whose deliverable
-is to prove an `Int`-only `bareiss → bareiss` equation by induction
-on the executable Bareiss recurrence. The induction works because
-Desnanot–Jacobi (or its `Int`-narrowed shadow) is being secretly
-re-derived inline. The repair is to relocate the *consumer*
-theorem (`gramDet_sizeReduce`, `scaledCoeffs_sizeReduce_pivot`, or
-similar) to the bridge layer, not to add the secret re-derivation.
+A Hex-local `bareiss → bareiss` equation whose proof inducts
+directly on the executable Bareiss recurrence belongs in
+`hex-matrix-mathlib`, not `hex-matrix`: the induction's correctness
+rests on Desnanot–Jacobi (or its `Int`-narrowed shadow), and
+restating that locally re-derives a forbidden theorem under a
+different name. When a Mathlib-free consumer appears to need such
+an equation, relocate the consumer to the bridge layer rather
+than inlining the derivation.
 
 **Proof that `bareiss M = det M`:** Via the bordered-minor invariant.
 Define `μ(k; i, j) := det M[rows 0..k-1 ∪ {i} | cols 0..k-1 ∪ {j}]`.
