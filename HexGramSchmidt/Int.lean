@@ -8143,7 +8143,7 @@ makes all three relevant Schur entries zero (`rows[s][s] = 0` and
 `rows[c][s] = 0` for `c ≥ s + 1`), so the σ-body `exactDiv` of zero by the
 prev-pivot returns zero; subsequent iterations preserve zero via the outer
 IH at columns `(s, j')`. The proof does not transitively cite
-`getArrayEntry_scaledCoeffRowsSchur_eq` (the residual sorry at line 6463). -/
+`getArrayEntry_scaledCoeffRowsSchur_eq` (the residual gap at line 6463). -/
 theorem getArrayEntry_scaledCoeffRowsSchur_eq_zero_of_singularStep_lt
     {n m : Nat} (b : Matrix Int n m) (hquot : StepWitness b)
     (i j : Nat) (hi : i < n) (hji : j ≤ i)

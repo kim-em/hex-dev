@@ -4332,6 +4332,22 @@ def StepWitness.ofGram (b : Matrix Int n m) :
   simp_rw [hK] at hdj
   exact hdj.symm
 
+/-- Mathlib-side bridge wrapper for the Schur kernel singular cascade:
+when the no-pivot Bareiss pass over the full Gram matrix records an
+early singular step at column `s < j`, the scaled Gram-Schmidt
+coefficient at any `(i, j)` with `j ≤ i` vanishes. Wraps the
+Mathlib-free `getArrayEntry_scaledCoeffRowsSchur_eq_zero_of_singularStep_lt`
+via the canonical `StepWitness.ofGram` instance. -/
+theorem scaledCoeffs_lower_eq_zero_of_singularStep_lt
+    {n m : Nat} (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val)
+    (s : Nat) (hs : s < j.val)
+    (h_sing : (Matrix.noPivotLoop j.val
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = some s) :
+    GramSchmidt.entry (scaledCoeffs b) i j = 0 := by
+  rw [scaledCoeffs_entry_eq_getArrayEntry]
+  exact getArrayEntry_scaledCoeffRowsSchur_eq_zero_of_singularStep_lt
+    b (StepWitness.ofGram b) i.val j.val i.isLt (Nat.le_of_lt hji) s hs h_sing
+
 end Int
 end GramSchmidt
 end Hex
