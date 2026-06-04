@@ -159,6 +159,25 @@ plausible. This keeps the proof graph reviewable even when the
 leaves are incomplete, and lets later workers attack foundational
 lemmas in isolation.
 
+### Proof debt does not cross the layer boundary
+
+A `*-mathlib` proof term must not depend, directly or
+transitively, on any Mathlib-free theorem whose proof contains
+`sorry`, regardless of channel (direct citation, wrapper, rename,
+helper, `simp`/`rw`/`simpa`, typeclass instance, imported chain,
+or a Mathlib-side lemma whose own proof routes through such a
+dependency). Mathlib-free definitions and Mathlib-free lemmas
+with complete proof terms are admissible.
+
+When a bridge proof needs an operational invariant from the
+Mathlib-free layer, the admissible moves are: factor the
+invariant into a sorry-free Mathlib-free lemma; close the
+Mathlib-free `sorry` first; or prove the bridge statement
+directly from Mathlib infrastructure (adjugate, cofactor,
+Desnanot–Jacobi, and the determinant equivalence the relevant
+`*-mathlib` SPEC requires). A wrapper, rename, or separate
+decomposition does not change the proof-term dependency graph.
+
 ## Naming and documentation
 
 **Namespaces.** New types, functions, and theorems introduced by this
