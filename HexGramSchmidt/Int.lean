@@ -8125,6 +8125,167 @@ theorem getArrayEntry_scaledCoeffRowsSchur_eq_noPivotLoop_of_nonsing
           h_sigma_closed c hcn h_pa]
         grind
 
+/-- Singular cascade at the Schur kernel. If the no-pivot Bareiss pass over
+the full Gram matrix records an early singular step at column `s < j`, every
+Schur-kernel entry in the column-`j`, weak-lower triangle (`j ≤ i`) vanishes.
+
+The row-`s` column is cleared by combining the non-singular Schur≡Bareiss
+correspondence at fuel `s`
+(`getArrayEntry_scaledCoeffRowsSchur_eq_noPivotLoop_of_nonsing`) with the
+column-zero structural lemma at the singular step
+(`leadingPrefix_gram_zero_pivot_column_zero_of_singular_step`). Strong
+induction on `j' ∈ (s, j]` then propagates the zeros via the Schur recurrence
+`rows[i'][j'] = rows[j'-1][j'-1] · gram[i'][j'] - schurSigma i' j'`. The
+diagonal factor `rows[j'-1][j'-1]` is zero by the row-`s` lemma when
+`j' = s + 1` and by the cascade IH otherwise. The σ-fold collapses to zero
+by sub-induction on the iteration count: the killing iteration `p = s`
+makes all three relevant Schur entries zero (`rows[s][s] = 0` and
+`rows[c][s] = 0` for `c ≥ s + 1`), so the σ-body `exactDiv` of zero by the
+prev-pivot returns zero; subsequent iterations preserve zero via the outer
+IH at columns `(s, j')`. The proof does not transitively cite
+`getArrayEntry_scaledCoeffRowsSchur_eq` (the residual gap at line 6463). -/
+theorem getArrayEntry_scaledCoeffRowsSchur_eq_zero_of_singularStep_lt
+    {n m : Nat} (b : Matrix Int n m) (hquot : StepWitness b)
+    (i j : Nat) (hi : i < n) (hji : j ≤ i)
+    (s : Nat) (hsj : s < j)
+    (h_sing : (Matrix.noPivotLoop j
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = some s) :
+    getArrayEntry (scaledCoeffRowsSchur b) i j = 0 := by
+  have hjn : j < n := Nat.lt_of_le_of_lt hji hi
+  have hsn : s < n := Nat.lt_trans hsj hjn
+  have hs_succ_le_n : s + 1 ≤ n := hsn
+  obtain ⟨h_s_prefix_none, _h_s_step, h_s_diag_zero⟩ :=
+    noPivotLoop_prefix_state_at_singular (Matrix.gramMatrix b) j s hs_succ_le_n h_sing
+  have h_corr_at_s :=
+    getArrayEntry_scaledCoeffRowsSchur_eq_noPivotLoop_of_nonsing b hquot s hsn h_s_prefix_none
+  -- Row-`s` is zero across the lower triangle (including the diagonal).
+  have h_row_s_zero : ∀ (c : Nat), c < n → s ≤ c →
+      getArrayEntry (scaledCoeffRowsSchur b) c s = 0 := by
+    intro c hcn hcs
+    by_cases hcs_eq : c = s
+    · subst hcs_eq
+      rw [h_corr_at_s.1]
+      exact h_s_diag_zero
+    · have hc_gt : s < c := Nat.lt_of_le_of_ne hcs (Ne.symm hcs_eq)
+      have hs_succ_lt_n : s + 1 < n := Nat.lt_of_le_of_lt hc_gt hcn
+      rw [h_corr_at_s.2 c hc_gt hcn]
+      exact leadingPrefix_gram_zero_pivot_column_zero_of_singular_step
+        b s hs_succ_lt_n hquot h_s_prefix_none h_s_diag_zero ⟨c, hcn⟩ hc_gt
+  -- Strong induction on `j'` ∈ (s, j].
+  suffices h_cascade : ∀ (j' : Nat), j' ≤ j → s < j' →
+      ∀ (i' : Nat), j' ≤ i' → i' < n →
+        getArrayEntry (scaledCoeffRowsSchur b) i' j' = 0 from
+    h_cascade j (Nat.le_refl j) hsj i hji hi
+  intro j' hj'j hsj' i' hj'i' hi'n
+  revert hj'j hsj' i' hj'i' hi'n
+  induction j' using Nat.strongRecOn with
+  | ind j' ih =>
+    intro hj'j hsj' i' hj'i' hi'n
+    have hj'_pos : 0 < j' := Nat.lt_of_le_of_lt (Nat.zero_le _) hsj'
+    have hj'n : j' < n := Nat.lt_of_le_of_lt hj'j hjn
+    -- Apply the Schur recurrence at `(i', j')`.
+    rw [getArrayEntry_scaledCoeffRowsSchur_eq_schurScaledCoeffEntry b i' j' hj'i' hi'n]
+    show schurScaledCoeffEntry (scaledCoeffRowsSchur b) (gramRows b) i' j' = 0
+    unfold schurScaledCoeffEntry
+    rw [if_neg (Nat.ne_of_gt hj'_pos)]
+    -- Diagonal factor at `(j' - 1, j' - 1)` is zero.
+    have h_diag_zero :
+        getArrayEntry (scaledCoeffRowsSchur b) (j' - 1) (j' - 1) = 0 := by
+      have hj'_sub_one_lt_n : j' - 1 < n := by omega
+      by_cases hj'_eq_s : j' - 1 = s
+      · rw [hj'_eq_s]
+        exact h_row_s_zero s hsn (Nat.le_refl s)
+      · have hj'_gt : s < j' - 1 := by omega
+        have hj'_sub_one_lt_j' : j' - 1 < j' := by omega
+        have hj'_sub_one_le_j : j' - 1 ≤ j := by omega
+        exact ih (j' - 1) hj'_sub_one_lt_j' hj'_sub_one_le_j hj'_gt
+          (j' - 1) (Nat.le_refl _) hj'_sub_one_lt_n
+    -- σ-fold value at `(i', j')` is zero, by sub-induction on the iteration prefix.
+    have h_sigma_zero :
+        schurSigma (scaledCoeffRowsSchur b) i' j' = 0 := by
+      show (Id.run do
+            let mut sigma :=
+              getArrayEntry (scaledCoeffRowsSchur b) i' 0 *
+                getArrayEntry (scaledCoeffRowsSchur b) j' 0
+            for p in [1:j'] do
+              sigma :=
+                Matrix.exactDiv
+                  (getArrayEntry (scaledCoeffRowsSchur b) p p * sigma +
+                    getArrayEntry (scaledCoeffRowsSchur b) i' p *
+                    getArrayEntry (scaledCoeffRowsSchur b) j' p)
+                  (getArrayEntry (scaledCoeffRowsSchur b) (p - 1) (p - 1))
+            return sigma) = 0
+      simp [Std.Legacy.Range.forIn_eq_forIn_range', Std.Legacy.Range.size]
+      have h_fold : ∀ (k : Nat), s ≤ k → k ≤ j' - 1 →
+          (List.range' 1 k).foldl
+            (fun σ p_iter =>
+              Matrix.exactDiv
+                (getArrayEntry (scaledCoeffRowsSchur b) p_iter p_iter * σ +
+                  getArrayEntry (scaledCoeffRowsSchur b) i' p_iter *
+                  getArrayEntry (scaledCoeffRowsSchur b) j' p_iter)
+                (getArrayEntry (scaledCoeffRowsSchur b) (p_iter - 1) (p_iter - 1)))
+            (getArrayEntry (scaledCoeffRowsSchur b) i' 0 *
+              getArrayEntry (scaledCoeffRowsSchur b) j' 0) = 0 := by
+        intro k
+        induction k with
+        | zero =>
+          intro hsk _hkj'
+          have hs_eq : s = 0 := Nat.le_zero.mp hsk
+          simp only [List.range'_zero, List.foldl_nil]
+          have hj'_ge_s : s ≤ j' := by omega
+          have h_j'0 := h_row_s_zero j' hj'n hj'_ge_s
+          rw [hs_eq] at h_j'0
+          rw [h_j'0]
+          simp
+        | succ k' ih_k =>
+          intro hsk hkj'
+          have h_concat :
+              List.range' 1 (k' + 1) = List.range' 1 k' ++ [k' + 1] := by
+            have := List.range'_concat (s := 1) (n := k') (step := 1)
+            simpa [Nat.add_comm 1 k'] using this
+          rw [h_concat, List.foldl_append]
+          simp only [List.foldl_cons, List.foldl_nil]
+          by_cases hsk' : s ≤ k'
+          · -- IH applies: the prefix fold is already zero.
+            have hk'_le_j' : k' ≤ j' - 1 := by omega
+            have ih_zero := ih_k hsk' hk'_le_j'
+            rw [ih_zero]
+            have hs_lt_kp1 : s < k' + 1 := Nat.lt_succ_of_le hsk'
+            have hkp1_lt_j' : k' + 1 < j' := by omega
+            have hkp1_le_j : k' + 1 ≤ j :=
+              Nat.le_of_lt (Nat.lt_of_lt_of_le hkp1_lt_j' hj'j)
+            have hkp1_lt_n : k' + 1 < n := Nat.lt_trans hkp1_lt_j' hj'n
+            have hkp1_le_i' : k' + 1 ≤ i' := by omega
+            have hkp1_le_j' : k' + 1 ≤ j' := by omega
+            have h_diag :=
+              ih (k' + 1) hkp1_lt_j' hkp1_le_j hs_lt_kp1 (k' + 1) (Nat.le_refl _) hkp1_lt_n
+            have h_i_pkp1 :=
+              ih (k' + 1) hkp1_lt_j' hkp1_le_j hs_lt_kp1 i' hkp1_le_i' hi'n
+            have h_j_pkp1 :=
+              ih (k' + 1) hkp1_lt_j' hkp1_le_j hs_lt_kp1 j' hkp1_le_j' hj'n
+            rw [h_diag, h_i_pkp1, h_j_pkp1]
+            simp [Matrix.exactDiv]
+          · -- Killing iteration: `s = k' + 1`, so `rows[*][k' + 1] = 0`.
+            have hs_eq : s = k' + 1 := by omega
+            have hkp1_le_i' : k' + 1 ≤ i' := by omega
+            have hkp1_le_j' : k' + 1 ≤ j' := by omega
+            have hkp1_lt_n : k' + 1 < n := by omega
+            have h_diag : getArrayEntry (scaledCoeffRowsSchur b) (k' + 1) (k' + 1) = 0 := by
+              rw [show k' + 1 = s from hs_eq.symm]
+              exact h_row_s_zero s hsn (Nat.le_refl _)
+            have h_i_pkp1 : getArrayEntry (scaledCoeffRowsSchur b) i' (k' + 1) = 0 := by
+              rw [show k' + 1 = s from hs_eq.symm]
+              exact h_row_s_zero i' hi'n (by omega)
+            have h_j_pkp1 : getArrayEntry (scaledCoeffRowsSchur b) j' (k' + 1) = 0 := by
+              rw [show k' + 1 = s from hs_eq.symm]
+              exact h_row_s_zero j' hj'n (by omega)
+            rw [h_diag, h_i_pkp1, h_j_pkp1]
+            simp [Matrix.exactDiv]
+      have hsj'_sub_one : s ≤ j' - 1 := by omega
+      exact h_fold (j' - 1) hsj'_sub_one (Nat.le_refl _)
+    rw [h_diag_zero, h_sigma_zero]
+    grind
+
 /-- Singular dual of `scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix`.
 When the no-pivot Bareiss pass over the full Gram matrix records an early
 singular step before reaching column `j`, the integral scaled Gram-Schmidt
