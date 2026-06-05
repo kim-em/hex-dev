@@ -303,16 +303,26 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
       have hkm1_lt_n : km1.val < n := km1.isLt
       have hkm1_le_n : km1.val ≤ n := Nat.le_of_lt km1.isLt
       -- Pre-compute the "upd" function used in the outer foldl, so we can apply
-      -- `foldl_modify_rows_get`.
+      -- `foldl_modify_rows_get`. The body matches the foldl in `swapStep`,
+      -- which destructures `pairs.get i = ((s.ν.get i).get kFin, (s.ν.get i).get km1)`
+      -- in the `k < i.val` branch (see `hpairs_at` below).
+      let pairs : Vector (Int × Int) n :=
+        Vector.ofFn fun i =>
+          if _ : k < i.val then ((s.ν.get i).get kFin, (s.ν.get i).get km1)
+          else (0, 0)
       let upd : Fin n → Vector Int n → Vector Int n :=
         fun i row =>
           let prev :=
-            (Int.ofNat dkPrev * (s.ν.get i).get kFin + B * (s.ν.get i).get km1) /
-              Int.ofNat dk
+            (Int.ofNat dkPrev * (pairs.get i).1 + B * (pairs.get i).2) / Int.ofNat dk
           let curr :=
-            (Int.ofNat dkNext * (s.ν.get i).get km1 - B * (s.ν.get i).get kFin) /
-              Int.ofNat dk
+            (Int.ofNat dkNext * (pairs.get i).2 - B * (pairs.get i).1) / Int.ofNat dk
           (row.set km1 prev).set kFin curr
+      have hpairs_at : ∀ (i : Fin n), k < i.val →
+          pairs.get i = ((s.ν.get i).get kFin, (s.ν.get i).get km1) := by
+        intro i hi
+        show (Vector.ofFn _).get i = _
+        rw [Vector.get_ofFn]
+        exact dif_pos hi
       have hkm1_ne_kFin : km1 ≠ kFin := by
         intro h; rw [h] at hkm1_lt_k; omega
       have hkm1_val_ne_kFin : km1.val ≠ kFin.val := fun h =>
@@ -401,8 +411,17 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
             omega
           rw [hνPivot_get_ne iFin hi_ne_kFin]
           rw [hνRows_get_ne iFin hi_ne_km1 hi_ne_kFin]
-          -- Now LHS = (upd iFin (s.ν.get iFin)).get jFin.
-          -- Reduce `upd iFin row` to its explicit form.
+          -- Now LHS = (upd iFin (s.ν.get iFin)).get jFin. Unfold `upd` to expose
+          -- the `pairs.get iFin` reference, then substitute it with its explicit
+          -- value (valid since `k < iFin.val` in this branch).
+          show ((let prev := (Int.ofNat dkPrev * (pairs.get iFin).1 +
+                              B * (pairs.get iFin).2) / Int.ofNat dk
+                 let curr := (Int.ofNat dkNext * (pairs.get iFin).2 -
+                              B * (pairs.get iFin).1) / Int.ofNat dk
+                 ((s.ν.get iFin).set km1 prev).set kFin curr).get jFin) =
+            ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin
+          rw [show pairs.get iFin = ((s.ν.get iFin).get kFin, (s.ν.get iFin).get km1)
+              from hpairs_at iFin hki]
           show ((((s.ν.get iFin).set km1.val
                 ((Int.ofNat dkPrev * (s.ν.get iFin).get kFin +
                     B * (s.ν.get iFin).get km1) /
