@@ -4175,6 +4175,78 @@ def quadraticIntegerRootFactors? (core : ZPoly) : Option (Array ZPoly) :=
   else
     none
 
+/-- Integer values in `[-B, B]`, listed in increasing order. -/
+private def boundedIntegerList (B : Nat) : List Int :=
+  (List.range (2 * B + 1)).map fun i => (Int.ofNat i) - (Int.ofNat B)
+
+/-- All length-`len` integer coefficient lists with each entry in `[-B, B]`. -/
+private def boundedCoefficientVectors (B : Nat) : Nat → List (List Int)
+  | 0 => [[]]
+  | len + 1 =>
+      (boundedCoefficientVectors B len).flatMap fun rest =>
+        (boundedIntegerList B).map fun c => c :: rest
+
+/-- Bounded-coefficient candidate divisors of degree exactly `d`. Each
+emitted polynomial has positive leading coefficient (so
+`normalizeFactorSign` is the identity on it) and passes
+`shouldRecordPolynomialFactor`. -/
+private def trialDivisionCandidatesOfDegree (B d : Nat) : List ZPoly :=
+  (boundedCoefficientVectors B (d + 1)).filterMap fun coeffs =>
+    let p := DensePoly.ofCoeffs coeffs.toArray
+    if p.degree?.getD 0 = d ∧ 0 < DensePoly.leadingCoeff p ∧
+        shouldRecordPolynomialFactor p = true then
+      some p
+    else
+      none
+
+/-- Bounded-coefficient candidate divisors of degrees `1..maxDeg`, in order
+of increasing degree. -/
+private def trialDivisionCandidatesUpTo (B maxDeg : Nat) : List ZPoly :=
+  (List.range maxDeg).flatMap fun d => trialDivisionCandidatesOfDegree B (d + 1)
+
+/-- Peel candidate divisors off the running target via `exactQuotient?`. Each
+candidate in the input list is tried at most once. Returns
+`(emittedFactors, residual)` with the invariant
+`residual * polyProduct emittedFactors = target`. -/
+private def trialDivisionPeelAux :
+    ZPoly → List ZPoly → Array ZPoly × ZPoly
+  | target, [] => (#[], target)
+  | target, candidate :: candidates =>
+      match exactQuotient? target candidate with
+      | some quotient =>
+          let rest := trialDivisionPeelAux quotient candidates
+          (#[candidate] ++ rest.1, rest.2)
+      | none => trialDivisionPeelAux target candidates
+
+/--
+Standalone integer trial-division core for the slow factorization path.
+
+First peels monic linear integer-root factors `(x - r)` off `core` via
+`splitIntegerRootFactorsAux`, then enumerates non-unit polynomial candidates
+of degrees `1..deg(afterLinear)/2` with coefficients in `[-B, B]`, dividing
+each in turn into the running residual. The returned array consists of the
+linear factors, the bounded-coefficient factors that exactly divided the
+residual, and the final residual (omitted when it collapses to `1`).
+
+The companion theorems `exhaustiveIntegerTrialCoreFactorsWithBound_polyProduct`,
+`exhaustiveIntegerTrialCoreFactorsWithBound_normalizeFactorSign`, and
+`exhaustiveIntegerTrialCoreFactorsWithBound_shouldRecord` record the
+local executable invariants needed by the eventual `factorSlow`
+reassembly callers.
+-/
+def exhaustiveIntegerTrialCoreFactorsWithBound
+    (core : ZPoly) (B : Nat) : Array ZPoly :=
+  let split :=
+    splitIntegerRootFactorsAux core (integerRootCandidates core)
+      (integerRootCandidates core).length
+  let peel :=
+    trialDivisionPeelAux split.2
+      (trialDivisionCandidatesUpTo B (split.2.degree?.getD 0 / 2))
+  if peel.2 = 1 then
+    split.1 ++ peel.1
+  else
+    (split.1 ++ peel.1).push peel.2
+
 def centeredModNat (z : Int) (m : Nat) : Int :=
   if m = 0 then
     z
@@ -11225,6 +11297,465 @@ theorem splitIntegerRootFactorsAux_factors_form
       factors.toList = rs.map linearFactorForRoot :=
   splitIntegerRootFactorsAux_factors_distinct_roots target roots fuel
     factors residual hsplit
+
+/-- Each candidate emitted by `trialDivisionCandidatesOfDegree B d` has degree
+exactly `d`, positive leading coefficient, and passes `shouldRecord`. -/
+private theorem mem_trialDivisionCandidatesOfDegree {B d : Nat} {p : ZPoly}
+    (hmem : p ∈ trialDivisionCandidatesOfDegree B d) :
+    p.degree?.getD 0 = d ∧ 0 < DensePoly.leadingCoeff p ∧
+      shouldRecordPolynomialFactor p = true := by
+  unfold trialDivisionCandidatesOfDegree at hmem
+  rcases List.mem_filterMap.mp hmem with ⟨coeffs, _hcoeffs, heq⟩
+  by_cases hcheck :
+      (DensePoly.ofCoeffs coeffs.toArray).degree?.getD 0 = d ∧
+        0 < DensePoly.leadingCoeff (DensePoly.ofCoeffs coeffs.toArray) ∧
+        shouldRecordPolynomialFactor (DensePoly.ofCoeffs coeffs.toArray) = true
+  · rw [if_pos hcheck] at heq
+    cases heq
+    exact hcheck
+  · rw [if_neg hcheck] at heq
+    contradiction
+
+/-- Each candidate emitted by `trialDivisionCandidatesUpTo B maxDeg` has
+positive degree, positive leading coefficient, and passes `shouldRecord`. -/
+private theorem mem_trialDivisionCandidatesUpTo {B maxDeg : Nat} {p : ZPoly}
+    (hmem : p ∈ trialDivisionCandidatesUpTo B maxDeg) :
+    0 < p.degree?.getD 0 ∧ 0 < DensePoly.leadingCoeff p ∧
+      shouldRecordPolynomialFactor p = true := by
+  unfold trialDivisionCandidatesUpTo at hmem
+  rcases List.mem_flatMap.mp hmem with ⟨d, _hd_range, hpd⟩
+  obtain ⟨hdeg, hlc, hrec⟩ := mem_trialDivisionCandidatesOfDegree hpd
+  refine ⟨?_, hlc, hrec⟩
+  rw [hdeg]; omega
+
+/-- The polyProduct invariant for the candidate-peel auxiliary: emitted
+factors and final residual multiply back to the original target. -/
+private theorem trialDivisionPeelAux_product
+    (target : ZPoly) (candidates : List ZPoly) :
+    ∀ factors residual,
+      trialDivisionPeelAux target candidates = (factors, residual) →
+        residual * Array.polyProduct factors = target := by
+  induction candidates generalizing target with
+  | nil =>
+      intro factors residual hsplit
+      simp [trialDivisionPeelAux] at hsplit
+      rcases hsplit with ⟨rfl, rfl⟩
+      exact DensePoly.mul_one_right_poly (S := Int) target
+  | cons c cs ih =>
+      intro factors residual hsplit
+      unfold trialDivisionPeelAux at hsplit
+      cases hquot : exactQuotient? target c with
+      | none =>
+          simp [hquot] at hsplit
+          exact ih target factors residual hsplit
+      | some q =>
+          simp [hquot] at hsplit
+          cases hrest : trialDivisionPeelAux q cs with
+          | mk rfact rres =>
+              simp [hrest] at hsplit
+              rcases hsplit with ⟨hfactors, hresidual⟩
+              subst factors
+              subst residual
+              have hih : rres * Array.polyProduct rfact = q :=
+                ih q rfact rres hrest
+              have hqcq : q * c = target := exactQuotient?_product hquot
+              calc
+                rres * Array.polyProduct (#[c] ++ rfact)
+                    = rres * (c * Array.polyProduct rfact) := by
+                      rw [ZPoly.polyProduct_append, ZPoly.polyProduct_singleton]
+                _ = rres * (Array.polyProduct rfact * c) := by
+                      rw [DensePoly.mul_comm_poly (S := Int) c
+                        (Array.polyProduct rfact)]
+                _ = (rres * Array.polyProduct rfact) * c := by
+                      rw [DensePoly.mul_assoc_poly (S := Int)]
+                _ = q * c := by rw [hih]
+                _ = target := hqcq
+
+/-- Each emitted factor of the candidate-peel auxiliary is a member of the
+input candidate list. -/
+private theorem trialDivisionPeelAux_factor_mem
+    (target : ZPoly) (candidates : List ZPoly) :
+    ∀ factors residual,
+      trialDivisionPeelAux target candidates = (factors, residual) →
+        ∀ factor ∈ factors.toList, factor ∈ candidates := by
+  induction candidates generalizing target with
+  | nil =>
+      intro factors residual hsplit factor hmem
+      simp [trialDivisionPeelAux] at hsplit
+      rcases hsplit with ⟨rfl, rfl⟩
+      simp at hmem
+  | cons c cs ih =>
+      intro factors residual hsplit factor hmem
+      unfold trialDivisionPeelAux at hsplit
+      cases hquot : exactQuotient? target c with
+      | none =>
+          simp [hquot] at hsplit
+          exact List.mem_cons_of_mem c
+            (ih target factors residual hsplit factor hmem)
+      | some q =>
+          simp [hquot] at hsplit
+          cases hrest : trialDivisionPeelAux q cs with
+          | mk rfact rres =>
+              simp [hrest] at hsplit
+              rcases hsplit with ⟨hfactors, hresidual⟩
+              subst factors
+              subst residual
+              rw [Array.toList_append] at hmem
+              simp at hmem
+              cases hmem with
+              | inl hself =>
+                  rw [hself]
+                  exact List.mem_cons_self
+              | inr hrest_mem =>
+                  exact List.mem_cons_of_mem c
+                    (ih q rfact rres hrest factor (by simpa using hrest_mem))
+
+/-- When the peel target has positive leading coefficient and every candidate
+in the input list has positive leading coefficient, the residual emitted by
+`trialDivisionPeelAux` retains a positive leading coefficient. -/
+private theorem trialDivisionPeelAux_residual_leadingCoeff_pos
+    (target : ZPoly) (candidates : List ZPoly)
+    (htarget_pos : 0 < DensePoly.leadingCoeff target)
+    (hcand_pos : ∀ c ∈ candidates, 0 < DensePoly.leadingCoeff c) :
+    ∀ factors residual,
+      trialDivisionPeelAux target candidates = (factors, residual) →
+        0 < DensePoly.leadingCoeff residual := by
+  induction candidates generalizing target with
+  | nil =>
+      intro factors residual hsplit
+      simp [trialDivisionPeelAux] at hsplit
+      rcases hsplit with ⟨rfl, rfl⟩
+      exact htarget_pos
+  | cons c cs ih =>
+      intro factors residual hsplit
+      have hc_pos : 0 < DensePoly.leadingCoeff c :=
+        hcand_pos c List.mem_cons_self
+      have hcs_pos : ∀ c' ∈ cs, 0 < DensePoly.leadingCoeff c' :=
+        fun c' h => hcand_pos c' (List.mem_cons_of_mem c h)
+      unfold trialDivisionPeelAux at hsplit
+      cases hquot : exactQuotient? target c with
+      | none =>
+          simp [hquot] at hsplit
+          exact ih target htarget_pos hcs_pos factors residual hsplit
+      | some q =>
+          simp [hquot] at hsplit
+          cases hrest : trialDivisionPeelAux q cs with
+          | mk rfact rres =>
+              simp [hrest] at hsplit
+              rcases hsplit with ⟨hfactors, hresidual⟩
+              subst factors
+              subst residual
+              have hqcq : q * c = target := exactQuotient?_product hquot
+              have htarget_ne : target ≠ 0 := by
+                intro hz
+                rw [hz] at htarget_pos
+                change 0 < (0 : Int) at htarget_pos
+                omega
+              have hc_ne : c ≠ 0 := by
+                intro hz
+                rw [hz] at hc_pos
+                change 0 < (0 : Int) at hc_pos
+                omega
+              have hq_ne : q ≠ 0 := by
+                intro hz
+                apply htarget_ne
+                rw [← hqcq, hz]
+                exact DensePoly.zero_mul _
+              have hlc_mul :
+                  DensePoly.leadingCoeff q * DensePoly.leadingCoeff c =
+                    DensePoly.leadingCoeff target := by
+                rw [← hqcq]
+                exact (ZPoly.leadingCoeff_mul_of_nonzero q c hq_ne hc_ne).symm
+              have hq_pos : 0 < DensePoly.leadingCoeff q := by
+                rcases Int.lt_or_le 0 (DensePoly.leadingCoeff q) with hp | hle
+                · exact hp
+                · exfalso
+                  have hc_nn : 0 ≤ DensePoly.leadingCoeff c :=
+                    Int.le_of_lt hc_pos
+                  have hna : 0 ≤ -DensePoly.leadingCoeff q := by omega
+                  have hprod_neg_nn :
+                      0 ≤ -DensePoly.leadingCoeff q *
+                        DensePoly.leadingCoeff c :=
+                    Int.mul_nonneg hna hc_nn
+                  have hneg_eq :
+                      -DensePoly.leadingCoeff q * DensePoly.leadingCoeff c =
+                        -(DensePoly.leadingCoeff q * DensePoly.leadingCoeff c) :=
+                    Int.neg_mul _ _
+                  rw [hneg_eq, hlc_mul] at hprod_neg_nn
+                  omega
+              exact ih q hq_pos hcs_pos rfact rres hrest
+
+/-- Each emitted factor of the candidate-peel auxiliary satisfies the
+property `P` whenever every input candidate does. -/
+private theorem trialDivisionPeelAux_factor_property
+    {P : ZPoly → Prop} (target : ZPoly) (candidates : List ZPoly)
+    (hcand : ∀ c ∈ candidates, P c) :
+    ∀ factors residual,
+      trialDivisionPeelAux target candidates = (factors, residual) →
+        ∀ factor ∈ factors.toList, P factor := by
+  intro factors residual hsplit factor hmem
+  exact hcand factor
+    (trialDivisionPeelAux_factor_mem target candidates factors residual hsplit
+      factor hmem)
+
+/-- PolyProduct identity for the standalone integer trial-division core. -/
+theorem exhaustiveIntegerTrialCoreFactorsWithBound_polyProduct
+    (core : ZPoly) (B : Nat) :
+    Array.polyProduct (exhaustiveIntegerTrialCoreFactorsWithBound core B) =
+      core := by
+  let split := splitIntegerRootFactorsAux core (integerRootCandidates core)
+    (integerRootCandidates core).length
+  let peel := trialDivisionPeelAux split.2
+    (trialDivisionCandidatesUpTo B (split.2.degree?.getD 0 / 2))
+  have hsplit_prod : split.2 * Array.polyProduct split.1 = core :=
+    splitIntegerRootFactorsAux_product core (integerRootCandidates core)
+      (integerRootCandidates core).length split.1 split.2 rfl
+  have hpeel_prod : peel.2 * Array.polyProduct peel.1 = split.2 :=
+    trialDivisionPeelAux_product split.2
+      (trialDivisionCandidatesUpTo B (split.2.degree?.getD 0 / 2))
+      peel.1 peel.2 rfl
+  change Array.polyProduct
+      (if peel.2 = 1 then split.1 ++ peel.1
+        else (split.1 ++ peel.1).push peel.2) = core
+  by_cases hres_one : peel.2 = 1
+  · rw [if_pos hres_one]
+    rw [hres_one, ZPoly.one_mul_zpoly] at hpeel_prod
+    rw [ZPoly.polyProduct_append, hpeel_prod,
+        DensePoly.mul_comm_poly (S := Int)]
+    exact hsplit_prod
+  · rw [if_neg hres_one]
+    rw [polyProduct_push, ZPoly.polyProduct_append,
+        DensePoly.mul_assoc_poly (S := Int),
+        DensePoly.mul_comm_poly (S := Int) (Array.polyProduct peel.1) peel.2,
+        hpeel_prod, DensePoly.mul_comm_poly (S := Int)]
+    exact hsplit_prod
+
+/-- Each factor emitted by the standalone integer trial-division core is
+fixed by `normalizeFactorSign`, provided `core` has positive leading
+coefficient. -/
+theorem exhaustiveIntegerTrialCoreFactorsWithBound_normalizeFactorSign
+    (core : ZPoly) (B : Nat)
+    (hcore_pos : 0 < DensePoly.leadingCoeff core) :
+    ∀ factor ∈ (exhaustiveIntegerTrialCoreFactorsWithBound core B).toList,
+      normalizeFactorSign factor = factor := by
+  let split := splitIntegerRootFactorsAux core (integerRootCandidates core)
+    (integerRootCandidates core).length
+  let candidates :=
+    trialDivisionCandidatesUpTo B (split.2.degree?.getD 0 / 2)
+  let peel := trialDivisionPeelAux split.2 candidates
+  have hsplit_norm :
+      ∀ factor ∈ split.1.toList, normalizeFactorSign factor = factor :=
+    splitIntegerRootFactorsAux_normalizeFactorSign core
+      (integerRootCandidates core) (integerRootCandidates core).length
+      split.1 split.2 rfl
+  have hsplit_prod : split.2 * Array.polyProduct split.1 = core :=
+    splitIntegerRootFactorsAux_product core (integerRootCandidates core)
+      (integerRootCandidates core).length split.1 split.2 rfl
+  have hsplit_lc_pos :
+      0 < DensePoly.leadingCoeff (Array.polyProduct split.1) :=
+    splitIntegerRootFactorsAux_polyProduct_leadingCoeff_pos core
+      (integerRootCandidates core) (integerRootCandidates core).length
+      split.1 split.2 rfl
+  have hcore_ne : core ≠ 0 := by
+    intro hz
+    rw [hz] at hcore_pos
+    change 0 < (0 : Int) at hcore_pos
+    omega
+  have hsplit1_ne : Array.polyProduct split.1 ≠ 0 := by
+    intro hz
+    rw [hz] at hsplit_lc_pos
+    change 0 < (0 : Int) at hsplit_lc_pos
+    omega
+  have hsplit2_ne : split.2 ≠ 0 := by
+    intro hz
+    apply hcore_ne
+    rw [← hsplit_prod, hz]
+    exact DensePoly.zero_mul _
+  have hsplit2_pos : 0 < DensePoly.leadingCoeff split.2 := by
+    have hlc :
+        DensePoly.leadingCoeff core =
+          DensePoly.leadingCoeff split.2 *
+            DensePoly.leadingCoeff (Array.polyProduct split.1) := by
+      rw [← hsplit_prod]
+      exact ZPoly.leadingCoeff_mul_of_nonzero split.2
+        (Array.polyProduct split.1) hsplit2_ne hsplit1_ne
+    rcases Int.lt_or_le 0 (DensePoly.leadingCoeff split.2) with hp | hle
+    · exact hp
+    · exfalso
+      have hnn : 0 ≤ DensePoly.leadingCoeff (Array.polyProduct split.1) :=
+        Int.le_of_lt hsplit_lc_pos
+      have hna : 0 ≤ -DensePoly.leadingCoeff split.2 := by omega
+      have hprod_neg_nn :
+          0 ≤ -DensePoly.leadingCoeff split.2 *
+            DensePoly.leadingCoeff (Array.polyProduct split.1) :=
+        Int.mul_nonneg hna hnn
+      have hneg_eq :
+          -DensePoly.leadingCoeff split.2 *
+              DensePoly.leadingCoeff (Array.polyProduct split.1) =
+            -(DensePoly.leadingCoeff split.2 *
+              DensePoly.leadingCoeff (Array.polyProduct split.1)) :=
+        Int.neg_mul _ _
+      rw [hneg_eq, ← hlc] at hprod_neg_nn
+      omega
+  have hcand_norm :
+      ∀ c ∈ candidates, normalizeFactorSign c = c := by
+    intro c hc
+    obtain ⟨_, hlc, _⟩ := mem_trialDivisionCandidatesUpTo hc
+    unfold normalizeFactorSign
+    have hnot_neg : ¬ DensePoly.leadingCoeff c < 0 := by omega
+    rw [if_neg hnot_neg]
+  have hcand_pos :
+      ∀ c ∈ candidates, 0 < DensePoly.leadingCoeff c :=
+    fun c hc => (mem_trialDivisionCandidatesUpTo hc).2.1
+  have hpeel_norm :
+      ∀ factor ∈ peel.1.toList, normalizeFactorSign factor = factor :=
+    trialDivisionPeelAux_factor_property
+      (P := fun p => normalizeFactorSign p = p)
+      split.2 candidates hcand_norm peel.1 peel.2 rfl
+  have hpeel_res_pos : 0 < DensePoly.leadingCoeff peel.2 :=
+    trialDivisionPeelAux_residual_leadingCoeff_pos split.2 candidates
+      hsplit2_pos hcand_pos peel.1 peel.2 rfl
+  change ∀ factor ∈ (if peel.2 = 1 then split.1 ++ peel.1
+      else (split.1 ++ peel.1).push peel.2).toList,
+    normalizeFactorSign factor = factor
+  intro factor hmem
+  by_cases hres_one : peel.2 = 1
+  · rw [if_pos hres_one] at hmem
+    rw [Array.toList_append] at hmem
+    rcases List.mem_append.mp hmem with hlin | hpeel
+    · exact hsplit_norm factor hlin
+    · exact hpeel_norm factor hpeel
+  · rw [if_neg hres_one] at hmem
+    rw [Array.toList_push, Array.toList_append] at hmem
+    rcases List.mem_append.mp hmem with hpref | hres
+    · rcases List.mem_append.mp hpref with hlin | hpeel
+      · exact hsplit_norm factor hlin
+      · exact hpeel_norm factor hpeel
+    · have hfactor_eq : factor = peel.2 := by
+        rcases List.mem_singleton.mp hres with rfl
+        rfl
+      rw [hfactor_eq]
+      unfold normalizeFactorSign
+      have hnot_neg : ¬ DensePoly.leadingCoeff peel.2 < 0 := by omega
+      rw [if_neg hnot_neg]
+
+/-- Each factor emitted by the standalone integer trial-division core
+satisfies `shouldRecordPolynomialFactor`, provided `core` has positive
+leading coefficient. -/
+theorem exhaustiveIntegerTrialCoreFactorsWithBound_shouldRecord
+    (core : ZPoly) (B : Nat)
+    (hcore_pos : 0 < DensePoly.leadingCoeff core) :
+    ∀ factor ∈ (exhaustiveIntegerTrialCoreFactorsWithBound core B).toList,
+      shouldRecordPolynomialFactor factor = true := by
+  let split := splitIntegerRootFactorsAux core (integerRootCandidates core)
+    (integerRootCandidates core).length
+  let candidates :=
+    trialDivisionCandidatesUpTo B (split.2.degree?.getD 0 / 2)
+  let peel := trialDivisionPeelAux split.2 candidates
+  have hsplit_record :
+      ∀ factor ∈ split.1.toList, shouldRecordPolynomialFactor factor = true :=
+    splitIntegerRootFactorsAux_shouldRecord core (integerRootCandidates core)
+      (integerRootCandidates core).length split.1 split.2 rfl
+  have hsplit_prod : split.2 * Array.polyProduct split.1 = core :=
+    splitIntegerRootFactorsAux_product core (integerRootCandidates core)
+      (integerRootCandidates core).length split.1 split.2 rfl
+  have hsplit_lc_pos :
+      0 < DensePoly.leadingCoeff (Array.polyProduct split.1) :=
+    splitIntegerRootFactorsAux_polyProduct_leadingCoeff_pos core
+      (integerRootCandidates core) (integerRootCandidates core).length
+      split.1 split.2 rfl
+  have hcore_ne : core ≠ 0 := by
+    intro hz
+    rw [hz] at hcore_pos
+    change 0 < (0 : Int) at hcore_pos
+    omega
+  have hsplit1_ne : Array.polyProduct split.1 ≠ 0 := by
+    intro hz
+    rw [hz] at hsplit_lc_pos
+    change 0 < (0 : Int) at hsplit_lc_pos
+    omega
+  have hsplit2_ne : split.2 ≠ 0 := by
+    intro hz
+    apply hcore_ne
+    rw [← hsplit_prod, hz]
+    exact DensePoly.zero_mul _
+  have hsplit2_pos : 0 < DensePoly.leadingCoeff split.2 := by
+    have hlc :
+        DensePoly.leadingCoeff core =
+          DensePoly.leadingCoeff split.2 *
+            DensePoly.leadingCoeff (Array.polyProduct split.1) := by
+      rw [← hsplit_prod]
+      exact ZPoly.leadingCoeff_mul_of_nonzero split.2
+        (Array.polyProduct split.1) hsplit2_ne hsplit1_ne
+    rcases Int.lt_or_le 0 (DensePoly.leadingCoeff split.2) with hp | hle
+    · exact hp
+    · exfalso
+      have hnn : 0 ≤ DensePoly.leadingCoeff (Array.polyProduct split.1) :=
+        Int.le_of_lt hsplit_lc_pos
+      have hna : 0 ≤ -DensePoly.leadingCoeff split.2 := by omega
+      have hprod_neg_nn :
+          0 ≤ -DensePoly.leadingCoeff split.2 *
+            DensePoly.leadingCoeff (Array.polyProduct split.1) :=
+        Int.mul_nonneg hna hnn
+      have hneg_eq :
+          -DensePoly.leadingCoeff split.2 *
+              DensePoly.leadingCoeff (Array.polyProduct split.1) =
+            -(DensePoly.leadingCoeff split.2 *
+              DensePoly.leadingCoeff (Array.polyProduct split.1)) :=
+        Int.neg_mul _ _
+      rw [hneg_eq, ← hlc] at hprod_neg_nn
+      omega
+  have hcand_record :
+      ∀ c ∈ candidates, shouldRecordPolynomialFactor c = true :=
+    fun c hc => (mem_trialDivisionCandidatesUpTo hc).2.2
+  have hcand_pos :
+      ∀ c ∈ candidates, 0 < DensePoly.leadingCoeff c :=
+    fun c hc => (mem_trialDivisionCandidatesUpTo hc).2.1
+  have hpeel_record :
+      ∀ factor ∈ peel.1.toList,
+        shouldRecordPolynomialFactor factor = true :=
+    trialDivisionPeelAux_factor_property
+      (P := fun p => shouldRecordPolynomialFactor p = true)
+      split.2 candidates hcand_record peel.1 peel.2 rfl
+  have hpeel_res_pos : 0 < DensePoly.leadingCoeff peel.2 :=
+    trialDivisionPeelAux_residual_leadingCoeff_pos split.2 candidates
+      hsplit2_pos hcand_pos peel.1 peel.2 rfl
+  change ∀ factor ∈ (if peel.2 = 1 then split.1 ++ peel.1
+      else (split.1 ++ peel.1).push peel.2).toList,
+    shouldRecordPolynomialFactor factor = true
+  intro factor hmem
+  by_cases hres_one : peel.2 = 1
+  · rw [if_pos hres_one] at hmem
+    rw [Array.toList_append] at hmem
+    rcases List.mem_append.mp hmem with hlin | hpeel
+    · exact hsplit_record factor hlin
+    · exact hpeel_record factor hpeel
+  · rw [if_neg hres_one] at hmem
+    rw [Array.toList_push, Array.toList_append] at hmem
+    rcases List.mem_append.mp hmem with hpref | hres
+    · rcases List.mem_append.mp hpref with hlin | hpeel
+      · exact hsplit_record factor hlin
+      · exact hpeel_record factor hpeel
+    · have hfactor_eq : factor = peel.2 := by
+        rcases List.mem_singleton.mp hres with rfl
+        rfl
+      rw [hfactor_eq]
+      have hpeel_ne_zero : peel.2 ≠ 0 := by
+        intro hz
+        rw [hz] at hpeel_res_pos
+        change 0 < (0 : Int) at hpeel_res_pos
+        omega
+      have hpeel_ne_neg_one : peel.2 ≠ DensePoly.C (-1 : Int) := by
+        intro hneg
+        have hlc_neg : DensePoly.leadingCoeff peel.2 = -1 := by
+          rw [hneg]
+          change DensePoly.leadingCoeff (DensePoly.C (-1 : Int)) = -1
+          simp [DensePoly.leadingCoeff,
+            DensePoly.coeffs_C_of_ne_zero (by decide : (-1 : Int) ≠ 0)]
+        rw [hlc_neg] at hpeel_res_pos
+        omega
+      unfold shouldRecordPolynomialFactor
+      simp [hpeel_ne_zero, hres_one, hpeel_ne_neg_one]
 
 /-- `positiveDivisors n` returns a duplicate-free list of natural divisors:
 the underlying source `List.range (n + 1)` is `Nodup`, and `List.filter`
