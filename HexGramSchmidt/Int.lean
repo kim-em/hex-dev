@@ -7076,7 +7076,7 @@ private theorem exists_highest_nonzero_coeff
     ⟨k, _hk_mem, hck, hmax⟩
   exact ⟨k, hck, fun j hj => hmax j (List.mem_finRange j) hj⟩
 
-private theorem normSq_map_intCast (v : Vector Int m) :
+theorem normSq_map_intCast (v : Vector Int m) :
     Vector.normSq (Vector.map (fun x : Int => (x : Rat)) v) =
       ((Vector.normSq v : Int) : Rat) := by
   simpa [Vector.normSq, Hex.Vector.normSq, Matrix.dot, Hex.Vector.dotProduct]
