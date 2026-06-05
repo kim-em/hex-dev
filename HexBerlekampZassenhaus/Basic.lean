@@ -6608,35 +6608,26 @@ private def exhaustiveNonMonicQuadraticGuard : ZPoly :=
 
 /-- The raw slow-path factor array used by the exhaustive recombination branch.
 
-The body dispatches via the compatibility `choosePrimeData` wrapper. Callers
-that need explicit failure on no admissible prime should use
-`exhaustiveSlowRawFactorsWithBound?`. -/
+Routes through the standalone integer trial-division core
+`exhaustiveIntegerTrialCoreFactorsWithBound`, so the slow path no longer
+consumes `PrimeChoiceData` or depends on `choosePrimeData?` succeeding. -/
 def exhaustiveSlowRawFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
   reassemblePolynomialFactors (normalizeForFactor f)
-    (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-      (choosePrimeData (normalizeForFactor f).squareFreeCore))
+    (exhaustiveIntegerTrialCoreFactorsWithBound
+      (normalizeForFactor f).squareFreeCore B)
 
-/-- Option-returning slow-path raw factor array. Returns `some` exactly
-when `choosePrimeData?` succeeds on the normalized square-free core,
-mirroring `factorFastFactorsWithBound`'s `none`-on-no-good-prime
-contract. Provides the Option-propagating boundary recommended by #5831
-(HO-5d-1b) for the slow exhaustive raw-factor path. -/
+/-- Option-returning slow-path raw factor array. Now total: the slow path
+is prime-independent and always returns `some`. Kept as a `some`-wrapper
+for downstream callers that thread an `Option (Array ZPoly)` through the
+slow surface. -/
 def exhaustiveSlowRawFactorsWithBound? (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
-  (choosePrimeData? (normalizeForFactor f).squareFreeCore).map fun primeData =>
-    reassemblePolynomialFactors (normalizeForFactor f)
-      (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B primeData)
+  some (exhaustiveSlowRawFactorsWithBound f B)
 
-/-- When `choosePrimeData?` succeeds, the `?` variant agrees with the
-total `exhaustiveSlowRawFactorsWithBound`. -/
-theorem exhaustiveSlowRawFactorsWithBound?_eq_some_of_isSome
-    (f : ZPoly) (B : Nat)
-    (h : (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome) :
+/-- The `?` variant is always `some` — the slow path is prime-independent. -/
+theorem exhaustiveSlowRawFactorsWithBound?_eq_some
+    (f : ZPoly) (B : Nat) :
     exhaustiveSlowRawFactorsWithBound? f B =
-      some (exhaustiveSlowRawFactorsWithBound f B) := by
-  obtain ⟨primeData, hchoose⟩ := Option.isSome_iff_exists.mp h
-  unfold exhaustiveSlowRawFactorsWithBound? exhaustiveSlowRawFactorsWithBound
-  rw [choosePrimeData_eq_of_choosePrimeData?_some hchoose, hchoose]
-  rfl
+      some (exhaustiveSlowRawFactorsWithBound f B) := rfl
 
 /-- Raw factor array produced by the slow exhaustive recombination branch.
 
@@ -6651,66 +6642,30 @@ def factorSlowFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
     match quadraticIntegerRootFactors? normalized.squareFreeCore with
     | some coreFactors => reassemblePolynomialFactors normalized coreFactors
     | none =>
-        let primeData := choosePrimeData normalized.squareFreeCore
         let coreFactors :=
-          exhaustiveCoreFactorsWithBound normalized.squareFreeCore B primeData
+          exhaustiveIntegerTrialCoreFactorsWithBound normalized.squareFreeCore B
         reassemblePolynomialFactors normalized coreFactors
 
 #guard factorSlowFactorsWithBound exhaustiveNonMonicQuadraticGuard 4 =
   #[exhaustiveNonMonicQuadraticGuard]
 
-/-- Option-returning slow-path raw factor array.
-
-Returns `some` precisely on the constant-core early-out, the
-quadratic-integer-root short-circuit, and the prime-data-available
-exhaustive case. Returns `none` precisely when both the
-quadratic-integer-root short-circuit fails and `choosePrimeData?` yields
-`none` on the normalized square-free core.
-
-This is the slow-path counterpart of the already-`Option`-returning
-`factorFastFactorsWithBound`. Provides the slow-side
-Option-propagating boundary recommended by #5831 (HO-5d-1b). -/
+/-- Option-returning slow-path raw factor array. Now total: the slow path
+is prime-independent (routes through `exhaustiveIntegerTrialCoreFactorsWithBound`)
+and always returns `some`. Kept as a `some`-wrapper for downstream callers that
+thread an `Option (Array ZPoly)` through the slow surface. -/
 def factorSlowFactorsWithBound? (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
-  let normalized := normalizeForFactor f
-  if normalized.squareFreeCore.degree?.getD 0 = 0 then
-    some (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
-  else
-    match quadraticIntegerRootFactors? normalized.squareFreeCore with
-    | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
-    | none =>
-        (choosePrimeData? normalized.squareFreeCore).map fun primeData =>
-          reassemblePolynomialFactors normalized
-            (exhaustiveCoreFactorsWithBound normalized.squareFreeCore B primeData)
+  some (factorSlowFactorsWithBound f B)
 
-/-- Characterise the `some` branch of `factorSlowFactorsWithBound?`.
-
-The `?` variant returns `some (factorSlowFactorsWithBound f B)` exactly
-on the safe branches and `none` precisely on the cascade the silent
-fallback would otherwise mask. Mirrors `factorWithBound?_eq_some_iff_safe_branch`
-for the slow raw-factor path. -/
-theorem factorSlowFactorsWithBound?_eq_some_iff_safe_branch (f : ZPoly) (B : Nat) :
-    factorSlowFactorsWithBound? f B =
-      (if (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0 ∨
-          (quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore).isSome ∨
-          (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome
-        then some (factorSlowFactorsWithBound f B) else none) := by
-  unfold factorSlowFactorsWithBound? factorSlowFactorsWithBound
-  by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
-  · simp [hdeg]
-  · simp only [hdeg, if_false]
-    cases hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
-    | some coreFactors => simp
-    | none =>
-        cases hchoose : choosePrimeData? (normalizeForFactor f).squareFreeCore with
-        | none => simp
-        | some primeData =>
-            rw [choosePrimeData_eq_of_choosePrimeData?_some hchoose]
-            simp
+/-- The `?` variant is always `some` — the slow path is prime-independent. -/
+theorem factorSlowFactorsWithBound?_eq_some (f : ZPoly) (B : Nat) :
+    factorSlowFactorsWithBound? f B = some (factorSlowFactorsWithBound f B) := rfl
 
 set_option maxHeartbeats 800000
 
 /-- Classify the raw slow-path factor array by the dispatch branch that emitted
-it. The final recorded `Factorization` entries still pass through
+it. The exhaustive arm now names the integer trial-division core array
+`exhaustiveIntegerTrialCoreFactorsWithBound`, with no `PrimeChoiceData`
+dependency. The final recorded `Factorization` entries still pass through
 `collectFactorMultiplicities`; use `factorizationOfFactors_entry_mem_normalized_raw`
 or `factorWithBound_entry_mem_raw_source` for that layer. -/
 theorem factorSlowFactorsWithBound_branch
@@ -6727,10 +6682,8 @@ theorem factorSlowFactorsWithBound_branch
         some coreFactors) ∨
     (factorSlowFactorsWithBound f B =
         reassemblePolynomialFactors (normalizeForFactor f)
-          (exhaustiveCoreFactorsWithBound
-            (normalizeForFactor f).squareFreeCore B
-            (choosePrimeData
-              (normalizeForFactor f).squareFreeCore)) ∧
+          (exhaustiveIntegerTrialCoreFactorsWithBound
+            (normalizeForFactor f).squareFreeCore B) ∧
       (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
       quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none) := by
   unfold factorSlowFactorsWithBound
@@ -6750,37 +6703,6 @@ theorem factorSlowFactorsWithBound_branch
         constructor
         · simp only [hdeg, hquad, if_false]
         · exact ⟨hdeg, rfl⟩
-
-/-- Witness-form variant of `factorSlowFactorsWithBound_branch`: the
-exhaustive branch's core array is computed against an explicit
-`primeData` paired with `hchoose : choosePrimeData? sf = some primeData`,
-removing the silent fallback dispatch from the disjunct's statement. -/
-theorem factorSlowFactorsWithBound_branch_of_choosePrimeData?_some
-    (f : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
-    (hchoose :
-      choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData) :
-    (factorSlowFactorsWithBound f B =
-        reassemblePolynomialFactors (normalizeForFactor f)
-          #[(normalizeForFactor f).squareFreeCore] ∧
-      (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0) ∨
-    (∃ coreFactors : Array ZPoly,
-      factorSlowFactorsWithBound f B =
-        reassemblePolynomialFactors (normalizeForFactor f) coreFactors ∧
-      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
-      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore =
-        some coreFactors) ∨
-    (factorSlowFactorsWithBound f B =
-        reassemblePolynomialFactors (normalizeForFactor f)
-          (exhaustiveCoreFactorsWithBound
-            (normalizeForFactor f).squareFreeCore B primeData) ∧
-      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
-      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none) := by
-  have hwf :
-      choosePrimeData (normalizeForFactor f).squareFreeCore = primeData :=
-    choosePrimeData_eq_of_choosePrimeData?_some hchoose
-  have hbranch := factorSlowFactorsWithBound_branch f B
-  rw [hwf] at hbranch
-  exact hbranch
 
 private def factorSlowWithBound (f : ZPoly) (B : Nat) : Factorization :=
   factorizationOfFactors f (factorSlowFactorsWithBound f B)
@@ -7742,58 +7664,55 @@ theorem factorWithBound_entry_mem_exhaustive_branch_raw
       exact hraw_mem
 
 /-- Membership in the public exhaustive slow raw array splits into
-normalization-prefix factors and exhaustive square-free-core factors. -/
+normalization-prefix factors and integer-trial square-free-core factors. -/
 theorem exhaustiveSlowRawFactorsWithBound_mem_normalization_or_core
     (f factor : ZPoly) (B : Nat)
     (hmem : factor ∈ (exhaustiveSlowRawFactorsWithBound f B).toList) :
     factor ∈ (polynomialNormalizationPrefixFactors (normalizeForFactor f)).toList ∨
       factor ∈
-        (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-          (choosePrimeData (normalizeForFactor f).squareFreeCore)).toList := by
+        (exhaustiveIntegerTrialCoreFactorsWithBound
+          (normalizeForFactor f).squareFreeCore B).toList := by
   rw [exhaustiveSlowRawFactorsWithBound] at hmem
   exact reassemblePolynomialFactors_mem_normalization_or_core
     (normalizeForFactor f)
-    (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-      (choosePrimeData (normalizeForFactor f).squareFreeCore))
+    (exhaustiveIntegerTrialCoreFactorsWithBound
+      (normalizeForFactor f).squareFreeCore B)
     factor hmem
 
 /--
 When the exhaustive slow branch's repeated-part expansion is complete, every
 recorded `factorWithBound` entry from that branch comes either from the
-extracted `X` power or from an exhaustive square-free-core factor. This is the
+extracted `X` power or from an integer-trial square-free-core factor. This is the
 branch-shape theorem that rules out the non-decomposed repeated-part fallback
 for callers that can prove the expansion-complete side condition.
+
+The slow path now routes through the prime-independent
+`exhaustiveIntegerTrialCoreFactorsWithBound`, so no `PrimeChoiceData`
+parameter is required.
 -/
 theorem factorWithBound_entry_mem_exhaustive_branch_xPower_or_core_of_reassemblyComplete
     (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
-    (primeData : PrimeChoiceData)
-    (hchoose :
-      choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData)
     (hbranch : factorWithBoundUsesExhaustiveBranch f B)
     (hcomplete :
       reassemblyExpansionComplete (normalizeForFactor f)
-        (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-          primeData))
+        (exhaustiveIntegerTrialCoreFactorsWithBound
+          (normalizeForFactor f).squareFreeCore B))
     (hmem : entry ∈ (factorWithBound f B).factors.toList) :
     ∃ raw,
       (raw ∈ (xPowerFactorArray (normalizeForFactor f).xPower).toList ∨
         raw ∈
-          (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-            primeData).toList) ∧
+          (exhaustiveIntegerTrialCoreFactorsWithBound
+            (normalizeForFactor f).squareFreeCore B).toList) ∧
         entry.1 = normalizeFactorSign raw := by
-  have hwf :
-      choosePrimeData (normalizeForFactor f).squareFreeCore = primeData :=
-    choosePrimeData_eq_of_choosePrimeData?_some hchoose
   rcases factorWithBound_entry_mem_exhaustive_branch_raw f B entry hbranch hmem with
     ⟨raw, hraw_mem, hraw_norm⟩
   refine ⟨raw, ?_, hraw_norm⟩
   rw [exhaustiveSlowRawFactorsWithBound] at hraw_mem
-  rw [hwf] at hraw_mem
   exact
     reassemblePolynomialFactors_mem_xPower_or_core_of_expansionComplete
       (normalizeForFactor f)
-      (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-        primeData)
+      (exhaustiveIntegerTrialCoreFactorsWithBound
+        (normalizeForFactor f).squareFreeCore B)
       raw hcomplete hraw_mem
 
 /--
@@ -7803,27 +7722,24 @@ for the public `factor` entry point.
 -/
 theorem factor_entry_mem_exhaustive_branch_xPower_or_core_of_reassemblyComplete
     (f : ZPoly) (entry : ZPoly × Nat)
-    (primeData : PrimeChoiceData)
-    (hchoose :
-      choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData)
     (hbranch :
       factorWithBoundUsesExhaustiveBranch f (ZPoly.defaultFactorCoeffBound f))
     (hcomplete :
       reassemblyExpansionComplete (normalizeForFactor f)
-        (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore
-          (ZPoly.defaultFactorCoeffBound f)
-          primeData))
+        (exhaustiveIntegerTrialCoreFactorsWithBound
+          (normalizeForFactor f).squareFreeCore
+          (ZPoly.defaultFactorCoeffBound f)))
     (hmem : entry ∈ (factor f).factors.toList) :
     ∃ raw,
       (raw ∈ (xPowerFactorArray (normalizeForFactor f).xPower).toList ∨
         raw ∈
-          (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore
-            (ZPoly.defaultFactorCoeffBound f)
-            primeData).toList) ∧
+          (exhaustiveIntegerTrialCoreFactorsWithBound
+            (normalizeForFactor f).squareFreeCore
+            (ZPoly.defaultFactorCoeffBound f)).toList) ∧
         entry.1 = normalizeFactorSign raw := by
   simpa [factor_eq_factorWithBound_default] using
     factorWithBound_entry_mem_exhaustive_branch_xPower_or_core_of_reassemblyComplete
-      f (ZPoly.defaultFactorCoeffBound f) entry primeData hchoose
+      f (ZPoly.defaultFactorCoeffBound f) entry
       hbranch hcomplete hmem
 
 /-- In the fast-path small-mod singleton branch, every recorded
@@ -13027,11 +12943,10 @@ private theorem factorSlowFactorsWithBound_polyProduct
           (quadraticIntegerRootFactors?_product hquad)
     | none =>
         exact reassemblePolynomialFactors_product_eq_input f
-          (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-            (choosePrimeData (normalizeForFactor f).squareFreeCore))
-          (exhaustiveCoreFactorsWithBound_product
-            (normalizeForFactor f).squareFreeCore B
-            (choosePrimeData (normalizeForFactor f).squareFreeCore))
+          (exhaustiveIntegerTrialCoreFactorsWithBound
+            (normalizeForFactor f).squareFreeCore B)
+          (exhaustiveIntegerTrialCoreFactorsWithBound_polyProduct
+            (normalizeForFactor f).squareFreeCore B)
 
 set_option maxHeartbeats 3000000 in
 private theorem factorFastFactorsWithBound_polyProduct_of_some
@@ -14160,33 +14075,31 @@ private theorem factorSlowWithBound_product_of_exhaustive_branch
     (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
     (hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none) :
     Factorization.product (factorSlowWithBound f B) = f := by
+  have hcore_pos : 0 < DensePoly.leadingCoeff (normalizeForFactor f).squareFreeCore :=
+    squareFreeCore_leadingCoeff_pos_of_ne_zero f hf
   apply factorSlowWithBound_product_of_all_recorded_normalized
   · unfold factorSlowFactorsWithBound
     rw [if_neg hdeg]
     rw [hquad]
     intro factor hmem
     refine reassemblePolynomialFactors_normalizeFactorSign_of_ne_zero f hf
-      (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-        (choosePrimeData (normalizeForFactor f).squareFreeCore))
+      (exhaustiveIntegerTrialCoreFactorsWithBound
+        (normalizeForFactor f).squareFreeCore B)
       ?_ factor hmem
     intro c hc
-    exact exhaustiveCoreFactorsWithBound_normalizeFactorSign
-      (normalizeForFactor f).squareFreeCore B
-      (choosePrimeData (normalizeForFactor f).squareFreeCore)
-      (squareFreeCore_normalizeFactorSign_of_ne_zero f hf) c hc
+    exact exhaustiveIntegerTrialCoreFactorsWithBound_normalizeFactorSign
+      (normalizeForFactor f).squareFreeCore B hcore_pos c hc
   · unfold factorSlowFactorsWithBound
     rw [if_neg hdeg]
     rw [hquad]
     intro factor hmem
     refine reassemblePolynomialFactors_shouldRecord_of_ne_zero f hf
-      (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-        (choosePrimeData (normalizeForFactor f).squareFreeCore))
+      (exhaustiveIntegerTrialCoreFactorsWithBound
+        (normalizeForFactor f).squareFreeCore B)
       ?_ factor hmem
     intro c hc
-    exact exhaustiveCoreFactorsWithBound_shouldRecord
-      (normalizeForFactor f).squareFreeCore B
-      (choosePrimeData (normalizeForFactor f).squareFreeCore)
-      (squareFreeCore_shouldRecord_of_degree_pos f hf hdeg) c hc
+    exact exhaustiveIntegerTrialCoreFactorsWithBound_shouldRecord
+      (normalizeForFactor f).squareFreeCore B hcore_pos c hc
 
 private theorem factorSlowWithBound_product
     (f : ZPoly) (B : Nat) :
