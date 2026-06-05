@@ -3203,6 +3203,16 @@ private theorem rowSwap_row_right (b : Matrix Rat n m) (i j : Fin n) :
   rw [Matrix.rowSwap_getElem (M := b) (i := i) (j := j) (r := j) (k := c)]
   simp
 
+private theorem rowSwap_row_eq_of_ne (b : Matrix Rat n m) (i j r : Fin n)
+    (hri : r ≠ i) (hrj : r ≠ j) :
+    (Matrix.rowSwap b i j).row r = b.row r := by
+  apply Vector.ext
+  intro idx hidx
+  let c : Fin m := ⟨idx, hidx⟩
+  change (Matrix.rowSwap b i j)[r][c] = b[r][c]
+  rw [Matrix.rowSwap_getElem (M := b) (i := i) (j := j) (r := r) (k := c)]
+  simp [hri, hrj]
+
 theorem coeffs_rowSwap_adjacent_lower_prev (b : Matrix Rat n m) (km1 k j : Fin n)
     (hkm1 : km1.val + 1 = k.val) (hj : j.val < km1.val) :
     GramSchmidt.entry (coeffs (Matrix.rowSwap b km1 k)) km1 j =
@@ -3716,6 +3726,68 @@ theorem basis_rowSwap_of_after (b : Matrix Rat n m) (km1 k i : Fin n)
     (basis (Matrix.rowSwap b km1 k)).row i = (basis b).row i :=
   basis_rowSwap_of_after_private b km1 k i hkm1 hi
 
+theorem coeffs_rowSwap_adjacent_before (b : Matrix Rat n m) (km1 k i j : Fin n)
+    (hkm1 : km1.val + 1 = k.val) (hi : i.val < km1.val) (hji : j.val < i.val) :
+    GramSchmidt.entry (coeffs (Matrix.rowSwap b km1 k)) i j =
+      GramSchmidt.entry (coeffs b) i j := by
+  have hkm1k : km1.val < k.val := by omega
+  have hrow : (Matrix.rowSwap b km1 k).row i = b.row i := by
+    apply rowSwap_row_eq_of_ne
+    · intro h
+      have : i.val = km1.val := congrArg Fin.val h
+      omega
+    · intro h
+      have : i.val = k.val := congrArg Fin.val h
+      omega
+  have hbasis :
+      (basis (Matrix.rowSwap b km1 k)).row j = (basis b).row j := by
+    exact basis_rowSwap_of_before (b := b) (km1 := km1) (k := k) (i := j) hkm1k
+      (Nat.lt_trans hji hi)
+  rw [coeffs_lower_projection (b := Matrix.rowSwap b km1 k) (i := i) (j := j) hji]
+  rw [coeffs_lower_projection (b := b) (i := i) (j := j) hji]
+  rw [hrow, hbasis]
+
+theorem coeffs_rowSwap_adjacent_after_low (b : Matrix Rat n m) (km1 k i j : Fin n)
+    (hkm1 : km1.val + 1 = k.val) (hi : k.val < i.val) (hj : j.val < km1.val) :
+    GramSchmidt.entry (coeffs (Matrix.rowSwap b km1 k)) i j =
+      GramSchmidt.entry (coeffs b) i j := by
+  have hkm1k : km1.val < k.val := by omega
+  have hji : j.val < i.val := by omega
+  have hrow : (Matrix.rowSwap b km1 k).row i = b.row i := by
+    apply rowSwap_row_eq_of_ne
+    · intro h
+      have : i.val = km1.val := congrArg Fin.val h
+      omega
+    · intro h
+      have : i.val = k.val := congrArg Fin.val h
+      omega
+  have hbasis :
+      (basis (Matrix.rowSwap b km1 k)).row j = (basis b).row j := by
+    exact basis_rowSwap_of_before (b := b) (km1 := km1) (k := k) (i := j) hkm1k hj
+  rw [coeffs_lower_projection (b := Matrix.rowSwap b km1 k) (i := i) (j := j) hji]
+  rw [coeffs_lower_projection (b := b) (i := i) (j := j) hji]
+  rw [hrow, hbasis]
+
+theorem coeffs_rowSwap_adjacent_after_high (b : Matrix Rat n m) (km1 k i j : Fin n)
+    (hkm1 : km1.val + 1 = k.val) (hi : k.val < i.val) (hj : k.val < j.val)
+    (hji : j.val < i.val) :
+    GramSchmidt.entry (coeffs (Matrix.rowSwap b km1 k)) i j =
+      GramSchmidt.entry (coeffs b) i j := by
+  have hrow : (Matrix.rowSwap b km1 k).row i = b.row i := by
+    apply rowSwap_row_eq_of_ne
+    · intro h
+      have : i.val = km1.val := congrArg Fin.val h
+      omega
+    · intro h
+      have : i.val = k.val := congrArg Fin.val h
+      omega
+  have hbasis :
+      (basis (Matrix.rowSwap b km1 k)).row j = (basis b).row j := by
+    exact basis_rowSwap_of_after (b := b) (km1 := km1) (k := k) (i := j) hkm1 hj
+  rw [coeffs_lower_projection (b := Matrix.rowSwap b km1 k) (i := i) (j := j) hji]
+  rw [coeffs_lower_projection (b := b) (i := i) (j := j) hji]
+  rw [hrow, hbasis]
+
 end GramSchmidt.Rat
 
 namespace GramSchmidt.Int
@@ -3906,6 +3978,37 @@ theorem coeffs_rowSwap_adjacent_pivot (b : Matrix Int n m) (km1 k : Fin n)
     castIntMatrix_rowSwap] using
     GramSchmidt.Rat.coeffs_rowSwap_adjacent_pivot
       (b := GramSchmidt.castIntMatrix b) (km1 := km1) (k := k) hkm1 hnormRat
+
+theorem coeffs_rowSwap_adjacent_before (b : Matrix Int n m) (km1 k i j : Fin n)
+    (hkm1 : km1.val + 1 = k.val) (hi : i.val < km1.val) (hji : j.val < i.val) :
+    GramSchmidt.entry (coeffs (Matrix.rowSwap b km1 k)) i j =
+      GramSchmidt.entry (coeffs b) i j := by
+  simpa [coeffs, basis, GramSchmidt.Rat.coeffs, GramSchmidt.Rat.basis,
+    castIntMatrix_rowSwap] using
+    GramSchmidt.Rat.coeffs_rowSwap_adjacent_before
+      (b := GramSchmidt.castIntMatrix b) (km1 := km1) (k := k) (i := i) (j := j)
+      hkm1 hi hji
+
+theorem coeffs_rowSwap_adjacent_after_low (b : Matrix Int n m) (km1 k i j : Fin n)
+    (hkm1 : km1.val + 1 = k.val) (hi : k.val < i.val) (hj : j.val < km1.val) :
+    GramSchmidt.entry (coeffs (Matrix.rowSwap b km1 k)) i j =
+      GramSchmidt.entry (coeffs b) i j := by
+  simpa [coeffs, basis, GramSchmidt.Rat.coeffs, GramSchmidt.Rat.basis,
+    castIntMatrix_rowSwap] using
+    GramSchmidt.Rat.coeffs_rowSwap_adjacent_after_low
+      (b := GramSchmidt.castIntMatrix b) (km1 := km1) (k := k) (i := i) (j := j)
+      hkm1 hi hj
+
+theorem coeffs_rowSwap_adjacent_after_high (b : Matrix Int n m) (km1 k i j : Fin n)
+    (hkm1 : km1.val + 1 = k.val) (hi : k.val < i.val) (hj : k.val < j.val)
+    (hji : j.val < i.val) :
+    GramSchmidt.entry (coeffs (Matrix.rowSwap b km1 k)) i j =
+      GramSchmidt.entry (coeffs b) i j := by
+  simpa [coeffs, basis, GramSchmidt.Rat.coeffs, GramSchmidt.Rat.basis,
+    castIntMatrix_rowSwap] using
+    GramSchmidt.Rat.coeffs_rowSwap_adjacent_after_high
+      (b := GramSchmidt.castIntMatrix b) (km1 := km1) (k := k) (i := i) (j := j)
+      hkm1 hi hj hji
 
 /-- Under integer row-add with `src < dst`, lower coefficients in the
 destination row update linearly below the pivot source column. -/
