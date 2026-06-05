@@ -178,26 +178,30 @@ For δ = p/q rational, this becomes a comparison of integers (no
 division): `q * (d[k+1] * d[k-1] + ν[k][k-1]^2) >= p * d[k]^2`.
 
 ```lean
+def lllLoop (s : LLLState n m) (k : Nat) (δ : Rat)
+    (hδ : 1/4 < δ) (hδ' : δ ≤ 1)
+    (hk : 1 ≤ k) (hkn : k ≤ n) : Nat → Matrix Int n m :=
+  | 0 => s.b
+  | fuel + 1 =>
+      if h : k = n then s.b
+      else
+        let s := s.sizeReduce k
+        -- Check Lovász condition (integer arithmetic, no division):
+        if δ.den * (s.d[k+1] * s.d[k-1] + s.ν[k][k-1]^2) ≥ δ.num * s.d[k]^2 then
+          -- Lovász holds: advance
+          lllLoop s (k + 1) δ hδ hδ' (by omega) (by omega) fuel
+        else
+          -- Lovász fails: swap and decrement
+          let s := s.swapStep k
+          lllLoop s (max (k - 1) 1) δ hδ hδ' (by omega) (by omega) fuel
+
+def lllFuel (s : LLLState n m) : Nat :=
+  (s.potential + 1) * (n + 1)
+
 def lllAux (s : LLLState n m) (k : Nat) (δ : Rat)
-    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hind : s.b.independent)
+    (hδ : 1/4 < δ) (hδ' : δ ≤ 1)
     (hk : 1 ≤ k) (hkn : k ≤ n) : Matrix Int n m :=
-  if h : k = n then s.b
-  else
-    let s := s.sizeReduce k
-    -- Check Lovász condition (integer arithmetic, no division):
-    if δ.den * (s.d[k+1] * s.d[k-1] + s.ν[k][k-1]^2) ≥ δ.num * s.d[k]^2 then
-      -- Lovász holds: advance
-      lllAux s (k + 1) δ hδ hδ' ‹_› (by omega) (by omega)
-    else
-      -- Lovász fails: swap and decrement
-      let s := s.swapStep k
-      lllAux s (max (k - 1) 1) δ hδ hδ' ‹_› (by omega) (by omega)
-termination_by (s.potential, n - k)
--- Termination uses only ν_eq, d_eq, and correctness of sizeReduce/swapStep.
--- Advance: sizeReduce preserves d (GS vectors unchanged), so potential
---   unchanged; n - k decreases.
--- Swap: the failing Lovász condition (read from d and ν via d_eq/ν_eq)
---   gives d[k]' < δ * d[k] ≤ d[k]; potential strictly decreases.
+  lllLoop s k δ hδ hδ' hk hkn (lllFuel s)
 
 /-- Initial `LLLState` constructor: builds the integer state directly
     from a basis matrix and discharges `ν_eq`/`d_eq` by composing the
@@ -220,7 +224,7 @@ def LLLState.ofBasis (b : Matrix Int n m) (hind : b.independent) :
 
 def lll (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent) : Matrix Int n m :=
-  lllAux (LLLState.ofBasis b hind) 1 δ hδ hδ' hind (by omega) (by omega)
+  lllAux (LLLState.ofBasis b hind) 1 δ hδ hδ' (by omega) (by omega)
 ```
 
 The `scaledCoeffs_eq` and `gramDetVec_eq_gramDet` lemmas referenced
@@ -631,10 +635,40 @@ This is polynomial in n and the bit-size of the input. (At delta = 1,
 termination is still guaranteed but the log bound degenerates; the
 integer bound #swaps <= D_initial - 1 applies instead.)
 
-**Lean formalization strategy for termination:** Use well-founded
-recursion on the pair (D, n - k), lexicographically ordered. Each
-iteration either decreases D (swap) or increases k (advance), and
-k is bounded by n.
+**Lean formalization strategy for termination:** The executable loop
+does not use in-place well-founded recursion. `HexLLL/Basic.lean` is
+Mathlib-free, so its `decreasing_by` block cannot import the
+Mathlib-side swap strict-decrease lemmas (`gramDet_pos`,
+`gramDet_adjacentSwap_pivot`, and
+`adjacentSwap_gramDetNumerator_dvd`). The proof-free downstream
+consumer path also calls `lllUnchecked` from BZ projected-row
+construction, where no `bhksLatticeBasis` independence theorem is
+available to supply an `(hind : s.b.independent)` argument to every
+recursive call.
+
+Instead, termination is implemented by structural recursion on a fuel
+argument. `lllAux` is a thin total wrapper around:
+
+    lllLoop s k δ hδ hδ' hk hkn (lllFuel s)
+
+where:
+
+    lllFuel s = (s.potential + 1) * (n + 1)
+
+The `fuel = 0` branch returns the current basis. This is classified
+under `SPEC/design-principles.md` §8 as
+`unreachable-by-pipeline-invariant`: for independent public inputs,
+the fuel-sufficiency theorem proves that `lllFuel` is enough for the
+loop to reach `k = n` before the fallback branch is taken.
+
+The potential argument above is still the mathematical reason that the
+fuel is sufficient. Each loop step either advances `k` with unchanged
+potential, or performs a swap that strictly decreases `D`; because
+there are at most `n + 1` consecutive advances between swaps and at
+most `s.potential` strict positive-integer potential decreases, the
+initial fuel bound covers the whole run. This proof lives in the
+Mathlib layer, where the swap-decrease and positivity lemmas are
+available, rather than in the Mathlib-free executable recursion.
 
 ## Formalization strategy: single-state architecture
 
