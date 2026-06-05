@@ -262,7 +262,81 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
   · rw [dif_pos hk]
     by_cases hk0 : 0 < k
     · rw [dif_pos hk0]
-      sorry
+      set kFin : Fin n := ⟨k, hk⟩ with hkFin_def
+      set km1 : Fin n := GramSchmidt.prevRow kFin hk0 with hkm1_def
+      have hkFinVal : kFin.val = k := rfl
+      have hkm1Val : km1.val = k - 1 := by
+        simp [hkm1_def, GramSchmidt.prevRow, hkFinVal]
+      have hkm1 : km1.val + 1 = k := by omega
+      have hkm1_lt_k : km1.val < k := by omega
+      have hdk_pos : 0 < GramSchmidt.Int.gramDet s.b k (Nat.le_of_lt hk) := by
+        have := hind ⟨km1.val, Nat.lt_trans hkm1_lt_k hk⟩
+        simpa [hkm1] using this
+      have hdk_ne_zero :
+          GramSchmidt.Int.gramDet s.b k (Nat.le_of_lt hk) ≠ 0 := Nat.pos_iff_ne_zero.mp hdk_pos
+      -- Common shorthand for the per-state quantities.
+      set B : Int := (s.ν.get kFin).get km1 with hB_def
+      set dkPrev : Nat := s.d.get ⟨km1.val, Nat.lt_succ_of_lt km1.isLt⟩ with hdkPrev_def
+      set dk : Nat := s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩ with hdk_def
+      set dkNext : Nat := s.d.get ⟨k + 1, Nat.succ_lt_succ hk⟩ with hdkNext_def
+      -- Bridge the let-bound `dk_*` quantities to gramDet via `hvalid`.
+      have hdkPrev_eq :
+          dkPrev = GramSchmidt.Int.gramDet s.b km1.val (Nat.le_of_lt km1.isLt) := by
+        simpa using hvalid.d_eq km1.val (Nat.lt_succ_of_lt km1.isLt)
+      have hdk_eq :
+          dk = GramSchmidt.Int.gramDet s.b k (Nat.le_of_lt hk) := by
+        simpa using hvalid.d_eq k (Nat.lt_succ_of_lt hk)
+      have hdkNext_eq :
+          dkNext = GramSchmidt.Int.gramDet s.b (k + 1) (Nat.succ_le_of_lt hk) := by
+        simpa using hvalid.d_eq (k + 1) (Nat.succ_lt_succ hk)
+      have hB_eq :
+          B = GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs s.b) kFin km1 := by
+        simpa [GramSchmidt.entry, Matrix.row] using
+          hvalid.ν_eq kFin.val km1.val kFin.isLt km1.isLt (by omega)
+      have hdk_kFin_ne_zero :
+          GramSchmidt.Int.gramDet s.b kFin.val (Nat.le_of_lt kFin.isLt) ≠ 0 := by
+        change GramSchmidt.Int.gramDet s.b k (Nat.le_of_lt hk) ≠ 0
+        exact hdk_ne_zero
+      -- Cache the adjacent-swap pivot identity to use in d_eq + ν_eq.
+      have hgramPivot :=
+        GramSchmidt.Int.gramDet_adjacentSwap_pivot s.b kFin hk0 hdk_kFin_ne_zero
+      refine ⟨?_, ?_⟩
+      · -- ν_eq
+        sorry
+      · -- d_eq: case-split on whether i = k.
+        intro i hi
+        change
+          (s.d.set k (Int.toNat
+              ((Int.ofNat dkNext * Int.ofNat dkPrev + B ^ 2) / Int.ofNat dk))
+            (Nat.lt_succ_of_lt hk)).get ⟨i, hi⟩ =
+            GramSchmidt.Int.gramDet (GramSchmidt.Int.adjacentSwap s.b kFin hk0) i
+              (Nat.le_of_lt_succ hi)
+        by_cases hik : i = k
+        · subst hik
+          rw [show (s.d.set i _ (Nat.lt_succ_of_lt hk)).get ⟨i, hi⟩ = _ from
+                Vector.getElem_set_self (xs := s.d) hi]
+          rw [hdkNext_eq, hdkPrev_eq, hdk_eq, hB_eq]
+          have hgramPivot' := hgramPivot
+          dsimp only at hgramPivot'
+          -- Normalise `Int.ofNat` ↔ `↑` to align with `hgramPivot'`.
+          show
+            ((((GramSchmidt.Int.gramDet s.b (i + 1) (Nat.succ_le_of_lt hk) : Nat) : Int) *
+                  ((GramSchmidt.Int.gramDet s.b km1.val (Nat.le_of_lt km1.isLt) : Nat) : Int) +
+                GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs s.b) kFin km1 ^ 2) /
+                ((GramSchmidt.Int.gramDet s.b i (Nat.le_of_lt hk) : Nat) : Int)).toNat =
+              GramSchmidt.Int.gramDet (GramSchmidt.Int.adjacentSwap s.b kFin hk0) i
+                (Nat.le_of_lt_succ hi)
+          rw [← hgramPivot']
+          exact Int.toNat_natCast _
+        · rw [show (s.d.set k _ (Nat.lt_succ_of_lt hk)).get ⟨i, hi⟩ = _ from
+                Vector.getElem_set_ne (h := fun h => hik h.symm) (xs := s.d) _ hi]
+          have hvalid_d := hvalid.d_eq i hi
+          change s.d.get ⟨i, hi⟩ =
+            GramSchmidt.Int.gramDet (GramSchmidt.Int.adjacentSwap s.b kFin hk0) i
+              (Nat.le_of_lt_succ hi)
+          rw [hvalid_d]
+          exact (GramSchmidt.Int.gramDet_adjacentSwap_of_ne s.b kFin hk0 i
+                  (Nat.le_of_lt_succ hi) hik).symm
     · rw [dif_neg hk0]
       exact hvalid
   · rw [dif_neg hk]
