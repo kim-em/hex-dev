@@ -280,16 +280,23 @@ def swapStep (s : LLLState n m) (k : Nat) : LLLState n m :=
         s.ν.modify km1 (setPrefixFrom (s.ν.get kFin))
           |>.modify kFin (setPrefixFrom (s.ν.get km1))
       let νPivot := setEntry νRowsSwapped kFin km1 B
+      -- Hoist (oldNu[i].kFin, oldNu[i].km1) reads out of the foldl lambda
+      -- so the closure does not hold a reference to s.ν across iterations.
+      -- With s.ν kept alive only for this precompute, the row-level rc on
+      -- post-pivot rows drops to 1 by the time `ν.modify i` runs, letting
+      -- the two-`set` body inside the modify mutate in place instead of
+      -- COW'ing the row on every iteration.
+      let pairs : Vector (Int × Int) n :=
+        Vector.ofFn fun i =>
+          if _ : k < i.val then ((s.ν.get i).get kFin, (s.ν.get i).get km1)
+          else (0, 0)
       let ν' : Matrix Int n n :=
         (List.finRange n).foldl
           (fun ν i =>
             if _ : k < i.val then
-              let prev :=
-                (Int.ofNat dkPrev * (s.ν.get i).get kFin + B * (s.ν.get i).get km1) /
-                  Int.ofNat dk
-              let curr :=
-                (Int.ofNat dkNext * (s.ν.get i).get km1 - B * (s.ν.get i).get kFin) /
-                  Int.ofNat dk
+              let (a, b) := pairs.get i
+              let prev := (Int.ofNat dkPrev * a + B * b) / Int.ofNat dk
+              let curr := (Int.ofNat dkNext * b - B * a) / Int.ofNat dk
               ν.modify i fun row =>
                 row.set km1 prev
                   |>.set kFin curr
