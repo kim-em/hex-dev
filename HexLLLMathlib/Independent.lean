@@ -303,16 +303,26 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
       have hkm1_lt_n : km1.val < n := km1.isLt
       have hkm1_le_n : km1.val ≤ n := Nat.le_of_lt km1.isLt
       -- Pre-compute the "upd" function used in the outer foldl, so we can apply
-      -- `foldl_modify_rows_get`.
+      -- `foldl_modify_rows_get`. The body matches the foldl in `swapStep`,
+      -- which destructures `pairs.get i = ((s.ν.get i).get kFin, (s.ν.get i).get km1)`
+      -- in the `k < i.val` branch (see `hpairs_at` below).
+      let pairs : Vector (Int × Int) n :=
+        Vector.ofFn fun i =>
+          if _ : k < i.val then ((s.ν.get i).get kFin, (s.ν.get i).get km1)
+          else (0, 0)
       let upd : Fin n → Vector Int n → Vector Int n :=
         fun i row =>
           let prev :=
-            (Int.ofNat dkPrev * (s.ν.get i).get kFin + B * (s.ν.get i).get km1) /
-              Int.ofNat dk
+            (Int.ofNat dkPrev * (pairs.get i).1 + B * (pairs.get i).2) / Int.ofNat dk
           let curr :=
-            (Int.ofNat dkNext * (s.ν.get i).get km1 - B * (s.ν.get i).get kFin) /
-              Int.ofNat dk
+            (Int.ofNat dkNext * (pairs.get i).2 - B * (pairs.get i).1) / Int.ofNat dk
           (row.set km1 prev).set kFin curr
+      have hpairs_at : ∀ (i : Fin n), k < i.val →
+          pairs.get i = ((s.ν.get i).get kFin, (s.ν.get i).get km1) := by
+        intro i hi
+        show (Vector.ofFn _).get i = _
+        rw [Vector.get_ofFn]
+        exact dif_pos hi
       have hkm1_ne_kFin : km1 ≠ kFin := by
         intro h; rw [h] at hkm1_lt_k; omega
       have hkm1_val_ne_kFin : km1.val ≠ kFin.val := fun h =>
@@ -401,8 +411,17 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
             omega
           rw [hνPivot_get_ne iFin hi_ne_kFin]
           rw [hνRows_get_ne iFin hi_ne_km1 hi_ne_kFin]
-          -- Now LHS = (upd iFin (s.ν.get iFin)).get jFin.
-          -- Reduce `upd iFin row` to its explicit form.
+          -- Now LHS = (upd iFin (s.ν.get iFin)).get jFin. Unfold `upd` to expose
+          -- the `pairs.get iFin` reference, then substitute it with its explicit
+          -- value (valid since `k < iFin.val` in this branch).
+          show ((let prev := (Int.ofNat dkPrev * (pairs.get iFin).1 +
+                              B * (pairs.get iFin).2) / Int.ofNat dk
+                 let curr := (Int.ofNat dkNext * (pairs.get iFin).2 -
+                              B * (pairs.get iFin).1) / Int.ofNat dk
+                 ((s.ν.get iFin).set km1 prev).set kFin curr).get jFin) =
+            ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin
+          rw [show pairs.get iFin = ((s.ν.get iFin).get kFin, (s.ν.get iFin).get km1)
+              from hpairs_at iFin hki]
           show ((((s.ν.get iFin).set km1.val
                 ((Int.ofNat dkPrev * (s.ν.get iFin).get kFin +
                     B * (s.ν.get iFin).get km1) /
@@ -723,6 +742,325 @@ theorem swapStep_independent (s : LLLState n m) (k : Nat)
       (Nat.succ_le_of_lt t.isLt) hne
     rw [hbridge]
     exact hind t
+
+/-! ### Potential strict-decrease under failing Lovász
+
+These lemmas package the multiplicative termination potential
+`d_1 · … · d_{n-1}` behaviour under the two inner-loop updates:
+
+* `sizeReduce_potential`: size reduction is potential-neutral (it only
+  edits `ν`, never `d`).
+* `swapStep_d_pivot`: the post-swap Gram-determinant slot reads
+  `Int.toNat ⌊(d_{k+1}·d_{k-1} + B²)/d_k⌋` directly off `swapStep`'s
+  definition (pairs with `swapStep_d_eq` to identify this slot with
+  `gramDet (adjacentSwap b k) k`).
+* `swapStep_potential_lt`: when the integer Lovász test fails at row
+  `k` (the swap branch of `lllLoop`), the potential strictly decreases.
+-/
+
+/-- Size reduction leaves the multiplicative termination potential
+unchanged, since it does not modify the stored Gram determinants. -/
+theorem sizeReduce_potential (s : LLLState n m) (k : Nat) :
+    (s.sizeReduce k).potential = s.potential := by
+  unfold potential
+  rw [sizeReduce_d]
+
+/-- Value lemma for the post-swap Gram-determinant slot at the pivot
+index. Reads `swapStep` directly: at index `k`, the updated `d` holds
+`Int.toNat ⌊(d_{k+1}·d_{k-1} + B²)/d_k⌋`, where `B = ν[k][k-1]`. Pairs
+with `swapStep_d_eq` to identify this slot with the post-swap basis'
+Gram determinant via `gramDet_adjacentSwap_pivot`. -/
+theorem swapStep_d_pivot (s : LLLState n m) (k : Nat) (hk : k < n) (hk0 : 0 < k) :
+    have hkm1lt : k - 1 < n := Nat.lt_of_le_of_lt (Nat.sub_le k 1) hk
+    (s.swapStep k).d.get ⟨k, Nat.lt_succ_of_lt hk⟩ =
+      Int.toNat
+        ((Int.ofNat (s.d.get ⟨k + 1, Nat.succ_lt_succ hk⟩) *
+              Int.ofNat (s.d.get ⟨k - 1, Nat.lt_succ_of_lt hkm1lt⟩) +
+            ((s.ν.get ⟨k, hk⟩).get ⟨k - 1, hkm1lt⟩) ^ 2) /
+          Int.ofNat (s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩)) := by
+  intro _hkm1lt
+  unfold swapStep
+  rw [dif_pos hk, dif_pos hk0]
+  exact Vector.getElem_set_self (xs := s.d) (Nat.lt_succ_of_lt hk)
+
+private theorem foldl_mul_pull {α : Type*} (xs : List α) (f : α → Nat) (a : Nat) :
+    xs.foldl (fun acc i => acc * f i) a =
+      a * xs.foldl (fun acc i => acc * f i) 1 := by
+  induction xs generalizing a with
+  | nil => simp
+  | cons x rest ih =>
+    simp only [List.foldl_cons]
+    rw [ih (a * f x), ih (1 * f x), Nat.one_mul, Nat.mul_assoc]
+
+private theorem foldl_mul_pos {α : Type*} (xs : List α) (f : α → Nat) (a : Nat)
+    (ha : 0 < a) (hpos : ∀ i ∈ xs, 0 < f i) :
+    0 < xs.foldl (fun acc i => acc * f i) a := by
+  induction xs generalizing a with
+  | nil => exact ha
+  | cons x rest ih =>
+    simp only [List.foldl_cons]
+    apply ih
+    · exact Nat.mul_pos ha (hpos x List.mem_cons_self)
+    · exact fun i hi => hpos i (List.mem_cons.mpr (Or.inr hi))
+
+private theorem foldl_mul_congr_pointwise {α : Type*} (xs : List α) (f g : α → Nat) (a : Nat)
+    (heq : ∀ i ∈ xs, f i = g i) :
+    xs.foldl (fun acc i => acc * f i) a = xs.foldl (fun acc i => acc * g i) a := by
+  induction xs generalizing a with
+  | nil => rfl
+  | cons x rest ih =>
+    simp only [List.foldl_cons]
+    rw [heq x List.mem_cons_self]
+    exact ih _ (fun i hi => heq i (List.mem_cons.mpr (Or.inr hi)))
+
+/-- Strict-decrease helper: if exactly one factor in the foldl-product
+strictly decreases and the others are unchanged, and all factors are
+positive, then the product strictly decreases. -/
+private theorem foldl_mul_strict_lt {α : Type*} {xs : List α} (hnd : xs.Nodup)
+    {k : α} (hk : k ∈ xs) (f g : α → Nat)
+    (hpos : ∀ i ∈ xs, 0 < f i)
+    (heq : ∀ i ∈ xs, i ≠ k → f i = g i)
+    (hlt : g k < f k) :
+    ∀ a, 0 < a →
+      xs.foldl (fun acc i => acc * g i) a <
+        xs.foldl (fun acc i => acc * f i) a := by
+  induction xs with
+  | nil => exact absurd hk List.not_mem_nil
+  | cons x rest ih =>
+    intro a ha
+    have hxnd : x ∉ rest := (List.nodup_cons.mp hnd).1
+    have hrnd : rest.Nodup := (List.nodup_cons.mp hnd).2
+    have hpos_x : 0 < f x := hpos x List.mem_cons_self
+    simp only [List.foldl_cons]
+    by_cases hxk : x = k
+    · subst hxk
+      have heq_rest : ∀ i ∈ rest, f i = g i := fun i hi =>
+        heq i (List.mem_cons.mpr (Or.inr hi)) (fun h => hxnd (h ▸ hi))
+      have hpos_rest : ∀ i ∈ rest, 0 < f i := fun i hi =>
+        hpos i (List.mem_cons.mpr (Or.inr hi))
+      have hP_pos : 0 < rest.foldl (fun acc i => acc * f i) 1 :=
+        foldl_mul_pos rest f 1 Nat.one_pos hpos_rest
+      rw [foldl_mul_pull rest g (a * g x), foldl_mul_pull rest f (a * f x)]
+      rw [← foldl_mul_congr_pointwise rest f g 1 heq_rest]
+      have h_factor : a * g x < a * f x := (Nat.mul_lt_mul_left ha).mpr hlt
+      exact (Nat.mul_lt_mul_right hP_pos).mpr h_factor
+    · have hk_rest : k ∈ rest := by
+        rcases List.mem_cons.mp hk with rfl | h
+        · exact absurd rfl hxk
+        · exact h
+      have heq_x : f x = g x := heq x List.mem_cons_self hxk
+      rw [heq_x]
+      apply ih hrnd hk_rest
+      · exact fun i hi => hpos i (List.mem_cons.mpr (Or.inr hi))
+      · exact fun i hi => heq i (List.mem_cons.mpr (Or.inr hi))
+      · exact Nat.mul_pos ha (heq_x ▸ hpos_x)
+
+/-- Strict decrease of the LLL termination potential across a swap that
+fails the integer Lovász test at row `k`.
+
+Hypotheses:
+* `s.Valid`, `s.b.independent`: the proof-facing interpretation of the
+  state. Independence gives positivity of all `d_j` factors.
+* `0 < k < n`: the swap acts on adjacent rows `k - 1, k`.
+* `0 < δnum` and `δnum ≤ δden`: the Lovász parameter `δ ∈ (0, 1]` as an
+  integer inequality on its numerator and denominator (in the form
+  `lllLoop`'s integer Lovász test consumes; follows from `1/4 < δ ≤ 1`).
+* `hfail`: the failing integer Lovász condition at `k`, exactly the
+  test `lllLoop` evaluates before dispatching the swap branch.
+
+Conclusion: `(s.swapStep k).potential < s.potential`. -/
+theorem swapStep_potential_lt (s : LLLState n m) (k : Nat)
+    (hind : s.b.independent) (hvalid : s.Valid)
+    (hk0 : 0 < k) (hk : k < n)
+    (δnum : Int) (δden : Nat) (_hδnum_pos : 0 < δnum)
+    (hδden_pos : 0 < δden) (hδ_le_one : δnum ≤ Int.ofNat δden)
+    (hfail :
+      Int.ofNat δden *
+          (Int.ofNat (s.d.get ⟨k + 1, Nat.succ_lt_succ hk⟩) *
+              Int.ofNat (s.d.get ⟨k - 1,
+                Nat.lt_succ_of_lt (Nat.lt_of_le_of_lt (Nat.sub_le k 1) hk)⟩) +
+            ((s.ν.get ⟨k, hk⟩).get
+                ⟨k - 1, Nat.lt_of_le_of_lt (Nat.sub_le k 1) hk⟩) ^ 2) <
+        δnum * (Int.ofNat (s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩)) ^ 2) :
+    (s.swapStep k).potential < s.potential := by
+  -- Abbreviations matching the hypotheses' shapes.
+  have hkm1lt : k - 1 < n := Nat.lt_of_le_of_lt (Nat.sub_le k 1) hk
+  let kFin : Fin n := ⟨k, hk⟩
+  let km1 : Fin n := ⟨k - 1, hkm1lt⟩
+  have hkm1_lt_k : km1.val < k := by show k - 1 < k; omega
+  have hkm1Pred_eq : (GramSchmidt.prevRow kFin hk0) = km1 := by
+    apply Fin.eq_of_val_eq
+    show k - 1 = k - 1
+    rfl
+  -- Positivity of the gramDets at indices k-1, k, k+1.
+  have hdk_pos : 0 < GramSchmidt.Int.gramDet s.b k (Nat.le_of_lt hk) := by
+    have h := hind ⟨km1.val, Nat.lt_trans hkm1_lt_k hk⟩
+    have hkm1_succ : km1.val + 1 = k := by show k - 1 + 1 = k; omega
+    rwa [GramSchmidt.Int.gramDet_subst_val s.b (km1.val + 1) k _ _ hkm1_succ] at h
+  have hdkNext_pos :
+      0 < GramSchmidt.Int.gramDet s.b (k + 1) (Nat.succ_le_of_lt hk) := hind kFin
+  have hdkm1_pos :
+      0 < GramSchmidt.Int.gramDet s.b km1.val (Nat.le_of_lt km1.isLt) := by
+    by_cases hkm1_zero : km1.val = 0
+    · rw [GramSchmidt.Int.gramDet_subst_val s.b km1.val 0 (Nat.le_of_lt km1.isLt)
+          (Nat.zero_le n) hkm1_zero, GramSchmidt.Int.gramDet_zero]
+      exact Nat.zero_lt_one
+    · have hpos : 0 < km1.val := Nat.pos_of_ne_zero hkm1_zero
+      have h := hind ⟨km1.val - 1, Nat.lt_trans
+        (Nat.sub_lt hpos Nat.zero_lt_one) km1.isLt⟩
+      rw [GramSchmidt.Int.gramDet_subst_val s.b km1.val (km1.val - 1 + 1)
+          (Nat.le_of_lt km1.isLt)
+          (Nat.succ_le_of_lt (Nat.lt_trans (Nat.sub_lt hpos Nat.zero_lt_one) km1.isLt))
+          (Nat.succ_pred_eq_of_pos hpos).symm]
+      exact h
+  -- Valid bridge.
+  have hdk_eq : s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩ =
+      GramSchmidt.Int.gramDet s.b k (Nat.le_of_lt hk) := by
+    have := hvalid.d_eq k (Nat.lt_succ_of_lt hk); simpa using this
+  have hdkPrev_eq : s.d.get ⟨k - 1, Nat.lt_succ_of_lt hkm1lt⟩ =
+      GramSchmidt.Int.gramDet s.b km1.val (Nat.le_of_lt km1.isLt) := by
+    have := hvalid.d_eq km1.val (Nat.lt_succ_of_lt km1.isLt); simpa using this
+  have hdkNext_eq : s.d.get ⟨k + 1, Nat.succ_lt_succ hk⟩ =
+      GramSchmidt.Int.gramDet s.b (k + 1) (Nat.succ_le_of_lt hk) := by
+    have := hvalid.d_eq (k + 1) (Nat.succ_lt_succ hk); simpa using this
+  have hdk_nat_pos : 0 < s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩ := hdk_eq ▸ hdk_pos
+  -- Step 1: failing Lovász + δ ≤ 1 ⇒ (d_{k+1} * d_{k-1} + B^2) < d_k^2 (as Int).
+  have hδden_int_pos : (0 : Int) < Int.ofNat δden := by
+    show (0 : Int) < ((δden : Nat) : Int)
+    exact_mod_cast hδden_pos
+  have hsq_lt :
+      Int.ofNat (s.d.get ⟨k + 1, Nat.succ_lt_succ hk⟩) *
+            Int.ofNat (s.d.get ⟨k - 1, Nat.lt_succ_of_lt hkm1lt⟩) +
+          ((s.ν.get kFin).get ⟨k - 1, hkm1lt⟩) ^ 2 <
+      (Int.ofNat (s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩)) ^ 2 := by
+    have hsq_nn : (0 : Int) ≤ (Int.ofNat (s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩)) ^ 2 :=
+      sq_nonneg _
+    have h_bound :
+        δnum * (Int.ofNat (s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩)) ^ 2 ≤
+          Int.ofNat δden * (Int.ofNat (s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩)) ^ 2 :=
+      Int.mul_le_mul_of_nonneg_right hδ_le_one hsq_nn
+    exact Int.lt_of_mul_lt_mul_left (hfail.trans_le h_bound) (le_of_lt hδden_int_pos)
+  -- Step 2: bridge to gramDet form via Valid, and use the pivot product identity.
+  have hvalid' : (s.swapStep k).Valid := swapStep_valid s k hind hvalid
+  have hswap_d_at_k :
+      ((s.swapStep k).d.get ⟨k, Nat.lt_succ_of_lt hk⟩ : Nat) =
+        GramSchmidt.Int.gramDet (GramSchmidt.Int.adjacentSwap s.b kFin hk0) k
+          (Nat.le_of_lt hk) := by
+    have := hvalid'.d_eq k (Nat.lt_succ_of_lt hk)
+    simpa [swapStep_b_eq s k hk hk0] using this
+  have hB_via_valid :
+      ((s.ν.get kFin).get ⟨k - 1, hkm1lt⟩ : Int) =
+        GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs s.b) kFin km1 := by
+    have h := hvalid.ν_eq kFin.val km1.val kFin.isLt km1.isLt
+      (by show k - 1 < k; omega)
+    simpa [GramSchmidt.entry, Matrix.row] using h
+  -- The pivot-product identity (no division needed since it's exact).
+  have hprod :=
+    GramSchmidt.Int.gramDet_rowSwap_adjacent_pivot_product (b := s.b)
+      (km1 := km1) (k := kFin) (by show k - 1 + 1 = k; omega)
+  -- Combine to get: dk' * dk = (d_{k+1} * d_{k-1} + B^2) as Int.
+  have hdk'_mul_dk :
+      ((s.swapStep k).d.get ⟨k, Nat.lt_succ_of_lt hk⟩ : Int) *
+        (Int.ofNat (s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩)) =
+      Int.ofNat (s.d.get ⟨k + 1, Nat.succ_lt_succ hk⟩) *
+            Int.ofNat (s.d.get ⟨k - 1, Nat.lt_succ_of_lt hkm1lt⟩) +
+          ((s.ν.get kFin).get ⟨k - 1, hkm1lt⟩) ^ 2 := by
+    -- Restate hprod with the unfolded `km1` and `kFin` to match our shapes.
+    have hprod' :
+        ((GramSchmidt.Int.gramDet (Matrix.rowSwap s.b km1 kFin) k
+            (Nat.le_of_lt hk) : Nat) : Int) *
+          ((GramSchmidt.Int.gramDet s.b k (Nat.le_of_lt hk) : Nat) : Int) =
+        ((GramSchmidt.Int.gramDet s.b (k + 1) (Nat.succ_le_of_lt hk) : Nat) : Int) *
+            ((GramSchmidt.Int.gramDet s.b km1.val (Nat.le_of_lt km1.isLt) : Nat) : Int) +
+          (GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs s.b) kFin km1) ^ 2 := hprod
+    -- Normalize all Int.ofNat to Nat.cast for uniform rewriting.
+    show ((s.swapStep k).d.get _ : Nat) * ((s.d.get _ : Nat) : Int) =
+      ((s.d.get _ : Nat) : Int) * ((s.d.get _ : Nat) : Int) +
+        ((s.ν.get kFin).get _) ^ 2
+    rw [hdk_eq, hdkPrev_eq, hdkNext_eq]
+    rw [show ((s.ν.get kFin).get ⟨k - 1, hkm1lt⟩ : Int) =
+        GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs s.b) kFin km1 from
+        hB_via_valid]
+    rw [hswap_d_at_k]
+    show ((GramSchmidt.Int.gramDet
+        (Matrix.rowSwap s.b (GramSchmidt.prevRow kFin hk0) kFin) k
+        (Nat.le_of_lt hk) : Nat) : Int) *
+        ((GramSchmidt.Int.gramDet s.b k (Nat.le_of_lt hk) : Nat) : Int) = _
+    rw [hkm1Pred_eq]
+    exact hprod'
+  -- Step 3: dk > 0 + dk'*dk < dk² ⇒ dk' < dk.
+  have hdk_int_pos : (0 : Int) < Int.ofNat (s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩) := by
+    show (0 : Int) < ((s.d.get _ : Nat) : Int)
+    exact_mod_cast hdk_nat_pos
+  have hdk'_lt_dk_int :
+      ((s.swapStep k).d.get ⟨k, Nat.lt_succ_of_lt hk⟩ : Int) <
+        Int.ofNat (s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩) := by
+    have h_mul_lt :
+        ((s.swapStep k).d.get ⟨k, Nat.lt_succ_of_lt hk⟩ : Int) *
+            (Int.ofNat (s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩)) <
+          Int.ofNat (s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩) *
+            Int.ofNat (s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩) := by
+      rw [hdk'_mul_dk]
+      have hsq : (Int.ofNat (s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩) : Int) ^ 2 =
+          Int.ofNat (s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩) *
+            Int.ofNat (s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩) := by ring
+      rw [← hsq]; exact hsq_lt
+    exact Int.lt_of_mul_lt_mul_right h_mul_lt (le_of_lt hdk_int_pos)
+  have hdk'_lt_dk :
+      (s.swapStep k).d.get ⟨k, Nat.lt_succ_of_lt hk⟩ <
+        s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩ := by
+    have :
+        ((s.swapStep k).d.get ⟨k, Nat.lt_succ_of_lt hk⟩ : Int) <
+          ((s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩ : Nat) : Int) := hdk'_lt_dk_int
+    exact_mod_cast this
+  -- Step 4: only `d` index k changes; all others equal.
+  have hd_off_pivot : ∀ (i : Nat) (hi : i < n + 1), i ≠ k →
+      (s.swapStep k).d.get ⟨i, hi⟩ = s.d.get ⟨i, hi⟩ := by
+    intro i hi hik
+    unfold swapStep
+    rw [dif_pos hk, dif_pos hk0]
+    exact Vector.getElem_set_ne (Nat.lt_succ_of_lt hk) hi (fun h => hik h.symm)
+  -- Step 5: apply the foldl strict-decrease helper.
+  unfold potential
+  have hkm1_lt_nsub : k - 1 < n - 1 := by omega
+  let i₀ : Fin (n - 1) := ⟨k - 1, hkm1_lt_nsub⟩
+  have hi₀_mem : i₀ ∈ List.finRange (n - 1) := List.mem_finRange _
+  have hi₀_plus : i₀.val + 1 = k := by show k - 1 + 1 = k; omega
+  let g : Fin (n - 1) → Nat := fun i =>
+    (s.swapStep k).d.get
+      ⟨i.val + 1, Nat.succ_lt_succ (Nat.lt_of_lt_of_le i.isLt (Nat.sub_le n 1))⟩
+  let f : Fin (n - 1) → Nat := fun i =>
+    s.d.get
+      ⟨i.val + 1, Nat.succ_lt_succ (Nat.lt_of_lt_of_le i.isLt (Nat.sub_le n 1))⟩
+  have hfg_eq : ∀ i ∈ List.finRange (n - 1), i ≠ i₀ → f i = g i := by
+    intro i _ hi
+    have hindex_ne : i.val + 1 ≠ k := by
+      intro h
+      apply hi
+      apply Fin.eq_of_val_eq
+      show i.val = k - 1
+      omega
+    show s.d.get _ = (s.swapStep k).d.get _
+    exact (hd_off_pivot (i.val + 1) _ hindex_ne).symm
+  have hglt : g i₀ < f i₀ := by
+    show (s.swapStep k).d.get _ < s.d.get _
+    have hidx : (⟨i₀.val + 1,
+        Nat.succ_lt_succ (Nat.lt_of_lt_of_le i₀.isLt (Nat.sub_le n 1))⟩ : Fin (n + 1)) =
+      ⟨k, Nat.lt_succ_of_lt hk⟩ := Fin.eq_of_val_eq hi₀_plus
+    rw [hidx]
+    exact hdk'_lt_dk
+  have hf_pos : ∀ i ∈ List.finRange (n - 1), 0 < f i := by
+    intro i _
+    show 0 < s.d.get _
+    have hi_succ_le : i.val + 1 ≤ n := by have := i.isLt; omega
+    have hdpos : 0 < GramSchmidt.Int.gramDet s.b (i.val + 1) hi_succ_le :=
+      hind ⟨i.val, by omega⟩
+    have h := hvalid.d_eq (i.val + 1)
+      (Nat.succ_lt_succ (Nat.lt_of_lt_of_le i.isLt (Nat.sub_le n 1)))
+    rw [h]
+    exact hdpos
+  exact foldl_mul_strict_lt (List.nodup_finRange _) hi₀_mem f g hf_pos hfg_eq hglt 1
+    Nat.one_pos
 
 end LLLState
 
