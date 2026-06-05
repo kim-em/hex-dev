@@ -622,6 +622,108 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
   · rw [dif_neg hk]
     exact hvalid
 
+/-- Adjacent swap preserves the executable Gram-determinant independence
+predicate.  Mirrors `sizeReduce_independent` for the swap step of the LLL
+inner loop. -/
+theorem swapStep_independent (s : LLLState n m) (k : Nat)
+    (hind : s.b.independent) (hvalid : s.Valid) (hk0 : 0 < k) (hk : k < n) :
+    (s.swapStep k).b.independent := by
+  rw [swapStep_b_eq s k hk hk0]
+  intro t
+  let kFin : Fin n := ⟨k, hk⟩
+  let km1 : Fin n := GramSchmidt.prevRow kFin hk0
+  have hkFinVal : kFin.val = k := rfl
+  have hkm1Val : km1.val = k - 1 := by
+    show (GramSchmidt.prevRow kFin hk0).val = k - 1
+    dsimp [GramSchmidt.prevRow]
+  have hkm1 : km1.val + 1 = k := by omega
+  have hkm1_lt_k : km1.val < k := by omega
+  have hdk_pos : 0 < GramSchmidt.Int.gramDet s.b k (Nat.le_of_lt hk) := by
+    have h := hind ⟨km1.val, Nat.lt_trans hkm1_lt_k hk⟩
+    rw [GramSchmidt.Int.gramDet_subst_val s.b k (km1.val + 1) (Nat.le_of_lt hk)
+        (Nat.succ_le_of_lt (Nat.lt_trans hkm1_lt_k hk)) hkm1.symm]
+    exact h
+  have hdkNext_pos :
+      0 < GramSchmidt.Int.gramDet s.b (k + 1) (Nat.succ_le_of_lt hk) := hind kFin
+  have hdkm1_pos :
+      0 < GramSchmidt.Int.gramDet s.b km1.val (Nat.le_of_lt km1.isLt) := by
+    by_cases hkm1_zero : km1.val = 0
+    · -- For an empty prefix, gramDet = 1 by definition.
+      rw [GramSchmidt.Int.gramDet_subst_val s.b km1.val 0 (Nat.le_of_lt km1.isLt)
+          (Nat.zero_le n) hkm1_zero, GramSchmidt.Int.gramDet_zero]
+      exact Nat.zero_lt_one
+    · have hpos : 0 < km1.val := Nat.pos_of_ne_zero hkm1_zero
+      have h := hind ⟨km1.val - 1, Nat.lt_trans
+        (Nat.sub_lt hpos Nat.zero_lt_one) km1.isLt⟩
+      rw [GramSchmidt.Int.gramDet_subst_val s.b km1.val (km1.val - 1 + 1)
+          (Nat.le_of_lt km1.isLt)
+          (Nat.succ_le_of_lt (Nat.lt_trans (Nat.sub_lt hpos Nat.zero_lt_one) km1.isLt))
+          (Nat.succ_pred_eq_of_pos hpos).symm]
+      exact h
+  by_cases hne : t.val + 1 = k
+  · -- Pivot case: t.val = k - 1, gramDet b' k > 0 via gramDet_adjacentSwap_pivot.
+    have hdk_ne_zero :
+        GramSchmidt.Int.gramDet s.b kFin.val (Nat.le_of_lt kFin.isLt) ≠ 0 :=
+      Nat.pos_iff_ne_zero.mp hdk_pos
+    have hgramPivot :=
+      GramSchmidt.Int.gramDet_adjacentSwap_pivot s.b kFin hk0 hdk_ne_zero
+    have hdvd :=
+      GramSchmidt.Int.adjacentSwap_gramDetNumerator_dvd s.b kFin hk0 hdk_ne_zero
+    -- Reduce the goal to `0 < gramDet b' k` (Nat) via index substitution.
+    rw [GramSchmidt.Int.gramDet_subst_val (GramSchmidt.Int.adjacentSwap s.b ⟨k, hk⟩ hk0)
+        (t.val + 1) k (Nat.succ_le_of_lt t.isLt) (Nat.le_of_lt hk) hne]
+    -- Cast to Int and use hgramPivot.
+    suffices h : (0 : Int) < ((GramSchmidt.Int.gramDet
+        (GramSchmidt.Int.adjacentSwap s.b kFin hk0) k
+        (Nat.le_of_lt hk) : Nat) : Int) by
+      exact_mod_cast h
+    rw [hgramPivot]
+    -- Now goal: 0 < (num : Int) / (denom : Int).
+    have hdenom_pos :
+        (0 : Int) < ((GramSchmidt.Int.gramDet s.b kFin.val
+            (Nat.le_of_lt kFin.isLt) : Nat) : Int) := by exact_mod_cast hdk_pos
+    have hnum_pos :
+        (0 : Int) < (((GramSchmidt.Int.gramDet s.b (kFin.val + 1)
+              (Nat.succ_le_of_lt kFin.isLt) : Nat) : Int) *
+            ((GramSchmidt.Int.gramDet s.b km1.val (Nat.le_of_lt km1.isLt) : Nat) : Int) +
+          GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs s.b) kFin km1 ^ 2) := by
+      have hprod_pos :
+          (0 : Int) < ((GramSchmidt.Int.gramDet s.b (kFin.val + 1)
+              (Nat.succ_le_of_lt kFin.isLt) : Nat) : Int) *
+            ((GramSchmidt.Int.gramDet s.b km1.val (Nat.le_of_lt km1.isLt) : Nat) : Int) :=
+        Int.mul_pos (by exact_mod_cast hdkNext_pos) (by exact_mod_cast hdkm1_pos)
+      have hsq_nn :
+          (0 : Int) ≤ GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs s.b) kFin km1 ^ 2 :=
+        sq_nonneg _
+      linarith
+    rcases hdvd with ⟨q, hq⟩
+    -- hq : adjacentSwapGramDetNumerator = denom * q
+    -- After substitution: 0 < (denom * q) / denom = q. Combined with denom > 0 and num > 0, q > 0.
+    have hnum_eq :
+        ((GramSchmidt.Int.gramDet s.b (kFin.val + 1)
+              (Nat.succ_le_of_lt kFin.isLt) : Nat) : Int) *
+            ((GramSchmidt.Int.gramDet s.b km1.val (Nat.le_of_lt km1.isLt) : Nat) : Int) +
+          GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs s.b) kFin km1 ^ 2 =
+        ((GramSchmidt.Int.gramDet s.b kFin.val (Nat.le_of_lt kFin.isLt) : Nat) : Int) * q := by
+      have := hq
+      unfold GramSchmidt.Int.adjacentSwapGramDetNumerator
+            GramSchmidt.Int.adjacentSwapDenom
+            GramSchmidt.Int.adjacentSwapPivotCoeff at this
+      exact this
+    rw [hnum_eq, Int.mul_ediv_cancel_left _ (by linarith :
+        ((GramSchmidt.Int.gramDet s.b kFin.val (Nat.le_of_lt kFin.isLt) : Nat) : Int) ≠ 0)]
+    -- Now need: 0 < q. Use that denom * q > 0 and denom > 0.
+    have hdq_pos :
+        (0 : Int) < ((GramSchmidt.Int.gramDet s.b kFin.val
+            (Nat.le_of_lt kFin.isLt) : Nat) : Int) * q := by
+      rw [← hnum_eq]; exact hnum_pos
+    exact (mul_pos_iff_of_pos_left hdenom_pos).mp hdq_pos
+  · -- Non-pivot case.
+    have hbridge := GramSchmidt.Int.gramDet_adjacentSwap_of_ne s.b kFin hk0 (t.val + 1)
+      (Nat.succ_le_of_lt t.isLt) hne
+    rw [hbridge]
+    exact hind t
+
 end LLLState
 
 end Hex
