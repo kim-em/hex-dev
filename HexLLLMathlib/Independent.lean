@@ -300,9 +300,289 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
       -- Cache the adjacent-swap pivot identity to use in d_eq + ν_eq.
       have hgramPivot :=
         GramSchmidt.Int.gramDet_adjacentSwap_pivot s.b kFin hk0 hdk_kFin_ne_zero
+      have hkm1_lt_n : km1.val < n := km1.isLt
+      have hkm1_le_n : km1.val ≤ n := Nat.le_of_lt km1.isLt
+      -- Pre-compute the "upd" function used in the outer foldl, so we can apply
+      -- `foldl_modify_rows_get`.
+      let upd : Fin n → Vector Int n → Vector Int n :=
+        fun i row =>
+          let prev :=
+            (Int.ofNat dkPrev * (s.ν.get i).get kFin + B * (s.ν.get i).get km1) /
+              Int.ofNat dk
+          let curr :=
+            (Int.ofNat dkNext * (s.ν.get i).get km1 - B * (s.ν.get i).get kFin) /
+              Int.ofNat dk
+          (row.set km1 prev).set kFin curr
+      have hkm1_ne_kFin : km1 ≠ kFin := by
+        intro h; rw [h] at hkm1_lt_k; omega
+      have hkm1_val_ne_kFin : km1.val ≠ kFin.val := fun h =>
+        hkm1_ne_kFin (Fin.eq_of_val_eq h)
       refine ⟨?_, ?_⟩
-      · -- ν_eq
-        sorry
+      · -- ν_eq: case-split on (i, j) relative to km1 and k.
+        intro i j hi hj hji
+        set b' : Hex.Matrix Int n m := GramSchmidt.Int.adjacentSwap s.b kFin hk0 with hb'_def
+        set iFin : Fin n := ⟨i, hi⟩ with hiFin_def
+        set jFin : Fin n := ⟨j, hj⟩ with hjFin_def
+        have hjiFin : jFin.val < iFin.val := hji
+        -- Define the abbreviations for the inner foldl base, so we can use
+        -- per-row characterization lemmas without copying expressions.
+        set νRowsSwapped : Hex.Matrix Int n n :=
+          (s.ν.modify km1.val (setPrefix (s.ν.get kFin) · km1)).modify kFin.val
+            (setPrefix (s.ν.get km1) · km1) with hνRows_def
+        set νPivot : Hex.Matrix Int n n := νRowsSwapped.modify kFin.val (·.set km1 B)
+          with hνPivot_def
+        -- Unfold the goal to expose the ν' foldl, then apply
+        -- `foldl_modify_rows_get`.
+        change
+          (((List.finRange n).foldl
+              (fun (ν : Hex.Matrix Int n n) (i : Fin n) =>
+                if _ : k < i.val then
+                  ν.modify i.val (upd i)
+                else ν)
+              νPivot).get iFin).get jFin =
+            ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin
+        have hν'_get :
+            ((List.finRange n).foldl
+                (fun (ν : Hex.Matrix Int n n) (i : Fin n) =>
+                  if k < i.val then ν.modify i.val (upd i) else ν)
+                νPivot).get iFin =
+              if k < iFin.val then upd iFin (νPivot.get iFin) else νPivot.get iFin := by
+          have := foldl_modify_rows_get (n := n) (α := Vector Int n) k
+            (List.finRange n) (List.nodup_finRange n) νPivot upd iFin
+          simp [List.mem_finRange] at this
+          exact this
+        -- Bridge `if _ : ...` (`dite`) to `if ...` (`ite`).
+        have hbody_eq :
+            (fun (ν : Hex.Matrix Int n n) (i : Fin n) =>
+                if _ : k < i.val then ν.modify i.val (upd i) else ν) =
+              (fun (ν : Hex.Matrix Int n n) (i : Fin n) =>
+                if k < i.val then ν.modify i.val (upd i) else ν) := by
+          funext ν i
+          split <;> rfl
+        rw [hbody_eq, hν'_get]
+        -- Helper: evaluate νRowsSwapped.get at a given row.
+        have hνRows_get_ne :
+            ∀ (l : Fin n), l.val ≠ km1.val → l.val ≠ kFin.val →
+              νRowsSwapped.get l = s.ν.get l := by
+          intro l hl_km1 hl_kFin
+          rw [hνRows_def]
+          rw [vector_modify_get_ne _ kFin.val _ l (fun h => hl_kFin h.symm)]
+          rw [vector_modify_get_ne _ km1.val _ l (fun h => hl_km1 h.symm)]
+        have hνRows_get_km1 : νRowsSwapped.get km1 = setPrefix (s.ν.get kFin) (s.ν.get km1) km1 := by
+          rw [hνRows_def]
+          rw [vector_modify_get_ne _ kFin.val _ km1 (fun h => hkm1_val_ne_kFin h.symm)]
+          exact vector_modify_get_self _ km1 _
+        have hνRows_get_kFin :
+            νRowsSwapped.get kFin = setPrefix (s.ν.get km1) (s.ν.get kFin) km1 := by
+          rw [hνRows_def]
+          rw [vector_modify_get_self _ kFin _]
+          rw [vector_modify_get_ne _ km1.val _ kFin hkm1_val_ne_kFin]
+        -- Evaluate νPivot.get.
+        have hνPivot_get_ne :
+            ∀ (l : Fin n), l.val ≠ kFin.val → νPivot.get l = νRowsSwapped.get l := by
+          intro l hl_kFin
+          rw [hνPivot_def]
+          exact vector_modify_get_ne _ kFin.val _ l (fun h => hl_kFin h.symm)
+        have hνPivot_get_kFin :
+            νPivot.get kFin = (νRowsSwapped.get kFin).set km1.val B hkm1_lt_n := by
+          rw [hνPivot_def]
+          exact vector_modify_get_self _ kFin _
+        -- Cache the `Valid` bridge from ν entries to scaledCoeffs.
+        have hν_eq := hvalid.ν_eq
+        -- Now case analysis on iFin's position.
+        by_cases hki : k < iFin.val
+        · -- Case D: k < iFin.val. ν' = upd iFin (νPivot.get iFin) and iFin ≠ km1, ≠ kFin.
+          rw [if_pos hki]
+          have hi_ne_km1 : iFin.val ≠ km1.val := by
+            have : iFin.val > km1.val := by omega
+            omega
+          have hi_ne_kFin : iFin.val ≠ kFin.val := by
+            have : iFin.val > kFin.val := hki
+            omega
+          rw [hνPivot_get_ne iFin hi_ne_kFin]
+          rw [hνRows_get_ne iFin hi_ne_km1 hi_ne_kFin]
+          -- Now LHS = (upd iFin (s.ν.get iFin)).get jFin.
+          -- Reduce `upd iFin row` to its explicit form.
+          show ((((s.ν.get iFin).set km1.val
+                ((Int.ofNat dkPrev * (s.ν.get iFin).get kFin +
+                    B * (s.ν.get iFin).get km1) /
+                  Int.ofNat dk) hkm1_lt_n).set kFin.val
+              ((Int.ofNat dkNext * (s.ν.get iFin).get km1 -
+                  B * (s.ν.get iFin).get kFin) /
+                Int.ofNat dk) hk).get jFin) =
+            ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin
+          -- Bridge `s.ν.get iFin .get k(Fin/m1)` to `scaledCoeffs s.b ...` for the
+          -- two pivot columns used by the formulas.
+          have hν_at_kFin :
+              (s.ν.get iFin).get kFin =
+                GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs s.b) iFin kFin := by
+            have := hν_eq iFin.val kFin.val iFin.isLt kFin.isLt
+              (by rw [hkFinVal]; exact hki)
+            simpa [GramSchmidt.entry, Matrix.row] using this
+          have hν_at_km1 :
+              (s.ν.get iFin).get km1 =
+                GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs s.b) iFin km1 := by
+            have hkm1_lt_i : km1.val < iFin.val := by omega
+            have := hν_eq iFin.val km1.val iFin.isLt km1.isLt hkm1_lt_i
+            simpa [GramSchmidt.entry, Matrix.row] using this
+          by_cases hjk : jFin.val = kFin.val
+          · -- D2: jFin = kFin. Outer .set kFin curr_i applies.
+            rw [show jFin = kFin from Fin.eq_of_val_eq hjk]
+            show ((((s.ν.get iFin).set km1.val _ hkm1_lt_n).set kFin.val _ hk).get kFin) = _
+            rw [show ∀ (xs : Vector Int n) (x : Int),
+                      (xs.set kFin.val x hk).get kFin = x from
+                  fun xs x => Vector.getElem_set_self hk]
+            rw [hdkNext_eq, hdk_eq, hB_eq, hν_at_kFin, hν_at_km1]
+            have hsc := GramSchmidt.Int.scaledCoeffs_adjacentSwap_above_curr s.b kFin hk0
+              iFin hki hdk_kFin_ne_zero
+            change _ = GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs b') iFin kFin
+            rw [hsc]
+            unfold GramSchmidt.Int.adjacentSwapScaledCoeffAboveCurrNumerator
+                  GramSchmidt.Int.adjacentSwapDenom
+                  GramSchmidt.Int.adjacentSwapPivotCoeff
+            rfl
+          · by_cases hjkm1 : jFin.val = km1.val
+            · -- D1: jFin = km1. Outer .set kFin doesn't affect km1; inner .set km1 prev_i applies.
+              rw [show jFin = km1 from Fin.eq_of_val_eq hjkm1]
+              have hkFin_ne_km1 : kFin.val ≠ km1.val := fun h => hkm1_val_ne_kFin h.symm
+              show ((((s.ν.get iFin).set km1.val _ hkm1_lt_n).set kFin.val _ hk).get km1) = _
+              rw [show ((((s.ν.get iFin).set km1.val _ hkm1_lt_n).set kFin.val _ hk).get km1) =
+                    (((s.ν.get iFin).set km1.val _ hkm1_lt_n).get km1) from
+                  Vector.getElem_set_ne (h := hkFin_ne_km1) _ km1.isLt]
+              rw [show (((s.ν.get iFin).set km1.val _ hkm1_lt_n).get km1) = _ from
+                  Vector.getElem_set_self hkm1_lt_n]
+              rw [hdkPrev_eq, hdk_eq, hB_eq, hν_at_kFin, hν_at_km1]
+              have hsc := GramSchmidt.Int.scaledCoeffs_adjacentSwap_above_prev s.b kFin hk0
+                iFin hki hdk_kFin_ne_zero
+              change _ = GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs b') iFin
+                (GramSchmidt.prevRow kFin hk0)
+              rw [hsc]
+              unfold GramSchmidt.Int.adjacentSwapScaledCoeffAbovePrevNumerator
+                    GramSchmidt.Int.adjacentSwapDenom
+                    GramSchmidt.Int.adjacentSwapPivotCoeff
+              rfl
+            · -- D3: jFin ≠ km1, ≠ kFin. Both .sets miss jFin.
+              have hkFin_ne_jFin : kFin.val ≠ jFin.val := fun h => hjk h.symm
+              have hkm1_ne_jFin : km1.val ≠ jFin.val := fun h => hjkm1 h.symm
+              show ((((s.ν.get iFin).set km1.val _ hkm1_lt_n).set kFin.val _ hk).get jFin) = _
+              rw [show ((((s.ν.get iFin).set km1.val _ hkm1_lt_n).set kFin.val _ hk).get jFin) =
+                    (((s.ν.get iFin).set km1.val _ hkm1_lt_n).get jFin) from
+                  Vector.getElem_set_ne (h := hkFin_ne_jFin) _ jFin.isLt]
+              rw [show (((s.ν.get iFin).set km1.val _ hkm1_lt_n).get jFin) = _ from
+                  Vector.getElem_set_ne (h := hkm1_ne_jFin) _ jFin.isLt]
+              have hν := hν_eq iFin.val jFin.val iFin.isLt jFin.isLt hjiFin
+              by_cases hj_lt_km1 : jFin.val < km1.val
+              · -- jFin below km1.
+                have hsc :=
+                  GramSchmidt.Int.scaledCoeffs_adjacentSwap_above_low s.b kFin hk0 iFin jFin
+                    hki (by rw [hkFinVal]; omega)
+                show (s.ν.get iFin)[jFin.val] = _
+                calc (s.ν.get iFin)[jFin.val]
+                    = ((GramSchmidt.Int.scaledCoeffs s.b).get iFin).get jFin := hν
+                  _ = ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin := by
+                        simpa [GramSchmidt.entry, Matrix.row] using hsc.symm
+              · -- jFin above kFin.
+                have hj_gt_k : kFin.val < jFin.val := by
+                  rw [hkFinVal]; rw [hkm1Val] at hj_lt_km1; omega
+                have hsc :=
+                  GramSchmidt.Int.scaledCoeffs_adjacentSwap_above_high s.b kFin hk0 iFin jFin
+                    hki hj_gt_k hjiFin
+                show (s.ν.get iFin)[jFin.val] = _
+                calc (s.ν.get iFin)[jFin.val]
+                    = ((GramSchmidt.Int.scaledCoeffs s.b).get iFin).get jFin := hν
+                  _ = ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin := by
+                        simpa [GramSchmidt.entry, Matrix.row] using hsc.symm
+        · -- Cases A/B/C: iFin.val ≤ k.
+          rw [if_neg hki]
+          have hki : iFin.val ≤ k := Nat.le_of_not_lt hki
+          by_cases hi_eq_k : iFin.val = kFin.val
+          · -- Case C: iFin = kFin.
+            have hi_eq : iFin = kFin := Fin.eq_of_val_eq hi_eq_k
+            rw [hi_eq, hνPivot_get_kFin]
+            -- Subcase: jFin = km1 or not.
+            by_cases hj_eq_km1 : jFin.val = km1.val
+            · -- C1: jFin = km1. The .set km1 B applies.
+              have hj_eq : jFin = km1 := Fin.eq_of_val_eq hj_eq_km1
+              rw [hj_eq,
+                show ((νRowsSwapped.get kFin).set km1.val B hkm1_lt_n).get km1 = B from
+                    Vector.getElem_set_self km1.isLt]
+              -- B = scaledCoeffs b' kFin km1 via hB_eq + scaledCoeffs_adjacentSwap_pivot.
+              have hsc := GramSchmidt.Int.scaledCoeffs_adjacentSwap_pivot s.b kFin hk0
+              show B = ((GramSchmidt.Int.scaledCoeffs b').get kFin).get km1
+              calc B = GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs s.b) kFin km1 := hB_eq
+                _ = ((GramSchmidt.Int.scaledCoeffs s.b).get kFin).get km1 := rfl
+                _ = ((GramSchmidt.Int.scaledCoeffs b').get kFin).get km1 := by
+                      have := hsc
+                      simp [GramSchmidt.entry, Matrix.row] at this
+                      exact this.symm
+            · -- C2: jFin.val ≠ km1.val ⇒ jFin.val < km1.val (since jFin.val < k = kFin.val).
+              have hj_lt_kFin : jFin.val < kFin.val := by
+                rw [← hi_eq_k]; exact hjiFin
+              have hj_lt_km1 : jFin.val < km1.val := by
+                have : jFin.val < k := by rw [hkFinVal] at hj_lt_kFin; exact hj_lt_kFin
+                omega
+              have hj_succ_lt_k : jFin.val + 1 < k := by omega
+              have hj_ne_km1 : km1.val ≠ jFin.val := fun h => hj_eq_km1 h.symm
+              rw [show ((νRowsSwapped.get kFin).set km1.val B hkm1_lt_n).get jFin = _ from
+                    Vector.getElem_set_ne (h := hj_ne_km1) _ jFin.isLt]
+              rw [hνRows_get_kFin]
+              change (setPrefix (s.ν.get km1) (s.ν.get kFin) km1).get jFin = _
+              rw [setPrefix_get_lt jFin hj_lt_km1]
+              have hν := hν_eq km1.val jFin.val km1.isLt jFin.isLt hj_lt_km1
+              have hsc :=
+                GramSchmidt.Int.scaledCoeffs_adjacentSwap_lower_curr s.b kFin hk0 jFin
+                  (by rw [hkFinVal]; exact hj_succ_lt_k)
+              show (s.ν.get km1).get jFin =
+                ((GramSchmidt.Int.scaledCoeffs b').get kFin).get jFin
+              calc (s.ν.get km1).get jFin
+                  = ((GramSchmidt.Int.scaledCoeffs s.b).get km1).get jFin := hν
+                _ = ((GramSchmidt.Int.scaledCoeffs b').get kFin).get jFin := by
+                      simpa [GramSchmidt.entry, Matrix.row] using hsc.symm
+          · -- iFin.val < k.
+            have hi_lt_k : iFin.val < kFin.val := lt_of_le_of_ne hki hi_eq_k
+            by_cases hi_eq_km1 : iFin.val = km1.val
+            · -- Case B: iFin = km1.
+              have hi_eq : iFin = km1 := Fin.eq_of_val_eq hi_eq_km1
+              have hi_ne_kFin : iFin.val ≠ kFin.val := by
+                rw [hi_eq_km1, hkFinVal]; omega
+              have hj_lt_km1 : jFin.val < km1.val := by
+                have : jFin.val < iFin.val := hjiFin
+                omega
+              have hj_succ_lt_k : jFin.val + 1 < k := by omega
+              have hj_lt_kFin : jFin.val < kFin.val := by rw [hkFinVal]; omega
+              rw [hνPivot_get_ne iFin hi_ne_kFin, hi_eq, hνRows_get_km1,
+                  setPrefix_get_lt (km1 := km1) jFin hj_lt_km1]
+              have hν := hν_eq kFin.val jFin.val kFin.isLt jFin.isLt hj_lt_kFin
+              have hsc :=
+                GramSchmidt.Int.scaledCoeffs_adjacentSwap_lower_prev s.b kFin hk0 jFin
+                  (by rw [hkFinVal]; exact hj_succ_lt_k)
+              -- The lemma uses `GramSchmidt.entry`, which is `(M.row _)[_]`;
+              -- our goal uses `(M.get _).get _`. Bridge via simp.
+              show (s.ν.get kFin).get jFin =
+                ((GramSchmidt.Int.scaledCoeffs b').get km1).get jFin
+              calc (s.ν.get kFin).get jFin
+                  = ((GramSchmidt.Int.scaledCoeffs s.b).get kFin).get jFin := hν
+                _ = ((GramSchmidt.Int.scaledCoeffs b').get km1).get jFin := by
+                      simpa [GramSchmidt.entry, Matrix.row] using hsc.symm
+            · -- Case A: iFin.val < km1.val.
+              have hi_lt_km1 : iFin.val < km1.val := by omega
+              have hi_ne_km1 : iFin.val ≠ km1.val := Nat.ne_of_lt hi_lt_km1
+              have hi_ne_kFin : iFin.val ≠ kFin.val := by
+                rw [hkFinVal]; omega
+              rw [hνPivot_get_ne iFin hi_ne_kFin]
+              rw [hνRows_get_ne iFin hi_ne_km1 hi_ne_kFin]
+              -- LHS = (s.ν.get iFin).get jFin. Bridge through Valid then
+              -- scaledCoeffs_adjacentSwap_before.
+              have hν := hν_eq iFin.val jFin.val iFin.isLt jFin.isLt hjiFin
+              have hsc :=
+                GramSchmidt.Int.scaledCoeffs_adjacentSwap_before s.b kFin hk0 iFin jFin
+                  (by rw [hkFinVal]; omega) hjiFin
+              -- The goal is `(s.ν[iFin])[jFin] = scaledCoeffs b' [iFin][jFin]`.
+              show (s.ν.get iFin).get jFin =
+                ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin
+              calc (s.ν.get iFin).get jFin
+                  = ((GramSchmidt.Int.scaledCoeffs s.b).get iFin).get jFin := hν
+                _ = ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin := hsc.symm
       · -- d_eq: case-split on whether i = k.
         intro i hi
         change
