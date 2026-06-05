@@ -65,7 +65,7 @@ private theorem vectorEquiv_mulVec [Field R] (M : Hex.Matrix R n m) (v : Vector 
   intro k _
   rfl
 
-theorem vectorEquiv_rowCombination [Field R] (M : Hex.Matrix R n m) (c : Vector R n) :
+theorem vectorEquiv_rowCombination [CommRing R] (M : Hex.Matrix R n m) (c : Vector R n) :
     vectorEquiv (Hex.Matrix.rowCombination M c) =
       Fintype.linearCombination R (_root_.Matrix.row (matrixEquiv M)) (vectorEquiv c) := by
   funext j
