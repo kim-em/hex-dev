@@ -593,44 +593,63 @@ def ofBasis (b : Matrix Int n m) (_hind : b.independent) : LLLState n m :=
 
 end LLLState
 
-/-- Outer LLL loop, dispatched by `lll`.
+/-- Fuel-bounded outer LLL loop, dispatched by `lllAux`.
 
 At row `k`, the loop size-reduces the current row, checks the integer
 Lovasz condition, and either advances to `k + 1` or swaps adjacent rows and
-continues from the previous position. -/
+continues from the previous position.
+
+The `fuel = 0` branch returns the current basis as the total fallback for a
+pipeline-unreachable case: issue #6567 tracks the fuel-sufficiency theorem
+showing that `lllFuel` is enough for public pipeline calls. -/
+def lllLoop (s : LLLState n m) (k : Nat) (δ : Rat)
+    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hk : 1 ≤ k) (hkn : k ≤ n) :
+    Nat → Matrix Int n m
+  | 0 =>
+      s.b
+  | fuel + 1 =>
+      if hdone : k = n then
+        s.b
+      else
+        have hlt : k < n := Nat.lt_of_le_of_ne hkn hdone
+        have hkm1lt : k - 1 < n :=
+          Nat.lt_of_le_of_lt (Nat.sub_le k 1) hlt
+        let sReduced := s.sizeReduce k
+        let kFin : Fin n := ⟨k, hlt⟩
+        let km1Fin : Fin n := ⟨k - 1, hkm1lt⟩
+        let dkPrev := sReduced.d.get
+          ⟨k - 1, Nat.lt_trans hkm1lt (Nat.lt_succ_self n)⟩
+        let dk := sReduced.d.get ⟨k, Nat.lt_succ_of_lt hlt⟩
+        let dkNext := sReduced.d.get ⟨k + 1, Nat.succ_lt_succ hlt⟩
+        let B := (sReduced.ν.get kFin).get km1Fin
+        let lovaszLhs : Int :=
+          Int.ofNat δ.den * (Int.ofNat dkNext * Int.ofNat dkPrev + B ^ 2)
+        let lovaszRhs : Int :=
+          δ.num * (Int.ofNat dk ^ 2)
+        if lovaszLhs ≥ lovaszRhs then
+          lllLoop sReduced (k + 1) δ hδ hδ' (Nat.succ_pos k) (Nat.succ_le_of_lt hlt) fuel
+        else
+          let sSwapped := sReduced.swapStep k
+          let k' := max (k - 1) 1
+          lllLoop sSwapped k' δ hδ hδ' (Nat.le_max_right (k - 1) 1)
+            (by
+              exact (Nat.max_le).2
+                ⟨Nat.le_trans (Nat.sub_le k 1) hkn, Nat.le_trans hk hkn⟩)
+            fuel
+
+/-- Initial fuel bound for `lllLoop`; issue #6567 tracks the proof that this
+bound is sufficient for the public LLL pipeline. -/
+def lllFuel (s : LLLState n m) : Nat :=
+  (s.potential + 1) * (n + 1)
+
+/-- Outer LLL loop, dispatched by `lll`.
+
+Compatibility wrapper preserving the original `lllAux` signature while the
+executable recursion is structurally bounded by `lllFuel`. -/
 def lllAux (s : LLLState n m) (k : Nat) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hk : 1 ≤ k) (hkn : k ≤ n) :
     Matrix Int n m :=
-  if hdone : k = n then
-    s.b
-  else
-    have hlt : k < n := Nat.lt_of_le_of_ne hkn hdone
-    have hkm1lt : k - 1 < n :=
-      Nat.lt_of_le_of_lt (Nat.sub_le k 1) hlt
-    let sReduced := s.sizeReduce k
-    let kFin : Fin n := ⟨k, hlt⟩
-    let km1Fin : Fin n := ⟨k - 1, hkm1lt⟩
-    let dkPrev := sReduced.d.get
-      ⟨k - 1, Nat.lt_trans hkm1lt (Nat.lt_succ_self n)⟩
-    let dk := sReduced.d.get ⟨k, Nat.lt_succ_of_lt hlt⟩
-    let dkNext := sReduced.d.get ⟨k + 1, Nat.succ_lt_succ hlt⟩
-    let B := (sReduced.ν.get kFin).get km1Fin
-    let lovaszLhs : Int :=
-      Int.ofNat δ.den * (Int.ofNat dkNext * Int.ofNat dkPrev + B ^ 2)
-    let lovaszRhs : Int :=
-      δ.num * (Int.ofNat dk ^ 2)
-    if lovaszLhs ≥ lovaszRhs then
-      lllAux sReduced (k + 1) δ hδ hδ' (Nat.succ_pos k) (Nat.succ_le_of_lt hlt)
-    else
-      let sSwapped := sReduced.swapStep k
-      let k' := max (k - 1) 1
-      lllAux sSwapped k' δ hδ hδ' (Nat.le_max_right (k - 1) 1)
-        (by
-          exact (Nat.max_le).2
-            ⟨Nat.le_trans (Nat.sub_le k 1) hkn, Nat.le_trans hk hkn⟩)
-termination_by (s.potential, n - k)
-decreasing_by
-  all_goals sorry
+  lllLoop s k δ hδ hδ' hk hkn (lllFuel s)
 
 /-- Proof-free executable LLL entry point. Builds the canonical integer state
 via `LLLState.ofBasisUnchecked` and dispatches to `lllAux`. Mathlib-free
