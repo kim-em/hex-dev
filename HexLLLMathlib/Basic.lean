@@ -58,7 +58,23 @@ def latticeSubmodule (b : Hex.Matrix Int n m) : Submodule ℤ (Fin m → ℤ) :=
 
 theorem mem_latticeSubmodule_iff (b : Hex.Matrix Int n m) (v : Vector Int m) :
     HexMatrixMathlib.vectorEquiv v ∈ latticeSubmodule b ↔ Hex.Matrix.memLattice b v := by
-  sorry
+  unfold latticeSubmodule Hex.Matrix.memLattice
+  rw [Submodule.mem_span_range_iff_exists_fun]
+  constructor
+  · rintro ⟨c, hc⟩
+    refine ⟨HexMatrixMathlib.vectorEquiv.symm c,
+      HexMatrixMathlib.vectorEquiv.injective ?_⟩
+    rw [HexMatrixMathlib.vectorEquiv_rowCombination,
+      Fintype.linearCombination_apply, Equiv.apply_symm_apply]
+    refine (Finset.sum_congr rfl fun i _ => ?_).trans hc
+    rw [HexMatrixMathlib.matrixEquiv_row]
+  · rintro ⟨c, hc⟩
+    refine ⟨HexMatrixMathlib.vectorEquiv c, ?_⟩
+    have hr := HexMatrixMathlib.vectorEquiv_rowCombination b c
+    rw [hc, Fintype.linearCombination_apply] at hr
+    rw [hr]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    rw [HexMatrixMathlib.matrixEquiv_row]
 
 theorem memLattice_iff_mem_latticeSubmodule (b : Hex.Matrix Int n m) (v : Vector Int m) :
     Hex.Matrix.memLattice b v ↔ HexMatrixMathlib.vectorEquiv v ∈ latticeSubmodule b :=
