@@ -94,13 +94,48 @@ space on `Fin m`. -/
 def intVectorToEuclidean (x : Fin m → ℤ) : EuclideanSpace ℝ (Fin m) :=
   WithLp.toLp 2 (fun j : Fin m => (x j : ℝ))
 
+private theorem foldl_finRange_eq_sum {R : Type*} [AddCommMonoid R] {n : Nat}
+    (f : Fin n → R) :
+    (List.finRange n).foldl (fun acc i => acc + f i) 0 = ∑ i, f i := by
+  rw [← List.foldl_map, ← List.sum_eq_foldl,
+    ← List.sum_toFinset f (List.nodup_finRange n), List.toFinset_finRange]
+
+/-- The Euclidean squared norm of an integer row embedded into
+`EuclideanSpace ℝ (Fin m)` equals the real cast of the executable integer
+squared norm. -/
+theorem norm_sq_intRowToEuclidean (row : Vector Int m) :
+    ‖intRowToEuclidean row‖ ^ 2 = ((Hex.Vector.normSq row : Int) : ℝ) := by
+  rw [EuclideanSpace.real_norm_sq_eq]
+  simp only [intRowToEuclidean, PiLp.toLp_apply]
+  unfold Hex.Vector.normSq Hex.Vector.dotProduct
+  rw [foldl_finRange_eq_sum]
+  push_cast
+  refine Finset.sum_congr rfl ?_
+  intro i _
+  ring
+
+/-- The Euclidean squared norm of a lattice vector embedded into
+`EuclideanSpace ℝ (Fin m)` equals the real cast of the executable integer
+squared norm of its `Vector` preimage. -/
+theorem norm_sq_intVectorToEuclidean (x : Fin m → ℤ) :
+    ‖intVectorToEuclidean x‖ ^ 2 =
+      ((Hex.Vector.normSq (HexMatrixMathlib.vectorEquiv.symm x) : Int) : ℝ) := by
+  have heq :
+      intVectorToEuclidean x =
+        intRowToEuclidean (HexMatrixMathlib.vectorEquiv.symm x) := by
+    unfold intVectorToEuclidean intRowToEuclidean HexMatrixMathlib.vectorEquiv
+    ext j
+    simp [Vector.getElem_ofFn]
+  rw [heq, norm_sq_intRowToEuclidean]
+
 /-- Mathlib-Euclidean-norm formulation of the LLL short-vector guarantee for
 an already `δ`-LLL-reduced executable basis.
 
 The input vector is assumed to lie in the Mathlib `latticeSubmodule`.  The
-proof route converts that hypothesis back through `mem_latticeSubmodule_iff`;
-the remaining proof obligation is the executable LLL short-vector theorem
-transported through the concrete Euclidean norm coercions above. -/
+proof route converts that hypothesis back through `mem_latticeSubmodule_iff`,
+applies the executable `Hex.lll_short_vector` for the rational squared-norm
+inequality, then transports both sides through the concrete Euclidean norm
+coercions above. -/
 theorem reduced_first_row_norm_sq_le_of_mem_latticeSubmodule
     (b : Hex.Matrix Int n m) (δ : Rat)
     (hδ : (1 : Rat) / 4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
@@ -121,6 +156,10 @@ theorem reduced_first_row_norm_sq_le_of_mem_latticeSubmodule
       ext j
       simp [hv]
     simpa [v] using hv'
-  sorry
+  have hRat := Hex.lll_short_vector b hli hred hδ hδ' hn hxExec hx0Exec
+  have hReal := (Rat.cast_le (K := ℝ)).mpr hRat
+  rw [norm_sq_intRowToEuclidean, norm_sq_intVectorToEuclidean]
+  simp only [Rat.cast_mul, Rat.cast_intCast] at hReal
+  exact hReal
 
 end HexLLLMathlib
