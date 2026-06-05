@@ -211,7 +211,93 @@ theorem teleBound (b : Matrix Int n m) {δ : Rat}
             rw [Lean.Grind.Semiring.pow_succ]
             grind
 
+/-- First Gram-Schmidt basis vector identity: the 0-th Gram-Schmidt vector
+coincides with the 0-th input row, so their squared norms agree. -/
+theorem basisNormSq_zero (b : Matrix Int n m) (hn : 0 < n) :
+    basisNormSq (GramSchmidt.Int.basis b) ⟨0, hn⟩ =
+      ((Vector.normSq (b.row ⟨0, hn⟩) : Int) : Rat) := by
+  unfold basisNormSq
+  rw [GramSchmidt.Int.basis_zero b hn]
+  exact GramSchmidt.Int.normSq_map_intCast (b.row ⟨0, hn⟩)
+
+private theorem ratPow_le_pow_of_one_le {α : Rat} (hα : 1 ≤ α) :
+    ∀ {i j : Nat}, i ≤ j → α ^ i ≤ α ^ j := by
+  intro i j hij
+  induction j with
+  | zero =>
+      have hi : i = 0 := Nat.le_zero.mp hij
+      subst hi
+      exact Rat.le_refl
+  | succ k ih =>
+      by_cases hi : i ≤ k
+      · have hih := ih hi
+        have hα_nn : (0 : Rat) ≤ α := by grind
+        have hpow_k : 0 ≤ α ^ k := ratPow_nonneg α hα_nn k
+        have hstep : α ^ k ≤ α ^ (k + 1) := by
+          rw [Lean.Grind.Semiring.pow_succ]
+          have h1 : α ^ k * 1 ≤ α ^ k * α :=
+            Rat.mul_le_mul_of_nonneg_left hα hpow_k
+          simpa using h1
+        exact Rat.le_trans hih hstep
+      · have hi' : i = k + 1 :=
+          Nat.le_antisymm hij (Nat.succ_le_of_lt (Nat.lt_of_not_ge hi))
+        subst hi'
+        exact Rat.le_refl
+
 end LLLCore
+
+/-- LLL short-vector core inequality: for a `δ`-LLL-reduced basis with
+`1/4 < δ ≤ 1`, the squared norm of the first row is at most
+`(1 / (δ - 1/4)) ^ (n - 1)` times the squared norm of any nonzero lattice
+vector. Combines `LLLCore.teleBound` with the lower bound on the smallest
+Gram-Schmidt vector contained in the lattice. -/
+theorem lll_short_vector (b : Matrix Int n m) {δ : Rat}
+    (hli : Matrix.independent b) (hred : isLLLReduced b δ)
+    (hδ : (1 / 4 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
+    {v : Vector Int m} (hv : Matrix.memLattice b v) (hv' : v ≠ 0) :
+    ((Vector.normSq (b.row ⟨0, Nat.lt_of_lt_of_le Nat.zero_lt_one hn⟩) : Int) : Rat) ≤
+      (1 / (δ - 1 / 4)) ^ (n - 1) *
+        ((Vector.normSq v : Int) : Rat) := by
+  have h0n : 0 < n := Nat.lt_of_lt_of_le Nat.zero_lt_one hn
+  obtain ⟨i, hi_norm⟩ :=
+    GramSchmidt.Int.normSq_latticeVec_ge_min_basis_normSq b hli v hv hv'
+  have htele := LLLCore.teleBound b hred hδ i.val i.isLt
+  have e1 : (⟨0, Nat.lt_of_le_of_lt (Nat.zero_le i.val) i.isLt⟩ : Fin n) = ⟨0, h0n⟩ :=
+    Fin.ext rfl
+  have e2 : (⟨i.val, i.isLt⟩ : Fin n) = i := Fin.ext rfl
+  rw [e1, e2, LLLCore.basisNormSq_zero b h0n] at htele
+  have hα_pos : 0 < δ - 1 / 4 := by grind
+  have hα_inv_pos : 0 < (1 / (δ - 1 / 4) : Rat) := by
+    rw [Rat.div_def]
+    simpa using (Rat.inv_pos.mpr hα_pos)
+  have hα_nn : (0 : Rat) ≤ 1 / (δ - 1 / 4) := by grind
+  have hα_one : (1 : Rat) ≤ 1 / (δ - 1 / 4) := by
+    have h_le : δ - 1 / 4 ≤ 1 := by grind
+    have hne : δ - 1 / 4 ≠ 0 := by grind
+    have hα_eq : (1 / (δ - 1 / 4)) * (δ - 1 / 4) = 1 := by
+      rw [Rat.div_def]
+      rw [show (1 : Rat) * (δ - 1 / 4)⁻¹ = (δ - 1 / 4)⁻¹ from by grind]
+      exact Rat.inv_mul_cancel _ hne
+    have hstep : (1 / (δ - 1 / 4)) * (δ - 1 / 4) ≤ (1 / (δ - 1 / 4)) * 1 :=
+      Rat.mul_le_mul_of_nonneg_left h_le hα_nn
+    rw [hα_eq] at hstep
+    simpa using hstep
+  have hi_le : i.val ≤ n - 1 := by omega
+  have hpow_mono : (1 / (δ - 1 / 4)) ^ i.val ≤ (1 / (δ - 1 / 4)) ^ (n - 1) :=
+    LLLCore.ratPow_le_pow_of_one_le hα_one hi_le
+  have hbasis_nn : 0 ≤ LLLCore.basisNormSq (GramSchmidt.Int.basis b) i :=
+    LLLCore.basisNormSq_nonneg _ i
+  have hαpow_nn : 0 ≤ (1 / (δ - 1 / 4)) ^ (n - 1) :=
+    LLLCore.ratPow_nonneg _ hα_nn (n - 1)
+  calc
+    ((Vector.normSq (b.row ⟨0, h0n⟩) : Int) : Rat)
+        ≤ (1 / (δ - 1 / 4)) ^ i.val *
+            LLLCore.basisNormSq (GramSchmidt.Int.basis b) i := htele
+    _ ≤ (1 / (δ - 1 / 4)) ^ (n - 1) *
+            LLLCore.basisNormSq (GramSchmidt.Int.basis b) i :=
+        Rat.mul_le_mul_of_nonneg_right hpow_mono hbasis_nn
+    _ ≤ (1 / (δ - 1 / 4)) ^ (n - 1) * ((Vector.normSq v : Int) : Rat) :=
+        Rat.mul_le_mul_of_nonneg_left hi_norm hαpow_nn
 
 /-- Integer-only state for later LLL reduction steps. The proof-facing fields
 connect the stored Gram determinants and scaled coefficients to the executable
