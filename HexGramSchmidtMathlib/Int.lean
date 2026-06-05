@@ -1559,121 +1559,6 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
     rw [Matrix.det_colReplace_existing_col_eq_zero _ _ _ hq_ne]
     grind
 
-/-- Cramer's rule identity under singularity. When the no-pivot Bareiss pass over
-the Gram matrix records an early singular step before reaching column `j`, the
-Leibniz determinant of the Cramer minor `scaledCoeffMatrix b i j hji` is zero.
-Internally lifts the partial-pass singularity to the full `bareissNoPivotData`
-pass, traverses `gramDetVecEntry` to conclude `gramDet b (j+1) = 0`, and
-finishes via the Cramer determinant identity
-`scaledCoeffMatrix_det_eq_gramDet_mul_coeffs`. -/
-theorem scaledCoeffMatrix_det_eq_zero_of_singularStep_lt
-    (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val) (s : Nat)
-    (h_sing : (Matrix.noPivotLoop j.val
-        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = some s) :
-    Matrix.det (GramSchmidt.scaledCoeffMatrix b i j hji) = 0 := by
-  -- Step A: derive `s < j.val` from the partial-pass singularity.
-  have hsj : s < j.val := by
-    have h := noPivotLoop_singularStep_lt j.val
-      (Matrix.noPivotInitialState (Matrix.gramMatrix b)) rfl s h_sing
-    -- h : s < (noPivotInitialState ...).step + j.val. The init step is 0.
-    change s < 0 + j.val at h
-    omega
-  -- Step B: lift to the full `bareissNoPivotData` pass.
-  have hjn : j.val < n := Nat.lt_trans hji i.isLt
-  have hsucc : j.val + 1 ≤ n := Nat.succ_le_of_lt hjn
-  have hjle : j.val ≤ n := Nat.le_of_lt hjn
-  have h_init :
-      (Matrix.noPivotInitialState (Matrix.gramMatrix b)).singularStep = none := rfl
-  have h_full_sing :
-      (Matrix.bareissNoPivotData (Matrix.gramMatrix b)).singularStep = some s := by
-    -- Apply singular_inv to the j.val-fueled pass.
-    rcases noPivotLoop_singular_inv j.val
-        (Matrix.noPivotInitialState (Matrix.gramMatrix b)) h_init
-      with h_none | ⟨k, hsk, hstk, hpk, hk⟩
-    · rw [h_none] at h_sing; nomatch h_sing
-    · -- The full pass equals the j.val pass via fixedpoint.
-      have hks : k.val = s := by
-        rw [hsk] at h_sing
-        exact Option.some.inj h_sing
-      -- Use noPivotLoop_add and noPivotLoop_id_at_singular_fixedpoint to lift.
-      have h_add : Matrix.noPivotLoop (j.val + (n - j.val))
-          (Matrix.noPivotInitialState (Matrix.gramMatrix b)) =
-        Matrix.noPivotLoop (n - j.val)
-          (Matrix.noPivotLoop j.val
-            (Matrix.noPivotInitialState (Matrix.gramMatrix b))) :=
-        Matrix.noPivotLoop_add j.val (n - j.val) _
-      have hn_eq : j.val + (n - j.val) = n := Nat.add_sub_cancel' hjle
-      -- The post-`j.val` state already has singularStep = some k.val, step = k.val,
-      -- and a zero pivot at column k. Extra fuel is a fixedpoint.
-      have h_step_lt : (Matrix.noPivotLoop j.val
-          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 < n := by
-        rw [hstk]; exact hk
-      have h_pivot_zero :
-          (Matrix.noPivotLoop j.val
-              (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
-              (⟨(Matrix.noPivotLoop j.val
-                  (Matrix.noPivotInitialState
-                    (Matrix.gramMatrix b))).step,
-                Nat.lt_of_succ_lt h_step_lt⟩ : Fin n)][
-              (⟨(Matrix.noPivotLoop j.val
-                  (Matrix.noPivotInitialState
-                    (Matrix.gramMatrix b))).step,
-                Nat.lt_of_succ_lt h_step_lt⟩ : Fin n)] = 0 := by
-        have h_fin :
-            (⟨(Matrix.noPivotLoop j.val
-                (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step,
-              Nat.lt_of_succ_lt h_step_lt⟩ : Fin n) = k :=
-          Fin.ext hstk
-        simp only [h_fin]
-        exact hpk
-      have h_sing_step :
-          (Matrix.noPivotLoop j.val
-              (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep =
-            some (Matrix.noPivotLoop j.val
-              (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step := by
-        rw [hsk, hstk]
-      have h_fixed :
-          Matrix.noPivotLoop (n - j.val)
-            (Matrix.noPivotLoop j.val
-              (Matrix.noPivotInitialState (Matrix.gramMatrix b))) =
-            Matrix.noPivotLoop j.val
-              (Matrix.noPivotInitialState (Matrix.gramMatrix b)) :=
-        Matrix.noPivotLoop_id_at_singular_fixedpoint (n := n) (n - j.val) _
-          h_step_lt h_pivot_zero h_sing_step
-      have h_full_eq :
-          Matrix.noPivotLoop n
-            (Matrix.noPivotInitialState (Matrix.gramMatrix b)) =
-          Matrix.noPivotLoop j.val
-            (Matrix.noPivotInitialState (Matrix.gramMatrix b)) := by
-        calc Matrix.noPivotLoop n
-              (Matrix.noPivotInitialState (Matrix.gramMatrix b))
-            = Matrix.noPivotLoop (j.val + (n - j.val))
-                (Matrix.noPivotInitialState (Matrix.gramMatrix b)) := by
-                  rw [hn_eq]
-          _ = Matrix.noPivotLoop (n - j.val)
-                (Matrix.noPivotLoop j.val
-                  (Matrix.noPivotInitialState (Matrix.gramMatrix b))) := h_add
-          _ = Matrix.noPivotLoop j.val
-                (Matrix.noPivotInitialState (Matrix.gramMatrix b)) := h_fixed
-      show (Matrix.finish (Matrix.noPivotLoop n
-          (Matrix.noPivotInitialState (Matrix.gramMatrix b)))).singularStep = some s
-      change (Matrix.noPivotLoop n
-          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = some s
-      rw [h_full_eq, hsk, hks]
-  -- Step C: gramDet b (j+1) = 0 via gramDetVecEntry chain.
-  have h_gd_zero : gramDet b (j.val + 1) hsucc = 0 := by
-    have h_vec_gd := gramDetVecEntry_eq_gramDet (b := b) (j.val + 1) hsucc
-    have h_vec_zero :=
-      gramDetVecEntry_noPivot_eq_zero_of_singularStep_lt b s j.val hjn h_full_sing
-        (by omega)
-    rw [← h_vec_gd, h_vec_zero]
-  -- Step D: Cramer's identity collapses to zero.
-  have h_cramer :=
-    scaledCoeffMatrix_det_eq_gramDet_mul_coeffs (b := b) i.val j.val i.isLt hji
-  rw [h_gd_zero] at h_cramer
-  simp at h_cramer
-  exact_mod_cast h_cramer
-
 /-- Substitution helper for the diagonal `(i, i)` matrix entry under a Fin
 equality. Folded out of `subst`/`rfl` so callers can rewrite the index without
 dragging the dependent proof component through the motive. -/
@@ -2417,6 +2302,122 @@ def StepWitness.ofGram (b : Matrix Int n m) :
     Fin.ext h_kA_val.symm
   simp_rw [hK] at hdj
   exact hdj.symm
+
+/-- Cramer's rule identity under singularity. When the no-pivot Bareiss pass over
+the Gram matrix records an early singular step before reaching column `j`, the
+Leibniz determinant of the Cramer minor `scaledCoeffMatrix b i j hji` is zero.
+Internally lifts the partial-pass singularity to the full `bareissNoPivotData`
+pass, traverses `gramDetVecEntry` to conclude `gramDet b (j+1) = 0`, and
+finishes via the Cramer determinant identity
+`scaledCoeffMatrix_det_eq_gramDet_mul_coeffs`. -/
+theorem scaledCoeffMatrix_det_eq_zero_of_singularStep_lt
+    (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val) (s : Nat)
+    (h_sing : (Matrix.noPivotLoop j.val
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = some s) :
+    Matrix.det (GramSchmidt.scaledCoeffMatrix b i j hji) = 0 := by
+  -- Step A: derive `s < j.val` from the partial-pass singularity.
+  have hsj : s < j.val := by
+    have h := noPivotLoop_singularStep_lt j.val
+      (Matrix.noPivotInitialState (Matrix.gramMatrix b)) rfl s h_sing
+    -- h : s < (noPivotInitialState ...).step + j.val. The init step is 0.
+    change s < 0 + j.val at h
+    omega
+  -- Step B: lift to the full `bareissNoPivotData` pass.
+  have hjn : j.val < n := Nat.lt_trans hji i.isLt
+  have hsucc : j.val + 1 ≤ n := Nat.succ_le_of_lt hjn
+  have hjle : j.val ≤ n := Nat.le_of_lt hjn
+  have h_init :
+      (Matrix.noPivotInitialState (Matrix.gramMatrix b)).singularStep = none := rfl
+  have h_full_sing :
+      (Matrix.bareissNoPivotData (Matrix.gramMatrix b)).singularStep = some s := by
+    -- Apply singular_inv to the j.val-fueled pass.
+    rcases noPivotLoop_singular_inv j.val
+        (Matrix.noPivotInitialState (Matrix.gramMatrix b)) h_init
+      with h_none | ⟨k, hsk, hstk, hpk, hk⟩
+    · rw [h_none] at h_sing; nomatch h_sing
+    · -- The full pass equals the j.val pass via fixedpoint.
+      have hks : k.val = s := by
+        rw [hsk] at h_sing
+        exact Option.some.inj h_sing
+      -- Use noPivotLoop_add and noPivotLoop_id_at_singular_fixedpoint to lift.
+      have h_add : Matrix.noPivotLoop (j.val + (n - j.val))
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b)) =
+        Matrix.noPivotLoop (n - j.val)
+          (Matrix.noPivotLoop j.val
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b))) :=
+        Matrix.noPivotLoop_add j.val (n - j.val) _
+      have hn_eq : j.val + (n - j.val) = n := Nat.add_sub_cancel' hjle
+      -- The post-`j.val` state already has singularStep = some k.val, step = k.val,
+      -- and a zero pivot at column k. Extra fuel is a fixedpoint.
+      have h_step_lt : (Matrix.noPivotLoop j.val
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 < n := by
+        rw [hstk]; exact hk
+      have h_pivot_zero :
+          (Matrix.noPivotLoop j.val
+              (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
+              (⟨(Matrix.noPivotLoop j.val
+                  (Matrix.noPivotInitialState
+                    (Matrix.gramMatrix b))).step,
+                Nat.lt_of_succ_lt h_step_lt⟩ : Fin n)][
+              (⟨(Matrix.noPivotLoop j.val
+                  (Matrix.noPivotInitialState
+                    (Matrix.gramMatrix b))).step,
+                Nat.lt_of_succ_lt h_step_lt⟩ : Fin n)] = 0 := by
+        have h_fin :
+            (⟨(Matrix.noPivotLoop j.val
+                (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step,
+              Nat.lt_of_succ_lt h_step_lt⟩ : Fin n) = k :=
+          Fin.ext hstk
+        simp only [h_fin]
+        exact hpk
+      have h_sing_step :
+          (Matrix.noPivotLoop j.val
+              (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep =
+            some (Matrix.noPivotLoop j.val
+              (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step := by
+        rw [hsk, hstk]
+      have h_fixed :
+          Matrix.noPivotLoop (n - j.val)
+            (Matrix.noPivotLoop j.val
+              (Matrix.noPivotInitialState (Matrix.gramMatrix b))) =
+            Matrix.noPivotLoop j.val
+              (Matrix.noPivotInitialState (Matrix.gramMatrix b)) :=
+        Matrix.noPivotLoop_id_at_singular_fixedpoint (n := n) (n - j.val) _
+          h_step_lt h_pivot_zero h_sing_step
+      have h_full_eq :
+          Matrix.noPivotLoop n
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b)) =
+          Matrix.noPivotLoop j.val
+            (Matrix.noPivotInitialState (Matrix.gramMatrix b)) := by
+        calc Matrix.noPivotLoop n
+              (Matrix.noPivotInitialState (Matrix.gramMatrix b))
+            = Matrix.noPivotLoop (j.val + (n - j.val))
+                (Matrix.noPivotInitialState (Matrix.gramMatrix b)) := by
+                  rw [hn_eq]
+          _ = Matrix.noPivotLoop (n - j.val)
+                (Matrix.noPivotLoop j.val
+                  (Matrix.noPivotInitialState (Matrix.gramMatrix b))) := h_add
+          _ = Matrix.noPivotLoop j.val
+                (Matrix.noPivotInitialState (Matrix.gramMatrix b)) := h_fixed
+      show (Matrix.finish (Matrix.noPivotLoop n
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b)))).singularStep = some s
+      change (Matrix.noPivotLoop n
+          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = some s
+      rw [h_full_eq, hsk, hks]
+  -- Step C: gramDet b (j+1) = 0 via gramDetVecEntry chain.
+  have h_gd_zero : gramDet b (j.val + 1) hsucc = 0 := by
+    have h_vec_gd :=
+      gramDetVecEntry_eq_gramDet (b := b) (StepWitness.ofGram b) (j.val + 1) hsucc
+    have h_vec_zero :=
+      gramDetVecEntry_noPivot_eq_zero_of_singularStep_lt b s j.val hjn h_full_sing
+        (by omega)
+    rw [← h_vec_gd, h_vec_zero]
+  -- Step D: Cramer's identity collapses to zero.
+  have h_cramer :=
+    scaledCoeffMatrix_det_eq_gramDet_mul_coeffs (b := b) i.val j.val i.isLt hji
+  rw [h_gd_zero] at h_cramer
+  simp at h_cramer
+  exact_mod_cast h_cramer
 
 /-- Unconditional rational closed form for the strictly lower entries of
 `scaledCoeffs`: the executable integer scaled coefficient agrees with the

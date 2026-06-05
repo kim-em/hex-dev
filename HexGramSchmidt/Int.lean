@@ -6140,27 +6140,107 @@ private theorem scaledCoeffArrayLoop_diag_matches
             rw [← h_step_eq]; exact Nat.lt_of_lt_of_le i.isLt hArrayStep'
           exact h_coeffs_processed i.val h_ilt i.isLt
 /-- The no-pivot Bareiss pass over the full Gram matrix records the same
-leading-prefix determinant as the public `gramDet` API at every vector slot.
-
-This sorry is the consumer side of the singular helper
-`leadingPrefix_gram_bareiss_toNat_eq_zero_of_noPivot_singular`. Discharging it
-requires propagating quotient provenance through this private theorem
-and its public consumers (`gramDetVecEntry_eq_gramDet`, `scaledCoeffs_diag_toNat`,
-`gramDetVec_eq_gramDet`, and downstream callers in
-`HexGramSchmidtMathlib` and `HexLLL`). That API surgery is tracked by #5655. -/
+leading-prefix determinant as the public `gramDet` API at every vector slot. -/
 private theorem gramDetVecEntry_eq_leadingPrefix_bareiss
-    (b : Matrix Int n m) (r : Nat) (hr : r < n) :
+    (b : Matrix Int n m) (hquot : StepWitness b) (r : Nat) (hr : r < n) :
     gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
         ⟨r + 1, Nat.succ_lt_succ hr⟩ =
       (Matrix.bareiss
         (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
           (Nat.succ_le_of_lt hr))).toNat := by
-  sorry
+  let GM := Matrix.gramMatrix b
+  let init := Matrix.noPivotInitialState GM
+  let data := Matrix.bareissNoPivotData GM
+  let i : Fin n := ⟨r, hr⟩
+  by_cases h_prefix :
+      (Matrix.noPivotLoop r init).singularStep = none
+  · have hdiag :=
+      bareissNoPivotData_diag_eq_leadingPrefix_bareiss_of_prefix_nonsingular
+        (b := b) r hr (by simpa [GM, init] using h_prefix)
+    have h_step_r : (Matrix.noPivotLoop r init).step = r := by
+      have h_room : init.step + r + 1 ≤ n := by
+        simp [init, Matrix.noPivotInitialState]
+        omega
+      have h := Matrix.noPivotLoop_step_eq_add_of_singularStep_none
+        r init rfl h_room h_prefix
+      simpa [init, Matrix.noPivotInitialState] using h
+    have h_entry_diag :
+        gramDetVecEntry data ⟨r + 1, Nat.succ_lt_succ hr⟩ =
+          (data.matrix[i][i]).toNat := by
+      have h_split : r + (n - r) = n := by omega
+      have h_full :
+          Matrix.noPivotLoop n init =
+            Matrix.noPivotLoop (n - r) (Matrix.noPivotLoop r init) := by
+        simpa [h_split] using Matrix.noPivotLoop_add r (n - r) init
+      rcases noPivotLoop_singular_inv (n := n) (n - r)
+          (Matrix.noPivotLoop r init) h_prefix with h_none | h_sing
+      · have hdata : data.singularStep = none := by
+          simpa [data, Matrix.bareissNoPivotData, Matrix.finish, GM, init, h_full] using h_none
+        simp [gramDetVecEntry, data, hdata, i]
+        rfl
+      · rcases h_sing with ⟨k, h_sing_full, h_step_full, h_zero_full, _hk_bound⟩
+        have hdata : data.singularStep = some k.val := by
+          simpa [data, Matrix.bareissNoPivotData, Matrix.finish, GM, init, h_full] using h_sing_full
+        have hmono := noPivotLoop_step_monotone (n - r) (Matrix.noPivotLoop r init)
+        have hr_le_k : r ≤ k.val := by
+          rw [h_step_r, h_step_full] at hmono
+          exact hmono
+        by_cases hkr : k.val = r
+        · have hlt : k.val < r + 1 := by omega
+          have hdata_matrix :
+              data.matrix[i][i] =
+                (Matrix.noPivotLoop (n - r) (Matrix.noPivotLoop r init)).matrix[i][i] := by
+            simp [data, Matrix.bareissNoPivotData, Matrix.finish, GM, init, h_full]
+          have hzero_i : data.matrix[i][i] = 0 := by
+            have hi_eq : i = k := Fin.ext hkr.symm
+            rw [hdata_matrix]
+            simpa [hi_eq] using h_zero_full
+          simp [gramDetVecEntry, data, hdata, i, hlt]
+          simpa [data, i] using (congrArg Int.toNat hzero_i).symm
+        · have hlt : ¬ k.val < r + 1 := by omega
+          simp [gramDetVecEntry, data, hdata, i, hlt]
+          rfl
+    calc
+      gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
+          ⟨r + 1, Nat.succ_lt_succ hr⟩ =
+          (data.matrix[i][i]).toNat := by
+            simpa [data, GM, i] using h_entry_diag
+      _ = (Matrix.bareiss
+            (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+              (Nat.succ_le_of_lt hr))).toNat := by
+            exact congrArg Int.toNat (by simpa [data, GM, i] using hdiag)
+  · rcases noPivotLoop_singular_inv (n := n) r init rfl with h_none | h_sing
+    · exact False.elim (h_prefix h_none)
+    · rcases h_sing with ⟨k, h_sing_r, h_step_r, h_zero_r, h_klt⟩
+      have hsr : k.val < r + 1 := by
+        have h := noPivotLoop_singularStep_lt (n := n) r init rfl k.val h_sing_r
+        simp [init, Matrix.noPivotInitialState] at h
+        omega
+      have h_full_eq :
+          Matrix.noPivotLoop n init = Matrix.noPivotLoop r init := by
+        have h_split : n = r + (n - r) := by omega
+        have hext :=
+          noPivotLoop_extends_singularStep init r (n - r) k
+            h_sing_r h_step_r h_zero_r h_klt
+        exact (congrArg (fun fuel => Matrix.noPivotLoop fuel init) h_split).trans hext
+      have hdata : data.singularStep = some k.val := by
+        simpa [data, Matrix.bareissNoPivotData, Matrix.finish, GM, init, h_full_eq] using h_sing_r
+      have hleft :
+          gramDetVecEntry data ⟨r + 1, Nat.succ_lt_succ hr⟩ = 0 := by
+        simp [gramDetVecEntry, data, hdata, hsr]
+      have hright :
+          (Matrix.bareiss
+            (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+              (Nat.succ_le_of_lt hr))).toNat = 0 :=
+        leadingPrefix_gram_bareiss_toNat_eq_zero_of_noPivot_singular
+          (b := b) r hr hquot k.val (by simpa [GM, init] using h_sing_r)
+      rw [hright]
+      simpa [data, GM] using hleft
 
 /-- The no-pivot Bareiss pass over the full Gram matrix records the same
 leading-prefix determinant as the public `gramDet` API at every vector slot. -/
 theorem gramDetVecEntry_eq_gramDet
-    (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
+    (b : Matrix Int n m) (hquot : StepWitness b) (k : Nat) (hk : k ≤ n) :
     gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
         ⟨k, Nat.lt_succ_of_le hk⟩ =
       gramDet b k hk := by
@@ -6179,7 +6259,7 @@ theorem gramDetVecEntry_eq_gramDet
         _ = (Matrix.bareiss
               (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
                 (Nat.succ_le_of_lt hr))).toNat :=
-              gramDetVecEntry_eq_leadingPrefix_bareiss (b := b) r hr
+              gramDetVecEntry_eq_leadingPrefix_bareiss (b := b) hquot r hr
         _ = gramDet b (r + 1) hk := by
               simp [gramDet, GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram]
 
@@ -6242,11 +6322,11 @@ private theorem scaledCoeffRows_diag_toNat_eq_gramDetVecEntry
 /-- The scaled-coefficient loop stores the next leading Gram determinant on
 the diagonal, at the executable Nat boundary. -/
 private theorem scaledCoeffRows_diag_toNat_eq_gramDet
-    (b : Matrix Int n m) (i : Nat) (hi : i < n) :
+    (b : Matrix Int n m) (hquot : StepWitness b) (i : Nat) (hi : i < n) :
     (getArrayEntry (scaledCoeffRows b) i i).toNat =
       gramDet b (i + 1) (Nat.succ_le_of_lt hi) := by
   rw [scaledCoeffRows_diag_toNat_eq_gramDetVecEntry (b := b) i hi]
-  rw [gramDetVecEntry_eq_gramDet (b := b) (i + 1) (Nat.succ_le_of_lt hi)]
+  rw [gramDetVecEntry_eq_gramDet (b := b) hquot (i + 1) (Nat.succ_le_of_lt hi)]
 
 /-- Signed diagonal information from the executable scaled-coefficient loop:
 the diagonal slot is either the zero tail recorded after an earlier singular
@@ -6410,11 +6490,11 @@ private theorem scaledCoeffRows_diag_eq_zero_or_eq_leadingPrefix_bareiss
 diagonal synchronization can be lifted back to the corresponding Int equality.
 That nonnegativity is a Mathlib-side obligation for Gram determinants. -/
 private theorem scaledCoeffRows_diag_eq_gramDet_of_nonneg
-    (b : Matrix Int n m) (i : Nat) (hi : i < n)
+    (b : Matrix Int n m) (hquot : StepWitness b) (i : Nat) (hi : i < n)
     (hnonneg : 0 ≤ getArrayEntry (scaledCoeffRows b) i i) :
     getArrayEntry (scaledCoeffRows b) i i =
       Int.ofNat (gramDet b (i + 1) (Nat.succ_le_of_lt hi)) := by
-  have hdiag := scaledCoeffRows_diag_toNat_eq_gramDet (b := b) i hi
+  have hdiag := scaledCoeffRows_diag_toNat_eq_gramDet (b := b) hquot i hi
   rw [← hdiag]
   exact (Int.toNat_of_nonneg hnonneg).symm
 
@@ -8503,7 +8583,7 @@ theorem gramDetVec_eq_gramDet (b : Matrix Int n m) (hquot : StepWitness b)
           (getArrayEntry (scaledCoeffRowsSchur b) r r).toNat := by
       simp [gramDetVec, data, gramDetVecFromScaledCoeffRows]
     rw [hget, getArrayEntry_scaledCoeffRowsSchur_eq b hquot]
-    exact scaledCoeffRows_diag_toNat_eq_gramDet (b := b) r hr
+    exact scaledCoeffRows_diag_toNat_eq_gramDet (b := b) hquot r hr
 
 /-- Nat-level diagonal synchronization for the public scaled-coefficient
 matrix. This is the Mathlib-free diagonal fact exposed by the shared array
