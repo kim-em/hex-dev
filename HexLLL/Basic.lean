@@ -28,7 +28,7 @@ end Matrix
 namespace LLLCore
 
 /-- Recover the squared norm of a Gram-Schmidt basis vector. -/
-private def basisNormSq (basis : Matrix Rat n m) (i : Fin n) : Rat :=
+def basisNormSq (basis : Matrix Rat n m) (i : Fin n) : Rat :=
   Vector.normSq (basis.row i)
 
 end LLLCore
@@ -49,6 +49,169 @@ def isLLLReduced (b : Matrix Int n m) (δ : Rat) : Prop :=
       let μ := coeffs[ip1Fin][iFin]
       δ * LLLCore.basisNormSq basis iFin ≤
         LLLCore.basisNormSq basis ip1Fin + μ * μ * LLLCore.basisNormSq basis iFin
+
+namespace LLLCore
+
+private theorem ratMulSelfNonneg (x : Rat) : 0 ≤ x * x := by
+  simpa [Lean.Grind.Semiring.pow_two] using (Lean.Grind.OrderedRing.sq_nonneg (a := x))
+
+private theorem foldlNonneg {α : Type} (xs : List α) (f : α → Rat)
+    (acc : Rat) (hacc : 0 ≤ acc) (hf : ∀ x, 0 ≤ f x) :
+    0 ≤ xs.foldl (fun sum x => sum + f x) acc := by
+  induction xs generalizing acc with
+  | nil =>
+      simpa using hacc
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      exact ih (acc + f x) (Rat.add_nonneg hacc (hf x))
+
+theorem basisNormSq_nonneg (basis : Matrix Rat n m) (i : Fin n) :
+    0 ≤ basisNormSq basis i := by
+  simp only [basisNormSq, Vector.normSq, Hex.Vector.dotProduct]
+  exact foldlNonneg (List.finRange m) (fun j => (basis.row i)[j] * (basis.row i)[j]) 0
+    (by grind) (fun j => ratMulSelfNonneg ((basis.row i)[j]))
+
+private theorem coeffSq_le_quarter (μ : Rat) (hsize : 4 * μ * μ ≤ 1) :
+    μ * μ ≤ 1 / 4 := by
+  have hq_nonneg : (0 : Rat) ≤ 1 / 4 := by grind
+  have h := Rat.mul_le_mul_of_nonneg_left hsize hq_nonneg
+  have hleft : (1 / 4 : Rat) * (4 * μ * μ) = μ * μ := by grind
+  have hright : (1 / 4 : Rat) * 1 = 1 / 4 := by grind
+  simpa [hleft, hright] using h
+
+private theorem stepBound_arith (δ μ N Np : Rat)
+    (hN : 0 ≤ N) (hsize : 4 * μ * μ ≤ 1)
+    (hlov : δ * N ≤ Np + μ * μ * N) :
+    (δ - 1 / 4) * N ≤ Np := by
+  have hmu : μ * μ ≤ 1 / 4 := coeffSq_le_quarter μ hsize
+  have hcoef : δ - 1 / 4 ≤ δ - μ * μ := by grind
+  have hleft : (δ - 1 / 4) * N ≤ (δ - μ * μ) * N :=
+    Rat.mul_le_mul_of_nonneg_right hcoef hN
+  have hlov' : (δ - μ * μ) * N ≤ Np := by
+    have hsub : δ * N - μ * μ * N ≤ (Np + μ * μ * N) - μ * μ * N := by
+      grind
+    calc
+      (δ - μ * μ) * N = δ * N - μ * μ * N := by grind
+      _ ≤ (Np + μ * μ * N) - μ * μ * N := hsub
+      _ = Np := by grind
+  exact Rat.le_trans hleft hlov'
+
+private theorem divStep_arith (d N Np : Rat) (hd : 0 < d)
+    (h : d * N ≤ Np) :
+    N ≤ (1 / d) * Np := by
+  have hdne : d ≠ 0 := by grind
+  have hinv_pos : 0 < (1 / d : Rat) := by
+    rw [Rat.div_def]
+    simpa using (Rat.inv_pos.mpr hd)
+  have hinv_nonneg : 0 ≤ (1 / d : Rat) := by grind
+  have hmul := Rat.mul_le_mul_of_nonneg_left h hinv_nonneg
+  have hleft : (1 / d : Rat) * (d * N) = N := by
+    rw [Rat.div_def]
+    rw [show (1 : Rat) * d⁻¹ = d⁻¹ by grind]
+    rw [← Rat.mul_assoc, Rat.inv_mul_cancel d hdne]
+    grind
+  simpa [hleft] using hmul
+
+private theorem ratPow_nonneg (a : Rat) (ha : 0 ≤ a) (k : Nat) :
+    0 ≤ a ^ k := by
+  induction k with
+  | zero =>
+      rw [Lean.Grind.Semiring.pow_zero]
+      grind
+  | succ k ih =>
+      rw [Lean.Grind.Semiring.pow_succ]
+      exact Rat.mul_nonneg ih ha
+
+/-- Adjacent Gram-Schmidt norm bound from size reduction and Lovasz. -/
+theorem stepBound (b : Matrix Int n m) {δ : Rat}
+    (hred : isLLLReduced b δ) (_hδ : (1 / 4 : Rat) < δ)
+    (i : Nat) (hi : i + 1 < n) :
+    (δ - 1 / 4) *
+        basisNormSq (GramSchmidt.Int.basis b)
+          ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩ ≤
+      basisNormSq (GramSchmidt.Int.basis b) ⟨i + 1, hi⟩ := by
+  let basis := GramSchmidt.Int.basis b
+  let coeffs := GramSchmidt.Int.coeffs b
+  let iFin : Fin n := ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩
+  let ip1Fin : Fin n := ⟨i + 1, hi⟩
+  let μ := coeffs[ip1Fin][iFin]
+  rcases hred with ⟨hsize, hlov⟩
+  have hsize' : 4 * μ * μ ≤ 1 := by
+    simpa [basis, coeffs, iFin, ip1Fin, μ] using
+      hsize (i + 1) i hi (Nat.lt_succ_self i)
+  have hlov' :
+      δ * basisNormSq basis iFin ≤
+        basisNormSq basis ip1Fin + μ * μ * basisNormSq basis iFin := by
+    simpa [basis, coeffs, iFin, ip1Fin, μ] using hlov i hi
+  exact stepBound_arith δ μ (basisNormSq basis iFin) (basisNormSq basis ip1Fin)
+    (basisNormSq_nonneg basis iFin) hsize' hlov'
+
+/-- Adjacent Gram-Schmidt norm bound in reciprocal form. -/
+theorem stepAlpha (b : Matrix Int n m) {δ : Rat}
+    (hred : isLLLReduced b δ) (hδ : (1 / 4 : Rat) < δ)
+    (i : Nat) (hi : i + 1 < n) :
+    basisNormSq (GramSchmidt.Int.basis b)
+        ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩ ≤
+      (1 / (δ - 1 / 4)) *
+        basisNormSq (GramSchmidt.Int.basis b) ⟨i + 1, hi⟩ := by
+  have hpos : 0 < δ - 1 / 4 := by grind
+  exact divStep_arith (δ - 1 / 4)
+    (basisNormSq (GramSchmidt.Int.basis b)
+      ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩)
+    (basisNormSq (GramSchmidt.Int.basis b) ⟨i + 1, hi⟩)
+    hpos (stepBound b hred hδ i hi)
+
+/-- Telescoped Gram-Schmidt norm bound from the first vector to index `i`. -/
+theorem teleBound (b : Matrix Int n m) {δ : Rat}
+    (hred : isLLLReduced b δ) (hδ : (1 / 4 : Rat) < δ)
+    (i : Nat) (hi : i < n) :
+    basisNormSq (GramSchmidt.Int.basis b)
+        ⟨0, Nat.lt_of_le_of_lt (Nat.zero_le i) hi⟩ ≤
+      (1 / (δ - 1 / 4)) ^ i *
+        basisNormSq (GramSchmidt.Int.basis b) ⟨i, hi⟩ := by
+  let α : Rat := 1 / (δ - 1 / 4)
+  induction i with
+  | zero =>
+      rw [Lean.Grind.Semiring.pow_zero]
+      have hfin :
+          (⟨0, Nat.lt_of_le_of_lt (Nat.zero_le 0) hi⟩ : Fin n) = ⟨0, hi⟩ :=
+        Fin.ext rfl
+      rw [hfin]
+      grind
+  | succ i ih =>
+      have hiPrev : i < n := Nat.lt_trans (Nat.lt_succ_self i) hi
+      have hih := ih hiPrev
+      have hzero :
+          (⟨0, Nat.lt_of_le_of_lt (Nat.zero_le i) hiPrev⟩ : Fin n) =
+            ⟨0, Nat.lt_of_le_of_lt (Nat.zero_le (i + 1)) hi⟩ :=
+        Fin.ext rfl
+      rw [hzero] at hih
+      have hstep := stepAlpha b hred hδ i hi
+      have hifin :
+          (⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩ : Fin n) = ⟨i, hiPrev⟩ :=
+        Fin.ext rfl
+      rw [hifin] at hstep
+      have hα_nonneg : 0 ≤ α := by
+        have hpos : 0 < δ - 1 / 4 := by grind
+        have hα_pos : 0 < α := by
+          dsimp [α]
+          rw [Rat.div_def]
+          simpa using (Rat.inv_pos.mpr hpos)
+        grind
+      have hpow_nonneg : 0 ≤ α ^ i := ratPow_nonneg α hα_nonneg i
+      have hmul := Rat.mul_le_mul_of_nonneg_left hstep hpow_nonneg
+      have hchain := Rat.le_trans hih hmul
+      calc
+        basisNormSq (GramSchmidt.Int.basis b)
+            ⟨0, Nat.lt_of_le_of_lt (Nat.zero_le (i + 1)) hi⟩
+            ≤ α ^ i *
+                (α * basisNormSq (GramSchmidt.Int.basis b) ⟨i + 1, hi⟩) := hchain
+        _ = α ^ (i + 1) *
+              basisNormSq (GramSchmidt.Int.basis b) ⟨i + 1, hi⟩ := by
+            rw [Lean.Grind.Semiring.pow_succ]
+            grind
+
+end LLLCore
 
 /-- Integer-only state for later LLL reduction steps. The proof-facing fields
 connect the stored Gram determinants and scaled coefficients to the executable
