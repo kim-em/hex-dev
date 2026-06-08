@@ -743,6 +743,52 @@ theorem swapStep_independent (s : LLLState n m) (k : Nat)
     rw [hbridge]
     exact hind t
 
+/-! ### Prefix LLL invariants under `swapStep`
+
+For row indices strictly below `k - 1`, both the Gram-Schmidt basis row and
+the rational coefficient entries are preserved by `swapStep s k`, because
+the swap only touches rows `k - 1` and `k`. These prefix lemmas package
+that observation as the building blocks for the `prefixLLLReduced`
+preservation corollary below. -/
+
+/-- For `i + 1 < k`, the squared norm of the `i`-th Gram-Schmidt basis row
+is unchanged by `swapStep s k`. -/
+theorem swapStep_basisNormSq_below (s : LLLState n m) (k : Nat) (hk : k < n)
+    (hk0 : 0 < k) (i : Nat) (hi : i + 1 < k) :
+    LLLCore.basisNormSq (GramSchmidt.Int.basis (s.swapStep k).b)
+        ⟨i, Nat.lt_of_succ_lt (Nat.lt_trans hi hk)⟩ =
+      LLLCore.basisNormSq (GramSchmidt.Int.basis s.b)
+        ⟨i, Nat.lt_of_succ_lt (Nat.lt_trans hi hk)⟩ := by
+  rw [swapStep_b_eq s k hk hk0]
+  unfold LLLCore.basisNormSq
+  rw [GramSchmidt.Int.basis_adjacentSwap_of_lt s.b ⟨k, hk⟩ hk0
+        ⟨i, Nat.lt_of_succ_lt (Nat.lt_trans hi hk)⟩ hi]
+
+/-- For `j < i` and `i + 1 < k`, the rational Gram-Schmidt coefficient at
+position `(i, j)` is unchanged by `swapStep s k`. -/
+theorem swapStep_coeffs_below (s : LLLState n m) (k : Nat) (hk : k < n)
+    (hk0 : 0 < k) (i j : Nat) (hi : i + 1 < k) (hji : j < i) :
+    (GramSchmidt.Int.coeffs (s.swapStep k).b)[(⟨i, Nat.lt_of_succ_lt
+          (Nat.lt_trans hi hk)⟩ : Fin n)][(⟨j, Nat.lt_trans hji
+            (Nat.lt_of_succ_lt (Nat.lt_trans hi hk))⟩ : Fin n)] =
+      (GramSchmidt.Int.coeffs s.b)[(⟨i, Nat.lt_of_succ_lt
+          (Nat.lt_trans hi hk)⟩ : Fin n)][(⟨j, Nat.lt_trans hji
+            (Nat.lt_of_succ_lt (Nat.lt_trans hi hk))⟩ : Fin n)] := by
+  rw [swapStep_b_eq s k hk hk0]
+  set kFin : Fin n := ⟨k, hk⟩ with hkFin_def
+  set km1 : Fin n := GramSchmidt.prevRow kFin hk0 with hkm1_def
+  have hkm1_succ : km1.val + 1 = kFin.val := by
+    simp [km1, GramSchmidt.prevRow, kFin]; omega
+  have hikm1 : i < km1.val := by
+    simp [km1, GramSchmidt.prevRow, kFin]; omega
+  have hcoeff := GramSchmidt.Int.coeffs_rowSwap_adjacent_before
+    s.b km1 kFin
+    ⟨i, Nat.lt_of_succ_lt (Nat.lt_trans hi hk)⟩
+    ⟨j, Nat.lt_trans hji (Nat.lt_of_succ_lt (Nat.lt_trans hi hk))⟩
+    hkm1_succ hikm1 hji
+  simpa [GramSchmidt.Int.adjacentSwap, GramSchmidt.entry, Matrix.row,
+    kFin, km1] using hcoeff
+
 /-! ### Size-reduce Valid preservation
 
 The single-column update `sizeReduceColumn` edits `b`, `ν` at row `k`,
