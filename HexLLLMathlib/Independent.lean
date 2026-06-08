@@ -819,6 +819,63 @@ theorem prefixLLLReduced.mono {b : Matrix Int n m} {k k' : Nat} {δ : Rat}
   · intro i hik' hin
     exact h.2 i (Nat.lt_of_lt_of_le hik' hk) hin
 
+/-- Extending the prefix by one row: given `prefixLLLReduced b k δ`, the new
+size-reducedness data for row `k` and the new Lovász data at the pair
+`(k - 1, k)` (vacuous when `k = 0`) jointly yield `prefixLLLReduced b (k + 1) δ`.
+This is the "add one row to the certified prefix" lemma consumed by the
+`lllLoop` advance branch. -/
+theorem prefixLLLReduced.advance {b : Matrix Int n m} {k : Nat} (hk : k < n) {δ : Rat}
+    (hpre : prefixLLLReduced b k δ)
+    (hsize : ∀ (j : Nat) (hj : j < k),
+      let kFin : Fin n := ⟨k, hk⟩
+      let jFin : Fin n := ⟨j, Nat.lt_trans hj hk⟩
+      let μ : Rat := (GramSchmidt.Int.coeffs b)[kFin][jFin]
+      4 * μ * μ ≤ 1)
+    (hlovasz : (hk0 : 0 < k) →
+      let kFin : Fin n := ⟨k, hk⟩
+      let km1Fin : Fin n := ⟨k - 1, Nat.lt_of_le_of_lt (Nat.sub_le k 1) hk⟩
+      let μ : Rat := (GramSchmidt.Int.coeffs b)[kFin][km1Fin]
+      δ * LLLCore.basisNormSq (GramSchmidt.Int.basis b) km1Fin ≤
+        LLLCore.basisNormSq (GramSchmidt.Int.basis b) kFin +
+          μ * μ * LLLCore.basisNormSq (GramSchmidt.Int.basis b) km1Fin) :
+    prefixLLLReduced b (k + 1) δ := by
+  refine ⟨?_, ?_⟩
+  · -- Size-reducedness at row i ≤ k.
+    intro i j hik' hin hji
+    rcases Nat.lt_or_ge i k with hik | hik
+    · exact hpre.1 i j hik hin hji
+    · have hi_eq : i = k := Nat.le_antisymm (Nat.lt_succ_iff.mp hik') hik
+      have hj_lt_k : j < k := hi_eq ▸ hji
+      have hg := hsize j hj_lt_k
+      let iFin : Fin n := ⟨i, hin⟩
+      let jFin : Fin n := ⟨j, Nat.lt_trans hji hin⟩
+      let μ : Rat := (GramSchmidt.Int.coeffs b)[iFin][jFin]
+      show 4 * μ * μ ≤ 1
+      have hi_fin : (⟨k, hk⟩ : Fin n) = iFin := Fin.ext hi_eq.symm
+      have hj_fin : (⟨j, Nat.lt_trans hj_lt_k hk⟩ : Fin n) = jFin :=
+        Fin.ext rfl
+      simpa [hi_fin, hj_fin] using hg
+  · -- Lovász at pair i ≤ k - 1, i + 1 ≤ k.
+    intro i hik' hin
+    rcases Nat.lt_or_ge (i + 1) k with hik | hik
+    · exact hpre.2 i hik hin
+    · have hip1_eq : i + 1 = k := Nat.le_antisymm (Nat.lt_succ_iff.mp hik') hik
+      have hk0 : 0 < k := by omega
+      have hi_eq : i = k - 1 := by omega
+      have hg := hlovasz hk0
+      have hin_i : i < n := Nat.lt_of_succ_lt hin
+      let iFin : Fin n := ⟨i, hin_i⟩
+      let ip1Fin : Fin n := ⟨i + 1, hin⟩
+      let μ : Rat := (GramSchmidt.Int.coeffs b)[ip1Fin][iFin]
+      let N_i : Rat := LLLCore.basisNormSq (GramSchmidt.Int.basis b) iFin
+      let N_ip1 : Rat := LLLCore.basisNormSq (GramSchmidt.Int.basis b) ip1Fin
+      show δ * N_i ≤ N_ip1 + μ * μ * N_i
+      have hi_fin : (⟨k - 1, Nat.lt_of_le_of_lt (Nat.sub_le k 1) hk⟩ : Fin n) = iFin :=
+        Fin.ext hi_eq.symm
+      have hip1_fin : (⟨k, hk⟩ : Fin n) = ip1Fin :=
+        Fin.ext (by show k = i + 1; omega)
+      simpa [hi_fin, hip1_fin] using hg
+
 namespace LLLState
 
 /-- `swapStep s k` preserves the prefix LLL-reduced predicate, with the
@@ -1978,6 +2035,106 @@ theorem lllLoop_fuel_sufficient
     have : (s.potential + 1) * (n + 1) = s.potential * (n + 1) + (n + 1) := by ring
     omega
   · exact hfuel
+
+/-! ### Size-reduce coefficient-row preservation
+
+Size reduction at row `k` rewrites only that row's coefficients; rows at
+indices `i ≠ k` are preserved by every iteration of the inner foldl.  This
+packages the preservation as a single statement so the loop-invariant proof
+below can quote it without re-running the inductive `coeffs_sizeReduce_other_row`
+chain. -/
+
+private theorem sizeReduceColumn_coeffs_row_of_ne (s : LLLState n m) (j k : Fin n)
+    (hjk : j.val < k.val) (i : Fin n) (hik : i ≠ k) :
+    (GramSchmidt.Int.coeffs (s.sizeReduceColumn j k hjk).b).row i =
+      (GramSchmidt.Int.coeffs s.b).row i := by
+  unfold sizeReduceColumn
+  by_cases hreduce :
+      2 * Int.natAbs ((s.ν.get k).get j) >
+        s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
+  · rw [dif_pos hreduce]
+    exact GramSchmidt.Int.coeffs_sizeReduce_other_row s.b j k hjk _ i hik
+  · rw [dif_neg hreduce]
+
+private theorem sizeReduce_foldl_coeffs_row_of_ne {n m : Nat}
+    (k : Nat) (hk : k < n) (i : Fin n) (hik : i ≠ ⟨k, hk⟩) :
+    ∀ (xs : List (Fin k)) (s' : LLLState n m),
+      (GramSchmidt.Int.coeffs (xs.foldl
+          (fun state j =>
+            let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt hk⟩
+            state.sizeReduceColumn jFin ⟨k, hk⟩ j.isLt)
+          s').b).row i = (GramSchmidt.Int.coeffs s'.b).row i := by
+  intro xs
+  induction xs with
+  | nil => intro s'; rfl
+  | cons j js ih =>
+    intro s'
+    simp only [List.foldl_cons]
+    rw [ih _]
+    exact sizeReduceColumn_coeffs_row_of_ne s' _ _ j.isLt i hik
+
+/-- Coefficient rows at `i ≠ k` survive `s.sizeReduce k` intact. -/
+theorem sizeReduce_coeffs_row_of_ne (s : LLLState n m) (k : Nat) (i : Fin n)
+    (hik : i.val ≠ k) :
+    (GramSchmidt.Int.coeffs (s.sizeReduce k).b).row i =
+      (GramSchmidt.Int.coeffs s.b).row i := by
+  unfold sizeReduce
+  by_cases hk : k < n
+  · rw [dif_pos hk]
+    have hik' : i ≠ ⟨k, hk⟩ := fun h => hik (by rw [h])
+    exact sizeReduce_foldl_coeffs_row_of_ne k hk i hik' (List.finRange k).reverse s
+  · rw [dif_neg hk]
+
+/-- Size reduction preserves `prefixLLLReduced` at the same prefix length: rows
+strictly below `k` are unaffected by the row-`k` update, so the prefix invariant
+on the input transfers to the output. -/
+theorem sizeReduce_prefixLLLReduced (s : LLLState n m) (k : Nat) (δ : Rat)
+    (h : prefixLLLReduced s.b k δ) :
+    prefixLLLReduced (s.sizeReduce k).b k δ := by
+  refine ⟨?_, ?_⟩
+  · -- Size-reducedness for i < k: coefficient row at i is preserved.
+    intro i j hik hin hji
+    have hi_ne_k : (⟨i, hin⟩ : Fin n).val ≠ k := Nat.ne_of_lt hik
+    have hrow := sizeReduce_coeffs_row_of_ne s k ⟨i, hin⟩ hi_ne_k
+    let iFin : Fin n := ⟨i, hin⟩
+    let jFin : Fin n := ⟨j, Nat.lt_trans hji hin⟩
+    let μ_sr : Rat := (GramSchmidt.Int.coeffs (s.sizeReduce k).b)[iFin][jFin]
+    show 4 * μ_sr * μ_sr ≤ 1
+    have hμ_eq : μ_sr =
+        (GramSchmidt.Int.coeffs s.b)[iFin][jFin] := by
+      show ((GramSchmidt.Int.coeffs (s.sizeReduce k).b).row iFin)[jFin] =
+        ((GramSchmidt.Int.coeffs s.b).row iFin)[jFin]
+      rw [hrow]
+    rw [hμ_eq]
+    exact h.1 i j hik hin hji
+  · -- Lovász for i + 1 < k: basis (norm) and coeffs at row i+1 preserved.
+    intro i hik hin
+    have hbasis_eq := sizeReduce_basis s k
+    have hip1_ne_k : (⟨i + 1, hin⟩ : Fin n).val ≠ k := Nat.ne_of_lt hik
+    have hrow := sizeReduce_coeffs_row_of_ne s k ⟨i + 1, hin⟩ hip1_ne_k
+    have hin_i : i < n := Nat.lt_of_succ_lt hin
+    let iFin : Fin n := ⟨i, hin_i⟩
+    let ip1Fin : Fin n := ⟨i + 1, hin⟩
+    let N_sr_i : Rat :=
+      LLLCore.basisNormSq (GramSchmidt.Int.basis (s.sizeReduce k).b) iFin
+    let N_sr_ip1 : Rat :=
+      LLLCore.basisNormSq (GramSchmidt.Int.basis (s.sizeReduce k).b) ip1Fin
+    let μ_sr : Rat :=
+      (GramSchmidt.Int.coeffs (s.sizeReduce k).b)[ip1Fin][iFin]
+    show δ * N_sr_i ≤ N_sr_ip1 + μ_sr * μ_sr * N_sr_i
+    have hb_i : N_sr_i = LLLCore.basisNormSq (GramSchmidt.Int.basis s.b) iFin := by
+      show LLLCore.basisNormSq (GramSchmidt.Int.basis (s.sizeReduce k).b) iFin = _
+      rw [hbasis_eq]
+    have hb_ip1 : N_sr_ip1 =
+        LLLCore.basisNormSq (GramSchmidt.Int.basis s.b) ip1Fin := by
+      show LLLCore.basisNormSq (GramSchmidt.Int.basis (s.sizeReduce k).b) ip1Fin = _
+      rw [hbasis_eq]
+    have hμ_eq : μ_sr = (GramSchmidt.Int.coeffs s.b)[ip1Fin][iFin] := by
+      show ((GramSchmidt.Int.coeffs (s.sizeReduce k).b).row ip1Fin)[iFin] =
+        ((GramSchmidt.Int.coeffs s.b).row ip1Fin)[iFin]
+      rw [hrow]
+    rw [hb_i, hb_ip1, hμ_eq]
+    exact h.2 i hik hin
 
 end LLLState
 
