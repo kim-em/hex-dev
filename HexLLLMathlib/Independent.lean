@@ -789,6 +789,107 @@ theorem swapStep_coeffs_below (s : LLLState n m) (k : Nat) (hk : k < n)
   simpa [GramSchmidt.Int.adjacentSwap, GramSchmidt.entry, Matrix.row,
     kFin, km1] using hcoeff
 
+end LLLState
+
+/-- The prefix `δ`-LLL-reduced predicate: the first `k` Gram-Schmidt rows
+satisfy size reduction (for all `i < k`, `j < i`) and the adjacent Lovász
+condition at `(i, i + 1)` (for all `i + 1 < k`). At `k = n` this coincides
+with `isLLLReduced`; at `k ≤ 1` it is vacuously true. -/
+def prefixLLLReduced (b : Matrix Int n m) (k : Nat) (δ : Rat) : Prop :=
+  let basis := GramSchmidt.Int.basis b
+  let coeffs := GramSchmidt.Int.coeffs b
+  (∀ i j, (hik : i < k) → (hin : i < n) → (hji : j < i) →
+      let iFin : Fin n := ⟨i, hin⟩
+      let jFin : Fin n := ⟨j, Nat.lt_trans hji hin⟩
+      let μ := coeffs[iFin][jFin]
+      4 * μ * μ ≤ 1) ∧
+    ∀ i, (hik : i + 1 < k) → (hin : i + 1 < n) →
+      let iFin : Fin n := ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hin⟩
+      let ip1Fin : Fin n := ⟨i + 1, hin⟩
+      let μ := coeffs[ip1Fin][iFin]
+      δ * LLLCore.basisNormSq basis iFin ≤
+        LLLCore.basisNormSq basis ip1Fin + μ * μ * LLLCore.basisNormSq basis iFin
+
+/-- Shrinking the row prefix weakens the predicate. -/
+theorem prefixLLLReduced.mono {b : Matrix Int n m} {k k' : Nat} {δ : Rat}
+    (h : prefixLLLReduced b k δ) (hk : k' ≤ k) : prefixLLLReduced b k' δ := by
+  refine ⟨?_, ?_⟩
+  · intro i j hik' hin hji
+    exact h.1 i j (Nat.lt_of_lt_of_le hik' hk) hin hji
+  · intro i hik' hin
+    exact h.2 i (Nat.lt_of_lt_of_le hik' hk) hin
+
+namespace LLLState
+
+/-- `swapStep s k` preserves the prefix LLL-reduced predicate, with the
+prefix shrunk by one (clamped below by `1` to stay in the trivially-true
+regime when `k ≤ 2`).  Mechanism: the swap only touches rows `k - 1` and
+`k`, so every Gram-Schmidt quantity at indices strictly below `k - 1` is
+preserved (`swapStep_basisNormSq_below`, `swapStep_coeffs_below`). -/
+theorem swapStep_prefixLLLReduced (s : LLLState n m) (k : Nat) (δ : Rat)
+    (h : prefixLLLReduced s.b k δ) :
+    prefixLLLReduced (s.swapStep k).b (max (k - 1) 1) δ := by
+  rcases Nat.eq_zero_or_pos k with hk0_eq | hk0_pos
+  · -- k = 0: swapStep is identity; conclusion at max(0, 1) = 1 is vacuous.
+    subst hk0_eq
+    refine ⟨fun i j hik' _ hji => ?_, fun i hik' _ => ?_⟩
+    · simp at hik'; omega
+    · simp at hik'
+  · by_cases hk : k < n
+    · -- Active case: 0 < k < n.
+      refine ⟨?_, ?_⟩
+      · intro i j hik' hin hji
+        have hi_pos : 0 < i := Nat.lt_of_le_of_lt (Nat.zero_le _) hji
+        have hi_lt : i + 1 < k := by
+          rcases Nat.lt_or_ge k 2 with hk_lt | hk_ge
+          · interval_cases k
+            simp at hik'; omega
+          · have hmax_eq : max (k - 1) 1 = k - 1 := max_eq_left (by omega)
+            rw [hmax_eq] at hik'; omega
+        let iFin : Fin n := ⟨i, hin⟩
+        let jFin : Fin n := ⟨j, Nat.lt_trans hji hin⟩
+        let μ_swap : Rat := (GramSchmidt.Int.coeffs (s.swapStep k).b)[iFin][jFin]
+        let μ : Rat := (GramSchmidt.Int.coeffs s.b)[iFin][jFin]
+        show 4 * μ_swap * μ_swap ≤ 1
+        have hcoeff : μ_swap = μ :=
+          swapStep_coeffs_below s k hk hk0_pos i j hi_lt hji
+        have hres : 4 * μ * μ ≤ 1 := h.1 i j (by omega) hin hji
+        rw [hcoeff]; exact hres
+      · intro i hik' hin
+        have hi_lt : i + 2 < k := by
+          rcases Nat.lt_or_ge k 3 with hk_lt | hk_ge
+          · interval_cases k
+            · simp at hik'
+            · simp at hik'
+          · have hmax_eq : max (k - 1) 1 = k - 1 := max_eq_left (by omega)
+            rw [hmax_eq] at hik'; omega
+        have hin_i : i < n := Nat.lt_of_succ_lt hin
+        let iFin : Fin n := ⟨i, hin_i⟩
+        let ip1Fin : Fin n := ⟨i + 1, hin⟩
+        let N_swap_i : Rat :=
+          LLLCore.basisNormSq (GramSchmidt.Int.basis (s.swapStep k).b) iFin
+        let N_swap_ip1 : Rat :=
+          LLLCore.basisNormSq (GramSchmidt.Int.basis (s.swapStep k).b) ip1Fin
+        let N_i : Rat := LLLCore.basisNormSq (GramSchmidt.Int.basis s.b) iFin
+        let N_ip1 : Rat := LLLCore.basisNormSq (GramSchmidt.Int.basis s.b) ip1Fin
+        let μ_swap : Rat := (GramSchmidt.Int.coeffs (s.swapStep k).b)[ip1Fin][iFin]
+        let μ : Rat := (GramSchmidt.Int.coeffs s.b)[ip1Fin][iFin]
+        show δ * N_swap_i ≤ N_swap_ip1 + μ_swap * μ_swap * N_swap_i
+        have hb_i : N_swap_i = N_i :=
+          swapStep_basisNormSq_below s k hk hk0_pos i (by omega)
+        have hb_ip1 : N_swap_ip1 = N_ip1 :=
+          swapStep_basisNormSq_below s k hk hk0_pos (i + 1) hi_lt
+        have hcoeff : μ_swap = μ :=
+          swapStep_coeffs_below s k hk hk0_pos (i + 1) i hi_lt (Nat.lt_succ_self i)
+        have hres : δ * N_i ≤ N_ip1 + μ * μ * N_i := h.2 i (by omega) hin
+        rw [hb_i, hb_ip1, hcoeff]; exact hres
+    · -- k ≥ n: swapStep is identity, shrink prefix via monotonicity.
+      have hsw : s.swapStep k = s := by
+        unfold swapStep; rw [dif_neg hk]
+      rw [hsw]
+      apply h.mono
+      apply max_le <;> omega
+
 /-! ### Size-reduce Valid preservation
 
 The single-column update `sizeReduceColumn` edits `b`, `ν` at row `k`,
