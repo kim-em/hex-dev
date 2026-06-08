@@ -743,6 +743,216 @@ theorem swapStep_independent (s : LLLState n m) (k : Nat)
     rw [hbridge]
     exact hind t
 
+/-! ### Size-reduce Valid preservation
+
+The single-column update `sizeReduceColumn` edits `b`, `ν` at row `k`,
+and leaves `d` alone.  Validity is preserved because the integer
+`(b, ν)` update mirrors the Mathlib-side `scaledCoeffs` updates
+(`scaledCoeffs_sizeReduce_pivot`/`_lower`/`_above_pivot`/`_other_row`)
+and the Gram-determinants are unchanged (`gramDet_sizeReduce`). -/
+
+/-- Field projection: `sizeReduceColumn`'s `.b` field under the reducing branch. -/
+private theorem sizeReduceColumn_b_reduce (s : LLLState n m) (j k : Fin n)
+    (hjk : j.val < k.val)
+    (hreduce : 2 * Int.natAbs ((s.ν.get k).get j) >
+      s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩) :
+    (s.sizeReduceColumn j k hjk).b =
+      GramSchmidt.Int.sizeReduce s.b j k
+        (nearestQuotient ((s.ν.get k).get j)
+          (s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩)) := by
+  unfold sizeReduceColumn; rw [dif_pos hreduce]
+
+/-- Field projection: `sizeReduceColumn`'s `.d` field (always unchanged). -/
+private theorem sizeReduceColumn_d_eq (s : LLLState n m) (j k : Fin n)
+    (hjk : j.val < k.val) :
+    (s.sizeReduceColumn j k hjk).d = s.d := by
+  unfold sizeReduceColumn
+  by_cases hreduce :
+      2 * Int.natAbs ((s.ν.get k).get j) >
+        s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
+  · rw [dif_pos hreduce]
+  · rw [dif_neg hreduce]
+
+/-- Field projection: `sizeReduceColumn`'s `.ν` row at `k` under the reducing
+branch.  Reads exactly the foldl + extra `.set j` from the def body.  Takes
+the integer nearest quotient `r` as an explicit parameter so callers can
+keep it opaque. -/
+private theorem sizeReduceColumn_ν_get_k (s : LLLState n m) (j k : Fin n)
+    (hjk : j.val < k.val)
+    (hreduce : 2 * Int.natAbs ((s.ν.get k).get j) >
+      s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩)
+    (r : Int)
+    (hr : r = nearestQuotient ((s.ν.get k).get j)
+      (s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩)) :
+    (s.sizeReduceColumn j k hjk).ν.get k =
+      ((List.finRange j.val).foldl
+        (fun (row : Vector Int n) (l : Fin j.val) =>
+          let lFin : Fin n := ⟨l.val, Nat.lt_trans l.isLt j.isLt⟩
+          row.set lFin ((s.ν.get k).get lFin - r * (s.ν.get j).get lFin))
+        (s.ν.get k)).set j ((s.ν.get k).get j -
+          r * Int.ofNat (s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩)) := by
+  subst hr
+  unfold sizeReduceColumn; rw [dif_pos hreduce]
+  exact Vector.getElem_set_self k.isLt
+
+/-- Field projection: `sizeReduceColumn`'s `.ν` row at indices other than `k`
+under the reducing branch (unchanged). -/
+private theorem sizeReduceColumn_ν_get_ne (s : LLLState n m) (j k : Fin n)
+    (hjk : j.val < k.val)
+    (hreduce : 2 * Int.natAbs ((s.ν.get k).get j) >
+      s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩)
+    (i : Fin n) (hi : i ≠ k) :
+    (s.sizeReduceColumn j k hjk).ν.get i = s.ν.get i := by
+  unfold sizeReduceColumn; rw [dif_pos hreduce]
+  exact Vector.getElem_set_ne k.isLt i.isLt (fun h => hi (Fin.eq_of_val_eq h.symm))
+
+/-- The single-column size reduction preserves `Valid`. -/
+theorem sizeReduceColumn_valid (s : LLLState n m) (j k : Fin n)
+    (hjk : j.val < k.val) (hvalid : s.Valid) :
+    (s.sizeReduceColumn j k hjk).Valid := by
+  by_cases hreduce :
+      2 * Int.natAbs ((s.ν.get k).get j) >
+        s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
+  · -- The reducing branch.  Let r be the integer nearest quotient.
+    -- Bridges from Valid to the Mathlib-side scaledCoeffs/gramDet.
+    have hν_at : ∀ (i : Fin n) (j' : Fin n), j'.val < i.val →
+        (s.ν.get i).get j' =
+          GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs s.b) i j' := by
+      intro i j' hj'i
+      have := hvalid.ν_eq i.val j'.val i.isLt j'.isLt hj'i
+      simpa [GramSchmidt.entry, Matrix.row] using this
+    have hd_at : ∀ (i : Nat) (hi : i < n + 1),
+        s.d.get ⟨i, hi⟩ =
+          GramSchmidt.Int.gramDet s.b i (Nat.le_of_lt_succ hi) :=
+      hvalid.d_eq
+    set r : Int := nearestQuotient ((s.ν.get k).get j)
+      (s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩) with hr_def
+    set b' : Matrix Int n m := GramSchmidt.Int.sizeReduce s.b j k r with hb'_def
+    -- The b/d projections.
+    have hb_eq : (s.sizeReduceColumn j k hjk).b = b' :=
+      sizeReduceColumn_b_reduce s j k hjk hreduce
+    have hd_state_eq : (s.sizeReduceColumn j k hjk).d = s.d :=
+      sizeReduceColumn_d_eq s j k hjk
+    refine ⟨?_, ?_⟩
+    · -- ν_eq
+      intro iVal jVal hi hj' hji
+      set iFin : Fin n := ⟨iVal, hi⟩
+      set jFin : Fin n := ⟨jVal, hj'⟩
+      have hji' : jFin.val < iFin.val := hji
+      show ((s.sizeReduceColumn j k hjk).ν.get iFin).get jFin =
+        ((GramSchmidt.Int.scaledCoeffs (s.sizeReduceColumn j k hjk).b).get iFin).get jFin
+      rw [hb_eq]
+      by_cases hi_k : iFin = k
+      · -- Case iFin = k.
+        subst hi_k
+        rw [sizeReduceColumn_ν_get_k s j iFin hjk hreduce r hr_def]
+        by_cases hj_eq : jFin = j
+        · -- Pivot column.
+          subst hj_eq
+          rw [show ∀ (xs : Vector Int n) (x : Int),
+              (xs.set jFin.val x jFin.isLt).get jFin = x from
+                fun xs x => Vector.getElem_set_self jFin.isLt]
+          rw [hν_at iFin jFin hji']
+          -- Want: scaledCoeffs s.b [iFin][jFin] - r * Int.ofNat (s.d[jFin+1]) =
+          --       scaledCoeffs b' [iFin][jFin]
+          have hd : s.d.get ⟨jFin.val + 1, Nat.succ_lt_succ jFin.isLt⟩ =
+              GramSchmidt.Int.gramDet s.b (jFin.val + 1)
+                (Nat.succ_le_of_lt jFin.isLt) :=
+            hd_at (jFin.val + 1) (Nat.succ_lt_succ jFin.isLt)
+          rw [hd]
+          have hsc := GramSchmidt.Int.scaledCoeffs_sizeReduce_pivot s.b jFin iFin hjk r
+          -- hsc : entry (scaledCoeffs b') iFin jFin =
+          --       entry (scaledCoeffs s.b) iFin jFin - r * Int.ofNat (gramDet s.b (jFin+1))
+          have hsc' : ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin =
+              ((GramSchmidt.Int.scaledCoeffs s.b).get iFin).get jFin -
+                r * Int.ofNat (GramSchmidt.Int.gramDet s.b (jFin.val + 1)
+                  (Nat.succ_le_of_lt jFin.isLt)) := by
+            simpa [GramSchmidt.entry, Matrix.row] using hsc
+          rw [hsc']
+          rfl
+        · -- Non-pivot column.  The outer .set j misses jFin.
+          rw [show ∀ (xs : Vector Int n) (x : Int),
+              (xs.set j.val x j.isLt).get jFin = xs.get jFin from
+                fun xs x => Vector.getElem_set_ne j.isLt jFin.isLt
+                  (fun h => hj_eq (Fin.eq_of_val_eq h).symm)]
+          -- Use foldl_finRange_set_outerSubMul_get_eq to compute rowK_inner[jFin].
+          rw [LLLState.foldl_finRange_set_outerSubMul_get_eq j.val
+              (Nat.le_of_lt j.isLt) (s.ν.get iFin) (s.ν.get iFin) (s.ν.get j) r jFin]
+          by_cases hjlt : jFin.val < j.val
+          · -- Below pivot.
+            rw [if_pos hjlt]
+            rw [hν_at iFin jFin hji', hν_at j jFin hjlt]
+            have hsc :=
+              GramSchmidt.Int.scaledCoeffs_sizeReduce_lower s.b jFin j iFin hjlt hjk r
+            have hsc' : ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin =
+                ((GramSchmidt.Int.scaledCoeffs s.b).get iFin).get jFin -
+                  r * ((GramSchmidt.Int.scaledCoeffs s.b).get j).get jFin := by
+              simpa [GramSchmidt.entry, Matrix.row] using hsc
+            rw [hsc']
+            rfl
+          · -- Above pivot.  jFin ≠ j and ¬ (jFin < j), so j < jFin.
+            rw [if_neg hjlt]
+            have hjge : j.val ≤ jFin.val := Nat.le_of_not_lt hjlt
+            have hjlt' : j.val < jFin.val := lt_of_le_of_ne hjge
+              (fun h => hj_eq (Fin.eq_of_val_eq h.symm))
+            rw [hν_at iFin jFin hji']
+            have hjlt_k : jFin.val < iFin.val := hji'
+            have hsc :=
+              GramSchmidt.Int.scaledCoeffs_sizeReduce_above_pivot s.b j iFin hjk r jFin
+                hjlt' hjlt_k
+            have hsc' : ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin =
+                ((GramSchmidt.Int.scaledCoeffs s.b).get iFin).get jFin := by
+              simpa [GramSchmidt.entry, Matrix.row] using hsc
+            rw [hsc']
+            rfl
+      · -- Case iFin ≠ k.
+        rw [sizeReduceColumn_ν_get_ne s j k hjk hreduce iFin hi_k]
+        rw [hν_at iFin jFin hji']
+        have hsc :=
+          GramSchmidt.Int.scaledCoeffs_sizeReduce_other_row s.b j k hjk r iFin hi_k
+        -- hsc : (scaledCoeffs b').row iFin = (scaledCoeffs s.b).row iFin
+        have hsc' : ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin =
+            ((GramSchmidt.Int.scaledCoeffs s.b).get iFin).get jFin := by
+          have hrow := hsc
+          rw [Matrix.row, Matrix.row] at hrow
+          exact congrArg (fun v : Vector Int n => v.get jFin) hrow
+        rw [hsc']
+        rfl
+    · -- d_eq
+      intro i hi
+      rw [hd_state_eq]
+      rw [hd_at i hi, hb_eq]
+      exact (GramSchmidt.Int.gramDet_sizeReduce s.b j k hjk r i (Nat.le_of_lt_succ hi)).symm
+  · -- The non-reducing branch: state unchanged.
+    have h_eq : s.sizeReduceColumn j k hjk = s := by
+      unfold sizeReduceColumn; rw [dif_neg hreduce]
+    rw [h_eq]; exact hvalid
+
+/-- The size-reduction outer foldl preserves `Valid`. -/
+theorem sizeReduce_valid (s : LLLState n m) (k : Nat) (hvalid : s.Valid) :
+    (s.sizeReduce k).Valid := by
+  unfold sizeReduce
+  by_cases hk : k < n
+  · rw [dif_pos hk]
+    -- Foldl over `(List.finRange k).reverse` of sizeReduceColumn applications,
+    -- each preserving Valid.
+    suffices h : ∀ (xs : List (Fin k)) (s' : LLLState n m), s'.Valid →
+        (xs.foldl
+            (fun state j =>
+              let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt hk⟩
+              state.sizeReduceColumn jFin ⟨k, hk⟩ j.isLt)
+            s').Valid from
+      h (List.finRange k).reverse s hvalid
+    intro xs
+    induction xs with
+    | nil => intro s' hv; exact hv
+    | cons j js ih =>
+      intro s' hv
+      simp only [List.foldl_cons]
+      exact ih _ (sizeReduceColumn_valid s' _ _ _ hv)
+  · rw [dif_neg hk]
+    exact hvalid
+
 /-! ### Potential strict-decrease under failing Lovász
 
 These lemmas package the multiplicative termination potential
@@ -1061,6 +1271,224 @@ theorem swapStep_potential_lt (s : LLLState n m) (k : Nat)
     exact hdpos
   exact foldl_mul_strict_lt (List.nodup_finRange _) hi₀_mem f g hf_pos hfg_eq hglt 1
     Nat.one_pos
+
+/-! ### Fuel sufficiency for `lllLoop`
+
+The outer LLL loop `lllLoop` was made total in #6564 by structural
+recursion on a `fuel` argument, with `fuel = 0` returning the current
+basis as a pipeline-unreachable fallback (per SPEC §8).  This section
+proves the fallback unreachable for valid input: the bound
+`lllFuel s = (s.potential + 1) * (n + 1)` is sufficient for the loop
+started at `k = 1` on `s = ofBasis b hind`.
+
+The argument tracks the lexicographic measure
+`s.potential * (n + 1) + (n - k)`:
+
+* size reduction is potential-neutral (`sizeReduce_potential`) and is
+  immediately followed by either an advance (decreases `n - k` by 1)
+  or a swap;
+* swaps strictly decrease the potential (`swapStep_potential_lt`),
+  swallowing the `n - k` reset.
+
+So each loop iteration strictly decreases the measure by ≥ 1, and the
+measure starts strictly below `lllFuel s`, so the loop hits the
+`k = n` base case before fuel exhausts.
+-/
+
+/-- When `k = n`, the loop returns `s.b` regardless of fuel (the `hdone`
+branch fires). -/
+private theorem lllLoop_eq_b_at_n
+    (s : LLLState n m) (δ : Rat) (hδ : 1/4 < δ) (hδ' : δ ≤ 1)
+    (hk : 1 ≤ n) (hkn : n ≤ n) (fuel : Nat) :
+    lllLoop s n δ hδ hδ' hk hkn fuel = s.b := by
+  cases fuel with
+  | zero => rfl
+  | succ f =>
+    show (if hdone : n = n then s.b
+          else _) = s.b
+    rw [dif_pos rfl]
+
+/-- The inner body of `lllLoop`'s `fuel = g + 1` branch (under `k < n`),
+extracted for use in fuel-sufficiency reasoning. -/
+private def lllLoopBody (s : LLLState n m) (k : Nat) (δ : Rat)
+    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hk : 1 ≤ k) (hkn : k ≤ n)
+    (hlt : k < n) (fuel : Nat) : Matrix Int n m :=
+  let sReduced := s.sizeReduce k
+  let kFin : Fin n := ⟨k, hlt⟩
+  let km1Fin : Fin n := ⟨k - 1, Nat.lt_of_le_of_lt (Nat.sub_le k 1) hlt⟩
+  let dkPrev := sReduced.d.get
+    ⟨k - 1, Nat.lt_trans
+      (Nat.lt_of_le_of_lt (Nat.sub_le k 1) hlt) (Nat.lt_succ_self n)⟩
+  let dk := sReduced.d.get ⟨k, Nat.lt_succ_of_lt hlt⟩
+  let dkNext := sReduced.d.get ⟨k + 1, Nat.succ_lt_succ hlt⟩
+  let B := (sReduced.ν.get kFin).get km1Fin
+  let lovaszLhs : Int :=
+    Int.ofNat δ.den * (Int.ofNat dkNext * Int.ofNat dkPrev + B ^ 2)
+  let lovaszRhs : Int := δ.num * (Int.ofNat dk ^ 2)
+  if lovaszLhs ≥ lovaszRhs then
+    lllLoop sReduced (k + 1) δ hδ hδ' (Nat.succ_pos k)
+      (Nat.succ_le_of_lt hlt) fuel
+  else
+    let sSwapped := sReduced.swapStep k
+    let k' := max (k - 1) 1
+    lllLoop sSwapped k' δ hδ hδ' (Nat.le_max_right (k - 1) 1)
+      ((Nat.max_le).2 ⟨Nat.le_trans (Nat.sub_le k 1) hkn, Nat.le_trans hk hkn⟩)
+      fuel
+
+private theorem lllLoop_succ_eq_body
+    (s : LLLState n m) (k : Nat) (δ : Rat)
+    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hk : 1 ≤ k) (hkn : k ≤ n) (hlt : k < n)
+    (fuel : Nat) :
+    lllLoop s k δ hδ hδ' hk hkn (fuel + 1) =
+      lllLoopBody s k δ hδ hδ' hk hkn hlt fuel := by
+  show (if hdone : k = n then s.b else _) = _
+  rw [dif_neg (Nat.ne_of_lt hlt)]
+  rfl
+
+/-- δ.num positivity and δ.num ≤ δ.den from `1/4 < δ ≤ 1`.  These are the
+integer hypotheses consumed by `swapStep_potential_lt`. -/
+private theorem lovasz_swap_hyps (δ : Rat) (hδ : 1/4 < δ) (hδ' : δ ≤ 1) :
+    0 < δ.num ∧ 0 < δ.den ∧ δ.num ≤ Int.ofNat δ.den := by
+  have hδpos : (0 : Rat) < δ := lt_trans (by norm_num) hδ
+  refine ⟨Rat.num_pos.mpr hδpos, δ.pos, ?_⟩
+  -- δ ≤ 1 ↔ δ.num ≤ δ.den (under δ.den > 0).
+  have hden_pos : (0 : Rat) < (δ.den : Rat) := by exact_mod_cast δ.pos
+  have h_rat : (δ.num : Rat) ≤ (δ.den : Rat) := by
+    have heq : δ = (δ.num : Rat) / (δ.den : Rat) := (Rat.num_div_den δ).symm
+    rw [heq] at hδ'
+    rw [div_le_one hden_pos] at hδ'
+    exact hδ'
+  exact_mod_cast h_rat
+
+private theorem lllLoop_eq_of_fuel_gt_measure
+    (δ : Rat) (hδ : 1/4 < δ) (hδ' : δ ≤ 1) :
+    ∀ (fuel : Nat) (s : LLLState n m) (k : Nat) (hk : 1 ≤ k) (hkn : k ≤ n),
+      s.Valid → s.b.independent →
+      s.potential * (n + 1) + (n - k) < fuel →
+      ∀ {fuel' : Nat}, fuel ≤ fuel' →
+        lllLoop s k δ hδ hδ' hk hkn fuel = lllLoop s k δ hδ hδ' hk hkn fuel' := by
+  intro fuel
+  induction fuel with
+  | zero =>
+    intros _ _ _ _ _ _ hmeasure _ _
+    exact absurd hmeasure (Nat.not_lt_zero _)
+  | succ f ih =>
+    intros s k hk hkn hvalid hind hmeasure fuel' hf
+    obtain ⟨f', rfl⟩ : ∃ f', fuel' = f' + 1 :=
+      ⟨fuel' - 1, by omega⟩
+    have hf' : f ≤ f' := Nat.le_of_succ_le_succ hf
+    by_cases hkn_eq : k = n
+    · subst hkn_eq
+      rw [lllLoop_eq_b_at_n, lllLoop_eq_b_at_n]
+    · -- Recursive case: k < n.
+      have hlt : k < n := Nat.lt_of_le_of_ne hkn hkn_eq
+      -- Establish post-sizeReduce invariants.
+      have hsR_valid : (s.sizeReduce k).Valid := sizeReduce_valid s k hvalid
+      have hsR_ind : (s.sizeReduce k).b.independent :=
+        sizeReduce_independent s k hind hvalid hsR_valid
+      have hsR_pot : (s.sizeReduce k).potential = s.potential := sizeReduce_potential s k
+      -- Unfold lllLoop on both sides.  The `f + 1` and `f' + 1` cases match the
+      -- second arm of the definition; the `hdone : k = n` dispatches to the else
+      -- branch.  The recursive call uses fuel `f` on the LHS and `f'` on the RHS.
+      rw [lllLoop_succ_eq_body s k δ hδ hδ' hk hkn hlt,
+          lllLoop_succ_eq_body s k δ hδ hδ' hk hkn hlt]
+      -- The body's lets are identical on both sides; only the recursive call's
+      -- fuel arg differs.  Split on the Lovász check.
+      dsimp only [lllLoopBody]
+      split_ifs with hcond
+      · -- Advance branch.
+        apply ih (s.sizeReduce k) (k + 1) (Nat.succ_pos k) (Nat.succ_le_of_lt hlt)
+          hsR_valid hsR_ind
+        · rw [hsR_pot]
+          have : n - (k + 1) + 1 ≤ n - k := by omega
+          omega
+        · exact hf'
+      · -- Swap branch.
+        obtain ⟨hnum_pos, hden_pos, hnum_le_den⟩ := lovasz_swap_hyps δ hδ hδ'
+        have hk0 : 0 < k := Nat.lt_of_lt_of_le Nat.zero_lt_one hk
+        -- Convert the negated `≥` to the strict `<` shape expected by
+        -- swapStep_potential_lt.
+        push_neg at hcond
+        have hpot_lt :
+            ((s.sizeReduce k).swapStep k).potential < (s.sizeReduce k).potential :=
+          swapStep_potential_lt (s.sizeReduce k) k hsR_ind hsR_valid hk0 hlt
+            δ.num δ.den hnum_pos hden_pos hnum_le_den (by
+              convert hcond using 2)
+        have hsS_pot_lt : ((s.sizeReduce k).swapStep k).potential < s.potential := by
+          rw [← hsR_pot]; exact hpot_lt
+        have hsS_valid : ((s.sizeReduce k).swapStep k).Valid :=
+          swapStep_valid (s.sizeReduce k) k hsR_ind hsR_valid
+        have hsS_ind : ((s.sizeReduce k).swapStep k).b.independent :=
+          swapStep_independent (s.sizeReduce k) k hsR_ind hsR_valid hk0 hlt
+        have hk'n :
+            max (k - 1) 1 ≤ n :=
+          (Nat.max_le).2 ⟨Nat.le_trans (Nat.sub_le k 1) hkn, Nat.le_trans hk hkn⟩
+        apply ih ((s.sizeReduce k).swapStep k) (max (k - 1) 1)
+          (Nat.le_max_right (k - 1) 1) hk'n hsS_valid hsS_ind
+        · -- measure(sSwapped, k') < f
+          have hmeasure_le : s.potential * (n + 1) + (n - k) ≤ f :=
+            Nat.lt_succ_iff.mp hmeasure
+          have hspot_pos : 0 < s.potential := by
+            have : 0 ≤ ((s.sizeReduce k).swapStep k).potential := Nat.zero_le _
+            omega
+          have hmul_bound :
+              ((s.sizeReduce k).swapStep k).potential * (n + 1) ≤
+                (s.potential - 1) * (n + 1) :=
+            Nat.mul_le_mul_right (n + 1)
+              (by omega : ((s.sizeReduce k).swapStep k).potential ≤ s.potential - 1)
+          have hsub_mul : (s.potential - 1) * (n + 1) + (n + 1) = s.potential * (n + 1) := by
+            have hp : s.potential = (s.potential - 1) + 1 := by omega
+            calc (s.potential - 1) * (n + 1) + (n + 1)
+                = ((s.potential - 1) + 1) * (n + 1) := by ring
+              _ = s.potential * (n + 1) := by rw [← hp]
+          -- Combine into the bound.
+          have hnk' : n - max (k - 1) 1 ≤ n := Nat.sub_le n _
+          have hgoal :
+              ((s.sizeReduce k).swapStep k).potential * (n + 1) + (n - max (k - 1) 1) ≤
+                s.potential * (n + 1) - 1 := by
+            have : ((s.sizeReduce k).swapStep k).potential * (n + 1) + n ≤
+                (s.potential - 1) * (n + 1) + n := by omega
+            have hsum_le : ((s.sizeReduce k).swapStep k).potential * (n + 1) +
+                (n - max (k - 1) 1) ≤ (s.potential - 1) * (n + 1) + n := by omega
+            have hrhs_eq : (s.potential - 1) * (n + 1) + n = s.potential * (n + 1) - 1 := by
+              omega
+            omega
+          have h1 : s.potential * (n + 1) - 1 ≤ s.potential * (n + 1) + (n - k) - 1 := by
+            omega
+          have h_meas : s.potential * (n + 1) + (n - k) - 1 ≤ f - 1 := by omega
+          have h_f_pos : 0 < f := by
+            -- Need f > 0 to subtract.  We use measure_old < f + 1 with measure_old ≥ 1.
+            have h1 : 1 ≤ s.potential * (n + 1) := by
+              calc 1 = 1 * (n + 1) - n := by omega
+                _ ≤ s.potential * (n + 1) - n := by
+                  have := Nat.mul_le_mul_right (n + 1) hspot_pos
+                  omega
+                _ ≤ s.potential * (n + 1) := Nat.sub_le _ _
+            omega
+          omega
+        · exact hf'
+
+/-- **Fuel sufficiency for `lllLoop`.**  For a valid state `s` with an
+independent basis, started at row `k = 1`, the bound
+`lllFuel s = (s.potential + 1) * (n + 1)` is enough fuel to reach the
+`k = n` base case.  Equivalently, `lllLoop` is fuel-stable above this
+threshold: running with any `fuel' ≥ lllFuel s` returns the same matrix.
+This discharges the SPEC §8 "unreachable-by-pipeline-invariant"
+classification for the `fuel = 0` fallback in `lllLoop` (introduced by
+the Route A totality refactor #6564). -/
+theorem lllLoop_fuel_sufficient
+    (s : LLLState n m) (δ : Rat) (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
+    (hvalid : s.Valid) (hind : s.b.independent) {fuel' : Nat}
+    (hfuel : lllFuel s ≤ fuel') :
+    lllLoop s 1 δ hδ hδ' (Nat.le_refl 1) hn (lllFuel s) =
+      lllLoop s 1 δ hδ hδ' (Nat.le_refl 1) hn fuel' := by
+  apply lllLoop_eq_of_fuel_gt_measure δ hδ hδ' (lllFuel s) s 1 (Nat.le_refl 1) hn
+    hvalid hind
+  · -- s.potential * (n + 1) + (n - 1) < (s.potential + 1) * (n + 1)
+    show s.potential * (n + 1) + (n - 1) < (s.potential + 1) * (n + 1)
+    have : (s.potential + 1) * (n + 1) = s.potential * (n + 1) + (n + 1) := by ring
+    omega
+  · exact hfuel
 
 end LLLState
 
