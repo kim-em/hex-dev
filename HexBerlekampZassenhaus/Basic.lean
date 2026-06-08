@@ -6830,6 +6830,78 @@ def factorSlowTrial (f : ZPoly) : Factorization :=
 #guard factorSlowTrial exhaustiveNonMonicQuadraticGuard =
   factorSlow exhaustiveNonMonicQuadraticGuard
 
+/-- Option-returning wrapper over `factorSlowWithBound` that explicitly fails
+when the modular slow path would otherwise dispatch through the silent
+`choosePrimeDataFallback`.
+
+Returns `some (factorSlowWithBound f B)` on the constant-core early-out, the
+quadratic-integer-root short-circuit, and whenever
+`choosePrimeData? (normalizeForFactor f).squareFreeCore` is `some`. Returns
+`none` precisely when all three conditions fail, i.e. when the legacy slow
+path would have produced a wrong answer via the silent fallback.
+
+This is the modular tier of the three-tier `factor` combinator (SPEC PR #6580):
+the parent combinator routes to `factorSlowTrial` exactly when this wrapper
+returns `none`. -/
+def factorSlowModularWithBound? (f : ZPoly) (B : Nat) : Option Factorization :=
+  let normalized := normalizeForFactor f
+  if normalized.squareFreeCore.degree?.getD 0 = 0 then
+    some (factorSlowWithBound f B)
+  else if (quadraticIntegerRootFactors? normalized.squareFreeCore).isSome then
+    some (factorSlowWithBound f B)
+  else if (choosePrimeData? normalized.squareFreeCore).isSome then
+    some (factorSlowWithBound f B)
+  else
+    none
+
+/-- Default-bound Option-returning wrapper over `factorSlow`; the modular tier
+of the three-tier `factor` combinator. -/
+def factorSlowModular? (f : ZPoly) : Option Factorization :=
+  factorSlowModularWithBound? f (ZPoly.defaultFactorCoeffBound f)
+
+@[simp] theorem factorSlowModular?_eq_factorSlowModularWithBound?_default
+    (f : ZPoly) :
+    factorSlowModular? f =
+      factorSlowModularWithBound? f (ZPoly.defaultFactorCoeffBound f) := rfl
+
+/-- Characterise the `some` branch of `factorSlowModularWithBound?`. The
+wrapper returns `some (factorSlowWithBound f B)` exactly on the same safe
+branches identified by `factorSlowFactorsWithBound?_eq_some_iff_safe_branch`,
+and `none` precisely on the silent-fallback branch that the three-tier
+combinator reroutes to `factorSlowTrial`. -/
+theorem factorSlowModularWithBound?_eq_some_iff_safe_branch (f : ZPoly) (B : Nat) :
+    factorSlowModularWithBound? f B =
+      (if (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0 ∨
+          (quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore).isSome ∨
+          (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome
+        then some (factorSlowWithBound f B) else none) := by
+  unfold factorSlowModularWithBound?
+  by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
+  · simp [hdeg]
+  · by_cases hquad :
+      (quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore).isSome
+    · simp [hdeg, hquad]
+    · by_cases hprime :
+        (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome
+      · simp [hdeg, hquad, hprime]
+      · simp [hdeg, hquad, hprime]
+
+/-- A successful `factorSlowModularWithBound?` result is exactly
+`factorSlowWithBound f B`. -/
+theorem factorSlowModularWithBound?_eq_some_eq_factorSlowWithBound
+    {f : ZPoly} {B : Nat} {φ : Factorization}
+    (h : factorSlowModularWithBound? f B = some φ) :
+    φ = factorSlowWithBound f B := by
+  rw [factorSlowModularWithBound?_eq_some_iff_safe_branch] at h
+  by_cases hsafe :
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0 ∨
+        (quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore).isSome ∨
+        (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome
+  · rw [if_pos hsafe] at h
+    exact (Option.some.inj h).symm
+  · rw [if_neg hsafe] at h
+    cases h
+
 /-- Raw factor array produced by the fast BHKS branch, when it succeeds.
 
 Exposed publicly so the Mathlib-side layer can express per-branch
