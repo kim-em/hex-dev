@@ -6793,6 +6793,43 @@ API.
 def factorSlow (f : ZPoly) : Factorization :=
   factorSlowWithBound f (ZPoly.defaultFactorCoeffBound f)
 
+/-- Raw factor array produced by the integer trial-division slow path.
+
+Mirrors `factorSlowFactorsWithBound`'s constant/quadratic-root short-circuits
+so the deg-0 core and integer-root cases are handled up front; the residual
+exhaustive branch dispatches to the standalone integer trial-division core
+(`exhaustiveIntegerTrialCoreFactorsWithBound`) instead of the modular
+recombination one. This is the trial-division tier of the three-tier
+`factor` combinator (SPEC PR #6580). -/
+def factorSlowTrialFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
+  let normalized := normalizeForFactor f
+  if normalized.squareFreeCore.degree?.getD 0 = 0 then
+    reassemblePolynomialFactors normalized #[normalized.squareFreeCore]
+  else
+    match quadraticIntegerRootFactors? normalized.squareFreeCore with
+    | some coreFactors => reassemblePolynomialFactors normalized coreFactors
+    | none =>
+        let coreFactors :=
+          exhaustiveIntegerTrialCoreFactorsWithBound normalized.squareFreeCore B
+        reassemblePolynomialFactors normalized coreFactors
+
+#guard factorSlowTrialFactorsWithBound exhaustiveNonMonicQuadraticGuard 4 =
+  #[exhaustiveNonMonicQuadraticGuard]
+
+private def factorSlowTrialWithBound (f : ZPoly) (B : Nat) : Factorization :=
+  factorizationOfFactors f (factorSlowTrialFactorsWithBound f B)
+
+/--
+Factor using the integer trial-division path at the default Mignotte
+coefficient bound. This is the trial-division tier of the three-tier
+`factor` combinator (SPEC PR #6580).
+-/
+def factorSlowTrial (f : ZPoly) : Factorization :=
+  factorSlowTrialWithBound f (ZPoly.defaultFactorCoeffBound f)
+
+#guard factorSlowTrial exhaustiveNonMonicQuadraticGuard =
+  factorSlow exhaustiveNonMonicQuadraticGuard
+
 /-- Raw factor array produced by the fast BHKS branch, when it succeeds.
 
 Exposed publicly so the Mathlib-side layer can express per-branch
@@ -14567,6 +14604,148 @@ theorem factorWithBound_product (f : ZPoly) (B : Nat) :
 theorem factorSlow_product (f : ZPoly) :
     Factorization.product (factorSlow f) = f := by
   exact factorSlowWithBound_product f (ZPoly.defaultFactorCoeffBound f)
+
+theorem factorSlowTrialFactorsWithBound_polyProduct
+    (f : ZPoly) (B : Nat) :
+    DensePoly.C (signedContentScalar f) *
+      Array.polyProduct (factorSlowTrialFactorsWithBound f B) = f := by
+  unfold factorSlowTrialFactorsWithBound
+  by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
+  · simp only [hdeg, if_true]
+    exact reassemblePolynomialFactors_product_eq_input f
+      #[(normalizeForFactor f).squareFreeCore] (by simp [Array.polyProduct])
+  · simp only [hdeg, if_false]
+    cases hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
+    | some coreFactors =>
+        exact reassemblePolynomialFactors_product_eq_input f coreFactors
+          (quadraticIntegerRootFactors?_product hquad)
+    | none =>
+        exact reassemblePolynomialFactors_product_eq_input f
+          (exhaustiveIntegerTrialCoreFactorsWithBound
+            (normalizeForFactor f).squareFreeCore B)
+          (exhaustiveIntegerTrialCoreFactorsWithBound_polyProduct
+            (normalizeForFactor f).squareFreeCore B)
+
+private theorem factorSlowTrialWithBound_product_of_all_recorded_normalized
+    (f : ZPoly) (B : Nat)
+    (hnormalized :
+      ∀ factor ∈ (factorSlowTrialFactorsWithBound f B).toList,
+        normalizeFactorSign factor = factor)
+    (hrecorded :
+      ∀ factor ∈ (factorSlowTrialFactorsWithBound f B).toList,
+        shouldRecordPolynomialFactor factor = true) :
+    Factorization.product (factorSlowTrialWithBound f B) = f := by
+  unfold factorSlowTrialWithBound
+  exact
+    factorizationOfFactors_product_of_raw_product_of_all_recorded_normalized
+      f (factorSlowTrialFactorsWithBound f B)
+      (factorSlowTrialFactorsWithBound_polyProduct f B) hnormalized hrecorded
+
+private theorem factorSlowTrialWithBound_product_of_constant_branch
+    (f : ZPoly) (B : Nat)
+    (hf : f ≠ 0)
+    (hbranch : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0) :
+    Factorization.product (factorSlowTrialWithBound f B) = f := by
+  unfold factorSlowTrialWithBound factorSlowTrialFactorsWithBound
+  rw [if_pos hbranch]
+  have hcore_one := squareFreeCore_eq_one_of_constant_of_ne_zero f hf hbranch
+  rw [hcore_one]
+  apply factorizationOfFactors_product_of_filtered_product
+  · exact reassemblePolynomialFactors_product_eq_input f #[1] (by
+      rw [ZPoly.polyProduct_singleton]
+      exact hcore_one.symm)
+  · rw [reassemblePolynomialFactors_singleton_one_eq]
+    rw [polyProduct_filteredNormalizedFactors_append_one_of_all_recorded_normalized]
+    rw [ZPoly.polyProduct_append, ZPoly.polyProduct_singleton]
+    exact (DensePoly.mul_one_right_poly (S := Int) _).symm
+    · intro factor hmem
+      exact polynomialNormalizationPrefixFactors_normalizeFactorSign_of_ne_zero
+        f hf factor hmem
+    · intro factor hmem
+      exact polynomialNormalizationPrefixFactors_shouldRecord_of_ne_zero
+        f hf factor hmem
+
+private theorem factorSlowTrialWithBound_product_of_quadratic_branch
+    (f : ZPoly) (B : Nat)
+    (hf : f ≠ 0)
+    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (coreFactors : Array ZPoly)
+    (hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore =
+      some coreFactors) :
+    Factorization.product (factorSlowTrialWithBound f B) = f := by
+  apply factorSlowTrialWithBound_product_of_all_recorded_normalized
+  · unfold factorSlowTrialFactorsWithBound
+    rw [if_neg hdeg]
+    rw [hquad]
+    intro factor hmem
+    refine reassemblePolynomialFactors_normalizeFactorSign_of_ne_zero f hf
+      coreFactors ?_ factor hmem
+    intro c hc
+    exact quadraticIntegerRootFactors?_normalizeFactorSign
+      (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad c hc
+  · unfold factorSlowTrialFactorsWithBound
+    rw [if_neg hdeg]
+    rw [hquad]
+    intro factor hmem
+    refine reassemblePolynomialFactors_shouldRecord_of_ne_zero f hf
+      coreFactors ?_ factor hmem
+    intro c hc
+    exact quadraticIntegerRootFactors?_shouldRecord
+      (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad c hc
+
+private theorem factorSlowTrialWithBound_product_of_trial_branch
+    (f : ZPoly) (B : Nat)
+    (hf : f ≠ 0)
+    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none) :
+    Factorization.product (factorSlowTrialWithBound f B) = f := by
+  apply factorSlowTrialWithBound_product_of_all_recorded_normalized
+  · unfold factorSlowTrialFactorsWithBound
+    rw [if_neg hdeg]
+    rw [hquad]
+    intro factor hmem
+    refine reassemblePolynomialFactors_normalizeFactorSign_of_ne_zero f hf
+      (exhaustiveIntegerTrialCoreFactorsWithBound
+        (normalizeForFactor f).squareFreeCore B)
+      ?_ factor hmem
+    intro c hc
+    exact exhaustiveIntegerTrialCoreFactorsWithBound_normalizeFactorSign
+      (normalizeForFactor f).squareFreeCore B
+      (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) c hc
+  · unfold factorSlowTrialFactorsWithBound
+    rw [if_neg hdeg]
+    rw [hquad]
+    intro factor hmem
+    refine reassemblePolynomialFactors_shouldRecord_of_ne_zero f hf
+      (exhaustiveIntegerTrialCoreFactorsWithBound
+        (normalizeForFactor f).squareFreeCore B)
+      ?_ factor hmem
+    intro c hc
+    exact exhaustiveIntegerTrialCoreFactorsWithBound_shouldRecord
+      (normalizeForFactor f).squareFreeCore B
+      (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) c hc
+
+theorem factorSlowTrialWithBound_product (f : ZPoly) (B : Nat) :
+    Factorization.product (factorSlowTrialWithBound f B) = f := by
+  by_cases hf : f = 0
+  · subst f
+    unfold factorSlowTrialWithBound
+    exact factorizationOfFactors_product_of_zero (factorSlowTrialFactorsWithBound 0 B)
+  · by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
+    · exact factorSlowTrialWithBound_product_of_constant_branch f B hf hdeg
+    · cases hquad :
+        quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
+      | some coreFactors =>
+          exact factorSlowTrialWithBound_product_of_quadratic_branch
+            f B hf hdeg coreFactors hquad
+      | none =>
+          exact factorSlowTrialWithBound_product_of_trial_branch
+            f B hf hdeg hquad
+
+/-- Product contract for the public trial-division slow-path entry point. -/
+theorem factorSlowTrial_product (f : ZPoly) :
+    Factorization.product (factorSlowTrial f) = f := by
+  exact factorSlowTrialWithBound_product f (ZPoly.defaultFactorCoeffBound f)
 
 /-- Product contract for the public fast path whenever it returns a
 certificate. -/
