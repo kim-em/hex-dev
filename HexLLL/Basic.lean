@@ -321,7 +321,7 @@ structure Valid (s : LLLState n m) : Prop where
       s.d.get ⟨i, hi⟩ = GramSchmidt.Int.gramDet s.b i (Nat.le_of_lt_succ hi)
 
 /-- Integer nearest-quotient used by the LLL size-reduction test. -/
-private def nearestQuotient (νjk : Int) (dj1 : Nat) : Int :=
+def nearestQuotient (νjk : Int) (dj1 : Nat) : Int :=
   Int.fdiv (2 * νjk + Int.ofNat dj1) (2 * Int.ofNat dj1)
 
 /-- Targeted matrix entry update for LLL's integer coefficient state.
@@ -368,7 +368,7 @@ private theorem foldl_set_outerSubMul_get_eq
         change (base.set x.val (outerK.get x - r * outerJ.get x) x.isLt)[l.val] = base[l.val]
         exact Vector.getElem_set_ne x.isLt l.isLt h_xl
 
-private theorem foldl_finRange_set_outerSubMul_get_eq
+theorem foldl_finRange_set_outerSubMul_get_eq
     {n : Nat} (jVal : Nat) (hjn : jVal ≤ n)
     (base outerK outerJ : Vector Int n) (r : Int) (l : Fin n) :
     ((List.finRange jVal).foldl
